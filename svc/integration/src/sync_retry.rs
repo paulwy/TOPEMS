@@ -1,10 +1,10 @@
 //! Data Sync Retry Mechanism
-//! 
+//!
 //! Provides retry logic with exponential backoff for data synchronization.
 
+use serde::{Deserialize, Serialize};
 use std::time::Duration;
 use tokio::time::sleep;
-use serde::{Deserialize, Serialize};
 
 /// Retry configuration
 #[derive(Debug, Clone, Serialize, Deserialize)]
@@ -56,10 +56,7 @@ impl RetryExecutor {
     }
 
     /// Execute a function with retry logic
-    pub async fn execute<F, Fut, T>(
-        &self,
-        operation: F,
-    ) -> RetryResult<T>
+    pub async fn execute<F, Fut, T>(&self, operation: F) -> RetryResult<T>
     where
         F: Fn() -> Fut,
         Fut: std::future::Future<Output = Result<T, String>>,
@@ -76,10 +73,7 @@ impl RetryExecutor {
                     last_error = error.clone();
 
                     if !self.is_retryable(&error) || attempts >= self.config.max_retries {
-                        return RetryResult::MaxRetriesExceeded {
-                            error,
-                            attempts,
-                        };
+                        return RetryResult::MaxRetriesExceeded { error, attempts };
                     }
 
                     let delay = self.calculate_delay(attempts);
@@ -129,7 +123,10 @@ impl RetryExecutor {
 
     fn is_retryable(&self, error: &str) -> bool {
         let error_lower = error.to_lowercase();
-        self.config.retryable_errors.iter().any(|e| error_lower.contains(e))
+        self.config
+            .retryable_errors
+            .iter()
+            .any(|e| error_lower.contains(e))
     }
 }
 
@@ -252,11 +249,8 @@ impl SyncTaskManager {
         }
     }
 
-    pub async fn execute_sync_task<F, Fut>(
-        &self,
-        task: &mut SyncTask,
-        operation: F,
-    ) where
+    pub async fn execute_sync_task<F, Fut>(&self, task: &mut SyncTask, operation: F)
+    where
         F: Fn() -> Fut,
         Fut: std::future::Future<Output = Result<(), String>>,
     {
@@ -276,7 +270,8 @@ impl SyncTaskManager {
             }
             RetryResult::MaxRetriesExceeded { error, attempts } => {
                 task.status = SyncStatus::MaxRetriesExceeded;
-                task.error_message = Some(format!("Max retries exceeded ({}): {}", attempts, error));
+                task.error_message =
+                    Some(format!("Max retries exceeded ({}): {}", attempts, error));
                 task.retry_count = attempts;
             }
         }

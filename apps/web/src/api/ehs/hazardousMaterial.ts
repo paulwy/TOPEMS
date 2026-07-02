@@ -36,44 +36,39 @@ export const hazardousMaterialApi = {
     if (params?.status) queryParams.append('status', params.status);
 
     return apiClient.ehs.get<PaginatedResponse<HazardousMaterial>>(
-      `/api/ehs/hazardous-materials?${queryParams.toString()}`
+      `/hazardous-materials?${queryParams.toString()}`
     );
   },
 
   getHazardousMaterial: async (id: string): Promise<ApiResponse<HazardousMaterial>> => {
-    return apiClient.ehs.get<HazardousMaterial>(`/api/ehs/hazardous-materials/${id}`);
+    return apiClient.ehs.get<HazardousMaterial>(`/hazardous-materials/${id}`);
   },
 
   createHazardousMaterial: async (
     data: CreateHazardousMaterialRequest
   ): Promise<ApiResponse<HazardousMaterial>> => {
-    return apiClient.ehs.post<HazardousMaterial>('/api/ehs/hazardous-materials', data);
+    return apiClient.ehs.post<HazardousMaterial>('/hazardous-materials', data);
   },
 
   updateHazardousMaterial: async (
     id: string,
     data: Partial<UpdateHazardousMaterialRequest>
   ): Promise<ApiResponse<HazardousMaterial>> => {
-    return apiClient.ehs.put<HazardousMaterial>(`/api/ehs/hazardous-materials/${id}`, data);
+    return apiClient.ehs.put<HazardousMaterial>(`/hazardous-materials/${id}`, data);
   },
 
   deleteHazardousMaterial: async (id: string): Promise<ApiResponse<void>> => {
-    return apiClient.ehs.delete<void>(`/api/ehs/hazardous-materials/${id}`);
+    return apiClient.ehs.delete<void>(`/hazardous-materials/${id}`);
   },
 
   listHazardousMaterialCategories: async (): Promise<ApiResponse<HazardousMaterialCategory[]>> => {
-    return apiClient.ehs.get<HazardousMaterialCategory[]>(
-      '/api/ehs/hazardous-materials/categories'
-    );
+    return apiClient.ehs.get<HazardousMaterialCategory[]>('/hazardous-materials/categories');
   },
 
   createHazardousMaterialCategory: async (
     data: CreateHazardousMaterialCategoryRequest
   ): Promise<ApiResponse<HazardousMaterialCategory>> => {
-    return apiClient.ehs.post<HazardousMaterialCategory>(
-      '/api/ehs/hazardous-materials/categories',
-      data
-    );
+    return apiClient.ehs.post<HazardousMaterialCategory>('/hazardous-materials/categories', data);
   },
 
   updateHazardousMaterialCategory: async (
@@ -81,13 +76,13 @@ export const hazardousMaterialApi = {
     data: Partial<UpdateHazardousMaterialCategoryRequest>
   ): Promise<ApiResponse<HazardousMaterialCategory>> => {
     return apiClient.ehs.put<HazardousMaterialCategory>(
-      `/api/ehs/hazardous-materials/categories/${id}`,
+      `/hazardous-materials/categories/${id}`,
       data
     );
   },
 
   deleteHazardousMaterialCategory: async (id: string): Promise<ApiResponse<void>> => {
-    return apiClient.ehs.delete<void>(`/api/ehs/hazardous-materials/categories/${id}`);
+    return apiClient.ehs.delete<void>(`/hazardous-materials/categories/${id}`);
   },
 
   listHazardousMaterialInventory: async (
@@ -102,25 +97,20 @@ export const hazardousMaterialApi = {
     if (params?.status) queryParams.append('status', params.status);
 
     return apiClient.ehs.get<PaginatedResponse<HazardousMaterialInventory>>(
-      `/api/ehs/hazardous-materials/inventory?${queryParams.toString()}`
+      `/hazardous-materials/inventory?${queryParams.toString()}`
     );
   },
 
   getHazardousMaterialInventory: async (
     id: string
   ): Promise<ApiResponse<HazardousMaterialInventory>> => {
-    return apiClient.ehs.get<HazardousMaterialInventory>(
-      `/api/ehs/hazardous-materials/inventory/${id}`
-    );
+    return apiClient.ehs.get<HazardousMaterialInventory>(`/hazardous-materials/inventory/${id}`);
   },
 
   createHazardousMaterialInventory: async (
     data: CreateHazardousMaterialInventoryRequest
   ): Promise<ApiResponse<HazardousMaterialInventory>> => {
-    return apiClient.ehs.post<HazardousMaterialInventory>(
-      '/api/ehs/hazardous-materials/inventory',
-      data
-    );
+    return apiClient.ehs.post<HazardousMaterialInventory>('/hazardous-materials/inventory', data);
   },
 
   updateHazardousMaterialInventory: async (
@@ -128,13 +118,13 @@ export const hazardousMaterialApi = {
     data: Partial<UpdateHazardousMaterialInventoryRequest>
   ): Promise<ApiResponse<HazardousMaterialInventory>> => {
     return apiClient.ehs.put<HazardousMaterialInventory>(
-      `/api/ehs/hazardous-materials/inventory/${id}`,
+      `/hazardous-materials/inventory/${id}`,
       data
     );
   },
 
   deleteHazardousMaterialInventory: async (id: string): Promise<ApiResponse<void>> => {
-    return apiClient.ehs.delete<void>(`/api/ehs/hazardous-materials/inventory/${id}`);
+    return apiClient.ehs.delete<void>(`/hazardous-materials/inventory/${id}`);
   },
 
   listHazardousMaterialMovements: async (
@@ -151,25 +141,20 @@ export const hazardousMaterialApi = {
     if (params?.end_date) queryParams.append('end_date', params.end_date);
 
     return apiClient.ehs.get<PaginatedResponse<HazardousMaterialMovement>>(
-      `/api/ehs/hazardous-materials/movements?${queryParams.toString()}`
+      `/hazardous-materials/movements?${queryParams.toString()}`
     );
   },
 
   getHazardousMaterialMovement: async (
     id: string
   ): Promise<ApiResponse<HazardousMaterialMovement>> => {
-    return apiClient.ehs.get<HazardousMaterialMovement>(
-      `/api/ehs/hazardous-materials/movements/${id}`
-    );
+    return apiClient.ehs.get<HazardousMaterialMovement>(`/hazardous-materials/movements/${id}`);
   },
 
   createHazardousMaterialMovement: async (
     data: CreateHazardousMaterialMovementRequest
   ): Promise<ApiResponse<HazardousMaterialMovement>> => {
-    return apiClient.ehs.post<HazardousMaterialMovement>(
-      '/api/ehs/hazardous-materials/movements',
-      data
-    );
+    return apiClient.ehs.post<HazardousMaterialMovement>('/hazardous-materials/movements', data);
   },
 
   updateHazardousMaterialMovement: async (
@@ -177,13 +162,13 @@ export const hazardousMaterialApi = {
     data: Partial<UpdateHazardousMaterialMovementRequest>
   ): Promise<ApiResponse<HazardousMaterialMovement>> => {
     return apiClient.ehs.put<HazardousMaterialMovement>(
-      `/api/ehs/hazardous-materials/movements/${id}`,
+      `/hazardous-materials/movements/${id}`,
       data
     );
   },
 
   deleteHazardousMaterialMovement: async (id: string): Promise<ApiResponse<void>> => {
-    return apiClient.ehs.delete<void>(`/api/ehs/hazardous-materials/movements/${id}`);
+    return apiClient.ehs.delete<void>(`/hazardous-materials/movements/${id}`);
   },
 
   listMSDS: async (params?: ListQueryParams): Promise<ApiResponse<PaginatedResponse<MSDS>>> => {
@@ -193,28 +178,28 @@ export const hazardousMaterialApi = {
     if (params?.search) queryParams.append('search', params.search);
 
     return apiClient.ehs.get<PaginatedResponse<MSDS>>(
-      `/api/ehs/hazardous-materials/msds?${queryParams.toString()}`
+      `/hazardous-materials/msds?${queryParams.toString()}`
     );
   },
 
   getMSDS: async (id: string): Promise<ApiResponse<MSDS>> => {
-    return apiClient.ehs.get<MSDS>(`/api/ehs/hazardous-materials/msds/${id}`);
+    return apiClient.ehs.get<MSDS>(`/hazardous-materials/msds/${id}`);
   },
 
   getMSDSByMaterialId: async (materialId: string): Promise<ApiResponse<MSDS>> => {
-    return apiClient.ehs.get<MSDS>(`/api/ehs/hazardous-materials/${materialId}/msds`);
+    return apiClient.ehs.get<MSDS>(`/hazardous-materials/${materialId}/msds`);
   },
 
   createMSDS: async (data: CreateMSDSRequest): Promise<ApiResponse<MSDS>> => {
-    return apiClient.ehs.post<MSDS>('/api/ehs/hazardous-materials/msds', data);
+    return apiClient.ehs.post<MSDS>('/hazardous-materials/msds', data);
   },
 
   updateMSDS: async (id: string, data: Partial<UpdateMSDSRequest>): Promise<ApiResponse<MSDS>> => {
-    return apiClient.ehs.put<MSDS>(`/api/ehs/hazardous-materials/msds/${id}`, data);
+    return apiClient.ehs.put<MSDS>(`/hazardous-materials/msds/${id}`, data);
   },
 
   deleteMSDS: async (id: string): Promise<ApiResponse<void>> => {
-    return apiClient.ehs.delete<void>(`/api/ehs/hazardous-materials/msds/${id}`);
+    return apiClient.ehs.delete<void>(`/hazardous-materials/msds/${id}`);
   },
 };
 

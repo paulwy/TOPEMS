@@ -62,6 +62,7 @@ const config: RuntimeConfig = {
     ai: getEnv('VITE_AI_SERVICE_URL', '/ai'),
     mobile: getEnv('VITE_MOBILE_SERVICE_URL', '/mobile'),
     migration: getEnv('VITE_MIGRATION_SERVICE_URL', '/migration'),
+    jaeger: getEnv('VITE_JAEGER_SERVICE_URL', 'http://localhost:14268'),
 
     // ========== [已整合] 统一服务 ==========
     communication: getEnv('VITE_COMMUNICATION_SERVICE_URL', '/comm'),
@@ -71,7 +72,7 @@ const config: RuntimeConfig = {
 
     // ========== [向后兼容] 旧服务路径 -> 新服务 ==========
     // notification, im, mail -> communication
-    notification: getEnv('VITE_NOTIFICATION_SERVICE_URL', '/notification'),
+    notification: getEnv('VITE_NOTIFICATION_SERVICE_URL', '/api/core/comm/notify'),
     mail: getEnv('VITE_MAIL_SERVICE_URL', '/mail'),
     im: getEnv('VITE_IM_SERVICE_URL', '/im'),
     // mes, pdm -> manufacturing

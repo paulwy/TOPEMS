@@ -3,7 +3,7 @@ use sqlx::{PgPool, Row};
 use tracing::{info, warn};
 
 use topems_shared::event::{
-    EventType, EhsHazardReportedPayload, EhsAccidentReportedPayload,
+    EhsAccidentReportedPayload, EhsHazardReportedPayload, EventType,
     LimsInspectionAbnormalDetectedPayload, LimsReagentAlertPayload, LimsRecordCompletedPayload,
     QmsInspectionCompletedPayload, QmsQualityIssueCreatedPayload,
 };
@@ -12,7 +12,10 @@ pub async fn handle_qms_inspection_completed(
     pool: &PgPool,
     payload: &QmsInspectionCompletedPayload,
 ) -> anyhow::Result<()> {
-    info!("处理QMS检验完成事件 - 同步到LIMS: {}", payload.inspection_no);
+    info!(
+        "处理QMS检验完成事件 - 同步到LIMS: {}",
+        payload.inspection_no
+    );
 
     let sample_no = format!("{}-SMP", payload.inspection_no);
 
@@ -47,9 +50,20 @@ pub async fn handle_qms_quality_issue_created(
     pool: &PgPool,
     payload: &QmsQualityIssueCreatedPayload,
 ) -> anyhow::Result<()> {
-    info!("处理QMS质量问题创建事件 - 触发EHS安全检查: {}", payload.issue_no);
+    info!(
+        "处理QMS质量问题创建事件 - 触发EHS安全检查: {}",
+        payload.issue_no
+    );
 
-    let hazard_no = format!("HAZ-QMS-{}", uuid::Uuid::new_v4().simple().to_string().chars().take(8).collect::<String>());
+    let hazard_no = format!(
+        "HAZ-QMS-{}",
+        uuid::Uuid::new_v4()
+            .simple()
+            .to_string()
+            .chars()
+            .take(8)
+            .collect::<String>()
+    );
     let level = match payload.severity.as_deref() {
         Some("critical") | Some("high") => "high",
         Some("medium") => "medium",
@@ -79,7 +93,10 @@ pub async fn handle_ehs_hazard_reported(
     pool: &PgPool,
     payload: &EhsHazardReportedPayload,
 ) -> anyhow::Result<()> {
-    info!("处理EHS隐患上报事件 - 触发QMS纠正措施: {}", payload.hazard_no);
+    info!(
+        "处理EHS隐患上报事件 - 触发QMS纠正措施: {}",
+        payload.hazard_no
+    );
 
     let action_title = format!("EHS隐患整改: {}", payload.title);
     let description = format!(
@@ -91,8 +108,21 @@ pub async fn handle_ehs_hazard_reported(
         payload.description.as_deref().unwrap_or("无")
     );
 
-    let action_no = format!("CAP-{}-{}", payload.hazard_no, uuid::Uuid::new_v4().simple().to_string().chars().take(4).collect::<String>());
-    let priority = if payload.level == "high" || payload.level == "critical" { "high" } else { "medium" };
+    let action_no = format!(
+        "CAP-{}-{}",
+        payload.hazard_no,
+        uuid::Uuid::new_v4()
+            .simple()
+            .to_string()
+            .chars()
+            .take(4)
+            .collect::<String>()
+    );
+    let priority = if payload.level == "high" || payload.level == "critical" {
+        "high"
+    } else {
+        "medium"
+    };
 
     let _ = sqlx::query(
         "INSERT INTO qa_corrective_actions (action_no, title, description, status, priority, created_by, related_issue_id, related_issue_type) VALUES ($1, $2, $3, $4, $5, $6, $7, $8)"
@@ -116,9 +146,20 @@ pub async fn handle_ehs_accident_reported(
     pool: &PgPool,
     payload: &EhsAccidentReportedPayload,
 ) -> anyhow::Result<()> {
-    info!("处理EHS事故上报事件 - 触发LIMS检测任务: {}", payload.accident_no);
+    info!(
+        "处理EHS事故上报事件 - 触发LIMS检测任务: {}",
+        payload.accident_no
+    );
 
-    let sample_no = format!("SMP-ACC-{}", uuid::Uuid::new_v4().simple().to_string().chars().take(8).collect::<String>());
+    let sample_no = format!(
+        "SMP-ACC-{}",
+        uuid::Uuid::new_v4()
+            .simple()
+            .to_string()
+            .chars()
+            .take(8)
+            .collect::<String>()
+    );
     let _ = sqlx::query(
         "INSERT INTO qa_lab_samples (sample_no, sample_name, sample_type, source, status) VALUES ($1, $2, $3, $4, $5)"
     )
@@ -130,7 +171,15 @@ pub async fn handle_ehs_accident_reported(
     .execute(pool)
     .await;
 
-    let task_no = format!("TASK-ACC-{}", uuid::Uuid::new_v4().simple().to_string().chars().take(8).collect::<String>());
+    let task_no = format!(
+        "TASK-ACC-{}",
+        uuid::Uuid::new_v4()
+            .simple()
+            .to_string()
+            .chars()
+            .take(8)
+            .collect::<String>()
+    );
     let test_items = serde_json::json!(["环境检测", "化学品残留", "材料分析", "安全评估"]);
     let _ = sqlx::query(
         "INSERT INTO qa_lab_tasks (task_no, sample_no, test_items, status, priority) VALUES ($1, $2, $3, $4, $5)"
@@ -163,8 +212,20 @@ pub async fn handle_lims_inspection_abnormal(
         payload.conclusion
     );
 
-    let hazard_no = format!("HAZ-LIMS-{}", uuid::Uuid::new_v4().simple().to_string().chars().take(8).collect::<String>());
-    let level = if payload.conclusion.contains("严重") || payload.conclusion.contains("超标") { "high" } else { "medium" };
+    let hazard_no = format!(
+        "HAZ-LIMS-{}",
+        uuid::Uuid::new_v4()
+            .simple()
+            .to_string()
+            .chars()
+            .take(8)
+            .collect::<String>()
+    );
+    let level = if payload.conclusion.contains("严重") || payload.conclusion.contains("超标") {
+        "high"
+    } else {
+        "medium"
+    };
 
     let _ = sqlx::query(
         "INSERT INTO qa_ehs_hazards (hazard_no, title, category, level, location, description, status, reported_by) VALUES ($1, $2, $3, $4, $5, $6, $7, $8)"
@@ -188,12 +249,15 @@ pub async fn handle_lims_record_completed(
     pool: &PgPool,
     payload: &LimsRecordCompletedPayload,
 ) -> anyhow::Result<()> {
-    info!("处理LIMS检测完成事件 - 更新QMS质检结果: {}", payload.record_no);
+    info!(
+        "处理LIMS检测完成事件 - 更新QMS质检结果: {}",
+        payload.record_no
+    );
 
     let _ = sqlx::query(
         "UPDATE qa_quality_inspections SET 
             test_result = $1, test_data = $2, conclusion = $3, updated_at = NOW()
-         WHERE inspection_no = $4"
+         WHERE inspection_no = $4",
     )
     .bind(payload.conclusion.clone())
     .bind(payload.test_data.clone())
@@ -212,7 +276,15 @@ pub async fn handle_lims_reagent_alert(
 ) -> anyhow::Result<()> {
     info!("处理LIMS试剂告警事件 - 同步到EHS: {}", payload.reagent_no);
 
-    let alert_no = format!("ALERT-RGT-{}", uuid::Uuid::new_v4().simple().to_string().chars().take(8).collect::<String>());
+    let alert_no = format!(
+        "ALERT-RGT-{}",
+        uuid::Uuid::new_v4()
+            .simple()
+            .to_string()
+            .chars()
+            .take(8)
+            .collect::<String>()
+    );
     let alert_type = match payload.alert_type.as_deref() {
         Some("expired") => "过期告警",
         Some("low_stock") => "低库存告警",
@@ -260,7 +332,8 @@ pub async fn process_event(
             handle_ehs_accident_reported(pool, &parsed).await?;
         }
         EventType::LimsInspectionAbnormalDetected => {
-            let parsed = serde_json::from_value::<LimsInspectionAbnormalDetectedPayload>(payload.clone())?;
+            let parsed =
+                serde_json::from_value::<LimsInspectionAbnormalDetectedPayload>(payload.clone())?;
             handle_lims_inspection_abnormal(pool, &parsed).await?;
         }
         EventType::LimsRecordCompleted => {

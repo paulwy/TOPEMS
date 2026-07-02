@@ -49,9 +49,7 @@ const PageRenderer: React.FC<PageRendererProps> = ({ schema, data = {} }) => {
       case 'card':
         return (
           <Card elevation={(component.props?.shadow as boolean) ? 2 : 0}>
-            {component.props?.title ? (
-              <CardHeader title={component.props.title as string} />
-            ) : null}
+            {component.props?.title ? <CardHeader title={component.props.title as string} /> : null}
             <CardContent>
               {component.children?.map((child, idx) => (
                 <React.Fragment key={idx}>{renderComponent(child)}</React.Fragment>
@@ -62,12 +60,14 @@ const PageRenderer: React.FC<PageRendererProps> = ({ schema, data = {} }) => {
 
       case 'tabs':
         return (
-          <TabsRenderComponent component={component} renderComponent={renderComponent} />
+          <TabsRenderComponent
+            component={component}
+            renderComponent={renderComponent}
+          />
         );
 
       case 'table':
-        const columns =
-          (component.props?.columns as Array<{ key: string; title: string }>) || [];
+        const columns = (component.props?.columns as Array<{ key: string; title: string }>) || [];
         const tableData = (data[component.name || 'table'] as unknown[]) || [
           { name: '示例数据1', value: 100 },
           { name: '示例数据2', value: 200 },
@@ -75,8 +75,14 @@ const PageRenderer: React.FC<PageRendererProps> = ({ schema, data = {} }) => {
         ];
 
         return (
-          <TableContainer component={Paper} variant="outlined">
-            <Table size="small" sx={{ height: (component.props?.height as number) || 400 }}>
+          <TableContainer
+            component={Paper}
+            variant='outlined'
+          >
+            <Table
+              size='small'
+              sx={{ height: (component.props?.height as number) || 400 }}
+            >
               <TableHead>
                 <TableRow>
                   {columns.map((col) => (
@@ -113,10 +119,16 @@ const PageRenderer: React.FC<PageRendererProps> = ({ schema, data = {} }) => {
               gap: 1,
             }}
           >
-            <Typography variant="h6" color="text.secondary">
-              {component.props?.title as string || '图表'}
+            <Typography
+              variant='h6'
+              color='text.secondary'
+            >
+              {(component.props?.title as string) || '图表'}
             </Typography>
-            <Typography variant="body2" color="text.secondary">
+            <Typography
+              variant='body2'
+              color='text.secondary'
+            >
               {(component.props?.chartType as string) || 'bar'} 图表示例
             </Typography>
           </Box>
@@ -132,11 +144,18 @@ const PageRenderer: React.FC<PageRendererProps> = ({ schema, data = {} }) => {
         return (
           <Box>
             {listData.map((item, idx) => (
-              <Paper key={idx} variant="outlined" sx={{ p: 2, mb: 1 }}>
-                <Typography variant="subtitle2">
+              <Paper
+                key={idx}
+                variant='outlined'
+                sx={{ p: 2, mb: 1 }}
+              >
+                <Typography variant='subtitle2'>
                   {(item as Record<string, unknown>).title as string}
                 </Typography>
-                <Typography variant="body2" color="text.secondary">
+                <Typography
+                  variant='body2'
+                  color='text.secondary'
+                >
                   {(item as Record<string, unknown>).desc as string}
                 </Typography>
               </Paper>
@@ -146,8 +165,15 @@ const PageRenderer: React.FC<PageRendererProps> = ({ schema, data = {} }) => {
 
       case 'form':
         return (
-          <Paper variant="outlined" sx={{ p: 2 }}>
-            <Typography variant="body2" color="text.secondary" sx={{ mb: 2 }}>
+          <Paper
+            variant='outlined'
+            sx={{ p: 2 }}
+          >
+            <Typography
+              variant='body2'
+              color='text.secondary'
+              sx={{ mb: 2 }}
+            >
               表单组件
             </Typography>
             {component.children?.map((child, idx) => (
@@ -160,7 +186,7 @@ const PageRenderer: React.FC<PageRendererProps> = ({ schema, data = {} }) => {
         const buttons =
           (component.props?.buttons as Array<{ text: string; variant: string }>) || [];
         return (
-          <ButtonGroup variant="contained">
+          <ButtonGroup variant='contained'>
             {buttons.map((btn, idx) => (
               <Button
                 key={idx}
@@ -172,7 +198,11 @@ const PageRenderer: React.FC<PageRendererProps> = ({ schema, data = {} }) => {
                       : 'primary'
                 }
                 variant={
-                  btn.variant === 'text' ? 'text' : btn.variant === 'secondary' ? 'outlined' : 'contained'
+                  btn.variant === 'text'
+                    ? 'text'
+                    : btn.variant === 'secondary'
+                      ? 'outlined'
+                      : 'contained'
                 }
               >
                 {btn.text}
@@ -184,7 +214,7 @@ const PageRenderer: React.FC<PageRendererProps> = ({ schema, data = {} }) => {
       case 'image':
         return (
           <Box
-            component="img"
+            component='img'
             src={(component.props?.src as string) || 'https://via.placeholder.com/400x200'}
             alt={(component.props?.alt as string) || '图片'}
             sx={{
@@ -213,8 +243,14 @@ const PageRenderer: React.FC<PageRendererProps> = ({ schema, data = {} }) => {
 
       default:
         return (
-          <Paper variant="outlined" sx={{ p: 2 }}>
-            <Typography variant="body2" color="text.secondary">
+          <Paper
+            variant='outlined'
+            sx={{ p: 2 }}
+          >
+            <Typography
+              variant='body2'
+              color='text.secondary'
+            >
               {component.label || component.type} 组件
             </Typography>
           </Paper>
@@ -237,9 +273,7 @@ const PageRenderer: React.FC<PageRendererProps> = ({ schema, data = {} }) => {
       }}
     >
       {schema.components.map((component) => (
-        <React.Fragment key={component.id}>
-          {renderComponent(component)}
-        </React.Fragment>
+        <React.Fragment key={component.id}>{renderComponent(component)}</React.Fragment>
       ))}
     </Box>
   );
@@ -253,14 +287,17 @@ const TabsRenderComponent: React.FC<{
   const tabs = (component.props?.tabs as Array<{ key: string; label: string }>) || [];
 
   return (
-    <Paper variant="outlined">
+    <Paper variant='outlined'>
       <Tabs
         value={activeTab}
         onChange={(_, newValue) => setActiveTab(newValue)}
-        variant="scrollable"
+        variant='scrollable'
       >
         {tabs.map((tab) => (
-          <Tab key={tab.key} label={tab.label} />
+          <Tab
+            key={tab.key}
+            label={tab.label}
+          />
         ))}
       </Tabs>
       <Box sx={{ p: 2 }}>

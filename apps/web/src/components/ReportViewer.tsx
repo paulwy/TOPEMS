@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import { useTheme } from '@mui/material';
 import { X, ChevronLeft, ChevronRight, FileText, Columns, Rows3 } from 'lucide-react';
 import type { ReportData } from '@/api/report';
 
@@ -8,6 +9,7 @@ interface ReportViewerProps {
 }
 
 const ReportViewer: React.FC<ReportViewerProps> = ({ report, onClose }) => {
+  const theme = useTheme();
   const [currentPage, setCurrentPage] = useState(1);
   const [pageSize, setPageSize] = useState(10);
   const [sortColumn, setSortColumn] = useState<string | null>(null);
@@ -101,7 +103,7 @@ const ReportViewer: React.FC<ReportViewerProps> = ({ report, onClose }) => {
                 <p
                   style={{
                     fontSize: '14px',
-                    color: '#475569',
+                    color: 'grey.600',
                     marginTop: '4px',
                   }}
                 >
@@ -115,7 +117,7 @@ const ReportViewer: React.FC<ReportViewerProps> = ({ report, onClose }) => {
                   gap: '16px',
                   marginTop: '12px',
                   fontSize: '14px',
-                  color: 'grey.600',
+                  color: theme.palette.grey[600],
                 }}
               >
                 <span style={{ display: 'flex', alignItems: 'center' }}>
@@ -132,7 +134,7 @@ const ReportViewer: React.FC<ReportViewerProps> = ({ report, onClose }) => {
               onClick={onClose}
               style={{
                 padding: '8px',
-                color: '#94a3b8',
+                color: 'grey.400',
                 borderRadius: '8px',
                 border: 'none',
                 background: 'transparent',
@@ -163,7 +165,7 @@ const ReportViewer: React.FC<ReportViewerProps> = ({ report, onClose }) => {
                       textAlign: 'left',
                       fontSize: '12px',
                       fontWeight: 500,
-                      color: 'grey.600',
+                      color: theme.palette.grey[600],
                       textTransform: 'uppercase',
                       letterSpacing: '0.05em',
                     }}
@@ -179,7 +181,7 @@ const ReportViewer: React.FC<ReportViewerProps> = ({ report, onClose }) => {
                         textAlign: 'left',
                         fontSize: '12px',
                         fontWeight: 500,
-                        color: 'grey.600',
+                        color: theme.palette.grey[600],
                         textTransform: 'uppercase',
                         letterSpacing: '0.05em',
                         cursor: 'pointer',
@@ -195,7 +197,7 @@ const ReportViewer: React.FC<ReportViewerProps> = ({ report, onClose }) => {
                       >
                         <span>{column}</span>
                         {sortColumn === column && (
-                          <span style={{ color: 'primary.dark' }}>
+                          <span style={{ color: theme.palette.primary.dark }}>
                             {sortDirection === 'asc' ? '↑' : '↓'}
                           </span>
                         )}
@@ -233,7 +235,7 @@ const ReportViewer: React.FC<ReportViewerProps> = ({ report, onClose }) => {
                         style={{
                           padding: '12px 16px',
                           fontSize: '14px',
-                          color: 'grey.600',
+                          color: theme.palette.grey[600],
                         }}
                       >
                         {startIndex + idx + 1}
@@ -244,7 +246,7 @@ const ReportViewer: React.FC<ReportViewerProps> = ({ report, onClose }) => {
                           style={{
                             padding: '12px 16px',
                             fontSize: '14px',
-                            color: 'text.primary',
+                            color: theme.palette.text.primary,
                           }}
                         >
                           {getCellValue(row[column])}
@@ -305,7 +307,7 @@ const ReportViewer: React.FC<ReportViewerProps> = ({ report, onClose }) => {
                 disabled={currentPage === 1}
                 style={{
                   padding: '8px',
-                  color: '#475569',
+                  color: 'grey.600',
                   borderRadius: '6px',
                   border: 'none',
                   background: 'transparent',
@@ -323,7 +325,7 @@ const ReportViewer: React.FC<ReportViewerProps> = ({ report, onClose }) => {
                 disabled={currentPage === totalPages}
                 style={{
                   padding: '8px',
-                  color: '#475569',
+                  color: 'grey.600',
                   borderRadius: '6px',
                   border: 'none',
                   background: 'transparent',

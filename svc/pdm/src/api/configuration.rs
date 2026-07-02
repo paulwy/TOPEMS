@@ -1,4 +1,9 @@
-use axum::{extract::Path, extract::State, routing::{get, post, put}, Json, Router};
+use axum::{
+    extract::Path,
+    extract::State,
+    routing::{get, post, put},
+    Json, Router,
+};
 use uuid::Uuid;
 
 use crate::AppState;
@@ -6,8 +11,14 @@ use topems_shared::ApiResponse;
 
 pub fn create_routes() -> Router<AppState> {
     Router::new()
-        .route("/api/pdm/configurations", get(list_configurations).post(create_configuration))
-        .route("/api/pdm/configurations/{id}", get(get_configuration).put(update_configuration))
+        .route(
+            "/api/pdm/configurations",
+            get(list_configurations).post(create_configuration),
+        )
+        .route(
+            "/api/pdm/configurations/{id}",
+            get(get_configuration).put(update_configuration),
+        )
 }
 
 pub async fn list_configurations(
@@ -36,10 +47,7 @@ pub async fn get_configuration(
     Path(_id): Path<Uuid>,
 ) -> Json<ApiResponse<serde_json::Value>> {
     tracing::info!("get_configuration called");
-    Json(ApiResponse::success(
-        serde_json::json!({}),
-        "获取成功",
-    ))
+    Json(ApiResponse::success(serde_json::json!({}), "获取成功"))
 }
 
 pub async fn update_configuration(
@@ -48,8 +56,5 @@ pub async fn update_configuration(
     Json(_req): Json<serde_json::Value>,
 ) -> Json<ApiResponse<serde_json::Value>> {
     tracing::info!("update_configuration called");
-    Json(ApiResponse::success(
-        serde_json::json!({}),
-        "更新成功",
-    ))
+    Json(ApiResponse::success(serde_json::json!({}), "更新成功"))
 }

@@ -1,14 +1,17 @@
 //! Manage submodule - File management handlers
 
-use axum::{extract::{Path, Query, State}, Json};
+use axum::{
+    extract::{Path, Query, State},
+    Json,
+};
 use serde::Serialize;
 use sqlx::Row;
-use uuid::Uuid;
 use std::fs;
+use uuid::Uuid;
 
 use crate::AppState;
-use topems_shared::auth::Claims;
 use axum::Extension;
+use topems_shared::auth::Claims;
 
 #[derive(Debug, Clone, Serialize)]
 struct FileInfo {
@@ -50,7 +53,10 @@ pub async fn list_files(
     Extension(claims): Extension<Claims>,
     Query(params): Query<FileQuery>,
 ) -> Json<serde_json::Value> {
-    tracing::info!("File manage list_files called for user: {}", claims.username);
+    tracing::info!(
+        "File manage list_files called for user: {}",
+        claims.username
+    );
 
     let page = params.page.unwrap_or(1).max(1);
     let page_size = params.page_size.unwrap_or(20).min(100);
@@ -76,26 +82,53 @@ pub async fn list_files(
 
     let count_query = "SELECT COUNT(*) FROM core_files WHERE is_deleted = FALSE";
 
-    let result = sqlx::query_as::<_, (Uuid, String, i64, Option<String>, String, Option<Uuid>, Uuid, chrono::NaiveDateTime, chrono::NaiveDateTime, bool)>(base_query)
-        .fetch_all(&state.pool)
-        .await;
+    let result = sqlx::query_as::<
+        _,
+        (
+            Uuid,
+            String,
+            i64,
+            Option<String>,
+            String,
+            Option<Uuid>,
+            Uuid,
+            chrono::NaiveDateTime,
+            chrono::NaiveDateTime,
+            bool,
+        ),
+    >(base_query)
+    .fetch_all(&state.pool)
+    .await;
 
     match result {
         Ok(rows) => {
             let files: Vec<FileInfo> = rows
                 .into_iter()
-                .map(|(id, name, size, mime_type, path, folder_id, uploader_id, created_at, updated_at, is_deleted)| FileInfo {
-                    id: id.to_string(),
-                    name,
-                    size: size as u64,
-                    mime_type: mime_type.unwrap_or_default(),
-                    path,
-                    folder_id: folder_id.map(|id| id.to_string()),
-                    uploader_id: uploader_id.to_string(),
-                    created_at: created_at.to_string(),
-                    updated_at: updated_at.to_string(),
-                    is_deleted,
-                })
+                .map(
+                    |(
+                        id,
+                        name,
+                        size,
+                        mime_type,
+                        path,
+                        folder_id,
+                        uploader_id,
+                        created_at,
+                        updated_at,
+                        is_deleted,
+                    )| FileInfo {
+                        id: id.to_string(),
+                        name,
+                        size: size as u64,
+                        mime_type: mime_type.unwrap_or_default(),
+                        path,
+                        folder_id: folder_id.map(|id| id.to_string()),
+                        uploader_id: uploader_id.to_string(),
+                        created_at: created_at.to_string(),
+                        updated_at: updated_at.to_string(),
+                        is_deleted,
+                    },
+                )
                 .collect();
 
             // 获取总数
@@ -147,7 +180,11 @@ pub async fn get_file(
     Extension(claims): Extension<Claims>,
     Path(id): Path<String>,
 ) -> Json<serde_json::Value> {
-    tracing::info!("File manage get_file called with id: {} for user: {}", id, claims.username);
+    tracing::info!(
+        "File manage get_file called with id: {} for user: {}",
+        id,
+        claims.username
+    );
 
     let file_id = match Uuid::parse_str(&id) {
         Ok(id) => id,
@@ -220,10 +257,16 @@ pub async fn get_file(
         size: row.get::<i64, _>("size") as u64,
         mime_type: row.get::<String, _>("mime_type"),
         path: row.get::<String, _>("path"),
-        folder_id: row.get::<Option<Uuid>, _>("folder_id").map(|id| id.to_string()),
+        folder_id: row
+            .get::<Option<Uuid>, _>("folder_id")
+            .map(|id| id.to_string()),
         uploader_id: row.get::<Uuid, _>("uploader_id").to_string(),
-        created_at: row.get::<chrono::NaiveDateTime, _>("created_at").to_string(),
-        updated_at: row.get::<chrono::NaiveDateTime, _>("updated_at").to_string(),
+        created_at: row
+            .get::<chrono::NaiveDateTime, _>("created_at")
+            .to_string(),
+        updated_at: row
+            .get::<chrono::NaiveDateTime, _>("updated_at")
+            .to_string(),
         is_deleted: row.get::<bool, _>("is_deleted"),
     };
 
@@ -242,7 +285,11 @@ pub async fn update_file(
     Path(id): Path<String>,
     Json(payload): Json<UpdateFileRequest>,
 ) -> Json<serde_json::Value> {
-    tracing::info!("File manage update_file called with id: {} for user: {}", id, claims.username);
+    tracing::info!(
+        "File manage update_file called with id: {} for user: {}",
+        id,
+        claims.username
+    );
 
     let file_id = match Uuid::parse_str(&id) {
         Ok(id) => id,
@@ -336,18 +383,16 @@ pub async fn update_file(
     }
 
     updates.push("updated_at = NOW()");
-    let query = format!(
-        "UPDATE core_files SET {} WHERE id = $1",
-        updates.join(", ")
-    );
+    let query = format!("UPDATE core_files SET {} WHERE id = $1", updates.join(", "));
 
     // 执行更新查询
     let mut query_builder = sqlx::query(&query).bind(file_id);
-    
+
     // 绑定额外参数
     for (_, value) in params {
         if value.is_string() {
-            query_builder = query_builder.bind(value.as_str().map(|s| s.to_string()).unwrap_or_default());
+            query_builder =
+                query_builder.bind(value.as_str().map(|s| s.to_string()).unwrap_or_default());
         } else if value.is_null() {
             query_builder = query_builder.bind::<Option<Uuid>>(None);
         } else if let Some(uuid) = value.as_str().and_then(|s| Uuid::parse_str(s).ok()) {
@@ -388,7 +433,11 @@ pub async fn delete_file(
     Extension(claims): Extension<Claims>,
     Path(id): Path<String>,
 ) -> Json<serde_json::Value> {
-    tracing::info!("File manage delete_file called with id: {} for user: {}", id, claims.username);
+    tracing::info!(
+        "File manage delete_file called with id: {} for user: {}",
+        id,
+        claims.username
+    );
 
     let file_id = match Uuid::parse_str(&id) {
         Ok(id) => id,
@@ -417,30 +466,31 @@ pub async fn delete_file(
     };
 
     // 获取文件信息
-    let row = match sqlx::query("SELECT uploader_id, path, is_deleted FROM core_files WHERE id = $1")
-        .bind(file_id)
-        .fetch_optional(&state.pool)
-        .await
-    {
-        Ok(Some(r)) => r,
-        Ok(None) => {
-            return Json(serde_json::json!({
-                "success": false,
-                "message": "文件不存在",
-                "data": null,
-                "code": 404
-            }));
-        }
-        Err(e) => {
-            tracing::error!("Failed to fetch file: {}", e);
-            return Json(serde_json::json!({
-                "success": false,
-                "message": "内部服务器错误",
-                "data": null,
-                "code": 500
-            }));
-        }
-    };
+    let row =
+        match sqlx::query("SELECT uploader_id, path, is_deleted FROM core_files WHERE id = $1")
+            .bind(file_id)
+            .fetch_optional(&state.pool)
+            .await
+        {
+            Ok(Some(r)) => r,
+            Ok(None) => {
+                return Json(serde_json::json!({
+                    "success": false,
+                    "message": "文件不存在",
+                    "data": null,
+                    "code": 404
+                }));
+            }
+            Err(e) => {
+                tracing::error!("Failed to fetch file: {}", e);
+                return Json(serde_json::json!({
+                    "success": false,
+                    "message": "内部服务器错误",
+                    "data": null,
+                    "code": 500
+                }));
+            }
+        };
 
     let file_uploader_id: Uuid = row.get("uploader_id");
     let file_path: String = row.get("path");
@@ -465,12 +515,10 @@ pub async fn delete_file(
     }
 
     // 软删除文件
-    match sqlx::query(
-        "UPDATE core_files SET is_deleted = TRUE, deleted_at = NOW() WHERE id = $1",
-    )
-    .bind(file_id)
-    .execute(&state.pool)
-    .await
+    match sqlx::query("UPDATE core_files SET is_deleted = TRUE, deleted_at = NOW() WHERE id = $1")
+        .bind(file_id)
+        .execute(&state.pool)
+        .await
     {
         Ok(r) if r.rows_affected() > 0 => {
             // 如果是管理员或超级管理员，也可以选择物理删除文件
@@ -510,7 +558,11 @@ pub async fn move_file(
     Path(id): Path<String>,
     Json(payload): Json<serde_json::Value>,
 ) -> Json<serde_json::Value> {
-    tracing::info!("File manage move_file called with id: {} for user: {}", id, claims.username);
+    tracing::info!(
+        "File manage move_file called with id: {} for user: {}",
+        id,
+        claims.username
+    );
 
     let file_id = match Uuid::parse_str(&id) {
         Ok(id) => id,
@@ -561,10 +613,12 @@ pub async fn move_file(
     };
 
     // 检查文件权限
-    let row = match sqlx::query("SELECT uploader_id FROM core_files WHERE id = $1 AND is_deleted = FALSE")
-        .bind(file_id)
-        .fetch_optional(&state.pool)
-        .await
+    let row = match sqlx::query(
+        "SELECT uploader_id FROM core_files WHERE id = $1 AND is_deleted = FALSE",
+    )
+    .bind(file_id)
+    .fetch_optional(&state.pool)
+    .await
     {
         Ok(Some(r)) => r,
         Ok(None) => {
@@ -597,13 +651,11 @@ pub async fn move_file(
     }
 
     // 更新文件的文件夹ID
-    match sqlx::query(
-        "UPDATE core_files SET folder_id = $2, updated_at = NOW() WHERE id = $1",
-    )
-    .bind(file_id)
-    .bind(target_folder_uuid)
-    .execute(&state.pool)
-    .await
+    match sqlx::query("UPDATE core_files SET folder_id = $2, updated_at = NOW() WHERE id = $1")
+        .bind(file_id)
+        .bind(target_folder_uuid)
+        .execute(&state.pool)
+        .await
     {
         Ok(r) if r.rows_affected() > 0 => Json(serde_json::json!({
             "success": true,
@@ -636,7 +688,11 @@ pub async fn copy_file(
     Path(id): Path<String>,
     Json(payload): Json<serde_json::Value>,
 ) -> Json<serde_json::Value> {
-    tracing::info!("File manage copy_file called with id: {} for user: {}", id, claims.username);
+    tracing::info!(
+        "File manage copy_file called with id: {} for user: {}",
+        id,
+        claims.username
+    );
 
     let file_id = match Uuid::parse_str(&id) {
         Ok(id) => id,
@@ -793,7 +849,11 @@ pub async fn set_file_permission(
     Path(id): Path<String>,
     Json(payload): Json<FilePermissionRequest>,
 ) -> Json<serde_json::Value> {
-    tracing::info!("File manage set_file_permission called with id: {} for user: {}", id, claims.username);
+    tracing::info!(
+        "File manage set_file_permission called with id: {} for user: {}",
+        id,
+        claims.username
+    );
 
     // 只有管理员可以设置权限
     if !claims.is_superuser && !claims.has_permission("file:admin") {
@@ -913,7 +973,11 @@ pub async fn share_file(
     Path(id): Path<String>,
     Json(payload): Json<serde_json::Value>,
 ) -> Json<serde_json::Value> {
-    tracing::info!("File manage share_file called with id: {} for user: {}", id, claims.username);
+    tracing::info!(
+        "File manage share_file called with id: {} for user: {}",
+        id,
+        claims.username
+    );
     Json(serde_json::json!({
         "success": true,
         "message": "分享文件成功",
@@ -928,7 +992,11 @@ pub async fn get_file_shares(
     Extension(claims): Extension<Claims>,
     Path(id): Path<String>,
 ) -> Json<serde_json::Value> {
-    tracing::info!("File manage get_file_shares called with id: {} for user: {}", id, claims.username);
+    tracing::info!(
+        "File manage get_file_shares called with id: {} for user: {}",
+        id,
+        claims.username
+    );
     Json(serde_json::json!({
         "success": true,
         "message": "获取文件分享列表成功",
@@ -943,7 +1011,11 @@ pub async fn delete_share(
     Extension(claims): Extension<Claims>,
     Path(id): Path<String>,
 ) -> Json<serde_json::Value> {
-    tracing::info!("File manage delete_share called with id: {} for user: {}", id, claims.username);
+    tracing::info!(
+        "File manage delete_share called with id: {} for user: {}",
+        id,
+        claims.username
+    );
     Json(serde_json::json!({
         "success": true,
         "message": "删除分享成功",
@@ -959,7 +1031,11 @@ pub async fn set_file_permissions(
     Path(id): Path<String>,
     Json(payload): Json<serde_json::Value>,
 ) -> Json<serde_json::Value> {
-    tracing::info!("File manage set_file_permissions called with id: {} for user: {}", id, claims.username);
+    tracing::info!(
+        "File manage set_file_permissions called with id: {} for user: {}",
+        id,
+        claims.username
+    );
     Json(serde_json::json!({
         "success": true,
         "message": "设置文件权限成功",
@@ -974,7 +1050,11 @@ pub async fn get_file_permissions(
     Extension(claims): Extension<Claims>,
     Path(id): Path<String>,
 ) -> Json<serde_json::Value> {
-    tracing::info!("File manage get_file_permissions called with id: {} for user: {}", id, claims.username);
+    tracing::info!(
+        "File manage get_file_permissions called with id: {} for user: {}",
+        id,
+        claims.username
+    );
     Json(serde_json::json!({
         "success": true,
         "message": "获取文件权限成功",
@@ -988,7 +1068,10 @@ pub async fn get_shared_files(
     State(_state): State<AppState>,
     Extension(claims): Extension<Claims>,
 ) -> Json<serde_json::Value> {
-    tracing::info!("File manage get_shared_files called for user: {}", claims.username);
+    tracing::info!(
+        "File manage get_shared_files called for user: {}",
+        claims.username
+    );
     Json(serde_json::json!({
         "success": true,
         "message": "获取我分享的文件列表成功",
@@ -1005,7 +1088,10 @@ pub async fn get_received_files(
     State(_state): State<AppState>,
     Extension(claims): Extension<Claims>,
 ) -> Json<serde_json::Value> {
-    tracing::info!("File manage get_received_files called for user: {}", claims.username);
+    tracing::info!(
+        "File manage get_received_files called for user: {}",
+        claims.username
+    );
     Json(serde_json::json!({
         "success": true,
         "message": "获取分享给我的文件列表成功",
@@ -1022,7 +1108,10 @@ pub async fn get_file_stats(
     State(_state): State<AppState>,
     Extension(claims): Extension<Claims>,
 ) -> Json<serde_json::Value> {
-    tracing::info!("File manage get_file_stats called for user: {}", claims.username);
+    tracing::info!(
+        "File manage get_file_stats called for user: {}",
+        claims.username
+    );
     Json(serde_json::json!({
         "success": true,
         "message": "获取文件统计信息成功",
@@ -1041,7 +1130,11 @@ pub async fn star_file(
     Extension(claims): Extension<Claims>,
     Path(id): Path<String>,
 ) -> Json<serde_json::Value> {
-    tracing::info!("File manage star_file called with id: {} for user: {}", id, claims.username);
+    tracing::info!(
+        "File manage star_file called with id: {} for user: {}",
+        id,
+        claims.username
+    );
     Json(serde_json::json!({
         "success": true,
         "message": "收藏文件成功",
@@ -1056,7 +1149,11 @@ pub async fn unstar_file(
     Extension(claims): Extension<Claims>,
     Path(id): Path<String>,
 ) -> Json<serde_json::Value> {
-    tracing::info!("File manage unstar_file called with id: {} for user: {}", id, claims.username);
+    tracing::info!(
+        "File manage unstar_file called with id: {} for user: {}",
+        id,
+        claims.username
+    );
     Json(serde_json::json!({
         "success": true,
         "message": "取消收藏成功",
@@ -1070,7 +1167,10 @@ pub async fn list_starred_files(
     State(_state): State<AppState>,
     Extension(claims): Extension<Claims>,
 ) -> Json<serde_json::Value> {
-    tracing::info!("File manage list_starred_files called for user: {}", claims.username);
+    tracing::info!(
+        "File manage list_starred_files called for user: {}",
+        claims.username
+    );
     Json(serde_json::json!({
         "success": true,
         "message": "获取收藏文件列表成功",
@@ -1088,7 +1188,10 @@ pub async fn export_files(
     Extension(claims): Extension<Claims>,
     Json(payload): Json<serde_json::Value>,
 ) -> Json<serde_json::Value> {
-    tracing::info!("File manage export_files called for user: {}", claims.username);
+    tracing::info!(
+        "File manage export_files called for user: {}",
+        claims.username
+    );
     Json(serde_json::json!({
         "success": true,
         "message": "导出文件成功",
@@ -1103,7 +1206,10 @@ pub async fn search_files(
     Extension(claims): Extension<Claims>,
     Query(params): Query<FileQuery>,
 ) -> Json<serde_json::Value> {
-    tracing::info!("File manage search_files called for user: {}", claims.username);
+    tracing::info!(
+        "File manage search_files called for user: {}",
+        claims.username
+    );
     Json(serde_json::json!({
         "success": true,
         "message": "搜索文件成功",

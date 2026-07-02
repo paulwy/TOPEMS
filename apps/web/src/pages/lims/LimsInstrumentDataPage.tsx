@@ -593,7 +593,7 @@ const LimsInstrumentDataPage: React.FC = () => {
             sx={{
               width: 48,
               height: 48,
-              borderRadius: 2,
+              borderRadius: 3,
               bgcolor: `${color}.lighter`,
               display: 'flex',
               alignItems: 'center',
@@ -626,9 +626,11 @@ const LimsInstrumentDataPage: React.FC = () => {
 
   return (
     <PageContainer
-      title='仪器数据采集'
-      subtitle='LIMS 仪器数据自动采集与解析管理'
       maxWidth='xl'
+      headerProps={{
+        pageIcon: <Database style={{ width: 20, height: 20 }} />,
+        pageGradient: 'linear-gradient(135deg, #14B8A6 0%, #0D9488 100%)',
+      }}
     >
       <Grid
         container

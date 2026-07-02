@@ -11,7 +11,10 @@ use topems_shared::{ApiResponse, Company, Department, Employee};
 pub fn create_routes() -> Router<ApiState> {
     Router::new()
         .route("/api/erp/example/employees", get(list_employees_from_hrm))
-        .route("/api/erp/example/employees/{id}", get(get_employee_from_hrm))
+        .route(
+            "/api/erp/example/employees/{id}",
+            get(get_employee_from_hrm),
+        )
         .route(
             "/api/erp/example/departments",
             get(list_departments_from_hrm),

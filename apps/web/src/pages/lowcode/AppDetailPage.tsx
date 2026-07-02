@@ -59,10 +59,7 @@ const AppDetailPage = () => {
   const loadApp = async () => {
     setLoading(true);
     try {
-      const [appRes, versionsRes] = await Promise.all([
-        getApp(appId!),
-        getAppVersions(appId!),
-      ]);
+      const [appRes, versionsRes] = await Promise.all([getApp(appId!), getAppVersions(appId!)]);
       if (appRes.success) setApp(appRes.data || null);
       if (versionsRes.success) setVersions(versionsRes.data || []);
     } catch (error) {
@@ -72,8 +69,7 @@ const AppDetailPage = () => {
     }
   };
 
-  const handlePublish = async (params: { version: string; description: string }) => {
-    console.log('Publish:', params);
+  const handlePublish = async (_params: { version: string; description: string }) => {
     setPublishDialogOpen(false);
     loadApp();
   };
@@ -114,7 +110,10 @@ const AppDetailPage = () => {
       headerContent={
         <Box>
           <Box sx={{ display: 'flex', alignItems: 'center', gap: 2, mb: 1 }}>
-            <IconButton onClick={() => navigate('/lowcode/apps')} size="small">
+            <IconButton
+              onClick={() => navigate('/lowcode/apps')}
+              size='small'
+            >
               <ArrowLeft style={{ width: 20, height: 20 }} />
             </IconButton>
             <Avatar
@@ -130,19 +129,25 @@ const AppDetailPage = () => {
             </Avatar>
             <Box>
               <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-                <Typography variant="h5" sx={{ fontWeight: 600 }}>
+                <Typography
+                  variant='h5'
+                  sx={{ fontWeight: 600 }}
+                >
                   {app?.label}
                 </Typography>
                 {app && (
                   <Chip
                     label={statusLabels[app.status]}
-                    size="small"
+                    size='small'
                     color={statusColors[app.status]}
-                    variant="outlined"
+                    variant='outlined'
                   />
                 )}
               </Box>
-              <Typography variant="body2" color="text.secondary">
+              <Typography
+                variant='body2'
+                color='text.secondary'
+              >
                 {app?.description}
               </Typography>
             </Box>
@@ -152,16 +157,16 @@ const AppDetailPage = () => {
       headerActions={
         <Box sx={{ display: 'flex', gap: 1 }}>
           <Button
-            variant="outlined"
+            variant='outlined'
             startIcon={<Edit style={{ width: 16, height: 16 }} />}
-            size="small"
+            size='small'
           >
             编辑信息
           </Button>
           <Button
-            variant="contained"
+            variant='contained'
             startIcon={<Tag style={{ width: 16, height: 16 }} />}
-            size="small"
+            size='small'
             onClick={() => setPublishDialogOpen(true)}
           >
             发布
@@ -171,48 +176,91 @@ const AppDetailPage = () => {
     >
       <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
         <Box sx={{ borderBottom: 1, borderColor: 'divider' }}>
-          <Tabs value={activeTab} onChange={(_, v) => setActiveTab(v)} variant="scrollable" scrollButtons="auto">
+          <Tabs
+            value={activeTab}
+            onChange={(_, v) => setActiveTab(v)}
+            variant='scrollable'
+            scrollButtons='auto'
+          >
             {tabs.map((tab) => (
               <Tab
                 key={tab.value}
                 value={tab.value}
                 label={tab.label}
                 icon={<tab.icon style={{ width: 16, height: 16 }} />}
-                iconPosition="start"
+                iconPosition='start'
               />
             ))}
           </Tabs>
         </Box>
 
         {activeTab === 'overview' && app && (
-          <Grid container spacing={3}>
+          <Grid
+            container
+            spacing={3}
+          >
             <Grid size={{ xs: 12, md: 8 }}>
-              <Card variant="outlined">
+              <Card variant='outlined'>
                 <CardContent>
-                  <Typography variant="h6" gutterBottom>应用概览</Typography>
-                  <Grid container spacing={3}>
+                  <Typography
+                    variant='h6'
+                    gutterBottom
+                  >
+                    应用概览
+                  </Typography>
+                  <Grid
+                    container
+                    spacing={3}
+                  >
                     <Grid size={{ xs: 4 }}>
                       <Box sx={{ textAlign: 'center' }}>
-                        <Typography variant="h4" sx={{ fontWeight: 700 }} color="primary.main">
+                        <Typography
+                          variant='h4'
+                          sx={{ fontWeight: 700 }}
+                          color='primary.main'
+                        >
                           {app.pageCount || 0}
                         </Typography>
-                        <Typography variant="body2" color="text.secondary">页面数</Typography>
+                        <Typography
+                          variant='body2'
+                          color='text.secondary'
+                        >
+                          页面数
+                        </Typography>
                       </Box>
                     </Grid>
                     <Grid size={{ xs: 4 }}>
                       <Box sx={{ textAlign: 'center' }}>
-                        <Typography variant="h4" sx={{ fontWeight: 700 }} color="secondary.main">
+                        <Typography
+                          variant='h4'
+                          sx={{ fontWeight: 700 }}
+                          color='secondary.main'
+                        >
                           {app.modelCount || 0}
                         </Typography>
-                        <Typography variant="body2" color="text.secondary">数据模型</Typography>
+                        <Typography
+                          variant='body2'
+                          color='text.secondary'
+                        >
+                          数据模型
+                        </Typography>
                       </Box>
                     </Grid>
                     <Grid size={{ xs: 4 }}>
                       <Box sx={{ textAlign: 'center' }}>
-                        <Typography variant="h4" sx={{ fontWeight: 700 }} color="success.main">
+                        <Typography
+                          variant='h4'
+                          sx={{ fontWeight: 700 }}
+                          color='success.main'
+                        >
                           {app.workflowCount || 0}
                         </Typography>
-                        <Typography variant="body2" color="text.secondary">工作流</Typography>
+                        <Typography
+                          variant='body2'
+                          color='text.secondary'
+                        >
+                          工作流
+                        </Typography>
                       </Box>
                     </Grid>
                   </Grid>
@@ -220,28 +268,48 @@ const AppDetailPage = () => {
               </Card>
             </Grid>
             <Grid size={{ xs: 12, md: 4 }}>
-              <Card variant="outlined">
+              <Card variant='outlined'>
                 <CardContent>
-                  <Typography variant="h6" gutterBottom>应用信息</Typography>
+                  <Typography
+                    variant='h6'
+                    gutterBottom
+                  >
+                    应用信息
+                  </Typography>
                   <List dense>
                     <ListItem>
-                      <ListItemText primary="应用标识" secondary={app.name} />
+                      <ListItemText
+                        primary='应用标识'
+                        secondary={app.name}
+                      />
                     </ListItem>
                     <Divider />
                     <ListItem>
-                      <ListItemText primary="当前版本" secondary={`v${app.currentVersion || '0.0.0'}`} />
+                      <ListItemText
+                        primary='当前版本'
+                        secondary={`v${app.currentVersion || '0.0.0'}`}
+                      />
                     </ListItem>
                     <Divider />
                     <ListItem>
-                      <ListItemText primary="创建时间" secondary={new Date(app.createdAt).toLocaleString('zh-CN')} />
+                      <ListItemText
+                        primary='创建时间'
+                        secondary={new Date(app.createdAt).toLocaleString('zh-CN')}
+                      />
                     </ListItem>
                     <Divider />
                     <ListItem>
-                      <ListItemText primary="更新时间" secondary={new Date(app.updatedAt).toLocaleString('zh-CN')} />
+                      <ListItemText
+                        primary='更新时间'
+                        secondary={new Date(app.updatedAt).toLocaleString('zh-CN')}
+                      />
                     </ListItem>
                     <Divider />
                     <ListItem>
-                      <ListItemText primary="分类" secondary={app.category || '-'} />
+                      <ListItemText
+                        primary='分类'
+                        secondary={app.category || '-'}
+                      />
                     </ListItem>
                   </List>
                 </CardContent>
@@ -251,13 +319,20 @@ const AppDetailPage = () => {
         )}
 
         {activeTab === 'pages' && (
-          <Card variant="outlined">
+          <Card variant='outlined'>
             <CardContent>
-              <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 2 }}>
-                <Typography variant="h6">页面列表</Typography>
+              <Box
+                sx={{
+                  display: 'flex',
+                  justifyContent: 'space-between',
+                  alignItems: 'center',
+                  mb: 2,
+                }}
+              >
+                <Typography variant='h6'>页面列表</Typography>
                 <Button
-                  size="small"
-                  variant="contained"
+                  size='small'
+                  variant='contained'
                   startIcon={<Plus style={{ width: 16, height: 16 }} />}
                 >
                   新建页面
@@ -273,10 +348,17 @@ const AppDetailPage = () => {
                     key={idx}
                     secondaryAction={
                       <Box sx={{ display: 'flex', gap: 1 }}>
-                        <IconButton edge="end" size="small">
+                        <IconButton
+                          edge='end'
+                          size='small'
+                        >
                           <Edit style={{ width: 18, height: 18 }} />
                         </IconButton>
-                        <IconButton edge="end" size="small" color="error">
+                        <IconButton
+                          edge='end'
+                          size='small'
+                          color='error'
+                        >
                           <Trash2 style={{ width: 18, height: 18 }} />
                         </IconButton>
                       </Box>
@@ -299,13 +381,20 @@ const AppDetailPage = () => {
         )}
 
         {activeTab === 'models' && (
-          <Card variant="outlined">
+          <Card variant='outlined'>
             <CardContent>
-              <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 2 }}>
-                <Typography variant="h6">数据模型</Typography>
+              <Box
+                sx={{
+                  display: 'flex',
+                  justifyContent: 'space-between',
+                  alignItems: 'center',
+                  mb: 2,
+                }}
+              >
+                <Typography variant='h6'>数据模型</Typography>
                 <Button
-                  size="small"
-                  variant="contained"
+                  size='small'
+                  variant='contained'
                   startIcon={<Plus style={{ width: 16, height: 16 }} />}
                   onClick={() => navigate('/lowcode/models')}
                 >
@@ -336,13 +425,20 @@ const AppDetailPage = () => {
         )}
 
         {activeTab === 'workflows' && (
-          <Card variant="outlined">
+          <Card variant='outlined'>
             <CardContent>
-              <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 2 }}>
-                <Typography variant="h6">工作流</Typography>
+              <Box
+                sx={{
+                  display: 'flex',
+                  justifyContent: 'space-between',
+                  alignItems: 'center',
+                  mb: 2,
+                }}
+              >
+                <Typography variant='h6'>工作流</Typography>
                 <Button
-                  size="small"
-                  variant="contained"
+                  size='small'
+                  variant='contained'
                   startIcon={<Plus style={{ width: 16, height: 16 }} />}
                 >
                   新建工作流
@@ -371,13 +467,20 @@ const AppDetailPage = () => {
         )}
 
         {activeTab === 'permissions' && (
-          <Card variant="outlined">
+          <Card variant='outlined'>
             <CardContent>
-              <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 2 }}>
-                <Typography variant="h6">权限配置</Typography>
+              <Box
+                sx={{
+                  display: 'flex',
+                  justifyContent: 'space-between',
+                  alignItems: 'center',
+                  mb: 2,
+                }}
+              >
+                <Typography variant='h6'>权限配置</Typography>
                 <Button
-                  size="small"
-                  variant="outlined"
+                  size='small'
+                  variant='outlined'
                   startIcon={<Users style={{ width: 16, height: 16 }} />}
                 >
                   管理角色

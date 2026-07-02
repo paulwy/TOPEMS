@@ -105,14 +105,14 @@ const SrmSupplierPage: React.FC = () => {
   };
 
   const getRiskStyle = (level: string) => {
-    if (level === 'low') return { bgcolor: 'success.lighter', color: '#15803d', label: '低' };
-    if (level === 'medium') return { bgcolor: 'warning.light', color: '#b45309', label: '中' };
+    if (level === 'low') return { bgcolor: 'success.lighter', color: 'success.700', label: '低' };
+    if (level === 'medium') return { bgcolor: 'warning.light', color: 'warning.700', label: '中' };
     return { bgcolor: 'error.lighter', color: 'error.darker', label: '高' };
   };
 
   const getStatusBadge = (status: string) => {
     const statusMap: Record<string, { bg: string; color: string }> = {
-      启用: { bg: 'success.lighter', color: '#15803d' },
+      启用: { bg: 'success.lighter', color: 'success.700' },
       禁用: { bg: 'error.lighter', color: 'error.darker' },
     };
     const colors = statusMap[status] || { bg: 'grey.100', color: '#475569' };
@@ -157,6 +157,39 @@ const SrmSupplierPage: React.FC = () => {
 
     [suppliers]
   );
+
+  const handleEdit = (row: Supplier) => {
+    setEditingId(row.id);
+    setFormData({
+      supplier_no: row.supplier_no,
+      name: row.name,
+      contact_person: row.contact_person,
+      phone: row.phone,
+      email: row.email,
+      address: row.address,
+      category: row.category,
+      risklevel: row.risklevel,
+      status: row.status === '启用' ? 'active' : 'inactive',
+      legal_name: row.legal_name,
+    });
+    setShowEditModal(true);
+  };
+
+  const handleDelete = async (row: Supplier) => {
+    try {
+      const response = await srmApi.deleteSupplier(row.id);
+      if (response.success) {
+        addNotification({ title: '成功', message: '供应商删除成功', type: 'success' });
+        loadSuppliers();
+        loadPerformanceSummary();
+      } else {
+        addNotification({ title: '错误', message: '删除失败', type: 'error' });
+      }
+    } catch (err: unknown) {
+      addNotification({ title: '错误', message: '删除失败', type: 'error' });
+      apiLogger.error('删除供应商失败:', err);
+    }
+  };
 
   const rowActions: RowAction<Supplier>[] = useMemo(
     () => [
@@ -234,23 +267,6 @@ const SrmSupplierPage: React.FC = () => {
     }
   };
 
-  const handleEdit = (row: Supplier) => {
-    setEditingId(row.id);
-    setFormData({
-      supplier_no: row.supplier_no,
-      name: row.name,
-      contact_person: row.contact_person,
-      phone: row.phone,
-      email: row.email,
-      address: row.address,
-      category: row.category,
-      risklevel: row.risklevel,
-      status: row.status === '启用' ? 'active' : 'inactive',
-      legal_name: row.legal_name,
-    });
-    setShowEditModal(true);
-  };
-
   const handleUpdate = async () => {
     if (!editingId) return;
     try {
@@ -277,22 +293,6 @@ const SrmSupplierPage: React.FC = () => {
     }
   };
 
-  const handleDelete = async (row: Supplier) => {
-    try {
-      const response = await srmApi.deleteSupplier(row.id);
-      if (response.success) {
-        addNotification({ title: '成功', message: '供应商删除成功', type: 'success' });
-        loadSuppliers();
-        loadPerformanceSummary();
-      } else {
-        addNotification({ title: '错误', message: '删除失败', type: 'error' });
-      }
-    } catch (err: unknown) {
-      addNotification({ title: '错误', message: '删除失败', type: 'error' });
-      apiLogger.error('删除供应商失败:', err);
-    }
-  };
-
   const stats = useMemo(() => {
     return {
       total: suppliers.length,
@@ -304,13 +304,13 @@ const SrmSupplierPage: React.FC = () => {
 
   const getLevelColor = (level: string) => {
     const colorMap: Record<string, { bg: string; color: string }> = {
-      A: { bg: 'success.lighter', color: '#15803d' },
-      B: { bg: '#dbeafe', color: 'primary.dark' },
-      C: { bg: 'warning.light', color: '#b45309' },
+      A: { bg: 'success.lighter', color: 'success.700' },
+      B: { bg: 'primary.100', color: 'primary.dark' },
+      C: { bg: 'warning.light', color: 'warning.700' },
       D: { bg: 'warning.light', color: '#92400e' },
       E: { bg: 'error.lighter', color: 'error.darker' },
     };
-    return colorMap[level] || { bg: 'grey.100', color: '#475569' };
+    return colorMap[level] || { bg: 'grey.100', color: 'grey.600' };
   };
 
   const headerContent = useMemo(
@@ -332,7 +332,7 @@ const SrmSupplierPage: React.FC = () => {
                     width: 40,
                     height: 40,
                     bgcolor: 'secondary.light',
-                    borderRadius: 2,
+                    borderRadius: 3,
                     display: 'flex',
                     alignItems: 'center',
                     justifyContent: 'center',
@@ -365,7 +365,7 @@ const SrmSupplierPage: React.FC = () => {
                     width: 40,
                     height: 40,
                     bgcolor: 'success.lighter',
-                    borderRadius: 2,
+                    borderRadius: 3,
                     display: 'flex',
                     alignItems: 'center',
                     justifyContent: 'center',
@@ -398,7 +398,7 @@ const SrmSupplierPage: React.FC = () => {
                     width: 40,
                     height: 40,
                     bgcolor: 'success.lighter',
-                    borderRadius: 2,
+                    borderRadius: 3,
                     display: 'flex',
                     alignItems: 'center',
                     justifyContent: 'center',
@@ -431,7 +431,7 @@ const SrmSupplierPage: React.FC = () => {
                     width: 40,
                     height: 40,
                     bgcolor: 'error.lighter',
-                    borderRadius: 2,
+                    borderRadius: 3,
                     display: 'flex',
                     alignItems: 'center',
                     justifyContent: 'center',
@@ -478,7 +478,7 @@ const SrmSupplierPage: React.FC = () => {
                       width: 40,
                       height: 40,
                       bgcolor: 'warning.light',
-                      borderRadius: 2,
+                      borderRadius: 3,
                       display: 'flex',
                       alignItems: 'center',
                       justifyContent: 'center',
@@ -510,8 +510,8 @@ const SrmSupplierPage: React.FC = () => {
                     sx={{
                       width: 40,
                       height: 40,
-                      bgcolor: '#dbeafe',
-                      borderRadius: 2,
+                      bgcolor: 'primary.100',
+                      borderRadius: 3,
                       display: 'flex',
                       alignItems: 'center',
                       justifyContent: 'center',
@@ -544,7 +544,7 @@ const SrmSupplierPage: React.FC = () => {
                       width: 40,
                       height: 40,
                       bgcolor: 'success.lighter',
-                      borderRadius: 2,
+                      borderRadius: 3,
                       display: 'flex',
                       alignItems: 'center',
                       justifyContent: 'center',

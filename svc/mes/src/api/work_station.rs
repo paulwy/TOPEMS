@@ -1,21 +1,41 @@
 //! Work Station handlers
 
-use axum::{extract::Path, extract::State, extract::Extension, routing::{delete, get, post, put}, Json, Router};
+use axum::{
+    extract::Extension,
+    extract::Path,
+    extract::State,
+    routing::{delete, get, post, put},
+    Json, Router,
+};
 use chrono::{DateTime, NaiveDateTime, TimeZone, Utc};
 use serde::{Deserialize, Serialize};
 use sqlx::{types::Uuid, PgPool};
 use topems_shared::auth::Claims;
 
-use crate::AppState;
 use crate::services::permission::{check_permission, ModulePermission};
+use crate::AppState;
 use topems_shared::response::ApiResponse;
 
 pub fn create_routes() -> Router<AppState> {
     Router::new()
-        .route("/api/mes/workstations", get(list_work_stations).post(create_work_station))
-        .route("/api/mes/workstations/{id}", get(get_work_station).put(update_work_station).delete(delete_work_station))
-        .route("/api/mes/workstations/{id}/activate", post(activate_work_station))
-        .route("/api/mes/workstations/{id}/deactivate", post(deactivate_work_station))
+        .route(
+            "/api/mes/workstations",
+            get(list_work_stations).post(create_work_station),
+        )
+        .route(
+            "/api/mes/workstations/{id}",
+            get(get_work_station)
+                .put(update_work_station)
+                .delete(delete_work_station),
+        )
+        .route(
+            "/api/mes/workstations/{id}/activate",
+            post(activate_work_station),
+        )
+        .route(
+            "/api/mes/workstations/{id}/deactivate",
+            post(deactivate_work_station),
+        )
 }
 
 // ==================== Data Types ====================
@@ -66,7 +86,8 @@ pub struct ListWorkStationsResponse {
 }
 
 fn naive_to_utc(dt: Option<NaiveDateTime>) -> DateTime<Utc> {
-    dt.map(|d| Utc.from_utc_datetime(&d)).unwrap_or_else(Utc::now)
+    dt.map(|d| Utc.from_utc_datetime(&d))
+        .unwrap_or_else(Utc::now)
 }
 
 // ==================== Work Station Handlers ====================
@@ -75,7 +96,8 @@ pub async fn list_work_stations(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
 ) -> Json<ApiResponse<ListWorkStationsResponse>> {
-    if let Err(e) = check_permission(&state.pool, &claims, &ModulePermission::WorkStationRead).await {
+    if let Err(e) = check_permission(&state.pool, &claims, &ModulePermission::WorkStationRead).await
+    {
         return e;
     }
 
@@ -100,20 +122,23 @@ pub async fn list_work_stations(
         }
     };
 
-    let workstations: Vec<WorkStationResponse> = workstations.into_iter().map(|r| WorkStationResponse {
-        id: r.id,
-        station_no: r.station_no,
-        name: r.name,
-        workshop_id: r.workshop_id,
-        location: r.location,
-        status: r.status.unwrap_or_else(|| "active".to_string()),
-        capacity: r.capacity.unwrap_or(1),
-        equipment_id: r.equipment_id,
-        process_id: r.process_id,
-        description: r.description,
-        created_at: naive_to_utc(r.created_at),
-        updated_at: naive_to_utc(r.updated_at),
-    }).collect();
+    let workstations: Vec<WorkStationResponse> = workstations
+        .into_iter()
+        .map(|r| WorkStationResponse {
+            id: r.id,
+            station_no: r.station_no,
+            name: r.name,
+            workshop_id: r.workshop_id,
+            location: r.location,
+            status: r.status.unwrap_or_else(|| "active".to_string()),
+            capacity: r.capacity.unwrap_or(1),
+            equipment_id: r.equipment_id,
+            process_id: r.process_id,
+            description: r.description,
+            created_at: naive_to_utc(r.created_at),
+            updated_at: naive_to_utc(r.updated_at),
+        })
+        .collect();
 
     let total = workstations.len() as i64;
 
@@ -131,12 +156,18 @@ pub async fn create_work_station(
     Extension(claims): Extension<Claims>,
     Json(req): Json<CreateWorkStationRequest>,
 ) -> Json<ApiResponse<WorkStationResponse>> {
-    if let Err(e) = check_permission(&state.pool, &claims, &ModulePermission::WorkStationWrite).await {
+    if let Err(e) =
+        check_permission(&state.pool, &claims, &ModulePermission::WorkStationWrite).await
+    {
         return e;
     }
 
     let now = Utc::now();
-    let station_no = format!("WS{}{:04}", now.format("%Y%m%d"), rand::random::<u16>() % 10000);
+    let station_no = format!(
+        "WS{}{:04}",
+        now.format("%Y%m%d"),
+        rand::random::<u16>() % 10000
+    );
 
     let result = sqlx::query!(
         r#"
@@ -194,7 +225,8 @@ pub async fn get_work_station(
     Extension(claims): Extension<Claims>,
     Path(id): Path<Uuid>,
 ) -> Json<ApiResponse<WorkStationResponse>> {
-    if let Err(e) = check_permission(&state.pool, &claims, &ModulePermission::WorkStationRead).await {
+    if let Err(e) = check_permission(&state.pool, &claims, &ModulePermission::WorkStationRead).await
+    {
         return e;
     }
 
@@ -248,7 +280,9 @@ pub async fn update_work_station(
     Path(id): Path<Uuid>,
     Json(req): Json<UpdateWorkStationRequest>,
 ) -> Json<ApiResponse<WorkStationResponse>> {
-    if let Err(e) = check_permission(&state.pool, &claims, &ModulePermission::WorkStationWrite).await {
+    if let Err(e) =
+        check_permission(&state.pool, &claims, &ModulePermission::WorkStationWrite).await
+    {
         return e;
     }
 
@@ -319,7 +353,9 @@ pub async fn delete_work_station(
     Extension(claims): Extension<Claims>,
     Path(id): Path<Uuid>,
 ) -> Json<ApiResponse<String>> {
-    if let Err(e) = check_permission(&state.pool, &claims, &ModulePermission::WorkStationWrite).await {
+    if let Err(e) =
+        check_permission(&state.pool, &claims, &ModulePermission::WorkStationWrite).await
+    {
         return e;
     }
 
@@ -353,7 +389,9 @@ pub async fn activate_work_station(
     Extension(claims): Extension<Claims>,
     Path(id): Path<Uuid>,
 ) -> Json<ApiResponse<WorkStationResponse>> {
-    if let Err(e) = check_permission(&state.pool, &claims, &ModulePermission::WorkStationWrite).await {
+    if let Err(e) =
+        check_permission(&state.pool, &claims, &ModulePermission::WorkStationWrite).await
+    {
         return e;
     }
 
@@ -409,7 +447,9 @@ pub async fn deactivate_work_station(
     Extension(claims): Extension<Claims>,
     Path(id): Path<Uuid>,
 ) -> Json<ApiResponse<WorkStationResponse>> {
-    if let Err(e) = check_permission(&state.pool, &claims, &ModulePermission::WorkStationWrite).await {
+    if let Err(e) =
+        check_permission(&state.pool, &claims, &ModulePermission::WorkStationWrite).await
+    {
         return e;
     }
 

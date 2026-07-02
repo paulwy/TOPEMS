@@ -189,10 +189,7 @@ fn test_claims_has_all_permissions() {
         username: "testuser".to_string(),
         role: "user".to_string(),
         roles: vec!["user".to_string()],
-        permissions: vec![
-            "iam:users_read".to_string(),
-            "iam:users_create".to_string(),
-        ],
+        permissions: vec!["iam:users_read".to_string(), "iam:users_create".to_string()],
         is_superuser: false,
         exp: 0,
         iat: 0,

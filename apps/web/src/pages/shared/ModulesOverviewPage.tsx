@@ -1,62 +1,17 @@
 import React, { useState, useEffect, useMemo, useCallback } from 'react';
 import { Box, Typography, Paper, TextField, Grid, Chip, InputAdornment } from '@mui/material';
-import {
-  Search,
-  Home,
-  Users,
-  Building2,
-  Briefcase,
-  BarChart3,
-  DollarSign,
-  Factory,
-  Truck,
-  Warehouse,
-  LineChart,
-  Map,
-  MessageSquare,
-  Layers,
-  GanttChart,
-  ShieldAlert,
-  Settings,
-  Package,
-  ClipboardCheck,
-  Workflow,
-  Brain,
-  Target,
-  type LucideProps,
-} from 'lucide-react';
+import { Search, Layers } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { navigationRegistryV2, type ModuleCardConfig } from '@/lib/navigation';
 import { gradients } from '@/theme';
 import { PageContainer } from '@/components/common/PageContainer';
+import { lucideIcons } from '@/lib/iconMapping';
 
 /* ------------------------------------------------------------------ */
 /*  Icon name -> component mapping                                     */
 /* ------------------------------------------------------------------ */
 
-const iconMap: Record<string, React.FC<LucideProps>> = {
-  Home,
-  Users,
-  Building2,
-  Briefcase,
-  BarChart3,
-  DollarSign,
-  Factory,
-  Truck,
-  Warehouse,
-  LineChart,
-  Map,
-  MessageSquare,
-  Layers,
-  GanttChart,
-  ShieldAlert,
-  Settings,
-  Package,
-  ClipboardCheck,
-  Workflow,
-  Brain,
-  Target,
-};
+const iconMap = lucideIcons;
 
 const renderIcon = (iconName?: string, size = 26): React.ReactNode => {
   if (!iconName) return null;
@@ -65,7 +20,7 @@ const renderIcon = (iconName?: string, size = 26): React.ReactNode => {
   return (
     <Icon
       size={size}
-      color='#fff'
+      style={{ color: '#fff' }}
     />
   );
 };
@@ -93,7 +48,7 @@ const ModuleCard: React.FC<ModuleCardProps> = ({ card, onClick }) => {
       onClick={onClick}
       sx={{
         p: 2,
-        borderRadius: 2,
+        borderRadius: 3,
         cursor: 'pointer',
         transition: 'transform 0.2s ease-in-out, box-shadow 0.2s ease-in-out',
         '&:hover': {

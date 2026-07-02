@@ -272,6 +272,10 @@ const FinanceLedgerPage: React.FC = () => {
     <PageContainer
       padding={false}
       maxWidth={false}
+      title='总账管理'
+      subtitle='管理会计科目和总账数据'
+      autoTitle
+      autoBreadcrumbs
     >
       <Box
         sx={{
@@ -298,7 +302,7 @@ const FinanceLedgerPage: React.FC = () => {
               sx={{ alignItems: 'center' }}
               spacing={2}
             >
-              <BackButton href='/dashboard' />
+              <BackButton href='/finance/dashboard' />
               <Box>
                 <Typography
                   variant='h5'

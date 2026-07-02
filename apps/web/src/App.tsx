@@ -20,31 +20,8 @@ import {
   authRoutes,
   dashboardRoutes,
   commonRoutes,
-  hrmRoutes,
-  crmRoutes,
-  financeRoutes,
-  erpRoutes,
-  iamRoutes,
-  workflowRoutes,
-  biRoutes,
-  pmRoutes,
-  notificationRoutes,
-  docsRoutes,
-  aiRoutes,
-  imRoutes,
-  professionalRoutes,
-  monitorRoutes,
-  mesRoutes,
-  scmRoutes,
-  wmsRoutes,
-  gisRoutes,
-  pluginRoutes,
-  reportRoutes,
-  mobileRoutes,
-  pdmRoutes,
-  srmRoutes,
-  tenantRoutes,
   legacyRedirects,
+  allV2FlatRoutes,
   type RouteConfig,
 } from './routes';
 
@@ -209,30 +186,9 @@ const AppContent: React.FC = () => {
 
         {renderRoutes(dashboardRoutes)}
         {renderRoutes(commonRoutes)}
-        {renderRoutes(hrmRoutes)}
-        {renderRoutes(crmRoutes)}
-        {renderRoutes(financeRoutes)}
-        {renderRoutes(erpRoutes)}
-        {renderRoutes(iamRoutes)}
-        {renderRoutes(workflowRoutes)}
-        {renderRoutes(biRoutes)}
-        {renderRoutes(pmRoutes)}
-        {renderRoutes(notificationRoutes)}
-        {renderRoutes(docsRoutes)}
-        {renderRoutes(aiRoutes)}
-        {renderRoutes(professionalRoutes)}
-        {renderRoutes(monitorRoutes)}
-        {renderRoutes(mesRoutes)}
-        {renderRoutes(scmRoutes)}
-        {renderRoutes(wmsRoutes)}
-        {renderRoutes(gisRoutes)}
-        {renderRoutes(pluginRoutes)}
-        {renderRoutes(reportRoutes)}
-        {renderRoutes(mobileRoutes)}
-        {renderRoutes(pdmRoutes)}
-        {renderRoutes(srmRoutes)}
-        {renderRoutes(tenantRoutes)}
-        {renderRoutes(imRoutes)}
+
+        {/* V2 路由（优先匹配，与导航系统路径一致） */}
+        {renderRoutes(allV2FlatRoutes)}
 
         {legacyRedirects.map((redirect) => (
           <Route
@@ -326,7 +282,7 @@ const AppContent: React.FC = () => {
           path='/config-debug'
           element={
             <Navigate
-              to='/iam/debug'
+              to='/admin/config-debug'
               replace
             />
           }

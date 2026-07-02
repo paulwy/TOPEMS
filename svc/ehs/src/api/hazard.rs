@@ -1,6 +1,10 @@
 //! Hazard management handlers - Reporting, classification, rectification, verification, and closure
 
-use axum::{extract::State, routing::{get, post}, Json, Router};
+use axum::{
+    extract::State,
+    routing::{get, post},
+    Json, Router,
+};
 use serde::{Deserialize, Serialize};
 use topems_shared::ApiResponse;
 
@@ -9,9 +13,18 @@ use crate::AppState;
 pub fn create_routes() -> Router<AppState> {
     Router::new()
         .route("/api/ehs/issues", get(list_hazards).post(create_hazard))
-        .route("/api/ehs/issues/{id}", get(get_hazard).put(update_hazard).delete(delete_hazard))
-        .route("/api/ehs/issues/{id}/rectification", post(start_rectification).put(update_rectification))
-        .route("/api/ehs/issues/{id}/rectification/submit", post(submit_rectification))
+        .route(
+            "/api/ehs/issues/{id}",
+            get(get_hazard).put(update_hazard).delete(delete_hazard),
+        )
+        .route(
+            "/api/ehs/issues/{id}/rectification",
+            post(start_rectification).put(update_rectification),
+        )
+        .route(
+            "/api/ehs/issues/{id}/rectification/submit",
+            post(submit_rectification),
+        )
         .route("/api/ehs/issues/{id}/verification", post(verify_hazard))
         .route("/api/ehs/issues/{id}/close", post(close_hazard))
 }
@@ -111,11 +124,12 @@ pub struct CreateVerificationRequest {
     pub remarks: Option<String>,
 }
 
-pub async fn list_hazards(
-    State(_state): State<crate::AppState>,
-) -> Json<ApiResponse<Vec<Hazard>>> {
+pub async fn list_hazards(State(_state): State<crate::AppState>) -> Json<ApiResponse<Vec<Hazard>>> {
     tracing::info!("Listing hazards");
-    Json(ApiResponse::success(Vec::<Hazard>::new(), "获取隐患列表成功"))
+    Json(ApiResponse::success(
+        Vec::<Hazard>::new(),
+        "获取隐患列表成功",
+    ))
 }
 
 pub async fn create_hazard(
@@ -126,7 +140,10 @@ pub async fn create_hazard(
     Json(ApiResponse::success(
         Hazard {
             id: uuid::Uuid::new_v4().to_string(),
-            hazard_no: format!("HZ-{}", uuid::Uuid::new_v4().to_string()[..8].to_uppercase()),
+            hazard_no: format!(
+                "HZ-{}",
+                uuid::Uuid::new_v4().to_string()[..8].to_uppercase()
+            ),
             title: req.title,
             description: req.description,
             category: req.category,
@@ -251,17 +268,29 @@ pub async fn update_rectification(
     Json(req): Json<UpdateRectificationRequest>,
 ) -> Json<ApiResponse<Rectification>> {
     tracing::info!("Updating rectification {}: {:?}", id, req);
-    let status = req.status.or(req.progress.and_then(|p| {
-        if p >= 100 { Some("completed".to_string()) }
-        else { Some("in_progress".to_string()) }
-    })).unwrap_or("in_progress".to_string());
-    let completed_at = if status == "completed" { Some(chrono::Utc::now().to_rfc3339()) } else { None };
-    
+    let status = req
+        .status
+        .or(req.progress.and_then(|p| {
+            if p >= 100 {
+                Some("completed".to_string())
+            } else {
+                Some("in_progress".to_string())
+            }
+        }))
+        .unwrap_or("in_progress".to_string());
+    let completed_at = if status == "completed" {
+        Some(chrono::Utc::now().to_rfc3339())
+    } else {
+        None
+    };
+
     Json(ApiResponse::success(
         Rectification {
             id,
             hazard_id: "hazard-001".to_string(),
-            description: req.description.unwrap_or_else(|| "清理消防通道".to_string()),
+            description: req
+                .description
+                .unwrap_or_else(|| "清理消防通道".to_string()),
             responsible: req.responsible.or(Some("仓库管理员B".to_string())),
             deadline: req.deadline.or(Some("2024-01-30".to_string())),
             status,

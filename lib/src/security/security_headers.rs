@@ -130,9 +130,7 @@ pub async fn security_headers_middleware(
     response
 }
 
-pub fn create_security_headers_layer(
-    config: SecurityHeadersConfig,
-) -> SecurityHeadersLayer {
+pub fn create_security_headers_layer(config: SecurityHeadersConfig) -> SecurityHeadersLayer {
     SecurityHeadersLayer::new(config)
 }
 
@@ -261,10 +259,7 @@ mod tests {
     #[test]
     fn test_add_security_headers_does_not_overwrite() {
         let config = SecurityHeadersConfig::default();
-        let mut response = Response::builder()
-            .status(StatusCode::OK)
-            .body(())
-            .unwrap();
+        let mut response = Response::builder().status(StatusCode::OK).body(()).unwrap();
 
         response.headers_mut().insert(
             HeaderName::from_static("x-frame-options"),

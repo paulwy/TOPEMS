@@ -1,4 +1,6 @@
+import React from 'react';
 import { Box, Typography, Select, MenuItem, FormControl, Button } from '@mui/material';
+import type { SxProps, Theme } from '@mui/material/styles';
 import { ChevronLeft, ChevronRight, ChevronsLeft, ChevronsRight } from 'lucide-react';
 
 export interface PaginationConfig {
@@ -11,11 +13,11 @@ export interface PaginationConfig {
   pageSizeOptions?: number[];
   showTotal?: boolean;
   totalItems?: number;
-  sx?: import('@mui/material/styles').SxProps<import('@mui/material/styles').Theme>;
+  sx?: SxProps<Theme>;
   disabled?: boolean;
 }
 
-export default function PaginationComponent({
+function PaginationComponent({
   page,
   total,
   pageSize,
@@ -52,7 +54,17 @@ export default function PaginationComponent({
   };
 
   return (
-    <Box sx={{ display: 'flex', flexWrap: 'wrap', alignItems: 'center', gap: 4, ...sx, opacity: disabled ? 0.5 : 1, pointerEvents: disabled ? 'none' : 'auto' }}>
+    <Box
+      sx={{
+        display: 'flex',
+        flexWrap: 'wrap',
+        alignItems: 'center',
+        gap: 4,
+        ...sx,
+        opacity: disabled ? 0.5 : 1,
+        pointerEvents: disabled ? 'none' : 'auto',
+      }}
+    >
       {showTotal && totalItems && (
         <Typography sx={{ fontSize: '0.875rem', color: 'text.secondary' }}>
           显示 {startItem}-{endItem} / 共 {totalItems} 条
@@ -64,7 +76,7 @@ export default function PaginationComponent({
           disabled={page === 1 || disabled}
           sx={{
             p: 2,
-            borderRadius: 2,
+            borderRadius: 3,
             color: 'text.secondary',
             '&:hover': { backgroundColor: 'grey.100' },
             '&:disabled': {
@@ -81,7 +93,7 @@ export default function PaginationComponent({
           disabled={page === 1 || disabled}
           sx={{
             p: 2,
-            borderRadius: 2,
+            borderRadius: 3,
             color: 'text.secondary',
             '&:hover': { backgroundColor: 'grey.100' },
             '&:disabled': {
@@ -110,7 +122,7 @@ export default function PaginationComponent({
                 minWidth: 32,
                 height: 32,
                 px: 3,
-                borderRadius: 2,
+                borderRadius: 3,
                 fontSize: '0.875rem',
                 fontWeight: 500,
                 backgroundColor: page === pageNum ? 'primary.dark' : 'transparent',
@@ -129,7 +141,7 @@ export default function PaginationComponent({
           disabled={page === total || disabled}
           sx={{
             p: 2,
-            borderRadius: 2,
+            borderRadius: 3,
             color: 'text.secondary',
             '&:hover': { backgroundColor: 'grey.100' },
             '&:disabled': {
@@ -146,7 +158,7 @@ export default function PaginationComponent({
           disabled={page === total || disabled}
           sx={{
             p: 2,
-            borderRadius: 2,
+            borderRadius: 3,
             color: 'text.secondary',
             '&:hover': { backgroundColor: 'grey.100' },
             '&:disabled': {
@@ -187,3 +199,5 @@ export default function PaginationComponent({
     </Box>
   );
 }
+
+export default React.memo(PaginationComponent);

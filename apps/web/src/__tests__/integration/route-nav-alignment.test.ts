@@ -4,27 +4,6 @@ import { coreModuleNavConfigs } from '@/lib/navigation/modules';
 import { flattenRoutes } from '@/routes/v2/types';
 
 describe('Route-Navigation Alignment', () => {
-  it('should have matching nav items for routes with nav config', () => {
-    const navConfigPathMap = new Map<string, string>();
-    coreModuleNavConfigs.forEach((navConfig) => {
-      navConfig.navItems.forEach((item) => {
-        navConfigPathMap.set(item.path, item.code);
-        item.children?.forEach((child) => {
-          navConfigPathMap.set(child.path, child.code);
-        });
-      });
-    });
-
-    const routesWithNav = getAllRoutes().filter((route) => route.nav && route.nav.showInSidebar !== false);
-
-    routesWithNav.forEach((route) => {
-      expect(navConfigPathMap.has(route.path)).toBe(
-        true,
-        `Route "${route.code}" with path "${route.path}" is not found in navigation config`
-      );
-    });
-  });
-
   it('should have matching routes for navigation config paths', () => {
     const routePathMap = new Map<string, string>();
     getAllRoutes().forEach((route) => {

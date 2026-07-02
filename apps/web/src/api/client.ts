@@ -97,7 +97,7 @@ const handleAuthError = (): void => {
 
 // 判断是否是不需要认证的路径
 const isPublicPath = (url: string): boolean => {
-  return url === '/health' || url.startsWith('/api/iam/auth/');
+  return url === '/health' || url.startsWith('/auth/');
 };
 
 export const createBaseAxiosClient = (baseURL: string): AxiosInstance => {
@@ -109,13 +109,66 @@ export const createBaseAxiosClient = (baseURL: string): AxiosInstance => {
   client.interceptors.request.use(
     (config) => {
       const token = localStorage.getItem('token');
-      // 只对非公开路径添加认证头
-      if (token && !config.headers['Authorization'] && !isPublicPath(config.url || '')) {
+      const url = config.url || '';
+      const fullUrl = `${baseURL}${url}`;
+
+      apiLogger.debug(`[Base API Request] ${config.method?.toUpperCase()} ${fullUrl}`, {
+        url: fullUrl,
+        method: config.method?.toUpperCase(),
+        baseURL,
+        tokenExists: !!token,
+        isPublicPath: isPublicPath(url),
+        params: config.params,
+        data: config.data
+          ? JSON.stringify(config.data).length > 1000
+            ? 'Truncated (over 1000 chars)'
+            : config.data
+          : undefined,
+      });
+
+      if (token && !config.headers['Authorization'] && !isPublicPath(url)) {
         config.headers['Authorization'] = `Bearer ${token}`;
       }
       return config;
     },
     (error) => {
+      const url = error.config?.url || '';
+      apiLogger.error(`[Base API Request Error] ${baseURL}${url}`, {
+        url: `${baseURL}${url}`,
+        errorCode: error.code,
+        errorMessage: error.message,
+      });
+      return Promise.reject(error);
+    }
+  );
+
+  client.interceptors.response.use(
+    (response) => {
+      const url = response.config?.url || '';
+      const fullUrl = `${baseURL}${url}`;
+
+      apiLogger.debug(`[Base API Response] ${response.status} ${fullUrl}`, {
+        url: fullUrl,
+        status: response.status,
+        statusText: response.statusText,
+        data: response.data
+          ? JSON.stringify(response.data).length > 2000
+            ? 'Truncated (over 2000 chars)'
+            : response.data
+          : undefined,
+      });
+
+      return response;
+    },
+    (error) => {
+      const url = error.config?.url || '';
+      apiLogger.error(`[Base API Error] ${error.response?.status || 'N/A'} ${baseURL}${url}`, {
+        url: `${baseURL}${url}`,
+        status: error.response?.status,
+        errorCode: error.code,
+        errorMessage: error.message,
+        responseData: error.response?.data,
+      });
       return Promise.reject(error);
     }
   );
@@ -151,11 +204,21 @@ export const downloadBlob = async (
   // 添加认证拦截器 - 始终添加 Authorization 头（下载接口都需要认证）
   client.interceptors.request.use((config) => {
     const token = localStorage.getItem('token');
-    apiLogger.debug('downloadBlob - token found:', !!token);
-    apiLogger.debug('downloadBlob - request URL:', clientBaseURL + (config.url || ''));
+    const url = config.url || '';
+    const fullUrl = `${clientBaseURL}${url}`;
+
+    apiLogger.debug(`[downloadBlob Request] GET ${fullUrl}`, {
+      url: fullUrl,
+      baseURL: clientBaseURL,
+      tokenExists: !!token,
+      params: config.params,
+      useProxy,
+      isLocalhost,
+    });
+
     if (token) {
       config.headers['Authorization'] = `Bearer ${token}`;
-      apiLogger.debug('downloadBlob - Authorization header added');
+      apiLogger.debug('[downloadBlob] Authorization header added');
     }
     return config;
   });
@@ -165,7 +228,16 @@ export const downloadBlob = async (
     params: options?.params,
   });
 
-  apiLogger.debug('downloadBlob - response status:', response.status);
+  const responseUrl = `${clientBaseURL}${requestUrl}`;
+  apiLogger.debug(`[downloadBlob Response] ${response.status} ${responseUrl}`, {
+    url: responseUrl,
+    status: response.status,
+    statusText: response.statusText,
+    headers: {
+      'Content-Type': response.headers?.['content-type'],
+      'Content-Length': response.headers?.['content-length'],
+    },
+  });
 
   // 检查是否是错误响应
   if (response.status !== 200) {
@@ -229,27 +301,29 @@ class ApiClient {
           const token = localStorage.getItem('token');
           const url = config.url || '';
           const baseURL = config.baseURL || '';
+          const fullUrl = `${baseURL}${url}`;
 
-          if (baseURL.includes('/hrm') || url.includes('/hrm') || url.includes('positions')) {
-            apiLogger.debug(`[HRM API Request]`, {
-              url: `${baseURL}${url}`,
-              method: config.method,
-              tokenExists: !!token,
-              hasAuthHeader: !!config.headers['Authorization'],
-              isPublicPath: isPublicPath(url),
-              params: config.params,
-              data: config.data,
-            });
-          }
-
-          if (baseURL.includes('notification') || url.includes('/api/notifications')) {
-            apiLogger.debug(`[Notification API Request]`, {
-              url: `${baseURL}${url}`,
-              tokenExists: !!token,
-              hasAuthHeader: !!config.headers['Authorization'],
-              isPublicPath: isPublicPath(url),
-            });
-          }
+          apiLogger.debug(`[API Request] ${config.method?.toUpperCase()} ${fullUrl}`, {
+            serviceName: name,
+            url: fullUrl,
+            method: config.method?.toUpperCase(),
+            baseURL,
+            requestUrl: url,
+            tokenExists: !!token,
+            hasAuthHeader: !!config.headers['Authorization'],
+            isPublicPath: isPublicPath(url),
+            params: config.params,
+            data: config.data
+              ? JSON.stringify(config.data).length > 1000
+                ? 'Truncated (over 1000 chars)'
+                : config.data
+              : undefined,
+            headers: {
+              'Content-Type': config.headers?.['Content-Type'],
+              Accept: config.headers?.['Accept'],
+              Authorization: config.headers?.['Authorization'] ? 'Bearer [token]' : undefined,
+            },
+          });
 
           if (token && !config.headers['Authorization'] && !isPublicPath(url)) {
             config.headers['Authorization'] = `Bearer ${token}`;
@@ -260,7 +334,17 @@ class ApiClient {
         (error) => {
           const isHealthCheck = error.config?.url?.includes('/health');
           if (!isHealthCheck) {
-            logger.error('Request error:', error);
+            const url = error.config?.url || '';
+            const baseURL = error.config?.baseURL || '';
+            apiLogger.error(`[API Request Error] ${baseURL}${url}`, {
+              url: `${baseURL}${url}`,
+              errorCode: error.code,
+              errorMessage: error.message,
+              config: {
+                method: error.config?.method,
+                headers: error.config?.headers,
+              },
+            });
           }
           return Promise.reject(error);
         }
@@ -270,14 +354,24 @@ class ApiClient {
         (response: AxiosResponse) => {
           const url = response.config?.url || '';
           const baseURL = response.config?.baseURL || '';
-          if (baseURL.includes('/hrm') || url.includes('/hrm') || url.includes('positions')) {
-            apiLogger.debug(`[HRM API Response]`, {
-              url: `${baseURL}${url}`,
-              status: response.status,
-              statusText: response.statusText,
-              data: response.data,
-            });
-          }
+          const fullUrl = `${baseURL}${url}`;
+
+          apiLogger.debug(`[API Response] ${response.status} ${fullUrl}`, {
+            serviceName: name,
+            url: fullUrl,
+            status: response.status,
+            statusText: response.statusText,
+            responseTime: response.headers?.['x-response-time'] || 'N/A',
+            data: response.data
+              ? JSON.stringify(response.data).length > 2000
+                ? 'Truncated (over 2000 chars)'
+                : response.data
+              : undefined,
+            headers: {
+              'Content-Type': response.headers?.['content-type'],
+              'x-response-time': response.headers?.['x-response-time'],
+            },
+          });
 
           csrfResponseInterceptor(response);
           return response.data;
@@ -285,19 +379,38 @@ class ApiClient {
         (error) => {
           const url = error.config?.url || '';
           const baseURL = error.config?.baseURL || '';
+          const fullUrl = `${baseURL}${url}`;
 
-          if (baseURL.includes('/hrm') || url.includes('/hrm') || url.includes('positions')) {
-            apiLogger.error(`[HRM API Error]`, {
-              url: `${baseURL}${url}`,
-              method: error.config?.method,
-              status: error.response?.status,
-              statusText: error.response?.statusText,
-              data: error.response?.data,
-              headers: error.response?.headers,
-              errorCode: error.code,
-              errorMessage: error.message,
-            });
-          }
+          apiLogger.error(`[API Error] ${error.response?.status || 'N/A'} ${fullUrl}`, {
+            serviceName: name,
+            url: fullUrl,
+            method: error.config?.method?.toUpperCase(),
+            status: error.response?.status,
+            statusText: error.response?.statusText,
+            errorCode: error.code,
+            errorMessage: error.message,
+            responseData: error.response?.data
+              ? JSON.stringify(error.response?.data).length > 2000
+                ? 'Truncated (over 2000 chars)'
+                : error.response?.data
+              : undefined,
+            responseHeaders: error.response?.headers,
+            requestConfig: {
+              url,
+              baseURL,
+              params: error.config?.params,
+              data: error.config?.data
+                ? JSON.stringify(error.config?.data).length > 1000
+                  ? 'Truncated (over 1000 chars)'
+                  : error.config?.data
+                : undefined,
+              headers: {
+                Authorization: error.config?.headers?.['Authorization']
+                  ? 'Bearer [token]'
+                  : undefined,
+              },
+            },
+          });
 
           if (error.code === 'ERR_CANCELED' || error.name === 'AbortError') {
             logger.debug('Request was canceled or aborted:', url);
@@ -316,22 +429,7 @@ class ApiClient {
 
           if (error.response?.status === 401) {
             const currentPath = window.location.pathname;
-            const isNotificationService =
-              error.config?.baseURL?.includes('8002') ||
-              error.config?.baseURL?.startsWith('notification');
-
-            if (isNotificationService) {
-              logger.debug('Notification service returned 401, skipping auth cleanup');
-              return Promise.resolve({
-                code: 0,
-                success: true,
-                data: 0,
-                message: 'Unauthorized',
-                timestamp: new Date().toISOString(),
-              });
-            }
-
-            if (currentPath !== '/login' && currentPath !== '/register' && !isNotificationService) {
+            if (currentPath !== '/login' && currentPath !== '/register') {
               handleAuthError();
             }
           }
@@ -343,13 +441,7 @@ class ApiClient {
 
           if (
             isProduction() ||
-            !(
-              isHealthCheck ||
-              isNotFound ||
-              isServiceUnavailable ||
-              isServerError ||
-              (error.config?.baseURL?.includes('notification') && error.response?.status === 401)
-            )
+            !(isHealthCheck || isNotFound || isServiceUnavailable || isServerError)
           ) {
             logger.error('Response error:', error);
           }

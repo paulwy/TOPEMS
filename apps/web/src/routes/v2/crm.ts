@@ -1,17 +1,13 @@
-import { lazyWithRetry } from '../utils';
+import { lazyWithRetry } from './types';
 import type { RouteModuleConfig } from './types';
 
-const CrmDashboardPage = lazyWithRetry(
+const CRMDashboardPage = lazyWithRetry(
   () => import('../../pages/crm/DashboardPage'),
-  'DashboardPage'
+  'CRMDashboardPage'
 );
-const CrmSalesFunnelPage = lazyWithRetry(
-  () => import('../../pages/crm/CRMSalesFunnelPage'),
-  'CRMSalesFunnelPage'
-);
-const CustomerDetailPage = lazyWithRetry(
-  () => import('../../pages/crm/CustomerDetailPage'),
-  'CustomerDetailPage'
+const CustomerManagementPage = lazyWithRetry(
+  () => import('../../pages/crm/CustomerManagementPage'),
+  'CustomerManagementPage'
 );
 const CustomerCreatePage = lazyWithRetry(
   () => import('../../pages/crm/CustomerCreatePage'),
@@ -21,17 +17,17 @@ const CustomerEditPage = lazyWithRetry(
   () => import('../../pages/crm/CustomerEditPage'),
   'CustomerEditPage'
 );
-const ContactDetailPage = lazyWithRetry(
-  () => import('../../pages/crm/ContactDetailPage'),
-  'ContactDetailPage'
-);
-const CustomerManagementPage = lazyWithRetry(
-  () => import('../../pages/crm/CustomerManagementPage'),
-  'CustomerManagementPage'
+const CustomerDetailPage = lazyWithRetry(
+  () => import('../../pages/crm/CustomerDetailPage'),
+  'CustomerDetailPage'
 );
 const ContactManagementPage = lazyWithRetry(
   () => import('../../pages/crm/ContactManagementPage'),
   'ContactManagementPage'
+);
+const ContactDetailPage = lazyWithRetry(
+  () => import('../../pages/crm/ContactDetailPage'),
+  'ContactDetailPage'
 );
 const OpportunityManagementPage = lazyWithRetry(
   () => import('../../pages/crm/OpportunityManagementPage'),
@@ -45,9 +41,9 @@ const InteractionManagementPage = lazyWithRetry(
   () => import('../../pages/crm/InteractionManagementPage'),
   'InteractionManagementPage'
 );
-const CRMCustomerSegmentationPage = lazyWithRetry(
-  () => import('../../pages/crm/CRMCustomerSegmentationPage'),
-  'CRMCustomerSegmentationPage'
+const CRMBillingPage = lazyWithRetry(
+  () => import('../../pages/crm/CRMBillingPage'),
+  'CRMBillingPage'
 );
 const CRMCustomerScoringPage = lazyWithRetry(
   () => import('../../pages/crm/CRMCustomerScoringPage'),
@@ -57,9 +53,13 @@ const CRMSalesForecastPage = lazyWithRetry(
   () => import('../../pages/crm/CRMSalesForecastPage'),
   'CRMSalesForecastPage'
 );
-const CRMBillingPage = lazyWithRetry(
-  () => import('../../pages/crm/CRMBillingPage'),
-  'CRMBillingPage'
+const CRMCustomerSegmentationPage = lazyWithRetry(
+  () => import('../../pages/crm/CRMCustomerSegmentationPage'),
+  'CRMCustomerSegmentationPage'
+);
+const CRMSalesFunnelPage = lazyWithRetry(
+  () => import('../../pages/crm/CRMSalesFunnelPage'),
+  'CRMSalesFunnelPage'
 );
 const CRMRecommendationPage = lazyWithRetry(
   () => import('../../pages/crm/CRMRecommendationPage'),
@@ -71,29 +71,22 @@ export const crmModuleConfig: RouteModuleConfig = {
   name: '客户关系',
   icon: 'Users',
   path: '/crm',
-  source: 'core',
+  source: 'plugin',
   suite: 'crm',
   status: 'online',
-  order: 7,
-  description: '客户管理、销售漏斗、商机、联系人、互动管理',
+  order: 6,
+  description: '客户管理、商机管理、销售漏斗、客户评分、销售预测',
   permission: 'crm:read',
   routes: [
     {
       path: '/crm/dashboard',
-      element: CrmDashboardPage,
+      element: CRMDashboardPage,
       module: 'crm',
       code: 'crm-dashboard',
       title: '仪表盘',
       template: 'dashboard',
       group: 'overview',
       requiredPermissions: ['crm:read'],
-      nav: {
-        label: '仪表盘',
-        icon: 'LayoutDashboard',
-        order: 0,
-        group: 'overview',
-        showInTabs: true,
-      },
     },
     {
       path: '/crm/customers',
@@ -104,13 +97,6 @@ export const crmModuleConfig: RouteModuleConfig = {
       template: 'list',
       group: 'business',
       requiredPermissions: ['crm:customer:read'],
-      nav: {
-        label: '客户管理',
-        icon: 'UserCircle',
-        order: 1,
-        group: 'business',
-        showInTabs: true,
-      },
     },
     {
       path: '/crm/customers/create',
@@ -147,16 +133,10 @@ export const crmModuleConfig: RouteModuleConfig = {
       element: ContactManagementPage,
       module: 'crm',
       code: 'crm-contacts',
-      title: '联系人',
+      title: '联系人管理',
       template: 'list',
       group: 'business',
       requiredPermissions: ['crm:contact:read'],
-      nav: {
-        label: '联系人',
-        icon: 'User',
-        order: 2,
-        group: 'business',
-      },
     },
     {
       path: '/crm/contacts/:id',
@@ -177,12 +157,6 @@ export const crmModuleConfig: RouteModuleConfig = {
       template: 'list',
       group: 'business',
       requiredPermissions: ['crm:opportunity:read'],
-      nav: {
-        label: '商机管理',
-        icon: 'Target',
-        order: 3,
-        group: 'business',
-      },
     },
     {
       path: '/crm/opportunities/:id',
@@ -199,97 +173,60 @@ export const crmModuleConfig: RouteModuleConfig = {
       element: InteractionManagementPage,
       module: 'crm',
       code: 'crm-interactions',
-      title: '互动记录',
+      title: '互动管理',
       template: 'list',
       group: 'business',
       requiredPermissions: ['crm:interaction:read'],
-      nav: {
-        label: '互动记录',
-        icon: 'MessageSquare',
-        order: 4,
-        group: 'business',
-      },
-    },
-    {
-      path: '/crm/segmentation',
-      element: CRMCustomerSegmentationPage,
-      module: 'crm',
-      code: 'crm-segmentation',
-      title: '客户分群',
-      template: 'list',
-      group: 'business',
-      requiredPermissions: ['crm:segmentation:read'],
-      nav: {
-        label: '客户分群',
-        icon: 'Layers',
-        order: 5,
-        group: 'business',
-      },
-    },
-    {
-      path: '/crm/scoring',
-      element: CRMCustomerScoringPage,
-      module: 'crm',
-      code: 'crm-scoring',
-      title: '客户评分',
-      template: 'stats',
-      group: 'business',
-      requiredPermissions: ['crm:scoring:read'],
-      nav: {
-        label: '客户评分',
-        icon: 'Award',
-        order: 6,
-        group: 'business',
-      },
-    },
-    {
-      path: '/crm/sales-funnel',
-      element: CrmSalesFunnelPage,
-      module: 'crm',
-      code: 'crm-sales-funnel',
-      title: '销售漏斗',
-      template: 'stats',
-      group: 'process',
-      requiredPermissions: ['crm:funnel:read'],
-      nav: {
-        label: '销售漏斗',
-        icon: 'TrendingUp',
-        order: 1,
-        group: 'process',
-        showInTabs: true,
-      },
-    },
-    {
-      path: '/crm/forecast',
-      element: CRMSalesForecastPage,
-      module: 'crm',
-      code: 'crm-forecast',
-      title: '销售预测',
-      template: 'stats',
-      group: 'process',
-      requiredPermissions: ['crm:forecast:read'],
-      nav: {
-        label: '销售预测',
-        icon: 'BarChart3',
-        order: 2,
-        group: 'process',
-      },
     },
     {
       path: '/crm/billing',
       element: CRMBillingPage,
       module: 'crm',
       code: 'crm-billing',
-      title: '计费管理',
+      title: '账单管理',
       template: 'list',
-      group: 'process',
+      group: 'business',
       requiredPermissions: ['crm:billing:read'],
-      nav: {
-        label: '计费管理',
-        icon: 'CreditCard',
-        order: 3,
-        group: 'process',
-      },
+    },
+    {
+      path: '/crm/sales-funnel',
+      element: CRMSalesFunnelPage,
+      module: 'crm',
+      code: 'crm-sales-funnel',
+      title: '销售漏斗',
+      template: 'kanban',
+      group: 'analytics',
+      requiredPermissions: ['crm:sales_funnel:read'],
+    },
+    {
+      path: '/crm/customer-scoring',
+      element: CRMCustomerScoringPage,
+      module: 'crm',
+      code: 'crm-customer-scoring',
+      title: '客户评分',
+      template: 'stats',
+      group: 'analytics',
+      requiredPermissions: ['crm:customer_scoring:read'],
+    },
+    {
+      path: '/crm/sales-forecast',
+      element: CRMSalesForecastPage,
+      module: 'crm',
+      code: 'crm-sales-forecast',
+      title: '销售预测',
+      template: 'stats',
+      group: 'analytics',
+      requiredPermissions: ['crm:sales_forecast:read'],
+    },
+    {
+      path: '/crm/customer-segmentation',
+      element: CRMCustomerSegmentationPage,
+      module: 'crm',
+      code: 'crm-customer-segmentation',
+      title: '客户细分',
+      template: 'stats',
+      group: 'analytics',
+      requiredPermissions: ['crm:customer_segmentation:read'],
     },
     {
       path: '/crm/recommendation',
@@ -297,15 +234,9 @@ export const crmModuleConfig: RouteModuleConfig = {
       module: 'crm',
       code: 'crm-recommendation',
       title: '智能推荐',
-      template: 'stats',
+      template: 'dashboard',
       group: 'analytics',
       requiredPermissions: ['crm:recommendation:read'],
-      nav: {
-        label: '智能推荐',
-        icon: 'Sparkles',
-        order: 1,
-        group: 'analytics',
-      },
     },
   ],
 };

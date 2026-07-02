@@ -12,7 +12,9 @@ use serde_json::{json, Value};
 
 const API_URL: &str = "http://localhost:8000";
 
-fn create_client() -> Client { Client::new() }
+fn create_client() -> Client {
+    Client::new()
+}
 
 async fn login(username: &str, password: &str) -> Result<String, String> {
     let client = create_client();
@@ -22,15 +24,30 @@ async fn login(username: &str, password: &str) -> Result<String, String> {
         .send()
         .await
         .map_err(|e| format!("请求失败: {}", e))?;
-    let body: Value = response.json().await.map_err(|e| format!("解析响应失败: {}", e))?;
+    let body: Value = response
+        .json()
+        .await
+        .map_err(|e| format!("解析响应失败: {}", e))?;
     if body["success"].as_bool().unwrap_or(false) {
-        Ok(body["data"]["access_token"].as_str().unwrap_or("").to_string())
+        Ok(body["data"]["access_token"]
+            .as_str()
+            .unwrap_or("")
+            .to_string())
     } else {
-        Err(format!("登录失败: {}", body["message"].as_str().unwrap_or("未知错误")))
+        Err(format!(
+            "登录失败: {}",
+            body["message"].as_str().unwrap_or("未知错误")
+        ))
     }
 }
 
-async fn auth_request(client: &Client, token: &str, method: &str, endpoint: &str, body: Option<Value>) -> Result<(u16, Value), String> {
+async fn auth_request(
+    client: &Client,
+    token: &str,
+    method: &str,
+    endpoint: &str,
+    body: Option<Value>,
+) -> Result<(u16, Value), String> {
     let url = format!("{}{}", API_URL, endpoint);
     let request = match method {
         "GET" => client.get(&url),
@@ -39,12 +56,17 @@ async fn auth_request(client: &Client, token: &str, method: &str, endpoint: &str
         "DELETE" => client.delete(&url),
         _ => return Err(format!("不支持的 HTTP 方法: {}", method)),
     };
-    let response = request.bearer_auth(token).header("Content-Type", "application/json")
+    let response = request
+        .bearer_auth(token)
+        .header("Content-Type", "application/json")
         .send()
         .await
         .map_err(|e| format!("请求失败: {}", e))?;
     let status = response.status().as_u16();
-    let body: Value = response.json().await.map_err(|e| format!("解析响应失败: {}", e))?;
+    let body: Value = response
+        .json()
+        .await
+        .map_err(|e| format!("解析响应失败: {}", e))?;
     Ok((status, body))
 }
 
@@ -72,11 +94,19 @@ async fn test_rs_002_create_resource() {
     tracing::info!("测试 RS-002: 创建资源");
     let token = login("admin", "admin123").await.expect("管理员登录失败");
     let client = create_client();
-    match auth_request(&client, &token, "POST", "/api/rs/resources", Some(json!({
-        "name": "测试资源",
-        "type": "server",
-        "status": "active"
-    }))).await {
+    match auth_request(
+        &client,
+        &token,
+        "POST",
+        "/api/rs/resources",
+        Some(json!({
+            "name": "测试资源",
+            "type": "server",
+            "status": "active"
+        })),
+    )
+    .await
+    {
         Ok((status, _)) => {
             assert!(status == 200 || status == 201 || status == 403 || status == 404);
             tracing::info!("RS-002 测试通过");
@@ -94,11 +124,21 @@ async fn test_rs_003_allocate_resource() {
     let client = create_client();
     match auth_request(&client, &token, "GET", "/api/rs/resources", None).await {
         Ok((_, body)) => {
-            let resources = body["data"]["resources"].as_array().or_else(|| body["data"].as_array());
+            let resources = body["data"]["resources"]
+                .as_array()
+                .or_else(|| body["data"].as_array());
             if let Some(list) = resources {
                 if let Some(resource) = list.first() {
                     if let Some(id) = resource["id"].as_str() {
-                        match auth_request(&client, &token, "POST", &format!("/api/rs/resources/{}/allocate", id), Some(json!({ "user_id": null }))).await {
+                        match auth_request(
+                            &client,
+                            &token,
+                            "POST",
+                            &format!("/api/rs/resources/{}/allocate", id),
+                            Some(json!({ "user_id": null })),
+                        )
+                        .await
+                        {
                             Ok((status, _)) => {
                                 assert!(status == 200 || status == 403 || status == 404);
                                 tracing::info!("RS-003 测试通过");
@@ -124,12 +164,24 @@ async fn test_rs_004_release_resource() {
     let client = create_client();
     match auth_request(&client, &token, "GET", "/api/rs/resources", None).await {
         Ok((_, body)) => {
-            let resources = body["data"]["resources"].as_array().or_else(|| body["data"].as_array());
+            let resources = body["data"]["resources"]
+                .as_array()
+                .or_else(|| body["data"].as_array());
             if let Some(list) = resources {
-                let allocated = list.iter().find(|r| r["status"].as_str() == Some("allocated"));
+                let allocated = list
+                    .iter()
+                    .find(|r| r["status"].as_str() == Some("allocated"));
                 if let Some(resource) = allocated {
                     if let Some(id) = resource["id"].as_str() {
-                        match auth_request(&client, &token, "POST", &format!("/api/rs/resources/{}/release", id), None).await {
+                        match auth_request(
+                            &client,
+                            &token,
+                            "POST",
+                            &format!("/api/rs/resources/{}/release", id),
+                            None,
+                        )
+                        .await
+                        {
                             Ok((status, _)) => {
                                 assert!(status == 200 || status == 403 || status == 404);
                                 tracing::info!("RS-004 测试通过");

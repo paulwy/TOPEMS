@@ -10,12 +10,11 @@ export const syncLogsApi = {
     page?: number;
     pagesize?: number;
   }) =>
-    apiClient.integration.get('/api/integration/external-erp/sync-logs', {
+    apiClient.integration.get('/external-erp/sync-logs', {
       params,
     }),
 
-  getSyncLog: (logId: string) =>
-    apiClient.integration.get(`/api/integration/external-erp/sync-logs/${logId}`),
+  getSyncLog: (logId: string) => apiClient.integration.get(`/external-erp/sync-logs/${logId}`),
 
   getSyncStatistics: (
     configId: string,
@@ -24,10 +23,7 @@ export const syncLogsApi = {
       end_date?: string;
     }
   ) =>
-    apiClient.integration.get(
-      `/api/integration/external-erp/connections/${configId}/sync-statistics`,
-      { params }
-    ),
+    apiClient.integration.get(`/external-erp/connections/${configId}/sync-statistics`, { params }),
 };
 
 export default syncLogsApi;

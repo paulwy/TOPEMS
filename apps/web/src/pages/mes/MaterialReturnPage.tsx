@@ -23,7 +23,7 @@ import {
   Paper,
   Button,
 } from '@mui/material';
-import { PageContainer } from '@/components/common';
+import { PageContainer } from '@/components/common/PageContainerV2';
 import React, { useState, useEffect, useMemo, useCallback } from 'react';
 import type { MaterialReturn, CreateMaterialReturnRequest, MaterialReturnItem } from '@/api/mes';
 import { mesApi } from '@/api/mes';
@@ -156,9 +156,9 @@ const MaterialReturnPage: React.FC = () => {
         color: string;
       }
     > = {
-      pending: { label: '待审核', bg: 'warning.light', color: '#b45309' },
-      approved: { label: '已审核', bg: '#e0e7ff', color: '#4338ca' },
-      returned: { label: '已退库', bg: 'success.lighter', color: '#15803d' },
+      pending: { label: '待审核', bg: 'warning.light', color: 'warning.700' },
+      approved: { label: '已审核', bg: '#e0e7ff', color: 'secondary.700' },
+      returned: { label: '已退库', bg: 'success.lighter', color: 'success.700' },
       cancelled: { label: '已取消', bg: 'error.lighter', color: 'error.dark' },
     };
     const s = statusMap[status] || { label: status, bg: 'grey.100', color: 'text.secondary' };
@@ -293,11 +293,11 @@ const MaterialReturnPage: React.FC = () => {
         mb: 3,
       }}
     >
-      <Box sx={{ p: 2, bgcolor: '#fef3c7', borderRadius: 2 }}>
+      <Box sx={{ p: 2, bgcolor: 'warning.100', borderRadius: 3 }}>
         <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 1 }}>
           <FileText
             size={18}
-            sx={{ color: '#b45309' }}
+            sx={{ color: 'warning.700' }}
           />
           <Typography
             variant='body2'
@@ -308,12 +308,12 @@ const MaterialReturnPage: React.FC = () => {
         </Box>
         <Typography
           variant='h5'
-          sx={{ fontWeight: 700, color: '#b45309' }}
+          sx={{ fontWeight: 700, color: 'warning.700' }}
         >
           {returns.filter((r) => r.status === 'pending').length}
         </Typography>
       </Box>
-      <Box sx={{ p: 2, bgcolor: '#e0e7ff', borderRadius: 2 }}>
+      <Box sx={{ p: 2, bgcolor: '#e0e7ff', borderRadius: 3 }}>
         <Typography
           variant='body2'
           sx={{ color: 'text.secondary', mb: 1 }}
@@ -322,16 +322,16 @@ const MaterialReturnPage: React.FC = () => {
         </Typography>
         <Typography
           variant='h5'
-          sx={{ fontWeight: 700, color: '#4338ca' }}
+          sx={{ fontWeight: 700, color: 'secondary.700' }}
         >
           {returns.filter((r) => r.status === 'approved').length}
         </Typography>
       </Box>
-      <Box sx={{ p: 2, bgcolor: 'success.lighter', borderRadius: 2 }}>
+      <Box sx={{ p: 2, bgcolor: 'success.lighter', borderRadius: 3 }}>
         <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 1 }}>
           <Undo2
             size={18}
-            sx={{ color: '#15803d' }}
+            sx={{ color: 'success.700' }}
           />
           <Typography
             variant='body2'
@@ -342,12 +342,12 @@ const MaterialReturnPage: React.FC = () => {
         </Box>
         <Typography
           variant='h5'
-          sx={{ fontWeight: 700, color: '#15803d' }}
+          sx={{ fontWeight: 700, color: 'success.700' }}
         >
           {returns.filter((r) => r.status === 'returned').length}
         </Typography>
       </Box>
-      <Box sx={{ p: 2, bgcolor: 'grey.100', borderRadius: 2 }}>
+      <Box sx={{ p: 2, bgcolor: 'grey.100', borderRadius: 3 }}>
         <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 1 }}>
           <Package
             size={18}
@@ -372,8 +372,12 @@ const MaterialReturnPage: React.FC = () => {
 
   return (
     <PageContainer
-      title='物料退库管理'
-      subtitle='管理物料退库记录,包括退库单号、工单、退库人、退库原因等'
+      autoTitle
+      autoBreadcrumbs
+      headerProps={{
+        pageIcon: <Undo2 style={{ width: 20, height: 20 }} />,
+        pageGradient: 'linear-gradient(135deg, #EF4444 0%, #B91C1C 100%)',
+      }}
     >
       <ListPageTemplate
         title=''

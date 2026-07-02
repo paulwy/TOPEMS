@@ -9,17 +9,19 @@ import { useAppStore } from '@/store';
 vi.mock('@/api/report');
 vi.mock('@/store', () => ({
   useAppStore: vi.fn((selector?: any) =>
-    selector ? selector({
-      addNotification: mockAddNotification,
-      notifications: [],
-      user: null,
-      theme: 'light',
-    }) : {
-      addNotification: mockAddNotification,
-      notifications: [],
-      user: null,
-      theme: 'light',
-    }
+    selector
+      ? selector({
+          addNotification: mockAddNotification,
+          notifications: [],
+          user: null,
+          theme: 'light',
+        })
+      : {
+          addNotification: mockAddNotification,
+          notifications: [],
+          user: null,
+          theme: 'light',
+        }
   ),
 }));
 
@@ -56,17 +58,19 @@ describe('ReportListPage', () => {
   beforeEach(() => {
     vi.clearAllMocks();
     (useAppStore as vi.Mock).mockImplementation((selector?: any) =>
-      selector ? selector({
-        addNotification: mockAddNotification,
-        notifications: [],
-        user: null,
-        theme: 'light',
-      }) : {
-        addNotification: mockAddNotification,
-        notifications: [],
-        user: null,
-        theme: 'light',
-      }
+      selector
+        ? selector({
+            addNotification: mockAddNotification,
+            notifications: [],
+            user: null,
+            theme: 'light',
+          })
+        : {
+            addNotification: mockAddNotification,
+            notifications: [],
+            user: null,
+            theme: 'light',
+          }
     );
     (reportApi.listReports as vi.Mock).mockResolvedValue({
       success: true,
@@ -81,7 +85,7 @@ describe('ReportListPage', () => {
   it('should render page title', async () => {
     renderWithProviders(<ReportListPage />);
     await waitFor(() => {
-      expect(screen.getByText('报表中心')).toBeInTheDocument();
+      expect(screen.getByRole('heading', { name: '报表中心' })).toBeInTheDocument();
     });
   });
 
@@ -106,7 +110,7 @@ describe('ReportListPage', () => {
     renderWithProviders(<ReportListPage />);
 
     await waitFor(() => {
-      expect(screen.getByText('报表中心')).toBeInTheDocument();
+      expect(screen.getByRole('heading', { name: '报表中心' })).toBeInTheDocument();
     });
   });
 });

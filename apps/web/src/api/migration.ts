@@ -61,14 +61,14 @@ const extractMessage = (err: unknown): string => {
 export const migrationApi = {
   async listServices(): Promise<MigrationService[]> {
     try {
-      const res: ApiResponse<MigrationService[]> = await apiClient.migration.get(
-        '/api/migrations/services'
-      );
+      const res: ApiResponse<MigrationService[]> =
+        await apiClient.migration.get('/migrations/services');
       if (res && res.success && Array.isArray(res.data)) {
         return res.data;
       }
       throw new Error((res && res.message) || '获取服务列表失败');
     } catch (err: unknown) {
+      console.error(`[MigrationAPI] listServices failed: ${extractMessage(err)}`);
       throw new Error(extractMessage(err));
     }
   },
@@ -79,7 +79,7 @@ export const migrationApi = {
   ): Promise<MigrationApplyResult> {
     try {
       const res: ApiResponse<MigrationApplyResult> = await apiClient.migration.post(
-        `/api/migrations/services/${encodeURIComponent(serviceName)}/apply`,
+        `/migrations/services/${encodeURIComponent(serviceName)}/apply`,
         { type }
       );
       if (res && res.success && res.data) {
@@ -94,7 +94,7 @@ export const migrationApi = {
   async rollbackMigration(serviceName: string, version?: string): Promise<RollbackResult> {
     try {
       const res: ApiResponse<RollbackResult> = await apiClient.migration.post(
-        `/api/migrations/services/${encodeURIComponent(serviceName)}/rollback`,
+        `/migrations/services/${encodeURIComponent(serviceName)}/rollback`,
         { version }
       );
       if (res && res.success && res.data) {
@@ -107,10 +107,9 @@ export const migrationApi = {
   },
 
   async getMigrationStatus(serviceName: string): Promise<MigrationStatus> {
+    const requestPath = `/migrations/services/${encodeURIComponent(serviceName)}/status`;
     try {
-      const res: ApiResponse<MigrationStatus> = await apiClient.migration.get(
-        `/api/migrations/services/${encodeURIComponent(serviceName)}/status`
-      );
+      const res: ApiResponse<MigrationStatus> = await apiClient.migration.get(requestPath);
       if (res && res.success && res.data) {
         return {
           pending: Array.isArray(res.data.pending) ? res.data.pending : [],
@@ -119,6 +118,7 @@ export const migrationApi = {
       }
       throw new Error((res && res.message) || `获取 ${serviceName} 迁移状态失败`);
     } catch (err: unknown) {
+      console.error(`[MigrationAPI] getMigrationStatus failed: ${extractMessage(err)}`);
       throw new Error(extractMessage(err));
     }
   },

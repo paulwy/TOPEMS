@@ -101,7 +101,10 @@ pub async fn query_cube(
     };
 
     let sort_by = req.sort_by.unwrap_or_else(|| {
-        req.dimensions.first().cloned().unwrap_or_else(|| "id".to_string())
+        req.dimensions
+            .first()
+            .cloned()
+            .unwrap_or_else(|| "id".to_string())
     });
     let sort_order = req.sort_order.unwrap_or_else(|| "DESC".to_string());
     let limit = req.limit.unwrap_or(100);
@@ -174,7 +177,10 @@ pub async fn slice_cube(
     };
 
     let sort_by = req.sort_by.unwrap_or_else(|| {
-        req.dimensions.first().cloned().unwrap_or_else(|| "id".to_string())
+        req.dimensions
+            .first()
+            .cloned()
+            .unwrap_or_else(|| "id".to_string())
     });
     let sort_order = req.sort_order.unwrap_or_else(|| "DESC".to_string());
     let limit = req.limit.unwrap_or(100);
@@ -248,7 +254,10 @@ pub async fn dice_cube(
     };
 
     let sort_by = req.sort_by.unwrap_or_else(|| {
-        req.dimensions.first().cloned().unwrap_or_else(|| "id".to_string())
+        req.dimensions
+            .first()
+            .cloned()
+            .unwrap_or_else(|| "id".to_string())
     });
     let sort_order = req.sort_order.unwrap_or_else(|| "DESC".to_string());
     let limit = req.limit.unwrap_or(100);
@@ -374,7 +383,10 @@ pub async fn rank_data(
     State(state): State<AppState>,
     Json(req): Json<RankQueryRequest>,
 ) -> Json<serde_json::Value> {
-    info!("Ranking data by dimension: {}, measure: {}", req.dimension, req.measure);
+    info!(
+        "Ranking data by dimension: {}, measure: {}",
+        req.dimension, req.measure
+    );
 
     let start_time = std::time::Instant::now();
     let top_n = req.top_n.unwrap_or(10);
@@ -426,7 +438,10 @@ pub async fn get_available_dimensions(
     State(state): State<AppState>,
     Path(datasource_id): Path<Uuid>,
 ) -> Json<serde_json::Value> {
-    info!("Getting available dimensions for datasource: {}", datasource_id);
+    info!(
+        "Getting available dimensions for datasource: {}",
+        datasource_id
+    );
 
     let dimensions = vec![
         serde_json::json!({
@@ -469,7 +484,10 @@ pub async fn get_available_measures(
     State(state): State<AppState>,
     Path(datasource_id): Path<Uuid>,
 ) -> Json<serde_json::Value> {
-    info!("Getting available measures for datasource: {}", datasource_id);
+    info!(
+        "Getting available measures for datasource: {}",
+        datasource_id
+    );
 
     let measures = vec![
         serde_json::json!({

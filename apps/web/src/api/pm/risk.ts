@@ -3,11 +3,11 @@ import type { ProjectRisk, RiskEvent } from './types';
 
 export const riskApi = {
   list: async (projectId: string) => {
-    return apiClient.pm.get(`/api/pm/projects/${projectId}/risks`);
+    return apiClient.pm.get(`/projects/${projectId}/risks`);
   },
 
   get: async (id: string) => {
-    return apiClient.pm.get(`/api/pm/risks/${id}`);
+    return apiClient.pm.get(`/risks/${id}`);
   },
 
   create: async (
@@ -30,7 +30,7 @@ export const riskApi = {
       created_by?: string;
     }
   ) => {
-    return apiClient.pm.post(`/api/pm/projects/${projectId}/risks`, data);
+    return apiClient.pm.post(`/projects/${projectId}/risks`, data);
   },
 
   update: async (
@@ -52,13 +52,13 @@ export const riskApi = {
       response_due_date?: string;
     }
   ) => {
-    return apiClient.pm.put(`/api/pm/risks/${id}`, data);
+    return apiClient.pm.put(`/risks/${id}`, data);
   },
 };
 
 export const riskEventApi = {
   list: async (riskId: string) => {
-    return apiClient.pm.get(`/api/pm/risks/${riskId}/events`);
+    return apiClient.pm.get(`/risks/${riskId}/events`);
   },
 
   create: async (
@@ -69,7 +69,7 @@ export const riskEventApi = {
       reported_by?: string;
     }
   ) => {
-    return apiClient.pm.post(`/api/pm/risks/${riskId}/events`, data);
+    return apiClient.pm.post(`/risks/${riskId}/events`, data);
   },
 };
 

@@ -16,64 +16,63 @@ import type {
 } from './types';
 
 export const testMethodApi = {
-  ...createCrudApi<TestMethod>('/api/lims/test-methods'),
+  ...createCrudApi<TestMethod>('/test-methods'),
 
-  listTestMethods: (params?: ListParams) =>
-    createCrudApi<TestMethod>('/api/lims/test-methods').list(params),
+  listTestMethods: (params?: ListParams) => createCrudApi<TestMethod>('/test-methods').list(params),
 
-  getTestMethod: (id: string) => createCrudApi<TestMethod>('/api/lims/test-methods').get(id),
+  getTestMethod: (id: string) => createCrudApi<TestMethod>('/test-methods').get(id),
 
   createTestMethod: (data: CreateTestMethodRequest) =>
-    createCrudApi<TestMethod>('/api/lims/test-methods').create(data),
+    createCrudApi<TestMethod>('/test-methods').create(data),
 
   updateTestMethod: (id: string, data: UpdateTestMethodRequest) =>
-    createCrudApi<TestMethod>('/api/lims/test-methods').update(id, data),
+    createCrudApi<TestMethod>('/test-methods').update(id, data),
 
-  deleteTestMethod: (id: string) => createCrudApi<TestMethod>('/api/lims/test-methods').delete(id),
+  deleteTestMethod: (id: string) => createCrudApi<TestMethod>('/test-methods').delete(id),
 
   listMethodVersions: async (methodId: string): Promise<ApiResponse<MethodVersion[]>> => {
-    return apiClient.lims.get(`/api/lims/test-methods/${methodId}/versions`);
+    return apiClient.lims.get(`/test-methods/${methodId}/versions`);
   },
 
   createNewVersion: async (
     methodId: string,
     data: CreateMethodVersionRequest
   ): Promise<ApiResponse<MethodVersion>> => {
-    return apiClient.lims.post(`/api/lims/test-methods/${methodId}/new-version`, data);
+    return apiClient.lims.post(`/test-methods/${methodId}/new-version`, data);
   },
 };
 
 export const methodCategoryApi = {
   listMethodCategories: async (params?: ListParams): Promise<ApiResponse<MethodCategory[]>> => {
-    return apiClient.lims.get('/api/lims/method-categories', { params });
+    return apiClient.lims.get('/method-categories', { params });
   },
 
   createCategory: async (
     data: CreateMethodCategoryRequest
   ): Promise<ApiResponse<MethodCategory>> => {
-    return apiClient.lims.post('/api/lims/method-categories', data);
+    return apiClient.lims.post('/method-categories', data);
   },
 
   updateCategory: async (
     id: string,
     data: UpdateMethodCategoryRequest
   ): Promise<ApiResponse<MethodCategory>> => {
-    return apiClient.lims.put(`/api/lims/method-categories/${id}`, data);
+    return apiClient.lims.put(`/method-categories/${id}`, data);
   },
 
   deleteCategory: async (id: string): Promise<ApiResponse<string>> => {
-    return apiClient.lims.delete(`/api/lims/method-categories/${id}`);
+    return apiClient.lims.delete(`/method-categories/${id}`);
   },
 };
 
 export const methodValidationApi = {
   listMethodValidations: async (params?: ListParams): Promise<ApiResponse<MethodValidation[]>> => {
-    return apiClient.lims.get('/api/lims/method-validations', { params });
+    return apiClient.lims.get('/method-validations', { params });
   },
 
   createValidation: async (
     data: CreateMethodValidationRequest
   ): Promise<ApiResponse<MethodValidation>> => {
-    return apiClient.lims.post('/api/lims/method-validations', data);
+    return apiClient.lims.post('/method-validations', data);
   },
 };

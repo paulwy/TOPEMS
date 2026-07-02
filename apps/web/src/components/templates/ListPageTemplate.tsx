@@ -127,6 +127,12 @@ export function ListPageTemplate<T>({
   showRowNumber = false,
   striped = false,
   primaryActionButton,
+  // 移动端卡片视图属性
+  mobileCardRender,
+  mobileCardTitleKey,
+  mobileCardSubtitleKey,
+  mobileCardDisplayFields,
+  mobileCardFieldLabels,
   // 排除自定义属性的剩余props
   ...props
 }: ListPageTemplateProps<T>) {
@@ -723,6 +729,193 @@ export function ListPageTemplate<T>({
     );
   };
 
+  // 渲染移动端卡片视图
+  const shouldUseMobileCard =
+    isMobile && (Boolean(mobileCardRender) || Boolean(mobileCardTitleKey));
+
+  const renderMobileCardView = () => {
+    if (loading) {
+      return (
+        <Box sx={{ display: 'flex', flexDirection: 'column', gap: 1.5, p: 1.5 }}>
+          {[1, 2, 3, 4].map((i) => (
+            <Skeleton key={i} variant='rectangular' height={120} sx={{ borderRadius: 1 }} />
+          ))}
+        </Box>
+      );
+    }
+
+    if (!data || data.length === 0) {
+      return (
+        <Box sx={{ p: 4, textAlign: 'center' }}>
+          <Typography variant='body2' color='text.secondary'>
+            {emptyMessage}
+          </Typography>
+        </Box>
+      );
+    }
+
+    // 构建字段标签映射（从 columns 配置自动生成）
+    const autoFieldLabels: Record<string, string> = {};
+    visibleColumns.forEach((col) => {
+      autoFieldLabels[col.id] = col.label || col.id;
+    });
+    const fieldLabels = { ...autoFieldLabels, ...(mobileCardFieldLabels || {}) };
+
+    // 确定展示字段
+    const displayFields =
+      mobileCardDisplayFields ||
+      visibleColumns.filter((c) => c.id !== mobileCardTitleKey && c.id !== mobileCardSubtitleKey)
+        .slice(0, 4)
+        .map((c) => c.id);
+
+    return (
+      <Box sx={{ display: 'flex', flexDirection: 'column', gap: 1.5, p: 1.5 }}>
+        {data.map((row, index) => {
+          const rowId = getRowId ? getRowId(row) : (row as any).id ?? index;
+          const isSelected = selectedIds?.includes(rowId as string | number);
+
+          // 优先使用自定义渲染函数
+          if (mobileCardRender) {
+            return (
+              <Box
+                key={rowId}
+                onClick={() => onRowClick?.(row)}
+                sx={{
+                  cursor: onRowClick ? 'pointer' : 'default',
+                  '&:active': onRowClick ? { opacity: 0.8 } : {},
+                }}
+              >
+                {mobileCardRender(row, index)}
+              </Box>
+            );
+          }
+
+          // 默认卡片渲染
+          const rowObj = row as any;
+          const title = mobileCardTitleKey
+            ? rowObj[mobileCardTitleKey]
+            : rowObj.name || rowObj.title || rowObj.code || `项目 ${index + 1}`;
+          const subtitle = mobileCardSubtitleKey ? rowObj[mobileCardSubtitleKey] : '';
+
+          return (
+            <Box
+              key={rowId}
+              onClick={() => onRowClick?.(row)}
+              sx={{
+                cursor: onRowClick ? 'pointer' : 'default',
+                bgcolor: 'background.paper',
+                border: 1,
+                borderColor: isSelected ? 'primary.main' : 'divider',
+                borderRadius: 1,
+                p: 1.5,
+                minHeight: 44,
+                '&:active': onRowClick ? { bgcolor: 'action.hover' } : {},
+                transition: 'background-color 150ms',
+              }}
+            >
+              {/* 卡片头部：标题 + 选择框 + 行操作 */}
+              <Box
+                sx={{
+                  display: 'flex',
+                  alignItems: 'flex-start',
+                  justifyContent: 'space-between',
+                  gap: 1,
+                  mb: displayFields.length > 0 ? 1 : 0,
+                }}
+              >
+                <Box sx={{ flex: 1, minWidth: 0 }}>
+                  <Typography
+                    variant='subtitle2'
+                    sx={{
+                      fontWeight: 600,
+                      overflow: 'hidden',
+                      textOverflow: 'ellipsis',
+                      whiteSpace: 'nowrap',
+                    }}
+                  >
+                    {String(title ?? '')}
+                  </Typography>
+                  {subtitle && (
+                    <Typography
+                      variant='body2'
+                      color='text.secondary'
+                      sx={{
+                        fontSize: 12,
+                        mt: 0.25,
+                        overflow: 'hidden',
+                        textOverflow: 'ellipsis',
+                        whiteSpace: 'nowrap',
+                      }}
+                    >
+                      {String(subtitle)}
+                    </Typography>
+                  )}
+                </Box>
+                <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5 }}>
+                  {selectable && (
+                    <Checkbox
+                      size='small'
+                      checked={isSelected || false}
+                      onClick={(e) => e.stopPropagation()}
+                      onChange={() => handleSelectRow(row)}
+                      sx={{ p: 0.5 }}
+                    />
+                  )}
+                  {rowActions && rowActions.length > 0 && (
+                    <IconButton size='small' onClick={(e) => handleRowActionClick(e, row)}>
+                      <MoreHorizontal style={{ width: 18, height: 18 }} />
+                    </IconButton>
+                  )}
+                </Box>
+              </Box>
+
+              {/* 卡片内容：字段列表 */}
+              {displayFields.length > 0 && (
+                <Box sx={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 0.75 }}>
+                  {displayFields.map((field) => {
+                    const value = rowObj[field];
+                    const label = fieldLabels[field] || field;
+                    const displayValue =
+                      value == null || value === ''
+                        ? '-'
+                        : typeof value === 'boolean'
+                          ? value
+                            ? '是'
+                            : '否'
+                          : String(value);
+
+                    return (
+                      <Box key={field} sx={{ display: 'flex', flexDirection: 'column', minWidth: 0 }}>
+                        <Typography
+                          variant='caption'
+                          color='text.secondary'
+                          sx={{ fontSize: 11, fontWeight: 500 }}
+                        >
+                          {label}
+                        </Typography>
+                        <Typography
+                          variant='body2'
+                          sx={{
+                            fontSize: 13,
+                            overflow: 'hidden',
+                            textOverflow: 'ellipsis',
+                            whiteSpace: 'nowrap',
+                          }}
+                        >
+                          {displayValue}
+                        </Typography>
+                      </Box>
+                    );
+                  })}
+                </Box>
+              )}
+            </Box>
+          );
+        })}
+      </Box>
+    );
+  };
+
   return (
     <Box {...props}>
       {/* 页面头部：面包屑、标题、操作按钮 */}
@@ -884,17 +1077,24 @@ export function ListPageTemplate<T>({
       {/* 自定义头部内容 */}
       {resolvedHeaderContent}
 
-      {/* 表格 */}
-      <TableContainer
-        component={Paper}
-        sx={{ borderRadius: 2 }}
-      >
-        <Table>
-          {renderTableHead()}
-          <TableBody>{renderTableBody()}</TableBody>
-        </Table>
-        {renderPagination()}
-      </TableContainer>
+      {/* 数据展示：移动端使用卡片视图，桌面端使用表格 */}
+      {shouldUseMobileCard ? (
+        <Paper sx={{ borderRadius: 3, overflow: 'hidden' }}>
+          {renderMobileCardView()}
+          {renderPagination()}
+        </Paper>
+      ) : (
+        <TableContainer
+          component={Paper}
+          sx={{ borderRadius: 3 }}
+        >
+          <Table>
+            {renderTableHead()}
+            <TableBody>{renderTableBody()}</TableBody>
+          </Table>
+          {renderPagination()}
+        </TableContainer>
+      )}
 
       {/* 自定义底部内容 */}
       {footerContent}

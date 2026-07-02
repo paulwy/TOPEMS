@@ -77,7 +77,8 @@ export const AppHeader: React.FC<AppHeaderProps> = ({
   const toggleTheme = useAppStore((state) => state.toggleTheme);
   const isDark = appTheme === 'dark';
 
-  const isTabletOnly = useMediaQuery(theme.breakpoints.between('sm', 'lg'));
+  // 响应式断点：优化计划要求 < 768px 隐藏 Sidebar，使用汉堡菜单
+  const isMobileNav = useMediaQuery('(max-width:767px)'); // < 768px 显示汉堡菜单按钮
 
   const [userMenuAnchorEl, setUserMenuAnchorEl] = useState<HTMLElement | null>(null);
   const userMenuOpen = Boolean(userMenuAnchorEl);
@@ -244,9 +245,9 @@ export const AppHeader: React.FC<AppHeaderProps> = ({
             </Typography>
           </Box>
 
-          {isTabletOnly && onTabletDrawerOpen && (
+          {isMobileNav && onMobileMenuOpen && (
             <IconButton
-              onClick={onTabletDrawerOpen}
+              onClick={onMobileMenuOpen}
               aria-label='打开导航菜单'
               sx={{
                 width: 36,
@@ -394,7 +395,7 @@ export const AppHeader: React.FC<AppHeaderProps> = ({
                     sx: {
                       width: 360,
                       maxHeight: 480,
-                      borderRadius: 2,
+                      borderRadius: 3,
                       mt: 1.5,
                     },
                   },

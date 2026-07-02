@@ -216,7 +216,7 @@ const ExportModal: React.FC<ExportModalProps> = ({ report, onClose }) => {
               >
                 导出报表
               </Typography>
-              <Typography sx={{ fontSize: '0.875rem', color: '#475569', marginTop: 0.5 }}>
+              <Typography sx={{ fontSize: '0.875rem', color: 'grey.600', marginTop: 0.5 }}>
                 {report.config.title}
               </Typography>
             </Box>
@@ -242,7 +242,7 @@ const ExportModal: React.FC<ExportModalProps> = ({ report, onClose }) => {
                   sx={{
                     fontSize: '0.875rem',
                     fontWeight: 'medium',
-                    color: '#334155',
+                    color: 'grey.700',
                     marginBottom: 2,
                   }}
                 >
@@ -321,7 +321,7 @@ const ExportModal: React.FC<ExportModalProps> = ({ report, onClose }) => {
                     sx={{
                       fontSize: '0.875rem',
                       fontWeight: 'medium',
-                      color: '#334155',
+                      color: 'grey.700',
                       marginBottom: 1,
                     }}
                   >
@@ -359,7 +359,7 @@ const ExportModal: React.FC<ExportModalProps> = ({ report, onClose }) => {
                         '&.Mui-checked': { color: 'primary.dark' },
                       }}
                     />
-                    <Typography sx={{ fontSize: '0.875rem', color: '#334155' }}>
+                    <Typography sx={{ fontSize: '0.875rem', color: 'grey.700' }}>
                       包含表头
                     </Typography>
                   </Box>
@@ -386,26 +386,26 @@ const ExportModal: React.FC<ExportModalProps> = ({ report, onClose }) => {
                     sx={{
                       fontSize: '0.875rem',
                       fontWeight: 'medium',
-                      color: '#334155',
+                      color: 'grey.700',
                     }}
                   >
                     导出预览
                   </Typography>
                 </Box>
                 <Box sx={{ display: 'flex', flexDirection: 'column', gap: 0.5 }}>
-                  <Typography sx={{ fontSize: '0.875rem', color: '#475569' }}>
+                  <Typography sx={{ fontSize: '0.875rem', color: 'grey.600' }}>
                     • 报表名称：{report.config.title}
                   </Typography>
-                  <Typography sx={{ fontSize: '0.875rem', color: '#475569' }}>
+                  <Typography sx={{ fontSize: '0.875rem', color: 'grey.600' }}>
                     • 数据行数：{report.row_count} 条
                   </Typography>
-                  <Typography sx={{ fontSize: '0.875rem', color: '#475569' }}>
+                  <Typography sx={{ fontSize: '0.875rem', color: 'grey.600' }}>
                     • 导出列数：{report.config.columns.length} 列
                   </Typography>
-                  <Typography sx={{ fontSize: '0.875rem', color: '#475569' }}>
+                  <Typography sx={{ fontSize: '0.875rem', color: 'grey.600' }}>
                     • 导出格式：{format.toUpperCase()}
                   </Typography>
-                  <Typography sx={{ fontSize: '0.875rem', color: '#475569' }}>
+                  <Typography sx={{ fontSize: '0.875rem', color: 'grey.600' }}>
                     • 文件名：{generateFilename()}.{format === 'excel' ? 'csv' : format}
                   </Typography>
                 </Box>
@@ -448,7 +448,7 @@ const ExportModal: React.FC<ExportModalProps> = ({ report, onClose }) => {
                   }}
                 />
               </Box>
-              <Typography sx={{ fontSize: '0.875rem', color: '#475569', marginTop: 1 }}>
+              <Typography sx={{ fontSize: '0.875rem', color: 'grey.600', marginTop: 1 }}>
                 {exportProgress}%
               </Typography>
             </Box>
@@ -479,7 +479,7 @@ const ExportModal: React.FC<ExportModalProps> = ({ report, onClose }) => {
               >
                 导出成功！
               </Typography>
-              <Typography sx={{ fontSize: '0.875rem', color: '#475569', marginTop: 1 }}>
+              <Typography sx={{ fontSize: '0.875rem', color: 'grey.600', marginTop: 1 }}>
                 文件已开始下载
               </Typography>
             </Box>
@@ -543,7 +543,7 @@ const ExportModal: React.FC<ExportModalProps> = ({ report, onClose }) => {
               sx={{
                 paddingX: 2,
                 paddingY: 1,
-                color: '#334155',
+                color: 'grey.700',
                 backgroundColor: 'grey.100',
                 borderRadius: '0.5rem',
                 '&:hover': { backgroundColor: 'border.default' },
@@ -561,7 +561,7 @@ const ExportModal: React.FC<ExportModalProps> = ({ report, onClose }) => {
                 backgroundColor: 'success.dark',
                 color: 'white',
                 borderRadius: '0.5rem',
-                '&:hover': { backgroundColor: '#15803d' },
+                '&:hover': { backgroundColor: 'success.700' },
               }}
             >
               导出

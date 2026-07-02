@@ -50,9 +50,7 @@ describe('FormFieldGroup', () => {
 
     // Find and click the collapse button (ChevronDown icon button)
     const buttons = screen.getAllByRole('button');
-    const collapseButton = buttons.find(
-      (btn) => btn.querySelector('svg')
-    );
+    const collapseButton = buttons.find((btn) => btn.querySelector('svg'));
     expect(collapseButton).toBeTruthy();
     fireEvent.click(collapseButton!);
 

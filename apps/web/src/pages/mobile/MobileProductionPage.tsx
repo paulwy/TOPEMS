@@ -778,7 +778,7 @@ const MobileProductionPage: React.FC = () => {
                       }
                       badge={
                         <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5 }}>
-                          <Clock style={{ width: 12, height: 12, color: 'text.secondary' }} />
+                          <Clock style={{ width: 12, height: 12, color: theme.palette.text.secondary }} />
                           <Typography
                             variant='caption'
                             color='text.secondary'

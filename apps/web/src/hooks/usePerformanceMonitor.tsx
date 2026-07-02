@@ -271,7 +271,7 @@ export function PerformanceWarnings() {
         right: 16,
         backgroundColor: 'warning.light',
         border: '1px solid #fde68a',
-        borderRadius: 2,
+        borderRadius: 3,
         p: 4,
         maxWidth: 400,
         boxShadow: 3,
@@ -280,13 +280,13 @@ export function PerformanceWarnings() {
       <Typography sx={{ fontWeight: 600, color: '#92400e', mb: 2 }}>⚠️ 性能警告</Typography>
 
       {successRate < 95 && (
-        <Typography sx={{ fontSize: '0.875rem', color: '#b45309', mb: 2 }}>
+        <Typography sx={{ fontSize: '0.875rem', color: 'warning.700', mb: 2 }}>
           API 成功率: {successRate.toFixed(1)}%
         </Typography>
       )}
 
       {slowCalls.length > 0 && (
-        <Box sx={{ fontSize: '0.875rem', color: '#b45309' }}>
+        <Box sx={{ fontSize: '0.875rem', color: 'warning.700' }}>
           <Typography sx={{ fontWeight: 500, mb: 1 }}>慢 API 调用 ({slowCalls.length}):</Typography>
           <Box sx={{ pl: 4 }}>
             {slowCalls.slice(0, 3).map((call, idx) => (

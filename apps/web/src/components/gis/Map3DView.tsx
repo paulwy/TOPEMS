@@ -378,7 +378,7 @@ const Map3DView: React.FC<Map3DViewProps> = ({
             left: 16,
             bgcolor: 'rgba(0,0,0,0.5)',
             backdropFilter: 'blur(8px)',
-            borderRadius: 2,
+            borderRadius: 3,
             p: 4,
             color: 'white',
           }}
@@ -434,7 +434,7 @@ const Map3DView: React.FC<Map3DViewProps> = ({
             right: 16,
             bgcolor: 'rgba(0,0,0,0.5)',
             backdropFilter: 'blur(8px)',
-            borderRadius: 2,
+            borderRadius: 3,
             p: 3,
             color: 'white',
           }}

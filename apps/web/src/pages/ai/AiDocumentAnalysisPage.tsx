@@ -141,7 +141,9 @@ export const AiDocumentAnalysisPage: React.FC = () => {
   const handleAskQuestion = () => {
     if (!question.trim()) return;
 
-    const answer = '根据文档内容，关于您的问题：' + question + '\n\n答案如下：这是一个示例回答，实际使用时会基于文档内容进行智能问答。系统会从文档中找到最相关的段落，并综合生成准确的答案。';
+    const answer = `根据文档内容，关于您的问题：${
+      question
+    }\n\n答案如下：这是一个示例回答，实际使用时会基于文档内容进行智能问答。系统会从文档中找到最相关的段落，并综合生成准确的答案。`;
     setQaHistory((prev) => [...prev, { q: question, a: answer }]);
     setQuestion('');
   };
@@ -160,7 +162,9 @@ export const AiDocumentAnalysisPage: React.FC = () => {
   const handleTranslate = () => {
     setAnalyzing(true);
     setTimeout(() => {
-      setTranslatedText('This is the translated content of the document. In actual use, it would be the professional translation of the uploaded document.');
+      setTranslatedText(
+        'This is the translated content of the document. In actual use, it would be the professional translation of the uploaded document.'
+      );
       setAnalyzing(false);
       setAnalysisComplete(true);
     }, 1500);
@@ -186,10 +190,17 @@ export const AiDocumentAnalysisPage: React.FC = () => {
       }}
     >
       <Box sx={{ p: 3 }}>
-        <Grid container spacing={3}>
+        <Grid
+          container
+          spacing={3}
+        >
           {/* 左侧：文档选择和最近文档 */}
-          <Grid item xs={12} md={3}>
-            <Paper sx={{ p: 3, borderRadius: 2, mb: 3 }}>
+          <Grid
+            item
+            xs={12}
+            md={3}
+          >
+            <Paper sx={{ p: 3, borderRadius: 3, mb: 3 }}>
               <Typography
                 variant='subtitle1'
                 sx={{ fontWeight: 600, mb: 2 }}
@@ -200,7 +211,7 @@ export const AiDocumentAnalysisPage: React.FC = () => {
                 sx={{
                   border: '2px dashed',
                   borderColor: 'divider',
-                  borderRadius: 2,
+                  borderRadius: 3,
                   p: 3,
                   textAlign: 'center',
                   cursor: 'pointer',
@@ -250,11 +261,19 @@ export const AiDocumentAnalysisPage: React.FC = () => {
                     gap: 2,
                   }}
                 >
-                  <FileText size={20} style={{ color: '#3b82f6' }} />
+                  <FileText
+                    size={20}
+                    style={{ color: '#3b82f6' }}
+                  />
                   <Box sx={{ flex: 1, minWidth: 0 }}>
                     <Typography
                       variant='body2'
-                      sx={{ fontWeight: 500, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}
+                      sx={{
+                        fontWeight: 500,
+                        overflow: 'hidden',
+                        textOverflow: 'ellipsis',
+                        whiteSpace: 'nowrap',
+                      }}
                     >
                       {uploadedFile.name}
                     </Typography>
@@ -279,7 +298,7 @@ export const AiDocumentAnalysisPage: React.FC = () => {
               </Button>
             </Paper>
 
-            <Paper sx={{ p: 3, borderRadius: 2 }}>
+            <Paper sx={{ p: 3, borderRadius: 3 }}>
               <Typography
                 variant='subtitle1'
                 sx={{ fontWeight: 600, mb: 2 }}
@@ -305,7 +324,10 @@ export const AiDocumentAnalysisPage: React.FC = () => {
                     }}
                   >
                     <ListItemIcon sx={{ minWidth: 36 }}>
-                      <FileText size={18} style={{ color: '#ef4444' }} />
+                      <FileText
+                        size={18}
+                        style={{ color: '#ef4444' }}
+                      />
                     </ListItemIcon>
                     <ListItemText
                       primary={
@@ -318,7 +340,10 @@ export const AiDocumentAnalysisPage: React.FC = () => {
                         </Typography>
                       }
                       secondary={
-                        <Typography variant='caption' color='text.secondary'>
+                        <Typography
+                          variant='caption'
+                          color='text.secondary'
+                        >
                           {doc.size} · {doc.date}
                         </Typography>
                       }
@@ -330,8 +355,12 @@ export const AiDocumentAnalysisPage: React.FC = () => {
           </Grid>
 
           {/* 右侧：分析结果区域 */}
-          <Grid item xs={12} md={9}>
-            <Paper sx={{ borderRadius: 2, overflow: 'hidden' }}>
+          <Grid
+            item
+            xs={12}
+            md={9}
+          >
+            <Paper sx={{ borderRadius: 3, overflow: 'hidden' }}>
               {/* 标签页 */}
               <Box
                 sx={{
@@ -375,7 +404,10 @@ export const AiDocumentAnalysisPage: React.FC = () => {
                     ))}
                   </Stepper>
                   <Box sx={{ textAlign: 'center' }}>
-                    <CircularProgress size={48} sx={{ mb: 2 }} />
+                    <CircularProgress
+                      size={48}
+                      sx={{ mb: 2 }}
+                    />
                     <Typography variant='body1'>{steps[analysisStep]}...</Typography>
                     <Typography
                       variant='body2'
@@ -415,7 +447,14 @@ export const AiDocumentAnalysisPage: React.FC = () => {
                   {/* 文档摘要 */}
                   {activeTab === 'summary' && (
                     <Box>
-                      <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 2 }}>
+                      <Box
+                        sx={{
+                          display: 'flex',
+                          justifyContent: 'space-between',
+                          alignItems: 'center',
+                          mb: 2,
+                        }}
+                      >
                         <Typography
                           variant='h6'
                           sx={{ fontWeight: 600 }}
@@ -445,7 +484,7 @@ export const AiDocumentAnalysisPage: React.FC = () => {
 
                       <Paper
                         variant='outlined'
-                        sx={{ p: 3, borderRadius: 2, mb: 3 }}
+                        sx={{ p: 3, borderRadius: 3, mb: 3 }}
                       >
                         <Typography
                           variant='body1'
@@ -468,7 +507,10 @@ export const AiDocumentAnalysisPage: React.FC = () => {
                             sx={{ px: 0, py: 1, alignItems: 'flex-start' }}
                           >
                             <ListItemIcon sx={{ minWidth: 32, pt: 0.5 }}>
-                              <Lightbulb size={18} style={{ color: '#f59e0b' }} />
+                              <Lightbulb
+                                size={18}
+                                style={{ color: '#f59e0b' }}
+                              />
                             </ListItemIcon>
                             <ListItemText primary={point} />
                           </ListItem>
@@ -480,7 +522,14 @@ export const AiDocumentAnalysisPage: React.FC = () => {
                   {/* 智能翻译 */}
                   {activeTab === 'translate' && (
                     <Box>
-                      <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 3 }}>
+                      <Box
+                        sx={{
+                          display: 'flex',
+                          justifyContent: 'space-between',
+                          alignItems: 'center',
+                          mb: 3,
+                        }}
+                      >
                         <Typography
                           variant='h6'
                           sx={{ fontWeight: 600 }}
@@ -488,7 +537,10 @@ export const AiDocumentAnalysisPage: React.FC = () => {
                           智能翻译
                         </Typography>
                         <Box sx={{ display: 'flex', gap: 1, alignItems: 'center' }}>
-                          <FormControl size='small' sx={{ width: 150 }}>
+                          <FormControl
+                            size='small'
+                            sx={{ width: 150 }}
+                          >
                             <InputLabel id='translate-target-label'>目标语言</InputLabel>
                             <Select
                               labelId='translate-target-label'
@@ -515,7 +567,7 @@ export const AiDocumentAnalysisPage: React.FC = () => {
                       </Box>
                       <Paper
                         variant='outlined'
-                        sx={{ p: 3, borderRadius: 2, minHeight: 300 }}
+                        sx={{ p: 3, borderRadius: 3, minHeight: 300 }}
                       >
                         {translatedText ? (
                           <Box>
@@ -660,10 +712,22 @@ export const AiDocumentAnalysisPage: React.FC = () => {
                       >
                         信息提取
                       </Typography>
-                      <Grid container spacing={2}>
+                      <Grid
+                        container
+                        spacing={2}
+                      >
                         {['日期', '人名', '组织机构', '地点', '关键词', '金额'].map((type) => (
-                          <Grid item xs={12} sm={6} md={4} key={type}>
-                            <Card variant='outlined' sx={{ borderRadius: 2 }}>
+                          <Grid
+                            item
+                            xs={12}
+                            sm={6}
+                            md={4}
+                            key={type}
+                          >
+                            <Card
+                              variant='outlined'
+                              sx={{ borderRadius: 3 }}
+                            >
                               <CardContent>
                                 <Typography
                                   variant='subtitle2'
@@ -725,7 +789,7 @@ export const AiDocumentAnalysisPage: React.FC = () => {
                       </Box>
                       <Paper
                         variant='outlined'
-                        sx={{ p: 3, borderRadius: 2, maxHeight: 400, overflowY: 'auto' }}
+                        sx={{ p: 3, borderRadius: 3, maxHeight: 400, overflowY: 'auto' }}
                       >
                         <Typography
                           variant='body2'

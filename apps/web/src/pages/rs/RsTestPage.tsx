@@ -369,10 +369,7 @@ const RsTestPage: React.FC = () => {
   );
 
   return (
-    <PageContainer
-      title='测试管理'
-      subtitle='管理测试用例和测试计划'
-    >
+    <PageContainer>
       <ListPageTemplate<TestCase>
         title=''
         subtitle=''

@@ -13,7 +13,12 @@ use super::ApiState;
 use crate::api::audit::log_audit_event;
 use crate::models::{CreateSupplierRequest, Supplier, UpdateSupplierRequest};
 use crate::services::permission::{check_permission, ModulePermission};
-use topems_shared::{api_error, auth::Claims, redis::{CacheService, RedisCacheService}, ApiResponse, PaginationParams};
+use topems_shared::{
+    api_error,
+    auth::Claims,
+    redis::{CacheService, RedisCacheService},
+    ApiResponse, PaginationParams,
+};
 
 /// 供应商缓存 TTL: 5分钟
 const CACHE_TTL_SECONDS: u64 = 300;
@@ -29,7 +34,12 @@ fn supplier_cache_key(id: &Uuid) -> String {
 }
 
 /// 构建供应商列表缓存 key
-fn suppliers_list_cache_key(page: i64, page_size: i64, search: &Option<String>, status: &Option<String>) -> String {
+fn suppliers_list_cache_key(
+    page: i64,
+    page_size: i64,
+    search: &Option<String>,
+    status: &Option<String>,
+) -> String {
     let search_pattern = search.clone().map(|s| format!("%{}%", s));
     format!(
         "{}:page:{}:size:{}:search:{:?}:status:{:?}",
@@ -120,7 +130,9 @@ async fn list_suppliers(
 
             if let Some(cache) = &state.cache {
                 if let Ok(serialized) = serde_json::to_string(&response_data) {
-                    let _ = cache.set(&cache_key, &serialized, Some(CACHE_TTL_SECONDS)).await;
+                    let _ = cache
+                        .set(&cache_key, &serialized, Some(CACHE_TTL_SECONDS))
+                        .await;
                 }
             }
 
@@ -248,7 +260,9 @@ async fn get_supplier(
         Ok(Some(supplier)) => {
             if let Some(cache) = &state.cache {
                 if let Ok(serialized) = serde_json::to_string(&supplier) {
-                    let _ = cache.set(&cache_key, &serialized, Some(CACHE_TTL_SECONDS)).await;
+                    let _ = cache
+                        .set(&cache_key, &serialized, Some(CACHE_TTL_SECONDS))
+                        .await;
                 }
             }
             Json(ApiResponse::success(supplier, "获取供应商成功"))
@@ -433,7 +447,9 @@ async fn delete_supplier(
 async fn clear_supplier_caches(cache: &Option<Arc<RedisCacheService>>) {
     if let Some(cache) = cache {
         let _ = cache.delete(&format!("{}:*", CACHE_PREFIX_SUPPLIER)).await;
-        let _ = cache.delete(&format!("{}:*", CACHE_PREFIX_SUPPLIERS_LIST)).await;
+        let _ = cache
+            .delete(&format!("{}:*", CACHE_PREFIX_SUPPLIERS_LIST))
+            .await;
         tracing::debug!("🗑️ 供应商缓存已清除");
     }
 }

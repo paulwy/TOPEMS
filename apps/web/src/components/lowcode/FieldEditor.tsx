@@ -104,22 +104,27 @@ export const FieldEditor: React.FC<FieldEditorProps> = ({
     onSave(formData);
   };
 
-  const isSystemField = field?.isSystem || systemFieldTypes.includes(field?.type || 'string' as FieldType);
+  const isSystemField =
+    field?.isSystem || systemFieldTypes.includes(field?.type || ('string' as FieldType));
   const needsOptions = formData.type === 'select' || formData.type === 'multiSelect';
   const needsRelation = formData.type === 'relation' || formData.type === 'multiRelation';
   const needsLength = formData.type === 'string';
-  const needsPrecision = formData.type === 'float' || formData.type === 'currency' || formData.type === 'percent';
+  const needsPrecision =
+    formData.type === 'float' || formData.type === 'currency' || formData.type === 'percent';
 
   const categories = Array.from(new Set(fieldTypeOptions.map((o) => o.category)));
 
   return (
     <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2, p: 2 }}>
       <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-        <Typography variant="h6">
+        <Typography variant='h6'>
           {isNew ? '新增字段' : isSystemField ? '系统字段' : '编辑字段'}
         </Typography>
         {!isNew && !isSystemField && onDelete && (
-          <IconButton color="error" onClick={() => onDelete(field!.id)}>
+          <IconButton
+            color='error'
+            onClick={() => onDelete(field!.id)}
+          >
             <Trash2 style={{ width: 20, height: 20 }} />
           </IconButton>
         )}
@@ -128,37 +133,44 @@ export const FieldEditor: React.FC<FieldEditorProps> = ({
       <Divider />
 
       <TextField
-        label="字段名称"
+        label='字段名称'
         value={formData.name || ''}
         onChange={(e) => handleChange('name', e.target.value)}
         disabled={isSystemField}
-        size="small"
-        helperText="英文标识，用于代码中引用"
+        size='small'
+        helperText='英文标识，用于代码中引用'
       />
 
       <TextField
-        label="字段显示名"
+        label='字段显示名'
         value={formData.label || ''}
         onChange={(e) => handleChange('label', e.target.value)}
         disabled={isSystemField}
-        size="small"
+        size='small'
       />
 
-      <FormControl size="small">
+      <FormControl size='small'>
         <InputLabel>字段类型</InputLabel>
         <Select
           value={formData.type || 'string'}
-          label="字段类型"
+          label='字段类型'
           onChange={(e) => handleChange('type', e.target.value as FieldType)}
           disabled={isSystemField}
         >
           {categories.map((category) => (
-            <MenuItem key={category} value="" disabled>
+            <MenuItem
+              key={category}
+              value=''
+              disabled
+            >
               <em>{category}</em>
             </MenuItem>
           ))}
           {fieldTypeOptions.map((opt) => (
-            <MenuItem key={opt.value} value={opt.value}>
+            <MenuItem
+              key={opt.value}
+              value={opt.value}
+            >
               &nbsp;&nbsp;{opt.label}
             </MenuItem>
           ))}
@@ -167,33 +179,33 @@ export const FieldEditor: React.FC<FieldEditorProps> = ({
 
       {needsLength && (
         <TextField
-          label="长度"
-          type="number"
+          label='长度'
+          type='number'
           value={formData.length || 255}
           onChange={(e) => handleChange('length', Number(e.target.value))}
           disabled={isSystemField}
-          size="small"
+          size='small'
         />
       )}
 
       {needsPrecision && (
         <Box sx={{ display: 'flex', gap: 2 }}>
           <TextField
-            label="精度"
-            type="number"
+            label='精度'
+            type='number'
             value={formData.precision || 10}
             onChange={(e) => handleChange('precision', Number(e.target.value))}
             disabled={isSystemField}
-            size="small"
+            size='small'
             sx={{ flex: 1 }}
           />
           <TextField
-            label="小数位数"
-            type="number"
+            label='小数位数'
+            type='number'
             value={formData.scale || 2}
             onChange={(e) => handleChange('scale', Number(e.target.value))}
             disabled={isSystemField}
-            size="small"
+            size='small'
             sx={{ flex: 1 }}
           />
         </Box>
@@ -201,33 +213,42 @@ export const FieldEditor: React.FC<FieldEditorProps> = ({
 
       {needsOptions && (
         <Box>
-          <Typography variant="subtitle2" gutterBottom>选项配置</Typography>
+          <Typography
+            variant='subtitle2'
+            gutterBottom
+          >
+            选项配置
+          </Typography>
           <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 1, mb: 2 }}>
             {(formData.options || []).map((opt, idx) => (
               <Chip
                 key={idx}
                 label={`${opt.label} (${opt.value})`}
                 onDelete={() => handleRemoveOption(idx)}
-                size="small"
+                size='small'
               />
             ))}
           </Box>
           <Box sx={{ display: 'flex', gap: 1 }}>
             <TextField
-              label="显示名"
+              label='显示名'
               value={newOptionLabel}
               onChange={(e) => setNewOptionLabel(e.target.value)}
-              size="small"
+              size='small'
               sx={{ flex: 1 }}
             />
             <TextField
-              label="值"
+              label='值'
               value={newOptionValue}
               onChange={(e) => setNewOptionValue(e.target.value)}
-              size="small"
+              size='small'
               sx={{ flex: 1 }}
             />
-            <Button variant="outlined" startIcon={<Plus style={{ width: 16, height: 16 }} />} onClick={handleAddOption}>
+            <Button
+              variant='outlined'
+              startIcon={<Plus style={{ width: 16, height: 16 }} />}
+              onClick={handleAddOption}
+            >
               添加
             </Button>
           </Box>
@@ -236,16 +257,19 @@ export const FieldEditor: React.FC<FieldEditorProps> = ({
 
       {needsRelation && (
         <>
-          <FormControl size="small">
+          <FormControl size='small'>
             <InputLabel>关联模型</InputLabel>
             <Select
               value={formData.relationModelId || ''}
-              label="关联模型"
+              label='关联模型'
               onChange={(e) => handleChange('relationModelId', e.target.value)}
               disabled={isSystemField}
             >
               {models.map((m) => (
-                <MenuItem key={m.id} value={m.id}>
+                <MenuItem
+                  key={m.id}
+                  value={m.id}
+                >
                   {m.label}
                 </MenuItem>
               ))}
@@ -253,25 +277,30 @@ export const FieldEditor: React.FC<FieldEditorProps> = ({
           </FormControl>
 
           <TextField
-            label="关联显示字段"
+            label='关联显示字段'
             value={formData.relationField || ''}
             onChange={(e) => handleChange('relationField', e.target.value)}
             disabled={isSystemField}
-            size="small"
+            size='small'
           />
         </>
       )}
 
       <TextField
-        label="默认值"
+        label='默认值'
         value={formData.defaultValue?.toString() || ''}
         onChange={(e) => handleChange('defaultValue', e.target.value)}
         disabled={isSystemField}
-        size="small"
+        size='small'
       />
 
       <Box>
-        <Typography variant="subtitle2" gutterBottom>属性设置</Typography>
+        <Typography
+          variant='subtitle2'
+          gutterBottom
+        >
+          属性设置
+        </Typography>
         <Box sx={{ display: 'flex', flexDirection: 'column' }}>
           <FormControlLabel
             control={
@@ -281,7 +310,7 @@ export const FieldEditor: React.FC<FieldEditorProps> = ({
                 disabled={isSystemField}
               />
             }
-            label="必填"
+            label='必填'
           />
           <FormControlLabel
             control={
@@ -291,7 +320,7 @@ export const FieldEditor: React.FC<FieldEditorProps> = ({
                 disabled={isSystemField}
               />
             }
-            label="唯一"
+            label='唯一'
           />
           <FormControlLabel
             control={
@@ -301,7 +330,7 @@ export const FieldEditor: React.FC<FieldEditorProps> = ({
                 disabled={isSystemField}
               />
             }
-            label="可搜索"
+            label='可搜索'
           />
           <FormControlLabel
             control={
@@ -311,17 +340,17 @@ export const FieldEditor: React.FC<FieldEditorProps> = ({
                 disabled={isSystemField}
               />
             }
-            label="可排序"
+            label='可排序'
           />
         </Box>
       </Box>
 
       <TextField
-        label="描述"
+        label='描述'
         value={formData.description || ''}
         onChange={(e) => handleChange('description', e.target.value)}
         disabled={isSystemField}
-        size="small"
+        size='small'
         multiline
         rows={2}
       />
@@ -331,7 +360,10 @@ export const FieldEditor: React.FC<FieldEditorProps> = ({
       <Box sx={{ display: 'flex', justifyContent: 'flex-end', gap: 1 }}>
         <Button onClick={onCancel}>取消</Button>
         {!isSystemField && (
-          <Button variant="contained" onClick={handleSave}>
+          <Button
+            variant='contained'
+            onClick={handleSave}
+          >
             {isNew ? '添加' : '保存'}
           </Button>
         )}

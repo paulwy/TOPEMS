@@ -23,12 +23,7 @@ import {
 } from '@mui/material';
 import { PageContainer } from '@/components/common';
 import React, { useState, useEffect, useMemo, useCallback } from 'react';
-import type {
-  Team,
-  TeamMember,
-  CreateTeamRequest,
-  UpdateTeamRequest,
-} from '@/api/mes';
+import type { Team, TeamMember, CreateTeamRequest, UpdateTeamRequest } from '@/api/mes';
 import { mesApi } from '@/api/mes';
 import { useAppStore } from '@/store';
 import { LoadingSpinner } from '@/components/common/LoadingSpinner';
@@ -38,13 +33,7 @@ import {
   type RowAction,
   type FilterConfig,
 } from '@/components/templates';
-import {
-  Plus,
-  Edit,
-  Trash2,
-  Eye,
-  Users,
-} from 'lucide-react';
+import { Plus, Edit, Trash2, Eye, Users } from 'lucide-react';
 import { apiLogger } from '@/utils/logger';
 
 const TeamManagementPage: React.FC = () => {
@@ -200,11 +189,14 @@ const TeamManagementPage: React.FC = () => {
     setShowDialog(true);
   }, []);
 
-  const handleViewDetail = useCallback((team: Team) => {
-    setSelectedTeam(team);
-    loadTeamMembers(team.id);
-    setShowDetailDialog(true);
-  }, [loadTeamMembers]);
+  const handleViewDetail = useCallback(
+    (team: Team) => {
+      setSelectedTeam(team);
+      loadTeamMembers(team.id);
+      setShowDetailDialog(true);
+    },
+    [loadTeamMembers]
+  );
 
   const resetForm = () => {
     setSelectedTeam(null);
@@ -225,7 +217,7 @@ const TeamManagementPage: React.FC = () => {
         color: string;
       }
     > = {
-      active: { label: '活跃', bg: 'success.lighter', color: '#15803d' },
+      active: { label: '活跃', bg: 'success.lighter', color: 'success.700' },
       inactive: { label: '停用', bg: 'grey.100', color: 'text.secondary' },
     };
     const s = statusMap[status] || { label: status, bg: 'grey.100', color: 'text.secondary' };
@@ -334,7 +326,7 @@ const TeamManagementPage: React.FC = () => {
         mb: 3,
       }}
     >
-      <Box sx={{ p: 2, bgcolor: 'grey.100', borderRadius: 2 }}>
+      <Box sx={{ p: 2, bgcolor: 'grey.100', borderRadius: 3 }}>
         <Typography
           variant='body2'
           sx={{ color: 'text.secondary' }}
@@ -348,7 +340,7 @@ const TeamManagementPage: React.FC = () => {
           {stats.total}
         </Typography>
       </Box>
-      <Box sx={{ p: 2, bgcolor: 'success.lighter', borderRadius: 2 }}>
+      <Box sx={{ p: 2, bgcolor: 'success.lighter', borderRadius: 3 }}>
         <Typography
           variant='body2'
           sx={{ color: 'text.secondary' }}
@@ -362,7 +354,7 @@ const TeamManagementPage: React.FC = () => {
           {stats.active}
         </Typography>
       </Box>
-      <Box sx={{ p: 2, bgcolor: 'grey.100', borderRadius: 2 }}>
+      <Box sx={{ p: 2, bgcolor: 'grey.100', borderRadius: 3 }}>
         <Typography
           variant='body2'
           sx={{ color: 'text.secondary' }}
@@ -376,7 +368,7 @@ const TeamManagementPage: React.FC = () => {
           {stats.inactive}
         </Typography>
       </Box>
-      <Box sx={{ p: 2, bgcolor: '#e0e7ff', borderRadius: 2 }}>
+      <Box sx={{ p: 2, bgcolor: '#e0e7ff', borderRadius: 3 }}>
         <Typography
           variant='body2'
           sx={{ color: 'text.secondary' }}
@@ -385,7 +377,7 @@ const TeamManagementPage: React.FC = () => {
         </Typography>
         <Typography
           variant='h5'
-          sx={{ fontWeight: 700, color: '#4338ca' }}
+          sx={{ fontWeight: 700, color: 'secondary.700' }}
         >
           {stats.total_members}
         </Typography>
@@ -397,6 +389,10 @@ const TeamManagementPage: React.FC = () => {
     <PageContainer
       title='班组管理'
       subtitle='管理生产班组信息,包括班组编码、名称、类型、成员等'
+      headerProps={{
+        pageIcon: <Users style={{ width: 20, height: 20 }} />,
+        pageGradient: 'linear-gradient(135deg, #10B981 0%, #059669 100%)',
+      }}
     >
       <ListPageTemplate
         title=''
@@ -480,7 +476,10 @@ const TeamManagementPage: React.FC = () => {
               </Box>
               <Box sx={{ display: 'flex', flexDirection: 'column', gap: 1 }}>
                 <InputLabel htmlFor='team_type'>班组类型</InputLabel>
-                <FormControl fullWidth size='small'>
+                <FormControl
+                  fullWidth
+                  size='small'
+                >
                   <Select
                     id='team_type'
                     value={formData.team_type || 'production'}
@@ -499,9 +498,7 @@ const TeamManagementPage: React.FC = () => {
                   id='work_station_id'
                   size='small'
                   value={formData.work_station_id || ''}
-                  onChange={(e) =>
-                    setFormData({ ...formData, work_station_id: e.target.value })
-                  }
+                  onChange={(e) => setFormData({ ...formData, work_station_id: e.target.value })}
                 />
               </Box>
               <Box sx={{ display: 'flex', flexDirection: 'column', gap: 1 }}>
@@ -609,7 +606,10 @@ const TeamManagementPage: React.FC = () => {
                 {membersLoading ? (
                   <LoadingSpinner />
                 ) : (
-                  <TableContainer component={Paper} variant='outlined'>
+                  <TableContainer
+                    component={Paper}
+                    variant='outlined'
+                  >
                     <Table size='small'>
                       <TableHead>
                         <TableRow>
@@ -648,11 +648,9 @@ const TeamManagementPage: React.FC = () => {
                                   label={member.status === 'active' ? '在职' : '离职'}
                                   sx={{
                                     backgroundColor:
-                                      member.status === 'active'
-                                        ? 'success.lighter'
-                                        : 'grey.100',
+                                      member.status === 'active' ? 'success.lighter' : 'grey.100',
                                     color:
-                                      member.status === 'active' ? '#15803d' : 'text.secondary',
+                                      member.status === 'active' ? 'success.700' : 'text.secondary',
                                     fontWeight: 500,
                                   }}
                                 />

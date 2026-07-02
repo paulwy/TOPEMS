@@ -1,4 +1,9 @@
-use axum::{extract::Path, extract::State, routing::{delete, get, post, put}, Json, Router};
+use axum::{
+    extract::Path,
+    extract::State,
+    routing::{delete, get, post, put},
+    Json, Router,
+};
 use uuid::Uuid;
 
 use crate::AppState;
@@ -6,13 +11,17 @@ use topems_shared::ApiResponse;
 
 pub fn create_routes() -> Router<AppState> {
     Router::new()
-        .route("/api/pdm/production-steps", get(list_steps).post(create_step))
-        .route("/api/pdm/production-steps/{id}", get(get_step).put(update_step).delete(delete_step))
+        .route(
+            "/api/pdm/production-steps",
+            get(list_steps).post(create_step),
+        )
+        .route(
+            "/api/pdm/production-steps/{id}",
+            get(get_step).put(update_step).delete(delete_step),
+        )
 }
 
-pub async fn list_steps(
-    State(_state): State<AppState>,
-) -> Json<ApiResponse<serde_json::Value>> {
+pub async fn list_steps(State(_state): State<AppState>) -> Json<ApiResponse<serde_json::Value>> {
     tracing::info!("list_steps called");
     Json(ApiResponse::success(
         serde_json::json!({"steps": [], "total": 0}),
@@ -36,10 +45,7 @@ pub async fn get_step(
     Path(_id): Path<Uuid>,
 ) -> Json<ApiResponse<serde_json::Value>> {
     tracing::info!("get_step called");
-    Json(ApiResponse::success(
-        serde_json::json!({}),
-        "获取成功",
-    ))
+    Json(ApiResponse::success(serde_json::json!({}), "获取成功"))
 }
 
 pub async fn update_step(
@@ -48,10 +54,7 @@ pub async fn update_step(
     Json(_req): Json<serde_json::Value>,
 ) -> Json<ApiResponse<serde_json::Value>> {
     tracing::info!("update_step called");
-    Json(ApiResponse::success(
-        serde_json::json!({}),
-        "更新成功",
-    ))
+    Json(ApiResponse::success(serde_json::json!({}), "更新成功"))
 }
 
 pub async fn delete_step(

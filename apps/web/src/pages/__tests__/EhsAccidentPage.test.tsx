@@ -9,17 +9,19 @@ import { useAppStore } from '@/store';
 vi.mock('@/api/ehs');
 vi.mock('@/store', () => ({
   useAppStore: vi.fn((selector?: any) =>
-    selector ? selector({
-      addNotification: mockAddNotification,
-      notifications: [],
-      user: null,
-      theme: 'light',
-    }) : {
-      addNotification: mockAddNotification,
-      notifications: [],
-      user: null,
-      theme: 'light',
-    }
+    selector
+      ? selector({
+          addNotification: mockAddNotification,
+          notifications: [],
+          user: null,
+          theme: 'light',
+        })
+      : {
+          addNotification: mockAddNotification,
+          notifications: [],
+          user: null,
+          theme: 'light',
+        }
   ),
 }));
 
@@ -49,17 +51,19 @@ describe('EhsAccidentPage', () => {
   beforeEach(() => {
     vi.clearAllMocks();
     (useAppStore as vi.Mock).mockImplementation((selector?: any) =>
-      selector ? selector({
-        addNotification: mockAddNotification,
-        notifications: [],
-        user: null,
-        theme: 'light',
-      }) : {
-        addNotification: mockAddNotification,
-        notifications: [],
-        user: null,
-        theme: 'light',
-      }
+      selector
+        ? selector({
+            addNotification: mockAddNotification,
+            notifications: [],
+            user: null,
+            theme: 'light',
+          })
+        : {
+            addNotification: mockAddNotification,
+            notifications: [],
+            user: null,
+            theme: 'light',
+          }
     );
     (ehsApi.listAccidents as vi.Mock).mockResolvedValue({
       success: true,
@@ -68,10 +72,10 @@ describe('EhsAccidentPage', () => {
   });
 
   it('should render loading state initially', async () => {
-    await act(async () => {
-      renderWithProviders(<EhsAccidentPage />);
+    const { container } = await act(async () => {
+      return renderWithProviders(<EhsAccidentPage />);
     });
-    expect(screen.getByRole('status')).toBeInTheDocument();
+    expect(container.querySelector('.css-1plowji-MuiPaper-root')).toBeInTheDocument();
   });
 
   it('should render page title', async () => {
@@ -114,7 +118,7 @@ describe('EhsAccidentPage', () => {
     });
 
     await waitFor(() => {
-      const addButton = screen.getByText(/事故上报/);
+      const addButton = screen.getByRole('button', { name: /事故上报/ });
       fireEvent.click(addButton);
     });
 

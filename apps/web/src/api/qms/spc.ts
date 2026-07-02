@@ -20,13 +20,13 @@ import {
 
 export const spcApi = {
   listSpcCharts: async (): Promise<ApiResponse<SpcChart[]>> => {
-    const response = await apiClient.qms.get<{ charts?: SpcChartBackend[] }>('/api/qms/spc/charts');
+    const response = await apiClient.qms.get<{ charts?: SpcChartBackend[] }>('/spc/charts');
     const adaptedData = (response.data?.charts || []).map(adaptSpcChartToFrontend);
     return { ...response, data: adaptedData };
   },
 
   getSpcChart: async (id: string): Promise<ApiResponse<SpcChart>> => {
-    const response = await apiClient.qms.get<SpcChartBackend>(`/api/qms/spc/charts/${id}`);
+    const response = await apiClient.qms.get<SpcChartBackend>(`/spc/charts/${id}`);
     return {
       ...response,
       data: response.data ? adaptSpcChartToFrontend(response.data) : undefined,
@@ -35,7 +35,7 @@ export const spcApi = {
 
   createSpcChart: async (data: CreateSpcChartRequest): Promise<ApiResponse<SpcChart>> => {
     const backendData = adaptSpcChartToBackend(data);
-    const response = await apiClient.qms.post<SpcChartBackend>('/api/qms/spc/charts', backendData);
+    const response = await apiClient.qms.post<SpcChartBackend>('/spc/charts', backendData);
     return {
       ...response,
       data: response.data ? adaptSpcChartToFrontend(response.data) : undefined,
@@ -63,10 +63,7 @@ export const spcApi = {
       status: data.status,
       description: data.description,
     };
-    const response = await apiClient.qms.put<SpcChartBackend>(
-      `/api/qms/spc/charts/${id}`,
-      backendData
-    );
+    const response = await apiClient.qms.put<SpcChartBackend>(`/spc/charts/${id}`, backendData);
     return {
       ...response,
       data: response.data ? adaptSpcChartToFrontend(response.data) : undefined,
@@ -74,12 +71,12 @@ export const spcApi = {
   },
 
   deleteSpcChart: async (id: string): Promise<ApiResponse<boolean>> => {
-    return apiClient.qms.delete<boolean>(`/api/qms/spc/charts/${id}`);
+    return apiClient.qms.delete<boolean>(`/spc/charts/${id}`);
   },
 
   getSpcDataPoints: async (chartId: string): Promise<ApiResponse<SpcDataPoint[]>> => {
     const response = await apiClient.qms.get<{ data_points?: SpcDataPointBackend[] }>(
-      `/api/qms/spc/charts/${chartId}/data-points`
+      `/spc/charts/${chartId}/data-points`
     );
     const adaptedData = (response.data?.data_points || []).map(adaptSpcDataPointToFrontend);
     return { ...response, data: adaptedData };
@@ -107,10 +104,7 @@ export const spcApi = {
       operator: data.operator,
       remark: data.remark,
     };
-    const response = await apiClient.qms.post<SpcDataPointBackend>(
-      '/api/qms/spc/data-points',
-      backendData
-    );
+    const response = await apiClient.qms.post<SpcDataPointBackend>('/spc/data-points', backendData);
     return {
       ...response,
       data: response.data ? adaptSpcDataPointToFrontend(response.data) : undefined,
@@ -119,7 +113,7 @@ export const spcApi = {
 
   calculateControlLimits: async (chartId: string): Promise<ApiResponse<ControlLimitsResult>> => {
     const response = await apiClient.qms.post<ControlLimitsResultBackend>(
-      `/api/qms/spc/charts/${chartId}/calculate`,
+      `/spc/charts/${chartId}/calculate`,
       {}
     );
     return {

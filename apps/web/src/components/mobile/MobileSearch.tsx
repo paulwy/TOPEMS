@@ -73,7 +73,7 @@ export function MobileSearch({
         />
         {query && (
           <IconButton
-            size="small"
+            size='small'
             onClick={() => {
               setQuery('');
               inputRef.current?.focus();
@@ -96,13 +96,16 @@ export function MobileSearch({
               mb: 0.5,
             }}
           >
-            <Typography variant="caption" color="text.secondary">
+            <Typography
+              variant='caption'
+              color='text.secondary'
+            >
               搜索历史
             </Typography>
             {onHistoryClear && (
               <Typography
-                variant="caption"
-                color="primary"
+                variant='caption'
+                color='primary'
                 sx={{ cursor: 'pointer' }}
                 onClick={onHistoryClear}
               >
@@ -110,7 +113,10 @@ export function MobileSearch({
               </Typography>
             )}
           </Box>
-          <List dense disablePadding>
+          <List
+            dense
+            disablePadding
+          >
             {history.map((item) => (
               <ListItem
                 key={item}
@@ -120,7 +126,7 @@ export function MobileSearch({
                   setFocused(false);
                 }}
                 sx={{
-                  borderRadius: 2,
+                  borderRadius: 3,
                   mx: 0.5,
                   cursor: 'pointer',
                   '&:active': { bgcolor: 'action.hover' },

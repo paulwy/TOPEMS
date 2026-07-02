@@ -68,14 +68,14 @@ impl FileServiceClient {
         // 配置带超时和代理设置的客户端
         // 对于大文件上传，使用更长的超时时间
         let client = Client::builder()
-            .timeout(std::time::Duration::from_secs(300))  // 总超时 5 分钟
-            .connect_timeout(std::time::Duration::from_secs(30))  // 连接超时 30 秒
-            .pool_idle_timeout(std::time::Duration::from_secs(60))  // 连接池空闲超时
-            .tcp_keepalive(std::time::Duration::from_secs(30))  // TCP keep-alive
-            .tcp_nodelay(true)  // 禁用 Nagle 算法，加快小包传输
+            .timeout(std::time::Duration::from_secs(300)) // 总超时 5 分钟
+            .connect_timeout(std::time::Duration::from_secs(30)) // 连接超时 30 秒
+            .pool_idle_timeout(std::time::Duration::from_secs(60)) // 连接池空闲超时
+            .tcp_keepalive(std::time::Duration::from_secs(30)) // TCP keep-alive
+            .tcp_nodelay(true) // 禁用 Nagle 算法，加快小包传输
             .build()
             .unwrap_or_else(|_| Client::new());
-        
+
         Self {
             base_url: base_url.trim_end_matches('/').to_string(),
             client,
@@ -115,11 +115,8 @@ impl FileServiceClient {
 
         let url = format!("{}/api/v1/files/upload", self.base_url);
         tracing::debug!("Uploading file to: {} ({} bytes)", url, content_length);
-        
-        let request = self
-            .client
-            .post(&url)
-            .multipart(form);
+
+        let request = self.client.post(&url).multipart(form);
 
         tracing::debug!("Sending request to file service...");
         let response = self.add_auth_header(request).send().await

@@ -1,4 +1,4 @@
-import { lazyWithRetry } from '../utils';
+import { lazyWithRetry } from './types';
 import type { RouteModuleConfig } from './types';
 
 const QmsDashboardPage = lazyWithRetry(
@@ -33,22 +33,10 @@ const QmsStandardDetailPage = lazyWithRetry(
   () => import('../../pages/qms/QmsStandardDetailPage'),
   'QmsStandardDetailPage'
 );
-const QmsApqpPage = lazyWithRetry(
-  () => import('../../pages/qms/QmsApqpPage'),
-  'QmsApqpPage'
-);
-const QmsFmeaPage = lazyWithRetry(
-  () => import('../../pages/qms/QmsFmeaPage'),
-  'QmsFmeaPage'
-);
-const QmsSpcPage = lazyWithRetry(
-  () => import('../../pages/qms/QmsSpcPage'),
-  'QmsSpcPage'
-);
-const QmsEightDPage = lazyWithRetry(
-  () => import('../../pages/qms/QmsEightDPage'),
-  'QmsEightDPage'
-);
+const QmsApqpPage = lazyWithRetry(() => import('../../pages/qms/QmsApqpPage'), 'QmsApqpPage');
+const QmsFmeaPage = lazyWithRetry(() => import('../../pages/qms/QmsFmeaPage'), 'QmsFmeaPage');
+const QmsSpcPage = lazyWithRetry(() => import('../../pages/qms/QmsSpcPage'), 'QmsSpcPage');
+const QmsEightDPage = lazyWithRetry(() => import('../../pages/qms/QmsEightDPage'), 'QmsEightDPage');
 
 export const qmsModuleConfig: RouteModuleConfig = {
   code: 'qms',
@@ -71,13 +59,6 @@ export const qmsModuleConfig: RouteModuleConfig = {
       template: 'dashboard',
       group: 'overview',
       requiredPermissions: ['qms:read'],
-      nav: {
-        label: '仪表盘',
-        icon: 'LayoutDashboard',
-        order: 0,
-        group: 'overview',
-        showInTabs: true,
-      },
     },
     {
       path: '/qms/inspection',
@@ -88,13 +69,6 @@ export const qmsModuleConfig: RouteModuleConfig = {
       template: 'list',
       group: 'business',
       requiredPermissions: ['qms:inspection:read'],
-      nav: {
-        label: '质检任务',
-        icon: 'CheckSquare',
-        order: 1,
-        group: 'business',
-        showInTabs: true,
-      },
     },
     {
       path: '/qms/quality-control',
@@ -105,12 +79,6 @@ export const qmsModuleConfig: RouteModuleConfig = {
       template: 'list',
       group: 'business',
       requiredPermissions: ['qms:quality_control:read'],
-      nav: {
-        label: '质量控制',
-        icon: 'ClipboardList',
-        order: 2,
-        group: 'business',
-      },
     },
     {
       path: '/qms/nonconformance',
@@ -121,12 +89,6 @@ export const qmsModuleConfig: RouteModuleConfig = {
       template: 'list',
       group: 'business',
       requiredPermissions: ['qms:nonconformance:read'],
-      nav: {
-        label: '不合格品',
-        icon: 'XCircle',
-        order: 3,
-        group: 'business',
-      },
     },
     {
       path: '/qms/audit-management',
@@ -137,12 +99,6 @@ export const qmsModuleConfig: RouteModuleConfig = {
       template: 'list',
       group: 'process',
       requiredPermissions: ['qms:audit:read'],
-      nav: {
-        label: '审核管理',
-        icon: 'SearchCheck',
-        order: 1,
-        group: 'process',
-      },
     },
     {
       path: '/qms/standards',
@@ -153,12 +109,6 @@ export const qmsModuleConfig: RouteModuleConfig = {
       template: 'list',
       group: 'business',
       requiredPermissions: ['qms:standard:read'],
-      nav: {
-        label: '质量标准',
-        icon: 'FileText',
-        order: 4,
-        group: 'business',
-      },
     },
     {
       path: '/qms/standards/:id',
@@ -179,12 +129,6 @@ export const qmsModuleConfig: RouteModuleConfig = {
       template: 'list',
       group: 'process',
       requiredPermissions: ['qms:apqp:read'],
-      nav: {
-        label: 'APQP管理',
-        icon: 'BookOpen',
-        order: 2,
-        group: 'process',
-      },
     },
     {
       path: '/qms/fmea',
@@ -195,12 +139,6 @@ export const qmsModuleConfig: RouteModuleConfig = {
       template: 'list',
       group: 'process',
       requiredPermissions: ['qms:fmea:read'],
-      nav: {
-        label: 'FMEA分析',
-        icon: 'AlertTriangle',
-        order: 3,
-        group: 'process',
-      },
     },
     {
       path: '/qms/spc',
@@ -211,12 +149,6 @@ export const qmsModuleConfig: RouteModuleConfig = {
       template: 'stats',
       group: 'analytics',
       requiredPermissions: ['qms:spc:read'],
-      nav: {
-        label: 'SPC统计',
-        icon: 'TrendingUp',
-        order: 1,
-        group: 'analytics',
-      },
     },
     {
       path: '/qms/eightd',
@@ -227,12 +159,6 @@ export const qmsModuleConfig: RouteModuleConfig = {
       template: 'list',
       group: 'process',
       requiredPermissions: ['qms:eightd:read'],
-      nav: {
-        label: '8D报告',
-        icon: 'FileCheck',
-        order: 4,
-        group: 'process',
-      },
     },
     {
       path: '/qms/quality-cost',
@@ -243,13 +169,6 @@ export const qmsModuleConfig: RouteModuleConfig = {
       template: 'stats',
       group: 'analytics',
       requiredPermissions: ['qms:quality_cost:read'],
-      nav: {
-        label: '质量成本',
-        icon: 'Wallet',
-        order: 2,
-        group: 'analytics',
-        showInTabs: true,
-      },
     },
   ],
 };

@@ -7,8 +7,7 @@ import React, { useState, useMemo } from 'react';
 import { logger } from '@/utils/logger';
 import { useAppStore } from '@/store';
 import { useEmployeeFinanceInfo, useUpdateEmployeeFinanceInfo } from '@/hooks/useHrmFinance';
-import {
-  TextField,
+import {TextField,
   FormLabel,
   Chip,
   Card,
@@ -20,8 +19,7 @@ import {
   MenuItem,
   Box,
   Typography,
-  Button,
-} from '@mui/material';
+  Button, useTheme} from '@mui/material';
 import {
   Banknote,
   DollarSign,
@@ -41,6 +39,7 @@ export const EmployeeFinanceTab: React.FC<EmployeeFinanceTabProps> = ({
   employeeName,
 }) => {
   const { data, isLoading, error } = useEmployeeFinanceInfo(employeeId);
+  const theme = useTheme();
   const updateFinanceInfo = useUpdateEmployeeFinanceInfo();
 
   const [isEditing, setIsEditing] = useState(false);
@@ -194,7 +193,7 @@ export const EmployeeFinanceTab: React.FC<EmployeeFinanceTabProps> = ({
           }}
           title={
             <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-              <Banknote style={{ width: 20, height: 20, color: 'primary.dark' }} />
+              <Banknote style={{ width: 20, height: 20, color: theme.palette.primary.dark }} />
               <Typography variant='subtitle1'>银行账户信息</Typography>
             </Box>
           }
@@ -278,7 +277,7 @@ export const EmployeeFinanceTab: React.FC<EmployeeFinanceTabProps> = ({
           }}
           title={
             <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-              <DollarSign style={{ width: 20, height: 20, color: 'success.dark' }} />
+              <DollarSign style={{ width: 20, height: 20, color: theme.palette.success.dark }} />
               <Typography variant='subtitle1'>薪资设置</Typography>
             </Box>
           }
@@ -582,7 +581,7 @@ export const EmployeeFinanceTab: React.FC<EmployeeFinanceTabProps> = ({
           }}
           title={
             <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-              <DollarSign style={{ width: 20, height: 20, color: 'secondary.dark' }} />
+              <DollarSign style={{ width: 20, height: 20, color: theme.palette.secondary.dark }} />
               <Typography variant='subtitle1'>费用归属</Typography>
             </Box>
           }
@@ -649,7 +648,7 @@ export const EmployeeFinanceTab: React.FC<EmployeeFinanceTabProps> = ({
           }}
           title={
             <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-              <Shield style={{ width: 20, height: 20, color: 'error.dark' }} />
+              <Shield style={{ width: 20, height: 20, color: theme.palette.error.dark }} />
               <Typography variant='subtitle1'>税务信息</Typography>
             </Box>
           }

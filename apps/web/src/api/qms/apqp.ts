@@ -19,48 +19,48 @@ export const apqpApi = {
     status?: string;
     product_name?: string;
   }): Promise<ApiResponse<ApqpProject[]>> => {
-    const response = await apiClient.qms.get<ApqpProject[]>('/api/qms/apqp/projects', { params });
+    const response = await apiClient.qms.get<ApqpProject[]>('/apqp/projects', { params });
     return response;
   },
 
   getApqpProject: async (id: string): Promise<ApiResponse<ApqpProject>> => {
-    return apiClient.qms.get<ApqpProject>(`/api/qms/apqp/projects/${id}`);
+    return apiClient.qms.get<ApqpProject>(`/apqp/projects/${id}`);
   },
 
   createApqpProject: async (data: CreateApqpProjectRequest): Promise<ApiResponse<ApqpProject>> => {
-    return apiClient.qms.post<ApqpProject>('/api/qms/apqp/projects', data);
+    return apiClient.qms.post<ApqpProject>('/apqp/projects', data);
   },
 
   updateApqpProject: async (
     id: string,
     data: UpdateApqpProjectRequest
   ): Promise<ApiResponse<ApqpProject>> => {
-    return apiClient.qms.put<ApqpProject>(`/api/qms/apqp/projects/${id}`, data);
+    return apiClient.qms.put<ApqpProject>(`/apqp/projects/${id}`, data);
   },
 
   deleteApqpProject: async (id: string): Promise<ApiResponse<boolean>> => {
-    return apiClient.qms.delete<boolean>(`/api/qms/apqp/projects/${id}`);
+    return apiClient.qms.delete<boolean>(`/apqp/projects/${id}`);
   },
 
   transitionApqpStatus: async (
     id: string,
     data: { target_status: string; operator: string; comment?: string }
   ): Promise<ApiResponse<ApqpProject>> => {
-    return apiClient.qms.post<ApqpProject>(`/api/qms/apqp/projects/${id}/transition`, data);
+    return apiClient.qms.post<ApqpProject>(`/apqp/projects/${id}/transition`, data);
   },
 
   getApqpProgress: async (id: string): Promise<ApiResponse<ApqpProgressStatistics>> => {
-    return apiClient.qms.get<ApqpProgressStatistics>(`/api/qms/apqp/projects/${id}/progress`);
+    return apiClient.qms.get<ApqpProgressStatistics>(`/apqp/projects/${id}/progress`);
   },
 
   // APQP Phases
   listApqpPhases: async (projectId?: string): Promise<ApiResponse<ApqpPhase[]>> => {
-    const url = projectId ? `/api/qms/apqp/phases?project_id=${projectId}` : '/api/qms/apqp/phases';
+    const url = projectId ? `/apqp/phases?project_id=${projectId}` : '/apqp/phases';
     return apiClient.qms.get<ApqpPhase[]>(url);
   },
 
   getApqpPhase: async (id: string): Promise<ApiResponse<ApqpPhase>> => {
-    return apiClient.qms.get<ApqpPhase>(`/api/qms/apqp/phases/${id}`);
+    return apiClient.qms.get<ApqpPhase>(`/apqp/phases/${id}`);
   },
 
   createApqpPhase: async (data: {
@@ -72,18 +72,18 @@ export const apqpApi = {
     end_date?: string;
     sort_order?: number;
   }): Promise<ApiResponse<ApqpPhase>> => {
-    return apiClient.qms.post<ApqpPhase>('/api/qms/apqp/phases', data);
+    return apiClient.qms.post<ApqpPhase>('/apqp/phases', data);
   },
 
   updateApqpPhase: async (
     id: string,
     data: Partial<ApqpPhase>
   ): Promise<ApiResponse<ApqpPhase>> => {
-    return apiClient.qms.put<ApqpPhase>(`/api/qms/apqp/phases/${id}`, data);
+    return apiClient.qms.put<ApqpPhase>(`/apqp/phases/${id}`, data);
   },
 
   deleteApqpPhase: async (id: string): Promise<ApiResponse<boolean>> => {
-    return apiClient.qms.delete<boolean>(`/api/qms/apqp/phases/${id}`);
+    return apiClient.qms.delete<boolean>(`/apqp/phases/${id}`);
   },
 
   // APQP Tasks
@@ -93,11 +93,11 @@ export const apqpApi = {
     status?: string;
     assignee?: string;
   }): Promise<ApiResponse<ApqpTask[]>> => {
-    return apiClient.qms.get<ApqpTask[]>('/api/qms/apqp/tasks', { params });
+    return apiClient.qms.get<ApqpTask[]>('/apqp/tasks', { params });
   },
 
   getApqpTask: async (id: string): Promise<ApiResponse<ApqpTask>> => {
-    return apiClient.qms.get<ApqpTask>(`/api/qms/apqp/tasks/${id}`);
+    return apiClient.qms.get<ApqpTask>(`/apqp/tasks/${id}`);
   },
 
   createApqpTask: async (data: {
@@ -111,15 +111,15 @@ export const apqpApi = {
     due_date?: string;
     sort_order?: number;
   }): Promise<ApiResponse<ApqpTask>> => {
-    return apiClient.qms.post<ApqpTask>('/api/qms/apqp/tasks', data);
+    return apiClient.qms.post<ApqpTask>('/apqp/tasks', data);
   },
 
   updateApqpTask: async (id: string, data: Partial<ApqpTask>): Promise<ApiResponse<ApqpTask>> => {
-    return apiClient.qms.put<ApqpTask>(`/api/qms/apqp/tasks/${id}`, data);
+    return apiClient.qms.put<ApqpTask>(`/apqp/tasks/${id}`, data);
   },
 
   deleteApqpTask: async (id: string): Promise<ApiResponse<boolean>> => {
-    return apiClient.qms.delete<boolean>(`/api/qms/apqp/tasks/${id}`);
+    return apiClient.qms.delete<boolean>(`/apqp/tasks/${id}`);
   },
 
   // APQP Risks
@@ -128,11 +128,11 @@ export const apqpApi = {
     status?: string;
     min_rpn?: number;
   }): Promise<ApiResponse<ApqpRisk[]>> => {
-    return apiClient.qms.get<ApqpRisk[]>('/api/qms/apqp/risks', { params });
+    return apiClient.qms.get<ApqpRisk[]>('/apqp/risks', { params });
   },
 
   getApqpRisk: async (id: string): Promise<ApiResponse<ApqpRisk>> => {
-    return apiClient.qms.get<ApqpRisk>(`/api/qms/apqp/risks/${id}`);
+    return apiClient.qms.get<ApqpRisk>(`/apqp/risks/${id}`);
   },
 
   createApqpRisk: async (data: {
@@ -147,22 +147,20 @@ export const apqpApi = {
     responsible?: string;
     target_date?: string;
   }): Promise<ApiResponse<ApqpRisk>> => {
-    return apiClient.qms.post<ApqpRisk>('/api/qms/apqp/risks', data);
+    return apiClient.qms.post<ApqpRisk>('/apqp/risks', data);
   },
 
   updateApqpRisk: async (id: string, data: Partial<ApqpRisk>): Promise<ApiResponse<ApqpRisk>> => {
-    return apiClient.qms.put<ApqpRisk>(`/api/qms/apqp/risks/${id}`, data);
+    return apiClient.qms.put<ApqpRisk>(`/apqp/risks/${id}`, data);
   },
 
   deleteApqpRisk: async (id: string): Promise<ApiResponse<boolean>> => {
-    return apiClient.qms.delete<boolean>(`/api/qms/apqp/risks/${id}`);
+    return apiClient.qms.delete<boolean>(`/apqp/risks/${id}`);
   },
 
   // APQP Approvals
   listApqpApprovals: async (projectId?: string): Promise<ApiResponse<ApqpApproval[]>> => {
-    const url = projectId
-      ? `/api/qms/apqp/approvals?project_id=${projectId}`
-      : '/api/qms/apqp/approvals';
+    const url = projectId ? `/apqp/approvals?project_id=${projectId}` : '/apqp/approvals';
     return apiClient.qms.get<ApqpApproval[]>(url);
   },
 
@@ -172,13 +170,13 @@ export const apqpApi = {
     applicant?: string;
     comment?: string;
   }): Promise<ApiResponse<ApqpApproval>> => {
-    return apiClient.qms.post<ApqpApproval>('/api/qms/apqp/approvals', data);
+    return apiClient.qms.post<ApqpApproval>('/apqp/approvals', data);
   },
 
   processApqpApproval: async (
     id: string,
     data: { approver: string; approved: boolean; comment?: string }
   ): Promise<ApiResponse<ApqpApproval>> => {
-    return apiClient.qms.post<ApqpApproval>(`/api/qms/apqp/approvals/${id}/process`, data);
+    return apiClient.qms.post<ApqpApproval>(`/apqp/approvals/${id}/process`, data);
   },
 };

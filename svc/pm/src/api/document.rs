@@ -317,11 +317,12 @@ async fn get_folder(
     State(pool): State<PgPool>,
     Path(id): Path<Uuid>,
 ) -> Json<ApiResponse<DocumentFolder>> {
-    let folder =
-        sqlx::query_as::<_, DocumentFolder>("SELECT * FROM plugin_pm.document_folders WHERE id = $1")
-            .bind(id)
-            .fetch_one(&pool)
-            .await;
+    let folder = sqlx::query_as::<_, DocumentFolder>(
+        "SELECT * FROM plugin_pm.document_folders WHERE id = $1",
+    )
+    .bind(id)
+    .fetch_one(&pool)
+    .await;
 
     match folder {
         Ok(f) => Json(ApiResponse::success(f, "获取文件夹详情成功")),

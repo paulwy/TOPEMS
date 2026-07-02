@@ -240,11 +240,11 @@ const DatabaseStructurePage: React.FC = () => {
   const getChangeTypeColor = (type: string) => {
     switch (type) {
       case 'add_column':
-        return { bgcolor: 'success.lighter', color: '#15803d' };
+        return { bgcolor: 'success.lighter', color: 'success.700' };
       case 'drop_column':
         return { bgcolor: 'error.lighter', color: 'error.darker' };
       default:
-        return { bgcolor: 'warning.light', color: '#b45309' };
+        return { bgcolor: 'warning.light', color: 'warning.700' };
     }
   };
 
@@ -274,7 +274,7 @@ const DatabaseStructurePage: React.FC = () => {
             elevation={0}
             sx={{
               p: 2,
-              borderRadius: 2,
+              borderRadius: 3,
               border: '1px solid',
               borderColor: 'divider',
               position: { md: 'sticky' },
@@ -294,7 +294,7 @@ const DatabaseStructurePage: React.FC = () => {
                     <InputAdornment position='start'>
                       <Search
                         size={16}
-                        color='#94a3b8'
+                        color='grey.400'
                       />
                     </InputAdornment>
                   ),
@@ -354,7 +354,7 @@ const DatabaseStructurePage: React.FC = () => {
                         >
                           <Table
                             size={16}
-                            color={isSelected ? 'primary.dark' : '#94a3b8'}
+                            color={isSelected ? 'primary.dark' : 'grey.400'}
                           />
                           <Typography
                             variant='body2'
@@ -387,7 +387,7 @@ const DatabaseStructurePage: React.FC = () => {
             <Paper
               elevation={0}
               sx={{
-                borderRadius: 2,
+                borderRadius: 3,
                 border: '1px solid',
                 borderColor: 'divider',
                 overflow: 'hidden',
@@ -595,7 +595,7 @@ const DatabaseStructurePage: React.FC = () => {
                                         col.is_nullable === 'YES'
                                           ? 'warning.light'
                                           : 'success.lighter',
-                                      color: col.is_nullable === 'YES' ? '#b45309' : '#15803d',
+                                      color: col.is_nullable === 'YES' ? 'warning.700' : 'success.700',
                                       fontWeight: 500,
                                       fontSize: '0.75rem',
                                     }}
@@ -646,7 +646,7 @@ const DatabaseStructurePage: React.FC = () => {
                     >
                       <Clock
                         size={48}
-                        color='#94a3b8'
+                        color='grey.400'
                       />
                       <Typography
                         color='text.secondary'
@@ -790,7 +790,7 @@ const DatabaseStructurePage: React.FC = () => {
             <Paper
               elevation={0}
               sx={{
-                borderRadius: 2,
+                borderRadius: 3,
                 border: '1px solid',
                 borderColor: 'divider',
                 p: 8,
@@ -799,7 +799,7 @@ const DatabaseStructurePage: React.FC = () => {
             >
               <Database
                 size={64}
-                color='#94a3b8'
+                color='grey.400'
                 style={{ marginBottom: 16 }}
               />
               <Typography
@@ -975,7 +975,7 @@ const DatabaseStructurePage: React.FC = () => {
             >
               <FileCode
                 size={16}
-                color='#4ade80'
+                color='success.400'
                 style={{ marginTop: 2 }}
               />
               <Box
@@ -983,7 +983,7 @@ const DatabaseStructurePage: React.FC = () => {
                 sx={{
                   m: 0,
                   fontSize: '0.875rem',
-                  color: '#4ade80',
+                  color: 'success.400',
                   fontFamily: 'ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace',
                   whiteSpace: 'pre-wrap',
                   wordBreak: 'break-all',

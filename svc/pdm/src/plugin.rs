@@ -23,8 +23,8 @@ pub struct PermissionDef {
 }
 
 pub async fn get_plugin_info() -> Json<ApiResponse<PluginInfo>> {
-    let runtime_url = std::env::var("RUNTIME_URL")
-        .unwrap_or_else(|_| "http://localhost:8031".to_string());
+    let runtime_url =
+        std::env::var("RUNTIME_URL").unwrap_or_else(|_| "http://localhost:8031".to_string());
 
     let info = PluginInfo {
         code: "pdm".to_string(),
@@ -38,13 +38,13 @@ pub async fn get_plugin_info() -> Json<ApiResponse<PluginInfo>> {
 }
 
 pub async fn plugin_health_check(State(state): State<AppState>) -> Json<ApiResponse<String>> {
-    let db_healthy = sqlx::query("SELECT 1")
-        .fetch_one(&state.pool)
-        .await
-        .is_ok();
+    let db_healthy = sqlx::query("SELECT 1").fetch_one(&state.pool).await.is_ok();
 
     if db_healthy {
-        Json(ApiResponse::success("healthy".to_string(), "Plugin is healthy"))
+        Json(ApiResponse::success(
+            "healthy".to_string(),
+            "Plugin is healthy",
+        ))
     } else {
         Json(ApiResponse::error(500, "Database connection failed"))
     }

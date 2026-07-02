@@ -362,7 +362,7 @@ const AuditLogPage: React.FC = () => {
             sx={{
               p: 2.5,
               bgcolor: 'background.paper',
-              borderRadius: 2,
+              borderRadius: 3,
               boxShadow: 1,
               display: 'flex',
               alignItems: 'center',
@@ -400,7 +400,7 @@ const AuditLogPage: React.FC = () => {
       <Box
         sx={{
           bgcolor: 'background.paper',
-          borderRadius: 2,
+          borderRadius: 3,
           boxShadow: 1,
           overflow: 'hidden',
         }}

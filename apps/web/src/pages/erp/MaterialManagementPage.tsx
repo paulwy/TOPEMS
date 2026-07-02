@@ -15,11 +15,7 @@ import {
 } from '@mui/material';
 import { PageContainer } from '@/components/common';
 import React, { useState, useEffect, useMemo, useCallback } from 'react';
-import type {
-  Material,
-  CreateMaterialRequest,
-  UpdateMaterialRequest,
-} from '@/api/erp';
+import type { Material, CreateMaterialRequest, UpdateMaterialRequest } from '@/api/erp';
 import { erpApi } from '@/api/erp';
 import { useAppStore } from '@/store';
 import { LoadingSpinner } from '@/components/common/LoadingSpinner';
@@ -29,13 +25,7 @@ import {
   type RowAction,
   type FilterConfig,
 } from '@/components/templates';
-import {
-  Plus,
-  Edit,
-  Trash2,
-  Eye,
-  Package as PackageIcon,
-} from 'lucide-react';
+import { Plus, Edit, Trash2, Eye, Package as PackageIcon } from 'lucide-react';
 import { apiLogger } from '@/utils/logger';
 
 const MaterialManagementPage: React.FC = () => {
@@ -208,7 +198,7 @@ const MaterialManagementPage: React.FC = () => {
         color: string;
       }
     > = {
-      active: { label: '启用', bg: 'success.lighter', color: '#15803d' },
+      active: { label: '启用', bg: 'success.lighter', color: 'success.700' },
       inactive: { label: '停用', bg: 'grey.100', color: 'text.secondary' },
       obsolete: { label: '淘汰', bg: 'error.lighter', color: 'error.dark' },
     };
@@ -341,35 +331,59 @@ const MaterialManagementPage: React.FC = () => {
         mb: 3,
       }}
     >
-      <Box sx={{ p: 2, bgcolor: 'primary.lighter', borderRadius: 2 }}>
-        <Typography variant='body2' sx={{ color: 'text.secondary' }}>
+      <Box sx={{ p: 2, bgcolor: 'primary.lighter', borderRadius: 3 }}>
+        <Typography
+          variant='body2'
+          sx={{ color: 'text.secondary' }}
+        >
           物料总数
         </Typography>
-        <Typography variant='h5' sx={{ fontWeight: 700 }}>
+        <Typography
+          variant='h5'
+          sx={{ fontWeight: 700 }}
+        >
           {stats.total}
         </Typography>
       </Box>
-      <Box sx={{ p: 2, bgcolor: 'success.lighter', borderRadius: 2 }}>
-        <Typography variant='body2' sx={{ color: 'text.secondary' }}>
+      <Box sx={{ p: 2, bgcolor: 'success.lighter', borderRadius: 3 }}>
+        <Typography
+          variant='body2'
+          sx={{ color: 'text.secondary' }}
+        >
           启用中
         </Typography>
-        <Typography variant='h5' sx={{ fontWeight: 700 }}>
+        <Typography
+          variant='h5'
+          sx={{ fontWeight: 700 }}
+        >
           {stats.active}
         </Typography>
       </Box>
-      <Box sx={{ p: 2, bgcolor: 'grey.100', borderRadius: 2 }}>
-        <Typography variant='body2' sx={{ color: 'text.secondary' }}>
+      <Box sx={{ p: 2, bgcolor: 'grey.100', borderRadius: 3 }}>
+        <Typography
+          variant='body2'
+          sx={{ color: 'text.secondary' }}
+        >
           已停用
         </Typography>
-        <Typography variant='h5' sx={{ fontWeight: 700 }}>
+        <Typography
+          variant='h5'
+          sx={{ fontWeight: 700 }}
+        >
           {stats.inactive}
         </Typography>
       </Box>
-      <Box sx={{ p: 2, bgcolor: 'error.lighter', borderRadius: 2 }}>
-        <Typography variant='body2' sx={{ color: 'text.secondary' }}>
+      <Box sx={{ p: 2, bgcolor: 'error.lighter', borderRadius: 3 }}>
+        <Typography
+          variant='body2'
+          sx={{ color: 'text.secondary' }}
+        >
           已淘汰
         </Typography>
-        <Typography variant='h5' sx={{ fontWeight: 700, color: 'error.dark' }}>
+        <Typography
+          variant='h5'
+          sx={{ fontWeight: 700, color: 'error.dark' }}
+        >
           {stats.obsolete}
         </Typography>
       </Box>
@@ -414,7 +428,11 @@ const MaterialManagementPage: React.FC = () => {
         getRowId={(row) => row.id}
       />
 
-      <Dialog open={showDialog} onClose={() => setShowDialog(false)} maxWidth='md'>
+      <Dialog
+        open={showDialog}
+        onClose={() => setShowDialog(false)}
+        maxWidth='md'
+      >
         <DialogTitle>{selectedMaterial ? '编辑物料' : '新增物料'}</DialogTitle>
         <DialogContent>
           <Box
@@ -581,10 +599,17 @@ const MaterialManagementPage: React.FC = () => {
               </Box>
             </Box>
             <DialogActions>
-              <Button type='button' variant='outlined' onClick={() => setShowDialog(false)}>
+              <Button
+                type='button'
+                variant='outlined'
+                onClick={() => setShowDialog(false)}
+              >
                 取消
               </Button>
-              <Button type='submit' variant='contained'>
+              <Button
+                type='submit'
+                variant='contained'
+              >
                 保存
               </Button>
             </DialogActions>
@@ -592,7 +617,11 @@ const MaterialManagementPage: React.FC = () => {
         </DialogContent>
       </Dialog>
 
-      <Dialog open={showDetailDialog} onClose={() => setShowDetailDialog(false)} maxWidth='md'>
+      <Dialog
+        open={showDetailDialog}
+        onClose={() => setShowDetailDialog(false)}
+        maxWidth='md'
+      >
         <DialogTitle>物料详情</DialogTitle>
         <DialogContent>
           {selectedMaterial && (
@@ -606,7 +635,10 @@ const MaterialManagementPage: React.FC = () => {
               >
                 <Box>
                   <InputLabel sx={{ color: 'text.secondary', fontSize: 12 }}>物料编码</InputLabel>
-                  <Box component='span' sx={{ fontWeight: 500 }}>
+                  <Box
+                    component='span'
+                    sx={{ fontWeight: 500 }}
+                  >
                     {selectedMaterial.material_code}
                   </Box>
                 </Box>
@@ -648,11 +680,15 @@ const MaterialManagementPage: React.FC = () => {
                 </Box>
                 <Box>
                   <InputLabel sx={{ color: 'text.secondary', fontSize: 12 }}>重量</InputLabel>
-                  <Box component='span'>{selectedMaterial.weight ? `${selectedMaterial.weight} kg` : '-'}</Box>
+                  <Box component='span'>
+                    {selectedMaterial.weight ? `${selectedMaterial.weight} kg` : '-'}
+                  </Box>
                 </Box>
                 <Box>
                   <InputLabel sx={{ color: 'text.secondary', fontSize: 12 }}>体积</InputLabel>
-                  <Box component='span'>{selectedMaterial.volume ? `${selectedMaterial.volume} m³` : '-'}</Box>
+                  <Box component='span'>
+                    {selectedMaterial.volume ? `${selectedMaterial.volume} m³` : '-'}
+                  </Box>
                 </Box>
                 <Box>
                   <InputLabel sx={{ color: 'text.secondary', fontSize: 12 }}>创建时间</InputLabel>

@@ -308,7 +308,11 @@ pub struct AlertConvergenceConfig {
 impl Default for AlertConvergenceConfig {
     fn default() -> Self {
         Self {
-            group_by: vec!["alertname".to_string(), "job".to_string(), "severity".to_string()],
+            group_by: vec![
+                "alertname".to_string(),
+                "job".to_string(),
+                "severity".to_string(),
+            ],
             group_wait_seconds: 30,
             group_interval_seconds: 300,
             repeat_interval_seconds: 14400,
@@ -436,7 +440,11 @@ impl MonitoringState {
             return None;
         }
 
-        if !rule.condition.operator.evaluate(value, rule.condition.threshold) {
+        if !rule
+            .condition
+            .operator
+            .evaluate(value, rule.condition.threshold)
+        {
             return None;
         }
 
@@ -707,7 +715,12 @@ impl MonitoringState {
             *category_counts.entry(alert.category).or_insert(0) += 1;
 
             if alert.triggered_at >= twenty_four_hours_ago {
-                let hour = alert.triggered_at.with_minute(0).unwrap().with_second(0).unwrap();
+                let hour = alert
+                    .triggered_at
+                    .with_minute(0)
+                    .unwrap()
+                    .with_second(0)
+                    .unwrap();
                 *hourly_counts.entry(hour).or_insert(0) += 1;
             }
         }
@@ -803,13 +816,11 @@ impl MonitoringState {
             id: "night-silence".to_string(),
             name: "夜间静默".to_string(),
             description: Some("夜间非工作时间降低告警敏感度".to_string()),
-            matchers: vec![
-                SilenceMatcher {
-                    name: "severity".to_string(),
-                    value: "P[23]".to_string(),
-                    is_regex: true,
-                },
-            ],
+            matchers: vec![SilenceMatcher {
+                name: "severity".to_string(),
+                value: "P[23]".to_string(),
+                is_regex: true,
+            }],
             starts_at: tonight,
             ends_at: tomorrow_morning,
             created_by: "system".to_string(),
@@ -1285,9 +1296,18 @@ mod tests {
         let rules = default_alert_rules();
         assert!(!rules.is_empty());
 
-        let p0_count = rules.iter().filter(|r| r.severity == AlertSeverity::P0).count();
-        let p1_count = rules.iter().filter(|r| r.severity == AlertSeverity::P1).count();
-        let p2_count = rules.iter().filter(|r| r.severity == AlertSeverity::P2).count();
+        let p0_count = rules
+            .iter()
+            .filter(|r| r.severity == AlertSeverity::P0)
+            .count();
+        let p1_count = rules
+            .iter()
+            .filter(|r| r.severity == AlertSeverity::P1)
+            .count();
+        let p2_count = rules
+            .iter()
+            .filter(|r| r.severity == AlertSeverity::P2)
+            .count();
 
         assert!(p0_count > 0, "应该有P0级别的告警规则");
         assert!(p1_count > 0, "应该有P1级别的告警规则");

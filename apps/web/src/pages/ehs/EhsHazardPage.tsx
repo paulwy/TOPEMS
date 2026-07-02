@@ -37,7 +37,7 @@ import {
 } from 'lucide-react';
 import { ListPageTemplate, type ColumnDef } from '@/components/templates';
 import { ehsApi } from '@/api/ehs';
-import { PageContainer } from '@/components/common';
+import { PageContainer } from '@/components/common/PageContainerV2';
 import type { SafetyIssue, Rectification, Verification } from '@/api/ehs';
 import { useAppStore } from '@/store';
 
@@ -167,7 +167,7 @@ const EhsHazardPage: React.FC = () => {
     const levelMap: Record<string, { bg: string; color: string; label: string }> = {
       major: { bg: 'error.lighter', color: 'error.dark', label: '重大' },
       serious: { bg: 'error.light', color: 'error.darker', label: '严重' },
-      general: { bg: '#fef9c3', color: '#ca8a04', label: '一般' },
+      general: { bg: 'warning.100', color: '#ca8a04', label: '一般' },
       minor: { bg: 'success.lighter', color: 'success.dark', label: '轻微' },
     };
     const colors = levelMap[level] || { bg: 'grey.100', color: 'text.secondary', label: level };
@@ -187,7 +187,7 @@ const EhsHazardPage: React.FC = () => {
   const getStatusBadge = (status: string) => {
     const statusMap: Record<string, { bg: string; color: string }> = {
       待整改: { bg: 'error.lighter', color: 'error.dark' },
-      整改中: { bg: '#fef9c3', color: '#ca8a04' },
+      整改中: { bg: 'warning.100', color: '#ca8a04' },
       待验收: { bg: 'primary.light', color: 'primary.dark' },
       已验收: { bg: 'success.lighter', color: 'success.dark' },
       已闭环: { bg: 'grey.100', color: 'text.secondary' },
@@ -441,10 +441,24 @@ const EhsHazardPage: React.FC = () => {
 
   const steps = ['隐患上报', '整改中', '待验收', '已验收', '已闭环'];
 
+  const headerActions = [
+    {
+      label: '上报隐患',
+      icon: <Plus style={{ width: 18, height: 18 }} />,
+      onClick: handleCreate,
+      variant: 'contained' as const,
+      color: 'error' as const,
+    },
+  ];
+
   return (
     <PageContainer
-      title='隐患管理'
-      subtitle='Safety Hazard Management'
+      headerProps={{
+        actions: headerActions,
+        pageIcon: <AlertTriangle sx={{ width: 20, height: 20 }} />,
+        pageGradient: 'linear-gradient(135deg, #EF4444 0%, #DC2626 100%)',
+      }}
+      maxWidth='xl'
     >
       <Box
         sx={{
@@ -465,7 +479,7 @@ const EhsHazardPage: React.FC = () => {
                   width: 40,
                   height: 40,
                   bgcolor: 'error.lighter',
-                  borderRadius: 2,
+                  borderRadius: 3,
                   display: 'flex',
                   alignItems: 'center',
                   justifyContent: 'center',
@@ -498,7 +512,7 @@ const EhsHazardPage: React.FC = () => {
                   width: 40,
                   height: 40,
                   bgcolor: 'error.lighter',
-                  borderRadius: 2,
+                  borderRadius: 3,
                   display: 'flex',
                   alignItems: 'center',
                   justifyContent: 'center',
@@ -531,7 +545,7 @@ const EhsHazardPage: React.FC = () => {
                   width: 40,
                   height: 40,
                   bgcolor: 'warning.light',
-                  borderRadius: 2,
+                  borderRadius: 3,
                   display: 'flex',
                   alignItems: 'center',
                   justifyContent: 'center',
@@ -564,7 +578,7 @@ const EhsHazardPage: React.FC = () => {
                   width: 40,
                   height: 40,
                   bgcolor: 'success.lighter',
-                  borderRadius: 2,
+                  borderRadius: 3,
                   display: 'flex',
                   alignItems: 'center',
                   justifyContent: 'center',
@@ -593,7 +607,6 @@ const EhsHazardPage: React.FC = () => {
 
       <ListPageTemplate
         title=''
-        subtitle=''
         columns={columns}
         data={filteredIssues}
         loading={loading}
@@ -602,14 +615,6 @@ const EhsHazardPage: React.FC = () => {
         searchPlaceholder='搜索隐患名称或编号...'
         searchValue={searchTerm}
         onSearch={(value) => setSearchTerm(value)}
-        actions={[
-          {
-            label: '上报隐患',
-            icon: <Plus style={{ width: 18, height: 18 }} />,
-            onClick: handleCreate,
-            variant: 'contained',
-          },
-        ]}
         emptyMessage='暂无隐患记录'
         onRefresh={loadIssues}
       />

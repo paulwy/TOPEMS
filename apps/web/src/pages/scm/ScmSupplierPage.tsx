@@ -167,10 +167,10 @@ const ScmSupplierPage: React.FC = () => {
                 '& .MuiRating-iconFilled': {
                   color:
                     performance.overall_score >= 80
-                      ? '#10B981'
+                      ? 'success.main'
                       : performance.overall_score >= 60
-                        ? '#F59E0B'
-                        : '#EF4444',
+                        ? 'warning.main'
+                        : 'error.main',
                 },
               }}
             />
@@ -243,7 +243,6 @@ const ScmSupplierPage: React.FC = () => {
 
   return (
     <PageContainer
-      title='供应商管理'
       headerProps={{
         pageIcon: <Truck style={{ width: 20, height: 20 }} />,
         pageGradient: 'linear-gradient(135deg, #F59E0B 0%, #D97706 100%)',

@@ -35,11 +35,7 @@ import {
 import { PageContainer } from '@/components/common';
 import { PluginCard, PluginCategoryNav } from '@/components/plugin';
 import type { Plugin, PluginCategory } from '@/api/plugin';
-import {
-  getPluginCategories,
-  listPlugins,
-  getMarketplaceSummary,
-} from '@/api/plugin';
+import { getPluginCategories, listPlugins, getMarketplaceSummary } from '@/api/plugin';
 import { usePluginStore } from '@/store/pluginStore';
 import { useAppStore } from '@/store';
 
@@ -177,7 +173,9 @@ const PluginMarketplacePage: React.FC = () => {
   if (loading) {
     return (
       <PageContainer>
-        <Box sx={{ display: 'flex', justifyContent: 'center', alignItems: 'center', minHeight: 400 }}>
+        <Box
+          sx={{ display: 'flex', justifyContent: 'center', alignItems: 'center', minHeight: 400 }}
+        >
           <CircularProgress />
         </Box>
       </PageContainer>
@@ -254,7 +252,9 @@ const PluginMarketplacePage: React.FC = () => {
 
       <Box sx={{ maxWidth: '1200px', mx: 'auto', px: 6, py: 6 }}>
         <Box sx={{ mb: 6 }}>
-          <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', mb: 3 }}>
+          <Box
+            sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', mb: 3 }}
+          >
             <Typography
               variant='h5'
               sx={{ fontWeight: 'bold' }}
@@ -489,13 +489,32 @@ const PluginMarketplacePage: React.FC = () => {
                     <Typography
                       variant='body2'
                       color='textSecondary'
-                      sx={{ mb: 2, display: '-webkit-box', WebkitLineClamp: 2, WebkitBoxOrient: 'vertical', overflow: 'hidden' }}
+                      sx={{
+                        mb: 2,
+                        display: '-webkit-box',
+                        WebkitLineClamp: 2,
+                        WebkitBoxOrient: 'vertical',
+                        overflow: 'hidden',
+                      }}
                     >
                       {plugin.description}
                     </Typography>
-                    <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+                    <Box
+                      sx={{
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'space-between',
+                      }}
+                    >
                       <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5 }}>
-                        <Star sx={{ width: 14, height: 14, color: 'warning.main', fill: 'warning.main' }} />
+                        <Star
+                          sx={{
+                            width: 14,
+                            height: 14,
+                            color: 'warning.main',
+                            fill: 'warning.main',
+                          }}
+                        />
                         <Typography
                           variant='body2'
                           sx={{ fontWeight: 'medium' }}
@@ -568,7 +587,12 @@ const PluginMarketplacePage: React.FC = () => {
                       </Box>
                       <Box sx={{ flexGrow: 1, minWidth: 0 }}>
                         <Typography
-                          sx={{ fontWeight: 'medium', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}
+                          sx={{
+                            fontWeight: 'medium',
+                            whiteSpace: 'nowrap',
+                            overflow: 'hidden',
+                            textOverflow: 'ellipsis',
+                          }}
                         >
                           {plugin.name}
                         </Typography>

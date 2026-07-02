@@ -73,17 +73,20 @@ impl WidgetCache {
     }
 
     pub fn get(&self, widget_id: &Uuid) -> Option<CachedWidgetData> {
-        self.cache.get(widget_id).map(|entry| {
-            let cached = entry.value().clone();
-            let elapsed = Utc::now().timestamp() - cached.cached_at.timestamp();
-            if elapsed > cached.ttl_seconds {
-                drop(entry);
-                self.cache.remove(widget_id);
-                None
-            } else {
-                Some(cached)
-            }
-        }).flatten()
+        self.cache
+            .get(widget_id)
+            .map(|entry| {
+                let cached = entry.value().clone();
+                let elapsed = Utc::now().timestamp() - cached.cached_at.timestamp();
+                if elapsed > cached.ttl_seconds {
+                    drop(entry);
+                    self.cache.remove(widget_id);
+                    None
+                } else {
+                    Some(cached)
+                }
+            })
+            .flatten()
     }
 
     pub fn set(&self, widget_id: Uuid, data: serde_json::Value, ttl_seconds: i64) {
@@ -242,7 +245,10 @@ pub async fn create_widget(
     State(state): State<AppState>,
     Json(req): Json<CreateWidgetRequest>,
 ) -> Json<serde_json::Value> {
-    info!("Creating widget: {} for dashboard: {}", req.name, req.dashboard_id);
+    info!(
+        "Creating widget: {} for dashboard: {}",
+        req.name, req.dashboard_id
+    );
 
     let id = Uuid::new_v4();
     let now = Utc::now().naive_utc();
@@ -492,7 +498,9 @@ pub async fn get_widget_data(
                     { "name": "产品C", "value": 200, "color": "#a855f7" },
                     { "name": "产品D", "value": 100, "color": "#d946ef" },
                 ]),
-                "chart-gauge" => serde_json::json!({ "value": 85.5, "min": 0, "max": 100, "label": "效率" }),
+                "chart-gauge" => {
+                    serde_json::json!({ "value": 85.5, "min": 0, "max": 100, "label": "效率" })
+                }
                 "metric" => serde_json::json!({ "value": 1250000, "prefix": "¥", "label": "本月" }),
                 "pivot" => serde_json::json!([
                     { "region": "华北", "category": "电子产品", "sales": 12000 },
@@ -705,7 +713,9 @@ fn generate_mock_data_for_type(widget_type: &str) -> serde_json::Value {
             { "name": "产品C", "value": 200, "color": "#a855f7" },
             { "name": "产品D", "value": 100, "color": "#d946ef" },
         ]),
-        "chart-gauge" => serde_json::json!({ "value": 85.5, "min": 0, "max": 100, "label": "效率" }),
+        "chart-gauge" => {
+            serde_json::json!({ "value": 85.5, "min": 0, "max": 100, "label": "效率" })
+        }
         "metric" => serde_json::json!({ "value": 1250000, "prefix": "¥", "label": "本月" }),
         "pivot" => serde_json::json!([
             { "region": "华北", "category": "电子产品", "sales": 12000 },

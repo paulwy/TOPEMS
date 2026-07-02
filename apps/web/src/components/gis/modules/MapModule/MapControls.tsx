@@ -34,7 +34,7 @@ const MapControls: React.FC<MapControlsProps> = ({
         sx={{
           p: 2,
           bgcolor: 'background.paper',
-          borderRadius: 2,
+          borderRadius: 3,
           boxShadow: 2,
           '&:hover': { bgcolor: 'action.hover' },
         }}
@@ -50,7 +50,7 @@ const MapControls: React.FC<MapControlsProps> = ({
         sx={{
           p: 2,
           bgcolor: 'background.paper',
-          borderRadius: 2,
+          borderRadius: 3,
           boxShadow: 2,
           '&:hover': { bgcolor: 'action.hover' },
         }}
@@ -67,7 +67,7 @@ const MapControls: React.FC<MapControlsProps> = ({
           sx={{
             p: 2,
             bgcolor: 'background.paper',
-            borderRadius: 2,
+            borderRadius: 3,
             boxShadow: 2,
             '&:hover': { bgcolor: 'action.hover' },
           }}

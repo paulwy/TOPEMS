@@ -347,8 +347,7 @@ async fn compute_mrp(
         return Json(api_error(500, "MRP计算失败"));
     }
 
-    let items_json: Vec<serde_json::Value> =
-        items.iter().map(mrp_suggestion_row_to_json).collect();
+    let items_json: Vec<serde_json::Value> = items.iter().map(mrp_suggestion_row_to_json).collect();
     let count = items.len() as i64;
     let response_data = Some(serde_json::json!({ "generated_count": count }));
 
@@ -423,7 +422,10 @@ async fn confirm_suggestion(
 
     let status: String = existing.try_get("status").unwrap_or_default();
     if status != "draft" {
-        return Json(api_error(400, &format!("MRP建议当前状态为{}，无法确认", status)));
+        return Json(api_error(
+            400,
+            &format!("MRP建议当前状态为{}，无法确认", status),
+        ));
     }
 
     let confirmed_qty = req

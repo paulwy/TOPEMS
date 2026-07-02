@@ -23,39 +23,37 @@ export const materialRequirementApi = {
     if (params?.status) searchParams.set('status', params.status);
 
     const queryString = searchParams.toString();
-    return apiClient.mes.get(
-      `/api/mes/material-requirements${queryString ? `?${queryString}` : ''}`
-    );
+    return apiClient.mes.get(`/material-requirements${queryString ? `?${queryString}` : ''}`);
   },
 
   async get(id: string): Promise<ApiResponse<MaterialRequirement>> {
-    return apiClient.mes.get(`/api/mes/material-requirements/${id}`);
+    return apiClient.mes.get(`/material-requirements/${id}`);
   },
 
   async create(data: CreateMaterialRequirementRequest): Promise<ApiResponse<MaterialRequirement>> {
-    return apiClient.mes.post('/api/mes/material-requirements', data);
+    return apiClient.mes.post('/material-requirements', data);
   },
 
   async update(
     id: string,
     data: UpdateMaterialRequirementRequest
   ): Promise<ApiResponse<MaterialRequirement>> {
-    return apiClient.mes.put(`/api/mes/material-requirements/${id}`, data);
+    return apiClient.mes.put(`/material-requirements/${id}`, data);
   },
 
   async delete(id: string): Promise<ApiResponse<string>> {
-    return apiClient.mes.delete(`/api/mes/material-requirements/${id}`);
+    return apiClient.mes.delete(`/material-requirements/${id}`);
   },
 
   async calculate(orderId: string): Promise<ApiResponse<MaterialRequirement[]>> {
-    return apiClient.mes.post(`/api/mes/material-requirements/calculate`, { order_id: orderId });
+    return apiClient.mes.post(`/material-requirements/calculate`, { order_id: orderId });
   },
 
   async confirm(id: string): Promise<ApiResponse<MaterialRequirement>> {
-    return apiClient.mes.put(`/api/mes/material-requirements/${id}/confirm`);
+    return apiClient.mes.put(`/material-requirements/${id}/confirm`);
   },
 
   async release(id: string): Promise<ApiResponse<MaterialRequirement>> {
-    return apiClient.mes.put(`/api/mes/material-requirements/${id}/release`);
+    return apiClient.mes.put(`/material-requirements/${id}/release`);
   },
 };

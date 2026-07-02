@@ -31,14 +31,21 @@ pub struct GenericServiceClient {
 }
 
 impl GenericServiceClient {
-    pub fn new(service_name: impl Into<String>, base_url: impl Into<String>) -> ServiceClientResult<Self> {
+    pub fn new(
+        service_name: impl Into<String>,
+        base_url: impl Into<String>,
+    ) -> ServiceClientResult<Self> {
         Ok(Self {
             base_client: BaseServiceClient::new(base_url)?,
             service_name: service_name.into(),
         })
     }
 
-    pub fn from_env(service_name: impl Into<String>, env_var: &str, default_url: &str) -> ServiceClientResult<Self> {
+    pub fn from_env(
+        service_name: impl Into<String>,
+        env_var: &str,
+        default_url: &str,
+    ) -> ServiceClientResult<Self> {
         let base_url = std::env::var(env_var).unwrap_or_else(|_| default_url.into());
         Self::new(service_name, base_url)
     }
@@ -82,11 +89,17 @@ impl GenericServiceClient {
         self.base_client.put(path, body).await
     }
 
-    pub async fn delete<T: serde::de::DeserializeOwned>(&self, path: &str) -> ServiceClientResult<T> {
+    pub async fn delete<T: serde::de::DeserializeOwned>(
+        &self,
+        path: &str,
+    ) -> ServiceClientResult<T> {
         self.base_client.delete(path).await
     }
 
-    pub async fn post_without_body<T: serde::de::DeserializeOwned>(&self, path: &str) -> ServiceClientResult<T> {
+    pub async fn post_without_body<T: serde::de::DeserializeOwned>(
+        &self,
+        path: &str,
+    ) -> ServiceClientResult<T> {
         self.base_client.post_without_body(path).await
     }
 }

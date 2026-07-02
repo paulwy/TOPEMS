@@ -359,9 +359,8 @@ const RsReviewPage: React.FC = () => {
   ];
 
   return (
-    <PageContainer title='代码评审'>
+    <PageContainer>
       <ListPageTemplate
-        title=''
         columns={columns}
         data={filteredReviews}
         loading={loading}

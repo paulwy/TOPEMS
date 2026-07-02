@@ -6,31 +6,31 @@ export const billingApi = {
   list: async (
     params?: BillingQueryParams
   ): Promise<ApiResponse<PaginatedResponse<BillingRecord>>> => {
-    return apiClient.crm.get('/api/crm/billing', { params });
+    return apiClient.crm.get('/billing', { params });
   },
 
   get: async (id: string): Promise<ApiResponse<BillingRecord>> => {
-    return apiClient.crm.get(`/api/crm/billing/${id}`);
+    return apiClient.crm.get(`/billing/${id}`);
   },
 
   create: async (data: CreateBillingRequest): Promise<ApiResponse<BillingRecord>> => {
-    return apiClient.crm.post('/api/crm/billing', data);
+    return apiClient.crm.post('/billing', data);
   },
 
   update: async (id: string, data: Partial<BillingRecord>): Promise<ApiResponse<BillingRecord>> => {
-    return apiClient.crm.put(`/api/crm/billing/${id}`, data);
+    return apiClient.crm.put(`/billing/${id}`, data);
   },
 
   delete: async (id: string): Promise<ApiResponse<void>> => {
-    return apiClient.crm.delete(`/api/crm/billing/${id}`);
+    return apiClient.crm.delete(`/billing/${id}`);
   },
 
   markPaid: async (id: string): Promise<ApiResponse<BillingRecord>> => {
-    return apiClient.crm.post(`/api/crm/billing/${id}/paid`);
+    return apiClient.crm.post(`/billing/${id}/paid`);
   },
 
   sendNotification: async (id: string): Promise<ApiResponse<void>> => {
-    return apiClient.crm.post(`/api/crm/billing/${id}/notify`);
+    return apiClient.crm.post(`/billing/${id}/notify`);
   },
 };
 

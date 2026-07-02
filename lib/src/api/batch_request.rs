@@ -123,7 +123,11 @@ impl BatchRequestHandler {
         let mut tasks = Vec::new();
 
         for (service, requests) in grouped_requests {
-            info!("Processing service group: {} with {} requests", service, requests.len());
+            info!(
+                "Processing service group: {} with {} requests",
+                service,
+                requests.len()
+            );
 
             for req in requests {
                 let semaphore_clone = semaphore.clone();
@@ -192,9 +196,7 @@ impl BatchRequestHandler {
 
     fn extract_service_from_url(&self, url: &str) -> String {
         match url::Url::parse(url) {
-            Ok(parsed) => {
-                parsed.host_str().unwrap_or("unknown").to_string()
-            }
+            Ok(parsed) => parsed.host_str().unwrap_or("unknown").to_string(),
             Err(_) => "unknown".to_string(),
         }
     }
@@ -235,7 +237,7 @@ impl BatchRequestHandler {
                     let success = response.status().is_success();
 
                     let text = response.text().await.unwrap_or_default();
-                    
+
                     match serde_json::from_str::<serde_json::Value>(&text) {
                         Ok(data) => SingleResponseResult {
                             status_code,
@@ -309,7 +311,9 @@ mod tests {
             service_group: None,
         }];
 
-        let batch = BatchRequest::new(requests).with_timeout(5000).with_max_concurrent(5);
+        let batch = BatchRequest::new(requests)
+            .with_timeout(5000)
+            .with_max_concurrent(5);
 
         assert_eq!(batch.requests.len(), 1);
         assert_eq!(batch.timeout_ms, Some(5000));

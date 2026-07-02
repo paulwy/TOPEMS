@@ -2,7 +2,7 @@
 
 use axum::{extract::State, Json};
 use serde::{Deserialize, Serialize};
-use sqlx::{FromRow, types::Uuid};
+use sqlx::{types::Uuid, FromRow};
 use topems_shared::ApiResponse;
 
 #[derive(Debug, Deserialize)]
@@ -88,7 +88,10 @@ pub async fn list_actions(
     let page_size = query.page_size.unwrap_or(10);
     let offset = (page - 1) * page_size;
 
-    let issue_id = query.issue_id.as_ref().and_then(|s| Uuid::parse_str(s).ok());
+    let issue_id = query
+        .issue_id
+        .as_ref()
+        .and_then(|s| Uuid::parse_str(s).ok());
 
     let actions = match (query.status.as_ref(), query.priority.as_ref(), issue_id) {
         (Some(st), Some(pr), Some(issue)) => sqlx::query_as::<_, CorrectiveAction>(r#"SELECT id, action_no, issue_id::TEXT, title, description, root_cause, action_type, status, priority, assignee, target_date::TEXT, completed_at::TEXT, created_by, created_at::TEXT, updated_at::TEXT FROM qa_corrective_actions WHERE status = $1 AND priority = $2 AND issue_id = $3 ORDER BY created_at DESC LIMIT $4 OFFSET $5"#).bind(st).bind(pr).bind(issue).bind(page_size).bind(offset)
@@ -130,7 +133,10 @@ pub async fn create_action(
     State(state): State<crate::AppState>,
     Json(req): Json<CreateActionRequest>,
 ) -> Json<ApiResponse<CorrectiveAction>> {
-    let action_no = format!("CA-{}", uuid::Uuid::new_v4().to_string()[..8].to_uppercase());
+    let action_no = format!(
+        "CA-{}",
+        uuid::Uuid::new_v4().to_string()[..8].to_uppercase()
+    );
     let issue_id = req.issue_id.as_ref().and_then(|s| Uuid::parse_str(s).ok());
     let priority = req.priority.unwrap_or_else(|| "medium".to_string());
 
@@ -256,9 +262,10 @@ pub async fn delete_action(
         Err(_) => return Json(ApiResponse::error(400, "无效的措施ID")),
     };
 
-    let result = sqlx::query(r#"DELETE FROM qa_corrective_actions WHERE id = $1"#).bind(id)
-    .execute(&state.pool)
-    .await;
+    let result = sqlx::query(r#"DELETE FROM qa_corrective_actions WHERE id = $1"#)
+        .bind(id)
+        .execute(&state.pool)
+        .await;
 
     match result {
         Ok(_) => Json(ApiResponse::success(true, "整改措施删除成功")),

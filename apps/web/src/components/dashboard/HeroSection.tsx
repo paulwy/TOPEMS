@@ -65,7 +65,7 @@ export const HeroSection: React.FC = () => {
             <Typography
               sx={{
                 fontSize: '0.875rem',
-                color: '#60a5fa',
+                color: 'primary.light',
                 fontWeight: 600,
                 letterSpacing: '0.1em',
                 textTransform: 'uppercase',
@@ -103,7 +103,7 @@ export const HeroSection: React.FC = () => {
           <Typography
             sx={{
               fontSize: '1.125rem',
-              color: '#94a3b8',
+              color: 'grey.400',
               mb: 6,
               maxWidth: '600px',
             }}
@@ -122,7 +122,7 @@ export const HeroSection: React.FC = () => {
                 background: 'linear-gradient(to right, rgb(59, 130, 246), rgb(147, 51, 234))',
                 color: 'white',
                 fontWeight: 600,
-                borderRadius: 2,
+                borderRadius: 3,
                 transition: 'all 0.3s',
                 '&:hover': {
                   boxShadow: '0 10px 15px -3px rgba(59, 130, 246, 0.25)',
@@ -144,7 +144,7 @@ export const HeroSection: React.FC = () => {
                 bgcolor: 'rgba(255, 255, 255, 0.05)',
                 color: 'white',
                 fontWeight: 600,
-                borderRadius: 2,
+                borderRadius: 3,
                 border: '1px solid rgba(255, 255, 255, 0.1)',
                 transition: 'all 0.3s',
                 '&:hover': {

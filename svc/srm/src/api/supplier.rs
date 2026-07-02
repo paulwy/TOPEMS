@@ -185,11 +185,12 @@ async fn create_supplier(
     }
 
     // 检查供应商编号是否已存在
-    let existing =
-        sqlx::query_scalar::<_, i64>("SELECT COUNT(*) FROM plugin_srm.suppliers WHERE supplier_no = $1")
-            .bind(&req.supplier_no)
-            .fetch_one(&state.db)
-            .await;
+    let existing = sqlx::query_scalar::<_, i64>(
+        "SELECT COUNT(*) FROM plugin_srm.suppliers WHERE supplier_no = $1",
+    )
+    .bind(&req.supplier_no)
+    .fetch_one(&state.db)
+    .await;
 
     if existing.unwrap_or(0) > 0 {
         return Json(ApiResponse::<Supplier>::error(400, "供应商编号已存在"));
@@ -400,12 +401,13 @@ async fn delete_supplier(
     let user_id = Uuid::parse_str(&claims.sub).ok();
 
     // 软删除：更新状态为deleted
-    let result =
-        sqlx::query("UPDATE plugin_srm.suppliers SET status = 'deleted', updated_at = $2 WHERE id = $1")
-            .bind(id)
-            .bind(Utc::now())
-            .execute(&state.db)
-            .await;
+    let result = sqlx::query(
+        "UPDATE plugin_srm.suppliers SET status = 'deleted', updated_at = $2 WHERE id = $1",
+    )
+    .bind(id)
+    .bind(Utc::now())
+    .execute(&state.db)
+    .await;
 
     match result {
         Ok(r) if r.rows_affected() > 0 => {

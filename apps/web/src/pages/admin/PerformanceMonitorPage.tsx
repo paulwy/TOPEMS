@@ -259,7 +259,7 @@ const PerformanceMonitorPage: React.FC = () => {
                   justifyContent: 'space-between',
                   alignItems: 'center',
                   padding: 16,
-                  backgroundColor: '#fef3c7',
+                  backgroundColor: 'warning.100',
                   borderRadius: 8,
                 }}
               >
@@ -277,7 +277,7 @@ const PerformanceMonitorPage: React.FC = () => {
                     style={{
                       fontSize: '0.75rem',
                       margin: '4px 0 0',
-                      color: call.status === 'success' ? '#22c55e' : '#ef4444',
+                      color: call.status === 'success' ? 'success.main' : 'error.main',
                     }}
                   >
                     {call.status === 'success' ? '成功' : '失败'}
@@ -315,7 +315,7 @@ const PerformanceMonitorPage: React.FC = () => {
                 alignItems: 'center',
                 gap: 8,
                 fontSize: '0.875rem',
-                color: '#6b7280',
+                color: 'grey.500',
               }}
             >
               <input

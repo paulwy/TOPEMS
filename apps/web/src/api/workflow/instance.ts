@@ -3,78 +3,78 @@ import type { CreateWorkflowInstanceRequest, ListParams } from './types';
 
 export const instanceApi = {
   list: (params?: ListParams) => {
-    return apiClient.workflow.get(`/api/flow/instances`, { params });
+    return apiClient.workflow.get(`/instances`, { params });
   },
 
   start: (data: CreateWorkflowInstanceRequest) => {
-    return apiClient.workflow.post('/api/flow/instances', data);
+    return apiClient.workflow.post('/instances', data);
   },
 
   get: (id: string) => {
-    return apiClient.workflow.get(`/api/flow/instances/${id}`);
+    return apiClient.workflow.get(`/instances/${id}`);
   },
 
   getDetails: (id: string) => {
-    return apiClient.workflow.get(`/api/flow/instances/${id}/details`);
+    return apiClient.workflow.get(`/instances/${id}/details`);
   },
 
   listInstances: (params?: ListParams) => {
-    return apiClient.workflow.get(`/api/flow/instances`, { params });
+    return apiClient.workflow.get(`/instances`, { params });
   },
 
   getInstance: (id: string) => {
-    return apiClient.workflow.get(`/api/flow/instances/${id}`);
+    return apiClient.workflow.get(`/instances/${id}`);
   },
 
   cancelInstance: (id: string) => {
-    return apiClient.workflow.post(`/api/flow/instances/${id}/cancel`);
+    return apiClient.workflow.post(`/instances/${id}/cancel`);
   },
 
   suspendInstance: (id: string) => {
-    return apiClient.workflow.post(`/api/flow/instances/${id}/suspend`);
+    return apiClient.workflow.post(`/instances/${id}/suspend`);
   },
 
   resumeInstance: (id: string) => {
-    return apiClient.workflow.post(`/api/flow/instances/${id}/resume`);
+    return apiClient.workflow.post(`/instances/${id}/resume`);
   },
 
   delete: (id: string) => {
-    return apiClient.workflow.delete(`/api/flow/instances/${id}`);
+    return apiClient.workflow.delete(`/instances/${id}`);
   },
 
   activateInstance: (id: string) => {
-    return apiClient.workflow.post(`/api/flow/instances/${id}/activate`);
+    return apiClient.workflow.post(`/instances/${id}/activate`);
   },
 
   deleteInstance: (id: string) => {
-    return apiClient.workflow.delete(`/api/flow/instances/${id}`);
+    return apiClient.workflow.delete(`/instances/${id}`);
   },
 
   terminateInstance: (id: string, data?: { reason?: string }) => {
-    return apiClient.workflow.post(`/api/flow/instances/${id}/terminate`, data);
+    return apiClient.workflow.post(`/instances/${id}/terminate`, data);
   },
 
   getInstanceVariables: (id: string) => {
-    return apiClient.workflow.get(`/api/flow/instances/${id}/variables`);
+    return apiClient.workflow.get(`/instances/${id}/variables`);
   },
 
   setInstanceVariables: (id: string, data: Record<string, unknown>) => {
-    return apiClient.workflow.post(`/api/flow/instances/${id}/variables`, data);
+    return apiClient.workflow.post(`/instances/${id}/variables`, data);
   },
 
   getInstanceTasks: (id: string, params?: ListParams) => {
-    return apiClient.workflow.get(`/api/flow/instances/${id}/tasks`, { params });
+    return apiClient.workflow.get(`/instances/${id}/tasks`, { params });
   },
 
   getInstanceHistory: (id: string) => {
-    return apiClient.workflow.get(`/api/flow/instances/${id}/history`);
+    return apiClient.workflow.get(`/instances/${id}/history`);
   },
 
   getInstanceLogs: (id: string, params?: ListParams) => {
-    return apiClient.workflow.get(`/api/flow/instances/${id}/logs`, { params });
+    return apiClient.workflow.get(`/instances/${id}/logs`, { params });
   },
 
   getInstanceDiagram: (id: string) => {
-    return apiClient.workflow.get(`/api/flow/instances/${id}/diagram`);
+    return apiClient.workflow.get(`/instances/${id}/diagram`);
   },
 };

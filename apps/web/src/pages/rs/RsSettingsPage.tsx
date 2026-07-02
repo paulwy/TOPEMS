@@ -331,32 +331,8 @@ const RsSettingsPage: React.FC = () => {
   };
 
   return (
-    <PageContainer title='研发设置'>
+    <PageContainer>
       <Box sx={{ maxWidth: 1200, mx: 'auto' }}>
-        {/* 页面头部 */}
-        <Box
-          sx={{
-            display: 'flex',
-            justifyContent: 'space-between',
-            alignItems: 'center',
-            mb: 3,
-          }}
-        >
-          <Typography
-            variant='h5'
-            sx={{ color: 'primary.main', fontWeight: 'bold' }}
-          >
-            研发设置
-          </Typography>
-          <Button
-            variant='contained'
-            startIcon={<Save size={18} />}
-            sx={{ bgcolor: 'primary.main' }}
-          >
-            保存设置
-          </Button>
-        </Box>
-
         {/* 统计概览 */}
         <Box sx={{ mb: 3 }}>
           <Typography

@@ -214,7 +214,7 @@ function TreeNodeItem({
   );
 }
 
-export default function TreeView({
+function TreeView({
   data,
   selected,
   expanded: controlledExpanded,
@@ -273,3 +273,5 @@ export default function TreeView({
     </Box>
   );
 }
+
+export default React.memo(TreeView);

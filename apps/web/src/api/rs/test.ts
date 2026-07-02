@@ -25,23 +25,23 @@ export const testApi = {
             .map(([k, v]) => [k, String(v)])
         )
       : '';
-    const url = queryParams ? `/api/rs/tests?${queryParams}` : '/api/rs/tests';
+    const url = queryParams ? `/tests?${queryParams}` : '/tests';
     return apiClient.rs.get(url);
   },
 
   getTest: async (id: string): Promise<ApiResponse<TestCase>> => {
-    return apiClient.rs.get(`/api/rs/tests/${id}`);
+    return apiClient.rs.get(`/tests/${id}`);
   },
 
   createTest: async (data: CreateTestCaseRequest): Promise<ApiResponse<TestCase>> => {
-    return apiClient.rs.post('/api/rs/tests', data);
+    return apiClient.rs.post('/tests', data);
   },
 
   updateTest: async (id: string, data: UpdateTestCaseRequest): Promise<ApiResponse<TestCase>> => {
-    return apiClient.rs.put(`/api/rs/tests/${id}`, data);
+    return apiClient.rs.put(`/tests/${id}`, data);
   },
 
   deleteTest: async (id: string): Promise<ApiResponse<string>> => {
-    return apiClient.rs.delete(`/api/rs/tests/${id}`);
+    return apiClient.rs.delete(`/tests/${id}`);
   },
 };

@@ -35,24 +35,23 @@ function createCrudApi<T>(endpoint: string): CrudOperations<T> {
 }
 
 export const performanceReviewApi = {
-  ...createCrudApi<PerformanceReview>('/api/hrm/performance-reviews'),
+  ...createCrudApi<PerformanceReview>('/performance-reviews'),
 
   list(params?: ListParams): Promise<ApiResponse<PaginatedResult<PerformanceReview>>> {
     const queryString = buildQueryString(params);
-    return apiClient.hrm.get(`/api/hrm/performance-reviews${queryString}`);
+    return apiClient.hrm.get(`/performance-reviews${queryString}`);
   },
 
   submit(id: string): Promise<ApiResponse<PerformanceReview>> {
-    return apiClient.hrm.put(`/api/hrm/performance-reviews/${id}/submit`);
+    return apiClient.hrm.put(`/performance-reviews/${id}/submit`);
   },
 
   approve(id: string): Promise<ApiResponse<PerformanceReview>> {
-    return apiClient.hrm.put(`/api/hrm/performance-reviews/${id}/approve`);
+    return apiClient.hrm.put(`/performance-reviews/${id}/approve`);
   },
 };
 
-export const performanceGoalApi: CrudOperations<PerformanceGoal> = createCrudApi<PerformanceGoal>(
-  '/api/hrm/performance-goals'
-);
+export const performanceGoalApi: CrudOperations<PerformanceGoal> =
+  createCrudApi<PerformanceGoal>('/performance-goals');
 
 export default performanceReviewApi;

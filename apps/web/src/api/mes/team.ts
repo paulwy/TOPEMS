@@ -24,37 +24,37 @@ export const teamApi = {
     if (params?.status) searchParams.set('status', params.status);
 
     const queryString = searchParams.toString();
-    return apiClient.mes.get(`/api/mes/teams${queryString ? `?${queryString}` : ''}`);
+    return apiClient.mes.get(`/teams${queryString ? `?${queryString}` : ''}`);
   },
 
   async get(id: string): Promise<ApiResponse<Team>> {
-    return apiClient.mes.get(`/api/mes/teams/${id}`);
+    return apiClient.mes.get(`/teams/${id}`);
   },
 
   async create(data: CreateTeamRequest): Promise<ApiResponse<Team>> {
-    return apiClient.mes.post('/api/mes/teams', data);
+    return apiClient.mes.post('/teams', data);
   },
 
   async update(id: string, data: UpdateTeamRequest): Promise<ApiResponse<Team>> {
-    return apiClient.mes.put(`/api/mes/teams/${id}`, data);
+    return apiClient.mes.put(`/teams/${id}`, data);
   },
 
   async delete(id: string): Promise<ApiResponse<string>> {
-    return apiClient.mes.delete(`/api/mes/teams/${id}`);
+    return apiClient.mes.delete(`/teams/${id}`);
   },
 
   async getMembers(teamId: string): Promise<ApiResponse<{ members: TeamMember[] }>> {
-    return apiClient.mes.get(`/api/mes/teams/${teamId}/members`);
+    return apiClient.mes.get(`/teams/${teamId}/members`);
   },
 
   async addMember(
     teamId: string,
     data: { employee_id: string; employee_name: string; position?: string }
   ): Promise<ApiResponse<TeamMember>> {
-    return apiClient.mes.post(`/api/mes/teams/${teamId}/members`, data);
+    return apiClient.mes.post(`/teams/${teamId}/members`, data);
   },
 
   async removeMember(teamId: string, memberId: string): Promise<ApiResponse<string>> {
-    return apiClient.mes.delete(`/api/mes/teams/${teamId}/members/${memberId}`);
+    return apiClient.mes.delete(`/teams/${teamId}/members/${memberId}`);
   },
 };

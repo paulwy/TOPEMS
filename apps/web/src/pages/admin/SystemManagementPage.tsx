@@ -1,15 +1,6 @@
 import React, { useState, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
-import {
-  Settings,
-  ChevronLeft,
-  Book,
-  Database,
-  Users,
-  Shield,
-  Key,
-  FileText,
-} from 'lucide-react';
+import { Settings, ChevronLeft, Book, Database, Users, Shield, Key, FileText } from 'lucide-react';
 import { MobileHeader } from '@/components/mobile';
 import { MobileNav } from '@/components/layout/MobileNav';
 import { Box, Typography } from '@mui/material';
@@ -142,7 +133,7 @@ const SystemManagementPage: React.FC<SystemManagementPageProps> = ({ onNavigate:
                     width: 40,
                     height: 40,
                     background: 'linear-gradient(to bottom right, #475569, #475569)',
-                    borderRadius: 2,
+                    borderRadius: 3,
                     display: 'flex',
                     alignItems: 'center',
                     justifyContent: 'center',
@@ -193,7 +184,7 @@ const SystemManagementPage: React.FC<SystemManagementPageProps> = ({ onNavigate:
                   onClick={() => navigate(feature.path)}
                   sx={{
                     bgcolor: 'background.paper',
-                    borderRadius: 2,
+                    borderRadius: 3,
                     boxShadow: 1,
                     '&:hover': { boxShadow: 3 },
                     cursor: 'pointer',
@@ -214,7 +205,7 @@ const SystemManagementPage: React.FC<SystemManagementPageProps> = ({ onNavigate:
                           width: 48,
                           height: 48,
                           bgcolor: feature.color.replace('bg-', ''),
-                          borderRadius: 2,
+                          borderRadius: 3,
                           display: 'flex',
                           alignItems: 'center',
                           justifyContent: 'center',

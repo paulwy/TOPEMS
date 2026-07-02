@@ -32,7 +32,7 @@ export function ColorSwatch({ color, label, darkText = false }: ColorSwatchProps
         sx={{
           width: 64,
           height: 64,
-          borderRadius: 2,
+          borderRadius: 3,
           backgroundColor: color,
           border: '1px solid',
           borderColor: 'divider',
@@ -124,7 +124,7 @@ export function StatusColorGroup({ name, colors }: StatusColorGroupProps) {
           sx={{
             width: 48,
             height: 48,
-            borderRadius: 2,
+            borderRadius: 3,
             backgroundColor: colors.light,
             border: '1px solid',
             borderColor: 'divider',
@@ -156,7 +156,7 @@ export function StatusColorGroup({ name, colors }: StatusColorGroupProps) {
           sx={{
             width: 56,
             height: 56,
-            borderRadius: 2,
+            borderRadius: 3,
             backgroundColor: colors.main,
           }}
         />
@@ -186,7 +186,7 @@ export function StatusColorGroup({ name, colors }: StatusColorGroupProps) {
           sx={{
             width: 48,
             height: 48,
-            borderRadius: 2,
+            borderRadius: 3,
             backgroundColor: colors.dark,
             border: '1px solid',
             borderColor: 'divider',
@@ -307,7 +307,7 @@ export function ShadowDemo() {
             sx={{
               width: 100,
               height: 80,
-              borderRadius: 2,
+              borderRadius: 3,
               boxShadow: value as string,
               display: 'flex',
               alignItems: 'center',
@@ -456,7 +456,7 @@ export function SurfaceHierarchy() {
             sx={{
               width: 64,
               height: 64,
-              borderRadius: 2,
+              borderRadius: 3,
               backgroundColor: s.color,
               border: '1px solid',
               borderColor: 'divider',
@@ -501,7 +501,7 @@ export function ModuleGradients() {
             sx={{
               width: 80,
               height: 56,
-              borderRadius: 2,
+              borderRadius: 3,
               background: gradient as string,
               boxShadow: 1,
             }}
@@ -616,7 +616,7 @@ export function DarkShadowComparison() {
                   sx={{
                     width: 80,
                     height: 60,
-                    borderRadius: 2,
+                    borderRadius: 3,
                     boxShadow: value as string,
                     backgroundColor: '#ffffff',
                     border: '1px solid',
@@ -650,7 +650,7 @@ export function DarkShadowComparison() {
                   sx={{
                     width: 80,
                     height: 60,
-                    borderRadius: 2,
+                    borderRadius: 3,
                     boxShadow: value as string,
                     backgroundColor: '#1f2937',
                     border: '1px solid',

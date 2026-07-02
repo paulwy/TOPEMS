@@ -117,12 +117,16 @@ pub async fn init_database(pool: &PgPool) -> Result<(), sqlx::Error> {
     .execute(pool)
     .await?;
 
-    sqlx::query("CREATE INDEX IF NOT EXISTS idx_production_orders_order_no ON production_orders(order_no)")
-        .execute(pool)
-        .await?;
-    sqlx::query("CREATE INDEX IF NOT EXISTS idx_production_orders_status ON production_orders(status)")
-        .execute(pool)
-        .await?;
+    sqlx::query(
+        "CREATE INDEX IF NOT EXISTS idx_production_orders_order_no ON production_orders(order_no)",
+    )
+    .execute(pool)
+    .await?;
+    sqlx::query(
+        "CREATE INDEX IF NOT EXISTS idx_production_orders_status ON production_orders(status)",
+    )
+    .execute(pool)
+    .await?;
     sqlx::query("CREATE INDEX IF NOT EXISTS idx_production_records_order_id ON production_records(order_id)")
         .execute(pool)
         .await?;
@@ -132,9 +136,11 @@ pub async fn init_database(pool: &PgPool) -> Result<(), sqlx::Error> {
     sqlx::query("CREATE INDEX IF NOT EXISTS idx_equipment_no ON equipment(equipment_no)")
         .execute(pool)
         .await?;
-    sqlx::query("CREATE INDEX IF NOT EXISTS idx_work_stations_station_no ON work_stations(station_no)")
-        .execute(pool)
-        .await?;
+    sqlx::query(
+        "CREATE INDEX IF NOT EXISTS idx_work_stations_station_no ON work_stations(station_no)",
+    )
+    .execute(pool)
+    .await?;
 
     sqlx::query(
         r#"
@@ -426,9 +432,11 @@ pub async fn init_database(pool: &PgPool) -> Result<(), sqlx::Error> {
     sqlx::query("CREATE INDEX IF NOT EXISTS idx_production_records_created_at ON production_records(created_at)")
         .execute(pool)
         .await?;
-    sqlx::query("CREATE INDEX IF NOT EXISTS idx_wips_current_process_id ON wips(current_process_id)")
-        .execute(pool)
-        .await?;
+    sqlx::query(
+        "CREATE INDEX IF NOT EXISTS idx_wips_current_process_id ON wips(current_process_id)",
+    )
+    .execute(pool)
+    .await?;
     sqlx::query("CREATE INDEX IF NOT EXISTS idx_wips_created_at ON wips(created_at)")
         .execute(pool)
         .await?;
@@ -445,36 +453,52 @@ pub async fn init_database(pool: &PgPool) -> Result<(), sqlx::Error> {
     sqlx::query("CREATE INDEX IF NOT EXISTS idx_material_boms_bom_no ON material_boms(bom_no)")
         .execute(pool)
         .await?;
-    sqlx::query("CREATE INDEX IF NOT EXISTS idx_material_boms_product_id ON material_boms(product_id)")
-        .execute(pool)
-        .await?;
+    sqlx::query(
+        "CREATE INDEX IF NOT EXISTS idx_material_boms_product_id ON material_boms(product_id)",
+    )
+    .execute(pool)
+    .await?;
     sqlx::query("CREATE INDEX IF NOT EXISTS idx_bom_items_bom_id ON bom_items(bom_id)")
         .execute(pool)
         .await?;
-    sqlx::query("CREATE INDEX IF NOT EXISTS idx_material_issues_issue_no ON material_issues(issue_no)")
-        .execute(pool)
-        .await?;
-    sqlx::query("CREATE INDEX IF NOT EXISTS idx_material_issues_order_id ON material_issues(order_id)")
-        .execute(pool)
-        .await?;
-    sqlx::query("CREATE INDEX IF NOT EXISTS idx_material_returns_return_no ON material_returns(return_no)")
-        .execute(pool)
-        .await?;
-    sqlx::query("CREATE INDEX IF NOT EXISTS idx_quality_records_record_no ON quality_records(record_no)")
-        .execute(pool)
-        .await?;
-    sqlx::query("CREATE INDEX IF NOT EXISTS idx_quality_records_order_id ON quality_records(order_id)")
-        .execute(pool)
-        .await?;
+    sqlx::query(
+        "CREATE INDEX IF NOT EXISTS idx_material_issues_issue_no ON material_issues(issue_no)",
+    )
+    .execute(pool)
+    .await?;
+    sqlx::query(
+        "CREATE INDEX IF NOT EXISTS idx_material_issues_order_id ON material_issues(order_id)",
+    )
+    .execute(pool)
+    .await?;
+    sqlx::query(
+        "CREATE INDEX IF NOT EXISTS idx_material_returns_return_no ON material_returns(return_no)",
+    )
+    .execute(pool)
+    .await?;
+    sqlx::query(
+        "CREATE INDEX IF NOT EXISTS idx_quality_records_record_no ON quality_records(record_no)",
+    )
+    .execute(pool)
+    .await?;
+    sqlx::query(
+        "CREATE INDEX IF NOT EXISTS idx_quality_records_order_id ON quality_records(order_id)",
+    )
+    .execute(pool)
+    .await?;
     sqlx::query("CREATE INDEX IF NOT EXISTS idx_batch_records_batch_no ON batch_records(batch_no)")
         .execute(pool)
         .await?;
-    sqlx::query("CREATE INDEX IF NOT EXISTS idx_equipment_oee_equipment_id ON equipment_oee(equipment_id)")
-        .execute(pool)
-        .await?;
-    sqlx::query("CREATE INDEX IF NOT EXISTS idx_equipment_oee_record_date ON equipment_oee(record_date)")
-        .execute(pool)
-        .await?;
+    sqlx::query(
+        "CREATE INDEX IF NOT EXISTS idx_equipment_oee_equipment_id ON equipment_oee(equipment_id)",
+    )
+    .execute(pool)
+    .await?;
+    sqlx::query(
+        "CREATE INDEX IF NOT EXISTS idx_equipment_oee_record_date ON equipment_oee(record_date)",
+    )
+    .execute(pool)
+    .await?;
     sqlx::query("CREATE INDEX IF NOT EXISTS idx_wips_wip_no ON wips(wip_no)")
         .execute(pool)
         .await?;

@@ -92,9 +92,9 @@ const LimsProficiencyTestingPage: React.FC = () => {
   const getStatusBadge = (status: string) => {
     const statusMap: Record<string, { bg: string; color: string }> = {
       待执行: { bg: 'grey.100', color: 'text.secondary' },
-      执行中: { bg: '#dbeafe', color: 'primary.dark' },
-      已完成: { bg: 'success.lighter', color: '#15803d' },
-      已评价: { bg: '#f3e8ff', color: '#7e22ce' },
+      执行中: { bg: 'primary.100', color: 'primary.dark' },
+      已完成: { bg: 'success.lighter', color: 'success.700' },
+      已评价: { bg: 'secondary.100', color: '#7e22ce' },
     };
     const colors = statusMap[status] || { bg: 'grey.100', color: 'text.secondary' };
     return (
@@ -329,7 +329,7 @@ const LimsProficiencyTestingPage: React.FC = () => {
               sx={{
                 width: 40,
                 height: 40,
-                bgcolor: '#f3e8ff',
+                bgcolor: 'secondary.100',
                 borderRadius: 3,
                 display: 'flex',
                 alignItems: 'center',
@@ -396,7 +396,7 @@ const LimsProficiencyTestingPage: React.FC = () => {
               sx={{
                 width: 40,
                 height: 40,
-                bgcolor: '#dbeafe',
+                bgcolor: 'primary.100',
                 borderRadius: 3,
                 display: 'flex',
                 alignItems: 'center',
@@ -606,7 +606,7 @@ const LimsProficiencyTestingPage: React.FC = () => {
             variant='contained'
             onClick={handleSave}
             disabled={saving}
-            sx={{ bgcolor: '#7c3aed' }}
+            sx={{ bgcolor: 'secondary.600' }}
           >
             {saving ? '保存中...' : '保存'}
           </Button>
@@ -764,7 +764,7 @@ const LimsProficiencyTestingPage: React.FC = () => {
               setShowDetailModal(false);
               if (selectedPlan) handleEdit(selectedPlan);
             }}
-            sx={{ bgcolor: '#7c3aed' }}
+            sx={{ bgcolor: 'secondary.600' }}
           >
             编辑
           </Button>

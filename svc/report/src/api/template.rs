@@ -1,4 +1,8 @@
-use axum::{extract::{Path, State}, routing::get, Json, Router};
+use axum::{
+    extract::{Path, State},
+    routing::get,
+    Json, Router,
+};
 use serde::{Deserialize, Serialize};
 use sqlx::{FromRow, Row};
 use tracing::info;
@@ -8,8 +12,16 @@ use crate::AppState;
 
 pub fn create_routes() -> Router<AppState> {
     Router::new()
-        .route("/api/report/templates", get(list_templates).post(create_template))
-        .route("/api/report/templates/{id}", get(get_template).put(update_template).delete(delete_template))
+        .route(
+            "/api/report/templates",
+            get(list_templates).post(create_template),
+        )
+        .route(
+            "/api/report/templates/{id}",
+            get(get_template)
+                .put(update_template)
+                .delete(delete_template),
+        )
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
@@ -118,31 +130,33 @@ pub struct TemplateListItem {
 
 pub async fn list_templates(State(state): State<AppState>) -> Json<serde_json::Value> {
     info!("Listing templates");
-    
+
     let templates = sqlx::query(
         r#"
         SELECT id, name, code, category, report_type, is_active, created_at
         FROM report_templates
         ORDER BY created_at DESC
-        "#
+        "#,
     )
     .fetch_all(&state.pool)
     .await
     .unwrap_or_default();
-    
+
     let result: Vec<serde_json::Value> = templates
         .into_iter()
-        .map(|t| serde_json::json!({
-            "id": t.get::<Uuid, _>("id"),
-            "name": t.get::<String, _>("name"),
-            "code": t.get::<String, _>("code"),
-            "category": t.get::<Option<String>, _>("category"),
-            "report_type": t.get::<Option<String>, _>("report_type"),
-            "is_active": t.get::<Option<bool>, _>("is_active"),
-            "created_at": t.get::<Option<chrono::DateTime<chrono::Utc>>, _>("created_at"),
-        }))
+        .map(|t| {
+            serde_json::json!({
+                "id": t.get::<Uuid, _>("id"),
+                "name": t.get::<String, _>("name"),
+                "code": t.get::<String, _>("code"),
+                "category": t.get::<Option<String>, _>("category"),
+                "report_type": t.get::<Option<String>, _>("report_type"),
+                "is_active": t.get::<Option<bool>, _>("is_active"),
+                "created_at": t.get::<Option<chrono::DateTime<chrono::Utc>>, _>("created_at"),
+            })
+        })
         .collect();
-    
+
     Json(serde_json::json!({
         "success": true,
         "data": result,
@@ -155,10 +169,10 @@ pub async fn create_template(
     Json(req): Json<CreateTemplateRequest>,
 ) -> Json<serde_json::Value> {
     info!("Creating template: {}", req.name);
-    
+
     let id = Uuid::new_v4();
     let now = chrono::Utc::now();
-    
+
     let result = sqlx::query(
         r#"
         INSERT INTO report_templates (id, name, code, description, category, report_type, data_source, layout_config, filter_config, style_config, columns, output_format, is_active, created_at, updated_at)
@@ -182,7 +196,7 @@ pub async fn create_template(
     .bind(now)
     .execute(&state.pool)
     .await;
-    
+
     match result {
         Ok(_) => Json(serde_json::json!({
             "success": true,
@@ -192,7 +206,7 @@ pub async fn create_template(
         Err(e) => Json(serde_json::json!({
             "success": false,
             "message": format!("Failed to create template: {}", e)
-        }))
+        })),
     }
 }
 
@@ -201,7 +215,7 @@ pub async fn get_template(
     Path(id): Path<Uuid>,
 ) -> Json<serde_json::Value> {
     info!("Getting template: {}", id);
-    
+
     let template = sqlx::query(
         r#"
         SELECT id, name, code, description, category, report_type, data_source, layout_config, filter_config, style_config, columns, output_format, is_active, created_at, updated_at
@@ -212,7 +226,7 @@ pub async fn get_template(
     .bind(id)
     .fetch_optional(&state.pool)
     .await;
-    
+
     match template {
         Ok(Some(row)) => {
             let t_id: Uuid = row.get("id");
@@ -250,7 +264,7 @@ pub async fn get_template(
                     "updated_at": t_updated_at,
                 }
             }))
-        },
+        }
         Ok(None) => Json(serde_json::json!({
             "success": false,
             "message": "Template not found"
@@ -258,7 +272,7 @@ pub async fn get_template(
         Err(e) => Json(serde_json::json!({
             "success": false,
             "message": format!("Failed to get template: {}", e)
-        }))
+        })),
     }
 }
 
@@ -268,7 +282,7 @@ pub async fn update_template(
     Json(req): Json<UpdateTemplateRequest>,
 ) -> Json<serde_json::Value> {
     info!("Updating template: {}", id);
-    
+
     let result = sqlx::query(
         r#"
         UPDATE report_templates
@@ -302,7 +316,7 @@ pub async fn update_template(
     .bind(id)
     .execute(&state.pool)
     .await;
-    
+
     match result {
         Ok(_) => Json(serde_json::json!({
             "success": true,
@@ -311,7 +325,7 @@ pub async fn update_template(
         Err(e) => Json(serde_json::json!({
             "success": false,
             "message": format!("Failed to update template: {}", e)
-        }))
+        })),
     }
 }
 
@@ -320,7 +334,7 @@ pub async fn delete_template(
     Path(id): Path<Uuid>,
 ) -> Json<serde_json::Value> {
     info!("Deleting template: {}", id);
-    
+
     let result = sqlx::query!(
         r#"
         DELETE FROM report_templates
@@ -330,7 +344,7 @@ pub async fn delete_template(
     )
     .execute(&state.pool)
     .await;
-    
+
     match result {
         Ok(_) => Json(serde_json::json!({
             "success": true,
@@ -339,6 +353,6 @@ pub async fn delete_template(
         Err(e) => Json(serde_json::json!({
             "success": false,
             "message": format!("Failed to delete template: {}", e)
-        }))
+        })),
     }
 }

@@ -8,18 +8,12 @@ import type {
 } from './types';
 
 export const connectionApi = {
-  getConnections: (params?: {
-    type?: string;
-    status?: string;
-    page?: number;
-    pagesize?: number;
-  }) =>
-    apiClient.integration.get('/api/integration/external-erp/connections', {
+  getConnections: (params?: { type?: string; status?: string; page?: number; pagesize?: number }) =>
+    apiClient.integration.get('/external-erp/connections', {
       params,
     }),
 
-  getConnection: (id: string) =>
-    apiClient.integration.get(`/api/integration/external-erp/connections/${id}`),
+  getConnection: (id: string) => apiClient.integration.get(`/external-erp/connections/${id}`),
 
   createConnection: (data: {
     type: 'kingdee' | 'yonyou' | 'sap';
@@ -30,47 +24,41 @@ export const connectionApi = {
     sync_direction?: 'import' | 'export' | 'bidirectional';
     sync_mode?: 'realtime' | 'scheduled' | 'manual';
     company_mappings?: CompanyMapping[];
-  }) => apiClient.integration.post('/api/integration/external-erp/connections', data),
+  }) => apiClient.integration.post('/external-erp/connections', data),
 
   updateConnection: (
     id: string,
     data: Partial<KingdeeConnectionConfig | YonyouConnectionConfig | SapConnectionConfig>
-  ) => apiClient.integration.put(`/api/integration/external-erp/connections/${id}`, data),
+  ) => apiClient.integration.put(`/external-erp/connections/${id}`, data),
 
-  deleteConnection: (id: string) =>
-    apiClient.integration.delete(`/api/integration/external-erp/connections/${id}`),
+  deleteConnection: (id: string) => apiClient.integration.delete(`/external-erp/connections/${id}`),
 
   toggleConnection: (id: string, enabled: boolean) =>
-    apiClient.integration.put(`/api/integration/external-erp/connections/${id}/toggle`, {
+    apiClient.integration.put(`/external-erp/connections/${id}/toggle`, {
       enabled,
     }),
 
   testConnection: (data: ConnectionTestRequest) =>
-    apiClient.integration.post('/api/integration/external-erp/connections/test', data),
+    apiClient.integration.post('/external-erp/connections/test', data),
 
   syncConnectionStatus: (id: string) =>
-    apiClient.integration.post(`/api/integration/external-erp/connections/${id}/sync-status`, {}),
+    apiClient.integration.post(`/external-erp/connections/${id}/sync-status`, {}),
 
   getCompanyMappings: (configId: string) =>
-    apiClient.integration.get(
-      `/api/integration/external-erp/connections/${configId}/company-mappings`
-    ),
+    apiClient.integration.get(`/external-erp/connections/${configId}/company-mappings`),
 
   addCompanyMapping: (configId: string, mapping: CompanyMapping) =>
-    apiClient.integration.post(
-      `/api/integration/external-erp/connections/${configId}/company-mappings`,
-      mapping
-    ),
+    apiClient.integration.post(`/external-erp/connections/${configId}/company-mappings`, mapping),
 
   updateCompanyMapping: (configId: string, mappingId: string, mapping: Partial<CompanyMapping>) =>
     apiClient.integration.put(
-      `/api/integration/external-erp/connections/${configId}/company-mappings/${mappingId}`,
+      `/external-erp/connections/${configId}/company-mappings/${mappingId}`,
       mapping
     ),
 
   deleteCompanyMapping: (configId: string, mappingId: string) =>
     apiClient.integration.delete(
-      `/api/integration/external-erp/connections/${configId}/company-mappings/${mappingId}`
+      `/external-erp/connections/${configId}/company-mappings/${mappingId}`
     ),
 };
 

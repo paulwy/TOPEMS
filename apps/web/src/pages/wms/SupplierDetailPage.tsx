@@ -302,7 +302,7 @@ const SupplierDetailPage: React.FC = () => {
     icon: <Truck size={16} />,
     content: (
       <Box sx={{ display: 'flex', flexDirection: 'column', gap: 3 }}>
-        <Paper sx={{ borderRadius: 2 }}>
+        <Paper sx={{ borderRadius: 3 }}>
           <Box sx={{ p: 2, borderBottom: 1, borderColor: 'divider' }}>
             <Typography
               variant='subtitle1'
@@ -313,7 +313,7 @@ const SupplierDetailPage: React.FC = () => {
           </Box>
           <Box sx={{ p: 3 }}>{basicInfoSection.content}</Box>
         </Paper>
-        <Paper sx={{ borderRadius: 2 }}>
+        <Paper sx={{ borderRadius: 3 }}>
           <Box sx={{ p: 2, borderBottom: 1, borderColor: 'divider' }}>
             <Typography
               variant='subtitle1'
@@ -324,7 +324,7 @@ const SupplierDetailPage: React.FC = () => {
           </Box>
           <Box sx={{ p: 3 }}>{bankInfoSection.content}</Box>
         </Paper>
-        <Paper sx={{ borderRadius: 2 }}>
+        <Paper sx={{ borderRadius: 3 }}>
           <Box sx={{ p: 2, borderBottom: 1, borderColor: 'divider' }}>
             <Typography
               variant='subtitle1'
@@ -346,7 +346,7 @@ const SupplierDetailPage: React.FC = () => {
     icon: <FileText size={16} />,
     badge: 0,
     content: (
-      <Paper sx={{ borderRadius: 2 }}>
+      <Paper sx={{ borderRadius: 3 }}>
         <Table>
           <TableHead>
             <TableRow>
@@ -381,7 +381,7 @@ const SupplierDetailPage: React.FC = () => {
     icon: <DollarSign size={16} />,
     badge: 0,
     content: (
-      <Paper sx={{ borderRadius: 2 }}>
+      <Paper sx={{ borderRadius: 3 }}>
         <Table>
           <TableHead>
             <TableRow>
@@ -413,7 +413,7 @@ const SupplierDetailPage: React.FC = () => {
     icon: <Receipt size={16} />,
     badge: 0,
     content: (
-      <Paper sx={{ borderRadius: 2 }}>
+      <Paper sx={{ borderRadius: 3 }}>
         <Table>
           <TableHead>
             <TableRow>

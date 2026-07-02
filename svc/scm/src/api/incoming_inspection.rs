@@ -143,8 +143,7 @@ async fn list_notices(
             .await;
 
             let total = count_result.unwrap_or(0);
-            let items_json: Vec<serde_json::Value> =
-                items.iter().map(notice_row_to_json).collect();
+            let items_json: Vec<serde_json::Value> = items.iter().map(notice_row_to_json).collect();
 
             Json(ApiResponse::success(
                 serde_json::json!({
@@ -504,12 +503,10 @@ async fn create_inspection(
     let now = Utc::now();
     let inspection_number = format!("IQC{}", now.format("%Y%m%d%H%M%S"));
 
-    let notice_info = sqlx::query(
-        "SELECT notice_number FROM scm.incoming_notices WHERE id = $1",
-    )
-    .bind(req.notice_id)
-    .fetch_optional(&state.db)
-    .await;
+    let notice_info = sqlx::query("SELECT notice_number FROM scm.incoming_notices WHERE id = $1")
+        .bind(req.notice_id)
+        .fetch_optional(&state.db)
+        .await;
 
     let notice_number: Option<String> = notice_info
         .ok()
@@ -650,12 +647,10 @@ async fn update_inspection(
     let request_data = serde_json::to_value(&req).ok();
     let now = Utc::now().naive_utc();
 
-    let existing = sqlx::query(
-        "SELECT id, status FROM scm.incoming_inspections WHERE id = $1",
-    )
-    .bind(id)
-    .fetch_optional(&state.db)
-    .await;
+    let existing = sqlx::query("SELECT id, status FROM scm.incoming_inspections WHERE id = $1")
+        .bind(id)
+        .fetch_optional(&state.db)
+        .await;
 
     if existing.is_err() {
         return Json(api_error(500, "查询检验记录失败"));
@@ -773,12 +768,10 @@ async fn inspection_pass(
         return Json(api_error(400, "检验记录已完成，无法重复操作"));
     }
 
-    let failed_qty = req
-        .failed_quantity
-        .unwrap_or_else(|| {
-            let inspected: f64 = existing.try_get("inspected_quantity").unwrap_or(0.0);
-            (inspected - req.passed_quantity).max(0.0)
-        });
+    let failed_qty = req.failed_quantity.unwrap_or_else(|| {
+        let inspected: f64 = existing.try_get("inspected_quantity").unwrap_or(0.0);
+        (inspected - req.passed_quantity).max(0.0)
+    });
 
     let result = sqlx::query(
         r#"
@@ -884,8 +877,7 @@ async fn inspection_fail(
         return Json(api_error(400, "检验记录已完成，无法重复操作"));
     }
 
-    let passed_qty = req
-        .passed_quantity;
+    let passed_qty = req.passed_quantity;
     let failed_qty = req.failed_quantity.unwrap_or_else(|| {
         let inspected: f64 = existing.try_get("inspected_quantity").unwrap_or(0.0);
         (inspected - passed_qty).max(0.0)

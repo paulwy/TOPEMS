@@ -24,7 +24,7 @@ const CRMCustomerSegmentationPage: React.FC = () => {
   const loadSegments = useCallback(async () => {
     try {
       setLoading(true);
-      const res = await apiClient.crm.get('/api/crm/segments', {
+      const res = await apiClient.crm.get('/segments', {
         params: { page: 1, pagesize: 50 },
       });
       if (res.success && res.data) {
@@ -124,6 +124,8 @@ const CRMCustomerSegmentationPage: React.FC = () => {
     <PageContainer
       title='客户分群'
       subtitle='基于多维度条件对客户进行精细化分群运营'
+      autoTitle
+      autoBreadcrumbs
     >
       <Box>
         <Box
@@ -159,7 +161,7 @@ const CRMCustomerSegmentationPage: React.FC = () => {
                     sx={{
                       width: 48,
                       height: 48,
-                      borderRadius: 2,
+                      borderRadius: 3,
                       bgcolor: 'primary.50',
                       display: 'flex',
                       alignItems: 'center',
@@ -168,7 +170,7 @@ const CRMCustomerSegmentationPage: React.FC = () => {
                   >
                     <Tag
                       size={24}
-                      color='#3b82f6'
+                      color='primary.main'
                     />
                   </Box>
                   <Box>
@@ -197,7 +199,7 @@ const CRMCustomerSegmentationPage: React.FC = () => {
                     sx={{
                       width: 48,
                       height: 48,
-                      borderRadius: 2,
+                      borderRadius: 3,
                       bgcolor: 'success.50',
                       display: 'flex',
                       alignItems: 'center',
@@ -206,7 +208,7 @@ const CRMCustomerSegmentationPage: React.FC = () => {
                   >
                     <Users
                       size={24}
-                      color='#10b981'
+                      color='success.main'
                     />
                   </Box>
                   <Box>
@@ -235,7 +237,7 @@ const CRMCustomerSegmentationPage: React.FC = () => {
                     sx={{
                       width: 48,
                       height: 48,
-                      borderRadius: 2,
+                      borderRadius: 3,
                       bgcolor: 'warning.50',
                       display: 'flex',
                       alignItems: 'center',
@@ -244,7 +246,7 @@ const CRMCustomerSegmentationPage: React.FC = () => {
                   >
                     <TrendingUp
                       size={24}
-                      color='#f59e0b'
+                      color='warning.main'
                     />
                   </Box>
                   <Box>

@@ -206,10 +206,17 @@ export const MonitorSettingsPage: React.FC = () => {
   const renderGeneralSettings = () => (
     <Stack spacing={3}>
       <Box>
-        <Typography variant='h6' sx={{ fontWeight: 600, mb: 1 }}>
+        <Typography
+          variant='h6'
+          sx={{ fontWeight: 600, mb: 1 }}
+        >
           基础配置
         </Typography>
-        <Typography variant='body2' color='text.secondary' sx={{ mb: 3 }}>
+        <Typography
+          variant='body2'
+          color='text.secondary'
+          sx={{ mb: 3 }}
+        >
           配置监控系统的基础参数
         </Typography>
         <Stack spacing={2}>
@@ -224,8 +231,18 @@ export const MonitorSettingsPage: React.FC = () => {
             }}
           >
             <Box>
-              <Typography variant='body2' sx={{ fontWeight: 500 }}>启用监控</Typography>
-              <Typography variant='caption' color='text.secondary'>开启或关闭全局监控</Typography>
+              <Typography
+                variant='body2'
+                sx={{ fontWeight: 500 }}
+              >
+                启用监控
+              </Typography>
+              <Typography
+                variant='caption'
+                color='text.secondary'
+              >
+                开启或关闭全局监控
+              </Typography>
             </Box>
             <Switch
               checked={generalSettings.monitoringEnabled}
@@ -278,8 +295,18 @@ export const MonitorSettingsPage: React.FC = () => {
             }}
           >
             <Box>
-              <Typography variant='body2' sx={{ fontWeight: 500 }}>自动发现</Typography>
-              <Typography variant='caption' color='text.secondary'>自动发现新的监控目标</Typography>
+              <Typography
+                variant='body2'
+                sx={{ fontWeight: 500 }}
+              >
+                自动发现
+              </Typography>
+              <Typography
+                variant='caption'
+                color='text.secondary'
+              >
+                自动发现新的监控目标
+              </Typography>
             </Box>
             <Switch
               checked={generalSettings.autoDiscovery}
@@ -295,7 +322,10 @@ export const MonitorSettingsPage: React.FC = () => {
       <Divider />
 
       <Box>
-        <Typography variant='h6' sx={{ fontWeight: 600, mb: 2 }}>
+        <Typography
+          variant='h6'
+          sx={{ fontWeight: 600, mb: 2 }}
+        >
           检查配置
         </Typography>
         <Stack spacing={2}>
@@ -335,7 +365,10 @@ export const MonitorSettingsPage: React.FC = () => {
       <Divider />
 
       <Box>
-        <Typography variant='h6' sx={{ fontWeight: 600, mb: 2 }}>
+        <Typography
+          variant='h6'
+          sx={{ fontWeight: 600, mb: 2 }}
+        >
           可观测性
         </Typography>
         <Stack spacing={2}>
@@ -350,8 +383,18 @@ export const MonitorSettingsPage: React.FC = () => {
             }}
           >
             <Box>
-              <Typography variant='body2' sx={{ fontWeight: 500 }}>指标监控</Typography>
-              <Typography variant='caption' color='text.secondary'>收集和存储指标数据</Typography>
+              <Typography
+                variant='body2'
+                sx={{ fontWeight: 500 }}
+              >
+                指标监控
+              </Typography>
+              <Typography
+                variant='caption'
+                color='text.secondary'
+              >
+                收集和存储指标数据
+              </Typography>
             </Box>
             <Switch
               checked={generalSettings.enableMetrics}
@@ -372,8 +415,18 @@ export const MonitorSettingsPage: React.FC = () => {
             }}
           >
             <Box>
-              <Typography variant='body2' sx={{ fontWeight: 500 }}>日志监控</Typography>
-              <Typography variant='caption' color='text.secondary'>收集和分析日志数据</Typography>
+              <Typography
+                variant='body2'
+                sx={{ fontWeight: 500 }}
+              >
+                日志监控
+              </Typography>
+              <Typography
+                variant='caption'
+                color='text.secondary'
+              >
+                收集和分析日志数据
+              </Typography>
             </Box>
             <Switch
               checked={generalSettings.enableLogs}
@@ -394,8 +447,18 @@ export const MonitorSettingsPage: React.FC = () => {
             }}
           >
             <Box>
-              <Typography variant='body2' sx={{ fontWeight: 500 }}>链路追踪</Typography>
-              <Typography variant='caption' color='text.secondary'>收集和分析分布式链路</Typography>
+              <Typography
+                variant='body2'
+                sx={{ fontWeight: 500 }}
+              >
+                链路追踪
+              </Typography>
+              <Typography
+                variant='caption'
+                color='text.secondary'
+              >
+                收集和分析分布式链路
+              </Typography>
             </Box>
             <Switch
               checked={generalSettings.enableTraces}
@@ -413,14 +476,24 @@ export const MonitorSettingsPage: React.FC = () => {
   const renderAlertSettings = () => (
     <Stack spacing={3}>
       <Box>
-        <Typography variant='h6' sx={{ fontWeight: 600, mb: 1 }}>
+        <Typography
+          variant='h6'
+          sx={{ fontWeight: 600, mb: 1 }}
+        >
           告警策略
         </Typography>
-        <Typography variant='body2' color='text.secondary' sx={{ mb: 3 }}>
+        <Typography
+          variant='body2'
+          color='text.secondary'
+          sx={{ mb: 3 }}
+        >
           配置默认告警策略和规则
         </Typography>
         <Stack spacing={2}>
-          <FormControl fullWidth size='small'>
+          <FormControl
+            fullWidth
+            size='small'
+          >
             <InputLabel>默认告警策略</InputLabel>
             <Select
               value={alertSettings.defaultAlertStrategy}
@@ -447,8 +520,18 @@ export const MonitorSettingsPage: React.FC = () => {
             }}
           >
             <Box>
-              <Typography variant='body2' sx={{ fontWeight: 500 }}>自动恢复</Typography>
-              <Typography variant='caption' color='text.secondary'>指标恢复正常后自动解除告警</Typography>
+              <Typography
+                variant='body2'
+                sx={{ fontWeight: 500 }}
+              >
+                自动恢复
+              </Typography>
+              <Typography
+                variant='caption'
+                color='text.secondary'
+              >
+                指标恢复正常后自动解除告警
+              </Typography>
             </Box>
             <Switch
               checked={alertSettings.enableAutoRecover}
@@ -480,7 +563,10 @@ export const MonitorSettingsPage: React.FC = () => {
       <Divider />
 
       <Box>
-        <Typography variant='h6' sx={{ fontWeight: 600, mb: 2 }}>
+        <Typography
+          variant='h6'
+          sx={{ fontWeight: 600, mb: 2 }}
+        >
           升级机制
         </Typography>
         <Stack spacing={2}>
@@ -494,7 +580,12 @@ export const MonitorSettingsPage: React.FC = () => {
               borderRadius: 1,
             }}
           >
-            <Typography variant='body2' sx={{ fontWeight: 500 }}>启用告警升级</Typography>
+            <Typography
+              variant='body2'
+              sx={{ fontWeight: 500 }}
+            >
+              启用告警升级
+            </Typography>
             <Switch
               checked={alertSettings.escalationEnabled}
               onChange={(e) => {
@@ -540,7 +631,10 @@ export const MonitorSettingsPage: React.FC = () => {
       <Divider />
 
       <Box>
-        <Typography variant='h6' sx={{ fontWeight: 600, mb: 2 }}>
+        <Typography
+          variant='h6'
+          sx={{ fontWeight: 600, mb: 2 }}
+        >
           静默规则
         </Typography>
         <Stack spacing={2}>
@@ -555,8 +649,18 @@ export const MonitorSettingsPage: React.FC = () => {
             }}
           >
             <Box>
-              <Typography variant='body2' sx={{ fontWeight: 500 }}>启用静默规则</Typography>
-              <Typography variant='caption' color='text.secondary'>允许在特定时间段静默告警</Typography>
+              <Typography
+                variant='body2'
+                sx={{ fontWeight: 500 }}
+              >
+                启用静默规则
+              </Typography>
+              <Typography
+                variant='caption'
+                color='text.secondary'
+              >
+                允许在特定时间段静默告警
+              </Typography>
             </Box>
             <Switch
               checked={alertSettings.enableSilenceRules}
@@ -588,7 +692,10 @@ export const MonitorSettingsPage: React.FC = () => {
       <Divider />
 
       <Box>
-        <Typography variant='h6' sx={{ fontWeight: 600, mb: 2 }}>
+        <Typography
+          variant='h6'
+          sx={{ fontWeight: 600, mb: 2 }}
+        >
           去重设置
         </Typography>
         <Stack spacing={2}>
@@ -603,8 +710,18 @@ export const MonitorSettingsPage: React.FC = () => {
             }}
           >
             <Box>
-              <Typography variant='body2' sx={{ fontWeight: 500 }}>告警去重</Typography>
-              <Typography variant='caption' color='text.secondary'>合并相同告警避免通知轰炸</Typography>
+              <Typography
+                variant='body2'
+                sx={{ fontWeight: 500 }}
+              >
+                告警去重
+              </Typography>
+              <Typography
+                variant='caption'
+                color='text.secondary'
+              >
+                合并相同告警避免通知轰炸
+              </Typography>
             </Box>
             <Switch
               checked={alertSettings.enableDeduplication}
@@ -638,10 +755,17 @@ export const MonitorSettingsPage: React.FC = () => {
   const renderNotificationSettings = () => (
     <Stack spacing={3}>
       <Box>
-        <Typography variant='h6' sx={{ fontWeight: 600, mb: 1 }}>
+        <Typography
+          variant='h6'
+          sx={{ fontWeight: 600, mb: 1 }}
+        >
           通知渠道
         </Typography>
-        <Typography variant='body2' color='text.secondary' sx={{ mb: 3 }}>
+        <Typography
+          variant='body2'
+          color='text.secondary'
+          sx={{ mb: 3 }}
+        >
           配置告警通知的发送渠道
         </Typography>
         <Stack spacing={2}>
@@ -656,8 +780,18 @@ export const MonitorSettingsPage: React.FC = () => {
             }}
           >
             <Box>
-              <Typography variant='body2' sx={{ fontWeight: 500 }}>邮件通知</Typography>
-              <Typography variant='caption' color='text.secondary'>通过邮件发送告警通知</Typography>
+              <Typography
+                variant='body2'
+                sx={{ fontWeight: 500 }}
+              >
+                邮件通知
+              </Typography>
+              <Typography
+                variant='caption'
+                color='text.secondary'
+              >
+                通过邮件发送告警通知
+              </Typography>
             </Box>
             <Switch
               checked={notificationSettings.emailEnabled}
@@ -681,8 +815,18 @@ export const MonitorSettingsPage: React.FC = () => {
             }}
           >
             <Box>
-              <Typography variant='body2' sx={{ fontWeight: 500 }}>短信通知</Typography>
-              <Typography variant='caption' color='text.secondary'>通过短信发送紧急告警</Typography>
+              <Typography
+                variant='body2'
+                sx={{ fontWeight: 500 }}
+              >
+                短信通知
+              </Typography>
+              <Typography
+                variant='caption'
+                color='text.secondary'
+              >
+                通过短信发送紧急告警
+              </Typography>
             </Box>
             <Switch
               checked={notificationSettings.smsEnabled}
@@ -706,8 +850,18 @@ export const MonitorSettingsPage: React.FC = () => {
             }}
           >
             <Box>
-              <Typography variant='body2' sx={{ fontWeight: 500 }}>站内推送</Typography>
-              <Typography variant='caption' color='text.secondary'>在系统内推送实时告警</Typography>
+              <Typography
+                variant='body2'
+                sx={{ fontWeight: 500 }}
+              >
+                站内推送
+              </Typography>
+              <Typography
+                variant='caption'
+                color='text.secondary'
+              >
+                在系统内推送实时告警
+              </Typography>
             </Box>
             <Switch
               checked={notificationSettings.pushEnabled}
@@ -731,8 +885,18 @@ export const MonitorSettingsPage: React.FC = () => {
             }}
           >
             <Box>
-              <Typography variant='body2' sx={{ fontWeight: 500 }}>企业微信</Typography>
-              <Typography variant='caption' color='text.secondary'>通过企业微信发送告警</Typography>
+              <Typography
+                variant='body2'
+                sx={{ fontWeight: 500 }}
+              >
+                企业微信
+              </Typography>
+              <Typography
+                variant='caption'
+                color='text.secondary'
+              >
+                通过企业微信发送告警
+              </Typography>
             </Box>
             <Switch
               checked={notificationSettings.wechatEnabled}
@@ -756,8 +920,18 @@ export const MonitorSettingsPage: React.FC = () => {
             }}
           >
             <Box>
-              <Typography variant='body2' sx={{ fontWeight: 500 }}>电话通知</Typography>
-              <Typography variant='caption' color='text.secondary'>通过电话语音发送严重告警</Typography>
+              <Typography
+                variant='body2'
+                sx={{ fontWeight: 500 }}
+              >
+                电话通知
+              </Typography>
+              <Typography
+                variant='caption'
+                color='text.secondary'
+              >
+                通过电话语音发送严重告警
+              </Typography>
             </Box>
             <Switch
               checked={notificationSettings.phoneEnabled}
@@ -776,7 +950,10 @@ export const MonitorSettingsPage: React.FC = () => {
       <Divider />
 
       <Box>
-        <Typography variant='h6' sx={{ fontWeight: 600, mb: 2 }}>
+        <Typography
+          variant='h6'
+          sx={{ fontWeight: 600, mb: 2 }}
+        >
           告警级别
         </Typography>
         <Stack spacing={2}>
@@ -852,11 +1029,17 @@ export const MonitorSettingsPage: React.FC = () => {
       <Divider />
 
       <Box>
-        <Typography variant='h6' sx={{ fontWeight: 600, mb: 2 }}>
+        <Typography
+          variant='h6'
+          sx={{ fontWeight: 600, mb: 2 }}
+        >
           通知配置
         </Typography>
         <Stack spacing={2}>
-          <FormControl fullWidth size='small'>
+          <FormControl
+            fullWidth
+            size='small'
+          >
             <InputLabel>默认通知模板</InputLabel>
             <Select
               value={notificationSettings.defaultTemplate}
@@ -897,14 +1080,24 @@ export const MonitorSettingsPage: React.FC = () => {
   const renderDatasourceSettings = () => (
     <Stack spacing={3}>
       <Box>
-        <Typography variant='h6' sx={{ fontWeight: 600, mb: 1 }}>
+        <Typography
+          variant='h6'
+          sx={{ fontWeight: 600, mb: 1 }}
+        >
           数据源配置
         </Typography>
-        <Typography variant='body2' color='text.secondary' sx={{ mb: 3 }}>
+        <Typography
+          variant='body2'
+          color='text.secondary'
+          sx={{ mb: 3 }}
+        >
           配置监控数据源连接
         </Typography>
         <Stack spacing={2}>
-          <FormControl fullWidth size='small'>
+          <FormControl
+            fullWidth
+            size='small'
+          >
             <InputLabel>主数据源类型</InputLabel>
             <Select
               value={datasourceSettings.primaryDatasource}
@@ -971,7 +1164,10 @@ export const MonitorSettingsPage: React.FC = () => {
       <Divider />
 
       <Box>
-        <Typography variant='h6' sx={{ fontWeight: 600, mb: 2 }}>
+        <Typography
+          variant='h6'
+          sx={{ fontWeight: 600, mb: 2 }}
+        >
           SSL 配置
         </Typography>
         <Stack spacing={2}>
@@ -986,8 +1182,18 @@ export const MonitorSettingsPage: React.FC = () => {
             }}
           >
             <Box>
-              <Typography variant='body2' sx={{ fontWeight: 500 }}>启用 SSL</Typography>
-              <Typography variant='caption' color='text.secondary'>使用 SSL/TLS 加密连接</Typography>
+              <Typography
+                variant='body2'
+                sx={{ fontWeight: 500 }}
+              >
+                启用 SSL
+              </Typography>
+              <Typography
+                variant='caption'
+                color='text.secondary'
+              >
+                使用 SSL/TLS 加密连接
+              </Typography>
             </Box>
             <Switch
               checked={datasourceSettings.enableSsl}
@@ -1008,8 +1214,18 @@ export const MonitorSettingsPage: React.FC = () => {
             }}
           >
             <Box>
-              <Typography variant='body2' sx={{ fontWeight: 500 }}>SSL 证书验证</Typography>
-              <Typography variant='caption' color='text.secondary'>验证服务端 SSL 证书</Typography>
+              <Typography
+                variant='body2'
+                sx={{ fontWeight: 500 }}
+              >
+                SSL 证书验证
+              </Typography>
+              <Typography
+                variant='caption'
+                color='text.secondary'
+              >
+                验证服务端 SSL 证书
+              </Typography>
             </Box>
             <Switch
               checked={datasourceSettings.sslVerify}
@@ -1026,7 +1242,10 @@ export const MonitorSettingsPage: React.FC = () => {
       <Divider />
 
       <Box>
-        <Typography variant='h6' sx={{ fontWeight: 600, mb: 2 }}>
+        <Typography
+          variant='h6'
+          sx={{ fontWeight: 600, mb: 2 }}
+        >
           查询优化
         </Typography>
         <Stack spacing={2}>
@@ -1041,13 +1260,26 @@ export const MonitorSettingsPage: React.FC = () => {
             }}
           >
             <Box>
-              <Typography variant='body2' sx={{ fontWeight: 500 }}>批量查询</Typography>
-              <Typography variant='caption' color='text.secondary'>合并多个查询减少请求次数</Typography>
+              <Typography
+                variant='body2'
+                sx={{ fontWeight: 500 }}
+              >
+                批量查询
+              </Typography>
+              <Typography
+                variant='caption'
+                color='text.secondary'
+              >
+                合并多个查询减少请求次数
+              </Typography>
             </Box>
             <Switch
               checked={datasourceSettings.batchQueryEnabled}
               onChange={(e) => {
-                setDatasourceSettings({ ...datasourceSettings, batchQueryEnabled: e.target.checked });
+                setDatasourceSettings({
+                  ...datasourceSettings,
+                  batchQueryEnabled: e.target.checked,
+                });
                 markUnsaved();
               }}
             />
@@ -1078,8 +1310,18 @@ export const MonitorSettingsPage: React.FC = () => {
             }}
           >
             <Box>
-              <Typography variant='body2' sx={{ fontWeight: 500 }}>查询缓存</Typography>
-              <Typography variant='caption' color='text.secondary'>缓存查询结果提升性能</Typography>
+              <Typography
+                variant='body2'
+                sx={{ fontWeight: 500 }}
+              >
+                查询缓存
+              </Typography>
+              <Typography
+                variant='caption'
+                color='text.secondary'
+              >
+                缓存查询结果提升性能
+              </Typography>
             </Box>
             <Switch
               checked={datasourceSettings.cacheEnabled}
@@ -1112,10 +1354,17 @@ export const MonitorSettingsPage: React.FC = () => {
   const renderPermissionSettings = () => (
     <Stack spacing={3}>
       <Box>
-        <Typography variant='h6' sx={{ fontWeight: 600, mb: 1 }}>
+        <Typography
+          variant='h6'
+          sx={{ fontWeight: 600, mb: 1 }}
+        >
           权限控制
         </Typography>
-        <Typography variant='body2' color='text.secondary' sx={{ mb: 3 }}>
+        <Typography
+          variant='body2'
+          color='text.secondary'
+          sx={{ mb: 3 }}
+        >
           配置监控系统权限控制方式
         </Typography>
         <Stack spacing={2}>
@@ -1130,8 +1379,18 @@ export const MonitorSettingsPage: React.FC = () => {
             }}
           >
             <Box>
-              <Typography variant='body2' sx={{ fontWeight: 500 }}>基于角色的权限</Typography>
-              <Typography variant='caption' color='text.secondary'>使用系统角色控制监控访问</Typography>
+              <Typography
+                variant='body2'
+                sx={{ fontWeight: 500 }}
+              >
+                基于角色的权限
+              </Typography>
+              <Typography
+                variant='caption'
+                color='text.secondary'
+              >
+                使用系统角色控制监控访问
+              </Typography>
             </Box>
             <Switch
               checked={permissionSettings.enableRoleBased}
@@ -1155,8 +1414,18 @@ export const MonitorSettingsPage: React.FC = () => {
             }}
           >
             <Box>
-              <Typography variant='body2' sx={{ fontWeight: 500 }}>基于部门的权限</Typography>
-              <Typography variant='caption' color='text.secondary'>使用组织架构控制监控访问</Typography>
+              <Typography
+                variant='body2'
+                sx={{ fontWeight: 500 }}
+              >
+                基于部门的权限
+              </Typography>
+              <Typography
+                variant='caption'
+                color='text.secondary'
+              >
+                使用组织架构控制监控访问
+              </Typography>
             </Box>
             <Switch
               checked={permissionSettings.enableDeptBased}
@@ -1180,8 +1449,18 @@ export const MonitorSettingsPage: React.FC = () => {
             }}
           >
             <Box>
-              <Typography variant='body2' sx={{ fontWeight: 500 }}>管理员管理全部</Typography>
-              <Typography variant='caption' color='text.secondary'>管理员可管理所有监控配置</Typography>
+              <Typography
+                variant='body2'
+                sx={{ fontWeight: 500 }}
+              >
+                管理员管理全部
+              </Typography>
+              <Typography
+                variant='caption'
+                color='text.secondary'
+              >
+                管理员可管理所有监控配置
+              </Typography>
             </Box>
             <Switch
               checked={permissionSettings.adminCanManageAll}
@@ -1200,7 +1479,10 @@ export const MonitorSettingsPage: React.FC = () => {
       <Divider />
 
       <Box>
-        <Typography variant='h6' sx={{ fontWeight: 600, mb: 2 }}>
+        <Typography
+          variant='h6'
+          sx={{ fontWeight: 600, mb: 2 }}
+        >
           访问控制
         </Typography>
         <Stack spacing={2}>
@@ -1215,8 +1497,18 @@ export const MonitorSettingsPage: React.FC = () => {
             }}
           >
             <Box>
-              <Typography variant='body2' sx={{ fontWeight: 500 }}>查看所有仪表盘</Typography>
-              <Typography variant='caption' color='text.secondary'>用户可查看所有监控仪表盘</Typography>
+              <Typography
+                variant='body2'
+                sx={{ fontWeight: 500 }}
+              >
+                查看所有仪表盘
+              </Typography>
+              <Typography
+                variant='caption'
+                color='text.secondary'
+              >
+                用户可查看所有监控仪表盘
+              </Typography>
             </Box>
             <Switch
               checked={permissionSettings.allowViewAllDashboards}
@@ -1240,8 +1532,18 @@ export const MonitorSettingsPage: React.FC = () => {
             }}
           >
             <Box>
-              <Typography variant='body2' sx={{ fontWeight: 500 }}>创建告警规则</Typography>
-              <Typography variant='caption' color='text.secondary'>允许用户创建自定义告警规则</Typography>
+              <Typography
+                variant='body2'
+                sx={{ fontWeight: 500 }}
+              >
+                创建告警规则
+              </Typography>
+              <Typography
+                variant='caption'
+                color='text.secondary'
+              >
+                允许用户创建自定义告警规则
+              </Typography>
             </Box>
             <Switch
               checked={permissionSettings.allowCreateAlertRules}
@@ -1265,8 +1567,18 @@ export const MonitorSettingsPage: React.FC = () => {
             }}
           >
             <Box>
-              <Typography variant='body2' sx={{ fontWeight: 500 }}>导出数据</Typography>
-              <Typography variant='caption' color='text.secondary'>允许导出监控数据</Typography>
+              <Typography
+                variant='body2'
+                sx={{ fontWeight: 500 }}
+              >
+                导出数据
+              </Typography>
+              <Typography
+                variant='caption'
+                color='text.secondary'
+              >
+                允许导出监控数据
+              </Typography>
             </Box>
             <Switch
               checked={permissionSettings.allowExportData}
@@ -1285,7 +1597,10 @@ export const MonitorSettingsPage: React.FC = () => {
       <Divider />
 
       <Box>
-        <Typography variant='h6' sx={{ fontWeight: 600, mb: 2 }}>
+        <Typography
+          variant='h6'
+          sx={{ fontWeight: 600, mb: 2 }}
+        >
           角色配置
         </Typography>
         <Stack spacing={2}>
@@ -1339,10 +1654,17 @@ export const MonitorSettingsPage: React.FC = () => {
   const renderIntegrationSettings = () => (
     <Stack spacing={3}>
       <Box>
-        <Typography variant='h6' sx={{ fontWeight: 600, mb: 1 }}>
+        <Typography
+          variant='h6'
+          sx={{ fontWeight: 600, mb: 1 }}
+        >
           Prometheus
         </Typography>
-        <Typography variant='body2' color='text.secondary' sx={{ mb: 3 }}>
+        <Typography
+          variant='body2'
+          color='text.secondary'
+          sx={{ mb: 3 }}
+        >
           配置 Prometheus 集成
         </Typography>
         <Stack spacing={2}>
@@ -1357,8 +1679,18 @@ export const MonitorSettingsPage: React.FC = () => {
             }}
           >
             <Box>
-              <Typography variant='body2' sx={{ fontWeight: 500 }}>启用 Prometheus</Typography>
-              <Typography variant='caption' color='text.secondary'>集成 Prometheus 监控系统</Typography>
+              <Typography
+                variant='body2'
+                sx={{ fontWeight: 500 }}
+              >
+                启用 Prometheus
+              </Typography>
+              <Typography
+                variant='caption'
+                color='text.secondary'
+              >
+                集成 Prometheus 监控系统
+              </Typography>
             </Box>
             <Switch
               checked={integrationSettings.prometheusEnabled}
@@ -1392,7 +1724,10 @@ export const MonitorSettingsPage: React.FC = () => {
       <Divider />
 
       <Box>
-        <Typography variant='h6' sx={{ fontWeight: 600, mb: 2 }}>
+        <Typography
+          variant='h6'
+          sx={{ fontWeight: 600, mb: 2 }}
+        >
           Grafana
         </Typography>
         <Stack spacing={2}>
@@ -1407,8 +1742,18 @@ export const MonitorSettingsPage: React.FC = () => {
             }}
           >
             <Box>
-              <Typography variant='body2' sx={{ fontWeight: 500 }}>启用 Grafana</Typography>
-              <Typography variant='caption' color='text.secondary'>集成 Grafana 可视化面板</Typography>
+              <Typography
+                variant='body2'
+                sx={{ fontWeight: 500 }}
+              >
+                启用 Grafana
+              </Typography>
+              <Typography
+                variant='caption'
+                color='text.secondary'
+              >
+                集成 Grafana 可视化面板
+              </Typography>
             </Box>
             <Switch
               checked={integrationSettings.grafanaEnabled}
@@ -1458,7 +1803,10 @@ export const MonitorSettingsPage: React.FC = () => {
       <Divider />
 
       <Box>
-        <Typography variant='h6' sx={{ fontWeight: 600, mb: 2 }}>
+        <Typography
+          variant='h6'
+          sx={{ fontWeight: 600, mb: 2 }}
+        >
           Webhook
         </Typography>
         <Stack spacing={2}>
@@ -1473,8 +1821,18 @@ export const MonitorSettingsPage: React.FC = () => {
             }}
           >
             <Box>
-              <Typography variant='body2' sx={{ fontWeight: 500 }}>启用 Webhook</Typography>
-              <Typography variant='caption' color='text.secondary'>通过 Webhook 推送告警事件</Typography>
+              <Typography
+                variant='body2'
+                sx={{ fontWeight: 500 }}
+              >
+                启用 Webhook
+              </Typography>
+              <Typography
+                variant='caption'
+                color='text.secondary'
+              >
+                通过 Webhook 推送告警事件
+              </Typography>
             </Box>
             <Switch
               checked={integrationSettings.webhookEnabled}
@@ -1524,7 +1882,10 @@ export const MonitorSettingsPage: React.FC = () => {
       <Divider />
 
       <Box>
-        <Typography variant='h6' sx={{ fontWeight: 600, mb: 2 }}>
+        <Typography
+          variant='h6'
+          sx={{ fontWeight: 600, mb: 2 }}
+        >
           API 访问
         </Typography>
         <Stack spacing={2}>
@@ -1539,8 +1900,18 @@ export const MonitorSettingsPage: React.FC = () => {
             }}
           >
             <Box>
-              <Typography variant='body2' sx={{ fontWeight: 500 }}>启用 API 访问</Typography>
-              <Typography variant='caption' color='text.secondary'>允许通过 API 操作监控</Typography>
+              <Typography
+                variant='body2'
+                sx={{ fontWeight: 500 }}
+              >
+                启用 API 访问
+              </Typography>
+              <Typography
+                variant='caption'
+                color='text.secondary'
+              >
+                允许通过 API 操作监控
+              </Typography>
             </Box>
             <Switch
               checked={integrationSettings.enableApiAccess}
@@ -1591,7 +1962,15 @@ export const MonitorSettingsPage: React.FC = () => {
       default:
         return renderGeneralSettings();
     }
-  }, [activeGroup, generalSettings, alertSettings, notificationSettings, datasourceSettings, permissionSettings, integrationSettings]);
+  }, [
+    activeGroup,
+    generalSettings,
+    alertSettings,
+    notificationSettings,
+    datasourceSettings,
+    permissionSettings,
+    integrationSettings,
+  ]);
 
   const currentGroup = SETTING_GROUPS.find((g) => g.id === activeGroup);
 
@@ -1604,7 +1983,7 @@ export const MonitorSettingsPage: React.FC = () => {
         },
       }}
     >
-      <Paper sx={{ borderRadius: 2, overflow: 'hidden' }}>
+      <Paper sx={{ borderRadius: 3, overflow: 'hidden' }}>
         <Box
           sx={{
             display: 'grid',
@@ -1678,10 +2057,16 @@ export const MonitorSettingsPage: React.FC = () => {
 
           <Box sx={{ p: 4 }}>
             <Box sx={{ mb: 3 }}>
-              <Typography variant='h5' sx={{ fontWeight: 600, mb: 0.5 }}>
+              <Typography
+                variant='h5'
+                sx={{ fontWeight: 600, mb: 0.5 }}
+              >
                 {currentGroup?.label}
               </Typography>
-              <Typography variant='body2' color='text.secondary'>
+              <Typography
+                variant='body2'
+                color='text.secondary'
+              >
                 {currentGroup?.description}
               </Typography>
             </Box>
@@ -1700,7 +2085,10 @@ export const MonitorSettingsPage: React.FC = () => {
               }}
             >
               {hasUnsavedChanges && (
-                <Typography variant='body2' color='warning.main'>
+                <Typography
+                  variant='body2'
+                  color='warning.main'
+                >
                   有未保存的更改
                 </Typography>
               )}

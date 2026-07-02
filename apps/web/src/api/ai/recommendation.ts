@@ -19,7 +19,7 @@ export const recommendationApi = {
       }>;
     }>
   > => {
-    return apiClient.ai.post('/api/ai/recommendations', data);
+    return apiClient.ai.post('/recommendations', data);
   },
 
   getPersonalizedRecommendations: async (
@@ -36,9 +36,7 @@ export const recommendationApi = {
       }>;
     }>
   > => {
-    return apiClient.ai.get(
-      `/api/ai/recommendations/personalized?type=${type}&limit=${limit || 10}`
-    );
+    return apiClient.ai.get(`/recommendations/personalized?type=${type}&limit=${limit || 10}`);
   },
 
   recordRecommendationFeedback: async (data: {
@@ -46,6 +44,6 @@ export const recommendationApi = {
     action: 'click' | 'like' | 'dislike' | 'convert';
     user_id?: string;
   }): Promise<ApiResponse<{ success: boolean }>> => {
-    return apiClient.ai.post('/api/ai/recommendations/feedback', data);
+    return apiClient.ai.post('/recommendations/feedback', data);
   },
 };

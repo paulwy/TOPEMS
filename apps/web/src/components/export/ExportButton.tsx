@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import { useTheme } from '@mui/material';
 import { Download, Loader2, CheckCircle } from 'lucide-react';
 import type { ExportFormat } from '@/api/report';
 import { logger } from '@/utils/logger';
@@ -28,6 +29,7 @@ const ExportButton: React.FC<ExportButtonProps> = ({
   onExportComplete,
   onExportError,
 }) => {
+  const theme = useTheme();
   const [exporting, setExporting] = useState(false);
   const [exportComplete, setExportComplete] = useState(false);
 
@@ -130,8 +132,8 @@ const ExportButton: React.FC<ExportButtonProps> = ({
         display: 'flex',
         alignItems: 'center',
         gap: '8px',
-        backgroundColor: disabled ? 'grey.400' : exportComplete ? 'success.dark' : 'primary.dark',
-        color: disabled ? 'grey.600' : 'white',
+        backgroundColor: disabled ? theme.palette.grey[400] : exportComplete ? theme.palette.success.dark : theme.palette.primary.dark,
+        color: disabled ? theme.palette.grey[600] : 'white',
         cursor: disabled || exporting ? 'not-allowed' : 'pointer',
         border: 'none',
         ...(buttonClassName ? {} : {}),

@@ -82,7 +82,8 @@ mod tests {
 
     #[test]
     fn test_validate_employee_data() {
-        let result = validate_employee_data("张三", "zhang@test.com", Some("13800138000"), "EMP001");
+        let result =
+            validate_employee_data("张三", "zhang@test.com", Some("13800138000"), "EMP001");
         assert!(result.is_valid());
     }
 }

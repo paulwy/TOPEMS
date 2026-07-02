@@ -3,11 +3,11 @@ import type { AcceptancePlan, AcceptanceItem, AcceptanceRecord } from './types';
 
 export const acceptancePlanApi = {
   list: async (projectId: string) => {
-    return apiClient.pm.get(`/api/pm/projects/${projectId}/acceptance-plans`);
+    return apiClient.pm.get(`/projects/${projectId}/acceptance-plans`);
   },
 
   get: async (id: string) => {
-    return apiClient.pm.get(`/api/pm/acceptance-plans/${id}`);
+    return apiClient.pm.get(`/acceptance-plans/${id}`);
   },
 
   create: async (
@@ -25,7 +25,7 @@ export const acceptancePlanApi = {
       created_by?: string;
     }
   ) => {
-    return apiClient.pm.post(`/api/pm/projects/${projectId}/acceptance-plans`, data);
+    return apiClient.pm.post(`/projects/${projectId}/acceptance-plans`, data);
   },
 
   update: async (
@@ -40,13 +40,13 @@ export const acceptancePlanApi = {
       documents_required?: Record<string, any>;
     }
   ) => {
-    return apiClient.pm.put(`/api/pm/acceptance-plans/${id}`, data);
+    return apiClient.pm.put(`/acceptance-plans/${id}`, data);
   },
 };
 
 export const acceptanceItemApi = {
   list: async (planId: string) => {
-    return apiClient.pm.get(`/api/pm/acceptance-plans/${planId}/items`);
+    return apiClient.pm.get(`/acceptance-plans/${planId}/items`);
   },
 
   create: async (
@@ -58,7 +58,7 @@ export const acceptanceItemApi = {
       required_standard?: string;
     }
   ) => {
-    return apiClient.pm.post(`/api/pm/acceptance-plans/${planId}/items`, data);
+    return apiClient.pm.post(`/acceptance-plans/${planId}/items`, data);
   },
 
   update: async (
@@ -69,21 +69,21 @@ export const acceptanceItemApi = {
       comments?: string;
     }
   ) => {
-    return apiClient.pm.put(`/api/pm/acceptance-items/${id}`, data);
+    return apiClient.pm.put(`/acceptance-items/${id}`, data);
   },
 
   delete: async (id: string) => {
-    return apiClient.pm.delete(`/api/pm/acceptance-items/${id}`);
+    return apiClient.pm.delete(`/acceptance-items/${id}`);
   },
 };
 
 export const acceptanceRecordApi = {
   list: async (projectId: string) => {
-    return apiClient.pm.get(`/api/pm/projects/${projectId}/acceptance-records`);
+    return apiClient.pm.get(`/projects/${projectId}/acceptance-records`);
   },
 
   get: async (id: string) => {
-    return apiClient.pm.get(`/api/pm/acceptance-records/${id}`);
+    return apiClient.pm.get(`/acceptance-records/${id}`);
   },
 
   create: async (
@@ -100,7 +100,7 @@ export const acceptanceRecordApi = {
       created_by?: string;
     }
   ) => {
-    return apiClient.pm.post(`/api/pm/acceptance-plans/${planId}/records`, data);
+    return apiClient.pm.post(`/acceptance-plans/${planId}/records`, data);
   },
 
   update: async (
@@ -114,7 +114,7 @@ export const acceptanceRecordApi = {
       recommendations?: Record<string, any>;
     }
   ) => {
-    return apiClient.pm.put(`/api/pm/acceptance-records/${id}`, data);
+    return apiClient.pm.put(`/acceptance-records/${id}`, data);
   },
 };
 

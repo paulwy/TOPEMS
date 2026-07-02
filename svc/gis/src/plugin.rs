@@ -15,13 +15,23 @@ pub async fn auto_register_to_core(core_url: Option<&str>) {
     match client.post(&url).json(&info).send().await {
         Ok(response) => {
             if response.status().is_success() {
-                tracing::info!("[GIS Plugin] Successfully registered to core at {}", core_url);
+                tracing::info!(
+                    "[GIS Plugin] Successfully registered to core at {}",
+                    core_url
+                );
             } else {
-                tracing::warn!("[GIS Plugin] Failed to register to core: {}", response.status());
+                tracing::warn!(
+                    "[GIS Plugin] Failed to register to core: {}",
+                    response.status()
+                );
             }
         }
         Err(e) => {
-            tracing::warn!("[GIS Plugin] Failed to connect to core at {}: {}", core_url, e);
+            tracing::warn!(
+                "[GIS Plugin] Failed to connect to core at {}: {}",
+                core_url,
+                e
+            );
         }
     }
 }
@@ -59,10 +69,7 @@ pub fn get_plugin_info() -> PluginInfo {
 }
 
 pub async fn plugin_health_check() -> Json<ApiResponse<ServiceHealth>> {
-    let health = ServiceHealth::healthy_with_message(
-        "topems-gis",
-        "GIS 地理信息服务运行正常",
-    );
+    let health = ServiceHealth::healthy_with_message("topems-gis", "GIS 地理信息服务运行正常");
     Json(ApiResponse::success(health, "插件健康检查"))
 }
 

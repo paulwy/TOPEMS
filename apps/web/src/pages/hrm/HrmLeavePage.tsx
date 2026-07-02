@@ -338,62 +338,18 @@ const LeaveManagementPage: React.FC = () => {
 
   return (
     <PageContainer
+      autoTitle
+      autoBreadcrumbs
+      headerProps={{
+        pageIcon: <FileText size={28} />,
+        pageGradient: 'linear-gradient(135deg, #4facfe 0%, #00f2fe 100%)',
+      }}
       padding={false}
       maxWidth={false}
     >
       <Box sx={{ p: 3 }}>
-        {/* 面包屑导航 */}
-        <Box sx={{ mb: 2 }}>
-          <Typography
-            component='a'
-            href='/hrm'
-            sx={{
-              color: 'text.secondary',
-              textDecoration: 'none',
-              fontSize: '0.875rem',
-              '&:hover': { color: 'primary.main', textDecoration: 'underline' },
-            }}
-          >
-            人力资源
-          </Typography>
-          <Typography
-            component='span'
-            sx={{ mx: 1, color: 'text.disabled' }}
-          >
-            /
-          </Typography>
-          <Typography
-            component='span'
-            sx={{ color: 'text.primary', fontSize: '0.875rem' }}
-          >
-            休假管理
-          </Typography>
-        </Box>
-
-        <Box
-          sx={{
-            display: 'flex',
-            justifyContent: 'space-between',
-            alignItems: 'center',
-            mb: 3,
-          }}
-        >
-          <Typography
-            variant='h5'
-            sx={{ fontWeight: 'bold' }}
-          >
-            休假管理
-          </Typography>
-          <ActionButton
-            label='新增申请'
-            icon={<Plus size={18} />}
-            onClick={handleAdd}
-            variant='primary'
-          />
-        </Box>
-
         {/* 统计卡片 */}
-        <Card sx={{ mb: 3, borderRadius: 2 }}>
+        <Card sx={{ mb: 3, borderRadius: 3 }}>
           <CardContent sx={{ p: 2 }}>
             <StatCardGroup
               stats={statCards}

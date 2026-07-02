@@ -100,7 +100,10 @@ pub async fn get_pending_approvals(
         rejected_count,
     };
 
-    (StatusCode::OK, Json(ApiResponse::success(response, "获取待审批列表成功")))
+    (
+        StatusCode::OK,
+        Json(ApiResponse::success(response, "获取待审批列表成功")),
+    )
 }
 
 async fn get_approval_count(pool: &PgPool, user_id: Uuid, status: &str) -> i64 {
@@ -170,7 +173,10 @@ pub async fn get_approved_approvals(
 
     let response = ApprovalHistoryResponse { items, total };
 
-    (StatusCode::OK, Json(ApiResponse::success(response, "获取已审批列表成功")))
+    (
+        StatusCode::OK,
+        Json(ApiResponse::success(response, "获取已审批列表成功")),
+    )
 }
 
 pub async fn get_rejected_approvals(
@@ -220,7 +226,10 @@ pub async fn get_rejected_approvals(
 
     let response = ApprovalHistoryResponse { items, total };
 
-    (StatusCode::OK, Json(ApiResponse::success(response, "获取已拒绝列表成功")))
+    (
+        StatusCode::OK,
+        Json(ApiResponse::success(response, "获取已拒绝列表成功")),
+    )
 }
 
 pub async fn approve_task(
@@ -232,16 +241,17 @@ pub async fn approve_task(
 ) -> impl IntoResponse {
     let _ = extract_user_id_from_token(&headers, &auth_state.jwt_secret);
 
-    let approval = match db_update_mobile_approval(&pool, id, "approve", payload.comment.as_deref()).await {
-        Ok(a) => a,
-        Err(e) => {
-            tracing::error!("审批操作失败: {}", e);
-            return (
-                StatusCode::INTERNAL_SERVER_ERROR,
-                Json(ApiResponse::error(500, "审批操作失败")),
-            );
-        }
-    };
+    let approval =
+        match db_update_mobile_approval(&pool, id, "approve", payload.comment.as_deref()).await {
+            Ok(a) => a,
+            Err(e) => {
+                tracing::error!("审批操作失败: {}", e);
+                return (
+                    StatusCode::INTERNAL_SERVER_ERROR,
+                    Json(ApiResponse::error(500, "审批操作失败")),
+                );
+            }
+        };
 
     if let Some(approval) = approval {
         let response = ApprovalActionResponse {
@@ -249,9 +259,15 @@ pub async fn approve_task(
             status: approval.status,
             message: "审批通过".to_string(),
         };
-        (StatusCode::OK, Json(ApiResponse::success(response, "审批通过")))
+        (
+            StatusCode::OK,
+            Json(ApiResponse::success(response, "审批通过")),
+        )
     } else {
-        (StatusCode::NOT_FOUND, Json(ApiResponse::error(404, "审批任务不存在")))
+        (
+            StatusCode::NOT_FOUND,
+            Json(ApiResponse::error(404, "审批任务不存在")),
+        )
     }
 }
 
@@ -264,16 +280,17 @@ pub async fn reject_task(
 ) -> impl IntoResponse {
     let _ = extract_user_id_from_token(&headers, &auth_state.jwt_secret);
 
-    let approval = match db_update_mobile_approval(&pool, id, "reject", payload.comment.as_deref()).await {
-        Ok(a) => a,
-        Err(e) => {
-            tracing::error!("拒绝操作失败: {}", e);
-            return (
-                StatusCode::INTERNAL_SERVER_ERROR,
-                Json(ApiResponse::error(500, "拒绝操作失败")),
-            );
-        }
-    };
+    let approval =
+        match db_update_mobile_approval(&pool, id, "reject", payload.comment.as_deref()).await {
+            Ok(a) => a,
+            Err(e) => {
+                tracing::error!("拒绝操作失败: {}", e);
+                return (
+                    StatusCode::INTERNAL_SERVER_ERROR,
+                    Json(ApiResponse::error(500, "拒绝操作失败")),
+                );
+            }
+        };
 
     if let Some(approval) = approval {
         let response = ApprovalActionResponse {
@@ -281,9 +298,15 @@ pub async fn reject_task(
             status: approval.status,
             message: "已拒绝".to_string(),
         };
-        (StatusCode::OK, Json(ApiResponse::success(response, "已拒绝")))
+        (
+            StatusCode::OK,
+            Json(ApiResponse::success(response, "已拒绝")),
+        )
     } else {
-        (StatusCode::NOT_FOUND, Json(ApiResponse::error(404, "审批任务不存在")))
+        (
+            StatusCode::NOT_FOUND,
+            Json(ApiResponse::error(404, "审批任务不存在")),
+        )
     }
 }
 
@@ -303,16 +326,17 @@ pub async fn transfer_task(
         );
     }
 
-    let approval = match db_update_mobile_approval(&pool, id, "transfer", payload.comment.as_deref()).await {
-        Ok(a) => a,
-        Err(e) => {
-            tracing::error!("转签操作失败: {}", e);
-            return (
-                StatusCode::INTERNAL_SERVER_ERROR,
-                Json(ApiResponse::error(500, "转签操作失败")),
-            );
-        }
-    };
+    let approval =
+        match db_update_mobile_approval(&pool, id, "transfer", payload.comment.as_deref()).await {
+            Ok(a) => a,
+            Err(e) => {
+                tracing::error!("转签操作失败: {}", e);
+                return (
+                    StatusCode::INTERNAL_SERVER_ERROR,
+                    Json(ApiResponse::error(500, "转签操作失败")),
+                );
+            }
+        };
 
     if let Some(approval) = approval {
         let response = ApprovalActionResponse {
@@ -320,9 +344,15 @@ pub async fn transfer_task(
             status: approval.status,
             message: format!("已转签给 {}", payload.target_user_name.unwrap_or_default()),
         };
-        (StatusCode::OK, Json(ApiResponse::success(response, "转签成功")))
+        (
+            StatusCode::OK,
+            Json(ApiResponse::success(response, "转签成功")),
+        )
     } else {
-        (StatusCode::NOT_FOUND, Json(ApiResponse::error(404, "审批任务不存在")))
+        (
+            StatusCode::NOT_FOUND,
+            Json(ApiResponse::error(404, "审批任务不存在")),
+        )
     }
 }
 
@@ -360,9 +390,15 @@ pub async fn get_approval_by_id(
                 );
             }
         };
-        (StatusCode::OK, Json(ApiResponse::success(approval, "获取审批详情成功")))
+        (
+            StatusCode::OK,
+            Json(ApiResponse::success(approval, "获取审批详情成功")),
+        )
     } else {
-        (StatusCode::NOT_FOUND, Json(ApiResponse::error(404, "审批任务不存在")))
+        (
+            StatusCode::NOT_FOUND,
+            Json(ApiResponse::error(404, "审批任务不存在")),
+        )
     }
 }
 
@@ -404,5 +440,8 @@ pub async fn get_approval_stats(
         "total_count": pending_count + approved_count + rejected_count + transferred_count,
     });
 
-    (StatusCode::OK, Json(ApiResponse::success(stats, "获取审批统计成功")))
+    (
+        StatusCode::OK,
+        Json(ApiResponse::success(stats, "获取审批统计成功")),
+    )
 }

@@ -25,8 +25,5 @@ pub async fn get_statistics(
     Path(_id): Path<Uuid>,
 ) -> Json<ApiResponse<serde_json::Value>> {
     tracing::info!("get_statistics called");
-    Json(ApiResponse::success(
-        serde_json::json!({}),
-        "获取成功",
-    ))
+    Json(ApiResponse::success(serde_json::json!({}), "获取成功"))
 }

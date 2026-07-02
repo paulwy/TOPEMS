@@ -1,4 +1,8 @@
-use axum::{extract::{Extension, State}, Json, Router, routing::get};
+use axum::{
+    extract::{Extension, State},
+    routing::get,
+    Json, Router,
+};
 use serde::{Deserialize, Serialize};
 use uuid::Uuid;
 
@@ -17,8 +21,7 @@ pub struct ServiceHealth {
 }
 
 pub fn create_routes() -> Router<ApiState> {
-    Router::new()
-        .route("/api/v1/monitor/health", get(get_service_health))
+    Router::new().route("/api/v1/monitor/health", get(get_service_health))
 }
 
 async fn get_service_health(

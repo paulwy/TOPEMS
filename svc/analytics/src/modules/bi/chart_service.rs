@@ -186,7 +186,10 @@ impl ChartService {
         })
     }
 
-    async fn execute_query(&self, query: &ChartQuery) -> Result<Vec<HashMap<String, serde_json::Value>>, String> {
+    async fn execute_query(
+        &self,
+        query: &ChartQuery,
+    ) -> Result<Vec<HashMap<String, serde_json::Value>>, String> {
         let mut results: Vec<HashMap<String, serde_json::Value>> = Vec::new();
 
         let sample_data = self.generate_sample_data(query).await;
@@ -198,7 +201,10 @@ impl ChartService {
         Ok(results)
     }
 
-    async fn generate_sample_data(&self, query: &ChartQuery) -> Vec<HashMap<String, serde_json::Value>> {
+    async fn generate_sample_data(
+        &self,
+        query: &ChartQuery,
+    ) -> Vec<HashMap<String, serde_json::Value>> {
         let mut data = Vec::new();
 
         match query.chart_type {
@@ -207,9 +213,23 @@ impl ChartService {
                 let mut rng = rand::thread_rng();
                 for month in months {
                     let mut row = HashMap::new();
-                    row.insert("month".to_string(), serde_json::Value::String(month.to_string()));
-                    row.insert("value1".to_string(), serde_json::Value::Number(serde_json::Number::from_f64((rng.gen::<f64>() * 100.0) + 50.0).unwrap()));
-                    row.insert("value2".to_string(), serde_json::Value::Number(serde_json::Number::from_f64((rng.gen::<f64>() * 80.0) + 30.0).unwrap()));
+                    row.insert(
+                        "month".to_string(),
+                        serde_json::Value::String(month.to_string()),
+                    );
+                    row.insert(
+                        "value1".to_string(),
+                        serde_json::Value::Number(
+                            serde_json::Number::from_f64((rng.gen::<f64>() * 100.0) + 50.0)
+                                .unwrap(),
+                        ),
+                    );
+                    row.insert(
+                        "value2".to_string(),
+                        serde_json::Value::Number(
+                            serde_json::Number::from_f64((rng.gen::<f64>() * 80.0) + 30.0).unwrap(),
+                        ),
+                    );
                     data.push(row);
                 }
             }
@@ -218,8 +238,16 @@ impl ChartService {
                 let mut rng = rand::thread_rng();
                 for category in categories {
                     let mut row = HashMap::new();
-                    row.insert("category".to_string(), serde_json::Value::String(category.to_string()));
-                    row.insert("value".to_string(), serde_json::Value::Number(serde_json::Number::from_f64(rng.gen::<f64>() * 100.0).unwrap()));
+                    row.insert(
+                        "category".to_string(),
+                        serde_json::Value::String(category.to_string()),
+                    );
+                    row.insert(
+                        "value".to_string(),
+                        serde_json::Value::Number(
+                            serde_json::Number::from_f64(rng.gen::<f64>() * 100.0).unwrap(),
+                        ),
+                    );
                     data.push(row);
                 }
             }
@@ -227,8 +255,18 @@ impl ChartService {
                 let mut rng = rand::thread_rng();
                 for _ in 0..20 {
                     let mut row = HashMap::new();
-                    row.insert("x".to_string(), serde_json::Value::Number(serde_json::Number::from_f64(rng.gen::<f64>() * 100.0).unwrap()));
-                    row.insert("y".to_string(), serde_json::Value::Number(serde_json::Number::from_f64(rng.gen::<f64>() * 100.0).unwrap()));
+                    row.insert(
+                        "x".to_string(),
+                        serde_json::Value::Number(
+                            serde_json::Number::from_f64(rng.gen::<f64>() * 100.0).unwrap(),
+                        ),
+                    );
+                    row.insert(
+                        "y".to_string(),
+                        serde_json::Value::Number(
+                            serde_json::Number::from_f64(rng.gen::<f64>() * 100.0).unwrap(),
+                        ),
+                    );
                     data.push(row);
                 }
             }
@@ -236,8 +274,16 @@ impl ChartService {
                 let mut rng = rand::thread_rng();
                 for i in 0..10 {
                     let mut row = HashMap::new();
-                    row.insert("bin".to_string(), serde_json::Value::String(format!("{}-{}", i * 10, (i + 1) * 10)));
-                    row.insert("count".to_string(), serde_json::Value::Number(serde_json::Number::from_f64((rng.gen::<f64>() * 50.0) + 10.0).unwrap()));
+                    row.insert(
+                        "bin".to_string(),
+                        serde_json::Value::String(format!("{}-{}", i * 10, (i + 1) * 10)),
+                    );
+                    row.insert(
+                        "count".to_string(),
+                        serde_json::Value::Number(
+                            serde_json::Number::from_f64((rng.gen::<f64>() * 50.0) + 10.0).unwrap(),
+                        ),
+                    );
                     data.push(row);
                 }
             }
@@ -245,9 +291,21 @@ impl ChartService {
                 let mut rng = rand::thread_rng();
                 for i in 0..5 {
                     let mut row = HashMap::new();
-                    row.insert("id".to_string(), serde_json::Value::Number(serde_json::Number::from(i + 1)));
-                    row.insert("name".to_string(), serde_json::Value::String(format!("项目 {}", i + 1)));
-                    row.insert("value".to_string(), serde_json::Value::Number(serde_json::Number::from_f64((rng.gen::<f64>() * 1000.0) + 100.0).unwrap()));
+                    row.insert(
+                        "id".to_string(),
+                        serde_json::Value::Number(serde_json::Number::from(i + 1)),
+                    );
+                    row.insert(
+                        "name".to_string(),
+                        serde_json::Value::String(format!("项目 {}", i + 1)),
+                    );
+                    row.insert(
+                        "value".to_string(),
+                        serde_json::Value::Number(
+                            serde_json::Number::from_f64((rng.gen::<f64>() * 1000.0) + 100.0)
+                                .unwrap(),
+                        ),
+                    );
                     data.push(row);
                 }
             }
@@ -257,7 +315,11 @@ impl ChartService {
         data
     }
 
-    async fn build_chart(&self, query: ChartQuery, data: Vec<HashMap<String, serde_json::Value>>) -> Result<ChartResult, String> {
+    async fn build_chart(
+        &self,
+        query: ChartQuery,
+        data: Vec<HashMap<String, serde_json::Value>>,
+    ) -> Result<ChartResult, String> {
         let mut datasets = Vec::new();
         let mut legend = Vec::new();
 
@@ -293,21 +355,23 @@ impl ChartService {
             .map(|(k, _)| k.clone())
             .collect();
 
-        let x_key = category_keys.first().cloned().unwrap_or_else(|| "x".to_string());
+        let x_key = category_keys
+            .first()
+            .cloned()
+            .unwrap_or_else(|| "x".to_string());
         let mut all_values: Vec<f64> = Vec::new();
 
         for numeric_key in &numeric_keys {
             let mut data_points = Vec::new();
 
             for row in &data {
-                let x_value = row.get(&x_key)
+                let x_value = row
+                    .get(&x_key)
                     .and_then(|v| v.as_str())
                     .unwrap_or("")
                     .to_string();
 
-                let y_value = row.get(numeric_key)
-                    .and_then(|v| v.as_f64())
-                    .unwrap_or(0.0);
+                let y_value = row.get(numeric_key).and_then(|v| v.as_f64()).unwrap_or(0.0);
 
                 all_values.push(y_value);
 
@@ -332,7 +396,11 @@ impl ChartService {
         let min_value = all_values.iter().cloned().fold(f64::INFINITY, f64::min);
         let max_value = all_values.iter().cloned().fold(f64::NEG_INFINITY, f64::max);
         let sum_value = all_values.iter().sum::<f64>();
-        let avg_value = if total_count > 0 { sum_value / total_count as f64 } else { 0.0 };
+        let avg_value = if total_count > 0 {
+            sum_value / total_count as f64
+        } else {
+            0.0
+        };
 
         Ok(ChartResult {
             chart_type: query.chart_type,

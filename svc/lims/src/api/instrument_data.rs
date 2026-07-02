@@ -1,4 +1,8 @@
-use axum::{extract::State, routing::{delete, get, post, put}, Json, Router};
+use axum::{
+    extract::State,
+    routing::{delete, get, post, put},
+    Json, Router,
+};
 use serde::{Deserialize, Serialize};
 use sqlx::{types::Uuid, Postgres, QueryBuilder, Row};
 use topems_shared::ApiResponse;
@@ -7,16 +11,52 @@ use crate::AppState;
 
 pub fn create_routes() -> Router<AppState> {
     Router::new()
-        .route("/api/lims/instrument-data", get(list_instrument_data).post(create_instrument_data))
-        .route("/api/lims/instrument-data/{id}", get(get_instrument_data).put(update_instrument_data).delete(delete_instrument_data))
-        .route("/api/lims/instrument-data/{id}/parse", post(parse_instrument_data))
-        .route("/api/lims/instrument-data/parse/test", post(test_parse_data))
-        .route("/api/lims/instrument-data/statistics", get(get_instrument_data_statistics))
-        .route("/api/lims/collection-tasks", get(list_collection_tasks).post(create_collection_task))
-        .route("/api/lims/collection-tasks/{id}", get(get_collection_task).put(update_collection_task).delete(delete_collection_task))
-        .route("/api/lims/collection-tasks/{id}/trigger", post(trigger_collection))
-        .route("/api/lims/parse-rules", get(list_parse_rules).post(create_parse_rule))
-        .route("/api/lims/parse-rules/{id}", get(get_parse_rule).put(update_parse_rule).delete(delete_parse_rule))
+        .route(
+            "/api/lims/instrument-data",
+            get(list_instrument_data).post(create_instrument_data),
+        )
+        .route(
+            "/api/lims/instrument-data/{id}",
+            get(get_instrument_data)
+                .put(update_instrument_data)
+                .delete(delete_instrument_data),
+        )
+        .route(
+            "/api/lims/instrument-data/{id}/parse",
+            post(parse_instrument_data),
+        )
+        .route(
+            "/api/lims/instrument-data/parse/test",
+            post(test_parse_data),
+        )
+        .route(
+            "/api/lims/instrument-data/statistics",
+            get(get_instrument_data_statistics),
+        )
+        .route(
+            "/api/lims/collection-tasks",
+            get(list_collection_tasks).post(create_collection_task),
+        )
+        .route(
+            "/api/lims/collection-tasks/{id}",
+            get(get_collection_task)
+                .put(update_collection_task)
+                .delete(delete_collection_task),
+        )
+        .route(
+            "/api/lims/collection-tasks/{id}/trigger",
+            post(trigger_collection),
+        )
+        .route(
+            "/api/lims/parse-rules",
+            get(list_parse_rules).post(create_parse_rule),
+        )
+        .route(
+            "/api/lims/parse-rules/{id}",
+            get(get_parse_rule)
+                .put(update_parse_rule)
+                .delete(delete_parse_rule),
+        )
 }
 
 // ==================== 数据类型定义 ====================
@@ -243,7 +283,7 @@ pub async fn list_instrument_data(
         FROM qa_lims_instrument_data d
         LEFT JOIN qa_lab_instruments i ON d.instrument_id = i.id
         WHERE 1=1
-        "#
+        "#,
     );
 
     if let Some(status) = &query.status {
@@ -366,7 +406,10 @@ pub async fn create_instrument_data(
     let data_id = Uuid::new_v4();
     let data_no = format!("ID-{}", chrono::Utc::now().format("%Y%m%d%H%M%S"));
     let batch_no = req.batch_no.unwrap_or_else(|| {
-        format!("BATCH-{}", uuid::Uuid::new_v4().to_string()[..8].to_uppercase())
+        format!(
+            "BATCH-{}",
+            uuid::Uuid::new_v4().to_string()[..8].to_uppercase()
+        )
     });
 
     let instrument_uuid = match &req.instrument_id {
@@ -690,9 +733,7 @@ fn parse_hl7_data(raw_data: &serde_json::Value) -> ParseResult {
                         .and_then(|v| v.as_str())
                         .map(|s| s.to_string());
 
-                    let numeric_result = result
-                        .as_deref()
-                        .and_then(|s| s.parse::<f64>().ok());
+                    let numeric_result = result.as_deref().and_then(|s| s.parse::<f64>().ok());
 
                     items.push(TestItemResult {
                         test_item,
@@ -769,9 +810,7 @@ fn parse_astm_data(raw_data: &serde_json::Value) -> ParseResult {
                         .and_then(|v| v.as_str())
                         .map(|s| s.to_string());
 
-                    let numeric_result = result
-                        .as_deref()
-                        .and_then(|s| s.parse::<f64>().ok());
+                    let numeric_result = result.as_deref().and_then(|s| s.parse::<f64>().ok());
 
                     items.push(TestItemResult {
                         test_item,
@@ -941,7 +980,10 @@ pub async fn trigger_collection(
 
     let data_id = Uuid::new_v4();
     let data_no = format!("ID-{}", chrono::Utc::now().format("%Y%m%d%H%M%S"));
-    let batch_no = format!("BATCH-{}", uuid::Uuid::new_v4().to_string()[..8].to_uppercase());
+    let batch_no = format!(
+        "BATCH-{}",
+        uuid::Uuid::new_v4().to_string()[..8].to_uppercase()
+    );
 
     let sample_raw_data = serde_json::json!({
         "test_items": [
@@ -1091,35 +1133,32 @@ pub async fn list_collection_tasks(
         }
     }
 
-    let tasks = query_builder
-        .fetch_all(&state.pool)
-        .await
-        .map(|rows| {
-            rows.into_iter()
-                .map(|row| CollectionTask {
-                    id: row.get("id"),
-                    task_no: row.get("task_no"),
-                    task_name: row.get("task_name"),
-                    instrument_id: row.get("instrument_id"),
-                    instrument_no: row.get("instrument_no"),
-                    instrument_name: row.get("instrument_name"),
-                    protocol: row.get("protocol"),
-                    collection_mode: row.get("collection_mode"),
-                    cron_expression: row.get("cron_expression"),
-                    interval_minutes: row.get("interval_minutes"),
-                    parse_rule_id: row.get("parse_rule_id"),
-                    status: row.get("status"),
-                    last_run_at: row.get("last_run_at"),
-                    next_run_at: row.get("next_run_at"),
-                    total_collections: row.get("total_collections"),
-                    success_count: row.get("success_count"),
-                    failed_count: row.get("failed_count"),
-                    created_by: row.get("created_by"),
-                    created_at: row.get("created_at"),
-                    updated_at: row.get("updated_at"),
-                })
-                .collect()
-        });
+    let tasks = query_builder.fetch_all(&state.pool).await.map(|rows| {
+        rows.into_iter()
+            .map(|row| CollectionTask {
+                id: row.get("id"),
+                task_no: row.get("task_no"),
+                task_name: row.get("task_name"),
+                instrument_id: row.get("instrument_id"),
+                instrument_no: row.get("instrument_no"),
+                instrument_name: row.get("instrument_name"),
+                protocol: row.get("protocol"),
+                collection_mode: row.get("collection_mode"),
+                cron_expression: row.get("cron_expression"),
+                interval_minutes: row.get("interval_minutes"),
+                parse_rule_id: row.get("parse_rule_id"),
+                status: row.get("status"),
+                last_run_at: row.get("last_run_at"),
+                next_run_at: row.get("next_run_at"),
+                total_collections: row.get("total_collections"),
+                success_count: row.get("success_count"),
+                failed_count: row.get("failed_count"),
+                created_by: row.get("created_by"),
+                created_at: row.get("created_at"),
+                updated_at: row.get("updated_at"),
+            })
+            .collect()
+    });
 
     match tasks {
         Ok(data) => Json(ApiResponse::success(data, "获取采集任务列表成功")),
@@ -1416,28 +1455,25 @@ pub async fn list_parse_rules(
         }
     }
 
-    let rules = query_builder
-        .fetch_all(&state.pool)
-        .await
-        .map(|rows| {
-            rows.into_iter()
-                .map(|row| ParseRule {
-                    id: row.get("id"),
-                    rule_no: row.get("rule_no"),
-                    rule_name: row.get("rule_name"),
-                    protocol: row.get("protocol"),
-                    instrument_type: row.get("instrument_type"),
-                    parse_config: row.get("parse_config"),
-                    quality_rules: row.get("quality_rules"),
-                    status: row.get("status"),
-                    version: row.get("version"),
-                    description: row.get("description"),
-                    created_by: row.get("created_by"),
-                    created_at: row.get("created_at"),
-                    updated_at: row.get("updated_at"),
-                })
-                .collect()
-        });
+    let rules = query_builder.fetch_all(&state.pool).await.map(|rows| {
+        rows.into_iter()
+            .map(|row| ParseRule {
+                id: row.get("id"),
+                rule_no: row.get("rule_no"),
+                rule_name: row.get("rule_name"),
+                protocol: row.get("protocol"),
+                instrument_type: row.get("instrument_type"),
+                parse_config: row.get("parse_config"),
+                quality_rules: row.get("quality_rules"),
+                status: row.get("status"),
+                version: row.get("version"),
+                description: row.get("description"),
+                created_by: row.get("created_by"),
+                created_at: row.get("created_at"),
+                updated_at: row.get("updated_at"),
+            })
+            .collect()
+    });
 
     match rules {
         Ok(data) => Json(ApiResponse::success(data, "获取解析规则列表成功")),
@@ -1674,24 +1710,21 @@ pub async fn get_instrument_data_statistics(
     .await
     .unwrap_or(0);
 
-    let total_tasks: i64 =
-        sqlx::query_scalar("SELECT COUNT(*) FROM qa_lims_collection_tasks")
+    let total_tasks: i64 = sqlx::query_scalar("SELECT COUNT(*) FROM qa_lims_collection_tasks")
+        .fetch_one(&state.pool)
+        .await
+        .unwrap_or(0);
+
+    let running_tasks: i64 =
+        sqlx::query_scalar("SELECT COUNT(*) FROM qa_lims_collection_tasks WHERE status = 'active'")
             .fetch_one(&state.pool)
             .await
             .unwrap_or(0);
 
-    let running_tasks: i64 = sqlx::query_scalar(
-        "SELECT COUNT(*) FROM qa_lims_collection_tasks WHERE status = 'active'",
-    )
-    .fetch_one(&state.pool)
-    .await
-    .unwrap_or(0);
-
-    let total_rules: i64 =
-        sqlx::query_scalar("SELECT COUNT(*) FROM qa_lims_parse_rules")
-            .fetch_one(&state.pool)
-            .await
-            .unwrap_or(0);
+    let total_rules: i64 = sqlx::query_scalar("SELECT COUNT(*) FROM qa_lims_parse_rules")
+        .fetch_one(&state.pool)
+        .await
+        .unwrap_or(0);
 
     let protocol_rows = sqlx::query(
         r#"

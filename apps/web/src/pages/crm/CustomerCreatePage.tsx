@@ -199,6 +199,8 @@ const CustomerCreatePage: React.FC = () => {
     <PageContainer
       title='新建客户'
       subtitle='创建新的客户档案'
+      autoTitle
+      autoBreadcrumbs
     >
       <FormPageTemplate
         title=''

@@ -29,8 +29,8 @@ impl BaseServiceClient {
             .build()
             .map_err(ServiceClientError::HttpRequestError)?;
 
-        Ok(Self { 
-            client, 
+        Ok(Self {
+            client,
             base_url,
             auth_token: None,
             custom_headers: HashMap::new(),
@@ -57,7 +57,10 @@ impl BaseServiceClient {
         self.execute_request(request).await
     }
 
-    pub async fn post_without_body<T: DeserializeOwned>(&self, path: &str) -> ServiceClientResult<T> {
+    pub async fn post_without_body<T: DeserializeOwned>(
+        &self,
+        path: &str,
+    ) -> ServiceClientResult<T> {
         let url = self.build_url(path);
         let request = self.client.post(&url);
         self.execute_request(request).await
@@ -150,15 +153,15 @@ impl BaseServiceClient {
 
     fn apply_headers(&self, request: RequestBuilder) -> RequestBuilder {
         let mut request = request;
-        
+
         if let Some(token) = &self.auth_token {
             request = request.bearer_auth(token);
         }
-        
+
         for (key, value) in &self.custom_headers {
             request = request.header(key, value);
         }
-        
+
         request
     }
 }

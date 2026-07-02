@@ -45,8 +45,8 @@ import { useAppStore } from '@/store';
 
 const STATUS_MAP: Record<string, { label: string; bg: string; color: string }> = {
   pending: { label: '待分配', bg: 'warning.light', color: 'warning.dark' },
-  in_progress: { label: '进行中', bg: '#dbeafe', color: 'primary.dark' },
-  pending_audit: { label: '待审核', bg: '#f3e8ff', color: 'secondary.dark' },
+  in_progress: { label: '进行中', bg: 'primary.100', color: 'primary.dark' },
+  pending_audit: { label: '待审核', bg: 'secondary.100', color: 'secondary.dark' },
   completed: { label: '已完成', bg: 'success.lighter', color: 'success.dark' },
   rejected: { label: '已驳回', bg: 'error.lighter', color: 'error.dark' },
 };
@@ -536,7 +536,7 @@ const QmsInspectionPage: React.FC = () => {
                 width: 40,
                 height: 40,
                 bgcolor: 'primary.light',
-                borderRadius: 2,
+                borderRadius: 3,
                 display: 'flex',
                 alignItems: 'center',
                 justifyContent: 'center',
@@ -561,7 +561,7 @@ const QmsInspectionPage: React.FC = () => {
           </Box>
         </CardContent>
       </Card>
-      <Card sx={{ bgcolor: '#fef9c3' }}>
+      <Card sx={{ bgcolor: 'warning.100' }}>
         <CardContent sx={{ p: 2 }}>
           <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5 }}>
             <Box
@@ -569,7 +569,7 @@ const QmsInspectionPage: React.FC = () => {
                 width: 40,
                 height: 40,
                 bgcolor: '#fde047',
-                borderRadius: 2,
+                borderRadius: 3,
                 display: 'flex',
                 alignItems: 'center',
                 justifyContent: 'center',
@@ -594,7 +594,7 @@ const QmsInspectionPage: React.FC = () => {
           </Box>
         </CardContent>
       </Card>
-      <Card sx={{ bgcolor: '#dbeafe' }}>
+      <Card sx={{ bgcolor: 'primary.100' }}>
         <CardContent sx={{ p: 2 }}>
           <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5 }}>
             <Box
@@ -602,7 +602,7 @@ const QmsInspectionPage: React.FC = () => {
                 width: 40,
                 height: 40,
                 bgcolor: '#93c5fd',
-                borderRadius: 2,
+                borderRadius: 3,
                 display: 'flex',
                 alignItems: 'center',
                 justifyContent: 'center',
@@ -627,7 +627,7 @@ const QmsInspectionPage: React.FC = () => {
           </Box>
         </CardContent>
       </Card>
-      <Card sx={{ bgcolor: '#f3e8ff' }}>
+      <Card sx={{ bgcolor: 'secondary.100' }}>
         <CardContent sx={{ p: 2 }}>
           <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5 }}>
             <Box
@@ -635,7 +635,7 @@ const QmsInspectionPage: React.FC = () => {
                 width: 40,
                 height: 40,
                 bgcolor: '#d8b4fe',
-                borderRadius: 2,
+                borderRadius: 3,
                 display: 'flex',
                 alignItems: 'center',
                 justifyContent: 'center',
@@ -668,7 +668,7 @@ const QmsInspectionPage: React.FC = () => {
                 width: 40,
                 height: 40,
                 bgcolor: '#86efac',
-                borderRadius: 2,
+                borderRadius: 3,
                 display: 'flex',
                 alignItems: 'center',
                 justifyContent: 'center',
@@ -701,7 +701,7 @@ const QmsInspectionPage: React.FC = () => {
                 width: 40,
                 height: 40,
                 bgcolor: '#fca5a5',
-                borderRadius: 2,
+                borderRadius: 3,
                 display: 'flex',
                 alignItems: 'center',
                 justifyContent: 'center',
@@ -761,18 +761,8 @@ const QmsInspectionPage: React.FC = () => {
   }
 
   return (
-    <PageContainer
-      title='质量检验'
-      subtitle='Quality Inspection'
-    >
+    <PageContainer>
       <ListPageTemplate
-        title=''
-        subtitle=''
-        breadcrumbs={[
-          { label: '首页', href: '/dashboard' },
-          { label: 'QMS' },
-          { label: '质量检验' },
-        ]}
         columns={columns}
         data={paginatedData}
         loading={loading}
@@ -799,6 +789,15 @@ const QmsInspectionPage: React.FC = () => {
         ]}
         rowActions={rowActions}
         headerContent={statsCards}
+        mobileCardTitleKey='product_name'
+        mobileCardSubtitleKey='inspection_no'
+        mobileCardDisplayFields={['inspection_type', 'quantity', 'qualified_quantity', 'status']}
+        mobileCardFieldLabels={{
+          inspection_type: '检验类型',
+          quantity: '检验数量',
+          qualified_quantity: '合格数量',
+          status: '状态',
+        }}
       />
 
       <Dialog

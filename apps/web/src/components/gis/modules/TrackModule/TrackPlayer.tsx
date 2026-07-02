@@ -1,7 +1,7 @@
 // modules/TrackModule/TrackPlayer.tsx
 import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { Play, Pause, Square, SkipBack, SkipForward } from 'lucide-react';
-import { Box, Typography, Paper, IconButton, Grid, Button } from '@mui/material';
+import {Box, Typography, Paper, IconButton, Grid, Button, useTheme} from '@mui/material';
 import type { TrackRecord, TrackStatistics } from './types';
 
 interface TrackPlayerProps {
@@ -27,6 +27,7 @@ const TrackPlayer: React.FC<TrackPlayerProps> = ({
   onSeek,
   statistics,
 }) => {
+  const theme = useTheme();
   const [currentIndex, setCurrentIndex] = useState(0);
   const progressRef = useRef<HTMLDivElement>(null);
   const intervalRef = useRef<NodeJS.Timeout | null>(null);
@@ -153,7 +154,7 @@ const TrackPlayer: React.FC<TrackPlayerProps> = ({
           >
             <SkipBack
               size={20}
-              style={{ color: 'text.secondary' }}
+              style={{ color: theme.palette.text.secondary }}
             />
           </IconButton>
           <IconButton
@@ -175,7 +176,7 @@ const TrackPlayer: React.FC<TrackPlayerProps> = ({
           >
             <Square
               size={20}
-              style={{ color: 'text.secondary' }}
+              style={{ color: theme.palette.text.secondary }}
             />
           </IconButton>
           <IconButton
@@ -185,7 +186,7 @@ const TrackPlayer: React.FC<TrackPlayerProps> = ({
           >
             <SkipForward
               size={20}
-              style={{ color: 'text.secondary' }}
+              style={{ color: theme.palette.text.secondary }}
             />
           </IconButton>
         </Box>

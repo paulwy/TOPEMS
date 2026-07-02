@@ -8,7 +8,7 @@
 
 use chrono::{DateTime, Utc};
 use serde::{Deserialize, Serialize};
-use sqlx::{PgPool, types::Uuid};
+use sqlx::{types::Uuid, PgPool};
 use std::time::Duration;
 
 use crate::sync_retry::{RetryConfig, RetryExecutor, RetryResult};
@@ -126,46 +126,63 @@ impl MesErpSyncService {
 
     // ==================== ERP → MES 同步 ====================
 
-    pub async fn sync_erp_to_mes(
-        &self,
-        erp_order_id: Uuid,
-    ) -> Result<SyncResult, String> {
+    pub async fn sync_erp_to_mes(&self, erp_order_id: Uuid) -> Result<SyncResult, String> {
         let sync_id = Uuid::new_v4();
         let now = Utc::now();
 
-        tracing::info!("[MES-ERP Sync] Starting ERP→MES sync for order: {}", erp_order_id);
+        tracing::info!(
+            "[MES-ERP Sync] Starting ERP→MES sync for order: {}",
+            erp_order_id
+        );
 
         let erp_order = self.fetch_erp_order(erp_order_id).await?;
 
-        let sync_record = self.create_sync_record(
-            sync_id,
-            "erp_to_mes",
-            None,
-            Some(erp_order_id),
-            &erp_order.order_no,
-            "create",
-            Some(serde_json::to_value(&erp_order).unwrap_or(serde_json::Value::Null)),
-        ).await?;
+        let sync_record = self
+            .create_sync_record(
+                sync_id,
+                "erp_to_mes",
+                None,
+                Some(erp_order_id),
+                &erp_order.order_no,
+                "create",
+                Some(serde_json::to_value(&erp_order).unwrap_or(serde_json::Value::Null)),
+            )
+            .await?;
 
-        let result = self.retry_executor.execute(|| async {
-            self.do_erp_to_mes_sync(&erp_order).await
-        }).await;
+        let result = self
+            .retry_executor
+            .execute(|| async { self.do_erp_to_mes_sync(&erp_order).await })
+            .await;
 
         match result {
             RetryResult::Success(mes_order) => {
-                self.update_sync_success(sync_id, Some(mes_order.id)).await?;
-                self.add_sync_log(sync_id, "erp_to_mes", "create", "success", None, 1).await?;
+                self.update_sync_success(sync_id, Some(mes_order.id))
+                    .await?;
+                self.add_sync_log(sync_id, "erp_to_mes", "create", "success", None, 1)
+                    .await?;
 
                 Ok(SyncResult {
                     success: true,
                     sync_id: Some(sync_id),
                     message: "ERP→MES 同步成功".to_string(),
-                    details: Some(serde_json::to_value(&mes_order).unwrap_or(serde_json::Value::Null)),
+                    details: Some(
+                        serde_json::to_value(&mes_order).unwrap_or(serde_json::Value::Null),
+                    ),
                 })
             }
-            RetryResult::Failed { error, attempts } | RetryResult::MaxRetriesExceeded { error, attempts } => {
-                self.update_sync_failed(sync_id, &error, attempts as i32).await?;
-                self.add_sync_log(sync_id, "erp_to_mes", "create", "failed", Some(&error), attempts as i32).await?;
+            RetryResult::Failed { error, attempts }
+            | RetryResult::MaxRetriesExceeded { error, attempts } => {
+                self.update_sync_failed(sync_id, &error, attempts as i32)
+                    .await?;
+                self.add_sync_log(
+                    sync_id,
+                    "erp_to_mes",
+                    "create",
+                    "failed",
+                    Some(&error),
+                    attempts as i32,
+                )
+                .await?;
 
                 Err(format!("ERP→MES 同步失败（尝试{}次）：{}", attempts, error))
             }
@@ -242,10 +259,7 @@ impl MesErpSyncService {
 
     // ==================== MES → ERP 进度回传 ====================
 
-    pub async fn sync_mes_progress_to_erp(
-        &self,
-        mes_order_id: Uuid,
-    ) -> Result<SyncResult, String> {
+    pub async fn sync_mes_progress_to_erp(&self, mes_order_id: Uuid) -> Result<SyncResult, String> {
         let sync_id = Uuid::new_v4();
 
         tracing::info!(
@@ -265,7 +279,8 @@ impl MesErpSyncService {
             &mes_progress.order_number.clone().unwrap_or_default(),
             "progress_update",
             Some(serde_json::to_value(&mes_progress).unwrap_or(serde_json::Value::Null)),
-        ).await?;
+        )
+        .await?;
 
         let progress_data = MesProductionProgressData {
             mes_order_id,
@@ -276,14 +291,16 @@ impl MesErpSyncService {
             actual_end_date: mes_progress.actual_end_date,
         };
 
-        let result = self.retry_executor.execute(|| async {
-            self.do_mes_to_erp_sync(&progress_data).await
-        }).await;
+        let result = self
+            .retry_executor
+            .execute(|| async { self.do_mes_to_erp_sync(&progress_data).await })
+            .await;
 
         match result {
             RetryResult::Success(_) => {
                 self.update_sync_success(sync_id, None).await?;
-                self.add_sync_log(sync_id, "mes_to_erp", "progress_update", "success", None, 1).await?;
+                self.add_sync_log(sync_id, "mes_to_erp", "progress_update", "success", None, 1)
+                    .await?;
 
                 Ok(SyncResult {
                     success: true,
@@ -292,21 +309,34 @@ impl MesErpSyncService {
                     details: None,
                 })
             }
-            RetryResult::Failed { error, attempts } | RetryResult::MaxRetriesExceeded { error, attempts } => {
-                self.update_sync_failed(sync_id, &error, attempts as i32).await?;
-                self.add_sync_log(sync_id, "mes_to_erp", "progress_update", "failed", Some(&error), attempts as i32).await?;
+            RetryResult::Failed { error, attempts }
+            | RetryResult::MaxRetriesExceeded { error, attempts } => {
+                self.update_sync_failed(sync_id, &error, attempts as i32)
+                    .await?;
+                self.add_sync_log(
+                    sync_id,
+                    "mes_to_erp",
+                    "progress_update",
+                    "failed",
+                    Some(&error),
+                    attempts as i32,
+                )
+                .await?;
 
-                Err(format!("MES→ERP 进度同步失败（尝试{}次）：{}", attempts, error))
+                Err(format!(
+                    "MES→ERP 进度同步失败（尝试{}次）：{}",
+                    attempts, error
+                ))
             }
         }
     }
 
-    async fn do_mes_to_erp_sync(
-        &self,
-        progress: &MesProductionProgressData,
-    ) -> Result<(), String> {
+    async fn do_mes_to_erp_sync(&self, progress: &MesProductionProgressData) -> Result<(), String> {
         let client = reqwest::Client::new();
-        let url = format!("{}/api/erp/production-orders/sync/mes-progress", self.erp_url);
+        let url = format!(
+            "{}/api/erp/production-orders/sync/mes-progress",
+            self.erp_url
+        );
 
         let response = client
             .post(&url)
@@ -342,12 +372,12 @@ impl MesErpSyncService {
 
     // ==================== 辅助方法：获取外部数据 ====================
 
-    async fn fetch_erp_order(
-        &self,
-        erp_order_id: Uuid,
-    ) -> Result<ErpProductionOrderData, String> {
+    async fn fetch_erp_order(&self, erp_order_id: Uuid) -> Result<ErpProductionOrderData, String> {
         let client = reqwest::Client::new();
-        let url = format!("{}/api/erp/production-orders/{}", self.erp_url, erp_order_id);
+        let url = format!(
+            "{}/api/erp/production-orders/{}",
+            self.erp_url, erp_order_id
+        );
 
         let response = client
             .get(&url)
@@ -369,19 +399,60 @@ impl MesErpSyncService {
 
         Ok(ErpProductionOrderData {
             id: Uuid::parse_str(data.get("id").and_then(|v| v.as_str()).unwrap_or_default()).ok(),
-            order_no: data.get("order_no").and_then(|v| v.as_str()).unwrap_or_default().to_string(),
-            product_id: data.get("product_id").and_then(|v| v.as_str()).and_then(|s| Uuid::parse_str(s).ok()),
-            product_name: data.get("product_name").and_then(|v| v.as_str()).unwrap_or_default().to_string(),
-            product_code: data.get("product_code").and_then(|v| v.as_str()).unwrap_or_default().to_string(),
+            order_no: data
+                .get("order_no")
+                .and_then(|v| v.as_str())
+                .unwrap_or_default()
+                .to_string(),
+            product_id: data
+                .get("product_id")
+                .and_then(|v| v.as_str())
+                .and_then(|s| Uuid::parse_str(s).ok()),
+            product_name: data
+                .get("product_name")
+                .and_then(|v| v.as_str())
+                .unwrap_or_default()
+                .to_string(),
+            product_code: data
+                .get("product_code")
+                .and_then(|v| v.as_str())
+                .unwrap_or_default()
+                .to_string(),
             quantity: data.get("quantity").and_then(|v| v.as_f64()).unwrap_or(0.0),
-            status: data.get("status").and_then(|v| v.as_str()).map(|s| s.to_string()),
-            planned_start_date: data.get("planned_start_date").and_then(|v| v.as_str()).and_then(|s| DateTime::parse_from_rfc3339(s).ok()).map(|d| d.with_timezone(&Utc)),
-            planned_end_date: data.get("planned_end_date").and_then(|v| v.as_str()).and_then(|s| DateTime::parse_from_rfc3339(s).ok()).map(|d| d.with_timezone(&Utc)),
-            workshop_id: data.get("workshop_id").and_then(|v| v.as_str()).and_then(|s| Uuid::parse_str(s).ok()),
-            workshop_name: data.get("workshop_name").and_then(|v| v.as_str()).map(|s| s.to_string()),
-            priority: data.get("priority").and_then(|v| v.as_i64()).map(|v| v as i32),
-            notes: data.get("notes").and_then(|v| v.as_str()).map(|s| s.to_string()),
-            source: data.get("source").and_then(|v| v.as_str()).map(|s| s.to_string()),
+            status: data
+                .get("status")
+                .and_then(|v| v.as_str())
+                .map(|s| s.to_string()),
+            planned_start_date: data
+                .get("planned_start_date")
+                .and_then(|v| v.as_str())
+                .and_then(|s| DateTime::parse_from_rfc3339(s).ok())
+                .map(|d| d.with_timezone(&Utc)),
+            planned_end_date: data
+                .get("planned_end_date")
+                .and_then(|v| v.as_str())
+                .and_then(|s| DateTime::parse_from_rfc3339(s).ok())
+                .map(|d| d.with_timezone(&Utc)),
+            workshop_id: data
+                .get("workshop_id")
+                .and_then(|v| v.as_str())
+                .and_then(|s| Uuid::parse_str(s).ok()),
+            workshop_name: data
+                .get("workshop_name")
+                .and_then(|v| v.as_str())
+                .map(|s| s.to_string()),
+            priority: data
+                .get("priority")
+                .and_then(|v| v.as_i64())
+                .map(|v| v as i32),
+            notes: data
+                .get("notes")
+                .and_then(|v| v.as_str())
+                .map(|s| s.to_string()),
+            source: data
+                .get("source")
+                .and_then(|v| v.as_str())
+                .map(|s| s.to_string()),
         })
     }
 
@@ -390,7 +461,10 @@ impl MesErpSyncService {
         mes_order_id: Uuid,
     ) -> Result<MesOrderProgress, String> {
         let client = reqwest::Client::new();
-        let url = format!("{}/api/mes/production-orders/{}", self.mes_url, mes_order_id);
+        let url = format!(
+            "{}/api/mes/production-orders/{}",
+            self.mes_url, mes_order_id
+        );
 
         let response = client
             .get(&url)
@@ -412,18 +486,29 @@ impl MesErpSyncService {
 
         Ok(MesOrderProgress {
             id: mes_order_id,
-            order_number: data.get("order_no").and_then(|v| v.as_str()).map(|s| s.to_string()),
+            order_number: data
+                .get("order_no")
+                .and_then(|v| v.as_str())
+                .map(|s| s.to_string()),
             completed_quantity: data.get("completed_quantity").and_then(|v| v.as_f64()),
-            status: data.get("status").and_then(|v| v.as_str()).map(|s| s.to_string()),
-            actual_start_date: data.get("actual_start_date").and_then(|v| v.as_str()).and_then(|s| DateTime::parse_from_rfc3339(s).ok()).map(|d| d.with_timezone(&Utc)),
-            actual_end_date: data.get("actual_end_date").and_then(|v| v.as_str()).and_then(|s| DateTime::parse_from_rfc3339(s).ok()).map(|d| d.with_timezone(&Utc)),
+            status: data
+                .get("status")
+                .and_then(|v| v.as_str())
+                .map(|s| s.to_string()),
+            actual_start_date: data
+                .get("actual_start_date")
+                .and_then(|v| v.as_str())
+                .and_then(|s| DateTime::parse_from_rfc3339(s).ok())
+                .map(|d| d.with_timezone(&Utc)),
+            actual_end_date: data
+                .get("actual_end_date")
+                .and_then(|v| v.as_str())
+                .and_then(|s| DateTime::parse_from_rfc3339(s).ok())
+                .map(|d| d.with_timezone(&Utc)),
         })
     }
 
-    async fn find_erp_order_by_mes_id(
-        &self,
-        mes_order_id: Uuid,
-    ) -> Result<Option<Uuid>, String> {
+    async fn find_erp_order_by_mes_id(&self, mes_order_id: Uuid) -> Result<Option<Uuid>, String> {
         let result = sqlx::query_scalar::<_, Option<Uuid>>(
             "SELECT erp_order_id FROM mes_erp_sync 
              WHERE mes_order_id = $1 AND erp_order_id IS NOT NULL
@@ -458,7 +543,7 @@ impl MesErpSyncService {
                 sync_type, payload, sync_status, retry_count, max_retries,
                 created_at, updated_at
             ) VALUES ($1, $2, $3, $4, $5, $6, $7, 'pending', 0, 5, $8, $8)
-            "#
+            "#,
         )
         .bind(id)
         .bind(direction)
@@ -492,7 +577,7 @@ impl MesErpSyncService {
                     last_synced_at = $3,
                     updated_at = $3
                 WHERE id = $1
-                "#
+                "#,
             )
             .bind(sync_id)
             .bind(mes_id)
@@ -509,7 +594,7 @@ impl MesErpSyncService {
                     last_synced_at = $2,
                     updated_at = $2
                 WHERE id = $1
-                "#
+                "#,
             )
             .bind(sync_id)
             .bind(now.naive_utc())
@@ -537,7 +622,7 @@ impl MesErpSyncService {
                 retry_count = $3,
                 updated_at = $4
             WHERE id = $1
-            "#
+            "#,
         )
         .bind(sync_id)
         .bind(error)
@@ -568,7 +653,7 @@ impl MesErpSyncService {
                 id, sync_record_id, sync_direction, sync_type,
                 status, error_message, attempt, created_at
             ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8)
-            "#
+            "#,
         )
         .bind(id)
         .bind(sync_record_id)
@@ -587,10 +672,7 @@ impl MesErpSyncService {
 
     // ==================== 重试失败同步 ====================
 
-    pub async fn retry_failed_sync(
-        &self,
-        sync_id: Uuid,
-    ) -> Result<SyncResult, String> {
+    pub async fn retry_failed_sync(&self, sync_id: Uuid) -> Result<SyncResult, String> {
         let sync_record = sqlx::query_as::<_, MesErpSyncRecord>(
             r#"
             SELECT id, sync_direction, mes_order_id, erp_order_id, order_number,
@@ -598,7 +680,7 @@ impl MesErpSyncService {
                    error_message, last_synced_at, created_at, updated_at
             FROM mes_erp_sync
             WHERE id = $1
-            "#
+            "#,
         )
         .bind(sync_id)
         .fetch_optional(&self.pool)
@@ -652,7 +734,7 @@ impl MesErpSyncService {
               AND ($2::VARCHAR IS NULL OR sync_status = $2)
             ORDER BY created_at DESC
             LIMIT $3 OFFSET $4
-            "#
+            "#,
         )
         .bind(direction)
         .bind(status)
@@ -663,10 +745,7 @@ impl MesErpSyncService {
         .map_err(|e| format!("查询同步记录失败: {}", e))
     }
 
-    pub async fn get_sync_record(
-        &self,
-        sync_id: Uuid,
-    ) -> Result<Option<MesErpSyncRecord>, String> {
+    pub async fn get_sync_record(&self, sync_id: Uuid) -> Result<Option<MesErpSyncRecord>, String> {
         sqlx::query_as::<_, MesErpSyncRecord>(
             r#"
             SELECT id, sync_direction, mes_order_id, erp_order_id, order_number,
@@ -674,7 +753,7 @@ impl MesErpSyncService {
                    error_message, last_synced_at, created_at, updated_at
             FROM mes_erp_sync
             WHERE id = $1
-            "#
+            "#,
         )
         .bind(sync_id)
         .fetch_optional(&self.pool)
@@ -682,10 +761,7 @@ impl MesErpSyncService {
         .map_err(|e| format!("查询同步记录失败: {}", e))
     }
 
-    pub async fn get_sync_logs(
-        &self,
-        sync_id: Uuid,
-    ) -> Result<Vec<SyncLog>, String> {
+    pub async fn get_sync_logs(&self, sync_id: Uuid) -> Result<Vec<SyncLog>, String> {
         sqlx::query_as::<_, SyncLog>(
             r#"
             SELECT id, sync_record_id, sync_direction, sync_type,
@@ -693,7 +769,7 @@ impl MesErpSyncService {
             FROM mes_erp_sync_logs
             WHERE sync_record_id = $1
             ORDER BY created_at DESC
-            "#
+            "#,
         )
         .bind(sync_id)
         .fetch_all(&self.pool)

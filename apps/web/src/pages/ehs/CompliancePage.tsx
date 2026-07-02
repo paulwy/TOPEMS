@@ -18,16 +18,10 @@ import {
   Tabs,
   Tab,
 } from '@mui/material';
-import {
-  Plus,
-  FileCheck,
-  ClipboardCheck,
-  AlertTriangle,
-  Shield,
-} from 'lucide-react';
+import { Plus, FileCheck, ClipboardCheck, AlertTriangle, Shield } from 'lucide-react';
 import { ListPageTemplate, type ColumnDef } from '@/components/templates';
 import { ehsApi } from '@/api/ehs';
-import { PageContainer } from '@/components/common';
+import { PageContainer } from '@/components/common/PageContainerV2';
 import type { EnvironmentalRegulation, ComplianceAssessment, DischargePermit } from '@/api/ehs';
 import { useAppStore } from '@/store';
 import { apiLogger } from '@/utils/logger';
@@ -219,11 +213,7 @@ const CompliancePage: React.FC = () => {
         title: regulationFormData.title,
         category: regulationFormData.category,
         regulation_type: regulationFormData.regulation_type as
-          | 'law'
-          | 'regulation'
-          | 'standard'
-          | 'policy'
-          | 'notice',
+          'law' | 'regulation' | 'standard' | 'policy' | 'notice',
         issuing_authority: regulationFormData.issuing_authority || null,
         issue_date: regulationFormData.issue_date || null,
         effective_date: regulationFormData.effective_date || null,
@@ -250,8 +240,6 @@ const CompliancePage: React.FC = () => {
 
   return (
     <PageContainer
-      title='合规管理'
-      subtitle='Compliance Management'
       headerProps={{
         actions: headerActions,
         pageIcon: <Shield sx={{ width: 20, height: 20 }} />,
@@ -275,7 +263,7 @@ const CompliancePage: React.FC = () => {
                   width: 40,
                   height: 40,
                   bgcolor: 'success.lighter',
-                  borderRadius: 2,
+                  borderRadius: 3,
                   display: 'flex',
                   alignItems: 'center',
                   justifyContent: 'center',
@@ -308,7 +296,7 @@ const CompliancePage: React.FC = () => {
                   width: 40,
                   height: 40,
                   bgcolor: 'primary.lighter',
-                  borderRadius: 2,
+                  borderRadius: 3,
                   display: 'flex',
                   alignItems: 'center',
                   justifyContent: 'center',
@@ -341,7 +329,7 @@ const CompliancePage: React.FC = () => {
                   width: 40,
                   height: 40,
                   bgcolor: 'warning.lighter',
-                  borderRadius: 2,
+                  borderRadius: 3,
                   display: 'flex',
                   alignItems: 'center',
                   justifyContent: 'center',
@@ -374,7 +362,7 @@ const CompliancePage: React.FC = () => {
                   width: 40,
                   height: 40,
                   bgcolor: 'info.lighter',
-                  borderRadius: 2,
+                  borderRadius: 3,
                   display: 'flex',
                   alignItems: 'center',
                   justifyContent: 'center',

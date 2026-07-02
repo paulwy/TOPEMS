@@ -85,15 +85,15 @@ const GisContent: React.FC = () => {
   ];
 
   const getStatusStyle = (status: string) => {
-    if (!status) return { bgcolor: 'grey.100', color: '#475569' };
+    if (!status) return { bgcolor: 'grey.100', color: 'grey.600' };
     const s = status.toLowerCase();
     if (s.includes('active') || s.includes('启用'))
-      return { bgcolor: 'success.lighter', color: '#15803d' };
+      return { bgcolor: 'success.lighter', color: 'success.700' };
     if (s.includes('pending') || s.includes('待处理'))
-      return { bgcolor: 'warning.light', color: '#b45309' };
+      return { bgcolor: 'warning.light', color: 'warning.700' };
     if (s.includes('inactive') || s.includes('禁用'))
       return { bgcolor: 'error.lighter', color: 'error.darker' };
-    return { bgcolor: 'grey.100', color: '#475569' };
+    return { bgcolor: 'grey.100', color: 'grey.600' };
   };
 
   const StatusChip: React.FC<{ status: string }> = ({ status }) => {
@@ -793,7 +793,7 @@ const GisContent: React.FC = () => {
                   width: 40,
                   height: 40,
                   borderRadius: 2,
-                  bgcolor: '#fce7f3',
+                  bgcolor: 'secondary.100',
                   display: 'flex',
                   alignItems: 'center',
                   justifyContent: 'center',
@@ -835,7 +835,7 @@ const GisContent: React.FC = () => {
                   width: 40,
                   height: 40,
                   borderRadius: 2,
-                  bgcolor: '#f3e8ff',
+                  bgcolor: 'secondary.100',
                   display: 'flex',
                   alignItems: 'center',
                   justifyContent: 'center',

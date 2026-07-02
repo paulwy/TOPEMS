@@ -36,7 +36,7 @@ import { EHSStatusBadge, EHSMeasureTypeBadge, calculateRiskLevel } from '@/compo
 import { useNotification } from '@/hooks/useNotification';
 import { DetailPageTemplate, type TabConfig, type SectionConfig } from '@/components/templates';
 import ConfirmDialog from '@/components/common/ConfirmDialog';
-import { PageContainer } from '@/components/common';
+import { PageContainer } from '@/components/common/PageContainerV2';
 
 interface ControlFormData {
   measure_type: 'engineering' | 'administrative' | 'ppe';
@@ -288,7 +288,7 @@ const EhsHazardDetailPage: React.FC = () => {
         );
         const colorMap: Record<string, { bg: string; color: string }> = {
           高风险: { bg: 'error.lighter', color: 'error.dark' },
-          中风险: { bg: '#fef9c3', color: '#ca8a04' },
+          中风险: { bg: 'warning.100', color: '#ca8a04' },
           低风险: { bg: 'success.lighter', color: 'success.dark' },
         };
         const colors = colorMap[`${riskResult.level}风险`] || {
@@ -387,10 +387,10 @@ const EhsHazardDetailPage: React.FC = () => {
           <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
             <Box
               component={Shield}
-              sx={{ fontSize: 48, color: '#ea580c' }}
+              sx={{ fontSize: 48, color: 'warning.600' }}
             />
             <Box>
-              <Typography sx={{ color: '#ea580c', fontSize: 14 }}>风险等级</Typography>
+              <Typography sx={{ color: 'warning.600', fontSize: 14 }}>风险等级</Typography>
               <Typography
                 sx={{
                   fontSize: 24,
@@ -562,7 +562,7 @@ const EhsHazardDetailPage: React.FC = () => {
       avatar: (
         <AlertTriangle
           size={32}
-          color='#ea580c'
+          color='warning.600'
         />
       ),
       title: hazard.name,
@@ -580,13 +580,15 @@ const EhsHazardDetailPage: React.FC = () => {
 
   return (
     <PageContainer
-      title='危险源详情'
-      subtitle='查看和管理危险源信息'
+      headerProps={{
+        pageIcon: <AlertTriangle sx={{ width: 20, height: 20 }} />,
+        pageGradient: 'linear-gradient(135deg, #F97316 0%, #EA580C 100%)',
+      }}
+      backButton={{ href: '/ehs/hazards' }}
+      maxWidth='xl'
     >
       <DetailPageTemplate
         title=''
-        subtitle=''
-        backHref='/ehs'
         loading={loading}
         error={errorMessage}
         onEdit={() => setShowEditModal(true)}
@@ -809,7 +811,7 @@ const EhsHazardDetailPage: React.FC = () => {
           <Button
             variant='contained'
             onClick={handleUpdateHazard}
-            sx={{ backgroundColor: '#ea580c', '&:hover': { backgroundColor: '#c2410c' } }}
+            sx={{ backgroundColor: 'warning.600', '&:hover': { backgroundColor: '#c2410c' } }}
           >
             保存更改
           </Button>
@@ -919,7 +921,7 @@ const EhsHazardDetailPage: React.FC = () => {
           <Button
             variant='contained'
             onClick={handleAddControl}
-            sx={{ backgroundColor: '#ea580c', '&:hover': { backgroundColor: '#c2410c' } }}
+            sx={{ backgroundColor: 'warning.600', '&:hover': { backgroundColor: '#c2410c' } }}
           >
             添加措施
           </Button>

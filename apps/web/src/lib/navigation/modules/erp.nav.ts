@@ -53,6 +53,7 @@ export const erpNavConfig: ModuleNavConfig = {
       order: 3,
       group: 'business',
       description: '供应商信息管理',
+      crossModuleRef: true, // overlaps with SCM(scm-suppliers), SRM(srm-supplier) -- supplier domain
     },
     {
       code: 'erp-inventory-management',
@@ -63,6 +64,7 @@ export const erpNavConfig: ModuleNavConfig = {
       order: 4,
       group: 'business',
       description: '库存物料管理',
+      crossModuleRef: true, // overlaps with WMS(wms-items) -- inventory domain
     },
     {
       code: 'erp-material-management',
@@ -84,6 +86,7 @@ export const erpNavConfig: ModuleNavConfig = {
       group: 'process',
       showInTabs: true,
       description: '采购订单管理',
+      crossModuleRef: true, // overlaps with SCM(scm-purchase-orders), SRM(srm-order) -- purchase order domain
     },
     {
       code: 'erp-sales-order',
@@ -94,6 +97,7 @@ export const erpNavConfig: ModuleNavConfig = {
       order: 2,
       group: 'process',
       description: '销售订单管理',
+      crossModuleRef: true, // overlaps with CRM(crm-sales-funnel) -- sales domain
     },
     {
       code: 'erp-financial-statements',

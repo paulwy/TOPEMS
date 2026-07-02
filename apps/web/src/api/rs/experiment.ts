@@ -32,31 +32,31 @@ export const experimentApi = {
             .map(([k, v]) => [k, String(v)])
         )
       : '';
-    const url = queryParams ? `/api/rs/experiments?${queryParams}` : '/api/rs/experiments';
+    const url = queryParams ? `/experiments?${queryParams}` : '/experiments';
     return apiClient.rs.get(url);
   },
 
   getExperiment: async (id: string): Promise<ApiResponse<Experiment>> => {
-    return apiClient.rs.get(`/api/rs/experiments/${id}`);
+    return apiClient.rs.get(`/experiments/${id}`);
   },
 
   createExperiment: async (data: CreateExperimentRequest): Promise<ApiResponse<Experiment>> => {
-    return apiClient.rs.post('/api/rs/experiments', data);
+    return apiClient.rs.post('/experiments', data);
   },
 
   updateExperiment: async (
     id: string,
     data: UpdateExperimentRequest
   ): Promise<ApiResponse<Experiment>> => {
-    return apiClient.rs.put(`/api/rs/experiments/${id}`, data);
+    return apiClient.rs.put(`/experiments/${id}`, data);
   },
 
   deleteExperiment: async (id: string): Promise<ApiResponse<string>> => {
-    return apiClient.rs.delete(`/api/rs/experiments/${id}`);
+    return apiClient.rs.delete(`/experiments/${id}`);
   },
 
   listExperimentsByProject: async (projectId: string): Promise<ApiResponse<Experiment[]>> => {
-    return apiClient.rs.get(`/api/rs/experiments/project/${projectId}`);
+    return apiClient.rs.get(`/experiments/project/${projectId}`);
   },
 
   listLabExperiments: async (params?: {
@@ -79,9 +79,7 @@ export const experimentApi = {
             .map(([k, v]) => [k, String(v)])
         )
       : '';
-    const url = queryParams
-      ? `/api/rs/experiments/phase/lab?${queryParams}`
-      : '/api/rs/experiments/phase/lab';
+    const url = queryParams ? `/experiments/phase/lab?${queryParams}` : '/experiments/phase/lab';
     return apiClient.rs.get(url);
   },
 
@@ -106,8 +104,8 @@ export const experimentApi = {
         )
       : '';
     const url = queryParams
-      ? `/api/rs/experiments/phase/pilot?${queryParams}`
-      : '/api/rs/experiments/phase/pilot';
+      ? `/experiments/phase/pilot?${queryParams}`
+      : '/experiments/phase/pilot';
     return apiClient.rs.get(url);
   },
 
@@ -132,8 +130,8 @@ export const experimentApi = {
         )
       : '';
     const url = queryParams
-      ? `/api/rs/experiments/phase/scaleup?${queryParams}`
-      : '/api/rs/experiments/phase/scaleup';
+      ? `/experiments/phase/scaleup?${queryParams}`
+      : '/experiments/phase/scaleup';
     return apiClient.rs.get(url);
   },
 
@@ -141,21 +139,21 @@ export const experimentApi = {
     id: string,
     data?: { new_status?: string }
   ): Promise<ApiResponse<Experiment>> => {
-    return apiClient.rs.post(`/api/rs/experiments/${id}/advance-phase`, data || {});
+    return apiClient.rs.post(`/experiments/${id}/advance-phase`, data || {});
   },
 
   traceBatch: async (batchNumber: string): Promise<ApiResponse<BatchTraceItem[]>> => {
-    return apiClient.rs.get(`/api/rs/batch-trace/${batchNumber}`);
+    return apiClient.rs.get(`/batch-trace/${batchNumber}`);
   },
 
   getExperimentRecords: async (experimentId: string): Promise<ApiResponse<ExperimentRecord[]>> => {
-    return apiClient.rs.get(`/api/rs/experiments/${experimentId}/records`);
+    return apiClient.rs.get(`/experiments/${experimentId}/records`);
   },
 
   createExperimentRecord: async (
     experimentId: string,
     data: CreateExperimentRecordRequest
   ): Promise<ApiResponse<{ id: string; recorded_at: string }>> => {
-    return apiClient.rs.post(`/api/rs/experiments/${experimentId}/records`, data);
+    return apiClient.rs.post(`/experiments/${experimentId}/records`, data);
   },
 };

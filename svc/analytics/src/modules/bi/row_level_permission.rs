@@ -100,9 +100,7 @@ pub struct FilteredDataResponse {
     pub page_size: i64,
 }
 
-pub async fn list_permission_rules(
-    State(state): State<AppState>,
-) -> Json<serde_json::Value> {
+pub async fn list_permission_rules(State(state): State<AppState>) -> Json<serde_json::Value> {
     info!("Listing row-level permission rules");
 
     let rows = match sqlx::query!(
@@ -374,7 +372,10 @@ pub async fn validate_permission(
     State(state): State<AppState>,
     Json(req): Json<ValidatePermissionRequest>,
 ) -> Json<serde_json::Value> {
-    info!("Validating permission for user: {} on table: {}", req.user_id, req.table_name);
+    info!(
+        "Validating permission for user: {} on table: {}",
+        req.user_id, req.table_name
+    );
 
     let role_ids = req.role_ids.unwrap_or_default();
 
@@ -448,7 +449,10 @@ pub async fn filter_data(
     State(state): State<AppState>,
     Json(req): Json<FilterDataRequest>,
 ) -> Json<serde_json::Value> {
-    info!("Filtering data for user: {} on table: {}", req.user_id, req.table_name);
+    info!(
+        "Filtering data for user: {} on table: {}",
+        req.user_id, req.table_name
+    );
 
     let page = req.page.unwrap_or(1);
     let page_size = req.page_size.unwrap_or(50);
@@ -557,9 +561,7 @@ pub async fn get_user_permissions(
     }))
 }
 
-pub async fn get_permission_rule_types(
-    State(_state): State<AppState>,
-) -> Json<serde_json::Value> {
+pub async fn get_permission_rule_types(State(_state): State<AppState>) -> Json<serde_json::Value> {
     info!("Getting permission rule types");
 
     let rule_types = vec![

@@ -10,16 +10,15 @@ import {
   Upload,
   Search,
 } from 'lucide-react';
-import {
-  Box,
-  Typography,
-  Chip,
-  Button,
-  Grid,
-} from '@mui/material';
+import { Box, Typography, Chip, Button, Grid } from '@mui/material';
 
 import { useAppStore } from '../../store';
-import { ListPageTemplate, type ColumnDef, type RowAction, type FilterConfig } from '@/components/templates';
+import {
+  ListPageTemplate,
+  type ColumnDef,
+  type RowAction,
+  type FilterConfig,
+} from '@/components/templates';
 import { PageContainer } from '@/components/common';
 import ConfirmDialog from '@/components/common/ConfirmDialog';
 import { extractErrorMessage } from '@/utils/errors';
@@ -222,31 +221,37 @@ export const NotificationTemplatesPage: React.FC = () => {
     }
   }, [deleteTarget, addNotification]);
 
-  const handleCopy = useCallback((template: NotificationTemplate) => {
-    const newTemplate: NotificationTemplate = {
-      ...template,
-      id: Date.now().toString(),
-      name: `${template.name} - 副本`,
-      code: `${template.code}_COPY`,
-      status: 'inactive',
-      updatedAt: new Date().toLocaleString('zh-CN'),
-      usageCount: 0,
-    };
-    setTemplates((prev) => [newTemplate, ...prev]);
-    addNotification({
-      title: '复制成功',
-      message: `模板「${template.name}」已复制`,
-      type: 'success',
-    });
-  }, [addNotification]);
+  const handleCopy = useCallback(
+    (template: NotificationTemplate) => {
+      const newTemplate: NotificationTemplate = {
+        ...template,
+        id: Date.now().toString(),
+        name: `${template.name} - 副本`,
+        code: `${template.code}_COPY`,
+        status: 'inactive',
+        updatedAt: new Date().toLocaleString('zh-CN'),
+        usageCount: 0,
+      };
+      setTemplates((prev) => [newTemplate, ...prev]);
+      addNotification({
+        title: '复制成功',
+        message: `模板「${template.name}」已复制`,
+        type: 'success',
+      });
+    },
+    [addNotification]
+  );
 
-  const handleEdit = useCallback((template: NotificationTemplate) => {
-    addNotification({
-      title: '编辑模板',
-      message: `正在编辑模板「${template.name}」`,
-      type: 'info',
-    });
-  }, [addNotification]);
+  const handleEdit = useCallback(
+    (template: NotificationTemplate) => {
+      addNotification({
+        title: '编辑模板',
+        message: `正在编辑模板「${template.name}」`,
+        type: 'info',
+      });
+    },
+    [addNotification]
+  );
 
   const handleCreate = useCallback(() => {
     addNotification({
@@ -295,16 +300,30 @@ export const NotificationTemplatesPage: React.FC = () => {
                 width: 40,
                 height: 40,
                 bgcolor: `${TYPE_COLORS[row.type]}.100`,
-                borderRadius: 2,
+                borderRadius: 3,
                 display: 'flex',
                 alignItems: 'center',
                 justifyContent: 'center',
               }}
             >
-              <FileText size={20} color={row.type === 'system' ? '#1976d2' : row.type === 'approval' ? '#9c27b0' : row.type === 'task' ? '#ed6c02' : '#2e7d32'} />
+              <FileText
+                size={20}
+                color={
+                  row.type === 'system'
+                    ? '#1976d2'
+                    : row.type === 'approval'
+                      ? '#9c27b0'
+                      : row.type === 'task'
+                        ? '#ed6c02'
+                        : '#2e7d32'
+                }
+              />
             </Box>
             <Box>
-              <Typography variant='body2' sx={{ fontWeight: 500, color: 'grey.900' }}>
+              <Typography
+                variant='body2'
+                sx={{ fontWeight: 500, color: 'grey.900' }}
+              >
                 {row.name}
               </Typography>
               {row.description && (
@@ -330,7 +349,10 @@ export const NotificationTemplatesPage: React.FC = () => {
         id: 'code',
         label: '模板编码',
         render: (row) => (
-          <Typography variant='body2' sx={{ fontFamily: 'monospace', color: 'text.secondary' }}>
+          <Typography
+            variant='body2'
+            sx={{ fontFamily: 'monospace', color: 'text.secondary' }}
+          >
             {row.code}
           </Typography>
         ),
@@ -382,7 +404,10 @@ export const NotificationTemplatesPage: React.FC = () => {
         id: 'updatedAt',
         label: '更新时间',
         render: (row) => (
-          <Typography variant='body2' color='text.secondary'>
+          <Typography
+            variant='body2'
+            color='text.secondary'
+          >
             {row.updatedAt}
           </Typography>
         ),
@@ -449,7 +474,7 @@ export const NotificationTemplatesPage: React.FC = () => {
             sx={{
               p: 2,
               bgcolor: 'primary.50',
-              borderRadius: 2,
+              borderRadius: 3,
               display: 'flex',
               alignItems: 'center',
               gap: 2,
@@ -460,19 +485,28 @@ export const NotificationTemplatesPage: React.FC = () => {
                 width: 48,
                 height: 48,
                 bgcolor: 'primary.main',
-                borderRadius: 2,
+                borderRadius: 3,
                 display: 'flex',
                 alignItems: 'center',
                 justifyContent: 'center',
               }}
             >
-              <FileText size={24} color='white' />
+              <FileText
+                size={24}
+                color='white'
+              />
             </Box>
             <Box>
-              <Typography variant='caption' color='text.secondary'>
+              <Typography
+                variant='caption'
+                color='text.secondary'
+              >
                 模板总数
               </Typography>
-              <Typography variant='h5' sx={{ fontWeight: 700, color: 'primary.main' }}>
+              <Typography
+                variant='h5'
+                sx={{ fontWeight: 700, color: 'primary.main' }}
+              >
                 {stats.total}
               </Typography>
             </Box>
@@ -483,7 +517,7 @@ export const NotificationTemplatesPage: React.FC = () => {
             sx={{
               p: 2,
               bgcolor: 'success.50',
-              borderRadius: 2,
+              borderRadius: 3,
               display: 'flex',
               alignItems: 'center',
               gap: 2,
@@ -494,19 +528,28 @@ export const NotificationTemplatesPage: React.FC = () => {
                 width: 48,
                 height: 48,
                 bgcolor: 'success.main',
-                borderRadius: 2,
+                borderRadius: 3,
                 display: 'flex',
                 alignItems: 'center',
                 justifyContent: 'center',
               }}
             >
-              <FileText size={24} color='white' />
+              <FileText
+                size={24}
+                color='white'
+              />
             </Box>
             <Box>
-              <Typography variant='caption' color='text.secondary'>
+              <Typography
+                variant='caption'
+                color='text.secondary'
+              >
                 启用模板
               </Typography>
-              <Typography variant='h5' sx={{ fontWeight: 700, color: 'success.main' }}>
+              <Typography
+                variant='h5'
+                sx={{ fontWeight: 700, color: 'success.main' }}
+              >
                 {stats.active}
               </Typography>
             </Box>
@@ -517,7 +560,7 @@ export const NotificationTemplatesPage: React.FC = () => {
             sx={{
               p: 2,
               bgcolor: 'grey.100',
-              borderRadius: 2,
+              borderRadius: 3,
               display: 'flex',
               alignItems: 'center',
               gap: 2,
@@ -528,19 +571,28 @@ export const NotificationTemplatesPage: React.FC = () => {
                 width: 48,
                 height: 48,
                 bgcolor: 'grey.500',
-                borderRadius: 2,
+                borderRadius: 3,
                 display: 'flex',
                 alignItems: 'center',
                 justifyContent: 'center',
               }}
             >
-              <FileText size={24} color='white' />
+              <FileText
+                size={24}
+                color='white'
+              />
             </Box>
             <Box>
-              <Typography variant='caption' color='text.secondary'>
+              <Typography
+                variant='caption'
+                color='text.secondary'
+              >
                 禁用模板
               </Typography>
-              <Typography variant='h5' sx={{ fontWeight: 700, color: 'grey.600' }}>
+              <Typography
+                variant='h5'
+                sx={{ fontWeight: 700, color: 'grey.600' }}
+              >
                 {stats.inactive}
               </Typography>
             </Box>
@@ -551,7 +603,7 @@ export const NotificationTemplatesPage: React.FC = () => {
             sx={{
               p: 2,
               bgcolor: 'warning.50',
-              borderRadius: 2,
+              borderRadius: 3,
               display: 'flex',
               alignItems: 'center',
               gap: 2,
@@ -562,19 +614,28 @@ export const NotificationTemplatesPage: React.FC = () => {
                 width: 48,
                 height: 48,
                 bgcolor: 'warning.main',
-                borderRadius: 2,
+                borderRadius: 3,
                 display: 'flex',
                 alignItems: 'center',
                 justifyContent: 'center',
               }}
             >
-              <FileText size={24} color='white' />
+              <FileText
+                size={24}
+                color='white'
+              />
             </Box>
             <Box>
-              <Typography variant='caption' color='text.secondary'>
+              <Typography
+                variant='caption'
+                color='text.secondary'
+              >
                 今日使用次数
               </Typography>
-              <Typography variant='h5' sx={{ fontWeight: 700, color: 'warning.main' }}>
+              <Typography
+                variant='h5'
+                sx={{ fontWeight: 700, color: 'warning.main' }}
+              >
                 {stats.todayUsage}
               </Typography>
             </Box>

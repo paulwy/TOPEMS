@@ -23,7 +23,7 @@ interface RecentActivitiesProps {
 }
 
 const typeColors: Record<string, { bg: string; text: string; bar: string; iconBg: string }> = {
-  系统: { bg: 'primary.light', text: 'primary.dark', bar: 'primary.main', iconBg: '#dbeafe' },
+  系统: { bg: 'primary.light', text: 'primary.dark', bar: 'primary.main', iconBg: 'primary.100' },
   文档: {
     bg: 'secondary.light',
     text: 'secondary.dark',
@@ -36,8 +36,8 @@ const typeColors: Record<string, { bg: string; text: string; bar: string; iconBg
     bar: 'success.dark',
     iconBg: 'success.lighter',
   },
-  培训: { bg: 'warning.lighter', text: '#ca8a04', bar: 'warning.main', iconBg: '#fef9c3' },
-  默认: { bg: 'grey.50', text: 'grey.600', bar: '#94a3b8', iconBg: 'grey.100' },
+  培训: { bg: 'warning.lighter', text: '#ca8a04', bar: 'warning.main', iconBg: 'warning.100' },
+  默认: { bg: 'grey.50', text: 'grey.600', bar: 'grey.400', iconBg: 'grey.100' },
 };
 
 const generateMockActivities = (): ActivityItem[] => [
@@ -142,7 +142,7 @@ export const RecentActivities: React.FC<RecentActivitiesProps> = ({
               display: 'flex',
               alignItems: 'flex-start',
               padding: 2,
-              borderRadius: 2,
+              borderRadius: 3,
               '&:hover': { backgroundColor: 'grey.50' },
               transition: 'backgroundColor 0.2s ease',
               cursor: 'pointer',
@@ -160,7 +160,7 @@ export const RecentActivities: React.FC<RecentActivitiesProps> = ({
                 sx={{
                   width: 40,
                   height: 40,
-                  borderRadius: 2,
+                  borderRadius: 3,
                   backgroundColor: colors.iconBg,
                   display: 'flex',
                   alignItems: 'center',
@@ -177,7 +177,7 @@ export const RecentActivities: React.FC<RecentActivitiesProps> = ({
                     width: 4,
                     height: 32,
                     backgroundColor: 'border.default',
-                    borderRadius: 2,
+                    borderRadius: 3,
                     marginTop: 1,
                   }}
                 >
@@ -188,7 +188,7 @@ export const RecentActivities: React.FC<RecentActivitiesProps> = ({
                       left: 0,
                       width: '100%',
                       backgroundColor: colors.bar,
-                      borderRadius: 2,
+                      borderRadius: 3,
                       transition: 'height 0.7s ease',
                     }}
                     style={{ height: progressWidth }}
@@ -220,7 +220,7 @@ export const RecentActivities: React.FC<RecentActivitiesProps> = ({
                     {activity.type}
                   </Typography>
                 </Box>
-                <Typography sx={{ fontSize: 12, color: '#94a3b8' }}>{activity.time}</Typography>
+                <Typography sx={{ fontSize: 12, color: 'grey.400' }}>{activity.time}</Typography>
               </Box>
             </Box>
             <ChevronRight sx={{ width: 16, height: 16, color: 'grey.400', marginLeft: 1 }} />

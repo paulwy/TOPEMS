@@ -1,6 +1,5 @@
 import React, { useState, useMemo, useEffect } from 'react';
-import {
-  Card,
+import {Card,
   CardContent,
   CardHeader,
   Chip,
@@ -9,8 +8,7 @@ import {
   Box,
   Tabs,
   Tab,
-  Button,
-} from '@mui/material';
+  Button, useTheme} from '@mui/material';
 import { useNavigate } from 'react-router-dom';
 import type { ColumnDef } from '@tanstack/react-table';
 import {
@@ -57,12 +55,12 @@ const getChipSx = (colorClass: string): object => {
       color: 'grey.700',
     },
     'bg-yellow-100 text-yellow-800': {
-      backgroundColor: '#fef9c3',
+      backgroundColor: 'warning.100',
       color: '#854d0e',
     },
     'bg-blue-100 text-blue-800': {
-      backgroundColor: '#dbeafe',
-      color: '#1e40af',
+      backgroundColor: 'primary.100',
+      color: 'primary.800',
     },
     'bg-purple-100 text-purple-800': {
       backgroundColor: 'secondary.light',
@@ -114,6 +112,7 @@ const CONTROL_TYPE_CONFIG = {
 };
 
 export default function ConsolidationScopePage() {
+  const theme = useTheme();
   const navigate = useNavigate();
   const { error: notifyError } = useNotification();
 
@@ -251,7 +250,7 @@ export default function ConsolidationScopePage() {
       header: '说明',
       accessorKey: 'description',
       cell: ({ row }) => (
-        <span style={{ color: 'text.secondary', fontSize: 14 }}>
+        <span style={{ color: theme.palette.text.secondary, fontSize: 14 }}>
           {row.getValue('description') || '-'}
         </span>
       ),
@@ -333,7 +332,7 @@ export default function ConsolidationScopePage() {
           {row.original.is_parent && (
             <Chip
               size='small'
-              sx={{ backgroundColor: '#dbeafe', color: '#1e40af' }}
+              sx={{ backgroundColor: 'primary.100', color: 'primary.800' }}
               label='母公司'
             />
           )}

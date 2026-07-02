@@ -3,8 +3,7 @@ import { adminNavConfig } from './admin.nav';
 import { assetNavConfig } from './asset.nav';
 import { biNavConfig } from './bi.nav';
 import { crmNavConfig } from './crm.nav';
-import { documentNavConfig } from './document.nav';
-import { docsNavConfig } from './docs.nav';
+import { docNavConfig } from './doc.nav';
 import { ehsNavConfig } from './ehs.nav';
 import { erpNavConfig } from './erp.nav';
 import { financeNavConfig } from './finance.nav';
@@ -33,11 +32,11 @@ import { workflowNavConfig } from './workflow.nav';
 import type { ModuleNavConfig } from '../types';
 
 export const coreModuleNavConfigs: ModuleNavConfig[] = [
-  iamNavConfig,
   adminNavConfig,
+  iamNavConfig,
   workflowNavConfig,
   notificationNavConfig,
-  documentNavConfig,
+  docNavConfig,
   monitorNavConfig,
   integrationNavConfig,
   aiNavConfig,
@@ -57,7 +56,6 @@ export const coreModuleNavConfigs: ModuleNavConfig[] = [
   lowcodeNavConfig,
   rsNavConfig,
   assetNavConfig,
-  docsNavConfig,
   pluginNavConfig,
   imNavConfig,
   biNavConfig,
@@ -73,14 +71,12 @@ export {
   assetNavConfig,
   biNavConfig,
   crmNavConfig,
-  documentNavConfig,
-  docsNavConfig,
+  docNavConfig,
   ehsNavConfig,
   erpNavConfig,
   financeNavConfig,
   gisNavConfig,
   hrmNavConfig,
-  iamNavConfig,
   imNavConfig,
   integrationNavConfig,
   limsNavConfig,

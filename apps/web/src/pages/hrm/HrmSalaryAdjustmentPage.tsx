@@ -139,12 +139,12 @@ const HrmSalaryAdjustmentPage: React.FC = () => {
             {isPositive ? (
               <TrendingUp
                 size={14}
-                color='#10b981'
+                color='success.main'
               />
             ) : (
               <TrendingDown
                 size={14}
-                color='#ef4444'
+                color='error.main'
               />
             )}
             <Typography

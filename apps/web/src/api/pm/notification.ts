@@ -3,11 +3,11 @@ import type { Notification, NotificationSetting, NotificationType } from './type
 
 export const notificationApi = {
   list: async (projectId: string) => {
-    return apiClient.pm.get(`/api/pm/projects/${projectId}/notifications`);
+    return apiClient.pm.get(`/projects/${projectId}/notifications`);
   },
 
   get: async (id: string) => {
-    return apiClient.pm.get(`/api/pm/notifications/${id}`);
+    return apiClient.pm.get(`/notifications/${id}`);
   },
 
   create: async (data: {
@@ -20,7 +20,7 @@ export const notificationApi = {
     metadata?: Record<string, any>;
     due_date?: string;
   }) => {
-    return apiClient.pm.post('/api/pm/notifications', data);
+    return apiClient.pm.post('/notifications', data);
   },
 
   update: async (
@@ -30,17 +30,17 @@ export const notificationApi = {
       read_at?: string;
     }
   ) => {
-    return apiClient.pm.put(`/api/pm/notifications/${id}`, data);
+    return apiClient.pm.put(`/notifications/${id}`, data);
   },
 
   markAsRead: async (id: string) => {
-    return apiClient.pm.post(`/api/pm/notifications/${id}/read`);
+    return apiClient.pm.post(`/notifications/${id}/read`);
   },
 };
 
 export const notificationSettingApi = {
   list: async (projectId: string) => {
-    return apiClient.pm.get(`/api/pm/projects/${projectId}/notification-settings`);
+    return apiClient.pm.get(`/projects/${projectId}/notification-settings`);
   },
 
   create: async (
@@ -52,7 +52,7 @@ export const notificationSettingApi = {
       preferred_channel?: string;
     }
   ) => {
-    return apiClient.pm.post(`/api/pm/projects/${projectId}/notification-settings`, data);
+    return apiClient.pm.post(`/projects/${projectId}/notification-settings`, data);
   },
 
   update: async (
@@ -63,13 +63,13 @@ export const notificationSettingApi = {
       preferred_channel?: string;
     }
   ) => {
-    return apiClient.pm.put(`/api/pm/notification-settings/${id}`, data);
+    return apiClient.pm.put(`/notification-settings/${id}`, data);
   },
 };
 
 export const notificationTypeApi = {
   list: async () => {
-    return apiClient.pm.get('/api/pm/notification-types');
+    return apiClient.pm.get('/notification-types');
   },
 };
 

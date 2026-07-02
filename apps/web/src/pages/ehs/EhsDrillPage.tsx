@@ -15,7 +15,7 @@ import {
 import { Plus, Eye, Clock, Users, Calendar } from 'lucide-react';
 import { ListPageTemplate, type ColumnDef, type RowAction } from '@/components/templates';
 import { ehsApi } from '@/api/ehs';
-import { PageContainer } from '@/components/common';
+import { PageContainer } from '@/components/common/PageContainerV2';
 import type { DrillRecord } from '@/api/ehs';
 import { useAppStore } from '@/store';
 import { apiLogger } from '@/utils/logger';
@@ -106,8 +106,8 @@ const EhsDrillPage: React.FC = () => {
   const getStatusBadge = (status: string) => {
     const statusMap: Record<string, { bg: string; color: string }> = {
       已完成: { bg: 'success.lighter', color: 'success.dark' },
-      已计划: { bg: '#dbeafe', color: 'primary.main' },
-      进行中: { bg: '#fef9c3', color: '#ca8a04' },
+      已计划: { bg: 'primary.100', color: 'primary.main' },
+      进行中: { bg: 'warning.100', color: '#ca8a04' },
     };
     const colors = statusMap[status] || { bg: 'grey.100', color: 'text.secondary' };
     return (
@@ -303,33 +303,41 @@ const EhsDrillPage: React.FC = () => {
           value={stats.scheduled}
           icon={<Clock sx={{ width: 20, height: 20, color: 'primary.main' }} />}
           bgColor='white'
-          iconBgColor='#dbeafe'
+          iconBgColor='primary.100'
         />
         <StatCard
           label='进行中'
           value={stats.inProgress}
           icon={<Clock sx={{ width: 20, height: 20, color: '#ca8a04' }} />}
           bgColor='white'
-          iconBgColor='#fef9c3'
+          iconBgColor='warning.100'
         />
       </Box>
     ),
     [stats]
   );
 
+  const headerActions = [
+    {
+      label: '新增演练',
+      icon: <Plus size={16} />,
+      onClick: handleCreate,
+      variant: 'contained' as const,
+      color: 'warning' as const,
+    },
+  ];
+
   return (
     <PageContainer
-      title='演练记录'
-      subtitle='管理应急演练和安全培训记录'
+      headerProps={{
+        actions: headerActions,
+        pageIcon: <Clock sx={{ width: 20, height: 20 }} />,
+        pageGradient: 'linear-gradient(135deg, #F59E0B 0%, #D97706 100%)',
+      }}
+      maxWidth='xl'
     >
       <ListPageTemplate
         title=''
-        subtitle=''
-        breadcrumbs={[
-          { label: '首页', href: '/dashboard' },
-          { label: 'EHS安全管理', href: '/ehs' },
-          { label: '演练记录' },
-        ]}
         columns={columns}
         data={paginatedDrills}
         loading={loading}
@@ -354,14 +362,6 @@ const EhsDrillPage: React.FC = () => {
             setCurrentPage(0);
           }
         }}
-        actions={[
-          {
-            label: '新增演练',
-            icon: <Plus size={16} />,
-            onClick: handleCreate,
-            variant: 'contained',
-          },
-        ]}
         rowActions={rowActions}
         onRefresh={loadDrills}
         showRowNumber
@@ -595,7 +595,7 @@ const StatCard: React.FC<{
             width: 40,
             height: 40,
             bgcolor: iconBgColor,
-            borderRadius: 2,
+            borderRadius: 3,
             display: 'flex',
             alignItems: 'center',
             justifyContent: 'center',

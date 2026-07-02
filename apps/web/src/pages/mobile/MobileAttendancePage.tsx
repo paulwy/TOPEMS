@@ -622,7 +622,7 @@ const MobileAttendancePage: React.FC = () => {
                         mb: 2,
                       }}
                     >
-                      <FileText style={{ width: 32, height: 32, color: 'text.secondary' }} />
+                      <FileText style={{ width: 32, height: 32, color: theme.palette.text.secondary }} />
                     </Box>
                     <Typography
                       variant='subtitle1'

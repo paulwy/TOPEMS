@@ -201,10 +201,10 @@ export const WizardPageTemplate: React.FC<WizardPageTemplateProps> = ({
 
   const renderStepIcon = (step: WizardStep, index: number) => {
     if (completedSteps.has(step.id)) {
-      return <CheckCircle style={{ width: 20, height: 20, color: 'success.main' }} />;
+      return <CheckCircle style={{ width: 20, height: 20, color: theme.palette.success.main }} />;
     }
     if (skippedSteps.has(step.id)) {
-      return <XCircle style={{ width: 20, height: 20, color: 'warning.main' }} />;
+      return <XCircle style={{ width: 20, height: 20, color: theme.palette.warning.main }} />;
     }
     if (index === currentStep) {
       return index + 1;

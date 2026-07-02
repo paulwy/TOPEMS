@@ -515,13 +515,13 @@ export const DocumentManager: React.FC<DocumentManagerProps> = ({ className }) =
                 <Card>
                   <CardContent sx={{ p: 4, textAlign: 'center' }}>
                     <FileText
-                  sx={{
-                    width: 48,
-                    height: 48,
-                    color: 'action.disabled',
-                    margin: '0 auto 16px',
-                  }}
-                />
+                      sx={{
+                        width: 48,
+                        height: 48,
+                        color: 'action.disabled',
+                        margin: '0 auto 16px',
+                      }}
+                    />
                     <Typography
                       variant='h6'
                       sx={{ mb: 1 }}

@@ -1,11 +1,9 @@
 //! Performance submodule - Workflow performance statistics handlers
 
-use axum::{extract::State, Json};
 use crate::AppState;
+use axum::{extract::State, Json};
 
-pub async fn get_performance(
-    State(_state): State<AppState>,
-) -> Json<serde_json::Value> {
+pub async fn get_performance(State(_state): State<AppState>) -> Json<serde_json::Value> {
     tracing::info!("Flow performance get_performance called");
     Json(serde_json::json!({
         "success": true,
@@ -14,9 +12,7 @@ pub async fn get_performance(
     }))
 }
 
-pub async fn reset_performance(
-    State(_state): State<AppState>,
-) -> Json<serde_json::Value> {
+pub async fn reset_performance(State(_state): State<AppState>) -> Json<serde_json::Value> {
     tracing::info!("Flow performance reset_performance called");
     Json(serde_json::json!({
         "success": true,

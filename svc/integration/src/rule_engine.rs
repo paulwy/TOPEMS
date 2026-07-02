@@ -126,10 +126,18 @@ impl RuleEvaluator {
             ConditionOperator::IsNotNull => field_value.is_some(),
             ConditionOperator::Eq => Self::compare_eq(&field_value, &condition.value),
             ConditionOperator::Ne => !Self::compare_eq(&field_value, &condition.value),
-            ConditionOperator::Gt => Self::compare_num(&field_value, &condition.value, |a, b| a > b),
-            ConditionOperator::Lt => Self::compare_num(&field_value, &condition.value, |a, b| a < b),
-            ConditionOperator::Gte => Self::compare_num(&field_value, &condition.value, |a, b| a >= b),
-            ConditionOperator::Lte => Self::compare_num(&field_value, &condition.value, |a, b| a <= b),
+            ConditionOperator::Gt => {
+                Self::compare_num(&field_value, &condition.value, |a, b| a > b)
+            }
+            ConditionOperator::Lt => {
+                Self::compare_num(&field_value, &condition.value, |a, b| a < b)
+            }
+            ConditionOperator::Gte => {
+                Self::compare_num(&field_value, &condition.value, |a, b| a >= b)
+            }
+            ConditionOperator::Lte => {
+                Self::compare_num(&field_value, &condition.value, |a, b| a <= b)
+            }
             ConditionOperator::Contains => Self::contains(&field_value, &condition.value),
             ConditionOperator::NotContains => !Self::contains(&field_value, &condition.value),
             ConditionOperator::StartsWith => Self::starts_with(&field_value, &condition.value),
@@ -308,7 +316,10 @@ impl FieldMapper {
         // 检查源值是否存在且非空
         if source_value.is_none() || source_value.as_ref().map(|v| v.is_null()).unwrap_or(true) {
             // 返回默认值
-            return Ok(mapping.default_value.clone().unwrap_or(serde_json::Value::Null));
+            return Ok(mapping
+                .default_value
+                .clone()
+                .unwrap_or(serde_json::Value::Null));
         }
 
         let source_val = source_value.unwrap();
@@ -360,7 +371,12 @@ impl FieldMapper {
         let last_idx = parts.len() - 1;
 
         // 使用索引来操作，避免借用问题
-        fn set_at_path(data: &mut serde_json::Value, parts: &[&str], last_idx: usize, value: serde_json::Value) {
+        fn set_at_path(
+            data: &mut serde_json::Value,
+            parts: &[&str],
+            last_idx: usize,
+            value: serde_json::Value,
+        ) {
             if parts.is_empty() {
                 return;
             }
@@ -473,17 +489,20 @@ impl FieldMapper {
                 .to_string();
 
             let default_value = obj.get("default_value").cloned();
-            let transform = obj.get("transform").and_then(|v| v.as_str()).map(String::from);
-            
+            let transform = obj
+                .get("transform")
+                .and_then(|v| v.as_str())
+                .map(String::from);
+
             // 解析值映射表
-            let value_map = obj.get("value_map").and_then(|v| {
-                serde_json::from_value::<ValueMap>(v.clone()).ok()
-            });
-            
+            let value_map = obj
+                .get("value_map")
+                .and_then(|v| serde_json::from_value::<ValueMap>(v.clone()).ok());
+
             // 解析条件映射列表
-            let conditional_mappings = obj.get("conditional_mappings").and_then(|v| {
-                serde_json::from_value::<Vec<ConditionalMapping>>(v.clone()).ok()
-            });
+            let conditional_mappings = obj
+                .get("conditional_mappings")
+                .and_then(|v| serde_json::from_value::<Vec<ConditionalMapping>>(v.clone()).ok());
 
             result.push(FieldMapping {
                 source_field,
@@ -593,11 +612,20 @@ impl ConversionEngine {
 /// 规则仓库 trait - 用于解耦数据库操作
 pub trait RuleRepository: Send + Sync {
     /// 获取规则
-    fn get_rule_by_code(&self, code: &str) -> impl std::future::Future<Output = Result<Option<ConversionRule>, String>> + Send;
+    fn get_rule_by_code(
+        &self,
+        code: &str,
+    ) -> impl std::future::Future<Output = Result<Option<ConversionRule>, String>> + Send;
     /// 保存执行记录
-    fn save_execution(&self, execution: &ConversionExecution) -> impl std::future::Future<Output = Result<(), String>> + Send;
+    fn save_execution(
+        &self,
+        execution: &ConversionExecution,
+    ) -> impl std::future::Future<Output = Result<(), String>> + Send;
     /// 更新执行记录
-    fn update_execution(&self, execution: &ConversionExecution) -> impl std::future::Future<Output = Result<(), String>> + Send;
+    fn update_execution(
+        &self,
+        execution: &ConversionExecution,
+    ) -> impl std::future::Future<Output = Result<(), String>> + Send;
 }
 
 #[cfg(test)]
@@ -606,12 +634,30 @@ mod tests {
 
     #[test]
     fn test_condition_operator_parsing() {
-        assert_eq!(ConditionOperator::from_str("eq"), Some(ConditionOperator::Eq));
-        assert_eq!(ConditionOperator::from_str("="), Some(ConditionOperator::Eq));
-        assert_eq!(ConditionOperator::from_str("=="), Some(ConditionOperator::Eq));
-        assert_eq!(ConditionOperator::from_str("gt"), Some(ConditionOperator::Gt));
-        assert_eq!(ConditionOperator::from_str(">"), Some(ConditionOperator::Gt));
-        assert_eq!(ConditionOperator::from_str("contains"), Some(ConditionOperator::Contains));
+        assert_eq!(
+            ConditionOperator::from_str("eq"),
+            Some(ConditionOperator::Eq)
+        );
+        assert_eq!(
+            ConditionOperator::from_str("="),
+            Some(ConditionOperator::Eq)
+        );
+        assert_eq!(
+            ConditionOperator::from_str("=="),
+            Some(ConditionOperator::Eq)
+        );
+        assert_eq!(
+            ConditionOperator::from_str("gt"),
+            Some(ConditionOperator::Gt)
+        );
+        assert_eq!(
+            ConditionOperator::from_str(">"),
+            Some(ConditionOperator::Gt)
+        );
+        assert_eq!(
+            ConditionOperator::from_str("contains"),
+            Some(ConditionOperator::Contains)
+        );
         assert_eq!(ConditionOperator::from_str("invalid"), None);
     }
 
@@ -803,25 +849,23 @@ mod tests {
 
     #[test]
     fn test_field_mapping_with_value_map() {
-        let mappings = vec![
-            FieldMapping {
-                source_field: "status".to_string(),
-                target_field: "order_status".to_string(),
-                default_value: None,
-                transform: None,
-                value_map: {
-                    let mut map = std::collections::HashMap::new();
-                    map.insert("pending".to_string(), serde_json::json!("待处理"));
-                    map.insert("confirmed".to_string(), serde_json::json!("已确认"));
-                    map.insert("shipped".to_string(), serde_json::json!("已发货"));
-                    Some(ValueMap {
-                        mappings: map,
-                        default_value: Some(serde_json::json!("未知状态")),
-                    })
-                },
-                conditional_mappings: None,
+        let mappings = vec![FieldMapping {
+            source_field: "status".to_string(),
+            target_field: "order_status".to_string(),
+            default_value: None,
+            transform: None,
+            value_map: {
+                let mut map = std::collections::HashMap::new();
+                map.insert("pending".to_string(), serde_json::json!("待处理"));
+                map.insert("confirmed".to_string(), serde_json::json!("已确认"));
+                map.insert("shipped".to_string(), serde_json::json!("已发货"));
+                Some(ValueMap {
+                    mappings: map,
+                    default_value: Some(serde_json::json!("未知状态")),
+                })
             },
-        ];
+            conditional_mappings: None,
+        }];
 
         let source = serde_json::json!({"status": "confirmed"});
         let result = FieldMapper::apply_mappings(&source, &mappings).unwrap();
@@ -834,41 +878,39 @@ mod tests {
 
     #[test]
     fn test_field_mapping_with_conditional_mappings() {
-        let mappings = vec![
-            FieldMapping {
-                source_field: "amount".to_string(),
-                target_field: "category".to_string(),
-                default_value: None,
-                transform: None,
-                value_map: None,
-                conditional_mappings: Some(vec![
-                    ConditionalMapping {
-                        condition: serde_json::json!({
-                            "field": "amount",
-                            "operator": "lt",
-                            "value": 1000
-                        }),
-                        result: serde_json::json!("small"),
-                    },
-                    ConditionalMapping {
-                        condition: serde_json::json!({
-                            "field": "amount",
-                            "operator": "gte",
-                            "value": 10000
-                        }),
-                        result: serde_json::json!("large"),
-                    },
-                    ConditionalMapping {
-                        condition: serde_json::json!({
-                            "field": "amount",
-                            "operator": "gte",
-                            "value": 1000
-                        }),
-                        result: serde_json::json!("medium"),
-                    },
-                ]),
-            },
-        ];
+        let mappings = vec![FieldMapping {
+            source_field: "amount".to_string(),
+            target_field: "category".to_string(),
+            default_value: None,
+            transform: None,
+            value_map: None,
+            conditional_mappings: Some(vec![
+                ConditionalMapping {
+                    condition: serde_json::json!({
+                        "field": "amount",
+                        "operator": "lt",
+                        "value": 1000
+                    }),
+                    result: serde_json::json!("small"),
+                },
+                ConditionalMapping {
+                    condition: serde_json::json!({
+                        "field": "amount",
+                        "operator": "gte",
+                        "value": 10000
+                    }),
+                    result: serde_json::json!("large"),
+                },
+                ConditionalMapping {
+                    condition: serde_json::json!({
+                        "field": "amount",
+                        "operator": "gte",
+                        "value": 1000
+                    }),
+                    result: serde_json::json!("medium"),
+                },
+            ]),
+        }];
 
         let source1 = serde_json::json!({"amount": 500});
         let result1 = FieldMapper::apply_mappings(&source1, &mappings).unwrap();
@@ -885,25 +927,21 @@ mod tests {
 
     #[test]
     fn test_field_mapping_conditional_with_nested_field() {
-        let mappings = vec![
-            FieldMapping {
-                source_field: "order.total".to_string(),
-                target_field: "order_level".to_string(),
-                default_value: Some(serde_json::json!("normal")),
-                transform: None,
-                value_map: None,
-                conditional_mappings: Some(vec![
-                    ConditionalMapping {
-                        condition: serde_json::json!({
-                            "field": "order.total",
-                            "operator": "gte",
-                            "value": 10000
-                        }),
-                        result: serde_json::json!("vip"),
-                    },
-                ]),
-            },
-        ];
+        let mappings = vec![FieldMapping {
+            source_field: "order.total".to_string(),
+            target_field: "order_level".to_string(),
+            default_value: Some(serde_json::json!("normal")),
+            transform: None,
+            value_map: None,
+            conditional_mappings: Some(vec![ConditionalMapping {
+                condition: serde_json::json!({
+                    "field": "order.total",
+                    "operator": "gte",
+                    "value": 10000
+                }),
+                result: serde_json::json!("vip"),
+            }]),
+        }];
 
         let source = serde_json::json!({
             "order": {

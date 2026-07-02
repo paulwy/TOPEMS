@@ -172,11 +172,10 @@ pub async fn get_pending_sync_tasks(db: &PgPool) -> Result<Vec<SyncTask>, Error>
 }
 
 pub async fn get_sync_statistics(db: &PgPool) -> Result<SyncStatistics, Error> {
-    let total_tasks = sqlx::query_scalar::<_, i64>(
-        "SELECT COUNT(*) FROM unified_core.inter_module_sync",
-    )
-    .fetch_one(db)
-    .await?;
+    let total_tasks =
+        sqlx::query_scalar::<_, i64>("SELECT COUNT(*) FROM unified_core.inter_module_sync")
+            .fetch_one(db)
+            .await?;
 
     let pending_tasks = sqlx::query_scalar::<_, i64>(
         "SELECT COUNT(*) FROM unified_core.inter_module_sync WHERE status = 'pending'",
@@ -287,7 +286,10 @@ pub async fn retry_failed_tasks(
     Ok(result.rows_affected() as i64)
 }
 
-pub async fn trigger_scm_to_wms_sync(db: &PgPool, purchase_order_id: Uuid) -> Result<SyncTask, Error> {
+pub async fn trigger_scm_to_wms_sync(
+    db: &PgPool,
+    purchase_order_id: Uuid,
+) -> Result<SyncTask, Error> {
     create_sync_task(
         db,
         Uuid::parse_str("00000000-0000-0000-0000-000000000001").unwrap(),
@@ -301,7 +303,10 @@ pub async fn trigger_scm_to_wms_sync(db: &PgPool, purchase_order_id: Uuid) -> Re
     .await
 }
 
-pub async fn trigger_wms_to_crm_sync(db: &PgPool, outbound_order_id: Uuid) -> Result<SyncTask, Error> {
+pub async fn trigger_wms_to_crm_sync(
+    db: &PgPool,
+    outbound_order_id: Uuid,
+) -> Result<SyncTask, Error> {
     create_sync_task(
         db,
         Uuid::parse_str("00000000-0000-0000-0000-000000000001").unwrap(),

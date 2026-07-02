@@ -7,12 +7,12 @@ pub use config::*;
 pub use middleware::*;
 
 use opentelemetry::{global, trace::TracerProvider as _, KeyValue};
+use opentelemetry_otlp::WithExportConfig;
 use opentelemetry_sdk::{
     propagation::TraceContextPropagator,
     trace::{Config, Sampler, TracerProvider},
     Resource,
 };
-use opentelemetry_otlp::WithExportConfig;
 use tracing_subscriber::{layer::SubscriberExt, EnvFilter, Registry};
 
 use crate::logging::{init_logging, LogFormat};
@@ -26,7 +26,9 @@ pub fn init_telemetry(service_name: &str) -> TelemetryGuard {
 
     if !otel_enabled {
         init_logging(service_name);
-        return TelemetryGuard { otel_enabled: false };
+        return TelemetryGuard {
+            otel_enabled: false,
+        };
     }
 
     let config = TelemetryConfig::from_env(service_name);
@@ -122,32 +124,25 @@ fn build_resource(config: &TelemetryConfig) -> Resource {
 
 fn setup_subscriber<L>(env_filter: EnvFilter, layer: L, log_format: LogFormat)
 where
-    L: tracing_subscriber::layer::Layer<
-            tracing_subscriber::layer::Layered<EnvFilter, Registry>,
-        > + Send
+    L: tracing_subscriber::layer::Layer<tracing_subscriber::layer::Layered<EnvFilter, Registry>>
+        + Send
         + Sync
         + 'static,
 {
     match log_format {
         LogFormat::Json => {
-            let subscriber = Registry::default()
-                .with(env_filter)
-                .with(layer)
-                .with(
-                    tracing_subscriber::fmt::layer()
-                        .event_format(crate::logging::JsonEventFormatter::new()),
-                );
+            let subscriber = Registry::default().with(env_filter).with(layer).with(
+                tracing_subscriber::fmt::layer()
+                    .event_format(crate::logging::JsonEventFormatter::new()),
+            );
             tracing::subscriber::set_global_default(subscriber)
                 .expect("Failed to set global subscriber");
         }
         LogFormat::File => {
-            let subscriber = Registry::default()
-                .with(env_filter)
-                .with(layer)
-                .with(
-                    tracing_subscriber::fmt::layer()
-                        .event_format(crate::logging::JsonEventFormatter::new()),
-                );
+            let subscriber = Registry::default().with(env_filter).with(layer).with(
+                tracing_subscriber::fmt::layer()
+                    .event_format(crate::logging::JsonEventFormatter::new()),
+            );
             tracing::subscriber::set_global_default(subscriber)
                 .expect("Failed to set global subscriber");
         }

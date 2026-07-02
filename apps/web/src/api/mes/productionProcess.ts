@@ -23,29 +23,29 @@ export const productionProcessApi = {
     if (params?.status) searchParams.set('status', params.status);
 
     const queryString = searchParams.toString();
-    return apiClient.mes.get(`/api/mes/processes${queryString ? `?${queryString}` : ''}`);
+    return apiClient.mes.get(`/processes${queryString ? `?${queryString}` : ''}`);
   },
 
   async get(id: string): Promise<ApiResponse<ProductionProcess>> {
-    return apiClient.mes.get(`/api/mes/processes/${id}`);
+    return apiClient.mes.get(`/processes/${id}`);
   },
 
   async create(data: CreateProductionProcessRequest): Promise<ApiResponse<ProductionProcess>> {
-    return apiClient.mes.post('/api/mes/processes', data);
+    return apiClient.mes.post('/processes', data);
   },
 
   async update(
     id: string,
     data: UpdateProductionProcessRequest
   ): Promise<ApiResponse<ProductionProcess>> {
-    return apiClient.mes.put(`/api/mes/processes/${id}`, data);
+    return apiClient.mes.put(`/processes/${id}`, data);
   },
 
   async delete(id: string): Promise<ApiResponse<string>> {
-    return apiClient.mes.delete(`/api/mes/processes/${id}`);
+    return apiClient.mes.delete(`/processes/${id}`);
   },
 
   async deactivate(id: string): Promise<ApiResponse<ProductionProcess>> {
-    return apiClient.mes.put(`/api/mes/processes/${id}/deactivate`);
+    return apiClient.mes.put(`/processes/${id}/deactivate`);
   },
 };

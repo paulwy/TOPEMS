@@ -669,7 +669,7 @@ const MobileScanPage: React.FC = () => {
                   mb: 2,
                 }}
               >
-                <History style={{ width: 32, height: 32, color: 'text.secondary' }} />
+                <History style={{ width: 32, height: 32, color: theme.palette.text.secondary }} />
               </Box>
               <Typography
                 variant='subtitle1'
@@ -716,7 +716,7 @@ const MobileScanPage: React.FC = () => {
                     }
                     badge={
                       <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5 }}>
-                        <Clock style={{ width: 12, height: 12, color: 'text.secondary' }} />
+                        <Clock style={{ width: 12, height: 12, color: theme.palette.text.secondary }} />
                         <Typography
                           variant='caption'
                           color='text.secondary'

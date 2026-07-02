@@ -1,5 +1,5 @@
 import React from 'react';
-import { Box, Typography, Button } from '@mui/material';
+import {Box, Typography, Button, useTheme} from '@mui/material';
 import { Building2, ChevronRight } from 'lucide-react';
 import { type Department } from '@/api/hrm';
 import type { TreeNode } from '../common/TreeView';
@@ -18,6 +18,7 @@ export const DepartmentSelector: React.FC<DepartmentSelectorProps> = ({
   onSelect,
   employees = [],
 }) => {
+  const theme = useTheme();
   const treeData = React.useMemo(() => {
     const deptMap = new Map<string, TreeNode>();
     const rootNodes: TreeNode[] = [];
@@ -74,7 +75,7 @@ export const DepartmentSelector: React.FC<DepartmentSelectorProps> = ({
             gap: 2,
           }}
         >
-          <Building2 style={{ width: 20, height: 20, color: 'success.main' }} />
+          <Building2 style={{ width: 20, height: 20, color: theme.palette.success.main }} />
           部门树
         </Typography>
         <Typography sx={{ fontSize: '0.875rem', color: 'grey.600' }}>
@@ -87,7 +88,7 @@ export const DepartmentSelector: React.FC<DepartmentSelectorProps> = ({
             style={{
               width: 48,
               height: 48,
-              color: 'text.disabled',
+              color: theme.palette.text.disabled,
               margin: '0 auto 12px',
             }}
           />
@@ -134,7 +135,7 @@ export const DepartmentBreadcrumb: React.FC<DepartmentBreadcrumbProps> = ({ item
               style={{
                 width: 16,
                 height: 16,
-                color: '#94a3b8',
+                color: 'grey.400',
                 margin: '0 4px',
               }}
             />
@@ -146,7 +147,7 @@ export const DepartmentBreadcrumb: React.FC<DepartmentBreadcrumbProps> = ({ item
                 fontSize: '0.875rem',
                 color: 'grey.600',
                 transition: 'color',
-                '&:hover': { color: '#334155' },
+                '&:hover': { color: 'grey.700' },
               }}
             >
               {item.label}

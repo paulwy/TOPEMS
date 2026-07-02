@@ -269,7 +269,7 @@ export const createCustomTheme = (): Theme => {
           },
           indicator: {
             height: 3,
-            borderRadius: 2,
+            borderRadius: 3,
           },
         },
       },
@@ -637,11 +637,11 @@ export const createCustomTheme = (): Theme => {
           },
           track: {
             height: 4,
-            borderRadius: 2,
+            borderRadius: 3,
           },
           rail: {
             height: 4,
-            borderRadius: 2,
+            borderRadius: 3,
             opacity: 0.3,
           },
         },

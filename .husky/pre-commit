@@ -130,14 +130,19 @@ echo "🔗 Checking API path duplicates..."
 HAS_RS_FILES=$(echo "$STAGED_FILES" | grep -E "^svc/.*\.rs$" | head -1)
 
 if [ -n "$HAS_RS_FILES" ]; then
-  python3 scripts/check_api_duplicates_ci.py --ci
-  API_EXIT=$?
-  
-  if [ $API_EXIT -ne 0 ]; then
-    echo "❌ API path check failed"
-    ERRORS=$((ERRORS + 1))
+  # 检查脚本是否存在
+  if [ -f "scripts/check_api_duplicates_ci.py" ]; then
+    python3 scripts/check_api_duplicates_ci.py --ci
+    API_EXIT=$?
+
+    if [ $API_EXIT -ne 0 ]; then
+      echo "❌ API path check failed"
+      ERRORS=$((ERRORS + 1))
+    else
+      echo "✅ API path check passed"
+    fi
   else
-    echo "✅ API path check passed"
+    echo "⏭️  Skipped (check_api_duplicates_ci.py not found)"
   fi
 else
   echo "⏭️  Skipped (no Rust backend files staged)"

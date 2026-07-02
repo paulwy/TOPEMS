@@ -9,46 +9,46 @@ import type {
 
 export const syncApi = {
   syncAccounts: (data: AccountSyncRequest) =>
-    apiClient.integration.post('/api/integration/external-erp/sync/accounts', data),
+    apiClient.integration.post('/external-erp/sync/accounts', data),
 
   syncCustomers: (data: CustomerSyncRequest) =>
-    apiClient.integration.post('/api/integration/external-erp/sync/customers', data),
+    apiClient.integration.post('/external-erp/sync/customers', data),
 
   syncSuppliers: (data: SupplierSyncRequest) =>
-    apiClient.integration.post('/api/integration/external-erp/sync/suppliers', data),
+    apiClient.integration.post('/external-erp/sync/suppliers', data),
 
   syncProjects: (data: {
     config_id: string;
     project_ids?: string[];
     company_id?: string;
     force_sync?: boolean;
-  }) => apiClient.integration.post('/api/integration/external-erp/sync/projects', data),
+  }) => apiClient.integration.post('/external-erp/sync/projects', data),
 
   syncDepartments: (data: {
     config_id: string;
     department_ids?: string[];
     company_id?: string;
     force_sync?: boolean;
-  }) => apiClient.integration.post('/api/integration/external-erp/sync/departments', data),
+  }) => apiClient.integration.post('/external-erp/sync/departments', data),
 
   syncEmployees: (data: {
     config_id: string;
     employee_ids?: string[];
     company_id?: string;
     force_sync?: boolean;
-  }) => apiClient.integration.post('/api/integration/external-erp/sync/employees', data),
+  }) => apiClient.integration.post('/external-erp/sync/employees', data),
 
   syncVouchers: (data: VoucherSyncRequest) =>
-    apiClient.integration.post('/api/integration/external-erp/sync/vouchers', data),
+    apiClient.integration.post('/external-erp/sync/vouchers', data),
 
   syncInvoices: (data: InvoiceSyncRequest) =>
-    apiClient.integration.post('/api/integration/external-erp/sync/invoices', data),
+    apiClient.integration.post('/external-erp/sync/invoices', data),
 
   fullSync: (data: { config_id: string; company_id?: string; sync_modules?: string[] }) =>
-    apiClient.integration.post('/api/integration/external-erp/sync/full', data),
+    apiClient.integration.post('/external-erp/sync/full', data),
 
   cancelSync: (logId: string) =>
-    apiClient.integration.post(`/api/integration/external-erp/sync/${logId}/cancel`, {}),
+    apiClient.integration.post(`/external-erp/sync/${logId}/cancel`, {}),
 };
 
 export default syncApi;

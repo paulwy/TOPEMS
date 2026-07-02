@@ -11,138 +11,133 @@ import type {
 import { createCrudApi } from './utils';
 
 export const formDefinitionApi = {
-  ...createCrudApi<FormDefinition>('/api/flow/form-definitions'),
+  ...createCrudApi<FormDefinition>('/form-definitions'),
 
   listFormDefinitions: (params?: ListParams) =>
-    createCrudApi<FormDefinition>('/api/flow/form-definitions').list(params),
+    createCrudApi<FormDefinition>('/form-definitions').list(params),
 
-  getFormDefinition: (id: string) =>
-    createCrudApi<FormDefinition>('/api/flow/form-definitions').get(id),
+  getFormDefinition: (id: string) => createCrudApi<FormDefinition>('/form-definitions').get(id),
 
   createFormDefinition: (data: CreateFormDefinitionRequest) =>
-    createCrudApi<FormDefinition>('/api/flow/form-definitions').create(data),
+    createCrudApi<FormDefinition>('/form-definitions').create(data),
 
   updateFormDefinition: (id: string, data: UpdateFormDefinitionRequest) =>
-    createCrudApi<FormDefinition>('/api/flow/form-definitions').update(id, data),
+    createCrudApi<FormDefinition>('/form-definitions').update(id, data),
 
   deleteFormDefinition: (id: string) =>
-    createCrudApi<FormDefinition>('/api/flow/form-definitions').delete(id),
+    createCrudApi<FormDefinition>('/form-definitions').delete(id),
 
   activate: (id: string) => {
-    return apiClient.workflow.post(`/api/flow/form-definitions/${id}/activate`);
+    return apiClient.workflow.post(`/form-definitions/${id}/activate`);
   },
 
   deactivate: (id: string) => {
-    return apiClient.workflow.post(`/api/flow/form-definitions/${id}/deactivate`);
+    return apiClient.workflow.post(`/form-definitions/${id}/deactivate`);
   },
 
   publish: (id: string) => {
-    return apiClient.workflow.post(`/api/flow/form-definitions/${id}/publish`);
+    return apiClient.workflow.post(`/form-definitions/${id}/publish`);
   },
 
   copy: (id: string, data?: { name?: string }) => {
-    return apiClient.workflow.post(`/api/flow/form-definitions/${id}/copy`, data);
+    return apiClient.workflow.post(`/form-definitions/${id}/copy`, data);
   },
 
   getByWorkflow: (workflowId: string) => {
-    return apiClient.workflow.get(`/api/flow/form-definitions/workflow/${workflowId}`);
+    return apiClient.workflow.get(`/form-definitions/workflow/${workflowId}`);
   },
 
   listCategories: () => {
-    return apiClient.workflow.get('/api/flow/form-definitions/categories');
+    return apiClient.workflow.get('/form-definitions/categories');
   },
 
   getVersion: (formId: string, versionId: string) => {
-    return apiClient.workflow.get(`/api/flow/form-definitions/${formId}/versions/${versionId}`);
+    return apiClient.workflow.get(`/form-definitions/${formId}/versions/${versionId}`);
   },
 
   listVersions: (formId: string, params?: ListParams) => {
-    return apiClient.workflow.get(`/api/flow/form-definitions/${formId}/versions`, { params });
+    return apiClient.workflow.get(`/form-definitions/${formId}/versions`, { params });
   },
 
   rollbackVersion: (formId: string, versionId: string) => {
-    return apiClient.workflow.post(`/api/flow/form-definitions/${formId}/versions/${versionId}/rollback`);
+    return apiClient.workflow.post(`/form-definitions/${formId}/versions/${versionId}/rollback`);
   },
 
   preview: (id: string, data?: Record<string, unknown>) => {
-    return apiClient.workflow.post(`/api/flow/form-definitions/${id}/preview`, { data });
+    return apiClient.workflow.post(`/form-definitions/${id}/preview`, { data });
   },
 
   validateForm: (id: string, data: Record<string, unknown>) => {
-    return apiClient.workflow.post(`/api/flow/form-definitions/${id}/validate`, { data });
+    return apiClient.workflow.post(`/form-definitions/${id}/validate`, { data });
   },
 
   exportForm: (id: string, format: 'json' | 'xml' = 'json') => {
-    return apiClient.workflow.get(`/api/flow/form-definitions/${id}/export`, {
+    return apiClient.workflow.get(`/form-definitions/${id}/export`, {
       params: { format },
     });
   },
 
   importForm: (data: { file: File; name?: string; category?: string }) => {
-    return apiClient.workflow.post('/api/flow/form-definitions/import', data);
+    return apiClient.workflow.post('/form-definitions/import', data);
   },
 };
 
 export const formInstanceApi = {
-  ...createCrudApi<FormInstance>('/api/flow/form-instances'),
+  ...createCrudApi<FormInstance>('/form-instances'),
 
   listFormInstances: (params?: ListParams) =>
-    createCrudApi<FormInstance>('/api/flow/form-instances').list(params),
+    createCrudApi<FormInstance>('/form-instances').list(params),
 
-  getFormInstance: (id: string) =>
-    createCrudApi<FormInstance>('/api/flow/form-instances').get(id),
+  getFormInstance: (id: string) => createCrudApi<FormInstance>('/form-instances').get(id),
 
   createFormInstance: (data: CreateFormInstanceRequest) =>
-    createCrudApi<FormInstance>('/api/flow/form-instances').create(data),
+    createCrudApi<FormInstance>('/form-instances').create(data),
 
   updateFormInstance: (id: string, data: UpdateFormInstanceRequest) =>
-    createCrudApi<FormInstance>('/api/flow/form-instances').update(id, data),
+    createCrudApi<FormInstance>('/form-instances').update(id, data),
 
-  deleteFormInstance: (id: string) =>
-    createCrudApi<FormInstance>('/api/flow/form-instances').delete(id),
+  deleteFormInstance: (id: string) => createCrudApi<FormInstance>('/form-instances').delete(id),
 
   getByWorkflowInstance: (workflowInstanceId: string) => {
-    return apiClient.workflow.get(
-      `/api/flow/form-instances/workflow-instance/${workflowInstanceId}`
-    );
+    return apiClient.workflow.get(`/form-instances/workflow-instance/${workflowInstanceId}`);
   },
 
   getByFormDefinition: (formDefinitionId: string, params?: ListParams) => {
-    return apiClient.workflow.get(`/api/flow/form-instances/form-definition/${formDefinitionId}`, {
+    return apiClient.workflow.get(`/form-instances/form-definition/${formDefinitionId}`, {
       params,
     });
   },
 
   submit: (id: string, data?: Record<string, unknown>) => {
-    return apiClient.workflow.post(`/api/flow/form-instances/${id}/submit`, data);
+    return apiClient.workflow.post(`/form-instances/${id}/submit`, data);
   },
 
   saveDraft: (id: string, data: Record<string, unknown>) => {
-    return apiClient.workflow.post(`/api/flow/form-instances/${id}/draft`, { data });
+    return apiClient.workflow.post(`/form-instances/${id}/draft`, { data });
   },
 
   getFormData: (id: string) => {
-    return apiClient.workflow.get(`/api/flow/form-instances/${id}/data`);
+    return apiClient.workflow.get(`/form-instances/${id}/data`);
   },
 
   updateFormData: (id: string, data: Record<string, unknown>) => {
-    return apiClient.workflow.put(`/api/flow/form-instances/${id}/data`, { data });
+    return apiClient.workflow.put(`/form-instances/${id}/data`, { data });
   },
 
   getHistory: (id: string, params?: ListParams) => {
-    return apiClient.workflow.get(`/api/flow/form-instances/${id}/history`, { params });
+    return apiClient.workflow.get(`/form-instances/${id}/history`, { params });
   },
 
   getMyForms: (params?: ListParams) => {
-    return apiClient.workflow.get('/api/flow/form-instances/my', { params });
+    return apiClient.workflow.get('/form-instances/my', { params });
   },
 
   getMyDrafts: (params?: ListParams) => {
-    return apiClient.workflow.get('/api/flow/form-instances/my/drafts', { params });
+    return apiClient.workflow.get('/form-instances/my/drafts', { params });
   },
 
   exportInstance: (id: string, format: 'json' | 'pdf' = 'json') => {
-    return apiClient.workflow.get(`/api/flow/form-instances/${id}/export`, {
+    return apiClient.workflow.get(`/form-instances/${id}/export`, {
       params: { format },
     });
   },

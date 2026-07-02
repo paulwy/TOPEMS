@@ -25,11 +25,11 @@ export const ContactDetailModal: React.FC<ContactDetailModalProps> = ({ contact,
   const getColor = () => {
     switch (contact.contact_type) {
       case 'EMPLOYEE':
-        return { bg: '#dbeafe', color: 'primary.dark' };
+        return { bg: 'primary.100', color: 'primary.dark' };
       case 'DEPARTMENT':
         return { bg: 'success.lighter', color: 'success.dark' };
       case 'COMPANY':
-        return { bg: '#f3e8ff', color: '#9333ea' };
+        return { bg: 'secondary.100', color: '#9333ea' };
       default:
         return { bg: 'grey.100', color: 'text.secondary' };
     }
@@ -103,7 +103,9 @@ export const ContactDetailModal: React.FC<ContactDetailModalProps> = ({ contact,
                 >
                   {contact.name}
                 </h2>
-                <p style={{ fontSize: 14, color: 'var(--mui-palette-text-secondary)', margin: 0 }}>{getTypeLabel()}</p>
+                <p style={{ fontSize: 14, color: 'var(--mui-palette-text-secondary)', margin: 0 }}>
+                  {getTypeLabel()}
+                </p>
               </div>
             </div>
             <button
@@ -157,8 +159,12 @@ export const ContactDetailModal: React.FC<ContactDetailModalProps> = ({ contact,
                       justifyContent: 'space-between',
                     }}
                   >
-                    <span style={{ fontSize: 14, color: 'var(--mui-palette-text-secondary)' }}>编号</span>
-                    <span style={{ fontSize: 14, color: 'var(--mui-palette-text-primary)' }}>{contact.code}</span>
+                    <span style={{ fontSize: 14, color: 'var(--mui-palette-text-secondary)' }}>
+                      编号
+                    </span>
+                    <span style={{ fontSize: 14, color: 'var(--mui-palette-text-primary)' }}>
+                      {contact.code}
+                    </span>
                   </div>
                 )}
                 {contact.position && (
@@ -169,8 +175,12 @@ export const ContactDetailModal: React.FC<ContactDetailModalProps> = ({ contact,
                       justifyContent: 'space-between',
                     }}
                   >
-                    <span style={{ fontSize: 14, color: 'var(--mui-palette-text-secondary)' }}>职位</span>
-                    <span style={{ fontSize: 14, color: 'var(--mui-palette-text-primary)' }}>{contact.position}</span>
+                    <span style={{ fontSize: 14, color: 'var(--mui-palette-text-secondary)' }}>
+                      职位
+                    </span>
+                    <span style={{ fontSize: 14, color: 'var(--mui-palette-text-primary)' }}>
+                      {contact.position}
+                    </span>
                   </div>
                 )}
                 {contact.department_name && (
@@ -181,7 +191,9 @@ export const ContactDetailModal: React.FC<ContactDetailModalProps> = ({ contact,
                       justifyContent: 'space-between',
                     }}
                   >
-                    <span style={{ fontSize: 14, color: 'var(--mui-palette-text-secondary)' }}>部门</span>
+                    <span style={{ fontSize: 14, color: 'var(--mui-palette-text-secondary)' }}>
+                      部门
+                    </span>
                     <span style={{ fontSize: 14, color: 'var(--mui-palette-text-primary)' }}>
                       {contact.department_name}
                     </span>
@@ -194,7 +206,9 @@ export const ContactDetailModal: React.FC<ContactDetailModalProps> = ({ contact,
                     justifyContent: 'space-between',
                   }}
                 >
-                  <span style={{ fontSize: 14, color: 'var(--mui-palette-text-secondary)' }}>状态</span>
+                  <span style={{ fontSize: 14, color: 'var(--mui-palette-text-secondary)' }}>
+                    状态
+                  </span>
                   <span
                     style={{
                       display: 'inline-flex',
@@ -204,7 +218,7 @@ export const ContactDetailModal: React.FC<ContactDetailModalProps> = ({ contact,
                       fontSize: 12,
                       fontWeight: 500,
                       ...(contact.status === 'active'
-                        ? { backgroundColor: 'success.lighter', color: '#15803d' }
+                        ? { backgroundColor: 'success.lighter', color: 'success.700' }
                         : { backgroundColor: 'error.lighter', color: 'error.darker' }),
                     }}
                   >
@@ -238,7 +252,7 @@ export const ContactDetailModal: React.FC<ContactDetailModalProps> = ({ contact,
               >
                 {contact.email && (
                   <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
-                    <Mail sx={{ width: 20, height: 20, color: '#94a3b8' }} />
+                    <Mail sx={{ width: 20, height: 20, color: 'grey.400' }} />
                     <a
                       href={`mailto:${contact.email}`}
                       style={{
@@ -259,7 +273,7 @@ export const ContactDetailModal: React.FC<ContactDetailModalProps> = ({ contact,
                 )}
                 {contact.phone && (
                   <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
-                    <Phone sx={{ width: 20, height: 20, color: '#94a3b8' }} />
+                    <Phone sx={{ width: 20, height: 20, color: 'grey.400' }} />
                     <a
                       href={`tel:${contact.phone}`}
                       style={{
@@ -302,7 +316,7 @@ export const ContactDetailModal: React.FC<ContactDetailModalProps> = ({ contact,
                   }}
                 >
                   <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
-                    <Calendar sx={{ width: 20, height: 20, color: '#94a3b8' }} />
+                    <Calendar sx={{ width: 20, height: 20, color: 'grey.400' }} />
                     <span style={{ fontSize: 14, color: 'var(--mui-palette-text-primary)' }}>
                       入职时间: {new Date(contact.hire_date).toLocaleDateString()}
                     </span>
@@ -359,7 +373,7 @@ export const ContactDetailModal: React.FC<ContactDetailModalProps> = ({ contact,
               style={{
                 padding: '8px 16px',
                 backgroundColor: 'grey.100',
-                color: '#334155',
+                color: 'grey.700',
                 borderRadius: 8,
                 border: 'none',
                 cursor: 'pointer',

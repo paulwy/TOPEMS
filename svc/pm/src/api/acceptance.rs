@@ -75,11 +75,12 @@ async fn get_plan(
     State(pool): State<PgPool>,
     Path(id): Path<Uuid>,
 ) -> Json<ApiResponse<AcceptancePlan>> {
-    let plan =
-        sqlx::query_as::<_, AcceptancePlan>("SELECT * FROM plugin_pm.acceptance_plans WHERE id = $1")
-            .bind(id)
-            .fetch_one(&pool)
-            .await;
+    let plan = sqlx::query_as::<_, AcceptancePlan>(
+        "SELECT * FROM plugin_pm.acceptance_plans WHERE id = $1",
+    )
+    .bind(id)
+    .fetch_one(&pool)
+    .await;
 
     match plan {
         Ok(p) => Json(ApiResponse::success(p, "获取验收计划详情成功")),
@@ -330,11 +331,12 @@ async fn get_record(
     State(pool): State<PgPool>,
     Path(id): Path<Uuid>,
 ) -> Json<ApiResponse<AcceptanceRecord>> {
-    let record =
-        sqlx::query_as::<_, AcceptanceRecord>("SELECT * FROM plugin_pm.acceptance_records WHERE id = $1")
-            .bind(id)
-            .fetch_one(&pool)
-            .await;
+    let record = sqlx::query_as::<_, AcceptanceRecord>(
+        "SELECT * FROM plugin_pm.acceptance_records WHERE id = $1",
+    )
+    .bind(id)
+    .fetch_one(&pool)
+    .await;
 
     match record {
         Ok(r) => Json(ApiResponse::success(r, "获取验收记录详情成功")),
@@ -357,11 +359,12 @@ async fn create_record(
     Path(plan_id): Path<Uuid>,
     Json(req): Json<CreateAcceptanceRecordRequest>,
 ) -> Json<ApiResponse<AcceptanceRecord>> {
-    let plan =
-        sqlx::query_as::<_, AcceptancePlan>("SELECT * FROM plugin_pm.acceptance_plans WHERE id = $1")
-            .bind(plan_id)
-            .fetch_one(&pool)
-            .await;
+    let plan = sqlx::query_as::<_, AcceptancePlan>(
+        "SELECT * FROM plugin_pm.acceptance_plans WHERE id = $1",
+    )
+    .bind(plan_id)
+    .fetch_one(&pool)
+    .await;
 
     let plan = match plan {
         Ok(p) => p,

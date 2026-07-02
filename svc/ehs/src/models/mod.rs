@@ -283,24 +283,32 @@ pub async fn init_database(pool: &PgPool) -> Result<(), sqlx::Error> {
     sqlx::query("CREATE INDEX IF NOT EXISTS idx_qa_ehs_risks_no ON qa_ehs_risks(risk_no)")
         .execute(pool)
         .await?;
-    sqlx::query("CREATE INDEX IF NOT EXISTS idx_qa_ehs_accidents_no ON qa_ehs_accidents(accident_no)")
-        .execute(pool)
-        .await?;
-    sqlx::query("CREATE INDEX IF NOT EXISTS idx_qa_ehs_plans_no ON qa_ehs_inspection_plans(plan_no)")
-        .execute(pool)
-        .await?;
-    sqlx::query("CREATE INDEX IF NOT EXISTS idx_qa_ehs_records_no ON qa_ehs_inspection_records(record_no)")
-        .execute(pool)
-        .await?;
+    sqlx::query(
+        "CREATE INDEX IF NOT EXISTS idx_qa_ehs_accidents_no ON qa_ehs_accidents(accident_no)",
+    )
+    .execute(pool)
+    .await?;
+    sqlx::query(
+        "CREATE INDEX IF NOT EXISTS idx_qa_ehs_plans_no ON qa_ehs_inspection_plans(plan_no)",
+    )
+    .execute(pool)
+    .await?;
+    sqlx::query(
+        "CREATE INDEX IF NOT EXISTS idx_qa_ehs_records_no ON qa_ehs_inspection_records(record_no)",
+    )
+    .execute(pool)
+    .await?;
     sqlx::query("CREATE INDEX IF NOT EXISTS idx_qa_ehs_hazards_no ON qa_ehs_hazards(hazard_no)")
         .execute(pool)
         .await?;
     sqlx::query("CREATE INDEX IF NOT EXISTS idx_qa_ehs_hazards_status ON qa_ehs_hazards(status)")
         .execute(pool)
         .await?;
-    sqlx::query("CREATE INDEX IF NOT EXISTS idx_qa_ehs_accidents_status ON qa_ehs_accidents(status)")
-        .execute(pool)
-        .await?;
+    sqlx::query(
+        "CREATE INDEX IF NOT EXISTS idx_qa_ehs_accidents_status ON qa_ehs_accidents(status)",
+    )
+    .execute(pool)
+    .await?;
 
     sqlx::query(
         r#"
@@ -326,9 +334,11 @@ pub async fn init_database(pool: &PgPool) -> Result<(), sqlx::Error> {
     sqlx::query("CREATE INDEX IF NOT EXISTS idx_qa_ehs_sync_no ON qa_ehs_sync_records(sync_no)")
         .execute(pool)
         .await?;
-    sqlx::query("CREATE INDEX IF NOT EXISTS idx_qa_ehs_sync_type ON qa_ehs_sync_records(sync_type)")
-        .execute(pool)
-        .await?;
+    sqlx::query(
+        "CREATE INDEX IF NOT EXISTS idx_qa_ehs_sync_type ON qa_ehs_sync_records(sync_type)",
+    )
+    .execute(pool)
+    .await?;
     sqlx::query("CREATE INDEX IF NOT EXISTS idx_qa_ehs_sync_status ON qa_ehs_sync_records(status)")
         .execute(pool)
         .await?;
@@ -450,12 +460,16 @@ pub async fn init_database(pool: &PgPool) -> Result<(), sqlx::Error> {
     .execute(pool)
     .await?;
 
-    sqlx::query("CREATE INDEX IF NOT EXISTS idx_qa_ehs_drill_plans_no ON qa_ehs_drill_plans(plan_no)")
-        .execute(pool)
-        .await?;
-    sqlx::query("CREATE INDEX IF NOT EXISTS idx_qa_ehs_drill_plans_status ON qa_ehs_drill_plans(status)")
-        .execute(pool)
-        .await?;
+    sqlx::query(
+        "CREATE INDEX IF NOT EXISTS idx_qa_ehs_drill_plans_no ON qa_ehs_drill_plans(plan_no)",
+    )
+    .execute(pool)
+    .await?;
+    sqlx::query(
+        "CREATE INDEX IF NOT EXISTS idx_qa_ehs_drill_plans_status ON qa_ehs_drill_plans(status)",
+    )
+    .execute(pool)
+    .await?;
 
     sqlx::query(
         r#"
@@ -485,9 +499,11 @@ pub async fn init_database(pool: &PgPool) -> Result<(), sqlx::Error> {
     .execute(pool)
     .await?;
 
-    sqlx::query("CREATE INDEX IF NOT EXISTS idx_qa_ehs_drill_records_no ON qa_ehs_drill_records(record_no)")
-        .execute(pool)
-        .await?;
+    sqlx::query(
+        "CREATE INDEX IF NOT EXISTS idx_qa_ehs_drill_records_no ON qa_ehs_drill_records(record_no)",
+    )
+    .execute(pool)
+    .await?;
     sqlx::query("CREATE INDEX IF NOT EXISTS idx_qa_ehs_drill_records_status ON qa_ehs_drill_records(status)")
         .execute(pool)
         .await?;
@@ -758,9 +774,11 @@ pub async fn init_database(pool: &PgPool) -> Result<(), sqlx::Error> {
     .execute(pool)
     .await?;
 
-    sqlx::query("CREATE INDEX IF NOT EXISTS idx_qa_ehs_disease_cases_no ON qa_ehs_disease_cases(case_no)")
-        .execute(pool)
-        .await?;
+    sqlx::query(
+        "CREATE INDEX IF NOT EXISTS idx_qa_ehs_disease_cases_no ON qa_ehs_disease_cases(case_no)",
+    )
+    .execute(pool)
+    .await?;
     sqlx::query("CREATE INDEX IF NOT EXISTS idx_qa_ehs_disease_cases_status ON qa_ehs_disease_cases(status)")
         .execute(pool)
         .await?;
@@ -904,9 +922,11 @@ pub async fn init_database(pool: &PgPool) -> Result<(), sqlx::Error> {
     .execute(pool)
     .await?;
 
-    sqlx::query("CREATE INDEX IF NOT EXISTS idx_qa_ehs_stock_records_no ON qa_ehs_stock_records(record_no)")
-        .execute(pool)
-        .await?;
+    sqlx::query(
+        "CREATE INDEX IF NOT EXISTS idx_qa_ehs_stock_records_no ON qa_ehs_stock_records(record_no)",
+    )
+    .execute(pool)
+    .await?;
     sqlx::query("CREATE INDEX IF NOT EXISTS idx_qa_ehs_stock_records_type ON qa_ehs_stock_records(record_type)")
         .execute(pool)
         .await?;

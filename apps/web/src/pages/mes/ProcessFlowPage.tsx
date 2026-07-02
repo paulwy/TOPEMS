@@ -11,7 +11,7 @@ import {
   Button,
   Stack,
 } from '@mui/material';
-import { PageContainer } from '@/components/common';
+import { PageContainer } from '@/components/common/PageContainerV2';
 import React, { useState, useEffect, useMemo, useCallback } from 'react';
 import type {
   ProcessFlow,
@@ -303,8 +303,12 @@ const ProcessFlowPage: React.FC = () => {
 
   return (
     <PageContainer
-      title='工艺流程管理'
-      subtitle='管理生产工艺流程,包括流程定义、工序关联、产能分析等'
+      autoTitle
+      autoBreadcrumbs
+      headerProps={{
+        pageIcon: <GitBranch style={{ width: 20, height: 20 }} />,
+        pageGradient: 'linear-gradient(135deg, #10B981 0%, #059669 100%)',
+      }}
     >
       <ListPageTemplate
         title=''
@@ -533,7 +537,7 @@ const ProcessFlowPage: React.FC = () => {
                       mb: 2,
                     }}
                   >
-                    <Box sx={{ p: 2, bgcolor: 'primary.light', borderRadius: 2 }}>
+                    <Box sx={{ p: 2, bgcolor: 'primary.light', borderRadius: 3 }}>
                       <Typography
                         variant='body2'
                         color='white'
@@ -547,7 +551,7 @@ const ProcessFlowPage: React.FC = () => {
                         {capacityAnalysis.theoretical_capacity}
                       </Typography>
                     </Box>
-                    <Box sx={{ p: 2, bgcolor: 'success.main', borderRadius: 2 }}>
+                    <Box sx={{ p: 2, bgcolor: 'success.main', borderRadius: 3 }}>
                       <Typography
                         variant='body2'
                         color='white'
@@ -561,7 +565,7 @@ const ProcessFlowPage: React.FC = () => {
                         {capacityAnalysis.effective_capacity}
                       </Typography>
                     </Box>
-                    <Box sx={{ p: 2, bgcolor: 'warning.main', borderRadius: 2 }}>
+                    <Box sx={{ p: 2, bgcolor: 'warning.main', borderRadius: 3 }}>
                       <Typography
                         variant='body2'
                         color='white'

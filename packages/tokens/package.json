@@ -21,6 +21,9 @@
   "keywords": ["design-tokens", "topems", "theme"],
   "author": "TOPEMS Team",
   "license": "MIT",
+  "peerDependencies": {
+    "@mui/material": "^6.0.0 || ^9.0.0"
+  },
   "devDependencies": {
     "typescript": "^6.0.3"
   }

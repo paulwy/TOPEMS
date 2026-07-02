@@ -1,8 +1,8 @@
-use topems_shared::permission::{
-    get_all_module_permissions, get_module_actions, check_any_module_permission,
-    ModuleCode, ModulePermission, PermissionAction,
-};
 use topems_shared::auth::Claims;
+use topems_shared::permission::{
+    check_any_module_permission, get_all_module_permissions, get_module_actions, ModuleCode,
+    ModulePermission, PermissionAction,
+};
 use uuid::Uuid;
 
 #[test]
@@ -47,9 +47,15 @@ fn test_module_code_from_str_valid() {
     assert_eq!(ModuleCode::from_str("workflow"), Some(ModuleCode::Workflow));
     assert_eq!(ModuleCode::from_str("doc"), Some(ModuleCode::Doc));
     assert_eq!(ModuleCode::from_str("file"), Some(ModuleCode::File));
-    assert_eq!(ModuleCode::from_str("notification"), Some(ModuleCode::Notification));
+    assert_eq!(
+        ModuleCode::from_str("notification"),
+        Some(ModuleCode::Notification)
+    );
     assert_eq!(ModuleCode::from_str("im"), Some(ModuleCode::Im));
-    assert_eq!(ModuleCode::from_str("integration"), Some(ModuleCode::Integration));
+    assert_eq!(
+        ModuleCode::from_str("integration"),
+        Some(ModuleCode::Integration)
+    );
     assert_eq!(ModuleCode::from_str("system"), Some(ModuleCode::System));
 }
 
@@ -71,11 +77,26 @@ fn test_permission_action_as_str() {
 
 #[test]
 fn test_permission_action_from_str_valid() {
-    assert_eq!(PermissionAction::from_str("read"), Some(PermissionAction::Read));
-    assert_eq!(PermissionAction::from_str("write"), Some(PermissionAction::Write));
-    assert_eq!(PermissionAction::from_str("delete"), Some(PermissionAction::Delete));
-    assert_eq!(PermissionAction::from_str("approve"), Some(PermissionAction::Approve));
-    assert_eq!(PermissionAction::from_str("admin"), Some(PermissionAction::Admin));
+    assert_eq!(
+        PermissionAction::from_str("read"),
+        Some(PermissionAction::Read)
+    );
+    assert_eq!(
+        PermissionAction::from_str("write"),
+        Some(PermissionAction::Write)
+    );
+    assert_eq!(
+        PermissionAction::from_str("delete"),
+        Some(PermissionAction::Delete)
+    );
+    assert_eq!(
+        PermissionAction::from_str("approve"),
+        Some(PermissionAction::Approve)
+    );
+    assert_eq!(
+        PermissionAction::from_str("admin"),
+        Some(PermissionAction::Admin)
+    );
 }
 
 #[test]
@@ -236,7 +257,10 @@ fn create_test_claims(permissions: Vec<&str>, is_superuser: bool) -> Claims {
 #[test]
 fn test_check_any_module_permission_user_has_permission() {
     let claims = create_test_claims(vec!["hrm:read"], false);
-    let perms = vec![ModulePermission::new(ModuleCode::Hrm, PermissionAction::Read)];
+    let perms = vec![ModulePermission::new(
+        ModuleCode::Hrm,
+        PermissionAction::Read,
+    )];
 
     let result = check_any_module_permission::<()>(&claims, &perms);
     assert!(result.is_ok());
@@ -245,7 +269,10 @@ fn test_check_any_module_permission_user_has_permission() {
 #[test]
 fn test_check_any_module_permission_user_has_admin() {
     let claims = create_test_claims(vec!["hrm:admin"], false);
-    let perms = vec![ModulePermission::new(ModuleCode::Hrm, PermissionAction::Read)];
+    let perms = vec![ModulePermission::new(
+        ModuleCode::Hrm,
+        PermissionAction::Read,
+    )];
 
     let result = check_any_module_permission::<()>(&claims, &perms);
     assert!(result.is_ok());
@@ -254,7 +281,10 @@ fn test_check_any_module_permission_user_has_admin() {
 #[test]
 fn test_check_any_module_permission_user_lacks_permission() {
     let claims = create_test_claims(vec![], false);
-    let perms = vec![ModulePermission::new(ModuleCode::Hrm, PermissionAction::Read)];
+    let perms = vec![ModulePermission::new(
+        ModuleCode::Hrm,
+        PermissionAction::Read,
+    )];
 
     let result = check_any_module_permission::<()>(&claims, &perms);
     assert!(result.is_err());
@@ -263,7 +293,10 @@ fn test_check_any_module_permission_user_lacks_permission() {
 #[test]
 fn test_check_any_module_permission_superuser() {
     let claims = create_test_claims(vec![], true);
-    let perms = vec![ModulePermission::new(ModuleCode::Hrm, PermissionAction::Admin)];
+    let perms = vec![ModulePermission::new(
+        ModuleCode::Hrm,
+        PermissionAction::Admin,
+    )];
 
     let result = check_any_module_permission::<()>(&claims, &perms);
     assert!(result.is_ok());

@@ -3,11 +3,11 @@ import type { QualityCheck, Defect } from './types';
 
 export const qualityCheckApi = {
   list: async (projectId: string) => {
-    return apiClient.pm.get(`/api/pm/projects/${projectId}/quality-checks`);
+    return apiClient.pm.get(`/projects/${projectId}/quality-checks`);
   },
 
   get: async (id: string) => {
-    return apiClient.pm.get(`/api/pm/quality-checks/${id}`);
+    return apiClient.pm.get(`/quality-checks/${id}`);
   },
 
   create: async (
@@ -23,7 +23,7 @@ export const qualityCheckApi = {
       created_by?: string;
     }
   ) => {
-    return apiClient.pm.post(`/api/pm/projects/${projectId}/quality-checks`, data);
+    return apiClient.pm.post(`/projects/${projectId}/quality-checks`, data);
   },
 
   update: async (
@@ -42,17 +42,17 @@ export const qualityCheckApi = {
       follow_up_date?: string;
     }
   ) => {
-    return apiClient.pm.put(`/api/pm/quality-checks/${id}`, data);
+    return apiClient.pm.put(`/quality-checks/${id}`, data);
   },
 };
 
 export const defectApi = {
   list: async (projectId: string) => {
-    return apiClient.pm.get(`/api/pm/projects/${projectId}/defects`);
+    return apiClient.pm.get(`/projects/${projectId}/defects`);
   },
 
   get: async (id: string) => {
-    return apiClient.pm.get(`/api/pm/defects/${id}`);
+    return apiClient.pm.get(`/defects/${id}`);
   },
 
   create: async (
@@ -69,7 +69,7 @@ export const defectApi = {
       created_by?: string;
     }
   ) => {
-    return apiClient.pm.post(`/api/pm/projects/${projectId}/defects`, data);
+    return apiClient.pm.post(`/projects/${projectId}/defects`, data);
   },
 
   update: async (
@@ -85,11 +85,11 @@ export const defectApi = {
       resolution?: string;
     }
   ) => {
-    return apiClient.pm.put(`/api/pm/defects/${id}`, data);
+    return apiClient.pm.put(`/defects/${id}`, data);
   },
 
   delete: async (id: string) => {
-    return apiClient.pm.delete(`/api/pm/defects/${id}`);
+    return apiClient.pm.delete(`/defects/${id}`);
   },
 };
 

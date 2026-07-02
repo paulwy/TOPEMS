@@ -494,7 +494,7 @@ const FinancePaymentPage: React.FC = () => {
         title=''
         subtitle=''
         backButton={{
-          onClick: () => navigate('/dashboard'),
+          onClick: () => navigate('/finance/dashboard'),
         }}
         columns={columns}
         data={filteredData}

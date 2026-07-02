@@ -36,13 +36,48 @@ pub async fn get_plugin_info() -> Json<ApiResponse<PluginInfo>> {
         version: env!("CARGO_PKG_VERSION").to_string(),
         description: "Report 报表服务 - 报表管理、模板管理、调度管理".to_string(),
         permissions: vec![
-            Permission { code: "report:report:read".to_string(), name: "查看报表".to_string(), resource_type: "report".to_string(), action: "read".to_string() },
-            Permission { code: "report:report:write".to_string(), name: "管理报表".to_string(), resource_type: "report".to_string(), action: "write".to_string() },
-            Permission { code: "report:report:execute".to_string(), name: "执行报表".to_string(), resource_type: "report".to_string(), action: "execute".to_string() },
-            Permission { code: "report:template:read".to_string(), name: "查看模板".to_string(), resource_type: "template".to_string(), action: "read".to_string() },
-            Permission { code: "report:template:write".to_string(), name: "管理模板".to_string(), resource_type: "template".to_string(), action: "write".to_string() },
-            Permission { code: "report:schedule:read".to_string(), name: "查看调度".to_string(), resource_type: "schedule".to_string(), action: "read".to_string() },
-            Permission { code: "report:schedule:write".to_string(), name: "管理调度".to_string(), resource_type: "schedule".to_string(), action: "write".to_string() },
+            Permission {
+                code: "report:report:read".to_string(),
+                name: "查看报表".to_string(),
+                resource_type: "report".to_string(),
+                action: "read".to_string(),
+            },
+            Permission {
+                code: "report:report:write".to_string(),
+                name: "管理报表".to_string(),
+                resource_type: "report".to_string(),
+                action: "write".to_string(),
+            },
+            Permission {
+                code: "report:report:execute".to_string(),
+                name: "执行报表".to_string(),
+                resource_type: "report".to_string(),
+                action: "execute".to_string(),
+            },
+            Permission {
+                code: "report:template:read".to_string(),
+                name: "查看模板".to_string(),
+                resource_type: "template".to_string(),
+                action: "read".to_string(),
+            },
+            Permission {
+                code: "report:template:write".to_string(),
+                name: "管理模板".to_string(),
+                resource_type: "template".to_string(),
+                action: "write".to_string(),
+            },
+            Permission {
+                code: "report:schedule:read".to_string(),
+                name: "查看调度".to_string(),
+                resource_type: "schedule".to_string(),
+                action: "read".to_string(),
+            },
+            Permission {
+                code: "report:schedule:write".to_string(),
+                name: "管理调度".to_string(),
+                resource_type: "schedule".to_string(),
+                action: "write".to_string(),
+            },
         ],
         runtime_url,
     };
@@ -82,13 +117,23 @@ pub async fn auto_register_to_core(core_url: Option<&str>) {
     match client.post(&url).json(&info).send().await {
         Ok(response) => {
             if response.status().is_success() {
-                tracing::info!("[Report Plugin] Successfully registered to core at {}", core_url);
+                tracing::info!(
+                    "[Report Plugin] Successfully registered to core at {}",
+                    core_url
+                );
             } else {
-                tracing::warn!("[Report Plugin] Failed to register to core: {}", response.status());
+                tracing::warn!(
+                    "[Report Plugin] Failed to register to core: {}",
+                    response.status()
+                );
             }
         }
         Err(e) => {
-            tracing::warn!("[Report Plugin] Failed to connect to core at {}: {}", core_url, e);
+            tracing::warn!(
+                "[Report Plugin] Failed to connect to core at {}: {}",
+                core_url,
+                e
+            );
         }
     }
 }

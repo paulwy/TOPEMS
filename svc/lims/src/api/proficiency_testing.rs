@@ -1,4 +1,8 @@
-use axum::{extract::State, routing::{delete, get, post, put}, Json, Router};
+use axum::{
+    extract::State,
+    routing::{delete, get, post, put},
+    Json, Router,
+};
 use serde::{Deserialize, Serialize};
 use sqlx::{types::Uuid, Row};
 use topems_shared::ApiResponse;
@@ -8,16 +12,31 @@ use crate::AppState;
 pub fn create_routes() -> Router<AppState> {
     Router::new()
         .route("/api/lims/pt-plans", get(list_plans).post(create_plan))
-        .route("/api/lims/pt-plans/{id}", get(get_plan).put(update_plan).delete(delete_plan))
+        .route(
+            "/api/lims/pt-plans/{id}",
+            get(get_plan).put(update_plan).delete(delete_plan),
+        )
         .route("/api/lims/pt-plans/{id}/samples", get(list_plan_samples))
         .route("/api/lims/pt-plans/{id}/results", get(list_plan_results))
-        .route("/api/lims/pt-plans/{id}/evaluations", get(list_plan_evaluations))
-        .route("/api/lims/pt-plans/{id}/corrective-actions", get(list_plan_corrective_actions))
+        .route(
+            "/api/lims/pt-plans/{id}/evaluations",
+            get(list_plan_evaluations),
+        )
+        .route(
+            "/api/lims/pt-plans/{id}/corrective-actions",
+            get(list_plan_corrective_actions),
+        )
         .route("/api/lims/pt-samples/receive", post(receive_sample))
         .route("/api/lims/pt-results", post(submit_result))
         .route("/api/lims/pt-evaluations", post(evaluate_result))
-        .route("/api/lims/pt-corrective-actions", post(create_corrective_action))
-        .route("/api/lims/pt-corrective-actions/{id}", put(update_corrective_action))
+        .route(
+            "/api/lims/pt-corrective-actions",
+            post(create_corrective_action),
+        )
+        .route(
+            "/api/lims/pt-corrective-actions/{id}",
+            put(update_corrective_action),
+        )
 }
 
 #[derive(Debug, Deserialize)]
@@ -257,84 +276,138 @@ pub async fn list_plans(
     };
 
     let mut query_builder = sqlx::query(sql);
-    match (query.status.as_ref(), query.year.as_ref(), query.plan_name.as_ref(), query.provider.as_ref()) {
+    match (
+        query.status.as_ref(),
+        query.year.as_ref(),
+        query.plan_name.as_ref(),
+        query.provider.as_ref(),
+    ) {
         (Some(st), Some(yr), Some(pn), Some(pr)) => {
-            query_builder = query_builder.bind(st).bind(yr).bind(format!("%{}%", pn)).bind(format!("%{}%", pr)).bind(page_size).bind(offset);
+            query_builder = query_builder
+                .bind(st)
+                .bind(yr)
+                .bind(format!("%{}%", pn))
+                .bind(format!("%{}%", pr))
+                .bind(page_size)
+                .bind(offset);
         }
         (Some(st), Some(yr), Some(pn), None) => {
-            query_builder = query_builder.bind(st).bind(yr).bind(format!("%{}%", pn)).bind(page_size).bind(offset);
+            query_builder = query_builder
+                .bind(st)
+                .bind(yr)
+                .bind(format!("%{}%", pn))
+                .bind(page_size)
+                .bind(offset);
         }
         (Some(st), Some(yr), None, Some(pr)) => {
-            query_builder = query_builder.bind(st).bind(yr).bind(format!("%{}%", pr)).bind(page_size).bind(offset);
+            query_builder = query_builder
+                .bind(st)
+                .bind(yr)
+                .bind(format!("%{}%", pr))
+                .bind(page_size)
+                .bind(offset);
         }
         (Some(st), Some(yr), None, None) => {
             query_builder = query_builder.bind(st).bind(yr).bind(page_size).bind(offset);
         }
         (Some(st), None, Some(pn), Some(pr)) => {
-            query_builder = query_builder.bind(st).bind(format!("%{}%", pn)).bind(format!("%{}%", pr)).bind(page_size).bind(offset);
+            query_builder = query_builder
+                .bind(st)
+                .bind(format!("%{}%", pn))
+                .bind(format!("%{}%", pr))
+                .bind(page_size)
+                .bind(offset);
         }
         (Some(st), None, Some(pn), None) => {
-            query_builder = query_builder.bind(st).bind(format!("%{}%", pn)).bind(page_size).bind(offset);
+            query_builder = query_builder
+                .bind(st)
+                .bind(format!("%{}%", pn))
+                .bind(page_size)
+                .bind(offset);
         }
         (Some(st), None, None, Some(pr)) => {
-            query_builder = query_builder.bind(st).bind(format!("%{}%", pr)).bind(page_size).bind(offset);
+            query_builder = query_builder
+                .bind(st)
+                .bind(format!("%{}%", pr))
+                .bind(page_size)
+                .bind(offset);
         }
         (Some(st), None, None, None) => {
             query_builder = query_builder.bind(st).bind(page_size).bind(offset);
         }
         (None, Some(yr), Some(pn), Some(pr)) => {
-            query_builder = query_builder.bind(yr).bind(format!("%{}%", pn)).bind(format!("%{}%", pr)).bind(page_size).bind(offset);
+            query_builder = query_builder
+                .bind(yr)
+                .bind(format!("%{}%", pn))
+                .bind(format!("%{}%", pr))
+                .bind(page_size)
+                .bind(offset);
         }
         (None, Some(yr), Some(pn), None) => {
-            query_builder = query_builder.bind(yr).bind(format!("%{}%", pn)).bind(page_size).bind(offset);
+            query_builder = query_builder
+                .bind(yr)
+                .bind(format!("%{}%", pn))
+                .bind(page_size)
+                .bind(offset);
         }
         (None, Some(yr), None, Some(pr)) => {
-            query_builder = query_builder.bind(yr).bind(format!("%{}%", pr)).bind(page_size).bind(offset);
+            query_builder = query_builder
+                .bind(yr)
+                .bind(format!("%{}%", pr))
+                .bind(page_size)
+                .bind(offset);
         }
         (None, Some(yr), None, None) => {
             query_builder = query_builder.bind(yr).bind(page_size).bind(offset);
         }
         (None, None, Some(pn), Some(pr)) => {
-            query_builder = query_builder.bind(format!("%{}%", pn)).bind(format!("%{}%", pr)).bind(page_size).bind(offset);
+            query_builder = query_builder
+                .bind(format!("%{}%", pn))
+                .bind(format!("%{}%", pr))
+                .bind(page_size)
+                .bind(offset);
         }
         (None, None, Some(pn), None) => {
-            query_builder = query_builder.bind(format!("%{}%", pn)).bind(page_size).bind(offset);
+            query_builder = query_builder
+                .bind(format!("%{}%", pn))
+                .bind(page_size)
+                .bind(offset);
         }
         (None, None, None, Some(pr)) => {
-            query_builder = query_builder.bind(format!("%{}%", pr)).bind(page_size).bind(offset);
+            query_builder = query_builder
+                .bind(format!("%{}%", pr))
+                .bind(page_size)
+                .bind(offset);
         }
         (None, None, None, None) => {
             query_builder = query_builder.bind(page_size).bind(offset);
         }
     }
 
-    let plans = query_builder
-        .fetch_all(&state.pool)
-        .await
-        .map(|rows| {
-            rows.into_iter()
-                .map(|row| ProficiencyTestingPlan {
-                    id: row.get("id"),
-                    plan_no: row.get("plan_no"),
-                    plan_name: row.get("plan_name"),
-                    provider: row.get("provider"),
-                    test_item: row.get("test_item"),
-                    test_method: row.get("test_method"),
-                    plan_year: row.get("plan_year"),
-                    sample_type: row.get("sample_type"),
-                    expected_result: row.get("expected_result"),
-                    registration_date: row.get("registration_date"),
-                    test_deadline: row.get("test_deadline"),
-                    report_deadline: row.get("report_deadline"),
-                    status: row.get("status"),
-                    contact_person: row.get("contact_person"),
-                    contact_phone: row.get("contact_phone"),
-                    notes: row.get("notes"),
-                    created_at: row.get("created_at"),
-                    updated_at: row.get("updated_at"),
-                })
-                .collect()
-        });
+    let plans = query_builder.fetch_all(&state.pool).await.map(|rows| {
+        rows.into_iter()
+            .map(|row| ProficiencyTestingPlan {
+                id: row.get("id"),
+                plan_no: row.get("plan_no"),
+                plan_name: row.get("plan_name"),
+                provider: row.get("provider"),
+                test_item: row.get("test_item"),
+                test_method: row.get("test_method"),
+                plan_year: row.get("plan_year"),
+                sample_type: row.get("sample_type"),
+                expected_result: row.get("expected_result"),
+                registration_date: row.get("registration_date"),
+                test_deadline: row.get("test_deadline"),
+                report_deadline: row.get("report_deadline"),
+                status: row.get("status"),
+                contact_person: row.get("contact_person"),
+                contact_phone: row.get("contact_phone"),
+                notes: row.get("notes"),
+                created_at: row.get("created_at"),
+                updated_at: row.get("updated_at"),
+            })
+            .collect()
+    });
 
     match plans {
         Ok(data) => Json(ApiResponse::success(data, "获取能力验证计划列表成功")),
@@ -349,7 +422,10 @@ pub async fn create_plan(
     State(state): State<crate::AppState>,
     Json(req): Json<CreatePtPlanRequest>,
 ) -> Json<ApiResponse<ProficiencyTestingPlan>> {
-    let plan_no = format!("PT-{}", uuid::Uuid::new_v4().to_string()[..8].to_uppercase());
+    let plan_no = format!(
+        "PT-{}",
+        uuid::Uuid::new_v4().to_string()[..8].to_uppercase()
+    );
 
     let row = sqlx::query(
         r#"
@@ -362,7 +438,7 @@ pub async fn create_plan(
                   sample_type, expected_result, registration_date::TEXT, test_deadline::TEXT,
                   report_deadline::TEXT, status, contact_person, contact_phone, notes,
                   created_at::TEXT, updated_at::TEXT
-        "#
+        "#,
     )
     .bind(&plan_no)
     .bind(&req.plan_name)
@@ -382,26 +458,29 @@ pub async fn create_plan(
     .await;
 
     match row {
-        Ok(r) => Json(ApiResponse::success(ProficiencyTestingPlan {
-            id: r.get("id"),
-            plan_no: r.get("plan_no"),
-            plan_name: r.get("plan_name"),
-            provider: r.get("provider"),
-            test_item: r.get("test_item"),
-            test_method: r.get("test_method"),
-            plan_year: r.get("plan_year"),
-            sample_type: r.get("sample_type"),
-            expected_result: r.get("expected_result"),
-            registration_date: r.get("registration_date"),
-            test_deadline: r.get("test_deadline"),
-            report_deadline: r.get("report_deadline"),
-            status: r.get("status"),
-            contact_person: r.get("contact_person"),
-            contact_phone: r.get("contact_phone"),
-            notes: r.get("notes"),
-            created_at: r.get("created_at"),
-            updated_at: r.get("updated_at"),
-        }, "能力验证计划创建成功")),
+        Ok(r) => Json(ApiResponse::success(
+            ProficiencyTestingPlan {
+                id: r.get("id"),
+                plan_no: r.get("plan_no"),
+                plan_name: r.get("plan_name"),
+                provider: r.get("provider"),
+                test_item: r.get("test_item"),
+                test_method: r.get("test_method"),
+                plan_year: r.get("plan_year"),
+                sample_type: r.get("sample_type"),
+                expected_result: r.get("expected_result"),
+                registration_date: r.get("registration_date"),
+                test_deadline: r.get("test_deadline"),
+                report_deadline: r.get("report_deadline"),
+                status: r.get("status"),
+                contact_person: r.get("contact_person"),
+                contact_phone: r.get("contact_phone"),
+                notes: r.get("notes"),
+                created_at: r.get("created_at"),
+                updated_at: r.get("updated_at"),
+            },
+            "能力验证计划创建成功",
+        )),
         Err(e) => {
             tracing::error!("Failed to create PT plan: {}", e);
             Json(ApiResponse::error(500, "能力验证计划创建失败"))
@@ -426,26 +505,29 @@ pub async fn get_plan(
     .await;
 
     match row {
-        Ok(r) => Json(ApiResponse::success(ProficiencyTestingPlan {
-            id: r.get("id"),
-            plan_no: r.get("plan_no"),
-            plan_name: r.get("plan_name"),
-            provider: r.get("provider"),
-            test_item: r.get("test_item"),
-            test_method: r.get("test_method"),
-            plan_year: r.get("plan_year"),
-            sample_type: r.get("sample_type"),
-            expected_result: r.get("expected_result"),
-            registration_date: r.get("registration_date"),
-            test_deadline: r.get("test_deadline"),
-            report_deadline: r.get("report_deadline"),
-            status: r.get("status"),
-            contact_person: r.get("contact_person"),
-            contact_phone: r.get("contact_phone"),
-            notes: r.get("notes"),
-            created_at: r.get("created_at"),
-            updated_at: r.get("updated_at"),
-        }, "获取能力验证计划成功")),
+        Ok(r) => Json(ApiResponse::success(
+            ProficiencyTestingPlan {
+                id: r.get("id"),
+                plan_no: r.get("plan_no"),
+                plan_name: r.get("plan_name"),
+                provider: r.get("provider"),
+                test_item: r.get("test_item"),
+                test_method: r.get("test_method"),
+                plan_year: r.get("plan_year"),
+                sample_type: r.get("sample_type"),
+                expected_result: r.get("expected_result"),
+                registration_date: r.get("registration_date"),
+                test_deadline: r.get("test_deadline"),
+                report_deadline: r.get("report_deadline"),
+                status: r.get("status"),
+                contact_person: r.get("contact_person"),
+                contact_phone: r.get("contact_phone"),
+                notes: r.get("notes"),
+                created_at: r.get("created_at"),
+                updated_at: r.get("updated_at"),
+            },
+            "获取能力验证计划成功",
+        )),
         Err(e) => {
             tracing::error!("Failed to fetch PT plan: {}", e);
             Json(ApiResponse::error(500, "获取能力验证计划失败"))
@@ -486,7 +568,7 @@ pub async fn update_plan(
                   sample_type, expected_result, registration_date::TEXT, test_deadline::TEXT,
                   report_deadline::TEXT, status, contact_person, contact_phone, notes,
                   created_at::TEXT, updated_at::TEXT
-        "#
+        "#,
     )
     .bind(id)
     .bind(&req.plan_name)
@@ -507,26 +589,29 @@ pub async fn update_plan(
     .await;
 
     match row {
-        Ok(r) => Json(ApiResponse::success(ProficiencyTestingPlan {
-            id: r.get("id"),
-            plan_no: r.get("plan_no"),
-            plan_name: r.get("plan_name"),
-            provider: r.get("provider"),
-            test_item: r.get("test_item"),
-            test_method: r.get("test_method"),
-            plan_year: r.get("plan_year"),
-            sample_type: r.get("sample_type"),
-            expected_result: r.get("expected_result"),
-            registration_date: r.get("registration_date"),
-            test_deadline: r.get("test_deadline"),
-            report_deadline: r.get("report_deadline"),
-            status: r.get("status"),
-            contact_person: r.get("contact_person"),
-            contact_phone: r.get("contact_phone"),
-            notes: r.get("notes"),
-            created_at: r.get("created_at"),
-            updated_at: r.get("updated_at"),
-        }, "能力验证计划更新成功")),
+        Ok(r) => Json(ApiResponse::success(
+            ProficiencyTestingPlan {
+                id: r.get("id"),
+                plan_no: r.get("plan_no"),
+                plan_name: r.get("plan_name"),
+                provider: r.get("provider"),
+                test_item: r.get("test_item"),
+                test_method: r.get("test_method"),
+                plan_year: r.get("plan_year"),
+                sample_type: r.get("sample_type"),
+                expected_result: r.get("expected_result"),
+                registration_date: r.get("registration_date"),
+                test_deadline: r.get("test_deadline"),
+                report_deadline: r.get("report_deadline"),
+                status: r.get("status"),
+                contact_person: r.get("contact_person"),
+                contact_phone: r.get("contact_phone"),
+                notes: r.get("notes"),
+                created_at: r.get("created_at"),
+                updated_at: r.get("updated_at"),
+            },
+            "能力验证计划更新成功",
+        )),
         Err(e) => {
             tracing::error!("Failed to update PT plan: {}", e);
             Json(ApiResponse::error(500, "能力验证计划更新失败"))
@@ -566,12 +651,10 @@ pub async fn receive_sample(
         Err(_) => return Json(ApiResponse::error(400, "无效的计划ID")),
     };
 
-    let plan_row = sqlx::query(
-        "SELECT plan_no, plan_name FROM qa_lims_pt_plans WHERE id = $1"
-    )
-    .bind(plan_id)
-    .fetch_optional(&state.pool)
-    .await;
+    let plan_row = sqlx::query("SELECT plan_no, plan_name FROM qa_lims_pt_plans WHERE id = $1")
+        .bind(plan_id)
+        .fetch_optional(&state.pool)
+        .await;
 
     let (plan_no, plan_name) = match plan_row {
         Ok(Some(row)) => (
@@ -593,7 +676,7 @@ pub async fn receive_sample(
         RETURNING id, plan_id, plan_no, plan_name, sample_code, sample_name,
                   received_date::TEXT, received_by, storage_condition, sample_status,
                   notes, created_at::TEXT
-        "#
+        "#,
     )
     .bind(plan_id)
     .bind(&plan_no)
@@ -608,27 +691,30 @@ pub async fn receive_sample(
     .await;
 
     let _ = sqlx::query(
-        "UPDATE qa_lims_pt_plans SET status = 'sample_received', updated_at = NOW() WHERE id = $1"
+        "UPDATE qa_lims_pt_plans SET status = 'sample_received', updated_at = NOW() WHERE id = $1",
     )
     .bind(plan_id)
     .execute(&state.pool)
     .await;
 
     match row {
-        Ok(r) => Json(ApiResponse::success(PtSample {
-            id: r.get("id"),
-            plan_id: r.get("plan_id"),
-            plan_no: r.get("plan_no"),
-            plan_name: r.get("plan_name"),
-            sample_code: r.get("sample_code"),
-            sample_name: r.get("sample_name"),
-            received_date: r.get("received_date"),
-            received_by: r.get("received_by"),
-            storage_condition: r.get("storage_condition"),
-            sample_status: r.get("sample_status"),
-            notes: r.get("notes"),
-            created_at: r.get("created_at"),
-        }, "能力验证样品接收登记成功")),
+        Ok(r) => Json(ApiResponse::success(
+            PtSample {
+                id: r.get("id"),
+                plan_id: r.get("plan_id"),
+                plan_no: r.get("plan_no"),
+                plan_name: r.get("plan_name"),
+                sample_code: r.get("sample_code"),
+                sample_name: r.get("sample_name"),
+                received_date: r.get("received_date"),
+                received_by: r.get("received_by"),
+                storage_condition: r.get("storage_condition"),
+                sample_status: r.get("sample_status"),
+                notes: r.get("notes"),
+                created_at: r.get("created_at"),
+            },
+            "能力验证样品接收登记成功",
+        )),
         Err(e) => {
             tracing::error!("Failed to receive PT sample: {}", e);
             Json(ApiResponse::error(500, "能力验证样品接收登记失败"))
@@ -653,7 +739,7 @@ pub async fn list_plan_samples(
         FROM qa_lims_pt_samples
         WHERE plan_id = $1
         ORDER BY created_at DESC
-        "#
+        "#,
     )
     .bind(id)
     .fetch_all(&state.pool)
@@ -701,12 +787,10 @@ pub async fn submit_result(
         Err(_) => return Json(ApiResponse::error(400, "无效的样品ID")),
     };
 
-    let plan_row = sqlx::query(
-        "SELECT plan_no FROM qa_lims_pt_plans WHERE id = $1"
-    )
-    .bind(plan_id)
-    .fetch_optional(&state.pool)
-    .await;
+    let plan_row = sqlx::query("SELECT plan_no FROM qa_lims_pt_plans WHERE id = $1")
+        .bind(plan_id)
+        .fetch_optional(&state.pool)
+        .await;
 
     let plan_no = match plan_row {
         Ok(Some(row)) => row.get::<String, _>("plan_no"),
@@ -714,12 +798,10 @@ pub async fn submit_result(
         Err(e) => return Json(ApiResponse::error(500, &format!("查询计划失败: {}", e))),
     };
 
-    let sample_row = sqlx::query(
-        "SELECT sample_code FROM qa_lims_pt_samples WHERE id = $1"
-    )
-    .bind(sample_id)
-    .fetch_optional(&state.pool)
-    .await;
+    let sample_row = sqlx::query("SELECT sample_code FROM qa_lims_pt_samples WHERE id = $1")
+        .bind(sample_id)
+        .fetch_optional(&state.pool)
+        .await;
 
     let sample_code = match sample_row {
         Ok(Some(row)) => row.get::<String, _>("sample_code"),
@@ -729,16 +811,17 @@ pub async fn submit_result(
 
     let (mean_val, std_dev, cv) = if let Some(replicates) = &req.replicate_results {
         if let Some(arr) = replicates.as_array() {
-            let values: Vec<f64> = arr.iter()
-                .filter_map(|v| v.as_f64())
-                .collect();
+            let values: Vec<f64> = arr.iter().filter_map(|v| v.as_f64()).collect();
             if !values.is_empty() {
                 let mean = values.iter().sum::<f64>() / values.len() as f64;
-                let variance = values.iter()
-                    .map(|v| (v - mean).powi(2))
-                    .sum::<f64>() / values.len() as f64;
+                let variance =
+                    values.iter().map(|v| (v - mean).powi(2)).sum::<f64>() / values.len() as f64;
                 let std = variance.sqrt();
-                let coef_var = if mean != 0.0 { (std / mean) * 100.0 } else { 0.0 };
+                let coef_var = if mean != 0.0 {
+                    (std / mean) * 100.0
+                } else {
+                    0.0
+                };
                 (Some(mean), Some(std), Some(coef_var))
             } else {
                 (None, None, None)
@@ -766,7 +849,7 @@ pub async fn submit_result(
                   result_unit, test_date::TEXT, tested_by, instrument, test_method,
                   replicate_results, mean_value, standard_deviation, coefficient_variation,
                   notes, submitted_at::TEXT, created_at::TEXT, updated_at::TEXT
-        "#
+        "#,
     )
     .bind(plan_id)
     .bind(&plan_no)
@@ -789,35 +872,38 @@ pub async fn submit_result(
     .await;
 
     let _ = sqlx::query(
-        "UPDATE qa_lims_pt_plans SET status = 'testing', updated_at = NOW() WHERE id = $1"
+        "UPDATE qa_lims_pt_plans SET status = 'testing', updated_at = NOW() WHERE id = $1",
     )
     .bind(plan_id)
     .execute(&state.pool)
     .await;
 
     match row {
-        Ok(r) => Json(ApiResponse::success(PtResult {
-            id: r.get("id"),
-            plan_id: r.get("plan_id"),
-            plan_no: r.get("plan_no"),
-            sample_id: r.get("sample_id"),
-            sample_code: r.get("sample_code"),
-            test_item: r.get("test_item"),
-            test_result: r.get("test_result"),
-            result_unit: r.get("result_unit"),
-            test_date: r.get("test_date"),
-            tested_by: r.get("tested_by"),
-            instrument: r.get("instrument"),
-            test_method: r.get("test_method"),
-            replicate_results: r.get("replicate_results"),
-            mean_value: r.get("mean_value"),
-            standard_deviation: r.get("standard_deviation"),
-            coefficient_variation: r.get("coefficient_variation"),
-            notes: r.get("notes"),
-            submitted_at: r.get("submitted_at"),
-            created_at: r.get("created_at"),
-            updated_at: r.get("updated_at"),
-        }, "能力验证结果录入成功")),
+        Ok(r) => Json(ApiResponse::success(
+            PtResult {
+                id: r.get("id"),
+                plan_id: r.get("plan_id"),
+                plan_no: r.get("plan_no"),
+                sample_id: r.get("sample_id"),
+                sample_code: r.get("sample_code"),
+                test_item: r.get("test_item"),
+                test_result: r.get("test_result"),
+                result_unit: r.get("result_unit"),
+                test_date: r.get("test_date"),
+                tested_by: r.get("tested_by"),
+                instrument: r.get("instrument"),
+                test_method: r.get("test_method"),
+                replicate_results: r.get("replicate_results"),
+                mean_value: r.get("mean_value"),
+                standard_deviation: r.get("standard_deviation"),
+                coefficient_variation: r.get("coefficient_variation"),
+                notes: r.get("notes"),
+                submitted_at: r.get("submitted_at"),
+                created_at: r.get("created_at"),
+                updated_at: r.get("updated_at"),
+            },
+            "能力验证结果录入成功",
+        )),
         Err(e) => {
             tracing::error!("Failed to submit PT result: {}", e);
             Json(ApiResponse::error(500, "能力验证结果录入失败"))
@@ -843,7 +929,7 @@ pub async fn list_plan_results(
         FROM qa_lims_pt_results
         WHERE plan_id = $1
         ORDER BY created_at DESC
-        "#
+        "#,
     )
     .bind(id)
     .fetch_all(&state.pool)
@@ -920,7 +1006,8 @@ pub async fn evaluate_result(
 
     let result_val = test_result.unwrap_or(0.0);
 
-    let z_score = req.standard_deviation
+    let z_score = req
+        .standard_deviation
         .filter(|&sd| sd != 0.0)
         .map(|sd| (result_val - req.assigned_value) / sd);
 
@@ -936,7 +1023,10 @@ pub async fn evaluate_result(
         _ => None,
     };
 
-    let eval_method = req.evaluation_method.clone().unwrap_or_else(|| "z_score".to_string());
+    let eval_method = req
+        .evaluation_method
+        .clone()
+        .unwrap_or_else(|| "z_score".to_string());
 
     let evaluation_result = if eval_method == "z_score" {
         match z_score {
@@ -967,7 +1057,7 @@ pub async fn evaluate_result(
                   assigned_value, standard_deviation, z_score, en_score,
                   measurement_uncertainty, reference_uncertainty, evaluation_method,
                   evaluation_result, evaluated_by, evaluated_at::TEXT, notes, created_at::TEXT
-        "#
+        "#,
     )
     .bind(plan_id)
     .bind(&plan_no)
@@ -990,34 +1080,37 @@ pub async fn evaluate_result(
     .await;
 
     let _ = sqlx::query(
-        "UPDATE qa_lims_pt_plans SET status = 'evaluated', updated_at = NOW() WHERE id = $1"
+        "UPDATE qa_lims_pt_plans SET status = 'evaluated', updated_at = NOW() WHERE id = $1",
     )
     .bind(plan_id)
     .execute(&state.pool)
     .await;
 
     match row {
-        Ok(r) => Json(ApiResponse::success(PtEvaluation {
-            id: r.get("id"),
-            plan_id: r.get("plan_id"),
-            plan_no: r.get("plan_no"),
-            sample_id: r.get("sample_id"),
-            sample_code: r.get("sample_code"),
-            test_item: r.get("test_item"),
-            test_result: r.get("test_result"),
-            assigned_value: r.get("assigned_value"),
-            standard_deviation: r.get("standard_deviation"),
-            z_score: r.get("z_score"),
-            en_score: r.get("en_score"),
-            measurement_uncertainty: r.get("measurement_uncertainty"),
-            reference_uncertainty: r.get("reference_uncertainty"),
-            evaluation_method: r.get("evaluation_method"),
-            evaluation_result: r.get("evaluation_result"),
-            evaluated_by: r.get("evaluated_by"),
-            evaluated_at: r.get("evaluated_at"),
-            notes: r.get("notes"),
-            created_at: r.get("created_at"),
-        }, "能力验证结果评价完成")),
+        Ok(r) => Json(ApiResponse::success(
+            PtEvaluation {
+                id: r.get("id"),
+                plan_id: r.get("plan_id"),
+                plan_no: r.get("plan_no"),
+                sample_id: r.get("sample_id"),
+                sample_code: r.get("sample_code"),
+                test_item: r.get("test_item"),
+                test_result: r.get("test_result"),
+                assigned_value: r.get("assigned_value"),
+                standard_deviation: r.get("standard_deviation"),
+                z_score: r.get("z_score"),
+                en_score: r.get("en_score"),
+                measurement_uncertainty: r.get("measurement_uncertainty"),
+                reference_uncertainty: r.get("reference_uncertainty"),
+                evaluation_method: r.get("evaluation_method"),
+                evaluation_result: r.get("evaluation_result"),
+                evaluated_by: r.get("evaluated_by"),
+                evaluated_at: r.get("evaluated_at"),
+                notes: r.get("notes"),
+                created_at: r.get("created_at"),
+            },
+            "能力验证结果评价完成",
+        )),
         Err(e) => {
             tracing::error!("Failed to evaluate PT result: {}", e);
             Json(ApiResponse::error(500, "能力验证结果评价失败"))
@@ -1043,7 +1136,7 @@ pub async fn list_plan_evaluations(
         FROM qa_lims_pt_evaluations
         WHERE plan_id = $1
         ORDER BY created_at DESC
-        "#
+        "#,
     )
     .bind(id)
     .fetch_all(&state.pool)
@@ -1075,7 +1168,10 @@ pub async fn list_plan_evaluations(
                     created_at: row.get("created_at"),
                 })
                 .collect();
-            Json(ApiResponse::success(evaluations, "获取能力验证评价列表成功"))
+            Json(ApiResponse::success(
+                evaluations,
+                "获取能力验证评价列表成功",
+            ))
         }
         Err(e) => {
             tracing::error!("Failed to fetch PT evaluations: {}", e);
@@ -1098,12 +1194,10 @@ pub async fn create_corrective_action(
         Err(_) => return Json(ApiResponse::error(400, "无效的评价ID")),
     };
 
-    let plan_row = sqlx::query(
-        "SELECT plan_no FROM qa_lims_pt_plans WHERE id = $1"
-    )
-    .bind(plan_id)
-    .fetch_optional(&state.pool)
-    .await;
+    let plan_row = sqlx::query("SELECT plan_no FROM qa_lims_pt_plans WHERE id = $1")
+        .bind(plan_id)
+        .fetch_optional(&state.pool)
+        .await;
 
     let plan_no = match plan_row {
         Ok(Some(row)) => row.get::<String, _>("plan_no"),
@@ -1121,7 +1215,7 @@ pub async fn create_corrective_action(
                   root_cause, corrective_measures, responsible_person, deadline::TEXT,
                   status, verification_result, verified_by, verified_at::TEXT,
                   created_at::TEXT, updated_at::TEXT
-        "#
+        "#,
     )
     .bind(plan_id)
     .bind(&plan_no)
@@ -1135,23 +1229,26 @@ pub async fn create_corrective_action(
     .await;
 
     match row {
-        Ok(r) => Json(ApiResponse::success(PtCorrectiveAction {
-            id: r.get("id"),
-            plan_id: r.get("plan_id"),
-            plan_no: r.get("plan_no"),
-            evaluation_id: r.get("evaluation_id"),
-            unsatisfactory_item: r.get("unsatisfactory_item"),
-            root_cause: r.get("root_cause"),
-            corrective_measures: r.get("corrective_measures"),
-            responsible_person: r.get("responsible_person"),
-            deadline: r.get("deadline"),
-            status: r.get("status"),
-            verification_result: r.get("verification_result"),
-            verified_by: r.get("verified_by"),
-            verified_at: r.get("verified_at"),
-            created_at: r.get("created_at"),
-            updated_at: r.get("updated_at"),
-        }, "不满意结果整改记录创建成功")),
+        Ok(r) => Json(ApiResponse::success(
+            PtCorrectiveAction {
+                id: r.get("id"),
+                plan_id: r.get("plan_id"),
+                plan_no: r.get("plan_no"),
+                evaluation_id: r.get("evaluation_id"),
+                unsatisfactory_item: r.get("unsatisfactory_item"),
+                root_cause: r.get("root_cause"),
+                corrective_measures: r.get("corrective_measures"),
+                responsible_person: r.get("responsible_person"),
+                deadline: r.get("deadline"),
+                status: r.get("status"),
+                verification_result: r.get("verification_result"),
+                verified_by: r.get("verified_by"),
+                verified_at: r.get("verified_at"),
+                created_at: r.get("created_at"),
+                updated_at: r.get("updated_at"),
+            },
+            "不满意结果整改记录创建成功",
+        )),
         Err(e) => {
             tracing::error!("Failed to create PT corrective action: {}", e);
             Json(ApiResponse::error(500, "不满意结果整改记录创建失败"))
@@ -1192,7 +1289,7 @@ pub async fn update_corrective_action(
                   root_cause, corrective_measures, responsible_person, deadline::TEXT,
                   status, verification_result, verified_by, verified_at::TEXT,
                   created_at::TEXT, updated_at::TEXT
-        "#
+        "#,
     )
     .bind(id)
     .bind(&req.root_cause)
@@ -1207,23 +1304,26 @@ pub async fn update_corrective_action(
     .await;
 
     match row {
-        Ok(r) => Json(ApiResponse::success(PtCorrectiveAction {
-            id: r.get("id"),
-            plan_id: r.get("plan_id"),
-            plan_no: r.get("plan_no"),
-            evaluation_id: r.get("evaluation_id"),
-            unsatisfactory_item: r.get("unsatisfactory_item"),
-            root_cause: r.get("root_cause"),
-            corrective_measures: r.get("corrective_measures"),
-            responsible_person: r.get("responsible_person"),
-            deadline: r.get("deadline"),
-            status: r.get("status"),
-            verification_result: r.get("verification_result"),
-            verified_by: r.get("verified_by"),
-            verified_at: r.get("verified_at"),
-            created_at: r.get("created_at"),
-            updated_at: r.get("updated_at"),
-        }, "不满意结果整改记录更新成功")),
+        Ok(r) => Json(ApiResponse::success(
+            PtCorrectiveAction {
+                id: r.get("id"),
+                plan_id: r.get("plan_id"),
+                plan_no: r.get("plan_no"),
+                evaluation_id: r.get("evaluation_id"),
+                unsatisfactory_item: r.get("unsatisfactory_item"),
+                root_cause: r.get("root_cause"),
+                corrective_measures: r.get("corrective_measures"),
+                responsible_person: r.get("responsible_person"),
+                deadline: r.get("deadline"),
+                status: r.get("status"),
+                verification_result: r.get("verification_result"),
+                verified_by: r.get("verified_by"),
+                verified_at: r.get("verified_at"),
+                created_at: r.get("created_at"),
+                updated_at: r.get("updated_at"),
+            },
+            "不满意结果整改记录更新成功",
+        )),
         Err(e) => {
             tracing::error!("Failed to update PT corrective action: {}", e);
             Json(ApiResponse::error(500, "不满意结果整改记录更新失败"))
@@ -1249,7 +1349,7 @@ pub async fn list_plan_corrective_actions(
         FROM qa_lims_pt_corrective_actions
         WHERE plan_id = $1
         ORDER BY created_at DESC
-        "#
+        "#,
     )
     .bind(id)
     .fetch_all(&state.pool)

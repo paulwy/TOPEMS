@@ -145,6 +145,9 @@ async fn main() {
     modules::plugin::init_database(&pool)
         .await
         .expect("Failed to init plugin database");
+    modules::migration::init_database(&pool)
+        .await
+        .expect("Failed to init migration database");
 
     let auth_state = AuthState::from_env();
     let health_config = SimpleHealthConfig::new("topems-unified-core").with_db(pool.clone());
@@ -152,8 +155,8 @@ async fn main() {
     let http_client = Client::new();
 
     let rate_limit_config = RateLimitConfig {
-        enabled: true,
-        requests: 100,
+        enabled: false,
+        requests: 500,
         window_secs: 60,
     };
     let rate_limit_middleware = std::sync::Arc::new(RateLimitMiddleware::new(rate_limit_config));
@@ -253,8 +256,45 @@ async fn main() {
             "/ws/notifications",
             get(modules::communication::ws::websocket_handler),
         )
+        .route("/ws/im", get(modules::communication::ws::websocket_handler))
         // Plugin proxy route (no auth required - plugins handle their own auth)
-        .route("/api/plugins/{plugin_code}/{*path}", get(plugin_proxy));
+        .route("/api/plugins/{plugin_code}/{*path}", get(plugin_proxy))
+        // Plugin registration routes (no auth required - for service startup auto-registration)
+        .route(
+            "/api/core/plugin/dev/plugins/{code}/register",
+            post(modules::plugin::handlers::register_plugin),
+        )
+        .route(
+            "/api/core/plugin/dev/plugins/{code}/status",
+            put(modules::plugin::handlers::update_plugin_status),
+        )
+        .route(
+            "/api/core/plugin/dev/plugins/{code}/unregister",
+            post(modules::plugin::handlers::unregister_plugin),
+        );
+
+    // ----- Migration Routes (requires system:migration permission) -----
+    let migration_routes = Router::new()
+        .route(
+            "/api/migrations/services",
+            get(modules::migration::handlers::list_services),
+        )
+        .route(
+            "/api/migrations/services/{name}/status",
+            get(modules::migration::handlers::get_status),
+        )
+        .route(
+            "/api/migrations/services/{name}/apply",
+            post(modules::migration::handlers::apply_migration),
+        )
+        .route(
+            "/api/migrations/services/{name}/rollback",
+            post(modules::migration::handlers::rollback_migration),
+        )
+        .layer(axum::middleware::from_fn_with_state(
+            state.clone(),
+            require_permission("system:migration"),
+        ));
 
     // ===== Protected routes (auth required) =====
 
@@ -1252,18 +1292,6 @@ async fn main() {
             post(modules::plugin::handlers::upload_plugin_version),
         )
         .route(
-            "/api/core/plugin/dev/plugins/{code}/register",
-            post(modules::plugin::handlers::register_plugin),
-        )
-        .route(
-            "/api/core/plugin/dev/plugins/{code}/status",
-            put(modules::plugin::handlers::update_plugin_status),
-        )
-        .route(
-            "/api/core/plugin/dev/plugins/{code}/unregister",
-            post(modules::plugin::handlers::unregister_plugin),
-        )
-        .route(
             "/api/core/plugin/tenant/{tenant_id}/plugins/{plugin_code}/install",
             post(modules::plugin::handlers::install_plugin),
         )
@@ -1362,6 +1390,7 @@ async fn main() {
         .merge(plugin_write_routes)
         .merge(sync_read_routes)
         .merge(sync_write_routes)
+        .merge(migration_routes)
         .merge(health_routes)
         .layer(axum::middleware::from_fn_with_state(
             state.auth_state.clone(),

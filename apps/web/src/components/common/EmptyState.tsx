@@ -1,5 +1,6 @@
 import React from 'react';
 import { Box, Typography, Paper, useTheme, Button } from '@mui/material';
+import type { SxProps, Theme } from '@mui/material/styles';
 
 // ============ 类型定义 ============
 
@@ -33,12 +34,12 @@ export interface EmptyStateProps {
   children?: React.ReactNode;
 
   // TOPEMS 设计系统
-  sx?: import('@mui/material/styles').SxProps<import('@mui/material/styles').Theme>;
+  sx?: SxProps<Theme>;
 }
 
 // ============ EmptyState 组件 ============
 
-export const EmptyState: React.FC<EmptyStateProps> = ({
+const EmptyStateInner: React.FC<EmptyStateProps> = ({
   icon,
   emoji,
   title,
@@ -142,7 +143,7 @@ export const ListEmptyState: React.FC<{
   actionLabel?: string;
   onAction?: () => void;
 }> = ({ title = '暂无数据', description, actionLabel, onAction }) => (
-  <Paper sx={{ borderRadius: 2, py: 8 }}>
+  <Paper sx={{ borderRadius: 3, py: 8 }}>
     <EmptyState
       emoji='📋'
       title={title}
@@ -165,7 +166,7 @@ export const SearchEmptyState: React.FC<{
   keyword?: string;
   onClear?: () => void;
 }> = ({ keyword, onClear }) => (
-  <Paper sx={{ borderRadius: 2, py: 8 }}>
+  <Paper sx={{ borderRadius: 3, py: 8 }}>
     <EmptyState
       emoji='🔍'
       title='未找到结果'
@@ -189,7 +190,7 @@ export const SearchEmptyState: React.FC<{
 export const PermissionEmptyState: React.FC<{
   onRequest?: () => void;
 }> = ({ onRequest }) => (
-  <Paper sx={{ borderRadius: 2, py: 8 }}>
+  <Paper sx={{ borderRadius: 3, py: 8 }}>
     <EmptyState
       emoji='🔒'
       title='暂无权限'
@@ -214,7 +215,7 @@ export interface ErrorEmptyStateProps {
 }
 
 export const ErrorEmptyState: React.FC<ErrorEmptyStateProps> = ({ error, onRetry }) => (
-  <Paper sx={{ borderRadius: 2, py: 8 }}>
+  <Paper sx={{ borderRadius: 3, py: 8 }}>
     <EmptyState
       emoji='❌'
       title='加载失败'
@@ -231,4 +232,5 @@ export const ErrorEmptyState: React.FC<ErrorEmptyStateProps> = ({ error, onRetry
   </Paper>
 );
 
+export const EmptyState = React.memo(EmptyStateInner);
 export default EmptyState;

@@ -12,7 +12,7 @@ import {
 } from '@mui/material';
 import { apiLogger } from '@/utils/logger';
 import { Plus, Eye, Clock } from 'lucide-react';
-import { PageContainer } from '@/components/common';
+import { PageContainer } from '@/components/common/PageContainerV2';
 import { ListPageTemplate } from '@/components/templates';
 
 import type { RowAction, FilterConfig, ColumnDef } from '@/components/templates';
@@ -180,7 +180,7 @@ const PdmProcessPage: React.FC = () => {
         mb: 3,
       }}
     >
-      <Box sx={{ p: 2, bgcolor: '#ecfeff', borderRadius: 2 }}>
+      <Box sx={{ p: 2, bgcolor: '#ecfeff', borderRadius: 3 }}>
         <Typography
           variant='body2'
           sx={{ color: 'slate.600' }}
@@ -194,7 +194,7 @@ const PdmProcessPage: React.FC = () => {
           {stats.total}
         </Typography>
       </Box>
-      <Box sx={{ p: 2, bgcolor: 'success.lighter', borderRadius: 2 }}>
+      <Box sx={{ p: 2, bgcolor: 'success.lighter', borderRadius: 3 }}>
         <Typography
           variant='body2'
           sx={{ color: 'slate.600' }}
@@ -208,7 +208,7 @@ const PdmProcessPage: React.FC = () => {
           {stats.active}
         </Typography>
       </Box>
-      <Box sx={{ p: 2, bgcolor: 'error.lighter', borderRadius: 2 }}>
+      <Box sx={{ p: 2, bgcolor: 'error.lighter', borderRadius: 3 }}>
         <Typography
           variant='body2'
           sx={{ color: 'slate.600' }}
@@ -227,8 +227,10 @@ const PdmProcessPage: React.FC = () => {
 
   return (
     <PageContainer
-      title='生产工艺'
-      subtitle='Production Process'
+      headerProps={{
+        pageIcon: <Clock style={{ width: 20, height: 20 }} />,
+        pageGradient: 'linear-gradient(135deg, #06B6D4 0%, #0891B2 100%)',
+      }}
     >
       <ListPageTemplate<ProductionProcess>
         title=''

@@ -1,15 +1,18 @@
 //! Upload submodule - File upload handlers with multipart support
 
-use axum::{extract::{State, Multipart}, Json};
+use axum::{
+    extract::{Multipart, State},
+    Json,
+};
 use serde::Serialize;
 use sqlx::Row;
-use uuid::Uuid;
 use std::fs;
 use std::path::Path;
+use uuid::Uuid;
 
 use crate::AppState;
-use topems_shared::auth::Claims;
 use axum::Extension;
+use topems_shared::auth::Claims;
 
 #[derive(Debug, Clone, Serialize)]
 struct FileUploadResponse {
@@ -36,7 +39,10 @@ pub async fn upload_file(
     Extension(claims): Extension<Claims>,
     mut multipart: Multipart,
 ) -> Json<serde_json::Value> {
-    tracing::info!("File upload upload_file called for user: {}", claims.username);
+    tracing::info!(
+        "File upload upload_file called for user: {}",
+        claims.username
+    );
 
     let mut results: Vec<FileUploadResponse> = Vec::new();
     let mut failed: Vec<String> = Vec::new();
@@ -44,7 +50,7 @@ pub async fn upload_file(
 
     while let Some(field) = multipart.next_field().await.unwrap() {
         let name = field.name().unwrap_or("unknown").to_string();
-        
+
         if name == "folder_id" {
             if let Ok(data) = field.bytes().await {
                 let folder_id_str = String::from_utf8_lossy(&data);
@@ -54,14 +60,17 @@ pub async fn upload_file(
             }
             continue;
         }
-        
+
         if name != "file" {
             continue;
         }
 
         let file_name = field.file_name().unwrap_or("unknown").to_string();
-        let content_type = field.content_type().map(|ct| ct.to_string()).unwrap_or("application/octet-stream".to_string());
-        
+        let content_type = field
+            .content_type()
+            .map(|ct| ct.to_string())
+            .unwrap_or("application/octet-stream".to_string());
+
         let data = match field.bytes().await {
             Ok(d) => d,
             Err(e) => {
@@ -72,7 +81,7 @@ pub async fn upload_file(
         };
 
         let file_size = data.len() as u64;
-        
+
         // 检查文件大小限制（最大50MB）
         if file_size > 50 * 1024 * 1024 {
             failed.push(format!("{}: 文件大小超过限制（最大50MB）", file_name));
@@ -80,10 +89,17 @@ pub async fn upload_file(
         }
 
         // 检查文件类型（简单的白名单）
-        let allowed_types = ["image/jpeg", "image/png", "image/gif", "application/pdf", 
-                          "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
-                          "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
-                          "text/plain", "application/json", "application/zip"];
+        let allowed_types = [
+            "image/jpeg",
+            "image/png",
+            "image/gif",
+            "application/pdf",
+            "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+            "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
+            "text/plain",
+            "application/json",
+            "application/zip",
+        ];
         if !allowed_types.contains(&content_type.as_str()) {
             failed.push(format!("{}: 不支持的文件类型", file_name));
             continue;
@@ -92,7 +108,7 @@ pub async fn upload_file(
         // 生成文件ID和存储路径
         let file_id = Uuid::new_v4();
         let storage_path = format!("uploads/{}/{:x}", claims.sub, file_id);
-        
+
         // 创建存储目录
         let path = Path::new(&storage_path);
         if let Some(parent) = path.parent() {
@@ -204,7 +220,10 @@ pub async fn upload_multiple(
     Extension(claims): Extension<Claims>,
     mut multipart: Multipart,
 ) -> Json<serde_json::Value> {
-    tracing::info!("File upload upload_multiple called for user: {}", claims.username);
+    tracing::info!(
+        "File upload upload_multiple called for user: {}",
+        claims.username
+    );
 
     let mut results: Vec<FileUploadResponse> = Vec::new();
     let mut failed: Vec<String> = Vec::new();
@@ -212,7 +231,7 @@ pub async fn upload_multiple(
 
     while let Some(field) = multipart.next_field().await.unwrap() {
         let name = field.name().unwrap_or("unknown").to_string();
-        
+
         if name == "folder_id" {
             if let Ok(data) = field.bytes().await {
                 let folder_id_str = String::from_utf8_lossy(&data);
@@ -222,14 +241,17 @@ pub async fn upload_multiple(
             }
             continue;
         }
-        
+
         if name != "files" && name != "file" {
             continue;
         }
 
         let file_name = field.file_name().unwrap_or("unknown").to_string();
-        let content_type = field.content_type().map(|ct| ct.to_string()).unwrap_or("application/octet-stream".to_string());
-        
+        let content_type = field
+            .content_type()
+            .map(|ct| ct.to_string())
+            .unwrap_or("application/octet-stream".to_string());
+
         let data = match field.bytes().await {
             Ok(d) => d,
             Err(e) => {
@@ -240,7 +262,7 @@ pub async fn upload_multiple(
         };
 
         let file_size = data.len() as u64;
-        
+
         // 检查文件大小限制（最大50MB）
         if file_size > 50 * 1024 * 1024 {
             failed.push(format!("{}: 文件大小超过限制（最大50MB）", file_name));
@@ -250,7 +272,7 @@ pub async fn upload_multiple(
         // 生成文件ID和存储路径
         let file_id = Uuid::new_v4();
         let storage_path = format!("uploads/{}/{:x}", claims.sub, file_id);
-        
+
         // 创建存储目录
         let path = Path::new(&storage_path);
         if let Some(parent) = path.parent() {

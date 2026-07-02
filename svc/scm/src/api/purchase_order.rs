@@ -383,14 +383,30 @@ async fn approve_order(
     };
 
     if existing.status != "pending" {
-        return Json(api_error(400, &format!("采购订单当前状态为{}，无法审批", existing.status)));
+        return Json(api_error(
+            400,
+            &format!("采购订单当前状态为{}，无法审批", existing.status),
+        ));
     }
 
     let approver_name = req.approver_name.clone().or(Some(claims.username.clone()));
     let new_remarks = match (existing.remarks.clone(), req.remarks.clone()) {
-        (Some(old), Some(new)) => Some(format!("{} | 审批通过 ({}): {}", old, approver_name.clone().unwrap_or_default(), new)),
-        (Some(old), None) => Some(format!("{} | 审批通过 ({})", old, approver_name.clone().unwrap_or_default())),
-        (None, Some(new)) => Some(format!("审批通过 ({}): {}", approver_name.clone().unwrap_or_default(), new)),
+        (Some(old), Some(new)) => Some(format!(
+            "{} | 审批通过 ({}): {}",
+            old,
+            approver_name.clone().unwrap_or_default(),
+            new
+        )),
+        (Some(old), None) => Some(format!(
+            "{} | 审批通过 ({})",
+            old,
+            approver_name.clone().unwrap_or_default()
+        )),
+        (None, Some(new)) => Some(format!(
+            "审批通过 ({}): {}",
+            approver_name.clone().unwrap_or_default(),
+            new
+        )),
         (None, None) => Some(format!("审批通过 ({})", approver_name.unwrap_or_default())),
     };
 
@@ -478,14 +494,26 @@ async fn reject_order(
     };
 
     if existing.status != "pending" {
-        return Json(api_error(400, &format!("采购订单当前状态为{}，无法驳回", existing.status)));
+        return Json(api_error(
+            400,
+            &format!("采购订单当前状态为{}，无法驳回", existing.status),
+        ));
     }
 
     let approver_name = req.approver_name.clone().or(Some(claims.username.clone()));
     let reject_reason = req.remarks.clone().unwrap_or_default();
     let new_remarks = match existing.remarks.clone() {
-        Some(old) => Some(format!("{} | 审批驳回 ({}): {}", old, approver_name.clone().unwrap_or_default(), reject_reason)),
-        None => Some(format!("审批驳回 ({}): {}", approver_name.unwrap_or_default(), reject_reason)),
+        Some(old) => Some(format!(
+            "{} | 审批驳回 ({}): {}",
+            old,
+            approver_name.clone().unwrap_or_default(),
+            reject_reason
+        )),
+        None => Some(format!(
+            "审批驳回 ({}): {}",
+            approver_name.unwrap_or_default(),
+            reject_reason
+        )),
     };
 
     let now = Utc::now();

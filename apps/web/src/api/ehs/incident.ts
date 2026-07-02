@@ -19,43 +19,39 @@ export const incidentApi = {
     if (params?.search) queryParams.append('search', params.search);
     if (params?.status) queryParams.append('status', params.status);
 
-    return apiClient.ehs.get<PaginatedResponse<Incident>>(
-      `/api/ehs/incidents?${queryParams.toString()}`
-    );
+    return apiClient.ehs.get<PaginatedResponse<Incident>>(`/incidents?${queryParams.toString()}`);
   },
 
   getIncident: async (id: string): Promise<ApiResponse<Incident>> => {
-    return apiClient.ehs.get<Incident>(`/api/ehs/incidents/${id}`);
+    return apiClient.ehs.get<Incident>(`/incidents/${id}`);
   },
 
   createIncident: async (data: CreateIncidentRequest): Promise<ApiResponse<Incident>> => {
-    return apiClient.ehs.post<Incident>('/api/ehs/incidents', data);
+    return apiClient.ehs.post<Incident>('/incidents', data);
   },
 
   updateIncident: async (
     id: string,
     data: Partial<CreateIncidentRequest>
   ): Promise<ApiResponse<Incident>> => {
-    return apiClient.ehs.put<Incident>(`/api/ehs/incidents/${id}`, data);
+    return apiClient.ehs.put<Incident>(`/incidents/${id}`, data);
   },
 
   deleteIncident: async (id: string): Promise<ApiResponse<void>> => {
-    return apiClient.ehs.delete<void>(`/api/ehs/incidents/${id}`);
+    return apiClient.ehs.delete<void>(`/incidents/${id}`);
   },
 
   listIncidentActions: async (
     incidentId: string
   ): Promise<ApiResponse<PaginatedResponse<IncidentAction>>> => {
-    return apiClient.ehs.get<PaginatedResponse<IncidentAction>>(
-      `/api/ehs/incidents/${incidentId}/actions`
-    );
+    return apiClient.ehs.get<PaginatedResponse<IncidentAction>>(`/incidents/${incidentId}/actions`);
   },
 
   createIncidentAction: async (
     incidentId: string,
     data: CreateIncidentActionRequest
   ): Promise<ApiResponse<IncidentAction>> => {
-    return apiClient.ehs.post<IncidentAction>(`/api/ehs/incidents/${incidentId}/actions`, data);
+    return apiClient.ehs.post<IncidentAction>(`/incidents/${incidentId}/actions`, data);
   },
 
   updateIncidentAction: async (
@@ -63,10 +59,7 @@ export const incidentApi = {
     actionId: string,
     data: Partial<CreateIncidentActionRequest>
   ): Promise<ApiResponse<IncidentAction>> => {
-    return apiClient.ehs.put<IncidentAction>(
-      `/api/ehs/incidents/${incidentId}/actions/${actionId}`,
-      data
-    );
+    return apiClient.ehs.put<IncidentAction>(`/incidents/${incidentId}/actions/${actionId}`, data);
   },
 };
 

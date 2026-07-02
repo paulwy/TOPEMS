@@ -26,12 +26,21 @@ async fn login(username: &str, password: &str) -> Result<String, String> {
         .await
         .map_err(|e| format!("请求失败: {}", e))?;
 
-    let body: Value = response.json().await.map_err(|e| format!("解析响应失败: {}", e))?;
+    let body: Value = response
+        .json()
+        .await
+        .map_err(|e| format!("解析响应失败: {}", e))?;
 
     if body["success"].as_bool().unwrap_or(false) {
-        Ok(body["data"]["access_token"].as_str().unwrap_or("").to_string())
+        Ok(body["data"]["access_token"]
+            .as_str()
+            .unwrap_or("")
+            .to_string())
     } else {
-        Err(format!("登录失败: {}", body["message"].as_str().unwrap_or("未知错误")))
+        Err(format!(
+            "登录失败: {}",
+            body["message"].as_str().unwrap_or("未知错误")
+        ))
     }
 }
 
@@ -52,7 +61,9 @@ async fn auth_request(
         _ => return Err(format!("不支持的 HTTP 方法: {}", method)),
     };
 
-    let request = request.bearer_auth(token).header("Content-Type", "application/json");
+    let request = request
+        .bearer_auth(token)
+        .header("Content-Type", "application/json");
 
     let response = match body {
         Some(b) => request.json(&b),
@@ -63,7 +74,10 @@ async fn auth_request(
     .map_err(|e| format!("请求失败: {}", e))?;
 
     let status = response.status().as_u16();
-    let body: Value = response.json().await.map_err(|e| format!("解析响应失败: {}", e))?;
+    let body: Value = response
+        .json()
+        .await
+        .map_err(|e| format!("解析响应失败: {}", e))?;
 
     Ok((status, body))
 }
@@ -114,7 +128,14 @@ async fn test_hrm_002_create_employee() {
         "position": "测试岗位"
     });
 
-    let result = auth_request(&client, &token, "POST", "/api/hrm/employees", Some(new_employee)).await;
+    let result = auth_request(
+        &client,
+        &token,
+        "POST",
+        "/api/hrm/employees",
+        Some(new_employee),
+    )
+    .await;
 
     match result {
         Ok((status, _)) => {
@@ -140,7 +161,8 @@ async fn test_hrm_003_update_employee() {
 
     match result {
         Ok((_, body)) => {
-            let employees = body["data"]["employees"].as_array()
+            let employees = body["data"]["employees"]
+                .as_array()
                 .or_else(|| body["data"].as_array());
 
             if let Some(emp_list) = employees {
@@ -186,12 +208,16 @@ async fn test_hrm_004_delete_employee() {
 
     match result {
         Ok((_, body)) => {
-            let employees = body["data"]["employees"].as_array()
+            let employees = body["data"]["employees"]
+                .as_array()
                 .or_else(|| body["data"].as_array());
 
             if let Some(emp_list) = employees {
                 let test_emp = emp_list.iter().find(|e| {
-                    e["username"].as_str().map(|s| s.starts_with("hrm_")).unwrap_or(false)
+                    e["username"]
+                        .as_str()
+                        .map(|s| s.starts_with("hrm_"))
+                        .unwrap_or(false)
                 });
 
                 if let Some(emp) = test_emp {
@@ -207,7 +233,12 @@ async fn test_hrm_004_delete_employee() {
 
                         match delete_result {
                             Ok((status, _)) => {
-                                assert!(status == 200 || status == 204 || status == 403 || status == 404);
+                                assert!(
+                                    status == 200
+                                        || status == 204
+                                        || status == 403
+                                        || status == 404
+                                );
                                 tracing::info!("HRM-004 测试通过: 删除员工功能正常");
                                 return;
                             }
@@ -266,7 +297,14 @@ async fn test_hrm_006_create_department() {
         "description": "HRM测试部门"
     });
 
-    let result = auth_request(&client, &token, "POST", "/api/hrm/departments", Some(new_dept)).await;
+    let result = auth_request(
+        &client,
+        &token,
+        "POST",
+        "/api/hrm/departments",
+        Some(new_dept),
+    )
+    .await;
 
     match result {
         Ok((status, _)) => {
@@ -311,10 +349,17 @@ async fn test_hrm_008_check_in() {
     let token = login("admin", "admin123").await.expect("管理员登录失败");
     let client = create_client();
 
-    let result = auth_request(&client, &token, "POST", "/api/hrm/attendance/check-in", Some(json!({
-        "type": "check_in",
-        "location": "办公室"
-    }))).await;
+    let result = auth_request(
+        &client,
+        &token,
+        "POST",
+        "/api/hrm/attendance/check-in",
+        Some(json!({
+            "type": "check_in",
+            "location": "办公室"
+        })),
+    )
+    .await;
 
     match result {
         Ok((status, _)) => {
@@ -396,12 +441,19 @@ async fn test_hrm_011_leave_application() {
     let token = login("admin", "admin123").await.expect("管理员登录失败");
     let client = create_client();
 
-    let result = auth_request(&client, &token, "POST", "/api/hrm/leave", Some(json!({
-        "type": "annual",
-        "start_date": "2026-07-01",
-        "end_date": "2026-07-03",
-        "reason": "年度休假"
-    }))).await;
+    let result = auth_request(
+        &client,
+        &token,
+        "POST",
+        "/api/hrm/leave",
+        Some(json!({
+            "type": "annual",
+            "start_date": "2026-07-01",
+            "end_date": "2026-07-03",
+            "reason": "年度休假"
+        })),
+    )
+    .await;
 
     match result {
         Ok((status, _)) => {
@@ -428,7 +480,8 @@ async fn test_hrm_012_approve_leave() {
 
     match list_result {
         Ok((_, body)) => {
-            let leaves = body["data"]["leaves"].as_array()
+            let leaves = body["data"]["leaves"]
+                .as_array()
                 .or_else(|| body["data"].as_array());
 
             if let Some(leave_list) = leaves {
@@ -470,12 +523,19 @@ async fn test_hrm_013_performance_eval() {
     let token = login("admin", "admin123").await.expect("管理员登录失败");
     let client = create_client();
 
-    let result = auth_request(&client, &token, "POST", "/api/hrm/performance", Some(json!({
-        "employee_id": null,
-        "period": "2026-Q2",
-        "score": 90,
-        "comment": "表现优秀"
-    }))).await;
+    let result = auth_request(
+        &client,
+        &token,
+        "POST",
+        "/api/hrm/performance",
+        Some(json!({
+            "employee_id": null,
+            "period": "2026-Q2",
+            "score": 90,
+            "comment": "表现优秀"
+        })),
+    )
+    .await;
 
     match result {
         Ok((status, _)) => {

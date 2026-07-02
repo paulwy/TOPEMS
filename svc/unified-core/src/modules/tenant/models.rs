@@ -1,15 +1,15 @@
 //! Tenant data models
 
+use chrono::{DateTime, NaiveDate, Utc};
 use serde::{Deserialize, Serialize};
 use sqlx::FromRow;
-use chrono::{DateTime, Utc, NaiveDate};
 
 /// Tenant type: independent database or shared database
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq)]
 #[serde(rename_all = "lowercase")]
 pub enum TenantType {
-    Independent,  // One database per tenant
-    Shared,       // Row-level isolation via tenant_id
+    Independent, // One database per tenant
+    Shared,      // Row-level isolation via tenant_id
 }
 
 impl Default for TenantType {
@@ -53,7 +53,7 @@ impl Default for TenantStatus {
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq)]
 #[serde(rename_all = "lowercase")]
 pub enum LicenseType {
-    Perpetual,   // One-time purchase
+    Perpetual,    // One-time purchase
     Subscription, // Monthly/annual subscription
 }
 
@@ -69,70 +69,70 @@ pub struct Tenant {
     pub id: uuid::Uuid,
     pub name: String,
     pub code: String,
-    
+
     #[sqlx(rename = "tenant_type")]
     #[serde(default)]
     pub tenant_type: String,
-    
+
     #[serde(default = "default_plan")]
     pub plan: String,
-    
+
     #[serde(rename = "license_type")]
     #[serde(default)]
     pub license_type: String,
-    
+
     #[serde(rename = "license_expires_at")]
     #[serde(skip_serializing_if = "Option::is_none")]
     pub license_expires_at: Option<DateTime<Utc>>,
-    
+
     // Database config (for independent mode)
     #[serde(rename = "database_host")]
     #[serde(skip_serializing_if = "Option::is_none")]
     pub database_host: Option<String>,
-    
+
     #[serde(rename = "database_port")]
     pub database_port: Option<i32>,
-    
+
     #[serde(rename = "database_name")]
     #[serde(skip_serializing_if = "Option::is_none")]
     pub database_name: Option<String>,
-    
+
     // Quota limits
     #[serde(default = "default_quota_users")]
     pub quota_users: i32,
-    
+
     #[serde(rename = "quota_storage_gb")]
     pub quota_storage_gb: Option<i64>,
-    
+
     #[serde(rename = "quota_api_calls")]
     pub quota_api_calls: Option<i64>,
-    
+
     #[serde(rename = "quota_plugins")]
     pub quota_plugins: Option<Vec<String>>,
-    
+
     // Feature flags
     #[serde(default)]
     pub features: serde_json::Value,
-    
+
     // Status
     #[serde(default)]
     pub status: String,
-    
+
     #[serde(rename = "trial_expires_at")]
     #[serde(skip_serializing_if = "Option::is_none")]
     pub trial_expires_at: Option<DateTime<Utc>>,
-    
+
     // Metadata
     #[serde(rename = "created_at")]
     pub created_at: DateTime<Utc>,
-    
+
     #[serde(rename = "updated_at")]
     pub updated_at: DateTime<Utc>,
-    
+
     #[serde(rename = "activated_at")]
     #[serde(skip_serializing_if = "Option::is_none")]
     pub activated_at: Option<DateTime<Utc>>,
-    
+
     #[serde(rename = "suspended_at")]
     #[serde(skip_serializing_if = "Option::is_none")]
     pub suspended_at: Option<DateTime<Utc>>,
@@ -151,20 +151,20 @@ fn default_quota_users() -> i32 {
 pub struct TenantUsage {
     pub id: uuid::Uuid,
     pub tenant_id: uuid::Uuid,
-    
+
     pub users_count: i32,
     pub storage_used_mb: i64,
     pub api_calls_count: i64,
-    
+
     pub period_start: NaiveDate,
     pub period_end: NaiveDate,
-    
+
     // Using i64 (cents) instead of Decimal for SQL compatibility
     pub base_cost_cents: Option<i64>,
     pub overage_cost_cents: Option<i64>,
     pub plugin_cost_cents: Option<i64>,
     pub total_cost_cents: Option<i64>,
-    
+
     pub created_at: DateTime<Utc>,
 }
 

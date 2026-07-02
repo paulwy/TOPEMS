@@ -258,7 +258,7 @@ export const TimelinePageTemplate: React.FC<TimelinePageTemplateProps> = ({
                 transform: 'translateY(-50%)',
                 width: 18,
                 height: 18,
-                color: 'text.secondary',
+                color: theme.palette.text.secondary,
               }}
             />
             <input
@@ -430,7 +430,7 @@ export const TimelinePageTemplate: React.FC<TimelinePageTemplateProps> = ({
                   )}
                   {node.location && (
                     <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5 }}>
-                      <MapPin style={{ width: 12, height: 12, color: 'text.secondary' }} />
+                      <MapPin style={{ width: 12, height: 12, color: theme.palette.text.secondary }} />
                       <Typography
                         variant='caption'
                         color='text.secondary'
@@ -643,7 +643,7 @@ export const TimelinePageTemplate: React.FC<TimelinePageTemplateProps> = ({
           ) : nodes.length === 0 ? (
             <Box sx={{ p: 8, textAlign: 'center' }}>
               <Calendar
-                style={{ width: 48, height: 48, color: 'text.secondary', margin: '0 auto 16px' }}
+                style={{ width: 48, height: 48, color: theme.palette.text.secondary, margin: '0 auto 16px' }}
               />
               <Typography
                 variant='body1'

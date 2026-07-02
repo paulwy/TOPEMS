@@ -23,29 +23,29 @@ export const productionRecordApi = {
     if (params?.status) searchParams.set('status', params.status);
 
     const queryString = searchParams.toString();
-    return apiClient.mes.get(`/api/mes/records${queryString ? `?${queryString}` : ''}`);
+    return apiClient.mes.get(`/records${queryString ? `?${queryString}` : ''}`);
   },
 
   async get(id: string): Promise<ApiResponse<ProductionRecord>> {
-    return apiClient.mes.get(`/api/mes/records/${id}`);
+    return apiClient.mes.get(`/records/${id}`);
   },
 
   async create(data: CreateProductionRecordRequest): Promise<ApiResponse<ProductionRecord>> {
-    return apiClient.mes.post('/api/mes/records', data);
+    return apiClient.mes.post('/records', data);
   },
 
   async update(
     id: string,
     data: UpdateProductionRecordRequest
   ): Promise<ApiResponse<ProductionRecord>> {
-    return apiClient.mes.put(`/api/mes/records/${id}`, data);
+    return apiClient.mes.put(`/records/${id}`, data);
   },
 
   async delete(id: string): Promise<ApiResponse<string>> {
-    return apiClient.mes.delete(`/api/mes/records/${id}`);
+    return apiClient.mes.delete(`/records/${id}`);
   },
 
   async complete(id: string, data: CompleteRecordRequest): Promise<ApiResponse<ProductionRecord>> {
-    return apiClient.mes.put(`/api/mes/records/${id}/complete`, data);
+    return apiClient.mes.put(`/records/${id}/complete`, data);
   },
 };

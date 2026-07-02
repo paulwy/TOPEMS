@@ -396,9 +396,8 @@ const RsReleasePage: React.FC = () => {
   ];
 
   return (
-    <PageContainer title='发布管理'>
+    <PageContainer>
       <ListPageTemplate
-        title=''
         columns={columns}
         data={filteredReleases}
         loading={loading}

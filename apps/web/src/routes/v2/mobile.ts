@@ -1,4 +1,4 @@
-import { lazyWithRetry } from '../utils';
+import { lazyWithRetry } from './types';
 import type { RouteModuleConfig } from './types';
 
 const MobileHomePage = lazyWithRetry(
@@ -70,13 +70,6 @@ export const mobileModuleConfig: RouteModuleConfig = {
       template: 'dashboard',
       group: 'home',
       requiredPermissions: ['mobile:read'],
-      nav: {
-        label: '首页',
-        icon: 'Home',
-        order: 0,
-        group: 'home',
-        showInTabs: true,
-      },
     },
     {
       path: '/mobile/workbench',
@@ -87,12 +80,6 @@ export const mobileModuleConfig: RouteModuleConfig = {
       template: 'dashboard',
       group: 'home',
       requiredPermissions: ['mobile:read'],
-      nav: {
-        label: '工作台',
-        icon: 'LayoutDashboard',
-        order: 1,
-        group: 'home',
-      },
     },
     {
       path: '/mobile/attendance',
@@ -103,13 +90,6 @@ export const mobileModuleConfig: RouteModuleConfig = {
       template: 'form',
       group: 'attendance',
       requiredPermissions: ['mobile:attendance:read'],
-      nav: {
-        label: '考勤打卡',
-        icon: 'Clock',
-        order: 1,
-        group: 'attendance',
-        showInTabs: true,
-      },
     },
     {
       path: '/mobile/tasks',
@@ -120,13 +100,6 @@ export const mobileModuleConfig: RouteModuleConfig = {
       template: 'list',
       group: 'tasks',
       requiredPermissions: ['mobile:task:read'],
-      nav: {
-        label: '我的任务',
-        icon: 'CheckSquare',
-        order: 1,
-        group: 'tasks',
-        showInTabs: true,
-      },
     },
     {
       path: '/mobile/approvals',
@@ -137,12 +110,6 @@ export const mobileModuleConfig: RouteModuleConfig = {
       template: 'list',
       group: 'tasks',
       requiredPermissions: ['mobile:approval:read'],
-      nav: {
-        label: '审批中心',
-        icon: 'FileCheck',
-        order: 2,
-        group: 'tasks',
-      },
     },
     {
       path: '/mobile/inventory',
@@ -153,13 +120,6 @@ export const mobileModuleConfig: RouteModuleConfig = {
       template: 'list',
       group: 'business',
       requiredPermissions: ['mobile:inventory:read'],
-      nav: {
-        label: '库存查询',
-        icon: 'Package',
-        order: 1,
-        group: 'business',
-        showInTabs: true,
-      },
     },
     {
       path: '/mobile/quality',
@@ -170,12 +130,6 @@ export const mobileModuleConfig: RouteModuleConfig = {
       template: 'list',
       group: 'business',
       requiredPermissions: ['mobile:quality:read'],
-      nav: {
-        label: '质量巡检',
-        icon: 'ClipboardCheck',
-        order: 2,
-        group: 'business',
-      },
     },
     {
       path: '/mobile/production',
@@ -186,12 +140,6 @@ export const mobileModuleConfig: RouteModuleConfig = {
       template: 'form',
       group: 'business',
       requiredPermissions: ['mobile:production:read'],
-      nav: {
-        label: '生产报工',
-        icon: 'Factory',
-        order: 3,
-        group: 'business',
-      },
     },
     {
       path: '/mobile/scan',
@@ -202,13 +150,6 @@ export const mobileModuleConfig: RouteModuleConfig = {
       template: 'form',
       group: 'tools',
       requiredPermissions: ['mobile:scan:read'],
-      nav: {
-        label: '扫码功能',
-        icon: 'Scan',
-        order: 1,
-        group: 'tools',
-        showInTabs: true,
-      },
     },
     {
       path: '/mobile/notifications',
@@ -219,12 +160,6 @@ export const mobileModuleConfig: RouteModuleConfig = {
       template: 'list',
       group: 'tools',
       requiredPermissions: ['mobile:notification:read'],
-      nav: {
-        label: '消息通知',
-        icon: 'Bell',
-        order: 2,
-        group: 'tools',
-      },
     },
     {
       path: '/mobile/profile',
@@ -235,13 +170,6 @@ export const mobileModuleConfig: RouteModuleConfig = {
       template: 'detail',
       group: 'settings',
       requiredPermissions: ['mobile:read'],
-      nav: {
-        label: '个人中心',
-        icon: 'User',
-        order: 1,
-        group: 'settings',
-        showInTabs: true,
-      },
     },
     {
       path: '/mobile/settings',
@@ -252,12 +180,6 @@ export const mobileModuleConfig: RouteModuleConfig = {
       template: 'settings',
       group: 'settings',
       requiredPermissions: ['mobile:admin'],
-      nav: {
-        label: '应用设置',
-        icon: 'Settings',
-        order: 2,
-        group: 'settings',
-      },
     },
   ],
 };

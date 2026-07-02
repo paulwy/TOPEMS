@@ -9,27 +9,27 @@ import type {
 
 export const contactApi = {
   list: async (params?: ContactQueryParams): Promise<ApiResponse<PaginatedResponse<Contact>>> => {
-    return apiClient.crm.get('/api/crm/contacts', { params });
+    return apiClient.crm.get('/contacts', { params });
   },
 
   create: async (data: CreateContactRequest): Promise<ApiResponse<Contact>> => {
-    return apiClient.crm.post('/api/crm/contacts', data);
+    return apiClient.crm.post('/contacts', data);
   },
 
   get: async (id: string): Promise<ApiResponse<Contact>> => {
-    return apiClient.crm.get(`/api/crm/contacts/${id}`);
+    return apiClient.crm.get(`/contacts/${id}`);
   },
 
   update: async (id: string, data: UpdateContactRequest): Promise<ApiResponse<Contact>> => {
-    return apiClient.crm.put(`/api/crm/contacts/${id}`, data);
+    return apiClient.crm.put(`/contacts/${id}`, data);
   },
 
   delete: async (id: string): Promise<ApiResponse<void>> => {
-    return apiClient.crm.delete(`/api/crm/contacts/${id}`);
+    return apiClient.crm.delete(`/contacts/${id}`);
   },
 
   batchDelete: async (ids: string[]): Promise<ApiResponse<void>> => {
-    return apiClient.crm.post('/api/crm/contacts/batch-delete', { ids });
+    return apiClient.crm.post('/contacts/batch-delete', { ids });
   },
 };
 

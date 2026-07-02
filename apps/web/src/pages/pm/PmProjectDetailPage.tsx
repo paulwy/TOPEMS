@@ -44,9 +44,9 @@ const STATUS_LABELS: Record<string, string> = {
 
 const STATUS_COLORS: Record<string, { bgcolor: string; color: string }> = {
   active: { bgcolor: 'success.lighter', color: '#166534' },
-  completed: { bgcolor: '#dbeafe', color: '#1e40af' },
-  pending: { bgcolor: '#fef9c3', color: '#a16207' },
-  approved: { bgcolor: '#f3e8ff', color: 'secondary.dark' },
+  completed: { bgcolor: 'primary.100', color: 'primary.800' },
+  pending: { bgcolor: 'warning.100', color: '#a16207' },
+  approved: { bgcolor: 'secondary.100', color: 'secondary.dark' },
   cancelled: { bgcolor: 'grey.100', color: 'grey.700' },
   draft: { bgcolor: 'grey.100', color: 'text.secondary' },
 };
@@ -59,7 +59,7 @@ const RISK_LABELS: Record<string, string> = {
 
 const RISK_COLORS: Record<string, { bgcolor: string; color: string }> = {
   high: { bgcolor: 'error.lighter', color: '#991b1b' },
-  medium: { bgcolor: '#fef9c3', color: '#a16207' },
+  medium: { bgcolor: 'warning.100', color: '#a16207' },
   low: { bgcolor: 'success.lighter', color: '#166534' },
 };
 
@@ -838,7 +838,7 @@ const PmProjectDetailPage: React.FC = () => {
                 gap: 2,
               }}
             >
-              <Box sx={{ p: 2, bgcolor: 'primary.light', borderRadius: 2 }}>
+              <Box sx={{ p: 2, bgcolor: 'primary.light', borderRadius: 3 }}>
                 <Typography
                   variant='body2'
                   sx={{ color: 'grey.500', mb: 0.5 }}
@@ -852,7 +852,7 @@ const PmProjectDetailPage: React.FC = () => {
                   -
                 </Typography>
               </Box>
-              <Box sx={{ p: 2, bgcolor: 'success.light', borderRadius: 2 }}>
+              <Box sx={{ p: 2, bgcolor: 'success.light', borderRadius: 3 }}>
                 <Typography
                   variant='body2'
                   sx={{ color: 'grey.500', mb: 0.5 }}
@@ -866,7 +866,7 @@ const PmProjectDetailPage: React.FC = () => {
                   -
                 </Typography>
               </Box>
-              <Box sx={{ p: 2, bgcolor: 'warning.light', borderRadius: 2 }}>
+              <Box sx={{ p: 2, bgcolor: 'warning.light', borderRadius: 3 }}>
                 <Typography
                   variant='body2'
                   sx={{ color: 'grey.500', mb: 0.5 }}
@@ -880,7 +880,7 @@ const PmProjectDetailPage: React.FC = () => {
                   -
                 </Typography>
               </Box>
-              <Box sx={{ p: 2, bgcolor: 'secondary.light', borderRadius: 2 }}>
+              <Box sx={{ p: 2, bgcolor: 'secondary.light', borderRadius: 3 }}>
                 <Typography
                   variant='body2'
                   sx={{ color: 'grey.500', mb: 0.5 }}
@@ -894,7 +894,7 @@ const PmProjectDetailPage: React.FC = () => {
                   -
                 </Typography>
               </Box>
-              <Box sx={{ p: 2, bgcolor: 'grey.50', borderRadius: 2 }}>
+              <Box sx={{ p: 2, bgcolor: 'grey.50', borderRadius: 3 }}>
                 <Typography
                   variant='body2'
                   sx={{ color: 'grey.500', mb: 0.5 }}

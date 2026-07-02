@@ -1,11 +1,12 @@
 //! Instance submodule - Workflow instance management handlers
 
-use axum::{extract::{Path, State}, Json};
 use crate::AppState;
+use axum::{
+    extract::{Path, State},
+    Json,
+};
 
-pub async fn list_instances(
-    State(_state): State<AppState>,
-) -> Json<serde_json::Value> {
+pub async fn list_instances(State(_state): State<AppState>) -> Json<serde_json::Value> {
     tracing::info!("Flow instance list_instances called");
     Json(serde_json::json!({
         "success": true,

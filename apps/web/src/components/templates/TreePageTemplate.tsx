@@ -470,7 +470,7 @@ export const TreePageTemplate: React.FC<TreePageTemplateProps> = ({
     if (!stats || stats.length === 0) return null;
 
     return (
-      <Paper sx={{ mb: 3, p: 2, borderRadius: 2 }}>
+      <Paper sx={{ mb: 3, p: 2, borderRadius: 3 }}>
         <Box
           sx={{
             display: 'grid',
@@ -490,7 +490,7 @@ export const TreePageTemplate: React.FC<TreePageTemplateProps> = ({
                 gap: 2,
                 p: 2,
                 bgcolor: 'grey.50',
-                borderRadius: 2,
+                borderRadius: 3,
               }}
             >
               {stat.icon && (
@@ -623,7 +623,7 @@ export const TreePageTemplate: React.FC<TreePageTemplateProps> = ({
       {customToolbar && <Box sx={{ mb: 2 }}>{customToolbar}</Box>}
 
       {/* 主内容区 - 树形+详情 */}
-      <Paper sx={{ borderRadius: 2, overflow: 'hidden' }}>
+      <Paper sx={{ borderRadius: 3, overflow: 'hidden' }}>
         <Box
           sx={{
             display: 'grid',

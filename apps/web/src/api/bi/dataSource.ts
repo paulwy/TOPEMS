@@ -8,29 +8,29 @@ export async function listDataSources(params?: {
   type?: string;
   status?: string;
 }) {
-  return await apiClient.bi.get('/api/bi/data-sources', { params });
+  return await apiClient.bi.get('/data-sources', { params });
 }
 
 export async function getDataSource(id: string) {
-  return await apiClient.bi.get(`/api/bi/data-sources/${id}`);
+  return await apiClient.bi.get(`/data-sources/${id}`);
 }
 
 export async function createDataSource(data: Partial<DataSource>) {
-  return await apiClient.bi.post('/api/bi/data-sources', data);
+  return await apiClient.bi.post('/data-sources', data);
 }
 
 export async function updateDataSource(id: string, data: Partial<DataSource>) {
-  return await apiClient.bi.put(`/api/bi/data-sources/${id}`, data);
+  return await apiClient.bi.put(`/data-sources/${id}`, data);
 }
 
 export async function deleteDataSource(id: string) {
-  return await apiClient.bi.delete(`/api/bi/data-sources/${id}`);
+  return await apiClient.bi.delete(`/data-sources/${id}`);
 }
 
 export async function testDataSource(id: string) {
-  return await apiClient.bi.post(`/api/bi/data-sources/${id}/test`);
+  return await apiClient.bi.post(`/data-sources/${id}/test`);
 }
 
 export async function refreshDataSource(id: string) {
-  return await apiClient.bi.post(`/api/bi/data-sources/${id}/refresh`);
+  return await apiClient.bi.post(`/data-sources/${id}/refresh`);
 }

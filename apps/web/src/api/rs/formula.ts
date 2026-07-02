@@ -13,7 +13,7 @@ export const formulaApi = {
     project_id?: string;
     status?: string;
   }): Promise<ApiResponse<Formula[]>> => {
-    let url = '/api/rs/formulas';
+    let url = '/formulas';
     if (params) {
       const searchParams = new URLSearchParams();
       Object.entries(params).forEach(([key, value]) => {
@@ -30,44 +30,44 @@ export const formulaApi = {
   },
 
   getFormula: async (id: string): Promise<ApiResponse<Formula>> => {
-    return apiClient.rs.get(`/api/rs/formulas/${id}`);
+    return apiClient.rs.get(`/formulas/${id}`);
   },
 
   createFormula: async (data: CreateFormulaRequest): Promise<ApiResponse<Formula>> => {
-    return apiClient.rs.post('/api/rs/formulas', data);
+    return apiClient.rs.post('/formulas', data);
   },
 
   updateFormula: async (id: string, data: UpdateFormulaRequest): Promise<ApiResponse<Formula>> => {
-    return apiClient.rs.put(`/api/rs/formulas/${id}`, data);
+    return apiClient.rs.put(`/formulas/${id}`, data);
   },
 
   deleteFormula: async (id: string): Promise<ApiResponse<boolean>> => {
-    return apiClient.rs.delete(`/api/rs/formulas/${id}`);
+    return apiClient.rs.delete(`/formulas/${id}`);
   },
 
   listVersions: async (formulaId: string): Promise<ApiResponse<FormulaVersion[]>> => {
-    return apiClient.rs.get(`/api/rs/formulas/${formulaId}/versions`);
+    return apiClient.rs.get(`/formulas/${formulaId}/versions`);
   },
 
   listFormulaVersions: async (formulaId: string): Promise<ApiResponse<FormulaVersion[]>> => {
-    return apiClient.rs.get(`/api/rs/formulas/${formulaId}/versions`);
+    return apiClient.rs.get(`/formulas/${formulaId}/versions`);
   },
 
   createVersion: async (
     formulaId: string,
     data: CreateFormulaVersionRequest
   ): Promise<ApiResponse<FormulaVersion>> => {
-    return apiClient.rs.post(`/api/rs/formulas/${formulaId}/versions`, data);
+    return apiClient.rs.post(`/formulas/${formulaId}/versions`, data);
   },
 
   createFormulaVersion: async (
     formulaId: string,
     data: CreateFormulaVersionRequest
   ): Promise<ApiResponse<FormulaVersion>> => {
-    return apiClient.rs.post(`/api/rs/formulas/${formulaId}/versions`, data);
+    return apiClient.rs.post(`/formulas/${formulaId}/versions`, data);
   },
 
   approveFormula: async (id: string): Promise<ApiResponse<Formula>> => {
-    return apiClient.rs.post(`/api/rs/formulas/${id}/approve`, {});
+    return apiClient.rs.post(`/formulas/${id}/approve`, {});
   },
 };

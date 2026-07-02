@@ -1,4 +1,5 @@
 import type { Meta, StoryObj } from '@storybook/react-vite';
+import { useTheme } from '@mui/material';
 import { useState } from 'react';
 
 import { LoadingSpinner, LoadingOverlay, SkeletonLoader } from './LoadingSpinner';
@@ -45,6 +46,7 @@ export const SpinnerSizes: Story = {
 
 export const OverlayWithToggle: Story = {
   render: () => {
+  const theme = useTheme();
     const [isLoading, setIsLoading] = useState(true);
 
     return (
@@ -57,7 +59,7 @@ export const OverlayWithToggle: Story = {
             isLoading={isLoading}
             message='加载中...'
           >
-            <div style={{ padding: '16px', background: 'grey.100', borderRadius: '8px' }}>
+            <div style={{ padding: '16px', background: theme.palette.grey[100], borderRadius: '8px' }}>
               内容区域
             </div>
           </LoadingOverlay>

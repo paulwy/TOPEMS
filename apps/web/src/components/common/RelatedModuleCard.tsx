@@ -6,6 +6,7 @@
  */
 import React, { useState } from 'react';
 import { Box, Typography, Card, CardContent, Button, Chip, Skeleton, Divider } from '@mui/material';
+import type { SxProps, Theme } from '@mui/material/styles';
 import { ExternalLink, ChevronRight, TrendingUp, ArrowRight } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { usePlugins } from '@/context/PluginContext';
@@ -37,10 +38,10 @@ export interface RelatedModuleCardProps {
   /** 加载状态 */
   loading?: boolean;
   /** 自定义 sx */
-  sx?: import('@mui/material/styles').SxProps<import('@mui/material/styles').Theme>;
+  sx?: SxProps<Theme>;
 }
 
-export const RelatedModuleCard: React.FC<RelatedModuleCardProps> = ({
+const RelatedModuleCardInner: React.FC<RelatedModuleCardProps> = ({
   moduleCode,
   moduleName,
   moduleIcon,
@@ -150,4 +151,5 @@ export const RelatedModuleCard: React.FC<RelatedModuleCardProps> = ({
   );
 };
 
+export const RelatedModuleCard = React.memo(RelatedModuleCardInner);
 export default RelatedModuleCard;

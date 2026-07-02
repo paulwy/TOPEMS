@@ -193,24 +193,24 @@ const QmsApqpPage: React.FC = () => {
 
   const getStatusBadge = (status?: string) => {
     const statusMap: Record<string, { bg: string; color: string; label: string }> = {
-      planning: { bg: '#dbeafe', color: 'primary.dark', label: '策划中' },
-      策划中: { bg: '#dbeafe', color: 'primary.dark', label: '策划中' },
-      developing: { bg: '#fef9c3', color: '#ca8a04', label: '开发中' },
-      开发中: { bg: '#fef9c3', color: '#ca8a04', label: '开发中' },
-      verifying: { bg: '#f3e8ff', color: 'secondary.dark', label: '验证中' },
-      验证中: { bg: '#f3e8ff', color: 'secondary.dark', label: '验证中' },
+      planning: { bg: 'primary.100', color: 'primary.dark', label: '策划中' },
+      策划中: { bg: 'primary.100', color: 'primary.dark', label: '策划中' },
+      developing: { bg: 'warning.100', color: '#ca8a04', label: '开发中' },
+      开发中: { bg: 'warning.100', color: '#ca8a04', label: '开发中' },
+      verifying: { bg: 'secondary.100', color: 'secondary.dark', label: '验证中' },
+      验证中: { bg: 'secondary.100', color: 'secondary.dark', label: '验证中' },
       released: { bg: 'success.lighter', color: 'success.dark', label: '已发布' },
       已发布: { bg: 'success.lighter', color: 'success.dark', label: '已发布' },
       closed: { bg: 'grey.100', color: 'text.secondary', label: '已关闭' },
       已关闭: { bg: 'grey.100', color: 'text.secondary', label: '已关闭' },
-      pending: { bg: '#f3f4f6', color: '#6b7280', label: '待开始' },
-      待开始: { bg: '#f3f4f6', color: '#6b7280', label: '待开始' },
-      in_progress: { bg: '#fef9c3', color: '#ca8a04', label: '进行中' },
-      进行中: { bg: '#fef9c3', color: '#ca8a04', label: '进行中' },
+      pending: { bg: 'grey.100', color: 'grey.500', label: '待开始' },
+      待开始: { bg: 'grey.100', color: 'grey.500', label: '待开始' },
+      in_progress: { bg: 'warning.100', color: '#ca8a04', label: '进行中' },
+      进行中: { bg: 'warning.100', color: '#ca8a04', label: '进行中' },
       completed: { bg: 'success.lighter', color: 'success.dark', label: '已完成' },
       已完成: { bg: 'success.lighter', color: 'success.dark', label: '已完成' },
       open: { bg: 'error.lighter', color: 'error.dark', label: '开放' },
-      mitigated: { bg: '#fef9c3', color: '#ca8a04', label: '已缓解' },
+      mitigated: { bg: 'warning.100', color: '#ca8a04', label: '已缓解' },
       closed_risk: { bg: 'success.lighter', color: 'success.dark', label: '已关闭' },
     };
     const item = statusMap[status || ''] || {
@@ -230,7 +230,7 @@ const QmsApqpPage: React.FC = () => {
   const getRiskLevelBadge = (level?: string) => {
     const levelMap: Record<string, { bg: string; color: string; label: string }> = {
       low: { bg: 'success.lighter', color: 'success.dark', label: '低' },
-      medium: { bg: '#fef9c3', color: '#ca8a04', label: '中' },
+      medium: { bg: 'warning.100', color: '#ca8a04', label: '中' },
       high: { bg: 'error.lighter', color: 'error.dark', label: '高' },
     };
     const item = levelMap[level || ''] || {
@@ -270,7 +270,7 @@ const QmsApqpPage: React.FC = () => {
         <Chip
           label={`中 (${rpn})`}
           size='small'
-          sx={{ backgroundColor: '#fef9c3', color: '#ca8a04' }}
+          sx={{ backgroundColor: 'warning.100', color: '#ca8a04' }}
         />
       );
     }
@@ -615,7 +615,7 @@ const QmsApqpPage: React.FC = () => {
                   }}
                 >
                   <Box>
-                    <Typography sx={{ color: '#ddd6fe', fontSize: '0.875rem' }}>验证中</Typography>
+                    <Typography sx={{ color: 'secondary.100', fontSize: '0.875rem' }}>验证中</Typography>
                     <Typography
                       variant='h4'
                       sx={{ fontWeight: 700, mt: 0.5 }}
@@ -623,7 +623,7 @@ const QmsApqpPage: React.FC = () => {
                       {stats.verifying}
                     </Typography>
                   </Box>
-                  <CheckCircle sx={{ width: 40, height: 40, color: '#ddd6fe' }} />
+                  <CheckCircle sx={{ width: 40, height: 40, color: 'secondary.100' }} />
                 </Box>
               </CardContent>
             </Card>
@@ -867,7 +867,7 @@ const QmsApqpPage: React.FC = () => {
                   </Typography>
                   <Typography
                     variant='body1'
-                    sx={{ fontWeight: 600, color: '#1e40af', mt: 0.5 }}
+                    sx={{ fontWeight: 600, color: 'primary.800', mt: 0.5 }}
                   >
                     {selectedProject.project_no}
                   </Typography>

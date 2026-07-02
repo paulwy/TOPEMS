@@ -11,21 +11,21 @@ export const purchaseItemApi = {
   list: async (
     params?: PurchaseItemQueryParams
   ): Promise<ApiResponse<PaginatedResponse<PurchaseItem>>> => {
-    return apiClient.scm.get('/api/scm/purchase-items', { params });
+    return apiClient.scm.get('/purchase-items', { params });
   },
 
   create: async (data: CreatePurchaseItemRequest): Promise<ApiResponse<PurchaseItem>> => {
-    return apiClient.scm.post('/api/scm/purchase-items', data);
+    return apiClient.scm.post('/purchase-items', data);
   },
 
   get: async (id: string): Promise<ApiResponse<PurchaseItem>> => {
-    return apiClient.scm.get(`/api/scm/purchase-items/${id}`);
+    return apiClient.scm.get(`/purchase-items/${id}`);
   },
 
   update: async (
     id: string,
     data: UpdatePurchaseItemRequest
   ): Promise<ApiResponse<PurchaseItem>> => {
-    return apiClient.scm.put(`/api/scm/purchase-items/${id}`, data);
+    return apiClient.scm.put(`/purchase-items/${id}`, data);
   },
 };

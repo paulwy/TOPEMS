@@ -23,11 +23,11 @@ export const ContactCard: React.FC<ContactCardProps> = ({ contact, onClick }) =>
   const getColor = () => {
     switch (contact.contact_type) {
       case 'EMPLOYEE':
-        return { bg: '#dbeafe', color: 'primary.dark' };
+        return { bg: 'primary.100', color: 'primary.dark' };
       case 'DEPARTMENT':
         return { bg: 'success.lighter', color: 'success.dark' };
       case 'COMPANY':
-        return { bg: '#f3e8ff', color: '#9333ea' };
+        return { bg: 'secondary.100', color: '#9333ea' };
       default:
         return { bg: 'grey.100', color: 'text.secondary' };
     }
@@ -37,7 +37,15 @@ export const ContactCard: React.FC<ContactCardProps> = ({ contact, onClick }) =>
 
   return (
     <div
+      role='button'
+      tabIndex={0}
       onClick={onClick}
+      onKeyDown={(e) => {
+        if (e.key === 'Enter' || e.key === ' ') {
+          e.preventDefault();
+          onClick();
+        }
+      }}
       style={{
         backgroundColor: 'white',
         borderRadius: 8,
@@ -95,7 +103,7 @@ export const ContactCard: React.FC<ContactCardProps> = ({ contact, onClick }) =>
             <p
               style={{
                 fontSize: 14,
-                color: '#94a3b8',
+                color: 'grey.400',
                 margin: 0,
                 overflow: 'hidden',
                 textOverflow: 'ellipsis',
@@ -152,7 +160,7 @@ export const ContactCard: React.FC<ContactCardProps> = ({ contact, onClick }) =>
               fontSize: 12,
               fontWeight: 500,
               ...(contact.status === 'active'
-                ? { backgroundColor: 'success.lighter', color: '#15803d' }
+                ? { backgroundColor: 'success.lighter', color: 'success.700' }
                 : { backgroundColor: 'error.lighter', color: 'error.darker' }),
             }}
           >

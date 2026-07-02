@@ -26,7 +26,47 @@ import { useNavigate } from 'react-router-dom';
 import { ListPageTemplate } from '@/components/templates';
 
 import type { RowAction, FilterConfig, ColumnDef } from '@/components/templates';
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 
+/**
+ * TODO: Phase 7-4 -- 虚拟滚动优化
+ *
+ * 当列表数据超过 100 条时，建议使用虚拟滚动提升渲染性能:
+ *
+ * 方案 1: @tanstack/react-virtual
+ *   import { useVirtualizer } from '@tanstack/react-virtual';
+ *   const virtualizer = useVirtualizer({ count: data.length, getScrollElement: () => parentRef.current });
+ *
+ * 方案 2: react-virtuoso (MUI 友好)
+ *   import { TableVirtuoso } from 'react-virtuoso';
+ *   <TableVirtuoso data={data} components={{ TableBody, TableRow, TableCell }} />
+ *
+ * 当前预估数据量: 客户列表 (企业级数据量)
+ */
+
+/**
+ * TODO: Phase 7-2 — React Query 迁移
+ *
+ * 模块: 客户管理 (CustomerManagementPage)
+ *
+ * 1. 将 useState(loading) + useState(data) + useEffect(fetch) 替换为 useQuery:
+ *    const { data: response, isLoading, error, refetch } = useQuery({
+ *      queryKey: ['crm-customers', page, rowsPerPage, searchText],
+ *      queryFn: () => crmApi.getList({ page: page + 1, pageSize: rowsPerPage, keyword: searchText }),
+ *      placeholderData: (prev) => prev,
+ *    });
+ *    const data = response?.data?.items || [];
+ *    const total = response?.data?.total || 0;
+ *
+ * 2. 将 create/update/delete handler 中的 setState + API 调用替换为 useMutation:
+ *    const queryClient = useQueryClient();
+ *    const deleteMutation = useMutation({
+ *      mutationFn: (id: string) => crmApi.delete(id),
+ *      onSuccess: () => queryClient.invalidateQueries({ queryKey: ['crm-customers'] }),
+ *    });
+ *
+ * 3. 保留 UI 状态（page, rowsPerPage, searchText, dialogOpen 等）的 useState
+ */
 const customerColumns = [
   { key: 'name', title: '客户名称' },
   { key: 'code', title: '客户代码' },
@@ -567,6 +607,8 @@ const CustomerManagementPage: React.FC = () => {
     <PageContainer
       title='客户管理'
       subtitle='管理客户信息，包括客户基本信息、联系方式、分类和标签等'
+      autoTitle
+      autoBreadcrumbs
       headerProps={{
         pageIcon: <Users style={{ width: 20, height: 20 }} />,
         pageGradient: 'linear-gradient(135deg, #3B82F6, #1D4ED8)',
@@ -995,3 +1037,5 @@ const CustomerManagementPage: React.FC = () => {
 };
 
 export default CustomerManagementPage;
+
+// Phase 7-2: React Query migration tagged

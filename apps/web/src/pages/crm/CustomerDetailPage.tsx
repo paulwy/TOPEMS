@@ -552,7 +552,7 @@ const CustomerDetailPage: React.FC = () => {
             gap: 2,
           }}
         >
-          <Box sx={{ bgcolor: 'grey.100', borderRadius: 2, p: 2 }}>
+          <Box sx={{ bgcolor: 'grey.100', borderRadius: 3, p: 2 }}>
             <Typography
               variant='body2'
               color='text.secondary'
@@ -563,7 +563,7 @@ const CustomerDetailPage: React.FC = () => {
               {new Date(customer.created_at).toLocaleString()}
             </Typography>
           </Box>
-          <Box sx={{ bgcolor: 'grey.100', borderRadius: 2, p: 2 }}>
+          <Box sx={{ bgcolor: 'grey.100', borderRadius: 3, p: 2 }}>
             <Typography
               variant='body2'
               color='text.secondary'
@@ -574,7 +574,7 @@ const CustomerDetailPage: React.FC = () => {
               {new Date(customer.updated_at).toLocaleString()}
             </Typography>
           </Box>
-          <Box sx={{ bgcolor: 'grey.100', borderRadius: 2, p: 2 }}>
+          <Box sx={{ bgcolor: 'grey.100', borderRadius: 3, p: 2 }}>
             <Typography
               variant='body2'
               color='text.secondary'
@@ -592,7 +592,7 @@ const CustomerDetailPage: React.FC = () => {
               {customer.id.substring(0, 8)}...
             </Typography>
           </Box>
-          <Box sx={{ bgcolor: 'grey.100', borderRadius: 2, p: 2 }}>
+          <Box sx={{ bgcolor: 'grey.100', borderRadius: 3, p: 2 }}>
             <Typography
               variant='body2'
               color='text.secondary'

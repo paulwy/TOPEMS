@@ -19,8 +19,7 @@ import { contractApi, contractRenewalApi, employeeApi } from '@/api/hrm';
 import { ListPageTemplate, MuiStatCard as StatCard } from '@/components';
 import type { ColumnDef, RowAction } from '@/components';
 
-import {
-  Card,
+import {Card,
   CardContent,
   CardHeader,
   Typography,
@@ -36,8 +35,7 @@ import {
   FormLabel,
   Alert,
   Snackbar,
-  Chip,
-} from '@mui/material';
+  Chip, useTheme} from '@mui/material';
 import { ActionButton } from '@/components/common/ActionButton';
 import { FormField } from '@/components/common/FormField';
 import { FormSelect } from '@/components/common/FormSelect';
@@ -106,6 +104,7 @@ interface RenewFormState {
 }
 
 export default function ContractManagementPage() {
+  const theme = useTheme();
   const [loading, setLoading] = useState(false);
   const [data, setData] = useState<PaginatedResult<Contract>>({
     items: [],
@@ -515,7 +514,7 @@ export default function ContractManagementPage() {
           >
             <FileTextIcon
               size={16}
-              style={{ color: 'primary.main' }}
+              style={{ color: theme.palette.primary.main }}
             />
             <Typography sx={{ fontWeight: 500, color: 'grey.900' }}>
               {row.contract_no || '-'}
@@ -556,7 +555,7 @@ export default function ContractManagementPage() {
               >
                 <Calendar
                   size={14}
-                  style={{ color: 'text.disabled' }}
+                  style={{ color: theme.palette.text.disabled }}
                 />
                 <Typography
                   variant='body2'

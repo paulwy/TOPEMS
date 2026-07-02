@@ -17,7 +17,7 @@ import {
   LinearProgress,
   Button,
 } from '@mui/material';
-import { PageContainer } from '@/components/common';
+import { PageContainer } from '@/components/common/PageContainerV2';
 import React, { useState, useEffect, useMemo, useCallback } from 'react';
 import type { OeeRecord, OeeStatistics } from '@/api/mes';
 import { mesApi } from '@/api/mes';
@@ -116,9 +116,9 @@ const EquipmentOEEPage: React.FC = () => {
   };
 
   const getOEEColorHex = (value: number) => {
-    if (value >= 85) return '#15803d';
-    if (value >= 70) return '#b45309';
-    return '#dc2626';
+    if (value >= 85) return 'success.700';
+    if (value >= 70) return 'warning.700';
+    return 'error.700';
   };
 
   const getOEEBgColor = (value: number) => {
@@ -251,7 +251,7 @@ const EquipmentOEEPage: React.FC = () => {
         mb: 3,
       }}
     >
-      <Box sx={{ p: 2, bgcolor: '#dbeafe', borderRadius: 2 }}>
+      <Box sx={{ p: 2, bgcolor: 'primary.100', borderRadius: 3 }}>
         <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 1 }}>
           <Activity
             size={18}
@@ -280,11 +280,11 @@ const EquipmentOEEPage: React.FC = () => {
           color={statistics ? getOEEColor(statistics.avg_oee) : 'primary'}
         />
       </Box>
-      <Box sx={{ p: 2, bgcolor: '#dcfce7', borderRadius: 2 }}>
+      <Box sx={{ p: 2, bgcolor: '#dcfce7', borderRadius: 3 }}>
         <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 1 }}>
           <Gauge
             size={18}
-            sx={{ color: '#15803d' }}
+            sx={{ color: 'success.700' }}
           />
           <Typography
             variant='body2'
@@ -295,7 +295,7 @@ const EquipmentOEEPage: React.FC = () => {
         </Box>
         <Typography
           variant='h5'
-          sx={{ fontWeight: 700, color: '#15803d' }}
+          sx={{ fontWeight: 700, color: 'success.700' }}
         >
           {statistics ? formatPercent(statistics.avg_availability) : '-'}
         </Typography>
@@ -306,11 +306,11 @@ const EquipmentOEEPage: React.FC = () => {
           color='success'
         />
       </Box>
-      <Box sx={{ p: 2, bgcolor: '#fef3c7', borderRadius: 2 }}>
+      <Box sx={{ p: 2, bgcolor: 'warning.100', borderRadius: 3 }}>
         <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 1 }}>
           <TrendingUp
             size={18}
-            sx={{ color: '#b45309' }}
+            sx={{ color: 'warning.700' }}
           />
           <Typography
             variant='body2'
@@ -321,7 +321,7 @@ const EquipmentOEEPage: React.FC = () => {
         </Box>
         <Typography
           variant='h5'
-          sx={{ fontWeight: 700, color: '#b45309' }}
+          sx={{ fontWeight: 700, color: 'warning.700' }}
         >
           {statistics ? formatPercent(statistics.avg_performance) : '-'}
         </Typography>
@@ -332,11 +332,11 @@ const EquipmentOEEPage: React.FC = () => {
           color='warning'
         />
       </Box>
-      <Box sx={{ p: 2, bgcolor: '#e0e7ff', borderRadius: 2 }}>
+      <Box sx={{ p: 2, bgcolor: '#e0e7ff', borderRadius: 3 }}>
         <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 1 }}>
           <CheckCircle2
             size={18}
-            sx={{ color: '#4338ca' }}
+            sx={{ color: 'secondary.700' }}
           />
           <Typography
             variant='body2'
@@ -347,7 +347,7 @@ const EquipmentOEEPage: React.FC = () => {
         </Box>
         <Typography
           variant='h5'
-          sx={{ fontWeight: 700, color: '#4338ca' }}
+          sx={{ fontWeight: 700, color: 'secondary.700' }}
         >
           {statistics ? formatPercent(statistics.avg_quality) : '-'}
         </Typography>
@@ -425,8 +425,12 @@ const EquipmentOEEPage: React.FC = () => {
 
   return (
     <PageContainer
-      title='设备OEE分析'
-      subtitle='分析设备综合效率(OEE),包括可用率、性能率、质量率等指标'
+      autoTitle
+      autoBreadcrumbs
+      headerProps={{
+        pageIcon: <Gauge style={{ width: 20, height: 20 }} />,
+        pageGradient: 'linear-gradient(135deg, #3B82F6 0%, #1D4ED8 100%)',
+      }}
     >
       <ListPageTemplate
         title=''
@@ -509,7 +513,7 @@ const EquipmentOEEPage: React.FC = () => {
                   gap: 2,
                 }}
               >
-                <Box sx={{ p: 2, bgcolor: '#dbeafe', borderRadius: 2, textAlign: 'center' }}>
+                <Box sx={{ p: 2, bgcolor: 'primary.100', borderRadius: 3, textAlign: 'center' }}>
                   <Typography
                     variant='body2'
                     sx={{ color: 'text.secondary', mb: 0.5 }}
@@ -526,7 +530,7 @@ const EquipmentOEEPage: React.FC = () => {
                     {formatPercent(selectedRecord.oee)}
                   </Typography>
                 </Box>
-                <Box sx={{ p: 2, bgcolor: '#dcfce7', borderRadius: 2, textAlign: 'center' }}>
+                <Box sx={{ p: 2, bgcolor: '#dcfce7', borderRadius: 3, textAlign: 'center' }}>
                   <Typography
                     variant='body2'
                     sx={{ color: 'text.secondary', mb: 0.5 }}
@@ -535,12 +539,12 @@ const EquipmentOEEPage: React.FC = () => {
                   </Typography>
                   <Typography
                     variant='h5'
-                    sx={{ fontWeight: 700, color: '#15803d' }}
+                    sx={{ fontWeight: 700, color: 'success.700' }}
                   >
                     {formatPercent(selectedRecord.availability)}
                   </Typography>
                 </Box>
-                <Box sx={{ p: 2, bgcolor: '#fef3c7', borderRadius: 2, textAlign: 'center' }}>
+                <Box sx={{ p: 2, bgcolor: 'warning.100', borderRadius: 3, textAlign: 'center' }}>
                   <Typography
                     variant='body2'
                     sx={{ color: 'text.secondary', mb: 0.5 }}
@@ -549,12 +553,12 @@ const EquipmentOEEPage: React.FC = () => {
                   </Typography>
                   <Typography
                     variant='h5'
-                    sx={{ fontWeight: 700, color: '#b45309' }}
+                    sx={{ fontWeight: 700, color: 'warning.700' }}
                   >
                     {formatPercent(selectedRecord.performance)}
                   </Typography>
                 </Box>
-                <Box sx={{ p: 2, bgcolor: '#e0e7ff', borderRadius: 2, textAlign: 'center' }}>
+                <Box sx={{ p: 2, bgcolor: '#e0e7ff', borderRadius: 3, textAlign: 'center' }}>
                   <Typography
                     variant='body2'
                     sx={{ color: 'text.secondary', mb: 0.5 }}
@@ -563,7 +567,7 @@ const EquipmentOEEPage: React.FC = () => {
                   </Typography>
                   <Typography
                     variant='h5'
-                    sx={{ fontWeight: 700, color: '#4338ca' }}
+                    sx={{ fontWeight: 700, color: 'secondary.700' }}
                   >
                     {formatPercent(selectedRecord.quality)}
                   </Typography>

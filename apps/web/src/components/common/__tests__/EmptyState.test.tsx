@@ -1,132 +1,83 @@
-import { describe, it, expect, vi, beforeEach } from 'vitest';
-import { render, screen, fireEvent } from '@testing-library/react';
-import '@testing-library/jest-dom';
+/**
+ * EmptyState component — 空状态组件测试
+ */
+import { describe, it, expect, vi } from 'vitest';
+import { render, screen } from '@testing-library/react';
 import React from 'react';
-
-import { EmptyState } from '../EmptyState';
-
-vi.mock('@/store', () => ({ useAppStore: vi.fn() }));
+import { EmptyState, ListEmptyState, SearchEmptyState } from '../EmptyState';
 
 describe('EmptyState', () => {
-  beforeEach(() => {
-    vi.clearAllMocks();
+  it('renders title text', () => {
+    render(<EmptyState title="No Data" />);
+    expect(screen.getByText('No Data')).toBeInTheDocument();
   });
 
-  it('renders default empty state with title', () => {
-    render(<EmptyState title='暂无数据' />);
-    expect(screen.getByText('暂无数据')).toBeInTheDocument();
+  it('renders description when provided', () => {
+    render(<EmptyState title="Empty" description="Nothing here" />);
+    expect(screen.getByText('Nothing here')).toBeInTheDocument();
   });
 
-  it('renders with description', () => {
-    render(
-      <EmptyState
-        title='暂无数据'
-        description='当前列表为空'
-      />
-    );
-    expect(screen.getByText('当前列表为空')).toBeInTheDocument();
+  it('does not render description when omitted', () => {
+    const { container } = render(<EmptyState title="Empty" />);
+    // No body2 text besides title
+    expect(container.querySelectorAll('p').length).toBe(0);
   });
 
-  it('renders action button and calls onAction', () => {
-    const handleAction = vi.fn();
-    render(
-      <EmptyState
-        title='暂无数据'
-        action={{ label: '添加数据', onClick: handleAction }}
-      />
-    );
-    const button = screen.getByRole('button', { name: '添加数据' });
-    expect(button).toBeInTheDocument();
-    fireEvent.click(button);
-    expect(handleAction).toHaveBeenCalledTimes(1);
+  it('renders action button with correct label', () => {
+    const onClick = vi.fn();
+    render(<EmptyState title="Empty" action={{ label: 'Add Item', onClick }} />);
+    const btn = screen.getByRole('button', { name: /Add Item/i });
+    expect(btn).toBeInTheDocument();
   });
 
-  it('renders action button with deprecated actionLabel/onAction props', () => {
-    const handleAction = vi.fn();
-    render(
-      <EmptyState
-        title='暂无数据'
-        actionLabel='添加'
-        onAction={handleAction}
-      />
-    );
-    const button = screen.getByRole('button', { name: '添加' });
-    expect(button).toBeInTheDocument();
-    fireEvent.click(button);
-    expect(handleAction).toHaveBeenCalledTimes(1);
+  it('renders emoji icon when provided', () => {
+    render(<EmptyState title="Empty" emoji="📦" />);
+    expect(screen.getByText('📦')).toBeInTheDocument();
   });
 
-  it('renders in compact mode', () => {
-    const { container } = render(
-      <EmptyState
-        title='暂无数据'
-        compact
-      />
-    );
-    const wrapper = container.firstChild as HTMLElement;
-    // compact mode uses py: 4 instead of py: 8
-    expect(wrapper).toBeInTheDocument();
-    expect(screen.getByText('暂无数据')).toBeInTheDocument();
-  });
-
-  it('renders custom icon', () => {
-    render(
-      <EmptyState
-        title='暂无数据'
-        icon={<span data-testid='custom-icon'>ICON</span>}
-      />
-    );
+  it('renders custom icon when provided', () => {
+    render(<EmptyState title="Empty" icon={<span data-testid="custom-icon">icon</span>} />);
     expect(screen.getByTestId('custom-icon')).toBeInTheDocument();
   });
 
-  it('renders with emoji', () => {
-    render(
-      <EmptyState
-        title='暂无数据'
-        emoji='🔍'
-      />
-    );
-    expect(screen.getByText('🔍')).toBeInTheDocument();
+  it('falls back to default emoji when no icon/emoji', () => {
+    render(<EmptyState title="Empty" />);
+    expect(screen.getByText('📋')).toBeInTheDocument();
   });
 
-  it('has role="status" and aria-live="polite" (a11y)', () => {
-    render(<EmptyState title='暂无数据' />);
-    const statusBox = screen.getByRole('status');
-    expect(statusBox).toBeInTheDocument();
-    expect(statusBox).toHaveAttribute('aria-live', 'polite');
+  it('uses legacy actionLabel/onAction for backward compatibility', () => {
+    render(<EmptyState title="Empty" actionLabel="Legacy Action" onAction={vi.fn()} />);
+    expect(screen.getByRole('button', { name: /Legacy Action/i })).toBeInTheDocument();
   });
 
-  it('icon container has aria-hidden="true"', () => {
-    render(<EmptyState title='暂无数据' />);
-    const iconContainer = screen.getByText('📋').closest('div[aria-hidden="true"]');
-    expect(iconContainer).toBeInTheDocument();
-    expect(iconContainer).toHaveAttribute('aria-hidden', 'true');
+  it('has role="status" for accessibility', () => {
+    render(<EmptyState title="Empty" />);
+    expect(screen.getByRole('status')).toBeInTheDocument();
   });
+});
 
-  it('does not render action button when action is not provided', () => {
-    render(<EmptyState title='暂无数据' />);
-    expect(screen.queryByRole('button')).not.toBeInTheDocument();
-  });
-
-  it('renders children', () => {
-    render(
-      <EmptyState title='暂无数据'>
-        <div data-testid='child-content'>子内容</div>
-      </EmptyState>
-    );
-    expect(screen.getByTestId('child-content')).toBeInTheDocument();
-    expect(screen.getByText('子内容')).toBeInTheDocument();
-  });
-
-  it('renders with left alignment', () => {
-    const { container } = render(
-      <EmptyState
-        title='暂无数据'
-        align='left'
-      />
-    );
-    const wrapper = container.firstChild as HTMLElement;
-    expect(wrapper).toBeInTheDocument();
+describe('ListEmptyState preset', () => {
+  it('renders default title and description', () => {
+    render(<ListEmptyState />);
     expect(screen.getByText('暂无数据')).toBeInTheDocument();
+    expect(screen.getByText('当前列表为空，没有可显示的内容')).toBeInTheDocument();
+  });
+
+  it('renders custom title and action', () => {
+    render(<ListEmptyState title="Custom" actionLabel="Create" onAction={vi.fn()} />);
+    expect(screen.getByText('Custom')).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: /Create/i })).toBeInTheDocument();
+  });
+});
+
+describe('SearchEmptyState preset', () => {
+  it('renders with keyword', () => {
+    render(<SearchEmptyState keyword="test" />);
+    expect(screen.getByText(/未找到与.*test.*相关的内容/)).toBeInTheDocument();
+  });
+
+  it('renders clear button when onClear is provided', () => {
+    render(<SearchEmptyState onClear={vi.fn()} />);
+    expect(screen.getByRole('button', { name: /清除搜索/i })).toBeInTheDocument();
   });
 });

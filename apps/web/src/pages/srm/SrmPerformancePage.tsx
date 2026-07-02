@@ -95,7 +95,7 @@ const SrmPerformancePage: React.FC = () => {
 
   const getRankBg = (index: number) => {
     if (index === 0) return '#fffbeb';
-    if (index === 1) return '#f3f4f6';
+    if (index === 1) return 'grey.100';
     if (index === 2) return '#fff8e7';
     return 'transparent';
   };

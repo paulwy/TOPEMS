@@ -1,7 +1,7 @@
 pub mod report;
-pub mod template;
 pub mod schedule;
 pub mod subscription;
+pub mod template;
 
 use crate::AppState;
 use axum::Router;

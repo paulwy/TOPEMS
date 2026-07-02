@@ -406,7 +406,7 @@ const BIAnalyticsPage = () => {
               <Skeleton sx={{ height: 16, width: 96 }} />
             </Box>
           </Box>
-          <Skeleton sx={{ height: 64, width: '100%', borderRadius: 2 }} />
+          <Skeleton sx={{ height: 64, width: '100%', borderRadius: 3 }} />
           <Box
             sx={{
               display: 'grid',
@@ -657,7 +657,7 @@ const BIAnalyticsPage = () => {
         <Box
           sx={{
             bgcolor: 'background.paper',
-            borderRadius: 2,
+            borderRadius: 3,
             boxShadow: 1,
             border: '1px solid',
             borderColor: 'divider',

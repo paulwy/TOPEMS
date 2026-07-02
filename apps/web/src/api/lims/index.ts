@@ -229,7 +229,7 @@ export const limsApi = {
   deleteParseRule: parseRuleApi.deleteParseRule,
 
   getStatistics: async (): Promise<ApiResponse<LimsStatistics>> => {
-    return apiClient.lims.get('/api/lims/statistics');
+    return apiClient.lims.get('/statistics');
   },
 
   health: async (): Promise<ApiResponse<string>> => {

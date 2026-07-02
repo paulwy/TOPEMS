@@ -27,7 +27,8 @@ export interface FileVersion {
 }
 
 export interface FileListResponse {
-  files: FileMetadata[];
+  files?: FileMetadata[];
+  items?: FileMetadata[];
   total: number;
   page: number;
   pagesize: number;
@@ -43,7 +44,8 @@ export interface Folder {
 }
 
 export interface ListFoldersData {
-  folders: Folder[];
+  folders?: Folder[];
+  items?: Folder[];
   total: number;
   page: number;
   pagesize: number;

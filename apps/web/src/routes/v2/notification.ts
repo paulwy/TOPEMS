@@ -1,4 +1,4 @@
-import { lazyWithRetry } from '../utils';
+import { lazyWithRetry } from './types';
 import type { RouteModuleConfig } from './types';
 
 const NotificationDashboardPage = lazyWithRetry(
@@ -54,13 +54,6 @@ export const notificationModuleConfig: RouteModuleConfig = {
       template: 'dashboard',
       group: 'overview',
       requiredPermissions: ['notification:read'],
-      nav: {
-        label: '仪表盘',
-        icon: 'LayoutDashboard',
-        order: 0,
-        group: 'overview',
-        showInTabs: true,
-      },
     },
     {
       path: '/notification/list',
@@ -71,13 +64,6 @@ export const notificationModuleConfig: RouteModuleConfig = {
       template: 'list',
       group: 'messages',
       requiredPermissions: ['notification:read'],
-      nav: {
-        label: '通知列表',
-        icon: 'ScrollText',
-        order: 1,
-        group: 'messages',
-        showInTabs: true,
-      },
     },
     {
       path: '/notification/archive',
@@ -88,12 +74,6 @@ export const notificationModuleConfig: RouteModuleConfig = {
       template: 'list',
       group: 'messages',
       requiredPermissions: ['notification:read'],
-      nav: {
-        label: '通知归档',
-        icon: 'Archive',
-        order: 2,
-        group: 'messages',
-      },
     },
     {
       path: '/notification/:id',
@@ -114,12 +94,6 @@ export const notificationModuleConfig: RouteModuleConfig = {
       template: 'list',
       group: 'messages',
       requiredPermissions: ['notification:read'],
-      nav: {
-        label: '通知中心',
-        icon: 'Bell',
-        order: 3,
-        group: 'messages',
-      },
     },
     {
       path: '/notification/templates',
@@ -130,12 +104,6 @@ export const notificationModuleConfig: RouteModuleConfig = {
       template: 'list',
       group: 'templates',
       requiredPermissions: ['notification:read'],
-      nav: {
-        label: '模板管理',
-        icon: 'FileText',
-        order: 1,
-        group: 'templates',
-      },
     },
     {
       path: '/notification/statistics',
@@ -146,12 +114,6 @@ export const notificationModuleConfig: RouteModuleConfig = {
       template: 'stats',
       group: 'analytics',
       requiredPermissions: ['notification:read'],
-      nav: {
-        label: '发送统计',
-        icon: 'BarChart3',
-        order: 1,
-        group: 'analytics',
-      },
     },
     {
       path: '/notification/settings',
@@ -162,12 +124,6 @@ export const notificationModuleConfig: RouteModuleConfig = {
       template: 'settings',
       group: 'settings',
       requiredPermissions: ['notification:read'],
-      nav: {
-        label: '通知设置',
-        icon: 'Settings',
-        order: 1,
-        group: 'settings',
-      },
     },
   ],
 };

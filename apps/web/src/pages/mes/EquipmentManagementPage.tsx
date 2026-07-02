@@ -277,9 +277,9 @@ const EquipmentManagementPage: React.FC = () => {
         color: string;
       }
     > = {
-      running: { label: '运行中', bg: 'success.lighter', color: '#15803d' },
+      running: { label: '运行中', bg: 'success.lighter', color: 'success.700' },
       idle: { label: '空闲', bg: 'grey.100', color: 'text.secondary' },
-      maintenance: { label: '维护中', bg: 'warning.light', color: '#b45309' },
+      maintenance: { label: '维护中', bg: 'warning.light', color: 'warning.700' },
       fault: { label: '故障', bg: 'error.lighter', color: 'error.dark' },
     };
     const s = statusMap[status] || { label: status, bg: 'grey.100', color: 'text.secondary' };
@@ -381,11 +381,11 @@ const EquipmentManagementPage: React.FC = () => {
         mb: 3,
       }}
     >
-      <Box sx={{ p: 2, bgcolor: 'success.lighter', borderRadius: 2 }}>
+      <Box sx={{ p: 2, bgcolor: 'success.lighter', borderRadius: 3 }}>
         <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 1 }}>
           <Power
             size={18}
-            sx={{ color: '#15803d' }}
+            sx={{ color: 'success.700' }}
           />
           <Typography
             variant='body2'
@@ -396,12 +396,12 @@ const EquipmentManagementPage: React.FC = () => {
         </Box>
         <Typography
           variant='h5'
-          sx={{ fontWeight: 700, color: '#15803d' }}
+          sx={{ fontWeight: 700, color: 'success.700' }}
         >
           {statistics?.in_use || equipment.filter((e) => e.status === 'running').length}
         </Typography>
       </Box>
-      <Box sx={{ p: 2, bgcolor: 'grey.100', borderRadius: 2 }}>
+      <Box sx={{ p: 2, bgcolor: 'grey.100', borderRadius: 3 }}>
         <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 1 }}>
           <Monitor
             size={18}
@@ -421,11 +421,11 @@ const EquipmentManagementPage: React.FC = () => {
           {statistics?.idle || equipment.filter((e) => e.status === 'idle').length}
         </Typography>
       </Box>
-      <Box sx={{ p: 2, bgcolor: 'warning.light', borderRadius: 2 }}>
+      <Box sx={{ p: 2, bgcolor: 'warning.light', borderRadius: 3 }}>
         <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 1 }}>
           <Wrench
             size={18}
-            sx={{ color: '#b45309' }}
+            sx={{ color: 'warning.700' }}
           />
           <Typography
             variant='body2'
@@ -436,12 +436,12 @@ const EquipmentManagementPage: React.FC = () => {
         </Box>
         <Typography
           variant='h5'
-          sx={{ fontWeight: 700, color: '#b45309' }}
+          sx={{ fontWeight: 700, color: 'warning.700' }}
         >
           {statistics?.maintenance || equipment.filter((e) => e.status === 'maintenance').length}
         </Typography>
       </Box>
-      <Box sx={{ p: 2, bgcolor: 'error.lighter', borderRadius: 2 }}>
+      <Box sx={{ p: 2, bgcolor: 'error.lighter', borderRadius: 3 }}>
         <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 1 }}>
           <AlertTriangle
             size={18}
@@ -468,6 +468,10 @@ const EquipmentManagementPage: React.FC = () => {
     <PageContainer
       title='设备管理'
       subtitle='管理设备信息,包括设备编号、名称、型号、状态等'
+      headerProps={{
+        pageIcon: <Wrench style={{ width: 20, height: 20 }} />,
+        pageGradient: 'linear-gradient(135deg, #F59E0B 0%, #D97706 100%)',
+      }}
     >
       <ListPageTemplate
         title=''
@@ -500,6 +504,15 @@ const EquipmentManagementPage: React.FC = () => {
         headerContent={statsContent}
         emptyMessage='暂无设备数据'
         getRowId={(row) => row.id}
+        mobileCardTitleKey='name'
+        mobileCardSubtitleKey='code'
+        mobileCardDisplayFields={['status', 'location', 'department', 'next_maintenance_date']}
+        mobileCardFieldLabels={{
+          status: '状态',
+          location: '位置',
+          department: '部门',
+          next_maintenance_date: '下次维护',
+        }}
       />
 
       {/* 新增/编辑对话框 */}

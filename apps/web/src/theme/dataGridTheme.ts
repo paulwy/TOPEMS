@@ -16,7 +16,6 @@ import type { ThemeOptions } from '@mui/material/styles';
  * until the package is installed.
  */
 
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
 export const getDataGridTheme = (): Record<string, any> => ({
   MuiDataGrid: {
     styleOverrides: {
@@ -106,7 +105,8 @@ export const getDataGridTheme = (): Record<string, any> => ({
         },
 
         '& .MuiDataGrid-overlay': {
-          backgroundColor: 'color-mix(in srgb, var(--mui-palette-background-default) 60%, transparent)',
+          backgroundColor:
+            'color-mix(in srgb, var(--mui-palette-background-default) 60%, transparent)',
         },
 
         '& .MuiTablePagination-root': { minHeight: 52 },

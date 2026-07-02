@@ -36,9 +36,15 @@ pub async fn get_plugin_info() -> Json<ApiResponse<PluginInfo>> {
             base_path: "/api/integration".to_string(),
         },
         permissions: vec![
-            PermissionDef { code: "connector".to_string() },
-            PermissionDef { code: "webhook".to_string() },
-            PermissionDef { code: "sync".to_string() },
+            PermissionDef {
+                code: "connector".to_string(),
+            },
+            PermissionDef {
+                code: "webhook".to_string(),
+            },
+            PermissionDef {
+                code: "sync".to_string(),
+            },
         ],
     };
 
@@ -46,7 +52,10 @@ pub async fn get_plugin_info() -> Json<ApiResponse<PluginInfo>> {
 }
 
 pub async fn plugin_health_check() -> Json<ServiceHealth> {
-    Json(topems_shared::build_health_response("topems-integration", true))
+    Json(topems_shared::build_health_response(
+        "topems-integration",
+        true,
+    ))
 }
 
 pub fn create_routes() -> Router {
@@ -72,18 +81,31 @@ pub async fn auto_register_to_core(core_url: Option<&str>) {
     };
 
     let client = reqwest::Client::new();
-    let url = format!("{}/api/core/plugin/dev/plugins/integration/register", core_url);
+    let url = format!(
+        "{}/api/core/plugin/dev/plugins/integration/register",
+        core_url
+    );
 
     match client.post(&url).json(&info).send().await {
         Ok(response) => {
             if response.status().is_success() {
-                tracing::info!("[Integration Plugin] Successfully registered to core at {}", core_url);
+                tracing::info!(
+                    "[Integration Plugin] Successfully registered to core at {}",
+                    core_url
+                );
             } else {
-                tracing::warn!("[Integration Plugin] Failed to register to core: {}", response.status());
+                tracing::warn!(
+                    "[Integration Plugin] Failed to register to core: {}",
+                    response.status()
+                );
             }
         }
         Err(e) => {
-            tracing::warn!("[Integration Plugin] Failed to connect to core at {}: {}", core_url, e);
+            tracing::warn!(
+                "[Integration Plugin] Failed to connect to core at {}: {}",
+                core_url,
+                e
+            );
         }
     }
 }

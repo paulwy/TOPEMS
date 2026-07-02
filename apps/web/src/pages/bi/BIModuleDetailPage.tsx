@@ -74,7 +74,7 @@ const moduleConfig: Record<string, { name: string; icon: string; color: string }
   lims: { name: '实验室管理', icon: '🧪', color: 'success.main' },
   qms: { name: '质量管理', icon: '✅', color: 'warning.main' },
   ehs: { name: '安全环保', icon: '🛡️', color: 'error.main' },
-  srm: { name: '供应链管理', icon: '📦', color: '#8B5CF6' },
+  srm: { name: '供应链管理', icon: '📦', color: 'secondary.main' },
   pdm: { name: '生产数据', icon: '🏭', color: '#06B6D4' },
 };
 

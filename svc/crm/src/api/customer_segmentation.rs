@@ -76,7 +76,10 @@ pub fn create_routes() -> Router<ApiState> {
     Router::new()
         .route("/api/crm/segments", get(list_segments).post(create_segment))
         .route("/api/crm/segments/{id}", get(get_segment))
-        .route("/api/crm/segments/{id}/customers", get(get_segment_customers))
+        .route(
+            "/api/crm/segments/{id}/customers",
+            get(get_segment_customers),
+        )
         .route("/api/crm/segments/{id}", delete(delete_segment))
         .route("/api/crm/segments/auto", get(auto_segment))
 }
@@ -110,11 +113,10 @@ async fn list_segments(
 
     match result {
         Ok(segments) => {
-            let count_result = sqlx::query_scalar::<_, i64>(
-                "SELECT COUNT(*) FROM plugin_crm.customer_segments",
-            )
-            .fetch_one(&state.db)
-            .await;
+            let count_result =
+                sqlx::query_scalar::<_, i64>("SELECT COUNT(*) FROM plugin_crm.customer_segments")
+                    .fetch_one(&state.db)
+                    .await;
 
             let total = count_result.unwrap_or(0);
 
@@ -227,7 +229,9 @@ async fn delete_segment(
         .await;
 
     match result {
-        Ok(r) if r.rows_affected() > 0 => Json(ApiResponse::success("".to_string(), "客户分群删除成功")),
+        Ok(r) if r.rows_affected() > 0 => {
+            Json(ApiResponse::success("".to_string(), "客户分群删除成功"))
+        }
         Ok(_) => Json(api_error(404, "客户分群不存在")),
         Err(e) => {
             tracing::error!("删除客户分群失败: {}", e);
@@ -251,12 +255,11 @@ async fn get_segment_customers(
     let page_size = params.page_size.unwrap_or(20).min(100);
     let offset = (page - 1) * page_size;
 
-    let segment_result = sqlx::query(
-        "SELECT name, criteria FROM plugin_crm.customer_segments WHERE id = $1",
-    )
-    .bind(id)
-    .fetch_optional(&state.db)
-    .await;
+    let segment_result =
+        sqlx::query("SELECT name, criteria FROM plugin_crm.customer_segments WHERE id = $1")
+            .bind(id)
+            .fetch_optional(&state.db)
+            .await;
 
     let (segment_name, criteria) = match segment_result {
         Ok(Some(s)) => (s.get::<String, _>(0), s.get::<serde_json::Value, _>(1)),
@@ -295,39 +298,63 @@ async fn auto_segment(
     }
 
     let segments = vec![
-        ("A类高价值客户", SegmentCriteria {
-            score_levels: Some(vec!["A".to_string()]),
-            ..Default::default()
-        }),
-        ("B类潜力客户", SegmentCriteria {
-            score_levels: Some(vec!["B".to_string()]),
-            ..Default::default()
-        }),
-        ("C类培育客户", SegmentCriteria {
-            score_levels: Some(vec!["C".to_string()]),
-            ..Default::default()
-        }),
-        ("D类待激活客户", SegmentCriteria {
-            score_levels: Some(vec!["D".to_string()]),
-            ..Default::default()
-        }),
-        ("高营收客户", SegmentCriteria {
-            revenue_min: Some(1_000_000.0),
-            ..Default::default()
-        }),
-        ("中营收客户", SegmentCriteria {
-            revenue_min: Some(100_000.0),
-            revenue_max: Some(1_000_000.0),
-            ..Default::default()
-        }),
-        ("活跃客户", SegmentCriteria {
-            statuses: Some(vec!["active".to_string()]),
-            ..Default::default()
-        }),
-        ("沉默客户", SegmentCriteria {
-            statuses: Some(vec!["inactive".to_string()]),
-            ..Default::default()
-        }),
+        (
+            "A类高价值客户",
+            SegmentCriteria {
+                score_levels: Some(vec!["A".to_string()]),
+                ..Default::default()
+            },
+        ),
+        (
+            "B类潜力客户",
+            SegmentCriteria {
+                score_levels: Some(vec!["B".to_string()]),
+                ..Default::default()
+            },
+        ),
+        (
+            "C类培育客户",
+            SegmentCriteria {
+                score_levels: Some(vec!["C".to_string()]),
+                ..Default::default()
+            },
+        ),
+        (
+            "D类待激活客户",
+            SegmentCriteria {
+                score_levels: Some(vec!["D".to_string()]),
+                ..Default::default()
+            },
+        ),
+        (
+            "高营收客户",
+            SegmentCriteria {
+                revenue_min: Some(1_000_000.0),
+                ..Default::default()
+            },
+        ),
+        (
+            "中营收客户",
+            SegmentCriteria {
+                revenue_min: Some(100_000.0),
+                revenue_max: Some(1_000_000.0),
+                ..Default::default()
+            },
+        ),
+        (
+            "活跃客户",
+            SegmentCriteria {
+                statuses: Some(vec!["active".to_string()]),
+                ..Default::default()
+            },
+        ),
+        (
+            "沉默客户",
+            SegmentCriteria {
+                statuses: Some(vec!["inactive".to_string()]),
+                ..Default::default()
+            },
+        ),
     ];
 
     let mut results = Vec::new();
@@ -353,7 +380,8 @@ async fn count_matching_customers(db: &sqlx::PgPool, criteria: &SegmentCriteria)
 
     if let Some(levels) = &criteria.score_levels {
         if !levels.is_empty() {
-            let placeholders: Vec<String> = levels.iter().map(|_| format!("${}", param_idx)).collect();
+            let placeholders: Vec<String> =
+                levels.iter().map(|_| format!("${}", param_idx)).collect();
             conditions.push(format!("cs.score_level IN ({})", placeholders.join(", ")));
             params.extend(levels.iter().cloned());
             param_idx += levels.len();
@@ -362,7 +390,10 @@ async fn count_matching_customers(db: &sqlx::PgPool, criteria: &SegmentCriteria)
 
     if let Some(industries) = &criteria.industries {
         if !industries.is_empty() {
-            let placeholders: Vec<String> = industries.iter().map(|_| format!("${}", param_idx)).collect();
+            let placeholders: Vec<String> = industries
+                .iter()
+                .map(|_| format!("${}", param_idx))
+                .collect();
             conditions.push(format!("c.industry IN ({})", placeholders.join(", ")));
             params.extend(industries.iter().cloned());
             param_idx += industries.len();
@@ -371,7 +402,8 @@ async fn count_matching_customers(db: &sqlx::PgPool, criteria: &SegmentCriteria)
 
     if let Some(sizes) = &criteria.company_sizes {
         if !sizes.is_empty() {
-            let placeholders: Vec<String> = sizes.iter().map(|_| format!("${}", param_idx)).collect();
+            let placeholders: Vec<String> =
+                sizes.iter().map(|_| format!("${}", param_idx)).collect();
             conditions.push(format!("c.company_size IN ({})", placeholders.join(", ")));
             params.extend(sizes.iter().cloned());
             param_idx += sizes.len();
@@ -380,7 +412,8 @@ async fn count_matching_customers(db: &sqlx::PgPool, criteria: &SegmentCriteria)
 
     if let Some(statuses) = &criteria.statuses {
         if !statuses.is_empty() {
-            let placeholders: Vec<String> = statuses.iter().map(|_| format!("${}", param_idx)).collect();
+            let placeholders: Vec<String> =
+                statuses.iter().map(|_| format!("${}", param_idx)).collect();
             conditions.push(format!("c.status IN ({})", placeholders.join(", ")));
             params.extend(statuses.iter().cloned());
             param_idx += statuses.len();
@@ -441,14 +474,20 @@ async fn count_matching_customers(db: &sqlx::PgPool, criteria: &SegmentCriteria)
     }
 }
 
-async fn fetch_segment_customers(db: &sqlx::PgPool, criteria: &SegmentCriteria, limit: i64, offset: i64) -> Vec<SegmentedCustomer> {
+async fn fetch_segment_customers(
+    db: &sqlx::PgPool,
+    criteria: &SegmentCriteria,
+    limit: i64,
+    offset: i64,
+) -> Vec<SegmentedCustomer> {
     let mut conditions = Vec::new();
     let mut params = Vec::new();
     let mut param_idx = 1;
 
     if let Some(levels) = &criteria.score_levels {
         if !levels.is_empty() {
-            let placeholders: Vec<String> = levels.iter().map(|_| format!("${}", param_idx)).collect();
+            let placeholders: Vec<String> =
+                levels.iter().map(|_| format!("${}", param_idx)).collect();
             conditions.push(format!("cs.score_level IN ({})", placeholders.join(", ")));
             params.extend(levels.iter().cloned());
             param_idx += levels.len();
@@ -457,7 +496,10 @@ async fn fetch_segment_customers(db: &sqlx::PgPool, criteria: &SegmentCriteria, 
 
     if let Some(industries) = &criteria.industries {
         if !industries.is_empty() {
-            let placeholders: Vec<String> = industries.iter().map(|_| format!("${}", param_idx)).collect();
+            let placeholders: Vec<String> = industries
+                .iter()
+                .map(|_| format!("${}", param_idx))
+                .collect();
             conditions.push(format!("c.industry IN ({})", placeholders.join(", ")));
             params.extend(industries.iter().cloned());
             param_idx += industries.len();
@@ -466,7 +508,8 @@ async fn fetch_segment_customers(db: &sqlx::PgPool, criteria: &SegmentCriteria, 
 
     if let Some(sizes) = &criteria.company_sizes {
         if !sizes.is_empty() {
-            let placeholders: Vec<String> = sizes.iter().map(|_| format!("${}", param_idx)).collect();
+            let placeholders: Vec<String> =
+                sizes.iter().map(|_| format!("${}", param_idx)).collect();
             conditions.push(format!("c.company_size IN ({})", placeholders.join(", ")));
             params.extend(sizes.iter().cloned());
             param_idx += sizes.len();
@@ -475,7 +518,8 @@ async fn fetch_segment_customers(db: &sqlx::PgPool, criteria: &SegmentCriteria, 
 
     if let Some(statuses) = &criteria.statuses {
         if !statuses.is_empty() {
-            let placeholders: Vec<String> = statuses.iter().map(|_| format!("${}", param_idx)).collect();
+            let placeholders: Vec<String> =
+                statuses.iter().map(|_| format!("${}", param_idx)).collect();
             conditions.push(format!("c.status IN ({})", placeholders.join(", ")));
             params.extend(statuses.iter().cloned());
             param_idx += statuses.len();
@@ -532,7 +576,9 @@ async fn fetch_segment_customers(db: &sqlx::PgPool, criteria: &SegmentCriteria, 
         ORDER BY c.created_at DESC
         LIMIT ${} OFFSET ${}
         "#,
-        where_clause, param_idx, param_idx + 1
+        where_clause,
+        param_idx,
+        param_idx + 1
     );
 
     let mut sqlx_query = sqlx::query_as::<_, SegmentedCustomer>(&query);

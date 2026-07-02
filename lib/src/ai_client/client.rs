@@ -7,9 +7,9 @@ use reqwest::Client;
 use std::pin::Pin;
 use std::sync::Arc;
 
-use super::models::*;
 use super::config::AIModelConfig;
-use super::providers::{OpenAIClient, GeminiClient, OllamaClient, AzureOpenAIClient};
+use super::models::*;
+use super::providers::{AzureOpenAIClient, GeminiClient, OllamaClient, OpenAIClient};
 
 /// AI 客户端错误类型
 #[derive(Debug)]
@@ -71,16 +71,27 @@ impl From<serde_json::Error> for AIClientError {
 #[async_trait]
 pub trait AIClient: Send + Sync {
     /// 聊天完成
-    async fn chat_completion(&self, request: ChatCompletionRequest) -> Result<ChatCompletionResponse, AIClientError>;
+    async fn chat_completion(
+        &self,
+        request: ChatCompletionRequest,
+    ) -> Result<ChatCompletionResponse, AIClientError>;
 
     /// 流式聊天完成
     async fn chat_completion_stream(
         &self,
         request: ChatCompletionRequest,
-    ) -> Result<Pin<Box<dyn futures::Stream<Item = Result<StreamingChunk, AIClientError>> + Send + 'static>>, AIClientError>;
+    ) -> Result<
+        Pin<
+            Box<dyn futures::Stream<Item = Result<StreamingChunk, AIClientError>> + Send + 'static>,
+        >,
+        AIClientError,
+    >;
 
     /// 生成嵌入
-    async fn embeddings(&self, request: EmbeddingRequest) -> Result<EmbeddingResponse, AIClientError>;
+    async fn embeddings(
+        &self,
+        request: EmbeddingRequest,
+    ) -> Result<EmbeddingResponse, AIClientError>;
 
     /// 获取模型列表
     async fn list_models(&self) -> Result<ModelListResponse, AIClientError>;
@@ -116,7 +127,10 @@ impl UnifiedAIClient {
     }
 
     /// 创建流式聊天请求
-    pub fn create_streaming_chat_request(&self, messages: Vec<ChatMessage>) -> ChatCompletionRequest {
+    pub fn create_streaming_chat_request(
+        &self,
+        messages: Vec<ChatMessage>,
+    ) -> ChatCompletionRequest {
         let config = self.get_config();
         ChatCompletionRequest {
             model: config.model_name.clone(),
@@ -137,7 +151,7 @@ impl UnifiedAIClient {
             UnifiedAIClient::Ollama(client) => client.chat_completion(request).await,
             UnifiedAIClient::AzureOpenAI(client) => client.chat_completion(request).await,
         }?;
-        
+
         if let Some(choice) = response.choices.first() {
             Ok(choice.message.content.clone())
         } else {
@@ -149,18 +163,26 @@ impl UnifiedAIClient {
     pub async fn chat_stream(
         &self,
         messages: Vec<ChatMessage>,
-    ) -> Result<Pin<Box<dyn futures::Stream<Item = Result<String, AIClientError>> + Send + 'static>>, AIClientError> {
+    ) -> Result<
+        Pin<Box<dyn futures::Stream<Item = Result<String, AIClientError>> + Send + 'static>>,
+        AIClientError,
+    > {
         let request = self.create_streaming_chat_request(messages);
-        
-        let result: Result<Pin<Box<dyn futures::Stream<Item = Result<String, AIClientError>> + Send + 'static>>, AIClientError>;
-        
+
+        let result: Result<
+            Pin<Box<dyn futures::Stream<Item = Result<String, AIClientError>> + Send + 'static>>,
+            AIClientError,
+        >;
+
         match self {
             UnifiedAIClient::OpenAI(client) => {
                 let stream = client.chat_completion_stream(request).await?;
                 result = Ok(process_stream(stream));
             }
             UnifiedAIClient::Gemini(_) => {
-                result = Err(AIClientError::NotImplemented("Gemini streaming not implemented".to_string()));
+                result = Err(AIClientError::NotImplemented(
+                    "Gemini streaming not implemented".to_string(),
+                ));
             }
             UnifiedAIClient::Ollama(client) => {
                 let stream = client.chat_completion_stream(request).await?;
@@ -171,7 +193,7 @@ impl UnifiedAIClient {
                 result = Ok(process_stream(stream));
             }
         }
-        
+
         result
     }
 
@@ -183,14 +205,14 @@ impl UnifiedAIClient {
             input: vec![text.to_string()],
             ..Default::default()
         };
-        
+
         let response = match self {
             UnifiedAIClient::OpenAI(client) => client.embeddings(request).await,
             UnifiedAIClient::Gemini(client) => client.embeddings(request).await,
             UnifiedAIClient::Ollama(client) => client.embeddings(request).await,
             UnifiedAIClient::AzureOpenAI(client) => client.embeddings(request).await,
         }?;
-        
+
         if let Some(data) = response.data.first() {
             Ok(data.embedding.clone())
         } else {
@@ -206,14 +228,14 @@ impl UnifiedAIClient {
             input: texts.to_vec(),
             ..Default::default()
         };
-        
+
         let response = match self {
             UnifiedAIClient::OpenAI(client) => client.embeddings(request).await,
             UnifiedAIClient::Gemini(client) => client.embeddings(request).await,
             UnifiedAIClient::Ollama(client) => client.embeddings(request).await,
             UnifiedAIClient::AzureOpenAI(client) => client.embeddings(request).await,
         }?;
-        
+
         Ok(response.data.into_iter().map(|d| d.embedding).collect())
     }
 
@@ -238,13 +260,16 @@ impl UnifiedAIClient {
     }
 }
 
-fn process_stream<S>(stream: S) -> Pin<Box<dyn futures::Stream<Item = Result<String, AIClientError>> + Send + 'static>>
+fn process_stream<S>(
+    stream: S,
+) -> Pin<Box<dyn futures::Stream<Item = Result<String, AIClientError>> + Send + 'static>>
 where
     S: futures::Stream<Item = Result<StreamingChunk, AIClientError>> + Send + 'static,
 {
     Box::pin(stream.map(|result| {
         result.map(|chunk| {
-            chunk.choices
+            chunk
+                .choices
                 .first()
                 .and_then(|c| c.delta.content.clone())
                 .unwrap_or_default()

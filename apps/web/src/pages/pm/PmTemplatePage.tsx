@@ -126,8 +126,6 @@ const PmTemplatePage: React.FC = () => {
 
   return (
     <PageContainer
-      title='项目模板'
-      subtitle='选择模板快速创建项目，提高工作效率'
       maxWidth='xl'
       headerProps={{
         actions: [

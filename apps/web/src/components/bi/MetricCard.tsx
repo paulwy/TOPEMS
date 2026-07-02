@@ -134,10 +134,10 @@ export interface MetricCardProps {
 const colorMap: Record<string, { bg: string; gradient: string }> = {
   green: {
     bg: 'success.main',
-    gradient: 'linear-gradient(135deg, success.main, success.dark)',
+    gradient: 'linear-gradient(135deg, #22C55E, #16A34A)',
   },
   purple: {
-    bg: '#8B5CF6',
+    bg: 'secondary.main',
     gradient: 'linear-gradient(135deg, #8B5CF6, #7C3AED)',
   },
   blue: {
@@ -148,7 +148,7 @@ const colorMap: Record<string, { bg: string; gradient: string }> = {
     bg: 'warning.main',
     gradient: 'linear-gradient(135deg, #F59E0B, #D97706)',
   },
-  red: { bg: 'error.main', gradient: 'linear-gradient(135deg, error.main, #DC2626)' },
+  red: { bg: '#EF4444', gradient: 'linear-gradient(135deg, #EF4444, #DC2626)' },
   cyan: {
     bg: '#06B6D4',
     gradient: 'linear-gradient(135deg, #06B6D4, #0891B2)',
@@ -229,11 +229,11 @@ export const MetricCard: React.FC<MetricCardProps> = ({
       return (
         <Minus
           size={16}
-          color='#94A3B8'
+          color='grey.400'
         />
       );
     }
-    return computedTrend === 'up' ? <TrendingUp size={16} /> : <TrendingDown size={16} />;
+    return computedTrend === 'up' ? <TrendingUp size={16} color='success.main' /> : <TrendingDown size={16} color='error.main' />;
   };
 
   const getTrendColor = () => {
@@ -286,7 +286,7 @@ export const MetricCard: React.FC<MetricCardProps> = ({
       sx={{
         position: 'relative',
         backgroundColor: 'white',
-        borderRadius: 2,
+        borderRadius: 3,
         padding: 3,
         border: '1px solid rgba(226, 232, 240, 0.6)',
         overflow: 'hidden',
@@ -393,7 +393,7 @@ export const MetricCard: React.FC<MetricCardProps> = ({
               {suffix && (
                 <Typography
                   variant='body2'
-                  sx={{ color: '#94A3B8', fontSize: '0.875rem' }}
+                  sx={{ color: 'grey.400', fontSize: '0.875rem' }}
                 >
                   {suffix}
                 </Typography>
@@ -402,7 +402,7 @@ export const MetricCard: React.FC<MetricCardProps> = ({
             {subtitle && (
               <Typography
                 variant='caption'
-                sx={{ color: '#94A3B8', marginTop: 0.5, display: 'block' }}
+                sx={{ color: 'grey.400', marginTop: 0.5, display: 'block' }}
               >
                 {subtitle}
               </Typography>
@@ -462,7 +462,7 @@ export const MetricCard: React.FC<MetricCardProps> = ({
                   computedTrend === 'up'
                     ? '#DCFCE7'
                     : computedTrend === 'down'
-                      ? '#FEE2E2'
+                      ? 'error.100'
                       : '#F1F5F9',
                 transition: 'all 0.3s',
                 transform: isHovered ? 'scale(1.1)' : 'scale(1)',
@@ -485,7 +485,7 @@ export const MetricCard: React.FC<MetricCardProps> = ({
               change !== undefined ? (
                 <Typography
                   variant='caption'
-                  sx={{ color: '#94A3B8', fontSize: '0.7rem' }}
+                  sx={{ color: 'grey.400', fontSize: '0.7rem' }}
                 >
                   vs last period
                 </Typography>

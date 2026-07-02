@@ -252,7 +252,10 @@ const ReportBuilderPage = () => {
           mb: 4,
         }}
       >
-        <Typography variant='h4' sx={{ fontWeight: 700 }}>
+        <Typography
+          variant='h4'
+          sx={{ fontWeight: 700 }}
+        >
           报表设计器
         </Typography>
         <Button
@@ -310,7 +313,11 @@ const ReportBuilderPage = () => {
           </Button>
         </Box>
       ) : (
-        <TableContainer component={Paper} elevation={0} sx={{ border: '1px solid', borderColor: 'divider' }}>
+        <TableContainer
+          component={Paper}
+          elevation={0}
+          sx={{ border: '1px solid', borderColor: 'divider' }}
+        >
           <Table>
             <TableHead>
               <TableRow>
@@ -325,7 +332,10 @@ const ReportBuilderPage = () => {
             </TableHead>
             <TableBody>
               {filteredReports.map((report) => (
-                <TableRow key={report.id} hover>
+                <TableRow
+                  key={report.id}
+                  hover
+                >
                   <TableCell>
                     <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
                       <Box
@@ -339,13 +349,19 @@ const ReportBuilderPage = () => {
                           justifyContent: 'center',
                         }}
                       >
-                        <FileText sx={{ color: '#F59E0B', fontSize: 20 }} />
+                        <FileText sx={{ color: 'warning.main', fontSize: 20 }} />
                       </Box>
                       <Box>
-                        <Typography variant='body2' sx={{ fontWeight: 600 }}>
+                        <Typography
+                          variant='body2'
+                          sx={{ fontWeight: 600 }}
+                        >
                           {report.name}
                         </Typography>
-                        <Typography variant='caption' color='text.secondary'>
+                        <Typography
+                          variant='caption'
+                          color='text.secondary'
+                        >
                           {report.description}
                         </Typography>
                       </Box>
@@ -362,13 +378,14 @@ const ReportBuilderPage = () => {
                   <TableCell>{getStatusChip(report.status || 'draft')}</TableCell>
                   <TableCell>{report.created_by || '-'}</TableCell>
                   <TableCell>
-                    {report.updated_at
-                      ? new Date(report.updated_at).toLocaleDateString()
-                      : '-'}
+                    {report.updated_at ? new Date(report.updated_at).toLocaleDateString() : '-'}
                   </TableCell>
                   <TableCell align='right'>
                     <Tooltip title='编辑'>
-                      <IconButton size='small' onClick={() => handleEdit(report)}>
+                      <IconButton
+                        size='small'
+                        onClick={() => handleEdit(report)}
+                      >
                         <Edit2 size={16} />
                       </IconButton>
                     </Tooltip>
@@ -378,12 +395,18 @@ const ReportBuilderPage = () => {
                       </IconButton>
                     </Tooltip>
                     <Tooltip title='导出'>
-                      <IconButton size='small' onClick={() => handleExport(report.id, report.format as 'excel' | 'pdf')}>
+                      <IconButton
+                        size='small'
+                        onClick={() => handleExport(report.id, report.format as 'excel' | 'pdf')}
+                      >
                         <Download size={16} />
                       </IconButton>
                     </Tooltip>
                     <Tooltip title='删除'>
-                      <IconButton size='small' onClick={() => handleDelete(report.id)}>
+                      <IconButton
+                        size='small'
+                        onClick={() => handleDelete(report.id)}
+                      >
                         <Trash2 size={16} />
                       </IconButton>
                     </Tooltip>
@@ -408,10 +431,17 @@ const ReportBuilderPage = () => {
         }}
       >
         <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
-          <Button variant='outlined' size='small' onClick={() => setViewMode('list')}>
+          <Button
+            variant='outlined'
+            size='small'
+            onClick={() => setViewMode('list')}
+          >
             返回列表
           </Button>
-          <Typography variant='h5' sx={{ fontWeight: 600 }}>
+          <Typography
+            variant='h5'
+            sx={{ fontWeight: 600 }}
+          >
             {selectedReport ? '编辑报表' : '创建报表'}
           </Typography>
         </Box>
@@ -422,18 +452,31 @@ const ReportBuilderPage = () => {
           >
             预览
           </Button>
-          <Button variant='outlined' onClick={() => setViewMode('list')}>
+          <Button
+            variant='outlined'
+            onClick={() => setViewMode('list')}
+          >
             取消
           </Button>
-          <Button variant='contained' onClick={handleSave}>
+          <Button
+            variant='contained'
+            onClick={handleSave}
+          >
             保存
           </Button>
         </Box>
       </Box>
 
-      <Card elevation={0} sx={{ border: '1px solid', borderColor: 'divider' }}>
+      <Card
+        elevation={0}
+        sx={{ border: '1px solid', borderColor: 'divider' }}
+      >
         <CardContent>
-          <Tabs value={builderTab} onChange={(_, v) => setBuilderTab(v)} sx={{ mb: 3 }}>
+          <Tabs
+            value={builderTab}
+            onChange={(_, v) => setBuilderTab(v)}
+            sx={{ mb: 3 }}
+          >
             <Tab label='基本信息' />
             <Tab label='报表模板' />
             <Tab label='数据配置' />
@@ -458,12 +501,17 @@ const ReportBuilderPage = () => {
                 onChange={(e) => setFormData({ ...formData, description: e.target.value })}
                 sx={{ mb: 3 }}
               />
-              <FormControl fullWidth sx={{ mb: 3 }}>
+              <FormControl
+                fullWidth
+                sx={{ mb: 3 }}
+              >
                 <InputLabel>报表类型</InputLabel>
                 <Select
                   value={formData.type || 'sales'}
                   label='报表类型'
-                  onChange={(e) => setFormData({ ...formData, type: e.target.value, report_type: e.target.value })}
+                  onChange={(e) =>
+                    setFormData({ ...formData, type: e.target.value, report_type: e.target.value })
+                  }
                 >
                   <MenuItem value='sales'>销售报表</MenuItem>
                   <MenuItem value='quality'>质量报表</MenuItem>
@@ -473,7 +521,10 @@ const ReportBuilderPage = () => {
                   <MenuItem value='production'>生产报表</MenuItem>
                 </Select>
               </FormControl>
-              <FormControl fullWidth sx={{ mb: 3 }}>
+              <FormControl
+                fullWidth
+                sx={{ mb: 3 }}
+              >
                 <InputLabel>默认格式</InputLabel>
                 <Select
                   value={formData.format || 'excel'}
@@ -491,7 +542,12 @@ const ReportBuilderPage = () => {
                 <Select
                   value={formData.status || 'draft'}
                   label='状态'
-                  onChange={(e) => setFormData({ ...formData, status: e.target.value as 'draft' | 'published' | 'archived' })}
+                  onChange={(e) =>
+                    setFormData({
+                      ...formData,
+                      status: e.target.value as 'draft' | 'published' | 'archived',
+                    })
+                  }
                 >
                   <MenuItem value='draft'>草稿</MenuItem>
                   <MenuItem value='published'>已发布</MenuItem>
@@ -503,17 +559,26 @@ const ReportBuilderPage = () => {
 
           {builderTab === 1 && (
             <Box>
-              <Typography variant='subtitle1' sx={{ mb: 2 }}>
+              <Typography
+                variant='subtitle1'
+                sx={{ mb: 2 }}
+              >
                 选择报表模板
               </Typography>
-              <Grid container spacing={2}>
+              <Grid
+                container
+                spacing={2}
+              >
                 {[
                   { name: '标准报表', desc: '经典表格布局，适合数据明细展示' },
                   { name: '图表报表', desc: '图表为主，适合数据可视化' },
                   { name: '综合报表', desc: '表格+图表，适合综合分析' },
                   { name: '分组报表', desc: '多级分组汇总，适合复杂数据' },
                 ].map((template, idx) => (
-                  <Grid size={{ xs: 12, sm: 6, md: 3 }} key={idx}>
+                  <Grid
+                    size={{ xs: 12, sm: 6, md: 3 }}
+                    key={idx}
+                  >
                     <Card
                       sx={{
                         cursor: 'pointer',
@@ -537,12 +602,21 @@ const ReportBuilderPage = () => {
                             mb: 2,
                           }}
                         >
-                          <FileText size={32} style={{ color: '#6B7280' }} />
+                          <FileText
+                            size={32}
+                            style={{ color: '#6B7280' }}
+                          />
                         </Box>
-                        <Typography variant='subtitle2' sx={{ fontWeight: 600 }}>
+                        <Typography
+                          variant='subtitle2'
+                          sx={{ fontWeight: 600 }}
+                        >
                           {template.name}
                         </Typography>
-                        <Typography variant='caption' color='text.secondary'>
+                        <Typography
+                          variant='caption'
+                          color='text.secondary'
+                        >
                           {template.desc}
                         </Typography>
                       </CardContent>
@@ -555,10 +629,16 @@ const ReportBuilderPage = () => {
 
           {builderTab === 2 && (
             <Box>
-              <Typography variant='subtitle1' sx={{ mb: 2 }}>
+              <Typography
+                variant='subtitle1'
+                sx={{ mb: 2 }}
+              >
                 数据源配置
               </Typography>
-              <FormControl fullWidth sx={{ mb: 3, maxWidth: 400 }}>
+              <FormControl
+                fullWidth
+                sx={{ mb: 3, maxWidth: 400 }}
+              >
                 <InputLabel>选择数据集</InputLabel>
                 <Select
                   value=''
@@ -571,7 +651,10 @@ const ReportBuilderPage = () => {
                 </Select>
               </FormControl>
               <Box sx={{ mt: 3, p: 3, backgroundColor: '#F9FAFB', borderRadius: 1 }}>
-                <Typography variant='body2' color='text.secondary'>
+                <Typography
+                  variant='body2'
+                  color='text.secondary'
+                >
                   提示：选择数据集后，可以在下方配置报表字段、筛选条件、排序方式等。
                 </Typography>
               </Box>
@@ -580,10 +663,16 @@ const ReportBuilderPage = () => {
 
           {builderTab === 3 && (
             <Box sx={{ maxWidth: 600 }}>
-              <Typography variant='subtitle1' sx={{ mb: 2 }}>
+              <Typography
+                variant='subtitle1'
+                sx={{ mb: 2 }}
+              >
                 定时任务配置
               </Typography>
-              <FormControl fullWidth sx={{ mb: 3 }}>
+              <FormControl
+                fullWidth
+                sx={{ mb: 3 }}
+              >
                 <InputLabel>执行频率</InputLabel>
                 <Select
                   value='daily'
@@ -610,7 +699,10 @@ const ReportBuilderPage = () => {
                 sx={{ mb: 3 }}
               />
               <Box sx={{ mt: 3, p: 3, backgroundColor: '#F9FAFB', borderRadius: 1 }}>
-                <Typography variant='body2' color='text.secondary'>
+                <Typography
+                  variant='body2'
+                  color='text.secondary'
+                >
                   提示：配置定时任务后，系统将按照设定的时间自动生成报表并发送到指定邮箱。
                 </Typography>
               </Box>
@@ -635,11 +727,7 @@ const ReportBuilderPage = () => {
       <DashboardTemplate
         title=''
         subtitle=''
-        breadcrumbs={[
-          { label: '首页', href: '/dashboard' },
-          { label: 'BI' },
-          { label: '报表' },
-        ]}
+        breadcrumbs={[{ label: '首页', href: '/dashboard' }, { label: 'BI' }, { label: '报表' }]}
       >
         {viewMode === 'list' ? renderListView() : renderBuilderView()}
       </DashboardTemplate>

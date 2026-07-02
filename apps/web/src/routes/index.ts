@@ -1,31 +1,21 @@
 export { authRoutes } from './auth';
 export { dashboardRoutes } from './dashboard';
 export { commonRoutes } from './common';
-export { hrmRoutes } from './hrm';
-export { crmRoutes } from './crm';
-export { financeRoutes } from './finance';
-export { erpRoutes } from './erp';
-export { iamRoutes } from './iam';
-export { workflowRoutes } from './workflow';
-export { biRoutes } from './bi';
-export { pmRoutes } from './pm';
-export { rsRoutes } from './rs';
-export { notificationRoutes } from './notifications';
-export { docsRoutes } from './docs';
-export { aiRoutes } from './ai';
-export { imRoutes } from './im';
-export { professionalRoutes } from './professional';
-export { monitorRoutes } from './monitor';
-export { mesRoutes } from './mes';
-export { scmRoutes } from './scm';
-export { wmsRoutes } from './wms';
-export { gisRoutes } from './gis';
-export { pluginRoutes } from './plugin';
-export { reportRoutes } from './report';
-export { mobileRoutes } from './mobile';
-export { pdmRoutes } from './pdm';
-export { srmRoutes } from './srm';
-export { tenantRoutes } from './tenant';
-export { lowcodeRoutes } from './lowcode';
 export { legacyRedirects } from './compatibility';
-export { type RouteConfig, lazyWithRetry } from './utils';
+
+export {
+  coreModuleRoutes,
+  getAllRoutes,
+  getModuleRoutes,
+  findRouteByPath,
+  toFlatRouteConfig,
+  allV2FlatRoutes,
+} from './v2';
+export type {
+  RouteModuleConfig,
+  RouteConfigV2,
+  RouteConfig,
+  PageTemplateType,
+  LayoutType,
+} from './v2/types';
+export { lazyWithRetry } from './v2/types';

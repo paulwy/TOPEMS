@@ -12,7 +12,7 @@ import {
 } from '@mui/material';
 import { apiLogger } from '@/utils/logger';
 import { Plus, Eye, Clock } from 'lucide-react';
-import { PageContainer } from '@/components/common';
+import { PageContainer } from '@/components/common/PageContainerV2';
 import { ListPageTemplate } from '@/components/templates';
 
 import type { RowAction, FilterConfig, ColumnDef } from '@/components/templates';
@@ -77,7 +77,7 @@ const PdmFormulaPage: React.FC = () => {
       启用: { bg: 'success.lighter', color: 'success.dark' },
       禁用: { bg: 'error.lighter', color: 'error.dark' },
       草稿: { bg: 'warning.light', color: '#ca8a04' },
-      已批准: { bg: '#dbeafe', color: 'primary.main' },
+      已批准: { bg: 'primary.100', color: 'primary.main' },
     };
     const colors = statusMap[status] || { bg: 'grey.100', color: 'text.secondary' };
     return (
@@ -197,7 +197,7 @@ const PdmFormulaPage: React.FC = () => {
         mb: 3,
       }}
     >
-      <Box sx={{ p: 2, bgcolor: '#fdf4ff', borderRadius: 2 }}>
+      <Box sx={{ p: 2, bgcolor: '#fdf4ff', borderRadius: 3 }}>
         <Typography
           variant='body2'
           sx={{ color: 'slate.600' }}
@@ -211,7 +211,7 @@ const PdmFormulaPage: React.FC = () => {
           {stats.total}
         </Typography>
       </Box>
-      <Box sx={{ p: 2, bgcolor: 'success.lighter', borderRadius: 2 }}>
+      <Box sx={{ p: 2, bgcolor: 'success.lighter', borderRadius: 3 }}>
         <Typography
           variant='body2'
           sx={{ color: 'slate.600' }}
@@ -225,7 +225,7 @@ const PdmFormulaPage: React.FC = () => {
           {stats.active}
         </Typography>
       </Box>
-      <Box sx={{ p: 2, bgcolor: 'warning.light', borderRadius: 2 }}>
+      <Box sx={{ p: 2, bgcolor: 'warning.light', borderRadius: 3 }}>
         <Typography
           variant='body2'
           sx={{ color: 'slate.600' }}
@@ -239,7 +239,7 @@ const PdmFormulaPage: React.FC = () => {
           {stats.draft}
         </Typography>
       </Box>
-      <Box sx={{ p: 2, bgcolor: '#dbeafe', borderRadius: 2 }}>
+      <Box sx={{ p: 2, bgcolor: 'primary.100', borderRadius: 3 }}>
         <Typography
           variant='body2'
           sx={{ color: 'slate.600' }}
@@ -258,8 +258,10 @@ const PdmFormulaPage: React.FC = () => {
 
   return (
     <PageContainer
-      title='配方管理'
-      subtitle='Production Formula'
+      headerProps={{
+        pageIcon: <Clock style={{ width: 20, height: 20 }} />,
+        pageGradient: 'linear-gradient(135deg, #D946EF 0%, #C026D3 100%)',
+      }}
     >
       <ListPageTemplate<ProductionFormula>
         title=''

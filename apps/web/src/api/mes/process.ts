@@ -83,34 +83,34 @@ export const processRouteApi = {
     if (params?.status) searchParams.set('status', params.status);
 
     const queryString = searchParams.toString();
-    return apiClient.mes.get(`/api/mes/process-routes${queryString ? `?${queryString}` : ''}`);
+    return apiClient.mes.get(`/process-routes${queryString ? `?${queryString}` : ''}`);
   },
 
   async get(id: string): Promise<ApiResponse<ProcessRoute>> {
-    return apiClient.mes.get(`/api/mes/process-routes/${id}`);
+    return apiClient.mes.get(`/process-routes/${id}`);
   },
 
   async create(data: CreateProcessRouteRequest): Promise<ApiResponse<ProcessRoute>> {
-    return apiClient.mes.post('/api/mes/process-routes', data);
+    return apiClient.mes.post('/process-routes', data);
   },
 
   async update(id: string, data: UpdateProcessRouteRequest): Promise<ApiResponse<ProcessRoute>> {
-    return apiClient.mes.put(`/api/mes/process-routes/${id}`, data);
+    return apiClient.mes.put(`/process-routes/${id}`, data);
   },
 
   async delete(id: string): Promise<ApiResponse<string>> {
-    return apiClient.mes.delete(`/api/mes/process-routes/${id}`);
+    return apiClient.mes.delete(`/process-routes/${id}`);
   },
 
   async getSteps(routeId: string): Promise<ApiResponse<{ steps: ProcessRouteStep[] }>> {
-    return apiClient.mes.get(`/api/mes/process-routes/${routeId}/steps`);
+    return apiClient.mes.get(`/process-routes/${routeId}/steps`);
   },
 
   async addStep(
     routeId: string,
     data: AddProcessRouteStepRequest
   ): Promise<ApiResponse<ProcessRouteStep>> {
-    return apiClient.mes.post(`/api/mes/process-routes/${routeId}/steps`, data);
+    return apiClient.mes.post(`/process-routes/${routeId}/steps`, data);
   },
 
   async updateStep(
@@ -118,18 +118,18 @@ export const processRouteApi = {
     stepId: string,
     data: UpdateProcessRouteStepRequest
   ): Promise<ApiResponse<ProcessRouteStep>> {
-    return apiClient.mes.put(`/api/mes/process-routes/${routeId}/steps/${stepId}`, data);
+    return apiClient.mes.put(`/process-routes/${routeId}/steps/${stepId}`, data);
   },
 
   async removeStep(routeId: string, stepId: string): Promise<ApiResponse<string>> {
-    return apiClient.mes.delete(`/api/mes/process-routes/${routeId}/steps/${stepId}`);
+    return apiClient.mes.delete(`/process-routes/${routeId}/steps/${stepId}`);
   },
 
   async reorderSteps(
     routeId: string,
     stepIds: string[]
   ): Promise<ApiResponse<{ steps: ProcessRouteStep[] }>> {
-    return apiClient.mes.put(`/api/mes/process-routes/${routeId}/steps/reorder`, {
+    return apiClient.mes.put(`/process-routes/${routeId}/steps/reorder`, {
       step_ids: stepIds,
     });
   },

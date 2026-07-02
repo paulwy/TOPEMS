@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { Check, RefreshCw } from 'lucide-react';
-import { Card, CardContent, Box, Typography, TextField, Button } from '@mui/material';
+import {Card, CardContent, Box, Typography, TextField, Button, useTheme} from '@mui/material';
 import { AIGenerateModal } from './AIGenerateModal';
 import type { CodeGenerateContext } from '@/types/ai';
 
@@ -303,6 +303,7 @@ export function AICodeGenerator({
 }: AICodeGeneratorProps) {
   const [suggestedCodes, setSuggestedCodes] = useState<string[]>([]);
   const [selectedCode, setSelectedCode] = useState<string | null>(null);
+  const theme = useTheme();
   const [customCode, setCustomCode] = useState('');
   const [regenerating, setRegenerating] = useState(false);
   const savedNameRef = useRef<string>('');
@@ -426,7 +427,7 @@ export function AICodeGenerator({
                   style={{
                     width: 20,
                     height: 20,
-                    color: 'secondary.main',
+                    color: theme.palette.secondary.main,
                     opacity: 0,
                     transition: 'opacity 0.2s',
                   }}

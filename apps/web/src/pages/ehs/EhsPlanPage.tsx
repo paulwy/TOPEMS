@@ -296,8 +296,6 @@ const EhsPlanPage: React.FC = () => {
 
   return (
     <PageContainer
-      title='应急预案'
-      subtitle='Emergency Plan'
       headerProps={{
         actions: headerActions,
         pageIcon: <Activity sx={{ width: 20, height: 20 }} />,
@@ -321,7 +319,7 @@ const EhsPlanPage: React.FC = () => {
                   width: 40,
                   height: 40,
                   bgcolor: 'success.lighter',
-                  borderRadius: 2,
+                  borderRadius: 3,
                   display: 'flex',
                   alignItems: 'center',
                   justifyContent: 'center',
@@ -354,7 +352,7 @@ const EhsPlanPage: React.FC = () => {
                   width: 40,
                   height: 40,
                   bgcolor: 'success.lighter',
-                  borderRadius: 2,
+                  borderRadius: 3,
                   display: 'flex',
                   alignItems: 'center',
                   justifyContent: 'center',
@@ -387,7 +385,7 @@ const EhsPlanPage: React.FC = () => {
                   width: 40,
                   height: 40,
                   bgcolor: 'error.lighter',
-                  borderRadius: 2,
+                  borderRadius: 3,
                   display: 'flex',
                   alignItems: 'center',
                   justifyContent: 'center',

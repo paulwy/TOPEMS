@@ -38,7 +38,7 @@ export const ChartCardComponent: React.FC<ChartCardType> = ({
     <Paper
       variant={variant}
       sx={{
-        borderRadius: 2,
+        borderRadius: 3,
         height: expandable && !expanded ? 'auto' : height,
         display: 'flex',
         flexDirection: 'column',

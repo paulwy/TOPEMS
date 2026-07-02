@@ -24,7 +24,9 @@ const remoteModuleCache: Map<string, MountFunction> = new Map();
 declare global {
   interface Window {
     [key: string]: any;
+    // eslint-disable-next-line @typescript-eslint/naming-convention
     __webpack_share_scopes__: any;
+    // eslint-disable-next-line @typescript-eslint/naming-convention
     __webpack_init_sharing__: (scope: string) => Promise<void>;
   }
 }
@@ -111,7 +113,10 @@ const loadRemoteModule = async (
     remoteModuleCache.set(cacheKey, result);
     return result;
   } catch (error) {
-    logger.error(`[MicroFrontendLoader] Failed to load remote module ${remoteName}:${modulePath}`, error);
+    logger.error(
+      `[MicroFrontendLoader] Failed to load remote module ${remoteName}:${modulePath}`,
+      error
+    );
     throw error;
   }
 };

@@ -745,7 +745,7 @@ const DictManagementPage: React.FC = () => {
         <Box
           sx={{
             bgcolor: 'background.paper',
-            borderRadius: 2,
+            borderRadius: 3,
             boxShadow: 1,
             overflow: 'hidden',
           }}
@@ -918,7 +918,7 @@ const DictManagementPage: React.FC = () => {
         <Box
           sx={{
             bgcolor: 'background.paper',
-            borderRadius: 2,
+            borderRadius: 3,
             boxShadow: 1,
             overflow: 'hidden',
           }}

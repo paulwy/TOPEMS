@@ -21,37 +21,37 @@ export const projectApi = {
     if (params?.status) query.set('status', params.status);
     if (params?.page) query.set('page', params.page.toString());
     if (params?.pagesize) query.set('pagesize', params.pagesize.toString());
-    return apiClient.pm.get(`/api/pm/projects?${query.toString()}`);
+    return apiClient.pm.get(`/projects?${query.toString()}`);
   },
 
   create: async (data: CreateProjectRequest) => {
-    return apiClient.pm.post('/api/pm/projects', data);
+    return apiClient.pm.post('/projects', data);
   },
 
   get: async (id: string) => {
-    return apiClient.pm.get(`/api/pm/projects/${id}`);
+    return apiClient.pm.get(`/projects/${id}`);
   },
 
   update: async (id: string, data: UpdateProjectRequest) => {
-    return apiClient.pm.put(`/api/pm/projects/${id}`, data);
+    return apiClient.pm.put(`/projects/${id}`, data);
   },
 
   delete: async (id: string) => {
-    return apiClient.pm.delete(`/api/pm/projects/${id}`);
+    return apiClient.pm.delete(`/projects/${id}`);
   },
 
   dashboard: async (id: string) => {
-    return apiClient.pm.get(`/api/pm/projects/${id}/dashboard`);
+    return apiClient.pm.get(`/projects/${id}/dashboard`);
   },
 
   gantt: async (id: string) => {
-    return apiClient.pm.get(`/api/pm/projects/${id}/gantt`);
+    return apiClient.pm.get(`/projects/${id}/gantt`);
   },
 };
 
 export const phaseApi = {
   list: async (projectId: string) => {
-    return apiClient.pm.get(`/api/pm/projects/${projectId}/phases`);
+    return apiClient.pm.get(`/projects/${projectId}/phases`);
   },
 
   create: async (
@@ -64,11 +64,11 @@ export const phaseApi = {
       predecessor_ids?: string[];
     }
   ) => {
-    return apiClient.pm.post(`/api/pm/projects/${projectId}/phases`, data);
+    return apiClient.pm.post(`/projects/${projectId}/phases`, data);
   },
 
   get: async (projectId: string, id: string) => {
-    return apiClient.pm.get(`/api/pm/projects/${projectId}/phases/${id}`);
+    return apiClient.pm.get(`/projects/${projectId}/phases/${id}`);
   },
 
   update: async (
@@ -85,17 +85,17 @@ export const phaseApi = {
       predecessor_ids?: string[];
     }
   ) => {
-    return apiClient.pm.put(`/api/pm/projects/${projectId}/phases/${id}`, data);
+    return apiClient.pm.put(`/projects/${projectId}/phases/${id}`, data);
   },
 
   delete: async (projectId: string, id: string) => {
-    return apiClient.pm.delete(`/api/pm/projects/${projectId}/phases/${id}`);
+    return apiClient.pm.delete(`/projects/${projectId}/phases/${id}`);
   },
 };
 
 export const milestoneApi = {
   list: async (projectId: string) => {
-    return apiClient.pm.get(`/api/pm/projects/${projectId}/milestones`);
+    return apiClient.pm.get(`/projects/${projectId}/milestones`);
   },
 
   create: async (
@@ -108,11 +108,11 @@ export const milestoneApi = {
       acceptance_criteria?: string;
     }
   ) => {
-    return apiClient.pm.post(`/api/pm/projects/${projectId}/milestones`, data);
+    return apiClient.pm.post(`/projects/${projectId}/milestones`, data);
   },
 
   get: async (projectId: string, id: string) => {
-    return apiClient.pm.get(`/api/pm/projects/${projectId}/milestones/${id}`);
+    return apiClient.pm.get(`/projects/${projectId}/milestones/${id}`);
   },
 
   update: async (
@@ -127,17 +127,17 @@ export const milestoneApi = {
       acceptance_criteria?: string;
     }
   ) => {
-    return apiClient.pm.put(`/api/pm/projects/${projectId}/milestones/${id}`, data);
+    return apiClient.pm.put(`/projects/${projectId}/milestones/${id}`, data);
   },
 
   delete: async (projectId: string, id: string) => {
-    return apiClient.pm.delete(`/api/pm/projects/${projectId}/milestones/${id}`);
+    return apiClient.pm.delete(`/projects/${projectId}/milestones/${id}`);
   },
 };
 
 export const approvalApi = {
   get: async (projectId: string) => {
-    return apiClient.pm.get(`/api/pm/projects/${projectId}/approval`);
+    return apiClient.pm.get(`/projects/${projectId}/approval`);
   },
 
   submit: async (
@@ -147,11 +147,11 @@ export const approvalApi = {
       approver_id: string;
     }
   ) => {
-    return apiClient.pm.post(`/api/pm/projects/${projectId}/approval`, data);
+    return apiClient.pm.post(`/projects/${projectId}/approval`, data);
   },
 
   action: async (projectId: string, data: ApprovalRequest) => {
-    return apiClient.pm.post(`/api/pm/projects/${projectId}/approval/action`, data);
+    return apiClient.pm.post(`/projects/${projectId}/approval/action`, data);
   },
 };
 

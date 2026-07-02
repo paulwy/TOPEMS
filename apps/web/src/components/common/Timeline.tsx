@@ -1,5 +1,6 @@
 import React from 'react';
 import { Box, Typography, Chip, Skeleton } from '@mui/material';
+import type { SxProps, Theme } from '@mui/material/styles';
 import { Circle, CheckCircle, XCircle, Clock, AlertCircle, type LucideIcon } from 'lucide-react';
 
 export interface TimelineItem {
@@ -19,7 +20,7 @@ export interface TimelineProps {
   orientation?: 'vertical' | 'horizontal';
   variant?: 'outlined' | 'filled' | 'soft';
   size?: 'sm' | 'md' | 'lg';
-  sx?: import('@mui/material/styles').SxProps<import('@mui/material/styles').Theme>;
+  sx?: SxProps<Theme>;
   onItemClick?: (item: TimelineItem) => void;
 }
 

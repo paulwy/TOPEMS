@@ -24,7 +24,10 @@ interface AppCardProps {
   onDuplicate?: () => void;
 }
 
-const statusColors: Record<LowCodeApp['status'], 'default' | 'success' | 'warning' | 'info' | 'secondary'> = {
+const statusColors: Record<
+  LowCodeApp['status'],
+  'default' | 'success' | 'warning' | 'info' | 'secondary'
+> = {
   draft: 'default',
   developing: 'info',
   testing: 'secondary',
@@ -71,7 +74,7 @@ export const AppCard: React.FC<AppCardProps> = ({
 
   return (
     <Card
-      variant="outlined"
+      variant='outlined'
       sx={{
         height: '100%',
         display: 'flex',
@@ -83,11 +86,14 @@ export const AppCard: React.FC<AppCardProps> = ({
         },
       }}
     >
-      <CardActionArea onClick={onClick} sx={{ flex: 1, display: 'flex', flexDirection: 'column', alignItems: 'stretch' }}>
+      <CardActionArea
+        onClick={onClick}
+        sx={{ flex: 1, display: 'flex', flexDirection: 'column', alignItems: 'stretch' }}
+      >
         <Box
           sx={{
             height: 120,
-            background: `linear-gradient(135deg, ${stringToColor(app.name)} 0%, ${stringToColor(app.name + '2')} 100%)`,
+            background: `linear-gradient(135deg, ${stringToColor(app.name)} 0%, ${stringToColor(`${app.name}2`)} 100%)`,
             display: 'flex',
             alignItems: 'center',
             justifyContent: 'center',
@@ -108,9 +114,9 @@ export const AppCard: React.FC<AppCardProps> = ({
           </Avatar>
           <Chip
             label={statusLabels[app.status]}
-            size="small"
+            size='small'
             color={statusColors[app.status]}
-            variant="filled"
+            variant='filled'
             sx={{
               position: 'absolute',
               top: 8,
@@ -120,44 +126,90 @@ export const AppCard: React.FC<AppCardProps> = ({
           />
         </Box>
         <CardContent sx={{ flex: 1, pb: 1 }}>
-          <Typography variant="subtitle1" sx={{ fontWeight: 600 }} gutterBottom noWrap>
+          <Typography
+            variant='subtitle1'
+            sx={{ fontWeight: 600 }}
+            gutterBottom
+            noWrap
+          >
             {app.label || app.name}
           </Typography>
-          <Typography variant="body2" color="text.secondary" sx={{
-            display: '-webkit-box',
-            WebkitLineClamp: 2,
-            WebkitBoxOrient: 'vertical',
-            overflow: 'hidden',
-            minHeight: 40,
-          }}>
+          <Typography
+            variant='body2'
+            color='text.secondary'
+            sx={{
+              display: '-webkit-box',
+              WebkitLineClamp: 2,
+              WebkitBoxOrient: 'vertical',
+              overflow: 'hidden',
+              minHeight: 40,
+            }}
+          >
             {app.description || '暂无描述'}
           </Typography>
           <Box sx={{ display: 'flex', gap: 1, mt: 2, flexWrap: 'wrap' }}>
-            <Chip label={`${app.modelCount || 0} 模型`} size="small" variant="outlined" />
-            <Chip label={`${app.pageCount || 0} 页面`} size="small" variant="outlined" />
+            <Chip
+              label={`${app.modelCount || 0} 模型`}
+              size='small'
+              variant='outlined'
+            />
+            <Chip
+              label={`${app.pageCount || 0} 页面`}
+              size='small'
+              variant='outlined'
+            />
             {app.currentVersion && (
-              <Chip label={`v${app.currentVersion}`} size="small" color="primary" variant="outlined" />
+              <Chip
+                label={`v${app.currentVersion}`}
+                size='small'
+                color='primary'
+                variant='outlined'
+              />
             )}
           </Box>
         </CardContent>
       </CardActionArea>
       <CardActions sx={{ justifyContent: 'space-between', px: 1, pt: 0 }}>
         <Box sx={{ display: 'flex', gap: 0.5 }}>
-          <IconButton size="small" onClick={(e) => { e.stopPropagation(); onEdit?.(); }} title="编辑">
+          <IconButton
+            size='small'
+            onClick={(e) => {
+              e.stopPropagation();
+              onEdit?.();
+            }}
+            title='编辑'
+          >
             <Settings style={{ width: 18, height: 18 }} />
           </IconButton>
           {app.status !== 'published' && (
-            <IconButton size="small" color="primary" onClick={(e) => { e.stopPropagation(); onPublish?.(); }} title="发布">
+            <IconButton
+              size='small'
+              color='primary'
+              onClick={(e) => {
+                e.stopPropagation();
+                onPublish?.();
+              }}
+              title='发布'
+            >
               <Upload style={{ width: 18, height: 18 }} />
             </IconButton>
           )}
           {app.status === 'published' && (
-            <IconButton size="small" color="success" onClick={(e) => e.stopPropagation()} title="访问">
+            <IconButton
+              size='small'
+              color='success'
+              onClick={(e) => e.stopPropagation()}
+              title='访问'
+            >
               <ExternalLink style={{ width: 18, height: 18 }} />
             </IconButton>
           )}
         </Box>
-        <IconButton size="small" onClick={handleMenuClick} title="更多">
+        <IconButton
+          size='small'
+          onClick={handleMenuClick}
+          title='更多'
+        >
           <MoreVertical style={{ width: 18, height: 18 }} />
         </IconButton>
         <Menu
@@ -166,11 +218,17 @@ export const AppCard: React.FC<AppCardProps> = ({
           onClose={handleMenuClose}
           onClick={handleMenuClose}
         >
-          <MenuItem onClick={onDuplicate} sx={{ gap: 1 }}>
+          <MenuItem
+            onClick={onDuplicate}
+            sx={{ gap: 1 }}
+          >
             <Copy style={{ width: 16, height: 16 }} />
             复制应用
           </MenuItem>
-          <MenuItem onClick={onDelete} sx={{ gap: 1, color: 'error.main' }}>
+          <MenuItem
+            onClick={onDelete}
+            sx={{ gap: 1, color: 'error.main' }}
+          >
             <Trash2 style={{ width: 16, height: 16 }} />
             删除应用
           </MenuItem>

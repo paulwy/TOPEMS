@@ -1,6 +1,5 @@
 import React, { useState, useEffect, useMemo } from 'react';
-import {
-  Box,
+import {Box,
   Dialog,
   DialogTitle,
   DialogContent,
@@ -10,8 +9,7 @@ import {
   Card,
   CardContent,
   Typography,
-  Button,
-} from '@mui/material';
+  Button, useTheme} from '@mui/material';
 import {
   Plus,
   ClipboardList,
@@ -32,6 +30,7 @@ import { PageContainer } from '@/components/common';
 
 const SrmOrderPage: React.FC = () => {
   const [orders, setOrders] = useState<PurchaseOrder[]>([]);
+  const theme = useTheme();
   const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState('');
   const [showCreateModal, setShowCreateModal] = useState(false);
@@ -88,9 +87,9 @@ const SrmOrderPage: React.FC = () => {
 
   const getStatusBadge = (status: string) => {
     const statusMap: Record<string, { bg: string; color: string }> = {
-      待处理: { bg: 'warning.light', color: '#b45309' },
-      处理中: { bg: '#dbeafe', color: 'primary.dark' },
-      已交付: { bg: 'success.lighter', color: '#15803d' },
+      待处理: { bg: 'warning.light', color: 'warning.700' },
+      处理中: { bg: 'primary.100', color: 'primary.dark' },
+      已交付: { bg: 'success.lighter', color: 'success.700' },
       已完成: { bg: 'secondary.light', color: 'primary.light' },
       已取消: { bg: 'error.lighter', color: 'error.darker' },
     };
@@ -129,46 +128,6 @@ const SrmOrderPage: React.FC = () => {
           const date = row.order_date;
           return date ? new Date(date).toLocaleDateString('zh-CN') : '';
         },
-      },
-    ],
-    []
-  );
-
-  const rowActions: RowAction<PurchaseOrder>[] = useMemo(
-    () => [
-      {
-        label: '查看',
-        icon: <Eye style={{ width: 16, height: 16 }} />,
-        onClick: () => {},
-      },
-      {
-        label: '编辑',
-        icon: <Edit2 style={{ width: 16, height: 16 }} />,
-        onClick: handleEdit,
-      },
-      {
-        label: '删除',
-        icon: <Trash2 style={{ width: 16, height: 16 }} />,
-        onClick: handleDelete,
-        color: 'error',
-      },
-      {
-        label: '确认',
-        icon: <Check style={{ width: 16, height: 16 }} />,
-        onClick: handleConfirm,
-        color: 'success',
-      },
-      {
-        label: '处理中',
-        icon: <Play style={{ width: 16, height: 16 }} />,
-        onClick: handleProcess,
-        color: 'primary',
-      },
-      {
-        label: '关闭',
-        icon: <X style={{ width: 16, height: 16 }} />,
-        onClick: handleClose,
-        color: 'error',
       },
     ],
     []
@@ -326,6 +285,46 @@ const SrmOrderPage: React.FC = () => {
     }
   };
 
+  const rowActions: RowAction<PurchaseOrder>[] = useMemo(
+    () => [
+      {
+        label: '查看',
+        icon: <Eye style={{ width: 16, height: 16 }} />,
+        onClick: () => {},
+      },
+      {
+        label: '编辑',
+        icon: <Edit2 style={{ width: 16, height: 16 }} />,
+        onClick: handleEdit,
+      },
+      {
+        label: '删除',
+        icon: <Trash2 style={{ width: 16, height: 16 }} />,
+        onClick: handleDelete,
+        color: 'error',
+      },
+      {
+        label: '确认',
+        icon: <Check style={{ width: 16, height: 16 }} />,
+        onClick: handleConfirm,
+        color: 'success',
+      },
+      {
+        label: '处理中',
+        icon: <Play style={{ width: 16, height: 16 }} />,
+        onClick: handleProcess,
+        color: 'primary',
+      },
+      {
+        label: '关闭',
+        icon: <X style={{ width: 16, height: 16 }} />,
+        onClick: handleClose,
+        color: 'error',
+      },
+    ],
+    []
+  );
+
   const stats = useMemo(() => {
     return {
       total: orders.length,
@@ -350,7 +349,7 @@ const SrmOrderPage: React.FC = () => {
           mb: 3,
         }}
       >
-        <Card sx={{ bgcolor: '#dbeafe' }}>
+        <Card sx={{ bgcolor: 'primary.100' }}>
           <CardContent sx={{ p: 2 }}>
             <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5 }}>
               <Box
@@ -423,7 +422,7 @@ const SrmOrderPage: React.FC = () => {
                 sx={{
                   width: 40,
                   height: 40,
-                  bgcolor: '#dbeafe',
+                  bgcolor: 'primary.100',
                   borderRadius: 2,
                   display: 'flex',
                   alignItems: 'center',
@@ -552,7 +551,7 @@ const SrmOrderPage: React.FC = () => {
           ]}
           onRefresh={loadOrders}
           emptyMessage='暂无订单数据'
-          emptyIcon={<ClipboardList style={{ width: 48, height: 48, color: 'text.disabled' }} />}
+          emptyIcon={<ClipboardList style={{ width: 48, height: 48, color: theme.palette.text.disabled }} />}
           headerContent={headerContent}
           getRowId={(row) => row.id || row.po_no || Math.random().toString()}
         />

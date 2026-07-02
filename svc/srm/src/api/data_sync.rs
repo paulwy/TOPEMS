@@ -1,6 +1,6 @@
 use anyhow::Result;
 use axum::{
-    extract::{State, Extension, Json},
+    extract::{Extension, Json, State},
     routing::post,
     Router,
 };
@@ -11,8 +11,8 @@ use std::sync::Arc;
 use uuid::Uuid;
 
 use crate::services::permission::{check_permission, ModulePermission};
-use topems_shared::{api_error, ApiResponse};
 use topems_shared::auth::Claims;
+use topems_shared::{api_error, ApiResponse};
 
 #[derive(Debug, Deserialize, Serialize)]
 pub struct SyncSupplierFromScmRequest {
@@ -41,10 +41,19 @@ pub async fn create_routes(db: PgPool) -> Result<Router> {
     let state = Arc::new(AppState { db });
 
     let app = Router::new()
-        .route("/api/srm/sync/supplier-from-scm", post(sync_supplier_from_scm))
-        .route("/api/srm/sync/suppliers-from-scm", post(sync_all_suppliers_from_scm))
+        .route(
+            "/api/srm/sync/supplier-from-scm",
+            post(sync_supplier_from_scm),
+        )
+        .route(
+            "/api/srm/sync/suppliers-from-scm",
+            post(sync_all_suppliers_from_scm),
+        )
         .route("/api/srm/sync/supplier-to-scm", post(sync_supplier_to_scm))
-        .route("/api/srm/sync/suppliers-to-scm", post(sync_all_suppliers_to_scm))
+        .route(
+            "/api/srm/sync/suppliers-to-scm",
+            post(sync_all_suppliers_to_scm),
+        )
         .route("/api/srm/sync/sync-logs", post(get_sync_logs))
         .with_state(state);
 
@@ -87,7 +96,18 @@ async fn sync_supplier_from_scm(
     .fetch_optional(&state.db)
     .await;
 
-    let (id, name, short_name, contact_name, contact_phone, email, address, bank_account, tax_number, status) = match scm_supplier {
+    let (
+        id,
+        name,
+        short_name,
+        contact_name,
+        contact_phone,
+        email,
+        address,
+        bank_account,
+        tax_number,
+        status,
+    ) = match scm_supplier {
         Ok(Some(s)) => s,
         Ok(None) => {
             return Json(ApiResponse::success(
@@ -106,16 +126,19 @@ async fn sync_supplier_from_scm(
         }
     };
 
-    let existing_count = sqlx::query_scalar::<_, i64>(
-        "SELECT COUNT(*) FROM plugin_srm.suppliers WHERE id = $1",
-    )
-    .bind(id)
-    .fetch_one(&state.db)
-    .await
-    .unwrap_or(0);
+    let existing_count =
+        sqlx::query_scalar::<_, i64>("SELECT COUNT(*) FROM plugin_srm.suppliers WHERE id = $1")
+            .bind(id)
+            .fetch_one(&state.db)
+            .await
+            .unwrap_or(0);
 
     let now = Utc::now();
-    let action = if existing_count > 0 { "update" } else { "create" };
+    let action = if existing_count > 0 {
+        "update"
+    } else {
+        "create"
+    };
 
     if existing_count > 0 {
         let result = sqlx::query(
@@ -156,7 +179,8 @@ async fn sync_supplier_from_scm(
                     action,
                     "success",
                     None,
-                ).await;
+                )
+                .await;
                 Json(ApiResponse::success(
                     serde_json::json!({
                         "success": true,
@@ -183,7 +207,10 @@ async fn sync_supplier_from_scm(
             "#,
         )
         .bind(id)
-        .bind(format!("SUP-{}", id.to_string().split('-').next().unwrap_or("")))
+        .bind(format!(
+            "SUP-{}",
+            id.to_string().split('-').next().unwrap_or("")
+        ))
         .bind(&name)
         .bind(short_name)
         .bind(contact_name)
@@ -213,7 +240,8 @@ async fn sync_supplier_from_scm(
                     action,
                     "success",
                     None,
-                ).await;
+                )
+                .await;
                 Json(ApiResponse::success(
                     serde_json::json!({
                         "success": true,
@@ -265,13 +293,24 @@ async fn sync_all_suppliers_from_scm(
     let mut failed_count = 0;
     let now = Utc::now();
 
-    for (id, name, short_name, contact_name, contact_phone, email, address, bank_account, tax_number, status) in scm_suppliers {
-        let existing = sqlx::query_scalar::<_, i64>(
-            "SELECT COUNT(*) FROM plugin_srm.suppliers WHERE id = $1",
-        )
-        .bind(id)
-        .fetch_one(&state.db)
-        .await;
+    for (
+        id,
+        name,
+        short_name,
+        contact_name,
+        contact_phone,
+        email,
+        address,
+        bank_account,
+        tax_number,
+        status,
+    ) in scm_suppliers
+    {
+        let existing =
+            sqlx::query_scalar::<_, i64>("SELECT COUNT(*) FROM plugin_srm.suppliers WHERE id = $1")
+                .bind(id)
+                .fetch_one(&state.db)
+                .await;
 
         if existing.unwrap_or(0) > 0 {
             let result = sqlx::query(
@@ -372,7 +411,20 @@ async fn sync_supplier_to_scm(
         }
     };
 
-    let srm_supplier = sqlx::query_as::<_, (Uuid, String, Option<String>, Option<String>, Option<String>, Option<String>, Option<String>, Option<String>, String)>(
+    let srm_supplier = sqlx::query_as::<
+        _,
+        (
+            Uuid,
+            String,
+            Option<String>,
+            Option<String>,
+            Option<String>,
+            Option<String>,
+            Option<String>,
+            Option<String>,
+            String,
+        ),
+    >(
         r#"
         SELECT id, name, legal_name, contact_person, phone, email, address, tax_id, status
         FROM plugin_srm.suppliers
@@ -383,35 +435,39 @@ async fn sync_supplier_to_scm(
     .fetch_optional(&state.db)
     .await;
 
-    let (id, name, legal_name, contact_person, phone, email, address, tax_number, status) = match srm_supplier {
-        Ok(Some(s)) => s,
-        Ok(None) => {
-            return Json(ApiResponse::success(
-                serde_json::json!({
-                    "success": false,
-                    "message": "SRM供应商不存在".to_string(),
-                    "supplier_id": supplier_id,
-                    "action": "none".to_string(),
-                }),
-                "SRM供应商不存在",
-            ));
-        }
-        Err(e) => {
-            tracing::error!("查询SRM供应商失败: {}", e);
-            return Json(api_error(500, "查询SRM供应商失败"));
-        }
-    };
+    let (id, name, legal_name, contact_person, phone, email, address, tax_number, status) =
+        match srm_supplier {
+            Ok(Some(s)) => s,
+            Ok(None) => {
+                return Json(ApiResponse::success(
+                    serde_json::json!({
+                        "success": false,
+                        "message": "SRM供应商不存在".to_string(),
+                        "supplier_id": supplier_id,
+                        "action": "none".to_string(),
+                    }),
+                    "SRM供应商不存在",
+                ));
+            }
+            Err(e) => {
+                tracing::error!("查询SRM供应商失败: {}", e);
+                return Json(api_error(500, "查询SRM供应商失败"));
+            }
+        };
 
-    let existing_count = sqlx::query_scalar::<_, i64>(
-        "SELECT COUNT(*) FROM plugin_scm.suppliers WHERE id = $1",
-    )
-    .bind(id)
-    .fetch_one(&state.db)
-    .await
-    .unwrap_or(0);
+    let existing_count =
+        sqlx::query_scalar::<_, i64>("SELECT COUNT(*) FROM plugin_scm.suppliers WHERE id = $1")
+            .bind(id)
+            .fetch_one(&state.db)
+            .await
+            .unwrap_or(0);
 
     let now = Utc::now();
-    let action = if existing_count > 0 { "update" } else { "create" };
+    let action = if existing_count > 0 {
+        "update"
+    } else {
+        "create"
+    };
 
     if existing_count > 0 {
         let result = sqlx::query(
@@ -452,7 +508,8 @@ async fn sync_supplier_to_scm(
                     action,
                     "success",
                     None,
-                ).await;
+                )
+                .await;
                 Json(ApiResponse::success(
                     serde_json::json!({
                         "success": true,
@@ -507,7 +564,8 @@ async fn sync_supplier_to_scm(
                     action,
                     "success",
                     None,
-                ).await;
+                )
+                .await;
                 Json(ApiResponse::success(
                     serde_json::json!({
                         "success": true,
@@ -535,7 +593,20 @@ async fn sync_all_suppliers_to_scm(
         Err(e) => return e,
     }
 
-    let srm_suppliers = sqlx::query_as::<_, (Uuid, String, Option<String>, Option<String>, Option<String>, Option<String>, Option<String>, Option<String>, String)>(
+    let srm_suppliers = sqlx::query_as::<
+        _,
+        (
+            Uuid,
+            String,
+            Option<String>,
+            Option<String>,
+            Option<String>,
+            Option<String>,
+            Option<String>,
+            Option<String>,
+            String,
+        ),
+    >(
         r#"
         SELECT id, name, legal_name, contact_person, phone, email, address, tax_id, status
         FROM plugin_srm.suppliers
@@ -559,13 +630,14 @@ async fn sync_all_suppliers_to_scm(
     let mut failed_count = 0;
     let now = Utc::now();
 
-    for (id, name, legal_name, contact_person, phone, email, address, tax_number, status) in srm_suppliers {
-        let existing = sqlx::query_scalar::<_, i64>(
-            "SELECT COUNT(*) FROM plugin_scm.suppliers WHERE id = $1",
-        )
-        .bind(id)
-        .fetch_one(&state.db)
-        .await;
+    for (id, name, legal_name, contact_person, phone, email, address, tax_number, status) in
+        srm_suppliers
+    {
+        let existing =
+            sqlx::query_scalar::<_, i64>("SELECT COUNT(*) FROM plugin_scm.suppliers WHERE id = $1")
+                .bind(id)
+                .fetch_one(&state.db)
+                .await;
 
         if existing.unwrap_or(0) > 0 {
             let result = sqlx::query(
@@ -693,7 +765,10 @@ async fn get_sync_logs(
                     })
                 })
                 .collect();
-            Json(ApiResponse::success(serde_json::json!({ "logs": logs }), "同步日志查询成功"))
+            Json(ApiResponse::success(
+                serde_json::json!({ "logs": logs }),
+                "同步日志查询成功",
+            ))
         }
         Err(e) => {
             tracing::error!("查询同步日志失败: {}", e);

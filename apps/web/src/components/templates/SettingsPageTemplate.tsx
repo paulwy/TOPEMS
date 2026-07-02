@@ -273,7 +273,7 @@ export const SettingsPageTemplate: React.FC<SettingsPageTemplateProps> = ({
           {field.description && (
             <Tooltip title={field.description}>
               <IconButton size='small'>
-                <Info style={{ width: 16, height: 16, color: 'text.secondary' }} />
+                <Info style={{ width: 16, height: 16, color: theme.palette.text.secondary }} />
               </IconButton>
             </Tooltip>
           )}
@@ -308,7 +308,7 @@ export const SettingsPageTemplate: React.FC<SettingsPageTemplateProps> = ({
                 style={{
                   width: 20,
                   height: 20,
-                  color: value ? 'success.main' : 'text.secondary',
+                  color: value ? theme.palette.success.main : theme.palette.text.secondary,
                 }}
               />
               <Typography variant='body2'>{field.label}</Typography>

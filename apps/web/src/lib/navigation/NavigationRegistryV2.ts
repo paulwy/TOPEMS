@@ -1,10 +1,4 @@
-import type {
-  ModuleNavConfig,
-  NavItemConfig,
-  NavItem,
-  ModuleCardConfig,
-  NavGroup,
-} from './types';
+import type { ModuleNavConfig, NavItemConfig, NavItem, ModuleCardConfig, NavGroup } from './types';
 import { NAV_GROUPS } from './types';
 
 type EventListener = (...args: unknown[]) => void;
@@ -56,7 +50,7 @@ class SimpleEventEmitter {
   }
 }
 
-class NavigationRegistryV2 {
+export class NavigationRegistryV2 {
   private static instance: NavigationRegistryV2;
   private modules: Map<string, ModuleNavConfig> = new Map();
   public emitter: SimpleEventEmitter;
@@ -88,9 +82,12 @@ class NavigationRegistryV2 {
   }
 
   getAllModules(): ModuleNavConfig[] {
-    return Array.from(this.modules.values()).sort(
-      (a, b) => (a.order || 0) - (b.order || 0)
-    );
+    return Array.from(this.modules.values()).sort((a, b) => (a.order || 0) - (b.order || 0));
+  }
+
+  private getModuleFirstPath(module: ModuleNavConfig): string {
+    const firstNavItem = module.navItems.find((item) => item.path && item.showInSidebar !== false);
+    return firstNavItem?.path || module.path;
   }
 
   getTopNavItems(hasPermission?: (perm: string) => boolean): NavItem[] {
@@ -103,7 +100,7 @@ class NavigationRegistryV2 {
         code: module.code,
         label: module.name,
         icon: module.icon,
-        path: module.path,
+        path: this.getModuleFirstPath(module),
         permission: module.permission,
         order: module.order,
         moduleCode: module.code,
@@ -141,7 +138,7 @@ class NavigationRegistryV2 {
       code: module.code,
       name: module.name,
       icon: module.icon,
-      path: module.path,
+      path: this.getModuleFirstPath(module),
       permission: module.permission,
       status: module.status || 'online',
       source: module.source,
@@ -151,10 +148,7 @@ class NavigationRegistryV2 {
     };
   }
 
-  getSidebarNavItems(
-    moduleCode: string,
-    hasPermission?: (perm: string) => boolean
-  ): NavItem[] {
+  getSidebarNavItems(moduleCode: string, hasPermission?: (perm: string) => boolean): NavItem[] {
     const module = this.modules.get(moduleCode);
     if (!module) return [];
 
@@ -188,10 +182,7 @@ class NavigationRegistryV2 {
     return grouped as Record<NavGroup | 'other', NavItem[]>;
   }
 
-  getModuleTabs(
-    moduleCode: string,
-    hasPermission?: (perm: string) => boolean
-  ): NavItem[] {
+  getModuleTabs(moduleCode: string, hasPermission?: (perm: string) => boolean): NavItem[] {
     const module = this.modules.get(moduleCode);
     if (!module) return [];
 
@@ -220,11 +211,10 @@ class NavigationRegistryV2 {
   }
 
   getNavHierarchy(path: string): NavItem[] {
-    const hierarchy: NavItem[] = [];
     const module = this.findModuleByPath(path);
-    if (!module) return hierarchy;
+    if (!module) return [];
 
-    hierarchy.push({
+    const baseItem: NavItem = {
       code: module.code,
       label: module.name,
       icon: module.icon,
@@ -233,35 +223,41 @@ class NavigationRegistryV2 {
       order: module.order,
       moduleCode: module.code,
       moduleName: module.name,
-    });
+      showInSidebar: false,
+      showInBreadcrumb: true,
+      showInTabs: false,
+    };
 
-    const findInTree = (items: NavItemConfig[], currentHierarchy: NavItem[]): boolean => {
+    const findInTree = (
+      items: NavItemConfig[],
+      currentPath: NavItem[]
+    ): NavItem[] | null => {
       for (const item of items) {
         const enriched = this.enrichNavItem(item, module);
-        const newHierarchy = [...currentHierarchy, enriched];
+        const newPath = [...currentPath, enriched];
 
         if (item.path === path || this.matchDynamicRoute(item.path, path)) {
-          hierarchy.push(...newHierarchy.slice(1));
-          return true;
+          return newPath;
         }
 
         if (path.startsWith(`${item.path}/`)) {
-          hierarchy.push(enriched);
-          if (item.children && findInTree(item.children, newHierarchy)) {
-            return true;
+          if (item.children) {
+            const found = findInTree(item.children, newPath);
+            if (found) return found;
           }
-          return false;
+          return newPath;
         }
 
-        if (item.children && findInTree(item.children, newHierarchy)) {
-          return true;
+        if (item.children) {
+          const found = findInTree(item.children, currentPath);
+          if (found) return found;
         }
       }
-      return false;
+      return null;
     };
 
-    findInTree(module.navItems, [hierarchy[0]]);
-    return hierarchy;
+    const foundPath = findInTree(module.navItems, [baseItem]);
+    return foundPath || [baseItem];
   }
 
   private findInTree(
@@ -315,6 +311,24 @@ class NavigationRegistryV2 {
       showInBreadcrumb: item.showInBreadcrumb !== false,
       showInTabs: item.showInTabs !== false,
     };
+  }
+
+
+  getNavItemsGroupedByBusinessDomain(
+    hasPermission?: (perm: string) => boolean
+  ): Record<string, ModuleCardConfig[]> {
+    const grouped: Record<string, ModuleCardConfig[]> = {};
+    const allCards = this.getModuleCards(hasPermission);
+
+    for (const card of allCards) {
+      const domain = card.suite || 'other';
+      if (!grouped[domain]) {
+        grouped[domain] = [];
+      }
+      grouped[domain].push(card);
+    }
+
+    return grouped;
   }
 
   getAllModuleCodes(): string[] {

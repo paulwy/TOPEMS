@@ -21,7 +21,7 @@ export const accountApi = {
     page?: number;
     pagesize?: number;
   }): Promise<ApiResponse<PaginatedResult<Account>>> => {
-    return createApiClient().get('/api/finance/accounts', { params });
+    return createApiClient().get('/finance/accounts', { params });
   },
 
   getTree: (params?: {
@@ -29,30 +29,30 @@ export const accountApi = {
     status?: string;
     include_disabled?: boolean;
   }): Promise<ApiResponse<Account[]>> => {
-    return createApiClient().get('/api/finance/accounts/tree', { params });
+    return createApiClient().get('/finance/accounts/tree', { params });
   },
 
   get: (id: string): Promise<ApiResponse<Account>> => {
-    return createApiClient().get(`/api/finance/accounts/${id}`);
+    return createApiClient().get(`/finance/accounts/${id}`);
   },
 
   create: (data: Partial<Account>): Promise<ApiResponse<Account>> => {
-    return createApiClient().post('/api/finance/accounts', data);
+    return createApiClient().post('/finance/accounts', data);
   },
 
   update: (id: string, data: Partial<Account>): Promise<ApiResponse<Account>> => {
-    return createApiClient().put(`/api/finance/accounts/${id}`, data);
+    return createApiClient().put(`/finance/accounts/${id}`, data);
   },
 
   delete: (id: string): Promise<ApiResponse<void>> => {
-    return createApiClient().delete(`/api/finance/accounts/${id}`);
+    return createApiClient().delete(`/finance/accounts/${id}`);
   },
 
   batchCreateChildren: (
     parentId: string,
     accounts: Partial<Account>[]
   ): Promise<ApiResponse<Account[]>> => {
-    return createApiClient().post(`/api/finance/accounts/${parentId}/children-batch`, { accounts });
+    return createApiClient().post(`/finance/accounts/${parentId}/children-batch`, { accounts });
   },
 
   getBalances: (params: {
@@ -62,7 +62,7 @@ export const accountApi = {
     department_id?: string;
     project_id?: string;
   }): Promise<ApiResponse<AccountBalance[]>> => {
-    return createApiClient().get('/api/finance/accounts/balances', {
+    return createApiClient().get('/finance/accounts/balances', {
       params,
     });
   },
@@ -72,7 +72,7 @@ export const accountApi = {
     account_ids?: string[];
     company_id?: string;
   }): Promise<ApiResponse<AccountOpeningBalance[]>> => {
-    return createApiClient().get('/api/finance/accounts/opening-balances', {
+    return createApiClient().get('/finance/accounts/opening-balances', {
       params,
     });
   },
@@ -81,7 +81,7 @@ export const accountApi = {
     accountId: string,
     data: Partial<AccountOpeningBalance>
   ): Promise<ApiResponse<AccountOpeningBalance>> => {
-    return createApiClient().post(`/api/finance/accounts/${accountId}/opening-balance`, data);
+    return createApiClient().post(`/finance/accounts/${accountId}/opening-balance`, data);
   },
 
   carryForwardOpeningBalance: (params: {
@@ -89,7 +89,7 @@ export const accountApi = {
     to_period: string;
     company_id?: string;
   }): Promise<ApiResponse<void>> => {
-    return createApiClient().post('/api/finance/accounts/opening-balance/carry-forward', params);
+    return createApiClient().post('/finance/accounts/opening-balance/carry-forward', params);
   },
 };
 

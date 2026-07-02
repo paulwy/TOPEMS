@@ -21,11 +21,7 @@ import {
   TableBody,
   IconButton,
 } from '@mui/material';
-import type {
-  Inquiry,
-  CreateInquiryRequest,
-  Quotation,
-} from '@/api/srm';
+import type { Inquiry, CreateInquiryRequest, Quotation } from '@/api/srm';
 import { srmApi } from '@/api/srm';
 import { useAppStore } from '@/store';
 import { Plus, Edit, Trash2, Send, Check, XCircle, MessageSquare, TrendingUp } from 'lucide-react';
@@ -34,7 +30,10 @@ import { ListPageTemplate, type ColumnDef } from '@/components/templates';
 import { PageContainer } from '@/components/common';
 import ConfirmDialog from '@/components/common/ConfirmDialog';
 
-const statusConfig: Record<string, { label: string; color: 'default' | 'primary' | 'success' | 'warning' | 'error' }> = {
+const statusConfig: Record<
+  string,
+  { label: string; color: 'default' | 'primary' | 'success' | 'warning' | 'error' }
+> = {
   draft: { label: '草稿', color: 'default' },
   published: { label: '已发布', color: 'primary' },
   in_progress: { label: '报价中', color: 'warning' },
@@ -43,7 +42,10 @@ const statusConfig: Record<string, { label: string; color: 'default' | 'primary'
   cancelled: { label: '已取消', color: 'error' },
 };
 
-const urgencyConfig: Record<string, { label: string; color: 'default' | 'primary' | 'success' | 'warning' | 'error' }> = {
+const urgencyConfig: Record<
+  string,
+  { label: string; color: 'default' | 'primary' | 'success' | 'warning' | 'error' }
+> = {
   low: { label: '低', color: 'default' },
   normal: { label: '普通', color: 'primary' },
   high: { label: '紧急', color: 'warning' },
@@ -367,7 +369,14 @@ const InquiryQuotationPage: React.FC = () => {
       label: '紧急程度',
       render: (row) => {
         const config = urgencyConfig[row.urgency || 'normal'] || urgencyConfig.normal;
-        return <Chip size='small' label={config.label} color={config.color} variant='outlined' />;
+        return (
+          <Chip
+            size='small'
+            label={config.label}
+            color={config.color}
+            variant='outlined'
+          />
+        );
       },
     },
     {
@@ -375,7 +384,13 @@ const InquiryQuotationPage: React.FC = () => {
       label: '状态',
       render: (row) => {
         const config = statusConfig[row.status] || statusConfig.draft;
-        return <Chip size='small' label={config.label} color={config.color} />;
+        return (
+          <Chip
+            size='small'
+            label={config.label}
+            color={config.color}
+          />
+        );
       },
     },
     {
@@ -417,16 +432,18 @@ const InquiryQuotationPage: React.FC = () => {
               发布
             </Button>
           )}
-          {(row.status === 'published' || row.status === 'in_progress') && row.quotation_count && row.quotation_count > 0 && (
-            <Button
-              size='small'
-              color='info'
-              onClick={() => handleViewQuotations(row)}
-              startIcon={<MessageSquare size={12} />}
-            >
-              报价
-            </Button>
-          )}
+          {(row.status === 'published' || row.status === 'in_progress') &&
+            row.quotation_count &&
+            row.quotation_count > 0 && (
+              <Button
+                size='small'
+                color='info'
+                onClick={() => handleViewQuotations(row)}
+                startIcon={<MessageSquare size={12} />}
+              >
+                报价
+              </Button>
+            )}
         </Box>
       ),
     },
@@ -493,13 +510,29 @@ const InquiryQuotationPage: React.FC = () => {
         emptyMessage='暂无询价单数据'
       />
 
-      <Dialog open={showDialog} onClose={() => setShowDialog(false)} maxWidth='lg' fullWidth>
+      <Dialog
+        open={showDialog}
+        onClose={() => setShowDialog(false)}
+        maxWidth='lg'
+        fullWidth
+      >
         <DialogTitle>{isEditing ? '编辑询价单' : '新增询价单'}</DialogTitle>
         <DialogContent>
           <Box sx={{ borderBottom: 1, borderColor: 'divider', mb: 2 }}>
-            <Tabs value={activeTab} onChange={(_, newValue) => setActiveTab(newValue)}>
-              <Tab label='基本信息' icon={<MessageSquare size={16} />} iconPosition='start' />
-              <Tab label='询价明细' icon={<TrendingUp size={16} />} iconPosition='start' />
+            <Tabs
+              value={activeTab}
+              onChange={(_, newValue) => setActiveTab(newValue)}
+            >
+              <Tab
+                label='基本信息'
+                icon={<MessageSquare size={16} />}
+                iconPosition='start'
+              />
+              <Tab
+                label='询价明细'
+                icon={<TrendingUp size={16} />}
+                iconPosition='start'
+              />
             </Tabs>
           </Box>
           <form onSubmit={handleSubmit}>
@@ -535,7 +568,10 @@ const InquiryQuotationPage: React.FC = () => {
                     onChange={(e) => setFormData({ ...formData, category: e.target.value })}
                   >
                     {Object.entries(categoryConfig).map(([key, label]) => (
-                      <MenuItem key={key} value={key}>
+                      <MenuItem
+                        key={key}
+                        value={key}
+                      >
                         {label}
                       </MenuItem>
                     ))}
@@ -549,7 +585,10 @@ const InquiryQuotationPage: React.FC = () => {
                     onChange={(e) => setFormData({ ...formData, urgency: e.target.value })}
                   >
                     {Object.entries(urgencyConfig).map(([key, config]) => (
-                      <MenuItem key={key} value={key}>
+                      <MenuItem
+                        key={key}
+                        value={key}
+                      >
                         {config.label}
                       </MenuItem>
                     ))}
@@ -588,7 +627,11 @@ const InquiryQuotationPage: React.FC = () => {
                   <TableBody>
                     {(formData.items || []).length === 0 ? (
                       <TableRow>
-                        <TableCell colSpan={7} align='center' sx={{ py: 4, color: 'text.secondary' }}>
+                        <TableCell
+                          colSpan={7}
+                          align='center'
+                          sx={{ py: 4, color: 'text.secondary' }}
+                        >
                           暂无询价明细
                         </TableCell>
                       </TableRow>
@@ -620,10 +663,16 @@ const InquiryQuotationPage: React.FC = () => {
               sx={{ mt: 2 }}
             />
             <DialogActions sx={{ mt: 2 }}>
-              <Button variant='outlined' onClick={() => setShowDialog(false)}>
+              <Button
+                variant='outlined'
+                onClick={() => setShowDialog(false)}
+              >
                 取消
               </Button>
-              <Button type='submit' variant='contained'>
+              <Button
+                type='submit'
+                variant='contained'
+              >
                 {isEditing ? '更新' : '保存'}
               </Button>
             </DialogActions>
@@ -637,9 +686,7 @@ const InquiryQuotationPage: React.FC = () => {
         maxWidth='lg'
         fullWidth
       >
-        <DialogTitle>
-          报价单列表 - {viewingInquiry?.inquiry_no}
-        </DialogTitle>
+        <DialogTitle>报价单列表 - {viewingInquiry?.inquiry_no}</DialogTitle>
         <DialogContent>
           <Table size='small'>
             <TableHead>
@@ -656,7 +703,11 @@ const InquiryQuotationPage: React.FC = () => {
             <TableBody>
               {quotations.length === 0 ? (
                 <TableRow>
-                  <TableCell colSpan={7} align='center' sx={{ py: 4, color: 'text.secondary' }}>
+                  <TableCell
+                    colSpan={7}
+                    align='center'
+                    sx={{ py: 4, color: 'text.secondary' }}
+                  >
                     暂无报价
                   </TableCell>
                 </TableRow>
@@ -679,17 +730,17 @@ const InquiryQuotationPage: React.FC = () => {
                           quotation.status === 'submitted'
                             ? '已提交'
                             : quotation.status === 'awarded'
-                            ? '已授标'
-                            : quotation.status === 'rejected'
-                            ? '已拒绝'
-                            : quotation.status
+                              ? '已授标'
+                              : quotation.status === 'rejected'
+                                ? '已拒绝'
+                                : quotation.status
                         }
                         color={
                           quotation.status === 'awarded'
                             ? 'success'
                             : quotation.status === 'rejected'
-                            ? 'error'
-                            : 'primary'
+                              ? 'error'
+                              : 'primary'
                         }
                         variant='outlined'
                       />
@@ -740,7 +791,10 @@ const InquiryQuotationPage: React.FC = () => {
           </Table>
         </DialogContent>
         <DialogActions>
-          <Button variant='outlined' onClick={() => setShowQuotationDialog(false)}>
+          <Button
+            variant='outlined'
+            onClick={() => setShowQuotationDialog(false)}
+          >
             关闭
           </Button>
         </DialogActions>

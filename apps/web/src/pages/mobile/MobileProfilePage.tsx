@@ -278,7 +278,7 @@ const MobileSettingsPage: React.FC = () => {
               sx={{ height: 22, fontSize: '0.75rem' }}
             />
           </Box>
-          <ChevronRight style={{ width: 20, height: 20, color: 'text.secondary' }} />
+          <ChevronRight style={{ width: 20, height: 20, color: theme.palette.text.secondary }} />
         </Box>
 
         {settingGroups.map((group, groupIndex) => (

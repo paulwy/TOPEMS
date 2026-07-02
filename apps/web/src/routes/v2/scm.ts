@@ -1,4 +1,4 @@
-import { lazyWithRetry } from '../utils';
+import { lazyWithRetry } from './types';
 import type { RouteModuleConfig } from './types';
 
 const ScmDashboardPage = lazyWithRetry(
@@ -37,10 +37,7 @@ const PurchaseRequisitionPage = lazyWithRetry(
   () => import('../../pages/scm/PurchaseRequisitionPage'),
   'PurchaseRequisitionPage'
 );
-const MrpPlanPage = lazyWithRetry(
-  () => import('../../pages/scm/MrpPlanPage'),
-  'MrpPlanPage'
-);
+const MrpPlanPage = lazyWithRetry(() => import('../../pages/scm/MrpPlanPage'), 'MrpPlanPage');
 const MrpSuggestionPage = lazyWithRetry(
   () => import('../../pages/scm/MrpSuggestionPage'),
   'MrpSuggestionPage'
@@ -79,13 +76,6 @@ export const scmModuleConfig: RouteModuleConfig = {
       template: 'dashboard',
       group: 'overview',
       requiredPermissions: ['scm:read'],
-      nav: {
-        label: '仪表盘',
-        icon: 'LayoutDashboard',
-        order: 0,
-        group: 'overview',
-        showInTabs: true,
-      },
     },
     {
       path: '/scm/purchase-orders',
@@ -96,13 +86,6 @@ export const scmModuleConfig: RouteModuleConfig = {
       template: 'list',
       group: 'business',
       requiredPermissions: ['scm:purchase_order:read'],
-      nav: {
-        label: '采购订单',
-        icon: 'ClipboardList',
-        order: 1,
-        group: 'business',
-        showInTabs: true,
-      },
     },
     {
       path: '/scm/purchase-requisition',
@@ -113,12 +96,6 @@ export const scmModuleConfig: RouteModuleConfig = {
       template: 'list',
       group: 'business',
       requiredPermissions: ['scm:purchase_requisition:read'],
-      nav: {
-        label: '采购申请',
-        icon: 'FileText',
-        order: 2,
-        group: 'business',
-      },
     },
     {
       path: '/scm/purchase-items',
@@ -129,12 +106,6 @@ export const scmModuleConfig: RouteModuleConfig = {
       template: 'list',
       group: 'business',
       requiredPermissions: ['scm:purchase_item:read'],
-      nav: {
-        label: '采购明细',
-        icon: 'List',
-        order: 3,
-        group: 'business',
-      },
     },
     {
       path: '/scm/suppliers',
@@ -145,12 +116,6 @@ export const scmModuleConfig: RouteModuleConfig = {
       template: 'list',
       group: 'business',
       requiredPermissions: ['scm:supplier:read'],
-      nav: {
-        label: '供应商管理',
-        icon: 'Building',
-        order: 4,
-        group: 'business',
-      },
     },
     {
       path: '/scm/supplier-admission',
@@ -161,12 +126,6 @@ export const scmModuleConfig: RouteModuleConfig = {
       template: 'list',
       group: 'business',
       requiredPermissions: ['scm:supplier_admission:read'],
-      nav: {
-        label: '供应商准入',
-        icon: 'UserPlus',
-        order: 5,
-        group: 'business',
-      },
     },
     {
       path: '/scm/supplier-evaluation',
@@ -177,12 +136,6 @@ export const scmModuleConfig: RouteModuleConfig = {
       template: 'list',
       group: 'process',
       requiredPermissions: ['scm:supplier_evaluation:read'],
-      nav: {
-        label: '供应商评估',
-        icon: 'Award',
-        order: 1,
-        group: 'process',
-      },
     },
     {
       path: '/scm/contracts',
@@ -193,12 +146,6 @@ export const scmModuleConfig: RouteModuleConfig = {
       template: 'list',
       group: 'process',
       requiredPermissions: ['scm:contract:read'],
-      nav: {
-        label: '合同管理',
-        icon: 'FileText',
-        order: 2,
-        group: 'process',
-      },
     },
     {
       path: '/scm/delivery-appointment',
@@ -209,12 +156,6 @@ export const scmModuleConfig: RouteModuleConfig = {
       template: 'list',
       group: 'process',
       requiredPermissions: ['scm:delivery_appointment:read'],
-      nav: {
-        label: '交期预约',
-        icon: 'Calendar',
-        order: 3,
-        group: 'process',
-      },
     },
     {
       path: '/scm/mrp-plan',
@@ -225,12 +166,6 @@ export const scmModuleConfig: RouteModuleConfig = {
       template: 'list',
       group: 'process',
       requiredPermissions: ['scm:mrp_plan:read'],
-      nav: {
-        label: 'MRP计划',
-        icon: 'LayoutGrid',
-        order: 4,
-        group: 'process',
-      },
     },
     {
       path: '/scm/mrp-suggestion',
@@ -241,12 +176,6 @@ export const scmModuleConfig: RouteModuleConfig = {
       template: 'list',
       group: 'process',
       requiredPermissions: ['scm:mrp_suggestion:read'],
-      nav: {
-        label: 'MRP建议',
-        icon: 'Lightbulb',
-        order: 5,
-        group: 'process',
-      },
     },
     {
       path: '/scm/overview',
@@ -257,13 +186,6 @@ export const scmModuleConfig: RouteModuleConfig = {
       template: 'dashboard',
       group: 'analytics',
       requiredPermissions: ['scm:read'],
-      nav: {
-        label: '供应链概览',
-        icon: 'PieChart',
-        order: 1,
-        group: 'analytics',
-        showInTabs: true,
-      },
     },
     {
       path: '/scm/inventory-turnover',
@@ -274,12 +196,6 @@ export const scmModuleConfig: RouteModuleConfig = {
       template: 'stats',
       group: 'analytics',
       requiredPermissions: ['scm:inventory_turnover:read'],
-      nav: {
-        label: '库存周转',
-        icon: 'TrendingUp',
-        order: 2,
-        group: 'analytics',
-      },
     },
     {
       path: '/scm/price-comparison',
@@ -290,12 +206,6 @@ export const scmModuleConfig: RouteModuleConfig = {
       template: 'stats',
       group: 'analytics',
       requiredPermissions: ['scm:price_comparison:read'],
-      nav: {
-        label: '价格对比',
-        icon: 'BarChart3',
-        order: 3,
-        group: 'analytics',
-      },
     },
   ],
 };

@@ -23,42 +23,42 @@ export const workOrderApi = {
     if (params?.status) searchParams.set('status', params.status);
 
     const queryString = searchParams.toString();
-    return apiClient.mes.get(`/api/mes/work-orders${queryString ? `?${queryString}` : ''}`);
+    return apiClient.mes.get(`/work-orders${queryString ? `?${queryString}` : ''}`);
   },
 
   async get(id: string): Promise<ApiResponse<WorkOrder>> {
-    return apiClient.mes.get(`/api/mes/work-orders/${id}`);
+    return apiClient.mes.get(`/work-orders/${id}`);
   },
 
   async create(data: CreateWorkOrderRequest): Promise<ApiResponse<WorkOrder>> {
-    return apiClient.mes.post('/api/mes/work-orders', data);
+    return apiClient.mes.post('/work-orders', data);
   },
 
   async update(id: string, data: UpdateWorkOrderRequest): Promise<ApiResponse<WorkOrder>> {
-    return apiClient.mes.put(`/api/mes/work-orders/${id}`, data);
+    return apiClient.mes.put(`/work-orders/${id}`, data);
   },
 
   async delete(id: string): Promise<ApiResponse<string>> {
-    return apiClient.mes.delete(`/api/mes/work-orders/${id}`);
+    return apiClient.mes.delete(`/work-orders/${id}`);
   },
 
   async start(id: string): Promise<ApiResponse<WorkOrder>> {
-    return apiClient.mes.put(`/api/mes/work-orders/${id}/start`);
+    return apiClient.mes.put(`/work-orders/${id}/start`);
   },
 
   async complete(id: string): Promise<ApiResponse<WorkOrder>> {
-    return apiClient.mes.put(`/api/mes/work-orders/${id}/complete`);
+    return apiClient.mes.put(`/work-orders/${id}/complete`);
   },
 
   async cancel(id: string): Promise<ApiResponse<WorkOrder>> {
-    return apiClient.mes.put(`/api/mes/work-orders/${id}/cancel`);
+    return apiClient.mes.put(`/work-orders/${id}/cancel`);
   },
 
   async pause(id: string): Promise<ApiResponse<WorkOrder>> {
-    return apiClient.mes.put(`/api/mes/work-orders/${id}/pause`);
+    return apiClient.mes.put(`/work-orders/${id}/pause`);
   },
 
   async resume(id: string): Promise<ApiResponse<WorkOrder>> {
-    return apiClient.mes.put(`/api/mes/work-orders/${id}/resume`);
+    return apiClient.mes.put(`/work-orders/${id}/resume`);
   },
 };

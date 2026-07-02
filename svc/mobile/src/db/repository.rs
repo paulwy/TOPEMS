@@ -371,14 +371,14 @@ pub async fn db_get_offline_operations(
         .bind(user_id)
         .bind(s)
     } else {
-        sqlx::query(
-            "SELECT * FROM offline_operations WHERE user_id = $1 ORDER BY created_at ASC",
-        )
-        .bind(user_id)
+        sqlx::query("SELECT * FROM offline_operations WHERE user_id = $1 ORDER BY created_at ASC")
+            .bind(user_id)
     };
 
     let rows = query.fetch_all(pool).await?;
-    rows.iter().map(|row| OfflineOperation::from_row(row)).collect()
+    rows.iter()
+        .map(|row| OfflineOperation::from_row(row))
+        .collect()
 }
 
 pub async fn db_create_offline_operation(
@@ -450,7 +450,10 @@ pub async fn db_update_offline_operation_status(
     Ok(())
 }
 
-pub async fn db_get_sync_policy(pool: &Pool<Postgres>, user_id: Uuid) -> sqlx::Result<Option<SyncPolicy>> {
+pub async fn db_get_sync_policy(
+    pool: &Pool<Postgres>,
+    user_id: Uuid,
+) -> sqlx::Result<Option<SyncPolicy>> {
     let row = sqlx::query("SELECT * FROM sync_policies WHERE user_id = $1")
         .bind(user_id)
         .fetch_optional(pool)
@@ -504,7 +507,9 @@ pub async fn db_create_or_update_sync_policy(
             auto_sync_enabled: data.auto_sync_enabled.unwrap_or(true),
             sync_interval_minutes: data.sync_interval_minutes.unwrap_or(5),
             sync_on_network_change: data.sync_on_network_change.unwrap_or(true),
-            conflict_strategy: data.conflict_strategy.unwrap_or_else(|| "server优先".to_string()),
+            conflict_strategy: data
+                .conflict_strategy
+                .unwrap_or_else(|| "server优先".to_string()),
             created_at: now,
             updated_at: now,
         };
@@ -573,8 +578,7 @@ pub async fn db_get_push_devices(
     user_id: Option<Uuid>,
 ) -> sqlx::Result<Vec<PushDevice>> {
     let query = if let Some(uid) = user_id {
-        sqlx::query("SELECT * FROM push_devices WHERE user_id = $1 AND is_active = true")
-            .bind(uid)
+        sqlx::query("SELECT * FROM push_devices WHERE user_id = $1 AND is_active = true").bind(uid)
     } else {
         sqlx::query("SELECT * FROM push_devices WHERE is_active = true")
     };
@@ -710,10 +714,8 @@ pub async fn db_get_barcode_scans(
         .bind(user_id)
         .bind(bt)
     } else {
-        sqlx::query(
-            "SELECT * FROM barcode_scans WHERE user_id = $1 ORDER BY scanned_at DESC",
-        )
-        .bind(user_id)
+        sqlx::query("SELECT * FROM barcode_scans WHERE user_id = $1 ORDER BY scanned_at DESC")
+            .bind(user_id)
     };
 
     let rows = query.fetch_all(pool).await?;
@@ -771,10 +773,8 @@ pub async fn db_get_photo_uploads(
         .bind(user_id)
         .bind(s)
     } else {
-        sqlx::query(
-            "SELECT * FROM photo_uploads WHERE user_id = $1 ORDER BY created_at DESC",
-        )
-        .bind(user_id)
+        sqlx::query("SELECT * FROM photo_uploads WHERE user_id = $1 ORDER BY created_at DESC")
+            .bind(user_id)
     };
 
     let rows = query.fetch_all(pool).await?;
@@ -877,7 +877,9 @@ pub async fn db_get_mobile_approvals(
     };
 
     let rows = query.fetch_all(pool).await?;
-    rows.iter().map(|row| MobileApproval::from_row(row)).collect()
+    rows.iter()
+        .map(|row| MobileApproval::from_row(row))
+        .collect()
 }
 
 pub async fn db_create_mobile_approval(

@@ -236,51 +236,51 @@ export const aiApi = {
     if (params?.category) searchParams.set('category', params.category);
 
     const queryString = searchParams.toString();
-    return apiClient.ai.get(`/api/ai/documents${queryString ? `?${queryString}` : ''}`);
+    return apiClient.ai.get(`/documents${queryString ? `?${queryString}` : ''}`);
   },
 
   getDocument: async (id: string): Promise<ApiResponse<Document>> => {
-    return apiClient.ai.get(`/api/ai/documents/${id}`);
+    return apiClient.ai.get(`/documents/${id}`);
   },
 
   createDocument: async (data: Partial<Document>): Promise<ApiResponse<Document>> => {
-    return apiClient.ai.post('/api/ai/documents', data);
+    return apiClient.ai.post('/documents', data);
   },
 
   updateDocument: async (id: string, data: Partial<Document>): Promise<ApiResponse<Document>> => {
-    return apiClient.ai.put(`/api/ai/documents/${id}`, data);
+    return apiClient.ai.put(`/documents/${id}`, data);
   },
 
   deleteDocument: async (id: string): Promise<ApiResponse<string>> => {
-    return apiClient.ai.delete(`/api/ai/documents/${id}`);
+    return apiClient.ai.delete(`/documents/${id}`);
   },
 
   chat: async (data: ChatRequest): Promise<ApiResponse<ChatResponse>> => {
-    return apiClient.ai.post<ChatResponse>('/api/ai/ai/chat', data);
+    return apiClient.ai.post<ChatResponse>('/ai/chat', data);
   },
 
   search: async (data: SearchRequest): Promise<ApiResponse<SearchResult>> => {
-    return apiClient.ai.post<SearchResult>('/api/ai/ai/search', data);
+    return apiClient.ai.post<SearchResult>('/ai/search', data);
   },
 
   generate: async (data: AIGenerateRequest): Promise<ApiResponse<AIGenerateResponse>> => {
-    return apiClient.ai.post<AIGenerateResponse>('/api/ai/ai/generate', data);
+    return apiClient.ai.post<AIGenerateResponse>('/ai/generate', data);
   },
 
   listConversations: async (): Promise<ApiResponse<Conversation[]>> => {
-    return apiClient.ai.get<Conversation[]>('/api/ai/conversations');
+    return apiClient.ai.get<Conversation[]>('/conversations');
   },
 
   getConversation: async (id: string): Promise<ApiResponse<Conversation>> => {
-    return apiClient.ai.get(`/api/ai/conversations/${id}`);
+    return apiClient.ai.get(`/conversations/${id}`);
   },
 
   createConversation: async (title?: string): Promise<ApiResponse<Conversation>> => {
-    return apiClient.ai.post('/api/ai/conversations', { title });
+    return apiClient.ai.post('/conversations', { title });
   },
 
   deleteConversation: async (id: string): Promise<ApiResponse<string>> => {
-    return apiClient.ai.delete(`/api/ai/conversations/${id}`);
+    return apiClient.ai.delete(`/conversations/${id}`);
   },
 
   health: async (): Promise<ApiResponse<string>> => {
@@ -288,47 +288,47 @@ export const aiApi = {
   },
 
   validate: async (data: ValidateRequest): Promise<ApiResponse<ValidateResponse>> => {
-    return apiClient.ai.post<ValidateResponse>('/api/ai/ai/validate', data);
+    return apiClient.ai.post<ValidateResponse>('/ai/validate', data);
   },
 
   complete: async (data: CompleteRequest): Promise<ApiResponse<CompleteResponse>> => {
-    return apiClient.ai.post<CompleteResponse>('/api/ai/ai/complete', data);
+    return apiClient.ai.post<CompleteResponse>('/ai/complete', data);
   },
 
   summarize: async (data: SummarizeRequest): Promise<ApiResponse<SummarizeResponse>> => {
-    return apiClient.ai.post<SummarizeResponse>('/api/ai/ai/summarize', data);
+    return apiClient.ai.post<SummarizeResponse>('/ai/summarize', data);
   },
 
   listTemplates: async (): Promise<ApiResponse<AITemplate[]>> => {
-    return apiClient.ai.get<AITemplate[]>('/api/ai/ai/templates');
+    return apiClient.ai.get<AITemplate[]>('/ai/templates');
   },
 
   // 分析相关接口
   analyzeSentiment: async (
     data: SentimentAnalysisRequest
   ): Promise<ApiResponse<SentimentAnalysisResponse>> => {
-    return apiClient.ai.post<SentimentAnalysisResponse>('/api/ai/analysis/sentiment', data);
+    return apiClient.ai.post<SentimentAnalysisResponse>('/analysis/sentiment', data);
   },
 
   classifyText: async (data: ClassifyTextRequest): Promise<ApiResponse<ClassifyTextResponse>> => {
-    return apiClient.ai.post<ClassifyTextResponse>('/api/ai/analysis/classify', data);
+    return apiClient.ai.post<ClassifyTextResponse>('/analysis/classify', data);
   },
 
   extractEntities: async (
     data: ExtractEntitiesRequest
   ): Promise<ApiResponse<ExtractEntitiesResponse>> => {
-    return apiClient.ai.post<ExtractEntitiesResponse>('/api/ai/analysis/entities', data);
+    return apiClient.ai.post<ExtractEntitiesResponse>('/analysis/entities', data);
   },
 
   extractKeywords: async (
     data: ExtractKeywordsRequest
   ): Promise<ApiResponse<ExtractKeywordsResponse>> => {
-    return apiClient.ai.post<ExtractKeywordsResponse>('/api/ai/analysis/keywords', data);
+    return apiClient.ai.post<ExtractKeywordsResponse>('/analysis/keywords', data);
   },
 
   // 文档问答接口
   documentQA: async (data: DocumentQAQuestionRequest): Promise<ApiResponse<DocumentQAAnswer>> => {
-    return apiClient.ai.post<DocumentQAAnswer>('/api/v1/documents/qa', data);
+    return apiClient.ai.post<DocumentQAAnswer>('/v1/documents/qa', data);
   },
 
   // 智能问答接口
@@ -347,7 +347,7 @@ export const aiApi = {
       confidence: number;
     }>
   > => {
-    return apiClient.ai.post('/api/ai/qa/ask', data);
+    return apiClient.ai.post('/qa/ask', data);
   },
 
   askWithContext: async (data: {
@@ -366,7 +366,7 @@ export const aiApi = {
       confidence: number;
     }>
   > => {
-    return apiClient.ai.post('/api/ai/qa/ask-with-context', data);
+    return apiClient.ai.post('/qa/ask-with-context', data);
   },
 
   askStructured: async (data: {
@@ -382,7 +382,7 @@ export const aiApi = {
       follow_up_questions: string[];
     }>
   > => {
-    return apiClient.ai.post('/api/ai/qa/ask-structured', data);
+    return apiClient.ai.post('/qa/ask-structured', data);
   },
 
   askConversation: async (data: {
@@ -402,13 +402,13 @@ export const aiApi = {
       confidence: number;
     }>
   > => {
-    return apiClient.ai.post('/api/ai/qa/ask-conversation', data);
+    return apiClient.ai.post('/qa/ask-conversation', data);
   },
 
   classifyQuestion: async (data: {
     question: string;
   }): Promise<ApiResponse<{ question_type: string }>> => {
-    return apiClient.ai.post('/api/ai/qa/classify', data);
+    return apiClient.ai.post('/qa/classify', data);
   },
 
   getQAHistory: async (params?: {
@@ -422,17 +422,17 @@ export const aiApi = {
     if (params?.query) searchParams.set('query', params.query);
 
     const queryString = searchParams.toString();
-    return apiClient.ai.get(`/api/ai/qa/history${queryString ? `?${queryString}` : ''}`);
+    return apiClient.ai.get(`/qa/history${queryString ? `?${queryString}` : ''}`);
   },
 
   deleteQAHistory: async (id: string): Promise<ApiResponse<string>> => {
-    return apiClient.ai.delete(`/api/ai/qa/history/${id}`);
+    return apiClient.ai.delete(`/qa/history/${id}`);
   },
 
   batchDeleteQAHistory: async (
     ids: string[]
   ): Promise<ApiResponse<{ deleted_count: number; message: string }>> => {
-    return apiClient.ai.post('/api/ai/qa/history/batch-delete', { ids });
+    return apiClient.ai.post('/qa/history/batch-delete', { ids });
   },
 
   submitFeedback: async (data: {
@@ -440,7 +440,7 @@ export const aiApi = {
     feedback: string;
     rating?: number;
   }): Promise<ApiResponse<{ qa_id: string; message: string }>> => {
-    return apiClient.ai.post('/api/ai/qa/feedback', data);
+    return apiClient.ai.post('/qa/feedback', data);
   },
 
   // 文档摘要接口
@@ -449,7 +449,7 @@ export const aiApi = {
     data?: SummarizeDocumentRequest
   ): Promise<ApiResponse<SummarizeDocumentResponse>> => {
     return apiClient.ai.post<SummarizeDocumentResponse>(
-      `/api/v1/documents/${id}/summarize`,
+      `/v1/documents/${id}/summarize`,
       data || {}
     );
   },
@@ -460,7 +460,7 @@ export const aiApi = {
     data?: ExtractKeyPointsRequest
   ): Promise<ApiResponse<ExtractKeyPointsResponse>> => {
     return apiClient.ai.post<ExtractKeyPointsResponse>(
-      `/api/v1/documents/${id}/key-points`,
+      `/v1/documents/${id}/key-points`,
       data || {}
     );
   },
@@ -470,7 +470,7 @@ export const aiApi = {
     id: string,
     data: ExtractDocumentRequest
   ): Promise<ApiResponse<ExtractDocumentResponse>> => {
-    return apiClient.ai.post<ExtractDocumentResponse>(`/api/v1/documents/${id}/extract`, data);
+    return apiClient.ai.post<ExtractDocumentResponse>(`/v1/documents/${id}/extract`, data);
   },
 
   // ========== 向量搜索模块 ==========
@@ -479,30 +479,36 @@ export const aiApi = {
     collection?: string;
     top_k?: number;
     filters?: Record<string, any>;
-  }): Promise<ApiResponse<{
-    results: Array<{
-      id: string;
-      content: string;
-      metadata: Record<string, any>;
-      similarity: number;
-      document_title?: string;
-    }>;
-    total: number;
-    query_time_ms: number;
-  }>> => {
-    return apiClient.ai.post('/api/ai/vector/search', data);
+  }): Promise<
+    ApiResponse<{
+      results: Array<{
+        id: string;
+        content: string;
+        metadata: Record<string, any>;
+        similarity: number;
+        document_title?: string;
+      }>;
+      total: number;
+      query_time_ms: number;
+    }>
+  > => {
+    return apiClient.ai.post('/vector/search', data);
   },
 
-  getVectorCollections: async (): Promise<ApiResponse<Array<{
-    id: string;
-    name: string;
-    description?: string;
-    document_count: number;
-    vector_count: number;
-    created_at: string;
-    updated_at: string;
-  }>>> => {
-    return apiClient.ai.get('/api/ai/vector/collections');
+  getVectorCollections: async (): Promise<
+    ApiResponse<
+      Array<{
+        id: string;
+        name: string;
+        description?: string;
+        document_count: number;
+        vector_count: number;
+        created_at: string;
+        updated_at: string;
+      }>
+    >
+  > => {
+    return apiClient.ai.get('/vector/collections');
   },
 
   createVectorCollection: async (data: {
@@ -510,19 +516,24 @@ export const aiApi = {
     description?: string;
     embedding_model?: string;
   }): Promise<ApiResponse<{ id: string; name: string }>> => {
-    return apiClient.ai.post('/api/ai/vector/collections', data);
+    return apiClient.ai.post('/vector/collections', data);
   },
 
   deleteVectorCollection: async (id: string): Promise<ApiResponse<string>> => {
-    return apiClient.ai.delete(`/api/ai/vector/collections/${id}`);
+    return apiClient.ai.delete(`/vector/collections/${id}`);
   },
 
-  indexDocument: async (documentId: string, collectionId?: string): Promise<ApiResponse<{
-    document_id: string;
-    chunks_indexed: number;
-    status: string;
-  }>> => {
-    return apiClient.ai.post(`/api/ai/vector/index/${documentId}`, { collection_id: collectionId });
+  indexDocument: async (
+    documentId: string,
+    collectionId?: string
+  ): Promise<
+    ApiResponse<{
+      document_id: string;
+      chunks_indexed: number;
+      status: string;
+    }>
+  > => {
+    return apiClient.ai.post(`/vector/index/${documentId}`, { collection_id: collectionId });
   },
 
   // ========== 文档智能模块 ==========
@@ -532,38 +543,52 @@ export const aiApi = {
       target_language: string;
       source_language?: string;
     }
-  ): Promise<ApiResponse<{
-    document_id: string;
-    translated_content: string;
-    target_language: string;
-    source_language: string;
-  }>> => {
-    return apiClient.ai.post(`/api/ai/documents/${id}/translate`, data);
+  ): Promise<
+    ApiResponse<{
+      document_id: string;
+      translated_content: string;
+      target_language: string;
+      source_language: string;
+    }>
+  > => {
+    return apiClient.ai.post(`/documents/${id}/translate`, data);
   },
 
-  ocrDocument: async (id: string): Promise<ApiResponse<{
-    document_id: string;
-    text: string;
-    pages: number;
-    confidence: number;
-  }>> => {
-    return apiClient.ai.post(`/api/ai/documents/${id}/ocr`);
+  ocrDocument: async (
+    id: string
+  ): Promise<
+    ApiResponse<{
+      document_id: string;
+      text: string;
+      pages: number;
+      confidence: number;
+    }>
+  > => {
+    return apiClient.ai.post(`/documents/${id}/ocr`);
   },
 
-  classifyDocument: async (id: string): Promise<ApiResponse<{
-    document_id: string;
-    category: string;
-    confidence: number;
-    all_categories?: Array<{ category: string; score: number }>;
-  }>> => {
-    return apiClient.ai.post(`/api/ai/documents/${id}/classify`);
+  classifyDocument: async (
+    id: string
+  ): Promise<
+    ApiResponse<{
+      document_id: string;
+      category: string;
+      confidence: number;
+      all_categories?: Array<{ category: string; score: number }>;
+    }>
+  > => {
+    return apiClient.ai.post(`/documents/${id}/classify`);
   },
 
-  extractDocumentEntities: async (id: string): Promise<ApiResponse<{
-    document_id: string;
-    entities: Entity[];
-  }>> => {
-    return apiClient.ai.post(`/api/ai/documents/${id}/entities`);
+  extractDocumentEntities: async (
+    id: string
+  ): Promise<
+    ApiResponse<{
+      document_id: string;
+      entities: Entity[];
+    }>
+  > => {
+    return apiClient.ai.post(`/documents/${id}/entities`);
   },
 
   // ========== 代码助手模块 ==========
@@ -572,64 +597,74 @@ export const aiApi = {
     language?: string;
     framework?: string;
     context?: string;
-  }): Promise<ApiResponse<{
-    code: string;
-    language: string;
-    explanation: string;
-  }>> => {
-    return apiClient.ai.post('/api/ai/code/generate', data);
+  }): Promise<
+    ApiResponse<{
+      code: string;
+      language: string;
+      explanation: string;
+    }>
+  > => {
+    return apiClient.ai.post('/code/generate', data);
   },
 
   explainCode: async (data: {
     code: string;
     language?: string;
-  }): Promise<ApiResponse<{
-    explanation: string;
-    summary: string;
-    key_points: string[];
-  }>> => {
-    return apiClient.ai.post('/api/ai/code/explain', data);
+  }): Promise<
+    ApiResponse<{
+      explanation: string;
+      summary: string;
+      key_points: string[];
+    }>
+  > => {
+    return apiClient.ai.post('/code/explain', data);
   },
 
   fixCodeBug: async (data: {
     code: string;
     error_message?: string;
     language?: string;
-  }): Promise<ApiResponse<{
-    fixed_code: string;
-    explanation: string;
-    bug_description: string;
-  }>> => {
-    return apiClient.ai.post('/api/ai/code/fix-bug', data);
+  }): Promise<
+    ApiResponse<{
+      fixed_code: string;
+      explanation: string;
+      bug_description: string;
+    }>
+  > => {
+    return apiClient.ai.post('/code/fix-bug', data);
   },
 
   optimizeCode: async (data: {
     code: string;
     optimization_type?: 'performance' | 'readability' | 'security';
     language?: string;
-  }): Promise<ApiResponse<{
-    optimized_code: string;
-    explanation: string;
-    improvements: string[];
-  }>> => {
-    return apiClient.ai.post('/api/ai/code/optimize', data);
+  }): Promise<
+    ApiResponse<{
+      optimized_code: string;
+      explanation: string;
+      improvements: string[];
+    }>
+  > => {
+    return apiClient.ai.post('/code/optimize', data);
   },
 
   reviewCode: async (data: {
     code: string;
     language?: string;
     standards?: string[];
-  }): Promise<ApiResponse<{
-    issues: Array<{
-      severity: 'critical' | 'warning' | 'info';
-      line?: number;
-      description: string;
-      suggestion: string;
-    }>;
-    summary: string;
-    score: number;
-  }>> => {
-    return apiClient.ai.post('/api/ai/code/review', data);
+  }): Promise<
+    ApiResponse<{
+      issues: Array<{
+        severity: 'critical' | 'warning' | 'info';
+        line?: number;
+        description: string;
+        suggestion: string;
+      }>;
+      summary: string;
+      score: number;
+    }>
+  > => {
+    return apiClient.ai.post('/code/review', data);
   },
 
   // ========== 智能推荐模块 ==========
@@ -638,32 +673,36 @@ export const aiApi = {
     scene: string;
     context?: Record<string, any>;
     limit?: number;
-  }): Promise<ApiResponse<{
-    recommendations: Array<{
-      id: string;
-      title: string;
-      description?: string;
-      type: string;
-      score: number;
-      reason?: string;
-    }>;
-  }>> => {
-    return apiClient.ai.post('/api/ai/recommendations', data);
+  }): Promise<
+    ApiResponse<{
+      recommendations: Array<{
+        id: string;
+        title: string;
+        description?: string;
+        type: string;
+        score: number;
+        reason?: string;
+      }>;
+    }>
+  > => {
+    return apiClient.ai.post('/recommendations', data);
   },
 
   getPersonalizedRecommendations: async (
     type: 'content' | 'products' | 'features',
     limit?: number
-  ): Promise<ApiResponse<{
-    items: Array<{
-      id: string;
-      title: string;
-      description?: string;
-      relevance_score: number;
-      metadata?: Record<string, any>;
-    }>;
-  }>> => {
-    return apiClient.ai.get(`/api/ai/recommendations/personalized?type=${type}&limit=${limit || 10}`);
+  ): Promise<
+    ApiResponse<{
+      items: Array<{
+        id: string;
+        title: string;
+        description?: string;
+        relevance_score: number;
+        metadata?: Record<string, any>;
+      }>;
+    }>
+  > => {
+    return apiClient.ai.get(`/recommendations/personalized?type=${type}&limit=${limit || 10}`);
   },
 
   recordRecommendationFeedback: async (data: {
@@ -671,37 +710,45 @@ export const aiApi = {
     action: 'click' | 'like' | 'dislike' | 'convert';
     user_id?: string;
   }): Promise<ApiResponse<{ success: boolean }>> => {
-    return apiClient.ai.post('/api/ai/recommendations/feedback', data);
+    return apiClient.ai.post('/recommendations/feedback', data);
   },
 
   // ========== 模型管理模块 ==========
-  listModels: async (): Promise<ApiResponse<Array<{
-    id: string;
-    name: string;
-    provider: string;
-    type: 'chat' | 'embedding' | 'image' | 'audio';
-    description?: string;
-    status: 'active' | 'inactive' | 'maintenance';
-    max_tokens?: number;
-    pricing?: {
-      input_per_1k?: number;
-      output_per_1k?: number;
-    };
-    capabilities?: string[];
-  }>>> => {
-    return apiClient.ai.get('/api/ai/models');
+  listModels: async (): Promise<
+    ApiResponse<
+      Array<{
+        id: string;
+        name: string;
+        provider: string;
+        type: 'chat' | 'embedding' | 'image' | 'audio';
+        description?: string;
+        status: 'active' | 'inactive' | 'maintenance';
+        max_tokens?: number;
+        pricing?: {
+          input_per_1k?: number;
+          output_per_1k?: number;
+        };
+        capabilities?: string[];
+      }>
+    >
+  > => {
+    return apiClient.ai.get('/models');
   },
 
-  getModelConfig: async (modelId: string): Promise<ApiResponse<{
-    model_id: string;
-    temperature: number;
-    max_tokens: number;
-    top_p: number;
-    frequency_penalty: number;
-    presence_penalty: number;
-    system_prompt?: string;
-  }>> => {
-    return apiClient.ai.get(`/api/ai/models/${modelId}/config`);
+  getModelConfig: async (
+    modelId: string
+  ): Promise<
+    ApiResponse<{
+      model_id: string;
+      temperature: number;
+      max_tokens: number;
+      top_p: number;
+      frequency_penalty: number;
+      presence_penalty: number;
+      system_prompt?: string;
+    }>
+  > => {
+    return apiClient.ai.get(`/models/${modelId}/config`);
   },
 
   updateModelConfig: async (
@@ -715,7 +762,7 @@ export const aiApi = {
       system_prompt: string;
     }>
   ): Promise<ApiResponse<{ success: boolean }>> => {
-    return apiClient.ai.put(`/api/ai/models/${modelId}/config`, data);
+    return apiClient.ai.put(`/models/${modelId}/config`, data);
   },
 
   getUsageStats: async (params?: {
@@ -723,86 +770,119 @@ export const aiApi = {
     end_date?: string;
     model_id?: string;
     group_by?: 'day' | 'week' | 'month';
-  }): Promise<ApiResponse<{
-    total_tokens: number;
-    total_requests: number;
-    total_cost: number;
-    breakdown: Array<{
-      date: string;
-      model_id: string;
-      tokens: number;
-      requests: number;
-      cost: number;
-    }>;
-  }>> => {
+  }): Promise<
+    ApiResponse<{
+      total_tokens: number;
+      total_requests: number;
+      total_cost: number;
+      breakdown: Array<{
+        date: string;
+        model_id: string;
+        tokens: number;
+        requests: number;
+        cost: number;
+      }>;
+    }>
+  > => {
     const searchParams = new URLSearchParams();
     if (params?.start_date) searchParams.set('start_date', params.start_date);
     if (params?.end_date) searchParams.set('end_date', params.end_date);
     if (params?.model_id) searchParams.set('model_id', params.model_id);
     if (params?.group_by) searchParams.set('group_by', params.group_by);
     const queryString = searchParams.toString();
-    return apiClient.ai.get(`/api/ai/models/usage${queryString ? `?${queryString}` : ''}`);
+    return apiClient.ai.get(`/models/usage${queryString ? `?${queryString}` : ''}`);
   },
 
   // ========== Prompt 模板模块 ==========
-  listPromptTemplates: async (params?: PaginationParams & {
-    category?: string;
-    is_favorite?: boolean;
-  }): Promise<ApiResponse<PaginatedResult<AITemplate & {
-    is_favorite?: boolean;
-    usage_count?: number;
-  }>>> => {
+  listPromptTemplates: async (
+    params?: PaginationParams & {
+      category?: string;
+      is_favorite?: boolean;
+    }
+  ): Promise<
+    ApiResponse<
+      PaginatedResult<
+        AITemplate & {
+          is_favorite?: boolean;
+          usage_count?: number;
+        }
+      >
+    >
+  > => {
     const searchParams = new URLSearchParams();
     if (params?.page) searchParams.set('page', params.page.toString());
     if (params?.pagesize) searchParams.set('pagesize', params.pagesize.toString());
     if (params?.search) searchParams.set('search', params.search);
     if (params?.category) searchParams.set('category', params.category);
-    if (params?.is_favorite !== undefined) searchParams.set('is_favorite', String(params.is_favorite));
+    if (params?.is_favorite !== undefined)
+      searchParams.set('is_favorite', String(params.is_favorite));
     const queryString = searchParams.toString();
-    return apiClient.ai.get(`/api/ai/prompts/templates${queryString ? `?${queryString}` : ''}`);
+    return apiClient.ai.get(`/prompts/templates${queryString ? `?${queryString}` : ''}`);
   },
 
-  getPromptTemplate: async (id: string): Promise<ApiResponse<AITemplate & {
-    is_favorite?: boolean;
-    usage_count?: number;
-    created_at?: string;
-    updated_at?: string;
-  }>> => {
-    return apiClient.ai.get(`/api/ai/prompts/templates/${id}`);
+  getPromptTemplate: async (
+    id: string
+  ): Promise<
+    ApiResponse<
+      AITemplate & {
+        is_favorite?: boolean;
+        usage_count?: number;
+        created_at?: string;
+        updated_at?: string;
+      }
+    >
+  > => {
+    return apiClient.ai.get(`/prompts/templates/${id}`);
   },
 
   createPromptTemplate: async (data: Partial<AITemplate>): Promise<ApiResponse<AITemplate>> => {
-    return apiClient.ai.post('/api/ai/prompts/templates', data);
+    return apiClient.ai.post('/prompts/templates', data);
   },
 
-  updatePromptTemplate: async (id: string, data: Partial<AITemplate>): Promise<ApiResponse<AITemplate>> => {
-    return apiClient.ai.put(`/api/ai/prompts/templates/${id}`, data);
+  updatePromptTemplate: async (
+    id: string,
+    data: Partial<AITemplate>
+  ): Promise<ApiResponse<AITemplate>> => {
+    return apiClient.ai.put(`/prompts/templates/${id}`, data);
   },
 
   deletePromptTemplate: async (id: string): Promise<ApiResponse<string>> => {
-    return apiClient.ai.delete(`/api/ai/prompts/templates/${id}`);
+    return apiClient.ai.delete(`/prompts/templates/${id}`);
   },
 
-  togglePromptFavorite: async (id: string): Promise<ApiResponse<{
-    id: string;
-    is_favorite: boolean;
-  }>> => {
-    return apiClient.ai.post(`/api/ai/prompts/templates/${id}/favorite`);
+  togglePromptFavorite: async (
+    id: string
+  ): Promise<
+    ApiResponse<{
+      id: string;
+      is_favorite: boolean;
+    }>
+  > => {
+    return apiClient.ai.post(`/prompts/templates/${id}/favorite`);
   },
 
-  getPromptCategories: async (): Promise<ApiResponse<Array<{
-    id: string;
-    name: string;
-    count: number;
-  }>>> => {
-    return apiClient.ai.get('/api/ai/prompts/categories');
+  getPromptCategories: async (): Promise<
+    ApiResponse<
+      Array<{
+        id: string;
+        name: string;
+        count: number;
+      }>
+    >
+  > => {
+    return apiClient.ai.get('/prompts/categories');
   },
 
-  usePromptTemplate: async (id: string, variables: Record<string, any>): Promise<ApiResponse<{
-    result: string;
-    formatted_prompt: string;
-  }>> => {
-    return apiClient.ai.post(`/api/ai/prompts/templates/${id}/use`, { variables });
+  usePromptTemplate: async (
+    id: string,
+    variables: Record<string, any>
+  ): Promise<
+    ApiResponse<{
+      result: string;
+      formatted_prompt: string;
+    }>
+  > => {
+    return apiClient.ai.post(`/prompts/templates/${id}/use`, { variables });
   },
 
   // ========== 对话聊天增强模块 ==========
@@ -814,7 +894,7 @@ export const aiApi = {
       system_prompt?: string;
     }
   ): Promise<ApiResponse<Conversation>> => {
-    return apiClient.ai.put(`/api/ai/conversations/${id}`, data);
+    return apiClient.ai.put(`/conversations/${id}`, data);
   },
 
   getConversationMessages: async (
@@ -828,55 +908,65 @@ export const aiApi = {
     if (params?.limit) searchParams.set('limit', params.limit.toString());
     if (params?.before) searchParams.set('before', params.before);
     const queryString = searchParams.toString();
-    return apiClient.ai.get(`/api/ai/conversations/${id}/messages${queryString ? `?${queryString}` : ''}`);
+    return apiClient.ai.get(`/conversations/${id}/messages${queryString ? `?${queryString}` : ''}`);
   },
 
   regenerateMessage: async (
     conversationId: string,
     messageId: string
   ): Promise<ApiResponse<ChatResponse>> => {
-    return apiClient.ai.post(`/api/ai/conversations/${conversationId}/messages/${messageId}/regenerate`);
+    return apiClient.ai.post(`/conversations/${conversationId}/messages/${messageId}/regenerate`);
   },
 
   // ========== AI 仪表盘统计 ==========
-  getDashboardStats: async (): Promise<ApiResponse<{
-    total_conversations: number;
-    total_messages: number;
-    total_documents: number;
-    total_tokens: number;
-    active_users: number;
-    satisfaction_rate: number;
-    trend: {
-      conversations: number;
-      messages: number;
-      tokens: number;
-    };
-  }>> => {
-    return apiClient.ai.get('/api/ai/dashboard/stats');
+  getDashboardStats: async (): Promise<
+    ApiResponse<{
+      total_conversations: number;
+      total_messages: number;
+      total_documents: number;
+      total_tokens: number;
+      active_users: number;
+      satisfaction_rate: number;
+      trend: {
+        conversations: number;
+        messages: number;
+        tokens: number;
+      };
+    }>
+  > => {
+    return apiClient.ai.get('/dashboard/stats');
   },
 
   getActivityTrend: async (params?: {
     days?: number;
     group_by?: 'day' | 'hour';
-  }): Promise<ApiResponse<Array<{
-    date: string;
-    conversations: number;
-    messages: number;
-    tokens: number;
-  }>>> => {
+  }): Promise<
+    ApiResponse<
+      Array<{
+        date: string;
+        conversations: number;
+        messages: number;
+        tokens: number;
+      }>
+    >
+  > => {
     const searchParams = new URLSearchParams();
     if (params?.days) searchParams.set('days', params.days.toString());
     if (params?.group_by) searchParams.set('group_by', params.group_by);
     const queryString = searchParams.toString();
-    return apiClient.ai.get(`/api/ai/dashboard/activity-trend${queryString ? `?${queryString}` : ''}`);
+    return apiClient.ai.get(`/dashboard/activity-trend${queryString ? `?${queryString}` : ''}`);
   },
 
-  getFeatureUsage: async (): Promise<ApiResponse<Array<{
-    feature: string;
-    label: string;
-    count: number;
-    percentage: number;
-  }>>> => {
-    return apiClient.ai.get('/api/ai/dashboard/feature-usage');
+  getFeatureUsage: async (): Promise<
+    ApiResponse<
+      Array<{
+        feature: string;
+        label: string;
+        count: number;
+        percentage: number;
+      }>
+    >
+  > => {
+    return apiClient.ai.get('/dashboard/feature-usage');
   },
 };

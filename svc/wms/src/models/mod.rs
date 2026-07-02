@@ -11,7 +11,7 @@ pub use inbound_order::{CreateInboundOrderRequest, InboundOrder, UpdateInboundOr
 pub use inventory::{CreateInventoryItemRequest, InventoryItem, UpdateInventoryItemRequest};
 pub use outbound_order::{CreateOutboundOrderRequest, OutboundOrder, UpdateOutboundOrderRequest};
 pub use stock_take::{
-    CreateStockTakeItemRequest, CreateStockTakeRequest, StockTake,
-    UpdateStockTakeItemRequest, UpdateStockTakeRequest,
+    CreateStockTakeItemRequest, CreateStockTakeRequest, StockTake, UpdateStockTakeItemRequest,
+    UpdateStockTakeRequest,
 };
 pub use warehouse::{CreateWarehouseRequest, UpdateWarehouseRequest, Warehouse};

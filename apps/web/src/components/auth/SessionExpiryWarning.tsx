@@ -1,12 +1,10 @@
-import {
-  Box,
+import {Box,
   Typography,
   Dialog,
   DialogContent,
   DialogTitle,
   DialogActions,
-  Button,
-} from '@mui/material';
+  Button, useTheme} from '@mui/material';
 import React, { useEffect, useState } from 'react';
 import { useAuth } from '../../hooks/useAuth';
 import { Clock, RefreshCw, AlertCircle } from 'lucide-react';
@@ -14,6 +12,7 @@ import { logger } from '@/utils/logger';
 
 const SessionExpiryWarning: React.FC = () => {
   const { isSessionExpiringSoon, getTimeUntilExpiry, refreshToken } = useAuth();
+  const theme = useTheme();
   const [isOpen, setIsOpen] = useState(false);
   const [countdown, setCountdown] = useState(0);
 
@@ -87,7 +86,7 @@ const SessionExpiryWarning: React.FC = () => {
             justifyContent: 'center',
           }}
         >
-          <AlertCircle style={{ width: 32, height: 32, color: 'warning.dark' }} />
+          <AlertCircle style={{ width: 32, height: 32, color: theme.palette.warning.dark }} />
         </Box>
         <DialogTitle sx={{ fontSize: 20, fontWeight: 600, textAlign: 'center' }}>
           会话即将过期
@@ -142,7 +141,7 @@ const SessionExpiryWarning: React.FC = () => {
               onClick={handleRefresh}
               startIcon={<RefreshCw style={{ width: 16, height: 16 }} />}
               sx={{
-                backgroundColor: 'warning.dark',
+                backgroundColor: theme.palette.warning.dark,
                 '&:hover': { backgroundColor: 'warning.darker' },
               }}
             >

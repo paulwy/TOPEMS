@@ -39,7 +39,10 @@ pub fn create_routes() -> Router<ApiState> {
             "/api/hrm/contract-renewals/{id}/approve",
             put(approve_renewal),
         )
-        .route("/api/hrm/contract-renewals/{id}/reject", put(reject_renewal))
+        .route(
+            "/api/hrm/contract-renewals/{id}/reject",
+            put(reject_renewal),
+        )
         .route(
             "/api/hrm/contract-renewals/{id}/execute",
             put(execute_renewal),
@@ -702,11 +705,12 @@ async fn delete_renewal(
     State(state): State<ApiState>,
     Path(id): Path<Uuid>,
 ) -> Json<ApiResponse<String>> {
-    let result =
-        sqlx::query("DELETE FROM plugin_hrm.contract_renewals WHERE id = $1 AND status = 'pending'")
-            .bind(id)
-            .execute(&state.db)
-            .await;
+    let result = sqlx::query(
+        "DELETE FROM plugin_hrm.contract_renewals WHERE id = $1 AND status = 'pending'",
+    )
+    .bind(id)
+    .execute(&state.db)
+    .await;
 
     match result {
         Ok(r) if r.rows_affected() > 0 => {

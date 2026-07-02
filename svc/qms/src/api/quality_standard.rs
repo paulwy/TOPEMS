@@ -2,7 +2,7 @@
 
 use axum::{extract::State, Json};
 use serde::{Deserialize, Serialize};
-use sqlx::{FromRow, types::Uuid};
+use sqlx::{types::Uuid, FromRow};
 use topems_shared::ApiResponse;
 
 #[derive(Debug, Deserialize)]
@@ -102,7 +102,10 @@ pub async fn create_standard(
     State(state): State<crate::AppState>,
     Json(req): Json<CreateStandardRequest>,
 ) -> Json<ApiResponse<QualityStandard>> {
-    let code = format!("QS-{}", uuid::Uuid::new_v4().to_string()[..8].to_uppercase());
+    let code = format!(
+        "QS-{}",
+        uuid::Uuid::new_v4().to_string()[..8].to_uppercase()
+    );
     let version = req.version.unwrap_or_else(|| "1.0".to_string());
 
     let standard = sqlx::query_as::<_, QualityStandard>(r#"INSERT INTO qa_standards (code, name, category, level, specification, description, version, status, created_by) VALUES ($1, $2, $3, $4, $5, $6, $7, 'active', $8) RETURNING id, code, name, category, level, specification, description, version, status, created_by, created_at::TEXT, updated_at::TEXT"#).bind(code).bind(req.name).bind(req.category).bind(req.level).bind(req.specification).bind(req.description).bind(version).bind(req.created_by)
@@ -192,9 +195,10 @@ pub async fn delete_standard(
         Err(_) => return Json(ApiResponse::error(400, "无效的标准ID")),
     };
 
-    let result = sqlx::query(r#"DELETE FROM qa_standards WHERE id = $1"#).bind(id)
-    .execute(&state.pool)
-    .await;
+    let result = sqlx::query(r#"DELETE FROM qa_standards WHERE id = $1"#)
+        .bind(id)
+        .execute(&state.pool)
+        .await;
 
     match result {
         Ok(_) => Json(ApiResponse::success(true, "质量标准删除成功")),
@@ -251,7 +255,7 @@ pub async fn create_revision(
             let description = current_data.description.clone();
             let status = current_data.status.clone();
             let created_by = current_data.created_by.clone();
-            
+
             if let Ok(standard_id) = Uuid::parse_str(&current_data.id) {
                 let _ = sqlx::query(r#"INSERT INTO qa_standard_revisions (standard_id, version, name, category, level, specification, description, status, created_by) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9)"#).bind(standard_id).bind(version.clone()).bind(name).bind(category).bind(level).bind(specification).bind(description).bind(status).bind(created_by)
                     .execute(&state.pool)

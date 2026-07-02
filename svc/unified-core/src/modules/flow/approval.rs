@@ -1,8 +1,11 @@
 //! Approval submodule - Approval task handlers
 
-use axum::{extract::{Path, Query, State}, Json};
-use serde::{Deserialize, Serialize};
 use crate::AppState;
+use axum::{
+    extract::{Path, Query, State},
+    Json,
+};
+use serde::{Deserialize, Serialize};
 
 #[derive(Debug, Deserialize)]
 pub struct ApprovalTaskQuery {
@@ -43,7 +46,10 @@ pub async fn list_approval_tasks(
     State(_state): State<AppState>,
     Query(query): Query<ApprovalTaskQuery>,
 ) -> Json<serde_json::Value> {
-    tracing::info!("Flow approval list_approval_tasks called with status: {:?}", query.status);
+    tracing::info!(
+        "Flow approval list_approval_tasks called with status: {:?}",
+        query.status
+    );
     let page = query.page.unwrap_or(1);
     let page_size = query.page_size.unwrap_or(10);
     Json(serde_json::json!({
@@ -70,9 +76,7 @@ pub async fn get_approval_task(
     }))
 }
 
-pub async fn list_pending_approvals(
-    State(_state): State<AppState>,
-) -> Json<serde_json::Value> {
+pub async fn list_pending_approvals(State(_state): State<AppState>) -> Json<serde_json::Value> {
     tracing::info!("Flow approval list_pending_approvals called");
     Json(serde_json::json!({
         "success": true,
@@ -134,7 +138,11 @@ pub async fn delegate_task(
     Path(id): Path<String>,
     Json(payload): Json<serde_json::Value>,
 ) -> Json<serde_json::Value> {
-    tracing::info!("Flow approval delegate_task called with id: {} and payload: {:?}", id, payload);
+    tracing::info!(
+        "Flow approval delegate_task called with id: {} and payload: {:?}",
+        id,
+        payload
+    );
     Json(serde_json::json!({
         "success": true,
         "message": "delegate_task success",
@@ -147,7 +155,11 @@ pub async fn reassign_task(
     Path(id): Path<String>,
     Json(payload): Json<serde_json::Value>,
 ) -> Json<serde_json::Value> {
-    tracing::info!("Flow approval reassign_task called with id: {} and payload: {:?}", id, payload);
+    tracing::info!(
+        "Flow approval reassign_task called with id: {} and payload: {:?}",
+        id,
+        payload
+    );
     Json(serde_json::json!({
         "success": true,
         "message": "reassign_task success",
@@ -155,9 +167,7 @@ pub async fn reassign_task(
     }))
 }
 
-pub async fn list_approvals(
-    State(_state): State<AppState>,
-) -> Json<serde_json::Value> {
+pub async fn list_approvals(State(_state): State<AppState>) -> Json<serde_json::Value> {
     tracing::info!("Flow approval list_approvals called");
     Json(serde_json::json!({
         "success": true,
@@ -195,7 +205,11 @@ pub async fn process_approval(
     Path(id): Path<String>,
     Json(payload): Json<serde_json::Value>,
 ) -> Json<serde_json::Value> {
-    tracing::info!("Flow approval process_approval called with id: {} and payload: {:?}", id, payload);
+    tracing::info!(
+        "Flow approval process_approval called with id: {} and payload: {:?}",
+        id,
+        payload
+    );
     Json(serde_json::json!({
         "success": true,
         "message": "process_approval success",

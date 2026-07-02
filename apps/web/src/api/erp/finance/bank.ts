@@ -20,23 +20,23 @@ export const bankAccountApi = {
     if (params?.status) searchParams.set('status', params.status);
 
     const queryString = searchParams.toString();
-    return apiClient.erp.get(`/api/erp/bank-accounts${queryString ? `?${queryString}` : ''}`);
+    return apiClient.erp.get(`/bank-accounts${queryString ? `?${queryString}` : ''}`);
   },
 
   async get(id: string): Promise<ApiResponse<BankAccount>> {
-    return apiClient.erp.get(`/api/erp/bank-accounts/${id}`);
+    return apiClient.erp.get(`/bank-accounts/${id}`);
   },
 
   async create(data: Partial<BankAccount>): Promise<ApiResponse<BankAccount>> {
-    return apiClient.erp.post('/api/erp/bank-accounts', data);
+    return apiClient.erp.post('/bank-accounts', data);
   },
 
   async update(id: string, data: Partial<BankAccount>): Promise<ApiResponse<BankAccount>> {
-    return apiClient.erp.put(`/api/erp/bank-accounts/${id}`, data);
+    return apiClient.erp.put(`/bank-accounts/${id}`, data);
   },
 
   async delete(id: string): Promise<ApiResponse<string>> {
-    return apiClient.erp.delete(`/api/erp/bank-accounts/${id}`);
+    return apiClient.erp.delete(`/bank-accounts/${id}`);
   },
 };
 
@@ -55,18 +55,18 @@ export const bankTransactionApi = {
     if (params?.transaction_date) searchParams.set('transaction_date', params.transaction_date);
 
     const queryString = searchParams.toString();
-    return apiClient.erp.get(`/api/erp/bank-transactions${queryString ? `?${queryString}` : ''}`);
+    return apiClient.erp.get(`/bank-transactions${queryString ? `?${queryString}` : ''}`);
   },
 
   async get(id: string): Promise<ApiResponse<BankTransaction>> {
-    return apiClient.erp.get(`/api/erp/bank-transactions/${id}`);
+    return apiClient.erp.get(`/bank-transactions/${id}`);
   },
 
   async create(data: CreateBankTransactionRequest): Promise<ApiResponse<BankTransaction>> {
-    return apiClient.erp.post('/api/erp/bank-transactions', data);
+    return apiClient.erp.post('/bank-transactions', data);
   },
 
   async delete(id: string): Promise<ApiResponse<string>> {
-    return apiClient.erp.delete(`/api/erp/bank-transactions/${id}`);
+    return apiClient.erp.delete(`/bank-transactions/${id}`);
   },
 };

@@ -26,12 +26,21 @@ async fn login(username: &str, password: &str) -> Result<String, String> {
         .await
         .map_err(|e| format!("请求失败: {}", e))?;
 
-    let body: Value = response.json().await.map_err(|e| format!("解析响应失败: {}", e))?;
+    let body: Value = response
+        .json()
+        .await
+        .map_err(|e| format!("解析响应失败: {}", e))?;
 
     if body["success"].as_bool().unwrap_or(false) {
-        Ok(body["data"]["access_token"].as_str().unwrap_or("").to_string())
+        Ok(body["data"]["access_token"]
+            .as_str()
+            .unwrap_or("")
+            .to_string())
     } else {
-        Err(format!("登录失败: {}", body["message"].as_str().unwrap_or("未知错误")))
+        Err(format!(
+            "登录失败: {}",
+            body["message"].as_str().unwrap_or("未知错误")
+        ))
     }
 }
 
@@ -52,7 +61,9 @@ async fn auth_request(
         _ => return Err(format!("不支持的 HTTP 方法: {}", method)),
     };
 
-    let request = request.bearer_auth(token).header("Content-Type", "application/json");
+    let request = request
+        .bearer_auth(token)
+        .header("Content-Type", "application/json");
 
     let response = match body {
         Some(b) => request.json(&b),
@@ -63,7 +74,10 @@ async fn auth_request(
     .map_err(|e| format!("请求失败: {}", e))?;
 
     let status = response.status().as_u16();
-    let body: Value = response.json().await.map_err(|e| format!("解析响应失败: {}", e))?;
+    let body: Value = response
+        .json()
+        .await
+        .map_err(|e| format!("解析响应失败: {}", e))?;
 
     Ok((status, body))
 }
@@ -105,11 +119,18 @@ async fn test_im_002_create_room() {
         .unwrap()
         .as_millis();
 
-    let result = auth_request(&client, &token, "POST", "/api/core/comm/im/rooms", Some(json!({
-        "name": format!("测试聊天室_{}", timestamp),
-        "type": "group",
-        "member_ids": []
-    }))).await;
+    let result = auth_request(
+        &client,
+        &token,
+        "POST",
+        "/api/core/comm/im/rooms",
+        Some(json!({
+            "name": format!("测试聊天室_{}", timestamp),
+            "type": "group",
+            "member_ids": []
+        })),
+    )
+    .await;
 
     match result {
         Ok((status, _)) => {
@@ -136,7 +157,8 @@ async fn test_im_003_send_message() {
 
     match list_result {
         Ok((_, body)) => {
-            let rooms = body["data"]["rooms"].as_array()
+            let rooms = body["data"]["rooms"]
+                .as_array()
                 .or_else(|| body["data"].as_array());
 
             if let Some(room_list) = rooms {
@@ -161,7 +183,12 @@ async fn test_im_003_send_message() {
 
                         match send_result {
                             Ok((status, _)) => {
-                                assert!(status == 200 || status == 201 || status == 403 || status == 404);
+                                assert!(
+                                    status == 200
+                                        || status == 201
+                                        || status == 403
+                                        || status == 404
+                                );
                                 tracing::info!("IM-003 测试通过: 发送消息功能正常");
                                 return;
                             }
@@ -191,7 +218,8 @@ async fn test_im_004_view_history() {
 
     match list_result {
         Ok((_, body)) => {
-            let rooms = body["data"]["rooms"].as_array()
+            let rooms = body["data"]["rooms"]
+                .as_array()
                 .or_else(|| body["data"].as_array());
 
             if let Some(room_list) = rooms {
@@ -277,14 +305,15 @@ async fn test_im_006_add_contact() {
 
     match users_result {
         Ok((_, body)) => {
-            let users = body["data"]["users"].as_array()
+            let users = body["data"]["users"]
+                .as_array()
                 .or_else(|| body["data"].as_array());
 
             if let Some(user_list) = users {
                 // 找一个不是自己的用户
-                let contact = user_list.iter().find(|u| {
-                    u["username"].as_str() != Some("admin")
-                });
+                let contact = user_list
+                    .iter()
+                    .find(|u| u["username"].as_str() != Some("admin"));
 
                 if let Some(user) = contact {
                     if let Some(user_id) = user["id"].as_str() {
@@ -299,7 +328,12 @@ async fn test_im_006_add_contact() {
 
                         match add_result {
                             Ok((status, _)) => {
-                                assert!(status == 200 || status == 201 || status == 409 || status == 404);
+                                assert!(
+                                    status == 200
+                                        || status == 201
+                                        || status == 409
+                                        || status == 404
+                                );
                                 tracing::info!("IM-006 测试通过: 添加联系人功能正常");
                                 return;
                             }
@@ -329,7 +363,8 @@ async fn test_im_007_view_online_status() {
 
     match users_result {
         Ok((_, body)) => {
-            let users = body["data"]["users"].as_array()
+            let users = body["data"]["users"]
+                .as_array()
                 .or_else(|| body["data"].as_array());
 
             if let Some(user_list) = users {

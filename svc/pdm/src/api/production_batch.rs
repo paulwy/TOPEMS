@@ -1,4 +1,9 @@
-use axum::{extract::Path, extract::State, routing::{delete, get, post, put}, Json, Router};
+use axum::{
+    extract::Path,
+    extract::State,
+    routing::{delete, get, post, put},
+    Json, Router,
+};
 use uuid::Uuid;
 
 use crate::AppState;
@@ -6,13 +11,17 @@ use topems_shared::ApiResponse;
 
 pub fn create_routes() -> Router<AppState> {
     Router::new()
-        .route("/api/pdm/production-batches", get(list_batches).post(create_batch))
-        .route("/api/pdm/production-batches/{id}", get(get_batch).put(update_batch).delete(delete_batch))
+        .route(
+            "/api/pdm/production-batches",
+            get(list_batches).post(create_batch),
+        )
+        .route(
+            "/api/pdm/production-batches/{id}",
+            get(get_batch).put(update_batch).delete(delete_batch),
+        )
 }
 
-pub async fn list_batches(
-    State(_state): State<AppState>,
-) -> Json<ApiResponse<serde_json::Value>> {
+pub async fn list_batches(State(_state): State<AppState>) -> Json<ApiResponse<serde_json::Value>> {
     tracing::info!("list_batches called");
     Json(ApiResponse::success(
         serde_json::json!({"batches": [], "total": 0}),
@@ -36,10 +45,7 @@ pub async fn get_batch(
     Path(_id): Path<Uuid>,
 ) -> Json<ApiResponse<serde_json::Value>> {
     tracing::info!("get_batch called");
-    Json(ApiResponse::success(
-        serde_json::json!({}),
-        "获取成功",
-    ))
+    Json(ApiResponse::success(serde_json::json!({}), "获取成功"))
 }
 
 pub async fn update_batch(
@@ -48,10 +54,7 @@ pub async fn update_batch(
     Json(_req): Json<serde_json::Value>,
 ) -> Json<ApiResponse<serde_json::Value>> {
     tracing::info!("update_batch called");
-    Json(ApiResponse::success(
-        serde_json::json!({}),
-        "更新成功",
-    ))
+    Json(ApiResponse::success(serde_json::json!({}), "更新成功"))
 }
 
 pub async fn delete_batch(

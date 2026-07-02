@@ -1,6 +1,5 @@
 import React, { useState, useEffect, useMemo, useCallback } from 'react';
-import {
-  Box,
+import {Box,
   Dialog,
   DialogTitle,
   DialogContent,
@@ -14,8 +13,7 @@ import {
   FormControlLabel,
   Chip,
   Tooltip,
-  Button,
-} from '@mui/material';
+  Button, useTheme} from '@mui/material';
 import {
   Plus as PlusIcon,
   Edit as EditIcon,
@@ -56,6 +54,7 @@ const STATUS_OPTIONS = [
 const ReportSubscriptionPage: React.FC = () => {
   const [subscriptions, setSubscriptions] = useState<ReportSubscription[]>([]);
   const [templates, setTemplates] = useState<ReportTemplate[]>([]);
+  const theme = useTheme();
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string>('');
   const [dialogOpen, setDialogOpen] = useState(false);
@@ -245,7 +244,7 @@ const ReportSubscriptionPage: React.FC = () => {
         minWidth: 180,
         render: (row) => (
           <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-            <FileText style={{ width: 16, height: 16, color: 'primary.main' }} />
+            <FileText style={{ width: 16, height: 16, color: theme.palette.primary.main }} />
             <span>{row.template_name || row.template_id}</span>
           </Box>
         ),
@@ -256,7 +255,7 @@ const ReportSubscriptionPage: React.FC = () => {
         minWidth: 120,
         render: (row) => (
           <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-            <User style={{ width: 14, height: 14, color: 'text.secondary' }} />
+            <User style={{ width: 14, height: 14, color: theme.palette.text.secondary }} />
             <span>{row.user_id}</span>
           </Box>
         ),
@@ -268,7 +267,7 @@ const ReportSubscriptionPage: React.FC = () => {
         render: (row) =>
           row.email ? (
             <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-              <Mail style={{ width: 14, height: 14, color: 'text.secondary' }} />
+              <Mail style={{ width: 14, height: 14, color: theme.palette.text.secondary }} />
               <span>{row.email}</span>
             </Box>
           ) : (
@@ -281,7 +280,7 @@ const ReportSubscriptionPage: React.FC = () => {
         minWidth: 100,
         render: (row) => (
           <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-            <Calendar style={{ width: 14, height: 14, color: 'text.secondary' }} />
+            <Calendar style={{ width: 14, height: 14, color: theme.palette.text.secondary }} />
             <span>{getFrequencyLabel(row.frequency)}</span>
           </Box>
         ),

@@ -47,7 +47,7 @@ export function AIGenerateModal({
               width: 32,
               height: 32,
               borderRadius: '50%',
-              backgroundColor: '#f3e8ff',
+              backgroundColor: 'secondary.100',
             }}
           >
             <Sparkles style={{ width: 16, height: 16, color: '#9333ea' }} />

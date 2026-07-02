@@ -1,4 +1,8 @@
-use axum::{extract::{Path, State}, routing::{get, post}, Json, Router};
+use axum::{
+    extract::{Path, State},
+    routing::{get, post},
+    Json, Router,
+};
 use serde::{Deserialize, Serialize};
 use sqlx::Row;
 use std::fmt;
@@ -10,10 +14,21 @@ use crate::AppState;
 
 pub fn create_routes() -> Router<AppState> {
     Router::new()
-        .route("/api/report/schedules", get(list_schedules).post(create_schedule))
-        .route("/api/report/schedules/{id}", get(get_schedule).put(update_schedule).delete(delete_schedule))
+        .route(
+            "/api/report/schedules",
+            get(list_schedules).post(create_schedule),
+        )
+        .route(
+            "/api/report/schedules/{id}",
+            get(get_schedule)
+                .put(update_schedule)
+                .delete(delete_schedule),
+        )
         .route("/api/report/schedules/{id}/execute", post(execute_schedule))
-        .route("/api/report/schedules/{id}/history", get(get_execution_history))
+        .route(
+            "/api/report/schedules/{id}/history",
+            get(get_execution_history),
+        )
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
@@ -117,7 +132,7 @@ pub struct ScheduleExecutionRecord {
 
 pub async fn list_schedules(State(state): State<AppState>) -> Json<serde_json::Value> {
     info!("Listing schedules");
-    
+
     let schedules = sqlx::query(
         r#"
         SELECT s.id, s.name, s.template_id, t.name as template_name, 
@@ -127,33 +142,35 @@ pub async fn list_schedules(State(state): State<AppState>) -> Json<serde_json::V
         FROM report_schedules s
         LEFT JOIN report_templates t ON s.template_id = t.id
         ORDER BY s.created_at DESC
-        "#
+        "#,
     )
     .fetch_all(&state.pool)
     .await
     .unwrap_or_default();
-    
+
     let result: Vec<serde_json::Value> = schedules
         .into_iter()
-        .map(|s| serde_json::json!({
-            "id": s.get::<Uuid, _>("id"),
-            "name": s.get::<String, _>("name"),
-            "template_id": s.get::<Uuid, _>("template_id"),
-            "template_name": s.get::<Option<String>, _>("template_name"),
-            "schedule_type": s.get::<String, _>("schedule_type"),
-            "schedule_expression": s.get::<String, _>("schedule_expression"),
-            "parameters": s.get::<serde_json::Value, _>("parameters"),
-            "recipients": s.get::<serde_json::Value, _>("recipients"),
-            "status": s.get::<String, _>("status"),
-            "last_run_at": s.get::<Option<chrono::DateTime<chrono::Utc>>, _>("last_run_at"),
-            "next_run_at": s.get::<Option<chrono::DateTime<chrono::Utc>>, _>("next_run_at"),
-            "run_count": s.get::<i32, _>("run_count"),
-            "error_message": s.get::<Option<String>, _>("error_message"),
-            "created_at": s.get::<Option<chrono::DateTime<chrono::Utc>>, _>("created_at"),
-            "updated_at": s.get::<Option<chrono::DateTime<chrono::Utc>>, _>("updated_at"),
-        }))
+        .map(|s| {
+            serde_json::json!({
+                "id": s.get::<Uuid, _>("id"),
+                "name": s.get::<String, _>("name"),
+                "template_id": s.get::<Uuid, _>("template_id"),
+                "template_name": s.get::<Option<String>, _>("template_name"),
+                "schedule_type": s.get::<String, _>("schedule_type"),
+                "schedule_expression": s.get::<String, _>("schedule_expression"),
+                "parameters": s.get::<serde_json::Value, _>("parameters"),
+                "recipients": s.get::<serde_json::Value, _>("recipients"),
+                "status": s.get::<String, _>("status"),
+                "last_run_at": s.get::<Option<chrono::DateTime<chrono::Utc>>, _>("last_run_at"),
+                "next_run_at": s.get::<Option<chrono::DateTime<chrono::Utc>>, _>("next_run_at"),
+                "run_count": s.get::<i32, _>("run_count"),
+                "error_message": s.get::<Option<String>, _>("error_message"),
+                "created_at": s.get::<Option<chrono::DateTime<chrono::Utc>>, _>("created_at"),
+                "updated_at": s.get::<Option<chrono::DateTime<chrono::Utc>>, _>("updated_at"),
+            })
+        })
         .collect();
-    
+
     Json(serde_json::json!({
         "success": true,
         "data": result,
@@ -166,10 +183,10 @@ pub async fn create_schedule(
     Json(req): Json<CreateScheduleRequest>,
 ) -> Json<serde_json::Value> {
     info!("Creating schedule: {}", req.name);
-    
+
     let id = Uuid::new_v4();
     let now = chrono::Utc::now();
-    
+
     let result = sqlx::query(
         r#"
         INSERT INTO report_schedules (id, name, template_id, schedule_type, 
@@ -191,7 +208,7 @@ pub async fn create_schedule(
     .bind(now)
     .execute(&state.pool)
     .await;
-    
+
     match result {
         Ok(_) => Json(serde_json::json!({
             "success": true,
@@ -201,7 +218,7 @@ pub async fn create_schedule(
         Err(e) => Json(serde_json::json!({
             "success": false,
             "message": format!("Failed to create schedule: {}", e)
-        }))
+        })),
     }
 }
 
@@ -210,7 +227,7 @@ pub async fn get_schedule(
     Path(id): Path<Uuid>,
 ) -> Json<serde_json::Value> {
     info!("Getting schedule: {}", id);
-    
+
     let schedule = sqlx::query(
         r#"
         SELECT s.id, s.name, s.template_id, t.name as template_name, 
@@ -225,7 +242,7 @@ pub async fn get_schedule(
     .bind(id)
     .fetch_optional(&state.pool)
     .await;
-    
+
     match schedule {
         Ok(Some(s)) => Json(serde_json::json!({
             "success": true,
@@ -254,7 +271,7 @@ pub async fn get_schedule(
         Err(e) => Json(serde_json::json!({
             "success": false,
             "message": format!("Failed to get schedule: {}", e)
-        }))
+        })),
     }
 }
 
@@ -264,7 +281,7 @@ pub async fn update_schedule(
     Json(req): Json<UpdateScheduleRequest>,
 ) -> Json<serde_json::Value> {
     info!("Updating schedule: {}", id);
-    
+
     let result = sqlx::query(
         r#"
         UPDATE report_schedules
@@ -286,7 +303,7 @@ pub async fn update_schedule(
     .bind(id)
     .execute(&state.pool)
     .await;
-    
+
     match result {
         Ok(_) => Json(serde_json::json!({
             "success": true,
@@ -295,7 +312,7 @@ pub async fn update_schedule(
         Err(e) => Json(serde_json::json!({
             "success": false,
             "message": format!("Failed to update schedule: {}", e)
-        }))
+        })),
     }
 }
 
@@ -304,7 +321,7 @@ pub async fn delete_schedule(
     Path(id): Path<Uuid>,
 ) -> Json<serde_json::Value> {
     info!("Deleting schedule: {}", id);
-    
+
     let result = sqlx::query!(
         r#"
         DELETE FROM report_schedules
@@ -314,7 +331,7 @@ pub async fn delete_schedule(
     )
     .execute(&state.pool)
     .await;
-    
+
     match result {
         Ok(_) => Json(serde_json::json!({
             "success": true,
@@ -323,7 +340,7 @@ pub async fn delete_schedule(
         Err(e) => Json(serde_json::json!({
             "success": false,
             "message": format!("Failed to delete schedule: {}", e)
-        }))
+        })),
     }
 }
 
@@ -332,7 +349,7 @@ pub async fn execute_schedule(
     Path(id): Path<Uuid>,
 ) -> Json<serde_json::Value> {
     info!("Executing schedule: {}", id);
-    
+
     let now = chrono::Utc::now();
 
     let result = sqlx::query(
@@ -347,7 +364,7 @@ pub async fn execute_schedule(
     .bind(id)
     .execute(&state.pool)
     .await;
-    
+
     match result {
         Ok(_) => Json(serde_json::json!({
             "success": true,
@@ -356,7 +373,7 @@ pub async fn execute_schedule(
         Err(e) => Json(serde_json::json!({
             "success": false,
             "message": format!("Failed to execute schedule: {}", e)
-        }))
+        })),
     }
 }
 
@@ -365,7 +382,7 @@ pub async fn get_execution_history(
     Path(id): Path<Uuid>,
 ) -> Json<serde_json::Value> {
     info!("Getting execution history for schedule: {}", id);
-    
+
     let records = sqlx::query(
         r#"
         SELECT id, schedule_id, schedule_name, status, output_path, 
@@ -380,21 +397,23 @@ pub async fn get_execution_history(
     .fetch_all(&state.pool)
     .await
     .unwrap_or_default();
-    
+
     let result: Vec<serde_json::Value> = records
         .into_iter()
-        .map(|r| serde_json::json!({
-            "id": r.get::<Uuid, _>("id"),
-            "schedule_id": r.get::<Uuid, _>("schedule_id"),
-            "schedule_name": r.get::<String, _>("schedule_name"),
-            "status": r.get::<String, _>("status"),
-            "output_path": r.get::<Option<String>, _>("output_path"),
-            "error_message": r.get::<Option<String>, _>("error_message"),
-            "started_at": r.get::<Option<chrono::DateTime<chrono::Utc>>, _>("started_at"),
-            "completed_at": r.get::<Option<chrono::DateTime<chrono::Utc>>, _>("completed_at"),
-        }))
+        .map(|r| {
+            serde_json::json!({
+                "id": r.get::<Uuid, _>("id"),
+                "schedule_id": r.get::<Uuid, _>("schedule_id"),
+                "schedule_name": r.get::<String, _>("schedule_name"),
+                "status": r.get::<String, _>("status"),
+                "output_path": r.get::<Option<String>, _>("output_path"),
+                "error_message": r.get::<Option<String>, _>("error_message"),
+                "started_at": r.get::<Option<chrono::DateTime<chrono::Utc>>, _>("started_at"),
+                "completed_at": r.get::<Option<chrono::DateTime<chrono::Utc>>, _>("completed_at"),
+            })
+        })
         .collect();
-    
+
     Json(serde_json::json!({
         "success": true,
         "data": result,

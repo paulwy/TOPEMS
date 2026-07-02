@@ -453,7 +453,7 @@ const FinanceReceiptPage: React.FC = () => {
               sx={{ alignItems: 'center' }}
               spacing={2}
             >
-              <BackButton href='/dashboard' />
+              <BackButton href='/finance/dashboard' />
               <MuiBox>
                 <Typography
                   variant='h5'

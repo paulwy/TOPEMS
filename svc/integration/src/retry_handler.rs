@@ -190,11 +190,7 @@ impl RetryManager {
     }
 
     /// 计算下次重试时间
-    pub fn calculate_next_retry(
-        &self,
-        retry_count: i32,
-        policy: &RetryPolicy,
-    ) -> DateTime<Utc> {
+    pub fn calculate_next_retry(&self, retry_count: i32, policy: &RetryPolicy) -> DateTime<Utc> {
         let interval_secs = if policy.exponential_backoff {
             let interval = policy.retry_interval_secs as f64 * 2.0_f64.powi(retry_count);
             if let Some(max) = policy.max_backoff_secs {
@@ -305,9 +301,9 @@ impl Default for RetryManager {
 /// 熔断器状态
 #[derive(Debug, Clone, PartialEq)]
 pub enum CircuitBreakerState {
-    Closed,    // 正常，流量通过
-    Open,      // 熔断，流量被拒绝
-    HalfOpen,  // 半开，部分流量通过
+    Closed,   // 正常，流量通过
+    Open,     // 熔断，流量被拒绝
+    HalfOpen, // 半开，部分流量通过
 }
 
 /// 熔断器
@@ -331,7 +327,11 @@ pub struct CircuitBreaker {
 
 impl CircuitBreaker {
     /// 创建新的熔断器
-    pub fn new(failure_threshold: u32, half_open_recovery_threshold: u32, open_duration_secs: u64) -> Self {
+    pub fn new(
+        failure_threshold: u32,
+        half_open_recovery_threshold: u32,
+        open_duration_secs: u64,
+    ) -> Self {
         Self {
             state: Arc::new(RwLock::new(CircuitBreakerState::Closed)),
             failure_count: Arc::new(RwLock::new(0)),
@@ -493,11 +493,7 @@ mod tests {
         let manager = RetryManager::new();
         let policy = RetryPolicy::default();
 
-        let task = manager.create_retry_task(
-            Uuid::new_v4(),
-            "test_rule".to_string(),
-            &policy,
-        );
+        let task = manager.create_retry_task(Uuid::new_v4(), "test_rule".to_string(), &policy);
 
         manager.add_task(task.clone()).await;
         let pending = manager.get_pending_tasks().await;
@@ -509,14 +505,12 @@ mod tests {
         let manager = RetryManager::new();
         let policy = RetryPolicy::default();
 
-        let task = manager.create_retry_task(
-            Uuid::new_v4(),
-            "test_rule".to_string(),
-            &policy,
-        );
+        let task = manager.create_retry_task(Uuid::new_v4(), "test_rule".to_string(), &policy);
 
         manager.add_task(task.clone()).await;
-        manager.increment_retry(task.id, "Test error".to_string(), &policy).await;
+        manager
+            .increment_retry(task.id, "Test error".to_string(), &policy)
+            .await;
 
         let pending = manager.get_pending_tasks().await;
         assert_eq!(pending[0].retry_count, 1);

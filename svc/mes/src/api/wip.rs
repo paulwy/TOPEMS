@@ -1,20 +1,32 @@
 //! WIP (Work In Progress) handlers
 
-use axum::{extract::Path, extract::State, extract::Extension, routing::{delete, get, post, put}, Json, Router};
+use axum::{
+    extract::Extension,
+    extract::Path,
+    extract::State,
+    routing::{delete, get, post, put},
+    Json, Router,
+};
 use chrono::{DateTime, NaiveDate, NaiveDateTime, TimeZone, Utc};
 use serde::{Deserialize, Serialize};
-use sqlx::{types::{BigDecimal, Uuid}, PgPool};
+use sqlx::{
+    types::{BigDecimal, Uuid},
+    PgPool,
+};
 use std::str::FromStr;
 use topems_shared::auth::Claims;
 
-use crate::AppState;
 use crate::services::permission::{check_permission, ModulePermission};
+use crate::AppState;
 use topems_shared::response::ApiResponse;
 
 pub fn create_routes() -> Router<AppState> {
     Router::new()
         .route("/api/mes/wips", get(list_wips).post(create_wip))
-        .route("/api/mes/wips/{id}", get(get_wip).put(update_wip).delete(delete_wip))
+        .route(
+            "/api/mes/wips/{id}",
+            get(get_wip).put(update_wip).delete(delete_wip),
+        )
         .route("/api/mes/wips/transfer", post(transfer_wip))
         .route("/api/mes/wips/{wip_id}/transfers", get(list_wip_transfers))
         .route("/api/mes/wips/statistics", get(get_wip_statistics))
@@ -131,7 +143,8 @@ pub struct UpdateWipRequest {
 }
 
 fn naive_to_utc(dt: Option<NaiveDateTime>) -> DateTime<Utc> {
-    dt.map(|d| Utc.from_utc_datetime(&d)).unwrap_or_else(Utc::now)
+    dt.map(|d| Utc.from_utc_datetime(&d))
+        .unwrap_or_else(Utc::now)
 }
 
 fn opt_naive_to_utc(dt: Option<NaiveDateTime>) -> Option<DateTime<Utc>> {
@@ -139,7 +152,8 @@ fn opt_naive_to_utc(dt: Option<NaiveDateTime>) -> Option<DateTime<Utc>> {
 }
 
 fn big_decimal_to_f64(bd: Option<BigDecimal>) -> f64 {
-    bd.and_then(|d| d.to_string().parse::<f64>().ok()).unwrap_or(0.0)
+    bd.and_then(|d| d.to_string().parse::<f64>().ok())
+        .unwrap_or(0.0)
 }
 
 // ==================== WIP Handlers ====================
@@ -179,28 +193,31 @@ pub async fn list_wips(
         }
     };
 
-    let wip_list: Vec<WipResponse> = wips.into_iter().map(|r| WipResponse {
-        id: r.id,
-        wip_no: r.wip_no,
-        order_id: r.order_id,
-        order_no: r.order_no,
-        product_id: r.product_id,
-        product_name: r.product_name,
-        product_code: r.product_code,
-        quantity: big_decimal_to_f64(Some(r.quantity)),
-        current_process_id: r.current_process_id,
-        current_process_name: Some(r.process_name),
-        current_work_station_id: r.current_work_station_id,
-        current_work_station_name: Some(r.work_station_name),
-        status: r.status.unwrap_or_else(|| "in_progress".to_string()),
-        batch_no: r.batch_no,
-        start_time: opt_naive_to_utc(r.start_time),
-        last_transfer_time: opt_naive_to_utc(r.last_transfer_time),
-        operator: r.operator,
-        notes: r.notes,
-        created_at: naive_to_utc(r.created_at),
-        updated_at: naive_to_utc(r.updated_at),
-    }).collect();
+    let wip_list: Vec<WipResponse> = wips
+        .into_iter()
+        .map(|r| WipResponse {
+            id: r.id,
+            wip_no: r.wip_no,
+            order_id: r.order_id,
+            order_no: r.order_no,
+            product_id: r.product_id,
+            product_name: r.product_name,
+            product_code: r.product_code,
+            quantity: big_decimal_to_f64(Some(r.quantity)),
+            current_process_id: r.current_process_id,
+            current_process_name: Some(r.process_name),
+            current_work_station_id: r.current_work_station_id,
+            current_work_station_name: Some(r.work_station_name),
+            status: r.status.unwrap_or_else(|| "in_progress".to_string()),
+            batch_no: r.batch_no,
+            start_time: opt_naive_to_utc(r.start_time),
+            last_transfer_time: opt_naive_to_utc(r.last_transfer_time),
+            operator: r.operator,
+            notes: r.notes,
+            created_at: naive_to_utc(r.created_at),
+            updated_at: naive_to_utc(r.updated_at),
+        })
+        .collect();
 
     let total = wip_list.len() as i64;
 
@@ -223,7 +240,11 @@ pub async fn create_wip(
     }
 
     let now = Utc::now();
-    let wip_no = format!("WIP{}{:04}", now.format("%Y%m%d"), rand::random::<u16>() % 10000);
+    let wip_no = format!(
+        "WIP{}{:04}",
+        now.format("%Y%m%d"),
+        rand::random::<u16>() % 10000
+    );
 
     let order_no = if let Some(order_id) = req.order_id {
         let order = sqlx::query!(
@@ -398,7 +419,8 @@ pub async fn update_wip(
             created_at, updated_at
         "#,
         id,
-        req.quantity.and_then(|v| BigDecimal::from_str(&v.to_string()).ok()),
+        req.quantity
+            .and_then(|v| BigDecimal::from_str(&v.to_string()).ok()),
         req.status,
         req.batch_no,
         req.notes,
@@ -489,7 +511,11 @@ pub async fn transfer_wip(
     }
 
     let now = Utc::now();
-    let transfer_no = format!("TRF{}{:04}", now.format("%Y%m%d"), rand::random::<u16>() % 10000);
+    let transfer_no = format!(
+        "TRF{}{:04}",
+        now.format("%Y%m%d"),
+        rand::random::<u16>() % 10000
+    );
 
     let mut tx = match state.pool.begin().await {
         Ok(t) => t,
@@ -548,7 +574,9 @@ pub async fn transfer_wip(
         BigDecimal::from_str(&req.quantity.to_string()).unwrap_or_default(),
         now.naive_utc(),
         req.operator.clone(),
-        req.transfer_type.clone().unwrap_or_else(|| "process_transfer".to_string()),
+        req.transfer_type
+            .clone()
+            .unwrap_or_else(|| "process_transfer".to_string()),
         req.notes.clone(),
     )
     .fetch_one(&mut *tx)
@@ -592,7 +620,9 @@ pub async fn transfer_wip(
             .ok()
             .flatten()
             .map(|p| p.name)
-    } else { None };
+    } else {
+        None
+    };
 
     let to_process_name = if let Some(pid) = req.to_process_id {
         sqlx::query!("SELECT name FROM production_processes WHERE id = $1", pid)
@@ -601,7 +631,9 @@ pub async fn transfer_wip(
             .ok()
             .flatten()
             .map(|p| p.name)
-    } else { None };
+    } else {
+        None
+    };
 
     let from_workstation_name = if let Some(wid) = req.from_work_station_id {
         sqlx::query!("SELECT name FROM work_stations WHERE id = $1", wid)
@@ -610,7 +642,9 @@ pub async fn transfer_wip(
             .ok()
             .flatten()
             .map(|w| w.name)
-    } else { None };
+    } else {
+        None
+    };
 
     let to_workstation_name = if let Some(wid) = req.to_work_station_id {
         sqlx::query!("SELECT name FROM work_stations WHERE id = $1", wid)
@@ -619,7 +653,9 @@ pub async fn transfer_wip(
             .ok()
             .flatten()
             .map(|w| w.name)
-    } else { None };
+    } else {
+        None
+    };
 
     let response = WipTransferResponse {
         id: transfer.id,
@@ -636,7 +672,9 @@ pub async fn transfer_wip(
         quantity: big_decimal_to_f64(Some(transfer.quantity)),
         transfer_time: naive_to_utc(Some(transfer.transfer_time)),
         operator: transfer.operator,
-        transfer_type: transfer.transfer_type.unwrap_or_else(|| "process_transfer".to_string()),
+        transfer_type: transfer
+            .transfer_type
+            .unwrap_or_else(|| "process_transfer".to_string()),
         notes: transfer.notes,
     };
 
@@ -684,24 +722,29 @@ pub async fn list_wip_transfers(
         }
     };
 
-    let transfer_list: Vec<WipTransferResponse> = transfers.into_iter().map(|r| WipTransferResponse {
-        id: r.id,
-        transfer_no: r.transfer_no,
-        wip_id: r.wip_id,
-        from_process_id: r.from_process_id,
-        from_process_name: Some(r.from_process_name),
-        from_work_station_id: r.from_work_station_id,
-        from_work_station_name: Some(r.from_work_station_name),
-        to_process_id: r.to_process_id,
-        to_process_name: Some(r.to_process_name),
-        to_work_station_id: r.to_work_station_id,
-        to_work_station_name: Some(r.to_work_station_name),
-        quantity: big_decimal_to_f64(Some(r.quantity)),
-        transfer_time: naive_to_utc(Some(r.transfer_time)),
-        operator: r.operator,
-        transfer_type: r.transfer_type.unwrap_or_else(|| "process_transfer".to_string()),
-        notes: r.notes,
-    }).collect();
+    let transfer_list: Vec<WipTransferResponse> = transfers
+        .into_iter()
+        .map(|r| WipTransferResponse {
+            id: r.id,
+            transfer_no: r.transfer_no,
+            wip_id: r.wip_id,
+            from_process_id: r.from_process_id,
+            from_process_name: Some(r.from_process_name),
+            from_work_station_id: r.from_work_station_id,
+            from_work_station_name: Some(r.from_work_station_name),
+            to_process_id: r.to_process_id,
+            to_process_name: Some(r.to_process_name),
+            to_work_station_id: r.to_work_station_id,
+            to_work_station_name: Some(r.to_work_station_name),
+            quantity: big_decimal_to_f64(Some(r.quantity)),
+            transfer_time: naive_to_utc(Some(r.transfer_time)),
+            operator: r.operator,
+            transfer_type: r
+                .transfer_type
+                .unwrap_or_else(|| "process_transfer".to_string()),
+            notes: r.notes,
+        })
+        .collect();
 
     Json(ApiResponse::success(transfer_list, "获取WIP转移记录成功"))
 }
@@ -752,11 +795,14 @@ pub async fn get_wip_statistics(
     .await;
 
     let by_status: Vec<WipStatusCount> = match status_result {
-        Ok(rows) => rows.into_iter().map(|r| WipStatusCount {
-            status: r.status.unwrap_or_else(|| "unknown".to_string()),
-            count: r.count.unwrap_or(0),
-            quantity: big_decimal_to_f64(r.quantity),
-        }).collect(),
+        Ok(rows) => rows
+            .into_iter()
+            .map(|r| WipStatusCount {
+                status: r.status.unwrap_or_else(|| "unknown".to_string()),
+                count: r.count.unwrap_or(0),
+                quantity: big_decimal_to_f64(r.quantity),
+            })
+            .collect(),
         Err(e) => {
             tracing::error!("Failed to fetch WIP status stats: {}", e);
             return Json(ApiResponse::error(500, "获取WIP统计失败"));
@@ -781,12 +827,15 @@ pub async fn get_wip_statistics(
     .await;
 
     let by_process: Vec<WipProcessCount> = match process_result {
-        Ok(rows) => rows.into_iter().map(|r| WipProcessCount {
-            process_id: r.current_process_id,
-            process_name: r.process_name,
-            count: r.count.unwrap_or(0),
-            quantity: big_decimal_to_f64(r.quantity),
-        }).collect(),
+        Ok(rows) => rows
+            .into_iter()
+            .map(|r| WipProcessCount {
+                process_id: r.current_process_id,
+                process_name: r.process_name,
+                count: r.count.unwrap_or(0),
+                quantity: big_decimal_to_f64(r.quantity),
+            })
+            .collect(),
         Err(e) => {
             tracing::error!("Failed to fetch WIP process stats: {}", e);
             return Json(ApiResponse::error(500, "获取WIP统计失败"));

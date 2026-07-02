@@ -1,5 +1,4 @@
-import {
-  Card,
+import {Card,
   CardContent,
   CardHeader,
   Chip,
@@ -21,8 +20,7 @@ import {
   DialogTitle,
   DialogContent,
   DialogActions,
-  Button,
-} from '@mui/material';
+  Button, useTheme} from '@mui/material';
 import { StatCardGroup } from '@/components';
 
 import React, { useState, useMemo, useEffect } from 'react';
@@ -76,6 +74,7 @@ export default function OpeningBalancePage() {
   const { error: notifyError } = useNotification();
 
   // 状态
+  const theme = useTheme();
   const [period, setPeriod] = useState(new Date().toISOString().slice(0, 7));
   const [selectedCategory, setSelectedCategory] = useState<AccountCategory | ''>('');
   const [searchKeyword, setSearchKeyword] = useState('');
@@ -609,7 +608,7 @@ export default function OpeningBalancePage() {
                       margin: '8px 0 0 0',
                       paddingLeft: 16,
                       fontSize: '0.875rem',
-                      color: 'warning.dark',
+                      color: theme.palette.warning.dark,
                     }}
                   >
                     <li>结转会将源期间的期末余额作为目标期间的期初余额</li>

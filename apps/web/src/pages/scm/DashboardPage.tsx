@@ -315,15 +315,11 @@ export const DashboardPage: React.FC = () => {
 
   return (
     <PageContainer
-      title='供应链管理'
-      subtitle={`${getGreeting()}，供应商与物流追踪`}
       padding={false}
       maxWidth={false}
     >
       <DashboardTemplate
         title=''
-        subtitle=''
-        breadcrumbs={[{ label: '首页', href: '/dashboard' }, { label: '供应链' }]}
         stats={stats}
         charts={charts}
         quickActions={quickActions}

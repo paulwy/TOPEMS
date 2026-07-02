@@ -4,10 +4,10 @@ import type { AuditLog, AuditLogQueryParams, AuditLogDetail } from './types';
 
 export const auditLogApi = {
   list: async (params?: AuditLogQueryParams): Promise<ApiResponse<PaginatedResponse<AuditLog>>> => {
-    return apiClient.scm.get('/api/scm/audit-logs', { params });
+    return apiClient.scm.get('/audit-logs', { params });
   },
 
   get: async (id: string): Promise<ApiResponse<AuditLogDetail>> => {
-    return apiClient.scm.get(`/api/scm/audit-logs/${id}`);
+    return apiClient.scm.get(`/audit-logs/${id}`);
   },
 };

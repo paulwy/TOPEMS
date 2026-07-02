@@ -3,6 +3,7 @@
 
 mod api;
 mod models;
+mod plugin;
 mod services;
 
 use axum::{
@@ -73,6 +74,8 @@ async fn main() {
     let public_routes = Router::new()
         .route("/", get(home))
         .route("/health", get(health))
+        .route("/api/plugins/info", get(plugin::get_plugin_info))
+        .route("/api/plugins/health", get(plugin::plugin_health_check))
         .merge(create_api_info_router("topems-doc-service"))
         .route(
             "/metrics",

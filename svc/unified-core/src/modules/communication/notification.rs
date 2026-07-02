@@ -1,12 +1,15 @@
 //! Notification submodule - Notification handlers with database support
 
-use axum::{extract::{Path, Query, State}, Json};
+use crate::AppState;
+use axum::Extension;
+use axum::{
+    extract::{Path, Query, State},
+    Json,
+};
 use serde::{Deserialize, Serialize};
 use sqlx::Row;
-use uuid::Uuid;
-use crate::AppState;
 use topems_shared::auth::Claims;
-use axum::Extension;
+use uuid::Uuid;
 
 #[derive(Debug, Deserialize)]
 pub struct SendNotificationRequest {
@@ -58,7 +61,11 @@ pub async fn send_notification(
     Extension(claims): Extension<Claims>,
     Json(req): Json<SendNotificationRequest>,
 ) -> Json<serde_json::Value> {
-    tracing::info!("Sending notification to user: {} by user: {}", req.user_id, claims.username);
+    tracing::info!(
+        "Sending notification to user: {} by user: {}",
+        req.user_id,
+        claims.username
+    );
 
     // 检查权限：管理员或超级管理员可以发送通知给任意用户
     if !claims.is_superuser && !claims.has_permission("notification:write") {
@@ -73,7 +80,11 @@ pub async fn send_notification(
     let id = Uuid::new_v4();
     let send_email = req.send_email.unwrap_or(false);
 
-    let notification_type = req.notification_type.as_deref().unwrap_or("info").to_string();
+    let notification_type = req
+        .notification_type
+        .as_deref()
+        .unwrap_or("info")
+        .to_string();
     let priority = req.priority.unwrap_or(0);
 
     let result = sqlx::query(
@@ -136,7 +147,11 @@ pub async fn broadcast_notification(
     Extension(claims): Extension<Claims>,
     Json(req): Json<BroadcastNotificationRequest>,
 ) -> Json<serde_json::Value> {
-    tracing::info!("Broadcasting notification to {} users by user: {}", req.user_ids.len(), claims.username);
+    tracing::info!(
+        "Broadcasting notification to {} users by user: {}",
+        req.user_ids.len(),
+        claims.username
+    );
 
     // 检查权限
     if !claims.is_superuser && !claims.has_permission("notification:admin") {
@@ -300,7 +315,11 @@ pub async fn mark_as_read(
     Extension(claims): Extension<Claims>,
     Path(id): Path<Uuid>,
 ) -> Json<serde_json::Value> {
-    tracing::info!("Marking notification as read: {} for user: {}", id, claims.username);
+    tracing::info!(
+        "Marking notification as read: {} for user: {}",
+        id,
+        claims.username
+    );
 
     let user_id = match Uuid::parse_str(&claims.sub) {
         Ok(id) => id,
@@ -373,7 +392,10 @@ pub async fn mark_all_as_read(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
 ) -> Json<serde_json::Value> {
-    tracing::info!("Marking all notifications as read for user: {}", claims.username);
+    tracing::info!(
+        "Marking all notifications as read for user: {}",
+        claims.username
+    );
 
     let user_id = match Uuid::parse_str(&claims.sub) {
         Ok(id) => id,
@@ -432,7 +454,10 @@ pub async fn get_unread_count(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
 ) -> Json<serde_json::Value> {
-    tracing::info!("Getting unread notification count for user: {}", claims.username);
+    tracing::info!(
+        "Getting unread notification count for user: {}",
+        claims.username
+    );
 
     let user_id = match Uuid::parse_str(&claims.sub) {
         Ok(id) => id,
@@ -580,7 +605,11 @@ pub async fn delete_notification(
     Extension(claims): Extension<Claims>,
     Path(id): Path<Uuid>,
 ) -> Json<serde_json::Value> {
-    tracing::info!("Deleting notification: {} for user: {}", id, claims.username);
+    tracing::info!(
+        "Deleting notification: {} for user: {}",
+        id,
+        claims.username
+    );
 
     let user_id = match Uuid::parse_str(&claims.sub) {
         Ok(id) => id,
@@ -613,13 +642,11 @@ pub async fn delete_notification(
         }));
     }
 
-    let result = sqlx::query(
-        "DELETE FROM core_notifications WHERE id = $1 AND user_id = $2",
-    )
-    .bind(id)
-    .bind(user_id)
-    .execute(&state.pool)
-    .await;
+    let result = sqlx::query("DELETE FROM core_notifications WHERE id = $1 AND user_id = $2")
+        .bind(id)
+        .bind(user_id)
+        .execute(&state.pool)
+        .await;
 
     match result {
         Ok(r) if r.rows_affected() > 0 => Json(serde_json::json!({
@@ -663,12 +690,10 @@ pub async fn delete_all_notifications(
         }
     };
 
-    let result = sqlx::query(
-        "DELETE FROM core_notifications WHERE user_id = $1",
-    )
-    .bind(user_id)
-    .execute(&state.pool)
-    .await;
+    let result = sqlx::query("DELETE FROM core_notifications WHERE user_id = $1")
+        .bind(user_id)
+        .execute(&state.pool)
+        .await;
 
     match result {
         Ok(r) => Json(serde_json::json!({
@@ -765,7 +790,11 @@ pub async fn mark_as_unread(
     Extension(claims): Extension<Claims>,
     Path(id): Path<Uuid>,
 ) -> Json<serde_json::Value> {
-    tracing::info!("Marking notification as unread: {} for user: {}", id, claims.username);
+    tracing::info!(
+        "Marking notification as unread: {} for user: {}",
+        id,
+        claims.username
+    );
 
     let user_id = match Uuid::parse_str(&claims.sub) {
         Ok(id) => id,
@@ -838,7 +867,11 @@ pub async fn bulk_mark_read(
     Extension(claims): Extension<Claims>,
     Json(payload): Json<BulkIdsRequest>,
 ) -> Json<serde_json::Value> {
-    tracing::info!("Bulk marking {} notifications as read for user: {}", payload.notification_ids.len(), claims.username);
+    tracing::info!(
+        "Bulk marking {} notifications as read for user: {}",
+        payload.notification_ids.len(),
+        claims.username
+    );
 
     let user_id = match Uuid::parse_str(&claims.sub) {
         Ok(id) => id,
@@ -900,7 +933,11 @@ pub async fn bulk_delete(
     Extension(claims): Extension<Claims>,
     Json(payload): Json<BulkIdsRequest>,
 ) -> Json<serde_json::Value> {
-    tracing::info!("Bulk deleting {} notifications for user: {}", payload.notification_ids.len(), claims.username);
+    tracing::info!(
+        "Bulk deleting {} notifications for user: {}",
+        payload.notification_ids.len(),
+        claims.username
+    );
 
     let user_id = match Uuid::parse_str(&claims.sub) {
         Ok(id) => id,
@@ -925,13 +962,11 @@ pub async fn bulk_delete(
         }));
     }
 
-    let result = sqlx::query(
-        "DELETE FROM core_notifications WHERE user_id = $1 AND id = ANY($2)",
-    )
-    .bind(user_id)
-    .bind(&payload.notification_ids)
-    .execute(&state.pool)
-    .await;
+    let result = sqlx::query("DELETE FROM core_notifications WHERE user_id = $1 AND id = ANY($2)")
+        .bind(user_id)
+        .bind(&payload.notification_ids)
+        .execute(&state.pool)
+        .await;
 
     match result {
         Ok(r) => Json(serde_json::json!({
@@ -958,7 +993,11 @@ pub async fn archive_notification(
     Extension(claims): Extension<Claims>,
     Path(id): Path<Uuid>,
 ) -> Json<serde_json::Value> {
-    tracing::info!("Archiving notification: {} for user: {}", id, claims.username);
+    tracing::info!(
+        "Archiving notification: {} for user: {}",
+        id,
+        claims.username
+    );
 
     let user_id = match Uuid::parse_str(&claims.sub) {
         Ok(id) => id,
@@ -1031,7 +1070,11 @@ pub async fn unarchive_notification(
     Extension(claims): Extension<Claims>,
     Path(id): Path<Uuid>,
 ) -> Json<serde_json::Value> {
-    tracing::info!("Unarchiving notification: {} for user: {}", id, claims.username);
+    tracing::info!(
+        "Unarchiving notification: {} for user: {}",
+        id,
+        claims.username
+    );
 
     let user_id = match Uuid::parse_str(&claims.sub) {
         Ok(id) => id,
@@ -1104,7 +1147,10 @@ pub async fn list_archived_notifications(
     Extension(claims): Extension<Claims>,
     Query(params): Query<NotificationQuery>,
 ) -> Json<serde_json::Value> {
-    tracing::info!("Listing archived notifications for user: {}", claims.username);
+    tracing::info!(
+        "Listing archived notifications for user: {}",
+        claims.username
+    );
 
     let page = params.page.unwrap_or(1).max(1);
     let page_size = params.page_size.unwrap_or(20).min(100);
@@ -1291,7 +1337,10 @@ pub async fn list_templates(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
 ) -> Json<serde_json::Value> {
-    tracing::info!("Listing notification templates for user: {}", claims.username);
+    tracing::info!(
+        "Listing notification templates for user: {}",
+        claims.username
+    );
 
     let result = sqlx::query(
         r#"
@@ -1400,7 +1449,11 @@ pub async fn create_template(
     Extension(claims): Extension<Claims>,
     Json(req): Json<CreateTemplateRequest>,
 ) -> Json<serde_json::Value> {
-    tracing::info!("Creating template: {} by user: {}", req.name, claims.username);
+    tracing::info!(
+        "Creating template: {} by user: {}",
+        req.name,
+        claims.username
+    );
 
     if !claims.is_superuser && !claims.has_permission("notification:admin") {
         return Json(serde_json::json!({
@@ -1412,7 +1465,10 @@ pub async fn create_template(
     }
 
     let id = Uuid::new_v4();
-    let notification_type = req.notification_type.clone().unwrap_or_else(|| "info".to_string());
+    let notification_type = req
+        .notification_type
+        .clone()
+        .unwrap_or_else(|| "info".to_string());
     let priority = req.priority.unwrap_or(0);
 
     let result = sqlx::query(
@@ -1558,12 +1614,10 @@ pub async fn delete_template(
         }));
     }
 
-    let result = sqlx::query(
-        "DELETE FROM core_notification_templates WHERE id = $1",
-    )
-    .bind(id)
-    .execute(&state.pool)
-    .await;
+    let result = sqlx::query("DELETE FROM core_notification_templates WHERE id = $1")
+        .bind(id)
+        .execute(&state.pool)
+        .await;
 
     match result {
         Ok(r) if r.rows_affected() > 0 => Json(serde_json::json!({
@@ -1587,16 +1641,17 @@ pub async fn delete_template(
     }
 }
 
-async fn send_notification_email(state: &AppState, req: &SendNotificationRequest) -> Result<(), ()> {
-    let email: Option<String> = sqlx::query_scalar(
-        "SELECT email FROM core_users WHERE id = $1",
-    )
-    .bind(req.user_id)
-    .fetch_optional(&state.pool)
-    .await
-    .map_err(|e| {
-        tracing::error!("Failed to get user email: {}", e);
-    })?;
+async fn send_notification_email(
+    state: &AppState,
+    req: &SendNotificationRequest,
+) -> Result<(), ()> {
+    let email: Option<String> = sqlx::query_scalar("SELECT email FROM core_users WHERE id = $1")
+        .bind(req.user_id)
+        .fetch_optional(&state.pool)
+        .await
+        .map_err(|e| {
+            tracing::error!("Failed to get user email: {}", e);
+        })?;
 
     if let Some(email) = email {
         let queue_id = crate::modules::communication::mail::queue_email(

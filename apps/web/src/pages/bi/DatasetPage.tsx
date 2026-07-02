@@ -71,8 +71,22 @@ const mockDatasets: Dataset[] = [
       { id: 'f2', name: 'customer_name', label: '客户名称', type: 'string', is_dimension: true },
       { id: 'f3', name: 'product_name', label: '产品名称', type: 'string', is_dimension: true },
       { id: 'f4', name: 'category', label: '产品类别', type: 'string', is_dimension: true },
-      { id: 'f5', name: 'quantity', label: '数量', type: 'number', is_measure: true, aggregation: 'sum' },
-      { id: 'f6', name: 'amount', label: '金额', type: 'number', is_measure: true, aggregation: 'sum' },
+      {
+        id: 'f5',
+        name: 'quantity',
+        label: '数量',
+        type: 'number',
+        is_measure: true,
+        aggregation: 'sum',
+      },
+      {
+        id: 'f6',
+        name: 'amount',
+        label: '金额',
+        type: 'number',
+        is_measure: true,
+        aggregation: 'sum',
+      },
     ],
     created_at: '2026-01-15T10:30:00Z',
     updated_at: '2026-06-28T08:00:00Z',
@@ -91,8 +105,21 @@ const mockDatasets: Dataset[] = [
       { id: 'f1', name: 'inspection_date', label: '检验日期', type: 'date', is_dimension: true },
       { id: 'f2', name: 'product_line', label: '生产线', type: 'string', is_dimension: true },
       { id: 'f3', name: 'defect_type', label: '缺陷类型', type: 'string', is_dimension: true },
-      { id: 'f4', name: 'inspection_result', label: '检验结果', type: 'string', is_dimension: true },
-      { id: 'f5', name: 'defect_count', label: '缺陷数量', type: 'number', is_measure: true, aggregation: 'sum' },
+      {
+        id: 'f4',
+        name: 'inspection_result',
+        label: '检验结果',
+        type: 'string',
+        is_dimension: true,
+      },
+      {
+        id: 'f5',
+        name: 'defect_count',
+        label: '缺陷数量',
+        type: 'number',
+        is_measure: true,
+        aggregation: 'sum',
+      },
     ],
     created_at: '2026-02-20T14:00:00Z',
     updated_at: '2026-06-28T00:00:00Z',
@@ -110,9 +137,30 @@ const mockDatasets: Dataset[] = [
     fields: [
       { id: 'f1', name: 'warehouse', label: '仓库', type: 'string', is_dimension: true },
       { id: 'f2', name: 'material', label: '物料', type: 'string', is_dimension: true },
-      { id: 'f3', name: 'stock_in', label: '入库数量', type: 'number', is_measure: true, aggregation: 'sum' },
-      { id: 'f4', name: 'stock_out', label: '出库数量', type: 'number', is_measure: true, aggregation: 'sum' },
-      { id: 'f5', name: 'stock_balance', label: '库存余额', type: 'number', is_measure: true, aggregation: 'sum' },
+      {
+        id: 'f3',
+        name: 'stock_in',
+        label: '入库数量',
+        type: 'number',
+        is_measure: true,
+        aggregation: 'sum',
+      },
+      {
+        id: 'f4',
+        name: 'stock_out',
+        label: '出库数量',
+        type: 'number',
+        is_measure: true,
+        aggregation: 'sum',
+      },
+      {
+        id: 'f5',
+        name: 'stock_balance',
+        label: '库存余额',
+        type: 'number',
+        is_measure: true,
+        aggregation: 'sum',
+      },
     ],
     created_at: '2026-05-10T09:00:00Z',
     updated_at: '2026-06-25T16:30:00Z',
@@ -246,9 +294,7 @@ const DatasetPage = () => {
   const updateField = (fieldId: string, updates: Partial<DatasetField>) => {
     setFormData({
       ...formData,
-      fields: formData.fields?.map((f) =>
-        f.id === fieldId ? { ...f, ...updates } : f
-      ) || [],
+      fields: formData.fields?.map((f) => (f.id === fieldId ? { ...f, ...updates } : f)) || [],
     });
   };
 
@@ -262,7 +308,10 @@ const DatasetPage = () => {
           mb: 4,
         }}
       >
-        <Typography variant='h4' sx={{ fontWeight: 700 }}>
+        <Typography
+          variant='h4'
+          sx={{ fontWeight: 700 }}
+        >
           数据集管理
         </Typography>
         <Button
@@ -320,7 +369,11 @@ const DatasetPage = () => {
           </Button>
         </Box>
       ) : (
-        <TableContainer component={Paper} elevation={0} sx={{ border: '1px solid', borderColor: 'divider' }}>
+        <TableContainer
+          component={Paper}
+          elevation={0}
+          sx={{ border: '1px solid', borderColor: 'divider' }}
+        >
           <Table>
             <TableHead>
               <TableRow>
@@ -334,7 +387,10 @@ const DatasetPage = () => {
             </TableHead>
             <TableBody>
               {filteredDatasets.map((dataset) => (
-                <TableRow key={dataset.id} hover>
+                <TableRow
+                  key={dataset.id}
+                  hover
+                >
                   <TableCell>
                     <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
                       <Box
@@ -348,13 +404,19 @@ const DatasetPage = () => {
                           justifyContent: 'center',
                         }}
                       >
-                        <Database sx={{ color: '#10B981', fontSize: 20 }} />
+                        <Database sx={{ color: 'success.main', fontSize: 20 }} />
                       </Box>
                       <Box>
-                        <Typography variant='body2' sx={{ fontWeight: 600 }}>
+                        <Typography
+                          variant='body2'
+                          sx={{ fontWeight: 600 }}
+                        >
                           {dataset.name}
                         </Typography>
-                        <Typography variant='caption' color='text.secondary'>
+                        <Typography
+                          variant='caption'
+                          color='text.secondary'
+                        >
                           {dataset.description}
                         </Typography>
                       </Box>
@@ -364,13 +426,14 @@ const DatasetPage = () => {
                   <TableCell>{getStatusChip(dataset.status)}</TableCell>
                   <TableCell>{dataset.row_count?.toLocaleString() || '-'}</TableCell>
                   <TableCell>
-                    {dataset.updated_at
-                      ? new Date(dataset.updated_at).toLocaleDateString()
-                      : '-'}
+                    {dataset.updated_at ? new Date(dataset.updated_at).toLocaleDateString() : '-'}
                   </TableCell>
                   <TableCell align='right'>
                     <Tooltip title='编辑'>
-                      <IconButton size='small' onClick={() => handleEdit(dataset)}>
+                      <IconButton
+                        size='small'
+                        onClick={() => handleEdit(dataset)}
+                      >
                         <Edit2 size={16} />
                       </IconButton>
                     </Tooltip>
@@ -380,7 +443,10 @@ const DatasetPage = () => {
                       </IconButton>
                     </Tooltip>
                     <Tooltip title='删除'>
-                      <IconButton size='small' onClick={() => handleDelete(dataset.id)}>
+                      <IconButton
+                        size='small'
+                        onClick={() => handleDelete(dataset.id)}
+                      >
                         <Trash2 size={16} />
                       </IconButton>
                     </Tooltip>
@@ -405,26 +471,46 @@ const DatasetPage = () => {
         }}
       >
         <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
-          <Button variant='outlined' size='small' onClick={() => setViewMode('list')}>
+          <Button
+            variant='outlined'
+            size='small'
+            onClick={() => setViewMode('list')}
+          >
             返回列表
           </Button>
-          <Typography variant='h5' sx={{ fontWeight: 600 }}>
+          <Typography
+            variant='h5'
+            sx={{ fontWeight: 600 }}
+          >
             {selectedDataset ? '编辑数据集' : '创建数据集'}
           </Typography>
         </Box>
         <Box sx={{ display: 'flex', gap: 2 }}>
-          <Button variant='outlined' onClick={() => setViewMode('list')}>
+          <Button
+            variant='outlined'
+            onClick={() => setViewMode('list')}
+          >
             取消
           </Button>
-          <Button variant='contained' onClick={handleSave}>
+          <Button
+            variant='contained'
+            onClick={handleSave}
+          >
             保存
           </Button>
         </Box>
       </Box>
 
-      <Card elevation={0} sx={{ border: '1px solid', borderColor: 'divider' }}>
+      <Card
+        elevation={0}
+        sx={{ border: '1px solid', borderColor: 'divider' }}
+      >
         <CardContent>
-          <Tabs value={editorTab} onChange={(_, v) => setEditorTab(v)} sx={{ mb: 3 }}>
+          <Tabs
+            value={editorTab}
+            onChange={(_, v) => setEditorTab(v)}
+            sx={{ mb: 3 }}
+          >
             <Tab label='基本信息' />
             <Tab label='字段配置' />
             <Tab label='SQL查询' />
@@ -448,7 +534,10 @@ const DatasetPage = () => {
                 onChange={(e) => setFormData({ ...formData, description: e.target.value })}
                 sx={{ mb: 3 }}
               />
-              <FormControl fullWidth sx={{ mb: 3 }}>
+              <FormControl
+                fullWidth
+                sx={{ mb: 3 }}
+              >
                 <InputLabel>数据源</InputLabel>
                 <Select
                   value={formData.data_source_id || ''}
@@ -465,7 +554,12 @@ const DatasetPage = () => {
                 <Select
                   value={formData.status || 'draft'}
                   label='状态'
-                  onChange={(e) => setFormData({ ...formData, status: e.target.value as 'draft' | 'published' | 'archived' })}
+                  onChange={(e) =>
+                    setFormData({
+                      ...formData,
+                      status: e.target.value as 'draft' | 'published' | 'archived',
+                    })
+                  }
                 >
                   <MenuItem value='draft'>草稿</MenuItem>
                   <MenuItem value='published'>已发布</MenuItem>
@@ -516,10 +610,17 @@ const DatasetPage = () => {
                           />
                         </TableCell>
                         <TableCell>
-                          <FormControl size='small' sx={{ minWidth: 120 }}>
+                          <FormControl
+                            size='small'
+                            sx={{ minWidth: 120 }}
+                          >
                             <Select
                               value={field.type}
-                              onChange={(e) => updateField(field.id, { type: e.target.value as DatasetField['type'] })}
+                              onChange={(e) =>
+                                updateField(field.id, {
+                                  type: e.target.value as DatasetField['type'],
+                                })
+                              }
                             >
                               <MenuItem value='string'>字符串</MenuItem>
                               <MenuItem value='number'>数字</MenuItem>
@@ -530,7 +631,10 @@ const DatasetPage = () => {
                           </FormControl>
                         </TableCell>
                         <TableCell>
-                          <FormControl size='small' sx={{ minWidth: 120 }}>
+                          <FormControl
+                            size='small'
+                            sx={{ minWidth: 120 }}
+                          >
                             <Select
                               value={field.is_dimension ? 'dimension' : 'measure'}
                               onChange={(e) =>
@@ -546,7 +650,10 @@ const DatasetPage = () => {
                           </FormControl>
                         </TableCell>
                         <TableCell align='right'>
-                          <IconButton size='small' onClick={() => removeField(field.id)}>
+                          <IconButton
+                            size='small'
+                            onClick={() => removeField(field.id)}
+                          >
                             <Trash2 size={14} />
                           </IconButton>
                         </TableCell>
@@ -560,7 +667,14 @@ const DatasetPage = () => {
 
           {editorTab === 2 && (
             <Box>
-              <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 2 }}>
+              <Box
+                sx={{
+                  display: 'flex',
+                  justifyContent: 'space-between',
+                  alignItems: 'center',
+                  mb: 2,
+                }}
+              >
                 <Typography variant='subtitle1'>SQL 查询语句</Typography>
                 <Button
                   variant='outlined'
@@ -604,11 +718,7 @@ const DatasetPage = () => {
       <DashboardTemplate
         title=''
         subtitle=''
-        breadcrumbs={[
-          { label: '首页', href: '/dashboard' },
-          { label: 'BI' },
-          { label: '数据集' },
-        ]}
+        breadcrumbs={[{ label: '首页', href: '/dashboard' }, { label: 'BI' }, { label: '数据集' }]}
       >
         {viewMode === 'list' ? renderListView() : renderEditorView()}
       </DashboardTemplate>
