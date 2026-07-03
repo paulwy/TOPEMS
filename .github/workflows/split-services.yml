@@ -29,7 +29,7 @@ on:
 
 env:
   REGISTRY: ghcr.io
-  RUST_VERSION: 1.78
+  RUST_VERSION: stable
   CARGO_TERM_COLOR: always
 
 jobs:
@@ -110,17 +110,9 @@ jobs:
           components: rustfmt, clippy
 
       - name: Cache cargo dependencies
-        uses: actions/cache@v4
+        uses: Swatinem/rust-cache@v2
         with:
-          path: |
-            ~/.cargo/registry/index
-            ~/.cargo/registry/cache
-            ~/.cargo/git/db
-            target
-          key: ${{ runner.os }}-cargo-${{ matrix.service.name }}-${{ hashFiles('Cargo.lock') }}
-          restore-keys: |
-            ${{ runner.os }}-cargo-${{ matrix.service.name }}-
-            ${{ runner.os }}-cargo-
+          prefix-key: "rust-${{ env.RUST_VERSION }}-${{ matrix.service.name }}"
 
       - name: Format check
         run: cargo fmt --check -p topems-${{ matrix.service.name }}
@@ -279,6 +271,7 @@ jobs:
           kubectl describe services -n topems
 
       - name: Slack notification
+        if: secrets.SLACK_WEBHOOK_URL != ''
         uses: slackapi/slack-github-action@v1.24.0
         with:
           payload: |
@@ -341,6 +334,7 @@ jobs:
           kubectl get pods -n topems
 
       - name: Slack rollback notification
+        if: secrets.SLACK_WEBHOOK_URL != ''
         uses: slackapi/slack-github-action@v1.24.0
         with:
           payload: |
@@ -361,4 +355,4 @@ jobs:
               ]
             }
         env:
-          SLACK_WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK_URL
+          SLACK_WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK_URL }}

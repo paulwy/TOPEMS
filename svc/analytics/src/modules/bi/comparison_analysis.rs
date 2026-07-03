@@ -223,8 +223,19 @@ pub async fn list_comparisons(
 /// GET /api/bi/comparison-analysis/{id}
 pub async fn get_comparison(
     State(state): State<AppState>,
-    Path(id): Path<Uuid>,
+    Path(id_str): Path<String>,
 ) -> Json<serde_json::Value> {
+    let id = match Uuid::parse_str(&id_str) {
+        Ok(id) => id,
+        Err(_) => {
+            return Json(serde_json::json!({
+                "success": false,
+                "message": format!("Invalid comparison analysis ID: {}", id_str),
+                "data": null
+            }));
+        }
+    };
+
     info!("Getting comparison analysis: {}", id);
 
     let row = match sqlx::query!(
@@ -342,9 +353,20 @@ pub async fn create_comparison(
 /// PUT /api/bi/comparison-analysis/{id}
 pub async fn update_comparison(
     State(state): State<AppState>,
-    Path(id): Path<Uuid>,
+    Path(id_str): Path<String>,
     Json(req): Json<UpdateComparisonRequest>,
 ) -> Json<serde_json::Value> {
+    let id = match Uuid::parse_str(&id_str) {
+        Ok(id) => id,
+        Err(_) => {
+            return Json(serde_json::json!({
+                "success": false,
+                "message": format!("Invalid comparison analysis ID: {}", id_str),
+                "data": null
+            }));
+        }
+    };
+
     info!("Updating comparison analysis: {}", id);
 
     let now = Utc::now().naive_utc();
@@ -415,8 +437,19 @@ pub async fn update_comparison(
 /// DELETE /api/bi/comparison-analysis/{id}
 pub async fn delete_comparison(
     State(state): State<AppState>,
-    Path(id): Path<Uuid>,
+    Path(id_str): Path<String>,
 ) -> Json<serde_json::Value> {
+    let id = match Uuid::parse_str(&id_str) {
+        Ok(id) => id,
+        Err(_) => {
+            return Json(serde_json::json!({
+                "success": false,
+                "message": format!("Invalid comparison analysis ID: {}", id_str),
+                "data": null
+            }));
+        }
+    };
+
     info!("Deleting comparison analysis: {}", id);
 
     let result = sqlx::query!(
@@ -456,8 +489,19 @@ pub async fn delete_comparison(
 /// updated to `completed` with a fresh `last_run_at` timestamp.
 pub async fn run_comparison(
     State(state): State<AppState>,
-    Path(id): Path<Uuid>,
+    Path(id_str): Path<String>,
 ) -> Json<serde_json::Value> {
+    let id = match Uuid::parse_str(&id_str) {
+        Ok(id) => id,
+        Err(_) => {
+            return Json(serde_json::json!({
+                "success": false,
+                "message": format!("Invalid comparison analysis ID: {}", id_str),
+                "data": null
+            }));
+        }
+    };
+
     info!("Running comparison analysis: {}", id);
 
     let row = match sqlx::query!(
@@ -605,8 +649,19 @@ pub async fn run_comparison(
 /// GET /api/bi/comparison-analysis/{id}/result
 pub async fn get_comparison_result(
     State(state): State<AppState>,
-    Path(id): Path<Uuid>,
+    Path(id_str): Path<String>,
 ) -> Json<serde_json::Value> {
+    let id = match Uuid::parse_str(&id_str) {
+        Ok(id) => id,
+        Err(_) => {
+            return Json(serde_json::json!({
+                "success": false,
+                "message": format!("Invalid comparison analysis ID: {}", id_str),
+                "data": null
+            }));
+        }
+    };
+
     info!("Getting comparison result: {}", id);
 
     let row = match sqlx::query!(

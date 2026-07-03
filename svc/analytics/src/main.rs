@@ -137,10 +137,6 @@ async fn main() {
             "/api/bi/dashboard/public",
             get(modules::bi::dashboard::get_public_dashboards),
         )
-        .route(
-            "/api/bi/dashboard/user/{owner_id}",
-            get(modules::bi::dashboard::get_user_dashboards),
-        )
         // Dashboard Templates - must come before {id} routes
         .route(
             "/api/bi/dashboard/template",
@@ -231,6 +227,11 @@ async fn main() {
         .route(
             "/api/bi/dashboard/{id}/export/excel",
             get(modules::bi::dashboard::export_dashboard_excel),
+        )
+        // Dashboard by user - must come after all specific paths
+        .route(
+            "/api/bi/dashboard/user/{owner_id}",
+            get(modules::bi::dashboard::get_user_dashboards),
         )
         // WebSocket
         .route(

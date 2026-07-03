@@ -38,9 +38,6 @@ env:
   DOCKER_IMAGE_PREFIX: topems
 
 jobs:
-  # ============================================================================
-  # Lint Job
-  # ============================================================================
   lint:
     name: Lint Code
     runs-on: ubuntu-latest
@@ -90,9 +87,6 @@ jobs:
       - name: Run frontend lint
         run: pnpm --filter topems-portal lint
 
-  # ============================================================================
-  # Test Job
-  # ============================================================================
   test:
     name: Run Tests
     runs-on: ubuntu-latest
@@ -181,9 +175,6 @@ jobs:
       - name: Run frontend tests
         run: pnpm --filter topems-portal test
 
-  # ============================================================================
-  # Build Job
-  # ============================================================================
   build:
     name: Build Services
     runs-on: ubuntu-latest
@@ -267,9 +258,6 @@ jobs:
             apps/core/dist/
           retention-days: 7
 
-  # ============================================================================
-  # Docker Build Matrix
-  # ============================================================================
   docker-build:
     name: Build Docker (${{ matrix.service }})
     runs-on: ubuntu-latest
@@ -279,7 +267,6 @@ jobs:
       fail-fast: false
       matrix:
         include:
-          # Core services
           - service: unified-core
             path: svc/unified-core
             dockerfile: svc/unified-core/Dockerfile
@@ -340,7 +327,6 @@ jobs:
             path: svc/integration
             dockerfile: svc/integration/Dockerfile
             port: 8072
-          # Split services (with separate Dockerfiles)
           - service: mes
             path: svc/mes
             dockerfile: svc/mes/Dockerfile
@@ -369,11 +355,6 @@ jobs:
             path: svc/report
             dockerfile: svc/report/Dockerfile
             port: 8061
-        exclude:
-          # Skip services without separate Dockerfiles (analytics, manufacturing, quality-assurance)
-          - service: analytics
-          - service: manufacturing
-          - service: quality-assurance
 
     steps:
       - name: Checkout code
@@ -442,76 +423,10 @@ jobs:
           path: sbom-${{ matrix.service }}.spdx.json
           retention-days: 30
 
-  # ============================================================================
-  # Build Docker Images for Split Services (mes, pdm, qms, lims, ehs, bi, report)
-  # These services have their own repository structure and need special handling
-  # ============================================================================
-  docker-build-split:
-    name: Build Docker Split (${{ matrix.service }})
-    runs-on: ubuntu-latest
-    needs: build
-    if: github.event.inputs.skip_docker != 'true'
-    strategy:
-      fail-fast: false
-      matrix:
-        service: [mes, pdm, qms, lims, ehs, bi, report]
-        include:
-          - service: mes
-            port: 8030
-          - service: pdm
-            port: 8031
-          - service: qms
-            port: 8050
-          - service: lims
-            port: 8051
-          - service: ehs
-            port: 8052
-          - service: bi
-            port: 8060
-          - service: report
-            port: 8061
-
-    steps:
-      - name: Checkout code
-        uses: actions/checkout@v4
-
-      - name: Set up QEMU
-        uses: docker/setup-qemu-action@v3
-
-      - name: Set up Docker Buildx
-        uses: docker/setup-buildx-action@v3
-
-      - name: Login to GitHub Container Registry
-        uses: docker/login-action@v3
-        with:
-          registry: ghcr.io
-          username: ${{ github.actor }}
-          password: ${{ secrets.GITHUB_TOKEN }}
-
-      - name: Build and push ${{ matrix.service }}
-        uses: docker/build-push-action@v5
-        with:
-          context: .
-          file: svc/${{ matrix.service }}/Dockerfile
-          platforms: linux/amd64,linux/arm64
-          push: true
-          tags: |
-            ghcr.io/${{ github.repository_owner }}/${{ env.DOCKER_IMAGE_PREFIX }}-${{ matrix.service }}:latest
-            ghcr.io/${{ github.repository_owner }}/${{ env.DOCKER_IMAGE_PREFIX }}-${{ matrix.service }}:${{ github.sha }}
-          cache-from: type=gha
-          cache-to: type=gha,mode=max
-          build-args: |
-            SERVICE_NAME=${{ matrix.service }}
-            SERVICE_PORT=${{ matrix.port }}
-            RUST_VERSION=${{ env.RUST_VERSION }}
-
-  # ============================================================================
-  # Deploy to Staging
-  # ============================================================================
   deploy-staging:
     name: Deploy to Staging
     runs-on: ubuntu-latest
-    needs: [build, docker-build, docker-build-split]
+    needs: [build, docker-build]
     if: github.ref == 'refs/heads/develop' || (github.event_name == 'workflow_dispatch' && github.event.inputs.environment == 'staging')
     environment: staging
     steps:
@@ -541,29 +456,66 @@ jobs:
       - name: Deploy to staging
         run: |
           ssh-keyscan -H ${{ secrets.STAGING_HOST }} >> ~/.ssh/known_hosts
-          
+
+          TIMESTAMP=$(date +%Y%m%d%H%M%S)
           ssh ${{ secrets.STAGING_USER }}@${{ secrets.STAGING_HOST }} -p ${{ secrets.STAGING_PORT || 22 }} << 'EOF'
             set -e
             mkdir -p /opt/topems/staging/services
             mkdir -p /opt/topems/staging/web
             mkdir -p /opt/topems/staging/core-remote
-            
+
+            if [[ -d /opt/topems/staging/services ]]; then
+              cp -r /opt/topems/staging/services /opt/topems/staging/services.backup.${TIMESTAMP}
+            fi
+            if [[ -d /opt/topems/staging/web ]]; then
+              cp -r /opt/topems/staging/web /opt/topems/staging/web.backup.${TIMESTAMP}
+            fi
+
             for service in unified-core ai analytics manufacturing quality-assurance hrm crm pm erp gis rs scm wms mobile monitor portal mes pdm qms lims ehs bi report; do
               sudo systemctl stop topems-${service}-staging 2>/dev/null || true
             done
           EOF
-          
+
           scp -P ${{ secrets.STAGING_PORT || 22 }} target/release/* ${{ secrets.STAGING_USER }}@${{ secrets.STAGING_HOST }}:/opt/topems/staging/services/
           scp -P ${{ secrets.STAGING_PORT || 22 }} -r dist/apps/web/dist/* ${{ secrets.STAGING_USER }}@${{ secrets.STAGING_HOST }}:/opt/topems/staging/web/
           scp -P ${{ secrets.STAGING_PORT || 22 }} -r dist/apps/core/dist/* ${{ secrets.STAGING_USER }}@${{ secrets.STAGING_HOST }}:/opt/topems/staging/core-remote/
-          
+
           ssh ${{ secrets.STAGING_USER }}@${{ secrets.STAGING_HOST }} -p ${{ secrets.STAGING_PORT || 22 }} << 'EOF'
             for service in unified-core ai analytics manufacturing quality-assurance hrm crm pm erp gis rs scm wms mobile monitor portal mes pdm qms lims ehs bi report; do
               sudo systemctl start topems-${service}-staging || true
             done
-            
-            sleep 10
-            curl -s http://localhost:8000/health || true
+
+            sleep 15
+
+            FAILURE=false
+            for port in 8000 8010 8020 8029 8023 8071 8053 8040 8041 8042 8070 8062 8063 8064 8072 8030 8031 8050 8051 8052 8060 8061; do
+              if ! curl -s -f -m 5 http://localhost:${port}/health; then
+                echo "Service on port ${port} not responding"
+                FAILURE=true
+              fi
+            done
+
+            if [ "$FAILURE" = true ]; then
+              echo "Health check failed, rolling back..."
+              for service in unified-core ai analytics manufacturing quality-assurance hrm crm pm erp gis rs scm wms mobile monitor portal mes pdm qms lims ehs bi report; do
+                sudo systemctl stop topems-${service}-staging 2>/dev/null || true
+              done
+
+              LATEST_BACKUP=$(ls -dt /opt/topems/staging/services.backup.* | head -1)
+              if [[ -n "$LATEST_BACKUP" ]]; then
+                cp -r "$LATEST_BACKUP" /opt/topems/staging/services
+              fi
+
+              LATEST_WEB_BACKUP=$(ls -dt /opt/topems/staging/web.backup.* | head -1)
+              if [[ -n "$LATEST_WEB_BACKUP" ]]; then
+                cp -r "$LATEST_WEB_BACKUP" /opt/topems/staging/web
+              fi
+
+              for service in unified-core ai analytics manufacturing quality-assurance hrm crm pm erp gis rs scm wms mobile monitor portal mes pdm qms lims ehs bi report; do
+                sudo systemctl start topems-${service}-staging || true
+              done
+              exit 1
+            fi
           EOF
 
       - name: Verify deployment
@@ -571,13 +523,10 @@ jobs:
           echo "Staging deployment completed"
           echo "Services should be available at: http://${{ secrets.STAGING_HOST }}:8000/health"
 
-  # ============================================================================
-  # Deploy to Production
-  # ============================================================================
   deploy-production:
     name: Deploy to Production
     runs-on: ubuntu-latest
-    needs: [build, docker-build, docker-build-split]
+    needs: [build, docker-build]
     if: github.ref == 'refs/heads/main' || (github.event_name == 'workflow_dispatch' && github.event.inputs.environment == 'production')
     environment: production
     concurrency: production
@@ -608,36 +557,65 @@ jobs:
       - name: Deploy to production
         run: |
           ssh-keyscan -H ${{ secrets.PROD_HOST }} >> ~/.ssh/known_hosts
-          
+
           TIMESTAMP=$(date +%Y%m%d%H%M%S)
           ssh ${{ secrets.PROD_USER }}@${{ secrets.PROD_HOST }} -p ${{ secrets.PROD_PORT || 22 }} << 'EOF'
             set -e
-            
-            # Backup current version
+
             if [[ -d /opt/topems/bin ]]; then
               cp -r /opt/topems/bin /opt/topems/bin.backup.${TIMESTAMP}
             fi
             if [[ -d /opt/topems/web ]]; then
               cp -r /opt/topems/web /opt/topems/web.backup.${TIMESTAMP}
             fi
-            
+
             for service in unified-core ai analytics manufacturing quality-assurance hrm crm pm erp gis rs scm wms mobile monitor portal mes pdm qms lims ehs bi report; do
               sudo systemctl stop topems-${service} 2>/dev/null || true
             done
           EOF
-          
+
           scp -P ${{ secrets.PROD_PORT || 22 }} target/release/* ${{ secrets.PROD_USER }}@${{ secrets.PROD_HOST }}:/opt/topems/bin/
           ssh ${{ secrets.PROD_USER }}@${{ secrets.PROD_HOST }} -p ${{ secrets.PROD_PORT || 22 }} "rm -rf /opt/topems/web/*"
           scp -P ${{ secrets.PROD_PORT || 22 }} -r dist/apps/web/dist/* ${{ secrets.PROD_USER }}@${{ secrets.PROD_HOST }}:/opt/topems/web/
           scp -P ${{ secrets.PROD_PORT || 22 }} -r dist/apps/core/dist/* ${{ secrets.PROD_USER }}@${{ secrets.PROD_HOST }}:/opt/topems/core-remote/
-          
+
           ssh ${{ secrets.PROD_USER }}@${{ secrets.PROD_HOST }} -p ${{ secrets.PROD_PORT || 22 }} << 'EOF'
             for service in unified-core ai analytics manufacturing quality-assurance hrm crm pm erp gis rs scm wms mobile monitor portal mes pdm qms lims ehs bi report; do
               sudo systemctl start topems-${service} || true
             done
-            
-            sleep 15
-            curl -s https://${{ secrets.PROD_DOMAIN }}/health || true
+
+            sleep 30
+
+            FAILURE=false
+            for port in 8000 8010 8020 8029 8023 8071 8053 8040 8041 8042 8070 8062 8063 8064 8072 8030 8031 8050 8051 8052 8060 8061; do
+              if ! curl -s -f -m 5 https://${{ secrets.PROD_DOMAIN }}/health; then
+                echo "Service health check failed"
+                FAILURE=true
+                break
+              fi
+            done
+
+            if [ "$FAILURE" = true ]; then
+              echo "Health check failed, rolling back..."
+              for service in unified-core ai analytics manufacturing quality-assurance hrm crm pm erp gis rs scm wms mobile monitor portal mes pdm qms lims ehs bi report; do
+                sudo systemctl stop topems-${service} 2>/dev/null || true
+              done
+
+              LATEST_BACKUP=$(ls -dt /opt/topems/bin.backup.* | head -1)
+              if [[ -n "$LATEST_BACKUP" ]]; then
+                cp -r "$LATEST_BACKUP" /opt/topems/bin
+              fi
+
+              LATEST_WEB_BACKUP=$(ls -dt /opt/topems/web.backup.* | head -1)
+              if [[ -n "$LATEST_WEB_BACKUP" ]]; then
+                cp -r "$LATEST_WEB_BACKUP" /opt/topems/web
+              fi
+
+              for service in unified-core ai analytics manufacturing quality-assurance hrm crm pm erp gis rs scm wms mobile monitor portal mes pdm qms lims ehs bi report; do
+                sudo systemctl start topems-${service} || true
+              done
+              exit 1
+            fi
           EOF
 
       - name: Verify deployment
@@ -645,9 +623,6 @@ jobs:
           echo "Production deployment completed"
           echo "Services should be available at: https://${{ secrets.PROD_DOMAIN }}/health"
 
-  # ============================================================================
-  # Notify Deployment
-  # ============================================================================
   notify:
     name: Notify Deployment
     runs-on: ubuntu-latest

@@ -1,6 +1,5 @@
-name: 代码质量检查
+name: Code Quality Check
 
-# 触发条件：push 和 pull_request 事件
 on:
   push:
     branches: [main, develop]
@@ -10,24 +9,23 @@ on:
 
 env:
   PYTHON_VERSION: '3.11'
+  NODE_VERSION: '20'
+  PNPM_VERSION: '9'
 
 jobs:
   code-quality:
-    name: 代码质量检查
+    name: Code Quality Check
     runs-on: ubuntu-latest
     steps:
-      # 步骤1：检出代码
-      - name: 检出代码
+      - name: Checkout code
         uses: actions/checkout@v4
 
-      # 步骤2：设置 Python 环境（用于运行检查脚本）
-      - name: 设置 Python 环境
+      - name: Set up Python
         uses: actions/setup-python@v5
         with:
           python-version: ${{ env.PYTHON_VERSION }}
 
-      # 步骤3：获取变更的文件列表（用于增量检查）
-      - name: 获取变更文件列表
+      - name: Get changed files
         id: changed-files
         uses: tj-actions/changed-files@v41
         with:
@@ -37,29 +35,64 @@ jobs:
             **/*.json
             docs/**
 
-      # 步骤4：检查 API 路径唯一性
-      - name: 检查 API 路径唯一性
+      - name: Check API path uniqueness
         run: |
-          echo "=== 开始检查 API 路径唯一性 ==="
+          echo "=== Checking API path uniqueness ==="
           python scripts/check_api_duplicates_ci.py --ci
-          echo "=== API 路径唯一性检查通过 ==="
+          echo "=== API path uniqueness check passed ==="
 
-      # 步骤5：检查组件命名规范
-      - name: 检查组件命名规范
+      - name: Check component naming conventions
         run: |
-          echo "=== 开始检查组件命名规范 ==="
+          echo "=== Checking component naming conventions ==="
           python scripts/check_component_naming.py --ci
-          echo "=== 组件命名规范检查通过 ==="
+          echo "=== Component naming conventions check passed ==="
 
-      # 步骤6：生成质量检查总结
-      - name: 生成质量检查总结
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+
+      - name: Install pnpm
+        uses: pnpm/action-setup@v4
+        with:
+          version: ${{ env.PNPM_VERSION }}
+          run_install: false
+
+      - name: Get pnpm store directory
+        shell: bash
+        run: |
+          echo "STORE_PATH=$(pnpm store path --silent)" >> $GITHUB_ENV
+
+      - name: Setup pnpm cache
+        uses: actions/cache@v4
+        with:
+          path: ${{ env.STORE_PATH }}
+          key: ${{ runner.os }}-pnpm-store-${{ hashFiles('**/pnpm-lock.yaml') }}
+          restore-keys: |
+            ${{ runner.os }}-pnpm-store-
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Check for console.log statements
+        run: |
+          echo "=== Checking for console.log statements ==="
+          if grep -r "console\.log" apps/web/src/ --include="*.ts" --include="*.tsx" | grep -v ".test." | grep -v ".spec." | grep -v ".stories."; then
+            echo "❌ Found console.log statements in source code"
+            exit 1
+          else
+            echo "✅ No console.log statements found"
+          fi
+
+      - name: Generate quality check summary
         if: always()
         run: |
-          echo "## 代码质量检查结果" >> $GITHUB_STEP_SUMMARY
+          echo "## Code Quality Check Results" >> $GITHUB_STEP_SUMMARY
           echo "" >> $GITHUB_STEP_SUMMARY
-          echo "| 检查项 | 状态 |" >> $GITHUB_STEP_SUMMARY
+          echo "| Check | Status |" >> $GITHUB_STEP_SUMMARY
           echo "|--------|------|" >> $GITHUB_STEP_SUMMARY
-          echo "| API 路径唯一性 | ✅ 通过 |" >> $GITHUB_STEP_SUMMARY
-          echo "| 组件命名规范 | ✅ 通过 |" >> $GITHUB_STEP_SUMMARY
+          echo "| API Path Uniqueness | ✅ Passed |" >> $GITHUB_STEP_SUMMARY
+          echo "| Component Naming Conventions | ✅ Passed |" >> $GITHUB_STEP_SUMMARY
+          echo "| Console.log Check | ✅ Passed |" >> $GITHUB_STEP_SUMMARY
           echo "" >> $GITHUB_STEP_SUMMARY
-          echo "**所有代码质量检查已通过！**" >> $GITHUB_STEP_SUMMARY
+          echo "**All code quality checks passed!**" >> $GITHUB_STEP_SUMMARY
