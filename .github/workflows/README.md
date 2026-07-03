@@ -8,7 +8,13 @@
 用于 Pull Request 和代码推送时的自动化检查，确保代码质量。
 
 ### 2. CI/CD Pipeline (ci-cd.yml) - 完整流水线
-包含完整的构建、测试、Docker 镜像构建和部署流程。
+包含完整的构建、测试、Docker 镜像构建和部署流程，支持自动回滚。
+
+### 3. Code Quality Check (code-quality.yml) - 代码质量检查
+执行 API 路径唯一性检查、组件命名规范检查和 console.log 检查。
+
+### 4. Split Services CI/CD (split-services.yml) - 拆分服务 CI/CD
+专门针对 mes/pdm/qms/lims/ehs/bi/report 等拆分服务的独立流水线。
 
 ---
 
@@ -46,11 +52,22 @@
           │                                   │
           │                                   ▼
           │                         ┌─────────────────────┐
+          │                         │ Design System Check │
+          │                         │  (token deviation)  │
+          │                         └─────────┬───────────┘
+          │                                   │
+          │                                   ▼
+          │                         ┌─────────────────────┐
           │                         │  Frontend Tests     │
           │                         │  (vitest + coverage)│
           │                         └─────────┬───────────┘
           │                                   │
           └─────────────────┬─────────────────┘
+                            │
+                            ▼
+                   ┌─────────────────┐
+                   │  Security Scan  │
+                   └────────┬────────┘
                             │
                             ▼
                    ┌─────────────────┐
@@ -64,40 +81,42 @@
 #### 1. Rust Lint (`rust-lint`)
 - **代码格式检查**: `cargo fmt --check --all`
 - **静态分析**: `cargo clippy --workspace --all-targets -- -D warnings`
-- **质量门禁**: Clippy 警告视为错误，阻止合并
 
 #### 2. Rust Tests (`rust-test`)
 - **依赖**: `rust-lint` 通过后执行
 - **服务**: PostgreSQL 16 + Redis 7
 - **测试命令**: `cargo test --workspace --no-fail-fast`
-- **质量门禁**: 测试失败阻止合并
 
 #### 3. Frontend Lint (`frontend-lint`)
 - **Lint 工具**: ESLint
 - **命令**: `pnpm --filter topems-portal lint`
-- **质量门禁**: Lint 错误阻止合并，警告不阻止
 
-#### 4. Frontend Type Check (`frontend-typecheck`)
+#### 4. Design System Check (`design-system-check`)
+- **功能**: 检查设计系统 token 偏差
+- **命令**: `pnpm --filter @topems/tokens build` + 偏差检查脚本
+
+#### 5. Frontend Type Check (`frontend-typecheck`)
 - **工具**: TypeScript
 - **命令**: `pnpm --filter topems-portal typecheck`
-- **质量门禁**: 类型错误阻止合并
 
-#### 5. Frontend Tests (`frontend-test`)
-- **依赖**: `frontend-lint` + `frontend-typecheck` 通过后执行
+#### 6. Frontend Tests (`frontend-test`)
+- **依赖**: `frontend-lint` + `frontend-typecheck` + `design-system-check` 通过后执行
 - **测试框架**: Vitest
 - **命令**: `pnpm --filter topems-portal test:coverage`
-- **代码覆盖率**: 使用 v8 provider，生成 HTML/JSON 报告
-- **覆盖率阈值**:
+- **代码覆盖率阈值**:
   - Statements: 60%
   - Branches: 50%
   - Functions: 60%
   - Lines: 60%
-- **质量门禁**: 测试失败阻止合并
+- **Bundle 大小检查**: 总大小 ≤ 5MB，单个 chunk ≤ 500KB，vendor chunk ≤ 2.5MB
 
-#### 6. Quality Gate (`quality-gate`)
+#### 7. Security Scan (`security-scan`)
+- **依赖审计**: `pnpm audit --prod --audit-level=high`
+- **密钥扫描**: 检查代码中是否包含敏感信息
+
+#### 8. Quality Gate (`quality-gate`)
 - **依赖**: 所有上述 Job
 - **作用**: 汇总所有检查结果，作为最终质量门禁
-- **输出**: 在 GitHub Step Summary 中生成结果表格
 
 ---
 
@@ -142,20 +161,71 @@
 │  └── Upload artifacts                                      │
 └──────────────────┬──────────────────────────────────────────┘
                    │
-         ┌─────────┴─────────┐
-         ▼                   ▼
-┌───────────────┐    ┌───────────────────┐
-│ Docker Build  │    │ Docker Build Split│
-│ (Matrix)      │    │ (mes/pdm/qms/...) │
-└───────┬───────┘    └─────────┬─────────┘
-        │                      │
-        └───────────┬──────────┘
-                    ▼
-         ┌─────────────────┐
-         │  Deploy Jobs    │
-         │  Staging / Prod │
-         └─────────────────┘
+                   ▼
+┌─────────────────────────────────────────────────────────────┐
+│  Job: docker-build (Matrix)                                │
+│  ├── 构建所有服务的 Docker 镜像                             │
+│  ├── 生成 SBOM                                              │
+│  └── 推送到 GHCR/Docker Hub                                 │
+└──────────────────┬──────────────────────────────────────────┘
+                   │
+          ┌────────┴────────┐
+          ▼                 ▼
+┌─────────────────┐ ┌─────────────────┐
+│ Deploy Staging  │ │ Deploy Production│
+│ (自动回滚)      │ │ (自动回滚)      │
+└─────────────────┘ └─────────────────┘
 ```
+
+### 部署特性
+
+#### 自动回滚机制
+- **备份**: 部署前自动备份当前版本到 `*.backup.{TIMESTAMP}`
+- **健康检查**: 部署后检查所有服务端口的 `/health` 端点
+- **自动回滚**: 如果健康检查失败，自动恢复到备份版本
+
+#### 服务列表
+| 服务 | 端口 |
+|------|------|
+| unified-core | 8000 |
+| erp | 8010 |
+| hrm | 8020 |
+| crm | 8029 |
+| pm | 8023 |
+| gis | 8071 |
+| rs | 8053 |
+| scm | 8040 |
+| wms | 8041 |
+| srm | 8042 |
+| mobile | 8070 |
+| monitor | 8062 |
+| portal | 8063 |
+| ai | 8064 |
+| integration | 8072 |
+| mes | 8030 |
+| pdm | 8031 |
+| qms | 8050 |
+| lims | 8051 |
+| ehs | 8052 |
+| bi | 8060 |
+| report | 8061 |
+
+---
+
+## Split Services CI/CD (split-services.yml)
+
+### 触发条件
+
+| 事件类型 | 触发分支 | 路径过滤 |
+|---------|---------|---------|
+| `push` | `main`, `develop` | `svc/mes/**`, `svc/pdm/**`, `svc/qms/**`, `svc/lims/**`, `svc/ehs/**`, `svc/bi/**`, `svc/report/**`, `lib/**` |
+| `pull_request` | `main`, `develop` | 同上 |
+
+### 特性
+- **增量构建**: 仅构建变更的服务
+- **Kubernetes 部署**: 支持 staging 和 production 环境
+- **Slack 通知**: 部署完成后发送通知
+- **手动回滚**: 支持通过 workflow_dispatch 触发回滚
 
 ---
 
@@ -171,11 +241,8 @@
 | 前端 Lint | `ESLint` | Error 级别问题 |
 | 前端类型检查 | `tsc --noEmit` | 任何类型错误 |
 | 前端单元测试 | `vitest` | 任何测试失败 |
-| 测试覆盖率 | `v8 coverage` | 低于阈值（可选） |
-
-### 不阻止合并的条件
-- ESLint Warning 级别问题
-- 测试覆盖率警告（可配置为强制）
+| 测试覆盖率 | `v8 coverage` | 低于阈值 |
+| Bundle 大小 | 构建检查 | 超过阈值 |
 
 ---
 
@@ -183,19 +250,16 @@
 
 ### Rust 缓存
 - 使用 `Swatinem/rust-cache@v2` 缓存依赖和构建产物
-- 按 Job 类型分离缓存（lint / test / build）
-- 显著减少重复构建时间
+- 按 Job 类型分离缓存（lint / test / build / 服务名）
 
 ### pnpm 缓存
 - 使用 `pnpm/action-setup@v4` 管理 pnpm 版本
 - 缓存 pnpm store 目录
 - 使用 `--frozen-lockfile` 确保依赖一致性
-- 基于 `pnpm-lock.yaml` 生成缓存 key
 
 ### 并行执行
-- 后端和前端检查并行执行（Rust Lint || Frontend Lint）
-- Frontend Lint 和 Frontend Type Check 并行执行
-- 减少整体 CI 运行时间
+- Rust 和前端检查并行执行
+- Docker 镜像构建使用 Matrix 并行
 
 ---
 
@@ -203,31 +267,17 @@
 
 ### 后端 Rust
 ```bash
-# 代码格式检查
 cargo fmt --check --all
-
-# Clippy 静态分析
 cargo clippy --workspace --all-targets -- -D warnings
-
-# 运行所有测试
 cargo test --workspace
 ```
 
 ### 前端 TypeScript
 ```bash
-# 安装依赖
 pnpm install
-
-# Lint 检查
 pnpm --filter topems-portal lint
-
-# 类型检查
 pnpm --filter topems-portal typecheck
-
-# 单元测试
 pnpm --filter topems-portal test
-
-# 单元测试（带覆盖率）
 pnpm --filter topems-portal test:coverage
 ```
 
@@ -235,9 +285,7 @@ pnpm --filter topems-portal test:coverage
 
 ## GitHub Secrets 配置
 
-在 GitHub 仓库的 **Settings > Secrets and variables > Actions** 中配置以下 secrets：
-
-### 部署相关（CI/CD Pipeline 需要）
+### 部署相关
 
 | Secret 名称 | 说明 | 必需 |
 |------------|------|------|
@@ -252,12 +300,13 @@ pnpm --filter topems-portal test:coverage
 | `PROD_DOMAIN` | 生产环境域名 | 部署需要 |
 | `DOCKER_USERNAME` | Docker Hub 用户名 | 可选 |
 | `DOCKER_PASSWORD` | Docker Hub 密码 | 可选 |
+| `KUBE_CONFIG_STAGING` | Staging Kubernetes 配置（base64 编码） | K8s 部署需要 |
+| `KUBE_CONFIG_PRODUCTION` | Production Kubernetes 配置（base64 编码） | K8s 部署需要 |
+| `SLACK_WEBHOOK_URL` | Slack 通知 Webhook | 可选 |
 
 ---
 
 ## GitHub Environments 配置
-
-在 GitHub 仓库的 **Settings > Environments** 中创建以下环境：
 
 1. **staging** - 用于预发布测试
 2. **production** - 用于生产环境
@@ -268,19 +317,17 @@ pnpm --filter topems-portal test:coverage
 
 ## Branch Protection 配置
 
-为了确保质量门禁生效，建议配置 Branch Protection Rules：
+为 `main` 和 `develop` 分支添加保护规则：
 
-1. 进入仓库 **Settings > Branches**
-2. 为 `main` 和 `develop` 分支添加保护规则
-3. 启用 **Require status checks to pass before merging**
-4. 添加以下 status checks:
+1. 启用 **Require status checks to pass before merging**
+2. 添加以下 status checks:
    - `Rust Lint`
    - `Rust Tests`
    - `Frontend Lint`
    - `Frontend Type Check`
    - `Frontend Tests`
    - `Quality Gate`
-5. 启用 **Require branches to be up to date before merging**
+3. 启用 **Require branches to be up to date before merging**
 
 ---
 
@@ -290,7 +337,7 @@ pnpm --filter topems-portal test:coverage
 
 1. **Rust 构建失败**
    - 检查 Rust 版本是否正确
-   - 清除缓存后重试（在 Actions 页面手动清除缓存）
+   - 清除缓存后重试
    - 检查 `Cargo.toml` 依赖配置
 
 2. **测试失败**
@@ -301,18 +348,15 @@ pnpm --filter topems-portal test:coverage
 3. **前端依赖安装失败**
    - 检查 `pnpm-lock.yaml` 是否与 `package.json` 同步
    - 本地运行 `pnpm install` 验证
-   - 检查 Node.js 版本是否匹配
 
 4. **Lint 失败**
    - 本地运行 lint 命令查看具体错误
    - 使用 `pnpm lint:fix` 自动修复可修复的问题
-   - 检查 ESLint 配置文件
 
-### 查看日志
-
-- 在 GitHub Actions 页面查看每个 Job 的详细日志
-- 点击具体的 Step 查看输出
-- 使用 **Re-run jobs** 按钮重新运行失败的 Job
+5. **部署失败**
+   - 检查服务器 SSH 密钥配置
+   - 查看部署日志中的错误信息
+   - 自动回滚已触发，服务应已恢复
 
 ---
 
@@ -320,7 +364,8 @@ pnpm --filter topems-portal test:coverage
 
 - `.github/workflows/ci.yml` - CI 工作流配置
 - `.github/workflows/ci-cd.yml` - 完整 CI/CD 流水线
-- `.github/workflows/deploy.yml` - 部署工作流
+- `.github/workflows/code-quality.yml` - 代码质量检查
+- `.github/workflows/split-services.yml` - 拆分服务 CI/CD
 - `apps/web/eslint.config.js` - ESLint 配置
 - `apps/web/vitest.config.ts` - Vitest 测试配置
 - `Cargo.toml` - Rust 工作区配置

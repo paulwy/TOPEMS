@@ -1,6 +1,6 @@
 import { useState, useEffect, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Download, Filter, TrendingUp, TrendingDown, Minus, RefreshCw } from 'lucide-react';
+import { Download, Filter, TrendingUp, TrendingDown, Minus, RefreshCw, Plus } from 'lucide-react';
 import {
   Card,
   CardContent,
@@ -38,7 +38,7 @@ import {
   Legend,
 } from 'recharts';
 import { BIChartColors } from '@/components/charts/chartTheme';
-import { getComparisonResult, runComparison, type ComparisonResult } from '@/api/bi';
+import { getComparisonResult, runComparison, listComparisons, type ComparisonResult, type ComparisonAnalysis } from '@/api/bi';
 
 interface ComparisonRow {
   id: string;
@@ -60,10 +60,30 @@ const BIComparisonPage = () => {
   const [comparisonDimension, setComparisonDimension] = useState<string>('halfYear');
   const [page, setPage] = useState(0);
   const [rowsPerPage, setRowsPerPage] = useState(10);
-  const [currentComparisonId, setCurrentComparisonId] = useState<string>('1');
+  const [currentComparisonId, setCurrentComparisonId] = useState<string | null>(null);
+  const [comparisons, setComparisons] = useState<ComparisonAnalysis[]>([]);
+
+  const loadComparisons = useCallback(async () => {
+    try {
+      const res = await listComparisons();
+      if (res.success && res.data) {
+        setComparisons(res.data.items || []);
+        if (res.data.items && res.data.items.length > 0 && !currentComparisonId) {
+          setCurrentComparisonId(res.data.items[0].id);
+        }
+      }
+    } catch (e: unknown) {
+      console.error('Failed to load comparisons:', e);
+    }
+  }, [currentComparisonId]);
 
   const loadComparisonResult = useCallback(
     async (showRefreshing = false) => {
+      if (!currentComparisonId) {
+        setLoading(false);
+        return;
+      }
+
       if (showRefreshing) setIsRefreshing(true);
       else setLoading(true);
       setError(null);
@@ -81,10 +101,14 @@ const BIComparisonPage = () => {
           }));
           setData(rows);
           setFilteredData(rows);
+        } else {
+          setData([]);
+          setFilteredData([]);
         }
       } catch (e: unknown) {
         console.error('Failed to load comparison data:', e);
-        setError('加载对比分析数据失败，请稍后重试');
+        setData([]);
+        setFilteredData([]);
       } finally {
         setLoading(false);
         setIsRefreshing(false);
@@ -94,10 +118,19 @@ const BIComparisonPage = () => {
   );
 
   useEffect(() => {
+    loadComparisons();
+  }, [loadComparisons]);
+
+  useEffect(() => {
     loadComparisonResult();
   }, [loadComparisonResult]);
 
   const handleRefresh = async () => {
+    if (!currentComparisonId) {
+      setError('请先创建或选择一个对比分析');
+      return;
+    }
+
     setError(null);
     try {
       const res = await runComparison(currentComparisonId);
@@ -207,6 +240,22 @@ const BIComparisonPage = () => {
             {error}
           </Alert>
         )}
+
+        {comparisons.length === 0 && (
+          <Card sx={{ mb: 3 }}>
+            <CardContent>
+              <Box sx={{ textAlign: 'center', py: 8 }}>
+                <Typography variant='h6' sx={{ mb: 2 }}>
+                  暂无对比分析
+                </Typography>
+                <Typography variant='body2' color='textSecondary'>
+                  请先创建对比分析配置
+                </Typography>
+              </Box>
+            </CardContent>
+          </Card>
+        )}
+
         {/* 筛选条件 */}
         <Card sx={{ mb: 3 }}>
           <CardContent>
@@ -220,6 +269,25 @@ const BIComparisonPage = () => {
               </Typography>
             </Box>
             <Box sx={{ display: 'flex', gap: 2, mt: 2 }}>
+              {comparisons.length > 0 && (
+                <FormControl
+                  size='small'
+                  sx={{ minWidth: 200 }}
+                >
+                  <InputLabel>对比分析</InputLabel>
+                  <Select
+                    value={currentComparisonId || ''}
+                    label='对比分析'
+                    onChange={(e) => setCurrentComparisonId(e.target.value)}
+                  >
+                    {comparisons.map((comp) => (
+                      <MenuItem key={comp.id} value={comp.id}>
+                        {comp.name}
+                      </MenuItem>
+                    ))}
+                  </Select>
+                </FormControl>
+              )}
               <FormControl
                 size='small'
                 sx={{ minWidth: 150 }}

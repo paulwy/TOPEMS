@@ -3,6 +3,7 @@
 use axum::{
     extract::Extension,
     extract::Path,
+    extract::Query,
     extract::State,
     routing::{delete, get, post, put},
     Json, Router,
@@ -10,7 +11,11 @@ use axum::{
 use chrono::Datelike;
 use chrono::{DateTime, NaiveDateTime, TimeZone, Utc};
 use serde::{Deserialize, Serialize};
-use sqlx::{types::Uuid, PgPool};
+use sqlx::{
+    types::{BigDecimal, Uuid},
+    PgPool,
+};
+use std::str::FromStr;
 use topems_shared::auth::Claims;
 
 use crate::services::permission::{check_permission, ModulePermission};
@@ -104,6 +109,14 @@ pub struct ListEquipmentResponse {
 fn naive_to_utc(dt: Option<NaiveDateTime>) -> DateTime<Utc> {
     dt.map(|d| Utc.from_utc_datetime(&d))
         .unwrap_or_else(Utc::now)
+}
+
+fn opt_big_decimal_to_f64(bd: Option<BigDecimal>) -> Option<f64> {
+    bd.and_then(|d| d.to_string().parse::<f64>().ok())
+}
+
+fn f64_to_big_decimal(f: Option<f64>) -> Option<BigDecimal> {
+    f.and_then(|v| BigDecimal::from_str(&v.to_string()).ok())
 }
 
 // ==================== Equipment Handlers ====================
@@ -674,15 +687,15 @@ pub async fn list_maintenances(
         .into_iter()
         .map(|r| MaintenanceRecord {
             id: r.id,
-            equipment_id: r.equipment_id,
-            equipment_name: r.equipment_name,
-            equipment_no: r.equipment_no,
-            maintenance_type: r.maintenance_type,
+            equipment_id: r.equipment_id.unwrap_or_default(),
+            equipment_name: Some(r.equipment_name),
+            equipment_no: Some(r.equipment_no),
+            maintenance_type: r.maintenance_type.unwrap_or_default(),
             description: r.description,
-            maintainer: r.maintainer,
+            maintainer: r.maintainer.unwrap_or_default(),
             start_time: naive_to_utc(r.start_time),
             end_time: r.end_time.map(|dt| naive_to_utc(Some(dt))),
-            cost: r.cost,
+            cost: opt_big_decimal_to_f64(r.cost),
             result: r.result,
             status: r.status.unwrap_or_else(|| "pending".to_string()),
             remarks: r.remarks,
@@ -701,7 +714,7 @@ pub async fn list_maintenances(
     .fetch_one(&state.pool)
     .await;
 
-    let total = total_result.unwrap_or(maintenance_records.len() as i64);
+    let total = total_result.unwrap_or_default();
 
     Json(ApiResponse::success(
         serde_json::json!({
@@ -751,9 +764,9 @@ pub async fn create_maintenance(
         req.maintainer,
         start_time.naive_utc(),
         end_time.map(|dt| dt.naive_utc()),
-        req.cost,
+        f64_to_big_decimal(req.cost),
         req.result,
-        req.status.unwrap_or_else(|| "pending".to_string()),
+        req.status.clone().unwrap_or_else(|| "pending".to_string()),
         req.remarks,
         now.naive_utc(),
     )
@@ -808,20 +821,20 @@ pub async fn create_maintenance(
     Json(ApiResponse::success(
         MaintenanceRecord {
             id: result.id,
-            equipment_id: result.equipment_id,
+            equipment_id: result.equipment_id.unwrap_or_default(),
             equipment_name,
             equipment_no,
-            maintenance_type: result.maintenance_type,
+            maintenance_type: result.maintenance_type.unwrap_or_default(),
             description: result.description,
-            maintainer: result.maintainer,
-            start_time: naive_to_utc(Some(result.start_time)),
+            maintainer: result.maintainer.unwrap_or_default(),
+            start_time: naive_to_utc(result.start_time),
             end_time: result.end_time.map(|dt| naive_to_utc(Some(dt))),
-            cost: result.cost,
+            cost: opt_big_decimal_to_f64(result.cost),
             result: result.result,
             status: result.status.unwrap_or_else(|| "pending".to_string()),
             remarks: result.remarks,
-            created_at: naive_to_utc(Some(result.created_at)),
-            updated_at: naive_to_utc(Some(result.updated_at)),
+            created_at: naive_to_utc(result.created_at),
+            updated_at: naive_to_utc(result.updated_at),
         },
         "维护记录创建成功",
     ))
@@ -889,20 +902,20 @@ pub async fn update_maintenance_status(
     Json(ApiResponse::success(
         MaintenanceRecord {
             id: result.id,
-            equipment_id: result.equipment_id,
+            equipment_id: result.equipment_id.unwrap_or_default(),
             equipment_name,
             equipment_no,
-            maintenance_type: result.maintenance_type,
+            maintenance_type: result.maintenance_type.unwrap_or_default(),
             description: result.description,
-            maintainer: result.maintainer,
-            start_time: naive_to_utc(Some(result.start_time)),
+            maintainer: result.maintainer.unwrap_or_default(),
+            start_time: naive_to_utc(result.start_time),
             end_time: result.end_time.map(|dt| naive_to_utc(Some(dt))),
-            cost: result.cost,
+            cost: opt_big_decimal_to_f64(result.cost),
             result: result.result,
             status: result.status.unwrap_or_else(|| "pending".to_string()),
             remarks: result.remarks,
-            created_at: naive_to_utc(Some(result.created_at)),
-            updated_at: naive_to_utc(Some(result.updated_at)),
+            created_at: naive_to_utc(result.created_at),
+            updated_at: naive_to_utc(result.updated_at),
         },
         "维护状态更新成功",
     ))
