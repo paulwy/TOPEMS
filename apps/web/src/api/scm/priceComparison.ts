@@ -14,37 +14,37 @@ export const priceComparisonApi = {
   list: async (
     params?: PriceComparisonQueryParams
   ): Promise<ApiResponse<PaginatedResponse<PriceComparison>>> => {
-    return apiClient.scm.get('/price-comparisons', { params });
+    return apiClient.scm.get('/comparisons', { params });
   },
 
   create: async (data: CreatePriceComparisonRequest): Promise<ApiResponse<PriceComparison>> => {
-    return apiClient.scm.post('/price-comparisons', data);
+    return apiClient.scm.post('/comparisons', data);
   },
 
   get: async (id: string): Promise<ApiResponse<PriceComparison>> => {
-    return apiClient.scm.get(`/price-comparisons/${id}`);
+    return apiClient.scm.get(`/v1/comparisons/${id}`);
   },
 
   update: async (
     id: string,
     data: UpdatePriceComparisonRequest
   ): Promise<ApiResponse<PriceComparison>> => {
-    return apiClient.scm.put(`/price-comparisons/${id}`, data);
+    return apiClient.scm.put(`/v1/comparisons/${id}`, data);
   },
 
   delete: async (id: string): Promise<ApiResponse<string>> => {
-    return apiClient.scm.delete(`/price-comparisons/${id}`);
+    return apiClient.scm.delete(`/v1/comparisons/${id}`);
   },
 
   result: async (id: string): Promise<ApiResponse<PriceComparisonResult>> => {
-    return apiClient.scm.get(`/price-comparisons/${id}/result`);
+    return apiClient.scm.get(`/v1/comparisons/${id}`);
   },
 
   quotes: async (comparisonId: string): Promise<ApiResponse<SupplierQuote[]>> => {
-    return apiClient.scm.get(`/price-comparisons/${comparisonId}/quotes`);
+    return apiClient.scm.get('/quotes', { params: { comparison_id: comparisonId } });
   },
 
   createQuote: async (data: CreateSupplierQuoteRequest): Promise<ApiResponse<SupplierQuote>> => {
-    return apiClient.scm.post('/price-comparisons/quotes', data);
+    return apiClient.scm.post('/quotes', data);
   },
 };

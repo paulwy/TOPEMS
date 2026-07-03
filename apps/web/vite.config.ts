@@ -460,19 +460,19 @@ export default defineConfig({
       '/notification/api/v1': {
         target: 'http://localhost:8000',
         changeOrigin: true,
-        rewrite: (path: string) => path.replace(/^\/notification\/api\/v1/, '/api/core/comm/notify/v1'),
+        rewrite: (path: string) => path.replace(/^\/notification\/api\/v1/, '/api/v1'),
         configure: createProxyLogger('notification', 'http://localhost:8000'),
       },
       '/notification/v1': {
         target: 'http://localhost:8000',
         changeOrigin: true,
-        rewrite: (path: string) => path.replace(/^\/notification\/v1/, '/api/core/comm/notify/v1'),
+        rewrite: (path: string) => path.replace(/^\/notification\/v1/, '/api/v1'),
         configure: createProxyLogger('notification', 'http://localhost:8000'),
       },
       '/notification': createPageSafeProxy({
         target: 'http://localhost:8000',
         changeOrigin: true,
-        rewrite: (path: string) => path.replace(/^\/notification(\/.*)$/, '/api/core/comm/notify$1'),
+        rewrite: (path: string) => path.replace(/^\/notification(\/.*)$/, '/api$1'),
         configure: createProxyLogger('notification', 'http://localhost:8000'),
       }),
       '/im': createPageSafeProxy({
@@ -486,6 +486,18 @@ export default defineConfig({
         target: 'http://localhost:8000', 
         changeOrigin: true,
         configure: createProxyLogger('health', 'http://localhost:8000'),
+      },
+
+      '/api/finance': {
+        target: 'http://localhost:8010',
+        changeOrigin: true,
+        configure: createProxyLogger('erp-finance', 'http://localhost:8010'),
+      },
+
+      '/api/erp': {
+        target: 'http://localhost:8010',
+        changeOrigin: true,
+        configure: createProxyLogger('erp-api', 'http://localhost:8010'),
       },
 
       '/erp/api': createServiceProxyConfig('erp', 'http://localhost:8010'),
@@ -526,42 +538,207 @@ export default defineConfig({
 
       '/pm/api': createServiceProxyConfig('pm', 'http://localhost:8023'),
       '/pm/health': createHealthProxyConfig('pm', 'http://localhost:8023'),
+      '/pm/': {
+        target: 'http://localhost:8023',
+        changeOrigin: true,
+        rewrite: (path: string) => path.replace(/^\/pm/, '/api/pm'),
+        configure: createProxyLogger('pm', 'http://localhost:8023'),
+      },
       '/crm/api': createServiceProxyConfig('crm', 'http://localhost:8029'),
       '/crm/health': createHealthProxyConfig('crm', 'http://localhost:8029'),
-
-      '/mes': createPageSafeProxy({
-        target: 'http://localhost:8030',
+      '/crm/opportunities': {
+        target: 'http://localhost:8029',
         changeOrigin: true,
-        rewrite: (path: string) => path.replace(/^\/mes/, ''),
-      }),
+        rewrite: (path: string) => '/api' + path,
+        configure: createProxyLogger('crm-opportunities', 'http://localhost:8029'),
+      },
+      '/crm/customers': {
+        target: 'http://localhost:8029',
+        changeOrigin: true,
+        rewrite: (path: string) => '/api' + path,
+        configure: createProxyLogger('crm-customers', 'http://localhost:8029'),
+      },
+      '/crm/contacts': {
+        target: 'http://localhost:8029',
+        changeOrigin: true,
+        rewrite: (path: string) => '/api' + path,
+        configure: createProxyLogger('crm-contacts', 'http://localhost:8029'),
+      },
+      '/crm/sales-funnel': {
+        target: 'http://localhost:8029',
+        changeOrigin: true,
+        rewrite: (path: string) => '/api' + path,
+        configure: createProxyLogger('crm-sales-funnel', 'http://localhost:8029'),
+      },
+
       '/mes/api': createServiceProxyConfig('mes', 'http://localhost:8030'),
       '/mes/health': createHealthProxyConfig('mes', 'http://localhost:8030'),
-
-      '/pdm': createPageSafeProxy({
-        target: 'http://localhost:8031',
+      '/mes/ws': {
+        target: 'http://localhost:8030',
         changeOrigin: true,
-        rewrite: (path: string) => path.replace(/^\/pdm/, ''),
-      }),
+        ws: true,
+        rewrite: (path: string) => path.replace(/^\/mes/, '/api/mes'),
+        configure: createProxyLogger('mes-ws', 'http://localhost:8030'),
+      },
+      '/mes/': {
+        target: 'http://localhost:8030',
+        changeOrigin: true,
+        rewrite: (path: string) => path.replace(/^\/mes/, '/api/mes'),
+        configure: createProxyLogger('mes', 'http://localhost:8030'),
+      },
+
       '/pdm/api': createServiceProxyConfig('pdm', 'http://localhost:8031'),
       '/pdm/health': createHealthProxyConfig('pdm', 'http://localhost:8031'),
+      '/pdm/': createPageSafeProxy({
+        target: 'http://localhost:8031',
+        changeOrigin: true,
+        rewrite: (path: string) => path.replace(/^\/pdm/, '/api/pdm'),
+        configure: createProxyLogger('pdm', 'http://localhost:8031'),
+      }),
 
       '/scm/api': createServiceProxyConfig('scm', 'http://localhost:8040'),
       '/scm/health': createHealthProxyConfig('scm', 'http://localhost:8040'),
-      '/scm/': {
+      '/scm/sync-records': {
         target: 'http://localhost:8040',
         changeOrigin: true,
-        rewrite: (path: string) => path.replace(/^\/scm/, '/api/scm'),
-        configure: createProxyLogger('scm', 'http://localhost:8040'),
+        rewrite: (path: string) => '/api' + path,
+        configure: createProxyLogger('scm-sync-records', 'http://localhost:8040'),
+      },
+      '/scm/sync/': {
+        target: 'http://localhost:8040',
+        changeOrigin: true,
+        rewrite: (path: string) => '/api' + path,
+        configure: createProxyLogger('scm-sync', 'http://localhost:8040'),
+      },
+      '/scm/evaluations': {
+        target: 'http://localhost:8040',
+        changeOrigin: true,
+        rewrite: (path: string) => '/api' + path,
+        configure: createProxyLogger('scm-evaluations', 'http://localhost:8040'),
+      },
+      '/scm/purchase-requisitions': {
+        target: 'http://localhost:8040',
+        changeOrigin: true,
+        rewrite: (path: string) => '/api' + path,
+        configure: createProxyLogger('scm-purchase-requisitions', 'http://localhost:8040'),
+      },
+      '/scm/price-comparisons': {
+        target: 'http://localhost:8040',
+        changeOrigin: true,
+        rewrite: (path: string) => '/api' + path,
+        configure: createProxyLogger('scm-price-comparisons', 'http://localhost:8040'),
+      },
+      '/scm/comparisons': {
+        target: 'http://localhost:8040',
+        changeOrigin: true,
+        rewrite: (path: string) => '/api' + path,
+        configure: createProxyLogger('scm-comparisons', 'http://localhost:8040'),
+      },
+      '/scm/quotes': {
+        target: 'http://localhost:8040',
+        changeOrigin: true,
+        rewrite: (path: string) => '/api' + path,
+        configure: createProxyLogger('scm-quotes', 'http://localhost:8040'),
+      },
+      '/scm/inquiries': {
+        target: 'http://localhost:8040',
+        changeOrigin: true,
+        rewrite: (path: string) => '/api' + path,
+        configure: createProxyLogger('scm-inquiries', 'http://localhost:8040'),
+      },
+      '/scm/incoming-inspections': {
+        target: 'http://localhost:8040',
+        changeOrigin: true,
+        rewrite: (path: string) => '/api' + path,
+        configure: createProxyLogger('scm-incoming-inspections', 'http://localhost:8040'),
+      },
+      '/scm/inspection-records': {
+        target: 'http://localhost:8040',
+        changeOrigin: true,
+        rewrite: (path: string) => '/api' + path,
+        configure: createProxyLogger('scm-inspection-records', 'http://localhost:8040'),
+      },
+      '/scm/delivery-appointments': {
+        target: 'http://localhost:8040',
+        changeOrigin: true,
+        rewrite: (path: string) => '/api' + path,
+        configure: createProxyLogger('scm-delivery-appointments', 'http://localhost:8040'),
+      },
+      '/scm/audit-logs': {
+        target: 'http://localhost:8040',
+        changeOrigin: true,
+        rewrite: (path: string) => '/api' + path,
+        configure: createProxyLogger('scm-audit-logs', 'http://localhost:8040'),
+      },
+      '/scm/dashboard/': {
+        target: 'http://localhost:8040',
+        changeOrigin: true,
+        rewrite: (path: string) => '/api' + path,
+        configure: createProxyLogger('scm-dashboard', 'http://localhost:8040'),
+      },
+      '/scm/mrp/': {
+        target: 'http://localhost:8040',
+        changeOrigin: true,
+        rewrite: (path: string) => '/api' + path,
+        configure: createProxyLogger('scm-mrp', 'http://localhost:8040'),
+      },
+      '/scm/purchase-items': {
+        target: 'http://localhost:8040',
+        changeOrigin: true,
+        rewrite: (path: string) => '/api' + path,
+        configure: createProxyLogger('scm-purchase-items', 'http://localhost:8040'),
+      },
+      '/scm/purchase-contracts': {
+        target: 'http://localhost:8040',
+        changeOrigin: true,
+        rewrite: (path: string) => '/api' + path,
+        configure: createProxyLogger('scm-purchase-contracts', 'http://localhost:8040'),
+      },
+      '/scm/mrp-suggestions': {
+        target: 'http://localhost:8040',
+        changeOrigin: true,
+        rewrite: (path: string) => '/api' + path,
+        configure: createProxyLogger('scm-mrp-suggestions', 'http://localhost:8040'),
+      },
+      '/scm/purchase-orders': {
+        target: 'http://localhost:8040',
+        changeOrigin: true,
+        rewrite: (path: string) => '/api' + path,
+        configure: createProxyLogger('scm-purchase-orders', 'http://localhost:8040'),
+      },
+      '/scm/inventory-turnover': {
+        target: 'http://localhost:8040',
+        changeOrigin: true,
+        rewrite: (path: string) => '/api' + path,
+        configure: createProxyLogger('scm-inventory-turnover', 'http://localhost:8040'),
+      },
+      '/scm/suppliers': {
+        target: 'http://localhost:8040',
+        changeOrigin: true,
+        rewrite: (path: string) => '/api' + path,
+        configure: createProxyLogger('scm-suppliers', 'http://localhost:8040'),
+      },
+      '/scm/supplier-admissions': {
+        target: 'http://localhost:8040',
+        changeOrigin: true,
+        rewrite: (path: string) => '/api' + path,
+        configure: createProxyLogger('scm-supplier-admissions', 'http://localhost:8040'),
+      },
+      '/scm/v1/': {
+        target: 'http://localhost:8040',
+        changeOrigin: true,
+        rewrite: (path: string) => '/api' + path,
+        configure: createProxyLogger('scm-v1', 'http://localhost:8040'),
       },
 
       '/wms/api': createServiceProxyConfig('wms', 'http://localhost:8041'),
       '/wms/health': createHealthProxyConfig('wms', 'http://localhost:8041'),
-      '/wms/': {
+      '/wms/': createPageSafeProxy({
         target: 'http://localhost:8041',
         changeOrigin: true,
         rewrite: (path: string) => path.replace(/^\/wms/, '/api/wms'),
         configure: createProxyLogger('wms', 'http://localhost:8041'),
-      },
+      }),
 
       '/srm/api': createServiceProxyConfig('srm', 'http://localhost:8042'),
       '/srm/health': createHealthProxyConfig('srm', 'http://localhost:8042'),

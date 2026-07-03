@@ -1,4 +1,4 @@
-import { apiClient } from '../client';
+import axios from 'axios';
 import type {
   Account,
   AccountBalance,
@@ -8,7 +8,24 @@ import type {
 } from '../../types/finance';
 
 const createApiClient = () => {
-  return apiClient.erp;
+  const client = axios.create({
+    baseURL: '/api',
+    timeout: 60000,
+    headers: {
+      'Content-Type': 'application/json',
+      Accept: 'application/json',
+    },
+  });
+
+  client.interceptors.request.use((config) => {
+    const token = localStorage.getItem('token');
+    if (token) {
+      config.headers['Authorization'] = `Bearer ${token}`;
+    }
+    return config;
+  });
+
+  return client;
 };
 
 export const accountApi = {
@@ -71,8 +88,10 @@ export const accountApi = {
     period: string;
     account_ids?: string[];
     company_id?: string;
-  }): Promise<ApiResponse<AccountOpeningBalance[]>> => {
-    return createApiClient().get('/finance/accounts/opening-balances', {
+    page?: number;
+    pagesize?: number;
+  }): Promise<ApiResponse<PaginatedResult<AccountOpeningBalance>>> => {
+    return createApiClient().get('/erp/finance/accounts/opening-balances', {
       params,
     });
   },
@@ -81,7 +100,7 @@ export const accountApi = {
     accountId: string,
     data: Partial<AccountOpeningBalance>
   ): Promise<ApiResponse<AccountOpeningBalance>> => {
-    return createApiClient().post(`/finance/accounts/${accountId}/opening-balance`, data);
+    return createApiClient().post(`/erp/finance/accounts/${accountId}/opening-balance`, data);
   },
 
   carryForwardOpeningBalance: (params: {
@@ -89,7 +108,7 @@ export const accountApi = {
     to_period: string;
     company_id?: string;
   }): Promise<ApiResponse<void>> => {
-    return createApiClient().post('/finance/accounts/opening-balance/carry-forward', params);
+    return createApiClient().post('/erp/finance/accounts/opening-balances/carry-forward', params);
   },
 };
 

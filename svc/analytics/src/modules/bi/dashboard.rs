@@ -454,7 +454,7 @@ pub async fn list_dashboard_templates(State(state): State<AppState>) -> Json<ser
             layout: row.layout.unwrap_or(serde_json::json!({})),
             preview_image: row.preview_image,
             category: row.category,
-            tags: row.tags,
+            tags: row.tags.and_then(|v| serde_json::from_value(v).ok()),
             is_active: row.is_active.unwrap_or(true),
             created_at: row.created_at.map(|t| t.to_string()).unwrap_or_default(),
             updated_at: row.updated_at.map(|t| t.to_string()).unwrap_or_default(),
@@ -493,7 +493,7 @@ pub async fn create_dashboard_template(
         req.layout,
         req.preview_image,
         req.category,
-        req.tags.as_deref(),
+        req.tags.as_ref().and_then(|v| serde_json::to_value(v).ok()),
         true,
         now,
         now,
@@ -512,7 +512,7 @@ pub async fn create_dashboard_template(
                 layout: row.layout.unwrap_or(serde_json::json!({})),
                 preview_image: row.preview_image,
                 category: row.category,
-                tags: row.tags,
+                tags: row.tags.and_then(|v| serde_json::from_value(v).ok()),
                 is_active: row.is_active.unwrap_or(true),
                 created_at: row.created_at.map(|t| t.to_string()).unwrap_or_default(),
                 updated_at: row.updated_at.map(|t| t.to_string()).unwrap_or_default(),
@@ -562,7 +562,7 @@ pub async fn get_dashboard_template(
                 layout: row.layout.unwrap_or(serde_json::json!({})),
                 preview_image: row.preview_image,
                 category: row.category,
-                tags: row.tags,
+                tags: row.tags.and_then(|v| serde_json::from_value(v).ok()),
                 is_active: row.is_active.unwrap_or(true),
                 created_at: row.created_at.map(|t| t.to_string()).unwrap_or_default(),
                 updated_at: row.updated_at.map(|t| t.to_string()).unwrap_or_default(),
@@ -603,7 +603,7 @@ pub async fn update_dashboard_template(
         req.layout,
         req.preview_image,
         req.category,
-        req.tags.as_deref(),
+        req.tags.as_ref().and_then(|v| serde_json::to_value(v).ok()),
         req.is_active,
         now,
         id,
@@ -622,7 +622,7 @@ pub async fn update_dashboard_template(
                 layout: row.layout.unwrap_or(serde_json::json!({})),
                 preview_image: row.preview_image,
                 category: row.category,
-                tags: row.tags,
+                tags: row.tags.and_then(|v| serde_json::from_value(v).ok()),
                 is_active: row.is_active.unwrap_or(true),
                 created_at: row.created_at.map(|t| t.to_string()).unwrap_or_default(),
                 updated_at: row.updated_at.map(|t| t.to_string()).unwrap_or_default(),
@@ -1155,7 +1155,7 @@ pub async fn export_dashboard_pdf(
         "BT /F1 12 Tf 100 720 Td (ID: {}) Tj ET\n",
         dashboard.id
     ));
-    if let Some(ref desc) = dashboard.description {
+    if let Some(desc) = &dashboard.description {
         page_content.push_str(&format!(
             "BT /F1 12 Tf 100 700 Td (Description: {}) Tj ET\n",
             escape_pdf_string(desc)

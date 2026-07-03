@@ -11,9 +11,12 @@ pub mod mrp;
 pub mod openapi;
 pub mod plugin;
 pub mod price_comparison;
+pub mod purchase_contract;
 pub mod purchase_item;
 pub mod purchase_order;
+pub mod purchase_requisition;
 pub mod supplier;
+pub mod supplier_admission;
 pub mod supplier_delivery_appointment;
 pub mod supplier_evaluation;
 pub mod supply_chain_dashboard;
@@ -46,8 +49,11 @@ impl FromRef<ApiState> for Option<Arc<RedisCacheService>> {
 pub fn create_routes() -> Router<ApiState> {
     Router::new()
         .merge(supplier::create_routes())
+        .merge(supplier_admission::create_routes())
+        .merge(purchase_contract::create_routes())
         .merge(purchase_order::create_routes())
         .merge(purchase_item::create_routes())
+        .merge(purchase_requisition::create_routes())
         .merge(supplier_evaluation::create_routes())
         .merge(supplier_delivery_appointment::create_routes())
         .merge(price_comparison::create_routes())

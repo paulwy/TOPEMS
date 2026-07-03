@@ -10,26 +10,26 @@ import type {
 
 export const mrpPlanApi = {
   list: async (params?: MrpPlanQueryParams): Promise<ApiResponse<PaginatedResponse<MrpPlan>>> => {
-    return apiClient.scm.get('/mrp-plans', { params });
+    return apiClient.scm.get('/mrp/suggestions', { params });
   },
 
   create: async (data: CreateMrpPlanRequest): Promise<ApiResponse<MrpPlan>> => {
-    return apiClient.scm.post('/mrp-plans', data);
+    return apiClient.scm.post('/mrp/suggestions', data);
   },
 
   get: async (id: string): Promise<ApiResponse<MrpPlan>> => {
-    return apiClient.scm.get(`/mrp-plans/${id}`);
+    return apiClient.scm.get(`/mrp/suggestions/${id}`);
   },
 
   update: async (id: string, data: UpdateMrpPlanRequest): Promise<ApiResponse<MrpPlan>> => {
-    return apiClient.scm.put(`/mrp-plans/${id}`, data);
+    return apiClient.scm.put(`/mrp/suggestions/${id}`, data);
   },
 
   delete: async (id: string): Promise<ApiResponse<string>> => {
-    return apiClient.scm.delete(`/mrp-plans/${id}`);
+    return apiClient.scm.delete(`/mrp/suggestions/${id}`);
   },
 
   calculate: async (id: string): Promise<ApiResponse<MrpCalculationResult>> => {
-    return apiClient.scm.post(`/mrp-calculations/${id}`);
+    return apiClient.scm.post(`/mrp/suggestions/${id}/confirm`);
   },
 };

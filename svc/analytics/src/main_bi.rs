@@ -130,6 +130,10 @@ async fn main() {
             post(modules::bi::dashboard::create_dashboard),
         )
         .route(
+            "/api/bi/dashboard/template",
+            get(modules::bi::dashboard::list_dashboard_templates),
+        )
+        .route(
             "/api/bi/dashboard/{id}",
             get(modules::bi::dashboard::get_dashboard),
         )
@@ -174,6 +178,11 @@ async fn main() {
             "/api/bi/datasource/{id}",
             put(modules::bi::datasource::update_datasource),
         )
+        // Data Sources alias (plural)
+        .route(
+            "/api/bi/data-sources",
+            get(modules::bi::datasource::list_datasources),
+        )
         // Visualization
         .route(
             "/api/bi/visualization",
@@ -204,6 +213,35 @@ async fn main() {
             "/api/bi/analysis/{id}/execute",
             post(modules::bi::analysis::execute_analysis),
         )
+        // Comparison Analysis
+        .route(
+            "/api/bi/comparison-analysis",
+            get(modules::bi::comparison_analysis::list_comparisons),
+        )
+        .route(
+            "/api/bi/comparison-analysis",
+            post(modules::bi::comparison_analysis::create_comparison),
+        )
+        .route(
+            "/api/bi/comparison-analysis/{id}",
+            get(modules::bi::comparison_analysis::get_comparison),
+        )
+        .route(
+            "/api/bi/comparison-analysis/{id}",
+            put(modules::bi::comparison_analysis::update_comparison),
+        )
+        .route(
+            "/api/bi/comparison-analysis/{id}",
+            delete(modules::bi::comparison_analysis::delete_comparison),
+        )
+        .route(
+            "/api/bi/comparison-analysis/{id}/run",
+            post(modules::bi::comparison_analysis::run_comparison),
+        )
+        .route(
+            "/api/bi/comparison-analysis/{id}/result",
+            get(modules::bi::comparison_analysis::get_comparison_result),
+        )
         // Analytics Summary
         .route(
             "/api/bi/analytics/summary",
@@ -228,6 +266,35 @@ async fn main() {
         .route(
             "/api/bi/analytics/overview",
             get(modules::bi::analytics::get_analytics_overview),
+        )
+        .route(
+            "/api/bi/analytics/report",
+            get(modules::bi::analytics::get_analytics_report),
+        )
+        // Module summary endpoints
+        .route(
+            "/api/bi/rs/summary",
+            get(modules::bi::analytics::get_development_analytics),
+        )
+        .route(
+            "/api/bi/qms/summary",
+            get(modules::bi::analytics::get_quality_analytics),
+        )
+        .route(
+            "/api/bi/pdm/summary",
+            get(modules::bi::analytics::get_production_analytics),
+        )
+        .route(
+            "/api/bi/lims/summary",
+            get(modules::bi::analytics::get_laboratory_analytics),
+        )
+        .route(
+            "/api/bi/srm/summary",
+            get(modules::bi::analytics::get_srm_analytics),
+        )
+        .route(
+            "/api/bi/ehs/summary",
+            get(modules::bi::analytics::get_ehs_analytics),
         )
         .layer(axum::middleware::from_fn_with_state(
             state.auth_state.clone(),

@@ -6,7 +6,7 @@ authors.workspace = true
 description = "TOPEMS-MES 生产执行系统"
 
 [dependencies]
-axum.workspace = true
+axum = { workspace = true, features = ["ws"] }
 tokio.workspace = true
 serde.workspace = true
 serde_json.workspace = true
@@ -24,6 +24,8 @@ prometheus.workspace = true
 anyhow.workspace = true
 reqwest.workspace = true
 rand.workspace = true
+lazy_static.workspace = true
+futures-util.workspace = true
 
 [dev-dependencies]
 tower = "0.5"

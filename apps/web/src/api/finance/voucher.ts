@@ -1,4 +1,5 @@
-import { apiClient, downloadBlob } from '../client';
+import axios from 'axios';
+import { downloadBlob } from '../client';
 import type {
   Voucher,
   CreateVoucherRequest,
@@ -9,10 +10,26 @@ import type {
   ApiResponse,
   BatchOperationResult,
 } from '../../types/finance';
-import config from '../../config/runtime';
 
 const createApiClient = () => {
-  return apiClient.erp;
+  const client = axios.create({
+    baseURL: '/api',
+    timeout: 60000,
+    headers: {
+      'Content-Type': 'application/json',
+      Accept: 'application/json',
+    },
+  });
+
+  client.interceptors.request.use((config) => {
+    const token = localStorage.getItem('token');
+    if (token) {
+      config.headers['Authorization'] = `Bearer ${token}`;
+    }
+    return config;
+  });
+
+  return client;
 };
 
 export const voucherApi = {
@@ -125,8 +142,7 @@ export const voucherApi = {
   },
 
   export: async (params: VoucherQueryParams): Promise<Blob> => {
-    const baseURL = (apiClient.erp as any).defaults?.baseURL || config.services.erp;
-    return downloadBlob(baseURL, '/finance/vouchers/export', {
+    return downloadBlob('/api', '/finance/vouchers/export', {
       params: params as unknown as Record<string, unknown>,
     });
   },

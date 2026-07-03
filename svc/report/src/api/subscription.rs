@@ -333,7 +333,7 @@ pub async fn toggle_subscription(
 
     match result {
         Ok(Some(row)) => {
-            let enabled = row.enabled.unwrap_or(true);
+            let enabled = row.enabled;
             Json(serde_json::json!({
                 "success": true,
                 "message": format!("Subscription {}d", if enabled { "enable" } else { "disable" }),

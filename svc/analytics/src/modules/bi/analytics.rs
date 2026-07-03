@@ -218,3 +218,141 @@ pub async fn get_analytics_overview() -> Json<Value> {
         "message": "获取分析概览成功"
     }))
 }
+
+/// Get analytics report
+pub async fn get_analytics_report() -> Json<Value> {
+    Json(serde_json::json!({
+        "code": 0,
+        "success": true,
+        "data": {
+            "items": [
+                {
+                    "id": "1",
+                    "name": "研发项目进度报告",
+                    "category": "development",
+                    "type": "project",
+                    "status": "generated",
+                    "generated_at": "2026-07-03T10:30:00Z",
+                    "period": "weekly",
+                    "description": "本周研发项目进度汇总报告"
+                },
+                {
+                    "id": "2",
+                    "name": "质量检测周报",
+                    "category": "quality",
+                    "type": "inspection",
+                    "status": "generated",
+                    "generated_at": "2026-07-03T09:00:00Z",
+                    "period": "weekly",
+                    "description": "本周质量检测数据分析报告"
+                },
+                {
+                    "id": "3",
+                    "name": "生产效率月报",
+                    "category": "production",
+                    "type": "production",
+                    "status": "generating",
+                    "generated_at": "2026-07-01T00:00:00Z",
+                    "period": "monthly",
+                    "description": "本月生产效率分析报告"
+                },
+                {
+                    "id": "4",
+                    "name": "实验室测试统计",
+                    "category": "laboratory",
+                    "type": "laboratory",
+                    "status": "generated",
+                    "generated_at": "2026-07-02T16:00:00Z",
+                    "period": "daily",
+                    "description": "今日实验室测试统计报告"
+                },
+                {
+                    "id": "5",
+                    "name": "供应商绩效评估",
+                    "category": "srm",
+                    "type": "supplier",
+                    "status": "generated",
+                    "generated_at": "2026-06-30T17:00:00Z",
+                    "period": "monthly",
+                    "description": "本月供应商绩效评估报告"
+                },
+                {
+                    "id": "6",
+                    "name": "EHS安全周报",
+                    "category": "ehs",
+                    "type": "safety",
+                    "status": "generated",
+                    "generated_at": "2026-07-03T11:00:00Z",
+                    "period": "weekly",
+                    "description": "本周环境健康安全报告"
+                }
+            ],
+            "total": 6,
+            "page": 1,
+            "pageSize": 20
+        },
+        "message": "获取分析报告列表成功"
+    }))
+}
+
+/// Get SRM analytics (供应商管理)
+pub async fn get_srm_analytics() -> Json<Value> {
+    Json(serde_json::json!({
+        "code": 0,
+        "success": true,
+        "data": {
+            "total_suppliers": 156,
+            "active_suppliers": 138,
+            "new_suppliers": 12,
+            "supplier_rating_distribution": {
+                "excellent": 45,
+                "good": 78,
+                "medium": 28,
+                "poor": 5
+            },
+            "delivery_on_time_rate": 94.2,
+            "quality_compliance_rate": 97.5,
+            "monthly_new_suppliers": [
+                {"month": "2026-01", "count": 3},
+                {"month": "2026-02", "count": 5},
+                {"month": "2026-03", "count": 2},
+                {"month": "2026-04", "count": 4},
+                {"month": "2026-05", "count": 6},
+                {"month": "2026-06", "count": 3}
+            ],
+            "generated_at": Utc::now().to_rfc3339()
+        },
+        "message": "获取供应商管理分析数据成功"
+    }))
+}
+
+/// Get EHS analytics (环境健康安全)
+pub async fn get_ehs_analytics() -> Json<Value> {
+    Json(serde_json::json!({
+        "code": 0,
+        "success": true,
+        "data": {
+            "total_incidents": 24,
+            "safety_accidents": 8,
+            "environmental_incidents": 6,
+            "health_issues": 10,
+            "safety_compliance_rate": 98.5,
+            "training_completion_rate": 96.2,
+            "incident_trend": [
+                {"month": "2026-01", "count": 5},
+                {"month": "2026-02", "count": 4},
+                {"month": "2026-03", "count": 3},
+                {"month": "2026-04", "count": 6},
+                {"month": "2026-05", "count": 4},
+                {"month": "2026-06", "count": 2}
+            ],
+            "risk_level_distribution": {
+                "high": 3,
+                "medium": 12,
+                "low": 45
+            },
+            "generated_at": Utc::now().to_rfc3339()
+        },
+        "message": "获取环境健康安全分析数据成功"
+    }))
+}

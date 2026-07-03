@@ -90,6 +90,16 @@ where
         .route("/api/wms/alerts/statistics", get(get_alert_statistics))
         .route("/api/wms/alerts/summary", get(get_alert_summary))
         .route("/api/wms/alerts/by-warehouse", get(get_alerts_by_warehouse))
+        .route("/api/wms/inventory-alerts", get(list_alerts))
+        .route(
+            "/api/wms/inventory-alerts/statistics",
+            get(get_alert_statistics),
+        )
+        .route("/api/wms/inventory-alerts/{id}", get(get_alert))
+        .route(
+            "/api/wms/inventory-alerts/{id}/acknowledge",
+            post(acknowledge_alert),
+        )
 }
 
 /// 获取库存预警列表

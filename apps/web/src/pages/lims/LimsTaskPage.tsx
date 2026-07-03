@@ -86,14 +86,13 @@ const LimsTaskPage: React.FC = () => {
 
   const checkServiceStatus = async (
     serviceName: string,
-    port: number,
     setStatus: (up: boolean) => void
   ) => {
     try {
       const controller = new AbortController();
       const timeoutId = setTimeout(() => controller.abort(), 2000);
 
-      const response = await fetch(`http://localhost:${port}/health`, {
+      const response = await fetch(`/${serviceName}/health`, {
         signal: controller.signal,
         method: 'GET',
       });
@@ -106,7 +105,7 @@ const LimsTaskPage: React.FC = () => {
 
   useEffect(() => {
     const checkAllServices = () => {
-      checkServiceStatus('lims', 8022, (up) =>
+      checkServiceStatus('lims', (up) =>
         setServiceStatuses((prev) => ({ ...prev, lims: up }))
       );
     };

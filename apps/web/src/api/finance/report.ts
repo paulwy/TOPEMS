@@ -1,4 +1,5 @@
-import { apiClient, downloadBlob } from '../client';
+import axios from 'axios';
+import { downloadBlob } from '../client';
 import type {
   BalanceSheet,
   IncomeStatement,
@@ -8,10 +9,26 @@ import type {
   PaginatedResult,
   ApiResponse,
 } from '../../types/finance';
-import config from '../../config/runtime';
 
 const createApiClient = () => {
-  return apiClient.erp;
+  const client = axios.create({
+    baseURL: '/api',
+    timeout: 60000,
+    headers: {
+      'Content-Type': 'application/json',
+      Accept: 'application/json',
+    },
+  });
+
+  client.interceptors.request.use((config) => {
+    const token = localStorage.getItem('token');
+    if (token) {
+      config.headers['Authorization'] = `Bearer ${token}`;
+    }
+    return config;
+  });
+
+  return client;
 };
 
 export const reportApi = {
@@ -90,22 +107,19 @@ export const reportApi = {
   },
 
   exportBalanceSheet: async (params: ReportQueryParams): Promise<Blob> => {
-    const baseURL = (apiClient.erp as any).defaults?.baseURL || config.services.erp;
-    return downloadBlob(baseURL, '/finance/reports/balance-sheet/export', {
+    return downloadBlob('/api', '/finance/reports/balance-sheet/export', {
       params: params as unknown as Record<string, unknown>,
     });
   },
 
   exportIncomeStatement: async (params: ReportQueryParams): Promise<Blob> => {
-    const baseURL = (apiClient.erp as any).defaults?.baseURL || config.services.erp;
-    return downloadBlob(baseURL, '/finance/reports/income-statement/export', {
+    return downloadBlob('/api', '/finance/reports/income-statement/export', {
       params: params as unknown as Record<string, unknown>,
     });
   },
 
   exportCashFlowStatement: async (params: ReportQueryParams): Promise<Blob> => {
-    const baseURL = (apiClient.erp as any).defaults?.baseURL || config.services.erp;
-    return downloadBlob(baseURL, '/finance/reports/cash-flow/export', {
+    return downloadBlob('/api', '/finance/reports/cash-flow/export', {
       params: params as unknown as Record<string, unknown>,
     });
   },

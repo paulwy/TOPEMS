@@ -101,6 +101,10 @@ async fn main() {
         .route(
             "/metrics",
             get(move || async move { metric_handle.render() }),
+        )
+        .route(
+            "/api/mes/ws/dashboard",
+            axum::routing::get(api::dashboard_ws::dashboard_websocket),
         );
 
     // Protected routes (auth required)

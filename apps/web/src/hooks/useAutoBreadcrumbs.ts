@@ -168,11 +168,13 @@ function findBestPathMatch(
             ? dynamicTitleResolver(paramName, paramValue) || item.label
             : item.label;
 
+        const actualPath = isDynamic ? path : itemPath;
+
         const newBreadcrumbs = [
           ...breadcrumbs,
           {
             label,
-            href: isDynamic ? undefined : itemPath,
+            href: actualPath,
             isDynamic,
             paramName,
             paramValue,

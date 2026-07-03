@@ -1,8 +1,25 @@
-import { apiClient } from '../client';
+import axios from 'axios';
 import type { VoucherTemplate, Voucher, PaginatedResult, ApiResponse } from '../../types/finance';
 
 const createApiClient = () => {
-  return apiClient.erp;
+  const client = axios.create({
+    baseURL: '/api',
+    timeout: 60000,
+    headers: {
+      'Content-Type': 'application/json',
+      Accept: 'application/json',
+    },
+  });
+
+  client.interceptors.request.use((config) => {
+    const token = localStorage.getItem('token');
+    if (token) {
+      config.headers['Authorization'] = `Bearer ${token}`;
+    }
+    return config;
+  });
+
+  return client;
 };
 
 export const voucherTemplateApi = {

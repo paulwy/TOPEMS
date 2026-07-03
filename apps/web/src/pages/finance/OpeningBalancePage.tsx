@@ -130,7 +130,7 @@ export default function OpeningBalancePage() {
       });
       return result;
     };
-    if (accountTreeData?.data) {
+    if (accountTreeData?.data && Array.isArray(accountTreeData.data)) {
       setAllAccounts(flattenTree(accountTreeData.data));
     }
   }, [accountTreeData]);
@@ -138,7 +138,7 @@ export default function OpeningBalancePage() {
   // 将期初余额数据转换为map便于查找
   const openingBalanceMap = useMemo(() => {
     const map = new Map<string, AccountOpeningBalance>();
-    openingBalancesData?.data?.forEach((ob) => {
+    openingBalancesData?.data?.items?.forEach((ob) => {
       map.set(ob.account_id, ob);
     });
     return map;
@@ -165,7 +165,7 @@ export default function OpeningBalancePage() {
   const totals = useMemo(() => {
     let totalDebit = 0;
     let totalCredit = 0;
-    openingBalancesData?.data?.forEach((ob) => {
+    openingBalancesData?.data?.items?.forEach((ob) => {
       totalDebit += ob.debit_balance || 0;
       totalCredit += ob.credit_balance || 0;
     });

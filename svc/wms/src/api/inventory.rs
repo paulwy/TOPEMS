@@ -4,7 +4,9 @@ use axum::{
     routing::{delete, get, post, put},
     Json, Router,
 };
+use bigdecimal::BigDecimal;
 use chrono::Utc;
+use num_traits::cast::ToPrimitive;
 use serde::Deserialize;
 use sqlx::Row;
 use uuid::Uuid;
@@ -66,18 +68,28 @@ where
             get(list_inventory).post(create_inventory),
         )
         .route(
-            "/api/wms/inventory/{id}",
-            get(get_inventory)
-                .put(update_inventory)
-                .delete(delete_inventory),
-        )
-        .route(
             "/api/wms/inventory/low-stock",
             get(list_low_stock_inventory),
         )
         .route(
             "/api/wms/inventory/warehouse/{warehouse_id}",
             get(list_inventory_by_warehouse),
+        )
+        .route(
+            "/api/wms/inventory/statistics",
+            get(get_inventory_statistics),
+        )
+        .route("/api/wms/inventory/abc-analysis", get(get_abc_analysis))
+        .route("/api/wms/inventory/turnover", get(get_turnover))
+        .route(
+            "/api/wms/inventory/value-by-warehouse",
+            get(get_value_by_warehouse),
+        )
+        .route(
+            "/api/wms/inventory/{id}",
+            get(get_inventory)
+                .put(update_inventory)
+                .delete(delete_inventory),
         )
 }
 
@@ -589,6 +601,325 @@ async fn list_inventory_by_warehouse(
         Err(e) => {
             tracing::error!("获取仓库库存列表失败: {}", e);
             Json(api_error(500, "获取仓库库存列表失败"))
+        }
+    }
+}
+
+async fn get_inventory_statistics(
+    State(state): State<ApiState>,
+    Extension(claims): Extension<Claims>,
+    Query(params): Query<InventoryPaginationParams>,
+) -> Json<ApiResponse<serde_json::Value>> {
+    match check_permission(&state.db, &claims, &ModulePermission::InventoryRead).await {
+        Ok(_) => {}
+        Err(e) => return e,
+    }
+
+    let warehouse_id = params.warehouse_id;
+
+    let result = sqlx::query(
+        r#"
+        SELECT 
+            COUNT(*) as total_items,
+            SUM(quantity) as total_quantity,
+            SUM(available_quantity) as total_available,
+            SUM(reserved_quantity) as total_reserved,
+            SUM(total_value) as total_value,
+            COUNT(*) FILTER (WHERE quantity <= COALESCE(min_quantity, 0)) as low_stock_count,
+            COUNT(*) FILTER (WHERE quantity = 0) as out_of_stock_count
+        FROM wms.inventory
+        WHERE ($1::uuid IS NULL OR warehouse_id = $1)
+          AND deleted_at IS NULL
+        "#,
+    )
+    .bind(&warehouse_id)
+    .fetch_one(&state.db)
+    .await;
+
+    match result {
+        Ok(row) => {
+            let total_items = row.try_get::<i64, _>("total_items").unwrap_or(0);
+            let total_quantity: f64 = row
+                .try_get::<Option<bigdecimal::BigDecimal>, _>("total_quantity")
+                .ok()
+                .flatten()
+                .and_then(|v| v.to_f64())
+                .unwrap_or(0.0);
+            let total_available: f64 = row
+                .try_get::<Option<bigdecimal::BigDecimal>, _>("total_available")
+                .ok()
+                .flatten()
+                .and_then(|v| v.to_f64())
+                .unwrap_or(0.0);
+            let total_reserved: f64 = row
+                .try_get::<Option<bigdecimal::BigDecimal>, _>("total_reserved")
+                .ok()
+                .flatten()
+                .and_then(|v| v.to_f64())
+                .unwrap_or(0.0);
+            let total_value: f64 = row
+                .try_get::<Option<bigdecimal::BigDecimal>, _>("total_value")
+                .ok()
+                .flatten()
+                .and_then(|v| v.to_f64())
+                .unwrap_or(0.0);
+            let low_stock_count = row.try_get::<i64, _>("low_stock_count").unwrap_or(0);
+            let out_of_stock_count = row.try_get::<i64, _>("out_of_stock_count").unwrap_or(0);
+
+            Json(ApiResponse::success(
+                serde_json::json!({
+                    "total_items": total_items,
+                    "total_quantity": total_quantity,
+                    "total_available": total_available,
+                    "total_reserved": total_reserved,
+                    "total_value": total_value,
+                    "low_stock_count": low_stock_count,
+                    "out_of_stock_count": out_of_stock_count,
+                    "warehouse_id": warehouse_id
+                }),
+                "获取库存统计成功",
+            ))
+        }
+        Err(e) => {
+            tracing::error!("获取库存统计失败: {}", e);
+            Json(api_error(500, "获取库存统计失败"))
+        }
+    }
+}
+
+async fn get_abc_analysis(
+    State(state): State<ApiState>,
+    Extension(claims): Extension<Claims>,
+) -> Json<ApiResponse<serde_json::Value>> {
+    match check_permission(&state.db, &claims, &ModulePermission::InventoryRead).await {
+        Ok(_) => {}
+        Err(e) => return e,
+    }
+
+    let result = sqlx::query(
+        r#"
+        SELECT 
+            material_code,
+            material_name,
+            SUM(total_value) as value
+        FROM wms.inventory
+        WHERE deleted_at IS NULL
+        GROUP BY material_code, material_name
+        ORDER BY value DESC
+        "#,
+    )
+    .fetch_all(&state.db)
+    .await;
+
+    match result {
+        Ok(rows) => {
+            let total_value: f64 = rows
+                .iter()
+                .filter_map(|r| {
+                    r.try_get::<Option<bigdecimal::BigDecimal>, _>("value")
+                        .ok()
+                        .flatten()
+                })
+                .filter_map(|v| v.to_f64())
+                .sum();
+
+            let mut items: Vec<serde_json::Value> = Vec::new();
+            let mut cumulative_value = 0.0;
+
+            for row in rows.iter() {
+                let value: f64 = row
+                    .try_get::<Option<bigdecimal::BigDecimal>, _>("value")
+                    .ok()
+                    .flatten()
+                    .and_then(|v| v.to_f64())
+                    .unwrap_or(0.0);
+                cumulative_value += value;
+                let percentage = if total_value > 0.0 {
+                    cumulative_value / total_value * 100.0
+                } else {
+                    0.0
+                };
+
+                let category = if percentage <= 80.0 {
+                    "A"
+                } else if percentage <= 95.0 {
+                    "B"
+                } else {
+                    "C"
+                };
+
+                items.push(serde_json::json!({
+                    "material_code": row.try_get::<String, _>("material_code").unwrap_or_default(),
+                    "material_name": row.try_get::<String, _>("material_name").unwrap_or_default(),
+                    "value": value,
+                    "percentage": percentage,
+                    "category": category
+                }));
+            }
+
+            let a_count = items.iter().filter(|i| i["category"] == "A").count() as i64;
+            let b_count = items.iter().filter(|i| i["category"] == "B").count() as i64;
+            let c_count = items.iter().filter(|i| i["category"] == "C").count() as i64;
+
+            Json(ApiResponse::success(
+                serde_json::json!({
+                    "items": items,
+                    "total_sku": rows.len() as i64,
+                    "total_value": total_value,
+                    "a_count": a_count,
+                    "b_count": b_count,
+                    "c_count": c_count
+                }),
+                "获取ABC分析成功",
+            ))
+        }
+        Err(e) => {
+            tracing::error!("获取ABC分析失败: {}", e);
+            Json(api_error(500, "获取ABC分析失败"))
+        }
+    }
+}
+
+async fn get_turnover(
+    State(state): State<ApiState>,
+    Extension(claims): Extension<Claims>,
+) -> Json<ApiResponse<serde_json::Value>> {
+    match check_permission(&state.db, &claims, &ModulePermission::InventoryRead).await {
+        Ok(_) => {}
+        Err(e) => return e,
+    }
+
+    let result = sqlx::query(
+        r#"
+        SELECT 
+            DATE_TRUNC('month', created_at) as period,
+            COUNT(*) as transaction_count,
+            SUM(quantity) as total_quantity
+        FROM wms.inventory
+        WHERE deleted_at IS NULL
+          AND created_at >= NOW() - INTERVAL '6 months'
+        GROUP BY DATE_TRUNC('month', created_at)
+        ORDER BY period ASC
+        "#,
+    )
+    .fetch_all(&state.db)
+    .await;
+
+    match result {
+        Ok(rows) => {
+            let items: Vec<serde_json::Value> = rows
+                .iter()
+                .map(|row| {
+                    let period: Option<String> = row
+                        .try_get::<Option<chrono::NaiveDateTime>, _>("period")
+                        .ok()
+                        .flatten()
+                        .map(|dt| dt.format("%Y-%m").to_string());
+                    let transaction_count = row.try_get::<i64, _>("transaction_count").unwrap_or(0);
+                    let total_quantity: f64 = row
+                        .try_get::<Option<bigdecimal::BigDecimal>, _>("total_quantity")
+                        .ok()
+                        .flatten()
+                        .and_then(|v| v.to_f64())
+                        .unwrap_or(0.0);
+
+                    serde_json::json!({
+                        "period": period,
+                        "transaction_count": transaction_count,
+                        "total_quantity": total_quantity
+                    })
+                })
+                .collect();
+
+            Json(ApiResponse::success(
+                serde_json::json!({ "items": items }),
+                "获取库存周转数据成功",
+            ))
+        }
+        Err(e) => {
+            tracing::error!("获取库存周转数据失败: {}", e);
+            Json(api_error(500, "获取库存周转数据失败"))
+        }
+    }
+}
+
+async fn get_value_by_warehouse(
+    State(state): State<ApiState>,
+    Extension(claims): Extension<Claims>,
+) -> Json<ApiResponse<serde_json::Value>> {
+    match check_permission(&state.db, &claims, &ModulePermission::InventoryRead).await {
+        Ok(_) => {}
+        Err(e) => return e,
+    }
+
+    let result = sqlx::query(
+        r#"
+        SELECT 
+            i.warehouse_id,
+            w.name as warehouse_name,
+            SUM(i.total_value) as total_value,
+            COUNT(*) as item_count
+        FROM wms.inventory i
+        LEFT JOIN wms.warehouses w ON i.warehouse_id = w.id
+        WHERE i.deleted_at IS NULL
+        GROUP BY i.warehouse_id, w.name
+        ORDER BY total_value DESC
+        "#,
+    )
+    .fetch_all(&state.db)
+    .await;
+
+    match result {
+        Ok(rows) => {
+            let total_value: f64 = rows
+                .iter()
+                .filter_map(|r| {
+                    r.try_get::<Option<bigdecimal::BigDecimal>, _>("total_value")
+                        .ok()
+                        .flatten()
+                })
+                .filter_map(|v| v.to_f64())
+                .sum();
+
+            let items: Vec<serde_json::Value> = rows
+                .iter()
+                .map(|row| {
+                    let warehouse_id: Option<Uuid> = row
+                        .try_get::<Option<Uuid>, _>("warehouse_id")
+                        .ok()
+                        .flatten();
+                    let warehouse_name: Option<String> = row
+                        .try_get::<Option<String>, _>("warehouse_name")
+                        .ok()
+                        .flatten();
+                    let value: f64 = row
+                        .try_get::<Option<bigdecimal::BigDecimal>, _>("total_value")
+                        .ok()
+                        .flatten()
+                        .and_then(|v| v.to_f64())
+                        .unwrap_or(0.0);
+                    let item_count = row.try_get::<i64, _>("item_count").unwrap_or(0);
+
+                    serde_json::json!({
+                        "warehouse_id": warehouse_id,
+                        "warehouse_name": warehouse_name,
+                        "total_value": value,
+                        "item_count": item_count
+                    })
+                })
+                .collect();
+
+            Json(ApiResponse::success(
+                serde_json::json!({
+                    "items": items,
+                    "total_value": total_value
+                }),
+                "获取按仓库统计库存价值成功",
+            ))
+        }
+        Err(e) => {
+            tracing::error!("获取按仓库统计库存价值失败: {}", e);
+            Json(api_error(500, "获取按仓库统计库存价值失败"))
         }
     }
 }

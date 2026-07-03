@@ -111,7 +111,7 @@ build_service() {
     info "编译 $service_name 服务..."
     local executable_name=$(get_executable_name "$service_name")
     cd "$PROJECT_ROOT"
-    cargo build --release --bin "$executable_name" 2>&1 && success "$service_name 编译成功" || { error "$service_name 编译失败"; return 1; }
+    SQLX_OFFLINE=true cargo build --release --bin "$executable_name" 2>&1 && success "$service_name 编译成功" || { error "$service_name 编译失败"; return 1; }
 }
 
 # 全量编译所有后端服务
@@ -119,7 +119,7 @@ build_all_backend() {
     info "全量编译所有后端服务..."
 
     cd "$PROJECT_ROOT"
-    if cargo build --release --workspace 2>&1; then
+    if SQLX_OFFLINE=true cargo build --release --workspace 2>&1; then
         local total=$(get_all_services | wc -l | tr -d ' ')
         success "所有后端服务编译完成 ($total 成功)"
         return 0
@@ -723,7 +723,12 @@ show_all_status() {
 db_start() {
     info "启动 PostgreSQL..."
     if command -v brew &> /dev/null; then
-        brew services start postgresql@16 2>/dev/null || brew services start postgresql 2>/dev/null
+        local pg_version=$(brew list | grep -E '^postgresql@[0-9]+$' | sort -r | head -1)
+        if [ -n "$pg_version" ]; then
+            brew services start "$pg_version" 2>/dev/null
+        else
+            brew services start postgresql 2>/dev/null
+        fi
         sleep 2
     elif command -v systemctl &> /dev/null; then
         sudo systemctl start postgresql 2>/dev/null || true
@@ -742,7 +747,12 @@ db_start() {
 db_stop() {
     info "停止 PostgreSQL..."
     if command -v brew &> /dev/null; then
-        brew services stop postgresql@16 2>/dev/null || brew services stop postgresql 2>/dev/null
+        local pg_version=$(brew list | grep -E '^postgresql@[0-9]+$' | sort -r | head -1)
+        if [ -n "$pg_version" ]; then
+            brew services stop "$pg_version" 2>/dev/null
+        else
+            brew services stop postgresql 2>/dev/null
+        fi
     elif command -v systemctl &> /dev/null; then
         sudo systemctl stop postgresql 2>/dev/null || true
     fi

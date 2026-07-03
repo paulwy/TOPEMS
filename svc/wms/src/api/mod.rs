@@ -7,15 +7,19 @@ use topems_shared::{AuthState, SystemMetrics};
 pub mod audit;
 // pub mod cycle_count;
 // pub mod discrepancy;
+pub mod batch;
 pub mod data_sync;
 pub mod inbound_order;
 pub mod inventory;
 pub mod inventory_alert;
+pub mod location;
 pub mod openapi;
 pub mod outbound_order;
 pub mod plugin;
+pub mod serial_number;
 pub mod smart_replenishment;
 pub mod stock_take;
+pub mod transfer_order;
 pub mod warehouse;
 
 #[derive(Clone)]
@@ -45,6 +49,10 @@ where
 {
     Router::new()
         .merge(warehouse::create_routes())
+        .merge(batch::create_routes())
+        .merge(location::create_routes())
+        .merge(serial_number::create_routes())
+        .merge(transfer_order::create_routes())
         .merge(inventory::create_routes())
         .merge(inventory_alert::create_routes())
         .merge(inbound_order::create_routes())
