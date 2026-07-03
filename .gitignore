@@ -94,3 +94,6 @@ debug_jwt.rs
 *storybook.log
 storybook-static
 apps/web/playwright-report/
+
+
+database/postgres_data/
