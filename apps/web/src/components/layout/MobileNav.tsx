@@ -28,6 +28,19 @@ import { navigationRegistryV2 } from '../../lib/navigation';
 import type { NavItem } from '../../lib/navigation/types';
 import { lucideIcons } from '../../lib/iconMapping';
 
+function getNavigablePath(path: string): string | null {
+  if (!path) return null;
+  if (path.includes(':id')) {
+    const segments = path.split('/').filter(Boolean);
+    const paramIndex = segments.findIndex((s) => s.startsWith(':'));
+    if (paramIndex > 0) {
+      return '/' + segments.slice(0, paramIndex).join('/');
+    }
+    return null;
+  }
+  return path;
+}
+
 const getIcon = (iconName?: string): React.ReactNode => {
   if (!iconName) return <Home style={{ width: 20, height: 20 }} />;
   const Icon = lucideIcons[iconName];
@@ -80,8 +93,11 @@ export const MobileNav: React.FC<MobileNavProps> = ({ open, onClose, onOpen }) =
       if (item.children && !item.path) {
         toggleExpand(item.code);
       } else if (item.path) {
-        navigate(item.path);
-        onClose();
+        const navigablePath = getNavigablePath(item.path);
+        if (navigablePath) {
+          navigate(navigablePath);
+          onClose();
+        }
       }
     },
     [navigate, onClose, toggleExpand]

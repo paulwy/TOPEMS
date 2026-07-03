@@ -1,0 +1,488 @@
+use axum::{
+    extract::{Extension, Path, Query, State},
+    routing::{delete, get, post, put},
+    Json, Router,
+};
+use chrono::{DateTime, Utc};
+use uuid::Uuid;
+
+use super::ApiState;
+use crate::models::purchase_requisition::{
+    CreatePurchaseRequisitionRequest, PurchaseRequisition, PurchaseRequisitionQueryParams,
+    UpdatePurchaseRequisitionRequest,
+};
+use crate::services::permission::{check_permission, ModulePermission};
+
+type ApiResult<T> = Result<axum::Json<ApiResponse<T>>, axum::Json<ApiResponse<T>>>;
+use topems_shared::{api_error, auth::Claims, ApiResponse};
+
+pub fn create_routes() -> Router<ApiState> {
+    Router::new()
+        .route(
+            "/api/scm/purchase-requisitions",
+            get(list_requisitions).post(create_requisition),
+        )
+        .route(
+            "/api/scm/purchase-requisitions/{id}",
+            get(get_requisition)
+                .put(update_requisition)
+                .delete(delete_requisition),
+        )
+        .route(
+            "/api/scm/purchase-requisitions/{id}/submit",
+            post(submit_requisition),
+        )
+        .route(
+            "/api/scm/purchase-requisitions/{id}/approve",
+            post(approve_requisition),
+        )
+        .route(
+            "/api/scm/purchase-requisitions/{id}/reject",
+            post(reject_requisition),
+        )
+        .route(
+            "/api/scm/purchase-requisitions/{id}/cancel",
+            post(cancel_requisition),
+        )
+        .route(
+            "/api/scm/purchase-requisitions/{id}/convert-to-order",
+            post(convert_to_order),
+        )
+}
+
+async fn list_requisitions(
+    State(state): State<ApiState>,
+    Extension(claims): Extension<Claims>,
+    Query(params): Query<PurchaseRequisitionQueryParams>,
+) -> Json<ApiResponse<serde_json::Value>> {
+    match check_permission(&state.db, &claims, &ModulePermission::PurchaseOrderRead).await {
+        Ok(_) => {}
+        Err(e) => return e,
+    }
+
+    let page = params.page.unwrap_or(1);
+    let page_size = params.page_size.unwrap_or(10);
+    let offset = (page - 1) * page_size;
+
+    let requisitions = sqlx::query_as::<_, PurchaseRequisition>(
+        "SELECT * FROM scm.purchase_requisitions WHERE deleted_at IS NULL ORDER BY created_at DESC LIMIT $1 OFFSET $2",
+    )
+    .bind(page_size)
+    .bind(offset)
+    .fetch_all(&state.db)
+    .await;
+
+    let total = sqlx::query_scalar::<_, i64>(
+        "SELECT COUNT(*) FROM scm.purchase_requisitions WHERE deleted_at IS NULL",
+    )
+    .fetch_one(&state.db)
+    .await
+    .unwrap_or(0);
+
+    match requisitions {
+        Ok(items) => Json(ApiResponse::success(
+            serde_json::json!({
+                "items": items,
+                "total": total,
+                "page": page,
+                "page_size": page_size,
+            }),
+            "获取采购申请列表成功",
+        )),
+        Err(e) => {
+            tracing::error!("获取采购申请列表失败: {}", e);
+            Json(api_error(500, "获取采购申请列表失败"))
+        }
+    }
+}
+
+async fn create_requisition(
+    State(state): State<ApiState>,
+    Extension(claims): Extension<Claims>,
+    Json(data): Json<CreatePurchaseRequisitionRequest>,
+) -> Json<ApiResponse<PurchaseRequisition>> {
+    match check_permission(&state.db, &claims, &ModulePermission::PurchaseOrderWrite).await {
+        Ok(_) => {}
+        Err(e) => return e,
+    }
+
+    let request_date = DateTime::parse_from_rfc3339(&data.request_date)
+        .unwrap_or_else(|_| chrono::Utc::now().into())
+        .with_timezone(&chrono::Utc);
+
+    let required_date = data.required_date.as_ref().map(|d| {
+        DateTime::parse_from_rfc3339(d)
+            .unwrap_or_else(|_| chrono::Utc::now().into())
+            .with_timezone(&chrono::Utc)
+    });
+
+    let applicant_id = data
+        .applicant_id
+        .as_ref()
+        .and_then(|id| Uuid::parse_str(id).ok());
+    let department_id = data
+        .department_id
+        .as_ref()
+        .and_then(|id| Uuid::parse_str(id).ok());
+    let supplier_id = data
+        .supplier_id
+        .as_ref()
+        .and_then(|id| Uuid::parse_str(id).ok());
+
+    let requisition = sqlx::query_as::<_, PurchaseRequisition>(
+        r#"
+        INSERT INTO scm.purchase_requisitions (
+            requisition_no, title, applicant_id, department_id,
+            request_date, required_date, priority, supplier_id, remarks, status
+        ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, 'draft')
+        RETURNING *
+        "#,
+    )
+    .bind(&data.requisition_no)
+    .bind(&data.title)
+    .bind(applicant_id)
+    .bind(department_id)
+    .bind(request_date)
+    .bind(required_date)
+    .bind(&data.priority)
+    .bind(supplier_id)
+    .bind(&data.remarks)
+    .fetch_one(&state.db)
+    .await;
+
+    match requisition {
+        Ok(item) => Json(ApiResponse::success(item, "创建采购申请成功")),
+        Err(e) => {
+            tracing::error!("创建采购申请失败: {}", e);
+            Json(api_error(500, "创建采购申请失败"))
+        }
+    }
+}
+
+async fn get_requisition(
+    State(state): State<ApiState>,
+    Extension(claims): Extension<Claims>,
+    Path(id): Path<String>,
+) -> Json<ApiResponse<PurchaseRequisition>> {
+    match check_permission(&state.db, &claims, &ModulePermission::PurchaseOrderRead).await {
+        Ok(_) => {}
+        Err(e) => return e,
+    }
+
+    let requisition_id = match Uuid::parse_str(&id) {
+        Ok(uuid) => uuid,
+        Err(_) => return Json(api_error(400, "无效的采购申请ID")),
+    };
+
+    let requisition = sqlx::query_as::<_, PurchaseRequisition>(
+        "SELECT * FROM scm.purchase_requisitions WHERE id = $1 AND deleted_at IS NULL",
+    )
+    .bind(requisition_id)
+    .fetch_one(&state.db)
+    .await;
+
+    match requisition {
+        Ok(item) => Json(ApiResponse::success(item, "获取采购申请成功")),
+        Err(sqlx::Error::RowNotFound) => Json(api_error(404, "采购申请不存在")),
+        Err(e) => {
+            tracing::error!("获取采购申请失败: {}", e);
+            Json(api_error(500, "获取采购申请失败"))
+        }
+    }
+}
+
+async fn update_requisition(
+    State(state): State<ApiState>,
+    Extension(claims): Extension<Claims>,
+    Path(id): Path<String>,
+    Json(data): Json<UpdatePurchaseRequisitionRequest>,
+) -> Json<ApiResponse<PurchaseRequisition>> {
+    match check_permission(&state.db, &claims, &ModulePermission::PurchaseOrderWrite).await {
+        Ok(_) => {}
+        Err(e) => return e,
+    }
+
+    let requisition_id = match Uuid::parse_str(&id) {
+        Ok(uuid) => uuid,
+        Err(_) => return Json(api_error(400, "无效的采购申请ID")),
+    };
+
+    let required_date = data.required_date.as_ref().map(|d| {
+        DateTime::parse_from_rfc3339(d)
+            .unwrap_or_else(|_| chrono::Utc::now().into())
+            .with_timezone(&chrono::Utc)
+    });
+
+    let supplier_id = data
+        .supplier_id
+        .as_ref()
+        .and_then(|id| Uuid::parse_str(id).ok());
+
+    let requisition = sqlx::query_as::<_, PurchaseRequisition>(
+        r#"
+        UPDATE scm.purchase_requisitions SET
+            title = COALESCE($1, title),
+            required_date = COALESCE($2, required_date),
+            priority = COALESCE($3, priority),
+            supplier_id = COALESCE($4, supplier_id),
+            status = COALESCE($5, status),
+            remarks = COALESCE($6, remarks)
+        WHERE id = $7 AND deleted_at IS NULL
+        RETURNING *
+        "#,
+    )
+    .bind(&data.title)
+    .bind(required_date)
+    .bind(&data.priority)
+    .bind(supplier_id)
+    .bind(&data.status)
+    .bind(&data.remarks)
+    .bind(requisition_id)
+    .fetch_one(&state.db)
+    .await;
+
+    match requisition {
+        Ok(item) => Json(ApiResponse::success(item, "更新采购申请成功")),
+        Err(sqlx::Error::RowNotFound) => Json(api_error(404, "采购申请不存在")),
+        Err(e) => {
+            tracing::error!("更新采购申请失败: {}", e);
+            Json(api_error(500, "更新采购申请失败"))
+        }
+    }
+}
+
+async fn delete_requisition(
+    State(state): State<ApiState>,
+    Extension(claims): Extension<Claims>,
+    Path(id): Path<String>,
+) -> Json<ApiResponse<String>> {
+    match check_permission(&state.db, &claims, &ModulePermission::PurchaseOrderWrite).await {
+        Ok(_) => {}
+        Err(e) => return e,
+    }
+
+    let requisition_id = match Uuid::parse_str(&id) {
+        Ok(uuid) => uuid,
+        Err(_) => return Json(api_error(400, "无效的采购申请ID")),
+    };
+
+    let result = sqlx::query(
+        "UPDATE scm.purchase_requisitions SET deleted_at = NOW() WHERE id = $1 AND deleted_at IS NULL",
+    )
+    .bind(requisition_id)
+    .execute(&state.db)
+    .await;
+
+    match result {
+        Ok(r) if r.rows_affected() > 0 => {
+            Json(ApiResponse::success("".to_string(), "删除采购申请成功"))
+        }
+        Ok(_) => Json(api_error(404, "采购申请不存在")),
+        Err(e) => {
+            tracing::error!("删除采购申请失败: {}", e);
+            Json(api_error(500, "删除采购申请失败"))
+        }
+    }
+}
+
+async fn submit_requisition(
+    State(state): State<ApiState>,
+    Extension(claims): Extension<Claims>,
+    Path(id): Path<String>,
+    Json(data): Json<serde_json::Value>,
+) -> Json<ApiResponse<PurchaseRequisition>> {
+    match check_permission(&state.db, &claims, &ModulePermission::PurchaseOrderWrite).await {
+        Ok(_) => {}
+        Err(e) => return e,
+    }
+
+    let requisition_id = match Uuid::parse_str(&id) {
+        Ok(uuid) => uuid,
+        Err(_) => return Json(api_error(400, "无效的采购申请ID")),
+    };
+
+    let remarks = data
+        .get("remarks")
+        .and_then(|v| v.as_str())
+        .map(|s| s.to_string());
+
+    let requisition = sqlx::query_as::<_, PurchaseRequisition>(
+        "UPDATE scm.purchase_requisitions SET status = 'pending', remarks = COALESCE($1, remarks) WHERE id = $2 AND deleted_at IS NULL AND status = 'draft' RETURNING *",
+    )
+    .bind(remarks)
+    .bind(requisition_id)
+    .fetch_one(&state.db)
+    .await;
+
+    match requisition {
+        Ok(item) => Json(ApiResponse::success(item, "提交采购申请成功")),
+        Err(sqlx::Error::RowNotFound) => Json(api_error(400, "采购申请状态不正确，无法提交")),
+        Err(e) => {
+            tracing::error!("提交采购申请失败: {}", e);
+            Json(api_error(500, "提交采购申请失败"))
+        }
+    }
+}
+
+async fn approve_requisition(
+    State(state): State<ApiState>,
+    Extension(claims): Extension<Claims>,
+    Path(id): Path<String>,
+    Json(data): Json<serde_json::Value>,
+) -> Json<ApiResponse<PurchaseRequisition>> {
+    match check_permission(&state.db, &claims, &ModulePermission::PurchaseOrderApprove).await {
+        Ok(_) => {}
+        Err(e) => return e,
+    }
+
+    let requisition_id = match Uuid::parse_str(&id) {
+        Ok(uuid) => uuid,
+        Err(_) => return Json(api_error(400, "无效的采购申请ID")),
+    };
+
+    let remarks = data
+        .get("remarks")
+        .and_then(|v| v.as_str())
+        .map(|s| s.to_string());
+
+    let requisition = sqlx::query_as::<_, PurchaseRequisition>(
+        r#"
+        UPDATE scm.purchase_requisitions SET 
+            status = 'approved', approval_status = 'approved', 
+            approver = $1, approved_at = NOW(), remarks = COALESCE($2, remarks)
+        WHERE id = $3 AND deleted_at IS NULL AND status = 'pending' 
+        RETURNING *
+        "#,
+    )
+    .bind(&claims.sub)
+    .bind(remarks)
+    .bind(requisition_id)
+    .fetch_one(&state.db)
+    .await;
+
+    match requisition {
+        Ok(item) => Json(ApiResponse::success(item, "审批通过采购申请成功")),
+        Err(sqlx::Error::RowNotFound) => Json(api_error(400, "采购申请状态不正确，无法审批")),
+        Err(e) => {
+            tracing::error!("审批采购申请失败: {}", e);
+            Json(api_error(500, "审批采购申请失败"))
+        }
+    }
+}
+
+async fn reject_requisition(
+    State(state): State<ApiState>,
+    Extension(claims): Extension<Claims>,
+    Path(id): Path<String>,
+    Json(data): Json<serde_json::Value>,
+) -> Json<ApiResponse<PurchaseRequisition>> {
+    match check_permission(&state.db, &claims, &ModulePermission::PurchaseOrderApprove).await {
+        Ok(_) => {}
+        Err(e) => return e,
+    }
+
+    let requisition_id = match Uuid::parse_str(&id) {
+        Ok(uuid) => uuid,
+        Err(_) => return Json(api_error(400, "无效的采购申请ID")),
+    };
+
+    let remarks = data
+        .get("remarks")
+        .and_then(|v| v.as_str())
+        .map(|s| s.to_string());
+
+    let requisition = sqlx::query_as::<_, PurchaseRequisition>(
+        r#"
+        UPDATE scm.purchase_requisitions SET 
+            status = 'rejected', approval_status = 'rejected', 
+            approver = $1, approved_at = NOW(), remarks = COALESCE($2, remarks)
+        WHERE id = $3 AND deleted_at IS NULL AND status = 'pending' 
+        RETURNING *
+        "#,
+    )
+    .bind(&claims.sub)
+    .bind(remarks)
+    .bind(requisition_id)
+    .fetch_one(&state.db)
+    .await;
+
+    match requisition {
+        Ok(item) => Json(ApiResponse::success(item, "拒绝采购申请成功")),
+        Err(sqlx::Error::RowNotFound) => Json(api_error(400, "采购申请状态不正确，无法拒绝")),
+        Err(e) => {
+            tracing::error!("拒绝采购申请失败: {}", e);
+            Json(api_error(500, "拒绝采购申请失败"))
+        }
+    }
+}
+
+async fn cancel_requisition(
+    State(state): State<ApiState>,
+    Extension(claims): Extension<Claims>,
+    Path(id): Path<String>,
+    Json(data): Json<serde_json::Value>,
+) -> Json<ApiResponse<PurchaseRequisition>> {
+    match check_permission(&state.db, &claims, &ModulePermission::PurchaseOrderWrite).await {
+        Ok(_) => {}
+        Err(e) => return e,
+    }
+
+    let requisition_id = match Uuid::parse_str(&id) {
+        Ok(uuid) => uuid,
+        Err(_) => return Json(api_error(400, "无效的采购申请ID")),
+    };
+
+    let remarks = data
+        .get("remarks")
+        .and_then(|v| v.as_str())
+        .map(|s| s.to_string());
+
+    let requisition = sqlx::query_as::<_, PurchaseRequisition>(
+        "UPDATE scm.purchase_requisitions SET status = 'cancelled', remarks = COALESCE($1, remarks) WHERE id = $2 AND deleted_at IS NULL AND status IN ('draft', 'pending') RETURNING *",
+    )
+    .bind(remarks)
+    .bind(requisition_id)
+    .fetch_one(&state.db)
+    .await;
+
+    match requisition {
+        Ok(item) => Json(ApiResponse::success(item, "取消采购申请成功")),
+        Err(sqlx::Error::RowNotFound) => Json(api_error(400, "采购申请状态不正确，无法取消")),
+        Err(e) => {
+            tracing::error!("取消采购申请失败: {}", e);
+            Json(api_error(500, "取消采购申请失败"))
+        }
+    }
+}
+
+async fn convert_to_order(
+    State(state): State<ApiState>,
+    Extension(claims): Extension<Claims>,
+    Path(id): Path<String>,
+) -> Json<ApiResponse<PurchaseRequisition>> {
+    match check_permission(&state.db, &claims, &ModulePermission::PurchaseOrderWrite).await {
+        Ok(_) => {}
+        Err(e) => return e,
+    }
+
+    let requisition_id = match Uuid::parse_str(&id) {
+        Ok(uuid) => uuid,
+        Err(_) => return Json(api_error(400, "无效的采购申请ID")),
+    };
+
+    let requisition = sqlx::query_as::<_, PurchaseRequisition>(
+        "UPDATE scm.purchase_requisitions SET status = 'converted' WHERE id = $1 AND deleted_at IS NULL AND status = 'approved' RETURNING *",
+    )
+    .bind(requisition_id)
+    .fetch_one(&state.db)
+    .await;
+
+    match requisition {
+        Ok(item) => Json(ApiResponse::success(item, "转换为采购订单成功")),
+        Err(sqlx::Error::RowNotFound) => Json(api_error(400, "采购申请状态不正确，无法转换")),
+        Err(e) => {
+            tracing::error!("转换采购申请失败: {}", e);
+            Json(api_error(500, "转换采购申请失败"))
+        }
+    }
+}

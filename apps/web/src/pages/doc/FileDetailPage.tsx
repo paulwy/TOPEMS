@@ -221,7 +221,7 @@ const DocsFileDetailPage: React.FC = () => {
         backHref='/documents'
         loading={loading}
         error={errorMessage}
-        onEdit={() => navigate(`/documents/${id}`)}
+        onEdit={() => navigate(`/doc/documents/${id}`)}
         onDelete={() => setDeleteDialogOpen(true)}
         onDownload={() => {
           success('文件下载功能开发中');

@@ -19,6 +19,10 @@ use topems_shared::{
     init_telemetry, telemetry_middleware, ApiResponse, AuthState, ServiceHealth,
 };
 
+use api::attendance::{
+    apply_leave, check_in, check_out, get_attendance_overview, get_attendance_stats,
+    list_attendance_records, list_leave_applications,
+};
 use api::auth::{login, logout, refresh_token, verify_code};
 use api::barcode_scanner::{
     delete_scan_record, get_scan_by_id, get_scan_history, get_supported_barcode_types, scan_barcode,
@@ -385,6 +389,31 @@ async fn main() -> anyhow::Result<()> {
         .route(
             "/api/mobile/mobile-tasks/{id}/status",
             axum::routing::post(update_task_status),
+        )
+        // Attendance Routes
+        .route(
+            "/api/mobile/attendance",
+            axum::routing::get(get_attendance_overview),
+        )
+        .route(
+            "/api/mobile/attendance/stats",
+            axum::routing::get(get_attendance_stats),
+        )
+        .route(
+            "/api/mobile/attendance/records",
+            axum::routing::get(list_attendance_records),
+        )
+        .route(
+            "/api/mobile/attendance/check-in",
+            axum::routing::post(check_in),
+        )
+        .route(
+            "/api/mobile/attendance/check-out",
+            axum::routing::post(check_out),
+        )
+        .route(
+            "/api/mobile/attendance/leaves",
+            axum::routing::get(list_leave_applications).post(apply_leave),
         )
         // Media Routes
         .route("/api/mobile/media/photos", axum::routing::get(get_photos))

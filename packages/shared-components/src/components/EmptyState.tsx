@@ -84,7 +84,7 @@ export const EmptyState: React.FC<EmptyStateProps> = ({
         ) : icon ? (
           <Box sx={{ color: 'text.secondary' }}>{icon}</Box>
         ) : (
-          <Info size={compact ? 24 : 32} sx={{ color: 'text.secondary' }} />
+          <Box sx={{ color: 'text.secondary' }}><Info size={compact ? 24 : 32} /></Box>
         )}
       </Box>
 

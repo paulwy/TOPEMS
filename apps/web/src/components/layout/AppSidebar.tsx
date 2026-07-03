@@ -44,6 +44,19 @@ function getModuleFromPath(pathname: string): string | null {
   return segments[0];
 }
 
+function getNavigablePath(path: string): string | null {
+  if (!path) return null;
+  if (path.includes(':id')) {
+    const segments = path.split('/').filter(Boolean);
+    const paramIndex = segments.findIndex((s) => s.startsWith(':'));
+    if (paramIndex > 0) {
+      return '/' + segments.slice(0, paramIndex).join('/');
+    }
+    return null;
+  }
+  return path;
+}
+
 // ---- 已知的模块 code 集合（注册过的 top_nav plugin code） ----
 const PLATFORM_ROOT_PATHS = new Set(['dashboard', 'login', 'register', 'settings', 'profile']);
 
@@ -389,11 +402,11 @@ export const AppSidebar: React.FC<AppSidebarProps> = ({
             <ListItemButton
               key={item.code || index}
               onClick={() => {
-                if (item.path) navigate(item.path);
+                const navigablePath = getNavigablePath(item.path);
+                if (navigablePath) navigate(navigablePath);
                 setSearchAnchorEl(null);
                 setSearchQuery('');
-              }}
-            >
+              }}>
               <ListItemIcon sx={{ minWidth: 32 }}>
                 {item.icon ? renderIcon(item.icon, 16) : <Star style={{ width: 16, height: 16 }} />}
               </ListItemIcon>
@@ -442,10 +455,10 @@ export const AppSidebar: React.FC<AppSidebarProps> = ({
                 <ListItemButton
                   key={item.code || index}
                   onClick={() => {
-                    if (item.path) navigate(item.path);
+                    const navigablePath = getNavigablePath(item.path);
+                    if (navigablePath) navigate(navigablePath);
                     setFavoritesAnchorEl(null);
-                  }}
-                >
+                  }}>
                   <ListItemIcon sx={{ minWidth: 32 }}>
                     {item.icon ? (
                       renderIcon(item.icon, 16)

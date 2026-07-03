@@ -487,51 +487,44 @@ pub async fn maintenance_equipment(
     }
 }
 
-#[derive(Debug, Clone, Serialize)]
-pub struct EquipmentStatisticsResponse {
-    pub total: i64,
-    pub in_use: i64,
-    pub idle: i64,
-    pub maintenance: i64,
-    pub fault: i64,
-}
-
 pub async fn get_equipment_statistics(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
-) -> Json<ApiResponse<EquipmentStatisticsResponse>> {
+) -> Json<ApiResponse<serde_json::Value>> {
     if let Err(e) = check_permission(&state.pool, &claims, &ModulePermission::EquipmentRead).await {
         return e;
     }
 
-    let result = sqlx::query!(
+    let stats = sqlx::query!(
         r#"
         SELECT
-            COUNT(*) as total,
-            COUNT(*) FILTER (WHERE status IN ('normal', 'running', 'in_use', 'active')) as in_use,
-            COUNT(*) FILTER (WHERE status IN ('idle', 'standby')) as idle,
-            COUNT(*) FILTER (WHERE status = 'maintenance') as maintenance,
-            COUNT(*) FILTER (WHERE status IN ('fault', 'error', 'abnormal')) as fault
+            COUNT(*) as total_count,
+            SUM(CASE WHEN status = 'normal' THEN 1 ELSE 0 END) as normal_count,
+            SUM(CASE WHEN status = 'maintenance' THEN 1 ELSE 0 END) as maintenance_count,
+            SUM(CASE WHEN status = 'fault' THEN 1 ELSE 0 END) as fault_count,
+            SUM(CASE WHEN next_maintenance_date IS NOT NULL AND next_maintenance_date <= CURRENT_DATE THEN 1 ELSE 0 END) as pending_maintenance_count
         FROM equipment
-        "#
+        "#,
     )
     .fetch_one(&state.pool)
     .await;
 
-    match result {
-        Ok(r) => {
-            let stats = EquipmentStatisticsResponse {
-                total: r.total.unwrap_or(0),
-                in_use: r.in_use.unwrap_or(0),
-                idle: r.idle.unwrap_or(0),
-                maintenance: r.maintenance.unwrap_or(0),
-                fault: r.fault.unwrap_or(0),
-            };
-            Json(ApiResponse::success(stats, "获取设备统计成功"))
-        }
+    let stats = match stats {
+        Ok(s) => s,
         Err(e) => {
-            tracing::error!("Failed to fetch equipment statistics: {}", e);
-            Json(ApiResponse::error(500, "获取设备统计失败"))
+            tracing::error!("Failed to get equipment statistics: {}", e);
+            return Json(ApiResponse::error(500, "获取设备统计失败"));
         }
-    }
+    };
+
+    Json(ApiResponse::success(
+        serde_json::json!({
+            "total_count": stats.total_count.unwrap_or(0),
+            "normal_count": stats.normal_count.unwrap_or(0),
+            "maintenance_count": stats.maintenance_count.unwrap_or(0),
+            "fault_count": stats.fault_count.unwrap_or(0),
+            "pending_maintenance_count": stats.pending_maintenance_count.unwrap_or(0),
+        }),
+        "获取设备统计成功",
+    ))
 }

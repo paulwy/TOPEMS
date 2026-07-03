@@ -1,3 +1,4 @@
+pub mod dashboard_ws;
 pub mod equipment;
 pub mod equipment_oee;
 pub mod material_bom;

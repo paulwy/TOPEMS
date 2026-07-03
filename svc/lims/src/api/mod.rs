@@ -1,9 +1,9 @@
-pub mod audit;
 pub mod data_sync;
 pub mod inspection_record;
 pub mod inspection_task;
 pub mod instrument;
 pub mod instrument_data;
+pub mod process;
 pub mod proficiency_testing;
 pub mod reagent;
 pub mod report;
@@ -30,5 +30,5 @@ pub fn create_api_routes() -> Router<AppState> {
         .merge(proficiency_testing::create_routes())
         .merge(uncertainty::create_routes())
         .merge(instrument_data::create_routes())
-        .merge(audit::create_routes())
+        .merge(process::create_routes())
 }

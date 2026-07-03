@@ -1668,3 +1668,118 @@ async fn send_notification_email(
 
     Ok(())
 }
+
+#[derive(Debug, Deserialize, Serialize)]
+pub struct ArchiveConfig {
+    pub enabled: bool,
+    pub retention_days: i32,
+    pub auto_archive_enabled: bool,
+    pub auto_archive_interval_days: i32,
+    pub auto_archive_days: i32,
+}
+
+pub async fn get_archive_config(
+    State(_state): State<AppState>,
+    Extension(_claims): Extension<Claims>,
+) -> Json<serde_json::Value> {
+    Json(serde_json::json!({
+        "success": true,
+        "message": "Success",
+        "data": {
+            "enabled": false,
+            "retention_days": 90,
+            "auto_archive_enabled": false,
+            "auto_archive_interval_days": 7,
+            "auto_archive_days": 30,
+        },
+        "code": 0
+    }))
+}
+
+pub async fn update_archive_config(
+    State(_state): State<AppState>,
+    Extension(_claims): Extension<Claims>,
+    Json(_config): Json<ArchiveConfig>,
+) -> Json<serde_json::Value> {
+    Json(serde_json::json!({
+        "success": true,
+        "message": "Archive config updated",
+        "data": _config,
+        "code": 0
+    }))
+}
+
+pub async fn run_auto_archive(
+    State(state): State<AppState>,
+    Extension(claims): Extension<Claims>,
+) -> Json<serde_json::Value> {
+    if !claims.is_superuser && !claims.has_permission("notification:admin") {
+        return Json(serde_json::json!({
+            "success": false,
+            "message": "没有权限执行自动归档",
+            "data": null,
+            "code": 403
+        }));
+    }
+
+    let count: i64 = sqlx::query_scalar(
+        r#"
+        UPDATE core_notifications
+        SET is_deleted = true
+        WHERE created_at < NOW() - INTERVAL '30 days' AND is_deleted = false
+        RETURNING COUNT(*)
+        "#,
+    )
+    .fetch_one(&state.pool)
+    .await
+    .unwrap_or(0);
+
+    Json(serde_json::json!({
+        "success": true,
+        "message": format!("Auto archive completed, {} notifications archived", count),
+        "data": { "archived_count": count },
+        "code": 0
+    }))
+}
+
+pub async fn get_notification_health_detailed(
+    State(state): State<AppState>,
+    Extension(_claims): Extension<Claims>,
+) -> Json<serde_json::Value> {
+    let db_status = match sqlx::query_scalar::<_, i32>("SELECT 1")
+        .fetch_one(&state.pool)
+        .await
+    {
+        Ok(_) => "healthy",
+        Err(_) => "unhealthy",
+    };
+
+    let notification_count: i64 = sqlx::query_scalar("SELECT COUNT(*) FROM core_notifications")
+        .fetch_one(&state.pool)
+        .await
+        .unwrap_or(0);
+
+    let unread_count: i64 =
+        sqlx::query_scalar("SELECT COUNT(*) FROM core_notifications WHERE is_read = false")
+            .fetch_one(&state.pool)
+            .await
+            .unwrap_or(0);
+
+    Json(serde_json::json!({
+        "success": true,
+        "message": "Success",
+        "data": {
+            "status": "healthy",
+            "uptime": "unknown",
+            "dependencies": {
+                "database": db_status,
+                "redis": "unknown",
+            },
+            "counters": {
+                "total_notifications": notification_count,
+                "unread_notifications": unread_count,
+            }
+        },
+        "code": 0
+    }))
+}

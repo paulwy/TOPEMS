@@ -249,30 +249,18 @@ export const getArchivedNotifications = async (
     page,
     pagesize: pageSize,
   };
-  const token = localStorage.getItem('token');
-  const response = await axios.get<ApiResponse<NotificationListResponse<ArchivedNotification>>>(
-    'http://localhost:8000/api/core/comm/notify/v1/notifications/archived',
-    {
-      params,
-      headers: {
-        Authorization: `Bearer ${token}`,
-      },
-    }
+  const response = await apiClient.notification.get<NotificationListResponse<ArchivedNotification>>(
+    '/v1/notifications/archived',
+    { params }
   );
-  return response.data;
+  return response;
 };
 
 export const getArchiveConfig = async (): Promise<ApiResponse<ArchiveConfig>> => {
-  const token = localStorage.getItem('token');
-  const response = await axios.get<ApiResponse<ArchiveConfig>>(
-    'http://localhost:8000/api/core/comm/notify/v1/notifications/archive/config',
-    {
-      headers: {
-        Authorization: `Bearer ${token}`,
-      },
-    }
+  const response = await apiClient.notification.get<ArchiveConfig>(
+    '/v1/notifications/archive/config'
   );
-  return response.data;
+  return response;
 };
 
 export const updateArchiveConfig = async (
@@ -419,7 +407,7 @@ export const notificationApi = {
     return await apiClient.notification.get<Notification>(`/v1/notifications/${id}`);
   },
   markRead: async (id: string): Promise<ApiResponse<Notification>> => {
-    return await apiClient.notification.put<Notification>(`/v1/notifications/${id}/read`);
+    return await apiClient.notification.put<Notification>(`/v1/notifications/${id}`);
   },
   markUnread: async (id: string): Promise<ApiResponse<Notification>> => {
     return await apiClient.notification.put<Notification>(`/v1/notifications/${id}/unread`);

@@ -1,0 +1,59 @@
+repos:
+  - repo: https://github.com/pre-commit/pre-commit-hooks
+    rev: v4.6.0
+    hooks:
+      - id: trailing-whitespace
+        description: "Trim trailing whitespace"
+      - id: end-of-file-fixer
+        description: "Ensure files end with a newline"
+      - id: check-yaml
+        description: "Check YAML files for syntax errors"
+      - id: check-json
+        description: "Check JSON files for syntax errors"
+      - id: check-merge-conflict
+        description: "Check for unresolved merge conflicts"
+      - id: detect-private-key
+        description: "Detect private keys in commits"
+      - id: check-case-conflict
+        description: "Check for files with case conflicts"
+      - id: check-executables-have-shebangs
+        description: "Check that executables have shebangs"
+      - id: check-shebang-scripts-are-executable
+        description: "Check that scripts with shebangs are executable"
+      - id: check-large-files
+        args: [--maxkb=500]
+        exclude: ^database/postgres_data/
+        description: "Check for large files (>500KB)"
+
+  - repo: https://github.com/psf/black
+    rev: 24.4.2
+    hooks:
+      - id: black
+        description: "Python code formatting"
+        language_version: python3
+
+  - repo: https://github.com/PyCQA/flake8
+    rev: 7.0.0
+    hooks:
+      - id: flake8
+        description: "Python linting"
+        additional_dependencies: [flake8-isort]
+
+  - repo: https://github.com/PyCQA/isort
+    rev: 5.13.2
+    hooks:
+      - id: isort
+        description: "Python import sorting"
+
+  - repo: https://github.com/adrienverge/yamllint
+    rev: v1.35.1
+    hooks:
+      - id: yamllint
+        description: "YAML linting"
+        args: ["-c", ".yamllint"]
+
+  - repo: https://github.com/rhysd/actionlint
+    rev: v1.6.4
+    hooks:
+      - id: actionlint
+        description: "GitHub Actions workflow linting"

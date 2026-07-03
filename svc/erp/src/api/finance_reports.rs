@@ -152,6 +152,134 @@ pub struct MonthlyTrendItem {
     pub voucher_count: i64,
 }
 
+#[derive(Debug, Serialize, Deserialize, Clone)]
+pub struct KeyRatios {
+    pub current_ratio: f64,
+    pub debt_ratio: f64,
+    pub return_on_equity: f64,
+    pub profit_margin: f64,
+    pub return_on_assets: f64,
+    pub earnings_per_share: f64,
+}
+
+#[derive(Debug, Serialize, Deserialize)]
+pub struct BusinessOverview {
+    pub total_assets: f64,
+    pub total_liabilities: f64,
+    pub total_equity: f64,
+    pub total_revenue: f64,
+    pub total_expenses: f64,
+    pub net_profit: f64,
+    pub cash_flow: f64,
+    pub period: String,
+    pub key_ratios: KeyRatios,
+    pub receivable_turnover: f64,
+    pub inventory_turnover: f64,
+    pub asset_turnover: f64,
+}
+
+#[derive(Debug, Serialize, Deserialize)]
+pub struct ProjectFinancialSummary {
+    pub project_id: String,
+    pub project_name: String,
+    pub contract_amount: f64,
+    pub received_amount: f64,
+    pub payable_amount: f64,
+    pub paid_amount: f64,
+    pub profit: f64,
+    pub margin: f64,
+    pub status: String,
+}
+
+#[derive(Debug, Serialize, Deserialize)]
+pub struct DepartmentFinancialSummary {
+    pub department_id: Option<String>,
+    pub department_name: String,
+    pub total_expenses: f64,
+    pub budget_amount: f64,
+    pub budget_usage: f64,
+    pub expense_count: i64,
+}
+
+#[derive(Debug, Serialize, Deserialize)]
+pub struct CashFlowAnalysis {
+    pub period: String,
+    pub operating_cash_flow: f64,
+    pub investing_cash_flow: f64,
+    pub financing_cash_flow: f64,
+    pub net_cash_flow: f64,
+    pub cash_flow_ratio: f64,
+    pub operating_cash_flow_to_revenue: f64,
+}
+
+#[derive(Debug, Serialize, Deserialize)]
+pub struct CategoryExpense {
+    pub category: String,
+    pub amount: f64,
+    pub percentage: f64,
+}
+
+#[derive(Debug, Serialize, Deserialize)]
+pub struct DepartmentExpense {
+    pub department_id: Option<String>,
+    pub department_name: String,
+    pub amount: f64,
+    pub percentage: f64,
+}
+
+#[derive(Debug, Serialize, Deserialize)]
+pub struct MonthlyExpense {
+    pub month: String,
+    pub amount: f64,
+    pub growth_rate: f64,
+}
+
+#[derive(Debug, Serialize, Deserialize)]
+pub struct ExpenseAnalysis {
+    pub period: String,
+    pub total_expenses: f64,
+    pub department_expenses: Vec<DepartmentExpense>,
+    pub category_expenses: Vec<CategoryExpense>,
+    pub monthly_trend: Vec<MonthlyExpense>,
+}
+
+#[derive(Debug, Serialize, Deserialize)]
+pub struct MonthlyProfit {
+    pub month: String,
+    pub gross_profit: f64,
+    pub operating_profit: f64,
+    pub net_profit: f64,
+}
+
+#[derive(Debug, Serialize, Deserialize)]
+pub struct ProfitAnalysis {
+    pub period: String,
+    pub gross_profit: f64,
+    pub operating_profit: f64,
+    pub net_profit: f64,
+    pub gross_margin: f64,
+    pub operating_margin: f64,
+    pub net_margin: f64,
+    pub profit_trend: Vec<MonthlyProfit>,
+}
+
+#[derive(Debug, Serialize, Deserialize)]
+pub struct FinancialOverview {
+    pub total_assets: f64,
+    pub total_liabilities: f64,
+    pub total_equity: f64,
+    pub total_revenue: f64,
+    pub total_expenses: f64,
+    pub net_profit: f64,
+    pub operating_cash_flow: f64,
+    pub key_ratios: KeyRatios,
+    pub profit_margin: f64,
+    pub return_on_assets: f64,
+    pub return_on_equity: f64,
+    pub debt_ratio: f64,
+    pub current_ratio: f64,
+}
+
 pub fn create_routes() -> Router<ApiState> {
     Router::new()
         .route("/api/erp/reports/balance-sheet", get(balance_sheet))
@@ -167,6 +295,22 @@ pub fn create_routes() -> Router<ApiState> {
         .route("/api/erp/reports/category-summary", get(category_summary))
         .route("/api/erp/reports/aging-analysis", get(aging_analysis))
         .route("/api/erp/reports/monthly-trend", get(monthly_trend))
+        .route("/api/erp/reports/business-overview", get(business_overview))
+        .route("/api/erp/reports/project-summary", get(project_summary))
+        .route(
+            "/api/erp/reports/department-summary",
+            get(department_summary),
+        )
+        .route(
+            "/api/erp/reports/cash-flow-analysis",
+            get(cash_flow_analysis),
+        )
+        .route("/api/erp/reports/expense-analysis", get(expense_analysis))
+        .route("/api/erp/reports/profit-analysis", get(profit_analysis))
+        .route(
+            "/api/erp/reports/financial-overview",
+            get(financial_overview),
+        )
 }
 
 async fn balance_sheet(
@@ -1065,4 +1209,580 @@ async fn monthly_trend(
     };
 
     Json(ApiResponse::success(trend, "获取月度趋势报表成功"))
+}
+
+async fn business_overview(
+    State(state): State<ApiState>,
+    Extension(claims): Extension<Claims>,
+    Query(params): Query<ReportParams>,
+) -> Json<ApiResponse<BusinessOverview>> {
+    if let Err(e) = check_permission(&claims, &ModulePermission::ReportRead).await {
+        return e;
+    }
+
+    let period = params.period.unwrap_or_else(|| {
+        let now = Utc::now();
+        format!("{}-{:02}", now.year(), now.month())
+    });
+
+    let result = sqlx::query(
+        r#"
+        SELECT 
+            SUM(CASE WHEN s.code LIKE '1%' THEN COALESCE(SUM(vi.debit_amount - vi.credit_amount), 0.0) ELSE 0.0 END) as total_assets,
+            SUM(CASE WHEN s.code LIKE '2%' THEN COALESCE(SUM(vi.debit_amount - vi.credit_amount), 0.0) ELSE 0.0 END) as total_liabilities,
+            SUM(CASE WHEN s.code LIKE '3%' THEN COALESCE(SUM(vi.debit_amount - vi.credit_amount), 0.0) ELSE 0.0 END) as total_equity,
+            SUM(CASE WHEN s.code LIKE '4%' THEN COALESCE(vi.credit_amount, 0.0) ELSE 0.0 END) as total_revenue,
+            SUM(CASE WHEN s.code LIKE '5%' THEN COALESCE(vi.debit_amount, 0.0) ELSE 0.0 END) as total_expenses
+        FROM plugin_erp.accounting_subjects s
+        LEFT JOIN plugin_erp.voucher_items vi ON vi.subject_code = s.code
+        LEFT JOIN plugin_erp.financial_vouchers v ON vi.voucher_id = v.id
+        WHERE v.period = $1
+        GROUP BY s.code
+        "#,
+    )
+    .bind(&period)
+    .fetch_all(&state.db)
+    .await;
+
+    let (total_assets, total_liabilities, total_equity, total_revenue, total_expenses) =
+        match result {
+            Ok(rows) => {
+                let mut assets = 0.0;
+                let mut liabilities = 0.0;
+                let mut equity = 0.0;
+                let mut revenue = 0.0;
+                let mut expenses = 0.0;
+                for row in rows {
+                    assets += row.try_get("total_assets").unwrap_or(0.0);
+                    liabilities += row.try_get("total_liabilities").unwrap_or(0.0);
+                    equity += row.try_get("total_equity").unwrap_or(0.0);
+                    revenue += row.try_get("total_revenue").unwrap_or(0.0);
+                    expenses += row.try_get("total_expenses").unwrap_or(0.0);
+                }
+                (assets, liabilities, equity, revenue, expenses)
+            }
+            Err(e) => {
+                tracing::error!("获取经营概览数据失败: {}", e);
+                (0.0, 0.0, 0.0, 0.0, 0.0)
+            }
+        };
+
+    let net_profit = total_revenue - total_expenses;
+    let cash_flow = 0.0;
+
+    let key_ratios = KeyRatios {
+        current_ratio: if total_liabilities > 0.0 {
+            total_assets / total_liabilities
+        } else {
+            0.0
+        },
+        debt_ratio: if total_assets > 0.0 {
+            total_liabilities / total_assets
+        } else {
+            0.0
+        },
+        return_on_equity: if total_equity > 0.0 {
+            net_profit / total_equity
+        } else {
+            0.0
+        },
+        profit_margin: if total_revenue > 0.0 {
+            net_profit / total_revenue
+        } else {
+            0.0
+        },
+        return_on_assets: if total_assets > 0.0 {
+            net_profit / total_assets
+        } else {
+            0.0
+        },
+        earnings_per_share: 0.0,
+    };
+
+    let overview = BusinessOverview {
+        total_assets,
+        total_liabilities,
+        total_equity,
+        total_revenue,
+        total_expenses,
+        net_profit,
+        cash_flow,
+        period,
+        key_ratios,
+        receivable_turnover: 0.0,
+        inventory_turnover: 0.0,
+        asset_turnover: if total_assets > 0.0 {
+            total_revenue / total_assets
+        } else {
+            0.0
+        },
+    };
+
+    Json(ApiResponse::success(overview, "获取经营概览成功"))
+}
+
+async fn project_summary(
+    State(state): State<ApiState>,
+    Extension(claims): Extension<Claims>,
+    Query(params): Query<ReportParams>,
+) -> Json<ApiResponse<Vec<ProjectFinancialSummary>>> {
+    if let Err(e) = check_permission(&claims, &ModulePermission::ReportRead).await {
+        return e;
+    }
+
+    let result = sqlx::query(
+        r#"
+        SELECT 
+            v.project_id,
+            v.project_id as project_name,
+            COALESCE(SUM(CASE WHEN s.code LIKE '4%' THEN vi.credit_amount ELSE 0 END), 0.0) as contract_amount,
+            COALESCE(SUM(CASE WHEN s.code LIKE '10%' THEN vi.debit_amount ELSE 0 END), 0.0) as received_amount,
+            COALESCE(SUM(CASE WHEN s.code LIKE '2%' THEN vi.credit_amount ELSE 0 END), 0.0) as payable_amount,
+            COALESCE(SUM(CASE WHEN s.code LIKE '2%' THEN vi.debit_amount ELSE 0 END), 0.0) as paid_amount,
+            COALESCE(SUM(vi.credit_amount - vi.debit_amount), 0.0) as profit
+        FROM plugin_erp.financial_vouchers v
+        LEFT JOIN plugin_erp.voucher_items vi ON vi.voucher_id = v.id
+        LEFT JOIN plugin_erp.accounting_subjects s ON vi.subject_code = s.code
+        WHERE v.project_id IS NOT NULL
+        GROUP BY v.project_id
+        "#,
+    )
+    .fetch_all(&state.db)
+    .await;
+
+    let summaries = match result {
+        Ok(rows) => {
+            let mut items = Vec::new();
+            for row in rows {
+                let contract_amount: f64 = row.try_get("contract_amount").unwrap_or(0.0);
+                let profit: f64 = row.try_get("profit").unwrap_or(0.0);
+                items.push(ProjectFinancialSummary {
+                    project_id: row.try_get("project_id").unwrap_or_default(),
+                    project_name: row.try_get("project_name").unwrap_or_default(),
+                    contract_amount,
+                    received_amount: row.try_get("received_amount").unwrap_or(0.0),
+                    payable_amount: row.try_get("payable_amount").unwrap_or(0.0),
+                    paid_amount: row.try_get("paid_amount").unwrap_or(0.0),
+                    profit,
+                    margin: if contract_amount > 0.0 {
+                        (profit / contract_amount) * 100.0
+                    } else {
+                        0.0
+                    },
+                    status: "active".to_string(),
+                });
+            }
+            items
+        }
+        Err(e) => {
+            tracing::error!("获取项目财务汇总失败: {}", e);
+            Vec::new()
+        }
+    };
+
+    Json(ApiResponse::success(summaries, "获取项目财务汇总成功"))
+}
+
+async fn department_summary(
+    State(state): State<ApiState>,
+    Extension(claims): Extension<Claims>,
+    Query(params): Query<ReportParams>,
+) -> Json<ApiResponse<Vec<DepartmentFinancialSummary>>> {
+    if let Err(e) = check_permission(&claims, &ModulePermission::ReportRead).await {
+        return e;
+    }
+
+    let result = sqlx::query(
+        r#"
+        SELECT 
+            d.id as department_id,
+            d.name as department_name,
+            COALESCE(SUM(b.used_amount), 0.0) as total_expenses,
+            COALESCE(SUM(b.total_budget), 0.0) as budget_amount,
+            COALESCE(COUNT(e.id), 0) as expense_count
+        FROM public.departments d
+        LEFT JOIN plugin_erp.budgets b ON d.id = b.department_id
+        LEFT JOIN plugin_erp.financial_vouchers e ON d.id = e.maker_id
+        GROUP BY d.id, d.name
+        "#,
+    )
+    .fetch_all(&state.db)
+    .await;
+
+    let summaries = match result {
+        Ok(rows) => {
+            let mut items = Vec::new();
+            for row in rows {
+                let budget_amount: f64 = row.try_get("budget_amount").unwrap_or(0.0);
+                let total_expenses: f64 = row.try_get("total_expenses").unwrap_or(0.0);
+                items.push(DepartmentFinancialSummary {
+                    department_id: row.try_get("department_id").ok(),
+                    department_name: row.try_get("department_name").unwrap_or_default(),
+                    total_expenses,
+                    budget_amount,
+                    budget_usage: if budget_amount > 0.0 {
+                        (total_expenses / budget_amount) * 100.0
+                    } else {
+                        0.0
+                    },
+                    expense_count: row.try_get("expense_count").unwrap_or(0),
+                });
+            }
+            items
+        }
+        Err(e) => {
+            tracing::error!("获取部门财务汇总失败: {}", e);
+            Vec::new()
+        }
+    };
+
+    Json(ApiResponse::success(summaries, "获取部门财务汇总成功"))
+}
+
+async fn cash_flow_analysis(
+    State(state): State<ApiState>,
+    Extension(claims): Extension<Claims>,
+    Query(params): Query<ReportParams>,
+) -> Json<ApiResponse<CashFlowAnalysis>> {
+    if let Err(e) = check_permission(&claims, &ModulePermission::ReportRead).await {
+        return e;
+    }
+
+    let period = params.period.unwrap_or_else(|| {
+        let now = Utc::now();
+        format!("{}-{:02}", now.year(), now.month())
+    });
+
+    let result = sqlx::query(
+        r#"
+        SELECT 
+            SUM(CASE WHEN s.code LIKE '1001%' OR s.code LIKE '1002%' THEN (vi.debit_amount - vi.credit_amount) ELSE 0 END) as operating_cash_flow,
+            SUM(CASE WHEN s.code LIKE '15%' THEN (vi.debit_amount - vi.credit_amount) ELSE 0 END) as investing_cash_flow,
+            SUM(CASE WHEN s.code LIKE '2%' OR s.code LIKE '3%' THEN (vi.debit_amount - vi.credit_amount) ELSE 0 END) as financing_cash_flow
+        FROM plugin_erp.accounting_subjects s
+        LEFT JOIN plugin_erp.voucher_items vi ON vi.subject_code = s.code
+        LEFT JOIN plugin_erp.financial_vouchers v ON vi.voucher_id = v.id
+        WHERE v.period = $1
+        "#,
+    )
+    .bind(&period)
+    .fetch_one(&state.db)
+    .await;
+
+    let (operating_cash_flow, investing_cash_flow, financing_cash_flow) = match result {
+        Ok(row) => (
+            row.try_get("operating_cash_flow").unwrap_or(0.0),
+            row.try_get("investing_cash_flow").unwrap_or(0.0),
+            row.try_get("financing_cash_flow").unwrap_or(0.0),
+        ),
+        Err(e) => {
+            tracing::error!("获取现金流分析数据失败: {}", e);
+            (0.0, 0.0, 0.0)
+        }
+    };
+
+    let net_cash_flow = operating_cash_flow + investing_cash_flow + financing_cash_flow;
+    let total_revenue = 0.0;
+
+    let analysis = CashFlowAnalysis {
+        period,
+        operating_cash_flow,
+        investing_cash_flow,
+        financing_cash_flow,
+        net_cash_flow,
+        cash_flow_ratio: 0.0,
+        operating_cash_flow_to_revenue: if total_revenue > 0.0 {
+            operating_cash_flow / total_revenue
+        } else {
+            0.0
+        },
+    };
+
+    Json(ApiResponse::success(analysis, "获取现金流分析成功"))
+}
+
+async fn expense_analysis(
+    State(state): State<ApiState>,
+    Extension(claims): Extension<Claims>,
+    Query(params): Query<ReportParams>,
+) -> Json<ApiResponse<ExpenseAnalysis>> {
+    if let Err(e) = check_permission(&claims, &ModulePermission::ReportRead).await {
+        return e;
+    }
+
+    let period = params.period.unwrap_or_else(|| {
+        let now = Utc::now();
+        format!("{}-{:02}", now.year(), now.month())
+    });
+
+    let total_result = sqlx::query_scalar::<_, f64>(
+        r#"
+        SELECT COALESCE(SUM(vi.debit_amount), 0.0) 
+        FROM plugin_erp.voucher_items vi
+        LEFT JOIN plugin_erp.financial_vouchers v ON vi.voucher_id = v.id
+        LEFT JOIN plugin_erp.accounting_subjects s ON vi.subject_code = s.code
+        WHERE v.period = $1 AND s.code LIKE '5%'
+        "#,
+    )
+    .bind(&period)
+    .fetch_one(&state.db)
+    .await;
+
+    let total_expenses = total_result.unwrap_or(0.0);
+
+    let department_result = sqlx::query(
+        r#"
+        SELECT 
+            d.id as department_id,
+            d.name as department_name,
+            COALESCE(SUM(vi.debit_amount), 0.0) as amount
+        FROM public.departments d
+        LEFT JOIN plugin_erp.voucher_items vi ON vi.subject_code IN (SELECT code FROM plugin_erp.accounting_subjects WHERE code LIKE '5%')
+        LEFT JOIN plugin_erp.financial_vouchers v ON vi.voucher_id = v.id
+        WHERE v.period = $1
+        GROUP BY d.id, d.name
+        "#,
+    )
+    .bind(&period)
+    .fetch_all(&state.db)
+    .await;
+
+    let department_expenses = match department_result {
+        Ok(rows) => rows
+            .into_iter()
+            .map(|row| DepartmentExpense {
+                department_id: row.try_get("department_id").ok(),
+                department_name: row.try_get("department_name").unwrap_or_default(),
+                amount: row.try_get("amount").unwrap_or(0.0),
+                percentage: if total_expenses > 0.0 {
+                    (row.try_get("amount").unwrap_or(0.0) / total_expenses) * 100.0
+                } else {
+                    0.0
+                },
+            })
+            .collect(),
+        Err(e) => {
+            tracing::error!("获取部门费用分析失败: {}", e);
+            Vec::new()
+        }
+    };
+
+    let category_result = sqlx::query(
+        r#"
+        SELECT 
+            s.category,
+            COALESCE(SUM(vi.debit_amount), 0.0) as amount
+        FROM plugin_erp.accounting_subjects s
+        LEFT JOIN plugin_erp.voucher_items vi ON vi.subject_code = s.code
+        LEFT JOIN plugin_erp.financial_vouchers v ON vi.voucher_id = v.id
+        WHERE v.period = $1 AND s.code LIKE '5%'
+        GROUP BY s.category
+        "#,
+    )
+    .bind(&period)
+    .fetch_all(&state.db)
+    .await;
+
+    let category_expenses = match category_result {
+        Ok(rows) => rows
+            .into_iter()
+            .map(|row| CategoryExpense {
+                category: row.try_get("category").unwrap_or_default(),
+                amount: row.try_get("amount").unwrap_or(0.0),
+                percentage: if total_expenses > 0.0 {
+                    (row.try_get("amount").unwrap_or(0.0) / total_expenses) * 100.0
+                } else {
+                    0.0
+                },
+            })
+            .collect(),
+        Err(e) => {
+            tracing::error!("获取类别费用分析失败: {}", e);
+            Vec::new()
+        }
+    };
+
+    let monthly_trend = Vec::new();
+
+    let analysis = ExpenseAnalysis {
+        period,
+        total_expenses,
+        department_expenses,
+        category_expenses,
+        monthly_trend,
+    };
+
+    Json(ApiResponse::success(analysis, "获取费用分析成功"))
+}
+
+async fn profit_analysis(
+    State(state): State<ApiState>,
+    Extension(claims): Extension<Claims>,
+    Query(params): Query<ReportParams>,
+) -> Json<ApiResponse<ProfitAnalysis>> {
+    if let Err(e) = check_permission(&claims, &ModulePermission::ReportRead).await {
+        return e;
+    }
+
+    let period = params.period.unwrap_or_else(|| {
+        let now = Utc::now();
+        format!("{}-{:02}", now.year(), now.month())
+    });
+
+    let result = sqlx::query(
+        r#"
+        SELECT 
+            SUM(CASE WHEN s.code LIKE '4%' THEN COALESCE(vi.credit_amount, 0.0) ELSE 0.0 END) as revenue,
+            SUM(CASE WHEN s.code LIKE '5%' THEN COALESCE(vi.debit_amount, 0.0) ELSE 0.0 END) as expense
+        FROM plugin_erp.accounting_subjects s
+        LEFT JOIN plugin_erp.voucher_items vi ON vi.subject_code = s.code
+        LEFT JOIN plugin_erp.financial_vouchers v ON vi.voucher_id = v.id
+        WHERE v.period = $1
+        "#,
+    )
+    .bind(&period)
+    .fetch_one(&state.db)
+    .await;
+
+    let (revenue, expense) = match result {
+        Ok(row) => (
+            row.try_get("revenue").unwrap_or(0.0),
+            row.try_get("expense").unwrap_or(0.0),
+        ),
+        Err(e) => {
+            tracing::error!("获取利润分析数据失败: {}", e);
+            (0.0, 0.0)
+        }
+    };
+
+    let gross_profit = revenue;
+    let operating_profit = gross_profit - expense;
+    let net_profit = operating_profit;
+
+    let analysis = ProfitAnalysis {
+        period,
+        gross_profit,
+        operating_profit,
+        net_profit,
+        gross_margin: if revenue > 0.0 {
+            (gross_profit / revenue) * 100.0
+        } else {
+            0.0
+        },
+        operating_margin: if revenue > 0.0 {
+            (operating_profit / revenue) * 100.0
+        } else {
+            0.0
+        },
+        net_margin: if revenue > 0.0 {
+            (net_profit / revenue) * 100.0
+        } else {
+            0.0
+        },
+        profit_trend: Vec::new(),
+    };
+
+    Json(ApiResponse::success(analysis, "获取利润分析成功"))
+}
+
+async fn financial_overview(
+    State(state): State<ApiState>,
+    Extension(claims): Extension<Claims>,
+    Query(params): Query<ReportParams>,
+) -> Json<ApiResponse<FinancialOverview>> {
+    if let Err(e) = check_permission(&claims, &ModulePermission::ReportRead).await {
+        return e;
+    }
+
+    let period = params.period.unwrap_or_else(|| {
+        let now = Utc::now();
+        format!("{}-{:02}", now.year(), now.month())
+    });
+
+    let result = sqlx::query(
+        r#"
+        SELECT 
+            SUM(CASE WHEN s.code LIKE '1%' THEN COALESCE(vi.debit_amount - vi.credit_amount, 0.0) ELSE 0.0 END) as total_assets,
+            SUM(CASE WHEN s.code LIKE '2%' THEN COALESCE(vi.debit_amount - vi.credit_amount, 0.0) ELSE 0.0 END) as total_liabilities,
+            SUM(CASE WHEN s.code LIKE '3%' THEN COALESCE(vi.debit_amount - vi.credit_amount, 0.0) ELSE 0.0 END) as total_equity,
+            SUM(CASE WHEN s.code LIKE '4%' THEN COALESCE(vi.credit_amount, 0.0) ELSE 0.0 END) as total_revenue,
+            SUM(CASE WHEN s.code LIKE '5%' THEN COALESCE(vi.debit_amount, 0.0) ELSE 0.0 END) as total_expenses
+        FROM plugin_erp.accounting_subjects s
+        LEFT JOIN plugin_erp.voucher_items vi ON vi.subject_code = s.code
+        LEFT JOIN plugin_erp.financial_vouchers v ON vi.voucher_id = v.id
+        WHERE v.period = $1
+        "#,
+    )
+    .bind(&period)
+    .fetch_one(&state.db)
+    .await;
+
+    let (total_assets, total_liabilities, total_equity, total_revenue, total_expenses) =
+        match result {
+            Ok(row) => (
+                row.try_get("total_assets").unwrap_or(0.0),
+                row.try_get("total_liabilities").unwrap_or(0.0),
+                row.try_get("total_equity").unwrap_or(0.0),
+                row.try_get("total_revenue").unwrap_or(0.0),
+                row.try_get("total_expenses").unwrap_or(0.0),
+            ),
+            Err(e) => {
+                tracing::error!("获取财务概览数据失败: {}", e);
+                (0.0, 0.0, 0.0, 0.0, 0.0)
+            }
+        };
+
+    let net_profit = total_revenue - total_expenses;
+    let operating_cash_flow = 0.0;
+
+    let current_ratio = if total_liabilities > 0.0 {
+        total_assets / total_liabilities
+    } else {
+        0.0
+    };
+    let debt_ratio = if total_assets > 0.0 {
+        total_liabilities / total_assets
+    } else {
+        0.0
+    };
+    let return_on_equity = if total_equity > 0.0 {
+        net_profit / total_equity
+    } else {
+        0.0
+    };
+    let profit_margin = if total_revenue > 0.0 {
+        net_profit / total_revenue
+    } else {
+        0.0
+    };
+    let return_on_assets = if total_assets > 0.0 {
+        net_profit / total_assets
+    } else {
+        0.0
+    };
+
+    let overview = FinancialOverview {
+        total_assets,
+        total_liabilities,
+        total_equity,
+        total_revenue,
+        total_expenses,
+        net_profit,
+        operating_cash_flow,
+        key_ratios: KeyRatios {
+            current_ratio,
+            debt_ratio,
+            return_on_equity,
+            profit_margin,
+            return_on_assets,
+            earnings_per_share: 0.0,
+        },
+        profit_margin,
+        return_on_assets,
+        return_on_equity,
+        debt_ratio,
+        current_ratio,
+    };
+
+    Json(ApiResponse::success(overview, "获取财务概览成功"))
 }

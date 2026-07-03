@@ -28,6 +28,12 @@ pub fn create_routes() -> Router<ApiState> {
             "/api/scm/mrp/material-summary",
             get(material_requirement_summary),
         )
+        .route("/api/scm/mrp-suggestions", get(list_suggestions))
+        .route("/api/scm/mrp-suggestions/{id}", get(get_suggestion))
+        .route(
+            "/api/scm/mrp-suggestions/summary",
+            get(material_requirement_summary),
+        )
 }
 
 #[derive(Debug, Clone, Deserialize, Serialize)]

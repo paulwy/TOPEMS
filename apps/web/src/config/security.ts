@@ -45,7 +45,7 @@ export const securityConfig: SecurityConfig = {
           'https://*.google-analytics.com',
         ],
     styleSrc: ["'self'", "'unsafe-inline'", 'https://fonts.googleapis.com'],
-    imgSrc: ["'self'", 'data:', 'blob:', 'https://*.amap.com', 'https://*.gravatar.com'],
+    imgSrc: ["'self'", 'data:', 'blob:', 'https://*.amap.com', 'https://*.gravatar.com', 'https://*.openstreetmap.org'],
     fontSrc: ["'self'", 'https://fonts.gstatic.com'],
     connectSrc: isDev
       ? ["'self'", 'http://localhost:*', 'ws://localhost:*', 'wss://localhost:*']
@@ -61,7 +61,7 @@ export const securityConfig: SecurityConfig = {
         "default-src 'self'",
         "script-src 'self' 'unsafe-inline' 'unsafe-eval' http://localhost:* ws://localhost:* wss://localhost:*",
         "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com",
-        "img-src 'self' data: blob: https://*.amap.com https://*.gravatar.com",
+        "img-src 'self' data: blob: https://*.amap.com https://*.gravatar.com https://*.openstreetmap.org",
         "font-src 'self' https://fonts.gstatic.com",
         "connect-src 'self' http://localhost:* ws://localhost:* wss://localhost:*",
         "object-src 'none'",
@@ -73,7 +73,7 @@ export const securityConfig: SecurityConfig = {
         "default-src 'self'",
         "script-src 'self' 'strict-dynamic' 'unsafe-inline' https://*.amap.com https://*.baidu.com https://*.google.com https://*.google-analytics.com",
         "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com",
-        "img-src 'self' data: blob: https://*.amap.com https://*.gravatar.com",
+        "img-src 'self' data: blob: https://*.amap.com https://*.gravatar.com https://*.openstreetmap.org",
         "font-src 'self' https://fonts.gstatic.com",
         "connect-src 'self' https://*.amap.com https://api.map.baidu.com wss://*",
         "object-src 'none'",

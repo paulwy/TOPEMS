@@ -85,7 +85,7 @@ export const docModuleConfig: RouteModuleConfig = {
       requiredPermissions: ['doc:read'],
     },
     {
-      path: '/doc/file/:id',
+      path: '/doc/documents/:id',
       element: DocsFileDetailPage,
       module: 'doc',
       code: 'doc-file-detail',

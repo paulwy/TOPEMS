@@ -1,3 +1,4 @@
+pub mod attendance;
 pub mod auth;
 pub mod auth_utils;
 pub mod barcode_scanner;

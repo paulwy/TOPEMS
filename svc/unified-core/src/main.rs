@@ -871,6 +871,14 @@ async fn main() {
             get(modules::communication::notification::list_archived_notifications),
         )
         .route(
+            "/api/v1/notifications/archive/config",
+            get(modules::communication::notification::get_archive_config),
+        )
+        .route(
+            "/api/v1/notifications/health/detailed",
+            get(modules::communication::notification::get_notification_health_detailed),
+        )
+        .route(
             "/api/v1/notification-templates",
             get(modules::communication::notification::list_templates),
         )
@@ -999,6 +1007,14 @@ async fn main() {
         .route(
             "/api/v1/notifications",
             delete(modules::communication::notification::delete_all_notifications),
+        )
+        .route(
+            "/api/v1/notifications/archive/config",
+            put(modules::communication::notification::update_archive_config),
+        )
+        .route(
+            "/api/v1/notifications/archive/run",
+            post(modules::communication::notification::run_auto_archive),
         )
         .route(
             "/api/v1/notification-templates",

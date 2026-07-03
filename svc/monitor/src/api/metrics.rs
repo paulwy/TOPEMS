@@ -1,7 +1,5 @@
 use axum::{
     extract::{Extension, State},
-    http::StatusCode,
-    response::{IntoResponse, Response},
     routing::get,
     Json, Router,
 };
@@ -66,10 +64,6 @@ pub fn create_routes() -> Router<ApiState> {
             get(get_database_metrics),
         )
         .route("/api/v1/monitor/performance/api", get(get_api_performance))
-        .route(
-            "/api/v1/monitor/metrics/test-retry",
-            get(test_retry_endpoint),
-        )
 }
 
 async fn get_system_metrics(
@@ -164,49 +158,4 @@ async fn get_api_performance(
     ];
 
     Json(ApiResponse::success(performances, "获取API性能指标成功"))
-}
-
-use std::sync::atomic::{AtomicUsize, Ordering};
-
-static RETRY_ATTEMPT: AtomicUsize = AtomicUsize::new(0);
-
-async fn test_retry_endpoint(
-    State(state): State<ApiState>,
-    Extension(claims): Extension<Claims>,
-) -> Response {
-    let attempt = RETRY_ATTEMPT.fetch_add(1, Ordering::SeqCst);
-
-    println!("[Test] test_retry_endpoint called, attempt: {}", attempt);
-
-    if attempt < 2 {
-        println!("[Test] Returning HTTP 500 error on attempt {}", attempt);
-        (
-            StatusCode::INTERNAL_SERVER_ERROR,
-            Json(ApiResponse::<serde_json::Value>::error(
-                500,
-                "模拟服务器内部错误",
-            )),
-        )
-            .into_response()
-    } else {
-        println!("[Test] Returning success on attempt {}", attempt);
-        let metrics = SystemMetricsResponse {
-            service_name: "topems-monitor-test".to_string(),
-            uptime: state.metrics.get_uptime(),
-            uptime_seconds: state.metrics.get_uptime_seconds(),
-            cpu_usage: 23.5,
-            memory_usage: 45.2,
-            memory_total: 16_000_000_000,
-            memory_used: 7_232_000_000,
-            disk_usage: 32.8,
-            disk_total: 500_000_000_000,
-            disk_used: 164_000_000_000,
-            network_in: 1_234_567_890,
-            network_out: 987_654_321,
-            request_count: state.metrics.get_request_count(),
-            error_count: state.metrics.get_error_count(),
-            active_connections: state.metrics.get_active_connections(),
-        };
-        Json(ApiResponse::success(metrics, "测试重试成功")).into_response()
-    }
 }

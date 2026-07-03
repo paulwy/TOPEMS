@@ -26,6 +26,19 @@ import { navigationRegistryV2 } from '../../lib/navigation';
 import type { NavItem } from '../../lib/navigation/types';
 import { usePermission } from '../../hooks/usePermission';
 
+function getNavigablePath(path: string): string | null {
+  if (!path) return null;
+  if (path.includes(':id')) {
+    const segments = path.split('/').filter(Boolean);
+    const paramIndex = segments.findIndex((s) => s.startsWith(':'));
+    if (paramIndex > 0) {
+      return '/' + segments.slice(0, paramIndex).join('/');
+    }
+    return null;
+  }
+  return path;
+}
+
 interface SidebarProps {
   open: boolean;
   onClose: () => void;
@@ -101,8 +114,11 @@ export const Sidebar: React.FC<SidebarProps> = ({ open, onClose, pluginCode }) =
             if (hasChildren) {
               toggleExpand(item.code);
             } else if (item.path) {
-              navigate(item.path);
-              onClose();
+              const navigablePath = getNavigablePath(item.path);
+              if (navigablePath) {
+                navigate(navigablePath);
+                onClose();
+              }
             }
           }}
           sx={{

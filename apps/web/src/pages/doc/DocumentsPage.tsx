@@ -1237,6 +1237,7 @@ const DocumentsPage: React.FC = () => {
                       onPreview={handlePreview}
                       isSelected={selectedFiles.includes(item.id)}
                       onSelect={toggleFileSelect}
+                      onClick={(file) => navigate(`/doc/documents/${file.id}`)}
                     />
                   )
                 )}
@@ -1401,7 +1402,11 @@ const DocumentsPage: React.FC = () => {
                               </td>
                             </tr>
                           ) : (
-                            <tr key={item.id}>
+                            <tr
+                              key={item.id}
+                              onClick={() => navigate(`/doc/documents/${item.id}`)}
+                              style={{ cursor: 'pointer' }}
+                            >
                               <td
                                 style={{
                                   padding: '16px 24px',
@@ -1478,21 +1483,30 @@ const DocumentsPage: React.FC = () => {
                                   <Button
                                     variant='text'
                                     size='small'
-                                    onClick={() => handlePreview(item)}
+                                    onClick={(e) => {
+                                      e.stopPropagation();
+                                      handlePreview(item);
+                                    }}
                                   >
                                     <Eye sx={{ width: 16, height: 16 }} />
                                   </Button>
                                   <Button
                                     variant='text'
                                     size='small'
-                                    onClick={() => handleDownload(item)}
+                                    onClick={(e) => {
+                                      e.stopPropagation();
+                                      handleDownload(item);
+                                    }}
                                   >
                                     <Download sx={{ width: 16, height: 16 }} />
                                   </Button>
                                   <Button
                                     variant='text'
                                     size='small'
-                                    onClick={() => toggleStar(item.id)}
+                                    onClick={(e) => {
+                                      e.stopPropagation();
+                                      toggleStar(item.id);
+                                    }}
                                   >
                                     <Star
                                       sx={{ width: 16, height: 16 }}
@@ -1505,7 +1519,10 @@ const DocumentsPage: React.FC = () => {
                                     variant='text'
                                     size='small'
                                     color='error'
-                                    onClick={() => handleDelete(item.id)}
+                                    onClick={(e) => {
+                                      e.stopPropagation();
+                                      handleDelete(item.id);
+                                    }}
                                   >
                                     <Trash2 sx={{ width: 16, height: 16 }} />
                                   </Button>
@@ -1620,6 +1637,7 @@ interface FileCardProps {
   onPreview: (file: File) => void;
   isSelected?: boolean;
   onSelect?: (id: string) => void;
+  onClick?: (file: File) => void;
 }
 
 const FileCard: React.FC<FileCardProps> = ({
@@ -1629,6 +1647,7 @@ const FileCard: React.FC<FileCardProps> = ({
   onPreview,
   isSelected = false,
   onSelect,
+  onClick,
 }) => {
   return (
     <Card
@@ -1640,6 +1659,7 @@ const FileCard: React.FC<FileCardProps> = ({
         '&:hover .hidden-actions': { opacity: 1 },
         ...(isSelected && { ring: 2, ringColor: 'primary.main' }),
       }}
+      onClick={() => onClick?.(file)}
     >
       {onSelect && (
         <Box sx={{ position: 'absolute', top: 1, left: 1, zIndex: 1 }}>

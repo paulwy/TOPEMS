@@ -4,7 +4,7 @@ use axum::{
     Json,
 };
 use serde::{Deserialize, Serialize};
-use sqlx::{postgres::PgPoolOptions, PgPool};
+use sqlx::{postgres::PgPoolOptions, PgPool, Row};
 use std::sync::Arc;
 use tracing::{debug, error};
 use uuid::Uuid;
@@ -50,19 +50,19 @@ impl RlsMiddleware {
     }
 
     async fn enable_rls_on_tables(pool: &PgPool, schema: &str) -> Result<(), sqlx::Error> {
-        let tables = sqlx::query!(
+        let tables = sqlx::query(
             r#"
             SELECT table_name 
             FROM information_schema.tables 
             WHERE table_schema = $1 AND table_name NOT LIKE 'pg_%' AND table_name NOT LIKE 'sqlx_%'
             "#,
-            schema
         )
+        .bind(schema)
         .fetch_all(pool)
         .await?;
 
         for table in tables {
-            let table_name = table.table_name.as_deref().unwrap_or_default();
+            let table_name: String = table.try_get("table_name")?;
             let enable_rls = format!(
                 "ALTER TABLE IF EXISTS {}.{} ENABLE ROW LEVEL SECURITY",
                 schema, table_name

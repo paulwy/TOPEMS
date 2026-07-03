@@ -233,7 +233,15 @@ export class NavigationRegistryV2 {
       currentPath: NavItem[]
     ): NavItem[] | null => {
       for (const item of items) {
-        const enriched = this.enrichNavItem(item, module);
+        let enriched = this.enrichNavItem(item, module);
+
+        if (this.matchDynamicRoute(item.path, path)) {
+          enriched = {
+            ...enriched,
+            path: this.getActualPath(item.path, path),
+          };
+        }
+
         const newPath = [...currentPath, enriched];
 
         if (item.path === path || this.matchDynamicRoute(item.path, path)) {
@@ -300,6 +308,29 @@ export class NavigationRegistryV2 {
     }
 
     return true;
+  }
+
+  private getActualPath(routePath: string, currentPath: string): string {
+    const routeSegments = routePath.split('/').filter(Boolean);
+    const pathSegments = currentPath.split('/').filter(Boolean);
+
+    if (routeSegments.length !== pathSegments.length) {
+      return routePath;
+    }
+
+    const actualSegments: string[] = [];
+    for (let i = 0; i < routeSegments.length; i++) {
+      const routeSegment = routeSegments[i];
+      const pathSegment = pathSegments[i];
+
+      if (routeSegment.startsWith(':')) {
+        actualSegments.push(pathSegment);
+      } else {
+        actualSegments.push(routeSegment);
+      }
+    }
+
+    return `/${actualSegments.join('/')}`;
   }
 
   private enrichNavItem(item: NavItemConfig, module: ModuleNavConfig): NavItem {
