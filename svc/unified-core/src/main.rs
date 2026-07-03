@@ -214,6 +214,10 @@ async fn main() {
         )
         .route("/api/plugins/health", get(plugin_health_check))
         .route(
+            "/api/v1/notifications/health/detailed",
+            get(modules::communication::notification::get_notification_health_detailed),
+        )
+        .route(
             "/metrics",
             get(move || async move { metric_handle.render() }),
         )
@@ -873,10 +877,6 @@ async fn main() {
         .route(
             "/api/v1/notifications/archive/config",
             get(modules::communication::notification::get_archive_config),
-        )
-        .route(
-            "/api/v1/notifications/health/detailed",
-            get(modules::communication::notification::get_notification_health_detailed),
         )
         .route(
             "/api/v1/notification-templates",

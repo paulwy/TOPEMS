@@ -930,19 +930,17 @@ const MailPage: React.FC = () => {
         </Box>
 
         <Box sx={{ maxWidth: 1280, mx: 'auto', px: 3, py: 4 }}>
-          <Tabs
-            value={activeTab}
-            onChange={(_, v) => setActiveTab(v)}
-            sx={{ width: '100%' }}
+          <Box
+            sx={{
+              mb: 3,
+              borderBottom: 1,
+              borderColor: 'divider',
+            }}
           >
-            <Box
-              sx={{
-                mb: 3,
-                borderBottom: 1,
-                borderColor: 'divider',
-                display: 'flex',
-                gap: 1,
-              }}
+            <Tabs
+              value={activeTab}
+              onChange={(_, v) => setActiveTab(v)}
+              sx={{ width: '100%' }}
             >
               <Tab
                 value='emails'
@@ -958,11 +956,12 @@ const MailPage: React.FC = () => {
                 sx={{ textTransform: 'none', minHeight: 48 }}
                 label='邮件模板'
               />
-            </Box>
+            </Tabs>
+          </Box>
 
-            {activeTab === 'emails' && (
-              <Box sx={{ mt: 0 }}>
-                <Box sx={{ mb: 3, display: 'flex', alignItems: 'center', gap: 2 }}>
+          {activeTab === 'emails' && (
+            <Box sx={{ mt: 0 }}>
+              <Box sx={{ mb: 3, display: 'flex', alignItems: 'center', gap: 2 }}>
                   <Box sx={{ flex: 1, position: 'relative' }}>
                     <Box
                       sx={{
@@ -2059,9 +2058,8 @@ const MailPage: React.FC = () => {
                     </CardContent>
                   )}
                 </Card>
-              </Box>
-            )}
-          </Tabs>
+            </Box>
+          )}
         </Box>
 
         <Dialog
@@ -2102,8 +2100,8 @@ const MailPage: React.FC = () => {
                   <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
                     <InputLabel htmlFor='template-select'>选择模板</InputLabel>
                     <FormControl
-                      fullWidth
                       size='small'
+                      sx={{ width: '100%' }}
                     >
                       <Select
                         value={sendForm.template_code}
@@ -2516,8 +2514,8 @@ const MailPage: React.FC = () => {
                 <Box sx={{ display: 'flex', flexDirection: 'column', gap: 1 }}>
                   <InputLabel htmlFor='template-category'>分类</InputLabel>
                   <FormControl
-                    fullWidth
                     size='small'
+                    sx={{ width: '100%' }}
                   >
                     <Select
                       value={templateForm.category}
@@ -2715,8 +2713,8 @@ const MailPage: React.FC = () => {
                   <Box sx={{ display: 'flex', flexDirection: 'column', gap: 1 }}>
                     <InputLabel htmlFor='edit-template-category'>分类</InputLabel>
                     <FormControl
-                      fullWidth
                       size='small'
+                      sx={{ width: '100%' }}
                     >
                       <Select
                         value={templateForm.category}

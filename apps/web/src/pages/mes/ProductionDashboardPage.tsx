@@ -1,4 +1,5 @@
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { useAuth } from '@/hooks/useAuth';
 import {
   Box,
   Chip,
@@ -1012,6 +1013,7 @@ const ProductionGantt: React.FC<{
 
 // ============== 主页 ==============
 export const ProductionDashboardPage: React.FC = () => {
+  const { token } = useAuth();
   const [loading, setLoading] = useState(true);
   const [refreshStatus, setRefreshStatus] = useState<RefreshStatus>('idle');
   const [autoRefresh, setAutoRefresh] = useState(true);
@@ -1256,8 +1258,8 @@ export const ProductionDashboardPage: React.FC = () => {
     try {
       const protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
       const host = window.location.host || 'localhost:8080';
-      // 优先尝试连 mes 服务 ws 路径；失败时降级为轮询
-      const wsUrl = `${protocol}//${host}/mes/ws/dashboard`;
+      const tokenParam = token ? `?token=${encodeURIComponent(token)}` : '';
+      const wsUrl = `${protocol}//${host}/mes/ws/dashboard${tokenParam}`;
       const ws = new WebSocket(wsUrl);
       wsRef.current = ws;
 
@@ -1290,7 +1292,7 @@ export const ProductionDashboardPage: React.FC = () => {
       apiLogger.warn('MES WebSocket 连接失败，将使用轮询模式', err);
       setWsConnected(false);
     }
-  }, [wsSupported, autoRefresh]);
+  }, [wsSupported, autoRefresh, token]);
 
   // ============== 副作用 ==============
   useEffect(() => {

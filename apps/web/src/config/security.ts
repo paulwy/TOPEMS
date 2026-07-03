@@ -16,6 +16,7 @@ export interface CspConfig {
   frameSrc: string[];
   formAction: string[];
   baseUri: string[];
+  workerSrc: string[];
 }
 
 const isDev = import.meta.env.DEV;
@@ -54,6 +55,7 @@ export const securityConfig: SecurityConfig = {
     frameSrc: ["'self'", 'https://*.amap.com'],
     formAction: ["'self'"],
     baseUri: ["'self'"],
+    workerSrc: ["'self'", 'blob:'],
   },
 
   contentSecurityPolicy: isDev
@@ -68,6 +70,7 @@ export const securityConfig: SecurityConfig = {
         "frame-src 'self' https://*.amap.com",
         "form-action 'self'",
         "base-uri 'self'",
+        "worker-src 'self' blob:",
       ].join('; ')
     : [
         "default-src 'self'",
@@ -80,6 +83,7 @@ export const securityConfig: SecurityConfig = {
         "frame-src 'self' https://*.amap.com",
         "form-action 'self'",
         "base-uri 'self'",
+        "worker-src 'self' blob:",
       ].join('; '),
 };
 

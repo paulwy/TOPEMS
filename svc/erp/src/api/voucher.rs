@@ -64,66 +64,75 @@ pub fn create_routes() -> Router<ApiState> {
         .route("/api/erp/vouchers/{id}/unpost", post(unpost_voucher))
         .route("/api/erp/vouchers/import/u8", post(import_u8_vouchers))
         .route(
-            "/api/voucher/templates",
+            "/api/erp/voucher/templates",
             get(list_voucher_templates).post(create_voucher_template),
         )
         .route(
-            "/api/voucher/templates/{template_id}",
+            "/api/erp/voucher/templates/{template_id}",
             get(get_voucher_template)
                 .put(update_voucher_template)
                 .delete(delete_voucher_template),
         )
         .route(
-            "/api/voucher/templates/{template_id}/copy",
+            "/api/erp/voucher/templates/{template_id}/copy",
             post(copy_voucher_template),
         )
         .route(
-            "/api/voucher/templates/{template_id}/set-default",
+            "/api/erp/voucher/templates/{template_id}/set-default",
             put(set_default_voucher_template),
         )
         .route(
-            "/api/voucher/templates/{template_id}/toggle",
+            "/api/erp/voucher/templates/{template_id}/toggle",
             put(toggle_voucher_template),
         )
         .route(
-            "/api/voucher/templates/{template_id}/entries",
+            "/api/erp/voucher/templates/{template_id}/entries",
             post(add_voucher_template_entry),
         )
         .route(
-            "/api/voucher/templates/{template_id}/entries/{entry_id}",
+            "/api/erp/voucher/templates/{template_id}/entries/{entry_id}",
             put(update_voucher_template_entry).delete(delete_voucher_template_entry),
         )
         .route(
-            "/api/voucher/templates/{template_id}/entries/reorder",
+            "/api/erp/voucher/templates/{template_id}/entries/reorder",
             put(reorder_voucher_template_entries),
         )
         .route(
-            "/api/voucher/generate/preview",
+            "/api/erp/voucher/generate/preview",
             post(preview_generated_vouchers),
         )
         .route(
-            "/api/voucher/generate/from-source",
+            "/api/erp/voucher/generate/from-source",
             post(generate_voucher_from_source),
         )
-        .route("/api/voucher/generate/batch", post(batch_generate_vouchers))
-        .route("/api/voucher/generate/auto", post(auto_generate_vouchers))
-        .route("/api/voucher/templates/match", post(match_voucher_template))
         .route(
-            "/api/voucher/templates/{template_id}/usage-stats",
+            "/api/erp/voucher/generate/batch",
+            post(batch_generate_vouchers),
+        )
+        .route(
+            "/api/erp/voucher/generate/auto",
+            post(auto_generate_vouchers),
+        )
+        .route(
+            "/api/erp/voucher/templates/match",
+            post(match_voucher_template),
+        )
+        .route(
+            "/api/erp/voucher/templates/{template_id}/usage-stats",
             get(get_template_usage_stats),
         )
         .route(
-            "/api/voucher/rules",
+            "/api/erp/voucher/rules",
             get(list_generation_rules).post(create_generation_rule),
         )
         .route(
-            "/api/voucher/rules/{rule_id}",
+            "/api/erp/voucher/rules/{rule_id}",
             get(get_generation_rule)
                 .put(update_generation_rule)
                 .delete(delete_generation_rule),
         )
         .route(
-            "/api/voucher/rules/{rule_id}/toggle",
+            "/api/erp/voucher/rules/{rule_id}/toggle",
             put(toggle_generation_rule),
         )
 }

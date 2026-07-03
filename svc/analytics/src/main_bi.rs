@@ -129,10 +129,12 @@ async fn main() {
             "/api/bi/dashboard",
             post(modules::bi::dashboard::create_dashboard),
         )
+        // Dashboard Templates - must come before {id} routes
         .route(
             "/api/bi/dashboard/template",
             get(modules::bi::dashboard::list_dashboard_templates),
         )
+        // Dashboard by ID
         .route(
             "/api/bi/dashboard/{id}",
             get(modules::bi::dashboard::get_dashboard),

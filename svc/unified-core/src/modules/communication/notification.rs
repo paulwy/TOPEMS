@@ -1744,7 +1744,6 @@ pub async fn run_auto_archive(
 
 pub async fn get_notification_health_detailed(
     State(state): State<AppState>,
-    Extension(_claims): Extension<Claims>,
 ) -> Json<serde_json::Value> {
     let db_status = match sqlx::query_scalar::<_, i32>("SELECT 1")
         .fetch_one(&state.pool)
