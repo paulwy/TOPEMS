@@ -468,6 +468,17 @@ pub async fn auth_middleware(
         return next.run(req).await;
     }
 
+    // Allow WebSocket upgrade requests without auth (auth handled separately)
+    let is_websocket_upgrade = req
+        .headers()
+        .get(header::UPGRADE)
+        .map(|h| h.to_str().unwrap_or(""))
+        .map(|h| h.eq_ignore_ascii_case("websocket"))
+        .unwrap_or(false);
+    if is_websocket_upgrade {
+        return next.run(req).await;
+    }
+
     // Allow plugin health check without auth (used by frontend for service discovery)
     if path.starts_with("/api/plugins/health") || path.starts_with("/api/plugins/info") {
         return next.run(req).await;
@@ -510,31 +521,62 @@ pub async fn auth_middleware(
         .get(header::AUTHORIZATION)
         .and_then(|h| h.to_str().ok());
 
-    let token = match auth_header {
-        Some(header) if header.starts_with("Bearer ") => &header[7..],
-        _ => {
-            return api_error::<()>(401, "未授权：缺少有效的认证令牌").into_response();
+    let claims = if let Some(header) = auth_header {
+        let token = if header.starts_with("Bearer ") {
+            &header[7..]
+        } else {
+            header
+        };
+        match decode::<Claims>(
+            token,
+            &DecodingKey::from_secret(auth_state.jwt_secret.as_ref()),
+            &Validation::new(Algorithm::HS256),
+        ) {
+            Ok(token_data) => token_data.claims,
+            Err(e) => {
+                tracing::error!("Token verification failed: {}", e);
+                return api_error::<()>(401, &format!("认证失败：{}", e)).into_response();
+            }
         }
+    } else if let Some(query) = parts.uri.query() {
+        let token_value: Option<String> = query
+            .split('&')
+            .filter_map(|pair| {
+                let mut parts = pair.splitn(2, '=');
+                let key = parts.next()?;
+                let value = parts.next()?;
+                if key == "token" {
+                    Some(value.to_string())
+                } else {
+                    None
+                }
+            })
+            .next();
+
+        match token_value {
+            Some(token) => match decode::<Claims>(
+                &token,
+                &DecodingKey::from_secret(auth_state.jwt_secret.as_ref()),
+                &Validation::new(Algorithm::HS256),
+            ) {
+                Ok(token_data) => token_data.claims,
+                Err(e) => {
+                    tracing::error!("Token verification failed: {}", e);
+                    return api_error::<()>(401, &format!("认证失败：{}", e)).into_response();
+                }
+            },
+            None => {
+                return api_error::<()>(401, "未授权：缺少有效的认证令牌").into_response();
+            }
+        }
+    } else {
+        return api_error::<()>(401, "未授权：缺少有效的认证令牌").into_response();
     };
 
-    match decode::<Claims>(
-        token,
-        &DecodingKey::from_secret(auth_state.jwt_secret.as_ref()),
-        &Validation::new(Algorithm::HS256),
-    ) {
-        Ok(token_data) => {
-            let claims = token_data.claims;
+    parts.extensions.insert(claims);
 
-            parts.extensions.insert(claims);
-
-            let req = Request::from_parts(parts, body);
-            next.run(req).await
-        }
-        Err(e) => {
-            tracing::error!("Token verification failed: {}", e);
-            api_error::<()>(401, &format!("认证失败：{}", e)).into_response()
-        }
-    }
+    let req = Request::from_parts(parts, body);
+    next.run(req).await
 }
 
 pub fn check_permission<T>(

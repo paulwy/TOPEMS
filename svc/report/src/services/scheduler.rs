@@ -315,8 +315,8 @@ async fn run_report(pool: &PgPool, schedule_id: Uuid) -> Result<String, anyhow::
     .await?;
 
     let output_format = template
-        .map(|t| t.output_format)
-        .unwrap_or("pdf".to_string());
+        .and_then(|t| t.output_format)
+        .unwrap_or_else(|| "pdf".to_string());
     let output_path = format!(
         "/tmp/reports/{}_{}.{}",
         schedule_id,
@@ -363,10 +363,12 @@ async fn notify_subscribers(pool: &PgPool, schedule_id: Uuid) -> Result<(), anyh
         }
     }
 
-    if let Some(recipients_obj) = schedule.recipients.as_object() {
-        for (_, recipient) in recipients_obj {
-            if let Some(email) = recipient.as_str() {
-                info!("Sending report to scheduled recipient: {}", email);
+    if let Some(recipients) = schedule.recipients {
+        if let Some(recipients_obj) = recipients.as_object() {
+            for (_, recipient) in recipients_obj {
+                if let Some(email) = recipient.as_str() {
+                    info!("Sending report to scheduled recipient: {}", email);
+                }
             }
         }
     }

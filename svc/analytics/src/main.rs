@@ -134,6 +134,40 @@ async fn main() {
             post(modules::bi::dashboard::create_dashboard),
         )
         .route(
+            "/api/bi/dashboard/public",
+            get(modules::bi::dashboard::get_public_dashboards),
+        )
+        .route(
+            "/api/bi/dashboard/user/{owner_id}",
+            get(modules::bi::dashboard::get_user_dashboards),
+        )
+        // Dashboard Templates - must come before {id} routes
+        .route(
+            "/api/bi/dashboard/template",
+            get(modules::bi::dashboard::list_dashboard_templates),
+        )
+        .route(
+            "/api/bi/dashboard/template",
+            post(modules::bi::dashboard::create_dashboard_template),
+        )
+        .route(
+            "/api/bi/dashboard/template/{id}",
+            get(modules::bi::dashboard::get_dashboard_template),
+        )
+        .route(
+            "/api/bi/dashboard/template/{id}",
+            put(modules::bi::dashboard::update_dashboard_template),
+        )
+        .route(
+            "/api/bi/dashboard/template/{id}",
+            delete(modules::bi::dashboard::delete_dashboard_template),
+        )
+        .route(
+            "/api/bi/dashboard/template/{template_id}/create",
+            post(modules::bi::dashboard::create_dashboard_from_template),
+        )
+        // Dashboard by ID
+        .route(
             "/api/bi/dashboard/{id}",
             get(modules::bi::dashboard::get_dashboard),
         )
@@ -146,12 +180,8 @@ async fn main() {
             delete(modules::bi::dashboard::delete_dashboard),
         )
         .route(
-            "/api/bi/dashboard/public",
-            get(modules::bi::dashboard::get_public_dashboards),
-        )
-        .route(
-            "/api/bi/dashboard/user/{owner_id}",
-            get(modules::bi::dashboard::get_user_dashboards),
+            "/api/bi/dashboard/{id}/clone",
+            post(modules::bi::dashboard::clone_dashboard),
         )
         // Dashboard Share
         .route(
@@ -238,35 +268,6 @@ async fn main() {
         .route(
             "/api/bi/widget/dashboard/{dashboard_id}",
             get(modules::bi::widget::get_widgets_by_dashboard),
-        )
-        // Dashboard Templates
-        .route(
-            "/api/bi/dashboard/template",
-            get(modules::bi::dashboard::list_dashboard_templates),
-        )
-        .route(
-            "/api/bi/dashboard/template",
-            post(modules::bi::dashboard::create_dashboard_template),
-        )
-        .route(
-            "/api/bi/dashboard/template/{id}",
-            get(modules::bi::dashboard::get_dashboard_template),
-        )
-        .route(
-            "/api/bi/dashboard/template/{id}",
-            put(modules::bi::dashboard::update_dashboard_template),
-        )
-        .route(
-            "/api/bi/dashboard/template/{id}",
-            delete(modules::bi::dashboard::delete_dashboard_template),
-        )
-        .route(
-            "/api/bi/dashboard/{id}/clone",
-            post(modules::bi::dashboard::clone_dashboard),
-        )
-        .route(
-            "/api/bi/dashboard/template/{template_id}/create",
-            post(modules::bi::dashboard::create_dashboard_from_template),
         )
         // Data Source
         .route(
