@@ -3,13 +3,14 @@
 use axum::{
     extract::Extension,
     extract::Path,
+    extract::Query,
     extract::State,
     routing::{delete, get, post, put},
     Json, Router,
 };
 use chrono::{DateTime, NaiveDateTime, TimeZone, Utc};
 use serde::{Deserialize, Serialize};
-use sqlx::{types::Uuid, PgPool};
+use sqlx::{types::Uuid, Row};
 use topems_shared::auth::Claims;
 
 use crate::services::permission::{check_permission, ModulePermission};
@@ -28,11 +29,19 @@ pub fn create_routes() -> Router<AppState> {
         )
         .route(
             "/api/mes/processes/{id}/deactivate",
-            post(deactivate_process),
+            put(deactivate_process),
         )
 }
 
 // ==================== Data Types ====================
+
+#[derive(Debug, Clone, Deserialize)]
+pub struct ListProcessesQuery {
+    page: Option<i32>,
+    pagesize: Option<i32>,
+    search: Option<String>,
+    status: Option<String>,
+}
 
 #[derive(Debug, Clone, Deserialize)]
 pub struct CreateProcessRequest {
@@ -73,6 +82,8 @@ pub struct ProductionProcessResponse {
 pub struct ListProcessesResponse {
     pub processes: Vec<ProductionProcessResponse>,
     pub total: i64,
+    pub page: i64,
+    pub pagesize: i64,
 }
 
 fn naive_to_utc(dt: Option<NaiveDateTime>) -> DateTime<Utc> {
@@ -80,30 +91,99 @@ fn naive_to_utc(dt: Option<NaiveDateTime>) -> DateTime<Utc> {
         .unwrap_or_else(Utc::now)
 }
 
+fn opt_naive_to_utc(dt: Option<NaiveDateTime>) -> Option<DateTime<Utc>> {
+    dt.map(|d| Utc.from_utc_datetime(&d))
+}
+
+fn datetime_to_string(dt: Option<NaiveDateTime>) -> String {
+    naive_to_utc(dt).to_rfc3339()
+}
+
+fn opt_datetime_to_string(dt: Option<NaiveDateTime>) -> Option<String> {
+    opt_naive_to_utc(dt).map(|d| d.to_rfc3339())
+}
+
 // ==================== Production Process Handlers ====================
 
 pub async fn list_processes(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
+    Query(query): Query<ListProcessesQuery>,
 ) -> Json<ApiResponse<ListProcessesResponse>> {
     if let Err(e) = check_permission(&state.pool, &claims, &ModulePermission::ProcessRead).await {
         return e;
     }
 
-    let result = sqlx::query!(
+    let page = query.page.unwrap_or(1) as i64;
+    let pagesize = query.pagesize.unwrap_or(10) as i64;
+    let offset = (page - 1) * pagesize;
+
+    let mut params: Vec<serde_json::Value> = Vec::new();
+    let mut where_clause = String::new();
+
+    if let Some(status) = query.status {
+        where_clause.push_str(" WHERE status = $1");
+        params.push(serde_json::Value::String(status));
+    }
+
+    if let Some(search) = query.search {
+        let pattern = format!("%{}%", search);
+        if where_clause.is_empty() {
+            where_clause
+                .push_str(" WHERE (process_no ILIKE $1 OR name ILIKE $1 OR description ILIKE $1)");
+        } else {
+            where_clause.push_str(&format!(
+                " AND (process_no ILIKE ${} OR name ILIKE ${} OR description ILIKE ${})",
+                params.len() + 1,
+                params.len() + 1,
+                params.len() + 1
+            ));
+        }
+        params.push(serde_json::Value::String(pattern));
+    }
+
+    let count_sql = format!(
+        "SELECT COUNT(*) as total FROM production_processes{}",
+        where_clause
+    );
+
+    let mut count_query = sqlx::query_scalar(&count_sql);
+    for p in &params {
+        count_query = count_query.bind(p.clone());
+    }
+
+    let count_result = count_query.fetch_one(&state.pool).await;
+    let total: Option<i64> = match count_result {
+        Ok(c) => c,
+        Err(e) => {
+            tracing::error!("Failed to count processes: {}", e);
+            return Json(ApiResponse::error(500, "获取生产工序列表失败"));
+        }
+    };
+
+    let fetch_sql = format!(
         r#"
         SELECT 
             id, process_no, name, description, version,
             status, sequence, equipment_required, estimated_duration,
             created_at, updated_at
         FROM production_processes
+        {}
         ORDER BY sequence ASC, created_at DESC
-        "#
-    )
-    .fetch_all(&state.pool)
-    .await;
+        LIMIT ${} OFFSET ${}
+        "#,
+        where_clause,
+        params.len() + 1,
+        params.len() + 2
+    );
 
-    let processes = match result {
+    let mut fetch_query = sqlx::query(&fetch_sql);
+    for p in &params {
+        fetch_query = fetch_query.bind(p.clone());
+    }
+    fetch_query = fetch_query.bind(pagesize).bind(offset);
+
+    let processes = match fetch_query.fetch_all(&state.pool).await {
         Ok(p) => p,
         Err(e) => {
             tracing::error!("Failed to fetch processes: {}", e);
@@ -114,26 +194,54 @@ pub async fn list_processes(
     let processes_list: Vec<ProductionProcessResponse> = processes
         .into_iter()
         .map(|r| ProductionProcessResponse {
-            id: r.id,
-            process_no: r.process_no,
-            name: r.name,
-            description: r.description,
-            version: r.version.unwrap_or_else(|| "1.0".to_string()),
-            status: r.status.unwrap_or_else(|| "active".to_string()),
-            sequence: r.sequence.unwrap_or(0),
-            equipment_required: r.equipment_required.unwrap_or(false),
-            estimated_duration: r.estimated_duration.unwrap_or(0),
-            created_at: naive_to_utc(r.created_at),
-            updated_at: naive_to_utc(r.updated_at),
+            id: r.try_get::<Uuid, _>("id").unwrap_or_default(),
+            process_no: r.try_get::<String, _>("process_no").unwrap_or_default(),
+            name: r.try_get::<String, _>("name").unwrap_or_default(),
+            description: r.try_get::<Option<String>, _>("description").ok().flatten(),
+            version: r
+                .try_get::<Option<String>, _>("version")
+                .ok()
+                .flatten()
+                .unwrap_or_else(|| "1.0".to_string()),
+            status: r
+                .try_get::<Option<String>, _>("status")
+                .ok()
+                .flatten()
+                .unwrap_or_else(|| "active".to_string()),
+            sequence: r
+                .try_get::<Option<i32>, _>("sequence")
+                .ok()
+                .flatten()
+                .unwrap_or(0),
+            equipment_required: r
+                .try_get::<Option<bool>, _>("equipment_required")
+                .ok()
+                .flatten()
+                .unwrap_or(false),
+            estimated_duration: r
+                .try_get::<Option<i32>, _>("estimated_duration")
+                .ok()
+                .flatten()
+                .unwrap_or(0),
+            created_at: naive_to_utc(
+                r.try_get::<Option<NaiveDateTime>, _>("created_at")
+                    .ok()
+                    .flatten(),
+            ),
+            updated_at: naive_to_utc(
+                r.try_get::<Option<NaiveDateTime>, _>("updated_at")
+                    .ok()
+                    .flatten(),
+            ),
         })
         .collect();
-
-    let total = processes_list.len() as i64;
 
     Json(ApiResponse::success(
         ListProcessesResponse {
             processes: processes_list,
-            total,
+            total: total.unwrap_or(0),
+            page,
+            pagesize,
         },
         "获取生产工序列表成功",
     ))

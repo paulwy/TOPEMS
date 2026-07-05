@@ -105,6 +105,10 @@ async fn main() {
         .route(
             "/api/mes/ws/dashboard",
             axum::routing::get(api::dashboard_ws::dashboard_websocket),
+        )
+        .route(
+            "/mes/ws/dashboard",
+            axum::routing::get(api::dashboard_ws::dashboard_websocket),
         );
 
     // Protected routes (auth required)

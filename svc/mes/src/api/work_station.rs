@@ -3,13 +3,14 @@
 use axum::{
     extract::Extension,
     extract::Path,
+    extract::Query,
     extract::State,
     routing::{delete, get, post, put},
     Json, Router,
 };
 use chrono::{DateTime, NaiveDateTime, TimeZone, Utc};
 use serde::{Deserialize, Serialize};
-use sqlx::{types::Uuid, PgPool};
+use sqlx::{types::Uuid, PgPool, Row};
 use topems_shared::auth::Claims;
 
 use crate::services::permission::{check_permission, ModulePermission};
@@ -30,59 +31,73 @@ pub fn create_routes() -> Router<AppState> {
         )
         .route(
             "/api/mes/workstations/{id}/activate",
-            post(activate_work_station),
+            put(activate_work_station),
         )
         .route(
             "/api/mes/workstations/{id}/deactivate",
-            post(deactivate_work_station),
+            put(deactivate_work_station),
         )
 }
 
 // ==================== Data Types ====================
 
 #[derive(Debug, Clone, Deserialize)]
+pub struct ListWorkStationsQuery {
+    page: Option<i32>,
+    pagesize: Option<i32>,
+    search: Option<String>,
+    status: Option<String>,
+}
+
+#[derive(Debug, Clone, Deserialize)]
 pub struct CreateWorkStationRequest {
+    pub station_no: Option<String>,
     pub name: String,
-    pub workshop_id: Option<Uuid>,
+    pub workshop_id: Option<String>,
     pub location: Option<String>,
     pub capacity: Option<i32>,
-    pub equipment_id: Option<Uuid>,
-    pub process_id: Option<Uuid>,
+    pub equipment_id: Option<String>,
+    pub process_id: Option<String>,
     pub description: Option<String>,
 }
 
 #[derive(Debug, Clone, Deserialize)]
 pub struct UpdateWorkStationRequest {
     pub name: Option<String>,
-    pub workshop_id: Option<Uuid>,
+    pub workshop_id: Option<String>,
     pub location: Option<String>,
     pub status: Option<String>,
     pub capacity: Option<i32>,
-    pub equipment_id: Option<Uuid>,
-    pub process_id: Option<Uuid>,
+    pub equipment_id: Option<String>,
+    pub process_id: Option<String>,
     pub description: Option<String>,
 }
 
 #[derive(Debug, Clone, Serialize)]
 pub struct WorkStationResponse {
-    pub id: Uuid,
+    pub id: String,
     pub station_no: String,
     pub name: String,
-    pub workshop_id: Option<Uuid>,
+    pub workshop_id: Option<String>,
+    pub workshop_name: Option<String>,
     pub location: Option<String>,
     pub status: String,
     pub capacity: i32,
-    pub equipment_id: Option<Uuid>,
-    pub process_id: Option<Uuid>,
+    pub equipment_id: Option<String>,
+    pub equipment_name: Option<String>,
+    pub process_id: Option<String>,
+    pub process_name: Option<String>,
     pub description: Option<String>,
-    pub created_at: DateTime<Utc>,
-    pub updated_at: DateTime<Utc>,
+    pub created_at: String,
+    pub updated_at: String,
 }
 
 #[derive(Debug, Clone, Serialize)]
 pub struct ListWorkStationsResponse {
     pub workstations: Vec<WorkStationResponse>,
     pub total: i64,
+    pub page: i32,
+    pub pagesize: i32,
 }
 
 fn naive_to_utc(dt: Option<NaiveDateTime>) -> DateTime<Utc> {
@@ -90,64 +105,181 @@ fn naive_to_utc(dt: Option<NaiveDateTime>) -> DateTime<Utc> {
         .unwrap_or_else(Utc::now)
 }
 
+fn datetime_to_string(dt: Option<NaiveDateTime>) -> String {
+    naive_to_utc(dt).to_rfc3339()
+}
+
+fn row_to_workstation_response(r: &sqlx::postgres::PgRow) -> WorkStationResponse {
+    WorkStationResponse {
+        id: r.try_get::<Uuid, _>("id").unwrap_or_default().to_string(),
+        station_no: r.try_get::<String, _>("station_no").unwrap_or_default(),
+        name: r.try_get::<String, _>("name").unwrap_or_default(),
+        workshop_id: r
+            .try_get::<Option<Uuid>, _>("workshop_id")
+            .ok()
+            .flatten()
+            .map(|u| u.to_string()),
+        workshop_name: {
+            let name: Option<String> = r
+                .try_get::<Option<String>, _>("workshop_name")
+                .ok()
+                .flatten();
+            name.filter(|n| !n.is_empty())
+        },
+        location: r.try_get::<Option<String>, _>("location").ok().flatten(),
+        status: r
+            .try_get::<Option<String>, _>("status")
+            .ok()
+            .flatten()
+            .unwrap_or_else(|| "active".to_string()),
+        capacity: r
+            .try_get::<Option<i32>, _>("capacity")
+            .ok()
+            .flatten()
+            .unwrap_or(1),
+        equipment_id: r
+            .try_get::<Option<Uuid>, _>("equipment_id")
+            .ok()
+            .flatten()
+            .map(|u| u.to_string()),
+        equipment_name: {
+            let name: Option<String> = r
+                .try_get::<Option<String>, _>("equipment_name")
+                .ok()
+                .flatten();
+            name.filter(|n| !n.is_empty())
+        },
+        process_id: r
+            .try_get::<Option<Uuid>, _>("process_id")
+            .ok()
+            .flatten()
+            .map(|u| u.to_string()),
+        process_name: {
+            let name: Option<String> = r
+                .try_get::<Option<String>, _>("process_name")
+                .ok()
+                .flatten();
+            name.filter(|n| !n.is_empty())
+        },
+        description: r.try_get::<Option<String>, _>("description").ok().flatten(),
+        created_at: datetime_to_string(
+            r.try_get::<Option<NaiveDateTime>, _>("created_at")
+                .ok()
+                .flatten(),
+        ),
+        updated_at: datetime_to_string(
+            r.try_get::<Option<NaiveDateTime>, _>("updated_at")
+                .ok()
+                .flatten(),
+        ),
+    }
+}
+
 // ==================== Work Station Handlers ====================
 
 pub async fn list_work_stations(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
+    Query(query): Query<ListWorkStationsQuery>,
 ) -> Json<ApiResponse<ListWorkStationsResponse>> {
     if let Err(e) = check_permission(&state.pool, &claims, &ModulePermission::WorkStationRead).await
     {
         return e;
     }
 
-    let result = sqlx::query!(
-        r#"
-        SELECT 
-            id, station_no, name, workshop_id, location,
-            status, capacity, equipment_id, process_id,
-            description, created_at, updated_at
-        FROM work_stations
-        ORDER BY created_at DESC
-        "#
-    )
-    .fetch_all(&state.pool)
-    .await;
+    let page = query.page.unwrap_or(1) as i64;
+    let pagesize = query.pagesize.unwrap_or(10) as i64;
+    let offset = (page - 1) * pagesize;
 
-    let workstations = match result {
-        Ok(w) => w,
+    let mut params: Vec<serde_json::Value> = Vec::new();
+    let mut where_clause = String::new();
+
+    if let Some(status) = query.status {
+        where_clause.push_str(" WHERE ws.status = $1");
+        params.push(serde_json::Value::String(status));
+    }
+
+    if let Some(search) = query.search {
+        let pattern = format!("%{}%", search);
+        if where_clause.is_empty() {
+            where_clause.push_str(" WHERE (ws.station_no ILIKE $1 OR ws.name ILIKE $1)");
+        } else {
+            where_clause.push_str(&format!(
+                " AND (ws.station_no ILIKE ${} OR ws.name ILIKE ${})",
+                params.len() + 1,
+                params.len() + 1
+            ));
+        }
+        params.push(serde_json::Value::String(pattern));
+    }
+
+    let count_sql = format!(
+        "SELECT COUNT(*) as total FROM work_stations ws{}",
+        where_clause
+    );
+
+    let mut count_query = sqlx::query_scalar(&count_sql);
+    for p in &params {
+        count_query = count_query.bind(p.clone());
+    }
+
+    let count_result = count_query.fetch_one(&state.pool).await;
+    let total: Option<i64> = match count_result {
+        Ok(c) => c,
         Err(e) => {
-            tracing::error!("Failed to fetch work stations: {}", e);
-            return Json(ApiResponse::error(500, "获取工作站列表失败"));
+            tracing::error!("Failed to count work stations: {}", e);
+            return Json(ApiResponse::error(500, "获取工位列表失败"));
         }
     };
 
-    let workstations: Vec<WorkStationResponse> = workstations
-        .into_iter()
-        .map(|r| WorkStationResponse {
-            id: r.id,
-            station_no: r.station_no,
-            name: r.name,
-            workshop_id: r.workshop_id,
-            location: r.location,
-            status: r.status.unwrap_or_else(|| "active".to_string()),
-            capacity: r.capacity.unwrap_or(1),
-            equipment_id: r.equipment_id,
-            process_id: r.process_id,
-            description: r.description,
-            created_at: naive_to_utc(r.created_at),
-            updated_at: naive_to_utc(r.updated_at),
-        })
-        .collect();
+    let fetch_sql = format!(
+        r#"
+        SELECT 
+            ws.id, ws.station_no, ws.name, ws.workshop_id, ws.location,
+            ws.status, ws.capacity, ws.equipment_id, ws.process_id,
+            ws.description, ws.created_at, ws.updated_at,
+            e.name as equipment_name,
+            pp.name as process_name,
+            '' as workshop_name
+        FROM work_stations ws
+        LEFT JOIN equipment e ON ws.equipment_id = e.id
+        LEFT JOIN production_processes pp ON ws.process_id = pp.id
+        {}
+        ORDER BY ws.created_at DESC
+        LIMIT ${} OFFSET ${}
+        "#,
+        where_clause,
+        params.len() + 1,
+        params.len() + 2
+    );
 
-    let total = workstations.len() as i64;
+    let mut fetch_query = sqlx::query(&fetch_sql);
+    for p in &params {
+        fetch_query = fetch_query.bind(p.clone());
+    }
+    fetch_query = fetch_query.bind(pagesize).bind(offset);
+
+    let workstations = match fetch_query.fetch_all(&state.pool).await {
+        Ok(w) => w,
+        Err(e) => {
+            tracing::error!("Failed to fetch work stations: {}", e);
+            return Json(ApiResponse::error(500, "获取工位列表失败"));
+        }
+    };
+
+    let workstation_list: Vec<WorkStationResponse> = workstations
+        .iter()
+        .map(|r| row_to_workstation_response(r))
+        .collect();
 
     Json(ApiResponse::success(
         ListWorkStationsResponse {
-            workstations,
-            total,
+            workstations: workstation_list,
+            total: total.unwrap_or(0),
+            page: page as i32,
+            pagesize: pagesize as i32,
         },
-        "获取工作站列表成功",
+        "获取工位列表成功",
     ))
 }
 
@@ -163,13 +295,28 @@ pub async fn create_work_station(
     }
 
     let now = Utc::now();
-    let station_no = format!(
-        "WS{}{:04}",
-        now.format("%Y%m%d"),
-        rand::random::<u16>() % 10000
-    );
+    let station_no = req.station_no.unwrap_or_else(|| {
+        format!(
+            "WS{}{:04}",
+            now.format("%Y%m%d"),
+            rand::random::<u16>() % 10000
+        )
+    });
 
-    let result = sqlx::query!(
+    let workshop_id = req
+        .workshop_id
+        .as_ref()
+        .and_then(|s| Uuid::parse_str(s).ok());
+    let equipment_id = req
+        .equipment_id
+        .as_ref()
+        .and_then(|s| Uuid::parse_str(s).ok());
+    let process_id = req
+        .process_id
+        .as_ref()
+        .and_then(|s| Uuid::parse_str(s).ok());
+
+    let result = sqlx::query(
         r#"
         INSERT INTO work_stations (
             station_no, name, workshop_id, location, status,
@@ -181,43 +328,31 @@ pub async fn create_work_station(
             status, capacity, equipment_id, process_id,
             description, created_at, updated_at
         "#,
-        station_no,
-        req.name,
-        req.workshop_id,
-        req.location,
-        req.capacity.unwrap_or(1),
-        req.equipment_id,
-        req.process_id,
-        req.description,
-        now.naive_utc(),
     )
+    .bind(&station_no)
+    .bind(&req.name)
+    .bind(workshop_id)
+    .bind(&req.location)
+    .bind(req.capacity.unwrap_or(1))
+    .bind(equipment_id)
+    .bind(process_id)
+    .bind(&req.description)
+    .bind(now.naive_utc())
     .fetch_one(&state.pool)
     .await;
 
-    let result = match result {
+    let row = match result {
         Ok(r) => r,
         Err(e) => {
             tracing::error!("Failed to create work station: {}", e);
-            return Json(ApiResponse::error(500, "创建工作站失败"));
+            return Json(ApiResponse::error(500, "创建工位失败"));
         }
     };
 
-    let station = WorkStationResponse {
-        id: result.id,
-        station_no: result.station_no,
-        name: result.name,
-        workshop_id: result.workshop_id,
-        location: result.location,
-        status: result.status.unwrap_or_else(|| "active".to_string()),
-        capacity: result.capacity.unwrap_or(1),
-        equipment_id: result.equipment_id,
-        process_id: result.process_id,
-        description: result.description,
-        created_at: naive_to_utc(result.created_at),
-        updated_at: naive_to_utc(result.updated_at),
-    };
-
-    Json(ApiResponse::success(station, "工作站创建成功"))
+    Json(ApiResponse::success(
+        row_to_workstation_response(&row),
+        "工位创建成功",
+    ))
 }
 
 pub async fn get_work_station(
@@ -230,17 +365,22 @@ pub async fn get_work_station(
         return e;
     }
 
-    let result = sqlx::query!(
+    let result = sqlx::query(
         r#"
         SELECT 
-            id, station_no, name, workshop_id, location,
-            status, capacity, equipment_id, process_id,
-            description, created_at, updated_at
-        FROM work_stations
-        WHERE id = $1
+            ws.id, ws.station_no, ws.name, ws.workshop_id, ws.location,
+            ws.status, ws.capacity, ws.equipment_id, ws.process_id,
+            ws.description, ws.created_at, ws.updated_at,
+            e.name as equipment_name,
+            pp.name as process_name,
+            '' as workshop_name
+        FROM work_stations ws
+        LEFT JOIN equipment e ON ws.equipment_id = e.id
+        LEFT JOIN production_processes pp ON ws.process_id = pp.id
+        WHERE ws.id = $1
         "#,
-        id,
     )
+    .bind(id)
     .fetch_optional(&state.pool)
     .await;
 
@@ -248,29 +388,16 @@ pub async fn get_work_station(
         Ok(r) => r,
         Err(e) => {
             tracing::error!("Failed to fetch work station: {}", e);
-            return Json(ApiResponse::error(500, "获取工作站失败"));
+            return Json(ApiResponse::error(500, "获取工位失败"));
         }
     };
 
     match result {
-        Some(r) => {
-            let station = WorkStationResponse {
-                id: r.id,
-                station_no: r.station_no,
-                name: r.name,
-                workshop_id: r.workshop_id,
-                location: r.location,
-                status: r.status.unwrap_or_else(|| "active".to_string()),
-                capacity: r.capacity.unwrap_or(1),
-                equipment_id: r.equipment_id,
-                process_id: r.process_id,
-                description: r.description,
-                created_at: naive_to_utc(r.created_at),
-                updated_at: naive_to_utc(r.updated_at),
-            };
-            Json(ApiResponse::success(station, "获取工作站成功"))
-        }
-        None => Json(ApiResponse::error(404, "工作站不存在")),
+        Some(row) => Json(ApiResponse::success(
+            row_to_workstation_response(&row),
+            "获取工位成功",
+        )),
+        None => Json(ApiResponse::error(404, "工位不存在")),
     }
 }
 
@@ -286,7 +413,20 @@ pub async fn update_work_station(
         return e;
     }
 
-    let result = sqlx::query!(
+    let workshop_id = req
+        .workshop_id
+        .as_ref()
+        .and_then(|s| Uuid::parse_str(s).ok());
+    let equipment_id = req
+        .equipment_id
+        .as_ref()
+        .and_then(|s| Uuid::parse_str(s).ok());
+    let process_id = req
+        .process_id
+        .as_ref()
+        .and_then(|s| Uuid::parse_str(s).ok());
+
+    let result = sqlx::query(
         r#"
         UPDATE work_stations SET
             name = COALESCE($2, name),
@@ -304,17 +444,17 @@ pub async fn update_work_station(
             status, capacity, equipment_id, process_id,
             description, created_at, updated_at
         "#,
-        id,
-        req.name,
-        req.workshop_id,
-        req.location,
-        req.status,
-        req.capacity,
-        req.equipment_id,
-        req.process_id,
-        req.description,
-        Utc::now().naive_utc(),
     )
+    .bind(id)
+    .bind(&req.name)
+    .bind(workshop_id)
+    .bind(&req.location)
+    .bind(&req.status)
+    .bind(req.capacity)
+    .bind(equipment_id)
+    .bind(process_id)
+    .bind(&req.description)
+    .bind(Utc::now().naive_utc())
     .fetch_optional(&state.pool)
     .await;
 
@@ -322,29 +462,16 @@ pub async fn update_work_station(
         Ok(r) => r,
         Err(e) => {
             tracing::error!("Failed to update work station: {}", e);
-            return Json(ApiResponse::error(500, "更新工作站失败"));
+            return Json(ApiResponse::error(500, "更新工位失败"));
         }
     };
 
     match result {
-        Some(r) => {
-            let station = WorkStationResponse {
-                id: r.id,
-                station_no: r.station_no,
-                name: r.name,
-                workshop_id: r.workshop_id,
-                location: r.location,
-                status: r.status.unwrap_or_else(|| "active".to_string()),
-                capacity: r.capacity.unwrap_or(1),
-                equipment_id: r.equipment_id,
-                process_id: r.process_id,
-                description: r.description,
-                created_at: naive_to_utc(r.created_at),
-                updated_at: naive_to_utc(r.updated_at),
-            };
-            Json(ApiResponse::success(station, "工作站更新成功"))
-        }
-        None => Json(ApiResponse::error(404, "工作站不存在")),
+        Some(row) => Json(ApiResponse::success(
+            row_to_workstation_response(&row),
+            "工位更新成功",
+        )),
+        None => Json(ApiResponse::error(404, "工位不存在")),
     }
 }
 
@@ -373,14 +500,14 @@ pub async fn delete_work_station(
         Ok(r) => r,
         Err(e) => {
             tracing::error!("Failed to delete work station: {}", e);
-            return Json(ApiResponse::error(500, "删除工作站失败"));
+            return Json(ApiResponse::error(500, "删除工位失败"));
         }
     };
 
     if result.rows_affected() > 0 {
-        Json(ApiResponse::success("".to_string(), "工作站删除成功"))
+        Json(ApiResponse::success("".to_string(), "工位删除成功"))
     } else {
-        Json(ApiResponse::error(404, "工作站不存在"))
+        Json(ApiResponse::error(404, "工位不存在"))
     }
 }
 
@@ -395,7 +522,7 @@ pub async fn activate_work_station(
         return e;
     }
 
-    let result = sqlx::query!(
+    let result = sqlx::query(
         r#"
         UPDATE work_stations SET
             status = 'active',
@@ -406,9 +533,9 @@ pub async fn activate_work_station(
             status, capacity, equipment_id, process_id,
             description, created_at, updated_at
         "#,
-        id,
-        Utc::now().naive_utc(),
     )
+    .bind(id)
+    .bind(Utc::now().naive_utc())
     .fetch_optional(&state.pool)
     .await;
 
@@ -416,29 +543,16 @@ pub async fn activate_work_station(
         Ok(r) => r,
         Err(e) => {
             tracing::error!("Failed to activate work station: {}", e);
-            return Json(ApiResponse::error(500, "激活工作站失败"));
+            return Json(ApiResponse::error(500, "激活工位失败"));
         }
     };
 
     match result {
-        Some(r) => {
-            let station = WorkStationResponse {
-                id: r.id,
-                station_no: r.station_no,
-                name: r.name,
-                workshop_id: r.workshop_id,
-                location: r.location,
-                status: r.status.unwrap_or_else(|| "active".to_string()),
-                capacity: r.capacity.unwrap_or(1),
-                equipment_id: r.equipment_id,
-                process_id: r.process_id,
-                description: r.description,
-                created_at: naive_to_utc(r.created_at),
-                updated_at: naive_to_utc(r.updated_at),
-            };
-            Json(ApiResponse::success(station, "工作站激活成功"))
-        }
-        None => Json(ApiResponse::error(404, "工作站不存在")),
+        Some(row) => Json(ApiResponse::success(
+            row_to_workstation_response(&row),
+            "工位激活成功",
+        )),
+        None => Json(ApiResponse::error(404, "工位不存在")),
     }
 }
 
@@ -453,7 +567,7 @@ pub async fn deactivate_work_station(
         return e;
     }
 
-    let result = sqlx::query!(
+    let result = sqlx::query(
         r#"
         UPDATE work_stations SET
             status = 'inactive',
@@ -464,9 +578,9 @@ pub async fn deactivate_work_station(
             status, capacity, equipment_id, process_id,
             description, created_at, updated_at
         "#,
-        id,
-        Utc::now().naive_utc(),
     )
+    .bind(id)
+    .bind(Utc::now().naive_utc())
     .fetch_optional(&state.pool)
     .await;
 
@@ -474,28 +588,15 @@ pub async fn deactivate_work_station(
         Ok(r) => r,
         Err(e) => {
             tracing::error!("Failed to deactivate work station: {}", e);
-            return Json(ApiResponse::error(500, "停用工作站失败"));
+            return Json(ApiResponse::error(500, "停用工位失败"));
         }
     };
 
     match result {
-        Some(r) => {
-            let station = WorkStationResponse {
-                id: r.id,
-                station_no: r.station_no,
-                name: r.name,
-                workshop_id: r.workshop_id,
-                location: r.location,
-                status: r.status.unwrap_or_else(|| "inactive".to_string()),
-                capacity: r.capacity.unwrap_or(1),
-                equipment_id: r.equipment_id,
-                process_id: r.process_id,
-                description: r.description,
-                created_at: naive_to_utc(r.created_at),
-                updated_at: naive_to_utc(r.updated_at),
-            };
-            Json(ApiResponse::success(station, "工作站停用成功"))
-        }
-        None => Json(ApiResponse::error(404, "工作站不存在或状态不允许停用")),
+        Some(row) => Json(ApiResponse::success(
+            row_to_workstation_response(&row),
+            "工位停用成功",
+        )),
+        None => Json(ApiResponse::error(404, "工位不存在或状态不允许停用")),
     }
 }

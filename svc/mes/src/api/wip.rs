@@ -3,6 +3,7 @@
 use axum::{
     extract::Extension,
     extract::Path,
+    extract::Query,
     extract::State,
     routing::{delete, get, post, put},
     Json, Router,
@@ -11,7 +12,7 @@ use chrono::{DateTime, NaiveDate, NaiveDateTime, TimeZone, Utc};
 use serde::{Deserialize, Serialize};
 use sqlx::{
     types::{BigDecimal, Uuid},
-    PgPool,
+    Row,
 };
 use std::str::FromStr;
 use topems_shared::auth::Claims;
@@ -33,6 +34,14 @@ pub fn create_routes() -> Router<AppState> {
 }
 
 // ==================== Data Types ====================
+
+#[derive(Debug, Clone, Deserialize)]
+pub struct ListWipsQuery {
+    page: Option<i32>,
+    pagesize: Option<i32>,
+    search: Option<String>,
+    status: Option<String>,
+}
 
 #[derive(Debug, Clone, Serialize)]
 pub struct WipResponse {
@@ -105,6 +114,8 @@ pub struct WipProcessCount {
 pub struct ListWipResponse {
     pub wips: Vec<WipResponse>,
     pub total: i64,
+    pub page: i64,
+    pub pagesize: i64,
 }
 
 #[derive(Debug, Clone, Deserialize)]
@@ -151,6 +162,14 @@ fn opt_naive_to_utc(dt: Option<NaiveDateTime>) -> Option<DateTime<Utc>> {
     dt.map(|d| Utc.from_utc_datetime(&d))
 }
 
+fn datetime_to_string(dt: Option<NaiveDateTime>) -> String {
+    naive_to_utc(dt).to_rfc3339()
+}
+
+fn opt_datetime_to_string(dt: Option<NaiveDateTime>) -> Option<String> {
+    opt_naive_to_utc(dt).map(|d| d.to_rfc3339())
+}
+
 fn big_decimal_to_f64(bd: Option<BigDecimal>) -> f64 {
     bd.and_then(|d| d.to_string().parse::<f64>().ok())
         .unwrap_or(0.0)
@@ -161,12 +180,57 @@ fn big_decimal_to_f64(bd: Option<BigDecimal>) -> f64 {
 pub async fn list_wips(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
+    Query(query): Query<ListWipsQuery>,
 ) -> Json<ApiResponse<ListWipResponse>> {
     if let Err(e) = check_permission(&state.pool, &claims, &ModulePermission::WipRead).await {
         return e;
     }
 
-    let result = sqlx::query!(
+    let page = query.page.unwrap_or(1) as i64;
+    let pagesize = query.pagesize.unwrap_or(10) as i64;
+    let offset = (page - 1) * pagesize;
+
+    let mut params: Vec<serde_json::Value> = Vec::new();
+    let mut where_clause = String::new();
+
+    if let Some(status) = query.status {
+        where_clause.push_str(" WHERE w.status = $1");
+        params.push(serde_json::Value::String(status));
+    }
+
+    if let Some(search) = query.search {
+        let pattern = format!("%{}%", search);
+        if where_clause.is_empty() {
+            where_clause.push_str(" WHERE (w.wip_no ILIKE $1 OR w.order_no ILIKE $1 OR w.product_name ILIKE $1 OR w.product_code ILIKE $1)");
+        } else {
+            where_clause.push_str(&format!(
+                " AND (w.wip_no ILIKE ${} OR w.order_no ILIKE ${} OR w.product_name ILIKE ${} OR w.product_code ILIKE ${})",
+                params.len() + 1,
+                params.len() + 1,
+                params.len() + 1,
+                params.len() + 1
+            ));
+        }
+        params.push(serde_json::Value::String(pattern));
+    }
+
+    let count_sql = format!("SELECT COUNT(*) as total FROM wips w{}", where_clause);
+
+    let mut count_query = sqlx::query_scalar(&count_sql);
+    for p in &params {
+        count_query = count_query.bind(p.clone());
+    }
+
+    let count_result = count_query.fetch_one(&state.pool).await;
+    let total: Option<i64> = match count_result {
+        Ok(c) => c,
+        Err(e) => {
+            tracing::error!("Failed to count WIPs: {}", e);
+            return Json(ApiResponse::error(500, "获取WIP列表失败"));
+        }
+    };
+
+    let fetch_sql = format!(
         r#"
         SELECT 
             w.id, w.wip_no, w.order_id, w.order_no,
@@ -179,13 +243,22 @@ pub async fn list_wips(
         FROM wips w
         LEFT JOIN production_processes pp ON w.current_process_id = pp.id
         LEFT JOIN work_stations ws ON w.current_work_station_id = ws.id
+        {}
         ORDER BY w.created_at DESC
-        "#
-    )
-    .fetch_all(&state.pool)
-    .await;
+        LIMIT ${} OFFSET ${}
+        "#,
+        where_clause,
+        params.len() + 1,
+        params.len() + 2
+    );
 
-    let wips = match result {
+    let mut fetch_query = sqlx::query(&fetch_sql);
+    for p in &params {
+        fetch_query = fetch_query.bind(p.clone());
+    }
+    fetch_query = fetch_query.bind(pagesize).bind(offset);
+
+    let wips = match fetch_query.fetch_all(&state.pool).await {
         Ok(w) => w,
         Err(e) => {
             tracing::error!("Failed to fetch WIP list: {}", e);
@@ -196,35 +269,71 @@ pub async fn list_wips(
     let wip_list: Vec<WipResponse> = wips
         .into_iter()
         .map(|r| WipResponse {
-            id: r.id,
-            wip_no: r.wip_no,
-            order_id: r.order_id,
-            order_no: r.order_no,
-            product_id: r.product_id,
-            product_name: r.product_name,
-            product_code: r.product_code,
-            quantity: big_decimal_to_f64(Some(r.quantity)),
-            current_process_id: r.current_process_id,
-            current_process_name: Some(r.process_name),
-            current_work_station_id: r.current_work_station_id,
-            current_work_station_name: Some(r.work_station_name),
-            status: r.status.unwrap_or_else(|| "in_progress".to_string()),
-            batch_no: r.batch_no,
-            start_time: opt_naive_to_utc(r.start_time),
-            last_transfer_time: opt_naive_to_utc(r.last_transfer_time),
-            operator: r.operator,
-            notes: r.notes,
-            created_at: naive_to_utc(r.created_at),
-            updated_at: naive_to_utc(r.updated_at),
+            id: r.try_get::<Uuid, _>("id").unwrap_or_default(),
+            wip_no: r.try_get::<String, _>("wip_no").unwrap_or_default(),
+            order_id: r.try_get::<Option<Uuid>, _>("order_id").ok().flatten(),
+            order_no: r.try_get::<Option<String>, _>("order_no").ok().flatten(),
+            product_id: r.try_get::<Option<Uuid>, _>("product_id").ok().flatten(),
+            product_name: r.try_get::<String, _>("product_name").unwrap_or_default(),
+            product_code: r.try_get::<String, _>("product_code").unwrap_or_default(),
+            quantity: big_decimal_to_f64(
+                r.try_get::<Option<BigDecimal>, _>("quantity")
+                    .ok()
+                    .flatten(),
+            ),
+            current_process_id: r
+                .try_get::<Option<Uuid>, _>("current_process_id")
+                .ok()
+                .flatten(),
+            current_process_name: r
+                .try_get::<Option<String>, _>("process_name")
+                .ok()
+                .flatten(),
+            current_work_station_id: r
+                .try_get::<Option<Uuid>, _>("current_work_station_id")
+                .ok()
+                .flatten(),
+            current_work_station_name: r
+                .try_get::<Option<String>, _>("work_station_name")
+                .ok()
+                .flatten(),
+            status: r
+                .try_get::<Option<String>, _>("status")
+                .ok()
+                .flatten()
+                .unwrap_or_else(|| "in_progress".to_string()),
+            batch_no: r.try_get::<Option<String>, _>("batch_no").ok().flatten(),
+            start_time: opt_naive_to_utc(
+                r.try_get::<Option<NaiveDateTime>, _>("start_time")
+                    .ok()
+                    .flatten(),
+            ),
+            last_transfer_time: opt_naive_to_utc(
+                r.try_get::<Option<NaiveDateTime>, _>("last_transfer_time")
+                    .ok()
+                    .flatten(),
+            ),
+            operator: r.try_get::<Option<String>, _>("operator").ok().flatten(),
+            notes: r.try_get::<Option<String>, _>("notes").ok().flatten(),
+            created_at: naive_to_utc(
+                r.try_get::<Option<NaiveDateTime>, _>("created_at")
+                    .ok()
+                    .flatten(),
+            ),
+            updated_at: naive_to_utc(
+                r.try_get::<Option<NaiveDateTime>, _>("updated_at")
+                    .ok()
+                    .flatten(),
+            ),
         })
         .collect();
-
-    let total = wip_list.len() as i64;
 
     Json(ApiResponse::success(
         ListWipResponse {
             wips: wip_list,
-            total,
+            total: total.unwrap_or(0),
+            page,
+            pagesize,
         },
         "获取WIP列表成功",
     ))

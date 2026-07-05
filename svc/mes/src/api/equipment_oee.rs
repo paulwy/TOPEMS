@@ -3,6 +3,7 @@
 use axum::{
     extract::Extension,
     extract::Path,
+    extract::Query,
     extract::State,
     routing::{delete, get, post, put},
     Json, Router,
@@ -11,7 +12,7 @@ use chrono::{DateTime, Duration, NaiveDate, NaiveDateTime, TimeZone, Utc};
 use serde::{Deserialize, Serialize};
 use sqlx::{
     types::{BigDecimal, Uuid},
-    PgPool,
+    Row,
 };
 use std::str::FromStr;
 use topems_shared::auth::Claims;
@@ -32,35 +33,40 @@ pub fn create_routes() -> Router<AppState> {
                 .put(update_oee_record)
                 .delete(delete_oee_record),
         )
+        .route("/api/mes/equipment-oee/statistics", get(get_oee_statistics))
         .route(
-            "/api/mes/equipment-oee/statistics",
-            post(get_oee_statistics),
-        )
-        .route(
-            "/api/mes/equipment-oee/efficiency-analysis",
+            "/api/mes/equipment-oee/{equipment_id}/efficiency",
             get(get_equipment_efficiency_analysis),
         )
 }
 
 // ==================== Data Types ====================
 
+#[derive(Debug, Clone, Deserialize)]
+pub struct ListOeeRecordsQuery {
+    page: Option<i32>,
+    pagesize: Option<i32>,
+    search: Option<String>,
+    shift: Option<String>,
+}
+
 #[derive(Debug, Clone, Serialize)]
 pub struct OeeRecordResponse {
     pub id: Uuid,
     pub equipment_id: Uuid,
     pub equipment_name: Option<String>,
-    pub equipment_no: Option<String>,
+    pub equipment_code: Option<String>,
     pub record_date: DateTime<Utc>,
     pub planned_production_time: f64,
-    pub actual_run_time: f64,
+    pub run_time: f64,
     pub downtime: f64,
     pub ideal_cycle_time: f64,
-    pub actual_output: f64,
-    pub good_output: f64,
-    pub defective_output: f64,
+    pub total_count: f64,
+    pub good_count: f64,
+    pub reject_count: f64,
     pub availability: f64,
     pub performance: f64,
-    pub quality_rate: f64,
+    pub quality: f64,
     pub oee: f64,
     pub shift: Option<String>,
     pub operator: Option<String>,
@@ -70,20 +76,34 @@ pub struct OeeRecordResponse {
 }
 
 #[derive(Debug, Clone, Serialize)]
-pub struct OeeStatisticsResponse {
+pub struct OeeEquipmentStat {
     pub equipment_id: Uuid,
     pub equipment_name: String,
-    pub equipment_no: String,
+    pub equipment_code: String,
+    pub availability: f64,
+    pub performance: f64,
+    pub quality: f64,
+    pub oee: f64,
+}
+
+#[derive(Debug, Clone, Serialize)]
+pub struct OeeTrendItem {
+    pub date: String,
+    pub availability: f64,
+    pub performance: f64,
+    pub quality: f64,
+    pub oee: f64,
+}
+
+#[derive(Debug, Clone, Serialize)]
+pub struct OeeStatisticsResponse {
     pub total_records: i64,
     pub avg_availability: f64,
     pub avg_performance: f64,
-    pub avg_quality_rate: f64,
+    pub avg_quality: f64,
     pub avg_oee: f64,
-    pub total_production_time: f64,
-    pub total_output: f64,
-    pub total_good_output: f64,
-    pub date_from: Option<DateTime<Utc>>,
-    pub date_to: Option<DateTime<Utc>>,
+    pub trend: Vec<OeeTrendItem>,
+    pub by_equipment: Vec<OeeEquipmentStat>,
 }
 
 #[derive(Debug, Clone, Serialize)]
@@ -104,6 +124,8 @@ pub struct EquipmentEfficiencyAnalysis {
 pub struct ListOeeRecordsResponse {
     pub records: Vec<OeeRecordResponse>,
     pub total: i64,
+    pub page: i64,
+    pub pagesize: i64,
 }
 
 #[derive(Debug, Clone, Deserialize)]
@@ -139,8 +161,8 @@ pub struct UpdateOeeRecordRequest {
 #[derive(Debug, Clone, Deserialize)]
 pub struct OeeStatisticsQuery {
     pub equipment_id: Option<Uuid>,
-    pub date_from: Option<DateTime<Utc>>,
-    pub date_to: Option<DateTime<Utc>>,
+    pub start_date: Option<String>,
+    pub end_date: Option<String>,
 }
 
 fn naive_to_utc(dt: Option<NaiveDateTime>) -> DateTime<Utc> {
@@ -169,24 +191,24 @@ fn calculate_oee(
     good_output: f64,
 ) -> (f64, f64, f64, f64) {
     let availability = if planned_time > 0.0 {
-        run_time / planned_time
+        (run_time / planned_time) * 100.0
     } else {
         0.0
     };
     let performance = if run_time > 0.0 && ideal_cycle_time > 0.0 {
-        (actual_output * ideal_cycle_time) / run_time
+        ((actual_output * ideal_cycle_time) / run_time) * 100.0
     } else {
         0.0
     };
-    let performance = performance.min(1.0);
-    let quality_rate = if actual_output > 0.0 {
-        good_output / actual_output
+    let performance = performance.min(100.0);
+    let quality = if actual_output > 0.0 {
+        (good_output / actual_output) * 100.0
     } else {
         0.0
     };
-    let oee = availability * performance * quality_rate;
+    let oee = (availability / 100.0) * (performance / 100.0) * (quality / 100.0) * 100.0;
 
-    (availability, performance, quality_rate, oee)
+    (availability, performance, quality, oee)
 }
 
 // ==================== Equipment OEE Handlers ====================
@@ -194,6 +216,7 @@ fn calculate_oee(
 pub async fn list_oee_records(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
+    Query(query): Query<ListOeeRecordsQuery>,
 ) -> Json<ApiResponse<ListOeeRecordsResponse>> {
     if let Err(e) =
         check_permission(&state.pool, &claims, &ModulePermission::EquipmentOeeRead).await
@@ -201,7 +224,55 @@ pub async fn list_oee_records(
         return e;
     }
 
-    let result = sqlx::query!(
+    let page = query.page.unwrap_or(1) as i64;
+    let pagesize = query.pagesize.unwrap_or(10) as i64;
+    let offset = (page - 1) * pagesize;
+
+    let mut params: Vec<serde_json::Value> = Vec::new();
+    let mut where_clause = String::new();
+
+    if let Some(shift) = query.shift {
+        where_clause.push_str(" WHERE oee.shift = $1");
+        params.push(serde_json::Value::String(shift));
+    }
+
+    if let Some(search) = query.search {
+        let pattern = format!("%{}%", search);
+        if where_clause.is_empty() {
+            where_clause.push_str(
+                " WHERE (e.name ILIKE $1 OR e.equipment_no ILIKE $1 OR oee.operator ILIKE $1)",
+            );
+        } else {
+            where_clause.push_str(&format!(
+                " AND (e.name ILIKE ${} OR e.equipment_no ILIKE ${} OR oee.operator ILIKE ${})",
+                params.len() + 1,
+                params.len() + 1,
+                params.len() + 1
+            ));
+        }
+        params.push(serde_json::Value::String(pattern));
+    }
+
+    let count_sql = format!(
+        "SELECT COUNT(*) as total FROM equipment_oee oee LEFT JOIN equipment e ON oee.equipment_id = e.id{}",
+        where_clause
+    );
+
+    let mut count_query = sqlx::query_scalar(&count_sql);
+    for p in &params {
+        count_query = count_query.bind(p.clone());
+    }
+
+    let count_result = count_query.fetch_one(&state.pool).await;
+    let total: Option<i64> = match count_result {
+        Ok(c) => c,
+        Err(e) => {
+            tracing::error!("Failed to count OEE records: {}", e);
+            return Json(ApiResponse::error(500, "获取OEE记录列表失败"));
+        }
+    };
+
+    let fetch_sql = format!(
         r#"
         SELECT 
             oee.id, oee.equipment_id, oee.record_date,
@@ -212,13 +283,22 @@ pub async fn list_oee_records(
             e.name as equipment_name, e.equipment_no
         FROM equipment_oee oee
         LEFT JOIN equipment e ON oee.equipment_id = e.id
+        {}
         ORDER BY oee.record_date DESC
-        "#
-    )
-    .fetch_all(&state.pool)
-    .await;
+        LIMIT ${} OFFSET ${}
+        "#,
+        where_clause,
+        params.len() + 1,
+        params.len() + 2
+    );
 
-    let records = match result {
+    let mut fetch_query = sqlx::query(&fetch_sql);
+    for p in &params {
+        fetch_query = fetch_query.bind(p.clone());
+    }
+    fetch_query = fetch_query.bind(pagesize).bind(offset);
+
+    let records = match fetch_query.fetch_all(&state.pool).await {
         Ok(r) => r,
         Err(e) => {
             tracing::error!("Failed to fetch OEE records: {}", e);
@@ -229,36 +309,96 @@ pub async fn list_oee_records(
     let records_list: Vec<OeeRecordResponse> = records
         .into_iter()
         .map(|r| OeeRecordResponse {
-            id: r.id,
-            equipment_id: r.equipment_id,
-            equipment_name: Some(r.equipment_name),
-            equipment_no: Some(r.equipment_no),
-            record_date: opt_naive_date_to_utc(Some(r.record_date)).unwrap_or_else(Utc::now),
-            planned_production_time: big_decimal_to_f64(Some(r.planned_production_time)),
-            actual_run_time: big_decimal_to_f64(Some(r.actual_run_time)),
-            downtime: big_decimal_to_f64(r.downtime),
-            ideal_cycle_time: big_decimal_to_f64(Some(r.ideal_cycle_time)),
-            actual_output: big_decimal_to_f64(Some(r.actual_output)),
-            good_output: big_decimal_to_f64(Some(r.good_output)),
-            defective_output: big_decimal_to_f64(r.defective_output),
-            availability: big_decimal_to_f64(r.availability),
-            performance: big_decimal_to_f64(r.performance),
-            quality_rate: big_decimal_to_f64(r.quality_rate),
-            oee: big_decimal_to_f64(r.oee),
-            shift: r.shift,
-            operator: r.operator,
-            notes: r.notes,
-            created_at: naive_to_utc(r.created_at),
-            updated_at: naive_to_utc(r.updated_at),
+            id: r.try_get::<Uuid, _>("id").unwrap_or_default(),
+            equipment_id: r.try_get::<Uuid, _>("equipment_id").unwrap_or_default(),
+            equipment_name: r
+                .try_get::<Option<String>, _>("equipment_name")
+                .ok()
+                .flatten(),
+            equipment_code: r
+                .try_get::<Option<String>, _>("equipment_no")
+                .ok()
+                .flatten(),
+            record_date: opt_naive_date_to_utc(
+                r.try_get::<Option<NaiveDate>, _>("record_date")
+                    .ok()
+                    .flatten(),
+            )
+            .unwrap_or_else(Utc::now),
+            planned_production_time: big_decimal_to_f64(
+                r.try_get::<Option<BigDecimal>, _>("planned_production_time")
+                    .ok()
+                    .flatten(),
+            ),
+            run_time: big_decimal_to_f64(
+                r.try_get::<Option<BigDecimal>, _>("actual_run_time")
+                    .ok()
+                    .flatten(),
+            ),
+            downtime: big_decimal_to_f64(
+                r.try_get::<Option<BigDecimal>, _>("downtime")
+                    .ok()
+                    .flatten(),
+            ),
+            ideal_cycle_time: big_decimal_to_f64(
+                r.try_get::<Option<BigDecimal>, _>("ideal_cycle_time")
+                    .ok()
+                    .flatten(),
+            ),
+            total_count: big_decimal_to_f64(
+                r.try_get::<Option<BigDecimal>, _>("actual_output")
+                    .ok()
+                    .flatten(),
+            ),
+            good_count: big_decimal_to_f64(
+                r.try_get::<Option<BigDecimal>, _>("good_output")
+                    .ok()
+                    .flatten(),
+            ),
+            reject_count: big_decimal_to_f64(
+                r.try_get::<Option<BigDecimal>, _>("defective_output")
+                    .ok()
+                    .flatten(),
+            ),
+            availability: big_decimal_to_f64(
+                r.try_get::<Option<BigDecimal>, _>("availability")
+                    .ok()
+                    .flatten(),
+            ) * 100.0,
+            performance: big_decimal_to_f64(
+                r.try_get::<Option<BigDecimal>, _>("performance")
+                    .ok()
+                    .flatten(),
+            ) * 100.0,
+            quality: big_decimal_to_f64(
+                r.try_get::<Option<BigDecimal>, _>("quality_rate")
+                    .ok()
+                    .flatten(),
+            ) * 100.0,
+            oee: big_decimal_to_f64(r.try_get::<Option<BigDecimal>, _>("oee").ok().flatten())
+                * 100.0,
+            shift: r.try_get::<Option<String>, _>("shift").ok().flatten(),
+            operator: r.try_get::<Option<String>, _>("operator").ok().flatten(),
+            notes: r.try_get::<Option<String>, _>("notes").ok().flatten(),
+            created_at: naive_to_utc(
+                r.try_get::<Option<NaiveDateTime>, _>("created_at")
+                    .ok()
+                    .flatten(),
+            ),
+            updated_at: naive_to_utc(
+                r.try_get::<Option<NaiveDateTime>, _>("updated_at")
+                    .ok()
+                    .flatten(),
+            ),
         })
         .collect();
-
-    let total = records_list.len() as i64;
 
     Json(ApiResponse::success(
         ListOeeRecordsResponse {
             records: records_list,
-            total,
+            total: total.unwrap_or(0),
+            page,
+            pagesize,
         },
         "获取OEE记录列表成功",
     ))
@@ -343,19 +483,19 @@ pub async fn create_oee_record(
         id: result.id,
         equipment_id: result.equipment_id,
         equipment_name: equipment.as_ref().map(|e| e.name.clone()),
-        equipment_no: equipment.as_ref().map(|e| e.equipment_no.clone()),
+        equipment_code: equipment.as_ref().map(|e| e.equipment_no.clone()),
         record_date: opt_naive_date_to_utc(Some(result.record_date)).unwrap_or_else(Utc::now),
         planned_production_time: big_decimal_to_f64(Some(result.planned_production_time)),
-        actual_run_time: big_decimal_to_f64(Some(result.actual_run_time)),
+        run_time: big_decimal_to_f64(Some(result.actual_run_time)),
         downtime: big_decimal_to_f64(result.downtime),
         ideal_cycle_time: big_decimal_to_f64(Some(result.ideal_cycle_time)),
-        actual_output: big_decimal_to_f64(Some(result.actual_output)),
-        good_output: big_decimal_to_f64(Some(result.good_output)),
-        defective_output: big_decimal_to_f64(result.defective_output),
-        availability: big_decimal_to_f64(result.availability),
-        performance: big_decimal_to_f64(result.performance),
-        quality_rate: big_decimal_to_f64(result.quality_rate),
-        oee: big_decimal_to_f64(result.oee),
+        total_count: big_decimal_to_f64(Some(result.actual_output)),
+        good_count: big_decimal_to_f64(Some(result.good_output)),
+        reject_count: big_decimal_to_f64(result.defective_output),
+        availability: big_decimal_to_f64(result.availability) * 100.0,
+        performance: big_decimal_to_f64(result.performance) * 100.0,
+        quality: big_decimal_to_f64(result.quality_rate) * 100.0,
+        oee: big_decimal_to_f64(result.oee) * 100.0,
         shift: result.shift,
         operator: result.operator,
         notes: result.notes,
@@ -409,19 +549,19 @@ pub async fn get_oee_record(
                 id: r.id,
                 equipment_id: r.equipment_id,
                 equipment_name: Some(r.equipment_name),
-                equipment_no: Some(r.equipment_no),
+                equipment_code: Some(r.equipment_no),
                 record_date: opt_naive_date_to_utc(Some(r.record_date)).unwrap_or_else(Utc::now),
                 planned_production_time: big_decimal_to_f64(Some(r.planned_production_time)),
-                actual_run_time: big_decimal_to_f64(Some(r.actual_run_time)),
+                run_time: big_decimal_to_f64(Some(r.actual_run_time)),
                 downtime: big_decimal_to_f64(r.downtime),
                 ideal_cycle_time: big_decimal_to_f64(Some(r.ideal_cycle_time)),
-                actual_output: big_decimal_to_f64(Some(r.actual_output)),
-                good_output: big_decimal_to_f64(Some(r.good_output)),
-                defective_output: big_decimal_to_f64(r.defective_output),
-                availability: big_decimal_to_f64(r.availability),
-                performance: big_decimal_to_f64(r.performance),
-                quality_rate: big_decimal_to_f64(r.quality_rate),
-                oee: big_decimal_to_f64(r.oee),
+                total_count: big_decimal_to_f64(Some(r.actual_output)),
+                good_count: big_decimal_to_f64(Some(r.good_output)),
+                reject_count: big_decimal_to_f64(r.defective_output),
+                availability: big_decimal_to_f64(r.availability) * 100.0,
+                performance: big_decimal_to_f64(r.performance) * 100.0,
+                quality: big_decimal_to_f64(r.quality_rate) * 100.0,
+                oee: big_decimal_to_f64(r.oee) * 100.0,
                 shift: r.shift,
                 operator: r.operator,
                 notes: r.notes,
@@ -552,19 +692,19 @@ pub async fn update_oee_record(
                 id: r.id,
                 equipment_id: r.equipment_id,
                 equipment_name: None,
-                equipment_no: None,
+                equipment_code: None,
                 record_date: opt_naive_date_to_utc(Some(r.record_date)).unwrap_or_else(Utc::now),
                 planned_production_time: big_decimal_to_f64(Some(r.planned_production_time)),
-                actual_run_time: big_decimal_to_f64(Some(r.actual_run_time)),
+                run_time: big_decimal_to_f64(Some(r.actual_run_time)),
                 downtime: big_decimal_to_f64(r.downtime),
                 ideal_cycle_time: big_decimal_to_f64(Some(r.ideal_cycle_time)),
-                actual_output: big_decimal_to_f64(Some(r.actual_output)),
-                good_output: big_decimal_to_f64(Some(r.good_output)),
-                defective_output: big_decimal_to_f64(r.defective_output),
-                availability: big_decimal_to_f64(r.availability),
-                performance: big_decimal_to_f64(r.performance),
-                quality_rate: big_decimal_to_f64(r.quality_rate),
-                oee: big_decimal_to_f64(r.oee),
+                total_count: big_decimal_to_f64(Some(r.actual_output)),
+                good_count: big_decimal_to_f64(Some(r.good_output)),
+                reject_count: big_decimal_to_f64(r.defective_output),
+                availability: big_decimal_to_f64(r.availability) * 100.0,
+                performance: big_decimal_to_f64(r.performance) * 100.0,
+                quality: big_decimal_to_f64(r.quality_rate) * 100.0,
+                oee: big_decimal_to_f64(r.oee) * 100.0,
                 shift: r.shift,
                 operator: r.operator,
                 notes: r.notes,
@@ -610,80 +750,195 @@ pub async fn delete_oee_record(
 pub async fn get_oee_statistics(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
-    Json(req): Json<OeeStatisticsQuery>,
-) -> Json<ApiResponse<Vec<OeeStatisticsResponse>>> {
+    Query(req): Query<OeeStatisticsQuery>,
+) -> Json<ApiResponse<OeeStatisticsResponse>> {
     if let Err(e) =
         check_permission(&state.pool, &claims, &ModulePermission::EquipmentOeeRead).await
     {
         return e;
     }
 
-    let result = sqlx::query!(
+    let start_date = req
+        .start_date
+        .as_ref()
+        .and_then(|s| NaiveDate::parse_from_str(s, "%Y-%m-%d").ok());
+    let end_date = req
+        .end_date
+        .as_ref()
+        .and_then(|s| NaiveDate::parse_from_str(s, "%Y-%m-%d").ok());
+
+    // 总体统计
+    let overall_result = sqlx::query!(
         r#"
         SELECT 
-            e.id as equipment_id, e.name as equipment_name, e.equipment_no,
             COUNT(oee.id) as total_records,
             COALESCE(AVG(oee.availability), 0) as avg_availability,
             COALESCE(AVG(oee.performance), 0) as avg_performance,
             COALESCE(AVG(oee.quality_rate), 0) as avg_quality_rate,
-            COALESCE(AVG(oee.oee), 0) as avg_oee,
-            COALESCE(SUM(oee.actual_run_time), 0) as total_production_time,
-            COALESCE(SUM(oee.actual_output), 0) as total_output,
-            COALESCE(SUM(oee.good_output), 0) as total_good_output,
-            MIN(oee.record_date) as date_from,
-            MAX(oee.record_date) as date_to
-        FROM equipment e
-        LEFT JOIN equipment_oee oee ON e.id = oee.equipment_id
+            COALESCE(AVG(oee.oee), 0) as avg_oee
+        FROM equipment_oee oee
+        LEFT JOIN equipment e ON oee.equipment_id = e.id
         WHERE ($1::uuid IS NULL OR e.id = $1)
           AND ($2::date IS NULL OR oee.record_date >= $2)
           AND ($3::date IS NULL OR oee.record_date <= $3)
-        GROUP BY e.id, e.name, e.equipment_no
-        ORDER BY avg_oee DESC
         "#,
         req.equipment_id,
-        req.date_from.map(|d| d.date_naive()),
-        req.date_to.map(|d| d.date_naive()),
+        start_date,
+        end_date,
+    )
+    .fetch_one(&state.pool)
+    .await;
+
+    let (total_records, avg_availability, avg_performance, avg_quality, avg_oee) =
+        match overall_result {
+            Ok(r) => (
+                r.total_records.unwrap_or(0),
+                big_decimal_to_f64(r.avg_availability) * 100.0,
+                big_decimal_to_f64(r.avg_performance) * 100.0,
+                big_decimal_to_f64(r.avg_quality_rate) * 100.0,
+                big_decimal_to_f64(r.avg_oee) * 100.0,
+            ),
+            Err(e) => {
+                tracing::error!("Failed to fetch overall OEE stats: {}", e);
+                (0, 0.0, 0.0, 0.0, 0.0)
+            }
+        };
+
+    // 趋势数据（近14天）
+    let trend_result = sqlx::query(
+        r#"
+        SELECT 
+            DATE(oee.record_date) as date,
+            COALESCE(AVG(oee.availability), 0) as availability,
+            COALESCE(AVG(oee.performance), 0) as performance,
+            COALESCE(AVG(oee.quality_rate), 0) as quality,
+            COALESCE(AVG(oee.oee), 0) as oee
+        FROM equipment_oee oee
+        LEFT JOIN equipment e ON oee.equipment_id = e.id
+        WHERE oee.record_date >= CURRENT_DATE - INTERVAL '14 days'
+          AND ($1::uuid IS NULL OR e.id = $1)
+        GROUP BY DATE(oee.record_date)
+        ORDER BY date DESC
+        LIMIT 14
+        "#,
+    )
+    .bind(req.equipment_id)
+    .fetch_all(&state.pool)
+    .await;
+
+    let trend: Vec<OeeTrendItem> = match trend_result {
+        Ok(rows) => rows
+            .into_iter()
+            .map(|r| {
+                let date = r
+                    .try_get::<Option<NaiveDate>, _>("date")
+                    .ok()
+                    .flatten()
+                    .map(|d| d.format("%Y-%m-%d").to_string())
+                    .unwrap_or_default();
+                OeeTrendItem {
+                    date,
+                    availability: big_decimal_to_f64(
+                        r.try_get::<Option<BigDecimal>, _>("availability")
+                            .ok()
+                            .flatten(),
+                    ) * 100.0,
+                    performance: big_decimal_to_f64(
+                        r.try_get::<Option<BigDecimal>, _>("performance")
+                            .ok()
+                            .flatten(),
+                    ) * 100.0,
+                    quality: big_decimal_to_f64(
+                        r.try_get::<Option<BigDecimal>, _>("quality").ok().flatten(),
+                    ) * 100.0,
+                    oee: big_decimal_to_f64(
+                        r.try_get::<Option<BigDecimal>, _>("oee").ok().flatten(),
+                    ) * 100.0,
+                }
+            })
+            .collect(),
+        Err(e) => {
+            tracing::error!("Failed to fetch OEE trend: {}", e);
+            vec![]
+        }
+    };
+
+    // 按设备统计
+    let by_equip_result = sqlx::query!(
+        r#"
+        SELECT 
+            e.id as equipment_id,
+            e.name as equipment_name,
+            e.equipment_no as equipment_code,
+            COALESCE(AVG(oee.availability), 0) as availability,
+            COALESCE(AVG(oee.performance), 0) as performance,
+            COALESCE(AVG(oee.quality_rate), 0) as quality_rate,
+            COALESCE(AVG(oee.oee), 0) as oee
+        FROM equipment e
+        LEFT JOIN equipment_oee oee ON e.id = oee.equipment_id
+          AND ($2::date IS NULL OR oee.record_date >= $2)
+          AND ($3::date IS NULL OR oee.record_date <= $3)
+        WHERE ($1::uuid IS NULL OR e.id = $1)
+        GROUP BY e.id, e.name, e.equipment_no
+        ORDER BY oee DESC
+        "#,
+        req.equipment_id,
+        start_date,
+        end_date,
     )
     .fetch_all(&state.pool)
     .await;
 
-    let stats = match result {
+    let by_equipment: Vec<OeeEquipmentStat> = match by_equip_result {
         Ok(rows) => rows
             .into_iter()
-            .map(|r| OeeStatisticsResponse {
+            .map(|r| OeeEquipmentStat {
                 equipment_id: r.equipment_id,
                 equipment_name: r.equipment_name,
-                equipment_no: r.equipment_no,
-                total_records: r.total_records.unwrap_or(0),
-                avg_availability: big_decimal_to_f64(r.avg_availability),
-                avg_performance: big_decimal_to_f64(r.avg_performance),
-                avg_quality_rate: big_decimal_to_f64(r.avg_quality_rate),
-                avg_oee: big_decimal_to_f64(r.avg_oee),
-                total_production_time: big_decimal_to_f64(r.total_production_time),
-                total_output: big_decimal_to_f64(r.total_output),
-                total_good_output: big_decimal_to_f64(r.total_good_output),
-                date_from: opt_naive_date_to_utc(r.date_from),
-                date_to: opt_naive_date_to_utc(r.date_to),
+                equipment_code: r.equipment_code,
+                availability: big_decimal_to_f64(r.availability) * 100.0,
+                performance: big_decimal_to_f64(r.performance) * 100.0,
+                quality: big_decimal_to_f64(r.quality_rate) * 100.0,
+                oee: big_decimal_to_f64(r.oee) * 100.0,
             })
             .collect(),
         Err(e) => {
-            tracing::error!("Failed to fetch OEE statistics: {}", e);
-            return Json(ApiResponse::error(500, "获取OEE统计数据失败"));
+            tracing::error!("Failed to fetch OEE by equipment: {}", e);
+            vec![]
         }
     };
 
-    Json(ApiResponse::success(stats, "获取OEE统计数据成功"))
+    Json(ApiResponse::success(
+        OeeStatisticsResponse {
+            total_records,
+            avg_availability,
+            avg_performance,
+            avg_quality,
+            avg_oee,
+            trend,
+            by_equipment,
+        },
+        "获取OEE统计数据成功",
+    ))
 }
 
 pub async fn get_equipment_efficiency_analysis(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
+    Path(equipment_id): Path<String>,
 ) -> Json<ApiResponse<Vec<EquipmentEfficiencyAnalysis>>> {
     if let Err(e) =
         check_permission(&state.pool, &claims, &ModulePermission::EquipmentOeeRead).await
     {
         return e;
     }
+
+    let equipment_uuid = match Uuid::parse_str(&equipment_id) {
+        Ok(u) => u,
+        Err(_) => {
+            return Json(ApiResponse::error(400, "无效的设备ID"));
+        }
+    };
 
     let result = sqlx::query!(
         r#"
@@ -697,9 +952,11 @@ pub async fn get_equipment_efficiency_analysis(
         FROM equipment e
         LEFT JOIN equipment_oee oee ON e.id = oee.equipment_id
           AND oee.record_date >= CURRENT_DATE - INTERVAL '30 days'
+        WHERE e.id = $1
         GROUP BY e.id, e.name, e.equipment_no, e.status
         ORDER BY oee DESC
-        "#
+        "#,
+        equipment_uuid,
     )
     .fetch_all(&state.pool)
     .await;
