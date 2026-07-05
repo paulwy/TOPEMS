@@ -1,9 +1,14 @@
 use axum::{
     extract::Path,
+    extract::Query,
     extract::State,
     routing::{delete, get, post, put},
     Json, Router,
 };
+use chrono::Utc;
+use serde::{Deserialize, Serialize};
+use sqlx::types::BigDecimal;
+use sqlx::FromRow;
 use uuid::Uuid;
 
 use crate::AppState;
@@ -21,46 +26,251 @@ pub fn create_routes() -> Router<AppState> {
         )
 }
 
-pub async fn list_batches(State(_state): State<AppState>) -> Json<ApiResponse<serde_json::Value>> {
-    tracing::info!("list_batches called");
-    Json(ApiResponse::success(
-        serde_json::json!({"batches": [], "total": 0}),
-        "获取列表成功",
-    ))
+#[derive(Debug, Serialize, Deserialize, FromRow)]
+pub struct ProductionBatch {
+    pub id: Uuid,
+    pub batch_no: String,
+    pub product_id: Option<Uuid>,
+    pub product_name: Option<String>,
+    pub quantity: Option<BigDecimal>,
+    pub unit: Option<String>,
+    pub start_date: Option<chrono::DateTime<chrono::Utc>>,
+    pub end_date: Option<chrono::DateTime<chrono::Utc>>,
+    pub status: String,
+    pub notes: Option<String>,
+    pub created_at: chrono::DateTime<chrono::Utc>,
+    pub updated_at: chrono::DateTime<chrono::Utc>,
+}
+
+#[derive(Debug, Deserialize)]
+pub struct CreateBatchRequest {
+    pub batch_no: String,
+    pub product_id: Option<Uuid>,
+    pub product_name: Option<String>,
+    pub quantity: Option<BigDecimal>,
+    pub unit: Option<String>,
+    pub start_date: Option<chrono::DateTime<chrono::Utc>>,
+    pub end_date: Option<chrono::DateTime<chrono::Utc>>,
+    pub status: Option<String>,
+    pub notes: Option<String>,
+}
+
+#[derive(Debug, Deserialize)]
+pub struct UpdateBatchRequest {
+    pub batch_no: Option<String>,
+    pub product_id: Option<Uuid>,
+    pub product_name: Option<String>,
+    pub quantity: Option<BigDecimal>,
+    pub unit: Option<String>,
+    pub start_date: Option<chrono::DateTime<chrono::Utc>>,
+    pub end_date: Option<chrono::DateTime<chrono::Utc>>,
+    pub status: Option<String>,
+    pub notes: Option<String>,
+}
+
+#[derive(Debug, Deserialize)]
+pub struct BatchQuery {
+    pub page: Option<i64>,
+    pub page_size: Option<i64>,
+    pub search: Option<String>,
+    pub status: Option<String>,
+    pub product_id: Option<Uuid>,
+}
+
+pub async fn list_batches(
+    State(state): State<AppState>,
+    Query(query): Query<BatchQuery>,
+) -> Json<ApiResponse<serde_json::Value>> {
+    let page = query.page.unwrap_or(1).max(1);
+    let page_size = query.page_size.unwrap_or(10).min(100);
+    let offset = (page - 1) * page_size;
+    let search_pattern = query.search.as_ref().map(|s| format!("%{}%", s));
+
+    let result = sqlx::query_as::<_, ProductionBatch>(
+        r#"
+        SELECT id, batch_no, product_id, product_name, quantity, unit,
+               start_date, end_date, status, notes, created_at, updated_at
+        FROM pdm_production_batches
+        WHERE ($1::text IS NULL OR batch_no ILIKE $1 OR product_name ILIKE $1)
+          AND ($2::text IS NULL OR status = $2)
+          AND ($3::uuid IS NULL OR product_id = $3)
+        ORDER BY created_at DESC
+        LIMIT $4 OFFSET $5
+        "#,
+    )
+    .bind(&search_pattern)
+    .bind(&query.status)
+    .bind(&query.product_id)
+    .bind(page_size)
+    .bind(offset)
+    .fetch_all(&state.pool)
+    .await;
+
+    match result {
+        Ok(batches) => {
+            let count_result = sqlx::query_scalar::<_, i64>(
+                r#"
+                SELECT COUNT(*) FROM pdm_production_batches
+                WHERE ($1::text IS NULL OR batch_no ILIKE $1 OR product_name ILIKE $1)
+                  AND ($2::text IS NULL OR status = $2)
+                  AND ($3::uuid IS NULL OR product_id = $3)
+                "#,
+            )
+            .bind(&search_pattern)
+            .bind(&query.status)
+            .bind(&query.product_id)
+            .fetch_one(&state.pool)
+            .await;
+
+            let total = count_result.unwrap_or(0);
+
+            Json(ApiResponse::success(
+                serde_json::json!({
+                    "batches": batches,
+                    "total": total,
+                    "page": page,
+                    "page_size": page_size
+                }),
+                "获取批次列表成功",
+            ))
+        }
+        Err(e) => {
+            tracing::error!("获取批次列表失败: {}", e);
+            Json(ApiResponse::error(500, "获取批次列表失败"))
+        }
+    }
 }
 
 pub async fn create_batch(
-    State(_state): State<AppState>,
-    Json(_req): Json<serde_json::Value>,
-) -> Json<ApiResponse<serde_json::Value>> {
-    tracing::info!("create_batch called");
-    Json(ApiResponse::success(
-        serde_json::json!({"id": Uuid::new_v4()}),
-        "创建成功",
-    ))
+    State(state): State<AppState>,
+    Json(req): Json<CreateBatchRequest>,
+) -> Json<ApiResponse<ProductionBatch>> {
+    if req.batch_no.is_empty() {
+        return Json(ApiResponse::error(400, "批次编号不能为空"));
+    }
+
+    let status = req.status.unwrap_or_else(|| "pending".to_string());
+
+    let result = sqlx::query_as::<_, ProductionBatch>(
+        r#"
+        INSERT INTO pdm_production_batches (
+            batch_no, product_id, product_name, quantity, unit,
+            start_date, end_date, status, notes
+        ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9)
+        RETURNING id, batch_no, product_id, product_name, quantity, unit,
+                  start_date, end_date, status, notes, created_at, updated_at
+        "#,
+    )
+    .bind(&req.batch_no)
+    .bind(req.product_id)
+    .bind(&req.product_name)
+    .bind(req.quantity)
+    .bind(&req.unit)
+    .bind(req.start_date)
+    .bind(req.end_date)
+    .bind(&status)
+    .bind(&req.notes)
+    .fetch_one(&state.pool)
+    .await;
+
+    match result {
+        Ok(batch) => Json(ApiResponse::success(batch, "批次创建成功")),
+        Err(e) => {
+            tracing::error!("创建批次失败: {}", e);
+            Json(ApiResponse::error(500, "创建批次失败"))
+        }
+    }
 }
 
 pub async fn get_batch(
-    State(_state): State<AppState>,
-    Path(_id): Path<Uuid>,
-) -> Json<ApiResponse<serde_json::Value>> {
-    tracing::info!("get_batch called");
-    Json(ApiResponse::success(serde_json::json!({}), "获取成功"))
+    State(state): State<AppState>,
+    Path(id): Path<Uuid>,
+) -> Json<ApiResponse<ProductionBatch>> {
+    let result = sqlx::query_as::<_, ProductionBatch>(
+        r#"
+        SELECT id, batch_no, product_id, product_name, quantity, unit,
+               start_date, end_date, status, notes, created_at, updated_at
+        FROM pdm_production_batches WHERE id = $1
+        "#,
+    )
+    .bind(id)
+    .fetch_optional(&state.pool)
+    .await;
+
+    match result {
+        Ok(Some(batch)) => Json(ApiResponse::success(batch, "获取批次成功")),
+        Ok(None) => Json(ApiResponse::error(404, "批次不存在")),
+        Err(e) => {
+            tracing::error!("获取批次失败: {}", e);
+            Json(ApiResponse::error(500, "获取批次失败"))
+        }
+    }
 }
 
 pub async fn update_batch(
-    State(_state): State<AppState>,
-    Path(_id): Path<Uuid>,
-    Json(_req): Json<serde_json::Value>,
-) -> Json<ApiResponse<serde_json::Value>> {
-    tracing::info!("update_batch called");
-    Json(ApiResponse::success(serde_json::json!({}), "更新成功"))
+    State(state): State<AppState>,
+    Path(id): Path<Uuid>,
+    Json(req): Json<UpdateBatchRequest>,
+) -> Json<ApiResponse<ProductionBatch>> {
+    let now = Utc::now();
+
+    let result = sqlx::query_as::<_, ProductionBatch>(
+        r#"
+        UPDATE pdm_production_batches SET
+            batch_no = COALESCE(NULLIF($2, ''), batch_no),
+            product_id = COALESCE($3, product_id),
+            product_name = COALESCE($4, product_name),
+            quantity = COALESCE($5, quantity),
+            unit = COALESCE(NULLIF($6, ''), unit),
+            start_date = COALESCE($7, start_date),
+            end_date = COALESCE($8, end_date),
+            status = COALESCE(NULLIF($9, ''), status),
+            notes = COALESCE($10, notes),
+            updated_at = $11
+        WHERE id = $1
+        RETURNING id, batch_no, product_id, product_name, quantity, unit,
+                  start_date, end_date, status, notes, created_at, updated_at
+        "#,
+    )
+    .bind(id)
+    .bind(&req.batch_no)
+    .bind(req.product_id)
+    .bind(&req.product_name)
+    .bind(req.quantity)
+    .bind(&req.unit)
+    .bind(req.start_date)
+    .bind(req.end_date)
+    .bind(&req.status)
+    .bind(&req.notes)
+    .bind(now)
+    .fetch_optional(&state.pool)
+    .await;
+
+    match result {
+        Ok(Some(batch)) => Json(ApiResponse::success(batch, "批次更新成功")),
+        Ok(None) => Json(ApiResponse::error(404, "批次不存在")),
+        Err(e) => {
+            tracing::error!("更新批次失败: {}", e);
+            Json(ApiResponse::error(500, "更新批次失败"))
+        }
+    }
 }
 
 pub async fn delete_batch(
-    State(_state): State<AppState>,
-    Path(_id): Path<Uuid>,
+    State(state): State<AppState>,
+    Path(id): Path<Uuid>,
 ) -> Json<ApiResponse<bool>> {
-    tracing::info!("delete_batch called");
-    Json(ApiResponse::success(true, "删除成功"))
+    let result = sqlx::query("DELETE FROM pdm_production_batches WHERE id = $1")
+        .bind(id)
+        .execute(&state.pool)
+        .await;
+
+    match result {
+        Ok(r) if r.rows_affected() > 0 => Json(ApiResponse::success(true, "批次删除成功")),
+        Ok(_) => Json(ApiResponse::error(404, "批次不存在")),
+        Err(e) => {
+            tracing::error!("删除批次失败: {}", e);
+            Json(ApiResponse::error(500, "删除批次失败"))
+        }
+    }
 }

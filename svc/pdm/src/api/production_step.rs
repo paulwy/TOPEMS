@@ -1,9 +1,7 @@
-use axum::{
-    extract::Path,
-    extract::State,
-    routing::{delete, get, post, put},
-    Json, Router,
-};
+use axum::{extract::Path, extract::Query, extract::State, routing::get, Json, Router};
+use serde::{Deserialize, Serialize};
+use sqlx::types::BigDecimal;
+use sqlx::FromRow;
 use uuid::Uuid;
 
 use crate::AppState;
@@ -21,46 +19,222 @@ pub fn create_routes() -> Router<AppState> {
         )
 }
 
-pub async fn list_steps(State(_state): State<AppState>) -> Json<ApiResponse<serde_json::Value>> {
-    tracing::info!("list_steps called");
-    Json(ApiResponse::success(
-        serde_json::json!({"steps": [], "total": 0}),
-        "获取列表成功",
-    ))
+#[derive(Debug, Serialize, Deserialize, FromRow)]
+pub struct ProductionStep {
+    pub id: Uuid,
+    pub process_id: Uuid,
+    pub step_no: i32,
+    pub name: String,
+    pub description: Option<String>,
+    pub standard_time: Option<BigDecimal>,
+    pub equipment_requirement: Option<String>,
+    pub quality_check: Option<String>,
+    pub status: String,
+}
+
+#[derive(Debug, Deserialize)]
+pub struct CreateStepRequest {
+    pub process_id: Uuid,
+    pub step_no: i32,
+    pub name: String,
+    pub description: Option<String>,
+    pub standard_time: Option<BigDecimal>,
+    pub equipment_requirement: Option<String>,
+    pub quality_check: Option<String>,
+    pub status: Option<String>,
+}
+
+#[derive(Debug, Deserialize)]
+pub struct UpdateStepRequest {
+    pub process_id: Option<Uuid>,
+    pub step_no: Option<i32>,
+    pub name: Option<String>,
+    pub description: Option<String>,
+    pub standard_time: Option<BigDecimal>,
+    pub equipment_requirement: Option<String>,
+    pub quality_check: Option<String>,
+    pub status: Option<String>,
+}
+
+#[derive(Debug, Deserialize)]
+pub struct StepQuery {
+    pub page: Option<i64>,
+    pub page_size: Option<i64>,
+    pub process_id: Option<Uuid>,
+}
+
+pub async fn list_steps(
+    State(state): State<AppState>,
+    Query(query): Query<StepQuery>,
+) -> Json<ApiResponse<serde_json::Value>> {
+    let page = query.page.unwrap_or(1).max(1);
+    let page_size = query.page_size.unwrap_or(10).min(100);
+    let offset = (page - 1) * page_size;
+
+    let result = sqlx::query_as::<_, ProductionStep>(
+        r#"
+        SELECT id, process_id, step_no, name, description, standard_time, equipment_requirement, quality_check, status
+        FROM pdm_production_steps
+        WHERE ($1::uuid IS NULL OR process_id = $1)
+        ORDER BY process_id, step_no
+        LIMIT $2 OFFSET $3
+        "#,
+    )
+    .bind(query.process_id)
+    .bind(page_size)
+    .bind(offset)
+    .fetch_all(&state.pool)
+    .await;
+
+    match result {
+        Ok(steps) => {
+            let count_result = sqlx::query_scalar::<_, i64>(
+                r#"
+                SELECT COUNT(*) FROM pdm_production_steps
+                WHERE ($1::uuid IS NULL OR process_id = $1)
+                "#,
+            )
+            .bind(query.process_id)
+            .fetch_one(&state.pool)
+            .await;
+
+            let total = count_result.unwrap_or(0);
+
+            Json(ApiResponse::success(
+                serde_json::json!({
+                    "steps": steps,
+                    "total": total,
+                    "page": page,
+                    "page_size": page_size
+                }),
+                "获取工步列表成功",
+            ))
+        }
+        Err(e) => {
+            tracing::error!("获取工步列表失败: {}", e);
+            Json(ApiResponse::error(500, "获取工步列表失败"))
+        }
+    }
 }
 
 pub async fn create_step(
-    State(_state): State<AppState>,
-    Json(_req): Json<serde_json::Value>,
-) -> Json<ApiResponse<serde_json::Value>> {
-    tracing::info!("create_step called");
-    Json(ApiResponse::success(
-        serde_json::json!({"id": Uuid::new_v4()}),
-        "创建成功",
-    ))
+    State(state): State<AppState>,
+    Json(req): Json<CreateStepRequest>,
+) -> Json<ApiResponse<ProductionStep>> {
+    if req.name.is_empty() {
+        return Json(ApiResponse::error(400, "工步名称不能为空"));
+    }
+
+    let status = req.status.unwrap_or_else(|| "active".to_string());
+
+    let result = sqlx::query_as::<_, ProductionStep>(
+        r#"
+        INSERT INTO pdm_production_steps (process_id, step_no, name, description, standard_time, equipment_requirement, quality_check, status)
+        VALUES ($1, $2, $3, $4, $5, $6, $7, $8)
+        RETURNING id, process_id, step_no, name, description, standard_time, equipment_requirement, quality_check, status
+        "#,
+    )
+    .bind(req.process_id)
+    .bind(req.step_no)
+    .bind(&req.name)
+    .bind(&req.description)
+    .bind(&req.standard_time)
+    .bind(&req.equipment_requirement)
+    .bind(&req.quality_check)
+    .bind(&status)
+    .fetch_one(&state.pool)
+    .await;
+
+    match result {
+        Ok(step) => Json(ApiResponse::success(step, "工步创建成功")),
+        Err(e) => {
+            tracing::error!("创建工步失败: {}", e);
+            Json(ApiResponse::error(500, "创建工步失败"))
+        }
+    }
 }
 
 pub async fn get_step(
-    State(_state): State<AppState>,
-    Path(_id): Path<Uuid>,
-) -> Json<ApiResponse<serde_json::Value>> {
-    tracing::info!("get_step called");
-    Json(ApiResponse::success(serde_json::json!({}), "获取成功"))
+    State(state): State<AppState>,
+    Path(id): Path<Uuid>,
+) -> Json<ApiResponse<ProductionStep>> {
+    let result = sqlx::query_as::<_, ProductionStep>(
+        r#"
+        SELECT id, process_id, step_no, name, description, standard_time, equipment_requirement, quality_check, status
+        FROM pdm_production_steps WHERE id = $1
+        "#,
+    )
+    .bind(id)
+    .fetch_optional(&state.pool)
+    .await;
+
+    match result {
+        Ok(Some(step)) => Json(ApiResponse::success(step, "获取工步成功")),
+        Ok(None) => Json(ApiResponse::error(404, "工步不存在")),
+        Err(e) => {
+            tracing::error!("获取工步失败: {}", e);
+            Json(ApiResponse::error(500, "获取工步失败"))
+        }
+    }
 }
 
 pub async fn update_step(
-    State(_state): State<AppState>,
-    Path(_id): Path<Uuid>,
-    Json(_req): Json<serde_json::Value>,
-) -> Json<ApiResponse<serde_json::Value>> {
-    tracing::info!("update_step called");
-    Json(ApiResponse::success(serde_json::json!({}), "更新成功"))
+    State(state): State<AppState>,
+    Path(id): Path<Uuid>,
+    Json(req): Json<UpdateStepRequest>,
+) -> Json<ApiResponse<ProductionStep>> {
+    let result = sqlx::query_as::<_, ProductionStep>(
+        r#"
+        UPDATE pdm_production_steps SET
+            process_id = COALESCE($2, process_id),
+            step_no = COALESCE($3, step_no),
+            name = COALESCE($4, name),
+            description = COALESCE($5, description),
+            standard_time = COALESCE($6, standard_time),
+            equipment_requirement = COALESCE($7, equipment_requirement),
+            quality_check = COALESCE($8, quality_check),
+            status = COALESCE($9, status)
+        WHERE id = $1
+        RETURNING id, process_id, step_no, name, description, standard_time, equipment_requirement, quality_check, status
+        "#,
+    )
+    .bind(id)
+    .bind(req.process_id)
+    .bind(req.step_no)
+    .bind(&req.name)
+    .bind(&req.description)
+    .bind(&req.standard_time)
+    .bind(&req.equipment_requirement)
+    .bind(&req.quality_check)
+    .bind(&req.status)
+    .fetch_optional(&state.pool)
+    .await;
+
+    match result {
+        Ok(Some(step)) => Json(ApiResponse::success(step, "工步更新成功")),
+        Ok(None) => Json(ApiResponse::error(404, "工步不存在")),
+        Err(e) => {
+            tracing::error!("更新工步失败: {}", e);
+            Json(ApiResponse::error(500, "更新工步失败"))
+        }
+    }
 }
 
 pub async fn delete_step(
-    State(_state): State<AppState>,
-    Path(_id): Path<Uuid>,
+    State(state): State<AppState>,
+    Path(id): Path<Uuid>,
 ) -> Json<ApiResponse<bool>> {
-    tracing::info!("delete_step called");
-    Json(ApiResponse::success(true, "删除成功"))
+    let result = sqlx::query("DELETE FROM pdm_production_steps WHERE id = $1")
+        .bind(id)
+        .execute(&state.pool)
+        .await;
+
+    match result {
+        Ok(r) if r.rows_affected() > 0 => Json(ApiResponse::success(true, "工步删除成功")),
+        Ok(_) => Json(ApiResponse::error(404, "工步不存在")),
+        Err(e) => {
+            tracing::error!("删除工步失败: {}", e);
+            Json(ApiResponse::error(500, "删除工步失败"))
+        }
+    }
 }
