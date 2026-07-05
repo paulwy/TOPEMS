@@ -12,14 +12,14 @@ export interface LoggerOptions {
   enableTimestamp?: boolean;
   enableConsole?: boolean;
   prefix?: string;
-  context?: Record<string, any>;
+  context?: Record<string, unknown>;
 }
 
 export interface Logger {
-  debug: (...args: any[]) => void;
-  info: (...args: any[]) => void;
-  warn: (...args: any[]) => void;
-  error: (...args: any[]) => void;
+  debug: (...args: unknown[]) => void;
+  info: (...args: unknown[]) => void;
+  warn: (...args: unknown[]) => void;
+  error: (...args: unknown[]) => void;
   group: (label: string, fn: () => void) => void;
   table: (data: unknown) => void;
   time: (label: string) => void;
@@ -49,7 +49,7 @@ function createLogger(name: string, options: LoggerOptions = {}): Logger {
 
   let minLevel = LOG_LEVELS[level];
 
-  function formatMessage(level: LogLevel, ...args: any[]): string {
+  function formatMessage(level: LogLevel, ...args: unknown[]): string {
     const parts: string[] = [];
 
     if (enableTimestamp) {
@@ -75,25 +75,25 @@ function createLogger(name: string, options: LoggerOptions = {}): Logger {
   }
 
   const logger = {
-    debug: (...args: any[]) => {
+    debug: (...args: unknown[]) => {
       if (shouldLog('debug') && enableConsole) {
         console.debug(formatMessage('debug'), ...args);
       }
     },
 
-    info: (...args: any[]) => {
+    info: (...args: unknown[]) => {
       if (shouldLog('info') && enableConsole) {
         console.info(formatMessage('info'), ...args);
       }
     },
 
-    warn: (...args: any[]) => {
+    warn: (...args: unknown[]) => {
       if (shouldLog('warn') && enableConsole) {
         console.warn(formatMessage('warn'), ...args);
       }
     },
 
-    error: (...args: any[]) => {
+    error: (...args: unknown[]) => {
       if (shouldLog('error') && enableConsole) {
         console.error(formatMessage('error'), ...args);
       }

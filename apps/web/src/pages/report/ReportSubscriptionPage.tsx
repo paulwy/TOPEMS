@@ -169,7 +169,7 @@ const ReportSubscriptionPage: React.FC = () => {
     });
   };
 
-  const handleFormChange = (field: string, value: any) => {
+  const handleFormChange = (field: string, value: unknown) => {
     setFormData((prev) => ({ ...prev, [field]: value }));
   };
 

@@ -90,11 +90,11 @@ export const taskApi = {
   },
 
   batchApprove: (data: TaskBatchApproveRequest): Promise<TaskBatchResult> => {
-    return apiClient.workflow.post('/tasks/batch/approve', data) as any;
+    return apiClient.workflow.post('/tasks/batch/approve', data) as unknown as Promise<TaskBatchResult>;
   },
 
   batchComplete: (data: { task_ids: string[]; comment?: string }): Promise<TaskBatchResult> => {
-    return apiClient.workflow.post('/tasks/batch/complete', data) as any;
+    return apiClient.workflow.post('/tasks/batch/complete', data) as unknown as Promise<TaskBatchResult>;
   },
 
   batchDelegate: (data: {
@@ -102,7 +102,7 @@ export const taskApi = {
     delegate_to: string;
     comment?: string;
   }): Promise<TaskBatchResult> => {
-    return apiClient.workflow.post('/tasks/batch/delegate', data) as any;
+    return apiClient.workflow.post('/tasks/batch/delegate', data) as unknown as Promise<TaskBatchResult>;
   },
 
   myTasks: (params?: TaskQueryParams) => {

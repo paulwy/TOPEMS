@@ -17,6 +17,7 @@ import {
 import { PageContainer } from '@/components/common/PageContainerV2';
 import React, { useState, useEffect, useMemo, useCallback } from 'react';
 import type { QualityInspection } from '@/api/mes/quality';
+import type { ListParams } from '@/api/mes';
 import { qualityApi } from '@/api/mes/quality';
 import { useAppStore } from '@/store';
 import { LoadingSpinner } from '@/components/common/LoadingSpinner';
@@ -62,7 +63,7 @@ const QualityInspectionPage: React.FC = () => {
   const loadInspections = useCallback(async () => {
     try {
       setLoading(true);
-      const params: any = {
+      const params: ListParams = {
         page: currentPage - 1,
         pagesize: pageSize,
       };

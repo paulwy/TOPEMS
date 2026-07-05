@@ -88,7 +88,7 @@ const EquipmentMaintenancePage: React.FC = () => {
     setLoading(true);
     setError(null);
     try {
-      const params: any = {
+      const params: Record<string, unknown> = {
         page: currentPage + 1,
         pagesize: pageSize,
       };
@@ -130,7 +130,7 @@ const EquipmentMaintenancePage: React.FC = () => {
     e.preventDefault();
     if (!selectedForMaintenance) return;
     try {
-      const data: any = {
+      const data: Partial<MaintenanceRecord> = {
         equipment_id: selectedForMaintenance.id,
         maintenance_type: newMaintenance.maintenance_type,
         description: newMaintenance.description,
@@ -177,9 +177,9 @@ const EquipmentMaintenancePage: React.FC = () => {
     setCurrentPage(0);
   };
 
-  const handleFilterChange = (filters: Record<string, any>) => {
+  const handleFilterChange = (filters: Record<string, unknown>) => {
     if (filters.status !== undefined) {
-      setFilterStatus(filters.status);
+      setFilterStatus(filters.status as string);
       setCurrentPage(0);
     }
   };
@@ -201,7 +201,7 @@ const EquipmentMaintenancePage: React.FC = () => {
         type: 'select',
         options: STATUS_OPTIONS,
         value: filterStatus,
-        onChange: (value: any) => setFilterStatus(value),
+        onChange: (value: unknown) => setFilterStatus(value as string),
       },
     ],
     [filterStatus]

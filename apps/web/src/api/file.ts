@@ -128,7 +128,7 @@ export const fileApi = {
   },
 
   async download(id: string): Promise<Blob> {
-    const baseURL = (apiClient.file as any).defaults?.baseURL || config.services.file;
+    const baseURL = apiClient.file.defaults?.baseURL || config.services.file;
     return downloadBlob(baseURL, `/download/${id}`);
   },
 

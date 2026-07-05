@@ -56,7 +56,7 @@ const SupplierManagementPage: React.FC = () => {
   const loadSuppliers = async () => {
     try {
       setLoading(true);
-      const params: any = {
+      const params: Record<string, unknown> = {
         page: currentPage,
         pagesize: pageSize,
       };

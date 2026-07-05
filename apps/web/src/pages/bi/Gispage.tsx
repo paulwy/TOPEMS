@@ -112,8 +112,8 @@ const GisContent: React.FC = () => {
   const addNotification = useAppStore((state) => state.addNotification);
   const [showModal, setShowModal] = useState(false);
   const [modalType, setModalType] = useState<ModalType>(null);
-  const [editingItem, setEditingItem] = useState<any>(null);
-  const [formData, setFormData] = useState<{ [key: string]: any }>({});
+  const [editingItem, setEditingItem] = useState<DevicePoint | StorageLocation | Pipeline | EvidenceRecord | FactoryMap | BusinessLocation | null>(null);
+  const [formData, setFormData] = useState<Record<string, unknown>>({});
   const [formErrors, setFormErrors] = useState<FormErrors>({});
   const [notification, setNotification] = useState<{
     type: 'success' | 'error';
@@ -501,7 +501,7 @@ const GisContent: React.FC = () => {
     );
   };
 
-  const ActionButtons: React.FC<{ item: any }> = ({ item }) => (
+  const ActionButtons: React.FC<{ item: DevicePoint | StorageLocation | Pipeline | EvidenceRecord | FactoryMap | BusinessLocation }> = ({ item }) => (
     <Stack
       direction='row'
       spacing={1}
@@ -844,7 +844,7 @@ const GisContent: React.FC = () => {
     label: string;
     name: string;
     type?: string;
-    value: any;
+    value: unknown;
     onChange: (value: unknown) => void;
     error?: string;
     placeholder?: string;
@@ -871,7 +871,7 @@ const GisContent: React.FC = () => {
 
   const TextAreaField: React.FC<{
     label: string;
-    value: any;
+    value: unknown;
     onChange: (value: unknown) => void;
     rows?: number;
   }> = ({ label, value, onChange, rows = 3 }) => (

@@ -578,6 +578,30 @@ export default defineConfig({
         rewrite: (path: string) => '/api' + path,
         configure: createProxyLogger('crm-sales-funnel', 'http://localhost:8029'),
       },
+      '/crm/interactions': {
+        target: 'http://localhost:8029',
+        changeOrigin: true,
+        rewrite: (path: string) => '/api' + path,
+        configure: createProxyLogger('crm-interactions', 'http://localhost:8029'),
+      },
+      '/crm/tags': {
+        target: 'http://localhost:8029',
+        changeOrigin: true,
+        rewrite: (path: string) => '/api' + path,
+        configure: createProxyLogger('crm-tags', 'http://localhost:8029'),
+      },
+      '/crm/segments': {
+        target: 'http://localhost:8029',
+        changeOrigin: true,
+        rewrite: (path: string) => '/api' + path,
+        configure: createProxyLogger('crm-segments', 'http://localhost:8029'),
+      },
+      '/crm/': createPageSafeProxy({
+        target: 'http://localhost:8029',
+        changeOrigin: true,
+        rewrite: (path: string) => '/api' + path,
+        configure: createProxyLogger('crm', 'http://localhost:8029'),
+      }),
 
       '/mes/api': createServiceProxyConfig('mes', 'http://localhost:8030'),
       '/mes/health': createHealthProxyConfig('mes', 'http://localhost:8030'),

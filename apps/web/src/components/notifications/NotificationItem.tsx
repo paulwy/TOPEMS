@@ -11,7 +11,7 @@ interface NotificationItemProps {
   onDelete: (id: string) => void;
 }
 
-const getNotificationIcon = (type: string, theme: any) => {
+const getNotificationIcon = (type: string, theme: { palette: unknown }) => {
   switch (type) {
     case 'system':
       return (
@@ -27,7 +27,7 @@ const getNotificationIcon = (type: string, theme: any) => {
           }}
         >
           <svg
-            style={{ width: 20, height: 20, color: theme.palette.primary.dark }}
+            style={{ width: 20, height: 20, color: (theme.palette as Record<string, { dark: string }>).primary.dark }}
             fill='none'
             stroke='currentColor'
             viewBox='0 0 24 24'
@@ -89,7 +89,7 @@ const getNotificationIcon = (type: string, theme: any) => {
           }}
         >
           <svg
-            style={{ width: 20, height: 20, color: theme.palette.error.dark }}
+            style={{ width: 20, height: 20, color: (theme.palette as Record<string, { dark: string }>).error.dark }}
             fill='none'
             stroke='currentColor'
             viewBox='0 0 24 24'
@@ -145,7 +145,7 @@ const getNotificationIcon = (type: string, theme: any) => {
           }}
         >
           <svg
-            style={{ width: 20, height: 20, color: theme.palette.success.dark }}
+            style={{ width: 20, height: 20, color: (theme.palette as Record<string, { dark: string }>).success.dark }}
             fill='none'
             stroke='currentColor'
             viewBox='0 0 24 24'
@@ -166,14 +166,14 @@ const getNotificationIcon = (type: string, theme: any) => {
             width: 40,
             height: 40,
             borderRadius: '9999px',
-            backgroundColor: theme.palette.grey[100],
+            backgroundColor: '#f5f5f5',
             display: 'flex',
             alignItems: 'center',
             justifyContent: 'center',
           }}
         >
           <svg
-            style={{ width: 20, height: 20, color: theme.palette.text.secondary }}
+            style={{ width: 20, height: 20, color: '#6b7280' }}
             fill='none'
             stroke='currentColor'
             viewBox='0 0 24 24'

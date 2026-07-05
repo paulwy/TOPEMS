@@ -13,6 +13,7 @@ import {
   Typography,
   Button,
 } from '@mui/material';
+import type { SxProps, Theme } from '@mui/material/styles';
 import { X } from 'lucide-react';
 
 // ============ 类型定义 ============
@@ -61,17 +62,17 @@ export interface DialogProps {
     disabled?: boolean;
   };
   /** 自定义样式 */
-  sx?: any;
+  sx?: SxProps<Theme>;
   /** 是否居中显示 */
   centered?: boolean;
   /** 是否显示分隔线 */
   showDivider?: boolean;
   /** 内容区域样式 */
-  contentSx?: any;
+  contentSx?: SxProps<Theme>;
   /** 标题区域样式 */
-  titleSx?: any;
+  titleSx?: SxProps<Theme>;
   /** 操作区域样式 */
-  actionsSx?: any;
+  actionsSx?: SxProps<Theme>;
 }
 
 // ============ Dialog 组件 ============

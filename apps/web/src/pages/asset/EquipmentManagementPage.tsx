@@ -75,7 +75,7 @@ const EquipmentManagementPage: React.FC = () => {
     setLoading(true);
     setError(null);
     try {
-      const params: any = {
+      const params: Record<string, unknown> = {
         page: currentPage,
         pagesize: pageSize,
       };
@@ -250,9 +250,9 @@ const EquipmentManagementPage: React.FC = () => {
     []
   );
 
-  const handleFilterChange = (filters: Record<string, any>) => {
+  const handleFilterChange = (filters: Record<string, unknown>) => {
     if (filters.status !== undefined) {
-      setFilterStatus(filters.status);
+      setFilterStatus(filters.status as string);
       setCurrentPage(1);
     }
   };

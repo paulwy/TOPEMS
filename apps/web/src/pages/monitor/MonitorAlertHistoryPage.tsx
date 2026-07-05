@@ -88,7 +88,7 @@ const MonitorAlertHistoryPage: React.FC = () => {
         setAlerts(response.data.items as AlertDetail[]);
         setTotalAlerts(response.data.total);
       }
-    } catch (err: any) {
+    } catch (err: unknown) {
       apiLogger.error('加载告警历史数据失败:', err);
       notifyError('加载告警历史数据失败');
     } finally {
@@ -153,7 +153,7 @@ const MonitorAlertHistoryPage: React.FC = () => {
       await monitorApi.acknowledgeAlert(id);
       notifySuccess('告警已确认');
       loadAlerts();
-    } catch (err: any) {
+    } catch (err: unknown) {
       apiLogger.error('确认告警失败:', err);
       notifyError('确认告警失败');
     }
@@ -164,7 +164,7 @@ const MonitorAlertHistoryPage: React.FC = () => {
       await monitorApi.resolveAlert(id);
       notifySuccess('告警已解决');
       loadAlerts();
-    } catch (err: any) {
+    } catch (err: unknown) {
       apiLogger.error('解决告警失败:', err);
       notifyError('解决告警失败');
     }
@@ -213,7 +213,7 @@ const MonitorAlertHistoryPage: React.FC = () => {
       link.click();
       URL.revokeObjectURL(url);
       notifySuccess('导出成功');
-    } catch (err: any) {
+    } catch (err: unknown) {
       apiLogger.error('导出失败:', err);
       notifyError('导出失败');
     }
@@ -343,7 +343,7 @@ const MonitorAlertHistoryPage: React.FC = () => {
             id: 'severity',
             label: '级别',
             field: 'severity',
-            render: (value: any) => (
+            render: (value: unknown) => (
               <Chip
                 size='small'
                 label={getSeverityLabel(value as string)}
@@ -360,7 +360,7 @@ const MonitorAlertHistoryPage: React.FC = () => {
             id: 'title',
             label: '告警标题',
             field: 'title',
-            render: (value: any, row: AlertDetail) => (
+            render: (value: unknown, row: AlertDetail) => (
               <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
                 <Typography
                   variant='body2'
@@ -388,13 +388,13 @@ const MonitorAlertHistoryPage: React.FC = () => {
             id: 'created_at',
             label: '触发时间',
             field: 'created_at',
-            render: (value: any) => new Date(value as string).toLocaleString('zh-CN'),
+            render: (value: unknown) => new Date(value as string).toLocaleString('zh-CN'),
           },
           {
             id: 'status',
             label: '状态',
             field: 'status',
-            render: (value: any) => (
+            render: (value: unknown) => (
               <Chip
                 size='small'
                 label={getStatusLabel(value as string)}
@@ -411,7 +411,7 @@ const MonitorAlertHistoryPage: React.FC = () => {
             id: 'actions',
             label: '操作',
             field: '',
-            render: (value: any, row: AlertDetail) => (
+            render: (value: unknown, row: AlertDetail) => (
               <Box sx={{ display: 'flex', gap: 0.5 }}>
                 {row.status === 'active' && (
                   <Tooltip title='确认告警'>

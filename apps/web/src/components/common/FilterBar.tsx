@@ -38,7 +38,7 @@ export interface FilterConfig {
   value?: FilterValue;
   defaultValue?: FilterValue;
 
-  onChange?: (value: any, filter?: FilterConfig) => void;
+  onChange?: (value: FilterValue, filter?: FilterConfig) => void;
   width?: number | string;
   /** 是否显示搜索框（用于multiselect） */
   searchable?: boolean;

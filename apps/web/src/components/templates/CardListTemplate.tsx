@@ -61,10 +61,10 @@ export interface FilterConfig {
  */
 export interface CardAction {
   label: string;
-  icon?: React.ReactNode | ((item: unknown) => React.ReactNode);
-  onClick: (item: unknown) => void;
+  icon?: React.ReactNode | ((item: Record<string, unknown>) => React.ReactNode);
+  onClick: (item: Record<string, unknown>) => void;
   color?: 'primary' | 'secondary' | 'success' | 'error' | 'warning' | 'info';
-  disabled?: (item: unknown) => boolean;
+  disabled?: (item: Record<string, unknown>) => boolean;
   variant?: 'contained' | 'outlined' | 'text';
   divider?: boolean;
 }
@@ -86,7 +86,7 @@ export interface CardRenderConfig {
   meta?: Array<{
     field: string;
     label?: string;
-    format?: (value: any, item: any) => React.ReactNode;
+    format?: (value: unknown, item: unknown) => React.ReactNode;
     icon?: React.ReactNode;
   }>;
   /** 标签字段 */
@@ -95,9 +95,9 @@ export interface CardRenderConfig {
     options?: Record<string, { label: string; color?: string }>;
   }>;
   /** 左侧图标 */
-  icon?: React.ReactNode | ((item: unknown) => React.ReactNode);
-  /** 左侧图标背景色 */
-  iconBgColor?: string | ((item: unknown) => string);
+  icon?: React.ReactNode | ((item: Record<string, unknown>) => React.ReactNode);
+  /** 图标背景色或渲染函数 */
+  iconBgColor?: string | ((item: Record<string, unknown>) => string);
 }
 
 /**
@@ -113,7 +113,7 @@ export interface CardListTemplateProps {
   /** 统计数据列数 */
   metricColumns?: number;
   /** 列表数据 */
-  data: any[];
+  data: Record<string, unknown>[];
   /** 卡片渲染配置 */
   cardConfig: CardRenderConfig;
   /** 加载状态 */
@@ -135,9 +135,9 @@ export interface CardListTemplateProps {
   /** 筛选配置列表 */
   filters?: FilterConfig[];
   /** 当前筛选值 */
-  filterValues?: Record<string, any>;
+  filterValues?: Record<string, unknown>;
   /** 筛选变更回调 */
-  onFilterChange?: (filters: Record<string, any>) => void;
+  onFilterChange?: (filters: Record<string, unknown>) => void;
   /** 重置筛选回调 */
   onFilterReset?: () => void;
   /** 搜索回调 */
@@ -239,7 +239,7 @@ export const CardListTemplate: React.FC<CardListTemplateProps> = ({
 
   // 筛选变更处理
   const handleFilterChange = useCallback(
-    (filterId: string, value: any) => {
+    (filterId: string, value: unknown) => {
       const newFilters = { ...filterValues, [filterId]: value };
       onFilterChange?.(newFilters);
     },
@@ -491,15 +491,14 @@ export const CardListTemplate: React.FC<CardListTemplateProps> = ({
   };
 
   // 渲染单个卡片
-  const renderCard = (item: any, index: number) => {
-    const title =
-      typeof cardConfig.title === 'function' ? cardConfig.title(item) : item[cardConfig.title];
+  const renderCard = (item: Record<string, unknown>, index: number) => {
+    const title = (typeof cardConfig.title === 'function' ? cardConfig.title(item) : item[cardConfig.title]) as React.ReactNode;
 
-    const description = cardConfig.description
+    const description = (cardConfig.description
       ? typeof cardConfig.description === 'function'
         ? cardConfig.description(item)
         : item[cardConfig.description]
-      : null;
+      : null) as React.ReactNode;
 
     const icon = cardConfig.icon
       ? typeof cardConfig.icon === 'function'
@@ -514,15 +513,15 @@ export const CardListTemplate: React.FC<CardListTemplateProps> = ({
       : 'primary.light';
 
     const statusConfig = cardConfig.status?.field
-      ? cardConfig.status?.options?.[item[cardConfig.status.field]]
+      ? cardConfig.status?.options?.[String(item[cardConfig.status.field])]
       : undefined;
     const statusColor = statusConfig?.color || 'default';
     const statusLabel =
-      statusConfig?.label || (cardConfig.status?.field ? item[cardConfig.status.field] : '');
+      statusConfig?.label || (cardConfig.status?.field ? String(item[cardConfig.status.field]) : '');
 
     return (
       <Paper
-        key={item.id || index}
+        key={(item.id as string | number) || index}
         sx={{
           borderRadius: 3,
           overflow: 'hidden',
@@ -609,7 +608,7 @@ export const CardListTemplate: React.FC<CardListTemplateProps> = ({
             <Box sx={{ flex: 1 }}>
               {cardConfig.meta.map((meta, idx) => {
                 const value = item[meta.field];
-                const formattedValue = meta.format ? meta.format(value, item) : value;
+                const formattedValue = meta.format ? meta.format(value as unknown, item) : value;
 
                 return (
                   <Box
@@ -645,7 +644,7 @@ export const CardListTemplate: React.FC<CardListTemplateProps> = ({
                       variant='body2'
                       sx={{ flex: 1 }}
                     >
-                      {formattedValue || '-'}
+                      {String(formattedValue) || '-'}
                     </Typography>
                   </Box>
                 );
@@ -665,7 +664,7 @@ export const CardListTemplate: React.FC<CardListTemplateProps> = ({
               }}
             >
               {cardConfig.tags.map((tag, idx) => {
-                const tagValue = item[tag.field];
+                const tagValue = String(item[tag.field]);
                 const tagConfig = tag.options?.[tagValue];
 
                 return (

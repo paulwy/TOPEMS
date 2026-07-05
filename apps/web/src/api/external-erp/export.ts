@@ -10,7 +10,7 @@ export const exportApi = {
     end_date?: string;
     format: 'csv' | 'xlsx';
   }): Promise<Blob> => {
-    const baseURL = (apiClient.integration as any).defaults?.baseURL || config.services.integration;
+    const baseURL = apiClient.integration.defaults?.baseURL || config.services.integration;
     return downloadBlob(baseURL, '/external-erp/export/sync-logs', { params });
   },
 
@@ -19,7 +19,7 @@ export const exportApi = {
     mapping_type: 'account' | 'customer' | 'supplier' | 'project' | 'department' | 'employee';
     format: 'csv' | 'xlsx';
   }): Promise<Blob> => {
-    const baseURL = (apiClient.integration as any).defaults?.baseURL || config.services.integration;
+    const baseURL = apiClient.integration.defaults?.baseURL || config.services.integration;
     return downloadBlob(baseURL, '/external-erp/export/mappings', { params });
   },
 };

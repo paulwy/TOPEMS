@@ -98,9 +98,9 @@ export interface FormField {
   /** 是否禁用 */
   disabled?: boolean;
   /** 默认值 */
-  defaultValue?: any;
+  defaultValue?: unknown;
   /** 选项列表（用于select和autocomplete类型） */
-  options?: Array<{ label: string; value: any }>;
+  options?: Array<{ label: string; value: unknown }>;
   /** 字段宽度（跨越的列数） */
   span?: number;
   /** 文本域行数 */
@@ -178,7 +178,7 @@ export interface FieldDependency {
     /** 条件类型 */
     type: 'equals' | 'notEquals' | 'contains' | 'notEmpty' | 'empty' | 'greaterThan' | 'lessThan';
     /** 条件值 */
-    value?: any;
+    value?: unknown;
   };
   /** 联动效果 */
   effect: {
@@ -186,10 +186,10 @@ export interface FieldDependency {
     visible?: boolean;
     /** 更新选项（用于options类型） */
     options?:
-      | Array<{ label: string; value: any }>
-      | ((value: unknown) => Array<{ label: string; value: any }>);
+      | Array<{ label: string; value: unknown }>
+      | ((value: unknown) => Array<{ label: string; value: unknown }>);
     /** 设置值（用于value类型） */
-    value?: any | ((value: unknown) => any);
+    value?: unknown | ((value: unknown) => unknown);
     /** 是否必填（用于required类型） */
     required?: boolean;
     /** 是否禁用（用于disabled类型） */
@@ -238,7 +238,7 @@ export interface VersionConfig {
   /** 历史版本列表 */
   history?: Array<{
     version: string;
-    data: Record<string, any>;
+    data: Record<string, unknown>;
     timestamp: number;
     user?: string;
   }>;
@@ -258,7 +258,7 @@ export interface FormPageTemplateProps extends Omit<BoxProps, 'onSubmit'> {
   // 表单配置
   sections: FormSection[];
   schema?: z.ZodType;
-  defaultValues?: Record<string, any>;
+  defaultValues?: Record<string, unknown>;
 
   // 状态
   loading?: boolean;
@@ -287,7 +287,7 @@ export interface FormPageTemplateProps extends Omit<BoxProps, 'onSubmit'> {
   /** 字段联动配置 */
   dependencies?: FieldDependency[];
   /** 字段联动变化回调 */
-  onDependencyChange?: (field: string, value: any, form: UseFormReturn) => void;
+  onDependencyChange?: (field: string, value: unknown, form: UseFormReturn) => void;
   /** 验证提示配置 */
   validationToasts?: ValidationToast[];
   /** 是否显示实时验证提示 */
@@ -447,9 +447,9 @@ export const FormPageTemplate: React.FC<FormPageTemplateProps> = ({
 
   // 动态选项状态
   const [dynamicOptions, setDynamicOptions] = useState<
-    Record<string, Array<{ label: string; value: any }>>
+    Record<string, Array<{ label: string; value: unknown }>>
   >(() => {
-    const options: Record<string, Array<{ label: string; value: any }>> = {};
+    const options: Record<string, Array<{ label: string; value: unknown }>> = {};
     sections.forEach((section) => {
       section.fields.forEach((field) => {
         if (field.options) {
@@ -880,8 +880,8 @@ export const FormPageTemplate: React.FC<FormPageTemplateProps> = ({
                     <option value=''>请选择</option>
                     {options?.map((option) => (
                       <option
-                        key={option.value}
-                        value={option.value}
+                        key={String(option.value)}
+                        value={option.value as string}
                       >
                         {option.label}
                       </option>
@@ -955,10 +955,10 @@ export const FormPageTemplate: React.FC<FormPageTemplateProps> = ({
                       <Controller
                         name={field.name}
                         control={control}
-                        defaultValue={field.defaultValue || false}
+                        defaultValue={field.defaultValue ?? false}
                         render={({ field: switchField }) => (
                           <Switch
-                            checked={switchField.value || false}
+                            checked={Boolean(switchField.value)}
                             onChange={(e) => switchField.onChange(e.target.checked)}
                             disabled={isDisabled}
                           />
@@ -989,10 +989,10 @@ export const FormPageTemplate: React.FC<FormPageTemplateProps> = ({
                       <Controller
                         name={field.name}
                         control={control}
-                        defaultValue={field.defaultValue || false}
+                        defaultValue={field.defaultValue ?? false}
                         render={({ field: checkboxField }) => (
                           <Checkbox
-                            checked={checkboxField.value || false}
+                            checked={Boolean(checkboxField.value)}
                             onChange={(e) => checkboxField.onChange(e.target.checked)}
                             disabled={isDisabled}
                           />
@@ -1022,10 +1022,10 @@ export const FormPageTemplate: React.FC<FormPageTemplateProps> = ({
                     <Controller
                       name={field.name}
                       control={control}
-                      defaultValue={field.defaultValue || []}
+                      defaultValue={field.defaultValue as string[] ?? []}
                       render={({ field: fileField }) => (
                         <FileUpload
-                          value={fileField.value || []}
+                          value={fileField.value as string[] ?? []}
                           onChange={fileField.onChange}
                           maxCount={field.uploadConfig?.maxCount}
                           accept={field.uploadConfig?.accept}
@@ -1059,10 +1059,10 @@ export const FormPageTemplate: React.FC<FormPageTemplateProps> = ({
                     <Controller
                       name={field.name}
                       control={control}
-                      defaultValue={field.defaultValue || []}
+                      defaultValue={field.defaultValue as string[] ?? []}
                       render={({ field: imageField }) => (
                         <ImageUpload
-                          value={imageField.value || []}
+                          value={imageField.value as string[] ?? []}
                           onChange={imageField.onChange}
                           maxCount={field.imageConfig?.maxCount}
                           disabled={isDisabled}
@@ -1088,8 +1088,8 @@ export const FormPageTemplate: React.FC<FormPageTemplateProps> = ({
                     <option value=''>请选择</option>
                     {options?.map((option) => (
                       <option
-                        key={option.value}
-                        value={option.value}
+                        key={String(option.value)}
+                        value={option.value as string}
                       >
                         {option.label}
                       </option>

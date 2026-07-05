@@ -181,13 +181,12 @@ export const AvatarGroup: React.FC<AvatarGroupProps> = ({
     }
   };
   const avatarSize = getAvatarSx();
+  const groupSx = { '& .MuiAvatar-root': avatarSize };
 
-  const avatarGroupSx: any = { '& .MuiAvatar-root': avatarSize, ...sx };
-  const AvatarGroupComponent = MuiAvatarGroup as React.ComponentType<any>;
   return (
-    <AvatarGroupComponent
+    <MuiAvatarGroup
       max={max}
-      sx={avatarGroupSx}
+      sx={groupSx as never}
     >
       {avatars.map((avatarProps, index) => (
         <Tooltip
@@ -200,7 +199,7 @@ export const AvatarGroup: React.FC<AvatarGroupProps> = ({
           />
         </Tooltip>
       ))}
-    </AvatarGroupComponent>
+    </MuiAvatarGroup>
   );
 };
 

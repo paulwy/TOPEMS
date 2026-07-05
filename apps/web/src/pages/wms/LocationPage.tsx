@@ -104,7 +104,7 @@ const LocationPage: React.FC = () => {
   const fetchLocations = useCallback(async () => {
     try {
       setLoading(true);
-      const params: any = {
+      const params: Record<string, unknown> = {
         page: currentPage,
         pagesize: pageSize,
       };
@@ -142,7 +142,7 @@ const LocationPage: React.FC = () => {
 
   const fetchStatusSummary = useCallback(async () => {
     try {
-      const params: any = {};
+      const params: Record<string, unknown> = {};
       if (warehouseFilter) params.warehouse_id = warehouseFilter;
       const response = await wmsApi.locations.getStatus(params);
       if (response.success && response.data) {

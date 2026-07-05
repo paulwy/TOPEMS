@@ -15,7 +15,7 @@ import {
 } from '@mui/material';
 import React, { useState, useEffect } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
-import WorkflowDesigner from '@/components/workflow/WorkflowDesigner';
+import WorkflowDesigner, { type NodeData, type EdgeData } from '@/components/workflow/WorkflowDesigner';
 import { useAppStore } from '../../store';
 import type { Workflow, CreateWorkflowRequest, UpdateWorkflowRequest } from '@/api/workflow';
 import { workflowApi } from '@/api/workflow';
@@ -37,8 +37,8 @@ const WorkflowDesignerPage: React.FC = () => {
     name: '',
     description: '',
   });
-  const [nodes, setNodes] = useState<any[]>([]);
-  const [edges, setEdges] = useState<any[]>([]);
+  const [nodes, setNodes] = useState<NodeData[]>([]);
+  const [edges, setEdges] = useState<EdgeData[]>([]);
 
   useEffect(() => {
     if (workflowId) {
@@ -99,7 +99,7 @@ const WorkflowDesignerPage: React.FC = () => {
     }
   };
 
-  const handleSave = (newNodes: any[], newEdges: any[]) => {
+  const handleSave = (newNodes: NodeData[], newEdges: EdgeData[]) => {
     setNodes(newNodes);
     setEdges(newEdges);
     setShowSaveDialog(true);

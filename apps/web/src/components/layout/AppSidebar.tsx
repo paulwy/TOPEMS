@@ -1,5 +1,6 @@
 import React, { useEffect, useMemo, useState, useCallback } from 'react';
-import {Box,
+import {
+  Box,
   Paper,
   Typography,
   Button,
@@ -15,7 +16,10 @@ import {Box,
   ListItemText,
   Popover,
   Avatar,
-  Badge as MuiBadge, useTheme} from '@mui/material';
+  Badge as MuiBadge,
+  useTheme,
+} from '@mui/material';
+import type { Theme } from '@mui/material/styles';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { usePermission } from '@/hooks/usePermission';
 import { navigationRegistryV2 } from '@/lib/navigation';
@@ -269,7 +273,7 @@ export const AppSidebar: React.FC<AppSidebarProps> = ({
     borderLeftColor: isActive ? 'primary.main' : 'transparent',
     bgcolor: isActive ? 'primary.50' : 'transparent',
     color: isActive ? 'primary.main' : 'text.secondary',
-    transition: (theme: any) => `all 200ms ${theme.transitions.easing.easeInOut}`,
+    transition: (theme: Theme) => `all 200ms ${theme.transitions.easing.easeInOut}`,
     justifyContent: collapsed ? 'center' : 'flex-start',
     position: 'relative' as const,
     width: '100%',

@@ -148,7 +148,7 @@ const BIComparisonPage = () => {
     setPage(0);
   }, [timeRange, comparisonDimension, data]);
 
-  const handleChangePage = (_: any, newPage: number) => {
+  const handleChangePage = (_: unknown, newPage: number) => {
     setPage(newPage);
   };
 

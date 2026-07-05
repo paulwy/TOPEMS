@@ -335,7 +335,7 @@ interface TemplateDemoPageProps {
 const TemplateDemoPage: React.FC<TemplateDemoPageProps> = ({ onClose }) => {
   const [templates, setTemplates] = useState<Template[]>([]);
   const [selectedTemplate, setSelectedTemplate] = useState<Template | null>(null);
-  const [templateVariables, setTemplateVariables] = useState<Record<string, any>>({});
+  const [templateVariables, setTemplateVariables] = useState<Record<string, unknown>>({});
   const [renderedContent, setRenderedContent] = useState<string>('');
   const [isLoading, setIsLoading] = useState(false);
   const [activeTab, setActiveTab] = useState(0);
@@ -383,7 +383,7 @@ const TemplateDemoPage: React.FC<TemplateDemoPageProps> = ({ onClose }) => {
   };
 
   // 处理变量值变化
-  const handleVariableChange = (key: string, value: any) => {
+  const handleVariableChange = (key: string, value: unknown) => {
     setTemplateVariables((prev) => ({
       ...prev,
       [key]: value,

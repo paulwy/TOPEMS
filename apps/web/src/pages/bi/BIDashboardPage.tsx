@@ -66,6 +66,12 @@ interface CreateDialogState {
   description: string;
 }
 
+interface DashboardSaveConfig {
+  name: string;
+  description: string;
+  widgets: DashboardWidget[];
+}
+
 const BIDashboardPage = () => {
   const [viewMode, setViewMode] = useState<ViewMode>('list');
   const [activeTab, setActiveTab] = useState<TabType>('dashboards');
@@ -186,7 +192,7 @@ const BIDashboardPage = () => {
     setViewMode('editor');
   };
 
-  const handleSaveDashboard = async (config: any) => {
+  const handleSaveDashboard = async (config: DashboardSaveConfig) => {
     try {
       const data: Partial<Dashboard> = {
         name: config.name,

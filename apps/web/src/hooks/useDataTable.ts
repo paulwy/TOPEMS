@@ -31,16 +31,31 @@ export interface UseDataTableResult<TData extends RowData, TValue> {
   setPagination: (pagination: PaginationState) => void;
   columnVisibility: VisibilityState;
   setColumnVisibility: (visibility: VisibilityState) => void;
-  tableOptions: any;
+  tableOptions: {
+    getCoreRowModel: typeof getCoreRowModel;
+    getSortedRowModel: typeof getSortedRowModel;
+    getFilteredRowModel: typeof getFilteredRowModel;
+    getPaginationRowModel: typeof getPaginationRowModel;
+    onSortingChange: (sorting: SortingState) => void;
+    onColumnFiltersChange: (filters: ColumnFiltersState) => void;
+    onPaginationChange: (pagination: PaginationState) => void;
+    onColumnVisibilityChange: (visibility: VisibilityState) => void;
+    state: {
+      sorting: SortingState;
+      columnFilters: ColumnFiltersState;
+      pagination: PaginationState;
+      columnVisibility: VisibilityState;
+    };
+  };
 }
 
-export function useDataTable<TData extends RowData>({
+export function useDataTable<TData extends RowData, TValue = unknown>({
   columns,
   data,
   initialPageIndex = 0,
   initialPageSize = 10,
   enablePagination = true,
-}: UseDataTableOptions<TData, any>): UseDataTableResult<TData, any> {
+}: UseDataTableOptions<TData, TValue>): UseDataTableResult<TData, TValue> {
   const [sorting, setSorting] = useState<SortingState>([]);
   const [columnFilters, setColumnFilters] = useState<ColumnFiltersState>([]);
   const [pagination, setPagination] = useState<PaginationState>({

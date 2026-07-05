@@ -47,7 +47,7 @@ export interface ChartDataPoint {
   label: string;
   value: number;
   color?: string;
-  [key: string]: any;
+  [key: string]: unknown;
 }
 
 // 图表系列

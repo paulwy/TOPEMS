@@ -71,7 +71,7 @@ const EquipmentInspectionPage: React.FC = () => {
     setLoading(true);
     setError(null);
     try {
-      const params: any = {
+      const params: Record<string, unknown> = {
         page: currentPage + 1,
         pagesize: pageSize,
       };
@@ -110,7 +110,7 @@ const EquipmentInspectionPage: React.FC = () => {
     e.preventDefault();
     if (!selectedForInspection) return;
     try {
-      const data: any = {
+      const data: Partial<InspectionRecord> = {
         equipment_id: selectedForInspection.id,
         inspector: newInspection.inspector,
         inspection_date: newInspection.inspection_date,

@@ -1,4 +1,4 @@
-import { Typography, Box, InputLabel, Chip, Card, CardContent } from '@mui/material';
+import { Typography, Box, InputLabel, Chip, Card, CardContent, type ChipProps } from '@mui/material';
 import React, { useState, useEffect, useMemo } from 'react';
 import { useParams } from 'react-router-dom';
 import { Package, CheckCircle, AlertCircle, TrendingUp } from 'lucide-react';
@@ -63,7 +63,7 @@ const ProductionOrderDetailPage: React.FC = () => {
     }
   };
 
-  const getStatusColor = (status: string) => {
+  const getStatusColor = (status: string): ChipProps['color'] => {
     switch (status) {
       case 'pending':
         return 'warning';
@@ -139,7 +139,7 @@ const ProductionOrderDetailPage: React.FC = () => {
           <Box sx={{ mt: 0.5 }}>
             <Chip
               label={getStatusLabel(order.status)}
-              color={getStatusColor(order.status) as any}
+              color={getStatusColor(order.status)}
               size='small'
             />
           </Box>

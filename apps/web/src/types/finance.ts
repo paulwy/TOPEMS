@@ -1030,7 +1030,7 @@ export interface ApiResponse<T = any> {
   error?: {
     code: string;
     message: string;
-    details?: any;
+    details?: unknown;
   };
   timestamp: string;
 }

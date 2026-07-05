@@ -48,7 +48,7 @@ const ReportViewer: React.FC<ReportViewerProps> = ({ report, onClose }) => {
     }
   };
 
-  const getCellValue = (value: any): string => {
+  const getCellValue = (value: unknown): string => {
     if (value === undefined || value === null) return '-';
     if (typeof value === 'object') return JSON.stringify(value);
     return String(value);

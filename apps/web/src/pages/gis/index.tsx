@@ -107,7 +107,7 @@ const GisContent: React.FC = () => {
     );
   };
 
-  const renderDataTable = (data: any[], type: TabType) => {
+  const renderDataTable = (data: unknown[], type: TabType) => {
     if (data.length === 0) {
       return (
         <Box sx={{ textAlign: 'center', py: 6 }}>

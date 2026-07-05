@@ -104,7 +104,7 @@ const ReplenishmentPage: React.FC = () => {
   const fetchSuggestions = useCallback(async () => {
     try {
       setLoading(true);
-      const params: any = {
+      const params: Record<string, unknown> = {
         page: currentPage,
         pagesize: pageSize,
       };
@@ -132,7 +132,7 @@ const ReplenishmentPage: React.FC = () => {
   const fetchOrders = useCallback(async () => {
     try {
       setLoading(true);
-      const params: any = {
+      const params: Record<string, unknown> = {
         page: currentPage,
         pagesize: pageSize,
       };
@@ -170,7 +170,7 @@ const ReplenishmentPage: React.FC = () => {
 
   const fetchStatistics = useCallback(async () => {
     try {
-      const params: any = {};
+      const params: Record<string, unknown> = {};
       if (warehouseFilter) params.warehouse_id = warehouseFilter;
       const response = await wmsApi.smartReplenishment.getStatistics(params);
       if (response.success && response.data) {
@@ -683,7 +683,7 @@ const ReplenishmentPage: React.FC = () => {
         rowActions={currentRowActions}
         headerContent={statsContent}
         emptyMessage={`暂无${currentTitle}数据`}
-        getRowId={(row: any) => row.id}
+        getRowId={(row) => row.id}
       />
 
       {/* 建议详情对话框 */}

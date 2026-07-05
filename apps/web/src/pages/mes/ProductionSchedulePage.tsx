@@ -26,6 +26,7 @@ import type {
   UpdateProductionScheduleRequest,
   AdjustScheduleRequest,
   GanttData,
+  ListParams,
 } from '@/api/mes';
 import { mesApi } from '@/api/mes';
 import { useAppStore } from '@/store';
@@ -83,7 +84,7 @@ const ProductionSchedulePage: React.FC = () => {
   const loadSchedules = useCallback(async () => {
     try {
       setLoading(true);
-      const params: any = {
+      const params: ListParams = {
         page: currentPage - 1,
         pagesize: pageSize,
       };

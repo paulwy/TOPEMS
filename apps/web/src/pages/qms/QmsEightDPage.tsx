@@ -707,7 +707,7 @@ const QmsEightDPage: React.FC = () => {
             columns={columns}
             data={filteredReports as any[]}
             loading={loading}
-            getRowId={(row: any) => row.id}
+            getRowId={(row: EightDReport) => row.id}
             rowActions={rowActions as any}
             searchable={false}
             filters={[]}

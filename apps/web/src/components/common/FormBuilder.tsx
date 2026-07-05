@@ -27,7 +27,7 @@ export interface FormFieldConfig {
   placeholder?: string;
   required?: boolean;
   disabled?: boolean;
-  defaultValue?: any;
+  defaultValue?: unknown;
   options?: { value: string; label: string }[];
   validation?: {
     minLength?: number;
@@ -38,17 +38,17 @@ export interface FormFieldConfig {
     custom?: (value: unknown) => string | null;
   };
   colSpan?: number;
-  render?: (props: any) => React.ReactNode;
+  render?: (props: { name: string; value: unknown; onChange: (value: unknown) => void; isRequired: boolean; isDisabled: boolean }) => React.ReactNode;
 }
 
 export interface FormBuilderConfig {
   fields: FormFieldConfig[];
-  onSubmit: (values: Record<string, any>) => Promise<void> | void;
+  onSubmit: (values: Record<string, unknown>) => Promise<void> | void;
   submitLabel?: string;
   resetLabel?: string;
   showReset?: boolean;
   title?: string;
-  initialValues?: Record<string, any>;
+  initialValues?: Record<string, unknown>;
   colCount?: number;
 }
 
@@ -62,8 +62,8 @@ export default function FormBuilder({
   initialValues = {},
   colCount = 2,
 }: FormBuilderConfig) {
-  const [values, setValues] = React.useState<Record<string, any>>(() => {
-    const initial: Record<string, any> = {};
+  const [values, setValues] = React.useState<Record<string, unknown>>(() => {
+    const initial: Record<string, unknown> = {};
     fields.forEach((field) => {
       initial[field.name] = initialValues[field.name] ?? field.defaultValue ?? '';
     });
@@ -72,21 +72,22 @@ export default function FormBuilder({
 
   const [errors, setErrors] = React.useState<Record<string, string>>({});
 
-  const handleChange = useCallback((name: string, value: any) => {
+  const handleChange = useCallback((name: string, value: unknown) => {
     setValues((prev) => ({ ...prev, [name]: value }));
     setErrors((prev) => ({ ...prev, [name]: '' }));
   }, []);
 
-  const validateField = useCallback((field: FormFieldConfig, value: any): string => {
+  const validateField = useCallback((field: FormFieldConfig, value: unknown): string => {
     if (field.required && !value) {
       return `${field.label}为必填项`;
     }
     if (field.validation) {
       const { minLength, maxLength, min, max, pattern, custom } = field.validation;
-      if (minLength && value.length < minLength) {
+      const stringValue = String(value);
+      if (minLength && stringValue.length < minLength) {
         return `${field.label}长度不能少于${minLength}个字符`;
       }
-      if (maxLength && value.length > maxLength) {
+      if (maxLength && stringValue.length > maxLength) {
         return `${field.label}长度不能超过${maxLength}个字符`;
       }
       if (min !== undefined && Number(value) < min) {
@@ -95,7 +96,7 @@ export default function FormBuilder({
       if (max !== undefined && Number(value) > max) {
         return `${field.label}不能大于${max}`;
       }
-      if (pattern && !pattern.test(value)) {
+      if (pattern && !pattern.test(stringValue)) {
         return `${field.label}格式不正确`;
       }
       if (custom) {
@@ -125,7 +126,7 @@ export default function FormBuilder({
   );
 
   const handleReset = useCallback(() => {
-    const initial: Record<string, any> = {};
+    const initial: Record<string, unknown> = {};
     fields.forEach((field) => {
       initial[field.name] = initialValues[field.name] ?? field.defaultValue ?? '';
     });
@@ -231,7 +232,7 @@ export default function FormBuilder({
             >
               <DatePicker
                 label={field.label}
-                value={value ? dayjs(value) : null}
+                value={value ? dayjs(value as string) : null}
                 onChange={(newValue: dayjs.Dayjs | null) =>
                   handleChange(field.name, newValue?.toISOString())
                 }

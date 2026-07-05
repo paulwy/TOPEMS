@@ -16,7 +16,7 @@ import {
 } from '@mui/material';
 import { PageContainer } from '@/components/common/PageContainerV2';
 import React, { useState, useEffect, useMemo, useCallback } from 'react';
-import type { WorkReport, CreateWorkReportRequest, UpdateWorkReportRequest } from '@/api/mes';
+import type { WorkReport, CreateWorkReportRequest, UpdateWorkReportRequest, ListParams } from '@/api/mes';
 import { mesApi } from '@/api/mes';
 import { useAppStore } from '@/store';
 import { LoadingSpinner } from '@/components/common/LoadingSpinner';
@@ -55,7 +55,7 @@ const WorkReportPage: React.FC = () => {
   const loadReports = useCallback(async () => {
     try {
       setLoading(true);
-      const params: any = {
+      const params: ListParams = {
         page: currentPage - 1,
         pagesize: pageSize,
       };

@@ -101,7 +101,7 @@ const PluginMarketplacePage: React.FC = () => {
       const fetchPlugins = async () => {
         setIsRefreshing(true);
         try {
-          const params: any = {
+          const params: Record<string, unknown> = {
             sort_by: sortBy,
           };
 

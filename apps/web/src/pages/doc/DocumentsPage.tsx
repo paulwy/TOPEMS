@@ -94,7 +94,7 @@ const CreateFolderModal: React.FC<{
     setError(null);
 
     try {
-      const request: any = { name: folderName.trim() };
+      const request: Record<string, unknown> = { name: folderName.trim() };
       if (parentId) {
         request.parent_id = parentId;
       }
@@ -1572,7 +1572,7 @@ const DocumentsPage: React.FC = () => {
 };
 
 interface StatCardProps {
-  icon: any;
+  icon: React.ComponentType<{ className?: string; size?: number }>;
   title: string;
   value: string;
   color: string;

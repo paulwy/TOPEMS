@@ -64,9 +64,10 @@ export const FormSelect: React.FC<FormSelectProps> = ({
   allowClear = false,
   sx,
 }) => {
-  const handleChange = (event: any) => {
-    const value = event.target.value;
-    onChange?.(value);
+  const handleChange = (_event: React.SyntheticEvent, newValue: string | number | string[] | null) => {
+    if (newValue !== null) {
+      onChange?.(newValue);
+    }
   };
 
   return (

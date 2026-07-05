@@ -43,7 +43,7 @@ export const auditLimsApi = {
         url += `?${queryString}`;
       }
     }
-    const baseURL = (apiClient.lims as any).defaults?.baseURL || config.services.lims;
+    const baseURL = apiClient.lims.defaults?.baseURL || config.services.lims;
     return downloadBlob(baseURL, url);
   },
 };

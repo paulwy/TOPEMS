@@ -55,7 +55,7 @@ export interface ChartData {
   name: string;
   value: number;
   color?: string;
-  [key: string]: any;
+  [key: string]: unknown;
 }
 
 /**
@@ -85,7 +85,7 @@ export interface TableColumn {
   id: string;
   label: string;
   field?: string;
-  render?: (value: any, row: any) => React.ReactNode;
+  render?: (value: unknown, row: Record<string, unknown>) => React.ReactNode;
   align?: 'left' | 'center' | 'right';
   width?: number | string;
   sortable?: boolean;
@@ -98,7 +98,7 @@ export interface DataTable {
   id: string;
   title?: string;
   columns: TableColumn[];
-  data: any[];
+  data: Record<string, unknown>[];
   height?: number;
   loading?: boolean;
 }
@@ -261,7 +261,7 @@ export const StatsPageTemplate: React.FC<StatsPageTemplateProps> = ({
 
   // 标签页变更
   const handleTabChange = useCallback(
-    (_: any, newValue: string) => {
+    (_: React.SyntheticEvent, newValue: string) => {
       setActiveTabValue(newValue);
       onTabChange?.(newValue);
     },
@@ -588,7 +588,7 @@ export const StatsPageTemplate: React.FC<StatsPageTemplateProps> = ({
                             {col.render && col.field
                               ? col.render(row[col.field], row)
                               : col.field
-                                ? row[col.field]
+                                ? String(row[col.field])
                                 : ''}
                           </td>
                         ))}

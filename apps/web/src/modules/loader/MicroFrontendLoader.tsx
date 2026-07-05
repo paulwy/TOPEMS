@@ -15,7 +15,7 @@ export interface MicroFrontendLoaderProps {
 }
 
 interface MountFunction {
-  mount: (container: HTMLElement, options?: any) => void;
+  mount: (container: HTMLElement, options?: unknown) => void;
   unmount: (container: HTMLElement) => void;
 }
 

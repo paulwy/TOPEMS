@@ -115,7 +115,7 @@ const TemplateEditor: React.FC<TemplateEditorProps> = ({
     }));
   };
 
-  const handleVariableChange = (index: number, field: keyof TemplateVariable, value: any) => {
+  const handleVariableChange = (index: number, field: keyof TemplateVariable, value: unknown) => {
     setFormData((prev) => {
       const variables = prev.variables || [];
       const updatedVariables = variables.map((v, i) =>

@@ -14,7 +14,7 @@ export interface UseModuleDataOptions<T> {
   /** 自动获取（默认 true） */
   autoFetch?: boolean;
   /** 依赖数组 */
-  deps?: any[];
+  deps?: unknown[];
 }
 
 export interface UseModuleDataResult<T> {
@@ -53,8 +53,9 @@ export function useModuleData<T>({
     try {
       const result = await fetchFn();
       setData(result);
-    } catch (err: any) {
-      const message = err?.response?.data?.message || err?.message || '获取关联数据失败';
+    } catch (err: unknown) {
+      const errAny = err as { response?: { data?: { message?: string } }; message?: string };
+      const message = errAny?.response?.data?.message || errAny?.message || '获取关联数据失败';
       setError(message);
     } finally {
       setLoading(false);

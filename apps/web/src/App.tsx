@@ -46,7 +46,7 @@ const PageLoader: React.FC = () => (
 );
 
 // 需要跳过 GlobalLayout 的模块（这些模块有自己的布局）
-const modulesWithOwnLayout = ['hrm', 'crm', 'system'];
+const modulesWithOwnLayout: string[] = [];
 
 const ProtectedRouteWrapper: React.FC<{
   route: RouteConfig;

@@ -22,6 +22,7 @@ import type {
   UpdateProcessRouteRequest,
   ProcessRouteStep,
 } from '@/api/mes/process';
+import type { ListParams } from '@/api/mes';
 import { processRouteApi } from '@/api/mes/process';
 import { useAppStore } from '@/store';
 import { LoadingSpinner } from '@/components/common/LoadingSpinner';
@@ -60,7 +61,7 @@ const ProcessRoutePage: React.FC = () => {
   const loadRoutes = useCallback(async () => {
     try {
       setLoading(true);
-      const params: any = {
+      const params: ListParams = {
         page: currentPage - 1,
         pagesize: pageSize,
       };

@@ -38,7 +38,7 @@ const ScmPriceComparisonPage: React.FC = () => {
         setComparisons(response.data.items || []);
         setTotal(response.data.total || 0);
       }
-    } catch (error: any) {
+    } catch (error: unknown) {
       console.error('加载询价比价数据失败:', error);
       addNotification({ title: '加载失败', message: '加载询价比价数据失败', type: 'error' });
     } finally {

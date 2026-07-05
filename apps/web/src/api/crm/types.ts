@@ -402,14 +402,14 @@ export interface RecommendationItem {
   confidence: number;
   reason: string;
   score: number;
-  metadata: any;
+  metadata: Record<string, unknown>;
 }
 
 export interface RecommendationRequest {
   customer_id: string;
   recommendation_type: string;
   top_k?: number;
-  context?: any;
+  context?: Record<string, unknown>;
 }
 
 export interface RecommendationQueryParams extends PaginationParams {

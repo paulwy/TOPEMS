@@ -71,7 +71,7 @@ const CustomerManagementPage: React.FC = () => {
   const loadCustomers = useCallback(async () => {
     try {
       setLoading(true);
-      const params: any = {
+      const params: Record<string, unknown> = {
         page: currentPage - 1,
         pagesize: pageSize,
       };

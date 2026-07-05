@@ -172,7 +172,7 @@ const OfficeSuppliesPage: React.FC = () => {
     setLoading(true);
     try {
       setSupplies(mockSupplies);
-    } catch (error: any) {
+    } catch (error: unknown) {
       console.error('加载办公用品数据失败:', error);
     } finally {
       setLoading(false);

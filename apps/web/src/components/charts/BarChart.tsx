@@ -10,9 +10,10 @@ import {
   Tooltip,
   ResponsiveContainer,
 } from 'recharts';
+import type { ChartData } from './AreaChart';
 
 interface BarChartProps {
-  data: any[];
+  data: ChartData[];
   title?: string;
   xKey?: string;
   yKey?: string;

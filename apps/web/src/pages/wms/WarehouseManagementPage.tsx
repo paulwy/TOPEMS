@@ -50,7 +50,7 @@ const WarehouseManagementPage: React.FC = () => {
   const loadWarehouses = useCallback(async () => {
     try {
       setLoading(true);
-      const params: any = {
+      const params: Record<string, unknown> = {
         page: currentPage,
         pagesize: pageSize,
       };

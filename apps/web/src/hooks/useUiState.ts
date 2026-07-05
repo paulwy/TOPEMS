@@ -8,18 +8,18 @@ import { useState, useCallback } from 'react';
 /**
  * 模态框状态管理
  */
-export interface ModalState {
+export interface ModalState<T = unknown> {
   open: boolean;
-  data?: any;
+  data?: T;
 }
 
-export function useModal() {
-  const [state, setState] = useState<ModalState>({
+export function useModal<T = unknown>() {
+  const [state, setState] = useState<ModalState<T>>({
     open: false,
     data: undefined,
   });
 
-  const open = useCallback((data?: any) => {
+  const open = useCallback((data?: T) => {
     setState({ open: true, data });
   }, []);
 
@@ -41,11 +41,11 @@ export function useModal() {
 /**
  * 抽屉状态管理
  */
-export function useDrawer(defaultOpen: boolean = false) {
+export function useDrawer<T = unknown>(defaultOpen: boolean = false) {
   const [open, setOpen] = useState(defaultOpen);
-  const [data, setData] = useState<any>(undefined);
+  const [data, setData] = useState<T | undefined>(undefined);
 
-  const openDrawer = useCallback((data?: any) => {
+  const openDrawer = useCallback((data?: T) => {
     setData(data);
     setOpen(true);
   }, []);
@@ -208,7 +208,7 @@ export function useSort(initialField?: string, initialOrder: SortOrder = 'asc') 
 /**
  * 筛选状态管理
  */
-export function useFilter<F extends Record<string, any>>(initialFilters?: F) {
+export function useFilter<F extends Record<string, unknown>>(initialFilters?: F) {
   const [filters, setFilters] = useState<F>(initialFilters || ({} as F));
 
   const setFilter = useCallback(<K extends keyof F>(key: K, value: F[K]) => {

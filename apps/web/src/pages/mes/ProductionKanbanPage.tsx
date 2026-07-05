@@ -97,11 +97,13 @@ const ProductionKanbanPage: React.FC = () => {
 
   const {
     summary,
-    order_progress: orderProgress,
-    workstation_status: workstationStatus,
-    quality_trend: qualityTrend,
-    equipment_status: equipmentStatus,
+    order_progress: orderProgress = [],
+    workstation_status: workstationStatus = [],
+    quality_trend: qualityTrend = [],
+    equipment_status: equipmentStatus = [],
   } = kanbanData;
+
+  if (!summary) return null;
 
   return (
     <PageContainer

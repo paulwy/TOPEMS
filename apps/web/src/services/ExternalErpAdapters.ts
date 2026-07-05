@@ -857,7 +857,7 @@ export class SapAdapter extends BaseAdapter {
           AMT_DOCCUR: entry.credit_amount ? -entry.credit_amount : 0,
         },
       ])
-      .filter((line: any) => line.GL_ACCOUNT);
+      .filter((line: { GL_ACCOUNT?: string }) => line.GL_ACCOUNT);
 
     return {
       DOCUMENTHEADER: {

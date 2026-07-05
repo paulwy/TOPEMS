@@ -56,7 +56,7 @@ const ModuleCard = ({
   id: string;
   name: string;
   icon: string;
-  stats: any;
+  stats: Record<string, string | number>;
   trend: 'up' | 'down' | 'stable';
   onSelect: (id: string) => void;
   color: string;
@@ -535,7 +535,7 @@ const BIAnalyticsPage = () => {
               dataKey='value'
               radius={[4, 4, 0, 0]}
             >
-              {chartData.map((entry: any, index: number) => (
+              {chartData.map((entry: { name: string; value: number }, index: number) => (
                 <rect
                   key={`cell-${index}`}
                   fill={BIChartColors.series[index % BIChartColors.series.length]}
@@ -571,7 +571,7 @@ const BIAnalyticsPage = () => {
               innerRadius={50}
               dataKey='value'
             >
-              {chartData.map((entry: any, index: number) => (
+              {chartData.map((entry: { name: string; value: number }, index: number) => (
                 <rect
                   key={`cell-${index}`}
                   fill={BIChartColors.series[index % BIChartColors.series.length]}

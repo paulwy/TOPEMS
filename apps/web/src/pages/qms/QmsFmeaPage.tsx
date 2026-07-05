@@ -845,7 +845,7 @@ const QmsFmeaPage: React.FC = () => {
             columns={columns}
             data={filteredAnalyses as any[]}
             loading={loading}
-            getRowId={(row: any) => row.id}
+            getRowId={(row: FmeaAnalysis) => row.id}
             rowActions={rowActions as any}
             searchable={false}
             filters={[]}

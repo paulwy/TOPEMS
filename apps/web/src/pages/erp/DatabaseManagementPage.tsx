@@ -559,7 +559,7 @@ const DatabaseManagementPage: React.FC = () => {
   };
 
   const getBackupStatusBadge = (status: string) => {
-    const badges: Record<string, { color: any; label: string; icon: React.ReactNode }> = {
+    const badges: Record<string, { color: 'success' | 'error' | 'info' | 'default'; label: string; icon: React.ReactNode }> = {
       success: { color: 'success', label: '成功', icon: <CheckCircle size={14} /> },
       failed: { color: 'error', label: '失败', icon: <AlertCircle size={14} /> },
       running: { color: 'info', label: '进行中', icon: <CircularProgress size={14} /> },

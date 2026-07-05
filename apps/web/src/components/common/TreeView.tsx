@@ -10,7 +10,7 @@ export interface TreeNode {
   children?: TreeNode[];
   badge?: string | number;
   disabled?: boolean;
-  [key: string]: any;
+  [key: string]: unknown;
 }
 
 export interface TreeViewProps {

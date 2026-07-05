@@ -44,7 +44,7 @@ const QmsDashboardPage: React.FC = () => {
       if (overviewRes.success && overviewRes.data) {
         setOverview(overviewRes.data);
       }
-    } catch (error: any) {
+    } catch (error: unknown) {
       console.error('Failed to load QMS dashboard data:', error);
     } finally {
       setLoading(false);

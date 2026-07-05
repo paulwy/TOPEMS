@@ -80,7 +80,14 @@ const defaultColors = [
 const CHART_WIDTH = 400;
 const CHART_HEIGHT = 200;
 
-const CustomTooltip = ({ active, payload }: { active?: boolean; payload?: any[] }) => {
+interface TooltipPayload {
+  name?: string;
+  value?: unknown;
+  dataKey?: string;
+  color?: string;
+}
+
+const CustomTooltip = ({ active, payload }: { active?: boolean; payload?: TooltipPayload[] }) => {
   if (active && payload && payload.length) {
     return (
       <div
@@ -100,7 +107,7 @@ const CustomTooltip = ({ active, payload }: { active?: boolean; payload?: any[] 
             style={{ fontSize: '14px', color: 'var(--mui-palette-text-secondary)', margin: '4px 0' }}
           >
             <span style={{ color: item.color || 'primary.light' }}>●</span>
-            {item.dataKey}: {item.value}
+            {item.dataKey}: {String(item.value)}
           </p>
         ))}
       </div>

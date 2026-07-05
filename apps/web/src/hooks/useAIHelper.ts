@@ -9,21 +9,22 @@ import type {
   SummarizeRequest,
   SummarizeResponse,
 } from '@/types/ai';
+import type { AIGenerateRequest } from '../api/ai';
 
-interface UseAIHelperOptions {
+interface UseAIHelperOptions<T = unknown> {
   featureType: AIFeatureType;
-  onSuccess?: (result: any) => void;
+  onSuccess?: (result: unknown) => void;
   onError?: (error: Error) => void;
   maxRetries?: number;
   retryDelay?: number;
 }
 
-interface UseAIHelperReturn<T = any> {
+interface UseAIHelperReturn<T = unknown> {
   isLoading: boolean;
   error: Error | null;
   result: T | null;
   retryCount: number;
-  generate: (prompt: string, options?: any) => Promise<string | null>;
+  generate: (prompt: string, options?: Partial<Omit<AIGenerateRequest, 'variables'>>) => Promise<string | null>;
   validate: (data: ValidateRequest) => Promise<ValidateResponse | null>;
   complete: (data: CompleteRequest) => Promise<CompleteResponse | null>;
   summarize: (data: SummarizeRequest) => Promise<SummarizeResponse | null>;
@@ -33,18 +34,20 @@ interface UseAIHelperReturn<T = any> {
   retry: () => Promise<void>;
 }
 
-export function useAIHelper<T = any>(options: UseAIHelperOptions): UseAIHelperReturn<T> {
+export function useAIHelper<T = unknown>(options: UseAIHelperOptions<T>): UseAIHelperReturn<T> {
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<Error | null>(null);
   const [result, setResult] = useState<T | null>(null);
   const [retryCount, setRetryCount] = useState(0);
 
-  const lastOperationRef = useRef<(() => Promise<any>) | null>(null);
+  const lastOperationRef = useRef<
+    (() => Promise<{ code: number; success: boolean; data: unknown; message: string }>) | null
+  >(null);
   const maxRetries = options.maxRetries ?? 2;
   const retryDelay = options.retryDelay ?? 1000;
 
   const handleError = useCallback(
-    (err: any) => {
+    (err: unknown) => {
       const error = err instanceof Error ? err : new Error(String(err));
       setError(error);
       options.onError?.(error);
@@ -75,7 +78,7 @@ export function useAIHelper<T = any>(options: UseAIHelperOptions): UseAIHelperRe
       }>,
       successHandler: (data: R) => void
     ): Promise<R | null> => {
-      lastOperationRef.current = operation as any;
+      lastOperationRef.current = operation;
       setIsLoading(true);
       setError(null);
 
@@ -119,7 +122,7 @@ export function useAIHelper<T = any>(options: UseAIHelperOptions): UseAIHelperRe
   }, [executeWithRetry, retryCount, maxRetries]);
 
   const generate = useCallback(
-    async (prompt: string, generateOptions?: any) => {
+    async (prompt: string, generateOptions?: Partial<Omit<AIGenerateRequest, 'variables'>>) => {
       const operation = () =>
         aiApi.generate({
           variables: { prompt },

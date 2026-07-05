@@ -119,7 +119,7 @@ const EhsHazardousMaterialPage: React.FC = () => {
       } else {
         setMaterials([]);
       }
-    } catch (err: any) {
+    } catch (err: unknown) {
       apiLogger.error('加载危化品列表失败:', err);
       addNotification({ title: '错误', message: '加载危化品列表失败', type: 'error' });
       setMaterials([]);
@@ -356,7 +356,7 @@ const EhsHazardousMaterialPage: React.FC = () => {
           } else {
             setMsdsData(null);
           }
-        } catch (err: any) {
+        } catch (err: unknown) {
           apiLogger.error('加载MSDS数据失败:', err);
           addNotification({ title: '错误', message: '加载MSDS数据失败', type: 'error' });
           setMsdsData(null);
@@ -517,7 +517,7 @@ const EhsHazardousMaterialPage: React.FC = () => {
       }
       setShowCreateModal(false);
       loadMaterials();
-    } catch (err: any) {
+    } catch (err: unknown) {
       addNotification({
         title: '错误',
         message: editingMaterial ? '更新失败' : '入库失败',

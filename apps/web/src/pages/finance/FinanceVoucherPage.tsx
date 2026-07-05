@@ -326,7 +326,7 @@ const FinanceVoucherPage: React.FC = () => {
     setNewVoucher((prev) => ({ ...prev, items: [...prev.items, newItem] }));
   };
 
-  const updateVoucherItem = (index: number, field: string, value: any) => {
+  const updateVoucherItem = (index: number, field: keyof VoucherItemRequest, value: VoucherItemRequest[keyof VoucherItemRequest]) => {
     const items = [...newVoucher.items];
     items[index] = { ...items[index], [field]: value };
 

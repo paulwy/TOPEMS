@@ -411,7 +411,7 @@ export interface ExternalVoucher {
   };
 
   // 原始数据
-  raw_data?: any;
+  raw_data?: unknown;
 }
 
 /**

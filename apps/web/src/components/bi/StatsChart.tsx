@@ -13,11 +13,12 @@ import {
   Line,
   Legend,
 } from 'recharts';
+import type { ChartData } from '../charts/AreaChart';
 
 export interface StatsChartProps {
   type: 'bar' | 'pie' | 'line';
   title?: string;
-  data: any[];
+  data: ChartData[];
   xKey?: string;
   yKey?: string;
   yKeys?: string[];
@@ -89,7 +90,12 @@ export const StatsChart: React.FC<StatsChartProps> = ({
     );
   }
 
-  const CustomTooltip = ({ active, payload }: { active?: boolean; payload?: any[] }) => {
+  interface TooltipPayload {
+  name?: string;
+  value?: unknown;
+}
+
+const CustomTooltip = ({ active, payload }: { active?: boolean; payload?: TooltipPayload[] }) => {
     if (active && payload && payload.length) {
       return (
         <div
@@ -105,7 +111,7 @@ export const StatsChart: React.FC<StatsChartProps> = ({
             {payload[0].name}
           </p>
           <p style={{ fontSize: '14px', color: 'var(--mui-palette-text-secondary)' }}>
-            {payload[0].value}
+            {String(payload[0].value)}
           </p>
         </div>
       );
@@ -146,12 +152,12 @@ export const StatsChart: React.FC<StatsChartProps> = ({
               outerRadius={80}
               paddingAngle={2}
               dataKey={dataKey || yKey}
-              nameKey={nameKey || xKey}
+              nameKey={(nameKey || xKey) as string}
             >
               {data.map((entry, index) => (
                 <Cell
                   key={`cell-${index}`}
-                  fill={entry[colorKey] || colors[index % colors.length]}
+                  fill={(entry as Record<string, unknown>)[colorKey] as string || colors[index % colors.length]}
                 />
               ))}
             </Pie>
@@ -205,7 +211,7 @@ export const StatsChart: React.FC<StatsChartProps> = ({
                 {data.map((entry, index) => (
                   <Cell
                     key={`cell-${index}`}
-                    fill={entry[colorKey] || colors[index % colors.length]}
+                    fill={(entry as Record<string, unknown>)[colorKey] as string || colors[index % colors.length]}
                   />
                 ))}
               </Bar>

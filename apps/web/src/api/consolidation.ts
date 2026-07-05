@@ -330,7 +330,7 @@ export const exportConsolidationReport = async (
   reportId: string,
   format: 'excel' | 'pdf' = 'excel'
 ): Promise<Blob> => {
-  const baseURL = (apiClient.erp as any).defaults?.baseURL || config.services.erp;
+  const baseURL = apiClient.erp.defaults?.baseURL || config.services.erp;
   return downloadBlob(baseURL, `/consolidation/reports/${reportId}/export`, {
     params: { format },
   });
@@ -343,7 +343,7 @@ export const exportEliminationWorkSheet = async (
   scopeId: string,
   period: string
 ): Promise<Blob> => {
-  const baseURL = (apiClient.erp as any).defaults?.baseURL || config.services.erp;
+  const baseURL = apiClient.erp.defaults?.baseURL || config.services.erp;
   return downloadBlob(baseURL, `/consolidation/scopes/${scopeId}/elimination-worksheet/export`, {
     params: { period },
   });

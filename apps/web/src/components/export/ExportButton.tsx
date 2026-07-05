@@ -5,7 +5,7 @@ import type { ExportFormat } from '@/api/report';
 import { logger } from '@/utils/logger';
 
 interface ExportButtonProps {
-  data: any[];
+  data: Record<string, unknown>[];
   columns: string[];
   filename: string;
   format?: ExportFormat;

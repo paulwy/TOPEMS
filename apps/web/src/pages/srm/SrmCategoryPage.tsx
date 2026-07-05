@@ -162,7 +162,7 @@ const SrmCategoryPage: React.FC = () => {
     setLoading(true);
     try {
       setCategories(mockCategories);
-    } catch (error: any) {
+    } catch (error: unknown) {
       console.error('加载供应商分类失败:', error);
       addNotification({ title: '加载失败', message: '加载供应商分类失败', type: 'error' });
     } finally {

@@ -393,7 +393,7 @@ const VoucherManagementPage: React.FC = () => {
     setNewVoucher((prev) => ({ ...prev, items: [...prev.items, newItem] }));
   };
 
-  const updateVoucherItem = (index: number, field: string, value: any) => {
+  const updateVoucherItem = (index: number, field: string, value: string | number) => {
     const items = [...newVoucher.items];
     items[index] = { ...items[index], [field]: value };
 

@@ -31,15 +31,15 @@ export interface CrudQueriesOptions<T> {
   /** 成功回调 */
   onSuccess?: (message: string) => void;
   /** 失败回调 */
-  onError?: (error: any) => void;
+  onError?: (error: unknown) => void;
   /** 列表数据转换（从 response 中提取 items） */
-  transformList?: (response: any) => { items: T[]; total: number };
+  transformList?: (response: unknown) => { items: T[]; total: number };
 }
 
 export interface ModuleQueriesOptions<T> {
   /** 模块 API 对象（必须实现 list/get/create/update/delete） */
   api: {
-    list: (params?: any) => Promise<{ success: boolean; data?: { items: T[]; total: number } }>;
+    list: (params?: Record<string, unknown>) => Promise<{ success: boolean; data?: { items: T[]; total: number } }>;
     get: (id: string) => Promise<{ success: boolean; data?: T }>;
     create: (data: Partial<T>) => Promise<{ success: boolean; data?: T }>;
     update: (id: string, data: Partial<T>) => Promise<{ success: boolean; data?: T }>;
@@ -66,7 +66,7 @@ export interface UseCrudQueriesResult<T, TCreate = Partial<T>, TUpdate = Partial
     setPageSize: (size: number) => void;
   };
   // Query 操作
-  fetch: (params?: Record<string, any>) => void;
+  fetch: (params?: Record<string, unknown>) => void;
   get: (id: string) => Promise<T | null>;
   refresh: () => void;
   // Mutation 操作
@@ -79,10 +79,10 @@ export interface UseCrudQueriesResult<T, TCreate = Partial<T>, TUpdate = Partial
 // ============ 内部辅助 ============
 
 /** 默认的列表数据转换，兼容 { items, total } 和 嵌套 data 结构 */
-function defaultTransformList<T>(response: any): { items: T[]; total: number } {
-  const data = response.data ?? response;
-  const items = data?.items ?? data?.data ?? (Array.isArray(data) ? data : []);
-  const total = data?.total ?? items.length;
+function defaultTransformList<T>(response: unknown): { items: T[]; total: number } {
+  const data = (response as { data?: unknown })?.data ?? response;
+  const items = (data as { items?: T[] })?.items ?? (data as { data?: T[] })?.data ?? (Array.isArray(data) ? (data as T[]) : []);
+  const total = (data as { total?: number })?.total ?? items.length;
   return { items, total };
 }
 
@@ -128,7 +128,7 @@ export function useCrudQueries<
   // ---- 分页状态 ----
   const [page, setPageState] = useState(1);
   const [pageSize, setPageSizeState] = useState(defaultPageSize);
-  const [extraParams, setExtraParams] = useState<Record<string, any>>({});
+  const [extraParams, setExtraParams] = useState<Record<string, unknown>>({});
 
   const setPage = useCallback((newPage: number) => {
     setPageState(Math.max(1, newPage));
@@ -171,7 +171,7 @@ export function useCrudQueries<
 
   // ---- fetch（手动触发 + 额外参数） ----
   const fetch = useCallback(
-    (params?: Record<string, any>) => {
+    (params?: Record<string, unknown>) => {
       if (params) {
         setExtraParams(params);
       }
@@ -192,7 +192,7 @@ export function useCrudQueries<
         const item = response.data?.data ?? response.data;
         queryClient.setQueryData([queryKey, 'detail', id], item);
         return item;
-      } catch (err: any) {
+      } catch (err: unknown) {
         onError?.(err);
         return null;
       }
@@ -208,7 +208,7 @@ export function useCrudQueries<
   // ---- 错误处理辅助 ----
   const handleMutationError = useCallback(
     (err: unknown, defaultMessage: string) => {
-      const errAny = err as any;
+      const errAny = err as { response?: { data?: { message?: string } }; message?: string };
       const message = errAny?.response?.data?.message || errAny?.message || defaultMessage;
       onError?.(err);
       return Promise.reject(err);
@@ -235,7 +235,7 @@ export function useCrudQueries<
       const response = await api.put(`${basePath}/${id}`, item);
       return response.data?.data ?? response.data;
     },
-    onSuccess: (_updatedItem: T, variables: any) => {
+    onSuccess: (_updatedItem: T, variables: { id: string; item: TUpdate }) => {
       queryClient.invalidateQueries({ queryKey: [queryKey, 'list'] });
       queryClient.invalidateQueries({
         queryKey: [queryKey, 'detail', variables.id],
@@ -343,7 +343,7 @@ export function useModuleQueries<T extends { id?: string }>(
   // ---- 分页状态 ----
   const [page, setPageState] = useState(1);
   const [pageSize, setPageSizeState] = useState(defaultPageSize);
-  const [extraParams, setExtraParams] = useState<Record<string, any>>({});
+  const [extraParams, setExtraParams] = useState<Record<string, unknown>>({});
 
   const setPage = useCallback((newPage: number) => {
     setPageState(Math.max(1, newPage));
@@ -407,8 +407,9 @@ export function useModuleQueries<T extends { id?: string }>(
           return response.data;
         }
         return null;
-      } catch (err: any) {
-        const message = err?.response?.data?.message || err?.message || '获取数据失败';
+      } catch (err: unknown) {
+        const errAny = err as { response?: { data?: { message?: string } }; message?: string };
+        const message = errAny?.response?.data?.message || errAny?.message || '获取数据失败';
         addNotification({ title: '错误', message, type: 'error' });
         return null;
       }
@@ -424,7 +425,7 @@ export function useModuleQueries<T extends { id?: string }>(
   // ---- 错误通知辅助 ----
   const notifyError = useCallback(
     (err: unknown, defaultMessage: string) => {
-      const errAny = err as any;
+      const errAny = err as { response?: { data?: { message?: string } }; message?: string };
       const message = errAny?.response?.data?.message || errAny?.message || defaultMessage;
       addNotification({ title: '错误', message, type: 'error' });
       return Promise.reject(err);

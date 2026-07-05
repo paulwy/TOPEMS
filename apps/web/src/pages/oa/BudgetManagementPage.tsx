@@ -176,7 +176,7 @@ const BudgetManagementPage: React.FC = () => {
     setLoading(true);
     try {
       setBudgets(mockBudgets);
-    } catch (error: any) {
+    } catch (error: unknown) {
       console.error('加载预算数据失败:', error);
     } finally {
       setLoading(false);

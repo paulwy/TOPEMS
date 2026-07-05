@@ -1,4 +1,4 @@
-import { Typography, Box, InputLabel, Chip } from '@mui/material';
+import { Typography, Box, InputLabel, Chip, type ChipProps } from '@mui/material';
 import React, { useState, useEffect, useMemo } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { Wrench, MapPin, Calendar, User, FileText } from 'lucide-react';
@@ -62,7 +62,7 @@ const EquipmentDetailPage: React.FC = () => {
     }
   };
 
-  const getStatusColor = (status: string) => {
+  const getStatusColor = (status: string): ChipProps['color'] => {
     switch (status) {
       case 'idle':
         return 'default';
@@ -142,7 +142,7 @@ const EquipmentDetailPage: React.FC = () => {
           <Box sx={{ mt: 0.5 }}>
             <Chip
               label={getStatusLabel(equipment.status)}
-              color={getStatusColor(equipment.status) as any}
+              color={getStatusColor(equipment.status)}
               size='small'
             />
           </Box>

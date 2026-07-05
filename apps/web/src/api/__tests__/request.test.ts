@@ -17,7 +17,7 @@ vi.mock('@/utils/logger', () => ({
 
 // Mock the errors module to control behavior
 vi.mock('@/utils/errors', () => ({
-  handleApiError: vi.fn((error: any) => {
+  handleApiError: vi.fn((error: unknown) => {
     // Simulate axios-style error response
     const axiosError = error as {
       response?: { status: number; data?: { message?: string } };
@@ -59,7 +59,7 @@ describe('handleResponse', () => {
     try {
       handleResponse(response);
       expect.unreachable('Should have thrown');
-    } catch (error: any) {
+    } catch (error: unknown) {
       const err = error as { message: string };
       expect(err.message).toBe('Not Found');
     }

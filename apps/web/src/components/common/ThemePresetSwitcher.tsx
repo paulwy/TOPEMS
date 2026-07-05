@@ -9,13 +9,14 @@ import {
   CardActionArea,
   Stack,
 } from '@mui/material';
+import type { SxProps, Theme } from '@mui/material/styles';
 import { Palette } from 'lucide-react';
 import { themePresets, getPresetById, type ThemePreset } from '@/theme/presets';
 
 const STORAGE_KEY = 'topems-theme-preset';
 
 interface ThemePresetSwitcherProps {
-  sx?: any;
+  sx?: SxProps<Theme>;
 }
 
 function applyPresetToCSS(preset: ThemePreset) {

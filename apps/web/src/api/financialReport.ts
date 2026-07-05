@@ -353,15 +353,14 @@ export const financialReportApi = {
    */
   exportReport: async (params: {
     report_type: 'balance_sheet' | 'income_statement' | 'cash_flow';
-    report_id?: string;
-    company_id: string;
+    company_id?: string;
     period: string;
     currency_code?: string;
     format: 'pdf' | 'xlsx' | 'csv';
     include_notes?: boolean; // 包含附注
     include_comparison?: boolean; // 包含对比数据
   }): Promise<Blob> => {
-    const baseURL = (apiClient.erp as any).defaults?.baseURL || config.services.erp;
+    const baseURL = apiClient.erp.defaults?.baseURL || config.services.erp;
     return downloadBlob(baseURL, '/reports/export', { params });
   },
 
@@ -386,7 +385,7 @@ export const financialReportApi = {
     currency_code?: string;
     format: 'pdf' | 'xlsx';
   }): Promise<Blob> => {
-    const baseURL = (apiClient.erp as any).defaults?.baseURL || config.services.erp;
+    const baseURL = apiClient.erp.defaults?.baseURL || config.services.erp;
     return downloadBlob(baseURL, `/reports/consolidated/${params.consolidation_id}/export`, {
       params: {
         report_type: params.report_type,

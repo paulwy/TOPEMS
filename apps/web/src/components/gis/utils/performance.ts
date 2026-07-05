@@ -118,10 +118,10 @@ export function debounce<T extends (...args: unknown[]) => unknown>(
  * 创建节流函数
  */
 
-export function throttle(
-  func: (...args: any[]) => void,
+export function throttle<T extends (...args: unknown[]) => void>(
+  func: T,
   limit: number
-): (...args: Parameters<typeof func>) => void {
+): (...args: Parameters<T>) => void {
   let inThrottle = false;
 
   return function (...args: Parameters<typeof func>) {
@@ -232,23 +232,23 @@ export function useMemoizedTrack<T extends { lat: number; lng: number }>(
  * useThrottledCallback - 节流回调 Hook
  */
 
-export function useThrottledCallback<T extends (...args: any[]) => void>(
+export function useThrottledCallback<T extends (...args: unknown[]) => void>(
   callback: T,
   limit: number
 ): (...args: Parameters<T>) => void {
   const callbackRef = useRef(callback);
-  const throttledRef = useRef<((...args: Parameters<T>) => void) | null>(null);
+  const throttledRef = useRef<((...args: unknown[]) => void) | null>(null);
 
   callbackRef.current = callback;
 
   if (!throttledRef.current) {
     throttledRef.current = throttle(
-      (...args: Parameters<T>) => callbackRef.current(...args),
+      (...args: unknown[]) => callbackRef.current(...args as Parameters<T>),
       limit
     );
   }
 
-  return throttledRef.current;
+  return throttledRef.current as (...args: Parameters<T>) => void;
 }
 
 /**

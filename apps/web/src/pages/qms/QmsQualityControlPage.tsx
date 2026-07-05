@@ -685,7 +685,7 @@ const QmsQualityControlPage: React.FC = () => {
             columns={currentColumns}
             data={currentData as any[]}
             loading={loading}
-            getRowId={(row: any) => row.id}
+            getRowId={(row: QualityIssue | AuditPlan) => row.id}
             rowActions={currentRowActions as any}
             searchable={false}
             filters={[]}

@@ -25,7 +25,7 @@ import {
 } from '@mui/material';
 import { PageContainer } from '@/components/common/PageContainerV2';
 import React, { useState, useEffect, useMemo, useCallback } from 'react';
-import type { MaterialIssue, CreateMaterialIssueRequest, MaterialIssueItem } from '@/api/mes';
+import type { MaterialIssue, CreateMaterialIssueRequest, MaterialIssueItem, ListParams } from '@/api/mes';
 import { mesApi } from '@/api/mes';
 import { useAppStore } from '@/store';
 import { LoadingSpinner } from '@/components/common/LoadingSpinner';
@@ -72,7 +72,7 @@ const MaterialIssuePage: React.FC = () => {
   const loadIssues = useCallback(async () => {
     try {
       setLoading(true);
-      const params: any = {
+      const params: ListParams = {
         page: currentPage - 1,
         pagesize: pageSize,
       };
@@ -191,9 +191,9 @@ const MaterialIssuePage: React.FC = () => {
     setFormData({ ...formData, items: newItems });
   };
 
-  const updateItem = (index: number, field: string, value: any) => {
+  const updateItem = (index: number, field: string, value: unknown) => {
     const newItems = [...(formData.items || [])];
-    (newItems[index] as any)[field] = value;
+    (newItems[index] as Record<string, unknown>)[field] = value;
     setFormData({ ...formData, items: newItems });
   };
 

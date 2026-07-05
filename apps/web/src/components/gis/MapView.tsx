@@ -623,7 +623,7 @@ const MapView: React.FC<MapViewProps> = ({
 
     allDrawFeatures.forEach((feature) => {
       let geometryType: 'Point' | 'LineString' | 'Polygon' = 'Point';
-      let coordinates: any[] = [];
+      let coordinates: unknown = [0, 0];
 
       if (feature.type === 'point') {
         geometryType = 'Point';
@@ -633,15 +633,16 @@ const MapView: React.FC<MapViewProps> = ({
         coordinates = feature.points.map((p) => [p.lng, p.lat]);
       } else if (feature.type === 'polygon') {
         geometryType = 'Polygon';
-        coordinates = [feature.points.map((p) => [p.lng, p.lat])];
-        coordinates[0].push([feature.points[0].lng, feature.points[0].lat]);
+        const polygonCoords: number[][] = feature.points.map((p) => [p.lng, p.lat]);
+        polygonCoords.push([feature.points[0].lng, feature.points[0].lat]);
+        coordinates = [polygonCoords];
       }
 
       features.push({
         type: 'Feature',
         geometry: {
           type: geometryType,
-          coordinates,
+          coordinates: coordinates as number[] | number[][] | number[][][],
         },
         properties: {
           id: feature.id,

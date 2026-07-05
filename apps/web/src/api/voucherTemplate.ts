@@ -266,7 +266,7 @@ export const voucherTemplateApi = {
    * 导出模板
    */
   exportTemplate: async (templateId: string, format: 'json' | 'yaml'): Promise<Blob> => {
-    const baseURL = (apiClient.erp as any).defaults?.baseURL || config.services.erp;
+    const baseURL = apiClient.erp.defaults?.baseURL || config.services.erp;
     return downloadBlob(baseURL, `/voucher/templates/${templateId}/export`, {
       params: { format },
     });

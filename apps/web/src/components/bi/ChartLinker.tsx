@@ -1,16 +1,17 @@
 import React, { useState, useContext, createContext, useCallback } from 'react';
+import type { ChartData } from '../charts/AreaChart';
 
 export interface ChartSelection {
   chartId: string;
-  selectedData: any[];
+  selectedData: ChartData[];
 }
 
 interface ChartLinkerContextType {
   selections: ChartSelection[];
-  selectData: (_chartId: string, _data: any[]) => void;
+  selectData: (_chartId: string, _data: ChartData[]) => void;
   clearSelection: (_chartId: string) => void;
   clearAllSelections: () => void;
-  isSelected: (_chartId: string, _dataItem: any) => boolean;
+  isSelected: (_chartId: string, _dataItem: ChartData) => boolean;
 }
 
 const ChartLinkerContext = createContext<ChartLinkerContextType | undefined>(undefined);
@@ -18,7 +19,7 @@ const ChartLinkerContext = createContext<ChartLinkerContextType | undefined>(und
 export const ChartLinkerProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const [selections, setSelections] = useState<ChartSelection[]>([]);
 
-  const selectData = useCallback((chartId: string, data: any[]) => {
+  const selectData = useCallback((chartId: string, data: ChartData[]) => {
     setSelections((prev) => {
       const existingIndex = prev.findIndex((s) => s.chartId === chartId);
       if (existingIndex >= 0) {
@@ -39,7 +40,7 @@ export const ChartLinkerProvider: React.FC<{ children: React.ReactNode }> = ({ c
   }, []);
 
   const isSelected = useCallback(
-    (chartId: string, dataItem: any) => {
+    (chartId: string, dataItem: ChartData) => {
       const selection = selections.find((s) => s.chartId === chartId);
       if (!selection) return false;
       return selection.selectedData.some((d) => JSON.stringify(d) === JSON.stringify(dataItem));

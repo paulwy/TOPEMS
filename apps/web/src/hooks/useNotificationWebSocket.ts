@@ -8,7 +8,7 @@ const logger = createLogger('WebSocket');
 
 interface WsMessage {
   type: 'notification' | 'unread_count' | 'ping' | 'pong' | 'subscribe' | 'unsubscribe';
-  payload?: any;
+  payload?: Notification | number | unknown;
 }
 
 interface UseNotificationWebSocketOptions {
@@ -85,7 +85,8 @@ export const useNotificationWebSocket = ({
     try {
       const playBeep = () => {
         try {
-          const audioContext = new (window.AudioContext || (window as any).webkitAudioContext)();
+          const audioContext = new (window.AudioContext ||
+        (window as typeof window & { webkitAudioContext?: typeof AudioContext }).webkitAudioContext)();
           const oscillator = audioContext.createOscillator();
           const gainNode = audioContext.createGain();
 
@@ -201,7 +202,7 @@ export const useNotificationWebSocket = ({
           switch (message.type) {
             case 'notification':
               if (onNotificationRef.current && message.payload) {
-                const notification = message.payload;
+                const notification = message.payload as Notification;
                 if (shouldShowNotification(notification.notification_type)) {
                   onNotificationRef.current(notification);
                   showDesktopNotification(notification);
@@ -210,7 +211,7 @@ export const useNotificationWebSocket = ({
               }
               break;
             case 'unread_count':
-              if (onUnreadCountChangeRef.current && message.payload !== undefined) {
+              if (onUnreadCountChangeRef.current && typeof message.payload === 'number') {
                 onUnreadCountChangeRef.current(message.payload);
               }
               break;

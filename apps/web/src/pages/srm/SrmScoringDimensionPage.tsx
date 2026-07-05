@@ -154,7 +154,7 @@ const SrmScoringDimensionPage: React.FC = () => {
     setLoading(true);
     try {
       setDimensions(mockDimensions);
-    } catch (error: any) {
+    } catch (error: unknown) {
       console.error('加载评分维度失败:', error);
       addNotification({ title: '加载失败', message: '加载评分维度失败', type: 'error' });
     } finally {

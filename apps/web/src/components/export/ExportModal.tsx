@@ -106,7 +106,7 @@ const ExportModal: React.FC<ExportModalProps> = ({ report, onClose }) => {
     }
   };
 
-  const generateCSV = (data: any[], columns: string[]) => {
+  const generateCSV = (data: Record<string, unknown>[], columns: string[]) => {
     const headers = columns.join(',');
     const rows = data.map((row) =>
       columns
@@ -124,7 +124,7 @@ const ExportModal: React.FC<ExportModalProps> = ({ report, onClose }) => {
     return [headers, ...rows].join('\n');
   };
 
-  const generateExcelData = (data: any[], columns: string[]) => {
+  const generateExcelData = (data: Record<string, unknown>[], columns: string[]) => {
     return {
       type: 'excel',
       headers: columns,
@@ -132,7 +132,7 @@ const ExportModal: React.FC<ExportModalProps> = ({ report, onClose }) => {
     };
   };
 
-  const generatePDFData = (data: any[], columns: string[]) => {
+  const generatePDFData = (data: Record<string, unknown>[], columns: string[]) => {
     return {
       type: 'pdf',
       title: report.config.title,
@@ -141,7 +141,7 @@ const ExportModal: React.FC<ExportModalProps> = ({ report, onClose }) => {
     };
   };
 
-  const downloadFile = (data: any, filename: string, format: ExportFormat) => {
+  const downloadFile = (data: string | { type: string; headers: string[]; rows: unknown[][] }, filename: string, format: ExportFormat) => {
     let content: string | Blob;
     let mimeType: string;
 

@@ -496,7 +496,7 @@ const QmsInspectionPage: React.FC = () => {
     }));
   };
 
-  const updateResultItem = (index: number, field: keyof InspectionResultItem, value: any) => {
+  const updateResultItem = (index: number, field: keyof InspectionResultItem, value: unknown) => {
     setSubmitData((prev) => ({
       ...prev,
       results: prev.results.map((item, i) =>
