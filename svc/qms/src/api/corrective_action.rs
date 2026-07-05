@@ -12,6 +12,15 @@ pub struct ActionQuery {
     pub status: Option<String>,
     pub priority: Option<String>,
     pub issue_id: Option<String>,
+    pub search: Option<String>,
+}
+
+#[derive(Debug, Serialize)]
+pub struct ListActionsResponse {
+    pub actions: Vec<CorrectiveAction>,
+    pub total: i64,
+    pub page: i64,
+    pub page_size: i64,
 }
 
 #[derive(Debug, Serialize, FromRow)]
@@ -83,7 +92,7 @@ pub struct UpdateActionRequest {
 pub async fn list_actions(
     State(state): State<crate::AppState>,
     axum::extract::Query(query): axum::extract::Query<ActionQuery>,
-) -> Json<ApiResponse<Vec<CorrectiveAction>>> {
+) -> Json<ApiResponse<ListActionsResponse>> {
     let page = query.page.unwrap_or(1);
     let page_size = query.page_size.unwrap_or(10);
     let offset = (page - 1) * page_size;
@@ -93,35 +102,94 @@ pub async fn list_actions(
         .as_ref()
         .and_then(|s| Uuid::parse_str(s).ok());
 
-    let actions = match (query.status.as_ref(), query.priority.as_ref(), issue_id) {
-        (Some(st), Some(pr), Some(issue)) => sqlx::query_as::<_, CorrectiveAction>(r#"SELECT id, action_no, issue_id::TEXT, title, description, root_cause, action_type, status, priority, assignee, target_date::TEXT, completed_at::TEXT, created_by, created_at::TEXT, updated_at::TEXT FROM qa_corrective_actions WHERE status = $1 AND priority = $2 AND issue_id = $3 ORDER BY created_at DESC LIMIT $4 OFFSET $5"#).bind(st).bind(pr).bind(issue).bind(page_size).bind(offset)
-        .fetch_all(&state.pool)
-        .await,
-        (Some(st), Some(pr), None) => sqlx::query_as::<_, CorrectiveAction>(r#"SELECT id, action_no, issue_id::TEXT, title, description, root_cause, action_type, status, priority, assignee, target_date::TEXT, completed_at::TEXT, created_by, created_at::TEXT, updated_at::TEXT FROM qa_corrective_actions WHERE status = $1 AND priority = $2 ORDER BY created_at DESC LIMIT $3 OFFSET $4"#).bind(st).bind(pr).bind(page_size).bind(offset)
-        .fetch_all(&state.pool)
-        .await,
-        (Some(st), None, Some(issue)) => sqlx::query_as::<_, CorrectiveAction>(r#"SELECT id, action_no, issue_id::TEXT, title, description, root_cause, action_type, status, priority, assignee, target_date::TEXT, completed_at::TEXT, created_by, created_at::TEXT, updated_at::TEXT FROM qa_corrective_actions WHERE status = $1 AND issue_id = $2 ORDER BY created_at DESC LIMIT $3 OFFSET $4"#).bind(st).bind(issue).bind(page_size).bind(offset)
-        .fetch_all(&state.pool)
-        .await,
-        (None, Some(pr), Some(issue)) => sqlx::query_as::<_, CorrectiveAction>(r#"SELECT id, action_no, issue_id::TEXT, title, description, root_cause, action_type, status, priority, assignee, target_date::TEXT, completed_at::TEXT, created_by, created_at::TEXT, updated_at::TEXT FROM qa_corrective_actions WHERE priority = $1 AND issue_id = $2 ORDER BY created_at DESC LIMIT $3 OFFSET $4"#).bind(pr).bind(issue).bind(page_size).bind(offset)
-        .fetch_all(&state.pool)
-        .await,
-        (Some(st), None, None) => sqlx::query_as::<_, CorrectiveAction>(r#"SELECT id, action_no, issue_id::TEXT, title, description, root_cause, action_type, status, priority, assignee, target_date::TEXT, completed_at::TEXT, created_by, created_at::TEXT, updated_at::TEXT FROM qa_corrective_actions WHERE status = $1 ORDER BY created_at DESC LIMIT $2 OFFSET $3"#).bind(st).bind(page_size).bind(offset)
-        .fetch_all(&state.pool)
-        .await,
-        (None, Some(pr), None) => sqlx::query_as::<_, CorrectiveAction>(r#"SELECT id, action_no, issue_id::TEXT, title, description, root_cause, action_type, status, priority, assignee, target_date::TEXT, completed_at::TEXT, created_by, created_at::TEXT, updated_at::TEXT FROM qa_corrective_actions WHERE priority = $1 ORDER BY created_at DESC LIMIT $2 OFFSET $3"#).bind(pr).bind(page_size).bind(offset)
-        .fetch_all(&state.pool)
-        .await,
-        (None, None, Some(issue)) => sqlx::query_as::<_, CorrectiveAction>(r#"SELECT id, action_no, issue_id::TEXT, title, description, root_cause, action_type, status, priority, assignee, target_date::TEXT, completed_at::TEXT, created_by, created_at::TEXT, updated_at::TEXT FROM qa_corrective_actions WHERE issue_id = $1 ORDER BY created_at DESC LIMIT $2 OFFSET $3"#).bind(issue).bind(page_size).bind(offset)
-        .fetch_all(&state.pool)
-        .await,
-        (None, None, None) => sqlx::query_as::<_, CorrectiveAction>(r#"SELECT id, action_no, issue_id::TEXT, title, description, root_cause, action_type, status, priority, assignee, target_date::TEXT, completed_at::TEXT, created_by, created_at::TEXT, updated_at::TEXT FROM qa_corrective_actions ORDER BY created_at DESC LIMIT $1 OFFSET $2"#).bind(page_size).bind(offset)
-        .fetch_all(&state.pool)
-        .await,
+    let mut params: Vec<serde_json::Value> = Vec::new();
+    let mut where_clause = String::new();
+
+    if let Some(status) = &query.status {
+        where_clause.push_str(" WHERE status = $1");
+        params.push(serde_json::Value::String(status.clone()));
+    }
+
+    if let Some(priority) = &query.priority {
+        if where_clause.is_empty() {
+            where_clause.push_str(" WHERE priority = $1");
+        } else {
+            where_clause.push_str(&format!(" AND priority = ${}", params.len() + 1));
+        }
+        params.push(serde_json::Value::String(priority.clone()));
+    }
+
+    if let Some(issue) = issue_id {
+        let issue_str = issue.to_string();
+        if where_clause.is_empty() {
+            where_clause.push_str(" WHERE issue_id = $1::uuid");
+        } else {
+            where_clause.push_str(&format!(" AND issue_id = ${}::uuid", params.len() + 1));
+        }
+        params.push(serde_json::Value::String(issue_str));
+    }
+
+    if let Some(search) = &query.search {
+        let pattern = format!("%{}%", search);
+        if where_clause.is_empty() {
+            where_clause.push_str(" WHERE (title ILIKE $1 OR description ILIKE $1)");
+        } else {
+            where_clause.push_str(&format!(
+                " AND (title ILIKE ${} OR description ILIKE ${})",
+                params.len() + 1,
+                params.len() + 1
+            ));
+        }
+        params.push(serde_json::Value::String(pattern));
+    }
+
+    let count_sql = format!(
+        "SELECT COUNT(*) as total FROM qa_corrective_actions{}",
+        where_clause
+    );
+
+    let mut count_query = sqlx::query_scalar(&count_sql);
+    for p in &params {
+        count_query = count_query.bind(p.clone());
+    }
+
+    let total: Option<i64> = match count_query.fetch_one(&state.pool).await {
+        Ok(c) => c,
+        Err(e) => {
+            tracing::error!("Failed to count actions: {}", e);
+            return Json(ApiResponse::error(500, "获取整改措施列表失败"));
+        }
     };
 
-    match actions {
-        Ok(data) => Json(ApiResponse::success(data, "获取整改措施列表成功")),
+    let fetch_sql = format!(
+        r#"
+        SELECT id, action_no, issue_id::TEXT, title, description, root_cause, action_type, status, priority, assignee, target_date::TEXT, completed_at::TEXT, created_by, created_at::TEXT, updated_at::TEXT
+        FROM qa_corrective_actions
+        {}
+        ORDER BY created_at DESC
+        LIMIT ${} OFFSET ${}
+        "#,
+        where_clause,
+        params.len() + 1,
+        params.len() + 2
+    );
+
+    let mut fetch_query = sqlx::query_as::<_, CorrectiveAction>(&fetch_sql);
+    for p in &params {
+        fetch_query = fetch_query.bind(p.clone());
+    }
+    fetch_query = fetch_query.bind(page_size).bind(offset);
+
+    match fetch_query.fetch_all(&state.pool).await {
+        Ok(data) => Json(ApiResponse::success(
+            ListActionsResponse {
+                actions: data,
+                total: total.unwrap_or(0),
+                page,
+                page_size,
+            },
+            "获取整改措施列表成功",
+        )),
         Err(e) => {
             tracing::error!("Failed to fetch actions: {}", e);
             Json(ApiResponse::error(500, "获取整改措施列表失败"))

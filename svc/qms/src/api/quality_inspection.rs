@@ -12,6 +12,15 @@ pub struct InspectionQuery {
     pub page_size: Option<i64>,
     pub status: Option<String>,
     pub inspection_type: Option<String>,
+    pub search: Option<String>,
+}
+
+#[derive(Debug, Serialize)]
+pub struct ListInspectionsResponse {
+    pub inspections: Vec<Inspection>,
+    pub total: i64,
+    pub page: i64,
+    pub page_size: i64,
 }
 
 #[derive(Debug, Serialize, FromRow)]
@@ -144,28 +153,97 @@ fn get_action_name(_from: &str, _to: &str) -> String {
 pub async fn list_inspections(
     State(state): State<crate::AppState>,
     axum::extract::Query(query): axum::extract::Query<InspectionQuery>,
-) -> Json<ApiResponse<Vec<Inspection>>> {
+) -> Json<ApiResponse<ListInspectionsResponse>> {
     let page = query.page.unwrap_or(1);
     let page_size = query.page_size.unwrap_or(10);
     let offset = (page - 1) * page_size;
 
-    let inspections = match (query.status.as_ref(), query.inspection_type.as_ref()) {
-        (Some(st), Some(ty)) => sqlx::query_as::<_, Inspection>(r#"SELECT id, inspection_no, inspection_type, product_id, product_name, standard_id, quantity, qualified_quantity, unqualified_quantity, qualification_rate, status, inspector, assignee, inspected_at::TEXT, result, memo, created_by, created_at::TEXT, updated_at::TEXT FROM qa_quality_inspections WHERE status = $1 AND inspection_type = $2 ORDER BY created_at DESC LIMIT $3 OFFSET $4"#).bind(st).bind(ty).bind(page_size).bind(offset)
-        .fetch_all(&state.pool)
-        .await,
-        (Some(st), None) => sqlx::query_as::<_, Inspection>(r#"SELECT id, inspection_no, inspection_type, product_id, product_name, standard_id, quantity, qualified_quantity, unqualified_quantity, qualification_rate, status, inspector, assignee, inspected_at::TEXT, result, memo, created_by, created_at::TEXT, updated_at::TEXT FROM qa_quality_inspections WHERE status = $1 ORDER BY created_at DESC LIMIT $2 OFFSET $3"#).bind(st).bind(page_size).bind(offset)
-        .fetch_all(&state.pool)
-        .await,
-        (None, Some(ty)) => sqlx::query_as::<_, Inspection>(r#"SELECT id, inspection_no, inspection_type, product_id, product_name, standard_id, quantity, qualified_quantity, unqualified_quantity, qualification_rate, status, inspector, assignee, inspected_at::TEXT, result, memo, created_by, created_at::TEXT, updated_at::TEXT FROM qa_quality_inspections WHERE inspection_type = $1 ORDER BY created_at DESC LIMIT $2 OFFSET $3"#).bind(ty).bind(page_size).bind(offset)
-        .fetch_all(&state.pool)
-        .await,
-        (None, None) => sqlx::query_as::<_, Inspection>(r#"SELECT id, inspection_no, inspection_type, product_id, product_name, standard_id, quantity, qualified_quantity, unqualified_quantity, qualification_rate, status, inspector, assignee, inspected_at::TEXT, result, memo, created_by, created_at::TEXT, updated_at::TEXT FROM qa_quality_inspections ORDER BY created_at DESC LIMIT $1 OFFSET $2"#).bind(page_size).bind(offset)
-        .fetch_all(&state.pool)
-        .await,
+    let mut params: Vec<serde_json::Value> = Vec::new();
+    let mut where_clause = String::new();
+
+    if let Some(status) = &query.status {
+        where_clause.push_str(" WHERE status = $1");
+        params.push(serde_json::Value::String(status.clone()));
+    }
+
+    if let Some(inspection_type) = &query.inspection_type {
+        if where_clause.is_empty() {
+            where_clause.push_str(" WHERE inspection_type = $1");
+            params.push(serde_json::Value::String(inspection_type.clone()));
+        } else {
+            where_clause.push_str(&format!(" AND inspection_type = ${}", params.len() + 1));
+            params.push(serde_json::Value::String(inspection_type.clone()));
+        }
+    }
+
+    if let Some(search) = &query.search {
+        let pattern = format!("%{}%", search);
+        if where_clause.is_empty() {
+            where_clause.push_str(" WHERE (inspection_no ILIKE $1 OR product_name ILIKE $1 OR inspector ILIKE $1 OR assignee ILIKE $1)");
+            params.push(serde_json::Value::String(pattern));
+        } else {
+            where_clause.push_str(&format!(
+                " AND (inspection_no ILIKE ${} OR product_name ILIKE ${} OR inspector ILIKE ${} OR assignee ILIKE ${})",
+                params.len() + 1,
+                params.len() + 1,
+                params.len() + 1,
+                params.len() + 1
+            ));
+            params.push(serde_json::Value::String(pattern));
+        }
+    }
+
+    let count_sql = format!(
+        "SELECT COUNT(*) as total FROM qa_quality_inspections{}",
+        where_clause
+    );
+
+    let mut count_query = sqlx::query_scalar(&count_sql);
+    for p in &params {
+        count_query = count_query.bind(p.clone());
+    }
+
+    let total: Option<i64> = match count_query.fetch_one(&state.pool).await {
+        Ok(c) => c,
+        Err(e) => {
+            tracing::error!("Failed to count inspections: {}", e);
+            return Json(ApiResponse::error(500, "获取质量检查列表失败"));
+        }
     };
 
-    match inspections {
-        Ok(data) => Json(ApiResponse::success(data, "获取质量检查列表成功")),
+    let fetch_sql = format!(
+        r#"
+        SELECT id, inspection_no, inspection_type, product_id, product_name,
+            standard_id, quantity, qualified_quantity, unqualified_quantity,
+            qualification_rate, status, inspector, assignee,
+            inspected_at::TEXT, result, memo, created_by,
+            created_at::TEXT, updated_at::TEXT
+        FROM qa_quality_inspections
+        {}
+        ORDER BY created_at DESC
+        LIMIT ${} OFFSET ${}
+        "#,
+        where_clause,
+        params.len() + 1,
+        params.len() + 2
+    );
+
+    let mut fetch_query = sqlx::query_as::<_, Inspection>(&fetch_sql);
+    for p in &params {
+        fetch_query = fetch_query.bind(p.clone());
+    }
+    fetch_query = fetch_query.bind(page_size).bind(offset);
+
+    match fetch_query.fetch_all(&state.pool).await {
+        Ok(data) => Json(ApiResponse::success(
+            ListInspectionsResponse {
+                inspections: data,
+                total: total.unwrap_or(0),
+                page,
+                page_size,
+            },
+            "获取质量检查列表成功",
+        )),
         Err(e) => {
             tracing::error!("Failed to fetch inspections: {}", e);
             Json(ApiResponse::error(500, "获取质量检查列表失败"))

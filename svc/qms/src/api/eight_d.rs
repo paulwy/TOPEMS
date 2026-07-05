@@ -13,6 +13,15 @@ pub struct EightDQuery {
     pub status: Option<String>,
     pub severity: Option<String>,
     pub assignee: Option<String>,
+    pub search: Option<String>,
+}
+
+#[derive(Debug, Serialize)]
+pub struct ListEightDReportsResponse {
+    pub reports: Vec<EightDReport>,
+    pub total: i64,
+    pub page: i64,
+    pub page_size: i64,
 }
 
 #[derive(Debug, Serialize, FromRow)]
@@ -95,28 +104,103 @@ pub struct EightDAuditLog {
 pub async fn list_eightd_reports(
     State(state): State<crate::AppState>,
     axum::extract::Query(query): axum::extract::Query<EightDQuery>,
-) -> Json<ApiResponse<Vec<EightDReport>>> {
+) -> Json<ApiResponse<ListEightDReportsResponse>> {
     let page = query.page.unwrap_or(1);
     let page_size = query.page_size.unwrap_or(10);
     let offset = (page - 1) * page_size;
 
-    let reports = match (query.status.as_ref(), query.severity.as_ref()) {
-        (Some(st), Some(sv)) => sqlx::query_as::<_, EightDReport>(r#"SELECT id, report_no, title, status, severity, priority, related_issue_id::TEXT, d1_team, d1_leader, d2_problem_description, d3_containment_action, d3_implemented_at::TEXT, d4_root_cause, d4_cause_analysis, d5_permanent_action, d6_verification_result, d6_verified_at::TEXT, d7_preventive_action, d8_congratulations, d8_closed_at::TEXT, assignee, due_date::TEXT, created_by, created_at::TEXT, updated_at::TEXT FROM qa_eightd_reports WHERE status = $1 AND severity = $2 ORDER BY created_at DESC LIMIT $3 OFFSET $4"#).bind(st).bind(sv).bind(page_size).bind(offset)
-        .fetch_all(&state.pool)
-        .await,
-        (Some(st), None) => sqlx::query_as::<_, EightDReport>(r#"SELECT id, report_no, title, status, severity, priority, related_issue_id::TEXT, d1_team, d1_leader, d2_problem_description, d3_containment_action, d3_implemented_at::TEXT, d4_root_cause, d4_cause_analysis, d5_permanent_action, d6_verification_result, d6_verified_at::TEXT, d7_preventive_action, d8_congratulations, d8_closed_at::TEXT, assignee, due_date::TEXT, created_by, created_at::TEXT, updated_at::TEXT FROM qa_eightd_reports WHERE status = $1 ORDER BY created_at DESC LIMIT $2 OFFSET $3"#).bind(st).bind(page_size).bind(offset)
-        .fetch_all(&state.pool)
-        .await,
-        (None, Some(sv)) => sqlx::query_as::<_, EightDReport>(r#"SELECT id, report_no, title, status, severity, priority, related_issue_id::TEXT, d1_team, d1_leader, d2_problem_description, d3_containment_action, d3_implemented_at::TEXT, d4_root_cause, d4_cause_analysis, d5_permanent_action, d6_verification_result, d6_verified_at::TEXT, d7_preventive_action, d8_congratulations, d8_closed_at::TEXT, assignee, due_date::TEXT, created_by, created_at::TEXT, updated_at::TEXT FROM qa_eightd_reports WHERE severity = $1 ORDER BY created_at DESC LIMIT $2 OFFSET $3"#).bind(sv).bind(page_size).bind(offset)
-        .fetch_all(&state.pool)
-        .await,
-        (None, None) => sqlx::query_as::<_, EightDReport>(r#"SELECT id, report_no, title, status, severity, priority, related_issue_id::TEXT, d1_team, d1_leader, d2_problem_description, d3_containment_action, d3_implemented_at::TEXT, d4_root_cause, d4_cause_analysis, d5_permanent_action, d6_verification_result, d6_verified_at::TEXT, d7_preventive_action, d8_congratulations, d8_closed_at::TEXT, assignee, due_date::TEXT, created_by, created_at::TEXT, updated_at::TEXT FROM qa_eightd_reports ORDER BY created_at DESC LIMIT $1 OFFSET $2"#).bind(page_size).bind(offset)
-        .fetch_all(&state.pool)
-        .await,
+    let mut params: Vec<serde_json::Value> = Vec::new();
+    let mut where_clause = String::new();
+
+    if let Some(status) = &query.status {
+        where_clause.push_str(" WHERE status = $1");
+        params.push(serde_json::Value::String(status.clone()));
+    }
+
+    if let Some(severity) = &query.severity {
+        if where_clause.is_empty() {
+            where_clause.push_str(" WHERE severity = $1");
+        } else {
+            where_clause.push_str(&format!(" AND severity = ${}", params.len() + 1));
+        }
+        params.push(serde_json::Value::String(severity.clone()));
+    }
+
+    if let Some(assignee) = &query.assignee {
+        if where_clause.is_empty() {
+            where_clause.push_str(" WHERE assignee = $1");
+        } else {
+            where_clause.push_str(&format!(" AND assignee = ${}", params.len() + 1));
+        }
+        params.push(serde_json::Value::String(assignee.clone()));
+    }
+
+    if let Some(search) = &query.search {
+        let pattern = format!("%{}%", search);
+        if where_clause.is_empty() {
+            where_clause.push_str(" WHERE (report_no ILIKE $1 OR title ILIKE $1)");
+        } else {
+            where_clause.push_str(&format!(
+                " AND (report_no ILIKE ${} OR title ILIKE ${})",
+                params.len() + 1,
+                params.len() + 1
+            ));
+        }
+        params.push(serde_json::Value::String(pattern));
+    }
+
+    let count_sql = format!(
+        "SELECT COUNT(*) as total FROM qa_eightd_reports{}",
+        where_clause
+    );
+
+    let mut count_query = sqlx::query_scalar(&count_sql);
+    for p in &params {
+        count_query = count_query.bind(p.clone());
+    }
+
+    let total: Option<i64> = match count_query.fetch_one(&state.pool).await {
+        Ok(c) => c,
+        Err(e) => {
+            tracing::error!("Failed to count 8D reports: {}", e);
+            return Json(ApiResponse::error(500, "获取8D报告列表失败"));
+        }
     };
 
-    match reports {
-        Ok(data) => Json(ApiResponse::success(data, "获取8D报告列表成功")),
+    let fetch_sql = format!(
+        r#"
+        SELECT id, report_no, title, status, severity, priority, related_issue_id::TEXT,
+            d1_team, d1_leader, d2_problem_description, d3_containment_action,
+            d3_implemented_at::TEXT, d4_root_cause, d4_cause_analysis,
+            d5_permanent_action, d6_verification_result, d6_verified_at::TEXT,
+            d7_preventive_action, d8_congratulations, d8_closed_at::TEXT,
+            assignee, due_date::TEXT, created_by, created_at::TEXT, updated_at::TEXT
+        FROM qa_eightd_reports
+        {}
+        ORDER BY created_at DESC
+        LIMIT ${} OFFSET ${}
+        "#,
+        where_clause,
+        params.len() + 1,
+        params.len() + 2
+    );
+
+    let mut fetch_query = sqlx::query_as::<_, EightDReport>(&fetch_sql);
+    for p in &params {
+        fetch_query = fetch_query.bind(p.clone());
+    }
+    fetch_query = fetch_query.bind(page_size).bind(offset);
+
+    match fetch_query.fetch_all(&state.pool).await {
+        Ok(data) => Json(ApiResponse::success(
+            ListEightDReportsResponse {
+                reports: data,
+                total: total.unwrap_or(0),
+                page,
+                page_size,
+            },
+            "获取8D报告列表成功",
+        )),
         Err(e) => {
             tracing::error!("Failed to fetch 8D reports: {}", e);
             Json(ApiResponse::error(500, "获取8D报告列表失败"))
