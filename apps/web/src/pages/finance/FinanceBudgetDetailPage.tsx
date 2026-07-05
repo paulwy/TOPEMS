@@ -30,6 +30,7 @@ import {
 import { useNavigate, useParams } from 'react-router-dom';
 import { budgetApi } from '@/api/erp';
 import { financeApi } from '@/api/finance';
+import type { AccountBalance } from '@/types/finance';
 import { useNotification } from '@/hooks/useNotification';
 import { apiLogger } from '@/utils/logger';
 import { DetailPageTemplate, type TabConfig, type SectionConfig } from '@/components/templates';
@@ -101,7 +102,7 @@ const FinanceBudgetDetailPage: React.FC = () => {
           period: periodRes.data.period,
         });
         if (balancesRes.success && balancesRes.data) {
-          items = balancesRes.data.slice(0, 5).map((balance: any, index: number) => ({
+          items = balancesRes.data.slice(0, 5).map((balance: AccountBalance, index: number) => ({
             id: balance.account_id || `item-${index}`,
             subject: balance.account_name,
             category: getCategoryLabel(balance.category),

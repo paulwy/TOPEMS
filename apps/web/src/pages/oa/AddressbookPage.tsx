@@ -27,7 +27,7 @@ const AddressbookPage: React.FC = () => {
   const loadContacts = useCallback(async () => {
     setLoading(true);
     try {
-      const params: any = {
+      const params: Record<string, unknown> = {
         page: currentPage,
         pagesize: 20,
       };

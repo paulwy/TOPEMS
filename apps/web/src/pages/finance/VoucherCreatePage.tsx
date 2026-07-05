@@ -103,7 +103,7 @@ const VoucherCreatePage: React.FC = () => {
     addVoucherItem();
   };
 
-  const handleFieldChange = (field: string, value: any) => {
+  const handleFieldChange = (field: keyof typeof formData, value: typeof formData[keyof typeof formData]) => {
     setFormData((prev) => ({
       ...prev,
       [field]: value,
@@ -122,7 +122,7 @@ const VoucherCreatePage: React.FC = () => {
     setVoucherItems((prev) => [...prev, newItem]);
   };
 
-  const updateVoucherItem = (index: number, field: keyof VoucherItemRequest, value: any) => {
+  const updateVoucherItem = (index: number, field: keyof VoucherItemRequest, value: VoucherItemRequest[keyof VoucherItemRequest]) => {
     const items = [...voucherItems];
 
     if (field === 'subject_code') {

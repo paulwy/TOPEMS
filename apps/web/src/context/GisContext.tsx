@@ -378,13 +378,19 @@ export const GisProvider: React.FC<{ children: React.ReactNode }> = ({ children 
             gisApi.listBusinessLocations(),
           ]);
 
-        const extractData = (res: any) => {
-          if (!res.success || !res.data) return [];
-          if (Array.isArray(res.data)) return res.data;
-          if (res.data.data && Array.isArray(res.data.data)) return res.data.data;
-          const keys = Object.keys(res.data);
-          for (const key of keys) {
-            if (Array.isArray(res.data[key])) return res.data[key];
+        const extractData = (res: unknown) => {
+          if (typeof res !== 'object' || res === null) return [];
+          const obj = res as Record<string, unknown>;
+          if (!obj.success || !obj.data) return [];
+          const data = obj.data;
+          if (Array.isArray(data)) return data;
+          if (typeof data === 'object' && data !== null) {
+            const dataObj = data as Record<string, unknown>;
+            if (dataObj.data && Array.isArray(dataObj.data)) return dataObj.data;
+            const keys = Object.keys(dataObj);
+            for (const key of keys) {
+              if (Array.isArray(dataObj[key])) return dataObj[key];
+            }
           }
           return [];
         };

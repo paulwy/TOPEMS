@@ -369,7 +369,7 @@ const MonitorNotificationPage: React.FC = () => {
         } else {
           notifyError('测试通知发送失败');
         }
-      } catch (err: any) {
+      } catch (err: unknown) {
         apiLogger.error('测试通知失败:', err);
         setTestResult({
           channelId: channel.id,

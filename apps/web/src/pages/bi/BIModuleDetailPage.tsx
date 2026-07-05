@@ -313,9 +313,9 @@ const BIModuleDetailPage = () => {
           return;
         }
 
-        let summaryData: any = null;
-        let timelineData: any[] = fallback.timeline;
-        let distributionData: any[] = fallback.distribution;
+        let summaryData: Record<string, number | string> | null = null;
+        let timelineData: Array<{ month: string; count: number }> = fallback.timeline;
+        let distributionData: Array<{ name: string; value: number }> = fallback.distribution;
 
         try {
           const summaryRes = await apiConfig.summary();
@@ -332,7 +332,7 @@ const BIModuleDetailPage = () => {
             if (timelineRes.success && timelineRes.data) {
               const timelineItems = timelineRes.data.items || timelineRes.data || [];
               if (Array.isArray(timelineItems) && timelineItems.length > 0) {
-                timelineData = timelineItems.map((item: any, index: number) => ({
+                timelineData = timelineItems.map((item: { month?: string; date?: string; count?: number; value?: number }, index: number) => ({
                   month: item.month || item.date || `${index + 1}月`,
                   count: item.count || item.value || 0,
                 }));
@@ -515,7 +515,7 @@ const BIModuleDetailPage = () => {
               innerRadius={50}
               dataKey='value'
             >
-              {distributionChartData.map((entry: any, index: number) => (
+              {distributionChartData.map((entry: { name: string; value: number }, index: number) => (
                 <Cell
                   key={`cell-${index}`}
                   fill={BIChartColors.series[index % BIChartColors.series.length]}

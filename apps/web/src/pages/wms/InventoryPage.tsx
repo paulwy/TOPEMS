@@ -125,7 +125,7 @@ const InventoryPage: React.FC = () => {
   const fetchInventory = useCallback(async () => {
     try {
       setLoading(true);
-      const params: any = {
+      const params: Record<string, unknown> = {
         page: currentPage,
         pagesize: pageSize,
       };
@@ -163,7 +163,7 @@ const InventoryPage: React.FC = () => {
 
   const fetchAlertStats = useCallback(async () => {
     try {
-      const params: any = {};
+      const params: Record<string, unknown> = {};
       if (warehouseFilter) params.warehouse_id = warehouseFilter;
       const response = await wmsApi.inventoryAlerts.getStatistics(params);
       if (response.success && response.data) {

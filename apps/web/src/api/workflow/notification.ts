@@ -6,8 +6,23 @@ import {
 } from '../notification';
 import type { CreateNotificationRequest, ListParams, Notification } from './types';
 import type { ApiResponse } from '../client';
+import type { NotificationTypeEnum } from '../notification';
 
-const adaptToWorkflowNotification = (n: any): Notification => ({
+interface RawNotification {
+  id: string;
+  user_id?: string;
+  title: string;
+  content: string;
+  notification_type: string;
+  data?: {
+    workflow_instance_id?: string;
+    approval_id?: string;
+  };
+  is_read: boolean;
+  created_at: string;
+}
+
+const adaptToWorkflowNotification = (n: RawNotification): Notification => ({
   id: n.id,
   user_id: n.user_id,
   title: n.title,
@@ -23,7 +38,7 @@ export const notificationApi = {
   list: async (_userId: string, params?: ListParams): Promise<ApiResponse<Notification[]>> => {
     const response = await getNotifications(params?.page, params?.pagesize);
     const adapted = (response.data?.notifications || []).map(adaptToWorkflowNotification);
-    return { ...response, data: adapted as any };
+    return { ...response, data: adapted };
   },
 
   getCount: async (_userId: string): Promise<ApiResponse<number>> => {
@@ -38,13 +53,13 @@ export const notificationApi = {
     const response = await createGeneralNotification({
       title: data.title,
       content: data.content,
-      notification_type: data.notification_type as any,
+      notification_type: data.notification_type as NotificationTypeEnum,
       data: {
         workflow_instance_id: data.workflow_instance_id,
         approval_id: data.approval_id,
       },
     });
-    return { ...response, data: adaptToWorkflowNotification(response.data) as any };
+    return { ...response, data: adaptToWorkflowNotification(response.data as RawNotification) };
   },
 
   listNotifications: async (
@@ -53,6 +68,6 @@ export const notificationApi = {
   ): Promise<ApiResponse<Notification[]>> => {
     const response = await getNotifications(params?.page, params?.pagesize);
     const adapted = (response.data?.notifications || []).map(adaptToWorkflowNotification);
-    return { ...response, data: adapted as any };
+    return { ...response, data: adapted };
   },
 };

@@ -170,8 +170,30 @@ export function instrumentFetch(originalFetch: typeof fetch): typeof fetch {
   };
 }
 
-export function instrumentAxios(axiosInstance: any): any {
-  axiosInstance.interceptors.request.use((config: any) => {
+interface AxiosInterceptorConfig {
+  headers?: Record<string, string>;
+}
+
+interface AxiosResponse {
+  config?: AxiosInterceptorConfig;
+}
+
+interface AxiosInterceptorManager<T> {
+  use(
+    onFulfilled?: (value: T) => T | Promise<T>,
+    onRejected?: (error: unknown) => Promise<never>
+  ): number;
+}
+
+interface AxiosInstance {
+  interceptors: {
+    request: AxiosInterceptorManager<AxiosInterceptorConfig>;
+    response: AxiosInterceptorManager<AxiosResponse>;
+  };
+}
+
+export function instrumentAxios<T extends AxiosInstance>(axiosInstance: T): T {
+  axiosInstance.interceptors.request.use((config: AxiosInterceptorConfig) => {
     const traceHeaders = getTraceHeaders();
     config.headers = {
       ...config.headers,
@@ -181,10 +203,10 @@ export function instrumentAxios(axiosInstance: any): any {
   });
 
   axiosInstance.interceptors.response.use(
-    (response: any) => {
+    (response: AxiosResponse) => {
       return response;
     },
-    (error: any) => {
+    (error: unknown) => {
       return Promise.reject(error);
     }
   );

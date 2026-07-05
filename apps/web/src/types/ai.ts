@@ -11,12 +11,12 @@ export interface ValidationIssue {
 
 export interface Suggestion {
   field: string;
-  value: any;
+  value: unknown;
   reason: string;
 }
 
 export interface ValidateRequest {
-  data: Record<string, any>;
+  data: Record<string, unknown>;
   schema?: string;
   context?: {
     module: string;
@@ -31,8 +31,8 @@ export interface ValidateResponse {
 }
 
 export interface CompleteRequest {
-  data?: Record<string, any>;
-  partialData?: Record<string, any>;
+  data?: Record<string, unknown>;
+  partialData?: Record<string, unknown>;
   fieldsToComplete?: string[];
   context?: {
     module: string;
@@ -41,7 +41,7 @@ export interface CompleteRequest {
 }
 
 export interface CompletionItem {
-  value: any;
+  value: unknown;
   confidence: number;
   source: 'inference' | 'history' | 'knowledge';
 }
@@ -54,7 +54,7 @@ export interface SummarizeRequest {
   text: string;
   maxLength?: number;
   type?: 'short' | 'medium' | 'detailed';
-  context?: any;
+  context?: Record<string, unknown>;
 }
 
 export interface SummarizeResponse {

@@ -102,8 +102,8 @@ export const ChatInterface: React.FC = () => {
       setLoading(true);
       const response = await imApi.listChatRooms();
       if (response.success && response.data) {
-        const data: any = response.data;
-        const rooms = data.chat_rooms || data.chatRooms || [];
+        const data: unknown = response.data;
+        const rooms = ((data as Record<string, unknown>).chat_rooms || (data as Record<string, unknown>).chatRooms || []) as ChatRoom[];
         setChatRooms(rooms);
       }
     } catch (error: unknown) {
@@ -157,8 +157,8 @@ export const ChatInterface: React.FC = () => {
     try {
       const response = await imApi.listChatMessages(chatRoomId);
       if (response.success && response.data) {
-        const data: any = response.data;
-        const msgs = data.chat_messages || data.chatMessages || [];
+        const data: unknown = response.data;
+        const msgs = ((data as Record<string, unknown>).chat_messages || (data as Record<string, unknown>).chatMessages || []) as ChatMessage[];
         setMessages(msgs);
       }
     } catch (error: unknown) {

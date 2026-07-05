@@ -5,7 +5,7 @@ export interface ExportPreviewProps {
   isOpen: boolean;
   onClose: () => void;
   onDownload: () => void;
-  data: any[];
+  data: Record<string, unknown>[];
   columns: string[];
   format: string;
   fileName?: string;

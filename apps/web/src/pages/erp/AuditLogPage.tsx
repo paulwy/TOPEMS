@@ -234,7 +234,7 @@ const AuditLogPage: React.FC = () => {
   }, [logs]);
 
   const getStatusBadge = (status: string) => {
-    const badges: Record<string, { color: any; label: string; icon: React.ReactNode }> = {
+    const badges: Record<string, { color: 'success' | 'error' | 'warning' | 'default'; label: string; icon: React.ReactNode }> = {
       success: { color: 'success', label: '成功', icon: <CheckCircle size={14} /> },
       failed: { color: 'error', label: '失败', icon: <XCircle size={14} /> },
       warning: { color: 'warning', label: '警告', icon: <AlertCircle size={14} /> },

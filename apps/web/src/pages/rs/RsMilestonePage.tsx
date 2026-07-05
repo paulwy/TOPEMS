@@ -59,7 +59,7 @@ const RsMilestonePage: React.FC = () => {
   const loadMilestones = async () => {
     try {
       setLoading(true);
-      const params: any = {
+      const params: Record<string, unknown> = {
         page: page + 1,
         pagesize: rowsPerPage,
       };

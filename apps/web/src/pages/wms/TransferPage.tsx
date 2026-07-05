@@ -95,7 +95,7 @@ const TransferPage: React.FC = () => {
   const fetchTransfers = useCallback(async () => {
     try {
       setLoading(true);
-      const params: any = {
+      const params: Record<string, unknown> = {
         page: currentPage,
         pagesize: pageSize,
       };

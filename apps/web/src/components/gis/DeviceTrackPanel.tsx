@@ -28,7 +28,7 @@ import {Box,
   Grid,
   Divider,
   Button, useTheme} from '@mui/material';
-import type { DevicePoint, DeviceLocationRecord } from '../../api/gis';
+import type { DevicePoint, DeviceLocationRecord, TrackQueryParams } from '../../api/gis';
 import { gisApi } from '../../api/gis';
 import { logger } from '@/utils/logger';
 import 'leaflet/dist/leaflet.css';
@@ -96,7 +96,7 @@ const DeviceTrackPanel: React.FC<DeviceTrackPanelProps> = ({ devicePoints, onClo
     if (!selectedDevice) return;
     setLoading(true);
     try {
-      const params: any = { device_id: selectedDevice };
+      const params: TrackQueryParams = { device_id: selectedDevice };
       if (timeRange.start) params.start_time = timeRange.start;
       if (timeRange.end) params.end_time = timeRange.end;
       params.pagesize = MAX_TRACK_POINTS;

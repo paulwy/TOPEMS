@@ -630,7 +630,7 @@ const QmsSpcPage: React.FC = () => {
             columns={columns}
             data={filteredCharts as any[]}
             loading={loading}
-            getRowId={(row: any) => row.id}
+            getRowId={(row: SpcChart) => row.id}
             rowActions={rowActions as any}
             searchable={false}
             filters={[]}

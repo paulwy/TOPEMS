@@ -18,7 +18,7 @@ import {
 } from '@mui/material';
 import React, { useState, useEffect, useCallback } from 'react';
 import { useSearchParams } from 'react-router-dom';
-import type { MrpSuggestion, MrpMaterialSummary } from '@/api/scm';
+import type { MrpSuggestion, MrpMaterialSummary, MrpSuggestionQueryParams, MrpMaterialSummaryQueryParams } from '@/api/scm';
 import { scmApi } from '@/api/scm';
 import { useAppStore } from '@/store';
 import {
@@ -76,7 +76,7 @@ const MrpSuggestionPage: React.FC = () => {
   const loadSuggestions = async () => {
     try {
       setLoading(true);
-      const params: any = {
+      const params: MrpSuggestionQueryParams = {
         page: currentPage,
         pageSize,
       };
@@ -108,7 +108,7 @@ const MrpSuggestionPage: React.FC = () => {
 
   const loadSummary = async () => {
     try {
-      const params: any = {};
+      const params: MrpMaterialSummaryQueryParams = {};
       if (selectedPlanId) {
         params.plan_id = selectedPlanId;
       }

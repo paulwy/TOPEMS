@@ -36,7 +36,7 @@ export const customerSegmentationApi = {
     return apiClient.crm.get(`/segments/${id}/customers`, { params });
   },
 
-  autoSegment: async (): Promise<ApiResponse<{ segments: any[] }>> => {
+  autoSegment: async (): Promise<ApiResponse<{ segments: CustomerSegment[] }>> => {
     return apiClient.crm.get('/segments/auto');
   },
 };

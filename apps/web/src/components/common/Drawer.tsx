@@ -1,5 +1,6 @@
 import React from 'react';
 import { Drawer as MuiDrawer, Box, IconButton, Typography, Divider } from '@mui/material';
+import type { SxProps, Theme } from '@mui/material/styles';
 import { X } from 'lucide-react';
 
 export type DrawerAnchor = 'left' | 'right' | 'top' | 'bottom';
@@ -20,10 +21,10 @@ export interface DrawerProps {
   showDivider?: boolean;
   closable?: boolean;
   closeOnBackdropClick?: boolean;
-  sx?: any;
-  paperSx?: any;
-  titleSx?: any;
-  contentSx?: any;
+  sx?: SxProps<Theme>;
+  paperSx?: SxProps<Theme>;
+  titleSx?: SxProps<Theme>;
+  contentSx?: SxProps<Theme>;
   headerContent?: React.ReactNode;
   footerContent?: React.ReactNode;
 }
@@ -56,7 +57,7 @@ export const Drawer: React.FC<DrawerProps> = ({
   };
 
   const getPaperSx = () => {
-    const baseStyle: any = {
+    const baseStyle: { [key: string]: unknown } = {
       ...(anchor === 'left' || anchor === 'right' ? { width } : { height }),
       maxWidth: anchor === 'left' || anchor === 'right' ? '90vw' : undefined,
       maxHeight: anchor === 'top' || anchor === 'bottom' ? '90vh' : undefined,

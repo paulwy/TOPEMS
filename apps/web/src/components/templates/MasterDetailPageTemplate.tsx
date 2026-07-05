@@ -31,7 +31,7 @@ import { EmptyState, ErrorEmptyState } from '../common/EmptyState';
 /**
  * 列定义 - 简化版，用于主从布局的列表列
  */
-export interface MasterColumn<T = any> {
+export interface MasterColumn<T = unknown> {
   /** 列唯一标识 */
   id: string;
   /** 列标题 */
@@ -43,7 +43,7 @@ export interface MasterColumn<T = any> {
   /** 对齐方式 */
   align?: 'left' | 'center' | 'right';
   /** 自定义渲染 */
-  render?: (value: any, row: T, index: number) => React.ReactNode;
+  render?: (value: unknown, row: T, index: number) => React.ReactNode;
   /** 数据字段名 (render 未提供时直接取值) */
   field?: string;
   /** 是否可排序 */
@@ -55,7 +55,7 @@ export interface MasterColumn<T = any> {
 /**
  * 行操作按钮
  */
-export interface MasterRowAction<T = any> {
+export interface MasterRowAction<T = unknown> {
   label: string;
   icon?: React.ReactNode;
   onClick: (row: T) => void;
@@ -87,7 +87,7 @@ export interface PaginationConfig {
 /**
  * MasterDetailPageTemplate 属性
  */
-export interface MasterDetailPageTemplateProps<T = any> extends BoxProps {
+export interface MasterDetailPageTemplateProps<T = unknown> extends BoxProps {
   // ---- 页面信息 ----
   /** 页面标题 */
   title: string;
@@ -130,7 +130,7 @@ export interface MasterDetailPageTemplateProps<T = any> extends BoxProps {
       isEditing: boolean;
       onEditStart: () => void;
       onEditCancel: () => void;
-      onEditSave: (data: any) => void;
+      onEditSave: (data: unknown) => void;
       onClose: () => void;
     }
   ) => React.ReactNode;
@@ -187,7 +187,7 @@ export interface MasterDetailPageTemplateProps<T = any> extends BoxProps {
   /** 是否启用内置编辑状态管理 */
   enableEditMode?: boolean;
   /** 编辑保存回调 */
-  onEditSave?: (item: T, data: any) => void;
+  onEditSave?: (item: T, data: unknown) => void;
   /** 编辑取消回调 */
   onEditCancel?: () => void;
 }
@@ -308,7 +308,7 @@ export function MasterDetailPageTemplate<T>({
   }, []);
 
   const handleEditSave = useCallback(
-    (data: any) => {
+    (data: unknown) => {
       if (selectedItem && onEditSave) {
         onEditSave(selectedItem, data);
       }

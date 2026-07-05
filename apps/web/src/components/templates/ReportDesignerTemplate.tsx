@@ -1305,14 +1305,14 @@ export const ReportDesignerTemplate: React.FC<ReportDesignerTemplateProps> = ({
                   value={state.layout.chart?.xAxisField || ''}
                   label='X轴字段'
                   onChange={(e) =>
-                    setState((prev: any) => ({
-                      ...prev,
-                      layout: {
-                        ...prev.layout,
-                        chart: { ...prev.layout.chart, xAxisField: e.target.value },
-                      },
-                    }))
-                  }
+                        setState((prev) => ({
+                          ...prev,
+                          layout: {
+                            ...prev.layout,
+                            chart: { ...(prev.layout.chart || {} as ReportChartConfig), xAxisField: e.target.value },
+                          },
+                        }))
+                      }
                 >
                   {state.selectedFields
                     .filter((f) => f.visible)
@@ -1334,11 +1334,11 @@ export const ReportDesignerTemplate: React.FC<ReportDesignerTemplateProps> = ({
                   value={state.layout.chart?.yAxisFields || []}
                   label='Y轴字段'
                   onChange={(e) =>
-                    setState((prev: any) => ({
+                    setState((prev) => ({
                       ...prev,
                       layout: {
                         ...prev.layout,
-                        chart: { ...prev.layout.chart, yAxisFields: e.target.value as string[] },
+                        chart: { ...(prev.layout.chart || {} as ReportChartConfig), yAxisFields: e.target.value as string[] },
                       },
                     }))
                   }
@@ -1361,11 +1361,11 @@ export const ReportDesignerTemplate: React.FC<ReportDesignerTemplateProps> = ({
                     <Switch
                       checked={state.layout.chart?.showLegend}
                       onChange={(e) =>
-                        setState((prev: any) => ({
+                        setState((prev) => ({
                           ...prev,
                           layout: {
                             ...prev.layout,
-                            chart: { ...prev.layout.chart, showLegend: e.target.checked },
+                            chart: { ...(prev.layout.chart || {} as ReportChartConfig), showLegend: e.target.checked },
                           },
                         }))
                       }
@@ -1378,9 +1378,9 @@ export const ReportDesignerTemplate: React.FC<ReportDesignerTemplateProps> = ({
                     <Switch
                       checked={state.layout.chart?.showGrid}
                       onChange={(e) =>
-                        setState((prev: any) => ({
+                        setState((prev) => ({
                           ...prev,
-                          layout: { ...prev.layout.chart, showGrid: e.target.checked },
+                          layout: { ...prev.layout, chart: { ...(prev.layout.chart || {} as ReportChartConfig), showGrid: e.target.checked } },
                         }))
                       }
                     />

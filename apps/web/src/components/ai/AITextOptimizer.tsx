@@ -68,12 +68,13 @@ export function AITextOptimizer({
   const [history, setHistory] = useState<string[]>([]);
   const [historyIndex, setHistoryIndex] = useState(-1);
 
-  const { isLoading, error, generate, retry, retryCount } = useAIHelper({
+  const { isLoading, error, generate, retry, retryCount } = useAIHelper<{ content: string }>({
     featureType: 'text',
     onSuccess: (result) => {
-      if (result?.content) {
-        setOptimizedText(result.content);
-        setHistory((prev) => [...prev, result.content]);
+      const data = result as { content: string };
+      if (data?.content) {
+        setOptimizedText(data.content);
+        setHistory((prev) => [...prev, data.content]);
         setHistoryIndex((prev) => prev + 1);
       }
     },

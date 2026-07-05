@@ -3,7 +3,7 @@ import React from 'react';
 import { AlertCircle } from 'lucide-react';
 
 export interface ImportPreviewProps {
-  data: any[];
+  data: Record<string, unknown>[];
   errors: Array<{
     row: number;
     field: string;

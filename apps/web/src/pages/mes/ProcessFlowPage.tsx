@@ -20,6 +20,7 @@ import type {
   ProcessFlowStep,
   CapacityAnalysis,
 } from '@/api/mes/processFlow';
+import type { ListParams } from '@/api/mes';
 import { processFlowApi } from '@/api/mes/processFlow';
 import { useAppStore } from '@/store';
 import { LoadingSpinner } from '@/components/common/LoadingSpinner';
@@ -62,7 +63,7 @@ const ProcessFlowPage: React.FC = () => {
   const loadFlows = useCallback(async () => {
     try {
       setLoading(true);
-      const params: any = {
+      const params: ListParams = {
         page: currentPage - 1,
         pagesize: pageSize,
       };

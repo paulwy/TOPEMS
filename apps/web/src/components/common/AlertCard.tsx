@@ -15,6 +15,7 @@ import {
   AlertTitle,
   Button,
 } from '@mui/material';
+import type { SxProps, Theme } from '@mui/material/styles';
 import {
   AlertTriangle,
   AlertCircle,
@@ -75,7 +76,7 @@ export interface AlertConfig {
   /** 自定义图标 */
   icon?: React.ReactNode;
   /** 自定义样式 */
-  sx?: any;
+  sx?: SxProps<Theme>;
 }
 
 /**
@@ -125,7 +126,7 @@ export interface AlertCardProps {
   closeIcon?: React.ReactNode;
 
   /** 自定义样式 */
-  sx?: any;
+  sx?: SxProps<Theme>;
 
   /** 使用Card包装 */
   useCard?: boolean;

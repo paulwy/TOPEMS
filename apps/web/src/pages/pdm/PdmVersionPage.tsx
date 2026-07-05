@@ -245,7 +245,7 @@ export const PdmVersionPage: React.FC = () => {
           ...documents.map((doc) => ({ value: doc.id, label: doc.name })),
         ],
         value: selectedDocument,
-        onChange: (value: any) => handleDocumentChange(value),
+        onChange: (value: unknown) => handleDocumentChange(value as string),
       },
       {
         id: 'type',
@@ -253,7 +253,7 @@ export const PdmVersionPage: React.FC = () => {
         type: 'select',
         options: VERSION_TYPE_OPTIONS,
         value: filterType,
-        onChange: (value: any) => setFilterType(value),
+        onChange: (value: unknown) => setFilterType(value as string),
       },
     ],
     [documents, selectedDocument, filterType]

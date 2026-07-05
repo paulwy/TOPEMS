@@ -7,7 +7,7 @@ export interface ChartDataPoint {
   label: string;
   value: number;
   color?: string;
-  [key: string]: any;
+  [key: string]: unknown;
 }
 
 export interface ChartSeries {
@@ -25,7 +25,7 @@ export interface ChartConfig {
   colorTheme?: string[];
   xAxis?: { label?: string; show?: boolean; type?: 'category' | 'value' | 'time' };
   yAxis?: { label?: string; show?: boolean; min?: number; max?: number };
-  customOptions?: Record<string, any>;
+  customOptions?: Record<string, unknown>;
 }
 
 export interface StatCard {
@@ -126,7 +126,7 @@ export interface LayoutConfig {
 export interface DashboardTemplateProps extends BoxProps {
   title: string;
   subtitle?: string;
-  breadcrumbs?: any;
+  breadcrumbs?: React.ReactNode;
   stats?: StatCard[];
   cardGroups?: CardGroup[];
   charts?: ChartCard[];

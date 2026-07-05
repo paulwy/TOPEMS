@@ -6,11 +6,22 @@ import { ListPageTemplate, type ColumnDef, type RowAction } from '@/components/t
 import { PageContainer } from '@/components/common';
 import apiClient from '@/api/client';
 
+interface SegmentRule {
+  field: string;
+  operator: string;
+  value: string;
+}
+
+interface SegmentCriteria {
+  rules?: SegmentRule[];
+  [key: string]: unknown;
+}
+
 interface CustomerSegment {
   id: string;
   name: string;
   description?: string;
-  criteria: any;
+  criteria: SegmentCriteria;
   customer_count: number;
   created_at: string;
   updated_at: string;
@@ -28,10 +39,10 @@ const CRMCustomerSegmentationPage: React.FC = () => {
         params: { page: 1, pagesize: 50 },
       });
       if (res.success && res.data) {
-        const data = res.data as any;
+        const data = res.data as { items?: CustomerSegment[] };
         setSegments(data.items || data || []);
       }
-    } catch (err) {
+    } catch (error: unknown) {
       setSegments([]);
     } finally {
       setLoading(false);
@@ -85,7 +96,7 @@ const CRMCustomerSegmentationPage: React.FC = () => {
       label: '分群条件',
       render: (row) => {
         const rules = (row.criteria?.rules || [])
-          .map((r: any) => `${r.field} ${r.operator} ${r.value}`)
+          .map((r: SegmentRule) => `${r.field} ${r.operator} ${r.value}`)
           .join(', ');
         return (
           <Typography

@@ -4,7 +4,7 @@ const SHARED_STATE_KEY = '__TOPEMS_SHARED_STATE__';
 
 export interface SharedState {
   auth?: {
-    user: any;
+    user: unknown;
     token: string | null;
     isAuthenticated: boolean;
     roles: string[];
@@ -17,7 +17,7 @@ export interface SharedState {
   i18n?: {
     language: string;
   };
-  [key: string]: any;
+  [key: string]: unknown;
 }
 
 declare global {

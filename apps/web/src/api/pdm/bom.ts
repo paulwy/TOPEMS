@@ -74,8 +74,8 @@ export interface BomComparison {
     modifieditems: Array<{
       item: BomItem;
       field: string;
-      old_value: any;
-      new_value: any;
+      old_value: unknown;
+      new_value: unknown;
     }>;
   };
   created_by?: string;

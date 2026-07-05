@@ -177,7 +177,7 @@ const SrmSupplierProductPage: React.FC = () => {
     setLoading(true);
     try {
       setProducts(mockProducts);
-    } catch (error: any) {
+    } catch (error: unknown) {
       console.error('加载供应商产品失败:', error);
       addNotification({ title: '加载失败', message: '加载供应商产品失败', type: 'error' });
     } finally {

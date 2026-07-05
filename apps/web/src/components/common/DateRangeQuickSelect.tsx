@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import { Box, Button, Typography, Popover, Divider } from '@mui/material';
+import type { SxProps, Theme } from '@mui/material/styles';
 import { Calendar, ChevronDown, Clock } from 'lucide-react';
 import { formatDate } from '@/utils/format';
 
@@ -14,7 +15,7 @@ export interface DateRangeQuickSelectProps {
   onChange: (range: DateRange) => void;
   label?: string;
   placeholder?: string;
-  sx?: any;
+  sx?: SxProps<Theme>;
 }
 
 const getDateRange = (type: string): DateRange => {

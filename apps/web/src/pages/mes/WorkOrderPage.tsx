@@ -18,7 +18,7 @@ import {
 } from '@mui/material';
 import { PageContainer } from '@/components/common';
 import React, { useState, useEffect, useMemo, useCallback } from 'react';
-import type { WorkOrder, CreateWorkOrderRequest, UpdateWorkOrderRequest } from '@/api/mes';
+import type { WorkOrder, CreateWorkOrderRequest, UpdateWorkOrderRequest, ListParams } from '@/api/mes';
 import { mesApi } from '@/api/mes';
 import { useAppStore } from '@/store';
 import { LoadingSpinner } from '@/components/common/LoadingSpinner';
@@ -67,7 +67,7 @@ const WorkOrderPage: React.FC = () => {
   const loadWorkOrders = useCallback(async () => {
     try {
       setLoading(true);
-      const params: any = {
+      const params: ListParams = {
         page: currentPage - 1,
         pagesize: pageSize,
       };

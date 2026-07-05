@@ -1,5 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { Typography } from '@mui/material';
+import type { SxProps, Theme } from '@mui/material/styles';
 import { formatRelativeTime } from '@/utils/format';
 
 export interface RelativeTimeProps {
@@ -8,7 +9,7 @@ export interface RelativeTimeProps {
   updateInterval?: number;
   showAbsolute?: boolean;
   absoluteFormat?: string;
-  sx?: any;
+  sx?: SxProps<Theme>;
 }
 
 export const RelativeTime: React.FC<RelativeTimeProps> = ({

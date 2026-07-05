@@ -23,7 +23,7 @@ import {
 } from '@mui/material';
 import { PageContainer } from '@/components/common';
 import React, { useState, useEffect, useMemo, useCallback } from 'react';
-import type { Team, TeamMember, CreateTeamRequest, UpdateTeamRequest } from '@/api/mes';
+import type { Team, TeamMember, CreateTeamRequest, UpdateTeamRequest, ListParams } from '@/api/mes';
 import { mesApi } from '@/api/mes';
 import { useAppStore } from '@/store';
 import { LoadingSpinner } from '@/components/common/LoadingSpinner';
@@ -62,7 +62,7 @@ const TeamManagementPage: React.FC = () => {
   const loadTeams = useCallback(async () => {
     try {
       setLoading(true);
-      const params: any = {
+      const params: ListParams = {
         page: currentPage - 1,
         pagesize: pageSize,
       };

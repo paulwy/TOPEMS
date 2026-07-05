@@ -413,7 +413,7 @@ const MeetingRoomManagementPage: React.FC = () => {
                 { label: '停用', value: 'inactive' },
               ],
               value: statusFilter,
-              onChange: (_: unknown, filter: any) => {
+              onChange: (_: unknown, filter: { value: string }) => {
                 setStatusFilter(filter.value);
                 setCurrentPage(1);
               },

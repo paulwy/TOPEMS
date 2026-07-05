@@ -13,7 +13,7 @@ vi.mock('@/context/PluginContext', () => {
   const mockFn = vi.fn();
   return {
     usePlugins: () => ({ isPluginInstalled: mockFn }),
-    PluginProvider: ({ children }: any) => children,
+    PluginProvider: ({ children }: { children: React.ReactNode }) => children,
     _mockIsPluginInstalled: mockFn,
   };
 });

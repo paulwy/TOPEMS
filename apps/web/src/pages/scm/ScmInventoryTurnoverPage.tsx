@@ -30,7 +30,7 @@ const ScmInventoryTurnoverPage: React.FC = () => {
         setData(response.data.items || []);
         setTotal(response.data.total || 0);
       }
-    } catch (error: any) {
+    } catch (error: unknown) {
       console.error('加载库存周转数据失败:', error);
       addNotification({ title: '加载失败', message: '加载库存周转数据失败', type: 'error' });
     } finally {

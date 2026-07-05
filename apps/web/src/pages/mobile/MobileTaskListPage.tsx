@@ -48,7 +48,22 @@ interface Task {
   tag: string;
 }
 
-const mapApiTaskToTask = (apiTask: any): Task => {
+interface ApiTask {
+  id?: string;
+  task_no?: string;
+  title?: string;
+  task_name?: string;
+  description?: string;
+  status?: string;
+  priority?: string;
+  assignee?: string;
+  assigned_to_name?: string;
+  due_date?: string;
+  task_type?: string;
+  tag?: string;
+}
+
+const mapApiTaskToTask = (apiTask: ApiTask): Task => {
   const statusMap: Record<string, Task['status']> = {
     pending: 'pending',
     待办: 'pending',

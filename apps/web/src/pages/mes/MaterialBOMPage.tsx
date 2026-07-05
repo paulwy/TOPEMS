@@ -30,6 +30,7 @@ import type {
   CreateMaterialBomRequest,
   UpdateMaterialBomRequest,
   MaterialBomItem,
+  ListParams,
 } from '@/api/mes';
 import { mesApi } from '@/api/mes';
 import { useAppStore } from '@/store';
@@ -79,7 +80,7 @@ const MaterialBOMPage: React.FC = () => {
   const loadBoms = useCallback(async () => {
     try {
       setLoading(true);
-      const params: any = {
+      const params: ListParams = {
         page: currentPage - 1,
         pagesize: pageSize,
       };
@@ -269,9 +270,9 @@ const MaterialBOMPage: React.FC = () => {
     setFormData({ ...formData, items: newItems });
   };
 
-  const updateBomItem = (index: number, field: string, value: any) => {
+  const updateBomItem = (index: number, field: string, value: unknown) => {
     const newItems = [...(formData.items || [])];
-    (newItems[index] as any)[field] = value;
+    (newItems[index] as Record<string, unknown>)[field] = value;
     setFormData({ ...formData, items: newItems });
   };
 

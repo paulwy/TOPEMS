@@ -24,6 +24,26 @@ import { apiLogger } from '@/utils/logger';
 import { DetailPageTemplate, type TabConfig, type SectionConfig } from '@/components/templates';
 import { PageContainer } from '@/components/common';
 
+interface SalesInvoice {
+  id: string;
+  invoice_no: string;
+  amount: number;
+  tax_amount: number;
+  total_amount: number;
+  invoice_date: string;
+  due_date: string;
+  status: string;
+}
+
+interface CollectionRecord {
+  id: string;
+  collection_no: string;
+  amount: number;
+  payment_method: string;
+  collection_date: string;
+  status: string;
+}
+
 const CustomerDetailPage: React.FC = () => {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
@@ -407,7 +427,7 @@ const CustomerDetailPage: React.FC = () => {
           </Typography>
         ) : (
           <Box sx={{ display: 'grid', gap: 1 }}>
-            {invoiceList.map((invoice: any) => (
+            {invoiceList.map((invoice: SalesInvoice) => (
               <Box
                 key={invoice.id}
                 sx={{
@@ -487,7 +507,7 @@ const CustomerDetailPage: React.FC = () => {
           </Typography>
         ) : (
           <Box sx={{ display: 'grid', gap: 1 }}>
-            {collectionList.map((record: any) => (
+            {collectionList.map((record: CollectionRecord) => (
               <Box
                 key={record.id}
                 sx={{

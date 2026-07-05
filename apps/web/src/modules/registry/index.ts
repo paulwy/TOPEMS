@@ -204,7 +204,7 @@ export class ModuleRegistry {
       await container.init(__webpack_share_scopes__.default);
       // @ts-ignore
       const factory = await container.get(module.entry);
-      return factory().then((module: any) => module);
+      return factory().then((module: unknown) => module);
     }
 
     throw new Error(`Cannot load module ${moduleId}: no entry point`);

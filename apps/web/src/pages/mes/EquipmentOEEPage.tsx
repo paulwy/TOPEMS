@@ -19,7 +19,7 @@ import {
 } from '@mui/material';
 import { PageContainer } from '@/components/common/PageContainerV2';
 import React, { useState, useEffect, useMemo, useCallback } from 'react';
-import type { OeeRecord, OeeStatistics } from '@/api/mes';
+import type { OeeRecord, OeeStatistics, ListParams } from '@/api/mes';
 import { mesApi } from '@/api/mes';
 import { useAppStore } from '@/store';
 import { LoadingSpinner } from '@/components/common/LoadingSpinner';
@@ -62,7 +62,7 @@ const EquipmentOEEPage: React.FC = () => {
   const loadRecords = useCallback(async () => {
     try {
       setLoading(true);
-      const params: any = {
+      const params: ListParams = {
         page: currentPage - 1,
         pagesize: pageSize,
       };
@@ -90,7 +90,7 @@ const EquipmentOEEPage: React.FC = () => {
 
   const loadStatistics = useCallback(async () => {
     try {
-      const params: any = {};
+      const params: ListParams = {};
       if (equipmentFilter !== 'all') params.equipment_id = equipmentFilter;
       if (startDate) params.start_date = startDate;
       if (endDate) params.end_date = endDate;
@@ -109,19 +109,22 @@ const EquipmentOEEPage: React.FC = () => {
     loadStatistics();
   }, [loadRecords, loadStatistics]);
 
-  const getOEEColor = (value: number) => {
+  const getOEEColor = (value: number | undefined | null) => {
+    if (value == null || isNaN(value)) return 'primary';
     if (value >= 85) return 'success';
     if (value >= 70) return 'warning';
     return 'error';
   };
 
-  const getOEEColorHex = (value: number) => {
+  const getOEEColorHex = (value: number | undefined | null) => {
+    if (value == null || isNaN(value)) return 'text.primary';
     if (value >= 85) return 'success.700';
     if (value >= 70) return 'warning.700';
     return 'error.700';
   };
 
-  const getOEEBgColor = (value: number) => {
+  const getOEEBgColor = (value: number | undefined | null) => {
+    if (value == null || isNaN(value)) return 'grey.100';
     if (value >= 85) return 'success.lighter';
     if (value >= 70) return 'warning.light';
     return 'error.lighter';
@@ -149,7 +152,8 @@ const EquipmentOEEPage: React.FC = () => {
     setCurrentPage(1);
   };
 
-  const formatPercent = (value: number) => {
+  const formatPercent = (value: number | undefined | null) => {
+    if (value == null || isNaN(value)) return '-';
     return `${value.toFixed(1)}%`;
   };
 

@@ -93,7 +93,7 @@ const ReportViewer: React.FC<ReportViewerProps> = ({ report, onClose }) => {
     link.click();
   };
 
-  const formatValue = (value: any): string => {
+  const formatValue = (value: unknown): string => {
     if (value === null || value === undefined) return '-';
     if (typeof value === 'boolean') return value ? '是' : '否';
     if (typeof value === 'number') {

@@ -1,4 +1,4 @@
-import { Typography, Box, InputLabel, Chip, Card, CardContent, Paper } from '@mui/material';
+import { Typography, Box, InputLabel, Chip, Card, CardContent, Paper, type ChipProps } from '@mui/material';
 import React, { useState, useEffect, useMemo } from 'react';
 import { useParams } from 'react-router-dom';
 import { Package, MapPin, CheckCircle, Factory, Truck, Boxes } from 'lucide-react';
@@ -115,7 +115,7 @@ const TraceabilityDetailPage: React.FC = () => {
     return typeMap[type] || type;
   };
 
-  const getNodeTypeColor = (type: string) => {
+  const getNodeTypeColor = (type: string): ChipProps['color'] => {
     switch (type) {
       case 'raw_material':
         return 'purple';
@@ -232,7 +232,7 @@ const TraceabilityDetailPage: React.FC = () => {
                 </Box>
                 <Chip
                   label={getNodeTypeLabel(node.type)}
-                  color={getNodeTypeColor(node.type) as any}
+                  color={getNodeTypeColor(node.type)}
                   size='small'
                 />
               </Box>

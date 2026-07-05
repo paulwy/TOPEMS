@@ -24,10 +24,10 @@ interface BIStore {
   quality: QualityAnalytics | null;
   production: ProductionAnalytics | null;
   laboratory: LaboratoryAnalytics | null;
-  rsTimeline: any;
-  rsSuccessRate: any;
-  qmsTrend: any;
-  pdmTrend: any;
+  rsTimeline: unknown;
+  rsSuccessRate: unknown;
+  qmsTrend: unknown;
+  pdmTrend: unknown;
 
   // 加载状态
   loading: boolean;

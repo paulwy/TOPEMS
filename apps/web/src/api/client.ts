@@ -34,6 +34,7 @@ export interface PaginatedResponse<T> {
 }
 
 type TypedAxiosInstance = Omit<AxiosInstance, 'get' | 'post' | 'put' | 'patch' | 'delete'> & {
+  defaults: { baseURL?: string };
   get<T = any, R = ApiResponse<T>, D = any>(
     url: string,
     config?: AxiosRequestConfig<D>

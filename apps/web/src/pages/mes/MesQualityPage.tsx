@@ -26,6 +26,7 @@ import type {
   CreatePatrolInspectionRequest,
   QualityStandard,
 } from '@/api/mes/quality';
+import type { ListParams } from '@/api/mes';
 import { qualityApi } from '@/api/mes/quality';
 import { useAppStore } from '@/store';
 import { LoadingSpinner } from '@/components/common/LoadingSpinner';
@@ -82,9 +83,11 @@ const MesQualityPage: React.FC = () => {
   const [pageSize] = useState(10);
   const [total, setTotal] = useState(0);
 
+  type QualityItem = QualityInspection | PatrolInspection;
+
   const [showDialog, setShowDialog] = useState(false);
   const [showDetailDialog, setShowDetailDialog] = useState(false);
-  const [selectedItem, setSelectedItem] = useState<any>(null);
+  const [selectedItem, setSelectedItem] = useState<QualityItem | null>(null);
   const [selectedIds, setSelectedIds] = useState<string[]>([]);
 
   const [inspectionFormData, setInspectionFormData] = useState<CreateQualityInspectionRequest>({
@@ -108,7 +111,7 @@ const MesQualityPage: React.FC = () => {
   const loadData = useCallback(async () => {
     try {
       setLoading(true);
-      const params: any = {
+      const params: ListParams = {
         page: currentPage - 1,
         pagesize: pageSize,
       };
@@ -311,7 +314,7 @@ const MesQualityPage: React.FC = () => {
     setShowDialog(true);
   }, []);
 
-  const handleViewDetail = useCallback((item: any) => {
+  const handleViewDetail = useCallback((item: QualityItem) => {
     setSelectedItem(item);
     setShowDetailDialog(true);
   }, []);

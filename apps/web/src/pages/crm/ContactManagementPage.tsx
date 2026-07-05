@@ -47,7 +47,7 @@ const ContactManagementPage: React.FC = () => {
   const loadContacts = async () => {
     try {
       setLoading(true);
-      const params: any = {
+      const params: Record<string, unknown> = {
         page: pagination.page + 1,
         pagesize: pagination.pageSize,
       };

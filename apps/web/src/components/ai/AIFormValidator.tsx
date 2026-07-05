@@ -3,7 +3,7 @@ import { AlertCircle, CheckCircle, AlertTriangle, Info, Sparkles, RefreshCw } fr
 import {Card, CardContent, Box, Typography, Button, useTheme} from '@mui/material';
 import { AIGenerateModal } from './AIGenerateModal';
 import { useAIHelper } from '../../hooks/useAIHelper';
-import type { ValidateRequest, ValidationIssue, Suggestion } from '@/types/ai';
+import type { ValidateRequest, ValidationIssue, Suggestion, ValidateResponse } from '@/types/ai';
 
 export interface AIFormValidatorProps {
   isOpen: boolean;
@@ -29,12 +29,13 @@ export function AIFormValidator({
   const [issues, setIssues] = useState<ValidationIssue[]>([]);
   const [suggestions, setSuggestions] = useState<Suggestion[]>([]);
 
-  const { isLoading, validate } = useAIHelper({
+  const { isLoading, validate } = useAIHelper<ValidateResponse>({
     featureType: 'validate',
     onSuccess: (result) => {
-      if (result) {
-        setIssues(result.issues || []);
-        setSuggestions(result.suggestions || []);
+      const data = result as ValidateResponse;
+      if (data) {
+        setIssues(data.issues || []);
+        setSuggestions(data.suggestions || []);
       }
     },
   });

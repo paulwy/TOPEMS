@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useMemo } from 'react';
 import { Bell, CheckCircle, XCircle, Clock, Check, Play, CheckCircle2 } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
-import type { Notification } from '@/api/workflow';
+import type { Notification, ListParams } from '@/api/workflow';
 import { workflowApi } from '@/api/workflow';
 import { useAppStore } from '../../store';
 import { apiLogger } from '@/utils/logger';
@@ -29,7 +29,7 @@ const FlowNotificationCenter: React.FC = () => {
 
       const userId = user?.id || 'current-user-id';
 
-      const params: any = {};
+      const params: ListParams = {};
       if (filter === 'unread') {
         // This would need backend support to filter by is_read
       }
@@ -41,7 +41,7 @@ const FlowNotificationCenter: React.FC = () => {
         setNotifications(notificationList);
 
         // Count unread
-        const unread = notificationList.filter((n: any) => !n.is_read).length;
+        const unread = notificationList.filter((n: Notification) => !n.is_read).length;
         setUnreadCount(unread);
       } else {
         setNotifications([]);

@@ -4,7 +4,7 @@ import { Sparkles, Check } from 'lucide-react';
 
 import { AIGenerateModal } from './AIGenerateModal';
 import { useAIHelper } from '../../hooks/useAIHelper';
-import type { CompleteRequest, CompletionItem } from '@/types/ai';
+import type { CompleteRequest, CompletionItem, CompleteResponse } from '@/types/ai';
 
 export interface AIDataCompleterProps {
   isOpen: boolean;
@@ -40,13 +40,13 @@ export function AIDataCompleter({
   const [completions, setCompletions] = useState<Record<string, CompletionItem>>({});
   const [selectedFields, setSelectedFields] = useState<Set<string>>(new Set());
 
-  const { isLoading, complete } = useAIHelper({
+  const { isLoading, complete } = useAIHelper<CompleteResponse>({
     featureType: 'complete',
     onSuccess: (result) => {
-      if (result?.completions) {
-        setCompletions(result.completions);
-        // 默认选中所有推荐字段
-        setSelectedFields(new Set(Object.keys(result.completions)));
+      const data = result as CompleteResponse;
+      if (data?.completions) {
+        setCompletions(data.completions);
+        setSelectedFields(new Set(Object.keys(data.completions)));
       }
     },
   });

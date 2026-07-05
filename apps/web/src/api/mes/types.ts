@@ -1,11 +1,21 @@
 import type { ApiResponse } from '../client';
 
-export interface PaginationParams {
+export interface ListParams {
   page?: number;
   pagesize?: number;
   search?: string;
   status?: string;
+  order_id?: string;
+  order_number?: string;
+  equipment_id?: string;
+  work_station_id?: string;
+  process_id?: string;
+  start_date?: string;
+  end_date?: string;
+  [key: string]: unknown;
 }
+
+export type PaginationParams = ListParams;
 
 export interface PaginatedResult<T> {
   items: T[];

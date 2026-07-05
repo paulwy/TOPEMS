@@ -16,6 +16,7 @@ import type {
   ProductionRecord,
   CreateProductionRecordRequest,
   UpdateProductionRecordRequest,
+  ListParams,
 } from '@/api/mes';
 import { mesApi } from '@/api/mes';
 import { useAppStore } from '@/store';
@@ -55,7 +56,7 @@ const ProductionRecordPage: React.FC = () => {
   const loadRecords = useCallback(async () => {
     try {
       setLoading(true);
-      const params: any = {
+      const params: ListParams = {
         page: currentPage - 1,
         pagesize: pageSize,
       };

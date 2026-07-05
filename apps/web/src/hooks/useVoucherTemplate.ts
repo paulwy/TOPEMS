@@ -6,7 +6,11 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { useNotification } from './useNotification';
 import { voucherTemplateApi } from '../api/voucherTemplate';
-import type { VoucherTemplate, VoucherTemplateType } from '../types/finance';
+import type {
+  VoucherTemplate,
+  VoucherTemplateType,
+  VoucherTemplateEntry,
+} from '../types/finance';
 
 // ============================================
 // 一、模板管理
@@ -57,7 +61,7 @@ export function useCreateVoucherTemplate() {
       applicable_modules?: string[];
       applicable_companies?: string[];
       condition?: string;
-      entries: any[];
+      entries: VoucherTemplateEntry[];
     }) => voucherTemplateApi.createTemplate(data),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['voucher-templates'] });
@@ -323,7 +327,7 @@ export function useMatchVoucherTemplate() {
       source_type: string;
       company_id?: string;
       amount?: number;
-      extra_data?: Record<string, any>;
+      extra_data?: Record<string, unknown>;
     }) => voucherTemplateApi.matchTemplate(data),
   });
 }
@@ -401,8 +405,21 @@ export function useUpdateGenerationRule() {
   const { success, error } = useNotification();
 
   return useMutation({
-    mutationFn: ({ ruleId, data }: { ruleId: string; data: any }) =>
-      voucherTemplateApi.updateGenerationRule(ruleId, data),
+    mutationFn: ({
+      ruleId,
+      data,
+    }: {
+      ruleId: string;
+      data: Partial<{
+        name?: string;
+        source_module?: string;
+        source_type?: string;
+        template_id?: string;
+        condition?: string;
+        priority?: number;
+        isactive?: boolean;
+      }>;
+    }) => voucherTemplateApi.updateGenerationRule(ruleId, data),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['voucher-generation-rules'] });
       success('生成规则更新成功');

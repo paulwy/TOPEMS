@@ -19,7 +19,7 @@ export const monitorApi = {
   },
 
   getInstanceDetail: (id: string): Promise<ProcessInstanceDetail> => {
-    return apiClient.workflow.get(`/monitor/instances/${id}`) as any;
+    return apiClient.workflow.get(`/monitor/instances/${id}`) as unknown as Promise<ProcessInstanceDetail>;
   },
 
   getInstanceHistory: (id: string, params?: ListParams) => {
@@ -63,7 +63,7 @@ export const monitorApi = {
   },
 
   getWorkflowAnalysis: (workflowId: string): Promise<ProcessAnalysisData> => {
-    return apiClient.workflow.get(`/monitor/analysis/${workflowId}`) as any;
+    return apiClient.workflow.get(`/monitor/analysis/${workflowId}`) as unknown as Promise<ProcessAnalysisData>;
   },
 
   getNodeStatistics: (workflowId: string) => {
@@ -75,19 +75,19 @@ export const monitorApi = {
   },
 
   getEfficiencyAnalysis: (params?: StatisticsQueryParams): Promise<WorkflowEfficiencyAnalysis> => {
-    return apiClient.workflow.get('/monitor/analysis/efficiency', { params }) as any;
+    return apiClient.workflow.get('/monitor/analysis/efficiency', { params }) as unknown as Promise<WorkflowEfficiencyAnalysis>;
   },
 
   getTrendData: (params?: StatisticsQueryParams): Promise<WorkflowTrendData[]> => {
-    return apiClient.workflow.get('/monitor/analysis/trend', { params }) as any;
+    return apiClient.workflow.get('/monitor/analysis/trend', { params }) as unknown as Promise<WorkflowTrendData[]>;
   },
 
   getUserStats: (params?: StatisticsQueryParams): Promise<UserWorkflowStats[]> => {
-    return apiClient.workflow.get('/monitor/analysis/users', { params }) as any;
+    return apiClient.workflow.get('/monitor/analysis/users', { params }) as unknown as Promise<UserWorkflowStats[]>;
   },
 
   getDepartmentStats: (params?: StatisticsQueryParams): Promise<DepartmentWorkflowStats[]> => {
-    return apiClient.workflow.get('/monitor/analysis/departments', { params }) as any;
+    return apiClient.workflow.get('/monitor/analysis/departments', { params }) as unknown as Promise<DepartmentWorkflowStats[]>;
   },
 
   listLogs: (params?: ProcessLogQueryParams) => {
@@ -95,7 +95,7 @@ export const monitorApi = {
   },
 
   getLog: (id: string): Promise<ProcessLog> => {
-    return apiClient.workflow.get(`/monitor/logs/${id}`) as any;
+    return apiClient.workflow.get(`/monitor/logs/${id}`) as unknown as Promise<ProcessLog>;
   },
 
   getLogsByInstance: (instanceId: string, params?: ListParams) => {

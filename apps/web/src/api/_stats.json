@@ -1,0 +1,1967 @@
+{
+  "summary": {
+    "total_files": 298,
+    "total_functions": 2962,
+    "total_exports": 783
+  },
+  "modules": [
+    {
+      "module": "root",
+      "files": 39,
+      "functions": 515,
+      "exports": 62
+    },
+    {
+      "module": "wms",
+      "files": 13,
+      "functions": 267,
+      "exports": 151
+    },
+    {
+      "module": "workflow",
+      "files": 16,
+      "functions": 249,
+      "exports": 20
+    },
+    {
+      "module": "ehs",
+      "files": 16,
+      "functions": 201,
+      "exports": 32
+    },
+    {
+      "module": "mes",
+      "files": 18,
+      "functions": 153,
+      "exports": 23
+    },
+    {
+      "module": "erp",
+      "files": 20,
+      "functions": 150,
+      "exports": 29
+    },
+    {
+      "module": "lims",
+      "files": 13,
+      "functions": 140,
+      "exports": 31
+    },
+    {
+      "module": "pm",
+      "files": 15,
+      "functions": 140,
+      "exports": 50
+    },
+    {
+      "module": "qms",
+      "files": 15,
+      "functions": 128,
+      "exports": 31
+    },
+    {
+      "module": "bi",
+      "files": 11,
+      "functions": 118,
+      "exports": 120
+    },
+    {
+      "module": "scm",
+      "files": 18,
+      "functions": 111,
+      "exports": 19
+    },
+    {
+      "module": "pdm",
+      "files": 4,
+      "functions": 95,
+      "exports": 4
+    },
+    {
+      "module": "hrm",
+      "files": 11,
+      "functions": 86,
+      "exports": 27
+    },
+    {
+      "module": "finance",
+      "files": 8,
+      "functions": 77,
+      "exports": 16
+    },
+    {
+      "module": "crm",
+      "files": 9,
+      "functions": 66,
+      "exports": 20
+    },
+    {
+      "module": "rs",
+      "files": 11,
+      "functions": 63,
+      "exports": 12
+    },
+    {
+      "module": "lowcode",
+      "files": 9,
+      "functions": 61,
+      "exports": 45
+    },
+    {
+      "module": "external-erp",
+      "files": 7,
+      "functions": 56,
+      "exports": 14
+    },
+    {
+      "module": "iam",
+      "files": 5,
+      "functions": 52,
+      "exports": 10
+    },
+    {
+      "module": "ai",
+      "files": 7,
+      "functions": 49,
+      "exports": 7
+    },
+    {
+      "module": "gis",
+      "files": 7,
+      "functions": 47,
+      "exports": 8
+    },
+    {
+      "module": "integration",
+      "files": 5,
+      "functions": 43,
+      "exports": 10
+    },
+    {
+      "module": "tenant",
+      "files": 2,
+      "functions": 27,
+      "exports": 7
+    },
+    {
+      "module": "plugin",
+      "files": 5,
+      "functions": 25,
+      "exports": 10
+    },
+    {
+      "module": "asset",
+      "files": 3,
+      "functions": 19,
+      "exports": 7
+    },
+    {
+      "module": "admin",
+      "files": 3,
+      "functions": 12,
+      "exports": 6
+    },
+    {
+      "module": "oa",
+      "files": 2,
+      "functions": 12,
+      "exports": 4
+    },
+    {
+      "module": "consolidation-contract",
+      "files": 6,
+      "functions": 0,
+      "exports": 8
+    }
+  ],
+  "files": [
+    {
+      "file": "ai.ts",
+      "module": "root",
+      "functions": 69,
+      "exports": 1
+    },
+    {
+      "file": "srm.ts",
+      "module": "root",
+      "functions": 65,
+      "exports": 1
+    },
+    {
+      "file": "pdm.ts",
+      "module": "root",
+      "functions": 56,
+      "exports": 1
+    },
+    {
+      "file": "workflow/task.ts",
+      "module": "workflow",
+      "functions": 53,
+      "exports": 1
+    },
+    {
+      "file": "pdm/index.ts",
+      "module": "pdm",
+      "functions": 49,
+      "exports": 1
+    },
+    {
+      "file": "wms/outbound.ts",
+      "module": "wms",
+      "functions": 48,
+      "exports": 27
+    },
+    {
+      "file": "mobile.ts",
+      "module": "root",
+      "functions": 45,
+      "exports": 1
+    },
+    {
+      "file": "wms/inventory.ts",
+      "module": "wms",
+      "functions": 40,
+      "exports": 24
+    },
+    {
+      "file": "financialReport.ts",
+      "module": "root",
+      "functions": 37,
+      "exports": 2
+    },
+    {
+      "file": "im.ts",
+      "module": "root",
+      "functions": 36,
+      "exports": 1
+    },
+    {
+      "file": "wms/replenishment.ts",
+      "module": "wms",
+      "functions": 34,
+      "exports": 19
+    },
+    {
+      "file": "workflow/monitor.ts",
+      "module": "workflow",
+      "functions": 34,
+      "exports": 1
+    },
+    {
+      "file": "workflow/form.ts",
+      "module": "workflow",
+      "functions": 33,
+      "exports": 2
+    },
+    {
+      "file": "bi/analytics.ts",
+      "module": "bi",
+      "functions": 31,
+      "exports": 31
+    },
+    {
+      "file": "report.ts",
+      "module": "root",
+      "functions": 31,
+      "exports": 1
+    },
+    {
+      "file": "wms/stocktake.ts",
+      "module": "wms",
+      "functions": 28,
+      "exports": 16
+    },
+    {
+      "file": "iam/user.ts",
+      "module": "iam",
+      "functions": 26,
+      "exports": 2
+    },
+    {
+      "file": "voucherTemplate.ts",
+      "module": "root",
+      "functions": 26,
+      "exports": 2
+    },
+    {
+      "file": "ehs/hazardousMaterial.ts",
+      "module": "ehs",
+      "functions": 25,
+      "exports": 2
+    },
+    {
+      "file": "external-erp/mapping.ts",
+      "module": "external-erp",
+      "functions": 25,
+      "exports": 2
+    },
+    {
+      "file": "qms/apqp.ts",
+      "module": "qms",
+      "functions": 25,
+      "exports": 1
+    },
+    {
+      "file": "wms/inbound.ts",
+      "module": "wms",
+      "functions": 24,
+      "exports": 14
+    },
+    {
+      "file": "pm/contract.ts",
+      "module": "pm",
+      "functions": 23,
+      "exports": 6
+    },
+    {
+      "file": "tenant/index.ts",
+      "module": "tenant",
+      "functions": 22,
+      "exports": 2
+    },
+    {
+      "file": "crmFinance.ts",
+      "module": "root",
+      "functions": 21,
+      "exports": 1
+    },
+    {
+      "file": "ehs/compliance.ts",
+      "module": "ehs",
+      "functions": 20,
+      "exports": 2
+    },
+    {
+      "file": "ehs/occupationalDisease.ts",
+      "module": "ehs",
+      "functions": 20,
+      "exports": 2
+    },
+    {
+      "file": "ehs/occupationalHealth.ts",
+      "module": "ehs",
+      "functions": 20,
+      "exports": 2
+    },
+    {
+      "file": "mes/equipment.ts",
+      "module": "mes",
+      "functions": 20,
+      "exports": 3
+    },
+    {
+      "file": "pm/project.ts",
+      "module": "pm",
+      "functions": 20,
+      "exports": 5
+    },
+    {
+      "file": "wms/transfer.ts",
+      "module": "wms",
+      "functions": 20,
+      "exports": 12
+    },
+    {
+      "file": "finance/voucher.ts",
+      "module": "finance",
+      "functions": 19,
+      "exports": 2
+    },
+    {
+      "file": "hrm/training.ts",
+      "module": "hrm",
+      "functions": 19,
+      "exports": 4
+    },
+    {
+      "file": "lims/instrument.ts",
+      "module": "lims",
+      "functions": 19,
+      "exports": 3
+    },
+    {
+      "file": "system.ts",
+      "module": "root",
+      "functions": 19,
+      "exports": 3
+    },
+    {
+      "file": "workflow/instance.ts",
+      "module": "workflow",
+      "functions": 19,
+      "exports": 1
+    },
+    {
+      "file": "finance/receivablePayable.ts",
+      "module": "finance",
+      "functions": 18,
+      "exports": 2
+    },
+    {
+      "file": "hrm/recruitment.ts",
+      "module": "hrm",
+      "functions": 18,
+      "exports": 4
+    },
+    {
+      "file": "wms/location.ts",
+      "module": "wms",
+      "functions": 18,
+      "exports": 11
+    },
+    {
+      "file": "wms/sync.ts",
+      "module": "wms",
+      "functions": 18,
+      "exports": 12
+    },
+    {
+      "file": "workflow/definition.ts",
+      "module": "workflow",
+      "functions": 18,
+      "exports": 1
+    },
+    {
+      "file": "integration/sync.ts",
+      "module": "integration",
+      "functions": 17,
+      "exports": 2
+    },
+    {
+      "file": "lims/uncertainty.ts",
+      "module": "lims",
+      "functions": 17,
+      "exports": 3
+    },
+    {
+      "file": "mes/quality.ts",
+      "module": "mes",
+      "functions": 17,
+      "exports": 1
+    },
+    {
+      "file": "lims/barcode.ts",
+      "module": "lims",
+      "functions": 16,
+      "exports": 3
+    },
+    {
+      "file": "notification.ts",
+      "module": "root",
+      "functions": 16,
+      "exports": 14
+    },
+    {
+      "file": "pdm/bom.ts",
+      "module": "pdm",
+      "functions": 16,
+      "exports": 1
+    },
+    {
+      "file": "qms/adapters.ts",
+      "module": "qms",
+      "functions": 16,
+      "exports": 16
+    },
+    {
+      "file": "bi/report.ts",
+      "module": "bi",
+      "functions": 15,
+      "exports": 15
+    },
+    {
+      "file": "crm/customer.ts",
+      "module": "crm",
+      "functions": 15,
+      "exports": 3
+    },
+    {
+      "file": "doc.ts",
+      "module": "root",
+      "functions": 15,
+      "exports": 1
+    },
+    {
+      "file": "ehs/training.ts",
+      "module": "ehs",
+      "functions": 15,
+      "exports": 2
+    },
+    {
+      "file": "hrm/payroll.ts",
+      "module": "hrm",
+      "functions": 15,
+      "exports": 4
+    },
+    {
+      "file": "lims/inspection.ts",
+      "module": "lims",
+      "functions": 15,
+      "exports": 3
+    },
+    {
+      "file": "lims/sample.ts",
+      "module": "lims",
+      "functions": 15,
+      "exports": 2
+    },
+    {
+      "file": "mail.ts",
+      "module": "root",
+      "functions": 15,
+      "exports": 3
+    },
+    {
+      "file": "pdm/document.ts",
+      "module": "pdm",
+      "functions": 15,
+      "exports": 1
+    },
+    {
+      "file": "pdm/project.ts",
+      "module": "pdm",
+      "functions": 15,
+      "exports": 1
+    },
+    {
+      "file": "workflow/approval.ts",
+      "module": "workflow",
+      "functions": 15,
+      "exports": 2
+    },
+    {
+      "file": "workflow/variable.ts",
+      "module": "workflow",
+      "functions": 15,
+      "exports": 1
+    },
+    {
+      "file": "bi/dashboard.ts",
+      "module": "bi",
+      "functions": 14,
+      "exports": 14
+    },
+    {
+      "file": "file.ts",
+      "module": "root",
+      "functions": 14,
+      "exports": 3
+    },
+    {
+      "file": "gis/map.ts",
+      "module": "gis",
+      "functions": 14,
+      "exports": 1
+    },
+    {
+      "file": "hrm/contract.ts",
+      "module": "hrm",
+      "functions": 14,
+      "exports": 3
+    },
+    {
+      "file": "iam/auth.ts",
+      "module": "iam",
+      "functions": 14,
+      "exports": 2
+    },
+    {
+      "file": "integration/conversionRule.ts",
+      "module": "integration",
+      "functions": 14,
+      "exports": 2
+    },
+    {
+      "file": "lims/proficiencyTesting.ts",
+      "module": "lims",
+      "functions": 14,
+      "exports": 5
+    },
+    {
+      "file": "ehs/accident.ts",
+      "module": "ehs",
+      "functions": 13,
+      "exports": 2
+    },
+    {
+      "file": "ehs/inspection.ts",
+      "module": "ehs",
+      "functions": 13,
+      "exports": 2
+    },
+    {
+      "file": "erp/finance/report.ts",
+      "module": "erp",
+      "functions": 13,
+      "exports": 1
+    },
+    {
+      "file": "lims/testMethod.ts",
+      "module": "lims",
+      "functions": 13,
+      "exports": 3
+    },
+    {
+      "file": "qms/eightD.ts",
+      "module": "qms",
+      "functions": 13,
+      "exports": 1
+    },
+    {
+      "file": "rs/experiment.ts",
+      "module": "rs",
+      "functions": 13,
+      "exports": 1
+    },
+    {
+      "file": "ai/documents.ts",
+      "module": "ai",
+      "functions": 12,
+      "exports": 1
+    },
+    {
+      "file": "asset/maintenance.ts",
+      "module": "asset",
+      "functions": 12,
+      "exports": 3
+    },
+    {
+      "file": "ehs/hazard.ts",
+      "module": "ehs",
+      "functions": 12,
+      "exports": 2
+    },
+    {
+      "file": "erp/finance/accounting.ts",
+      "module": "erp",
+      "functions": 12,
+      "exports": 2
+    },
+    {
+      "file": "external-erp/connection.ts",
+      "module": "external-erp",
+      "functions": 12,
+      "exports": 2
+    },
+    {
+      "file": "lowcode/dataModel.ts",
+      "module": "lowcode",
+      "functions": 12,
+      "exports": 12
+    },
+    {
+      "file": "monitor.ts",
+      "module": "root",
+      "functions": 12,
+      "exports": 1
+    },
+    {
+      "file": "pm/acceptance.ts",
+      "module": "pm",
+      "functions": 12,
+      "exports": 4
+    },
+    {
+      "file": "pm/document.ts",
+      "module": "pm",
+      "functions": 12,
+      "exports": 4
+    },
+    {
+      "file": "workflow/delegate.ts",
+      "module": "workflow",
+      "functions": 12,
+      "exports": 1
+    },
+    {
+      "file": "workflow/rule.ts",
+      "module": "workflow",
+      "functions": 12,
+      "exports": 1
+    },
+    {
+      "file": "bi/permission.ts",
+      "module": "bi",
+      "functions": 11,
+      "exports": 11
+    },
+    {
+      "file": "ehs/risk.ts",
+      "module": "ehs",
+      "functions": 11,
+      "exports": 2
+    },
+    {
+      "file": "erp/admin/meeting.ts",
+      "module": "erp",
+      "functions": 11,
+      "exports": 2
+    },
+    {
+      "file": "erp/admin/vehicle.ts",
+      "module": "erp",
+      "functions": 11,
+      "exports": 2
+    },
+    {
+      "file": "erp/finance/asset.ts",
+      "module": "erp",
+      "functions": 11,
+      "exports": 2
+    },
+    {
+      "file": "finance/account.ts",
+      "module": "finance",
+      "functions": 11,
+      "exports": 2
+    },
+    {
+      "file": "gis/storage.ts",
+      "module": "gis",
+      "functions": 11,
+      "exports": 1
+    },
+    {
+      "file": "lims/collection.ts",
+      "module": "lims",
+      "functions": 11,
+      "exports": 2
+    },
+    {
+      "file": "oa/expense.ts",
+      "module": "oa",
+      "functions": 11,
+      "exports": 2
+    },
+    {
+      "file": "pm/settlement.ts",
+      "module": "pm",
+      "functions": 11,
+      "exports": 4
+    },
+    {
+      "file": "qms/fmea.ts",
+      "module": "qms",
+      "functions": 11,
+      "exports": 1
+    },
+    {
+      "file": "qms/inspection.ts",
+      "module": "qms",
+      "functions": 11,
+      "exports": 1
+    },
+    {
+      "file": "rs/project.ts",
+      "module": "rs",
+      "functions": 11,
+      "exports": 1
+    },
+    {
+      "file": "scm/deliveryAppointment.ts",
+      "module": "scm",
+      "functions": 11,
+      "exports": 1
+    },
+    {
+      "file": "scm/purchaseContract.ts",
+      "module": "scm",
+      "functions": 11,
+      "exports": 1
+    },
+    {
+      "file": "wms/serialNumber.ts",
+      "module": "wms",
+      "functions": 11,
+      "exports": 1
+    },
+    {
+      "file": "ai/chat.ts",
+      "module": "ai",
+      "functions": 10,
+      "exports": 1
+    },
+    {
+      "file": "ai/qa.ts",
+      "module": "ai",
+      "functions": 10,
+      "exports": 1
+    },
+    {
+      "file": "bi/dataset.ts",
+      "module": "bi",
+      "functions": 10,
+      "exports": 10
+    },
+    {
+      "file": "bi/visualization.ts",
+      "module": "bi",
+      "functions": 10,
+      "exports": 10
+    },
+    {
+      "file": "crm/segmentation.ts",
+      "module": "crm",
+      "functions": 10,
+      "exports": 3
+    },
+    {
+      "file": "ehs/emergency.ts",
+      "module": "ehs",
+      "functions": 10,
+      "exports": 2
+    },
+    {
+      "file": "ehs/safetyIssue.ts",
+      "module": "ehs",
+      "functions": 10,
+      "exports": 2
+    },
+    {
+      "file": "erp/finance/budget.ts",
+      "module": "erp",
+      "functions": 10,
+      "exports": 2
+    },
+    {
+      "file": "erp/finance/receivablePayable.ts",
+      "module": "erp",
+      "functions": 10,
+      "exports": 2
+    },
+    {
+      "file": "external-erp/sync.ts",
+      "module": "external-erp",
+      "functions": 10,
+      "exports": 2
+    },
+    {
+      "file": "mes/process.ts",
+      "module": "mes",
+      "functions": 10,
+      "exports": 1
+    },
+    {
+      "file": "mes/processFlow.ts",
+      "module": "mes",
+      "functions": 10,
+      "exports": 1
+    },
+    {
+      "file": "mes/productionOrder.ts",
+      "module": "mes",
+      "functions": 10,
+      "exports": 1
+    },
+    {
+      "file": "mes/workOrder.ts",
+      "module": "mes",
+      "functions": 10,
+      "exports": 1
+    },
+    {
+      "file": "pm/budget.ts",
+      "module": "pm",
+      "functions": 10,
+      "exports": 3
+    },
+    {
+      "file": "pm/resource.ts",
+      "module": "pm",
+      "functions": 10,
+      "exports": 3
+    },
+    {
+      "file": "qms/audit.ts",
+      "module": "qms",
+      "functions": 10,
+      "exports": 1
+    },
+    {
+      "file": "rs/formula.ts",
+      "module": "rs",
+      "functions": 10,
+      "exports": 1
+    },
+    {
+      "file": "scm/purchaseRequisition.ts",
+      "module": "scm",
+      "functions": 10,
+      "exports": 1
+    },
+    {
+      "file": "scm/supplierAdmission.ts",
+      "module": "scm",
+      "functions": 10,
+      "exports": 1
+    },
+    {
+      "file": "wms/batch.ts",
+      "module": "wms",
+      "functions": 10,
+      "exports": 1
+    },
+    {
+      "file": "wms/warehouse.ts",
+      "module": "wms",
+      "functions": 10,
+      "exports": 7
+    },
+    {
+      "file": "crm/opportunity.ts",
+      "module": "crm",
+      "functions": 9,
+      "exports": 2
+    },
+    {
+      "file": "ehs/environment.ts",
+      "module": "ehs",
+      "functions": 9,
+      "exports": 2
+    },
+    {
+      "file": "ehs/sync.ts",
+      "module": "ehs",
+      "functions": 9,
+      "exports": 2
+    },
+    {
+      "file": "erp/core/salesOrder.ts",
+      "module": "erp",
+      "functions": 9,
+      "exports": 1
+    },
+    {
+      "file": "erp/finance/bank.ts",
+      "module": "erp",
+      "functions": 9,
+      "exports": 2
+    },
+    {
+      "file": "finance/report.ts",
+      "module": "finance",
+      "functions": 9,
+      "exports": 2
+    },
+    {
+      "file": "gis/device.ts",
+      "module": "gis",
+      "functions": 9,
+      "exports": 1
+    },
+    {
+      "file": "mes/material.ts",
+      "module": "mes",
+      "functions": 9,
+      "exports": 3
+    },
+    {
+      "file": "plugin/plugin.ts",
+      "module": "plugin",
+      "functions": 9,
+      "exports": 2
+    },
+    {
+      "file": "pm/notification.ts",
+      "module": "pm",
+      "functions": 9,
+      "exports": 4
+    },
+    {
+      "file": "pm/quality.ts",
+      "module": "pm",
+      "functions": 9,
+      "exports": 3
+    },
+    {
+      "file": "pm/report.ts",
+      "module": "pm",
+      "functions": 9,
+      "exports": 3
+    },
+    {
+      "file": "scm/purchaseOrder.ts",
+      "module": "scm",
+      "functions": 9,
+      "exports": 1
+    },
+    {
+      "file": "template.ts",
+      "module": "root",
+      "functions": 9,
+      "exports": 1
+    },
+    {
+      "file": "workflow/category.ts",
+      "module": "workflow",
+      "functions": 9,
+      "exports": 1
+    },
+    {
+      "file": "admin/systemSetting.ts",
+      "module": "admin",
+      "functions": 8,
+      "exports": 2
+    },
+    {
+      "file": "ehs/incident.ts",
+      "module": "ehs",
+      "functions": 8,
+      "exports": 2
+    },
+    {
+      "file": "finance/voucherTemplate.ts",
+      "module": "finance",
+      "functions": 8,
+      "exports": 2
+    },
+    {
+      "file": "iam/role.ts",
+      "module": "iam",
+      "functions": 8,
+      "exports": 2
+    },
+    {
+      "file": "lowcode/app.ts",
+      "module": "lowcode",
+      "functions": 8,
+      "exports": 8
+    },
+    {
+      "file": "lowcode/dataSource.ts",
+      "module": "lowcode",
+      "functions": 8,
+      "exports": 8
+    },
+    {
+      "file": "lowcode/form.ts",
+      "module": "lowcode",
+      "functions": 8,
+      "exports": 1
+    },
+    {
+      "file": "lowcode/page.ts",
+      "module": "lowcode",
+      "functions": 8,
+      "exports": 1
+    },
+    {
+      "file": "mes/materialRequirement.ts",
+      "module": "mes",
+      "functions": 8,
+      "exports": 1
+    },
+    {
+      "file": "mes/team.ts",
+      "module": "mes",
+      "functions": 8,
+      "exports": 1
+    },
+    {
+      "file": "mes/wip.ts",
+      "module": "mes",
+      "functions": 8,
+      "exports": 1
+    },
+    {
+      "file": "qms/spc.ts",
+      "module": "qms",
+      "functions": 8,
+      "exports": 1
+    },
+    {
+      "file": "rs/material.ts",
+      "module": "rs",
+      "functions": 8,
+      "exports": 1
+    },
+    {
+      "file": "scm/priceComparison.ts",
+      "module": "scm",
+      "functions": 8,
+      "exports": 1
+    },
+    {
+      "file": "workflow/template.ts",
+      "module": "workflow",
+      "functions": 8,
+      "exports": 1
+    },
+    {
+      "file": "asset/equipment.ts",
+      "module": "asset",
+      "functions": 7,
+      "exports": 2
+    },
+    {
+      "file": "bi/comparison.ts",
+      "module": "bi",
+      "functions": 7,
+      "exports": 7
+    },
+    {
+      "file": "bi/dataSource.ts",
+      "module": "bi",
+      "functions": 7,
+      "exports": 7
+    },
+    {
+      "file": "bi/widget.ts",
+      "module": "bi",
+      "functions": 7,
+      "exports": 7
+    },
+    {
+      "file": "consolidation.ts",
+      "module": "root",
+      "functions": 7,
+      "exports": 7
+    },
+    {
+      "file": "crm/billing.ts",
+      "module": "crm",
+      "functions": 7,
+      "exports": 2
+    },
+    {
+      "file": "erp/admin/announcement.ts",
+      "module": "erp",
+      "functions": 7,
+      "exports": 1
+    },
+    {
+      "file": "erp/core/purchaseOrder.ts",
+      "module": "erp",
+      "functions": 7,
+      "exports": 1
+    },
+    {
+      "file": "erp/finance/voucher.ts",
+      "module": "erp",
+      "functions": 7,
+      "exports": 1
+    },
+    {
+      "file": "hrm/attendance.ts",
+      "module": "hrm",
+      "functions": 7,
+      "exports": 2
+    },
+    {
+      "file": "hrm/leave.ts",
+      "module": "hrm",
+      "functions": 7,
+      "exports": 2
+    },
+    {
+      "file": "lims/reagent.ts",
+      "module": "lims",
+      "functions": 7,
+      "exports": 1
+    },
+    {
+      "file": "mes/productionSchedule.ts",
+      "module": "mes",
+      "functions": 7,
+      "exports": 1
+    },
+    {
+      "file": "mes/workReport.ts",
+      "module": "mes",
+      "functions": 7,
+      "exports": 1
+    },
+    {
+      "file": "mes/workStation.ts",
+      "module": "mes",
+      "functions": 7,
+      "exports": 1
+    },
+    {
+      "file": "plugin/marketplace.ts",
+      "module": "plugin",
+      "functions": 7,
+      "exports": 2
+    },
+    {
+      "file": "plugin/mock.ts",
+      "module": "plugin",
+      "functions": 7,
+      "exports": 2
+    },
+    {
+      "file": "qms/qualityCost.ts",
+      "module": "qms",
+      "functions": 7,
+      "exports": 1
+    },
+    {
+      "file": "scm/incomingInspection.ts",
+      "module": "scm",
+      "functions": 7,
+      "exports": 1
+    },
+    {
+      "file": "scm/syncRecord.ts",
+      "module": "scm",
+      "functions": 7,
+      "exports": 1
+    },
+    {
+      "file": "bi/sync.ts",
+      "module": "bi",
+      "functions": 6,
+      "exports": 6
+    },
+    {
+      "file": "crm/contact.ts",
+      "module": "crm",
+      "functions": 6,
+      "exports": 2
+    },
+    {
+      "file": "crm/forecast.ts",
+      "module": "crm",
+      "functions": 6,
+      "exports": 2
+    },
+    {
+      "file": "crm/interaction.ts",
+      "module": "crm",
+      "functions": 6,
+      "exports": 2
+    },
+    {
+      "file": "crm/scoring.ts",
+      "module": "crm",
+      "functions": 6,
+      "exports": 2
+    },
+    {
+      "file": "email.ts",
+      "module": "root",
+      "functions": 6,
+      "exports": 6
+    },
+    {
+      "file": "erp/core/customer.ts",
+      "module": "erp",
+      "functions": 6,
+      "exports": 1
+    },
+    {
+      "file": "erp/core/inventory.ts",
+      "module": "erp",
+      "functions": 6,
+      "exports": 1
+    },
+    {
+      "file": "erp/core/material.ts",
+      "module": "erp",
+      "functions": 6,
+      "exports": 1
+    },
+    {
+      "file": "erp/core/supplier.ts",
+      "module": "erp",
+      "functions": 6,
+      "exports": 1
+    },
+    {
+      "file": "finance/counterparty.ts",
+      "module": "finance",
+      "functions": 6,
+      "exports": 2
+    },
+    {
+      "file": "finance/period.ts",
+      "module": "finance",
+      "functions": 6,
+      "exports": 2
+    },
+    {
+      "file": "gis/business.ts",
+      "module": "gis",
+      "functions": 6,
+      "exports": 1
+    },
+    {
+      "file": "gis/pipeline.ts",
+      "module": "gis",
+      "functions": 6,
+      "exports": 1
+    },
+    {
+      "file": "integration/connection.ts",
+      "module": "integration",
+      "functions": 6,
+      "exports": 2
+    },
+    {
+      "file": "lims/sync.ts",
+      "module": "lims",
+      "functions": 6,
+      "exports": 1
+    },
+    {
+      "file": "lowcode/permission.ts",
+      "module": "lowcode",
+      "functions": 6,
+      "exports": 6
+    },
+    {
+      "file": "lowcode/workflow.ts",
+      "module": "lowcode",
+      "functions": 6,
+      "exports": 6
+    },
+    {
+      "file": "mes/productionProcess.ts",
+      "module": "mes",
+      "functions": 6,
+      "exports": 1
+    },
+    {
+      "file": "mes/productionRecord.ts",
+      "module": "mes",
+      "functions": 6,
+      "exports": 1
+    },
+    {
+      "file": "pm/risk.ts",
+      "module": "pm",
+      "functions": 6,
+      "exports": 3
+    },
+    {
+      "file": "qms/standard.ts",
+      "module": "qms",
+      "functions": 6,
+      "exports": 1
+    },
+    {
+      "file": "qms/sync.ts",
+      "module": "qms",
+      "functions": 6,
+      "exports": 1
+    },
+    {
+      "file": "scm/mrpPlan.ts",
+      "module": "scm",
+      "functions": 6,
+      "exports": 1
+    },
+    {
+      "file": "wms/audit.ts",
+      "module": "wms",
+      "functions": 6,
+      "exports": 5
+    },
+    {
+      "file": "workflow/setting.ts",
+      "module": "workflow",
+      "functions": 6,
+      "exports": 1
+    },
+    {
+      "file": "addressbook.ts",
+      "module": "root",
+      "functions": 5,
+      "exports": 1
+    },
+    {
+      "file": "ai/code.ts",
+      "module": "ai",
+      "functions": 5,
+      "exports": 1
+    },
+    {
+      "file": "ai/vector.ts",
+      "module": "ai",
+      "functions": 5,
+      "exports": 1
+    },
+    {
+      "file": "ehs/safetyCheck.ts",
+      "module": "ehs",
+      "functions": 5,
+      "exports": 2
+    },
+    {
+      "file": "erp/admin/officeSupplies.ts",
+      "module": "erp",
+      "functions": 5,
+      "exports": 1
+    },
+    {
+      "file": "integration/mapping.ts",
+      "module": "integration",
+      "functions": 5,
+      "exports": 2
+    },
+    {
+      "file": "lowcode/component.ts",
+      "module": "lowcode",
+      "functions": 5,
+      "exports": 1
+    },
+    {
+      "file": "mes/productionKanban.ts",
+      "module": "mes",
+      "functions": 5,
+      "exports": 1
+    },
+    {
+      "file": "pm/team.ts",
+      "module": "pm",
+      "functions": 5,
+      "exports": 2
+    },
+    {
+      "file": "qms/improvement.ts",
+      "module": "qms",
+      "functions": 5,
+      "exports": 1
+    },
+    {
+      "file": "qms/issue.ts",
+      "module": "qms",
+      "functions": 5,
+      "exports": 1
+    },
+    {
+      "file": "rs/bug.ts",
+      "module": "rs",
+      "functions": 5,
+      "exports": 1
+    },
+    {
+      "file": "rs/test.ts",
+      "module": "rs",
+      "functions": 5,
+      "exports": 1
+    },
+    {
+      "file": "scm/inspectionRecord.ts",
+      "module": "scm",
+      "functions": 5,
+      "exports": 1
+    },
+    {
+      "file": "scm/supplier.ts",
+      "module": "scm",
+      "functions": 5,
+      "exports": 1
+    },
+    {
+      "file": "scm/supplierEvaluation.ts",
+      "module": "scm",
+      "functions": 5,
+      "exports": 1
+    },
+    {
+      "file": "tenant/mockData.ts",
+      "module": "tenant",
+      "functions": 5,
+      "exports": 5
+    },
+    {
+      "file": "workflow/notification.ts",
+      "module": "workflow",
+      "functions": 5,
+      "exports": 1
+    },
+    {
+      "file": "admin/auditLog.ts",
+      "module": "admin",
+      "functions": 4,
+      "exports": 2
+    },
+    {
+      "file": "ai/analysis.ts",
+      "module": "ai",
+      "functions": 4,
+      "exports": 1
+    },
+    {
+      "file": "external-erp/preview.ts",
+      "module": "external-erp",
+      "functions": 4,
+      "exports": 2
+    },
+    {
+      "file": "iam/permission.ts",
+      "module": "iam",
+      "functions": 4,
+      "exports": 2
+    },
+    {
+      "file": "mes/traceability.ts",
+      "module": "mes",
+      "functions": 4,
+      "exports": 1
+    },
+    {
+      "file": "migration.ts",
+      "module": "root",
+      "functions": 4,
+      "exports": 2
+    },
+    {
+      "file": "request.ts",
+      "module": "root",
+      "functions": 4,
+      "exports": 4
+    },
+    {
+      "file": "scm/inventoryTurnover.ts",
+      "module": "scm",
+      "functions": 4,
+      "exports": 1
+    },
+    {
+      "file": "scm/purchaseItem.ts",
+      "module": "scm",
+      "functions": 4,
+      "exports": 1
+    },
+    {
+      "file": "workflow/history.ts",
+      "module": "workflow",
+      "functions": 4,
+      "exports": 1
+    },
+    {
+      "file": "workflow/index.ts",
+      "module": "workflow",
+      "functions": 4,
+      "exports": 2
+    },
+    {
+      "file": "ai/recommendation.ts",
+      "module": "ai",
+      "functions": 3,
+      "exports": 1
+    },
+    {
+      "file": "erp/utils.ts",
+      "module": "erp",
+      "functions": 3,
+      "exports": 3
+    },
+    {
+      "file": "external-erp/syncLogs.ts",
+      "module": "external-erp",
+      "functions": 3,
+      "exports": 2
+    },
+    {
+      "file": "hrm/performance.ts",
+      "module": "hrm",
+      "functions": 3,
+      "exports": 2
+    },
+    {
+      "file": "lims/audit.ts",
+      "module": "lims",
+      "functions": 3,
+      "exports": 1
+    },
+    {
+      "file": "pm/benefit.ts",
+      "module": "pm",
+      "functions": 3,
+      "exports": 2
+    },
+    {
+      "file": "rs/audit.ts",
+      "module": "rs",
+      "functions": 3,
+      "exports": 1
+    },
+    {
+      "file": "rs/build.ts",
+      "module": "rs",
+      "functions": 3,
+      "exports": 1
+    },
+    {
+      "file": "rs/deploy.ts",
+      "module": "rs",
+      "functions": 3,
+      "exports": 1
+    },
+    {
+      "file": "scm/mrpSuggestion.ts",
+      "module": "scm",
+      "functions": 3,
+      "exports": 1
+    },
+    {
+      "file": "scm/supplyChainDashboard.ts",
+      "module": "scm",
+      "functions": 3,
+      "exports": 1
+    },
+    {
+      "file": "external-erp/export.ts",
+      "module": "external-erp",
+      "functions": 2,
+      "exports": 2
+    },
+    {
+      "file": "hrm/employee.ts",
+      "module": "hrm",
+      "functions": 2,
+      "exports": 2
+    },
+    {
+      "file": "lims/index.ts",
+      "module": "lims",
+      "functions": 2,
+      "exports": 2
+    },
+    {
+      "file": "lims/utils.ts",
+      "module": "lims",
+      "functions": 2,
+      "exports": 2
+    },
+    {
+      "file": "permissionInterceptor.ts",
+      "module": "root",
+      "functions": 2,
+      "exports": 3
+    },
+    {
+      "file": "plugin/registry.ts",
+      "module": "plugin",
+      "functions": 2,
+      "exports": 2
+    },
+    {
+      "file": "qms/correctiveAction.ts",
+      "module": "qms",
+      "functions": 2,
+      "exports": 1
+    },
+    {
+      "file": "qms/index.ts",
+      "module": "qms",
+      "functions": 2,
+      "exports": 2
+    },
+    {
+      "file": "scm/auditLog.ts",
+      "module": "scm",
+      "functions": 2,
+      "exports": 1
+    },
+    {
+      "file": "workflow/utils.ts",
+      "module": "workflow",
+      "functions": 2,
+      "exports": 2
+    },
+    {
+      "file": "client.ts",
+      "module": "root",
+      "functions": 1,
+      "exports": 2
+    },
+    {
+      "file": "crm/index.ts",
+      "module": "crm",
+      "functions": 1,
+      "exports": 2
+    },
+    {
+      "file": "ehs/index.ts",
+      "module": "ehs",
+      "functions": 1,
+      "exports": 2
+    },
+    {
+      "file": "erp/index.ts",
+      "module": "erp",
+      "functions": 1,
+      "exports": 2
+    },
+    {
+      "file": "gis/utils.ts",
+      "module": "gis",
+      "functions": 1,
+      "exports": 1
+    },
+    {
+      "file": "hrm/index.ts",
+      "module": "hrm",
+      "functions": 1,
+      "exports": 2
+    },
+    {
+      "file": "integration/index.ts",
+      "module": "integration",
+      "functions": 1,
+      "exports": 2
+    },
+    {
+      "file": "mes/index.ts",
+      "module": "mes",
+      "functions": 1,
+      "exports": 2
+    },
+    {
+      "file": "oa/index.ts",
+      "module": "oa",
+      "functions": 1,
+      "exports": 2
+    },
+    {
+      "file": "pm/dashboard.ts",
+      "module": "pm",
+      "functions": 1,
+      "exports": 2
+    },
+    {
+      "file": "qms/dashboard.ts",
+      "module": "qms",
+      "functions": 1,
+      "exports": 1
+    },
+    {
+      "file": "rs/index.ts",
+      "module": "rs",
+      "functions": 1,
+      "exports": 2
+    },
+    {
+      "file": "rs/statistics.ts",
+      "module": "rs",
+      "functions": 1,
+      "exports": 1
+    },
+    {
+      "file": "scm/index.ts",
+      "module": "scm",
+      "functions": 1,
+      "exports": 2
+    },
+    {
+      "file": "admin/index.ts",
+      "module": "admin",
+      "functions": 0,
+      "exports": 2
+    },
+    {
+      "file": "asset/index.ts",
+      "module": "asset",
+      "functions": 0,
+      "exports": 2
+    },
+    {
+      "file": "bi.ts",
+      "module": "root",
+      "functions": 0,
+      "exports": 0
+    },
+    {
+      "file": "bi/index.ts",
+      "module": "bi",
+      "functions": 0,
+      "exports": 2
+    },
+    {
+      "file": "consolidation-contract/company.ts",
+      "module": "consolidation-contract",
+      "functions": 0,
+      "exports": 1
+    },
+    {
+      "file": "consolidation-contract/elimination.ts",
+      "module": "consolidation-contract",
+      "functions": 0,
+      "exports": 1
+    },
+    {
+      "file": "consolidation-contract/index.ts",
+      "module": "consolidation-contract",
+      "functions": 0,
+      "exports": 2
+    },
+    {
+      "file": "consolidation-contract/report.ts",
+      "module": "consolidation-contract",
+      "functions": 0,
+      "exports": 1
+    },
+    {
+      "file": "consolidation-contract/scope.ts",
+      "module": "consolidation-contract",
+      "functions": 0,
+      "exports": 2
+    },
+    {
+      "file": "consolidation-contract/transaction.ts",
+      "module": "consolidation-contract",
+      "functions": 0,
+      "exports": 1
+    },
+    {
+      "file": "crm.ts",
+      "module": "root",
+      "functions": 0,
+      "exports": 0
+    },
+    {
+      "file": "erp.ts",
+      "module": "root",
+      "functions": 0,
+      "exports": 0
+    },
+    {
+      "file": "erp/core/index.ts",
+      "module": "erp",
+      "functions": 0,
+      "exports": 0
+    },
+    {
+      "file": "external-erp/index.ts",
+      "module": "external-erp",
+      "functions": 0,
+      "exports": 2
+    },
+    {
+      "file": "finance.ts",
+      "module": "root",
+      "functions": 0,
+      "exports": 0
+    },
+    {
+      "file": "finance/index.ts",
+      "module": "finance",
+      "functions": 0,
+      "exports": 2
+    },
+    {
+      "file": "gis.ts",
+      "module": "root",
+      "functions": 0,
+      "exports": 0
+    },
+    {
+      "file": "gis/index.ts",
+      "module": "gis",
+      "functions": 0,
+      "exports": 2
+    },
+    {
+      "file": "hrm.ts",
+      "module": "root",
+      "functions": 0,
+      "exports": 0
+    },
+    {
+      "file": "hrm/company.ts",
+      "module": "hrm",
+      "functions": 0,
+      "exports": 1
+    },
+    {
+      "file": "hrm/department.ts",
+      "module": "hrm",
+      "functions": 0,
+      "exports": 1
+    },
+    {
+      "file": "iam.ts",
+      "module": "root",
+      "functions": 0,
+      "exports": 0
+    },
+    {
+      "file": "iam/index.ts",
+      "module": "iam",
+      "functions": 0,
+      "exports": 2
+    },
+    {
+      "file": "index.ts",
+      "module": "root",
+      "functions": 0,
+      "exports": 0
+    },
+    {
+      "file": "integration.ts",
+      "module": "root",
+      "functions": 0,
+      "exports": 0
+    },
+    {
+      "file": "lowcode/index.ts",
+      "module": "lowcode",
+      "functions": 0,
+      "exports": 2
+    },
+    {
+      "file": "plugin.ts",
+      "module": "root",
+      "functions": 0,
+      "exports": 0
+    },
+    {
+      "file": "plugin/index.ts",
+      "module": "plugin",
+      "functions": 0,
+      "exports": 2
+    },
+    {
+      "file": "pm.ts",
+      "module": "root",
+      "functions": 0,
+      "exports": 0
+    },
+    {
+      "file": "pm/index.ts",
+      "module": "pm",
+      "functions": 0,
+      "exports": 2
+    },
+    {
+      "file": "qms.ts",
+      "module": "root",
+      "functions": 0,
+      "exports": 0
+    },
+    {
+      "file": "rs.ts",
+      "module": "root",
+      "functions": 0,
+      "exports": 0
+    },
+    {
+      "file": "scm.ts",
+      "module": "root",
+      "functions": 0,
+      "exports": 0
+    },
+    {
+      "file": "wms.ts",
+      "module": "root",
+      "functions": 0,
+      "exports": 0
+    },
+    {
+      "file": "wms/index.ts",
+      "module": "wms",
+      "functions": 0,
+      "exports": 2
+    },
+    {
+      "file": "workflow.ts",
+      "module": "root",
+      "functions": 0,
+      "exports": 0
+    }
+  ]
+}

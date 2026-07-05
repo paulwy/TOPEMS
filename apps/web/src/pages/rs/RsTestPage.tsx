@@ -63,7 +63,7 @@ const RsTestPage: React.FC = () => {
   const loadTestCases = async () => {
     try {
       setLoading(true);
-      const params: any = {
+      const params: Record<string, unknown> = {
         page: page + 1,
         pagesize: rowsPerPage,
       };

@@ -113,7 +113,7 @@ const EhsOccupationalDiseasePage: React.FC = () => {
       } else {
         setCases([]);
       }
-    } catch (err: any) {
+    } catch (err: unknown) {
       apiLogger.error('加载职业病案例失败:', err);
       addNotification({ title: '错误', message: '加载职业病案例失败', type: 'error' });
       setCases([]);
@@ -440,7 +440,7 @@ const EhsOccupationalDiseasePage: React.FC = () => {
       }
       setShowCreateModal(false);
       loadCases();
-    } catch (err: any) {
+    } catch (err: unknown) {
       addNotification({
         title: '错误',
         message: editingCase ? '更新失败' : '创建失败',

@@ -22,6 +22,21 @@ interface FunnelMetrics {
   weighted_value: number;
 }
 
+interface ChartDataItem {
+  name: string;
+  value: number;
+  color: string;
+}
+
+interface ChartConfig {
+  id: string;
+  title: string;
+  type: string;
+  dataKey: string;
+  nameKey: string;
+  data: ChartDataItem[];
+}
+
 const stageLabelMap: Record<string, string> = {
   lead: '潜在客户',
   qualified: '意向确认',
@@ -48,10 +63,10 @@ const CRMSalesFunnelPage: React.FC = () => {
         setMetrics(metricsRes.value.data as FunnelMetrics);
       }
       if (stagesRes.status === 'fulfilled' && stagesRes.value.success) {
-        const data = (stagesRes.value.data as any) || {};
+        const data = stagesRes.value.data as { stages?: FunnelStage[] } || {};
         setStages(data.stages || []);
       }
-    } catch (err) {
+    } catch (error: unknown) {
       addNotification({
         type: 'error',
         title: '加载失败',
@@ -97,7 +112,7 @@ const CRMSalesFunnelPage: React.FC = () => {
     },
   ];
 
-  const charts: any[] = [
+  const charts: ChartConfig[] = [
     {
       id: 'stage-distribution',
       title: '各阶段商机数',

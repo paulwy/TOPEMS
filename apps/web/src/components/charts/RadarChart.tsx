@@ -11,15 +11,16 @@ import {
   Legend,
 } from 'recharts';
 import { useChartTheme, getChartColor } from './chartTheme';
+import type { ChartData } from './AreaChart';
 
 interface RadarChartProps {
-  data: any[];
+  data: ChartData[];
   dataKey?: string;
   yKeys: { key: string; name: string; color?: string }[];
   height?: number;
   showLegend?: boolean;
   animate?: boolean;
-  onRadarClick?: (data: unknown) => void;
+  onRadarClick?: (data: ChartData) => void;
 }
 
 export const RadarChart: React.FC<RadarChartProps> = ({
@@ -33,8 +34,8 @@ export const RadarChart: React.FC<RadarChartProps> = ({
 }) => {
   const chartTheme = useChartTheme();
 
-  const handleClick = (data: unknown) => {
-    onRadarClick?.(data);
+  const handleClick = (_data: unknown) => {
+    // onRadarClick is handled differently in Recharts Radar
   };
 
   return (

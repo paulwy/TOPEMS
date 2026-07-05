@@ -129,7 +129,7 @@ export const WithRowNumbers: Story = {
       { id: 'orderNo', label: '工单号', sortable: true, width: 140 },
       { id: 'product', label: '产品名称', width: 160 },
       { id: 'quantity', label: '数量', align: 'right', width: 80 },
-      { id: 'status', label: '状态', width: 100, render: (row: any) => <Chip label={row.status} size='small' color={row.status === '生产中' ? 'info' : row.status === '已完成' ? 'success' : 'default'} sx={{ height: 24 }} /> },
+      { id: 'status', label: '状态', width: 100, render: (row: Record<string, unknown>) => <Chip label={String(row.status)} size='small' color={String(row.status) === '生产中' ? 'info' : String(row.status) === '已完成' ? 'success' : 'default'} sx={{ height: 24 }} /> },
       { id: 'operator', label: '操作员', width: 100 },
       { id: 'deadline', label: '截止日期', width: 120 },
     ],

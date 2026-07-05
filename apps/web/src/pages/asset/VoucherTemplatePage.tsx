@@ -30,7 +30,7 @@ import {
   useToggleVoucherTemplate,
   useAutoGenerateVouchers,
 } from '@/hooks/useVoucherTemplate';
-import type { VoucherTemplateType } from '@/types/finance';
+import type { VoucherTemplate, VoucherTemplateType } from '@/types/finance';
 import { PageContainer } from '@/components/common';
 
 // 模板类型配置
@@ -64,10 +64,10 @@ export default function VoucherTemplatePage() {
   const [searchKeyword, setSearchKeyword] = useState('');
   const [filterType, setFilterType] = useState<VoucherTemplateType | ''>('');
   const [, setShowCreateModal] = useState(false);
-  const [, setEditingTemplate] = useState<any>(null);
+  const [, setEditingTemplate] = useState<VoucherTemplate | null>(null);
 
   // 筛选模板
-  const filteredTemplates = (templatesData?.data?.items || []).filter((tmpl: any) => {
+  const filteredTemplates = (templatesData?.data?.items || []).filter((tmpl: VoucherTemplate) => {
     const matchesSearch =
       !searchKeyword ||
       tmpl.name.toLowerCase().includes(searchKeyword.toLowerCase()) ||
@@ -77,7 +77,7 @@ export default function VoucherTemplatePage() {
   });
 
   // 处理复制
-  const handleCopy = async (template: any) => {
+  const handleCopy = async (template: VoucherTemplate) => {
     const newCode = `${template.code}_copy_${Date.now()}`;
     const newName = `${template.name} (副本)`;
     try {
@@ -102,11 +102,11 @@ export default function VoucherTemplatePage() {
   };
 
   // 处理启用/禁用
-  const handleToggle = async (template: any) => {
+  const handleToggle = async (template: VoucherTemplate) => {
     try {
       await toggleTemplate.mutateAsync({
         templateId: template.id,
-        isActive: !template.isactive,
+        isActive: template.status === 'active',
       });
     } catch (error: unknown) {
       logger.error('Toggle template failed:', error);
@@ -223,8 +223,8 @@ export default function VoucherTemplatePage() {
             gap: 3,
           }}
         >
-          {filteredTemplates.map((template: any) => {
-            const typeConfig = TEMPLATE_TYPE_CONFIG[template.type as VoucherTemplateType] || {
+          {filteredTemplates.map((template: VoucherTemplate) => {
+            const typeConfig = TEMPLATE_TYPE_CONFIG[template.type] || {
               label: template.type,
               color: 'bg-gray-100 text-gray-800',
             };

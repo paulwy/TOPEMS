@@ -24,6 +24,7 @@ import type {
   UpdateEquipmentRequest,
   EquipmentStatistics,
   MaintenanceEquipmentRequest,
+  ListParams,
 } from '@/api/mes';
 import { mesApi } from '@/api/mes';
 import { useAppStore } from '@/store';
@@ -83,7 +84,7 @@ const EquipmentManagementPage: React.FC = () => {
   const loadEquipment = useCallback(async () => {
     try {
       setLoading(true);
-      const params: any = {
+      const params: ListParams = {
         page: currentPage - 1,
         pagesize: pageSize,
       };

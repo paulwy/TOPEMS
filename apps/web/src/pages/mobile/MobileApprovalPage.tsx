@@ -61,7 +61,31 @@ interface ApprovalItem {
   }[];
 }
 
-const mapApiApprovalToApprovalItem = (apiApproval: any): ApprovalItem => {
+interface ApiApproval {
+  id?: string;
+  task_id?: string;
+  title?: string;
+  task_name?: string;
+  type?: string;
+  applicant_name?: string;
+  assignee_name?: string;
+  applicant?: string;
+  department?: string;
+  department_name?: string;
+  created_at?: string;
+  amount?: string | number;
+  priority?: string;
+  status?: string;
+  description?: string;
+  remarks?: string;
+  steps?: Array<{
+    name: string;
+    status: 'completed' | 'current' | 'pending';
+    time?: string;
+  }>;
+}
+
+const mapApiApprovalToApprovalItem = (apiApproval: ApiApproval): ApprovalItem => {
   const typeMap: Record<string, ApprovalItem['type']> = {
     purchase: 'purchase',
     采购: 'purchase',
@@ -126,7 +150,7 @@ const MobileApprovalPage: React.FC = () => {
   const loadApprovals = useCallback(async () => {
     setLoading(true);
     try {
-      const params: any = {};
+      const params: Record<string, unknown> = {};
       if (searchQuery) {
         params.search = searchQuery;
       }

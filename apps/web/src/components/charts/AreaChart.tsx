@@ -13,8 +13,12 @@ import {
 import { useChartTheme, getChartColor } from './chartTheme';
 import { CustomTooltip } from './CustomTooltip';
 
+export interface ChartData {
+  [key: string]: unknown;
+}
+
 interface AreaChartProps {
-  data: any[];
+  data: ChartData[];
   xKey: string;
   yKeys: { key: string; name: string; color?: string }[];
   height?: number;
@@ -24,7 +28,7 @@ interface AreaChartProps {
   showGrid?: boolean;
   strokeType?: 'solid' | 'dashed';
   fillOpacity?: number;
-  onAreaClick?: (data: unknown) => void;
+  onAreaClick?: (data: ChartData) => void;
 }
 
 export const AreaChart: React.FC<AreaChartProps> = ({
@@ -43,7 +47,7 @@ export const AreaChart: React.FC<AreaChartProps> = ({
   const chartTheme = useChartTheme();
 
   const handleClick = (data: unknown) => {
-    onAreaClick?.(data);
+    onAreaClick?.(data as ChartData);
   };
 
   return (

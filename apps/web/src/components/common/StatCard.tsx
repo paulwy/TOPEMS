@@ -4,7 +4,8 @@
  * 提供基类组件和多种特化组件，支持丰富的交互和动画效果
  */
 import React, { useEffect, useState, useRef } from 'react';
-import {Box,
+import {
+  Box,
   Typography,
   Card,
   CardHeader,
@@ -16,7 +17,10 @@ import {Box,
   IconButton,
   Tooltip,
   LinearProgress,
-  Button, useTheme} from '@mui/material';
+  Button,
+  useTheme,
+} from '@mui/material';
+import type { SxProps, Theme } from '@mui/material/styles';
 import {
   TrendingUp,
   TrendingDown,
@@ -118,7 +122,7 @@ export interface StatCardBaseProps {
   /** 点击事件 */
   onClick?: () => void;
   /** 自定义样式 */
-  sx?: any;
+  sx?: SxProps<Theme>;
   /** 子元素 */
   children?: React.ReactNode;
 }
@@ -192,7 +196,7 @@ export interface ChartCardProps {
   /** 趋势值 */
   trendValue?: string;
   /** 自定义样式 */
-  sx?: any;
+  sx?: SxProps<Theme>;
 }
 
 // ============ 颜色配置 ============

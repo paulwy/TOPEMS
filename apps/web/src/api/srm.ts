@@ -655,19 +655,19 @@ export const srmApi = {
   getSupplierPortalOrders: async (supplierId: string): Promise<ApiResponse<PurchaseOrder[]>> => {
     return apiClient.srm.get(`/supplier-portal/${supplierId}/orders`);
   },
-  getSupplierPortalInvoices: async (supplierId: string): Promise<ApiResponse<any[]>> => {
+  getSupplierPortalInvoices: async (supplierId: string): Promise<ApiResponse<unknown[]>> => {
     return apiClient.srm.get(`/supplier-portal/${supplierId}/invoices`);
   },
-  getSupplierPortalDeliveries: async (supplierId: string): Promise<ApiResponse<any[]>> => {
+  getSupplierPortalDeliveries: async (supplierId: string): Promise<ApiResponse<unknown[]>> => {
     return apiClient.srm.get(`/supplier-portal/${supplierId}/deliveries`);
   },
-  getSupplierPortalAnnouncements: async (): Promise<ApiResponse<any[]>> => {
+  getSupplierPortalAnnouncements: async (): Promise<ApiResponse<unknown[]>> => {
     return apiClient.srm.get('/supplier-portal/announcements');
   },
 
   // Inquiry & Quotation
   listInquiries: async (
-    params?: any
+    params?: Record<string, unknown>
   ): Promise<ApiResponse<{ items: Inquiry[]; total: number }>> => {
     return apiClient.srm.get('/inquiries', { params });
   },
@@ -677,7 +677,7 @@ export const srmApi = {
   createInquiry: async (data: CreateInquiryRequest): Promise<ApiResponse<Inquiry>> => {
     return apiClient.srm.post('/inquiries', data);
   },
-  updateInquiry: async (id: string, data: any): Promise<ApiResponse<Inquiry>> => {
+  updateInquiry: async (id: string, data: Partial<CreateInquiryRequest>): Promise<ApiResponse<Inquiry>> => {
     return apiClient.srm.put(`/inquiries/${id}`, data);
   },
   deleteInquiry: async (id: string): Promise<ApiResponse<boolean>> => {
@@ -700,7 +700,7 @@ export const srmApi = {
   createQuotation: async (data: CreateQuotationRequest): Promise<ApiResponse<Quotation>> => {
     return apiClient.srm.post('/quotations', data);
   },
-  updateQuotation: async (id: string, data: any): Promise<ApiResponse<Quotation>> => {
+  updateQuotation: async (id: string, data: Partial<CreateQuotationRequest>): Promise<ApiResponse<Quotation>> => {
     return apiClient.srm.put(`/quotations/${id}`, data);
   },
   awardQuotation: async (id: string): Promise<ApiResponse<Quotation>> => {
@@ -711,7 +711,7 @@ export const srmApi = {
   },
 
   // Bidding
-  listBiddings: async (params?: any): Promise<ApiResponse<{ items: Bidding[]; total: number }>> => {
+  listBiddings: async (params?: Record<string, unknown>): Promise<ApiResponse<{ items: Bidding[]; total: number }>> => {
     return apiClient.srm.get('/biddings', { params });
   },
   getBidding: async (id: string): Promise<ApiResponse<Bidding>> => {
@@ -720,7 +720,7 @@ export const srmApi = {
   createBidding: async (data: CreateBiddingRequest): Promise<ApiResponse<Bidding>> => {
     return apiClient.srm.post('/biddings', data);
   },
-  updateBidding: async (id: string, data: any): Promise<ApiResponse<Bidding>> => {
+  updateBidding: async (id: string, data: Partial<CreateBiddingRequest>): Promise<ApiResponse<Bidding>> => {
     return apiClient.srm.put(`/biddings/${id}`, data);
   },
   deleteBidding: async (id: string): Promise<ApiResponse<boolean>> => {

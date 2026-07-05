@@ -103,6 +103,38 @@ interface DashboardPageProps {
   onLogout?: () => void;
 }
 
+interface EhsHazard {
+  id: string;
+  status: string;
+}
+
+interface BiMetric {
+  title: string;
+  value: number;
+  icon?: string;
+}
+
+interface FlowMonthlyData {
+  month: string;
+  instances_started?: number;
+  approvals_processed?: number;
+}
+
+interface WorkflowTask {
+  id: string | number;
+  task_name?: string;
+  name?: string;
+  workflow_name?: string;
+  status: string;
+}
+
+interface AuditLog {
+  id: string;
+  action?: string;
+  module?: string;
+  created_at: string;
+}
+
 const DashboardPage: React.FC<DashboardPageProps> = ({ onLogout }) => {
   const navigate = useNavigate();
   const location = useLocation();
@@ -185,7 +217,7 @@ const DashboardPage: React.FC<DashboardPageProps> = ({ onLogout }) => {
         workflowApi.getStatistics(),
         user?.id
           ? workflowApi.getNotificationCount(user.id)
-          : Promise.resolve({ success: false, data: { count: 0 } } as any),
+          : Promise.resolve({ success: false, data: { count: 0 } }),
       ]);
 
       const docData =
@@ -204,7 +236,8 @@ const DashboardPage: React.FC<DashboardPageProps> = ({ onLogout }) => {
         docCount: docData?.total || 0,
         workflowCount: flowData?.total_workflows || 0,
         notificationCount:
-          (notificationData as any)?.count ?? (notificationData as any)?.total ?? 0,
+          (notificationData as { count?: number; total?: number })?.count ??
+          (notificationData as { count?: number; total?: number })?.total ?? 0,
       };
 
       setStats(newStats);
@@ -248,7 +281,7 @@ const DashboardPage: React.FC<DashboardPageProps> = ({ onLogout }) => {
           active:
             (ehsRes.status === 'fulfilled' &&
               ehsRes.value.success &&
-              ehsRes.value.data?.data?.filter((h: any) => h.status === 'active').length) ||
+              ehsRes.value.data?.data?.filter((h: EhsHazard) => h.status === 'active').length) ||
             0,
         },
         srm: {
@@ -318,13 +351,13 @@ const DashboardPage: React.FC<DashboardPageProps> = ({ onLogout }) => {
 
       setChartData({
         moduleDistribution:
-          summary?.key_metrics?.map((metric: any) => ({
+          summary?.key_metrics?.map((metric: BiMetric) => ({
             name: metric.title,
             value: metric.value,
             color: metric.icon || 'primary.main',
           })) || [],
         monthlyTrend:
-          flowStats?.monthly_data?.map((item: any) => ({
+          flowStats?.monthly_data?.map((item: FlowMonthlyData) => ({
             name: item.month,
             value: item.instances_started || item.approvals_processed || 0,
           })) || [],
@@ -346,8 +379,8 @@ const DashboardPage: React.FC<DashboardPageProps> = ({ onLogout }) => {
       ]);
 
       if (tasksRes.status === 'fulfilled' && tasksRes.value.success && tasksRes.value.data?.items) {
-        const tasks = tasksRes.value.data.items.map((task: any, index: number) => ({
-          id: task.id ? parseInt(task.id, 10) || index + 1 : index + 1,
+        const tasks = tasksRes.value.data.items.map((task: WorkflowTask, index: number) => ({
+          id: task.id ? parseInt(String(task.id), 10) || index + 1 : index + 1,
           title: task.task_name || task.name || '待办任务',
           type: task.workflow_name || 'workflow',
           done: task.status === 'completed' || task.status === 'approved',
@@ -372,7 +405,7 @@ const DashboardPage: React.FC<DashboardPageProps> = ({ onLogout }) => {
 
       if (logsRes.status === 'fulfilled' && logsRes.value.success && logsRes.value.data?.items) {
         const logs = logsRes.value.data.items;
-        const activities: ActivityItem[] = logs.map((log: any) => {
+        const activities: ActivityItem[] = logs.map((log: AuditLog) => {
           let icon = <User size={16} />;
           let type = '系统';
 

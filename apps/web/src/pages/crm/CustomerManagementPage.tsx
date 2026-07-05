@@ -177,7 +177,7 @@ const CustomerManagementPage: React.FC = () => {
   const loadCustomers = async () => {
     try {
       setLoading(true);
-      const params: any = {
+      const params: Record<string, unknown> = {
         page: pagination.page + 1,
         pagesize: pagination.pageSize,
       };

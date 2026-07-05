@@ -45,7 +45,7 @@ const InteractionManagementPage: React.FC = () => {
   const loadInteractions = async () => {
     try {
       setLoading(true);
-      const params: any = {};
+      const params: Record<string, unknown> = {};
       if (searchTerm) params.search = searchTerm;
       if (statusFilter) params.status = statusFilter;
       if (typeFilter) params.type = typeFilter;

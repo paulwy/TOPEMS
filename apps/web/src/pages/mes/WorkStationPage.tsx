@@ -14,7 +14,7 @@ import {
 } from '@mui/material';
 import { PageContainer } from '@/components/common';
 import React, { useState, useEffect, useMemo } from 'react';
-import type { WorkStation, CreateWorkStationRequest, UpdateWorkStationRequest } from '@/api/mes';
+import type { WorkStation, CreateWorkStationRequest, UpdateWorkStationRequest, ListParams } from '@/api/mes';
 import { mesApi } from '@/api/mes';
 import { useAppStore } from '@/store';
 import { LoadingSpinner } from '@/components/common/LoadingSpinner';
@@ -55,7 +55,7 @@ const WorkStationPage: React.FC = () => {
   const loadWorkStations = async () => {
     try {
       setLoading(true);
-      const params: any = {
+      const params: ListParams = {
         page: currentPage - 1,
         pagesize: pageSize,
       };

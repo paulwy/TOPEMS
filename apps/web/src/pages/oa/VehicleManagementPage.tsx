@@ -162,7 +162,7 @@ const VehicleManagementPage: React.FC = () => {
     setLoading(true);
     try {
       setVehicles(mockVehicles);
-    } catch (error: any) {
+    } catch (error: unknown) {
       console.error('加载车辆数据失败:', error);
     } finally {
       setLoading(false);

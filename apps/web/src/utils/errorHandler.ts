@@ -11,28 +11,47 @@ export interface AppError {
   message: string;
   detail?: string;
   code?: number | string;
-  originalError?: any;
+  originalError?: unknown;
 }
 
 /**
  * 分类 API 错误
  */
-export function classifyError(error: any): AppError {
+interface ErrorLike {
+  code?: string;
+  message?: string;
+  response?: {
+    status?: number;
+    data?: {
+      message?: string;
+      errors?: unknown[];
+      details?: unknown[];
+    };
+  };
+  request?: unknown;
+}
+
+function isErrorLike(error: unknown): error is ErrorLike {
+  return typeof error === 'object' && error !== null;
+}
+
+export function classifyError(error: unknown): AppError {
   if (!error) {
     return { category: 'unknown', message: '未知错误' };
   }
 
-  // 网络错误
+  if (!isErrorLike(error)) {
+    return { category: 'unknown', message: String(error), originalError: error };
+  }
+
   if (error.code === 'ERR_NETWORK' || error.message === 'Network Error') {
     return { category: 'network', message: '网络连接失败，请检查网络设置', originalError: error };
   }
 
-  // 超时
   if (error.code === 'ECONNABORTED') {
     return { category: 'network', message: '请求超时，请稍后重试', originalError: error };
   }
 
-  // Axios 响应错误
   if (error.response) {
     const { status, data } = error.response;
     switch (status) {
@@ -90,18 +109,20 @@ export function classifyError(error: any): AppError {
     }
   }
 
-  // 请求配置错误
   if (error.request) {
     return { category: 'network', message: '服务器未响应，请检查网络连接', originalError: error };
   }
 
-  // JavaScript 错误
-  return { category: 'unknown', message: error.message || '操作失败', originalError: error };
+  if (error instanceof Error) {
+    return { category: 'unknown', message: error.message || '操作失败', originalError: error };
+  }
+
+  return { category: 'unknown', message: '操作失败', originalError: error };
 }
 
 /**
  * 获取用户友好的错误消息
  */
-export function getUserFriendlyError(error: any): string {
+export function getUserFriendlyError(error: unknown): string {
   return classifyError(error).message;
 }

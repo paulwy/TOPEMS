@@ -92,7 +92,7 @@ export interface ImportResult<T> {
 export const importFromExcel = async <T>(
   file: File,
   columns: ExportColumn<T>[],
-  transform?: (raw: Record<string, any>) => T
+  transform?: (raw: Record<string, unknown>) => T
 ): Promise<ImportResult<T>> => {
   return new Promise((resolve) => {
     const reader = new FileReader();
@@ -105,7 +105,7 @@ export const importFromExcel = async <T>(
         const sheetName = workbook.SheetNames[0];
         const worksheet = workbook.Sheets[sheetName];
 
-        const rawData = XLSX.utils.sheet_to_json(worksheet) as Record<string, any>[];
+        const rawData = XLSX.utils.sheet_to_json(worksheet) as Record<string, unknown>[];
 
         const errors: { row: number; message: string }[] = [];
         const result: T[] = [];
@@ -116,9 +116,9 @@ export const importFromExcel = async <T>(
               const item = transform(row);
               result.push(item);
             } else {
-              const item: any = {};
+              const item: Partial<T> = {};
               columns.forEach((col) => {
-                item[col.key] = row[col.label];
+                item[col.key] = row[col.label] as T[keyof T];
               });
               result.push(item as T);
             }

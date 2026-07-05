@@ -34,7 +34,7 @@ export interface UseErpResult<T> {
   data: T[];
   loading: boolean;
   error: string | null;
-  fetch: (params?: Record<string, any>) => Promise<T[]>;
+  fetch: (params?: Record<string, unknown>) => Promise<T[]>;
   get: (id: string) => Promise<T | null>;
   create: (item: Partial<T>) => Promise<T | null>;
   update: (id: string, item: Partial<T>) => Promise<T | null>;
@@ -52,7 +52,7 @@ export interface UseErpResult<T> {
 
 function useErpBase<T extends { id?: string }>(
   api: {
-    list: (params?: any) => Promise<{ success: boolean; data?: { items: T[]; total: number } }>;
+    list: (params?: Record<string, unknown>) => Promise<{ success: boolean; data?: { items: T[]; total: number } }>;
     get: (id: string) => Promise<{ success: boolean; data?: T }>;
     create: (data: Partial<T>) => Promise<{ success: boolean; data?: T }>;
     update: (id: string, data: Partial<T>) => Promise<{ success: boolean; data?: T }>;
@@ -69,8 +69,9 @@ function useErpBase<T extends { id?: string }>(
   const addNotification = useAppStore((state) => state.addNotification);
 
   const handleError = useCallback(
-    (err: any, defaultMessage: string) => {
-      const message = err?.response?.data?.message || err?.message || defaultMessage;
+    (err: unknown, defaultMessage: string) => {
+      const errAny = err as { response?: { data?: { message?: string } }; message?: string };
+      const message = errAny?.response?.data?.message || errAny?.message || defaultMessage;
       setError(message);
       addNotification({ title: '错误', message, type: 'error' });
       return Promise.reject(err);
@@ -271,7 +272,13 @@ export function useAccountingSubjects() {
 }
 
 export function useVouchers() {
-  return useErpBase<FinancialVoucher>(voucherApi as any);
+  return useErpBase<FinancialVoucher>(voucherApi as typeof voucherApi & {
+    list: (params?: Record<string, unknown>) => Promise<{ success: boolean; data?: { items: FinancialVoucher[]; total: number } }>;
+    get: (id: string) => Promise<{ success: boolean; data?: FinancialVoucher }>;
+    create: (data: Partial<FinancialVoucher>) => Promise<{ success: boolean; data?: FinancialVoucher }>;
+    update: (id: string, data: Partial<FinancialVoucher>) => Promise<{ success: boolean; data?: FinancialVoucher }>;
+    delete: (id: string) => Promise<{ success: boolean }>;
+  });
 }
 
 export function useOfficeSupplies() {
@@ -304,8 +311,9 @@ export function useFinanceReports() {
   const addNotification = useAppStore((state) => state.addNotification);
 
   const handleError = useCallback(
-    (err: any, defaultMessage: string) => {
-      const message = err?.response?.data?.message || err?.message || defaultMessage;
+    (err: unknown, defaultMessage: string) => {
+      const errAny = err as { response?: { data?: { message?: string } }; message?: string };
+      const message = errAny?.response?.data?.message || errAny?.message || defaultMessage;
       setError(message);
       addNotification({ title: '错误', message, type: 'error' });
       return Promise.reject(err);

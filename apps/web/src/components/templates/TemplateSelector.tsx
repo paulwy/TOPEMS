@@ -118,7 +118,7 @@ const TemplateSelector: React.FC<TemplateSelectorProps> = ({
     loadTemplates();
   };
 
-  const handleVariableChange = (key: string, value: any) => {
+  const handleVariableChange = (key: string, value: unknown) => {
     setVariableValues((prev) => ({ ...prev, [key]: value }));
   };
 
