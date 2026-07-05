@@ -1,5 +1,6 @@
 use axum::{
     extract::Path,
+    extract::Query,
     extract::State,
     routing::{delete, get, post, put},
     Json, Router,
@@ -70,6 +71,16 @@ pub struct CreateChangeNoticeRequest {
 }
 
 #[derive(Debug, Deserialize)]
+pub struct ChangeNoticeQuery {
+    pub page: Option<i64>,
+    pub page_size: Option<i64>,
+    pub search: Option<String>,
+    pub status: Option<String>,
+    pub change_type: Option<String>,
+    pub priority: Option<String>,
+}
+
+#[derive(Debug, Deserialize)]
 pub struct UpdateChangeNoticeRequest {
     pub title: Option<String>,
     pub description: Option<String>,
@@ -85,27 +96,66 @@ pub struct UpdateChangeNoticeRequest {
 
 pub async fn list_change_notices(
     State(state): State<AppState>,
+    Query(query): Query<ChangeNoticeQuery>,
 ) -> Json<ApiResponse<serde_json::Value>> {
+    let page = query.page.unwrap_or(1).max(1);
+    let page_size = query.page_size.unwrap_or(10).min(100);
+    let offset = (page - 1) * page_size;
+    let search_pattern = query.search.as_ref().map(|s| format!("%{}%", s));
+
     let result = sqlx::query_as::<_, ChangeNotice>(
         r#"
         SELECT id, ecn_no, title, description, change_type, affected_items,
                reason, priority, status, initiator, approver, approved_at,
                effective_date, created_at, updated_at
         FROM pdm_change_notices
+        WHERE ($1::text IS NULL OR ecn_no ILIKE $1 OR title ILIKE $1)
+          AND ($2::text IS NULL OR status = $2)
+          AND ($3::text IS NULL OR change_type = $3)
+          AND ($4::text IS NULL OR priority = $4)
         ORDER BY created_at DESC
+        LIMIT $5 OFFSET $6
         "#,
     )
+    .bind(&search_pattern)
+    .bind(&query.status)
+    .bind(&query.change_type)
+    .bind(&query.priority)
+    .bind(page_size)
+    .bind(offset)
     .fetch_all(&state.pool)
     .await;
 
     match result {
-        Ok(notices) => Json(ApiResponse::success(
-            serde_json::json!({
-                "notices": notices,
-                "total": notices.len()
-            }),
-            "获取变更通知列表成功",
-        )),
+        Ok(notices) => {
+            let count_result = sqlx::query_scalar::<_, i64>(
+                r#"
+                SELECT COUNT(*) FROM pdm_change_notices
+                WHERE ($1::text IS NULL OR ecn_no ILIKE $1 OR title ILIKE $1)
+                  AND ($2::text IS NULL OR status = $2)
+                  AND ($3::text IS NULL OR change_type = $3)
+                  AND ($4::text IS NULL OR priority = $4)
+                "#,
+            )
+            .bind(&search_pattern)
+            .bind(&query.status)
+            .bind(&query.change_type)
+            .bind(&query.priority)
+            .fetch_one(&state.pool)
+            .await;
+
+            let total = count_result.unwrap_or(0);
+
+            Json(ApiResponse::success(
+                serde_json::json!({
+                    "notices": notices,
+                    "total": total,
+                    "page": page,
+                    "page_size": page_size
+                }),
+                "获取变更通知列表成功",
+            ))
+        }
         Err(e) => {
             tracing::error!("获取变更通知列表失败: {}", e);
             Json(ApiResponse::error(500, "获取变更通知列表失败"))
