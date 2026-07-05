@@ -632,7 +632,7 @@ const HrmRecruitmentPage: React.FC = () => {
                     outline: 'none',
                     '&:focus': {
                       borderColor: 'primary.main',
-                      boxShadow: (theme: any) => `0 0 0 2px ${theme.palette.primary.main}20`,
+                      boxShadow: (theme: { palette: { primary: { main: string } } }) => `0 0 0 2px ${theme.palette.primary.main}20`,
                     },
                   }}
                 />

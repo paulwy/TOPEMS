@@ -5,6 +5,7 @@ import {
   positionApi,
   departmentApi,
   type Position,
+  type Department,
   type PaginatedResult,
   type ListParams,
 } from '@/api/hrm';
@@ -76,8 +77,8 @@ const PositionManagementPage: React.FC<PositionManagementPageProps> = () => {
     try {
       const response = await departmentApi.list();
       if (response.code === 200 && response.data) {
-        const items = (response.data as any).items || [];
-        setDepartments(items.map((d: any) => ({ id: d.id, name: d.name })));
+        const items = response.data.items || [];
+        setDepartments(items.map((d: Department) => ({ id: d.id, name: d.name })));
       } else {
         setDepartments([]);
       }

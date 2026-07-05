@@ -31,6 +31,15 @@ import type { TestMethod, CreateTestMethodRequest, UpdateTestMethodRequest } fro
 import { useAppStore } from '@/store';
 import { apiLogger } from '@/utils/logger';
 
+interface LimsListResponse<T> {
+  items?: T[];
+  test_methods?: T[];
+}
+
+interface TestMethodForm extends CreateTestMethodRequest {
+  status?: string;
+}
+
 const LimsTestMethodPage: React.FC = () => {
   const navigate = useNavigate();
   const [methods, setMethods] = useState<TestMethod[]>([]);
@@ -47,21 +56,22 @@ const LimsTestMethodPage: React.FC = () => {
   const [pageSize, setPageSize] = useState(10);
   const addNotification = useAppStore((state) => state.addNotification);
 
-  const initialFormData: CreateTestMethodRequest = {
+  const initialFormData: TestMethodForm = {
     method_code: '',
     method_name: '',
     standard: '',
     description: '',
+    status: '草稿',
   };
 
-  const [formData, setFormData] = useState<CreateTestMethodRequest>(initialFormData);
+  const [formData, setFormData] = useState<TestMethodForm>(initialFormData);
 
   const loadMethods = useCallback(async () => {
     try {
       setLoading(true);
       const response = await limsApi.listTestMethods();
       if (response.success && response.data) {
-        const data = response.data as any;
+        const data = response.data as LimsListResponse<TestMethod> | TestMethod[];
         let rawMethods: TestMethod[] = [];
         if (Array.isArray(data)) {
           rawMethods = data;
@@ -74,7 +84,7 @@ const LimsTestMethodPage: React.FC = () => {
       } else {
         setMethods([]);
       }
-    } catch (err: any) {
+    } catch (err: unknown) {
       apiLogger.error('加载检测方法列表失败:', err);
       setMethods([]);
       addNotification({
@@ -264,7 +274,7 @@ const LimsTestMethodPage: React.FC = () => {
           });
         }
       }
-    } catch (err: any) {
+    } catch (err: unknown) {
       apiLogger.error('保存检测方法失败:', err);
       addNotification({
         title: '错误',
@@ -293,7 +303,7 @@ const LimsTestMethodPage: React.FC = () => {
           type: 'error',
         });
       }
-    } catch (err: any) {
+    } catch (err: unknown) {
       apiLogger.error('删除检测方法失败:', err);
       addNotification({
         title: '错误',
@@ -563,9 +573,9 @@ const LimsTestMethodPage: React.FC = () => {
             <FormControl fullWidth>
               <InputLabel>方法分类</InputLabel>
               <Select
-                value={(formData as any).category || ''}
+                value={formData.category_id || ''}
                 label='方法分类'
-                onChange={(e) => setFormData({ ...formData, category_id: e.target.value } as any)}
+                onChange={(e) => setFormData({ ...formData, category_id: e.target.value })}
               >
                 <MenuItem value=''>请选择分类</MenuItem>
                 <MenuItem value='理化分析'>理化分析</MenuItem>
@@ -584,9 +594,9 @@ const LimsTestMethodPage: React.FC = () => {
             <FormControl fullWidth>
               <InputLabel>状态</InputLabel>
               <Select
-                value={(formData as any).status || '草稿'}
+                value={formData.status || '草稿'}
                 label='状态'
-                onChange={(e) => setFormData({ ...formData, status: e.target.value } as any)}
+                onChange={(e) => setFormData({ ...formData, status: e.target.value })}
               >
                 <MenuItem value='草稿'>草稿</MenuItem>
                 <MenuItem value='已发布'>已发布</MenuItem>

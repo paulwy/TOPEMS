@@ -153,7 +153,7 @@ const LimsInstrumentPage: React.FC = () => {
 
   // 搜索和筛选状态
   const [searchValue, setSearchValue] = useState('');
-  const [filterValues, setFilterValues] = useState<Record<string, any>>({});
+  const [filterValues, setFilterValues] = useState<Record<string, unknown>>({});
   const [statusFilter, setStatusFilter] = useState('');
 
   const loadStatistics = useCallback(async () => {
@@ -167,17 +167,24 @@ const LimsInstrumentPage: React.FC = () => {
     }
   }, []);
 
+  interface LimsListResponse<T> {
+    items?: T[];
+    instruments?: T[];
+  }
+
   const loadInstruments = useCallback(async () => {
     try {
       const response = await limsApi.listInstruments();
       if (response.success && response.data) {
-        const instrumentData = response.data as any;
-        let rawInstruments: any[] = [];
+        const instrumentData = response.data as LimsListResponse<Instrument> | Instrument[];
+        let rawInstruments: Instrument[] = [];
 
         if (Array.isArray(instrumentData)) {
           rawInstruments = instrumentData;
         } else if (instrumentData.items && Array.isArray(instrumentData.items)) {
           rawInstruments = instrumentData.items;
+        } else if (instrumentData.instruments && Array.isArray(instrumentData.instruments)) {
+          rawInstruments = instrumentData.instruments;
         }
 
         setInstruments(rawInstruments);
@@ -208,7 +215,7 @@ const LimsInstrumentPage: React.FC = () => {
   }, [serviceStatuses.lims, loadAllData]);
 
   const getInstrumentTypeIcon = (type: string) => {
-    const iconMap: Record<string, any> = {
+    const iconMap: Record<string, React.ComponentType<{ size?: number }>> = {
       分析仪器: Beaker,
       测量仪器: Settings,
       实验设备: Wrench,
@@ -241,7 +248,7 @@ const LimsInstrumentPage: React.FC = () => {
     try {
       const response = await limsApi.listMaintenanceByInstrument(instrumentId);
       if (response.success && response.data) {
-        const data = response.data as any;
+        const data = response.data as LimsListResponse<MaintenanceRecord> | MaintenanceRecord[];
         setInstrumentMaintenanceRecords(Array.isArray(data) ? data : data.items || []);
       }
     } catch (err: unknown) {
@@ -566,10 +573,10 @@ const LimsInstrumentPage: React.FC = () => {
     // 搜索和筛选已经在 filteredInstruments 中自动处理
   }, []);
 
-  const handleFilterChange = useCallback((newFilters: Record<string, any>) => {
+  const handleFilterChange = useCallback((newFilters: Record<string, unknown>) => {
     setFilterValues(newFilters);
     if (newFilters.status !== undefined) {
-      setStatusFilter(newFilters.status);
+      setStatusFilter(String(newFilters.status || ''));
     }
   }, []);
 

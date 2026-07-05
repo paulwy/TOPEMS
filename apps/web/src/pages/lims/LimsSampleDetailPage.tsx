@@ -63,6 +63,17 @@ interface SampleTestRecord {
   tested_at: string;
 }
 
+interface RawRecord extends Partial<InspectionRecord> {
+  step_name?: string;
+  created_at?: string;
+}
+
+interface LimsListResponse<T> {
+  items?: T[];
+  tasks?: T[];
+  records?: T[];
+}
+
 const LimsSampleDetailPage: React.FC = () => {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
@@ -103,7 +114,7 @@ const LimsSampleDetailPage: React.FC = () => {
       }
 
       if (tasksRes.success && tasksRes.data) {
-        const tasksData = tasksRes.data as any;
+        const tasksData = tasksRes.data as LimsListResponse<InspectionTask> | InspectionTask[];
         const tasksArray = Array.isArray(tasksData)
           ? tasksData
           : tasksData.items || tasksData.tasks || [];
@@ -112,11 +123,11 @@ const LimsSampleDetailPage: React.FC = () => {
         for (const task of tasksArray) {
           const recordRes = await limsApi.listRecordsByTask(task.id);
           if (recordRes.success && recordRes.data) {
-            const recordData = recordRes.data as any;
-            const recordArray = Array.isArray(recordData) ? recordData : recordData.records || [];
-            const formattedRecords = recordArray.map((r: any) => ({
-              id: r.id,
-              step_name: r.step_name || r.step_id,
+            const recordData = recordRes.data as LimsListResponse<RawRecord> | RawRecord[];
+            const recordArray = Array.isArray(recordData) ? recordData : recordData.records || recordData.items || [];
+            const formattedRecords = recordArray.map((r: RawRecord) => ({
+              id: r.id || '',
+              step_name: r.step_name || r.step_id || '',
               inspector: r.inspector || '-',
               result: r.result || '-',
               conclusion: r.conclusion || '-',

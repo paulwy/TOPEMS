@@ -16,7 +16,7 @@ import { PageContainer } from '@/components/common';
 import React, { useEffect, useState, useMemo, useCallback } from 'react';
 import { ClipboardList, ChevronRight, FileText, Play, Clock, CheckCircle, X } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
-import { limsApi, type InspectionProcess, type LimsStatistics } from '@/api/lims';
+import { limsApi, type InspectionProcess, type LimsStatistics, type ListParams } from '@/api/lims';
 import { useAppStore } from '@/store';
 import {
   ListPageTemplate,
@@ -160,9 +160,15 @@ const LimsProcessPage: React.FC = () => {
     }
   }, []);
 
+  interface ProcessListResponse {
+    items?: InspectionProcess[];
+    processes?: InspectionProcess[];
+    total?: number;
+  }
+
   const loadProcesses = async () => {
     try {
-      const params: any = {
+      const params: ListParams = {
         page: currentPage + 1,
         pagesize: pageSize,
       };
@@ -175,7 +181,7 @@ const LimsProcessPage: React.FC = () => {
 
       const response = await limsApi.processes.list(params);
       if (response.success && response.data) {
-        const data = response.data as any;
+        const data = response.data as ProcessListResponse;
         const items = data.items || data.processes || [];
         const total = data.total || items.length;
         setProcesses(items);
@@ -205,9 +211,9 @@ const LimsProcessPage: React.FC = () => {
     setCurrentPage(0);
   };
 
-  const handleFilterChange = (filters: Record<string, any>) => {
+  const handleFilterChange = (filters: Record<string, unknown>) => {
     if (filters.status !== undefined) {
-      setFilterStatus(filters.status);
+      setFilterStatus(String(filters.status || ''));
       setCurrentPage(0);
     }
   };
@@ -229,7 +235,7 @@ const LimsProcessPage: React.FC = () => {
         type: 'select',
         options: STATUS_OPTIONS,
         value: filterStatus,
-        onChange: (value: any) => setFilterStatus(value),
+        onChange: (value: string) => setFilterStatus(value),
       },
     ],
     [filterStatus]

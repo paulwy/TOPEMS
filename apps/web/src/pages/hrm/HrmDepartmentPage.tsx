@@ -34,6 +34,7 @@ import {
   type Employee,
   type Company,
   type PaginatedResult,
+  type ListParams,
 } from '@/api/hrm';
 import { useAppStore } from '../../store';
 import { AIHelperButton, AICodeGenerator, AITextOptimizer, AIFormValidator } from '@/components/ai';
@@ -93,7 +94,7 @@ const HrmDepartmentPage: React.FC = () => {
 
   // ============ 数据获取 ============
   const fetchDepartments = useCallback(
-    async (params?: any) => {
+    async (params?: ListParams) => {
       setLoading(true);
       try {
         const response = await departmentApi.list(params);
@@ -702,7 +703,7 @@ const HrmDepartmentPage: React.FC = () => {
     [selectedDepartment, formData, addNotification, fetchDepartments]
   );
 
-  const handleInputChange = useCallback((field: string, value: any) => {
+  const handleInputChange = useCallback((field: string, value: unknown) => {
     setFormData((prev) => ({ ...prev, [field]: value }));
   }, []);
 
@@ -945,7 +946,7 @@ interface DepartmentFormDialogProps {
   mode: 'create' | 'edit';
   department: Department | null;
   formData: Partial<Department>;
-  onChange: (field: string, value: any) => void;
+  onChange: (field: string, value: unknown) => void;
   onSubmit: (e: React.FormEvent) => void;
   companies: Company[];
   departments: Department[];

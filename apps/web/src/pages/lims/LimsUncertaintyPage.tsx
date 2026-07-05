@@ -35,9 +35,23 @@ import type {
 import { useAppStore } from '@/store';
 import { apiLogger } from '@/utils/logger';
 
+interface LimsListResponse<T> {
+  items?: T[];
+  projects?: T[];
+}
+
+interface UncertaintyProjectWithCount extends UncertaintyProject {
+  sources_count?: number;
+}
+
+interface UncertaintyProjectForm extends CreateUncertaintyProjectRequest {
+  project_no?: string;
+  status?: string;
+}
+
 const LimsUncertaintyPage: React.FC = () => {
   const navigate = useNavigate();
-  const [projects, setProjects] = useState<UncertaintyProject[]>([]);
+  const [projects, setProjects] = useState<UncertaintyProjectWithCount[]>([]);
   const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState('');
   const [statusFilter, setStatusFilter] = useState('all');
@@ -50,20 +64,21 @@ const LimsUncertaintyPage: React.FC = () => {
   const [pageSize, setPageSize] = useState(10);
   const addNotification = useAppStore((state) => state.addNotification);
 
-  const initialFormData: CreateUncertaintyProjectRequest = {
+  const initialFormData: UncertaintyProjectForm = {
     project_name: '',
     method_name: '',
+    status: '草稿',
   };
 
-  const [formData, setFormData] = useState<CreateUncertaintyProjectRequest>(initialFormData);
+  const [formData, setFormData] = useState<UncertaintyProjectForm>(initialFormData);
 
   const loadProjects = useCallback(async () => {
     try {
       setLoading(true);
       const response = await limsApi.listUncertaintyProjects();
       if (response.success && response.data) {
-        const data = response.data as any;
-        let rawProjects: UncertaintyProject[] = [];
+        const data = response.data as LimsListResponse<UncertaintyProjectWithCount> | UncertaintyProjectWithCount[];
+        let rawProjects: UncertaintyProjectWithCount[] = [];
         if (Array.isArray(data)) {
           rawProjects = data;
         } else if (data.items && Array.isArray(data.items)) {
@@ -75,7 +90,7 @@ const LimsUncertaintyPage: React.FC = () => {
       } else {
         setProjects([]);
       }
-    } catch (err: any) {
+    } catch (err: unknown) {
       apiLogger.error('加载不确定度项目列表失败:', err);
       setProjects([]);
       addNotification({
@@ -112,7 +127,7 @@ const LimsUncertaintyPage: React.FC = () => {
     );
   };
 
-  const columns: ColumnDef<UncertaintyProject>[] = [
+  const columns: ColumnDef<UncertaintyProjectWithCount>[] = [
     { id: 'project_no', label: '项目编号', sortable: true },
     { id: 'project_name', label: '项目名称', sortable: true },
     {
@@ -123,7 +138,7 @@ const LimsUncertaintyPage: React.FC = () => {
     {
       id: 'sources_count',
       label: '不确定度来源数',
-      render: (row) => (row as any).sources_count || '-',
+      render: (row) => row.sources_count || '-',
     },
     {
       id: 'combined_uncertainty',
@@ -142,7 +157,7 @@ const LimsUncertaintyPage: React.FC = () => {
     },
   ];
 
-  const rowActions: RowAction<UncertaintyProject>[] = [
+  const rowActions: RowAction<UncertaintyProjectWithCount>[] = [
     {
       label: '查看',
       icon: <Eye style={{ width: 16, height: 16 }} />,
@@ -268,7 +283,7 @@ const LimsUncertaintyPage: React.FC = () => {
           });
         }
       }
-    } catch (err: any) {
+    } catch (err: unknown) {
       apiLogger.error('保存不确定度项目失败:', err);
       addNotification({
         title: '错误',
@@ -526,8 +541,8 @@ const LimsUncertaintyPage: React.FC = () => {
               <TextField
                 fullWidth
                 label='项目编号 *'
-                value={(formData as any).project_no || ''}
-                onChange={(e) => setFormData({ ...formData, project_no: e.target.value } as any)}
+                value={formData.project_no || ''}
+                onChange={(e) => setFormData({ ...formData, project_no: e.target.value })}
                 placeholder='请输入项目编号'
                 disabled={isEditing}
               />
@@ -544,7 +559,7 @@ const LimsUncertaintyPage: React.FC = () => {
               <Select
                 value={formData.method_name || ''}
                 label='检测方法'
-                onChange={(e) => setFormData({ ...formData, method_name: e.target.value } as any)}
+                onChange={(e) => setFormData({ ...formData, method_name: e.target.value })}
               >
                 <MenuItem value=''>请选择检测方法</MenuItem>
                 <MenuItem value='GB/T 5009.11-2014'>GB/T 5009.11-2014</MenuItem>
@@ -565,9 +580,9 @@ const LimsUncertaintyPage: React.FC = () => {
             <FormControl fullWidth>
               <InputLabel>状态</InputLabel>
               <Select
-                value={(formData as any).status || '草稿'}
+                value={formData.status || '草稿'}
                 label='状态'
-                onChange={(e) => setFormData({ ...formData, status: e.target.value } as any)}
+                onChange={(e) => setFormData({ ...formData, status: e.target.value })}
               >
                 <MenuItem value='草稿'>草稿</MenuItem>
                 <MenuItem value='计算中'>计算中</MenuItem>

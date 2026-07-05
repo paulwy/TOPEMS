@@ -43,6 +43,7 @@ import {
   type Department,
   type Employee,
   type PaginatedResult,
+  type ListParams,
 } from '@/api/hrm';
 import { useAppStore } from '../../store';
 import {
@@ -91,7 +92,7 @@ const HrmCompanyPage: React.FC = () => {
   };
 
   const fetchCompanies = useCallback(
-    async (params?: any) => {
+    async (params?: ListParams) => {
       setLoading(true);
       try {
         const response = await companyApi.list(params);

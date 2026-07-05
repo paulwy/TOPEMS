@@ -53,6 +53,18 @@ import { useAppStore } from '@/store';
 import { apiLogger } from '@/utils/logger';
 import { GRADIENTS } from '@/constants/colors';
 
+interface RawTask extends Partial<InspectionTask> {
+  status?: string;
+}
+
+interface LimsListResponse<T> {
+  items?: T[];
+  samples?: T[];
+  processes?: T[];
+  tasks?: T[];
+  records?: T[];
+}
+
 const InspectionTaskPage: React.FC = () => {
   const navigate = useNavigate();
   const [samples, setSamples] = useState<Sample[]>([]);
@@ -92,12 +104,14 @@ const InspectionTaskPage: React.FC = () => {
     try {
       const response = await limsApi.listSamples();
       if (response.success && response.data) {
-        const sampleData = response.data as any;
-        let rawSamples: any[] = [];
+        const sampleData = response.data as LimsListResponse<Sample> | Sample[];
+        let rawSamples: Sample[] = [];
         if (Array.isArray(sampleData)) {
           rawSamples = sampleData;
         } else if (sampleData.samples && Array.isArray(sampleData.samples)) {
           rawSamples = sampleData.samples;
+        } else if (sampleData.items && Array.isArray(sampleData.items)) {
+          rawSamples = sampleData.items;
         }
         setSamples(rawSamples);
       } else {
@@ -113,12 +127,14 @@ const InspectionTaskPage: React.FC = () => {
     try {
       const response = await limsApi.listProcesses();
       if (response.success && response.data) {
-        const processData = response.data as any;
-        let rawProcesses: any[] = [];
+        const processData = response.data as LimsListResponse<InspectionProcess> | InspectionProcess[];
+        let rawProcesses: InspectionProcess[] = [];
         if (Array.isArray(processData)) {
           rawProcesses = processData;
         } else if (processData.processes && Array.isArray(processData.processes)) {
           rawProcesses = processData.processes;
+        } else if (processData.items && Array.isArray(processData.items)) {
+          rawProcesses = processData.items;
         }
         setProcesses(rawProcesses);
       } else {
@@ -146,18 +162,20 @@ const InspectionTaskPage: React.FC = () => {
     try {
       const response = await limsApi.listTasks();
       if (response.success && response.data) {
-        const taskData = response.data as any;
-        let rawTasks: any[] = [];
+        const taskData = response.data as LimsListResponse<RawTask> | RawTask[];
+        let rawTasks: RawTask[] = [];
         if (Array.isArray(taskData)) {
           rawTasks = taskData;
         } else if (taskData.tasks && Array.isArray(taskData.tasks)) {
           rawTasks = taskData.tasks;
+        } else if (taskData.items && Array.isArray(taskData.items)) {
+          rawTasks = taskData.items;
         }
-        const adaptedTasks = rawTasks.map((t: any) => ({
+        const adaptedTasks = rawTasks.map((t: RawTask) => ({
           ...t,
-          status: mapStatusToChinese(t.status),
+          status: mapStatusToChinese(t.status || ''),
         }));
-        setTasks(adaptedTasks);
+        setTasks(adaptedTasks as InspectionTask[]);
       } else {
         setTasks([]);
       }
@@ -183,12 +201,14 @@ const InspectionTaskPage: React.FC = () => {
     try {
       const response = await limsApi.listRecordsByTask(taskId);
       if (response.success && response.data) {
-        const recordData = response.data as any;
-        let rawRecords: any[] = [];
+        const recordData = response.data as LimsListResponse<InspectionRecord> | InspectionRecord[];
+        let rawRecords: InspectionRecord[] = [];
         if (Array.isArray(recordData)) {
           rawRecords = recordData;
         } else if (recordData.records && Array.isArray(recordData.records)) {
           rawRecords = recordData.records;
+        } else if (recordData.items && Array.isArray(recordData.items)) {
+          rawRecords = recordData.items;
         }
         setSelectedTaskRecords(rawRecords);
       } else {
