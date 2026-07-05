@@ -11,6 +11,15 @@ pub struct StandardQuery {
     pub page_size: Option<i64>,
     pub category: Option<String>,
     pub status: Option<String>,
+    pub search: Option<String>,
+}
+
+#[derive(Debug, Serialize)]
+pub struct ListStandardsResponse {
+    pub standards: Vec<QualityStandard>,
+    pub total: i64,
+    pub page: i64,
+    pub page_size: i64,
 }
 
 #[derive(Debug, Serialize, FromRow)]
@@ -69,28 +78,92 @@ pub struct StandardRevision {
 pub async fn list_standards(
     State(state): State<crate::AppState>,
     axum::extract::Query(query): axum::extract::Query<StandardQuery>,
-) -> Json<ApiResponse<Vec<QualityStandard>>> {
+) -> Json<ApiResponse<ListStandardsResponse>> {
     let page = query.page.unwrap_or(1);
     let page_size = query.page_size.unwrap_or(10);
     let offset = (page - 1) * page_size;
 
-    let standards = match (query.category.as_ref(), query.status.as_ref()) {
-        (Some(cat), Some(st)) => sqlx::query_as::<_, QualityStandard>(r#"SELECT id, code, name, category, level, specification, description, version, status, created_by, created_at::TEXT, updated_at::TEXT FROM qa_standards WHERE category = $1 AND status = $2 ORDER BY created_at DESC LIMIT $3 OFFSET $4"#).bind(cat).bind(st).bind(page_size).bind(offset)
-        .fetch_all(&state.pool)
-        .await,
-        (Some(cat), None) => sqlx::query_as::<_, QualityStandard>(r#"SELECT id, code, name, category, level, specification, description, version, status, created_by, created_at::TEXT, updated_at::TEXT FROM qa_standards WHERE category = $1 ORDER BY created_at DESC LIMIT $2 OFFSET $3"#).bind(cat).bind(page_size).bind(offset)
-        .fetch_all(&state.pool)
-        .await,
-        (None, Some(st)) => sqlx::query_as::<_, QualityStandard>(r#"SELECT id, code, name, category, level, specification, description, version, status, created_by, created_at::TEXT, updated_at::TEXT FROM qa_standards WHERE status = $1 ORDER BY created_at DESC LIMIT $2 OFFSET $3"#).bind(st).bind(page_size).bind(offset)
-        .fetch_all(&state.pool)
-        .await,
-        (None, None) => sqlx::query_as::<_, QualityStandard>(r#"SELECT id, code, name, category, level, specification, description, version, status, created_by, created_at::TEXT, updated_at::TEXT FROM qa_standards ORDER BY created_at DESC LIMIT $1 OFFSET $2"#).bind(page_size).bind(offset)
-        .fetch_all(&state.pool)
-        .await,
+    let mut params: Vec<serde_json::Value> = Vec::new();
+    let mut where_clause = String::new();
+
+    if let Some(category) = &query.category {
+        where_clause.push_str(" WHERE category = $1");
+        params.push(serde_json::Value::String(category.clone()));
+    }
+
+    if let Some(status) = &query.status {
+        if where_clause.is_empty() {
+            where_clause.push_str(" WHERE status = $1");
+            params.push(serde_json::Value::String(status.clone()));
+        } else {
+            where_clause.push_str(&format!(" AND status = ${}", params.len() + 1));
+            params.push(serde_json::Value::String(status.clone()));
+        }
+    }
+
+    if let Some(search) = &query.search {
+        let pattern = format!("%{}%", search);
+        if where_clause.is_empty() {
+            where_clause
+                .push_str(" WHERE (code ILIKE $1 OR name ILIKE $1 OR description ILIKE $1)");
+            params.push(serde_json::Value::String(pattern));
+        } else {
+            where_clause.push_str(&format!(
+                " AND (code ILIKE ${} OR name ILIKE ${} OR description ILIKE ${})",
+                params.len() + 1,
+                params.len() + 1,
+                params.len() + 1
+            ));
+            params.push(serde_json::Value::String(pattern));
+        }
+    }
+
+    let count_sql = format!("SELECT COUNT(*) as total FROM qa_standards{}", where_clause);
+
+    let mut count_query = sqlx::query_scalar(&count_sql);
+    for p in &params {
+        count_query = count_query.bind(p.clone());
+    }
+
+    let total: Option<i64> = match count_query.fetch_one(&state.pool).await {
+        Ok(c) => c,
+        Err(e) => {
+            tracing::error!("Failed to count standards: {}", e);
+            return Json(ApiResponse::error(500, "获取质量标准列表失败"));
+        }
     };
 
-    match standards {
-        Ok(data) => Json(ApiResponse::success(data, "获取质量标准列表成功")),
+    let fetch_sql = format!(
+        r#"
+        SELECT id, code, name, category, level, specification,
+            description, version, status, created_by,
+            created_at::TEXT, updated_at::TEXT
+        FROM qa_standards
+        {}
+        ORDER BY created_at DESC
+        LIMIT ${} OFFSET ${}
+        "#,
+        where_clause,
+        params.len() + 1,
+        params.len() + 2
+    );
+
+    let mut fetch_query = sqlx::query_as::<_, QualityStandard>(&fetch_sql);
+    for p in &params {
+        fetch_query = fetch_query.bind(p.clone());
+    }
+    fetch_query = fetch_query.bind(page_size).bind(offset);
+
+    match fetch_query.fetch_all(&state.pool).await {
+        Ok(data) => Json(ApiResponse::success(
+            ListStandardsResponse {
+                standards: data,
+                total: total.unwrap_or(0),
+                page,
+                page_size,
+            },
+            "获取质量标准列表成功",
+        )),
         Err(e) => {
             tracing::error!("Failed to fetch standards: {}", e);
             Json(ApiResponse::error(500, "获取质量标准列表失败"))
