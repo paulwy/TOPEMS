@@ -1,7 +1,7 @@
 import React from 'react';
 import {Box, Typography, Button, useTheme} from '@mui/material';
 import { Building2, ChevronRight } from 'lucide-react';
-import { type Department } from '@/api/hrm';
+import { type Department, type Employee } from '@/api/hrm';
 import type { TreeNode } from '../common/TreeView';
 import TreeView from '../common/TreeView';
 
@@ -9,7 +9,7 @@ interface DepartmentSelectorProps {
   departments: Department[];
   selectedId: string | undefined;
   onSelect: (node: TreeNode) => void;
-  employees?: any[];
+  employees?: Employee[];
 }
 
 export const DepartmentSelector: React.FC<DepartmentSelectorProps> = ({

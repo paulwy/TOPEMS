@@ -31,9 +31,18 @@ import type { PtPlan, CreatePtPlanRequest, UpdatePtPlanRequest } from '@/api/lim
 import { useAppStore } from '@/store';
 import { apiLogger } from '@/utils/logger';
 
+interface LimsListResponse<T> {
+  items?: T[];
+  plans?: T[];
+}
+
+interface PtPlanWithCount extends PtPlan {
+  samples_count?: number;
+}
+
 const LimsProficiencyTestingPage: React.FC = () => {
   const navigate = useNavigate();
-  const [plans, setPlans] = useState<PtPlan[]>([]);
+  const [plans, setPlans] = useState<PtPlanWithCount[]>([]);
   const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState('');
   const [statusFilter, setStatusFilter] = useState('all');
@@ -59,8 +68,8 @@ const LimsProficiencyTestingPage: React.FC = () => {
       setLoading(true);
       const response = await limsApi.listPtPlans();
       if (response.success && response.data) {
-        const data = response.data as any;
-        let rawPlans: PtPlan[] = [];
+        const data = response.data as LimsListResponse<PtPlanWithCount> | PtPlanWithCount[];
+        let rawPlans: PtPlanWithCount[] = [];
         if (Array.isArray(data)) {
           rawPlans = data;
         } else if (data.items && Array.isArray(data.items)) {
@@ -72,7 +81,7 @@ const LimsProficiencyTestingPage: React.FC = () => {
       } else {
         setPlans([]);
       }
-    } catch (err: any) {
+    } catch (err: unknown) {
       apiLogger.error('加载能力验证计划列表失败:', err);
       setPlans([]);
       addNotification({
@@ -110,7 +119,7 @@ const LimsProficiencyTestingPage: React.FC = () => {
     );
   };
 
-  const columns: ColumnDef<PtPlan>[] = [
+  const columns: ColumnDef<PtPlanWithCount>[] = [
     { id: 'plan_no', label: '计划编号', sortable: true },
     { id: 'plan_name', label: '计划名称', sortable: true },
     {
@@ -129,7 +138,7 @@ const LimsProficiencyTestingPage: React.FC = () => {
     {
       id: 'samples_count',
       label: '样品数',
-      render: (row) => (row as any).samples_count || '-',
+      render: (row) => row.samples_count || '-',
     },
     {
       id: 'registration_date',
@@ -145,7 +154,7 @@ const LimsProficiencyTestingPage: React.FC = () => {
     },
   ];
 
-  const rowActions: RowAction<PtPlan>[] = [
+  const rowActions: RowAction<PtPlanWithCount>[] = [
     {
       label: '查看',
       icon: <Eye style={{ width: 16, height: 16 }} />,
@@ -292,7 +301,7 @@ const LimsProficiencyTestingPage: React.FC = () => {
           });
         }
       }
-    } catch (err: any) {
+    } catch (err: unknown) {
       apiLogger.error('保存能力验证计划失败:', err);
       addNotification({
         title: '错误',
@@ -556,9 +565,9 @@ const LimsProficiencyTestingPage: React.FC = () => {
             <FormControl fullWidth>
               <InputLabel>验证周期</InputLabel>
               <Select
-                value={(formData as any).cycle || formData.plan_year || ''}
+                value={formData.plan_year || ''}
                 label='验证周期'
-                onChange={(e) => setFormData({ ...formData, plan_year: e.target.value } as any)}
+                onChange={(e) => setFormData({ ...formData, plan_year: e.target.value })}
               >
                 <MenuItem value=''>请选择周期</MenuItem>
                 <MenuItem value='月度'>月度</MenuItem>

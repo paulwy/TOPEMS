@@ -48,6 +48,24 @@ import { limsApi } from '@/api/lims';
 import { useAppStore } from '@/store';
 import { GRADIENTS } from '@/constants/colors';
 import { PageContainer } from '@/components/common';
+
+interface RawSample extends Partial<Sample> {
+  received_date?: string;
+  created_at?: string;
+}
+
+interface RawTask extends Partial<InspectionTask> {
+  status?: string;
+  process_name?: string;
+}
+
+interface LimsListResponse<T> {
+  items?: T[];
+  samples?: T[];
+  processes?: T[];
+  tasks?: T[];
+  records?: T[];
+}
 import { CardListTemplate } from '@/components/templates/CardListTemplate';
 import { apiLogger } from '@/utils/logger';
 
@@ -169,10 +187,16 @@ const LimsTaskPage: React.FC = () => {
     }
   };
 
-  const adaptSample = (s: any): Sample => {
+  const adaptSample = (s: RawSample): Sample => {
     return {
       ...s,
-      received_date: s.received_date || s.created_at,
+      id: s.id || '',
+      name: s.name || '',
+      description: s.description || '',
+      status: s.status || '',
+      received_date: s.received_date || s.created_at || '',
+      created_at: s.created_at || '',
+      updated_at: s.updated_at || '',
     };
   };
 
@@ -180,13 +204,15 @@ const LimsTaskPage: React.FC = () => {
     try {
       const response = await limsApi.listSamples();
       if (response.success && response.data) {
-        const sampleData = response.data as any;
-        let rawSamples: any[] = [];
+        const sampleData = response.data as LimsListResponse<RawSample> | RawSample[];
+        let rawSamples: RawSample[] = [];
 
         if (Array.isArray(sampleData)) {
           rawSamples = sampleData;
         } else if (sampleData.samples && Array.isArray(sampleData.samples)) {
           rawSamples = sampleData.samples;
+        } else if (sampleData.items && Array.isArray(sampleData.items)) {
+          rawSamples = sampleData.items;
         }
 
         const adaptedSamples = rawSamples.map((s) => adaptSample(s));
@@ -204,13 +230,15 @@ const LimsTaskPage: React.FC = () => {
     try {
       const response = await limsApi.listProcesses();
       if (response.success && response.data) {
-        const processData = response.data as any;
-        let rawProcesses: any[] = [];
+        const processData = response.data as LimsListResponse<InspectionProcess> | InspectionProcess[];
+        let rawProcesses: InspectionProcess[] = [];
 
         if (Array.isArray(processData)) {
           rawProcesses = processData;
         } else if (processData.processes && Array.isArray(processData.processes)) {
           rawProcesses = processData.processes;
+        } else if (processData.items && Array.isArray(processData.items)) {
+          rawProcesses = processData.items;
         }
 
         setProcesses(rawProcesses);
@@ -234,10 +262,19 @@ const LimsTaskPage: React.FC = () => {
     return statusMap[status] || status;
   };
 
-  const adaptTask = (t: any): InspectionTask => {
+  const adaptTask = (t: RawTask): InspectionTask => {
     return {
-      ...t,
-      status: mapStatusToChinese(t.status),
+      id: t.id || '',
+      sample_id: t.sample_id || '',
+      sample_name: t.sample_name || '',
+      process_id: t.process_id || '',
+      current_step: t.current_step || 0,
+      status: mapStatusToChinese(t.status || ''),
+      inspector: t.inspector || '',
+      started_at: t.started_at || '',
+      completed_at: t.completed_at,
+      created_at: t.created_at || '',
+      updated_at: t.updated_at || '',
     };
   };
 
@@ -245,13 +282,15 @@ const LimsTaskPage: React.FC = () => {
     try {
       const response = await limsApi.listTasks();
       if (response.success && response.data) {
-        const taskData = response.data as any;
-        let rawTasks: any[] = [];
+        const taskData = response.data as LimsListResponse<RawTask> | RawTask[];
+        let rawTasks: RawTask[] = [];
 
         if (Array.isArray(taskData)) {
           rawTasks = taskData;
         } else if (taskData.tasks && Array.isArray(taskData.tasks)) {
           rawTasks = taskData.tasks;
+        } else if (taskData.items && Array.isArray(taskData.items)) {
+          rawTasks = taskData.items;
         }
 
         const adaptedTasks = rawTasks.map((t) => adaptTask(t));
@@ -269,15 +308,15 @@ const LimsTaskPage: React.FC = () => {
     try {
       const response = await limsApi.listRecordsByTask(taskId);
       if (response.success && response.data) {
-        const recordData = response.data as any;
-        let rawRecords: any[] = [];
+        const recordData = response.data as LimsListResponse<InspectionRecord> | InspectionRecord[];
+        let rawRecords: InspectionRecord[] = [];
 
         if (Array.isArray(recordData)) {
           rawRecords = recordData;
         } else if (recordData.records && Array.isArray(recordData.records)) {
           rawRecords = recordData.records;
-        } else {
-          rawRecords = [];
+        } else if (recordData.items && Array.isArray(recordData.items)) {
+          rawRecords = recordData.items;
         }
 
         setSelectedTaskRecords(rawRecords);
@@ -465,12 +504,12 @@ const LimsTaskPage: React.FC = () => {
       {
         field: 'process_id',
         label: '检验流程',
-        format: (_: any, item: unknown) => getProcessName((item as InspectionTask).process_id),
+        format: (_: unknown, item: unknown) => getProcessName((item as InspectionTask).process_id),
       },
       {
         field: 'current_step',
         label: '当前步骤',
-        format: (_: any, item: unknown) => getCurrentStepName(item as InspectionTask),
+        format: (_: unknown, item: unknown) => getCurrentStepName(item as InspectionTask),
       },
       {
         field: 'inspector',

@@ -53,8 +53,8 @@ export const EmployeeForm: React.FC<EmployeeFormProps> = ({
     setShowAIDataCompleter(false);
   };
 
-  const handleApplyValidationSuggestions = (suggestions: any[]) => {
-    const updates: Record<string, any> = {};
+  const handleApplyValidationSuggestions = (suggestions: { field: string; value?: unknown }[]) => {
+    const updates: Record<string, unknown> = {};
     suggestions.forEach((s) => {
       updates[s.field] = s.value;
     });

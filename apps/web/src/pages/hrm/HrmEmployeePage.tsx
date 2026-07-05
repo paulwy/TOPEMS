@@ -76,6 +76,29 @@ import { PageContainer } from '@/components/common/PageContainerV2';
 import type { CompletionItem as AICompletionItem } from '@/types/ai';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 
+interface TreeNode {
+  id: string;
+  name: string;
+  type: 'department' | 'employee';
+  children?: TreeNode[];
+  [key: string]: unknown;
+}
+
+interface EmployeeListParams {
+  page?: number;
+  pagesize?: number;
+  search?: string;
+  department_id?: string;
+  status?: string;
+  [key: string]: string | number | undefined;
+}
+
+interface ValidationSuggestion {
+  field: string;
+  value?: string | number;
+  message?: string;
+}
+
 /**
  * TODO: Phase 7-4 -- 虚拟滚动优化
  *
@@ -167,12 +190,12 @@ const HrmEmployeePage: React.FC = () => {
 
   // 获取员工列表
   const fetchEmployees = useCallback(
-    async (params?: any) => {
+    async (params?: EmployeeListParams) => {
       setLoading(true);
       try {
         const response = await employeeApi.list(params);
         if (response.code === 200 && response.data) {
-          const responseData = response.data as any;
+          const responseData = response.data;
           setData({
             items: responseData.items || [],
             total: responseData.total || 0,
@@ -201,8 +224,7 @@ const HrmEmployeePage: React.FC = () => {
     try {
       const response = await departmentApi.list({ pagesize: 100 });
       if (response.code === 200 && response.data) {
-        const responseData = response.data as any;
-        const depts = responseData.items || [];
+        const depts = response.data.items || [];
         setDepartments(depts);
       }
     } catch (error: unknown) {
@@ -215,8 +237,7 @@ const HrmEmployeePage: React.FC = () => {
     try {
       const response = await companyApi.list({ pagesize: 100 });
       if (response.code === 200 && response.data) {
-        const responseData = response.data as any;
-        setCompanies(responseData.items || []);
+        setCompanies(response.data.items || []);
       }
     } catch (error: unknown) {
       apiLogger.error('Failed to fetch companies:', error);
@@ -231,9 +252,9 @@ const HrmEmployeePage: React.FC = () => {
   }, [fetchEmployees, fetchDepartments, fetchCompanies]);
 
   // 构建树形数据
-  const buildTree = useCallback((depts: Department[], emps: Employee[]): any[] => {
-    const deptMap = new Map<string, any>();
-    const rootNodes: any[] = [];
+  const buildTree = useCallback((depts: Department[], emps: Employee[]): TreeNode[] => {
+    const deptMap = new Map<string, TreeNode>();
+    const rootNodes: TreeNode[] = [];
 
     depts.forEach((dept) => {
       deptMap.set(dept.id, {
@@ -255,7 +276,7 @@ const HrmEmployeePage: React.FC = () => {
     });
 
     emps.forEach((emp) => {
-      const empNode: any = {
+      const empNode: TreeNode = {
         id: emp.id,
         name: emp.name,
         type: 'employee',
@@ -278,7 +299,7 @@ const HrmEmployeePage: React.FC = () => {
 
   // 搜索处理
   const handleSearch = useCallback(() => {
-    const params: any = { search: searchText };
+    const params: EmployeeListParams = { search: searchText };
     if (departmentFilter && departmentFilter !== 'all') params.department_id = departmentFilter;
     if (statusFilter && statusFilter !== 'all') params.status = statusFilter;
 
@@ -290,8 +311,7 @@ const HrmEmployeePage: React.FC = () => {
         .list({ ...params, pagesize: 100 })
         .then((response) => {
           if (response.code === 200 && response.data) {
-            const responseData = response.data as any;
-            const emps = responseData.items || [];
+            const emps = response.data.items || [];
             setFilteredEmployees(emps);
             const tree = buildTree(departments, emps);
             setTreeData(tree);
@@ -457,7 +477,7 @@ const HrmEmployeePage: React.FC = () => {
   );
 
   // 输入变化
-  const handleInputChange = useCallback((field: string, value: any) => {
+  const handleInputChange = useCallback((field: string, value: unknown) => {
     setFormData((prev) => ({ ...prev, [field]: value }));
   }, []);
 
@@ -476,7 +496,7 @@ const HrmEmployeePage: React.FC = () => {
   }, []);
 
   const handleApplyCompletion = useCallback((completions: Record<string, AICompletionItem>) => {
-    const updates: Record<string, any> = {};
+    const updates: Record<string, unknown> = {};
     Object.entries(completions).forEach(([field, item]) => {
       updates[field] = item.value;
     });
@@ -488,8 +508,8 @@ const HrmEmployeePage: React.FC = () => {
     setShowAIFormValidator(true);
   }, []);
 
-  const handleApplyValidationSuggestions = useCallback((suggestions: any[]) => {
-    const updates: Record<string, any> = {};
+  const handleApplyValidationSuggestions = useCallback((suggestions: ValidationSuggestion[]) => {
+    const updates: Record<string, unknown> = {};
     suggestions.forEach((s) => {
       updates[s.field] = s.value;
     });
@@ -1112,11 +1132,11 @@ const HrmEmployeePage: React.FC = () => {
               <TreeViewComponent
                 data={treeData}
                 selectedId={selectedDeptId}
-                onSelect={(node: any) => {
+                onSelect={(node: TreeNode) => {
                   if (node.type === 'department') {
                     setSelectedDeptId(node.id);
                   } else {
-                    handleView(node.data);
+                    handleView(node.data as Employee);
                   }
                 }}
               />
@@ -1342,7 +1362,7 @@ interface EmployeeFormDialogProps {
   mode: 'create' | 'edit';
   employee: Employee | null;
   formData: Partial<Employee>;
-  onChange: (field: string, value: any) => void;
+  onChange: (field: string, value: unknown) => void;
   onSubmit: (e: React.FormEvent) => void;
   companies: Company[];
   departments: Department[];
@@ -1551,9 +1571,9 @@ const EmployeeFormDialog: React.FC<EmployeeFormDialogProps> = ({
 // ============ 简单树形组件 ============
 
 interface TreeViewComponentProps {
-  data: any[];
+  data: TreeNode[];
   selectedId?: string;
-  onSelect: (node: { id: string; name: string; children?: any[] }) => void;
+  onSelect: (node: TreeNode) => void;
 }
 
 const TreeViewComponent: React.FC<TreeViewComponentProps> = ({ data, selectedId, onSelect }) => {
@@ -1568,7 +1588,7 @@ const TreeViewComponent: React.FC<TreeViewComponentProps> = ({ data, selectedId,
     });
   };
 
-  const renderNode = (node: any, level: number = 0) => {
+  const renderNode = (node: TreeNode, level: number = 0) => {
     const hasChildren = node.children && node.children.length > 0;
     const isExpanded = expanded.has(node.id);
     const isSelected = selectedId === node.id;
@@ -1629,7 +1649,7 @@ const TreeViewComponent: React.FC<TreeViewComponentProps> = ({ data, selectedId,
           )}
         </Box>
         {hasChildren && isExpanded && (
-          <Box>{node.children.map((child: any) => renderNode(child, level + 1))}</Box>
+          <Box>{node.children?.map((child: TreeNode) => renderNode(child, level + 1))}</Box>
         )}
       </Box>
     );

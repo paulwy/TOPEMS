@@ -37,10 +37,26 @@ import {
   type ColumnDef,
 } from '@/components/templates';
 import { limsApi } from '@/api/lims';
-import type { Instrument, CalibrationRecord, MaintenanceRecord } from '@/api/lims';
+import type { Instrument, CalibrationRecord, MaintenanceRecord, InspectionTask } from '@/api/lims';
 import { useAppStore } from '@/store';
 import { apiLogger } from '@/utils/logger';
 import dayjs from 'dayjs';
+
+interface LimsListResponse<T> {
+  items?: T[];
+  records?: T[];
+  tasks?: T[];
+  instruments?: T[];
+}
+
+interface UsageLog {
+  id: string;
+  time?: string;
+  user?: string;
+  task?: string;
+  purpose?: string;
+  notes?: string;
+}
 
 const LimsInstrumentDetailPage: React.FC = () => {
   const { id } = useParams<{ id: string }>();
@@ -48,8 +64,8 @@ const LimsInstrumentDetailPage: React.FC = () => {
   const [instrument, setInstrument] = useState<Instrument | null>(null);
   const [calibrationRecords, setCalibrationRecords] = useState<CalibrationRecord[]>([]);
   const [maintenanceRecords, setMaintenanceRecords] = useState<MaintenanceRecord[]>([]);
-  const [usageLogs, setUsageLogs] = useState<any[]>([]);
-  const [relatedTasks, setRelatedTasks] = useState<any[]>([]);
+  const [usageLogs, setUsageLogs] = useState<UsageLog[]>([]);
+  const [relatedTasks, setRelatedTasks] = useState<InspectionTask[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const addNotification = useAppStore((state) => state.addNotification);
@@ -74,12 +90,12 @@ const LimsInstrumentDetailPage: React.FC = () => {
       }
 
       if (calibrationRes.success && calibrationRes.data) {
-        const data = calibrationRes.data as any;
+        const data = calibrationRes.data as LimsListResponse<CalibrationRecord> | CalibrationRecord[];
         setCalibrationRecords(Array.isArray(data) ? data : data.items || data.records || []);
       }
 
       if (maintenanceRes.success && maintenanceRes.data) {
-        const data = maintenanceRes.data as any;
+        const data = maintenanceRes.data as LimsListResponse<MaintenanceRecord> | MaintenanceRecord[];
         setMaintenanceRecords(Array.isArray(data) ? data : data.items || []);
       }
 
@@ -87,7 +103,7 @@ const LimsInstrumentDetailPage: React.FC = () => {
       try {
         const tasksRes = await limsApi.listTasks();
         if (tasksRes.success && tasksRes.data) {
-          const tasksData = tasksRes.data as any;
+          const tasksData = tasksRes.data as LimsListResponse<InspectionTask> | InspectionTask[];
           const allTasks = Array.isArray(tasksData)
             ? tasksData
             : tasksData.items || tasksData.tasks || [];
@@ -97,7 +113,7 @@ const LimsInstrumentDetailPage: React.FC = () => {
       } catch {
         // Usage logs not critical
       }
-    } catch (err: any) {
+    } catch (err: unknown) {
       apiLogger.error('加载仪器详情失败:', err);
       setError('加载仪器详情失败');
     } finally {
