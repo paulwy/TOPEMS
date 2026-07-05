@@ -1,0 +1,801 @@
+use axum::{
+    extract::Extension,
+    extract::Path,
+    extract::Query,
+    extract::State,
+    routing::{delete, get, post, put},
+    Json, Router,
+};
+use chrono::{DateTime, NaiveDateTime, TimeZone, Utc};
+use serde::{Deserialize, Serialize};
+use sqlx::{
+    types::{BigDecimal, Uuid},
+    PgPool, Row,
+};
+use std::str::FromStr;
+use topems_shared::auth::Claims;
+
+use crate::services::permission::{check_permission, ModulePermission};
+use crate::AppState;
+use topems_shared::response::ApiResponse;
+
+pub fn create_routes() -> Router<AppState> {
+    Router::new()
+        .route(
+            "/api/mes/material-requirements",
+            get(list_material_requirements).post(create_material_requirement),
+        )
+        .route(
+            "/api/mes/material-requirements/{id}",
+            get(get_material_requirement)
+                .put(update_material_requirement)
+                .delete(delete_material_requirement),
+        )
+        .route(
+            "/api/mes/material-requirements/calculate",
+            post(calculate_requirements),
+        )
+        .route(
+            "/api/mes/material-requirements/{id}/confirm",
+            put(confirm_requirement),
+        )
+        .route(
+            "/api/mes/material-requirements/{id}/release",
+            put(release_requirement),
+        )
+}
+
+#[derive(Debug, Clone, Deserialize)]
+pub struct ListMaterialRequirementsQuery {
+    page: Option<i32>,
+    pagesize: Option<i32>,
+    search: Option<String>,
+    status: Option<String>,
+}
+
+#[derive(Debug, Clone, Deserialize)]
+pub struct CreateMaterialRequirementRequest {
+    pub order_id: Option<String>,
+    pub product_code: String,
+    pub product_name: String,
+    pub material_code: String,
+    pub material_name: String,
+    pub specification: Option<String>,
+    pub unit: Option<String>,
+    pub required_quantity: f64,
+    pub required_date: String,
+    pub priority: Option<String>,
+    pub source_type: Option<String>,
+    pub remark: Option<String>,
+}
+
+#[derive(Debug, Clone, Deserialize)]
+pub struct UpdateMaterialRequirementRequest {
+    pub required_quantity: Option<f64>,
+    pub available_quantity: Option<f64>,
+    pub required_date: Option<String>,
+    pub priority: Option<String>,
+    pub status: Option<String>,
+    pub remark: Option<String>,
+}
+
+#[derive(Debug, Clone, Serialize)]
+pub struct MaterialRequirementResponse {
+    pub id: String,
+    pub mrp_no: String,
+    pub order_id: Option<String>,
+    pub order_number: Option<String>,
+    pub product_code: String,
+    pub product_name: String,
+    pub material_code: String,
+    pub material_name: String,
+    pub specification: Option<String>,
+    pub unit: Option<String>,
+    pub required_quantity: f64,
+    pub available_quantity: Option<f64>,
+    pub shortfall_quantity: Option<f64>,
+    pub required_date: String,
+    pub priority: Option<String>,
+    pub status: String,
+    pub source_type: Option<String>,
+    pub remark: Option<String>,
+    pub created_at: String,
+    pub updated_at: String,
+}
+
+fn naive_to_utc(dt: Option<NaiveDateTime>) -> DateTime<Utc> {
+    match dt {
+        Some(d) => Utc.from_utc_datetime(&d),
+        None => Utc::now(),
+    }
+}
+
+fn datetime_to_string(dt: Option<NaiveDateTime>) -> String {
+    naive_to_utc(dt).to_rfc3339()
+}
+
+fn big_decimal_to_f64(bd: Option<BigDecimal>) -> f64 {
+    bd.and_then(|d| d.to_string().parse::<f64>().ok())
+        .unwrap_or(0.0)
+}
+
+fn opt_big_decimal_to_f64(bd: Option<BigDecimal>) -> Option<f64> {
+    bd.and_then(|d| d.to_string().parse::<f64>().ok())
+}
+
+pub async fn list_material_requirements(
+    State(state): State<AppState>,
+    Extension(claims): Extension<Claims>,
+    Query(query): Query<ListMaterialRequirementsQuery>,
+) -> Json<ApiResponse<serde_json::Value>> {
+    if let Err(e) = check_permission(&state.pool, &claims, &ModulePermission::WorkStationRead).await
+    {
+        return e;
+    }
+
+    let page = query.page.unwrap_or(1) as i64;
+    let pagesize = query.pagesize.unwrap_or(10) as i64;
+    let offset = (page - 1) * pagesize;
+
+    let mut params: Vec<serde_json::Value> = Vec::new();
+    let mut where_clause = String::new();
+
+    if let Some(status) = query.status {
+        where_clause.push_str(" WHERE status = $1");
+        params.push(serde_json::Value::String(status));
+    }
+
+    if let Some(search) = query.search {
+        let pattern = format!("%{}%", search);
+        if where_clause.is_empty() {
+            where_clause.push_str(" WHERE (material_code ILIKE $1 OR material_name ILIKE $1 OR product_code ILIKE $1 OR product_name ILIKE $1)");
+        } else {
+            where_clause.push_str(&format!(" AND (material_code ILIKE ${} OR material_name ILIKE ${} OR product_code ILIKE ${} OR product_name ILIKE ${})", params.len() + 1, params.len() + 1, params.len() + 1, params.len() + 1));
+        }
+        params.push(serde_json::Value::String(pattern));
+    }
+
+    let count_sql = format!(
+        "SELECT COUNT(*) as total FROM material_requirements{}",
+        where_clause
+    );
+
+    let mut count_query = sqlx::query_scalar(&count_sql);
+    for p in &params {
+        count_query = count_query.bind(p.clone());
+    }
+
+    let count_result = count_query.fetch_one(&state.pool).await;
+    let total: Option<i64> = match count_result {
+        Ok(c) => c,
+        Err(e) => {
+            tracing::error!("Failed to count material requirements: {}", e);
+            return Json(ApiResponse::error(500, "获取物料需求列表失败"));
+        }
+    };
+
+    let fetch_sql = format!(
+        r#"
+        SELECT 
+            id, mrp_no, order_id, order_number, product_code, product_name,
+            material_code, material_name, specification, unit, required_quantity,
+            available_quantity, shortfall_quantity, required_date, priority,
+            status, source_type, remark, created_at, updated_at
+        FROM material_requirements
+        {}
+        ORDER BY created_at DESC
+        LIMIT ${} OFFSET ${}
+        "#,
+        where_clause,
+        params.len() + 1,
+        params.len() + 2
+    );
+
+    let mut fetch_query = sqlx::query(&fetch_sql);
+    for p in &params {
+        fetch_query = fetch_query.bind(p.clone());
+    }
+    fetch_query = fetch_query.bind(pagesize).bind(offset);
+
+    let requirements = match fetch_query.fetch_all(&state.pool).await {
+        Ok(r) => r,
+        Err(e) => {
+            tracing::error!("Failed to fetch material requirements: {}", e);
+            return Json(ApiResponse::error(500, "获取物料需求列表失败"));
+        }
+    };
+
+    let requirements: Vec<MaterialRequirementResponse> = requirements
+        .into_iter()
+        .map(|r| MaterialRequirementResponse {
+            id: r.try_get::<Uuid, _>("id").unwrap_or_default().to_string(),
+            mrp_no: r.try_get::<String, _>("mrp_no").unwrap_or_default(),
+            order_id: r
+                .try_get::<Option<Uuid>, _>("order_id")
+                .ok()
+                .flatten()
+                .map(|u| u.to_string()),
+            order_number: r
+                .try_get::<Option<String>, _>("order_number")
+                .ok()
+                .flatten(),
+            product_code: r.try_get::<String, _>("product_code").unwrap_or_default(),
+            product_name: r.try_get::<String, _>("product_name").unwrap_or_default(),
+            material_code: r.try_get::<String, _>("material_code").unwrap_or_default(),
+            material_name: r.try_get::<String, _>("material_name").unwrap_or_default(),
+            specification: r
+                .try_get::<Option<String>, _>("specification")
+                .ok()
+                .flatten(),
+            unit: r.try_get::<Option<String>, _>("unit").ok().flatten(),
+            required_quantity: big_decimal_to_f64(
+                r.try_get::<Option<BigDecimal>, _>("required_quantity")
+                    .ok()
+                    .flatten(),
+            ),
+            available_quantity: opt_big_decimal_to_f64(
+                r.try_get::<Option<BigDecimal>, _>("available_quantity")
+                    .ok()
+                    .flatten(),
+            ),
+            shortfall_quantity: opt_big_decimal_to_f64(
+                r.try_get::<Option<BigDecimal>, _>("shortfall_quantity")
+                    .ok()
+                    .flatten(),
+            ),
+            required_date: r.try_get::<String, _>("required_date").unwrap_or_default(),
+            priority: r.try_get::<Option<String>, _>("priority").ok().flatten(),
+            status: r
+                .try_get::<Option<String>, _>("status")
+                .ok()
+                .flatten()
+                .unwrap_or_else(|| "pending".to_string()),
+            source_type: r.try_get::<Option<String>, _>("source_type").ok().flatten(),
+            remark: r.try_get::<Option<String>, _>("remark").ok().flatten(),
+            created_at: datetime_to_string(
+                r.try_get::<Option<NaiveDateTime>, _>("created_at")
+                    .ok()
+                    .flatten(),
+            ),
+            updated_at: datetime_to_string(
+                r.try_get::<Option<NaiveDateTime>, _>("updated_at")
+                    .ok()
+                    .flatten(),
+            ),
+        })
+        .collect();
+
+    Json(ApiResponse::success(
+        serde_json::json!({
+            "requirements": requirements,
+            "total": total.expect("count failed"),
+            "page": page,
+            "pagesize": pagesize,
+        }),
+        "获取物料需求列表成功",
+    ))
+}
+
+pub async fn get_material_requirement(
+    State(state): State<AppState>,
+    Extension(claims): Extension<Claims>,
+    Path(id): Path<String>,
+) -> Json<ApiResponse<MaterialRequirementResponse>> {
+    if let Err(e) = check_permission(&state.pool, &claims, &ModulePermission::WorkStationRead).await
+    {
+        return e;
+    }
+
+    let uuid = match Uuid::parse_str(&id) {
+        Ok(u) => u,
+        Err(_) => {
+            return Json(ApiResponse::error(400, "无效的物料需求ID"));
+        }
+    };
+
+    let result = sqlx::query!(
+        r#"
+        SELECT 
+            id, mrp_no, order_id, order_number, product_code, product_name,
+            material_code, material_name, specification, unit, required_quantity,
+            available_quantity, shortfall_quantity, required_date, priority,
+            status, source_type, remark, created_at, updated_at
+        FROM material_requirements
+        WHERE id = $1
+        "#,
+        uuid,
+    )
+    .fetch_one(&state.pool)
+    .await;
+
+    match result {
+        Ok(r) => Json(ApiResponse::success(
+            MaterialRequirementResponse {
+                id: r.id.to_string(),
+                mrp_no: r.mrp_no,
+                order_id: r.order_id.map(|u| u.to_string()),
+                order_number: r.order_number,
+                product_code: r.product_code,
+                product_name: r.product_name,
+                material_code: r.material_code,
+                material_name: r.material_name,
+                specification: r.specification,
+                unit: r.unit,
+                required_quantity: big_decimal_to_f64(Some(r.required_quantity)),
+                available_quantity: opt_big_decimal_to_f64(r.available_quantity),
+                shortfall_quantity: opt_big_decimal_to_f64(r.shortfall_quantity),
+                required_date: r.required_date,
+                priority: r.priority,
+                status: r.status.unwrap_or_else(|| "pending".to_string()),
+                source_type: r.source_type,
+                remark: r.remark,
+                created_at: datetime_to_string(r.created_at),
+                updated_at: datetime_to_string(r.updated_at),
+            },
+            "获取物料需求成功",
+        )),
+        Err(sqlx::Error::RowNotFound) => Json(ApiResponse::error(404, "物料需求不存在")),
+        Err(e) => {
+            tracing::error!("Failed to get material requirement: {}", e);
+            Json(ApiResponse::error(500, "获取物料需求失败"))
+        }
+    }
+}
+
+pub async fn create_material_requirement(
+    State(state): State<AppState>,
+    Extension(claims): Extension<Claims>,
+    Json(body): Json<CreateMaterialRequirementRequest>,
+) -> Json<ApiResponse<MaterialRequirementResponse>> {
+    if let Err(e) =
+        check_permission(&state.pool, &claims, &ModulePermission::WorkStationWrite).await
+    {
+        return e;
+    }
+
+    let mrp_no = format!("MRP{}", chrono::Local::now().format("%Y%m%d%H%M%S"));
+
+    let order_id = body
+        .order_id
+        .as_ref()
+        .and_then(|id| Uuid::parse_str(id).ok());
+    let required_quantity =
+        BigDecimal::from_str(&body.required_quantity.to_string()).unwrap_or_default();
+
+    let result = sqlx::query!(
+        r#"
+        INSERT INTO material_requirements (
+            mrp_no, order_id, order_number, product_code, product_name,
+            material_code, material_name, specification, unit, required_quantity,
+            required_date, priority, source_type, remark
+        )
+        VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14)
+        RETURNING *
+        "#,
+        mrp_no,
+        order_id,
+        body.order_id,
+        body.product_code,
+        body.product_name,
+        body.material_code,
+        body.material_name,
+        body.specification,
+        body.unit,
+        required_quantity,
+        body.required_date,
+        body.priority,
+        body.source_type,
+        body.remark,
+    )
+    .fetch_one(&state.pool)
+    .await;
+
+    match result {
+        Ok(r) => Json(ApiResponse::success(
+            MaterialRequirementResponse {
+                id: r.id.to_string(),
+                mrp_no: r.mrp_no,
+                order_id: r.order_id.map(|u| u.to_string()),
+                order_number: r.order_number,
+                product_code: r.product_code,
+                product_name: r.product_name,
+                material_code: r.material_code,
+                material_name: r.material_name,
+                specification: r.specification,
+                unit: r.unit,
+                required_quantity: big_decimal_to_f64(Some(r.required_quantity)),
+                available_quantity: opt_big_decimal_to_f64(r.available_quantity),
+                shortfall_quantity: opt_big_decimal_to_f64(r.shortfall_quantity),
+                required_date: r.required_date,
+                priority: r.priority,
+                status: r.status.unwrap_or_else(|| "pending".to_string()),
+                source_type: r.source_type,
+                remark: r.remark,
+                created_at: datetime_to_string(r.created_at),
+                updated_at: datetime_to_string(r.updated_at),
+            },
+            "创建物料需求成功",
+        )),
+        Err(e) => {
+            tracing::error!("Failed to create material requirement: {}", e);
+            Json(ApiResponse::error(500, "创建物料需求失败"))
+        }
+    }
+}
+
+pub async fn update_material_requirement(
+    State(state): State<AppState>,
+    Extension(claims): Extension<Claims>,
+    Path(id): Path<String>,
+    Json(body): Json<UpdateMaterialRequirementRequest>,
+) -> Json<ApiResponse<MaterialRequirementResponse>> {
+    if let Err(e) =
+        check_permission(&state.pool, &claims, &ModulePermission::WorkStationWrite).await
+    {
+        return e;
+    }
+
+    let uuid = match Uuid::parse_str(&id) {
+        Ok(u) => u,
+        Err(_) => {
+            return Json(ApiResponse::error(400, "无效的物料需求ID"));
+        }
+    };
+
+    let required_quantity = body
+        .required_quantity
+        .and_then(|v| BigDecimal::from_str(&v.to_string()).ok());
+    let available_quantity = body
+        .available_quantity
+        .and_then(|v| BigDecimal::from_str(&v.to_string()).ok());
+
+    let result = sqlx::query!(
+        r#"
+        UPDATE material_requirements
+        SET 
+            required_quantity = COALESCE($1, required_quantity),
+            available_quantity = COALESCE($2, available_quantity),
+            shortfall_quantity = COALESCE($1, required_quantity) - COALESCE($2, available_quantity),
+            required_date = COALESCE($3, required_date),
+            priority = COALESCE($4, priority),
+            status = COALESCE($5, status),
+            remark = COALESCE($6, remark),
+            updated_at = NOW()
+        WHERE id = $7
+        RETURNING *
+        "#,
+        required_quantity,
+        available_quantity,
+        body.required_date,
+        body.priority,
+        body.status,
+        body.remark,
+        uuid,
+    )
+    .fetch_one(&state.pool)
+    .await;
+
+    match result {
+        Ok(r) => Json(ApiResponse::success(
+            MaterialRequirementResponse {
+                id: r.id.to_string(),
+                mrp_no: r.mrp_no,
+                order_id: r.order_id.map(|u| u.to_string()),
+                order_number: r.order_number,
+                product_code: r.product_code,
+                product_name: r.product_name,
+                material_code: r.material_code,
+                material_name: r.material_name,
+                specification: r.specification,
+                unit: r.unit,
+                required_quantity: big_decimal_to_f64(Some(r.required_quantity)),
+                available_quantity: opt_big_decimal_to_f64(r.available_quantity),
+                shortfall_quantity: opt_big_decimal_to_f64(r.shortfall_quantity),
+                required_date: r.required_date,
+                priority: r.priority,
+                status: r.status.unwrap_or_else(|| "pending".to_string()),
+                source_type: r.source_type,
+                remark: r.remark,
+                created_at: datetime_to_string(r.created_at),
+                updated_at: datetime_to_string(r.updated_at),
+            },
+            "更新物料需求成功",
+        )),
+        Err(sqlx::Error::RowNotFound) => Json(ApiResponse::error(404, "物料需求不存在")),
+        Err(e) => {
+            tracing::error!("Failed to update material requirement: {}", e);
+            Json(ApiResponse::error(500, "更新物料需求失败"))
+        }
+    }
+}
+
+pub async fn delete_material_requirement(
+    State(state): State<AppState>,
+    Extension(claims): Extension<Claims>,
+    Path(id): Path<String>,
+) -> Json<ApiResponse<String>> {
+    if let Err(e) =
+        check_permission(&state.pool, &claims, &ModulePermission::WorkStationWrite).await
+    {
+        return e;
+    }
+
+    let uuid = match Uuid::parse_str(&id) {
+        Ok(u) => u,
+        Err(_) => {
+            return Json(ApiResponse::error(400, "无效的物料需求ID"));
+        }
+    };
+
+    let result = sqlx::query!(
+        r#"
+        DELETE FROM material_requirements WHERE id = $1
+        "#,
+        uuid,
+    )
+    .execute(&state.pool)
+    .await;
+
+    match result {
+        Ok(_) => Json(ApiResponse::success(id, "删除物料需求成功")),
+        Err(e) => {
+            tracing::error!("Failed to delete material requirement: {}", e);
+            Json(ApiResponse::error(500, "删除物料需求失败"))
+        }
+    }
+}
+
+#[derive(Debug, Clone, Deserialize)]
+pub struct CalculateRequirementsRequest {
+    pub order_id: String,
+}
+
+pub async fn calculate_requirements(
+    State(state): State<AppState>,
+    Extension(claims): Extension<Claims>,
+    Json(body): Json<CalculateRequirementsRequest>,
+) -> Json<ApiResponse<Vec<MaterialRequirementResponse>>> {
+    if let Err(e) =
+        check_permission(&state.pool, &claims, &ModulePermission::WorkStationWrite).await
+    {
+        return e;
+    }
+
+    let order_uuid = match Uuid::parse_str(&body.order_id) {
+        Ok(u) => u,
+        Err(_) => {
+            return Json(ApiResponse::error(400, "无效的订单ID"));
+        }
+    };
+
+    let order_result = sqlx::query!(
+        r#"
+        SELECT order_no, product_code, product_name, quantity
+        FROM production_orders
+        WHERE id = $1
+        "#,
+        order_uuid,
+    )
+    .fetch_one(&state.pool)
+    .await;
+
+    let order = match order_result {
+        Ok(o) => o,
+        Err(sqlx::Error::RowNotFound) => {
+            return Json(ApiResponse::error(404, "生产订单不存在"));
+        }
+        Err(e) => {
+            tracing::error!("Failed to get production order: {}", e);
+            return Json(ApiResponse::error(500, "获取生产订单失败"));
+        }
+    };
+
+    let bom_items_result = sqlx::query!(
+        r#"
+        SELECT bi.material_code, bi.material_name, bi.specification, bi.unit, bi.quantity
+        FROM bom_items bi
+        JOIN material_boms mb ON bi.bom_id = mb.id
+        WHERE mb.product_code = $1
+        "#,
+        order.product_code,
+    )
+    .fetch_all(&state.pool)
+    .await;
+
+    let mut requirements: Vec<MaterialRequirementResponse> = Vec::new();
+
+    match bom_items_result {
+        Ok(items) => {
+            for item in items {
+                let required_quantity_bd = item.quantity * &order.quantity;
+                let mrp_no = format!("MRP{}", chrono::Local::now().format("%Y%m%d%H%M%S"));
+
+                let insert_result = sqlx::query!(
+                    r#"
+                    INSERT INTO material_requirements (
+                        mrp_no, order_id, order_number, product_code, product_name,
+                        material_code, material_name, specification, unit, required_quantity,
+                        required_date, priority, source_type, status
+                    )
+                    VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14)
+                    RETURNING *
+                    "#,
+                    mrp_no,
+                    Some(order_uuid),
+                    order.order_no,
+                    order.product_code,
+                    order.product_name,
+                    item.material_code,
+                    item.material_name,
+                    item.specification,
+                    item.unit,
+                    required_quantity_bd,
+                    chrono::Local::now().to_rfc3339(),
+                    Some("normal"),
+                    Some("calculated"),
+                    Some("calculated"),
+                )
+                .fetch_one(&state.pool)
+                .await;
+
+                if let Ok(r) = insert_result {
+                    requirements.push(MaterialRequirementResponse {
+                        id: r.id.to_string(),
+                        mrp_no: r.mrp_no,
+                        order_id: r.order_id.map(|u| u.to_string()),
+                        order_number: r.order_number,
+                        product_code: r.product_code,
+                        product_name: r.product_name,
+                        material_code: r.material_code,
+                        material_name: r.material_name,
+                        specification: r.specification,
+                        unit: r.unit,
+                        required_quantity: big_decimal_to_f64(Some(r.required_quantity)),
+                        available_quantity: opt_big_decimal_to_f64(r.available_quantity),
+                        shortfall_quantity: opt_big_decimal_to_f64(r.shortfall_quantity),
+                        required_date: r.required_date,
+                        priority: r.priority,
+                        status: r.status.unwrap_or_else(|| "pending".to_string()),
+                        source_type: r.source_type,
+                        remark: r.remark,
+                        created_at: datetime_to_string(r.created_at),
+                        updated_at: datetime_to_string(r.updated_at),
+                    });
+                }
+            }
+        }
+        Err(e) => {
+            tracing::warn!("Failed to get BOM items: {}", e);
+        }
+    }
+
+    Json(ApiResponse::success(requirements, "物料需求计算成功"))
+}
+
+pub async fn confirm_requirement(
+    State(state): State<AppState>,
+    Extension(claims): Extension<Claims>,
+    Path(id): Path<String>,
+) -> Json<ApiResponse<MaterialRequirementResponse>> {
+    if let Err(e) =
+        check_permission(&state.pool, &claims, &ModulePermission::WorkStationWrite).await
+    {
+        return e;
+    }
+
+    let uuid = match Uuid::parse_str(&id) {
+        Ok(u) => u,
+        Err(_) => {
+            return Json(ApiResponse::error(400, "无效的物料需求ID"));
+        }
+    };
+
+    let result = sqlx::query!(
+        r#"
+        UPDATE material_requirements
+        SET status = 'confirmed', updated_at = NOW()
+        WHERE id = $1
+        RETURNING *
+        "#,
+        uuid,
+    )
+    .fetch_one(&state.pool)
+    .await;
+
+    match result {
+        Ok(r) => Json(ApiResponse::success(
+            MaterialRequirementResponse {
+                id: r.id.to_string(),
+                mrp_no: r.mrp_no,
+                order_id: r.order_id.map(|u| u.to_string()),
+                order_number: r.order_number,
+                product_code: r.product_code,
+                product_name: r.product_name,
+                material_code: r.material_code,
+                material_name: r.material_name,
+                specification: r.specification,
+                unit: r.unit,
+                required_quantity: big_decimal_to_f64(Some(r.required_quantity)),
+                available_quantity: opt_big_decimal_to_f64(r.available_quantity),
+                shortfall_quantity: opt_big_decimal_to_f64(r.shortfall_quantity),
+                required_date: r.required_date,
+                priority: r.priority,
+                status: r.status.unwrap_or_else(|| "pending".to_string()),
+                source_type: r.source_type,
+                remark: r.remark,
+                created_at: datetime_to_string(r.created_at),
+                updated_at: datetime_to_string(r.updated_at),
+            },
+            "确认物料需求成功",
+        )),
+        Err(sqlx::Error::RowNotFound) => Json(ApiResponse::error(404, "物料需求不存在")),
+        Err(e) => {
+            tracing::error!("Failed to confirm material requirement: {}", e);
+            Json(ApiResponse::error(500, "确认物料需求失败"))
+        }
+    }
+}
+
+pub async fn release_requirement(
+    State(state): State<AppState>,
+    Extension(claims): Extension<Claims>,
+    Path(id): Path<String>,
+) -> Json<ApiResponse<MaterialRequirementResponse>> {
+    if let Err(e) =
+        check_permission(&state.pool, &claims, &ModulePermission::WorkStationWrite).await
+    {
+        return e;
+    }
+
+    let uuid = match Uuid::parse_str(&id) {
+        Ok(u) => u,
+        Err(_) => {
+            return Json(ApiResponse::error(400, "无效的物料需求ID"));
+        }
+    };
+
+    let result = sqlx::query!(
+        r#"
+        UPDATE material_requirements
+        SET status = 'released', updated_at = NOW()
+        WHERE id = $1
+        RETURNING *
+        "#,
+        uuid,
+    )
+    .fetch_one(&state.pool)
+    .await;
+
+    match result {
+        Ok(r) => Json(ApiResponse::success(
+            MaterialRequirementResponse {
+                id: r.id.to_string(),
+                mrp_no: r.mrp_no,
+                order_id: r.order_id.map(|u| u.to_string()),
+                order_number: r.order_number,
+                product_code: r.product_code,
+                product_name: r.product_name,
+                material_code: r.material_code,
+                material_name: r.material_name,
+                specification: r.specification,
+                unit: r.unit,
+                required_quantity: big_decimal_to_f64(Some(r.required_quantity)),
+                available_quantity: opt_big_decimal_to_f64(r.available_quantity),
+                shortfall_quantity: opt_big_decimal_to_f64(r.shortfall_quantity),
+                required_date: r.required_date,
+                priority: r.priority,
+                status: r.status.unwrap_or_else(|| "pending".to_string()),
+                source_type: r.source_type,
+                remark: r.remark,
+                created_at: datetime_to_string(r.created_at),
+                updated_at: datetime_to_string(r.updated_at),
+            },
+            "下发物料需求成功",
+        )),
+        Err(sqlx::Error::RowNotFound) => Json(ApiResponse::error(404, "物料需求不存在")),
+        Err(e) => {
+            tracing::error!("Failed to release material requirement: {}", e);
+            Json(ApiResponse::error(500, "下发物料需求失败"))
+        }
+    }
+}

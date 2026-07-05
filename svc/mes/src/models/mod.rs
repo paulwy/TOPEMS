@@ -512,5 +512,164 @@ pub async fn init_database(pool: &PgPool) -> Result<(), sqlx::Error> {
         .execute(pool)
         .await?;
 
+    sqlx::query(
+        r#"
+        CREATE TABLE IF NOT EXISTS teams (
+            id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+            team_code VARCHAR(64) NOT NULL UNIQUE,
+            team_name VARCHAR(128) NOT NULL,
+            team_type VARCHAR(32),
+            work_station_id UUID REFERENCES work_stations(id) ON DELETE SET NULL,
+            leader_id UUID,
+            leader_name VARCHAR(128),
+            member_count INT DEFAULT 0,
+            status VARCHAR(32) DEFAULT 'active',
+            description TEXT,
+            created_at TIMESTAMP DEFAULT NOW(),
+            updated_at TIMESTAMP DEFAULT NOW()
+        )
+        "#,
+    )
+    .execute(pool)
+    .await?;
+
+    sqlx::query(
+        r#"
+        CREATE TABLE IF NOT EXISTS team_members (
+            id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+            team_id UUID NOT NULL REFERENCES teams(id) ON DELETE CASCADE,
+            employee_id VARCHAR(64) NOT NULL,
+            employee_name VARCHAR(128) NOT NULL,
+            employee_code VARCHAR(64),
+            position VARCHAR(64),
+            join_date TIMESTAMP DEFAULT NOW(),
+            status VARCHAR(32) DEFAULT 'active',
+            created_at TIMESTAMP DEFAULT NOW()
+        )
+        "#,
+    )
+    .execute(pool)
+    .await?;
+
+    sqlx::query("CREATE INDEX IF NOT EXISTS idx_teams_team_code ON teams(team_code)")
+        .execute(pool)
+        .await?;
+    sqlx::query("CREATE INDEX IF NOT EXISTS idx_teams_status ON teams(status)")
+        .execute(pool)
+        .await?;
+    sqlx::query("CREATE INDEX IF NOT EXISTS idx_teams_work_station_id ON teams(work_station_id)")
+        .execute(pool)
+        .await?;
+    sqlx::query("CREATE INDEX IF NOT EXISTS idx_team_members_team_id ON team_members(team_id)")
+        .execute(pool)
+        .await?;
+    sqlx::query(
+        "CREATE INDEX IF NOT EXISTS idx_team_members_employee_id ON team_members(employee_id)",
+    )
+    .execute(pool)
+    .await?;
+
+    sqlx::query(
+        r#"
+        CREATE TABLE IF NOT EXISTS material_requirements (
+            id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+            mrp_no VARCHAR(64) NOT NULL UNIQUE,
+            order_id UUID REFERENCES production_orders(id) ON DELETE SET NULL,
+            order_number VARCHAR(64),
+            product_code VARCHAR(64) NOT NULL,
+            product_name VARCHAR(256) NOT NULL,
+            material_code VARCHAR(64) NOT NULL,
+            material_name VARCHAR(256) NOT NULL,
+            specification VARCHAR(256),
+            unit VARCHAR(32),
+            required_quantity DECIMAL(12,4) NOT NULL,
+            available_quantity DECIMAL(12,4) DEFAULT 0,
+            shortfall_quantity DECIMAL(12,4) DEFAULT 0,
+            required_date VARCHAR(32) NOT NULL,
+            priority VARCHAR(32) DEFAULT 'normal',
+            status VARCHAR(32) DEFAULT 'pending',
+            source_type VARCHAR(32),
+            remark TEXT,
+            created_at TIMESTAMP DEFAULT NOW(),
+            updated_at TIMESTAMP DEFAULT NOW()
+        )
+        "#,
+    )
+    .execute(pool)
+    .await?;
+
+    sqlx::query("CREATE INDEX IF NOT EXISTS idx_material_requirements_mrp_no ON material_requirements(mrp_no)")
+        .execute(pool)
+        .await?;
+    sqlx::query("CREATE INDEX IF NOT EXISTS idx_material_requirements_order_id ON material_requirements(order_id)")
+        .execute(pool)
+        .await?;
+    sqlx::query("CREATE INDEX IF NOT EXISTS idx_material_requirements_status ON material_requirements(status)")
+        .execute(pool)
+        .await?;
+    sqlx::query("CREATE INDEX IF NOT EXISTS idx_material_requirements_material_code ON material_requirements(material_code)")
+        .execute(pool)
+        .await?;
+
+    sqlx::query(
+        r#"
+        CREATE TABLE IF NOT EXISTS equipment_inspections (
+            id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+            equipment_id UUID NOT NULL REFERENCES equipment(id) ON DELETE CASCADE,
+            equipment_code VARCHAR(64),
+            equipment_name VARCHAR(128),
+            inspector VARCHAR(128) NOT NULL,
+            inspection_date VARCHAR(32) NOT NULL,
+            location VARCHAR(256),
+            temperature DECIMAL(10,2),
+            vibration DECIMAL(10,4),
+            noiselevel DECIMAL(10,2),
+            status VARCHAR(32) DEFAULT 'normal',
+            items JSONB,
+            abnormalities TEXT,
+            remarks TEXT,
+            created_at TIMESTAMP DEFAULT NOW(),
+            updated_at TIMESTAMP DEFAULT NOW()
+        )
+        "#,
+    )
+    .execute(pool)
+    .await?;
+
+    sqlx::query(
+        r#"
+        CREATE TABLE IF NOT EXISTS equipment_maintenance_records (
+            id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+            equipment_id UUID NOT NULL REFERENCES equipment(id) ON DELETE CASCADE,
+            maintenance_type VARCHAR(64) NOT NULL,
+            description TEXT,
+            maintainer VARCHAR(128) NOT NULL,
+            start_time TIMESTAMP NOT NULL,
+            end_time TIMESTAMP,
+            cost DECIMAL(12,2),
+            result TEXT,
+            status VARCHAR(32) DEFAULT 'pending',
+            remarks TEXT,
+            created_at TIMESTAMP DEFAULT NOW(),
+            updated_at TIMESTAMP DEFAULT NOW()
+        )
+        "#,
+    )
+    .execute(pool)
+    .await?;
+
+    sqlx::query("CREATE INDEX IF NOT EXISTS idx_equipment_inspections_equipment_id ON equipment_inspections(equipment_id)")
+        .execute(pool)
+        .await?;
+    sqlx::query("CREATE INDEX IF NOT EXISTS idx_equipment_inspections_inspection_date ON equipment_inspections(inspection_date)")
+        .execute(pool)
+        .await?;
+    sqlx::query("CREATE INDEX IF NOT EXISTS idx_equipment_maintenance_records_equipment_id ON equipment_maintenance_records(equipment_id)")
+        .execute(pool)
+        .await?;
+    sqlx::query("CREATE INDEX IF NOT EXISTS idx_equipment_maintenance_records_status ON equipment_maintenance_records(status)")
+        .execute(pool)
+        .await?;
+
     Ok(())
 }

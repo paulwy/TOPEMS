@@ -1,6 +1,8 @@
 //! Quality Traceability handlers
 
-use axum::{extract::Extension, extract::Path, extract::State, routing::get, Json, Router};
+use axum::{
+    extract::Extension, extract::Path, extract::Query, extract::State, routing::get, Json, Router,
+};
 use chrono::{DateTime, NaiveDate, NaiveDateTime, TimeZone, Utc};
 use serde::{Deserialize, Serialize};
 use sqlx::{
@@ -24,8 +26,11 @@ pub fn create_routes() -> Router<AppState> {
             "/api/mes/traceability/backward/{batch_no}",
             get(backward_traceability),
         )
-        .route("/api/mes/traceability/chain/{id}", get(get_trace_chain))
-        .route("/api/mes/quality-records", get(list_quality_records))
+        .route("/api/mes/traceability/chain", get(get_trace_chain))
+        .route(
+            "/api/mes/traceability/quality-records",
+            get(list_quality_records),
+        )
 }
 
 // ==================== Data Types ====================
@@ -386,10 +391,17 @@ pub async fn backward_traceability(
     ))
 }
 
+#[derive(Debug, Clone, Deserialize)]
+pub struct TraceChainQuery {
+    #[serde(rename = "type")]
+    trace_type: String,
+    identifier: String,
+}
+
 pub async fn get_trace_chain(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
-    Path(id): Path<Uuid>,
+    Query(query): Query<TraceChainQuery>,
 ) -> Json<ApiResponse<TraceChainResponse>> {
     if let Err(e) = check_permission(
         &state.pool,
@@ -399,6 +411,18 @@ pub async fn get_trace_chain(
     .await
     {
         return e;
+    }
+
+    let id = match Uuid::parse_str(&query.identifier) {
+        Ok(u) => u,
+        Err(_) => {
+            return Json(ApiResponse::error(400, "无效的标识符"));
+        }
+    };
+
+    if query.trace_type == "backward" {
+        return backward_traceability(State(state), Extension(claims), Path(query.identifier))
+            .await;
     }
 
     let order = sqlx::query!(
@@ -423,10 +447,30 @@ pub async fn get_trace_chain(
     }
 }
 
+#[derive(Debug, Clone, Deserialize)]
+pub struct ListQualityRecordsQuery {
+    pub page: Option<i64>,
+    pub page_size: Option<i64>,
+    pub search: Option<String>,
+    pub status: Option<String>,
+    pub record_type: Option<String>,
+    pub order_id: Option<String>,
+    pub batch_no: Option<String>,
+}
+
+#[derive(Debug, Clone, Serialize)]
+pub struct ListQualityRecordsResponse {
+    pub records: Vec<QualityRecordResponse>,
+    pub total: i64,
+    pub page: i64,
+    pub page_size: i64,
+}
+
 pub async fn list_quality_records(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
-) -> Json<ApiResponse<Vec<QualityRecordResponse>>> {
+    Query(query): Query<ListQualityRecordsQuery>,
+) -> Json<ApiResponse<ListQualityRecordsResponse>> {
     if let Err(e) = check_permission(
         &state.pool,
         &claims,
@@ -437,22 +481,104 @@ pub async fn list_quality_records(
         return e;
     }
 
-    let result = sqlx::query!(
+    let page = query.page.unwrap_or(1);
+    let page_size = query.page_size.unwrap_or(10);
+    let offset = (page - 1) * page_size;
+
+    let mut params: Vec<serde_json::Value> = Vec::new();
+    let mut where_clause = String::new();
+
+    if let Some(status) = &query.status {
+        where_clause.push_str(" WHERE quality_status = $1");
+        params.push(serde_json::Value::String(status.clone()));
+    }
+
+    if let Some(record_type) = &query.record_type {
+        if where_clause.is_empty() {
+            where_clause.push_str(" WHERE record_type = $1");
+        } else {
+            where_clause.push_str(&format!(" AND record_type = ${}", params.len() + 1));
+        }
+        params.push(serde_json::Value::String(record_type.clone()));
+    }
+
+    if let Some(order_id) = &query.order_id {
+        if where_clause.is_empty() {
+            where_clause.push_str(" WHERE order_id = $1::uuid");
+        } else {
+            where_clause.push_str(&format!(" AND order_id = ${}::uuid", params.len() + 1));
+        }
+        params.push(serde_json::Value::String(order_id.clone()));
+    }
+
+    if let Some(batch_no) = &query.batch_no {
+        if where_clause.is_empty() {
+            where_clause.push_str(" WHERE batch_no = $1");
+        } else {
+            where_clause.push_str(&format!(" AND batch_no = ${}", params.len() + 1));
+        }
+        params.push(serde_json::Value::String(batch_no.clone()));
+    }
+
+    if let Some(search) = &query.search {
+        let pattern = format!("%{}%", search);
+        if where_clause.is_empty() {
+            where_clause.push_str(" WHERE (record_no ILIKE $1 OR order_no ILIKE $1 OR product_name ILIKE $1 OR product_code ILIKE $1 OR inspector ILIKE $1)");
+        } else {
+            where_clause.push_str(&format!(
+                " AND (record_no ILIKE ${} OR order_no ILIKE ${} OR product_name ILIKE ${} OR product_code ILIKE ${} OR inspector ILIKE ${})",
+                params.len() + 1,
+                params.len() + 1,
+                params.len() + 1,
+                params.len() + 1,
+                params.len() + 1
+            ));
+        }
+        params.push(serde_json::Value::String(pattern));
+    }
+
+    let count_sql = format!(
+        "SELECT COUNT(*) as total FROM quality_records{}",
+        where_clause
+    );
+    let mut count_query = sqlx::query_scalar::<_, i64>(&count_sql);
+    for p in &params {
+        count_query = count_query.bind(p.clone());
+    }
+
+    let total: i64 = match count_query.fetch_one(&state.pool).await {
+        Ok(c) => c,
+        Err(e) => {
+            tracing::error!("Failed to count quality records: {}", e);
+            return Json(ApiResponse::error(500, "获取质量记录列表失败"));
+        }
+    };
+
+    let fetch_sql = format!(
         r#"
-        SELECT 
-            id, record_no, record_type, order_id, order_no,
+        SELECT id, record_no, record_type, order_id, order_no,
             product_id, product_name, product_code, batch_no,
             quantity, qualified_quantity, defective_quantity,
             quality_status, inspector, inspection_time,
             defect_reason, notes, created_at, updated_at
         FROM quality_records
+        {}
         ORDER BY created_at DESC
-        "#
-    )
-    .fetch_all(&state.pool)
-    .await;
+        LIMIT ${} OFFSET ${}
+        "#,
+        where_clause,
+        params.len() + 1,
+        params.len() + 2
+    );
 
-    let records = match result {
+    let mut fetch_query = sqlx::query(&fetch_sql);
+    for p in &params {
+        fetch_query = fetch_query.bind(p.clone());
+    }
+    fetch_query = fetch_query.bind(page_size).bind(offset);
+
+    use sqlx::Row;
+    let records = match fetch_query.fetch_all(&state.pool).await {
         Ok(r) => r,
         Err(e) => {
             tracing::error!("Failed to fetch quality records: {}", e);
@@ -463,27 +589,76 @@ pub async fn list_quality_records(
     let record_list: Vec<QualityRecordResponse> = records
         .into_iter()
         .map(|r| QualityRecordResponse {
-            id: r.id,
-            record_no: r.record_no,
-            record_type: r.record_type.unwrap_or_else(|| "inspection".to_string()),
-            order_id: r.order_id,
-            order_no: r.order_no,
-            product_id: r.product_id,
-            product_name: r.product_name,
-            product_code: r.product_code,
-            batch_no: r.batch_no,
-            quantity: big_decimal_to_f64(Some(r.quantity)),
-            qualified_quantity: big_decimal_to_f64(r.qualified_quantity),
-            defective_quantity: big_decimal_to_f64(r.defective_quantity),
-            quality_status: r.quality_status.unwrap_or_else(|| "pending".to_string()),
-            inspector: r.inspector,
-            inspection_time: opt_naive_to_utc(r.inspection_time),
-            defect_reason: r.defect_reason,
-            notes: r.notes,
-            created_at: naive_to_utc(r.created_at),
-            updated_at: naive_to_utc(r.updated_at),
+            id: r.try_get::<Uuid, _>("id").unwrap_or_default(),
+            record_no: r.try_get::<String, _>("record_no").unwrap_or_default(),
+            record_type: r
+                .try_get::<Option<String>, _>("record_type")
+                .ok()
+                .flatten()
+                .unwrap_or_else(|| "inspection".to_string()),
+            order_id: r.try_get::<Option<Uuid>, _>("order_id").ok().flatten(),
+            order_no: r.try_get::<Option<String>, _>("order_no").ok().flatten(),
+            product_id: r.try_get::<Option<Uuid>, _>("product_id").ok().flatten(),
+            product_name: r
+                .try_get::<Option<String>, _>("product_name")
+                .ok()
+                .flatten(),
+            product_code: r
+                .try_get::<Option<String>, _>("product_code")
+                .ok()
+                .flatten(),
+            batch_no: r.try_get::<Option<String>, _>("batch_no").ok().flatten(),
+            quantity: big_decimal_to_f64(
+                r.try_get::<Option<BigDecimal>, _>("quantity")
+                    .ok()
+                    .flatten(),
+            ),
+            qualified_quantity: big_decimal_to_f64(
+                r.try_get::<Option<BigDecimal>, _>("qualified_quantity")
+                    .ok()
+                    .flatten(),
+            ),
+            defective_quantity: big_decimal_to_f64(
+                r.try_get::<Option<BigDecimal>, _>("defective_quantity")
+                    .ok()
+                    .flatten(),
+            ),
+            quality_status: r
+                .try_get::<Option<String>, _>("quality_status")
+                .ok()
+                .flatten()
+                .unwrap_or_else(|| "pending".to_string()),
+            inspector: r.try_get::<Option<String>, _>("inspector").ok().flatten(),
+            inspection_time: opt_naive_to_utc(
+                r.try_get::<Option<NaiveDateTime>, _>("inspection_time")
+                    .ok()
+                    .flatten(),
+            ),
+            defect_reason: r
+                .try_get::<Option<String>, _>("defect_reason")
+                .ok()
+                .flatten(),
+            notes: r.try_get::<Option<String>, _>("notes").ok().flatten(),
+            created_at: naive_to_utc(
+                r.try_get::<Option<NaiveDateTime>, _>("created_at")
+                    .ok()
+                    .flatten(),
+            ),
+            updated_at: naive_to_utc(
+                r.try_get::<Option<NaiveDateTime>, _>("updated_at")
+                    .ok()
+                    .flatten(),
+            ),
         })
         .collect();
 
-    Json(ApiResponse::success(record_list, "获取质量记录列表成功"))
+    Json(ApiResponse::success(
+        ListQualityRecordsResponse {
+            records: record_list,
+            total,
+            page,
+            page_size,
+        },
+        "获取质量记录列表成功",
+    ))
 }

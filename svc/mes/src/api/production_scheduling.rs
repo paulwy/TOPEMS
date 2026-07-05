@@ -3,6 +3,7 @@
 use axum::{
     extract::Extension,
     extract::Path,
+    extract::Query,
     extract::State,
     routing::{delete, get, post, put},
     Json, Router,
@@ -11,7 +12,7 @@ use chrono::{DateTime, NaiveDate, NaiveDateTime, TimeZone, Utc};
 use serde::{Deserialize, Serialize};
 use sqlx::{
     types::{BigDecimal, Uuid},
-    PgPool,
+    Row,
 };
 use std::str::FromStr;
 use topems_shared::auth::Claims;
@@ -32,11 +33,19 @@ pub fn create_routes() -> Router<AppState> {
                 .put(update_production_schedule)
                 .delete(delete_production_schedule),
         )
-        .route("/api/mes/schedules/adjust", post(adjust_schedule))
+        .route("/api/mes/schedules/{id}/adjust", put(adjust_schedule))
         .route("/api/mes/schedules/gantt", get(get_gantt_data))
 }
 
 // ==================== Data Types ====================
+
+#[derive(Debug, Clone, Deserialize)]
+pub struct ListProductionSchedulesQuery {
+    page: Option<i32>,
+    pagesize: Option<i32>,
+    search: Option<String>,
+    status: Option<String>,
+}
 
 #[derive(Debug, Clone, Serialize)]
 pub struct ProductionScheduleResponse {
@@ -70,6 +79,8 @@ pub struct ProductionScheduleResponse {
 pub struct ListProductionSchedulesResponse {
     pub schedules: Vec<ProductionScheduleResponse>,
     pub total: i64,
+    pub page: i64,
+    pub pagesize: i64,
 }
 
 #[derive(Debug, Clone, Deserialize)]
@@ -143,6 +154,14 @@ fn opt_naive_to_utc(dt: Option<NaiveDateTime>) -> Option<DateTime<Utc>> {
     dt.map(|d| Utc.from_utc_datetime(&d))
 }
 
+fn datetime_to_string(dt: Option<NaiveDateTime>) -> String {
+    naive_to_utc(dt).to_rfc3339()
+}
+
+fn opt_datetime_to_string(dt: Option<NaiveDateTime>) -> Option<String> {
+    opt_naive_to_utc(dt).map(|d| d.to_rfc3339())
+}
+
 fn big_decimal_to_f64(bd: Option<BigDecimal>) -> f64 {
     bd.and_then(|d| d.to_string().parse::<f64>().ok())
         .unwrap_or(0.0)
@@ -153,6 +172,7 @@ fn big_decimal_to_f64(bd: Option<BigDecimal>) -> f64 {
 pub async fn list_production_schedules(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
+    Query(query): Query<ListProductionSchedulesQuery>,
 ) -> Json<ApiResponse<ListProductionSchedulesResponse>> {
     if let Err(e) = check_permission(
         &state.pool,
@@ -164,7 +184,54 @@ pub async fn list_production_schedules(
         return e;
     }
 
-    let result = sqlx::query!(
+    let page = query.page.unwrap_or(1) as i64;
+    let pagesize = query.pagesize.unwrap_or(10) as i64;
+    let offset = (page - 1) * pagesize;
+
+    let mut params: Vec<serde_json::Value> = Vec::new();
+    let mut where_clause = String::new();
+
+    if let Some(status) = query.status {
+        where_clause.push_str(" WHERE ps.status = $1");
+        params.push(serde_json::Value::String(status));
+    }
+
+    if let Some(search) = query.search {
+        let pattern = format!("%{}%", search);
+        if where_clause.is_empty() {
+            where_clause.push_str(" WHERE (ps.schedule_no ILIKE $1 OR ps.order_no ILIKE $1 OR ps.product_name ILIKE $1 OR ps.product_code ILIKE $1)");
+        } else {
+            where_clause.push_str(&format!(
+                " AND (ps.schedule_no ILIKE ${} OR ps.order_no ILIKE ${} OR ps.product_name ILIKE ${} OR ps.product_code ILIKE ${})",
+                params.len() + 1,
+                params.len() + 1,
+                params.len() + 1,
+                params.len() + 1
+            ));
+        }
+        params.push(serde_json::Value::String(pattern));
+    }
+
+    let count_sql = format!(
+        "SELECT COUNT(*) as total FROM production_schedules ps{}",
+        where_clause
+    );
+
+    let mut count_query = sqlx::query_scalar(&count_sql);
+    for p in &params {
+        count_query = count_query.bind(p.clone());
+    }
+
+    let count_result = count_query.fetch_one(&state.pool).await;
+    let total: Option<i64> = match count_result {
+        Ok(c) => c,
+        Err(e) => {
+            tracing::error!("Failed to count production schedules: {}", e);
+            return Json(ApiResponse::error(500, "获取生产排产列表失败"));
+        }
+    };
+
+    let fetch_sql = format!(
         r#"
         SELECT 
             ps.id, ps.schedule_no, ps.order_id, ps.order_no,
@@ -181,13 +248,22 @@ pub async fn list_production_schedules(
         LEFT JOIN work_stations ws ON ps.work_station_id = ws.id
         LEFT JOIN equipment e ON ps.equipment_id = e.id
         LEFT JOIN production_processes pp ON ps.process_id = pp.id
+        {}
         ORDER BY ps.planned_start_time DESC, ps.priority DESC
-        "#
-    )
-    .fetch_all(&state.pool)
-    .await;
+        LIMIT ${} OFFSET ${}
+        "#,
+        where_clause,
+        params.len() + 1,
+        params.len() + 2
+    );
 
-    let schedules = match result {
+    let mut fetch_query = sqlx::query(&fetch_sql);
+    for p in &params {
+        fetch_query = fetch_query.bind(p.clone());
+    }
+    fetch_query = fetch_query.bind(pagesize).bind(offset);
+
+    let schedules = match fetch_query.fetch_all(&state.pool).await {
         Ok(s) => s,
         Err(e) => {
             tracing::error!("Failed to fetch production schedules: {}", e);
@@ -198,39 +274,91 @@ pub async fn list_production_schedules(
     let schedules_list: Vec<ProductionScheduleResponse> = schedules
         .into_iter()
         .map(|r| ProductionScheduleResponse {
-            id: r.id,
-            schedule_no: r.schedule_no,
-            order_id: r.order_id,
-            order_no: r.order_no,
-            product_id: r.product_id,
-            product_name: r.product_name,
-            product_code: r.product_code,
-            quantity: big_decimal_to_f64(Some(r.quantity)),
-            work_station_id: r.work_station_id,
-            work_station_name: Some(r.work_station_name),
-            equipment_id: r.equipment_id,
-            equipment_name: Some(r.equipment_name),
-            process_id: r.process_id,
-            process_name: Some(r.process_name),
-            planned_start_time: opt_naive_to_utc(r.planned_start_time),
-            planned_end_time: opt_naive_to_utc(r.planned_end_time),
-            actual_start_time: opt_naive_to_utc(r.actual_start_time),
-            actual_end_time: opt_naive_to_utc(r.actual_end_time),
-            status: r.status.unwrap_or_else(|| "pending".to_string()),
-            priority: r.priority.unwrap_or(0),
-            sequence: r.sequence.unwrap_or(0),
-            notes: r.notes,
-            created_at: naive_to_utc(r.created_at),
-            updated_at: naive_to_utc(r.updated_at),
+            id: r.try_get::<Uuid, _>("id").unwrap_or_default(),
+            schedule_no: r.try_get::<String, _>("schedule_no").unwrap_or_default(),
+            order_id: r.try_get::<Option<Uuid>, _>("order_id").ok().flatten(),
+            order_no: r.try_get::<Option<String>, _>("order_no").ok().flatten(),
+            product_id: r.try_get::<Option<Uuid>, _>("product_id").ok().flatten(),
+            product_name: r.try_get::<String, _>("product_name").unwrap_or_default(),
+            product_code: r.try_get::<String, _>("product_code").unwrap_or_default(),
+            quantity: big_decimal_to_f64(
+                r.try_get::<Option<BigDecimal>, _>("quantity")
+                    .ok()
+                    .flatten(),
+            ),
+            work_station_id: r
+                .try_get::<Option<Uuid>, _>("work_station_id")
+                .ok()
+                .flatten(),
+            work_station_name: r
+                .try_get::<Option<String>, _>("work_station_name")
+                .ok()
+                .flatten(),
+            equipment_id: r.try_get::<Option<Uuid>, _>("equipment_id").ok().flatten(),
+            equipment_name: r
+                .try_get::<Option<String>, _>("equipment_name")
+                .ok()
+                .flatten(),
+            process_id: r.try_get::<Option<Uuid>, _>("process_id").ok().flatten(),
+            process_name: r
+                .try_get::<Option<String>, _>("process_name")
+                .ok()
+                .flatten(),
+            planned_start_time: opt_naive_to_utc(
+                r.try_get::<Option<NaiveDateTime>, _>("planned_start_time")
+                    .ok()
+                    .flatten(),
+            ),
+            planned_end_time: opt_naive_to_utc(
+                r.try_get::<Option<NaiveDateTime>, _>("planned_end_time")
+                    .ok()
+                    .flatten(),
+            ),
+            actual_start_time: opt_naive_to_utc(
+                r.try_get::<Option<NaiveDateTime>, _>("actual_start_time")
+                    .ok()
+                    .flatten(),
+            ),
+            actual_end_time: opt_naive_to_utc(
+                r.try_get::<Option<NaiveDateTime>, _>("actual_end_time")
+                    .ok()
+                    .flatten(),
+            ),
+            status: r
+                .try_get::<Option<String>, _>("status")
+                .ok()
+                .flatten()
+                .unwrap_or_else(|| "pending".to_string()),
+            priority: r
+                .try_get::<Option<i32>, _>("priority")
+                .ok()
+                .flatten()
+                .unwrap_or(0),
+            sequence: r
+                .try_get::<Option<i32>, _>("sequence")
+                .ok()
+                .flatten()
+                .unwrap_or(0),
+            notes: r.try_get::<Option<String>, _>("notes").ok().flatten(),
+            created_at: naive_to_utc(
+                r.try_get::<Option<NaiveDateTime>, _>("created_at")
+                    .ok()
+                    .flatten(),
+            ),
+            updated_at: naive_to_utc(
+                r.try_get::<Option<NaiveDateTime>, _>("updated_at")
+                    .ok()
+                    .flatten(),
+            ),
         })
         .collect();
-
-    let total = schedules_list.len() as i64;
 
     Json(ApiResponse::success(
         ListProductionSchedulesResponse {
             schedules: schedules_list,
-            total,
+            total: total.unwrap_or(0),
+            page,
+            pagesize,
         },
         "获取生产排产列表成功",
     ))
@@ -567,6 +695,7 @@ pub async fn delete_production_schedule(
 pub async fn adjust_schedule(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
+    Path(_id): Path<String>,
     Json(req): Json<AdjustScheduleRequest>,
 ) -> Json<ApiResponse<String>> {
     if let Err(e) = check_permission(

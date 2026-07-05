@@ -3,6 +3,7 @@
 use axum::{
     extract::Extension,
     extract::Path,
+    extract::Query,
     extract::State,
     routing::{delete, get, post, put},
     Json, Router,
@@ -11,7 +12,7 @@ use chrono::{DateTime, NaiveDate, NaiveDateTime, TimeZone, Utc};
 use serde::{Deserialize, Serialize};
 use sqlx::{
     types::{BigDecimal, Uuid},
-    PgPool,
+    Row,
 };
 use std::str::FromStr;
 use topems_shared::auth::Claims;
@@ -35,17 +36,25 @@ pub fn create_routes() -> Router<AppState> {
         )
         .route(
             "/api/mes/orders/{id}/release",
-            post(release_production_order),
+            put(release_production_order),
         )
-        .route("/api/mes/orders/{id}/start", post(start_production_order))
+        .route("/api/mes/orders/{id}/start", put(start_production_order))
         .route(
             "/api/mes/orders/{id}/complete",
-            post(complete_production_order),
+            put(complete_production_order),
         )
-        .route("/api/mes/orders/{id}/cancel", post(cancel_production_order))
+        .route("/api/mes/orders/{id}/cancel", put(cancel_production_order))
 }
 
 // ==================== Data Types ====================
+
+#[derive(Debug, Clone, Deserialize)]
+pub struct ListProductionOrdersQuery {
+    page: Option<i32>,
+    pagesize: Option<i32>,
+    search: Option<String>,
+    status: Option<String>,
+}
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub enum ProductionOrderSource {
@@ -139,6 +148,8 @@ pub struct ProductionOrderResponse {
 pub struct ListProductionOrdersResponse {
     pub orders: Vec<ProductionOrderResponse>,
     pub total: i64,
+    pub page: i64,
+    pub pagesize: i64,
 }
 
 fn naive_to_utc(dt: Option<NaiveDateTime>) -> DateTime<Utc> {
@@ -148,6 +159,14 @@ fn naive_to_utc(dt: Option<NaiveDateTime>) -> DateTime<Utc> {
 
 fn opt_naive_to_utc(dt: Option<NaiveDateTime>) -> Option<DateTime<Utc>> {
     dt.map(|d| Utc.from_utc_datetime(&d))
+}
+
+fn datetime_to_string(dt: Option<NaiveDateTime>) -> String {
+    naive_to_utc(dt).to_rfc3339()
+}
+
+fn opt_datetime_to_string(dt: Option<NaiveDateTime>) -> Option<String> {
+    opt_naive_to_utc(dt).map(|d| d.to_rfc3339())
 }
 
 fn big_decimal_to_f64(bd: Option<BigDecimal>) -> f64 {
@@ -191,6 +210,7 @@ pub fn validate_state_transition(current_status: &str, target_status: &str) -> R
 pub async fn list_production_orders(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
+    Query(query): Query<ListProductionOrdersQuery>,
 ) -> Json<ApiResponse<ListProductionOrdersResponse>> {
     if let Err(e) =
         check_permission(&state.pool, &claims, &ModulePermission::ProductionOrderRead).await
@@ -198,7 +218,55 @@ pub async fn list_production_orders(
         return e;
     }
 
-    let result = sqlx::query!(
+    let page = query.page.unwrap_or(1) as i64;
+    let pagesize = query.pagesize.unwrap_or(10) as i64;
+    let offset = (page - 1) * pagesize;
+
+    let mut params: Vec<serde_json::Value> = Vec::new();
+    let mut where_clause = String::new();
+
+    if let Some(status) = query.status {
+        where_clause.push_str(" WHERE status = $1");
+        params.push(serde_json::Value::String(status));
+    }
+
+    if let Some(search) = query.search {
+        let pattern = format!("%{}%", search);
+        if where_clause.is_empty() {
+            where_clause.push_str(
+                " WHERE (order_no ILIKE $1 OR product_name ILIKE $1 OR product_code ILIKE $1)",
+            );
+        } else {
+            where_clause.push_str(&format!(
+                " AND (order_no ILIKE ${} OR product_name ILIKE ${} OR product_code ILIKE ${})",
+                params.len() + 1,
+                params.len() + 1,
+                params.len() + 1
+            ));
+        }
+        params.push(serde_json::Value::String(pattern));
+    }
+
+    let count_sql = format!(
+        "SELECT COUNT(*) as total FROM production_orders{}",
+        where_clause
+    );
+
+    let mut count_query = sqlx::query_scalar(&count_sql);
+    for p in &params {
+        count_query = count_query.bind(p.clone());
+    }
+
+    let count_result = count_query.fetch_one(&state.pool).await;
+    let total: Option<i64> = match count_result {
+        Ok(c) => c,
+        Err(e) => {
+            tracing::error!("Failed to count production orders: {}", e);
+            return Json(ApiResponse::error(500, "获取生产工单列表失败"));
+        }
+    };
+
+    let fetch_sql = format!(
         r#"
         SELECT 
             id, order_no, product_id, product_name, product_code,
@@ -208,13 +276,22 @@ pub async fn list_production_orders(
             actual_start_date, actual_end_date,
             workshop_id, notes, created_at, updated_at
         FROM production_orders
+        {}
         ORDER BY created_at DESC
-        "#
-    )
-    .fetch_all(&state.pool)
-    .await;
+        LIMIT ${} OFFSET ${}
+        "#,
+        where_clause,
+        params.len() + 1,
+        params.len() + 2
+    );
 
-    let orders = match result {
+    let mut fetch_query = sqlx::query(&fetch_sql);
+    for p in &params {
+        fetch_query = fetch_query.bind(p.clone());
+    }
+    fetch_query = fetch_query.bind(pagesize).bind(offset);
+
+    let orders = match fetch_query.fetch_all(&state.pool).await {
         Ok(o) => o,
         Err(e) => {
             tracing::error!("Failed to fetch production orders: {}", e);
@@ -225,34 +302,80 @@ pub async fn list_production_orders(
     let orders_list: Vec<ProductionOrderResponse> = orders
         .into_iter()
         .map(|r| ProductionOrderResponse {
-            id: r.id,
-            order_no: r.order_no,
-            product_id: r.product_id,
-            product_name: r.product_name,
-            product_code: r.product_code,
-            quantity: big_decimal_to_f64(Some(r.quantity)),
-            completed_quantity: big_decimal_to_f64(r.completed_quantity),
-            status: r.status.unwrap_or_else(|| "pending".to_string()),
-            source: r.source.unwrap_or_else(|| "manual".to_string()),
-            source_order_id: r.source_order_id,
-            source_order_number: r.source_order_number,
-            planned_start_date: opt_naive_to_utc(r.planned_start_date),
-            planned_end_date: opt_naive_to_utc(r.planned_end_date),
-            actual_start_date: opt_naive_to_utc(r.actual_start_date),
-            actual_end_date: opt_naive_to_utc(r.actual_end_date),
-            workshop_id: r.workshop_id,
-            notes: r.notes,
-            created_at: naive_to_utc(r.created_at),
-            updated_at: naive_to_utc(r.updated_at),
+            id: r.try_get::<Uuid, _>("id").unwrap_or_default(),
+            order_no: r.try_get::<String, _>("order_no").unwrap_or_default(),
+            product_id: r.try_get::<Option<Uuid>, _>("product_id").ok().flatten(),
+            product_name: r.try_get::<String, _>("product_name").unwrap_or_default(),
+            product_code: r.try_get::<String, _>("product_code").unwrap_or_default(),
+            quantity: big_decimal_to_f64(
+                r.try_get::<Option<BigDecimal>, _>("quantity")
+                    .ok()
+                    .flatten(),
+            ),
+            completed_quantity: big_decimal_to_f64(
+                r.try_get::<Option<BigDecimal>, _>("completed_quantity")
+                    .ok()
+                    .flatten(),
+            ),
+            status: r
+                .try_get::<Option<String>, _>("status")
+                .ok()
+                .flatten()
+                .unwrap_or_else(|| "pending".to_string()),
+            source: r
+                .try_get::<Option<String>, _>("source")
+                .ok()
+                .flatten()
+                .unwrap_or_else(|| "manual".to_string()),
+            source_order_id: r
+                .try_get::<Option<Uuid>, _>("source_order_id")
+                .ok()
+                .flatten(),
+            source_order_number: r
+                .try_get::<Option<String>, _>("source_order_number")
+                .ok()
+                .flatten(),
+            planned_start_date: opt_naive_to_utc(
+                r.try_get::<Option<NaiveDateTime>, _>("planned_start_date")
+                    .ok()
+                    .flatten(),
+            ),
+            planned_end_date: opt_naive_to_utc(
+                r.try_get::<Option<NaiveDateTime>, _>("planned_end_date")
+                    .ok()
+                    .flatten(),
+            ),
+            actual_start_date: opt_naive_to_utc(
+                r.try_get::<Option<NaiveDateTime>, _>("actual_start_date")
+                    .ok()
+                    .flatten(),
+            ),
+            actual_end_date: opt_naive_to_utc(
+                r.try_get::<Option<NaiveDateTime>, _>("actual_end_date")
+                    .ok()
+                    .flatten(),
+            ),
+            workshop_id: r.try_get::<Option<Uuid>, _>("workshop_id").ok().flatten(),
+            notes: r.try_get::<Option<String>, _>("notes").ok().flatten(),
+            created_at: naive_to_utc(
+                r.try_get::<Option<NaiveDateTime>, _>("created_at")
+                    .ok()
+                    .flatten(),
+            ),
+            updated_at: naive_to_utc(
+                r.try_get::<Option<NaiveDateTime>, _>("updated_at")
+                    .ok()
+                    .flatten(),
+            ),
         })
         .collect();
-
-    let total = orders_list.len() as i64;
 
     Json(ApiResponse::success(
         ListProductionOrdersResponse {
             orders: orders_list,
-            total,
+            total: total.unwrap_or(0),
+            page,
+            pagesize,
         },
         "获取生产工单列表成功",
     ))
