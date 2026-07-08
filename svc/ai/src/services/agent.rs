@@ -1,3 +1,5 @@
+#![allow(dead_code)]
+
 use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
 use uuid::Uuid;
@@ -392,7 +394,11 @@ impl AgentService {
                 } else {
                     while let Some(&op) = operators.last() {
                         if op != '(' && self.precedence(op) >= self.precedence(c) {
-                            self.apply_operator(&mut numbers, operators.pop().unwrap());
+                            if let Some(poped_op) = operators.pop() {
+                                self.apply_operator(&mut numbers, poped_op);
+                            } else {
+                                break;
+                            }
                         } else {
                             break;
                         }
@@ -427,12 +433,12 @@ impl AgentService {
     }
 
     fn apply_operator(&self, numbers: &mut Vec<f64>, op: char) {
-        if numbers.len() < 2 {
+        let Some(b) = numbers.pop() else {
             return;
-        }
-
-        let b = numbers.pop().unwrap();
-        let a = numbers.pop().unwrap();
+        };
+        let Some(a) = numbers.pop() else {
+            return;
+        };
 
         let result = match op {
             '+' => a + b,
@@ -478,7 +484,7 @@ impl AgentService {
         }
     }
 
-    fn get_weather_data(&self, city: &str) -> WeatherData {
+    fn get_weather_data(&self, _city: &str) -> WeatherData {
         let weather_conditions = vec!["晴", "多云", "阴", "小雨", "中雨", "大雨", "雷阵雨", "雾霾"];
         let mut rng = rand::thread_rng();
         let idx = rand::Rng::gen_range(&mut rng, 0..weather_conditions.len());
@@ -638,7 +644,7 @@ impl AgentService {
         }
     }
 
-    fn perform_web_search(&self, query: &str) -> String {
+    fn perform_web_search(&self, _query: &str) -> String {
         let results = vec![
             (
                 "TOPEMS 官方文档",
@@ -960,7 +966,7 @@ impl WorkflowOrchestrator {
         let mut has_error = false;
         let mut error_msg: Option<String> = None;
 
-        for (index, step) in workflow.steps.iter().enumerate() {
+        for (_index, step) in workflow.steps.iter().enumerate() {
             // Check condition
             if let Some(condition) = &step.condition {
                 if !self.evaluate_condition(condition, &context, &results) {

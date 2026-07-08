@@ -450,7 +450,7 @@ const FinanceAssetPage: React.FC = () => {
         type: 'select' as const,
         options: [{ value: 'asset', label: '资产类' }],
         value: filterCategory,
-        onChange: setFilterCategory,
+        onChange: (value: unknown) => setFilterCategory(value as string),
       },
       {
         id: 'status',
@@ -461,7 +461,7 @@ const FinanceAssetPage: React.FC = () => {
           { value: 'disabled', label: '停用' },
         ],
         value: filterStatus,
-        onChange: setFilterStatus,
+        onChange: (value: unknown) => setFilterStatus(value as string),
       },
     ],
     [filterCategory, filterStatus]

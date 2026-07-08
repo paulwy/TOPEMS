@@ -45,49 +45,52 @@ import {
   type Dataset,
 } from '@/api/bi';
 import { logger } from '@/utils/logger';
+import { designTokens } from '@/theme/tokens';
+
+const ct = designTokens.colors;
 
 const quickActions = [
   {
     icon: <LayoutDashboard size={24} />,
     label: '新建仪表盘',
     path: '/bi/dashboard',
-    color: '#6366F1',
-    bg: '#EEF2FF',
+    color: ct.secondary[400],
+    bg: ct.secondary[50],
   },
   {
     icon: <FileText size={24} />,
     label: '创建报表',
     path: '/bi/reports',
     color: 'warning.main',
-    bg: '#FFFBEB',
+    bg: ct.warning[50],
   },
   {
     icon: <Database size={24} />,
     label: '数据集管理',
     path: '/bi/datasets',
     color: 'success.main',
-    bg: '#ECFDF5',
+    bg: ct.success[50],
   },
   {
     icon: <BarChart3 size={24} />,
     label: '数据分析',
     path: '/bi/analysis',
     color: 'secondary.main',
-    bg: '#F5F3FF',
+    bg: ct.secondary[50],
   },
   {
     icon: <PieChart size={24} />,
     label: '可视化',
     path: '/bi/visualizations',
-    color: '#EC4899',
-    bg: '#FDF2F8',
+    color: ct.pink[500],
+    bg: ct.pink[50],
   },
   {
     icon: <Shield size={24} />,
     label: '权限管理',
     path: '/bi/permissions',
     color: 'error.main',
-    bg: '#FEF2F2',
+    bg: ct.error[50],
   },
 ];
 
@@ -224,7 +227,7 @@ const BiIndexPage = () => {
       subtitle='一站式数据分析与可视化平台'
       headerProps={{
         pageIcon: <BarChart3 style={{ width: 20, height: 20 }} />,
-        pageGradient: 'linear-gradient(135deg, #6366F1 0%, #8B5CF6 100%)',
+        pageGradient: `linear-gradient(135deg, ${ct.secondary[400]} 0%, ${ct.secondary.main} 100%)`,
       }}
       padding={false}
       maxWidth={false}
@@ -268,7 +271,7 @@ const BiIndexPage = () => {
                   startAdornment: (
                     <Search
                       size={18}
-                      style={{ marginRight: 8, color: '#9ca3af' }}
+                      style={{ marginRight: 8, color: ct.grey[400] }}
                     />
                   ),
                 },
@@ -313,7 +316,7 @@ const BiIndexPage = () => {
             <Box sx={{ display: 'flex', alignItems: 'center', mb: 3 }}>
               <Sparkles
                 size={20}
-                style={{ color: '#8B5CF6', marginRight: 8 }}
+                style={{ color: ct.secondary.main, marginRight: 8 }}
               />
               <Typography
                 variant='h6'
@@ -462,11 +465,11 @@ const BiIndexPage = () => {
                                     width: 28,
                                     height: 28,
                                     borderRadius: 0.5,
-                                    backgroundColor: '#EEF2FF',
+                                    backgroundColor: 'indigo.light',
                                     display: 'flex',
                                     alignItems: 'center',
                                     justifyContent: 'center',
-                                    color: '#6366F1',
+                                    color: 'indigo.main',
                                   }}
                                 >
                                   <LayoutDashboard size={16} />
@@ -534,7 +537,7 @@ const BiIndexPage = () => {
                                     width: 28,
                                     height: 28,
                                     borderRadius: 0.5,
-                                    backgroundColor: '#FFFBEB',
+                                    backgroundColor: ct.warning[50],
                                     display: 'flex',
                                     alignItems: 'center',
                                     justifyContent: 'center',
@@ -573,7 +576,7 @@ const BiIndexPage = () => {
                   <Box sx={{ display: 'flex', alignItems: 'center', mb: 2 }}>
                     <Clock
                       size={18}
-                      style={{ marginRight: 8, color: '#6B7280' }}
+                      style={{ marginRight: 8, color: ct.grey[500] }}
                     />
                     <Typography
                       variant='subtitle1'
@@ -627,7 +630,7 @@ const BiIndexPage = () => {
                   <Box sx={{ display: 'flex', alignItems: 'center', mb: 2 }}>
                     <Database
                       size={18}
-                      style={{ marginRight: 8, color: '#10B981' }}
+                      style={{ marginRight: 8, color: ct.success.main }}
                     />
                     <Typography
                       variant='subtitle1'
@@ -656,7 +659,7 @@ const BiIndexPage = () => {
                               width: 28,
                               height: 28,
                               borderRadius: 0.5,
-                              backgroundColor: '#ECFDF5',
+                              backgroundColor: ct.success[50],
                               display: 'flex',
                               alignItems: 'center',
                               justifyContent: 'center',
@@ -708,7 +711,7 @@ const BiIndexPage = () => {
                 <Box sx={{ display: 'flex', alignItems: 'center', mb: 2 }}>
                   <Zap
                     size={20}
-                    style={{ color: '#10B981', marginRight: 8 }}
+                    style={{ color: ct.success.main, marginRight: 8 }}
                   />
                   <Typography
                     variant='subtitle1'
@@ -729,7 +732,7 @@ const BiIndexPage = () => {
                   variant='contained'
                   startIcon={<Sparkles size={16} />}
                   sx={{
-                    background: 'linear-gradient(135deg, #10B981 0%, #059669 100%)',
+                    background: `linear-gradient(135deg, ${ct.success.main} 0%, ${ct.success.dark} 100%)`,
                   }}
                 >
                   AI 智能分析

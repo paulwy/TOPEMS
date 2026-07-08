@@ -1,6 +1,8 @@
 import { Grid } from '@/components';
 import { useAppStore } from '@/store';
 import React, { useEffect, useState, useMemo, useCallback } from 'react';
+import { designTokens } from '@/theme/tokens';
+const ct = designTokens.colors;
 import {
   ClipboardList,
   Plus,
@@ -436,7 +438,7 @@ const LimsInstrumentPage: React.FC = () => {
         title: '样品总数',
         value: stats.total_samples,
         icon: <ClipboardList size={24} />,
-        gradient: ['#8B5CF6', '#7C3AED'] as [string, string],
+        gradient: [ct.secondary.main, ct.secondary.dark] as [string, string],
         subtitle: `待测试: ${stats.pending_samples}`,
       },
       {
@@ -444,7 +446,7 @@ const LimsInstrumentPage: React.FC = () => {
         title: '检验任务',
         value: stats.total_tasks,
         icon: <ClipboardList size={24} />,
-        gradient: ['#6366F1', '#4F46E5'] as [string, string],
+        gradient: [ct.secondary[400], ct.secondary[600]] as [string, string],
         subtitle: `进行中: ${stats.in_progress_tasks}`,
       },
       {
@@ -452,14 +454,14 @@ const LimsInstrumentPage: React.FC = () => {
         title: '检验流程',
         value: stats.total_processes,
         icon: <ClipboardList size={24} />,
-        gradient: ['warning.main', '#D97706'] as [string, string],
+        gradient: [ct.warning.main, ct.warning.dark] as [string, string],
       },
       {
         id: 'total-instruments',
         title: '仪器设备',
         value: stats.total_instruments,
         icon: <Settings size={24} />,
-        gradient: ['#14B8A6', '#0D9488'] as [string, string],
+        gradient: [ct.teal[400], ct.teal[600]] as [string, string],
         subtitle: `正常: ${stats.normal_instruments}`,
       },
       {
@@ -467,14 +469,14 @@ const LimsInstrumentPage: React.FC = () => {
         title: '已完成样品',
         value: stats.completed_samples,
         icon: <CheckCircle2 size={24} />,
-        gradient: ['#00C897', '#00A878'] as [string, string],
+        gradient: [ct.success.main, ct.success.dark] as [string, string],
       },
       {
         id: 'testing-samples',
         title: '测试中样品',
         value: stats.testing_samples,
         icon: <ClipboardList size={24} />,
-        gradient: ['#EC4899', '#DB2777'] as [string, string],
+        gradient: [ct.pink[500], ct.pink[600]] as [string, string],
       },
     ],
     [stats]
@@ -506,7 +508,7 @@ const LimsInstrumentPage: React.FC = () => {
         const TypeIcon = getInstrumentTypeIcon(instrument.type);
         return <TypeIcon size={24} />;
       },
-      iconBgColor: '#ccfbf1',
+      iconBgColor: ct.teal[100],
       meta: [
         { field: 'code' as const, label: '编号' },
         { field: 'location' as const, label: '位置' },
@@ -594,7 +596,7 @@ const LimsInstrumentPage: React.FC = () => {
           display: 'flex',
           alignItems: 'center',
           justifyContent: 'center',
-          background: 'linear-gradient(135deg, #f8fafc 0%, border.default 100%)',
+          background: `linear-gradient(135deg, ${ct.background.default} 0%, border.default 100%)`,
         }}
       >
         <Box sx={{ textAlign: 'center' }}>
@@ -616,7 +618,7 @@ const LimsInstrumentPage: React.FC = () => {
           display: 'flex',
           alignItems: 'center',
           justifyContent: 'center',
-          background: 'linear-gradient(135deg, #f8fafc 0%, border.default 100%)',
+          background: `linear-gradient(135deg, ${ct.background.default} 0%, border.default 100%)`,
           p: 2,
         }}
       >
@@ -641,7 +643,7 @@ const LimsInstrumentPage: React.FC = () => {
           >
             <ClipboardList
               size={32}
-              color='#0891b2'
+              color={ct.cyan[600]}
             />
           </Avatar>
           <Typography
@@ -672,14 +674,14 @@ const LimsInstrumentPage: React.FC = () => {
     <PageContainer
       sx={{
         minHeight: '100vh',
-        background: 'linear-gradient(135deg, #f8fafc 0%, border.default 100%)',
+        background: `linear-gradient(135deg, ${ct.background.default} 0%, border.default 100%)`,
       }}
       padding={false}
       title='仪器管理'
       subtitle='Instrument Management'
       headerProps={{
         pageIcon: <Settings style={{ width: 20, height: 20 }} />,
-        pageGradient: 'linear-gradient(135deg, #14B8A6, #0D9488)',
+        pageGradient: `linear-gradient(135deg, ${ct.teal[400]}, ${ct.teal[600]})`,
         breadcrumbs: [
           { label: '首页', href: '/dashboard' },
           { label: 'LIMS' },
@@ -711,7 +713,7 @@ const LimsInstrumentPage: React.FC = () => {
       >
         <CardListTemplate
           title=''
-          data={filteredInstruments}
+          data={filteredInstruments as unknown as Record<string, unknown>[]}
           cardConfig={cardConfig}
           metricStats={metricStats}
           metricColumns={6}
@@ -773,6 +775,7 @@ const LimsInstrumentPage: React.FC = () => {
               setShowInstrumentModal(false);
               setIsEditingInstrument(false);
             }}
+            aria-label='关闭添加仪器对话框'
           >
             <X size={20} />
           </IconButton>
@@ -1033,8 +1036,8 @@ const LimsInstrumentPage: React.FC = () => {
             disabled={creating}
             variant='contained'
             sx={{
-              backgroundColor: '#0d9488',
-              '&:hover': { backgroundColor: '#0f766e' },
+              backgroundColor: ct.teal[600],
+              '&:hover': { backgroundColor: ct.teal[700] },
             }}
           >
             {creating
@@ -1072,7 +1075,7 @@ const LimsInstrumentPage: React.FC = () => {
                 >
                   仪器详情
                 </Typography>
-                <IconButton onClick={() => setShowInstrumentDetailModal(false)}>
+                <IconButton onClick={() => setShowInstrumentDetailModal(false)} aria-label='关闭仪器详情对话框'>
                   <X size={24} />
                 </IconButton>
               </Box>
@@ -1112,7 +1115,7 @@ const LimsInstrumentPage: React.FC = () => {
                     <Chip
                       size='small'
                       label={selectedInstrument.type}
-                      sx={{ bgcolor: '#ccfbf1', color: '#0f766e' }}
+                      sx={{ bgcolor: ct.teal[100], color: ct.teal[700] }}
                     />
                     <Chip
                       size='small'
@@ -1305,7 +1308,7 @@ const LimsInstrumentPage: React.FC = () => {
                           >
                             <Typography
                               sx={{
-                                ...{ color: '#0f766e' },
+                                ...{ color: ct.teal[700] },
                                 fontWeight: 'medium',
                               }}
                             >
@@ -1345,7 +1348,7 @@ const LimsInstrumentPage: React.FC = () => {
                       openMaintenanceModal(selectedInstrument);
                     }}
                     variant='outlined'
-                    sx={{ color: '#0d9488', borderColor: '#0d9488' }}
+                    sx={{ color: ct.teal[600], borderColor: ct.teal[600] }}
                   >
                     添加维护记录
                   </Button>
@@ -1400,6 +1403,7 @@ const LimsInstrumentPage: React.FC = () => {
           <IconButton
             size='small'
             onClick={() => setShowMaintenanceModal(false)}
+            aria-label='关闭添加维护记录对话框'
           >
             <X size={20} />
           </IconButton>
@@ -1415,7 +1419,7 @@ const LimsInstrumentPage: React.FC = () => {
                 >
                   仪器名称
                 </Typography>
-                <Typography sx={{ ...{ color: '#0f766e' }, fontWeight: 'medium' }}>
+                <Typography sx={{ ...{ color: ct.teal[700] }, fontWeight: 'medium' }}>
                   {selectedInstrument.name}
                 </Typography>
               </Box>
@@ -1558,8 +1562,8 @@ const LimsInstrumentPage: React.FC = () => {
             disabled={creating}
             variant='contained'
             sx={{
-              backgroundColor: '#0d9488',
-              '&:hover': { backgroundColor: '#0f766e' },
+              backgroundColor: ct.teal[600],
+              '&:hover': { backgroundColor: ct.teal[700] },
             }}
           >
             {creating ? '创建中...' : '创建'}

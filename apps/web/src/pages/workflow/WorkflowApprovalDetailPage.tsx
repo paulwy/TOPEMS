@@ -37,6 +37,9 @@ import { apiLogger } from '@/utils/logger';
 import { DetailPageTemplate } from '@/components/templates/DetailPageTemplate';
 import type { TabConfig, SectionConfig } from '@/components/templates/DetailPageTemplate';
 import { PageContainer } from '@/components/common';
+import { designTokens } from '@/theme/tokens';
+
+const ct = designTokens.colors;
 
 const FlowApprovalDetailPage: React.FC = () => {
   const { id } = useParams<{ id: string }>();
@@ -202,28 +205,28 @@ const FlowApprovalDetailPage: React.FC = () => {
         return (
           <CheckCircle
             size={20}
-            style={{ color: '#16a34a' }}
+            style={{ color: ct.success[600] }}
           />
         );
       case 'rejected':
         return (
           <XCircle
             size={20}
-            style={{ color: '#dc2626' }}
+            style={{ color: ct.error[600] }}
           />
         );
       case 'pending':
         return (
           <Clock
             size={20}
-            style={{ color: '#ca8a04' }}
+            style={{ color: ct.warning[600] }}
           />
         );
       default:
         return (
           <AlertCircle
             size={20}
-            style={{ color: '#6b7280' }}
+            style={{ color: ct.grey[500] }}
           />
         );
     }
@@ -447,12 +450,12 @@ const FlowApprovalDetailPage: React.FC = () => {
                       {record.action === 'approve' ? (
                         <CheckCircle2
                           size={16}
-                          style={{ color: '#16a34a' }}
+                          style={{ color: ct.success[600] }}
                         />
                       ) : (
                         <XCircle
                           size={16}
-                          style={{ color: '#dc2626' }}
+                          style={{ color: ct.error[600] }}
                         />
                       )}
                       <Typography

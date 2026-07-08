@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useMemo } from 'react';
-import { apiLogger } from '@/utils/logger';
+import { apiLogger, logger } from '@/utils/logger';
 import {
   Box,
   Typography,
@@ -99,7 +99,7 @@ const RsDocPage: React.FC = () => {
         setTotal(newDocs.length);
       }
     } catch (error: unknown) {
-      console.error('加载文档数据失败:', error);
+      logger.error('加载文档数据失败:', error);
       addNotification({
         type: 'error',
         title: '加载失败',
@@ -117,7 +117,7 @@ const RsDocPage: React.FC = () => {
         setStatistics(response.data);
       }
     } catch (error: unknown) {
-      console.error('加载统计数据失败:', error);
+      logger.error('加载统计数据失败:', error);
     }
   };
 
@@ -202,7 +202,7 @@ const RsDocPage: React.FC = () => {
       setNewDocForm({ doc_name: '', doc_type: '设计文档', description: '' });
       loadDocs();
     } catch (error: unknown) {
-      console.error('创建文档失败:', error);
+      logger.error('创建文档失败:', error);
       addNotification({
         type: 'error',
         title: '创建失败',
@@ -277,7 +277,7 @@ const RsDocPage: React.FC = () => {
         ...uniqueDocTypes.map((type) => ({ label: type, value: type })),
       ],
       value: docTypeFilter || '',
-      onChange: (value) => setDocTypeFilter(value || null),
+      onChange: (value: unknown) => setDocTypeFilter(value as string || ''),
     },
     {
       id: 'status',
@@ -289,7 +289,7 @@ const RsDocPage: React.FC = () => {
         { label: '草稿', value: 'draft' },
       ],
       value: statusFilter || '',
-      onChange: (value) => setStatusFilter(value || null),
+      onChange: (value: unknown) => setStatusFilter(value as string || ''),
     },
   ];
 

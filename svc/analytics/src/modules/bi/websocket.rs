@@ -77,7 +77,9 @@ async fn handle_dashboard_socket(
         return;
     }
 
-    let dashboard = dashboard.unwrap();
+    let Some(dashboard) = dashboard else {
+        return;
+    };
     let refresh_interval = if dashboard.auto_refresh_enabled.unwrap_or(false) {
         dashboard.auto_refresh_interval.unwrap_or(30) as u64
     } else {

@@ -5,6 +5,9 @@ import { DashboardTemplate } from '@/components/templates';
 import type { StatCard, ChartCard, QuickAction, RecentItem } from '@/components/templates';
 import { PageContainer } from '@/components/common';
 import PieChartComponent from '../../components/charts/PieChart';
+import { designTokens } from '@/theme/tokens';
+
+const ct = designTokens.colors;
 
 const iconMap: Record<string, React.ReactNode> = {
   Users: <Users size={24} />,
@@ -144,7 +147,7 @@ export const DashboardPage: React.FC = () => {
       subtitle={`${getGreeting()}，身份认证与访问控制`}
       headerProps={{
         pageIcon: <Shield style={{ width: 20, height: 20 }} />,
-        pageGradient: 'linear-gradient(135deg, #6366F1 0%, #8B5CF6 100%)',
+        pageGradient: `linear-gradient(135deg, ${ct.secondary[400]} 0%, ${ct.secondary.main} 100%)`,
       }}
       padding={false}
       maxWidth={false}

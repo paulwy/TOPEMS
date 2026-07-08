@@ -336,6 +336,155 @@ CREATE TABLE IF NOT EXISTS media_files (
     created_at TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT NOW()
 );
 
+-- Inventory Items Table
+CREATE TABLE IF NOT EXISTS inventory_items (
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    sku VARCHAR(100) NOT NULL UNIQUE,
+    name VARCHAR(255) NOT NULL,
+    category VARCHAR(100),
+    quantity INTEGER NOT NULL DEFAULT 0,
+    unit VARCHAR(50) NOT NULL,
+    location VARCHAR(255),
+    batch_no VARCHAR(100),
+    expiry_date DATE,
+    status VARCHAR(50) NOT NULL DEFAULT 'normal',
+    last_updated TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT NOW(),
+    created_at TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT NOW()
+);
+
+-- Stocktake Tasks Table
+CREATE TABLE IF NOT EXISTS stocktake_tasks (
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    title VARCHAR(255) NOT NULL,
+    warehouse VARCHAR(255) NOT NULL,
+    status VARCHAR(50) NOT NULL DEFAULT 'pending',
+    total_items INTEGER NOT NULL DEFAULT 0,
+    counted_items INTEGER NOT NULL DEFAULT 0,
+    assignee VARCHAR(255) NOT NULL,
+    due_date DATE NOT NULL,
+    created_at TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT NOW()
+);
+
+-- Stocktake Records Table
+CREATE TABLE IF NOT EXISTS stocktake_records (
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    task_id UUID NOT NULL REFERENCES stocktake_tasks(id) ON DELETE CASCADE,
+    item_id UUID NOT NULL REFERENCES inventory_items(id) ON DELETE CASCADE,
+    item_name VARCHAR(255) NOT NULL,
+    sku VARCHAR(100) NOT NULL,
+    system_quantity INTEGER NOT NULL,
+    actual_quantity INTEGER NOT NULL,
+    difference INTEGER NOT NULL,
+    status VARCHAR(50) NOT NULL DEFAULT 'normal',
+    counted_by VARCHAR(255) NOT NULL,
+    counted_at TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT NOW(),
+    created_at TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT NOW()
+);
+
+-- Inbound Orders Table
+CREATE TABLE IF NOT EXISTS inbound_orders (
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    order_no VARCHAR(100) NOT NULL UNIQUE,
+    supplier VARCHAR(255) NOT NULL,
+    order_type VARCHAR(50) NOT NULL DEFAULT 'purchase',
+    status VARCHAR(50) NOT NULL DEFAULT 'pending',
+    total_items INTEGER NOT NULL DEFAULT 0,
+    total_quantity INTEGER NOT NULL DEFAULT 0,
+    expected_date DATE NOT NULL,
+    created_at TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT NOW()
+);
+
+-- Outbound Orders Table
+CREATE TABLE IF NOT EXISTS outbound_orders (
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    order_no VARCHAR(100) NOT NULL UNIQUE,
+    customer VARCHAR(255) NOT NULL,
+    order_type VARCHAR(50) NOT NULL DEFAULT 'sales',
+    status VARCHAR(50) NOT NULL DEFAULT 'pending',
+    total_items INTEGER NOT NULL DEFAULT 0,
+    total_quantity INTEGER NOT NULL DEFAULT 0,
+    expected_date DATE NOT NULL,
+    created_at TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT NOW()
+);
+
+-- Quality Tasks Table
+CREATE TABLE IF NOT EXISTS quality_tasks (
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    task_no VARCHAR(100) NOT NULL UNIQUE,
+    task_type VARCHAR(50) NOT NULL,
+    product_name VARCHAR(255) NOT NULL,
+    batch_no VARCHAR(100) NOT NULL,
+    quantity INTEGER NOT NULL DEFAULT 0,
+    status VARCHAR(50) NOT NULL DEFAULT 'pending',
+    inspector VARCHAR(255) NOT NULL,
+    due_date DATE NOT NULL,
+    created_at TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT NOW(),
+    updated_at TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT NOW()
+);
+
+-- Defect Records Table
+CREATE TABLE IF NOT EXISTS defect_records (
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    task_id UUID NOT NULL REFERENCES quality_tasks(id) ON DELETE CASCADE,
+    product_name VARCHAR(255) NOT NULL,
+    batch_no VARCHAR(100) NOT NULL,
+    defect_type VARCHAR(100) NOT NULL,
+    severity VARCHAR(50) NOT NULL DEFAULT 'minor',
+    quantity INTEGER NOT NULL DEFAULT 0,
+    description TEXT NOT NULL,
+    images JSONB,
+    reporter VARCHAR(255) NOT NULL,
+    reported_at TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT NOW(),
+    status VARCHAR(50) NOT NULL DEFAULT 'open',
+    created_at TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT NOW()
+);
+
+-- Production Orders Table
+CREATE TABLE IF NOT EXISTS production_orders (
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    order_no VARCHAR(100) NOT NULL UNIQUE,
+    product_name VARCHAR(255) NOT NULL,
+    quantity INTEGER NOT NULL DEFAULT 0,
+    completed_quantity INTEGER NOT NULL DEFAULT 0,
+    status VARCHAR(50) NOT NULL DEFAULT 'pending',
+    workstation VARCHAR(255) NOT NULL,
+    start_time TIMESTAMP WITH TIME ZONE,
+    end_time TIMESTAMP WITH TIME ZONE,
+    due_date DATE NOT NULL,
+    created_at TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT NOW()
+);
+
+-- Work Reports Table
+CREATE TABLE IF NOT EXISTS work_reports (
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    order_id UUID NOT NULL REFERENCES production_orders(id) ON DELETE CASCADE,
+    order_no VARCHAR(100) NOT NULL,
+    workstation VARCHAR(255) NOT NULL,
+    operator VARCHAR(255) NOT NULL,
+    quantity INTEGER NOT NULL DEFAULT 0,
+    good_quantity INTEGER NOT NULL DEFAULT 0,
+    bad_quantity INTEGER NOT NULL DEFAULT 0,
+    start_time TIMESTAMP WITH TIME ZONE NOT NULL,
+    end_time TIMESTAMP WITH TIME ZONE NOT NULL,
+    duration INTEGER NOT NULL DEFAULT 0,
+    created_at TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT NOW()
+);
+
+-- Equipment Table
+CREATE TABLE IF NOT EXISTS equipment (
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    equipment_no VARCHAR(100) NOT NULL UNIQUE,
+    name VARCHAR(255) NOT NULL,
+    equipment_type VARCHAR(100) NOT NULL,
+    status VARCHAR(50) NOT NULL DEFAULT 'running',
+    location VARCHAR(255),
+    last_maintenance DATE,
+    next_maintenance DATE,
+    running_hours INTEGER NOT NULL DEFAULT 0,
+    created_at TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT NOW(),
+    updated_at TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT NOW()
+);
+
 -- Indexes
 CREATE INDEX IF NOT EXISTS idx_mobile_users_username ON mobile_users(username);
 CREATE INDEX IF NOT EXISTS idx_refresh_tokens_user_id ON refresh_tokens(user_id);

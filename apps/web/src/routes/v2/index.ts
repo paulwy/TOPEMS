@@ -1,107 +1,111 @@
-import { aiModuleConfig } from './ai';
-import { adminModuleConfig } from './admin';
-import { assetModuleConfig } from './asset';
-import { iamModuleConfig } from './iam';
-import { biModuleConfig } from './bi';
-import { crmModuleConfig } from './crm';
-import { docModuleConfig } from './doc';
-import { ehsModuleConfig } from './ehs';
-import { erpModuleConfig } from './erp';
-import { financeModuleConfig } from './finance';
-import { gisModuleConfig } from './gis';
-import { hrmModuleConfig } from './hrm';
-import { imModuleConfig } from './im';
-import { integrationModuleConfig } from './integration';
-import { limsModuleConfig } from './lims';
-import { lowcodeModuleConfig } from './lowcode';
-import { mesModuleConfig } from './mes';
-import { mobileModuleConfig } from './mobile';
-import { monitorModuleConfig } from './monitor';
-import { notificationModuleConfig } from './notification';
-import { oaModuleConfig } from './oa';
-import { pdmModuleConfig } from './pdm';
-import { pluginModuleConfig } from './plugin';
-import { pmModuleConfig } from './pm';
-import { qmsModuleConfig } from './qms';
-import { reportModuleConfig } from './report';
-import { rsModuleConfig } from './rs';
-import { scmModuleConfig } from './scm';
-import { srmModuleConfig } from './srm';
-import { wmsModuleConfig } from './wms';
-import { workflowModuleConfig } from './workflow';
-import { flattenRoutes } from './types';
+import { flattenRoutes, toFlatRouteConfig } from './types';
 import type { RouteModuleConfig, RouteConfigV2, RouteConfig } from './types';
 
-export const coreModuleRoutes: RouteModuleConfig[] = [
-  iamModuleConfig,
-  adminModuleConfig,
-  workflowModuleConfig,
-  notificationModuleConfig,
-  docModuleConfig,
-  reportModuleConfig,
-  monitorModuleConfig,
-  integrationModuleConfig,
-  aiModuleConfig,
-  mobileModuleConfig,
-  hrmModuleConfig,
-  financeModuleConfig,
-  crmModuleConfig,
-  mesModuleConfig,
-  qmsModuleConfig,
-  limsModuleConfig,
-  ehsModuleConfig,
-  scmModuleConfig,
-  erpModuleConfig,
-  wmsModuleConfig,
-  pmModuleConfig,
-  pdmModuleConfig,
-  srmModuleConfig,
-  oaModuleConfig,
-  lowcodeModuleConfig,
-  rsModuleConfig,
-  assetModuleConfig,
-  pluginModuleConfig,
-  imModuleConfig,
-  biModuleConfig,
-  gisModuleConfig,
-];
+const moduleImports: Record<string, () => Promise<{ [key: string]: RouteModuleConfig }>> = {
+  iam: () => import('./iam'),
+  admin: () => import('./admin'),
+  workflow: () => import('./workflow'),
+  notification: () => import('./notification'),
+  doc: () => import('./doc'),
+  report: () => import('./report'),
+  monitor: () => import('./monitor'),
+  integration: () => import('./integration'),
+  ai: () => import('./ai'),
+  mobile: () => import('./mobile'),
+  hrm: () => import('./hrm'),
+  finance: () => import('./finance'),
+  crm: () => import('./crm'),
+  mes: () => import('./mes'),
+  qms: () => import('./qms'),
+  lims: () => import('./lims'),
+  ehs: () => import('./ehs'),
+  scm: () => import('./scm'),
+  erp: () => import('./erp'),
+  wms: () => import('./wms'),
+  pm: () => import('./pm'),
+  pdm: () => import('./pdm'),
+  srm: () => import('./srm'),
+  oa: () => import('./oa'),
+  lowcode: () => import('./lowcode'),
+  rs: () => import('./rs'),
+  asset: () => import('./asset'),
+  plugin: () => import('./plugin'),
+  im: () => import('./im'),
+  bi: () => import('./bi'),
+  gis: () => import('./gis'),
+};
 
-export function getAllRoutes(): RouteConfigV2[] {
+const loadedModules = new Map<string, RouteModuleConfig>();
+const loadingPromises = new Map<string, Promise<RouteModuleConfig>>();
+
+export async function loadModuleConfig(moduleCode: string): Promise<RouteModuleConfig> {
+  if (loadedModules.has(moduleCode)) {
+    return loadedModules.get(moduleCode)!;
+  }
+
+  if (loadingPromises.has(moduleCode)) {
+    return loadingPromises.get(moduleCode)!;
+  }
+
+  const importFn = moduleImports[moduleCode];
+  if (!importFn) {
+    throw new Error(`Module ${moduleCode} not found`);
+  }
+
+  const promise = importFn()
+    .then((module) => {
+      const moduleConfig = module[`${moduleCode}ModuleConfig`] as RouteModuleConfig;
+      loadedModules.set(moduleCode, moduleConfig);
+      return moduleConfig;
+    })
+    .catch((error) => {
+      loadingPromises.delete(moduleCode);
+      throw error;
+    });
+
+  loadingPromises.set(moduleCode, promise);
+  return promise;
+}
+
+export async function getAllRoutes(): Promise<RouteConfigV2[]> {
   const allRoutes: RouteConfigV2[] = [];
-  coreModuleRoutes.forEach((moduleConfig) => {
-    allRoutes.push(...flattenRoutes(moduleConfig.routes));
-  });
+  for (const moduleCode of Object.keys(moduleImports)) {
+    try {
+      const moduleConfig = await loadModuleConfig(moduleCode);
+      allRoutes.push(...flattenRoutes(moduleConfig.routes));
+    } catch (e) {
+      console.error(`Failed to load module routes: ${moduleCode}`, e);
+    }
+  }
   return allRoutes;
 }
 
-export function getModuleRoutes(moduleCode: string): RouteConfigV2[] {
-  const moduleConfig = coreModuleRoutes.find((m) => m.code === moduleCode);
-  if (!moduleConfig) return [];
+export async function getModuleRoutes(moduleCode: string): Promise<RouteConfigV2[]> {
+  const moduleConfig = await loadModuleConfig(moduleCode);
   return flattenRoutes(moduleConfig.routes);
 }
 
-export function findRouteByPath(path: string): RouteConfigV2 | undefined {
-  const allRoutes = getAllRoutes();
+export async function findRouteByPath(path: string): Promise<RouteConfigV2 | undefined> {
+  const allRoutes = await getAllRoutes();
   return allRoutes.find((r) => r.path === path);
 }
 
-export function toFlatRouteConfig(modules: RouteModuleConfig[]): RouteConfig[] {
-  const result: RouteConfig[] = [];
-  modules.forEach((moduleConfig) => {
-    const flatRoutes = flattenRoutes(moduleConfig.routes);
-    flatRoutes.forEach((route) => {
-      result.push({
-        path: route.path,
-        element: route.element,
-        requiredPermissions: route.requiredPermissions,
-        module: route.module,
-        action: route.action,
-      });
-    });
-  });
-  return result;
+export function findRouteByPathSync(path: string): RouteConfigV2 | undefined {
+  for (const moduleConfig of loadedModules.values()) {
+    const routes = flattenRoutes(moduleConfig.routes);
+    const found = routes.find((r) => r.path === path);
+    if (found) return found;
+  }
+  return undefined;
 }
 
-export const allV2FlatRoutes: RouteConfig[] = toFlatRouteConfig(coreModuleRoutes);
+export function getLoadedModules(): string[] {
+  return Array.from(loadedModules.keys());
+}
 
-export type { RouteModuleConfig, RouteConfigV2 } from './types';
+export const coreModuleCodes = [
+  'iam', 'admin', 'workflow', 'notification', 'doc', 'report', 'monitor',
+  'integration', 'ai', 'mobile', 'hrm', 'finance', 'crm', 'mes', 'qms',
+  'lims', 'ehs', 'scm', 'erp', 'wms', 'pm', 'pdm', 'srm', 'oa', 'lowcode',
+  'rs', 'asset', 'plugin', 'im', 'bi', 'gis',
+] as const;

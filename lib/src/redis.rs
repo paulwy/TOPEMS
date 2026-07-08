@@ -412,7 +412,7 @@ impl BloomFilter {
     }
 
     fn calculate_bits_needed(expected_elements: usize, false_positive_rate: f64) -> usize {
-        let numerator = -1.0 * expected_elements as f64 * false_positive_rate.ln();
+        let numerator = -(expected_elements as f64) * false_positive_rate.ln();
         let denominator = (2.0f64).ln().powi(2);
         (numerator / denominator).ceil() as usize
     }
@@ -478,6 +478,12 @@ pub struct CacheStatisticsCollector {
     expirations: Arc<std::sync::atomic::AtomicU64>,
     latencies: Arc<Mutex<Vec<u64>>>,
     max_latencies: usize,
+}
+
+impl Default for CacheStatisticsCollector {
+    fn default() -> Self {
+        Self::new()
+    }
 }
 
 impl CacheStatisticsCollector {

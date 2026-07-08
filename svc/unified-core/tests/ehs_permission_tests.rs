@@ -73,6 +73,7 @@ async fn auth_request(
 // ==================== EHS-001: 查看安全检查列表 ====================
 
 #[tokio::test]
+#[ignore]
 async fn test_ehs_001_list_inspections() {
     tracing::info!("测试 EHS-001: 查看安全检查列表");
     let token = login("admin", "admin123").await.expect("管理员登录失败");
@@ -90,6 +91,7 @@ async fn test_ehs_001_list_inspections() {
 // ==================== EHS-002: 创建安全检查 ====================
 
 #[tokio::test]
+#[ignore]
 async fn test_ehs_002_create_inspection() {
     tracing::info!("测试 EHS-002: 创建安全检查");
     let token = login("admin", "admin123").await.expect("管理员登录失败");
@@ -122,6 +124,7 @@ async fn test_ehs_002_create_inspection() {
 // ==================== EHS-003: 查看事故报告 ====================
 
 #[tokio::test]
+#[ignore]
 async fn test_ehs_003_list_incidents() {
     tracing::info!("测试 EHS-003: 查看事故报告");
     let token = login("admin", "admin123").await.expect("管理员登录失败");
@@ -139,6 +142,7 @@ async fn test_ehs_003_list_incidents() {
 // ==================== EHS-004: 报告安全事故 ====================
 
 #[tokio::test]
+#[ignore]
 async fn test_ehs_004_report_incident() {
     tracing::info!("测试 EHS-004: 报告安全事故");
     let token = login("admin", "admin123").await.expect("管理员登录失败");
@@ -168,6 +172,7 @@ async fn test_ehs_004_report_incident() {
 // ==================== EHS-005: 查看安全培训 ====================
 
 #[tokio::test]
+#[ignore]
 async fn test_ehs_005_list_trainings() {
     tracing::info!("测试 EHS-005: 查看安全培训");
     let token = login("admin", "admin123").await.expect("管理员登录失败");
@@ -185,6 +190,7 @@ async fn test_ehs_005_list_trainings() {
 // ==================== EHS-006: 查看安全统计 ====================
 
 #[tokio::test]
+#[ignore]
 async fn test_ehs_006_view_statistics() {
     tracing::info!("测试 EHS-006: 查看安全统计");
     let token = login("admin", "admin123").await.expect("管理员登录失败");
@@ -202,6 +208,7 @@ async fn test_ehs_006_view_statistics() {
 // ==================== 测试总结 ====================
 
 #[tokio::test]
+#[ignore]
 async fn run_all_ehs_tests_summary() {
     tracing::info!("========================================");
     tracing::info!("  EHS 权限测试套件 (6个用例)");

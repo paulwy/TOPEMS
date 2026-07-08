@@ -37,6 +37,9 @@ import { limsApi } from '@/api/lims';
 import type { Instrument, CreateInstrumentRequest } from '@/api/lims';
 import { useAppStore } from '@/store';
 import { apiLogger } from '@/utils/logger';
+import { designTokens } from '@/theme/tokens';
+
+const ct = designTokens.colors;
 
 const InstrumentPage: React.FC = () => {
   const navigate = useNavigate();
@@ -154,8 +157,8 @@ const InstrumentPage: React.FC = () => {
         const needs = needsCalibration(row);
         return (
           <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5 }}>
-            {needs && <AlertTriangle style={{ width: 14, height: 14, color: '#ca8a04' }} />}
-            <span style={{ color: needs ? '#ca8a04' : 'inherit' }}>
+            {needs && <AlertTriangle style={{ width: 14, height: 14, color: ct.yellow[600] }} />}
+            <span style={{ color: needs ? ct.yellow[600] : 'inherit' }}>
               {new Date(row.next_calibration_date).toLocaleDateString('zh-CN')}
             </span>
           </Box>
@@ -195,7 +198,7 @@ const InstrumentPage: React.FC = () => {
         { label: '停用', value: '停用' },
       ],
       value: statusFilter,
-      onChange: (value) => setStatusFilter(value),
+      onChange: (value: unknown) => setStatusFilter(value as string),
     },
   ];
 
@@ -372,7 +375,7 @@ const InstrumentPage: React.FC = () => {
         mb: 3,
       }}
     >
-      <Card sx={{ bgcolor: '#f0fdfa' }}>
+      <Card sx={{ bgcolor: 'teal.light' }}>
         <CardContent sx={{ p: 2 }}>
           <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5 }}>
             <Box
@@ -485,7 +488,7 @@ const InstrumentPage: React.FC = () => {
                 justifyContent: 'center',
               }}
             >
-              <AlertTriangle sx={{ width: 20, height: 20, color: '#ca8a04' }} />
+              <AlertTriangle sx={{ width: 20, height: 20, color: ct.yellow[600] }} />
             </Box>
             <Box>
               <Typography
@@ -548,7 +551,7 @@ const InstrumentPage: React.FC = () => {
           display: 'flex',
           alignItems: 'center',
           justifyContent: 'center',
-          background: 'linear-gradient(135deg, #f0fdfa 0%, #f8fafc 100%)',
+          background: `linear-gradient(135deg, ${ct.teal[50]} 0%, ${ct.background.default} 100%)`,
         }}
       >
         <Box sx={{ textAlign: 'center' }}>
@@ -558,7 +561,7 @@ const InstrumentPage: React.FC = () => {
               height: 48,
               border: 4,
               borderColor: 'info.main',
-              borderTopColor: '#0891b2',
+              borderTopColor: 'cyan.dark',
               borderRadius: '50%',
               animation: 'spin 1s linear infinite',
               mx: 'auto',
@@ -577,7 +580,7 @@ const InstrumentPage: React.FC = () => {
       subtitle='Instrument Management'
       headerProps={{
         pageIcon: <Microscope style={{ width: 20, height: 20 }} />,
-        pageGradient: 'linear-gradient(135deg, #14B8A6 0%, #0D9488 100%)',
+        pageGradient: `linear-gradient(135deg, ${ct.teal[400]} 0%, ${ct.teal[600]} 100%)`,
       }}
     >
       <ListPageTemplate
@@ -899,11 +902,11 @@ const InstrumentPage: React.FC = () => {
                   {selectedInstrument.next_calibration_date ? (
                     <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5 }}>
                       {needsCalibration(selectedInstrument) && (
-                        <AlertTriangle style={{ width: 14, height: 14, color: '#ca8a04' }} />
+                        <AlertTriangle style={{ width: 14, height: 14, color: ct.yellow[600] }} />
                       )}
                       <span
                         style={{
-                          color: needsCalibration(selectedInstrument) ? '#ca8a04' : 'inherit',
+                          color: needsCalibration(selectedInstrument) ? ct.yellow[600] : 'inherit',
                         }}
                       >
                         {new Date(selectedInstrument.next_calibration_date).toLocaleDateString(

@@ -90,16 +90,19 @@ lsof -i :<端口号>
 
 ### 4.1 标准规则模板
 
-使用 `createServiceProxyConfig` 和 `createHealthProxyConfig` 辅助函数：
+使用 `createServiceProxyConfig`、`createCoreServiceProxyConfig` 和 `createHealthProxyConfig` 辅助函数：
 
 ```typescript
-// 1. API路径（带rewrite，转为 /api/service/xxx）
+// 1. 业务服务API路径（带rewrite，转为 /api/service/xxx）
 '/service/api': createServiceProxyConfig('service', 'http://localhost:<端口>'),
 
-// 2. 健康检查（精确路径，转为 /health）
+// 2. 核心服务API路径（带rewrite，转为 /api/xxx，无服务名前缀）
+'/master/api': createCoreServiceProxyConfig('master', 'http://localhost:8000'),
+
+// 3. 健康检查（精确路径，转为 /health）
 '/service/health': createHealthProxyConfig('service', 'http://localhost:<端口>'),
 
-// 3. 通用路径（带rewrite）
+// 4. 通用路径（带rewrite）
 '/service/': {
   target: 'http://localhost:<端口>',
   changeOrigin: true,
@@ -118,6 +121,8 @@ lsof -i :<端口号>
 | `/hrm/health` | `createHealthProxyConfig` | `/hrm` → `` | `/health` |
 | `/lims/api/xxx` | `createServiceProxyConfig` | `/lims` → `/api/lims` | `/api/lims/xxx` |
 | `/lims/health` | `createHealthProxyConfig` | `/lims` → `` | `/health` |
+| `/master/api/xxx` | `createCoreServiceProxyConfig` | `/master` → `` | `/api/xxx` |
+| `/master/health` | `createHealthProxyConfig` | `/master` → `` | `/health` |
 | `/plugin-health/erp/xxx` | 手动配置 | `/plugin-health/erp` → `` | `/xxx` |
 
 ### 4.3 特殊路径处理
@@ -150,9 +155,108 @@ lsof -i :<端口号>
 },
 ```
 
-## 5. 日志配置规范
+## 5. WebSocket 代理配置规范
 
-### 5.1 必须配置日志
+### 5.1 WebSocket 路径命名规范
+
+所有服务的 WebSocket 路由必须遵循统一的命名约定：
+
+```
+/ws/{module}/{feature}
+```
+
+| 服务 | 模块 | 功能 | 前端路径 | 后端路径 |
+|------|------|------|----------|----------|
+| unified-core | core | 通知 | `/ws/core/notifications` | `/ws/core/notifications` |
+| unified-core | core | IM | `/ws/core/im` | `/ws/core/im` |
+| MES | mes | 仪表盘 | `/mes/ws/dashboard` | `/mes/ws/dashboard` |
+| GIS | gis | 通用 | `/gis/ws` | `/api/gis/ws` |
+
+### 5.2 WebSocket 代理配置模板
+
+```typescript
+// Core WebSocket（无重写，直接转发）
+'/ws/core': {
+  target: 'http://localhost:8000',
+  changeOrigin: true,
+  ws: true,
+  proxyTimeout: 60000,
+  timeout: 60000,
+  configure: (proxy: any) => {
+    proxy.on('proxyReq', (proxyReq: any, req: IncomingMessage) => {
+      if (req.headers['upgrade'] && req.headers['upgrade'].toLowerCase() === 'websocket') {
+        proxyReq.setHeader('Connection', 'Upgrade');
+        proxyReq.setHeader('Upgrade', 'websocket');
+      }
+    });
+  },
+},
+
+// 业务服务 WebSocket（无重写，直接转发）
+'/mes/ws': {
+  target: 'http://localhost:8030',
+  changeOrigin: true,
+  ws: true,
+  proxyTimeout: 60000,
+  timeout: 60000,
+  configure: (proxy: any) => {
+    proxy.on('proxyReq', (proxyReq: any, req: IncomingMessage) => {
+      if (req.headers['upgrade'] && req.headers['upgrade'].toLowerCase() === 'websocket') {
+        proxyReq.setHeader('Connection', 'Upgrade');
+        proxyReq.setHeader('Upgrade', 'websocket');
+      }
+    });
+  },
+},
+
+// GIS WebSocket（带重写）
+'/gis/ws': {
+  target: 'http://localhost:8071',
+  changeOrigin: true,
+  ws: true,
+  proxyTimeout: 60000,
+  timeout: 60000,
+  rewrite: (path: string) => path.replace(/^\/gis\/ws/, '/api/gis/ws'),
+  configure: (proxy: any) => {
+    proxy.on('proxyReq', (proxyReq: any, req: IncomingMessage) => {
+      if (req.headers['upgrade'] && req.headers['upgrade'].toLowerCase() === 'websocket') {
+        proxyReq.setHeader('Connection', 'Upgrade');
+        proxyReq.setHeader('Upgrade', 'websocket');
+      }
+    });
+  },
+},
+```
+
+### 5.3 WebSocket 配置注意事项
+
+| 配置项 | 值 | 说明 |
+|--------|-----|------|
+| `ws` | `true` | 必须启用 WebSocket 支持 |
+| `proxyTimeout` | `60000` | 代理超时时间（毫秒） |
+| `timeout` | `60000` | 连接超时时间（毫秒） |
+| `changeOrigin` | `true` | 必须设置为 true |
+| `Upgrade` Header | `websocket` | 必须设置 WebSocket Upgrade 头 |
+| `Connection` Header | `Upgrade` | 必须设置 Connection Upgrade 头 |
+
+### 5.4 前端 WebSocket 连接方式
+
+```typescript
+// 通知服务
+const wsUrl = `${window.location.protocol === 'https:' ? 'wss:' : 'ws:'}//${window.location.host}/ws/core/notifications`;
+
+// IM 服务（通过配置动态生成）
+const servicePath = config.services.im; // '/im'
+const wsPath = `/ws/core${servicePath}`; // '/ws/core/im'
+const wsUrl = `${window.location.protocol === 'https:' ? 'wss:' : 'ws:'}//${window.location.host}${wsPath}`;
+
+// MES 仪表盘
+const wsUrl = `${protocol}//${host}/mes/ws/dashboard${tokenParam}`;
+```
+
+## 6. 日志配置规范
+
+### 6.1 必须配置日志
 
 所有代理规则必须包含 `configure: createProxyLogger()` 配置，确保请求转发过程可追踪。
 
@@ -165,14 +269,14 @@ lsof -i :<端口号>
 },
 ```
 
-### 5.2 日志格式
+### 6.2 日志格式
 
 ```
 [Vite Proxy] SERVICE_NAME METHOD original_path -> target_url
 [Vite Proxy] SERVICE_NAME METHOD original_path <- status_code
 ```
 
-### 5.3 颜色编码
+### 6.3 颜色编码
 
 | 状态码 | 颜色 | 含义 |
 |--------|------|------|
@@ -180,9 +284,9 @@ lsof -i :<端口号>
 | 4xx | 黄色 | 客户端错误 |
 | 5xx | 红色 | 服务端错误 |
 
-## 6. 三段映射表维护
+## 7. 三段映射表维护
 
-### 6.1 映射表结构
+### 7.1 映射表结构
 
 每个代理规则必须维护三段映射关系：
 
@@ -192,7 +296,7 @@ lsof -i :<端口号>
 | Rewrite 后 | `/api/erp/assets` | Vite 重写后的路径 |
 | 后端目标 | `http://localhost:8010/api/erp/assets` | 最终转发地址 |
 
-### 6.2 映射表示例
+### 7.2 映射表示例
 
 ```
 ERP 服务映射:
@@ -205,9 +309,9 @@ ERP 服务映射:
 └─────────────────────────┴─────────────────────────┴─────────────────────────────────────┘
 ```
 
-## 7. 测试验证流程
+## 8. 测试验证流程
 
-### 7.1 自动化测试
+### 8.1 自动化测试
 
 使用 `scripts/test-proxy.sh` 进行全面测试：
 
@@ -222,7 +326,7 @@ ERP 服务映射:
 # - 502: 后端服务未运行或不可用（失败）
 ```
 
-### 7.2 手动验证
+### 8.2 手动验证
 
 ```bash
 # 1. 检查服务是否运行
@@ -238,9 +342,9 @@ curl http://localhost:3000/<service>/api/xxx
 # 观察格式: [Vite Proxy] SERVICE GET /path -> http://localhost:port/path
 ```
 
-## 8. 常见问题排查
+## 9. 常见问题排查
 
-### 8.1 404 错误
+### 9.1 404 错误
 
 **原因分析：**
 1. 代理规则顺序错误（通用路径先匹配）
@@ -255,7 +359,7 @@ curl http://localhost:<port>/expected/path
 # 3. 检查代理规则顺序
 ```
 
-### 8.2 502 错误
+### 9.2 502 错误
 
 **原因分析：**
 1. 后端服务未运行
@@ -274,7 +378,7 @@ lsof -i :<port>
 # - vite.config.ts vs scripts/topems.sh
 ```
 
-### 8.3 503 错误
+### 9.3 503 错误
 
 **原因分析：**
 1. 代理目标端口错误（服务运行在其他端口）
@@ -288,7 +392,7 @@ lsof -i | grep <service-name>
 # 2. 更新vite.config.ts中的端口配置
 ```
 
-### 8.4 特殊服务路由格式
+### 9.4 特殊服务路由格式
 
 部分服务使用不同的路由前缀格式：
 
@@ -307,7 +411,7 @@ lsof -i | grep <service-name>
 },
 ```
 
-### 8.5 常见错误修复案例
+### 9.5 常见错误修复案例
 
 | 错误现象 | 根因 | 修复方案 |
 |---------|------|---------|
@@ -317,9 +421,9 @@ lsof -i | grep <service-name>
 | `/monitor/api/alerts` 返回 404 | Monitor 路由前缀为 `/api/v1/monitor` | 单独配置 Monitor 的 rewrite 规则 |
 | 重复代理规则 | 同一服务的代理规则定义多次 | 删除重复定义，保留包含日志配置的规则 |
 
-## 9. 变更流程
+## 10. 变更流程
 
-### 9.1 添加新服务代理
+### 10.1 添加新服务代理
 
 ```bash
 # 1. 在vite.config.ts中添加代理规则
@@ -329,7 +433,7 @@ lsof -i | grep <service-name>
 # 4. 更新文档中的端口列表和映射表
 ```
 
-### 9.2 修改现有代理
+### 10.2 修改现有代理
 
 ```bash
 # 1. 修改vite.config.ts
@@ -339,7 +443,7 @@ lsof -i | grep <service-name>
 ./scripts/topems.sh status
 ```
 
-## 10. 代码审查检查清单
+## 11. 代码审查检查清单
 
 - [ ] 代理规则顺序是否正确（精确匹配优先）
 - [ ] 端口配置是否与 `scripts/topems.sh` 一致

@@ -274,7 +274,7 @@ pub async fn update_user_permissions(
 
     // 添加新的角色关联
     for role_id in &role_ids {
-        let role_uuid = Uuid::parse_str(role_id).unwrap();
+        let role_uuid = Uuid::parse_str(role_id).unwrap_or_default();
         if let Err(e) = sqlx::query(
             "INSERT INTO core_user_roles (user_id, role_id) VALUES ($1, $2) ON CONFLICT DO NOTHING",
         )

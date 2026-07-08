@@ -12,6 +12,7 @@ import {
   equipmentApi,
 } from '@/api/mes';
 import { useAppStore } from '@/store';
+import { AuthProvider } from '@/hooks/useAuth';
 
 vi.mock('@/api/mes', () => ({
   productionOrderApi: { list: vi.fn() },
@@ -45,7 +46,11 @@ vi.mock('@/store', () => ({
 }));
 
 const renderWithProviders = (ui: React.ReactElement) => {
-  return render(<BrowserRouter>{ui}</BrowserRouter>);
+  return render(
+    <BrowserRouter>
+      <AuthProvider>{ui}</AuthProvider>
+    </BrowserRouter>
+  );
 };
 
 describe('ProductionDashboardPage', () => {

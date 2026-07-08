@@ -13,7 +13,7 @@ BLUE='\033[0;34m'
 NC='\033[0m'
 
 # 前端服务地址（Vite开发服务器）
-FRONTEND_URL="http://localhost:3002"
+FRONTEND_URL="http://localhost:3000"
 
 # 测试结果统计
 TOTAL_TESTS=0
@@ -293,9 +293,12 @@ echo ""
 echo "=== 3. WebSocket代理（配置验证） ==="
 echo ""
 log_info "WebSocket代理需要浏览器测试:"
-log_info "  - /ws/core -> ws://localhost:8000"
-log_info "  - /ws/notifications -> ws://localhost:8000"
-log_info "  - /ws/im -> ws://localhost:8000"
+log_info "  - /ws/core/notifications -> ws://localhost:8000 (通知服务，统一规范)"
+log_info "  - /ws/core/im -> ws://localhost:8000 (IM服务，统一规范)"
+log_info "  - /mes/ws/dashboard -> ws://localhost:8030 (MES仪表盘)"
+log_info "  - /gis/ws -> ws://localhost:8071 (GIS服务，重写为/api/gis/ws)"
+log_info ""
+log_info "路径规范: /ws/{module}/{feature}"
 
 # 4. 特殊代理规则
 echo ""

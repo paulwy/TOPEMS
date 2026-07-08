@@ -137,10 +137,7 @@ export function LoginFormV2({ onLogin, className }: LoginFormV2Props) {
           }
         />
         <CardContent>
-          <form
-            onSubmit={form.handleSubmit(onSubmit)}
-            style={{ display: 'flex', flexDirection: 'column', gap: 24 }}
-          >
+          <Box component='form' onSubmit={form.handleSubmit(onSubmit)} sx={{ display: 'flex', flexDirection: 'column', gap: 24 }}>
             {/* 用户名 */}
             <Controller
               name='username'
@@ -254,7 +251,7 @@ export function LoginFormV2({ onLogin, className }: LoginFormV2Props) {
             >
               {loading ? '处理中...' : isRegister ? '注册' : '登录'}
             </Button>
-          </form>
+          </Box>
         </CardContent>
         <Box
           sx={{

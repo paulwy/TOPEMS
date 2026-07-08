@@ -5,6 +5,7 @@ import { BrowserRouter } from 'react-router-dom';
 import ProductionDashboardPage from '../mes/ProductionDashboardPage';
 import { mesApi, productionOrderApi, workStationApi, qualityApi, equipmentApi, mesEquipmentApi } from '@/api/mes';
 import { useAppStore } from '@/store';
+import { AuthProvider } from '@/hooks/useAuth';
 
 vi.mock('@/api/mes', () => ({
   mesApi: {
@@ -133,7 +134,9 @@ describe('MesModule', () => {
     it('should render without crashing', () => {
       const { container } = render(
         <BrowserRouter>
-          <ProductionDashboardPage />
+          <AuthProvider>
+            <ProductionDashboardPage />
+          </AuthProvider>
         </BrowserRouter>
       );
       expect(container).toBeDefined();
@@ -142,7 +145,9 @@ describe('MesModule', () => {
     it('should have MES API methods defined', async () => {
       render(
         <BrowserRouter>
-          <ProductionDashboardPage />
+          <AuthProvider>
+            <ProductionDashboardPage />
+          </AuthProvider>
         </BrowserRouter>
       );
       expect(productionOrderApi.list).toBeDefined();
@@ -155,7 +160,9 @@ describe('MesModule', () => {
     it('should call production orders list API on mount', async () => {
       render(
         <BrowserRouter>
-          <ProductionDashboardPage />
+          <AuthProvider>
+            <ProductionDashboardPage />
+          </AuthProvider>
         </BrowserRouter>
       );
       expect(productionOrderApi.list).toHaveBeenCalled();

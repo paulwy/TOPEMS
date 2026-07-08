@@ -26,6 +26,9 @@ import {
   type FilterConfig,
 } from '@/components/templates';
 import { PageContainer } from '@/components/common/PageContainerV2';
+import { designTokens } from '@/theme/tokens';
+
+const ct = designTokens.colors;
 
 interface MaterialFormData {
   code: string;
@@ -383,7 +386,7 @@ export const MaterialPage: React.FC = () => {
       subtitle='管理生产所需的原材料、辅助材料等物料'
       headerProps={{
         pageIcon: <Layers style={{ width: 20, height: 20 }} />,
-        pageGradient: 'linear-gradient(135deg, #10B981 0%, #059669 100%)',
+        pageGradient: `linear-gradient(135deg, ${ct.success.main} 0%, ${ct.success.dark} 100%)`,
       }}
     >
       <ListPageTemplate

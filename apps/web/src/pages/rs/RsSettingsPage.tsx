@@ -41,6 +41,10 @@ import { PageContainer } from '@/components/common';
 import { rsApi } from '@/api/rs';
 import { useAppStore } from '@/store';
 import type { RsStatistics } from '@/api/rs';
+import { designTokens } from '@/theme/tokens';
+import { logger } from '@/utils/logger';
+
+const ct = designTokens.colors;
 
 interface RepoConfig {
   id: string;
@@ -99,7 +103,7 @@ const RsSettingsPage: React.FC = () => {
         setStatistics(response.data);
       }
     } catch (error: unknown) {
-      console.error('加载统计数据失败:', error);
+      logger.error('加载统计数据失败:', error);
       addNotification({
         type: 'error',
         title: '加载失败',
@@ -251,7 +255,7 @@ const RsSettingsPage: React.FC = () => {
           {activeTab === 'integration' && (
             <Plug
               size={16}
-              color={row.enabled ? 'primary.main' : '#9e9e9e'}
+              color={row.enabled ? 'primary.main' : ct.grey[400]}
             />
           )}
           <Box>

@@ -5,6 +5,9 @@ import { PageContainer } from '@/components/common';
 import type { NotificationStats } from '@/api/notification';
 import { getMyNotificationStats, notificationServiceApi } from '@/api/notification';
 import { StatsPageTemplate } from '@/components/templates/StatsPageTemplate';
+import { designTokens } from '@/theme/tokens';
+
+const ct = designTokens.colors;
 
 const NotificationStatsPage: React.FC = () => {
   const [stats, setStats] = useState<NotificationStats | null>(null);
@@ -143,7 +146,7 @@ const NotificationStatsPage: React.FC = () => {
             {
               id: 'percentage',
               label: '占比',
-              render: (value: number) => `${value.toFixed(1)}%`,
+              render: (value: unknown) => `${Number(value).toFixed(1)}%`,
             },
           ],
           data: [
@@ -238,14 +241,14 @@ const NotificationStatsPage: React.FC = () => {
                     height: 12,
                     borderRadius: '50%',
                     marginRight: 12,
-                    backgroundColor: serviceStatus.status === 'healthy' ? '#16a34a' : 'error.700',
+                    backgroundColor: serviceStatus.status === 'healthy' ? ct.success[600] : 'error.700',
                   }}
                 />
                 <span
                   style={{
                     fontSize: '0.875rem',
                     fontWeight: 500,
-                    color: '#1f2937',
+                    color: ct.grey[800],
                   }}
                 >
                   通知服务状态：{serviceStatus.status === 'healthy' ? '健康' : '异常'}

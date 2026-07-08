@@ -58,6 +58,9 @@ import { ListPageTemplate, type ColumnDef, type RowAction } from '@/components/t
 import { PageContainer } from '@/components/common';
 import { eightDApi } from '@/api/qms';
 import type { EightDReport, EightDAuditLog } from '@/api/qms';
+import { designTokens } from '@/theme/tokens';
+import { logger } from "@/utils/logger";
+const ct = designTokens.colors;
 
 const D_STEPS = [
   { label: 'D1 团队建立', key: 'd1TeamEstablished' },
@@ -144,7 +147,7 @@ const QmsEightDPage: React.FC = () => {
         setAuditLogs(response.data);
       }
     } catch (error: unknown) {
-      console.error('Failed to load audit logs:', error);
+      logger.error('Failed to load audit logs:', error);
     }
   }, []);
 
@@ -668,7 +671,7 @@ const QmsEightDPage: React.FC = () => {
       subtitle='Eight Disciplines Problem Solving'
       headerProps={{
         pageIcon: <FileText style={{ width: 20, height: 20 }} />,
-        pageGradient: 'linear-gradient(135deg, #6366F1, #8B5CF6)',
+        pageGradient: `linear-gradient(135deg, ${ct.secondary[400]}, ${ct.secondary.main})`,
         search: {
           value: searchTerm,
           onChange: setSearchTerm,

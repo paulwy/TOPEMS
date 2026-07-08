@@ -11,10 +11,10 @@
 #![allow(clippy::map_flatten)]
 #![allow(dead_code)]
 
-mod api;
 mod models;
-mod plugin;
+mod modules;
 mod services;
+mod shared;
 
 use anyhow::Result;
 use axum::{
@@ -30,8 +30,8 @@ use axum_prometheus::PrometheusMetricLayer;
 use prometheus::{default_registry, Gauge};
 use topems_shared::{
     auth_middleware, build_health_response, create_api_info_router, create_cors_layer,
-    create_database_pool, init_telemetry, telemetry_middleware, ApiResponse, AuthState,
-    DatabaseConfig, ServiceHealth,
+    create_database_pool, init_telemetry, rls_middleware, telemetry_middleware, ApiResponse,
+    AuthState, DatabaseConfig, ServiceHealth,
 };
 
 static START_TIME: std::sync::OnceLock<Instant> = std::sync::OnceLock::new();
@@ -40,7 +40,7 @@ fn get_uptime() -> u64 {
     START_TIME.get_or_init(Instant::now).elapsed().as_secs()
 }
 
-use api::{
+use modules::{
     create_category_routes, create_contract_routes, create_data_sync_routes,
     create_evaluation_routes, create_performance_routes, create_product_routes,
     create_scoring_dimension_routes, create_statistics_routes, create_supplier_routes,
@@ -121,8 +121,14 @@ async fn main() -> Result<()> {
             "/metrics",
             get(move || async move { metric_handle.render() }),
         )
-        .route("/api/plugins/info", get(plugin::get_plugin_info))
-        .route("/api/plugins/health", get(plugin::plugin_health_check))
+        .route(
+            "/api/plugins/info",
+            get(modules::srm_plugin::get_plugin_info),
+        )
+        .route(
+            "/api/plugins/health",
+            get(modules::srm_plugin::plugin_health_check),
+        )
         .with_state(app_state.clone());
 
     let protected_routes = Router::new()
@@ -138,6 +144,10 @@ async fn main() -> Result<()> {
         .layer(axum::middleware::from_fn_with_state(
             app_state.auth_state.clone(),
             auth_middleware,
+        ))
+        .layer(axum::middleware::from_fn_with_state(
+            app_state.pool.clone(),
+            rls_middleware,
         ));
 
     let app = Router::new()
@@ -157,7 +167,7 @@ async fn main() -> Result<()> {
 
     let core_url = env::var("CORE_URL").ok();
     tokio::spawn(async move {
-        plugin::auto_register_to_core(core_url.as_deref()).await;
+        modules::srm_plugin::auto_register_to_core(core_url.as_deref()).await;
     });
 
     let listener = tokio::net::TcpListener::bind(&addr).await?;
@@ -250,5 +260,5 @@ async fn init_db(_pool: &sqlx::PgPool) -> Result<()> {
 }
 
 async fn serve_openapi_json() -> axum::Json<utoipa::openapi::OpenApi> {
-    axum::Json(api::openapi::SrmApiDoc::openapi())
+    axum::Json(modules::openapi::SrmApiDoc::openapi())
 }

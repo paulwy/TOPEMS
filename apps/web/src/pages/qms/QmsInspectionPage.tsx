@@ -42,6 +42,9 @@ import {
 import { PageContainer } from '@/components/common';
 import { qmsApi, type QualityCheck, type CreateQualityCheckRequest } from '@/api/qms';
 import { useAppStore } from '@/store';
+import { designTokens } from '@/theme/tokens';
+import { logger } from "@/utils/logger";
+const ct = designTokens.colors;
 
 const STATUS_MAP: Record<string, { label: string; bg: string; color: string }> = {
   pending: { label: '待分配', bg: 'warning.light', color: 'warning.dark' },
@@ -120,7 +123,7 @@ const QmsInspectionPage: React.FC = () => {
         });
       }
     } catch (error: unknown) {
-      console.error('Failed to load inspections:', error);
+      logger.error('Failed to load inspections:', error);
       addNotification({
         title: '加载失败',
         message: '加载检验数据失败',
@@ -175,7 +178,7 @@ const QmsInspectionPage: React.FC = () => {
               (row.qualification_rate || 0) >= 95
                 ? 'success.dark'
                 : (row.qualification_rate || 0) >= 90
-                  ? '#ca8a04'
+                  ? ct.yellow[600]
                   : 'error.dark',
             fontWeight: 500,
           }}
@@ -250,7 +253,7 @@ const QmsInspectionPage: React.FC = () => {
         { label: '例行检验', value: 'routine' },
       ],
       value: typeFilter,
-      onChange: (value) => setTypeFilter(value),
+      onChange: (value: unknown) => setTypeFilter(value as string),
     },
     {
       id: 'status',
@@ -265,7 +268,7 @@ const QmsInspectionPage: React.FC = () => {
         { label: '已驳回', value: 'rejected' },
       ],
       value: statusFilter,
-      onChange: (value) => setStatusFilter(value),
+      onChange: (value: unknown) => setStatusFilter(value as string),
     },
   ];
 
@@ -344,7 +347,7 @@ const QmsInspectionPage: React.FC = () => {
         });
       }
     } catch (error: unknown) {
-      console.error('Failed to create inspection:', error);
+      logger.error('Failed to create inspection:', error);
       addNotification({
         title: '错误',
         message: '创建质检单时发生错误',
@@ -379,7 +382,7 @@ const QmsInspectionPage: React.FC = () => {
         });
       }
     } catch (error: unknown) {
-      console.error('Failed to assign inspection:', error);
+      logger.error('Failed to assign inspection:', error);
       addNotification({
         title: '错误',
         message: '分配时发生错误',
@@ -420,7 +423,7 @@ const QmsInspectionPage: React.FC = () => {
         });
       }
     } catch (error: unknown) {
-      console.error('Failed to submit inspection result:', error);
+      logger.error('Failed to submit inspection result:', error);
       addNotification({
         title: '错误',
         message: '提交结果时发生错误',
@@ -471,7 +474,7 @@ const QmsInspectionPage: React.FC = () => {
         });
       }
     } catch (error: unknown) {
-      console.error('Failed to audit inspection:', error);
+      logger.error('Failed to audit inspection:', error);
       addNotification({
         title: '错误',
         message: '操作时发生错误',
@@ -568,14 +571,14 @@ const QmsInspectionPage: React.FC = () => {
               sx={{
                 width: 40,
                 height: 40,
-                bgcolor: '#fde047',
+                bgcolor: ct.yellow[300],
                 borderRadius: 3,
                 display: 'flex',
                 alignItems: 'center',
                 justifyContent: 'center',
               }}
             >
-              <AlertCircle sx={{ width: 20, height: 20, color: '#ca8a04' }} />
+              <AlertCircle sx={{ width: 20, height: 20, color: ct.yellow[600] }} />
             </Box>
             <Box>
               <Typography
@@ -601,7 +604,7 @@ const QmsInspectionPage: React.FC = () => {
               sx={{
                 width: 40,
                 height: 40,
-                bgcolor: '#93c5fd',
+                bgcolor: ct.blue[300],
                 borderRadius: 3,
                 display: 'flex',
                 alignItems: 'center',
@@ -634,7 +637,7 @@ const QmsInspectionPage: React.FC = () => {
               sx={{
                 width: 40,
                 height: 40,
-                bgcolor: '#d8b4fe',
+                bgcolor: ct.purple[200],
                 borderRadius: 3,
                 display: 'flex',
                 alignItems: 'center',
@@ -667,7 +670,7 @@ const QmsInspectionPage: React.FC = () => {
               sx={{
                 width: 40,
                 height: 40,
-                bgcolor: '#86efac',
+                bgcolor: ct.success[300],
                 borderRadius: 3,
                 display: 'flex',
                 alignItems: 'center',
@@ -700,7 +703,7 @@ const QmsInspectionPage: React.FC = () => {
               sx={{
                 width: 40,
                 height: 40,
-                bgcolor: '#fca5a5',
+                bgcolor: ct.error[300],
                 borderRadius: 3,
                 display: 'flex',
                 alignItems: 'center',
@@ -737,7 +740,7 @@ const QmsInspectionPage: React.FC = () => {
           display: 'flex',
           alignItems: 'center',
           justifyContent: 'center',
-          background: 'linear-gradient(135deg, primary.light 0%, #f8fafc 100%)',
+          background: `linear-gradient(135deg, primary.light 0%, ${ct.background.default} 100%)`,
         }}
       >
         <Box sx={{ textAlign: 'center' }}>
@@ -1110,7 +1113,7 @@ const QmsInspectionPage: React.FC = () => {
                 auditData.action === 'approve'
                   ? 'success.dark'
                   : auditData.action === 'rework'
-                    ? '#ca8a04'
+                    ? ct.yellow[600]
                     : 'error.dark',
             }}
           >

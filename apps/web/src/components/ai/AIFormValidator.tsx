@@ -262,7 +262,7 @@ export function AIFormValidator({
                             border: '1px solid primary.100',
                           }}
                         >
-                          {suggestion.value}
+                          {String(suggestion.value)}
                         </Typography>
                       </Box>
                     </Box>

@@ -68,6 +68,9 @@ import {
   Cell,
 } from 'recharts';
 import { BIChartColors } from '@/components/charts/chartTheme';
+import { designTokens } from '@/theme/tokens';
+
+const ct = designTokens.colors;
 
 const moduleConfig: Record<string, { name: string; icon: string; color: string }> = {
   rs: { name: '研发管理', icon: '🔬', color: 'primary.main' },
@@ -75,7 +78,7 @@ const moduleConfig: Record<string, { name: string; icon: string; color: string }
   qms: { name: '质量管理', icon: '✅', color: 'warning.main' },
   ehs: { name: '安全环保', icon: '🛡️', color: 'error.main' },
   srm: { name: '供应链管理', icon: '📦', color: 'secondary.main' },
-  pdm: { name: '生产数据', icon: '🏭', color: '#06B6D4' },
+  pdm: { name: '生产数据', icon: '🏭', color: ct.cyan.main },
 };
 
 interface ModuleData {
@@ -470,13 +473,13 @@ const BIModuleDetailPage = () => {
           <RechartsLineChart data={timelineChartData}>
             <CartesianGrid
               strokeDasharray='3 3'
-              stroke='#E2E8F0'
+              stroke={ct.border.default}
             />
             <XAxis
               dataKey='month'
-              tick={{ fill: '#64748B', fontSize: 12 }}
+              tick={{ fill: ct.text.secondary, fontSize: 12 }}
             />
-            <YAxis tick={{ fill: '#64748B', fontSize: 12 }} />
+            <YAxis tick={{ fill: ct.text.secondary, fontSize: 12 }} />
             <Tooltip />
             <Line
               type='monotone'

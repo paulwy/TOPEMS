@@ -27,6 +27,9 @@ import {
   type FilterConfig,
 } from '@/components/templates';
 import { PageContainer } from '@/components/common';
+import { designTokens } from '@/theme/tokens';
+
+const ct = designTokens.colors;
 
 const STATUS_COLORS: Record<
   string,
@@ -440,7 +443,7 @@ export const BomPage: React.FC = () => {
     <PageContainer
       headerProps={{
         pageIcon: <Package style={{ width: 20, height: 20 }} />,
-        pageGradient: 'linear-gradient(135deg, #8B5CF6 0%, #7C3AED 100%)',
+        pageGradient: `linear-gradient(135deg, ${ct.secondary.main} 0%, ${ct.secondary.dark} 100%)`,
       }}
     >
       <Tabs

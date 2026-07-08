@@ -164,42 +164,39 @@ export const AvatarGroup: React.FC<AvatarGroupProps> = ({
   spacing = -8,
   sx,
 }) => {
-  const getAvatarSx = (): Record<string, string | number> => {
-    switch (size) {
-      case 'xs':
-        return { width: 24, height: 24, fontSize: '0.625rem' };
-      case 'sm':
-        return { width: 32, height: 32, fontSize: '0.75rem' };
-      case 'md':
-        return { width: 40, height: 40, fontSize: '0.875rem' };
-      case 'lg':
-        return { width: 56, height: 56, fontSize: '1.25rem' };
-      case 'xl':
-        return { width: 72, height: 72, fontSize: '1.5rem' };
-      default:
-        return { width: 40, height: 40, fontSize: '0.875rem' };
-    }
-  };
-  const avatarSize = getAvatarSx();
-  const groupSx = { '& .MuiAvatar-root': avatarSize };
-
+  const displayAvatars = avatars.slice(0, max);
+  const remainingCount = avatars.length - max;
+  
+  const gap = -spacing;
+  
   return (
-    <MuiAvatarGroup
-      max={max}
-      sx={groupSx as never}
-    >
-      {avatars.map((avatarProps, index) => (
-        <Tooltip
+    <Box sx={{ display: 'flex', alignItems: 'center', ...sx }}>
+      {displayAvatars.map((avatarProps, index) => (
+        <Box
           key={index}
-          title={avatarProps.name || ''}
+          sx={{
+            marginLeft: index > 0 ? gap : 0,
+            position: 'relative',
+            zIndex: displayAvatars.length - index,
+          }}
         >
-          <Avatar
-            size={size}
-            {...avatarProps}
-          />
-        </Tooltip>
+          <Tooltip title={avatarProps.name || ''}>
+            <Avatar size={size} {...avatarProps} />
+          </Tooltip>
+        </Box>
       ))}
-    </MuiAvatarGroup>
+      {remainingCount > 0 && (
+        <Box
+          sx={{
+            marginLeft: gap,
+            position: 'relative',
+            zIndex: 0,
+          }}
+        >
+          <Avatar size={size} label={`+${remainingCount}`} />
+        </Box>
+      )}
+    </Box>
   );
 };
 

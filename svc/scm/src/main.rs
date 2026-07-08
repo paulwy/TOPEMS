@@ -10,26 +10,24 @@
 #![allow(clippy::too_many_arguments)]
 #![allow(dead_code)]
 
-mod api;
-mod models;
-mod services;
+use topems_scm::{models, modules, shared};
 
 use anyhow::Result;
-use axum::{extract::State, routing::get, Json, Router};
+use axum::{extract::State, http::StatusCode, routing::get, Json, Router};
 use std::env;
 use std::time::Instant;
 use utoipa::OpenApi;
 
-use api::{plugin, ApiState};
 use axum_prometheus::PrometheusMetricLayer;
+use modules::{scm_plugin, ApiState};
 use prometheus::{default_registry, Gauge};
 use std::sync::Arc;
 use std::time::Duration;
 use topems_shared::redis::RedisCacheService;
 use topems_shared::{
     auth_middleware, build_health_response, create_api_info_router, create_cors_layer,
-    create_database_pool, init_telemetry, telemetry_middleware, ApiResponse, AuthState,
-    DatabaseConfig, RedisConfig, RedisPool as RedisPoolTrait, ServiceHealth,
+    create_database_pool, init_telemetry, rls_middleware, telemetry_middleware, ApiResponse,
+    AuthState, DatabaseConfig, RedisConfig, RedisPool as RedisPoolTrait, ServiceHealth,
 };
 use tower_http::{compression::CompressionLayer, timeout::TimeoutLayer};
 
@@ -120,15 +118,19 @@ async fn main() -> Result<()> {
             "/metrics",
             get(move || async move { metric_handle.render() }),
         )
-        .route("/api/plugins/info", get(plugin::get_plugin_info))
-        .route("/api/plugins/health", get(plugin::plugin_health_check))
+        .route("/api/plugins/info", get(scm_plugin::get_plugin_info))
+        .route("/api/plugins/health", get(scm_plugin::plugin_health_check))
         .route("/api-docs/openapi.json", get(serve_openapi_json));
 
-    let protected_routes = api::create_routes()
+    let protected_routes = modules::create_routes()
         .route("/api/v1/health/detailed", get(health_check_detailed))
         .layer(axum::middleware::from_fn_with_state(
             api_state.auth_state.clone(),
             auth_middleware,
+        ))
+        .layer(axum::middleware::from_fn_with_state(
+            api_state.db.clone(),
+            rls_middleware,
         ));
 
     let app = Router::new()
@@ -140,7 +142,10 @@ async fn main() -> Result<()> {
         .layer(axum::middleware::from_fn(telemetry_middleware))
         .layer(prometheus_layer)
         .layer(CompressionLayer::new())
-        .layer(TimeoutLayer::new(Duration::from_secs(30)));
+        .layer(TimeoutLayer::with_status_code(
+            StatusCode::REQUEST_TIMEOUT,
+            Duration::from_secs(30),
+        ));
 
     let port = env::var("PORT").unwrap_or_else(|_| "8040".to_string());
     let addr = format!("0.0.0.0:{}", port);
@@ -152,7 +157,7 @@ async fn main() -> Result<()> {
     // 启动时自动注册到统一核心
     let core_url = env::var("CORE_URL").ok();
     tokio::spawn(async move {
-        plugin::auto_register_to_core(core_url.as_deref()).await;
+        scm_plugin::auto_register_to_core(core_url.as_deref()).await;
     });
 
     let listener = tokio::net::TcpListener::bind(&addr).await?;
@@ -245,5 +250,5 @@ async fn init_db(_pool: &sqlx::PgPool) -> Result<()> {
 }
 
 async fn serve_openapi_json() -> axum::Json<utoipa::openapi::OpenApi> {
-    axum::Json(api::openapi::ScmApiDoc::openapi())
+    axum::Json(modules::openapi::ScmApiDoc::openapi())
 }

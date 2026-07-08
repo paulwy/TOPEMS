@@ -4,6 +4,9 @@ import { Server, Database, Code } from 'lucide-react';
 import config from '../../config/runtime';
 import { SettingsPageTemplate, type SettingSection } from '@/components/templates';
 import { PageContainer } from '@/components/common';
+import { designTokens } from '@/theme/tokens';
+
+const ct = designTokens.colors;
 
 const ConfigDebugPage: React.FC = () => {
   const sections: SettingSection[] = [
@@ -80,8 +83,8 @@ const ConfigDebugPage: React.FC = () => {
           <CardContent>
             <pre
               style={{
-                backgroundColor: '#1a1a2e',
-                color: '#e0e0e0',
+                backgroundColor: ct.grey[900],
+                color: ct.grey[200],
                 padding: 16,
                 borderRadius: 8,
                 overflow: 'auto',
@@ -131,8 +134,8 @@ const ConfigDebugPage: React.FC = () => {
           <CardContent>
             <pre
               style={{
-                backgroundColor: '#1a1a2e',
-                color: '#e0e0e0',
+                backgroundColor: ct.grey[900],
+                color: ct.grey[200],
                 padding: 16,
                 borderRadius: 8,
                 overflow: 'auto',
@@ -182,8 +185,8 @@ const ConfigDebugPage: React.FC = () => {
           <CardContent>
             <pre
               style={{
-                backgroundColor: '#1a1a2e',
-                color: '#e0e0e0',
+                backgroundColor: ct.grey[900],
+                color: ct.grey[200],
                 padding: 16,
                 borderRadius: 8,
                 overflow: 'auto',

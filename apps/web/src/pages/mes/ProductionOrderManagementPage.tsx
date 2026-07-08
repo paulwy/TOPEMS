@@ -48,6 +48,8 @@ import {
 } from 'lucide-react';
 import { apiLogger } from '@/utils/logger';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import { designTokens } from '@/theme/tokens';
+const ct = designTokens.colors;
 
 /**
  * TODO: Phase 7-4 -- 虚拟滚动优化
@@ -339,7 +341,7 @@ const ProductionOrderManagementPage: React.FC = () => {
       }
     > = {
       pending: { label: '待下达', bg: 'warning.light', color: 'warning.700' },
-      released: { label: '已下达', bg: '#e0e7ff', color: 'secondary.700' },
+      released: { label: '已下达', bg: ct.secondary[100], color: 'secondary.700' },
       in_progress: { label: '生产中', bg: 'primary.100', color: 'primary.dark' },
       completed: { label: '已完成', bg: 'success.lighter', color: 'success.700' },
       cancelled: { label: '已取消', bg: 'error.lighter', color: 'error.dark' },
@@ -401,8 +403,8 @@ const ProductionOrderManagementPage: React.FC = () => {
           { label: '已暂停', value: 'paused' },
         ],
         value: statusFilter,
-        onChange: (value) => {
-          setStatusFilter(value);
+        onChange: (value: unknown) => {
+          setStatusFilter(value as string);
           setCurrentPage(1);
         },
       },
@@ -512,7 +514,7 @@ const ProductionOrderManagementPage: React.FC = () => {
           {stats.pending}
         </Typography>
       </Box>
-      <Box sx={{ p: 2, bgcolor: '#e0e7ff', borderRadius: 3 }}>
+      <Box sx={{ p: 2, bgcolor: ct.secondary[100], borderRadius: 3 }}>
         <Typography
           variant='body2'
           sx={{ color: 'text.secondary' }}
@@ -577,7 +579,7 @@ const ProductionOrderManagementPage: React.FC = () => {
       subtitle='管理生产订单信息,包括订单号、产品、数量、计划时间等'
       headerProps={{
         pageIcon: <ClipboardList style={{ width: 20, height: 20 }} />,
-        pageGradient: 'linear-gradient(135deg, #3B82F6 0%, #1D4ED8 100%)',
+        pageGradient: `linear-gradient(135deg, ${ct.primary.main} 0%, ${ct.primary.dark} 100%)`,
       }}
     >
       <ListPageTemplate

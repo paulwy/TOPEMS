@@ -17,6 +17,7 @@ import {Box,
 import { RefreshCw, Eye, Pencil } from 'lucide-react';
 import type { ModelField, DataModel } from '../../api/lowcode/types';
 import { getDataPreview } from '../../api/lowcode/dataModel';
+import { logger } from "@/utils/logger";
 
 interface ModelPreviewProps {
   modelId: string;
@@ -41,7 +42,7 @@ export const ModelPreview: React.FC<ModelPreviewProps> = ({ modelId, model }) =>
         setTotal(result.data.total);
       }
     } catch (error) {
-      console.error('Failed to load data preview:', error);
+      logger.error('Failed to load data preview:', error);
     } finally {
       setLoading(false);
     }

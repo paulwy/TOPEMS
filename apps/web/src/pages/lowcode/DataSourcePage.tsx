@@ -54,6 +54,7 @@ import {
   listTables,
 } from '../../api/lowcode';
 import type { DataSource, TableInfo } from '../../api/lowcode/types';
+import { logger } from "@/utils/logger";
 
 const DataSourcePage = () => {
   const [datasources, setDatasources] = useState<DataSource[]>([]);
@@ -94,7 +95,7 @@ const DataSourcePage = () => {
         setTotal(res.data.total || 0);
       }
     } catch (error) {
-      console.error('Failed to load datasources:', error);
+      logger.error('Failed to load datasources:', error);
     } finally {
       setLoading(false);
     }
@@ -138,7 +139,7 @@ const DataSourcePage = () => {
       setDialogOpen(false);
       loadDataSources();
     } catch (error) {
-      console.error('Failed to save datasource:', error);
+      logger.error('Failed to save datasource:', error);
     }
   };
 
@@ -148,7 +149,7 @@ const DataSourcePage = () => {
         await deleteDataSource(id);
         loadDataSources();
       } catch (error) {
-        console.error('Failed to delete datasource:', error);
+        logger.error('Failed to delete datasource:', error);
       }
     }
   };
@@ -181,7 +182,7 @@ const DataSourcePage = () => {
         setTables(res.data || []);
       }
     } catch (error) {
-      console.error('Failed to load tables:', error);
+      logger.error('Failed to load tables:', error);
     } finally {
       setTablesLoading(false);
     }

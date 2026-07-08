@@ -1,9 +1,10 @@
 #![allow(dead_code)]
 
-mod api;
 mod db;
 mod models;
-mod plugin;
+mod modules;
+mod services;
+mod shared;
 
 use axum::{
     extract::{FromRef, State},
@@ -19,51 +20,63 @@ use topems_shared::{
     init_telemetry, telemetry_middleware, ApiResponse, AuthState, ServiceHealth,
 };
 
-use api::attendance::{
+use db::repository::*;
+use models::*;
+use modules::attendance::{
     apply_leave, check_in, check_out, get_attendance_overview, get_attendance_stats,
     list_attendance_records, list_leave_applications,
 };
-use api::auth::{login, logout, refresh_token, verify_code};
-use api::barcode_scanner::{
+use modules::auth::{login, logout, refresh_token, verify_code};
+use modules::barcode_scanner::{
     delete_scan_record, get_scan_by_id, get_scan_history, get_supported_barcode_types, scan_barcode,
 };
-use api::device::{register_device, update_push_token};
-use api::media::{delete_media, get_audio, get_photos, get_video, upload_media};
-use api::mobile_approval::{
+use modules::device::{register_device, update_push_token};
+use modules::inventory::{
+    create_stocktake_record, get_inventory_item, list_inbound_orders, list_inventory_items,
+    list_outbound_orders, list_stocktake_tasks,
+};
+use modules::media::{delete_media, get_audio, get_photos, get_video, upload_media};
+use modules::mobile_approval::{
     approve_task, get_approval_by_id, get_approval_stats, get_approved_approvals,
     get_pending_approvals, get_rejected_approvals, reject_task, transfer_task,
 };
-use api::notification::{get_notifications, get_unread_count, mark_all_read, mark_read};
-use api::offline::{get_offline_status, sync_offline_data};
-use api::offline_sync::{
+use modules::notification::{get_notifications, get_unread_count, mark_all_read, mark_read};
+use modules::offline::{get_offline_status, sync_offline_data};
+use modules::offline_sync::{
     get_offline_status as get_offline_sync_status, get_sync_history, get_sync_policy,
     retry_failed_sync, sync_data, update_sync_policy,
 };
-use api::patrol::{
+use modules::patrol::{
     create_patrol_record, delete_patrol_record, get_all_patrol_records, get_patrol_record,
     update_patrol_record,
 };
-use api::photo_upload::{
+use modules::photo_upload::{
     batch_upload_photos, delete_photo, get_photo_by_id, get_photo_list, get_upload_progress,
     upload_photo,
 };
-use api::push_notification::{
+use modules::production::{
+    get_production_order, list_equipment, list_production_orders, list_work_reports,
+    submit_work_report,
+};
+use modules::push_notification::{
     create_template, get_devices, get_notification_by_id, get_notification_list,
     get_notification_stats, get_templates, register_device as register_push_device, send_broadcast,
     send_notification,
 };
-use api::scan::{image_ocr, scan_barcode as scan_qr_barcode, scan_qrcode};
-use api::shortcut::{create_shortcut, get_shortcuts};
-use api::stats::{get_dashboard_stats, get_patrol_stats, get_task_stats};
-use api::task::{
+use modules::quality::{
+    get_quality_task, list_defect_records, list_quality_tasks, report_defect,
+    update_quality_task_status,
+};
+use modules::scan::{image_ocr, scan_qrcode};
+use modules::shortcut::{create_shortcut, get_shortcuts};
+use modules::stats::{get_dashboard_stats, get_patrol_stats, get_task_stats};
+use modules::task::{
     create_task, delete_task, get_all_tasks, get_task, update_task, update_task_status,
 };
-use api::user::{get_profile, update_profile, upload_avatar};
-use api::workbench::get_workbench_data;
-use db::repository::*;
-use models::*;
+use modules::user::{get_profile, update_profile, upload_avatar};
+use modules::workbench::get_workbench_data;
 
-use plugin::create_routes;
+use modules::mobile_plugin::create_routes;
 
 #[derive(Clone)]
 struct AppState {
@@ -563,6 +576,65 @@ async fn main() -> anyhow::Result<()> {
             "/api/mobile/approvals/{id}/transfer",
             axum::routing::post(transfer_task),
         )
+        // Inventory Routes
+        .route(
+            "/api/mobile/inventory/items",
+            axum::routing::get(list_inventory_items),
+        )
+        .route(
+            "/api/mobile/inventory/items/{id}",
+            axum::routing::get(get_inventory_item),
+        )
+        .route(
+            "/api/mobile/inventory/stocktake",
+            axum::routing::get(list_stocktake_tasks),
+        )
+        .route(
+            "/api/mobile/inventory/stocktake/{task_id}/records",
+            axum::routing::post(create_stocktake_record),
+        )
+        .route(
+            "/api/mobile/inventory/inbound",
+            axum::routing::get(list_inbound_orders),
+        )
+        .route(
+            "/api/mobile/inventory/outbound",
+            axum::routing::get(list_outbound_orders),
+        )
+        // Quality Routes
+        .route(
+            "/api/mobile/quality/tasks",
+            axum::routing::get(list_quality_tasks),
+        )
+        .route(
+            "/api/mobile/quality/tasks/{id}",
+            axum::routing::get(get_quality_task),
+        )
+        .route(
+            "/api/mobile/quality/tasks/{id}/status",
+            axum::routing::put(update_quality_task_status),
+        )
+        .route(
+            "/api/mobile/quality/defects",
+            axum::routing::get(list_defect_records).post(report_defect),
+        )
+        // Production Routes
+        .route(
+            "/api/mobile/production/orders",
+            axum::routing::get(list_production_orders),
+        )
+        .route(
+            "/api/mobile/production/orders/{id}",
+            axum::routing::get(get_production_order),
+        )
+        .route(
+            "/api/mobile/production/work-reports",
+            axum::routing::get(list_work_reports).post(submit_work_report),
+        )
+        .route(
+            "/api/mobile/production/equipment",
+            axum::routing::get(list_equipment),
+        )
         .layer(axum::middleware::from_fn_with_state(
             app_state.auth_state.clone(),
             auth_middleware,
@@ -586,7 +658,7 @@ async fn main() -> anyhow::Result<()> {
     // 启动时自动注册到统一核心
     let core_url = env::var("CORE_URL").ok();
     tokio::spawn(async move {
-        plugin::auto_register_to_core(core_url.as_deref()).await;
+        modules::mobile_plugin::auto_register_to_core(core_url.as_deref()).await;
     });
 
     let listener = tokio::net::TcpListener::bind(&addr).await?;

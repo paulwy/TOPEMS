@@ -36,7 +36,7 @@ mod rule_engine;
 mod sync_retry;
 
 use conversion_rules::{
-    get_predefined_rules, get_rule_executions, init_conversion_rules_table, insert_conversion_rule,
+    get_rule_executions, init_conversion_rules_table, insert_conversion_rule,
     list_conversion_rules, ConversionExecution, ConversionRule, CreateConversionRuleRequest,
     ExecuteConversionRequest, ExecuteConversionResponse, RuleStatus, TriggerType,
     UpdateConversionRuleRequest,

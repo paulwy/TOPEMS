@@ -35,6 +35,9 @@ import { useAppStore } from '@/store';
 import { Plus, Edit, Trash2, Eye, Download, Check, Package, ClipboardCheck } from 'lucide-react';
 import { apiLogger } from '@/utils/logger';
 import { ConfirmDialog, PageContainer } from '@/components/common';
+import { designTokens } from '@/theme/tokens';
+
+const ct = designTokens.colors;
 
 const statusConfig: Record<
   string,
@@ -363,7 +366,7 @@ const InboundPage: React.FC = () => {
         ],
         value: statusFilter,
         onChange: (value) => {
-          setStatusFilter(value);
+          setStatusFilter(value as string);
           setCurrentPage(1);
         },
       },
@@ -376,8 +379,8 @@ const InboundPage: React.FC = () => {
           ...warehouses.map((w) => ({ label: w.name, value: w.id })),
         ],
         value: warehouseFilter,
-        onChange: (value) => {
-          setWarehouseFilter(value);
+        onChange: (value: unknown) => {
+          setWarehouseFilter(value as string);
           setCurrentPage(1);
         },
       },
@@ -533,7 +536,7 @@ const InboundPage: React.FC = () => {
       subtitle='管理入库单，包括采购入库、退货入库、调拨入库等'
       headerProps={{
         pageIcon: <Download style={{ width: 20, height: 20 }} />,
-        pageGradient: 'linear-gradient(135deg, #10B981, #059669)',
+        pageGradient: `linear-gradient(135deg, ${ct.success.main}, ${ct.success.dark})`,
       }}
     >
       <ListPageTemplate

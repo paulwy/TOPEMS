@@ -32,6 +32,8 @@ import {
 } from '@/components/templates';
 import { Plus, Edit, Trash2, Eye, CheckCircle, XCircle, ShoppingCart } from 'lucide-react';
 import { apiLogger } from '@/utils/logger';
+import { designTokens } from '@/theme/tokens';
+const ct = designTokens.colors;
 
 const PurchaseOrderPage: React.FC = () => {
   const [orders, setOrders] = useState<PurchaseOrder[]>([]);
@@ -267,7 +269,7 @@ const PurchaseOrderPage: React.FC = () => {
     > = {
       draft: { label: '草稿', bg: 'grey.100', color: 'text.secondary' },
       pending: { label: '待审批', bg: 'warning.light', color: 'warning.700' },
-      approved: { label: '已审批', bg: '#e0e7ff', color: 'secondary.700' },
+      approved: { label: '已审批', bg: ct.secondary[100], color: 'secondary.700' },
       partially_received: { label: '部分收货', bg: 'primary.100', color: 'primary.dark' },
       received: { label: '已收货', bg: 'success.lighter', color: 'success.700' },
       cancelled: { label: '已取消', bg: 'error.lighter', color: 'error.dark' },
@@ -330,8 +332,8 @@ const PurchaseOrderPage: React.FC = () => {
           { label: '已取消', value: 'cancelled' },
         ],
         value: statusFilter,
-        onChange: (value) => {
-          setStatusFilter(value);
+        onChange: (value: unknown) => {
+          setStatusFilter(value as string);
           setCurrentPage(1);
         },
       },
@@ -422,7 +424,7 @@ const PurchaseOrderPage: React.FC = () => {
           {stats.pending}
         </Typography>
       </Box>
-      <Box sx={{ p: 2, bgcolor: '#e0e7ff', borderRadius: 3 }}>
+      <Box sx={{ p: 2, bgcolor: ct.secondary[100], borderRadius: 3 }}>
         <Typography
           variant='body2'
           sx={{ color: 'text.secondary' }}

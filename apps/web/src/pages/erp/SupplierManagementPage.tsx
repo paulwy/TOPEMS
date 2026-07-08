@@ -258,8 +258,8 @@ const SupplierManagementPage: React.FC = () => {
           { label: '黑名单', value: 'blacklisted' },
         ],
         value: statusFilter,
-        onChange: (value) => {
-          setStatusFilter(value);
+        onChange: (value: unknown) => {
+          setStatusFilter(value as string);
           setCurrentPage(1);
         },
       },
@@ -275,8 +275,8 @@ const SupplierManagementPage: React.FC = () => {
           { label: '包装材料供应商', value: '包装材料供应商' },
         ],
         value: categoryFilter,
-        onChange: (value) => {
-          setCategoryFilter(value);
+        onChange: (value: unknown) => {
+          setCategoryFilter(value as string);
           setCurrentPage(1);
         },
       },

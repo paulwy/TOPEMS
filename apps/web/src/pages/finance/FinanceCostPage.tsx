@@ -241,7 +241,7 @@ const FinanceCostPage: React.FC = () => {
           { value: 'disabled', label: '停用' },
         ],
         value: filterCenter,
-        onChange: setFilterCenter,
+        onChange: (value: unknown) => setFilterCenter(value as string),
       },
     ],
     [filterCenter]

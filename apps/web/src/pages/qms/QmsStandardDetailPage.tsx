@@ -19,6 +19,8 @@ import { PageContainer } from '@/components/common';
 import { qmsApi } from '@/api/qms';
 import type { QualityStandard, StandardRevision } from '@/api/qms';
 import { useAppStore } from '@/store';
+import { designTokens } from '@/theme/tokens';
+const ct = designTokens.colors;
 
 const QmsStandardDetailPage: React.FC = () => {
   const { id } = useParams<{ id: string }>();
@@ -125,7 +127,7 @@ const QmsStandardDetailPage: React.FC = () => {
           color: item.color.includes('green')
             ? 'success.700'
             : item.color.includes('yellow')
-              ? '#a16207'
+              ? ct.yellow[700]
               : item.color.includes('red')
                 ? 'error.darker'
                 : 'text.secondary',
@@ -264,7 +266,7 @@ const QmsStandardDetailPage: React.FC = () => {
           display: 'flex',
           alignItems: 'center',
           justifyContent: 'center',
-          background: 'linear-gradient(135deg, #f8fafc 0%, grey.100 100%)',
+          background: `linear-gradient(135deg, ${ct.background.default} 0%, grey.100 100%)`,
         }}
       >
         <Box sx={{ textAlign: 'center' }}>
@@ -776,7 +778,7 @@ const QmsStandardDetailPage: React.FC = () => {
             disabled={submitting}
             sx={{
               backgroundColor: 'secondary.dark',
-              '&:hover': { backgroundColor: '#6d28d9' },
+              '&:hover': { backgroundColor: ct.purple[700] },
             }}
           >
             {submitting ? '创建中...' : '创建版本'}

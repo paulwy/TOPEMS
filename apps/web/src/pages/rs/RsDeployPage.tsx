@@ -23,6 +23,7 @@ import { PageContainer } from '@/components/common';
 import { rsApi } from '@/api/rs';
 import { useAppStore } from '@/store';
 import type { Deploy, CreateDeployRequest } from '@/api/rs';
+import { logger } from '@/utils/logger';
 
 const RsDeployPage: React.FC = () => {
   const { addNotification } = useAppStore();
@@ -65,7 +66,7 @@ const RsDeployPage: React.FC = () => {
         setTotal(response.data.total || 0);
       }
     } catch (error: unknown) {
-      console.error('加载部署记录失败:', error);
+      logger.error('加载部署记录失败:', error);
       addNotification({
         type: 'error',
         title: '加载失败',
@@ -177,7 +178,7 @@ const RsDeployPage: React.FC = () => {
       });
       loadDeploys();
     } catch (error: unknown) {
-      console.error('重新部署失败:', error);
+      logger.error('重新部署失败:', error);
       addNotification({
         type: 'error',
         title: '操作失败',
@@ -212,7 +213,7 @@ const RsDeployPage: React.FC = () => {
       });
       loadDeploys();
     } catch (error: unknown) {
-      console.error('创建部署失败:', error);
+      logger.error('创建部署失败:', error);
       addNotification({
         type: 'error',
         title: '创建失败',

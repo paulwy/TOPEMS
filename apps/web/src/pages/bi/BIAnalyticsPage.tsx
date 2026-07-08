@@ -43,6 +43,9 @@ import {
   type ChartCard as ChartCardType,
 } from '@/components/templates';
 import { PageContainer } from '@/components/common';
+import { designTokens } from '@/theme/tokens';
+
+const ct = designTokens.colors;
 
 const ModuleCard = ({
   id,
@@ -523,13 +526,13 @@ const BIAnalyticsPage = () => {
           <BarChart data={chartData}>
             <CartesianGrid
               strokeDasharray='3 3'
-              stroke='#E2E8F0'
+              stroke={ct.border.default}
             />
             <XAxis
               dataKey='name'
-              tick={{ fill: '#64748B', fontSize: 12 }}
+              tick={{ fill: ct.text.secondary, fontSize: 12 }}
             />
-            <YAxis tick={{ fill: '#64748B', fontSize: 12 }} />
+            <YAxis tick={{ fill: ct.text.secondary, fontSize: 12 }} />
             <Tooltip />
             <Bar
               dataKey='value'

@@ -24,6 +24,7 @@ import type { LowCodeApp } from '../../api/lowcode/types';
 import AppCard from '../../components/lowcode/AppCard';
 import AppPublishDialog from '../../components/lowcode/AppPublishDialog';
 import { useNavigate } from 'react-router-dom';
+import { logger } from "@/utils/logger";
 
 const AppManagementPage = () => {
   const navigate = useNavigate();
@@ -60,7 +61,7 @@ const AppManagementPage = () => {
         setTotal(res.data.total || 0);
       }
     } catch (error) {
-      console.error('Failed to load apps:', error);
+      logger.error('Failed to load apps:', error);
     } finally {
       setLoading(false);
     }
@@ -79,7 +80,7 @@ const AppManagementPage = () => {
         loadApps();
       }
     } catch (error) {
-      console.error('Failed to create app:', error);
+      logger.error('Failed to create app:', error);
     }
   };
 
@@ -89,7 +90,7 @@ const AppManagementPage = () => {
         await deleteApp(appId);
         loadApps();
       } catch (error) {
-        console.error('Failed to delete app:', error);
+        logger.error('Failed to delete app:', error);
       }
     }
   };

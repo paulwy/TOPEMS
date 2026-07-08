@@ -18,6 +18,9 @@ import { PageContainer } from '@/components/common';
 import BarChartComponent from '../../components/charts/BarChart';
 import LineChartComponent from '../../components/charts/LineChart';
 import PieChartComponent from '../../components/charts/PieChart';
+import { designTokens } from '@/theme/tokens';
+
+const ct = designTokens.colors;
 
 const ScmOverviewPage: React.FC = () => {
   const navigate = useNavigate();
@@ -147,35 +150,35 @@ const ScmOverviewPage: React.FC = () => {
         label: '供应商管理',
         icon: <Users size={20} />,
         onClick: () => navigate('/scm/suppliers'),
-        color: '#1976d2',
+        color: ct.primary.dark,
       },
       {
         id: 'purchase-order',
         label: '采购订单',
         icon: <ShoppingCart size={20} />,
         onClick: () => navigate('/scm/orders'),
-        color: '#7b1fa2',
+        color: ct.secondary[700],
       },
       {
         id: 'mrp-plan',
         label: 'MRP计划',
         icon: <Calculator size={20} />,
         onClick: () => navigate('/scm/mrp'),
-        color: '#388e3c',
+        color: ct.success[700],
       },
       {
         id: 'supplier-eval',
         label: '供应商评估',
         icon: <Award size={20} />,
         onClick: () => navigate('/scm/evaluation'),
-        color: '#f57c00',
+        color: ct.warning[700],
       },
       {
         id: 'delivery-appointment',
         label: '送货预约',
         icon: <Truck size={20} />,
         onClick: () => navigate('/scm/delivery'),
-        color: '#00796b',
+        color: ct.teal[700],
       },
     ],
     [navigate]
@@ -190,7 +193,7 @@ const ScmOverviewPage: React.FC = () => {
         time: '2026-06-29 09:00',
         icon: <ShoppingCart size={18} />,
         status: 'warning',
-        tags: [{ label: '待审批', color: '#f57c00' }],
+        tags: [{ label: '待审批', color: ct.warning[700] }],
         onClick: () => navigate('/scm/orders/po1'),
       },
       {
@@ -209,7 +212,7 @@ const ScmOverviewPage: React.FC = () => {
         time: '2026-06-28 14:00',
         icon: <Calculator size={18} />,
         status: 'info',
-        tags: [{ label: '已生成', color: '#1976d2' }],
+        tags: [{ label: '已生成', color: ct.primary.dark }],
         onClick: () => navigate('/scm/mrp/mrp1'),
       },
       {
@@ -219,7 +222,7 @@ const ScmOverviewPage: React.FC = () => {
         time: '2026-06-28 11:20',
         icon: <ShoppingCart size={18} />,
         status: 'success',
-        tags: [{ label: '已入库', color: '#388e3c' }],
+        tags: [{ label: '已入库', color: ct.success[700] }],
         onClick: () => navigate('/scm/orders/po2'),
       },
       {
@@ -229,7 +232,7 @@ const ScmOverviewPage: React.FC = () => {
         time: '2026-06-27 10:00',
         icon: <Truck size={18} />,
         status: 'default',
-        tags: [{ label: '运输中', color: '#757575' }],
+        tags: [{ label: '运输中', color: ct.grey[600] }],
         onClick: () => navigate('/scm/delivery/del1'),
       },
     ],

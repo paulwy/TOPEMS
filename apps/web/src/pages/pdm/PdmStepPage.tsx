@@ -19,6 +19,9 @@ import { PageContainer } from '@/components/common';
 import { pdmApi } from '@/api/pdm';
 import type { ProductionStep } from '@/api/pdm';
 import { useAppStore } from '@/store';
+import { designTokens } from '@/theme/tokens';
+
+const ct = designTokens.colors;
 
 const PdmStepPage: React.FC = () => {
   const [steps, setSteps] = useState<ProductionStep[]>([]);
@@ -218,7 +221,7 @@ const PdmStepPage: React.FC = () => {
       headerProps={{
         actions: headerActions,
         pageIcon: <ClipboardList sx={{ width: 20, height: 20 }} />,
-        pageGradient: 'linear-gradient(135deg, #22c55e 0%, #16a34a 100%)',
+        pageGradient: `linear-gradient(135deg, ${ct.success[500]} 0%, ${ct.success[600]} 100%)`,
       }}
       maxWidth='xl'
     >

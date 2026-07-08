@@ -184,7 +184,7 @@ impl Drop for LockGuard {
             // 异步释放锁
             let redis_url = self.redis_url.clone();
             let lock_key = self.lock_key.clone();
-            let lock_value = self.lock_value.clone();
+            let _lock_value = self.lock_value.clone();
 
             tokio::spawn(async move {
                 if let Ok(lock) = DistLock::new(&redis_url).acquire(&lock_key).await {
@@ -215,7 +215,7 @@ impl LockContext {
     }
 
     pub fn release(&mut self) {
-        if let Some(guard) = self.lock.take() {
+        if let Some(_guard) = self.lock.take() {
             // 注意：这里需要同步等待
             // 实际使用中建议使用 release().await
         }

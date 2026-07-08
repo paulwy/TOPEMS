@@ -51,6 +51,7 @@ import {
   type RowAction,
 } from '@/components/templates';
 import { tenantApi } from '@/api/tenant';
+import { logger } from '@/utils/logger';
 import type {
   Tenant,
   TenantUser,
@@ -140,7 +141,7 @@ const TenantDetailPage: React.FC = () => {
         setStats(statsRes.data);
       }
     } catch (error) {
-      console.error('Failed to load tenant:', error);
+      logger.error('Failed to load tenant:', error);
     } finally {
       setLoading(false);
     }
@@ -155,7 +156,7 @@ const TenantDetailPage: React.FC = () => {
         setUsers(res.data.items);
       }
     } catch (error) {
-      console.error('Failed to load users:', error);
+      logger.error('Failed to load users:', error);
     } finally {
       setUsersLoading(false);
     }
@@ -169,7 +170,7 @@ const TenantDetailPage: React.FC = () => {
         setInvoices(res.data);
       }
     } catch (error) {
-      console.error('Failed to load invoices:', error);
+      logger.error('Failed to load invoices:', error);
     }
   }, [tenantId]);
 
@@ -183,7 +184,7 @@ const TenantDetailPage: React.FC = () => {
         loadUsers();
       }
     } catch (error) {
-      console.error('Failed to invite member:', error);
+      logger.error('Failed to invite member:', error);
     }
   };
 
@@ -200,7 +201,7 @@ const TenantDetailPage: React.FC = () => {
             setConfirmDialogOpen(false);
             loadUsers();
           } catch (error) {
-            console.error('Failed to remove member:', error);
+            logger.error('Failed to remove member:', error);
           }
         },
       });
@@ -215,7 +216,7 @@ const TenantDetailPage: React.FC = () => {
       await tenantApi.updateMemberRole(tenantId, userId, { role });
       loadUsers();
     } catch (error) {
-      console.error('Failed to update member role:', error);
+      logger.error('Failed to update member role:', error);
     }
   };
 

@@ -129,7 +129,7 @@ const VoucherCreatePage: React.FC = () => {
       const subject = subjects.find((s) => s.code === value);
       items[index] = {
         ...items[index],
-        subject_code: value,
+        subject_code: String(value),
         subject_name: subject?.name || '',
       };
     } else {

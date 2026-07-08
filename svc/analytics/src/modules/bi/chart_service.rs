@@ -131,7 +131,7 @@ impl ChartService {
         &self,
         data_source: &str,
         label_column: &str,
-        value_column: &str,
+        _value_column: &str,
         title: Option<String>,
     ) -> Result<ChartResult, String> {
         let query = ChartQuery {

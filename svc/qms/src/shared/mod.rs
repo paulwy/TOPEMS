@@ -1,6 +1,8 @@
 //! Shared module for quality-assurance service
 //! Contains unified types and utilities
 
+pub mod permission;
+
 use serde::{Deserialize, Serialize};
 
 /// Shared quality standards

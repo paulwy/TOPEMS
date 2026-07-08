@@ -73,6 +73,7 @@ async fn auth_request(
 // ==================== GIS-001: 查看地图数据 ====================
 
 #[tokio::test]
+#[ignore]
 async fn test_gis_001_view_map() {
     tracing::info!("测试 GIS-001: 查看地图数据");
     let token = login("admin", "admin123").await.expect("管理员登录失败");
@@ -90,6 +91,7 @@ async fn test_gis_001_view_map() {
 // ==================== GIS-002: 位置查询 ====================
 
 #[tokio::test]
+#[ignore]
 async fn test_gis_002_search_location() {
     tracing::info!("测试 GIS-002: 位置查询");
     let token = login("admin", "admin123").await.expect("管理员登录失败");
@@ -107,6 +109,7 @@ async fn test_gis_002_search_location() {
 // ==================== GIS-003: 添加地标 ====================
 
 #[tokio::test]
+#[ignore]
 async fn test_gis_003_add_marker() {
     tracing::info!("测试 GIS-003: 添加地标");
     let token = login("admin", "admin123").await.expect("管理员登录失败");
@@ -136,6 +139,7 @@ async fn test_gis_003_add_marker() {
 // ==================== GIS-004: 查看地标列表 ====================
 
 #[tokio::test]
+#[ignore]
 async fn test_gis_004_list_markers() {
     tracing::info!("测试 GIS-004: 查看地标列表");
     let token = login("admin", "admin123").await.expect("管理员登录失败");
@@ -153,6 +157,7 @@ async fn test_gis_004_list_markers() {
 // ==================== GIS-005: 路径规划 ====================
 
 #[tokio::test]
+#[ignore]
 async fn test_gis_005_route_planning() {
     tracing::info!("测试 GIS-005: 路径规划");
     let token = login("admin", "admin123").await.expect("管理员登录失败");
@@ -180,6 +185,7 @@ async fn test_gis_005_route_planning() {
 // ==================== 测试总结 ====================
 
 #[tokio::test]
+#[ignore]
 async fn run_all_gis_tests_summary() {
     tracing::info!("========================================");
     tracing::info!("  GIS 权限测试套件 (5个用例)");

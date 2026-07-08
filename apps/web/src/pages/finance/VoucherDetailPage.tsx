@@ -17,6 +17,8 @@ import {
   Tooltip,
   Button,
 } from '@mui/material';
+import { designTokens } from '@/theme/tokens';
+const ct = designTokens.colors;
 import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import {
@@ -239,7 +241,7 @@ const VoucherDetailPage: React.FC = () => {
         <Box sx={{ textAlign: 'center' }}>
           <AlertCircle
             size={64}
-            style={{ color: '#d32f2f', marginBottom: 16 }}
+            style={{ color: ct.error[700], marginBottom: 16 }}
           />
           <Typography
             variant='h6'
@@ -376,7 +378,7 @@ const VoucherDetailPage: React.FC = () => {
             >
               <User
                 size={20}
-                style={{ color: '#1976d2' }}
+                style={{ color: ct.primary.dark }}
               />
             </Box>
             <Box>
@@ -405,7 +407,7 @@ const VoucherDetailPage: React.FC = () => {
             >
               <Check
                 size={20}
-                style={{ color: '#0288d1' }}
+                style={{ color: ct.info.dark }}
               />
             </Box>
             <Box>
@@ -434,7 +436,7 @@ const VoucherDetailPage: React.FC = () => {
             >
               <Building2
                 size={20}
-                style={{ color: '#388e3c' }}
+                style={{ color: ct.success[700] }}
               />
             </Box>
             <Box>
@@ -631,7 +633,7 @@ const VoucherDetailPage: React.FC = () => {
             >
               <Calendar
                 size={16}
-                style={{ color: '#388e3c' }}
+                style={{ color: ct.success[700] }}
               />
             </Box>
             <Box sx={{ flex: 1 }}>
@@ -670,7 +672,7 @@ const VoucherDetailPage: React.FC = () => {
               >
                 <Check
                   size={16}
-                  style={{ color: '#0288d1' }}
+                  style={{ color: ct.info.dark }}
                 />
               </Box>
               <Box sx={{ flex: 1 }}>
@@ -710,7 +712,7 @@ const VoucherDetailPage: React.FC = () => {
               >
                 <Building2
                   size={16}
-                  style={{ color: '#1976d2' }}
+                  style={{ color: ct.primary.dark }}
                 />
               </Box>
               <Box sx={{ flex: 1 }}>

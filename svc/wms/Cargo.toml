@@ -30,6 +30,7 @@ bigdecimal.workspace = true
 
 [dev-dependencies]
 tokio-test.workspace = true
+rust_decimal = "1.35"
 
 [[bin]]
 name = "topems-wms"

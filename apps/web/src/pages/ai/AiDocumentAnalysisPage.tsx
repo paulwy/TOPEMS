@@ -43,6 +43,8 @@ import {
 import { PageContainer, Grid } from '@/components/common';
 import { useAppStore } from '@/store';
 import { logger } from '@/utils/logger';
+import { designTokens } from '@/theme/tokens';
+const ct = designTokens.colors;
 
 type AnalysisTab = 'summary' | 'translate' | 'qa' | 'extract' | 'ocr';
 
@@ -186,7 +188,7 @@ export const AiDocumentAnalysisPage: React.FC = () => {
       maxWidth={false}
       headerProps={{
         pageIcon: <FileText style={{ width: 20, height: 20 }} />,
-        pageGradient: 'linear-gradient(135deg, #2193b0 0%, #6dd5ed 100%)',
+        pageGradient: `linear-gradient(135deg, ${ct.cyan[600]} 0%, ${ct.cyan[300]} 100%)`,
       }}
     >
       <Box sx={{ p: 3 }}>
@@ -238,7 +240,7 @@ export const AiDocumentAnalysisPage: React.FC = () => {
                 />
                 <Upload
                   size={32}
-                  style={{ margin: '0 auto 8px', color: '#9ca3af' }}
+                  style={{ margin: '0 auto 8px', color: ct.grey[400] }}
                 />
                 <Typography variant='body2'>点击上传文档</Typography>
                 <Typography
@@ -263,7 +265,7 @@ export const AiDocumentAnalysisPage: React.FC = () => {
                 >
                   <FileText
                     size={20}
-                    style={{ color: '#3b82f6' }}
+                    style={{ color: ct.primary.main }}
                   />
                   <Box sx={{ flex: 1, minWidth: 0 }}>
                     <Typography
@@ -326,7 +328,7 @@ export const AiDocumentAnalysisPage: React.FC = () => {
                     <ListItemIcon sx={{ minWidth: 36 }}>
                       <FileText
                         size={18}
-                        style={{ color: '#ef4444' }}
+                        style={{ color: ct.error.main }}
                       />
                     </ListItemIcon>
                     <ListItemText
@@ -424,7 +426,7 @@ export const AiDocumentAnalysisPage: React.FC = () => {
                 <Box sx={{ p: 8, textAlign: 'center' }}>
                   <Zap
                     size={64}
-                    style={{ margin: '0 auto 16px', color: '#cbd5e1' }}
+                    style={{ margin: '0 auto 16px', color: ct.text.disabled }}
                   />
                   <Typography
                     variant='h6'
@@ -509,7 +511,7 @@ export const AiDocumentAnalysisPage: React.FC = () => {
                             <ListItemIcon sx={{ minWidth: 32, pt: 0.5 }}>
                               <Lightbulb
                                 size={18}
-                                style={{ color: '#f59e0b' }}
+                                style={{ color: ct.warning.main }}
                               />
                             </ListItemIcon>
                             <ListItemText primary={point} />
@@ -591,7 +593,7 @@ export const AiDocumentAnalysisPage: React.FC = () => {
                           <Box sx={{ textAlign: 'center', py: 8 }}>
                             <Languages
                               size={48}
-                              style={{ margin: '0 auto 12px', color: '#cbd5e1' }}
+                              style={{ margin: '0 auto 12px', color: ct.text.disabled }}
                             />
                             <Typography
                               variant='body2'
@@ -644,7 +646,7 @@ export const AiDocumentAnalysisPage: React.FC = () => {
                         <Box sx={{ textAlign: 'center', py: 6 }}>
                           <MessageSquare
                             size={48}
-                            style={{ margin: '0 auto 12px', color: '#cbd5e1' }}
+                            style={{ margin: '0 auto 12px', color: ct.text.disabled }}
                           />
                           <Typography
                             variant='body2'

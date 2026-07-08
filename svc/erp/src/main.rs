@@ -1,18 +1,12 @@
-mod api;
 mod models;
 mod services;
+mod shared;
 mod utils;
 
+pub mod modules;
+
 use anyhow::Result;
-use axum::{
-    body::Body,
-    extract::State,
-    http::{header, Request},
-    middleware::Next,
-    response::{IntoResponse, Response},
-    routing::get,
-    Json, Router,
-};
+use axum::{routing::get, Json, Router};
 use axum_prometheus::PrometheusMetricLayer;
 use prometheus::{
     register_int_counter, register_int_gauge, Encoder, IntCounter, IntGauge, TextEncoder,
@@ -23,11 +17,11 @@ use std::sync::Arc;
 use std::time::{Duration, Instant};
 use utoipa::OpenApi;
 
-use api::ApiState;
+use modules::ApiState;
 use topems_shared::{
-    check_http_health, create_api_info_router, create_cors_layer, create_database_pool,
-    create_hrm_client, init_telemetry, telemetry_middleware, verify_jwt_token, ApiResponse,
-    AuthState, Claims, DatabaseConfig, DependencyHealth, FieldEncryptionService, HealthStatus,
+    auth_middleware, check_http_health, create_api_info_router, create_cors_layer,
+    create_database_pool, create_hrm_client, init_telemetry, rls_middleware, telemetry_middleware,
+    ApiResponse, AuthState, DatabaseConfig, DependencyHealth, FieldEncryptionService, HealthStatus,
     KeyManager, NotificationServiceClient, ServiceHealth, SystemMetrics,
 };
 
@@ -157,10 +151,14 @@ async fn main() -> Result<()> {
         )
         .with_state(api_state.clone());
 
-    let protected_routes = api::create_routes()
+    let protected_routes = modules::create_routes()
         .layer(axum::middleware::from_fn_with_state(
             api_state.auth_state.clone(),
-            erp_auth_middleware,
+            auth_middleware,
+        ))
+        .layer(axum::middleware::from_fn_with_state(
+            api_state.db.clone(),
+            rls_middleware,
         ))
         .with_state(api_state.clone());
 
@@ -188,7 +186,7 @@ async fn main() -> Result<()> {
     // 启动时自动注册到统一核心
     let core_url = env::var("CORE_URL").ok();
     tokio::spawn(async move {
-        api::plugin::auto_register_to_core(core_url.as_deref()).await;
+        modules::erp_plugin::auto_register_to_core(core_url.as_deref()).await;
     });
 
     let listener = tokio::net::TcpListener::bind(&addr).await?;
@@ -388,107 +386,4 @@ fn init_encryption_service() -> FieldEncryptionService {
     key_array.copy_from_slice(&key_bytes[..32]);
     let key_manager = KeyManager::new(&key_array);
     FieldEncryptionService::new(key_manager)
-}
-
-// ==================== ERP 认证中间件 ====================
-// 支持三种认证模式：
-// 1. X-User-Id header 模式（通过 unified-core 代理访问）
-// 2. Authorization header 模式（直连模式）
-// 3. 开发模式（环境变量 DEVELOPMENT_MODE=true 时跳过认证）
-
-async fn erp_auth_middleware(
-    State(auth_state): State<AuthState>,
-    req: Request<Body>,
-    next: Next,
-) -> Response {
-    let path = req.uri().path().to_string();
-
-    // 公开路径不需要认证
-    let public_paths = [
-        "/",
-        "/health",
-        "/api/v1/auth/login",
-        "/api/v1/auth/refresh",
-        "/api/plugins/info",
-        "/api/plugins/health",
-    ];
-    if public_paths.contains(&path.as_str()) {
-        return next.run(req).await;
-    }
-
-    let (mut parts, body) = req.into_parts();
-
-    // 模式 1: 检查 X-User-Id header（代理模式）
-    if let Some(user_id) = parts.headers.get("X-User-Id") {
-        if let Ok(user_id_str) = user_id.to_str() {
-            let claims = Claims {
-                sub: user_id_str.to_string(),
-                username: user_id_str.to_string(),
-                role: "user".to_string(),
-                roles: vec!["user".to_string()],
-                permissions: vec![],
-                is_superuser: false,
-                exp: 0,
-                iat: 0,
-                email: None,
-                department: None,
-                tenant_id: parts
-                    .headers
-                    .get("X-Tenant-Id")
-                    .and_then(|h| h.to_str().ok())
-                    .map(|s| s.to_string()),
-            };
-            parts.extensions.insert(claims);
-            let req = Request::from_parts(parts, body);
-            return next.run(req).await;
-        }
-    }
-
-    // 模式 3: 开发模式（跳过认证）
-    if std::env::var("DEVELOPMENT_MODE").unwrap_or_default() == "true" {
-        tracing::info!("开发模式：跳过认证，路径: {}", parts.uri.path());
-        let claims = Claims {
-            sub: "dev_user".to_string(),
-            username: "dev_user".to_string(),
-            role: "admin".to_string(),
-            roles: vec!["admin".to_string(), "user".to_string()],
-            permissions: vec!["finance:read".to_string(), "finance:write".to_string()],
-            is_superuser: true,
-            exp: 0,
-            iat: 0,
-            email: Some("dev@example.com".to_string()),
-            department: None,
-            tenant_id: None,
-        };
-        parts.extensions.insert(claims);
-        let req = Request::from_parts(parts, body);
-        return next.run(req).await;
-    }
-
-    // 模式 2: 检查 Authorization header（直连模式）
-    let auth_header = parts
-        .headers
-        .get(header::AUTHORIZATION)
-        .and_then(|h| h.to_str().ok());
-
-    let token = match auth_header {
-        Some(header) if header.starts_with("Bearer ") => &header[7..],
-        _ => {
-            return topems_shared::response::api_error::<()>(401, "未授权：缺少有效的认证令牌")
-                .into_response();
-        }
-    };
-
-    match verify_jwt_token(token, &auth_state.jwt_secret) {
-        Ok(claims) => {
-            parts.extensions.insert(claims);
-            let req = Request::from_parts(parts, body);
-            next.run(req).await
-        }
-        Err(e) => {
-            tracing::error!("Token verification failed: {}", e);
-            topems_shared::response::api_error::<()>(401, &format!("认证失败：{}", e))
-                .into_response()
-        }
-    }
 }

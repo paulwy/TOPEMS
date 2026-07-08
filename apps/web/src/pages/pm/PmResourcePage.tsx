@@ -7,6 +7,9 @@ import { pmApi } from '@/api/pm';
 import { apiLogger } from '@/utils/logger';
 import { ListPageTemplate, type ColumnDef } from '@/components/templates';
 import { PageContainer } from '@/components/common';
+import { designTokens } from '@/theme/tokens';
+
+const ct = designTokens.colors;
 
 const STATUS_LABELS: Record<string, string> = {
   available: '可用',
@@ -210,13 +213,13 @@ const PmResourcePage: React.FC = () => {
         render: (row) => (
           <Box sx={{ display: 'flex', gap: 0.5 }}>
             <Tooltip title='查看详情'>
-              <IconButton size='small'>
+              <IconButton size='small' aria-label='查看详情'>
                 <Eye size={16} />
               </IconButton>
             </Tooltip>
             {row.status === 'available' && (
               <Tooltip title='分配资源'>
-                <IconButton size='small'>
+                <IconButton size='small' aria-label='分配资源'>
                   <Users size={16} />
                 </IconButton>
               </Tooltip>
@@ -226,6 +229,7 @@ const PmResourcePage: React.FC = () => {
                 <IconButton
                   size='small'
                   onClick={() => handleRelease(row)}
+                  aria-label='释放资源'
                 >
                   <CheckCircle2 size={16} />
                 </IconButton>
@@ -236,6 +240,7 @@ const PmResourcePage: React.FC = () => {
                 size='small'
                 onClick={() => handleDelete(row)}
                 sx={{ color: 'error.main' }}
+                aria-label='删除资源'
               >
                 <Trash2 size={16} />
               </IconButton>
@@ -258,7 +263,7 @@ const PmResourcePage: React.FC = () => {
           ...projects.map((p) => ({ value: p.id, label: p.name })),
         ],
         value: selectedProject,
-        onChange: setSelectedProject,
+        onChange: (value: unknown) => setSelectedProject(value as string),
       },
       {
         id: 'resource_type',
@@ -274,7 +279,7 @@ const PmResourcePage: React.FC = () => {
           { value: 'network', label: '网络设备' },
         ],
         value: selectedType,
-        onChange: setSelectedType,
+        onChange: (value: unknown) => setSelectedType(value as string),
       },
       {
         id: 'status',
@@ -288,7 +293,7 @@ const PmResourcePage: React.FC = () => {
           { value: 'retired', label: '已退役' },
         ],
         value: selectedStatus,
-        onChange: setSelectedStatus,
+        onChange: (value: unknown) => setSelectedStatus(value as string),
       },
     ],
     [projects, selectedProject, selectedType, selectedStatus]
@@ -428,7 +433,7 @@ const PmResourcePage: React.FC = () => {
                 <Box sx={{ p: 1.5, bgcolor: 'warning.light', borderRadius: '50%' }}>
                   <Users
                     size={24}
-                    color='#ca8a04'
+                    color={ct.yellow[600]}
                   />
                 </Box>
                 <Box>
@@ -448,15 +453,15 @@ const PmResourcePage: React.FC = () => {
               }}
             >
               <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5 }}>
-                <Box sx={{ p: 1.5, bgcolor: '#e9d5ff', borderRadius: '50%' }}>
+                <Box sx={{ p: 1.5, bgcolor: ct.purple[200], borderRadius: '50%' }}>
                   <Clock
                     size={24}
-                    color='#7e22ce'
+                    color={ct.purple[700]}
                   />
                 </Box>
                 <Box>
                   <Box sx={{ fontSize: '0.875rem', color: 'grey.500' }}>累计工时</Box>
-                  <Box sx={{ fontSize: '1.5rem', fontWeight: 700, color: '#7e22ce' }}>
+                  <Box sx={{ fontSize: '1.5rem', fontWeight: 700, color: 'secondary.dark' }}>
                     {totalHours.toFixed(0)}h
                   </Box>
                 </Box>

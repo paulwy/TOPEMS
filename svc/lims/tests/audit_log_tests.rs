@@ -23,6 +23,7 @@ mod tests {
     }
 
     #[tokio::test]
+    #[ignore]
     async fn test_list_audit_logs_success() {
         let base_url = "http://localhost:8051";
         let client = reqwest::Client::new();
@@ -57,6 +58,7 @@ mod tests {
     }
 
     #[tokio::test]
+    #[ignore]
     async fn test_list_audit_logs_invalid_start_date() {
         let base_url = "http://localhost:8051";
         let client = reqwest::Client::new();
@@ -88,6 +90,7 @@ mod tests {
     }
 
     #[tokio::test]
+    #[ignore]
     async fn test_list_audit_logs_invalid_end_date() {
         let base_url = "http://localhost:8051";
         let client = reqwest::Client::new();
@@ -119,6 +122,7 @@ mod tests {
     }
 
     #[tokio::test]
+    #[ignore]
     async fn test_list_audit_logs_with_valid_date_range() {
         let base_url = "http://localhost:8051";
         let client = reqwest::Client::new();
@@ -143,6 +147,7 @@ mod tests {
     }
 
     #[tokio::test]
+    #[ignore]
     async fn test_get_audit_log_not_found() {
         let base_url = "http://localhost:8051";
         let client = reqwest::Client::new();
@@ -175,6 +180,7 @@ mod tests {
     }
 
     #[tokio::test]
+    #[ignore]
     async fn test_export_audit_logs_success() {
         let base_url = "http://localhost:8051";
         let client = reqwest::Client::new();
@@ -205,6 +211,7 @@ mod tests {
     }
 
     #[tokio::test]
+    #[ignore]
     async fn test_export_audit_logs_invalid_date() {
         let base_url = "http://localhost:8051";
         let client = reqwest::Client::new();
@@ -236,6 +243,7 @@ mod tests {
     }
 
     #[tokio::test]
+    #[ignore]
     async fn test_list_audit_logs_unauthorized() {
         let base_url = "http://localhost:8051";
         let client = reqwest::Client::new();

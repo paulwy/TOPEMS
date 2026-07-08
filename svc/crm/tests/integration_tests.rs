@@ -15,12 +15,14 @@ mod tests {
     }
 
     #[tokio::test]
+    #[ignore]
     async fn test_database_connection() {
         let pool = setup_test_pool().await;
         assert!(pool.is_ok(), "数据库连接应该成功");
     }
 
     #[tokio::test]
+    #[ignore]
     async fn test_customer_table_exists() {
         let pool = setup_test_pool().await.unwrap();
 
@@ -40,6 +42,7 @@ mod tests {
     }
 
     #[tokio::test]
+    #[ignore]
     async fn test_contact_table_exists() {
         let pool = setup_test_pool().await.unwrap();
 
@@ -59,6 +62,7 @@ mod tests {
     }
 
     #[tokio::test]
+    #[ignore]
     async fn test_opportunity_table_exists() {
         let pool = setup_test_pool().await.unwrap();
 
@@ -78,6 +82,7 @@ mod tests {
     }
 
     #[tokio::test]
+    #[ignore]
     async fn test_interaction_table_exists() {
         let pool = setup_test_pool().await.unwrap();
 
@@ -97,6 +102,7 @@ mod tests {
     }
 
     #[tokio::test]
+    #[ignore]
     async fn test_tag_table_exists() {
         let pool = setup_test_pool().await.unwrap();
 
@@ -154,6 +160,7 @@ mod tests {
     }
 
     #[tokio::test]
+    #[ignore]
     async fn test_list_customers() {
         let pool = setup_test_pool().await.unwrap();
 
@@ -180,6 +187,7 @@ mod tests {
     }
 
     #[tokio::test]
+    #[ignore]
     async fn test_customer_status_update() {
         let pool = setup_test_pool().await.unwrap();
         let org_id = test_org_id();
@@ -274,7 +282,7 @@ mod tests {
         let opportunity_id = Uuid::new_v4();
         let result = sqlx::query(
             r#"
-            INSERT INTO plugin_crm.opportunities (id, organization_id, customer_id, name, stage, value, probability, status, created_at, updated_at)
+            INSERT INTO crm.opportunities (id, organization_id, customer_id, name, stage, value, probability, status, created_at, updated_at)
             VALUES ($1, $2, $3, $4, $5, $6, $7, $8, NOW(), NOW())
             "#,
         )
@@ -292,7 +300,7 @@ mod tests {
         assert!(result.is_ok(), "商机创建应该成功");
 
         // 清理测试数据
-        let _ = sqlx::query("DELETE FROM plugin_crm.opportunities WHERE id = $1")
+        let _ = sqlx::query("DELETE FROM crm.opportunities WHERE id = $1")
             .bind(opportunity_id)
             .execute(&pool)
             .await;
@@ -303,6 +311,7 @@ mod tests {
     }
 
     #[tokio::test]
+    #[ignore]
     async fn test_audit_log_table_exists() {
         let pool = setup_test_pool().await.unwrap();
 

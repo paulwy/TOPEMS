@@ -25,6 +25,9 @@ import { PageContainer } from '@/components/common/PageContainerV2';
 import type { EnvironmentalRegulation, ComplianceAssessment, DischargePermit } from '@/api/ehs';
 import { useAppStore } from '@/store';
 import { apiLogger } from '@/utils/logger';
+import { designTokens } from '@/theme/tokens';
+
+const ct = designTokens.colors;
 
 const CompliancePage: React.FC = () => {
   const [activeTab, setActiveTab] = useState(0);
@@ -188,7 +191,7 @@ const CompliancePage: React.FC = () => {
           { value: 'archived', label: '已归档' },
         ],
         value: statusFilter,
-        onChange: (value: string) => setStatusFilter(value),
+        onChange: (value: unknown) => setStatusFilter(value as string),
       },
     ],
     [statusFilter]
@@ -243,7 +246,7 @@ const CompliancePage: React.FC = () => {
       headerProps={{
         actions: headerActions,
         pageIcon: <Shield sx={{ width: 20, height: 20 }} />,
-        pageGradient: 'linear-gradient(135deg, #10B981 0%, #059669 100%)',
+        pageGradient: `linear-gradient(135deg, ${ct.success.main} 0%, ${ct.success.dark} 100%)`,
       }}
       maxWidth='xl'
     >

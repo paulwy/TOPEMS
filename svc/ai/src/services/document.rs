@@ -1,3 +1,5 @@
+#![allow(dead_code)]
+
 use crate::services::pdf::PdfParser;
 use crate::services::vector::{
     CreateDocumentRequest, SaveChunkRequest, SearchResult, VectorService,
@@ -5,7 +7,7 @@ use crate::services::vector::{
 use reqwest::Client;
 use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
-use std::io::{BufRead, BufReader, Read};
+use std::io::{BufReader, Read};
 use std::sync::Arc;
 use tokio::sync::RwLock;
 use topems_shared::file_client::FileServiceClient;

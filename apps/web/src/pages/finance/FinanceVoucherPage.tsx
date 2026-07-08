@@ -1,4 +1,6 @@
 import { Typography, Tabs, Tab, Box } from '@mui/material';
+import { designTokens } from '@/theme/tokens';
+const ct = designTokens.colors;
 import React, { useState, useEffect, useMemo } from 'react';
 import {
   FileText,
@@ -631,7 +633,7 @@ const FinanceVoucherPage: React.FC = () => {
       subtitle='管理财务凭证、会计科目，支持用友凭证导入'
       headerProps={{
         pageIcon: <Wallet style={{ width: 20, height: 20 }} />,
-        pageGradient: 'linear-gradient(135deg, #10B981 0%, #059669 100%)',
+        pageGradient: `linear-gradient(135deg, ${ct.success.main} 0%, ${ct.success.dark} 100%)`,
       }}
     >
       <Box
@@ -1102,7 +1104,7 @@ const FinanceVoucherPage: React.FC = () => {
                     name={`subject_code_${index}`}
                     label='选择科目'
                     value={item.subject_code}
-                    onChange={(value) => updateVoucherItem(index, 'subject_code', value)}
+                    onChange={(value) => updateVoucherItem(index, 'subject_code', value as string | number)}
                     options={subjects.map((s) => ({
                       value: s.code,
                       label: `${s.code} - ${s.name}`,

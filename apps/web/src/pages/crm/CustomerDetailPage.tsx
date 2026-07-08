@@ -1,6 +1,9 @@
 import { Chip, Typography, Box, InputLabel, Button } from '@mui/material';
 import React, { useState, useEffect, useMemo } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
+import { designTokens } from '@/theme/tokens';
+
+const ct = designTokens.colors;
 import {
   Building2,
   Mail,
@@ -18,31 +21,14 @@ import {
   useSalesInvoices,
   useCollectionRecords,
 } from '@/hooks/useCrmFinance';
+import type { SalesInvoice, CollectionRecord } from '@/api/crmFinance';
 import { useNotification } from '@/hooks/useNotification';
 import type { Customer } from '@/api/crm';
 import { apiLogger } from '@/utils/logger';
 import { DetailPageTemplate, type TabConfig, type SectionConfig } from '@/components/templates';
 import { PageContainer } from '@/components/common';
 
-interface SalesInvoice {
-  id: string;
-  invoice_no: string;
-  amount: number;
-  tax_amount: number;
-  total_amount: number;
-  invoice_date: string;
-  due_date: string;
-  status: string;
-}
 
-interface CollectionRecord {
-  id: string;
-  collection_no: string;
-  amount: number;
-  payment_method: string;
-  collection_date: string;
-  status: string;
-}
 
 const CustomerDetailPage: React.FC = () => {
   const { id } = useParams<{ id: string }>();
@@ -427,7 +413,7 @@ const CustomerDetailPage: React.FC = () => {
           </Typography>
         ) : (
           <Box sx={{ display: 'grid', gap: 1 }}>
-            {invoiceList.map((invoice: SalesInvoice) => (
+            {invoiceList.map((invoice: SalesInvoice, _index: number) => (
               <Box
                 key={invoice.id}
                 sx={{
@@ -441,7 +427,7 @@ const CustomerDetailPage: React.FC = () => {
                   alignItems: 'center',
                 }}
               >
-                <Typography sx={{ fontWeight: 'medium' }}>{invoice.invoice_no}</Typography>
+                <Typography sx={{ fontWeight: 'medium' }}>{invoice.invoice_number}</Typography>
                 <Typography align='right'>{formatCurrency(invoice.amount)}</Typography>
                 <Typography align='right'>{formatCurrency(invoice.tax_amount)}</Typography>
                 <Typography align='right'>{formatCurrency(invoice.total_amount)}</Typography>
@@ -461,13 +447,15 @@ const CustomerDetailPage: React.FC = () => {
                   label={
                     invoice.status === 'draft'
                       ? '草稿'
-                      : invoice.status === 'approved'
-                        ? '已审批'
-                        : invoice.status === 'issued'
-                          ? '已开具'
-                          : invoice.status === 'cancelled'
-                            ? '已作废'
-                            : invoice.status
+                      : invoice.status === 'issued'
+                        ? '已开具'
+                        : invoice.status === 'paid'
+                          ? '已付款'
+                          : invoice.status === 'overdue'
+                            ? '已逾期'
+                            : invoice.status === 'cancelled'
+                              ? '已作废'
+                              : invoice.status
                   }
                 />
               </Box>
@@ -521,32 +509,32 @@ const CustomerDetailPage: React.FC = () => {
                   alignItems: 'center',
                 }}
               >
-                <Typography sx={{ fontWeight: 'medium' }}>{record.collection_no}</Typography>
+                <Typography sx={{ fontWeight: 'medium' }}>{record.collection_number}</Typography>
                 <Typography align='right'>{formatCurrency(record.amount)}</Typography>
                 <Typography>
                   {record.payment_method === 'bank_transfer'
                     ? '银行转账'
                     : record.payment_method === 'cash'
                       ? '现金'
-                      : record.payment_method === 'credit'
-                        ? '信用'
+                      : record.payment_method === 'check'
+                        ? '支票'
                         : '其他'}
                 </Typography>
                 <Typography>{formatDate(record.collection_date)}</Typography>
                 <Chip
                   size='small'
                   color={
-                    record.status === 'matched'
+                    record.status === 'confirmed'
                       ? 'success'
-                      : record.status === 'recorded'
-                        ? 'info'
-                        : 'default'
+                      : record.status === 'pending'
+                        ? 'warning'
+                        : 'error'
                   }
                   label={
-                    record.status === 'matched'
-                      ? '已核销'
-                      : record.status === 'recorded'
-                        ? '已记录'
+                    record.status === 'confirmed'
+                      ? '已确认'
+                      : record.status === 'pending'
+                        ? '待确认'
                         : '已取消'
                   }
                 />
@@ -647,7 +635,7 @@ const CustomerDetailPage: React.FC = () => {
       avatar: (
         <Building2
           size={32}
-          color='#1976d2'
+          color={ct.primary.dark}
         />
       ),
       title: customer?.name,

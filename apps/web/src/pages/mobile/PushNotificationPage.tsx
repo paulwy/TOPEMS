@@ -26,6 +26,7 @@ import {
 import { MobileLayout, MobileSkeleton, MobileCard } from '@/components/mobile';
 import { useNavigate } from 'react-router-dom';
 import { useAppStore } from '@/store';
+import { logger } from "@/utils/logger";
 
 interface PushTemplate {
   id: string;
@@ -112,7 +113,7 @@ const PushNotificationPage: React.FC = () => {
         },
       ]);
     } catch (err) {
-      console.error('加载推送配置失败:', err);
+      logger.error('加载推送配置失败:', err);
     } finally {
       setLoading(false);
     }

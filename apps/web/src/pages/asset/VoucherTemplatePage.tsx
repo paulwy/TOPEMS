@@ -339,8 +339,8 @@ export default function VoucherTemplatePage() {
                       </Typography>
                       <Chip
                         size='small'
-                        variant={template.isactive ? 'filled' : 'outlined'}
-                        label={template.isactive ? '启用' : '禁用'}
+                        variant={template.status === 'active' ? 'filled' : 'outlined'}
+                        label={template.status === 'active' ? '启用' : '禁用'}
                       />
                     </Box>
                     {template.is_default && (
@@ -395,7 +395,7 @@ export default function VoucherTemplatePage() {
                       size='small'
                       onClick={() => handleToggle(template)}
                     >
-                      {template.isactive ? (
+                      {template.status === 'active' ? (
                         <X sx={{ width: 16, height: 16, color: 'grey.500' }} />
                       ) : (
                         <Check sx={{ width: 16, height: 16, color: 'green.600' }} />

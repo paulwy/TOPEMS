@@ -10,9 +10,10 @@
 #![allow(clippy::too_many_arguments)]
 #![allow(dead_code)]
 
-mod api;
 mod models;
-mod services;
+mod shared;
+
+pub mod modules;
 
 use anyhow::Result;
 use axum::{routing::get, Json, Router};
@@ -26,12 +27,12 @@ use utoipa::OpenApi;
 
 use topems_shared::{
     auth_middleware, check_http_health, create_api_info_router, create_cors_layer,
-    create_database_pool, init_telemetry, telemetry_middleware, ApiResponse, AuthState,
-    DatabaseConfig, DependencyHealth, HealthStatus, ServiceHealth, SystemMetrics,
+    create_database_pool, init_telemetry, rls_middleware, telemetry_middleware, ApiResponse,
+    AuthState, DatabaseConfig, DependencyHealth, HealthStatus, ServiceHealth, SystemMetrics,
 };
 
-use api::plugin::{auto_register_to_core, get_plugin_info, plugin_health_check};
-use api::ApiState;
+use modules::wms_plugin::{auto_register_to_core, get_plugin_info, plugin_health_check};
+use modules::ApiState;
 
 #[tokio::main]
 async fn main() -> Result<()> {
@@ -93,15 +94,18 @@ async fn main() -> Result<()> {
             }),
         );
 
-    let api_router = api::create_routes::<ApiState>().with_state(api_state.clone());
+    let api_router = modules::create_routes::<ApiState>().with_state(api_state.clone());
 
-    let protected_routes: Router<ApiState> =
-        Router::new()
-            .merge(api_router)
-            .layer(axum::middleware::from_fn_with_state(
-                api_state.auth_state.clone(),
-                auth_middleware,
-            ));
+    let protected_routes: Router<ApiState> = Router::new()
+        .merge(api_router)
+        .layer(axum::middleware::from_fn_with_state(
+            api_state.auth_state.clone(),
+            auth_middleware,
+        ))
+        .layer(axum::middleware::from_fn_with_state(
+            api_state.db.clone(),
+            rls_middleware,
+        ));
 
     let app = Router::new()
         .merge(health_router)
@@ -132,7 +136,7 @@ async fn main() -> Result<()> {
 }
 
 async fn serve_openapi_json() -> axum::Json<utoipa::openapi::OpenApi> {
-    axum::Json(api::openapi::WmsApiDoc::openapi())
+    axum::Json(modules::openapi::WmsApiDoc::openapi())
 }
 
 async fn health_check(

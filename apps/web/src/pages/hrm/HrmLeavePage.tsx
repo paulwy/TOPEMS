@@ -1,5 +1,7 @@
 import React, { useState, useEffect, useMemo } from 'react';
 import { PageContainer } from '@/components/common';
+import { designTokens } from '@/theme/tokens';
+const ct = designTokens.colors;
 import {
   Plus,
   Edit,
@@ -342,7 +344,7 @@ const LeaveManagementPage: React.FC = () => {
       autoBreadcrumbs
       headerProps={{
         pageIcon: <FileText size={28} />,
-        pageGradient: 'linear-gradient(135deg, #4facfe 0%, #00f2fe 100%)',
+        pageGradient: `linear-gradient(135deg, ${ct.primary[400]} 0%, ${ct.info[400]} 100%)`,
       }}
       padding={false}
       maxWidth={false}

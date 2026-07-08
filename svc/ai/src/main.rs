@@ -1,12 +1,12 @@
 // TOPEMS-AI Backend - with PostgreSQL/pgvector persistence and PDF support
 // =============================================================================
 
-mod api;
-mod plugin;
+mod modules;
 mod services;
+mod shared;
 
 // 分析 API handlers
-use crate::api::{
+use crate::modules::{
     AnalysisApi, DocumentApi, EmbeddingApi, MultimodalApi, QaApi, RecommendationApi, VectorApi,
 };
 use crate::services::document::DocumentQAConfig;
@@ -556,11 +556,9 @@ fn cosine_similarity(vec1: &[f32], vec2: &[f32]) -> f64 {
 async fn process_document_for_embedding(
     doc: &Document,
 ) -> Result<(), Box<dyn std::error::Error + Send + Sync>> {
-    if doc.file_path.is_none() {
+    let Some(file_path) = doc.file_path.as_ref() else {
         return Ok(());
-    }
-
-    let file_path = doc.file_path.as_ref().unwrap();
+    };
 
     let content = read_file_content(file_path)
         .await
@@ -580,8 +578,20 @@ async fn process_document_for_embedding(
         .to_string();
 
     if let (Some(vectors_arc), Some(chunks_arc)) = (VECTORS.get(), CHUNKS.get()) {
-        let mut vectors = vectors_arc.lock().unwrap();
-        let mut chunks_storage = chunks_arc.lock().unwrap();
+        let mut vectors = match vectors_arc.lock() {
+            Ok(v) => v,
+            Err(e) => {
+                tracing::error!("Failed to lock vectors: {}", e);
+                return Ok(());
+            }
+        };
+        let mut chunks_storage = match chunks_arc.lock() {
+            Ok(c) => c,
+            Err(e) => {
+                tracing::error!("Failed to lock chunks: {}", e);
+                return Ok(());
+            }
+        };
 
         for (idx, (chunk_content, embedding)) in chunks.into_iter().zip(embeddings).enumerate() {
             let chunk_id = Uuid::new_v4().to_string();
@@ -622,14 +632,29 @@ async fn index_all_documents() {
     if let (Some(docs_arc), Some(vectors_arc), Some(chunks_arc)) =
         (DOCUMENTS.get(), VECTORS.get(), CHUNKS.get())
     {
-        let docs = {
-            let docs_lock = docs_arc.lock().unwrap();
-            docs_lock.clone()
+        let docs = match docs_arc.lock() {
+            Ok(d) => d.clone(),
+            Err(e) => {
+                tracing::error!("Failed to lock documents: {}", e);
+                return;
+            }
         };
 
         {
-            let mut vectors = vectors_arc.lock().unwrap();
-            let mut chunks = chunks_arc.lock().unwrap();
+            let mut vectors = match vectors_arc.lock() {
+                Ok(v) => v,
+                Err(e) => {
+                    tracing::error!("Failed to lock vectors: {}", e);
+                    return;
+                }
+            };
+            let mut chunks = match chunks_arc.lock() {
+                Ok(c) => c,
+                Err(e) => {
+                    tracing::error!("Failed to lock chunks: {}", e);
+                    return;
+                }
+            };
             vectors.clear();
             chunks.clear();
         }
@@ -643,9 +668,12 @@ async fn index_all_documents() {
             }
         }
 
-        let vector_count = {
-            let vectors = vectors_arc.lock().unwrap();
-            vectors.len()
+        let vector_count = match vectors_arc.lock() {
+            Ok(v) => v.len(),
+            Err(e) => {
+                tracing::error!("Failed to lock vectors for count: {}", e);
+                return;
+            }
         };
         tracing::info!("✅ 向量库索引完成，共 {} 个向量", vector_count);
     }
@@ -665,7 +693,13 @@ async fn vector_search(query: &str, top_k: usize) -> Vec<(VectorEmbedding, f64)>
     }
 
     if let Some(vectors_arc) = VECTORS.get() {
-        let vectors = vectors_arc.lock().unwrap();
+        let vectors = match vectors_arc.lock() {
+            Ok(v) => v,
+            Err(e) => {
+                tracing::error!("Failed to lock vectors for search: {}", e);
+                return Vec::new();
+            }
+        };
 
         let mut results: Vec<(VectorEmbedding, f64)> = vectors
             .iter()
@@ -826,7 +860,16 @@ async fn check_ai_service_health() -> DependencyHealth {
 
 async fn list_connectors() -> Json<ApiResponse<Vec<DataConnector>>> {
     if let Some(connectors) = CONNECTORS.get() {
-        let connectors = connectors.lock().unwrap();
+        let connectors = match connectors.lock() {
+            Ok(c) => c,
+            Err(e) => {
+                tracing::error!("Failed to lock connectors: {}", e);
+                return Json(ApiResponse::<Vec<DataConnector>>::error(
+                    500,
+                    "Internal server error",
+                ));
+            }
+        };
         Json(ApiResponse::success(connectors.clone(), "Success"))
     } else {
         Json(ApiResponse::<Vec<DataConnector>>::error(
@@ -838,7 +881,16 @@ async fn list_connectors() -> Json<ApiResponse<Vec<DataConnector>>> {
 
 async fn get_connector(Query(params): Query<ConnectorQuery>) -> Json<ApiResponse<DataConnector>> {
     if let Some(connectors) = CONNECTORS.get() {
-        let connectors = connectors.lock().unwrap();
+        let connectors = match connectors.lock() {
+            Ok(c) => c,
+            Err(e) => {
+                tracing::error!("Failed to lock connectors: {}", e);
+                return Json(ApiResponse::<DataConnector>::error(
+                    500,
+                    "Internal server error",
+                ));
+            }
+        };
         if let Some(connector) = connectors.iter().find(|c| c.id == params.id) {
             Json(ApiResponse::success(connector.clone(), "Success"))
         } else {
@@ -1876,8 +1928,14 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
     let public_routes = Router::new()
         .route("/", get(home))
         .route("/health", get(health))
-        .route("/api/plugins/info", get(plugin::get_plugin_info))
-        .route("/api/plugins/health", get(plugin::plugin_health_check))
+        .route(
+            "/api/plugins/info",
+            get(modules::ai_plugin::get_plugin_info),
+        )
+        .route(
+            "/api/plugins/health",
+            get(modules::ai_plugin::plugin_health_check),
+        )
         .route("/api/ai/health/detailed", get(health_check_detailed))
         .route("/api/ai/metrics", get(VectorApi::stats))
         .route("/api/ai/search", post(ai_search))
@@ -1974,7 +2032,7 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
         .with_state(app_state.clone());
 
     let agent_router = Router::new()
-        .merge(api::agent::create_routes())
+        .merge(modules::agent::create_routes())
         .layer(axum::middleware::from_fn_with_state(
             app_state.auth_state.clone(),
             auth_middleware,
@@ -2072,7 +2130,7 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
     // 启动时自动注册到统一核心
     let core_url = std::env::var("CORE_URL").ok();
     tokio::spawn(async move {
-        plugin::auto_register_to_core(core_url.as_deref()).await;
+        modules::ai_plugin::auto_register_to_core(core_url.as_deref()).await;
     });
 
     if use_ollama {

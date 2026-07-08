@@ -1,5 +1,5 @@
-import React, { useEffect, Suspense } from 'react';
-import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
+import React, { useEffect, Suspense, lazy, useState } from 'react';
+import { BrowserRouter, Routes, Route, Navigate, useLocation } from 'react-router-dom';
 import { Box, Typography } from '@mui/material';
 import { AuthProvider, useAuth } from './hooks/useAuth';
 import { ProtectedRoute, GuestRoute } from './components/auth/ProtectedRoute';
@@ -9,10 +9,7 @@ import { NotificationProvider } from './components/notification/NotificationProv
 import { LoadingProvider } from './components/LoadingProvider';
 import { ThemeProvider } from './components/ThemeProvider';
 import { LoadingSpinner } from './components/common/LoadingSpinner';
-import { TemplateDemoPage } from './components/templates/index';
 import { GlobalLayout } from './components/layout';
-import { DynamicRouter } from './modules/loader/DynamicRouter';
-import { eventBus, ModuleEvents } from './modules/loader/EventBus';
 import { logger } from '@/utils/logger';
 import { PluginProvider } from './context/PluginContext';
 
@@ -21,11 +18,15 @@ import {
   dashboardRoutes,
   commonRoutes,
   legacyRedirects,
-  allV2FlatRoutes,
+  loadModuleConfig,
+  coreModuleCodes,
   type RouteConfig,
 } from './routes';
 
-// Check if we're in static mode (Module Federation disabled)
+const TemplateDemoPage = lazy(() => import('./components/templates/index').then((m) => ({ default: m.TemplateDemoPage })));
+const DynamicRouter = lazy(() => import('./modules/loader/DynamicRouter'));
+import { eventBus, ModuleEvents } from './modules/loader/EventBus';
+
 const IS_STATIC_MODE = import.meta.env.VITE_DEPLOYMENT_MODE !== 'module-federation';
 
 const PageLoader: React.FC = () => (
@@ -45,7 +46,6 @@ const PageLoader: React.FC = () => (
   </Box>
 );
 
-// 需要跳过 GlobalLayout 的模块（这些模块有自己的布局）
 const modulesWithOwnLayout: string[] = [];
 
 const ProtectedRouteWrapper: React.FC<{
@@ -55,7 +55,6 @@ const ProtectedRouteWrapper: React.FC<{
   const hasOwnLayout = route.module && modulesWithOwnLayout.includes(route.module);
 
   if (hasOwnLayout) {
-    // 使用简化包装，不添加 GlobalLayout
     return (
       <ProtectedRoute requiredPermissions={route.requiredPermissions || []}>
         {route.module && route.action ? (
@@ -72,7 +71,6 @@ const ProtectedRouteWrapper: React.FC<{
     );
   }
 
-  // 移动端路由使用 MobileLayout
   if (route.module === 'mobile') {
     return (
       <ProtectedRoute requiredPermissions={route.requiredPermissions || []}>
@@ -113,6 +111,82 @@ const ProtectedRouteWrapper: React.FC<{
   );
 };
 
+const DynamicRoutes: React.FC = () => {
+  const [routes, setRoutes] = useState<RouteConfig[]>([]);
+  const [loading, setLoading] = useState(true);
+  const location = useLocation();
+
+  useEffect(() => {
+    const detectModuleFromPath = (path: string): string | null => {
+      const pathParts = path.split('/').filter((p) => p);
+      if (pathParts.length === 0) return null;
+      const firstPart = pathParts[0];
+      if (coreModuleCodes.includes(firstPart as typeof coreModuleCodes[number])) {
+        return firstPart;
+      }
+      return null;
+    };
+
+    const loadRoutes = async () => {
+      setLoading(true);
+      try {
+        const moduleCode = detectModuleFromPath(location.pathname);
+        if (moduleCode) {
+          logger.info(`[Dynamic Routes] Loading module: ${moduleCode}`);
+          const moduleConfig = await loadModuleConfig(moduleCode);
+          const flatRoutes = moduleConfig.routes.flatMap((route) => {
+            const flatten = (r: typeof route): typeof route[] => [r, ...(r.children || []).flatMap(flatten)];
+            return flatten(route);
+          });
+          const mappedRoutes: RouteConfig[] = flatRoutes.map((route) => ({
+            path: route.path,
+            element: route.element,
+            requiredPermissions: route.requiredPermissions,
+            module: route.module,
+            action: route.action,
+          }));
+          setRoutes(mappedRoutes);
+        }
+      } catch (error) {
+        logger.error('[Dynamic Routes] Failed to load routes', error);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    loadRoutes();
+  }, [location.pathname]);
+
+  const renderElement = (route: RouteConfig) => {
+    const { element } = route;
+    if (React.isValidElement(element)) {
+      return element;
+    }
+    const Element = element as React.ComponentType;
+    return <Element />;
+  };
+
+  if (loading) {
+    return <PageLoader />;
+  }
+
+  return (
+    <Routes>
+      {routes.map((route) => (
+        <Route
+          key={route.path}
+          path={route.path}
+          element={
+            <ProtectedRouteWrapper route={route}>
+              <Suspense fallback={<PageLoader />}>{renderElement(route)}</Suspense>
+            </ProtectedRouteWrapper>
+          }
+        />
+      ))}
+    </Routes>
+  );
+};
+
 const AppContent: React.FC = () => {
   useAuth();
 
@@ -136,14 +210,9 @@ const AppContent: React.FC = () => {
 
   const renderElement = (route: RouteConfig) => {
     const { element } = route;
-
-    // Use React.isValidElement to check if it's a React element (from React.createElement)
-    // vs a component type (including LazyExoticComponent from React.lazy)
     if (React.isValidElement(element)) {
       return element;
     }
-
-    // It's a component type (including LazyExoticComponent from React.lazy), render as Element
     const Element = element as React.ComponentType;
     return <Element />;
   };
@@ -187,8 +256,7 @@ const AppContent: React.FC = () => {
         {renderRoutes(dashboardRoutes)}
         {renderRoutes(commonRoutes)}
 
-        {/* V2 路由（优先匹配，与导航系统路径一致） */}
-        {renderRoutes(allV2FlatRoutes)}
+        <Route path='*' element={<DynamicRoutes />} />
 
         {legacyRedirects.map((redirect) => (
           <Route
@@ -198,7 +266,6 @@ const AppContent: React.FC = () => {
           />
         ))}
 
-        {/* Core module routes - only load via Module Federation when not in static mode */}
         {!IS_STATIC_MODE && (
           <Route
             path='/core/*'
@@ -292,7 +359,7 @@ const AppContent: React.FC = () => {
           element={<TemplateDemoPage />}
         />
         <Route
-          path='*'
+          path='/'
           element={
             <Navigate
               to='/dashboard'

@@ -20,6 +20,9 @@ import type { Contract, ContractMilestone, ContractPaymentSchedule } from '@/api
 import { pmApi } from '@/api/pm';
 import { DetailPageTemplate, type TabConfig } from '@/components/templates';
 import { PageContainer } from '@/components/common';
+import { designTokens } from '@/theme/tokens';
+
+const ct = designTokens.colors;
 
 const STATUS_LABELS: Record<string, string> = {
   draft: '草稿',
@@ -32,9 +35,9 @@ const STATUS_LABELS: Record<string, string> = {
 
 const STATUS_COLORS: Record<string, { bgcolor: string; color: string }> = {
   draft: { bgcolor: 'grey.100', color: 'grey.700' },
-  pending: { bgcolor: 'warning.100', color: '#a16207' },
-  approved: { bgcolor: 'secondary.100', color: '#6b21a8' },
-  active: { bgcolor: 'success.lighter', color: '#166534' },
+  pending: { bgcolor: 'warning.100', color: ct.yellow[700] },
+  approved: { bgcolor: 'secondary.100', color: ct.purple[800] },
+  active: { bgcolor: 'success.lighter', color: ct.success[800] },
   completed: { bgcolor: 'primary.100', color: 'primary.800' },
   cancelled: { bgcolor: 'grey.100', color: 'grey.800' },
 };
@@ -104,23 +107,23 @@ const PmContractDetailPage: React.FC = () => {
 
   const getMilestoneStatusSx = (status?: string) => {
     if (status === 'completed') {
-      return { bgcolor: 'success.lighter', color: '#166534' };
+      return { bgcolor: 'success.lighter', color: ct.success[800] };
     }
     if (status === 'pending') {
-      return { bgcolor: 'warning.100', color: '#a16207' };
+      return { bgcolor: 'warning.100', color: ct.yellow[700] };
     }
     return { bgcolor: 'grey.100', color: 'grey.700' };
   };
 
   const getPaymentStatusSx = (status?: string) => {
     if (status === 'paid') {
-      return { bgcolor: 'success.lighter', color: '#166534' };
+      return { bgcolor: 'success.lighter', color: ct.success[800] };
     }
     if (status === 'pending') {
-      return { bgcolor: 'warning.100', color: '#a16207' };
+      return { bgcolor: 'warning.100', color: ct.yellow[700] };
     }
     if (status === 'overdue') {
-      return { bgcolor: 'error.lighter', color: '#991b1b' };
+      return { bgcolor: 'error.lighter', color: ct.error[800] };
     }
     return { bgcolor: 'grey.100', color: 'grey.700' };
   };
@@ -158,7 +161,7 @@ const PmContractDetailPage: React.FC = () => {
             >
               <Typography sx={{ color: 'grey.500' }}>合同编号</Typography>
               <Typography sx={{ fontWeight: 500, color: 'grey.900' }}>
-                {contract.contract_code}
+                {contract.contract_no}
               </Typography>
             </Box>
             <Box
@@ -203,7 +206,7 @@ const PmContractDetailPage: React.FC = () => {
             >
               <Typography sx={{ color: 'grey.500' }}>签署日期</Typography>
               <Typography sx={{ fontWeight: 500, color: 'grey.900' }}>
-                {formatDate(contract.signing_date)}
+                {formatDate(contract.sign_date)}
               </Typography>
             </Box>
             <Box
@@ -244,7 +247,7 @@ const PmContractDetailPage: React.FC = () => {
             >
               <Typography sx={{ color: 'grey.500' }}>甲方</Typography>
               <Typography sx={{ fontWeight: 500, color: 'grey.900' }}>
-                {contract.party_a_name || '-'}
+                {contract.party_a || '-'}
               </Typography>
             </Box>
             <Box
@@ -259,7 +262,7 @@ const PmContractDetailPage: React.FC = () => {
             >
               <Typography sx={{ color: 'grey.500' }}>乙方</Typography>
               <Typography sx={{ fontWeight: 500, color: 'grey.900' }}>
-                {contract.party_b_name || '-'}
+                {contract.party_b || '-'}
               </Typography>
             </Box>
             <Box
@@ -274,7 +277,7 @@ const PmContractDetailPage: React.FC = () => {
             >
               <Typography sx={{ color: 'grey.500' }}>甲方联系人</Typography>
               <Typography sx={{ fontWeight: 500, color: 'grey.900' }}>
-                {contract.party_a_contact || '-'}
+                -
               </Typography>
             </Box>
             <Box
@@ -287,7 +290,7 @@ const PmContractDetailPage: React.FC = () => {
             >
               <Typography sx={{ color: 'grey.500' }}>乙方联系人</Typography>
               <Typography sx={{ fontWeight: 500, color: 'grey.900' }}>
-                {contract.party_b_contact || '-'}
+                -
               </Typography>
             </Box>
           </CardContent>
@@ -303,7 +306,7 @@ const PmContractDetailPage: React.FC = () => {
             </Typography>
           </CardHeader>
           <CardContent>
-            <Typography sx={{ color: 'grey.700' }}>{contract.description || '-'}</Typography>
+            <Typography sx={{ color: 'grey.700' }}>-</Typography>
           </CardContent>
         </Card>
       </Box>
@@ -336,7 +339,7 @@ const PmContractDetailPage: React.FC = () => {
                     borderRadius: 3,
                     p: 2,
                     transition: 'border-color 0.2s',
-                    '&:hover': { borderColor: '#93c5fd' },
+                    '&:hover': { borderColor: ct.primary[300] },
                   }}
                 >
                   <Box
@@ -378,7 +381,7 @@ const PmContractDetailPage: React.FC = () => {
                       </Typography>
                       <Typography
                         variant='body2'
-                        sx={{ color: '#7e22ce', mt: 0.5 }}
+                        sx={{ color: 'secondary.dark', mt: 0.5 }}
                       >
                         {formatCurrency(milestone.payment_amount)}
                       </Typography>
@@ -491,16 +494,16 @@ const PmContractDetailPage: React.FC = () => {
 
     return {
       title: contract.contract_name,
-      subtitle: contract.contract_code,
+      subtitle: contract.contract_no,
       tags: [
         STATUS_LABELS[statusKey],
         CONTRACT_TYPE_LABELS[contract.contract_type] || contract.contract_type,
       ],
       stats: [
         { label: '合同金额', value: formatCurrency(contract.amount) },
-        { label: '甲方', value: contract.party_a_name || '-' },
-        { label: '乙方', value: contract.party_b_name || '-' },
-        { label: '签署日期', value: formatDate(contract.signing_date) },
+        { label: '甲方', value: contract.party_a || '-' },
+        { label: '乙方', value: contract.party_b || '-' },
+        { label: '签署日期', value: formatDate(contract.sign_date) },
       ],
     };
   }, [contract]);
@@ -508,7 +511,7 @@ const PmContractDetailPage: React.FC = () => {
   return (
     <PageContainer
       title={contract?.contract_name || '合同详情'}
-      subtitle={contract?.contract_code}
+      subtitle={contract?.contract_no}
     >
       <DetailPageTemplate
         title=''

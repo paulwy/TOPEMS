@@ -20,6 +20,9 @@ import { useAppStore } from '../../store';
 import { ListPageTemplate, type ColumnDef, type FilterConfig } from '@/components/templates';
 import { PageContainer } from '@/components/common';
 import ConfirmDialog from '@/components/common/ConfirmDialog';
+import { designTokens } from '@/theme/tokens';
+
+const ct = designTokens.colors;
 
 interface Document {
   id: string;
@@ -147,7 +150,7 @@ const CATEGORY_LABELS: Record<string, string> = {
 };
 
 const getFileIcon = (type: string) => {
-  const color = TYPE_COLORS[type] || '#6B7280';
+  const color = TYPE_COLORS[type] || ct.grey[500];
   switch (type) {
     case 'pdf':
       return (
@@ -331,7 +334,7 @@ export const DocumentListPage: React.FC = () => {
       type: 'select',
       options: typeFilterOptions,
       value: typeFilter,
-      onChange: (value: string | string[]) => {
+      onChange: (value: unknown) => {
         setTypeFilter(value as string);
         setCurrentPage(1);
       },
@@ -342,7 +345,7 @@ export const DocumentListPage: React.FC = () => {
       type: 'select',
       options: categoryFilterOptions,
       value: categoryFilter,
-      onChange: (value: string | string[]) => {
+      onChange: (value: unknown) => {
         setCategoryFilter(value as string);
         setCurrentPage(1);
       },
@@ -427,7 +430,7 @@ export const DocumentListPage: React.FC = () => {
           >
             <FolderOpen
               size={14}
-              style={{ color: '#6B7280' }}
+              style={{ color: ct.grey[500] }}
             />
             <Typography
               variant='body2'

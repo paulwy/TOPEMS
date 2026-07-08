@@ -6,6 +6,7 @@ import {
   type SettingSection,
   type SettingValueType,
 } from '@/components/templates';
+import { logger } from "@/utils/logger";
 
 interface MobileSetting {
   key: string;
@@ -58,7 +59,7 @@ const MobileSettingsPage: React.FC = () => {
         setMobileSettings(JSON.parse(stored));
       }
     } catch (err: unknown) {
-      console.error('Error loading mobile settings:', err);
+      logger.error('Error loading mobile settings:', err);
       addNotification({ title: '加载失败', message: '加载设置失败', type: 'error' });
     } finally {
       setLoading(false);
@@ -80,7 +81,7 @@ const MobileSettingsPage: React.FC = () => {
       localStorage.setItem('mobile_settings', JSON.stringify(updatedSettings));
       addNotification({ title: '成功', message: '移动应用设置保存成功', type: 'success' });
     } catch (err: unknown) {
-      console.error('Error saving mobile settings:', err);
+      logger.error('Error saving mobile settings:', err);
       addNotification({ title: '失败', message: '保存设置失败', type: 'error' });
       throw err;
     } finally {

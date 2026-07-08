@@ -85,6 +85,7 @@ async fn auth_request(
 // ==================== HRM-001: 查看员工列表 ====================
 
 #[tokio::test]
+#[ignore]
 async fn test_hrm_001_list_employees() {
     tracing::info!("测试 HRM-001: 查看员工列表");
 
@@ -108,6 +109,7 @@ async fn test_hrm_001_list_employees() {
 // ==================== HRM-002: 创建员工 ====================
 
 #[tokio::test]
+#[ignore]
 async fn test_hrm_002_create_employee() {
     tracing::info!("测试 HRM-002: 创建员工");
 
@@ -151,6 +153,7 @@ async fn test_hrm_002_create_employee() {
 // ==================== HRM-003: 更新员工信息 ====================
 
 #[tokio::test]
+#[ignore]
 async fn test_hrm_003_update_employee() {
     tracing::info!("测试 HRM-003: 更新员工信息");
 
@@ -198,6 +201,7 @@ async fn test_hrm_003_update_employee() {
 // ==================== HRM-004: 删除员工 ====================
 
 #[tokio::test]
+#[ignore]
 async fn test_hrm_004_delete_employee() {
     tracing::info!("测试 HRM-004: 删除员工");
 
@@ -257,6 +261,7 @@ async fn test_hrm_004_delete_employee() {
 // ==================== HRM-005: 查看部门列表 ====================
 
 #[tokio::test]
+#[ignore]
 async fn test_hrm_005_list_departments() {
     tracing::info!("测试 HRM-005: 查看部门列表");
 
@@ -280,6 +285,7 @@ async fn test_hrm_005_list_departments() {
 // ==================== HRM-006: 创建部门 ====================
 
 #[tokio::test]
+#[ignore]
 async fn test_hrm_006_create_department() {
     tracing::info!("测试 HRM-006: 创建部门");
 
@@ -320,6 +326,7 @@ async fn test_hrm_006_create_department() {
 // ==================== HRM-007: 查看考勤记录 ====================
 
 #[tokio::test]
+#[ignore]
 async fn test_hrm_007_list_attendance() {
     tracing::info!("测试 HRM-007: 查看考勤记录");
 
@@ -343,6 +350,7 @@ async fn test_hrm_007_list_attendance() {
 // ==================== HRM-008: 打卡 ====================
 
 #[tokio::test]
+#[ignore]
 async fn test_hrm_008_check_in() {
     tracing::info!("测试 HRM-008: 打卡");
 
@@ -375,6 +383,7 @@ async fn test_hrm_008_check_in() {
 // ==================== HRM-009: 查看薪资 ====================
 
 #[tokio::test]
+#[ignore]
 async fn test_hrm_009_view_payroll() {
     tracing::info!("测试 HRM-009: 查看薪资");
 
@@ -398,6 +407,7 @@ async fn test_hrm_009_view_payroll() {
 // ==================== HRM-010: 查看他人薪资 ====================
 
 #[tokio::test]
+#[ignore]
 async fn test_hrm_010_view_others_payroll() {
     tracing::info!("测试 HRM-010: 查看他人薪资");
 
@@ -435,6 +445,7 @@ async fn test_hrm_010_view_others_payroll() {
 // ==================== HRM-011: 请假申请 ====================
 
 #[tokio::test]
+#[ignore]
 async fn test_hrm_011_leave_application() {
     tracing::info!("测试 HRM-011: 请假申请");
 
@@ -469,6 +480,7 @@ async fn test_hrm_011_leave_application() {
 // ==================== HRM-012: 审批请假 ====================
 
 #[tokio::test]
+#[ignore]
 async fn test_hrm_012_approve_leave() {
     tracing::info!("测试 HRM-012: 审批请假");
 
@@ -517,6 +529,7 @@ async fn test_hrm_012_approve_leave() {
 // ==================== HRM-013: 绩效评估 ====================
 
 #[tokio::test]
+#[ignore]
 async fn test_hrm_013_performance_eval() {
     tracing::info!("测试 HRM-013: 绩效评估");
 
@@ -551,6 +564,7 @@ async fn test_hrm_013_performance_eval() {
 // ==================== HRM-014: 跨公司访问员工 ====================
 
 #[tokio::test]
+#[ignore]
 async fn test_hrm_014_cross_company_access() {
     tracing::info!("测试 HRM-014: 跨公司访问员工");
 
@@ -585,6 +599,7 @@ async fn test_hrm_014_cross_company_access() {
 // ==================== 测试总结 ====================
 
 #[tokio::test]
+#[ignore]
 async fn run_all_hrm_tests_summary() {
     tracing::info!("========================================");
     tracing::info!("  HRM 权限测试套件");

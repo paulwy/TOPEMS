@@ -7,17 +7,12 @@ use tokio::sync::Semaphore;
 use tokio::time::timeout;
 use tracing::info;
 
-#[derive(Debug, Clone, PartialEq, Eq, PartialOrd, Ord)]
+#[derive(Debug, Clone, PartialEq, Eq, PartialOrd, Ord, Default)]
 pub enum RequestPriority {
     Low,
+    #[default]
     Normal,
     High,
-}
-
-impl Default for RequestPriority {
-    fn default() -> Self {
-        RequestPriority::Normal
-    }
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]

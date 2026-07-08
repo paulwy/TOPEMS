@@ -38,6 +38,7 @@ import {
   type UpdateSubscriptionRequest,
   type SubscriptionFrequency,
 } from '@/api/report';
+import { logger } from '@/utils/logger';
 
 const FREQUENCY_OPTIONS: { value: SubscriptionFrequency; label: string }[] = [
   { value: 'daily', label: '每天' },
@@ -102,7 +103,7 @@ const ReportSubscriptionPage: React.FC = () => {
         setTemplates(response.data);
       }
     } catch (err: unknown) {
-      console.error('获取报表模板失败', err);
+      logger.error('获取报表模板失败', err);
     }
   };
 

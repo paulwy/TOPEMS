@@ -38,6 +38,7 @@ import type { Plugin, PluginCategory } from '@/api/plugin';
 import { getPluginCategories, listPlugins, getMarketplaceSummary } from '@/api/plugin';
 import { usePluginStore } from '@/store/pluginStore';
 import { useAppStore } from '@/store';
+import { logger } from '@/utils/logger';
 
 type SortOption = 'popular' | 'rating' | 'newest' | 'price';
 type ViewMode = 'grid' | 'list';
@@ -87,7 +88,7 @@ const PluginMarketplacePage: React.FC = () => {
         fetchHealthStatus();
       } catch (err: unknown) {
         setError('加载失败，请稍后重试');
-        console.error('Failed to load marketplace:', err);
+        logger.error('Failed to load marketplace:', err);
       } finally {
         setLoading(false);
       }
@@ -113,7 +114,7 @@ const PluginMarketplacePage: React.FC = () => {
             setPlugins(res.data.plugins);
           }
         } catch (err: unknown) {
-          console.error('Failed to load plugins:', err);
+          logger.error('Failed to load plugins:', err);
         } finally {
           setIsRefreshing(false);
         }

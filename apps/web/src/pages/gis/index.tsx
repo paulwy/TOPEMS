@@ -32,6 +32,9 @@ import type {
   FactoryMap,
   BusinessLocation,
 } from '../../api/gis';
+import { designTokens } from '@/theme/tokens';
+
+const ct = designTokens.colors;
 
 type TabType =
   | 'map'
@@ -551,7 +554,7 @@ const GisContent: React.FC = () => {
     <Box
       sx={{
         minHeight: '100vh',
-        background: 'linear-gradient(135deg, #f8fafc 0%, #ecfeff 100%)',
+        background: `linear-gradient(135deg, ${ct.background.default} 0%, ${ct.cyan[50]} 100%)`,
       }}
     >
       <Box sx={{ maxWidth: 1400, mx: 'auto', px: { xs: 2, sm: 3 }, py: 4 }}>
@@ -709,7 +712,7 @@ const GisContent: React.FC = () => {
                   width: 40,
                   height: 40,
                   borderRadius: 2,
-                  bgcolor: '#eef2ff',
+                  bgcolor: 'indigo.light',
                   display: 'flex',
                   alignItems: 'center',
                   justifyContent: 'center',
@@ -801,7 +804,7 @@ const GisContent: React.FC = () => {
               >
                 <Camera
                   size={20}
-                  style={{ color: '#db2777' }}
+                  style={{ color: ct.pink.dark }}
                 />
               </Box>
               <Box>
@@ -843,7 +846,7 @@ const GisContent: React.FC = () => {
               >
                 <Map
                   size={20}
-                  style={{ color: '#9333ea' }}
+                  style={{ color: ct.purple.dark }}
                 />
               </Box>
               <Box>
@@ -877,7 +880,7 @@ const GisContent: React.FC = () => {
                   width: 40,
                   height: 40,
                   borderRadius: 2,
-                  bgcolor: '#ccfbf1',
+                  bgcolor: ct.teal[100],
                   display: 'flex',
                   alignItems: 'center',
                   justifyContent: 'center',
@@ -885,7 +888,7 @@ const GisContent: React.FC = () => {
               >
                 <Building2
                   size={20}
-                  style={{ color: '#14b8a6' }}
+                  style={{ color: ct.teal.main }}
                 />
               </Box>
               <Box>
@@ -936,12 +939,12 @@ const GisContent: React.FC = () => {
                   fontSize: '0.875rem',
                   fontWeight: 500,
                   whiteSpace: 'nowrap',
-                  color: activeTab === tab.id ? '#0891b2' : 'text.secondary',
+                  color: activeTab === tab.id ? 'cyan.dark' : 'text.secondary',
                   borderBottom: activeTab === tab.id ? 2 : 0,
-                  borderColor: activeTab === tab.id ? '#0891b2' : 'transparent',
-                  bgcolor: activeTab === tab.id ? '#ecfeff' : 'transparent',
+                  borderColor: activeTab === tab.id ? 'cyan.dark' : 'transparent',
+                  bgcolor: activeTab === tab.id ? 'cyan.light' : 'transparent',
                   '&:hover': {
-                    bgcolor: activeTab === tab.id ? '#ecfeff' : 'grey.50',
+                    bgcolor: activeTab === tab.id ? 'cyan.light' : 'grey.50',
                   },
                   textTransform: 'none',
                 }}

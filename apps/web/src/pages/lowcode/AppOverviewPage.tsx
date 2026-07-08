@@ -22,6 +22,7 @@ import { getAppOverview, listApps } from '../../api/lowcode';
 import type { AppOverview, LowCodeApp } from '../../api/lowcode/types';
 import AppCard from '../../components/lowcode/AppCard';
 import { useNavigate } from 'react-router-dom';
+import { logger } from '@/utils/logger';
 
 const AppOverviewPage = () => {
   const theme = useTheme();
@@ -44,7 +45,7 @@ const AppOverviewPage = () => {
       if (overviewRes.success) setOverview(overviewRes.data);
       if (appsRes.success) setRecentApps(appsRes.data.items || []);
     } catch (error) {
-      console.error('Failed to load overview:', error);
+      logger.error('Failed to load overview:', error);
     } finally {
       setLoading(false);
     }

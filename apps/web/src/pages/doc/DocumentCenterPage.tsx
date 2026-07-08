@@ -33,6 +33,9 @@ import {Box,
   Stack,
   IconButton,
   Tooltip, useTheme} from '@mui/material';
+import { designTokens } from '@/theme/tokens';
+
+const ct = designTokens.colors;
 
 interface DocumentWithFavorite extends FileMetadata {
   is_favorite?: boolean;
@@ -77,7 +80,7 @@ const DocumentCenterPage: React.FC = () => {
       return (
         <File
           size={24}
-          style={{ color: '#dc2626' }}
+          style={{ color: ct.error.dark }}
         />
       );
     }
@@ -85,7 +88,7 @@ const DocumentCenterPage: React.FC = () => {
       return (
         <File
           size={24}
-          style={{ color: '#2563eb' }}
+          style={{ color: ct.primary.dark }}
         />
       );
     }
@@ -93,14 +96,14 @@ const DocumentCenterPage: React.FC = () => {
       return (
         <File
           size={24}
-          style={{ color: '#16a34a' }}
+          style={{ color: ct.success.dark }}
         />
       );
     }
     return (
       <File
         size={24}
-        style={{ color: '#6b7280' }}
+        style={{ color: ct.grey[500] }}
       />
     );
   };
@@ -357,18 +360,18 @@ const DocumentCenterPage: React.FC = () => {
         field: 'size',
         label: '大小',
         icon: <File size={14} />,
-        format: (value: number) => formatFileSize(value),
+        format: (value: unknown) => formatFileSize(value as number),
       },
       {
         field: 'updated_at',
         label: '更新时间',
         icon: <Clock size={14} />,
-        format: (value: string) => value.split('T')[0] || '-',
+        format: (value: unknown) => (value as string).split('T')[0] || '-',
       },
       {
         field: 'created_by',
         label: '创建者',
-        format: (value: string) => value || '-',
+        format: (value: unknown) => (value as string) || '-',
       },
     ],
     tags: [
@@ -527,7 +530,7 @@ const DocumentCenterPage: React.FC = () => {
       <CardListTemplate
         title=''
         subtitle=''
-        data={filteredDocuments}
+        data={filteredDocuments as unknown as Record<string, unknown>[]}
         cardConfig={cardConfig}
         loading={loading}
         search={{

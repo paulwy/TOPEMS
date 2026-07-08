@@ -29,6 +29,9 @@ import {
 } from '@/components/templates';
 import { useAppStore } from '../../store';
 import { logError } from '@/utils/errors';
+import { designTokens } from '@/theme/tokens';
+
+const ct = designTokens.colors;
 
 export const NotificationDashboardPage: React.FC = () => {
   const navigate = useNavigate();
@@ -358,7 +361,7 @@ const NotificationTrendChart: React.FC = () => {
             y1={`${100 - value}%`}
             x2='100%'
             y2={`${100 - value}%`}
-            stroke='#e0e0e0'
+            stroke={ct.grey[300]}
             strokeWidth='0.5'
             strokeDasharray='4,4'
           />

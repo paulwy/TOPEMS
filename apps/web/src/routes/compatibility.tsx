@@ -2158,15 +2158,6 @@ export const legacyRedirects = [
     ),
   },
   {
-    path: '/qms/fmea',
-    element: (
-      <Navigate
-        to='/qms/dashboard'
-        replace
-      />
-    ),
-  },
-  {
     path: '/ehs/hazard/:id',
     element: (
       <Navigate

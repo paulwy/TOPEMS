@@ -26,6 +26,9 @@ import {
   type FilterConfig,
 } from '@/components/templates';
 import { PageContainer } from '@/components/common/PageContainerV2';
+import { designTokens } from '@/theme/tokens';
+
+const ct = designTokens.colors;
 
 interface ChangeOrderFormData {
   change_no: string;
@@ -400,7 +403,7 @@ export const ChangePage: React.FC = () => {
     <PageContainer
       headerProps={{
         pageIcon: <FileWarning style={{ width: 20, height: 20 }} />,
-        pageGradient: 'linear-gradient(135deg, #F59E0B 0%, #D97706 100%)',
+        pageGradient: `linear-gradient(135deg, ${ct.warning.main} 0%, ${ct.warning.dark} 100%)`,
       }}
     >
       <ListPageTemplate

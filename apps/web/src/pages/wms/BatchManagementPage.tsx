@@ -19,6 +19,9 @@ import { useAppStore } from '@/store';
 import { Plus, Edit, Trash2, Layers, AlertTriangle, Package, ArrowRightLeft } from 'lucide-react';
 import { apiLogger } from '@/utils/logger';
 import { ListPageTemplate, type ColumnDef } from '@/components/templates';
+import { designTokens } from '@/theme/tokens';
+
+const ct = designTokens.colors;
 import { PageContainer } from '@/components/common';
 import ConfirmDialog from '@/components/common/ConfirmDialog';
 
@@ -390,7 +393,7 @@ const BatchManagementPage: React.FC = () => {
       maxWidth='xl'
       headerProps={{
         pageIcon: <Layers style={{ width: 20, height: 20 }} />,
-        pageGradient: 'linear-gradient(135deg, #F59E0B, #D97706)',
+        pageGradient: `linear-gradient(135deg, ${ct.warning.main}, ${ct.warning.dark})`,
       }}
     >
       <ListPageTemplate

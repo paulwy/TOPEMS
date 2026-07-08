@@ -13,6 +13,8 @@ import type {
   TableColumn,
 } from '@/components/templates/StatsPageTemplate';
 import { PageContainer } from '@/components/common';
+import { designTokens } from '@/theme/tokens';
+const ct = designTokens.colors;
 
 const CRMSalesForecastPage: React.FC = () => {
   const [loading, setLoading] = useState(true);
@@ -99,28 +101,28 @@ const CRMSalesForecastPage: React.FC = () => {
         title: '预测总收入',
         value: `¥${summary.totalPredicted.toLocaleString()}`,
         icon: <Target sx={{ width: 24, height: 24 }} />,
-        gradient: ['#1976D2', '#1565C0'] as [string, string],
+        gradient: [ct.primary.dark, ct.primary[800]] as [string, string],
       },
       {
         id: 'total-actual',
         title: '实际总收入',
         value: `¥${summary.totalActual.toLocaleString()}`,
         icon: <Calculator sx={{ width: 24, height: 24 }} />,
-        gradient: ['#00C897', '#00A878'] as [string, string],
+        gradient: [ct.success.main, ct.success.dark] as [string, string],
       },
       {
         id: 'average-confidence',
         title: '平均置信度',
         value: `${summary.averageConfidence}%`,
         icon: <BarChart3 sx={{ width: 24, height: 24 }} />,
-        gradient: ['#8B5CF6', '#7C3AED'] as [string, string],
+        gradient: [ct.secondary.main, ct.secondary.dark] as [string, string],
       },
       {
         id: 'completed-count',
         title: '已完成预测',
         value: `${summary.completedCount} / ${forecasts.length}`,
         icon: <Calendar sx={{ width: 24, height: 24 }} />,
-        gradient: ['#F59E0B', '#D97706'] as [string, string],
+        gradient: [ct.warning.main, ct.warning.dark] as [string, string],
       },
     ],
     [summary, forecasts.length]

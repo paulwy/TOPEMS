@@ -7,6 +7,8 @@
  * 保留作为基础设施工具，可在需要高级存储功能（过期时间、命名空间等）时使用。
  */
 
+import { logger } from "@/utils/logger";
+
 const PREFIX = 'topems_';
 
 /**
@@ -87,7 +89,7 @@ class LocalStorage {
       };
       localStorage.setItem(createKey(key, this.prefix), this.serialize(item));
     } catch (error: unknown) {
-      console.error('LocalStorage set error:', error);
+      logger.error('LocalStorage set error:', error);
     }
   }
 
@@ -107,7 +109,7 @@ class LocalStorage {
 
       return item.value;
     } catch (error: unknown) {
-      console.error('LocalStorage get error:', error);
+      logger.error('LocalStorage get error:', error);
       return defaultValue;
     }
   }
@@ -119,7 +121,7 @@ class LocalStorage {
     try {
       localStorage.removeItem(createKey(key, this.prefix));
     } catch (error: unknown) {
-      console.error('LocalStorage remove error:', error);
+      logger.error('LocalStorage remove error:', error);
     }
   }
 
@@ -135,7 +137,7 @@ class LocalStorage {
         }
       });
     } catch (error: unknown) {
-      console.error('LocalStorage clear error:', error);
+      logger.error('LocalStorage clear error:', error);
     }
   }
 
@@ -156,7 +158,7 @@ class LocalStorage {
         .filter((key) => key.startsWith(this.prefix))
         .map((key) => key.replace(this.prefix, ''));
     } catch (error: unknown) {
-      console.error('LocalStorage keys error:', error);
+      logger.error('LocalStorage keys error:', error);
       return [];
     }
   }
@@ -187,7 +189,7 @@ class SessionStorage {
       };
       sessionStorage.setItem(createKey(key, this.prefix), this.serialize(item));
     } catch (error: unknown) {
-      console.error('SessionStorage set error:', error);
+      logger.error('SessionStorage set error:', error);
     }
   }
 
@@ -202,7 +204,7 @@ class SessionStorage {
       const item = this.deserialize<StorageItem<T>>(raw);
       return item.value;
     } catch (error: unknown) {
-      console.error('SessionStorage get error:', error);
+      logger.error('SessionStorage get error:', error);
       return defaultValue;
     }
   }
@@ -214,7 +216,7 @@ class SessionStorage {
     try {
       sessionStorage.removeItem(createKey(key, this.prefix));
     } catch (error: unknown) {
-      console.error('SessionStorage remove error:', error);
+      logger.error('SessionStorage remove error:', error);
     }
   }
 
@@ -230,7 +232,7 @@ class SessionStorage {
         }
       });
     } catch (error: unknown) {
-      console.error('SessionStorage clear error:', error);
+      logger.error('SessionStorage clear error:', error);
     }
   }
 }

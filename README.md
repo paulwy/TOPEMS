@@ -307,6 +307,20 @@ curl -s http://localhost:8000/api/plugins/info | python3 -m json.tool
 | Host Shell | 3000 | apps/web | 主应用 |
 | Remote Module | 3001 | apps/core | 核心组件模块 |
 
+### WebSocket 路径映射
+
+系统采用统一的 WebSocket 路径规范：`/ws/{module}/{feature}`
+
+| 服务 | 前端路径 | 后端路由 | 服务端口 |
+|------|----------|----------|----------|
+| Core | `/ws/core/notifications` | `/ws/core/notifications` | 8000 |
+| Core | `/ws/core/im` | `/ws/core/im` | 8000 |
+| MES | `/mes/ws/dashboard` | `/mes/ws/dashboard` | 8030 |
+| GIS | `/gis/ws` | `/api/gis/ws` | 8071 |
+| GIS | `/gis/ws/device/{device_code}` | `/api/gis/ws/device/{device_code}` | 8071 |
+
+详细说明请参考 [WebSocket 路径映射规范](docs/guides/devops/websocket-path-mapping.md)
+
 ## 🔒 安全配置
 
 ### JWT 密钥配置
@@ -573,6 +587,7 @@ docs/
 | **部署指南** | [docs/deployment-guide.md](docs/deployment-guide.md) | 环境配置、安装步骤、运维说明 |
 | **开发者指南** | [docs/developers-guide.md](docs/developers-guide.md) | API使用示例、插件开发规范 |
 | **数据库设计** | [docs/database-design.md](docs/database-design.md) | 完整数据库表结构文档 |
+| **WebSocket规范** | [docs/guides/devops/websocket-path-mapping.md](docs/guides/devops/websocket-path-mapping.md) | WebSocket连接路径映射规范 |
 
 #### API文档
 | 文档 | 路径 | 说明 |
@@ -782,6 +797,6 @@ MIT License
 
 ---
 
-**最后更新**: 2026-07-01
-**版本**: v3.2.0 (服务注册版)
-**文档版本**: v2.0
+**最后更新**: 2026-07-06
+**版本**: v3.3.0 (WebSocket统一版)
+**文档版本**: v2.1

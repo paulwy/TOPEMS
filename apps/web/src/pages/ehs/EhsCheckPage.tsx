@@ -37,6 +37,9 @@ import { PageContainer } from '@/components/common/PageContainerV2';
 import { ehsApi } from '@/api/ehs';
 import type { InspectionPlan, InspectionItem, InspectionRecord, RecordItem } from '@/api/ehs';
 import { useAppStore } from '@/store';
+import { designTokens } from '@/theme/tokens';
+
+const ct = designTokens.colors;
 
 const EhsCheckPage: React.FC = () => {
   const navigate = useNavigate();
@@ -174,7 +177,7 @@ const EhsCheckPage: React.FC = () => {
   const getStatusBadge = (status: string) => {
     const statusMap: Record<string, { bg: string; color: string }> = {
       已完成: { bg: 'success.lighter', color: 'success.dark' },
-      进行中: { bg: 'warning.100', color: '#ca8a04' },
+      进行中: { bg: 'warning.100', color: ct.yellow[600] },
       待处理: { bg: 'error.lighter', color: 'error.dark' },
       启用: { bg: 'success.lighter', color: 'success.dark' },
       停用: { bg: 'grey.100', color: 'text.secondary' },
@@ -488,7 +491,7 @@ const EhsCheckPage: React.FC = () => {
               { label: '待处理', value: '待处理' },
             ],
       value: statusFilter,
-      onChange: (value: string) => setStatusFilter(value),
+      onChange: (value: unknown) => setStatusFilter(value as string),
     },
   ];
 
@@ -682,7 +685,7 @@ const EhsCheckPage: React.FC = () => {
                         justifyContent: 'center',
                       }}
                     >
-                      <FileText sx={{ width: 20, height: 20, color: '#ca8a04' }} />
+                      <FileText sx={{ width: 20, height: 20, color: ct.yellow[600] }} />
                     </Box>
                     <Box>
                       <Typography

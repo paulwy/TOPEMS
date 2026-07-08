@@ -33,6 +33,9 @@ import { useAppStore } from '@/store';
 import { Plus, Edit, Trash2, Eye, MapPin } from 'lucide-react';
 import { apiLogger } from '@/utils/logger';
 import { ConfirmDialog, PageContainer } from '@/components/common';
+import { designTokens } from '@/theme/tokens';
+
+const ct = designTokens.colors;
 
 const statusConfig: Record<
   string,
@@ -144,7 +147,7 @@ const LocationPage: React.FC = () => {
     try {
       const params: Record<string, unknown> = {};
       if (warehouseFilter) params.warehouse_id = warehouseFilter;
-      const response = await wmsApi.locations.getStatus(params);
+      const response = await wmsApi.locations.getStatus(warehouseFilter || undefined);
       if (response.success && response.data) {
         setStatusSummary(response.data);
       }
@@ -359,7 +362,7 @@ const LocationPage: React.FC = () => {
         ],
         value: statusFilter,
         onChange: (value) => {
-          setStatusFilter(value);
+          setStatusFilter(value as string);
           setCurrentPage(1);
         },
       },
@@ -373,7 +376,7 @@ const LocationPage: React.FC = () => {
         ],
         value: warehouseFilter,
         onChange: (value) => {
-          setWarehouseFilter(value);
+          setWarehouseFilter(value as string);
           setCurrentPage(1);
         },
       },
@@ -487,7 +490,7 @@ const LocationPage: React.FC = () => {
       subtitle='管理仓库库位信息，包括库位编码、类型、容量等'
       headerProps={{
         pageIcon: <MapPin style={{ width: 20, height: 20 }} />,
-        pageGradient: 'linear-gradient(135deg, #10B981, #059669)',
+        pageGradient: `linear-gradient(135deg, ${ct.success.main}, ${ct.success.dark})`,
       }}
     >
       <ListPageTemplate

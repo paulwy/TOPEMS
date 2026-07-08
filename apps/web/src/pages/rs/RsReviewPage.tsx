@@ -25,6 +25,7 @@ import { PageContainer } from '@/components/common';
 import { rsApi } from '@/api/rs';
 import { useAppStore } from '@/store';
 import type { Build, CreateBuildRequest } from '@/api/rs';
+import { logger } from '@/utils/logger';
 
 interface Review {
   id: string;
@@ -96,7 +97,7 @@ const RsReviewPage: React.FC = () => {
         setTotal(response.data.total || 0);
       }
     } catch (error: unknown) {
-      console.error('加载评审数据失败:', error);
+      logger.error('加载评审数据失败:', error);
       addNotification({
         type: 'error',
         title: '加载失败',
@@ -170,7 +171,7 @@ const RsReviewPage: React.FC = () => {
         message: '评审已通过',
       });
     } catch (error: unknown) {
-      console.error('评审操作失败:', error);
+      logger.error('评审操作失败:', error);
     }
   };
 
@@ -183,7 +184,7 @@ const RsReviewPage: React.FC = () => {
         message: '评审已拒绝',
       });
     } catch (error: unknown) {
-      console.error('评审操作失败:', error);
+      logger.error('评审操作失败:', error);
     }
   };
 
@@ -205,7 +206,7 @@ const RsReviewPage: React.FC = () => {
       setNewReviewForm({ title: '', description: '', author: '' });
       loadReviews();
     } catch (error: unknown) {
-      console.error('创建评审失败:', error);
+      logger.error('创建评审失败:', error);
       addNotification({
         type: 'error',
         title: '创建失败',
@@ -284,7 +285,7 @@ const RsReviewPage: React.FC = () => {
         { label: '已拒绝', value: 'rejected' },
       ],
       value: statusFilter || '',
-      onChange: (value) => setStatusFilter(value || null),
+      onChange: (value: unknown) => setStatusFilter(value as string || ''),
     },
     {
       id: 'reviewer',
@@ -298,14 +299,14 @@ const RsReviewPage: React.FC = () => {
         })),
       ],
       value: reviewerFilter || '',
-      onChange: (value) => setReviewerFilter(value || null),
+      onChange: (value: unknown) => setReviewerFilter(value as string || ''),
     },
     {
       id: 'dateRange',
       label: '日期范围',
       type: 'dateRange',
       value: dateRange,
-      onChange: (value) => setDateRange(value || { start: '', end: '' }),
+      onChange: (value: unknown) => setDateRange(value as { start: string; end: string } || { start: '', end: '' }),
     },
   ];
 

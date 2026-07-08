@@ -55,7 +55,14 @@ export const useServiceStatus = (autoRefreshInterval: number = PLUGIN_TIMEOUT.DE
 
       clearTimeout(timeoutId);
       return response.ok;
-    } catch {
+    } catch (error) {
+      if (error instanceof DOMException && error.name === 'AbortError') {
+        return false;
+      }
+      const errorType = (error as { type?: string })?.type;
+      if (errorType === 'fetch' || errorType === 'network') {
+        return false;
+      }
       return false;
     }
   }, []);

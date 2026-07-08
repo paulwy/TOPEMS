@@ -29,6 +29,7 @@ import { Plus, Search, MoreVertical, Edit, Trash2, Copy, Eye, Send, Layout } fro
 import PageContainer from '@/components/common/PageContainer';
 import { lowcodeApi } from '@/api';
 import type { PageSchema, ListParams } from '@/api/lowcode';
+import { logger } from "@/utils/logger";
 
 const PageListPage: React.FC = () => {
   const navigate = useNavigate();
@@ -67,7 +68,7 @@ const PageListPage: React.FC = () => {
       setPages(res.items);
       setTotal(res.total);
     } catch (error) {
-      console.error('Failed to load pages:', error);
+      logger.error('Failed to load pages:', error);
     } finally {
       setLoading(false);
     }
@@ -127,7 +128,7 @@ const PageListPage: React.FC = () => {
       await lowcodeApi.pageApi.copy(pageItem.id);
       loadPages();
     } catch (error) {
-      console.error('Failed to copy page:', error);
+      logger.error('Failed to copy page:', error);
     }
     setMenuAnchor(null);
   };
@@ -137,7 +138,7 @@ const PageListPage: React.FC = () => {
       await lowcodeApi.pageApi.publish(pageItem.id);
       loadPages();
     } catch (error) {
-      console.error('Failed to publish page:', error);
+      logger.error('Failed to publish page:', error);
     }
     setMenuAnchor(null);
   };
@@ -149,7 +150,7 @@ const PageListPage: React.FC = () => {
       setDeleteDialog(null);
       loadPages();
     } catch (error) {
-      console.error('Failed to delete page:', error);
+      logger.error('Failed to delete page:', error);
     }
   };
 

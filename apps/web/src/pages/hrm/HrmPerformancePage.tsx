@@ -354,7 +354,7 @@ const HrmPerformancePage: React.FC = () => {
                 id: 'status',
                 label: '状态',
                 field: 'status',
-                render: (value: string) => getStatusLabel(value),
+                render: (value: unknown) => getStatusLabel(value as string),
               },
             ],
             data: filteredReviews.map((r) => ({
@@ -383,7 +383,7 @@ const HrmPerformancePage: React.FC = () => {
                 id: 'status',
                 label: '状态',
                 field: 'status',
-                render: (value: string) => getStatusLabel(value),
+                render: (value: unknown) => getStatusLabel(value as string),
               },
             ],
             data: goals.map((g) => ({
@@ -407,7 +407,7 @@ const HrmPerformancePage: React.FC = () => {
               { id: 'attitude_score', label: '态度得分', field: 'attitude_score' },
               { id: 'final_score', label: '最终得分', field: 'final_score' },
             ],
-            data: rankings,
+            data: rankings as unknown as Record<string, unknown>[],
           },
         ];
       default:

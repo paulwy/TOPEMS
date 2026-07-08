@@ -33,6 +33,9 @@ import {
   Chip,
   Stack,
 } from '@mui/material';
+import { designTokens } from '@/theme/tokens';
+
+const ct = designTokens.colors;
 
 const MeetingRoomManagementPage: React.FC = () => {
   const addNotification = useAppStore((state) => state.addNotification);
@@ -270,7 +273,7 @@ const MeetingRoomManagementPage: React.FC = () => {
         <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5, justifyContent: 'center' }}>
           <Users
             size={14}
-            style={{ color: '#1976d2' }}
+            style={{ color: ct.primary.dark }}
           />
           {row.capacity} 人
         </Box>
@@ -284,7 +287,7 @@ const MeetingRoomManagementPage: React.FC = () => {
         <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5 }}>
           <MapPin
             size={14}
-            style={{ color: '#1976d2' }}
+            style={{ color: ct.primary.dark }}
           />
           {row.location || '-'}
         </Box>
@@ -413,8 +416,8 @@ const MeetingRoomManagementPage: React.FC = () => {
                 { label: '停用', value: 'inactive' },
               ],
               value: statusFilter,
-              onChange: (_: unknown, filter: { value: string }) => {
-                setStatusFilter(filter.value);
+              onChange: (value: unknown) => {
+                setStatusFilter(value as string);
                 setCurrentPage(1);
               },
             },

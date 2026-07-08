@@ -44,6 +44,7 @@ import { useAppStore } from '@/store';
 import { type Plugin, fetchAllPluginInfo, PLUGIN_REGISTRY } from '@/api/plugin';
 import { usePluginStore } from '@/store/pluginStore';
 import { extractErrorMessage } from '@/utils/errors';
+import { logger } from '@/utils/logger';
 
 interface MarketplacePlugin {
   code: string;
@@ -162,7 +163,7 @@ const PluginManagementPage: React.FC = () => {
         setPlugins(runtimePlugins);
       }
     } catch (err: unknown) {
-      console.error('Failed to load plugins:', err);
+      logger.error('Failed to load plugins:', err);
     }
   }, [fetchInstalledPlugins, fetchHealthStatus]);
 
@@ -481,7 +482,7 @@ const PluginManagementPage: React.FC = () => {
           { label: '核心插件', value: 'core' },
           { label: '业务插件', value: 'business' },
         ],
-        onChange: (value: string) => setTypeFilter(value),
+        onChange: (value: unknown) => setTypeFilter(value as string),
       },
     ],
     [typeFilter]

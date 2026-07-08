@@ -28,6 +28,9 @@ import {
 import { ListPageTemplate } from '@/components';
 import type { ColumnDef, RowAction, FilterConfig } from '@/components';
 import { PageContainer } from '@/components/common';
+import { designTokens } from '@/theme/tokens';
+
+const ct = designTokens.colors;
 
 /** 账户类型配置 */
 const ACCOUNT_TYPE_CONFIG: Record<
@@ -138,7 +141,7 @@ export default function BankAccountManagementPage() {
           <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
             <CreditCard
               size={16}
-              color='#9e9e9e'
+              color={ct.grey[400]}
             />
             <Typography
               variant='body2'
@@ -439,7 +442,7 @@ export default function BankAccountManagementPage() {
           emptyIcon={
             <CreditCard
               size={48}
-              color='#9e9e9e'
+              color={ct.grey[400]}
             />
           }
           emptyMessage='暂无银行账户'

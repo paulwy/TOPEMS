@@ -9,6 +9,9 @@ import { rsApi } from '@/api/rs';
 import { useAppStore } from '@/store';
 import type { Project } from '@/api/rs';
 import ConfirmDialog from '@/components/common/ConfirmDialog';
+import { designTokens } from '@/theme/tokens';
+
+const ct = designTokens.colors;
 
 const RsProjectListPage: React.FC = () => {
   const navigate = useNavigate();
@@ -203,7 +206,7 @@ const RsProjectListPage: React.FC = () => {
           { label: '取消', value: 'cancelled' },
         ],
         value: statusFilter || '',
-        onChange: (value) => setStatusFilter(value || null),
+        onChange: (value: unknown) => setStatusFilter(value as string || null),
       },
     ],
     [statusFilter]
@@ -238,7 +241,7 @@ const RsProjectListPage: React.FC = () => {
       subtitle='管理研发项目、跟踪进度、分配资源'
       headerProps={{
         pageIcon: <Code2 style={{ width: 20, height: 20 }} />,
-        pageGradient: 'linear-gradient(135deg, #8B5CF6 0%, #7C3AED 100%)',
+        pageGradient: `linear-gradient(135deg, ${ct.secondary.main} 0%, ${ct.secondary.dark} 100%)`,
       }}
     >
       <ListPageTemplate

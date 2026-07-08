@@ -16,7 +16,9 @@ impl<V> CacheEntry<V> {
     }
 
     fn is_expired(&self) -> bool {
-        self.expires_at.map(|exp| Instant::now() > exp).unwrap_or(false)
+        self.expires_at
+            .map(|exp| Instant::now() > exp)
+            .unwrap_or(false)
     }
 }
 
@@ -50,12 +52,21 @@ impl MobileCacheService {
     // 任务缓存
     pub async fn get_task(&self, id: &str) -> Option<serde_json::Value> {
         let cache = self.task_cache.read().await;
-        cache.get(id).and_then(|e| if e.is_expired() { None } else { Some(e.value.clone()) })
+        cache.get(id).and_then(|e| {
+            if e.is_expired() {
+                None
+            } else {
+                Some(e.value.clone())
+            }
+        })
     }
 
     pub async fn set_task(&self, id: &str, task: serde_json::Value) {
         let mut cache = self.task_cache.write().await;
-        cache.insert(id.to_string(), CacheEntry::new(task, Some(self.default_ttl)));
+        cache.insert(
+            id.to_string(),
+            CacheEntry::new(task, Some(self.default_ttl)),
+        );
     }
 
     pub async fn delete_task(&self, id: &str) {
@@ -66,34 +77,61 @@ impl MobileCacheService {
     // 巡检缓存
     pub async fn get_patrol(&self, id: &str) -> Option<serde_json::Value> {
         let cache = self.patrol_cache.read().await;
-        cache.get(id).and_then(|e| if e.is_expired() { None } else { Some(e.value.clone()) })
+        cache.get(id).and_then(|e| {
+            if e.is_expired() {
+                None
+            } else {
+                Some(e.value.clone())
+            }
+        })
     }
 
     pub async fn set_patrol(&self, id: &str, patrol: serde_json::Value) {
         let mut cache = self.patrol_cache.write().await;
-        cache.insert(id.to_string(), CacheEntry::new(patrol, Some(self.default_ttl)));
+        cache.insert(
+            id.to_string(),
+            CacheEntry::new(patrol, Some(self.default_ttl)),
+        );
     }
 
     // 扫码缓存
     pub async fn get_scan(&self, id: &str) -> Option<serde_json::Value> {
         let cache = self.scan_cache.read().await;
-        cache.get(id).and_then(|e| if e.is_expired() { None } else { Some(e.value.clone()) })
+        cache.get(id).and_then(|e| {
+            if e.is_expired() {
+                None
+            } else {
+                Some(e.value.clone())
+            }
+        })
     }
 
     pub async fn set_scan(&self, id: &str, scan: serde_json::Value) {
         let mut cache = self.scan_cache.write().await;
-        cache.insert(id.to_string(), CacheEntry::new(scan, Some(self.default_ttl)));
+        cache.insert(
+            id.to_string(),
+            CacheEntry::new(scan, Some(self.default_ttl)),
+        );
     }
 
     // 设备缓存
     pub async fn get_device(&self, id: &str) -> Option<serde_json::Value> {
         let cache = self.device_cache.read().await;
-        cache.get(id).and_then(|e| if e.is_expired() { None } else { Some(e.value.clone()) })
+        cache.get(id).and_then(|e| {
+            if e.is_expired() {
+                None
+            } else {
+                Some(e.value.clone())
+            }
+        })
     }
 
     pub async fn set_device(&self, id: &str, device: serde_json::Value) {
         let mut cache = self.device_cache.write().await;
-        cache.insert(id.to_string(), CacheEntry::new(device, Some(self.default_ttl)));
+        cache.insert(
+            id.to_string(),
+            CacheEntry::new(device, Some(self.default_ttl)),
+        );
     }
 
     // 离线队列

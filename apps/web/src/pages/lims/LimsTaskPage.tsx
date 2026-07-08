@@ -68,6 +68,9 @@ interface LimsListResponse<T> {
 }
 import { CardListTemplate } from '@/components/templates/CardListTemplate';
 import { apiLogger } from '@/utils/logger';
+import { designTokens } from '@/theme/tokens';
+
+const ct = designTokens.colors;
 
 const LimsTaskPage: React.FC = () => {
   const navigate = useNavigate();
@@ -442,7 +445,7 @@ const LimsTaskPage: React.FC = () => {
       case '待测试':
         return { bgcolor: 'warning.light', color: 'warning.700' };
       case '测试中':
-        return { bgcolor: 'secondary.100', color: '#7e22ce' };
+        return { bgcolor: 'secondary.100', color: ct.purple[700] };
       default:
         return { bgcolor: 'grey.100', color: 'grey.600' };
     }
@@ -461,7 +464,7 @@ const LimsTaskPage: React.FC = () => {
       title: '任务总数',
       value: safeTasks.length,
       icon: <ClipboardCheck size={24} />,
-      gradient: ['#6366F1', '#4F46E5'] as [string, string],
+      gradient: [ct.secondary[400], ct.secondary[600]] as [string, string],
     },
     {
       id: 'in_progress',
@@ -518,7 +521,7 @@ const LimsTaskPage: React.FC = () => {
       {
         field: 'started_at',
         label: '开始时间',
-        format: (value: string) => new Date(value).toLocaleDateString('zh-CN'),
+        format: (value: unknown) => new Date(value as string).toLocaleDateString('zh-CN'),
       },
     ],
     icon: <ClipboardCheck size={24} />,
@@ -574,7 +577,7 @@ const LimsTaskPage: React.FC = () => {
           display: 'flex',
           alignItems: 'center',
           justifyContent: 'center',
-          background: 'linear-gradient(135deg, #f8fafc 0%, border.default 100%)',
+          background: `linear-gradient(135deg, ${ct.background.default} 0%, border.default 100%)`,
           p: 2,
         }}
       >
@@ -599,7 +602,7 @@ const LimsTaskPage: React.FC = () => {
           >
             <ClipboardList
               size={32}
-              color='#0891b2'
+              color={ct.cyan[600]}
             />
           </Avatar>
           <Typography
@@ -632,11 +635,11 @@ const LimsTaskPage: React.FC = () => {
       subtitle='Inspection Tasks'
       sx={{
         minHeight: '100vh',
-        background: 'linear-gradient(135deg, #f8fafc 0%, border.default 100%)',
+        background: `linear-gradient(135deg, ${ct.background.default} 0%, border.default 100%)`,
       }}
       headerProps={{
         pageIcon: <ClipboardList style={{ width: 20, height: 20 }} />,
-        pageGradient: 'linear-gradient(135deg, #14B8A6 0%, #0D9488 100%)',
+        pageGradient: `linear-gradient(135deg, ${ct.teal[400]} 0%, ${ct.teal[600]} 100%)`,
       }}
     >
       <Snackbar
@@ -658,7 +661,7 @@ const LimsTaskPage: React.FC = () => {
       <CardListTemplate
         title=''
         subtitle=''
-        data={filteredTasks}
+        data={filteredTasks as unknown as Record<string, unknown>[]}
         cardConfig={cardConfig}
         cardActions={cardActions}
         metricStats={metricStats}
@@ -918,7 +921,7 @@ const LimsTaskPage: React.FC = () => {
                 >
                   检验任务详情
                 </Typography>
-                <IconButton onClick={() => setShowDetailModal(false)}>
+                <IconButton onClick={() => setShowDetailModal(false)} aria-label='关闭检验任务详情对话框'>
                   <X size={24} />
                 </IconButton>
               </Box>

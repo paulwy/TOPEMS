@@ -8,6 +8,9 @@ import { pmApi } from '@/api/pm';
 import { DataExport, StatusBadge, PageContainer } from '@/components/common';
 import { apiLogger } from '@/utils/logger';
 import { ListPageTemplate, type ColumnDef } from '@/components/templates';
+import { designTokens } from '@/theme/tokens';
+
+const ct = designTokens.colors;
 
 const PROJECT_TYPES = [
   { value: '', label: '全部类型' },
@@ -247,7 +250,7 @@ const PmProjectListPage: React.FC = () => {
         type: 'select' as const,
         options: PROJECT_TYPES,
         value: selectedType,
-        onChange: setSelectedType,
+        onChange: (value: unknown) => setSelectedType(value as string),
       },
       {
         id: 'status',
@@ -255,7 +258,7 @@ const PmProjectListPage: React.FC = () => {
         type: 'select' as const,
         options: STATUS_OPTIONS,
         value: selectedStatus,
-        onChange: setSelectedStatus,
+        onChange: (value: unknown) => setSelectedStatus(value as string),
       },
     ],
     [selectedType, selectedStatus]
@@ -282,7 +285,7 @@ const PmProjectListPage: React.FC = () => {
       subtitle='管理所有类型的项目，跟踪进度和状态'
       headerProps={{
         pageIcon: <FolderKanban style={{ width: 20, height: 20 }} />,
-        pageGradient: 'linear-gradient(135deg, #8B5CF6 0%, #7C3AED 100%)',
+        pageGradient: `linear-gradient(135deg, ${ct.secondary.main} 0%, ${ct.secondary.dark} 100%)`,
       }}
     >
       <ListPageTemplate

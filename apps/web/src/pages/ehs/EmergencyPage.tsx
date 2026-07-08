@@ -25,6 +25,9 @@ import { ehsApi } from '@/api/ehs';
 import type { DrillRecord } from '@/api/ehs';
 import { useAppStore } from '@/store';
 import { apiLogger } from '@/utils/logger';
+import { designTokens } from '@/theme/tokens';
+
+const ct = designTokens.colors;
 
 const EmergencyPage: React.FC = () => {
   const navigate = useNavigate();
@@ -280,7 +283,7 @@ const EmergencyPage: React.FC = () => {
       headerProps={{
         actions: headerActions,
         pageIcon: <AlertCircle sx={{ width: 20, height: 20 }} />,
-        pageGradient: 'linear-gradient(135deg, #F59E0B 0%, #D97706 100%)',
+        pageGradient: `linear-gradient(135deg, ${ct.warning.main} 0%, ${ct.warning.dark} 100%)`,
       }}
       maxWidth='xl'
     >

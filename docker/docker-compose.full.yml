@@ -190,7 +190,7 @@ services:
       <<: *common-env
       SEARCH_PATH: scm, shared, public
     ports:
-      - "8053:8053"
+      - "8040:8040"
     networks:
       - topems-network
     depends_on:
@@ -228,7 +228,7 @@ services:
       <<: *common-env
       SEARCH_PATH: wms, shared, public
     ports:
-      - "8055:8055"
+      - "8041:8041"
     networks:
       - topems-network
     depends_on:
@@ -268,7 +268,7 @@ services:
       <<: *common-env
       SEARCH_PATH: rs, shared, public
     ports:
-      - "8015:8015"
+      - "8053:8053"
     networks:
       - topems-network
     depends_on:
@@ -327,7 +327,7 @@ services:
       <<: *common-env
       SEARCH_PATH: lims, shared, public
     ports:
-      - "8023:8023"
+      - "8051:8051"
     networks:
       - topems-network
     depends_on:
@@ -392,7 +392,7 @@ services:
       OLLAMA_MODEL: ${OLLAMA_MODEL:-qwen2.5:7b-instruct}
       EMBEDDING_MODEL: ${EMBEDDING_MODEL:-nomic-embed-text}
     ports:
-      - "8062:8062"
+      - "8013:8013"
     volumes:
       - ./docs:/app/docs:ro
     networks:
@@ -413,7 +413,7 @@ services:
       <<: *common-env
       UPLOAD_DIR: /app/uploads
     ports:
-      - "8051:8051"
+      - "8058:8058"
     volumes:
       - ./uploads:/app/uploads
     networks:
@@ -434,7 +434,7 @@ services:
       <<: *common-env
       SEARCH_PATH: mobile, shared, public
     ports:
-      - "8052:8052"
+      - "8070:8070"
     networks:
       - topems-network
     depends_on:
@@ -455,7 +455,7 @@ services:
       <<: *common-env
       SEARCH_PATH: bi, shared, public
     ports:
-      - "8059:8059"
+      - "8060:8060"
     networks:
       - topems-network
     depends_on:
@@ -475,7 +475,7 @@ services:
       STORAGE_PATH: /app/storage
       SEARCH_PATH: doc, shared, public
     ports:
-      - "8060:8060"
+      - "8012:8012"
     volumes:
       - ./doc-storage:/app/storage
     networks:
@@ -496,7 +496,7 @@ services:
       <<: *common-env
       STORAGE_PATH: /app/storage
     ports:
-      - "8061:8061"
+      - "8056:8056"
     volumes:
       - ./file-storage:/app/storage
     networks:
@@ -594,7 +594,7 @@ services:
     environment:
       <<: *common-env
     ports:
-      - "8029:8029"
+      - "8061:8061"
     networks:
       - topems-network
     depends_on:
@@ -612,7 +612,7 @@ services:
     environment:
       <<: *common-env
     ports:
-      - "8030:8030"
+      - "8057:8057"
     networks:
       - topems-network
     depends_on:

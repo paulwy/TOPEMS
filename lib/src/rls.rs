@@ -1,11 +1,13 @@
 use axum::{
+    body::Body,
+    extract::State,
     http::{Request, StatusCode},
-    response::IntoResponse,
+    middleware::Next,
+    response::{IntoResponse, Response},
     Json,
 };
 use serde::{Deserialize, Serialize};
 use sqlx::{postgres::PgPoolOptions, PgPool, Row};
-use std::sync::Arc;
 use tracing::{debug, error};
 use uuid::Uuid;
 
@@ -28,7 +30,8 @@ impl Default for RlsConfig {
 
 #[derive(Debug)]
 pub struct RlsMiddleware {
-    pool: Arc<PgPool>,
+    pool: PgPool,
+    #[allow(dead_code)]
     config: RlsConfig,
 }
 
@@ -43,10 +46,7 @@ impl RlsMiddleware {
             Self::enable_rls_on_tables(&pool, &config.schema_name).await?;
         }
 
-        Ok(Self {
-            pool: Arc::new(pool),
-            config,
-        })
+        Ok(Self { pool, config })
     }
 
     async fn enable_rls_on_tables(pool: &PgPool, schema: &str) -> Result<(), sqlx::Error> {
@@ -86,15 +86,17 @@ impl RlsMiddleware {
     }
 
     pub async fn set_tenant_context(&self, tenant_id: Uuid) -> Result<(), sqlx::Error> {
-        let query = format!("SET app.tenant_id = '{}'", tenant_id);
-        sqlx::query(&query).execute(self.pool.as_ref()).await?;
+        sqlx::query("SELECT set_config('app.tenant_id', $1, false)")
+            .bind(tenant_id.to_string())
+            .execute(&self.pool)
+            .await?;
 
         Ok(())
     }
 
     pub async fn clear_tenant_context(&self) -> Result<(), sqlx::Error> {
         sqlx::query("RESET app.tenant_id")
-            .execute(self.pool.as_ref())
+            .execute(&self.pool)
             .await?;
 
         Ok(())
@@ -169,15 +171,18 @@ impl IntoResponse for TenantContextRejection {
 
 pub async fn apply_rls_middleware<B>(
     req: Request<B>,
-    pool: Arc<PgPool>,
+    pool: &PgPool,
 ) -> Result<Request<B>, axum::response::Response> {
     let headers = req.headers();
     let tenant_id_str = headers.get("x-tenant-id").and_then(|h| h.to_str().ok());
 
     if let Some(tenant_id_str) = tenant_id_str {
         if let Ok(tenant_id) = Uuid::parse_str(tenant_id_str) {
-            let query = format!("SET app.tenant_id = '{}'", tenant_id);
-            match sqlx::query(&query).execute(pool.as_ref()).await {
+            match sqlx::query("SELECT set_config('app.tenant_id', $1, false)")
+                .bind(tenant_id.to_string())
+                .execute(pool)
+                .await
+            {
                 Ok(_) => {
                     debug!("Applied RLS context for tenant: {}", tenant_id);
                 }
@@ -189,4 +194,34 @@ pub async fn apply_rls_middleware<B>(
     }
 
     Ok(req)
+}
+
+pub async fn rls_middleware(
+    State(pool): State<PgPool>,
+    req: Request<Body>,
+    next: Next,
+) -> Response {
+    let tenant_id_str = req
+        .headers()
+        .get("x-tenant-id")
+        .and_then(|h| h.to_str().ok());
+
+    if let Some(tenant_id_str) = tenant_id_str {
+        if let Ok(tenant_id) = Uuid::parse_str(tenant_id_str) {
+            match sqlx::query("SELECT set_config('app.tenant_id', $1, false)")
+                .bind(tenant_id.to_string())
+                .execute(&pool)
+                .await
+            {
+                Ok(_) => {
+                    debug!("Applied RLS context for tenant: {}", tenant_id);
+                }
+                Err(e) => {
+                    error!("Failed to set RLS context: {}", e);
+                }
+            }
+        }
+    }
+
+    next.run(req).await
 }

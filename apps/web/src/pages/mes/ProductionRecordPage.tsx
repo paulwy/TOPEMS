@@ -29,6 +29,8 @@ import {
 } from '@/components/templates';
 import { Plus, Edit, Eye, Trash2, Clock, User, Package, Settings, Activity } from 'lucide-react';
 import { apiLogger } from '@/utils/logger';
+import { designTokens } from '@/theme/tokens';
+const ct = designTokens.colors;
 
 const ProductionRecordPage: React.FC = () => {
   const [records, setRecords] = useState<ProductionRecord[]>([]);
@@ -269,8 +271,8 @@ const ProductionRecordPage: React.FC = () => {
           { label: '已取消', value: 'cancelled' },
         ],
         value: statusFilter,
-        onChange: (value) => {
-          setStatusFilter(value);
+        onChange: (value: unknown) => {
+          setStatusFilter(value as string);
           setCurrentPage(1);
         },
       },
@@ -379,7 +381,7 @@ const ProductionRecordPage: React.FC = () => {
       autoBreadcrumbs
       headerProps={{
         pageIcon: <Activity style={{ width: 20, height: 20 }} />,
-        pageGradient: 'linear-gradient(135deg, #F59E0B 0%, #D97706 100%)',
+        pageGradient: `linear-gradient(135deg, ${ct.warning.main} 0%, ${ct.warning.dark} 100%)`,
       }}
     >
       <ListPageTemplate

@@ -60,7 +60,7 @@ pub async fn list_files(
 
     let page = params.page.unwrap_or(1).max(1);
     let page_size = params.page_size.unwrap_or(20).min(100);
-    let offset = (page - 1) * page_size;
+    let _offset = (page - 1) * page_size;
 
     let user_id = match Uuid::parse_str(&claims.sub) {
         Ok(id) => id,
@@ -80,7 +80,7 @@ pub async fn list_files(
          FROM core_files 
          WHERE is_deleted = FALSE";
 
-    let count_query = "SELECT COUNT(*) FROM core_files WHERE is_deleted = FALSE";
+    let _count_query = "SELECT COUNT(*) FROM core_files WHERE is_deleted = FALSE";
 
     let result = sqlx::query_as::<
         _,
@@ -971,7 +971,7 @@ pub async fn share_file(
     State(_state): State<AppState>,
     Extension(claims): Extension<Claims>,
     Path(id): Path<String>,
-    Json(payload): Json<serde_json::Value>,
+    Json(_payload): Json<serde_json::Value>,
 ) -> Json<serde_json::Value> {
     tracing::info!(
         "File manage share_file called with id: {} for user: {}",
@@ -1029,7 +1029,7 @@ pub async fn set_file_permissions(
     State(_state): State<AppState>,
     Extension(claims): Extension<Claims>,
     Path(id): Path<String>,
-    Json(payload): Json<serde_json::Value>,
+    Json(_payload): Json<serde_json::Value>,
 ) -> Json<serde_json::Value> {
     tracing::info!(
         "File manage set_file_permissions called with id: {} for user: {}",
@@ -1186,7 +1186,7 @@ pub async fn list_starred_files(
 pub async fn export_files(
     State(_state): State<AppState>,
     Extension(claims): Extension<Claims>,
-    Json(payload): Json<serde_json::Value>,
+    Json(_payload): Json<serde_json::Value>,
 ) -> Json<serde_json::Value> {
     tracing::info!(
         "File manage export_files called for user: {}",
@@ -1204,7 +1204,7 @@ pub async fn export_files(
 pub async fn search_files(
     State(_state): State<AppState>,
     Extension(claims): Extension<Claims>,
-    Query(params): Query<FileQuery>,
+    Query(_params): Query<FileQuery>,
 ) -> Json<serde_json::Value> {
     tracing::info!(
         "File manage search_files called for user: {}",

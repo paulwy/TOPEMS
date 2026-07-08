@@ -39,6 +39,12 @@ fn format_level(level: &Level) -> &'static str {
 
 pub struct JsonEventFormatter;
 
+impl Default for JsonEventFormatter {
+    fn default() -> Self {
+        Self::new()
+    }
+}
+
 impl JsonEventFormatter {
     pub fn new() -> Self {
         Self

@@ -49,6 +49,9 @@ import ReportBuilder from './ReportBuilder';
 import ReportViewer from './ReportViewer';
 import ExportModal from '@/components/export/ExportModal';
 import { apiLogger } from '@/utils/logger';
+import { designTokens } from '@/theme/tokens';
+
+const ct = designTokens.colors;
 
 const ReportPage: React.FC = () => {
   const navigate = useNavigate();
@@ -500,7 +503,7 @@ const ReportPage: React.FC = () => {
           display: 'flex',
           alignItems: 'center',
           justifyContent: 'center',
-          background: 'linear-gradient(135deg, #f8fafc 0%, border.default 100%)',
+          background: `linear-gradient(135deg, ${ct.background.default} 0%, border.default 100%)`,
         }}
       >
         <Box sx={{ textAlign: 'center' }}>
@@ -528,7 +531,7 @@ const ReportPage: React.FC = () => {
           display: 'flex',
           alignItems: 'center',
           justifyContent: 'center',
-          background: 'linear-gradient(135deg, #f8fafc 0%, border.default 100%)',
+          background: `linear-gradient(135deg, ${ct.background.default} 0%, border.default 100%)`,
         }}
       >
         <Box
@@ -584,7 +587,7 @@ const ReportPage: React.FC = () => {
       padding={false}
       sx={{
         minHeight: '100vh',
-        background: 'linear-gradient(135deg, #f8fafc 0%, border.default 100%)',
+        background: `linear-gradient(135deg, ${ct.background.default} 0%, border.default 100%)`,
       }}
     >
       <Box

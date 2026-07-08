@@ -63,6 +63,8 @@ import { useAppStore } from '@/store';
 import { apiLogger } from '@/utils/logger';
 import { useNavigate } from 'react-router-dom';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import { designTokens } from '@/theme/tokens';
+const ct = designTokens.colors;
 
 /**
  * TODO: Phase 7-4 -- 虚拟滚动优化
@@ -466,7 +468,7 @@ const VoucherManagementPage: React.FC = () => {
       maxWidth='xl'
       headerProps={{
         pageIcon: <Building2 style={{ width: 20, height: 20 }} />,
-        pageGradient: 'linear-gradient(135deg, #8B5CF6 0%, #7C3AED 100%)',
+        pageGradient: `linear-gradient(135deg, ${ct.secondary.main} 0%, ${ct.secondary.dark} 100%)`,
         backButton: {
           onClick: () => navigate('/erp/dashboard'),
         },

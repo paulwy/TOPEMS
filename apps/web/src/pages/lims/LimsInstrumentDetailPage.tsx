@@ -41,6 +41,9 @@ import type { Instrument, CalibrationRecord, MaintenanceRecord, InspectionTask }
 import { useAppStore } from '@/store';
 import { apiLogger } from '@/utils/logger';
 import dayjs from 'dayjs';
+import { designTokens } from '@/theme/tokens';
+
+const ct = designTokens.colors;
 
 interface LimsListResponse<T> {
   items?: T[];
@@ -129,15 +132,15 @@ const LimsInstrumentDetailPage: React.FC = () => {
     const statusMap: Record<string, { bg: string; color: string }> = {
       正常: { bg: 'success.lighter', color: 'success.700' },
       校准中: { bg: 'primary.100', color: 'primary.dark' },
-      维修中: { bg: '#fef2f2', color: 'error.700' },
+      维修中: { bg: ct.error[50], color: 'error.700' },
       停用: { bg: 'grey.100', color: 'grey.600' },
       报废: { bg: 'grey.100', color: 'grey.600' },
       normal: { bg: 'success.lighter', color: 'success.700' },
       calibration: { bg: 'primary.100', color: 'primary.dark' },
-      maintenance: { bg: '#fef2f2', color: 'error.700' },
+      maintenance: { bg: ct.error[50], color: 'error.700' },
       disabled: { bg: 'grey.100', color: 'grey.600' },
     };
-    const colors = statusMap[status] || { bg: 'grey.100', color: '#475569' };
+    const colors = statusMap[status] || { bg: 'grey.100', color: ct.grey[600] };
     return (
       <Chip
         label={status}
@@ -250,7 +253,7 @@ const LimsInstrumentDetailPage: React.FC = () => {
                           ? 'success.dark'
                           : task.status === '进行中' || task.status === 'in_progress'
                             ? 'primary.dark'
-                            : '#ca8a04',
+                            : ct.yellow[600],
                     }}
                   />
                 </Box>
@@ -566,7 +569,7 @@ const LimsInstrumentDetailPage: React.FC = () => {
           display: 'flex',
           alignItems: 'center',
           justifyContent: 'center',
-          background: 'linear-gradient(135deg, #f0fdfa 0%, #f8fafc 100%)',
+          background: `linear-gradient(135deg, ${ct.teal[50]} 0%, ${ct.background.default} 100%)`,
         }}
       >
         <Box sx={{ textAlign: 'center' }}>
@@ -576,7 +579,7 @@ const LimsInstrumentDetailPage: React.FC = () => {
               height: 48,
               border: 4,
               borderColor: 'info.main',
-              borderTopColor: '#0891b2',
+              borderTopColor: 'cyan.dark',
               borderRadius: '50%',
               animation: 'spin 1s linear infinite',
               mx: 'auto',
@@ -597,7 +600,7 @@ const LimsInstrumentDetailPage: React.FC = () => {
           display: 'flex',
           alignItems: 'center',
           justifyContent: 'center',
-          background: 'linear-gradient(135deg, #f0fdfa 0%, #f8fafc 100%)',
+          background: `linear-gradient(135deg, ${ct.teal[50]} 0%, ${ct.background.default} 100%)`,
         }}
       >
         <Box sx={{ textAlign: 'center' }}>
@@ -609,7 +612,7 @@ const LimsInstrumentDetailPage: React.FC = () => {
               margin: '0 auto 16px auto',
             }}
           />
-          <p style={{ color: '#475569' }}>{error || '仪器不存在或已被删除'}</p>
+          <p style={{ color: ct.grey[600] }}>{error || '仪器不存在或已被删除'}</p>
           <Button
             onClick={() => navigate('/lims/instrument')}
             sx={{ mt: 2 }}
@@ -627,7 +630,7 @@ const LimsInstrumentDetailPage: React.FC = () => {
       maxWidth={false}
       headerProps={{
         pageIcon: <Settings style={{ width: 20, height: 20 }} />,
-        pageGradient: 'linear-gradient(135deg, #14B8A6 0%, #0D9488 100%)',
+        pageGradient: `linear-gradient(135deg, ${ct.teal[400]} 0%, ${ct.teal[600]} 100%)`,
       }}
     >
       <DetailPageTemplate
@@ -643,7 +646,7 @@ const LimsInstrumentDetailPage: React.FC = () => {
         loading={loading}
         onRefresh={loadInstrumentData}
         infoCard={{
-          avatar: <Settings sx={{ fontSize: 40, color: '#0891b2' }} />,
+          avatar: <Settings sx={{ fontSize: 40, color: 'cyan.dark' }} />,
           title: instrument.name,
           subtitle: instrument.code,
           tags: [instrument.status, instrument.type].filter(Boolean),

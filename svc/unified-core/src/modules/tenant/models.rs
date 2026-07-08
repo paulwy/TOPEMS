@@ -222,6 +222,160 @@ pub struct UpdateTenantRequest {
     pub features: Option<serde_json::Value>,
 }
 
+/// Tenant user entity
+#[derive(Debug, Clone, Serialize, Deserialize, FromRow)]
+pub struct TenantUser {
+    pub id: uuid::Uuid,
+    #[serde(rename = "tenant_id")]
+    pub tenant_id: uuid::Uuid,
+    #[serde(rename = "user_id")]
+    pub user_id: uuid::Uuid,
+    pub email: String,
+    pub role: String,
+    pub status: String,
+    #[serde(rename = "created_at")]
+    pub created_at: DateTime<Utc>,
+    #[serde(rename = "last_login")]
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub last_login: Option<DateTime<Utc>>,
+}
+
+/// Tenant stats response
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct TenantStats {
+    #[serde(rename = "total_users")]
+    pub total_users: i32,
+    #[serde(rename = "active_users")]
+    pub active_users: i32,
+    #[serde(rename = "storage_used_gb")]
+    pub storage_used_gb: f64,
+    #[serde(rename = "api_requests_today")]
+    pub api_requests_today: i64,
+    #[serde(rename = "monthly_active_users")]
+    pub monthly_active_users: i32,
+    #[serde(rename = "last_30d_logins")]
+    pub last_30d_logins: i32,
+}
+
+/// Usage metrics response
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct UsageMetrics {
+    #[serde(rename = "tenant_id")]
+    pub tenant_id: uuid::Uuid,
+    #[serde(rename = "users_count")]
+    pub users_count: i32,
+    #[serde(rename = "storage_used_gb")]
+    pub storage_used_gb: f64,
+    #[serde(rename = "api_requests_today")]
+    pub api_requests_today: i64,
+    #[serde(rename = "updated_at")]
+    pub updated_at: DateTime<Utc>,
+}
+
+/// Tenant billing info
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct TenantBillingInfo {
+    pub plan: String,
+    #[serde(rename = "current_period_start")]
+    pub current_period_start: DateTime<Utc>,
+    #[serde(rename = "current_period_end")]
+    pub current_period_end: DateTime<Utc>,
+    #[serde(rename = "next_billing_date")]
+    pub next_billing_date: DateTime<Utc>,
+    pub status: String,
+}
+
+/// Tenant invoice
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct TenantInvoice {
+    pub id: uuid::Uuid,
+    pub amount: f64,
+    pub currency: String,
+    pub status: String,
+    #[serde(rename = "period_start")]
+    pub period_start: DateTime<Utc>,
+    #[serde(rename = "period_end")]
+    pub period_end: DateTime<Utc>,
+    #[serde(rename = "created_at")]
+    pub created_at: DateTime<Utc>,
+    #[serde(rename = "paid_at")]
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub paid_at: Option<DateTime<Utc>>,
+}
+
+/// Tenant context
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct TenantContext {
+    #[serde(rename = "tenant_id")]
+    pub tenant_id: uuid::Uuid,
+    #[serde(rename = "user_id")]
+    pub user_id: uuid::Uuid,
+    pub role: String,
+    pub permissions: Vec<String>,
+}
+
+/// Invite member request
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct InviteMemberRequest {
+    pub email: String,
+    pub role: String,
+}
+
+/// Update member role request
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct UpdateMemberRoleRequest {
+    pub role: String,
+}
+
+/// List tenants query parameters
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct ListTenantsQuery {
+    pub page: Option<i64>,
+    #[serde(rename = "pageSize")]
+    pub page_size: Option<i64>,
+    pub search: Option<String>,
+    pub status: Option<String>,
+    pub plan: Option<String>,
+}
+
+/// List tenant users query parameters
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct ListTenantUsersQuery {
+    pub page: Option<i64>,
+    #[serde(rename = "pageSize")]
+    pub page_size: Option<i64>,
+    pub search: Option<String>,
+    pub role: Option<String>,
+    pub status: Option<String>,
+}
+
+/// Switch tenant request
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct SwitchTenantRequest {
+    #[serde(rename = "tenant_id")]
+    pub tenant_id: String,
+}
+
+/// List response wrapper for tenants
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct ListTenantsResponse {
+    pub items: Vec<Tenant>,
+    pub total: i64,
+    pub page: i64,
+    #[serde(rename = "pageSize")]
+    pub page_size: i64,
+}
+
+/// List response wrapper for tenant users
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct ListTenantUsersResponse {
+    pub items: Vec<TenantUser>,
+    pub total: i64,
+    pub page: i64,
+    #[serde(rename = "pageSize")]
+    pub page_size: i64,
+}
+
 /// Response with tenant quota info
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct TenantQuotaResponse {

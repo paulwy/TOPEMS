@@ -28,6 +28,8 @@ import {
 } from '@/components/templates';
 import { Plus, Edit, Trash2, Eye, CheckCircle, XCircle, Truck, ShoppingBag } from 'lucide-react';
 import { apiLogger } from '@/utils/logger';
+import { designTokens } from '@/theme/tokens';
+const ct = designTokens.colors;
 
 const SalesOrderPage: React.FC = () => {
   const [orders, setOrders] = useState<SalesOrder[]>([]);
@@ -283,9 +285,9 @@ const SalesOrderPage: React.FC = () => {
     > = {
       draft: { label: '草稿', bg: 'grey.100', color: 'text.secondary' },
       pending: { label: '待审批', bg: 'warning.light', color: 'warning.700' },
-      approved: { label: '已审批', bg: '#e0e7ff', color: 'secondary.700' },
+      approved: { label: '已审批', bg: ct.secondary[100], color: 'secondary.700' },
       partially_shipped: { label: '部分发货', bg: 'primary.100', color: 'primary.dark' },
-      shipped: { label: '已发货', bg: '#bae6fd', color: '#0369a1' },
+      shipped: { label: '已发货', bg: ct.info[200], color: ct.info[700] },
       completed: { label: '已完成', bg: 'success.lighter', color: 'success.700' },
       cancelled: { label: '已取消', bg: 'error.lighter', color: 'error.dark' },
     };
@@ -348,8 +350,8 @@ const SalesOrderPage: React.FC = () => {
           { label: '已取消', value: 'cancelled' },
         ],
         value: statusFilter,
-        onChange: (value) => {
-          setStatusFilter(value);
+        onChange: (value: unknown) => {
+          setStatusFilter(value as string);
           setCurrentPage(1);
         },
       },
@@ -440,7 +442,7 @@ const SalesOrderPage: React.FC = () => {
           {stats.pending}
         </Typography>
       </Box>
-      <Box sx={{ p: 2, bgcolor: '#e0e7ff', borderRadius: 3 }}>
+      <Box sx={{ p: 2, bgcolor: ct.secondary[100], borderRadius: 3 }}>
         <Typography
           variant='body2'
           sx={{ color: 'text.secondary' }}
@@ -454,7 +456,7 @@ const SalesOrderPage: React.FC = () => {
           {stats.approved}
         </Typography>
       </Box>
-      <Box sx={{ p: 2, bgcolor: '#bae6fd', borderRadius: 3 }}>
+      <Box sx={{ p: 2, bgcolor: ct.info[200], borderRadius: 3 }}>
         <Typography
           variant='body2'
           sx={{ color: 'text.secondary' }}
@@ -463,7 +465,7 @@ const SalesOrderPage: React.FC = () => {
         </Typography>
         <Typography
           variant='h5'
-          sx={{ fontWeight: 700, color: '#0369a1' }}
+          sx={{ fontWeight: 700, color: ct.info[700] }}
         >
           {stats.shipped}
         </Typography>

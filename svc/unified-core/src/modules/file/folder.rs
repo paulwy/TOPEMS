@@ -54,7 +54,7 @@ pub async fn delete_folder(
 pub async fn update_folder(
     State(_state): State<AppState>,
     Path(id): Path<String>,
-    Json(payload): Json<serde_json::Value>,
+    Json(_payload): Json<serde_json::Value>,
 ) -> Json<serde_json::Value> {
     tracing::info!("File folder update_folder called with id: {}", id);
     Json(serde_json::json!({
@@ -67,7 +67,7 @@ pub async fn update_folder(
 pub async fn move_folder(
     State(_state): State<AppState>,
     Path(id): Path<String>,
-    Json(payload): Json<serde_json::Value>,
+    Json(_payload): Json<serde_json::Value>,
 ) -> Json<serde_json::Value> {
     tracing::info!("File folder move_folder called with id: {}", id);
     Json(serde_json::json!({

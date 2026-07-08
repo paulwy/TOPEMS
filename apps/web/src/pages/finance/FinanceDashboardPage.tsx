@@ -1,4 +1,6 @@
 import React, { useState, useEffect, useMemo } from 'react';
+import { designTokens } from '@/theme/tokens';
+const ct = designTokens.colors;
 import { useNavigate } from 'react-router-dom';
 import {
   FileText,
@@ -159,42 +161,42 @@ const FinanceDashboardPage: React.FC = () => {
         label: '凭证管理',
         icon: <FileText size={20} />,
         onClick: () => navigate('/finance/voucher'),
-        color: '#1976d2',
+        color: ct.primary.dark,
       },
       {
         id: 'ledger-manage',
         label: '总账管理',
         icon: <BookOpen size={20} />,
         onClick: () => navigate('/finance/ledger'),
-        color: '#7b1fa2',
+        color: ct.purple[700],
       },
       {
         id: 'receivable-manage',
         label: '应收管理',
         icon: <TrendingUp size={20} />,
         onClick: () => navigate('/finance/receivable'),
-        color: '#388e3c',
+        color: ct.success[700],
       },
       {
         id: 'payable-manage',
         label: '应付管理',
         icon: <TrendingDown size={20} />,
         onClick: () => navigate('/finance/payable'),
-        color: '#f57c00',
+        color: ct.orange[600],
       },
       {
         id: 'report',
         label: '报表',
         icon: <BarChart3 size={20} />,
         onClick: () => navigate('/finance/reports'),
-        color: '#00796b',
+        color: ct.teal[700],
       },
       {
         id: 'budget-manage',
         label: '预算管理',
         icon: <Target size={20} />,
         onClick: () => navigate('/finance/budget'),
-        color: '#c62828',
+        color: ct.error[700],
       },
     ],
     [navigate]

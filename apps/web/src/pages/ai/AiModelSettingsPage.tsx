@@ -51,6 +51,8 @@ import BarChartComponent from '@/components/charts/BarChart';
 import PieChartComponent from '@/components/charts/PieChart';
 import { useAppStore } from '@/store';
 import { logger } from '@/utils/logger';
+import { designTokens } from '@/theme/tokens';
+const ct = designTokens.colors;
 
 type SettingsTab = 'models' | 'config' | 'usage' | 'api';
 
@@ -217,7 +219,7 @@ export const AiModelSettingsPage: React.FC = () => {
       maxWidth={false}
       headerProps={{
         pageIcon: <Settings style={{ width: 20, height: 20 }} />,
-        pageGradient: 'linear-gradient(135deg, #ff9a9e 0%, #fecfef 100%)',
+        pageGradient: `linear-gradient(135deg, ${ct.pink[300]} 0%, ${ct.pink[100]} 100%)`,
       }}
     >
       <Box sx={{ p: 3 }}>
@@ -860,7 +862,7 @@ export const AiModelSettingsPage: React.FC = () => {
                           </TableCell>
                           <TableCell>2024-01-15</TableCell>
                           <TableCell align='right'>
-                            <IconButton size='small'>
+                            <IconButton size='small' aria-label='编辑API密钥'>
                               <Edit3 size={16} />
                             </IconButton>
                           </TableCell>
@@ -881,7 +883,7 @@ export const AiModelSettingsPage: React.FC = () => {
                           </TableCell>
                           <TableCell>2024-03-20</TableCell>
                           <TableCell align='right'>
-                            <IconButton size='small'>
+                            <IconButton size='small' aria-label='编辑API密钥'>
                               <Edit3 size={16} />
                             </IconButton>
                           </TableCell>
@@ -902,7 +904,7 @@ export const AiModelSettingsPage: React.FC = () => {
                           </TableCell>
                           <TableCell>2024-02-10</TableCell>
                           <TableCell align='right'>
-                            <IconButton size='small'>
+                            <IconButton size='small' aria-label='编辑API密钥'>
                               <Edit3 size={16} />
                             </IconButton>
                           </TableCell>
@@ -927,7 +929,7 @@ export const AiModelSettingsPage: React.FC = () => {
                       <ListItemIcon sx={{ minWidth: 32 }}>
                         <AlertCircle
                           size={16}
-                          style={{ color: '#f59e0b' }}
+                          style={{ color: ct.warning.main }}
                         />
                       </ListItemIcon>
                       <ListItemText
@@ -940,7 +942,7 @@ export const AiModelSettingsPage: React.FC = () => {
                       <ListItemIcon sx={{ minWidth: 32 }}>
                         <AlertCircle
                           size={16}
-                          style={{ color: '#f59e0b' }}
+                          style={{ color: ct.warning.main }}
                         />
                       </ListItemIcon>
                       <ListItemText
@@ -953,7 +955,7 @@ export const AiModelSettingsPage: React.FC = () => {
                       <ListItemIcon sx={{ minWidth: 32 }}>
                         <AlertCircle
                           size={16}
-                          style={{ color: '#f59e0b' }}
+                          style={{ color: ct.warning.main }}
                         />
                       </ListItemIcon>
                       <ListItemText

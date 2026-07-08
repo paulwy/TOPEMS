@@ -25,6 +25,9 @@ import { useNotification } from '@/hooks/useNotification';
 import { apiLogger } from '@/utils/logger';
 import { DetailPageTemplate, type TabConfig, type SectionConfig } from '@/components/templates';
 import { PageContainer } from '@/components/common';
+import { designTokens } from '@/theme/tokens';
+
+const ct = designTokens.colors;
 
 const NotificationDetailPage: React.FC = () => {
   const navigate = useNavigate();
@@ -301,7 +304,7 @@ const NotificationDetailPage: React.FC = () => {
       avatar: (
         <Bell
           size={32}
-          color='#1976d2'
+          color={ct.primary.dark}
         />
       ),
       title: notification?.title,

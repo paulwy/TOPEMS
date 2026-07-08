@@ -1,40 +1,49 @@
 import React, { useState, useRef, useEffect } from 'react';
-import { Box } from '@mui/material';
+import { Box, CircularProgress } from '@mui/material';
 
 interface LazyImageProps {
   src: string;
   alt: string;
+  placeholderColor?: string;
   fallbackSrc?: string;
-  width?: string | number;
-  height?: string | number;
+  onLoad?: () => void;
+  onError?: () => void;
   className?: string;
   style?: React.CSSProperties;
+  aspectRatio?: number;
+  maxWidth?: string;
 }
 
 export const LazyImage: React.FC<LazyImageProps> = ({
   src,
   alt,
-  fallbackSrc = '',
-  width = '100%',
-  height = 'auto',
+  placeholderColor = '#e2e8f0',
+  fallbackSrc,
+  onLoad,
+  onError,
   className,
-  style = {},
+  style,
+  aspectRatio,
+  maxWidth = '100%',
 }) => {
   const [isLoaded, setIsLoaded] = useState(false);
+  const [isError, setIsError] = useState(false);
   const [isInView, setIsInView] = useState(false);
   const imgRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     const observer = new IntersectionObserver(
-      ([entry]) => {
-        if (entry.isIntersecting) {
-          setIsInView(true);
-          observer.disconnect();
-        }
+      (entries) => {
+        entries.forEach((entry) => {
+          if (entry.isIntersecting) {
+            setIsInView(true);
+            observer.disconnect();
+          }
+        });
       },
       {
-        threshold: 0.1,
         rootMargin: '100px',
+        threshold: 0.1,
       }
     );
 
@@ -49,44 +58,46 @@ export const LazyImage: React.FC<LazyImageProps> = ({
 
   const handleLoad = () => {
     setIsLoaded(true);
+    onLoad?.();
   };
 
   const handleError = () => {
-    if (fallbackSrc) {
-      setIsLoaded(false);
-    }
+    setIsError(true);
+    onError?.();
   };
 
   return (
     <Box
       ref={imgRef}
-      sx={{
-        width,
-        height,
-        backgroundColor: 'action.hover',
-        overflow: 'hidden',
+      className={className}
+      style={{
         position: 'relative',
+        maxWidth,
+        width: '100%',
+        ...(aspectRatio && {
+          aspectRatio,
+        }),
         ...style,
       }}
-      className={className}
     >
-      {!isLoaded && (
+      {!isLoaded && !isError && (
         <Box
           sx={{
-            width: '100%',
-            height: '100%',
-            backgroundColor: '#e0e0e0',
-            animation: 'pulse 1.5s infinite',
-            '@keyframes pulse': {
-              '0%, 100%': { opacity: 0.4 },
-              '50%': { opacity: 0.8 },
-            },
+            position: 'absolute',
+            inset: 0,
+            backgroundColor: placeholderColor,
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
           }}
-        />
+        >
+          <CircularProgress size={24} />
+        </Box>
       )}
-      {isInView && (
+
+      {(isInView || isLoaded) && (
         <img
-          src={src}
+          src={isError && fallbackSrc ? fallbackSrc : src}
           alt={alt}
           onLoad={handleLoad}
           onError={handleError}
@@ -96,9 +107,10 @@ export const LazyImage: React.FC<LazyImageProps> = ({
             objectFit: 'cover',
             opacity: isLoaded ? 1 : 0,
             transition: 'opacity 0.3s ease-in-out',
-            position: 'absolute',
-            top: 0,
-            left: 0,
+            ...(isLoaded && {
+              position: 'relative',
+              zIndex: 1,
+            }),
           }}
         />
       )}

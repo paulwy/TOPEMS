@@ -17,6 +17,9 @@ import { pmApi } from '@/api/pm';
 import { apiLogger } from '@/utils/logger';
 import { ListPageTemplate, type ColumnDef } from '@/components/templates';
 import { StatusBadge, PageContainer } from '@/components/common';
+import { designTokens } from '@/theme/tokens';
+
+const ct = designTokens.colors;
 
 const CONTRACT_TYPES = [
   { value: '', label: '全部类型' },
@@ -147,7 +150,7 @@ const PmContractListPage: React.FC = () => {
         sortable: true,
       },
       {
-        id: 'contract_code',
+        id: 'contract_no',
         label: '合同编号',
         width: 120,
       },
@@ -158,10 +161,10 @@ const PmContractListPage: React.FC = () => {
         render: (row) => CONTRACT_TYPE_LABELS[row.contract_type] || row.contract_type,
       },
       {
-        id: 'party_b_name',
+        id: 'party_b',
         label: '乙方',
         width: 150,
-        render: (row) => row.party_b_name || '-',
+        render: (row) => row.party_b || '-',
       },
       {
         id: 'amount',
@@ -182,10 +185,10 @@ const PmContractListPage: React.FC = () => {
         ),
       },
       {
-        id: 'signing_date',
+        id: 'sign_date',
         label: '签署日期',
         width: 150,
-        render: (row) => formatDate(row.signing_date),
+        render: (row) => formatDate(row.sign_date),
       },
       {
         id: 'end_date',
@@ -240,7 +243,7 @@ const PmContractListPage: React.FC = () => {
         type: 'select' as const,
         options: CONTRACT_TYPES,
         value: selectedType,
-        onChange: setSelectedType,
+        onChange: (value: unknown) => setSelectedType(value as string),
       },
       {
         id: 'status',
@@ -248,7 +251,7 @@ const PmContractListPage: React.FC = () => {
         type: 'select' as const,
         options: STATUS_OPTIONS,
         value: selectedStatus,
-        onChange: setSelectedStatus,
+        onChange: (value: unknown) => setSelectedStatus(value as string),
       },
     ],
     [selectedType, selectedStatus]
@@ -259,7 +262,7 @@ const PmContractListPage: React.FC = () => {
     return contracts.filter(
       (contract) =>
         contract.contract_name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        contract.contract_code.toLowerCase().includes(searchTerm.toLowerCase())
+        contract.contract_no.toLowerCase().includes(searchTerm.toLowerCase())
     );
   }, [contracts, searchTerm]);
 
@@ -380,7 +383,7 @@ const PmContractListPage: React.FC = () => {
                 <Box sx={{ p: 1.5, bgcolor: 'warning.light', borderRadius: '50%' }}>
                   <AlertCircle
                     size={24}
-                    color='#ca8a04'
+                    color={ct.yellow[600]}
                   />
                 </Box>
                 <Box>
@@ -400,15 +403,15 @@ const PmContractListPage: React.FC = () => {
               }}
             >
               <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5 }}>
-                <Box sx={{ p: 1.5, bgcolor: '#e9d5ff', borderRadius: '50%' }}>
+                <Box sx={{ p: 1.5, bgcolor: ct.purple[200], borderRadius: '50%' }}>
                   <DollarSign
                     size={24}
-                    color='#7e22ce'
+                    color={ct.purple[700]}
                   />
                 </Box>
                 <Box>
                   <Box sx={{ fontSize: '0.875rem', color: 'grey.500' }}>合同总金额</Box>
-                  <Box sx={{ fontSize: '1.5rem', fontWeight: 700, color: '#7e22ce' }}>
+                  <Box sx={{ fontSize: '1.5rem', fontWeight: 700, color: 'secondary.dark' }}>
                     {formatCurrency(totalAmount)}
                   </Box>
                 </Box>
@@ -417,7 +420,7 @@ const PmContractListPage: React.FC = () => {
           </Box>
         }
         mobileCardTitleKey='contract_name'
-        mobileCardSubtitleKey='contract_code'
+        mobileCardSubtitleKey='contract_no'
         mobileCardDisplayFields={['contract_type', 'status', 'amount', 'start_date']}
         mobileCardFieldLabels={{
           contract_type: '合同类型',

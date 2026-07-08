@@ -50,6 +50,9 @@ import {
   type RecentItem,
 } from '@/components/templates';
 import { useAppStore } from '../../store';
+import { designTokens } from '@/theme/tokens';
+
+const ct = designTokens.colors;
 
 type TimeRange = '1h' | '6h' | '24h' | '7d' | '30d';
 
@@ -123,7 +126,7 @@ const MiniLineChart: React.FC<{
   labels: string[];
   color?: string;
   height?: number;
-}> = ({ data, labels, color = '#1976d2', height = 180 }) => {
+}> = ({ data, labels, color = ct.primary.dark, height = 180 }) => {
   const max = Math.max(...data);
   const min = Math.min(...data);
   const range = max - min || 1;
@@ -155,7 +158,7 @@ const MiniLineChart: React.FC<{
             y1={padding.top + (chartHeight - padding.top - padding.bottom) * ratio}
             x2={width - padding.right}
             y2={padding.top + (chartHeight - padding.top - padding.bottom) * ratio}
-            stroke='#e0e0e0'
+            stroke={ct.grey[200]}
             strokeWidth='0.3'
             strokeDasharray='2,2'
           />
@@ -178,7 +181,7 @@ const MiniBarChart: React.FC<{
   labels: string[];
   color?: string;
   height?: number;
-}> = ({ data, labels, color = '#1976d2', height = 180 }) => {
+}> = ({ data, labels, color = ct.primary.dark, height = 180 }) => {
   const max = Math.max(...data);
   const barWidth = (100 - 40) / data.length - 2;
 

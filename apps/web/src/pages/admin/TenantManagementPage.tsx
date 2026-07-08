@@ -36,6 +36,7 @@ import {
 } from '@/components/templates';
 import { tenantApi } from '@/api/tenant';
 import type { Tenant, TenantStatus, TenantPlan } from '@/api/tenant/types';
+import { logger } from '@/utils/logger';
 
 const statusColors: Record<TenantStatus, 'success' | 'warning' | 'error' | 'default'> = {
   active: 'success',
@@ -123,7 +124,7 @@ const TenantManagementPage: React.FC = () => {
       }
     } catch (err) {
       setError('加载租户列表失败');
-      console.error('Failed to load tenants:', err);
+      logger.error('Failed to load tenants:', err);
     } finally {
       setLoading(false);
     }
@@ -138,7 +139,7 @@ const TenantManagementPage: React.FC = () => {
         loadTenants();
       }
     } catch (error) {
-      console.error('Failed to create tenant:', error);
+      logger.error('Failed to create tenant:', error);
     }
   };
 
@@ -152,7 +153,7 @@ const TenantManagementPage: React.FC = () => {
         loadTenants();
       }
     } catch (error) {
-      console.error('Failed to update tenant:', error);
+      logger.error('Failed to update tenant:', error);
     }
   };
 
@@ -168,7 +169,7 @@ const TenantManagementPage: React.FC = () => {
             setConfirmDialogOpen(false);
             loadTenants();
           } catch (error) {
-            console.error('Failed to delete tenant:', error);
+            logger.error('Failed to delete tenant:', error);
           }
         },
       });
@@ -189,7 +190,7 @@ const TenantManagementPage: React.FC = () => {
             setConfirmDialogOpen(false);
             loadTenants();
           } catch (error) {
-            console.error('Failed to suspend tenant:', error);
+            logger.error('Failed to suspend tenant:', error);
           }
         },
       });
@@ -204,7 +205,7 @@ const TenantManagementPage: React.FC = () => {
         await tenantApi.activateTenant(tenant.id);
         loadTenants();
       } catch (error) {
-        console.error('Failed to activate tenant:', error);
+        logger.error('Failed to activate tenant:', error);
       }
     },
     [loadTenants]

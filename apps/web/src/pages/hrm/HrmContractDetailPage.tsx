@@ -25,6 +25,8 @@ import { useNotification } from '@/hooks/useNotification';
 import { apiLogger } from '@/utils/logger';
 import { DetailPageTemplate, type TabConfig, type SectionConfig } from '@/components/templates';
 import { PageContainer } from '@/components/common';
+import { designTokens } from '@/theme/tokens';
+const ct = designTokens.colors;
 
 const HrmContractDetailPage: React.FC = () => {
   const navigate = useNavigate();
@@ -341,7 +343,7 @@ const HrmContractDetailPage: React.FC = () => {
       avatar: (
         <FileText
           size={32}
-          color='#1976d2'
+          color={ct.primary.dark}
         />
       ),
       title: contract?.contract_name,

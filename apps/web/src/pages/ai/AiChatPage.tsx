@@ -209,7 +209,7 @@ export const AiChatPage: React.FC = () => {
                   <MenuItem value='ERNIE'>文心一言</MenuItem>
                 </Select>
               </FormControl>
-              <IconButton onClick={handleNewChat}>
+              <IconButton onClick={handleNewChat} aria-label='新建对话'>
                 <RefreshCw size={20} />
               </IconButton>
             </Box>
@@ -241,6 +241,7 @@ export const AiChatPage: React.FC = () => {
                     <IconButton
                       size='small'
                       onClick={() => handleCopy(msg.content)}
+                      aria-label='复制消息内容'
                     >
                       <Copy size={14} />
                     </IconButton>

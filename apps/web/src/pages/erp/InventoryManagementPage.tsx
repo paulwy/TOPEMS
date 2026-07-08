@@ -27,6 +27,8 @@ import {
 } from '@/components/templates';
 import { Plus, Edit, Trash2, Eye, Package, AlertTriangle } from 'lucide-react';
 import { apiLogger } from '@/utils/logger';
+import { designTokens } from '@/theme/tokens';
+const ct = designTokens.colors;
 
 const InventoryManagementPage: React.FC = () => {
   const [items, setItems] = useState<Inventory[]>([]);
@@ -255,8 +257,8 @@ const InventoryManagementPage: React.FC = () => {
           { label: '半成品仓库', value: 'W003' },
         ],
         value: warehouseFilter,
-        onChange: (value) => {
-          setWarehouseFilter(value);
+        onChange: (value: unknown) => {
+          setWarehouseFilter(value as string);
           setCurrentPage(1);
         },
       },
@@ -363,7 +365,7 @@ const InventoryManagementPage: React.FC = () => {
           {stats.lowStock}
         </Typography>
       </Box>
-      <Box sx={{ p: 2, bgcolor: '#e0e7ff', borderRadius: 3 }}>
+      <Box sx={{ p: 2, bgcolor: ct.secondary[100], borderRadius: 3 }}>
         <Typography
           variant='body2'
           sx={{ color: 'text.secondary' }}

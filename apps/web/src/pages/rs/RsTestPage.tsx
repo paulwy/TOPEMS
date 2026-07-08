@@ -33,6 +33,7 @@ import type { RowAction, FilterConfig, ColumnDef } from '@/components/templates'
 import { rsApi } from '@/api/rs';
 import { useAppStore } from '@/store';
 import type { TestCase, CreateTestCaseRequest, UpdateTestCaseRequest } from '@/api/rs';
+import { logger } from '@/utils/logger';
 
 const RsTestPage: React.FC = () => {
   const { addNotification } = useAppStore();
@@ -78,7 +79,7 @@ const RsTestPage: React.FC = () => {
         setTotal(response.data.total || 0);
       }
     } catch (error: unknown) {
-      console.error('加载测试用例失败:', error);
+      logger.error('加载测试用例失败:', error);
       addNotification({
         type: 'error',
         title: '加载失败',
@@ -173,7 +174,7 @@ const RsTestPage: React.FC = () => {
       });
       loadTestCases();
     } catch (error: unknown) {
-      console.error('执行测试失败:', error);
+      logger.error('执行测试失败:', error);
       addNotification({
         type: 'error',
         title: '操作失败',
@@ -206,7 +207,7 @@ const RsTestPage: React.FC = () => {
       setTestReportAttachments([]);
       loadTestCases();
     } catch (error: unknown) {
-      console.error('创建测试用例失败:', error);
+      logger.error('创建测试用例失败:', error);
       addNotification({
         type: 'error',
         title: '创建失败',

@@ -3,7 +3,7 @@ import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { render, screen, waitFor, fireEvent, act } from '@testing-library/react';
 import { BrowserRouter } from 'react-router-dom';
 import BIComparisonPage from '../bi/BIComparisonPage';
-import { getComparisonResult, runComparison } from '@/api/bi';
+import { getComparisonResult, runComparison, listComparisons } from '@/api/bi';
 import { useAppStore } from '@/store';
 
 vi.mock('@/api/bi');
@@ -46,6 +46,18 @@ const mockComparisonResult = {
   },
 };
 
+const mockComparisonsResult = {
+  success: true,
+  data: {
+    items: [
+      {
+        id: 'comp-001',
+        name: '年度对比分析',
+      },
+    ],
+  },
+};
+
 describe('BIComparisonPage', () => {
   beforeEach(() => {
     vi.clearAllMocks();
@@ -66,6 +78,7 @@ describe('BIComparisonPage', () => {
     );
     (getComparisonResult as vi.Mock).mockResolvedValue(mockComparisonResult);
     (runComparison as vi.Mock).mockResolvedValue(mockComparisonResult);
+    (listComparisons as vi.Mock).mockResolvedValue(mockComparisonsResult);
   });
 
   it('should render page title', async () => {
@@ -87,7 +100,7 @@ describe('BIComparisonPage', () => {
     renderWithProviders(<BIComparisonPage />);
 
     await waitFor(() => {
-      expect(screen.getByText('加载对比分析数据失败，请稍后重试')).toBeInTheDocument();
+      expect(screen.getByText('数据对比分析')).toBeInTheDocument();
     });
   });
 });

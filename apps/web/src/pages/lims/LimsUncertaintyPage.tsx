@@ -34,6 +34,9 @@ import type {
 } from '@/api/lims';
 import { useAppStore } from '@/store';
 import { apiLogger } from '@/utils/logger';
+import { designTokens } from '@/theme/tokens';
+
+const ct = designTokens.colors;
 
 interface LimsListResponse<T> {
   items?: T[];
@@ -182,7 +185,7 @@ const LimsUncertaintyPage: React.FC = () => {
         { label: '已完成', value: '已完成' },
       ],
       value: statusFilter,
-      onChange: (value) => setStatusFilter(value),
+      onChange: (value: unknown) => setStatusFilter(value as string),
     },
   ];
 
@@ -313,14 +316,14 @@ const LimsUncertaintyPage: React.FC = () => {
         mb: 3,
       }}
     >
-      <Card sx={{ bgcolor: '#fff7ed' }}>
+      <Card sx={{ bgcolor: ct.orange[50] }}>
         <CardContent sx={{ p: 2 }}>
           <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5 }}>
             <Box
               sx={{
                 width: 40,
                 height: 40,
-                bgcolor: '#ffedd5',
+                bgcolor: ct.orange[100],
                 borderRadius: 3,
                 display: 'flex',
                 alignItems: 'center',
@@ -353,7 +356,7 @@ const LimsUncertaintyPage: React.FC = () => {
               sx={{
                 width: 40,
                 height: 40,
-                background: 'linear-gradient(135deg, #3b82f6, #2563eb)',
+                background: `linear-gradient(135deg, ${ct.primary.main}, ${ct.primary[600]})`,
                 boxShadow: '0 4px 12px rgba(59,130,246,0.3)',
                 borderRadius: '50%',
                 display: 'flex',
@@ -361,7 +364,7 @@ const LimsUncertaintyPage: React.FC = () => {
                 justifyContent: 'center',
               }}
             >
-              <Calculator sx={{ width: 20, height: 20, color: '#fff' }} />
+              <Calculator sx={{ width: 20, height: 20, color: ct.background.paper }} />
             </Box>
             <Box>
               <Typography
@@ -420,7 +423,7 @@ const LimsUncertaintyPage: React.FC = () => {
               sx={{
                 width: 40,
                 height: 40,
-                background: 'linear-gradient(135deg, #22c55e, #16a34a)',
+                background: `linear-gradient(135deg, ${ct.success.main}, ${ct.success[600]})`,
                 boxShadow: '0 4px 12px rgba(34,197,94,0.3)',
                 borderRadius: '50%',
                 display: 'flex',
@@ -428,7 +431,7 @@ const LimsUncertaintyPage: React.FC = () => {
                 justifyContent: 'center',
               }}
             >
-              <Calculator sx={{ width: 20, height: 20, color: '#fff' }} />
+              <Calculator sx={{ width: 20, height: 20, color: ct.background.paper }} />
             </Box>
             <Box>
               <Typography
@@ -458,7 +461,7 @@ const LimsUncertaintyPage: React.FC = () => {
           display: 'flex',
           alignItems: 'center',
           justifyContent: 'center',
-          background: 'linear-gradient(135deg, #fff7ed 0%, #f8fafc 100%)',
+          background: `linear-gradient(135deg, ${ct.orange[50]} 0%, ${ct.background.default} 100%)`,
         }}
       >
         <Box sx={{ textAlign: 'center' }}>
@@ -467,7 +470,7 @@ const LimsUncertaintyPage: React.FC = () => {
               width: 48,
               height: 48,
               border: 4,
-              borderColor: '#fdba74',
+              borderColor: ct.orange[300],
               borderTopColor: 'warning.600',
               borderRadius: '50%',
               animation: 'spin 1s linear infinite',
@@ -487,7 +490,7 @@ const LimsUncertaintyPage: React.FC = () => {
       subtitle='Uncertainty Evaluation'
       headerProps={{
         pageIcon: <Calculator style={{ width: 20, height: 20 }} />,
-        pageGradient: 'linear-gradient(135deg, #F97316 0%, #EA580C 100%)',
+        pageGradient: `linear-gradient(135deg, ${ct.orange.main} 0%, ${ct.orange.dark} 100%)`,
       }}
     >
       <ListPageTemplate

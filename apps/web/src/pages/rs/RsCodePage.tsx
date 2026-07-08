@@ -23,6 +23,7 @@ import { PageContainer } from '@/components/common';
 import { rsApi } from '@/api/rs';
 import { useAppStore } from '@/store';
 import type { Project } from '@/api/rs';
+import { logger } from '@/utils/logger';
 
 interface CodeRepo {
   id: string;
@@ -65,7 +66,7 @@ const RsCodePage: React.FC = () => {
         setProjects(response.data.projects || []);
       }
     } catch (error: unknown) {
-      console.error('加载项目列表失败:', error);
+      logger.error('加载项目列表失败:', error);
     }
   };
 
@@ -96,7 +97,7 @@ const RsCodePage: React.FC = () => {
         setTotal(response.data.total || 0);
       }
     } catch (error: unknown) {
-      console.error('加载代码仓库失败:', error);
+      logger.error('加载代码仓库失败:', error);
       addNotification({
         type: 'error',
         title: '加载失败',
@@ -148,7 +149,7 @@ const RsCodePage: React.FC = () => {
       });
       loadRepos();
     } catch (error: unknown) {
-      console.error('创建代码仓库失败:', error);
+      logger.error('创建代码仓库失败:', error);
       addNotification({
         type: 'error',
         title: '创建失败',

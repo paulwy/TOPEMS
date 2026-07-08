@@ -31,6 +31,9 @@ import { useAppStore } from '../../store';
 import { ListPageTemplate, type ColumnDef } from '@/components/templates';
 import { extractErrorMessage } from '@/utils/errors';
 import { PageContainer, ConfirmDialog } from '@/components/common';
+import { designTokens } from '@/theme/tokens';
+
+const ct = designTokens.colors;
 
 type AlertSeverity = 'critical' | 'warning' | 'info';
 type AlertStatus = 'active' | 'acknowledged' | 'resolved';
@@ -570,7 +573,7 @@ export const MonitorAlertsPage: React.FC = () => {
           >
             <Server
               size={14}
-              style={{ color: '#9ca3af' }}
+              style={{ color: ct.grey[400] }}
             />
             <Typography
               variant='body2'
@@ -612,7 +615,7 @@ export const MonitorAlertsPage: React.FC = () => {
           >
             <Clock
               size={14}
-              style={{ color: '#9ca3af' }}
+              style={{ color: ct.grey[400] }}
             />
             <Typography
               variant='body2'

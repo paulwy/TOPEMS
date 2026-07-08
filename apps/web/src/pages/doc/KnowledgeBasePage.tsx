@@ -10,6 +10,9 @@ import {
   type ColumnDef,
 } from '@/components/templates';
 import { PageContainer } from '@/components/common';
+import { designTokens } from '@/theme/tokens';
+
+const ct = designTokens.colors;
 
 interface KnowledgeDoc {
   id: string;
@@ -243,7 +246,7 @@ export const DocumentKnowledgeBasePage: React.FC = () => {
             >
               <FileText
                 size={14}
-                style={{ color: '#6B7280' }}
+                style={{ color: ct.grey[500] }}
               />
             </Box>
           ),
@@ -318,7 +321,7 @@ export const DocumentKnowledgeBasePage: React.FC = () => {
             >
               <FileText
                 size={16}
-                style={{ color: '#3b82f6' }}
+                style={{ color: ct.primary.main }}
               />
             </Box>
             <Typography
@@ -342,7 +345,7 @@ export const DocumentKnowledgeBasePage: React.FC = () => {
           >
             <User
               size={14}
-              style={{ color: '#6B7280' }}
+              style={{ color: ct.grey[500] }}
             />
             <Typography
               variant='body2'
@@ -365,7 +368,7 @@ export const DocumentKnowledgeBasePage: React.FC = () => {
           >
             <Calendar
               size={14}
-              style={{ color: '#6B7280' }}
+              style={{ color: ct.grey[500] }}
             />
             <Typography
               variant='body2'
@@ -388,7 +391,7 @@ export const DocumentKnowledgeBasePage: React.FC = () => {
           >
             <BarChart3
               size={14}
-              style={{ color: '#6B7280' }}
+              style={{ color: ct.grey[500] }}
             />
             <Typography
               variant='body2'

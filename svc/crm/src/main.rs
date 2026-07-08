@@ -12,15 +12,7 @@
 #![allow(unused_imports)]
 
 use anyhow::Result;
-use axum::{
-    body::Body,
-    extract::{Request, State},
-    http::header,
-    middleware::Next,
-    response::{IntoResponse, Response},
-    routing::get,
-    Json, Router,
-};
+use axum::{extract::State, routing::get, Json, Router};
 use axum_prometheus::PrometheusMetricLayer;
 use prometheus::{Encoder, TextEncoder};
 use serde::Serialize;
@@ -30,17 +22,18 @@ use std::time::Instant;
 use utoipa::OpenApi;
 
 use topems_shared::{
-    check_http_health, create_api_info_router, create_cors_layer, create_database_pool,
-    init_telemetry, telemetry_middleware, verify_jwt_token, ApiResponse, AuthState, Claims,
-    DatabaseConfig, DependencyHealth, FieldEncryptionService, HealthStatus, KeyManager,
+    auth_middleware, check_http_health, create_api_info_router, create_cors_layer,
+    create_database_pool, init_telemetry, rls_middleware, telemetry_middleware, ApiResponse,
+    AuthState, DatabaseConfig, DependencyHealth, FieldEncryptionService, HealthStatus, KeyManager,
     ServiceHealth, SystemMetrics,
 };
 
-mod api;
 mod models;
-mod services;
+mod shared;
 
-use api::ApiState;
+pub mod modules;
+
+use modules::ApiState;
 
 #[tokio::main]
 async fn main() -> Result<()> {
@@ -86,7 +79,7 @@ async fn main() -> Result<()> {
 
     let cors = create_cors_layer();
 
-    let (prometheus_layer, _metric_handle) = PrometheusMetricLayer::pair();
+    let (prometheus_layer, metric_handle) = PrometheusMetricLayer::pair();
 
     let health_router = Router::new()
         .route("/health", get(health_check))
@@ -94,20 +87,18 @@ async fn main() -> Result<()> {
         .route("/api/v1/metrics", get(get_metrics))
         .route(
             "/metrics",
-            get(move || async move {
-                let encoder = TextEncoder::new();
-                let metrics = prometheus::gather();
-                let mut buffer = Vec::new();
-                encoder.encode(&metrics, &mut buffer).unwrap();
-                String::from_utf8(buffer).unwrap()
-            }),
+            get(move || async move { metric_handle.render() }),
         )
         .with_state(api_state.clone());
 
-    let protected_routes = api::create_routes()
+    let protected_routes = modules::create_routes()
         .layer(axum::middleware::from_fn_with_state(
             api_state.auth_state.clone(),
-            crm_auth_middleware,
+            auth_middleware,
+        ))
+        .layer(axum::middleware::from_fn_with_state(
+            api_state.db.clone(),
+            rls_middleware,
         ))
         .with_state(api_state.clone());
 
@@ -129,7 +120,7 @@ async fn main() -> Result<()> {
     // 启动时自动注册到统一核心
     let core_url = env::var("CORE_URL").ok();
     tokio::spawn(async move {
-        api::plugin::auto_register_to_core(core_url.as_deref()).await;
+        modules::crm_plugin::auto_register_to_core(core_url.as_deref()).await;
     });
 
     let listener = tokio::net::TcpListener::bind(&addr).await?;
@@ -293,87 +284,5 @@ fn init_encryption_service() -> FieldEncryptionService {
 }
 
 async fn serve_openapi_json() -> axum::Json<utoipa::openapi::OpenApi> {
-    axum::Json(api::openapi::CrmApiDoc::openapi())
-}
-
-/// CRM 自定义认证中间件
-/// 支持两种认证模式：
-/// 1. 代理模式：通过 X-User-Id header 传递用户 ID
-/// 2. 直连模式：通过 Authorization header 传递 JWT token
-async fn crm_auth_middleware(
-    State(auth_state): State<AuthState>,
-    req: Request,
-    next: Next,
-) -> Response {
-    let path = req.uri().path();
-
-    // 公开路径不需要认证
-    let public_paths = [
-        "/",
-        "/health",
-        "/api/plugins/info",
-        "/api/plugins/health",
-        "/api/v1/health/detailed",
-        "/api/v1/metrics",
-    ];
-    if public_paths.contains(&path) || path.starts_with("/metrics") || path.starts_with("/api-docs")
-    {
-        return next.run(req).await;
-    }
-
-    let (mut parts, body) = req.into_parts();
-
-    // 模式 1: 检查 X-User-Id header（代理模式）
-    if let Some(user_id) = parts.headers.get("X-User-Id") {
-        if let Ok(user_id_str) = user_id.to_str() {
-            // 创建简化的 Claims 用于代理模式
-            let claims = Claims {
-                sub: user_id_str.to_string(),
-                username: user_id_str.to_string(),
-                role: "user".to_string(),
-                roles: vec!["user".to_string()],
-                permissions: vec![],
-                is_superuser: false,
-                exp: 0,
-                iat: 0,
-                email: None,
-                department: None,
-                tenant_id: parts
-                    .headers
-                    .get("X-Tenant-Id")
-                    .and_then(|h| h.to_str().ok())
-                    .map(|s| s.to_string()),
-            };
-            parts.extensions.insert(claims);
-            let req = Request::from_parts(parts, body);
-            return next.run(req).await;
-        }
-    }
-
-    // 模式 2: 检查 Authorization header（直连模式）
-    let auth_header = parts
-        .headers
-        .get(header::AUTHORIZATION)
-        .and_then(|h| h.to_str().ok());
-
-    let token = match auth_header {
-        Some(header) if header.starts_with("Bearer ") => &header[7..],
-        _ => {
-            return topems_shared::response::api_error::<()>(401, "未授权：缺少有效的认证令牌")
-                .into_response();
-        }
-    };
-
-    match verify_jwt_token(token, &auth_state.jwt_secret) {
-        Ok(claims) => {
-            parts.extensions.insert(claims);
-            let req = Request::from_parts(parts, body);
-            next.run(req).await
-        }
-        Err(e) => {
-            tracing::error!("Token verification failed: {}", e);
-            topems_shared::response::api_error::<()>(401, &format!("认证失败：{}", e))
-                .into_response()
-        }
-    }
+    axum::Json(modules::openapi::CrmApiDoc::openapi())
 }

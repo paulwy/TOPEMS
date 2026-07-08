@@ -110,11 +110,11 @@ const EquipmentInspectionPage: React.FC = () => {
     e.preventDefault();
     if (!selectedForInspection) return;
     try {
-      const data: Partial<InspectionRecord> = {
+      const data = {
         equipment_id: selectedForInspection.id,
-        inspector: newInspection.inspector,
-        inspection_date: newInspection.inspection_date,
-        status: newInspection.status,
+        inspector: newInspection.inspector || '',
+        inspection_date: newInspection.inspection_date || '',
+        status: newInspection.status || 'normal',
         location: newInspection.location,
         temperature: newInspection.temperature,
         vibration: newInspection.vibration,

@@ -19,6 +19,9 @@ import type { RowAction, FilterConfig, ColumnDef } from '@/components/templates'
 import { pdmApi } from '@/api/pdm';
 import type { ProductionProcess } from '@/api/pdm';
 import { useAppStore } from '@/store';
+import { designTokens } from '@/theme/tokens';
+
+const ct = designTokens.colors;
 
 const PdmProcessPage: React.FC = () => {
   const [processes, setProcesses] = useState<ProductionProcess[]>([]);
@@ -180,7 +183,7 @@ const PdmProcessPage: React.FC = () => {
         mb: 3,
       }}
     >
-      <Box sx={{ p: 2, bgcolor: '#ecfeff', borderRadius: 3 }}>
+      <Box sx={{ p: 2, bgcolor: 'cyan.light', borderRadius: 3 }}>
         <Typography
           variant='body2'
           sx={{ color: 'slate.600' }}
@@ -229,7 +232,7 @@ const PdmProcessPage: React.FC = () => {
     <PageContainer
       headerProps={{
         pageIcon: <Clock style={{ width: 20, height: 20 }} />,
-        pageGradient: 'linear-gradient(135deg, #06B6D4 0%, #0891B2 100%)',
+        pageGradient: `linear-gradient(135deg, ${ct.cyan.main} 0%, ${ct.cyan.dark} 100%)`,
       }}
     >
       <ListPageTemplate<ProductionProcess>

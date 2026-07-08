@@ -3,7 +3,7 @@ name = "analytics-service"
 version.workspace = true
 edition.workspace = true
 authors.workspace = true
-description = "TOPEMS Analytics Service - BI and Report (Multi-binary)"
+description = "TOPEMS Analytics Service - BI and Report (Unified)"
 
 [dependencies]
 axum = { workspace = true }
@@ -30,11 +30,4 @@ lopdf = { workspace = true }
 tokio-stream = { workspace = true }
 futures = { workspace = true }
 once_cell = { workspace = true }
-
-[[bin]]
-name = "bi-service"
-path = "src/main_bi.rs"
-
-[[bin]]
-name = "report-service"
-path = "src/main_report.rs"
+job_scheduler_ng.workspace = true

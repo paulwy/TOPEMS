@@ -28,6 +28,7 @@ import {
   Edit2,
   X,
 } from 'lucide-react';
+import { designTokens } from '@/theme/tokens';
 
 interface EmployeeFinanceTabProps {
   employeeId: string;
@@ -40,6 +41,7 @@ export const EmployeeFinanceTab: React.FC<EmployeeFinanceTabProps> = ({
 }) => {
   const { data, isLoading, error } = useEmployeeFinanceInfo(employeeId);
   const theme = useTheme();
+  const ct = designTokens.colors;
   const updateFinanceInfo = useUpdateEmployeeFinanceInfo();
 
   const [isEditing, setIsEditing] = useState(false);
@@ -401,7 +403,7 @@ export const EmployeeFinanceTab: React.FC<EmployeeFinanceTabProps> = ({
           }}
           title={
             <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-              <Shield style={{ width: 20, height: 20, color: '#ea580c' }} />
+              <Shield style={{ width: 20, height: 20, color: ct.warning[600] }} />
               <Typography variant='subtitle1'>社保公积金</Typography>
             </Box>
           }

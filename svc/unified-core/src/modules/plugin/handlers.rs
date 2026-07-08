@@ -225,7 +225,7 @@ pub async fn create_review(
     let user_id = claims.user_id().unwrap_or_else(|_| Uuid::nil());
     let user_name = claims.username.clone();
 
-    let review: PluginReview = sqlx::query_as(
+    let review_result = sqlx::query_as(
         r#"
         INSERT INTO core_plugin_reviews (plugin_id, user_id, user_name, rating, title, content)
         VALUES ($1, $2, $3, $4, $5, $6)
@@ -239,10 +239,18 @@ pub async fn create_review(
     .bind(&req.title)
     .bind(&req.content)
     .fetch_one(&state.pool)
-    .await
-    .unwrap();
+    .await;
 
-    Json(CoreResponse::success(review, "Review created"))
+    match review_result {
+        Ok(review) => Json(CoreResponse::success(review, "Review created")),
+        Err(e) => {
+            tracing::error!("Failed to create review: {}", e);
+            Json(CoreResponse::error(&format!(
+                "Failed to create review: {}",
+                e
+            )))
+        }
+    }
 }
 
 /// Get tenant's installed plugins
@@ -350,7 +358,7 @@ pub async fn install_plugin(
     };
 
     // Create installation
-    let installation: TenantPlugin = sqlx::query_as(
+    let installation_result = sqlx::query_as(
         r#"
         INSERT INTO core_tenant_plugins (tenant_id, plugin_id, is_active, license_type)
         VALUES ($1, $2, true, $3)
@@ -367,17 +375,25 @@ pub async fn install_plugin(
         "subscription"
     })
     .fetch_one(&state.pool)
-    .await
-    .unwrap();
+    .await;
 
-    // Update plugin install count
-    sqlx::query("UPDATE core_plugins SET install_count = install_count + 1 WHERE id = $1")
-        .bind(plugin.id)
-        .execute(&state.pool)
-        .await
-        .ok();
-
-    Json(CoreResponse::success(installation, "Plugin installed"))
+    match installation_result {
+        Ok(installation) => {
+            sqlx::query("UPDATE core_plugins SET install_count = install_count + 1 WHERE id = $1")
+                .bind(plugin.id)
+                .execute(&state.pool)
+                .await
+                .ok();
+            Json(CoreResponse::success(installation, "Plugin installed"))
+        }
+        Err(e) => {
+            tracing::error!("Failed to install plugin: {}", e);
+            Json(CoreResponse::error(&format!(
+                "Failed to install plugin: {}",
+                e
+            )))
+        }
+    }
 }
 
 /// Uninstall plugin for tenant (with three-tier strategy)
@@ -693,7 +709,7 @@ pub async fn upload_plugin(
 ) -> Json<CoreResponse<Plugin>> {
     tracing::info!("[Plugin] Uploading new plugin: {}", req.name);
 
-    let plugin: Plugin = sqlx::query_as(
+    let plugin_result: Result<Plugin, sqlx::Error> = sqlx::query_as(
         r#"
         INSERT INTO core_plugins (
             code, name, description, version, plugin_type,
@@ -722,14 +738,24 @@ pub async fn upload_plugin(
     .bind(serde_json::to_value(&req.tags).unwrap_or(serde_json::Value::Array(vec![])))
     .bind(&req.category)
     .fetch_one(&state.pool)
-    .await
-    .unwrap();
+    .await;
 
-    tracing::info!("[Plugin] Plugin uploaded successfully: {}", plugin.code);
-    Json(CoreResponse::success(
-        plugin,
-        "Plugin uploaded successfully",
-    ))
+    match plugin_result {
+        Ok(plugin) => {
+            tracing::info!("[Plugin] Plugin uploaded successfully: {}", plugin.code);
+            Json(CoreResponse::success(
+                plugin,
+                "Plugin uploaded successfully",
+            ))
+        }
+        Err(e) => {
+            tracing::error!("Failed to upload plugin: {}", e);
+            Json(CoreResponse::error(&format!(
+                "Failed to upload plugin: {}",
+                e
+            )))
+        }
+    }
 }
 
 /// Upload a new plugin version
@@ -756,7 +782,7 @@ pub async fn upload_plugin_version(
         None => return Json(CoreResponse::error("Plugin not found")),
     };
 
-    let version: PluginVersion = sqlx::query_as(
+    let version_result = sqlx::query_as(
         r#"
         INSERT INTO core_plugin_versions (
             plugin_id, version, release_notes, is_stable, is_latest,
@@ -776,23 +802,31 @@ pub async fn upload_plugin_version(
     .bind(req.file_size)
     .bind(&req.min_app_version)
     .fetch_one(&state.pool)
-    .await
-    .unwrap();
+    .await;
 
-    // Update plugin's current version
-    sqlx::query("UPDATE core_plugins SET version = $1 WHERE id = $2")
-        .bind(&req.version)
-        .bind(plugin.id)
-        .execute(&state.pool)
-        .await
-        .ok();
-
-    tracing::info!(
-        "[Plugin] Version {} uploaded for plugin: {}",
-        req.version,
-        plugin_code
-    );
-    Json(CoreResponse::success(version, "Plugin version uploaded"))
+    match version_result {
+        Ok(version) => {
+            sqlx::query("UPDATE core_plugins SET version = $1 WHERE id = $2")
+                .bind(&req.version)
+                .bind(plugin.id)
+                .execute(&state.pool)
+                .await
+                .ok();
+            tracing::info!(
+                "[Plugin] Version {} uploaded for plugin: {}",
+                req.version,
+                plugin_code
+            );
+            Json(CoreResponse::success(version, "Plugin version uploaded"))
+        }
+        Err(e) => {
+            tracing::error!("Failed to upload plugin version: {}", e);
+            Json(CoreResponse::error(&format!(
+                "Failed to upload plugin version: {}",
+                e
+            )))
+        }
+    }
 }
 
 /// Publish a plugin (make it available in marketplace)
@@ -886,8 +920,14 @@ pub async fn update_plugin(
     .bind(req.price_cents)
     .bind(&req.remote_url)
     .bind(&req.entry_point)
-    .bind(req.screenshots.map(|s| serde_json::to_value(s).unwrap()))
-    .bind(req.tags.map(|t| serde_json::to_value(t).unwrap()))
+    .bind(
+        req.screenshots
+            .map(|s| serde_json::to_value(s).unwrap_or_default()),
+    )
+    .bind(
+        req.tags
+            .map(|t| serde_json::to_value(t).unwrap_or_default()),
+    )
     .bind(&req.category)
     .fetch_optional(&state.pool)
     .await
@@ -1183,7 +1223,7 @@ pub async fn install_plugin_simple(
     };
 
     // Create installation
-    let installation: TenantPlugin = sqlx::query_as(
+    let installation_result = sqlx::query_as(
         r#"
         INSERT INTO core_tenant_plugins (tenant_id, plugin_id, is_active, license_type)
         VALUES ($1, $2, true, $3)
@@ -1200,10 +1240,18 @@ pub async fn install_plugin_simple(
         "subscription"
     })
     .fetch_one(&state.pool)
-    .await
-    .unwrap();
+    .await;
 
-    Json(CoreResponse::success(installation, "Plugin installed"))
+    match installation_result {
+        Ok(installation) => Json(CoreResponse::success(installation, "Plugin installed")),
+        Err(e) => {
+            tracing::error!("Failed to install plugin: {}", e);
+            Json(CoreResponse::error(&format!(
+                "Failed to install plugin: {}",
+                e
+            )))
+        }
+    }
 }
 
 /// Simplified: Uninstall plugin with three-tier strategy (uses X-Tenant-ID header)

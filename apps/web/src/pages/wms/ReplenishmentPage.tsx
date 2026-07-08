@@ -41,6 +41,9 @@ import {
 } from 'lucide-react';
 import { apiLogger } from '@/utils/logger';
 import { ConfirmDialog, PageContainer } from '@/components/common';
+import { designTokens } from '@/theme/tokens';
+
+const ct = designTokens.colors;
 
 const suggestionStatusConfig: Record<
   string,
@@ -450,7 +453,7 @@ const ReplenishmentPage: React.FC = () => {
               ],
         value: statusFilter,
         onChange: (value) => {
-          setStatusFilter(value);
+          setStatusFilter(value as string);
           setCurrentPage(1);
         },
       },
@@ -464,7 +467,7 @@ const ReplenishmentPage: React.FC = () => {
         ],
         value: warehouseFilter,
         onChange: (value) => {
-          setWarehouseFilter(value);
+          setWarehouseFilter(value as string);
           setCurrentPage(1);
         },
       },
@@ -620,7 +623,7 @@ const ReplenishmentPage: React.FC = () => {
       subtitle='智能补货建议和补货单管理'
       headerProps={{
         pageIcon: <ShoppingCart style={{ width: 20, height: 20 }} />,
-        pageGradient: 'linear-gradient(135deg, #F59E0B, #D97706)',
+        pageGradient: `linear-gradient(135deg, ${ct.warning.main}, ${ct.warning.dark})`,
       }}
     >
       <Box sx={{ borderBottom: 1, borderColor: 'divider', mb: 3 }}>
@@ -683,7 +686,7 @@ const ReplenishmentPage: React.FC = () => {
         rowActions={currentRowActions}
         headerContent={statsContent}
         emptyMessage={`暂无${currentTitle}数据`}
-        getRowId={(row) => row.id}
+        getRowId={(row) => (row as { id: string }).id}
       />
 
       {/* 建议详情对话框 */}

@@ -58,6 +58,9 @@ import {
   PRIORITY_OPTIONS,
   TEMPLATE_CATEGORIES,
 } from '@/api/mail';
+import { designTokens } from '@/theme/tokens';
+
+const ct = designTokens.colors;
 
 const validateEmail = (email: string): boolean => {
   const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
@@ -854,7 +857,7 @@ const MailPage: React.FC = () => {
       maxWidth={false}
       headerProps={{
         pageIcon: <MessageSquare style={{ width: 20, height: 20 }} />,
-        pageGradient: 'linear-gradient(135deg, #10B981 0%, #059669 100%)',
+        pageGradient: `linear-gradient(135deg, ${ct.success.main} 0%, ${ct.success.dark} 100%)`,
       }}
     >
       <Box sx={{ minHeight: '100vh', bgcolor: 'background.default' }}>
@@ -1102,7 +1105,7 @@ const MailPage: React.FC = () => {
                   </Card>
                   <Card
                     sx={{
-                      background: 'linear-gradient(135deg, #22c55e 0%, #16a34a 100%)',
+                      background: `linear-gradient(135deg, ${ct.success.main} 0%, ${ct.success.dark} 100%)`,
                       border: 'none',
                     }}
                   >
@@ -1150,7 +1153,7 @@ const MailPage: React.FC = () => {
                   </Card>
                   <Card
                     sx={{
-                      background: 'linear-gradient(135deg, #eab308 0%, #ca8a04 100%)',
+                      background: `linear-gradient(135deg, ${ct.yellow.main} 0%, ${ct.yellow[600]} 100%)`,
                       border: 'none',
                     }}
                   >

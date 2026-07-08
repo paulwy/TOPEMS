@@ -1,4 +1,6 @@
 import React, { useState, useEffect, useMemo } from 'react';
+import { designTokens } from '@/theme/tokens';
+const ct = designTokens.colors;
 import { PageContainer } from '@/components/common';
 import {
   Chip,
@@ -634,7 +636,7 @@ const FinanceReceivablePayablePage: React.FC = () => {
           { value: 'overdue', label: '已逾期' },
         ],
         value: filterStatus,
-        onChange: setFilterStatus,
+        onChange: (value: unknown) => setFilterStatus(value as string),
       },
     ],
     [filterStatus, activeTab]
@@ -1019,7 +1021,7 @@ const FinanceReceivablePayablePage: React.FC = () => {
               <Box
                 sx={{
                   p: 3,
-                  bgcolor: 'linear-gradient(135deg, primary.light 0%, #eef2ff 100%)',
+                  bgcolor: `linear-gradient(135deg, primary.light 0%, ${ct.primary[50]} 100%)`,
                   borderRadius: 3,
                 }}
               >

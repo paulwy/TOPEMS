@@ -71,10 +71,13 @@ import {
   type FilterConfig,
 } from '@/components';
 import { AIHelperButton, AICodeGenerator, AIDataCompleter, AIFormValidator } from '@/components/ai';
+import type { Suggestion } from '@/types/ai';
 import { ImageUpload, DataExport } from '@/components/common';
 import { PageContainer } from '@/components/common/PageContainerV2';
 import type { CompletionItem as AICompletionItem } from '@/types/ai';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import { designTokens } from '@/theme/tokens';
+const ct = designTokens.colors;
 
 interface TreeNode {
   id: string;
@@ -508,7 +511,7 @@ const HrmEmployeePage: React.FC = () => {
     setShowAIFormValidator(true);
   }, []);
 
-  const handleApplyValidationSuggestions = useCallback((suggestions: ValidationSuggestion[]) => {
+  const handleApplyValidationSuggestions = useCallback((suggestions: { field: string; value: unknown }[]) => {
     const updates: Record<string, unknown> = {};
     suggestions.forEach((s) => {
       updates[s.field] = s.value;
@@ -628,7 +631,7 @@ const HrmEmployeePage: React.FC = () => {
           field: 'department_id',
           label: '部门',
           icon: <Building2 sx={{ width: 14, height: 14 }} />,
-          format: (value: string) => {
+          format: (value) => {
             const dept = departments.find((d) => d.id === value);
             return dept?.name || '-';
           },
@@ -654,19 +657,19 @@ const HrmEmployeePage: React.FC = () => {
       {
         label: '查看',
         icon: <Eye style={{ width: 14, height: 14 }} />,
-        onClick: (item) => handleView(item as Employee),
+        onClick: (item) => handleView(item as unknown as Employee),
         color: 'primary',
       },
       {
         label: '编辑',
         icon: <Edit style={{ width: 14, height: 14 }} />,
-        onClick: (item) => handleEdit(item as Employee),
+        onClick: (item) => handleEdit(item as unknown as Employee),
         color: 'secondary',
       },
       {
         label: '删除',
         icon: <Trash2 style={{ width: 14, height: 14 }} />,
-        onClick: (item) => handleDelete((item as Employee).id),
+        onClick: (item) => handleDelete((item as unknown as Employee).id),
         color: 'error',
         divider: true,
       },
@@ -888,7 +891,7 @@ const HrmEmployeePage: React.FC = () => {
       autoBreadcrumbs
       headerProps={{
         pageIcon: <Users style={{ width: 20, height: 20 }} />,
-        pageGradient: 'linear-gradient(135deg, #22C55E, #15803D)',
+        pageGradient: `linear-gradient(135deg, ${ct.success.main}, ${ct.success.dark})`,
       }}
     >
       {/* 统计概览 */}
@@ -996,7 +999,7 @@ const HrmEmployeePage: React.FC = () => {
           subtitle='管理企业员工信息'
           metricStats={metricStats}
           metricColumns={4}
-          data={data.items}
+          data={data.items as unknown as Record<string, unknown>[]}
           cardConfig={cardConfig}
           loading={loading}
           emptyState={{

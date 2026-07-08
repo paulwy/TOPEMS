@@ -239,8 +239,8 @@ const RsExperimentListPage: React.FC = () => {
         { label: '失败', value: '失败' },
       ],
       value: statusFilter || '',
-      onChange: (value: string) => {
-        setStatusFilter(value || null);
+      onChange: (value: unknown) => {
+        setStatusFilter(value as string || null);
         setPage(0);
       },
     },

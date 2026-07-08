@@ -118,7 +118,7 @@ impl EmployeeService {
         }
     }
 
-    pub async fn create_employee(&self, mut req: CreateEmployeeRequest) -> ApiResponse<Employee> {
+    pub async fn create_employee(&self, req: CreateEmployeeRequest) -> ApiResponse<Employee> {
         if req.name.is_empty() {
             return api_error(400, "员工姓名不能为空");
         }

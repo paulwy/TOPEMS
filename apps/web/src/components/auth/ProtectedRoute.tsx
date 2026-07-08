@@ -29,30 +29,31 @@ export const ProtectedRoute: React.FC<ProtectedRouteProps> = ({
 
   if (isLoading) {
     return (
-      <div
-        style={{
+      <Box
+        sx={{
           minHeight: '100vh',
           display: 'flex',
           alignItems: 'center',
           justifyContent: 'center',
         }}
       >
-        <div style={{ textAlign: 'center' }}>
-          <div
-            style={{
+        <Box sx={{ textAlign: 'center' }}>
+          <Box
+            sx={{
               width: '48px',
               height: '48px',
-              border: '4px solid primary.dark',
+              border: '4px solid',
+              borderColor: 'primary.main',
               borderBottom: '4px solid transparent',
               borderRadius: '9999px',
               animation: 'spin 1s linear infinite',
               margin: 'auto',
               marginBottom: '16px',
             }}
-          ></div>
-          <p style={{ color: 'var(--mui-palette-text-secondary)' }}>加载中...</p>
-        </div>
-      </div>
+          ></Box>
+          <Typography sx={{ color: 'text.secondary' }}>加载中...</Typography>
+        </Box>
+      </Box>
     );
   }
 
@@ -209,40 +210,37 @@ export const PermissionRoute: React.FC<PermissionRouteProps> = ({
       return <>{fallbackComponent}</>;
     }
     return (
-      <div style={{ padding: '24px' }}>
-        <div
-          style={{
+      <Box sx={{ padding: '24px' }}>
+        <Box
+          sx={{
             backgroundColor: 'warning.lighter',
-            border: '1px solid #fde68a',
+            border: '1px solid',
+            borderColor: 'warning.light',
             borderRadius: '8px',
             padding: '16px',
           }}
         >
-          <div style={{ display: 'flex', alignItems: 'flex-start' }}>
-            <div style={{ flexShrink: 0 }}>
-              <svg
-                style={{ height: 20, width: 20, color: theme.palette.warning.main }}
-                viewBox='0 0 20 20'
-                fill='currentColor'
-              >
+          <Box sx={{ display: 'flex', alignItems: 'flex-start' }}>
+            <Box sx={{ flexShrink: 0 }}>
+              <Box sx={{ height: 20, width: 20, color: 'warning.main' }} component='svg' viewBox='0 0 20 20' fill='currentColor'>
                 <path
                   fillRule='evenodd'
                   d='M8.257 3.099c.765-1.36 2.722-1.36 3.486 0l5.58 9.92c.75 1.334-.213 2.98-1.742 2.98H4.42c-1.53 0-2.493-1.646-1.743-2.98l5.58-9.92zM11 13a1 1 0 11-2 0 1 1 0 012 0zm-1-8a1 1 0 00-1 1v3a1 1 0 002 0V6a1 1 0 00-1-1z'
                   clipRule='evenodd'
                 />
-              </svg>
-            </div>
-            <div style={{ marginLeft: '12px' }}>
-              <h3 style={{ fontSize: '14px', fontWeight: 500, color: '#a16207' }}>权限提示</h3>
-              <div style={{ marginTop: '8px', fontSize: '14px', color: '#a16207' }}>
+              </Box>
+            </Box>
+            <Box sx={{ marginLeft: '12px' }}>
+              <Typography sx={{ fontSize: '14px', fontWeight: 500, color: 'warning.700' }}>权限提示</Typography>
+              <Box sx={{ marginTop: '8px', fontSize: '14px', color: 'warning.700' }}>
                 <p>
                   您没有访问 {module} 模块的 {action} 权限。
                 </p>
-              </div>
-            </div>
-          </div>
-        </div>
-      </div>
+              </Box>
+            </Box>
+          </Box>
+        </Box>
+      </Box>
     );
   }
 

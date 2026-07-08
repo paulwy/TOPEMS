@@ -17,7 +17,6 @@ use lettre::{
 };
 use serde::{Deserialize, Serialize};
 use sqlx::Row;
-use std::sync::Arc;
 use topems_shared::auth::Claims;
 use uuid::Uuid;
 
@@ -204,7 +203,7 @@ pub async fn send_email(
     }
 
     let sender_email = match sqlx::query_scalar("SELECT email FROM core_users WHERE id = $1")
-        .bind(Uuid::parse_str(&claims.sub).unwrap())
+        .bind(Uuid::parse_str(&claims.sub).unwrap_or_default())
         .fetch_optional(&state.pool)
         .await
     {
@@ -974,7 +973,7 @@ pub async fn send_with_template(
         }
     };
 
-    let mut handlebars = Handlebars::new();
+    let handlebars = Handlebars::new();
     let subject = handlebars
         .render_template(&subject_template, &payload.variables)
         .unwrap_or_else(|_| subject_template.clone());

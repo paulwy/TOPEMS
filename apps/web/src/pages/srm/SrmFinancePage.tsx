@@ -21,6 +21,9 @@ import { apiLogger } from '@/utils/logger';
 import { ListPageTemplate, type ColumnDef } from '@/components/templates';
 import { PageContainer } from '@/components/common/PageContainerV2';
 import { MetricCard } from '@/components/bi/MetricCard';
+import { designTokens } from '@/theme/tokens';
+
+const ct = designTokens.colors;
 
 interface FinanceRecord {
   id: string;
@@ -171,9 +174,9 @@ const SrmFinancePage: React.FC = () => {
       有效: { bg: 'success.lighter', color: 'success.700' },
       已过期: { bg: 'error.lighter', color: 'error.darker' },
       草稿: { bg: 'grey.100', color: 'grey.600' },
-      已终止: { bg: 'warning.light', color: '#92400e' },
+      已终止: { bg: 'warning.light', color: ct.warning[800] },
     };
-    const colors = statusMap[status] || { bg: 'grey.100', color: '#475569' };
+    const colors = statusMap[status] || { bg: 'grey.100', color: ct.text.secondary };
     return (
       <Chip
         label={status}
@@ -306,7 +309,7 @@ const SrmFinancePage: React.FC = () => {
             title='订单数量'
             value={stats.orders}
             icon={<CreditCard style={{ width: 24, height: 24 }} />}
-            gradient={['primary.main', '#1D4ED8']}
+            gradient={['primary.main', ct.primary.dark]}
             subtitle='已记录订单'
             trend='neutral'
           />
@@ -316,7 +319,7 @@ const SrmFinancePage: React.FC = () => {
             title='合同数量'
             value={stats.contracts}
             icon={<Receipt style={{ width: 24, height: 24 }} />}
-            gradient={['#14B8A6', '#0D9488']}
+            gradient={[ct.teal.main, ct.teal.dark]}
             subtitle='已记录合同'
             trend='neutral'
           />
@@ -326,7 +329,7 @@ const SrmFinancePage: React.FC = () => {
             title='总金额'
             value={`¥${stats.totalAmount.toLocaleString()}`}
             icon={<DollarSign style={{ width: 24, height: 24 }} />}
-            gradient={['#8B5CF6', '#7C3AED']}
+            gradient={[ct.secondary.main, ct.secondary.dark]}
             subtitle='所有单据合计'
             trend='neutral'
           />
@@ -336,7 +339,7 @@ const SrmFinancePage: React.FC = () => {
             title='待结算'
             value={`¥${stats.pendingAmount.toLocaleString()}`}
             icon={<TrendingUp style={{ width: 24, height: 24 }} />}
-            gradient={['warning.main', '#D97706']}
+            gradient={['warning.main', ct.warning.dark]}
             subtitle='待处理/处理中/有效'
             trend='neutral'
           />

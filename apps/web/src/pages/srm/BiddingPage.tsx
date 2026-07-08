@@ -29,6 +29,9 @@ import { apiLogger } from '@/utils/logger';
 import { ListPageTemplate, type ColumnDef } from '@/components/templates';
 import { PageContainer } from '@/components/common';
 import ConfirmDialog from '@/components/common/ConfirmDialog';
+import { designTokens } from '@/theme/tokens';
+
+const ct = designTokens.colors;
 
 const statusConfig: Record<
   string,
@@ -538,7 +541,7 @@ const BiddingPage: React.FC = () => {
       maxWidth='xl'
       headerProps={{
         pageIcon: <Gavel style={{ width: 20, height: 20 }} />,
-        pageGradient: 'linear-gradient(135deg, #F97316, #EA580C)',
+        pageGradient: `linear-gradient(135deg, ${ct.orange.main}, ${ct.orange.dark})`,
       }}
     >
       <ListPageTemplate

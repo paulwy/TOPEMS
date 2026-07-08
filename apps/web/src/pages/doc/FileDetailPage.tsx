@@ -8,6 +8,9 @@ import { apiLogger } from '@/utils/logger';
 import { DetailPageTemplate, type TabConfig, type SectionConfig } from '@/components/templates';
 import ConfirmDialog from '@/components/common/ConfirmDialog';
 import { PageContainer } from '@/components/common';
+import { designTokens } from '@/theme/tokens';
+
+const ct = designTokens.colors;
 
 const DocsFileDetailPage: React.FC = () => {
   const { id } = useParams<{ id: string }>();
@@ -200,7 +203,7 @@ const DocsFileDetailPage: React.FC = () => {
       avatar: (
         <FileText
           size={32}
-          color='#1976d2'
+          color={ct.primary.dark}
         />
       ),
       title: file?.name,

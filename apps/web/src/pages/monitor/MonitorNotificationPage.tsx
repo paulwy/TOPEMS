@@ -41,6 +41,9 @@ import { ListPageTemplate } from '@/components/templates/ListPageTemplate';
 import type { ColumnDef } from '@/components/templates/ListPageTemplate';
 import { useNotification } from '@/hooks/useNotification';
 import { apiLogger } from '@/utils/logger';
+import { designTokens } from '@/theme/tokens';
+
+const ct = designTokens.colors;
 
 // TODO(v2-phase2): Replace CircularProgress with LoadingSpinner from '@/components/common/LoadingSpinner'. Complex usage found - manual review needed.
 
@@ -115,8 +118,8 @@ const CHANNEL_TYPE_OPTIONS: {
   icon: React.ReactNode;
   color: string;
 }[] = [
-  { value: 'email', label: '邮件', icon: <Mail size={18} />, color: '#1976D2' },
-  { value: 'dingtalk', label: '钉钉', icon: <MessageSquare size={18} />, color: '#00C897' },
+  { value: 'email', label: '邮件', icon: <Mail size={18} />, color: ct.primary.dark },
+  { value: 'dingtalk', label: '钉钉', icon: <MessageSquare size={18} />, color: ct.success.main },
   { value: 'wechat', label: '企业微信', icon: <MessageSquare size={18} />, color: 'success.main' },
   { value: 'sms', label: '短信', icon: <Smartphone size={18} />, color: 'secondary.main' },
   { value: 'webhook', label: 'Webhook', icon: <Webhook size={18} />, color: 'warning.main' },
@@ -815,7 +818,7 @@ const MonitorNotificationPage: React.FC = () => {
       subtitle='管理系统告警的通知发送渠道'
       headerProps={{
         pageIcon: <Bell style={{ width: 20, height: 20 }} />,
-        pageGradient: 'linear-gradient(135deg, #1976D2 0%, #1565C0 100%)',
+        pageGradient: `linear-gradient(135deg, ${ct.primary.dark} 0%, ${ct.primary[800]} 100%)`,
       }}
     >
       {/* 测试结果提示 */}

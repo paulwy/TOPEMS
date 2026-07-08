@@ -21,6 +21,9 @@ import { ListPageTemplate, type ColumnDef } from '@/components/templates';
 import { extractErrorMessage } from '@/utils/errors';
 import { PageContainer } from '@/components/common';
 import ConfirmDialog from '@/components/common/ConfirmDialog';
+import { designTokens } from '@/theme/tokens';
+
+const ct = designTokens.colors;
 
 interface UserManagementPageProps {
   onNavigate?: (page: string) => void;
@@ -821,7 +824,7 @@ const UserManagementPage: React.FC<UserManagementPageProps> = ({ onNavigate: _on
                     <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
                       <Shield
                         size={16}
-                        color='#9e9e9e'
+                        color={ct.grey[400]}
                       />
                       <Box>
                         <Typography sx={{ fontWeight: 500 }}>{role.name}</Typography>

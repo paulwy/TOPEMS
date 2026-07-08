@@ -9,6 +9,8 @@ import { apiLogger } from '@/utils/logger';
 import { DetailPageTemplate, type TabConfig, type SectionConfig } from '@/components/templates';
 import ConfirmDialog from '@/components/common/ConfirmDialog';
 import { PageContainer } from '@/components/common';
+import { designTokens } from '@/theme/tokens';
+const ct = designTokens.colors;
 
 const ContactDetailPage: React.FC = () => {
   const { id } = useParams<{ id: string }>();
@@ -260,7 +262,7 @@ const ContactDetailPage: React.FC = () => {
       avatar: (
         <User
           size={32}
-          color='#1976d2'
+          color={ct.primary.dark}
         />
       ),
       title: contact

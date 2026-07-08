@@ -7,9 +7,10 @@
 ## 目录
 
 1. [API使用指南](#api使用指南)
-2. [插件开发规范](#插件开发规范)
-3. [后端服务开发](#后端服务开发)
-4. [前端开发指南](#前端开发指南)
+2. [WebSocket开发指南](#websocket开发指南)
+3. [插件开发规范](#插件开发规范)
+4. [后端服务开发](#后端服务开发)
+5. [前端开发指南](#前端开发指南)
 
 ---
 
@@ -372,6 +373,179 @@ const newUser = await client.createUser({
 });
 console.log(`创建用户成功: ${newUser.data.username}`);
 ```
+
+---
+
+## WebSocket开发指南
+
+### 路径规范
+
+TOPEMS 使用统一的 WebSocket 路径命名规范：
+
+```
+/ws/{module}/{feature}
+```
+
+| 组成部分 | 说明 | 示例 |
+|---------|------|------|
+| `{module}` | 服务模块名称 | `core`, `mes`, `gis` |
+| `{feature}` | 功能标识 | `notifications`, `im`, `dashboard` |
+
+### 路径映射表
+
+| 服务 | 前端路径 | Vite代理 | 后端路由 | 服务端口 |
+|------|----------|----------|----------|----------|
+| Core | `/ws/core/notifications` | `/ws/core` → 8000 | `/ws/core/notifications` | 8000 |
+| Core | `/ws/core/im` | `/ws/core` → 8000 | `/ws/core/im` | 8000 |
+| MES | `/mes/ws/dashboard` | `/mes/ws` → 8030 | `/mes/ws/dashboard` | 8030 |
+| GIS | `/gis/ws` | `/gis/ws` → 8071 (重写) | `/api/gis/ws` | 8071 |
+| GIS | `/gis/ws/device/{device_code}` | `/gis/ws` → 8071 (重写) | `/api/gis/ws/device/{device_code}` | 8071 |
+
+### 前端连接方式
+
+#### 使用 useWebSocket Hook
+
+```typescript
+import { useWebSocket } from '@/hooks/useWebSocket';
+
+const { isConnected, connect, disconnect, send } = useWebSocket({
+  wsPath: '/ws/core/im',
+  onMessage: (message) => {
+    console.log('收到消息:', message);
+  },
+  onOpen: () => {
+    console.log('连接成功');
+  },
+  onClose: () => {
+    console.log('连接关闭');
+  },
+});
+```
+
+#### 使用专用 Hook
+
+```typescript
+import { useNotificationWebSocket } from '@/hooks/useNotificationWebSocket';
+
+const { connect, disconnect, send } = useNotificationWebSocket({
+  onMessage: (message) => {
+    console.log('收到通知:', message);
+  },
+});
+```
+
+#### 直接创建 WebSocket
+
+```typescript
+const protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
+const wsUrl = `${protocol}//${window.location.host}/mes/ws/dashboard`;
+const ws = new WebSocket(wsUrl);
+
+ws.onopen = () => {
+  console.log('WebSocket连接成功');
+};
+
+ws.onmessage = (event) => {
+  const data = JSON.parse(event.data);
+  console.log('收到消息:', data);
+};
+
+ws.onerror = (error) => {
+  console.error('WebSocket错误:', error);
+};
+
+ws.onclose = () => {
+  console.log('WebSocket连接关闭');
+};
+```
+
+### 后端路由配置
+
+#### Core 服务 (Axum)
+
+```rust
+.route("/ws/core/notifications", get(modules::communication::ws::websocket_handler))
+.route("/ws/core/im", get(modules::communication::ws::websocket_handler))
+```
+
+#### MES 服务
+
+```rust
+.route("/mes/ws/dashboard", axum::routing::get(api::dashboard_ws::dashboard_websocket))
+```
+
+#### GIS 服务
+
+```rust
+.route("/api/gis/ws", get(api::websocket::websocket_handler))
+.route("/api/gis/ws/device/{device_code}", get(api::websocket::websocket_device_handler))
+```
+
+### Vite 代理配置
+
+```typescript
+'/ws/core': {
+  target: 'http://localhost:8000',
+  changeOrigin: true,
+  ws: true,
+  proxyTimeout: 60000,
+  timeout: 60000,
+},
+
+'/mes/ws': {
+  target: 'http://localhost:8030',
+  changeOrigin: true,
+  ws: true,
+  proxyTimeout: 60000,
+  timeout: 60000,
+},
+
+'/gis/ws': {
+  target: 'http://localhost:8071',
+  changeOrigin: true,
+  ws: true,
+  proxyTimeout: 60000,
+  timeout: 60000,
+  rewrite: (path: string) => path.replace(/^\/gis\/ws/, '/api/gis/ws'),
+},
+```
+
+### 消息格式
+
+#### 发送消息
+
+```json
+{
+  "type": "message",
+  "data": {
+    "topic": "chat",
+    "content": "Hello World"
+  }
+}
+```
+
+#### 接收消息
+
+```json
+{
+  "type": "notification",
+  "data": {
+    "id": "abc123",
+    "title": "新消息",
+    "content": "您有一条新消息",
+    "created_at": "2026-07-06T10:00:00Z"
+  }
+}
+```
+
+### 新增 WebSocket 服务流程
+
+1. 在后端服务的 `main.rs` 中添加路由
+2. 在 `apps/web/vite.config.ts` 中配置代理规则
+3. 创建或更新前端 Hook（推荐）
+4. 更新 [WebSocket 路径映射规范](../guides/devops/websocket-path-mapping.md)
+
+详细说明请参考完整的 [WebSocket 路径映射规范](../guides/devops/websocket-path-mapping.md)。
 
 ---
 

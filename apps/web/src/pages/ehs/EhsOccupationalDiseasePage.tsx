@@ -31,6 +31,9 @@ import { ehsApi } from '@/api/ehs';
 import type { CreateOccupationalDiseaseCaseRequest } from '@/api/ehs/types';
 import { useAppStore } from '@/store';
 import { apiLogger } from '@/utils/logger';
+import { designTokens } from '@/theme/tokens';
+
+const ct = designTokens.colors;
 
 interface OccupationalDiseaseCase {
   id: string;
@@ -125,7 +128,7 @@ const EhsOccupationalDiseasePage: React.FC = () => {
   const getSeverityChip = (severity: string) => {
     const severityMap: Record<string, { bg: string; color: string }> = {
       轻度: { bg: 'success.lighter', color: 'success.dark' },
-      中度: { bg: 'warning.100', color: '#ca8a04' },
+      中度: { bg: 'warning.100', color: ct.yellow[600] },
       重度: { bg: 'error.lighter', color: 'error.dark' },
     };
     const colors = severityMap[severity] || { bg: 'grey.100', color: 'text.secondary' };
@@ -144,7 +147,7 @@ const EhsOccupationalDiseasePage: React.FC = () => {
 
   const getStatusChip = (status: string) => {
     const statusMap: Record<string, { bg: string; color: string }> = {
-      疑似: { bg: 'warning.100', color: '#ca8a04' },
+      疑似: { bg: 'warning.100', color: ct.yellow[600] },
       确诊: { bg: 'error.lighter', color: 'error.dark' },
       康复: { bg: 'success.lighter', color: 'success.dark' },
     };
@@ -370,7 +373,7 @@ const EhsOccupationalDiseasePage: React.FC = () => {
           icon={<AlertCircle />}
           bgColor='background.paper'
           iconBgColor='warning.100'
-          iconColor='#ca8a04'
+          iconColor={ct.yellow[600]}
         />
         <StatCard
           label='确诊案例'
@@ -465,7 +468,7 @@ const EhsOccupationalDiseasePage: React.FC = () => {
       headerProps={{
         actions: headerActions,
         pageIcon: <HeartPulse sx={{ width: 20, height: 20 }} />,
-        pageGradient: 'linear-gradient(135deg, #EF4444 0%, #DC2626 100%)',
+        pageGradient: `linear-gradient(135deg, ${ct.error.main} 0%, ${ct.error[600]} 100%)`,
       }}
       maxWidth='xl'
     >

@@ -29,6 +29,8 @@ import {
 } from '@/components/templates';
 import { Plus, Edit, Trash2, Eye, CheckCircle, XCircle } from 'lucide-react';
 import { apiLogger } from '@/utils/logger';
+import { designTokens } from '@/theme/tokens';
+const ct = designTokens.colors;
 
 const QualityInspectionPage: React.FC = () => {
   const [inspections, setInspections] = useState<QualityInspection[]>([]);
@@ -229,7 +231,7 @@ const QualityInspectionPage: React.FC = () => {
       inspecting: { label: '检验中', bg: 'primary.100', color: 'primary.dark' },
       passed: { label: '合格', bg: 'success.lighter', color: 'success.700' },
       failed: { label: '不合格', bg: 'error.lighter', color: 'error.dark' },
-      rework: { label: '返工', bg: 'warning.100', color: '#92400e' },
+      rework: { label: '返工', bg: 'warning.100', color: ct.warning[800] },
       scrapped: { label: '报废', bg: 'grey.200', color: 'text.secondary' },
     };
     const s = statusMap[status] || { label: status, bg: 'grey.100', color: 'text.secondary' };
@@ -251,11 +253,11 @@ const QualityInspectionPage: React.FC = () => {
         color: string;
       }
     > = {
-      incoming: { label: '来料检验', bg: '#e0e7ff', color: 'secondary.700' },
+      incoming: { label: '来料检验', bg: ct.secondary[100], color: 'secondary.700' },
       process: { label: '过程检验', bg: 'primary.100', color: 'primary.dark' },
       final: { label: '成品检验', bg: 'success.lighter', color: 'success.700' },
       outgoing: { label: '出货检验', bg: 'warning.light', color: 'warning.700' },
-      patrol: { label: '巡检', bg: 'secondary.100', color: '#be185d' },
+      patrol: { label: '巡检', bg: 'secondary.100', color: ct.secondary[700] },
     };
     const t = typeMap[type] || { label: type, bg: 'grey.100', color: 'text.secondary' };
     return (
@@ -319,8 +321,8 @@ const QualityInspectionPage: React.FC = () => {
           { label: '报废', value: 'scrapped' },
         ],
         value: statusFilter,
-        onChange: (value) => {
-          setStatusFilter(value);
+        onChange: (value: unknown) => {
+          setStatusFilter(value as string);
           setCurrentPage(1);
         },
       },
@@ -442,7 +444,7 @@ const QualityInspectionPage: React.FC = () => {
           {stats.failed}
         </Typography>
       </Box>
-      <Box sx={{ p: 2, bgcolor: '#e0e7ff', borderRadius: 3 }}>
+      <Box sx={{ p: 2, bgcolor: ct.secondary[100], borderRadius: 3 }}>
         <Typography
           variant='body2'
           sx={{ color: 'text.secondary' }}
@@ -465,7 +467,7 @@ const QualityInspectionPage: React.FC = () => {
       autoBreadcrumbs
       headerProps={{
         pageIcon: <CheckCircle style={{ width: 20, height: 20 }} />,
-        pageGradient: 'linear-gradient(135deg, #3B82F6 0%, #1D4ED8 100%)',
+        pageGradient: `linear-gradient(135deg, ${ct.primary.main} 0%, ${ct.primary.dark} 100%)`,
       }}
     >
       <ListPageTemplate

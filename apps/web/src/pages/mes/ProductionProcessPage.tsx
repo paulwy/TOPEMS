@@ -33,6 +33,8 @@ import {
 } from '@/components/templates';
 import { Plus, Edit, Eye, Clock, Settings } from 'lucide-react';
 import { apiLogger } from '@/utils/logger';
+import { designTokens } from '@/theme/tokens';
+const ct = designTokens.colors;
 
 const ProductionProcessPage: React.FC = () => {
   const [processes, setProcesses] = useState<ProductionProcess[]>([]);
@@ -207,8 +209,8 @@ const ProductionProcessPage: React.FC = () => {
           { label: '禁用', value: 'inactive' },
         ],
         value: statusFilter,
-        onChange: (value) => {
-          setStatusFilter(value);
+        onChange: (value: unknown) => {
+          setStatusFilter(value as string);
           setCurrentPage(1);
         },
       },
@@ -255,7 +257,7 @@ const ProductionProcessPage: React.FC = () => {
         mb: 3,
       }}
     >
-      <Box sx={{ p: 2, bgcolor: '#ecfeff', borderRadius: 3 }}>
+      <Box sx={{ p: 2, bgcolor: 'cyan.light', borderRadius: 3 }}>
         <Typography
           variant='body2'
           sx={{ color: 'text.secondary' }}
@@ -308,7 +310,7 @@ const ProductionProcessPage: React.FC = () => {
       autoBreadcrumbs
       headerProps={{
         pageIcon: <Settings style={{ width: 20, height: 20 }} />,
-        pageGradient: 'linear-gradient(135deg, #10B981 0%, #059669 100%)',
+        pageGradient: `linear-gradient(135deg, ${ct.success.main} 0%, ${ct.success.dark} 100%)`,
       }}
     >
       <ListPageTemplate

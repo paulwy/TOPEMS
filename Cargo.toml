@@ -32,7 +32,6 @@ members = [
     "svc/doc",
     # [数据分析]
     "svc/analytics",
-    "svc/report",
 ]
 resolver = "2"
 
@@ -42,6 +41,7 @@ resolver = "2"
 # svc/manufacturing    → svc/mes + svc/pdm（已拆分独立部署）
 # svc/quality-assurance → svc/qms + svc/lims + svc/ehs（已拆分独立部署）
 # svc/bi               → svc/analytics（已整合到 analytics 统一服务，2026-06）
+# svc/report           → svc/analytics（已整合到 analytics 统一服务，2026-07）
 # svc/config-center    → 功能已整合到 etcd + unified-core 配置管理
 # svc/shared           → 功能已整合到 lib/topems_shared
 # ================================================
@@ -111,5 +111,8 @@ cron = "0.12"
 job_scheduler_ng = "2.0"
 lettre = { version = "0.11", features = ["default", "smtp-transport", "tokio1-native-tls"] }
 handlebars = { version = "5", features = ["dir_source"] }
+
+mockall = { version = "0.11", features = ["nightly"] }
+
 
 [patch.crates-io]

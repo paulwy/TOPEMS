@@ -25,6 +25,9 @@ import { apiLogger } from '@/utils/logger';
 import { ListPageTemplate, type ColumnDef } from '@/components/templates';
 import { PageContainer } from '@/components/common';
 import ConfirmDialog from '@/components/common/ConfirmDialog';
+import { designTokens } from '@/theme/tokens';
+
+const ct = designTokens.colors;
 
 const statusConfig: Record<
   string,
@@ -522,7 +525,7 @@ const PurchaseContractPage: React.FC = () => {
       maxWidth='xl'
       headerProps={{
         pageIcon: <FileSignature style={{ width: 20, height: 20 }} />,
-        pageGradient: 'linear-gradient(135deg, #8B5CF6, #7C3AED)',
+        pageGradient: `linear-gradient(135deg, ${ct.secondary.main}, ${ct.secondary.dark})`,
       }}
     >
       <ListPageTemplate

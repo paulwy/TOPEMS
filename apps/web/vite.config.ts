@@ -8,7 +8,8 @@ import imageminGifsicle from 'imagemin-gifsicle';
 import imageminMozjpeg from 'imagemin-mozjpeg';
 import imageminPngquant from 'imagemin-pngquant';
 import imageminSvgo from 'imagemin-svgo';
-
+import { createHtmlPlugin } from 'vite-plugin-html';
+import { VitePWA } from 'vite-plugin-pwa';
 
 import type { IncomingMessage, ServerResponse } from 'http';
 
@@ -97,12 +98,33 @@ const createProxyLogger = (serviceName: string, target: string) => (proxy: any) 
       }));
     }
   });
+
+  proxy.on('open', (proxySocket: any) => {
+    console.log(
+      `\x1b[36m[Vite Proxy] \x1b[34m${serviceName.toUpperCase()}\x1b[0m ` +
+      `\x1b[32mWebSocket connection opened\x1b[0m`
+    );
+  });
+
+  proxy.on('close', (proxySocket: any, proxyHead: any) => {
+    console.log(
+      `\x1b[36m[Vite Proxy] \x1b[34m${serviceName.toUpperCase()}\x1b[0m ` +
+      `\x1b[31mWebSocket connection closed\x1b[0m`
+    );
+  });
 };
 
 const createServiceProxyConfig = (serviceName: string, target: string, skipRewrite = false) => ({
   target,
   changeOrigin: true,
   rewrite: skipRewrite ? undefined : (path: string) => path.replace(new RegExp(`^\\/${serviceName}\\/api`), `/api/${serviceName}`),
+  configure: createProxyLogger(serviceName, target),
+});
+
+const createCoreServiceProxyConfig = (serviceName: string, target: string) => ({
+  target,
+  changeOrigin: true,
+  rewrite: (path: string) => path.replace(new RegExp(`^\\/${serviceName}\\/api`), '/api'),
   configure: createProxyLogger(serviceName, target),
 });
 
@@ -115,15 +137,29 @@ const createHealthProxyConfig = (serviceName: string, target: string) => ({
 
 const plugins = [
   react(),
+  createHtmlPlugin({
+    minify: {
+      minifyJS: true,
+      minifyCSS: true,
+      minifyURLs: true,
+      removeComments: true,
+      removeEmptyAttributes: true,
+      removeRedundantAttributes: true,
+      collapseWhitespace: true,
+      useShortDoctype: true,
+      removeScriptTypeAttributes: true,
+      removeStyleLinkTypeAttributes: true,
+    },
+  }),
   viteCompression({
     algorithm: 'gzip',
-    threshold: 10240,
+    threshold: 1024,
     verbose: true,
     deleteOriginalAssets: false,
   }),
   viteCompression({
     algorithm: 'brotliCompress',
-    threshold: 10240,
+    threshold: 1024,
     verbose: false,
     deleteOriginalAssets: false,
   }),
@@ -154,7 +190,61 @@ const plugins = [
     },
     exclude: ['**/offline_tiles/**', '**/icons/**'],
   }),
-  
+  VitePWA({
+    srcDir: 'src',
+    filename: 'sw.ts',
+    strategies: 'generateSW',
+    manifest: {
+      name: 'TOPEMS',
+      short_name: 'TOPEMS',
+      description: '企业数字化平台',
+      theme_color: '#1976d2',
+      icons: [
+        {
+          src: 'icons/icon-128x128.png',
+          sizes: '128x128',
+          type: 'image/png',
+        },
+        {
+          src: 'icons/icon-512x512.png',
+          sizes: '512x512',
+          type: 'image/png',
+        },
+      ],
+    },
+    workbox: {
+      globPatterns: ['**/*.{js,css,html,svg,png,jpg,jpeg,gif}'],
+      maximumFileSizeToCacheInBytes: 5 * 1024 * 1024,
+      runtimeCaching: [
+        {
+          urlPattern: /^https?:\/\/localhost/,
+          handler: 'StaleWhileRevalidate',
+          options: {
+            cacheName: 'api-cache',
+            cacheableResponse: {
+              statuses: [200],
+            },
+          },
+        },
+        {
+          urlPattern: /^https?:\/\/fonts\.(googleapis|gstatic)\.com/,
+          handler: 'CacheFirst',
+          options: {
+            cacheName: 'fonts-cache',
+            cacheableResponse: {
+              statuses: [200],
+            },
+            expiration: {
+              maxAgeSeconds: 30 * 24 * 60 * 60,
+            },
+          },
+        },
+      ],
+    },
+    devOptions: {
+      enabled: false,
+    },
+  }),
 ];
 
 export default defineConfig({
@@ -189,10 +279,11 @@ export default defineConfig({
     rollupOptions: {
       plugins: [
         visualizer({
-          filename: 'stats.json',
-          format: 'json',
+          filename: './dist/stats.html',
+          format: 'html',
           gzipSize: true,
           brotliSize: true,
+          open: false,
         }),
       ],
       output: {
@@ -204,14 +295,11 @@ export default defineConfig({
             if (id.includes('react-router-dom') || id.includes('react-router')) {
               return 'router-vendor';
             }
-            if (id.includes('@mui/material') || id.includes('@mui/system')) {
-              return 'mui-material';
+            if (id.includes('@mui/material') || id.includes('@mui/system') || id.includes('@mui/icons-material') || id.includes('@emotion')) {
+              return 'mui-vendor';
             }
-            if (id.includes('@mui/lab')) {
-              return 'mui-lab';
-            }
-            if (id.includes('@mui/x-date-pickers') || id.includes('@mui/x-tree-view')) {
-              return 'mui-x-extended';
+            if (id.includes('@mui/lab') || id.includes('@mui/x-date-pickers') || id.includes('@mui/x-tree-view') || id.includes('@mui/x-data-grid')) {
+              return 'mui-x-vendor';
             }
             if (id.includes('recharts')) {
               return 'charts-vendor';
@@ -222,16 +310,16 @@ export default defineConfig({
             if (id.includes('dayjs') || id.includes('date-fns')) {
               return 'date-vendor';
             }
-            if (id.includes('zod') || id.includes('es-toolkit')) {
-              return 'validation-vendor';
+            if (id.includes('zod') || id.includes('es-toolkit') || id.includes('@hookform') || id.includes('react-hook-form')) {
+              return 'form-validation-vendor';
             }
-            if (id.includes('zustand')) {
-              return 'state-vendor';
+            if (id.includes('zustand') || id.includes('@tanstack/react-query') || id.includes('@tanstack/react-table')) {
+              return 'state-data-vendor';
             }
             if (id.includes('i18next') || id.includes('react-i18next')) {
               return 'i18n-vendor';
             }
-            if (id.includes('leaflet') || id.includes('@react-leaflet')) {
+            if (id.includes('leaflet') || id.includes('@react-leaflet') || id.includes('@amap')) {
               return 'map-vendor';
             }
             if (id.includes('three') || id.includes('@react-three')) {
@@ -240,45 +328,25 @@ export default defineConfig({
             if (id.includes('framer-motion')) {
               return 'animation-vendor';
             }
-            if (id.includes('@hookform') || id.includes('react-hook-form')) {
-              return 'form-vendor';
-            }
-            if (id.includes('@tanstack/react-query') || id.includes('@tanstack/react-table')) {
-              return 'data-vendor';
-            }
             if (id.includes('clsx') || id.includes('lucide-react')) {
               return 'ui-vendor';
             }
-            if (id.includes('xlsx') || id.includes('xlsx-style')) {
-              return 'excel-vendor';
+            if (id.includes('xlsx') || id.includes('xlsx-style') || id.includes('docx-preview')) {
+              return 'document-vendor';
             }
-            if (id.includes('docx-preview')) {
-              return 'docx-vendor';
-            }
-            if (id.includes('dompurify')) {
-              return 'sanitize-vendor';
-            }
-            if (id.includes('react-markdown') || id.includes('remark-gfm') || id.includes('react-syntax-highlighter')) {
-              return 'markdown-vendor';
+            if (id.includes('dompurify') || id.includes('react-markdown') || id.includes('remark-gfm') || id.includes('react-syntax-highlighter') || id.includes('marked') || id.includes('prismjs')) {
+              return 'content-vendor';
             }
             if (id.includes('lodash') || id.includes('lodash-es')) {
               return 'lodash-vendor';
             }
-            if (id.includes('uuid')) {
-              return 'uuid-vendor';
-            }
-            if (id.includes('crypto-js')) {
-              return 'crypto-vendor';
-            }
-            if (id.includes('marked')) {
-              return 'markdown-vendor';
-            }
-            if (id.includes('prismjs')) {
-              return 'prism-vendor';
+            if (id.includes('uuid') || id.includes('crypto-js')) {
+              return 'utils-vendor';
             }
             if (id.includes('jspdf') || id.includes('html2canvas')) {
               return 'pdf-vendor';
             }
+            return 'other-vendor';
           }
           
           if (id.includes('/pages/iam/')) {
@@ -305,20 +373,74 @@ export default defineConfig({
           if (id.includes('/pages/ai/')) {
             return 'ai-chunk';
           }
-          if (id.includes('/pages/dashboard/')) {
+          if (id.includes('/pages/dashboard/') || id.includes('/pages/shared/')) {
             return 'dashboard-chunk';
           }
           if (id.includes('/pages/bi/')) {
             return 'bi-chunk';
-          }
-          if (id.includes('/pages/portal/')) {
-            return 'portal-chunk';
           }
           if (id.includes('/pages/report/')) {
             return 'report-chunk';
           }
           if (id.includes('/pages/gis/')) {
             return 'gis-chunk';
+          }
+          if (id.includes('/pages/lowcode/')) {
+            return 'lowcode-chunk';
+          }
+          if (id.includes('/pages/pdm/')) {
+            return 'pdm-chunk';
+          }
+          if (id.includes('/pages/qms/')) {
+            return 'qms-chunk';
+          }
+          if (id.includes('/pages/scm/')) {
+            return 'scm-chunk';
+          }
+          if (id.includes('/pages/wms/')) {
+            return 'wms-chunk';
+          }
+          if (id.includes('/pages/srm/')) {
+            return 'srm-chunk';
+          }
+          if (id.includes('/pages/lims/')) {
+            return 'lims-chunk';
+          }
+          if (id.includes('/pages/ehs/')) {
+            return 'ehs-chunk';
+          }
+          if (id.includes('/pages/rs/')) {
+            return 'rs-chunk';
+          }
+          if (id.includes('/pages/oa/')) {
+            return 'oa-chunk';
+          }
+          if (id.includes('/pages/im/')) {
+            return 'im-chunk';
+          }
+          if (id.includes('/pages/erp/')) {
+            return 'erp-chunk';
+          }
+          if (id.includes('/pages/integration/')) {
+            return 'integration-chunk';
+          }
+          if (id.includes('/pages/asset/')) {
+            return 'asset-chunk';
+          }
+          if (id.includes('/pages/plugin/')) {
+            return 'plugin-chunk';
+          }
+          if (id.includes('/pages/monitor/')) {
+            return 'monitor-chunk';
+          }
+          if (id.includes('/pages/notification/')) {
+            return 'notification-chunk';
+          }
+          if (id.includes('/pages/mobile/')) {
+            return 'mobile-chunk';
+          }
+          if (id.includes('/pages/doc/')) {
+            return 'doc-chunk';
           }
         },
       },
@@ -336,6 +458,8 @@ export default defineConfig({
         unused: true,
         collapse_vars: true,
         reduce_vars: true,
+        inline: false,
+        join_vars: true,
       },
       mangle: {
         properties: {
@@ -347,20 +471,42 @@ export default defineConfig({
     cssCodeSplit: true,
     assetsInlineLimit: 4096,
     reportCompressedSize: true,
-    target: ['es2020', 'chrome100', 'edge100', 'firefox100', 'safari15'],
+    target: ['es2022', 'chrome108', 'edge108', 'firefox108', 'safari16'],
     modulePreload: {
-      polyfill: true,
+      polyfill: false,
+      resolveDependencies: (filename, deps) => {
+        const coreVendors = [
+          'react-vendor',
+          'router-vendor',
+          'mui-vendor',
+          'mui-x-vendor',
+          'state-data-vendor',
+          'form-validation-vendor',
+          'date-vendor',
+          'ui-vendor',
+          'i18n-vendor',
+          'network-vendor',
+          'charts-vendor',
+        ];
+        return deps.filter((dep) => {
+          const depName = dep.split('/').pop()?.split('-')[0];
+          return coreVendors.some((vendor) => dep.includes(vendor));
+        });
+      },
     },
     outDir: 'dist',
+    base: process.env.VITE_CDN_URL || '/',
+    cacheDir: '.vite/cache',
+    manifest: true,
   },
   server: {
     port: 3000,
     host: '0.0.0.0',
     strictPort: true,
     hmr: {
+      path: '/vite-hmr',
       host: 'localhost',
       port: 3000,
-      protocol: 'ws',
     },
     fs: {
       allow: ['..'],
@@ -392,11 +538,35 @@ export default defineConfig({
         changeOrigin: true,
         configure: createProxyLogger('core', 'http://localhost:8000'),
       },
+      '/unified-core/health': {
+        target: 'http://localhost:8000',
+        changeOrigin: true,
+        rewrite: (path: string) => path.replace(/^\/unified-core/, ''),
+        configure: createProxyLogger('unified-core', 'http://localhost:8000'),
+      },
       '/ws/core': {
         target: 'http://localhost:8000',
         changeOrigin: true,
         ws: true,
-        configure: createProxyLogger('core-ws', 'http://localhost:8000'),
+        proxyTimeout: 60000,
+        timeout: 60000,
+        configure: (proxy: any) => {
+          proxy.on('proxyReq', (proxyReq: any, req: IncomingMessage) => {
+            if (req.headers['upgrade'] && req.headers['upgrade'].toLowerCase() === 'websocket') {
+              proxyReq.setHeader('Connection', 'Upgrade');
+              proxyReq.setHeader('Upgrade', 'websocket');
+            }
+            const originalUrl = req.url || '';
+            const finalPath = proxyReq.path || proxyReq.pathname || '';
+            console.log(
+              `\x1b[36m[Vite Proxy] \x1b[34mCORE-WS\x1b[0m ` +
+              `\x1b[33m${req.method}\x1b[0m ` +
+              `\x1b[35m${originalUrl}\x1b[0m ` +
+              `\x1b[32m->\x1b[0m ` +
+              `\x1b[32mhttp://localhost:8000${finalPath}\x1b[0m`
+            );
+          });
+        },
       },
       
       '/comm/api': {
@@ -410,19 +580,6 @@ export default defineConfig({
         changeOrigin: true,
         configure: createProxyLogger('comm', 'http://localhost:8000'),
       },
-      '/ws/notifications': {
-        target: 'http://localhost:8000',
-        changeOrigin: true,
-        ws: true,
-        configure: createProxyLogger('comm-ws', 'http://localhost:8000'),
-      },
-      '/ws/im': {
-        target: 'http://localhost:8000',
-        changeOrigin: true,
-        ws: true,
-        configure: createProxyLogger('im-ws', 'http://localhost:8000'),
-      },
-      
       '/iam/api/iam/auth/': {
         target: 'http://localhost:8000',
         changeOrigin: true,
@@ -447,6 +604,7 @@ export default defineConfig({
         rewrite: (path: string) => path.replace(/^\/iam\//, '/api/core/iam/'),
         configure: createProxyLogger('iam', 'http://localhost:8000'),
       }),
+      '/doc/health': createHealthProxyConfig('doc', 'http://localhost:8012'),
       '/doc': createPageSafeProxy({
         target: 'http://localhost:8012',
         changeOrigin: true,
@@ -543,6 +701,11 @@ export default defineConfig({
         rewrite: (path: string) => path.replace(/^\/hrm/, '/api/hrm'),
         configure: createProxyLogger('hrm', 'http://localhost:8020'),
       }),
+      '/api/hrm': {
+        target: 'http://localhost:8020',
+        changeOrigin: true,
+        configure: createProxyLogger('hrm-api', 'http://localhost:8020'),
+      },
 
       '/pm/api': createServiceProxyConfig('pm', 'http://localhost:8023'),
       '/pm/health': createHealthProxyConfig('pm', 'http://localhost:8023'),
@@ -609,8 +772,36 @@ export default defineConfig({
         target: 'http://localhost:8030',
         changeOrigin: true,
         ws: true,
-        rewrite: (path: string) => path.replace(/^\/mes/, '/api/mes'),
-        configure: createProxyLogger('mes-ws', 'http://localhost:8030'),
+        proxyTimeout: 60000,
+        timeout: 60000,
+        configure: (proxy: any) => {
+          proxy.on('proxyReq', (proxyReq: any, req: IncomingMessage) => {
+            if (req.headers['upgrade'] && req.headers['upgrade'].toLowerCase() === 'websocket') {
+              proxyReq.setHeader('Connection', 'Upgrade');
+              proxyReq.setHeader('Upgrade', 'websocket');
+            }
+            const originalUrl = req.url || '';
+            const finalPath = proxyReq.path || proxyReq.pathname || '';
+            console.log(
+              `\x1b[36m[Vite Proxy] \x1b[34mMES-WS\x1b[0m ` +
+              `\x1b[33m${req.method}\x1b[0m ` +
+              `\x1b[35m${originalUrl}\x1b[0m ` +
+              `\x1b[32m->\x1b[0m ` +
+              `\x1b[32mhttp://localhost:8030${finalPath}\x1b[0m`
+            );
+          });
+          proxy.on('error', (err: any) => {
+            console.error(
+              `\x1b[31m[Vite Proxy] \x1b[34mMES-WS Error\x1b[0m ` +
+              `\x1b[31m${err.message}\x1b[0m`
+            );
+          });
+          proxy.on('close', () => {
+            console.log(
+              `\x1b[31m[Vite Proxy] \x1b[34mMES-WS Connection Closed\x1b[0m`
+            );
+          });
+        },
       },
       '/mes/': createPageSafeProxy({
         target: 'http://localhost:8030',
@@ -826,13 +1017,13 @@ export default defineConfig({
         configure: createProxyLogger('bi', 'http://localhost:8060'),
       }),
 
-      '/report/api': createServiceProxyConfig('report', 'http://localhost:8061'),
-      '/report/health': createHealthProxyConfig('report', 'http://localhost:8061'),
+      '/report/api': createServiceProxyConfig('report', 'http://localhost:8060'),
+      '/report/health': createHealthProxyConfig('report', 'http://localhost:8060'),
       '/report/': createPageSafeProxy({
-        target: 'http://localhost:8061',
+        target: 'http://localhost:8060',
         changeOrigin: true,
         rewrite: (path: string) => path.replace(/^\/report/, '/api/report'),
-        configure: createProxyLogger('report', 'http://localhost:8061'),
+        configure: createProxyLogger('report', 'http://localhost:8060'),
       }),
 
       '/monitor/api': {
@@ -863,6 +1054,31 @@ export default defineConfig({
 
       '/gis/api': createServiceProxyConfig('gis', 'http://localhost:8071'),
       '/gis/health': createHealthProxyConfig('gis', 'http://localhost:8071'),
+      '/gis/ws': {
+        target: 'http://localhost:8071',
+        changeOrigin: true,
+        ws: true,
+        proxyTimeout: 60000,
+        timeout: 60000,
+        rewrite: (path: string) => path.replace(/^\/gis\/ws/, '/ws/gis'),
+        configure: (proxy: any) => {
+          proxy.on('proxyReq', (proxyReq: any, req: IncomingMessage) => {
+            if (req.headers['upgrade'] && req.headers['upgrade'].toLowerCase() === 'websocket') {
+              proxyReq.setHeader('Connection', 'Upgrade');
+              proxyReq.setHeader('Upgrade', 'websocket');
+            }
+            const originalUrl = req.url || '';
+            const finalPath = proxyReq.path || proxyReq.pathname || '';
+            console.log(
+              `\x1b[36m[Vite Proxy] \x1b[34mGIS-WS\x1b[0m ` +
+              `\x1b[33m${req.method}\x1b[0m ` +
+              `\x1b[35m${originalUrl}\x1b[0m ` +
+              `\x1b[32m->\x1b[0m ` +
+              `\x1b[32mhttp://localhost:8071${finalPath}\x1b[0m`
+            );
+          });
+        },
+      },
       '/gis/': createPageSafeProxy({
         target: 'http://localhost:8071',
         changeOrigin: true,
@@ -879,7 +1095,7 @@ export default defineConfig({
         configure: createProxyLogger('integration', 'http://localhost:8072'),
       }),
 
-      '/master/api': createServiceProxyConfig('master', 'http://localhost:8000'),
+      '/master/api': createCoreServiceProxyConfig('master', 'http://localhost:8000'),
       '/master/health': createHealthProxyConfig('master', 'http://localhost:8000'),
       '/master/monitor/': {
         target: 'http://localhost:8062',
@@ -1007,10 +1223,10 @@ export default defineConfig({
         configure: createProxyLogger('plugin-health-bi', 'http://localhost:8060'),
       },
       '/plugin-health/report': {
-        target: 'http://localhost:8061',
+        target: 'http://localhost:8060',
         changeOrigin: true,
         rewrite: (path: string) => path.replace(/^\/plugin-health\/report/, ''),
-        configure: createProxyLogger('plugin-health-report', 'http://localhost:8061'),
+        configure: createProxyLogger('plugin-health-report', 'http://localhost:8060'),
       },
       '/plugin-health/monitor': {
         target: 'http://localhost:8062',
@@ -1055,6 +1271,16 @@ export default defineConfig({
         configure: createProxyLogger('plugin-health-workflow', 'http://localhost:8000'),
       },
 
+      '/api/crm': {
+        target: 'http://localhost:8029',
+        changeOrigin: true,
+        configure: createProxyLogger('crm-api', 'http://localhost:8029'),
+      },
+      '/api/pm': {
+        target: 'http://localhost:8023',
+        changeOrigin: true,
+        configure: createProxyLogger('pm-api', 'http://localhost:8023'),
+      },
       '/api': { 
         target: 'http://localhost:8000', 
         changeOrigin: true,

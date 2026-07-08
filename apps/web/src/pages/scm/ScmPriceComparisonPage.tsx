@@ -6,6 +6,10 @@ import { PageContainer } from '@/components/common';
 import { scmApi } from '@/api/scm';
 import type { PriceComparison } from '@/api/scm';
 import { useAppStore } from '@/store';
+import { designTokens } from '@/theme/tokens';
+import { logger } from "@/utils/logger";
+
+const ct = designTokens.colors;
 
 const STATUS_MAP: Record<string, { label: string; bg: string; color: string }> = {
   pending: { label: '询价中', bg: 'warning.light', color: 'warning.700' },
@@ -39,7 +43,7 @@ const ScmPriceComparisonPage: React.FC = () => {
         setTotal(response.data.total || 0);
       }
     } catch (error: unknown) {
-      console.error('加载询价比价数据失败:', error);
+      logger.error('加载询价比价数据失败:', error);
       addNotification({ title: '加载失败', message: '加载询价比价数据失败', type: 'error' });
     } finally {
       setLoading(false);
@@ -47,7 +51,7 @@ const ScmPriceComparisonPage: React.FC = () => {
   };
 
   const getStatusBadge = (status: string) => {
-    const config = STATUS_MAP[status] || { label: status, bg: 'grey.100', color: '#475569' };
+    const config = STATUS_MAP[status] || { label: status, bg: 'grey.100', color: ct.text.secondary };
     return (
       <Chip
         label={config.label}
@@ -163,8 +167,8 @@ const ScmPriceComparisonPage: React.FC = () => {
               { label: '已取消', value: 'cancelled' },
             ],
             value: statusFilter,
-            onChange: (value) => {
-              setStatusFilter(value);
+            onChange: (value: unknown) => {
+              setStatusFilter(value as string);
               setPage(0);
             },
           },

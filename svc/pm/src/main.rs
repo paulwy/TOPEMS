@@ -1,14 +1,14 @@
-pub mod api;
 pub mod models;
+pub mod modules;
 pub mod services;
 
-use api::{auth, plugin};
 use axum::{routing::get, Router};
 use axum_prometheus::PrometheusMetricLayer;
+use modules::{auth, pm_plugin};
 use prometheus::{default_registry, Gauge};
 use topems_shared::{
     auth_middleware, build_health_response, create_api_info_router, create_cors_layer,
-    create_database_pool, init_logging, init_telemetry, telemetry_middleware,
+    create_database_pool, init_telemetry, rls_middleware, telemetry_middleware,
     test_database_connection, AuthState, DatabaseConfig, Result, ServiceHealth,
 };
 use utoipa::OpenApi;
@@ -63,13 +63,19 @@ async fn main() -> Result<()> {
             "/metrics",
             get(move || async move { metric_handle.render() }),
         )
-        .route("/api/plugins/info", get(plugin::get_plugin_info))
-        .route("/api/plugins/health", get(plugin::plugin_health_check))
+        .route("/api/plugins/info", get(pm_plugin::get_plugin_info))
+        .route("/api/plugins/health", get(pm_plugin::plugin_health_check))
         .merge(auth::create_routes());
 
-    let protected_routes = api::create_routes(pool.clone()).layer(
-        axum::middleware::from_fn_with_state(auth_state.clone(), auth_middleware),
-    );
+    let protected_routes = modules::create_routes(pool.clone())
+        .layer(axum::middleware::from_fn_with_state(
+            auth_state.clone(),
+            auth_middleware,
+        ))
+        .layer(axum::middleware::from_fn_with_state(
+            pool.clone(),
+            rls_middleware,
+        ));
 
     let app = Router::new()
         .merge(public_routes)
@@ -89,7 +95,7 @@ async fn main() -> Result<()> {
     // 启动时自动注册到统一核心
     let core_url = std::env::var("CORE_URL").ok();
     tokio::spawn(async move {
-        plugin::auto_register_to_core(core_url.as_deref()).await;
+        pm_plugin::auto_register_to_core(core_url.as_deref()).await;
     });
 
     let listener = tokio::net::TcpListener::bind(&addr).await?;
@@ -103,7 +109,7 @@ async fn health_check() -> ServiceHealth {
 }
 
 async fn serve_openapi_json() -> axum::Json<utoipa::openapi::OpenApi> {
-    axum::Json(api::openapi::ApiDoc::openapi())
+    axum::Json(modules::openapi::ApiDoc::openapi())
 }
 
 async fn init_db(_pool: &sqlx::PgPool) -> Result<()> {

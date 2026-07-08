@@ -76,6 +76,7 @@ impl AlertSeverity {
         }
     }
 
+    #[allow(clippy::should_implement_trait)]
     pub fn from_str(s: &str) -> Option<Self> {
         match s.to_uppercase().as_str() {
             "P0" | "CRITICAL" | "EMERGENCY" => Some(AlertSeverity::P0),
@@ -338,7 +339,7 @@ pub struct MonitoringState {
 
 impl Default for MonitoringState {
     fn default() -> Self {
-        let state = Self {
+        Self {
             services: Arc::new(RwLock::new(HashMap::new())),
             metrics: Arc::new(RwLock::new(MonitoringMetrics {
                 requests_total: 0,
@@ -359,8 +360,7 @@ impl Default for MonitoringState {
             failure_count: AtomicU64::new(0),
             response_times: Arc::new(RwLock::new(Vec::new())),
             last_alert_triggered: Arc::new(RwLock::new(HashMap::new())),
-        };
-        state
+        }
     }
 }
 
@@ -732,7 +732,7 @@ impl MonitoringState {
                 alert_count: count,
             })
             .collect();
-        top_services.sort_by(|a, b| b.alert_count.cmp(&a.alert_count));
+        top_services.sort_by_key(|b| std::cmp::Reverse(b.alert_count));
         top_services.truncate(10);
 
         let mut top_categories: Vec<CategoryAlertCount> = category_counts
@@ -742,7 +742,7 @@ impl MonitoringState {
                 alert_count: count,
             })
             .collect();
-        top_categories.sort_by(|a, b| b.alert_count.cmp(&a.alert_count));
+        top_categories.sort_by_key(|b| std::cmp::Reverse(b.alert_count));
 
         let mut trend_last_24h: Vec<HourlyAlertCount> = Vec::new();
         for i in 0..24 {

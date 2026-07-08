@@ -26,6 +26,8 @@ import {
 } from '@/components/templates';
 import { Plus, Edit, Eye, MapPin, Clock, Settings } from 'lucide-react';
 import { apiLogger } from '@/utils/logger';
+import { designTokens } from '@/theme/tokens';
+const ct = designTokens.colors;
 
 const WorkStationPage: React.FC = () => {
   const [workstations, setWorkstations] = useState<WorkStation[]>([]);
@@ -188,8 +190,8 @@ const WorkStationPage: React.FC = () => {
           { label: '离线', value: 'offline' },
         ],
         value: statusFilter,
-        onChange: (value) => {
-          setStatusFilter(value);
+        onChange: (value: unknown) => {
+          setStatusFilter(value as string);
           setCurrentPage(1);
         },
       },
@@ -309,7 +311,7 @@ const WorkStationPage: React.FC = () => {
       subtitle='管理生产工作站,包括工作站名称、编码、位置、容量等'
       headerProps={{
         pageIcon: <MapPin style={{ width: 20, height: 20 }} />,
-        pageGradient: 'linear-gradient(135deg, #10B981 0%, #059669 100%)',
+        pageGradient: `linear-gradient(135deg, ${ct.success.main} 0%, ${ct.success.dark} 100%)`,
       }}
     >
       <ListPageTemplate

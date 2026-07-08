@@ -64,6 +64,9 @@ import {
   type DataPermissionRule,
 } from '@/api/bi';
 import { logger } from '@/utils/logger';
+import { designTokens } from '@/theme/tokens';
+
+const ct = designTokens.colors;
 
 const mockRowPermissions: RowLevelPermission[] = [
   {
@@ -320,7 +323,7 @@ const BiPermissionPage = () => {
       subtitle='配置行级权限和数据访问控制'
       headerProps={{
         pageIcon: <Shield style={{ width: 20, height: 20 }} />,
-        pageGradient: 'linear-gradient(135deg, #EF4444 0%, #DC2626 100%)',
+        pageGradient: `linear-gradient(135deg, ${ct.error.main} 0%, ${ct.error[600]} 100%)`,
       }}
       padding={false}
       maxWidth={false}
@@ -349,7 +352,7 @@ const BiPermissionPage = () => {
                         width: 48,
                         height: 48,
                         borderRadius: 1,
-                        backgroundColor: '#FEF2F2',
+                        backgroundColor: ct.error[50],
                         display: 'flex',
                         alignItems: 'center',
                         justifyContent: 'center',
@@ -425,7 +428,7 @@ const BiPermissionPage = () => {
                         width: 48,
                         height: 48,
                         borderRadius: 1,
-                        backgroundColor: '#DCFCE7',
+                        backgroundColor: ct.success[100],
                         display: 'flex',
                         alignItems: 'center',
                         justifyContent: 'center',
@@ -537,7 +540,7 @@ const BiPermissionPage = () => {
                       startAdornment: (
                         <Search
                           size={18}
-                          style={{ marginRight: 8, color: '#9ca3af' }}
+                          style={{ marginRight: 8, color: ct.grey[400] }}
                         />
                       ),
                     },
@@ -694,6 +697,7 @@ const BiPermissionPage = () => {
                                   <IconButton
                                     size='small'
                                     onClick={() => handleTest(perm)}
+                                    aria-label='测试规则'
                                   >
                                     <CheckCircle2 size={16} />
                                   </IconButton>
@@ -702,6 +706,7 @@ const BiPermissionPage = () => {
                                   <IconButton
                                     size='small'
                                     onClick={() => handleOpenDialog(perm)}
+                                    aria-label='编辑权限规则'
                                   >
                                     <Edit2 size={16} />
                                   </IconButton>
@@ -711,6 +716,7 @@ const BiPermissionPage = () => {
                                     size='small'
                                     color='error'
                                     onClick={() => handleDelete(perm.id)}
+                                    aria-label='删除权限规则'
                                   >
                                     <Trash2 size={16} />
                                   </IconButton>
@@ -829,7 +835,7 @@ const BiPermissionPage = () => {
                               </TableCell>
                               <TableCell>
                                 <Tooltip title='编辑'>
-                                  <IconButton size='small'>
+                                  <IconButton size='small' aria-label='编辑角色'>
                                     <Edit2 size={16} />
                                   </IconButton>
                                 </Tooltip>
@@ -837,6 +843,7 @@ const BiPermissionPage = () => {
                                   <IconButton
                                     size='small'
                                     color='error'
+                                    aria-label='删除角色'
                                   >
                                     <Trash2 size={16} />
                                   </IconButton>

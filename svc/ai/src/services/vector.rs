@@ -331,7 +331,7 @@ impl VectorService {
         top_k: usize,
         vector_weight: f64,
         keyword_weight: f64,
-    ) -> Result<Vec<crate::api::models::HybridSearchResult>, sqlx::Error> {
+    ) -> Result<Vec<crate::modules::models::HybridSearchResult>, sqlx::Error> {
         // 向量搜索
         let vector_results = self.search_similar(query_embedding, top_k * 2).await?;
 
@@ -341,13 +341,13 @@ impl VectorService {
         // 合并结果
         let mut combined_map: std::collections::HashMap<
             uuid::Uuid,
-            crate::api::models::HybridSearchResult,
+            crate::modules::models::HybridSearchResult,
         > = std::collections::HashMap::new();
 
         // 处理向量搜索结果
         for result in vector_results {
             let entry = combined_map.entry(result.chunk_id).or_insert(
-                crate::api::models::HybridSearchResult {
+                crate::modules::models::HybridSearchResult {
                     document_id: result.document_id,
                     chunk_id: result.chunk_id,
                     content: result.content.clone(),
@@ -363,7 +363,7 @@ impl VectorService {
         // 处理关键词搜索结果
         for result in keyword_results {
             let entry = combined_map.entry(result.chunk_id).or_insert(
-                crate::api::models::HybridSearchResult {
+                crate::modules::models::HybridSearchResult {
                     document_id: result.document_id,
                     chunk_id: result.chunk_id,
                     content: result.content.clone(),

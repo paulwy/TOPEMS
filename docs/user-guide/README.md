@@ -24,7 +24,8 @@ user-guide/
     ├── pdm.md           # 产品数据管理
     ├── ehs.md           # 环境健康安全
     ├── bi.md            # 数据分析
-    └── scm.md           # 供应链管理
+    ├── scm.md           # 供应链管理
+    └── lims.md          # 实验室管理
 ```
 
 ---
@@ -53,12 +54,15 @@ user-guide/
 | 企业资源 | [erp.md](./modules/erp.md) | 资产管理、财务、凭证 |
 | 客户管理 | [crm.md](./modules/crm.md) | 客户、商机 |
 | 研发管理 | [rs.md](./modules/rs.md) | 项目、实验 |
-| 质量管理 | [qms.md](./modules/qms.md) | 质量标准、检验 |
-| 供应商管理 | [srm.md](./modules/srm.md) | 供应商、采购 |
-| 仓库管理 | [wms.md](./modules/wms.md) | 仓库、库存 |
-| 制造执行 | [mes.md](./modules/mes.md) | 生产计划、工艺 |
-| 产品数据 | [pdm.md](./modules/pdm.md) | 产品、BOM |
+| 质量管理 | [qms.md](./modules/qms.md) | 质量标准、检验、SPC |
+| 供应商管理 | [srm.md](./modules/srm.md) | 供应商、采购订单 |
+| 仓库管理 | [wms.md](./modules/wms.md) | 仓库、库存、预警 |
+| 制造执行 | [mes.md](./modules/mes.md) | 生产计划、工艺、OEE |
+| 产品数据 | [pdm.md](./modules/pdm.md) | 产品、BOM、文档 |
 | 环境健康 | [ehs.md](./modules/ehs.md) | 安全检查、事故 |
+| 数据分析 | [bi.md](./modules/bi.md) | 仪表盘、报表、预测 |
+| 供应链 | [scm.md](./modules/scm.md) | 采购、MRP、补货 |
+| 实验室 | [lims.md](./modules/lims.md) | 样品、检验记录 |
 
 ### 遇到问题
 
@@ -75,5 +79,5 @@ user-guide/
 
 ---
 
-**文档版本**: v1.1  
-**最后更新**: 2026-06-25
+**文档版本**: v1.2  
+**最后更新**: 2026-07-03

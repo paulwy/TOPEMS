@@ -18,6 +18,10 @@ import { Plus, Edit2, Trash2, Eye } from 'lucide-react';
 import { ListPageTemplate, type ColumnDef, type RowAction } from '@/components/templates';
 import { PageContainer } from '@/components/common';
 import { useAppStore } from '@/store';
+import { designTokens } from '@/theme/tokens';
+import { logger } from '@/utils/logger';
+
+const ct = designTokens.colors;
 
 interface OfficeSupply {
   id: string;
@@ -33,8 +37,8 @@ interface OfficeSupply {
 
 const STATUS_MAP: Record<string, { label: string; bg: string; color: string }> = {
   normal: { label: '正常', bg: 'success.lighter', color: 'success.700' },
-  low: { label: '库存不足', bg: 'error.lighter', color: '#b91c1c' },
-  out_of_stock: { label: '缺货', bg: 'error.lighter', color: '#991b1b' },
+  low: { label: '库存不足', bg: 'error.lighter', color: ct.error[700] },
+  out_of_stock: { label: '缺货', bg: 'error.lighter', color: ct.error[800] },
 };
 
 const mockSupplies: OfficeSupply[] = [
@@ -173,14 +177,14 @@ const OfficeSuppliesPage: React.FC = () => {
     try {
       setSupplies(mockSupplies);
     } catch (error: unknown) {
-      console.error('加载办公用品数据失败:', error);
+      logger.error('加载办公用品数据失败:', error);
     } finally {
       setLoading(false);
     }
   };
 
   const getStatusBadge = (status: string) => {
-    const config = STATUS_MAP[status] || { label: status, bg: 'grey.100', color: '#475569' };
+    const config = STATUS_MAP[status] || { label: status, bg: 'grey.100', color: ct.text.secondary };
     return (
       <Chip
         label={config.label}
@@ -402,8 +406,8 @@ const OfficeSuppliesPage: React.FC = () => {
               { label: '文件管理', value: '文件管理' },
             ],
             value: categoryFilter,
-            onChange: (value) => {
-              setCategoryFilter(value);
+            onChange: (value: unknown) => {
+              setCategoryFilter(value as string);
               setPage(0);
             },
           },
@@ -418,8 +422,8 @@ const OfficeSuppliesPage: React.FC = () => {
               { label: '缺货', value: 'out_of_stock' },
             ],
             value: statusFilter,
-            onChange: (value) => {
-              setStatusFilter(value);
+            onChange: (value: unknown) => {
+              setStatusFilter(value as string);
               setPage(0);
             },
           },

@@ -6,7 +6,6 @@ pub mod db;
 pub mod document;
 pub mod multimodal;
 pub mod pdf;
-pub mod permission;
 pub mod qa;
 pub mod recommendation;
 pub mod vector;

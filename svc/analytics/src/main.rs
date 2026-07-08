@@ -86,6 +86,12 @@ async fn main() {
         tracing::warn!("Report module database init warning: {}", e);
     }
 
+    // Start report scheduler
+    let scheduler = modules::report::ReportScheduler::new(pool.clone());
+    if let Err(e) = scheduler.start().await {
+        tracing::warn!("Failed to start report scheduler: {}", e);
+    }
+
     let auth_state = AuthState::from_env();
     let health_config = SimpleHealthConfig::new("topems-analytics").with_db(pool.clone());
 
@@ -577,74 +583,8 @@ async fn main() {
             "/api/bi/analytics/overview",
             get(modules::bi::analytics::get_analytics_overview),
         )
-        // ===== Report routes (prefix: /api/analytics/report) =====
-        // Report
-        .route(
-            "/api/analytics/report",
-            get(modules::report::report::list_reports),
-        )
-        .route(
-            "/api/analytics/report",
-            post(modules::report::report::create_report),
-        )
-        .route(
-            "/api/analytics/report/{id}",
-            get(modules::report::report::get_report),
-        )
-        .route(
-            "/api/analytics/report/{id}",
-            put(modules::report::report::update_report),
-        )
-        .route(
-            "/api/analytics/report/{id}",
-            delete(modules::report::report::delete_report),
-        )
-        .route(
-            "/api/analytics/report/{id}/export",
-            post(modules::report::report::export_report),
-        )
-        .route(
-            "/api/analytics/report/{id}/run",
-            post(modules::report::report::run_report),
-        )
-        // Report Template
-        .route(
-            "/api/analytics/report/template",
-            get(modules::report::template::list_templates),
-        )
-        .route(
-            "/api/analytics/report/template",
-            post(modules::report::template::create_template),
-        )
-        .route(
-            "/api/analytics/report/template/{id}",
-            get(modules::report::template::get_template),
-        )
-        .route(
-            "/api/analytics/report/template/{id}",
-            put(modules::report::template::update_template),
-        )
-        // Report Schedule
-        .route(
-            "/api/analytics/report/schedule",
-            get(modules::report::schedule::list_schedules),
-        )
-        .route(
-            "/api/analytics/report/schedule",
-            post(modules::report::schedule::create_schedule),
-        )
-        .route(
-            "/api/analytics/report/schedule/{id}",
-            get(modules::report::schedule::get_schedule),
-        )
-        .route(
-            "/api/analytics/report/schedule/{id}",
-            put(modules::report::schedule::update_schedule),
-        )
-        .route(
-            "/api/analytics/report/schedule/{id}",
-            delete(modules::report::schedule::delete_schedule),
-        )
+        // ===== Report routes (prefix: /api/report) =====
+        .merge(modules::report::create_routes())
         // Health & Metrics
         .route("/api/v1/health/detailed", get(detailed_health))
         .layer(axum::middleware::from_fn_with_state(

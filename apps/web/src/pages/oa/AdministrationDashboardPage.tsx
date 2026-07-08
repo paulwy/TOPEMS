@@ -25,6 +25,9 @@ import {
   CalendarCheck,
 } from 'lucide-react';
 import { PageContainer } from '@/components/common';
+import { designTokens } from '@/theme/tokens';
+
+const ct = designTokens.colors;
 
 const STATUS_STYLES: Record<string, { bg: string; color: string; label: string }> = {
   pending: { bg: 'warning.light', color: 'warning.dark', label: '待审批' },
@@ -157,7 +160,7 @@ const mockMeetingBookings: MeetingBooking[] = [
 ];
 
 const quickActions: QuickAction[] = [
-  { label: '请假申请', icon: <CalendarDays />, color: 'orange', bg: '#ffedd5', path: '/oa/leave' },
+  { label: '请假申请', icon: <CalendarDays />, color: 'orange', bg: ct.orange[100], path: '/oa/leave' },
   {
     label: '报销申请',
     icon: <DollarSign />,
@@ -166,10 +169,10 @@ const quickActions: QuickAction[] = [
     path: '/oa/expense',
   },
   { label: '会议室预订', icon: <Calendar />, color: 'blue', bg: 'primary.100', path: '/oa/meeting' },
-  { label: '办公用品', icon: <Package />, color: 'teal', bg: '#ccfbf1', path: '/oa/supplies' },
+  { label: '办公用品', icon: <Package />, color: 'teal', bg: ct.teal[100], path: '/oa/supplies' },
   { label: '车辆预约', icon: <Car />, color: 'red', bg: 'error.lighter', path: '/oa/vehicle' },
   { label: '公告通知', icon: <Bell />, color: 'purple', bg: 'secondary.100', path: '/oa/announcement' },
-  { label: '考勤查询', icon: <UserCheck />, color: 'green', bg: '#dcfce7', path: '/oa/attendance' },
+  { label: '考勤查询', icon: <UserCheck />, color: 'green', bg: ct.success[100], path: '/oa/attendance' },
   { label: '证明开具', icon: <FileText />, color: 'amber', bg: 'warning.100', path: '/oa/certificate' },
 ];
 
@@ -186,14 +189,14 @@ const statCards: StatCardData[] = [
     value: mockStats.pendingLeaves,
     color: 'orange',
     icon: <CalendarDays />,
-    bg: '#ffedd5',
+    bg: ct.orange[100],
   },
   {
     label: '今日考勤',
     value: mockStats.todayAttendance,
     color: 'teal',
     icon: <UserCheck />,
-    bg: '#ccfbf1',
+    bg: ct.teal[100],
   },
   {
     label: '待审批报销',
@@ -224,7 +227,7 @@ export const AdministrationDashboardPage: React.FC = () => {
       title='行政概览'
       headerProps={{
         pageIcon: <CalendarCheck style={{ width: 20, height: 20 }} />,
-        pageGradient: 'linear-gradient(135deg, #06B6D4 0%, #0891B2 100%)',
+        pageGradient: `linear-gradient(135deg, ${ct.cyan.main} 0%, ${ct.cyan.dark} 100%)`,
       }}
     >
       <Stack spacing={3}>

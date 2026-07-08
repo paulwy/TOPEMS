@@ -154,9 +154,9 @@ const RsReportPage: React.FC = () => {
         {
           id: 'percentage',
           label: '占比',
-          render: (value: number) => `${value.toFixed(1)}%`,
+          render: (value: unknown) => `${(value as number).toFixed(1)}%`,
         },
-      ],
+      ] as any,
       data: [
         {
           phase: '小试阶段',

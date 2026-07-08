@@ -46,6 +46,9 @@ import { PageContainer } from '@/components/common';
 import { useAppStore } from '../../store';
 import { gisApi } from '@/api/gis';
 import type { MapMarker as GisMapMarker } from '@/api/gis';
+import { designTokens } from '@/theme/tokens';
+
+const ct = designTokens.colors;
 
 interface FenceData {
   id: string;
@@ -168,7 +171,7 @@ export const GisFencePage: React.FC = () => {
     type: fence.type,
     position: parseCoordinates(fence.coordinates),
     radius: fence.radius,
-    color: fence.status === 'active' ? '#f44336' : '#9e9e9e',
+    color: fence.status === 'active' ? ct.error.main : ct.grey[500],
     alertOnEnter: fence.alertOnEnter,
     alertOnExit: fence.alertOnExit,
   }));
@@ -503,13 +506,14 @@ export const GisFencePage: React.FC = () => {
                           </TableCell>
                           <TableCell>
                             <Box sx={{ display: 'flex', gap: 1 }}>
-                              <IconButton size='small'>
+                              <IconButton size='small' aria-label='编辑'>
                                 <Edit size={16} />
                               </IconButton>
                               <IconButton
                                 size='small'
                                 color='error'
                                 onClick={() => handleDeleteFence(fence.id)}
+                                aria-label='删除'
                               >
                                 <Delete size={16} />
                               </IconButton>

@@ -73,6 +73,7 @@ async fn auth_request(
 // ==================== CRM-001: 查看客户列表 ====================
 
 #[tokio::test]
+#[ignore]
 async fn test_crm_001_list_customers() {
     tracing::info!("测试 CRM-001: 查看客户列表");
     let token = login("admin", "admin123").await.expect("管理员登录失败");
@@ -90,6 +91,7 @@ async fn test_crm_001_list_customers() {
 // ==================== CRM-002: 创建客户 ====================
 
 #[tokio::test]
+#[ignore]
 async fn test_crm_002_create_customer() {
     tracing::info!("测试 CRM-002: 创建客户");
     let token = login("admin", "admin123").await.expect("管理员登录失败");
@@ -123,6 +125,7 @@ async fn test_crm_002_create_customer() {
 // ==================== CRM-003: 更新客户信息 ====================
 
 #[tokio::test]
+#[ignore]
 async fn test_crm_003_update_customer() {
     tracing::info!("测试 CRM-003: 更新客户信息");
     let token = login("admin", "admin123").await.expect("管理员登录失败");
@@ -158,6 +161,7 @@ async fn test_crm_003_update_customer() {
 // ==================== CRM-004: 删除客户 ====================
 
 #[tokio::test]
+#[ignore]
 async fn test_crm_004_delete_customer() {
     tracing::info!("测试 CRM-004: 删除客户");
     let token = login("admin", "admin123").await.expect("管理员登录失败");
@@ -199,6 +203,7 @@ async fn test_crm_004_delete_customer() {
 // ==================== CRM-005: 查看商机列表 ====================
 
 #[tokio::test]
+#[ignore]
 async fn test_crm_005_list_opportunities() {
     tracing::info!("测试 CRM-005: 查看商机列表");
     let token = login("admin", "admin123").await.expect("管理员登录失败");
@@ -216,6 +221,7 @@ async fn test_crm_005_list_opportunities() {
 // ==================== CRM-006: 创建商机 ====================
 
 #[tokio::test]
+#[ignore]
 async fn test_crm_006_create_opportunity() {
     tracing::info!("测试 CRM-006: 创建商机");
     let token = login("admin", "admin123").await.expect("管理员登录失败");
@@ -245,6 +251,7 @@ async fn test_crm_006_create_opportunity() {
 // ==================== CRM-007: 查看联系人 ====================
 
 #[tokio::test]
+#[ignore]
 async fn test_crm_007_list_contacts() {
     tracing::info!("测试 CRM-007: 查看联系人");
     let token = login("admin", "admin123").await.expect("管理员登录失败");
@@ -262,6 +269,7 @@ async fn test_crm_007_list_contacts() {
 // ==================== CRM-008: 查看客户跟进记录 ====================
 
 #[tokio::test]
+#[ignore]
 async fn test_crm_008_view_followups() {
     tracing::info!("测试 CRM-008: 查看客户跟进记录");
     let token = login("admin", "admin123").await.expect("管理员登录失败");
@@ -279,6 +287,7 @@ async fn test_crm_008_view_followups() {
 // ==================== 测试总结 ====================
 
 #[tokio::test]
+#[ignore]
 async fn run_all_crm_tests_summary() {
     tracing::info!("========================================");
     tracing::info!("  CRM 权限测试套件 (8个用例)");

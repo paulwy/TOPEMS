@@ -161,15 +161,14 @@ impl FieldEncryptionService {
         Ok(EncryptedField::new(
             STANDARD.encode(&ciphertext),
             self.key_manager.current_version(),
-            STANDARD.encode(&nonce),
+            STANDARD.encode(nonce),
         ))
     }
 
     pub fn encrypt_to_string(&self, plaintext: &str) -> EncryptionResult<String> {
         let field = self.encrypt(plaintext)?;
-        Ok(serde_json::to_string(&field).map_err(|e| {
-            EncryptionError::EncryptionFailed(format!("Serialization failed: {}", e))
-        })?)
+        serde_json::to_string(&field)
+            .map_err(|e| EncryptionError::EncryptionFailed(format!("Serialization failed: {}", e)))
     }
 
     pub fn decrypt(&self, field: &EncryptedField) -> EncryptionResult<String> {
@@ -365,7 +364,7 @@ impl DataMasking {
             let prefix = &digits[..4];
             let suffix = &digits[digits.len() - 4..];
             let middle_len = digits.len() - 8;
-            let middle_stars: String = std::iter::repeat('*').take(middle_len).collect();
+            let middle_stars: String = std::iter::repeat_n('*', middle_len).collect();
             format!("{} {} {}", prefix, middle_stars, suffix)
         } else if digits.len() >= 4 {
             let suffix = &digits[digits.len() - 4..];
@@ -397,7 +396,7 @@ impl DataMasking {
             2 => format!("{}*", chars[0]),
             _ => {
                 let first = chars[0];
-                let stars: String = std::iter::repeat('*').take(chars.len() - 1).collect();
+                let stars: String = std::iter::repeat_n('*', chars.len() - 1).collect();
                 format!("{}{}", first, stars)
             }
         }
@@ -408,12 +407,12 @@ impl DataMasking {
         if chars.len() >= 15 {
             let prefix: String = chars[..3].iter().collect();
             let suffix: String = chars[chars.len() - 4..].iter().collect();
-            let middle_stars: String = std::iter::repeat('*').take(chars.len() - 7).collect();
+            let middle_stars: String = std::iter::repeat_n('*', chars.len() - 7).collect();
             format!("{}{}{}", prefix, middle_stars, suffix)
         } else if chars.len() >= 6 {
             let prefix: String = chars[..2].iter().collect();
             let suffix: String = chars[chars.len() - 2..].iter().collect();
-            let middle_stars: String = std::iter::repeat('*').take(chars.len() - 4).collect();
+            let middle_stars: String = std::iter::repeat_n('*', chars.len() - 4).collect();
             format!("{}{}{}", prefix, middle_stars, suffix)
         } else {
             "****".to_string()
@@ -433,11 +432,11 @@ impl DataMasking {
                 if value.len() <= 2 {
                     "**".to_string()
                 } else if value.len() <= 6 {
-                    let first = value.chars().next().unwrap();
+                    let first = value.chars().next().unwrap_or('*');
                     format!("{}***", first)
                 } else {
-                    let first = value.chars().next().unwrap();
-                    let last = value.chars().last().unwrap();
+                    let first = value.chars().next().unwrap_or('*');
+                    let last = value.chars().last().unwrap_or('*');
                     format!("{}****{}", first, last)
                 }
             }

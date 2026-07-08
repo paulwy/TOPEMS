@@ -313,6 +313,7 @@ const ExpenseClaimPage: React.FC = () => {
             <IconButton
               size='small'
               sx={{ color: 'text.secondary' }}
+              aria-label='筛选'
             >
               <Filter />
             </IconButton>
@@ -378,6 +379,7 @@ const ExpenseClaimPage: React.FC = () => {
                                     size='small'
                                     color='success'
                                     onClick={() => handleApprove(claim.id)}
+                                    aria-label='批准'
                                   >
                                     <CheckSquare fontSize='small' />
                                   </IconButton>
@@ -387,6 +389,7 @@ const ExpenseClaimPage: React.FC = () => {
                                     size='small'
                                     color='error'
                                     onClick={() => handleReject(claim.id)}
+                                    aria-label='拒绝'
                                   >
                                     <XCircle fontSize='small' />
                                   </IconButton>
@@ -543,7 +546,7 @@ const ExpenseClaimPage: React.FC = () => {
             }}
           >
             <Typography variant='h6'>{getModalTitle()}</Typography>
-            <IconButton onClick={handleCloseModal}>
+            <IconButton onClick={handleCloseModal} aria-label='关闭'>
               <X />
             </IconButton>
           </Box>

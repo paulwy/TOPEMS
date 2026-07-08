@@ -12,6 +12,7 @@ pub struct PluginInfo {
     pub description: String,
     pub deployment: DeploymentInfo,
     pub permissions: Vec<PermissionDef>,
+    pub runtime_url: String,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
@@ -26,6 +27,7 @@ pub struct PermissionDef {
 }
 
 pub async fn get_plugin_info() -> Json<ApiResponse<PluginInfo>> {
+    let runtime_url = get_runtime_url();
     let plugin_info = PluginInfo {
         code: "integration".to_string(),
         name: "系统集成".to_string(),
@@ -46,6 +48,7 @@ pub async fn get_plugin_info() -> Json<ApiResponse<PluginInfo>> {
                 code: "sync".to_string(),
             },
         ],
+        runtime_url,
     };
 
     Json(ApiResponse::success(plugin_info, "获取插件信息成功"))
@@ -64,9 +67,15 @@ pub fn create_routes() -> Router {
         .route("/api/plugins/health", get(plugin_health_check))
 }
 
+/// 获取运行时 URL
+fn get_runtime_url() -> String {
+    std::env::var("RUNTIME_URL").unwrap_or_else(|_| "http://localhost:8068".to_string())
+}
+
 /// 启动时自动注册到统一核心
 pub async fn auto_register_to_core(core_url: Option<&str>) {
     let core_url = core_url.unwrap_or("http://localhost:8000");
+    let runtime_url = get_runtime_url();
 
     let info = PluginInfo {
         code: "integration".to_string(),
@@ -78,6 +87,7 @@ pub async fn auto_register_to_core(core_url: Option<&str>) {
             base_path: "/api/integration".to_string(),
         },
         permissions: vec![],
+        runtime_url,
     };
 
     let client = reqwest::Client::new();

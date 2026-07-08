@@ -1,4 +1,6 @@
 import React, { useState, useEffect, useMemo } from 'react';
+import { designTokens } from '@/theme/tokens';
+const ct = designTokens.colors;
 import { useNavigate } from 'react-router-dom';
 import {
   GitMerge,
@@ -53,15 +55,15 @@ const REPORT_TYPE_CONFIG: Record<
   ConsolidationReportType,
   { name: string; icon: React.ElementType; color: string }
 > = {
-  consolidated_balance_sheet: { name: '合并资产负债表', icon: Building2, color: '#1976D2' },
-  consolidated_income_statement: { name: '合并利润表', icon: TrendingUp, color: '#00C897' },
+  consolidated_balance_sheet: { name: '合并资产负债表', icon: Building2, color: ct.primary.dark },
+  consolidated_income_statement: { name: '合并利润表', icon: TrendingUp, color: ct.success.main },
   consolidated_cash_flow: { name: '合并现金流量表', icon: DollarSign, color: 'secondary.main' },
   consolidated_statement_changes: {
     name: '合并所有者权益变动表',
     icon: BarChart3,
     color: 'warning.main',
   },
-  elimination_work_sheet: { name: '抵消工作底稿', icon: FileSpreadsheet, color: '#6366F1' },
+  elimination_work_sheet: { name: '抵消工作底稿', icon: FileSpreadsheet, color: ct.secondary[400] },
 };
 
 const STATUS_CONFIG: Record<string, { label: string; color: string }> = {
@@ -129,28 +131,28 @@ export default function ConsolidationReportsPage() {
         title: '合并资产负债表',
         value: reports.filter((r) => r.report_type === 'consolidated_balance_sheet').length,
         icon: <Building2 sx={{ width: 24, height: 24 }} />,
-        gradient: ['#1976D2', '#1565C0'] as [string, string],
+        gradient: [ct.primary.dark, ct.primary[800]] as [string, string],
       },
       {
         id: 'income-statement',
         title: '合并利润表',
         value: reports.filter((r) => r.report_type === 'consolidated_income_statement').length,
         icon: <TrendingUp sx={{ width: 24, height: 24 }} />,
-        gradient: ['#00C897', '#00A878'] as [string, string],
+        gradient: [ct.success.main, ct.success.dark] as [string, string],
       },
       {
         id: 'cash-flow',
         title: '合并现金流量表',
         value: reports.filter((r) => r.report_type === 'consolidated_cash_flow').length,
         icon: <DollarSign sx={{ width: 24, height: 24 }} />,
-        gradient: ['#8B5CF6', '#7C3AED'] as [string, string],
+        gradient: [ct.secondary.main, ct.secondary.dark] as [string, string],
       },
       {
         id: 'equity-changes',
         title: '所有者权益变动表',
         value: reports.filter((r) => r.report_type === 'consolidated_statement_changes').length,
         icon: <BarChart3 sx={{ width: 24, height: 24 }} />,
-        gradient: ['#F59E0B', '#D97706'] as [string, string],
+        gradient: [ct.warning.main, ct.warning.dark] as [string, string],
       },
     ],
     [reports]
@@ -173,8 +175,8 @@ export default function ConsolidationReportsPage() {
         nameKey: 'name',
         data: [
           { name: '草稿', value: statusDistribution.draft, color: 'grey' },
-          { name: '计算中', value: statusDistribution.calculating, color: '#1976D2' },
-          { name: '已完成', value: statusDistribution.completed, color: '#00C897' },
+          { name: '计算中', value: statusDistribution.calculating, color: ct.primary.dark },
+          { name: '已完成', value: statusDistribution.completed, color: ct.success.main },
           { name: '已发布', value: statusDistribution.published, color: 'secondary.main' },
         ].filter((d) => d.value > 0),
         height: 250,
@@ -336,7 +338,7 @@ export default function ConsolidationReportsPage() {
                   {selectedReport.scope_name} | {selectedReport.period}
                 </Typography>
               </Box>
-              <IconButton onClick={() => setShowDetail(false)}>
+              <IconButton onClick={() => setShowDetail(false)} aria-label='关闭'>
                 <X style={{ width: 20, height: 20 }} />
               </IconButton>
             </Box>
@@ -423,7 +425,7 @@ export default function ConsolidationReportsPage() {
                           textAlign: 'left',
                           padding: '12px',
                           fontWeight: 600,
-                          backgroundColor: '#f9fafb',
+                          backgroundColor: ct.background.default,
                         }}
                       >
                         项目
@@ -433,7 +435,7 @@ export default function ConsolidationReportsPage() {
                           textAlign: 'right',
                           padding: '12px',
                           fontWeight: 600,
-                          backgroundColor: '#f9fafb',
+                          backgroundColor: ct.background.default,
                         }}
                       >
                         本期金额
@@ -443,7 +445,7 @@ export default function ConsolidationReportsPage() {
                           textAlign: 'right',
                           padding: '12px',
                           fontWeight: 600,
-                          backgroundColor: '#f9fafb',
+                          backgroundColor: ct.background.default,
                         }}
                       >
                         上期金额
@@ -453,7 +455,7 @@ export default function ConsolidationReportsPage() {
                           textAlign: 'right',
                           padding: '12px',
                           fontWeight: 600,
-                          backgroundColor: '#f9fafb',
+                          backgroundColor: ct.background.default,
                         }}
                       >
                         变动
@@ -463,7 +465,7 @@ export default function ConsolidationReportsPage() {
                           textAlign: 'right',
                           padding: '12px',
                           fontWeight: 600,
-                          backgroundColor: '#f9fafb',
+                          backgroundColor: ct.background.default,
                         }}
                       >
                         变动率

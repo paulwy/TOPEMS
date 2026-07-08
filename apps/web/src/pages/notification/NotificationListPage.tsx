@@ -20,6 +20,9 @@ import { useAppStore } from '../../store';
 import { ListPageTemplate, type ColumnDef } from '@/components/templates';
 import { extractErrorMessage } from '@/utils/errors';
 import { PageContainer, ConfirmDialog } from '@/components/common';
+import { designTokens } from '@/theme/tokens';
+
+const ct = designTokens.colors;
 
 type NotificationType = 'system' | 'approval' | 'task' | 'message';
 type NotificationStatus = 'unread' | 'read';
@@ -53,7 +56,7 @@ const TYPE_BG_COLORS: Record<NotificationType, { bg: string; color: string }> = 
   system: { bg: 'rgba(59, 130, 246, 0.1)', color: 'primary.main' },
   approval: { bg: 'rgba(245, 158, 11, 0.1)', color: 'warning.main' },
   task: { bg: 'rgba(34, 197, 94, 0.1)', color: 'success.main' },
-  message: { bg: 'rgba(14, 165, 233, 0.1)', color: '#0ea5e9' },
+  message: { bg: 'rgba(14, 165, 233, 0.1)', color: ct.info.main },
 };
 
 const TYPE_ICONS: Record<NotificationType, React.ReactNode> = {

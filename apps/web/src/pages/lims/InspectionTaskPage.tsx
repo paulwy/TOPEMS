@@ -1,4 +1,6 @@
 import React, { useState, useEffect, useCallback } from 'react';
+import { designTokens } from '@/theme/tokens';
+const ct = designTokens.colors;
 import { PageContainer } from '@/components/common';
 import { useNavigate } from 'react-router-dom';
 import {
@@ -460,7 +462,7 @@ const InspectionTaskPage: React.FC = () => {
         { label: '已终止', value: '已终止' },
       ],
       value: statusFilter,
-      onChange: (value) => setStatusFilter(value),
+      onChange: (value: unknown) => setStatusFilter(value as string),
     },
   ];
 
@@ -610,7 +612,7 @@ const InspectionTaskPage: React.FC = () => {
       subtitle='Inspection Task Management'
       headerProps={{
         pageIcon: <ClipboardList style={{ width: 20, height: 20 }} />,
-        pageGradient: 'linear-gradient(135deg, #6366F1 0%, #4F46E5 100%)',
+        pageGradient: `linear-gradient(135deg, ${ct.secondary[400]} 0%, ${ct.secondary[600]} 100%)`,
       }}
     >
       <ListPageTemplate

@@ -20,6 +20,9 @@ import { scmApi } from '@/api/scm';
 import type { Supplier, SupplierPerformance } from '@/api/scm';
 import { useAppStore } from '@/store';
 import { apiLogger } from '@/utils/logger';
+import { designTokens } from '@/theme/tokens';
+
+const ct = designTokens.colors;
 
 const ScmSupplierPage: React.FC = () => {
   const navigate = useNavigate();
@@ -245,7 +248,7 @@ const ScmSupplierPage: React.FC = () => {
     <PageContainer
       headerProps={{
         pageIcon: <Truck style={{ width: 20, height: 20 }} />,
-        pageGradient: 'linear-gradient(135deg, #F59E0B 0%, #D97706 100%)',
+        pageGradient: `linear-gradient(135deg, ${ct.warning.main} 0%, ${ct.warning.dark} 100%)`,
       }}
     >
       <ListPageTemplate

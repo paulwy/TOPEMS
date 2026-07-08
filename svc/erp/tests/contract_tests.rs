@@ -424,6 +424,7 @@ mod tests {
     }
 
     #[tokio::test]
+    #[ignore]
     #[ignore = "集成测试需要运行 iam:8000, rs:8020, erp:8010 服务"]
     async fn test_contract_integration() {
         test_project_contract_crud().await;

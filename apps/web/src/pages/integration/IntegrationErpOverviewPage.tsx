@@ -49,6 +49,9 @@ import {
   type RecentItem,
 } from '@/components/templates';
 import { useAppStore } from '../../store';
+import { designTokens } from '@/theme/tokens';
+
+const ct = designTokens.colors;
 
 type SyncStatus = 'success' | 'syncing' | 'error' | 'pending';
 
@@ -164,14 +167,14 @@ const getStatusIcon = (status: SyncStatus) => {
       return (
         <CheckCircle2
           size={16}
-          color='#4caf50'
+          color={ct.success.main}
         />
       );
     case 'syncing':
       return (
         <RefreshCw
           size={16}
-          color='#1976d2'
+          color={ct.primary.dark}
           className='spin'
         />
       );
@@ -179,14 +182,14 @@ const getStatusIcon = (status: SyncStatus) => {
       return (
         <AlertCircle
           size={16}
-          color='#f44336'
+          color={ct.error.main}
         />
       );
     case 'pending':
       return (
         <Clock
           size={16}
-          color='#9e9e9e'
+          color={ct.grey[400]}
         />
       );
   }

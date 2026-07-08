@@ -26,6 +26,9 @@ import {
 } from '@/components/templates';
 import { MetricCard } from '@/components/bi/MetricCard';
 import { apiLogger } from '@/utils/logger';
+import { designTokens } from '@/theme/tokens';
+
+const ct = designTokens.colors;
 
 const STATUS_COLOR_MAP: Record<string, 'success' | 'warning' | 'default'> = {
   active: 'success',
@@ -235,7 +238,7 @@ const LimsProcessPage: React.FC = () => {
         type: 'select',
         options: STATUS_OPTIONS,
         value: filterStatus,
-        onChange: (value: string) => setFilterStatus(value),
+        onChange: (value: unknown) => setFilterStatus(value as string),
       },
     ],
     [filterStatus]
@@ -322,7 +325,7 @@ const LimsProcessPage: React.FC = () => {
             title='样品总数'
             value={stats.total_samples}
             icon={<ClipboardList size={24} />}
-            gradient={['#8B5CF6', '#7C3AED']}
+            gradient={[ct.secondary.main, ct.secondary.dark]}
             subtitle={`待测试: ${stats.pending_samples}`}
             trend={stats.pending_samples > 0 ? 'up' : 'neutral'}
           />
@@ -330,7 +333,7 @@ const LimsProcessPage: React.FC = () => {
             title='检验任务'
             value={stats.total_tasks}
             icon={<ClipboardList size={24} />}
-            gradient={['#6366F1', '#4F46E5']}
+            gradient={[ct.secondary[400], ct.secondary[600]]}
             subtitle={`进行中: ${stats.in_progress_tasks}`}
             trend={stats.in_progress_tasks > 0 ? 'up' : 'neutral'}
           />
@@ -338,14 +341,14 @@ const LimsProcessPage: React.FC = () => {
             title='检验流程'
             value={stats.total_processes}
             icon={<FileText size={24} />}
-            gradient={['warning.main', '#D97706']}
+            gradient={[ct.warning.main, ct.warning.dark]}
             trend='neutral'
           />
           <MetricCard
             title='已完成样品'
             value={stats.completed_samples}
             icon={<CheckCircle size={24} />}
-            gradient={['#00C897', '#00A878']}
+            gradient={[ct.success.main, ct.success.dark]}
             trend='up'
           />
         </Box>
@@ -362,7 +365,7 @@ const LimsProcessPage: React.FC = () => {
           display: 'flex',
           alignItems: 'center',
           justifyContent: 'center',
-          background: 'linear-gradient(135deg, #f8fafc 0%, border.default 100%)',
+          background: `linear-gradient(135deg, ${ct.background.default} 0%, border.default 100%)`,
           p: 2,
         }}
       >
@@ -387,7 +390,7 @@ const LimsProcessPage: React.FC = () => {
           >
             <ClipboardList
               size={32}
-              color='#0891b2'
+              color={ct.cyan[600]}
             />
           </Avatar>
           <Typography
@@ -418,7 +421,7 @@ const LimsProcessPage: React.FC = () => {
     <PageContainer
       headerProps={{
         pageIcon: <ClipboardList style={{ width: 20, height: 20 }} />,
-        pageGradient: 'linear-gradient(135deg, #14B8A6 0%, #0D9488 100%)',
+        pageGradient: `linear-gradient(135deg, ${ct.teal[400]} 0%, ${ct.teal[600]} 100%)`,
       }}
     >
       <ListPageTemplate

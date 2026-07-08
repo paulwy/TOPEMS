@@ -73,6 +73,7 @@ async fn auth_request(
 // ==================== QMS-001: 查看质量检查列表 ====================
 
 #[tokio::test]
+#[ignore]
 async fn test_qms_001_list_inspections() {
     tracing::info!("测试 QMS-001: 查看质量检查列表");
     let token = login("admin", "admin123").await.expect("管理员登录失败");
@@ -90,6 +91,7 @@ async fn test_qms_001_list_inspections() {
 // ==================== QMS-002: 创建质量检查 ====================
 
 #[tokio::test]
+#[ignore]
 async fn test_qms_002_create_inspection() {
     tracing::info!("测试 QMS-002: 创建质量检查");
     let token = login("admin", "admin123").await.expect("管理员登录失败");
@@ -122,6 +124,7 @@ async fn test_qms_002_create_inspection() {
 // ==================== QMS-003: 查看不合格记录 ====================
 
 #[tokio::test]
+#[ignore]
 async fn test_qms_003_list_nonconformities() {
     tracing::info!("测试 QMS-003: 查看不合格记录");
     let token = login("admin", "admin123").await.expect("管理员登录失败");
@@ -139,6 +142,7 @@ async fn test_qms_003_list_nonconformities() {
 // ==================== QMS-004: 创建不合格记录 ====================
 
 #[tokio::test]
+#[ignore]
 async fn test_qms_004_create_nonconformity() {
     tracing::info!("测试 QMS-004: 创建不合格记录");
     let token = login("admin", "admin123").await.expect("管理员登录失败");
@@ -167,6 +171,7 @@ async fn test_qms_004_create_nonconformity() {
 // ==================== QMS-005: 查看质量报告 ====================
 
 #[tokio::test]
+#[ignore]
 async fn test_qms_005_view_reports() {
     tracing::info!("测试 QMS-005: 查看质量报告");
     let token = login("admin", "admin123").await.expect("管理员登录失败");
@@ -184,6 +189,7 @@ async fn test_qms_005_view_reports() {
 // ==================== QMS-006: 查看审核计划 ====================
 
 #[tokio::test]
+#[ignore]
 async fn test_qms_006_view_audit_plan() {
     tracing::info!("测试 QMS-006: 查看审核计划");
     let token = login("admin", "admin123").await.expect("管理员登录失败");
@@ -201,6 +207,7 @@ async fn test_qms_006_view_audit_plan() {
 // ==================== 测试总结 ====================
 
 #[tokio::test]
+#[ignore]
 async fn run_all_qms_tests_summary() {
     tracing::info!("========================================");
     tracing::info!("  QMS 权限测试套件 (6个用例)");

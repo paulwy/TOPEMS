@@ -15,7 +15,7 @@ import {
 } from '@mui/material';
 import React, { useState, useEffect } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
-import WorkflowDesigner, { type NodeData, type EdgeData } from '@/components/workflow/WorkflowDesigner';
+import WorkflowDesigner, { NodeData, EdgeData } from '@/components/workflow/WorkflowDesigner';
 import { useAppStore } from '../../store';
 import type { Workflow, CreateWorkflowRequest, UpdateWorkflowRequest } from '@/api/workflow';
 import { workflowApi } from '@/api/workflow';

@@ -38,6 +38,9 @@ import { ehsApi } from '@/api/ehs';
 import { PageContainer } from '@/components/common/PageContainerV2';
 import type { Incident, IncidentAction } from '@/api/ehs';
 import { useAppStore } from '@/store';
+import { designTokens } from '@/theme/tokens';
+
+const ct = designTokens.colors;
 
 const EhsIncidentReportPage: React.FC = () => {
   const navigate = useNavigate();
@@ -165,8 +168,8 @@ const EhsIncidentReportPage: React.FC = () => {
   const getSeverityBadge = (severity: string) => {
     const severityMap: Record<string, { bg: string; color: string; label: string }> = {
       fatal: { bg: 'error.lighter', color: 'error.dark', label: '致命' },
-      serious: { bg: '#fed7aa', color: 'warning.600', label: '严重' },
-      minor: { bg: 'warning.100', color: '#ca8a04', label: '轻微' },
+      serious: { bg: ct.orange[200], color: 'warning.600', label: '严重' },
+      minor: { bg: 'warning.100', color: ct.yellow[600], label: '轻微' },
       near_miss: { bg: 'primary.100', color: 'primary.dark', label: '未遂' },
     };
     const item = severityMap[severity] || {
@@ -185,8 +188,8 @@ const EhsIncidentReportPage: React.FC = () => {
 
   const getStatusBadge = (status: string) => {
     const statusMap: Record<string, { bg: string; color: string; label: string }> = {
-      pending: { bg: 'warning.100', color: '#ca8a04', label: '待处理' },
-      待处理: { bg: 'warning.100', color: '#ca8a04', label: '待处理' },
+      pending: { bg: 'warning.100', color: ct.yellow[600], label: '待处理' },
+      待处理: { bg: 'warning.100', color: ct.yellow[600], label: '待处理' },
       investigating: { bg: 'primary.100', color: 'primary.dark', label: '调查中' },
       调查中: { bg: 'primary.100', color: 'primary.dark', label: '调查中' },
       resolved: { bg: 'success.lighter', color: 'success.dark', label: '已解决' },
@@ -364,7 +367,7 @@ const EhsIncidentReportPage: React.FC = () => {
       headerProps={{
         actions: headerActions,
         pageIcon: <AlertCircle sx={{ width: 20, height: 20 }} />,
-        pageGradient: 'linear-gradient(135deg, #F97316 0%, #EA580C 100%)',
+        pageGradient: `linear-gradient(135deg, ${ct.orange[500]} 0%, ${ct.orange[600]} 100%)`,
       }}
       maxWidth='xl'
     >
@@ -387,7 +390,7 @@ const EhsIncidentReportPage: React.FC = () => {
           >
             <Card
               sx={{
-                background: 'linear-gradient(to bottom right, #f97316, error.main)',
+                background: `linear-gradient(to bottom right, ${ct.orange[500]}, error.main)`,
                 color: 'white',
               }}
             >
@@ -400,7 +403,7 @@ const EhsIncidentReportPage: React.FC = () => {
                   }}
                 >
                   <Box>
-                    <Typography sx={{ color: '#fed7aa', fontSize: 14 }}>事件总数</Typography>
+                    <Typography sx={{ color: ct.orange[200], fontSize: 14 }}>事件总数</Typography>
                     <Typography
                       variant='h3'
                       sx={{ fontWeight: 700, mt: 0.5 }}
@@ -408,14 +411,14 @@ const EhsIncidentReportPage: React.FC = () => {
                       {stats.total}
                     </Typography>
                   </Box>
-                  <AlertCircle sx={{ fontSize: 48, color: '#fed7aa' }} />
+                  <AlertCircle sx={{ fontSize: 48, color: ct.orange[200] }} />
                 </Box>
               </CardContent>
             </Card>
 
             <Card
               sx={{
-                background: 'linear-gradient(to bottom right, #eab308, #f97316)',
+                background: `linear-gradient(to bottom right, ${ct.yellow[500]}, ${ct.orange[500]})`,
                 color: 'white',
               }}
             >
@@ -443,7 +446,7 @@ const EhsIncidentReportPage: React.FC = () => {
 
             <Card
               sx={{
-                background: 'linear-gradient(to bottom right, #22c55e, success.main)',
+                background: `linear-gradient(to bottom right, ${ct.success.main}, success.main)`,
                 color: 'white',
               }}
             >
@@ -471,7 +474,7 @@ const EhsIncidentReportPage: React.FC = () => {
 
             <Card
               sx={{
-                background: 'linear-gradient(to bottom right, error.main, #ec4899)',
+                background: `linear-gradient(to bottom right, error.main, ${ct.pink[500]})`,
                 color: 'white',
               }}
             >
@@ -687,7 +690,7 @@ const EhsIncidentReportPage: React.FC = () => {
             onClick={handleCreateIncident}
             sx={{
               backgroundColor: 'warning.600',
-              '&:hover': { backgroundColor: '#c2410c' },
+              '&:hover': { backgroundColor: ct.orange[700] },
             }}
           >
             提交报告
@@ -721,13 +724,13 @@ const EhsIncidentReportPage: React.FC = () => {
                 <Box sx={{ p: 2, bgcolor: 'white7ed', borderRadius: 1 }}>
                   <Typography
                     variant='body2'
-                    sx={{ color: '#c2410c' }}
+                    sx={{ color: ct.orange[700] }}
                   >
                     事件类型
                   </Typography>
                   <Typography
                     variant='body1'
-                    sx={{ fontWeight: 500, color: '#7c2d12', mt: 0.5 }}
+                    sx={{ fontWeight: 500, color: ct.orange[900], mt: 0.5 }}
                   >
                     {getTypeLabel(selectedIncident.incident_type)}
                   </Typography>
@@ -744,7 +747,7 @@ const EhsIncidentReportPage: React.FC = () => {
                 <Box sx={{ p: 2, bgcolor: 'warning.lighter', borderRadius: 1 }}>
                   <Typography
                     variant='body2'
-                    sx={{ color: '#ca8a04' }}
+                    sx={{ color: ct.yellow[600] }}
                   >
                     状态
                   </Typography>

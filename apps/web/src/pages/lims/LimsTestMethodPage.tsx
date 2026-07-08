@@ -30,6 +30,9 @@ import { limsApi } from '@/api/lims';
 import type { TestMethod, CreateTestMethodRequest, UpdateTestMethodRequest } from '@/api/lims';
 import { useAppStore } from '@/store';
 import { apiLogger } from '@/utils/logger';
+import { designTokens } from '@/theme/tokens';
+
+const ct = designTokens.colors;
 
 interface LimsListResponse<T> {
   items?: T[];
@@ -170,7 +173,7 @@ const LimsTestMethodPage: React.FC = () => {
         { label: '感官检验', value: '感官检验' },
       ],
       value: categoryFilter,
-      onChange: (value) => setCategoryFilter(value),
+      onChange: (value: unknown) => setCategoryFilter(value as string),
     },
     {
       id: 'status',
@@ -183,7 +186,7 @@ const LimsTestMethodPage: React.FC = () => {
         { label: '已归档', value: '已归档' },
       ],
       value: statusFilter,
-      onChange: (value) => setStatusFilter(value),
+      onChange: (value: unknown) => setStatusFilter(value as string),
     },
   ];
 
@@ -329,14 +332,14 @@ const LimsTestMethodPage: React.FC = () => {
         mb: 3,
       }}
     >
-      <Card sx={{ bgcolor: '#f0fdf4' }}>
+      <Card sx={{ bgcolor: ct.success[50] }}>
         <CardContent sx={{ p: 2 }}>
           <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5 }}>
             <Box
               sx={{
                 width: 40,
                 height: 40,
-                bgcolor: '#dcfce7',
+                bgcolor: ct.success[100],
                 borderRadius: 3,
                 display: 'flex',
                 alignItems: 'center',
@@ -369,7 +372,7 @@ const LimsTestMethodPage: React.FC = () => {
               sx={{
                 width: 40,
                 height: 40,
-                background: 'linear-gradient(135deg, #3b82f6, #2563eb)',
+                background: `linear-gradient(135deg, ${ct.primary.main}, ${ct.primary[600]})`,
                 boxShadow: '0 4px 12px rgba(59,130,246,0.3)',
                 borderRadius: '50%',
                 display: 'flex',
@@ -377,7 +380,7 @@ const LimsTestMethodPage: React.FC = () => {
                 justifyContent: 'center',
               }}
             >
-              <BookOpen sx={{ width: 20, height: 20, color: '#fff' }} />
+              <BookOpen sx={{ width: 20, height: 20, color: ct.background.paper }} />
             </Box>
             <Box>
               <Typography
@@ -403,7 +406,7 @@ const LimsTestMethodPage: React.FC = () => {
               sx={{
                 width: 40,
                 height: 40,
-                background: 'linear-gradient(135deg, #22c55e, #16a34a)',
+                background: `linear-gradient(135deg, ${ct.success.main}, ${ct.success[600]})`,
                 boxShadow: '0 4px 12px rgba(34,197,94,0.3)',
                 borderRadius: '50%',
                 display: 'flex',
@@ -411,7 +414,7 @@ const LimsTestMethodPage: React.FC = () => {
                 justifyContent: 'center',
               }}
             >
-              <BookOpen sx={{ width: 20, height: 20, color: '#fff' }} />
+              <BookOpen sx={{ width: 20, height: 20, color: ct.background.paper }} />
             </Box>
             <Box>
               <Typography
@@ -474,7 +477,7 @@ const LimsTestMethodPage: React.FC = () => {
           display: 'flex',
           alignItems: 'center',
           justifyContent: 'center',
-          background: 'linear-gradient(135deg, #f0fdf4 0%, #f8fafc 100%)',
+          background: `linear-gradient(135deg, ${ct.success[50]} 0%, ${ct.background.default} 100%)`,
         }}
       >
         <Box sx={{ textAlign: 'center' }}>
@@ -503,7 +506,7 @@ const LimsTestMethodPage: React.FC = () => {
       subtitle='Test Method Management'
       headerProps={{
         pageIcon: <BookOpen style={{ width: 20, height: 20 }} />,
-        pageGradient: 'linear-gradient(135deg, #22C55E 0%, #16A34A 100%)',
+        pageGradient: `linear-gradient(135deg, ${ct.success.main} 0%, ${ct.success[600]} 100%)`,
       }}
     >
       <ListPageTemplate
@@ -625,7 +628,7 @@ const LimsTestMethodPage: React.FC = () => {
             variant='contained'
             onClick={handleSave}
             disabled={saving}
-            sx={{ bgcolor: '#16a34a' }}
+            sx={{ bgcolor: ct.success[600] }}
           >
             {saving ? '保存中...' : '保存'}
           </Button>
@@ -751,7 +754,7 @@ const LimsTestMethodPage: React.FC = () => {
               setShowDetailModal(false);
               if (selectedMethod) handleEdit(selectedMethod);
             }}
-            sx={{ bgcolor: '#16a34a' }}
+            sx={{ bgcolor: ct.success[600] }}
           >
             编辑
           </Button>

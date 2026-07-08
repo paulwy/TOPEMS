@@ -47,7 +47,7 @@ impl ChatMessage {
     }
 
     /// 创建工具调用消息
-    pub fn tool(content: &str, tool_call: FunctionCall) -> Self {
+    pub fn tool(_content: &str, tool_call: FunctionCall) -> Self {
         Self {
             role: "assistant".to_string(),
             content: "".to_string(),

@@ -1,6 +1,6 @@
-use chrono::Utc;
 use rust_decimal::Decimal;
 use serde::{Deserialize, Serialize};
+use std::str::FromStr;
 use uuid::Uuid;
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
@@ -18,14 +18,6 @@ struct PermissionDef {
     name: String,
     resource_type: String,
     action: String,
-}
-
-#[derive(Debug, Clone, Serialize, Deserialize)]
-struct ApiResponse<T> {
-    success: bool,
-    data: Option<T>,
-    message: String,
-    code: Option<i32>,
 }
 
 #[test]
@@ -672,5 +664,413 @@ mod business_logic_tests {
         assert_eq!(parts[0], "INV");
         assert_eq!(parts[1].len(), 4);
         assert_eq!(parts[2].len(), 4);
+    }
+}
+
+#[cfg(test)]
+mod scoring_logic_tests {
+    use rust_decimal::Decimal;
+    use topems_crm::modules::scoring_logic::{
+        calculate_interaction_score, calculate_loyalty_score, calculate_opportunity_score,
+        calculate_revenue_score, calculate_score_level, calculate_total_score, calculate_trend,
+    };
+
+    #[test]
+    fn test_calculate_score_level_a() {
+        assert_eq!(calculate_score_level(95), "A");
+        assert_eq!(calculate_score_level(80), "A");
+        assert_eq!(calculate_score_level(85), "A");
+    }
+
+    #[test]
+    fn test_calculate_score_level_b() {
+        assert_eq!(calculate_score_level(79), "B");
+        assert_eq!(calculate_score_level(60), "B");
+        assert_eq!(calculate_score_level(70), "B");
+    }
+
+    #[test]
+    fn test_calculate_score_level_c() {
+        assert_eq!(calculate_score_level(59), "C");
+        assert_eq!(calculate_score_level(40), "C");
+        assert_eq!(calculate_score_level(50), "C");
+    }
+
+    #[test]
+    fn test_calculate_score_level_d() {
+        assert_eq!(calculate_score_level(39), "D");
+        assert_eq!(calculate_score_level(0), "D");
+        assert_eq!(calculate_score_level(25), "D");
+    }
+
+    #[test]
+    fn test_calculate_trend_up() {
+        assert_eq!(calculate_trend(Some(70), 80), "up");
+        assert_eq!(calculate_trend(Some(50), 60), "up");
+        assert_eq!(calculate_trend(Some(0), 10), "up");
+    }
+
+    #[test]
+    fn test_calculate_trend_down() {
+        assert_eq!(calculate_trend(Some(80), 70), "down");
+        assert_eq!(calculate_trend(Some(60), 50), "down");
+        assert_eq!(calculate_trend(Some(10), 0), "down");
+    }
+
+    #[test]
+    fn test_calculate_trend_stable() {
+        assert_eq!(calculate_trend(Some(80), 80), "stable");
+        assert_eq!(calculate_trend(None, 80), "stable");
+        assert_eq!(calculate_trend(Some(50), 50), "stable");
+    }
+
+    #[test]
+    fn test_calculate_revenue_score_high_value() {
+        assert_eq!(
+            calculate_revenue_score(Some(Decimal::from(1_000_000)), None),
+            100
+        );
+        assert_eq!(
+            calculate_revenue_score(Some(Decimal::from(500_000)), Some(Decimal::from(100_000))),
+            80
+        );
+        assert_eq!(
+            calculate_revenue_score(Some(Decimal::from(500_000)), Some(Decimal::from(600_000))),
+            100
+        );
+    }
+
+    #[test]
+    fn test_calculate_revenue_score_medium_value() {
+        assert_eq!(
+            calculate_revenue_score(Some(Decimal::from(500_000)), None),
+            80
+        );
+        assert_eq!(
+            calculate_revenue_score(Some(Decimal::from(100_000)), None),
+            60
+        );
+        assert_eq!(
+            calculate_revenue_score(Some(Decimal::from(50_000)), None),
+            40
+        );
+    }
+
+    #[test]
+    fn test_calculate_revenue_score_low_value() {
+        assert_eq!(
+            calculate_revenue_score(Some(Decimal::from(10_000)), None),
+            20
+        );
+        assert_eq!(calculate_revenue_score(None, None), 10);
+        assert_eq!(
+            calculate_revenue_score(Some(Decimal::from(5_000)), None),
+            10
+        );
+    }
+
+    #[test]
+    fn test_calculate_opportunity_score_high_volume() {
+        assert_eq!(calculate_opportunity_score(10, 7), 100);
+        assert_eq!(calculate_opportunity_score(10, 5), 90);
+        assert_eq!(calculate_opportunity_score(10, 3), 80);
+    }
+
+    #[test]
+    fn test_calculate_opportunity_score_medium_volume() {
+        assert_eq!(calculate_opportunity_score(5, 3), 75);
+        assert_eq!(calculate_opportunity_score(3, 1), 50);
+        assert_eq!(calculate_opportunity_score(1, 1), 55);
+    }
+
+    #[test]
+    fn test_calculate_opportunity_score_low_volume() {
+        assert_eq!(calculate_opportunity_score(0, 0), 10);
+        assert_eq!(calculate_opportunity_score(1, 0), 25);
+    }
+
+    #[test]
+    fn test_calculate_interaction_score() {
+        assert_eq!(calculate_interaction_score(20), 100);
+        assert_eq!(calculate_interaction_score(10), 80);
+        assert_eq!(calculate_interaction_score(5), 60);
+        assert_eq!(calculate_interaction_score(3), 40);
+        assert_eq!(calculate_interaction_score(1), 20);
+        assert_eq!(calculate_interaction_score(0), 10);
+    }
+
+    #[test]
+    fn test_calculate_loyalty_score_active() {
+        assert_eq!(calculate_loyalty_score(5, Some("active")), 100);
+        assert_eq!(calculate_loyalty_score(3, Some("active")), 85);
+        assert_eq!(calculate_loyalty_score(1, Some("active")), 70);
+        assert_eq!(calculate_loyalty_score(0, Some("active")), 55);
+    }
+
+    #[test]
+    fn test_calculate_loyalty_score_inactive() {
+        assert_eq!(calculate_loyalty_score(5, Some("inactive")), 80);
+        assert_eq!(calculate_loyalty_score(1, Some("inactive")), 50);
+    }
+
+    #[test]
+    fn test_calculate_total_score() {
+        assert_eq!(calculate_total_score(100, 100, 100, 100), 100);
+        assert_eq!(calculate_total_score(0, 0, 0, 0), 10);
+        assert_eq!(calculate_total_score(80, 80, 80, 80), 80);
+        assert_eq!(calculate_total_score(100, 0, 0, 0), 35);
+        assert_eq!(calculate_total_score(0, 100, 0, 0), 30);
+        assert_eq!(calculate_total_score(0, 0, 100, 0), 20);
+        assert_eq!(calculate_total_score(0, 0, 0, 100), 15);
+    }
+}
+
+#[cfg(test)]
+mod permission_logic_tests {
+    use super::*;
+
+    #[derive(Debug, Clone, PartialEq)]
+    enum ModulePermission {
+        CustomerRead,
+        CustomerWrite,
+        ContactRead,
+        ContactWrite,
+        OpportunityRead,
+        OpportunityWrite,
+        InteractionRead,
+        InteractionWrite,
+        All,
+    }
+
+    impl std::fmt::Display for ModulePermission {
+        fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+            match self {
+                ModulePermission::CustomerRead => write!(f, "crm:read"),
+                ModulePermission::CustomerWrite => write!(f, "crm:write"),
+                ModulePermission::ContactRead => write!(f, "crm:read"),
+                ModulePermission::ContactWrite => write!(f, "crm:write"),
+                ModulePermission::OpportunityRead => write!(f, "crm:read"),
+                ModulePermission::OpportunityWrite => write!(f, "crm:write"),
+                ModulePermission::InteractionRead => write!(f, "crm:read"),
+                ModulePermission::InteractionWrite => write!(f, "crm:write"),
+                ModulePermission::All => write!(f, "crm:admin"),
+            }
+        }
+    }
+
+    struct Claims {
+        is_superuser: bool,
+        permissions: Vec<String>,
+    }
+
+    impl Claims {
+        fn has_permission(&self, permission: &str) -> bool {
+            self.permissions.contains(&permission.to_string())
+        }
+    }
+
+    fn check_permission(claims: &Claims, permission: &ModulePermission) -> Result<(), String> {
+        if claims.is_superuser {
+            return Ok(());
+        }
+
+        let permission_str = permission.to_string();
+
+        if claims.has_permission(&permission_str) {
+            return Ok(());
+        }
+
+        if claims.has_permission("crm:admin") {
+            return Ok(());
+        }
+
+        if claims.has_permission("all") {
+            return Ok(());
+        }
+
+        Err(format!("权限不足：需要 {} 权限", permission))
+    }
+
+    #[test]
+    fn test_check_permission_superuser() {
+        let claims = Claims {
+            is_superuser: true,
+            permissions: vec![],
+        };
+
+        let result = check_permission(&claims, &ModulePermission::CustomerRead);
+        assert!(result.is_ok());
+    }
+
+    #[test]
+    fn test_check_permission_has_required_permission() {
+        let claims = Claims {
+            is_superuser: false,
+            permissions: vec!["crm:read".to_string()],
+        };
+
+        let result = check_permission(&claims, &ModulePermission::CustomerRead);
+        assert!(result.is_ok());
+    }
+
+    #[test]
+    fn test_check_permission_has_admin_permission() {
+        let claims = Claims {
+            is_superuser: false,
+            permissions: vec!["crm:admin".to_string()],
+        };
+
+        let result = check_permission(&claims, &ModulePermission::CustomerWrite);
+        assert!(result.is_ok());
+    }
+
+    #[test]
+    fn test_check_permission_has_all_permission() {
+        let claims = Claims {
+            is_superuser: false,
+            permissions: vec!["all".to_string()],
+        };
+
+        let result = check_permission(&claims, &ModulePermission::OpportunityRead);
+        assert!(result.is_ok());
+    }
+
+    #[test]
+    fn test_check_permission_lacks_permission() {
+        let claims = Claims {
+            is_superuser: false,
+            permissions: vec!["hrm:read".to_string()],
+        };
+
+        let result = check_permission(&claims, &ModulePermission::CustomerRead);
+        assert!(result.is_err());
+    }
+
+    #[test]
+    fn test_module_permission_display() {
+        assert_eq!(ModulePermission::CustomerRead.to_string(), "crm:read");
+        assert_eq!(ModulePermission::CustomerWrite.to_string(), "crm:write");
+        assert_eq!(ModulePermission::ContactRead.to_string(), "crm:read");
+        assert_eq!(ModulePermission::ContactWrite.to_string(), "crm:write");
+        assert_eq!(ModulePermission::OpportunityRead.to_string(), "crm:read");
+        assert_eq!(ModulePermission::OpportunityWrite.to_string(), "crm:write");
+        assert_eq!(ModulePermission::InteractionRead.to_string(), "crm:read");
+        assert_eq!(ModulePermission::InteractionWrite.to_string(), "crm:write");
+        assert_eq!(ModulePermission::All.to_string(), "crm:admin");
+    }
+}
+
+#[cfg(test)]
+mod mockall_examples {
+    use mockall::mock;
+    use rust_decimal::Decimal;
+
+    mock! {
+        pub ScoringDataProvider {
+            pub async fn get_revenue(&self, customer_id: &str) -> Option<Decimal>;
+            pub async fn get_opportunity_count(&self, customer_id: &str) -> i64;
+            pub async fn get_won_count(&self, customer_id: &str) -> i64;
+            pub async fn get_interaction_count(&self, customer_id: &str) -> i64;
+            pub async fn get_years_since_created(&self, customer_id: &str) -> i64;
+            pub async fn get_customer_status(&self, customer_id: &str) -> Option<String>;
+        }
+    }
+
+    use topems_crm::modules::scoring_logic::{
+        calculate_interaction_score, calculate_loyalty_score, calculate_opportunity_score,
+        calculate_revenue_score, calculate_score_level, calculate_total_score, calculate_trend,
+    };
+
+    async fn calculate_customer_score_with_mock(provider: &MockScoringDataProvider) -> i32 {
+        let customer_id = "test-customer-id";
+
+        let revenue = provider.get_revenue(customer_id).await;
+        let opportunity_count = provider.get_opportunity_count(customer_id).await;
+        let won_count = provider.get_won_count(customer_id).await;
+        let interaction_count = provider.get_interaction_count(customer_id).await;
+        let years_since_created = provider.get_years_since_created(customer_id).await;
+        let status_str = provider.get_customer_status(customer_id).await;
+        let status = status_str.as_deref();
+
+        let revenue_score = calculate_revenue_score(revenue, None);
+        let opportunity_score = calculate_opportunity_score(opportunity_count, won_count);
+        let interaction_score = calculate_interaction_score(interaction_count);
+        let loyalty_score = calculate_loyalty_score(years_since_created, status);
+
+        calculate_total_score(
+            revenue_score,
+            opportunity_score,
+            interaction_score,
+            loyalty_score,
+        )
+    }
+
+    #[tokio::test]
+    async fn test_mock_scoring_data_provider_high_value_customer() {
+        let mut provider = MockScoringDataProvider::new();
+
+        provider
+            .expect_get_revenue()
+            .returning(|_| Some(Decimal::from(1_000_000)));
+        provider.expect_get_opportunity_count().returning(|_| 10);
+        provider.expect_get_won_count().returning(|_| 7);
+        provider.expect_get_interaction_count().returning(|_| 20);
+        provider.expect_get_years_since_created().returning(|_| 5);
+        provider
+            .expect_get_customer_status()
+            .returning(|_| Some("active".to_string()));
+
+        let score = calculate_customer_score_with_mock(&provider).await;
+
+        assert!(score >= 80);
+        assert_eq!(calculate_score_level(score), "A");
+    }
+
+    #[tokio::test]
+    async fn test_mock_scoring_data_provider_low_value_customer() {
+        let mut provider = MockScoringDataProvider::new();
+
+        provider
+            .expect_get_revenue()
+            .returning(|_| Some(Decimal::from(5_000)));
+        provider.expect_get_opportunity_count().returning(|_| 1);
+        provider.expect_get_won_count().returning(|_| 0);
+        provider.expect_get_interaction_count().returning(|_| 0);
+        provider.expect_get_years_since_created().returning(|_| 0);
+        provider
+            .expect_get_customer_status()
+            .returning(|_| Some("inactive".to_string()));
+
+        let score = calculate_customer_score_with_mock(&provider).await;
+
+        assert!(score < 40);
+        assert_eq!(calculate_score_level(score), "D");
+    }
+
+    #[tokio::test]
+    async fn test_mock_scoring_data_provider_missing_data() {
+        let mut provider = MockScoringDataProvider::new();
+
+        provider.expect_get_revenue().returning(|_| None);
+        provider.expect_get_opportunity_count().returning(|_| 0);
+        provider.expect_get_won_count().returning(|_| 0);
+        provider.expect_get_interaction_count().returning(|_| 0);
+        provider.expect_get_years_since_created().returning(|_| 0);
+        provider.expect_get_customer_status().returning(|_| None);
+
+        let score = calculate_customer_score_with_mock(&provider).await;
+
+        assert_eq!(score, 12);
+        assert_eq!(calculate_score_level(score), "D");
+    }
+
+    #[tokio::test]
+    async fn test_mock_trend_analysis() {
+        let last_score = Some(60);
+        let current_score = 80;
+
+        let trend = calculate_trend(last_score, current_score);
+
+        assert_eq!(trend, "up");
     }
 }

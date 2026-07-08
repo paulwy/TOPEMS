@@ -37,6 +37,9 @@ import { useNotification } from '@/hooks/useNotification';
 import { DetailPageTemplate, type TabConfig, type SectionConfig } from '@/components/templates';
 import ConfirmDialog from '@/components/common/ConfirmDialog';
 import { PageContainer } from '@/components/common/PageContainerV2';
+import { designTokens } from '@/theme/tokens';
+
+const ct = designTokens.colors;
 
 interface ControlFormData {
   measure_type: 'engineering' | 'administrative' | 'ppe';
@@ -288,7 +291,7 @@ const EhsHazardDetailPage: React.FC = () => {
         );
         const colorMap: Record<string, { bg: string; color: string }> = {
           高风险: { bg: 'error.lighter', color: 'error.dark' },
-          中风险: { bg: 'warning.100', color: '#ca8a04' },
+          中风险: { bg: 'warning.100', color: ct.yellow[600] },
           低风险: { bg: 'success.lighter', color: 'success.dark' },
         };
         const colors = colorMap[`${riskResult.level}风险`] || {
@@ -437,8 +440,8 @@ const EhsHazardDetailPage: React.FC = () => {
             </Typography>
           </Box>
           <Box sx={{ textAlign: 'center', p: 2, bgcolor: 'warning.lighter', borderRadius: 1 }}>
-            <Typography sx={{ color: '#ca8a04', fontSize: 12 }}>暴露频率</Typography>
-            <Typography sx={{ fontWeight: 500, color: '#a16207', mt: 0.5 }}>
+            <Typography sx={{ color: ct.yellow[600], fontSize: 12 }}>暴露频率</Typography>
+            <Typography sx={{ fontWeight: 500, color: ct.yellow[700], mt: 0.5 }}>
               {hazard.exposure === 'high' ? '高' : hazard.exposure === 'medium' ? '中' : '低'}
             </Typography>
           </Box>
@@ -582,7 +585,7 @@ const EhsHazardDetailPage: React.FC = () => {
     <PageContainer
       headerProps={{
         pageIcon: <AlertTriangle sx={{ width: 20, height: 20 }} />,
-        pageGradient: 'linear-gradient(135deg, #F97316 0%, #EA580C 100%)',
+        pageGradient: `linear-gradient(135deg, ${ct.orange[500]} 0%, ${ct.orange[600]} 100%)`,
       }}
       backButton={{ href: '/ehs/hazards' }}
       maxWidth='xl'
@@ -811,7 +814,7 @@ const EhsHazardDetailPage: React.FC = () => {
           <Button
             variant='contained'
             onClick={handleUpdateHazard}
-            sx={{ backgroundColor: 'warning.600', '&:hover': { backgroundColor: '#c2410c' } }}
+            sx={{ backgroundColor: 'warning.600', '&:hover': { backgroundColor: ct.orange[700] } }}
           >
             保存更改
           </Button>
@@ -921,7 +924,7 @@ const EhsHazardDetailPage: React.FC = () => {
           <Button
             variant='contained'
             onClick={handleAddControl}
-            sx={{ backgroundColor: 'warning.600', '&:hover': { backgroundColor: '#c2410c' } }}
+            sx={{ backgroundColor: 'warning.600', '&:hover': { backgroundColor: ct.orange[700] } }}
           >
             添加措施
           </Button>

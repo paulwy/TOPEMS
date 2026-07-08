@@ -401,8 +401,8 @@ const RsMaterialListPage: React.FC = () => {
           ...categories.map((cat) => ({ label: cat, value: cat })),
         ],
         value: categoryFilter,
-        onChange: (value: string) => {
-          setCategoryFilter(value);
+        onChange: (value: unknown) => {
+          setCategoryFilter(value as string);
           setPage(0);
         },
       },
@@ -412,8 +412,8 @@ const RsMaterialListPage: React.FC = () => {
         type: 'select' as const,
         options: STATUS_OPTIONS,
         value: statusFilter,
-        onChange: (value: string) => {
-          setStatusFilter(value);
+        onChange: (value: unknown) => {
+          setStatusFilter(value as string);
           setPage(0);
         },
       },

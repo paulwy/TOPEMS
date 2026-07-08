@@ -1,5 +1,5 @@
 use std::time::Instant;
-use tracing::{info_span, Instrument};
+use tracing::info_span;
 
 pub async fn trace_db_query<T>(
     sql: &str,

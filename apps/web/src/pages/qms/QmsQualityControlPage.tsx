@@ -1,6 +1,8 @@
 import React, { useState, useMemo, useEffect, useCallback } from 'react';
 import { motion } from 'framer-motion';
 import { Shield, AlertCircle, CheckCircle, FileText, Plus, Edit, Trash2, Eye } from 'lucide-react';
+import { designTokens } from '@/theme/tokens';
+const ct = designTokens.colors;
 import {
   Dialog,
   DialogTitle,
@@ -126,9 +128,9 @@ const QmsQualityControlPage: React.FC = () => {
       high: { bg: 'error.lighter', color: 'error.dark' },
       critical: { bg: 'error.lighter', color: 'error.dark' },
       严重: { bg: 'error.lighter', color: 'error.dark' },
-      medium: { bg: 'warning.100', color: '#ca8a04' },
-      中等: { bg: 'warning.100', color: '#ca8a04' },
-      一般: { bg: 'warning.100', color: '#ca8a04' },
+      medium: { bg: 'warning.100', color: ct.yellow[600] },
+      中等: { bg: 'warning.100', color: ct.yellow[600] },
+      一般: { bg: 'warning.100', color: ct.yellow[600] },
       low: { bg: 'success.lighter', color: 'success.dark' },
       轻微: { bg: 'success.lighter', color: 'success.dark' },
     };
@@ -162,8 +164,8 @@ const QmsQualityControlPage: React.FC = () => {
         scheduled: { bg: 'primary.100', color: 'primary.dark' },
         planning: { bg: 'primary.100', color: 'primary.dark' },
         计划中: { bg: 'primary.100', color: 'primary.dark' },
-        in_progress: { bg: 'warning.100', color: '#ca8a04' },
-        进行中: { bg: 'warning.100', color: '#ca8a04' },
+        in_progress: { bg: 'warning.100', color: ct.yellow[600] },
+        进行中: { bg: 'warning.100', color: ct.yellow[600] },
         completed: { bg: 'success.lighter', color: 'success.dark' },
         已完成: { bg: 'success.lighter', color: 'success.dark' },
         已计划: { bg: 'primary.100', color: 'primary.dark' },
@@ -193,8 +195,8 @@ const QmsQualityControlPage: React.FC = () => {
     const colors: Record<string, { bg: string; color: string }> = {
       open: { bg: 'error.lighter', color: 'error.dark' },
       待处理: { bg: 'error.lighter', color: 'error.dark' },
-      in_progress: { bg: 'warning.100', color: '#ca8a04' },
-      处理中: { bg: 'warning.100', color: '#ca8a04' },
+      in_progress: { bg: 'warning.100', color: ct.yellow[600] },
+      处理中: { bg: 'warning.100', color: ct.yellow[600] },
       closed: { bg: 'success.lighter', color: 'success.dark' },
       resolved: { bg: 'success.lighter', color: 'success.dark' },
       已关闭: { bg: 'success.lighter', color: 'success.dark' },
@@ -468,7 +470,7 @@ const QmsQualityControlPage: React.FC = () => {
                 justifyContent: 'center',
               }}
             >
-              <AlertCircle sx={{ width: 20, height: 20, color: '#ca8a04' }} />
+              <AlertCircle sx={{ width: 20, height: 20, color: ct.yellow[600] }} />
             </Box>
             <Box>
               <Typography
@@ -665,7 +667,7 @@ const QmsQualityControlPage: React.FC = () => {
       subtitle='Quality Management System'
       headerProps={{
         pageIcon: <Shield style={{ width: 20, height: 20 }} />,
-        pageGradient: 'linear-gradient(135deg, #6366F1, #8B5CF6)',
+        pageGradient: `linear-gradient(135deg, ${ct.secondary[400]}, ${ct.secondary.main})`,
         tabs: headerTabs,
         onTabChange: (value) => setActiveTab(value as 'nonconformance' | 'audit'),
         search: {
@@ -682,7 +684,7 @@ const QmsQualityControlPage: React.FC = () => {
       <Card>
         <CardContent sx={{ p: 0 }}>
           <ListPageTemplate
-            columns={currentColumns}
+            columns={currentColumns as any}
             data={currentData as any[]}
             loading={loading}
             getRowId={(row: QualityIssue | AuditPlan) => row.id}

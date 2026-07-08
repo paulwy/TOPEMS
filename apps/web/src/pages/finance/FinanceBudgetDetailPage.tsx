@@ -1,4 +1,6 @@
 import React, { useState, useEffect, useMemo } from 'react';
+import { designTokens } from '@/theme/tokens';
+const ct = designTokens.colors;
 import {
   Box,
   Typography,
@@ -542,7 +544,7 @@ const FinanceBudgetDetailPage: React.FC = () => {
       avatar: (
         <DollarSign
           size={32}
-          color='#1976d2'
+          color={ct.primary.dark}
         />
       ),
       title: budget?.name,

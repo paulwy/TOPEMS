@@ -29,6 +29,9 @@ import {
   type FilterConfig,
 } from '@/components/templates';
 import { PageContainer } from '@/components/common/PageContainerV2';
+import { designTokens } from '@/theme/tokens';
+
+const ct = designTokens.colors;
 
 interface ConfigAttribute {
   name: string;
@@ -286,7 +289,7 @@ export const PdmProductConfigPage: React.FC = () => {
             <span style={{ fontSize: '0.875rem' }}>
               {row.attributes?.color || '-'} / {row.attributes?.size || '-'}
             </span>
-            <span style={{ fontSize: '0.75rem', color: '#888' }}>
+            <span style={{ fontSize: '0.75rem', color: ct.text.muted }}>
               {row.attributes?.material || '-'} / {row.attributes?.grade || '-'}
             </span>
           </Box>
@@ -450,7 +453,7 @@ export const PdmProductConfigPage: React.FC = () => {
     <PageContainer
       headerProps={{
         pageIcon: <Settings style={{ width: 20, height: 20 }} />,
-        pageGradient: 'linear-gradient(135deg, #6366F1 0%, #4F46E5 100%)',
+        pageGradient: `linear-gradient(135deg, ${ct.secondary[400]} 0%, ${ct.secondary[600]} 100%)`,
       }}
     >
       <ListPageTemplate

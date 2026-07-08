@@ -6,6 +6,7 @@ import {
   getPermissionsByGroup,
   type ModuleCode,
 } from '@/config/permissions';
+import { logger } from "@/utils/logger";
 
 const PERMISSION_CACHE_KEY = 'permission_cache';
 const CACHE_TTL = 5 * 60 * 1000;
@@ -26,7 +27,7 @@ const getCachedPermissions = (): PermissionCache | null => {
       }
     }
   } catch (e) {
-    console.error('Failed to read permission cache:', e);
+    logger.error('Failed to read permission cache:', e);
   }
   return null;
 };
@@ -40,7 +41,7 @@ const setCachedPermissions = (permissions: string[], inheritedPermissions: strin
     };
     localStorage.setItem(PERMISSION_CACHE_KEY, JSON.stringify(cache));
   } catch (e) {
-    console.error('Failed to write permission cache:', e);
+    logger.error('Failed to write permission cache:', e);
   }
 };
 

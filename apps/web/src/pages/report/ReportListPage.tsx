@@ -18,6 +18,9 @@ import type { ReportData } from '@/api/report';
 import { useAppStore } from '@/store';
 import { apiLogger } from '@/utils/logger';
 import ConfirmDialog from '@/components/common/ConfirmDialog';
+import { designTokens } from '@/theme/tokens';
+
+const ct = designTokens.colors;
 
 const ReportListPage: React.FC = () => {
   const navigate = useNavigate();
@@ -318,7 +321,7 @@ const ReportListPage: React.FC = () => {
       subtitle='统一报表管理平台，支持多种报表类型和导出格式'
       headerProps={{
         pageIcon: <FileBarChart style={{ width: 20, height: 20 }} />,
-        pageGradient: 'linear-gradient(135deg, #3B82F6 0%, #1D4ED8 100%)',
+        pageGradient: `linear-gradient(135deg, ${ct.primary.main} 0%, ${ct.primary.dark} 100%)`,
       }}
     >
       <ListPageTemplate

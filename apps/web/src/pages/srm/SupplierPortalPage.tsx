@@ -36,6 +36,9 @@ import { useAppStore } from '@/store';
 import { apiLogger } from '@/utils/logger';
 import { DashboardTemplate } from '@/components/templates';
 import { PageContainer } from '@/components/common/PageContainerV2';
+import { designTokens } from '@/theme/tokens';
+
+const ct = designTokens.colors;
 
 const SupplierPortalPage: React.FC = () => {
   const [loading, setLoading] = useState(true);
@@ -383,7 +386,7 @@ const SupplierPortalPage: React.FC = () => {
                         />
                         <ChevronRight
                           size={16}
-                          style={{ color: '#94A3B8' }}
+                          style={{ color: ct.text.muted }}
                         />
                       </ListItem>
                     </React.Fragment>
@@ -432,7 +435,7 @@ const SupplierPortalPage: React.FC = () => {
                         />
                         <ChevronRight
                           size={16}
-                          style={{ color: '#94A3B8' }}
+                          style={{ color: ct.text.muted }}
                         />
                       </ListItem>
                     </React.Fragment>
@@ -463,7 +466,7 @@ const SupplierPortalPage: React.FC = () => {
                         />
                         <ChevronRight
                           size={16}
-                          style={{ color: '#94A3B8' }}
+                          style={{ color: ct.text.muted }}
                         />
                       </ListItem>
                     </React.Fragment>

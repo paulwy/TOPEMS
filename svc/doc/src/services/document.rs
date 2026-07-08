@@ -4,11 +4,11 @@ use uuid::Uuid;
 use crate::models::{CreateDocumentRequest, Document, UpdateDocumentRequest};
 
 pub struct DocumentService {
-    pool: std::sync::Arc<PgPool>,
+    pool: PgPool,
 }
 
 impl DocumentService {
-    pub fn new(pool: std::sync::Arc<PgPool>) -> Self {
+    pub fn new(pool: PgPool) -> Self {
         Self { pool }
     }
 
@@ -17,7 +17,7 @@ impl DocumentService {
             Document,
             r#"SELECT * FROM doc.documents ORDER BY created_at DESC"#
         )
-        .fetch_all(&*self.pool)
+        .fetch_all(&self.pool)
         .await
     }
 
@@ -27,7 +27,7 @@ impl DocumentService {
             r#"SELECT * FROM doc.documents WHERE id = $1"#,
             document_id
         )
-        .fetch_optional(&*self.pool)
+        .fetch_optional(&self.pool)
         .await
     }
 
@@ -56,7 +56,7 @@ impl DocumentService {
             req.description,
             Some(created_by.to_string())
         )
-        .fetch_one(&*self.pool)
+        .fetch_one(&self.pool)
         .await
     }
 
@@ -86,13 +86,13 @@ impl DocumentService {
             tags,
             req.description
         )
-        .fetch_optional(&*self.pool)
+        .fetch_optional(&self.pool)
         .await
     }
 
     pub async fn delete_document(&self, document_id: Uuid) -> Result<bool> {
         let result = sqlx::query!(r#"DELETE FROM doc.documents WHERE id = $1"#, document_id)
-            .execute(&*self.pool)
+            .execute(&self.pool)
             .await?;
         Ok(result.rows_affected() > 0)
     }

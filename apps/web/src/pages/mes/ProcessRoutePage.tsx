@@ -34,6 +34,8 @@ import {
 } from '@/components/templates';
 import { Plus, Edit, Trash2, Eye, Route, Clock } from 'lucide-react';
 import { apiLogger } from '@/utils/logger';
+import { designTokens } from '@/theme/tokens';
+const ct = designTokens.colors;
 
 const ProcessRoutePage: React.FC = () => {
   const [routes, setRoutes] = useState<ProcessRoute[]>([]);
@@ -252,8 +254,8 @@ const ProcessRoutePage: React.FC = () => {
           { label: '草稿', value: 'draft' },
         ],
         value: statusFilter,
-        onChange: (value) => {
-          setStatusFilter(value);
+        onChange: (value: unknown) => {
+          setStatusFilter(value as string);
           setCurrentPage(1);
         },
       },
@@ -303,7 +305,7 @@ const ProcessRoutePage: React.FC = () => {
       subtitle='管理生产工序路线,包括路线定义、工序顺序、标准工时等'
       headerProps={{
         pageIcon: <Route style={{ width: 20, height: 20 }} />,
-        pageGradient: 'linear-gradient(135deg, #8B5CF6 0%, #7C3AED 100%)',
+        pageGradient: `linear-gradient(135deg, ${ct.secondary.main} 0%, ${ct.secondary.dark} 100%)`,
       }}
     >
       <ListPageTemplate

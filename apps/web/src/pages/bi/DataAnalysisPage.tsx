@@ -42,6 +42,9 @@ import { ChartComponent } from '@/components/bi/ChartLibrary';
 import { FilterBar } from '@/components/bi/FilterBar';
 import type { FilterConfig } from '@/api/bi';
 import { logger } from '@/utils/logger';
+import { designTokens } from '@/theme/tokens';
+
+const ct = designTokens.colors;
 
 const mockSalesData = [
   { month: '1月', 销售额: 125000, 订单数: 450, 客户数: 180 },
@@ -330,7 +333,7 @@ const DataAnalysisPage = () => {
                 ].map((metric, idx) => (
                   <Box
                     key={idx}
-                    sx={{ p: 2, backgroundColor: '#F9FAFB', borderRadius: 1 }}
+                    sx={{ p: 2, backgroundColor: ct.grey[50], borderRadius: 1 }}
                   >
                     <Typography
                       variant='caption'
@@ -396,14 +399,14 @@ const DataAnalysisPage = () => {
             <Table size='small'>
               <TableHead>
                 <TableRow>
-                  <TableCell sx={{ fontWeight: 600, backgroundColor: '#F9FAFB' }}>
+                  <TableCell sx={{ fontWeight: 600, backgroundColor: ct.grey[50] }}>
                     产品类别
                   </TableCell>
                   {['1月', '2月', '3月', '4月', '5月', '6月'].map((month) => (
                     <TableCell
                       key={month}
                       align='right'
-                      sx={{ fontWeight: 600, backgroundColor: '#F9FAFB' }}
+                      sx={{ fontWeight: 600, backgroundColor: ct.grey[50] }}
                     >
                       {month}
                     </TableCell>
@@ -551,7 +554,7 @@ const DataAnalysisPage = () => {
       subtitle='多维度数据探索与钻取分析'
       headerProps={{
         pageIcon: <BarChart3 style={{ width: 20, height: 20 }} />,
-        pageGradient: 'linear-gradient(135deg, #8B5CF6 0%, #6366F1 100%)',
+        pageGradient: `linear-gradient(135deg, ${ct.secondary.main} 0%, ${ct.secondary[400]} 100%)`,
       }}
       padding={false}
       maxWidth={false}

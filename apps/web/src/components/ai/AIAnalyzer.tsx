@@ -752,7 +752,7 @@ export function AIAnalyzer({
                             <Box
                               sx={{
                                 height: '100%',
-                                bgcolor: '#f97316',
+                                bgcolor: 'orange.main',
                                 borderRadius: 4,
                                 width: `${keyword.score * 100}%`,
                               }}

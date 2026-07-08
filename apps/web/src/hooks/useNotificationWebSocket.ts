@@ -145,7 +145,7 @@ export const useNotificationWebSocket = ({
 
     try {
       const wsProtocol = window.location.protocol === 'https:' ? 'wss' : 'ws';
-      const wsUrl = `${wsProtocol}://${window.location.host}/ws/notifications`;
+      const wsUrl = `${wsProtocol}://${window.location.host}/ws/core/notifications`;
 
       logger.info('Attempting to connect to notification service:', wsUrl);
 
@@ -238,6 +238,14 @@ export const useNotificationWebSocket = ({
         if (ws.readyState === WebSocket.CONNECTING) {
           setConnectionStatus('error');
           setIsConnecting(false);
+        }
+
+        if (ws.readyState === WebSocket.CONNECTING || ws.readyState === WebSocket.OPEN) {
+          try {
+            ws.close(1011, 'WebSocket error occurred');
+          } catch (e) {
+            logger.error('Failed to close connection on error:', e);
+          }
         }
       };
 

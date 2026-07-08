@@ -1,5 +1,6 @@
 import apiClient from './client';
 import type { ApiResponse } from './client';
+import { logger } from "@/utils/logger";
 
 export interface MigrationService {
   name: string;
@@ -68,7 +69,7 @@ export const migrationApi = {
       }
       throw new Error((res && res.message) || '获取服务列表失败');
     } catch (err: unknown) {
-      console.error(`[MigrationAPI] listServices failed: ${extractMessage(err)}`);
+      logger.error(`[MigrationAPI] listServices failed: ${extractMessage(err)}`);
       throw new Error(extractMessage(err));
     }
   },
@@ -118,7 +119,7 @@ export const migrationApi = {
       }
       throw new Error((res && res.message) || `获取 ${serviceName} 迁移状态失败`);
     } catch (err: unknown) {
-      console.error(`[MigrationAPI] getMigrationStatus failed: ${extractMessage(err)}`);
+      logger.error(`[MigrationAPI] getMigrationStatus failed: ${extractMessage(err)}`);
       throw new Error(extractMessage(err));
     }
   },

@@ -43,6 +43,7 @@ import {
 } from 'lucide-react';
 import { PageContainer, Grid } from '@/components/common';
 import { tenantApi } from '@/api/tenant';
+import { logger } from '@/utils/logger';
 import type { Tenant, TenantUser, TenantRole } from '@/api/tenant/types';
 
 const roleLabels: Record<TenantRole, string> = {
@@ -99,7 +100,7 @@ const TenantSettingsPage: React.FC = () => {
         }
       }
     } catch (error) {
-      console.error('Failed to load tenant settings:', error);
+      logger.error('Failed to load tenant settings:', error);
     } finally {
       setLoading(false);
     }
@@ -112,7 +113,7 @@ const TenantSettingsPage: React.FC = () => {
         setMembers(res.data.items);
       }
     } catch (error) {
-      console.error('Failed to load members:', error);
+      logger.error('Failed to load members:', error);
     }
   };
 
@@ -134,7 +135,7 @@ const TenantSettingsPage: React.FC = () => {
       });
       loadCurrentTenant();
     } catch (error) {
-      console.error('Failed to save settings:', error);
+      logger.error('Failed to save settings:', error);
     } finally {
       setSaving(false);
     }
@@ -158,7 +159,7 @@ const TenantSettingsPage: React.FC = () => {
       });
       loadCurrentTenant();
     } catch (error) {
-      console.error('Failed to save security settings:', error);
+      logger.error('Failed to save security settings:', error);
     } finally {
       setSaving(false);
     }
@@ -174,7 +175,7 @@ const TenantSettingsPage: React.FC = () => {
         loadMembers(tenant.id);
       }
     } catch (error) {
-      console.error('Failed to invite member:', error);
+      logger.error('Failed to invite member:', error);
     }
   };
 
@@ -184,7 +185,7 @@ const TenantSettingsPage: React.FC = () => {
       await tenantApi.removeMember(tenant.id, userId);
       loadMembers(tenant.id);
     } catch (error) {
-      console.error('Failed to remove member:', error);
+      logger.error('Failed to remove member:', error);
     }
   };
 
