@@ -1,10 +1,5 @@
-use axum::{
-    extract::{Json, State},
-    routing::{get, post},
-    Router,
-};
+use axum::extract::{Json, State};
 use serde::{Deserialize, Serialize};
-use sqlx::postgres::PgPool;
 use uuid::Uuid;
 
 use super::models::{CreateSyncTaskRequest, RetryFailedRequest, SyncStatistics, SyncTask};
@@ -26,7 +21,7 @@ pub async fn create_task(
     State(state): State<AppState>,
     Json(req): Json<CreateSyncTaskRequest>,
 ) -> Json<ApiResponse<SyncTask>> {
-    let tenant_id = Uuid::parse_str("00000000-0000-0000-0000-000000000001").unwrap();
+    let tenant_id = Uuid::nil();
     let source_id = req.source_id.as_ref().and_then(|s| Uuid::parse_str(s).ok());
 
     match create_sync_task(

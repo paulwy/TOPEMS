@@ -16,7 +16,6 @@ pub struct Customer {
     pub email: Option<String>,
     pub phone: Option<String>,
     pub fax: Option<String>,
-    pub id_card_number: Option<String>,
     pub address: Option<String>,
     pub city: Option<String>,
     pub province: Option<String>,
@@ -41,9 +40,6 @@ impl Customer {
         if let Some(email) = &self.email {
             self.email = Some(service.encrypt_to_string(email)?);
         }
-        if let Some(id_card) = &self.id_card_number {
-            self.id_card_number = Some(service.encrypt_to_string(id_card)?);
-        }
         Ok(())
     }
 
@@ -58,11 +54,6 @@ impl Customer {
                 self.email = Some(service.decrypt_string(email)?);
             }
         }
-        if let Some(id_card) = &self.id_card_number {
-            if id_card.starts_with('{') {
-                self.id_card_number = Some(service.decrypt_string(id_card)?);
-            }
-        }
         Ok(())
     }
 
@@ -72,9 +63,6 @@ impl Customer {
         }
         if let Some(email) = &self.email {
             self.email = Some(DataMasking::email(email));
-        }
-        if let Some(id_card) = &self.id_card_number {
-            self.id_card_number = Some(DataMasking::id_card(id_card));
         }
     }
 }
@@ -89,7 +77,6 @@ pub struct CreateCustomerRequest {
     pub email: Option<String>,
     pub phone: Option<String>,
     pub fax: Option<String>,
-    pub id_card_number: Option<String>,
     pub address: Option<String>,
     pub city: Option<String>,
     pub province: Option<String>,
@@ -113,7 +100,6 @@ pub struct UpdateCustomerRequest {
     pub email: Option<String>,
     pub phone: Option<String>,
     pub fax: Option<String>,
-    pub id_card_number: Option<String>,
     pub address: Option<String>,
     pub city: Option<String>,
     pub province: Option<String>,
@@ -151,7 +137,6 @@ mod tests {
             email: Some("contact@example.com".to_string()),
             phone: Some("+1234567890".to_string()),
             fax: Some("+1234567891".to_string()),
-            id_card_number: Some("110101199001011234".to_string()),
             address: Some("123 Main St".to_string()),
             city: Some("Shanghai".to_string()),
             province: Some("Shanghai".to_string()),
@@ -188,7 +173,6 @@ mod tests {
             email: Some("new@example.com".to_string()),
             phone: None,
             fax: None,
-            id_card_number: None,
             address: None,
             city: None,
             province: None,
@@ -217,7 +201,6 @@ mod tests {
             email: None,
             phone: None,
             fax: None,
-            id_card_number: None,
             address: None,
             city: None,
             province: None,
@@ -252,7 +235,6 @@ mod tests {
             email: Some("customer@example.com".to_string()),
             phone: Some("13800138000".to_string()),
             fax: None,
-            id_card_number: Some("110101199001011234".to_string()),
             address: None,
             city: None,
             province: None,
@@ -271,23 +253,19 @@ mod tests {
 
         let original_email = customer.email.clone();
         let original_phone = customer.phone.clone();
-        let original_id_card = customer.id_card_number.clone();
 
         customer.encrypt_fields(&service).unwrap();
 
         assert_ne!(customer.email, original_email);
         assert_ne!(customer.phone, original_phone);
-        assert_ne!(customer.id_card_number, original_id_card);
 
         assert!(customer.email.as_ref().unwrap().starts_with('{'));
         assert!(customer.phone.as_ref().unwrap().starts_with('{'));
-        assert!(customer.id_card_number.as_ref().unwrap().starts_with('{'));
 
         customer.decrypt_fields(&service).unwrap();
 
         assert_eq!(customer.email, original_email);
         assert_eq!(customer.phone, original_phone);
-        assert_eq!(customer.id_card_number, original_id_card);
     }
 
     #[test]
@@ -305,7 +283,6 @@ mod tests {
             email: Some("customer@example.com".to_string()),
             phone: Some("13800138000".to_string()),
             fax: None,
-            id_card_number: Some("110101199001011234".to_string()),
             address: None,
             city: None,
             province: None,
@@ -326,10 +303,5 @@ mod tests {
 
         assert!(customer.phone.as_ref().unwrap().contains("****"));
         assert!(customer.email.as_ref().unwrap().contains("***"));
-        assert!(customer
-            .id_card_number
-            .as_ref()
-            .unwrap()
-            .contains("********"));
     }
 }

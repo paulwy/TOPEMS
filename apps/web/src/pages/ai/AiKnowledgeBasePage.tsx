@@ -52,6 +52,8 @@ import { PageContainer, Grid } from '@/components/common';
 import { ListPageTemplate, type ColumnDef, type RowAction } from '@/components/templates';
 import { useAppStore } from '@/store';
 import { logger } from '@/utils/logger';
+import { designTokens } from '@/theme/tokens';
+const ct = designTokens.colors;
 
 interface VectorCollection {
   id: string;
@@ -231,34 +233,34 @@ const getFileIcon = (fileType: string) => {
     return (
       <FileText
         size={20}
-        style={{ color: '#ef4444' }}
+        style={{ color: ct.error.main }}
       />
     );
   if (['docx', 'doc'].includes(fileType))
     return (
       <FileText
         size={20}
-        style={{ color: '#3b82f6' }}
+        style={{ color: ct.primary.main }}
       />
     );
   if (['xlsx', 'xls'].includes(fileType))
     return (
       <FileSpreadsheet
         size={20}
-        style={{ color: '#22c55e' }}
+        style={{ color: ct.success.main }}
       />
     );
   if (['pptx', 'ppt'].includes(fileType))
     return (
       <File
         size={20}
-        style={{ color: '#f97316' }}
+        style={{ color: ct.orange.main }}
       />
     );
   return (
     <File
       size={20}
-      style={{ color: '#6b7280' }}
+      style={{ color: ct.grey[500] }}
     />
   );
 };
@@ -451,7 +453,7 @@ export const AiKnowledgeBasePage: React.FC = () => {
       maxWidth={false}
       headerProps={{
         pageIcon: <Database style={{ width: 20, height: 20 }} />,
-        pageGradient: 'linear-gradient(135deg, #11998e 0%, #38ef7d 100%)',
+        pageGradient: `linear-gradient(135deg, ${ct.teal[600]} 0%, ${ct.success[400]} 100%)`,
       }}
     >
       <Box sx={{ p: 3 }}>
@@ -630,7 +632,7 @@ export const AiKnowledgeBasePage: React.FC = () => {
                             />
                           </Box>
                         </Box>
-                        <IconButton size='small'>
+                        <IconButton size='small' aria-label='更多选项'>
                           <MoreHorizontal size={18} />
                         </IconButton>
                       </Box>
@@ -798,7 +800,7 @@ export const AiKnowledgeBasePage: React.FC = () => {
               />
               <Upload
                 size={40}
-                style={{ margin: '0 auto 12px', color: '#9ca3af' }}
+                style={{ margin: '0 auto 12px', color: ct.grey[400] }}
               />
               <Typography
                 variant='body1'

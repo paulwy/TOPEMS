@@ -3,13 +3,11 @@
 //! 实现转换规则解析器和执行引擎
 
 use serde_json::Value as JsonValue;
-use std::collections::HashMap;
 
 use super::conversion_rules::{
-    ConditionalMapping, ConversionExecution, ConversionRule, FieldMapping, RuleStatus, TriggerType,
-    ValueMap,
+    ConditionalMapping, ConversionExecution, ConversionRule, FieldMapping, RuleStatus, ValueMap,
 };
-use chrono::{DateTime, Utc};
+use chrono::Utc;
 use uuid::Uuid;
 
 // ==================== Condition Expression Types ====================
@@ -413,7 +411,7 @@ impl FieldMapper {
 
         // toUpperCase 转换
         if transform_trimmed.ends_with(".toUpperCase()") {
-            if let Some(field_path) = transform_trimmed.strip_suffix(".toUpperCase()") {
+            if let Some(_field_path) = transform_trimmed.strip_suffix(".toUpperCase()") {
                 if let Some(str_val) = value.as_str() {
                     return Ok(JsonValue::String(str_val.to_uppercase()));
                 }
@@ -422,7 +420,7 @@ impl FieldMapper {
 
         // toLowerCase 转换
         if transform_trimmed.ends_with(".toLowerCase()") {
-            if let Some(field_path) = transform_trimmed.strip_suffix(".toLowerCase()") {
+            if let Some(_field_path) = transform_trimmed.strip_suffix(".toLowerCase()") {
                 if let Some(str_val) = value.as_str() {
                     return Ok(JsonValue::String(str_val.to_lowercase()));
                 }
@@ -439,8 +437,8 @@ impl FieldMapper {
         // 字符串替换 "field.replace(old, new)"
         if transform_trimmed.contains(".replace(") {
             if let Some(rest) = transform_trimmed.strip_suffix(")") {
-                if let Some((old_new)) = rest.find(".replace(") {
-                    let field_path = &transform_trimmed[..old_new];
+                if let Some(old_new) = rest.find(".replace(") {
+                    let _field_path = &transform_trimmed[..old_new];
                     let args = &transform_trimmed[old_new + 9..];
                     if let Some((old, new)) = args.split_once(",") {
                         if let Some(str_val) = value.as_str() {
@@ -631,6 +629,7 @@ pub trait RuleRepository: Send + Sync {
 #[cfg(test)]
 mod tests {
     use super::*;
+    use crate::TriggerType;
 
     #[test]
     fn test_condition_operator_parsing() {

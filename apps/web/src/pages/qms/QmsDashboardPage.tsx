@@ -24,6 +24,9 @@ import {
 import { PageContainer } from '@/components/common';
 import { qmsApi } from '@/api/qms';
 import type { QualityOverview } from '@/api/qms';
+import { designTokens } from '@/theme/tokens';
+import { logger } from "@/utils/logger";
+const ct = designTokens.colors;
 
 const QmsDashboardPage: React.FC = () => {
   const navigate = useNavigate();
@@ -45,7 +48,7 @@ const QmsDashboardPage: React.FC = () => {
         setOverview(overviewRes.data);
       }
     } catch (error: unknown) {
-      console.error('Failed to load QMS dashboard data:', error);
+      logger.error('Failed to load QMS dashboard data:', error);
     } finally {
       setLoading(false);
     }
@@ -164,7 +167,7 @@ const QmsDashboardPage: React.FC = () => {
           ) : overview?.topIssues && overview.topIssues.length > 0 ? (
             <Box sx={{ width: '100%', p: 2 }}>
               {overview.topIssues.map((item, index) => {
-                const colors = ['#6366f1', '#f59e0b', '#ef4444', '#10b981', '#8b5cf6'];
+                const colors = [ct.secondary[400], ct.warning.main, ct.error.main, ct.success.main, ct.secondary.main];
                 return (
                   <Box
                     key={index}
@@ -237,7 +240,7 @@ const QmsDashboardPage: React.FC = () => {
                         cx={x}
                         cy={y}
                         r={4}
-                        fill='#6366f1'
+                        fill={ct.secondary[400]}
                       />
                       {index < overview!.trendData.length - 1 && (
                         <line
@@ -247,7 +250,7 @@ const QmsDashboardPage: React.FC = () => {
                             ((index + 1) / Math.max(overview!.trendData.length - 1, 1)) * 380 + 10
                           }
                           y2={200 - (overview!.trendData[index + 1].passRate / 100) * 180 - 10}
-                          stroke='#6366f1'
+                          stroke={ct.secondary[400]}
                           strokeWidth={2}
                         />
                       )}
@@ -321,7 +324,7 @@ const QmsDashboardPage: React.FC = () => {
       label: '新建检验',
       icon: <Plus style={{ width: 20, height: 20 }} />,
       onClick: () => navigate('/qms/inspections'),
-      color: '#6366f1',
+      color: ct.secondary[400],
     },
     {
       id: 'quality-standards',

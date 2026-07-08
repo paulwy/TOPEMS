@@ -27,6 +27,8 @@ import { ListPageTemplate } from '@/components/templates';
 
 import type { RowAction, FilterConfig, ColumnDef } from '@/components/templates';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import { designTokens } from '@/theme/tokens';
+const ct = designTokens.colors;
 
 /**
  * TODO: Phase 7-4 -- 虚拟滚动优化
@@ -611,7 +613,7 @@ const CustomerManagementPage: React.FC = () => {
       autoBreadcrumbs
       headerProps={{
         pageIcon: <Users style={{ width: 20, height: 20 }} />,
-        pageGradient: 'linear-gradient(135deg, #3B82F6, #1D4ED8)',
+        pageGradient: `linear-gradient(135deg, ${ct.primary.main}, ${ct.primary.dark})`,
       }}
     >
       <>

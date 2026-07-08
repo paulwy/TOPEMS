@@ -28,6 +28,9 @@ import {
   Box,
   Chip,
 } from '@mui/material';
+import { designTokens } from '@/theme/tokens';
+
+const ct = designTokens.colors;
 
 const AnnouncementManagementPage: React.FC = () => {
   const addNotification = useAppStore((state) => state.addNotification);
@@ -294,7 +297,7 @@ const AnnouncementManagementPage: React.FC = () => {
         <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5 }}>
           <User
             size={14}
-            style={{ color: '#1976d2' }}
+            style={{ color: ct.primary.dark }}
           />
           {row.author}
         </Box>

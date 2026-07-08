@@ -40,6 +40,8 @@ import { PageContainer } from '@/components/common';
 import { qmsApi } from '@/api/qms';
 import type { QualityCost, CostStatistics, CostTrendItem } from '@/api/qms';
 import { useAppStore } from '@/store';
+import { designTokens } from '@/theme/tokens';
+const ct = designTokens.colors;
 
 const QmsQualityCostPage: React.FC = () => {
   const navigate = useNavigate();
@@ -428,7 +430,7 @@ const QmsQualityCostPage: React.FC = () => {
 
             <Card
               sx={{
-                background: 'linear-gradient(135deg, #10b981 0%, #059669 100%)',
+                background: `linear-gradient(135deg, ${ct.success.main} 0%, ${ct.success.dark} 100%)`,
                 color: 'white',
               }}
             >
@@ -454,7 +456,7 @@ const QmsQualityCostPage: React.FC = () => {
 
             <Card
               sx={{
-                background: 'linear-gradient(135deg, #3b82f6 0%, #1d4ed8 100%)',
+                background: `linear-gradient(135deg, ${ct.primary.main} 0%, ${ct.primary.dark} 100%)`,
                 color: 'white',
               }}
             >
@@ -480,7 +482,7 @@ const QmsQualityCostPage: React.FC = () => {
 
             <Card
               sx={{
-                background: 'linear-gradient(135deg, #f59e0b 0%, #d97706 100%)',
+                background: `linear-gradient(135deg, ${ct.warning.main} 0%, ${ct.warning.dark} 100%)`,
                 color: 'white',
               }}
             >
@@ -506,7 +508,7 @@ const QmsQualityCostPage: React.FC = () => {
 
             <Card
               sx={{
-                background: 'linear-gradient(135deg, #ef4444 0%, #dc2626 100%)',
+                background: `linear-gradient(135deg, ${ct.error.main} 0%, ${ct.error[600]} 100%)`,
                 color: 'white',
               }}
             >

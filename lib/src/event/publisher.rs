@@ -227,46 +227,16 @@ impl EventPublisher {
 
     pub async fn publish_lims_inspection_result_submitted(
         &self,
-        task_id: uuid::Uuid,
-        task_no: &str,
-        sample_id: uuid::Uuid,
-        sample_no: &str,
-        conclusion: &str,
-        result: serde_json::Value,
-        recorded_by: &str,
+        payload: LimsInspectionResultSubmittedPayload,
     ) -> EventResult<()> {
-        let payload = LimsInspectionResultSubmittedPayload {
-            task_id,
-            task_no: task_no.to_string(),
-            sample_id,
-            sample_no: sample_no.to_string(),
-            conclusion: conclusion.to_string(),
-            result,
-            recorded_by: recorded_by.to_string(),
-        };
         self.publish_event(EventType::LimsInspectionResultSubmitted, payload)
             .await
     }
 
     pub async fn publish_lims_inspection_abnormal_detected(
         &self,
-        task_id: uuid::Uuid,
-        task_no: &str,
-        sample_id: uuid::Uuid,
-        sample_no: &str,
-        test_item: &str,
-        abnormal_data: serde_json::Value,
-        conclusion: &str,
+        payload: LimsInspectionAbnormalDetectedPayload,
     ) -> EventResult<()> {
-        let payload = LimsInspectionAbnormalDetectedPayload {
-            task_id,
-            task_no: task_no.to_string(),
-            sample_id,
-            sample_no: sample_no.to_string(),
-            test_item: test_item.to_string(),
-            abnormal_data,
-            conclusion: conclusion.to_string(),
-        };
         self.publish_event(EventType::LimsInspectionAbnormalDetected, payload)
             .await
     }
@@ -275,23 +245,8 @@ impl EventPublisher {
 
     pub async fn publish_qms_inspection_completed(
         &self,
-        inspection_id: uuid::Uuid,
-        inspection_no: &str,
-        product_id: Option<uuid::Uuid>,
-        product_name: Option<&str>,
-        result: &str,
-        qualification_rate: Option<f64>,
-        inspector: &str,
+        payload: QmsInspectionCompletedPayload,
     ) -> EventResult<()> {
-        let payload = QmsInspectionCompletedPayload {
-            inspection_id,
-            inspection_no: inspection_no.to_string(),
-            product_id,
-            product_name: product_name.map(|s| s.to_string()),
-            result: result.to_string(),
-            qualification_rate,
-            inspector: inspector.to_string(),
-        };
         self.publish_event(EventType::QmsInspectionCompleted, payload)
             .await
     }
@@ -319,25 +274,8 @@ impl EventPublisher {
 
     pub async fn publish_ehs_hazard_reported(
         &self,
-        hazard_id: uuid::Uuid,
-        hazard_no: &str,
-        title: &str,
-        category: &str,
-        level: &str,
-        location: Option<&str>,
-        description: Option<&str>,
-        reported_by: Option<&str>,
+        payload: EhsHazardReportedPayload,
     ) -> EventResult<()> {
-        let payload = EhsHazardReportedPayload {
-            hazard_id,
-            hazard_no: hazard_no.to_string(),
-            title: title.to_string(),
-            category: category.to_string(),
-            level: level.to_string(),
-            location: location.map(|s| s.to_string()),
-            description: description.map(|s| s.to_string()),
-            reported_by: reported_by.map(|s| s.to_string()),
-        };
         self.publish_event(EventType::EhsHazardReported, payload)
             .await
     }

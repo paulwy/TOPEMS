@@ -31,6 +31,7 @@ import { PageContainer, Grid } from '@/components/common';
 import { ListPageTemplate, type ColumnDef, type RowAction } from '@/components/templates';
 import { tenantApi } from '@/api/tenant';
 import type { TenantInvoice, Tenant, UsageMetrics, TenantBillingInfo } from '@/api/tenant/types';
+import { logger } from '@/utils/logger';
 
 const plans = [
   {
@@ -149,7 +150,7 @@ const TenantBillingPage: React.FC = () => {
         }
       }
     } catch (error) {
-      console.error('Failed to load billing data:', error);
+      logger.error('Failed to load billing data:', error);
     } finally {
       setLoading(false);
     }

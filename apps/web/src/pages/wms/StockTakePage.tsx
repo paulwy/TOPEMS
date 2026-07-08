@@ -385,7 +385,7 @@ const StockTakePage: React.FC = () => {
         ],
         value: statusFilter,
         onChange: (value) => {
-          setStatusFilter(value);
+          setStatusFilter(value as string);
           setCurrentPage(1);
         },
       },

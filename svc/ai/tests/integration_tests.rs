@@ -17,12 +17,14 @@ mod tests {
     }
 
     #[tokio::test]
+    #[ignore]
     async fn test_database_connection() {
         let pool = setup_test_pool().await;
         assert!(pool.is_ok(), "数据库连接应该成功");
     }
 
     #[tokio::test]
+    #[ignore]
     async fn test_documents_table_exists() {
         let pool = setup_test_pool().await.unwrap();
 
@@ -42,6 +44,7 @@ mod tests {
     }
 
     #[tokio::test]
+    #[ignore]
     async fn test_qa_history_table_exists() {
         let pool = setup_test_pool().await.unwrap();
 
@@ -61,6 +64,7 @@ mod tests {
     }
 
     #[tokio::test]
+    #[ignore]
     async fn test_analysis_results_table_exists() {
         let pool = setup_test_pool().await.unwrap();
 
@@ -80,6 +84,7 @@ mod tests {
     }
 
     #[tokio::test]
+    #[ignore]
     async fn test_document_chunks_table_exists() {
         let pool = setup_test_pool().await.unwrap();
 

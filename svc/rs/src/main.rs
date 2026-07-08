@@ -1,7 +1,6 @@
-mod api;
 mod cache;
 mod models;
-mod plugin;
+mod modules;
 mod repositories;
 mod services;
 
@@ -15,7 +14,7 @@ use std::time::Instant;
 
 use topems_shared::{
     auth_middleware, check_http_health, config::enhanced::DatabaseConfig, create_api_info_router,
-    create_cors_layer, create_database_pool, init_telemetry, telemetry_middleware,
+    create_cors_layer, create_database_pool, init_telemetry, rls_middleware, telemetry_middleware,
     test_database_connection, ApiResponse, AuthState, Config, DependencyHealth, HealthStatus,
     Result, ServiceHealth, SystemMetrics,
 };
@@ -98,7 +97,7 @@ async fn main() -> Result<()> {
 
     let cors = create_cors_layer();
 
-    let api_state = api::ApiState {
+    let api_state = modules::ApiState {
         db: pool.clone(),
         auth_state: auth_state.clone(),
         config: config.clone(),
@@ -106,7 +105,7 @@ async fn main() -> Result<()> {
         start_time,
     };
 
-    let public_routes: Router<api::ApiState> = Router::new()
+    let public_routes: Router<modules::ApiState> = Router::new()
         .route("/health", get(health_check))
         .route("/api/rs/health/detailed", get(health_check_detailed))
         .route("/api/rs/metrics", get(get_metrics))
@@ -115,13 +114,25 @@ async fn main() -> Result<()> {
             "/metrics",
             get(move || async move { metric_handle.render() }),
         )
-        .route("/api/plugins/info", get(plugin::get_plugin_info))
-        .route("/api/plugins/health", get(plugin::plugin_health_check));
+        .route(
+            "/api/plugins/info",
+            get(modules::rs_plugin::get_plugin_info),
+        )
+        .route(
+            "/api/plugins/health",
+            get(modules::rs_plugin::plugin_health_check),
+        );
 
-    let protected_routes = api::create_routes().layer(axum::middleware::from_fn_with_state(
-        auth_state.clone(),
-        auth_middleware,
-    ));
+    let protected_routes = modules::create_routes()
+        .layer(axum::middleware::from_fn_with_state(
+            auth_state.clone(),
+            auth_middleware,
+        ))
+        .layer(axum::middleware::from_fn_with_state(
+            api_state.db.clone(),
+            rls_middleware,
+        ))
+        .with_state(api_state.clone());
 
     let app = Router::new()
         .merge(public_routes)
@@ -142,7 +153,7 @@ async fn main() -> Result<()> {
     // 启动时自动注册到统一核心
     let core_url = env::var("CORE_URL").ok();
     tokio::spawn(async move {
-        plugin::auto_register_to_core(core_url.as_deref()).await;
+        modules::rs_plugin::auto_register_to_core(core_url.as_deref()).await;
     });
 
     let listener = tokio::net::TcpListener::bind(&addr).await?;
@@ -152,7 +163,7 @@ async fn main() -> Result<()> {
 }
 
 async fn health_check(
-    axum::extract::State(state): axum::extract::State<api::ApiState>,
+    axum::extract::State(state): axum::extract::State<modules::ApiState>,
 ) -> Json<ApiResponse<String>> {
     let database_health = check_database_health(&state.db).await;
     let iam_health = check_iam_health().await;
@@ -179,7 +190,7 @@ async fn health_check(
 }
 
 async fn health_check_detailed(
-    axum::extract::State(state): axum::extract::State<api::ApiState>,
+    axum::extract::State(state): axum::extract::State<modules::ApiState>,
 ) -> Json<ApiResponse<ServiceHealth>> {
     let dependencies = vec![
         check_database_health(&state.db).await,
@@ -227,7 +238,7 @@ struct RsServiceMetrics {
 }
 
 async fn get_metrics(
-    axum::extract::State(state): axum::extract::State<api::ApiState>,
+    axum::extract::State(state): axum::extract::State<modules::ApiState>,
 ) -> Json<ApiResponse<RsServiceMetrics>> {
     let metrics = RsServiceMetrics {
         service_name: "topems-rs".to_string(),
@@ -291,7 +302,7 @@ async fn check_iam_health() -> DependencyHealth {
 }
 
 async fn serve_openapi_json() -> axum::Json<utoipa::openapi::OpenApi> {
-    axum::Json(api::openapi::ApiDoc::openapi())
+    axum::Json(modules::openapi::ApiDoc::openapi())
 }
 
 async fn init_db(_pool: &sqlx::PgPool) -> Result<()> {

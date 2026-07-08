@@ -43,6 +43,8 @@ import SidebarNavGroup from '@/lib/navigation/components/SidebarNavGroup';
 import { navigationRegistryV2 } from '@/lib/navigation/NavigationRegistryV2';
 import { NAV_GROUPS } from '@/lib/navigation/types';
 import type { NavItem, NavGroup } from '@/lib/navigation/types';
+import { designTokens } from '@/theme/tokens';
+const ct = designTokens.colors;
 
 const iconMap: Record<string, React.ReactNode> = {
   Shield: <Shield size={20} />,
@@ -105,7 +107,7 @@ const V4DemoPage: React.FC = () => {
       subtitle='IAM模块导航系统标准化样板'
       headerProps={{
         pageIcon: <Shield size={20} />,
-        pageGradient: 'linear-gradient(135deg, #6366F1 0%, #8B5CF6 100%)',
+        pageGradient: `linear-gradient(135deg, ${ct.secondary[400]} 0%, ${ct.secondary.main} 100%)`,
       }}
     >
       <Alert

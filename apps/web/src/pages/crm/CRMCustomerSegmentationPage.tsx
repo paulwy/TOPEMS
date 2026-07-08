@@ -40,7 +40,7 @@ const CRMCustomerSegmentationPage: React.FC = () => {
       });
       if (res.success && res.data) {
         const data = res.data as { items?: CustomerSegment[] };
-        setSegments(data.items || data || []);
+        setSegments(data.items || (res.data as CustomerSegment[]) || []);
       }
     } catch (error: unknown) {
       setSegments([]);

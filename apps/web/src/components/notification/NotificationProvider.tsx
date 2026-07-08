@@ -3,6 +3,7 @@
 import React, { useEffect, useState } from 'react';
 import { X, CheckCircle2, AlertCircle, Info, AlertTriangle } from 'lucide-react';
 import { useAppStore } from '@/store';
+import { Box, Typography, Button } from '@mui/material';
 
 type NotificationType = 'success' | 'error' | 'info' | 'warning';
 
@@ -48,24 +49,24 @@ const Toast = ({ id: _, title, message, type, duration, onClose }: ToastProps) =
     switch (type) {
       case 'success':
         return {
-          backgroundColor: '#f0fdf4',
-          borderColor: '#bbf7d0',
+          backgroundColor: 'success.light',
+          borderColor: 'success.light',
           titleColor: '#166534',
           messageColor: 'success.700',
         };
       case 'error':
         return {
-          backgroundColor: '#fef2f2',
-          borderColor: '#fecaca',
+          backgroundColor: 'error.light',
+          borderColor: 'error.light',
           titleColor: '#991b1b',
           messageColor: '#b91c1c',
         };
       case 'warning':
         return {
           backgroundColor: '#fefce8',
-          borderColor: '#fde68a',
+          borderColor: 'warning.light',
           titleColor: '#854d0e',
-          messageColor: '#a16207',
+          messageColor: 'warning.700',
         };
       case 'info':
       default:
@@ -90,8 +91,8 @@ const Toast = ({ id: _, title, message, type, duration, onClose }: ToastProps) =
   };
 
   return (
-    <div
-      style={{
+    <Box
+      sx={{
         display: 'flex',
         alignItems: 'flex-start',
         gap: '12px',
@@ -101,18 +102,19 @@ const Toast = ({ id: _, title, message, type, duration, onClose }: ToastProps) =
         boxShadow: '0 10px 15px -3px rgba(0, 0, 0, 0.1)',
         transition: 'all 0.3s ease',
         animation: 'slideIn 0.3s ease',
-        ...styles,
+        backgroundColor: styles.backgroundColor,
+        borderColor: styles.borderColor,
       }}
     >
       {getIcon()}
-      <div style={{ flex: 1, minWidth: 0 }}>
+      <Box sx={{ flex: 1, minWidth: 0 }}>
         {title && (
-          <p style={{ fontWeight: 600, margin: 0, color: styles.titleColor, fontSize: '14px' }}>
+          <Typography sx={{ fontWeight: 600, margin: 0, color: styles.titleColor, fontSize: '14px' }}>
             {title}
-          </p>
+          </Typography>
         )}
-        <p
-          style={{
+        <Typography
+          sx={{
             fontSize: '14px',
             margin: title ? '4px 0 0' : 0,
             color: styles.messageColor,
@@ -120,11 +122,11 @@ const Toast = ({ id: _, title, message, type, duration, onClose }: ToastProps) =
           }}
         >
           {message}
-        </p>
-      </div>
-      <button
+        </Typography>
+      </Box>
+      <Button
         onClick={handleClose}
-        style={{
+        sx={{
           color: 'grey.500',
           border: 'none',
           background: 'transparent',
@@ -135,12 +137,13 @@ const Toast = ({ id: _, title, message, type, duration, onClose }: ToastProps) =
           display: 'flex',
           alignItems: 'center',
           justifyContent: 'center',
+          minWidth: 'auto',
         }}
         aria-label='关闭通知'
       >
         <X style={{ height: 16, width: 16 }} />
-      </button>
-    </div>
+      </Button>
+    </Box>
   );
 };
 
@@ -153,8 +156,8 @@ export function Toaster() {
   }
 
   return (
-    <div
-      style={{
+    <Box
+      sx={{
         position: 'fixed',
         top: '16px',
         right: '16px',
@@ -178,7 +181,7 @@ export function Toaster() {
           onClose={() => removeNotification(notification.id)}
         />
       ))}
-    </div>
+    </Box>
   );
 }
 

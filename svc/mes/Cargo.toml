@@ -29,3 +29,4 @@ futures-util.workspace = true
 
 [dev-dependencies]
 tower = "0.5"
+rust_decimal = "1.35"

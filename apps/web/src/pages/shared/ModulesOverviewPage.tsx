@@ -6,6 +6,8 @@ import { navigationRegistryV2, type ModuleCardConfig } from '@/lib/navigation';
 import { gradients } from '@/theme';
 import { PageContainer } from '@/components/common/PageContainer';
 import { lucideIcons } from '@/lib/iconMapping';
+import { designTokens } from '@/theme/tokens';
+const ct = designTokens.colors;
 
 /* ------------------------------------------------------------------ */
 /*  Icon name -> component mapping                                     */
@@ -20,7 +22,7 @@ const renderIcon = (iconName?: string, size = 26): React.ReactNode => {
   return (
     <Icon
       size={size}
-      style={{ color: '#fff' }}
+      style={{ color: ct.background.paper }}
     />
   );
 };
@@ -77,7 +79,7 @@ const ModuleCard: React.FC<ModuleCardProps> = ({ card, onClick }) => {
         {renderIcon(card.icon) || (
           <Typography
             sx={{
-              color: '#fff',
+              color: ct.background.paper,
               fontWeight: 700,
               fontSize: 22,
               lineHeight: 1,

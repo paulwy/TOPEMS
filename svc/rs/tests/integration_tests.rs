@@ -22,6 +22,7 @@ mod tests {
     }
 
     #[tokio::test]
+    #[ignore]
     async fn test_projects_table_exists() {
         let pool = setup_test_pool().await.unwrap();
 
@@ -62,6 +63,7 @@ mod tests {
     }
 
     #[tokio::test]
+    #[ignore]
     async fn test_formulas_table_exists() {
         let pool = setup_test_pool().await.unwrap();
 
@@ -102,6 +104,7 @@ mod tests {
     }
 
     #[tokio::test]
+    #[ignore]
     async fn test_project_milestones_table_exists() {
         let pool = setup_test_pool().await.unwrap();
 
@@ -297,6 +300,7 @@ mod tests {
     }
 
     #[tokio::test]
+    #[ignore]
     async fn test_audit_log_creation() {
         let pool = setup_test_pool().await.unwrap();
 

@@ -6,6 +6,10 @@ import { PageContainer } from '@/components/common';
 import { scmApi } from '@/api/scm';
 import type { InventoryTurnoverStat } from '@/api/scm';
 import { useAppStore } from '@/store';
+import { designTokens } from '@/theme/tokens';
+import { logger } from "@/utils/logger";
+
+const ct = designTokens.colors;
 
 const ScmInventoryTurnoverPage: React.FC = () => {
   const [data, setData] = useState<InventoryTurnoverStat[]>([]);
@@ -31,7 +35,7 @@ const ScmInventoryTurnoverPage: React.FC = () => {
         setTotal(response.data.total || 0);
       }
     } catch (error: unknown) {
-      console.error('加载库存周转数据失败:', error);
+      logger.error('加载库存周转数据失败:', error);
       addNotification({ title: '加载失败', message: '加载库存周转数据失败', type: 'error' });
     } finally {
       setLoading(false);
@@ -40,9 +44,9 @@ const ScmInventoryTurnoverPage: React.FC = () => {
 
   const getAbcColor = (abc?: string) => {
     const map: Record<string, { bg: string; color: string }> = {
-      A: { bg: 'error.main20', color: '#ef4444' },
-      B: { bg: '#f59e0b20', color: 'warning.700' },
-      C: { bg: '#10b98120', color: 'success.700' },
+      A: { bg: 'error.main20', color: ct.error.main },
+      B: { bg: 'warning.main20', color: ct.warning.main },
+      C: { bg: 'success.main20', color: ct.success.main },
     };
     return map[abc || ''] || { bg: 'grey.100', color: 'grey.600' };
   };
@@ -150,8 +154,8 @@ const ScmInventoryTurnoverPage: React.FC = () => {
               { label: '包装材料', value: '包装材料' },
             ],
             value: categoryFilter,
-            onChange: (value) => {
-              setCategoryFilter(value);
+            onChange: (value: unknown) => {
+              setCategoryFilter(value as string);
               setPage(0);
             },
           },

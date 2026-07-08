@@ -19,6 +19,8 @@ import {
 } from '@mui/material';
 
 import { ModeToggle } from '@/components/theme/ModeToggle';
+import { designTokens } from '@/theme/tokens';
+const ct = designTokens.colors;
 
 const requestResetSchema = z.object({
   email: z.string().email({ message: '请输入有效的邮箱地址' }),
@@ -149,7 +151,7 @@ const ForgotPasswordPage: React.FC = () => {
         sx={{
           position: 'absolute',
           inset: 0,
-          background: 'linear-gradient(135deg, #667eea 0%, #764ba2 50%, #f093fb 100%)',
+          background: `linear-gradient(135deg, ${ct.secondary[400]} 0%, ${ct.secondary.dark} 50%, ${ct.pink[300]} 100%)`,
         }}
       />
 
@@ -230,7 +232,7 @@ const ForgotPasswordPage: React.FC = () => {
       >
         <Box
           sx={{
-            background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
+            background: `linear-gradient(135deg, ${ct.secondary[400]} 0%, ${ct.secondary.dark} 100%)`,
             padding: 4,
             textAlign: 'center',
           }}
@@ -290,9 +292,9 @@ const ForgotPasswordPage: React.FC = () => {
                   height: 48,
                   borderRadius: 1.5,
                   fontWeight: 600,
-                  background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
+                  background: `linear-gradient(135deg, ${ct.secondary[400]} 0%, ${ct.secondary.dark} 100%)`,
                   '&:hover': {
-                    background: 'linear-gradient(135deg, #5a6fd6 0%, #6a4090 100%)',
+                    background: `linear-gradient(135deg, ${ct.secondary[600]} 0%, ${ct.secondary[800]} 100%)`,
                   },
                 }}
               >
@@ -317,9 +319,9 @@ const ForgotPasswordPage: React.FC = () => {
                   height: 48,
                   borderRadius: 1.5,
                   fontWeight: 600,
-                  background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
+                  background: `linear-gradient(135deg, ${ct.secondary[400]} 0%, ${ct.secondary.dark} 100%)`,
                   '&:hover': {
-                    background: 'linear-gradient(135deg, #5a6fd6 0%, #6a4090 100%)',
+                    background: `linear-gradient(135deg, ${ct.secondary[600]} 0%, ${ct.secondary[800]} 100%)`,
                   },
                 }}
               >
@@ -374,9 +376,9 @@ const ForgotPasswordPage: React.FC = () => {
                     height: 48,
                     borderRadius: 1.5,
                     fontWeight: 600,
-                    background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
+                    background: `linear-gradient(135deg, ${ct.secondary[400]} 0%, ${ct.secondary.dark} 100%)`,
                     '&:hover': {
-                      background: 'linear-gradient(135deg, #5a6fd6 0%, #6a4090 100%)',
+                      background: `linear-gradient(135deg, ${ct.secondary[600]} 0%, ${ct.secondary[800]} 100%)`,
                     },
                     '&:disabled': {
                       background: 'grey.400',
@@ -483,9 +485,9 @@ const ForgotPasswordPage: React.FC = () => {
                     height: 48,
                     borderRadius: 1.5,
                     fontWeight: 600,
-                    background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
+                    background: `linear-gradient(135deg, ${ct.secondary[400]} 0%, ${ct.secondary.dark} 100%)`,
                     '&:hover': {
-                      background: 'linear-gradient(135deg, #5a6fd6 0%, #6a4090 100%)',
+                      background: `linear-gradient(135deg, ${ct.secondary[600]} 0%, ${ct.secondary[800]} 100%)`,
                     },
                     '&:disabled': {
                       background: 'grey.400',
@@ -505,8 +507,8 @@ const ForgotPasswordPage: React.FC = () => {
               onClick={() => navigate('/login')}
               startIcon={<ArrowLeft size={16} />}
               sx={{
-                color: '#667eea',
-                '&:hover': { color: '#5a6fd6' },
+                color: ct.secondary[400],
+                '&:hover': { color: ct.secondary[600] },
                 fontSize: '0.875rem',
                 background: 'transparent',
                 fontWeight: 500,

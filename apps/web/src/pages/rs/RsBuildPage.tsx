@@ -23,6 +23,7 @@ import { PageContainer } from '@/components/common';
 import { rsApi } from '@/api/rs';
 import { useAppStore } from '@/store';
 import type { Build, CreateBuildRequest } from '@/api/rs';
+import { logger } from '@/utils/logger';
 
 const RsBuildPage: React.FC = () => {
   const { addNotification } = useAppStore();
@@ -65,7 +66,7 @@ const RsBuildPage: React.FC = () => {
         setTotal(response.data.total || 0);
       }
     } catch (error: unknown) {
-      console.error('加载构建记录失败:', error);
+      logger.error('加载构建记录失败:', error);
       addNotification({
         type: 'error',
         title: '加载失败',
@@ -142,7 +143,7 @@ const RsBuildPage: React.FC = () => {
       });
       loadBuilds();
     } catch (error: unknown) {
-      console.error('重新构建失败:', error);
+      logger.error('重新构建失败:', error);
       addNotification({
         type: 'error',
         title: '操作失败',
@@ -174,7 +175,7 @@ const RsBuildPage: React.FC = () => {
       });
       loadBuilds();
     } catch (error: unknown) {
-      console.error('创建构建失败:', error);
+      logger.error('创建构建失败:', error);
       addNotification({
         type: 'error',
         title: '创建失败',

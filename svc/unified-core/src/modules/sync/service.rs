@@ -231,8 +231,8 @@ pub async fn retry_failed_tasks(
             "#,
         )
         .bind(now)
-        .bind(sync_type.unwrap())
-        .bind(source_module.unwrap())
+        .bind(sync_type.unwrap_or_default())
+        .bind(source_module.unwrap_or_default())
         .execute(db)
         .await?
     } else if sync_type.is_some() {
@@ -248,7 +248,7 @@ pub async fn retry_failed_tasks(
             "#,
         )
         .bind(now)
-        .bind(sync_type.unwrap())
+        .bind(sync_type.unwrap_or_default())
         .execute(db)
         .await?
     } else if source_module.is_some() {
@@ -264,7 +264,7 @@ pub async fn retry_failed_tasks(
             "#,
         )
         .bind(now)
-        .bind(source_module.unwrap())
+        .bind(source_module.unwrap_or_default())
         .execute(db)
         .await?
     } else {
@@ -292,7 +292,7 @@ pub async fn trigger_scm_to_wms_sync(
 ) -> Result<SyncTask, Error> {
     create_sync_task(
         db,
-        Uuid::parse_str("00000000-0000-0000-0000-000000000001").unwrap(),
+        Uuid::nil(),
         "purchase_order_sync",
         "scm",
         "wms",
@@ -309,7 +309,7 @@ pub async fn trigger_wms_to_crm_sync(
 ) -> Result<SyncTask, Error> {
     create_sync_task(
         db,
-        Uuid::parse_str("00000000-0000-0000-0000-000000000001").unwrap(),
+        Uuid::nil(),
         "outbound_order_sync",
         "wms",
         "crm",
@@ -323,7 +323,7 @@ pub async fn trigger_wms_to_crm_sync(
 pub async fn trigger_srm_to_scm_sync(db: &PgPool, supplier_id: Uuid) -> Result<SyncTask, Error> {
     create_sync_task(
         db,
-        Uuid::parse_str("00000000-0000-0000-0000-000000000001").unwrap(),
+        Uuid::nil(),
         "supplier_sync",
         "srm",
         "scm",

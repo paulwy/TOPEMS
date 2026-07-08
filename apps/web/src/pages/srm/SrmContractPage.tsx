@@ -267,8 +267,8 @@ const SrmContractPage: React.FC = () => {
         type: 'select' as const,
         options: STATUS_OPTIONS,
         value: statusFilter,
-        onChange: (value: string) => {
-          setStatusFilter(value);
+        onChange: (value: unknown) => {
+          setStatusFilter(value as string);
           setPage(0);
         },
       },
@@ -281,8 +281,8 @@ const SrmContractPage: React.FC = () => {
           ...contractTypes.map((type) => ({ label: type, value: type })),
         ],
         value: typeFilter,
-        onChange: (value: string) => {
-          setTypeFilter(value);
+        onChange: (value: unknown) => {
+          setTypeFilter(value as string);
           setPage(0);
         },
       },

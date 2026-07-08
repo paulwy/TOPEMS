@@ -27,6 +27,9 @@ import {
   type FilterConfig,
 } from '@/components/templates';
 import { PageContainer } from '@/components/common';
+import { designTokens } from '@/theme/tokens';
+
+const ct = designTokens.colors;
 
 const NotificationArchivePage: React.FC = () => {
   const theme = useTheme();
@@ -135,13 +138,13 @@ const NotificationArchivePage: React.FC = () => {
     const colors: Record<NotificationTypeEnum, { bgcolor: string; color: string }> = {
       system: { bgcolor: 'primary.100', color: 'primary.dark' },
       workflow: { bgcolor: 'secondary.light', color: 'secondary.dark' },
-      reminder: { bgcolor: 'warning.100', color: '#a16207' },
+      reminder: { bgcolor: 'warning.100', color: ct.warning[700] },
       alert: { bgcolor: 'error.lighter', color: 'error.dark' },
       message: { bgcolor: 'success.lighter', color: 'success.dark' },
-      info: { bgcolor: '#cffafe', color: '#0891b2' },
+      info: { bgcolor: ct.cyan[100], color: ct.cyan[600] },
       success: { bgcolor: 'success.lighter', color: 'success.dark' },
-      warning: { bgcolor: '#ffedd5', color: 'warning.600' },
-      error: { bgcolor: '#ffe4e6', color: '#e11d48' },
+      warning: { bgcolor: ct.orange[100], color: 'warning.600' },
+      error: { bgcolor: ct.error[50], color: ct.error[600] },
     };
     return colors[type] || { bgcolor: 'grey.100', color: 'grey.700' };
   };
@@ -331,7 +334,7 @@ const NotificationArchivePage: React.FC = () => {
             </Box>
           ) : null
         }
-        emptyIcon={<Archive style={{ width: 48, height: 48, color: '#9e9e9e' }} />}
+        emptyIcon={<Archive style={{ width: 48, height: 48, color: ct.grey[400] }} />}
         emptyMessage='暂无归档通知'
       />
 

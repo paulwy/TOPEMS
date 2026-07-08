@@ -355,6 +355,7 @@ mod tests {
     }
 
     #[tokio::test]
+    #[ignore]
     #[ignore = "集成测试需要运行 rs:8020 和 iam:8000 服务"]
     async fn test_project_relations_integration() {
         test_project_phase_crud().await;

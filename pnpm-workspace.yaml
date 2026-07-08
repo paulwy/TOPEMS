@@ -2,13 +2,14 @@ packages:
   - 'apps/*'
   - 'packages/*'
 allowBuilds:
-  canvas: set this to true or false
+  canvas: true
   core-js-pure: true
   cwebp-bin: set this to true or false
   esbuild: true
-  gifsicle: set this to true or false
+  gifsicle: true
   jpegtran-bin: set this to true or false
-  mozjpeg: set this to true or false
+  mozjpeg: true
   optipng-bin: set this to true or false
-  pngquant-bin: set this to true or false
+  pngquant-bin: true
+  puppeteer: true
   unrs-resolver: true

@@ -4,17 +4,17 @@ use uuid::Uuid;
 use crate::models::{CreateTemplateRequest, Template, UpdateTemplateRequest};
 
 pub struct TemplateService {
-    pool: std::sync::Arc<PgPool>,
+    pool: PgPool,
 }
 
 impl TemplateService {
-    pub fn new(pool: std::sync::Arc<PgPool>) -> Self {
+    pub fn new(pool: PgPool) -> Self {
         Self { pool }
     }
 
     pub async fn list_templates(&self) -> Result<Vec<Template>> {
         sqlx::query_as!(Template, r#"SELECT * FROM doc.templates ORDER BY name"#)
-            .fetch_all(&*self.pool)
+            .fetch_all(&self.pool)
             .await
     }
 
@@ -24,7 +24,7 @@ impl TemplateService {
             r#"SELECT * FROM doc.templates WHERE id = $1"#,
             template_id
         )
-        .fetch_optional(&*self.pool)
+        .fetch_optional(&self.pool)
         .await
     }
 
@@ -51,7 +51,7 @@ impl TemplateService {
             req.is_default.unwrap_or(false),
             Some(created_by.to_string())
         )
-        .fetch_one(&*self.pool)
+        .fetch_one(&self.pool)
         .await
     }
 
@@ -86,13 +86,13 @@ impl TemplateService {
             req.is_enabled,
             req.is_default
         )
-        .fetch_optional(&*self.pool)
+        .fetch_optional(&self.pool)
         .await
     }
 
     pub async fn delete_template(&self, template_id: Uuid) -> Result<bool> {
         let result = sqlx::query!(r#"DELETE FROM doc.templates WHERE id = $1"#, template_id)
-            .execute(&*self.pool)
+            .execute(&self.pool)
             .await?;
         Ok(result.rows_affected() > 0)
     }

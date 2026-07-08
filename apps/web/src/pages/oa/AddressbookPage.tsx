@@ -237,19 +237,19 @@ const AddressbookPage: React.FC = () => {
         field: 'email',
         label: '邮箱',
         icon: <Mail size={14} />,
-        format: (value: string) => value || '-',
+        format: (value: unknown) => (value as string) || '-',
       },
       {
         field: 'phone',
         label: '电话',
         icon: <Phone size={14} />,
-        format: (value: string) => value || '-',
+        format: (value: unknown) => (value as string) || '-',
       },
       {
         field: 'department_name',
         label: '部门',
         icon: <Briefcase size={14} />,
-        format: (value: string) => value || '-',
+        format: (value: unknown) => (value as string) || '-',
       },
     ],
     tags: [
@@ -274,7 +274,7 @@ const AddressbookPage: React.FC = () => {
       <CardListTemplate
         title=''
         subtitle=''
-        data={contacts}
+        data={contacts as unknown as Record<string, unknown>[]}
         cardConfig={cardConfig}
         loading={loading}
         search={{

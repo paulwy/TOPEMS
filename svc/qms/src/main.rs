@@ -16,10 +16,7 @@
 
 mod shared;
 
-pub mod api;
-pub mod models;
-pub mod plugin;
-pub mod services;
+pub mod modules;
 
 use std::net::SocketAddr;
 
@@ -28,8 +25,9 @@ use axum_prometheus::PrometheusMetricLayer;
 use sqlx::PgPool;
 
 use topems_shared::{
-    auth_middleware, create_cors_layer, get_api_info_handler, init_telemetry, simple_health_check,
-    telemetry_middleware, ApiResponse, AuthState, ServiceHealth, SimpleHealthConfig,
+    auth_middleware, create_cors_layer, get_api_info_handler, init_telemetry, rls_middleware,
+    simple_health_check, telemetry_middleware, ApiResponse, AuthState, ServiceHealth,
+    SimpleHealthConfig,
 };
 
 pub use shared::*;
@@ -78,7 +76,7 @@ async fn main() {
     };
 
     // Initialize database for QMS module
-    if let Err(e) = models::init_database(&pool).await {
+    if let Err(e) = modules::init_database(&pool).await {
         tracing::warn!("QMS module database init warning: {}", e);
     }
 
@@ -99,8 +97,14 @@ async fn main() {
     let public_routes = Router::new()
         .route("/", get(home))
         .route("/health", get(health))
-        .route("/api/plugins/info", get(plugin::get_plugin_info))
-        .route("/api/plugins/health", get(plugin::plugin_health_check))
+        .route(
+            "/api/plugins/info",
+            get(modules::qms_plugin::get_plugin_info),
+        )
+        .route(
+            "/api/plugins/health",
+            get(modules::qms_plugin::plugin_health_check),
+        )
         .route("/api", get(|| get_api_info_handler("qms-service")))
         .route("/api/info", get(|| get_api_info_handler("qms-service")))
         .route(
@@ -110,15 +114,19 @@ async fn main() {
 
     // Protected routes (auth required)
     let protected_routes = Router::new()
-        .merge(api::create_api_routes())
+        .merge(modules::create_routes())
         // Health & Metrics
         .route("/api/v1/health/detailed", get(detailed_health))
         .layer(axum::middleware::from_fn_with_state(
             state.auth_state.clone(),
             auth_middleware,
         ))
+        .layer(axum::middleware::from_fn_with_state(
+            state.pool.clone(),
+            rls_middleware,
+        ))
         .layer(axum::middleware::from_fn(
-            services::permission::check_permission,
+            shared::permission::check_permission,
         ));
 
     let app = Router::new()
@@ -139,7 +147,7 @@ async fn main() {
     // 启动时自动注册到统一核心
     let core_url = std::env::var("CORE_URL").ok();
     tokio::spawn(async move {
-        plugin::auto_register_to_core(core_url.as_deref()).await;
+        modules::qms_plugin::auto_register_to_core(core_url.as_deref()).await;
     });
 
     axum::serve(

@@ -4,6 +4,7 @@ import { Box, CircularProgress } from '@mui/material';
 import { PageDesigner } from '@/components/lowcode';
 import { lowcodeApi } from '@/api';
 import type { PageSchema } from '@/api/lowcode';
+import { logger } from "@/utils/logger";
 
 const PageDesignerPage: React.FC = () => {
   const { pageId } = useParams<{ pageId: string }>();
@@ -25,7 +26,7 @@ const PageDesignerPage: React.FC = () => {
         setSchema(page);
       }
     } catch (error) {
-      console.error('Failed to load page:', error);
+      logger.error('Failed to load page:', error);
     } finally {
       setLoading(false);
     }
@@ -48,7 +49,7 @@ const PageDesignerPage: React.FC = () => {
         navigate(`/lowcode/pages/${created.id}`, { replace: true });
       }
     } catch (error) {
-      console.error('Failed to save page:', error);
+      logger.error('Failed to save page:', error);
     }
   };
 
@@ -58,7 +59,7 @@ const PageDesignerPage: React.FC = () => {
         await lowcodeApi.pageApi.publish(pageId);
       }
     } catch (error) {
-      console.error('Failed to publish page:', error);
+      logger.error('Failed to publish page:', error);
     }
   };
 

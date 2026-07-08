@@ -31,6 +31,9 @@ import { PageContainer } from '@/components/common/PageContainerV2';
 import { ehsApi } from '@/api/ehs';
 import { useAppStore } from '@/store';
 import { apiLogger } from '@/utils/logger';
+import { designTokens } from '@/theme/tokens';
+
+const ct = designTokens.colors;
 
 interface HazardousMaterial {
   id: string;
@@ -131,7 +134,7 @@ const EhsHazardousMaterialPage: React.FC = () => {
   const getDangerLevelChip = (level: string) => {
     const levelMap: Record<string, { bg: string; color: string }> = {
       一级: { bg: 'error.lighter', color: 'error.dark' },
-      二级: { bg: 'warning.100', color: '#ca8a04' },
+      二级: { bg: 'warning.100', color: ct.yellow[600] },
       三级: { bg: 'primary.100', color: 'primary.dark' },
       四级: { bg: 'success.lighter', color: 'success.dark' },
     };
@@ -152,9 +155,9 @@ const EhsHazardousMaterialPage: React.FC = () => {
   const getCategoryChip = (category: string) => {
     const categoryMap: Record<string, { bg: string; color: string }> = {
       易燃: { bg: 'error.100', color: 'error.700' },
-      易爆: { bg: 'warning.100', color: '#ca8a04' },
-      有毒: { bg: '#e0e7ff', color: 'secondary.700' },
-      腐蚀: { bg: '#ffe4e6', color: '#be123c' },
+      易爆: { bg: 'warning.100', color: ct.yellow[600] },
+      有毒: { bg: ct.secondary[100], color: 'secondary.700' },
+      腐蚀: { bg: ct.pink[100], color: ct.pink[700] },
       氧化: { bg: 'warning.100', color: 'warning.700' },
       放射性: { bg: 'secondary.100', color: 'secondary.600' },
     };
@@ -436,7 +439,7 @@ const EhsHazardousMaterialPage: React.FC = () => {
           icon={<AlertTriangle />}
           bgColor='background.paper'
           iconBgColor='warning.100'
-          iconColor='#ca8a04'
+          iconColor={ct.yellow[600]}
         />
         <StatCard
           label='严重危化品数'
@@ -542,7 +545,7 @@ const EhsHazardousMaterialPage: React.FC = () => {
       headerProps={{
         actions: headerActions,
         pageIcon: <FlaskConical sx={{ width: 20, height: 20 }} />,
-        pageGradient: 'linear-gradient(135deg, #EF4444 0%, #DC2626 100%)',
+        pageGradient: `linear-gradient(135deg, ${ct.error.main} 0%, ${ct.error[600]} 100%)`,
       }}
       maxWidth='xl'
     >

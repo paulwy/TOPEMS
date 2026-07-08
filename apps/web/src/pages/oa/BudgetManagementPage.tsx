@@ -20,6 +20,10 @@ import { Plus, Edit2, Trash2, Eye, DollarSign, TrendingDown, PieChart } from 'lu
 import { ListPageTemplate, type ColumnDef, type RowAction } from '@/components/templates';
 import { PageContainer } from '@/components/common';
 import { useAppStore } from '@/store';
+import { designTokens } from '@/theme/tokens';
+import { logger } from '@/utils/logger';
+
+const ct = designTokens.colors;
 
 interface Budget {
   id: string;
@@ -177,7 +181,7 @@ const BudgetManagementPage: React.FC = () => {
     try {
       setBudgets(mockBudgets);
     } catch (error: unknown) {
-      console.error('加载预算数据失败:', error);
+      logger.error('加载预算数据失败:', error);
     } finally {
       setLoading(false);
     }
@@ -193,7 +197,7 @@ const BudgetManagementPage: React.FC = () => {
   }, [budgets]);
 
   const getStatusBadge = (status: string) => {
-    const config = STATUS_MAP[status] || { label: status, bg: 'grey.100', color: '#475569' };
+    const config = STATUS_MAP[status] || { label: status, bg: 'grey.100', color: ct.text.secondary };
     return (
       <Chip
         label={config.label}
@@ -427,7 +431,7 @@ const BudgetManagementPage: React.FC = () => {
               sx={{
                 width: 40,
                 height: 40,
-                background: 'linear-gradient(135deg, #3b82f6, #2563eb)',
+                background: `linear-gradient(135deg, ${ct.primary.main}, ${ct.primary[600]})`,
                 borderRadius: '50%',
                 display: 'flex',
                 alignItems: 'center',
@@ -435,7 +439,7 @@ const BudgetManagementPage: React.FC = () => {
                 boxShadow: '0 4px 12px rgba(59,130,246,0.3)',
               }}
             >
-              <DollarSign style={{ width: 20, height: 20, color: '#fff' }} />
+              <DollarSign style={{ width: 20, height: 20, color: ct.background.paper }} />
             </Box>
             <Box>
               <Typography
@@ -461,7 +465,7 @@ const BudgetManagementPage: React.FC = () => {
               sx={{
                 width: 40,
                 height: 40,
-                background: 'linear-gradient(135deg, #f59e0b, #d97706)',
+                background: `linear-gradient(135deg, ${ct.warning.main}, ${ct.warning.dark})`,
                 borderRadius: '50%',
                 display: 'flex',
                 alignItems: 'center',
@@ -469,7 +473,7 @@ const BudgetManagementPage: React.FC = () => {
                 boxShadow: '0 4px 12px rgba(245,158,11,0.3)',
               }}
             >
-              <TrendingDown style={{ width: 20, height: 20, color: '#fff' }} />
+              <TrendingDown style={{ width: 20, height: 20, color: ct.background.paper }} />
             </Box>
             <Box>
               <Typography
@@ -495,7 +499,7 @@ const BudgetManagementPage: React.FC = () => {
               sx={{
                 width: 40,
                 height: 40,
-                background: 'linear-gradient(135deg, #22c55e, #16a34a)',
+                background: `linear-gradient(135deg, ${ct.success.main}, ${ct.success[600]})`,
                 borderRadius: '50%',
                 display: 'flex',
                 alignItems: 'center',
@@ -503,7 +507,7 @@ const BudgetManagementPage: React.FC = () => {
                 boxShadow: '0 4px 12px rgba(34,197,94,0.3)',
               }}
             >
-              <PieChart style={{ width: 20, height: 20, color: '#fff' }} />
+              <PieChart style={{ width: 20, height: 20, color: ct.background.paper }} />
             </Box>
             <Box>
               <Typography
@@ -531,8 +535,8 @@ const BudgetManagementPage: React.FC = () => {
                 height: 40,
                 background:
                   stats.rate > 90
-                    ? 'linear-gradient(135deg, #ef4444, #dc2626)'
-                    : 'linear-gradient(135deg, #0ea5e9, #0284c7)',
+                    ? `linear-gradient(135deg, ${ct.error.main}, ${ct.error[600]})`
+                    : `linear-gradient(135deg, ${ct.info.main}, ${ct.info.dark})`,
                 borderRadius: '50%',
                 display: 'flex',
                 alignItems: 'center',
@@ -547,7 +551,7 @@ const BudgetManagementPage: React.FC = () => {
                 style={{
                   width: 20,
                   height: 20,
-                  color: '#fff',
+                  color: ct.background.paper,
                 }}
               />
             </Box>
@@ -603,8 +607,8 @@ const BudgetManagementPage: React.FC = () => {
               { label: '2024', value: '2024' },
             ],
             value: yearFilter,
-            onChange: (value) => {
-              setYearFilter(value);
+            onChange: (value: unknown) => {
+              setYearFilter(value as string);
               setPage(0);
             },
           },
@@ -622,8 +626,8 @@ const BudgetManagementPage: React.FC = () => {
               { label: '研发部', value: '研发部' },
             ],
             value: deptFilter,
-            onChange: (value) => {
-              setDeptFilter(value);
+            onChange: (value: unknown) => {
+              setDeptFilter(value as string);
               setPage(0);
             },
           },
@@ -639,8 +643,8 @@ const BudgetManagementPage: React.FC = () => {
               { label: '冻结', value: 'frozen' },
             ],
             value: statusFilter,
-            onChange: (value) => {
-              setStatusFilter(value);
+            onChange: (value: unknown) => {
+              setStatusFilter(value as string);
               setPage(0);
             },
           },

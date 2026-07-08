@@ -14,36 +14,18 @@
 #![allow(clippy::redundant_closure)]
 #![allow(dead_code)]
 
-mod api;
-mod models;
-mod plugin;
-mod services;
+use topems_mes::{modules, shared, AppState};
 
 use std::net::SocketAddr;
 
 use axum::{extract::State, routing::get, Json, Router};
 use axum_prometheus::PrometheusMetricLayer;
-use sqlx::PgPool;
 
 use topems_shared::{
-    auth_middleware, create_cors_layer, get_api_info_handler, init_telemetry, simple_health_check,
-    telemetry_middleware, ApiResponse, AuthState, ServiceHealth, SimpleHealthConfig,
+    auth_middleware, create_cors_layer, get_api_info_handler, init_telemetry, rls_middleware,
+    simple_health_check, telemetry_middleware, ApiResponse, AuthState, ServiceHealth,
+    SimpleHealthConfig,
 };
-
-// ==================== 应用状态 ====================
-
-#[derive(Clone)]
-pub struct AppState {
-    pub auth_state: AuthState,
-    pub pool: PgPool,
-    pub health_config: SimpleHealthConfig,
-}
-
-impl axum::extract::FromRef<AppState> for AuthState {
-    fn from_ref(state: &AppState) -> Self {
-        state.auth_state.clone()
-    }
-}
 
 // ==================== 主入口 ====================
 
@@ -73,7 +55,7 @@ async fn main() {
         }
     };
 
-    if let Err(e) = models::init_database(&pool).await {
+    if let Err(e) = modules::init_database(&pool).await {
         tracing::warn!("MES database init warning: {}", e);
     }
 
@@ -96,29 +78,39 @@ async fn main() {
         .route("/health", get(health))
         .route("/api", get(|| get_api_info_handler("mes-service")))
         .route("/api/info", get(|| get_api_info_handler("mes-service")))
-        .route("/api/plugins/info", get(plugin::get_plugin_info))
-        .route("/api/plugins/health", get(plugin::plugin_health_check))
+        .route(
+            "/api/plugins/info",
+            get(modules::mes_plugin::get_plugin_info),
+        )
+        .route(
+            "/api/plugins/health",
+            get(modules::mes_plugin::plugin_health_check),
+        )
         .route(
             "/metrics",
             get(move || async move { metric_handle.render() }),
         )
         .route(
             "/api/mes/ws/dashboard",
-            axum::routing::get(api::dashboard_ws::dashboard_websocket),
+            axum::routing::get(modules::dashboard_ws::dashboard_websocket),
         )
         .route(
             "/mes/ws/dashboard",
-            axum::routing::get(api::dashboard_ws::dashboard_websocket),
+            axum::routing::get(modules::dashboard_ws::dashboard_websocket),
         );
 
     // Protected routes (auth required)
     let protected_routes = Router::new()
-        .merge(api::create_api_routes())
+        .merge(modules::create_routes())
         // Health & Metrics
         .route("/api/v1/health/detailed", get(detailed_health))
         .layer(axum::middleware::from_fn_with_state(
             state.auth_state.clone(),
             auth_middleware,
+        ))
+        .layer(axum::middleware::from_fn_with_state(
+            state.pool.clone(),
+            rls_middleware,
         ));
 
     let app = Router::new()
@@ -139,7 +131,7 @@ async fn main() {
     // 启动时自动注册到统一核心
     let core_url = std::env::var("CORE_URL").ok();
     tokio::spawn(async move {
-        plugin::auto_register_to_core(core_url.as_deref()).await;
+        modules::mes_plugin::auto_register_to_core(core_url.as_deref()).await;
     });
 
     axum::serve(

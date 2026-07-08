@@ -32,6 +32,9 @@ import { pmApi } from '@/api/pm';
 import type { Project, ProjectPhase, ProjectMilestone, GanttPhase, GanttMilestone } from '@/api/pm';
 import { DetailPageTemplate, type TabConfig, type SectionConfig } from '@/components/templates';
 import { ActionButton, StatusBadge, PageContainer } from '@/components/common';
+import { designTokens } from '@/theme/tokens';
+
+const ct = designTokens.colors;
 
 const STATUS_LABELS: Record<string, string> = {
   active: '进行中',
@@ -43,9 +46,9 @@ const STATUS_LABELS: Record<string, string> = {
 };
 
 const STATUS_COLORS: Record<string, { bgcolor: string; color: string }> = {
-  active: { bgcolor: 'success.lighter', color: '#166534' },
+  active: { bgcolor: 'success.lighter', color: ct.success[800] },
   completed: { bgcolor: 'primary.100', color: 'primary.800' },
-  pending: { bgcolor: 'warning.100', color: '#a16207' },
+  pending: { bgcolor: 'warning.100', color: ct.yellow[700] },
   approved: { bgcolor: 'secondary.100', color: 'secondary.dark' },
   cancelled: { bgcolor: 'grey.100', color: 'grey.700' },
   draft: { bgcolor: 'grey.100', color: 'text.secondary' },
@@ -58,9 +61,9 @@ const RISK_LABELS: Record<string, string> = {
 };
 
 const RISK_COLORS: Record<string, { bgcolor: string; color: string }> = {
-  high: { bgcolor: 'error.lighter', color: '#991b1b' },
-  medium: { bgcolor: 'warning.100', color: '#a16207' },
-  low: { bgcolor: 'success.lighter', color: '#166534' },
+  high: { bgcolor: 'error.lighter', color: ct.error[800] },
+  medium: { bgcolor: 'warning.100', color: ct.yellow[700] },
+  low: { bgcolor: 'success.lighter', color: ct.success[800] },
 };
 
 const PmProjectDetailPage: React.FC = () => {

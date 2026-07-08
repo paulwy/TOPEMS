@@ -20,7 +20,9 @@ impl MobileAuditService {
         status: &str,
         error_message: Option<&str>,
     ) -> Result<(), sqlx::Error> {
-        let details_str = request_details.map(|d| serde_json::to_string(&d).ok()).flatten();
+        let details_str = request_details
+            .map(|d| serde_json::to_string(&d).ok())
+            .flatten();
         let user_uuid = user_id.and_then(|s| Uuid::parse_str(s).ok());
 
         sqlx::query(
@@ -51,7 +53,9 @@ impl MobileAuditService {
         status: &str,
         error_message: Option<&str>,
     ) -> Result<(), sqlx::Error> {
-        let details_str = request_details.map(|d| serde_json::to_string(&d).ok()).flatten();
+        let details_str = request_details
+            .map(|d| serde_json::to_string(&d).ok())
+            .flatten();
         let user_uuid = user_id.and_then(|s| Uuid::parse_str(s).ok());
 
         sqlx::query(
@@ -82,7 +86,9 @@ impl MobileAuditService {
         status: &str,
         error_message: Option<&str>,
     ) -> Result<(), sqlx::Error> {
-        let details_str = request_details.map(|d| serde_json::to_string(&d).ok()).flatten();
+        let details_str = request_details
+            .map(|d| serde_json::to_string(&d).ok())
+            .flatten();
         let user_uuid = user_id.and_then(|s| Uuid::parse_str(s).ok());
 
         sqlx::query(
@@ -113,7 +119,9 @@ impl MobileAuditService {
         status: &str,
         error_message: Option<&str>,
     ) -> Result<(), sqlx::Error> {
-        let details_str = request_details.map(|d| serde_json::to_string(&d).ok()).flatten();
+        let details_str = request_details
+            .map(|d| serde_json::to_string(&d).ok())
+            .flatten();
         let entity_uuid = entity_id.and_then(|s| Uuid::parse_str(s).ok());
         let user_uuid = user_id.and_then(|s| Uuid::parse_str(s).ok());
 

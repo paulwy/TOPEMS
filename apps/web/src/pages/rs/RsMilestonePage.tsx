@@ -18,6 +18,7 @@ import { PageContainer } from '@/components/common';
 import { rsApi } from '@/api/rs';
 import { useAppStore } from '@/store';
 import type { Build, CreateBuildRequest } from '@/api/rs';
+import { logger } from '@/utils/logger';
 
 interface Milestone {
   id: string;
@@ -90,7 +91,7 @@ const RsMilestonePage: React.FC = () => {
         setTotal(response.data.total || 0);
       }
     } catch (error: unknown) {
-      console.error('加载里程碑数据失败:', error);
+      logger.error('加载里程碑数据失败:', error);
       addNotification({
         type: 'error',
         title: '加载失败',
@@ -168,7 +169,7 @@ const RsMilestonePage: React.FC = () => {
       });
       loadMilestones();
     } catch (error: unknown) {
-      console.error('创建里程碑失败:', error);
+      logger.error('创建里程碑失败:', error);
       addNotification({
         type: 'error',
         title: '创建失败',
@@ -265,21 +266,21 @@ const RsMilestonePage: React.FC = () => {
         { label: '规划中', value: 'planning' },
       ],
       value: statusFilter || '',
-      onChange: (value) => setStatusFilter(value || null),
+      onChange: (value: unknown) => setStatusFilter(value as string || ''),
     },
     {
       id: 'start_date',
       label: '开始日期',
       type: 'date',
       value: dateRange.start,
-      onChange: (value) => setDateRange((prev) => ({ ...prev, start: value })),
+      onChange: (value: unknown) => setDateRange((prev) => ({ ...prev, start: value as string })),
     },
     {
       id: 'end_date',
       label: '结束日期',
       type: 'date',
       value: dateRange.end,
-      onChange: (value) => setDateRange((prev) => ({ ...prev, end: value })),
+      onChange: (value: unknown) => setDateRange((prev) => ({ ...prev, end: value as string })),
     },
   ];
 

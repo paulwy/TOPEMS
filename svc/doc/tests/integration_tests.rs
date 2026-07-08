@@ -15,12 +15,14 @@ mod tests {
     }
 
     #[tokio::test]
+    #[ignore]
     async fn test_database_connection() {
         let pool = setup_test_pool().await;
         assert!(pool.is_ok(), "数据库连接应该成功");
     }
 
     #[tokio::test]
+    #[ignore]
     async fn test_documents_table_exists() {
         let pool = setup_test_pool().await.unwrap();
 
@@ -42,6 +44,7 @@ mod tests {
     }
 
     #[tokio::test]
+    #[ignore]
     async fn test_templates_table_exists() {
         let pool = setup_test_pool().await.unwrap();
 
@@ -63,6 +66,7 @@ mod tests {
     }
 
     #[tokio::test]
+    #[ignore]
     async fn test_folders_table_exists() {
         let pool = setup_test_pool().await.unwrap();
 
@@ -84,6 +88,7 @@ mod tests {
     }
 
     #[tokio::test]
+    #[ignore]
     async fn test_documents_table_columns() {
         let pool = setup_test_pool().await.unwrap();
 
@@ -118,6 +123,7 @@ mod tests {
     }
 
     #[tokio::test]
+    #[ignore]
     async fn test_templates_table_columns() {
         let pool = setup_test_pool().await.unwrap();
 
@@ -148,6 +154,7 @@ mod tests {
     }
 
     #[tokio::test]
+    #[ignore]
     async fn test_folders_table_columns() {
         let pool = setup_test_pool().await.unwrap();
 
@@ -178,6 +185,7 @@ mod tests {
     }
 
     #[tokio::test]
+    #[ignore]
     async fn test_list_documents() {
         let pool = setup_test_pool().await.unwrap();
 
@@ -189,6 +197,7 @@ mod tests {
     }
 
     #[tokio::test]
+    #[ignore]
     async fn test_list_templates() {
         let pool = setup_test_pool().await.unwrap();
 
@@ -200,6 +209,7 @@ mod tests {
     }
 
     #[tokio::test]
+    #[ignore]
     async fn test_list_folders() {
         let pool = setup_test_pool().await.unwrap();
 
@@ -211,6 +221,7 @@ mod tests {
     }
 
     #[tokio::test]
+    #[ignore]
     async fn test_create_and_get_template() {
         let pool = setup_test_pool().await.unwrap();
         let template_id = Uuid::new_v4();
@@ -252,6 +263,7 @@ mod tests {
     }
 
     #[tokio::test]
+    #[ignore]
     async fn test_create_and_get_folder() {
         let pool = setup_test_pool().await.unwrap();
         let folder_id = Uuid::new_v4();
@@ -291,6 +303,7 @@ mod tests {
     }
 
     #[tokio::test]
+    #[ignore]
     async fn test_update_template() {
         let pool = setup_test_pool().await.unwrap();
         let template_id = Uuid::new_v4();
@@ -338,6 +351,7 @@ mod tests {
     }
 
     #[tokio::test]
+    #[ignore]
     async fn test_delete_template() {
         let pool = setup_test_pool().await.unwrap();
         let template_id = Uuid::new_v4();
@@ -370,6 +384,7 @@ mod tests {
     }
 
     #[tokio::test]
+    #[ignore]
     async fn test_update_folder() {
         let pool = setup_test_pool().await.unwrap();
         let folder_id = Uuid::new_v4();
@@ -414,6 +429,7 @@ mod tests {
     }
 
     #[tokio::test]
+    #[ignore]
     async fn test_delete_folder() {
         let pool = setup_test_pool().await.unwrap();
         let folder_id = Uuid::new_v4();

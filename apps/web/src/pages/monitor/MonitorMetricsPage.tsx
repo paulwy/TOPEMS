@@ -40,6 +40,9 @@ import { AreaChart } from '../../components/charts/AreaChart';
 import { BarChartComponent } from '../../components/charts/BarChart';
 import { useAppStore } from '../../store';
 import { handleApiError, getErrorMessage } from '@/utils/errors';
+import { designTokens } from '@/theme/tokens';
+
+const ct = designTokens.colors;
 
 type TimeRange = '1h' | '6h' | '24h' | '7d' | '30d';
 type MetricCategory = 'host' | 'service' | 'database' | 'middleware';
@@ -343,7 +346,7 @@ export const MonitorMetricsPage: React.FC = () => {
             yKeys={serviceNames.slice(0, 4).map((name, i) => ({
               key: name,
               name,
-              color: ['secondary.main', '#06B6D4', '#EC4899', 'success.main'][i],
+              color: ['secondary.main', ct.cyan[500], ct.pink[500], 'success.main'][i],
             }))}
             height={280}
           />
@@ -420,7 +423,7 @@ export const MonitorMetricsPage: React.FC = () => {
                 {apiRequestData.map((_, index) => (
                   <Cell
                     key={`cell-${index}`}
-                    fill={['primary.main', 'success.main', 'warning.main', 'error.main', 'secondary.main', '#06B6D4'][index]}
+                    fill={['primary.main', 'success.main', 'warning.main', 'error.main', 'secondary.main', ct.cyan[500]][index]}
                   />
                 ))}
               </Bar>
@@ -556,7 +559,7 @@ export const MonitorMetricsPage: React.FC = () => {
       subtitle='全方位系统指标监控与性能分析'
       headerProps={{
         pageIcon: <BarChart3 size={20} />,
-        pageGradient: 'linear-gradient(135deg, #6366F1 0%, #8B5CF6 100%)',
+        pageGradient: `linear-gradient(135deg, ${ct.secondary[400]} 0%, ${ct.secondary.main} 100%)`,
         backButton: {
           href: '/monitor/dashboard',
           visible: true,

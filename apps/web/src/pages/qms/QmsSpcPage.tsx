@@ -48,6 +48,8 @@ import { ListPageTemplate, type ColumnDef, type RowAction } from '@/components/t
 import { PageContainer } from '@/components/common';
 import { spcApi, qmsApi } from '@/api/qms';
 import type { SpcChart, SpcDataPoint, ControlLimitsResult } from '@/api/qms';
+import { designTokens } from '@/theme/tokens';
+const ct = designTokens.colors;
 
 const QmsSpcPage: React.FC = () => {
   const [searchTerm, setSearchTerm] = useState('');
@@ -587,7 +589,7 @@ const QmsSpcPage: React.FC = () => {
       subtitle='Statistical Process Control'
       headerProps={{
         pageIcon: <Activity style={{ width: 20, height: 20 }} />,
-        pageGradient: 'linear-gradient(135deg, #10B981, #059669)',
+        pageGradient: `linear-gradient(135deg, ${ct.success.main}, ${ct.success.dark})`,
         search: {
           value: searchTerm,
           onChange: setSearchTerm,

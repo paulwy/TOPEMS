@@ -16,6 +16,9 @@ import {
 } from '@mui/material';
 import { PageContainer } from '@/components/common';
 import React, { useState, useEffect, useMemo, useCallback } from 'react';
+import { designTokens } from '@/theme/tokens';
+
+const ct = designTokens.colors;
 import type { Customer, CreateCustomerRequest, UpdateCustomerRequest } from '@/api/erp';
 import { erpApi } from '@/api/erp';
 import { useAppStore } from '@/store';
@@ -275,8 +278,8 @@ const CustomerManagementPage: React.FC = () => {
           { label: '黑名单', value: 'blacklisted' },
         ],
         value: statusFilter,
-        onChange: (value) => {
-          setStatusFilter(value);
+        onChange: (value: unknown) => {
+          setStatusFilter(value as string);
           setCurrentPage(1);
         },
       },
@@ -293,8 +296,8 @@ const CustomerManagementPage: React.FC = () => {
           { label: '个人客户', value: '个人客户' },
         ],
         value: categoryFilter,
-        onChange: (value) => {
-          setCategoryFilter(value);
+        onChange: (value: unknown) => {
+          setCategoryFilter(value as string);
           setCurrentPage(1);
         },
       },
@@ -312,8 +315,8 @@ const CustomerManagementPage: React.FC = () => {
           { label: '医疗', value: '医疗' },
         ],
         value: industryFilter,
-        onChange: (value) => {
-          setIndustryFilter(value);
+        onChange: (value: unknown) => {
+          setIndustryFilter(value as string);
           setCurrentPage(1);
         },
       },
@@ -418,7 +421,7 @@ const CustomerManagementPage: React.FC = () => {
           {stats.inactive}
         </Typography>
       </Box>
-      <Box sx={{ p: 2, bgcolor: '#e0e7ff', borderRadius: 3 }}>
+      <Box sx={{ p: 2, bgcolor: ct.secondary[100], borderRadius: 3 }}>
         <Typography
           variant='body2'
           sx={{ color: 'text.secondary' }}

@@ -19,6 +19,9 @@ import type { RowAction, FilterConfig, ColumnDef } from '@/components/templates'
 import { pdmApi } from '@/api/pdm';
 import type { ProductionFormula } from '@/api/pdm';
 import { useAppStore } from '@/store';
+import { designTokens } from '@/theme/tokens';
+
+const ct = designTokens.colors;
 
 const PdmFormulaPage: React.FC = () => {
   const [formulas, setFormulas] = useState<ProductionFormula[]>([]);
@@ -76,7 +79,7 @@ const PdmFormulaPage: React.FC = () => {
     const statusMap: Record<string, { bg: string; color: string }> = {
       启用: { bg: 'success.lighter', color: 'success.dark' },
       禁用: { bg: 'error.lighter', color: 'error.dark' },
-      草稿: { bg: 'warning.light', color: '#ca8a04' },
+      草稿: { bg: 'warning.light', color: ct.yellow[600] },
       已批准: { bg: 'primary.100', color: 'primary.main' },
     };
     const colors = statusMap[status] || { bg: 'grey.100', color: 'text.secondary' };
@@ -197,7 +200,7 @@ const PdmFormulaPage: React.FC = () => {
         mb: 3,
       }}
     >
-      <Box sx={{ p: 2, bgcolor: '#fdf4ff', borderRadius: 3 }}>
+      <Box sx={{ p: 2, bgcolor: ct.pink[50], borderRadius: 3 }}>
         <Typography
           variant='body2'
           sx={{ color: 'slate.600' }}
@@ -260,7 +263,7 @@ const PdmFormulaPage: React.FC = () => {
     <PageContainer
       headerProps={{
         pageIcon: <Clock style={{ width: 20, height: 20 }} />,
-        pageGradient: 'linear-gradient(135deg, #D946EF 0%, #C026D3 100%)',
+        pageGradient: `linear-gradient(135deg, ${ct.pink[500]} 0%, ${ct.pink[600]} 100%)`,
       }}
     >
       <ListPageTemplate<ProductionFormula>
@@ -346,7 +349,7 @@ const PdmFormulaPage: React.FC = () => {
           <Button
             variant='contained'
             onClick={handleSave}
-            sx={{ bgcolor: '#d946ef' }}
+            sx={{ bgcolor: ct.pink[500] }}
           >
             保存
           </Button>

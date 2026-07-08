@@ -4,17 +4,17 @@ use uuid::Uuid;
 use crate::models::{CreateFolderRequest, Folder, UpdateFolderRequest};
 
 pub struct FolderService {
-    pool: std::sync::Arc<PgPool>,
+    pool: PgPool,
 }
 
 impl FolderService {
-    pub fn new(pool: std::sync::Arc<PgPool>) -> Self {
+    pub fn new(pool: PgPool) -> Self {
         Self { pool }
     }
 
     pub async fn list_folders(&self) -> Result<Vec<Folder>> {
         sqlx::query_as!(Folder, r#"SELECT * FROM doc.folders ORDER BY name"#)
-            .fetch_all(&*self.pool)
+            .fetch_all(&self.pool)
             .await
     }
 
@@ -24,7 +24,7 @@ impl FolderService {
             r#"SELECT * FROM doc.folders WHERE id = $1"#,
             folder_id
         )
-        .fetch_optional(&*self.pool)
+        .fetch_optional(&self.pool)
         .await
     }
 
@@ -47,7 +47,7 @@ impl FolderService {
             req.is_enabled.unwrap_or(true),
             Some(created_by.to_string())
         )
-        .fetch_one(&*self.pool)
+        .fetch_one(&self.pool)
         .await
     }
 
@@ -76,13 +76,13 @@ impl FolderService {
             req.sort_order,
             req.is_enabled
         )
-        .fetch_optional(&*self.pool)
+        .fetch_optional(&self.pool)
         .await
     }
 
     pub async fn delete_folder(&self, folder_id: Uuid) -> Result<bool> {
         let result = sqlx::query!(r#"DELETE FROM doc.folders WHERE id = $1"#, folder_id)
-            .execute(&*self.pool)
+            .execute(&self.pool)
             .await?;
         Ok(result.rows_affected() > 0)
     }

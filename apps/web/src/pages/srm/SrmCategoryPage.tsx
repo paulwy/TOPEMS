@@ -16,6 +16,10 @@ import { Plus, Edit2, Trash2, Eye, FolderTree } from 'lucide-react';
 import { ListPageTemplate, type ColumnDef, type RowAction } from '@/components/templates';
 import { PageContainer } from '@/components/common';
 import { useAppStore } from '@/store';
+import { designTokens } from '@/theme/tokens';
+import { logger } from '@/utils/logger';
+
+const ct = designTokens.colors;
 
 interface SupplierCategory {
   id: string;
@@ -31,7 +35,7 @@ interface SupplierCategory {
 
 const STATUS_MAP: Record<string, { label: string; bg: string; color: string }> = {
   active: { label: '启用', bg: 'success.lighter', color: 'success.700' },
-  inactive: { label: '禁用', bg: 'error.lighter', color: '#b91c1c' },
+  inactive: { label: '禁用', bg: 'error.lighter', color: ct.error[700] },
 };
 
 const mockCategories: SupplierCategory[] = [
@@ -163,7 +167,7 @@ const SrmCategoryPage: React.FC = () => {
     try {
       setCategories(mockCategories);
     } catch (error: unknown) {
-      console.error('加载供应商分类失败:', error);
+      logger.error('加载供应商分类失败:', error);
       addNotification({ title: '加载失败', message: '加载供应商分类失败', type: 'error' });
     } finally {
       setLoading(false);
@@ -171,7 +175,7 @@ const SrmCategoryPage: React.FC = () => {
   };
 
   const getStatusBadge = (status: string) => {
-    const config = STATUS_MAP[status] || { label: status, bg: 'grey.100', color: '#475569' };
+    const config = STATUS_MAP[status] || { label: status, bg: 'grey.100', color: ct.text.secondary };
     return (
       <Chip
         label={config.label}

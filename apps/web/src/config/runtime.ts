@@ -39,7 +39,6 @@ const config: RuntimeConfig = {
     timeout: getEnvNumber('VITE_API_TIMEOUT', 60000),
   },
   ws: {
-    url: getEnv('VITE_WS_URL', 'ws://localhost:8080'),
     reconnectInterval: getEnvNumber('VITE_WS_RECONNECT_INTERVAL', 5000),
     maxReconnectAttempts: getEnvNumber('VITE_WS_MAX_RECONNECT_ATTEMPTS', 10),
   },

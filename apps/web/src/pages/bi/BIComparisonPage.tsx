@@ -39,6 +39,10 @@ import {
 } from 'recharts';
 import { BIChartColors } from '@/components/charts/chartTheme';
 import { getComparisonResult, runComparison, listComparisons, type ComparisonResult, type ComparisonAnalysis } from '@/api/bi';
+import { designTokens } from '@/theme/tokens';
+import { logger } from '@/utils/logger';
+
+const ct = designTokens.colors;
 
 interface ComparisonRow {
   id: string;
@@ -73,7 +77,7 @@ const BIComparisonPage = () => {
         }
       }
     } catch (e: unknown) {
-      console.error('Failed to load comparisons:', e);
+      logger.error('Failed to load comparisons:', e);
     }
   }, [currentComparisonId]);
 
@@ -106,7 +110,7 @@ const BIComparisonPage = () => {
           setFilteredData([]);
         }
       } catch (e: unknown) {
-        console.error('Failed to load comparison data:', e);
+        logger.error('Failed to load comparison data:', e);
         setData([]);
         setFilteredData([]);
       } finally {
@@ -138,7 +142,7 @@ const BIComparisonPage = () => {
         loadComparisonResult(true);
       }
     } catch (e: unknown) {
-      console.error('Failed to run comparison:', e);
+      logger.error('Failed to run comparison:', e);
       setError('执行对比分析失败');
     }
   };
@@ -350,16 +354,16 @@ const BIComparisonPage = () => {
               <BarChart data={chartData}>
                 <CartesianGrid
                   strokeDasharray='3 3'
-                  stroke='#E2E8F0'
+                  stroke={ct.border.default}
                 />
                 <XAxis
                   dataKey='name'
-                  tick={{ fill: '#64748B', fontSize: 12 }}
+                  tick={{ fill: ct.text.secondary, fontSize: 12 }}
                   angle={-45}
                   textAnchor='end'
                   height={80}
                 />
-                <YAxis tick={{ fill: '#64748B', fontSize: 12 }} />
+                <YAxis tick={{ fill: ct.text.secondary, fontSize: 12 }} />
                 <Tooltip />
                 <Legend />
                 <Bar

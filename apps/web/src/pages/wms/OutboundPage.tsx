@@ -47,6 +47,9 @@ import {
 } from 'lucide-react';
 import { apiLogger } from '@/utils/logger';
 import { ConfirmDialog, PageContainer } from '@/components/common';
+import { designTokens } from '@/theme/tokens';
+
+const ct = designTokens.colors;
 
 const statusConfig: Record<
   string,
@@ -458,7 +461,7 @@ const OutboundPage: React.FC = () => {
         ],
         value: statusFilter,
         onChange: (value) => {
-          setStatusFilter(value);
+          setStatusFilter(value as string);
           setCurrentPage(1);
         },
       },
@@ -472,7 +475,7 @@ const OutboundPage: React.FC = () => {
         ],
         value: warehouseFilter,
         onChange: (value) => {
-          setWarehouseFilter(value);
+          setWarehouseFilter(value as string);
           setCurrentPage(1);
         },
       },
@@ -636,7 +639,7 @@ const OutboundPage: React.FC = () => {
       subtitle='管理出库单，包括销售出库、生产领料、拣货管理等'
       headerProps={{
         pageIcon: <Upload style={{ width: 20, height: 20 }} />,
-        pageGradient: 'linear-gradient(135deg, #F59E0B, #D97706)',
+        pageGradient: `linear-gradient(135deg, ${ct.warning.main}, ${ct.warning.dark})`,
       }}
     >
       <Box sx={{ borderBottom: 1, borderColor: 'divider', mb: 2 }}>

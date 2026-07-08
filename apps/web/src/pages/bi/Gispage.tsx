@@ -67,6 +67,9 @@ import {Box,
   CircularProgress,
   Button, useTheme} from '@mui/material';
 import { PageContainer } from '@/components/common';
+import { designTokens } from '@/theme/tokens';
+
+const ct = designTokens.colors;
 
 type TabType =
   | 'map'
@@ -164,8 +167,8 @@ const GisContent: React.FC = () => {
     });
 
     if (activeTab === 'devicePoints' || activeTab === 'storageLocations') {
-      const lat = parseFloat(formData.latitude);
-      const lng = parseFloat(formData.longitude);
+      const lat = parseFloat(formData.latitude as string);
+      const lng = parseFloat(formData.longitude as string);
       if (isNaN(lat) || lat < -90 || lat > 90) {
         errors.latitude = '纬度必须在 -90 到 90 之间';
       }
@@ -175,8 +178,8 @@ const GisContent: React.FC = () => {
     }
 
     if (activeTab === 'businessLocations') {
-      const lat = parseFloat(formData.lat);
-      const lng = parseFloat(formData.lng);
+      const lat = parseFloat(formData.lat as string);
+      const lng = parseFloat(formData.lng as string);
       if (isNaN(lat) || lat < -90 || lat > 90) {
         errors.lat = '纬度必须在 -90 到 90 之间';
       }
@@ -186,10 +189,10 @@ const GisContent: React.FC = () => {
     }
 
     if (activeTab === 'pipelines') {
-      const startLat = parseFloat(formData.start_lat);
-      const startLng = parseFloat(formData.start_lng);
-      const endLat = parseFloat(formData.end_lat);
-      const endLng = parseFloat(formData.end_lng);
+      const startLat = parseFloat(formData.start_lat as string);
+      const startLng = parseFloat(formData.start_lng as string);
+      const endLat = parseFloat(formData.end_lat as string);
+      const endLng = parseFloat(formData.end_lng as string);
       if (isNaN(startLat) || startLat < -90 || startLat > 90) {
         errors.start_lat = '起点纬度无效';
       }
@@ -222,75 +225,75 @@ const GisContent: React.FC = () => {
       switch (activeTab) {
         case 'devicePoints':
           await createDevicePoint({
-            name: formData.name,
-            description: formData.description,
-            device_type: formData.device_type,
-            latitude: parseFloat(formData.latitude),
-            longitude: parseFloat(formData.longitude),
-            status: formData.status || 'active',
+            name: formData.name as string,
+            description: formData.description as string,
+            device_type: formData.device_type as string,
+            latitude: parseFloat(formData.latitude as string),
+            longitude: parseFloat(formData.longitude as string),
+            status: (formData.status as string) || 'active',
           });
           break;
         case 'pipelines':
           await createPipeline({
-            name: formData.name,
-            description: formData.description,
-            pipeline_type: formData.pipeline_type,
-            start_point: [parseFloat(formData.start_lat), parseFloat(formData.start_lng)],
-            end_point: [parseFloat(formData.end_lat), parseFloat(formData.end_lng)],
-            status: formData.status || 'active',
+            name: formData.name as string,
+            description: formData.description as string,
+            pipeline_type: formData.pipeline_type as string,
+            start_point: [parseFloat(formData.start_lat as string), parseFloat(formData.start_lng as string)],
+            end_point: [parseFloat(formData.end_lat as string), parseFloat(formData.end_lng as string)],
+            status: (formData.status as string) || 'active',
           });
           break;
         case 'storageLocations':
           await createStorageLocation({
-            name: formData.name,
-            description: formData.description,
-            location_type: formData.location_type,
-            latitude: parseFloat(formData.latitude),
-            longitude: parseFloat(formData.longitude),
-            capacity: formData.capacity ? parseFloat(formData.capacity) : undefined,
-            current_usage: formData.current_usage ? parseFloat(formData.current_usage) : undefined,
+            name: formData.name as string,
+            description: formData.description as string,
+            location_type: formData.location_type as string,
+            latitude: parseFloat(formData.latitude as string),
+            longitude: parseFloat(formData.longitude as string),
+            capacity: formData.capacity ? parseFloat(formData.capacity as string) : undefined,
+            current_usage: formData.current_usage ? parseFloat(formData.current_usage as string) : undefined,
           });
           break;
         case 'evidenceRecords':
           await createEvidenceRecord({
-            title: formData.title,
-            description: formData.description,
-            evidence_type: formData.evidence_type,
-            latitude: parseFloat(formData.latitude),
-            longitude: parseFloat(formData.longitude),
-            file_url: formData.file_url,
-            recorded_by: formData.recorded_by,
+            title: formData.title as string,
+            description: formData.description as string,
+            evidence_type: formData.evidence_type as string,
+            latitude: parseFloat(formData.latitude as string),
+            longitude: parseFloat(formData.longitude as string),
+            file_url: formData.file_url as string,
+            recorded_by: formData.recorded_by as string,
           });
           break;
         case 'factoryMaps':
           await createFactoryMap({
-            name: formData.name,
-            code: formData.code,
-            map_type: formData.map_type,
-            file_url: formData.file_url || '',
-            description: formData.description,
+            name: formData.name as string,
+            code: formData.code as string,
+            map_type: formData.map_type as string,
+            file_url: (formData.file_url as string) || '',
+            description: formData.description as string,
           });
           break;
         case 'businessLocations':
           await createBusinessLocation({
-            business_type: formData.business_type,
-            business_name: formData.business_name,
-            business_code: formData.business_code,
-            category: formData.category,
+            business_type: formData.business_type as string,
+            business_name: formData.business_name as string,
+            business_code: formData.business_code as string,
+            category: formData.category as string,
             position: {
-              lat: parseFloat(formData.lat),
-              lng: parseFloat(formData.lng),
+              lat: parseFloat(formData.lat as string),
+              lng: parseFloat(formData.lng as string),
             },
-            address: formData.address,
-            contact_person: formData.contact_person,
-            contact_phone: formData.contact_phone,
-            capacity: formData.capacity ? parseFloat(formData.capacity) : undefined,
-            current_usage: formData.current_usage ? parseFloat(formData.current_usage) : undefined,
-            status: formData.status || 'active',
-            properties: formData.properties ? JSON.parse(formData.properties) : undefined,
-            description: formData.description,
-            external_id: formData.external_id,
-            external_type: formData.external_type,
+            address: formData.address as string,
+            contact_person: formData.contact_person as string,
+            contact_phone: formData.contact_phone as string,
+            capacity: formData.capacity ? parseFloat(formData.capacity as string) : undefined,
+            current_usage: formData.current_usage ? parseFloat(formData.current_usage as string) : undefined,
+            status: (formData.status as string) || 'active',
+            properties: formData.properties ? JSON.parse(formData.properties as string) : undefined,
+            description: formData.description as string,
+            external_id: formData.external_id as string,
+            external_type: formData.external_type as string,
           });
           break;
       }
@@ -310,79 +313,79 @@ const GisContent: React.FC = () => {
       switch (activeTab) {
         case 'devicePoints':
           await updateDevicePoint(editingItem.id, {
-            name: formData.name || editingItem.name,
-            description: formData.description || editingItem.description,
-            device_type: formData.device_type || editingItem.device_type,
-            latitude: parseFloat(formData.latitude || editingItem.latitude?.toString() || '0'),
-            longitude: parseFloat(formData.longitude || editingItem.longitude?.toString() || '0'),
-            status: formData.status || editingItem.status,
+            name: formData.name as string || (editingItem as DevicePoint).name,
+            description: formData.description as string || (editingItem as DevicePoint).description,
+            device_type: formData.device_type as string || (editingItem as DevicePoint).device_type,
+            latitude: parseFloat(formData.latitude as string || (editingItem as DevicePoint).latitude?.toString() || '0'),
+            longitude: parseFloat(formData.longitude as string || (editingItem as DevicePoint).longitude?.toString() || '0'),
+            status: (formData.status as string) || (editingItem as DevicePoint).status,
           });
           break;
         case 'pipelines':
           await updatePipeline(editingItem.id, {
-            name: formData.name || editingItem.name,
-            description: formData.description || editingItem.description,
-            pipeline_type: formData.pipeline_type || editingItem.pipeline_type,
+            name: formData.name as string || (editingItem as Pipeline).name,
+            description: formData.description as string || (editingItem as Pipeline).description,
+            pipeline_type: formData.pipeline_type as string || (editingItem as Pipeline).pipeline_type,
             start_point:
               formData.start_lat && formData.start_lng
-                ? [parseFloat(formData.start_lat), parseFloat(formData.start_lng)]
-                : editingItem.start_point,
+                ? [parseFloat(formData.start_lat as string), parseFloat(formData.start_lng as string)]
+                : (editingItem as Pipeline).start_point,
             end_point:
               formData.end_lat && formData.end_lng
-                ? [parseFloat(formData.end_lat), parseFloat(formData.end_lng)]
-                : editingItem.end_point,
-            status: formData.status || editingItem.status,
+                ? [parseFloat(formData.end_lat as string), parseFloat(formData.end_lng as string)]
+                : (editingItem as Pipeline).end_point,
+            status: (formData.status as string) || (editingItem as Pipeline).status,
           });
           break;
         case 'storageLocations':
           await updateStorageLocation(editingItem.id, {
-            name: formData.name || editingItem.name,
-            description: formData.description || editingItem.description,
-            location_type: formData.location_type || editingItem.location_type,
-            latitude: parseFloat(formData.latitude || editingItem.latitude?.toString() || '0'),
-            longitude: parseFloat(formData.longitude || editingItem.longitude?.toString() || '0'),
-            capacity: formData.capacity ? parseFloat(formData.capacity) : editingItem.capacity,
+            name: formData.name as string || (editingItem as StorageLocation).name,
+            description: formData.description as string || (editingItem as StorageLocation).description,
+            location_type: formData.location_type as string || (editingItem as StorageLocation).location_type,
+            latitude: parseFloat(formData.latitude as string || (editingItem as StorageLocation).latitude?.toString() || '0'),
+            longitude: parseFloat(formData.longitude as string || (editingItem as StorageLocation).longitude?.toString() || '0'),
+            capacity: formData.capacity ? parseFloat(formData.capacity as string) : (editingItem as StorageLocation).capacity,
             current_usage: formData.current_usage
-              ? parseFloat(formData.current_usage)
-              : editingItem.current_usage,
+              ? parseFloat(formData.current_usage as string)
+              : (editingItem as StorageLocation).current_usage,
           });
           break;
         case 'factoryMaps':
           await updateFactoryMap(editingItem.id, {
-            name: formData.name || editingItem.name,
-            code: formData.code || editingItem.code,
-            map_type: formData.map_type || editingItem.map_type,
-            file_url: formData.file_url || editingItem.file_url,
-            description: formData.description || editingItem.description,
+            name: formData.name as string || (editingItem as FactoryMap).name,
+            code: formData.code as string || (editingItem as FactoryMap).code,
+            map_type: formData.map_type as string || (editingItem as FactoryMap).map_type,
+            file_url: (formData.file_url as string) || (editingItem as FactoryMap).file_url,
+            description: formData.description as string || (editingItem as FactoryMap).description,
           });
           break;
         case 'businessLocations':
           await updateBusinessLocation(editingItem.id, {
-            business_type: formData.business_type || editingItem.business_type,
-            business_name: formData.business_name || editingItem.business_name,
-            business_code: formData.business_code || editingItem.business_code,
-            category: formData.category || editingItem.category,
+            business_type: formData.business_type as string || (editingItem as BusinessLocation).business_type,
+            business_name: formData.business_name as string || (editingItem as BusinessLocation).business_name,
+            business_code: formData.business_code as string || (editingItem as BusinessLocation).business_code,
+            category: formData.category as string || (editingItem as BusinessLocation).category,
             position:
               formData.lat && formData.lng
                 ? {
-                    lat: parseFloat(formData.lat),
-                    lng: parseFloat(formData.lng),
+                    lat: parseFloat(formData.lat as string),
+                    lng: parseFloat(formData.lng as string),
                   }
-                : editingItem.position,
-            address: formData.address || editingItem.address,
-            contact_person: formData.contact_person || editingItem.contact_person,
-            contact_phone: formData.contact_phone || editingItem.contact_phone,
-            capacity: formData.capacity ? parseFloat(formData.capacity) : editingItem.capacity,
+                : (editingItem as BusinessLocation).position,
+            address: formData.address as string || (editingItem as BusinessLocation).address,
+            contact_person: formData.contact_person as string || (editingItem as BusinessLocation).contact_person,
+            contact_phone: formData.contact_phone as string || (editingItem as BusinessLocation).contact_phone,
+            capacity: formData.capacity ? parseFloat(formData.capacity as string) : (editingItem as BusinessLocation).capacity,
             current_usage: formData.current_usage
-              ? parseFloat(formData.current_usage)
-              : editingItem.current_usage,
-            status: formData.status || editingItem.status,
+              ? parseFloat(formData.current_usage as string)
+              : (editingItem as BusinessLocation).current_usage,
+            status: (formData.status as string) || (editingItem as BusinessLocation).status,
             properties: formData.properties
-              ? JSON.parse(formData.properties)
-              : editingItem.properties,
-            description: formData.description || editingItem.description,
-            external_id: formData.external_id || editingItem.external_id,
-            external_type: formData.external_type || editingItem.external_type,
+              ? JSON.parse(formData.properties as string)
+              : (editingItem as BusinessLocation).properties,
+            description: formData.description as string || (editingItem as BusinessLocation).description,
+            external_id: formData.external_id as string || (editingItem as BusinessLocation).external_id,
+            external_type: formData.external_type as string || (editingItem as BusinessLocation).external_type,
           });
           break;
       }
@@ -430,30 +433,29 @@ const GisContent: React.FC = () => {
     setShowModal(true);
   };
 
-  const openEditModal = (item: {
-    position?: { lat?: number; lng?: number };
-    start_point?: [number, number];
-    end_point?: [number, number];
-    properties?: Record<string, unknown>;
-    [key: string]: unknown;
-  }) => {
+  const openEditModal = (item: DevicePoint | Pipeline | StorageLocation | EvidenceRecord | BusinessLocation | FactoryMap) => {
     setModalType('edit');
     setEditingItem(item);
-    const initialFormData: Record<string, unknown> = { ...item };
-    if (item.position?.lat !== undefined) {
-      initialFormData.lat = item.position.lat;
-      initialFormData.lng = item.position.lng;
+    const itemData = item as unknown as Record<string, unknown>;
+    const initialFormData: Record<string, unknown> = { ...itemData };
+    const position = itemData.position as { lat?: number; lng?: number } | undefined;
+    if (position?.lat !== undefined) {
+      initialFormData.lat = position.lat;
+      initialFormData.lng = position.lng;
     }
-    if (item.start_point) {
-      initialFormData.start_lat = item.start_point[0];
-      initialFormData.start_lng = item.start_point[1];
+    const startPoint = itemData.start_point as [number, number] | undefined;
+    if (startPoint) {
+      initialFormData.start_lat = startPoint[0];
+      initialFormData.start_lng = startPoint[1];
     }
-    if (item.end_point) {
-      initialFormData.end_lat = item.end_point[0];
-      initialFormData.end_lng = item.end_point[1];
+    const endPoint = itemData.end_point as [number, number] | undefined;
+    if (endPoint) {
+      initialFormData.end_lat = endPoint[0];
+      initialFormData.end_lng = endPoint[1];
     }
-    if (item.properties) {
-      initialFormData.properties = JSON.stringify(item.properties);
+    const properties = itemData.properties as Record<string, unknown> | undefined;
+    if (properties) {
+      initialFormData.properties = JSON.stringify(properties);
     }
     setFormData(initialFormData);
     setFormErrors({});
@@ -901,7 +903,7 @@ const GisContent: React.FC = () => {
       <Box
         sx={{
           minHeight: '100vh',
-          background: 'linear-gradient(135deg, #f8fafc 0%, #ecfeff 100%)',
+          background: `linear-gradient(135deg, ${ct.background.default} 0%, ${ct.cyan[50]} 100%)`,
         }}
       >
         <Box sx={{ maxWidth: 1280, mx: 'auto', px: { xs: 2, sm: 3 }, py: 4 }}>
@@ -920,7 +922,7 @@ const GisContent: React.FC = () => {
               spacing={1.5}
               sx={{ alignItems: 'center' }}
             >
-              <IconButton onClick={() => navigate('/dashboard')}>
+              <IconButton onClick={() => navigate('/dashboard')} aria-label='返回首页'>
                 <ChevronRight style={{ transform: 'rotate(180deg)' }} />
               </IconButton>
               <Box>
@@ -953,7 +955,7 @@ const GisContent: React.FC = () => {
                   variant='contained'
                   sx={{
                     bgcolor: 'info.main',
-                    '&:hover': { bgcolor: '#0891b2' },
+                    '&:hover': { bgcolor: 'cyan.dark' },
                   }}
                   startIcon={<Plus size={16} />}
                   onClick={openCreateModal}
@@ -1017,7 +1019,7 @@ const GisContent: React.FC = () => {
                 title='设备点位'
                 value={statistics?.device_points || 0}
                 icon={<MapPin size={24} />}
-                gradient={['#00C897', '#00A878']}
+                gradient={[ct.success.main, ct.success.dark]}
                 subtitle={`启用: ${statistics?.active_devices || 0}`}
               />
             </Grid>
@@ -1026,7 +1028,7 @@ const GisContent: React.FC = () => {
                 title='管线管理'
                 value={statistics?.pipelines || 0}
                 icon={<ArrowRight size={24} />}
-                gradient={['#6366F1', '#4F46E5']}
+                gradient={[ct.secondary[400], ct.secondary[600]]}
                 subtitle={`启用: ${statistics?.active_pipelines || 0}`}
               />
             </Grid>
@@ -1035,7 +1037,7 @@ const GisContent: React.FC = () => {
                 title='仓储位置'
                 value={statistics?.storage_locations || 0}
                 icon={<Warehouse size={24} />}
-                gradient={['warning.main', '#D97706']}
+                gradient={['warning.main', ct.warning.dark]}
               />
             </Grid>
             <Grid size={{ xs: 12, sm: 6, md: 4, lg: 2 }}>
@@ -1043,7 +1045,7 @@ const GisContent: React.FC = () => {
                 title='现场取证'
                 value={statistics?.evidence_records || 0}
                 icon={<Camera size={24} />}
-                gradient={['#EC4899', '#DB2777']}
+                gradient={[ct.pink[500], ct.pink.dark]}
               />
             </Grid>
             <Grid size={{ xs: 12, sm: 6, md: 4, lg: 2 }}>
@@ -1051,7 +1053,7 @@ const GisContent: React.FC = () => {
                 title='厂区地图'
                 value={statistics?.factory_maps || 0}
                 icon={<Map size={24} />}
-                gradient={['#8B5CF6', '#7C3AED']}
+                gradient={[ct.secondary.main, ct.secondary.dark]}
               />
             </Grid>
             <Grid size={{ xs: 12, sm: 6, md: 4, lg: 2 }}>
@@ -1059,7 +1061,7 @@ const GisContent: React.FC = () => {
                 title='业务位置'
                 value={statistics?.business_locations || 0}
                 icon={<Building2 size={24} />}
-                gradient={['#14B8A6', '#0D9488']}
+                gradient={[ct.teal.main, ct.teal.dark]}
               />
             </Grid>
           </Grid>
@@ -1077,12 +1079,12 @@ const GisContent: React.FC = () => {
                   {
                     name: '设备点位',
                     value: statistics?.device_points || 0,
-                    color: '#00C897',
+                    color: ct.success.main,
                   },
                   {
                     name: '管线',
                     value: statistics?.pipelines || 0,
-                    color: '#6366F1',
+                    color: ct.secondary[400],
                   },
                   {
                     name: '仓储位置',
@@ -1097,7 +1099,7 @@ const GisContent: React.FC = () => {
                   {
                     name: '业务位置',
                     value: statistics?.business_locations || 0,
-                    color: '#14B8A6',
+                    color: ct.teal.main,
                   },
                 ].filter((d) => d.value > 0)}
                 dataKey='value'
@@ -1122,7 +1124,7 @@ const GisContent: React.FC = () => {
                 ]}
                 dataKey='name'
                 yKeys={['启用', '总数']}
-                colors={['#00C897', '#6366F1']}
+                colors={[ct.success.main, ct.secondary[400]]}
               />
             </Grid>
           </Grid>
@@ -1352,11 +1354,12 @@ const GisContent: React.FC = () => {
                   {modalType === 'create' ? '新建' : '编辑'}
                 </Typography>
                 <IconButton
-                  onClick={resetModal}
-                  size='small'
-                >
-                  <X size={20} />
-                </IconButton>
+          onClick={resetModal}
+          size='small'
+          aria-label='关闭新建点位对话框'
+        >
+          <X size={20} />
+        </IconButton>
               </Stack>
             </DialogTitle>
             <DialogContent dividers>
@@ -1737,7 +1740,7 @@ const GisContent: React.FC = () => {
                 variant='contained'
                 sx={{
                   bgcolor: 'info.main',
-                  '&:hover': { bgcolor: '#0891b2' },
+                  '&:hover': { bgcolor: 'cyan.dark' },
                 }}
               >
                 {modalType === 'create' ? '创建' : '保存'}

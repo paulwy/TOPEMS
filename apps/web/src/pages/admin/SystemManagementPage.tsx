@@ -5,6 +5,9 @@ import { MobileHeader } from '@/components/mobile';
 import { MobileNav } from '@/components/layout/MobileNav';
 import { Box, Typography } from '@mui/material';
 import { PageContainer } from '@/components/common';
+import { designTokens } from '@/theme/tokens';
+
+const ct = designTokens.colors;
 
 interface SystemManagementPageProps {
   onNavigate?: (page: string) => void;
@@ -82,7 +85,7 @@ const SystemManagementPage: React.FC<SystemManagementPageProps> = ({ onNavigate:
       <Box
         sx={{
           minHeight: '100vh',
-          background: 'linear-gradient(to bottom right, grey.100, #f8fafc)',
+          background: `linear-gradient(to bottom right, grey.100, ${ct.background.default})`,
         }}
       >
         <MobileHeader
@@ -132,7 +135,7 @@ const SystemManagementPage: React.FC<SystemManagementPageProps> = ({ onNavigate:
                   sx={{
                     width: 40,
                     height: 40,
-                    background: 'linear-gradient(to bottom right, #475569, #475569)',
+                    background: `linear-gradient(to bottom right, ${ct.grey[600]}, ${ct.grey[600]})`,
                     borderRadius: 3,
                     display: 'flex',
                     alignItems: 'center',

@@ -18,10 +18,26 @@ import { useAppStore } from '@/store';
 import { logger } from '@/utils/logger';
 
 interface ReportBuilderProps {
-  onClose: () => void;
-  reportTypes: ReportTypeInfo[];
-  onSuccess: () => void;
+  onClose?: () => void;
+  reportTypes?: ReportTypeInfo[];
+  onSuccess?: () => void;
+  isModal?: boolean;
 }
+
+const DEFAULT_REPORT_TYPES: ReportTypeInfo[] = [
+  { type: 'rs_project_progress', name: '研发项目进度报表', module: 'RS' },
+  { type: 'rs_experiment_record', name: '试验记录报表', module: 'RS' },
+  { type: 'lims_inspection_stats', name: '实验室检验统计', module: 'LIMS' },
+  { type: 'lims_sample_summary', name: '样品汇总报表', module: 'LIMS' },
+  { type: 'qms_quality_analysis', name: '质量分析报表', module: 'QMS' },
+  { type: 'qms_defect_stats', name: '缺陷统计报表', module: 'QMS' },
+  { type: 'ehs_safety_check', name: '安全检查报表', module: 'EHS' },
+  { type: 'ehs_risk_assessment', name: '风险评估报表', module: 'EHS' },
+  { type: 'srm_supplier_eval', name: '供应商评估报表', module: 'SRM' },
+  { type: 'srm_purchase_stats', name: '采购统计报表', module: 'SRM' },
+  { type: 'pdm_production_stats', name: '生产统计报表', module: 'PDM' },
+  { type: 'pdm_process_summary', name: '工艺汇总报表', module: 'PDM' },
+];
 
 const REPORT_COLUMNS: Record<ReportType, string[]> = {
   rs_project_progress: ['项目名称', '负责人', '开始时间', '结束时间', '进度', '状态'],
@@ -38,7 +54,12 @@ const REPORT_COLUMNS: Record<ReportType, string[]> = {
   pdm_process_summary: ['工序名称', '工序编号', '标准时间', '实际时间', '效率', '负责人'],
 };
 
-const ReportBuilder: React.FC<ReportBuilderProps> = ({ onClose, reportTypes, onSuccess }) => {
+const ReportBuilder: React.FC<ReportBuilderProps> = ({
+  onClose = () => {},
+  reportTypes = DEFAULT_REPORT_TYPES,
+  onSuccess = () => {},
+  isModal = true,
+}) => {
   const addNotification = useAppStore((state) => state.addNotification);
   const [formData, setFormData] = useState({
     title: '',
@@ -136,523 +157,290 @@ const ReportBuilder: React.FC<ReportBuilderProps> = ({ onClose, reportTypes, onS
     }
   };
 
-  const getFormatIcon = (format: string) => {
-    switch (format) {
-      case 'excel':
-        return <FileSpreadsheet sx={{ width: 20, height: 20 }} />;
-      case 'pdf':
-        return <File sx={{ width: 20, height: 20 }} />;
-      case 'csv':
-        return <FileJson sx={{ width: 20, height: 20 }} />;
-      default:
-        return <FileText sx={{ width: 20, height: 20 }} />;
-    }
-  };
-
   const availableColumns = formData.reportType
     ? REPORT_COLUMNS[formData.reportType as ReportType] || []
     : [];
 
-  return (
-    <PageContainer
-      padding={false}
-      maxWidth={false}
+  const renderHeader = () => (
+    <Box
       sx={{
-        position: 'fixed',
-        inset: 0,
-        bgcolor: 'rgba(0, 0, 0, 0.5)',
-        display: 'flex',
-        alignItems: 'center',
-        justifyContent: 'center',
-        zIndex: 50,
-        minHeight: 'auto',
+        background: 'linear-gradient(135deg, primary.main 0%, primary.light 100%)',
+        color: 'white',
+        p: 3,
       }}
     >
       <Box
         sx={{
-          bgcolor: 'background.paper',
-          borderRadius: 3,
-          width: '100%',
-          maxWidth: 896,
-          maxHeight: '90vh',
-          overflow: 'hidden',
           display: 'flex',
-          flexDirection: 'column',
+          alignItems: 'center',
+          justifyContent: 'space-between',
         }}
       >
-        {/* Header */}
-        <Box
-          sx={{
-            background: 'linear-gradient(135deg, primary.main 0%, primary.light 100%)',
-            color: 'white',
-            p: 3,
-          }}
-        >
-          <Box
+        <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
+          <FileText sx={{ width: 24, height: 24 }} />
+          <Typography
+            variant='h5'
+            sx={{ fontWeight: 700 }}
+          >
+            报表构建器
+          </Typography>
+        </Box>
+        {isModal && (
+          <Button
+            onClick={onClose}
             sx={{
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'space-between',
+              p: 1,
+              color: 'white',
+              '&:hover': { bgcolor: 'rgba(255,255,255,0.2)' },
+              borderRadius: 3,
+              minWidth: 'auto',
             }}
           >
-            <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
-              <FileText sx={{ width: 24, height: 24 }} />
-              <Typography
-                variant='h5'
-                sx={{ fontWeight: 700 }}
-              >
-                报表构建器
-              </Typography>
-            </Box>
-            <Button
-              onClick={onClose}
-              sx={{
-                p: 1,
-                color: 'white',
-                '&:hover': { bgcolor: 'rgba(255,255,255,0.2)' },
-                borderRadius: 3,
-                minWidth: 'auto',
-              }}
-            >
-              <X sx={{ width: 24, height: 24 }} />
-            </Button>
-          </Box>
-          <Typography sx={{ color: 'primary.light', fontSize: 14, mt: 1 }}>
-            创建自定义报表，灵活配置字段和时间范围
+            <X sx={{ width: 24, height: 24 }} />
+          </Button>
+        )}
+      </Box>
+      <Typography sx={{ color: 'primary.light', fontSize: 14, mt: 1 }}>
+        创建自定义报表，灵活配置字段和时间范围
+      </Typography>
+    </Box>
+  );
+
+  const renderForm = () => (
+    <Box
+      sx={{
+        flex: 1,
+        overflowY: 'auto',
+        p: 3,
+        display: 'flex',
+        flexDirection: 'column',
+        gap: 3,
+      }}
+    >
+      <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
+        <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+          <FileText sx={{ width: 20, height: 20, color: 'primary.main', mr: 1 }} />
+          <Typography
+            variant='h6'
+            sx={{ fontWeight: 600 }}
+          >
+            基本信息
           </Typography>
         </Box>
 
-        {/* Form */}
-        <Box
-          sx={{
-            flex: 1,
-            overflowY: 'auto',
-            p: 3,
-            display: 'flex',
-            flexDirection: 'column',
-            gap: 3,
-          }}
-        >
-          {/* Basic Info */}
-          <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
-            <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-              <FileText sx={{ width: 20, height: 20, color: 'primary.main', mr: 1 }} />
-              <Typography
-                variant='h6'
-                sx={{ fontWeight: 600 }}
-              >
-                基本信息
-              </Typography>
-            </Box>
-
-            <Box>
-              <Typography
-                variant='body2'
-                sx={{ fontWeight: 500, mb: 1, color: 'grey.700' }}
-              >
-                报表标题{' '}
-                <Typography
-                  component='span'
-                  sx={{ color: 'error.main' }}
-                >
-                  *
-                </Typography>
-              </Typography>
-              <TextField
-                fullWidth
-                size='small'
-                value={formData.title}
-                onChange={(e) => {
-                  setFormData((prev) => ({ ...prev, title: e.target.value }));
-                  setErrors((prev) => ({ ...prev, title: '' }));
-                }}
-                placeholder='例如：2024年Q1项目进度报表'
-                error={!!errors.title}
-                sx={{
-                  '& .MuiOutlinedInput-root': {
-                    borderRadius: 3,
-                    '&.Mui-error': { borderColor: 'error.main' },
-                  },
-                }}
-              />
-              {errors.title && (
-                <Box
-                  sx={{
-                    display: 'flex',
-                    alignItems: 'center',
-                    mt: 0.5,
-                    color: 'error.main',
-                    fontSize: 14,
-                  }}
-                >
-                  <AlertCircle sx={{ width: 16, height: 16, mr: 0.5 }} />
-                  {errors.title}
-                </Box>
-              )}
-            </Box>
-
-            <Box>
-              <Typography
-                variant='body2'
-                sx={{ fontWeight: 500, mb: 1, color: 'grey.700' }}
-              >
-                报表描述
-              </Typography>
-              <TextField
-                fullWidth
-                size='small'
-                multiline
-                rows={3}
-                value={formData.description}
-                onChange={(e) =>
-                  setFormData((prev) => ({
-                    ...prev,
-                    description: e.target.value,
-                  }))
-                }
-                placeholder='可选的报表描述信息'
-                sx={{ '& .MuiOutlinedInput-root': { borderRadius: 3 } }}
-              />
-            </Box>
-          </Box>
-
-          {/* Report Type */}
-          <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
-            <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-              <Columns sx={{ width: 20, height: 20, color: 'secondary.main', mr: 1 }} />
-              <Typography
-                variant='h6'
-                sx={{ fontWeight: 600 }}
-              >
-                报表类型{' '}
-                <Typography
-                  component='span'
-                  sx={{ color: 'error.main' }}
-                >
-                  *
-                </Typography>
-              </Typography>
-            </Box>
-
+        <Box>
+          <Typography
+            variant='body2'
+            sx={{ fontWeight: 500, mb: 1, color: 'grey.700' }}
+          >
+            报表标题{' '}
+            <Typography
+              component='span'
+              sx={{ color: 'error.main' }}
+            >
+              *
+            </Typography>
+          </Typography>
+          <TextField
+            fullWidth
+            size='small'
+            value={formData.title}
+            onChange={(e) => {
+              setFormData((prev) => ({ ...prev, title: e.target.value }));
+              setErrors((prev) => ({ ...prev, title: '' }));
+            }}
+            placeholder='例如：2024年Q1项目进度报表'
+            error={!!errors.title}
+            sx={{
+              '& .MuiOutlinedInput-root': {
+                borderRadius: 3,
+                '&.Mui-error': { borderColor: 'error.main' },
+              },
+            }}
+          />
+          {errors.title && (
             <Box
               sx={{
-                display: 'grid',
-                gridTemplateColumns: {
-                  xs: 'repeat(1, 1fr)',
-                  sm: 'repeat(2, 1fr)',
-                  md: 'repeat(3, 1fr)',
-                },
-                gap: 2,
+                display: 'flex',
+                alignItems: 'center',
+                mt: 0.5,
+                color: 'error.main',
+                fontSize: 14,
               }}
             >
-              {reportTypes.map((type) => (
-                <Box
-                  key={type.type}
-                  onClick={() => handleReportTypeChange(type.type)}
-                  sx={{
-                    p: 2,
-                    border: 2,
-                    borderRadius: 3,
-                    cursor: 'pointer',
-                    borderColor: formData.reportType === type.type ? 'primary.main' : 'grey.200',
-                    bgcolor: formData.reportType === type.type ? 'primary.light' : 'transparent',
-                    '&:hover': {
-                      borderColor:
-                        formData.reportType === type.type ? 'primary.main' : 'primary.light',
-                    },
-                  }}
-                >
-                  <Typography sx={{ fontWeight: 500, color: 'grey.900' }}>{type.name}</Typography>
-                  <Typography
-                    variant='caption'
-                    sx={{ color: 'grey.500', mt: 0.5 }}
-                  >
-                    {type.module}
-                  </Typography>
-                </Box>
-              ))}
-            </Box>
-            {errors.reportType && (
-              <Box
-                sx={{
-                  display: 'flex',
-                  alignItems: 'center',
-                  color: 'error.main',
-                  fontSize: 14,
-                }}
-              >
-                <AlertCircle sx={{ width: 16, height: 16, mr: 0.5 }} />
-                {errors.reportType}
-              </Box>
-            )}
-          </Box>
-
-          {/* Date Range */}
-          <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
-            <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-              <Calendar sx={{ width: 20, height: 20, color: 'success.main', mr: 1 }} />
-              <Typography
-                variant='h6'
-                sx={{ fontWeight: 600 }}
-              >
-                时间范围
-              </Typography>
-            </Box>
-
-            <Box sx={{ display: 'grid', gridTemplateColumns: 2, gap: 2 }}>
-              <Box>
-                <Typography
-                  variant='body2'
-                  sx={{ fontWeight: 500, mb: 1, color: 'grey.700' }}
-                >
-                  开始日期
-                </Typography>
-                <TextField
-                  type='date'
-                  fullWidth
-                  size='small'
-                  value={formData.startDate}
-                  onChange={(e) =>
-                    setFormData((prev) => ({
-                      ...prev,
-                      startDate: e.target.value,
-                    }))
-                  }
-                  sx={{ '& .MuiOutlinedInput-root': { borderRadius: 3 } }}
-                />
-              </Box>
-              <Box>
-                <Typography
-                  variant='body2'
-                  sx={{ fontWeight: 500, mb: 1, color: 'grey.700' }}
-                >
-                  结束日期
-                </Typography>
-                <TextField
-                  type='date'
-                  fullWidth
-                  size='small'
-                  value={formData.endDate}
-                  onChange={(e) =>
-                    setFormData((prev) => ({
-                      ...prev,
-                      endDate: e.target.value,
-                    }))
-                  }
-                  sx={{ '& .MuiOutlinedInput-root': { borderRadius: 3 } }}
-                />
-              </Box>
-            </Box>
-            {errors.dateRange && (
-              <Box
-                sx={{
-                  display: 'flex',
-                  alignItems: 'center',
-                  color: 'error.main',
-                  fontSize: 14,
-                }}
-              >
-                <AlertCircle sx={{ width: 16, height: 16, mr: 0.5 }} />
-                {errors.dateRange}
-              </Box>
-            )}
-          </Box>
-
-          {/* Column Selection */}
-          {availableColumns.length > 0 && (
-            <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
-              <Box
-                sx={{
-                  display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'space-between',
-                }}
-              >
-                <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-                  <Columns sx={{ width: 20, height: 20, color: 'warning.main', mr: 1 }} />
-                  <Typography
-                    variant='h6'
-                    sx={{ fontWeight: 600 }}
-                  >
-                    选择列{' '}
-                    <Typography
-                      component='span'
-                      sx={{ color: 'error.main' }}
-                    >
-                      *
-                    </Typography>
-                  </Typography>
-                </Box>
-                <Box sx={{ display: 'flex', gap: 2 }}>
-                  <Button
-                    onClick={handleSelectAllColumns}
-                    size='small'
-                    sx={{
-                      color: 'primary.main',
-                      '&:hover': { bgcolor: 'primary.light' },
-                    }}
-                  >
-                    全选
-                  </Button>
-                  <Typography sx={{ color: 'grey.400', lineHeight: '32px' }}>|</Typography>
-                  <Button
-                    onClick={handleDeselectAllColumns}
-                    size='small'
-                    sx={{
-                      color: 'grey.700',
-                      '&:hover': { bgcolor: 'grey.100' },
-                    }}
-                  >
-                    取消全选
-                  </Button>
-                </Box>
-              </Box>
-
-              <Box
-                sx={{
-                  display: 'grid',
-                  gridTemplateColumns: {
-                    xs: 'repeat(1, 1fr)',
-                    sm: 'repeat(2, 1fr)',
-                    md: 'repeat(3, 1fr)',
-                  },
-                  gap: 2,
-                }}
-              >
-                {availableColumns.map((column) => (
-                  <Box
-                    key={column}
-                    onClick={() => handleColumnToggle(column)}
-                    sx={{
-                      display: 'flex',
-                      alignItems: 'center',
-                      p: 2,
-                      border: 1,
-                      borderRadius: 3,
-                      borderColor: 'grey.200',
-                      cursor: 'pointer',
-                      '&:hover': { bgcolor: 'grey.50' },
-                    }}
-                  >
-                    <Checkbox
-                      checked={formData.selectedColumns.includes(column)}
-                      size='small'
-                      sx={{
-                        p: 0,
-                        mr: 1,
-                        color: 'grey.400',
-                        '&.Mui-checked': { color: 'primary.main' },
-                      }}
-                    />
-                    <Typography
-                      variant='body2'
-                      sx={{ color: 'grey.700' }}
-                    >
-                      {column}
-                    </Typography>
-                  </Box>
-                ))}
-              </Box>
-              {errors.selectedColumns && (
-                <Box
-                  sx={{
-                    display: 'flex',
-                    alignItems: 'center',
-                    color: 'error.main',
-                    fontSize: 14,
-                  }}
-                >
-                  <AlertCircle sx={{ width: 16, height: 16, mr: 0.5 }} />
-                  {errors.selectedColumns}
-                </Box>
-              )}
-              <Typography
-                variant='body2'
-                sx={{ color: 'grey.500' }}
-              >
-                已选择 {formData.selectedColumns.length} 列
-              </Typography>
+              <AlertCircle sx={{ width: 16, height: 16, mr: 0.5 }} />
+              {errors.title}
             </Box>
           )}
-
-          {/* Export Format */}
-          <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
-            <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-              <FileText sx={{ width: 20, height: 20, color: 'info.main', mr: 1 }} />
-              <Typography
-                variant='h6'
-                sx={{ fontWeight: 600 }}
-              >
-                导出格式
-              </Typography>
-            </Box>
-
-            <Box sx={{ display: 'grid', gridTemplateColumns: 3, gap: 2 }}>
-              {(['excel', 'pdf', 'csv'] as ExportFormat[]).map((format) => (
-                <Box
-                  key={format}
-                  onClick={() => setFormData((prev) => ({ ...prev, format }))}
-                  sx={{
-                    p: 2,
-                    border: 2,
-                    borderRadius: 3,
-                    cursor: 'pointer',
-                    borderColor: formData.format === format ? 'primary.main' : 'grey.200',
-                    bgcolor: formData.format === format ? 'primary.light' : 'transparent',
-                    '&:hover': {
-                      borderColor: formData.format === format ? 'primary.main' : 'primary.light',
-                    },
-                  }}
-                >
-                  <Box
-                    sx={{
-                      display: 'flex',
-                      flexDirection: 'column',
-                      alignItems: 'center',
-                    }}
-                  >
-                    <Box
-                      sx={{
-                        mb: 1,
-                        color: formData.format === format ? 'primary.main' : 'grey.500',
-                      }}
-                    >
-                      {getFormatIcon(format)}
-                    </Box>
-                    <Typography
-                      sx={{
-                        fontWeight: 500,
-                        color: 'grey.900',
-                        textTransform: 'capitalize',
-                      }}
-                    >
-                      {format}
-                    </Typography>
-                    <Typography
-                      variant='caption'
-                      sx={{ color: 'grey.500', mt: 0.5 }}
-                    >
-                      {format === 'excel' && '.xlsx 文件'}
-                      {format === 'pdf' && '.pdf 文件'}
-                      {format === 'csv' && '.csv 文件'}
-                    </Typography>
-                  </Box>
-                </Box>
-              ))}
-            </Box>
-          </Box>
         </Box>
 
-        {/* Footer */}
+        <Box>
+          <Typography
+            variant='body2'
+            sx={{ fontWeight: 500, mb: 1, color: 'grey.700' }}
+          >
+            报表描述
+          </Typography>
+          <TextField
+            fullWidth
+            size='small'
+            multiline
+            rows={3}
+            value={formData.description}
+            onChange={(e) =>
+              setFormData((prev) => ({
+                ...prev,
+                description: e.target.value,
+              }))
+            }
+            placeholder='可选的报表描述信息'
+            sx={{ '& .MuiOutlinedInput-root': { borderRadius: 3 } }}
+          />
+        </Box>
+      </Box>
+
+      <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
+        <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+          <Columns sx={{ width: 20, height: 20, color: 'secondary.main', mr: 1 }} />
+          <Typography
+            variant='h6'
+            sx={{ fontWeight: 600 }}
+          >
+            报表类型{' '}
+            <Typography
+              component='span'
+              sx={{ color: 'error.main' }}
+            >
+              *
+            </Typography>
+          </Typography>
+        </Box>
+
         <Box
           sx={{
-            bgcolor: 'grey.100',
-            px: 3,
-            py: 2,
-            borderTop: 1,
-            borderColor: 'grey.200',
+            display: 'grid',
+            gridTemplateColumns: {
+              xs: 'repeat(1, 1fr)',
+              sm: 'repeat(2, 1fr)',
+              md: 'repeat(3, 1fr)',
+            },
+            gap: 2,
           }}
         >
+          {reportTypes.map((type) => (
+            <Box
+              key={type.type}
+              onClick={() => handleReportTypeChange(type.type)}
+              sx={{
+                p: 2,
+                border: 2,
+                borderRadius: 3,
+                cursor: 'pointer',
+                borderColor: formData.reportType === type.type ? 'primary.main' : 'grey.200',
+                bgcolor: formData.reportType === type.type ? 'primary.light' : 'transparent',
+                '&:hover': {
+                  borderColor:
+                    formData.reportType === type.type ? 'primary.main' : 'primary.light',
+                },
+              }}
+            >
+              <Typography sx={{ fontWeight: 500, color: 'grey.900' }}>{type.name}</Typography>
+              <Typography
+                variant='caption'
+                sx={{ color: 'grey.500', mt: 0.5 }}
+              >
+                {type.module}
+              </Typography>
+            </Box>
+          ))}
+        </Box>
+        {errors.reportType && (
+          <Box
+            sx={{
+              display: 'flex',
+              alignItems: 'center',
+              color: 'error.main',
+              fontSize: 14,
+            }}
+          >
+            <AlertCircle sx={{ width: 16, height: 16, mr: 0.5 }} />
+            {errors.reportType}
+          </Box>
+        )}
+      </Box>
+
+      <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
+        <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+          <Calendar sx={{ width: 20, height: 20, color: 'success.main', mr: 1 }} />
+          <Typography
+            variant='h6'
+            sx={{ fontWeight: 600 }}
+          >
+            时间范围
+          </Typography>
+        </Box>
+
+        <Box sx={{ display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', gap: 2 }}>
+          <Box>
+            <Typography
+              variant='body2'
+              sx={{ fontWeight: 500, mb: 1, color: 'grey.700' }}
+            >
+              开始日期
+            </Typography>
+            <TextField
+              type='date'
+              fullWidth
+              size='small'
+              value={formData.startDate}
+              onChange={(e) =>
+                setFormData((prev) => ({
+                  ...prev,
+                  startDate: e.target.value,
+                }))
+              }
+              sx={{ '& .MuiOutlinedInput-root': { borderRadius: 3 } }}
+            />
+          </Box>
+          <Box>
+            <Typography
+              variant='body2'
+              sx={{ fontWeight: 500, mb: 1, color: 'grey.700' }}
+            >
+              结束日期
+            </Typography>
+            <TextField
+              type='date'
+              fullWidth
+              size='small'
+              value={formData.endDate}
+              onChange={(e) =>
+                setFormData((prev) => ({
+                  ...prev,
+                  endDate: e.target.value,
+                }))
+              }
+              sx={{ '& .MuiOutlinedInput-root': { borderRadius: 3 } }}
+            />
+          </Box>
+        </Box>
+        {errors.dateRange && (
+          <Box
+            sx={{
+              display: 'flex',
+              alignItems: 'center',
+              color: 'error.main',
+              fontSize: 14,
+            }}
+          >
+            <AlertCircle sx={{ width: 16, height: 16, mr: 0.5 }} />
+            {errors.dateRange}
+          </Box>
+        )}
+      </Box>
+
+      {availableColumns.length > 0 && (
+        <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
           <Box
             sx={{
               display: 'flex',
@@ -660,83 +448,311 @@ const ReportBuilder: React.FC<ReportBuilderProps> = ({ onClose, reportTypes, onS
               justifyContent: 'space-between',
             }}
           >
-            <Box sx={{ fontSize: 14, color: 'grey.600' }}>
-              {formData.selectedColumns.length > 0 && (
-                <Box sx={{ display: 'flex', alignItems: 'center' }}>
-                  <CheckCircle
-                    sx={{
-                      width: 16,
-                      height: 16,
-                      color: 'success.main',
-                      mr: 0.5,
-                    }}
-                  />
-                  已配置 {formData.selectedColumns.length} 列
-                  {formData.reportType && (
-                    <Typography
-                      component='span'
-                      sx={{ ml: 1, color: 'grey.400' }}
-                    >
-                      ({REPORT_COLUMNS[formData.reportType as ReportType]?.length} 可选)
-                    </Typography>
-                  )}
-                </Box>
-              )}
+            <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+              <Columns sx={{ width: 20, height: 20, color: 'warning.main', mr: 1 }} />
+              <Typography
+                variant='h6'
+                sx={{ fontWeight: 600 }}
+              >
+                选择列{' '}
+                <Typography
+                  component='span'
+                  sx={{ color: 'error.main' }}
+                >
+                  *
+                </Typography>
+              </Typography>
             </Box>
             <Box sx={{ display: 'flex', gap: 2 }}>
               <Button
-                onClick={onClose}
-                disabled={submitting}
-                variant='outlined'
+                onClick={handleSelectAllColumns}
+                size='small'
                 sx={{
-                  borderRadius: 3,
-                  borderColor: 'grey.300',
+                  color: 'primary.main',
+                  '&:hover': { bgcolor: 'primary.light' },
+                }}
+              >
+                全选
+              </Button>
+              <Typography sx={{ color: 'grey.400', lineHeight: '32px' }}>|</Typography>
+              <Button
+                onClick={handleDeselectAllColumns}
+                size='small'
+                sx={{
                   color: 'grey.700',
                   '&:hover': { bgcolor: 'grey.100' },
                 }}
               >
-                取消
-              </Button>
-              <Button
-                onClick={handleSubmit}
-                disabled={submitting}
-                variant='contained'
-                startIcon={
-                  submitting ? (
-                    <Loader2
-                      sx={{
-                        width: 16,
-                        height: 16,
-                        animation: 'spin 1s linear infinite',
-                      }}
-                    />
-                  ) : (
-                    <FileText sx={{ width: 16, height: 16 }} />
-                  )
-                }
-                sx={{ borderRadius: 3 }}
-              >
-                {submitting ? '生成中...' : '生成报表'}
+                取消全选
               </Button>
             </Box>
           </Box>
-          {errors.submit && (
+
+          <Box
+            sx={{
+              display: 'grid',
+              gridTemplateColumns: {
+                xs: 'repeat(1, 1fr)',
+                sm: 'repeat(2, 1fr)',
+                md: 'repeat(3, 1fr)',
+              },
+              gap: 2,
+            }}
+          >
+            {availableColumns.map((column) => (
+              <Box
+                key={column}
+                onClick={() => handleColumnToggle(column)}
+                sx={{
+                  display: 'flex',
+                  alignItems: 'center',
+                  p: 2,
+                  border: 1,
+                  borderRadius: 3,
+                  borderColor: 'grey.200',
+                  cursor: 'pointer',
+                  '&:hover': { bgcolor: 'grey.50' },
+                }}
+              >
+                <Checkbox
+                  checked={formData.selectedColumns.includes(column)}
+                  size='small'
+                  sx={{
+                    p: 0,
+                    mr: 1,
+                    color: 'grey.400',
+                    '&.Mui-checked': { color: 'primary.main' },
+                  }}
+                />
+                <Typography
+                  variant='body2'
+                  sx={{ color: 'grey.700' }}
+                >
+                  {column}
+                </Typography>
+              </Box>
+            ))}
+          </Box>
+          {errors.selectedColumns && (
             <Box
               sx={{
-                mt: 1,
-                color: 'error.main',
-                fontSize: 14,
                 display: 'flex',
                 alignItems: 'center',
+                color: 'error.main',
+                fontSize: 14,
               }}
             >
               <AlertCircle sx={{ width: 16, height: 16, mr: 0.5 }} />
-              {errors.submit}
+              {errors.selectedColumns}
+            </Box>
+          )}
+          <Typography
+            variant='body2'
+            sx={{ color: 'grey.500' }}
+          >
+            已选择 {formData.selectedColumns.length} 列
+          </Typography>
+        </Box>
+      )}
+
+      <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
+        <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+          <FileText sx={{ width: 20, height: 20, color: 'info.main', mr: 1 }} />
+          <Typography
+            variant='h6'
+            sx={{ fontWeight: 600 }}
+          >
+            导出格式
+          </Typography>
+        </Box>
+
+        <Box sx={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 2 }}>
+          {(['excel', 'pdf', 'csv'] as ExportFormat[]).map((format) => (
+            <Box
+              key={format}
+              onClick={() => setFormData((prev) => ({ ...prev, format }))}
+              sx={{
+                p: 2,
+                border: 2,
+                borderRadius: 3,
+                cursor: 'pointer',
+                borderColor: formData.format === format ? 'primary.main' : 'grey.200',
+                bgcolor: formData.format === format ? 'primary.light' : 'transparent',
+                '&:hover': {
+                  borderColor: formData.format === format ? 'primary.main' : 'primary.light',
+                },
+              }}
+            >
+              {format === 'excel' && <FileSpreadsheet sx={{ width: 24, height: 24, color: 'green.500', mb: 1 }} />}
+              {format === 'pdf' && <File sx={{ width: 24, height: 24, color: 'red.500', mb: 1 }} />}
+              {format === 'csv' && <FileJson sx={{ width: 24, height: 24, color: 'blue.500', mb: 1 }} />}
+              <Typography
+                sx={{ fontWeight: 500, color: 'grey.900' }}
+              >
+                {format === 'excel' && 'Excel'}
+                {format === 'pdf' && 'PDF'}
+                {format === 'csv' && 'CSV'}
+              </Typography>
+              <Typography
+                variant='caption'
+                sx={{ color: 'grey.500', mt: 0.5 }}
+              >
+                {format === 'excel' && '.xlsx 文件'}
+                {format === 'pdf' && '.pdf 文件'}
+                {format === 'csv' && '.csv 文件'}
+              </Typography>
+            </Box>
+          ))}
+        </Box>
+      </Box>
+    </Box>
+  );
+
+  const renderFooter = () => (
+    <Box
+      sx={{
+        bgcolor: 'grey.100',
+        px: 3,
+        py: 2,
+        borderTop: 1,
+        borderColor: 'grey.200',
+      }}
+    >
+      <Box
+        sx={{
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'space-between',
+        }}
+      >
+        <Box sx={{ fontSize: 14, color: 'grey.600' }}>
+          {formData.selectedColumns.length > 0 && (
+            <Box sx={{ display: 'flex', alignItems: 'center' }}>
+              <CheckCircle
+                sx={{
+                  width: 16,
+                  height: 16,
+                  color: 'success.main',
+                  mr: 0.5,
+                }}
+              />
+              已配置 {formData.selectedColumns.length} 列
+              {formData.reportType && (
+                <Typography
+                  component='span'
+                  sx={{ ml: 1, color: 'grey.400' }}
+                >
+                  ({REPORT_COLUMNS[formData.reportType as ReportType]?.length} 可选)
+                </Typography>
+              )}
             </Box>
           )}
         </Box>
+        <Box sx={{ display: 'flex', gap: 2 }}>
+          {isModal && (
+            <Button
+              onClick={onClose}
+              disabled={submitting}
+              variant='outlined'
+              sx={{
+                borderRadius: 3,
+                borderColor: 'grey.300',
+                color: 'grey.700',
+                '&:hover': { bgcolor: 'grey.100' },
+              }}
+            >
+              取消
+            </Button>
+          )}
+          <Button
+            onClick={handleSubmit}
+            disabled={submitting}
+            variant='contained'
+            startIcon={
+              submitting ? (
+                <Loader2
+                  sx={{
+                    width: 16,
+                    height: 16,
+                    animation: 'spin 1s linear infinite',
+                  }}
+                />
+              ) : (
+                <FileText sx={{ width: 16, height: 16 }} />
+              )
+            }
+            sx={{ borderRadius: 3 }}
+          >
+            {submitting ? '生成中...' : '生成报表'}
+          </Button>
+        </Box>
       </Box>
-    </PageContainer>
+      {errors.submit && (
+        <Box
+          sx={{
+            mt: 1,
+            color: 'error.main',
+            fontSize: 14,
+            display: 'flex',
+            alignItems: 'center',
+          }}
+        >
+          <AlertCircle sx={{ width: 16, height: 16, mr: 0.5 }} />
+          {errors.submit}
+        </Box>
+      )}
+    </Box>
+  );
+
+  if (isModal) {
+    return (
+      <PageContainer
+        padding={false}
+        maxWidth={false}
+        sx={{
+          position: 'fixed',
+          inset: 0,
+          bgcolor: 'rgba(0, 0, 0, 0.5)',
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center',
+          zIndex: 50,
+          minHeight: 'auto',
+        }}
+      >
+        <Box
+          sx={{
+            bgcolor: 'background.paper',
+            borderRadius: 3,
+            width: '100%',
+            maxWidth: 896,
+            maxHeight: '90vh',
+            overflow: 'hidden',
+            display: 'flex',
+            flexDirection: 'column',
+          }}
+        >
+          {renderHeader()}
+          {renderForm()}
+          {renderFooter()}
+        </Box>
+      </PageContainer>
+    );
+  }
+
+  return (
+    <Box
+      sx={{
+        minHeight: '100vh',
+        display: 'flex',
+        flexDirection: 'column',
+        bgcolor: 'background.paper',
+      }}
+    >
+      {renderHeader()}
+      {renderForm()}
+      {renderFooter()}
+    </Box>
   );
 };
 

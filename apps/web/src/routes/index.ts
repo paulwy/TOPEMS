@@ -4,13 +4,15 @@ export { commonRoutes } from './common';
 export { legacyRedirects } from './compatibility';
 
 export {
-  coreModuleRoutes,
   getAllRoutes,
   getModuleRoutes,
   findRouteByPath,
-  toFlatRouteConfig,
-  allV2FlatRoutes,
+  findRouteByPathSync,
+  coreModuleCodes,
+  loadModuleConfig,
+  getLoadedModules,
 } from './v2';
+export { toFlatRouteConfig, lazyWithRetry } from './v2/types';
 export type {
   RouteModuleConfig,
   RouteConfigV2,
@@ -18,4 +20,3 @@ export type {
   PageTemplateType,
   LayoutType,
 } from './v2/types';
-export { lazyWithRetry } from './v2/types';

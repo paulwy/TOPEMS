@@ -32,6 +32,8 @@ import {
   Wrench,
 } from 'lucide-react';
 import { apiLogger } from '@/utils/logger';
+import { designTokens } from '@/theme/tokens';
+const ct = designTokens.colors;
 
 const ProductionKanbanPage: React.FC = () => {
   const [kanbanData, setKanbanData] = useState<ProductionKanbanData | null>(null);
@@ -111,7 +113,7 @@ const ProductionKanbanPage: React.FC = () => {
       autoBreadcrumbs
       headerProps={{
         pageIcon: <Monitor style={{ width: 20, height: 20 }} />,
-        pageGradient: 'linear-gradient(135deg, #3B82F6 0%, #1D4ED8 100%)',
+        pageGradient: `linear-gradient(135deg, ${ct.primary.main} 0%, ${ct.primary.dark} 100%)`,
       }}
     >
       <Box sx={{ mb: 3 }}>
@@ -184,7 +186,7 @@ const ProductionKanbanPage: React.FC = () => {
             </Card>
           </Grid>
           <Grid size={{ xs: 12, sm: 6, md: 4, lg: 2 }}>
-            <Card sx={{ bgcolor: '#e0e7ff', color: 'secondary.700' }}>
+            <Card sx={{ bgcolor: ct.secondary[100], color: 'secondary.700' }}>
               <CardContent>
                 <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 1 }}>
                   <TrendingUp size={24} />
@@ -200,7 +202,7 @@ const ProductionKanbanPage: React.FC = () => {
             </Card>
           </Grid>
           <Grid size={{ xs: 12, sm: 6, md: 4, lg: 2 }}>
-            <Card sx={{ bgcolor: 'secondary.100', color: '#be185d' }}>
+            <Card sx={{ bgcolor: 'secondary.100', color: ct.secondary[700] }}>
               <CardContent>
                 <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 1 }}>
                   <Gauge size={24} />

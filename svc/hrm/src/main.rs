@@ -9,22 +9,14 @@
 #![allow(clippy::unnecessary_cast)]
 #![allow(dead_code)]
 
-mod api;
 mod models;
-mod plugin;
 mod services;
-mod utils;
+
+pub mod modules;
+mod shared;
 
 use anyhow::Result;
-use axum::{
-    body::Body,
-    extract::{Request, State},
-    http::header,
-    middleware::Next,
-    response::{IntoResponse, Response},
-    routing::get,
-    Json, Router,
-};
+use axum::{routing::get, Json, Router};
 use axum_prometheus::PrometheusMetricLayer;
 use prometheus::{Encoder, TextEncoder};
 use serde::Serialize;
@@ -33,12 +25,12 @@ use std::sync::Arc;
 use std::time::Instant;
 use utoipa::OpenApi;
 
-use api::ApiState;
+use modules::ApiState;
 use topems_shared::redis::{RedisCacheService, RedisPool as RedisPoolTrait};
 use topems_shared::{
-    check_http_health, config::CacheConfig, create_api_info_router, create_cors_layer,
-    create_database_pool, init_telemetry, telemetry_middleware, verify_jwt_token, ApiResponse,
-    AuthState, CacheService, Claims, DatabaseConfig, DependencyHealth, FieldEncryptionService,
+    auth_middleware, check_http_health, config::CacheConfig, create_api_info_router,
+    create_cors_layer, create_database_pool, init_telemetry, rls_middleware, telemetry_middleware,
+    ApiResponse, AuthState, CacheService, DatabaseConfig, DependencyHealth, FieldEncryptionService,
     HealthStatus, InMemoryCache, KeyManager, RedisConfig, ServiceHealth, SystemMetrics,
 };
 
@@ -107,10 +99,14 @@ async fn main() -> Result<()> {
         .route("/api-docs/openapi.json", get(serve_openapi_json))
         .with_state(api_state.clone());
 
-    let protected_routes = api::create_routes()
+    let protected_routes = modules::create_routes()
         .layer(axum::middleware::from_fn_with_state(
             api_state.auth_state.clone(),
-            hrm_auth_middleware,
+            auth_middleware,
+        ))
+        .layer(axum::middleware::from_fn_with_state(
+            api_state.db.clone(),
+            rls_middleware,
         ))
         .with_state(api_state.clone());
 
@@ -135,7 +131,7 @@ async fn main() -> Result<()> {
     // 启动时自动注册到统一核心
     let core_url = env::var("CORE_URL").ok();
     tokio::spawn(async move {
-        plugin::auto_register_to_core(core_url.as_deref()).await;
+        modules::hrm_plugin::auto_register_to_core(core_url.as_deref()).await;
     });
 
     let listener = tokio::net::TcpListener::bind(&addr).await?;
@@ -291,7 +287,7 @@ fn init_encryption_service() -> FieldEncryptionService {
         let mut hasher = Sha256::new();
         hasher.update(encryption_key.as_bytes());
         let result = hasher.finalize();
-        base64::encode(result)
+        base64::Engine::encode(&base64::engine::general_purpose::STANDARD, result)
     };
 
     match KeyManager::from_base64_key(&key_b64) {
@@ -309,87 +305,5 @@ async fn init_db(_pool: &sqlx::PgPool) -> Result<()> {
 }
 
 async fn serve_openapi_json() -> axum::Json<utoipa::openapi::OpenApi> {
-    axum::Json(api::openapi::ApiDoc::openapi())
-}
-
-/// HRM 自定义认证中间件
-/// 支持两种认证模式：
-/// 1. 代理模式：通过 X-User-Id header 传递用户 ID
-/// 2. 直连模式：通过 Authorization header 传递 JWT token
-async fn hrm_auth_middleware(
-    State(auth_state): State<AuthState>,
-    req: Request,
-    next: Next,
-) -> Response {
-    let path = req.uri().path();
-
-    // 公开路径不需要认证
-    let public_paths = [
-        "/",
-        "/health",
-        "/api/plugins/info",
-        "/api/plugins/health",
-        "/api/v1/health/detailed",
-        "/api/v1/metrics",
-    ];
-    if public_paths.contains(&path) || path.starts_with("/metrics") || path.starts_with("/api-docs")
-    {
-        return next.run(req).await;
-    }
-
-    let (mut parts, body) = req.into_parts();
-
-    // 模式 1: 检查 X-User-Id header（代理模式）
-    if let Some(user_id) = parts.headers.get("X-User-Id") {
-        if let Ok(user_id_str) = user_id.to_str() {
-            // 创建简化的 Claims 用于代理模式
-            let claims = Claims {
-                sub: user_id_str.to_string(),
-                username: user_id_str.to_string(),
-                role: "user".to_string(),
-                roles: vec!["user".to_string()],
-                permissions: vec![],
-                is_superuser: false,
-                exp: 0,
-                iat: 0,
-                email: None,
-                department: None,
-                tenant_id: parts
-                    .headers
-                    .get("X-Tenant-Id")
-                    .and_then(|h| h.to_str().ok())
-                    .map(|s| s.to_string()),
-            };
-            parts.extensions.insert(claims);
-            let req = Request::from_parts(parts, body);
-            return next.run(req).await;
-        }
-    }
-
-    // 模式 2: 检查 Authorization header（直连模式）
-    let auth_header = parts
-        .headers
-        .get(header::AUTHORIZATION)
-        .and_then(|h| h.to_str().ok());
-
-    let token = match auth_header {
-        Some(header) if header.starts_with("Bearer ") => &header[7..],
-        _ => {
-            return topems_shared::response::api_error::<()>(401, "未授权：缺少有效的认证令牌")
-                .into_response();
-        }
-    };
-
-    match verify_jwt_token(token, &auth_state.jwt_secret) {
-        Ok(claims) => {
-            parts.extensions.insert(claims);
-            let req = Request::from_parts(parts, body);
-            next.run(req).await
-        }
-        Err(e) => {
-            tracing::error!("Token verification failed: {}", e);
-            topems_shared::response::api_error::<()>(401, &format!("认证失败：{}", e))
-                .into_response()
-        }
-    }
+    axum::Json(modules::openapi::ApiDoc::openapi())
 }

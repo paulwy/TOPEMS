@@ -449,13 +449,24 @@ curl -X POST http://localhost:8012/api/notification/notifications \
 
 通知系统支持通过 WebSocket 实时推送通知。
 
-**连接地址**: `ws://localhost:8012/ws/notifications`
+**连接地址**: `ws://localhost:8000/ws/core/notifications`
+
+> **路径规范**: 遵循统一的 WebSocket 路径规范 `/ws/{module}/{feature}`
+> - 模块: `core`（统一核心服务）
+> - 功能: `notifications`（通知服务）
 
 **认证**: 通过 URL 参数或 Header 传递 Token
 
 ```
-ws://localhost:8012/ws/notifications?token=xxx
+ws://localhost:8000/ws/core/notifications?token=xxx
 ```
+
+**前端实际连接**:
+```
+ws://localhost:3000/ws/core/notifications?token=xxx
+```
+
+> **说明**: 前端通过 Vite 代理转发到后端统一核心服务（端口8000）
 
 ### 4.2 接收消息格式
 

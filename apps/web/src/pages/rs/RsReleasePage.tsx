@@ -29,6 +29,7 @@ import {
 import { rsApi } from '@/api/rs';
 import { useAppStore } from '@/store';
 import type { Deploy, CreateDeployRequest } from '@/api/rs';
+import { logger } from '@/utils/logger';
 
 interface Release {
   id: string;
@@ -100,7 +101,7 @@ const RsReleasePage: React.FC = () => {
         setTotal(response.data.total || 0);
       }
     } catch (error: unknown) {
-      console.error('加载发布数据失败:', error);
+      logger.error('加载发布数据失败:', error);
       addNotification({
         type: 'error',
         title: '加载失败',
@@ -202,7 +203,7 @@ const RsReleasePage: React.FC = () => {
       });
       loadReleases();
     } catch (error: unknown) {
-      console.error('回滚失败:', error);
+      logger.error('回滚失败:', error);
       addNotification({
         type: 'error',
         title: '操作失败',
@@ -236,7 +237,7 @@ const RsReleasePage: React.FC = () => {
       });
       loadReleases();
     } catch (error: unknown) {
-      console.error('创建发布失败:', error);
+      logger.error('创建发布失败:', error);
       addNotification({
         type: 'error',
         title: '创建失败',
@@ -335,7 +336,7 @@ const RsReleasePage: React.FC = () => {
         { label: '开发环境', value: 'development' },
       ],
       value: envFilter || '',
-      onChange: (value) => setEnvFilter(value || null),
+      onChange: (value: unknown) => setEnvFilter(value as string || ''),
     },
     {
       id: 'status',
@@ -348,14 +349,14 @@ const RsReleasePage: React.FC = () => {
         { label: '已回滚', value: 'rolled_back' },
       ],
       value: statusFilter || '',
-      onChange: (value) => setStatusFilter(value || null),
+      onChange: (value: unknown) => setStatusFilter(value as string || ''),
     },
     {
       id: 'dateRange',
       label: '日期范围',
       type: 'dateRange',
       value: dateRange,
-      onChange: (value) => setDateRange(value || { start: '', end: '' }),
+      onChange: (value: unknown) => setDateRange(value as { start: string; end: string } || { start: '', end: '' }),
     },
   ];
 

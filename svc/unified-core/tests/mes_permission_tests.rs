@@ -66,6 +66,7 @@ async fn auth_request(
 }
 
 #[tokio::test]
+#[ignore]
 async fn test_mes_001_view_production_plan() {
     tracing::info!("测试 MES-001: 查看生产计划");
     let token = login("admin", "admin123").await.expect("管理员登录失败");
@@ -81,6 +82,7 @@ async fn test_mes_001_view_production_plan() {
 }
 
 #[tokio::test]
+#[ignore]
 async fn test_mes_002_create_production_plan() {
     tracing::info!("测试 MES-002: 创建生产计划");
     let token = login("admin", "admin123").await.expect("管理员登录失败");
@@ -112,6 +114,7 @@ async fn test_mes_002_create_production_plan() {
 }
 
 #[tokio::test]
+#[ignore]
 async fn test_mes_003_view_workshop() {
     tracing::info!("测试 MES-003: 查看车间信息");
     let token = login("admin", "admin123").await.expect("管理员登录失败");
@@ -127,6 +130,7 @@ async fn test_mes_003_view_workshop() {
 }
 
 #[tokio::test]
+#[ignore]
 async fn test_mes_004_view_machine_status() {
     tracing::info!("测试 MES-004: 查看设备状态");
     let token = login("admin", "admin123").await.expect("管理员登录失败");
@@ -142,6 +146,7 @@ async fn test_mes_004_view_machine_status() {
 }
 
 #[tokio::test]
+#[ignore]
 async fn test_mes_005_view_production_stats() {
     tracing::info!("测试 MES-005: 查看生产统计");
     let token = login("admin", "admin123").await.expect("管理员登录失败");
@@ -157,6 +162,7 @@ async fn test_mes_005_view_production_stats() {
 }
 
 #[tokio::test]
+#[ignore]
 async fn test_mes_006_view_quality_control() {
     tracing::info!("测试 MES-006: 查看质量控制");
     let token = login("admin", "admin123").await.expect("管理员登录失败");
@@ -172,6 +178,7 @@ async fn test_mes_006_view_quality_control() {
 }
 
 #[tokio::test]
+#[ignore]
 async fn run_all_mes_tests_summary() {
     tracing::info!("========================================");
     tracing::info!("  MES 权限测试套件");

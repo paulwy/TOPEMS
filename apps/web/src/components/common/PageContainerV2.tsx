@@ -3,7 +3,7 @@ import { Box, Paper, useTheme, useMediaQuery, Skeleton } from '@mui/material';
 import { PageHeader } from '../templates/PageHeader';
 import type { PageHeaderProps, PageAction } from '../templates/PageHeader';
 import { useNavHierarchy, useCurrentNavItem } from '@/lib/navigation/hooks';
-import { findRouteByPath } from '@/routes/v2';
+import { findRouteByPathSync } from '@/routes/v2';
 import { useLocation } from 'react-router-dom';
 
 export interface PageContainerProps {
@@ -56,7 +56,7 @@ export const PageContainer: React.FC<PageContainerProps> = ({
   const computedTitle = useMemo(() => {
     if (!autoTitle) return;
     if (currentNavItem) return currentNavItem.label;
-    const route = findRouteByPath(location.pathname);
+    const route = findRouteByPathSync(location.pathname);
     return route?.title;
   }, [autoTitle, currentNavItem, location.pathname]);
 

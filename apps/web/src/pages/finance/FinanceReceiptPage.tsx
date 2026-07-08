@@ -390,7 +390,7 @@ const FinanceReceiptPage: React.FC = () => {
           { value: '现金', label: '现金' },
         ],
         value: filterMethod,
-        onChange: setFilterMethod,
+        onChange: (value: unknown) => setFilterMethod(value as string),
       },
       {
         id: 'status',
@@ -404,7 +404,7 @@ const FinanceReceiptPage: React.FC = () => {
           { value: '已取消', label: '已取消' },
         ],
         value: filterStatus,
-        onChange: setFilterStatus,
+        onChange: (value: unknown) => setFilterStatus(value as string),
       },
     ],
     [filterMethod, filterStatus]
@@ -490,7 +490,7 @@ const FinanceReceiptPage: React.FC = () => {
               direction='row'
               spacing={1}
             >
-              <IconButton onClick={handleRefresh}>
+              <IconButton onClick={handleRefresh} aria-label='刷新'>
                 <RefreshCw sx={{ width: 20, height: 20 }} />
               </IconButton>
               <DataExport

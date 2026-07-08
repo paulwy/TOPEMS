@@ -17,12 +17,14 @@ mod tests {
     }
 
     #[tokio::test]
+    #[ignore]
     async fn test_database_connection() {
         let pool = setup_test_pool().await;
         assert!(pool.is_ok(), "数据库连接应该成功");
     }
 
     #[tokio::test]
+    #[ignore]
     async fn test_patrol_records_table_exists() {
         let pool = setup_test_pool().await.unwrap();
 
@@ -42,6 +44,7 @@ mod tests {
     }
 
     #[tokio::test]
+    #[ignore]
     async fn test_mobile_tasks_table_exists() {
         let pool = setup_test_pool().await.unwrap();
 

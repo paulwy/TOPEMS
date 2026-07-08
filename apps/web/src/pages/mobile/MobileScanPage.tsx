@@ -39,6 +39,9 @@ import {
 import { useNavigate } from 'react-router-dom';
 import { MobileLayout, MobileCard, MobileButton } from '@/components/mobile';
 import { useAppStore } from '@/store';
+import { designTokens } from '@/theme/tokens';
+
+const ct = designTokens.colors;
 
 interface ScanHistoryItem {
   id: string;
@@ -321,18 +324,18 @@ const MobileScanPage: React.FC = () => {
               borderRadius: 2,
               overflow: 'hidden',
               mb: 3,
-              backgroundColor: '#000',
+              backgroundColor: ct.grey[900],
             }}
           >
             <Box
               sx={{
-                position: 'absolute',
-                inset: 0,
-                background: 'linear-gradient(135deg, #1a1a2e 0%, #16213e 100%)',
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'center',
-              }}
+              position: 'absolute',
+              inset: 0,
+              background: `linear-gradient(135deg, ${ct.grey[900]} 0%, ${ct.blue[900]} 100%)`,
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+            }}
             >
               <Box
                 sx={{

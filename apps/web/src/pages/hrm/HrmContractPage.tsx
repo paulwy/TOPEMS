@@ -42,6 +42,7 @@ import { FormSelect } from '@/components/common/FormSelect';
 import { StatusBadge } from '@/components/common/StatusBadge';
 import { Dialog } from '@/components/common/Dialog';
 import { FileUpload, PageContainer } from '@/components/common';
+import { designTokens } from '@/theme/tokens';
 
 const contractTypes = [
   { value: 'labor', label: '劳动合同' },
@@ -105,6 +106,7 @@ interface RenewFormState {
 
 export default function ContractManagementPage() {
   const theme = useTheme();
+  const ct = designTokens.colors;
   const [loading, setLoading] = useState(false);
   const [data, setData] = useState<PaginatedResult<Contract>>({
     items: [],
@@ -579,7 +581,7 @@ export default function ContractManagementPage() {
                 >
                   <AlertCircle
                     size={12}
-                    style={{ color: '#ea580c' }}
+                    style={{ color: ct.warning[600] }}
                   />
                   <Typography
                     variant='caption'

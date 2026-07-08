@@ -92,7 +92,7 @@ impl RecommendationService {
 
     async fn recommend_documents(
         &self,
-        request: &RecommendationRequest,
+        _request: &RecommendationRequest,
         top_k: usize,
     ) -> Result<Vec<RecommendationItem>, String> {
         let query = sqlx::query(
@@ -156,7 +156,7 @@ impl RecommendationService {
 
     async fn recommend_opportunities(
         &self,
-        request: &RecommendationRequest,
+        _request: &RecommendationRequest,
         top_k: usize,
     ) -> Result<Vec<RecommendationItem>, String> {
         let items = vec![
@@ -246,7 +246,7 @@ impl RecommendationService {
 
     async fn recommend_similar(
         &self,
-        request: &RecommendationRequest,
+        _request: &RecommendationRequest,
         top_k: usize,
     ) -> Result<Vec<RecommendationItem>, String> {
         let items = vec![
@@ -398,7 +398,7 @@ impl RecommendationService {
 
     async fn recommend_articles(
         &self,
-        request: &RecommendationRequest,
+        _request: &RecommendationRequest,
         top_k: usize,
     ) -> Result<Vec<RecommendationItem>, String> {
         let query = sqlx::query(
@@ -436,7 +436,7 @@ impl RecommendationService {
 
     async fn recommend_events(
         &self,
-        request: &RecommendationRequest,
+        _request: &RecommendationRequest,
         top_k: usize,
     ) -> Result<Vec<RecommendationItem>, String> {
         let items = vec![
@@ -470,7 +470,7 @@ impl RecommendationService {
 
     async fn recommend_users(
         &self,
-        request: &RecommendationRequest,
+        _request: &RecommendationRequest,
         top_k: usize,
     ) -> Result<Vec<RecommendationItem>, String> {
         let items = vec![
@@ -524,7 +524,7 @@ impl RecommendationService {
 
     async fn recommend_personalized(
         &self,
-        request: &RecommendationRequest,
+        _request: &RecommendationRequest,
         top_k: usize,
     ) -> Result<Vec<RecommendationItem>, String> {
         let items = vec![
@@ -550,7 +550,7 @@ impl RecommendationService {
 
     async fn recommend_cross_sell(
         &self,
-        request: &RecommendationRequest,
+        _request: &RecommendationRequest,
         top_k: usize,
     ) -> Result<Vec<RecommendationItem>, String> {
         let items = vec![
@@ -580,7 +580,7 @@ impl RecommendationService {
 
     async fn recommend_up_sell(
         &self,
-        request: &RecommendationRequest,
+        _request: &RecommendationRequest,
         top_k: usize,
     ) -> Result<Vec<RecommendationItem>, String> {
         let items = vec![

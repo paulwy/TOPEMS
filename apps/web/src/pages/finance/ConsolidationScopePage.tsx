@@ -1,4 +1,6 @@
 import React, { useState, useMemo, useEffect } from 'react';
+import { designTokens } from '@/theme/tokens';
+const ct = designTokens.colors;
 import {Card,
   CardContent,
   CardHeader,
@@ -48,7 +50,7 @@ const getChipSx = (colorClass: string): object => {
   const colorMap: Record<string, { backgroundColor: string; color: string }> = {
     'bg-green-100 text-green-800': {
       backgroundColor: 'success.lighter',
-      color: '#166534',
+      color: ct.success[800],
     },
     'bg-gray-100 text-gray-800': {
       backgroundColor: 'grey.100',
@@ -56,7 +58,7 @@ const getChipSx = (colorClass: string): object => {
     },
     'bg-yellow-100 text-yellow-800': {
       backgroundColor: 'warning.100',
-      color: '#854d0e',
+      color: 'warning.800',
     },
     'bg-blue-100 text-blue-800': {
       backgroundColor: 'primary.100',
@@ -64,15 +66,15 @@ const getChipSx = (colorClass: string): object => {
     },
     'bg-purple-100 text-purple-800': {
       backgroundColor: 'secondary.light',
-      color: '#6b21a8',
+      color: ct.purple[700],
     },
     'bg-teal-100 text-teal-800': {
-      backgroundColor: '#ccfbf1',
-      color: '#115e59',
+      backgroundColor: ct.teal[100],
+      color: ct.teal[800],
     },
     'bg-orange-100 text-orange-800': {
-      backgroundColor: '#ffedd5',
-      color: '#9a3412',
+      backgroundColor: ct.orange[100],
+      color: ct.orange[800],
     },
   };
   return colorMap[colorClass] || { backgroundColor: 'grey.100', color: 'grey.700' };

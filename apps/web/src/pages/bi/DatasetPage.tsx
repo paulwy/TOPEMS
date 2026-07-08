@@ -52,6 +52,9 @@ import {
   type DataSource,
 } from '@/api/bi';
 import { logger } from '@/utils/logger';
+import { designTokens } from '@/theme/tokens';
+
+const ct = designTokens.colors;
 
 type ViewMode = 'list' | 'editor';
 
@@ -398,7 +401,7 @@ const DatasetPage = () => {
                           width: 40,
                           height: 40,
                           borderRadius: 1,
-                          backgroundColor: '#ECFDF5',
+                          backgroundColor: ct.success[50],
                           display: 'flex',
                           alignItems: 'center',
                           justifyContent: 'center',
@@ -433,12 +436,13 @@ const DatasetPage = () => {
                       <IconButton
                         size='small'
                         onClick={() => handleEdit(dataset)}
+                        aria-label='编辑数据集'
                       >
                         <Edit2 size={16} />
                       </IconButton>
                     </Tooltip>
                     <Tooltip title='查看'>
-                      <IconButton size='small'>
+                      <IconButton size='small' aria-label='查看数据集'>
                         <Eye size={16} />
                       </IconButton>
                     </Tooltip>
@@ -446,6 +450,7 @@ const DatasetPage = () => {
                       <IconButton
                         size='small'
                         onClick={() => handleDelete(dataset.id)}
+                        aria-label='删除数据集'
                       >
                         <Trash2 size={16} />
                       </IconButton>
@@ -653,6 +658,7 @@ const DatasetPage = () => {
                           <IconButton
                             size='small'
                             onClick={() => removeField(field.id)}
+                            aria-label='删除字段'
                           >
                             <Trash2 size={14} />
                           </IconButton>
@@ -710,7 +716,7 @@ const DatasetPage = () => {
       subtitle='管理和配置数据分析数据集'
       headerProps={{
         pageIcon: <Database style={{ width: 20, height: 20 }} />,
-        pageGradient: 'linear-gradient(135deg, #10B981 0%, #059669 100%)',
+        pageGradient: `linear-gradient(135deg, ${ct.success.main} 0%, ${ct.success.dark} 100%)`,
       }}
       padding={false}
       maxWidth={false}

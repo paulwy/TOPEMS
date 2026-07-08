@@ -1,5 +1,6 @@
 import type { ModuleNavConfig, NavItemConfig, NavItem, ModuleCardConfig, NavGroup } from './types';
 import { NAV_GROUPS } from './types';
+import { logger } from "@/utils/logger";
 
 type EventListener = (...args: unknown[]) => void;
 
@@ -14,7 +15,7 @@ class SimpleEventEmitter {
   on(event: string, listener: EventListener): void {
     const arr = this.listeners.get(event) || [];
     if (arr.length >= this.maxListeners) {
-      console.warn(
+      logger.warn(
         `MaxListenersExceededWarning: Possible memory leak detected. ${arr.length + 1} ${event} listeners added.`
       );
     }
@@ -36,7 +37,7 @@ class SimpleEventEmitter {
       try {
         listener(...args);
       } catch (e: unknown) {
-        console.error(`Error in event listener for "${event}":`, e);
+        logger.error(`Error in event listener for "${event}":`, e);
       }
     }
   }

@@ -564,7 +564,7 @@ impl FinancialReportService {
         let profit_before_tax = gross_profit - expenses_total + other_total;
 
         // 所得税率 15% (简化计算)
-        let tax_rate = Decimal::from_str("0.15").unwrap();
+        let tax_rate = Decimal::from_str("0.15").unwrap_or_default();
         let tax_expense = profit_before_tax * tax_rate;
         let net_profit = profit_before_tax - tax_expense;
 

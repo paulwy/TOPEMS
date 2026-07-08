@@ -25,6 +25,9 @@ import { ehsApi } from '@/api/ehs';
 import type { EnvironmentMonitor } from '@/api/ehs';
 import { useAppStore } from '@/store';
 import { apiLogger } from '@/utils/logger';
+import { designTokens } from '@/theme/tokens';
+
+const ct = designTokens.colors;
 
 const EnvironmentPage: React.FC = () => {
   const navigate = useNavigate();
@@ -294,7 +297,7 @@ const EnvironmentPage: React.FC = () => {
       headerProps={{
         actions: headerActions,
         pageIcon: <Activity sx={{ width: 20, height: 20 }} />,
-        pageGradient: 'linear-gradient(135deg, #10B981 0%, #059669 100%)',
+        pageGradient: `linear-gradient(135deg, ${ct.success.main} 0%, ${ct.success.dark} 100%)`,
       }}
       maxWidth='xl'
     >

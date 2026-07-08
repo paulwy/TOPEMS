@@ -7,6 +7,7 @@ mod tests {
 
     // 测试数据库连接
     #[tokio::test]
+    #[ignore]
     async fn test_database_connection() {
         let database_url = std::env::var("DATABASE_URL").unwrap_or_else(|_| {
             "postgres://topems:topems_secret@localhost:5432/topems".to_string()

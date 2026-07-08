@@ -7,6 +7,8 @@ import { DetailPageTemplate, type TabConfig } from '@/components/templates';
 import { traceabilityApi } from '@/api/mes';
 import type { TraceChain, QualityRecord } from '@/api/mes';
 import { apiLogger } from '@/utils/logger';
+import { designTokens } from '@/theme/tokens';
+const ct = designTokens.colors;
 import { useAppStore } from '@/store';
 
 const TraceabilityDetailPage: React.FC = () => {
@@ -89,7 +91,7 @@ const TraceabilityDetailPage: React.FC = () => {
         return (
           <CheckCircle
             size={20}
-            color='#16a34a'
+            color={ct.success[600]}
           />
         );
       default:
@@ -118,15 +120,15 @@ const TraceabilityDetailPage: React.FC = () => {
   const getNodeTypeColor = (type: string): ChipProps['color'] => {
     switch (type) {
       case 'raw_material':
-        return 'purple';
+        return 'primary';
       case 'production':
-        return 'blue';
+        return 'info';
       case 'finished_goods':
-        return 'green';
-      case 'shipping':
-        return 'red';
-      case 'quality':
         return 'success';
+      case 'shipping':
+        return 'error';
+      case 'quality':
+        return 'warning';
       default:
         return 'default';
     }
@@ -464,7 +466,7 @@ const TraceabilityDetailPage: React.FC = () => {
       autoBreadcrumbs
       headerProps={{
         pageIcon: <MapPin style={{ width: 20, height: 20 }} />,
-        pageGradient: 'linear-gradient(135deg, #8B5CF6 0%, #4C1D95 100%)',
+        pageGradient: `linear-gradient(135deg, ${ct.secondary.main} 0%, ${ct.secondary[900]} 100%)`,
       }}
     >
       <DetailPageTemplate

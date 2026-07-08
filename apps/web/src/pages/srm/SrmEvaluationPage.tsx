@@ -282,8 +282,8 @@ const SrmEvaluationPage: React.FC = () => {
         type: 'select' as const,
         options: STATUS_OPTIONS,
         value: statusFilter,
-        onChange: (value: string) => {
-          setStatusFilter(value);
+        onChange: (value: unknown) => {
+          setStatusFilter(value as string);
           setPage(0);
         },
       },

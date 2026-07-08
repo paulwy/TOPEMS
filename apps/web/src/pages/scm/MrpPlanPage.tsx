@@ -29,6 +29,9 @@ import { apiLogger } from '@/utils/logger';
 import { ListPageTemplate, type ColumnDef } from '@/components/templates';
 import { PageContainer } from '@/components/common';
 import ConfirmDialog from '@/components/common/ConfirmDialog';
+import { designTokens } from '@/theme/tokens';
+
+const ct = designTokens.colors;
 
 const MrpPlanPage: React.FC = () => {
   const [plans, setPlans] = useState<MrpPlan[]>([]);
@@ -501,25 +504,25 @@ const MrpPlanPage: React.FC = () => {
                   gap: 2,
                 }}
               >
-                <Box sx={{ p: 2, border: '1px solid #eee', borderRadius: 1 }}>
+                <Box sx={{ p: 2, border: `1px solid ${ct.border.default}`, borderRadius: 1 }}>
                   <Box sx={{ fontSize: '0.875rem', color: 'text.secondary' }}>总物料项</Box>
                   <Box sx={{ fontSize: '1.5rem', fontWeight: 500 }}>
                     {calculationResult.totalitems}
                   </Box>
                 </Box>
-                <Box sx={{ p: 2, border: '1px solid #eee', borderRadius: 1 }}>
+                <Box sx={{ p: 2, border: `1px solid ${ct.border.default}`, borderRadius: 1 }}>
                   <Box sx={{ fontSize: '0.875rem', color: 'text.secondary' }}>总建议数</Box>
                   <Box sx={{ fontSize: '1.5rem', fontWeight: 500 }}>
                     {calculationResult.total_suggestions}
                   </Box>
                 </Box>
-                <Box sx={{ p: 2, border: '1px solid #eee', borderRadius: 1 }}>
+                <Box sx={{ p: 2, border: `1px solid ${ct.border.default}`, borderRadius: 1 }}>
                   <Box sx={{ fontSize: '0.875rem', color: 'text.secondary' }}>采购建议</Box>
                   <Box sx={{ fontSize: '1.5rem', fontWeight: 500, color: 'primary.main' }}>
                     {calculationResult.purchase_suggestions}
                   </Box>
                 </Box>
-                <Box sx={{ p: 2, border: '1px solid #eee', borderRadius: 1 }}>
+                <Box sx={{ p: 2, border: `1px solid ${ct.border.default}`, borderRadius: 1 }}>
                   <Box sx={{ fontSize: '0.875rem', color: 'text.secondary' }}>生产建议</Box>
                   <Box sx={{ fontSize: '1.5rem', fontWeight: 500, color: 'success.main' }}>
                     {calculationResult.production_suggestions}

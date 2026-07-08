@@ -13,6 +13,9 @@ import { apiLogger } from '@/utils/logger';
 import { useNotification } from '@/hooks/useNotification';
 import { StatsPageTemplate } from '@/components/templates/StatsPageTemplate';
 import { PageContainer } from '@/components/common';
+import { designTokens } from '@/theme/tokens';
+import apiClient from '@/api/client';
+const ct = designTokens.colors;
 
 interface EmployeeSummary {
   total_employees: number;
@@ -89,16 +92,15 @@ const HrmReportsPage: React.FC = () => {
     setLoading(true);
     try {
       const promises = [
-        fetch(`/api/hrm/reports/employee-summary?time_range=${timeRange}`),
-        fetch(`/api/hrm/reports/department-summary?time_range=${timeRange}`),
-        fetch(`/api/hrm/reports/contract-summary?time_range=${timeRange}`),
-        fetch(`/api/hrm/reports/training-summary?time_range=${timeRange}`),
-        fetch(`/api/hrm/reports/attendance-summary?time_range=${timeRange}`),
-        fetch(`/api/hrm/reports/payroll-summary?time_range=${timeRange}`),
+        apiClient.hrm.get(`/api/hrm/reports/employee-summary?time_range=${timeRange}`),
+        apiClient.hrm.get(`/api/hrm/reports/department-summary?time_range=${timeRange}`),
+        apiClient.hrm.get(`/api/hrm/reports/contract-summary?time_range=${timeRange}`),
+        apiClient.hrm.get(`/api/hrm/reports/training-summary?time_range=${timeRange}`),
+        apiClient.hrm.get(`/api/hrm/reports/attendance-summary?time_range=${timeRange}`),
+        apiClient.hrm.get(`/api/hrm/reports/payroll-summary?time_range=${timeRange}`),
       ];
 
-      const responses = await Promise.all(promises);
-      const results = await Promise.all(responses.map((r) => r.json()));
+      const results = await Promise.all(promises);
 
       if (results[0].code === 200) setEmployeeSummary(results[0].data);
       if (results[1].code === 200) setDepartmentSummary(results[1].data.departments);
@@ -305,7 +307,7 @@ const HrmReportsPage: React.FC = () => {
             nameKey: 'name',
             data: [
               { name: '准时', value: attendanceSummary?.on_time_count || 0, color: 'success.main' },
-              { name: '迟到', value: attendanceSummary?.late_count || 0, color: '#eab308' },
+              { name: '迟到', value: attendanceSummary?.late_count || 0, color: ct.yellow[600] },
               { name: '缺勤', value: attendanceSummary?.absent_count || 0, color: 'error.main' },
               { name: '请假', value: attendanceSummary?.leave_count || 0, color: 'primary.main' },
             ].filter((d) => d.value > 0),
@@ -346,7 +348,7 @@ const HrmReportsPage: React.FC = () => {
             nameKey: 'name',
             data: [
               { name: '男', value: employeeSummary?.male_count || 0, color: 'primary.main' },
-              { name: '女', value: employeeSummary?.female_count || 0, color: '#ec4899' },
+              { name: '女', value: employeeSummary?.female_count || 0, color: ct.secondary[500] },
             ].filter((d) => d.value > 0),
           },
           {

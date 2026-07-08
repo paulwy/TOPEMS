@@ -7,6 +7,9 @@ import {
   ChartBar as ChartBarIcon,
   Layout as LayoutIcon,
 } from 'lucide-react';
+import { designTokens } from '@/theme/tokens';
+
+const ct = designTokens.colors;
 
 const ReportDesignPage: React.FC = () => {
   return (
@@ -26,7 +29,7 @@ const ReportDesignPage: React.FC = () => {
           >
             <PenToolIcon
               size={64}
-              style={{ color: '#1976d2' }}
+              style={{ color: ct.primary.dark }}
             />
             <Typography
               variant='h5'

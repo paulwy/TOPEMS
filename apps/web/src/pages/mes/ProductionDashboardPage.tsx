@@ -55,6 +55,8 @@ import {
 } from '@/api/mes';
 import { apiLogger } from '@/utils/logger';
 import { PageContainer } from '@/components/common/PageContainerV2';
+import { designTokens } from '@/theme/tokens';
+const ct = designTokens.colors;
 
 // ============== 类型定义 ==============
 interface RealtimeAlarm {
@@ -111,9 +113,9 @@ const ALARM_LEVEL_META: Record<
   RealtimeAlarm['level'],
   { label: string; color: string; bg: string }
 > = {
-  critical: { label: '严重', color: '#fff', bg: 'error.main' },
-  warning: { label: '警告', color: '#fff', bg: 'warning.main' },
-  info: { label: '提示', color: '#fff', bg: 'primary.main' },
+  critical: { label: '严重', color: ct.background.paper, bg: 'error.main' },
+  warning: { label: '警告', color: ct.background.paper, bg: 'warning.main' },
+  info: { label: '提示', color: ct.background.paper, bg: 'primary.main' },
 };
 
 const SCHEDULE_STATUS_META: Record<string, { label: string; color: string }> = {
@@ -768,7 +770,7 @@ const ProductionGantt: React.FC<{
         >
           <Calendar
             size={18}
-            color='#0EA5E9'
+            color={ct.info.main}
           />
           <Typography
             variant='subtitle1'
@@ -1028,10 +1030,20 @@ export const ProductionDashboardPage: React.FC = () => {
 
   const [wsConnected, setWsConnected] = useState(false);
   const [wsSupported] = useState(typeof window !== 'undefined' && 'WebSocket' in window);
+  const [wsReconnectCount, setWsReconnectCount] = useState(0);
+  const [wsStatus, setWsStatus] = useState<'disconnected' | 'connecting' | 'connected' | 'reconnecting'>('disconnected');
 
   const refreshTimerRef = useRef<ReturnType<typeof setInterval> | null>(null);
   const wsRef = useRef<WebSocket | null>(null);
   const wsReconnectRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const wsConnectTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const wsConnectingRef = useRef(false);
+  const wsReconnectAttemptRef = useRef(0);
+  const wsInitRef = useRef(false);
+  const MAX_RECONNECT_ATTEMPTS = 10;
+  const MIN_RECONNECT_DELAY = 1000;
+  const MAX_RECONNECT_DELAY = 30000;
+  const CONNECTION_TIMEOUT = 15000;
 
   // ============== 数据加载 ==============
   const loadAll = useCallback(async () => {
@@ -1184,7 +1196,7 @@ export const ProductionDashboardPage: React.FC = () => {
     });
     const buckets: EquipmentStatusBucket[] = [];
     map.forEach((count, status) => {
-      const meta = EQUIPMENT_STATUS_META[status] || { label: status, color: '#94A3B8' };
+      const meta = EQUIPMENT_STATUS_META[status] || { label: status, color: ct.text.muted };
       buckets.push({ status, label: meta.label, count, color: meta.color });
     });
     return buckets.sort((a, b) => b.count - a.count);
@@ -1251,27 +1263,89 @@ export const ProductionDashboardPage: React.FC = () => {
   }, [workStationUtilization]);
 
   // ============== WebSocket ==============
-  const setupWebSocket = useCallback(() => {
-    if (!wsSupported) return;
-    if (wsRef.current && wsRef.current.readyState === WebSocket.OPEN) return;
+  const setupWebSocket = useCallback((isReconnecting = false) => {
+    if (!wsSupported) {
+      apiLogger.warn('WebSocket 不支持');
+      return;
+    }
+    if (wsRef.current && wsRef.current.readyState === WebSocket.OPEN) {
+      apiLogger.warn('WebSocket 已连接');
+      return;
+    }
+    if (wsConnectingRef.current) {
+      apiLogger.warn('WebSocket 正在连接中');
+      return;
+    }
+    if (!isReconnecting && wsInitRef.current) {
+      apiLogger.info('WebSocket 已初始化，跳过重复连接');
+      return;
+    }
 
     try {
+      if (wsRef.current) {
+        wsRef.current.close(1000, '重新连接');
+        wsRef.current = null;
+      }
+
+      wsConnectingRef.current = true;
+      const isReconnecting = wsReconnectAttemptRef.current > 0;
+      if (isReconnecting) {
+        setWsStatus('reconnecting');
+        apiLogger.info(`WebSocket 重连尝试 ${wsReconnectAttemptRef.current}/${MAX_RECONNECT_ATTEMPTS}`);
+      } else {
+        setWsStatus('connecting');
+      }
+
       const protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
-      const host = window.location.host || 'localhost:8080';
+      const wsHost = window.location.host;
       const tokenParam = token ? `?token=${encodeURIComponent(token)}` : '';
-      const wsUrl = `${protocol}//${host}/mes/ws/dashboard${tokenParam}`;
+      const wsUrl = `${protocol}//${wsHost}/mes/ws/dashboard${tokenParam}`;
+      apiLogger.info(`正在建立 WebSocket 连接: ${wsUrl}`);
       const ws = new WebSocket(wsUrl);
       wsRef.current = ws;
 
+      wsConnectTimeoutRef.current = setTimeout(() => {
+        if (ws.readyState === WebSocket.CONNECTING) {
+          apiLogger.warn(`WebSocket 连接超时 (${CONNECTION_TIMEOUT}ms)，正在关闭连接`);
+          try {
+            ws.close(1006, 'Connection timeout');
+          } catch (err) {
+            apiLogger.error('关闭超时连接失败:', err);
+          }
+          wsRef.current = null;
+        }
+      }, CONNECTION_TIMEOUT);
+
       ws.onopen = () => {
+        if (wsConnectTimeoutRef.current) {
+          clearTimeout(wsConnectTimeoutRef.current);
+          wsConnectTimeoutRef.current = null;
+        }
+        wsConnectingRef.current = false;
+        wsInitRef.current = true;
+        wsReconnectAttemptRef.current = 0;
+        setWsReconnectCount(0);
+        setWsStatus('connected');
         setWsConnected(true);
+        apiLogger.info('WebSocket 连接成功');
+
+        const authMessage = JSON.stringify({ type: 'authenticate' });
+        apiLogger.info(`WebSocket 发送认证消息: ${authMessage}`);
+        ws.send(authMessage);
       };
+
       ws.onmessage = (event) => {
         try {
+          apiLogger.info(`WebSocket 收到消息: ${event.data.substring(0, 200)}`);
           const payload = JSON.parse(event.data) as {
             type?: string;
             data?: { alarms?: RealtimeAlarm[] };
+            message?: string;
           };
+          if (payload?.type === 'connected') {
+            apiLogger.info('WebSocket 收到连接确认消息');
+            setWsConnected(true);
+          }
           if (payload?.type === 'alarms' && payload.data?.alarms) {
             setAlarms(payload.data.alarms);
           }
@@ -1279,16 +1353,69 @@ export const ProductionDashboardPage: React.FC = () => {
           apiLogger.warn('解析 MES WS 消息失败', err);
         }
       };
-      ws.onclose = () => {
+
+      ws.onclose = (event) => {
+        if (wsConnectTimeoutRef.current) {
+          clearTimeout(wsConnectTimeoutRef.current);
+          wsConnectTimeoutRef.current = null;
+        }
+        wsConnectingRef.current = false;
         setWsConnected(false);
-        if (autoRefresh) {
-          wsReconnectRef.current = setTimeout(() => setupWebSocket(), 5000);
+        setWsStatus('disconnected');
+        wsRef.current = null;
+
+        const code = event.code;
+        const wasClean = event.wasClean;
+        apiLogger.info(`WebSocket 连接关闭: code=${code}, reason=${event.reason}, wasClean=${wasClean}`);
+
+        if (!autoRefresh) {
+          apiLogger.info('自动刷新已关闭，不进行重连');
+          return;
+        }
+
+        if (code === 1000 || code === 1001) {
+          apiLogger.info('连接正常关闭，不进行重连');
+          return;
+        }
+
+        if (wsReconnectAttemptRef.current >= MAX_RECONNECT_ATTEMPTS) {
+          apiLogger.error(`WebSocket 重连尝试已达最大次数 (${MAX_RECONNECT_ATTEMPTS})，停止重连`);
+          wsReconnectAttemptRef.current = 0;
+          return;
+        }
+
+        wsReconnectAttemptRef.current += 1;
+        const attempt = wsReconnectAttemptRef.current;
+        const delay = Math.min(
+          MIN_RECONNECT_DELAY * Math.pow(2, attempt - 1),
+          MAX_RECONNECT_DELAY
+        ) + Math.random() * 1000;
+
+        setWsReconnectCount(attempt);
+        apiLogger.info(`WebSocket 重连尝试 ${attempt}/${MAX_RECONNECT_ATTEMPTS}，延迟 ${Math.round(delay)}ms`);
+
+        wsReconnectRef.current = setTimeout(() => setupWebSocket(), delay);
+      };
+
+      ws.onerror = (event) => {
+        if (wsConnectTimeoutRef.current) {
+          clearTimeout(wsConnectTimeoutRef.current);
+          wsConnectTimeoutRef.current = null;
+        }
+        wsConnectingRef.current = false;
+        apiLogger.error('WebSocket 连接错误:', event);
+        setWsConnected(false);
+
+        if (ws.readyState === WebSocket.CONNECTING || ws.readyState === WebSocket.OPEN) {
+          try {
+            ws.close(1011, 'WebSocket error occurred');
+          } catch (e) {
+            apiLogger.error('关闭错误连接失败:', e);
+          }
         }
       };
-      ws.onerror = () => {
-        setWsConnected(false);
-      };
     } catch (err) {
+      wsConnectingRef.current = false;
       apiLogger.warn('MES WebSocket 连接失败，将使用轮询模式', err);
       setWsConnected(false);
     }
@@ -1319,7 +1446,7 @@ export const ProductionDashboardPage: React.FC = () => {
   }, [autoRefresh, loadAll]);
 
   useEffect(() => {
-    if (autoRefresh && wsSupported) {
+    if (autoRefresh && wsSupported && token) {
       setupWebSocket();
     }
     return () => {
@@ -1327,12 +1454,17 @@ export const ProductionDashboardPage: React.FC = () => {
         clearTimeout(wsReconnectRef.current);
         wsReconnectRef.current = null;
       }
-      if (wsRef.current) {
-        wsRef.current.close();
+      if (wsConnectTimeoutRef.current) {
+        clearTimeout(wsConnectTimeoutRef.current);
+        wsConnectTimeoutRef.current = null;
+      }
+      if (wsRef.current && wsRef.current.readyState !== WebSocket.CLOSED) {
+        wsRef.current.close(1000, '组件卸载');
         wsRef.current = null;
       }
+      wsInitRef.current = false;
     };
-  }, [autoRefresh, wsSupported, setupWebSocket]);
+  }, [autoRefresh, wsSupported, token]);
 
   // ============== 渲染 ==============
   const runningEquipmentCount = equipmentBuckets
@@ -1356,7 +1488,7 @@ export const ProductionDashboardPage: React.FC = () => {
       autoBreadcrumbs
       headerProps={{
         pageIcon: <Factory style={{ width: 20, height: 20 }} />,
-        pageGradient: 'linear-gradient(135deg, #EF4444 0%, #B91C1C 100%)',
+        pageGradient: `linear-gradient(135deg, ${ct.error.main} 0%, ${ct.error[700]} 100%)`,
         breadcrumbs: [
           { label: '首页', href: '/dashboard' },
           { label: '生产执行', href: '/mes' },
@@ -1492,6 +1624,35 @@ export const ProductionDashboardPage: React.FC = () => {
               sx={{ color: 'text.secondary' }}
             >
               {lastUpdated ? `更新于 ${formatTime(lastUpdated)}` : '未更新'}
+            </Typography>
+          </Stack>
+          <Divider
+            orientation='vertical'
+            flexItem
+          />
+          <Stack
+            direction='row'
+            spacing={0.5}
+            sx={{ alignItems: 'center' }}
+          >
+            {wsStatus === 'connected' ? (
+              <Wifi size={12} sx={{ color: 'success.main' }} />
+            ) : wsStatus === 'connecting' || wsStatus === 'reconnecting' ? (
+              <Wifi size={12} sx={{ color: 'warning.main', animation: 'spin 2s linear infinite', '@keyframes spin': { 'from': { transform: 'rotate(0deg)' }, 'to': { transform: 'rotate(360deg)' } } }} />
+            ) : (
+              <WifiOff size={12} sx={{ color: 'error.main' }} />
+            )}
+            <Typography
+              variant='caption'
+              sx={{ color: 'text.secondary' }}
+            >
+              {wsStatus === 'connected'
+                ? '实时连接'
+                : wsStatus === 'connecting'
+                  ? '连接中…'
+                  : wsStatus === 'reconnecting'
+                    ? `重连中 (${wsReconnectCount})`
+                    : '未连接'}
             </Typography>
           </Stack>
           <Box sx={{ flex: 1 }} />
@@ -1721,7 +1882,7 @@ export const ProductionDashboardPage: React.FC = () => {
             >
               <Settings2
                 size={18}
-                color='#6366F1'
+                color={ct.secondary[400]}
               />
               <Typography
                 variant='subtitle1'

@@ -31,6 +31,9 @@ import NotificationSettings from '@/components/notifications/NotificationSetting
 import useNotificationSettings from '@/hooks/useNotificationSettings';
 import { apiLogger } from '@/utils/logger';
 import { PageContainer } from '@/components';
+import { designTokens } from '@/theme/tokens';
+
+const ct = designTokens.colors;
 
 type NotificationFilterType = 'all' | NotificationTypeEnum;
 
@@ -200,7 +203,7 @@ const NotificationCenter: React.FC = () => {
         pageIcon: (
           <Bell
             size={24}
-            color='#1976d2'
+            color={ct.primary.dark}
           />
         ),
         pageColor: 'primary.100',
@@ -342,7 +345,7 @@ const NotificationCenter: React.FC = () => {
                   >
                     <Search
                       size={16}
-                      color='#666'
+                      color={ct.grey[600]}
                     />
                   </Box>
                   <Box
@@ -555,7 +558,7 @@ const NotificationCenter: React.FC = () => {
                 >
                   <Bell
                     size={80}
-                    color='#666'
+                    color={ct.grey[600]}
                     style={{ marginBottom: 8 }}
                   />
                   <Typography

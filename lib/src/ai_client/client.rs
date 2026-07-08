@@ -11,6 +11,9 @@ use super::config::AIModelConfig;
 use super::models::*;
 use super::providers::{AzureOpenAIClient, GeminiClient, OllamaClient, OpenAIClient};
 
+type AIStream =
+    Pin<Box<dyn futures::Stream<Item = Result<String, AIClientError>> + Send + 'static>>;
+
 /// AI 客户端错误类型
 #[derive(Debug)]
 pub enum AIClientError {
@@ -53,8 +56,6 @@ impl From<reqwest::Error> for AIClientError {
     fn from(e: reqwest::Error) -> Self {
         if e.is_timeout() {
             AIClientError::TimeoutError(e.to_string())
-        } else if e.is_connect() {
-            AIClientError::NetworkError(e.to_string())
         } else {
             AIClientError::NetworkError(e.to_string())
         }
@@ -160,19 +161,10 @@ impl UnifiedAIClient {
     }
 
     /// 简单流式聊天接口
-    pub async fn chat_stream(
-        &self,
-        messages: Vec<ChatMessage>,
-    ) -> Result<
-        Pin<Box<dyn futures::Stream<Item = Result<String, AIClientError>> + Send + 'static>>,
-        AIClientError,
-    > {
+    pub async fn chat_stream(&self, messages: Vec<ChatMessage>) -> Result<AIStream, AIClientError> {
         let request = self.create_streaming_chat_request(messages);
 
-        let result: Result<
-            Pin<Box<dyn futures::Stream<Item = Result<String, AIClientError>> + Send + 'static>>,
-            AIClientError,
-        >;
+        let result: Result<AIStream, AIClientError>;
 
         match self {
             UnifiedAIClient::OpenAI(client) => {

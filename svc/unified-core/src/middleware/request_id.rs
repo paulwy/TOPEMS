@@ -1,5 +1,5 @@
 use axum::{
-    http::{HeaderName, Request},
+    http::{HeaderName, HeaderValue, Request},
     response::Response,
 };
 use topems_shared::generate_request_id;
@@ -23,10 +23,11 @@ pub async fn request_id_middleware(
 
     let mut response = next.run(request).await;
 
-    response.headers_mut().insert(
-        HeaderName::from_static(X_REQUEST_ID),
-        request_id.parse().unwrap(),
-    );
+    if let Ok(header_value) = request_id.parse::<HeaderValue>() {
+        response
+            .headers_mut()
+            .insert(HeaderName::from_static(X_REQUEST_ID), header_value);
+    }
 
     response
 }

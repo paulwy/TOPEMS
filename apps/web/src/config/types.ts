@@ -4,7 +4,6 @@ export interface ApiConfig {
 }
 
 export interface WebSocketConfig {
-  url: string;
   reconnectInterval: number;
   maxReconnectAttempts: number;
 }

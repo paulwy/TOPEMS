@@ -38,6 +38,9 @@ import type {
   Warehouse,
 } from '@/api/wms';
 import { apiLogger } from '@/utils/logger';
+import { designTokens } from '@/theme/tokens';
+
+const ct = designTokens.colors;
 
 interface TabPanelProps {
   children?: React.ReactNode;
@@ -226,7 +229,7 @@ const InventoryReportPage: React.FC = () => {
             <CardContent>
               <Box sx={{ display: 'flex', alignItems: 'center', mb: 2 }}>
                 <WarehouseIcon
-                  style={{ width: 20, height: 20, marginRight: 8, color: '#6366f1' }}
+                  style={{ width: 20, height: 20, marginRight: 8, color: ct.secondary[400] }}
                 />
                 <Typography
                   variant='subtitle2'
@@ -252,7 +255,7 @@ const InventoryReportPage: React.FC = () => {
           <Card sx={{ height: '100%' }}>
             <CardContent>
               <Box sx={{ display: 'flex', alignItems: 'center', mb: 2 }}>
-                <Package style={{ width: 20, height: 20, marginRight: 8, color: '#10b981' }} />
+                <Package style={{ width: 20, height: 20, marginRight: 8, color: ct.success.main }} />
                 <Typography
                   variant='subtitle2'
                   color='text.secondary'
@@ -277,7 +280,7 @@ const InventoryReportPage: React.FC = () => {
           <Card sx={{ height: '100%' }}>
             <CardContent>
               <Box sx={{ display: 'flex', alignItems: 'center', mb: 2 }}>
-                <TrendingUp style={{ width: 20, height: 20, marginRight: 8, color: '#f59e0b' }} />
+                <TrendingUp style={{ width: 20, height: 20, marginRight: 8, color: ct.warning.main }} />
                 <Typography
                   variant='subtitle2'
                   color='text.secondary'
@@ -302,7 +305,7 @@ const InventoryReportPage: React.FC = () => {
           <Card sx={{ height: '100%' }}>
             <CardContent>
               <Box sx={{ display: 'flex', alignItems: 'center', mb: 2 }}>
-                <BarChart3 style={{ width: 20, height: 20, marginRight: 8, color: '#ec4899' }} />
+                <BarChart3 style={{ width: 20, height: 20, marginRight: 8, color: ct.secondary[500] }} />
                 <Typography
                   variant='subtitle2'
                   color='text.secondary'
@@ -336,7 +339,7 @@ const InventoryReportPage: React.FC = () => {
             <CardContent>
               <Box sx={{ display: 'flex', alignItems: 'center', mb: 2 }}>
                 <AlertTriangle
-                  style={{ width: 20, height: 20, marginRight: 8, color: '#dc2626' }}
+                  style={{ width: 20, height: 20, marginRight: 8, color: ct.error[600] }}
                 />
                 <Typography
                   variant='subtitle2'
@@ -368,7 +371,7 @@ const InventoryReportPage: React.FC = () => {
           <Card sx={{ height: '100%', bgcolor: 'warning.light' }}>
             <CardContent>
               <Box sx={{ display: 'flex', alignItems: 'center', mb: 2 }}>
-                <TrendingDown style={{ width: 20, height: 20, marginRight: 8, color: '#d97706' }} />
+                <TrendingDown style={{ width: 20, height: 20, marginRight: 8, color: ct.warning.dark }} />
                 <Typography
                   variant='subtitle2'
                   color='warning.dark'
@@ -397,7 +400,7 @@ const InventoryReportPage: React.FC = () => {
           <Card sx={{ height: '100%', bgcolor: 'info.light' }}>
             <CardContent>
               <Box sx={{ display: 'flex', alignItems: 'center', mb: 2 }}>
-                <Clock style={{ width: 20, height: 20, marginRight: 8, color: '#0284c7' }} />
+                <Clock style={{ width: 20, height: 20, marginRight: 8, color: ct.info.dark }} />
                 <Typography
                   variant='subtitle2'
                   color='info.dark'
@@ -428,7 +431,7 @@ const InventoryReportPage: React.FC = () => {
           <Card sx={{ height: '100%', bgcolor: 'success.light' }}>
             <CardContent>
               <Box sx={{ display: 'flex', alignItems: 'center', mb: 2 }}>
-                <TrendingUp style={{ width: 20, height: 20, marginRight: 8, color: '#059669' }} />
+                <TrendingUp style={{ width: 20, height: 20, marginRight: 8, color: ct.success.dark }} />
                 <Typography
                   variant='subtitle2'
                   color='success.dark'
@@ -1014,7 +1017,7 @@ const InventoryReportPage: React.FC = () => {
       subtitle='查看库存统计数据、库龄分析、周转分析等报表'
       headerProps={{
         pageIcon: <BarChart3 style={{ width: 20, height: 20 }} />,
-        pageGradient: 'linear-gradient(135deg, #6366F1, #4F46E5)',
+        pageGradient: `linear-gradient(135deg, ${ct.secondary[400]}, ${ct.secondary[600]})`,
       }}
     >
       <Box sx={{ mb: 3 }}>

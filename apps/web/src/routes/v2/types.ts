@@ -69,3 +69,20 @@ export function flattenRoutes(routes: RouteConfigV2[]): RouteConfigV2[] {
   traverse(routes);
   return result;
 }
+
+export function toFlatRouteConfig(modules: RouteModuleConfig[]): RouteConfig[] {
+  const result: RouteConfig[] = [];
+  modules.forEach((moduleConfig) => {
+    const flatRoutes = flattenRoutes(moduleConfig.routes);
+    flatRoutes.forEach((route) => {
+      result.push({
+        path: route.path,
+        element: route.element,
+        requiredPermissions: route.requiredPermissions,
+        module: route.module,
+        action: route.action,
+      });
+    });
+  });
+  return result;
+}

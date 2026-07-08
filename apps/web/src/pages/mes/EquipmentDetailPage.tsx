@@ -5,6 +5,8 @@ import { Wrench, MapPin, Calendar, User, FileText } from 'lucide-react';
 import { assetApi, type Asset } from '@/api/erp';
 import { useNotification } from '@/hooks/useNotification';
 import { apiLogger } from '@/utils/logger';
+import { designTokens } from '@/theme/tokens';
+const ct = designTokens.colors;
 import { DetailPageTemplate, type TabConfig, type SectionConfig } from '@/components/templates';
 import ConfirmDialog from '@/components/common/ConfirmDialog';
 import { PageContainer } from '@/components/common/PageContainerV2';
@@ -286,7 +288,7 @@ const EquipmentDetailPage: React.FC = () => {
       avatar: (
         <Wrench
           size={32}
-          color='#1976d2'
+          color={ct.primary.dark}
         />
       ),
       title: equipment?.name,
@@ -306,7 +308,7 @@ const EquipmentDetailPage: React.FC = () => {
       autoBreadcrumbs
       headerProps={{
         pageIcon: <Wrench style={{ width: 20, height: 20 }} />,
-        pageGradient: 'linear-gradient(135deg, #F59E0B 0%, #D97706 100%)',
+        pageGradient: `linear-gradient(135deg, ${ct.warning.main} 0%, ${ct.warning.dark} 100%)`,
       }}
     >
       <DetailPageTemplate

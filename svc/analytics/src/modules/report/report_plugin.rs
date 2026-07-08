@@ -25,7 +25,7 @@ pub struct Permission {
 }
 
 fn get_runtime_url() -> String {
-    std::env::var("RUNTIME_URL").unwrap_or_else(|_| "http://localhost:8061".to_string())
+    std::env::var("RUNTIME_URL").unwrap_or_else(|_| "http://localhost:8060".to_string())
 }
 
 pub async fn get_plugin_info() -> Json<ApiResponse<PluginInfo>> {

@@ -51,6 +51,8 @@ import {
   XCircle,
 } from 'lucide-react';
 import { apiLogger } from '@/utils/logger';
+import { designTokens } from '@/theme/tokens';
+const ct = designTokens.colors;
 
 const ProductionSchedulePage: React.FC = () => {
   const [schedules, setSchedules] = useState<ProductionSchedule[]>([]);
@@ -260,7 +262,7 @@ const ProductionSchedulePage: React.FC = () => {
         color: string;
       }
     > = {
-      scheduled: { label: '已排程', bg: '#e0e7ff', color: 'secondary.700' },
+      scheduled: { label: '已排程', bg: ct.secondary[100], color: 'secondary.700' },
       in_progress: { label: '执行中', bg: 'primary.100', color: 'primary.dark' },
       completed: { label: '已完成', bg: 'success.lighter', color: 'success.700' },
       cancelled: { label: '已取消', bg: 'error.lighter', color: 'error.dark' },
@@ -316,8 +318,8 @@ const ProductionSchedulePage: React.FC = () => {
           { label: '已取消', value: 'cancelled' },
         ],
         value: statusFilter,
-        onChange: (value) => {
-          setStatusFilter(value);
+        onChange: (value: unknown) => {
+          setStatusFilter(value as string);
           setCurrentPage(1);
         },
       },
@@ -385,7 +387,7 @@ const ProductionSchedulePage: React.FC = () => {
         mb: 3,
       }}
     >
-      <Box sx={{ p: 2, bgcolor: '#e0e7ff', borderRadius: 3 }}>
+      <Box sx={{ p: 2, bgcolor: ct.secondary[100], borderRadius: 3 }}>
         <Typography
           variant='body2'
           sx={{ color: 'text.secondary' }}
@@ -515,7 +517,7 @@ const ProductionSchedulePage: React.FC = () => {
                     const left = ((start - totalStart) / totalDuration) * 100;
                     const width = ((end - start) / totalDuration) * 100;
 
-                    let bgColor = '#6366f1';
+                    let bgColor = ct.secondary[400];
                     if (task.status === 'in_progress') bgColor = 'primary.main';
                     if (task.status === 'completed') bgColor = 'success.main';
                     if (task.status === 'cancelled') bgColor = 'error.main';
@@ -564,7 +566,7 @@ const ProductionSchedulePage: React.FC = () => {
       autoBreadcrumbs
       headerProps={{
         pageIcon: <Calendar style={{ width: 20, height: 20 }} />,
-        pageGradient: 'linear-gradient(135deg, #EC4899 0%, #BE185D 100%)',
+        pageGradient: `linear-gradient(135deg, ${ct.secondary[500]} 0%, ${ct.secondary[700]} 100%)`,
       }}
     >
       <Box sx={{ mb: 2 }}>

@@ -32,6 +32,8 @@ import {
 } from '@/components/templates';
 import { Plus, Edit, Trash2, Eye, GitBranch, Clock, TrendingUp, BarChart3 } from 'lucide-react';
 import { apiLogger } from '@/utils/logger';
+import { designTokens } from '@/theme/tokens';
+const ct = designTokens.colors;
 
 const ProcessFlowPage: React.FC = () => {
   const [flows, setFlows] = useState<ProcessFlow[]>([]);
@@ -257,8 +259,8 @@ const ProcessFlowPage: React.FC = () => {
           { label: '草稿', value: 'draft' },
         ],
         value: statusFilter,
-        onChange: (value) => {
-          setStatusFilter(value);
+        onChange: (value: unknown) => {
+          setStatusFilter(value as string);
           setCurrentPage(1);
         },
       },
@@ -308,7 +310,7 @@ const ProcessFlowPage: React.FC = () => {
       autoBreadcrumbs
       headerProps={{
         pageIcon: <GitBranch style={{ width: 20, height: 20 }} />,
-        pageGradient: 'linear-gradient(135deg, #10B981 0%, #059669 100%)',
+        pageGradient: `linear-gradient(135deg, ${ct.success.main} 0%, ${ct.success.dark} 100%)`,
       }}
     >
       <ListPageTemplate

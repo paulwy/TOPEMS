@@ -43,6 +43,7 @@ import type { Plugin, PluginVersion, PluginReview } from '@/api/plugin';
 import { getPlugin, getPluginVersions, getPluginReviews, submitPluginReview } from '@/api/plugin';
 import { usePluginStore } from '@/store/pluginStore';
 import { useAppStore } from '@/store';
+import { logger } from '@/utils/logger';
 
 const PluginDetailPage: React.FC = () => {
   const { pluginCode } = useParams<{ pluginCode: string }>();
@@ -103,7 +104,7 @@ const PluginDetailPage: React.FC = () => {
         fetchHealthStatus();
       } catch (err: unknown) {
         setError('加载失败，请稍后重试');
-        console.error('Failed to load plugin detail:', err);
+        logger.error('Failed to load plugin detail:', err);
       } finally {
         setLoading(false);
       }

@@ -7,6 +7,7 @@ pub mod customer_scoring;
 pub mod interaction;
 pub mod opportunity;
 pub mod sales_forecast;
+pub mod tag;
 
 pub use audit_log::AuditLog;
 pub use billing::{BillingQueryParams, BillingRecord, CreateBillingRequest};
@@ -19,3 +20,4 @@ pub use customer_scoring::{
 pub use interaction::{CreateInteractionRequest, Interaction, UpdateInteractionRequest};
 pub use opportunity::{CreateOpportunityRequest, Opportunity, UpdateOpportunityRequest};
 pub use sales_forecast::{CreateSalesForecastRequest, SalesForecast, SalesForecastQueryParams};
+pub use tag::{AddTagToCustomerRequest, CreateTagRequest, CustomerWithTags, Tag, UpdateTagRequest};

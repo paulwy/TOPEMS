@@ -8,9 +8,9 @@ SVC_DIR = Path("/Users/air/TOPEMS/svc")
 
 # 需要扫描的服务目录
 SERVICES = [
-    "ai", "analytics", "config-center", "crm", "ehs", "erp", "gis", "hrm",
-    "integration", "lims", "manufacturing", "mes", "mobile", "monitor", "pdm",
-    "pm", "qms", "quality-assurance", "report", "rs", "scm", "shared", "srm",
+    "ai", "analytics", "crm", "ehs", "erp", "finance", "gis", "hrm",
+    "integration", "lims", "mes", "migration-sdk", "mobile", "monitor", "pdm",
+    "pm", "portal", "qms", "report", "rs", "scm", "shared", "srm",
     "unified-core", "wms"
 ]
 

@@ -19,6 +19,9 @@ import type { RowAction, FilterConfig, ColumnDef } from '@/components/templates'
 import { pdmApi } from '@/api/pdm';
 import type { ProductionBatch } from '@/api/pdm';
 import { useAppStore } from '@/store';
+import { designTokens } from '@/theme/tokens';
+
+const ct = designTokens.colors;
 
 const PdmBatchPage: React.FC = () => {
   const [batches, setBatches] = useState<ProductionBatch[]>([]);
@@ -73,7 +76,7 @@ const PdmBatchPage: React.FC = () => {
 
   const getStatusBadge = (status: string) => {
     const statusMap: Record<string, { bg: string; color: string }> = {
-      规划中: { bg: 'warning.100', color: '#ca8a04' },
+      规划中: { bg: 'warning.100', color: ct.yellow[600] },
       进行中: { bg: 'primary.100', color: 'primary.dark' },
       已完成: { bg: 'success.lighter', color: 'success.dark' },
       已取消: { bg: 'error.lighter', color: 'error.dark' },
@@ -203,7 +206,7 @@ const PdmBatchPage: React.FC = () => {
         mb: 3,
       }}
     >
-      <Box sx={{ p: 2, bgcolor: '#ecfeff', borderRadius: 3 }}>
+      <Box sx={{ p: 2, bgcolor: 'cyan.light', borderRadius: 3 }}>
         <Typography
           variant='body2'
           sx={{ color: 'slate.600' }}
@@ -266,7 +269,7 @@ const PdmBatchPage: React.FC = () => {
     <PageContainer
       headerProps={{
         pageIcon: <Clock style={{ width: 20, height: 20 }} />,
-        pageGradient: 'linear-gradient(135deg, #06B6D4 0%, #0891B2 100%)',
+        pageGradient: `linear-gradient(135deg, ${ct.cyan.main} 0%, ${ct.cyan.dark} 100%)`,
       }}
     >
       <ListPageTemplate<ProductionBatch>

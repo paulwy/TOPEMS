@@ -1,4 +1,4 @@
-use crate::api::models::{
+use crate::modules::models::{
     AnalysisResult, CategoryScore, ClassifyTextResponse, Entity, ExtractEntitiesResponse,
     ExtractKeywordsResponse, Keyword, SentimentAnalysisResponse,
 };

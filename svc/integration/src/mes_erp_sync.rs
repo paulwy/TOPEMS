@@ -128,7 +128,7 @@ impl MesErpSyncService {
 
     pub async fn sync_erp_to_mes(&self, erp_order_id: Uuid) -> Result<SyncResult, String> {
         let sync_id = Uuid::new_v4();
-        let now = Utc::now();
+        let _now = Utc::now();
 
         tracing::info!(
             "[MES-ERP Sync] Starting ERP→MES sync for order: {}",
@@ -137,7 +137,7 @@ impl MesErpSyncService {
 
         let erp_order = self.fetch_erp_order(erp_order_id).await?;
 
-        let sync_record = self
+        let _sync_record = self
             .create_sync_record(
                 sync_id,
                 "erp_to_mes",

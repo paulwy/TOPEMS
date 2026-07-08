@@ -1,4 +1,6 @@
 import React, { useState, useEffect, useMemo } from 'react';
+import { designTokens } from '@/theme/tokens';
+const ct = designTokens.colors;
 import {
   Plus,
   Edit2,
@@ -527,7 +529,7 @@ const FinanceBudgetPage: React.FC = () => {
           { value: 'personnel', label: '人事预算' },
         ],
         value: filterType,
-        onChange: setFilterType,
+        onChange: (value: unknown) => setFilterType(value as string),
       },
       {
         id: 'status',
@@ -540,7 +542,7 @@ const FinanceBudgetPage: React.FC = () => {
           { value: 'expired', label: '已过期' },
         ],
         value: filterStatus,
-        onChange: setFilterStatus,
+        onChange: (value: unknown) => setFilterStatus(value as string),
       },
     ],
     [filterType, filterStatus]
@@ -786,7 +788,7 @@ const FinanceBudgetPage: React.FC = () => {
             <Box
               sx={{
                 p: 2,
-                bgcolor: 'linear-gradient(to right, primary.light, #eef2ff)',
+                bgcolor: `linear-gradient(to right, primary.light, ${ct.primary[50]})`,
                 borderRadius: 1,
               }}
             >

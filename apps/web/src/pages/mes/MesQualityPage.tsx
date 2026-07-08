@@ -47,6 +47,8 @@ import {
   AlertCircle,
 } from 'lucide-react';
 import { apiLogger } from '@/utils/logger';
+import { designTokens } from '@/theme/tokens';
+const ct = designTokens.colors;
 
 interface TabPanelProps {
   children?: React.ReactNode;
@@ -412,8 +414,8 @@ const MesQualityPage: React.FC = () => {
           { label: '待检', value: 'pending' },
         ],
         value: statusFilter,
-        onChange: (value) => {
-          setStatusFilter(value);
+        onChange: (value: unknown) => {
+          setStatusFilter(value as string);
           setCurrentPage(1);
         },
       },
@@ -434,8 +436,8 @@ const MesQualityPage: React.FC = () => {
           { label: '待处理', value: 'pending' },
         ],
         value: statusFilter,
-        onChange: (value) => {
-          setStatusFilter(value);
+        onChange: (value: unknown) => {
+          setStatusFilter(value as string);
           setCurrentPage(1);
         },
       },
@@ -499,7 +501,7 @@ const MesQualityPage: React.FC = () => {
       autoBreadcrumbs
       headerProps={{
         pageIcon: <ClipboardCheck style={{ width: 20, height: 20 }} />,
-        pageGradient: 'linear-gradient(135deg, #10B981 0%, #059669 100%)',
+        pageGradient: `linear-gradient(135deg, ${ct.success.main} 0%, ${ct.success.dark} 100%)`,
       }}
     >
       <Box sx={{ borderBottom: 1, borderColor: 'divider' }}>
@@ -618,7 +620,7 @@ const MesQualityPage: React.FC = () => {
               render: (row) => getStatusBadge(row.status),
             },
           ]}
-          data={standards}
+          data={standards as unknown as QualityItem[]}
           loading={loading}
           filters={filters}
           searchable
@@ -1033,35 +1035,35 @@ const MesQualityPage: React.FC = () => {
                       component='span'
                       sx={{ fontWeight: 500 }}
                     >
-                      {(selectedItem as QualityStandard).code}
+                      {(selectedItem as unknown as QualityStandard).code}
                     </Box>
                   </Box>
                   <Box>
                     <InputLabel sx={{ color: 'text.secondary', fontSize: 12 }}>标准名称</InputLabel>
-                    <Box component='span'>{(selectedItem as QualityStandard).name}</Box>
+                    <Box component='span'>{(selectedItem as unknown as QualityStandard).name}</Box>
                   </Box>
                   <Box>
                     <InputLabel sx={{ color: 'text.secondary', fontSize: 12 }}>适用产品</InputLabel>
                     <Box component='span'>
-                      {(selectedItem as QualityStandard).product_name || '-'}
+                      {(selectedItem as unknown as QualityStandard).product_name || '-'}
                     </Box>
                   </Box>
                   <Box>
                     <InputLabel sx={{ color: 'text.secondary', fontSize: 12 }}>质检类型</InputLabel>
-                    <Box component='span'>{(selectedItem as QualityStandard).inspection_type}</Box>
+                    <Box component='span'>{(selectedItem as unknown as QualityStandard).inspection_type}</Box>
                   </Box>
                   <Box>
                     <InputLabel sx={{ color: 'text.secondary', fontSize: 12 }}>版本</InputLabel>
-                    <Box component='span'>{(selectedItem as QualityStandard).version || '-'}</Box>
+                    <Box component='span'>{(selectedItem as unknown as QualityStandard).version || '-'}</Box>
                   </Box>
                   <Box>
                     <InputLabel sx={{ color: 'text.secondary', fontSize: 12 }}>状态</InputLabel>
-                    <Box>{getStatusBadge((selectedItem as QualityStandard).status)}</Box>
+                    <Box>{getStatusBadge((selectedItem as unknown as QualityStandard).status)}</Box>
                   </Box>
                   <Box sx={{ gridColumn: '1 / -1' }}>
                     <InputLabel sx={{ color: 'text.secondary', fontSize: 12 }}>描述</InputLabel>
                     <Box component='span'>
-                      {(selectedItem as QualityStandard).description || '-'}
+                      {(selectedItem as unknown as QualityStandard).description || '-'}
                     </Box>
                   </Box>
                 </Box>

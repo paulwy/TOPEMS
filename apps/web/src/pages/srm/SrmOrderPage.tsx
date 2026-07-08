@@ -27,6 +27,9 @@ import type { PurchaseOrder, CreatePurchaseOrderRequest } from '@/api/srm';
 import { useAppStore } from '@/store';
 import { apiLogger } from '@/utils/logger';
 import { PageContainer } from '@/components/common';
+import { designTokens } from '@/theme/tokens';
+
+const ct = designTokens.colors;
 
 const SrmOrderPage: React.FC = () => {
   const [orders, setOrders] = useState<PurchaseOrder[]>([]);
@@ -93,7 +96,7 @@ const SrmOrderPage: React.FC = () => {
       已完成: { bg: 'secondary.light', color: 'primary.light' },
       已取消: { bg: 'error.lighter', color: 'error.darker' },
     };
-    const colors = statusMap[status] || { bg: 'grey.100', color: '#475569' };
+    const colors = statusMap[status] || { bg: 'grey.100', color: ct.text.secondary };
     return (
       <Chip
         label={status}
@@ -525,7 +528,7 @@ const SrmOrderPage: React.FC = () => {
       subtitle='Purchase Orders'
       sx={{
         minHeight: '100vh',
-        background: 'linear-gradient(135deg, #dbeafe 0%, #f8fafc 100%)',
+        background: `linear-gradient(135deg, ${ct.primary[100]} 0%, ${ct.background.default} 100%)`,
       }}
       padding={false}
     >

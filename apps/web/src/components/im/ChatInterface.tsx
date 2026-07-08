@@ -75,6 +75,7 @@ export const ChatInterface: React.FC = () => {
     onMessage: handleWsMessage,
     onOpen: handleWsOpen,
     onClose: handleWsClose,
+    wsPath: '/ws/core/im',
   });
 
   useEffect(() => {

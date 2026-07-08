@@ -37,6 +37,7 @@ import {
 } from '../../api/lowcode';
 import type { DataModel } from '../../api/lowcode/types';
 import { useNavigate } from 'react-router-dom';
+import { logger } from "@/utils/logger";
 
 const DataModelListPage = () => {
   const theme = useTheme();
@@ -70,7 +71,7 @@ const DataModelListPage = () => {
         setTotal(res.data.total || 0);
       }
     } catch (error) {
-      console.error('Failed to load models:', error);
+      logger.error('Failed to load models:', error);
     } finally {
       setLoading(false);
     }
@@ -89,7 +90,7 @@ const DataModelListPage = () => {
         loadModels();
       }
     } catch (error) {
-      console.error('Failed to create model:', error);
+      logger.error('Failed to create model:', error);
     }
   };
 
@@ -99,7 +100,7 @@ const DataModelListPage = () => {
         await deleteDataModel(modelId);
         loadModels();
       } catch (error) {
-        console.error('Failed to delete model:', error);
+        logger.error('Failed to delete model:', error);
       }
     }
   };
@@ -109,7 +110,7 @@ const DataModelListPage = () => {
       await publishModel(modelId);
       loadModels();
     } catch (error) {
-      console.error('Failed to publish model:', error);
+      logger.error('Failed to publish model:', error);
     }
   };
 

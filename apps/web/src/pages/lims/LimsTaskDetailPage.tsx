@@ -33,6 +33,9 @@ import { apiLogger } from '@/utils/logger';
 import { useAppStore } from '@/store';
 import { DetailPageTemplate, type SectionConfig } from '@/components/templates';
 import { PageContainer } from '@/components/common';
+import { designTokens } from '@/theme/tokens';
+
+const ct = designTokens.colors;
 
 interface TaskRecord extends InspectionRecord {
   step_name: string;
@@ -217,7 +220,7 @@ const LimsTaskDetailPage: React.FC = () => {
                 fontSize: '0.875rem',
               }}
             >
-              <span style={{ color: '#475569' }}>完成进度</span>
+              <span style={{ color: ct.grey[600] }}>完成进度</span>
               <span style={{ fontWeight: 500, color: theme.palette.grey[900] }}>
                 {completedSteps} / {totalSteps} 步骤
               </span>
@@ -233,7 +236,7 @@ const LimsTaskDetailPage: React.FC = () => {
               <Box
                 sx={{
                   height: '100%',
-                  background: 'linear-gradient(to right, #a855f7, #ec4899)',
+                  background: `linear-gradient(to right, ${ct.purple[500]}, ${ct.pink[500]})`,
                   width: `${progressPercent}%`,
                   transition: 'all 0.3s',
                 }}
@@ -244,7 +247,7 @@ const LimsTaskDetailPage: React.FC = () => {
                 sx={{
                   fontSize: '1.875rem',
                   fontWeight: 700,
-                  color: '#9333ea',
+                  color: 'secondary.main',
                 }}
               >
                 {Math.round(progressPercent)}%
@@ -353,7 +356,7 @@ const LimsTaskDetailPage: React.FC = () => {
           display: 'flex',
           alignItems: 'center',
           justifyContent: 'center',
-          background: 'linear-gradient(135deg, #f8fafc 0%, grey.100 100%)',
+          background: `linear-gradient(135deg, ${ct.background.default} 0%, grey.100 100%)`,
         }}
       >
         <div style={{ textAlign: 'center' }}>
@@ -361,14 +364,14 @@ const LimsTaskDetailPage: React.FC = () => {
             style={{
               width: 48,
               height: 48,
-              border: '4px solid #e9d5ff',
-              borderTop: '4px solid #9333ea',
+              border: `4px solid ${ct.purple[200]}`,
+              borderTop: `4px solid ${ct.purple[600]}`,
               borderRadius: '50%',
               animation: 'spin 1s linear infinite',
               margin: '0 auto 16px auto',
             }}
           ></div>
-          <p style={{ color: '#475569' }}>加载中...</p>
+          <p style={{ color: ct.grey[600] }}>加载中...</p>
         </div>
       </div>
     );
@@ -382,7 +385,7 @@ const LimsTaskDetailPage: React.FC = () => {
           display: 'flex',
           alignItems: 'center',
           justifyContent: 'center',
-          background: 'linear-gradient(135deg, #f8fafc 0%, grey.100 100%)',
+          background: `linear-gradient(135deg, ${ct.background.default} 0%, grey.100 100%)`,
         }}
       >
         <div style={{ textAlign: 'center' }}>
@@ -394,7 +397,7 @@ const LimsTaskDetailPage: React.FC = () => {
               margin: '0 auto 16px auto',
             }}
           />
-          <p style={{ color: '#475569' }}>检验任务不存在或已被删除</p>
+          <p style={{ color: ct.grey[600] }}>检验任务不存在或已被删除</p>
           <Button
             onClick={() => navigate('/lims')}
             sx={{ mt: 2 }}
@@ -408,8 +411,8 @@ const LimsTaskDetailPage: React.FC = () => {
 
   const getStatusBadge = (status: string) => {
     const statusMap: Record<string, { bg: string; color: string; label: string }> = {
-      pending: { bg: 'warning.100', color: '#ca8a04', label: '待测试' },
-      待测试: { bg: 'warning.100', color: '#ca8a04', label: '待测试' },
+      pending: { bg: 'warning.100', color: ct.yellow[600], label: '待测试' },
+      待测试: { bg: 'warning.100', color: ct.yellow[600], label: '待测试' },
       in_progress: { bg: 'primary.100', color: 'primary.dark', label: '进行中' },
       进行中: { bg: 'primary.100', color: 'primary.dark', label: '进行中' },
       completed: { bg: 'success.lighter', color: 'success.dark', label: '已完成' },
@@ -581,7 +584,7 @@ const LimsTaskDetailPage: React.FC = () => {
                   display: 'flex',
                   alignItems: 'center',
                   gap: 1,
-                  color: '#854d0e',
+                  color: ct.yellow[800],
                 }}
               >
                 <AlertCircle sx={{ width: 20, height: 20 }} />

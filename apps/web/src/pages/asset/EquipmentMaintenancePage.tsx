@@ -130,15 +130,15 @@ const EquipmentMaintenancePage: React.FC = () => {
     e.preventDefault();
     if (!selectedForMaintenance) return;
     try {
-      const data: Partial<MaintenanceRecord> = {
+      const data = {
         equipment_id: selectedForMaintenance.id,
-        maintenance_type: newMaintenance.maintenance_type,
-        description: newMaintenance.description,
-        maintainer: newMaintenance.maintainer,
-        start_time: newMaintenance.start_time,
+        maintenance_type: newMaintenance.maintenance_type || '',
+        description: newMaintenance.description || '',
+        maintainer: newMaintenance.maintainer || '',
+        start_time: newMaintenance.start_time || new Date().toISOString(),
         end_time: newMaintenance.end_time,
         cost: newMaintenance.cost,
-        status: newMaintenance.status,
+        status: newMaintenance.status || 'pending',
         remarks: newMaintenance.remarks,
       };
       const res = await mesEquipmentApi.createMaintenance(data);

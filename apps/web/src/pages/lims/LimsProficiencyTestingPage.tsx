@@ -30,6 +30,9 @@ import { limsApi } from '@/api/lims';
 import type { PtPlan, CreatePtPlanRequest, UpdatePtPlanRequest } from '@/api/lims';
 import { useAppStore } from '@/store';
 import { apiLogger } from '@/utils/logger';
+import { designTokens } from '@/theme/tokens';
+
+const ct = designTokens.colors;
 
 interface LimsListResponse<T> {
   items?: T[];
@@ -103,7 +106,7 @@ const LimsProficiencyTestingPage: React.FC = () => {
       待执行: { bg: 'grey.100', color: 'text.secondary' },
       执行中: { bg: 'primary.100', color: 'primary.dark' },
       已完成: { bg: 'success.lighter', color: 'success.700' },
-      已评价: { bg: 'secondary.100', color: '#7e22ce' },
+      已评价: { bg: 'secondary.100', color: ct.purple[700] },
     };
     const colors = statusMap[status] || { bg: 'grey.100', color: 'text.secondary' };
     return (
@@ -180,7 +183,7 @@ const LimsProficiencyTestingPage: React.FC = () => {
         { label: '已评价', value: '已评价' },
       ],
       value: statusFilter,
-      onChange: (value) => setStatusFilter(value),
+      onChange: (value: unknown) => setStatusFilter(value as string),
     },
     {
       id: 'cycle',
@@ -193,7 +196,7 @@ const LimsProficiencyTestingPage: React.FC = () => {
         { label: '年度', value: '年度' },
       ],
       value: cycleFilter,
-      onChange: (value) => setCycleFilter(value),
+      onChange: (value: unknown) => setCycleFilter(value as string),
     },
   ];
 
@@ -331,7 +334,7 @@ const LimsProficiencyTestingPage: React.FC = () => {
         mb: 3,
       }}
     >
-      <Card sx={{ bgcolor: '#faf5ff' }}>
+      <Card sx={{ bgcolor: ct.purple[50] }}>
         <CardContent sx={{ p: 2 }}>
           <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5 }}>
             <Box
@@ -345,7 +348,7 @@ const LimsProficiencyTestingPage: React.FC = () => {
                 justifyContent: 'center',
               }}
             >
-              <Award sx={{ width: 20, height: 20, color: '#7e22ce' }} />
+              <Award sx={{ width: 20, height: 20, color: 'secondary.dark' }} />
             </Box>
             <Box>
               <Typography
@@ -371,7 +374,7 @@ const LimsProficiencyTestingPage: React.FC = () => {
               sx={{
                 width: 40,
                 height: 40,
-                background: 'linear-gradient(135deg, #3b82f6, #2563eb)',
+                background: `linear-gradient(135deg, ${ct.primary.main}, ${ct.primary[600]})`,
                 boxShadow: '0 4px 12px rgba(59,130,246,0.3)',
                 borderRadius: '50%',
                 display: 'flex',
@@ -379,7 +382,7 @@ const LimsProficiencyTestingPage: React.FC = () => {
                 justifyContent: 'center',
               }}
             >
-              <Award sx={{ width: 20, height: 20, color: '#fff' }} />
+              <Award sx={{ width: 20, height: 20, color: ct.background.paper }} />
             </Box>
             <Box>
               <Typography
@@ -438,7 +441,7 @@ const LimsProficiencyTestingPage: React.FC = () => {
               sx={{
                 width: 40,
                 height: 40,
-                background: 'linear-gradient(135deg, #22c55e, #16a34a)',
+                background: `linear-gradient(135deg, ${ct.success.main}, ${ct.success[600]})`,
                 boxShadow: '0 4px 12px rgba(34,197,94,0.3)',
                 borderRadius: '50%',
                 display: 'flex',
@@ -446,7 +449,7 @@ const LimsProficiencyTestingPage: React.FC = () => {
                 justifyContent: 'center',
               }}
             >
-              <Award sx={{ width: 20, height: 20, color: '#fff' }} />
+              <Award sx={{ width: 20, height: 20, color: ct.background.paper }} />
             </Box>
             <Box>
               <Typography
@@ -476,7 +479,7 @@ const LimsProficiencyTestingPage: React.FC = () => {
           display: 'flex',
           alignItems: 'center',
           justifyContent: 'center',
-          background: 'linear-gradient(135deg, #faf5ff 0%, #f8fafc 100%)',
+          background: `linear-gradient(135deg, ${ct.purple[50]} 0%, ${ct.background.default} 100%)`,
         }}
       >
         <Box sx={{ textAlign: 'center' }}>
@@ -485,8 +488,8 @@ const LimsProficiencyTestingPage: React.FC = () => {
               width: 48,
               height: 48,
               border: 4,
-              borderColor: '#c084fc',
-              borderTopColor: '#7e22ce',
+              borderColor: ct.purple[400],
+              borderTopColor: 'secondary.dark',
               borderRadius: '50%',
               animation: 'spin 1s linear infinite',
               mx: 'auto',
@@ -505,7 +508,7 @@ const LimsProficiencyTestingPage: React.FC = () => {
       subtitle='Proficiency Testing'
       headerProps={{
         pageIcon: <Award style={{ width: 20, height: 20 }} />,
-        pageGradient: 'linear-gradient(135deg, #A855F7 0%, #7C3AED 100%)',
+        pageGradient: `linear-gradient(135deg, ${ct.purple[500]} 0%, ${ct.secondary.dark} 100%)`,
       }}
     >
       <ListPageTemplate

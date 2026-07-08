@@ -2,31 +2,43 @@ import React from 'react';
 import ReactDOM from 'react-dom/client';
 import { QueryClientProvider } from '@tanstack/react-query';
 import App from './App';
-import './index.css';
 import './i18n';
 import { createPermissionInterceptor } from './api/permissionInterceptor';
 import { queryClient } from './lib/reactQuery';
 import { logger } from '@/utils/logger';
 import { applySecurityHeaders } from '@/config/security';
 
-// 同步执行安全相关的初始化
 applySecurityHeaders();
 createPermissionInterceptor();
 
-// 延迟初始化事件监听器，减少首屏阻塞
+import('./index.css').catch(logger.error);
+
 if (typeof window !== 'undefined') {
   window.addEventListener('permission-denied', (event: Event) => {
     const customEvent = event as CustomEvent;
     logger.warn('Permission denied:', customEvent.detail);
   });
+
+  window.addEventListener('unhandledrejection', (event: PromiseRejectionEvent) => {
+    const reason = event.reason as Error;
+    if (reason && reason.message && reason.message.includes('WebSocket')) {
+      logger.debug('Ignoring unhandled WebSocket rejection:', reason.message);
+      event.preventDefault();
+    } else {
+      logger.error('Unhandled promise rejection:', reason);
+    }
+  });
+
+  window.addEventListener('error', (event: ErrorEvent) => {
+    if (event.message && event.message.includes('WebSocket')) {
+      logger.debug('Ignoring WebSocket error:', event.message);
+      event.preventDefault();
+    }
+  });
 }
 
-// 使用 requestIdleCallback 延迟执行非关键初始化
 const performDeferredInit = () => {
-  // 预加载可能需要的组件
-  import('./pages/shared/DashboardPage').catch(() => {
-    // 忽略预加载错误
-  });
+  import('./pages/shared/DashboardPage').catch(() => {});
 };
 
 if ('requestIdleCallback' in window) {

@@ -14,16 +14,16 @@
 #![allow(clippy::redundant_closure)]
 #![allow(dead_code)]
 
-mod api;
 mod models;
+mod modules;
 mod plugin;
-mod services;
 mod shared;
 
 use std::net::SocketAddr;
 
 use axum::{extract::State, routing::get, Json, Router};
 use axum_prometheus::PrometheusMetricLayer;
+use modules::scheduler::ReportScheduler;
 use sqlx::PgPool;
 
 use topems_shared::{
@@ -89,7 +89,7 @@ async fn main() {
         health_config,
     };
 
-    let scheduler = services::ReportScheduler::new(pool);
+    let scheduler = ReportScheduler::new(pool);
     if let Err(e) = scheduler.start().await {
         tracing::warn!("Failed to start report scheduler: {}", e);
     }
@@ -113,7 +113,7 @@ async fn main() {
 
     // Protected routes (auth required)
     let protected_routes = Router::new()
-        .merge(api::create_api_routes())
+        .merge(modules::create_api_routes())
         // Health & Metrics
         .route("/api/v1/health/detailed", get(detailed_health))
         .layer(axum::middleware::from_fn_with_state(

@@ -4,23 +4,24 @@ import { Plus, Trash2, Save, ZoomIn, ZoomOut, Move } from 'lucide-react';
 
 type NodeType = 'start' | 'task' | 'approval' | 'condition' | 'end';
 
-interface NodeData {
+export interface NodeData {
   id: string;
-  type: NodeType;
+  type: string;
   x: number;
   y: number;
   label: string;
   description?: string;
+  approvers?: string[];
 }
 
-interface EdgeData {
+export interface EdgeData {
   id: string;
   source: string;
   target: string;
   label?: string;
 }
 
-const NODE_ICONS: Record<NodeType, string> = {
+const NODE_ICONS: Record<string, string> = {
   start: '▶',
   task: '📝',
   approval: '✓',

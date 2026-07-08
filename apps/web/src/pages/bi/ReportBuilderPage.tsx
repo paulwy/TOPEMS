@@ -55,6 +55,9 @@ import {
   type Report,
 } from '@/api/bi';
 import { logger } from '@/utils/logger';
+import { designTokens } from '@/theme/tokens';
+
+const ct = designTokens.colors;
 
 type ViewMode = 'list' | 'builder';
 
@@ -343,7 +346,7 @@ const ReportBuilderPage = () => {
                           width: 40,
                           height: 40,
                           borderRadius: 1,
-                          backgroundColor: '#FFFBEB',
+                          backgroundColor: ct.warning[50],
                           display: 'flex',
                           alignItems: 'center',
                           justifyContent: 'center',
@@ -385,12 +388,13 @@ const ReportBuilderPage = () => {
                       <IconButton
                         size='small'
                         onClick={() => handleEdit(report)}
+                        aria-label='编辑报表'
                       >
                         <Edit2 size={16} />
                       </IconButton>
                     </Tooltip>
                     <Tooltip title='查看'>
-                      <IconButton size='small'>
+                      <IconButton size='small' aria-label='查看报表'>
                         <Eye size={16} />
                       </IconButton>
                     </Tooltip>
@@ -398,6 +402,7 @@ const ReportBuilderPage = () => {
                       <IconButton
                         size='small'
                         onClick={() => handleExport(report.id, report.format as 'excel' | 'pdf')}
+                        aria-label='导出报表'
                       >
                         <Download size={16} />
                       </IconButton>
@@ -406,6 +411,7 @@ const ReportBuilderPage = () => {
                       <IconButton
                         size='small'
                         onClick={() => handleDelete(report.id)}
+                        aria-label='删除报表'
                       >
                         <Trash2 size={16} />
                       </IconButton>
@@ -582,7 +588,7 @@ const ReportBuilderPage = () => {
                     <Card
                       sx={{
                         cursor: 'pointer',
-                        border: idx === 0 ? '2px solid #6366F1' : '1px solid',
+                        border: idx === 0 ? '2px solid indigo.main' : '1px solid',
                         borderColor: idx === 0 ? 'primary.main' : 'divider',
                         transition: 'all 0.3s',
                         '&:hover': {
@@ -594,7 +600,7 @@ const ReportBuilderPage = () => {
                         <Box
                           sx={{
                             height: 100,
-                            backgroundColor: '#F9FAFB',
+                            backgroundColor: ct.grey[50],
                             borderRadius: 1,
                             display: 'flex',
                             alignItems: 'center',
@@ -604,7 +610,7 @@ const ReportBuilderPage = () => {
                         >
                           <FileText
                             size={32}
-                            style={{ color: '#6B7280' }}
+                            style={{ color: ct.grey[500] }}
                           />
                         </Box>
                         <Typography
@@ -650,7 +656,7 @@ const ReportBuilderPage = () => {
                   <MenuItem value='ds-003'>库存周转数据集</MenuItem>
                 </Select>
               </FormControl>
-              <Box sx={{ mt: 3, p: 3, backgroundColor: '#F9FAFB', borderRadius: 1 }}>
+              <Box sx={{ mt: 3, p: 3, backgroundColor: ct.grey[50], borderRadius: 1 }}>
                 <Typography
                   variant='body2'
                   color='text.secondary'
@@ -698,7 +704,7 @@ const ReportBuilderPage = () => {
                 placeholder='多个邮箱用逗号分隔'
                 sx={{ mb: 3 }}
               />
-              <Box sx={{ mt: 3, p: 3, backgroundColor: '#F9FAFB', borderRadius: 1 }}>
+              <Box sx={{ mt: 3, p: 3, backgroundColor: ct.grey[50], borderRadius: 1 }}>
                 <Typography
                   variant='body2'
                   color='text.secondary'
@@ -719,7 +725,7 @@ const ReportBuilderPage = () => {
       subtitle='创建和管理各类业务报表'
       headerProps={{
         pageIcon: <FileText style={{ width: 20, height: 20 }} />,
-        pageGradient: 'linear-gradient(135deg, #F59E0B 0%, #D97706 100%)',
+        pageGradient: `linear-gradient(135deg, ${ct.warning.main} 0%, ${ct.warning.dark} 100%)`,
       }}
       padding={false}
       maxWidth={false}

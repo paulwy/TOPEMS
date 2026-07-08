@@ -52,6 +52,8 @@ import {
 import { PageContainer, Grid } from '@/components/common';
 import { useAppStore } from '@/store';
 import { logger } from '@/utils/logger';
+import { designTokens } from '@/theme/tokens';
+const ct = designTokens.colors;
 
 type PromptCategory = 'all' | 'writing' | 'code' | 'business' | 'analysis' | 'creative';
 
@@ -182,7 +184,7 @@ const getCategoryColor = (category: string) => {
     code: 'secondary.main',
     business: 'success.main',
     analysis: 'warning.main',
-    creative: '#ec4899',
+    creative: ct.pink[500],
   };
   return map[category] || 'grey.500';
 };
@@ -271,7 +273,7 @@ export const AiPromptLibraryPage: React.FC = () => {
       maxWidth={false}
       headerProps={{
         pageIcon: <BookOpen style={{ width: 20, height: 20 }} />,
-        pageGradient: 'linear-gradient(135deg, #a8edea 0%, #fed6e3 100%)',
+        pageGradient: `linear-gradient(135deg, ${ct.teal[200]} 0%, ${ct.pink[100]} 100%)`,
       }}
     >
       <Box sx={{ p: 3 }}>
@@ -310,7 +312,7 @@ export const AiPromptLibraryPage: React.FC = () => {
                       onClick={() => setActiveCategory(cat.id as PromptCategory)}
                     >
                       <ListItemIcon sx={{ minWidth: 36 }}>
-                        <span style={{ color: activeCategory === cat.id ? '#6366f1' : '#6b7280' }}>
+                        <span style={{ color: activeCategory === cat.id ? ct.secondary[400] : ct.grey[500] }}>
                           {cat.icon}
                         </span>
                       </ListItemIcon>
@@ -392,7 +394,7 @@ export const AiPromptLibraryPage: React.FC = () => {
                         startAdornment: (
                           <Search
                             size={16}
-                            style={{ marginRight: 8, color: '#9ca3af' }}
+                            style={{ marginRight: 8, color: ct.grey[400] }}
                           />
                         ),
                       },
@@ -573,7 +575,7 @@ export const AiPromptLibraryPage: React.FC = () => {
                   <Box sx={{ textAlign: 'center', py: 8 }}>
                     <BookOpen
                       size={48}
-                      style={{ margin: '0 auto 12px', color: '#cbd5e1' }}
+                      style={{ margin: '0 auto 12px', color: ct.text.disabled }}
                     />
                     <Typography
                       variant='body1'
@@ -682,7 +684,7 @@ export const AiPromptLibraryPage: React.FC = () => {
                   <Sparkles
                     size={32}
                     className='animate-pulse'
-                    style={{ margin: '0 auto 8px', color: '#6366f1' }}
+                    style={{ margin: '0 auto 8px', color: ct.secondary[400] }}
                   />
                   <Typography
                     variant='body2'
@@ -708,7 +710,7 @@ export const AiPromptLibraryPage: React.FC = () => {
                 <Box sx={{ textAlign: 'center', py: 6 }}>
                   <Sparkles
                     size={32}
-                    style={{ margin: '0 auto 8px', color: '#cbd5e1' }}
+                    style={{ margin: '0 auto 8px', color: ct.text.disabled }}
                   />
                   <Typography
                     variant='body2'

@@ -250,8 +250,8 @@ const MaterialManagementPage: React.FC = () => {
           { label: '淘汰', value: 'obsolete' },
         ],
         value: statusFilter,
-        onChange: (value) => {
-          setStatusFilter(value);
+        onChange: (value: unknown) => {
+          setStatusFilter(value as string);
           setCurrentPage(1);
         },
       },
@@ -268,8 +268,8 @@ const MaterialManagementPage: React.FC = () => {
           { label: '辅助材料', value: '辅助材料' },
         ],
         value: categoryFilter,
-        onChange: (value) => {
-          setCategoryFilter(value);
+        onChange: (value: unknown) => {
+          setCategoryFilter(value as string);
           setCurrentPage(1);
         },
       },

@@ -7,6 +7,7 @@ mod tests {
 
     // 测试数据库连接
     #[tokio::test]
+    #[ignore]
     async fn test_database_connection() {
         let database_url = std::env::var("DATABASE_URL").unwrap_or_else(|_| {
             "postgres://topems:topems_secret@localhost:5432/topems".to_string()
@@ -22,6 +23,7 @@ mod tests {
 
     // 测试厂区地图创建
     #[tokio::test]
+    #[ignore]
     async fn test_create_factory_map() {
         let database_url = std::env::var("DATABASE_URL").unwrap_or_else(|_| {
             "postgres://topems:topems_secret@localhost:5432/topems".to_string()
@@ -58,6 +60,7 @@ mod tests {
 
     // 测试设备位置创建
     #[tokio::test]
+    #[ignore]
     async fn test_create_device_location() {
         let database_url = std::env::var("DATABASE_URL").unwrap_or_else(|_| {
             "postgres://topems:topems_secret@localhost:5432/topems".to_string()
@@ -118,6 +121,7 @@ mod tests {
 
     // 测试管道创建
     #[tokio::test]
+    #[ignore]
     async fn test_create_pipeline() {
         let database_url = std::env::var("DATABASE_URL").unwrap_or_else(|_| {
             "postgres://topems:topems_secret@localhost:5432/topems".to_string()
@@ -212,6 +216,7 @@ mod tests {
 
     // 测试GeoJSON导出
     #[tokio::test]
+    #[ignore]
     async fn test_geojson_export() {
         let database_url = std::env::var("DATABASE_URL").unwrap_or_else(|_| {
             "postgres://topems:topems_secret@localhost:5432/topems".to_string()

@@ -5,7 +5,6 @@ use axum::{
     Json,
 };
 use serde::Serialize;
-use sqlx::Row;
 use std::fs;
 use std::path::Path;
 use uuid::Uuid;
@@ -48,7 +47,7 @@ pub async fn upload_file(
     let mut failed: Vec<String> = Vec::new();
     let mut folder_id: Option<Uuid> = None;
 
-    while let Some(field) = multipart.next_field().await.unwrap() {
+    while let Some(field) = multipart.next_field().await.unwrap_or(None) {
         let name = field.name().unwrap_or("unknown").to_string();
 
         if name == "folder_id" {
@@ -229,7 +228,7 @@ pub async fn upload_multiple(
     let mut failed: Vec<String> = Vec::new();
     let mut folder_id: Option<Uuid> = None;
 
-    while let Some(field) = multipart.next_field().await.unwrap() {
+    while let Some(field) = multipart.next_field().await.unwrap_or(None) {
         let name = field.name().unwrap_or("unknown").to_string();
 
         if name == "folder_id" {

@@ -11,6 +11,10 @@ import type {
   ProductionFormula,
   ProductionBatch,
 } from '@/api/pdm';
+import { designTokens } from '@/theme/tokens';
+import { logger } from '@/utils/logger';
+
+const ct = designTokens.colors;
 
 const PdmStatsPage: React.FC = () => {
   const [processes, setProcesses] = useState<ProductionProcess[]>([]);
@@ -86,7 +90,7 @@ const PdmStatsPage: React.FC = () => {
         );
       }
     } catch (err: unknown) {
-      console.error('加载统计数据失败:', err);
+      logger.error('加载统计数据失败:', err);
     } finally {
       setLoading(false);
     }
@@ -111,7 +115,7 @@ const PdmStatsPage: React.FC = () => {
       title: '生产工艺',
       value: stats.totalProcesses,
       icon: <Factory sx={{ width: 24, height: 24 }} />,
-      gradient: ['#14B8A6', '#0D9488'] as [string, string],
+      gradient: [ct.teal.main, ct.teal.dark] as [string, string],
       description: `启用 ${stats.activeProcesses}`,
       trend: { value: 0, direction: 'neutral' as const },
     },
@@ -120,7 +124,7 @@ const PdmStatsPage: React.FC = () => {
       title: '生产工序',
       value: stats.totalSteps,
       icon: <ClipboardList sx={{ width: 24, height: 24 }} />,
-      gradient: ['#8B5CF6', '#7C3AED'] as [string, string],
+      gradient: [ct.secondary.main, ct.secondary.dark] as [string, string],
       trend: { value: 0, direction: 'neutral' as const },
     },
     {
@@ -128,7 +132,7 @@ const PdmStatsPage: React.FC = () => {
       title: '生产配方',
       value: stats.totalFormulas,
       icon: <Package sx={{ width: 24, height: 24 }} />,
-      gradient: ['warning.main', '#D97706'] as [string, string],
+      gradient: ['warning.main', ct.warning.dark] as [string, string],
       description: `活跃 ${stats.activeFormulas}`,
       trend: { value: 0, direction: 'neutral' as const },
     },
@@ -137,7 +141,7 @@ const PdmStatsPage: React.FC = () => {
       title: '生产批次',
       value: stats.totalBatches,
       icon: <Activity sx={{ width: 24, height: 24 }} />,
-      gradient: ['#6366F1', '#4F46E5'] as [string, string],
+      gradient: [ct.secondary[400], ct.secondary[600]] as [string, string],
       description: `进行中 ${stats.inProgressBatches}`,
       trend: { value: 0, direction: 'neutral' as const },
     },
@@ -146,7 +150,7 @@ const PdmStatsPage: React.FC = () => {
       title: '已完成批次',
       value: stats.completedBatches,
       icon: <CheckCircle sx={{ width: 24, height: 24 }} />,
-      gradient: ['#00C897', '#00A878'] as [string, string],
+      gradient: [ct.success.main, ct.success.dark] as [string, string],
       trend: { value: 0, direction: 'up' as const },
     },
     {
@@ -154,7 +158,7 @@ const PdmStatsPage: React.FC = () => {
       title: '规划中批次',
       value: stats.planningBatches,
       icon: <TrendingUp sx={{ width: 24, height: 24 }} />,
-      gradient: ['#EC4899', '#DB2777'] as [string, string],
+      gradient: [ct.pink[500], ct.pink[600]] as [string, string],
       trend: { value: 0, direction: 'neutral' as const },
     },
   ];
@@ -168,8 +172,8 @@ const PdmStatsPage: React.FC = () => {
       nameKey: 'name',
       data: [
         { name: '规划中', value: stats.planningBatches, color: 'warning.main' },
-        { name: '进行中', value: stats.inProgressBatches, color: '#6366F1' },
-        { name: '已完成', value: stats.completedBatches, color: '#00C897' },
+        { name: '进行中', value: stats.inProgressBatches, color: ct.secondary[400] },
+        { name: '已完成', value: stats.completedBatches, color: ct.success.main },
         { name: '已取消', value: stats.cancelledBatches, color: 'grey.500' },
       ].filter((d) => d.value > 0),
     },
@@ -180,7 +184,7 @@ const PdmStatsPage: React.FC = () => {
       dataKey: 'value',
       nameKey: 'name',
       data: [
-        { name: '活跃工艺', value: stats.activeProcesses, color: '#14B8A6' },
+        { name: '活跃工艺', value: stats.activeProcesses, color: ct.teal.main },
         { name: '活跃配方', value: stats.activeFormulas, color: 'warning.main' },
         { name: '总工序', value: stats.totalSteps, color: 'secondary.main' },
       ].filter((d) => d.value > 0),
@@ -231,7 +235,7 @@ const PdmStatsPage: React.FC = () => {
       padding={false}
       headerProps={{
         pageIcon: <TrendingUp style={{ width: 20, height: 20 }} />,
-        pageGradient: 'linear-gradient(135deg, #10B981 0%, #059669 100%)',
+        pageGradient: `linear-gradient(135deg, ${ct.success.main} 0%, ${ct.success.dark} 100%)`,
       }}
     >
       <StatsPageTemplate

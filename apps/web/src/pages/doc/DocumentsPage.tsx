@@ -51,6 +51,9 @@ import {TextField,
   IconButton,
   Button, useTheme} from '@mui/material';
 import { ModeToggle } from '@/components/theme/ModeToggle';
+import { designTokens } from '@/theme/tokens';
+
+const ct = designTokens.colors;
 
 interface File {
   id: string;
@@ -94,7 +97,7 @@ const CreateFolderModal: React.FC<{
     setError(null);
 
     try {
-      const request: Record<string, unknown> = { name: folderName.trim() };
+      const request = { name: folderName.trim() } as { name: string; parent_id?: string };
       if (parentId) {
         request.parent_id = parentId;
       }
@@ -624,7 +627,7 @@ const DocumentsPage: React.FC = () => {
       bgcolor='grey.100'
       headerProps={{
         pageIcon: <BookOpen style={{ width: 20, height: 20 }} />,
-        pageGradient: 'linear-gradient(135deg, #F59E0B 0%, #D97706 100%)',
+        pageGradient: `linear-gradient(135deg, ${ct.warning.main} 0%, ${ct.warning.dark} 100%)`,
       }}
     >
       {/* Header */}
@@ -1622,7 +1625,7 @@ const StatCard: React.FC<StatCardProps> = ({ icon: Icon, title, value, color }) 
               bgcolor: colors[color as keyof typeof colors],
             }}
           >
-            <Icon sx={{ width: 24, height: 24 }} />
+            <Icon size={24} />
           </Box>
         </Box>
       </CardContent>

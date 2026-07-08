@@ -287,31 +287,23 @@ export interface ApprovalRequest {
 
 export interface Contract {
   id: string;
-  project_id?: string;
-  contract_code: string;
+  project_id: string;
+  contract_no: string;
   contract_name: string;
   contract_type: string;
-  contract_category?: string;
-  party_a_name?: string;
-  party_a_id?: string;
-  party_a_contact?: string;
-  party_b_name?: string;
-  party_b_id?: string;
-  party_b_contact?: string;
-  amount: number;
-  currency?: string;
-  tax_rate?: number;
-  signing_date?: string;
-  effective_date?: string;
+  party_a: string;
+  party_b: string;
+  amount?: number;
+  currency: string;
+  sign_date?: string;
+  start_date?: string;
   end_date?: string;
-  status?: string;
-  template_id?: string;
-  workflow_instance_id?: string;
-  description?: string;
-  attachment_ids?: string[];
+  status: string;
+  tenant_id?: string;
   created_by?: string;
   created_at: string;
   updated_at: string;
+  deleted_at?: string;
 }
 
 export interface ContractMilestone {

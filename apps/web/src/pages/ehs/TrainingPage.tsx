@@ -25,6 +25,9 @@ import { PageContainer } from '@/components/common/PageContainerV2';
 import type { TrainingPlan, TrainingRecord, TrainingCertificate } from '@/api/ehs';
 import { useAppStore } from '@/store';
 import { apiLogger } from '@/utils/logger';
+import { designTokens } from '@/theme/tokens';
+
+const ct = designTokens.colors;
 
 const TrainingPage: React.FC = () => {
   const [activeTab, setActiveTab] = useState(0);
@@ -205,7 +208,7 @@ const TrainingPage: React.FC = () => {
           { value: 'cancelled', label: '已取消' },
         ],
         value: statusFilter,
-        onChange: (value: string) => setStatusFilter(value),
+        onChange: (value: unknown) => setStatusFilter(value as string),
       },
     ],
     [statusFilter]
@@ -267,7 +270,7 @@ const TrainingPage: React.FC = () => {
       headerProps={{
         actions: headerActions,
         pageIcon: <GraduationCap sx={{ width: 20, height: 20 }} />,
-        pageGradient: 'linear-gradient(135deg, #3B82F6 0%, #2563EB 100%)',
+        pageGradient: `linear-gradient(135deg, ${ct.primary.main} 0%, ${ct.primary[600]} 100%)`,
       }}
       maxWidth='xl'
     >

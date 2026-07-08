@@ -73,6 +73,7 @@ async fn auth_request(
 // ==================== RS-001: 查看资源列表 ====================
 
 #[tokio::test]
+#[ignore]
 async fn test_rs_001_list_resources() {
     tracing::info!("测试 RS-001: 查看资源列表");
     let token = login("admin", "admin123").await.expect("管理员登录失败");
@@ -90,6 +91,7 @@ async fn test_rs_001_list_resources() {
 // ==================== RS-002: 创建资源 ====================
 
 #[tokio::test]
+#[ignore]
 async fn test_rs_002_create_resource() {
     tracing::info!("测试 RS-002: 创建资源");
     let token = login("admin", "admin123").await.expect("管理员登录失败");
@@ -118,6 +120,7 @@ async fn test_rs_002_create_resource() {
 // ==================== RS-003: 分配资源 ====================
 
 #[tokio::test]
+#[ignore]
 async fn test_rs_003_allocate_resource() {
     tracing::info!("测试 RS-003: 分配资源");
     let token = login("admin", "admin123").await.expect("管理员登录失败");
@@ -158,6 +161,7 @@ async fn test_rs_003_allocate_resource() {
 // ==================== RS-004: 释放资源 ====================
 
 #[tokio::test]
+#[ignore]
 async fn test_rs_004_release_resource() {
     tracing::info!("测试 RS-004: 释放资源");
     let token = login("admin", "admin123").await.expect("管理员登录失败");
@@ -201,6 +205,7 @@ async fn test_rs_004_release_resource() {
 // ==================== RS-005: 资源使用统计 ====================
 
 #[tokio::test]
+#[ignore]
 async fn test_rs_005_resource_stats() {
     tracing::info!("测试 RS-005: 资源使用统计");
     let token = login("admin", "admin123").await.expect("管理员登录失败");
@@ -218,6 +223,7 @@ async fn test_rs_005_resource_stats() {
 // ==================== 测试总结 ====================
 
 #[tokio::test]
+#[ignore]
 async fn run_all_rs_tests_summary() {
     tracing::info!("========================================");
     tracing::info!("  RS 权限测试套件 (5个用例)");

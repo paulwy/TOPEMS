@@ -28,6 +28,9 @@ import { useAppStore } from '@/store';
 import { Plus, Edit, Trash2, Eye, ArrowRightLeft, Check, Truck, Package } from 'lucide-react';
 import { apiLogger } from '@/utils/logger';
 import { ConfirmDialog, PageContainer } from '@/components/common';
+import { designTokens } from '@/theme/tokens';
+
+const ct = designTokens.colors;
 
 const statusConfig: Record<
   string,
@@ -381,7 +384,7 @@ const TransferPage: React.FC = () => {
         ],
         value: statusFilter,
         onChange: (value) => {
-          setStatusFilter(value);
+          setStatusFilter(value as string);
           setCurrentPage(1);
         },
       },
@@ -394,8 +397,8 @@ const TransferPage: React.FC = () => {
           ...warehouses.map((w) => ({ label: w.name, value: w.id })),
         ],
         value: warehouseFilter,
-        onChange: (value) => {
-          setWarehouseFilter(value);
+        onChange: (value: unknown) => {
+          setWarehouseFilter(value as string ?? '');
           setCurrentPage(1);
         },
       },
@@ -559,7 +562,7 @@ const TransferPage: React.FC = () => {
       subtitle='管理库存调拨单，包括调拨出库、调拨入库等'
       headerProps={{
         pageIcon: <ArrowRightLeft style={{ width: 20, height: 20 }} />,
-        pageGradient: 'linear-gradient(135deg, #8B5CF6, #7C3AED)',
+        pageGradient: `linear-gradient(135deg, ${ct.secondary.main}, ${ct.secondary.dark})`,
       }}
     >
       <ListPageTemplate

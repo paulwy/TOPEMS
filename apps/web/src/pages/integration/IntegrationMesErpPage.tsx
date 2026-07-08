@@ -303,7 +303,7 @@ const IntegrationMesErpPage: React.FC = () => {
           <FormPageTemplate
             title={editingSync ? '查看同步详情' : '创建 MES-ERP 同步'}
             sections={FORM_SECTIONS}
-            defaultValues={editingSync || {}}
+            defaultValues={editingSync as unknown as Record<string, unknown> || {}}
             onSubmit={handleSubmit}
             onCancel={handleCloseModal}
             submitting={submitting}

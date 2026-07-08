@@ -30,6 +30,8 @@ import { DetailPageTemplate, type TabConfig, type SectionConfig } from '@/compon
 import { StatusBadge } from '@/components/common/StatusBadge';
 import { Dialog } from '@/components/common/Dialog';
 import { PageContainer } from '@/components/common';
+import { designTokens } from '@/theme/tokens';
+const ct = designTokens.colors;
 
 const HrmEmployeeDetailPage: React.FC = () => {
   const navigate = useNavigate();
@@ -311,7 +313,7 @@ const HrmEmployeeDetailPage: React.FC = () => {
       avatar: (
         <User
           size={32}
-          color='#1976d2'
+          color={ct.primary.dark}
         />
       ),
       title: employee?.name,

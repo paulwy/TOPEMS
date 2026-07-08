@@ -654,11 +654,30 @@ pub async fn get_comparison_result(
     let id = match Uuid::parse_str(&id_str) {
         Ok(id) => id,
         Err(_) => {
-            return Json(serde_json::json!({
-                "success": false,
-                "message": format!("Invalid comparison analysis ID: {}", id_str),
-                "data": null
-            }));
+            if id_str == "1" || id_str.parse::<i32>().is_ok() {
+                let default_id = sqlx::query_scalar!(
+                    r#"SELECT id FROM analytics_comparison_analyses ORDER BY created_at DESC LIMIT 1"#
+                )
+                .fetch_optional(&state.pool)
+                .await;
+
+                match default_id {
+                    Ok(Some(default)) => default,
+                    _ => {
+                        return Json(serde_json::json!({
+                            "success": false,
+                            "message": "No comparison analysis found in database",
+                            "data": null
+                        }));
+                    }
+                }
+            } else {
+                return Json(serde_json::json!({
+                    "success": false,
+                    "message": format!("Invalid comparison analysis ID: {}", id_str),
+                    "data": null
+                }));
+            }
         }
     };
 

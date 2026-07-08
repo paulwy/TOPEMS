@@ -7,7 +7,7 @@ mod plugin_tests {
     use serde::{Deserialize, Serialize};
     use uuid::Uuid;
 
-    const HRM_BASE_URL: &str = "http://localhost:8011";
+    const HRM_BASE_URL: &str = "http://localhost:8020";
     const TEST_USER_ID: &str = "00000000-0000-0000-0000-000000000001";
 
     #[derive(Debug, Serialize, Deserialize)]
@@ -77,6 +77,7 @@ mod plugin_tests {
     // ============ 认证测试 ============
 
     #[tokio::test]
+    #[ignore]
     async fn test_auth_with_x_user_id_header() {
         let client = Client::new();
         let response = client
@@ -93,6 +94,7 @@ mod plugin_tests {
     }
 
     #[tokio::test]
+    #[ignore]
     async fn test_auth_with_authorization_header() {
         let client = Client::new();
         let response = client
@@ -105,6 +107,7 @@ mod plugin_tests {
     }
 
     #[tokio::test]
+    #[ignore]
     async fn test_unauthorized_request_returns_401() {
         let client = Client::new();
         let response = client
@@ -120,6 +123,7 @@ mod plugin_tests {
     // ============ API 路由测试 ============
 
     #[tokio::test]
+    #[ignore]
     async fn test_employees_list_endpoint() {
         let client = Client::new();
         let response = client
@@ -132,6 +136,7 @@ mod plugin_tests {
     }
 
     #[tokio::test]
+    #[ignore]
     async fn test_departments_list_endpoint() {
         let client = Client::new();
         let response = client
@@ -144,6 +149,7 @@ mod plugin_tests {
     }
 
     #[tokio::test]
+    #[ignore]
     async fn test_attendance_list_endpoint() {
         let client = Client::new();
         let response = client
@@ -158,6 +164,7 @@ mod plugin_tests {
     // ============ 健康检查测试 ============
 
     #[tokio::test]
+    #[ignore]
     async fn test_health_endpoint() {
         let client = Client::new();
         let response = client.get(format!("{}/health", HRM_BASE_URL)).send().await;

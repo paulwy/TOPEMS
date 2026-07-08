@@ -174,14 +174,15 @@ impl RetryManager {
 
             // 如果任务完成或取消，移到历史
             if status == RetryTaskStatus::Completed || status == RetryTaskStatus::Cancelled {
-                let completed_task = tasks.remove(&task_id).unwrap();
-                let mut history = self.history.write().await;
-                history.push(completed_task);
+                if let Some(completed_task) = tasks.remove(&task_id) {
+                    let mut history = self.history.write().await;
+                    history.push(completed_task);
 
-                // 清理过多历史
-                let len = history.len();
-                if len > self.max_history {
-                    history.drain(0..len - self.max_history);
+                    // 清理过多历史
+                    let len = history.len();
+                    if len > self.max_history {
+                        history.drain(0..len - self.max_history);
+                    }
                 }
             }
             return true;

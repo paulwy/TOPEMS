@@ -53,6 +53,8 @@ import {
   Save,
 } from 'lucide-react';
 import { apiLogger } from '@/utils/logger';
+import { designTokens } from '@/theme/tokens';
+const ct = designTokens.colors;
 
 const MaterialBOMPage: React.FC = () => {
   const [boms, setBoms] = useState<MaterialBom[]>([]);
@@ -314,8 +316,8 @@ const MaterialBOMPage: React.FC = () => {
           { label: '作废', value: 'obsolete' },
         ],
         value: statusFilter,
-        onChange: (value) => {
-          setStatusFilter(value);
+        onChange: (value: unknown) => {
+          setStatusFilter(value as string);
           setCurrentPage(1);
         },
       },
@@ -368,7 +370,7 @@ const MaterialBOMPage: React.FC = () => {
         mb: 3,
       }}
     >
-      <Box sx={{ p: 2, bgcolor: '#e0e7ff', borderRadius: 3 }}>
+      <Box sx={{ p: 2, bgcolor: ct.secondary[100], borderRadius: 3 }}>
         <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 1 }}>
           <Package
             size={18}
@@ -439,7 +441,7 @@ const MaterialBOMPage: React.FC = () => {
       autoBreadcrumbs
       headerProps={{
         pageIcon: <Package style={{ width: 20, height: 20 }} />,
-        pageGradient: 'linear-gradient(135deg, #3B82F6 0%, #1D4ED8 100%)',
+        pageGradient: `linear-gradient(135deg, ${ct.primary.main} 0%, ${ct.primary.dark} 100%)`,
       }}
     >
       <ListPageTemplate

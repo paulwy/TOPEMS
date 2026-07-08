@@ -3,9 +3,10 @@
 use axum::{
     extract::{Path as AxumPath, State},
     http::{header, StatusCode},
-    response::{IntoResponse, Response},
+    response::Response,
     Json,
 };
+use serde_json::json;
 use sqlx::Row;
 use std::fs;
 use std::path::Path;
@@ -136,7 +137,7 @@ pub async fn download_file(
     };
 
     // 设置响应头
-    let response = Response::builder()
+    axum::http::Response::builder()
         .status(StatusCode::OK)
         .header(header::CONTENT_TYPE, mime_type)
         .header(
@@ -145,9 +146,13 @@ pub async fn download_file(
         )
         .header(header::CONTENT_LENGTH, file_content.len())
         .body(file_content.into())
-        .unwrap();
-
-    Ok(response)
+        .map_err(|e| {
+            tracing::error!("Failed to build download response: {}", e);
+            (
+                StatusCode::INTERNAL_SERVER_ERROR,
+                Json(json!({"error": "Failed to build response"})),
+            )
+        })
 }
 
 /// 预览文件（在线查看）
@@ -271,7 +276,7 @@ pub async fn preview_file(
     };
 
     // 设置响应头（内联预览）
-    let response = Response::builder()
+    Response::builder()
         .status(StatusCode::OK)
         .header(header::CONTENT_TYPE, mime_type)
         .header(
@@ -280,9 +285,13 @@ pub async fn preview_file(
         )
         .header(header::CONTENT_LENGTH, file_content.len())
         .body(file_content.into())
-        .unwrap();
-
-    Ok(response)
+        .map_err(|e| {
+            tracing::error!("Failed to build preview response: {}", e);
+            (
+                StatusCode::INTERNAL_SERVER_ERROR,
+                Json(json!({"error": "Failed to build response"})),
+            )
+        })
 }
 
 /// 获取文件缩略图（仅图片）
@@ -428,12 +437,16 @@ pub async fn get_thumbnail(
         }
     };
 
-    let response = Response::builder()
+    Response::builder()
         .status(StatusCode::OK)
         .header(header::CONTENT_TYPE, mime_type)
         .header(header::CONTENT_LENGTH, file_content.len())
         .body(file_content.into())
-        .unwrap();
-
-    Ok(response)
+        .map_err(|e| {
+            tracing::error!("Failed to build thumbnail response: {}", e);
+            (
+                StatusCode::INTERNAL_SERVER_ERROR,
+                Json(json!({"error": "Failed to build response"})),
+            )
+        })
 }

@@ -32,6 +32,9 @@ import { ListPageTemplate, type ColumnDef } from '@/components/templates';
 import { PageContainer } from '@/components/common';
 import { logger } from '@/utils/logger';
 import { useAppStore } from '@/store';
+import { designTokens } from '@/theme/tokens';
+
+const ct = designTokens.colors;
 
 const LimsInstrumentMaintenancePage: React.FC = () => {
   const { id } = useParams<{ id: string }>();
@@ -90,8 +93,8 @@ const LimsInstrumentMaintenancePage: React.FC = () => {
     const statusMap: Record<string, { bg: string; color: string; label: string }> = {
       normal: { bg: 'success.lighter', color: 'success.dark', label: '正常' },
       正常: { bg: 'success.lighter', color: 'success.dark', label: '正常' },
-      calibration: { bg: 'warning.100', color: '#ca8a04', label: '校准中' },
-      校准中: { bg: 'warning.100', color: '#ca8a04', label: '校准中' },
+      calibration: { bg: 'warning.100', color: ct.yellow[600], label: '校准中' },
+      校准中: { bg: 'warning.100', color: ct.yellow[600], label: '校准中' },
       maintenance: { bg: 'error.lighter', color: 'error.dark', label: '维修中' },
       维修中: { bg: 'error.lighter', color: 'error.dark', label: '维修中' },
       disabled: { bg: 'grey.100', color: 'text.secondary', label: '停用' },
@@ -370,7 +373,7 @@ const LimsInstrumentMaintenancePage: React.FC = () => {
           display: 'flex',
           alignItems: 'center',
           justifyContent: 'center',
-          background: 'linear-gradient(135deg, #f8fafc 0%, grey.100 100%)',
+          background: `linear-gradient(135deg, ${ct.background.default} 0%, grey.100 100%)`,
         }}
       >
         <div style={{ textAlign: 'center' }}>
@@ -378,14 +381,14 @@ const LimsInstrumentMaintenancePage: React.FC = () => {
             style={{
               width: 48,
               height: 48,
-              border: '4px solid #99f6e4',
-              borderTop: '4px solid #0d9488',
+              border: `4px solid ${ct.teal[200]}`,
+              borderTop: `4px solid ${ct.teal[600]}`,
               borderRadius: '50%',
               animation: 'spin 1s linear infinite',
               margin: '0 auto 16px auto',
             }}
           ></div>
-          <p style={{ color: '#475569' }}>加载中...</p>
+          <p style={{ color: ct.grey[600] }}>加载中...</p>
         </div>
       </div>
     );
@@ -399,7 +402,7 @@ const LimsInstrumentMaintenancePage: React.FC = () => {
           display: 'flex',
           alignItems: 'center',
           justifyContent: 'center',
-          background: 'linear-gradient(135deg, #f8fafc 0%, grey.100 100%)',
+          background: `linear-gradient(135deg, ${ct.background.default} 0%, grey.100 100%)`,
         }}
       >
         <div style={{ textAlign: 'center' }}>
@@ -411,7 +414,7 @@ const LimsInstrumentMaintenancePage: React.FC = () => {
               margin: '0 auto 16px auto',
             }}
           />
-          <p style={{ color: '#475569' }}>仪器不存在或已被删除</p>
+          <p style={{ color: ct.grey[600] }}>仪器不存在或已被删除</p>
           <Button
             onClick={() => navigate('/lims')}
             sx={{ mt: 2 }}
@@ -439,7 +442,7 @@ const LimsInstrumentMaintenancePage: React.FC = () => {
       subtitle='Instrument Maintenance'
       headerProps={{
         pageIcon: <Wrench style={{ width: 20, height: 20 }} />,
-        pageGradient: 'linear-gradient(135deg, #14B8A6, #0D9488)',
+        pageGradient: `linear-gradient(135deg, ${ct.teal[400]}, ${ct.teal[600]})`,
         backButton: { onClick: () => navigate('/lims') },
         actions: headerActions,
       }}
@@ -468,7 +471,7 @@ const LimsInstrumentMaintenancePage: React.FC = () => {
               >
                 <Box
                   component={Wrench}
-                  sx={{ fontSize: 20, color: '#14b8a6' }}
+                  sx={{ fontSize: 20, color: ct.teal[400] }}
                 />
                 仪器信息
               </Typography>

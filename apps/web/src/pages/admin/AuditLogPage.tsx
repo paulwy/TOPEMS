@@ -43,8 +43,11 @@ import { useAppStore } from '../../store';
 import { apiLogger } from '@/utils/logger';
 import { ListPageTemplate, type ColumnDef, type FilterConfig } from '@/components/templates';
 import { extractErrorMessage } from '@/utils/errors';
+import { designTokens } from '@/theme/tokens';
 
 import { ModeToggle } from '@/components/theme/ModeToggle';
+
+const ct = designTokens.colors;
 
 const formatDateTimeForApi = (dateTimeString: string): string => {
   if (!dateTimeString) return '';
@@ -307,7 +310,7 @@ const AuditLogPage: React.FC<AuditLogPageProps> = ({ onNavigate }) => {
             >
               <User
                 size={16}
-                color='#1976d2'
+                color={ct.primary.dark}
               />
             </Box>
             <Typography
@@ -512,7 +515,7 @@ const AuditLogPage: React.FC<AuditLogPageProps> = ({ onNavigate }) => {
         customToolbar,
         actions: headerActions,
         pageIcon: <Shield size={20} />,
-        pageColor: '#1976d2',
+        pageColor: ct.primary.dark,
       }}
       maxWidth='xl'
     >
@@ -523,7 +526,7 @@ const AuditLogPage: React.FC<AuditLogPageProps> = ({ onNavigate }) => {
             <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
               <Calendar
                 size={18}
-                color='#666'
+                color={ct.grey[600]}
               />
               <Typography
                 variant='body2'
@@ -601,7 +604,7 @@ const AuditLogPage: React.FC<AuditLogPageProps> = ({ onNavigate }) => {
             emptyIcon={
               <Clock
                 size={48}
-                color='#9e9e9e'
+                color={ct.grey[400]}
               />
             }
             emptyMessage='暂无审计日志'
@@ -622,13 +625,13 @@ const AuditLogPage: React.FC<AuditLogPageProps> = ({ onNavigate }) => {
           <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
             <Activity
               size={24}
-              color='#1976d2'
+              color={ct.primary.dark}
             />
             <Typography variant='h6'>审计日志详情</Typography>
           </Box>
-          <IconButton onClick={() => setSelectedLog(null)}>
-            <X size={20} />
-          </IconButton>
+          <IconButton onClick={() => setSelectedLog(null)} aria-label='关闭审计日志详情对话框'>
+                  <X size={20} />
+                </IconButton>
         </DialogTitle>
         <DialogContent>
           {selectedLog && (
@@ -841,7 +844,7 @@ const AuditLogPage: React.FC<AuditLogPageProps> = ({ onNavigate }) => {
                         whiteSpace: 'pre-wrap',
                         wordBreak: 'break-all',
                         fontSize: '0.875rem',
-                        color: '#333',
+                        color: ct.grey[800],
                       }}
                     >
                       {typeof selectedLog.request_details === 'string'
@@ -866,7 +869,7 @@ const AuditLogPage: React.FC<AuditLogPageProps> = ({ onNavigate }) => {
                         whiteSpace: 'pre-wrap',
                         wordBreak: 'break-all',
                         fontSize: '0.875rem',
-                        color: '#333',
+                        color: ct.grey[800],
                       }}
                     >
                       {typeof selectedLog.response_details === 'string'

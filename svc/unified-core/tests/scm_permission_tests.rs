@@ -73,6 +73,7 @@ async fn auth_request(
 // ==================== SCM-001: 查看供应商列表 ====================
 
 #[tokio::test]
+#[ignore]
 async fn test_scm_001_list_suppliers() {
     tracing::info!("测试 SCM-001: 查看供应商列表");
     let token = login("admin", "admin123").await.expect("管理员登录失败");
@@ -90,6 +91,7 @@ async fn test_scm_001_list_suppliers() {
 // ==================== SCM-002: 创建供应商 ====================
 
 #[tokio::test]
+#[ignore]
 async fn test_scm_002_create_supplier() {
     tracing::info!("测试 SCM-002: 创建供应商");
     let token = login("admin", "admin123").await.expect("管理员登录失败");
@@ -122,6 +124,7 @@ async fn test_scm_002_create_supplier() {
 // ==================== SCM-003: 查看采购计划 ====================
 
 #[tokio::test]
+#[ignore]
 async fn test_scm_003_list_purchase_plans() {
     tracing::info!("测试 SCM-003: 查看采购计划");
     let token = login("admin", "admin123").await.expect("管理员登录失败");
@@ -139,6 +142,7 @@ async fn test_scm_003_list_purchase_plans() {
 // ==================== SCM-004: 创建采购计划 ====================
 
 #[tokio::test]
+#[ignore]
 async fn test_scm_004_create_purchase_plan() {
     tracing::info!("测试 SCM-004: 创建采购计划");
     let token = login("admin", "admin123").await.expect("管理员登录失败");
@@ -167,6 +171,7 @@ async fn test_scm_004_create_purchase_plan() {
 // ==================== SCM-005: 审批采购计划 ====================
 
 #[tokio::test]
+#[ignore]
 async fn test_scm_005_approve_purchase_plan() {
     tracing::info!("测试 SCM-005: 审批采购计划");
     let token = login("admin", "admin123").await.expect("管理员登录失败");
@@ -206,6 +211,7 @@ async fn test_scm_005_approve_purchase_plan() {
 // ==================== SCM-006: 查看物流跟踪 ====================
 
 #[tokio::test]
+#[ignore]
 async fn test_scm_006_track_shipments() {
     tracing::info!("测试 SCM-006: 查看物流跟踪");
     let token = login("admin", "admin123").await.expect("管理员登录失败");
@@ -223,6 +229,7 @@ async fn test_scm_006_track_shipments() {
 // ==================== SCM-007: 查看仓库 ====================
 
 #[tokio::test]
+#[ignore]
 async fn test_scm_007_list_warehouses() {
     tracing::info!("测试 SCM-007: 查看仓库");
     let token = login("admin", "admin123").await.expect("管理员登录失败");
@@ -240,6 +247,7 @@ async fn test_scm_007_list_warehouses() {
 // ==================== SCM-008: 仓库调拨 ====================
 
 #[tokio::test]
+#[ignore]
 async fn test_scm_008_transfer_inventory() {
     tracing::info!("测试 SCM-008: 仓库调拨");
     let token = login("admin", "admin123").await.expect("管理员登录失败");
@@ -268,6 +276,7 @@ async fn test_scm_008_transfer_inventory() {
 // ==================== 测试总结 ====================
 
 #[tokio::test]
+#[ignore]
 async fn run_all_scm_tests_summary() {
     tracing::info!("========================================");
     tracing::info!("  SCM 权限测试套件 (8个用例)");

@@ -35,6 +35,9 @@ import {
   IconButton,
   Button,
 } from '@mui/material';
+import { designTokens } from '@/theme/tokens';
+
+const ct = designTokens.colors;
 
 interface AssetManagementPageProps {
   onNavigate?: (page: string) => void;
@@ -492,7 +495,7 @@ const AssetManagementPage: React.FC<AssetManagementPageProps> = ({ onNavigate })
       subtitle='管理企业资产、设备台账'
       headerProps={{
         pageIcon: <Layers style={{ width: 20, height: 20 }} />,
-        pageGradient: 'linear-gradient(135deg, #14B8A6 0%, #0D9488 100%)',
+        pageGradient: `linear-gradient(135deg, ${ct.teal.main} 0%, ${ct.teal.dark} 100%)`,
       }}
     >
       <ListPageTemplate

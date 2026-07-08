@@ -410,7 +410,7 @@ pub async fn query_report_data(
         Ok(rows) => {
             let data: Vec<serde_json::Value> = rows
                 .iter()
-                .map(|row| {
+                .map(|_row| {
                     let mut map = serde_json::Map::new();
                     for col in &dimensions {
                         map.insert(col.clone(), serde_json::Value::Null);

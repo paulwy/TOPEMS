@@ -29,6 +29,9 @@ import { apiLogger } from '@/utils/logger';
 import { ListPageTemplate, type ColumnDef } from '@/components/templates';
 import { PageContainer } from '@/components/common';
 import ConfirmDialog from '@/components/common/ConfirmDialog';
+import { designTokens } from '@/theme/tokens';
+
+const ct = designTokens.colors;
 
 const statusConfig: Record<
   string,
@@ -475,7 +478,7 @@ const InquiryQuotationPage: React.FC = () => {
       maxWidth='xl'
       headerProps={{
         pageIcon: <TrendingUp style={{ width: 20, height: 20 }} />,
-        pageGradient: 'linear-gradient(135deg, #EC4899, #DB2777)',
+        pageGradient: `linear-gradient(135deg, ${ct.pink[500]}, ${ct.pink[600]})`,
       }}
     >
       <ListPageTemplate

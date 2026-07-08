@@ -18,6 +18,9 @@ import {
 } from '@mui/material';
 import { PageContainer } from '@/components/common';
 import React, { useState, useEffect, useMemo, useCallback } from 'react';
+import { designTokens } from '@/theme/tokens';
+
+const ct = designTokens.colors;
 import type {
   Equipment,
   CreateEquipmentRequest,
@@ -323,8 +326,8 @@ const EquipmentManagementPage: React.FC = () => {
           { label: '故障', value: 'fault' },
         ],
         value: statusFilter,
-        onChange: (value) => {
-          setStatusFilter(value);
+        onChange: (value: unknown) => {
+          setStatusFilter(value as string);
           setCurrentPage(1);
         },
       },
@@ -471,7 +474,7 @@ const EquipmentManagementPage: React.FC = () => {
       subtitle='管理设备信息,包括设备编号、名称、型号、状态等'
       headerProps={{
         pageIcon: <Wrench style={{ width: 20, height: 20 }} />,
-        pageGradient: 'linear-gradient(135deg, #F59E0B 0%, #D97706 100%)',
+        pageGradient: `linear-gradient(135deg, ${ct.warning.main} 0%, ${ct.warning.dark} 100%)`,
       }}
     >
       <ListPageTemplate

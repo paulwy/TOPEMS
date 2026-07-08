@@ -1,9 +1,8 @@
 // TOPEMS Document Service
 // =============================================================================
 
-mod api;
 mod models;
-mod plugin;
+mod modules;
 mod services;
 
 use axum::{
@@ -74,8 +73,14 @@ async fn main() {
     let public_routes = Router::new()
         .route("/", get(home))
         .route("/health", get(health))
-        .route("/api/plugins/info", get(plugin::get_plugin_info))
-        .route("/api/plugins/health", get(plugin::plugin_health_check))
+        .route(
+            "/api/plugins/info",
+            get(modules::doc_plugin::get_plugin_info),
+        )
+        .route(
+            "/api/plugins/health",
+            get(modules::doc_plugin::plugin_health_check),
+        )
         .merge(create_api_info_router("topems-doc-service"))
         .route(
             "/metrics",
@@ -83,7 +88,7 @@ async fn main() {
         );
 
     let protected_routes = Router::new()
-        .nest("/api/doc", api::create_routes())
+        .nest("/api/doc", modules::create_routes())
         .layer(axum::middleware::from_fn_with_state(
             auth_state.clone(),
             auth_middleware,

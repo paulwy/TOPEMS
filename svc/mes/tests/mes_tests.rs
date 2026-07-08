@@ -617,6 +617,10 @@ mod http_endpoint_tests {
 #[cfg(test)]
 mod business_logic_tests {
     use super::*;
+    use topems_mes::modules::oee_logic::{
+        calculate_availability, calculate_efficiency_trend, calculate_oee, calculate_performance,
+        calculate_quality, determine_oee_level, validate_oee_inputs,
+    };
 
     #[test]
     fn test_oee_calculation() {
@@ -675,5 +679,194 @@ mod business_logic_tests {
         for status in statuses {
             assert!(!status.is_empty());
         }
+    }
+
+    #[test]
+    fn test_calculate_oee_full_efficiency() {
+        let (availability, performance, quality, oee) =
+            calculate_oee(480.0, 480.0, 1.0, 480.0, 480.0);
+        assert_eq!(availability, 100.0);
+        assert_eq!(performance, 100.0);
+        assert_eq!(quality, 100.0);
+        assert_eq!(oee, 100.0);
+    }
+
+    #[test]
+    fn test_calculate_oee_components() {
+        assert_eq!(calculate_availability(480.0, 480.0), 100.0);
+        assert_eq!(calculate_availability(480.0, 240.0), 50.0);
+        assert_eq!(calculate_performance(480.0, 1.0, 480.0), 100.0);
+        assert_eq!(calculate_performance(480.0, 1.0, 240.0), 50.0);
+        assert_eq!(calculate_quality(100.0, 100.0), 100.0);
+        assert_eq!(calculate_quality(100.0, 90.0), 90.0);
+    }
+
+    #[test]
+    fn test_determine_oee_level() {
+        assert_eq!(determine_oee_level(90.0), "world_class");
+        assert_eq!(determine_oee_level(80.0), "good");
+        assert_eq!(determine_oee_level(70.0), "average");
+        assert_eq!(determine_oee_level(55.0), "needs_improvement");
+    }
+
+    #[test]
+    fn test_calculate_efficiency_trend() {
+        assert_eq!(
+            calculate_efficiency_trend(Some(70.0), 75.0),
+            "significantly_improved"
+        );
+        assert_eq!(calculate_efficiency_trend(Some(70.0), 72.0), "improved");
+        assert_eq!(calculate_efficiency_trend(Some(70.0), 70.0), "stable");
+        assert_eq!(
+            calculate_efficiency_trend(Some(70.0), 65.0),
+            "significantly_decreased"
+        );
+    }
+
+    #[test]
+    fn test_validate_oee_inputs() {
+        assert!(validate_oee_inputs(480.0, 400.0, 80.0, 1.0, 350.0, 340.0).is_ok());
+        assert!(validate_oee_inputs(-10.0, 400.0, 80.0, 1.0, 350.0, 340.0).is_err());
+        assert!(validate_oee_inputs(480.0, 400.0, 80.0, 1.0, 350.0, 400.0).is_err());
+    }
+
+    #[test]
+    fn test_calculate_oee_edge_cases() {
+        let (avail, perf, qual, oee) = calculate_oee(0.0, 0.0, 0.0, 0.0, 0.0);
+        assert_eq!(avail, 0.0);
+        assert_eq!(perf, 0.0);
+        assert_eq!(qual, 0.0);
+        assert_eq!(oee, 0.0);
+
+        let (avail, perf, qual, oee) = calculate_oee(480.0, 0.0, 1.0, 0.0, 0.0);
+        assert_eq!(avail, 0.0);
+        assert_eq!(perf, 0.0);
+        assert_eq!(qual, 0.0);
+        assert_eq!(oee, 0.0);
+    }
+
+    #[test]
+    fn test_calculate_oee_realistic_scenario() {
+        let planned_time = 480.0;
+        let run_time = 420.0;
+        let ideal_cycle_time = 1.0;
+        let actual_output = 380.0;
+        let good_output = 361.0;
+
+        let (availability, performance, quality, oee) = calculate_oee(
+            planned_time,
+            run_time,
+            ideal_cycle_time,
+            actual_output,
+            good_output,
+        );
+
+        assert!((availability - 87.5).abs() < 0.01);
+        assert!((performance - 90.48).abs() < 0.01);
+        assert!((quality - 95.0).abs() < 0.01);
+        assert!((oee - 74.9).abs() < 0.5);
+    }
+
+    #[test]
+    fn test_determine_oee_level_boundaries() {
+        assert_eq!(determine_oee_level(85.0), "world_class");
+        assert_eq!(determine_oee_level(84.99), "good");
+        assert_eq!(determine_oee_level(75.0), "good");
+        assert_eq!(determine_oee_level(74.99), "average");
+        assert_eq!(determine_oee_level(60.0), "average");
+        assert_eq!(determine_oee_level(59.99), "needs_improvement");
+        assert_eq!(determine_oee_level(0.0), "needs_improvement");
+        assert_eq!(determine_oee_level(100.0), "world_class");
+    }
+
+    #[test]
+    fn test_calculate_availability_edge_cases() {
+        assert_eq!(calculate_availability(0.0, 100.0), 0.0);
+        assert_eq!(calculate_availability(100.0, 0.0), 0.0);
+        assert_eq!(calculate_availability(100.0, 50.0), 50.0);
+        assert_eq!(calculate_availability(200.0, 200.0), 100.0);
+        assert_eq!(calculate_availability(480.0, 360.0), 75.0);
+    }
+
+    #[test]
+    fn test_calculate_performance_edge_cases() {
+        assert_eq!(calculate_performance(0.0, 1.0, 100.0), 0.0);
+        assert_eq!(calculate_performance(100.0, 0.0, 100.0), 0.0);
+        assert_eq!(calculate_performance(100.0, 1.0, 0.0), 0.0);
+        assert_eq!(calculate_performance(100.0, 1.0, 100.0), 100.0);
+        assert_eq!(calculate_performance(100.0, 1.0, 150.0), 100.0);
+        let perf = calculate_performance(480.0, 2.0, 200.0);
+        assert!((perf - 83.33).abs() < 0.01);
+    }
+
+    #[test]
+    fn test_calculate_quality_edge_cases() {
+        assert_eq!(calculate_quality(0.0, 0.0), 0.0);
+        assert_eq!(calculate_quality(100.0, 0.0), 0.0);
+        assert_eq!(calculate_quality(100.0, 100.0), 100.0);
+        assert_eq!(calculate_quality(200.0, 180.0), 90.0);
+        assert_eq!(calculate_quality(50.0, 45.0), 90.0);
+    }
+
+    #[test]
+    fn test_calculate_efficiency_trend_complete() {
+        assert_eq!(calculate_efficiency_trend(None, 70.0), "stable");
+        assert_eq!(
+            calculate_efficiency_trend(Some(70.0), 73.01),
+            "significantly_improved"
+        );
+        assert_eq!(calculate_efficiency_trend(Some(70.0), 73.0), "improved");
+        assert_eq!(calculate_efficiency_trend(Some(70.0), 72.99), "improved");
+        assert_eq!(calculate_efficiency_trend(Some(70.0), 70.0), "stable");
+        assert_eq!(calculate_efficiency_trend(Some(70.0), 67.01), "decreased");
+        assert_eq!(calculate_efficiency_trend(Some(70.0), 67.0), "decreased");
+        assert_eq!(
+            calculate_efficiency_trend(Some(70.0), 66.99),
+            "significantly_decreased"
+        );
+        assert_eq!(
+            calculate_efficiency_trend(Some(50.0), 85.0),
+            "significantly_improved"
+        );
+        assert_eq!(
+            calculate_efficiency_trend(Some(85.0), 50.0),
+            "significantly_decreased"
+        );
+    }
+
+    #[test]
+    fn test_validate_oee_inputs_comprehensive() {
+        assert!(validate_oee_inputs(480.0, 400.0, 80.0, 1.0, 350.0, 340.0).is_ok());
+
+        assert!(validate_oee_inputs(-10.0, 400.0, 80.0, 1.0, 350.0, 340.0).is_err());
+        assert!(validate_oee_inputs(480.0, -10.0, 80.0, 1.0, 350.0, 340.0).is_err());
+        assert!(validate_oee_inputs(480.0, 400.0, -10.0, 1.0, 350.0, 340.0).is_err());
+        assert!(validate_oee_inputs(480.0, 400.0, 80.0, -1.0, 350.0, 340.0).is_err());
+        assert!(validate_oee_inputs(480.0, 400.0, 80.0, 1.0, -10.0, 340.0).is_err());
+        assert!(validate_oee_inputs(480.0, 400.0, 80.0, 1.0, 350.0, -10.0).is_err());
+
+        assert!(validate_oee_inputs(480.0, 400.0, 80.0, 1.0, 350.0, 400.0).is_err());
+        assert!(validate_oee_inputs(480.0, 600.0, 80.0, 1.0, 350.0, 340.0).is_err());
+    }
+
+    #[test]
+    fn test_oee_calculation_inverse() {
+        let (availability, performance, quality, oee) =
+            calculate_oee(480.0, 400.0, 1.0, 380.0, 361.0);
+        let expected_oee =
+            (availability / 100.0) * (performance / 100.0) * (quality / 100.0) * 100.0;
+        assert!((oee - expected_oee).abs() < 0.001);
+    }
+
+    #[test]
+    fn test_performance_capped_at_100() {
+        let performance = calculate_performance(100.0, 1.0, 200.0);
+        assert_eq!(performance, 100.0);
+
+        let performance = calculate_performance(100.0, 0.5, 300.0);
+        assert_eq!(performance, 100.0);
+
+        let performance = calculate_performance(100.0, 1.0, 100.0);
+        assert_eq!(performance, 100.0);
     }
 }

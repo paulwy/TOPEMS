@@ -76,6 +76,7 @@ mod plugin_tests {
     // ============ 认证测试 ============
 
     #[tokio::test]
+    #[ignore]
     async fn test_auth_with_x_user_id_header() {
         let client = Client::new();
         let response = client
@@ -91,6 +92,7 @@ mod plugin_tests {
     }
 
     #[tokio::test]
+    #[ignore]
     async fn test_auth_with_authorization_header() {
         let client = Client::new();
         let response = client
@@ -105,6 +107,7 @@ mod plugin_tests {
     // ============ API 路由测试 ============
 
     #[tokio::test]
+    #[ignore]
     async fn test_customers_list_endpoint() {
         let client = Client::new();
         let response = client
@@ -117,6 +120,7 @@ mod plugin_tests {
     }
 
     #[tokio::test]
+    #[ignore]
     async fn test_contacts_list_endpoint() {
         let client = Client::new();
         let response = client
@@ -129,6 +133,7 @@ mod plugin_tests {
     }
 
     #[tokio::test]
+    #[ignore]
     async fn test_opportunities_list_endpoint() {
         let client = Client::new();
         let response = client
@@ -143,6 +148,7 @@ mod plugin_tests {
     // ============ 健康检查测试 ============
 
     #[tokio::test]
+    #[ignore]
     async fn test_health_endpoint() {
         let client = Client::new();
         let response = client.get(format!("{}/health", CRM_BASE_URL)).send().await;

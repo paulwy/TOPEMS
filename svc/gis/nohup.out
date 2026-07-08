@@ -1,0 +1,41 @@
+nohup: target/debug/topems-gis: No such file or directory
+[2m2026-07-07T20:30:26.270292Z[0m [32m INFO[0m [2mtopems_shared::logging[0m[2m:[0m ✅ topems-gis 日志系统初始化完成 (format: Text)
+[2m2026-07-07T20:30:26.476865Z[0m [32m INFO[0m [2mtopems_gis[0m[2m:[0m ✅ Prometheus 监控已初始化
+[2m2026-07-07T20:30:26.492715Z[0m [32m INFO[0m [2mtopems_gis[0m[2m:[0m ✅ 连接到 PostgreSQL 数据库成功
+[2m2026-07-07T20:30:26.495125Z[0m [32m INFO[0m [2msqlx::postgres::notice[0m[2m:[0m schema "gis" already exists, skipping
+[2m2026-07-07T20:30:26.500862Z[0m [32m INFO[0m [2msqlx::postgres::notice[0m[2m:[0m relation "factory_maps" already exists, skipping
+[2m2026-07-07T20:30:26.501314Z[0m [32m INFO[0m [2msqlx::postgres::notice[0m[2m:[0m relation "device_locations" already exists, skipping
+[2m2026-07-07T20:30:26.501686Z[0m [32m INFO[0m [2msqlx::postgres::notice[0m[2m:[0m relation "pipelines" already exists, skipping
+[2m2026-07-07T20:30:26.502038Z[0m [32m INFO[0m [2msqlx::postgres::notice[0m[2m:[0m relation "warehouse_locations" already exists, skipping
+[2m2026-07-07T20:30:26.502366Z[0m [32m INFO[0m [2msqlx::postgres::notice[0m[2m:[0m relation "location_photos" already exists, skipping
+[2m2026-07-07T20:30:26.502730Z[0m [32m INFO[0m [2msqlx::postgres::notice[0m[2m:[0m relation "business_locations" already exists, skipping
+[2m2026-07-07T20:30:26.503081Z[0m [32m INFO[0m [2msqlx::postgres::notice[0m[2m:[0m relation "map_markers" already exists, skipping
+[2m2026-07-07T20:30:26.503490Z[0m [32m INFO[0m [2msqlx::postgres::notice[0m[2m:[0m relation "maps" already exists, skipping
+[2m2026-07-07T20:30:26.503863Z[0m [32m INFO[0m [2msqlx::postgres::notice[0m[2m:[0m relation "map_layers" already exists, skipping
+[2m2026-07-07T20:30:26.504266Z[0m [32m INFO[0m [2msqlx::postgres::notice[0m[2m:[0m relation "geodata" already exists, skipping
+[2m2026-07-07T20:30:26.504588Z[0m [32m INFO[0m [2msqlx::postgres::notice[0m[2m:[0m relation "geofeatures" already exists, skipping
+[2m2026-07-07T20:30:26.504953Z[0m [32m INFO[0m [2msqlx::postgres::notice[0m[2m:[0m relation "spatial_analysis" already exists, skipping
+[2m2026-07-07T20:30:26.505307Z[0m [32m INFO[0m [2msqlx::postgres::notice[0m[2m:[0m relation "locations" already exists, skipping
+[2m2026-07-07T20:30:26.505679Z[0m [32m INFO[0m [2msqlx::postgres::notice[0m[2m:[0m relation "devices" already exists, skipping
+[2m2026-07-07T20:30:26.506025Z[0m [32m INFO[0m [2msqlx::postgres::notice[0m[2m:[0m relation "device_location_records" already exists, skipping
+[2m2026-07-07T20:30:26.506300Z[0m [32m INFO[0m [2msqlx::postgres::notice[0m[2m:[0m relation "audit_log" already exists, skipping
+[2m2026-07-07T20:30:26.507205Z[0m [32m INFO[0m [2msqlx::postgres::notice[0m[2m:[0m relation "idx_device_locations_map_id" already exists, skipping
+[2m2026-07-07T20:30:26.507992Z[0m [32m INFO[0m [2msqlx::postgres::notice[0m[2m:[0m relation "idx_pipelines_map_id" already exists, skipping
+[2m2026-07-07T20:30:26.508371Z[0m [32m INFO[0m [2msqlx::postgres::notice[0m[2m:[0m relation "idx_warehouse_locations_map_id" already exists, skipping
+[2m2026-07-07T20:30:26.508762Z[0m [32m INFO[0m [2msqlx::postgres::notice[0m[2m:[0m relation "idx_location_photos_map_id" already exists, skipping
+[2m2026-07-07T20:30:26.509254Z[0m [32m INFO[0m [2msqlx::postgres::notice[0m[2m:[0m relation "idx_business_locations_type" already exists, skipping
+[2m2026-07-07T20:30:26.509715Z[0m [32m INFO[0m [2msqlx::postgres::notice[0m[2m:[0m relation "idx_map_markers_type" already exists, skipping
+[2m2026-07-07T20:30:26.510075Z[0m [32m INFO[0m [2msqlx::postgres::notice[0m[2m:[0m relation "idx_gis_geofeatures_geodata_id" already exists, skipping
+[2m2026-07-07T20:30:26.510413Z[0m [32m INFO[0m [2msqlx::postgres::notice[0m[2m:[0m relation "idx_gis_device_location_records_device_id" already exists, skipping
+[2m2026-07-07T20:30:26.510751Z[0m [32m INFO[0m [2msqlx::postgres::notice[0m[2m:[0m relation "idx_gis_device_location_records_recorded_at" already exists, skipping
+[2m2026-07-07T20:30:26.511092Z[0m [32m INFO[0m [2msqlx::postgres::notice[0m[2m:[0m relation "idx_device_locations_position" already exists, skipping
+[2m2026-07-07T20:30:26.511363Z[0m [32m INFO[0m [2msqlx::postgres::notice[0m[2m:[0m relation "idx_business_locations_position" already exists, skipping
+[2m2026-07-07T20:30:26.511645Z[0m [32m INFO[0m [2msqlx::postgres::notice[0m[2m:[0m relation "idx_gis_locations_position" already exists, skipping
+[2m2026-07-07T20:30:26.511662Z[0m [32m INFO[0m [2mtopems_gis::db::schema[0m[2m:[0m ✅ GIS 数据库表初始化完成
+[2m2026-07-07T20:30:26.511849Z[0m [32m INFO[0m [2mtopems_gis[0m[2m:[0m ✅ 数据库表初始化成功
+[2m2026-07-07T20:30:26.512090Z[0m [32m INFO[0m [2mtopems_shared::auth[0m[2m:[0m 🔑 AuthState 读取到的 JWT_SECRET: topems-jwt-secret-key-must-be-at-least-32-characters-long-for-hs256
+[2m2026-07-07T20:30:26.512649Z[0m [32m INFO[0m [2mtopems_shared::cors[0m[2m:[0m CORS allowed origins: ["http://localhost:3000", "http://localhost:5173"]
+[2m2026-07-07T20:30:26.519374Z[0m [32m INFO[0m [2mtopems_gis[0m[2m:[0m 🚀 TOPEMS-GIS 厂区空间数字化系统启动中...
+[2m2026-07-07T20:30:26.519382Z[0m [32m INFO[0m [2mtopems_gis[0m[2m:[0m 📦 端口: 8071
+[2m2026-07-07T20:30:26.519387Z[0m [32m INFO[0m [2mtopems_gis[0m[2m:[0m 🔒 认证保护已启用
+[2m2026-07-07T20:30:26.527615Z[0m [33m WARN[0m [2mtopems_gis::plugin[0m[2m:[0m [GIS Plugin] Failed to register to core: 422 Unprocessable Entity

@@ -40,6 +40,9 @@ import { ehsApi } from '@/api/ehs';
 import { PageContainer } from '@/components/common/PageContainerV2';
 import type { SafetyIssue, Rectification, Verification } from '@/api/ehs';
 import { useAppStore } from '@/store';
+import { designTokens } from '@/theme/tokens';
+
+const ct = designTokens.colors;
 
 const EhsHazardPage: React.FC = () => {
   const navigate = useNavigate();
@@ -167,7 +170,7 @@ const EhsHazardPage: React.FC = () => {
     const levelMap: Record<string, { bg: string; color: string; label: string }> = {
       major: { bg: 'error.lighter', color: 'error.dark', label: '重大' },
       serious: { bg: 'error.light', color: 'error.darker', label: '严重' },
-      general: { bg: 'warning.100', color: '#ca8a04', label: '一般' },
+      general: { bg: 'warning.100', color: ct.yellow[600], label: '一般' },
       minor: { bg: 'success.lighter', color: 'success.dark', label: '轻微' },
     };
     const colors = levelMap[level] || { bg: 'grey.100', color: 'text.secondary', label: level };
@@ -187,7 +190,7 @@ const EhsHazardPage: React.FC = () => {
   const getStatusBadge = (status: string) => {
     const statusMap: Record<string, { bg: string; color: string }> = {
       待整改: { bg: 'error.lighter', color: 'error.dark' },
-      整改中: { bg: 'warning.100', color: '#ca8a04' },
+      整改中: { bg: 'warning.100', color: ct.yellow[600] },
       待验收: { bg: 'primary.light', color: 'primary.dark' },
       已验收: { bg: 'success.lighter', color: 'success.dark' },
       已闭环: { bg: 'grey.100', color: 'text.secondary' },
@@ -419,7 +422,7 @@ const EhsHazardPage: React.FC = () => {
         { label: '轻微', value: 'minor' },
       ],
       value: levelFilter,
-      onChange: (value: string) => setLevelFilter(value),
+      onChange: (value: unknown) => setLevelFilter(value as string),
     },
     {
       id: 'status',
@@ -435,7 +438,7 @@ const EhsHazardPage: React.FC = () => {
         { label: '已驳回', value: '已驳回' },
       ],
       value: statusFilter,
-      onChange: (value: string) => setStatusFilter(value),
+      onChange: (value: unknown) => setStatusFilter(value as string),
     },
   ];
 
@@ -456,7 +459,7 @@ const EhsHazardPage: React.FC = () => {
       headerProps={{
         actions: headerActions,
         pageIcon: <AlertTriangle sx={{ width: 20, height: 20 }} />,
-        pageGradient: 'linear-gradient(135deg, #EF4444 0%, #DC2626 100%)',
+        pageGradient: `linear-gradient(135deg, ${ct.error.main} 0%, ${ct.error[600]} 100%)`,
       }}
       maxWidth='xl'
     >
@@ -551,7 +554,7 @@ const EhsHazardPage: React.FC = () => {
                   justifyContent: 'center',
                 }}
               >
-                <Clock sx={{ width: 20, height: 20, color: '#ca8a04' }} />
+                <Clock sx={{ width: 20, height: 20, color: ct.yellow[600] }} />
               </Box>
               <Box>
                 <Typography
@@ -838,7 +841,7 @@ const EhsHazardPage: React.FC = () => {
                         mb: 2,
                       }}
                     >
-                      <FileEdit sx={{ width: 18, height: 18, color: '#ca8a04' }} />
+                      <FileEdit sx={{ width: 18, height: 18, color: ct.yellow[600] }} />
                       <Typography
                         variant='subtitle2'
                         sx={{ fontWeight: 600 }}
@@ -993,7 +996,7 @@ const EhsHazardPage: React.FC = () => {
                 <Button
                   variant='contained'
                   onClick={handleStartRectification}
-                  sx={{ bgcolor: '#ca8a04' }}
+                  sx={{ bgcolor: ct.yellow[600] }}
                 >
                   开始整改
                 </Button>
@@ -1090,7 +1093,7 @@ const EhsHazardPage: React.FC = () => {
           <Button
             variant='contained'
             onClick={handleSaveRectification}
-            sx={{ bgcolor: '#ca8a04' }}
+            sx={{ bgcolor: ct.yellow[600] }}
           >
             创建整改任务
           </Button>

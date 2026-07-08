@@ -55,6 +55,9 @@ import {
   type FilterConfig,
 } from '@/components/templates';
 import { PageContainer } from '@/components/common/PageContainerV2';
+import { designTokens } from '@/theme/tokens';
+
+const ct = designTokens.colors;
 
 const STATUS_COLORS: Record<
   string,
@@ -496,7 +499,7 @@ export const DocumentPage: React.FC = () => {
     <PageContainer
       headerProps={{
         pageIcon: <FileText style={{ width: 20, height: 20 }} />,
-        pageGradient: 'linear-gradient(135deg, #8B5CF6 0%, #7C3AED 100%)',
+        pageGradient: `linear-gradient(135deg, ${ct.secondary.main} 0%, ${ct.secondary.dark} 100%)`,
       }}
     >
       <Tabs
@@ -614,11 +617,12 @@ export const DocumentPage: React.FC = () => {
                             <IconButton
                               size='small'
                               onClick={() => handlePublishVersion(selectedDocumentId, version.id)}
+                              aria-label='发布版本'
                             >
                               <CheckCircle size={16} />
                             </IconButton>
                           )}
-                          <IconButton size='small'>
+                          <IconButton size='small' aria-label='下载文档'>
                             <Download size={16} />
                           </IconButton>
                         </Box>

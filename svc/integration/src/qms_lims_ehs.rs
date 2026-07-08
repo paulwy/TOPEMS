@@ -1,5 +1,5 @@
 use serde_json::Value;
-use sqlx::{PgPool, Row};
+use sqlx::PgPool;
 use tracing::{info, warn};
 
 use topems_shared::event::{

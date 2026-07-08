@@ -20,6 +20,9 @@ import { PageContainer } from '@/components/common';
 import BarChartComponent from '../../components/charts/BarChart';
 import LineChartComponent from '../../components/charts/LineChart';
 import PieChartComponent from '../../components/charts/PieChart';
+import { designTokens } from '@/theme/tokens';
+
+const ct = designTokens.colors;
 
 const RsOverviewPage: React.FC = () => {
   const navigate = useNavigate();
@@ -157,42 +160,42 @@ const RsOverviewPage: React.FC = () => {
         label: '新建项目',
         icon: <Plus size={20} />,
         onClick: () => navigate('/rs/projects/create'),
-        color: '#1976d2',
+        color: ct.primary.dark,
       },
       {
         id: 'bug-manage',
         label: '缺陷管理',
         icon: <Bug size={20} />,
         onClick: () => navigate('/rs/bugs'),
-        color: '#c62828',
+        color: ct.error.dark,
       },
       {
         id: 'code-manage',
         label: '代码管理',
         icon: <GitBranch size={20} />,
         onClick: () => navigate('/rs/code'),
-        color: '#7b1fa2',
+        color: ct.secondary.dark,
       },
       {
         id: 'build-manage',
         label: '构建管理',
         icon: <Hammer size={20} />,
         onClick: () => navigate('/rs/builds'),
-        color: '#f57c00',
+        color: ct.warning.dark,
       },
       {
         id: 'release',
         label: '版本发布',
         icon: <Rocket size={20} />,
         onClick: () => navigate('/rs/releases'),
-        color: '#00796b',
+        color: ct.teal[700],
       },
       {
         id: 'review',
         label: '评审管理',
         icon: <ShieldCheck size={20} />,
         onClick: () => navigate('/rs/reviews'),
-        color: '#388e3c',
+        color: ct.success.dark,
       },
     ],
     [navigate]
@@ -207,7 +210,7 @@ const RsOverviewPage: React.FC = () => {
         time: '2026-06-29 10:15',
         icon: <Bug size={18} />,
         status: 'error',
-        tags: [{ label: '严重', color: '#c62828' }],
+        tags: [{ label: '严重', color: ct.error.dark }],
         onClick: () => navigate('/rs/bugs/bug1'),
       },
       {
@@ -217,7 +220,7 @@ const RsOverviewPage: React.FC = () => {
         time: '2026-06-29 09:30',
         icon: <Bug size={18} />,
         status: 'warning',
-        tags: [{ label: '中等', color: '#f57c00' }],
+        tags: [{ label: '中等', color: ct.warning.dark }],
         onClick: () => navigate('/rs/bugs/bug2'),
       },
       {

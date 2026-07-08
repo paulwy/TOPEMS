@@ -33,6 +33,8 @@ import {
 } from '@/components/templates';
 import { Plus, Edit, Trash2, Eye, Calculator, CheckCircle, Send } from 'lucide-react';
 import { apiLogger } from '@/utils/logger';
+import { designTokens } from '@/theme/tokens';
+const ct = designTokens.colors;
 
 const MaterialRequirementPage: React.FC = () => {
   const [requirements, setRequirements] = useState<MaterialRequirement[]>([]);
@@ -369,8 +371,8 @@ const MaterialRequirementPage: React.FC = () => {
           { label: '已取消', value: 'cancelled' },
         ],
         value: statusFilter,
-        onChange: (value) => {
-          setStatusFilter(value);
+        onChange: (value: unknown) => {
+          setStatusFilter(value as string);
           setCurrentPage(1);
         },
       },
@@ -503,7 +505,7 @@ const MaterialRequirementPage: React.FC = () => {
           {stats.released}
         </Typography>
       </Box>
-      <Box sx={{ p: 2, bgcolor: '#e0e7ff', borderRadius: 3 }}>
+      <Box sx={{ p: 2, bgcolor: ct.secondary[100], borderRadius: 3 }}>
         <Typography
           variant='body2'
           sx={{ color: 'text.secondary' }}
@@ -526,7 +528,7 @@ const MaterialRequirementPage: React.FC = () => {
       autoBreadcrumbs
       headerProps={{
         pageIcon: <Calculator style={{ width: 20, height: 20 }} />,
-        pageGradient: 'linear-gradient(135deg, #10B981 0%, #059669 100%)',
+        pageGradient: `linear-gradient(135deg, ${ct.success.main} 0%, ${ct.success.dark} 100%)`,
       }}
     >
       <ListPageTemplate

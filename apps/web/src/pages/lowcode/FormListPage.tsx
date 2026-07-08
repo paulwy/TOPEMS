@@ -29,6 +29,7 @@ import { Plus, Search, MoreVertical, Edit, Trash2, Copy, Eye, Send, FileText } f
 import PageContainer from '@/components/common/PageContainer';
 import { lowcodeApi } from '@/api';
 import type { FormSchema, ListParams } from '@/api/lowcode';
+import { logger } from "@/utils/logger";
 
 const FormListPage: React.FC = () => {
   const navigate = useNavigate();
@@ -67,7 +68,7 @@ const FormListPage: React.FC = () => {
       setForms(res.items);
       setTotal(res.total);
     } catch (error) {
-      console.error('Failed to load forms:', error);
+      logger.error('Failed to load forms:', error);
     } finally {
       setLoading(false);
     }
@@ -127,7 +128,7 @@ const FormListPage: React.FC = () => {
       await lowcodeApi.formApi.copy(form.id);
       loadForms();
     } catch (error) {
-      console.error('Failed to copy form:', error);
+      logger.error('Failed to copy form:', error);
     }
     setMenuAnchor(null);
   };
@@ -137,7 +138,7 @@ const FormListPage: React.FC = () => {
       await lowcodeApi.formApi.publish(form.id);
       loadForms();
     } catch (error) {
-      console.error('Failed to publish form:', error);
+      logger.error('Failed to publish form:', error);
     }
     setMenuAnchor(null);
   };
@@ -149,7 +150,7 @@ const FormListPage: React.FC = () => {
       setDeleteDialog(null);
       loadForms();
     } catch (error) {
-      console.error('Failed to delete form:', error);
+      logger.error('Failed to delete form:', error);
     }
   };
 

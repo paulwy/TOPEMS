@@ -18,6 +18,7 @@ export interface UseWebSocketOptions {
   onError?: (error: Event) => void;
   reconnectAttempts?: number;
   reconnectInterval?: number;
+  wsPath?: string;
 }
 
 export function useWebSocket(options: UseWebSocketOptions = {}) {
@@ -28,6 +29,7 @@ export function useWebSocket(options: UseWebSocketOptions = {}) {
     onError,
     reconnectAttempts = config.ws.maxReconnectAttempts,
     reconnectInterval = config.ws.reconnectInterval,
+    wsPath,
   } = options;
 
   const [isConnected, setIsConnected] = useState(false);
@@ -44,17 +46,20 @@ export function useWebSocket(options: UseWebSocketOptions = {}) {
       return;
     }
 
-    const imServiceUrl = config.services.im;
-    let wsUrl = imServiceUrl;
+    let wsUrl = '';
+    const protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
 
-    if (wsUrl.startsWith('/')) {
-      // Vite proxy expects /ws/<service> for WebSocket (e.g., /ws/im)
-      // config.services.im = '/im', so WebSocket path should be '/ws/im'
-      const servicePath = wsUrl.replace(/\/$/, ''); // Remove trailing slash
-      const wsPath = `/ws${servicePath}`;
-      wsUrl = `${window.location.protocol === 'https:' ? 'wss:' : 'ws:'}//${window.location.host}${wsPath}`;
+    if (wsPath) {
+      wsUrl = `${protocol}//${window.location.host}${wsPath}`;
     } else {
-      wsUrl = wsUrl.replace('http://', 'ws://').replace('https://', 'wss://');
+      const imServiceUrl = config.services.im;
+      if (imServiceUrl.startsWith('/')) {
+        const servicePath = imServiceUrl.replace(/\/$/, '');
+        const path = `/ws/core${servicePath}`;
+        wsUrl = `${protocol}//${window.location.host}${path}`;
+      } else {
+        wsUrl = imServiceUrl.replace('http://', 'ws://').replace('https://', 'wss://');
+      }
     }
 
     logger.info('[useWebSocket] Attempting to connect to:', wsUrl);
@@ -95,6 +100,14 @@ export function useWebSocket(options: UseWebSocketOptions = {}) {
       logger.error('[useWebSocket] Connection error:', event);
       setError(event);
       callbacksRef.current.onError?.(event);
+
+      if (ws.readyState === WebSocket.CONNECTING || ws.readyState === WebSocket.OPEN) {
+        try {
+          ws.close(1011, 'WebSocket error occurred');
+        } catch (e) {
+          logger.error('[useWebSocket] Failed to close connection on error:', e);
+        }
+      }
     };
 
     wsRef.current = ws;

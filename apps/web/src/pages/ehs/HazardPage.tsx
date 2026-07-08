@@ -26,6 +26,9 @@ import { PageContainer } from '@/components/common/PageContainerV2';
 import type { Hazard, RiskAssessment, ControlMeasure } from '@/api/ehs';
 import { useAppStore } from '@/store';
 import { apiLogger } from '@/utils/logger';
+import { designTokens } from '@/theme/tokens';
+
+const ct = designTokens.colors;
 
 const HazardPage: React.FC = () => {
   const [hazards, setHazards] = useState<Hazard[]>([]);
@@ -243,7 +246,7 @@ const HazardPage: React.FC = () => {
           { value: 'low', label: '低' },
         ],
         value: severityFilter,
-        onChange: (value: string) => setSeverityFilter(value),
+        onChange: (value: unknown) => setSeverityFilter(value as string),
       },
       {
         id: 'status',
@@ -257,7 +260,7 @@ const HazardPage: React.FC = () => {
           { value: 'archived', label: '已归档' },
         ],
         value: statusFilter,
-        onChange: (value: string) => setStatusFilter(value),
+        onChange: (value: unknown) => setStatusFilter(value as string),
       },
     ],
     [severityFilter, statusFilter]
@@ -339,7 +342,7 @@ const HazardPage: React.FC = () => {
       headerProps={{
         actions: headerActions,
         pageIcon: <ShieldAlert sx={{ width: 20, height: 20 }} />,
-        pageGradient: 'linear-gradient(135deg, #F59E0B 0%, #D97706 100%)',
+        pageGradient: `linear-gradient(135deg, ${ct.warning.main} 0%, ${ct.warning.dark} 100%)`,
       }}
     >
       <Box

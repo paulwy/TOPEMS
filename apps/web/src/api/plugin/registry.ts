@@ -191,13 +191,20 @@ export const checkPluginHealth = async (
     }
     return { healthy: true, status: 'running', latency };
   } catch (error: unknown) {
-    try {
-      const response = await runtimeAxios.get(`/plugin-health/${code}/health`);
-      const latency = Date.now() - startTime;
-      return { healthy: true, status: 'running', latency };
-    } catch {
+    const axiosError = error as { code?: string; response?: { status?: number } };
+    if (axiosError.code === 'ECONNREFUSED' || axiosError.code === 'ENOTFOUND') {
       return { healthy: false };
     }
+    if (axiosError.response?.status === 404) {
+      try {
+        const response = await runtimeAxios.get(`/plugin-health/${code}/health`);
+        const latency = Date.now() - startTime;
+        return { healthy: true, status: 'running', latency };
+      } catch {
+        return { healthy: false };
+      }
+    }
+    return { healthy: false };
   }
 };
 

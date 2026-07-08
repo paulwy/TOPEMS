@@ -1449,7 +1449,7 @@ pub async fn query_dashboard_realtime_data(
         }));
     }
 
-    let dashboard = dashboard.unwrap();
+    let dashboard = dashboard.expect("Dashboard should exist after existence check");
 
     // Get all widgets for this dashboard
     let widgets = match sqlx::query!(

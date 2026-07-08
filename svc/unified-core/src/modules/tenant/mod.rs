@@ -119,6 +119,26 @@ pub async fn init_database(pool: &PgPool) -> Result<(), sqlx::Error> {
     .execute(pool)
     .await?;
 
+    // Tenant users table
+    sqlx::query(
+        r#"
+        CREATE TABLE IF NOT EXISTS core_tenant_users (
+            id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+            tenant_id UUID NOT NULL REFERENCES core_tenants(id) ON DELETE CASCADE,
+            user_id UUID NOT NULL,
+            email VARCHAR(256) NOT NULL,
+            role VARCHAR(32) DEFAULT 'member',
+            status VARCHAR(32) DEFAULT 'active',
+            created_at TIMESTAMP DEFAULT NOW(),
+            last_login TIMESTAMP,
+            UNIQUE(tenant_id, user_id),
+            UNIQUE(tenant_id, email)
+        )
+        "#,
+    )
+    .execute(pool)
+    .await?;
+
     // Create indexes
     sqlx::query("CREATE INDEX IF NOT EXISTS idx_core_tenants_code ON core_tenants(code)")
         .execute(pool)
@@ -129,6 +149,16 @@ pub async fn init_database(pool: &PgPool) -> Result<(), sqlx::Error> {
     sqlx::query("CREATE INDEX IF NOT EXISTS idx_core_tenant_usage_period ON core_tenant_usage(tenant_id, period_start)")
         .execute(pool)
         .await?;
+    sqlx::query(
+        "CREATE INDEX IF NOT EXISTS idx_core_tenant_users_tenant ON core_tenant_users(tenant_id)",
+    )
+    .execute(pool)
+    .await?;
+    sqlx::query(
+        "CREATE INDEX IF NOT EXISTS idx_core_tenant_users_email ON core_tenant_users(email)",
+    )
+    .execute(pool)
+    .await?;
 
     Ok(())
 }

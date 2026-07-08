@@ -48,12 +48,15 @@ import {
   type Dashboard,
   type DashboardTemplate,
 } from '@/api/bi';
-import { DashboardEditor, type DashboardWidget } from '@/components/bi/DashboardEditor';
+import { DashboardEditor, type DashboardWidget, type DashboardConfig } from '@/components/bi/DashboardEditor';
 import { useAppStore } from '@/store';
 import { DashboardTemplateManager } from '@/components/bi/DashboardTemplateManager';
 import { DashboardTemplate as DashboardLayout } from '@/components/templates';
 import { PageContainer } from '@/components/common';
 import { logger } from '@/utils/logger';
+import { designTokens } from '@/theme/tokens';
+
+const ct = designTokens.colors;
 
 type ViewMode = 'list' | 'editor';
 type TabType = 'dashboards' | 'templates';
@@ -192,11 +195,11 @@ const BIDashboardPage = () => {
     setViewMode('editor');
   };
 
-  const handleSaveDashboard = async (config: DashboardSaveConfig) => {
+  const handleSaveDashboard = async (config: DashboardConfig) => {
     try {
       const data: Partial<Dashboard> = {
         name: config.name,
-        description: config.description,
+        description: config.description || '',
         layout: { widgets: config.widgets },
       };
 
@@ -261,7 +264,7 @@ const BIDashboardPage = () => {
       subtitle='管理和创建您的个性化数据仪表盘'
       headerProps={{
         pageIcon: <BarChart3 style={{ width: 20, height: 20 }} />,
-        pageGradient: 'linear-gradient(135deg, #6366F1 0%, #4F46E5 100%)',
+        pageGradient: `linear-gradient(135deg, ${ct.secondary[400]} 0%, ${ct.secondary[600]} 100%)`,
       }}
       padding={false}
       maxWidth={false}
@@ -442,13 +445,13 @@ const BIDashboardPage = () => {
                               width: 40,
                               height: 40,
                               borderRadius: 1,
-                              backgroundColor: '#EEF2FF',
+                              backgroundColor: 'indigo.light',
                               display: 'flex',
                               alignItems: 'center',
                               justifyContent: 'center',
                             }}
                           >
-                            <LayoutDashboard sx={{ color: '#6366F1' }} />
+                            <LayoutDashboard sx={{ color: 'indigo.main' }} />
                           </Box>
                           <Box sx={{ flex: 1, minWidth: 0 }}>
                             <Typography
@@ -624,7 +627,7 @@ const BIDashboardPage = () => {
                               cursor: 'pointer',
                               backgroundColor:
                                 createDialog.selectedTemplateId === template.id
-                                  ? '#EEF2FF'
+                                  ? 'indigo.light'
                                   : 'transparent',
                               '&:hover': { backgroundColor: 'action.hover' },
                             }}
@@ -645,7 +648,7 @@ const BIDashboardPage = () => {
                                 })
                               }
                             />
-                            <FolderOpen sx={{ color: '#6366F1' }} />
+                            <FolderOpen sx={{ color: 'indigo.main' }} />
                             <div>
                               <Typography
                                 variant='body1'

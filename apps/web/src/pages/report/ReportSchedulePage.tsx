@@ -49,6 +49,7 @@ import {
   type ScheduleStatus,
   type ScheduleExecutionRecord,
 } from '@/api/report';
+import { logger } from '@/utils/logger';
 
 const SCHEDULE_TYPE_OPTIONS: { value: ScheduleType; label: string }[] = [
   { value: 'cron', label: 'Cron表达式' },
@@ -115,7 +116,7 @@ const ReportSchedulePage: React.FC = () => {
         setTemplates(response.data);
       }
     } catch (err: unknown) {
-      console.error('获取报表模板失败', err);
+      logger.error('获取报表模板失败', err);
     }
   };
 

@@ -28,6 +28,9 @@ import {
 } from '@/components/templates';
 import { PageContainer } from '@/components/common/PageContainerV2';
 import { apiLogger } from '@/utils/logger';
+import { designTokens } from '@/theme/tokens';
+
+const ct = designTokens.colors;
 
 interface FormData {
   document_id: string;
@@ -450,7 +453,7 @@ export const PdmVersionPage: React.FC = () => {
     <PageContainer
       headerProps={{
         pageIcon: <GitBranch style={{ width: 20, height: 20 }} />,
-        pageGradient: 'linear-gradient(135deg, #3B82F6 0%, #2563EB 100%)',
+        pageGradient: `linear-gradient(135deg, ${ct.primary.main} 0%, ${ct.primary[600]} 100%)`,
       }}
     >
       <ListPageTemplate

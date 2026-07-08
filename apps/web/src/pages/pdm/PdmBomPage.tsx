@@ -25,6 +25,9 @@ import {
   type FilterConfig,
 } from '@/components/templates';
 import { PageContainer } from '@/components/common/PageContainerV2';
+import { designTokens } from '@/theme/tokens';
+
+const ct = designTokens.colors;
 
 interface BomItemFormData {
   part_number: string;
@@ -318,7 +321,7 @@ export const PdmBomPage: React.FC = () => {
     <PageContainer
       headerProps={{
         pageIcon: <Database style={{ width: 20, height: 20 }} />,
-        pageGradient: 'linear-gradient(135deg, #06B6D4 0%, #0891B2 100%)',
+        pageGradient: `linear-gradient(135deg, ${ct.cyan.main} 0%, ${ct.cyan.dark} 100%)`,
       }}
     >
       <ListPageTemplate

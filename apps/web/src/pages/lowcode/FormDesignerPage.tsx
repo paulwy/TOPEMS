@@ -4,6 +4,7 @@ import { Box, Typography, CircularProgress } from '@mui/material';
 import { FormDesigner } from '@/components/lowcode';
 import { lowcodeApi } from '@/api';
 import type { FormSchema } from '@/api/lowcode';
+import { logger } from '@/utils/logger';
 
 const FormDesignerPage: React.FC = () => {
   const { formId } = useParams<{ formId: string }>();
@@ -25,7 +26,7 @@ const FormDesignerPage: React.FC = () => {
         setSchema(form);
       }
     } catch (error) {
-      console.error('Failed to load form:', error);
+      logger.error('Failed to load form:', error);
     } finally {
       setLoading(false);
     }
@@ -48,7 +49,7 @@ const FormDesignerPage: React.FC = () => {
         navigate(`/lowcode/forms/${created.id}`, { replace: true });
       }
     } catch (error) {
-      console.error('Failed to save form:', error);
+      logger.error('Failed to save form:', error);
     }
   };
 
@@ -58,7 +59,7 @@ const FormDesignerPage: React.FC = () => {
         await lowcodeApi.formApi.publish(formId);
       }
     } catch (error) {
-      console.error('Failed to publish form:', error);
+      logger.error('Failed to publish form:', error);
     }
   };
 

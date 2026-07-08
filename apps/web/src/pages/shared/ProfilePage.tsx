@@ -46,6 +46,8 @@ import {Box,
   CircularProgress,
   Divider,
   Button, useTheme} from '@mui/material';
+import { designTokens } from '@/theme/tokens';
+const ct = designTokens.colors;
 
 interface ActivityItem {
   id: string;
@@ -779,7 +781,7 @@ const ProfilePage: React.FC = () => {
                     <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5 }}>
                       <Settings
                         size={20}
-                        style={{ color: '#9333ea' }}
+                        style={{ color: ct.purple[600] }}
                       />
                       <Box>
                         <Typography
@@ -948,7 +950,7 @@ const ProfilePage: React.FC = () => {
                         icon: Bell,
                         label: '系统通知',
                         desc: '接收系统消息和公告',
-                        color: '#ca8a04',
+                        color: ct.yellow[600],
                       },
                       {
                         key: 'workflow_enabled' as const,
@@ -962,7 +964,7 @@ const ProfilePage: React.FC = () => {
                         icon: FileText,
                         label: '文档通知',
                         desc: '接收文档更新和评论提醒',
-                        color: '#9333ea',
+                        color: ct.purple[600],
                       },
                       {
                         key: 'security_enabled' as const,
@@ -1067,7 +1069,7 @@ const ProfilePage: React.FC = () => {
                         icon: GitBranch,
                         iconName: 'GitBranch',
                         path: '/flow/definitions',
-                        color: '#a855f7',
+                        color: ct.purple[500],
                       },
                       {
                         id: '4',
@@ -1083,7 +1085,7 @@ const ProfilePage: React.FC = () => {
                         icon: Bot,
                         iconName: 'Bot',
                         path: '/ai',
-                        color: '#ec4899',
+                        color: ct.pink[500],
                       },
                       {
                         id: '6',

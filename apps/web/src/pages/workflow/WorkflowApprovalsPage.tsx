@@ -32,6 +32,9 @@ import { useAppStore } from '../../store';
 import { ListPageTemplate, type ColumnDef } from '@/components/templates';
 import { extractErrorMessage } from '@/utils/errors';
 import { PageContainer, ConfirmDialog } from '@/components/common';
+import { designTokens } from '@/theme/tokens';
+
+const ct = designTokens.colors;
 
 type ApprovalStatus = 'pending' | 'approved' | 'rejected';
 type ApprovalPriority = 'high' | 'medium' | 'low';
@@ -203,7 +206,7 @@ const WORKFLOW_TYPE_COLORS: Record<string, string> = {
   人事管理: 'success.main',
   财务管理: 'warning.main',
   法务管理: 'secondary.main',
-  IT管理: '#06b6d4',
+  IT管理: ct.cyan[500],
 };
 
 export const WorkflowApprovalsPage: React.FC = () => {
@@ -480,7 +483,7 @@ export const WorkflowApprovalsPage: React.FC = () => {
           >
             <User
               size={14}
-              style={{ color: '#9ca3af' }}
+              style={{ color: ct.grey[400] }}
             />
             <Typography
               variant='body2'
@@ -503,7 +506,7 @@ export const WorkflowApprovalsPage: React.FC = () => {
           >
             <Clock
               size={14}
-              style={{ color: '#9ca3af' }}
+              style={{ color: ct.grey[400] }}
             />
             <Typography
               variant='body2'

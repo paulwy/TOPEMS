@@ -2,6 +2,36 @@
 
 > 记录项目所有重要的变更、新功能、修复和改进
 
+## [3.3.0] - 2026-07-06
+
+### 🎉 重大变更
+- **WebSocket 路由统一规范** - Core WebSocket 路由统一为 `/ws/core/{feature}` 格式，消除路径不一致问题
+- **GIS WebSocket 路由注册** - 在 GIS 服务 main.rs 中注册了 `/gis/ws` 和 `/gis/ws/device/{device_code}` 路由，修复 404 错误
+
+### ✨ 新功能
+- **统一 Core WebSocket 路径** - 新增 `/ws/core/notifications` 和 `/ws/core/im` 路由，保留旧路径 `/ws/notifications` 和 `/ws/im` 向后兼容
+- **GIS 简化路径路由** - 新增 `/gis/ws` 和 `/gis/ws/device/{device_code}` 简化路径，与 MES 服务保持一致
+
+### 🔧 改进
+- **前端 WebSocket 路径更新** - 更新 `useNotificationWebSocket.ts` 和 `useWebSocket.ts` 使用新的统一路径
+- **Vite 代理配置精简** - 移除分散的 `/ws/notifications` 和 `/ws/im` 规则，保留统一的 `/ws/core` 规则
+
+### 📚 文档
+- 更新 [Vite 代理配置规范](./guides/devops/proxy-config-guide.md) - 添加完整的 WebSocket 代理配置规范章节
+- 更新 [Vite 代理验证报告](./vite-proxy-verification-report.md) - 反映 WebSocket 路由统一规范
+- 更新 [通知系统 API](./api/API_NOTIFICATION.md) - 修正 WebSocket 连接地址为统一规范
+- 新增 [WebSocket 路径映射规范](./guides/devops/websocket-path-mapping.md) - 详细说明新的路径映射规则、前端实现、后端路由和代理配置
+- 更新 [README.md](../README.md) - 添加 WebSocket 路径映射章节和文档链接
+- 更新 [开发者指南](./guides/devops/developers-guide.md) - 添加 WebSocket 开发指南章节
+
+### 📜 脚本
+- **topems.sh 新增 WebSocket 检查命令** - 添加 `ws check` 命令，支持检查所有 WebSocket 连接状态，显示路径规范和文档链接
+
+### 🔧 修复
+- **修复 MES WebSocket 连接 401 错误** - 在 `auth_middleware` 中添加路径匹配逻辑，直接放行 `/ws/`、`/mes/ws/` 和 `/gis/ws/` 路径的请求，解决 Firefox 无法建立 WebSocket 连接的问题
+
+---
+
 ## [3.2.0] - 2026-07-01
 
 ### 🎉 重大变更

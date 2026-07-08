@@ -38,9 +38,12 @@ import DeviceTrackPanel from './DeviceTrackPanel';
 import HeatmapLayer, { HeatmapLegend } from './HeatmapLayer';
 import Map3DView from './Map3DView';
 import AmapLayer from './AmapLayer';
+import { designTokens } from '@/theme/tokens';
 
 import 'leaflet/dist/leaflet.css';
 import 'leaflet-draw/dist/leaflet.draw.css';
+
+const ct = designTokens.colors;
 
 interface MapViewProps {
   devicePoints?: DevicePoint[];
@@ -300,14 +303,14 @@ const MeasureTooltip: React.FC<{
 
 const deviceIcon = new (window as any).L.Icon({
   iconUrl:
-    "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='%2300C897'%3E%3Cpath d='M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7zm0 9.5c-1.38 0-2.5-1.12-2.5-2.5s1.12-2.5 2.5-2.5 2.5 1.12 2.5 2.5-1.12 2.5-2.5 2.5z'/%3E%3C/svg%3E",
+    `data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='${encodeURIComponent(ct.success.main)}'%3E%3Cpath d='M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7zm0 9.5c-1.38 0-2.5-1.12-2.5-2.5s1.12-2.5 2.5-2.5 2.5 1.12 2.5 2.5-1.12 2.5-2.5 2.5z'/%3E%3C/svg%3E`,
   iconSize: [28, 28],
   iconAnchor: [14, 28],
 });
 
 const storageIcon = new (window as any).L.Icon({
   iconUrl:
-    "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='%23F59E0B'%3E%3Cpath d='M19 3H5c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2zm0 16H5V5h14v14z'/%3E%3C/svg%3E",
+    `data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='${encodeURIComponent(ct.warning.main)}'%3E%3Cpath d='M19 3H5c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2zm0 16H5V5h14v14z'/%3E%3C/svg%3E`,
   iconSize: [28, 28],
   iconAnchor: [14, 28],
 });
@@ -700,7 +703,7 @@ const MapView: React.FC<MapViewProps> = ({
   const getStatusColor = (status: string) => {
     if (!status) return 'text.secondary';
     const s = status.toLowerCase();
-    if (s.includes('active') || s.includes('启用')) return '#00C897';
+    if (s.includes('active') || s.includes('启用')) return ct.success.main;
     if (s.includes('pending') || s.includes('待处理')) return 'warning.main';
     if (s.includes('inactive') || s.includes('禁用')) return 'error.main';
     return 'text.secondary';
@@ -808,7 +811,7 @@ const MapView: React.FC<MapViewProps> = ({
                 <Polyline
                   key={pipeline.id}
                   positions={pathCoords}
-                  color='#6366F1'
+                  color={ct.secondary[400]}
                   weight={4}
                   opacity={0.8}
                 >
@@ -868,7 +871,7 @@ const MapView: React.FC<MapViewProps> = ({
                     >
                       <MapPin
                         size={20}
-                        style={{ color: '#00C897' }}
+                        style={{ color: ct.success.main }}
                       />
                       <Typography
                         variant='h6'
@@ -915,10 +918,10 @@ const MapView: React.FC<MapViewProps> = ({
                       onClick={() => handleMarkerClick(point)}
                       sx={{
                         mt: 1,
-                        color: '#0891b2',
-                        backgroundColor: '#ecfeff',
+                        color: ct.info[700],
+                        backgroundColor: ct.info[100],
                         '&:hover': {
-                          backgroundColor: '#cffafe',
+                          backgroundColor: ct.info[50],
                         },
                         fontSize: '0.875rem',
                         padding: '4px 8px',
@@ -987,10 +990,10 @@ const MapView: React.FC<MapViewProps> = ({
                       onClick={() => handleMarkerClick(location)}
                       sx={{
                         mt: 1,
-                        color: '#0891b2',
-                        backgroundColor: '#ecfeff',
+                        color: ct.info[700],
+                        backgroundColor: ct.info[100],
                         '&:hover': {
-                          backgroundColor: '#cffafe',
+                          backgroundColor: ct.info[50],
                         },
                         fontSize: '0.875rem',
                         padding: '4px 8px',
@@ -1365,7 +1368,7 @@ const MapView: React.FC<MapViewProps> = ({
               display: 'flex',
               alignItems: 'center',
               gap: 1,
-              backgroundColor: showTrackPanel ? '#9333ea' : 'white',
+              backgroundColor: showTrackPanel ? 'secondary.main' : 'white',
               color: showTrackPanel ? 'white' : 'grey.700',
               '&:hover': {
                 backgroundColor: showTrackPanel ? 'secondary.dark' : 'grey.50',
@@ -1563,15 +1566,15 @@ const MapView: React.FC<MapViewProps> = ({
             position: 'absolute',
             bottom: 16,
             left: 16,
-            backgroundColor: 'warning.light',
-            border: '1px solid #fde68a',
+            backgroundColor: ct.warning[100],
+            border: `1px solid ${ct.warning[200]}`,
             borderRadius: 2,
             padding: '8px 16px',
           }}
         >
           <Typography
             variant='caption'
-            sx={{ color: '#92400e' }}
+            sx={{ color: ct.warning[800] }}
           >
             按 ESC 退出工具模式 | 按 Enter 完成绘制
           </Typography>
@@ -1693,14 +1696,14 @@ const MapView: React.FC<MapViewProps> = ({
               icon={<MapPin size={16} />}
               checked={visibleLayers.devices}
               onChange={() => toggleLayer('devices')}
-              color='#00C897'
+              color={ct.success.main}
             />
             <LayerToggle
               label='管线'
               icon={<Navigation size={16} />}
               checked={visibleLayers.pipelines}
               onChange={() => toggleLayer('pipelines')}
-              color='#6366F1'
+              color={ct.secondary[400]}
             />
             <LayerToggle
               label='仓储位置'
@@ -1750,7 +1753,7 @@ const MapView: React.FC<MapViewProps> = ({
               alignItems: 'center',
               justifyContent: 'space-between',
               padding: '12px 16px',
-              background: 'linear-gradient(to right, #06b6d4, primary.main)',
+              background: `linear-gradient(to right, ${ct.info[400]}, ${ct.primary.main})`,
             }}
           >
             <Typography
@@ -1844,19 +1847,19 @@ const MapView: React.FC<MapViewProps> = ({
                     backgroundColor:
                       selectedItem.status.toLowerCase().includes('active') ||
                       selectedItem.status.includes('启用')
-                        ? 'success.lighter'
+                        ? ct.success[50]
                         : selectedItem.status.toLowerCase().includes('pending') ||
                             selectedItem.status.includes('待处理')
-                          ? 'warning.light'
-                          : 'error.lighter',
+                          ? ct.warning[100]
+                          : ct.error[50],
                     color:
                       selectedItem.status.toLowerCase().includes('active') ||
                       selectedItem.status.includes('启用')
-                        ? '#065f46'
+                        ? ct.success[800]
                         : selectedItem.status.toLowerCase().includes('pending') ||
                             selectedItem.status.includes('待处理')
-                          ? '#92400e'
-                          : '#991b1b',
+                          ? ct.warning[800]
+                          : ct.error[800],
                     fontWeight: 'medium',
                   }}
                 />

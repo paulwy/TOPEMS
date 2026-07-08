@@ -47,6 +47,7 @@ import {
 import 'leaflet/dist/leaflet.css';
 import L from 'leaflet';
 import type { LatLngExpression } from 'leaflet';
+import { logger } from "@/utils/logger";
 
 L.Icon.Default.mergeOptions({
   iconRetinaUrl: 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/images/marker-icon-2x.png',
@@ -583,7 +584,7 @@ export function GisMapTemplate({
       navigator.geolocation.getCurrentPosition(
         (position) =>
           mapRef.current?.setView([position.coords.latitude, position.coords.longitude], 15),
-        (error) => console.error('定位失败:', error)
+        (error) => logger.error('定位失败:', error)
       );
     }
   }, []);

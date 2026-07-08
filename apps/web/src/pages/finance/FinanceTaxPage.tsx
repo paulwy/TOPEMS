@@ -255,7 +255,7 @@ const FinanceTaxPage: React.FC = () => {
           { value: '消费税', label: '消费税' },
         ],
         value: filterType,
-        onChange: setFilterType,
+        onChange: (value: unknown) => setFilterType(value as string),
       },
       {
         id: 'status',
@@ -268,7 +268,7 @@ const FinanceTaxPage: React.FC = () => {
           { value: '待缴纳', label: '待缴纳' },
         ],
         value: filterStatus,
-        onChange: setFilterStatus,
+        onChange: (value: unknown) => setFilterStatus(value as string),
       },
     ],
     [filterType, filterStatus]

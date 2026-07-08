@@ -33,6 +33,9 @@ import { useAppStore } from '@/store';
 import { Plus, Edit, Trash2, Eye, Package, AlertTriangle } from 'lucide-react';
 import { apiLogger } from '@/utils/logger';
 import { ConfirmDialog, PageContainer } from '@/components/common';
+import { designTokens } from '@/theme/tokens';
+
+const ct = designTokens.colors;
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 
 /**
@@ -371,7 +374,7 @@ const InventoryPage: React.FC = () => {
         ],
         value: statusFilter,
         onChange: (value) => {
-          setStatusFilter(value);
+          setStatusFilter(value as string);
           setCurrentPage(1);
         },
       },
@@ -385,7 +388,7 @@ const InventoryPage: React.FC = () => {
         ],
         value: warehouseFilter,
         onChange: (value) => {
-          setWarehouseFilter(value);
+          setWarehouseFilter(value as string);
           setCurrentPage(1);
         },
       },
@@ -484,7 +487,7 @@ const InventoryPage: React.FC = () => {
           {alertStats?.low_stock_count || 0}
         </Typography>
       </Box>
-      <Box sx={{ p: 2, bgcolor: '#fef2f2', borderRadius: 3 }}>
+      <Box sx={{ p: 2, bgcolor: ct.error[50], borderRadius: 3 }}>
         <Typography
           variant='body2'
           sx={{ color: 'text.secondary' }}
@@ -521,7 +524,7 @@ const InventoryPage: React.FC = () => {
       subtitle='管理仓库库存，查看库存状态和低库存预警'
       headerProps={{
         pageIcon: <Package style={{ width: 20, height: 20 }} />,
-        pageGradient: 'linear-gradient(135deg, #0EA5E9, #0284C7)',
+        pageGradient: `linear-gradient(135deg, ${ct.info.main}, ${ct.info.dark})`,
       }}
     >
       <ListPageTemplate

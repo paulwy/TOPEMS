@@ -26,6 +26,9 @@ import { limsApi } from '@/api/lims';
 import type { Sample, CreateSampleRequest, UpdateSampleRequest } from '@/api/lims';
 import { useAppStore } from '@/store';
 import { apiLogger } from '@/utils/logger';
+import { designTokens } from '@/theme/tokens';
+
+const ct = designTokens.colors;
 
 const LimsSamplePage: React.FC = () => {
   const navigate = useNavigate();
@@ -93,7 +96,7 @@ const LimsSamplePage: React.FC = () => {
   const getStatusBadge = (status: string) => {
     const statusMap: Record<string, { bg: string; color: string }> = {
       待接收: { bg: 'grey.100', color: 'text.secondary' },
-      待检测: { bg: 'warning.100', color: '#ca8a04' },
+      待检测: { bg: 'warning.100', color: ct.yellow[600] },
       检测中: { bg: 'primary.100', color: 'primary.dark' },
       已完成: { bg: 'success.lighter', color: 'success.dark' },
       pending: { bg: 'grey.100', color: 'text.secondary' },
@@ -178,7 +181,7 @@ const LimsSamplePage: React.FC = () => {
         { label: '已完成', value: '已完成' },
       ],
       value: statusFilter,
-      onChange: (value) => setStatusFilter(value),
+      onChange: (value: unknown) => setStatusFilter(value as string),
     },
   ];
 
@@ -346,7 +349,7 @@ const LimsSamplePage: React.FC = () => {
         mb: 3,
       }}
     >
-      <Card sx={{ bgcolor: '#f0fdfa' }}>
+      <Card sx={{ bgcolor: 'teal.light' }}>
         <CardContent sx={{ p: 2 }}>
           <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5 }}>
             <Box
@@ -393,7 +396,7 @@ const LimsSamplePage: React.FC = () => {
                 justifyContent: 'center',
               }}
             >
-              <Filter sx={{ width: 20, height: 20, color: '#ca8a04' }} />
+              <Filter sx={{ width: 20, height: 20, color: ct.yellow[600] }} />
             </Box>
             <Box>
               <Typography
@@ -489,7 +492,7 @@ const LimsSamplePage: React.FC = () => {
           display: 'flex',
           alignItems: 'center',
           justifyContent: 'center',
-          background: 'linear-gradient(135deg, #f0fdfa 0%, #f8fafc 100%)',
+          background: `linear-gradient(135deg, ${ct.teal[50]} 0%, ${ct.background.default} 100%)`,
         }}
       >
         <Box sx={{ textAlign: 'center' }}>
@@ -499,7 +502,7 @@ const LimsSamplePage: React.FC = () => {
               height: 48,
               border: 4,
               borderColor: 'info.main',
-              borderTopColor: '#0891b2',
+              borderTopColor: 'cyan.dark',
               borderRadius: '50%',
               animation: 'spin 1s linear infinite',
               mx: 'auto',
@@ -518,7 +521,7 @@ const LimsSamplePage: React.FC = () => {
       subtitle='Sample Management'
       headerProps={{
         pageIcon: <FlaskConical style={{ width: 20, height: 20 }} />,
-        pageGradient: 'linear-gradient(135deg, #14B8A6 0%, #0D9488 100%)',
+        pageGradient: `linear-gradient(135deg, ${ct.teal[400]} 0%, ${ct.teal[600]} 100%)`,
       }}
     >
       <ListPageTemplate

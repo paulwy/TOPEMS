@@ -70,6 +70,9 @@ import type {
   ParseDataRequest,
 } from '@/api/lims';
 import { instrumentDataApi, collectionTaskApi, parseRuleApi } from '@/api/lims';
+import { designTokens } from '@/theme/tokens';
+
+const ct = designTokens.colors;
 
 const LimsInstrumentDataPage: React.FC = () => {
   const [activeTab, setActiveTab] = useState(0);
@@ -629,7 +632,7 @@ const LimsInstrumentDataPage: React.FC = () => {
       maxWidth='xl'
       headerProps={{
         pageIcon: <Database style={{ width: 20, height: 20 }} />,
-        pageGradient: 'linear-gradient(135deg, #14B8A6 0%, #0D9488 100%)',
+        pageGradient: `linear-gradient(135deg, ${ct.teal[400]} 0%, ${ct.teal[600]} 100%)`,
       }}
     >
       <Grid
@@ -1401,7 +1404,7 @@ const LimsInstrumentDataPage: React.FC = () => {
                   padding: '8px',
                   fontFamily: 'monospace',
                   fontSize: '12px',
-                  border: '1px solid #ccc',
+                  border: `1px solid ${ct.grey[300]}`,
                   borderRadius: '4px',
                 }}
                 value={formatJson(dataFormData.raw_data)}
@@ -1596,7 +1599,7 @@ const LimsInstrumentDataPage: React.FC = () => {
                   padding: '8px',
                   fontFamily: 'monospace',
                   fontSize: '12px',
-                  border: '1px solid #ccc',
+                  border: `1px solid ${ct.grey[300]}`,
                   borderRadius: '4px',
                 }}
                 value={formatJson(ruleFormData.parse_config)}
@@ -1624,7 +1627,7 @@ const LimsInstrumentDataPage: React.FC = () => {
                   padding: '8px',
                   fontFamily: 'monospace',
                   fontSize: '12px',
-                  border: '1px solid #ccc',
+                  border: `1px solid ${ct.grey[300]}`,
                   borderRadius: '4px',
                 }}
                 value={formatJson(ruleFormData.quality_rules)}
@@ -1697,7 +1700,7 @@ const LimsInstrumentDataPage: React.FC = () => {
                       padding: '8px',
                       fontFamily: 'monospace',
                       fontSize: '12px',
-                      border: '1px solid #ccc',
+                      border: `1px solid ${ct.grey[300]}`,
                       borderRadius: '4px',
                     }}
                     value={formatJson(parseTestData.raw_data)}

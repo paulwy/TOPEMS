@@ -74,15 +74,17 @@ impl Default for CompressionConfig {
 
 impl CompressionConfig {
     pub fn lenient() -> Self {
-        let mut config = Self::default();
-        config.min_content_length = 512;
-        config
+        Self {
+            min_content_length: 512,
+            ..Self::default()
+        }
     }
 
     pub fn strict() -> Self {
-        let mut config = Self::default();
-        config.min_content_length = 4096;
-        config
+        Self {
+            min_content_length: 4096,
+            ..Self::default()
+        }
     }
 
     pub fn with_min_content_length(mut self, length: usize) -> Self {

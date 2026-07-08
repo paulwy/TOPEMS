@@ -237,7 +237,7 @@ export function AIDataCompleter({
                             flex: 1,
                           }}
                         >
-                          {item.value}
+                          {String(item.value)}
                         </Typography>
                         <Box
                           sx={{

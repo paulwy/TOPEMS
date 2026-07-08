@@ -14,9 +14,8 @@
 #![allow(clippy::redundant_closure)]
 #![allow(dead_code)]
 
-mod api;
 mod models;
-mod plugin;
+mod modules;
 mod services;
 
 use std::net::SocketAddr;
@@ -26,8 +25,9 @@ use axum_prometheus::PrometheusMetricLayer;
 use sqlx::PgPool;
 
 use topems_shared::{
-    auth_middleware, create_cors_layer, get_api_info_handler, init_telemetry, simple_health_check,
-    telemetry_middleware, ApiResponse, AuthState, ServiceHealth, SimpleHealthConfig,
+    auth_middleware, create_cors_layer, get_api_info_handler, init_telemetry, rls_middleware,
+    simple_health_check, telemetry_middleware, ApiResponse, AuthState, ServiceHealth,
+    SimpleHealthConfig,
 };
 
 // ==================== 应用状态 ====================
@@ -94,8 +94,14 @@ async fn main() {
     let public_routes = Router::new()
         .route("/", get(home))
         .route("/health", get(health))
-        .route("/api/plugins/info", get(plugin::get_plugin_info))
-        .route("/api/plugins/health", get(plugin::plugin_health_check))
+        .route(
+            "/api/plugins/info",
+            get(modules::pdm_plugin::get_plugin_info),
+        )
+        .route(
+            "/api/plugins/health",
+            get(modules::pdm_plugin::plugin_health_check),
+        )
         .route("/api", get(|| get_api_info_handler("pdm-service")))
         .route("/api/info", get(|| get_api_info_handler("pdm-service")))
         .route(
@@ -105,12 +111,16 @@ async fn main() {
 
     // Protected routes (auth required)
     let protected_routes = Router::new()
-        .merge(api::create_api_routes())
+        .merge(modules::create_api_routes())
         // Health & Metrics
         .route("/api/v1/health/detailed", get(detailed_health))
         .layer(axum::middleware::from_fn_with_state(
             state.auth_state.clone(),
             auth_middleware,
+        ))
+        .layer(axum::middleware::from_fn_with_state(
+            state.pool.clone(),
+            rls_middleware,
         ));
 
     let app = Router::new()
@@ -128,12 +138,19 @@ async fn main() {
     let addr = SocketAddr::from(([0, 0, 0, 0], port));
     tracing::info!("✅ PDM Service is running at http://{}", addr);
 
-    axum::serve(
-        tokio::net::TcpListener::bind(&addr).await.unwrap(),
-        app.into_make_service(),
-    )
-    .await
-    .unwrap();
+    let listener = tokio::net::TcpListener::bind(&addr)
+        .await
+        .unwrap_or_else(|e| {
+            tracing::error!("Failed to bind to {}: {}", addr, e);
+            std::process::exit(1);
+        });
+
+    axum::serve(listener, app.into_make_service())
+        .await
+        .unwrap_or_else(|e| {
+            tracing::error!("Server error: {}", e);
+            std::process::exit(1);
+        });
 }
 
 // ==================== 公共处理函数 ====================

@@ -28,6 +28,8 @@ import {
 } from '@/components/templates';
 import { Plus, Edit, Trash2, Eye, CheckCircle, XCircle, Clock, FileText } from 'lucide-react';
 import { apiLogger } from '@/utils/logger';
+import { designTokens } from '@/theme/tokens';
+const ct = designTokens.colors;
 
 const WorkReportPage: React.FC = () => {
   const [reports, setReports] = useState<WorkReport[]>([]);
@@ -291,8 +293,8 @@ const WorkReportPage: React.FC = () => {
           { label: '已取消', value: 'cancelled' },
         ],
         value: statusFilter,
-        onChange: (value) => {
-          setStatusFilter(value);
+        onChange: (value: unknown) => {
+          setStatusFilter(value as string);
           setCurrentPage(1);
         },
       },
@@ -425,7 +427,7 @@ const WorkReportPage: React.FC = () => {
           {stats.approved}
         </Typography>
       </Box>
-      <Box sx={{ p: 2, bgcolor: '#e0e7ff', borderRadius: 3 }}>
+      <Box sx={{ p: 2, bgcolor: ct.secondary[100], borderRadius: 3 }}>
         <Typography
           variant='body2'
           sx={{ color: 'text.secondary' }}
@@ -448,7 +450,7 @@ const WorkReportPage: React.FC = () => {
       autoBreadcrumbs
       headerProps={{
         pageIcon: <FileText style={{ width: 20, height: 20 }} />,
-        pageGradient: 'linear-gradient(135deg, #3B82F6 0%, #1D4ED8 100%)',
+        pageGradient: `linear-gradient(135deg, ${ct.primary.main} 0%, ${ct.primary.dark} 100%)`,
       }}
     >
       <ListPageTemplate

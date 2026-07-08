@@ -25,6 +25,9 @@ import { ehsApi } from '@/api/ehs';
 import type { HealthRecord } from '@/api/ehs';
 import { useAppStore } from '@/store';
 import { apiLogger } from '@/utils/logger';
+import { designTokens } from '@/theme/tokens';
+
+const ct = designTokens.colors;
 
 const HealthManagementPage: React.FC = () => {
   const navigate = useNavigate();
@@ -288,7 +291,7 @@ const HealthManagementPage: React.FC = () => {
       headerProps={{
         actions: headerActions,
         pageIcon: <Heart sx={{ width: 20, height: 20 }} />,
-        pageGradient: 'linear-gradient(135deg, #EC4899 0%, #DB2777 100%)',
+        pageGradient: `linear-gradient(135deg, ${ct.pink[500]} 0%, ${ct.pink[600]} 100%)`,
       }}
       maxWidth='xl'
     >

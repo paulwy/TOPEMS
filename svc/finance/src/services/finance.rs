@@ -1,5 +1,3 @@
-use std::sync::Arc;
-
 use chrono::{DateTime, Datelike, NaiveDate, Utc};
 use rust_decimal::Decimal;
 use sqlx::{postgres::PgPool, Row};
@@ -9,11 +7,11 @@ use super::super::models::*;
 use topems_shared::error::TopemsError;
 
 pub struct FinanceService {
-    db_pool: Arc<PgPool>,
+    db_pool: PgPool,
 }
 
 impl FinanceService {
-    pub fn new(db_pool: Arc<PgPool>) -> Self {
+    pub fn new(db_pool: PgPool) -> Self {
         Self { db_pool }
     }
 
@@ -26,7 +24,7 @@ impl FinanceService {
             let parent: (i32,) =
                 sqlx::query_as("SELECT level FROM core_finance_accounts WHERE id = $1")
                     .bind(parent_id)
-                    .fetch_one(&*self.db_pool)
+                    .fetch_one(&self.db_pool)
                     .await?;
             parent.0 + 1
         } else {
@@ -46,7 +44,7 @@ impl FinanceService {
         .bind(level)
         .bind(req.currency)
         .bind(req.description)
-        .fetch_one(&*self.db_pool)
+        .fetch_one(&self.db_pool)
         .await?;
 
         Ok(account)
@@ -61,7 +59,7 @@ impl FinanceService {
             sqlx::query_as("SELECT * FROM core_finance_accounts WHERE tenant_id = $1 AND id = $2")
                 .bind(tenant_id)
                 .bind(account_id)
-                .fetch_one(&*self.db_pool)
+                .fetch_one(&self.db_pool)
                 .await?;
 
         Ok(account)
@@ -77,7 +75,7 @@ impl FinanceService {
         )
         .bind(tenant_id)
         .bind(code)
-        .fetch_one(&*self.db_pool)
+        .fetch_one(&self.db_pool)
         .await?;
 
         Ok(account)
@@ -88,7 +86,7 @@ impl FinanceService {
             "SELECT * FROM core_finance_accounts WHERE tenant_id = $1 ORDER BY code",
         )
         .bind(tenant_id)
-        .fetch_all(&*self.db_pool)
+        .fetch_all(&self.db_pool)
         .await?;
 
         Ok(accounts)
@@ -133,7 +131,7 @@ impl FinanceService {
         .bind(total_credit)
         .bind(req.description)
         .bind(created_by)
-        .fetch_one(&*self.db_pool)
+        .fetch_one(&self.db_pool)
         .await?;
 
         let mut lines = Vec::new();
@@ -157,7 +155,7 @@ impl FinanceService {
             .bind(line.credit)
             .bind(line.project_id)
             .bind(line.department_id)
-            .fetch_one(&*self.db_pool)
+            .fetch_one(&self.db_pool)
             .await?;
 
             lines.push(voucher_line);
@@ -201,7 +199,7 @@ impl FinanceService {
         .bind(tenant_id)
         .bind(voucher_type)
         .bind(format!("{}%", period_prefix))
-        .fetch_one(&*self.db_pool)
+        .fetch_one(&self.db_pool)
         .await?;
 
         Ok(format!("{}{}{:04}", prefix, period_prefix, count.0 + 1))
@@ -213,7 +211,7 @@ impl FinanceService {
         )
         .bind(tenant_id)
         .bind(&period)
-        .fetch_optional(&*self.db_pool)
+        .fetch_optional(&self.db_pool)
         .await?;
 
         if let Some(status) = period_status {
@@ -237,7 +235,7 @@ impl FinanceService {
         )
         .bind(tenant_id)
         .bind(voucher_id)
-        .fetch_one(&*self.db_pool)
+        .fetch_one(&self.db_pool)
         .await?;
 
         Ok(voucher)
@@ -257,7 +255,7 @@ impl FinanceService {
         .bind(tenant_id)
         .bind(voucher_id)
         .bind(approved_by)
-        .fetch_one(&*self.db_pool)
+        .fetch_one(&self.db_pool)
         .await?;
 
         Ok(voucher)
@@ -274,14 +272,14 @@ impl FinanceService {
         )
         .bind(tenant_id)
         .bind(voucher_id)
-        .fetch_one(&*self.db_pool)
+        .fetch_one(&self.db_pool)
         .await?;
 
         let lines: Vec<VoucherLine> = sqlx::query_as(
             "SELECT * FROM core_finance_voucher_lines WHERE voucher_id = $1 ORDER BY line_no",
         )
         .bind(voucher.id)
-        .fetch_all(&*self.db_pool)
+        .fetch_all(&self.db_pool)
         .await?;
 
         for line in &lines {
@@ -310,7 +308,7 @@ impl FinanceService {
             .bind(line.debit)
             .bind(line.credit)
             .bind(new_balance)
-            .execute(&*self.db_pool)
+            .execute(&self.db_pool)
             .await?;
         }
 
@@ -322,7 +320,7 @@ impl FinanceService {
         .bind(tenant_id)
         .bind(voucher_id)
         .bind(posted_by)
-        .fetch_one(&*self.db_pool)
+        .fetch_one(&self.db_pool)
         .await?;
 
         Ok(updated_voucher)
@@ -339,7 +337,7 @@ impl FinanceService {
         )
         .bind(tenant_id)
         .bind(account_id)
-        .fetch_one(&*self.db_pool)
+        .fetch_one(&self.db_pool)
         .await?;
 
         Ok(result.0.unwrap_or(Decimal::ZERO))
@@ -354,14 +352,14 @@ impl FinanceService {
             sqlx::query_as("SELECT * FROM core_finance_vouchers WHERE tenant_id = $1 AND id = $2")
                 .bind(tenant_id)
                 .bind(voucher_id)
-                .fetch_one(&*self.db_pool)
+                .fetch_one(&self.db_pool)
                 .await?;
 
         let lines: Vec<VoucherLine> = sqlx::query_as(
             "SELECT * FROM core_finance_voucher_lines WHERE voucher_id = $1 ORDER BY line_no",
         )
         .bind(voucher.id)
-        .fetch_all(&*self.db_pool)
+        .fetch_all(&self.db_pool)
         .await?;
 
         Ok(VoucherResponse {
@@ -406,7 +404,7 @@ impl FinanceService {
             query_builder = query_builder.bind(p);
         }
 
-        let vouchers = query_builder.fetch_all(&*self.db_pool).await?;
+        let vouchers = query_builder.fetch_all(&self.db_pool).await?;
 
         Ok(vouchers)
     }
@@ -451,7 +449,7 @@ impl FinanceService {
             query_builder = query_builder.bind(period);
         }
 
-        let entries = query_builder.fetch_all(&*self.db_pool).await?;
+        let entries = query_builder.fetch_all(&self.db_pool).await?;
 
         Ok(entries)
     }
@@ -477,7 +475,7 @@ impl FinanceService {
         )
         .bind(tenant_id)
         .bind(period)
-        .fetch_all(&*self.db_pool)
+        .fetch_all(&self.db_pool)
         .await?;
 
         Ok(balances)
@@ -544,7 +542,7 @@ impl FinanceService {
             .bind(tenant_id)
             .bind(type_str)
             .bind(period)
-            .fetch_all(&*self.db_pool)
+            .fetch_all(&self.db_pool)
             .await?;
 
         let items = rows
@@ -614,7 +612,7 @@ impl FinanceService {
         .bind(tenant_id)
         .bind(type_str)
         .bind(period)
-        .fetch_all(&*self.db_pool)
+        .fetch_all(&self.db_pool)
         .await?;
 
         let items = rows
@@ -643,7 +641,7 @@ impl FinanceService {
         .bind(tenant_id)
         .bind(year)
         .bind(month)
-        .fetch_optional(&*self.db_pool)
+        .fetch_optional(&self.db_pool)
         .await?;
 
         if let Some(period) = existing {
@@ -657,7 +655,7 @@ impl FinanceService {
                 .bind(tenant_id)
                 .bind(year)
                 .bind(month)
-                .fetch_one(&*self.db_pool)
+                .fetch_one(&self.db_pool)
                 .await?;
                 return Ok(updated);
             }
@@ -690,7 +688,7 @@ impl FinanceService {
         .bind(&period_name)
         .bind(start_date)
         .bind(end_date)
-        .fetch_one(&*self.db_pool)
+        .fetch_one(&self.db_pool)
         .await?;
 
         Ok(period)
@@ -718,7 +716,7 @@ impl FinanceService {
         .bind(chrono::NaiveDate::from_ymd_opt(year as i32, month as u32, 1).unwrap().and_hms_opt(0, 0, 0).unwrap())
         .bind(chrono::NaiveDate::from_ymd_opt(year as i32, month as u32, 1).unwrap().and_hms_opt(23, 59, 59).unwrap())
         .bind(closed_by)
-        .fetch_one(&*self.db_pool)
+        .fetch_one(&self.db_pool)
         .await?;
 
         Ok(period)
@@ -744,7 +742,7 @@ impl FinanceService {
         .bind(tenant_id)
         .bind(AccountType::Income)
         .bind(&period_pattern)
-        .fetch_all(&*self.db_pool)
+        .fetch_all(&self.db_pool)
         .await?;
 
         let expense_rows = sqlx::query(
@@ -758,7 +756,7 @@ impl FinanceService {
         .bind(tenant_id)
         .bind(AccountType::Expense)
         .bind(&period_pattern)
-        .fetch_all(&*self.db_pool)
+        .fetch_all(&self.db_pool)
         .await?;
 
         let total_income: Decimal = income_rows
@@ -816,7 +814,7 @@ impl FinanceService {
         .bind(total_income + total_expense)
         .bind(description.unwrap_or_else(|| format!("{}年度结转", year)))
         .bind(created_by)
-        .fetch_one(&*self.db_pool)
+        .fetch_one(&self.db_pool)
         .await?;
 
         let mut line_no = 0;
@@ -840,7 +838,7 @@ impl FinanceService {
                 .bind(&account_name)
                 .bind("结转年度收入")
                 .bind(balance)
-                .execute(&*self.db_pool)
+                .execute(&self.db_pool)
                 .await?;
             }
         }
@@ -864,7 +862,7 @@ impl FinanceService {
                 .bind(&profit_account.name)
                 .bind("结转年度费用")
                 .bind(balance)
-                .execute(&*self.db_pool)
+                .execute(&self.db_pool)
                 .await?;
 
                 line_no += 1;
@@ -879,7 +877,7 @@ impl FinanceService {
                 .bind(&account_name)
                 .bind("结转年度费用")
                 .bind(balance)
-                .execute(&*self.db_pool)
+                .execute(&self.db_pool)
                 .await?;
             }
         }
@@ -904,7 +902,7 @@ impl FinanceService {
             let parent: (i32,) =
                 sqlx::query_as("SELECT level FROM core_finance_aux_accounts WHERE id = $1")
                     .bind(parent_id)
-                    .fetch_one(&*self.db_pool)
+                    .fetch_one(&self.db_pool)
                     .await?;
             parent.0 + 1
         } else {
@@ -923,7 +921,7 @@ impl FinanceService {
         .bind(req.parent_id)
         .bind(level)
         .bind(req.description)
-        .fetch_one(&*self.db_pool)
+        .fetch_one(&self.db_pool)
         .await?;
 
         Ok(aux_account)
@@ -941,14 +939,14 @@ impl FinanceService {
             )
             .bind(tenant_id)
             .bind(type_str)
-            .fetch_all(&*self.db_pool)
+            .fetch_all(&self.db_pool)
             .await?
         } else {
             sqlx::query_as(
                 "SELECT * FROM core_finance_aux_accounts WHERE tenant_id = $1 ORDER BY aux_type, code",
             )
             .bind(tenant_id)
-            .fetch_all(&*self.db_pool)
+            .fetch_all(&self.db_pool)
             .await?
         };
 
@@ -965,7 +963,7 @@ impl FinanceService {
         )
         .bind(tenant_id)
         .bind(aux_id)
-        .fetch_one(&*self.db_pool)
+        .fetch_one(&self.db_pool)
         .await?;
 
         Ok(account)
@@ -1018,7 +1016,7 @@ impl FinanceService {
         .bind(period)
         .bind(start_date)
         .bind(end_date)
-        .fetch_all(&*self.db_pool)
+        .fetch_all(&self.db_pool)
         .await?;
 
         Ok(entries)
@@ -1063,7 +1061,7 @@ impl FinanceService {
         .bind(aux_id)
         .bind(period)
         .bind(account_id)
-        .fetch_all(&*self.db_pool)
+        .fetch_all(&self.db_pool)
         .await?;
 
         let mut acc: std::collections::HashMap<Uuid, AuxBalanceReport> =
@@ -1131,7 +1129,7 @@ impl FinanceService {
         )
         .bind(tenant_id)
         .bind(period)
-        .fetch_all(&*self.db_pool)
+        .fetch_all(&self.db_pool)
         .await?;
 
         let mut items = Vec::new();
@@ -1328,7 +1326,7 @@ impl FinanceService {
 
         let rows = sqlx::query(&query)
             .bind(tenant_id)
-            .fetch_all(&*self.db_pool)
+            .fetch_all(&self.db_pool)
             .await?;
 
         let mut total_debit = Decimal::ZERO;
@@ -1404,7 +1402,7 @@ impl FinanceService {
         .bind(doc_id)
         .bind(doc_no)
         .bind(submitted_by)
-        .fetch_one(&*self.db_pool)
+        .fetch_one(&self.db_pool)
         .await?;
 
         Ok(workflow)
@@ -1428,7 +1426,7 @@ impl FinanceService {
         .bind(doc_id)
         .bind(approved_by)
         .bind(comment)
-        .fetch_one(&*self.db_pool)
+        .fetch_one(&self.db_pool)
         .await?;
 
         Ok(workflow)
@@ -1454,7 +1452,7 @@ impl FinanceService {
         .bind(rejected_by)
         .bind(reason)
         .bind(comment)
-        .fetch_one(&*self.db_pool)
+        .fetch_one(&self.db_pool)
         .await?;
 
         Ok(workflow)
@@ -1474,7 +1472,7 @@ impl FinanceService {
         .bind(tenant_id)
         .bind(doc_type)
         .bind(doc_id)
-        .fetch_one(&*self.db_pool)
+        .fetch_one(&self.db_pool)
         .await?;
 
         Ok(workflow)
@@ -1492,7 +1490,7 @@ impl FinanceService {
         .bind(tenant_id)
         .bind(doc_type)
         .bind(doc_id)
-        .fetch_optional(&*self.db_pool)
+        .fetch_optional(&self.db_pool)
         .await?;
 
         Ok(workflow)
@@ -1511,7 +1509,7 @@ impl FinanceService {
             "SELECT COUNT(*) FROM core_finance_approval_workflows WHERE tenant_id = $1 AND status = 'pending'"
         )
         .bind(tenant_id)
-        .fetch_one(&*self.db_pool)
+        .fetch_one(&self.db_pool)
         .await?;
 
         let workflows = if let Some(t) = doc_type {
@@ -1522,7 +1520,7 @@ impl FinanceService {
             .bind(t)
             .bind(page_size)
             .bind(offset)
-            .fetch_all(&*self.db_pool)
+            .fetch_all(&self.db_pool)
             .await?
         } else {
             sqlx::query_as(
@@ -1531,7 +1529,7 @@ impl FinanceService {
             .bind(tenant_id)
             .bind(page_size)
             .bind(offset)
-            .fetch_all(&*self.db_pool)
+            .fetch_all(&self.db_pool)
             .await?
         };
 

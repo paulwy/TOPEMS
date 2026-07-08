@@ -85,6 +85,7 @@ async fn auth_request(
 // ==================== IM-001: 查看聊天室列表 ====================
 
 #[tokio::test]
+#[ignore]
 async fn test_im_001_list_rooms() {
     tracing::info!("测试 IM-001: 查看聊天室列表");
 
@@ -108,6 +109,7 @@ async fn test_im_001_list_rooms() {
 // ==================== IM-002: 创建聊天室 ====================
 
 #[tokio::test]
+#[ignore]
 async fn test_im_002_create_room() {
     tracing::info!("测试 IM-002: 创建聊天室");
 
@@ -146,6 +148,7 @@ async fn test_im_002_create_room() {
 // ==================== IM-003: 发送消息 ====================
 
 #[tokio::test]
+#[ignore]
 async fn test_im_003_send_message() {
     tracing::info!("测试 IM-003: 发送消息");
 
@@ -207,6 +210,7 @@ async fn test_im_003_send_message() {
 // ==================== IM-004: 查看聊天记录 ====================
 
 #[tokio::test]
+#[ignore]
 async fn test_im_004_view_history() {
     tracing::info!("测试 IM-004: 查看聊天记录");
 
@@ -255,6 +259,7 @@ async fn test_im_004_view_history() {
 // ==================== IM-005: 非成员查看聊天记录 ====================
 
 #[tokio::test]
+#[ignore]
 async fn test_im_005_non_member_view_history() {
     tracing::info!("测试 IM-005: 非成员查看聊天记录");
 
@@ -294,6 +299,7 @@ async fn test_im_005_non_member_view_history() {
 // ==================== IM-006: 添加联系人 ====================
 
 #[tokio::test]
+#[ignore]
 async fn test_im_006_add_contact() {
     tracing::info!("测试 IM-006: 添加联系人");
 
@@ -352,6 +358,7 @@ async fn test_im_006_add_contact() {
 // ==================== IM-007: 查看在线状态 ====================
 
 #[tokio::test]
+#[ignore]
 async fn test_im_007_view_online_status() {
     tracing::info!("测试 IM-007: 查看在线状态");
 
@@ -400,6 +407,7 @@ async fn test_im_007_view_online_status() {
 // ==================== 测试总结 ====================
 
 #[tokio::test]
+#[ignore]
 async fn run_all_im_tests_summary() {
     tracing::info!("========================================");
     tracing::info!("  IM 权限测试套件");

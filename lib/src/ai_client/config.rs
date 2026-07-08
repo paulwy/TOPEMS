@@ -3,19 +3,14 @@
 use serde::{Deserialize, Serialize};
 
 /// AI 服务提供者类型
-#[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq)]
+#[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq, Default)]
 pub enum AIProviderType {
     OpenAI,
     Gemini,
+    #[default]
     Ollama,
     AzureOpenAI,
     Custom,
-}
-
-impl Default for AIProviderType {
-    fn default() -> Self {
-        AIProviderType::Ollama
-    }
 }
 
 impl std::fmt::Display for AIProviderType {

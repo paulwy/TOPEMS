@@ -417,7 +417,7 @@ const FinanceInvoicePage: React.FC = () => {
           { value: 'special', label: '增值税专用发票' },
         ],
         value: filterType,
-        onChange: setFilterType,
+        onChange: (value: unknown) => setFilterType(value as string),
       },
       {
         id: 'status',
@@ -431,7 +431,7 @@ const FinanceInvoicePage: React.FC = () => {
           { value: 'cancelled', label: '已作废' },
         ],
         value: filterStatus,
-        onChange: setFilterStatus,
+        onChange: (value: unknown) => setFilterStatus(value as string),
       },
     ],
     [filterType, filterStatus]

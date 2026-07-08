@@ -89,13 +89,34 @@ jobs:
             sleep 1
           done
 
-      - name: Run tests
+      - name: Run unit tests (no database required)
+        env:
+          APP_ENV: test
+        run: cargo test --workspace --test crm_tests --test unit_tests -p topems-crm -p topems-qms --no-fail-fast
+
+      - name: Run integration tests (with database)
         env:
           DATABASE_URL: postgres://topems_test:topems_test_secret@localhost:5432/topems_test
           REDIS_URL: redis://localhost:6379/0
           JWT_SECRET: test-jwt-secret-key-for-testing-only-32chars
           APP_ENV: test
         run: cargo test --workspace --no-fail-fast
+
+      - name: Install cargo-llvm-cov
+        run: cargo install cargo-llvm-cov
+
+      - name: Run coverage for shared library
+        env:
+          APP_ENV: test
+        run: cargo llvm-cov test -p topems-shared --html --output-dir target/llvm-cov-report
+
+      - name: Upload Rust coverage report
+        uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: rust-coverage
+          path: target/llvm-cov-report/
+          retention-days: 7
 
   frontend-lint:
     name: Frontend Lint

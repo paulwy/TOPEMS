@@ -43,6 +43,9 @@ import LineChartComponent from '../../components/charts/LineChart';
 import PieChartComponent from '../../components/charts/PieChart';
 import { useAppStore } from '../../store';
 import { handleApiError, getErrorMessage } from '@/utils/errors';
+import { designTokens } from '@/theme/tokens';
+
+const ct = designTokens.colors;
 
 type TimeRange = 'today' | 'week' | 'month' | 'quarter' | 'year';
 
@@ -405,7 +408,7 @@ export const WorkflowStatisticsPage: React.FC = () => {
       subtitle='全方位流程数据洞察与效率分析'
       headerProps={{
         pageIcon: <BarChart3 size={20} />,
-        pageGradient: 'linear-gradient(135deg, #6366F1 0%, #8B5CF6 100%)',
+        pageGradient: `linear-gradient(135deg, ${ct.secondary[400]} 0%, ${ct.secondary.main} 100%)`,
         backButton: {
           href: '/workflow/dashboard',
           visible: true,

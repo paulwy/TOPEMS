@@ -1,11 +1,11 @@
-use crate::api::models::{QAHistory, SearchResult};
+#![allow(dead_code)]
+
+use crate::modules::models::{QAHistory, SearchResult};
 use crate::services::db::Database;
 use serde::{Deserialize, Serialize};
 use sqlx::{Executor, Row};
-use std::sync::Arc;
 use topems_shared::ai_client::{
-    create_client, AIClient, AIClientError, AIModelConfig, AIProviderType, ChatCompletionRequest,
-    ChatMessage, UnifiedAIClient,
+    create_client, AIModelConfig, AIProviderType, ChatMessage, UnifiedAIClient,
 };
 use uuid::Uuid;
 

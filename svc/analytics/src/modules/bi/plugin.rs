@@ -12,6 +12,7 @@ pub struct PluginInfo {
     pub version: String,
     pub description: String,
     pub permissions: Vec<PermissionDef>,
+    pub runtime_url: String,
 }
 
 /// 权限定义
@@ -25,6 +26,7 @@ pub struct PermissionDef {
 
 /// 获取插件信息
 pub async fn get_plugin_info() -> Json<ApiResponse<PluginInfo>> {
+    let runtime_url = get_runtime_url();
     let info = PluginInfo {
         code: "bi".to_string(),
         name: "商业智能".to_string(),
@@ -93,6 +95,7 @@ pub async fn get_plugin_info() -> Json<ApiResponse<PluginInfo>> {
                 action: "write".to_string(),
             },
         ],
+        runtime_url,
     };
     Json(ApiResponse::success(info, "Plugin info"))
 }
@@ -127,6 +130,7 @@ pub async fn auto_register_to_core(core_url: Option<&str>) {
         version: env!("CARGO_PKG_VERSION").to_string(),
         description: "BI 商业智能系统".to_string(),
         permissions: vec![],
+        runtime_url,
     };
 
     let client = reqwest::Client::new();

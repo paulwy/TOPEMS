@@ -2,9 +2,10 @@
 
 ## 验证概要
 
-**验证时间**: 2026-07-01
+**验证时间**: 2026-07-06
 **验证工具**: [scripts/verify-vite-proxy.sh](file:///Users/air/TOPEMS/scripts/verify-vite-proxy.sh)
 **配置文件**: [apps/web/vite.config.ts](file:///Users/air/TOPEMS/apps/web/vite.config.ts#L217-L531)
+**变更说明**: WebSocket 路由统一为 `/ws/core/{feature}` 规范
 
 ### 验证结果统计
 
@@ -73,13 +74,17 @@
 |------|------|------|------|
 | **Migration** | 8787 | ⊘ 503 | 后端服务未启动 |
 
-### ✓ WebSocket代理 - 配置正确
+### ✓ WebSocket代理 - 配置正确（统一规范）
 
 | WebSocket路径 | 目标 | 说明 |
 |---------------|------|------|
-| `/ws/core` | ws://localhost:8000 | WebSocket代理配置正确 |
-| `/ws/notifications` | ws://localhost:8000 | WebSocket代理配置正确 |
-| `/ws/im` | ws://localhost:8000 | WebSocket代理配置正确 |
+| `/ws/core/notifications` | ws://localhost:8000 | 通知服务WebSocket（新统一路径） |
+| `/ws/core/im` | ws://localhost:8000 | IM服务WebSocket（新统一路径） |
+| `/ws/core` | ws://localhost:8000 | Core WebSocket代理规则（覆盖所有子路径） |
+| `/mes/ws/dashboard` | ws://localhost:8030 | MES仪表盘WebSocket |
+| `/gis/ws` | ws://localhost:8071 | GIS服务WebSocket（重写为/api/gis/ws） |
+
+**路径规范**: 所有Core WebSocket路由统一为 `/ws/core/{feature}` 格式
 
 **注意**: WebSocket代理需要浏览器测试，无法通过curl验证。
 

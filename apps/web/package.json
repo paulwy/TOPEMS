@@ -27,6 +27,7 @@
     "build-storybook": "storybook build",
     "perf": "lighthouse --view http://localhost:8063/ --output=html --output-path=./reports/lighthouse-report.html",
     "perf:ci": "lhci autorun",
+    "perf:mobile": "lighthouse http://localhost:3000/ --preset=desktop --output=html --output-path=./reports/lighthouse-mobile.html --view",
     "perf:analyze": "webpack-bundle-analyzer ./dist/stats.json"
   },
   "dependencies": {
@@ -81,6 +82,7 @@
     "recharts": "^3.8.1",
     "remark-gfm": "^4.0.1",
     "three": "^0.184.0",
+    "vite-plugin-imp": "^2.4.0",
     "vite-plugin-pwa": "^1.3.0",
     "workbox-precaching": "^7.4.1",
     "xlsx": "^0.18.5",
@@ -138,6 +140,7 @@
     "playwright": "^1.61.1",
     "postcss": "^8.5.15",
     "prettier": "^3.8.3",
+    "rollup-plugin-critical": "^1.0.18",
     "rollup-plugin-visualizer": "^7.0.1",
     "storybook": "^10.4.6",
     "ts-jest": "^29.4.11",
@@ -145,6 +148,8 @@
     "typescript-eslint": "^8.62.0",
     "vite": "^8.0.16",
     "vite-plugin-compression": "^0.5.1",
+    "vite-plugin-css-injected-by-js": "^5.0.1",
+    "vite-plugin-html": "^3.2.2",
     "vite-plugin-preload": "^0.1.5",
     "vitest": "^4.1.9",
     "webpack-bundle-analyzer": "^4.10.2",

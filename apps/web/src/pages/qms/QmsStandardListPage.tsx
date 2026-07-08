@@ -29,6 +29,8 @@ import {
 import { PageContainer } from '@/components/common';
 import { qmsApi } from '@/api/qms';
 import type { QualityStandard } from '@/api/qms';
+import { designTokens } from '@/theme/tokens';
+const ct = designTokens.colors;
 
 const QmsStandardListPage: React.FC = () => {
   const navigate = useNavigate();
@@ -104,8 +106,8 @@ const QmsStandardListPage: React.FC = () => {
     const colors: Record<string, { bg: string; color: string }> = {
       active: { bg: 'success.lighter', color: 'success.dark' },
       有效: { bg: 'success.lighter', color: 'success.dark' },
-      draft: { bg: 'warning.100', color: '#ca8a04' },
-      草稿: { bg: 'warning.100', color: '#ca8a04' },
+      draft: { bg: 'warning.100', color: ct.yellow[600] },
+ 草稿: { bg: 'warning.100', color: ct.yellow[600] },
       expired: { bg: 'error.lighter', color: 'error.dark' },
       已过期: { bg: 'error.lighter', color: 'error.dark' },
       archived: { bg: 'grey.100', color: 'text.secondary' },
@@ -396,7 +398,7 @@ const QmsStandardListPage: React.FC = () => {
                 justifyContent: 'center',
               }}
             >
-              <FileText sx={{ width: 20, height: 20, color: '#ca8a04' }} />
+              <FileText sx={{ width: 20, height: 20, color: ct.yellow[600] }} />
             </Box>
             <Box>
               <Typography
@@ -424,7 +426,7 @@ const QmsStandardListPage: React.FC = () => {
       label: '状态',
       type: 'select',
       value: statusFilter,
-      onChange: setStatusFilter,
+      onChange: (value: unknown) => setStatusFilter(value as string),
       options: [
         { value: 'all', label: '全部' },
         { value: 'active', label: '有效' },
@@ -465,7 +467,7 @@ const QmsStandardListPage: React.FC = () => {
       subtitle='Quality Standards'
       headerProps={{
         pageIcon: <ClipboardCheck style={{ width: 20, height: 20 }} />,
-        pageGradient: 'linear-gradient(135deg, #6366F1 0%, #8B5CF6 100%)',
+        pageGradient: `linear-gradient(135deg, ${ct.secondary[400]} 0%, ${ct.secondary.main} 100%)`,
         search: {
           value: searchTerm,
           onChange: setSearchTerm,

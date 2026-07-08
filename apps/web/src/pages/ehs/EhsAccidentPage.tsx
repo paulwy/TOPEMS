@@ -33,6 +33,9 @@ import { ehsApi } from '@/api/ehs';
 import type { Accident, AccidentDetail, TreatmentAction } from '@/api/ehs';
 import { useAppStore } from '@/store';
 import { apiLogger } from '@/utils/logger';
+import { designTokens } from '@/theme/tokens';
+
+const ct = designTokens.colors;
 
 const EhsAccidentPage: React.FC = () => {
   const navigate = useNavigate();
@@ -139,7 +142,7 @@ const EhsAccidentPage: React.FC = () => {
   const getSeverityChip = (severity: string) => {
     const severityMap: Record<string, { bg: string; color: string }> = {
       轻微: { bg: 'success.lighter', color: 'success.dark' },
-      一般: { bg: 'warning.100', color: '#ca8a04' },
+      一般: { bg: 'warning.100', color: ct.yellow[600] },
       严重: { bg: 'error.lighter', color: 'error.dark' },
       致命: { bg: 'error.light', color: 'error.darker' },
     };
@@ -159,7 +162,7 @@ const EhsAccidentPage: React.FC = () => {
 
   const getStatusChip = (status: string) => {
     const statusMap: Record<string, { bg: string; color: string }> = {
-      待处理: { bg: 'warning.100', color: '#ca8a04' },
+      待处理: { bg: 'warning.100', color: ct.yellow[600] },
       调查中: { bg: 'primary.100', color: 'primary.dark' },
       处理中: { bg: 'warning.light', color: 'warning.dark' },
       已解决: { bg: 'success.lighter', color: 'success.dark' },
@@ -362,7 +365,7 @@ const EhsAccidentPage: React.FC = () => {
           icon={<AlertCircle />}
           bgColor='background.paper'
           iconBgColor='warning.100'
-          iconColor='#ca8a04'
+          iconColor={ct.yellow[600]}
         />
         <StatCard
           label='调查中'

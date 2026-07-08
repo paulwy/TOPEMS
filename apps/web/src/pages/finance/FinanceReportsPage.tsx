@@ -1,4 +1,6 @@
 import React, { useState, useEffect, useMemo } from 'react';
+import { designTokens } from '@/theme/tokens';
+const ct = designTokens.colors;
 import {
   TrendingUp,
   TrendingDown,
@@ -89,21 +91,21 @@ const FinanceReportsPage: React.FC = () => {
         title: '总资产',
         value: formatCurrency(businessOverview.total_assets),
         icon: <DollarSign sx={{ width: 24, height: 24 }} />,
-        gradient: ['#1976D2', '#1565C0'] as [string, string],
+        gradient: [ct.primary.dark, ct.primary[800]] as [string, string],
       },
       {
         id: 'total-liabilities',
         title: '总负债',
         value: formatCurrency(businessOverview.total_liabilities),
         icon: <TrendingDown sx={{ width: 24, height: 24 }} />,
-        gradient: ['#F59E0B', '#D97706'] as [string, string],
+        gradient: [ct.warning.main, ct.warning.dark] as [string, string],
       },
       {
         id: 'total-revenue',
         title: '总收入',
         value: formatCurrency(businessOverview.total_revenue),
         icon: <TrendingUp sx={{ width: 24, height: 24 }} />,
-        gradient: ['#00C897', '#00A878'] as [string, string],
+        gradient: [ct.success.main, ct.success.dark] as [string, string],
       },
       {
         id: 'net-profit',
@@ -112,8 +114,8 @@ const FinanceReportsPage: React.FC = () => {
         icon: <Wallet sx={{ width: 24, height: 24 }} />,
         gradient:
           businessOverview.net_profit >= 0
-            ? (['#00C897', '#00A878'] as [string, string])
-            : (['error.main', 'error.700'] as [string, string]),
+            ? ([ct.success.main, ct.success.dark] as [string, string])
+            : ([ct.error.main, ct.error[700]] as [string, string]),
       },
     ];
   }, [businessOverview]);

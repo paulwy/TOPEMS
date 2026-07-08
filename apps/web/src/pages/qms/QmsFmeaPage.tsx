@@ -1,4 +1,6 @@
 import React, { useState, useEffect, useCallback, useMemo } from 'react';
+import { designTokens } from '@/theme/tokens';
+const ct = designTokens.colors;
 import {
   Dialog,
   DialogTitle,
@@ -805,7 +807,7 @@ const QmsFmeaPage: React.FC = () => {
       subtitle='Failure Mode and Effects Analysis'
       headerProps={{
         pageIcon: <TriangleAlert style={{ width: 20, height: 20 }} />,
-        pageGradient: 'linear-gradient(135deg, #F59E0B, #D97706)',
+        pageGradient: `linear-gradient(135deg, ${ct.warning.main}, ${ct.warning.dark})`,
         search: {
           value: searchTerm,
           onChange: setSearchTerm,

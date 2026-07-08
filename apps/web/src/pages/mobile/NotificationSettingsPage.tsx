@@ -6,6 +6,7 @@ import {
   type SettingSection,
   type SettingValueType,
 } from '@/components/templates';
+import { logger } from "@/utils/logger";
 
 interface NotificationSetting {
   key: string;
@@ -72,7 +73,7 @@ const NotificationSettingsPage: React.FC = () => {
         setNotificationSettings(JSON.parse(stored));
       }
     } catch (err: unknown) {
-      console.error('Error loading notification settings:', err);
+      logger.error('Error loading notification settings:', err);
       addNotification({ title: '加载失败', message: '加载通知设置失败', type: 'error' });
     } finally {
       setLoading(false);
@@ -94,7 +95,7 @@ const NotificationSettingsPage: React.FC = () => {
       localStorage.setItem('notification_settings', JSON.stringify(updatedSettings));
       addNotification({ title: '成功', message: '通知设置保存成功', type: 'success' });
     } catch (err: unknown) {
-      console.error('Error saving notification settings:', err);
+      logger.error('Error saving notification settings:', err);
       addNotification({ title: '失败', message: '保存设置失败', type: 'error' });
       throw err;
     } finally {

@@ -22,6 +22,9 @@ import {
 import { PageContainer } from '@/components/common';
 import ConfirmDialog from '@/components/common/ConfirmDialog';
 import { extractErrorMessage } from '@/utils/errors';
+import { designTokens } from '@/theme/tokens';
+
+const ct = designTokens.colors;
 
 interface NotificationTemplate {
   id: string;
@@ -310,12 +313,12 @@ export const NotificationTemplatesPage: React.FC = () => {
                 size={20}
                 color={
                   row.type === 'system'
-                    ? '#1976d2'
+                    ? ct.primary.dark
                     : row.type === 'approval'
-                      ? '#9c27b0'
+                      ? ct.secondary.dark
                       : row.type === 'task'
-                        ? '#ed6c02'
-                        : '#2e7d32'
+                        ? ct.warning.dark
+                        : ct.success.dark
                 }
               />
             </Box>
@@ -697,7 +700,7 @@ export const NotificationTemplatesPage: React.FC = () => {
             variant: 'outlined',
           },
         ]}
-        emptyIcon={<FileText style={{ width: 48, height: 48, color: '#9e9e9e' }} />}
+        emptyIcon={<FileText style={{ width: 48, height: 48, color: ct.grey[400] }} />}
         emptyMessage='暂无模板数据'
       />
 

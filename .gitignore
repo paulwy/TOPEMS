@@ -97,3 +97,14 @@ apps/web/playwright-report/
 
 
 database/postgres_data/
+
+# Lighthouse 性能报告，无需入库
+apps/web/.lighthouseci/
+apps/web/*.report.html
+apps/web/lighthouse-*.json
+apps/web/reports/lighthouse-*
+apps/web/stats.json
+chromewebdata_*.report.html
+localhost_*.report.html
+apps/web/lighthouse-report.html
+apps/web/lighthouse-report.html

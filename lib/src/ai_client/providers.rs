@@ -104,8 +104,7 @@ impl AIClient for OpenAIClient {
 
                 for line in lines.lines() {
                     let trimmed = line.trim();
-                    if trimmed.starts_with("data: ") {
-                        let json_str = &trimmed[6..];
+                    if let Some(json_str) = trimmed.strip_prefix("data: ") {
                         if json_str == "[DONE]" {
                             continue;
                         }
@@ -335,8 +334,7 @@ impl AIClient for GeminiClient {
 
                     for line in lines.lines() {
                         let trimmed = line.trim();
-                        if trimmed.starts_with("data: ") {
-                            let json_str = &trimmed[6..];
+                        if let Some(json_str) = trimmed.strip_prefix("data: ") {
                             match serde_json::from_str::<serde_json::Value>(json_str) {
                                 Ok(gemini_chunk) => {
                                     let content = gemini_chunk["candidates"][0]["content"]["parts"]
@@ -535,8 +533,7 @@ impl AIClient for OllamaClient {
 
                 for line in lines.lines() {
                     let trimmed = line.trim();
-                    if trimmed.starts_with("data: ") {
-                        let json_str = &trimmed[6..];
+                    if let Some(json_str) = trimmed.strip_prefix("data: ") {
                         if json_str == "[DONE]" {
                             continue;
                         }
@@ -632,7 +629,7 @@ impl AIClient for AzureOpenAIClient {
         &self,
         request: ChatCompletionRequest,
     ) -> Result<ChatCompletionResponse, AIClientError> {
-        let deployment = self.get_deployment_name();
+        let _deployment = self.get_deployment_name();
         let url = format!(
             "{}/chat/completions?api-version=2024-02-15-preview",
             self.config.get_base_url()
@@ -686,8 +683,7 @@ impl AIClient for AzureOpenAIClient {
 
                 for line in lines.lines() {
                     let trimmed = line.trim();
-                    if trimmed.starts_with("data: ") {
-                        let json_str = &trimmed[6..];
+                    if let Some(json_str) = trimmed.strip_prefix("data: ") {
                         if json_str == "[DONE]" {
                             continue;
                         }

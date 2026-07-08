@@ -196,7 +196,7 @@ impl MigrationSDK {
 
         for entry in entries.flatten() {
             let path = entry.path();
-            if path.extension().map_or(false, |ext| ext == "sql") {
+            if path.extension().is_some_and(|ext| ext == "sql") {
                 let filename = path.file_name().unwrap().to_string_lossy().to_string();
                 let version = extract_version(&filename);
                 let name = extract_name(&filename);
@@ -247,9 +247,7 @@ impl MigrationSDK {
                 let _ = self
                     .record_migration(
                         plugin_code,
-                        &migration.version,
-                        &migration.name,
-                        &migration.checksum,
+                        migration,
                         executed_by,
                         MigrationStatus::Success,
                         None,
@@ -267,9 +265,7 @@ impl MigrationSDK {
                 let _ = self
                     .record_migration(
                         plugin_code,
-                        &migration.version,
-                        &migration.name,
-                        &migration.checksum,
+                        migration,
                         executed_by,
                         MigrationStatus::Failed,
                         Some(e.to_string()),
@@ -289,9 +285,7 @@ impl MigrationSDK {
     async fn record_migration(
         &self,
         plugin_code: &str,
-        version: &str,
-        name: &str,
-        checksum: &str,
+        migration: &MigrationFile,
         executed_by: &str,
         status: MigrationStatus,
         error_message: Option<String>,
@@ -311,9 +305,9 @@ impl MigrationSDK {
 
         let _ = sqlx::query(&query)
             .bind(plugin_code)
-            .bind(version)
-            .bind(name)
-            .bind(checksum)
+            .bind(&migration.version)
+            .bind(&migration.name)
+            .bind(&migration.checksum)
             .bind(executed_by)
             .bind(status_str)
             .bind(error_message)

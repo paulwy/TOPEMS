@@ -18,6 +18,9 @@ import {
   type StatCard,
 } from '@/components/templates/StatsPageTemplate';
 import { PageContainer } from '@/components/common';
+import { designTokens } from '@/theme/tokens';
+
+const ct = designTokens.colors;
 
 const PerformanceMonitorPage: React.FC = () => {
   const navigate = useNavigate();
@@ -117,26 +120,26 @@ const PerformanceMonitorPage: React.FC = () => {
         {
           id: 'timestamp',
           label: '时间',
-          render: (value: number) => new Date(value).toLocaleTimeString(),
+          render: (value: unknown) => new Date(value as number).toLocaleTimeString(),
         },
         { id: 'endpoint', label: 'API 端点' },
         {
           id: 'duration',
           label: '响应时间',
-          render: (value: number) => `${value.toFixed(0)}ms`,
+          render: (value: unknown) => `${(value as number).toFixed(0)}ms`,
         },
         {
           id: 'status',
           label: '状态',
-          render: (value: string) =>
+          render: (value: unknown) =>
             value === 'success' ? (
-              <span style={{ color: '#22c55e', fontWeight: 500 }}>成功</span>
+              <span style={{ color: ct.success[500], fontWeight: 500 }}>成功</span>
             ) : (
-              <span style={{ color: '#ef4444', fontWeight: 500 }}>失败</span>
+              <span style={{ color: ct.error.main, fontWeight: 500 }}>失败</span>
             ),
         },
       ],
-      data: apiHistory.slice(-20).reverse(),
+      data: apiHistory.slice(-20).reverse() as unknown as Record<string, unknown>[],
     },
   ];
 
@@ -157,7 +160,7 @@ const PerformanceMonitorPage: React.FC = () => {
           onClick: () => navigate('/dashboard'),
         },
         pageIcon: <Activity style={{ width: 20, height: 20 }} />,
-        pageGradient: 'linear-gradient(135deg, #6366F1, #8B5CF6)',
+        pageGradient: `linear-gradient(135deg, ${ct.secondary[400]}, ${ct.secondary.main})`,
         actions: [
           {
             label: '导出报告',
@@ -188,19 +191,19 @@ const PerformanceMonitorPage: React.FC = () => {
         <h3 style={{ fontSize: '1.125rem', fontWeight: 600, marginBottom: 16 }}>页面性能指标</h3>
         <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-            <span style={{ color: '#6b7280', fontSize: '0.875rem' }}>首次绘制 (FP)</span>
+            <span style={{ color: ct.grey[500], fontSize: '0.875rem' }}>首次绘制 (FP)</span>
             <span style={{ fontWeight: 500 }}>{metrics.firstPaint.toFixed(0)}ms</span>
           </div>
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-            <span style={{ color: '#6b7280', fontSize: '0.875rem' }}>首次内容绘制 (FCP)</span>
+            <span style={{ color: ct.grey[500], fontSize: '0.875rem' }}>首次内容绘制 (FCP)</span>
             <span style={{ fontWeight: 500 }}>{metrics.firstContentfulPaint.toFixed(0)}ms</span>
           </div>
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-            <span style={{ color: '#6b7280', fontSize: '0.875rem' }}>DOM 内容加载</span>
+            <span style={{ color: ct.grey[500], fontSize: '0.875rem' }}>DOM 内容加载</span>
             <span style={{ fontWeight: 500 }}>{metrics.domContentLoaded.toFixed(0)}ms</span>
           </div>
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-            <span style={{ color: '#6b7280', fontSize: '0.875rem' }}>页面完全加载</span>
+            <span style={{ color: ct.grey[500], fontSize: '0.875rem' }}>页面完全加载</span>
             <span style={{ fontWeight: 500 }}>{metrics.pageLoadTime.toFixed(0)}ms</span>
           </div>
         </div>
@@ -219,7 +222,7 @@ const PerformanceMonitorPage: React.FC = () => {
         <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
           <h3 style={{ fontSize: '1.125rem', fontWeight: 600, margin: 0 }}>慢 API 调用</h3>
           <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-            <span style={{ color: '#6b7280', fontSize: '0.875rem' }}>阈值:</span>
+            <span style={{ color: ct.grey[500], fontSize: '0.875rem' }}>阈值:</span>
             <input
               type='number'
               value={slowCallThreshold}
@@ -229,16 +232,16 @@ const PerformanceMonitorPage: React.FC = () => {
                 padding: 4,
                 fontSize: '0.875rem',
                 borderRadius: 4,
-                border: '1px solid #d1d5db',
+                border: `1px solid ${ct.grey[300]}`,
               }}
             />
-            <span style={{ color: '#6b7280', fontSize: '0.875rem' }}>ms</span>
+            <span style={{ color: ct.grey[500], fontSize: '0.875rem' }}>ms</span>
           </div>
         </div>
         {slowCalls.length === 0 ? (
           <div style={{ textAlign: 'center', padding: 32 }}>
-            <CheckCircle style={{ width: 48, height: 48, color: '#22c55e', marginBottom: 8 }} />
-            <p style={{ color: '#6b7280' }}>没有慢 API 调用</p>
+            <CheckCircle style={{ width: 48, height: 48, color: ct.success[500], marginBottom: 8 }} />
+            <p style={{ color: ct.grey[500] }}>没有慢 API 调用</p>
           </div>
         ) : (
           <div
@@ -265,12 +268,12 @@ const PerformanceMonitorPage: React.FC = () => {
               >
                 <div>
                   <p style={{ fontWeight: 500, margin: 0 }}>{call.endpoint}</p>
-                  <p style={{ fontSize: '0.75rem', color: '#6b7280', margin: '4px 0 0' }}>
+                  <p style={{ fontSize: '0.75rem', color: ct.grey[500], margin: '4px 0 0' }}>
                     {new Date(call.timestamp).toLocaleString()}
                   </p>
                 </div>
                 <div style={{ textAlign: 'right' }}>
-                  <p style={{ fontWeight: 500, color: '#ef4444', margin: 0 }}>
+                  <p style={{ fontWeight: 500, color: ct.error.main, margin: 0 }}>
                     {(call.duration / 1000).toFixed(2)}s
                   </p>
                   <p

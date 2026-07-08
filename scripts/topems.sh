@@ -78,7 +78,10 @@ check_port() { lsof -Pi ":$1" -sTCP:LISTEN -t >/dev/null 2>&1 && return 0 || ret
 get_service_pid() {
     local port=$2
     local executable_name=$(get_executable_name "$1")
-    lsof -ti:${port} 2>/dev/null || ps aux | grep -v grep | grep "$executable_name" | awk '{print $2}' 2>/dev/null
+    local pid=""
+    pid=$(lsof -ti:${port} 2>/dev/null)
+    [ -z "$pid" ] && pid=$(ps aux | grep -v grep | grep "$executable_name" | awk '{print $2}' 2>/dev/null)
+    echo "$pid"
 }
 
 # 加载环境变量
@@ -119,7 +122,12 @@ build_all_backend() {
     info "全量编译所有后端服务..."
 
     cd "$PROJECT_ROOT"
-    if SQLX_OFFLINE=true cargo build --release --workspace 2>&1; then
+    set +e
+    SQLX_OFFLINE=true cargo build --release --workspace 2>&1
+    local build_result=$?
+    set -e
+
+    if [ $build_result -eq 0 ]; then
         local total=$(get_all_services | wc -l | tr -d ' ')
         success "所有后端服务编译完成 ($total 成功)"
         return 0
@@ -290,26 +298,25 @@ start_service() {
         fi
     fi
 
-    cd "$PROJECT_ROOT/$service_path"
-    # 设置环境变量并启动服务
-    local env_cmd="env"
+    # 设置环境变量并启动服务（从项目根目录启动，确保 dotenv 能找到正确的 .env 文件）
+    cd "$PROJECT_ROOT"
+    
     case "$service_name" in
-        iam) env_cmd="env CORE_PORT=$port" ;;
-        pm) env_cmd="env PM_PORT=$port" ;;
-        erp) env_cmd="env ERP_PORT=$port" ;;
-        finance) env_cmd="env FINANCE_PORT=$port" ;;
-        doc) env_cmd="env DOC_PORT=$port" ;;
-        ai) env_cmd="env AI_PORT=$port" ;;
-        mes) env_cmd="env MES_PORT=$port" ;;
-        pdm) env_cmd="env PDM_PORT=$port" ;;
-        qms) env_cmd="env QMS_PORT=$port" ;;
-        lims) env_cmd="env LIMS_PORT=$port" ;;
-        ehs) env_cmd="env EHS_PORT=$port" ;;
-        bi) env_cmd="env BI_PORT=$port" ;;
-        report) env_cmd="env REPORT_PORT=$port" ;;
-        *) env_cmd="env SERVER_PORT=$port" ;;
+        iam) CORE_PORT=$port nohup "$executable_path" > "/tmp/topems-${service_name}.log" 2>&1 & ;;
+        pm) PM_PORT=$port nohup "$executable_path" > "/tmp/topems-${service_name}.log" 2>&1 & ;;
+        erp) ERP_PORT=$port nohup "$executable_path" > "/tmp/topems-${service_name}.log" 2>&1 & ;;
+        finance) FINANCE_PORT=$port nohup "$executable_path" > "/tmp/topems-${service_name}.log" 2>&1 & ;;
+        doc) DOC_PORT=$port nohup "$executable_path" > "/tmp/topems-${service_name}.log" 2>&1 & ;;
+        ai) AI_PORT=$port nohup "$executable_path" > "/tmp/topems-${service_name}.log" 2>&1 & ;;
+        mes) MES_PORT=$port nohup "$executable_path" > "/tmp/topems-${service_name}.log" 2>&1 & ;;
+        pdm) PDM_PORT=$port nohup "$executable_path" > "/tmp/topems-${service_name}.log" 2>&1 & ;;
+        qms) QMS_PORT=$port nohup "$executable_path" > "/tmp/topems-${service_name}.log" 2>&1 & ;;
+        lims) LIMS_PORT=$port nohup "$executable_path" > "/tmp/topems-${service_name}.log" 2>&1 & ;;
+        ehs) EHS_PORT=$port nohup "$executable_path" > "/tmp/topems-${service_name}.log" 2>&1 & ;;
+        bi) BI_PORT=$port nohup "$executable_path" > "/tmp/topems-${service_name}.log" 2>&1 & ;;
+        report) REPORT_PORT=$port nohup "$executable_path" > "/tmp/topems-${service_name}.log" 2>&1 & ;;
+        *) SERVER_PORT=$port nohup "$executable_path" > "/tmp/topems-${service_name}.log" 2>&1 & ;;
     esac
-    $env_cmd nohup "$executable_path" > "/tmp/topems-${service_name}.log" 2>&1 &
     local pid=$!
     sleep 3
 
@@ -602,9 +609,9 @@ start_dev_macos() {
     if [[ ! -f "$PROJECT_ROOT/.env" ]]; then
         warning ".env 文件不存在，从示例复制..."
         cp "$PROJECT_ROOT/.env.example" "$PROJECT_ROOT/.env"
-        JWT_SECRET=$(openssl rand -base64 32)
-        sed -i.bak "s|^JWT_SECRET=.*|JWT_SECRET=$JWT_SECRET|" "$PROJECT_ROOT/.env"
-        rm "$PROJECT_ROOT/.env.bak"
+        JWT_SECRET=$(openssl rand -base64 32 | tr '/' '_' | tr '+' '-' | tr '=' '.')
+        awk -F'=' -v secret="$JWT_SECRET" '$1=="JWT_SECRET" {$2=secret} 1' OFS='=' "$PROJECT_ROOT/.env" > "$PROJECT_ROOT/.env.tmp"
+        mv "$PROJECT_ROOT/.env.tmp" "$PROJECT_ROOT/.env"
     fi
 
     # 启动后端服务
@@ -713,6 +720,76 @@ show_all_status() {
     
     echo "=================================================="
     info "状态统计: ${running_count}/${total_count} 服务运行中"
+}
+
+# =============================================
+# WebSocket 连接检查
+# =============================================
+
+# 检查 WebSocket 连接状态
+ws_check() {
+    info "=== WebSocket 连接检查 ==="
+    
+    local ws_endpoints=(
+        "通知服务:/ws/core/notifications:8000"
+        "IM服务:/ws/core/im:8000"
+        "MES仪表盘:/mes/ws/dashboard:8030"
+        "GIS服务:/gis/ws:8071"
+    )
+    
+    local frontend_running=false
+    if check_port 3000; then
+        frontend_running=true
+    fi
+    
+    local accessible_count=0
+    local total_count=${#ws_endpoints[@]}
+    
+    for endpoint in "${ws_endpoints[@]}"; do
+        local name=$(echo "$endpoint" | cut -d: -f1)
+        local path=$(echo "$endpoint" | cut -d: -f2)
+        local port=$(echo "$endpoint" | cut -d: -f3)
+        
+        local backend_running=false
+        if check_port $port; then
+            backend_running=true
+        fi
+        
+        if [ "$frontend_running" = true ]; then
+            local proxy_status=$(curl -s -o /dev/null -w "%{http_code}" -H "Upgrade: websocket" -H "Connection: Upgrade" "http://localhost:3000${path}" 2>/dev/null)
+            if [ "$proxy_status" = "101" ] || [ "$proxy_status" = "401" ] || [ "$proxy_status" = "403" ]; then
+                echo -e "${GREEN}✅${NC} $name ($path) 代理配置正确 (状态码: $proxy_status)"
+                accessible_count=$((accessible_count + 1))
+            elif [ "$proxy_status" = "503" ]; then
+                echo -e "${YELLOW}⚠️${NC} $name ($path) 后端服务未响应"
+            elif [ "$proxy_status" = "000" ]; then
+                echo -e "${YELLOW}⚠️${NC} $name ($path) 连接失败 (可能是WebSocket握手问题)"
+            else
+                echo -e "${YELLOW}⚠️${NC} $name ($path) 状态码: $proxy_status"
+            fi
+        elif [ "$backend_running" = true ]; then
+            local backend_status=$(curl -s -o /dev/null -w "%{http_code}" -H "Upgrade: websocket" -H "Connection: Upgrade" "http://localhost:${port}${path}" 2>/dev/null)
+            if [ "$backend_status" = "101" ] || [ "$backend_status" = "401" ]; then
+                echo -e "${GREEN}✅${NC} $name ($path) 后端可访问 (状态码: $backend_status)"
+                accessible_count=$((accessible_count + 1))
+            else
+                echo -e "${YELLOW}⚠️${NC} $name ($path) 后端状态码: $backend_status"
+            fi
+        else
+            echo -e "${RED}❌${NC} $name ($path) 服务未运行 (端口 $port)"
+        fi
+    done
+    
+    echo ""
+    info "WebSocket 统计: ${accessible_count}/${total_count} 可访问"
+    
+    if [ "$frontend_running" = false ]; then
+        warning "前端未运行，请先启动前端: topems start web"
+    fi
+    
+    echo ""
+    detail "路径规范: /ws/{module}/{feature}"
+    detail "详细文档: docs/guides/devops/websocket-path-mapping.md"
 }
 
 # =============================================
@@ -1020,6 +1097,9 @@ AI模型管理:
   ai status               查看 Ollama 状态
   ai pull <模型>          下载AI模型
 
+WebSocket:
+  ws check                检查 WebSocket 连接状态
+
 部署:
   deploy                  一键部署
   update-password         重置管理员密码
@@ -1199,6 +1279,18 @@ case "${1:-help}" in
                 ;;
             *)
                 "$SCRIPT_DIR/dev/ai-models.sh"
+                ;;
+        esac
+        ;;
+    ws)
+        case "$2" in
+            check)
+                ws_check
+                ;;
+            *)
+                error "未知 WebSocket 命令: $2"
+                echo "可用命令: check"
+                exit 1
                 ;;
         esac
         ;;

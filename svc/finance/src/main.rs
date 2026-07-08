@@ -1,17 +1,16 @@
 // TOPEMS Finance Service
 // =============================================================================
 
-pub mod api;
 pub mod models;
+pub mod modules;
 pub mod services;
 
 use axum::{
     extract::{FromRef, State},
-    routing::{get, post},
+    routing::get,
     Json, Router,
 };
 use axum_prometheus::PrometheusMetricLayer;
-use serde::{Deserialize, Serialize};
 use std::net::SocketAddr;
 
 use topems_shared::{
@@ -85,7 +84,7 @@ async fn main() {
         );
 
     let protected_routes = Router::new()
-        .nest("/api/finance", api::create_routes())
+        .nest("/api/finance", modules::create_routes())
         .layer(axum::middleware::from_fn_with_state(
             auth_state.clone(),
             auth_middleware,

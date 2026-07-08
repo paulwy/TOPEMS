@@ -36,6 +36,8 @@ export type {
   UseIntersectionObserverOptions,
   UseIntersectionObserverResult,
 } from './useIntersectionObserver';
+export { useTouchFeedback, useSwipeGesture, useDoubleTap } from './useTouchFeedback';
+export type { TouchFeedbackOptions, TouchRipple } from './useTouchFeedback';
 
 export {
   useAssets,

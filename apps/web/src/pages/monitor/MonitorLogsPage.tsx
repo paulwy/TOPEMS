@@ -48,7 +48,10 @@ import {
 import { useAppStore } from '../../store';
 import { ListPageTemplate, type ColumnDef } from '@/components/templates';
 import { extractErrorMessage } from '@/utils/errors';
+import { designTokens } from '@/theme/tokens';
 import { PageContainer, ConfirmDialog } from '@/components/common';
+
+const ct = designTokens.colors;
 
 type LogLevel = 'error' | 'warn' | 'info' | 'debug';
 type LogType = 'access' | 'error' | 'application' | 'slow_query';
@@ -92,10 +95,10 @@ const TYPE_LABELS: Record<LogType, string> = {
 };
 
 const LEVEL_COLORS: Record<LogLevel, { bg: string; color: string; border: string }> = {
-  error: { bg: 'error.100', color: 'error.700', border: '#fca5a5' },
-  warn: { bg: '#ffedd5', color: 'warning.600', border: '#fdba74' },
-  info: { bg: 'primary.100', color: 'primary.dark', border: '#93c5fd' },
-  debug: { bg: 'grey.100', color: 'grey.500', border: '#d1d5db' },
+  error: { bg: 'error.100', color: 'error.700', border: ct.error.light },
+  warn: { bg: ct.orange[100], color: 'warning.600', border: ct.orange[300] },
+  info: { bg: 'primary.100', color: 'primary.dark', border: ct.primary[300] },
+  debug: { bg: 'grey.100', color: 'grey.500', border: ct.grey[300] },
 };
 
 const generateMockLogs = (): SystemLog[] => {
@@ -919,9 +922,9 @@ export const MonitorLogsPage: React.FC = () => {
             <Typography variant='h6'>日志详情</Typography>
             {selectedLog && getLevelChip(selectedLog.level)}
           </Box>
-          <IconButton onClick={() => setDetailOpen(false)}>
-            <X size={20} />
-          </IconButton>
+          <IconButton onClick={() => setDetailOpen(false)} aria-label='关闭日志详情对话框'>
+                  <X size={20} />
+                </IconButton>
         </DialogTitle>
         <DialogContent>
           {selectedLog && (

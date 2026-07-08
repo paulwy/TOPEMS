@@ -234,7 +234,7 @@ const FinanceLedgerPage: React.FC = () => {
           { value: '2024-04', label: '2024年4月' },
         ],
         value: filterPeriod,
-        onChange: setFilterPeriod,
+        onChange: (value: unknown) => setFilterPeriod(value as string),
       },
       {
         id: 'category',
@@ -250,7 +250,7 @@ const FinanceLedgerPage: React.FC = () => {
           { value: 'cost', label: '成本类' },
         ],
         value: filterCategory,
-        onChange: setFilterCategory,
+        onChange: (value: unknown) => setFilterCategory(value as string),
       },
     ],
     [filterPeriod, filterCategory]

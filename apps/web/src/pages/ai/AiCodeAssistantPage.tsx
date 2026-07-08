@@ -41,6 +41,8 @@ import {
 import { PageContainer, Grid } from '@/components/common';
 import { useAppStore } from '@/store';
 import { logger } from '@/utils/logger';
+import { designTokens } from '@/theme/tokens';
+const ct = designTokens.colors;
 
 type CodeTab = 'generate' | 'explain' | 'fix' | 'optimize' | 'review';
 
@@ -306,21 +308,21 @@ export const AiCodeAssistantPage: React.FC = () => {
         return (
           <AlertTriangle
             size={16}
-            style={{ color: '#ef4444' }}
+            style={{ color: ct.error.main }}
           />
         );
       case 'warning':
         return (
           <AlertTriangle
             size={16}
-            style={{ color: '#f59e0b' }}
+            style={{ color: ct.warning.main }}
           />
         );
       default:
         return (
           <Info
             size={16}
-            style={{ color: '#3b82f6' }}
+            style={{ color: ct.primary.main }}
           />
         );
     }
@@ -334,7 +336,7 @@ export const AiCodeAssistantPage: React.FC = () => {
       maxWidth={false}
       headerProps={{
         pageIcon: <Code2 style={{ width: 20, height: 20 }} />,
-        pageGradient: 'linear-gradient(135deg, #f093fb 0%, #f5576c 100%)',
+        pageGradient: `linear-gradient(135deg, ${ct.pink[300]} 0%, ${ct.pink[500]} 100%)`,
       }}
     >
       <Box sx={{ p: 3 }}>
@@ -687,7 +689,7 @@ export const AiCodeAssistantPage: React.FC = () => {
                   >
                     <Code2
                       size={48}
-                      style={{ color: '#cbd5e1', marginBottom: 12 }}
+                      style={{ color: ct.text.disabled, marginBottom: 12 }}
                     />
                     <Typography
                       variant='body2'
@@ -715,7 +717,7 @@ export const AiCodeAssistantPage: React.FC = () => {
                     <RefreshCw
                       size={32}
                       className='animate-spin'
-                      style={{ color: '#6366f1', marginBottom: 12 }}
+                      style={{ color: ct.secondary[400], marginBottom: 12 }}
                     />
                     <Typography variant='body1'>AI 正在处理...</Typography>
                     <Typography

@@ -335,7 +335,7 @@ impl InvoiceVoucherGenerator {
 
         if data.is_output {
             // 销项发票: 应收账款(借) -> 主营业务收入(贷), 应交税费-销项税(贷)
-            let tax_rate = Decimal::from_str("0.13").unwrap();
+            let tax_rate = Decimal::from_str("0.13").unwrap_or_default();
             let tax_amount = data.amount * tax_rate / (Decimal::ONE + tax_rate);
             let revenue_amount = data.amount - tax_amount;
 
@@ -386,7 +386,7 @@ impl InvoiceVoucherGenerator {
             }
         } else {
             // 进项发票: 原材料/费用(借), 应交税费-进项税(借) -> 应付账款(贷)
-            let tax_rate = Decimal::from_str("0.13").unwrap();
+            let tax_rate = Decimal::from_str("0.13").unwrap_or_default();
             let tax_amount = data.amount * tax_rate / (Decimal::ONE + tax_rate);
             let expense_amount = data.amount - tax_amount;
 
@@ -724,7 +724,7 @@ mod tests {
 
         let req = AutoGenerateVoucherRequest {
             source_type: VoucherSourceType::Expense,
-            event_data: serde_json::to_value(expense_data).unwrap(),
+            event_data: serde_json::to_value(expense_data).unwrap_or_default(),
             voucher_date: Utc::now(),
             period: "2024-01".to_string(),
             maker_id: None,

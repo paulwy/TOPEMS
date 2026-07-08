@@ -23,6 +23,8 @@ import { ListPageTemplate, type ColumnDef, type RowAction } from '@/components/t
 import { PageContainer } from '@/components/common';
 import { qmsApi } from '@/api/qms';
 import type { QualityIssue } from '@/api/qms';
+import { designTokens } from '@/theme/tokens';
+const ct = designTokens.colors;
 
 const QmsNonconformancePage: React.FC = () => {
   const [searchTerm, setSearchTerm] = useState('');
@@ -94,9 +96,9 @@ const QmsNonconformancePage: React.FC = () => {
       high: { bg: 'error.lighter', color: 'error.dark' },
       critical: { bg: 'error.lighter', color: 'error.dark' },
       严重: { bg: 'error.lighter', color: 'error.dark' },
-      medium: { bg: 'warning.100', color: '#ca8a04' },
-      中等: { bg: 'warning.100', color: '#ca8a04' },
-      一般: { bg: 'warning.100', color: '#ca8a04' },
+      medium: { bg: 'warning.100', color: ct.yellow[600] },
+ 中等: { bg: 'warning.100', color: ct.yellow[600] },
+ 一般: { bg: 'warning.100', color: ct.yellow[600] },
       low: { bg: 'success.lighter', color: 'success.dark' },
       轻微: { bg: 'success.lighter', color: 'success.dark' },
     };
@@ -128,8 +130,8 @@ const QmsNonconformancePage: React.FC = () => {
     const colors: Record<string, { bg: string; color: string }> = {
       open: { bg: 'error.lighter', color: 'error.dark' },
       待处理: { bg: 'error.lighter', color: 'error.dark' },
-      in_progress: { bg: 'warning.100', color: '#ca8a04' },
-      处理中: { bg: 'warning.100', color: '#ca8a04' },
+      in_progress: { bg: 'warning.100', color: ct.yellow[600] },
+ 处理中: { bg: 'warning.100', color: ct.yellow[600] },
       closed: { bg: 'success.lighter', color: 'success.dark' },
       resolved: { bg: 'success.lighter', color: 'success.dark' },
       已关闭: { bg: 'success.lighter', color: 'success.dark' },
@@ -367,7 +369,7 @@ const QmsNonconformancePage: React.FC = () => {
                 justifyContent: 'center',
               }}
             >
-              <AlertCircle sx={{ width: 20, height: 20, color: '#ca8a04' }} />
+              <AlertCircle sx={{ width: 20, height: 20, color: ct.yellow[600] }} />
             </Box>
             <Box>
               <Typography
@@ -446,7 +448,7 @@ const QmsNonconformancePage: React.FC = () => {
     <PageContainer
       headerProps={{
         pageIcon: <AlertCircle style={{ width: 20, height: 20 }} />,
-        pageGradient: 'linear-gradient(135deg, #EF4444, #F97316)',
+        pageGradient: `linear-gradient(135deg, ${ct.error.main}, ${ct.orange[500]})`,
         search: {
           value: searchTerm,
           onChange: setSearchTerm,

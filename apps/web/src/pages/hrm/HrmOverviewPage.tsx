@@ -16,9 +16,11 @@ import {
 import { DashboardTemplate } from '@/components/templates';
 import type { StatCard, ChartCard, QuickAction, RecentItem } from '@/components/templates';
 import { PageContainer } from '@/components/common';
+import { designTokens } from '@/theme/tokens';
 import BarChartComponent from '../../components/charts/BarChart';
 import LineChartComponent from '../../components/charts/LineChart';
 import PieChartComponent from '../../components/charts/PieChart';
+const ct = designTokens.colors;
 
 const HrmOverviewPage: React.FC = () => {
   const navigate = useNavigate();
@@ -158,42 +160,42 @@ const HrmOverviewPage: React.FC = () => {
         label: '员工管理',
         icon: <Users size={20} />,
         onClick: () => navigate('/hrm/employees'),
-        color: '#1976d2',
+        color: ct.primary.dark,
       },
       {
         id: 'attendance-manage',
         label: '考勤管理',
         icon: <Clock size={20} />,
         onClick: () => navigate('/hrm/attendance'),
-        color: '#7b1fa2',
+        color: ct.secondary[700],
       },
       {
         id: 'leave-manage',
         label: '请假管理',
         icon: <Calendar size={20} />,
         onClick: () => navigate('/hrm/leave'),
-        color: '#388e3c',
+        color: ct.success[700],
       },
       {
         id: 'salary-manage',
         label: '薪酬管理',
         icon: <DollarSign size={20} />,
         onClick: () => navigate('/hrm/salary'),
-        color: '#f57c00',
+        color: ct.warning[600],
       },
       {
         id: 'performance-review',
         label: '绩效考核',
         icon: <Award size={20} />,
         onClick: () => navigate('/hrm/performance'),
-        color: '#00796b',
+        color: ct.success[700],
       },
       {
         id: 'recruitment',
         label: '招聘管理',
         icon: <Briefcase size={20} />,
         onClick: () => navigate('/hrm/recruitment'),
-        color: '#c62828',
+        color: ct.error[700],
       },
     ],
     [navigate]
@@ -208,7 +210,7 @@ const HrmOverviewPage: React.FC = () => {
         time: '2026-06-29 09:30',
         icon: <Calendar size={18} />,
         status: 'warning',
-        tags: [{ label: '待审批', color: '#f57c00' }],
+        tags: [{ label: '待审批', color: ct.warning[600] }],
         onClick: () => navigate('/hrm/leave/leave1'),
       },
       {
@@ -245,7 +247,7 @@ const HrmOverviewPage: React.FC = () => {
         time: '2026-06-27 15:00',
         icon: <GraduationCap size={18} />,
         status: 'info',
-        tags: [{ label: '进行中', color: '#1976d2' }],
+        tags: [{ label: '进行中', color: ct.primary.dark }],
         onClick: () => navigate('/hrm/training/train1'),
       },
     ],

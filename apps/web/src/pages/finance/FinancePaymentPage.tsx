@@ -406,6 +406,7 @@ const FinancePaymentPage: React.FC = () => {
               size='small'
               color='success'
               onClick={() => handleApprove(row)}
+              aria-label='审批'
             >
               <CheckCircle sx={{ width: 16, height: 16 }} />
             </IconButton>
@@ -415,6 +416,7 @@ const FinancePaymentPage: React.FC = () => {
               size='small'
               color='error'
               onClick={() => handleRejectClick(row)}
+              aria-label='拒绝'
             >
               <XCircle sx={{ width: 16, height: 16 }} />
             </IconButton>
@@ -422,21 +424,24 @@ const FinancePaymentPage: React.FC = () => {
         </>
       )}
       {row.status === '已付款' && (
-        <Tooltip title='查看'>
-          <IconButton size='small'>
-            <Eye sx={{ width: 16, height: 16 }} />
-          </IconButton>
-        </Tooltip>
+        <>
+          <Tooltip title='查看'>
+            <IconButton size='small' aria-label='查看'>
+              <Eye sx={{ width: 16, height: 16 }} />
+            </IconButton>
+          </Tooltip>
+          <Tooltip title='删除'>
+            <IconButton
+              size='small'
+              color='error'
+              onClick={() => handleDeleteClick(row.id)}
+              aria-label='删除'
+            >
+              <Trash2 sx={{ width: 16, height: 16 }} />
+            </IconButton>
+          </Tooltip>
+        </>
       )}
-      <Tooltip title='删除'>
-        <IconButton
-          size='small'
-          color='error'
-          onClick={() => handleDeleteClick(row.id)}
-        >
-          <Trash2 sx={{ width: 16, height: 16 }} />
-        </IconButton>
-      </Tooltip>
     </Stack>
   );
 
@@ -453,7 +458,7 @@ const FinancePaymentPage: React.FC = () => {
           { value: '现金', label: '现金' },
         ],
         value: filterMethod,
-        onChange: setFilterMethod,
+        onChange: (value: unknown) => setFilterMethod(value as string),
       },
       {
         id: 'status',
@@ -466,7 +471,7 @@ const FinancePaymentPage: React.FC = () => {
           { value: '已拒绝', label: '已拒绝' },
         ],
         value: filterStatus,
-        onChange: setFilterStatus,
+        onChange: (value: unknown) => setFilterStatus(value as string),
       },
     ],
     [filterMethod, filterStatus]

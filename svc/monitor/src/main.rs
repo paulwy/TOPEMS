@@ -26,11 +26,10 @@ use topems_shared::{
     DatabaseConfig, DependencyHealth, HealthStatus, ServiceHealth, SystemMetrics,
 };
 
-mod api;
 mod models;
-mod plugin;
+mod modules;
 
-use api::ApiState;
+use modules::ApiState;
 
 #[tokio::main]
 async fn main() -> Result<()> {
@@ -77,8 +76,14 @@ async fn main() -> Result<()> {
         .route("/health", get(health_check))
         .route("/api/v1/health/detailed", get(health_check_detailed))
         .route("/api/v1/metrics", get(get_metrics))
-        .route("/api/plugins/health", get(plugin::plugin_health_check))
-        .route("/api/plugins/info", get(plugin::get_plugin_info))
+        .route(
+            "/api/plugins/health",
+            get(modules::monitor_plugin::plugin_health_check),
+        )
+        .route(
+            "/api/plugins/info",
+            get(modules::monitor_plugin::get_plugin_info),
+        )
         .route(
             "/metrics",
             get(move || async move {
@@ -91,7 +96,7 @@ async fn main() -> Result<()> {
         )
         .with_state(api_state.clone());
 
-    let protected_routes = api::create_routes()
+    let protected_routes = modules::create_routes()
         .layer(axum::middleware::from_fn_with_state(
             api_state.auth_state.clone(),
             auth_middleware,
@@ -117,7 +122,7 @@ async fn main() -> Result<()> {
     // 启动时自动注册到统一核心
     let core_url = env::var("CORE_URL").ok();
     tokio::spawn(async move {
-        plugin::auto_register_to_core(core_url.as_deref()).await;
+        modules::monitor_plugin::auto_register_to_core(core_url.as_deref()).await;
     });
 
     let listener = tokio::net::TcpListener::bind(&addr).await?;

@@ -21,6 +21,9 @@ import { ehsApi } from '@/api/ehs';
 import type { EmergencyPlan } from '@/api/ehs';
 import { useAppStore } from '@/store';
 import { apiLogger } from '@/utils/logger';
+import { designTokens } from '@/theme/tokens';
+
+const ct = designTokens.colors;
 
 const EhsPlanPage: React.FC = () => {
   const navigate = useNavigate();
@@ -299,7 +302,7 @@ const EhsPlanPage: React.FC = () => {
       headerProps={{
         actions: headerActions,
         pageIcon: <Activity sx={{ width: 20, height: 20 }} />,
-        pageGradient: 'linear-gradient(135deg, #22C55E 0%, #16A34A 100%)',
+        pageGradient: `linear-gradient(135deg, ${ct.success.main} 0%, ${ct.success[600]} 100%)`,
       }}
       maxWidth='xl'
     >

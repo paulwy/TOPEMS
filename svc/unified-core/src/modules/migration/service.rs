@@ -1,6 +1,5 @@
 use sqlx::PgPool;
-use std::sync::Arc;
-use tracing::{error, info};
+use tracing::info;
 
 use super::models::*;
 

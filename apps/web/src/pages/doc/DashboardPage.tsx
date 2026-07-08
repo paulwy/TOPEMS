@@ -19,6 +19,9 @@ import { PageContainer } from '@/components/common';
 import PieChartComponent from '../../components/charts/PieChart';
 import LineChartComponent from '../../components/charts/LineChart';
 import { useAppStore } from '../../store';
+import { designTokens } from '@/theme/tokens';
+
+const ct = designTokens.colors;
 
 const iconMap: Record<string, React.ReactNode> = {
   FileText: <FileText size={24} />,
@@ -242,7 +245,7 @@ export const DocumentDashboardPage: React.FC = () => {
       subtitle={`${getGreeting()}，文档管理中心`}
       headerProps={{
         pageIcon: <FileText style={{ width: 20, height: 20 }} />,
-        pageGradient: 'linear-gradient(135deg, #3B82F6 0%, #06B6D4 100%)',
+        pageGradient: `linear-gradient(135deg, ${ct.primary.main} 0%, ${ct.cyan.main} 100%)`,
       }}
       padding={false}
       maxWidth={false}

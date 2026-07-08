@@ -42,7 +42,8 @@ use topems_shared::{
     ServiceHealth, SimpleHealthConfig,
 };
 
-use crate::middleware::permission::{require_permission, require_superuser};
+use crate::middleware::permission::require_permission;
+use crate::middleware::tenant_rls::tenant_rls_middleware;
 
 pub use shared::*;
 
@@ -252,6 +253,16 @@ async fn main() {
             post(modules::iam::auth::reset_password),
         )
         // WebSocket endpoints (auth handled via token query param or subscribe message)
+        // Unified WebSocket routes with module prefix
+        .route(
+            "/ws/core/notifications",
+            get(modules::communication::ws::websocket_handler),
+        )
+        .route(
+            "/ws/core/im",
+            get(modules::communication::ws::websocket_handler),
+        )
+        // Legacy paths for backward compatibility
         .route(
             "/api/core/comm/ws/connect",
             get(modules::communication::ws::websocket_handler),
@@ -1151,6 +1162,46 @@ async fn main() {
             "/api/core/tenant/by-code/{code}",
             get(modules::tenant::handlers::get_tenant_by_code),
         )
+        .route(
+            "/api/core/tenant/list",
+            get(modules::tenant::handlers::list_tenants),
+        )
+        .route(
+            "/api/core/tenant/{id}",
+            get(modules::tenant::handlers::get_tenant),
+        )
+        .route(
+            "/api/core/tenant/slug/{slug}",
+            get(modules::tenant::handlers::get_tenant_by_slug),
+        )
+        .route(
+            "/api/core/tenant/{id}/users",
+            get(modules::tenant::handlers::get_tenant_users),
+        )
+        .route(
+            "/api/core/tenant/{id}/stats",
+            get(modules::tenant::handlers::get_tenant_stats),
+        )
+        .route(
+            "/api/core/tenant/{id}/metrics",
+            get(modules::tenant::handlers::get_usage_metrics),
+        )
+        .route(
+            "/api/core/tenant/{id}/billing",
+            get(modules::tenant::handlers::get_billing_info),
+        )
+        .route(
+            "/api/core/tenant/{id}/invoices",
+            get(modules::tenant::handlers::get_invoices),
+        )
+        .route(
+            "/api/core/tenant/context",
+            get(modules::tenant::handlers::get_current_tenant_context),
+        )
+        .route(
+            "/api/core/tenant/my",
+            get(modules::tenant::handlers::get_my_tenants),
+        )
         .layer(axum::middleware::from_fn_with_state(
             state.clone(),
             require_permission("tenant:read"),
@@ -1180,6 +1231,42 @@ async fn main() {
         .route(
             "/api/core/tenant/tenants/{tenant_id}/modules/{module_code}/deactivate",
             post(modules::tenant::handlers::deactivate_module),
+        )
+        .route(
+            "/api/core/tenant/create",
+            post(modules::tenant::handlers::create_tenant),
+        )
+        .route(
+            "/api/core/tenant/{id}",
+            put(modules::tenant::handlers::update_tenant),
+        )
+        .route(
+            "/api/core/tenant/{id}",
+            delete(modules::tenant::handlers::delete_tenant),
+        )
+        .route(
+            "/api/core/tenant/{id}/activate",
+            post(modules::tenant::handlers::activate_tenant),
+        )
+        .route(
+            "/api/core/tenant/{id}/suspend",
+            post(modules::tenant::handlers::suspend_tenant),
+        )
+        .route(
+            "/api/core/tenant/{id}/users/invite",
+            post(modules::tenant::handlers::invite_member),
+        )
+        .route(
+            "/api/core/tenant/{id}/users/{user_id}",
+            delete(modules::tenant::handlers::remove_member),
+        )
+        .route(
+            "/api/core/tenant/{id}/users/{user_id}/role",
+            put(modules::tenant::handlers::update_member_role),
+        )
+        .route(
+            "/api/core/tenant/switch",
+            post(modules::tenant::handlers::switch_tenant),
         )
         .layer(axum::middleware::from_fn_with_state(
             state.clone(),
@@ -1416,6 +1503,10 @@ async fn main() {
     let app = Router::new()
         .merge(public_routes)
         .merge(protected_routes)
+        .layer(axum::middleware::from_fn_with_state(
+            state.clone(),
+            tenant_rls_middleware,
+        ))
         .layer(axum::middleware::from_fn_with_state(
             state.clone(),
             security_headers_middleware_fn,

@@ -41,6 +41,9 @@ import { useAppStore } from '../../store';
 import { PageContainer } from '@/components/common';
 import { gisApi } from '@/api/gis';
 import type { DevicePoint, DeviceLocationRecord } from '@/api/gis';
+import { designTokens } from '@/theme/tokens';
+
+const ct = designTokens.colors;
 
 export const GisTrackingPage: React.FC = () => {
   const addNotification = useAppStore((state) => state.addNotification);
@@ -234,7 +237,7 @@ export const GisTrackingPage: React.FC = () => {
       maxWidth='xl'
       headerProps={{
         pageIcon: <Map style={{ width: 20, height: 20 }} />,
-        pageGradient: 'linear-gradient(135deg, #10B981 0%, #059669 100%)',
+        pageGradient: `linear-gradient(135deg, ${ct.success.main} 0%, ${ct.success.dark} 100%)`,
       }}
     >
       <Box sx={{ flex: 1, display: 'flex', flexDirection: 'column', height: '100%' }}>

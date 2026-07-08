@@ -39,6 +39,9 @@ import { apiLogger } from '@/utils/logger';
 import { ListPageTemplate, type ColumnDef } from '@/components/templates';
 import { PageContainer } from '@/components/common';
 import ConfirmDialog from '@/components/common/ConfirmDialog';
+import { designTokens } from '@/theme/tokens';
+
+const ct = designTokens.colors;
 
 const STATUS_OPTIONS: { value: DeliveryAppointmentStatus | ''; label: string }[] = [
   { value: '', label: '全部状态' },
@@ -486,9 +489,9 @@ const ScmDeliveryAppointmentPage: React.FC = () => {
   const renderStats = () => {
     if (!stats) return null;
     const cards = [
-      { label: '预约总数', value: stats.total, color: '#1976d2' },
-      { label: '即将到期', value: stats.upcoming, color: '#2e7d32' },
-      { label: '已逾期', value: stats.overdue, color: '#d32f2f' },
+      { label: '预约总数', value: stats.total, color: ct.primary.dark },
+      { label: '即将到期', value: stats.upcoming, color: ct.success[800] },
+      { label: '已逾期', value: stats.overdue, color: ct.error[700] },
     ];
     return (
       <Stack

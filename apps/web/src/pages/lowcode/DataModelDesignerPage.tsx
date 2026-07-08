@@ -15,6 +15,7 @@ import { PageContainer } from '@/components/common';
 import { getDataModel, updateDataModel, listDataModels, publishModel } from '../../api/lowcode';
 import type { DataModel } from '../../api/lowcode/types';
 import DataModelDesigner from '../../components/lowcode/DataModelDesigner';
+import { logger } from '@/utils/logger';
 
 const DataModelDesignerPage = () => {
   const { modelId } = useParams<{ modelId: string }>();
@@ -40,7 +41,7 @@ const DataModelDesignerPage = () => {
       if (modelRes.success) setModel(modelRes.data || null);
       if (allRes.success) setAllModels(allRes.data.items || []);
     } catch (error) {
-      console.error('Failed to load model:', error);
+      logger.error('Failed to load model:', error);
     } finally {
       setLoading(false);
     }
@@ -54,7 +55,7 @@ const DataModelDesignerPage = () => {
         setModel(updatedModel);
       }
     } catch (error) {
-      console.error('Failed to save model:', error);
+      logger.error('Failed to save model:', error);
     } finally {
       setSaving(false);
     }
@@ -67,7 +68,7 @@ const DataModelDesignerPage = () => {
         loadData();
       }
     } catch (error) {
-      console.error('Failed to publish model:', error);
+      logger.error('Failed to publish model:', error);
     }
   };
 

@@ -119,7 +119,7 @@ pub async fn create_subscription(
         (now.date_naive(), end.date_naive())
     };
 
-    let subscription: Subscription = sqlx::query_as(
+    let subscription_result = sqlx::query_as(
         r#"
         INSERT INTO core_subscriptions 
             (tenant_id, plan_id, status, current_period_start, current_period_end, is_trial, trial_ends_at)
@@ -137,10 +137,18 @@ pub async fn create_subscription(
     .bind(req.is_trial)
     .bind(if req.is_trial { Some(now + Duration::days(req.trial_days as i64)) } else { None })
     .fetch_one(&state.pool)
-    .await
-    .unwrap();
+    .await;
 
-    Json(CoreResponse::success(subscription, "Subscription created"))
+    match subscription_result {
+        Ok(subscription) => Json(CoreResponse::success(subscription, "Subscription created")),
+        Err(e) => {
+            tracing::error!("Failed to create subscription: {}", e);
+            Json(CoreResponse::error(&format!(
+                "Failed to create subscription: {}",
+                e
+            )))
+        }
+    }
 }
 
 /// Cancel subscription
@@ -319,7 +327,7 @@ pub async fn record_usage(
     }
     .to_string();
 
-    let record: UsageRecord = sqlx::query_as(
+    let record_result = sqlx::query_as(
         r#"
         INSERT INTO core_usage_records (tenant_id, metric_type, metric_name, quantity, period_start, period_end)
         VALUES ($1, $2, $3, $4, $5, $6)
@@ -333,8 +341,16 @@ pub async fn record_usage(
     .bind(now)
     .bind(now)
     .fetch_one(&state.pool)
-    .await
-    .unwrap();
+    .await;
 
-    Json(CoreResponse::success(record, "Usage recorded"))
+    match record_result {
+        Ok(record) => Json(CoreResponse::success(record, "Usage recorded")),
+        Err(e) => {
+            tracing::error!("Failed to record usage: {}", e);
+            Json(CoreResponse::error(&format!(
+                "Failed to record usage: {}",
+                e
+            )))
+        }
+    }
 }

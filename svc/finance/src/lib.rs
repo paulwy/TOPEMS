@@ -1,5 +1,5 @@
-pub mod api;
 pub mod models;
+pub mod modules;
 pub mod services;
 
 use sqlx::PgPool;

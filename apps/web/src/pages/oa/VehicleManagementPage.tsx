@@ -18,6 +18,10 @@ import { Plus, Edit2, Trash2, Eye } from 'lucide-react';
 import { ListPageTemplate, type ColumnDef, type RowAction } from '@/components/templates';
 import { PageContainer } from '@/components/common';
 import { useAppStore } from '@/store';
+import { designTokens } from '@/theme/tokens';
+import { logger } from '@/utils/logger';
+
+const ct = designTokens.colors;
 
 interface Vehicle {
   id: string;
@@ -163,14 +167,14 @@ const VehicleManagementPage: React.FC = () => {
     try {
       setVehicles(mockVehicles);
     } catch (error: unknown) {
-      console.error('加载车辆数据失败:', error);
+      logger.error('加载车辆数据失败:', error);
     } finally {
       setLoading(false);
     }
   };
 
   const getStatusBadge = (status: string) => {
-    const config = STATUS_MAP[status] || { label: status, bg: 'grey.100', color: '#475569' };
+    const config = STATUS_MAP[status] || { label: status, bg: 'grey.100', color: ct.text.secondary };
     return (
       <Chip
         label={config.label}
@@ -386,8 +390,8 @@ const VehicleManagementPage: React.FC = () => {
               { label: '已退役', value: 'retired' },
             ],
             value: statusFilter,
-            onChange: (value) => {
-              setStatusFilter(value);
+            onChange: (value: unknown) => {
+              setStatusFilter(value as string);
               setPage(0);
             },
           },
@@ -403,8 +407,8 @@ const VehicleManagementPage: React.FC = () => {
               { label: '面包车', value: '面包车' },
             ],
             value: typeFilter,
-            onChange: (value) => {
-              setTypeFilter(value);
+            onChange: (value: unknown) => {
+              setTypeFilter(value as string);
               setPage(0);
             },
           },

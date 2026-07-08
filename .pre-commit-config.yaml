@@ -22,7 +22,11 @@ repos:
         description: "Check that scripts with shebangs are executable"
       - id: check-large-files
         args: [--maxkb=500]
-        exclude: ^database/postgres_data/
+        exclude: |
+          (?x)^(
+            database/postgres_data/|
+            pnpm-lock.yaml
+          )$
         description: "Check for large files (>500KB)"
 
   - repo: https://github.com/psf/black

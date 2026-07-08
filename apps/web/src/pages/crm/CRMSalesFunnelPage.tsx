@@ -2,7 +2,7 @@ import React, { useState, useEffect, useCallback } from 'react';
 import { Box, Typography, Card, CardContent, LinearProgress, Chip } from '@mui/material';
 import { TrendingUp, TrendingDown, Users, Target, DollarSign } from 'lucide-react';
 import { useAppStore } from '../../store';
-import { StatsPageTemplate, type StatsStatCard } from '@/components/templates';
+import { StatsPageTemplate, type StatsStatCard, type ChartConfig } from '@/components/templates';
 import apiClient from '@/api/client';
 import { PageContainer } from '@/components/common';
 
@@ -28,14 +28,7 @@ interface ChartDataItem {
   color: string;
 }
 
-interface ChartConfig {
-  id: string;
-  title: string;
-  type: string;
-  dataKey: string;
-  nameKey: string;
-  data: ChartDataItem[];
-}
+
 
 const stageLabelMap: Record<string, string> = {
   lead: '潜在客户',
@@ -116,7 +109,7 @@ const CRMSalesFunnelPage: React.FC = () => {
     {
       id: 'stage-distribution',
       title: '各阶段商机数',
-      type: 'bar',
+      type: 'bar' as const,
       dataKey: 'value',
       nameKey: 'name',
       data: stages.flatMap((stage) => [

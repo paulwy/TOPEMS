@@ -791,7 +791,18 @@ pub async fn reset_password(
             "code": 500
         }));
     }
-    let mut tx = transaction.unwrap();
+    let mut tx = match transaction {
+        Ok(tx) => tx,
+        Err(e) => {
+            tracing::error!("Failed to start transaction: {}", e);
+            return Json(serde_json::json!({
+                "success": false,
+                "message": "内部服务器错误",
+                "data": null,
+                "code": 500
+            }));
+        }
+    };
 
     // 更新密码
     match sqlx::query("UPDATE core_users SET password_hash = $1, updated_at = NOW() WHERE id = $2")

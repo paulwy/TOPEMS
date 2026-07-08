@@ -1,5 +1,5 @@
 use axum::{
-    extract::{FromRef, State},
+    extract::FromRef,
     routing::{delete, get, post},
     Json, Router,
 };
@@ -17,12 +17,11 @@ use topems_shared::{
     PortalServiceAggregator, ServiceHealth,
 };
 
-mod api;
 mod models;
-mod plugin;
+mod modules;
 mod services;
 
-use crate::plugin::{auto_register_to_core, get_plugin_info, plugin_health_check};
+use crate::modules::portal_plugin::{auto_register_to_core, get_plugin_info, plugin_health_check};
 
 static START_TIME: std::sync::OnceLock<Instant> = std::sync::OnceLock::new();
 
@@ -31,6 +30,7 @@ fn get_uptime() -> u64 {
 }
 
 #[derive(Clone)]
+#[allow(dead_code)]
 struct AppState {
     auth_state: AuthState,
     service_registry: Arc<LocalServiceRegistry>,
@@ -93,43 +93,52 @@ async fn main() -> anyhow::Result<()> {
         .route("/", get(home));
 
     let protected_routes = Router::new()
-        .route("/api/portal/v1/services", get(api::services::list_services))
-        .route("/api/portal/v1/todos", get(api::todos::get_todos))
-        .route("/api/portal/v1/todos", post(api::todos::add_todo))
-        .route("/api/portal/v1/todos/{id}", post(api::todos::complete_todo))
-        .route("/api/portal/v1/todos/{id}", delete(api::todos::delete_todo))
-        .route("/api/portal/v1/user", get(api::user::get_user_info))
+        .route(
+            "/api/portal/v1/services",
+            get(modules::services::list_services),
+        )
+        .route("/api/portal/v1/todos", get(modules::todos::get_todos))
+        .route("/api/portal/v1/todos", post(modules::todos::add_todo))
+        .route(
+            "/api/portal/v1/todos/{id}",
+            post(modules::todos::complete_todo),
+        )
+        .route(
+            "/api/portal/v1/todos/{id}",
+            delete(modules::todos::delete_todo),
+        )
+        .route("/api/portal/v1/user", get(modules::user::get_user_info))
         .route(
             "/api/portal/v1/monitoring/services",
-            get(api::monitoring::get_monitoring_services),
+            get(modules::monitoring::get_monitoring_services),
         )
         .route(
             "/api/portal/v1/monitoring/metrics",
-            get(api::monitoring::get_monitoring_metrics),
+            get(modules::monitoring::get_monitoring_metrics),
         )
         .route(
             "/api/portal/v1/monitoring/alerts",
-            get(api::monitoring::get_monitoring_alerts),
+            get(modules::monitoring::get_monitoring_alerts),
         )
         .route(
             "/api/portal/v1/monitoring/alerts/{id}",
-            post(api::monitoring::acknowledge_alert),
+            post(modules::monitoring::acknowledge_alert),
         )
         .route(
             "/api/portal/v1/monitoring/logs",
-            get(api::monitoring::get_monitoring_logs),
+            get(modules::monitoring::get_monitoring_logs),
         )
         .route(
             "/api/portal/v1/notifications",
-            get(api::notifications::get_notifications),
+            get(modules::notifications::get_notifications),
         )
         .route(
             "/api/portal/v1/notifications/{id}",
-            post(api::notifications::mark_notification_read),
+            post(modules::notifications::mark_notification_read),
         )
         .route(
             "/api/portal/v1/notifications/mark-all-read",
-            post(api::notifications::mark_all_notifications_read),
+            post(modules::notifications::mark_all_notifications_read),
         )
         .layer(axum::middleware::from_fn_with_state(
             app_state.auth_state.clone(),

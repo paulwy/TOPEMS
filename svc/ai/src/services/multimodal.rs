@@ -1,3 +1,5 @@
+#![allow(dead_code)]
+
 use serde::{Deserialize, Serialize};
 use uuid::Uuid;
 
@@ -116,8 +118,8 @@ impl MultimodalService {
 
     pub async fn generate_image_caption(
         &self,
-        image_base64: &str,
-        prompt: &Option<String>,
+        _image_base64: &str,
+        _prompt: &Option<String>,
     ) -> Result<serde_json::Value, String> {
         let caption = "这是一张展示现代办公环境的图片，包含多台电脑和办公设备".to_string();
         let tags = vec!["办公室", "电脑", "办公设备", "现代", "工作环境"];
@@ -213,7 +215,7 @@ impl MultimodalService {
         }))
     }
 
-    pub async fn extract_text(&self, image_base64: &str) -> Result<serde_json::Value, String> {
+    pub async fn extract_text(&self, _image_base64: &str) -> Result<serde_json::Value, String> {
         let text_regions = vec![
             TextRegion {
                 text: "TOPEMS".to_string(),
@@ -246,7 +248,7 @@ impl MultimodalService {
 
     pub async fn describe_image(
         &self,
-        image_base64: &str,
+        _image_base64: &str,
         prompt: &Option<String>,
     ) -> Result<serde_json::Value, String> {
         let custom_prompt = prompt.clone().unwrap_or("请详细描述这张图片".to_string());
@@ -307,7 +309,7 @@ impl MultimodalService {
         })
     }
 
-    async fn summarize_video(&self, video_url: &str) -> Result<serde_json::Value, String> {
+    async fn summarize_video(&self, _video_url: &str) -> Result<serde_json::Value, String> {
         Ok(serde_json::json!({
             "summary": "视频内容为企业产品介绍，包含公司介绍、产品功能展示、客户案例等部分",
             "duration": "3:45",
@@ -315,7 +317,7 @@ impl MultimodalService {
         }))
     }
 
-    async fn detect_scenes(&self, video_url: &str) -> Result<serde_json::Value, String> {
+    async fn detect_scenes(&self, _video_url: &str) -> Result<serde_json::Value, String> {
         Ok(serde_json::json!({
             "scenes": [
                 {"time": "0:00-0:30", "description": "开场动画", "confidence": 0.95},
@@ -326,7 +328,7 @@ impl MultimodalService {
         }))
     }
 
-    async fn track_objects(&self, video_url: &str) -> Result<serde_json::Value, String> {
+    async fn track_objects(&self, _video_url: &str) -> Result<serde_json::Value, String> {
         Ok(serde_json::json!({
             "tracked_objects": [
                 {"name": "演讲者", "frames": [10, 20, 30, 40, 50], "confidence": 0.98},
@@ -450,7 +452,7 @@ impl MultimodalService {
         &self,
         image_base64: &str,
     ) -> Result<ImageQualityAssessment, String> {
-        let features = self.extract_image_features(image_base64);
+        let _features = self.extract_image_features(image_base64);
 
         let sharpness = 0.85 + (image_base64.len() % 10) as f64 * 0.01;
         let brightness = 0.70 + (image_base64.len() % 15) as f64 * 0.01;

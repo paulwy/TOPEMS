@@ -19,6 +19,9 @@ import { PageContainer } from '@/components/common/PageContainerV2';
 import type { DrillRecord } from '@/api/ehs';
 import { useAppStore } from '@/store';
 import { apiLogger } from '@/utils/logger';
+import { designTokens } from '@/theme/tokens';
+
+const ct = designTokens.colors;
 
 const EhsDrillPage: React.FC = () => {
   const [drills, setDrills] = useState<DrillRecord[]>([]);
@@ -107,7 +110,7 @@ const EhsDrillPage: React.FC = () => {
     const statusMap: Record<string, { bg: string; color: string }> = {
       已完成: { bg: 'success.lighter', color: 'success.dark' },
       已计划: { bg: 'primary.100', color: 'primary.main' },
-      进行中: { bg: 'warning.100', color: '#ca8a04' },
+      进行中: { bg: 'warning.100', color: ct.yellow[600] },
     };
     const colors = statusMap[status] || { bg: 'grey.100', color: 'text.secondary' };
     return (
@@ -267,8 +270,8 @@ const EhsDrillPage: React.FC = () => {
         { label: '已计划', value: '已计划' },
         { label: '进行中', value: '进行中' },
       ],
-      onChange: (value: string) => {
-        setStatusFilter(value);
+      onChange: (value: unknown) => {
+        setStatusFilter(value as string);
         setCurrentPage(0);
       },
     },
@@ -308,7 +311,7 @@ const EhsDrillPage: React.FC = () => {
         <StatCard
           label='进行中'
           value={stats.inProgress}
-          icon={<Clock sx={{ width: 20, height: 20, color: '#ca8a04' }} />}
+          icon={<Clock sx={{ width: 20, height: 20, color: ct.yellow[600] }} />}
           bgColor='white'
           iconBgColor='warning.100'
         />
@@ -332,7 +335,7 @@ const EhsDrillPage: React.FC = () => {
       headerProps={{
         actions: headerActions,
         pageIcon: <Clock sx={{ width: 20, height: 20 }} />,
-        pageGradient: 'linear-gradient(135deg, #F59E0B 0%, #D97706 100%)',
+        pageGradient: `linear-gradient(135deg, ${ct.warning.main} 0%, ${ct.warning.dark} 100%)`,
       }}
       maxWidth='xl'
     >

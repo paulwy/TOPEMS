@@ -33,6 +33,9 @@ import { monitorApi } from '@/api/monitor';
 import type { Alert, AlertQueryParams } from '@/api/monitor';
 import { useNotification } from '@/hooks/useNotification';
 import { apiLogger } from '@/utils/logger';
+import { designTokens } from '@/theme/tokens';
+
+const ct = designTokens.colors;
 
 // ============ 类型 ============
 
@@ -226,35 +229,35 @@ const MonitorAlertHistoryPage: React.FC = () => {
         title: '总告警数',
         value: totalAlerts || alerts.length,
         icon: <Bell size={24} />,
-        gradient: ['#1976D2', '#1565C0'] as [string, string],
+        gradient: [ct.primary.dark, ct.primary[800]] as [string, string],
       },
       {
         id: 'critical-alerts',
         title: '严重告警',
         value: alerts.filter((a) => a.severity === 'critical').length,
         icon: <AlertTriangle size={24} />,
-        gradient: ['#EF4444', '#DC2626'] as [string, string],
+        gradient: [ct.error.main, ct.error[600]] as [string, string],
       },
       {
         id: 'warning-alerts',
         title: '警告告警',
         value: alerts.filter((a) => a.severity === 'warning').length,
         icon: <AlertTriangle size={24} />,
-        gradient: ['#F59E0B', '#D97706'] as [string, string],
+        gradient: [ct.warning.main, ct.warning.dark] as [string, string],
       },
       {
         id: 'active-alerts',
         title: '未处理',
         value: alerts.filter((a) => a.status === 'active').length,
         icon: <Clock size={24} />,
-        gradient: ['#EF4444', '#DC2626'] as [string, string],
+        gradient: [ct.error.main, ct.error[600]] as [string, string],
       },
       {
         id: 'resolved-alerts',
         title: '已解决',
         value: alerts.filter((a) => a.status === 'resolved').length,
         icon: <CheckCircle size={24} />,
-        gradient: ['#00C897', '#00A878'] as [string, string],
+        gradient: [ct.success.main, ct.success.dark] as [string, string],
       },
       {
         id: 'avg-resolution',
@@ -271,7 +274,7 @@ const MonitorAlertHistoryPage: React.FC = () => {
             )}分钟`
           : '-',
         icon: <Clock size={24} />,
-        gradient: ['#8B5CF6', '#7C3AED'] as [string, string],
+        gradient: [ct.secondary.main, ct.secondary.dark] as [string, string],
       },
     ],
     [alerts, totalAlerts]
@@ -360,7 +363,7 @@ const MonitorAlertHistoryPage: React.FC = () => {
             id: 'title',
             label: '告警标题',
             field: 'title',
-            render: (value: unknown, row: AlertDetail) => (
+            render: (value: unknown, row: Record<string, unknown>) => (
               <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
                 <Typography
                   variant='body2'
@@ -373,7 +376,7 @@ const MonitorAlertHistoryPage: React.FC = () => {
                     size='small'
                     onClick={(e) => {
                       e.stopPropagation();
-                      handleViewDetail(row);
+                      handleViewDetail(row as unknown as AlertDetail);
                     }}
                   >
                     <Eye size={14} />
@@ -411,9 +414,9 @@ const MonitorAlertHistoryPage: React.FC = () => {
             id: 'actions',
             label: '操作',
             field: '',
-            render: (value: unknown, row: AlertDetail) => (
+            render: (value: unknown, row: Record<string, unknown>) => (
               <Box sx={{ display: 'flex', gap: 0.5 }}>
-                {row.status === 'active' && (
+                {(row.status as string) === 'active' && (
                   <Tooltip title='确认告警'>
                     <Button
                       size='small'
@@ -422,14 +425,14 @@ const MonitorAlertHistoryPage: React.FC = () => {
                       startIcon={<Check size={14} />}
                       onClick={(e) => {
                         e.stopPropagation();
-                        handleAcknowledge(row.id);
+                        handleAcknowledge(row.id as string);
                       }}
                     >
                       确认
                     </Button>
                   </Tooltip>
                 )}
-                {row.status === 'acknowledged' && (
+                {(row.status as string) === 'acknowledged' && (
                   <Tooltip title='解决告警'>
                     <Button
                       size='small'
@@ -438,7 +441,7 @@ const MonitorAlertHistoryPage: React.FC = () => {
                       startIcon={<CheckCircle size={14} />}
                       onClick={(e) => {
                         e.stopPropagation();
-                        handleResolve(row.id);
+                        handleResolve(row.id as string);
                       }}
                     >
                       解决
@@ -449,7 +452,7 @@ const MonitorAlertHistoryPage: React.FC = () => {
             ),
           },
         ],
-        data: filteredAlerts,
+        data: filteredAlerts as unknown as Record<string, unknown>[],
         loading,
       },
     ],
@@ -469,7 +472,7 @@ const MonitorAlertHistoryPage: React.FC = () => {
       subtitle='查看和处理所有告警记录'
       headerProps={{
         pageIcon: <Clock style={{ width: 20, height: 20 }} />,
-        pageGradient: 'linear-gradient(135deg, #8B5CF6 0%, #7C3AED 100%)',
+        pageGradient: `linear-gradient(135deg, ${ct.secondary.main} 0%, ${ct.secondary.dark} 100%)`,
       }}
     >
       <StatsPageTemplate
@@ -631,7 +634,7 @@ const MonitorAlertHistoryPage: React.FC = () => {
                   sx={{
                     fontWeight: 600,
                     bgcolor: getSeverityColor(selectedAlert.severity),
-                    color: '#fff',
+                    color: ct.background.paper,
                   }}
                 />
                 <Chip

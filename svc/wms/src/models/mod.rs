@@ -25,7 +25,6 @@ pub use stock_take::{
     UpdateStockTakeRequest,
 };
 pub use transfer_order::{
-    CreateTransferOrderItemRequest, CreateTransferOrderRequest, TransferOrder, TransferOrderItem,
-    TransferOrderQueryParams,
+    CreateTransferOrderRequest, TransferOrder, TransferOrderItem, TransferOrderQueryParams,
 };
 pub use warehouse::{CreateWarehouseRequest, UpdateWarehouseRequest, Warehouse};

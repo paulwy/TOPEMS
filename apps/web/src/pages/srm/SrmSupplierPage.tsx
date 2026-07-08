@@ -26,6 +26,9 @@ import type {
 import { useAppStore } from '@/store';
 import { apiLogger } from '@/utils/logger';
 import { PageContainer } from '@/components/common';
+import { designTokens } from '@/theme/tokens';
+
+const ct = designTokens.colors;
 
 const SrmSupplierPage: React.FC = () => {
   const navigate = useNavigate();
@@ -115,7 +118,7 @@ const SrmSupplierPage: React.FC = () => {
       启用: { bg: 'success.lighter', color: 'success.700' },
       禁用: { bg: 'error.lighter', color: 'error.darker' },
     };
-    const colors = statusMap[status] || { bg: 'grey.100', color: '#475569' };
+    const colors = statusMap[status] || { bg: 'grey.100', color: ct.text.secondary };
     return (
       <Chip
         label={status}
@@ -307,7 +310,7 @@ const SrmSupplierPage: React.FC = () => {
       A: { bg: 'success.lighter', color: 'success.700' },
       B: { bg: 'primary.100', color: 'primary.dark' },
       C: { bg: 'warning.light', color: 'warning.700' },
-      D: { bg: 'warning.light', color: '#92400e' },
+      D: { bg: 'warning.light', color: ct.warning[800] },
       E: { bg: 'error.lighter', color: 'error.darker' },
     };
     return colorMap[level] || { bg: 'grey.100', color: 'grey.600' };
@@ -338,7 +341,7 @@ const SrmSupplierPage: React.FC = () => {
                     justifyContent: 'center',
                   }}
                 >
-                  <Users sx={{ width: 20, height: 20, color: '#a855f7' }} />
+                  <Users sx={{ width: 20, height: 20, color: ct.purple[500] }} />
                 </Box>
                 <Box>
                   <Typography
@@ -618,12 +621,12 @@ const SrmSupplierPage: React.FC = () => {
       subtitle='Supplier Management'
       sx={{
         minHeight: '100vh',
-        background: 'linear-gradient(135deg, secondary.light 0%, #f8fafc 100%)',
+        background: `linear-gradient(135deg, secondary.light 0%, ${ct.background.default} 100%)`,
       }}
       padding={false}
       headerProps={{
         pageIcon: <Handshake style={{ width: 20, height: 20 }} />,
-        pageGradient: 'linear-gradient(135deg, #14B8A6 0%, #0D9488 100%)',
+        pageGradient: `linear-gradient(135deg, ${ct.teal.main} 0%, ${ct.teal.dark} 100%)`,
       }}
     >
       <ListPageTemplate
@@ -751,7 +754,7 @@ const SrmSupplierPage: React.FC = () => {
           <Button
             variant='contained'
             onClick={handleSave}
-            sx={{ bgcolor: '#a855f7' }}
+            sx={{ bgcolor: ct.purple[500] }}
           >
             保存
           </Button>
@@ -859,7 +862,7 @@ const SrmSupplierPage: React.FC = () => {
           <Button
             variant='contained'
             onClick={handleUpdate}
-            sx={{ bgcolor: '#a855f7' }}
+            sx={{ bgcolor: ct.purple[500] }}
           >
             更新
           </Button>

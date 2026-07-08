@@ -25,48 +25,51 @@ import { useNavigate } from 'react-router-dom';
 
 import { PageContainer } from '@/components/common';
 import { useAppStore } from '../../store';
+import { designTokens } from '@/theme/tokens';
+
+const ct = designTokens.colors;
 
 const quickActions = [
   {
     id: 'attendance',
     label: '考勤打卡',
     icon: <Clock size={24} />,
-    color: '#4CAF50',
+    color: ct.success.main,
     path: '/mobile/attendance',
   },
   {
     id: 'approval',
     label: '审批任务',
     icon: <CheckSquare size={24} />,
-    color: '#2196F3',
+    color: ct.primary.main,
     path: '/mobile/approvals',
   },
   {
     id: 'scan',
     label: '扫码功能',
     icon: <Scan size={24} />,
-    color: '#FF9800',
+    color: ct.warning.main,
     path: '/mobile/scan',
   },
   {
     id: 'workbench',
     label: '工作台',
     icon: <LayoutDashboard size={24} />,
-    color: '#9C27B0',
+    color: ct.secondary.main,
     path: '/mobile/workbench',
   },
   {
     id: 'notification',
     label: '消息通知',
     icon: <Bell size={24} />,
-    color: '#F44336',
+    color: ct.error.main,
     path: '/mobile/notifications',
   },
   {
     id: 'profile',
     label: '个人中心',
     icon: <User size={24} />,
-    color: '#607D8B',
+    color: ct.text.secondary,
     path: '/mobile/profile',
   },
 ];

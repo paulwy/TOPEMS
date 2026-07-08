@@ -115,7 +115,7 @@ const mapApiApprovalToApprovalItem = (apiApproval: ApiApproval): ApprovalItem =>
   return {
     id: apiApproval.id || String(apiApproval.task_id || apiApproval.id),
     title: apiApproval.title || apiApproval.task_name || `审批 ${apiApproval.id}`,
-    type: typeMap[apiApproval.type] || 'other',
+    type: apiApproval.type ? typeMap[apiApproval.type] : 'other',
     applicant:
       apiApproval.applicant_name || apiApproval.assignee_name || apiApproval.applicant || '未知',
     department: apiApproval.department || apiApproval.department_name || '',
@@ -123,8 +123,8 @@ const mapApiApprovalToApprovalItem = (apiApproval: ApiApproval): ApprovalItem =>
       ? new Date(apiApproval.created_at).toLocaleString('zh-CN')
       : '',
     amount: apiApproval.amount ? `¥${Number(apiApproval.amount).toFixed(2)}` : undefined,
-    priority: priorityMap[apiApproval.priority] || 'medium',
-    status: statusMap[apiApproval.status] || 'pending',
+    priority: apiApproval.priority ? priorityMap[apiApproval.priority] : 'medium',
+    status: apiApproval.status ? statusMap[apiApproval.status] : 'pending',
     description: apiApproval.description || apiApproval.remarks || '',
     steps: apiApproval.steps || [
       { name: '提交申请', status: 'completed' },
@@ -165,7 +165,7 @@ const MobileApprovalPage: React.FC = () => {
         params.initiator_id = user?.id;
       }
 
-      const response = await approvalTaskApi.listApprovalTasks(params);
+      const response = await approvalTaskApi.listApprovalTasks(params as any);
       if (response.success && response.data) {
         const data = response.data as any;
         const apiApprovals = Array.isArray(data) ? data : data.items || [];

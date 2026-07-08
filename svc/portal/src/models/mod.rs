@@ -98,6 +98,7 @@ pub struct Notification {
 }
 
 #[derive(Debug, Clone, Serialize, PartialEq)]
+#[allow(dead_code)]
 pub enum HealthStatus {
     #[serde(rename = "healthy")]
     Healthy,

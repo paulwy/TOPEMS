@@ -38,6 +38,7 @@ import { getApp, getAppVersions } from '../../api/lowcode';
 import type { LowCodeApp, AppVersion } from '../../api/lowcode/types';
 import AppVersionList from '../../components/lowcode/AppVersionList';
 import AppPublishDialog from '../../components/lowcode/AppPublishDialog';
+import { logger } from '@/utils/logger';
 
 type TabType = 'overview' | 'pages' | 'models' | 'workflows' | 'permissions' | 'versions';
 
@@ -63,7 +64,7 @@ const AppDetailPage = () => {
       if (appRes.success) setApp(appRes.data || null);
       if (versionsRes.success) setVersions(versionsRes.data || []);
     } catch (error) {
-      console.error('Failed to load app:', error);
+      logger.error('Failed to load app:', error);
     } finally {
       setLoading(false);
     }

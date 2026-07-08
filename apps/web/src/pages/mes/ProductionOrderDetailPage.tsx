@@ -8,6 +8,8 @@ import { mesApi } from '@/api/mes';
 import type { ProductionOrder, ProductionRecord, QualityRecord } from '@/api/mes';
 import { apiLogger } from '@/utils/logger';
 import { useAppStore } from '@/store';
+import { designTokens } from '@/theme/tokens';
+const ct = designTokens.colors;
 
 const ProductionOrderDetailPage: React.FC = () => {
   const { id } = useParams<{ id: string }>();
@@ -394,7 +396,7 @@ const ProductionOrderDetailPage: React.FC = () => {
             <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 1 }}>
               <Package
                 size={18}
-                color='#1976d2'
+                color={ct.primary.dark}
               />
               <InputLabel sx={{ fontSize: 12, color: 'text.secondary' }}>计划数量</InputLabel>
             </Box>
@@ -434,7 +436,7 @@ const ProductionOrderDetailPage: React.FC = () => {
             <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 1 }}>
               <AlertCircle
                 size={18}
-                color='#b91c1c'
+                color={ct.error[700]}
               />
               <InputLabel sx={{ fontSize: 12, color: 'text.secondary' }}>不合格</InputLabel>
             </Box>
@@ -486,7 +488,7 @@ const ProductionOrderDetailPage: React.FC = () => {
       avatar: (
         <Package
           size={32}
-          color='#1976d2'
+          color={ct.primary.dark}
         />
       ),
       title: order?.product_name,
@@ -507,7 +509,7 @@ const ProductionOrderDetailPage: React.FC = () => {
       autoBreadcrumbs
       headerProps={{
         pageIcon: <Package style={{ width: 20, height: 20 }} />,
-        pageGradient: 'linear-gradient(135deg, #3B82F6 0%, #1D4ED8 100%)',
+        pageGradient: `linear-gradient(135deg, ${ct.primary.main} 0%, ${ct.primary.dark} 100%)`,
       }}
     >
       <DetailPageTemplate

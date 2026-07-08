@@ -435,7 +435,7 @@ pub async fn rank_data(
 }
 
 pub async fn get_available_dimensions(
-    State(state): State<AppState>,
+    State(_state): State<AppState>,
     Path(datasource_id): Path<Uuid>,
 ) -> Json<serde_json::Value> {
     info!(
@@ -481,7 +481,7 @@ pub async fn get_available_dimensions(
 }
 
 pub async fn get_available_measures(
-    State(state): State<AppState>,
+    State(_state): State<AppState>,
     Path(datasource_id): Path<Uuid>,
 ) -> Json<serde_json::Value> {
     info!(

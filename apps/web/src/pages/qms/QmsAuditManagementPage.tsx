@@ -17,6 +17,8 @@ import { ListPageTemplate, type ColumnDef, type RowAction } from '@/components/t
 import { PageContainer } from '@/components/common';
 import { qmsApi } from '@/api/qms';
 import type { AuditPlan } from '@/api/qms';
+import { designTokens } from '@/theme/tokens';
+const ct = designTokens.colors;
 
 const QmsAuditManagementPage: React.FC = () => {
   const [searchTerm, setSearchTerm] = useState('');
@@ -56,8 +58,8 @@ const QmsAuditManagementPage: React.FC = () => {
       scheduled: { bg: 'primary.100', color: 'primary.dark' },
       planning: { bg: 'primary.100', color: 'primary.dark' },
       计划中: { bg: 'primary.100', color: 'primary.dark' },
-      in_progress: { bg: 'warning.100', color: '#ca8a04' },
-      进行中: { bg: 'warning.100', color: '#ca8a04' },
+      in_progress: { bg: 'warning.100', color: ct.yellow[600] },
+ 进行中: { bg: 'warning.100', color: ct.yellow[600] },
       completed: { bg: 'success.lighter', color: 'success.dark' },
       已完成: { bg: 'success.lighter', color: 'success.dark' },
       已计划: { bg: 'primary.100', color: 'primary.dark' },
@@ -248,7 +250,7 @@ const QmsAuditManagementPage: React.FC = () => {
       subtitle='Audit Management'
       headerProps={{
         pageIcon: <FileText style={{ width: 20, height: 20 }} />,
-        pageGradient: 'linear-gradient(135deg, #3B82F6, #6366F1)',
+        pageGradient: `linear-gradient(135deg, ${ct.primary.main}, ${ct.secondary[400]})`,
         search: {
           value: searchTerm,
           onChange: setSearchTerm,

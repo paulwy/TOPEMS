@@ -59,6 +59,7 @@ import {
 import { usePluginStore } from '@/store/pluginStore';
 import { useAppStore } from '@/store';
 import { PageContainer } from '@/components/common';
+import { logger } from '@/utils/logger';
 
 type SortOption = 'popular' | 'rating' | 'newest' | 'price';
 type ViewMode = 'grid' | 'list';
@@ -712,7 +713,7 @@ const PluginMarketplacePage: React.FC = () => {
       try {
         await Promise.all([fetchMarketplacePlugins(), fetchHealthStatus()]);
       } catch (err: unknown) {
-        console.error('Failed to load marketplace data:', err);
+        logger.error('Failed to load marketplace data:', err);
       }
     };
     fetchData();

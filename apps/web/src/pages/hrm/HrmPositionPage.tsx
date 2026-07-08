@@ -398,7 +398,7 @@ const PositionManagementPage: React.FC<PositionManagementPageProps> = () => {
                 ...departments.map((d) => ({ label: d.name, value: d.id })),
               ],
               value: departmentFilter,
-              onChange: (value: string) => setDepartmentFilter(value),
+              onChange: (value: unknown) => setDepartmentFilter(value as string),
             },
             {
               id: 'status',
@@ -410,7 +410,7 @@ const PositionManagementPage: React.FC<PositionManagementPageProps> = () => {
                 { label: '禁用', value: 'inactive' },
               ],
               value: statusFilter,
-              onChange: (value: string) => setStatusFilter(value),
+              onChange: (value: unknown) => setStatusFilter(value as string),
             },
           ]}
           actions={[

@@ -36,6 +36,9 @@ import { useAppStore } from '../../store';
 import { PageContainer } from '@/components/common';
 import ConfirmDialog from '@/components/common/ConfirmDialog';
 import { extractErrorMessage } from '@/utils/errors';
+import { designTokens } from '@/theme/tokens';
+
+const ct = designTokens.colors;
 
 interface SettingGroup {
   id: string;
@@ -443,7 +446,7 @@ export const NotificationSettingsPage: React.FC = () => {
               >
                 <MessageSquare
                   size={18}
-                  color='#1976d2'
+                  color={ct.primary.dark}
                 />
               </Box>
               <Box>
@@ -493,7 +496,7 @@ export const NotificationSettingsPage: React.FC = () => {
               >
                 <Mail
                   size={18}
-                  color='#2e7d32'
+                  color={ct.success.dark}
                 />
               </Box>
               <Box>
@@ -556,7 +559,7 @@ export const NotificationSettingsPage: React.FC = () => {
               >
                 <Smartphone
                   size={18}
-                  color='#ed6c02'
+                  color={ct.warning.dark}
                 />
               </Box>
               <Box>
@@ -619,7 +622,7 @@ export const NotificationSettingsPage: React.FC = () => {
               >
                 <Bell
                   size={18}
-                  color='#9c27b0'
+                  color={ct.secondary.dark}
                 />
               </Box>
               <Box>
@@ -669,7 +672,7 @@ export const NotificationSettingsPage: React.FC = () => {
               >
                 <Users
                   size={18}
-                  color='#0288d1'
+                  color={ct.info.dark}
                 />
               </Box>
               <Box>
@@ -999,7 +1002,7 @@ export const NotificationSettingsPage: React.FC = () => {
             <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
               <AlertCircle
                 size={18}
-                color='#d32f2f'
+                color={ct.error.dark}
               />
               <Box>
                 <Typography
@@ -1040,7 +1043,7 @@ export const NotificationSettingsPage: React.FC = () => {
             <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
               <Layers
                 size={18}
-                color='#1976d2'
+                color={ct.primary.dark}
               />
               <Box>
                 <Typography
@@ -1081,7 +1084,7 @@ export const NotificationSettingsPage: React.FC = () => {
             <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
               <Clock
                 size={18}
-                color='#9c27b0'
+                color={ct.secondary.dark}
               />
               <Box>
                 <Typography
@@ -1122,7 +1125,7 @@ export const NotificationSettingsPage: React.FC = () => {
             <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
               <Bell
                 size={18}
-                color='#ed6c02'
+                color={ct.warning.dark}
               />
               <Box>
                 <Typography
@@ -1163,7 +1166,7 @@ export const NotificationSettingsPage: React.FC = () => {
             <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
               <MessageSquare
                 size={18}
-                color='#2e7d32'
+                color={ct.success.dark}
               />
               <Box>
                 <Typography
@@ -1504,7 +1507,7 @@ export const NotificationSettingsPage: React.FC = () => {
             <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
               <Webhook
                 size={18}
-                color='#1976d2'
+                color={ct.primary.dark}
               />
               <Box>
                 <Typography

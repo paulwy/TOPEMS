@@ -53,6 +53,9 @@ import {
   Cell,
 } from 'recharts';
 import dayjs from 'dayjs';
+import { designTokens } from '@/theme/tokens';
+
+const ct = designTokens.colors;
 
 interface SampleTestRecord {
   id: string;
@@ -146,8 +149,8 @@ const LimsSampleDetailPage: React.FC = () => {
 
   const getStatusBadge = (status: string) => {
     const statusMap: Record<string, { bg: string; color: string; label: string }> = {
-      pending: { bg: 'warning.100', color: '#ca8a04', label: '待测试' },
-      待测试: { bg: 'warning.100', color: '#ca8a04', label: '待测试' },
+      pending: { bg: 'warning.100', color: ct.yellow[600], label: '待测试' },
+      待测试: { bg: 'warning.100', color: ct.yellow[600], label: '待测试' },
       in_progress: { bg: 'primary.100', color: 'primary.dark', label: '测试中' },
       测试中: { bg: 'primary.100', color: 'primary.dark', label: '测试中' },
       completed: { bg: 'success.lighter', color: 'success.dark', label: '已完成' },
@@ -308,7 +311,7 @@ const LimsSampleDetailPage: React.FC = () => {
                           ? 'success.dark'
                           : task.status === 'in_progress' || task.status === '进行中'
                             ? 'primary.dark'
-                            : '#ca8a04',
+                            : ct.yellow[600],
                     }}
                   />
                 </Box>
@@ -458,12 +461,12 @@ const LimsSampleDetailPage: React.FC = () => {
                 borderRadius: 3,
               }}
             >
-              <Typography sx={{ fontSize: '1.5rem', fontWeight: 700, color: '#ca8a04' }}>
+              <Typography sx={{ fontSize: '1.5rem', fontWeight: 700, color: ct.yellow[600] }}>
                 {stats.pending}
               </Typography>
               <Typography
                 variant='caption'
-                sx={{ color: '#ca8a04', mt: 0.5 }}
+                sx={{ color: ct.yellow[600], mt: 0.5 }}
               >
                 待定
               </Typography>
@@ -502,7 +505,7 @@ const LimsSampleDetailPage: React.FC = () => {
           display: 'flex',
           alignItems: 'center',
           justifyContent: 'center',
-          background: 'linear-gradient(135deg, #f8fafc 0%, grey.100 100%)',
+          background: `linear-gradient(135deg, ${ct.background.default} 0%, grey.100 100%)`,
         }}
       >
         <div style={{ textAlign: 'center' }}>
@@ -510,14 +513,14 @@ const LimsSampleDetailPage: React.FC = () => {
             style={{
               width: 48,
               height: 48,
-              border: '4px solid #e9d5ff',
-              borderTop: '4px solid #9333ea',
+              border: `4px solid ${ct.purple[200]}`,
+              borderTop: `4px solid ${ct.purple[600]}`,
               borderRadius: '50%',
               animation: 'spin 1s linear infinite',
               margin: '0 auto 16px auto',
             }}
           ></div>
-          <p style={{ color: '#475569' }}>加载中...</p>
+          <p style={{ color: ct.grey[600] }}>加载中...</p>
         </div>
       </div>
     );
@@ -531,7 +534,7 @@ const LimsSampleDetailPage: React.FC = () => {
           display: 'flex',
           alignItems: 'center',
           justifyContent: 'center',
-          background: 'linear-gradient(135deg, #f8fafc 0%, grey.100 100%)',
+          background: `linear-gradient(135deg, ${ct.background.default} 0%, grey.100 100%)`,
         }}
       >
         <div style={{ textAlign: 'center' }}>
@@ -543,7 +546,7 @@ const LimsSampleDetailPage: React.FC = () => {
               margin: '0 auto 16px auto',
             }}
           />
-          <p style={{ color: '#475569' }}>样品不存在或已被删除</p>
+          <p style={{ color: ct.grey[600] }}>样品不存在或已被删除</p>
           <Button
             onClick={() => navigate('/lims')}
             sx={{ mt: 2 }}
@@ -561,7 +564,7 @@ const LimsSampleDetailPage: React.FC = () => {
       maxWidth={false}
       headerProps={{
         pageIcon: <Package style={{ width: 20, height: 20 }} />,
-        pageGradient: 'linear-gradient(135deg, #14B8A6 0%, #0D9488 100%)',
+        pageGradient: `linear-gradient(135deg, ${ct.teal[400]} 0%, ${ct.teal[600]} 100%)`,
       }}
     >
       <DetailPageTemplate
@@ -577,7 +580,7 @@ const LimsSampleDetailPage: React.FC = () => {
         onEdit={() => setShowEditModal(true)}
         onDelete={handleDelete}
         infoCard={{
-          avatar: <Package sx={{ fontSize: 40, color: '#9333ea' }} />,
+          avatar: <Package sx={{ fontSize: 40, color: 'secondary.main' }} />,
           title: sample.name,
           subtitle: sample.sample_no || sample.id,
           tags: [sample.status],

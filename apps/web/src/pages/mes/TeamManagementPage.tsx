@@ -35,6 +35,8 @@ import {
 } from '@/components/templates';
 import { Plus, Edit, Trash2, Eye, Users } from 'lucide-react';
 import { apiLogger } from '@/utils/logger';
+import { designTokens } from '@/theme/tokens';
+const ct = designTokens.colors;
 
 const TeamManagementPage: React.FC = () => {
   const [teams, setTeams] = useState<Team[]>([]);
@@ -263,8 +265,8 @@ const TeamManagementPage: React.FC = () => {
           { label: '停用', value: 'inactive' },
         ],
         value: statusFilter,
-        onChange: (value) => {
-          setStatusFilter(value);
+        onChange: (value: unknown) => {
+          setStatusFilter(value as string);
           setCurrentPage(1);
         },
       },
@@ -368,7 +370,7 @@ const TeamManagementPage: React.FC = () => {
           {stats.inactive}
         </Typography>
       </Box>
-      <Box sx={{ p: 2, bgcolor: '#e0e7ff', borderRadius: 3 }}>
+      <Box sx={{ p: 2, bgcolor: ct.secondary[100], borderRadius: 3 }}>
         <Typography
           variant='body2'
           sx={{ color: 'text.secondary' }}
@@ -391,7 +393,7 @@ const TeamManagementPage: React.FC = () => {
       subtitle='管理生产班组信息,包括班组编码、名称、类型、成员等'
       headerProps={{
         pageIcon: <Users style={{ width: 20, height: 20 }} />,
-        pageGradient: 'linear-gradient(135deg, #10B981 0%, #059669 100%)',
+        pageGradient: `linear-gradient(135deg, ${ct.success.main} 0%, ${ct.success.dark} 100%)`,
       }}
     >
       <ListPageTemplate

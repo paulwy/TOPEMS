@@ -6,6 +6,9 @@ import { srmApi, type SupplierPerformance, type PerformanceSummary } from '@/api
 import { useAppStore } from '@/store';
 import { apiLogger } from '@/utils/logger';
 import { PageContainer } from '@/components/common';
+import { designTokens } from '@/theme/tokens';
+
+const ct = designTokens.colors;
 
 const SrmPerformancePage: React.FC = () => {
   const addNotification = useAppStore((state) => state.addNotification);
@@ -87,16 +90,16 @@ const SrmPerformancePage: React.FC = () => {
       return (
         <Award
           size={20}
-          color='#cd7f32'
+          color={ct.orange[700]}
         />
       );
     return null;
   };
 
   const getRankBg = (index: number) => {
-    if (index === 0) return '#fffbeb';
+    if (index === 0) return ct.warning[50];
     if (index === 1) return 'grey.100';
-    if (index === 2) return '#fff8e7';
+    if (index === 2) return ct.orange[50];
     return 'transparent';
   };
 

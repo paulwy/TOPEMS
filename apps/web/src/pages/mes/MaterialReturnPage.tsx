@@ -47,6 +47,8 @@ import {
   Package,
 } from 'lucide-react';
 import { apiLogger } from '@/utils/logger';
+import { designTokens } from '@/theme/tokens';
+const ct = designTokens.colors;
 
 const MaterialReturnPage: React.FC = () => {
   const [returns, setReturns] = useState<MaterialReturn[]>([]);
@@ -157,7 +159,7 @@ const MaterialReturnPage: React.FC = () => {
       }
     > = {
       pending: { label: '待审核', bg: 'warning.light', color: 'warning.700' },
-      approved: { label: '已审核', bg: '#e0e7ff', color: 'secondary.700' },
+      approved: { label: '已审核', bg: ct.secondary[100], color: 'secondary.700' },
       returned: { label: '已退库', bg: 'success.lighter', color: 'success.700' },
       cancelled: { label: '已取消', bg: 'error.lighter', color: 'error.dark' },
     };
@@ -252,8 +254,8 @@ const MaterialReturnPage: React.FC = () => {
           { label: '已取消', value: 'cancelled' },
         ],
         value: statusFilter,
-        onChange: (value) => {
-          setStatusFilter(value);
+        onChange: (value: unknown) => {
+          setStatusFilter(value as string);
           setCurrentPage(1);
         },
       },
@@ -313,7 +315,7 @@ const MaterialReturnPage: React.FC = () => {
           {returns.filter((r) => r.status === 'pending').length}
         </Typography>
       </Box>
-      <Box sx={{ p: 2, bgcolor: '#e0e7ff', borderRadius: 3 }}>
+      <Box sx={{ p: 2, bgcolor: ct.secondary[100], borderRadius: 3 }}>
         <Typography
           variant='body2'
           sx={{ color: 'text.secondary', mb: 1 }}
@@ -376,7 +378,7 @@ const MaterialReturnPage: React.FC = () => {
       autoBreadcrumbs
       headerProps={{
         pageIcon: <Undo2 style={{ width: 20, height: 20 }} />,
-        pageGradient: 'linear-gradient(135deg, #EF4444 0%, #B91C1C 100%)',
+        pageGradient: `linear-gradient(135deg, ${ct.error.main} 0%, ${ct.error[700]} 100%)`,
       }}
     >
       <ListPageTemplate
