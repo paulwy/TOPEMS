@@ -17,7 +17,8 @@ import {
   Table,
 } from 'lucide-react';
 import { BackButton } from '../common';
-import {Box,
+import {
+  Box,
   Typography,
   Button,
   Drawer,
@@ -31,7 +32,9 @@ import {Box,
   FormControl,
   InputLabel,
   Divider,
-  Chip, useTheme} from '@mui/material';
+  Chip,
+  useTheme,
+} from '@mui/material';
 import type { ChartType, ChartDataPoint } from './ChartLibrary';
 import ChartComponent from './ChartLibrary';
 import PivotTable from './PivotTable';
@@ -357,7 +360,7 @@ export const DashboardEditor: React.FC<{
           <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
             <BackButton
               variant='text'
-              size='sm'
+              size='small'
               onClick={onCancel}
             />
             <TextField

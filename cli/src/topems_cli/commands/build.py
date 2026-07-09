@@ -32,7 +32,7 @@ def build_all(release: bool, jobs: int):
         "svc/crm", "svc/rs", "svc/lims", "svc/pdm", "svc/doc",
         "svc/mes", "svc/qms", "svc/ehs", "svc/scm", "svc/srm",
         "svc/wms", "svc/file", "svc/mail", "svc/im", "svc/gis",
-        "svc/bi", "svc/report", "svc/ai", "svc/mobile",
+        "svc/bi", "svc/ai", "svc/mobile",
     ]
     
     build_type = "release" if release else "debug"

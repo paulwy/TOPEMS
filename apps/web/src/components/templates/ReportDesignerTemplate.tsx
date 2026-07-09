@@ -1305,14 +1305,17 @@ export const ReportDesignerTemplate: React.FC<ReportDesignerTemplateProps> = ({
                   value={state.layout.chart?.xAxisField || ''}
                   label='X轴字段'
                   onChange={(e) =>
-                        setState((prev) => ({
-                          ...prev,
-                          layout: {
-                            ...prev.layout,
-                            chart: { ...(prev.layout.chart || {} as ReportChartConfig), xAxisField: e.target.value },
-                          },
-                        }))
-                      }
+                    setState((prev) => ({
+                      ...prev,
+                      layout: {
+                        ...prev.layout,
+                        chart: {
+                          ...(prev.layout.chart || ({} as ReportChartConfig)),
+                          xAxisField: e.target.value,
+                        },
+                      },
+                    }))
+                  }
                 >
                   {state.selectedFields
                     .filter((f) => f.visible)
@@ -1338,7 +1341,10 @@ export const ReportDesignerTemplate: React.FC<ReportDesignerTemplateProps> = ({
                       ...prev,
                       layout: {
                         ...prev.layout,
-                        chart: { ...(prev.layout.chart || {} as ReportChartConfig), yAxisFields: e.target.value as string[] },
+                        chart: {
+                          ...(prev.layout.chart || ({} as ReportChartConfig)),
+                          yAxisFields: e.target.value as string[],
+                        },
                       },
                     }))
                   }
@@ -1365,7 +1371,10 @@ export const ReportDesignerTemplate: React.FC<ReportDesignerTemplateProps> = ({
                           ...prev,
                           layout: {
                             ...prev.layout,
-                            chart: { ...(prev.layout.chart || {} as ReportChartConfig), showLegend: e.target.checked },
+                            chart: {
+                              ...(prev.layout.chart || ({} as ReportChartConfig)),
+                              showLegend: e.target.checked,
+                            },
                           },
                         }))
                       }
@@ -1380,7 +1389,13 @@ export const ReportDesignerTemplate: React.FC<ReportDesignerTemplateProps> = ({
                       onChange={(e) =>
                         setState((prev) => ({
                           ...prev,
-                          layout: { ...prev.layout, chart: { ...(prev.layout.chart || {} as ReportChartConfig), showGrid: e.target.checked } },
+                          layout: {
+                            ...prev.layout,
+                            chart: {
+                              ...(prev.layout.chart || ({} as ReportChartConfig)),
+                              showGrid: e.target.checked,
+                            },
+                          },
                         }))
                       }
                     />

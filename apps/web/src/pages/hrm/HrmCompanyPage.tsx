@@ -53,7 +53,7 @@ import {
   type TreeAction,
 } from '@/components/templates';
 import { EmptyState } from '@/components';
-import ConfirmDialog from '@/components/common/ConfirmDialog';
+import { ConfirmDialog } from '@topems/shared-components';
 
 const HrmCompanyPage: React.FC = () => {
   const addNotification = useAppStore((state) => state.addNotification);

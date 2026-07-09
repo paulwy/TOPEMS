@@ -26,10 +26,10 @@ import {
   Grid,
 } from '@mui/material';
 import { Plus, Search, MoreVertical, Edit, Trash2, Copy, Eye, Send, Layout } from 'lucide-react';
-import PageContainer from '@/components/common/PageContainer';
+import { PageContainer } from '@/components';
 import { lowcodeApi } from '@/api';
 import type { PageSchema, ListParams } from '@/api/lowcode';
-import { logger } from "@/utils/logger";
+import { logger } from '@/utils/logger';
 
 const PageListPage: React.FC = () => {
   const navigate = useNavigate();

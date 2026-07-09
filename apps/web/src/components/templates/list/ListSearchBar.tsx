@@ -15,7 +15,7 @@ import {
   IconButton,
 } from '@mui/material';
 import { Search, RefreshCw } from 'lucide-react';
-import type { FilterConfig, FilterValue } from '../../common/FilterBar';
+import type { FilterConfig, FilterValue } from '@topems/shared-components';
 
 interface ListSearchBarProps {
   searchable?: boolean;

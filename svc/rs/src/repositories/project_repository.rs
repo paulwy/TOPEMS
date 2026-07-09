@@ -23,7 +23,7 @@ impl ProjectRepository {
 
         let project = sqlx::query_as::<_, Project>(
             r#"
-            INSERT INTO projects (
+            INSERT INTO rs.projects (
                 id, name, code, description, project_type, status, leader,
                 team_members, start_date, end_date, budget, progress, created_by,
                 created_at, updated_at, project_config, benefit_target, risk_level,
@@ -429,6 +429,9 @@ mod tests {
         };
 
         let result = repo.create(&req).await;
+        if let Err(e) = &result {
+            eprintln!("Create project error: {}", e);
+        }
         assert!(result.is_ok());
 
         let project = result.unwrap();

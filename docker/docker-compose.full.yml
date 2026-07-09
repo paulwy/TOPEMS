@@ -586,24 +586,6 @@ services:
         condition: service_started
     restart: unless-stopped
 
-  topems-report:
-    build:
-      context: ./svc/report
-      dockerfile: Dockerfile
-    container_name: topems-report
-    environment:
-      <<: *common-env
-    ports:
-      - "8061:8061"
-    networks:
-      - topems-network
-    depends_on:
-      postgres:
-        condition: service_healthy
-      topems-iam:
-        condition: service_started
-    restart: unless-stopped
-
   topems-notification:
     build:
       context: ./svc/notification

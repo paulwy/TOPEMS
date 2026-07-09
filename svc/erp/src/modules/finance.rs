@@ -77,48 +77,6 @@ pub fn create_routes() -> Router<ApiState> {
             "/api/erp/payables/{id}",
             get(get_payable).put(update_payable).delete(delete_payable),
         )
-        .route("/api/finance/period/current", get(get_current_period))
-        .route("/api/finance/periods", get(list_periods))
-        .route("/api/finance/periods/open", post(open_period))
-        .route("/api/finance/periods/close", post(close_period))
-        .route(
-            "/api/finance/accounts",
-            get(list_accounts).post(create_account),
-        )
-        .route("/api/finance/accounts/tree", get(get_accounts_tree))
-        .route(
-            "/api/finance/accounts/{id}",
-            get(get_account).put(update_account).delete(delete_account),
-        )
-        .route(
-            "/api/finance/accounts/{parent_id}/children-batch",
-            post(batch_create_children),
-        )
-        .route("/api/finance/accounts/balances", get(get_account_balances))
-        .route(
-            "/api/finance/accounts/opening-balances",
-            get(get_opening_balances),
-        )
-        .route(
-            "/api/finance/accounts/{account_id}/opening-balance",
-            post(set_opening_balance),
-        )
-        .route(
-            "/api/finance/accounts/opening-balance/carry-forward",
-            post(carry_forward_opening_balance),
-        )
-        .route(
-            "/api/finance/ar/collections",
-            get(list_collections).post(create_collection),
-        )
-        .route(
-            "/api/finance/ap/payments",
-            get(list_payments).post(create_payment),
-        )
-        .route("/api/finance/reconcile", post(reconcile))
-        .route("/api/finance/reconcile/auto", post(auto_reconcile))
-        .route("/api/finance/ar/aging", get(get_receivable_aging))
-        .route("/api/finance/ap/aging", get(get_payable_aging))
 }
 
 async fn list_expenses(

@@ -7,7 +7,8 @@ import React, { useState, useMemo } from 'react';
 import { logger } from '@/utils/logger';
 import { useAppStore } from '@/store';
 import { useEmployeeFinanceInfo, useUpdateEmployeeFinanceInfo } from '@/hooks/useHrmFinance';
-import {TextField,
+import {
+  TextField,
   FormLabel,
   Chip,
   Card,
@@ -19,15 +20,10 @@ import {TextField,
   MenuItem,
   Box,
   Typography,
-  Button, useTheme} from '@mui/material';
-import {
-  Banknote,
-  DollarSign,
-  Shield,
-  Save,
-  Edit2,
-  X,
-} from 'lucide-react';
+  Button,
+  useTheme,
+} from '@mui/material';
+import { Banknote, DollarSign, Shield, Save, Edit2, X } from 'lucide-react';
 import { designTokens } from '@/theme/tokens';
 
 interface EmployeeFinanceTabProps {

@@ -127,7 +127,9 @@ const LimsSampleDetailPage: React.FC = () => {
           const recordRes = await limsApi.listRecordsByTask(task.id);
           if (recordRes.success && recordRes.data) {
             const recordData = recordRes.data as LimsListResponse<RawRecord> | RawRecord[];
-            const recordArray = Array.isArray(recordData) ? recordData : recordData.records || recordData.items || [];
+            const recordArray = Array.isArray(recordData)
+              ? recordData
+              : recordData.records || recordData.items || [];
             const formattedRecords = recordArray.map((r: RawRecord) => ({
               id: r.id || '',
               step_name: r.step_name || r.step_id || '',

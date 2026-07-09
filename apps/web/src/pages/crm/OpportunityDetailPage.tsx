@@ -7,9 +7,10 @@ import type { Opportunity } from '@/api/crm';
 import { useNotification } from '@/hooks/useNotification';
 import { apiLogger } from '@/utils/logger';
 import { DetailPageTemplate, type TabConfig, type SectionConfig } from '@/components/templates';
-import ConfirmDialog from '@/components/common/ConfirmDialog';
+import { ConfirmDialog } from '@topems/shared-components';
 import { PageContainer } from '@/components/common';
 import { designTokens } from '@/theme/tokens';
+
 const ct = designTokens.colors;
 
 const OpportunityDetailPage: React.FC = () => {

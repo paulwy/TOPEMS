@@ -75,7 +75,12 @@ describe('NavigationRegistryV2 Edge Cases', () => {
         path: '/test-static-priority',
         source: 'core',
         navItems: [
-          { code: 'test-users', path: '/test-static-priority/users', label: '用户列表', icon: 'Test' },
+          {
+            code: 'test-users',
+            path: '/test-static-priority/users',
+            label: '用户列表',
+            icon: 'Test',
+          },
           { code: 'test-user', path: '/test-static-priority/:id', label: '用户详情', icon: 'Test' },
         ],
       });
@@ -95,9 +100,7 @@ describe('NavigationRegistryV2 Edge Cases', () => {
         icon: 'Test',
         path: '/test-segment',
         source: 'core',
-        navItems: [
-          { code: 'test-detail', path: '/test-segment/:id', label: '详情', icon: 'Test' },
-        ],
+        navItems: [{ code: 'test-detail', path: '/test-segment/:id', label: '详情', icon: 'Test' }],
       });
       registeredCodes.push('test-segment');
 
@@ -216,9 +219,27 @@ describe('NavigationRegistryV2 Edge Cases', () => {
         path: '/test-grouping',
         source: 'core',
         navItems: [
-          { code: 'test-group-a-1', path: '/test-grouping/a1', label: 'A1', icon: 'Test', group: 'management' },
-          { code: 'test-group-a-2', path: '/test-grouping/a2', label: 'A2', icon: 'Test', group: 'management' },
-          { code: 'test-group-b-1', path: '/test-grouping/b1', label: 'B1', icon: 'Test', group: 'operations' },
+          {
+            code: 'test-group-a-1',
+            path: '/test-grouping/a1',
+            label: 'A1',
+            icon: 'Test',
+            group: 'management',
+          },
+          {
+            code: 'test-group-a-2',
+            path: '/test-grouping/a2',
+            label: 'A2',
+            icon: 'Test',
+            group: 'management',
+          },
+          {
+            code: 'test-group-b-1',
+            path: '/test-grouping/b1',
+            label: 'B1',
+            icon: 'Test',
+            group: 'operations',
+          },
           { code: 'test-group-c-1', path: '/test-grouping/c1', label: 'C1', icon: 'Test' },
         ],
       });
@@ -260,8 +281,19 @@ describe('NavigationRegistryV2 Edge Cases', () => {
         source: 'core',
         navItems: [
           { code: 'test-visible', path: '/test-hidden-items/visible', label: '可见', icon: 'Test' },
-          { code: 'test-hidden', path: '/test-hidden-items/hidden', label: '隐藏', icon: 'Test', showInSidebar: false },
-          { code: 'test-visible2', path: '/test-hidden-items/visible2', label: '可见2', icon: 'Test' },
+          {
+            code: 'test-hidden',
+            path: '/test-hidden-items/hidden',
+            label: '隐藏',
+            icon: 'Test',
+            showInSidebar: false,
+          },
+          {
+            code: 'test-visible2',
+            path: '/test-hidden-items/visible2',
+            label: '可见2',
+            icon: 'Test',
+          },
         ],
       });
       registeredCodes.push('test-hidden-items');
@@ -333,13 +365,28 @@ describe('NavigationRegistryV2 Edge Cases', () => {
         source: 'core',
         navItems: [
           { code: 'test-public', path: '/test-perm-filter/public', label: '公开', icon: 'Test' },
-          { code: 'test-admin', path: '/test-perm-filter/admin', label: '管理员', icon: 'Test', permission: 'admin:view' },
-          { code: 'test-user', path: '/test-perm-filter/user', label: '用户', icon: 'Test', permission: 'user:view' },
+          {
+            code: 'test-admin',
+            path: '/test-perm-filter/admin',
+            label: '管理员',
+            icon: 'Test',
+            permission: 'admin:view',
+          },
+          {
+            code: 'test-user',
+            path: '/test-perm-filter/user',
+            label: '用户',
+            icon: 'Test',
+            permission: 'user:view',
+          },
         ],
       });
       registeredCodes.push('test-perm-filter');
 
-      const userItems = registry.getSidebarNavItems('test-perm-filter', (perm) => perm === 'user:view');
+      const userItems = registry.getSidebarNavItems(
+        'test-perm-filter',
+        (perm) => perm === 'user:view'
+      );
       expect(userItems.length).toBe(2);
       expect(userItems.some((item) => item.code === 'test-public')).toBe(true);
       expect(userItems.some((item) => item.code === 'test-user')).toBe(true);

@@ -721,7 +721,7 @@ const MeetingRoomManagementPage: React.FC = () => {
                     size='small'
                     fullWidth
                     required
-                    slotProps={{ inputLabel: { shrink: true } }}
+                    slotProps={{ inputLabel: { shrink: true } } as any}
                   />
                   <TextField
                     label='结束时间 *'
@@ -740,7 +740,7 @@ const MeetingRoomManagementPage: React.FC = () => {
                     size='small'
                     fullWidth
                     required
-                    slotProps={{ inputLabel: { shrink: true } }}
+                    slotProps={{ inputLabel: { shrink: true } } as any}
                   />
                 </Box>
               </Box>

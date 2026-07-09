@@ -28,6 +28,7 @@ import { ListPageTemplate } from '@/components/templates';
 import type { RowAction, FilterConfig, ColumnDef } from '@/components/templates';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { designTokens } from '@/theme/tokens';
+
 const ct = designTokens.colors;
 
 /**

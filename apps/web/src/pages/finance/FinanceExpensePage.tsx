@@ -44,8 +44,7 @@ import {
 import { FormField, FormSelect, ActionButton, PageContainer } from '@/components/common';
 import { ModeToggle } from '@/components/theme/ModeToggle';
 import { DashboardTemplate } from '@/components/templates/DashboardTemplate';
-import ConfirmDialog from '@/components/common/ConfirmDialog';
-import { StatusBadge } from '@/components/common/StatusBadge';
+import { ConfirmDialog, StatusBadge } from '@topems/shared-components';
 
 const FinanceExpensePage: React.FC = () => {
   const navigate = useNavigate();

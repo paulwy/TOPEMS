@@ -24,7 +24,7 @@ import {
   Chip,
   Button,
 } from '@mui/material';
-import { StatusBadge } from '@/components/common/StatusBadge';
+import { StatusBadge, ConfirmDialog } from '@topems/shared-components';
 import { Plus, Edit, Trash2, Eye, Building2, Building, User, Mail, Phone } from 'lucide-react';
 import {
   departmentApi,
@@ -47,7 +47,6 @@ import {
 } from '@/components/templates';
 import { EmptyState } from '@/components';
 import { ImageUpload, PageContainer } from '@/components/common';
-import ConfirmDialog from '@/components/common/ConfirmDialog';
 
 const HrmDepartmentPage: React.FC = () => {
   const theme = useTheme();

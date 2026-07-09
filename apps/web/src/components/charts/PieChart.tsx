@@ -41,19 +41,20 @@ export const PieChartComponent: React.FC<PieChartProps> = ({ data, title }) => {
           {title}
         </h4>
       )}
-      <ResponsiveContainer width="100%" height={200}>
+      <ResponsiveContainer
+        width='100%'
+        height={200}
+      >
         <PieChart>
           <Pie
             data={data}
-            cx="50%"
-            cy="50%"
+            cx='50%'
+            cy='50%'
             innerRadius={40}
             outerRadius={80}
             paddingAngle={2}
-            dataKey="value"
-            label={({ name, percent }) =>
-              `${name} ${((percent || 0) * 100).toFixed(0)}%`
-            }
+            dataKey='value'
+            label={({ name, percent }) => `${name} ${((percent || 0) * 100).toFixed(0)}%`}
             labelLine={{ stroke: chartTheme.gridColor }}
           >
             {data.map((entry, index) => (

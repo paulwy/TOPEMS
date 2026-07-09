@@ -1,6 +1,5 @@
 import React, { useState, useEffect, useMemo } from 'react';
 import { designTokens } from '@/theme/tokens';
-const ct = designTokens.colors;
 import { useNavigate } from 'react-router-dom';
 import {
   FileText,
@@ -22,6 +21,8 @@ import { PageContainer } from '@/components/common/PageContainerV2';
 import BarChartComponent from '../../components/charts/BarChart';
 import LineChartComponent from '../../components/charts/LineChart';
 import PieChartComponent from '../../components/charts/PieChart';
+
+const ct = designTokens.colors;
 
 const FinanceDashboardPage: React.FC = () => {
   const navigate = useNavigate();

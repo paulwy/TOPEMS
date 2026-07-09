@@ -1,4 +1,5 @@
-import {Dialog,
+import {
+  Dialog,
   DialogContent,
   DialogActions,
   TextField,
@@ -9,7 +10,9 @@ import {Dialog,
   Typography,
   Chip,
   Box,
-  Button, useTheme} from '@mui/material';
+  Button,
+  useTheme,
+} from '@mui/material';
 import React, { useState, useEffect } from 'react';
 
 import {
@@ -456,7 +459,9 @@ const TemplateSelector: React.FC<TemplateSelectorProps> = ({
                                 {variable.label}
                               </span>
                               {variable.required && (
-                                <span style={{ fontSize: 12, color: theme.palette.error.main }}>必填</span>
+                                <span style={{ fontSize: 12, color: theme.palette.error.main }}>
+                                  必填
+                                </span>
                               )}
                             </Box>
                             <TextField

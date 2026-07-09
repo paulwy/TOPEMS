@@ -24,7 +24,7 @@ import type { LowCodeApp } from '../../api/lowcode/types';
 import AppCard from '../../components/lowcode/AppCard';
 import AppPublishDialog from '../../components/lowcode/AppPublishDialog';
 import { useNavigate } from 'react-router-dom';
-import { logger } from "@/utils/logger";
+import { logger } from '@/utils/logger';
 
 const AppManagementPage = () => {
   const navigate = useNavigate();

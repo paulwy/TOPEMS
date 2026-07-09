@@ -26,7 +26,7 @@ import { Plus, Edit, Trash2, Check, XCircle, Send, UserCheck, ClipboardCheck } f
 import { apiLogger } from '@/utils/logger';
 import { ListPageTemplate, type ColumnDef } from '@/components/templates';
 import { PageContainer } from '@/components/common';
-import ConfirmDialog from '@/components/common/ConfirmDialog';
+import { ConfirmDialog } from '@topems/shared-components';
 import { designTokens } from '@/theme/tokens';
 
 const ct = designTokens.colors;
@@ -706,7 +706,7 @@ const SupplierAdmissionPage: React.FC = () => {
                   value={formData.established_date}
                   onChange={(e) => setFormData({ ...formData, established_date: e.target.value })}
                   size='small'
-                  slotProps={{ inputLabel: { shrink: true } }}
+                  slotProps={{ inputLabel: { shrink: true } } as any}
                 />
                 <TextField
                   label='经营范围'

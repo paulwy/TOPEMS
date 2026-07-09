@@ -12,7 +12,8 @@ import {
   Trash2,
   AlertCircle,
 } from 'lucide-react';
-import {Dialog,
+import {
+  Dialog,
   DialogTitle,
   DialogContent,
   DialogActions,
@@ -24,7 +25,9 @@ import {Dialog,
   Box,
   Typography,
   MenuItem,
-  Button, useTheme} from '@mui/material';
+  Button,
+  useTheme,
+} from '@mui/material';
 
 import { limsApi } from '@/api/lims';
 import type { Instrument, MaintenanceRecord } from '@/api/lims';
@@ -324,7 +327,9 @@ const LimsInstrumentMaintenancePage: React.FC = () => {
       id: 'cost',
       label: '费用 (元)',
       render: (row) => (
-        <span style={{ fontWeight: 500, color: theme.palette.grey[900] }}>{row.cost?.toFixed(2) || '0.00'}</span>
+        <span style={{ fontWeight: 500, color: theme.palette.grey[900] }}>
+          {row.cost?.toFixed(2) || '0.00'}
+        </span>
       ),
     },
     {
@@ -521,11 +526,15 @@ const LimsInstrumentMaintenancePage: React.FC = () => {
               >
                 <div>
                   <p style={{ fontSize: '0.875rem', color: theme.palette.grey[600] }}>型号</p>
-                  <p style={{ color: theme.palette.grey[900], marginTop: 4 }}>{instrument.model || '-'}</p>
+                  <p style={{ color: theme.palette.grey[900], marginTop: 4 }}>
+                    {instrument.model || '-'}
+                  </p>
                 </div>
                 <div>
                   <p style={{ fontSize: '0.875rem', color: theme.palette.grey[600] }}>分类</p>
-                  <p style={{ color: theme.palette.grey[900], marginTop: 4 }}>{instrument.category || '-'}</p>
+                  <p style={{ color: theme.palette.grey[900], marginTop: 4 }}>
+                    {instrument.category || '-'}
+                  </p>
                 </div>
               </div>
               <div
@@ -537,7 +546,9 @@ const LimsInstrumentMaintenancePage: React.FC = () => {
               >
                 <div>
                   <p style={{ fontSize: '0.875rem', color: theme.palette.grey[600] }}>位置</p>
-                  <p style={{ color: theme.palette.grey[900], marginTop: 4 }}>{instrument.location || '-'}</p>
+                  <p style={{ color: theme.palette.grey[900], marginTop: 4 }}>
+                    {instrument.location || '-'}
+                  </p>
                 </div>
                 <div>
                   <p style={{ fontSize: '0.875rem', color: theme.palette.grey[600] }}>负责人</p>
@@ -624,7 +635,9 @@ const LimsInstrumentMaintenancePage: React.FC = () => {
                     borderRadius: 8,
                   }}
                 >
-                  <p style={{ fontSize: '0.875rem', color: theme.palette.success.dark }}>维护次数</p>
+                  <p style={{ fontSize: '0.875rem', color: theme.palette.success.dark }}>
+                    维护次数
+                  </p>
                   <p
                     style={{
                       fontSize: '1.5rem',
@@ -643,7 +656,9 @@ const LimsInstrumentMaintenancePage: React.FC = () => {
                     borderRadius: 8,
                   }}
                 >
-                  <p style={{ fontSize: '0.875rem', color: theme.palette.primary.dark }}>累计费用</p>
+                  <p style={{ fontSize: '0.875rem', color: theme.palette.primary.dark }}>
+                    累计费用
+                  </p>
                   <p
                     style={{
                       fontSize: '1.5rem',
@@ -765,7 +780,7 @@ const LimsInstrumentMaintenancePage: React.FC = () => {
                 }
                 fullWidth
                 size='small'
-                slotProps={{ inputLabel: { shrink: true } }}
+                slotProps={{ inputLabel: { shrink: true } } as any}
               />
               <TextField
                 type='date'
@@ -779,7 +794,7 @@ const LimsInstrumentMaintenancePage: React.FC = () => {
                 }
                 fullWidth
                 size='small'
-                slotProps={{ inputLabel: { shrink: true } }}
+                slotProps={{ inputLabel: { shrink: true } } as any}
               />
             </Box>
             <TextField
@@ -888,7 +903,7 @@ const LimsInstrumentMaintenancePage: React.FC = () => {
                 }
                 fullWidth
                 size='small'
-                slotProps={{ inputLabel: { shrink: true } }}
+                slotProps={{ inputLabel: { shrink: true } } as any}
               />
               <TextField
                 type='date'
@@ -902,7 +917,7 @@ const LimsInstrumentMaintenancePage: React.FC = () => {
                 }
                 fullWidth
                 size='small'
-                slotProps={{ inputLabel: { shrink: true } }}
+                slotProps={{ inputLabel: { shrink: true } } as any}
               />
             </Box>
             <TextField

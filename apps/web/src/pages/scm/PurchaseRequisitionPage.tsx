@@ -24,7 +24,7 @@ import { Plus, Edit, Trash2, Check, XCircle, Send, FileText } from 'lucide-react
 import { apiLogger } from '@/utils/logger';
 import { ListPageTemplate, type ColumnDef } from '@/components/templates';
 import { PageContainer } from '@/components/common';
-import ConfirmDialog from '@/components/common/ConfirmDialog';
+import { ConfirmDialog } from '@topems/shared-components';
 import { designTokens } from '@/theme/tokens';
 
 const ct = designTokens.colors;
@@ -542,7 +542,7 @@ const PurchaseRequisitionPage: React.FC = () => {
                 onChange={(e) => setFormData({ ...formData, request_date: e.target.value })}
                 size='small'
                 required
-                slotProps={{ inputLabel: { shrink: true } }}
+                slotProps={{ inputLabel: { shrink: true } } as any}
                 disabled={isEditing}
               />
               <TextField
@@ -551,7 +551,7 @@ const PurchaseRequisitionPage: React.FC = () => {
                 value={formData.required_date}
                 onChange={(e) => setFormData({ ...formData, required_date: e.target.value })}
                 size='small'
-                slotProps={{ inputLabel: { shrink: true } }}
+                slotProps={{ inputLabel: { shrink: true } } as any}
               />
               <FormControl size='small'>
                 <InputLabel>优先级</InputLabel>

@@ -2,8 +2,6 @@ import { Chip, Typography, Box, InputLabel, Button } from '@mui/material';
 import React, { useState, useEffect, useMemo } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { designTokens } from '@/theme/tokens';
-
-const ct = designTokens.colors;
 import {
   Building2,
   Mail,
@@ -28,7 +26,7 @@ import { apiLogger } from '@/utils/logger';
 import { DetailPageTemplate, type TabConfig, type SectionConfig } from '@/components/templates';
 import { PageContainer } from '@/components/common';
 
-
+const ct = designTokens.colors;
 
 const CustomerDetailPage: React.FC = () => {
   const { id } = useParams<{ id: string }>();

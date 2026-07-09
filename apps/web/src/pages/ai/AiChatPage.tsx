@@ -209,7 +209,10 @@ export const AiChatPage: React.FC = () => {
                   <MenuItem value='ERNIE'>文心一言</MenuItem>
                 </Select>
               </FormControl>
-              <IconButton onClick={handleNewChat} aria-label='新建对话'>
+              <IconButton
+                onClick={handleNewChat}
+                aria-label='新建对话'
+              >
                 <RefreshCw size={20} />
               </IconButton>
             </Box>

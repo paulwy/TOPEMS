@@ -1,6 +1,6 @@
 import axios from 'axios';
 import { apiLogger } from '@/utils/logger';
-import { PLUGIN_TIMEOUT } from '@/constants/timeouts';
+import { PLUGIN_TIMEOUT } from '@topems/shared-constants';
 import type { PluginRuntimeInfo, SuiteInfo } from './types';
 
 export const SUITES: SuiteInfo[] = [

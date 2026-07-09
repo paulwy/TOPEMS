@@ -191,7 +191,7 @@ export const CommandPalette: React.FC<CommandPaletteProps> = ({
           },
         },
         backdrop: { style: { backgroundColor: 'rgba(0,0,0,0.3)', backdropFilter: 'blur(4px)' } },
-      }}
+      } as any}
     >
       {/* Search input */}
       <Box

@@ -1,3 +1,7 @@
+import type { PaginatedResponse } from '@topems/shared-types';
+
+export { PaginatedResponse };
+
 export type FieldType =
   | 'string'
   | 'text'
@@ -340,13 +344,6 @@ export interface ListParams {
   keyword?: string;
   status?: string;
   category?: string;
-}
-
-export interface PaginatedResponse<T> {
-  items: T[];
-  total: number;
-  page: number;
-  pageSize: number;
 }
 
 export interface CreateFormRequest {

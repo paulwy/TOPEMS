@@ -1,12 +1,15 @@
 import { useState, useEffect } from 'react';
-import {Box,
+import {
+  Box,
   Grid,
   Card,
   CardContent,
   Typography,
   Chip,
   Button,
-  Avatar, useTheme} from '@mui/material';
+  Avatar,
+  useTheme,
+} from '@mui/material';
 import {
   Database,
   LayoutGrid,
@@ -52,10 +55,34 @@ const AppOverviewPage = () => {
   };
 
   const stats = [
-    { label: '应用总数', value: overview?.totalApps || 0, icon: LayoutGrid, color: 'primary.main', bg: 'primary.light' },
-    { label: '数据模型', value: overview?.totalModels || 0, icon: Database, color: 'secondary.main', bg: 'secondary.light' },
-    { label: '工作流', value: overview?.totalWorkflows || 0, icon: Workflow, color: 'success.main', bg: 'success.light' },
-    { label: '用户数', value: overview?.totalUsers || 0, icon: Users, color: 'warning.main', bg: 'warning.light' },
+    {
+      label: '应用总数',
+      value: overview?.totalApps || 0,
+      icon: LayoutGrid,
+      color: 'primary.main',
+      bg: 'primary.light',
+    },
+    {
+      label: '数据模型',
+      value: overview?.totalModels || 0,
+      icon: Database,
+      color: 'secondary.main',
+      bg: 'secondary.light',
+    },
+    {
+      label: '工作流',
+      value: overview?.totalWorkflows || 0,
+      icon: Workflow,
+      color: 'success.main',
+      bg: 'success.light',
+    },
+    {
+      label: '用户数',
+      value: overview?.totalUsers || 0,
+      icon: Users,
+      color: 'warning.main',
+      bg: 'warning.light',
+    },
   ];
 
   const stringToColor = (string: string) => {
@@ -69,12 +96,12 @@ const AppOverviewPage = () => {
 
   return (
     <PageContainer
-      title="低代码平台"
-      subtitle="快速构建企业级应用"
+      title='低代码平台'
+      subtitle='快速构建企业级应用'
       loading={loading}
       headerActions={
         <Button
-          variant="contained"
+          variant='contained'
           startIcon={<Plus style={{ width: 18, height: 18 }} />}
           onClick={() => navigate('/lowcode/apps')}
         >
@@ -83,10 +110,19 @@ const AppOverviewPage = () => {
       }
     >
       <Box sx={{ display: 'flex', flexDirection: 'column', gap: 3 }}>
-        <Grid container spacing={3}>
+        <Grid
+          container
+          spacing={3}
+        >
           {stats.map((stat, idx) => (
-            <Grid size={{ xs: 12, sm: 6, md: 3 }} key={idx}>
-              <Card variant="outlined" sx={{ height: '100%' }}>
+            <Grid
+              size={{ xs: 12, sm: 6, md: 3 }}
+              key={idx}
+            >
+              <Card
+                variant='outlined'
+                sx={{ height: '100%' }}
+              >
                 <CardContent>
                   <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
                     <Avatar
@@ -100,10 +136,16 @@ const AppOverviewPage = () => {
                       <stat.icon style={{ width: 24, height: 24 }} />
                     </Avatar>
                     <Box>
-                      <Typography variant="h4" sx={{ fontWeight: 700 }}>
+                      <Typography
+                        variant='h4'
+                        sx={{ fontWeight: 700 }}
+                      >
                         {stat.value}
                       </Typography>
-                      <Typography variant="body2" color="text.secondary">
+                      <Typography
+                        variant='body2'
+                        color='text.secondary'
+                      >
                         {stat.label}
                       </Typography>
                     </Box>
@@ -114,23 +156,39 @@ const AppOverviewPage = () => {
           ))}
         </Grid>
 
-        <Grid container spacing={3}>
+        <Grid
+          container
+          spacing={3}
+        >
           <Grid size={{ xs: 12, md: 8 }}>
-            <Card variant="outlined">
+            <Card variant='outlined'>
               <CardContent>
-                <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 2 }}>
-                  <Typography variant="h6">最近应用</Typography>
+                <Box
+                  sx={{
+                    display: 'flex',
+                    justifyContent: 'space-between',
+                    alignItems: 'center',
+                    mb: 2,
+                  }}
+                >
+                  <Typography variant='h6'>最近应用</Typography>
                   <Button
-                    size="small"
+                    size='small'
                     endIcon={<ArrowRight style={{ width: 16, height: 16 }} />}
                     onClick={() => navigate('/lowcode/apps')}
                   >
                     查看全部
                   </Button>
                 </Box>
-                <Grid container spacing={2}>
+                <Grid
+                  container
+                  spacing={2}
+                >
                   {recentApps.map((app) => (
-                    <Grid size={{ xs: 12, sm: 6, md: 4 }} key={app.id}>
+                    <Grid
+                      size={{ xs: 12, sm: 6, md: 4 }}
+                      key={app.id}
+                    >
                       <AppCard
                         app={app}
                         onClick={() => navigate(`/lowcode/apps/${app.id}`)}
@@ -144,11 +202,18 @@ const AppOverviewPage = () => {
 
           <Grid size={{ xs: 12, md: 4 }}>
             <Box sx={{ display: 'flex', flexDirection: 'column', gap: 3 }}>
-              <Card variant="outlined">
+              <Card variant='outlined'>
                 <CardContent>
                   <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 2 }}>
-                    <Activity style={{ width: 20, height: 20, color: theme.palette.success.main }} />
-                    <Typography variant="subtitle1" sx={{ fontWeight: 600 }}>使用趋势</Typography>
+                    <Activity
+                      style={{ width: 20, height: 20, color: theme.palette.success.main }}
+                    />
+                    <Typography
+                      variant='subtitle1'
+                      sx={{ fontWeight: 600 }}
+                    >
+                      使用趋势
+                    </Typography>
                   </Box>
                   <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
                     {[
@@ -158,15 +223,23 @@ const AppOverviewPage = () => {
                     ].map((item, idx) => (
                       <Box key={idx}>
                         <Box sx={{ display: 'flex', justifyContent: 'space-between', mb: 0.5 }}>
-                          <Typography variant="body2" color="text.secondary">{item.label}</Typography>
+                          <Typography
+                            variant='body2'
+                            color='text.secondary'
+                          >
+                            {item.label}
+                          </Typography>
                           <Chip
                             label={item.change}
-                            size="small"
-                            color="success"
+                            size='small'
+                            color='success'
                             sx={{ height: 20, '& .MuiChip-label': { px: 1, py: 0 } }}
                           />
                         </Box>
-                        <Typography variant="h6" sx={{ fontWeight: 600 }}>
+                        <Typography
+                          variant='h6'
+                          sx={{ fontWeight: 600 }}
+                        >
                           {item.value.toLocaleString()}
                         </Typography>
                       </Box>
@@ -175,11 +248,16 @@ const AppOverviewPage = () => {
                 </CardContent>
               </Card>
 
-              <Card variant="outlined">
+              <Card variant='outlined'>
                 <CardContent>
                   <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 2 }}>
                     <Zap style={{ width: 20, height: 20, color: theme.palette.warning.main }} />
-                    <Typography variant="subtitle1" sx={{ fontWeight: 600 }}>快速入门</Typography>
+                    <Typography
+                      variant='subtitle1'
+                      sx={{ fontWeight: 600 }}
+                    >
+                      快速入门
+                    </Typography>
                   </Box>
                   <Box sx={{ display: 'flex', flexDirection: 'column', gap: 1.5 }}>
                     {[
@@ -188,7 +266,10 @@ const AppOverviewPage = () => {
                       { step: 3, title: '设置权限', desc: '角色与字段权限' },
                       { step: 4, title: '发布应用', desc: '一键部署上线' },
                     ].map((item, idx) => (
-                      <Box key={idx} sx={{ display: 'flex', gap: 2, alignItems: 'flex-start' }}>
+                      <Box
+                        key={idx}
+                        sx={{ display: 'flex', gap: 2, alignItems: 'flex-start' }}
+                      >
                         <Avatar
                           sx={{
                             width: 28,
@@ -201,8 +282,18 @@ const AppOverviewPage = () => {
                           {item.step}
                         </Avatar>
                         <Box>
-                          <Typography variant="body2" sx={{ fontWeight: 500 }}>{item.title}</Typography>
-                          <Typography variant="caption" color="text.secondary">{item.desc}</Typography>
+                          <Typography
+                            variant='body2'
+                            sx={{ fontWeight: 500 }}
+                          >
+                            {item.title}
+                          </Typography>
+                          <Typography
+                            variant='caption'
+                            color='text.secondary'
+                          >
+                            {item.desc}
+                          </Typography>
                         </Box>
                       </Box>
                     ))}

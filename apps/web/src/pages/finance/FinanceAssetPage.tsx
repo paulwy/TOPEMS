@@ -38,7 +38,7 @@ import {
   Tooltip,
   Button,
 } from '@mui/material';
-import ConfirmDialog from '@/components/common/ConfirmDialog';
+import { ConfirmDialog } from '@topems/shared-components';
 
 const FinanceAssetPage: React.FC = () => {
   const addNotification = useAppStore((state) => state.addNotification);

@@ -63,9 +63,7 @@ export const CustomTooltip: React.FC<CustomTooltipProps> = ({
           const [displayValue, displayName] = formatter
             ? formatter(entry.value, entry.name)
             : [
-                typeof entry.value === 'number'
-                  ? entry.value.toLocaleString()
-                  : entry.value,
+                typeof entry.value === 'number' ? entry.value.toLocaleString() : entry.value,
                 entry.name,
               ];
 

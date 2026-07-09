@@ -44,6 +44,7 @@ import { navigationRegistryV2 } from '@/lib/navigation/NavigationRegistryV2';
 import { NAV_GROUPS } from '@/lib/navigation/types';
 import type { NavItem, NavGroup } from '@/lib/navigation/types';
 import { designTokens } from '@/theme/tokens';
+
 const ct = designTokens.colors;
 
 const iconMap: Record<string, React.ReactNode> = {

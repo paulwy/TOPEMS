@@ -109,9 +109,7 @@ const SuggestionItem = styled(ListItem, {
   shouldForwardProp: (prop) => prop !== 'isHighlighted',
 })<{ isHighlighted?: boolean }>(({ theme, isHighlighted }) => ({
   cursor: 'pointer',
-  backgroundColor: isHighlighted
-    ? alpha(theme.palette.primary.main, 0.12)
-    : 'transparent',
+  backgroundColor: isHighlighted ? alpha(theme.palette.primary.main, 0.12) : 'transparent',
   '&:hover': {
     backgroundColor: alpha(theme.palette.primary.main, 0.06),
   },

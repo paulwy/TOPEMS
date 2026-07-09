@@ -12,8 +12,6 @@ use crate::models::purchase_requisition::{
     UpdatePurchaseRequisitionRequest,
 };
 use crate::shared::permission::{check_permission, ModulePermission};
-
-type ApiResult<T> = Result<axum::Json<ApiResponse<T>>, axum::Json<ApiResponse<T>>>;
 use topems_shared::{api_error, auth::Claims, ApiResponse};
 
 pub fn create_routes() -> Router<ApiState> {

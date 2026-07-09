@@ -351,7 +351,9 @@ const ReportBuilder: React.FC<ReportBuilderProps> = ({ onClose, reportTypes, onS
                               borderRadius: 8,
                               border: `2px solid ${reportType === type.type ? theme.palette.primary.dark : 'border.default'}`,
                               backgroundColor:
-                                reportType === type.type ? theme.palette.primary.light : 'transparent',
+                                reportType === type.type
+                                  ? theme.palette.primary.light
+                                  : 'transparent',
                               transition: 'all 0.2s',
                               cursor: 'pointer',
                               textAlign: 'left',

@@ -4,9 +4,10 @@ import { Search, Layers } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { navigationRegistryV2, type ModuleCardConfig } from '@/lib/navigation';
 import { gradients } from '@/theme';
-import { PageContainer } from '@/components/common/PageContainer';
+import { PageContainer } from '@/components';
 import { lucideIcons } from '@/lib/iconMapping';
 import { designTokens } from '@/theme/tokens';
+
 const ct = designTokens.colors;
 
 /* ------------------------------------------------------------------ */

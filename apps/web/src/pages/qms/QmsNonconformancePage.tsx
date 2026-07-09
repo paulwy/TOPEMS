@@ -24,6 +24,7 @@ import { PageContainer } from '@/components/common';
 import { qmsApi } from '@/api/qms';
 import type { QualityIssue } from '@/api/qms';
 import { designTokens } from '@/theme/tokens';
+
 const ct = designTokens.colors;
 
 const QmsNonconformancePage: React.FC = () => {
@@ -97,8 +98,8 @@ const QmsNonconformancePage: React.FC = () => {
       critical: { bg: 'error.lighter', color: 'error.dark' },
       严重: { bg: 'error.lighter', color: 'error.dark' },
       medium: { bg: 'warning.100', color: ct.yellow[600] },
- 中等: { bg: 'warning.100', color: ct.yellow[600] },
- 一般: { bg: 'warning.100', color: ct.yellow[600] },
+      中等: { bg: 'warning.100', color: ct.yellow[600] },
+      一般: { bg: 'warning.100', color: ct.yellow[600] },
       low: { bg: 'success.lighter', color: 'success.dark' },
       轻微: { bg: 'success.lighter', color: 'success.dark' },
     };
@@ -131,7 +132,7 @@ const QmsNonconformancePage: React.FC = () => {
       open: { bg: 'error.lighter', color: 'error.dark' },
       待处理: { bg: 'error.lighter', color: 'error.dark' },
       in_progress: { bg: 'warning.100', color: ct.yellow[600] },
- 处理中: { bg: 'warning.100', color: ct.yellow[600] },
+      处理中: { bg: 'warning.100', color: ct.yellow[600] },
       closed: { bg: 'success.lighter', color: 'success.dark' },
       resolved: { bg: 'success.lighter', color: 'success.dark' },
       已关闭: { bg: 'success.lighter', color: 'success.dark' },

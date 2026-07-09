@@ -15,6 +15,7 @@ import { StatsPageTemplate } from '@/components/templates/StatsPageTemplate';
 import { PageContainer } from '@/components/common';
 import { designTokens } from '@/theme/tokens';
 import apiClient from '@/api/client';
+
 const ct = designTokens.colors;
 
 interface EmployeeSummary {

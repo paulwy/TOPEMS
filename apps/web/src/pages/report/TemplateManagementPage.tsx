@@ -42,7 +42,7 @@ import {
   Chip,
   Button,
 } from '@mui/material';
-import { PageContainer } from '@/components/common/PageContainer';
+import { PageContainer } from '@/components';
 
 const TemplateManagementPage: React.FC = () => {
   const { success, error, notifications, hideNotification } = useNotification();

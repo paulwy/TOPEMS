@@ -109,7 +109,9 @@ const Toast = ({ id: _, title, message, type, duration, onClose }: ToastProps) =
       {getIcon()}
       <Box sx={{ flex: 1, minWidth: 0 }}>
         {title && (
-          <Typography sx={{ fontWeight: 600, margin: 0, color: styles.titleColor, fontSize: '14px' }}>
+          <Typography
+            sx={{ fontWeight: 600, margin: 0, color: styles.titleColor, fontSize: '14px' }}
+          >
             {title}
           </Typography>
         )}

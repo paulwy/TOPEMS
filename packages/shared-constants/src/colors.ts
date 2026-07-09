@@ -180,6 +180,7 @@ export const GRADIENTS = {
   warning: gradients.warning,
   error: gradients.error,
   info: gradients.info,
+  accent: gradients.secondary,
 } as const;
 
 // ========== Sidebar Colors ==========

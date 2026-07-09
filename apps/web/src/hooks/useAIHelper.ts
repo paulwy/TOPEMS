@@ -24,7 +24,10 @@ interface UseAIHelperReturn<T = unknown> {
   error: Error | null;
   result: T | null;
   retryCount: number;
-  generate: (prompt: string, options?: Partial<Omit<AIGenerateRequest, 'variables'>>) => Promise<string | null>;
+  generate: (
+    prompt: string,
+    options?: Partial<Omit<AIGenerateRequest, 'variables'>>
+  ) => Promise<string | null>;
   validate: (data: ValidateRequest) => Promise<ValidateResponse | null>;
   complete: (data: CompleteRequest) => Promise<CompleteResponse | null>;
   summarize: (data: SummarizeRequest) => Promise<SummarizeResponse | null>;
@@ -73,7 +76,7 @@ export function useAIHelper<T = unknown>(options: UseAIHelperOptions<T>): UseAIH
       operation: () => Promise<{
         code: number;
         success: boolean;
-        data: R;
+        data: R | undefined;
         message: string;
       }>,
       successHandler: (data: R) => void
@@ -130,7 +133,7 @@ export function useAIHelper<T = unknown>(options: UseAIHelperOptions<T>): UseAIH
           ...generateOptions,
         });
 
-      const result = await executeWithRetry(operation, (data) => {
+      const result = await executeWithRetry<{ content: string }>(operation, (data) => {
         options.onSuccess?.(data);
       });
 
@@ -186,7 +189,7 @@ export function useAIHelper<T = unknown>(options: UseAIHelperOptions<T>): UseAIH
           conversation_id: conversationId,
         });
 
-      const result = await executeWithRetry(operation, (data) => {
+      const result = await executeWithRetry<{ answer: string }>(operation, (data) => {
         options.onSuccess?.(data);
       });
 

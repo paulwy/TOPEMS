@@ -23,7 +23,9 @@ describe('PM Module API Tests', () => {
       const { projectApi } = await import('../project');
       await projectApi.list({ page: 1, pagesize: 10, status: 'active', project_type: 'internal' });
       const { apiClient } = await import('../../client');
-      expect(apiClient.pm.get).toHaveBeenCalledWith('/projects?project_type=internal&status=active&page=1&pagesize=10');
+      expect(apiClient.pm.get).toHaveBeenCalledWith(
+        '/projects?project_type=internal&status=active&page=1&pagesize=10'
+      );
     });
 
     it('list should call GET /projects without params', async () => {
@@ -88,7 +90,12 @@ describe('PM Module API Tests', () => {
 
     it('create should call POST /projects/:projectId/phases with data', async () => {
       const { phaseApi } = await import('../project');
-      const data = { name: 'Phase 1', description: 'Initial phase', start_date: '2024-01-01', end_date: '2024-01-31' };
+      const data = {
+        name: 'Phase 1',
+        description: 'Initial phase',
+        start_date: '2024-01-01',
+        end_date: '2024-01-31',
+      };
       await phaseApi.create('proj-001', data);
       const { apiClient } = await import('../../client');
       expect(apiClient.pm.post).toHaveBeenCalledWith('/projects/proj-001/phases', data);
@@ -134,7 +141,12 @@ describe('PM Module API Tests', () => {
 
     it('create should call POST /contracts with data', async () => {
       const { contractApi } = await import('../contract');
-      const data = { contract_code: 'CT-001', contract_name: 'Service Contract', contract_type: 'service', amount: 10000 };
+      const data = {
+        contract_code: 'CT-001',
+        contract_name: 'Service Contract',
+        contract_type: 'service',
+        amount: 10000,
+      };
       await contractApi.create(data);
       const { apiClient } = await import('../../client');
       expect(apiClient.pm.post).toHaveBeenCalledWith('/contracts', data);
@@ -240,7 +252,12 @@ describe('PM Module API Tests', () => {
 
     it('create should call POST /projects/:projectId/risks with data', async () => {
       const { riskApi } = await import('../risk');
-      const data = { risk_name: 'Budget Overrun', likelihood: 'medium', impact: 'high', risk_score: 15 };
+      const data = {
+        risk_name: 'Budget Overrun',
+        likelihood: 'medium',
+        impact: 'high',
+        risk_score: 15,
+      };
       await riskApi.create('proj-001', data);
       const { apiClient } = await import('../../client');
       expect(apiClient.pm.post).toHaveBeenCalledWith('/projects/proj-001/risks', data);
@@ -272,7 +289,12 @@ describe('PM Module API Tests', () => {
 
     it('create should call POST /projects/:projectId/documents with data', async () => {
       const { documentApi } = await import('../document');
-      const data = { document_name: 'Project Plan', document_type: 'plan', file_path: '/files/plan.pdf', filesize: 1024 };
+      const data = {
+        document_name: 'Project Plan',
+        document_type: 'plan',
+        file_path: '/files/plan.pdf',
+        filesize: 1024,
+      };
       await documentApi.create('proj-001', data);
       const { apiClient } = await import('../../client');
       expect(apiClient.pm.post).toHaveBeenCalledWith('/projects/proj-001/documents', data);

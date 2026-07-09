@@ -1,7 +1,7 @@
 import React from 'react';
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { render, screen, fireEvent, waitFor } from '@testing-library/react';
-import ConfirmDialog from '../ConfirmDialog';
+import { ConfirmDialog } from '@topems/shared-components';
 import { useAppStore } from '@/store';
 
 vi.mock('@/store', () => ({
@@ -158,7 +158,7 @@ describe('ConfirmDialog', () => {
         title='Test'
         message='Test'
         onConfirm={vi.fn()}
-        disabled={true}
+        confirmDisabled={true}
       />
     );
     const confirmButton = screen.getByRole('button', { name: /确认/i });

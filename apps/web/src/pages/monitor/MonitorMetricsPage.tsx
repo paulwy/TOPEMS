@@ -423,7 +423,16 @@ export const MonitorMetricsPage: React.FC = () => {
                 {apiRequestData.map((_, index) => (
                   <Cell
                     key={`cell-${index}`}
-                    fill={['primary.main', 'success.main', 'warning.main', 'error.main', 'secondary.main', ct.cyan[500]][index]}
+                    fill={
+                      [
+                        'primary.main',
+                        'success.main',
+                        'warning.main',
+                        'error.main',
+                        'secondary.main',
+                        ct.cyan[500],
+                      ][index]
+                    }
                   />
                 ))}
               </Bar>

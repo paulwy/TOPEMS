@@ -213,13 +213,19 @@ const PmResourcePage: React.FC = () => {
         render: (row) => (
           <Box sx={{ display: 'flex', gap: 0.5 }}>
             <Tooltip title='查看详情'>
-              <IconButton size='small' aria-label='查看详情'>
+              <IconButton
+                size='small'
+                aria-label='查看详情'
+              >
                 <Eye size={16} />
               </IconButton>
             </Tooltip>
             {row.status === 'available' && (
               <Tooltip title='分配资源'>
-                <IconButton size='small' aria-label='分配资源'>
+                <IconButton
+                  size='small'
+                  aria-label='分配资源'
+                >
                   <Users size={16} />
                 </IconButton>
               </Tooltip>

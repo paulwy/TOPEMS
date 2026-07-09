@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useMemo } from 'react';
-import {Box,
+import {
+  Box,
   Dialog,
   DialogTitle,
   DialogContent,
@@ -11,7 +12,9 @@ import {Box,
   MenuItem,
   InputLabel,
   FormControl,
-  Typography, useTheme} from '@mui/material';
+  Typography,
+  useTheme,
+} from '@mui/material';
 import { Plus, Edit2, Trash2, Eye, FolderTree } from 'lucide-react';
 import { ListPageTemplate, type ColumnDef, type RowAction } from '@/components/templates';
 import { PageContainer } from '@/components/common';
@@ -175,7 +178,11 @@ const SrmCategoryPage: React.FC = () => {
   };
 
   const getStatusBadge = (status: string) => {
-    const config = STATUS_MAP[status] || { label: status, bg: 'grey.100', color: ct.text.secondary };
+    const config = STATUS_MAP[status] || {
+      label: status,
+      bg: 'grey.100',
+      color: ct.text.secondary,
+    };
     return (
       <Chip
         label={config.label}

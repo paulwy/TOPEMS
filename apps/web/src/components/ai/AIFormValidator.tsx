@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { AlertCircle, CheckCircle, AlertTriangle, Info, Sparkles, RefreshCw } from 'lucide-react';
-import {Card, CardContent, Box, Typography, Button, useTheme} from '@mui/material';
+import { Card, CardContent, Box, Typography, Button, useTheme } from '@mui/material';
 import { AIGenerateModal } from './AIGenerateModal';
 import { useAIHelper } from '../../hooks/useAIHelper';
 import type { ValidateRequest, ValidationIssue, Suggestion, ValidateResponse } from '@/types/ai';
@@ -41,7 +41,7 @@ export function AIFormValidator({
   });
 
   const theme = useTheme();
-  
+
   const issueIconMap = {
     error: <AlertCircle style={{ width: 20, height: 20, color: theme.palette.error.main }} />,
     warning: <AlertTriangle style={{ width: 20, height: 20, color: theme.palette.warning.main }} />,

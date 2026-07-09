@@ -99,7 +99,7 @@ const EhsCheckPage: React.FC = () => {
       setLoading(true);
       const response = await ehsApi.listInspectionPlans({ pagesize: 100 });
       if (response.success && response.data) {
-        const plansData = Array.isArray(response.data) ? response.data : response.data.data || [];
+        const plansData = Array.isArray(response.data) ? response.data : response.data.items || [];
         const adapted = plansData.map((item: InspectionPlan) => ({
           ...item,
           status:
@@ -122,7 +122,7 @@ const EhsCheckPage: React.FC = () => {
       setLoading(true);
       const response = await ehsApi.listInspectionRecords({ pagesize: 100 });
       if (response.success && response.data) {
-        const recordsData = Array.isArray(response.data) ? response.data : response.data.data || [];
+        const recordsData = Array.isArray(response.data) ? response.data : response.data.items || [];
         const adapted = recordsData.map((item: InspectionRecord) => ({
           ...item,
           status:
@@ -150,7 +150,7 @@ const EhsCheckPage: React.FC = () => {
     try {
       const response = await ehsApi.listInspectionItems(planId);
       if (response.success && response.data) {
-        const itemsData = Array.isArray(response.data) ? response.data : response.data.data || [];
+        const itemsData = Array.isArray(response.data) ? response.data : response.data.items || [];
         setPlanItems(itemsData);
       } else {
         setPlanItems([]);

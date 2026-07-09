@@ -174,7 +174,11 @@ const VehicleManagementPage: React.FC = () => {
   };
 
   const getStatusBadge = (status: string) => {
-    const config = STATUS_MAP[status] || { label: status, bg: 'grey.100', color: ct.text.secondary };
+    const config = STATUS_MAP[status] || {
+      label: status,
+      bg: 'grey.100',
+      color: ct.text.secondary,
+    };
     return (
       <Chip
         label={config.label}
@@ -343,7 +347,7 @@ const VehicleManagementPage: React.FC = () => {
           label='下次保养'
           value={data.next_maintenance}
           onChange={(e) => onChange({ ...data, next_maintenance: e.target.value })}
-          slotProps={{ inputLabel: { shrink: true } }}
+          slotProps={{ inputLabel: { shrink: true } } as any}
         />
         <TextField
           fullWidth

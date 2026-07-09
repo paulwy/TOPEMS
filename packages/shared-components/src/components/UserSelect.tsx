@@ -2,7 +2,7 @@ import React from 'react';
 import { Autocomplete, TextField, CircularProgress } from '@mui/material';
 import type { User } from '@topems/shared-types';
 
-interface UserSelectProps {
+export interface UserSelectProps {
   users: User[];
   value?: User | null;
   onChange?: (user: User | null) => void;

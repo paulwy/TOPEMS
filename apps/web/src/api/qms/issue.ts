@@ -6,12 +6,13 @@ import type {
   QualityIssueBackend,
   UpdateQualityIssueRequestBackend,
   PaginatedResponse,
+  QmsPaginatedResponse,
 } from './types';
 import { adaptIssueToFrontend, adaptIssueToBackend } from './adapters';
 
 export const issueApi = {
   listIssues: async (): Promise<ApiResponse<QualityIssue[]>> => {
-    const response = await apiClient.qms.get<PaginatedResponse<QualityIssueBackend>>('/issues');
+    const response = await apiClient.qms.get<QmsPaginatedResponse<QualityIssueBackend>>('/issues');
     const adaptedData = (response.data?.issues || []).map(adaptIssueToFrontend);
     return { ...response, data: adaptedData };
   },

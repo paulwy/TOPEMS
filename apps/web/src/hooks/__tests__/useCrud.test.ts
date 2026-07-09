@@ -1,6 +1,6 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { renderHook, waitFor, act } from '@testing-library/react';
-import { useCrud } from '../useCrud';
+import { useCrud } from '@topems/shared-hooks';
 import type { AxiosInstance } from 'axios';
 
 const createMockApi = () => {
@@ -124,9 +124,12 @@ describe('useCrud', () => {
         await result.current.fetch();
       });
 
-      expect(mockApi.get).toHaveBeenCalledWith('/test', expect.objectContaining({
-        params: { page: 1, pageSize: 10 },
-      }));
+      expect(mockApi.get).toHaveBeenCalledWith(
+        '/test',
+        expect.objectContaining({
+          params: { page: 1, pageSize: 10 },
+        })
+      );
       expect(result.current.data).toEqual(mockItems);
       expect(result.current.pagination.total).toBe(2);
     });
@@ -272,7 +275,13 @@ describe('useCrud', () => {
       vi.mocked(mockApi.put).mockResolvedValue({ data: { id: 1, name: 'Updated' } });
 
       const { result } = renderHook(() =>
-        useCrud({ api: mockApi, basePath: '/test', autoFetch: false, initialData: mockItems, onSuccess })
+        useCrud({
+          api: mockApi,
+          basePath: '/test',
+          autoFetch: false,
+          initialData: mockItems,
+          onSuccess,
+        })
       );
 
       await act(async () => {
@@ -319,7 +328,13 @@ describe('useCrud', () => {
       vi.mocked(mockApi.delete).mockResolvedValue({});
 
       const { result } = renderHook(() =>
-        useCrud({ api: mockApi, basePath: '/test', autoFetch: false, initialData: mockItems, onSuccess })
+        useCrud({
+          api: mockApi,
+          basePath: '/test',
+          autoFetch: false,
+          initialData: mockItems,
+          onSuccess,
+        })
       );
 
       await act(async () => {
@@ -365,7 +380,13 @@ describe('useCrud', () => {
       vi.mocked(mockApi.post).mockResolvedValue({});
 
       const { result } = renderHook(() =>
-        useCrud({ api: mockApi, basePath: '/test', autoFetch: false, initialData: mockItems, onSuccess })
+        useCrud({
+          api: mockApi,
+          basePath: '/test',
+          autoFetch: false,
+          initialData: mockItems,
+          onSuccess,
+        })
       );
 
       await act(async () => {

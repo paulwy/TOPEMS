@@ -13,7 +13,8 @@ import {
   ChevronDown,
   ChevronUp,
 } from 'lucide-react';
-import {Box,
+import {
+  Box,
   Typography,
   Paper,
   TextField,
@@ -27,7 +28,9 @@ import {Box,
   Stack,
   Grid,
   Divider,
-  Button, useTheme} from '@mui/material';
+  Button,
+  useTheme,
+} from '@mui/material';
 import type { DevicePoint, DeviceLocationRecord, TrackQueryParams } from '../../api/gis';
 import { gisApi } from '../../api/gis';
 import { logger } from '@/utils/logger';
@@ -103,7 +106,7 @@ const DeviceTrackPanel: React.FC<DeviceTrackPanelProps> = ({ devicePoints, onClo
 
       const response = await gisApi.getDeviceTrack(params);
       if (response.success && response.data) {
-        const data = response.data.data || [];
+        const data = response.data.items || [];
         const limitedData = data.slice(0, MAX_TRACK_POINTS);
         setTrackData(limitedData);
         setCurrentIndex(0);

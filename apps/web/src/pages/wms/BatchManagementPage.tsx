@@ -20,10 +20,10 @@ import { Plus, Edit, Trash2, Layers, AlertTriangle, Package, ArrowRightLeft } fr
 import { apiLogger } from '@/utils/logger';
 import { ListPageTemplate, type ColumnDef } from '@/components/templates';
 import { designTokens } from '@/theme/tokens';
+import { PageContainer } from '@/components/common';
+import { ConfirmDialog } from '@topems/shared-components';
 
 const ct = designTokens.colors;
-import { PageContainer } from '@/components/common';
-import ConfirmDialog from '@/components/common/ConfirmDialog';
 
 const statusConfig: Record<
   string,
@@ -537,7 +537,7 @@ const BatchManagementPage: React.FC = () => {
                 value={formData.production_date}
                 onChange={(e) => setFormData({ ...formData, production_date: e.target.value })}
                 size='small'
-                slotProps={{ inputLabel: { shrink: true } }}
+                slotProps={{ inputLabel: { shrink: true } } as any}
               />
               <TextField
                 label='有效期至'
@@ -545,7 +545,7 @@ const BatchManagementPage: React.FC = () => {
                 value={formData.expiry_date}
                 onChange={(e) => setFormData({ ...formData, expiry_date: e.target.value })}
                 size='small'
-                slotProps={{ inputLabel: { shrink: true } }}
+                slotProps={{ inputLabel: { shrink: true } } as any}
               />
               <TextField
                 label='入库日期'
@@ -553,7 +553,7 @@ const BatchManagementPage: React.FC = () => {
                 value={formData.receipt_date}
                 onChange={(e) => setFormData({ ...formData, receipt_date: e.target.value })}
                 size='small'
-                slotProps={{ inputLabel: { shrink: true } }}
+                slotProps={{ inputLabel: { shrink: true } } as any}
               />
               <FormControl size='small'>
                 <InputLabel>质检状态</InputLabel>

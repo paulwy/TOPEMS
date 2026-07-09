@@ -70,31 +70,34 @@ const AmapLayer = forwardRef<AmapLayerRef, AmapLayerProps>(
     }, [devicePoints, storageLocations]);
 
     interface AMapMarkerOptions {
-  position: [number, number];
-  title?: string;
-  icon?: unknown;
-}
+      position: [number, number];
+      title?: string;
+      icon?: unknown;
+    }
 
-interface AMapMarker {
-  position: [number, number];
-  on(event: string, callback: () => void): void;
-  getPosition(): [number, number];
-}
+    interface AMapMarker {
+      position: [number, number];
+      on(event: string, callback: () => void): void;
+      getPosition(): [number, number];
+    }
 
-interface AMapInfoWindow {
-  new (options: { content: string }): {
-    open: (map: unknown, position: [number, number]) => void;
-  };
-}
+    interface AMapInfoWindow {
+      new (options: { content: string }): {
+        open: (map: unknown, position: [number, number]) => void;
+      };
+    }
 
-interface AMapType {
-  Marker: new (options: AMapMarkerOptions) => AMapMarker;
-  Icon: new (options: unknown) => unknown;
-  Size: new (width: number, height: number) => unknown;
-  InfoWindow: AMapInfoWindow;
-}
+    interface AMapType {
+      Marker: new (options: AMapMarkerOptions) => AMapMarker;
+      Icon: new (options: unknown) => unknown;
+      Size: new (width: number, height: number) => unknown;
+      InfoWindow: AMapInfoWindow;
+    }
 
-const updateMarkers = (AMap: AMapType, map: { remove: (marker: AMapMarker) => void; add: (marker: AMapMarker) => void }) => {
+    const updateMarkers = (
+      AMap: AMapType,
+      map: { remove: (marker: AMapMarker) => void; add: (marker: AMapMarker) => void }
+    ) => {
       markersRef.current.forEach((marker) => {
         map.remove(marker);
       });

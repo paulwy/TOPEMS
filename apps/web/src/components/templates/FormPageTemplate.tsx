@@ -1022,10 +1022,10 @@ export const FormPageTemplate: React.FC<FormPageTemplateProps> = ({
                     <Controller
                       name={field.name}
                       control={control}
-                      defaultValue={field.defaultValue as string[] ?? []}
+                      defaultValue={(field.defaultValue as string[]) ?? []}
                       render={({ field: fileField }) => (
                         <FileUpload
-                          value={fileField.value as string[] ?? []}
+                          value={(fileField.value as string[]) ?? []}
                           onChange={fileField.onChange}
                           maxCount={field.uploadConfig?.maxCount}
                           accept={field.uploadConfig?.accept}
@@ -1059,10 +1059,10 @@ export const FormPageTemplate: React.FC<FormPageTemplateProps> = ({
                     <Controller
                       name={field.name}
                       control={control}
-                      defaultValue={field.defaultValue as string[] ?? []}
+                      defaultValue={(field.defaultValue as string[]) ?? []}
                       render={({ field: imageField }) => (
                         <ImageUpload
-                          value={imageField.value as string[] ?? []}
+                          value={(imageField.value as string[]) ?? []}
                           onChange={imageField.onChange}
                           maxCount={field.imageConfig?.maxCount}
                           disabled={isDisabled}

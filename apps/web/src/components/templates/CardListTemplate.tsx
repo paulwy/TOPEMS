@@ -492,13 +492,17 @@ export const CardListTemplate: React.FC<CardListTemplateProps> = ({
 
   // 渲染单个卡片
   const renderCard = (item: Record<string, unknown>, index: number) => {
-    const title = (typeof cardConfig.title === 'function' ? cardConfig.title(item) : item[cardConfig.title]) as React.ReactNode;
+    const title = (
+      typeof cardConfig.title === 'function' ? cardConfig.title(item) : item[cardConfig.title]
+    ) as React.ReactNode;
 
-    const description = (cardConfig.description
-      ? typeof cardConfig.description === 'function'
-        ? cardConfig.description(item)
-        : item[cardConfig.description]
-      : null) as React.ReactNode;
+    const description = (
+      cardConfig.description
+        ? typeof cardConfig.description === 'function'
+          ? cardConfig.description(item)
+          : item[cardConfig.description]
+        : null
+    ) as React.ReactNode;
 
     const icon = cardConfig.icon
       ? typeof cardConfig.icon === 'function'
@@ -517,7 +521,8 @@ export const CardListTemplate: React.FC<CardListTemplateProps> = ({
       : undefined;
     const statusColor = statusConfig?.color || 'default';
     const statusLabel =
-      statusConfig?.label || (cardConfig.status?.field ? String(item[cardConfig.status.field]) : '');
+      statusConfig?.label ||
+      (cardConfig.status?.field ? String(item[cardConfig.status.field]) : '');
 
     return (
       <Paper

@@ -356,7 +356,7 @@ const EquipmentInspectionPage: React.FC = () => {
                   }
                   fullWidth
                   required
-                  slotProps={{ inputLabel: { shrink: true } }}
+                  slotProps={{ inputLabel: { shrink: true } } as any}
                 />
               </Box>
 

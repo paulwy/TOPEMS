@@ -19,8 +19,6 @@ import {
 import { PageContainer } from '@/components/common';
 import React, { useState, useEffect, useMemo, useCallback } from 'react';
 import { designTokens } from '@/theme/tokens';
-
-const ct = designTokens.colors;
 import type {
   Equipment,
   CreateEquipmentRequest,
@@ -31,7 +29,7 @@ import type {
 } from '@/api/mes';
 import { mesApi } from '@/api/mes';
 import { useAppStore } from '@/store';
-import { LoadingSpinner } from '@/components/common/LoadingSpinner';
+import { LoadingSpinner } from '@topems/shared-components';
 import {
   ListPageTemplate,
   type ColumnDef,
@@ -51,6 +49,8 @@ import {
   AlertTriangle,
 } from 'lucide-react';
 import { apiLogger } from '@/utils/logger';
+
+const ct = designTokens.colors;
 
 const EquipmentManagementPage: React.FC = () => {
   const [equipment, setEquipment] = useState<Equipment[]>([]);

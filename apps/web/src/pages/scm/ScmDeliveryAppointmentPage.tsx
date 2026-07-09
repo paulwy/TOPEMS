@@ -38,7 +38,7 @@ import {
 import { apiLogger } from '@/utils/logger';
 import { ListPageTemplate, type ColumnDef } from '@/components/templates';
 import { PageContainer } from '@/components/common';
-import ConfirmDialog from '@/components/common/ConfirmDialog';
+import { ConfirmDialog } from '@topems/shared-components';
 import { designTokens } from '@/theme/tokens';
 
 const ct = designTokens.colors;
@@ -805,7 +805,7 @@ const ScmDeliveryAppointmentPage: React.FC = () => {
                 onChange={(e) => setFormData({ ...formData, delivery_date: e.target.value })}
                 size='small'
                 required
-                slotProps={{ inputLabel: { shrink: true } }}
+                slotProps={{ inputLabel: { shrink: true } } as any}
               />
               <TextField
                 label='预约时间'
@@ -813,7 +813,7 @@ const ScmDeliveryAppointmentPage: React.FC = () => {
                 value={formData.delivery_time}
                 onChange={(e) => setFormData({ ...formData, delivery_time: e.target.value })}
                 size='small'
-                slotProps={{ inputLabel: { shrink: true } }}
+                slotProps={{ inputLabel: { shrink: true } } as any}
               />
               <FormControl
                 size='small'
@@ -870,7 +870,7 @@ const ScmDeliveryAppointmentPage: React.FC = () => {
                   setFormData({ ...formData, expected_arrival_time: e.target.value })
                 }
                 size='small'
-                slotProps={{ inputLabel: { shrink: true } }}
+                slotProps={{ inputLabel: { shrink: true } } as any}
               />
               <TextField
                 label='总数量'

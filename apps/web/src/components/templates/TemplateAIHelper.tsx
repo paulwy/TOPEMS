@@ -1,11 +1,14 @@
-import {TextField,
+import {
+  TextField,
   FormLabel,
   Card,
   CardContent,
   CardHeader,
   Typography,
   CircularProgress,
-  Button, useTheme} from '@mui/material';
+  Button,
+  useTheme,
+} from '@mui/material';
 import React, { useState } from 'react';
 
 import { Sparkles, Wand2, Lightbulb, TrendingUp, Send } from 'lucide-react';
@@ -342,7 +345,9 @@ const TemplateAIHelper: React.FC<TemplateAIHelperProps> = ({
 
         {suggestions.length > 0 && (
           <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
-            <FormLabel sx={{ fontSize: 12, fontWeight: 500, color: 'warning.700' }}>AI 建议</FormLabel>
+            <FormLabel sx={{ fontSize: 12, fontWeight: 500, color: 'warning.700' }}>
+              AI 建议
+            </FormLabel>
             <div style={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
               {suggestions.map((suggestion, index) => (
                 <div
@@ -364,7 +369,9 @@ const TemplateAIHelper: React.FC<TemplateAIHelperProps> = ({
 
         {analysisResult && analysisResult.suggestions.length > 0 && (
           <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
-            <FormLabel sx={{ fontSize: 12, fontWeight: 500, color: 'warning.700' }}>分析结果</FormLabel>
+            <FormLabel sx={{ fontSize: 12, fontWeight: 500, color: 'warning.700' }}>
+              分析结果
+            </FormLabel>
             <div style={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
               {analysisResult.suggestions.map((suggestion, index) => (
                 <div

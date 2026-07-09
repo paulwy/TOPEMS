@@ -18,7 +18,7 @@ import React, { useState, useEffect, useCallback } from 'react';
 import type { Supplier, CreateSupplierRequest, UpdateSupplierRequest } from '@/api/scm';
 import { scmApi } from '@/api/scm';
 import { useAppStore } from '@/store';
-import { LoadingSpinner } from '@/components/common/LoadingSpinner';
+import { LoadingSpinner } from '@topems/shared-components';
 import { ListPageTemplate, type ColumnDef, type FilterConfig } from '@/components/templates';
 import { Search, Plus, Edit, Trash2, Eye } from 'lucide-react';
 import { ImageUpload, PageContainer } from '@/components/common';

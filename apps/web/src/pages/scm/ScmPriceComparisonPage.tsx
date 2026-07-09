@@ -7,7 +7,7 @@ import { scmApi } from '@/api/scm';
 import type { PriceComparison } from '@/api/scm';
 import { useAppStore } from '@/store';
 import { designTokens } from '@/theme/tokens';
-import { logger } from "@/utils/logger";
+import { logger } from '@/utils/logger';
 
 const ct = designTokens.colors;
 
@@ -51,7 +51,11 @@ const ScmPriceComparisonPage: React.FC = () => {
   };
 
   const getStatusBadge = (status: string) => {
-    const config = STATUS_MAP[status] || { label: status, bg: 'grey.100', color: ct.text.secondary };
+    const config = STATUS_MAP[status] || {
+      label: status,
+      bg: 'grey.100',
+      color: ct.text.secondary,
+    };
     return (
       <Chip
         label={config.label}

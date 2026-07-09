@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { Flag, MessageSquare, Tag, Plus, X, Edit3, Check } from 'lucide-react';
-import {TextField, Chip, Paper, Button, useTheme} from '@mui/material';
+import { TextField, Chip, Paper, Button, useTheme } from '@mui/material';
 
 export interface Annotation {
   id: string;
@@ -133,7 +133,9 @@ export function ChartAnnotations({
           </div>
 
           <div style={{ marginBottom: 8 }}>
-            <div style={{ fontSize: 12, color: theme.palette.text.disabled, marginBottom: 4 }}>类型</div>
+            <div style={{ fontSize: 12, color: theme.palette.text.disabled, marginBottom: 4 }}>
+              类型
+            </div>
             <div style={{ display: 'flex', gap: 4 }}>
               {annotationTypes.map((type) => {
                 const Icon = type.icon;
@@ -149,7 +151,8 @@ export function ChartAnnotations({
                       borderRadius: 8,
                       border: 'none',
                       backgroundColor: selectedType === type.id ? 'primary.100' : 'transparent',
-                      color: selectedType === type.id ? 'primary.700' : theme.palette.text.secondary,
+                      color:
+                        selectedType === type.id ? 'primary.700' : theme.palette.text.secondary,
                       cursor: 'pointer',
                     }}
                     onMouseEnter={(e) => {
@@ -170,7 +173,9 @@ export function ChartAnnotations({
           </div>
 
           <div style={{ marginBottom: 8 }}>
-            <div style={{ fontSize: 12, color: theme.palette.text.disabled, marginBottom: 4 }}>颜色</div>
+            <div style={{ fontSize: 12, color: theme.palette.text.disabled, marginBottom: 4 }}>
+              颜色
+            </div>
             <div style={{ display: 'flex', gap: 4 }}>
               {annotationTypes
                 .find((t) => t.id === selectedType)

@@ -12,7 +12,7 @@ import { materialApi } from '@/api/rs';
 import type { Material } from '@/api/rs';
 import { useAppStore } from '@/store';
 import { logger } from '@/utils/logger';
-import ConfirmDialog from '@/components/common/ConfirmDialog';
+import { ConfirmDialog } from '@topems/shared-components';
 
 const STATUS_OPTIONS = [
   { label: '全部', value: '' },

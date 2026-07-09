@@ -9,7 +9,9 @@ import { useAppStore } from '@/store';
 vi.mock('@/api/lims', () => ({
   limsApi: {
     processes: {
-      list: vi.fn().mockResolvedValue({ success: true, data: { data: [], pagination: { total: 0 } } }),
+      list: vi
+        .fn()
+        .mockResolvedValue({ success: true, data: { data: [], pagination: { total: 0 } } }),
     },
     getStatistics: vi.fn().mockResolvedValue({ success: true, data: {} }),
     createProcess: vi.fn(),

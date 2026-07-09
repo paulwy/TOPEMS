@@ -141,7 +141,11 @@ const ExportModal: React.FC<ExportModalProps> = ({ report, onClose }) => {
     };
   };
 
-  const downloadFile = (data: string | { type: string; headers: string[]; rows: unknown[][] }, filename: string, format: ExportFormat) => {
+  const downloadFile = (
+    data: string | { type: string; headers: string[]; rows: unknown[][] },
+    filename: string,
+    format: ExportFormat
+  ) => {
     let content: string | Blob;
     let mimeType: string;
 

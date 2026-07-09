@@ -52,7 +52,9 @@ export interface UseErpResult<T> {
 
 function useErpBase<T extends { id?: string }>(
   api: {
-    list: (params?: Record<string, unknown>) => Promise<{ success: boolean; data?: { items: T[]; total: number } }>;
+    list: (
+      params?: Record<string, unknown>
+    ) => Promise<{ success: boolean; data?: { items: T[]; total: number } }>;
     get: (id: string) => Promise<{ success: boolean; data?: T }>;
     create: (data: Partial<T>) => Promise<{ success: boolean; data?: T }>;
     update: (id: string, data: Partial<T>) => Promise<{ success: boolean; data?: T }>;
@@ -272,13 +274,22 @@ export function useAccountingSubjects() {
 }
 
 export function useVouchers() {
-  return useErpBase<FinancialVoucher>(voucherApi as typeof voucherApi & {
-    list: (params?: Record<string, unknown>) => Promise<{ success: boolean; data?: { items: FinancialVoucher[]; total: number } }>;
-    get: (id: string) => Promise<{ success: boolean; data?: FinancialVoucher }>;
-    create: (data: Partial<FinancialVoucher>) => Promise<{ success: boolean; data?: FinancialVoucher }>;
-    update: (id: string, data: Partial<FinancialVoucher>) => Promise<{ success: boolean; data?: FinancialVoucher }>;
-    delete: (id: string) => Promise<{ success: boolean }>;
-  });
+  return useErpBase<FinancialVoucher>(
+    voucherApi as typeof voucherApi & {
+      list: (
+        params?: Record<string, unknown>
+      ) => Promise<{ success: boolean; data?: { items: FinancialVoucher[]; total: number } }>;
+      get: (id: string) => Promise<{ success: boolean; data?: FinancialVoucher }>;
+      create: (
+        data: Partial<FinancialVoucher>
+      ) => Promise<{ success: boolean; data?: FinancialVoucher }>;
+      update: (
+        id: string,
+        data: Partial<FinancialVoucher>
+      ) => Promise<{ success: boolean; data?: FinancialVoucher }>;
+      delete: (id: string) => Promise<{ success: boolean }>;
+    }
+  );
 }
 
 export function useOfficeSupplies() {

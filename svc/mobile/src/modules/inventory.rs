@@ -1,6 +1,6 @@
 use axum::{extract::State, Json};
 use serde::{Deserialize, Serialize};
-use sqlx::PgPool;
+use sqlx::{types::BigDecimal, PgPool};
 use uuid::Uuid;
 
 use topems_shared::ApiResponse;
@@ -40,7 +40,7 @@ pub async fn list_inventory_items(
                         "batch_no": row.batch_no,
                         "expiry_date": row.expiry_date,
                         "status": row.status,
-                        "last_updated": row.last_updated.to_string(),
+                        "last_updated": row.last_updated.map(|t| t.to_string()),
                     })
                 })
                 .collect();
@@ -89,7 +89,7 @@ pub async fn get_inventory_item(
                 "batch_no": row.batch_no,
                 "expiry_date": row.expiry_date,
                 "status": row.status,
-                "last_updated": row.last_updated.to_string(),
+                "last_updated": row.last_updated.map(|t| t.to_string()),
             });
             Json(ApiResponse::success(item, "获取库存详情成功"))
         }
@@ -127,8 +127,8 @@ pub async fn list_stocktake_tasks(
                         "total_items": row.total_items,
                         "counted_items": row.counted_items,
                         "assignee": row.assignee,
-                        "due_date": row.due_date.to_string(),
-                        "created_at": row.created_at.to_string(),
+                        "due_date": row.due_date.map(|d| d.to_string()),
+                        "created_at": row.created_at.map(|t| t.to_string()),
                     })
                 })
                 .collect();
@@ -179,10 +179,12 @@ pub async fn create_stocktake_record(
         }
     };
 
-    let difference = payload.actual_quantity - system_quantity;
-    let status = if difference == 0 {
+    let system_qty = system_quantity.clone().unwrap_or_default();
+    let actual_qty: BigDecimal = payload.actual_quantity.into();
+    let difference = &actual_qty - &system_qty;
+    let status = if difference == BigDecimal::from(0i32) {
         "normal"
-    } else if difference > 0 {
+    } else if difference > BigDecimal::from(0i32) {
         "surplus"
     } else {
         "shortage"
@@ -191,43 +193,42 @@ pub async fn create_stocktake_record(
     let record_id = Uuid::new_v4();
     let now = chrono::Utc::now();
 
-    let result = sqlx::query!(
+    let record = serde_json::json!({
+        "id": record_id,
+        "task_id": task_id,
+        "item_id": item_id,
+        "item_name": item_name,
+        "sku": sku,
+        "system_quantity": system_quantity,
+        "actual_quantity": payload.actual_quantity,
+        "difference": difference,
+        "status": status,
+        "counted_by": "mobile_user",
+        "counted_at": now.to_rfc3339(),
+    });
+
+    let result = sqlx::query(
         r#"
         INSERT INTO stocktake_records (id, task_id, item_id, item_name, sku, system_quantity, actual_quantity, difference, status, counted_by, counted_at)
         VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11)
         "#,
-        record_id,
-        task_id,
-        item_id,
-        item_name,
-        sku,
-        system_quantity,
-        payload.actual_quantity,
-        difference,
-        status,
-        "mobile_user",
-        now
     )
+    .bind(record_id)
+    .bind(task_id)
+    .bind(item_id)
+    .bind(item_name)
+    .bind(sku)
+    .bind(system_qty)
+    .bind(actual_qty)
+    .bind(difference)
+    .bind(status)
+    .bind("mobile_user")
+    .bind(now.naive_utc())
     .execute(&pool)
     .await;
 
     match result {
-        Ok(_) => {
-            let record = serde_json::json!({
-                "id": record_id,
-                "task_id": task_id,
-                "item_id": item_id,
-                "item_name": item_name,
-                "sku": sku,
-                "system_quantity": system_quantity,
-                "actual_quantity": payload.actual_quantity,
-                "difference": difference,
-                "status": status,
-                "counted_by": "mobile_user",
-                "counted_at": now.to_rfc3339(),
-            });
-            Json(ApiResponse::success(record, "创建盘点记录成功"))
-        }
+        Ok(_) => Json(ApiResponse::success(record, "创建盘点记录成功")),
         Err(e) => {
             tracing::error!("创建盘点记录失败: {}", e);
             Json(ApiResponse::error(500, "创建盘点记录失败"))
@@ -261,8 +262,8 @@ pub async fn list_inbound_orders(
                         "status": row.status,
                         "total_items": row.total_items,
                         "total_quantity": row.total_quantity,
-                        "expected_date": row.expected_date.to_string(),
-                        "created_at": row.created_at.to_string(),
+                        "expected_date": row.expected_date.map(|d| d.to_string()),
+                        "created_at": row.created_at.map(|t| t.to_string()),
                     })
                 })
                 .collect();
@@ -304,8 +305,8 @@ pub async fn list_outbound_orders(
                         "status": row.status,
                         "total_items": row.total_items,
                         "total_quantity": row.total_quantity,
-                        "expected_date": row.expected_date.to_string(),
-                        "created_at": row.created_at.to_string(),
+                        "expected_date": row.expected_date.map(|d| d.to_string()),
+                        "created_at": row.created_at.map(|t| t.to_string()),
                     })
                 })
                 .collect();

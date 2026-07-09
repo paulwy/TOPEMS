@@ -19,7 +19,7 @@ import {
 import { useAppStore } from '../../store';
 import { ListPageTemplate, type ColumnDef, type FilterConfig } from '@/components/templates';
 import { PageContainer } from '@/components/common';
-import ConfirmDialog from '@/components/common/ConfirmDialog';
+import { ConfirmDialog } from '@topems/shared-components';
 import { designTokens } from '@/theme/tokens';
 
 const ct = designTokens.colors;

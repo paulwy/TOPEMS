@@ -11,7 +11,8 @@ import {
   Play,
   Plus,
 } from 'lucide-react';
-import {Dialog,
+import {
+  Dialog,
   DialogTitle,
   DialogContent,
   DialogActions,
@@ -23,7 +24,9 @@ import {Dialog,
   Box,
   Typography,
   MenuItem,
-  Button, useTheme} from '@mui/material';
+  Button,
+  useTheme,
+} from '@mui/material';
 
 import { DataTable } from '@/components/common/DataTable';
 import type { ColumnDef } from '@tanstack/react-table';
@@ -91,7 +94,9 @@ const LimsTaskDetailPage: React.FC = () => {
 
       if (recordRes.success && recordRes.data) {
         const recordData = recordRes.data as LimsListResponse<RawRecord> | RawRecord[];
-        const recordArray = Array.isArray(recordData) ? recordData : recordData.records || recordData.items || [];
+        const recordArray = Array.isArray(recordData)
+          ? recordData
+          : recordData.records || recordData.items || [];
         const formattedRecords = recordArray.map((r: RawRecord) => ({
           ...r,
           step_name: r.step_name || r.step_id || `步骤 ${r.step_index}`,
@@ -100,9 +105,14 @@ const LimsTaskDetailPage: React.FC = () => {
       }
 
       if (processRes.success && processRes.data && task) {
-        const processData = processRes.data as LimsListResponse<InspectionProcess> | InspectionProcess[];
-        const processArray = Array.isArray(processData) ? processData : processData.processes || processData.items || [];
-        const matchedProcess = processArray.find((p: InspectionProcess) => p.id === task.process_id);
+        const processData = processRes.data as
+          LimsListResponse<InspectionProcess> | InspectionProcess[];
+        const processArray = Array.isArray(processData)
+          ? processData
+          : processData.processes || processData.items || [];
+        const matchedProcess = processArray.find(
+          (p: InspectionProcess) => p.id === task.process_id
+        );
         if (matchedProcess) {
           setProcess(matchedProcess);
         }

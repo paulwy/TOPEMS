@@ -113,7 +113,9 @@ describe('BI Module API Tests', () => {
       const { fetchReports } = await import('../report');
       await fetchReports({ page: 1, pageSize: 10 });
       const { apiClient } = await import('../../client');
-      expect(apiClient.bi.get).toHaveBeenCalledWith('/analytics/report', { params: { page: 1, pageSize: 10 } });
+      expect(apiClient.bi.get).toHaveBeenCalledWith('/analytics/report', {
+        params: { page: 1, pageSize: 10 },
+      });
     });
 
     it('fetchReport should call GET /analytics/report/:id', async () => {
@@ -150,7 +152,9 @@ describe('BI Module API Tests', () => {
       const { exportReport } = await import('../report');
       await exportReport('rep-001', 'pdf');
       const { apiClient } = await import('../../client');
-      expect(apiClient.bi.post).toHaveBeenCalledWith('/analytics/report/rep-001/export', { format: 'pdf' });
+      expect(apiClient.bi.post).toHaveBeenCalledWith('/analytics/report/rep-001/export', {
+        format: 'pdf',
+      });
     });
 
     it('listExportJobs should call GET /analytics/report/:reportId/exports', async () => {
@@ -164,7 +168,9 @@ describe('BI Module API Tests', () => {
       const { downloadExport } = await import('../report');
       await downloadExport('job-001');
       const { apiClient } = await import('../../client');
-      expect(apiClient.bi.get).toHaveBeenCalledWith('/analytics/report/exports/job-001/download', { responseType: 'blob' });
+      expect(apiClient.bi.get).toHaveBeenCalledWith('/analytics/report/exports/job-001/download', {
+        responseType: 'blob',
+      });
     });
 
     it('createSchedule should call POST /analytics/report/:reportId/schedules', async () => {
@@ -186,7 +192,9 @@ describe('BI Module API Tests', () => {
       const { toggleSchedule } = await import('../report');
       await toggleSchedule('sch-001', true);
       const { apiClient } = await import('../../client');
-      expect(apiClient.bi.post).toHaveBeenCalledWith('/analytics/report/schedules/sch-001/toggle', { enabled: true });
+      expect(apiClient.bi.post).toHaveBeenCalledWith('/analytics/report/schedules/sch-001/toggle', {
+        enabled: true,
+      });
     });
   });
 
@@ -248,7 +256,9 @@ describe('BI Module API Tests', () => {
       const { listDatasets } = await import('../dataset');
       await listDatasets({ page: 1, pageSize: 10 });
       const { apiClient } = await import('../../client');
-      expect(apiClient.bi.get).toHaveBeenCalledWith('/datasets', { params: { page: 1, pageSize: 10 } });
+      expect(apiClient.bi.get).toHaveBeenCalledWith('/datasets', {
+        params: { page: 1, pageSize: 10 },
+      });
     });
 
     it('getDataset should call GET /datasets/:id', async () => {
@@ -293,7 +303,10 @@ describe('BI Module API Tests', () => {
       const { testSqlQuery } = await import('../dataset');
       await testSqlQuery('ds-001', 'SELECT * FROM test');
       const { apiClient } = await import('../../client');
-      expect(apiClient.bi.post).toHaveBeenCalledWith('/datasets/test-sql', { data_source_id: 'ds-001', sql: 'SELECT * FROM test' });
+      expect(apiClient.bi.post).toHaveBeenCalledWith('/datasets/test-sql', {
+        data_source_id: 'ds-001',
+        sql: 'SELECT * FROM test',
+      });
     });
 
     it('publishDataset should call POST /datasets/:id/publish', async () => {
@@ -314,7 +327,9 @@ describe('BI Module API Tests', () => {
       const { getDatasetPreview } = await import('../dataset');
       await getDatasetPreview('ds-001', 100);
       const { apiClient } = await import('../../client');
-      expect(apiClient.bi.get).toHaveBeenCalledWith('/datasets/ds-001/preview', { params: { limit: 100 } });
+      expect(apiClient.bi.get).toHaveBeenCalledWith('/datasets/ds-001/preview', {
+        params: { limit: 100 },
+      });
     });
   });
 
@@ -323,7 +338,9 @@ describe('BI Module API Tests', () => {
       const { listDataSources } = await import('../dataSource');
       await listDataSources({ page: 1, pageSize: 10 });
       const { apiClient } = await import('../../client');
-      expect(apiClient.bi.get).toHaveBeenCalledWith('/data-sources', { params: { page: 1, pageSize: 10 } });
+      expect(apiClient.bi.get).toHaveBeenCalledWith('/data-sources', {
+        params: { page: 1, pageSize: 10 },
+      });
     });
 
     it('getDataSource should call GET /data-sources/:id', async () => {
@@ -376,7 +393,9 @@ describe('BI Module API Tests', () => {
       const { listComparisons } = await import('../comparison');
       await listComparisons({ page: 1, pageSize: 10 });
       const { apiClient } = await import('../../client');
-      expect(apiClient.bi.get).toHaveBeenCalledWith('/comparison-analysis', { params: { page: 1, pageSize: 10 } });
+      expect(apiClient.bi.get).toHaveBeenCalledWith('/comparison-analysis', {
+        params: { page: 1, pageSize: 10 },
+      });
     });
 
     it('getComparison should call GET /comparison-analysis/:id', async () => {

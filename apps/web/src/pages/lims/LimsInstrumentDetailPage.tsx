@@ -93,12 +93,14 @@ const LimsInstrumentDetailPage: React.FC = () => {
       }
 
       if (calibrationRes.success && calibrationRes.data) {
-        const data = calibrationRes.data as LimsListResponse<CalibrationRecord> | CalibrationRecord[];
+        const data = calibrationRes.data as
+          LimsListResponse<CalibrationRecord> | CalibrationRecord[];
         setCalibrationRecords(Array.isArray(data) ? data : data.items || data.records || []);
       }
 
       if (maintenanceRes.success && maintenanceRes.data) {
-        const data = maintenanceRes.data as LimsListResponse<MaintenanceRecord> | MaintenanceRecord[];
+        const data = maintenanceRes.data as
+          LimsListResponse<MaintenanceRecord> | MaintenanceRecord[];
         setMaintenanceRecords(Array.isArray(data) ? data : data.items || []);
       }
 

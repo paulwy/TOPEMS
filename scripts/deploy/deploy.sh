@@ -329,7 +329,6 @@ run_migrations() {
         "svc/wms/migrations"
         "svc/gis/migrations"
         "svc/analytics/migrations"
-        "svc/report/migrations"
         "svc/monitor/migrations"
         "svc/portal/migrations"
         "svc/mobile/migrations"

@@ -622,7 +622,10 @@ export const DocumentPage: React.FC = () => {
                               <CheckCircle size={16} />
                             </IconButton>
                           )}
-                          <IconButton size='small' aria-label='下载文档'>
+                          <IconButton
+                            size='small'
+                            aria-label='下载文档'
+                          >
                             <Download size={16} />
                           </IconButton>
                         </Box>

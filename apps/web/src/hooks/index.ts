@@ -1,5 +1,5 @@
-export { useCrud } from './useCrud';
-export type { UseCrudOptions, UseCrudResult } from './useCrud';
+export { useCrud } from '@topems/shared-hooks';
+export type { UseCrudOptions, UseCrudResult } from '@topems/shared-hooks';
 
 export { useBackNavigation } from './useBackNavigation';
 export type { FromState, BackNavigationResult } from './useBackNavigation';
@@ -29,7 +29,7 @@ export { usePerformanceMonitor } from './usePerformanceMonitor';
 export { useResponsive } from './useResponsive';
 export type { Breakpoint } from './useResponsive';
 
-export { useDebounce, useDebouncedValue, useDebouncedCallback } from './useDebounce';
+export { useDebounce, useDebouncedValue, useDebouncedCallback } from '@topems/shared-hooks';
 export { useThrottle, useThrottledValue, useThrottledCallback } from './useThrottle';
 export { useIntersectionObserver, useInView } from './useIntersectionObserver';
 export type {

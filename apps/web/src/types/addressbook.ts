@@ -1,3 +1,7 @@
+import type { ApiResponse, PaginatedResponse } from '@topems/shared-types';
+
+export { ApiResponse, PaginatedResponse };
+
 export interface AddressbookEntry {
   id: string;
   contact_type: 'EMPLOYEE' | 'DEPARTMENT' | 'COMPANY';
@@ -49,17 +53,4 @@ export interface DepartmentNode {
   name: string;
   code?: string;
   children: DepartmentNode[];
-}
-
-export interface PaginatedResponse<T> {
-  items: T[];
-  total: number;
-  page: number;
-  pagesize: number;
-}
-
-export interface ApiResponse<T = any> {
-  success: boolean;
-  data: T;
-  message?: string;
 }

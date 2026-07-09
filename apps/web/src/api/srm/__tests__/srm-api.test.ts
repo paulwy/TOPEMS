@@ -35,7 +35,13 @@ describe('SRM Module API Tests', () => {
 
     it('createSupplier should call POST /suppliers with data', async () => {
       const { srmApi } = await import('../../srm');
-      const data = { supplier_no: 'SUP-001', name: 'Supplier A', category: 'raw_material', status: 'active', risklevel: 'low' };
+      const data = {
+        supplier_no: 'SUP-001',
+        name: 'Supplier A',
+        category: 'raw_material',
+        status: 'active',
+        risklevel: 'low',
+      };
       await srmApi.createSupplier(data as any);
       const { apiClient } = await import('../../client');
       expect(apiClient.srm.post).toHaveBeenCalledWith('/suppliers', data);
@@ -113,7 +119,12 @@ describe('SRM Module API Tests', () => {
 
     it('createPurchaseOrder should call POST /purchase-orders with data', async () => {
       const { srmApi } = await import('../../srm');
-      const data = { po_no: 'PO-001', supplier_id: 'supplier-001', currency: 'CNY', status: 'draft' };
+      const data = {
+        po_no: 'PO-001',
+        supplier_id: 'supplier-001',
+        currency: 'CNY',
+        status: 'draft',
+      };
       await srmApi.createPurchaseOrder(data as any);
       const { apiClient } = await import('../../client');
       expect(apiClient.srm.post).toHaveBeenCalledWith('/purchase-orders', data);
@@ -152,7 +163,14 @@ describe('SRM Module API Tests', () => {
 
     it('createContract should call POST /supplier-contracts with data', async () => {
       const { srmApi } = await import('../../srm');
-      const data = { contract_no: 'CT-001', supplier_id: 'supplier-001', title: 'Supply Contract', contract_type: 'supply', currency: 'CNY', status: 'draft' };
+      const data = {
+        contract_no: 'CT-001',
+        supplier_id: 'supplier-001',
+        title: 'Supply Contract',
+        contract_type: 'supply',
+        currency: 'CNY',
+        status: 'draft',
+      };
       await srmApi.createContract(data as any);
       const { apiClient } = await import('../../client');
       expect(apiClient.srm.post).toHaveBeenCalledWith('/supplier-contracts', data);
@@ -221,7 +239,15 @@ describe('SRM Module API Tests', () => {
 
     it('createScoringDimension should call POST /scoring-dimensions with data', async () => {
       const { srmApi } = await import('../../srm');
-      const data = { name: 'Quality', code: 'quality', weight: 30, min_score: 0, max_score: 100, isactive: true, sort_order: 1 };
+      const data = {
+        name: 'Quality',
+        code: 'quality',
+        weight: 30,
+        min_score: 0,
+        max_score: 100,
+        isactive: true,
+        sort_order: 1,
+      };
       await srmApi.createScoringDimension(data);
       const { apiClient } = await import('../../client');
       expect(apiClient.srm.post).toHaveBeenCalledWith('/scoring-dimensions', data);
@@ -248,7 +274,9 @@ describe('SRM Module API Tests', () => {
       const { srmApi } = await import('../../srm');
       await srmApi.getPerformanceReports({ page: 1, pagesize: 10, category: 'raw_material' });
       const { apiClient } = await import('../../client');
-      expect(apiClient.srm.get).toHaveBeenCalledWith('/performance/reports?page=1&pagesize=10&category=raw_material');
+      expect(apiClient.srm.get).toHaveBeenCalledWith(
+        '/performance/reports?page=1&pagesize=10&category=raw_material'
+      );
     });
 
     it('getPerformanceReports should call GET /performance/reports without params', async () => {
@@ -290,14 +318,18 @@ describe('SRM Module API Tests', () => {
       const { srmApi } = await import('../../srm');
       await srmApi.getPerformanceTrend({ supplier_id: 'supplier-001', period: 'monthly' });
       const { apiClient } = await import('../../client');
-      expect(apiClient.srm.get).toHaveBeenCalledWith('/performance/trend?supplier_id=supplier-001&period=monthly');
+      expect(apiClient.srm.get).toHaveBeenCalledWith(
+        '/performance/trend?supplier_id=supplier-001&period=monthly'
+      );
     });
 
     it('compareSupplierPerformance should call GET /performance/compare with supplier_ids', async () => {
       const { srmApi } = await import('../../srm');
       await srmApi.compareSupplierPerformance(['sup-001', 'sup-002']);
       const { apiClient } = await import('../../client');
-      expect(apiClient.srm.get).toHaveBeenCalledWith('/performance/compare?supplier_ids=sup-001,sup-002');
+      expect(apiClient.srm.get).toHaveBeenCalledWith(
+        '/performance/compare?supplier_ids=sup-001,sup-002'
+      );
     });
   });
 
@@ -306,7 +338,9 @@ describe('SRM Module API Tests', () => {
       const { srmApi } = await import('../../srm');
       await srmApi.listInquiries({ status: 'published', page: 1, pagesize: 10 });
       const { apiClient } = await import('../../client');
-      expect(apiClient.srm.get).toHaveBeenCalledWith('/inquiries', { params: { status: 'published', page: 1, pagesize: 10 } });
+      expect(apiClient.srm.get).toHaveBeenCalledWith('/inquiries', {
+        params: { status: 'published', page: 1, pagesize: 10 },
+      });
     });
 
     it('getInquiry should call GET /inquiries/:id', async () => {
@@ -376,7 +410,14 @@ describe('SRM Module API Tests', () => {
 
     it('createQuotation should call POST /quotations with data', async () => {
       const { srmApi } = await import('../../srm');
-      const data = { inquiry_id: 'inquiry-001', supplier_id: 'supplier-001', title: 'Quotation A', total_amount: 10000, currency: 'CNY', status: 'draft' };
+      const data = {
+        inquiry_id: 'inquiry-001',
+        supplier_id: 'supplier-001',
+        title: 'Quotation A',
+        total_amount: 10000,
+        currency: 'CNY',
+        status: 'draft',
+      };
       await srmApi.createQuotation(data as any);
       const { apiClient } = await import('../../client');
       expect(apiClient.srm.post).toHaveBeenCalledWith('/quotations', data);
@@ -410,7 +451,9 @@ describe('SRM Module API Tests', () => {
       const { srmApi } = await import('../../srm');
       await srmApi.listBiddings({ status: 'published', page: 1, pagesize: 10 });
       const { apiClient } = await import('../../client');
-      expect(apiClient.srm.get).toHaveBeenCalledWith('/biddings', { params: { status: 'published', page: 1, pagesize: 10 } });
+      expect(apiClient.srm.get).toHaveBeenCalledWith('/biddings', {
+        params: { status: 'published', page: 1, pagesize: 10 },
+      });
     });
 
     it('getBidding should call GET /biddings/:id', async () => {
@@ -468,7 +511,9 @@ describe('SRM Module API Tests', () => {
       const { srmApi } = await import('../../srm');
       await srmApi.awardBidding('bid-001', 'supplier-001');
       const { apiClient } = await import('../../client');
-      expect(apiClient.srm.post).toHaveBeenCalledWith('/biddings/bid-001/award', { supplier_id: 'supplier-001' });
+      expect(apiClient.srm.post).toHaveBeenCalledWith('/biddings/bid-001/award', {
+        supplier_id: 'supplier-001',
+      });
     });
 
     it('listBiddingSuppliers should call GET /biddings/:biddingId/suppliers', async () => {

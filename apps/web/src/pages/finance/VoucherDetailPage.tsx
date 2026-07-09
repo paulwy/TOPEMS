@@ -18,7 +18,6 @@ import {
   Button,
 } from '@mui/material';
 import { designTokens } from '@/theme/tokens';
-const ct = designTokens.colors;
 import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import {
@@ -41,6 +40,8 @@ import { voucherApi, type FinancialVoucher, type VoucherItem } from '@/api/erp';
 import { PageContainer } from '@/components/common';
 import { useAppStore } from '@/store';
 import { apiLogger } from '@/utils/logger';
+
+const ct = designTokens.colors;
 
 interface TabConfig {
   id: string;

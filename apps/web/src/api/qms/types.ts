@@ -1,4 +1,7 @@
 import type { ApiResponse } from '../client';
+import type { PaginatedResponse } from '@topems/shared-types';
+
+export { PaginatedResponse };
 
 // Backend returns data structures
 export interface QualityStandardBackend {
@@ -498,8 +501,8 @@ export interface ApqpApproval {
   created_at?: string;
 }
 
-// Pagination wrapper
-export interface PaginatedResponse<T> {
+// Pagination wrapper - QMS specific
+export interface QmsPaginatedResponse<T> {
   standards?: T[];
   inspections?: T[];
   issues?: T[];

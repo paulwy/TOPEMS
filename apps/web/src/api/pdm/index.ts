@@ -1,12 +1,14 @@
-// PDM API 模块
-// Re-exports from main pdm.ts for backwards compatibility
-
 import apiClient from '../client';
 import type { ApiResponse } from '../client';
+
+import { bomApi } from './bom';
+import { documentApi } from './document';
 
 export * from './bom';
 export * from './project';
 export * from './document';
+
+export type Document = PdmDocument;
 
 export interface ProductionProcess {
   id: string;
@@ -297,34 +299,10 @@ export interface CreateProductConfigRequest {
   options: string[];
 }
 
-export interface BomItem {
-  id: string;
-  product_id: string;
-  part_number: string;
-  part_name: string;
-  quantity: number;
-  unit: string;
-  unit_price: number;
-  total_price: number;
-  level: number;
-  parent_id?: string;
-  status?: string;
-  created_at: string;
-  updated_at: string;
-}
-
-export interface CreateBomItemRequest {
-  product_id: string;
-  part_number: string;
-  part_name: string;
-  quantity: number;
-  unit: string;
-  unit_price: number;
-  level: number;
-  parent_id?: string;
-}
-
 export const pdmApi = {
+  ...bomApi,
+  ...documentApi,
+
   // Production Processes
   listProcesses: async (): Promise<ApiResponse<ProductionProcess[]>> => {
     return apiClient.pdm.get<ProductionProcess[]>('/production-processes');
@@ -477,26 +455,6 @@ export const pdmApi = {
     return apiClient.pdm.delete<boolean>(`/change-orders/${id}`);
   },
 
-  // BOM Items
-  listBomItems: async (): Promise<ApiResponse<BomItem[]>> => {
-    return apiClient.pdm.get<BomItem[]>('/bom-items');
-  },
-  getBomItem: async (id: string): Promise<ApiResponse<BomItem>> => {
-    return apiClient.pdm.get<BomItem>(`/bom-items/${id}`);
-  },
-  createBomItem: async (data: CreateBomItemRequest): Promise<ApiResponse<BomItem>> => {
-    return apiClient.pdm.post<BomItem>('/bom-items', data);
-  },
-  updateBomItem: async (
-    id: string,
-    data: Partial<CreateBomItemRequest>
-  ): Promise<ApiResponse<BomItem>> => {
-    return apiClient.pdm.put<BomItem>(`/bom-items/${id}`, data);
-  },
-  deleteBomItem: async (id: string): Promise<ApiResponse<boolean>> => {
-    return apiClient.pdm.delete<boolean>(`/bom-items/${id}`);
-  },
-
   // Product Configurations
   listProductConfigs: async (): Promise<ApiResponse<ProductConfig[]>> => {
     return apiClient.pdm.get<ProductConfig[]>('/product-configs');
@@ -532,3 +490,5 @@ export const pdmApi = {
     });
   },
 };
+
+export default pdmApi;

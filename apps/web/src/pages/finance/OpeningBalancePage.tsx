@@ -1,4 +1,5 @@
-import {Card,
+import {
+  Card,
   CardContent,
   CardHeader,
   Chip,
@@ -20,7 +21,9 @@ import {Card,
   DialogTitle,
   DialogContent,
   DialogActions,
-  Button, useTheme} from '@mui/material';
+  Button,
+  useTheme,
+} from '@mui/material';
 import { StatCardGroup } from '@/components';
 
 import React, { useState, useMemo, useEffect } from 'react';
@@ -257,7 +260,7 @@ export default function OpeningBalancePage() {
               size='small'
               value={period}
               onChange={(e) => setPeriod(e.target.value)}
-              slotProps={{ inputLabel: { shrink: true } }}
+              slotProps={{ inputLabel: { shrink: true } } as any}
             />
             <FormControl
               size='small'
@@ -567,7 +570,7 @@ export default function OpeningBalancePage() {
               size='small'
               value={carryForwardFrom}
               onChange={(e) => setCarryForwardFrom(e.target.value)}
-              slotProps={{ inputLabel: { shrink: true } }}
+              slotProps={{ inputLabel: { shrink: true } } as any}
             />
             <TextField
               label='到期间'
@@ -575,7 +578,7 @@ export default function OpeningBalancePage() {
               size='small'
               value={carryForwardTo}
               onChange={(e) => setCarryForwardTo(e.target.value)}
-              slotProps={{ inputLabel: { shrink: true } }}
+              slotProps={{ inputLabel: { shrink: true } } as any}
             />
             <Box
               sx={{

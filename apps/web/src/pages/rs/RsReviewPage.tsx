@@ -285,7 +285,7 @@ const RsReviewPage: React.FC = () => {
         { label: '已拒绝', value: 'rejected' },
       ],
       value: statusFilter || '',
-      onChange: (value: unknown) => setStatusFilter(value as string || ''),
+      onChange: (value: unknown) => setStatusFilter((value as string) || ''),
     },
     {
       id: 'reviewer',
@@ -299,14 +299,15 @@ const RsReviewPage: React.FC = () => {
         })),
       ],
       value: reviewerFilter || '',
-      onChange: (value: unknown) => setReviewerFilter(value as string || ''),
+      onChange: (value: unknown) => setReviewerFilter((value as string) || ''),
     },
     {
       id: 'dateRange',
       label: '日期范围',
       type: 'dateRange',
       value: dateRange,
-      onChange: (value: unknown) => setDateRange(value as { start: string; end: string } || { start: '', end: '' }),
+      onChange: (value: unknown) =>
+        setDateRange((value as { start: string; end: string }) || { start: '', end: '' }),
     },
   ];
 

@@ -127,10 +127,9 @@ describe('useBatchSelection', () => {
   });
 
   it('should update when items change', () => {
-    const { result, rerender } = renderHook(
-      ({ items }) => useBatchSelection(items),
-      { initialProps: { items: mockItems } }
-    );
+    const { result, rerender } = renderHook(({ items }) => useBatchSelection(items), {
+      initialProps: { items: mockItems },
+    });
 
     act(() => {
       result.current.selectAll();

@@ -237,7 +237,8 @@ const DashboardPage: React.FC<DashboardPageProps> = ({ onLogout }) => {
         workflowCount: flowData?.total_workflows || 0,
         notificationCount:
           (notificationData as { count?: number; total?: number })?.count ??
-          (notificationData as { count?: number; total?: number })?.total ?? 0,
+          (notificationData as { count?: number; total?: number })?.total ??
+          0,
       };
 
       setStats(newStats);
@@ -281,7 +282,7 @@ const DashboardPage: React.FC<DashboardPageProps> = ({ onLogout }) => {
           active:
             (ehsRes.status === 'fulfilled' &&
               ehsRes.value.success &&
-              ehsRes.value.data?.data?.filter((h: EhsHazard) => h.status === 'active').length) ||
+              ehsRes.value.data?.items?.filter((h: EhsHazard) => h.status === 'active').length) ||
             0,
         },
         srm: {

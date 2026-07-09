@@ -36,7 +36,7 @@ import { Settings, CheckSquare, Bell, FileText, Shield, Plug, Save, RotateCcw } 
 
 import { useAppStore } from '../../store';
 import { PageContainer } from '@/components/common';
-import ConfirmDialog from '@/components/common/ConfirmDialog';
+import { ConfirmDialog } from '@topems/shared-components';
 
 interface SettingGroup {
   id: string;

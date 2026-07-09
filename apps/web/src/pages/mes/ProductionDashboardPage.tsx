@@ -56,6 +56,7 @@ import {
 import { apiLogger } from '@/utils/logger';
 import { PageContainer } from '@/components/common/PageContainerV2';
 import { designTokens } from '@/theme/tokens';
+
 const ct = designTokens.colors;
 
 // ============== 类型定义 ==============
@@ -1031,7 +1032,9 @@ export const ProductionDashboardPage: React.FC = () => {
   const [wsConnected, setWsConnected] = useState(false);
   const [wsSupported] = useState(typeof window !== 'undefined' && 'WebSocket' in window);
   const [wsReconnectCount, setWsReconnectCount] = useState(0);
-  const [wsStatus, setWsStatus] = useState<'disconnected' | 'connecting' | 'connected' | 'reconnecting'>('disconnected');
+  const [wsStatus, setWsStatus] = useState<
+    'disconnected' | 'connecting' | 'connected' | 'reconnecting'
+  >('disconnected');
 
   const refreshTimerRef = useRef<ReturnType<typeof setInterval> | null>(null);
   const wsRef = useRef<WebSocket | null>(null);
@@ -1263,163 +1266,171 @@ export const ProductionDashboardPage: React.FC = () => {
   }, [workStationUtilization]);
 
   // ============== WebSocket ==============
-  const setupWebSocket = useCallback((isReconnecting = false) => {
-    if (!wsSupported) {
-      apiLogger.warn('WebSocket 不支持');
-      return;
-    }
-    if (wsRef.current && wsRef.current.readyState === WebSocket.OPEN) {
-      apiLogger.warn('WebSocket 已连接');
-      return;
-    }
-    if (wsConnectingRef.current) {
-      apiLogger.warn('WebSocket 正在连接中');
-      return;
-    }
-    if (!isReconnecting && wsInitRef.current) {
-      apiLogger.info('WebSocket 已初始化，跳过重复连接');
-      return;
-    }
-
-    try {
-      if (wsRef.current) {
-        wsRef.current.close(1000, '重新连接');
-        wsRef.current = null;
+  const setupWebSocket = useCallback(
+    (isReconnecting = false) => {
+      if (!wsSupported) {
+        apiLogger.warn('WebSocket 不支持');
+        return;
+      }
+      if (wsRef.current && wsRef.current.readyState === WebSocket.OPEN) {
+        apiLogger.warn('WebSocket 已连接');
+        return;
+      }
+      if (wsConnectingRef.current) {
+        apiLogger.warn('WebSocket 正在连接中');
+        return;
+      }
+      if (!isReconnecting && wsInitRef.current) {
+        apiLogger.info('WebSocket 已初始化，跳过重复连接');
+        return;
       }
 
-      wsConnectingRef.current = true;
-      const isReconnecting = wsReconnectAttemptRef.current > 0;
-      if (isReconnecting) {
-        setWsStatus('reconnecting');
-        apiLogger.info(`WebSocket 重连尝试 ${wsReconnectAttemptRef.current}/${MAX_RECONNECT_ATTEMPTS}`);
-      } else {
-        setWsStatus('connecting');
-      }
-
-      const protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
-      const wsHost = window.location.host;
-      const tokenParam = token ? `?token=${encodeURIComponent(token)}` : '';
-      const wsUrl = `${protocol}//${wsHost}/mes/ws/dashboard${tokenParam}`;
-      apiLogger.info(`正在建立 WebSocket 连接: ${wsUrl}`);
-      const ws = new WebSocket(wsUrl);
-      wsRef.current = ws;
-
-      wsConnectTimeoutRef.current = setTimeout(() => {
-        if (ws.readyState === WebSocket.CONNECTING) {
-          apiLogger.warn(`WebSocket 连接超时 (${CONNECTION_TIMEOUT}ms)，正在关闭连接`);
-          try {
-            ws.close(1006, 'Connection timeout');
-          } catch (err) {
-            apiLogger.error('关闭超时连接失败:', err);
-          }
+      try {
+        if (wsRef.current) {
+          wsRef.current.close(1000, '重新连接');
           wsRef.current = null;
         }
-      }, CONNECTION_TIMEOUT);
 
-      ws.onopen = () => {
-        if (wsConnectTimeoutRef.current) {
-          clearTimeout(wsConnectTimeoutRef.current);
-          wsConnectTimeoutRef.current = null;
+        wsConnectingRef.current = true;
+        const isReconnecting = wsReconnectAttemptRef.current > 0;
+        if (isReconnecting) {
+          setWsStatus('reconnecting');
+          apiLogger.info(
+            `WebSocket 重连尝试 ${wsReconnectAttemptRef.current}/${MAX_RECONNECT_ATTEMPTS}`
+          );
+        } else {
+          setWsStatus('connecting');
         }
-        wsConnectingRef.current = false;
-        wsInitRef.current = true;
-        wsReconnectAttemptRef.current = 0;
-        setWsReconnectCount(0);
-        setWsStatus('connected');
-        setWsConnected(true);
-        apiLogger.info('WebSocket 连接成功');
 
-        const authMessage = JSON.stringify({ type: 'authenticate' });
-        apiLogger.info(`WebSocket 发送认证消息: ${authMessage}`);
-        ws.send(authMessage);
-      };
+        const protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
+        const wsHost = window.location.host;
+        const tokenParam = token ? `?token=${encodeURIComponent(token)}` : '';
+        const wsUrl = `${protocol}//${wsHost}/mes/ws/dashboard${tokenParam}`;
+        apiLogger.info(`正在建立 WebSocket 连接: ${wsUrl}`);
+        const ws = new WebSocket(wsUrl);
+        wsRef.current = ws;
 
-      ws.onmessage = (event) => {
-        try {
-          apiLogger.info(`WebSocket 收到消息: ${event.data.substring(0, 200)}`);
-          const payload = JSON.parse(event.data) as {
-            type?: string;
-            data?: { alarms?: RealtimeAlarm[] };
-            message?: string;
-          };
-          if (payload?.type === 'connected') {
-            apiLogger.info('WebSocket 收到连接确认消息');
-            setWsConnected(true);
+        wsConnectTimeoutRef.current = setTimeout(() => {
+          if (ws.readyState === WebSocket.CONNECTING) {
+            apiLogger.warn(`WebSocket 连接超时 (${CONNECTION_TIMEOUT}ms)，正在关闭连接`);
+            try {
+              ws.close(1006, 'Connection timeout');
+            } catch (err) {
+              apiLogger.error('关闭超时连接失败:', err);
+            }
+            wsRef.current = null;
           }
-          if (payload?.type === 'alarms' && payload.data?.alarms) {
-            setAlarms(payload.data.alarms);
+        }, CONNECTION_TIMEOUT);
+
+        ws.onopen = () => {
+          if (wsConnectTimeoutRef.current) {
+            clearTimeout(wsConnectTimeoutRef.current);
+            wsConnectTimeoutRef.current = null;
           }
-        } catch (err) {
-          apiLogger.warn('解析 MES WS 消息失败', err);
-        }
-      };
-
-      ws.onclose = (event) => {
-        if (wsConnectTimeoutRef.current) {
-          clearTimeout(wsConnectTimeoutRef.current);
-          wsConnectTimeoutRef.current = null;
-        }
-        wsConnectingRef.current = false;
-        setWsConnected(false);
-        setWsStatus('disconnected');
-        wsRef.current = null;
-
-        const code = event.code;
-        const wasClean = event.wasClean;
-        apiLogger.info(`WebSocket 连接关闭: code=${code}, reason=${event.reason}, wasClean=${wasClean}`);
-
-        if (!autoRefresh) {
-          apiLogger.info('自动刷新已关闭，不进行重连');
-          return;
-        }
-
-        if (code === 1000 || code === 1001) {
-          apiLogger.info('连接正常关闭，不进行重连');
-          return;
-        }
-
-        if (wsReconnectAttemptRef.current >= MAX_RECONNECT_ATTEMPTS) {
-          apiLogger.error(`WebSocket 重连尝试已达最大次数 (${MAX_RECONNECT_ATTEMPTS})，停止重连`);
+          wsConnectingRef.current = false;
+          wsInitRef.current = true;
           wsReconnectAttemptRef.current = 0;
-          return;
-        }
+          setWsReconnectCount(0);
+          setWsStatus('connected');
+          setWsConnected(true);
+          apiLogger.info('WebSocket 连接成功');
 
-        wsReconnectAttemptRef.current += 1;
-        const attempt = wsReconnectAttemptRef.current;
-        const delay = Math.min(
-          MIN_RECONNECT_DELAY * Math.pow(2, attempt - 1),
-          MAX_RECONNECT_DELAY
-        ) + Math.random() * 1000;
+          const authMessage = JSON.stringify({ type: 'authenticate' });
+          apiLogger.info(`WebSocket 发送认证消息: ${authMessage}`);
+          ws.send(authMessage);
+        };
 
-        setWsReconnectCount(attempt);
-        apiLogger.info(`WebSocket 重连尝试 ${attempt}/${MAX_RECONNECT_ATTEMPTS}，延迟 ${Math.round(delay)}ms`);
-
-        wsReconnectRef.current = setTimeout(() => setupWebSocket(), delay);
-      };
-
-      ws.onerror = (event) => {
-        if (wsConnectTimeoutRef.current) {
-          clearTimeout(wsConnectTimeoutRef.current);
-          wsConnectTimeoutRef.current = null;
-        }
-        wsConnectingRef.current = false;
-        apiLogger.error('WebSocket 连接错误:', event);
-        setWsConnected(false);
-
-        if (ws.readyState === WebSocket.CONNECTING || ws.readyState === WebSocket.OPEN) {
+        ws.onmessage = (event) => {
           try {
-            ws.close(1011, 'WebSocket error occurred');
-          } catch (e) {
-            apiLogger.error('关闭错误连接失败:', e);
+            apiLogger.info(`WebSocket 收到消息: ${event.data.substring(0, 200)}`);
+            const payload = JSON.parse(event.data) as {
+              type?: string;
+              data?: { alarms?: RealtimeAlarm[] };
+              message?: string;
+            };
+            if (payload?.type === 'connected') {
+              apiLogger.info('WebSocket 收到连接确认消息');
+              setWsConnected(true);
+            }
+            if (payload?.type === 'alarms' && payload.data?.alarms) {
+              setAlarms(payload.data.alarms);
+            }
+          } catch (err) {
+            apiLogger.warn('解析 MES WS 消息失败', err);
           }
-        }
-      };
-    } catch (err) {
-      wsConnectingRef.current = false;
-      apiLogger.warn('MES WebSocket 连接失败，将使用轮询模式', err);
-      setWsConnected(false);
-    }
-  }, [wsSupported, autoRefresh, token]);
+        };
+
+        ws.onclose = (event) => {
+          if (wsConnectTimeoutRef.current) {
+            clearTimeout(wsConnectTimeoutRef.current);
+            wsConnectTimeoutRef.current = null;
+          }
+          wsConnectingRef.current = false;
+          setWsConnected(false);
+          setWsStatus('disconnected');
+          wsRef.current = null;
+
+          const code = event.code;
+          const wasClean = event.wasClean;
+          apiLogger.info(
+            `WebSocket 连接关闭: code=${code}, reason=${event.reason}, wasClean=${wasClean}`
+          );
+
+          if (!autoRefresh) {
+            apiLogger.info('自动刷新已关闭，不进行重连');
+            return;
+          }
+
+          if (code === 1000 || code === 1001) {
+            apiLogger.info('连接正常关闭，不进行重连');
+            return;
+          }
+
+          if (wsReconnectAttemptRef.current >= MAX_RECONNECT_ATTEMPTS) {
+            apiLogger.error(`WebSocket 重连尝试已达最大次数 (${MAX_RECONNECT_ATTEMPTS})，停止重连`);
+            wsReconnectAttemptRef.current = 0;
+            return;
+          }
+
+          wsReconnectAttemptRef.current += 1;
+          const attempt = wsReconnectAttemptRef.current;
+          const delay =
+            Math.min(MIN_RECONNECT_DELAY * Math.pow(2, attempt - 1), MAX_RECONNECT_DELAY) +
+            Math.random() * 1000;
+
+          setWsReconnectCount(attempt);
+          apiLogger.info(
+            `WebSocket 重连尝试 ${attempt}/${MAX_RECONNECT_ATTEMPTS}，延迟 ${Math.round(delay)}ms`
+          );
+
+          wsReconnectRef.current = setTimeout(() => setupWebSocket(), delay);
+        };
+
+        ws.onerror = (event) => {
+          if (wsConnectTimeoutRef.current) {
+            clearTimeout(wsConnectTimeoutRef.current);
+            wsConnectTimeoutRef.current = null;
+          }
+          wsConnectingRef.current = false;
+          apiLogger.error('WebSocket 连接错误:', event);
+          setWsConnected(false);
+
+          if (ws.readyState === WebSocket.CONNECTING || ws.readyState === WebSocket.OPEN) {
+            try {
+              ws.close(1011, 'WebSocket error occurred');
+            } catch (e) {
+              apiLogger.error('关闭错误连接失败:', e);
+            }
+          }
+        };
+      } catch (err) {
+        wsConnectingRef.current = false;
+        apiLogger.warn('MES WebSocket 连接失败，将使用轮询模式', err);
+        setWsConnected(false);
+      }
+    },
+    [wsSupported, autoRefresh, token]
+  );
 
   // ============== 副作用 ==============
   useEffect(() => {
@@ -1636,11 +1647,27 @@ export const ProductionDashboardPage: React.FC = () => {
             sx={{ alignItems: 'center' }}
           >
             {wsStatus === 'connected' ? (
-              <Wifi size={12} sx={{ color: 'success.main' }} />
+              <Wifi
+                size={12}
+                sx={{ color: 'success.main' }}
+              />
             ) : wsStatus === 'connecting' || wsStatus === 'reconnecting' ? (
-              <Wifi size={12} sx={{ color: 'warning.main', animation: 'spin 2s linear infinite', '@keyframes spin': { 'from': { transform: 'rotate(0deg)' }, 'to': { transform: 'rotate(360deg)' } } }} />
+              <Wifi
+                size={12}
+                sx={{
+                  color: 'warning.main',
+                  animation: 'spin 2s linear infinite',
+                  '@keyframes spin': {
+                    from: { transform: 'rotate(0deg)' },
+                    to: { transform: 'rotate(360deg)' },
+                  },
+                }}
+              />
             ) : (
-              <WifiOff size={12} sx={{ color: 'error.main' }} />
+              <WifiOff
+                size={12}
+                sx={{ color: 'error.main' }}
+              />
             )}
             <Typography
               variant='caption'

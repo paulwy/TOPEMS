@@ -234,7 +234,10 @@ const AuditLogPage: React.FC = () => {
   }, [logs]);
 
   const getStatusBadge = (status: string) => {
-    const badges: Record<string, { color: 'success' | 'error' | 'warning' | 'default'; label: string; icon: React.ReactNode }> = {
+    const badges: Record<
+      string,
+      { color: 'success' | 'error' | 'warning' | 'default'; label: string; icon: React.ReactNode }
+    > = {
       success: { color: 'success', label: '成功', icon: <CheckCircle size={14} /> },
       failed: { color: 'error', label: '失败', icon: <XCircle size={14} /> },
       warning: { color: 'warning', label: '警告', icon: <AlertCircle size={14} /> },
@@ -533,7 +536,7 @@ const AuditLogPage: React.FC = () => {
             type='date'
             value={dateRange.start}
             onChange={(e) => setDateRange((prev) => ({ ...prev, start: e.target.value }))}
-            slotProps={{ inputLabel: { shrink: true } }}
+            slotProps={{ inputLabel: { shrink: true } } as any}
           />
           <TextField
             size='small'
@@ -541,7 +544,7 @@ const AuditLogPage: React.FC = () => {
             type='date'
             value={dateRange.end}
             onChange={(e) => setDateRange((prev) => ({ ...prev, end: e.target.value }))}
-            slotProps={{ inputLabel: { shrink: true } }}
+            slotProps={{ inputLabel: { shrink: true } } as any}
           />
         </Box>
 

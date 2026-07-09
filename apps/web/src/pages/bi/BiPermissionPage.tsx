@@ -835,7 +835,10 @@ const BiPermissionPage = () => {
                               </TableCell>
                               <TableCell>
                                 <Tooltip title='编辑'>
-                                  <IconButton size='small' aria-label='编辑角色'>
+                                  <IconButton
+                                    size='small'
+                                    aria-label='编辑角色'
+                                  >
                                     <Edit2 size={16} />
                                   </IconButton>
                                 </Tooltip>

@@ -104,8 +104,39 @@ export function getLoadedModules(): string[] {
 }
 
 export const coreModuleCodes = [
-  'iam', 'admin', 'workflow', 'notification', 'doc', 'report', 'monitor',
-  'integration', 'ai', 'mobile', 'hrm', 'finance', 'crm', 'mes', 'qms',
-  'lims', 'ehs', 'scm', 'erp', 'wms', 'pm', 'pdm', 'srm', 'oa', 'lowcode',
-  'rs', 'asset', 'plugin', 'im', 'bi', 'gis',
+  'iam',
+  'admin',
+  'workflow',
+  'notification',
+  'doc',
+  'report',
+  'monitor',
+  'integration',
+  'ai',
+  'mobile',
+  'hrm',
+  'finance',
+  'crm',
+  'mes',
+  'qms',
+  'lims',
+  'ehs',
+  'scm',
+  'erp',
+  'wms',
+  'pm',
+  'pdm',
+  'srm',
+  'oa',
+  'lowcode',
+  'rs',
+  'asset',
+  'plugin',
+  'im',
+  'bi',
+  'gis',
 ] as const;
+
+export const coreModuleRoutes = Object.keys(moduleImports).map((code) => ({
+  code,
+}));

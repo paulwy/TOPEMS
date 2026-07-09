@@ -336,7 +336,7 @@ const RsReleasePage: React.FC = () => {
         { label: '开发环境', value: 'development' },
       ],
       value: envFilter || '',
-      onChange: (value: unknown) => setEnvFilter(value as string || ''),
+      onChange: (value: unknown) => setEnvFilter((value as string) || ''),
     },
     {
       id: 'status',
@@ -349,14 +349,15 @@ const RsReleasePage: React.FC = () => {
         { label: '已回滚', value: 'rolled_back' },
       ],
       value: statusFilter || '',
-      onChange: (value: unknown) => setStatusFilter(value as string || ''),
+      onChange: (value: unknown) => setStatusFilter((value as string) || ''),
     },
     {
       id: 'dateRange',
       label: '日期范围',
       type: 'dateRange',
       value: dateRange,
-      onChange: (value: unknown) => setDateRange(value as { start: string; end: string } || { start: '', end: '' }),
+      onChange: (value: unknown) =>
+        setDateRange((value as { start: string; end: string }) || { start: '', end: '' }),
     },
   ];
 

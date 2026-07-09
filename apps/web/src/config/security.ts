@@ -46,7 +46,14 @@ export const securityConfig: SecurityConfig = {
           'https://*.google-analytics.com',
         ],
     styleSrc: ["'self'", "'unsafe-inline'", 'https://fonts.googleapis.com'],
-    imgSrc: ["'self'", 'data:', 'blob:', 'https://*.amap.com', 'https://*.gravatar.com', 'https://*.openstreetmap.org'],
+    imgSrc: [
+      "'self'",
+      'data:',
+      'blob:',
+      'https://*.amap.com',
+      'https://*.gravatar.com',
+      'https://*.openstreetmap.org',
+    ],
     fontSrc: ["'self'", 'https://fonts.gstatic.com'],
     connectSrc: isDev
       ? ["'self'", 'http://localhost:*', 'ws://localhost:*', 'wss://localhost:*']

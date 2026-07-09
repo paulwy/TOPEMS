@@ -40,7 +40,13 @@ import {
   Monitor,
 } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
-import { MobileLayout, PullToRefresh, MobileSkeleton, MobileCard, MobileButton } from '@/components/mobile';
+import {
+  MobileLayout,
+  PullToRefresh,
+  MobileSkeleton,
+  MobileCard,
+  MobileButton,
+} from '@/components/mobile';
 import { useAppStore } from '@/store';
 import { mobileApi, type ProductionOrder, type WorkReport, type Equipment } from '@/api/mobile';
 import { apiLogger } from '@/utils/logger';
@@ -627,9 +633,7 @@ const MobileProductionPage: React.FC = () => {
                                 width: `${progress}%`,
                                 height: '100%',
                                 bgcolor:
-                                  order.status === 'completed'
-                                    ? 'success.main'
-                                    : 'primary.main',
+                                  order.status === 'completed' ? 'success.main' : 'primary.main',
                                 borderRadius: 3,
                                 transition: 'width 0.3s',
                               }}
@@ -697,11 +701,13 @@ const MobileProductionPage: React.FC = () => {
                               <MobileButton
                                 size='small'
                                 variant='outlined'
-                                onClick={() => addNotification({
-                                  title: '查看详情',
-                                  message: '查看工单详情',
-                                  type: 'info',
-                                })}
+                                onClick={() =>
+                                  addNotification({
+                                    title: '查看详情',
+                                    message: '查看工单详情',
+                                    type: 'info',
+                                  })
+                                }
                               >
                                 详情
                               </MobileButton>
@@ -778,7 +784,9 @@ const MobileProductionPage: React.FC = () => {
                       }
                       badge={
                         <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5 }}>
-                          <Clock style={{ width: 12, height: 12, color: theme.palette.text.secondary }} />
+                          <Clock
+                            style={{ width: 12, height: 12, color: theme.palette.text.secondary }}
+                          />
                           <Typography
                             variant='caption'
                             color='text.secondary'
@@ -787,11 +795,13 @@ const MobileProductionPage: React.FC = () => {
                           </Typography>
                         </Box>
                       }
-                      onClick={() => addNotification({
-                        title: '报工详情',
-                        message: `查看 ${report.order_no} 报工详情`,
-                        type: 'info',
-                      })}
+                      onClick={() =>
+                        addNotification({
+                          title: '报工详情',
+                          message: `查看 ${report.order_no} 报工详情`,
+                          type: 'info',
+                        })
+                      }
                     />
                   </React.Fragment>
                 ))}
@@ -849,11 +859,13 @@ const MobileProductionPage: React.FC = () => {
                           </Typography>
                         </Box>
                       }
-                      onClick={() => addNotification({
-                        title: '设备详情',
-                        message: `查看 ${equipment.name} 详情`,
-                        type: 'info',
-                      })}
+                      onClick={() =>
+                        addNotification({
+                          title: '设备详情',
+                          message: `查看 ${equipment.name} 详情`,
+                          type: 'info',
+                        })
+                      }
                     />
                   </React.Fragment>
                 ))}

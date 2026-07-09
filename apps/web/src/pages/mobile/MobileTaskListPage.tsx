@@ -499,7 +499,11 @@ const MobileTaskListPage: React.FC = () => {
                             <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
                               <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5 }}>
                                 <UserIcon
-                                  style={{ width: 14, height: 14, color: theme.palette.text.secondary }}
+                                  style={{
+                                    width: 14,
+                                    height: 14,
+                                    color: theme.palette.text.secondary,
+                                  }}
                                 />
                                 <Typography
                                   variant='caption'
@@ -510,7 +514,11 @@ const MobileTaskListPage: React.FC = () => {
                               </Box>
                               <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5 }}>
                                 <Calendar
-                                  style={{ width: 14, height: 14, color: theme.palette.text.secondary }}
+                                  style={{
+                                    width: 14,
+                                    height: 14,
+                                    color: theme.palette.text.secondary,
+                                  }}
                                 />
                                 <Typography
                                   variant='caption'

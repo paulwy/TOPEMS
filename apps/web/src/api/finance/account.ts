@@ -38,7 +38,7 @@ export const accountApi = {
     page?: number;
     pagesize?: number;
   }): Promise<ApiResponse<PaginatedResult<Account>>> => {
-    return createApiClient().get('/finance/accounts', { params });
+    return createApiClient().get('/erp/finance/accounts', { params });
   },
 
   getTree: (params?: {
@@ -46,30 +46,30 @@ export const accountApi = {
     status?: string;
     include_disabled?: boolean;
   }): Promise<ApiResponse<Account[]>> => {
-    return createApiClient().get('/finance/accounts/tree', { params });
+    return createApiClient().get('/erp/finance/accounts/tree', { params });
   },
 
   get: (id: string): Promise<ApiResponse<Account>> => {
-    return createApiClient().get(`/finance/accounts/${id}`);
+    return createApiClient().get(`/erp/finance/accounts/${id}`);
   },
 
   create: (data: Partial<Account>): Promise<ApiResponse<Account>> => {
-    return createApiClient().post('/finance/accounts', data);
+    return createApiClient().post('/erp/finance/accounts', data);
   },
 
   update: (id: string, data: Partial<Account>): Promise<ApiResponse<Account>> => {
-    return createApiClient().put(`/finance/accounts/${id}`, data);
+    return createApiClient().put(`/erp/finance/accounts/${id}`, data);
   },
 
   delete: (id: string): Promise<ApiResponse<void>> => {
-    return createApiClient().delete(`/finance/accounts/${id}`);
+    return createApiClient().delete(`/erp/finance/accounts/${id}`);
   },
 
   batchCreateChildren: (
     parentId: string,
     accounts: Partial<Account>[]
   ): Promise<ApiResponse<Account[]>> => {
-    return createApiClient().post(`/finance/accounts/${parentId}/children-batch`, { accounts });
+    return createApiClient().post(`/erp/finance/accounts/${parentId}/children-batch`, { accounts });
   },
 
   getBalances: (params: {
@@ -79,7 +79,7 @@ export const accountApi = {
     department_id?: string;
     project_id?: string;
   }): Promise<ApiResponse<AccountBalance[]>> => {
-    return createApiClient().get('/finance/accounts/balances', {
+    return createApiClient().get('/erp/finance/accounts/balances', {
       params,
     });
   },

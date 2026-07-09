@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useMemo } from 'react';
-import {Box, Typography, Chip, Stack, useTheme} from '@mui/material';
+import { Box, Typography, Chip, Stack, useTheme } from '@mui/material';
 import {
   GitBranch,
   CheckCircle,

@@ -9,12 +9,13 @@ import type {
   CorrectiveActionBackend,
   UpdateCorrectiveActionRequestBackend,
   PaginatedResponse,
+  QmsPaginatedResponse,
 } from './types';
 
 export const improvementApi = {
   listImprovements: async (): Promise<ApiResponse<QualityImprovement[]>> => {
     const response =
-      await apiClient.qms.get<PaginatedResponse<CorrectiveActionBackend>>('/actions');
+      await apiClient.qms.get<QmsPaginatedResponse<CorrectiveActionBackend>>('/actions');
     const adaptedData = (response.data?.actions || []).map(adaptActionToFrontend);
     return { ...response, data: adaptedData };
   },

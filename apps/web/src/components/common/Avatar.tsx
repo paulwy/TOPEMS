@@ -166,9 +166,9 @@ export const AvatarGroup: React.FC<AvatarGroupProps> = ({
 }) => {
   const displayAvatars = avatars.slice(0, max);
   const remainingCount = avatars.length - max;
-  
+
   const gap = -spacing;
-  
+
   return (
     <Box sx={{ display: 'flex', alignItems: 'center', ...sx }}>
       {displayAvatars.map((avatarProps, index) => (
@@ -181,7 +181,10 @@ export const AvatarGroup: React.FC<AvatarGroupProps> = ({
           }}
         >
           <Tooltip title={avatarProps.name || ''}>
-            <Avatar size={size} {...avatarProps} />
+            <Avatar
+              size={size}
+              {...avatarProps}
+            />
           </Tooltip>
         </Box>
       ))}
@@ -193,7 +196,10 @@ export const AvatarGroup: React.FC<AvatarGroupProps> = ({
             zIndex: 0,
           }}
         >
-          <Avatar size={size} label={`+${remainingCount}`} />
+          <Avatar
+            size={size}
+            label={`+${remainingCount}`}
+          />
         </Box>
       )}
     </Box>

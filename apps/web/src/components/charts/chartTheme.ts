@@ -28,6 +28,22 @@ export const BIChartColors = {
     '#EC4899', // Pink
     '#84CC16', // Lime
   ],
+  dark: {
+    series: [
+      '#60a5fa', // Blue (lighter for dark bg)
+      '#4ade80', // Emerald
+      '#fbbf24', // Amber
+      '#f87171', // Red
+      '#a78bfa', // Violet
+      '#22d3ee', // Cyan
+      '#f472b6', // Pink
+      '#a3e635', // Lime
+    ],
+    grid: '#334155',
+    text: '#94A3B8',
+    background: 'rgba(30, 41, 59, 0.95)',
+    border: '#475569',
+  },
   neutral: {
     grid: '#E2E8F0',
     gridDark: '#334155',
@@ -101,6 +117,8 @@ export interface ChartThemeColors {
   error: string;
   /** MUI info, resolved to hex */
   info: string;
+  /** Series color palette (dark-aware) */
+  series: readonly string[];
 }
 
 export const useChartTheme = (): ChartThemeColors => {
@@ -108,15 +126,9 @@ export const useChartTheme = (): ChartThemeColors => {
   const isDark = theme.palette.mode === 'dark';
 
   return {
-    gridColor: isDark
-      ? BIChartColors.neutral.gridDark
-      : BIChartColors.neutral.grid,
-    textColor: isDark
-      ? BIChartColors.neutral.textDark
-      : BIChartColors.neutral.text,
-    tooltipBg: isDark
-      ? BIChartColors.neutral.backgroundDark
-      : BIChartColors.neutral.background,
+    gridColor: isDark ? BIChartColors.neutral.gridDark : BIChartColors.neutral.grid,
+    textColor: isDark ? BIChartColors.neutral.textDark : BIChartColors.neutral.text,
+    tooltipBg: isDark ? BIChartColors.neutral.backgroundDark : BIChartColors.neutral.background,
     borderColor: isDark ? '#475569' : '#E2E8F0',
     primary: theme.palette.primary.main,
     secondary: theme.palette.secondary.main,
@@ -124,6 +136,7 @@ export const useChartTheme = (): ChartThemeColors => {
     warning: theme.palette.warning.main,
     error: theme.palette.error.main,
     info: theme.palette.info.main,
+    series: isDark ? BIChartColors.dark.series : BIChartColors.series,
   };
 };
 

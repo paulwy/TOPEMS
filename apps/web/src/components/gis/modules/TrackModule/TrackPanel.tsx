@@ -1,14 +1,17 @@
 // modules/TrackModule/TrackPanel.tsx
 import React, { useState, useMemo } from 'react';
 import { Search, Calendar, MapPin } from 'lucide-react';
-import {Box,
+import {
+  Box,
   Typography,
   Paper,
   TextField,
   IconButton,
   Grid,
   Divider,
-  Button, useTheme} from '@mui/material';
+  Button,
+  useTheme,
+} from '@mui/material';
 import type { DevicePoint } from '../../../../api/gis';
 import type { TrackRecord, TrackStatistics, TrackPoint } from './types';
 import TrackPlayer from './TrackPlayer';
@@ -368,7 +371,12 @@ const TrackPanel: React.FC<TrackPanelProps> = ({ devicePoints, onClose }) => {
                           <td style={{ padding: '8px 12px', color: theme.palette.text.secondary }}>
                             {index + 1}
                           </td>
-                          <td style={{ padding: '8px 12px', color: 'var(--mui-palette-text-secondary)' }}>
+                          <td
+                            style={{
+                              padding: '8px 12px',
+                              color: 'var(--mui-palette-text-secondary)',
+                            }}
+                          >
                             {new Date(point.timestamp).toLocaleTimeString()}
                           </td>
                           <td
@@ -381,7 +389,12 @@ const TrackPanel: React.FC<TrackPanelProps> = ({ devicePoints, onClose }) => {
                           >
                             {point.position[0].toFixed(5)}, {point.position[1].toFixed(5)}
                           </td>
-                          <td style={{ padding: '8px 12px', color: 'var(--mui-palette-text-secondary)' }}>
+                          <td
+                            style={{
+                              padding: '8px 12px',
+                              color: 'var(--mui-palette-text-secondary)',
+                            }}
+                          >
                             {point.speed?.toFixed(1) || '-'} km/h
                           </td>
                         </tr>

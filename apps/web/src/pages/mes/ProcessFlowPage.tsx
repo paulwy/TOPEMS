@@ -23,7 +23,7 @@ import type {
 import type { ListParams } from '@/api/mes';
 import { processFlowApi } from '@/api/mes/processFlow';
 import { useAppStore } from '@/store';
-import { LoadingSpinner } from '@/components/common/LoadingSpinner';
+import { LoadingSpinner } from '@topems/shared-components';
 import {
   ListPageTemplate,
   type ColumnDef,
@@ -33,6 +33,7 @@ import {
 import { Plus, Edit, Trash2, Eye, GitBranch, Clock, TrendingUp, BarChart3 } from 'lucide-react';
 import { apiLogger } from '@/utils/logger';
 import { designTokens } from '@/theme/tokens';
+
 const ct = designTokens.colors;
 
 const ProcessFlowPage: React.FC = () => {

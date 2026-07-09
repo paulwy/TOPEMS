@@ -339,8 +339,7 @@ const ReportBuilder: React.FC<ReportBuilderProps> = ({
                 borderColor: formData.reportType === type.type ? 'primary.main' : 'grey.200',
                 bgcolor: formData.reportType === type.type ? 'primary.light' : 'transparent',
                 '&:hover': {
-                  borderColor:
-                    formData.reportType === type.type ? 'primary.main' : 'primary.light',
+                  borderColor: formData.reportType === type.type ? 'primary.main' : 'primary.light',
                 },
               }}
             >
@@ -583,12 +582,14 @@ const ReportBuilder: React.FC<ReportBuilderProps> = ({
                 },
               }}
             >
-              {format === 'excel' && <FileSpreadsheet sx={{ width: 24, height: 24, color: 'green.500', mb: 1 }} />}
+              {format === 'excel' && (
+                <FileSpreadsheet sx={{ width: 24, height: 24, color: 'green.500', mb: 1 }} />
+              )}
               {format === 'pdf' && <File sx={{ width: 24, height: 24, color: 'red.500', mb: 1 }} />}
-              {format === 'csv' && <FileJson sx={{ width: 24, height: 24, color: 'blue.500', mb: 1 }} />}
-              <Typography
-                sx={{ fontWeight: 500, color: 'grey.900' }}
-              >
+              {format === 'csv' && (
+                <FileJson sx={{ width: 24, height: 24, color: 'blue.500', mb: 1 }} />
+              )}
+              <Typography sx={{ fontWeight: 500, color: 'grey.900' }}>
                 {format === 'excel' && 'Excel'}
                 {format === 'pdf' && 'PDF'}
                 {format === 'csv' && 'CSV'}

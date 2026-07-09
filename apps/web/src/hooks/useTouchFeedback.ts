@@ -145,34 +145,37 @@ export function useSwipeGesture(options?: {
     touchStartY.current = e.touches[0].clientY;
   }, []);
 
-  const handleTouchEnd = useCallback((e: React.TouchEvent) => {
-    const touchEndX = e.changedTouches[0].clientX;
-    const touchEndY = e.changedTouches[0].clientY;
+  const handleTouchEnd = useCallback(
+    (e: React.TouchEvent) => {
+      const touchEndX = e.changedTouches[0].clientX;
+      const touchEndY = e.changedTouches[0].clientY;
 
-    const deltaX = touchEndX - touchStartX.current;
-    const deltaY = touchEndY - touchStartY.current;
+      const deltaX = touchEndX - touchStartX.current;
+      const deltaY = touchEndY - touchStartY.current;
 
-    const absDeltaX = Math.abs(deltaX);
-    const absDeltaY = Math.abs(deltaY);
+      const absDeltaX = Math.abs(deltaX);
+      const absDeltaY = Math.abs(deltaY);
 
-    if (Math.max(absDeltaX, absDeltaY) < threshold) {
-      return;
-    }
-
-    if (absDeltaX > absDeltaY) {
-      if (deltaX > 0 && onSwipeRight) {
-        onSwipeRight();
-      } else if (deltaX < 0 && onSwipeLeft) {
-        onSwipeLeft();
+      if (Math.max(absDeltaX, absDeltaY) < threshold) {
+        return;
       }
-    } else {
-      if (deltaY > 0 && onSwipeDown) {
-        onSwipeDown();
-      } else if (deltaY < 0 && onSwipeUp) {
-        onSwipeUp();
+
+      if (absDeltaX > absDeltaY) {
+        if (deltaX > 0 && onSwipeRight) {
+          onSwipeRight();
+        } else if (deltaX < 0 && onSwipeLeft) {
+          onSwipeLeft();
+        }
+      } else {
+        if (deltaY > 0 && onSwipeDown) {
+          onSwipeDown();
+        } else if (deltaY < 0 && onSwipeUp) {
+          onSwipeUp();
+        }
       }
-    }
-  }, [onSwipeLeft, onSwipeRight, onSwipeUp, onSwipeDown, threshold]);
+    },
+    [onSwipeLeft, onSwipeRight, onSwipeUp, onSwipeDown, threshold]
+  );
 
   return {
     handleTouchStart,

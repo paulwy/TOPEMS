@@ -40,6 +40,21 @@ export interface PageContainerProps {
   maxWidth?: 'xs' | 'sm' | 'md' | 'lg' | 'xl' | false;
 
   /**
+   * Header props for internal PageHeader (legacy support)
+   */
+  headerProps?: {
+    pageIcon?: React.ReactNode;
+    pageColor?: string;
+    onRefresh?: () => void;
+    actions?: {
+      label: string;
+      onClick: () => void;
+      icon?: React.ReactNode;
+      variant?: string;
+    }[];
+  };
+
+  /**
    * Show page padding
    * - true: horizontal padding (xs: 16px, sm+: 24px) and bottom padding (32px)
    * - false: no padding, content fills full width

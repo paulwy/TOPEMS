@@ -103,7 +103,10 @@ const VoucherCreatePage: React.FC = () => {
     addVoucherItem();
   };
 
-  const handleFieldChange = (field: keyof typeof formData, value: typeof formData[keyof typeof formData]) => {
+  const handleFieldChange = (
+    field: keyof typeof formData,
+    value: (typeof formData)[keyof typeof formData]
+  ) => {
     setFormData((prev) => ({
       ...prev,
       [field]: value,
@@ -122,7 +125,11 @@ const VoucherCreatePage: React.FC = () => {
     setVoucherItems((prev) => [...prev, newItem]);
   };
 
-  const updateVoucherItem = (index: number, field: keyof VoucherItemRequest, value: VoucherItemRequest[keyof VoucherItemRequest]) => {
+  const updateVoucherItem = (
+    index: number,
+    field: keyof VoucherItemRequest,
+    value: VoucherItemRequest[keyof VoucherItemRequest]
+  ) => {
     const items = [...voucherItems];
 
     if (field === 'subject_code') {
@@ -281,7 +288,7 @@ const VoucherCreatePage: React.FC = () => {
             required
             fullWidth
             size='small'
-            slotProps={{ inputLabel: { shrink: true } }}
+            slotProps={{ inputLabel: { shrink: true } } as any}
           />
           <TextField
             label='会计期间 *'

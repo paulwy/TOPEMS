@@ -27,10 +27,11 @@ import { hrmApi, type Employee } from '@/api/hrm';
 import { useNotification } from '@/hooks/useNotification';
 import { apiLogger } from '@/utils/logger';
 import { DetailPageTemplate, type TabConfig, type SectionConfig } from '@/components/templates';
-import { StatusBadge } from '@/components/common/StatusBadge';
+import { StatusBadge } from '@topems/shared-components';
 import { Dialog } from '@/components/common/Dialog';
 import { PageContainer } from '@/components/common';
 import { designTokens } from '@/theme/tokens';
+
 const ct = designTokens.colors;
 
 const HrmEmployeeDetailPage: React.FC = () => {

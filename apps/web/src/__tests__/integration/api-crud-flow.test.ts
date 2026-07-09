@@ -192,17 +192,30 @@ describe('API CRUD Flow Integration', () => {
   describe('ERP Sales Order Mock Data Flow', () => {
     it('should return consistent data from list → get flow', async () => {
       const { salesOrderApi } = await import('@/api/erp/core/salesOrder');
+      const { apiClient } = await import('@/api/client');
 
-      // List returns mock data
+      const mockOrders = [
+        { id: 'SO-001', order_no: 'SO-001', customer_name: '客户A', status: 'pending', total_amount: 1000 },
+      ];
+
+      apiClient.erp.get.mockResolvedValue({
+        success: true,
+        data: { orders: mockOrders, total: 1, page: 0, pagesize: 10 },
+      });
+
       const listResult = await salesOrderApi.list({ page: 0, pageSize: 10 });
       expect(listResult.success).toBe(true);
       expect(listResult.data).toBeDefined();
       expect(listResult.data.orders).toBeDefined();
       expect(Array.isArray(listResult.data.orders)).toBe(true);
+      expect(listResult.data.orders.length).toBe(1);
 
-      // Get by ID from the list
       if (listResult.data.orders.length > 0) {
         const orderId = listResult.data.orders[0].id;
+        apiClient.erp.get.mockResolvedValue({
+          success: true,
+          data: mockOrders[0],
+        });
         const getResult = await salesOrderApi.get(orderId);
         expect(getResult.success).toBe(true);
         expect(getResult.data).toBeDefined();

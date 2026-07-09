@@ -28,7 +28,7 @@ import { Plus, Edit, Trash2, Send, Check, XCircle, MessageSquare, TrendingUp } f
 import { apiLogger } from '@/utils/logger';
 import { ListPageTemplate, type ColumnDef } from '@/components/templates';
 import { PageContainer } from '@/components/common';
-import ConfirmDialog from '@/components/common/ConfirmDialog';
+import { ConfirmDialog } from '@topems/shared-components';
 import { designTokens } from '@/theme/tokens';
 
 const ct = designTokens.colors;
@@ -603,7 +603,7 @@ const InquiryQuotationPage: React.FC = () => {
                   value={formData.deadline}
                   onChange={(e) => setFormData({ ...formData, deadline: e.target.value })}
                   size='small'
-                  slotProps={{ inputLabel: { shrink: true } }}
+                  slotProps={{ inputLabel: { shrink: true } } as any}
                 />
                 <TextField
                   label='备注'

@@ -97,14 +97,6 @@ async fn main() {
     let public_routes = Router::new()
         .route("/", get(home))
         .route("/health", get(health))
-        .route(
-            "/api/plugins/info",
-            get(modules::qms_plugin::get_plugin_info),
-        )
-        .route(
-            "/api/plugins/health",
-            get(modules::qms_plugin::plugin_health_check),
-        )
         .route("/api", get(|| get_api_info_handler("qms-service")))
         .route("/api/info", get(|| get_api_info_handler("qms-service")))
         .route(

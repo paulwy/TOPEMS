@@ -1,17 +1,14 @@
 use axum::{
     extract::{Extension, Path, Query, State},
-    routing::{get, post},
+    routing::get,
     Json, Router,
 };
-use chrono::{DateTime, Utc};
 use rust_decimal::Decimal;
 use serde::{Deserialize, Serialize};
 use sqlx::Row;
-use uuid::Uuid;
 
 use super::ApiState;
 use crate::models::opportunity::Opportunity;
-use crate::modules::audit::log_audit_event;
 use crate::shared::permission::{check_permission, ModulePermission};
 use topems_shared::auth::Claims;
 use topems_shared::{api_error, ApiResponse};

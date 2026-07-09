@@ -2,6 +2,9 @@
 # 文件: scripts/verify-vite-proxy.sh
 # Vite 代理配置验证脚本
 # 验证 vite.config.ts 中所有代理规则是否正常工作
+# 
+# 注意：代理规则已通过 generateServiceProxies 函数程序化生成
+# 新增服务只需在 vite.config.ts 的 services 数组中添加配置
 
 set -e
 

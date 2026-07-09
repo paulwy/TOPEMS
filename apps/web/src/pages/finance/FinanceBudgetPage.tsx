@@ -1,6 +1,5 @@
 import React, { useState, useEffect, useMemo } from 'react';
 import { designTokens } from '@/theme/tokens';
-const ct = designTokens.colors;
 import {
   Plus,
   Edit2,
@@ -45,6 +44,8 @@ import {
   StatusBadge,
   PageContainer,
 } from '@/components/common';
+
+const ct = designTokens.colors;
 
 const FinanceBudgetPage: React.FC = () => {
   const navigate = useNavigate();

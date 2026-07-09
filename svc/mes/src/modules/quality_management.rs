@@ -89,10 +89,6 @@ fn big_decimal_to_f64(bd: Option<BigDecimal>) -> f64 {
         .unwrap_or(0.0)
 }
 
-fn big_decimal_value_to_f64(bd: BigDecimal) -> f64 {
-    bd.to_string().parse::<f64>().unwrap_or(0.0)
-}
-
 // ==================== Quality Inspections ====================
 
 #[derive(Debug, Clone, Deserialize)]
@@ -382,17 +378,17 @@ pub async fn get_inspection(
                 inspection_no: r.inspection_no,
                 order_id: r.order_id.map(|u| u.to_string()),
                 order_number: r.order_number,
-                product_code: r.product_code,
-                product_name: r.product_name,
+                product_code: r.product_code.unwrap_or_default(),
+                product_name: r.product_name.unwrap_or_default(),
                 process_id: r.process_id.map(|u| u.to_string()),
                 process_name: r.process_name,
-                inspection_type: r.inspection_type,
-                quantity: big_decimal_value_to_f64(r.quantity),
-                qualified_quantity: big_decimal_value_to_f64(r.qualified_quantity),
-                unqualified_quantity: big_decimal_value_to_f64(r.unqualified_quantity),
+                inspection_type: r.inspection_type.unwrap_or_default(),
+                quantity: big_decimal_to_f64(r.quantity),
+                qualified_quantity: big_decimal_to_f64(r.qualified_quantity),
+                unqualified_quantity: big_decimal_to_f64(r.unqualified_quantity),
                 qualification_rate: big_decimal_to_f64(r.qualification_rate),
                 inspector: r.inspector,
-                inspection_time: r.inspection_time.unwrap_or_default(),
+                inspection_time: datetime_to_string(r.inspection_time),
                 status: r.status.unwrap_or_else(|| "pending".to_string()),
                 result: r.result,
                 memo: r.memo,
@@ -442,7 +438,10 @@ pub async fn create_inspection(
     let unqualified_quantity = body
         .unqualified_quantity
         .and_then(|v| BigDecimal::from_str(&v.to_string()).ok());
-    let inspection_time = body.inspection_time.unwrap_or_else(|| now.to_rfc3339());
+    let inspection_time = body
+        .inspection_time
+        .and_then(|t| chrono::NaiveDateTime::parse_from_str(&t, "%Y-%m-%dT%H:%M:%S").ok())
+        .unwrap_or_else(|| now.naive_utc());
 
     let result = sqlx::query!(
         r#"
@@ -489,17 +488,17 @@ pub async fn create_inspection(
                 inspection_no: r.inspection_no,
                 order_id: r.order_id.map(|u| u.to_string()),
                 order_number: r.order_number,
-                product_code: r.product_code,
-                product_name: r.product_name,
+                product_code: r.product_code.unwrap_or_default(),
+                product_name: r.product_name.unwrap_or_default(),
                 process_id: r.process_id.map(|u| u.to_string()),
                 process_name: r.process_name,
-                inspection_type: r.inspection_type,
-                quantity: big_decimal_value_to_f64(r.quantity),
-                qualified_quantity: big_decimal_value_to_f64(r.qualified_quantity),
-                unqualified_quantity: big_decimal_value_to_f64(r.unqualified_quantity),
+                inspection_type: r.inspection_type.unwrap_or_default(),
+                quantity: big_decimal_to_f64(r.quantity),
+                qualified_quantity: big_decimal_to_f64(r.qualified_quantity),
+                unqualified_quantity: big_decimal_to_f64(r.unqualified_quantity),
                 qualification_rate: big_decimal_to_f64(r.qualification_rate),
                 inspector: r.inspector,
-                inspection_time: r.inspection_time.unwrap_or_default(),
+                inspection_time: datetime_to_string(r.inspection_time),
                 status: r.status.unwrap_or_else(|| "pending".to_string()),
                 result: r.result,
                 memo: r.memo,
@@ -540,6 +539,9 @@ pub async fn update_inspection(
     let unqualified_quantity = body
         .unqualified_quantity
         .and_then(|v| BigDecimal::from_str(&v.to_string()).ok());
+    let inspection_time = body
+        .inspection_time
+        .and_then(|t| chrono::NaiveDateTime::parse_from_str(&t, "%Y-%m-%dT%H:%M:%S").ok());
 
     let result = sqlx::query!(
         r#"
@@ -569,7 +571,7 @@ pub async fn update_inspection(
         qualified_quantity,
         unqualified_quantity,
         body.inspector,
-        body.inspection_time,
+        inspection_time,
         body.status,
         body.result,
         body.memo,
@@ -585,17 +587,17 @@ pub async fn update_inspection(
                 inspection_no: r.inspection_no,
                 order_id: r.order_id.map(|u| u.to_string()),
                 order_number: r.order_number,
-                product_code: r.product_code,
-                product_name: r.product_name,
+                product_code: r.product_code.unwrap_or_default(),
+                product_name: r.product_name.unwrap_or_default(),
                 process_id: r.process_id.map(|u| u.to_string()),
                 process_name: r.process_name,
-                inspection_type: r.inspection_type,
-                quantity: big_decimal_value_to_f64(r.quantity),
-                qualified_quantity: big_decimal_value_to_f64(r.qualified_quantity),
-                unqualified_quantity: big_decimal_value_to_f64(r.unqualified_quantity),
+                inspection_type: r.inspection_type.unwrap_or_default(),
+                quantity: big_decimal_to_f64(r.quantity),
+                qualified_quantity: big_decimal_to_f64(r.qualified_quantity),
+                unqualified_quantity: big_decimal_to_f64(r.unqualified_quantity),
                 qualification_rate: big_decimal_to_f64(r.qualification_rate),
                 inspector: r.inspector,
-                inspection_time: r.inspection_time.unwrap_or_default(),
+                inspection_time: datetime_to_string(r.inspection_time),
                 status: r.status.unwrap_or_else(|| "pending".to_string()),
                 result: r.result,
                 memo: r.memo,
@@ -883,8 +885,8 @@ pub async fn get_patrol(
                 production_line: r.production_line,
                 workstation_id: r.workstation_id.map(|u| u.to_string()),
                 workstation_name: r.workstation_name,
-                inspector: r.inspector,
-                patrol_time: r.patrol_time.unwrap_or_default(),
+                inspector: r.inspector.unwrap_or_default(),
+                patrol_time: r.patrol_time.unwrap_or_default().to_string(),
                 status: r.status.unwrap_or_else(|| "pending".to_string()),
                 result: r.result,
                 findings: r.findings,
@@ -924,7 +926,10 @@ pub async fn create_patrol(
         .workstation_id
         .as_ref()
         .and_then(|id| Uuid::parse_str(id).ok());
-    let patrol_time = body.patrol_time.unwrap_or_else(|| now.to_rfc3339());
+    let patrol_time = body
+        .patrol_time
+        .and_then(|d| chrono::NaiveDateTime::parse_from_str(&d, "%Y-%m-%dT%H:%M:%S").ok())
+        .unwrap_or_else(|| chrono::Utc::now().naive_utc());
 
     let result = sqlx::query!(
         r#"
@@ -961,8 +966,8 @@ pub async fn create_patrol(
                 production_line: r.production_line,
                 workstation_id: r.workstation_id.map(|u| u.to_string()),
                 workstation_name: r.workstation_name,
-                inspector: r.inspector,
-                patrol_time: r.patrol_time.unwrap_or_default(),
+                inspector: r.inspector.unwrap_or_default(),
+                patrol_time: r.patrol_time.unwrap_or_default().to_string(),
                 status: r.status.unwrap_or_else(|| "pending".to_string()),
                 result: r.result,
                 findings: r.findings,
@@ -1002,6 +1007,9 @@ pub async fn update_patrol(
         .workstation_id
         .as_ref()
         .and_then(|id| Uuid::parse_str(id).ok());
+    let patrol_time = body
+        .patrol_time
+        .and_then(|d| chrono::NaiveDateTime::parse_from_str(&d, "%Y-%m-%dT%H:%M:%S").ok());
 
     let result = sqlx::query!(
         r#"
@@ -1028,7 +1036,7 @@ pub async fn update_patrol(
         workstation_id,
         body.workstation_name,
         body.inspector,
-        body.patrol_time,
+        patrol_time,
         body.status,
         body.result,
         body.findings,
@@ -1046,8 +1054,8 @@ pub async fn update_patrol(
                 production_line: r.production_line,
                 workstation_id: r.workstation_id.map(|u| u.to_string()),
                 workstation_name: r.workstation_name,
-                inspector: r.inspector,
-                patrol_time: r.patrol_time.unwrap_or_default(),
+                inspector: r.inspector.unwrap_or_default(),
+                patrol_time: r.patrol_time.unwrap_or_default().to_string(),
                 status: r.status.unwrap_or_else(|| "pending".to_string()),
                 result: r.result,
                 findings: r.findings,
@@ -1160,7 +1168,7 @@ pub async fn list_patrol_items(
                 .into_iter()
                 .map(|r| PatrolItemResponse {
                     id: r.id.to_string(),
-                    patrol_id: r.patrol_id.to_string(),
+                    patrol_id: r.patrol_id.map(|u| u.to_string()).unwrap_or_default(),
                     item_name: r.item_name,
                     standard: r.standard,
                     actual_value: r.actual_value,
@@ -1222,7 +1230,7 @@ pub async fn add_patrol_item(
         Ok(r) => Json(ApiResponse::success(
             PatrolItemResponse {
                 id: r.id.to_string(),
-                patrol_id: r.patrol_id.to_string(),
+                patrol_id: r.patrol_id.map(|u| u.to_string()).unwrap_or_default(),
                 item_name: r.item_name,
                 standard: r.standard,
                 actual_value: r.actual_value,
@@ -1292,7 +1300,7 @@ pub async fn update_patrol_item(
         Ok(r) => Json(ApiResponse::success(
             PatrolItemResponse {
                 id: r.id.to_string(),
-                patrol_id: r.patrol_id.to_string(),
+                patrol_id: r.patrol_id.map(|u| u.to_string()).unwrap_or_default(),
                 item_name: r.item_name,
                 standard: r.standard,
                 actual_value: r.actual_value,
@@ -1543,20 +1551,21 @@ pub async fn list_standards(
 
         if let Ok(value_rows) = values_result {
             for v in value_rows {
-                let sid = v.standard_id;
-                values_map
-                    .entry(sid)
-                    .or_insert_with(Vec::new)
-                    .push(StandardValueResponse {
-                        id: v.id.to_string(),
-                        standard_id: sid.to_string(),
-                        item_name: v.item_name,
-                        lower_limit: opt_big_decimal_to_f64(v.lower_limit),
-                        upper_limit: opt_big_decimal_to_f64(v.upper_limit),
-                        unit: v.unit,
-                        inspection_method: v.inspection_method,
-                        remark: v.remark,
-                    });
+                if let Some(sid) = v.standard_id {
+                    values_map
+                        .entry(sid)
+                        .or_default()
+                        .push(StandardValueResponse {
+                            id: v.id.to_string(),
+                            standard_id: sid.to_string(),
+                            item_name: v.item_name,
+                            lower_limit: opt_big_decimal_to_f64(v.lower_limit),
+                            upper_limit: opt_big_decimal_to_f64(v.upper_limit),
+                            unit: v.unit,
+                            inspection_method: v.inspection_method,
+                            remark: v.remark,
+                        });
+                }
             }
         }
     }
@@ -1679,7 +1688,7 @@ pub async fn get_standard(
             .into_iter()
             .map(|v| StandardValueResponse {
                 id: v.id.to_string(),
-                standard_id: v.standard_id.to_string(),
+                standard_id: v.standard_id.map(|u| u.to_string()).unwrap_or_default(),
                 item_name: v.item_name,
                 lower_limit: opt_big_decimal_to_f64(v.lower_limit),
                 upper_limit: opt_big_decimal_to_f64(v.upper_limit),
@@ -1701,11 +1710,11 @@ pub async fn get_standard(
             name: standard.name,
             product_code: standard.product_code,
             product_name: standard.product_name,
-            inspection_type: standard.inspection_type,
+            inspection_type: standard.inspection_type.unwrap_or_default(),
             standard_values,
             status: standard.status.unwrap_or_else(|| "active".to_string()),
             version: standard.version,
-            effective_date: standard.effective_date,
+            effective_date: standard.effective_date.map(|d| d.to_string()),
             description: standard.description,
             created_at: datetime_to_string(standard.created_at),
             updated_at: datetime_to_string(standard.updated_at),
@@ -1724,6 +1733,10 @@ pub async fn create_standard(
     {
         return e;
     }
+
+    let effective_date = body
+        .effective_date
+        .and_then(|d| chrono::NaiveDateTime::parse_from_str(&d, "%Y-%m-%dT%H:%M:%S").ok());
 
     let mut tx = match state.pool.begin().await {
         Ok(t) => t,
@@ -1753,7 +1766,7 @@ pub async fn create_standard(
         body.inspection_type,
         body.status.unwrap_or_else(|| "active".to_string()),
         body.version,
-        body.effective_date,
+        effective_date,
         body.description,
     )
     .fetch_one(&mut *tx)
@@ -1804,7 +1817,7 @@ pub async fn create_standard(
                 Ok(r) => {
                     values.push(StandardValueResponse {
                         id: r.id.to_string(),
-                        standard_id: r.standard_id.to_string(),
+                        standard_id: r.standard_id.map(|u| u.to_string()).unwrap_or_default(),
                         item_name: r.item_name,
                         lower_limit: opt_big_decimal_to_f64(r.lower_limit),
                         upper_limit: opt_big_decimal_to_f64(r.upper_limit),
@@ -1834,11 +1847,11 @@ pub async fn create_standard(
             name: standard.name,
             product_code: standard.product_code,
             product_name: standard.product_name,
-            inspection_type: standard.inspection_type,
+            inspection_type: standard.inspection_type.unwrap_or_default(),
             standard_values: values,
             status: standard.status.unwrap_or_else(|| "active".to_string()),
             version: standard.version,
-            effective_date: standard.effective_date,
+            effective_date: standard.effective_date.map(|d| d.to_string()),
             description: standard.description,
             created_at: datetime_to_string(standard.created_at),
             updated_at: datetime_to_string(standard.updated_at),
@@ -1865,6 +1878,10 @@ pub async fn update_standard(
             return Json(ApiResponse::error(400, "无效的质量标准ID"));
         }
     };
+
+    let effective_date = body
+        .effective_date
+        .and_then(|d| chrono::NaiveDateTime::parse_from_str(&d, "%Y-%m-%dT%H:%M:%S").ok());
 
     let mut tx = match state.pool.begin().await {
         Ok(t) => t,
@@ -1902,7 +1919,7 @@ pub async fn update_standard(
         body.inspection_type,
         body.status,
         body.version,
-        body.effective_date,
+        effective_date,
         body.description,
         uuid,
     )
@@ -1973,7 +1990,7 @@ pub async fn update_standard(
                 Ok(r) => {
                     values.push(StandardValueResponse {
                         id: r.id.to_string(),
-                        standard_id: r.standard_id.to_string(),
+                        standard_id: r.standard_id.map(|u| u.to_string()).unwrap_or_default(),
                         item_name: r.item_name,
                         lower_limit: opt_big_decimal_to_f64(r.lower_limit),
                         upper_limit: opt_big_decimal_to_f64(r.upper_limit),
@@ -2007,7 +2024,7 @@ pub async fn update_standard(
             for v in rows {
                 values.push(StandardValueResponse {
                     id: v.id.to_string(),
-                    standard_id: v.standard_id.to_string(),
+                    standard_id: v.standard_id.map(|u| u.to_string()).unwrap_or_default(),
                     item_name: v.item_name,
                     lower_limit: opt_big_decimal_to_f64(v.lower_limit),
                     upper_limit: opt_big_decimal_to_f64(v.upper_limit),
@@ -2031,11 +2048,11 @@ pub async fn update_standard(
             name: standard.name,
             product_code: standard.product_code,
             product_name: standard.product_name,
-            inspection_type: standard.inspection_type,
+            inspection_type: standard.inspection_type.unwrap_or_default(),
             standard_values: values,
             status: standard.status.unwrap_or_else(|| "active".to_string()),
             version: standard.version,
-            effective_date: standard.effective_date,
+            effective_date: standard.effective_date.map(|d| d.to_string()),
             description: standard.description,
             created_at: datetime_to_string(standard.created_at),
             updated_at: datetime_to_string(standard.updated_at),

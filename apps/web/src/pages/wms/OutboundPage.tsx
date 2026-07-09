@@ -815,7 +815,7 @@ const OutboundPage: React.FC = () => {
               onChange={(e) => setNewItem({ ...newItem, expected_date: e.target.value })}
               fullWidth
               size='small'
-              slotProps={{ inputLabel: { shrink: true } }}
+              slotProps={{ inputLabel: { shrink: true } } as any}
             />
             <TextField
               label='发货地址'

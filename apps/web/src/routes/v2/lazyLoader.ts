@@ -5,7 +5,8 @@ const moduleImports: Record<string, () => Promise<{ default: RouteModuleConfig }
   iam: () => import('./iam').then((m) => ({ default: m.iamModuleConfig })),
   admin: () => import('./admin').then((m) => ({ default: m.adminModuleConfig })),
   workflow: () => import('./workflow').then((m) => ({ default: m.workflowModuleConfig })),
-  notification: () => import('./notification').then((m) => ({ default: m.notificationModuleConfig })),
+  notification: () =>
+    import('./notification').then((m) => ({ default: m.notificationModuleConfig })),
   doc: () => import('./doc').then((m) => ({ default: m.docModuleConfig })),
   report: () => import('./report').then((m) => ({ default: m.reportModuleConfig })),
   monitor: () => import('./monitor').then((m) => ({ default: m.monitorModuleConfig })),
@@ -36,14 +37,41 @@ const moduleImports: Record<string, () => Promise<{ default: RouteModuleConfig }
 };
 
 export const coreModuleCodes = [
-  'iam', 'admin', 'workflow', 'notification', 'doc', 'report', 'monitor',
-  'integration', 'ai', 'mobile', 'hrm', 'finance', 'crm', 'mes', 'qms',
-  'lims', 'ehs', 'scm', 'erp', 'wms', 'pm', 'pdm', 'srm', 'oa', 'lowcode',
-  'rs', 'asset', 'plugin', 'im', 'bi', 'gis',
+  'iam',
+  'admin',
+  'workflow',
+  'notification',
+  'doc',
+  'report',
+  'monitor',
+  'integration',
+  'ai',
+  'mobile',
+  'hrm',
+  'finance',
+  'crm',
+  'mes',
+  'qms',
+  'lims',
+  'ehs',
+  'scm',
+  'erp',
+  'wms',
+  'pm',
+  'pdm',
+  'srm',
+  'oa',
+  'lowcode',
+  'rs',
+  'asset',
+  'plugin',
+  'im',
+  'bi',
+  'gis',
 ];
 
-let loadedModules: Record<string, RouteModuleConfig> = {};
-let loadingPromises: Record<string, Promise<RouteModuleConfig>> = {};
+const loadedModules: Record<string, RouteModuleConfig> = {};
+const loadingPromises: Record<string, Promise<RouteModuleConfig>> = {};
 
 export async function loadModuleRoutes(moduleCode: string): Promise<RouteModuleConfig> {
   if (loadedModules[moduleCode]) {

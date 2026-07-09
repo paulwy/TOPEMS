@@ -243,7 +243,7 @@ export function useThrottledCallback<T extends (...args: unknown[]) => void>(
 
   if (!throttledRef.current) {
     throttledRef.current = throttle(
-      (...args: unknown[]) => callbackRef.current(...args as Parameters<T>),
+      (...args: unknown[]) => callbackRef.current(...(args as Parameters<T>)),
       limit
     );
   }

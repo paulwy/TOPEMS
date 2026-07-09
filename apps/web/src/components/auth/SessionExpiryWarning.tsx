@@ -1,10 +1,13 @@
-import {Box,
+import {
+  Box,
   Typography,
   Dialog,
   DialogContent,
   DialogTitle,
   DialogActions,
-  Button, useTheme} from '@mui/material';
+  Button,
+  useTheme,
+} from '@mui/material';
 import React, { useEffect, useState } from 'react';
 import { useAuth } from '../../hooks/useAuth';
 import { Clock, RefreshCw, AlertCircle } from 'lucide-react';

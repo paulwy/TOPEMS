@@ -11,13 +11,14 @@ import type {
   InspectionResult,
   InspectionAudit,
   PaginatedResponse,
+  QmsPaginatedResponse,
 } from './types';
 import { adaptInspectionToFrontend, adaptInspectionToBackend } from './adapters';
 
 export const inspectionApi = {
   listChecks: async (): Promise<ApiResponse<QualityCheck[]>> => {
     const response =
-      await apiClient.qms.get<PaginatedResponse<QualityInspectionBackend>>('/checks');
+      await apiClient.qms.get<QmsPaginatedResponse<QualityInspectionBackend>>('/checks');
     const adaptedData = (response.data?.inspections || []).map(adaptInspectionToFrontend);
     return { ...response, data: adaptedData };
   },

@@ -277,7 +277,7 @@ const RsDocPage: React.FC = () => {
         ...uniqueDocTypes.map((type) => ({ label: type, value: type })),
       ],
       value: docTypeFilter || '',
-      onChange: (value: unknown) => setDocTypeFilter(value as string || ''),
+      onChange: (value: unknown) => setDocTypeFilter((value as string) || ''),
     },
     {
       id: 'status',
@@ -289,7 +289,7 @@ const RsDocPage: React.FC = () => {
         { label: '草稿', value: 'draft' },
       ],
       value: statusFilter || '',
-      onChange: (value: unknown) => setStatusFilter(value as string || ''),
+      onChange: (value: unknown) => setStatusFilter((value as string) || ''),
     },
   ];
 

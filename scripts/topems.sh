@@ -51,8 +51,7 @@ qms         svc/qms                topems-qms                  8050
 lims        svc/lims               topems-lims                 8051
 ehs         svc/ehs                topems-ehs                  8052
 rs          svc/rs                 topems-rs                   8053
-bi          svc/analytics          bi-service                  8060
-report      svc/report             topems-report               8061
+bi          svc/analytics          analytics-service           8060
 monitor     svc/monitor            topems-monitor              8062
 portal      svc/portal             topems-portal               8063
 mobile      svc/mobile             topems-mobile               8070

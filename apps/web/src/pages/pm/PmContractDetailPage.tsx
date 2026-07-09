@@ -276,9 +276,7 @@ const PmContractDetailPage: React.FC = () => {
               }}
             >
               <Typography sx={{ color: 'grey.500' }}>甲方联系人</Typography>
-              <Typography sx={{ fontWeight: 500, color: 'grey.900' }}>
-                -
-              </Typography>
+              <Typography sx={{ fontWeight: 500, color: 'grey.900' }}>-</Typography>
             </Box>
             <Box
               sx={{
@@ -289,9 +287,7 @@ const PmContractDetailPage: React.FC = () => {
               }}
             >
               <Typography sx={{ color: 'grey.500' }}>乙方联系人</Typography>
-              <Typography sx={{ fontWeight: 500, color: 'grey.900' }}>
-                -
-              </Typography>
+              <Typography sx={{ fontWeight: 500, color: 'grey.900' }}>-</Typography>
             </Box>
           </CardContent>
         </Card>

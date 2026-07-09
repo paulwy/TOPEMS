@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import {Box, Typography, Card, CardContent, CardHeader, Grid, useTheme} from '@mui/material';
+import { Box, Typography, Card, CardContent, CardHeader, Grid, useTheme } from '@mui/material';
 import {
   TrendingUp,
   Users,

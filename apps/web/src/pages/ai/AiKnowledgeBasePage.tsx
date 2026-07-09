@@ -53,6 +53,7 @@ import { ListPageTemplate, type ColumnDef, type RowAction } from '@/components/t
 import { useAppStore } from '@/store';
 import { logger } from '@/utils/logger';
 import { designTokens } from '@/theme/tokens';
+
 const ct = designTokens.colors;
 
 interface VectorCollection {
@@ -632,7 +633,10 @@ export const AiKnowledgeBasePage: React.FC = () => {
                             />
                           </Box>
                         </Box>
-                        <IconButton size='small' aria-label='更多选项'>
+                        <IconButton
+                          size='small'
+                          aria-label='更多选项'
+                        >
                           <MoreHorizontal size={18} />
                         </IconButton>
                       </Box>

@@ -2,6 +2,7 @@ import React from 'react';
 import { render, RenderOptions } from '@testing-library/react';
 import { BrowserRouter } from 'react-router-dom';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
+import { ThemeProvider, createTheme } from '@mui/material/styles';
 
 const createTestQueryClient = () => {
   return new QueryClient({
@@ -14,6 +15,8 @@ const createTestQueryClient = () => {
   });
 };
 
+const testTheme = createTheme();
+
 export const renderWithProviders = (
   ui: React.ReactElement,
   options?: RenderOptions
@@ -21,9 +24,11 @@ export const renderWithProviders = (
   const queryClient = createTestQueryClient();
 
   return render(
-    <QueryClientProvider client={queryClient}>
-      <BrowserRouter>{ui}</BrowserRouter>
-    </QueryClientProvider>,
+    <ThemeProvider theme={testTheme}>
+      <QueryClientProvider client={queryClient}>
+        <BrowserRouter>{ui}</BrowserRouter>
+      </QueryClientProvider>
+    </ThemeProvider>,
     options
   );
 };

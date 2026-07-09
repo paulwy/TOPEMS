@@ -12,12 +12,15 @@ describe('useVirtualScroll', () => {
       disconnect: vi.fn(),
     };
 
-    resizeObserverSpy = vi.stubGlobal('ResizeObserver', function (this: unknown, callback: () => void) {
-      return {
-        observe: mockResizeObserver.observe,
-        disconnect: mockResizeObserver.disconnect,
-      };
-    });
+    resizeObserverSpy = vi.stubGlobal(
+      'ResizeObserver',
+      function (this: unknown, callback: () => void) {
+        return {
+          observe: mockResizeObserver.observe,
+          disconnect: mockResizeObserver.disconnect,
+        };
+      }
+    );
   });
 
   afterEach(() => {
@@ -25,17 +28,13 @@ describe('useVirtualScroll', () => {
   });
 
   it('should calculate total height correctly', () => {
-    const { result } = renderHook(() =>
-      useVirtualScroll({ itemCount: 100, itemHeight: 50 })
-    );
+    const { result } = renderHook(() => useVirtualScroll({ itemCount: 100, itemHeight: 50 }));
 
     expect(result.current.totalHeight).toBe(5000);
   });
 
   it('should return empty visibleItems when itemCount is 0', () => {
-    const { result } = renderHook(() =>
-      useVirtualScroll({ itemCount: 0, itemHeight: 50 })
-    );
+    const { result } = renderHook(() => useVirtualScroll({ itemCount: 0, itemHeight: 50 }));
 
     expect(result.current.visibleItems).toEqual([]);
     expect(result.current.totalHeight).toBe(0);
@@ -61,27 +60,21 @@ describe('useVirtualScroll', () => {
   });
 
   it('should use default overscan value', () => {
-    const { result } = renderHook(() =>
-      useVirtualScroll({ itemCount: 100, itemHeight: 50 })
-    );
+    const { result } = renderHook(() => useVirtualScroll({ itemCount: 100, itemHeight: 50 }));
 
     expect(result.current.containerProps).toBeDefined();
     expect(result.current.innerProps).toBeDefined();
   });
 
   it('should handle scroll event', () => {
-    const { result } = renderHook(() =>
-      useVirtualScroll({ itemCount: 100, itemHeight: 50 })
-    );
+    const { result } = renderHook(() => useVirtualScroll({ itemCount: 100, itemHeight: 50 }));
 
     expect(typeof result.current.handleScroll).toBe('function');
     expect(typeof result.current.containerProps.onScroll).toBe('function');
   });
 
   it('should return correct containerProps', () => {
-    const { result } = renderHook(() =>
-      useVirtualScroll({ itemCount: 100, itemHeight: 50 })
-    );
+    const { result } = renderHook(() => useVirtualScroll({ itemCount: 100, itemHeight: 50 }));
 
     expect(result.current.containerProps.ref).toBe(result.current.containerRef);
     expect(result.current.containerProps.onScroll).toBe(result.current.handleScroll);
@@ -90,9 +83,7 @@ describe('useVirtualScroll', () => {
   });
 
   it('should return correct innerProps', () => {
-    const { result } = renderHook(() =>
-      useVirtualScroll({ itemCount: 100, itemHeight: 50 })
-    );
+    const { result } = renderHook(() => useVirtualScroll({ itemCount: 100, itemHeight: 50 }));
 
     expect(result.current.innerProps.style.position).toBe('relative');
     expect(result.current.innerProps.style.height).toBe('5000px');
@@ -100,9 +91,7 @@ describe('useVirtualScroll', () => {
   });
 
   it('should initialize resize observer', () => {
-    const { result } = renderHook(() =>
-      useVirtualScroll({ itemCount: 100, itemHeight: 50 })
-    );
+    const { result } = renderHook(() => useVirtualScroll({ itemCount: 100, itemHeight: 50 }));
 
     expect(mockResizeObserver.disconnect).toBeDefined();
   });

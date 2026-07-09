@@ -10,8 +10,7 @@ import React, {
   memo,
 } from 'react';
 import {
-
-// TODO(v2-phase2): Replace CircularProgress with LoadingSpinner from '@/components/common/LoadingSpinner'. Complex usage found - manual review needed.
+  // TODO(v2-phase2): Replace CircularProgress with LoadingSpinner from '@/components/common/LoadingSpinner'. Complex usage found - manual review needed.
   Box,
   CircularProgress,
   LinearProgress,

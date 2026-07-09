@@ -1,4 +1,4 @@
-import {TextField, Button, useTheme} from '@mui/material';
+import { TextField, Button, useTheme } from '@mui/material';
 import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { MessageSquare, Users, Bell, Search, Plus, ChevronLeft, User } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
@@ -104,7 +104,9 @@ export const ChatInterface: React.FC = () => {
       const response = await imApi.listChatRooms();
       if (response.success && response.data) {
         const data: unknown = response.data;
-        const rooms = ((data as Record<string, unknown>).chat_rooms || (data as Record<string, unknown>).chatRooms || []) as ChatRoom[];
+        const rooms = ((data as Record<string, unknown>).chat_rooms ||
+          (data as Record<string, unknown>).chatRooms ||
+          []) as ChatRoom[];
         setChatRooms(rooms);
       }
     } catch (error: unknown) {
@@ -159,7 +161,9 @@ export const ChatInterface: React.FC = () => {
       const response = await imApi.listChatMessages(chatRoomId);
       if (response.success && response.data) {
         const data: unknown = response.data;
-        const msgs = ((data as Record<string, unknown>).chat_messages || (data as Record<string, unknown>).chatMessages || []) as ChatMessage[];
+        const msgs = ((data as Record<string, unknown>).chat_messages ||
+          (data as Record<string, unknown>).chatMessages ||
+          []) as ChatMessage[];
         setMessages(msgs);
       }
     } catch (error: unknown) {
@@ -431,7 +435,9 @@ export const ChatInterface: React.FC = () => {
   ];
 
   return (
-    <div style={{ display: 'flex', height: '100vh', backgroundColor: 'var(--mui-palette-grey-50)' }}>
+    <div
+      style={{ display: 'flex', height: '100vh', backgroundColor: 'var(--mui-palette-grey-50)' }}
+    >
       <div
         style={{
           width: 320,
@@ -458,7 +464,9 @@ export const ChatInterface: React.FC = () => {
               >
                 <ChevronLeft style={{ width: 20, height: 20 }} />
               </Button>
-              <h1 style={{ fontSize: 20, fontWeight: 'bold', color: theme.palette.text.primary }}>消息</h1>
+              <h1 style={{ fontSize: 20, fontWeight: 'bold', color: theme.palette.text.primary }}>
+                消息
+              </h1>
             </div>
             <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
               <div
@@ -466,7 +474,9 @@ export const ChatInterface: React.FC = () => {
                   width: 8,
                   height: 8,
                   borderRadius: '9999px',
-                  backgroundColor: isConnected ? theme.palette.success.dark : theme.palette.error.main,
+                  backgroundColor: isConnected
+                    ? theme.palette.success.dark
+                    : theme.palette.error.main,
                 }}
               />
               <Button
@@ -521,7 +531,10 @@ export const ChatInterface: React.FC = () => {
                   backgroundColor: 'transparent',
                   border: 'none',
                   cursor: 'pointer',
-                  color: activeTab === tab.id ? theme.palette.primary.main : theme.palette.text.secondary,
+                  color:
+                    activeTab === tab.id
+                      ? theme.palette.primary.main
+                      : theme.palette.text.secondary,
                 }}
               >
                 <Icon style={{ width: 16, height: 16 }} />

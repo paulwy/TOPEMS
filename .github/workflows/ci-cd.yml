@@ -351,10 +351,6 @@ jobs:
             path: svc/bi
             dockerfile: svc/bi/Dockerfile
             port: 8060
-          - service: report
-            path: svc/report
-            dockerfile: svc/report/Dockerfile
-            port: 8061
 
     steps:
       - name: Checkout code
@@ -471,7 +467,7 @@ jobs:
               cp -r /opt/topems/staging/web /opt/topems/staging/web.backup.${TIMESTAMP}
             fi
 
-            for service in unified-core ai analytics manufacturing quality-assurance hrm crm pm erp gis rs scm wms mobile monitor portal mes pdm qms lims ehs bi report; do
+            for service in unified-core ai analytics manufacturing quality-assurance hrm crm pm erp gis rs scm wms mobile monitor portal mes pdm qms lims ehs bi; do
               sudo systemctl stop topems-${service}-staging 2>/dev/null || true
             done
           EOF
@@ -481,14 +477,14 @@ jobs:
           scp -P ${{ secrets.STAGING_PORT || 22 }} -r dist/apps/core/dist/* ${{ secrets.STAGING_USER }}@${{ secrets.STAGING_HOST }}:/opt/topems/staging/core-remote/
 
           ssh ${{ secrets.STAGING_USER }}@${{ secrets.STAGING_HOST }} -p ${{ secrets.STAGING_PORT || 22 }} << 'EOF'
-            for service in unified-core ai analytics manufacturing quality-assurance hrm crm pm erp gis rs scm wms mobile monitor portal mes pdm qms lims ehs bi report; do
+            for service in unified-core ai analytics manufacturing quality-assurance hrm crm pm erp gis rs scm wms mobile monitor portal mes pdm qms lims ehs bi; do
               sudo systemctl start topems-${service}-staging || true
             done
 
             sleep 15
 
             FAILURE=false
-            for port in 8000 8010 8020 8029 8023 8071 8053 8040 8041 8042 8070 8062 8063 8064 8072 8030 8031 8050 8051 8052 8060 8061; do
+            for port in 8000 8010 8020 8029 8023 8071 8053 8040 8041 8042 8070 8062 8063 8064 8072 8030 8031 8050 8051 8052 8060; do
               if ! curl -s -f -m 5 http://localhost:${port}/health; then
                 echo "Service on port ${port} not responding"
                 FAILURE=true
@@ -497,7 +493,7 @@ jobs:
 
             if [ "$FAILURE" = true ]; then
               echo "Health check failed, rolling back..."
-              for service in unified-core ai analytics manufacturing quality-assurance hrm crm pm erp gis rs scm wms mobile monitor portal mes pdm qms lims ehs bi report; do
+              for service in unified-core ai analytics manufacturing quality-assurance hrm crm pm erp gis rs scm wms mobile monitor portal mes pdm qms lims ehs bi; do
                 sudo systemctl stop topems-${service}-staging 2>/dev/null || true
               done
 
@@ -511,7 +507,7 @@ jobs:
                 cp -r "$LATEST_WEB_BACKUP" /opt/topems/staging/web
               fi
 
-              for service in unified-core ai analytics manufacturing quality-assurance hrm crm pm erp gis rs scm wms mobile monitor portal mes pdm qms lims ehs bi report; do
+              for service in unified-core ai analytics manufacturing quality-assurance hrm crm pm erp gis rs scm wms mobile monitor portal mes pdm qms lims ehs bi; do
                 sudo systemctl start topems-${service}-staging || true
               done
               exit 1
@@ -569,7 +565,7 @@ jobs:
               cp -r /opt/topems/web /opt/topems/web.backup.${TIMESTAMP}
             fi
 
-            for service in unified-core ai analytics manufacturing quality-assurance hrm crm pm erp gis rs scm wms mobile monitor portal mes pdm qms lims ehs bi report; do
+            for service in unified-core ai analytics manufacturing quality-assurance hrm crm pm erp gis rs scm wms mobile monitor portal mes pdm qms lims ehs bi; do
               sudo systemctl stop topems-${service} 2>/dev/null || true
             done
           EOF
@@ -580,14 +576,14 @@ jobs:
           scp -P ${{ secrets.PROD_PORT || 22 }} -r dist/apps/core/dist/* ${{ secrets.PROD_USER }}@${{ secrets.PROD_HOST }}:/opt/topems/core-remote/
 
           ssh ${{ secrets.PROD_USER }}@${{ secrets.PROD_HOST }} -p ${{ secrets.PROD_PORT || 22 }} << 'EOF'
-            for service in unified-core ai analytics manufacturing quality-assurance hrm crm pm erp gis rs scm wms mobile monitor portal mes pdm qms lims ehs bi report; do
+            for service in unified-core ai analytics manufacturing quality-assurance hrm crm pm erp gis rs scm wms mobile monitor portal mes pdm qms lims ehs bi; do
               sudo systemctl start topems-${service} || true
             done
 
             sleep 30
 
             FAILURE=false
-            for port in 8000 8010 8020 8029 8023 8071 8053 8040 8041 8042 8070 8062 8063 8064 8072 8030 8031 8050 8051 8052 8060 8061; do
+            for port in 8000 8010 8020 8029 8023 8071 8053 8040 8041 8042 8070 8062 8063 8064 8072 8030 8031 8050 8051 8052 8060; do
               if ! curl -s -f -m 5 https://${{ secrets.PROD_DOMAIN }}/health; then
                 echo "Service health check failed"
                 FAILURE=true
@@ -597,7 +593,7 @@ jobs:
 
             if [ "$FAILURE" = true ]; then
               echo "Health check failed, rolling back..."
-              for service in unified-core ai analytics manufacturing quality-assurance hrm crm pm erp gis rs scm wms mobile monitor portal mes pdm qms lims ehs bi report; do
+              for service in unified-core ai analytics manufacturing quality-assurance hrm crm pm erp gis rs scm wms mobile monitor portal mes pdm qms lims ehs bi; do
                 sudo systemctl stop topems-${service} 2>/dev/null || true
               done
 
@@ -611,7 +607,7 @@ jobs:
                 cp -r "$LATEST_WEB_BACKUP" /opt/topems/web
               fi
 
-              for service in unified-core ai analytics manufacturing quality-assurance hrm crm pm erp gis rs scm wms mobile monitor portal mes pdm qms lims ehs bi report; do
+              for service in unified-core ai analytics manufacturing quality-assurance hrm crm pm erp gis rs scm wms mobile monitor portal mes pdm qms lims ehs bi; do
                 sudo systemctl start topems-${service} || true
               done
               exit 1

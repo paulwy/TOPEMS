@@ -43,7 +43,8 @@ import { PageContainer } from '@/components/common';
 import { qmsApi, type QualityCheck, type CreateQualityCheckRequest } from '@/api/qms';
 import { useAppStore } from '@/store';
 import { designTokens } from '@/theme/tokens';
-import { logger } from "@/utils/logger";
+import { logger } from '@/utils/logger';
+
 const ct = designTokens.colors;
 
 const STATUS_MAP: Record<string, { label: string; bg: string; color: string }> = {

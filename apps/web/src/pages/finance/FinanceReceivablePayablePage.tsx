@@ -1,6 +1,5 @@
 import React, { useState, useEffect, useMemo } from 'react';
 import { designTokens } from '@/theme/tokens';
-const ct = designTokens.colors;
 import { PageContainer } from '@/components/common';
 import {
   Chip,
@@ -34,6 +33,8 @@ import { financeApi } from '@/api/finance';
 import type { SalesInvoice, PurchaseInvoice, InvoiceStatus } from '../../types/finance';
 import { useAppStore } from '../../store';
 import { apiLogger } from '@/utils/logger';
+
+const ct = designTokens.colors;
 
 const FinanceReceivablePayablePage: React.FC = () => {
   const addNotification = useAppStore((state) => state.addNotification);
@@ -881,7 +882,7 @@ const FinanceReceivablePayablePage: React.FC = () => {
                 value={formData.invoice_date}
                 onChange={(e) => setFormData({ ...formData, invoice_date: e.target.value })}
                 size='small'
-                slotProps={{ inputLabel: { shrink: true } }}
+                slotProps={{ inputLabel: { shrink: true } } as any}
               />
               <TextField
                 label='到期日期'
@@ -889,7 +890,7 @@ const FinanceReceivablePayablePage: React.FC = () => {
                 value={formData.due_date}
                 onChange={(e) => setFormData({ ...formData, due_date: e.target.value })}
                 size='small'
-                slotProps={{ inputLabel: { shrink: true } }}
+                slotProps={{ inputLabel: { shrink: true } } as any}
               />
             </Box>
             <FormControl

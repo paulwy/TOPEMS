@@ -1,6 +1,5 @@
 import React, { useState, useEffect, useCallback, useMemo } from 'react';
 import { designTokens } from '@/theme/tokens';
-const ct = designTokens.colors;
 import {
   Dialog,
   DialogTitle,
@@ -51,6 +50,8 @@ import { ListPageTemplate, type ColumnDef, type RowAction } from '@/components/t
 import { PageContainer } from '@/components/common';
 import { fmeaApi } from '@/api/qms';
 import type { FmeaAnalysis, FmeaItem, FmeaStatistics } from '@/api/qms';
+
+const ct = designTokens.colors;
 
 const QmsFmeaPage: React.FC = () => {
   const [searchTerm, setSearchTerm] = useState('');
@@ -1741,7 +1742,7 @@ const QmsFmeaPage: React.FC = () => {
                   onChange={(e) =>
                     setItemFormData((prev) => ({ ...prev, targetDate: e.target.value }))
                   }
-                  slotProps={{ inputLabel: { shrink: true } }}
+                  slotProps={{ inputLabel: { shrink: true } } as any}
                 />
               </Box>
             </Box>

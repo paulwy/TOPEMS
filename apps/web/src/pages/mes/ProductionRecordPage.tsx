@@ -20,7 +20,7 @@ import type {
 } from '@/api/mes';
 import { mesApi } from '@/api/mes';
 import { useAppStore } from '@/store';
-import { LoadingSpinner } from '@/components/common/LoadingSpinner';
+import { LoadingSpinner } from '@topems/shared-components';
 import {
   ListPageTemplate,
   type ColumnDef,
@@ -30,6 +30,7 @@ import {
 import { Plus, Edit, Eye, Trash2, Clock, User, Package, Settings, Activity } from 'lucide-react';
 import { apiLogger } from '@/utils/logger';
 import { designTokens } from '@/theme/tokens';
+
 const ct = designTokens.colors;
 
 const ProductionRecordPage: React.FC = () => {
@@ -492,7 +493,7 @@ const ProductionRecordPage: React.FC = () => {
                 onChange={(e) => setFormData({ ...formData, start_time: e.target.value })}
                 size='small'
                 required
-                slotProps={{ inputLabel: { shrink: true } }}
+                slotProps={{ inputLabel: { shrink: true } } as any}
               />
             </Box>
             <DialogActions sx={{ mt: 2 }}>

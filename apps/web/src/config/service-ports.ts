@@ -28,7 +28,12 @@ export const SERVICE_PORTS: Record<string, ServicePort> = {
   ehs: { name: 'ehs', port: 8052, description: '环境健康安全', category: 'quality-rd' },
   rs: { name: 'rs', port: 8053, description: '研发管理', category: 'quality-rd' },
   bi: { name: 'bi', port: 8060, description: '商业智能', category: 'analytics' },
-  report: { name: 'report', port: 8060, description: '报表服务（统一到 analytics）', category: 'analytics' },
+  report: {
+    name: 'report',
+    port: 8060,
+    description: '报表服务（统一到 analytics）',
+    category: 'analytics',
+  },
   monitor: { name: 'monitor', port: 8062, description: '系统监控', category: 'analytics' },
   portal: { name: 'portal', port: 8063, description: '企业门户', category: 'analytics' },
   ai: { name: 'ai', port: 8064, description: 'AI智能服务', category: 'analytics' },

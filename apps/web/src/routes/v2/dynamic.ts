@@ -1,11 +1,15 @@
 import type { RouteModuleConfig, RouteConfig } from './types';
 import { flattenRoutes, toFlatRouteConfig } from './types';
 
-const moduleImports: Record<string, () => Promise<{ default: RouteModuleConfig | { [key: string]: RouteModuleConfig } }>> = {
+const moduleImports: Record<
+  string,
+  () => Promise<{ default: RouteModuleConfig | { [key: string]: RouteModuleConfig } }>
+> = {
   iam: () => import('./iam').then((m) => ({ default: m.iamModuleConfig })),
   admin: () => import('./admin').then((m) => ({ default: m.adminModuleConfig })),
   workflow: () => import('./workflow').then((m) => ({ default: m.workflowModuleConfig })),
-  notification: () => import('./notification').then((m) => ({ default: m.notificationModuleConfig })),
+  notification: () =>
+    import('./notification').then((m) => ({ default: m.notificationModuleConfig })),
   doc: () => import('./doc').then((m) => ({ default: m.docModuleConfig })),
   report: () => import('./report').then((m) => ({ default: m.reportModuleConfig })),
   monitor: () => import('./monitor').then((m) => ({ default: m.monitorModuleConfig })),
@@ -82,8 +86,35 @@ export function getLoadedModules(): string[] {
 }
 
 export const coreModuleCodes = [
-  'iam', 'admin', 'workflow', 'notification', 'doc', 'report', 'monitor',
-  'integration', 'ai', 'mobile', 'hrm', 'finance', 'crm', 'mes', 'qms',
-  'lims', 'ehs', 'scm', 'erp', 'wms', 'pm', 'pdm', 'srm', 'oa', 'lowcode',
-  'rs', 'asset', 'plugin', 'im', 'bi', 'gis',
+  'iam',
+  'admin',
+  'workflow',
+  'notification',
+  'doc',
+  'report',
+  'monitor',
+  'integration',
+  'ai',
+  'mobile',
+  'hrm',
+  'finance',
+  'crm',
+  'mes',
+  'qms',
+  'lims',
+  'ehs',
+  'scm',
+  'erp',
+  'wms',
+  'pm',
+  'pdm',
+  'srm',
+  'oa',
+  'lowcode',
+  'rs',
+  'asset',
+  'plugin',
+  'im',
+  'bi',
+  'gis',
 ] as const;

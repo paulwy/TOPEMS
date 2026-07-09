@@ -18,10 +18,15 @@ import {
 } from '@mui/material';
 import { PageContainer } from '@/components/common';
 import React, { useState, useEffect, useMemo, useCallback } from 'react';
-import type { WorkOrder, CreateWorkOrderRequest, UpdateWorkOrderRequest, ListParams } from '@/api/mes';
+import type {
+  WorkOrder,
+  CreateWorkOrderRequest,
+  UpdateWorkOrderRequest,
+  ListParams,
+} from '@/api/mes';
 import { mesApi } from '@/api/mes';
 import { useAppStore } from '@/store';
-import { LoadingSpinner } from '@/components/common/LoadingSpinner';
+import { LoadingSpinner } from '@topems/shared-components';
 import {
   ListPageTemplate,
   type ColumnDef,
@@ -42,6 +47,7 @@ import {
 } from 'lucide-react';
 import { apiLogger } from '@/utils/logger';
 import { designTokens } from '@/theme/tokens';
+
 const ct = designTokens.colors;
 
 const WorkOrderPage: React.FC = () => {

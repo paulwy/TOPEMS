@@ -2,7 +2,6 @@ import React, { useState, useEffect } from 'react';
 import { apiLogger } from '@/utils/logger';
 import { useNavigate } from 'react-router-dom';
 import { designTokens } from '@/theme/tokens';
-const ct = designTokens.colors;
 import {
   ClipboardList,
   Users,
@@ -44,6 +43,8 @@ import { PageContainer } from '@/components/common';
 import { qmsApi } from '@/api/qms';
 import type { ApqpProject, ApqpPhase, ApqpTask, ApqpRisk, ApqpProgressStatistics } from '@/api/qms';
 import { useAppStore } from '@/store';
+
+const ct = designTokens.colors;
 
 const QmsApqpPage: React.FC = () => {
   const navigate = useNavigate();
@@ -198,7 +199,7 @@ const QmsApqpPage: React.FC = () => {
       planning: { bg: 'primary.100', color: 'primary.dark', label: '策划中' },
       策划中: { bg: 'primary.100', color: 'primary.dark', label: '策划中' },
       developing: { bg: 'warning.100', color: ct.yellow[600], label: '开发中' },
-  开发中: { bg: 'warning.100', color: ct.yellow[600], label: '开发中' },
+      开发中: { bg: 'warning.100', color: ct.yellow[600], label: '开发中' },
       verifying: { bg: 'secondary.100', color: 'secondary.dark', label: '验证中' },
       验证中: { bg: 'secondary.100', color: 'secondary.dark', label: '验证中' },
       released: { bg: 'success.lighter', color: 'success.dark', label: '已发布' },
@@ -208,7 +209,7 @@ const QmsApqpPage: React.FC = () => {
       pending: { bg: 'grey.100', color: 'grey.500', label: '待开始' },
       待开始: { bg: 'grey.100', color: 'grey.500', label: '待开始' },
       in_progress: { bg: 'warning.100', color: ct.yellow[600], label: '进行中' },
-  进行中: { bg: 'warning.100', color: ct.yellow[600], label: '进行中' },
+      进行中: { bg: 'warning.100', color: ct.yellow[600], label: '进行中' },
       completed: { bg: 'success.lighter', color: 'success.dark', label: '已完成' },
       已完成: { bg: 'success.lighter', color: 'success.dark', label: '已完成' },
       open: { bg: 'error.lighter', color: 'error.dark', label: '开放' },
@@ -545,11 +546,11 @@ const QmsApqpPage: React.FC = () => {
             </Card>
 
             <Card
-        sx={{
-          background: `linear-gradient(135deg, ${ct.primary.main} 0%, ${ct.primary.dark} 100%)`,
-          color: 'white',
-        }}
-      >
+              sx={{
+                background: `linear-gradient(135deg, ${ct.primary.main} 0%, ${ct.primary.dark} 100%)`,
+                color: 'white',
+              }}
+            >
               <CardContent sx={{ p: 3 }}>
                 <Box
                   sx={{
@@ -559,7 +560,9 @@ const QmsApqpPage: React.FC = () => {
                   }}
                 >
                   <Box>
-                    <Typography sx={{ color: ct.blue[200], fontSize: '0.875rem' }}>策划中</Typography>
+                    <Typography sx={{ color: ct.blue[200], fontSize: '0.875rem' }}>
+                      策划中
+                    </Typography>
                     <Typography
                       variant='h4'
                       sx={{ fontWeight: 700, mt: 0.5 }}
@@ -573,11 +576,11 @@ const QmsApqpPage: React.FC = () => {
             </Card>
 
             <Card
-        sx={{
-          background: `linear-gradient(135deg, ${ct.warning.main} 0%, ${ct.orange[600]} 100%)`,
-          color: 'white',
-        }}
-      >
+              sx={{
+                background: `linear-gradient(135deg, ${ct.warning.main} 0%, ${ct.orange[600]} 100%)`,
+                color: 'white',
+              }}
+            >
               <CardContent sx={{ p: 3 }}>
                 <Box
                   sx={{
@@ -603,11 +606,11 @@ const QmsApqpPage: React.FC = () => {
             </Card>
 
             <Card
-        sx={{
-          background: `linear-gradient(135deg, ${ct.secondary.main} 0%, ${ct.purple[700]} 100%)`,
-          color: 'white',
-        }}
-      >
+              sx={{
+                background: `linear-gradient(135deg, ${ct.secondary.main} 0%, ${ct.purple[700]} 100%)`,
+                color: 'white',
+              }}
+            >
               <CardContent sx={{ p: 3 }}>
                 <Box
                   sx={{
@@ -617,7 +620,9 @@ const QmsApqpPage: React.FC = () => {
                   }}
                 >
                   <Box>
-                    <Typography sx={{ color: 'secondary.100', fontSize: '0.875rem' }}>验证中</Typography>
+                    <Typography sx={{ color: 'secondary.100', fontSize: '0.875rem' }}>
+                      验证中
+                    </Typography>
                     <Typography
                       variant='h4'
                       sx={{ fontWeight: 700, mt: 0.5 }}
@@ -631,11 +636,11 @@ const QmsApqpPage: React.FC = () => {
             </Card>
 
             <Card
-        sx={{
-          background: `linear-gradient(135deg, ${ct.success.main} 0%, ${ct.success.main} 100%)`,
-          color: 'white',
-        }}
-      >
+              sx={{
+                background: `linear-gradient(135deg, ${ct.success.main} 0%, ${ct.success.main} 100%)`,
+                color: 'white',
+              }}
+            >
               <CardContent sx={{ p: 3 }}>
                 <Box
                   sx={{

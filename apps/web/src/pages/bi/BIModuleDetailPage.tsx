@@ -31,7 +31,7 @@ import {
 } from '@mui/material';
 import { Grid } from '@/components';
 import { useAppStore } from '@/store';
-import { LoadingSpinner } from '@/components/common/LoadingSpinner';
+import { LoadingSpinner } from '@topems/shared-components';
 import ExportButton from '@/components/export/ExportButton';
 import { apiLogger, logger } from '@/utils/logger';
 import {
@@ -335,10 +335,15 @@ const BIModuleDetailPage = () => {
             if (timelineRes.success && timelineRes.data) {
               const timelineItems = timelineRes.data.items || timelineRes.data || [];
               if (Array.isArray(timelineItems) && timelineItems.length > 0) {
-                timelineData = timelineItems.map((item: { month?: string; date?: string; count?: number; value?: number }, index: number) => ({
-                  month: item.month || item.date || `${index + 1}月`,
-                  count: item.count || item.value || 0,
-                }));
+                timelineData = timelineItems.map(
+                  (
+                    item: { month?: string; date?: string; count?: number; value?: number },
+                    index: number
+                  ) => ({
+                    month: item.month || item.date || `${index + 1}月`,
+                    count: item.count || item.value || 0,
+                  })
+                );
               }
             }
           } catch (e) {
@@ -518,12 +523,14 @@ const BIModuleDetailPage = () => {
               innerRadius={50}
               dataKey='value'
             >
-              {distributionChartData.map((entry: { name: string; value: number }, index: number) => (
-                <Cell
-                  key={`cell-${index}`}
-                  fill={BIChartColors.series[index % BIChartColors.series.length]}
-                />
-              ))}
+              {distributionChartData.map(
+                (entry: { name: string; value: number }, index: number) => (
+                  <Cell
+                    key={`cell-${index}`}
+                    fill={BIChartColors.series[index % BIChartColors.series.length]}
+                  />
+                )
+              )}
             </Pie>
             <Tooltip />
           </RechartsPieChart>

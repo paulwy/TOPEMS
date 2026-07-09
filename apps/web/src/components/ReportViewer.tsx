@@ -96,7 +96,13 @@ const ReportViewer: React.FC<ReportViewerProps> = ({ report, onClose }) => {
             }}
           >
             <div>
-              <h3 style={{ fontSize: '20px', fontWeight: 600, color: 'var(--mui-palette-text-primary)' }}>
+              <h3
+                style={{
+                  fontSize: '20px',
+                  fontWeight: 600,
+                  color: 'var(--mui-palette-text-primary)',
+                }}
+              >
                 {report.config.title}
               </h3>
               {report.config.description && (

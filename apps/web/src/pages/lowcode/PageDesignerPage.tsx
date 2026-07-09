@@ -4,7 +4,7 @@ import { Box, CircularProgress } from '@mui/material';
 import { PageDesigner } from '@/components/lowcode';
 import { lowcodeApi } from '@/api';
 import type { PageSchema } from '@/api/lowcode';
-import { logger } from "@/utils/logger";
+import { logger } from '@/utils/logger';
 
 const PageDesignerPage: React.FC = () => {
   const { pageId } = useParams<{ pageId: string }>();

@@ -410,7 +410,7 @@ const EhsDrillPage: React.FC = () => {
               type='date'
               value={formData.date}
               onChange={(e) => setFormData({ ...formData, date: e.target.value })}
-              slotProps={{ inputLabel: { shrink: true } }}
+              slotProps={{ inputLabel: { shrink: true } } as any}
             />
             <TextField
               fullWidth

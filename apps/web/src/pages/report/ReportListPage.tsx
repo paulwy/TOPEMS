@@ -17,7 +17,7 @@ import { reportApi } from '@/api/report';
 import type { ReportData } from '@/api/report';
 import { useAppStore } from '@/store';
 import { apiLogger } from '@/utils/logger';
-import ConfirmDialog from '@/components/common/ConfirmDialog';
+import { ConfirmDialog } from '@topems/shared-components';
 import { designTokens } from '@/theme/tokens';
 
 const ct = designTokens.colors;

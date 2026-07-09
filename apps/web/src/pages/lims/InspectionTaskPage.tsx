@@ -1,6 +1,5 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { designTokens } from '@/theme/tokens';
-const ct = designTokens.colors;
 import { PageContainer } from '@/components/common';
 import { useNavigate } from 'react-router-dom';
 import {
@@ -53,7 +52,9 @@ import {
 } from '@/api/lims';
 import { useAppStore } from '@/store';
 import { apiLogger } from '@/utils/logger';
-import { GRADIENTS } from '@/constants/colors';
+import { GRADIENTS } from '@topems/shared-constants';
+
+const ct = designTokens.colors;
 
 interface RawTask extends Partial<InspectionTask> {
   status?: string;
@@ -129,7 +130,8 @@ const InspectionTaskPage: React.FC = () => {
     try {
       const response = await limsApi.listProcesses();
       if (response.success && response.data) {
-        const processData = response.data as LimsListResponse<InspectionProcess> | InspectionProcess[];
+        const processData = response.data as
+          LimsListResponse<InspectionProcess> | InspectionProcess[];
         let rawProcesses: InspectionProcess[] = [];
         if (Array.isArray(processData)) {
           rawProcesses = processData;

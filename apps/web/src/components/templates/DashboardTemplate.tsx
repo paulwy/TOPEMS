@@ -427,11 +427,17 @@ const StatCardComponent: React.FC<StatCard & { loading?: boolean }> = ({
                     }}
                   >
                     {change > 0 ? (
-                      <TrendingUp style={{ width: 14, height: 14, color: theme.palette.success.dark }} />
+                      <TrendingUp
+                        style={{ width: 14, height: 14, color: theme.palette.success.dark }}
+                      />
                     ) : change < 0 ? (
-                      <TrendingDown style={{ width: 14, height: 14, color: theme.palette.error.main }} />
+                      <TrendingDown
+                        style={{ width: 14, height: 14, color: theme.palette.error.main }}
+                      />
                     ) : (
-                      <Minus style={{ width: 14, height: 14, color: theme.palette.text.disabled }} />
+                      <Minus
+                        style={{ width: 14, height: 14, color: theme.palette.text.disabled }}
+                      />
                     )}
                     <Typography
                       variant='caption'

@@ -53,6 +53,7 @@ import { PageContainer, Grid } from '@/components/common';
 import { useAppStore } from '@/store';
 import { logger } from '@/utils/logger';
 import { designTokens } from '@/theme/tokens';
+
 const ct = designTokens.colors;
 
 type PromptCategory = 'all' | 'writing' | 'code' | 'business' | 'analysis' | 'creative';
@@ -312,7 +313,11 @@ export const AiPromptLibraryPage: React.FC = () => {
                       onClick={() => setActiveCategory(cat.id as PromptCategory)}
                     >
                       <ListItemIcon sx={{ minWidth: 36 }}>
-                        <span style={{ color: activeCategory === cat.id ? ct.secondary[400] : ct.grey[500] }}>
+                        <span
+                          style={{
+                            color: activeCategory === cat.id ? ct.secondary[400] : ct.grey[500],
+                          }}
+                        >
                           {cat.icon}
                         </span>
                       </ListItemIcon>

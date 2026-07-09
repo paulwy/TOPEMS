@@ -48,7 +48,11 @@ import {
   type Dashboard,
   type DashboardTemplate,
 } from '@/api/bi';
-import { DashboardEditor, type DashboardWidget, type DashboardConfig } from '@/components/bi/DashboardEditor';
+import {
+  DashboardEditor,
+  type DashboardWidget,
+  type DashboardConfig,
+} from '@/components/bi/DashboardEditor';
 import { useAppStore } from '@/store';
 import { DashboardTemplateManager } from '@/components/bi/DashboardTemplateManager';
 import { DashboardTemplate as DashboardLayout } from '@/components/templates';

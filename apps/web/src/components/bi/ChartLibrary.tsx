@@ -27,15 +27,7 @@ import {
 } from 'recharts';
 
 export type ChartType =
-  | 'bar'
-  | 'pie'
-  | 'line'
-  | 'area'
-  | 'radar'
-  | 'scatter'
-  | 'composed'
-  | 'histogram'
-  | 'gauge';
+  'bar' | 'pie' | 'line' | 'area' | 'radar' | 'scatter' | 'composed' | 'histogram' | 'gauge';
 
 export interface ChartDataPoint {
   [key: string]: string | number | boolean;
@@ -100,11 +92,19 @@ const CustomTooltip = ({ active, payload }: { active?: boolean; payload?: Toolti
           minWidth: '120px',
         }}
       >
-        <p style={{ fontWeight: 600, color: 'var(--mui-palette-text-primary)', marginBottom: '8px' }}>{payload[0].name}</p>
+        <p
+          style={{ fontWeight: 600, color: 'var(--mui-palette-text-primary)', marginBottom: '8px' }}
+        >
+          {payload[0].name}
+        </p>
         {payload.map((item, index) => (
           <p
             key={index}
-            style={{ fontSize: '14px', color: 'var(--mui-palette-text-secondary)', margin: '4px 0' }}
+            style={{
+              fontSize: '14px',
+              color: 'var(--mui-palette-text-secondary)',
+              margin: '4px 0',
+            }}
           >
             <span style={{ color: item.color || 'primary.light' }}>●</span>
             {item.dataKey}: {String(item.value)}

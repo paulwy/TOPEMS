@@ -23,7 +23,7 @@ export const deviceApi = {
     const response = await apiClient.gis.get<any>(`/device-locations?${queryParams.toString()}`);
     if (response.success && response.data) {
       const adapted = adaptResponse<any>(response.data, 'device_locations');
-      adapted.data = adapted.data.map(
+      adapted.items = adapted.items.map(
         (item: {
           position?: { lat?: number; lng?: number };
           latitude?: number;

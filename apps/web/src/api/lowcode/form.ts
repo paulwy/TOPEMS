@@ -161,6 +161,7 @@ export const formApi = {
       total: filtered.length,
       page,
       pageSize,
+      totalPages: Math.ceil(filtered.length / pageSize),
     };
   },
 

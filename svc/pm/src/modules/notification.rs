@@ -30,11 +30,6 @@ pub fn create_routes(pool: PgPool) -> Router {
             get(get_project_notifications).post(create_notification),
         )
         .route(
-            "/api/plugin_pm.notifications/{id}",
-            get(get_notification).put(update_notification),
-        )
-        .route("/api/plugin_pm.notifications/{id}/read", post(mark_as_read))
-        .route(
             "/api/pm/projects/{project_id}/notification-settings",
             get(get_project_settings).post(create_setting),
         )

@@ -6,6 +6,26 @@ const PmDashboardPage = lazyWithRetry(
   'DashboardPage'
 );
 
+const ProjectTaskKanbanPage = lazyWithRetry(
+  () => import('../../pages/pm/ProjectTaskKanbanPage'),
+  'ProjectTaskKanbanPage'
+);
+
+const ProjectCreateWizardPage = lazyWithRetry(
+  () => import('../../pages/pm/ProjectCreateWizardPage'),
+  'ProjectCreateWizardPage'
+);
+
+const ProjectTimelinePage = lazyWithRetry(
+  () => import('../../pages/pm/ProjectTimelinePage'),
+  'ProjectTimelinePage'
+);
+
+const ProjectMasterDetailPage = lazyWithRetry(
+  () => import('../../pages/pm/ProjectMasterDetailPage'),
+  'ProjectMasterDetailPage'
+);
+
 export const pmModuleConfig: RouteModuleConfig = {
   code: 'pm',
   name: '项目管理',
@@ -132,6 +152,46 @@ export const pmModuleConfig: RouteModuleConfig = {
       template: 'stats',
       group: 'analytics',
       requiredPermissions: ['pm:report:read'],
+    },
+    {
+      path: '/pm/task-kanban',
+      element: ProjectTaskKanbanPage,
+      module: 'pm',
+      code: 'pm-task-kanban',
+      title: '任务看板',
+      template: 'kanban',
+      group: 'business',
+      requiredPermissions: ['pm:task:read'],
+    },
+    {
+      path: '/pm/project-wizard',
+      element: ProjectCreateWizardPage,
+      module: 'pm',
+      code: 'pm-project-wizard',
+      title: '新建项目向导',
+      template: 'wizard',
+      group: 'business',
+      requiredPermissions: ['pm:project:create'],
+    },
+    {
+      path: '/pm/timeline',
+      element: ProjectTimelinePage,
+      module: 'pm',
+      code: 'pm-timeline',
+      title: '项目时间线',
+      template: 'timeline',
+      group: 'analytics',
+      requiredPermissions: ['pm:read'],
+    },
+    {
+      path: '/pm/project-list',
+      element: ProjectMasterDetailPage,
+      module: 'pm',
+      code: 'pm-project-list',
+      title: '项目列表',
+      template: 'master-detail',
+      group: 'business',
+      requiredPermissions: ['pm:project:read'],
     },
   ],
 };

@@ -1,4 +1,5 @@
-import {Card,
+import {
+  Card,
   CardContent,
   CardHeader,
   Chip,
@@ -15,7 +16,9 @@ import {Card,
   Tabs,
   Tab,
   Box,
-  Button, useTheme} from '@mui/material';
+  Button,
+  useTheme,
+} from '@mui/material';
 import React, { useState, useEffect } from 'react';
 import {
   Mail,
@@ -46,7 +49,7 @@ import {
 } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { useAppStore } from '../../store';
-import ConfirmDialog from '@/components/common/ConfirmDialog';
+import { ConfirmDialog } from '@topems/shared-components';
 import { PageContainer } from '@/components/common';
 import {
   emailApi,
@@ -965,395 +968,522 @@ const MailPage: React.FC = () => {
           {activeTab === 'emails' && (
             <Box sx={{ mt: 0 }}>
               <Box sx={{ mb: 3, display: 'flex', alignItems: 'center', gap: 2 }}>
-                  <Box sx={{ flex: 1, position: 'relative' }}>
-                    <Box
-                      sx={{
-                        position: 'absolute',
-                        left: 12,
-                        top: '50%',
-                        transform: 'translateY(-50%)',
-                        zIndex: 1,
-                        pointerEvents: 'none',
-                      }}
-                    >
-                      <Search
-                        size={20}
-                        color='text.disabled'
-                      />
-                    </Box>
-                    <TextField
-                      type='text'
-                      placeholder='搜索邮件主题、发件人...'
-                      value={searchQuery}
-                      onChange={(e) => {
-                        setSearchQuery(e.target.value);
-                        setCurrentPage(1);
-                      }}
-                      size='small'
-                      sx={{ pl: 5, width: '100%' }}
+                <Box sx={{ flex: 1, position: 'relative' }}>
+                  <Box
+                    sx={{
+                      position: 'absolute',
+                      left: 12,
+                      top: '50%',
+                      transform: 'translateY(-50%)',
+                      zIndex: 1,
+                      pointerEvents: 'none',
+                    }}
+                  >
+                    <Search
+                      size={20}
+                      color='text.disabled'
                     />
                   </Box>
-                  <FormControl
+                  <TextField
+                    type='text'
+                    placeholder='搜索邮件主题、发件人...'
+                    value={searchQuery}
+                    onChange={(e) => {
+                      setSearchQuery(e.target.value);
+                      setCurrentPage(1);
+                    }}
                     size='small'
-                    sx={{ minWidth: 120 }}
-                  >
-                    <InputLabel>状态</InputLabel>
-                    <Select
-                      value={statusFilter || 'all'}
-                      label='状态'
-                      onChange={(e) => {
-                        setStatusFilter(e.target.value === 'all' ? '' : e.target.value);
-                        setCurrentPage(1);
-                      }}
-                    >
-                      <MenuItem value='all'>全部</MenuItem>
-                      {STATUS_OPTIONS.map((opt) => (
-                        <MenuItem
-                          key={opt.value}
-                          value={opt.value}
-                        >
-                          {opt.label}
-                        </MenuItem>
-                      ))}
-                    </Select>
-                  </FormControl>
-                  <FormControl
-                    size='small'
-                    sx={{ minWidth: 120 }}
-                  >
-                    <InputLabel>优先级</InputLabel>
-                    <Select
-                      value={priorityFilter || 'all'}
-                      label='优先级'
-                      onChange={(e) => {
-                        setPriorityFilter(e.target.value === 'all' ? '' : e.target.value);
-                        setCurrentPage(1);
-                      }}
-                    >
-                      <MenuItem value='all'>全部</MenuItem>
-                      {PRIORITY_OPTIONS.map((opt) => (
-                        <MenuItem
-                          key={opt.value}
-                          value={opt.value}
-                        >
-                          {opt.label}
-                        </MenuItem>
-                      ))}
-                    </Select>
-                  </FormControl>
+                    sx={{ pl: 5, width: '100%' }}
+                  />
                 </Box>
+                <FormControl
+                  size='small'
+                  sx={{ minWidth: 120 }}
+                >
+                  <InputLabel>状态</InputLabel>
+                  <Select
+                    value={statusFilter || 'all'}
+                    label='状态'
+                    onChange={(e) => {
+                      setStatusFilter(e.target.value === 'all' ? '' : e.target.value);
+                      setCurrentPage(1);
+                    }}
+                  >
+                    <MenuItem value='all'>全部</MenuItem>
+                    {STATUS_OPTIONS.map((opt) => (
+                      <MenuItem
+                        key={opt.value}
+                        value={opt.value}
+                      >
+                        {opt.label}
+                      </MenuItem>
+                    ))}
+                  </Select>
+                </FormControl>
+                <FormControl
+                  size='small'
+                  sx={{ minWidth: 120 }}
+                >
+                  <InputLabel>优先级</InputLabel>
+                  <Select
+                    value={priorityFilter || 'all'}
+                    label='优先级'
+                    onChange={(e) => {
+                      setPriorityFilter(e.target.value === 'all' ? '' : e.target.value);
+                      setCurrentPage(1);
+                    }}
+                  >
+                    <MenuItem value='all'>全部</MenuItem>
+                    {PRIORITY_OPTIONS.map((opt) => (
+                      <MenuItem
+                        key={opt.value}
+                        value={opt.value}
+                      >
+                        {opt.label}
+                      </MenuItem>
+                    ))}
+                  </Select>
+                </FormControl>
+              </Box>
 
-                <Box
+              <Box
+                sx={{
+                  display: 'grid',
+                  gridTemplateColumns: {
+                    xs: '1fr',
+                    md: 'repeat(2, 1fr)',
+                    lg: 'repeat(4, 1fr)',
+                  },
+                  gap: 2,
+                  mb: 3,
+                }}
+              >
+                <Card
                   sx={{
-                    display: 'grid',
-                    gridTemplateColumns: {
-                      xs: '1fr',
-                      md: 'repeat(2, 1fr)',
-                      lg: 'repeat(4, 1fr)',
-                    },
-                    gap: 2,
-                    mb: 3,
+                    background: 'linear-gradient(135deg, primary.main 0%, primary.dark 100%)',
+                    border: 'none',
                   }}
                 >
-                  <Card
-                    sx={{
-                      background: 'linear-gradient(135deg, primary.main 0%, primary.dark 100%)',
-                      border: 'none',
-                    }}
-                  >
-                    <CardContent sx={{ p: 2 }}>
-                      <Box
-                        sx={{
-                          display: 'flex',
-                          alignItems: 'center',
-                          justifyContent: 'space-between',
-                        }}
-                      >
-                        <Box>
-                          <Typography sx={{ color: 'primary.light', fontSize: '0.875rem' }}>
-                            邮件总数
-                          </Typography>
-                          <Typography
-                            sx={{
-                              fontSize: '1.875rem',
-                              fontWeight: 700,
-                              color: 'common.white',
-                              mt: 0.5,
-                            }}
-                          >
-                            {statsLoading ? '...' : stats?.total || 0}
-                          </Typography>
-                        </Box>
-                        <Box
-                          sx={{
-                            width: 48,
-                            height: 48,
-                            bgcolor: 'rgba(255,255,255,0.2)',
-                            borderRadius: '50%',
-                            display: 'flex',
-                            alignItems: 'center',
-                            justifyContent: 'center',
-                          }}
-                        >
-                          <Mail
-                            size={24}
-                            color='white'
-                          />
-                        </Box>
-                      </Box>
-                    </CardContent>
-                  </Card>
-                  <Card
-                    sx={{
-                      background: `linear-gradient(135deg, ${ct.success.main} 0%, ${ct.success.dark} 100%)`,
-                      border: 'none',
-                    }}
-                  >
-                    <CardContent sx={{ p: 2 }}>
-                      <Box
-                        sx={{
-                          display: 'flex',
-                          alignItems: 'center',
-                          justifyContent: 'space-between',
-                        }}
-                      >
-                        <Box>
-                          <Typography sx={{ color: 'success.light', fontSize: '0.875rem' }}>
-                            已发送
-                          </Typography>
-                          <Typography
-                            sx={{
-                              fontSize: '1.875rem',
-                              fontWeight: 700,
-                              color: 'common.white',
-                              mt: 0.5,
-                            }}
-                          >
-                            {statsLoading ? '...' : stats?.sent_count || 0}
-                          </Typography>
-                        </Box>
-                        <Box
-                          sx={{
-                            width: 48,
-                            height: 48,
-                            bgcolor: 'rgba(255,255,255,0.2)',
-                            borderRadius: '50%',
-                            display: 'flex',
-                            alignItems: 'center',
-                            justifyContent: 'center',
-                          }}
-                        >
-                          <CheckCircle
-                            size={24}
-                            color='white'
-                          />
-                        </Box>
-                      </Box>
-                    </CardContent>
-                  </Card>
-                  <Card
-                    sx={{
-                      background: `linear-gradient(135deg, ${ct.yellow.main} 0%, ${ct.yellow[600]} 100%)`,
-                      border: 'none',
-                    }}
-                  >
-                    <CardContent sx={{ p: 2 }}>
-                      <Box
-                        sx={{
-                          display: 'flex',
-                          alignItems: 'center',
-                          justifyContent: 'space-between',
-                        }}
-                      >
-                        <Box>
-                          <Typography sx={{ color: 'warning.100', fontSize: '0.875rem' }}>
-                            待发送
-                          </Typography>
-                          <Typography
-                            sx={{
-                              fontSize: '1.875rem',
-                              fontWeight: 700,
-                              color: 'common.white',
-                              mt: 0.5,
-                            }}
-                          >
-                            {statsLoading ? '...' : stats?.pending_count || 0}
-                          </Typography>
-                        </Box>
-                        <Box
-                          sx={{
-                            width: 48,
-                            height: 48,
-                            bgcolor: 'rgba(255,255,255,0.2)',
-                            borderRadius: '50%',
-                            display: 'flex',
-                            alignItems: 'center',
-                            justifyContent: 'center',
-                          }}
-                        >
-                          <Clock
-                            size={24}
-                            color='white'
-                          />
-                        </Box>
-                      </Box>
-                    </CardContent>
-                  </Card>
-                  <Card
-                    sx={{
-                      background: 'linear-gradient(135deg, error.main 0%, error.dark 100%)',
-                      border: 'none',
-                    }}
-                  >
-                    <CardContent sx={{ p: 2 }}>
-                      <Box
-                        sx={{
-                          display: 'flex',
-                          alignItems: 'center',
-                          justifyContent: 'space-between',
-                        }}
-                      >
-                        <Box>
-                          <Typography sx={{ color: 'error.light', fontSize: '0.875rem' }}>
-                            发送失败
-                          </Typography>
-                          <Typography
-                            sx={{
-                              fontSize: '1.875rem',
-                              fontWeight: 700,
-                              color: 'common.white',
-                              mt: 0.5,
-                            }}
-                          >
-                            {statsLoading ? '...' : stats?.failed_count || 0}
-                          </Typography>
-                        </Box>
-                        <Box
-                          sx={{
-                            width: 48,
-                            height: 48,
-                            bgcolor: 'rgba(255,255,255,0.2)',
-                            borderRadius: '50%',
-                            display: 'flex',
-                            alignItems: 'center',
-                            justifyContent: 'center',
-                          }}
-                        >
-                          <XCircle
-                            size={24}
-                            color='white'
-                          />
-                        </Box>
-                      </Box>
-                    </CardContent>
-                  </Card>
-                </Box>
-
-                <Card>
-                  <CardContent sx={{ p: 0 }}>
-                    {selectedEmails.length > 0 && (
-                      <Box
-                        sx={{
-                          px: 3,
-                          py: 1.5,
-                          bgcolor: 'blue.50',
-                          borderBottom: 1,
-                          borderColor: 'blue.200',
-                          display: 'flex',
-                          alignItems: 'center',
-                          justifyContent: 'space-between',
-                        }}
-                      >
-                        <Typography
-                          variant='body2'
-                          sx={{ color: 'blue.700' }}
-                        >
-                          已选择 {selectedEmails.length} 条记录
+                  <CardContent sx={{ p: 2 }}>
+                    <Box
+                      sx={{
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'space-between',
+                      }}
+                    >
+                      <Box>
+                        <Typography sx={{ color: 'primary.light', fontSize: '0.875rem' }}>
+                          邮件总数
                         </Typography>
-                        <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-                          <Button
-                            variant='contained'
-                            size='small'
-                            onClick={() => setBatchResendDialogOpen(true)}
-                            sx={{ gap: 1 }}
-                          >
-                            <RefreshCw size={16} />
-                            批量重发
-                          </Button>
-                          <Button
-                            variant='contained'
-                            size='small'
-                            onClick={() => setBatchDeleteDialogOpen(true)}
-                            sx={{ gap: 1 }}
-                          >
-                            <Trash size={16} />
-                            批量删除
-                          </Button>
-                        </Box>
-                      </Box>
-                    )}
-                    {loading ? (
-                      <Box sx={{ p: 4, textAlign: 'center' }}>
-                        <Box
+                        <Typography
                           sx={{
-                            display: 'inline-block',
-                            animation: 'spin 1s linear infinite',
-                            borderRadius: '50%',
-                            height: 32,
-                            width: 32,
-                            border: 4,
-                            borderColor: 'primary.main',
-                            borderTopColor: 'transparent',
-                            '@keyframes spin': {
-                              '0%': { transform: 'rotate(0deg)' },
-                              '100%': { transform: 'rotate(360deg)' },
-                            },
+                            fontSize: '1.875rem',
+                            fontWeight: 700,
+                            color: 'common.white',
+                            mt: 0.5,
                           }}
-                        />
-                        <Typography sx={{ mt: 1, color: 'grey.500' }}>加载中...</Typography>
-                      </Box>
-                    ) : emails.length === 0 ? (
-                      <Box sx={{ p: 4, textAlign: 'center' }}>
-                        <Mail
-                          size={48}
-                          color='text.disabled'
-                          style={{ margin: '0 auto 12px' }}
-                        />
-                        <Typography sx={{ color: 'grey.500' }}>暂无邮件记录</Typography>
-                      </Box>
-                    ) : (
-                      <Box sx={{ overflowX: 'auto' }}>
-                        <Box
-                          component='table'
-                          sx={{ width: '100%', borderCollapse: 'collapse' }}
                         >
-                          <Box component='thead'>
+                          {statsLoading ? '...' : stats?.total || 0}
+                        </Typography>
+                      </Box>
+                      <Box
+                        sx={{
+                          width: 48,
+                          height: 48,
+                          bgcolor: 'rgba(255,255,255,0.2)',
+                          borderRadius: '50%',
+                          display: 'flex',
+                          alignItems: 'center',
+                          justifyContent: 'center',
+                        }}
+                      >
+                        <Mail
+                          size={24}
+                          color='white'
+                        />
+                      </Box>
+                    </Box>
+                  </CardContent>
+                </Card>
+                <Card
+                  sx={{
+                    background: `linear-gradient(135deg, ${ct.success.main} 0%, ${ct.success.dark} 100%)`,
+                    border: 'none',
+                  }}
+                >
+                  <CardContent sx={{ p: 2 }}>
+                    <Box
+                      sx={{
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'space-between',
+                      }}
+                    >
+                      <Box>
+                        <Typography sx={{ color: 'success.light', fontSize: '0.875rem' }}>
+                          已发送
+                        </Typography>
+                        <Typography
+                          sx={{
+                            fontSize: '1.875rem',
+                            fontWeight: 700,
+                            color: 'common.white',
+                            mt: 0.5,
+                          }}
+                        >
+                          {statsLoading ? '...' : stats?.sent_count || 0}
+                        </Typography>
+                      </Box>
+                      <Box
+                        sx={{
+                          width: 48,
+                          height: 48,
+                          bgcolor: 'rgba(255,255,255,0.2)',
+                          borderRadius: '50%',
+                          display: 'flex',
+                          alignItems: 'center',
+                          justifyContent: 'center',
+                        }}
+                      >
+                        <CheckCircle
+                          size={24}
+                          color='white'
+                        />
+                      </Box>
+                    </Box>
+                  </CardContent>
+                </Card>
+                <Card
+                  sx={{
+                    background: `linear-gradient(135deg, ${ct.yellow.main} 0%, ${ct.yellow[600]} 100%)`,
+                    border: 'none',
+                  }}
+                >
+                  <CardContent sx={{ p: 2 }}>
+                    <Box
+                      sx={{
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'space-between',
+                      }}
+                    >
+                      <Box>
+                        <Typography sx={{ color: 'warning.100', fontSize: '0.875rem' }}>
+                          待发送
+                        </Typography>
+                        <Typography
+                          sx={{
+                            fontSize: '1.875rem',
+                            fontWeight: 700,
+                            color: 'common.white',
+                            mt: 0.5,
+                          }}
+                        >
+                          {statsLoading ? '...' : stats?.pending_count || 0}
+                        </Typography>
+                      </Box>
+                      <Box
+                        sx={{
+                          width: 48,
+                          height: 48,
+                          bgcolor: 'rgba(255,255,255,0.2)',
+                          borderRadius: '50%',
+                          display: 'flex',
+                          alignItems: 'center',
+                          justifyContent: 'center',
+                        }}
+                      >
+                        <Clock
+                          size={24}
+                          color='white'
+                        />
+                      </Box>
+                    </Box>
+                  </CardContent>
+                </Card>
+                <Card
+                  sx={{
+                    background: 'linear-gradient(135deg, error.main 0%, error.dark 100%)',
+                    border: 'none',
+                  }}
+                >
+                  <CardContent sx={{ p: 2 }}>
+                    <Box
+                      sx={{
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'space-between',
+                      }}
+                    >
+                      <Box>
+                        <Typography sx={{ color: 'error.light', fontSize: '0.875rem' }}>
+                          发送失败
+                        </Typography>
+                        <Typography
+                          sx={{
+                            fontSize: '1.875rem',
+                            fontWeight: 700,
+                            color: 'common.white',
+                            mt: 0.5,
+                          }}
+                        >
+                          {statsLoading ? '...' : stats?.failed_count || 0}
+                        </Typography>
+                      </Box>
+                      <Box
+                        sx={{
+                          width: 48,
+                          height: 48,
+                          bgcolor: 'rgba(255,255,255,0.2)',
+                          borderRadius: '50%',
+                          display: 'flex',
+                          alignItems: 'center',
+                          justifyContent: 'center',
+                        }}
+                      >
+                        <XCircle
+                          size={24}
+                          color='white'
+                        />
+                      </Box>
+                    </Box>
+                  </CardContent>
+                </Card>
+              </Box>
+
+              <Card>
+                <CardContent sx={{ p: 0 }}>
+                  {selectedEmails.length > 0 && (
+                    <Box
+                      sx={{
+                        px: 3,
+                        py: 1.5,
+                        bgcolor: 'blue.50',
+                        borderBottom: 1,
+                        borderColor: 'blue.200',
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'space-between',
+                      }}
+                    >
+                      <Typography
+                        variant='body2'
+                        sx={{ color: 'blue.700' }}
+                      >
+                        已选择 {selectedEmails.length} 条记录
+                      </Typography>
+                      <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                        <Button
+                          variant='contained'
+                          size='small'
+                          onClick={() => setBatchResendDialogOpen(true)}
+                          sx={{ gap: 1 }}
+                        >
+                          <RefreshCw size={16} />
+                          批量重发
+                        </Button>
+                        <Button
+                          variant='contained'
+                          size='small'
+                          onClick={() => setBatchDeleteDialogOpen(true)}
+                          sx={{ gap: 1 }}
+                        >
+                          <Trash size={16} />
+                          批量删除
+                        </Button>
+                      </Box>
+                    </Box>
+                  )}
+                  {loading ? (
+                    <Box sx={{ p: 4, textAlign: 'center' }}>
+                      <Box
+                        sx={{
+                          display: 'inline-block',
+                          animation: 'spin 1s linear infinite',
+                          borderRadius: '50%',
+                          height: 32,
+                          width: 32,
+                          border: 4,
+                          borderColor: 'primary.main',
+                          borderTopColor: 'transparent',
+                          '@keyframes spin': {
+                            '0%': { transform: 'rotate(0deg)' },
+                            '100%': { transform: 'rotate(360deg)' },
+                          },
+                        }}
+                      />
+                      <Typography sx={{ mt: 1, color: 'grey.500' }}>加载中...</Typography>
+                    </Box>
+                  ) : emails.length === 0 ? (
+                    <Box sx={{ p: 4, textAlign: 'center' }}>
+                      <Mail
+                        size={48}
+                        color='text.disabled'
+                        style={{ margin: '0 auto 12px' }}
+                      />
+                      <Typography sx={{ color: 'grey.500' }}>暂无邮件记录</Typography>
+                    </Box>
+                  ) : (
+                    <Box sx={{ overflowX: 'auto' }}>
+                      <Box
+                        component='table'
+                        sx={{ width: '100%', borderCollapse: 'collapse' }}
+                      >
+                        <Box component='thead'>
+                          <Box
+                            component='tr'
+                            sx={{ borderBottom: 1, borderColor: 'divider' }}
+                          >
+                            <Box
+                              component='th'
+                              sx={{
+                                textAlign: 'left',
+                                px: 1.5,
+                                py: 1.5,
+                                fontSize: '0.875rem',
+                                fontWeight: 500,
+                                color: 'grey.500',
+                                width: 48,
+                              }}
+                            >
+                              <input
+                                type='checkbox'
+                                onChange={(e) => {
+                                  if (e.target.checked) {
+                                    setSelectedEmails(emails.map((e) => e.id));
+                                  } else {
+                                    setSelectedEmails([]);
+                                  }
+                                }}
+                                checked={selectedEmails.length === emails.length}
+                                style={{
+                                  borderRadius: 4,
+                                  borderColor: theme.palette.grey[300],
+                                  color: theme.palette.primary.dark,
+                                }}
+                              />
+                            </Box>
+                            <Box
+                              component='th'
+                              sx={{
+                                textAlign: 'left',
+                                px: 3,
+                                py: 1.5,
+                                fontSize: '0.875rem',
+                                fontWeight: 500,
+                                color: 'grey.500',
+                              }}
+                            >
+                              主题
+                            </Box>
+                            <Box
+                              component='th'
+                              sx={{
+                                textAlign: 'left',
+                                px: 3,
+                                py: 1.5,
+                                fontSize: '0.875rem',
+                                fontWeight: 500,
+                                color: 'grey.500',
+                              }}
+                            >
+                              收件人
+                            </Box>
+                            <Box
+                              component='th'
+                              sx={{
+                                textAlign: 'left',
+                                px: 3,
+                                py: 1.5,
+                                fontSize: '0.875rem',
+                                fontWeight: 500,
+                                color: 'grey.500',
+                              }}
+                            >
+                              发件人
+                            </Box>
+                            <Box
+                              component='th'
+                              sx={{
+                                textAlign: 'left',
+                                px: 3,
+                                py: 1.5,
+                                fontSize: '0.875rem',
+                                fontWeight: 500,
+                                color: 'grey.500',
+                              }}
+                            >
+                              状态
+                            </Box>
+                            <Box
+                              component='th'
+                              sx={{
+                                textAlign: 'left',
+                                px: 3,
+                                py: 1.5,
+                                fontSize: '0.875rem',
+                                fontWeight: 500,
+                                color: 'grey.500',
+                              }}
+                            >
+                              优先级
+                            </Box>
+                            <Box
+                              component='th'
+                              sx={{
+                                textAlign: 'left',
+                                px: 3,
+                                py: 1.5,
+                                fontSize: '0.875rem',
+                                fontWeight: 500,
+                                color: 'grey.500',
+                              }}
+                            >
+                              创建时间
+                            </Box>
+                            <Box
+                              component='th'
+                              sx={{
+                                textAlign: 'right',
+                                px: 3,
+                                py: 1.5,
+                                fontSize: '0.875rem',
+                                fontWeight: 500,
+                                color: 'grey.500',
+                              }}
+                            >
+                              操作
+                            </Box>
+                          </Box>
+                        </Box>
+                        <Box component='tbody'>
+                          {emails.map((email) => (
                             <Box
                               component='tr'
-                              sx={{ borderBottom: 1, borderColor: 'divider' }}
+                              key={email.id}
+                              sx={{
+                                borderBottom: 1,
+                                borderColor: 'divider',
+                                '&:hover': { bgcolor: 'grey.50' },
+                              }}
                             >
                               <Box
-                                component='th'
-                                sx={{
-                                  textAlign: 'left',
-                                  px: 1.5,
-                                  py: 1.5,
-                                  fontSize: '0.875rem',
-                                  fontWeight: 500,
-                                  color: 'grey.500',
-                                  width: 48,
-                                }}
+                                component='td'
+                                sx={{ px: 1.5, py: 2 }}
                               >
                                 <input
                                   type='checkbox'
+                                  checked={selectedEmails.includes(email.id)}
                                   onChange={(e) => {
                                     if (e.target.checked) {
-                                      setSelectedEmails(emails.map((e) => e.id));
+                                      setSelectedEmails((prev) => [...prev, email.id]);
                                     } else {
-                                      setSelectedEmails([]);
+                                      setSelectedEmails((prev) =>
+                                        prev.filter((id) => id !== email.id)
+                                      );
                                     }
                                   }}
-                                  checked={selectedEmails.length === emails.length}
                                   style={{
                                     borderRadius: 4,
                                     borderColor: theme.palette.grey[300],
@@ -1362,705 +1492,578 @@ const MailPage: React.FC = () => {
                                 />
                               </Box>
                               <Box
-                                component='th'
-                                sx={{
-                                  textAlign: 'left',
-                                  px: 3,
-                                  py: 1.5,
-                                  fontSize: '0.875rem',
-                                  fontWeight: 500,
-                                  color: 'grey.500',
-                                }}
+                                component='td'
+                                sx={{ px: 3, py: 2 }}
                               >
-                                主题
-                              </Box>
-                              <Box
-                                component='th'
-                                sx={{
-                                  textAlign: 'left',
-                                  px: 3,
-                                  py: 1.5,
-                                  fontSize: '0.875rem',
-                                  fontWeight: 500,
-                                  color: 'grey.500',
-                                }}
-                              >
-                                收件人
-                              </Box>
-                              <Box
-                                component='th'
-                                sx={{
-                                  textAlign: 'left',
-                                  px: 3,
-                                  py: 1.5,
-                                  fontSize: '0.875rem',
-                                  fontWeight: 500,
-                                  color: 'grey.500',
-                                }}
-                              >
-                                发件人
-                              </Box>
-                              <Box
-                                component='th'
-                                sx={{
-                                  textAlign: 'left',
-                                  px: 3,
-                                  py: 1.5,
-                                  fontSize: '0.875rem',
-                                  fontWeight: 500,
-                                  color: 'grey.500',
-                                }}
-                              >
-                                状态
-                              </Box>
-                              <Box
-                                component='th'
-                                sx={{
-                                  textAlign: 'left',
-                                  px: 3,
-                                  py: 1.5,
-                                  fontSize: '0.875rem',
-                                  fontWeight: 500,
-                                  color: 'grey.500',
-                                }}
-                              >
-                                优先级
-                              </Box>
-                              <Box
-                                component='th'
-                                sx={{
-                                  textAlign: 'left',
-                                  px: 3,
-                                  py: 1.5,
-                                  fontSize: '0.875rem',
-                                  fontWeight: 500,
-                                  color: 'grey.500',
-                                }}
-                              >
-                                创建时间
-                              </Box>
-                              <Box
-                                component='th'
-                                sx={{
-                                  textAlign: 'right',
-                                  px: 3,
-                                  py: 1.5,
-                                  fontSize: '0.875rem',
-                                  fontWeight: 500,
-                                  color: 'grey.500',
-                                }}
-                              >
-                                操作
-                              </Box>
-                            </Box>
-                          </Box>
-                          <Box component='tbody'>
-                            {emails.map((email) => (
-                              <Box
-                                component='tr'
-                                key={email.id}
-                                sx={{
-                                  borderBottom: 1,
-                                  borderColor: 'divider',
-                                  '&:hover': { bgcolor: 'grey.50' },
-                                }}
-                              >
-                                <Box
-                                  component='td'
-                                  sx={{ px: 1.5, py: 2 }}
-                                >
-                                  <input
-                                    type='checkbox'
-                                    checked={selectedEmails.includes(email.id)}
-                                    onChange={(e) => {
-                                      if (e.target.checked) {
-                                        setSelectedEmails((prev) => [...prev, email.id]);
-                                      } else {
-                                        setSelectedEmails((prev) =>
-                                          prev.filter((id) => id !== email.id)
-                                        );
-                                      }
-                                    }}
-                                    style={{
-                                      borderRadius: 4,
-                                      borderColor: theme.palette.grey[300],
-                                      color: theme.palette.primary.dark,
-                                    }}
-                                  />
-                                </Box>
-                                <Box
-                                  component='td'
-                                  sx={{ px: 3, py: 2 }}
-                                >
-                                  <Typography
-                                    sx={{
-                                      fontWeight: 500,
-                                      color: 'text.primary',
-                                      overflow: 'hidden',
-                                      textOverflow: 'ellipsis',
-                                      whiteSpace: 'nowrap',
-                                      maxWidth: 240,
-                                    }}
-                                  >
-                                    {email.subject}
-                                  </Typography>
-                                </Box>
-                                <Box
-                                  component='td'
+                                <Typography
                                   sx={{
-                                    px: 3,
-                                    py: 2,
-                                    fontSize: '0.875rem',
-                                    color: 'grey.600',
-                                  }}
-                                >
-                                  {Array.isArray(email.to_addresses)
-                                    ? email.to_addresses.join(', ')
-                                    : email.to_addresses}
-                                </Box>
-                                <Box
-                                  component='td'
-                                  sx={{
-                                    px: 3,
-                                    py: 2,
-                                    fontSize: '0.875rem',
-                                    color: 'grey.600',
-                                  }}
-                                >
-                                  {email.from_address}
-                                </Box>
-                                <Box
-                                  component='td'
-                                  sx={{ px: 3, py: 2 }}
-                                >
-                                  {getStatusBadge(email.status)}
-                                </Box>
-                                <Box
-                                  component='td'
-                                  sx={{ px: 3, py: 2 }}
-                                >
-                                  {getPriorityBadge(email.priority)}
-                                </Box>
-                                <Box
-                                  component='td'
-                                  sx={{
-                                    px: 3,
-                                    py: 2,
-                                    fontSize: '0.875rem',
-                                    color: 'grey.600',
-                                  }}
-                                >
-                                  {new Date(email.created_at).toLocaleString('zh-CN')}
-                                </Box>
-                                <Box
-                                  component='td'
-                                  sx={{ px: 3, py: 2 }}
-                                >
-                                  <Box
-                                    sx={{
-                                      display: 'flex',
-                                      alignItems: 'center',
-                                      justifyContent: 'flex-end',
-                                      gap: 0.5,
-                                    }}
-                                  >
-                                    <Button
-                                      variant='text'
-                                      size='small'
-                                      onClick={() => copyToClipboard(email.id, `email-${email.id}`)}
-                                      title='复制ID'
-                                    >
-                                      {copiedId === `email-${email.id}` ? (
-                                        <Check
-                                          size={16}
-                                          color='success.dark'
-                                        />
-                                      ) : (
-                                        <Copy size={16} />
-                                      )}
-                                    </Button>
-                                    <Button
-                                      variant='text'
-                                      size='small'
-                                      onClick={() => openEmailDetail(email)}
-                                      title='查看详情'
-                                    >
-                                      <Eye size={16} />
-                                    </Button>
-                                    {email.status === 'failed' && (
-                                      <Button
-                                        variant='text'
-                                        size='small'
-                                        onClick={() => openResendEmailDialog(email.id)}
-                                        sx={{
-                                          color: 'success.main',
-                                          '&:hover': { color: 'success.dark' },
-                                        }}
-                                        title='重新发送'
-                                      >
-                                        <RefreshCw size={16} />
-                                      </Button>
-                                    )}
-                                    <Button
-                                      variant='text'
-                                      size='small'
-                                      sx={{
-                                        color: 'error.main',
-                                        '&:hover': { color: 'error.dark' },
-                                      }}
-                                      onClick={() => openDeleteEmailDialog(email.id)}
-                                      title='删除'
-                                    >
-                                      <Trash2 size={16} />
-                                    </Button>
-                                  </Box>
-                                </Box>
-                              </Box>
-                            ))}
-                          </Box>
-                        </Box>
-                      </Box>
-                    )}
-                  </CardContent>
-                  {!loading && emails.length > 0 && (
-                    <CardContent
-                      sx={{
-                        display: 'flex',
-                        alignItems: 'center',
-                        justifyContent: 'space-between',
-                        borderTop: 1,
-                        borderColor: 'divider',
-                      }}
-                    >
-                      <Typography
-                        variant='body2'
-                        sx={{ color: 'grey.500' }}
-                      >
-                        共 {totalEmails} 条记录
-                      </Typography>
-                      <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-                        <Button
-                          variant='text'
-                          size='small'
-                          onClick={handlePrevPage}
-                          disabled={currentPage === 1}
-                        >
-                          <ChevronLeft size={16} />
-                        </Button>
-                        <Typography
-                          variant='body2'
-                          sx={{ color: 'grey.600' }}
-                        >
-                          {currentPage} / {Math.ceil(totalEmails / pageSize)}
-                        </Typography>
-                        <Button
-                          variant='text'
-                          size='small'
-                          onClick={handleNextPage}
-                          disabled={currentPage >= Math.ceil(totalEmails / pageSize)}
-                        >
-                          <ChevronRight size={16} />
-                        </Button>
-                      </Box>
-                    </CardContent>
-                  )}
-                </Card>
-              </Box>
-            )}
-
-            {activeTab === 'templates' && (
-              <Box sx={{ mt: 0 }}>
-                <Box sx={{ mb: 3, display: 'flex', alignItems: 'center', gap: 2 }}>
-                  <Box sx={{ flex: 1, position: 'relative' }}>
-                    <Box
-                      sx={{
-                        position: 'absolute',
-                        left: 12,
-                        top: '50%',
-                        transform: 'translateY(-50%)',
-                        zIndex: 1,
-                        pointerEvents: 'none',
-                      }}
-                    >
-                      <Search
-                        size={20}
-                        color='text.disabled'
-                      />
-                    </Box>
-                    <TextField
-                      type='text'
-                      placeholder='搜索模板名称、编码...'
-                      value={searchQuery}
-                      onChange={(e) => {
-                        setSearchQuery(e.target.value);
-                        setCurrentPage(1);
-                      }}
-                      size='small'
-                      sx={{ pl: 5, width: '100%' }}
-                    />
-                  </Box>
-                  <FormControl
-                    size='small'
-                    sx={{ minWidth: 120 }}
-                  >
-                    <InputLabel>分类</InputLabel>
-                    <Select
-                      value={categoryFilter || 'all'}
-                      label='分类'
-                      onChange={(e) => {
-                        setCategoryFilter(e.target.value === 'all' ? '' : e.target.value);
-                        setCurrentPage(1);
-                      }}
-                    >
-                      <MenuItem value='all'>全部</MenuItem>
-                      {TEMPLATE_CATEGORIES.map((cat) => (
-                        <MenuItem
-                          key={cat.value}
-                          value={cat.value}
-                        >
-                          {cat.label}
-                        </MenuItem>
-                      ))}
-                    </Select>
-                  </FormControl>
-                </Box>
-
-                <Card>
-                  <CardContent sx={{ p: 0 }}>
-                    {loading ? (
-                      <Box sx={{ p: 4, textAlign: 'center' }}>
-                        <Box
-                          sx={{
-                            display: 'inline-block',
-                            animation: 'spin 1s linear infinite',
-                            borderRadius: '50%',
-                            height: 32,
-                            width: 32,
-                            border: 4,
-                            borderColor: 'primary.main',
-                            borderTopColor: 'transparent',
-                            '@keyframes spin': {
-                              '0%': { transform: 'rotate(0deg)' },
-                              '100%': { transform: 'rotate(360deg)' },
-                            },
-                          }}
-                        />
-                        <Typography sx={{ mt: 1, color: 'grey.500' }}>加载中...</Typography>
-                      </Box>
-                    ) : templates.length === 0 ? (
-                      <Box sx={{ p: 4, textAlign: 'center' }}>
-                        <FileText
-                          size={48}
-                          color='text.disabled'
-                          style={{ margin: '0 auto 12px' }}
-                        />
-                        <Typography sx={{ color: 'grey.500' }}>暂无邮件模板</Typography>
-                      </Box>
-                    ) : (
-                      <Box sx={{ overflowX: 'auto' }}>
-                        <Box
-                          component='table'
-                          sx={{ width: '100%', borderCollapse: 'collapse' }}
-                        >
-                          <Box component='thead'>
-                            <Box
-                              component='tr'
-                              sx={{ borderBottom: 1, borderColor: 'divider' }}
-                            >
-                              <Box
-                                component='th'
-                                sx={{
-                                  textAlign: 'left',
-                                  px: 3,
-                                  py: 1.5,
-                                  fontSize: '0.875rem',
-                                  fontWeight: 500,
-                                  color: 'grey.500',
-                                }}
-                              >
-                                名称
-                              </Box>
-                              <Box
-                                component='th'
-                                sx={{
-                                  textAlign: 'left',
-                                  px: 3,
-                                  py: 1.5,
-                                  fontSize: '0.875rem',
-                                  fontWeight: 500,
-                                  color: 'grey.500',
-                                }}
-                              >
-                                编码
-                              </Box>
-                              <Box
-                                component='th'
-                                sx={{
-                                  textAlign: 'left',
-                                  px: 3,
-                                  py: 1.5,
-                                  fontSize: '0.875rem',
-                                  fontWeight: 500,
-                                  color: 'grey.500',
-                                }}
-                              >
-                                分类
-                              </Box>
-                              <Box
-                                component='th'
-                                sx={{
-                                  textAlign: 'left',
-                                  px: 3,
-                                  py: 1.5,
-                                  fontSize: '0.875rem',
-                                  fontWeight: 500,
-                                  color: 'grey.500',
-                                }}
-                              >
-                                主题模板
-                              </Box>
-                              <Box
-                                component='th'
-                                sx={{
-                                  textAlign: 'left',
-                                  px: 3,
-                                  py: 1.5,
-                                  fontSize: '0.875rem',
-                                  fontWeight: 500,
-                                  color: 'grey.500',
-                                }}
-                              >
-                                状态
-                              </Box>
-                              <Box
-                                component='th'
-                                sx={{
-                                  textAlign: 'left',
-                                  px: 3,
-                                  py: 1.5,
-                                  fontSize: '0.875rem',
-                                  fontWeight: 500,
-                                  color: 'grey.500',
-                                }}
-                              >
-                                创建时间
-                              </Box>
-                              <Box
-                                component='th'
-                                sx={{
-                                  textAlign: 'right',
-                                  px: 3,
-                                  py: 1.5,
-                                  fontSize: '0.875rem',
-                                  fontWeight: 500,
-                                  color: 'grey.500',
-                                }}
-                              >
-                                操作
-                              </Box>
-                            </Box>
-                          </Box>
-                          <Box component='tbody'>
-                            {templates.map((template) => (
-                              <Box
-                                component='tr'
-                                key={template.id}
-                                sx={{
-                                  borderBottom: 1,
-                                  borderColor: 'divider',
-                                  '&:hover': { bgcolor: 'grey.50' },
-                                }}
-                              >
-                                <Box
-                                  component='td'
-                                  sx={{ px: 3, py: 2 }}
-                                >
-                                  <Typography
-                                    sx={{
-                                      fontWeight: 500,
-                                      color: 'text.primary',
-                                    }}
-                                  >
-                                    {template.name}
-                                  </Typography>
-                                </Box>
-                                <Box
-                                  component='td'
-                                  sx={{
-                                    px: 3,
-                                    py: 2,
-                                    fontSize: '0.875rem',
-                                    color: 'grey.600',
-                                    fontFamily: 'monospace',
-                                  }}
-                                >
-                                  {template.code}
-                                </Box>
-                                <Box
-                                  component='td'
-                                  sx={{ px: 3, py: 2 }}
-                                >
-                                  <Chip
-                                    size='small'
-                                    variant='outlined'
-                                    label={getCategoryLabel(template.category)}
-                                  />
-                                </Box>
-                                <Box
-                                  component='td'
-                                  sx={{
-                                    px: 3,
-                                    py: 2,
-                                    fontSize: '0.875rem',
-                                    color: 'grey.600',
+                                    fontWeight: 500,
+                                    color: 'text.primary',
                                     overflow: 'hidden',
                                     textOverflow: 'ellipsis',
                                     whiteSpace: 'nowrap',
-                                    maxWidth: 384,
+                                    maxWidth: 240,
                                   }}
                                 >
-                                  {template.subject_template}
-                                </Box>
+                                  {email.subject}
+                                </Typography>
+                              </Box>
+                              <Box
+                                component='td'
+                                sx={{
+                                  px: 3,
+                                  py: 2,
+                                  fontSize: '0.875rem',
+                                  color: 'grey.600',
+                                }}
+                              >
+                                {Array.isArray(email.to_addresses)
+                                  ? email.to_addresses.join(', ')
+                                  : email.to_addresses}
+                              </Box>
+                              <Box
+                                component='td'
+                                sx={{
+                                  px: 3,
+                                  py: 2,
+                                  fontSize: '0.875rem',
+                                  color: 'grey.600',
+                                }}
+                              >
+                                {email.from_address}
+                              </Box>
+                              <Box
+                                component='td'
+                                sx={{ px: 3, py: 2 }}
+                              >
+                                {getStatusBadge(email.status)}
+                              </Box>
+                              <Box
+                                component='td'
+                                sx={{ px: 3, py: 2 }}
+                              >
+                                {getPriorityBadge(email.priority)}
+                              </Box>
+                              <Box
+                                component='td'
+                                sx={{
+                                  px: 3,
+                                  py: 2,
+                                  fontSize: '0.875rem',
+                                  color: 'grey.600',
+                                }}
+                              >
+                                {new Date(email.created_at).toLocaleString('zh-CN')}
+                              </Box>
+                              <Box
+                                component='td'
+                                sx={{ px: 3, py: 2 }}
+                              >
                                 <Box
-                                  component='td'
-                                  sx={{ px: 3, py: 2 }}
-                                >
-                                  <Chip
-                                    size='small'
-                                    variant={template.status === 'active' ? 'filled' : 'outlined'}
-                                    label={template.status === 'active' ? '启用' : '禁用'}
-                                  />
-                                </Box>
-                                <Box
-                                  component='td'
                                   sx={{
-                                    px: 3,
-                                    py: 2,
-                                    fontSize: '0.875rem',
-                                    color: 'grey.600',
+                                    display: 'flex',
+                                    alignItems: 'center',
+                                    justifyContent: 'flex-end',
+                                    gap: 0.5,
                                   }}
                                 >
-                                  {new Date(template.created_at).toLocaleString('zh-CN')}
-                                </Box>
-                                <Box
-                                  component='td'
-                                  sx={{ px: 3, py: 2 }}
-                                >
-                                  <Box
-                                    sx={{
-                                      display: 'flex',
-                                      alignItems: 'center',
-                                      justifyContent: 'flex-end',
-                                      gap: 0.5,
-                                    }}
+                                  <Button
+                                    variant='text'
+                                    size='small'
+                                    onClick={() => copyToClipboard(email.id, `email-${email.id}`)}
+                                    title='复制ID'
                                   >
+                                    {copiedId === `email-${email.id}` ? (
+                                      <Check
+                                        size={16}
+                                        color='success.dark'
+                                      />
+                                    ) : (
+                                      <Copy size={16} />
+                                    )}
+                                  </Button>
+                                  <Button
+                                    variant='text'
+                                    size='small'
+                                    onClick={() => openEmailDetail(email)}
+                                    title='查看详情'
+                                  >
+                                    <Eye size={16} />
+                                  </Button>
+                                  {email.status === 'failed' && (
                                     <Button
                                       variant='text'
                                       size='small'
-                                      onClick={() => handleEyeTemplate(template)}
-                                      title='预览模板'
-                                    >
-                                      <Eye size={16} />
-                                    </Button>
-                                    <Button
-                                      variant='text'
-                                      size='small'
-                                      onClick={() => openEditTemplate(template)}
-                                      title='编辑'
-                                    >
-                                      <Edit size={16} />
-                                    </Button>
-                                    <Button
-                                      variant='text'
-                                      size='small'
-                                      onClick={() => handleToggleTemplateStatus(template)}
-                                      title={template.status === 'active' ? '禁用模板' : '启用模板'}
-                                      sx={
-                                        template.status === 'active'
-                                          ? {
-                                              color: 'warning.main',
-                                              '&:hover': {
-                                                color: 'warning.dark',
-                                              },
-                                            }
-                                          : {
-                                              color: 'success.main',
-                                              '&:hover': {
-                                                color: 'success.dark',
-                                              },
-                                            }
-                                      }
-                                    >
-                                      {template.status === 'active' ? (
-                                        <Pause size={16} />
-                                      ) : (
-                                        <Play size={16} />
-                                      )}
-                                    </Button>
-                                    <Button
-                                      variant='text'
-                                      size='small'
+                                      onClick={() => openResendEmailDialog(email.id)}
                                       sx={{
-                                        color: 'error.main',
-                                        '&:hover': { color: 'error.dark' },
+                                        color: 'success.main',
+                                        '&:hover': { color: 'success.dark' },
                                       }}
-                                      onClick={() => openDeleteTemplateDialog(template.id)}
-                                      title='删除'
+                                      title='重新发送'
                                     >
-                                      <Trash2 size={16} />
+                                      <RefreshCw size={16} />
                                     </Button>
-                                  </Box>
+                                  )}
+                                  <Button
+                                    variant='text'
+                                    size='small'
+                                    sx={{
+                                      color: 'error.main',
+                                      '&:hover': { color: 'error.dark' },
+                                    }}
+                                    onClick={() => openDeleteEmailDialog(email.id)}
+                                    title='删除'
+                                  >
+                                    <Trash2 size={16} />
+                                  </Button>
                                 </Box>
                               </Box>
-                            ))}
-                          </Box>
+                            </Box>
+                          ))}
                         </Box>
                       </Box>
-                    )}
-                  </CardContent>
-                  {!loading && templates.length > 0 && (
-                    <CardContent
-                      sx={{
-                        display: 'flex',
-                        alignItems: 'center',
-                        justifyContent: 'space-between',
-                        borderTop: 1,
-                        borderColor: 'divider',
-                      }}
+                    </Box>
+                  )}
+                </CardContent>
+                {!loading && emails.length > 0 && (
+                  <CardContent
+                    sx={{
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'space-between',
+                      borderTop: 1,
+                      borderColor: 'divider',
+                    }}
+                  >
+                    <Typography
+                      variant='body2'
+                      sx={{ color: 'grey.500' }}
                     >
+                      共 {totalEmails} 条记录
+                    </Typography>
+                    <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                      <Button
+                        variant='text'
+                        size='small'
+                        onClick={handlePrevPage}
+                        disabled={currentPage === 1}
+                      >
+                        <ChevronLeft size={16} />
+                      </Button>
                       <Typography
                         variant='body2'
-                        sx={{ color: 'grey.500' }}
+                        sx={{ color: 'grey.600' }}
                       >
-                        共 {totalTemplates} 条记录
+                        {currentPage} / {Math.ceil(totalEmails / pageSize)}
                       </Typography>
-                      <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-                        <Button
-                          variant='text'
-                          size='small'
-                          onClick={handlePrevPage}
-                          disabled={currentPage === 1}
-                        >
-                          <ChevronLeft size={16} />
-                        </Button>
-                        <Typography
-                          variant='body2'
-                          sx={{ color: 'grey.600' }}
-                        >
-                          {currentPage} / {Math.ceil(totalTemplates / pageSize)}
-                        </Typography>
-                        <Button
-                          variant='text'
-                          size='small'
-                          onClick={handleNextPage}
-                          disabled={currentPage >= Math.ceil(totalTemplates / pageSize)}
-                        >
-                          <ChevronRight size={16} />
-                        </Button>
+                      <Button
+                        variant='text'
+                        size='small'
+                        onClick={handleNextPage}
+                        disabled={currentPage >= Math.ceil(totalEmails / pageSize)}
+                      >
+                        <ChevronRight size={16} />
+                      </Button>
+                    </Box>
+                  </CardContent>
+                )}
+              </Card>
+            </Box>
+          )}
+
+          {activeTab === 'templates' && (
+            <Box sx={{ mt: 0 }}>
+              <Box sx={{ mb: 3, display: 'flex', alignItems: 'center', gap: 2 }}>
+                <Box sx={{ flex: 1, position: 'relative' }}>
+                  <Box
+                    sx={{
+                      position: 'absolute',
+                      left: 12,
+                      top: '50%',
+                      transform: 'translateY(-50%)',
+                      zIndex: 1,
+                      pointerEvents: 'none',
+                    }}
+                  >
+                    <Search
+                      size={20}
+                      color='text.disabled'
+                    />
+                  </Box>
+                  <TextField
+                    type='text'
+                    placeholder='搜索模板名称、编码...'
+                    value={searchQuery}
+                    onChange={(e) => {
+                      setSearchQuery(e.target.value);
+                      setCurrentPage(1);
+                    }}
+                    size='small'
+                    sx={{ pl: 5, width: '100%' }}
+                  />
+                </Box>
+                <FormControl
+                  size='small'
+                  sx={{ minWidth: 120 }}
+                >
+                  <InputLabel>分类</InputLabel>
+                  <Select
+                    value={categoryFilter || 'all'}
+                    label='分类'
+                    onChange={(e) => {
+                      setCategoryFilter(e.target.value === 'all' ? '' : e.target.value);
+                      setCurrentPage(1);
+                    }}
+                  >
+                    <MenuItem value='all'>全部</MenuItem>
+                    {TEMPLATE_CATEGORIES.map((cat) => (
+                      <MenuItem
+                        key={cat.value}
+                        value={cat.value}
+                      >
+                        {cat.label}
+                      </MenuItem>
+                    ))}
+                  </Select>
+                </FormControl>
+              </Box>
+
+              <Card>
+                <CardContent sx={{ p: 0 }}>
+                  {loading ? (
+                    <Box sx={{ p: 4, textAlign: 'center' }}>
+                      <Box
+                        sx={{
+                          display: 'inline-block',
+                          animation: 'spin 1s linear infinite',
+                          borderRadius: '50%',
+                          height: 32,
+                          width: 32,
+                          border: 4,
+                          borderColor: 'primary.main',
+                          borderTopColor: 'transparent',
+                          '@keyframes spin': {
+                            '0%': { transform: 'rotate(0deg)' },
+                            '100%': { transform: 'rotate(360deg)' },
+                          },
+                        }}
+                      />
+                      <Typography sx={{ mt: 1, color: 'grey.500' }}>加载中...</Typography>
+                    </Box>
+                  ) : templates.length === 0 ? (
+                    <Box sx={{ p: 4, textAlign: 'center' }}>
+                      <FileText
+                        size={48}
+                        color='text.disabled'
+                        style={{ margin: '0 auto 12px' }}
+                      />
+                      <Typography sx={{ color: 'grey.500' }}>暂无邮件模板</Typography>
+                    </Box>
+                  ) : (
+                    <Box sx={{ overflowX: 'auto' }}>
+                      <Box
+                        component='table'
+                        sx={{ width: '100%', borderCollapse: 'collapse' }}
+                      >
+                        <Box component='thead'>
+                          <Box
+                            component='tr'
+                            sx={{ borderBottom: 1, borderColor: 'divider' }}
+                          >
+                            <Box
+                              component='th'
+                              sx={{
+                                textAlign: 'left',
+                                px: 3,
+                                py: 1.5,
+                                fontSize: '0.875rem',
+                                fontWeight: 500,
+                                color: 'grey.500',
+                              }}
+                            >
+                              名称
+                            </Box>
+                            <Box
+                              component='th'
+                              sx={{
+                                textAlign: 'left',
+                                px: 3,
+                                py: 1.5,
+                                fontSize: '0.875rem',
+                                fontWeight: 500,
+                                color: 'grey.500',
+                              }}
+                            >
+                              编码
+                            </Box>
+                            <Box
+                              component='th'
+                              sx={{
+                                textAlign: 'left',
+                                px: 3,
+                                py: 1.5,
+                                fontSize: '0.875rem',
+                                fontWeight: 500,
+                                color: 'grey.500',
+                              }}
+                            >
+                              分类
+                            </Box>
+                            <Box
+                              component='th'
+                              sx={{
+                                textAlign: 'left',
+                                px: 3,
+                                py: 1.5,
+                                fontSize: '0.875rem',
+                                fontWeight: 500,
+                                color: 'grey.500',
+                              }}
+                            >
+                              主题模板
+                            </Box>
+                            <Box
+                              component='th'
+                              sx={{
+                                textAlign: 'left',
+                                px: 3,
+                                py: 1.5,
+                                fontSize: '0.875rem',
+                                fontWeight: 500,
+                                color: 'grey.500',
+                              }}
+                            >
+                              状态
+                            </Box>
+                            <Box
+                              component='th'
+                              sx={{
+                                textAlign: 'left',
+                                px: 3,
+                                py: 1.5,
+                                fontSize: '0.875rem',
+                                fontWeight: 500,
+                                color: 'grey.500',
+                              }}
+                            >
+                              创建时间
+                            </Box>
+                            <Box
+                              component='th'
+                              sx={{
+                                textAlign: 'right',
+                                px: 3,
+                                py: 1.5,
+                                fontSize: '0.875rem',
+                                fontWeight: 500,
+                                color: 'grey.500',
+                              }}
+                            >
+                              操作
+                            </Box>
+                          </Box>
+                        </Box>
+                        <Box component='tbody'>
+                          {templates.map((template) => (
+                            <Box
+                              component='tr'
+                              key={template.id}
+                              sx={{
+                                borderBottom: 1,
+                                borderColor: 'divider',
+                                '&:hover': { bgcolor: 'grey.50' },
+                              }}
+                            >
+                              <Box
+                                component='td'
+                                sx={{ px: 3, py: 2 }}
+                              >
+                                <Typography
+                                  sx={{
+                                    fontWeight: 500,
+                                    color: 'text.primary',
+                                  }}
+                                >
+                                  {template.name}
+                                </Typography>
+                              </Box>
+                              <Box
+                                component='td'
+                                sx={{
+                                  px: 3,
+                                  py: 2,
+                                  fontSize: '0.875rem',
+                                  color: 'grey.600',
+                                  fontFamily: 'monospace',
+                                }}
+                              >
+                                {template.code}
+                              </Box>
+                              <Box
+                                component='td'
+                                sx={{ px: 3, py: 2 }}
+                              >
+                                <Chip
+                                  size='small'
+                                  variant='outlined'
+                                  label={getCategoryLabel(template.category)}
+                                />
+                              </Box>
+                              <Box
+                                component='td'
+                                sx={{
+                                  px: 3,
+                                  py: 2,
+                                  fontSize: '0.875rem',
+                                  color: 'grey.600',
+                                  overflow: 'hidden',
+                                  textOverflow: 'ellipsis',
+                                  whiteSpace: 'nowrap',
+                                  maxWidth: 384,
+                                }}
+                              >
+                                {template.subject_template}
+                              </Box>
+                              <Box
+                                component='td'
+                                sx={{ px: 3, py: 2 }}
+                              >
+                                <Chip
+                                  size='small'
+                                  variant={template.status === 'active' ? 'filled' : 'outlined'}
+                                  label={template.status === 'active' ? '启用' : '禁用'}
+                                />
+                              </Box>
+                              <Box
+                                component='td'
+                                sx={{
+                                  px: 3,
+                                  py: 2,
+                                  fontSize: '0.875rem',
+                                  color: 'grey.600',
+                                }}
+                              >
+                                {new Date(template.created_at).toLocaleString('zh-CN')}
+                              </Box>
+                              <Box
+                                component='td'
+                                sx={{ px: 3, py: 2 }}
+                              >
+                                <Box
+                                  sx={{
+                                    display: 'flex',
+                                    alignItems: 'center',
+                                    justifyContent: 'flex-end',
+                                    gap: 0.5,
+                                  }}
+                                >
+                                  <Button
+                                    variant='text'
+                                    size='small'
+                                    onClick={() => handleEyeTemplate(template)}
+                                    title='预览模板'
+                                  >
+                                    <Eye size={16} />
+                                  </Button>
+                                  <Button
+                                    variant='text'
+                                    size='small'
+                                    onClick={() => openEditTemplate(template)}
+                                    title='编辑'
+                                  >
+                                    <Edit size={16} />
+                                  </Button>
+                                  <Button
+                                    variant='text'
+                                    size='small'
+                                    onClick={() => handleToggleTemplateStatus(template)}
+                                    title={template.status === 'active' ? '禁用模板' : '启用模板'}
+                                    sx={
+                                      template.status === 'active'
+                                        ? {
+                                            color: 'warning.main',
+                                            '&:hover': {
+                                              color: 'warning.dark',
+                                            },
+                                          }
+                                        : {
+                                            color: 'success.main',
+                                            '&:hover': {
+                                              color: 'success.dark',
+                                            },
+                                          }
+                                    }
+                                  >
+                                    {template.status === 'active' ? (
+                                      <Pause size={16} />
+                                    ) : (
+                                      <Play size={16} />
+                                    )}
+                                  </Button>
+                                  <Button
+                                    variant='text'
+                                    size='small'
+                                    sx={{
+                                      color: 'error.main',
+                                      '&:hover': { color: 'error.dark' },
+                                    }}
+                                    onClick={() => openDeleteTemplateDialog(template.id)}
+                                    title='删除'
+                                  >
+                                    <Trash2 size={16} />
+                                  </Button>
+                                </Box>
+                              </Box>
+                            </Box>
+                          ))}
+                        </Box>
                       </Box>
-                    </CardContent>
+                    </Box>
                   )}
-                </Card>
+                </CardContent>
+                {!loading && templates.length > 0 && (
+                  <CardContent
+                    sx={{
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'space-between',
+                      borderTop: 1,
+                      borderColor: 'divider',
+                    }}
+                  >
+                    <Typography
+                      variant='body2'
+                      sx={{ color: 'grey.500' }}
+                    >
+                      共 {totalTemplates} 条记录
+                    </Typography>
+                    <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                      <Button
+                        variant='text'
+                        size='small'
+                        onClick={handlePrevPage}
+                        disabled={currentPage === 1}
+                      >
+                        <ChevronLeft size={16} />
+                      </Button>
+                      <Typography
+                        variant='body2'
+                        sx={{ color: 'grey.600' }}
+                      >
+                        {currentPage} / {Math.ceil(totalTemplates / pageSize)}
+                      </Typography>
+                      <Button
+                        variant='text'
+                        size='small'
+                        onClick={handleNextPage}
+                        disabled={currentPage >= Math.ceil(totalTemplates / pageSize)}
+                      >
+                        <ChevronRight size={16} />
+                      </Button>
+                    </Box>
+                  </CardContent>
+                )}
+              </Card>
             </Box>
           )}
         </Box>

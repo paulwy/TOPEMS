@@ -165,7 +165,10 @@ describe('GIS mapApi', () => {
   });
 
   it('should call GET /geojson/export for exportGeoJSON', async () => {
-    mockApiClient.get.mockResolvedValue({ success: true, data: { type: 'FeatureCollection', features: [] } });
+    mockApiClient.get.mockResolvedValue({
+      success: true,
+      data: { type: 'FeatureCollection', features: [] },
+    });
     await mapApi.exportGeoJSON();
     expect(mockApiClient.get).toHaveBeenCalledWith('/geojson/export');
   });
@@ -190,9 +193,14 @@ describe('GIS deviceApi', () => {
   });
 
   it('should call GET /device-locations with query params for listDevicePoints', async () => {
-    mockApiClient.get.mockResolvedValue({ success: true, data: { device_locations: [], total: 0 } });
+    mockApiClient.get.mockResolvedValue({
+      success: true,
+      data: { device_locations: [], total: 0 },
+    });
     await deviceApi.listDevicePoints({ page: 1, pagesize: 10, status: 'active' });
-    expect(mockApiClient.get).toHaveBeenCalledWith('/device-locations?page=1&pagesize=10&status=active');
+    expect(mockApiClient.get).toHaveBeenCalledWith(
+      '/device-locations?page=1&pagesize=10&status=active'
+    );
   });
 
   it('should call GET /device-locations/:id for getDevicePoint', async () => {
@@ -229,8 +237,14 @@ describe('GIS deviceApi', () => {
 
   it('should call GET /device-tracks with params for getDeviceTrack', async () => {
     mockApiClient.get.mockResolvedValue({ success: true, data: { items: [], total: 0 } });
-    await deviceApi.getDeviceTrack({ device_id: 'dev1', start_time: '2024-01-01', end_time: '2024-01-02' });
-    expect(mockApiClient.get).toHaveBeenCalledWith('/device-tracks?device_id=dev1&start_time=2024-01-01&end_time=2024-01-02');
+    await deviceApi.getDeviceTrack({
+      device_id: 'dev1',
+      start_time: '2024-01-01',
+      end_time: '2024-01-02',
+    });
+    expect(mockApiClient.get).toHaveBeenCalledWith(
+      '/device-tracks?device_id=dev1&start_time=2024-01-01&end_time=2024-01-02'
+    );
   });
 
   it('should call GET /device-tracks/:device_id/statistics for getDeviceTrackStatistics', async () => {
@@ -277,7 +291,12 @@ describe('GIS pipelineApi', () => {
   });
 
   it('should call POST /pipelines for createPipeline', async () => {
-    const data = { name: 'Pipeline1', pipeline_type: 'water', start_point: [1, 2], end_point: [3, 4] };
+    const data = {
+      name: 'Pipeline1',
+      pipeline_type: 'water',
+      start_point: [1, 2],
+      end_point: [3, 4],
+    };
     mockApiClient.post.mockResolvedValue({ success: true, data });
     await pipelineApi.createPipeline(data);
     expect(mockApiClient.post).toHaveBeenCalledWith('/pipelines', data);
@@ -310,7 +329,10 @@ describe('GIS storageApi', () => {
   });
 
   it('should call GET /warehouse-locations for listStorageLocations', async () => {
-    mockApiClient.get.mockResolvedValue({ success: true, data: { warehouse_locations: [], total: 0 } });
+    mockApiClient.get.mockResolvedValue({
+      success: true,
+      data: { warehouse_locations: [], total: 0 },
+    });
     await storageApi.listStorageLocations();
     expect(mockApiClient.get).toHaveBeenCalledWith('/warehouse-locations?');
   });
@@ -360,7 +382,13 @@ describe('GIS storageApi', () => {
   });
 
   it('should call POST /location-photos for createEvidenceRecord', async () => {
-    const data = { title: 'Evidence1', evidence_type: 'photo', latitude: 1.0, longitude: 2.0, recorded_by: 'user1' };
+    const data = {
+      title: 'Evidence1',
+      evidence_type: 'photo',
+      latitude: 1.0,
+      longitude: 2.0,
+      recorded_by: 'user1',
+    };
     mockApiClient.post.mockResolvedValue({ success: true, data });
     await storageApi.createEvidenceRecord(data);
     expect(mockApiClient.post).toHaveBeenCalledWith('/location-photos', data);
@@ -386,7 +414,10 @@ describe('GIS businessApi', () => {
   });
 
   it('should call GET /business-locations for listBusinessLocations', async () => {
-    mockApiClient.get.mockResolvedValue({ success: true, data: { business_locations: [], total: 0 } });
+    mockApiClient.get.mockResolvedValue({
+      success: true,
+      data: { business_locations: [], total: 0 },
+    });
     await businessApi.listBusinessLocations();
     expect(mockApiClient.get).toHaveBeenCalledWith('/business-locations?');
   });
@@ -404,7 +435,11 @@ describe('GIS businessApi', () => {
   });
 
   it('should call POST /business-locations for createBusinessLocation', async () => {
-    const data = { business_type: 'office', business_name: 'Office1', position: { lat: 1.0, lng: 2.0 } };
+    const data = {
+      business_type: 'office',
+      business_name: 'Office1',
+      position: { lat: 1.0, lng: 2.0 },
+    };
     mockApiClient.post.mockResolvedValue({ success: true, data });
     await businessApi.createBusinessLocation(data);
     expect(mockApiClient.post).toHaveBeenCalledWith('/business-locations', data);

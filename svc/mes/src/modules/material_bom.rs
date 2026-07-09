@@ -292,10 +292,6 @@ fn big_decimal_to_f64(bd: Option<BigDecimal>) -> f64 {
         .unwrap_or(0.0)
 }
 
-fn uuid_to_string(u: Option<Uuid>) -> Option<String> {
-    u.map(|id| id.to_string())
-}
-
 // ==================== Material BOM Handlers ====================
 
 pub async fn list_material_boms(

@@ -8,7 +8,7 @@ import { apiLogger } from '@/utils/logger';
 import { Box, Typography, Tabs, Tab, CircularProgress, Button } from '@mui/material';
 import { PageContainer } from '@/components/common';
 
-// TODO(v2-phase2): Replace CircularProgress with LoadingSpinner from '@/components/common/LoadingSpinner'. Complex usage found - manual review needed.
+// TODO(v2-phase2): Replace CircularProgress with LoadingSpinner from '@topems/shared-components'. Complex usage found - manual review needed.
 
 const FlowNotificationCenter: React.FC = () => {
   const navigate = useNavigate();

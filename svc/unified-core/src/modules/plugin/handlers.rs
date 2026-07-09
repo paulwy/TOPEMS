@@ -17,34 +17,34 @@ pub async fn get_marketplace_summary(
     tracing::info!("[Plugin] Getting marketplace summary");
 
     let total: (i64,) =
-        sqlx::query_as("SELECT COUNT(*) FROM core_plugins WHERE is_published = true")
+        sqlx::query_as("SELECT COUNT(*) FROM core.core_plugins WHERE is_published = true")
             .fetch_one(&state.pool)
             .await
             .unwrap_or((0,));
 
     let categories: Vec<PluginCategory> = sqlx::query_as(
-        "SELECT * FROM core_plugin_categories WHERE is_active = true ORDER BY sort_order",
+        "SELECT * FROM core.core_plugin_categories WHERE is_active = true ORDER BY sort_order",
     )
     .fetch_all(&state.pool)
     .await
     .unwrap_or_default();
 
     let featured: Vec<Plugin> = sqlx::query_as(
-        "SELECT * FROM core_plugins WHERE is_published = true AND is_featured = true ORDER BY install_count DESC LIMIT 6"
+        "SELECT * FROM core.core_plugins WHERE is_published = true AND is_featured = true ORDER BY install_count DESC LIMIT 6"
     )
     .fetch_all(&state.pool)
     .await
     .unwrap_or_default();
 
     let new_plugins: Vec<Plugin> = sqlx::query_as(
-        "SELECT * FROM core_plugins WHERE is_published = true ORDER BY published_at DESC LIMIT 6",
+        "SELECT * FROM core.core_plugins WHERE is_published = true ORDER BY published_at DESC LIMIT 6",
     )
     .fetch_all(&state.pool)
     .await
     .unwrap_or_default();
 
     let top_rated: Vec<Plugin> = sqlx::query_as(
-        "SELECT * FROM core_plugins WHERE is_published = true AND rating_count > 0 ORDER BY rating DESC LIMIT 6"
+        "SELECT * FROM core.core_plugins WHERE is_published = true AND rating_count > 0 ORDER BY rating DESC LIMIT 6"
     )
     .fetch_all(&state.pool)
     .await
@@ -71,7 +71,7 @@ pub async fn list_categories(
     tracing::info!("[Plugin] Listing categories");
 
     let categories: Vec<PluginCategory> = sqlx::query_as(
-        "SELECT * FROM core_plugin_categories WHERE is_active = true ORDER BY sort_order",
+        "SELECT * FROM core.core_plugin_categories WHERE is_active = true ORDER BY sort_order",
     )
     .fetch_all(&state.pool)
     .await
@@ -119,7 +119,7 @@ pub async fn list_plugins(
     };
 
     let total: (i64,) = sqlx::query_as(&format!(
-        "SELECT COUNT(*) FROM core_plugins WHERE {}",
+        "SELECT COUNT(*) FROM core.core_plugins WHERE {}",
         where_clause
     ))
     .fetch_one(&state.pool)
@@ -127,7 +127,7 @@ pub async fn list_plugins(
     .unwrap_or((0,));
 
     let plugins: Vec<Plugin> = match sqlx::query_as::<_, Plugin>(&format!(
-        "SELECT * FROM core_plugins WHERE {} ORDER BY {} LIMIT {} OFFSET {}",
+        "SELECT * FROM core.core_plugins WHERE {} ORDER BY {} LIMIT {} OFFSET {}",
         where_clause, sort_order, page_size, offset
     ))
     .fetch_all(&state.pool)
@@ -161,7 +161,7 @@ pub async fn get_plugin(
 ) -> Json<CoreResponse<Plugin>> {
     tracing::info!("[Plugin] Getting plugin: {}", code);
 
-    let plugin: Option<Plugin> = sqlx::query_as("SELECT * FROM core_plugins WHERE code = $1")
+    let plugin: Option<Plugin> = sqlx::query_as("SELECT * FROM core.core_plugins WHERE code = $1")
         .bind(&code)
         .fetch_optional(&state.pool)
         .await
@@ -181,7 +181,7 @@ pub async fn get_plugin_versions(
     tracing::info!("[Plugin] Getting versions for plugin: {}", plugin_id);
 
     let versions: Vec<PluginVersion> = sqlx::query_as(
-        "SELECT * FROM core_plugin_versions WHERE plugin_id = $1 ORDER BY created_at DESC",
+        "SELECT * FROM core.core_plugin_versions WHERE plugin_id = $1 ORDER BY created_at DESC",
     )
     .bind(plugin_id)
     .fetch_all(&state.pool)
@@ -199,7 +199,7 @@ pub async fn get_plugin_reviews(
     tracing::info!("[Plugin] Getting reviews for plugin: {}", plugin_id);
 
     let reviews: Vec<PluginReview> = sqlx::query_as(
-        "SELECT * FROM core_plugin_reviews WHERE plugin_id = $1 ORDER BY is_featured DESC, helpful_count DESC, created_at DESC"
+        "SELECT * FROM core.core_plugin_reviews WHERE plugin_id = $1 ORDER BY is_featured DESC, helpful_count DESC, created_at DESC"
     )
     .bind(plugin_id)
     .fetch_all(&state.pool)
@@ -227,7 +227,7 @@ pub async fn create_review(
 
     let review_result = sqlx::query_as(
         r#"
-        INSERT INTO core_plugin_reviews (plugin_id, user_id, user_name, rating, title, content)
+        INSERT INTO core.core_plugin_reviews (plugin_id, user_id, user_name, rating, title, content)
         VALUES ($1, $2, $3, $4, $5, $6)
         RETURNING *
         "#,
@@ -269,7 +269,7 @@ pub async fn list_tenant_plugins(
             p.code as plugin_code, p.name as plugin_name, p.description as plugin_description,
             p.version as plugin_version, p.category as plugin_category, p.is_free,
             p.price_cents, p.install_count, p.rating, p.rating_count
-        FROM core_tenant_plugins tp
+        FROM core.core_tenant_plugins tp
         JOIN core_plugins p ON tp.plugin_id = p.id
         WHERE tp.tenant_id = $1
         ORDER BY tp.is_active DESC, tp.activated_at DESC
@@ -319,7 +319,7 @@ pub async fn list_my_plugins(
             p.code as plugin_code, p.name as plugin_name, p.description as plugin_description,
             p.version as plugin_version, p.category as plugin_category, p.is_free,
             p.price_cents, p.install_count, p.rating, p.rating_count
-        FROM core_tenant_plugins tp
+        FROM core.core_tenant_plugins tp
         JOIN core_plugins p ON tp.plugin_id = p.id
         WHERE tp.tenant_id = $1
         ORDER BY tp.is_active DESC, tp.activated_at DESC
@@ -346,7 +346,7 @@ pub async fn install_plugin(
 
     // Get plugin
     let plugin: Option<Plugin> =
-        sqlx::query_as("SELECT * FROM core_plugins WHERE code = $1 AND is_published = true")
+        sqlx::query_as("SELECT * FROM core.core_plugins WHERE code = $1 AND is_published = true")
             .bind(&plugin_code)
             .fetch_optional(&state.pool)
             .await
@@ -360,7 +360,7 @@ pub async fn install_plugin(
     // Create installation
     let installation_result = sqlx::query_as(
         r#"
-        INSERT INTO core_tenant_plugins (tenant_id, plugin_id, is_active, license_type)
+        INSERT INTO core.core_tenant_plugins (tenant_id, plugin_id, is_active, license_type)
         VALUES ($1, $2, true, $3)
         ON CONFLICT (tenant_id, plugin_id) 
         DO UPDATE SET is_active = true, activated_at = NOW()
@@ -379,11 +379,13 @@ pub async fn install_plugin(
 
     match installation_result {
         Ok(installation) => {
-            sqlx::query("UPDATE core_plugins SET install_count = install_count + 1 WHERE id = $1")
-                .bind(plugin.id)
-                .execute(&state.pool)
-                .await
-                .ok();
+            sqlx::query(
+                "UPDATE core.core_plugins SET install_count = install_count + 1 WHERE id = $1",
+            )
+            .bind(plugin.id)
+            .execute(&state.pool)
+            .await
+            .ok();
             Json(CoreResponse::success(installation, "Plugin installed"))
         }
         Err(e) => {
@@ -422,7 +424,7 @@ pub async fn uninstall_plugin(
     }
 
     // Get plugin info
-    let plugin: Option<Plugin> = sqlx::query_as("SELECT * FROM core_plugins WHERE code = $1")
+    let plugin: Option<Plugin> = sqlx::query_as("SELECT * FROM core.core_plugins WHERE code = $1")
         .bind(&plugin_code)
         .fetch_optional(&state.pool)
         .await
@@ -439,7 +441,7 @@ pub async fn uninstall_plugin(
             // Tier 1: Disable - set is_active = false but keep data
             let installation: Option<TenantPlugin> = sqlx::query_as(
                 r#"
-                UPDATE core_tenant_plugins
+                UPDATE core.core_tenant_plugins
                 SET is_active = false
                 WHERE tenant_id = $1 AND plugin_id = $2
                 RETURNING *
@@ -477,7 +479,7 @@ pub async fn uninstall_plugin(
             // Data in plugin's own schema will be retained for potential reinstallation
             let result = sqlx::query(
                 r#"
-                DELETE FROM core_tenant_plugins
+                DELETE FROM core.core_tenant_plugins
                 WHERE tenant_id = $1 AND plugin_id = $2
                 "#,
             )
@@ -539,7 +541,7 @@ pub async fn uninstall_plugin(
             // Then delete from tenant_plugins
             let result = sqlx::query(
                 r#"
-                DELETE FROM core_tenant_plugins
+                DELETE FROM core.core_tenant_plugins
                 WHERE tenant_id = $1 AND plugin_id = $2
                 "#,
             )
@@ -594,9 +596,9 @@ pub async fn activate_plugin(
 
     let installation: Option<TenantPlugin> = sqlx::query_as(
         r#"
-        UPDATE core_tenant_plugins
+        UPDATE core.core_tenant_plugins
         SET is_active = true, activated_at = NOW()
-        WHERE tenant_id = $1 AND plugin_id = (SELECT id FROM core_plugins WHERE code = $2)
+        WHERE tenant_id = $1 AND plugin_id = (SELECT id FROM core.core_plugins WHERE code = $2)
         RETURNING *
         "#,
     )
@@ -625,9 +627,9 @@ pub async fn deactivate_plugin(
 
     let installation: Option<TenantPlugin> = sqlx::query_as(
         r#"
-        UPDATE core_tenant_plugins
+        UPDATE core.core_tenant_plugins
         SET is_active = false
-        WHERE tenant_id = $1 AND plugin_id = (SELECT id FROM core_plugins WHERE code = $2)
+        WHERE tenant_id = $1 AND plugin_id = (SELECT id FROM core.core_plugins WHERE code = $2)
         RETURNING *
         "#,
     )
@@ -673,7 +675,7 @@ pub async fn get_available_plugins(
     let where_clause = where_clauses.join(" AND ");
 
     let plugins: Vec<Plugin> = sqlx::query_as(&format!(
-        "SELECT * FROM core_plugins WHERE {} ORDER BY is_featured DESC, install_count DESC LIMIT 50",
+        "SELECT * FROM core.core_plugins WHERE {} ORDER BY is_featured DESC, install_count DESC LIMIT 50",
         where_clause
     ))
     .fetch_all(&state.pool)
@@ -684,7 +686,7 @@ pub async fn get_available_plugins(
 
     for plugin in plugins {
         let tenant_plugin: Option<TenantPlugin> = sqlx::query_as(
-            "SELECT * FROM core_tenant_plugins WHERE tenant_id = $1 AND plugin_id = $2",
+            "SELECT * FROM core.core_tenant_plugins WHERE tenant_id = $1 AND plugin_id = $2",
         )
         .bind(tenant_id)
         .bind(plugin.id)
@@ -711,7 +713,7 @@ pub async fn upload_plugin(
 
     let plugin_result: Result<Plugin, sqlx::Error> = sqlx::query_as(
         r#"
-        INSERT INTO core_plugins (
+        INSERT INTO core.core_plugins (
             code, name, description, version, plugin_type,
             is_free, price_cents, remote_url, entry_point,
             dependencies, author_name, author_url, homepage_url,
@@ -771,7 +773,7 @@ pub async fn upload_plugin_version(
     );
 
     // Get plugin id
-    let plugin: Option<Plugin> = sqlx::query_as("SELECT * FROM core_plugins WHERE code = $1")
+    let plugin: Option<Plugin> = sqlx::query_as("SELECT * FROM core.core_plugins WHERE code = $1")
         .bind(&plugin_code)
         .fetch_optional(&state.pool)
         .await
@@ -784,7 +786,7 @@ pub async fn upload_plugin_version(
 
     let version_result = sqlx::query_as(
         r#"
-        INSERT INTO core_plugin_versions (
+        INSERT INTO core.core_plugin_versions (
             plugin_id, version, release_notes, is_stable, is_latest,
             download_url, checksum, file_size, min_app_version
         )
@@ -806,7 +808,7 @@ pub async fn upload_plugin_version(
 
     match version_result {
         Ok(version) => {
-            sqlx::query("UPDATE core_plugins SET version = $1 WHERE id = $2")
+            sqlx::query("UPDATE core.core_plugins SET version = $1 WHERE id = $2")
                 .bind(&req.version)
                 .bind(plugin.id)
                 .execute(&state.pool)
@@ -838,7 +840,7 @@ pub async fn publish_plugin(
 
     let plugin: Option<Plugin> = sqlx::query_as(
         r#"
-        UPDATE core_plugins
+        UPDATE core.core_plugins
         SET is_published = true, published_at = NOW(), updated_at = NOW()
         WHERE code = $1
         RETURNING *
@@ -867,7 +869,7 @@ pub async fn unpublish_plugin(
 
     let plugin: Option<Plugin> = sqlx::query_as(
         r#"
-        UPDATE core_plugins
+        UPDATE core.core_plugins
         SET is_published = false, updated_at = NOW()
         WHERE code = $1
         RETURNING *
@@ -897,7 +899,7 @@ pub async fn update_plugin(
 
     let plugin: Option<Plugin> = sqlx::query_as(
         r#"
-        UPDATE core_plugins
+        UPDATE core.core_plugins
         SET
             name = COALESCE($2, name),
             description = COALESCE($3, description),
@@ -954,9 +956,9 @@ pub async fn register_plugin(
     tracing::info!("[Plugin] Registering plugin: {}", req.code);
 
     // 1. 创建或更新插件记录
-    let plugin: Option<Plugin> = sqlx::query_as(
+    let plugin_result = sqlx::query_as(
         r#"
-        INSERT INTO core_plugins (code, name, description, version, plugin_type, is_published)
+        INSERT INTO core.core_plugins (code, name, description, version, plugin_type, is_published)
         VALUES ($1, $2, $3, $4, 'business', true)
         ON CONFLICT (code) DO UPDATE SET
             name = $2, description = $3, version = $4
@@ -968,19 +970,25 @@ pub async fn register_plugin(
     .bind(&req.description)
     .bind(&req.version)
     .fetch_optional(&state.pool)
-    .await
-    .unwrap_or(None);
+    .await;
 
-    let plugin = match plugin {
-        Some(p) => p,
-        None => return Json(CoreResponse::error("Failed to create plugin")),
+    let plugin: Plugin = match plugin_result {
+        Ok(Some(p)) => p,
+        Ok(None) => return Json(CoreResponse::error("Failed to create plugin - no result")),
+        Err(e) => {
+            tracing::error!("[Plugin] Failed to insert plugin: {}", e);
+            return Json(CoreResponse::error(&format!(
+                "Failed to create plugin: {}",
+                e
+            )));
+        }
     };
 
     // 2. 注册插件权限
     for perm in &req.permissions {
         sqlx::query(
             r#"
-            INSERT INTO core_plugin_permissions (plugin_code, permission_code, permission_name, resource_type, action)
+            INSERT INTO core.core_plugin_permissions (plugin_code, permission_code, permission_name, resource_type, action)
             VALUES ($1, $2, $3, $4, $5)
             ON CONFLICT (plugin_code, permission_code) DO UPDATE SET
                 permission_name = $3, resource_type = $4, action = $5
@@ -1002,7 +1010,7 @@ pub async fn register_plugin(
         .unwrap_or_else(|| format!("/api/plugins/{}", req.code));
     sqlx::query(
         r#"
-        INSERT INTO core_plugin_instances (plugin_id, runtime_url, runtime_status, base_path)
+        INSERT INTO core.core_plugin_instances (plugin_id, runtime_url, runtime_status, base_path)
         VALUES ($1, $2, 'running', $3)
         ON CONFLICT (plugin_id) DO UPDATE SET
             runtime_url = $2, runtime_status = 'running', base_path = $3
@@ -1033,9 +1041,9 @@ pub async fn update_plugin_status(
 
     let result = sqlx::query(
         r#"
-        UPDATE core_plugin_instances
+        UPDATE core.core_plugin_instances
         SET runtime_status = $2, last_heartbeat = NOW()
-        WHERE plugin_id = (SELECT id FROM core_plugins WHERE code = $1)
+        WHERE plugin_id = (SELECT id FROM core.core_plugins WHERE code = $1)
         "#,
     )
     .bind(&plugin_code)
@@ -1061,7 +1069,7 @@ pub async fn get_plugin_status(
 
     let instance: Option<PluginInstance> = sqlx::query_as(
         r#"
-        SELECT pi.* FROM core_plugin_instances pi
+        SELECT pi.* FROM core.core_plugin_instances pi
         JOIN core_plugins p ON pi.plugin_id = p.id
         WHERE p.code = $1
         "#,
@@ -1087,9 +1095,9 @@ pub async fn unregister_plugin(
     // 更新运行时状态为 stopped
     sqlx::query(
         r#"
-        UPDATE core_plugin_instances
+        UPDATE core.core_plugin_instances
         SET runtime_status = 'stopped', stopped_at = NOW()
-        WHERE plugin_id = (SELECT id FROM core_plugins WHERE code = $1)
+        WHERE plugin_id = (SELECT id FROM core.core_plugins WHERE code = $1)
         "#,
     )
     .bind(&plugin_code)
@@ -1111,7 +1119,7 @@ pub async fn list_plugins_with_status(
         SELECT p.id, p.code, p.name, p.description, p.version, p.plugin_type,
                p.is_published, p.category,
                pi.runtime_status, pi.runtime_url, pi.base_path, pi.last_heartbeat
-        FROM core_plugins p
+        FROM core.core_plugins p
         LEFT JOIN core_plugin_instances pi ON p.id = pi.plugin_id
         WHERE p.is_published = true
         ORDER BY p.code
@@ -1139,7 +1147,7 @@ pub async fn list_installed_plugins(
         SELECT p.id, p.code, p.name, p.description, p.version, p.plugin_type,
                p.is_published, p.category,
                pi.runtime_status, pi.runtime_url, pi.base_path, pi.last_heartbeat
-        FROM core_plugins p
+        FROM core.core_plugins p
         LEFT JOIN core_plugin_instances pi ON p.id = pi.plugin_id
         WHERE p.is_published = true
         ORDER BY p.code
@@ -1159,7 +1167,7 @@ pub async fn get_plugin_details(
 ) -> Json<CoreResponse<PluginDetailsResponse>> {
     tracing::info!("[Plugin] Getting plugin details: {}", plugin_code);
 
-    let plugin: Option<Plugin> = sqlx::query_as("SELECT * FROM core_plugins WHERE code = $1")
+    let plugin: Option<Plugin> = sqlx::query_as("SELECT * FROM core.core_plugins WHERE code = $1")
         .bind(&plugin_code)
         .fetch_optional(&state.pool)
         .await
@@ -1171,7 +1179,7 @@ pub async fn get_plugin_details(
     };
 
     let permissions: Vec<PluginPermission> =
-        sqlx::query_as("SELECT * FROM core_plugin_permissions WHERE plugin_code = $1")
+        sqlx::query_as("SELECT * FROM core.core_plugin_permissions WHERE plugin_code = $1")
             .bind(&plugin_code)
             .fetch_all(&state.pool)
             .await
@@ -1211,7 +1219,7 @@ pub async fn install_plugin_simple(
 
     // Get plugin
     let plugin: Option<Plugin> =
-        sqlx::query_as("SELECT * FROM core_plugins WHERE code = $1 AND is_published = true")
+        sqlx::query_as("SELECT * FROM core.core_plugins WHERE code = $1 AND is_published = true")
             .bind(&plugin_code)
             .fetch_optional(&state.pool)
             .await
@@ -1225,7 +1233,7 @@ pub async fn install_plugin_simple(
     // Create installation
     let installation_result = sqlx::query_as(
         r#"
-        INSERT INTO core_tenant_plugins (tenant_id, plugin_id, is_active, license_type)
+        INSERT INTO core.core_tenant_plugins (tenant_id, plugin_id, is_active, license_type)
         VALUES ($1, $2, true, $3)
         ON CONFLICT (tenant_id, plugin_id)
         DO UPDATE SET is_active = true, activated_at = NOW()
@@ -1294,7 +1302,7 @@ pub async fn uninstall_plugin_simple(
     }
 
     // Get plugin info
-    let plugin: Option<Plugin> = sqlx::query_as("SELECT * FROM core_plugins WHERE code = $1")
+    let plugin: Option<Plugin> = sqlx::query_as("SELECT * FROM core.core_plugins WHERE code = $1")
         .bind(&plugin_code)
         .fetch_optional(&state.pool)
         .await
@@ -1311,7 +1319,7 @@ pub async fn uninstall_plugin_simple(
             // Tier 1: Disable - set is_active = false but keep data
             let installation: Option<TenantPlugin> = sqlx::query_as(
                 r#"
-                UPDATE core_tenant_plugins
+                UPDATE core.core_tenant_plugins
                 SET is_active = false
                 WHERE tenant_id = $1 AND plugin_id = $2
                 RETURNING *
@@ -1348,7 +1356,7 @@ pub async fn uninstall_plugin_simple(
             // Tier 2: Uninstall - remove from tenant_plugins but keep data
             let result = sqlx::query(
                 r#"
-                DELETE FROM core_tenant_plugins
+                DELETE FROM core.core_tenant_plugins
                 WHERE tenant_id = $1 AND plugin_id = $2
                 "#,
             )
@@ -1407,7 +1415,7 @@ pub async fn uninstall_plugin_simple(
 
             let result = sqlx::query(
                 r#"
-                DELETE FROM core_tenant_plugins
+                DELETE FROM core.core_tenant_plugins
                 WHERE tenant_id = $1 AND plugin_id = $2
                 "#,
             )
@@ -1480,7 +1488,7 @@ pub async fn list_tenant_installed_plugins(
                p.code as plugin_code, p.name as plugin_name, p.description as plugin_description,
                p.version as plugin_version, p.category as plugin_category,
                pi.runtime_status, pi.runtime_url, pi.last_heartbeat
-        FROM core_tenant_plugins tp
+        FROM core.core_tenant_plugins tp
         JOIN core_plugins p ON tp.plugin_id = p.id
         LEFT JOIN core_plugin_instances pi ON p.id = pi.plugin_id
         WHERE tp.tenant_id = $1
@@ -1522,9 +1530,9 @@ pub async fn enable_plugin_simple(
 
     let installation: Option<TenantPlugin> = sqlx::query_as(
         r#"
-        UPDATE core_tenant_plugins
+        UPDATE core.core_tenant_plugins
         SET is_active = true, activated_at = NOW()
-        WHERE tenant_id = $1 AND plugin_id = (SELECT id FROM core_plugins WHERE code = $2)
+        WHERE tenant_id = $1 AND plugin_id = (SELECT id FROM core.core_plugins WHERE code = $2)
         RETURNING *
         "#,
     )
@@ -1567,9 +1575,9 @@ pub async fn disable_plugin_simple(
 
     let installation: Option<TenantPlugin> = sqlx::query_as(
         r#"
-        UPDATE core_tenant_plugins
+        UPDATE core.core_tenant_plugins
         SET is_active = false
-        WHERE tenant_id = $1 AND plugin_id = (SELECT id FROM core_plugins WHERE code = $2)
+        WHERE tenant_id = $1 AND plugin_id = (SELECT id FROM core.core_plugins WHERE code = $2)
         RETURNING *
         "#,
     )
@@ -1674,7 +1682,7 @@ pub async fn check_plugin_updates(
 ) -> Json<CoreResponse<UpgradeCheckResult>> {
     tracing::info!("[Plugin] Checking updates for plugin: {}", plugin_code);
 
-    let plugin: Option<Plugin> = sqlx::query_as("SELECT * FROM core_plugins WHERE code = $1")
+    let plugin: Option<Plugin> = sqlx::query_as("SELECT * FROM core.core_plugins WHERE code = $1")
         .bind(&plugin_code)
         .fetch_optional(&state.pool)
         .await
@@ -1688,7 +1696,7 @@ pub async fn check_plugin_updates(
     let current_version = plugin.version.clone();
 
     let latest_version: Option<PluginVersion> = sqlx::query_as(
-        "SELECT * FROM core_plugin_versions WHERE plugin_id = $1 AND is_latest = true ORDER BY created_at DESC LIMIT 1"
+        "SELECT * FROM core.core_plugin_versions WHERE plugin_id = $1 AND is_latest = true ORDER BY created_at DESC LIMIT 1"
     )
     .bind(plugin.id)
     .fetch_optional(&state.pool)
@@ -1750,7 +1758,7 @@ pub async fn rollback_plugin_version(
         target_version
     );
 
-    let plugin: Option<Plugin> = sqlx::query_as("SELECT * FROM core_plugins WHERE code = $1")
+    let plugin: Option<Plugin> = sqlx::query_as("SELECT * FROM core.core_plugins WHERE code = $1")
         .bind(&plugin_code)
         .fetch_optional(&state.pool)
         .await
@@ -1763,19 +1771,20 @@ pub async fn rollback_plugin_version(
 
     let current_version = plugin.version.clone();
 
-    let target_version_info: Option<PluginVersion> =
-        sqlx::query_as("SELECT * FROM core_plugin_versions WHERE plugin_id = $1 AND version = $2")
-            .bind(plugin.id)
-            .bind(&target_version)
-            .fetch_optional(&state.pool)
-            .await
-            .unwrap_or(None);
+    let target_version_info: Option<PluginVersion> = sqlx::query_as(
+        "SELECT * FROM core.core_plugin_versions WHERE plugin_id = $1 AND version = $2",
+    )
+    .bind(plugin.id)
+    .bind(&target_version)
+    .fetch_optional(&state.pool)
+    .await
+    .unwrap_or(None);
 
     if target_version_info.is_none() {
         return Json(CoreResponse::error("Target version not found"));
     }
 
-    let result = sqlx::query("UPDATE core_plugins SET version = $1 WHERE id = $2")
+    let result = sqlx::query("UPDATE core.core_plugins SET version = $1 WHERE id = $2")
         .bind(&target_version)
         .bind(plugin.id)
         .execute(&state.pool)
@@ -1816,7 +1825,7 @@ pub async fn check_all_updates(
     tracing::info!("[Plugin] Checking updates for all plugins");
 
     let plugins: Vec<Plugin> =
-        sqlx::query_as("SELECT * FROM core_plugins WHERE is_published = true")
+        sqlx::query_as("SELECT * FROM core.core_plugins WHERE is_published = true")
             .fetch_all(&state.pool)
             .await
             .unwrap_or_default();
@@ -1827,7 +1836,7 @@ pub async fn check_all_updates(
         let current_version = plugin.version.clone();
 
         let latest_version: Option<PluginVersion> = sqlx::query_as(
-            "SELECT * FROM core_plugin_versions WHERE plugin_id = $1 AND is_latest = true ORDER BY created_at DESC LIMIT 1"
+            "SELECT * FROM core.core_plugin_versions WHERE plugin_id = $1 AND is_latest = true ORDER BY created_at DESC LIMIT 1"
         )
         .bind(plugin.id)
         .fetch_optional(&state.pool)
@@ -1879,7 +1888,7 @@ pub async fn start_plugin_upgrade(
         req.target_version
     );
 
-    let plugin: Option<Plugin> = sqlx::query_as("SELECT * FROM core_plugins WHERE code = $1")
+    let plugin: Option<Plugin> = sqlx::query_as("SELECT * FROM core.core_plugins WHERE code = $1")
         .bind(&plugin_code)
         .fetch_optional(&state.pool)
         .await
@@ -1896,13 +1905,14 @@ pub async fn start_plugin_upgrade(
         return Json(CoreResponse::error("Already at target version"));
     }
 
-    let target_version_info: Option<PluginVersion> =
-        sqlx::query_as("SELECT * FROM core_plugin_versions WHERE plugin_id = $1 AND version = $2")
-            .bind(plugin.id)
-            .bind(&req.target_version)
-            .fetch_optional(&state.pool)
-            .await
-            .unwrap_or(None);
+    let target_version_info: Option<PluginVersion> = sqlx::query_as(
+        "SELECT * FROM core.core_plugin_versions WHERE plugin_id = $1 AND version = $2",
+    )
+    .bind(plugin.id)
+    .bind(&req.target_version)
+    .fetch_optional(&state.pool)
+    .await
+    .unwrap_or(None);
 
     if target_version_info.is_none() {
         return Json(CoreResponse::error("Target version not found"));
@@ -1956,7 +1966,7 @@ async fn execute_upgrade(
     tokio::time::sleep(tokio::time::Duration::from_millis(500)).await;
 
     // Step 4: Update plugin version in database
-    let update_result = sqlx::query("UPDATE core_plugins SET version = $1 WHERE id = $2")
+    let update_result = sqlx::query("UPDATE core.core_plugins SET version = $1 WHERE id = $2")
         .bind(to_version)
         .bind(plugin.id)
         .execute(&state.pool)
@@ -2004,7 +2014,7 @@ pub async fn verify_plugin_version(
         version
     );
 
-    let plugin: Option<Plugin> = sqlx::query_as("SELECT * FROM core_plugins WHERE code = $1")
+    let plugin: Option<Plugin> = sqlx::query_as("SELECT * FROM core.core_plugins WHERE code = $1")
         .bind(&plugin_code)
         .fetch_optional(&state.pool)
         .await
@@ -2035,7 +2045,7 @@ pub async fn verify_plugin_version(
     });
 
     let version_exists: Option<PluginVersion> = sqlx::query_as(
-        "SELECT * FROM core_plugin_versions WHERE plugin_id = (SELECT id FROM core_plugins WHERE code = $1) AND version = $2"
+        "SELECT * FROM core.core_plugin_versions WHERE plugin_id = (SELECT id FROM core.core_plugins WHERE code = $1) AND version = $2"
     )
     .bind(&plugin_code)
     .bind(&version)

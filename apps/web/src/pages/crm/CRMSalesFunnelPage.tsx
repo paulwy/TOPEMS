@@ -28,8 +28,6 @@ interface ChartDataItem {
   color: string;
 }
 
-
-
 const stageLabelMap: Record<string, string> = {
   lead: '潜在客户',
   qualified: '意向确认',
@@ -56,7 +54,7 @@ const CRMSalesFunnelPage: React.FC = () => {
         setMetrics(metricsRes.value.data as FunnelMetrics);
       }
       if (stagesRes.status === 'fulfilled' && stagesRes.value.success) {
-        const data = stagesRes.value.data as { stages?: FunnelStage[] } || {};
+        const data = (stagesRes.value.data as { stages?: FunnelStage[] }) || {};
         setStages(data.stages || []);
       }
     } catch (error: unknown) {

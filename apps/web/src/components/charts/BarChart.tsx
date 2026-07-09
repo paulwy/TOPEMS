@@ -1,15 +1,7 @@
 import React from 'react';
 import { useTheme } from '@mui/material/styles';
 import { useChartTheme } from './chartTheme';
-import {
-  BarChart,
-  Bar,
-  XAxis,
-  YAxis,
-  CartesianGrid,
-  Tooltip,
-  ResponsiveContainer,
-} from 'recharts';
+import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts';
 import type { ChartData } from './AreaChart';
 
 interface BarChartProps {
@@ -46,10 +38,19 @@ export const BarChartComponent: React.FC<BarChartProps> = ({
           {title}
         </h4>
       )}
-      <ResponsiveContainer width="100%" height={height}>
+      <ResponsiveContainer
+        width='100%'
+        height={height}
+      >
         <BarChart data={data}>
-          <CartesianGrid strokeDasharray="3 3" stroke={chartTheme.gridColor} />
-          <XAxis dataKey={xKey} tick={{ fill: chartTheme.textColor, fontSize: 12 }} />
+          <CartesianGrid
+            strokeDasharray='3 3'
+            stroke={chartTheme.gridColor}
+          />
+          <XAxis
+            dataKey={xKey}
+            tick={{ fill: chartTheme.textColor, fontSize: 12 }}
+          />
           <YAxis tick={{ fill: chartTheme.textColor, fontSize: 12 }} />
           <Tooltip
             contentStyle={{
@@ -65,9 +66,7 @@ export const BarChartComponent: React.FC<BarChartProps> = ({
               dataKey={item.key}
               name={item.name}
               fill={item.color || resolvedColor}
-              radius={
-                Array.isArray(barRadius) ? barRadius : [barRadius, barRadius, 0, 0]
-              }
+              radius={Array.isArray(barRadius) ? barRadius : [barRadius, barRadius, 0, 0]}
             />
           ))}
         </BarChart>

@@ -778,14 +778,7 @@ export const lazyWithErrorBoundary = <P extends object>(
   importFn: () => Promise<{ default: React.ComponentType<P> }>,
   options?: ErrorBoundaryOptions
 ): React.LazyExoticComponent<React.ComponentType<P>> => {
-  const {
-    level = 'module',
-    fallback,
-    onError,
-    onReport,
-    showDetails,
-    enableRetry,
-  } = options || {};
+  const { level = 'module', fallback, onError, onReport, showDetails, enableRetry } = options || {};
 
   return React.lazy(() =>
     importFn().catch((error) => {

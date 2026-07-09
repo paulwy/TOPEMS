@@ -77,7 +77,9 @@ describe('BIDataSourcePage', () => {
 
   it('should render page title', async () => {
     renderWithProviders(<BIDataSourcePage />);
-    expect(await screen.findByRole('heading', { name: '数据源管理' }, { timeout: 10000 })).toBeInTheDocument();
+    expect(
+      await screen.findByRole('heading', { name: '数据源管理' }, { timeout: 10000 })
+    ).toBeInTheDocument();
   });
 
   it('should render data source list', async () => {

@@ -12,10 +12,9 @@ describe('useThrottle', () => {
     vi.useFakeTimers();
     const nowSpy = vi.spyOn(Date, 'now').mockImplementation(() => vi.getTimerCount());
 
-    const { result, rerender } = renderHook(
-      ({ value }) => useThrottle(value, 500),
-      { initialProps: { value: 'same' } }
-    );
+    const { result, rerender } = renderHook(({ value }) => useThrottle(value, 500), {
+      initialProps: { value: 'same' },
+    });
 
     expect(result.current).toBe('same');
 

@@ -26,7 +26,7 @@ import {
 import { MobileLayout, MobileSkeleton, MobileCard } from '@/components/mobile';
 import { useNavigate } from 'react-router-dom';
 import { useAppStore } from '@/store';
-import { logger } from "@/utils/logger";
+import { logger } from '@/utils/logger';
 
 interface PushTemplate {
   id: string;

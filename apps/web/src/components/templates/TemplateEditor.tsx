@@ -1,4 +1,5 @@
-import {Dialog,
+import {
+  Dialog,
   DialogContent,
   DialogActions,
   TextField,
@@ -8,7 +9,9 @@ import {Dialog,
   FormLabel,
   Typography,
   Box,
-  Button, useTheme} from '@mui/material';
+  Button,
+  useTheme,
+} from '@mui/material';
 import React, { useState, useEffect } from 'react';
 
 import { Plus, Trash2, GripVertical, Sparkles, Eye, EyeOff } from 'lucide-react';

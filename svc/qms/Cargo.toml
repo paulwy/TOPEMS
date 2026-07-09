@@ -28,6 +28,10 @@ bigdecimal = { version = "0.4", features = ["serde"] }
 [dev-dependencies]
 axum-test.workspace = true
 
+[lib]
+name = "topems_qms"
+path = "src/lib.rs"
+
 [[bin]]
 name = "topems-qms"
 path = "src/main.rs"

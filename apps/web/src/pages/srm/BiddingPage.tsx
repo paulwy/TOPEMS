@@ -28,7 +28,7 @@ import { Plus, Edit, Trash2, Send, Check, XCircle, Gavel, Users, FileText } from
 import { apiLogger } from '@/utils/logger';
 import { ListPageTemplate, type ColumnDef } from '@/components/templates';
 import { PageContainer } from '@/components/common';
-import ConfirmDialog from '@/components/common/ConfirmDialog';
+import { ConfirmDialog } from '@topems/shared-components';
 import { designTokens } from '@/theme/tokens';
 
 const ct = designTokens.colors;
@@ -686,7 +686,7 @@ const BiddingPage: React.FC = () => {
                   value={formData.bid_deadline}
                   onChange={(e) => setFormData({ ...formData, bid_deadline: e.target.value })}
                   size='small'
-                  slotProps={{ inputLabel: { shrink: true } }}
+                  slotProps={{ inputLabel: { shrink: true } } as any}
                 />
                 <TextField
                   label='开标日期'
@@ -694,7 +694,7 @@ const BiddingPage: React.FC = () => {
                   value={formData.open_date}
                   onChange={(e) => setFormData({ ...formData, open_date: e.target.value })}
                   size='small'
-                  slotProps={{ inputLabel: { shrink: true } }}
+                  slotProps={{ inputLabel: { shrink: true } } as any}
                 />
               </Box>
             )}

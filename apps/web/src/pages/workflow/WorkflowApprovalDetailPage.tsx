@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useMemo } from 'react';
-import {Dialog,
+import {
+  Dialog,
   DialogContent,
   DialogTitle,
   DialogActions,
@@ -12,7 +13,9 @@ import {Dialog,
   Button,
   Paper,
   Avatar,
-  Divider, useTheme} from '@mui/material';
+  Divider,
+  useTheme,
+} from '@mui/material';
 import {
   CheckCircle,
   XCircle,

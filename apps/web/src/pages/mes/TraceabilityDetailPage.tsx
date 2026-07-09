@@ -1,4 +1,13 @@
-import { Typography, Box, InputLabel, Chip, Card, CardContent, Paper, type ChipProps } from '@mui/material';
+import {
+  Typography,
+  Box,
+  InputLabel,
+  Chip,
+  Card,
+  CardContent,
+  Paper,
+  type ChipProps,
+} from '@mui/material';
 import React, { useState, useEffect, useMemo } from 'react';
 import { useParams } from 'react-router-dom';
 import { Package, MapPin, CheckCircle, Factory, Truck, Boxes } from 'lucide-react';
@@ -8,8 +17,9 @@ import { traceabilityApi } from '@/api/mes';
 import type { TraceChain, QualityRecord } from '@/api/mes';
 import { apiLogger } from '@/utils/logger';
 import { designTokens } from '@/theme/tokens';
-const ct = designTokens.colors;
 import { useAppStore } from '@/store';
+
+const ct = designTokens.colors;
 
 const TraceabilityDetailPage: React.FC = () => {
   const { batchNo } = useParams<{ batchNo: string }>();

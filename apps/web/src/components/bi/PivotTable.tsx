@@ -524,9 +524,13 @@ export const PivotTable: React.FC<PivotConfig> = ({
                   >
                     <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
                       {expandedRows.has(row as string) ? (
-                        <ChevronDown sx={{ width: 14, height: 14, color: theme.palette.text.secondary }} />
+                        <ChevronDown
+                          sx={{ width: 14, height: 14, color: theme.palette.text.secondary }}
+                        />
                       ) : (
-                        <ChevronUp sx={{ width: 14, height: 14, color: theme.palette.text.secondary }} />
+                        <ChevronUp
+                          sx={{ width: 14, height: 14, color: theme.palette.text.secondary }}
+                        />
                       )}
                       {row}
                       {sortConfig?.key === row && (

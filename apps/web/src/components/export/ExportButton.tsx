@@ -132,7 +132,11 @@ const ExportButton: React.FC<ExportButtonProps> = ({
         display: 'flex',
         alignItems: 'center',
         gap: '8px',
-        backgroundColor: disabled ? theme.palette.grey[400] : exportComplete ? theme.palette.success.dark : theme.palette.primary.dark,
+        backgroundColor: disabled
+          ? theme.palette.grey[400]
+          : exportComplete
+            ? theme.palette.success.dark
+            : theme.palette.primary.dark,
         color: disabled ? theme.palette.grey[600] : 'white',
         cursor: disabled || exporting ? 'not-allowed' : 'pointer',
         border: 'none',

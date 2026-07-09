@@ -546,7 +546,10 @@ const ExpenseClaimPage: React.FC = () => {
             }}
           >
             <Typography variant='h6'>{getModalTitle()}</Typography>
-            <IconButton onClick={handleCloseModal} aria-label='关闭'>
+            <IconButton
+              onClick={handleCloseModal}
+              aria-label='关闭'
+            >
               <X />
             </IconButton>
           </Box>

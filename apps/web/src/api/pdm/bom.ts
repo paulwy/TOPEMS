@@ -32,6 +32,7 @@ export interface CreateBomVersionRequest {
 export interface BomItem {
   id: string;
   bom_version_id: string;
+  product_id?: string;
   parent_id?: string;
   level: number;
   item_no: string;
@@ -86,6 +87,21 @@ export const bomApi = {
   // BOM Versions
   listVersions: async (): Promise<ApiResponse<BomVersion[]>> => {
     return apiClient.pdm.get<BomVersion[]>('/bom-versions');
+  },
+  listBomItems: async (bomVersionId?: string): Promise<ApiResponse<BomItem[]>> => {
+    return bomApi.listItems(bomVersionId);
+  },
+  createBomItem: async (data: CreateBomItemRequest): Promise<ApiResponse<BomItem>> => {
+    return bomApi.createItem(data);
+  },
+  updateBomItem: async (
+    id: string,
+    data: Partial<CreateBomItemRequest>
+  ): Promise<ApiResponse<BomItem>> => {
+    return bomApi.updateItem(id, data);
+  },
+  deleteBomItem: async (id: string): Promise<ApiResponse<boolean>> => {
+    return bomApi.deleteItem(id);
   },
   getVersion: async (id: string): Promise<ApiResponse<BomVersion>> => {
     return apiClient.pdm.get<BomVersion>(`/bom-versions/${id}`);

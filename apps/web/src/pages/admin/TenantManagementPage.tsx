@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useMemo, useCallback } from 'react';
-import {Box,
+import {
+  Box,
   Typography,
   Chip,
   Dialog,
@@ -13,7 +14,9 @@ import {Box,
   InputLabel,
   Select,
   Card,
-  CardContent, useTheme} from '@mui/material';
+  CardContent,
+  useTheme,
+} from '@mui/material';
 import {
   Plus,
   Edit,
@@ -27,7 +30,7 @@ import {
 } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { PageContainer } from '@/components/common';
-import ConfirmDialog from '@/components/common/ConfirmDialog';
+import { ConfirmDialog } from '@topems/shared-components';
 import {
   ListPageTemplate,
   type ColumnDef,

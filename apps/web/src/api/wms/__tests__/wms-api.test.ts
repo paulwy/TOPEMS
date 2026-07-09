@@ -23,7 +23,9 @@ describe('WMS Module API Tests', () => {
       const { warehouseApi } = await import('../warehouse');
       await warehouseApi.list({ page: 1, pagesize: 10 });
       const { apiClient } = await import('../../client');
-      expect(apiClient.wms.get).toHaveBeenCalledWith('/warehouses', { params: { page: 1, pagesize: 10 } });
+      expect(apiClient.wms.get).toHaveBeenCalledWith('/warehouses', {
+        params: { page: 1, pagesize: 10 },
+      });
     });
 
     it('get should call GET /warehouses/:id', async () => {
@@ -62,7 +64,9 @@ describe('WMS Module API Tests', () => {
       const { locationApi } = await import('../location');
       await locationApi.list({ page: 1, pagesize: 10 });
       const { apiClient } = await import('../../client');
-      expect(apiClient.wms.get).toHaveBeenCalledWith('/locations', { params: { page: 1, pagesize: 10 } });
+      expect(apiClient.wms.get).toHaveBeenCalledWith('/locations', {
+        params: { page: 1, pagesize: 10 },
+      });
     });
 
     it('get should call GET /locations/:id', async () => {
@@ -99,7 +103,9 @@ describe('WMS Module API Tests', () => {
       const { locationApi } = await import('../location');
       await locationApi.getStatus('wh-001');
       const { apiClient } = await import('../../client');
-      expect(apiClient.wms.get).toHaveBeenCalledWith('/locations/status', { params: { warehouse_id: 'wh-001' } });
+      expect(apiClient.wms.get).toHaveBeenCalledWith('/locations/status', {
+        params: { warehouse_id: 'wh-001' },
+      });
     });
   });
 
@@ -108,7 +114,9 @@ describe('WMS Module API Tests', () => {
       const { inventoryApi } = await import('../inventory');
       await inventoryApi.list({ page: 1, pagesize: 10 });
       const { apiClient } = await import('../../client');
-      expect(apiClient.wms.get).toHaveBeenCalledWith('/inventory', { params: { page: 1, pagesize: 10 } });
+      expect(apiClient.wms.get).toHaveBeenCalledWith('/inventory', {
+        params: { page: 1, pagesize: 10 },
+      });
     });
 
     it('get should call GET /inventory/:id', async () => {
@@ -161,7 +169,9 @@ describe('WMS Module API Tests', () => {
       const { inventoryAlertsApi } = await import('../inventory');
       await inventoryAlertsApi.listRules({ page: 1, pagesize: 10 });
       const { apiClient } = await import('../../client');
-      expect(apiClient.wms.get).toHaveBeenCalledWith('/inventory-alerts/rules', { params: { page: 1, pagesize: 10 } });
+      expect(apiClient.wms.get).toHaveBeenCalledWith('/inventory-alerts/rules', {
+        params: { page: 1, pagesize: 10 },
+      });
     });
 
     it('getRule should call GET /inventory-alerts/rules/:id', async () => {
@@ -198,7 +208,9 @@ describe('WMS Module API Tests', () => {
       const { inventoryAlertsApi } = await import('../inventory');
       await inventoryAlertsApi.listRecords({ page: 1, pagesize: 10 });
       const { apiClient } = await import('../../client');
-      expect(apiClient.wms.get).toHaveBeenCalledWith('/inventory-alerts/records', { params: { page: 1, pagesize: 10 } });
+      expect(apiClient.wms.get).toHaveBeenCalledWith('/inventory-alerts/records', {
+        params: { page: 1, pagesize: 10 },
+      });
     });
 
     it('getRecord should call GET /inventory-alerts/records/:id', async () => {
@@ -213,14 +225,19 @@ describe('WMS Module API Tests', () => {
       const data = { notes: 'Confirmed' };
       await inventoryAlertsApi.confirm('rec-001', data);
       const { apiClient } = await import('../../client');
-      expect(apiClient.wms.post).toHaveBeenCalledWith('/inventory-alerts/records/rec-001/confirm', data);
+      expect(apiClient.wms.post).toHaveBeenCalledWith(
+        '/inventory-alerts/records/rec-001/confirm',
+        data
+      );
     });
 
     it('getStatistics should call GET /inventory-alerts/statistics with params', async () => {
       const { inventoryAlertsApi } = await import('../inventory');
       await inventoryAlertsApi.getStatistics({ warehouse_id: 'wh-001' });
       const { apiClient } = await import('../../client');
-      expect(apiClient.wms.get).toHaveBeenCalledWith('/inventory-alerts/statistics', { params: { warehouse_id: 'wh-001' } });
+      expect(apiClient.wms.get).toHaveBeenCalledWith('/inventory-alerts/statistics', {
+        params: { warehouse_id: 'wh-001' },
+      });
     });
   });
 
@@ -229,28 +246,36 @@ describe('WMS Module API Tests', () => {
       const { inventoryStatsApi } = await import('../inventory');
       await inventoryStatsApi.getStatistics({ warehouse_id: 'wh-001' });
       const { apiClient } = await import('../../client');
-      expect(apiClient.wms.get).toHaveBeenCalledWith('/inventory/statistics', { params: { warehouse_id: 'wh-001' } });
+      expect(apiClient.wms.get).toHaveBeenCalledWith('/inventory/statistics', {
+        params: { warehouse_id: 'wh-001' },
+      });
     });
 
     it('getABCAnalysis should call GET /inventory/abc-analysis with params', async () => {
       const { inventoryStatsApi } = await import('../inventory');
       await inventoryStatsApi.getABCAnalysis({ a_threshold: 80, b_threshold: 90 });
       const { apiClient } = await import('../../client');
-      expect(apiClient.wms.get).toHaveBeenCalledWith('/inventory/abc-analysis', { params: { a_threshold: 80, b_threshold: 90 } });
+      expect(apiClient.wms.get).toHaveBeenCalledWith('/inventory/abc-analysis', {
+        params: { a_threshold: 80, b_threshold: 90 },
+      });
     });
 
     it('getTurnover should call GET /inventory/turnover with params', async () => {
       const { inventoryStatsApi } = await import('../inventory');
       await inventoryStatsApi.getTurnover({ period_type: 'monthly', periods: 6 });
       const { apiClient } = await import('../../client');
-      expect(apiClient.wms.get).toHaveBeenCalledWith('/inventory/turnover', { params: { period_type: 'monthly', periods: 6 } });
+      expect(apiClient.wms.get).toHaveBeenCalledWith('/inventory/turnover', {
+        params: { period_type: 'monthly', periods: 6 },
+      });
     });
 
     it('getValueByWarehouse should call GET /inventory/value-by-warehouse with params', async () => {
       const { inventoryStatsApi } = await import('../inventory');
       await inventoryStatsApi.getValueByWarehouse({ category_id: 'cat-001' });
       const { apiClient } = await import('../../client');
-      expect(apiClient.wms.get).toHaveBeenCalledWith('/inventory/value-by-warehouse', { params: { category_id: 'cat-001' } });
+      expect(apiClient.wms.get).toHaveBeenCalledWith('/inventory/value-by-warehouse', {
+        params: { category_id: 'cat-001' },
+      });
     });
   });
 
@@ -259,7 +284,9 @@ describe('WMS Module API Tests', () => {
       const { inboundOrderApi } = await import('../inbound');
       await inboundOrderApi.list({ page: 1, pagesize: 10 });
       const { apiClient } = await import('../../client');
-      expect(apiClient.wms.get).toHaveBeenCalledWith('/inbound-orders', { params: { page: 1, pagesize: 10 } });
+      expect(apiClient.wms.get).toHaveBeenCalledWith('/inbound-orders', {
+        params: { page: 1, pagesize: 10 },
+      });
     });
 
     it('get should call GET /inbound-orders/:id', async () => {
@@ -335,7 +362,9 @@ describe('WMS Module API Tests', () => {
       const { outboundOrderApi } = await import('../outbound');
       await outboundOrderApi.list({ page: 1, pagesize: 10 });
       const { apiClient } = await import('../../client');
-      expect(apiClient.wms.get).toHaveBeenCalledWith('/outbound-orders', { params: { page: 1, pagesize: 10 } });
+      expect(apiClient.wms.get).toHaveBeenCalledWith('/outbound-orders', {
+        params: { page: 1, pagesize: 10 },
+      });
     });
 
     it('get should call GET /outbound-orders/:id', async () => {
@@ -410,7 +439,9 @@ describe('WMS Module API Tests', () => {
       const { stockTakeApi } = await import('../stocktake');
       await stockTakeApi.list({ page: 1, pagesize: 10 });
       const { apiClient } = await import('../../client');
-      expect(apiClient.wms.get).toHaveBeenCalledWith('/stock-takes', { params: { page: 1, pagesize: 10 } });
+      expect(apiClient.wms.get).toHaveBeenCalledWith('/stock-takes', {
+        params: { page: 1, pagesize: 10 },
+      });
     });
 
     it('get should call GET /stock-takes/:id', async () => {
@@ -515,7 +546,9 @@ describe('WMS Module API Tests', () => {
       const { transferApi } = await import('../transfer');
       await transferApi.list({ page: 1, pagesize: 10 });
       const { apiClient } = await import('../../client');
-      expect(apiClient.wms.get).toHaveBeenCalledWith('/transfers', { params: { page: 1, pagesize: 10 } });
+      expect(apiClient.wms.get).toHaveBeenCalledWith('/transfers', {
+        params: { page: 1, pagesize: 10 },
+      });
     });
 
     it('get should call GET /transfers/:id', async () => {
@@ -567,7 +600,9 @@ describe('WMS Module API Tests', () => {
       const data = { items: [{ item_id: 'item-001', received_quantity: 50 }] };
       await transferApi.receive('tf-001', data.items);
       const { apiClient } = await import('../../client');
-      expect(apiClient.wms.post).toHaveBeenCalledWith('/transfers/tf-001/receive', { items: data.items });
+      expect(apiClient.wms.post).toHaveBeenCalledWith('/transfers/tf-001/receive', {
+        items: data.items,
+      });
     });
 
     it('complete should call POST /transfers/:id/complete', async () => {
@@ -590,7 +625,9 @@ describe('WMS Module API Tests', () => {
       const { smartReplenishmentApi } = await import('../replenishment');
       await smartReplenishmentApi.listSuggestions({ page: 1, pagesize: 10 });
       const { apiClient } = await import('../../client');
-      expect(apiClient.wms.get).toHaveBeenCalledWith('/smart-replenishment/suggestions', { params: { page: 1, pagesize: 10 } });
+      expect(apiClient.wms.get).toHaveBeenCalledWith('/smart-replenishment/suggestions', {
+        params: { page: 1, pagesize: 10 },
+      });
     });
 
     it('getSuggestion should call GET /smart-replenishment/suggestions/:id', async () => {
@@ -604,7 +641,9 @@ describe('WMS Module API Tests', () => {
       const { smartReplenishmentApi } = await import('../replenishment');
       await smartReplenishmentApi.generateSuggestions({ warehouse_id: 'wh-001' });
       const { apiClient } = await import('../../client');
-      expect(apiClient.wms.post).toHaveBeenCalledWith('/smart-replenishment/suggestions/generate', { warehouse_id: 'wh-001' });
+      expect(apiClient.wms.post).toHaveBeenCalledWith('/smart-replenishment/suggestions/generate', {
+        warehouse_id: 'wh-001',
+      });
     });
 
     it('createOrder should call POST /smart-replenishment/orders with data', async () => {
@@ -634,7 +673,9 @@ describe('WMS Module API Tests', () => {
       const { smartReplenishmentApi } = await import('../replenishment');
       await smartReplenishmentApi.listOrders({ page: 1, pagesize: 10 });
       const { apiClient } = await import('../../client');
-      expect(apiClient.wms.get).toHaveBeenCalledWith('/smart-replenishment/orders', { params: { page: 1, pagesize: 10 } });
+      expect(apiClient.wms.get).toHaveBeenCalledWith('/smart-replenishment/orders', {
+        params: { page: 1, pagesize: 10 },
+      });
     });
 
     it('getOrder should call GET /smart-replenishment/orders/:id', async () => {
@@ -648,14 +689,18 @@ describe('WMS Module API Tests', () => {
       const { smartReplenishmentApi } = await import('../replenishment');
       await smartReplenishmentApi.confirmOrder('ord-001');
       const { apiClient } = await import('../../client');
-      expect(apiClient.wms.post).toHaveBeenCalledWith('/smart-replenishment/orders/ord-001/confirm');
+      expect(apiClient.wms.post).toHaveBeenCalledWith(
+        '/smart-replenishment/orders/ord-001/confirm'
+      );
     });
 
     it('completeOrder should call POST /smart-replenishment/orders/:id/complete', async () => {
       const { smartReplenishmentApi } = await import('../replenishment');
       await smartReplenishmentApi.completeOrder('ord-001');
       const { apiClient } = await import('../../client');
-      expect(apiClient.wms.post).toHaveBeenCalledWith('/smart-replenishment/orders/ord-001/complete');
+      expect(apiClient.wms.post).toHaveBeenCalledWith(
+        '/smart-replenishment/orders/ord-001/complete'
+      );
     });
 
     it('listOrderItems should call GET /smart-replenishment/orders/:id/items', async () => {
@@ -669,7 +714,9 @@ describe('WMS Module API Tests', () => {
       const { smartReplenishmentApi } = await import('../replenishment');
       await smartReplenishmentApi.listSafetyStock({ page: 1, pagesize: 10 });
       const { apiClient } = await import('../../client');
-      expect(apiClient.wms.get).toHaveBeenCalledWith('/smart-replenishment/safety-stock', { params: { page: 1, pagesize: 10 } });
+      expect(apiClient.wms.get).toHaveBeenCalledWith('/smart-replenishment/safety-stock', {
+        params: { page: 1, pagesize: 10 },
+      });
     });
 
     it('getSafetyStock should call GET /smart-replenishment/safety-stock/:id', async () => {
@@ -684,14 +731,19 @@ describe('WMS Module API Tests', () => {
       const data = { min_stock: 10, max_stock: 100 };
       await smartReplenishmentApi.updateSafetyStock('ss-001', data);
       const { apiClient } = await import('../../client');
-      expect(apiClient.wms.put).toHaveBeenCalledWith('/smart-replenishment/safety-stock/ss-001', data);
+      expect(apiClient.wms.put).toHaveBeenCalledWith(
+        '/smart-replenishment/safety-stock/ss-001',
+        data
+      );
     });
 
     it('getStatistics should call GET /smart-replenishment/statistics with params', async () => {
       const { smartReplenishmentApi } = await import('../replenishment');
       await smartReplenishmentApi.getStatistics({ warehouse_id: 'wh-001' });
       const { apiClient } = await import('../../client');
-      expect(apiClient.wms.get).toHaveBeenCalledWith('/smart-replenishment/statistics', { params: { warehouse_id: 'wh-001' } });
+      expect(apiClient.wms.get).toHaveBeenCalledWith('/smart-replenishment/statistics', {
+        params: { warehouse_id: 'wh-001' },
+      });
     });
   });
 });

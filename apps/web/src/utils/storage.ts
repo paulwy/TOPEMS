@@ -7,7 +7,7 @@
  * 保留作为基础设施工具，可在需要高级存储功能（过期时间、命名空间等）时使用。
  */
 
-import { logger } from "@/utils/logger";
+import { logger } from '@/utils/logger';
 
 const PREFIX = 'topems_';
 

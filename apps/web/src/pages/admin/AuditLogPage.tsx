@@ -544,7 +544,7 @@ const AuditLogPage: React.FC<AuditLogPageProps> = ({ onNavigate }) => {
                 setCurrentPage(1);
               }}
               sx={{ width: 220 }}
-              slotProps={{ inputLabel: { shrink: true } }}
+              slotProps={{ inputLabel: { shrink: true } } as any}
             />
             <Typography
               variant='body2'
@@ -561,7 +561,7 @@ const AuditLogPage: React.FC<AuditLogPageProps> = ({ onNavigate }) => {
                 setCurrentPage(1);
               }}
               sx={{ width: 220 }}
-              slotProps={{ inputLabel: { shrink: true } }}
+              slotProps={{ inputLabel: { shrink: true } } as any}
             />
             {(startDate || endDate) && (
               <Button
@@ -629,9 +629,12 @@ const AuditLogPage: React.FC<AuditLogPageProps> = ({ onNavigate }) => {
             />
             <Typography variant='h6'>审计日志详情</Typography>
           </Box>
-          <IconButton onClick={() => setSelectedLog(null)} aria-label='关闭审计日志详情对话框'>
-                  <X size={20} />
-                </IconButton>
+          <IconButton
+            onClick={() => setSelectedLog(null)}
+            aria-label='关闭审计日志详情对话框'
+          >
+            <X size={20} />
+          </IconButton>
         </DialogTitle>
         <DialogContent>
           {selectedLog && (

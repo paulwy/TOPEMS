@@ -2,7 +2,6 @@ import { Grid } from '@/components';
 import { useAppStore } from '@/store';
 import React, { useEffect, useState, useMemo, useCallback } from 'react';
 import { designTokens } from '@/theme/tokens';
-const ct = designTokens.colors;
 import {
   ClipboardList,
   Plus,
@@ -55,6 +54,8 @@ import { PageContainer } from '@/components/common';
 import { CardListTemplate } from '@/components/templates/CardListTemplate';
 import { apiLogger } from '@/utils/logger';
 
+const ct = designTokens.colors;
+
 const LimsInstrumentPage: React.FC = () => {
   const navigate = useNavigate();
   const [instruments, setInstruments] = useState<Instrument[]>([]);
@@ -82,10 +83,7 @@ const LimsInstrumentPage: React.FC = () => {
     lims: false,
   });
 
-  const checkServiceStatus = async (
-    serviceName: string,
-    setStatus: (up: boolean) => void
-  ) => {
+  const checkServiceStatus = async (serviceName: string, setStatus: (up: boolean) => void) => {
     try {
       const controller = new AbortController();
       const timeoutId = setTimeout(() => controller.abort(), 2000);
@@ -103,9 +101,7 @@ const LimsInstrumentPage: React.FC = () => {
 
   useEffect(() => {
     const checkAllServices = () => {
-      checkServiceStatus('lims', (up) =>
-        setServiceStatuses((prev) => ({ ...prev, lims: up }))
-      );
+      checkServiceStatus('lims', (up) => setServiceStatuses((prev) => ({ ...prev, lims: up })));
     };
 
     checkAllServices();
@@ -944,7 +940,7 @@ const LimsInstrumentPage: React.FC = () => {
                   label='购买日期'
                   type='date'
                   fullWidth
-                  slotProps={{ inputLabel: { shrink: true } }}
+                  slotProps={{ inputLabel: { shrink: true } } as any}
                   value={instrumentFormData.purchase_date}
                   onChange={(e) =>
                     setInstrumentFormData({
@@ -959,7 +955,7 @@ const LimsInstrumentPage: React.FC = () => {
                   label='上次校准日期'
                   type='date'
                   fullWidth
-                  slotProps={{ inputLabel: { shrink: true } }}
+                  slotProps={{ inputLabel: { shrink: true } } as any}
                   value={instrumentFormData.calibration_date}
                   onChange={(e) =>
                     setInstrumentFormData({
@@ -979,7 +975,7 @@ const LimsInstrumentPage: React.FC = () => {
                   label='下次校准日期'
                   type='date'
                   fullWidth
-                  slotProps={{ inputLabel: { shrink: true } }}
+                  slotProps={{ inputLabel: { shrink: true } } as any}
                   value={instrumentFormData.next_calibration_date}
                   onChange={(e) =>
                     setInstrumentFormData({
@@ -1075,7 +1071,10 @@ const LimsInstrumentPage: React.FC = () => {
                 >
                   仪器详情
                 </Typography>
-                <IconButton onClick={() => setShowInstrumentDetailModal(false)} aria-label='关闭仪器详情对话框'>
+                <IconButton
+                  onClick={() => setShowInstrumentDetailModal(false)}
+                  aria-label='关闭仪器详情对话框'
+                >
                   <X size={24} />
                 </IconButton>
               </Box>
@@ -1486,7 +1485,7 @@ const LimsInstrumentPage: React.FC = () => {
                     type='date'
                     required
                     fullWidth
-                    slotProps={{ inputLabel: { shrink: true } }}
+                    slotProps={{ inputLabel: { shrink: true } } as any}
                     value={maintenanceFormData.performed_at}
                     onChange={(e) =>
                       setMaintenanceFormData({
@@ -1506,7 +1505,7 @@ const LimsInstrumentPage: React.FC = () => {
                     label='下次维护日期'
                     type='date'
                     fullWidth
-                    slotProps={{ inputLabel: { shrink: true } }}
+                    slotProps={{ inputLabel: { shrink: true } } as any}
                     value={maintenanceFormData.next_maintenance_date}
                     onChange={(e) =>
                       setMaintenanceFormData({

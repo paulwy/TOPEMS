@@ -2,6 +2,7 @@ import React from 'react';
 import { PageContainer } from '@/components/common/PageContainerV2';
 import { MapPin } from 'lucide-react';
 import { designTokens } from '@/theme/tokens';
+
 const ct = designTokens.colors;
 
 const QualityTraceabilityPage: React.FC = () => {

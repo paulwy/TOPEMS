@@ -150,7 +150,9 @@ describe('QMS Module API Tests', () => {
     it('getIssue should call GET /issues/:id', async () => {
       const { issueApi } = await import('../issue');
       const { apiClient } = await import('../../client');
-      (apiClient.qms.get as vi.Mock).mockResolvedValue({ data: { id: 'issue-001', title: 'Test Issue' } });
+      (apiClient.qms.get as vi.Mock).mockResolvedValue({
+        data: { id: 'issue-001', title: 'Test Issue' },
+      });
       await issueApi.getIssue('issue-001');
       expect(apiClient.qms.get).toHaveBeenCalledWith('/issues/issue-001');
     });
@@ -158,7 +160,9 @@ describe('QMS Module API Tests', () => {
     it('createIssue should call POST /issues with data', async () => {
       const { issueApi } = await import('../issue');
       const { apiClient } = await import('../../client');
-      (apiClient.qms.post as vi.Mock).mockResolvedValue({ data: { id: 'issue-001', title: 'Test Issue' } });
+      (apiClient.qms.post as vi.Mock).mockResolvedValue({
+        data: { id: 'issue-001', title: 'Test Issue' },
+      });
       const data = { title: 'Test Issue', description: 'Issue description', severity: 'high' };
       await issueApi.createIssue(data as any);
       expect(apiClient.qms.post).toHaveBeenCalledWith('/issues', expect.any(Object));
@@ -167,7 +171,9 @@ describe('QMS Module API Tests', () => {
     it('updateIssue should call PUT /issues/:id with data', async () => {
       const { issueApi } = await import('../issue');
       const { apiClient } = await import('../../client');
-      (apiClient.qms.put as vi.Mock).mockResolvedValue({ data: { id: 'issue-001', title: 'Updated Issue' } });
+      (apiClient.qms.put as vi.Mock).mockResolvedValue({
+        data: { id: 'issue-001', title: 'Updated Issue' },
+      });
       const data = { title: 'Updated Issue', status: 'in_progress' };
       await issueApi.updateIssue('issue-001', data as any);
       expect(apiClient.qms.put).toHaveBeenCalledWith('/issues/issue-001', expect.any(Object));
@@ -296,7 +302,11 @@ describe('QMS Module API Tests', () => {
       const { qualityCostApi } = await import('../qualityCost');
       const { apiClient } = await import('../../client');
       (apiClient.qms.get as vi.Mock).mockResolvedValue({ data: { trend: [] } });
-      await qualityCostApi.getCostTrend({ startDate: '2024-01-01', endDate: '2024-01-31', period: 'monthly' });
+      await qualityCostApi.getCostTrend({
+        startDate: '2024-01-01',
+        endDate: '2024-01-31',
+        period: 'monthly',
+      });
       expect(apiClient.qms.get).toHaveBeenCalledWith('/quality-costs/trend', {
         params: { start_date: '2024-01-01', end_date: '2024-01-31', period: 'monthly' },
       });
@@ -315,7 +325,9 @@ describe('QMS Module API Tests', () => {
     it('getImprovement should call GET /actions/:id', async () => {
       const { improvementApi } = await import('../improvement');
       const { apiClient } = await import('../../client');
-      (apiClient.qms.get as vi.Mock).mockResolvedValue({ data: { id: 'imp-001', title: 'Test Improvement' } });
+      (apiClient.qms.get as vi.Mock).mockResolvedValue({
+        data: { id: 'imp-001', title: 'Test Improvement' },
+      });
       await improvementApi.getImprovement('imp-001');
       expect(apiClient.qms.get).toHaveBeenCalledWith('/actions/imp-001');
     });
@@ -323,7 +335,9 @@ describe('QMS Module API Tests', () => {
     it('createImprovement should call POST /actions with data', async () => {
       const { improvementApi } = await import('../improvement');
       const { apiClient } = await import('../../client');
-      (apiClient.qms.post as vi.Mock).mockResolvedValue({ data: { id: 'imp-001', title: 'Test Improvement' } });
+      (apiClient.qms.post as vi.Mock).mockResolvedValue({
+        data: { id: 'imp-001', title: 'Test Improvement' },
+      });
       const data = { title: 'Test Improvement', description: 'Improvement description' };
       await improvementApi.createImprovement(data as any);
       expect(apiClient.qms.post).toHaveBeenCalledWith('/actions', expect.any(Object));
@@ -332,7 +346,9 @@ describe('QMS Module API Tests', () => {
     it('updateImprovement should call PUT /actions/:id with data', async () => {
       const { improvementApi } = await import('../improvement');
       const { apiClient } = await import('../../client');
-      (apiClient.qms.put as vi.Mock).mockResolvedValue({ data: { id: 'imp-001', title: 'Updated Improvement' } });
+      (apiClient.qms.put as vi.Mock).mockResolvedValue({
+        data: { id: 'imp-001', title: 'Updated Improvement' },
+      });
       const data = { title: 'Updated Improvement', status: 'in_progress' };
       await improvementApi.updateImprovement('imp-001', data as any);
       expect(apiClient.qms.put).toHaveBeenCalledWith('/actions/imp-001', expect.any(Object));

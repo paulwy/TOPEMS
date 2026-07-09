@@ -1,14 +1,20 @@
 /**
  * API相关Hooks
  * 提供常用的API数据获取和管理Hooks
+ *
+ * @deprecated Use useCrudQueries from hooks/useCrudQueries.ts instead
  */
 
 import { useState, useEffect, useCallback, useRef } from 'react';
+import type { ApiResponse as SharedApiResponse, PaginatedResponse as SharedPaginatedResponse } from '@topems/shared-types';
+
+export type ApiResponse<T = any> = SharedApiResponse<T>;
+export type PaginatedResponse<T = any> = SharedPaginatedResponse<T>;
 
 /**
- * API响应类型
+ * Hook 返回结果类型
  */
-export interface ApiResponse<T = any> {
+export interface UseApiResult<T = any> {
   data: T | null;
   loading: boolean;
   error: Error | null;
@@ -26,9 +32,9 @@ export interface PaginationParams {
 }
 
 /**
- * 分页响应
+ * Hook 分页返回结果类型
  */
-export interface PaginatedResponse<T> {
+export interface UsePaginatedResult<T> {
   data: T[];
   pagination: {
     page: number;
@@ -48,7 +54,7 @@ export function useApi<T>(
     onSuccess?: (data: T) => void;
     onError?: (error: Error) => void;
   }
-) {
+): UseApiResult<T> {
   const [data, setData] = useState<T | null>(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<Error | null>(null);
@@ -103,11 +109,11 @@ export function usePaginatedApi<T>(
     setError(null);
     try {
       const response = await apiFunction(params);
-      setData(response.data);
+      setData(response.items);
       setParams((prev) => ({
         ...prev,
-        total: response.pagination.total,
-        totalPages: response.pagination.totalPages,
+        total: response.total,
+        totalPages: response.totalPages,
       }));
       return response;
     } catch (err: unknown) {

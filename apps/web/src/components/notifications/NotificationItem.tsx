@@ -27,7 +27,11 @@ const getNotificationIcon = (type: string, theme: { palette: unknown }) => {
           }}
         >
           <svg
-            style={{ width: 20, height: 20, color: (theme.palette as Record<string, { dark: string }>).primary.dark }}
+            style={{
+              width: 20,
+              height: 20,
+              color: (theme.palette as Record<string, { dark: string }>).primary.dark,
+            }}
             fill='none'
             stroke='currentColor'
             viewBox='0 0 24 24'
@@ -89,7 +93,11 @@ const getNotificationIcon = (type: string, theme: { palette: unknown }) => {
           }}
         >
           <svg
-            style={{ width: 20, height: 20, color: (theme.palette as Record<string, { dark: string }>).error.dark }}
+            style={{
+              width: 20,
+              height: 20,
+              color: (theme.palette as Record<string, { dark: string }>).error.dark,
+            }}
             fill='none'
             stroke='currentColor'
             viewBox='0 0 24 24'
@@ -145,7 +153,11 @@ const getNotificationIcon = (type: string, theme: { palette: unknown }) => {
           }}
         >
           <svg
-            style={{ width: 20, height: 20, color: (theme.palette as Record<string, { dark: string }>).success.dark }}
+            style={{
+              width: 20,
+              height: 20,
+              color: (theme.palette as Record<string, { dark: string }>).success.dark,
+            }}
             fill='none'
             stroke='currentColor'
             viewBox='0 0 24 24'

@@ -38,7 +38,13 @@ export interface FormFieldConfig {
     custom?: (value: unknown) => string | null;
   };
   colSpan?: number;
-  render?: (props: { name: string; value: unknown; onChange: (value: unknown) => void; isRequired: boolean; isDisabled: boolean }) => React.ReactNode;
+  render?: (props: {
+    name: string;
+    value: unknown;
+    onChange: (value: unknown) => void;
+    isRequired: boolean;
+    isDisabled: boolean;
+  }) => React.ReactNode;
 }
 
 export interface FormBuilderConfig {

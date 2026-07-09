@@ -84,7 +84,7 @@ const EhsHazardPage: React.FC = () => {
       setLoading(true);
       const response = await ehsApi.listSafetyIssues({ pagesize: 100 });
       if (response.success && response.data) {
-        const issuesData = Array.isArray(response.data) ? response.data : response.data.data || [];
+        const issuesData = Array.isArray(response.data) ? response.data : response.data.items || [];
         const adapted = issuesData.map((item: SafetyIssue) => ({
           ...item,
           status: translateStatus(item.status),

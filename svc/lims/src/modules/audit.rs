@@ -5,7 +5,7 @@ use axum::{
     routing::get,
     Json, Router,
 };
-use chrono::{DateTime, Timelike, Utc};
+use chrono::{DateTime, Utc};
 use serde::{Deserialize, Serialize};
 use serde_json;
 use sqlx::Row;

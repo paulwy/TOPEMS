@@ -33,9 +33,21 @@ import {
   Barcode,
 } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
-import { MobileLayout, PullToRefresh, MobileSkeleton, MobileCard, MobileButton } from '@/components/mobile';
+import {
+  MobileLayout,
+  PullToRefresh,
+  MobileSkeleton,
+  MobileCard,
+  MobileButton,
+} from '@/components/mobile';
 import { useAppStore } from '@/store';
-import { mobileApi, type InventoryItem, type StocktakeTask, type InboundOrder, type OutboundOrder } from '@/api/mobile';
+import {
+  mobileApi,
+  type InventoryItem,
+  type StocktakeTask,
+  type InboundOrder,
+  type OutboundOrder,
+} from '@/api/mobile';
 import { apiLogger } from '@/utils/logger';
 
 const MobileInventoryPage: React.FC = () => {
@@ -474,11 +486,13 @@ const MobileInventoryPage: React.FC = () => {
                           </Typography>
                         </Box>
                       }
-                      onClick={() => addNotification({
-                        title: '物料详情',
-                        message: `查看 ${item.name} 详情`,
-                        type: 'info',
-                      })}
+                      onClick={() =>
+                        addNotification({
+                          title: '物料详情',
+                          message: `查看 ${item.name} 详情`,
+                          type: 'info',
+                        })
+                      }
                     />
                   </React.Fragment>
                 ))}
@@ -509,7 +523,9 @@ const MobileInventoryPage: React.FC = () => {
                         }}
                       >
                         <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-                          <ClipboardList style={{ width: 18, height: 18, color: theme.palette.primary.main }} />
+                          <ClipboardList
+                            style={{ width: 18, height: 18, color: theme.palette.primary.main }}
+                          />
                           <Typography
                             variant='subtitle2'
                             sx={{ fontWeight: 600 }}
@@ -601,11 +617,13 @@ const MobileInventoryPage: React.FC = () => {
                           <MobileButton
                             size='small'
                             variant='outlined'
-                            onClick={() => addNotification({
-                              title: '开始盘点',
-                              message: `开始 ${task.title}`,
-                              type: 'info',
-                            })}
+                            onClick={() =>
+                              addNotification({
+                                title: '开始盘点',
+                                message: `开始 ${task.title}`,
+                                type: 'info',
+                              })
+                            }
                           >
                             {task.status === 'pending' ? '开始' : '继续'}
                           </MobileButton>
@@ -671,14 +689,18 @@ const MobileInventoryPage: React.FC = () => {
                           >
                             {order.total_items}种物料
                           </Typography>
-                          <Typography variant='body2'>{order.total_quantity.toLocaleString()}件</Typography>
+                          <Typography variant='body2'>
+                            {order.total_quantity.toLocaleString()}件
+                          </Typography>
                         </Box>
                       }
-                      onClick={() => addNotification({
-                        title: '入库单详情',
-                        message: `查看 ${order.order_no}`,
-                        type: 'info',
-                      })}
+                      onClick={() =>
+                        addNotification({
+                          title: '入库单详情',
+                          message: `查看 ${order.order_no}`,
+                          type: 'info',
+                        })
+                      }
                     />
                   </React.Fragment>
                 ))}
@@ -738,14 +760,18 @@ const MobileInventoryPage: React.FC = () => {
                           >
                             {order.total_items}种物料
                           </Typography>
-                          <Typography variant='body2'>{order.total_quantity.toLocaleString()}件</Typography>
+                          <Typography variant='body2'>
+                            {order.total_quantity.toLocaleString()}件
+                          </Typography>
                         </Box>
                       }
-                      onClick={() => addNotification({
-                        title: '出库单详情',
-                        message: `查看 ${order.order_no}`,
-                        type: 'info',
-                      })}
+                      onClick={() =>
+                        addNotification({
+                          title: '出库单详情',
+                          message: `查看 ${order.order_no}`,
+                          type: 'info',
+                        })
+                      }
                     />
                   </React.Fragment>
                 ))}

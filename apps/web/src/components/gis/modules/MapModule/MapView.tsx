@@ -13,7 +13,7 @@ import {
 import { MapPin, Info, Navigation, X } from 'lucide-react';
 import type { DevicePoint, Pipeline, StorageLocation, GeoJSONFeature } from '../../../../api/gis';
 import type { DrawFeature } from '../shared/types';
-import { EARTH } from '@/constants/numbers';
+import { EARTH } from '@topems/shared-constants';
 import MapEvents from './MapEvents';
 import MapControls from './MapControls';
 import LayerManager from './LayerManager';
@@ -26,12 +26,7 @@ import 'leaflet/dist/leaflet.css';
 import 'leaflet-draw/dist/leaflet.draw.css';
 
 type ToolMode =
-  | 'select'
-  | 'measure-distance'
-  | 'measure-area'
-  | 'draw-point'
-  | 'draw-line'
-  | 'draw-polygon';
+  'select' | 'measure-distance' | 'measure-area' | 'draw-point' | 'draw-line' | 'draw-polygon';
 
 interface MapViewProps {
   devicePoints?: DevicePoint[];
@@ -149,8 +144,8 @@ const DetailsPanel: React.FC<{
   selectedItem: DevicePoint | StorageLocation | null;
   onClose: () => void;
 }> = ({ selectedItem, onClose }) => {
-  if (!selectedItem) return null;
   const theme = useTheme();
+  if (!selectedItem) return null;
 
   const formatCoordinate = (value: number) => value.toFixed(6);
 
@@ -229,7 +224,9 @@ const DetailsPanel: React.FC<{
           >
             名称
           </div>
-          <div style={{ fontWeight: 500, color: theme.palette.text.primary }}>{selectedItem.name}</div>
+          <div style={{ fontWeight: 500, color: theme.palette.text.primary }}>
+            {selectedItem.name}
+          </div>
         </div>
         {'device_type' in selectedItem && (
           <div style={{ marginBottom: '1rem' }}>
@@ -242,7 +239,9 @@ const DetailsPanel: React.FC<{
             >
               设备类型
             </div>
-            <div style={{ color: 'var(--mui-palette-text-secondary)' }}>{selectedItem.device_type}</div>
+            <div style={{ color: 'var(--mui-palette-text-secondary)' }}>
+              {selectedItem.device_type}
+            </div>
           </div>
         )}
         {'location_type' in selectedItem && (
@@ -256,7 +255,9 @@ const DetailsPanel: React.FC<{
             >
               位置类型
             </div>
-            <div style={{ color: 'var(--mui-palette-text-secondary)' }}>{selectedItem.location_type}</div>
+            <div style={{ color: 'var(--mui-palette-text-secondary)' }}>
+              {selectedItem.location_type}
+            </div>
           </div>
         )}
         {'status' in selectedItem && (
@@ -294,7 +295,9 @@ const DetailsPanel: React.FC<{
             >
               容量
             </div>
-            <div style={{ color: 'var(--mui-palette-text-secondary)' }}>{selectedItem.capacity}</div>
+            <div style={{ color: 'var(--mui-palette-text-secondary)' }}>
+              {selectedItem.capacity}
+            </div>
           </div>
         )}
         {'current_usage' in selectedItem && selectedItem.current_usage !== undefined && (
@@ -308,7 +311,9 @@ const DetailsPanel: React.FC<{
             >
               当前用量
             </div>
-            <div style={{ color: 'var(--mui-palette-text-secondary)' }}>{selectedItem.current_usage}</div>
+            <div style={{ color: 'var(--mui-palette-text-secondary)' }}>
+              {selectedItem.current_usage}
+            </div>
           </div>
         )}
         {'description' in selectedItem && selectedItem.description && (
@@ -569,7 +574,10 @@ const MapView: React.FC<MapViewProps> = ({
 
         features.push({
           type: 'Feature',
-          geometry: { type: geometryType, coordinates: coordinates as number[] | number[][] | number[][][] },
+          geometry: {
+            type: geometryType,
+            coordinates: coordinates as number[] | number[][] | number[][][],
+          },
           properties: {
             id: feature.id,
             name: feature.label || 'Drawing',
@@ -703,7 +711,9 @@ const MapView: React.FC<MapViewProps> = ({
                         minWidth: '120px',
                       }}
                     >
-                      <div style={{ fontWeight: 500, color: theme.palette.text.primary }}>{pipeline.name}</div>
+                      <div style={{ fontWeight: 500, color: theme.palette.text.primary }}>
+                        {pipeline.name}
+                      </div>
                       <div style={{ fontSize: '0.875rem', color: theme.palette.text.secondary }}>
                         {pipeline.pipeline_type}
                       </div>
@@ -1051,7 +1061,13 @@ const MapView: React.FC<MapViewProps> = ({
             padding: '0.5rem 1rem',
           }}
         >
-          <span style={{ fontSize: '0.875rem', fontWeight: 500, color: 'var(--mui-palette-text-secondary)' }}>
+          <span
+            style={{
+              fontSize: '0.875rem',
+              fontWeight: 500,
+              color: 'var(--mui-palette-text-secondary)',
+            }}
+          >
             {measureResult}
           </span>
         </div>

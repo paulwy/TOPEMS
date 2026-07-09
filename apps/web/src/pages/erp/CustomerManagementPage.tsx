@@ -17,12 +17,10 @@ import {
 import { PageContainer } from '@/components/common';
 import React, { useState, useEffect, useMemo, useCallback } from 'react';
 import { designTokens } from '@/theme/tokens';
-
-const ct = designTokens.colors;
 import type { Customer, CreateCustomerRequest, UpdateCustomerRequest } from '@/api/erp';
 import { erpApi } from '@/api/erp';
 import { useAppStore } from '@/store';
-import { LoadingSpinner } from '@/components/common/LoadingSpinner';
+import { LoadingSpinner } from '@topems/shared-components';
 import {
   ListPageTemplate,
   type ColumnDef,
@@ -31,6 +29,8 @@ import {
 } from '@/components/templates';
 import { Plus, Edit, Trash2, Eye, User } from 'lucide-react';
 import { apiLogger } from '@/utils/logger';
+
+const ct = designTokens.colors;
 
 const CustomerManagementPage: React.FC = () => {
   const [customers, setCustomers] = useState<Customer[]>([]);

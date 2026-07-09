@@ -7,7 +7,7 @@ import { scmApi } from '@/api/scm';
 import type { InventoryTurnoverStat } from '@/api/scm';
 import { useAppStore } from '@/store';
 import { designTokens } from '@/theme/tokens';
-import { logger } from "@/utils/logger";
+import { logger } from '@/utils/logger';
 
 const ct = designTokens.colors;
 

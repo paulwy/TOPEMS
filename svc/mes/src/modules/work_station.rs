@@ -269,7 +269,7 @@ pub async fn list_work_stations(
 
     let workstation_list: Vec<WorkStationResponse> = workstations
         .iter()
-        .map(|r| row_to_workstation_response(r))
+        .map(row_to_workstation_response)
         .collect();
 
     Json(ApiResponse::success(

@@ -6,7 +6,7 @@ import {
   getPermissionsByGroup,
   type ModuleCode,
 } from '@/config/permissions';
-import { logger } from "@/utils/logger";
+import { logger } from '@/utils/logger';
 
 const PERMISSION_CACHE_KEY = 'permission_cache';
 const CACHE_TTL = 5 * 60 * 1000;

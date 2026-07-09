@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react';
-import {Box,
+import {
+  Box,
   TextField,
   InputAdornment,
   Button,
@@ -24,7 +25,9 @@ import {Box,
   ListItem,
   ListItemIcon,
   ListItemText,
-  Divider, useTheme} from '@mui/material';
+  Divider,
+  useTheme,
+} from '@mui/material';
 import {
   Search,
   Plus,
@@ -39,11 +42,7 @@ import {
   Table,
 } from 'lucide-react';
 import { PageContainer } from '@/components/common';
-import {
-  ListPageTemplate,
-  type ColumnDef,
-  type RowAction,
-} from '@/components/templates';
+import { ListPageTemplate, type ColumnDef, type RowAction } from '@/components/templates';
 import {
   listDataSources,
   getDataSource,
@@ -54,7 +53,7 @@ import {
   listTables,
 } from '../../api/lowcode';
 import type { DataSource, TableInfo } from '../../api/lowcode/types';
-import { logger } from "@/utils/logger";
+import { logger } from '@/utils/logger';
 
 const DataSourcePage = () => {
   const [datasources, setDatasources] = useState<DataSource[]>([]);
@@ -70,7 +69,10 @@ const DataSourcePage = () => {
   const [editingDs, setEditingDs] = useState<Partial<DataSource> | null>(null);
   const [formData, setFormData] = useState<Partial<DataSource>>({});
 
-  const [testResult, setTestResult] = useState<{ status: 'testing' | 'success' | 'error' | null; message?: string }>({ status: null });
+  const [testResult, setTestResult] = useState<{
+    status: 'testing' | 'success' | 'error' | null;
+    message?: string;
+  }>({ status: null });
 
   const [tablesDialogOpen, setTablesDialogOpen] = useState(false);
   const [selectedDs, setSelectedDs] = useState<DataSource | null>(null);
@@ -134,7 +136,9 @@ const DataSourcePage = () => {
       if (editingDs) {
         await updateDataSource(editingDs.id!, formData);
       } else {
-        await createDataSource(formData as Omit<DataSource, 'id' | 'status' | 'createdAt' | 'updatedAt'>);
+        await createDataSource(
+          formData as Omit<DataSource, 'id' | 'status' | 'createdAt' | 'updatedAt'>
+        );
       }
       setDialogOpen(false);
       loadDataSources();
@@ -190,23 +194,35 @@ const DataSourcePage = () => {
 
   const getTypeIcon = (type: string) => {
     switch (type) {
-      case 'mysql': return '🐬';
-      case 'postgresql': return '🐘';
-      case 'mongodb': return '🍃';
-      case 'redis': return '🔴';
-      default: return '💾';
+      case 'mysql':
+        return '🐬';
+      case 'postgresql':
+        return '🐘';
+      case 'mongodb':
+        return '🍃';
+      case 'redis':
+        return '🔴';
+      default:
+        return '💾';
     }
   };
 
   const getTypeLabel = (type: string) => {
     switch (type) {
-      case 'mysql': return 'MySQL';
-      case 'postgresql': return 'PostgreSQL';
-      case 'mongodb': return 'MongoDB';
-      case 'redis': return 'Redis';
-      case 'elasticsearch': return 'Elasticsearch';
-      case 'api': return 'API';
-      default: return type;
+      case 'mysql':
+        return 'MySQL';
+      case 'postgresql':
+        return 'PostgreSQL';
+      case 'mongodb':
+        return 'MongoDB';
+      case 'redis':
+        return 'Redis';
+      case 'elasticsearch':
+        return 'Elasticsearch';
+      case 'api':
+        return 'API';
+      default:
+        return type;
     }
   };
 
@@ -235,9 +251,9 @@ const DataSourcePage = () => {
               <span style={{ fontWeight: 500 }}>{row.name}</span>
               <Chip
                 label={getStatusConfig(row.status).label}
-                size="small"
+                size='small'
                 color={getStatusConfig(row.status).color}
-                variant="outlined"
+                variant='outlined'
               />
             </Box>
             <span style={{ fontSize: 12, color: theme.palette.text.secondary }}>
@@ -286,12 +302,12 @@ const DataSourcePage = () => {
 
   return (
     <PageContainer
-      title="数据源管理"
-      subtitle="管理低代码平台的数据源连接"
+      title='数据源管理'
+      subtitle='管理低代码平台的数据源连接'
       loading={loading}
       headerActions={
         <Button
-          variant="contained"
+          variant='contained'
           startIcon={<Plus style={{ width: 18, height: 18 }} />}
           onClick={handleCreate}
         >
@@ -311,20 +327,26 @@ const DataSourcePage = () => {
         onPageSizeChange={setPageSize}
         searchValue={searchTerm}
         onSearchChange={handleSearch}
-        searchPlaceholder="搜索数据源..."
+        searchPlaceholder='搜索数据源...'
         filterContent={
-          <FormControl size="small" sx={{ width: 180 }}>
+          <FormControl
+            size='small'
+            sx={{ width: 180 }}
+          >
             <InputLabel>数据源类型</InputLabel>
             <Select
               value={typeFilter}
-              label="数据源类型"
-              onChange={(e) => { setTypeFilter(e.target.value); setPage(0); }}
+              label='数据源类型'
+              onChange={(e) => {
+                setTypeFilter(e.target.value);
+                setPage(0);
+              }}
             >
-              <MenuItem value="">全部</MenuItem>
-              <MenuItem value="mysql">MySQL</MenuItem>
-              <MenuItem value="postgresql">PostgreSQL</MenuItem>
-              <MenuItem value="mongodb">MongoDB</MenuItem>
-              <MenuItem value="redis">Redis</MenuItem>
+              <MenuItem value=''>全部</MenuItem>
+              <MenuItem value='mysql'>MySQL</MenuItem>
+              <MenuItem value='postgresql'>PostgreSQL</MenuItem>
+              <MenuItem value='mongodb'>MongoDB</MenuItem>
+              <MenuItem value='redis'>Redis</MenuItem>
             </Select>
           </FormControl>
         }
@@ -333,93 +355,103 @@ const DataSourcePage = () => {
       <Dialog
         open={dialogOpen}
         onClose={() => setDialogOpen(false)}
-        maxWidth="sm"
+        maxWidth='sm'
         fullWidth
       >
-        <DialogTitle>
-          {editingDs ? '编辑数据源' : '新建数据源'}
-        </DialogTitle>
+        <DialogTitle>{editingDs ? '编辑数据源' : '新建数据源'}</DialogTitle>
         <DialogContent>
           <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2, pt: 1 }}>
             <TextField
-              label="数据源名称"
+              label='数据源名称'
               value={formData.name || ''}
               onChange={(e) => setFormData({ ...formData, name: e.target.value })}
-              size="small"
+              size='small'
             />
-            <FormControl size="small">
+            <FormControl size='small'>
               <InputLabel>类型</InputLabel>
               <Select
                 value={formData.type || 'mysql'}
-                label="类型"
+                label='类型'
                 onChange={(e) => setFormData({ ...formData, type: e.target.value })}
               >
-                <MenuItem value="mysql">MySQL</MenuItem>
-                <MenuItem value="postgresql">PostgreSQL</MenuItem>
-                <MenuItem value="mongodb">MongoDB</MenuItem>
-                <MenuItem value="redis">Redis</MenuItem>
+                <MenuItem value='mysql'>MySQL</MenuItem>
+                <MenuItem value='postgresql'>PostgreSQL</MenuItem>
+                <MenuItem value='mongodb'>MongoDB</MenuItem>
+                <MenuItem value='redis'>Redis</MenuItem>
               </Select>
             </FormControl>
-            <Grid container spacing={2}>
+            <Grid
+              container
+              spacing={2}
+            >
               <Grid size={{ xs: 8 }}>
                 <TextField
-                  label="主机地址"
+                  label='主机地址'
                   value={formData.host || ''}
                   onChange={(e) => setFormData({ ...formData, host: e.target.value })}
-                  size="small"
+                  size='small'
                   fullWidth
                 />
               </Grid>
               <Grid size={{ xs: 4 }}>
                 <TextField
-                  label="端口"
-                  type="number"
+                  label='端口'
+                  type='number'
                   value={formData.port || 3306}
                   onChange={(e) => setFormData({ ...formData, port: Number(e.target.value) })}
-                  size="small"
+                  size='small'
                   fullWidth
                 />
               </Grid>
             </Grid>
             <TextField
-              label="数据库名"
+              label='数据库名'
               value={formData.database || ''}
               onChange={(e) => setFormData({ ...formData, database: e.target.value })}
-              size="small"
+              size='small'
             />
-            <Grid container spacing={2}>
+            <Grid
+              container
+              spacing={2}
+            >
               <Grid size={{ xs: 6 }}>
                 <TextField
-                  label="用户名"
+                  label='用户名'
                   value={formData.username || ''}
                   onChange={(e) => setFormData({ ...formData, username: e.target.value })}
-                  size="small"
+                  size='small'
                   fullWidth
                 />
               </Grid>
               <Grid size={{ xs: 6 }}>
                 <TextField
-                  label="密码"
-                  type="password"
+                  label='密码'
+                  type='password'
                   value={formData.password || ''}
                   onChange={(e) => setFormData({ ...formData, password: e.target.value })}
-                  size="small"
+                  size='small'
                   fullWidth
                 />
               </Grid>
             </Grid>
             <TextField
-              label="描述"
+              label='描述'
               value={formData.description || ''}
               onChange={(e) => setFormData({ ...formData, description: e.target.value })}
-              size="small"
+              size='small'
               multiline
               rows={2}
             />
 
             {testResult.status && (
               <Alert
-                severity={testResult.status === 'success' ? 'success' : testResult.status === 'error' ? 'error' : 'info'}
+                severity={
+                  testResult.status === 'success'
+                    ? 'success'
+                    : testResult.status === 'error'
+                      ? 'error'
+                      : 'info'
+                }
                 icon={testResult.status === 'testing' ? <CircularProgress size={16} /> : undefined}
               >
                 {testResult.message}
@@ -427,7 +459,7 @@ const DataSourcePage = () => {
             )}
 
             <Button
-              variant="outlined"
+              variant='outlined'
               startIcon={<RefreshCw style={{ width: 16, height: 16 }} />}
               onClick={handleTest}
               disabled={testResult.status === 'testing'}
@@ -438,18 +470,22 @@ const DataSourcePage = () => {
         </DialogContent>
         <DialogActions>
           <Button onClick={() => setDialogOpen(false)}>取消</Button>
-          <Button variant="contained" onClick={handleSave}>保存</Button>
+          <Button
+            variant='contained'
+            onClick={handleSave}
+          >
+            保存
+          </Button>
         </DialogActions>
       </Dialog>
 
       <Dialog
         open={tablesDialogOpen}
         onClose={() => setTablesDialogOpen(false)}
-        maxWidth="md"
+        maxWidth='md'
         fullWidth
       >
-        <DialogTitle>
-          {selectedDs?.name} - 数据表列表</DialogTitle>
+        <DialogTitle>{selectedDs?.name} - 数据表列表</DialogTitle>
         <DialogContent dividers>
           {tablesLoading ? (
             <Box sx={{ display: 'flex', justifyContent: 'center', py: 4 }}>
@@ -460,25 +496,34 @@ const DataSourcePage = () => {
               {tables.map((table, idx) => (
                 <div key={table.name}>
                   <ListItem
-                  secondaryAction={
-                    <Chip label={`${table.rows} 行`} size="small" variant="outlined" />
-                  }
-                >
-                  <ListItemIcon sx={{ minWidth: 40 }}>
-                    <Table style={{ width: 18, height: 18, color: theme.palette.primary.main }} />
-                  </ListItemIcon>
-                  <ListItemText
-                    primary={table.label || table.name}
-                    secondary={table.comment || table.name}
-                  />
-                </ListItem>
-                  {idx < tables.length - 1 && <Divider variant="inset" component="li" />}
+                    secondaryAction={
+                      <Chip
+                        label={`${table.rows} 行`}
+                        size='small'
+                        variant='outlined'
+                      />
+                    }
+                  >
+                    <ListItemIcon sx={{ minWidth: 40 }}>
+                      <Table style={{ width: 18, height: 18, color: theme.palette.primary.main }} />
+                    </ListItemIcon>
+                    <ListItemText
+                      primary={table.label || table.name}
+                      secondary={table.comment || table.name}
+                    />
+                  </ListItem>
+                  {idx < tables.length - 1 && (
+                    <Divider
+                      variant='inset'
+                      component='li'
+                    />
+                  )}
                 </div>
               ))}
               {tables.length === 0 && (
                 <ListItem>
                   <ListItemText
-                    primary="暂无数据表"
+                    primary='暂无数据表'
                     sx={{ textAlign: 'center', color: 'text.secondary' }}
                   />
                 </ListItem>

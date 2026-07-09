@@ -25,7 +25,7 @@ import type {
 import type { ListParams } from '@/api/mes';
 import { processRouteApi } from '@/api/mes/process';
 import { useAppStore } from '@/store';
-import { LoadingSpinner } from '@/components/common/LoadingSpinner';
+import { LoadingSpinner } from '@topems/shared-components';
 import {
   ListPageTemplate,
   type ColumnDef,
@@ -35,6 +35,7 @@ import {
 import { Plus, Edit, Trash2, Eye, Route, Clock } from 'lucide-react';
 import { apiLogger } from '@/utils/logger';
 import { designTokens } from '@/theme/tokens';
+
 const ct = designTokens.colors;
 
 const ProcessRoutePage: React.FC = () => {

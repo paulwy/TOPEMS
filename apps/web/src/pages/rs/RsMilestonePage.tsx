@@ -266,7 +266,7 @@ const RsMilestonePage: React.FC = () => {
         { label: '规划中', value: 'planning' },
       ],
       value: statusFilter || '',
-      onChange: (value: unknown) => setStatusFilter(value as string || ''),
+      onChange: (value: unknown) => setStatusFilter((value as string) || ''),
     },
     {
       id: 'start_date',
@@ -389,7 +389,7 @@ const RsMilestonePage: React.FC = () => {
                   start_date: e.target.value,
                 })
               }
-              slotProps={{ inputLabel: { shrink: true } }}
+              slotProps={{ inputLabel: { shrink: true } } as any}
             />
             <TextField
               label='结束日期'
@@ -402,7 +402,7 @@ const RsMilestonePage: React.FC = () => {
                   end_date: e.target.value,
                 })
               }
-              slotProps={{ inputLabel: { shrink: true } }}
+              slotProps={{ inputLabel: { shrink: true } } as any}
             />
             <TextField
               label='关联项目'

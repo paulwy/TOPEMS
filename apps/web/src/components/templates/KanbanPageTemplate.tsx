@@ -436,7 +436,9 @@ export const KanbanPageTemplate: React.FC<KanbanPageTemplateProps> = ({
         onClick={card.onClick}
       >
         <Box sx={{ display: 'flex', alignItems: 'flex-start', gap: 1, mb: 1 }}>
-          <GripVertical style={{ width: 16, height: 16, color: theme.palette.text.secondary, flexShrink: 0 }} />
+          <GripVertical
+            style={{ width: 16, height: 16, color: theme.palette.text.secondary, flexShrink: 0 }}
+          />
           <Box sx={{ flex: 1, minWidth: 0 }}>
             <Typography
               variant='body2'

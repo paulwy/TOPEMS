@@ -1,7 +1,6 @@
 import React, { useState, useEffect, useMemo } from 'react';
 import { PageContainer } from '@/components/common';
 import { designTokens } from '@/theme/tokens';
-const ct = designTokens.colors;
 import {
   Plus,
   Edit,
@@ -22,10 +21,7 @@ import {
   type ColumnDef,
   type RowAction,
 } from '@/components';
-import { StatusBadge } from '@/components/common/StatusBadge';
-import { ActionButton } from '@/components/common/ActionButton';
-import { FormField } from '@/components/common/FormField';
-import { FormSelect } from '@/components/common/FormSelect';
+import { StatusBadge, ActionButton, FormField, FormSelect } from '@topems/shared-components';
 import { Dialog } from '@/components/common/Dialog';
 import { useAppStore } from '@/store';
 import { logger } from '@/utils/logger';
@@ -36,6 +32,8 @@ import {
   type PaginatedResult,
   type ListParams,
 } from '@/api/hrm';
+
+const ct = designTokens.colors;
 
 const LeaveManagementPage: React.FC = () => {
   const [loading, setLoading] = useState(false);
@@ -471,7 +469,7 @@ const LeaveManagementPage: React.FC = () => {
                   handleInputChange('start_date', e.target.value)
                 }
                 fullWidth
-                slotProps={{ inputLabel: { shrink: true } }}
+                slotProps={{ inputLabel: { shrink: true } } as any}
               />
               <FormField
                 name='end_date'
@@ -482,7 +480,7 @@ const LeaveManagementPage: React.FC = () => {
                   handleInputChange('end_date', e.target.value)
                 }
                 fullWidth
-                slotProps={{ inputLabel: { shrink: true } }}
+                slotProps={{ inputLabel: { shrink: true } } as any}
               />
             </Box>
             <FormField

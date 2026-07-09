@@ -586,7 +586,7 @@ const EhsAccidentPage: React.FC = () => {
                   label='发生时间'
                   value={formData.occurred_at}
                   onChange={(e) => setFormData({ ...formData, occurred_at: e.target.value })}
-                  slotProps={{ inputLabel: { shrink: true } }}
+                  slotProps={{ inputLabel: { shrink: true } } as any}
                 />
               </Box>
               <Box sx={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 2 }}>

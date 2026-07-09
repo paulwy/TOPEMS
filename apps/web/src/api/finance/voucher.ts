@@ -34,25 +34,25 @@ const createApiClient = () => {
 
 export const voucherApi = {
   list: (params?: VoucherQueryParams): Promise<ApiResponse<PaginatedResult<Voucher>>> => {
-    return createApiClient().get('/finance/vouchers', { params });
+    return createApiClient().get('/erp/finance/vouchers', { params });
   },
 
   get: (id: string): Promise<ApiResponse<Voucher>> => {
-    return createApiClient().get(`/finance/vouchers/${id}`);
+    return createApiClient().get(`/erp/finance/vouchers/${id}`);
   },
 
   getWithEntries: (id: string): Promise<ApiResponse<Voucher>> => {
-    return createApiClient().get(`/finance/vouchers/${id}/entries`);
+    return createApiClient().get(`/erp/finance/vouchers/${id}/entries`);
   },
 
   create: (data: CreateVoucherRequest): Promise<ApiResponse<VoucherOperationResult>> => {
-    return createApiClient().post('/finance/vouchers', data);
+    return createApiClient().post('/erp/finance/vouchers', data);
   },
 
   batchCreate: (
     vouchers: CreateVoucherRequest[]
   ): Promise<ApiResponse<{ results: VoucherOperationResult[] }>> => {
-    return createApiClient().post('/finance/vouchers/batch', {
+    return createApiClient().post('/erp/finance/vouchers/batch', {
       vouchers,
     });
   },
@@ -61,49 +61,49 @@ export const voucherApi = {
     id: string,
     data: Partial<CreateVoucherRequest>
   ): Promise<ApiResponse<VoucherOperationResult>> => {
-    return createApiClient().put(`/finance/vouchers/${id}`, data);
+    return createApiClient().put(`/erp/finance/vouchers/${id}`, data);
   },
 
   delete: (id: string): Promise<ApiResponse<void>> => {
-    return createApiClient().delete(`/finance/vouchers/${id}`);
+    return createApiClient().delete(`/erp/finance/vouchers/${id}`);
   },
 
   batchDelete: (ids: string[]): Promise<ApiResponse<BatchOperationResult>> => {
-    return createApiClient().post('/finance/vouchers/batch-delete', {
+    return createApiClient().post('/erp/finance/vouchers/batch-delete', {
       ids,
     });
   },
 
   submit: (id: string): Promise<ApiResponse<void>> => {
-    return createApiClient().post(`/finance/vouchers/${id}/submit`, {});
+    return createApiClient().post(`/erp/finance/vouchers/${id}/submit`, {});
   },
 
   approve: (id: string): Promise<ApiResponse<void>> => {
-    return createApiClient().post(`/finance/vouchers/${id}/approve`, {});
+    return createApiClient().post(`/erp/finance/vouchers/${id}/approve`, {});
   },
 
   batchApprove: (ids: string[]): Promise<ApiResponse<BatchOperationResult>> => {
-    return createApiClient().post('/finance/vouchers/batch-approve', {
+    return createApiClient().post('/erp/finance/vouchers/batch-approve', {
       ids,
     });
   },
 
   unapprove: (id: string): Promise<ApiResponse<void>> => {
-    return createApiClient().post(`/finance/vouchers/${id}/unapprove`, {});
+    return createApiClient().post(`/erp/finance/vouchers/${id}/unapprove`, {});
   },
 
   post: (id: string): Promise<ApiResponse<void>> => {
-    return createApiClient().post(`/finance/vouchers/${id}/post`, {});
+    return createApiClient().post(`/erp/finance/vouchers/${id}/post`, {});
   },
 
   batchPost: (ids: string[]): Promise<ApiResponse<BatchOperationResult>> => {
-    return createApiClient().post('/finance/vouchers/batch-post', {
+    return createApiClient().post('/erp/finance/vouchers/batch-post', {
       ids,
     });
   },
 
   reverse: (id: string, reason?: string): Promise<ApiResponse<VoucherOperationResult>> => {
-    return createApiClient().post(`/finance/vouchers/${id}/reverse`, {
+    return createApiClient().post(`/erp/finance/vouchers/${id}/reverse`, {
       reason,
     });
   },
@@ -112,7 +112,7 @@ export const voucherApi = {
     period?: string;
     voucher_type?: string;
   }): Promise<ApiResponse<{ voucher_no: string }>> => {
-    return createApiClient().get('/finance/vouchers/next-no', {
+    return createApiClient().get('/erp/finance/vouchers/next-no', {
       params,
     });
   },
@@ -121,7 +121,7 @@ export const voucherApi = {
     template_id: string;
     source_data: Record<string, any>;
   }): Promise<ApiResponse<Voucher>> => {
-    return createApiClient().post('/finance/vouchers/generate', params);
+    return createApiClient().post('/erp/finance/vouchers/generate', params);
   },
 
   import: (
@@ -136,13 +136,13 @@ export const voucherApi = {
   > => {
     const formData = new FormData();
     formData.append('file', file);
-    return createApiClient().post('/finance/vouchers/import', formData, {
+    return createApiClient().post('/erp/finance/vouchers/import', formData, {
       headers: { 'Content-Type': 'multipart/form-data' },
     });
   },
 
   export: async (params: VoucherQueryParams): Promise<Blob> => {
-    return downloadBlob('/api', '/finance/vouchers/export', {
+    return downloadBlob('/api', '/erp/finance/vouchers/export', {
       params: params as unknown as Record<string, unknown>,
     });
   },

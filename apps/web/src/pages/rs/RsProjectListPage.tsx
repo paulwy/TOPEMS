@@ -8,7 +8,7 @@ import { PageContainer } from '@/components/common';
 import { rsApi } from '@/api/rs';
 import { useAppStore } from '@/store';
 import type { Project } from '@/api/rs';
-import ConfirmDialog from '@/components/common/ConfirmDialog';
+import { ConfirmDialog } from '@topems/shared-components';
 import { designTokens } from '@/theme/tokens';
 
 const ct = designTokens.colors;
@@ -206,7 +206,7 @@ const RsProjectListPage: React.FC = () => {
           { label: '取消', value: 'cancelled' },
         ],
         value: statusFilter || '',
-        onChange: (value: unknown) => setStatusFilter(value as string || null),
+        onChange: (value: unknown) => setStatusFilter((value as string) || null),
       },
     ],
     [statusFilter]

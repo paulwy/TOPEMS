@@ -1,5 +1,5 @@
 import { useState, useCallback, useEffect, useRef } from 'react';
-import { PLUGIN_TIMEOUT } from '@/constants/timeouts';
+import { PLUGIN_TIMEOUT } from '@topems/shared-constants';
 
 export interface ServiceInfo {
   key: string;

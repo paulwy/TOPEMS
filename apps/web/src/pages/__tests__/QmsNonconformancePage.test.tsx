@@ -8,7 +8,9 @@ import { useAppStore } from '@/store';
 
 vi.mock('@/api/qms', () => ({
   qmsApi: {
-    listIssues: vi.fn().mockResolvedValue({ success: true, data: { data: [], pagination: { total: 0 } } }),
+    listIssues: vi
+      .fn()
+      .mockResolvedValue({ success: true, data: { data: [], pagination: { total: 0 } } }),
     createIssue: vi.fn(),
     updateIssue: vi.fn(),
     deleteIssue: vi.fn(),

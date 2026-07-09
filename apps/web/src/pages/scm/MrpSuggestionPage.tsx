@@ -18,7 +18,12 @@ import {
 } from '@mui/material';
 import React, { useState, useEffect, useCallback } from 'react';
 import { useSearchParams } from 'react-router-dom';
-import type { MrpSuggestion, MrpMaterialSummary, MrpSuggestionQueryParams, MrpMaterialSummaryQueryParams } from '@/api/scm';
+import type {
+  MrpSuggestion,
+  MrpMaterialSummary,
+  MrpSuggestionQueryParams,
+  MrpMaterialSummaryQueryParams,
+} from '@/api/scm';
 import { scmApi } from '@/api/scm';
 import { useAppStore } from '@/store';
 import {
@@ -36,7 +41,7 @@ import {
 import { apiLogger } from '@/utils/logger';
 import { ListPageTemplate, type ColumnDef } from '@/components/templates';
 import { PageContainer } from '@/components/common';
-import ConfirmDialog from '@/components/common/ConfirmDialog';
+import { ConfirmDialog } from '@topems/shared-components';
 
 const MrpSuggestionPage: React.FC = () => {
   const [searchParams] = useSearchParams();

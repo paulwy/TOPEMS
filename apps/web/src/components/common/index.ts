@@ -20,41 +20,42 @@ export type { FormFieldConfig, FormBuilderConfig } from './FormBuilder';
 export { Dialog } from './Dialog';
 export type { DialogProps, DialogSize } from './Dialog';
 
-// ConfirmDialog - 已增强，保留原导出
+// [shared] ConfirmDialog - 已提升到 @topems/shared-components
 export {
-  default as ConfirmDialog,
+  ConfirmDialog,
   AlertDialog,
   InfoDialog,
   SuccessDialog,
   WarningDialog,
   ErrorDialog,
   ConfirmationDialog,
-} from './ConfirmDialog';
-export type { ConfirmDialogConfig } from './ConfirmDialog';
+  type ConfirmDialogConfig,
+  type DialogType,
+  type DialogButtonType,
+} from '@topems/shared-components';
 
 // [shared] PaginationComponent - 已提升到 @topems/shared-components
-export { default as PaginationComponent } from './Pagination';
-export type { PaginationConfig } from './Pagination';
+export {
+  Pagination as PaginationComponent,
+  type PaginationConfig,
+} from '@topems/shared-components';
 
 // [shared] ProgressBar - 已提升到 @topems/shared-components
-export { default as ProgressBar } from './ProgressBar';
-export type { ProgressBarProps } from './ProgressBar';
+export { ProgressBar, type ProgressBarProps } from '@topems/shared-components';
 
 // TreeView - 保留原导出
 export { default as TreeView } from './TreeView';
 export type { TreeNode, TreeViewProps } from './TreeView';
 
 // [shared] Stepper - 已提升到 @topems/shared-components
-export { default as Stepper } from './Stepper';
-export type { StepperProps, StepItem } from './Stepper';
+export { Stepper, type StepperProps, type StepItem } from '@topems/shared-components';
 
 // HelpButton - 保留原导出
 export { default as HelpButton } from './HelpButton';
 export type { HelpButtonProps } from './HelpButton';
 
 // [shared] StatusBadge - 已提升到 @topems/shared-components
-export { default as StatusBadge } from './StatusBadge';
-export type { StatusBadgeProps } from './StatusBadge';
+export { StatusBadge, type StatusBadgeProps } from '@topems/shared-components';
 
 /**
  * @deprecated 已合并到 templates/DashboardTemplate.tsx
@@ -80,9 +81,8 @@ export type { AmountDisplayProps } from './AmountDisplay';
 export { default as DateRangeQuickSelect } from './DateRangeQuickSelect';
 export type { DateRangeQuickSelectProps, DateRange } from './DateRangeQuickSelect';
 
-// RelativeTime - 相对时间显示
-export { default as RelativeTime } from './RelativeTime';
-export type { RelativeTimeProps } from './RelativeTime';
+// [shared] RelativeTime - 已提升到 @topems/shared-components
+export { RelativeTime, type RelativeTimeProps } from '@topems/shared-components';
 
 // DateRangePicker - 保留原导出
 export { default as DateRangePicker } from './DateRangePicker';
@@ -112,9 +112,9 @@ export type { StatusTimelineProps, TimelineItem } from './StatusTimeline';
 export { default as CommentList } from './CommentList';
 export type { CommentListProps, Comment } from './CommentList';
 
-// UserSelect - 保留原导出
-export { default as UserSelect } from './UserSelect';
-export type { UserSelectProps, User } from './UserSelect';
+// [shared] UserSelect - 已提升到 @topems/shared-components
+export { UserSelect, type UserSelectProps } from '@topems/shared-components';
+export type { User } from '@topems/shared-types';
 
 // DepartmentSelect - 保留原导出
 export { default as DepartmentSelect } from './DepartmentSelect';
@@ -123,26 +123,26 @@ export type { DepartmentSelectProps, Department } from './DepartmentSelect';
 // Grid - Grid2 兼容组件
 export { Grid } from './Grid';
 
-// BackButton - 统一返回按钮（支持智能返回）
-export { default as BackButton } from './BackButton';
-export type { BackButtonProps } from './BackButton';
+// [shared] BackButton - 已提升到 @topems/shared-components
+export { BackButton, type BackButtonProps } from '@topems/shared-components';
 
 // ===== 统一表单组件 =====
 // [shared] FormField - 已提升到 @topems/shared-components
-export { default as FormField } from './FormField';
-export type { FormFieldProps } from './FormField';
+export { FormField, type FormFieldProps } from '@topems/shared-components';
 
 // [shared] FormSelect - 已提升到 @topems/shared-components
-export { default as FormSelect } from './FormSelect';
-export type { FormSelectProps, FormSelectOption } from './FormSelect';
+export { FormSelect, type FormSelectProps, type FormSelectOption } from '@topems/shared-components';
 
 // [shared] ActionButton - 已提升到 @topems/shared-components
-export { default as ActionButton } from './ActionButton';
-export type { ActionButtonProps, ActionButtonVariant, ActionButtonSize } from './ActionButton';
+export {
+  ActionButton,
+  type ActionButtonProps,
+  type ActionButtonVariant,
+  type ActionButtonSize,
+} from '@topems/shared-components';
 
 // [shared] LoadingSpinner - 已提升到 @topems/shared-components
-export { default as LoadingSpinner } from './LoadingSpinner';
-// 注意：LoadingSpinnerProps 是 interface，会自动导出
+export { LoadingSpinner } from '@topems/shared-components';
 
 // AdvancedFilterPanel - 高级筛选面板组件
 export { default as AdvancedFilterPanel } from './AdvancedFilter';
@@ -159,12 +159,17 @@ export {
   SearchEmptyState,
   PermissionEmptyState,
   ErrorEmptyState,
-} from './EmptyState';
-export type { EmptyStateProps, ErrorEmptyStateProps } from './EmptyState';
+  type EmptyStateProps,
+  type ErrorEmptyStateProps,
+} from '@topems/shared-components';
 
 // [shared] FilterBar - 已提升到 @topems/shared-components
-export { FilterBar } from './FilterBar';
-export type { FilterOption, FilterConfig, FilterBarProps } from './FilterBar';
+export {
+  FilterBar,
+  type FilterOption,
+  type FilterConfig,
+  type FilterBarProps,
+} from '@topems/shared-components';
 
 // MuiStatCard - MUI风格统计卡片（从mui/迁移）
 export { StatCard as MuiStatCard, StatCardGroup } from './MuiStatCard';

@@ -161,14 +161,6 @@ fn opt_naive_to_utc(dt: Option<NaiveDateTime>) -> Option<DateTime<Utc>> {
     dt.map(|d| Utc.from_utc_datetime(&d))
 }
 
-fn datetime_to_string(dt: Option<NaiveDateTime>) -> String {
-    naive_to_utc(dt).to_rfc3339()
-}
-
-fn opt_datetime_to_string(dt: Option<NaiveDateTime>) -> Option<String> {
-    opt_naive_to_utc(dt).map(|d| d.to_rfc3339())
-}
-
 fn big_decimal_to_f64(bd: Option<BigDecimal>) -> f64 {
     bd.and_then(|d| d.to_string().parse::<f64>().ok())
         .unwrap_or(0.0)
@@ -491,7 +483,7 @@ pub async fn create_from_erp(
     let planned_start = req.planned_start_date.unwrap_or(now);
     let planned_end = req
         .planned_completion_date
-        .or_else(|| req.erp_order.delivery_date)
+        .or(req.erp_order.delivery_date)
         .unwrap_or_else(|| now + chrono::Duration::days(7));
 
     let result = sqlx::query!(

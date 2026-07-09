@@ -132,7 +132,7 @@ export const GisFencePage: React.FC = () => {
       setError('');
       const res = await gisApi.listMapMarkers({ pagesize: 50 });
       if (res.success && res.data) {
-        setMapMarkers(res.data.data || []);
+        setMapMarkers(res.data.items || []);
       }
     } catch (err: unknown) {
       const msg = err instanceof Error ? err.message : '加载地图标记失败';
@@ -506,7 +506,10 @@ export const GisFencePage: React.FC = () => {
                           </TableCell>
                           <TableCell>
                             <Box sx={{ display: 'flex', gap: 1 }}>
-                              <IconButton size='small' aria-label='编辑'>
+                              <IconButton
+                                size='small'
+                                aria-label='编辑'
+                              >
                                 <Edit size={16} />
                               </IconButton>
                               <IconButton

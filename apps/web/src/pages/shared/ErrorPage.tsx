@@ -1,7 +1,7 @@
 import React from 'react';
 import { AlertCircle } from 'lucide-react';
 import { Box, Typography } from '@mui/material';
-import BackButton from '@/components/common/BackButton';
+import { BackButton } from '@topems/shared-components';
 
 const ErrorPage: React.FC = () => {
   return (

@@ -6,11 +6,7 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { useNotification } from './useNotification';
 import { voucherTemplateApi } from '../api/voucherTemplate';
-import type {
-  VoucherTemplate,
-  VoucherTemplateType,
-  VoucherTemplateEntry,
-} from '../types/finance';
+import type { VoucherTemplate, VoucherTemplateType, VoucherTemplateEntry } from '../types/finance';
 
 // ============================================
 // 一、模板管理

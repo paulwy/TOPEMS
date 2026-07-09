@@ -734,7 +734,11 @@ ${content
                       ),
                       td: ({ children }) => (
                         <td
-                          style={{ border: '1px solid var(--mui-palette-divider)', padding: '0.5rem', textAlign: 'left' }}
+                          style={{
+                            border: '1px solid var(--mui-palette-divider)',
+                            padding: '0.5rem',
+                            textAlign: 'left',
+                          }}
                         >
                           {children}
                         </td>
@@ -805,7 +809,11 @@ ${content
                       ),
                       hr: () => (
                         <hr
-                          style={{ border: 'none', borderTop: '1px solid var(--mui-palette-divider)', margin: '2rem 0' }}
+                          style={{
+                            border: 'none',
+                            borderTop: '1px solid var(--mui-palette-divider)',
+                            margin: '2rem 0',
+                          }}
                         />
                       ),
                       strong: ({ children }) => (

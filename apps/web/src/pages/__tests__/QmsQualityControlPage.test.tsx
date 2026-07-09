@@ -9,21 +9,27 @@ import { useAppStore } from '@/store';
 vi.mock('@/api/qms', () => ({
   qmsApi: {
     qualityIssues: {
-      list: vi.fn().mockResolvedValue({ success: true, data: { data: [], pagination: { total: 0 } } }),
+      list: vi
+        .fn()
+        .mockResolvedValue({ success: true, data: { data: [], pagination: { total: 0 } } }),
       create: vi.fn(),
       get: vi.fn(),
       update: vi.fn(),
       delete: vi.fn(),
     },
     inspections: {
-      list: vi.fn().mockResolvedValue({ success: true, data: { data: [], pagination: { total: 0 } } }),
+      list: vi
+        .fn()
+        .mockResolvedValue({ success: true, data: { data: [], pagination: { total: 0 } } }),
       create: vi.fn(),
       get: vi.fn(),
       update: vi.fn(),
       delete: vi.fn(),
     },
     nonconformances: {
-      list: vi.fn().mockResolvedValue({ success: true, data: { data: [], pagination: { total: 0 } } }),
+      list: vi
+        .fn()
+        .mockResolvedValue({ success: true, data: { data: [], pagination: { total: 0 } } }),
       create: vi.fn(),
       get: vi.fn(),
       update: vi.fn(),

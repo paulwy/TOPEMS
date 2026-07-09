@@ -129,9 +129,7 @@ describe('WorkStationPage Interactions', () => {
     (mesApi.workstations.list as vi.Mock).mockRejectedValue(new Error('Network error'));
     renderWithProviders(<WorkStationPage />);
     await waitFor(() => {
-      expect(mockAddNotification).toHaveBeenCalledWith(
-        expect.objectContaining({ type: 'error' })
-      );
+      expect(mockAddNotification).toHaveBeenCalledWith(expect.objectContaining({ type: 'error' }));
     });
   });
 

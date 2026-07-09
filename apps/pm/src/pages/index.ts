@@ -1,9 +1,0 @@
-export { DashboardPage } from './DashboardPage';
-export { ProjectListPage } from './ProjectListPage';
-export { ProjectDetailPage } from './ProjectDetailPage';
-export { ProjectTaskPage } from './ProjectTaskPage';
-export { GanttChartPage } from './GanttChartPage';
-export { MilestonePage } from './MilestonePage';
-export { RiskManagementPage } from './RiskManagementPage';
-export { ContractListPage } from './ContractListPage';
-export { ProjectReportPage } from './ProjectReportPage';

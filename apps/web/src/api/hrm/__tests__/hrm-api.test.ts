@@ -48,7 +48,11 @@ describe('HRM API types - buildQueryString', () => {
   });
 
   it('should skip undefined and null values', () => {
-    const result = buildQueryString({ page: 1, search: undefined, status: null as unknown as string });
+    const result = buildQueryString({
+      page: 1,
+      search: undefined,
+      status: null as unknown as string,
+    });
     expect(result).toBe('?page=1');
   });
 
@@ -295,13 +299,17 @@ describe('HRM attendanceApi', () => {
   it('should call POST /attendance/check-in for checkIn', async () => {
     mockApiClient.post.mockResolvedValue({ success: true, data: {} });
     await attendanceApi.checkIn('EMP001');
-    expect(mockApiClient.post).toHaveBeenCalledWith('/attendance/check-in', { employee_id: 'EMP001' });
+    expect(mockApiClient.post).toHaveBeenCalledWith('/attendance/check-in', {
+      employee_id: 'EMP001',
+    });
   });
 
   it('should call POST /attendance/check-out for checkOut', async () => {
     mockApiClient.post.mockResolvedValue({ success: true, data: {} });
     await attendanceApi.checkOut('EMP001');
-    expect(mockApiClient.post).toHaveBeenCalledWith('/attendance/check-out', { employee_id: 'EMP001' });
+    expect(mockApiClient.post).toHaveBeenCalledWith('/attendance/check-out', {
+      employee_id: 'EMP001',
+    });
   });
 });
 
@@ -330,7 +338,12 @@ describe('HRM leaveApi', () => {
   });
 
   it('should call POST /leaves for create', async () => {
-    const data = { employee_id: 'EMP001', leave_type: 'annual', start_date: '2024-01-01', end_date: '2024-01-03' };
+    const data = {
+      employee_id: 'EMP001',
+      leave_type: 'annual',
+      start_date: '2024-01-01',
+      end_date: '2024-01-03',
+    };
     mockApiClient.post.mockResolvedValue({ success: true, data });
     await leaveApi.create(data);
     expect(mockApiClient.post).toHaveBeenCalledWith('/leaves', data);
@@ -358,7 +371,10 @@ describe('HRM leaveApi', () => {
   it('should call PUT /leaves/:id/reject for reject', async () => {
     mockApiClient.put.mockResolvedValue({ success: true, data: { id: '1', status: 'rejected' } });
     await leaveApi.reject('1', 'APP001', 'Insufficient notice');
-    expect(mockApiClient.put).toHaveBeenCalledWith('/leaves/1/reject', { approver_id: 'APP001', reason: 'Insufficient notice' });
+    expect(mockApiClient.put).toHaveBeenCalledWith('/leaves/1/reject', {
+      approver_id: 'APP001',
+      reason: 'Insufficient notice',
+    });
   });
 });
 
@@ -638,13 +654,18 @@ describe('HRM salaryAdjustmentApi', () => {
   it('should call PUT /salary-adjustments/:id/approve for approve', async () => {
     mockApiClient.put.mockResolvedValue({ success: true, data: { id: '1', status: 'approved' } });
     await salaryAdjustmentApi.approve('1', 'APP001');
-    expect(mockApiClient.put).toHaveBeenCalledWith('/salary-adjustments/1/approve', { approver_id: 'APP001' });
+    expect(mockApiClient.put).toHaveBeenCalledWith('/salary-adjustments/1/approve', {
+      approver_id: 'APP001',
+    });
   });
 
   it('should call PUT /salary-adjustments/:id/reject for reject', async () => {
     mockApiClient.put.mockResolvedValue({ success: true, data: { id: '1', status: 'rejected' } });
     await salaryAdjustmentApi.reject('1', 'APP001', 'Budget not approved');
-    expect(mockApiClient.put).toHaveBeenCalledWith('/salary-adjustments/1/reject', { approver_id: 'APP001', reason: 'Budget not approved' });
+    expect(mockApiClient.put).toHaveBeenCalledWith('/salary-adjustments/1/reject', {
+      approver_id: 'APP001',
+      reason: 'Budget not approved',
+    });
   });
 });
 
@@ -775,7 +796,12 @@ describe('HRM contractApi', () => {
   });
 
   it('should call POST /contracts for create', async () => {
-    const data = { employee_id: 'EMP001', start_date: '2024-01-01', end_date: '2027-01-01', contract_type: 'full-time' };
+    const data = {
+      employee_id: 'EMP001',
+      start_date: '2024-01-01',
+      end_date: '2027-01-01',
+      contract_type: 'full-time',
+    };
     mockApiClient.post.mockResolvedValue({ success: true, data });
     await contractApi.create(data);
     expect(mockApiClient.post).toHaveBeenCalledWith('/contracts', data);
@@ -854,7 +880,9 @@ describe('HRM contractRenewalApi', () => {
   it('should call PUT /contract-renewals/:id/reject for reject', async () => {
     mockApiClient.put.mockResolvedValue({ success: true, data: { id: '1', status: 'rejected' } });
     await contractRenewalApi.reject('1', 'Budget not approved');
-    expect(mockApiClient.put).toHaveBeenCalledWith('/contract-renewals/1/reject', { reason: 'Budget not approved' });
+    expect(mockApiClient.put).toHaveBeenCalledWith('/contract-renewals/1/reject', {
+      reason: 'Budget not approved',
+    });
   });
 
   it('should call PUT /contract-renewals/:id/execute for execute', async () => {
@@ -1013,7 +1041,10 @@ describe('HRM trainingRecordApi', () => {
   it('should call POST /training-records/enroll for enroll', async () => {
     mockApiClient.post.mockResolvedValue({ success: true, data: {} });
     await trainingRecordApi.enroll('COURSE001', 'EMP001');
-    expect(mockApiClient.post).toHaveBeenCalledWith('/training-records/enroll', { course_id: 'COURSE001', employee_id: 'EMP001' });
+    expect(mockApiClient.post).toHaveBeenCalledWith('/training-records/enroll', {
+      course_id: 'COURSE001',
+      employee_id: 'EMP001',
+    });
   });
 
   it('should call PUT /training-records/:id/complete for complete', async () => {

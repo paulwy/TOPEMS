@@ -3,12 +3,6 @@ import react from '@vitejs/plugin-react';
 import path from 'path';
 import viteCompression from 'vite-plugin-compression';
 import { visualizer } from 'rollup-plugin-visualizer';
-import viteImagemin from '@vheemstra/vite-plugin-imagemin';
-import imageminGifsicle from 'imagemin-gifsicle';
-import imageminMozjpeg from 'imagemin-mozjpeg';
-import imageminPngquant from 'imagemin-pngquant';
-import imageminSvgo from 'imagemin-svgo';
-import { createHtmlPlugin } from 'vite-plugin-html';
 import { VitePWA } from 'vite-plugin-pwa';
 
 import type { IncomingMessage, ServerResponse } from 'http';
@@ -17,11 +11,64 @@ const DEPLOYMENT_MODE = process.env.VITE_DEPLOYMENT_MODE || 'static';
 
 const env = loadEnv('', process.cwd(), '');
 
+interface ServiceConfig {
+  name: string;
+  port: number;
+  target?: string;
+  apiRewrite?: (path: string) => string;
+  healthRewrite?: (path: string) => string;
+  pageRewrite?: (path: string) => string;
+  hasWs?: boolean;
+  wsPath?: string;
+  wsRewrite?: (path: string) => string;
+  basePath?: string;
+  useCoreService?: boolean;
+  skipPluginHealth?: boolean;
+}
+
+const services: ServiceConfig[] = [
+  { name: 'core', port: 8000, hasWs: true, wsPath: '/ws/core' },
+  { name: 'comm', port: 8000, useCoreService: true, apiRewrite: (path) => path.replace(/^\/comm\/api/, '/api/core/comm') },
+  { name: 'iam', port: 8000, useCoreService: true, apiRewrite: (path) => path.replace(/^\/iam\/api\/iam/, '/api/core/iam') },
+  { name: 'doc', port: 8012, pageRewrite: (path) => path.replace(/^\/doc(\/.*)$/, '/api/doc$1') },
+  { name: 'file', port: 8000, useCoreService: true, pageRewrite: (path) => path.replace(/^\/file(\/.*)$/, '/api/core/file$1') },
+  { name: 'mail', port: 8000, useCoreService: true, pageRewrite: (path) => path.replace(/^\/mail(\/.*)$/, '/api/core/comm/mail$1') },
+  { name: 'notification', port: 8000, useCoreService: true, pageRewrite: (path) => path.replace(/^\/notification(\/.*)$/, '/api$1'), apiRewrite: (path) => path.replace(/^\/notification\/api\/v1/, '/api/v1') },
+  { name: 'im', port: 8000, useCoreService: true, pageRewrite: (path) => path.replace(/^\/im(\/.*)$/, '/api/core/comm/im$1') },
+  { name: 'erp', port: 8010, apiRewrite: (path) => path.replace(/^\/erp\/system/, '/api/erp') },
+  { name: 'finance', port: 8011 },
+  { name: 'hrm', port: 8020 },
+  { name: 'pm', port: 8023 },
+  { name: 'crm', port: 8029 },
+  { name: 'mes', port: 8030, hasWs: true, wsPath: '/mes/ws' },
+  { name: 'pdm', port: 8031 },
+  { name: 'scm', port: 8040 },
+  { name: 'wms', port: 8041 },
+  { name: 'srm', port: 8042 },
+  { name: 'qms', port: 8050 },
+  { name: 'lims', port: 8051 },
+  { name: 'ehs', port: 8052 },
+  { name: 'rs', port: 8053 },
+  { name: 'bi', port: 8060 },
+  { name: 'report', port: 8060, skipPluginHealth: true },
+  { name: 'monitor', port: 8062, apiRewrite: (path) => path.replace(/^\/monitor\/api/, '/api/v1/monitor') },
+  { name: 'portal', port: 8063 },
+  { name: 'mobile', port: 8070 },
+  { name: 'gis', port: 8071, hasWs: true, wsPath: '/gis/ws', wsRewrite: (path) => path.replace(/^\/gis\/ws/, '/ws/gis') },
+  { name: 'integration', port: 8072 },
+  { name: 'master', port: 8000, useCoreService: true, apiRewrite: (path) => path.replace(/^\/master\/api/, '/api') },
+  { name: 'migration', port: 8000, useCoreService: true, apiRewrite: (path) => path.replace(/^\/migration\/api/, '/api') },
+  { name: 'ai', port: 8013, skipPluginHealth: true },
+  { name: 'flow', port: 8000, useCoreService: true, pageRewrite: (path) => path.replace(/^\/flow/, '/api/flow') },
+  { name: 'manufacturing', port: 8030, skipPluginHealth: true },
+];
+
 const isPageRequest = (req: IncomingMessage): boolean => {
   const url = req.url || '';
   const accept = req.headers.accept || '';
   if (url.includes('.') && !url.includes('?')) return false;
   if (url.startsWith('/api/') || url.startsWith('/ws/')) return false;
+  if (url.startsWith('/src/')) return false;
   if (url.startsWith('/notification/v1/')) return false;
   if (url.startsWith('/notification/api/v1/')) return false;
   if (url.endsWith('/health')) return false;
@@ -33,23 +80,16 @@ const isPageRequest = (req: IncomingMessage): boolean => {
 const createPageSafeProxy = (config: any) => ({
   ...config,
   bypass: (req: IncomingMessage) => {
+    const url = req.url || '';
+    if (url.startsWith('/src/')) {
+      return url;
+    }
     if (isPageRequest(req)) {
       return req.url;
     }
     return undefined;
   },
 });
-
-const REMOTE_MODULES = [
-  { name: 'topems_core', port: 3001, description: 'Core Module' },
-  { name: 'topems_hrm', port: 3002, description: 'HRM Module' },
-  { name: 'topems_crm', port: 3003, description: 'CRM Module' },
-  { name: 'topems_finance', port: 3004, description: 'Finance Module' },
-  { name: 'topems_pm', port: 3005, description: 'Project Management' },
-  { name: 'topems_mes', port: 3006, description: 'Manufacturing Execution' },
-  { name: 'topems_scm', port: 3007, description: 'Supply Chain' },
-  { name: 'topems_bi', port: 3008, description: 'Business Intelligence' },
-];
 
 const createProxyLogger = (serviceName: string, target: string) => (proxy: any) => {
   proxy.on('proxyReq', (proxyReq: any, req: IncomingMessage) => {
@@ -135,22 +175,116 @@ const createHealthProxyConfig = (serviceName: string, target: string) => ({
   configure: createProxyLogger(serviceName, target),
 });
 
+const createWsProxyConfig = (serviceName: string, target: string, wsPath?: string) => ({
+  target,
+  changeOrigin: true,
+  ws: true,
+  proxyTimeout: 60000,
+  timeout: 60000,
+  configure: (proxy: any) => {
+    proxy.on('proxyReq', (proxyReq: any, req: IncomingMessage) => {
+      if (req.headers['upgrade'] && req.headers['upgrade'].toLowerCase() === 'websocket') {
+        proxyReq.setHeader('Connection', 'Upgrade');
+        proxyReq.setHeader('Upgrade', 'websocket');
+      }
+      const originalUrl = req.url || '';
+      const finalPath = proxyReq.path || proxyReq.pathname || '';
+      console.log(
+        `\x1b[36m[Vite Proxy] \x1b[34m${serviceName.toUpperCase()}-WS\x1b[0m ` +
+        `\x1b[33m${req.method}\x1b[0m ` +
+        `\x1b[35m${originalUrl}\x1b[0m ` +
+        `\x1b[32m->\x1b[0m ` +
+        `\x1b[32m${target}${finalPath}\x1b[0m`
+      );
+    });
+  },
+});
+
+const generateServiceProxies = (services: ServiceConfig[]) => {
+  const proxyConfig: Record<string, any> = {};
+
+  services.forEach((service) => {
+    const target = service.target || `http://localhost:${service.port}`;
+    const serviceName = service.name;
+
+    if (service.useCoreService) {
+      proxyConfig[`/${serviceName}/api`] = {
+        target,
+        changeOrigin: true,
+        rewrite: service.apiRewrite || ((path: string) => path.replace(new RegExp(`^\\/${serviceName}\\/api`), '/api/core/' + serviceName)),
+        configure: createProxyLogger(serviceName, target),
+      };
+
+      proxyConfig[`/${serviceName}/health`] = {
+        target,
+        changeOrigin: true,
+        configure: createProxyLogger(serviceName, target),
+      };
+
+      if (service.pageRewrite) {
+        proxyConfig[`/${serviceName}`] = createPageSafeProxy({
+          target,
+          changeOrigin: true,
+          rewrite: service.pageRewrite,
+          configure: createProxyLogger(serviceName, target),
+        });
+      }
+
+      if (service.hasWs && service.wsPath) {
+        proxyConfig[service.wsPath] = createWsProxyConfig(serviceName, target);
+      }
+    } else {
+      proxyConfig[`/${serviceName}/api`] = service.apiRewrite
+        ? {
+            target,
+            changeOrigin: true,
+            rewrite: service.apiRewrite,
+            configure: createProxyLogger(serviceName, target),
+          }
+        : createServiceProxyConfig(serviceName, target);
+
+      proxyConfig[`/${serviceName}/health`] = service.healthRewrite
+        ? {
+            target,
+            changeOrigin: true,
+            rewrite: service.healthRewrite,
+            configure: createProxyLogger(serviceName, target),
+          }
+        : createHealthProxyConfig(serviceName, target);
+
+      proxyConfig[`/${serviceName}/`] = createPageSafeProxy({
+        target,
+        changeOrigin: true,
+        rewrite: service.pageRewrite || ((path: string) => path.replace(new RegExp(`^\\/${serviceName}`), `/api/${serviceName}`)),
+        configure: createProxyLogger(serviceName, target),
+      });
+
+      proxyConfig[`/api/${serviceName}`] = {
+        target,
+        changeOrigin: true,
+        configure: createProxyLogger(`${serviceName}-api`, target),
+      };
+
+      if (!service.skipPluginHealth) {
+        proxyConfig[`/plugin-health/${serviceName}`] = {
+          target,
+          changeOrigin: true,
+          rewrite: (path: string) => path.replace(new RegExp(`^\\/plugin-health\\/${serviceName}`), ''),
+          configure: createProxyLogger(`plugin-health-${serviceName}`, target),
+        };
+      }
+
+      if (service.hasWs && service.wsPath) {
+        proxyConfig[service.wsPath] = createWsProxyConfig(serviceName, target);
+      }
+    }
+  });
+
+  return proxyConfig;
+};
+
 const plugins = [
   react(),
-  createHtmlPlugin({
-    minify: {
-      minifyJS: true,
-      minifyCSS: true,
-      minifyURLs: true,
-      removeComments: true,
-      removeEmptyAttributes: true,
-      removeRedundantAttributes: true,
-      collapseWhitespace: true,
-      useShortDoctype: true,
-      removeScriptTypeAttributes: true,
-      removeStyleLinkTypeAttributes: true,
-    },
-  }),
   viteCompression({
     algorithm: 'gzip',
     threshold: 1024,
@@ -163,36 +297,9 @@ const plugins = [
     verbose: false,
     deleteOriginalAssets: false,
   }),
-  viteImagemin({
-    plugins: {
-      gif: imageminGifsicle({
-        optimizationLevel: 7,
-        interlaced: false,
-      }),
-      jpg: imageminMozjpeg({
-        quality: 80,
-      }),
-      png: imageminPngquant({
-        quality: [0.8, 0.9],
-        speed: 4,
-      }),
-      svg: imageminSvgo({
-        plugins: [
-          {
-            name: 'removeViewBox',
-          },
-          {
-            name: 'removeEmptyAttrs',
-            active: false,
-          },
-        ],
-      }),
-    },
-    exclude: ['**/offline_tiles/**', '**/icons/**'],
-  }),
   VitePWA({
     srcDir: 'src',
-    filename: 'sw.ts',
+    filename: 'sw.js',
     strategies: 'generateSW',
     manifest: {
       name: 'TOPEMS',
@@ -261,14 +368,6 @@ export default defineConfig({
       { find: 'react-transition-group', replacement: path.resolve(__dirname, '../../node_modules/react-transition-group') },
       { find: 'react-transition-group/cjs', replacement: path.resolve(__dirname, '../../node_modules/react-transition-group/cjs') },
       { find: 'react-transition-group/TransitionGroupContext', replacement: path.resolve(__dirname, '../../node_modules/react-transition-group/cjs/TransitionGroupContext.js') },
-      { find: /^topems_core\/.*/, replacement: path.resolve(__dirname, './src/modules/empty-remote.ts') },
-      { find: /^topems_hrm\/.*/, replacement: path.resolve(__dirname, './src/modules/empty-remote.ts') },
-      { find: /^topems_crm\/.*/, replacement: path.resolve(__dirname, './src/modules/empty-remote.ts') },
-      { find: /^topems_finance\/.*/, replacement: path.resolve(__dirname, './src/modules/empty-remote.ts') },
-      { find: /^topems_pm\/.*/, replacement: path.resolve(__dirname, './src/modules/empty-remote.ts') },
-      { find: /^topems_mes\/.*/, replacement: path.resolve(__dirname, './src/modules/empty-remote.ts') },
-      { find: /^topems_scm\/.*/, replacement: path.resolve(__dirname, './src/modules/empty-remote.ts') },
-      { find: /^topems_bi\/.*/, replacement: path.resolve(__dirname, './src/modules/empty-remote.ts') },
     ],
     dedupe: ['react', 'react-dom', 'scheduler'],
   },
@@ -512,6 +611,8 @@ export default defineConfig({
       allow: ['..'],
     },
     proxy: {
+      ...generateServiceProxies(services),
+
       '/api/core/plugins': {
         target: 'http://localhost:8000',
         changeOrigin: true,
@@ -527,58 +628,11 @@ export default defineConfig({
         changeOrigin: true,
         configure: createProxyLogger('core', 'http://localhost:8000'),
       },
-      '/core/api': {
-        target: 'http://localhost:8000',
-        changeOrigin: true,
-        rewrite: (path: string) => path.replace(/^\/core/, '/api/core'),
-        configure: createProxyLogger('core', 'http://localhost:8000'),
-      },
-      '/core/health': {
-        target: 'http://localhost:8000',
-        changeOrigin: true,
-        configure: createProxyLogger('core', 'http://localhost:8000'),
-      },
       '/unified-core/health': {
         target: 'http://localhost:8000',
         changeOrigin: true,
         rewrite: (path: string) => path.replace(/^\/unified-core/, ''),
         configure: createProxyLogger('unified-core', 'http://localhost:8000'),
-      },
-      '/ws/core': {
-        target: 'http://localhost:8000',
-        changeOrigin: true,
-        ws: true,
-        proxyTimeout: 60000,
-        timeout: 60000,
-        configure: (proxy: any) => {
-          proxy.on('proxyReq', (proxyReq: any, req: IncomingMessage) => {
-            if (req.headers['upgrade'] && req.headers['upgrade'].toLowerCase() === 'websocket') {
-              proxyReq.setHeader('Connection', 'Upgrade');
-              proxyReq.setHeader('Upgrade', 'websocket');
-            }
-            const originalUrl = req.url || '';
-            const finalPath = proxyReq.path || proxyReq.pathname || '';
-            console.log(
-              `\x1b[36m[Vite Proxy] \x1b[34mCORE-WS\x1b[0m ` +
-              `\x1b[33m${req.method}\x1b[0m ` +
-              `\x1b[35m${originalUrl}\x1b[0m ` +
-              `\x1b[32m->\x1b[0m ` +
-              `\x1b[32mhttp://localhost:8000${finalPath}\x1b[0m`
-            );
-          });
-        },
-      },
-      
-      '/comm/api': {
-        target: 'http://localhost:8000',
-        changeOrigin: true,
-        rewrite: (path: string) => path.replace(/^\/comm/, '/api/core/comm'),
-        configure: createProxyLogger('comm', 'http://localhost:8000'),
-      },
-      '/comm/health': {
-        target: 'http://localhost:8000',
-        changeOrigin: true,
-        configure: createProxyLogger('comm', 'http://localhost:8000'),
       },
       '/iam/api/iam/auth/': {
         target: 'http://localhost:8000',
@@ -586,48 +640,11 @@ export default defineConfig({
         rewrite: (path: string) => path.replace(/^\/iam\/api\/iam\/auth\//, '/api/v1/auth/'),
         configure: createProxyLogger('iam-auth', 'http://localhost:8000'),
       },
-      '/iam/api': {
-        target: 'http://localhost:8000',
-        changeOrigin: true,
-        rewrite: (path: string) => path.replace(/^\/iam\/api\/iam\//, '/api/core/iam/'),
-        configure: createProxyLogger('iam', 'http://localhost:8000'),
-      },
       '/iam/auth/': {
         target: 'http://localhost:8000',
         changeOrigin: true,
         rewrite: (path: string) => path.replace(/^\/iam\/auth\//, '/api/v1/auth/'),
         configure: createProxyLogger('iam-auth', 'http://localhost:8000'),
-      },
-      '/iam/': createPageSafeProxy({
-        target: 'http://localhost:8000',
-        changeOrigin: true,
-        rewrite: (path: string) => path.replace(/^\/iam\//, '/api/core/iam/'),
-        configure: createProxyLogger('iam', 'http://localhost:8000'),
-      }),
-      '/doc/health': createHealthProxyConfig('doc', 'http://localhost:8012'),
-      '/doc': createPageSafeProxy({
-        target: 'http://localhost:8012',
-        changeOrigin: true,
-        rewrite: (path: string) => path.replace(/^\/doc(\/.*)$/, '/api/doc$1'),
-        configure: createProxyLogger('doc', 'http://localhost:8012'),
-      }),
-      '/file': createPageSafeProxy({
-        target: 'http://localhost:8000',
-        changeOrigin: true,
-        rewrite: (path: string) => path.replace(/^\/file(\/.*)$/, '/api/core/file$1'),
-        configure: createProxyLogger('file', 'http://localhost:8000'),
-      }),
-      '/mail': createPageSafeProxy({
-        target: 'http://localhost:8000',
-        changeOrigin: true,
-        rewrite: (path: string) => path.replace(/^\/mail(\/.*)$/, '/api/core/comm/mail$1'),
-        configure: createProxyLogger('mail', 'http://localhost:8000'),
-      }),
-      '/notification/api/v1': {
-        target: 'http://localhost:8000',
-        changeOrigin: true,
-        rewrite: (path: string) => path.replace(/^\/notification\/api\/v1/, '/api/v1'),
-        configure: createProxyLogger('notification', 'http://localhost:8000'),
       },
       '/notification/v1': {
         target: 'http://localhost:8000',
@@ -635,44 +652,10 @@ export default defineConfig({
         rewrite: (path: string) => path.replace(/^\/notification\/v1/, '/api/v1'),
         configure: createProxyLogger('notification', 'http://localhost:8000'),
       },
-      '/notification': createPageSafeProxy({
-        target: 'http://localhost:8000',
-        changeOrigin: true,
-        rewrite: (path: string) => path.replace(/^\/notification(\/.*)$/, '/api$1'),
-        configure: createProxyLogger('notification', 'http://localhost:8000'),
-      }),
-      '/im': createPageSafeProxy({
-        target: 'http://localhost:8000',
-        changeOrigin: true,
-        rewrite: (path: string) => path.replace(/^\/im(\/.*)$/, '/api/core/comm/im$1'),
-        configure: createProxyLogger('im', 'http://localhost:8000'),
-      }),
-
       '/health': { 
         target: 'http://localhost:8000', 
         changeOrigin: true,
         configure: createProxyLogger('health', 'http://localhost:8000'),
-      },
-
-      '/api/finance': {
-        target: 'http://localhost:8010',
-        changeOrigin: true,
-        configure: createProxyLogger('erp-finance', 'http://localhost:8010'),
-      },
-
-      '/api/erp': {
-        target: 'http://localhost:8010',
-        changeOrigin: true,
-        configure: createProxyLogger('erp-api', 'http://localhost:8010'),
-      },
-
-      '/erp/api': createServiceProxyConfig('erp', 'http://localhost:8010'),
-      '/erp/health': createHealthProxyConfig('erp', 'http://localhost:8010'),
-      '/erp/system/': {
-        target: 'http://localhost:8010',
-        changeOrigin: true,
-        rewrite: (path: string) => path.replace(/^\/erp\/system/, '/api/erp'),
-        configure: createProxyLogger('erp', 'http://localhost:8010'),
       },
       '/erp/consolidation/': {
         target: 'http://localhost:8010',
@@ -680,606 +663,17 @@ export default defineConfig({
         rewrite: (path: string) => path.replace(/^\/erp\/consolidation/, '/api/consolidation'),
         configure: createProxyLogger('erp-consolidation', 'http://localhost:8010'),
       },
-      '/erp/': createPageSafeProxy({
-        target: 'http://localhost:8010',
-        changeOrigin: true,
-        rewrite: (path: string) => path.replace(/^\/erp/, '/api/erp'),
-        configure: createProxyLogger('erp', 'http://localhost:8010'),
-      }),
-
-      '/hrm/api': createServiceProxyConfig('hrm', 'http://localhost:8020'),
-      '/hrm/api/hrm/': {
-        target: 'http://localhost:8020',
-        changeOrigin: true,
-        rewrite: (path: string) => path.replace(/^\/hrm\/api\/hrm\//, '/api/hrm/'),
-        configure: createProxyLogger('hrm', 'http://localhost:8020'),
-      },
-      '/hrm/health': createHealthProxyConfig('hrm', 'http://localhost:8020'),
-      '/hrm/': createPageSafeProxy({
-        target: 'http://localhost:8020',
-        changeOrigin: true,
-        rewrite: (path: string) => path.replace(/^\/hrm/, '/api/hrm'),
-        configure: createProxyLogger('hrm', 'http://localhost:8020'),
-      }),
-      '/api/hrm': {
-        target: 'http://localhost:8020',
-        changeOrigin: true,
-        configure: createProxyLogger('hrm-api', 'http://localhost:8020'),
-      },
-
-      '/pm/api': createServiceProxyConfig('pm', 'http://localhost:8023'),
-      '/pm/health': createHealthProxyConfig('pm', 'http://localhost:8023'),
-      '/pm/': createPageSafeProxy({
-        target: 'http://localhost:8023',
-        changeOrigin: true,
-        rewrite: (path: string) => path.replace(/^\/pm/, '/api/pm'),
-        configure: createProxyLogger('pm', 'http://localhost:8023'),
-      }),
-      '/crm/api': createServiceProxyConfig('crm', 'http://localhost:8029'),
-      '/crm/health': createHealthProxyConfig('crm', 'http://localhost:8029'),
-      '/crm/opportunities': {
-        target: 'http://localhost:8029',
-        changeOrigin: true,
-        rewrite: (path: string) => '/api' + path,
-        configure: createProxyLogger('crm-opportunities', 'http://localhost:8029'),
-      },
-      '/crm/customers': {
-        target: 'http://localhost:8029',
-        changeOrigin: true,
-        rewrite: (path: string) => '/api' + path,
-        configure: createProxyLogger('crm-customers', 'http://localhost:8029'),
-      },
-      '/crm/contacts': {
-        target: 'http://localhost:8029',
-        changeOrigin: true,
-        rewrite: (path: string) => '/api' + path,
-        configure: createProxyLogger('crm-contacts', 'http://localhost:8029'),
-      },
-      '/crm/sales-funnel': {
-        target: 'http://localhost:8029',
-        changeOrigin: true,
-        rewrite: (path: string) => '/api' + path,
-        configure: createProxyLogger('crm-sales-funnel', 'http://localhost:8029'),
-      },
-      '/crm/interactions': {
-        target: 'http://localhost:8029',
-        changeOrigin: true,
-        rewrite: (path: string) => '/api' + path,
-        configure: createProxyLogger('crm-interactions', 'http://localhost:8029'),
-      },
-      '/crm/tags': {
-        target: 'http://localhost:8029',
-        changeOrigin: true,
-        rewrite: (path: string) => '/api' + path,
-        configure: createProxyLogger('crm-tags', 'http://localhost:8029'),
-      },
-      '/crm/segments': {
-        target: 'http://localhost:8029',
-        changeOrigin: true,
-        rewrite: (path: string) => '/api' + path,
-        configure: createProxyLogger('crm-segments', 'http://localhost:8029'),
-      },
-      '/crm/': createPageSafeProxy({
-        target: 'http://localhost:8029',
-        changeOrigin: true,
-        rewrite: (path: string) => '/api' + path,
-        configure: createProxyLogger('crm', 'http://localhost:8029'),
-      }),
-
-      '/mes/api': createServiceProxyConfig('mes', 'http://localhost:8030'),
-      '/mes/health': createHealthProxyConfig('mes', 'http://localhost:8030'),
-      '/mes/ws': {
-        target: 'http://localhost:8030',
-        changeOrigin: true,
-        ws: true,
-        proxyTimeout: 60000,
-        timeout: 60000,
-        configure: (proxy: any) => {
-          proxy.on('proxyReq', (proxyReq: any, req: IncomingMessage) => {
-            if (req.headers['upgrade'] && req.headers['upgrade'].toLowerCase() === 'websocket') {
-              proxyReq.setHeader('Connection', 'Upgrade');
-              proxyReq.setHeader('Upgrade', 'websocket');
-            }
-            const originalUrl = req.url || '';
-            const finalPath = proxyReq.path || proxyReq.pathname || '';
-            console.log(
-              `\x1b[36m[Vite Proxy] \x1b[34mMES-WS\x1b[0m ` +
-              `\x1b[33m${req.method}\x1b[0m ` +
-              `\x1b[35m${originalUrl}\x1b[0m ` +
-              `\x1b[32m->\x1b[0m ` +
-              `\x1b[32mhttp://localhost:8030${finalPath}\x1b[0m`
-            );
-          });
-          proxy.on('error', (err: any) => {
-            console.error(
-              `\x1b[31m[Vite Proxy] \x1b[34mMES-WS Error\x1b[0m ` +
-              `\x1b[31m${err.message}\x1b[0m`
-            );
-          });
-          proxy.on('close', () => {
-            console.log(
-              `\x1b[31m[Vite Proxy] \x1b[34mMES-WS Connection Closed\x1b[0m`
-            );
-          });
-        },
-      },
-      '/mes/': createPageSafeProxy({
-        target: 'http://localhost:8030',
-        changeOrigin: true,
-        rewrite: (path: string) => path.replace(/^\/mes/, '/api/mes'),
-        configure: createProxyLogger('mes', 'http://localhost:8030'),
-      }),
-
-      '/pdm/api': createServiceProxyConfig('pdm', 'http://localhost:8031'),
-      '/pdm/health': createHealthProxyConfig('pdm', 'http://localhost:8031'),
-      '/pdm/': createPageSafeProxy({
-        target: 'http://localhost:8031',
-        changeOrigin: true,
-        rewrite: (path: string) => path.replace(/^\/pdm/, '/api/pdm'),
-        configure: createProxyLogger('pdm', 'http://localhost:8031'),
-      }),
-
-      '/scm/api': createServiceProxyConfig('scm', 'http://localhost:8040'),
-      '/scm/health': createHealthProxyConfig('scm', 'http://localhost:8040'),
-      '/scm/sync-records': {
-        target: 'http://localhost:8040',
-        changeOrigin: true,
-        rewrite: (path: string) => '/api' + path,
-        configure: createProxyLogger('scm-sync-records', 'http://localhost:8040'),
-      },
-      '/scm/sync/': {
-        target: 'http://localhost:8040',
-        changeOrigin: true,
-        rewrite: (path: string) => '/api' + path,
-        configure: createProxyLogger('scm-sync', 'http://localhost:8040'),
-      },
-      '/scm/evaluations': {
-        target: 'http://localhost:8040',
-        changeOrigin: true,
-        rewrite: (path: string) => '/api' + path,
-        configure: createProxyLogger('scm-evaluations', 'http://localhost:8040'),
-      },
-      '/scm/purchase-requisitions': {
-        target: 'http://localhost:8040',
-        changeOrigin: true,
-        rewrite: (path: string) => '/api' + path,
-        configure: createProxyLogger('scm-purchase-requisitions', 'http://localhost:8040'),
-      },
-      '/scm/price-comparisons': {
-        target: 'http://localhost:8040',
-        changeOrigin: true,
-        rewrite: (path: string) => '/api' + path,
-        configure: createProxyLogger('scm-price-comparisons', 'http://localhost:8040'),
-      },
-      '/scm/comparisons': {
-        target: 'http://localhost:8040',
-        changeOrigin: true,
-        rewrite: (path: string) => '/api' + path,
-        configure: createProxyLogger('scm-comparisons', 'http://localhost:8040'),
-      },
-      '/scm/quotes': {
-        target: 'http://localhost:8040',
-        changeOrigin: true,
-        rewrite: (path: string) => '/api' + path,
-        configure: createProxyLogger('scm-quotes', 'http://localhost:8040'),
-      },
-      '/scm/inquiries': {
-        target: 'http://localhost:8040',
-        changeOrigin: true,
-        rewrite: (path: string) => '/api' + path,
-        configure: createProxyLogger('scm-inquiries', 'http://localhost:8040'),
-      },
-      '/scm/incoming-inspections': {
-        target: 'http://localhost:8040',
-        changeOrigin: true,
-        rewrite: (path: string) => '/api' + path,
-        configure: createProxyLogger('scm-incoming-inspections', 'http://localhost:8040'),
-      },
-      '/scm/inspection-records': {
-        target: 'http://localhost:8040',
-        changeOrigin: true,
-        rewrite: (path: string) => '/api' + path,
-        configure: createProxyLogger('scm-inspection-records', 'http://localhost:8040'),
-      },
-      '/scm/delivery-appointments': {
-        target: 'http://localhost:8040',
-        changeOrigin: true,
-        rewrite: (path: string) => '/api' + path,
-        configure: createProxyLogger('scm-delivery-appointments', 'http://localhost:8040'),
-      },
-      '/scm/audit-logs': {
-        target: 'http://localhost:8040',
-        changeOrigin: true,
-        rewrite: (path: string) => '/api' + path,
-        configure: createProxyLogger('scm-audit-logs', 'http://localhost:8040'),
-      },
-      '/scm/dashboard/': {
-        target: 'http://localhost:8040',
-        changeOrigin: true,
-        rewrite: (path: string) => '/api' + path,
-        configure: createProxyLogger('scm-dashboard', 'http://localhost:8040'),
-      },
-      '/scm/mrp/': {
-        target: 'http://localhost:8040',
-        changeOrigin: true,
-        rewrite: (path: string) => '/api' + path,
-        configure: createProxyLogger('scm-mrp', 'http://localhost:8040'),
-      },
-      '/scm/purchase-items': {
-        target: 'http://localhost:8040',
-        changeOrigin: true,
-        rewrite: (path: string) => '/api' + path,
-        configure: createProxyLogger('scm-purchase-items', 'http://localhost:8040'),
-      },
-      '/scm/purchase-contracts': {
-        target: 'http://localhost:8040',
-        changeOrigin: true,
-        rewrite: (path: string) => '/api' + path,
-        configure: createProxyLogger('scm-purchase-contracts', 'http://localhost:8040'),
-      },
-      '/scm/mrp-suggestions': {
-        target: 'http://localhost:8040',
-        changeOrigin: true,
-        rewrite: (path: string) => '/api' + path,
-        configure: createProxyLogger('scm-mrp-suggestions', 'http://localhost:8040'),
-      },
-      '/scm/purchase-orders': {
-        target: 'http://localhost:8040',
-        changeOrigin: true,
-        rewrite: (path: string) => '/api' + path,
-        configure: createProxyLogger('scm-purchase-orders', 'http://localhost:8040'),
-      },
-      '/scm/inventory-turnover': {
-        target: 'http://localhost:8040',
-        changeOrigin: true,
-        rewrite: (path: string) => '/api' + path,
-        configure: createProxyLogger('scm-inventory-turnover', 'http://localhost:8040'),
-      },
-      '/scm/suppliers': {
-        target: 'http://localhost:8040',
-        changeOrigin: true,
-        rewrite: (path: string) => '/api' + path,
-        configure: createProxyLogger('scm-suppliers', 'http://localhost:8040'),
-      },
-      '/scm/supplier-admissions': {
-        target: 'http://localhost:8040',
-        changeOrigin: true,
-        rewrite: (path: string) => '/api' + path,
-        configure: createProxyLogger('scm-supplier-admissions', 'http://localhost:8040'),
-      },
-      '/scm/v1/': {
-        target: 'http://localhost:8040',
-        changeOrigin: true,
-        rewrite: (path: string) => '/api' + path,
-        configure: createProxyLogger('scm-v1', 'http://localhost:8040'),
-      },
-
-      '/wms/api': createServiceProxyConfig('wms', 'http://localhost:8041'),
-      '/wms/health': createHealthProxyConfig('wms', 'http://localhost:8041'),
-      '/wms/': createPageSafeProxy({
-        target: 'http://localhost:8041',
-        changeOrigin: true,
-        rewrite: (path: string) => path.replace(/^\/wms/, '/api/wms'),
-        configure: createProxyLogger('wms', 'http://localhost:8041'),
-      }),
-
-      '/srm/api': createServiceProxyConfig('srm', 'http://localhost:8042'),
-      '/srm/health': createHealthProxyConfig('srm', 'http://localhost:8042'),
-      '/srm/': createPageSafeProxy({
-        target: 'http://localhost:8042',
-        changeOrigin: true,
-        rewrite: (path: string) => path.replace(/^\/srm/, '/api/srm'),
-        configure: createProxyLogger('srm', 'http://localhost:8042'),
-      }),
-
-      '/qms/api': createServiceProxyConfig('qms', 'http://localhost:8050'),
-      '/qms/health': createHealthProxyConfig('qms', 'http://localhost:8050'),
-      '/qms/': createPageSafeProxy({
-        target: 'http://localhost:8050',
-        changeOrigin: true,
-        rewrite: (path: string) => path.replace(/^\/qms/, '/api/qms'),
-        configure: createProxyLogger('qms', 'http://localhost:8050'),
-      }),
-
-      '/lims/api': createServiceProxyConfig('lims', 'http://localhost:8051'),
-      '/lims/health': createHealthProxyConfig('lims', 'http://localhost:8051'),
-      '/lims/': createPageSafeProxy({
-        target: 'http://localhost:8051',
-        changeOrigin: true,
-        rewrite: (path: string) => path.replace(/^\/lims/, '/api/lims'),
-        configure: createProxyLogger('lims', 'http://localhost:8051'),
-      }),
-
-      '/ehs/api': createServiceProxyConfig('ehs', 'http://localhost:8052'),
-      '/ehs/health': createHealthProxyConfig('ehs', 'http://localhost:8052'),
-      '/ehs/': createPageSafeProxy({
-        target: 'http://localhost:8052',
-        changeOrigin: true,
-        rewrite: (path: string) => path.replace(/^\/ehs/, '/api/ehs'),
-        configure: createProxyLogger('ehs', 'http://localhost:8052'),
-      }),
-
-      '/rs/api': createServiceProxyConfig('rs', 'http://localhost:8053'),
-      '/rs/health': createHealthProxyConfig('rs', 'http://localhost:8053'),
-      '/rs/': createPageSafeProxy({
-        target: 'http://localhost:8053',
-        changeOrigin: true,
-        rewrite: (path: string) => path.replace(/^\/rs/, '/api/rs'),
-        configure: createProxyLogger('rs', 'http://localhost:8053'),
-      }),
-
-      '/bi/api': createServiceProxyConfig('bi', 'http://localhost:8060'),
-      '/bi/health': createHealthProxyConfig('bi', 'http://localhost:8060'),
-      '/bi/': createPageSafeProxy({
-        target: 'http://localhost:8060',
-        changeOrigin: true,
-        rewrite: (path: string) => path.replace(/^\/bi/, '/api/bi'),
-        configure: createProxyLogger('bi', 'http://localhost:8060'),
-      }),
-
-      '/report/api': createServiceProxyConfig('report', 'http://localhost:8060'),
-      '/report/health': createHealthProxyConfig('report', 'http://localhost:8060'),
-      '/report/': createPageSafeProxy({
-        target: 'http://localhost:8060',
-        changeOrigin: true,
-        rewrite: (path: string) => path.replace(/^\/report/, '/api/report'),
-        configure: createProxyLogger('report', 'http://localhost:8060'),
-      }),
-
-      '/monitor/api': {
-        target: 'http://localhost:8062',
-        changeOrigin: true,
-        rewrite: (path: string) => path.replace(/^\/monitor\/api/, '/api/v1/monitor'),
-        configure: createProxyLogger('monitor', 'http://localhost:8062'),
-      },
-      '/monitor/health': createHealthProxyConfig('monitor', 'http://localhost:8062'),
-
-      '/portal/api': createServiceProxyConfig('portal', 'http://localhost:8063'),
-      '/portal/health': createHealthProxyConfig('portal', 'http://localhost:8063'),
-      '/portal/': createPageSafeProxy({
-        target: 'http://localhost:8063',
-        changeOrigin: true,
-        rewrite: (path: string) => path.replace(/^\/portal/, '/api/portal'),
-        configure: createProxyLogger('portal', 'http://localhost:8063'),
-      }),
-
-      '/mobile/api': createServiceProxyConfig('mobile', 'http://localhost:8070'),
-      '/mobile/health': createHealthProxyConfig('mobile', 'http://localhost:8070'),
-      '/mobile/': createPageSafeProxy({
-        target: 'http://localhost:8070',
-        changeOrigin: true,
-        rewrite: (path: string) => path.replace(/^\/mobile/, '/api/mobile'),
-        configure: createProxyLogger('mobile', 'http://localhost:8070'),
-      }),
-
-      '/gis/api': createServiceProxyConfig('gis', 'http://localhost:8071'),
-      '/gis/health': createHealthProxyConfig('gis', 'http://localhost:8071'),
-      '/gis/ws': {
-        target: 'http://localhost:8071',
-        changeOrigin: true,
-        ws: true,
-        proxyTimeout: 60000,
-        timeout: 60000,
-        rewrite: (path: string) => path.replace(/^\/gis\/ws/, '/ws/gis'),
-        configure: (proxy: any) => {
-          proxy.on('proxyReq', (proxyReq: any, req: IncomingMessage) => {
-            if (req.headers['upgrade'] && req.headers['upgrade'].toLowerCase() === 'websocket') {
-              proxyReq.setHeader('Connection', 'Upgrade');
-              proxyReq.setHeader('Upgrade', 'websocket');
-            }
-            const originalUrl = req.url || '';
-            const finalPath = proxyReq.path || proxyReq.pathname || '';
-            console.log(
-              `\x1b[36m[Vite Proxy] \x1b[34mGIS-WS\x1b[0m ` +
-              `\x1b[33m${req.method}\x1b[0m ` +
-              `\x1b[35m${originalUrl}\x1b[0m ` +
-              `\x1b[32m->\x1b[0m ` +
-              `\x1b[32mhttp://localhost:8071${finalPath}\x1b[0m`
-            );
-          });
-        },
-      },
-      '/gis/': createPageSafeProxy({
-        target: 'http://localhost:8071',
-        changeOrigin: true,
-        rewrite: (path: string) => path.replace(/^\/gis/, '/api/gis'),
-        configure: createProxyLogger('gis', 'http://localhost:8071'),
-      }),
-
-      '/integration/api': createServiceProxyConfig('integration', 'http://localhost:8072'),
-      '/integration/health': createHealthProxyConfig('integration', 'http://localhost:8072'),
-      '/integration/': createPageSafeProxy({
-        target: 'http://localhost:8072',
-        changeOrigin: true,
-        rewrite: (path: string) => path.replace(/^\/integration/, '/api/integration'),
-        configure: createProxyLogger('integration', 'http://localhost:8072'),
-      }),
-
-      '/master/api': createCoreServiceProxyConfig('master', 'http://localhost:8000'),
-      '/master/health': createHealthProxyConfig('master', 'http://localhost:8000'),
       '/master/monitor/': {
         target: 'http://localhost:8062',
         changeOrigin: true,
         rewrite: (path: string) => path.replace(/^\/master\/monitor/, '/api/v1/monitor'),
         configure: createProxyLogger('monitor', 'http://localhost:8062'),
       },
-
-      '/migration/api': {
-        target: 'http://localhost:8000',
-        changeOrigin: true,
-        rewrite: (path: string) => path.replace(/^\/migration\/api/, '/api'),
-        configure: createProxyLogger('migration', 'http://localhost:8000'),
-      },
       '/migration/health': {
         target: 'http://localhost:8000',
         changeOrigin: true,
         rewrite: (path: string) => path.replace(/^\/migration/, '/api/migrations'),
         configure: createProxyLogger('migration', 'http://localhost:8000'),
-      },
-
-      '/ai/api': createServiceProxyConfig('ai', 'http://localhost:8013'),
-      '/ai/health': createHealthProxyConfig('ai', 'http://localhost:8013'),
-
-      '/flow/health': createHealthProxyConfig('flow', 'http://localhost:8000'),
-      '/flow/': createPageSafeProxy({
-        target: 'http://localhost:8000',
-        changeOrigin: true,
-        rewrite: (path: string) => path.replace(/^\/flow/, '/api/flow'),
-        configure: createProxyLogger('flow', 'http://localhost:8000'),
-      }),
-
-      '/manufacturing/api': createServiceProxyConfig('manufacturing', 'http://localhost:8030'),
-      '/manufacturing/health': createHealthProxyConfig('manufacturing', 'http://localhost:8030'),
-
-      '/mfg/api': {
-        target: 'http://localhost:8030',
-        changeOrigin: true,
-        rewrite: (path: string) => path.replace(/^\/mfg/, '/api/mfg'),
-        configure: createProxyLogger('mfg', 'http://localhost:8030'),
-      },
-
-      '/plugin-health/erp': {
-        target: 'http://localhost:8010',
-        changeOrigin: true,
-        rewrite: (path: string) => path.replace(/^\/plugin-health\/erp/, ''),
-        configure: createProxyLogger('plugin-health-erp', 'http://localhost:8010'),
-      },
-      '/plugin-health/hrm': {
-        target: 'http://localhost:8020',
-        changeOrigin: true,
-        rewrite: (path: string) => path.replace(/^\/plugin-health\/hrm/, ''),
-        configure: createProxyLogger('plugin-health-hrm', 'http://localhost:8020'),
-      },
-      '/plugin-health/pm': {
-        target: 'http://localhost:8023',
-        changeOrigin: true,
-        rewrite: (path: string) => path.replace(/^\/plugin-health\/pm/, ''),
-        configure: createProxyLogger('plugin-health-pm', 'http://localhost:8023'),
-      },
-      '/plugin-health/crm': {
-        target: 'http://localhost:8029',
-        changeOrigin: true,
-        rewrite: (path: string) => path.replace(/^\/plugin-health\/crm/, ''),
-        configure: createProxyLogger('plugin-health-crm', 'http://localhost:8029'),
-      },
-      '/plugin-health/mes': {
-        target: 'http://localhost:8030',
-        changeOrigin: true,
-        rewrite: (path: string) => path.replace(/^\/plugin-health\/mes/, ''),
-        configure: createProxyLogger('plugin-health-mes', 'http://localhost:8030'),
-      },
-      '/plugin-health/pdm': {
-        target: 'http://localhost:8031',
-        changeOrigin: true,
-        rewrite: (path: string) => path.replace(/^\/plugin-health\/pdm/, ''),
-        configure: createProxyLogger('plugin-health-pdm', 'http://localhost:8031'),
-      },
-      '/plugin-health/scm': {
-        target: 'http://localhost:8040',
-        changeOrigin: true,
-        rewrite: (path: string) => path.replace(/^\/plugin-health\/scm/, ''),
-        configure: createProxyLogger('plugin-health-scm', 'http://localhost:8040'),
-      },
-      '/plugin-health/wms': {
-        target: 'http://localhost:8041',
-        changeOrigin: true,
-        rewrite: (path: string) => path.replace(/^\/plugin-health\/wms/, ''),
-        configure: createProxyLogger('plugin-health-wms', 'http://localhost:8041'),
-      },
-      '/plugin-health/srm': {
-        target: 'http://localhost:8042',
-        changeOrigin: true,
-        rewrite: (path: string) => path.replace(/^\/plugin-health\/srm/, ''),
-        configure: createProxyLogger('plugin-health-srm', 'http://localhost:8042'),
-      },
-      '/plugin-health/qms': {
-        target: 'http://localhost:8050',
-        changeOrigin: true,
-        rewrite: (path: string) => path.replace(/^\/plugin-health\/qms/, ''),
-        configure: createProxyLogger('plugin-health-qms', 'http://localhost:8050'),
-      },
-      '/plugin-health/lims': {
-        target: 'http://localhost:8051',
-        changeOrigin: true,
-        rewrite: (path: string) => path.replace(/^\/plugin-health\/lims/, ''),
-        configure: createProxyLogger('plugin-health-lims', 'http://localhost:8051'),
-      },
-      '/plugin-health/ehs': {
-        target: 'http://localhost:8052',
-        changeOrigin: true,
-        rewrite: (path: string) => path.replace(/^\/plugin-health\/ehs/, ''),
-        configure: createProxyLogger('plugin-health-ehs', 'http://localhost:8052'),
-      },
-      '/plugin-health/rs': {
-        target: 'http://localhost:8053',
-        changeOrigin: true,
-        rewrite: (path: string) => path.replace(/^\/plugin-health\/rs/, ''),
-        configure: createProxyLogger('plugin-health-rs', 'http://localhost:8053'),
-      },
-      '/plugin-health/bi': {
-        target: 'http://localhost:8060',
-        changeOrigin: true,
-        rewrite: (path: string) => path.replace(/^\/plugin-health\/bi/, ''),
-        configure: createProxyLogger('plugin-health-bi', 'http://localhost:8060'),
-      },
-      '/plugin-health/report': {
-        target: 'http://localhost:8060',
-        changeOrigin: true,
-        rewrite: (path: string) => path.replace(/^\/plugin-health\/report/, ''),
-        configure: createProxyLogger('plugin-health-report', 'http://localhost:8060'),
-      },
-      '/plugin-health/monitor': {
-        target: 'http://localhost:8062',
-        changeOrigin: true,
-        rewrite: (path: string) => path.replace(/^\/plugin-health\/monitor/, ''),
-        configure: createProxyLogger('plugin-health-monitor', 'http://localhost:8062'),
-      },
-      '/plugin-health/doc': {
-        target: 'http://localhost:8012',
-        changeOrigin: true,
-        rewrite: (path: string) => path.replace(/^\/plugin-health\/doc/, ''),
-        configure: createProxyLogger('plugin-health-doc', 'http://localhost:8012'),
-      },
-      '/plugin-health/portal': {
-        target: 'http://localhost:8063',
-        changeOrigin: true,
-        rewrite: (path: string) => path.replace(/^\/plugin-health\/portal/, ''),
-        configure: createProxyLogger('plugin-health-portal', 'http://localhost:8063'),
-      },
-      '/plugin-health/mobile': {
-        target: 'http://localhost:8070',
-        changeOrigin: true,
-        rewrite: (path: string) => path.replace(/^\/plugin-health\/mobile/, ''),
-        configure: createProxyLogger('plugin-health-mobile', 'http://localhost:8070'),
-      },
-      '/plugin-health/gis': {
-        target: 'http://localhost:8071',
-        changeOrigin: true,
-        rewrite: (path: string) => path.replace(/^\/plugin-health\/gis/, ''),
-        configure: createProxyLogger('plugin-health-gis', 'http://localhost:8071'),
-      },
-      '/plugin-health/integration': {
-        target: 'http://localhost:8072',
-        changeOrigin: true,
-        rewrite: (path: string) => path.replace(/^\/plugin-health\/integration/, ''),
-        configure: createProxyLogger('plugin-health-integration', 'http://localhost:8072'),
-      },
-      '/plugin-health/workflow': {
-        target: 'http://localhost:8000',
-        changeOrigin: true,
-        rewrite: (path: string) => path.replace(/^\/plugin-health\/workflow/, ''),
-        configure: createProxyLogger('plugin-health-workflow', 'http://localhost:8000'),
-      },
-
-      '/api/crm': {
-        target: 'http://localhost:8029',
-        changeOrigin: true,
-        configure: createProxyLogger('crm-api', 'http://localhost:8029'),
-      },
-      '/api/pm': {
-        target: 'http://localhost:8023',
-        changeOrigin: true,
-        configure: createProxyLogger('pm-api', 'http://localhost:8023'),
       },
       '/api': { 
         target: 'http://localhost:8000', 
