@@ -41,7 +41,7 @@ import {
   useUpdateCompanyRelation,
   useDeleteCompanyRelation,
 } from '@/hooks/useConsolidation';
-import { EnhancedDataTable } from '@/components/EnhancedDataTable';
+import { DataTable } from '@/components/common/DataTable';
 import type { CompanyRelation, CompanyTreeNode, CompanyRelationType } from '@/types/consolidation';
 
 // 关系类型配置
@@ -407,10 +407,9 @@ export default function CompanyStructurePage() {
           {/* 关系列表视图 */}
           {activeTab === 1 && (
             <Box sx={{ mt: 2 }}>
-              <EnhancedDataTable
+              <DataTable
                 columns={relationColumns}
                 data={relationsData?.data || []}
-                loading={relationsLoading}
               />
             </Box>
           )}

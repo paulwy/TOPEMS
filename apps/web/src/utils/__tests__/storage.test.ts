@@ -1,5 +1,11 @@
 import { describe, it, expect, beforeEach } from 'vitest';
-import { localStorage2, sessionStorage2, LocalStorage, SessionStorage, STORAGE_KEYS } from '../storage';
+import {
+  localStorage2,
+  sessionStorage2,
+  LocalStorage,
+  SessionStorage,
+  STORAGE_KEYS,
+} from '../storage';
 
 describe('LocalStorage', () => {
   beforeEach(() => {

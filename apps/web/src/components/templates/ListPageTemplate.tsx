@@ -28,11 +28,10 @@ import {
   Link,
   Button,
 } from '@mui/material';
-import { EmptyState, ErrorEmptyState } from '../common/EmptyState';
+import { EmptyState, ErrorEmptyState, BackButton } from '@topems/shared-components';
 import { MoreHorizontal, ChevronRight, Columns3, RefreshCw } from 'lucide-react';
 import { Link as RouterLink } from 'react-router-dom';
 import { useAutoBreadcrumbs } from '@/hooks';
-import { BackButton } from '../common';
 
 // 从子组件导入类型和组件
 import type { ListPageTemplateProps, ColumnConfig, RowAction } from './list';
@@ -738,7 +737,12 @@ export function ListPageTemplate<T>({
       return (
         <Box sx={{ display: 'flex', flexDirection: 'column', gap: 1.5, p: 1.5 }}>
           {[1, 2, 3, 4].map((i) => (
-            <Skeleton key={i} variant='rectangular' height={120} sx={{ borderRadius: 1 }} />
+            <Skeleton
+              key={i}
+              variant='rectangular'
+              height={120}
+              sx={{ borderRadius: 1 }}
+            />
           ))}
         </Box>
       );
@@ -747,7 +751,10 @@ export function ListPageTemplate<T>({
     if (!data || data.length === 0) {
       return (
         <Box sx={{ p: 4, textAlign: 'center' }}>
-          <Typography variant='body2' color='text.secondary'>
+          <Typography
+            variant='body2'
+            color='text.secondary'
+          >
             {emptyMessage}
           </Typography>
         </Box>
@@ -764,14 +771,15 @@ export function ListPageTemplate<T>({
     // 确定展示字段
     const displayFields =
       mobileCardDisplayFields ||
-      visibleColumns.filter((c) => c.id !== mobileCardTitleKey && c.id !== mobileCardSubtitleKey)
+      visibleColumns
+        .filter((c) => c.id !== mobileCardTitleKey && c.id !== mobileCardSubtitleKey)
         .slice(0, 4)
         .map((c) => c.id);
 
     return (
       <Box sx={{ display: 'flex', flexDirection: 'column', gap: 1.5, p: 1.5 }}>
         {data.map((row, index) => {
-          const rowId = getRowId ? getRowId(row) : (row as any).id ?? index;
+          const rowId = getRowId ? getRowId(row) : ((row as any).id ?? index);
           const isSelected = selectedIds?.includes(rowId as string | number);
 
           // 优先使用自定义渲染函数
@@ -862,7 +870,10 @@ export function ListPageTemplate<T>({
                     />
                   )}
                   {rowActions && rowActions.length > 0 && (
-                    <IconButton size='small' onClick={(e) => handleRowActionClick(e, row)}>
+                    <IconButton
+                      size='small'
+                      onClick={(e) => handleRowActionClick(e, row)}
+                    >
                       <MoreHorizontal style={{ width: 18, height: 18 }} />
                     </IconButton>
                   )}
@@ -885,7 +896,10 @@ export function ListPageTemplate<T>({
                           : String(value);
 
                     return (
-                      <Box key={field} sx={{ display: 'flex', flexDirection: 'column', minWidth: 0 }}>
+                      <Box
+                        key={field}
+                        sx={{ display: 'flex', flexDirection: 'column', minWidth: 0 }}
+                      >
                         <Typography
                           variant='caption'
                           color='text.secondary'
@@ -976,7 +990,7 @@ export function ListPageTemplate<T>({
                 <BackButton
                   onClick={backButton.onClick}
                   href={backButton.href}
-                  size='sm'
+                  size='small'
                   sx={{ bgcolor: 'action.hover' }}
                 />
               )}
@@ -1148,7 +1162,7 @@ export type {
   ListPageTemplateProps,
 } from './list/types';
 
-export type { FilterConfig } from '../common/FilterBar';
+export type { FilterConfig } from '@topems/shared-components';
 
 const MemoizedListPageTemplate = React.memo(ListPageTemplate) as typeof ListPageTemplate;
 export default MemoizedListPageTemplate;

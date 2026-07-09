@@ -58,7 +58,10 @@ export const reportModuleConfig: RouteModuleConfig = {
     },
     {
       path: '/report/builder',
-      element: lazyWithRetry(() => import('../../pages/report/ReportBuilderPage'), 'ReportBuilderPage'),
+      element: lazyWithRetry(
+        () => import('../../pages/report/ReportBuilderPage'),
+        'ReportBuilderPage'
+      ),
       module: 'report',
       title: '报表构建',
       code: 'report-builder',

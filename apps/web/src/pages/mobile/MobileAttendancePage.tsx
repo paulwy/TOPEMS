@@ -36,9 +36,20 @@ import {
   Plus,
 } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
-import { MobileLayout, PullToRefresh, MobileSkeleton, MobileCard, MobileButton } from '@/components/mobile';
+import {
+  MobileLayout,
+  PullToRefresh,
+  MobileSkeleton,
+  MobileCard,
+  MobileButton,
+} from '@/components/mobile';
 import { useAppStore } from '@/store';
-import { mobileApi, type AttendanceStats, type AttendanceRecord, type LeaveApplication } from '@/api/mobile';
+import {
+  mobileApi,
+  type AttendanceStats,
+  type AttendanceRecord,
+  type LeaveApplication,
+} from '@/api/mobile';
 import { apiLogger } from '@/utils/logger';
 
 const MobileAttendancePage: React.FC = () => {
@@ -391,7 +402,10 @@ const MobileAttendancePage: React.FC = () => {
                   >
                     <Box sx={{ textAlign: 'center' }}>
                       <CalendarCheck style={{ width: 40, height: 40, margin: '0 auto 4px' }} />
-                      <Typography variant='h6' sx={{ fontWeight: 600 }}>
+                      <Typography
+                        variant='h6'
+                        sx={{ fontWeight: 600 }}
+                      >
                         {todayStatus === 'not_checked_in'
                           ? '上班打卡'
                           : todayStatus === 'checked_in'
@@ -409,7 +423,10 @@ const MobileAttendancePage: React.FC = () => {
                       >
                         上班时间
                       </Typography>
-                      <Typography variant='h6' sx={{ fontWeight: 600 }}>
+                      <Typography
+                        variant='h6'
+                        sx={{ fontWeight: 600 }}
+                      >
                         {attendanceStats?.today_check_in || '--:--'}
                       </Typography>
                     </Box>
@@ -420,7 +437,10 @@ const MobileAttendancePage: React.FC = () => {
                       >
                         下班时间
                       </Typography>
-                      <Typography variant='h6' sx={{ fontWeight: 600 }}>
+                      <Typography
+                        variant='h6'
+                        sx={{ fontWeight: 600 }}
+                      >
                         {attendanceStats?.today_check_out || '--:--'}
                       </Typography>
                     </Box>
@@ -622,7 +642,9 @@ const MobileAttendancePage: React.FC = () => {
                         mb: 2,
                       }}
                     >
-                      <FileText style={{ width: 32, height: 32, color: theme.palette.text.secondary }} />
+                      <FileText
+                        style={{ width: 32, height: 32, color: theme.palette.text.secondary }}
+                      />
                     </Box>
                     <Typography
                       variant='subtitle1'
@@ -740,20 +762,16 @@ const MobileAttendancePage: React.FC = () => {
               label='开始日期'
               type='date'
               value={leaveForm.start_date}
-              onChange={(e) =>
-                setLeaveForm((prev) => ({ ...prev, start_date: e.target.value }))
-              }
-              slotProps={{ inputLabel: { shrink: true } }}
+              onChange={(e) => setLeaveForm((prev) => ({ ...prev, start_date: e.target.value }))}
+              slotProps={{ inputLabel: { shrink: true } } as any}
             />
             <TextField
               fullWidth
               label='结束日期'
               type='date'
               value={leaveForm.end_date}
-              onChange={(e) =>
-                setLeaveForm((prev) => ({ ...prev, end_date: e.target.value }))
-              }
-              slotProps={{ inputLabel: { shrink: true } }}
+              onChange={(e) => setLeaveForm((prev) => ({ ...prev, end_date: e.target.value }))}
+              slotProps={{ inputLabel: { shrink: true } } as any}
             />
             <TextField
               fullWidth
@@ -761,9 +779,7 @@ const MobileAttendancePage: React.FC = () => {
               rows={3}
               label='请假原因'
               value={leaveForm.reason}
-              onChange={(e) =>
-                setLeaveForm((prev) => ({ ...prev, reason: e.target.value }))
-              }
+              onChange={(e) => setLeaveForm((prev) => ({ ...prev, reason: e.target.value }))}
               placeholder='请输入请假原因'
             />
           </Box>

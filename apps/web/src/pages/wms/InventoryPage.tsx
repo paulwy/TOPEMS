@@ -34,9 +34,9 @@ import { Plus, Edit, Trash2, Eye, Package, AlertTriangle } from 'lucide-react';
 import { apiLogger } from '@/utils/logger';
 import { ConfirmDialog, PageContainer } from '@/components/common';
 import { designTokens } from '@/theme/tokens';
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 
 const ct = designTokens.colors;
-import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 
 /**
  * TODO: Phase 7-4 -- 虚拟滚动优化
@@ -562,7 +562,12 @@ const InventoryPage: React.FC = () => {
         getRowId={(row) => row.id}
         mobileCardTitleKey='name'
         mobileCardSubtitleKey='sku'
-        mobileCardDisplayFields={['specification', 'quantity', 'available_quantity', 'warehouse_name']}
+        mobileCardDisplayFields={[
+          'specification',
+          'quantity',
+          'available_quantity',
+          'warehouse_name',
+        ]}
         mobileCardFieldLabels={{
           specification: '规格',
           quantity: '数量',

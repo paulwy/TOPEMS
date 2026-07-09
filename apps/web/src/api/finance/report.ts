@@ -33,19 +33,19 @@ const createApiClient = () => {
 
 export const reportApi = {
   getBalanceSheet: (params: ReportQueryParams): Promise<ApiResponse<BalanceSheet>> => {
-    return createApiClient().get('/finance/reports/balance-sheet', {
+    return createApiClient().get('/erp/finance/reports/balance-sheet', {
       params,
     });
   },
 
   getIncomeStatement: (params: ReportQueryParams): Promise<ApiResponse<IncomeStatement>> => {
-    return createApiClient().get('/finance/reports/income-statement', {
+    return createApiClient().get('/erp/finance/reports/income-statement', {
       params,
     });
   },
 
   getCashFlowStatement: (params: ReportQueryParams): Promise<ApiResponse<CashFlowStatement>> => {
-    return createApiClient().get('/finance/reports/cash-flow', {
+    return createApiClient().get('/erp/finance/reports/cash-flow', {
       params,
     });
   },
@@ -62,7 +62,7 @@ export const reportApi = {
       total_records: number;
     }>
   > => {
-    return createApiClient().get('/finance/reports/account-balance', {
+    return createApiClient().get('/erp/finance/reports/account-balance', {
       params,
     });
   },
@@ -89,7 +89,7 @@ export const reportApi = {
       }>
     >
   > => {
-    return createApiClient().get('/finance/reports/account-ledger', {
+    return createApiClient().get('/erp/finance/reports/account-ledger', {
       params,
     });
   },
@@ -101,25 +101,25 @@ export const reportApi = {
     end_period: string;
     company_id?: string;
   }): Promise<ApiResponse<any>> => {
-    return createApiClient().get('/finance/reports/dimension-detail', {
+    return createApiClient().get('/erp/finance/reports/dimension-detail', {
       params,
     });
   },
 
   exportBalanceSheet: async (params: ReportQueryParams): Promise<Blob> => {
-    return downloadBlob('/api', '/finance/reports/balance-sheet/export', {
+    return downloadBlob('/api', '/erp/finance/reports/balance-sheet/export', {
       params: params as unknown as Record<string, unknown>,
     });
   },
 
   exportIncomeStatement: async (params: ReportQueryParams): Promise<Blob> => {
-    return downloadBlob('/api', '/finance/reports/income-statement/export', {
+    return downloadBlob('/api', '/erp/finance/reports/income-statement/export', {
       params: params as unknown as Record<string, unknown>,
     });
   },
 
   exportCashFlowStatement: async (params: ReportQueryParams): Promise<Blob> => {
-    return downloadBlob('/api', '/finance/reports/cash-flow/export', {
+    return downloadBlob('/api', '/erp/finance/reports/cash-flow/export', {
       params: params as unknown as Record<string, unknown>,
     });
   },

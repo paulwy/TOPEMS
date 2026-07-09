@@ -34,6 +34,7 @@ export interface CreatePdmDocumentRequest {
 export interface DocumentVersion {
   id: string;
   document_id: string;
+  type?: string;
   version_number: string;
   title: string;
   description?: string;
@@ -80,6 +81,9 @@ export interface DocumentSearchResult {
 
 export const documentApi = {
   // Documents
+  listDocuments: async (params?: DocumentSearchParams): Promise<ApiResponse<PdmDocument[]>> => {
+    return documentApi.list(params);
+  },
   list: async (params?: DocumentSearchParams): Promise<ApiResponse<PdmDocument[]>> => {
     return apiClient.pdm.get<PdmDocument[]>('/documents', { params });
   },

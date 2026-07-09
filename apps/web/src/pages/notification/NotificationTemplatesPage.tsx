@@ -20,7 +20,7 @@ import {
   type FilterConfig,
 } from '@/components/templates';
 import { PageContainer } from '@/components/common';
-import ConfirmDialog from '@/components/common/ConfirmDialog';
+import { ConfirmDialog } from '@topems/shared-components';
 import { extractErrorMessage } from '@/utils/errors';
 import { designTokens } from '@/theme/tokens';
 

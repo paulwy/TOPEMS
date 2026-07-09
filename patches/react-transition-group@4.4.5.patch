@@ -1,0 +1,39 @@
+diff --git a/package.json b/package.json
+index e9bd5377e808703df0d8cafb2964152ee6c0b4f3..aa75ef857b3139e71677dd8bb9edc082c9250c1e 100644
+--- a/package.json
++++ b/package.json
+@@ -65,5 +65,23 @@
+       "loose-envify"
+     ]
+   },
+-  "sideEffects": false
++  "sideEffects": false,
++  "exports": {
++    ".": {
++      "import": "./esm/index.js",
++      "require": "./cjs/index.js"
++    },
++    "./TransitionGroupContext": {
++      "import": "./esm/TransitionGroupContext.js",
++      "require": "./cjs/TransitionGroupContext.js"
++    },
++    "./cjs/*": "./cjs/*",
++    "./esm/*": "./esm/*",
++    "./CSSTransition": {
++      "import": "./esm/CSSTransition.js",
++      "require": "./cjs/CSSTransition.js"
++    },
++    "./Transition": {
++      "import": "./esm/Transition.js",
++      "require": "./cjs/Transition.js"
++    },
++    "./TransitionGroup": {
++      "import": "./esm/TransitionGroup.js",
++      "require": "./cjs/TransitionGroup.js"
++    },
++    "./SwitchTransition": {
++      "import": "./esm/SwitchTransition.js",
++      "require": "./cjs/SwitchTransition.js"
++    }
++  }
+ }

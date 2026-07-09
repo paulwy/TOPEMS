@@ -165,10 +165,6 @@ fn naive_to_utc(dt: Option<NaiveDateTime>) -> DateTime<Utc> {
         .unwrap_or_else(Utc::now)
 }
 
-fn opt_naive_to_utc(dt: Option<NaiveDateTime>) -> Option<DateTime<Utc>> {
-    dt.map(|d| Utc.from_utc_datetime(&d))
-}
-
 fn opt_naive_date_to_utc(dt: Option<NaiveDate>) -> Option<DateTime<Utc>> {
     dt.map(|d| Utc.from_utc_datetime(&d.and_hms_opt(0, 0, 0).unwrap_or_default()))
 }

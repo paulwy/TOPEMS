@@ -26,6 +26,7 @@ import { apiLogger } from '@/utils/logger';
 import { DetailPageTemplate, type TabConfig, type SectionConfig } from '@/components/templates';
 import { PageContainer } from '@/components/common';
 import { designTokens } from '@/theme/tokens';
+
 const ct = designTokens.colors;
 
 const HrmContractDetailPage: React.FC = () => {

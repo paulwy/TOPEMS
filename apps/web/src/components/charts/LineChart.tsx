@@ -43,10 +43,19 @@ export const LineChartComponent: React.FC<LineChartProps> = ({
           {title}
         </h4>
       )}
-      <ResponsiveContainer width="100%" height={height}>
+      <ResponsiveContainer
+        width='100%'
+        height={height}
+      >
         <LineChart data={data}>
-          <CartesianGrid strokeDasharray="3 3" stroke={chartTheme.gridColor} />
-          <XAxis dataKey={xKey} tick={{ fill: chartTheme.textColor, fontSize: 12 }} />
+          <CartesianGrid
+            strokeDasharray='3 3'
+            stroke={chartTheme.gridColor}
+          />
+          <XAxis
+            dataKey={xKey}
+            tick={{ fill: chartTheme.textColor, fontSize: 12 }}
+          />
           <YAxis tick={{ fill: chartTheme.textColor, fontSize: 12 }} />
           <Tooltip
             contentStyle={{
@@ -61,7 +70,7 @@ export const LineChartComponent: React.FC<LineChartProps> = ({
             return (
               <Line
                 key={item.key}
-                type="monotone"
+                type='monotone'
                 dataKey={item.key}
                 name={item.name}
                 stroke={strokeColor}

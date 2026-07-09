@@ -1,6 +1,5 @@
 import { Typography, Tabs, Tab, Box } from '@mui/material';
 import { designTokens } from '@/theme/tokens';
-const ct = designTokens.colors;
 import React, { useState, useEffect, useMemo } from 'react';
 import {
   FileText,
@@ -45,6 +44,8 @@ import { ListPageTemplate } from '@/components/templates';
 import type { ColumnDef, RowAction, FilterConfig } from '@/components/templates';
 import { StatCardGroup } from '@/components';
 import { apiLogger } from '@/utils/logger';
+
+const ct = designTokens.colors;
 
 const FinanceVoucherPage: React.FC = () => {
   const navigate = useNavigate();
@@ -328,7 +329,11 @@ const FinanceVoucherPage: React.FC = () => {
     setNewVoucher((prev) => ({ ...prev, items: [...prev.items, newItem] }));
   };
 
-  const updateVoucherItem = (index: number, field: keyof VoucherItemRequest, value: VoucherItemRequest[keyof VoucherItemRequest]) => {
+  const updateVoucherItem = (
+    index: number,
+    field: keyof VoucherItemRequest,
+    value: VoucherItemRequest[keyof VoucherItemRequest]
+  ) => {
     const items = [...newVoucher.items];
     items[index] = { ...items[index], [field]: value };
 
@@ -1104,7 +1109,9 @@ const FinanceVoucherPage: React.FC = () => {
                     name={`subject_code_${index}`}
                     label='选择科目'
                     value={item.subject_code}
-                    onChange={(value) => updateVoucherItem(index, 'subject_code', value as string | number)}
+                    onChange={(value) =>
+                      updateVoucherItem(index, 'subject_code', value as string | number)
+                    }
                     options={subjects.map((s) => ({
                       value: s.code,
                       label: `${s.code} - ${s.name}`,

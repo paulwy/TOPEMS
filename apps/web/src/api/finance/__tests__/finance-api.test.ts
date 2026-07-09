@@ -30,14 +30,18 @@ describe('Finance Module API Tests', () => {
       await accountApi.list({ category: 'asset', page: 1, pagesize: 10 });
       expect(mockAxios.create).toHaveBeenCalled();
       const instance = mockAxios.create.mock.results[0].value;
-      expect(instance.get).toHaveBeenCalledWith('/finance/accounts', { params: { category: 'asset', page: 1, pagesize: 10 } });
+      expect(instance.get).toHaveBeenCalledWith('/finance/accounts', {
+        params: { category: 'asset', page: 1, pagesize: 10 },
+      });
     });
 
     it('getTree should call GET /finance/accounts/tree with params', async () => {
       const { accountApi } = await import('../account');
       await accountApi.getTree({ category: 'asset' });
       const instance = mockAxios.create.mock.results[0].value;
-      expect(instance.get).toHaveBeenCalledWith('/finance/accounts/tree', { params: { category: 'asset' } });
+      expect(instance.get).toHaveBeenCalledWith('/finance/accounts/tree', {
+        params: { category: 'asset' },
+      });
     });
 
     it('get should call GET /finance/accounts/:id', async () => {
@@ -75,21 +79,27 @@ describe('Finance Module API Tests', () => {
       const accounts = [{ name: 'Sub Account 1' }, { name: 'Sub Account 2' }];
       await accountApi.batchCreateChildren('acc-001', accounts);
       const instance = mockAxios.create.mock.results[0].value;
-      expect(instance.post).toHaveBeenCalledWith('/finance/accounts/acc-001/children-batch', { accounts });
+      expect(instance.post).toHaveBeenCalledWith('/finance/accounts/acc-001/children-batch', {
+        accounts,
+      });
     });
 
     it('getBalances should call GET /finance/accounts/balances with params', async () => {
       const { accountApi } = await import('../account');
       await accountApi.getBalances({ period: '2024-01' });
       const instance = mockAxios.create.mock.results[0].value;
-      expect(instance.get).toHaveBeenCalledWith('/finance/accounts/balances', { params: { period: '2024-01' } });
+      expect(instance.get).toHaveBeenCalledWith('/finance/accounts/balances', {
+        params: { period: '2024-01' },
+      });
     });
 
     it('getOpeningBalances should call GET /erp/finance/accounts/opening-balances with params', async () => {
       const { accountApi } = await import('../account');
       await accountApi.getOpeningBalances({ period: '2024-01', page: 1, pagesize: 10 });
       const instance = mockAxios.create.mock.results[0].value;
-      expect(instance.get).toHaveBeenCalledWith('/erp/finance/accounts/opening-balances', { params: { period: '2024-01', page: 1, pagesize: 10 } });
+      expect(instance.get).toHaveBeenCalledWith('/erp/finance/accounts/opening-balances', {
+        params: { period: '2024-01', page: 1, pagesize: 10 },
+      });
     });
 
     it('setOpeningBalance should call POST /erp/finance/accounts/:id/opening-balance with data', async () => {
@@ -97,14 +107,20 @@ describe('Finance Module API Tests', () => {
       const data = { debit: 10000 };
       await accountApi.setOpeningBalance('acc-001', data);
       const instance = mockAxios.create.mock.results[0].value;
-      expect(instance.post).toHaveBeenCalledWith('/erp/finance/accounts/acc-001/opening-balance', data);
+      expect(instance.post).toHaveBeenCalledWith(
+        '/erp/finance/accounts/acc-001/opening-balance',
+        data
+      );
     });
 
     it('carryForwardOpeningBalance should call POST /erp/finance/accounts/opening-balances/carry-forward with params', async () => {
       const { accountApi } = await import('../account');
       await accountApi.carryForwardOpeningBalance({ from_period: '2023-12', to_period: '2024-01' });
       const instance = mockAxios.create.mock.results[0].value;
-      expect(instance.post).toHaveBeenCalledWith('/erp/finance/accounts/opening-balances/carry-forward', { from_period: '2023-12', to_period: '2024-01' });
+      expect(instance.post).toHaveBeenCalledWith(
+        '/erp/finance/accounts/opening-balances/carry-forward',
+        { from_period: '2023-12', to_period: '2024-01' }
+      );
     });
   });
 
@@ -141,16 +157,28 @@ describe('Finance Module API Tests', () => {
 
     it('listCustomersWithFinance should call GET /finance/counterparty/customers with params', async () => {
       const { counterpartyFinanceApi } = await import('../counterparty');
-      await counterpartyFinanceApi.listCustomersWithFinance({ status: 'active', page: 1, pagesize: 10 });
+      await counterpartyFinanceApi.listCustomersWithFinance({
+        status: 'active',
+        page: 1,
+        pagesize: 10,
+      });
       const instance = mockAxios.create.mock.results[0].value;
-      expect(instance.get).toHaveBeenCalledWith('/finance/counterparty/customers', { params: { status: 'active', page: 1, pagesize: 10 } });
+      expect(instance.get).toHaveBeenCalledWith('/finance/counterparty/customers', {
+        params: { status: 'active', page: 1, pagesize: 10 },
+      });
     });
 
     it('listSuppliersWithFinance should call GET /finance/counterparty/suppliers with params', async () => {
       const { counterpartyFinanceApi } = await import('../counterparty');
-      await counterpartyFinanceApi.listSuppliersWithFinance({ status: 'active', page: 1, pagesize: 10 });
+      await counterpartyFinanceApi.listSuppliersWithFinance({
+        status: 'active',
+        page: 1,
+        pagesize: 10,
+      });
       const instance = mockAxios.create.mock.results[0].value;
-      expect(instance.get).toHaveBeenCalledWith('/finance/counterparty/suppliers', { params: { status: 'active', page: 1, pagesize: 10 } });
+      expect(instance.get).toHaveBeenCalledWith('/finance/counterparty/suppliers', {
+        params: { status: 'active', page: 1, pagesize: 10 },
+      });
     });
   });
 
@@ -159,7 +187,9 @@ describe('Finance Module API Tests', () => {
       const { voucherApi } = await import('../voucher');
       await voucherApi.list({ period: '2024-01', page: 1, pagesize: 10 });
       const instance = mockAxios.create.mock.results[0].value;
-      expect(instance.get).toHaveBeenCalledWith('/finance/vouchers', { params: { period: '2024-01', page: 1, pagesize: 10 } });
+      expect(instance.get).toHaveBeenCalledWith('/finance/vouchers', {
+        params: { period: '2024-01', page: 1, pagesize: 10 },
+      });
     });
 
     it('get should call GET /finance/vouchers/:id', async () => {
@@ -211,7 +241,9 @@ describe('Finance Module API Tests', () => {
       const { voucherApi } = await import('../voucher');
       await voucherApi.batchDelete(['vou-001', 'vou-002']);
       const instance = mockAxios.create.mock.results[0].value;
-      expect(instance.post).toHaveBeenCalledWith('/finance/vouchers/batch-delete', { ids: ['vou-001', 'vou-002'] });
+      expect(instance.post).toHaveBeenCalledWith('/finance/vouchers/batch-delete', {
+        ids: ['vou-001', 'vou-002'],
+      });
     });
 
     it('submit should call POST /finance/vouchers/:id/submit', async () => {
@@ -232,7 +264,9 @@ describe('Finance Module API Tests', () => {
       const { voucherApi } = await import('../voucher');
       await voucherApi.batchApprove(['vou-001', 'vou-002']);
       const instance = mockAxios.create.mock.results[0].value;
-      expect(instance.post).toHaveBeenCalledWith('/finance/vouchers/batch-approve', { ids: ['vou-001', 'vou-002'] });
+      expect(instance.post).toHaveBeenCalledWith('/finance/vouchers/batch-approve', {
+        ids: ['vou-001', 'vou-002'],
+      });
     });
 
     it('unapprove should call POST /finance/vouchers/:id/unapprove', async () => {
@@ -253,21 +287,27 @@ describe('Finance Module API Tests', () => {
       const { voucherApi } = await import('../voucher');
       await voucherApi.batchPost(['vou-001', 'vou-002']);
       const instance = mockAxios.create.mock.results[0].value;
-      expect(instance.post).toHaveBeenCalledWith('/finance/vouchers/batch-post', { ids: ['vou-001', 'vou-002'] });
+      expect(instance.post).toHaveBeenCalledWith('/finance/vouchers/batch-post', {
+        ids: ['vou-001', 'vou-002'],
+      });
     });
 
     it('reverse should call POST /finance/vouchers/:id/reverse with reason', async () => {
       const { voucherApi } = await import('../voucher');
       await voucherApi.reverse('vou-001', 'Wrong entry');
       const instance = mockAxios.create.mock.results[0].value;
-      expect(instance.post).toHaveBeenCalledWith('/finance/vouchers/vou-001/reverse', { reason: 'Wrong entry' });
+      expect(instance.post).toHaveBeenCalledWith('/finance/vouchers/vou-001/reverse', {
+        reason: 'Wrong entry',
+      });
     });
 
     it('getNextVoucherNo should call GET /finance/vouchers/next-no with params', async () => {
       const { voucherApi } = await import('../voucher');
       await voucherApi.getNextVoucherNo({ period: '2024-01', voucher_type: 'journal' });
       const instance = mockAxios.create.mock.results[0].value;
-      expect(instance.get).toHaveBeenCalledWith('/finance/vouchers/next-no', { params: { period: '2024-01', voucher_type: 'journal' } });
+      expect(instance.get).toHaveBeenCalledWith('/finance/vouchers/next-no', {
+        params: { period: '2024-01', voucher_type: 'journal' },
+      });
     });
 
     it('generateByTemplate should call POST /finance/vouchers/generate with params', async () => {
@@ -284,7 +324,9 @@ describe('Finance Module API Tests', () => {
       const { voucherTemplateApi } = await import('../voucherTemplate');
       await voucherTemplateApi.list({ type: 'journal', page: 1, pagesize: 10 });
       const instance = mockAxios.create.mock.results[0].value;
-      expect(instance.get).toHaveBeenCalledWith('/finance/voucher-templates', { params: { type: 'journal', page: 1, pagesize: 10 } });
+      expect(instance.get).toHaveBeenCalledWith('/finance/voucher-templates', {
+        params: { type: 'journal', page: 1, pagesize: 10 },
+      });
     });
 
     it('get should call GET /finance/voucher-templates/:id', async () => {
@@ -321,7 +363,9 @@ describe('Finance Module API Tests', () => {
       const { voucherTemplateApi } = await import('../voucherTemplate');
       await voucherTemplateApi.copy('temp-001', 'Copy of Template');
       const instance = mockAxios.create.mock.results[0].value;
-      expect(instance.post).toHaveBeenCalledWith('/finance/voucher-templates/temp-001/copy', { name: 'Copy of Template' });
+      expect(instance.post).toHaveBeenCalledWith('/finance/voucher-templates/temp-001/copy', {
+        name: 'Copy of Template',
+      });
     });
 
     it('preview should call POST /finance/voucher-templates/:id/preview with source_data', async () => {
@@ -329,14 +373,19 @@ describe('Finance Module API Tests', () => {
       const sourceData = { amount: 1000 };
       await voucherTemplateApi.preview('temp-001', sourceData);
       const instance = mockAxios.create.mock.results[0].value;
-      expect(instance.post).toHaveBeenCalledWith('/finance/voucher-templates/temp-001/preview', { source_data: sourceData });
+      expect(instance.post).toHaveBeenCalledWith('/finance/voucher-templates/temp-001/preview', {
+        source_data: sourceData,
+      });
     });
 
     it('setDefault should call POST /finance/voucher-templates/:id/set-default', async () => {
       const { voucherTemplateApi } = await import('../voucherTemplate');
       await voucherTemplateApi.setDefault('temp-001');
       const instance = mockAxios.create.mock.results[0].value;
-      expect(instance.post).toHaveBeenCalledWith('/finance/voucher-templates/temp-001/set-default', {});
+      expect(instance.post).toHaveBeenCalledWith(
+        '/finance/voucher-templates/temp-001/set-default',
+        {}
+      );
     });
   });
 
@@ -352,7 +401,9 @@ describe('Finance Module API Tests', () => {
       const { periodApi } = await import('../period');
       await periodApi.list({ year: 2024, status: 'open' });
       const instance = mockAxios.create.mock.results[0].value;
-      expect(instance.get).toHaveBeenCalledWith('/finance/periods', { params: { year: 2024, status: 'open' } });
+      expect(instance.get).toHaveBeenCalledWith('/finance/periods', {
+        params: { year: 2024, status: 'open' },
+      });
     });
 
     it('open should call POST /finance/periods/open with period', async () => {
@@ -373,7 +424,9 @@ describe('Finance Module API Tests', () => {
       const { periodApi } = await import('../period');
       await periodApi.closePeriodIncome('2024-12');
       const instance = mockAxios.create.mock.results[0].value;
-      expect(instance.post).toHaveBeenCalledWith('/finance/periods/close-income', { period: '2024-12' });
+      expect(instance.post).toHaveBeenCalledWith('/finance/periods/close-income', {
+        period: '2024-12',
+      });
     });
 
     it('yearEndClose should call POST /finance/periods/year-end-close with year', async () => {
@@ -387,9 +440,15 @@ describe('Finance Module API Tests', () => {
   describe('receivablePayableApi', () => {
     it('listSalesInvoices should call GET /erp/receivables with params', async () => {
       const { receivablePayableApi } = await import('../receivablePayable');
-      await receivablePayableApi.listSalesInvoices({ customer_id: 'cust-001', page: 1, pagesize: 10 });
+      await receivablePayableApi.listSalesInvoices({
+        customer_id: 'cust-001',
+        page: 1,
+        pagesize: 10,
+      });
       const instance = mockAxios.create.mock.results[0].value;
-      expect(instance.get).toHaveBeenCalledWith('/erp/receivables', { params: { customer_id: 'cust-001', page: 1, pagesize: 10 } });
+      expect(instance.get).toHaveBeenCalledWith('/erp/receivables', {
+        params: { customer_id: 'cust-001', page: 1, pagesize: 10 },
+      });
     });
 
     it('getSalesInvoice should call GET /erp/receivables/:id', async () => {
@@ -424,9 +483,15 @@ describe('Finance Module API Tests', () => {
 
     it('listPurchaseInvoices should call GET /erp/payables with params', async () => {
       const { receivablePayableApi } = await import('../receivablePayable');
-      await receivablePayableApi.listPurchaseInvoices({ supplier_id: 'supp-001', page: 1, pagesize: 10 });
+      await receivablePayableApi.listPurchaseInvoices({
+        supplier_id: 'supp-001',
+        page: 1,
+        pagesize: 10,
+      });
       const instance = mockAxios.create.mock.results[0].value;
-      expect(instance.get).toHaveBeenCalledWith('/erp/payables', { params: { supplier_id: 'supp-001', page: 1, pagesize: 10 } });
+      expect(instance.get).toHaveBeenCalledWith('/erp/payables', {
+        params: { supplier_id: 'supp-001', page: 1, pagesize: 10 },
+      });
     });
 
     it('getPurchaseInvoice should call GET /erp/payables/:id', async () => {
@@ -461,9 +526,15 @@ describe('Finance Module API Tests', () => {
 
     it('listCollections should call GET /finance/ar/collections with params', async () => {
       const { receivablePayableApi } = await import('../receivablePayable');
-      await receivablePayableApi.listCollections({ customer_id: 'cust-001', page: 1, pagesize: 10 });
+      await receivablePayableApi.listCollections({
+        customer_id: 'cust-001',
+        page: 1,
+        pagesize: 10,
+      });
       const instance = mockAxios.create.mock.results[0].value;
-      expect(instance.get).toHaveBeenCalledWith('/finance/ar/collections', { params: { customer_id: 'cust-001', page: 1, pagesize: 10 } });
+      expect(instance.get).toHaveBeenCalledWith('/finance/ar/collections', {
+        params: { customer_id: 'cust-001', page: 1, pagesize: 10 },
+      });
     });
 
     it('createCollection should call POST /finance/ar/collections with data', async () => {
@@ -478,7 +549,9 @@ describe('Finance Module API Tests', () => {
       const { receivablePayableApi } = await import('../receivablePayable');
       await receivablePayableApi.listPayments({ supplier_id: 'supp-001', page: 1, pagesize: 10 });
       const instance = mockAxios.create.mock.results[0].value;
-      expect(instance.get).toHaveBeenCalledWith('/finance/ap/payments', { params: { supplier_id: 'supp-001', page: 1, pagesize: 10 } });
+      expect(instance.get).toHaveBeenCalledWith('/finance/ap/payments', {
+        params: { supplier_id: 'supp-001', page: 1, pagesize: 10 },
+      });
     });
 
     it('createPayment should call POST /finance/ap/payments with data', async () => {
@@ -509,14 +582,18 @@ describe('Finance Module API Tests', () => {
       const { receivablePayableApi } = await import('../receivablePayable');
       await receivablePayableApi.getReceivableAging({ as_of_date: '2024-01-31' });
       const instance = mockAxios.create.mock.results[0].value;
-      expect(instance.get).toHaveBeenCalledWith('/finance/ar/aging', { params: { as_of_date: '2024-01-31' } });
+      expect(instance.get).toHaveBeenCalledWith('/finance/ar/aging', {
+        params: { as_of_date: '2024-01-31' },
+      });
     });
 
     it('getPayableAging should call GET /finance/ap/aging with params', async () => {
       const { receivablePayableApi } = await import('../receivablePayable');
       await receivablePayableApi.getPayableAging({ as_of_date: '2024-01-31' });
       const instance = mockAxios.create.mock.results[0].value;
-      expect(instance.get).toHaveBeenCalledWith('/finance/ap/aging', { params: { as_of_date: '2024-01-31' } });
+      expect(instance.get).toHaveBeenCalledWith('/finance/ap/aging', {
+        params: { as_of_date: '2024-01-31' },
+      });
     });
   });
 
@@ -525,42 +602,68 @@ describe('Finance Module API Tests', () => {
       const { reportApi } = await import('../report');
       await reportApi.getBalanceSheet({ period: '2024-01', company_id: 'comp-001' });
       const instance = mockAxios.create.mock.results[0].value;
-      expect(instance.get).toHaveBeenCalledWith('/finance/reports/balance-sheet', { params: { period: '2024-01', company_id: 'comp-001' } });
+      expect(instance.get).toHaveBeenCalledWith('/finance/reports/balance-sheet', {
+        params: { period: '2024-01', company_id: 'comp-001' },
+      });
     });
 
     it('getIncomeStatement should call GET /finance/reports/income-statement with params', async () => {
       const { reportApi } = await import('../report');
       await reportApi.getIncomeStatement({ period: '2024-01', company_id: 'comp-001' });
       const instance = mockAxios.create.mock.results[0].value;
-      expect(instance.get).toHaveBeenCalledWith('/finance/reports/income-statement', { params: { period: '2024-01', company_id: 'comp-001' } });
+      expect(instance.get).toHaveBeenCalledWith('/finance/reports/income-statement', {
+        params: { period: '2024-01', company_id: 'comp-001' },
+      });
     });
 
     it('getCashFlowStatement should call GET /finance/reports/cash-flow with params', async () => {
       const { reportApi } = await import('../report');
       await reportApi.getCashFlowStatement({ period: '2024-01', company_id: 'comp-001' });
       const instance = mockAxios.create.mock.results[0].value;
-      expect(instance.get).toHaveBeenCalledWith('/finance/reports/cash-flow', { params: { period: '2024-01', company_id: 'comp-001' } });
+      expect(instance.get).toHaveBeenCalledWith('/finance/reports/cash-flow', {
+        params: { period: '2024-01', company_id: 'comp-001' },
+      });
     });
 
     it('getAccountBalanceReport should call GET /finance/reports/account-balance with params', async () => {
       const { reportApi } = await import('../report');
       await reportApi.getAccountBalanceReport({ company_id: 'comp-001', period: '2024-01' });
       const instance = mockAxios.create.mock.results[0].value;
-      expect(instance.get).toHaveBeenCalledWith('/finance/reports/account-balance', { params: { company_id: 'comp-001', period: '2024-01' } });
+      expect(instance.get).toHaveBeenCalledWith('/finance/reports/account-balance', {
+        params: { company_id: 'comp-001', period: '2024-01' },
+      });
     });
 
     it('getAccountLedger should call GET /finance/reports/account-ledger with params', async () => {
       const { reportApi } = await import('../report');
-      await reportApi.getAccountLedger({ account_id: 'acc-001', start_period: '2024-01', end_period: '2024-03' });
+      await reportApi.getAccountLedger({
+        account_id: 'acc-001',
+        start_period: '2024-01',
+        end_period: '2024-03',
+      });
       const instance = mockAxios.create.mock.results[0].value;
-      expect(instance.get).toHaveBeenCalledWith('/finance/reports/account-ledger', { params: { account_id: 'acc-001', start_period: '2024-01', end_period: '2024-03' } });
+      expect(instance.get).toHaveBeenCalledWith('/finance/reports/account-ledger', {
+        params: { account_id: 'acc-001', start_period: '2024-01', end_period: '2024-03' },
+      });
     });
 
     it('getDimensionDetail should call GET /finance/reports/dimension-detail with params', async () => {
       const { reportApi } = await import('../report');
-      await reportApi.getDimensionDetail({ dimension: 'department', dimension_id: 'dept-001', start_period: '2024-01', end_period: '2024-03' });
+      await reportApi.getDimensionDetail({
+        dimension: 'department',
+        dimension_id: 'dept-001',
+        start_period: '2024-01',
+        end_period: '2024-03',
+      });
       const instance = mockAxios.create.mock.results[0].value;
-      expect(instance.get).toHaveBeenCalledWith('/finance/reports/dimension-detail', { params: { dimension: 'department', dimension_id: 'dept-001', start_period: '2024-01', end_period: '2024-03' } });
+      expect(instance.get).toHaveBeenCalledWith('/finance/reports/dimension-detail', {
+        params: {
+          dimension: 'department',
+          dimension_id: 'dept-001',
+          start_period: '2024-01',
+          end_period: '2024-03',
+        },
+      });
     });
   });
 });

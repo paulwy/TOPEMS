@@ -85,8 +85,11 @@ export const useNotificationWebSocket = ({
     try {
       const playBeep = () => {
         try {
-          const audioContext = new (window.AudioContext ||
-        (window as typeof window & { webkitAudioContext?: typeof AudioContext }).webkitAudioContext)();
+          const audioContext = new (
+            window.AudioContext ||
+            (window as typeof window & { webkitAudioContext?: typeof AudioContext })
+              .webkitAudioContext
+          )();
           const oscillator = audioContext.createOscillator();
           const gainNode = audioContext.createGain();
 

@@ -17,7 +17,8 @@ import { dictTypeApi, dictItemApi, type DictType, type DictItem } from '@/api/sy
 import { useAppStore } from '../../store';
 import { apiLogger } from '@/utils/logger';
 import { extractErrorMessage } from '@/utils/errors';
-import {Box,
+import {
+  Box,
   TextField,
   Typography,
   Card,
@@ -37,9 +38,11 @@ import {Box,
   Paper,
   Switch,
   IconButton,
-  Button, useTheme} from '@mui/material';
+  Button,
+  useTheme,
+} from '@mui/material';
 import { ListPageTemplate, type ColumnDef } from '@/components/templates';
-import ConfirmDialog from '@/components/common/ConfirmDialog';
+import { ConfirmDialog } from '@topems/shared-components';
 
 interface DictionaryManagementPageProps {
   onNavigate?: (page: string) => void;

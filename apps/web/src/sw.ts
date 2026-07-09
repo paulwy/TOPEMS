@@ -3,11 +3,7 @@
 import type { PrecacheEntry } from 'workbox-precaching';
 import { precacheAndRoute, createHandlerBoundToURL } from 'workbox-precaching';
 import { registerRoute, NavigationRoute } from 'workbox-routing';
-import {
-  StaleWhileRevalidate,
-  CacheFirst,
-  NetworkFirst,
-} from 'workbox-strategies';
+import { StaleWhileRevalidate, CacheFirst, NetworkFirst } from 'workbox-strategies';
 import { CacheableResponsePlugin } from 'workbox-cacheable-response';
 import { ExpirationPlugin } from 'workbox-expiration';
 import { logger } from '@/utils/logger';
@@ -169,7 +165,9 @@ self.addEventListener('push', (event) => {
     waitUntil: (promise: Promise<unknown>) => void;
   };
 
-  const payload = pushEvent.data?.json() as { title?: string; body?: string; data?: Record<string, unknown> } || {};
+  const payload =
+    (pushEvent.data?.json() as { title?: string; body?: string; data?: Record<string, unknown> }) ||
+    {};
   const title = payload.title || 'TOPEMS 通知';
   const options: NotificationOptions = {
     body: payload.body || '',
@@ -191,19 +189,17 @@ self.addEventListener('notificationclick', (event) => {
 
   const url = notificationEvent.notification.data?.url || '/dashboard';
   notificationEvent.waitUntil(
-    self.clients
-      .matchAll({ type: 'window', includeUncontrolled: true })
-      .then((clientList) => {
-        for (const client of clientList) {
-          if (client.url === url && 'focus' in client) {
-            client.focus();
-            return;
-          }
+    self.clients.matchAll({ type: 'window', includeUncontrolled: true }).then((clientList) => {
+      for (const client of clientList) {
+        if (client.url === url && 'focus' in client) {
+          client.focus();
+          return;
         }
-        if (self.clients.openWindow) {
-          self.clients.openWindow(url);
-        }
-      })
+      }
+      if (self.clients.openWindow) {
+        self.clients.openWindow(url);
+      }
+    })
   );
 });
 
@@ -255,17 +251,20 @@ self.addEventListener('activate', (event) => {
 
   const currentCaches = Object.values(CACHE_NAME);
   activateEvent.waitUntil(
-    caches.keys().then((cacheNames) => {
-      return Promise.all(
-        cacheNames.map((cacheName) => {
-          if (!currentCaches.includes(cacheName)) {
-            return caches.delete(cacheName);
-          }
-          return Promise.resolve();
-        })
-      );
-    }).then(() => {
-      return self.clients.claim();
-    })
+    caches
+      .keys()
+      .then((cacheNames) => {
+        return Promise.all(
+          cacheNames.map((cacheName) => {
+            if (!currentCaches.includes(cacheName)) {
+              return caches.delete(cacheName);
+            }
+            return Promise.resolve();
+          })
+        );
+      })
+      .then(() => {
+        return self.clients.claim();
+      })
   );
 });

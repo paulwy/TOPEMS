@@ -707,7 +707,7 @@ const EhsHazardousMaterialPage: React.FC = () => {
                 label='有效期'
                 value={formData.expiry_date}
                 onChange={(e) => setFormData({ ...formData, expiry_date: e.target.value })}
-                slotProps={{ inputLabel: { shrink: true } }}
+                slotProps={{ inputLabel: { shrink: true } } as any}
               />
             </Box>
             <TextField
@@ -819,7 +819,8 @@ const EhsHazardousMaterialPage: React.FC = () => {
                           label={status.text}
                           size='small'
                           sx={{
-                            backgroundColor: status.text === '已过期' ? 'error.lighter' : 'warning.100',
+                            backgroundColor:
+                              status.text === '已过期' ? 'error.lighter' : 'warning.100',
                             color: status.color,
                             fontWeight: 500,
                           }}

@@ -39,7 +39,9 @@ export interface CrudQueriesOptions<T> {
 export interface ModuleQueriesOptions<T> {
   /** 模块 API 对象（必须实现 list/get/create/update/delete） */
   api: {
-    list: (params?: Record<string, unknown>) => Promise<{ success: boolean; data?: { items: T[]; total: number } }>;
+    list: (
+      params?: Record<string, unknown>
+    ) => Promise<{ success: boolean; data?: { items: T[]; total: number } }>;
     get: (id: string) => Promise<{ success: boolean; data?: T }>;
     create: (data: Partial<T>) => Promise<{ success: boolean; data?: T }>;
     update: (id: string, data: Partial<T>) => Promise<{ success: boolean; data?: T }>;
@@ -81,7 +83,10 @@ export interface UseCrudQueriesResult<T, TCreate = Partial<T>, TUpdate = Partial
 /** 默认的列表数据转换，兼容 { items, total } 和 嵌套 data 结构 */
 function defaultTransformList<T>(response: unknown): { items: T[]; total: number } {
   const data = (response as { data?: unknown })?.data ?? response;
-  const items = (data as { items?: T[] })?.items ?? (data as { data?: T[] })?.data ?? (Array.isArray(data) ? (data as T[]) : []);
+  const items =
+    (data as { items?: T[] })?.items ??
+    (data as { data?: T[] })?.data ??
+    (Array.isArray(data) ? (data as T[]) : []);
   const total = (data as { total?: number })?.total ?? items.length;
   return { items, total };
 }

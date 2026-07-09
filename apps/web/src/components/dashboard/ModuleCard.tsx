@@ -1,7 +1,6 @@
 import React, { useState } from 'react';
 import { useTheme } from '@mui/material';
-import { ModuleStatusBadge } from '@/components/common/StatusBadge';
-import type { ModuleStatusValue } from '@/components/common/StatusBadge';
+import { ModuleStatusBadge, type ModuleStatusValue } from '@topems/shared-components';
 
 type IconComponent = React.ComponentType<{
   className?: string;

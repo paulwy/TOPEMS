@@ -24,6 +24,7 @@ reqwest.workspace = true
 bcrypt.workspace = true
 jsonwebtoken.workspace = true
 bytes.workspace = true
+bigdecimal.workspace = true
 topems-shared = { path = "../../lib" }
 
 # OpenAPI 文档

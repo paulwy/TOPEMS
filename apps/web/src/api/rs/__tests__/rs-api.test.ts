@@ -23,7 +23,9 @@ describe('RS Module API Tests', () => {
       const { projectApi } = await import('../project');
       await projectApi.listProjects({ page: 1, pagesize: 10, search: 'test', status: 'active' });
       const { apiClient } = await import('../../client');
-      expect(apiClient.rs.get).toHaveBeenCalledWith('/projects?page=1&pagesize=10&search=test&status=active');
+      expect(apiClient.rs.get).toHaveBeenCalledWith(
+        '/projects?page=1&pagesize=10&search=test&status=active'
+      );
     });
 
     it('listProjects should call GET /projects without params', async () => {
@@ -97,9 +99,16 @@ describe('RS Module API Tests', () => {
   describe('experimentApi', () => {
     it('listExperiments should call GET /experiments with params', async () => {
       const { experimentApi } = await import('../experiment');
-      await experimentApi.listExperiments({ page: 1, pagesize: 10, search: 'test', status: 'active' });
+      await experimentApi.listExperiments({
+        page: 1,
+        pagesize: 10,
+        search: 'test',
+        status: 'active',
+      });
       const { apiClient } = await import('../../client');
-      expect(apiClient.rs.get).toHaveBeenCalledWith('/experiments?page=1&pagesize=10&search=test&status=active');
+      expect(apiClient.rs.get).toHaveBeenCalledWith(
+        '/experiments?page=1&pagesize=10&search=test&status=active'
+      );
     });
 
     it('listExperiments should call GET /experiments without params', async () => {
@@ -164,7 +173,9 @@ describe('RS Module API Tests', () => {
       const { experimentApi } = await import('../experiment');
       await experimentApi.listScaleupExperiments({ page: 1, pagesize: 10 });
       const { apiClient } = await import('../../client');
-      expect(apiClient.rs.get).toHaveBeenCalledWith('/experiments/phase/scaleup?page=1&pagesize=10');
+      expect(apiClient.rs.get).toHaveBeenCalledWith(
+        '/experiments/phase/scaleup?page=1&pagesize=10'
+      );
     });
 
     it('advancePhase should call POST /experiments/:id/advance-phase with data', async () => {
@@ -271,7 +282,9 @@ describe('RS Module API Tests', () => {
       const { bugApi } = await import('../bug');
       await bugApi.listBugs({ page: 1, pagesize: 10, severity: 'high', status: 'open' });
       const { apiClient } = await import('../../client');
-      expect(apiClient.rs.get).toHaveBeenCalledWith('/bugs?page=1&pagesize=10&severity=high&status=open');
+      expect(apiClient.rs.get).toHaveBeenCalledWith(
+        '/bugs?page=1&pagesize=10&severity=high&status=open'
+      );
     });
 
     it('listBugs should call GET /bugs without params', async () => {
@@ -317,7 +330,9 @@ describe('RS Module API Tests', () => {
       const { testApi } = await import('../test');
       await testApi.listTests({ page: 1, pagesize: 10, case_type: 'unit', priority: 'high' });
       const { apiClient } = await import('../../client');
-      expect(apiClient.rs.get).toHaveBeenCalledWith('/tests?page=1&pagesize=10&case_type=unit&priority=high');
+      expect(apiClient.rs.get).toHaveBeenCalledWith(
+        '/tests?page=1&pagesize=10&case_type=unit&priority=high'
+      );
     });
 
     it('listTests should call GET /tests without params', async () => {

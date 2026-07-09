@@ -9,7 +9,10 @@ import { useAppStore } from '@/store';
 vi.mock('@/api/mes', () => ({
   mesApi: {
     processes: {
-      list: vi.fn().mockResolvedValue({ success: true, data: { processes: [], total: 0, page: 0, pagesize: 10 } }),
+      list: vi.fn().mockResolvedValue({
+        success: true,
+        data: { processes: [], total: 0, page: 0, pagesize: 10 },
+      }),
       create: vi.fn(),
       update: vi.fn(),
       delete: vi.fn(),

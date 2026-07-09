@@ -117,8 +117,12 @@ export const ChatRoomItem: React.FC<ChatRoomItemProps> = ({
           gap: 4,
         }}
       >
-        {chatRoom.is_pinned && <Pin style={{ width: 12, height: 12, color: theme.palette.warning.main }} />}
-        {chatRoom.is_muted && <BellOff style={{ width: 12, height: 12, color: theme.palette.text.disabled }} />}
+        {chatRoom.is_pinned && (
+          <Pin style={{ width: 12, height: 12, color: theme.palette.warning.main }} />
+        )}
+        {chatRoom.is_muted && (
+          <BellOff style={{ width: 12, height: 12, color: theme.palette.text.disabled }} />
+        )}
       </div>
 
       <div style={{ display: 'flex', alignItems: 'flex-start', gap: 12 }}>
@@ -252,7 +256,9 @@ export const ChatRoomItem: React.FC<ChatRoomItemProps> = ({
                     cursor: 'pointer',
                   }}
                 >
-                  <MoreVertical style={{ width: 16, height: 16, color: theme.palette.text.disabled }} />
+                  <MoreVertical
+                    style={{ width: 16, height: 16, color: theme.palette.text.disabled }}
+                  />
                 </button>
               )}
             </div>

@@ -47,7 +47,10 @@ export const createSafeLazy = () => {
         return result;
       } catch (error: unknown) {
         const err = error instanceof Error ? error : new Error(String(error));
-        logger.error(`[Safe Lazy] Failed to load component ${moduleName || 'unknown'}:`, err.message);
+        logger.error(
+          `[Safe Lazy] Failed to load component ${moduleName || 'unknown'}:`,
+          err.message
+        );
         return { default: ErrorPage as unknown as T };
       }
     });

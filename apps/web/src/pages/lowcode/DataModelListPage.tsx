@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react';
-import {Box,
+import {
+  Box,
   TextField,
   InputAdornment,
   Button,
@@ -13,31 +14,16 @@ import {Box,
   FormControl,
   InputLabel,
   Select,
-  MenuItem, useTheme} from '@mui/material';
-import {
-  Search,
-  Plus,
-  Database,
-  Edit,
-  Trash2,
-  Upload,
-  RefreshCw,
-} from 'lucide-react';
+  MenuItem,
+  useTheme,
+} from '@mui/material';
+import { Search, Plus, Database, Edit, Trash2, Upload, RefreshCw } from 'lucide-react';
 import { PageContainer } from '@/components/common';
-import {
-  ListPageTemplate,
-  type ColumnDef,
-  type RowAction,
-} from '@/components/templates';
-import {
-  listDataModels,
-  createDataModel,
-  deleteDataModel,
-  publishModel,
-} from '../../api/lowcode';
+import { ListPageTemplate, type ColumnDef, type RowAction } from '@/components/templates';
+import { listDataModels, createDataModel, deleteDataModel, publishModel } from '../../api/lowcode';
 import type { DataModel } from '../../api/lowcode/types';
 import { useNavigate } from 'react-router-dom';
-import { logger } from "@/utils/logger";
+import { logger } from '@/utils/logger';
 
 const DataModelListPage = () => {
   const theme = useTheme();
@@ -139,9 +125,9 @@ const DataModelListPage = () => {
               <span style={{ fontWeight: 500 }}>{row.label}</span>
               <Chip
                 label={row.status === 'published' ? '已发布' : '草稿'}
-                size="small"
+                size='small'
                 color={row.status === 'published' ? 'success' : 'default'}
-                variant="outlined"
+                variant='outlined'
               />
             </Box>
             <span style={{ fontSize: 12, color: theme.palette.text.secondary }}>{row.name}</span>
@@ -191,12 +177,12 @@ const DataModelListPage = () => {
 
   return (
     <PageContainer
-      title="数据模型"
-      subtitle="管理所有数据模型"
+      title='数据模型'
+      subtitle='管理所有数据模型'
       loading={loading}
       headerActions={
         <Button
-          variant="contained"
+          variant='contained'
           startIcon={<Plus style={{ width: 18, height: 18 }} />}
           onClick={() => setCreateDialogOpen(true)}
         >
@@ -216,47 +202,58 @@ const DataModelListPage = () => {
         onPageSizeChange={setPageSize}
         searchValue={searchTerm}
         onSearchChange={handleSearch}
-        searchPlaceholder="搜索模型名称..."
+        searchPlaceholder='搜索模型名称...'
         filterContent={
-          <FormControl size="small" sx={{ width: 150 }}>
+          <FormControl
+            size='small'
+            sx={{ width: 150 }}
+          >
             <InputLabel>状态</InputLabel>
             <Select
               value={statusFilter}
-              label="状态"
-              onChange={(e) => { setStatusFilter(e.target.value); setPage(0); }}
+              label='状态'
+              onChange={(e) => {
+                setStatusFilter(e.target.value);
+                setPage(0);
+              }}
             >
-              <MenuItem value="">全部</MenuItem>
-              <MenuItem value="draft">草稿</MenuItem>
-              <MenuItem value="published">已发布</MenuItem>
-              <MenuItem value="archived">已归档</MenuItem>
+              <MenuItem value=''>全部</MenuItem>
+              <MenuItem value='draft'>草稿</MenuItem>
+              <MenuItem value='published'>已发布</MenuItem>
+              <MenuItem value='archived'>已归档</MenuItem>
             </Select>
           </FormControl>
         }
         onRowClick={(row) => navigate(`/lowcode/models/${row.id}`)}
       />
 
-      <Dialog open={createDialogOpen} onClose={() => setCreateDialogOpen(false)} maxWidth="sm" fullWidth>
+      <Dialog
+        open={createDialogOpen}
+        onClose={() => setCreateDialogOpen(false)}
+        maxWidth='sm'
+        fullWidth
+      >
         <DialogTitle>新建数据模型</DialogTitle>
         <DialogContent>
           <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2, pt: 1 }}>
             <TextField
-              label="模型名称"
+              label='模型名称'
               value={newModel.name}
               onChange={(e) => setNewModel({ ...newModel, name: e.target.value })}
-              size="small"
-              helperText="英文标识，用于代码引用"
+              size='small'
+              helperText='英文标识，用于代码引用'
             />
             <TextField
-              label="模型显示名"
+              label='模型显示名'
               value={newModel.label}
               onChange={(e) => setNewModel({ ...newModel, label: e.target.value })}
-              size="small"
+              size='small'
             />
             <TextField
-              label="描述"
+              label='描述'
               value={newModel.description}
               onChange={(e) => setNewModel({ ...newModel, description: e.target.value })}
-              size="small"
+              size='small'
               multiline
               rows={3}
             />
@@ -264,7 +261,12 @@ const DataModelListPage = () => {
         </DialogContent>
         <DialogActions>
           <Button onClick={() => setCreateDialogOpen(false)}>取消</Button>
-          <Button variant="contained" onClick={handleCreateModel}>创建</Button>
+          <Button
+            variant='contained'
+            onClick={handleCreateModel}
+          >
+            创建
+          </Button>
         </DialogActions>
       </Dialog>
     </PageContainer>

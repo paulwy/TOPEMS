@@ -581,7 +581,7 @@ const EhsOccupationalDiseasePage: React.FC = () => {
                 label='诊断日期'
                 value={formData.diagnosis_date}
                 onChange={(e) => setFormData({ ...formData, diagnosis_date: e.target.value })}
-                slotProps={{ inputLabel: { shrink: true } }}
+                slotProps={{ inputLabel: { shrink: true } } as any}
               />
             </Box>
             <TextField

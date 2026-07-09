@@ -6,40 +6,9 @@
  * - Falls back to `window.history.back()` / `window.location.href`
  * - Does NOT depend on any app-specific hooks or stores
  */
-import React, { useCallback, Component, type ReactNode } from 'react';
+import React, { useCallback, Component, type ReactNode, useEffect, useState } from 'react';
 import { Button, IconButton, Tooltip } from '@mui/material';
 import { ArrowLeft } from 'lucide-react';
-
-// ============ Optional react-router-dom integration ============
-
-type NavigateFn = (to: string | number) => void;
-
-/**
- * Safely obtain react-router-dom's useNavigate at module level.
- * Uses dynamic import so it works in ESM environments where `require` is unavailable.
- * If react-router-dom is not installed this is simply `null`.
- */
-let _useNavigate: (() => NavigateFn) | null = null;
-let _useNavigateLoaded = false;
-try {
-  // Dynamic import for react-router-dom (optional dependency)
-  import('react-router-dom').then((mod) => {
-    if (mod.useNavigate) {
-      _useNavigate = () => {
-        const navigate = mod.useNavigate();
-        return (to: string | number) => {
-          // NavigateFunction has multiple overloads; use type assertion
-          (navigate as (to: string | number) => void)(to);
-        };
-      };
-    }
-    _useNavigateLoaded = true;
-  }).catch(() => {
-    /* react-router-dom is not installed – that is fine */
-  });
-} catch {
-  /* ignore */
-}
 
 // ============ Error boundary for missing Router context ============
 
@@ -68,6 +37,8 @@ class _RouterBoundary extends Component<_EBProps, _EBState> {
 export interface BackButtonProps {
   /** Custom back handler – if provided, router navigation is skipped */
   onBack?: () => void;
+  /** Click handler - alias for onBack */
+  onClick?: () => void;
   /** Navigation path when used with router / fallback to `window.location.href` */
   href?: string;
   /** Display text */
@@ -82,6 +53,8 @@ export interface BackButtonProps {
   sx?: Record<string, unknown>;
   /** Tooltip text (icon variant only) */
   tooltip?: string;
+  /** Fallback text when router context is missing */
+  fallback?: string;
 }
 
 // ============ Shared render helper ============
@@ -129,14 +102,18 @@ function renderButton(
 
 // ============ Inner: router-aware ============
 
-function _BackButtonRouter(props: BackButtonProps) {
-  // Dynamic import may not have resolved yet – fall back gracefully
-  if (!_useNavigateLoaded || !_useNavigate) {
-    return <_BackButtonFallback {...props} />;
-  }
-  const navigate = _useNavigate!();
+interface _RouterButtonProps extends BackButtonProps {
+  useNavigateFn: () => (to: string | number) => void;
+}
+
+function _BackButtonRouter({ useNavigateFn, ...props }: _RouterButtonProps) {
+  const navigate = useNavigateFn();
 
   const handleClick = useCallback(() => {
+    if (props.onClick) {
+      props.onClick();
+      return;
+    }
     if (props.onBack) {
       props.onBack();
       return;
@@ -146,7 +123,7 @@ function _BackButtonRouter(props: BackButtonProps) {
       return;
     }
     navigate(-1);
-  }, [props.onBack, props.href, navigate]);
+  }, [props.onClick, props.onBack, props.href, navigate]);
 
   return renderButton(handleClick, props);
 }
@@ -155,6 +132,10 @@ function _BackButtonRouter(props: BackButtonProps) {
 
 function _BackButtonFallback(props: BackButtonProps) {
   const handleClick = useCallback(() => {
+    if (props.onClick) {
+      props.onClick();
+      return;
+    }
     if (props.onBack) {
       props.onBack();
       return;
@@ -164,9 +145,27 @@ function _BackButtonFallback(props: BackButtonProps) {
       return;
     }
     window.history.back();
-  }, [props.onBack, props.href]);
+  }, [props.onClick, props.onBack, props.href]);
 
   return renderButton(handleClick, props);
+}
+
+// ============ Router detector hook ============
+
+function useRouterDetector() {
+  const [useNavigateFn, setUseNavigateFn] = useState<(() => (to: string | number) => void) | null>(null);
+
+  useEffect(() => {
+    import('react-router-dom').then((mod) => {
+      if (mod.useNavigate) {
+        setUseNavigateFn(() => mod.useNavigate);
+      }
+    }).catch(() => {
+      /* react-router-dom is not installed – that is fine */
+    });
+  }, []);
+
+  return useNavigateFn;
 }
 
 // ============ Main exported component ============
@@ -180,23 +179,22 @@ function _BackButtonFallback(props: BackButtonProps) {
  * 3. `window.history.back()` / `window.location.href` (universal fallback)
  */
 export const BackButton: React.FC<BackButtonProps> = (props) => {
-  // If caller provides an explicit handler, skip router entirely
+  const useNavigateFn = useRouterDetector();
+
   if (props.onBack) {
     return <_BackButtonFallback {...props} />;
   }
 
-  // react-router-dom available – render with router, catch missing Router context
-  if (_useNavigate) {
+  if (useNavigateFn) {
     return (
       <_RouterBoundary
         fallback={renderButton(() => window.history.back(), props)}
       >
-        <_BackButtonRouter {...props} />
+        <_BackButtonRouter {...props} useNavigateFn={useNavigateFn} />
       </_RouterBoundary>
     );
   }
 
-  // No router available – use browser APIs
   return <_BackButtonFallback {...props} />;
 };
 

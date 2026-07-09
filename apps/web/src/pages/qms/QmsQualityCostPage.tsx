@@ -41,6 +41,7 @@ import { qmsApi } from '@/api/qms';
 import type { QualityCost, CostStatistics, CostTrendItem } from '@/api/qms';
 import { useAppStore } from '@/store';
 import { designTokens } from '@/theme/tokens';
+
 const ct = designTokens.colors;
 
 const QmsQualityCostPage: React.FC = () => {
@@ -623,7 +624,7 @@ const QmsQualityCostPage: React.FC = () => {
                 size='small'
                 fullWidth
                 label='发生日期'
-                slotProps={{ inputLabel: { shrink: true } }}
+                slotProps={{ inputLabel: { shrink: true } } as any}
                 value={formData.occurrence_date}
                 onChange={(e) =>
                   setFormData((prev) => ({ ...prev, occurrence_date: e.target.value }))

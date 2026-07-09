@@ -14,10 +14,15 @@ import {
 } from '@mui/material';
 import { PageContainer } from '@/components/common';
 import React, { useState, useEffect, useMemo } from 'react';
-import type { WorkStation, CreateWorkStationRequest, UpdateWorkStationRequest, ListParams } from '@/api/mes';
+import type {
+  WorkStation,
+  CreateWorkStationRequest,
+  UpdateWorkStationRequest,
+  ListParams,
+} from '@/api/mes';
 import { mesApi } from '@/api/mes';
 import { useAppStore } from '@/store';
-import { LoadingSpinner } from '@/components/common/LoadingSpinner';
+import { LoadingSpinner } from '@topems/shared-components';
 import {
   ListPageTemplate,
   type ColumnDef,
@@ -27,6 +32,7 @@ import {
 import { Plus, Edit, Eye, MapPin, Clock, Settings } from 'lucide-react';
 import { apiLogger } from '@/utils/logger';
 import { designTokens } from '@/theme/tokens';
+
 const ct = designTokens.colors;
 
 const WorkStationPage: React.FC = () => {

@@ -102,7 +102,9 @@ const NotificationPanel: React.FC<NotificationPanelProps> = ({ onClose, onUnread
           borderBottom: '1px solid grey.200',
         }}
       >
-        <h3 style={{ fontSize: 18, fontWeight: 600, color: theme.palette.text.primary }}>通知中心</h3>
+        <h3 style={{ fontSize: 18, fontWeight: 600, color: theme.palette.text.primary }}>
+          通知中心
+        </h3>
         <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
           <button
             onClick={() => setShowSettings(!showSettings)}
@@ -194,7 +196,8 @@ const NotificationPanel: React.FC<NotificationPanelProps> = ({ onClose, onUnread
             backgroundColor: 'transparent',
             border: 'none',
             cursor: 'pointer',
-            color: activeTab === 'unread' ? theme.palette.primary.dark : theme.palette.text.secondary,
+            color:
+              activeTab === 'unread' ? theme.palette.primary.dark : theme.palette.text.secondary,
             borderBottom:
               activeTab === 'unread' ? '2px solid primary.dark' : '2px solid transparent',
             position: 'relative',

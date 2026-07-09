@@ -26,7 +26,7 @@ import React, { useState, useEffect, useMemo, useCallback } from 'react';
 import type { Team, TeamMember, CreateTeamRequest, UpdateTeamRequest, ListParams } from '@/api/mes';
 import { mesApi } from '@/api/mes';
 import { useAppStore } from '@/store';
-import { LoadingSpinner } from '@/components/common/LoadingSpinner';
+import { LoadingSpinner } from '@topems/shared-components';
 import {
   ListPageTemplate,
   type ColumnDef,
@@ -36,6 +36,7 @@ import {
 import { Plus, Edit, Trash2, Eye, Users } from 'lucide-react';
 import { apiLogger } from '@/utils/logger';
 import { designTokens } from '@/theme/tokens';
+
 const ct = designTokens.colors;
 
 const TeamManagementPage: React.FC = () => {

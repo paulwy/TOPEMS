@@ -39,7 +39,7 @@ import { financeApi } from '@/api/finance';
 import { apiLogger } from '@/utils/logger';
 import type { PaymentRecord } from '@/types/finance';
 
-import ConfirmDialog from '@/components/common/ConfirmDialog';
+import { ConfirmDialog } from '@topems/shared-components';
 
 interface Payment {
   id: string;
@@ -211,7 +211,7 @@ const FinancePaymentPage: React.FC = () => {
       } else {
         addNotification({
           title: '错误',
-          message: response.error?.message || '付款申请提交失败',
+          message: response.message || '付款申请提交失败',
           type: 'error',
         });
       }
@@ -426,7 +426,10 @@ const FinancePaymentPage: React.FC = () => {
       {row.status === '已付款' && (
         <>
           <Tooltip title='查看'>
-            <IconButton size='small' aria-label='查看'>
+            <IconButton
+              size='small'
+              aria-label='查看'
+            >
               <Eye sx={{ width: 16, height: 16 }} />
             </IconButton>
           </Tooltip>

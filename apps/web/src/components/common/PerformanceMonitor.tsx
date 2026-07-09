@@ -36,7 +36,9 @@ export const PerformanceMonitor: React.FC = () => {
         logger.info(`[Performance] Largest Contentful Paint: ${lcpEntry.startTime.toFixed(2)}ms`);
       }
       if (clsEntry) {
-        logger.info(`[Performance] Cumulative Layout Shift: ${(clsEntry as PerformanceEntry & { value: number }).value.toFixed(2)}`);
+        logger.info(
+          `[Performance] Cumulative Layout Shift: ${(clsEntry as PerformanceEntry & { value: number }).value.toFixed(2)}`
+        );
       }
     });
 

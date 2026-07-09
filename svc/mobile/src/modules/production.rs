@@ -45,8 +45,8 @@ pub async fn list_production_orders(
                         "workstation": row.workstation,
                         "start_time": row.start_time.map(|t| t.to_string()),
                         "end_time": row.end_time.map(|t| t.to_string()),
-                        "due_date": row.due_date.to_string(),
-                        "created_at": row.created_at.to_string(),
+                        "due_date": row.due_date.map(|d| d.to_string()),
+                        "created_at": row.created_at.map(|t| t.to_string()),
                     })
                 })
                 .collect();
@@ -94,8 +94,8 @@ pub async fn get_production_order(
                 "workstation": row.workstation,
                 "start_time": row.start_time.map(|t| t.to_string()),
                 "end_time": row.end_time.map(|t| t.to_string()),
-                "due_date": row.due_date.to_string(),
-                "created_at": row.created_at.to_string(),
+                "due_date": row.due_date.map(|d| d.to_string()),
+                "created_at": row.created_at.map(|t| t.to_string()),
             });
             Json(ApiResponse::success(order, "获取生产订单详情成功"))
         }
@@ -132,10 +132,10 @@ pub async fn list_work_reports(State(pool): State<PgPool>) -> Json<ApiResponse<s
                         "quantity": row.quantity,
                         "good_quantity": row.good_quantity,
                         "bad_quantity": row.bad_quantity,
-                        "start_time": row.start_time.to_string(),
-                        "end_time": row.end_time.to_string(),
+                        "start_time": row.start_time.map(|t| t.to_string()),
+                        "end_time": row.end_time.map(|t| t.to_string()),
                         "duration": row.duration,
-                        "created_at": row.created_at.to_string(),
+                        "created_at": row.created_at.map(|t| t.to_string()),
                     })
                 })
                 .collect();
@@ -207,12 +207,12 @@ pub async fn submit_work_report(
         order_no,
         payload.workstation,
         payload.operator,
-        payload.quantity,
-        payload.good_quantity,
-        payload.bad_quantity,
-        start_time,
-        end_time,
-        duration
+        payload.quantity as i32,
+        payload.good_quantity as i32,
+        payload.bad_quantity as i32,
+        start_time.naive_utc(),
+        end_time.naive_utc(),
+        duration as i64
     )
     .execute(&pool)
     .await;
@@ -268,8 +268,8 @@ pub async fn list_equipment(State(pool): State<PgPool>) -> Json<ApiResponse<serd
                         "last_maintenance": row.last_maintenance.map(|d| d.to_string()),
                         "next_maintenance": row.next_maintenance.map(|d| d.to_string()),
                         "running_hours": row.running_hours,
-                        "created_at": row.created_at.to_string(),
-                        "updated_at": row.updated_at.to_string(),
+                        "created_at": row.created_at.map(|t| t.to_string()),
+                        "updated_at": row.updated_at.map(|t| t.to_string()),
                     })
                 })
                 .collect();
@@ -317,8 +317,8 @@ pub async fn get_equipment(
                 "last_maintenance": row.last_maintenance.map(|d| d.to_string()),
                 "next_maintenance": row.next_maintenance.map(|d| d.to_string()),
                 "running_hours": row.running_hours,
-                "created_at": row.created_at.to_string(),
-                "updated_at": row.updated_at.to_string(),
+                "created_at": row.created_at.map(|t| t.to_string()),
+                "updated_at": row.updated_at.map(|t| t.to_string()),
             });
             Json(ApiResponse::success(equipment, "获取设备详情成功"))
         }

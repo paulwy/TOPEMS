@@ -72,7 +72,9 @@ vi.mock('@/api/wms', () => ({
       create: vi.fn(),
       update: vi.fn(),
       delete: vi.fn(),
-      getStatus: vi.fn().mockResolvedValue({ data: { total: 0, available: 0, occupied: 0, locked: 0 } }),
+      getStatus: vi
+        .fn()
+        .mockResolvedValue({ data: { total: 0, available: 0, occupied: 0, locked: 0 } }),
       batchCreate: vi.fn().mockResolvedValue({ data: { created_count: 0, locations: [] } }),
       batchUpdate: vi.fn().mockResolvedValue({ data: { updated_count: 0 } }),
       batchDelete: vi.fn().mockResolvedValue({ data: { deleted_count: 0 } }),
@@ -148,7 +150,9 @@ vi.mock('@/api/wms', () => ({
     create: vi.fn(),
     update: vi.fn(),
     delete: vi.fn(),
-    getStatus: vi.fn().mockResolvedValue({ data: { total: 0, available: 0, occupied: 0, locked: 0 } }),
+    getStatus: vi
+      .fn()
+      .mockResolvedValue({ data: { total: 0, available: 0, occupied: 0, locked: 0 } }),
     batchCreate: vi.fn().mockResolvedValue({ data: { created_count: 0, locations: [] } }),
     batchUpdate: vi.fn().mockResolvedValue({ data: { updated_count: 0 } }),
     batchDelete: vi.fn().mockResolvedValue({ data: { deleted_count: 0 } }),

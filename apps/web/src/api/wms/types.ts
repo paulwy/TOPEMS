@@ -1,3 +1,5 @@
+import type { PaginatedResponse } from '@topems/shared-types';
+
 export interface InventoryItem {
   id: string;
   sku: string;
@@ -291,13 +293,6 @@ export interface PaginationParams {
   search?: string;
   status?: string;
   warehouse_id?: string;
-}
-
-export interface PaginatedResponse<T> {
-  items: T[];
-  total: number;
-  page: number;
-  pagesize: number;
 }
 
 export interface Warehouse {

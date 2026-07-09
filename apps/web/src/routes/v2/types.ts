@@ -4,7 +4,17 @@ import { lazyWithRetry } from '../utils';
 export { lazyWithRetry };
 
 export type PageTemplateType =
-  'dashboard' | 'list' | 'detail' | 'form' | 'tree' | 'stats' | 'settings' | 'kanban';
+  | 'dashboard'
+  | 'list'
+  | 'detail'
+  | 'form'
+  | 'tree'
+  | 'stats'
+  | 'settings'
+  | 'kanban'
+  | 'wizard'
+  | 'timeline'
+  | 'master-detail';
 
 export type LayoutType = 'default' | 'full' | 'mobile' | 'none';
 

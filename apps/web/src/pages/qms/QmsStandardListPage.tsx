@@ -30,6 +30,7 @@ import { PageContainer } from '@/components/common';
 import { qmsApi } from '@/api/qms';
 import type { QualityStandard } from '@/api/qms';
 import { designTokens } from '@/theme/tokens';
+
 const ct = designTokens.colors;
 
 const QmsStandardListPage: React.FC = () => {
@@ -107,7 +108,7 @@ const QmsStandardListPage: React.FC = () => {
       active: { bg: 'success.lighter', color: 'success.dark' },
       有效: { bg: 'success.lighter', color: 'success.dark' },
       draft: { bg: 'warning.100', color: ct.yellow[600] },
- 草稿: { bg: 'warning.100', color: ct.yellow[600] },
+      草稿: { bg: 'warning.100', color: ct.yellow[600] },
       expired: { bg: 'error.lighter', color: 'error.dark' },
       已过期: { bg: 'error.lighter', color: 'error.dark' },
       archived: { bg: 'grey.100', color: 'text.secondary' },

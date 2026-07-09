@@ -47,7 +47,9 @@ describe('SCM supplierApi', () => {
   it('should call GET /suppliers with params for list', async () => {
     mockApiClient.get.mockResolvedValue({ success: true, data: { items: [], total: 0 } });
     await supplierApi.list({ page: 1, pageSize: 10 });
-    expect(mockApiClient.get).toHaveBeenCalledWith('/suppliers', { params: { page: 1, pageSize: 10 } });
+    expect(mockApiClient.get).toHaveBeenCalledWith('/suppliers', {
+      params: { page: 1, pageSize: 10 },
+    });
   });
 
   it('should call POST /suppliers for create', async () => {
@@ -124,25 +126,33 @@ describe('SCM purchaseOrderApi', () => {
   it('should call POST /purchase-orders/:id/approve for approve', async () => {
     mockApiClient.post.mockResolvedValue({ success: true, data: { id: '1' } });
     await purchaseOrderApi.approve('1', 'Approved');
-    expect(mockApiClient.post).toHaveBeenCalledWith('/purchase-orders/1/approve', { remarks: 'Approved' });
+    expect(mockApiClient.post).toHaveBeenCalledWith('/purchase-orders/1/approve', {
+      remarks: 'Approved',
+    });
   });
 
   it('should call POST /purchase-orders/:id/confirm for confirm', async () => {
     mockApiClient.post.mockResolvedValue({ success: true, data: { id: '1' } });
     await purchaseOrderApi.confirm('1');
-    expect(mockApiClient.post).toHaveBeenCalledWith('/purchase-orders/1/confirm', { remarks: undefined });
+    expect(mockApiClient.post).toHaveBeenCalledWith('/purchase-orders/1/confirm', {
+      remarks: undefined,
+    });
   });
 
   it('should call POST /purchase-orders/:id/cancel for cancel', async () => {
     mockApiClient.post.mockResolvedValue({ success: true, data: { id: '1' } });
     await purchaseOrderApi.cancel('1', 'Cancelled');
-    expect(mockApiClient.post).toHaveBeenCalledWith('/purchase-orders/1/cancel', { remarks: 'Cancelled' });
+    expect(mockApiClient.post).toHaveBeenCalledWith('/purchase-orders/1/cancel', {
+      remarks: 'Cancelled',
+    });
   });
 
   it('should call POST /purchase-orders/:id/close for close', async () => {
     mockApiClient.post.mockResolvedValue({ success: true, data: { id: '1' } });
     await purchaseOrderApi.close('1');
-    expect(mockApiClient.post).toHaveBeenCalledWith('/purchase-orders/1/close', { remarks: undefined });
+    expect(mockApiClient.post).toHaveBeenCalledWith('/purchase-orders/1/close', {
+      remarks: undefined,
+    });
   });
 });
 
@@ -308,7 +318,9 @@ describe('SCM mrpSuggestionApi', () => {
   it('should call GET /mrp-suggestions/summary for summary', async () => {
     mockApiClient.get.mockResolvedValue({ success: true, data: [] });
     await mrpSuggestionApi.summary();
-    expect(mockApiClient.get).toHaveBeenCalledWith('/mrp-suggestions/summary', { params: undefined });
+    expect(mockApiClient.get).toHaveBeenCalledWith('/mrp-suggestions/summary', {
+      params: undefined,
+    });
   });
 });
 
@@ -359,7 +371,9 @@ describe('SCM incomingInspectionApi', () => {
   it('should call POST /incoming-inspections/:id/pass for pass', async () => {
     mockApiClient.post.mockResolvedValue({ success: true, data: { id: '1' } });
     await incomingInspectionApi.pass('1', 'Passed');
-    expect(mockApiClient.post).toHaveBeenCalledWith('/incoming-inspections/1/pass', { remarks: 'Passed' });
+    expect(mockApiClient.post).toHaveBeenCalledWith('/incoming-inspections/1/pass', {
+      remarks: 'Passed',
+    });
   });
 
   it('should call POST /incoming-inspections/:id/reject for reject', async () => {
@@ -385,7 +399,9 @@ describe('SCM inspectionRecordApi', () => {
   it('should call GET /incoming-inspections/:id/records for list', async () => {
     mockApiClient.get.mockResolvedValue({ success: true, data: { items: [], total: 0 } });
     await inspectionRecordApi.list('inspection1');
-    expect(mockApiClient.get).toHaveBeenCalledWith('/incoming-inspections/inspection1/records', { params: undefined });
+    expect(mockApiClient.get).toHaveBeenCalledWith('/incoming-inspections/inspection1/records', {
+      params: undefined,
+    });
   });
 
   it('should call POST /inspection-records for create', async () => {
@@ -442,13 +458,17 @@ describe('SCM inventoryTurnoverApi', () => {
   it('should call GET /inventory-turnover/abc-classification for abcClassification', async () => {
     mockApiClient.get.mockResolvedValue({ success: true, data: [] });
     await inventoryTurnoverApi.abcClassification();
-    expect(mockApiClient.get).toHaveBeenCalledWith('/inventory-turnover/abc-classification', { params: undefined });
+    expect(mockApiClient.get).toHaveBeenCalledWith('/inventory-turnover/abc-classification', {
+      params: undefined,
+    });
   });
 
   it('should call GET /inventory-turnover/trend for trend', async () => {
     mockApiClient.get.mockResolvedValue({ success: true, data: [] });
     await inventoryTurnoverApi.trend();
-    expect(mockApiClient.get).toHaveBeenCalledWith('/inventory-turnover/trend', { params: undefined });
+    expect(mockApiClient.get).toHaveBeenCalledWith('/inventory-turnover/trend', {
+      params: undefined,
+    });
   });
 });
 
@@ -479,7 +499,9 @@ describe('SCM supplyChainDashboardApi', () => {
   it('should call GET /dashboard/supplier-performance for supplierPerformance', async () => {
     mockApiClient.get.mockResolvedValue({ success: true, data: { items: [], total: 0 } });
     await supplyChainDashboardApi.supplierPerformance();
-    expect(mockApiClient.get).toHaveBeenCalledWith('/dashboard/supplier-performance', { params: undefined });
+    expect(mockApiClient.get).toHaveBeenCalledWith('/dashboard/supplier-performance', {
+      params: undefined,
+    });
   });
 });
 
@@ -530,7 +552,9 @@ describe('SCM priceComparisonApi', () => {
   it('should call GET /quotes for quotes', async () => {
     mockApiClient.get.mockResolvedValue({ success: true, data: [] });
     await priceComparisonApi.quotes('comp1');
-    expect(mockApiClient.get).toHaveBeenCalledWith('/quotes', { params: { comparison_id: 'comp1' } });
+    expect(mockApiClient.get).toHaveBeenCalledWith('/quotes', {
+      params: { comparison_id: 'comp1' },
+    });
   });
 
   it('should call POST /quotes for createQuote', async () => {
@@ -593,7 +617,9 @@ describe('SCM syncRecordApi', () => {
   it('should call GET /sync-records/:id/details for details', async () => {
     mockApiClient.get.mockResolvedValue({ success: true, data: { items: [], total: 0 } });
     await syncRecordApi.details('1');
-    expect(mockApiClient.get).toHaveBeenCalledWith('/sync-records/1/details', { params: undefined });
+    expect(mockApiClient.get).toHaveBeenCalledWith('/sync-records/1/details', {
+      params: undefined,
+    });
   });
 });
 
@@ -726,7 +752,9 @@ describe('SCM purchaseRequisitionApi', () => {
   it('should call POST /purchase-requisitions/:id/submit for submit', async () => {
     mockApiClient.post.mockResolvedValue({ success: true, data: { id: '1' } });
     await purchaseRequisitionApi.submit('1');
-    expect(mockApiClient.post).toHaveBeenCalledWith('/purchase-requisitions/1/submit', { remarks: undefined });
+    expect(mockApiClient.post).toHaveBeenCalledWith('/purchase-requisitions/1/submit', {
+      remarks: undefined,
+    });
   });
 
   it('should call POST /purchase-requisitions/:id/convert-to-order for convertToOrder', async () => {
@@ -783,13 +811,17 @@ describe('SCM purchaseContractApi', () => {
   it('should call POST /purchase-contracts/:id/submit for submit', async () => {
     mockApiClient.post.mockResolvedValue({ success: true, data: { id: '1' } });
     await purchaseContractApi.submit('1');
-    expect(mockApiClient.post).toHaveBeenCalledWith('/purchase-contracts/1/submit', { remarks: undefined });
+    expect(mockApiClient.post).toHaveBeenCalledWith('/purchase-contracts/1/submit', {
+      remarks: undefined,
+    });
   });
 
   it('should call POST /purchase-contracts/:id/terminate for terminate', async () => {
     mockApiClient.post.mockResolvedValue({ success: true, data: { id: '1' } });
     await purchaseContractApi.terminate('1', 'Terminated');
-    expect(mockApiClient.post).toHaveBeenCalledWith('/purchase-contracts/1/terminate', { remarks: 'Terminated' });
+    expect(mockApiClient.post).toHaveBeenCalledWith('/purchase-contracts/1/terminate', {
+      remarks: 'Terminated',
+    });
   });
 
   it('should call POST /purchase-contracts/:id/renew for renew', async () => {
@@ -846,7 +878,9 @@ describe('SCM supplierAdmissionApi', () => {
   it('should call POST /supplier-admissions/:id/submit for submit', async () => {
     mockApiClient.post.mockResolvedValue({ success: true, data: { id: '1' } });
     await supplierAdmissionApi.submit('1');
-    expect(mockApiClient.post).toHaveBeenCalledWith('/supplier-admissions/1/submit', { remarks: undefined });
+    expect(mockApiClient.post).toHaveBeenCalledWith('/supplier-admissions/1/submit', {
+      remarks: undefined,
+    });
   });
 
   it('should call POST /supplier-admissions/:id/audit for audit', async () => {

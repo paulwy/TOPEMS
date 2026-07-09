@@ -215,7 +215,8 @@ export const ContactList: React.FC<ContactListProps> = ({ onSelectContact }) => 
             backgroundColor: 'transparent',
             border: 'none',
             cursor: 'pointer',
-            color: activeTab === 'friends' ? theme.palette.primary.main : theme.palette.text.secondary,
+            color:
+              activeTab === 'friends' ? theme.palette.primary.main : theme.palette.text.secondary,
             borderBottom:
               activeTab === 'friends' ? '2px solid primary.main' : '2px solid transparent',
           }}
@@ -234,7 +235,8 @@ export const ContactList: React.FC<ContactListProps> = ({ onSelectContact }) => 
             backgroundColor: 'transparent',
             border: 'none',
             cursor: 'pointer',
-            color: activeTab === 'groups' ? theme.palette.primary.main : theme.palette.text.secondary,
+            color:
+              activeTab === 'groups' ? theme.palette.primary.main : theme.palette.text.secondary,
             borderBottom:
               activeTab === 'groups' ? '2px solid primary.main' : '2px solid transparent',
           }}
@@ -288,7 +290,9 @@ export const ContactList: React.FC<ContactListProps> = ({ onSelectContact }) => 
                     >
                       {friend.friend_name}
                     </div>
-                    <div style={{ fontSize: 12, color: theme.palette.text.secondary }}>等待通过</div>
+                    <div style={{ fontSize: 12, color: theme.palette.text.secondary }}>
+                      等待通过
+                    </div>
                   </div>
                 </div>
                 <div style={{ display: 'flex', gap: 4 }}>
@@ -328,7 +332,9 @@ export const ContactList: React.FC<ContactListProps> = ({ onSelectContact }) => 
 
         {activeTab !== 'groups' && filteredFriends.length > 0 && (
           <div style={{ padding: 8 }}>
-            <div style={{ fontSize: 12, color: theme.palette.text.secondary, padding: '4px 8px' }}>好友</div>
+            <div style={{ fontSize: 12, color: theme.palette.text.secondary, padding: '4px 8px' }}>
+              好友
+            </div>
             {filteredFriends
               .filter((f) => f.status === 'accepted')
               .map((friend) => (
@@ -361,7 +367,9 @@ export const ContactList: React.FC<ContactListProps> = ({ onSelectContact }) => 
                           justifyContent: 'center',
                         }}
                       >
-                        <User style={{ width: 20, height: 20, color: theme.palette.primary.main }} />
+                        <User
+                          style={{ width: 20, height: 20, color: theme.palette.primary.main }}
+                        />
                       </div>
                       {friend.is_online && (
                         <span
@@ -411,7 +419,9 @@ export const ContactList: React.FC<ContactListProps> = ({ onSelectContact }) => 
                       cursor: 'pointer',
                     }}
                   >
-                    <MoreVertical style={{ width: 16, height: 16, color: theme.palette.text.disabled }} />
+                    <MoreVertical
+                      style={{ width: 16, height: 16, color: theme.palette.text.disabled }}
+                    />
                   </button>
                   {showFriendMenu && selectedFriend?.id === friend.id && (
                     <div
@@ -454,7 +464,9 @@ export const ContactList: React.FC<ContactListProps> = ({ onSelectContact }) => 
         {activeTab === 'groups' && (
           <div style={{ padding: 8 }}>
             {groups.length === 0 ? (
-              <div style={{ textAlign: 'center', padding: 32, color: theme.palette.text.secondary }}>
+              <div
+                style={{ textAlign: 'center', padding: 32, color: theme.palette.text.secondary }}
+              >
                 <Users
                   style={{
                     width: 48,
@@ -505,7 +517,9 @@ export const ContactList: React.FC<ContactListProps> = ({ onSelectContact }) => 
                         justifyContent: 'center',
                       }}
                     >
-                      <Users style={{ width: 20, height: 20, color: theme.palette.text.secondary }} />
+                      <Users
+                        style={{ width: 20, height: 20, color: theme.palette.text.secondary }}
+                      />
                     </div>
                     <div>
                       <div
@@ -517,10 +531,14 @@ export const ContactList: React.FC<ContactListProps> = ({ onSelectContact }) => 
                       >
                         {group.name}
                       </div>
-                      <div style={{ fontSize: 12, color: theme.palette.text.secondary }}>0 位联系人</div>
+                      <div style={{ fontSize: 12, color: theme.palette.text.secondary }}>
+                        0 位联系人
+                      </div>
                     </div>
                   </div>
-                  <ChevronRight style={{ width: 16, height: 16, color: theme.palette.text.disabled }} />
+                  <ChevronRight
+                    style={{ width: 16, height: 16, color: theme.palette.text.disabled }}
+                  />
                 </div>
               ))
             )}
@@ -598,7 +616,9 @@ export const ContactList: React.FC<ContactListProps> = ({ onSelectContact }) => 
               margin: '0 16px',
             }}
           >
-            <h3 style={{ fontWeight: 500, color: theme.palette.text.primary, marginBottom: 16 }}>创建分组</h3>
+            <h3 style={{ fontWeight: 500, color: theme.palette.text.primary, marginBottom: 16 }}>
+              创建分组
+            </h3>
             <input
               type='text'
               placeholder='分组名称'

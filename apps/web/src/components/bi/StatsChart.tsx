@@ -91,11 +91,11 @@ export const StatsChart: React.FC<StatsChartProps> = ({
   }
 
   interface TooltipPayload {
-  name?: string;
-  value?: unknown;
-}
+    name?: string;
+    value?: unknown;
+  }
 
-const CustomTooltip = ({ active, payload }: { active?: boolean; payload?: TooltipPayload[] }) => {
+  const CustomTooltip = ({ active, payload }: { active?: boolean; payload?: TooltipPayload[] }) => {
     if (active && payload && payload.length) {
       return (
         <div
@@ -157,7 +157,10 @@ const CustomTooltip = ({ active, payload }: { active?: boolean; payload?: Toolti
               {data.map((entry, index) => (
                 <Cell
                   key={`cell-${index}`}
-                  fill={(entry as Record<string, unknown>)[colorKey] as string || colors[index % colors.length]}
+                  fill={
+                    ((entry as Record<string, unknown>)[colorKey] as string) ||
+                    colors[index % colors.length]
+                  }
                 />
               ))}
             </Pie>
@@ -211,7 +214,10 @@ const CustomTooltip = ({ active, payload }: { active?: boolean; payload?: Toolti
                 {data.map((entry, index) => (
                   <Cell
                     key={`cell-${index}`}
-                    fill={(entry as Record<string, unknown>)[colorKey] as string || colors[index % colors.length]}
+                    fill={
+                      ((entry as Record<string, unknown>)[colorKey] as string) ||
+                      colors[index % colors.length]
+                    }
                   />
                 ))}
               </Bar>

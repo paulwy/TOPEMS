@@ -10,7 +10,6 @@ on:
       - 'svc/lims/**'
       - 'svc/ehs/**'
       - 'svc/bi/**'
-      - 'svc/report/**'
       - 'lib/**'
       - 'Cargo.toml'
       - 'Cargo.lock'
@@ -24,7 +23,6 @@ on:
       - 'svc/lims/**'
       - 'svc/ehs/**'
       - 'svc/bi/**'
-      - 'svc/report/**'
       - 'lib/**'
 
 env:
@@ -42,7 +40,6 @@ jobs:
       lims: ${{ steps.changes.outputs.lims }}
       ehs: ${{ steps.changes.outputs.ehs }}
       bi: ${{ steps.changes.outputs.bi }}
-      report: ${{ steps.changes.outputs.report }}
       lib: ${{ steps.changes.outputs.lib }}
     steps:
       - uses: actions/checkout@v4
@@ -62,8 +59,6 @@ jobs:
               - 'svc/ehs/**'
             bi:
               - 'svc/bi/**'
-            report:
-              - 'svc/report/**'
             lib:
               - 'lib/**'
               - 'Cargo.toml'
@@ -94,9 +89,6 @@ jobs:
           - name: bi
             port: 8060
             changed: ${{ needs.detect-changes.outputs.bi }}
-          - name: report
-            port: 8061
-            changed: ${{ needs.detect-changes.outputs.report }}
 
     if: matrix.service.changed == 'true' || needs.detect-changes.outputs.lib == 'true'
     steps:
@@ -157,9 +149,6 @@ jobs:
           - name: bi
             port: 8060
             changed: ${{ needs.detect-changes.outputs.bi }}
-          - name: report
-            port: 8061
-            changed: ${{ needs.detect-changes.outputs.report }}
 
     if: github.event_name == 'push' && (matrix.service.changed == 'true' || needs.detect-changes.outputs.lib == 'true')
     steps:
@@ -227,7 +216,6 @@ jobs:
           kubectl rollout status deployment/lims -n topems-staging --timeout=300s || true
           kubectl rollout status deployment/ehs -n topems-staging --timeout=300s || true
           kubectl rollout status deployment/bi -n topems-staging --timeout=300s || true
-          kubectl rollout status deployment/report -n topems-staging --timeout=300s || true
 
       - name: Health check staging
         run: |
@@ -262,7 +250,6 @@ jobs:
           kubectl rollout status deployment/lims -n topems --timeout=300s
           kubectl rollout status deployment/ehs -n topems --timeout=300s
           kubectl rollout status deployment/bi -n topems --timeout=300s
-          kubectl rollout status deployment/report -n topems --timeout=300s
 
       - name: Health check production
         run: |

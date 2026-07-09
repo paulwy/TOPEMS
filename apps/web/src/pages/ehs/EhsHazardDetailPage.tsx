@@ -35,7 +35,7 @@ import type { Hazard, RiskAssessment, ControlMeasure } from '@/api/ehs';
 import { EHSStatusBadge, EHSMeasureTypeBadge, calculateRiskLevel } from '@/components/ehs';
 import { useNotification } from '@/hooks/useNotification';
 import { DetailPageTemplate, type TabConfig, type SectionConfig } from '@/components/templates';
-import ConfirmDialog from '@/components/common/ConfirmDialog';
+import { ConfirmDialog } from '@topems/shared-components';
 import { PageContainer } from '@/components/common/PageContainerV2';
 import { designTokens } from '@/theme/tokens';
 

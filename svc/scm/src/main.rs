@@ -10,7 +10,7 @@
 #![allow(clippy::too_many_arguments)]
 #![allow(dead_code)]
 
-use topems_scm::{models, modules, shared};
+use topems_scm::modules;
 
 use anyhow::Result;
 use axum::{extract::State, http::StatusCode, routing::get, Json, Router};

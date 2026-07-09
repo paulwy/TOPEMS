@@ -4,9 +4,10 @@ import { coreModuleNavConfigs } from '@/lib/navigation/modules';
 import { flattenRoutes } from '@/routes/v2/types';
 
 describe('Route-Navigation Alignment', () => {
-  it('should have matching routes for navigation config paths', () => {
+  it('should have matching routes for navigation config paths', async () => {
     const routePathMap = new Map<string, string>();
-    getAllRoutes().forEach((route) => {
+    const allRoutes = await getAllRoutes();
+    allRoutes.forEach((route) => {
       routePathMap.set(route.path, route.code);
     });
 
@@ -26,9 +27,10 @@ describe('Route-Navigation Alignment', () => {
     });
   });
 
-  it('should have consistent codes between routes and navigation', () => {
+  it('should have consistent codes between routes and navigation', async () => {
     const routeCodeMap = new Map<string, string>();
-    getAllRoutes().forEach((route) => {
+    const allRoutes = await getAllRoutes();
+    allRoutes.forEach((route) => {
       routeCodeMap.set(route.path, route.code);
     });
 

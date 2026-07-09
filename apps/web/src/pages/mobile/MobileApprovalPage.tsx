@@ -884,7 +884,11 @@ const MobileApprovalPage: React.FC = () => {
                             <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
                               <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5 }}>
                                 <UserIcon
-                                  style={{ width: 14, height: 14, color: theme.palette.text.secondary }}
+                                  style={{
+                                    width: 14,
+                                    height: 14,
+                                    color: theme.palette.text.secondary,
+                                  }}
                                 />
                                 <Typography
                                   variant='caption'
@@ -894,7 +898,13 @@ const MobileApprovalPage: React.FC = () => {
                                 </Typography>
                               </Box>
                               <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5 }}>
-                                <Clock style={{ width: 14, height: 14, color: theme.palette.text.secondary }} />
+                                <Clock
+                                  style={{
+                                    width: 14,
+                                    height: 14,
+                                    color: theme.palette.text.secondary,
+                                  }}
+                                />
                                 <Typography
                                   variant='caption'
                                   color='text.secondary'

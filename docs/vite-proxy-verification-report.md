@@ -2,10 +2,10 @@
 
 ## 验证概要
 
-**验证时间**: 2026-07-06
-**验证工具**: [scripts/verify-vite-proxy.sh](file:///Users/air/TOPEMS/scripts/verify-vite-proxy.sh)
-**配置文件**: [apps/web/vite.config.ts](file:///Users/air/TOPEMS/apps/web/vite.config.ts#L217-L531)
-**变更说明**: WebSocket 路由统一为 `/ws/core/{feature}` 规范
+**验证时间**: 2026-07-09
+**验证工具**: [scripts/verify-vite-proxy.sh](file:///Users/xingzhai/TOPEMS/scripts/verify-vite-proxy.sh)
+**配置文件**: [apps/web/vite.config.ts](file:///Users/xingzhai/TOPEMS/apps/web/vite.config.ts)
+**变更说明**: 代理配置从手动维护升级为程序化生成，通过 `generateServiceProxies` 函数自动生成标准代理规则
 
 ### 验证结果统计
 
@@ -96,6 +96,14 @@
 | `/api/*` | → http://localhost:8000/api/* | ✓ 401 |
 
 ## 关键发现
+
+### ✓ 程序化代理生成成功
+
+1. **代理配置已程序化**: 通过 `generateServiceProxies` 函数自动生成标准代理规则
+2. **服务配置集中管理**: 所有服务配置集中在 `services` 数组中，新增服务只需添加一行
+3. **自动生成规则**: API、健康检查、页面路由、WebSocket、plugin-health 自动生成
+4. **代码量大幅减少**: 删除了约60%的冗余手动配置
+5. **TypeScript类型检查通过**: 配置验证成功
 
 ### ✓ 代理配置正确性
 

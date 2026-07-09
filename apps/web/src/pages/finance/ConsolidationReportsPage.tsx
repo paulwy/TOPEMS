@@ -1,6 +1,5 @@
 import React, { useState, useEffect, useMemo } from 'react';
 import { designTokens } from '@/theme/tokens';
-const ct = designTokens.colors;
 import { useNavigate } from 'react-router-dom';
 import {
   GitMerge,
@@ -50,6 +49,8 @@ import type {
 } from '@/components/templates/StatsPageTemplate';
 import type { ConsolidationReport, ConsolidationReportType } from '@/types/consolidation';
 import { PageContainer } from '@/components/common';
+
+const ct = designTokens.colors;
 
 const REPORT_TYPE_CONFIG: Record<
   ConsolidationReportType,
@@ -338,7 +339,10 @@ export default function ConsolidationReportsPage() {
                   {selectedReport.scope_name} | {selectedReport.period}
                 </Typography>
               </Box>
-              <IconButton onClick={() => setShowDetail(false)} aria-label='关闭'>
+              <IconButton
+                onClick={() => setShowDetail(false)}
+                aria-label='关闭'
+              >
                 <X style={{ width: 20, height: 20 }} />
               </IconButton>
             </Box>

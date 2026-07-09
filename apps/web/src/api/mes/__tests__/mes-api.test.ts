@@ -627,7 +627,9 @@ describe('MES traceabilityApi', () => {
   it('should call GET /traceability/chain for getTraceChain', async () => {
     mockApiClient.get.mockResolvedValue({ success: true, data: {} });
     await traceabilityApi.getTraceChain({ type: 'forward', identifier: 'order1' });
-    expect(mockApiClient.get).toHaveBeenCalledWith('/traceability/chain?type=forward&identifier=order1');
+    expect(mockApiClient.get).toHaveBeenCalledWith(
+      '/traceability/chain?type=forward&identifier=order1'
+    );
   });
 
   it('should call GET /traceability/quality-records for listQualityRecords', async () => {
@@ -940,7 +942,9 @@ describe('MES workReportApi', () => {
   it('should call PUT /work-reports/:id/reject for reject', async () => {
     mockApiClient.put.mockResolvedValue({ success: true, data: { id: '1' } });
     await workReportApi.reject('1', 'Rejected');
-    expect(mockApiClient.put).toHaveBeenCalledWith('/work-reports/1/reject', { remark: 'Rejected' });
+    expect(mockApiClient.put).toHaveBeenCalledWith('/work-reports/1/reject', {
+      remark: 'Rejected',
+    });
   });
 });
 
@@ -1124,7 +1128,9 @@ describe('MES materialRequirementApi', () => {
   it('should call POST /material-requirements/calculate for calculate', async () => {
     mockApiClient.post.mockResolvedValue({ success: true, data: [] });
     await materialRequirementApi.calculate('order1');
-    expect(mockApiClient.post).toHaveBeenCalledWith('/material-requirements/calculate', { order_id: 'order1' });
+    expect(mockApiClient.post).toHaveBeenCalledWith('/material-requirements/calculate', {
+      order_id: 'order1',
+    });
   });
 
   it('should call PUT /material-requirements/:id/confirm for confirm', async () => {

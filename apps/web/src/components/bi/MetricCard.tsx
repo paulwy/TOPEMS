@@ -233,7 +233,17 @@ export const MetricCard: React.FC<MetricCardProps> = ({
         />
       );
     }
-    return computedTrend === 'up' ? <TrendingUp size={16} color='success.main' /> : <TrendingDown size={16} color='error.main' />;
+    return computedTrend === 'up' ? (
+      <TrendingUp
+        size={16}
+        color='success.main'
+      />
+    ) : (
+      <TrendingDown
+        size={16}
+        color='error.main'
+      />
+    );
   };
 
   const getTrendColor = () => {

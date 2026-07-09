@@ -2,7 +2,7 @@ import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { render, screen, fireEvent } from '@testing-library/react';
 import React from 'react';
 
-import { FilterBar } from '../FilterBar';
+import { FilterBar } from '@topems/shared-components';
 
 vi.mock('@/store', () => ({ useAppStore: vi.fn() }));
 

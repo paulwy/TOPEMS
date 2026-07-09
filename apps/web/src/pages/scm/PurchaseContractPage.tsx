@@ -24,7 +24,7 @@ import { Plus, Edit, Trash2, Check, XCircle, FileSignature, Send, RefreshCw } fr
 import { apiLogger } from '@/utils/logger';
 import { ListPageTemplate, type ColumnDef } from '@/components/templates';
 import { PageContainer } from '@/components/common';
-import ConfirmDialog from '@/components/common/ConfirmDialog';
+import { ConfirmDialog } from '@topems/shared-components';
 import { designTokens } from '@/theme/tokens';
 
 const ct = designTokens.colors;
@@ -622,7 +622,7 @@ const PurchaseContractPage: React.FC = () => {
                 value={formData.sign_date}
                 onChange={(e) => setFormData({ ...formData, sign_date: e.target.value })}
                 size='small'
-                slotProps={{ inputLabel: { shrink: true } }}
+                slotProps={{ inputLabel: { shrink: true } } as any}
               />
               <TextField
                 label='生效日期'
@@ -630,7 +630,7 @@ const PurchaseContractPage: React.FC = () => {
                 value={formData.effective_date}
                 onChange={(e) => setFormData({ ...formData, effective_date: e.target.value })}
                 size='small'
-                slotProps={{ inputLabel: { shrink: true } }}
+                slotProps={{ inputLabel: { shrink: true } } as any}
               />
               <TextField
                 label='到期日期'
@@ -638,7 +638,7 @@ const PurchaseContractPage: React.FC = () => {
                 value={formData.expiry_date}
                 onChange={(e) => setFormData({ ...formData, expiry_date: e.target.value })}
                 size='small'
-                slotProps={{ inputLabel: { shrink: true } }}
+                slotProps={{ inputLabel: { shrink: true } } as any}
               />
               <TextField
                 label='合同金额'

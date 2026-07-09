@@ -64,9 +64,9 @@ export const GisTrackingPage: React.FC = () => {
       setError('');
       const res = await gisApi.listDevicePoints({ pagesize: 100 });
       if (res.success && res.data) {
-        setDevices(res.data.data || []);
-        if (res.data.data && res.data.data.length > 0 && !selectedDevice) {
-          setSelectedDevice(res.data.data[0].id);
+        setDevices(res.data.items || []);
+        if (res.data.items && res.data.items.length > 0 && !selectedDevice) {
+          setSelectedDevice(res.data.items[0].id);
         }
       }
     } catch (err: unknown) {
@@ -85,7 +85,7 @@ export const GisTrackingPage: React.FC = () => {
         setTrackLoading(true);
         const res = await gisApi.getDeviceTrack({ device_id: deviceId, pagesize: 100 });
         if (res.success && res.data) {
-          setTrackHistory(res.data.data || []);
+          setTrackHistory(res.data.items || []);
         }
       } catch (err: unknown) {
         const msg = err instanceof Error ? err.message : '加载轨迹数据失败';

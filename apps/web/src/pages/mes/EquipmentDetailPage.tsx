@@ -6,10 +6,11 @@ import { assetApi, type Asset } from '@/api/erp';
 import { useNotification } from '@/hooks/useNotification';
 import { apiLogger } from '@/utils/logger';
 import { designTokens } from '@/theme/tokens';
-const ct = designTokens.colors;
 import { DetailPageTemplate, type TabConfig, type SectionConfig } from '@/components/templates';
-import ConfirmDialog from '@/components/common/ConfirmDialog';
+import { ConfirmDialog } from '@topems/shared-components';
 import { PageContainer } from '@/components/common/PageContainerV2';
+
+const ct = designTokens.colors;
 
 const EquipmentDetailPage: React.FC = () => {
   const { id } = useParams<{ id: string }>();

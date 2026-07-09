@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useCallback, useMemo, useRef } from 'react';
-import {Dialog,
+import {
+  Dialog,
   Box,
   TextField,
   InputAdornment,
@@ -10,7 +11,9 @@ import {Dialog,
   Typography,
   Divider,
   Chip,
-  IconButton, useTheme} from '@mui/material';
+  IconButton,
+  useTheme,
+} from '@mui/material';
 import {
   Search,
   X,
@@ -395,7 +398,10 @@ export const CommandPalette: React.FC<CommandPaletteProps> = ({ open, onClose })
                       <ListItemText
                         primary={cmd.label}
                         secondary={cmd.description}
-                        slotProps={{ primary: { sx: { fontSize: '0.875rem', fontWeight: 500 } }, secondary: { sx: { fontSize: '0.75rem' } } }}
+                        slotProps={{
+                          primary: { sx: { fontSize: '0.875rem', fontWeight: 500 } },
+                          secondary: { sx: { fontSize: '0.75rem' } },
+                        }}
                       />
                       <ArrowRight
                         style={{

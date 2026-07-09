@@ -14,7 +14,7 @@
 #![allow(clippy::redundant_closure)]
 #![allow(dead_code)]
 
-use topems_mes::{modules, shared, AppState};
+use topems_mes::{modules, AppState};
 
 use std::net::SocketAddr;
 

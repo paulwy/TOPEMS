@@ -772,7 +772,7 @@ const ReagentPage: React.FC = () => {
                 type='date'
                 value={formData.received_date}
                 onChange={(e) => setFormData({ ...formData, received_date: e.target.value })}
-                slotProps={{ inputLabel: { shrink: true } }}
+                slotProps={{ inputLabel: { shrink: true } } as any}
               />
               <TextField
                 fullWidth
@@ -780,7 +780,7 @@ const ReagentPage: React.FC = () => {
                 type='date'
                 value={formData.expiry_date}
                 onChange={(e) => setFormData({ ...formData, expiry_date: e.target.value })}
-                slotProps={{ inputLabel: { shrink: true } }}
+                slotProps={{ inputLabel: { shrink: true } } as any}
               />
             </Box>
             <Box sx={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 2 }}>

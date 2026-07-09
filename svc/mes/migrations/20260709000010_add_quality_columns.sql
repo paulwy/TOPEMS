@@ -1,0 +1,2 @@
+ALTER TABLE quality_standards ADD COLUMN IF NOT EXISTS version VARCHAR(32) DEFAULT '1.0';
+ALTER TABLE quality_standard_values ADD COLUMN IF NOT EXISTS remark TEXT;

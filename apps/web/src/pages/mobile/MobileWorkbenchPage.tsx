@@ -442,7 +442,10 @@ const MobileWorkbenchPage: React.FC = () => {
                   {user?.department || '生产部 · 操作员'}
                 </Typography>
               </Box>
-              <Badge badgeContent={unreadCount} color='error'>
+              <Badge
+                badgeContent={unreadCount}
+                color='error'
+              >
                 <Bell style={{ width: 22, height: 22, opacity: 0.9 }} />
               </Badge>
             </Box>
@@ -673,7 +676,9 @@ const MobileWorkbenchPage: React.FC = () => {
                         }
                         badge={
                           <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5 }}>
-                            <Clock style={{ width: 12, height: 12, color: theme.palette.text.secondary }} />
+                            <Clock
+                              style={{ width: 12, height: 12, color: theme.palette.text.secondary }}
+                            />
                             <Typography
                               variant='caption'
                               color='text.secondary'

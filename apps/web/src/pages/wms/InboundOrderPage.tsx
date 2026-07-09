@@ -427,7 +427,7 @@ const InboundOrderPage: React.FC = () => {
               onChange={(e) => setFormData({ ...formData, expected_date: e.target.value })}
               size='small'
               fullWidth
-              slotProps={{ inputLabel: { shrink: true } }}
+              slotProps={{ inputLabel: { shrink: true } } as any}
             />
           </Box>
           <DialogActions sx={{ mt: 2 }}>
@@ -520,7 +520,7 @@ const InboundOrderPage: React.FC = () => {
                 }
                 size='small'
                 fullWidth
-                slotProps={{ inputLabel: { shrink: true } }}
+                slotProps={{ inputLabel: { shrink: true } } as any}
               />
             </Box>
           )}

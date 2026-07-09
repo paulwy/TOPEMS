@@ -49,6 +49,7 @@ import { PageContainer } from '@/components/common';
 import { spcApi, qmsApi } from '@/api/qms';
 import type { SpcChart, SpcDataPoint, ControlLimitsResult } from '@/api/qms';
 import { designTokens } from '@/theme/tokens';
+
 const ct = designTokens.colors;
 
 const QmsSpcPage: React.FC = () => {

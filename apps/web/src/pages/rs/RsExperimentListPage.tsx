@@ -7,7 +7,7 @@ import { PageContainer } from '@/components/common';
 import { rsApi, type Experiment } from '@/api/rs';
 import { useAppStore } from '@/store';
 import { apiLogger } from '@/utils/logger';
-import ConfirmDialog from '@/components/common/ConfirmDialog';
+import { ConfirmDialog } from '@topems/shared-components';
 
 interface ExperimentWithProject extends Experiment {
   project_name?: string;
@@ -240,7 +240,7 @@ const RsExperimentListPage: React.FC = () => {
       ],
       value: statusFilter || '',
       onChange: (value: unknown) => {
-        setStatusFilter(value as string || null);
+        setStatusFilter((value as string) || null);
         setPage(0);
       },
     },

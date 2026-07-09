@@ -22,7 +22,7 @@ import {
   Alert,
   Button,
 } from '@mui/material';
-import { LoadingSpinner } from '@/components/common/LoadingSpinner';
+import { LoadingSpinner } from '@topems/shared-components';
 import { useAppStore } from '@/store';
 import ExportButton from '@/components/export/ExportButton';
 import { DashboardTemplate, type StatCard } from '@/components/templates';
@@ -38,7 +38,13 @@ import {
   Legend,
 } from 'recharts';
 import { BIChartColors } from '@/components/charts/chartTheme';
-import { getComparisonResult, runComparison, listComparisons, type ComparisonResult, type ComparisonAnalysis } from '@/api/bi';
+import {
+  getComparisonResult,
+  runComparison,
+  listComparisons,
+  type ComparisonResult,
+  type ComparisonAnalysis,
+} from '@/api/bi';
 import { designTokens } from '@/theme/tokens';
 import { logger } from '@/utils/logger';
 
@@ -249,10 +255,16 @@ const BIComparisonPage = () => {
           <Card sx={{ mb: 3 }}>
             <CardContent>
               <Box sx={{ textAlign: 'center', py: 8 }}>
-                <Typography variant='h6' sx={{ mb: 2 }}>
+                <Typography
+                  variant='h6'
+                  sx={{ mb: 2 }}
+                >
                   暂无对比分析
                 </Typography>
-                <Typography variant='body2' color='textSecondary'>
+                <Typography
+                  variant='body2'
+                  color='textSecondary'
+                >
                   请先创建对比分析配置
                 </Typography>
               </Box>
@@ -285,7 +297,10 @@ const BIComparisonPage = () => {
                     onChange={(e) => setCurrentComparisonId(e.target.value)}
                   >
                     {comparisons.map((comp) => (
-                      <MenuItem key={comp.id} value={comp.id}>
+                      <MenuItem
+                        key={comp.id}
+                        value={comp.id}
+                      >
                         {comp.name}
                       </MenuItem>
                     ))}

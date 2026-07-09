@@ -20,63 +20,59 @@ export { Sidebar } from './layout/Sidebar';
 export { Grid } from './common/Grid';
 export type { GridProps, GridSizeProps } from './common/Grid';
 
-export { default as PageContainer } from './common/PageContainer';
-export type { PageContainerProps } from './common/PageContainer';
+// PageContainer - 使用 web 增强版本
+export { PageContainer, type PageContainerProps } from './common/PageContainerV2';
 
-export { default as BackButton } from './common/BackButton';
-export type { BackButtonProps } from './common/BackButton';
+// [shared] BackButton - 已提升到 @topems/shared-components
+export { BackButton, type BackButtonProps } from '@topems/shared-components';
 
 export { default as TreeView } from './common/TreeView';
 export type { TreeNode, TreeViewProps } from './common/TreeView';
 
-export { default as ProgressBar } from './common/ProgressBar';
-export type { ProgressBarProps } from './common/ProgressBar';
+// [shared] ProgressBar - 已提升到 @topems/shared-components
+export { ProgressBar, type ProgressBarProps } from '@topems/shared-components';
 
-export { default as Stepper } from './common/Stepper';
-export type { StepperProps, StepItem } from './common/Stepper';
+// [shared] Stepper - 已提升到 @topems/shared-components
+export { Stepper, type StepperProps, type StepItem } from '@topems/shared-components';
 
 export { default as HelpButton } from './common/HelpButton';
 export type { HelpButtonProps } from './common/HelpButton';
 
 // ===== 统一对话框/抽屉组件 =====
 export { default as Dialog } from './common/Dialog';
-export type { DialogProps } from './common/Dialog';
-// DialogSize 在两个组件中都有定义，统一从 ConfirmDialog 导出
-export type { DialogSize } from './common/ConfirmDialog';
+export type { DialogProps, DialogSize } from './common/Dialog';
 
 export { default as Drawer } from './common/Drawer';
 export type { DrawerProps, DrawerAnchor, DrawerVariant } from './common/Drawer';
 
+// [shared] ConfirmDialog - 已提升到 @topems/shared-components
 export {
-  default as ConfirmDialog,
+  ConfirmDialog,
   AlertDialog,
   InfoDialog,
   SuccessDialog,
   WarningDialog,
   ErrorDialog,
   ConfirmationDialog,
-} from './common/ConfirmDialog';
-export type { ConfirmDialogConfig, DialogType, DialogButtonType } from './common/ConfirmDialog';
+} from '@topems/shared-components';
+export type { ConfirmDialogConfig, DialogType, DialogButtonType } from '@topems/shared-components';
 
 // ===== 统一表单组件 =====
-// FormField - 统一 TextField 包装
-export { default as FormField } from './common/FormField';
-export type { FormFieldProps } from './common/FormField';
+// [shared] FormField - 已提升到 @topems/shared-components
+export { FormField, type FormFieldProps } from '@topems/shared-components';
 
-// FormSelect - 统一 Select 包装
-export { default as FormSelect } from './common/FormSelect';
-export type { FormSelectProps, FormSelectOption } from './common/FormSelect';
+// [shared] FormSelect - 已提升到 @topems/shared-components
+export { FormSelect, type FormSelectProps, type FormSelectOption } from '@topems/shared-components';
 
-// ActionButton - 统一按钮组件
-export { default as ActionButton } from './common/ActionButton';
-export type {
-  ActionButtonProps,
-  ActionButtonVariant,
-  ActionButtonSize,
-} from './common/ActionButton';
+// [shared] ActionButton - 已提升到 @topems/shared-components
+export {
+  ActionButton,
+  type ActionButtonProps,
+  type ActionButtonVariant,
+  type ActionButtonSize,
+} from '@topems/shared-components';
 
-// ===== 统一状态组件 =====
-// StatusBadge - 统一状态徽章组件 (common 版本最完整)
+// [shared] StatusBadge - 已提升到 @topems/shared-components
 export {
   StatusBadge,
   EmployeeStatusBadge,
@@ -89,15 +85,13 @@ export {
   FinanceStatusBadge,
   ModuleStatusBadge,
   DEFAULT_STATUS_MAP,
-} from './common/StatusBadge';
-export type {
-  StatusBadgeProps,
-  StatusColor,
-  StatusVariant,
-  StatusSize,
-  StatusConfig,
-  StatusMapConfig,
-} from './common/StatusBadge';
+  type StatusBadgeProps,
+  type StatusColor,
+  type StatusVariant,
+  type StatusSize,
+  type StatusConfig,
+  type StatusMapConfig,
+} from '@topems/shared-components';
 
 // ===== 数据展示组件 =====
 export { DataTable } from './common/DataTable';
@@ -108,10 +102,14 @@ export type {
   AdvancedFilter as DataTableAdvancedFilter,
 } from './common/DataTable';
 
-export { default as PaginationComponent } from './common/Pagination';
-export type { PaginationConfig } from './common/Pagination';
+// [shared] PaginationComponent - 已提升到 @topems/shared-components
+export {
+  Pagination as PaginationComponent,
+  type PaginationConfig,
+} from '@topems/shared-components';
 
-export { default as LoadingSpinner } from './common/LoadingSpinner';
+// [shared] LoadingSpinner - 已提升到 @topems/shared-components
+export { LoadingSpinner } from '@topems/shared-components';
 
 export { default as StatusTimeline } from './common/StatusTimeline';
 export type { StatusTimelineProps, TimelineItem } from './common/StatusTimeline';
@@ -131,8 +129,8 @@ export type {
 export { default as AmountDisplay } from './common/AmountDisplay';
 export type { AmountDisplayProps } from './common/AmountDisplay';
 
-export { default as RelativeTime } from './common/RelativeTime';
-export type { RelativeTimeProps } from './common/RelativeTime';
+// [shared] RelativeTime - 已提升到 @topems/shared-components
+export { RelativeTime, type RelativeTimeProps } from '@topems/shared-components';
 
 // ===== 日期选择组件 =====
 export { default as DateRangePicker } from './common/DateRangePicker';
@@ -161,8 +159,9 @@ export { default as CommentList } from './common/CommentList';
 export type { CommentListProps, Comment } from './common/CommentList';
 
 // ===== 用户/部门选择组件 =====
-export { default as UserSelect } from './common/UserSelect';
-export type { UserSelectProps, User } from './common/UserSelect';
+// [shared] UserSelect - 已提升到 @topems/shared-components
+export { UserSelect, type UserSelectProps } from '@topems/shared-components';
+export type { User } from '@topems/shared-types';
 
 export { default as DepartmentSelect } from './common/DepartmentSelect';
 export type { DepartmentSelectProps, Department } from './common/DepartmentSelect';
@@ -170,18 +169,24 @@ export type { DepartmentSelectProps, Department } from './common/DepartmentSelec
 // ===== 统一通知系统 =====
 export { NotificationProvider } from './notification/NotificationProvider';
 
-// MUI enhanced components (已迁移到 common/ 目录)
+// [shared] EmptyState - 已提升到 @topems/shared-components
 export {
   EmptyState,
   ListEmptyState,
   SearchEmptyState,
   PermissionEmptyState,
   ErrorEmptyState,
-} from './common/EmptyState';
-export type { EmptyStateProps, ErrorEmptyStateProps } from './common/EmptyState';
+  type EmptyStateProps,
+  type ErrorEmptyStateProps,
+} from '@topems/shared-components';
 
-export { FilterBar } from './common/FilterBar';
-export type { FilterOption, FilterConfig, FilterBarProps } from './common/FilterBar';
+// [shared] FilterBar - 已提升到 @topems/shared-components
+export {
+  FilterBar,
+  type FilterOption,
+  type FilterConfig,
+  type FilterBarProps,
+} from '@topems/shared-components';
 
 export { StatCard as MuiStatCard, StatCardGroup } from './common/MuiStatCard';
 export type { StatCardProps as MuiStatCardProps, StatCardGroupProps } from './common/MuiStatCard';

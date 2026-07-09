@@ -398,7 +398,7 @@ const TransferPage: React.FC = () => {
         ],
         value: warehouseFilter,
         onChange: (value: unknown) => {
-          setWarehouseFilter(value as string ?? '');
+          setWarehouseFilter((value as string) ?? '');
           setCurrentPage(1);
         },
       },
@@ -704,7 +704,7 @@ const TransferPage: React.FC = () => {
               onChange={(e) => setNewItem({ ...newItem, planned_date: e.target.value })}
               fullWidth
               size='small'
-              slotProps={{ inputLabel: { shrink: true } }}
+              slotProps={{ inputLabel: { shrink: true } } as any}
             />
             <TextField
               label='承运人'

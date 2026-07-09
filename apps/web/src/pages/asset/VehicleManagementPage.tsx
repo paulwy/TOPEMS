@@ -566,7 +566,7 @@ const VehicleManagementPage: React.FC<VehicleManagementPageProps> = ({ onNavigat
               value={newVehicle.last_service || ''}
               onChange={(e) => setNewVehicle({ ...newVehicle, last_service: e.target.value })}
               fullWidth
-              slotProps={{ inputLabel: { shrink: true } }}
+              slotProps={{ inputLabel: { shrink: true } } as any}
             />
 
             <Box
@@ -743,7 +743,7 @@ const VehicleManagementPage: React.FC<VehicleManagementPageProps> = ({ onNavigat
                   })
                 }
                 fullWidth
-                slotProps={{ inputLabel: { shrink: true } }}
+                slotProps={{ inputLabel: { shrink: true } } as any}
               />
 
               <Box
@@ -838,7 +838,7 @@ const VehicleManagementPage: React.FC<VehicleManagementPageProps> = ({ onNavigat
                 onChange={(e) => setNewRequest({ ...newRequest, start_time: e.target.value })}
                 fullWidth
                 required
-                slotProps={{ inputLabel: { shrink: true } }}
+                slotProps={{ inputLabel: { shrink: true } } as any}
               />
               <TextField
                 label='结束时间 *'
@@ -847,7 +847,7 @@ const VehicleManagementPage: React.FC<VehicleManagementPageProps> = ({ onNavigat
                 onChange={(e) => setNewRequest({ ...newRequest, end_time: e.target.value })}
                 fullWidth
                 required
-                slotProps={{ inputLabel: { shrink: true } }}
+                slotProps={{ inputLabel: { shrink: true } } as any}
               />
             </Box>
 

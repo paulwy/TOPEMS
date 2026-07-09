@@ -32,9 +32,10 @@ import { docApi, type Folder as FolderType } from '@/api/doc';
 import { useAppStore } from '../../store';
 import { DocumentPreviewModal } from '@/components/DocumentPreviewModal';
 import { apiLogger } from '@/utils/logger';
-import ConfirmDialog from '@/components/common/ConfirmDialog';
+import { ConfirmDialog } from '@topems/shared-components';
 
-import {TextField,
+import {
+  TextField,
   Card,
   CardContent,
   Dialog,
@@ -49,7 +50,9 @@ import {TextField,
   Typography,
   Stack,
   IconButton,
-  Button, useTheme} from '@mui/material';
+  Button,
+  useTheme,
+} from '@mui/material';
 import { ModeToggle } from '@/components/theme/ModeToggle';
 import { designTokens } from '@/theme/tokens';
 
@@ -232,7 +235,7 @@ const DocumentsPage: React.FC = () => {
         const mappedFiles: File[] = response.data.files.map((f) => ({
           id: f.id,
           name: f.name,
-          type: 'file',
+          type: 'file' as const,
           size: formatFileSize(f.size),
           sizeBytes: f.size,
           updatedAt: new Date(f.updated_at).toLocaleString('zh-CN'),

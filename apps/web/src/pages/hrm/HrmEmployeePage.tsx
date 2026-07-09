@@ -24,8 +24,7 @@ import {
   Chip,
   Button,
 } from '@mui/material';
-import { StatusBadge } from '@/components/common/StatusBadge';
-import ConfirmDialog from '@/components/common/ConfirmDialog';
+import { StatusBadge, ConfirmDialog } from '@topems/shared-components';
 import { apiLogger } from '@/utils/logger';
 import {
   Users,
@@ -71,12 +70,12 @@ import {
   type FilterConfig,
 } from '@/components';
 import { AIHelperButton, AICodeGenerator, AIDataCompleter, AIFormValidator } from '@/components/ai';
-import type { Suggestion } from '@/types/ai';
+import type { Suggestion, CompletionItem as AICompletionItem } from '@/types/ai';
 import { ImageUpload, DataExport } from '@/components/common';
 import { PageContainer } from '@/components/common/PageContainerV2';
-import type { CompletionItem as AICompletionItem } from '@/types/ai';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { designTokens } from '@/theme/tokens';
+
 const ct = designTokens.colors;
 
 interface TreeNode {
@@ -511,14 +510,17 @@ const HrmEmployeePage: React.FC = () => {
     setShowAIFormValidator(true);
   }, []);
 
-  const handleApplyValidationSuggestions = useCallback((suggestions: { field: string; value: unknown }[]) => {
-    const updates: Record<string, unknown> = {};
-    suggestions.forEach((s) => {
-      updates[s.field] = s.value;
-    });
-    setFormData((prev) => ({ ...prev, ...updates }));
-    setShowAIFormValidator(false);
-  }, []);
+  const handleApplyValidationSuggestions = useCallback(
+    (suggestions: { field: string; value: unknown }[]) => {
+      const updates: Record<string, unknown> = {};
+      suggestions.forEach((s) => {
+        updates[s.field] = s.value;
+      });
+      setFormData((prev) => ({ ...prev, ...updates }));
+      setShowAIFormValidator(false);
+    },
+    []
+  );
 
   // 状态徽章
   const getStatusBadge = useCallback((status: string) => {
@@ -1512,7 +1514,7 @@ const EmployeeFormDialog: React.FC<EmployeeFormDialogProps> = ({
           size='small'
           value={(formData as Employee)?.hire_date || ''}
           onChange={(e) => onChange('hire_date', e.target.value)}
-          slotProps={{ inputLabel: { shrink: true } }}
+          slotProps={{ inputLabel: { shrink: true } } as any}
         />
 
         <FormControl

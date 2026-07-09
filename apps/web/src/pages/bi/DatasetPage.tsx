@@ -442,7 +442,10 @@ const DatasetPage = () => {
                       </IconButton>
                     </Tooltip>
                     <Tooltip title='查看'>
-                      <IconButton size='small' aria-label='查看数据集'>
+                      <IconButton
+                        size='small'
+                        aria-label='查看数据集'
+                      >
                         <Eye size={16} />
                       </IconButton>
                     </Tooltip>

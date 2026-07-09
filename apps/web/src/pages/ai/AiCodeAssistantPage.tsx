@@ -42,6 +42,7 @@ import { PageContainer, Grid } from '@/components/common';
 import { useAppStore } from '@/store';
 import { logger } from '@/utils/logger';
 import { designTokens } from '@/theme/tokens';
+
 const ct = designTokens.colors;
 
 type CodeTab = 'generate' | 'explain' | 'fix' | 'optimize' | 'review';

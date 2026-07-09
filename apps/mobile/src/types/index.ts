@@ -1,3 +1,5 @@
+import type { ApiResponse } from '@topems/shared-types';
+
 export interface User {
   id: string;
   username: string;
@@ -40,10 +42,4 @@ export interface Event {
   date: string;
   time: string;
   location: string;
-}
-
-export interface ApiResponse<T = unknown> {
-  success: boolean;
-  message: string;
-  data: T;
 }

@@ -1,31 +1,16 @@
 import React from 'react';
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { render, screen, fireEvent } from '@testing-library/react';
-import { BrowserRouter } from 'react-router-dom';
-import BackButton from '../BackButton';
-import { useBackNavigation } from '@/hooks';
-
-vi.mock('@/hooks', () => ({
-  useBackNavigation: vi.fn(),
-}));
-
-const mockGoBack = vi.fn();
-const mockUseBackNavigation = useBackNavigation as vi.Mock;
+import { MemoryRouter } from 'react-router-dom';
+import { BackButton } from '@topems/shared-components';
 
 const renderWithRouter = (ui: React.ReactElement) => {
-  return render(<BrowserRouter>{ui}</BrowserRouter>);
+  return render(<MemoryRouter>{ui}</MemoryRouter>);
 };
 
 describe('BackButton', () => {
   beforeEach(() => {
     vi.clearAllMocks();
-    mockUseBackNavigation.mockReturnValue({
-      goBack: mockGoBack,
-      hasFrom: false,
-      from: null,
-      fromFullPath: null,
-      createNavigateState: vi.fn(),
-    });
   });
 
   it('should render with default props', () => {
@@ -75,41 +60,17 @@ describe('BackButton', () => {
     expect(handleClick).toHaveBeenCalledTimes(1);
   });
 
-  it('should navigate to href when provided', () => {
+  it('should call onBack when provided', () => {
+    const handleBack = vi.fn();
     renderWithRouter(
       <BackButton
-        href='/test-page'
+        onBack={handleBack}
         variant='text'
       />
     );
     const button = screen.getByRole('button', { name: /返回/i });
     fireEvent.click(button);
-    expect(window.location.pathname).toBe('/test-page');
-  });
-
-  it('should call goBack with fallback when no onClick or href', () => {
-    renderWithRouter(
-      <BackButton
-        fallback='/fallback-page'
-        variant='text'
-      />
-    );
-    const button = screen.getByRole('button', { name: /返回/i });
-    fireEvent.click(button);
-    expect(mockGoBack).toHaveBeenCalledWith('/fallback-page');
-  });
-
-  it('should render with tooltip wrapper when hasFrom is true', () => {
-    mockUseBackNavigation.mockReturnValue({
-      goBack: mockGoBack,
-      hasFrom: true,
-      from: { pathname: '/from-page' },
-      fromFullPath: '/from-page',
-      createNavigateState: vi.fn(),
-    });
-    renderWithRouter(<BackButton />);
-    const button = screen.getByLabelText('返回');
-    expect(button).toBeInTheDocument();
+    expect(handleBack).toHaveBeenCalledTimes(1);
   });
 
   it('should render with custom tooltip wrapper when provided', () => {
@@ -124,9 +85,9 @@ describe('BackButton', () => {
     expect(button).toBeInTheDocument();
 
     rerender(
-      <BrowserRouter>
+      <MemoryRouter>
         <BackButton size='large' />
-      </BrowserRouter>
+      </MemoryRouter>
     );
     button = screen.getByLabelText('返回');
     expect(button).toBeInTheDocument();
@@ -140,6 +101,12 @@ describe('BackButton', () => {
       />
     );
     const button = screen.getByRole('button', { name: /上一页/i });
+    expect(button).toBeInTheDocument();
+  });
+
+  it('should render without router context (fallback mode)', () => {
+    render(<BackButton variant='text' />);
+    const button = screen.getByRole('button', { name: /返回/i });
     expect(button).toBeInTheDocument();
   });
 });

@@ -1,7 +1,7 @@
 import type React from 'react';
 import type { BoxProps } from '@mui/material';
 
-import type { FilterConfig } from '../../common/FilterBar';
+import type { FilterConfig } from '@topems/shared-components';
 
 // ============ 类型定义 ============
 

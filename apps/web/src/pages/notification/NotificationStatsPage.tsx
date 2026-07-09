@@ -241,7 +241,8 @@ const NotificationStatsPage: React.FC = () => {
                     height: 12,
                     borderRadius: '50%',
                     marginRight: 12,
-                    backgroundColor: serviceStatus.status === 'healthy' ? ct.success[600] : 'error.700',
+                    backgroundColor:
+                      serviceStatus.status === 'healthy' ? ct.success[600] : 'error.700',
                   }}
                 />
                 <span

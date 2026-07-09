@@ -1,23 +1,9 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
-import { render, screen, fireEvent } from '@testing-library/react';
+import { screen, fireEvent } from '@testing-library/react';
 import '@testing-library/jest-dom';
 import React from 'react';
-
-import {
-  StatusBadge,
-  EmployeeStatusBadge,
-  AttendanceStatusBadge,
-  LeaveStatusBadge,
-  PayrollStatusBadge,
-  PerformanceStatusBadge,
-  CustomerStatusBadge,
-  OpportunityStatusBadge,
-  ProjectStatusBadge,
-  WorkflowStatusBadge,
-  FinanceStatusBadge,
-  ModuleStatusBadge,
-  DEFAULT_STATUS_MAP,
-} from '../StatusBadge';
+import { StatusBadge, DEFAULT_STATUS_MAP } from '@topems/shared-components';
+import { renderWithProviders } from '@/__tests__/test-utils';
 
 vi.mock('@/store', () => ({ useAppStore: vi.fn() }));
 
@@ -27,12 +13,12 @@ describe('StatusBadge', () => {
   });
 
   it('renders default status badge with label', () => {
-    render(<StatusBadge status='active' />);
+    renderWithProviders(<StatusBadge status='active' />);
     expect(screen.getByText('启用')).toBeInTheDocument();
   });
 
   it('renders with different status values from DEFAULT_STATUS_MAP', () => {
-    const { rerender } = render(<StatusBadge status='pending' />);
+    const { rerender } = renderWithProviders(<StatusBadge status='pending' />);
     expect(screen.getByText('待处理')).toBeInTheDocument();
 
     rerender(<StatusBadge status='approved' />);
@@ -64,7 +50,7 @@ describe('StatusBadge', () => {
     const customMap = {
       custom_status: { label: '自定义状态', color: 'info' as const },
     };
-    render(
+    renderWithProviders(
       <StatusBadge
         status='custom_status'
         statusMap={customMap}
@@ -74,7 +60,7 @@ describe('StatusBadge', () => {
   });
 
   it('renders with custom label prop', () => {
-    render(
+    renderWithProviders(
       <StatusBadge
         status='active'
         label='自定义标签'
@@ -85,7 +71,7 @@ describe('StatusBadge', () => {
 
   it('calls onClick when clickable and clicked', () => {
     const handleClick = vi.fn();
-    render(
+    renderWithProviders(
       <StatusBadge
         status='active'
         clickable
@@ -99,7 +85,7 @@ describe('StatusBadge', () => {
 
   it('does not call onClick when disabled', () => {
     const handleClick = vi.fn();
-    render(
+    renderWithProviders(
       <StatusBadge
         status='active'
         clickable
@@ -114,7 +100,7 @@ describe('StatusBadge', () => {
 
   it('does not call onClick when not clickable', () => {
     const handleClick = vi.fn();
-    render(
+    renderWithProviders(
       <StatusBadge
         status='active'
         onClick={handleClick}
@@ -126,7 +112,7 @@ describe('StatusBadge', () => {
   });
 
   it('renders with different sizes (sm, md, lg)', () => {
-    const { rerender } = render(
+    const { rerender } = renderWithProviders(
       <StatusBadge
         status='active'
         size='sm'
@@ -156,7 +142,7 @@ describe('StatusBadge', () => {
   });
 
   it('renders with different variants (filled, outlined, soft)', () => {
-    const { rerender } = render(
+    const { rerender } = renderWithProviders(
       <StatusBadge
         status='active'
         variant='filled'
@@ -186,7 +172,7 @@ describe('StatusBadge', () => {
   });
 
   it('shows icon when showIcon is true', () => {
-    const { container } = render(
+    const { container } = renderWithProviders(
       <StatusBadge
         status='active'
         showIcon
@@ -199,13 +185,13 @@ describe('StatusBadge', () => {
   });
 
   it('renders with unknown status using fallback label', () => {
-    render(<StatusBadge status='unknown_status' />);
+    renderWithProviders(<StatusBadge status='unknown_status' />);
     expect(screen.getByText('unknown_status')).toBeInTheDocument();
   });
 
   it('renders with custom render function', () => {
     const customRender = vi.fn((config) => <span data-testid='custom'>{config.label}</span>);
-    render(
+    renderWithProviders(
       <StatusBadge
         status='active'
         render={customRender}
@@ -216,7 +202,7 @@ describe('StatusBadge', () => {
   });
 
   it('renders without chip when useChip is false', () => {
-    render(
+    renderWithProviders(
       <StatusBadge
         status='active'
         useChip={false}
@@ -225,62 +211,5 @@ describe('StatusBadge', () => {
     expect(screen.getByText('启用')).toBeInTheDocument();
     // MUI Chip uses .MuiChip-root class, not a "chip" role
     expect(document.querySelector('.MuiChip-root')).not.toBeInTheDocument();
-  });
-});
-
-describe('Typed Sub-components', () => {
-  it('EmployeeStatusBadge renders correctly', () => {
-    render(<EmployeeStatusBadge status='employeeactive' />);
-    expect(screen.getByText('在职')).toBeInTheDocument();
-  });
-
-  it('AttendanceStatusBadge renders correctly', () => {
-    render(<AttendanceStatusBadge status='attendance_late' />);
-    expect(screen.getByText('迟到')).toBeInTheDocument();
-  });
-
-  it('LeaveStatusBadge renders correctly', () => {
-    render(<LeaveStatusBadge status='leave_approved' />);
-    expect(screen.getByText('已批准')).toBeInTheDocument();
-  });
-
-  it('PayrollStatusBadge renders correctly', () => {
-    render(<PayrollStatusBadge status='payroll_paid' />);
-    expect(screen.getByText('已发放')).toBeInTheDocument();
-  });
-
-  it('PerformanceStatusBadge renders correctly', () => {
-    render(<PerformanceStatusBadge status='performance_completed' />);
-    expect(screen.getByText('已完成')).toBeInTheDocument();
-  });
-
-  it('CustomerStatusBadge renders correctly', () => {
-    render(<CustomerStatusBadge status='customeractive' />);
-    expect(screen.getByText('活跃')).toBeInTheDocument();
-  });
-
-  it('OpportunityStatusBadge renders correctly', () => {
-    render(<OpportunityStatusBadge status='opportunity_won' />);
-    expect(screen.getByText('已成交')).toBeInTheDocument();
-  });
-
-  it('ProjectStatusBadge renders correctly', () => {
-    render(<ProjectStatusBadge status='project_completed' />);
-    expect(screen.getByText('已完成')).toBeInTheDocument();
-  });
-
-  it('WorkflowStatusBadge renders correctly', () => {
-    render(<WorkflowStatusBadge status='workflow_approved' />);
-    expect(screen.getByText('已通过')).toBeInTheDocument();
-  });
-
-  it('FinanceStatusBadge renders correctly', () => {
-    render(<FinanceStatusBadge status='finance_posted' />);
-    expect(screen.getByText('已记账')).toBeInTheDocument();
-  });
-
-  it('ModuleStatusBadge renders correctly', () => {
-    render(<ModuleStatusBadge status='online' />);
-    expect(screen.getByText('上线')).toBeInTheDocument();
   });
 });

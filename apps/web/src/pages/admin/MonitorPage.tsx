@@ -1,16 +1,19 @@
-import {Box,
+import {
+  Box,
   Card,
   CardContent,
   CardHeader,
   Chip,
   Typography,
   LinearProgress,
-  Button, useTheme} from '@mui/material';
+  Button,
+  useTheme,
+} from '@mui/material';
 import React, { useState, useEffect } from 'react';
 import { monitorApi } from '@/api/monitor';
 import { apiLogger } from '@/utils/logger';
 import { useAppStore } from '@/store';
-import { LoadingSpinner } from '@/components/common/LoadingSpinner';
+import { LoadingSpinner } from '@topems/shared-components';
 import {
   Cpu,
   HardDrive,
@@ -21,7 +24,7 @@ import {
   Activity,
   Server,
 } from 'lucide-react';
-import { PageContainer } from '@/components/common/PageContainer';
+import { PageContainer } from '@/components';
 
 const MonitorPage: React.FC = () => {
   const theme = useTheme();
@@ -396,7 +399,9 @@ const MonitorPage: React.FC = () => {
                           {service.uptime_percentage?.toFixed(1) ?? '0.0'}%
                         </td>
                         <td style={{ padding: '12px 16px' }}>
-                          {service.last_checked ? new Date(service.last_checked).toLocaleString() : '-'}
+                          {service.last_checked
+                            ? new Date(service.last_checked).toLocaleString()
+                            : '-'}
                         </td>
                       </tr>
                     ))

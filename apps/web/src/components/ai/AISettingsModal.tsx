@@ -521,7 +521,9 @@ const AISettingsModal: React.FC<AISettingsModalProps> = ({ isOpen, onClose }) =>
                   {errors.systemPrompt}
                 </p>
               )}
-              <p style={{ fontSize: '12px', color: theme.palette.text.secondary, marginTop: '4px' }}>
+              <p
+                style={{ fontSize: '12px', color: theme.palette.text.secondary, marginTop: '4px' }}
+              >
                 定义AI助手的基本角色、知识范围和回答风格
               </p>
             </div>
@@ -561,7 +563,9 @@ const AISettingsModal: React.FC<AISettingsModalProps> = ({ isOpen, onClose }) =>
                 }}
               >
                 <div style={{ flex: 1 }}>
-                  <div style={{ fontWeight: 500, color: theme.palette.text.primary }}>启用知识库</div>
+                  <div style={{ fontWeight: 500, color: theme.palette.text.primary }}>
+                    启用知识库
+                  </div>
                   <div style={{ fontSize: '14px', color: theme.palette.text.secondary }}>
                     基于企业知识库生成回答
                   </div>

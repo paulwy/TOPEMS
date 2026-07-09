@@ -22,7 +22,8 @@ import {
   Loader2,
 } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
-import {Box,
+import {
+  Box,
   Typography,
   Dialog,
   DialogTitle,
@@ -32,7 +33,9 @@ import {Box,
   Chip,
   Stack,
   IconButton,
-  Tooltip, useTheme} from '@mui/material';
+  Tooltip,
+  useTheme,
+} from '@mui/material';
 import { designTokens } from '@/theme/tokens';
 
 const ct = designTokens.colors;
@@ -75,7 +78,6 @@ const DocumentCenterPage: React.FC = () => {
   };
 
   const getFileIcon = (contentType: string) => {
-  const theme = useTheme();
     if (contentType.includes('pdf')) {
       return (
         <File

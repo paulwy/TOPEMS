@@ -9,7 +9,9 @@ import { useAppStore } from '@/store';
 vi.mock('@/api/mes', () => ({
   mesApi: {
     productionRecords: {
-      list: vi.fn().mockResolvedValue({ success: true, data: { data: [], pagination: { total: 0 } } }),
+      list: vi
+        .fn()
+        .mockResolvedValue({ success: true, data: { data: [], pagination: { total: 0 } } }),
       create: vi.fn(),
       get: vi.fn(),
       update: vi.fn(),

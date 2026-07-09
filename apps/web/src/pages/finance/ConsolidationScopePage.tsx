@@ -1,7 +1,7 @@
 import React, { useState, useMemo, useEffect } from 'react';
 import { designTokens } from '@/theme/tokens';
-const ct = designTokens.colors;
-import {Card,
+import {
+  Card,
   CardContent,
   CardHeader,
   Chip,
@@ -10,7 +10,9 @@ import {Card,
   Box,
   Tabs,
   Tab,
-  Button, useTheme} from '@mui/material';
+  Button,
+  useTheme,
+} from '@mui/material';
 import { useNavigate } from 'react-router-dom';
 import type { ColumnDef } from '@tanstack/react-table';
 import {
@@ -40,10 +42,12 @@ import {
   useRemoveCompanyFromScope,
 } from '@/hooks/useConsolidation';
 import { useNotification } from '@/hooks/useNotification';
-import { EnhancedDataTable } from '@/components/EnhancedDataTable';
+import { DataTable } from '@/components/common/DataTable';
 import { StatCardGroup } from '@/components';
 import type { ConsolidationScope, ConsolidationCompany } from '@/types/consolidation';
 import { PageContainer } from '@/components/common';
+
+const ct = designTokens.colors;
 
 // Helper to convert tailwind color class to sx
 const getChipSx = (colorClass: string): object => {
@@ -493,10 +497,9 @@ export default function ConsolidationScopePage() {
                   暂无合并范围，点击右上角新建
                 </Box>
               ) : (
-                <EnhancedDataTable
+                <DataTable
                   columns={scopeColumns}
                   data={scopesData?.items || []}
-                  loading={scopesLoading}
                   onRowClick={(row) => handleSelectScope(row)}
                 />
               )}
@@ -605,10 +608,9 @@ export default function ConsolidationScopePage() {
                         暂无成员公司
                       </Box>
                     ) : (
-                      <EnhancedDataTable
+                      <DataTable
                         columns={companyColumns}
                         data={companiesData?.data || []}
-                        loading={companiesLoading}
                       />
                     )}
                   </Box>

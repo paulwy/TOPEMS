@@ -1,6 +1,5 @@
 import React, { useState, useEffect, useMemo } from 'react';
 import { designTokens } from '@/theme/tokens';
-const ct = designTokens.colors;
 import {
   Box,
   Typography,
@@ -37,6 +36,8 @@ import { useNotification } from '@/hooks/useNotification';
 import { apiLogger } from '@/utils/logger';
 import { DetailPageTemplate, type TabConfig, type SectionConfig } from '@/components/templates';
 import { PageContainer } from '@/components/common';
+
+const ct = designTokens.colors;
 
 interface BudgetItem {
   id: string;

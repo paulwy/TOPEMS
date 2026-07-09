@@ -2,7 +2,8 @@ import type { AxiosInstance, AxiosResponse, AxiosRequestConfig } from 'axios';
 import axios from 'axios';
 import config, { isProduction, isDevelopment } from '../config/runtime';
 import { createLogger, apiLogger } from '../utils/logger';
-import { API_TIMEOUT } from '@/constants/timeouts';
+import { API_TIMEOUT } from '@topems/shared-constants';
+import { ApiResponse as SharedApiResponse, PaginatedResponse as SharedPaginatedResponse } from '@topems/shared-types';
 import {
   csrfRequestInterceptor,
   csrfResponseInterceptor,
@@ -11,26 +12,13 @@ import {
 
 const logger = createLogger('ApiClient');
 
-export interface ApiResponse<T = unknown> {
-  code: number;
-  success: boolean;
-  data: T | undefined;
-  message: string;
-  timestamp: string;
-}
+export type ApiResponse<T = unknown> = SharedApiResponse<T>;
+export type PaginatedResponse<T = any> = SharedPaginatedResponse<T>;
 
 export interface PaginationParams {
   page?: number;
   pageSize?: number;
   search?: string;
-}
-
-export interface PaginatedResponse<T> {
-  items: T[];
-  total: number;
-  page: number;
-  pageSize: number;
-  totalPages: number;
 }
 
 type TypedAxiosInstance = Omit<AxiosInstance, 'get' | 'post' | 'put' | 'patch' | 'delete'> & {

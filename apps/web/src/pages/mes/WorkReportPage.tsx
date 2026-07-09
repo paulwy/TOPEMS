@@ -16,10 +16,15 @@ import {
 } from '@mui/material';
 import { PageContainer } from '@/components/common/PageContainerV2';
 import React, { useState, useEffect, useMemo, useCallback } from 'react';
-import type { WorkReport, CreateWorkReportRequest, UpdateWorkReportRequest, ListParams } from '@/api/mes';
+import type {
+  WorkReport,
+  CreateWorkReportRequest,
+  UpdateWorkReportRequest,
+  ListParams,
+} from '@/api/mes';
 import { mesApi } from '@/api/mes';
 import { useAppStore } from '@/store';
-import { LoadingSpinner } from '@/components/common/LoadingSpinner';
+import { LoadingSpinner } from '@topems/shared-components';
 import {
   ListPageTemplate,
   type ColumnDef,
@@ -29,6 +34,7 @@ import {
 import { Plus, Edit, Trash2, Eye, CheckCircle, XCircle, Clock, FileText } from 'lucide-react';
 import { apiLogger } from '@/utils/logger';
 import { designTokens } from '@/theme/tokens';
+
 const ct = designTokens.colors;
 
 const WorkReportPage: React.FC = () => {

@@ -7,13 +7,14 @@ import type {
   UpdateQualityStandardRequestBackend,
   StandardRevision,
   PaginatedResponse,
+  QmsPaginatedResponse,
 } from './types';
 import { adaptStandardToFrontend, adaptStandardToBackend } from './adapters';
 
 export const standardApi = {
   listStandards: async (): Promise<ApiResponse<QualityStandard[]>> => {
     const response =
-      await apiClient.qms.get<PaginatedResponse<QualityStandardBackend>>('/standards');
+      await apiClient.qms.get<QmsPaginatedResponse<QualityStandardBackend>>('/standards');
     const adaptedData = (response.data?.standards || []).map(adaptStandardToFrontend);
     return { ...response, data: adaptedData };
   },

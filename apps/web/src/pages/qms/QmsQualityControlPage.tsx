@@ -2,7 +2,6 @@ import React, { useState, useMemo, useEffect, useCallback } from 'react';
 import { motion } from 'framer-motion';
 import { Shield, AlertCircle, CheckCircle, FileText, Plus, Edit, Trash2, Eye } from 'lucide-react';
 import { designTokens } from '@/theme/tokens';
-const ct = designTokens.colors;
 import {
   Dialog,
   DialogTitle,
@@ -31,6 +30,8 @@ import {
 import { PageContainer } from '@/components/common';
 import { qmsApi } from '@/api/qms';
 import type { QualityIssue, AuditPlan } from '@/api/qms';
+
+const ct = designTokens.colors;
 
 const QmsQualityControlPage: React.FC = () => {
   const [activeTab, setActiveTab] = useState<'nonconformance' | 'audit'>('nonconformance');

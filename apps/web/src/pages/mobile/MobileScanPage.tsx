@@ -329,13 +329,13 @@ const MobileScanPage: React.FC = () => {
           >
             <Box
               sx={{
-              position: 'absolute',
-              inset: 0,
-              background: `linear-gradient(135deg, ${ct.grey[900]} 0%, ${ct.blue[900]} 100%)`,
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-            }}
+                position: 'absolute',
+                inset: 0,
+                background: `linear-gradient(135deg, ${ct.grey[900]} 0%, ${ct.blue[900]} 100%)`,
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+              }}
             >
               <Box
                 sx={{
@@ -719,7 +719,9 @@ const MobileScanPage: React.FC = () => {
                     }
                     badge={
                       <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5 }}>
-                        <Clock style={{ width: 12, height: 12, color: theme.palette.text.secondary }} />
+                        <Clock
+                          style={{ width: 12, height: 12, color: theme.palette.text.secondary }}
+                        />
                         <Typography
                           variant='caption'
                           color='text.secondary'

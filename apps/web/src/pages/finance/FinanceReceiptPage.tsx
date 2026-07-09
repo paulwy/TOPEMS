@@ -24,7 +24,7 @@ import {
   IconButton,
   Button,
 } from '@mui/material';
-import ConfirmDialog from '@/components/common/ConfirmDialog';
+import { ConfirmDialog } from '@topems/shared-components';
 
 interface Receipt {
   id: string;
@@ -222,7 +222,7 @@ const FinanceReceiptPage: React.FC = () => {
           bank_account: '',
         });
       } else {
-        error(response.error?.message || '收款登记失败');
+        error(response.message || '收款登记失败');
       }
     } catch (err) {
       error('收款登记失败');
@@ -490,7 +490,10 @@ const FinanceReceiptPage: React.FC = () => {
               direction='row'
               spacing={1}
             >
-              <IconButton onClick={handleRefresh} aria-label='刷新'>
+              <IconButton
+                onClick={handleRefresh}
+                aria-label='刷新'
+              >
                 <RefreshCw sx={{ width: 20, height: 20 }} />
               </IconButton>
               <DataExport

@@ -4,6 +4,8 @@
 
 本文档定义 TOPEMS 前端项目中 Vite 代理配置的规范和最佳实践，确保代理规则的一致性、可维护性和正确性。
 
+**核心变更（2026-07-09）**: 代理配置已从手动维护升级为程序化生成。新增服务只需在 `services` 数组中添加一行配置，`generateServiceProxies` 函数会自动生成所有标准代理规则（API、健康检查、页面路由、WebSocket、plugin-health）。
+
 ## 2. 代理规则顺序原则
 
 ### 2.1 精确匹配优先
@@ -50,11 +52,20 @@ Vite 代理按照配置顺序匹配，**先匹配的规则优先**。必须遵�
 | unified-core | 8000 | svc/unified-core |
 | ERP | 8010 | svc/erp |
 | AI | 8013 | svc/ai |
+| Comm | 8000 | svc/core (useCoreService) |
+| File | 8000 | svc/core (useCoreService) |
+| Mail | 8000 | svc/core (useCoreService) |
+| Notification | 8000 | svc/core (useCoreService) |
+| IM | 8000 | svc/core (useCoreService) |
+| Master | 8000 | svc/core (useCoreService) |
+| Migration | 8000 | svc/core (useCoreService) |
+| Flow | 8000 | svc/core (useCoreService) |
 | Doc | 8012 | svc/doc |
 | HRM | 8020 | svc/hrm |
 | PM | 8023 | svc/pm |
 | CRM | 8029 | svc/crm |
 | MES | 8030 | svc/mes |
+| Manufacturing | 8030 | svc/mes (skipPluginHealth) |
 | PDM | 8031 | svc/pdm |
 | SCM | 8040 | svc/scm |
 | WMS | 8041 | svc/wms |
@@ -64,7 +75,7 @@ Vite 代理按照配置顺序匹配，**先匹配的规则优先**。必须遵�
 | EHS | 8052 | svc/ehs |
 | RS | 8053 | svc/rs |
 | BI | 8060 | svc/analytics (bi) |
-| Report | 8061 | svc/analytics (report) |
+| Report | 8060 | svc/analytics (report, skipPluginHealth) |
 | Monitor | 8062 | svc/monitor |
 | Portal | 8063 | svc/portal |
 | Mobile | 8070 | svc/mobile |
@@ -86,9 +97,246 @@ lsof -i :<端口号>
 ./scripts/test-proxy.sh
 ```
 
-## 4. 代理规则配置规范
+## 4. 程序化代理配置（推荐方式）
 
-### 4.1 标准规则模板
+### 4.1 服务配置数组
+
+所有服务的代理配置集中定义在 `services` 数组中，`generateServiceProxies` 函数会自动生成标准代理规则：
+
+```typescript
+interface ServiceConfig {
+  name: string;                          // 服务名称
+  port: number;                          // 服务端口
+  target?: string;                       // 自定义目标地址
+  basePath?: string;                     // 自定义基础路径
+  apiRewrite?: (path: string) => string; // 自定义API重写规则
+  healthRewrite?: (path: string) => string; // 自定义健康检查重写规则
+  pageRewrite?: (path: string) => string;   // 自定义页面路由重写规则
+  hasWs?: boolean;                       // 是否支持WebSocket
+  wsPath?: string;                       // WebSocket路径
+  wsRewrite?: (path: string) => string;  // WebSocket重写规则
+  useCoreService?: boolean;              // 是否使用核心服务端口(8000)
+  skipPluginHealth?: boolean;            // 是否跳过plugin-health生成
+}
+
+const services: ServiceConfig[] = [
+  { name: 'core', port: 8000, hasWs: true, wsPath: '/ws/core' },
+  { name: 'comm', port: 8000, useCoreService: true },
+  { name: 'erp', port: 8010, apiRewrite: (path) => path.replace(/^\/erp\/system/, '/api/erp') },
+  { name: 'hrm', port: 8020 },
+  // ... 其他服务
+];
+```
+
+### 4.2 自动生成的代理规则
+
+`generateServiceProxies` 函数为每个服务自动生成以下代理规则：
+
+| 规则类型 | 前端路径 | 后端路径 | 说明 |
+|---------|---------|---------|------|
+| API代理 | `/service/api/*` | `/api/service/*` | 标准API路由 |
+| 健康检查 | `/service/health` | `/health` | 服务健康检查 |
+| 页面路由 | `/service/*` | `/api/service/*` | 页面路由（使用PageSafeProxy） |
+| WebSocket | `/ws/service` 或自定义 | 自定义 | WebSocket连接 |
+| Plugin健康 | `/plugin-health/service/*` | `/*` | 插件健康检查 |
+
+### 4.3 新增服务流程
+
+```bash
+# 1. 在 vite.config.ts 的 services 数组中添加服务配置
+{ name: 'new-service', port: 80XX }
+
+# 2. 运行 typecheck 验证配置
+pnpm run typecheck
+
+# 3. 启动开发服务器验证
+pnpm run dev:web
+
+# 4. 测试代理
+curl http://localhost:3000/new-service/health
+```
+
+### 4.4 特殊配置示例
+
+#### 自定义重写规则
+```typescript
+{ 
+  name: 'erp', 
+  port: 8010, 
+  apiRewrite: (path) => path.replace(/^\/erp\/system/, '/api/erp') 
+}
+```
+
+#### WebSocket支持
+```typescript
+{ 
+  name: 'mes', 
+  port: 8030, 
+  hasWs: true, 
+  wsPath: '/mes/ws' 
+}
+```
+
+#### 使用核心服务端口
+```typescript
+{ 
+  name: 'comm', 
+  port: 8000, 
+  useCoreService: true 
+}
+```
+
+### 4.5 createPageSafeProxy 页面安全代理
+
+`createPageSafeProxy` 是一个辅助函数，用于创建智能代理规则，能够区分页面请求和API请求：
+
+```typescript
+const isPageRequest = (req: IncomingMessage): boolean => {
+  const url = req.url || '';
+  const accept = req.headers.accept || '';
+  if (url.includes('.') && !url.includes('?')) return false;
+  if (url.startsWith('/api/') || url.startsWith('/ws/')) return false;
+  if (url.startsWith('/notification/v1/')) return false;
+  if (url.startsWith('/notification/api/v1/')) return false;
+  if (url.endsWith('/health')) return false;
+  if (url.includes('/api/')) return false;
+  if (accept.includes('text/html') && req.method === 'GET') return true;
+  return false;
+};
+
+const createPageSafeProxy = (config: any) => ({
+  ...config,
+  bypass: (req: IncomingMessage) => {
+    if (isPageRequest(req)) {
+      return req.url;
+    }
+    return undefined;
+  },
+});
+```
+
+**工作原理：**
+
+| 判断条件 | 结果 | 说明 |
+|---------|------|------|
+| URL包含文件扩展名（如 `.js`, `.css`） | API请求 | 静态资源不视为页面 |
+| URL以 `/api/` 或 `/ws/` 开头 | API请求 | 明确的API/WebSocket路径 |
+| URL包含 `/api/` | API请求 | 中间包含API路径 |
+| URL以 `/notification/v1/` 开头 | API请求 | 通知服务API |
+| URL以 `/notification/api/v1/` 开头 | API请求 | 通知服务API |
+| URL以 `/health` 结尾 | API请求 | 健康检查路径 |
+| Accept头包含 `text/html` 且GET方法 | 页面请求 | 浏览器页面导航 |
+
+**使用场景：**
+
+页面安全代理主要用于 `useCoreService` 服务，防止页面路由被错误转发到后端：
+
+```typescript
+// 页面路由（由前端处理，不转发到后端）
+'/iam/': createPageSafeProxy({
+  target: 'http://localhost:8000',
+  changeOrigin: true,
+  rewrite: (path: string) => path.replace(/^\/iam\//, '/api/core/iam/'),
+}),
+
+// API请求（转发到后端）
+'/iam/api': {
+  target: 'http://localhost:8000',
+  changeOrigin: true,
+  rewrite: (path: string) => path.replace(/^\/iam\/api\/iam\//, '/api/core/iam/'),
+},
+```
+
+### 4.6 useCoreService 服务的手动代理规则
+
+标记为 `useCoreService: true` 的服务不参与自动代理生成，需要手动配置。以下是 `useCoreService` 服务的完整代理规则示例：
+
+**Comm 服务：**
+```typescript
+'/comm/api': {
+  target: 'http://localhost:8000',
+  changeOrigin: true,
+  rewrite: (path: string) => path.replace(/^\/comm/, '/api/core/comm'),
+},
+'/comm/health': {
+  target: 'http://localhost:8000',
+  changeOrigin: true,
+},
+```
+
+**IAM 服务（含认证路径）：**
+```typescript
+'/iam/api/iam/auth/': {
+  target: 'http://localhost:8000',
+  changeOrigin: true,
+  rewrite: (path: string) => path.replace(/^\/iam\/api\/iam\/auth\//, '/api/v1/auth/'),
+},
+'/iam/api': {
+  target: 'http://localhost:8000',
+  changeOrigin: true,
+  rewrite: (path: string) => path.replace(/^\/iam\/api\/iam\//, '/api/core/iam/'),
+},
+'/iam/auth/': {
+  target: 'http://localhost:8000',
+  changeOrigin: true,
+  rewrite: (path: string) => path.replace(/^\/iam\/auth\//, '/api/v1/auth/'),
+},
+'/iam/': createPageSafeProxy({
+  target: 'http://localhost:8000',
+  changeOrigin: true,
+  rewrite: (path: string) => path.replace(/^\/iam\//, '/api/core/iam/'),
+}),
+```
+
+**File 服务：**
+```typescript
+'/file': createPageSafeProxy({
+  target: 'http://localhost:8000',
+  changeOrigin: true,
+  rewrite: (path: string) => path.replace(/^\/file(\/.*)$/, '/api/core/file$1'),
+}),
+```
+
+**Mail 服务：**
+```typescript
+'/mail': createPageSafeProxy({
+  target: 'http://localhost:8000',
+  changeOrigin: true,
+  rewrite: (path: string) => path.replace(/^\/mail(\/.*)$/, '/api/core/comm/mail$1'),
+}),
+```
+
+**Notification 服务（含特殊API路径）：**
+```typescript
+'/notification/api/v1': {
+  target: 'http://localhost:8000',
+  changeOrigin: true,
+  rewrite: (path: string) => path.replace(/^\/notification\/api\/v1/, '/api/v1'),
+},
+'/notification/v1': {
+  target: 'http://localhost:8000',
+  changeOrigin: true,
+  rewrite: (path: string) => path.replace(/^\/notification\/v1/, '/api/v1'),
+},
+'/notification': createPageSafeProxy({
+  target: 'http://localhost:8000',
+  changeOrigin: true,
+  rewrite: (path: string) => path.replace(/^\/notification(\/.*)$/, '/api$1'),
+}),
+```
+
+**IM 服务：**
+```typescript
+'/im': createPageSafeProxy({
+  target: 'http://localhost:8000',
+  changeOrigin: true,
+  rewrite: (path: string) => path.replace(/^\/im(\/.*)$/, '/api/core/comm/im$1'),
+}),
+```
+
+## 5. 代理规则配置规范
+
+### 5.1 标准规则模板（保留用于特殊情况）
 
 使用 `createServiceProxyConfig`、`createCoreServiceProxyConfig` 和 `createHealthProxyConfig` 辅助函数：
 
@@ -111,7 +359,7 @@ lsof -i :<端口号>
 },
 ```
 
-### 4.2 Rewrite 规则规范
+### 5.2 Rewrite 规则规范
 
 | 前端路径 | 使用函数 | Rewrite 规则 | 后端路径 |
 |---------|---------|-------------|---------|
@@ -125,7 +373,7 @@ lsof -i :<端口号>
 | `/master/health` | `createHealthProxyConfig` | `/master` → `` | `/health` |
 | `/plugin-health/erp/xxx` | 手动配置 | `/plugin-health/erp` → `` | `/xxx` |
 
-### 4.3 特殊路径处理
+### 5.3 特殊路径处理
 
 #### IAM 认证路径
 
@@ -155,9 +403,9 @@ lsof -i :<端口号>
 },
 ```
 
-## 5. WebSocket 代理配置规范
+## 6. WebSocket 代理配置规范
 
-### 5.1 WebSocket 路径命名规范
+### 6.1 WebSocket 路径命名规范
 
 所有服务的 WebSocket 路由必须遵循统一的命名约定：
 
@@ -170,9 +418,9 @@ lsof -i :<端口号>
 | unified-core | core | 通知 | `/ws/core/notifications` | `/ws/core/notifications` |
 | unified-core | core | IM | `/ws/core/im` | `/ws/core/im` |
 | MES | mes | 仪表盘 | `/mes/ws/dashboard` | `/mes/ws/dashboard` |
-| GIS | gis | 通用 | `/gis/ws` | `/api/gis/ws` |
+| GIS | gis | 通用 | `/gis/ws` | `/ws/gis` |
 
-### 5.2 WebSocket 代理配置模板
+### 6.2 WebSocket 代理配置模板
 
 ```typescript
 // Core WebSocket（无重写，直接转发）
@@ -239,7 +487,7 @@ lsof -i :<端口号>
 | `Upgrade` Header | `websocket` | 必须设置 WebSocket Upgrade 头 |
 | `Connection` Header | `Upgrade` | 必须设置 Connection Upgrade 头 |
 
-### 5.4 前端 WebSocket 连接方式
+### 6.3 前端 WebSocket 连接方式
 
 ```typescript
 // 通知服务
@@ -254,9 +502,9 @@ const wsUrl = `${window.location.protocol === 'https:' ? 'wss:' : 'ws:'}//${wind
 const wsUrl = `${protocol}//${host}/mes/ws/dashboard${tokenParam}`;
 ```
 
-## 6. 日志配置规范
+## 7. 日志配置规范
 
-### 6.1 必须配置日志
+### 7.1 必须配置日志
 
 所有代理规则必须包含 `configure: createProxyLogger()` 配置，确保请求转发过程可追踪。
 
@@ -269,14 +517,14 @@ const wsUrl = `${protocol}//${host}/mes/ws/dashboard${tokenParam}`;
 },
 ```
 
-### 6.2 日志格式
+### 7.2 日志格式
 
 ```
 [Vite Proxy] SERVICE_NAME METHOD original_path -> target_url
 [Vite Proxy] SERVICE_NAME METHOD original_path <- status_code
 ```
 
-### 6.3 颜色编码
+### 7.3 颜色编码
 
 | 状态码 | 颜色 | 含义 |
 |--------|------|------|
@@ -284,9 +532,9 @@ const wsUrl = `${protocol}//${host}/mes/ws/dashboard${tokenParam}`;
 | 4xx | 黄色 | 客户端错误 |
 | 5xx | 红色 | 服务端错误 |
 
-## 7. 三段映射表维护
+## 8. 三段映射表维护
 
-### 7.1 映射表结构
+### 8.1 映射表结构
 
 每个代理规则必须维护三段映射关系：
 
@@ -296,7 +544,7 @@ const wsUrl = `${protocol}//${host}/mes/ws/dashboard${tokenParam}`;
 | Rewrite 后 | `/api/erp/assets` | Vite 重写后的路径 |
 | 后端目标 | `http://localhost:8010/api/erp/assets` | 最终转发地址 |
 
-### 7.2 映射表示例
+### 8.2 映射表示例
 
 ```
 ERP 服务映射:
@@ -309,9 +557,9 @@ ERP 服务映射:
 └─────────────────────────┴─────────────────────────┴─────────────────────────────────────┘
 ```
 
-## 8. 测试验证流程
+## 9. 测试验证流程
 
-### 8.1 自动化测试
+### 9.1 自动化测试
 
 使用 `scripts/test-proxy.sh` 进行全面测试：
 
@@ -326,7 +574,7 @@ ERP 服务映射:
 # - 502: 后端服务未运行或不可用（失败）
 ```
 
-### 8.2 手动验证
+### 9.2 手动验证
 
 ```bash
 # 1. 检查服务是否运行
@@ -342,9 +590,9 @@ curl http://localhost:3000/<service>/api/xxx
 # 观察格式: [Vite Proxy] SERVICE GET /path -> http://localhost:port/path
 ```
 
-## 9. 常见问题排查
+## 10. 常见问题排查
 
-### 9.1 404 错误
+### 10.1 404 错误
 
 **原因分析：**
 1. 代理规则顺序错误（通用路径先匹配）
@@ -359,7 +607,7 @@ curl http://localhost:<port>/expected/path
 # 3. 检查代理规则顺序
 ```
 
-### 9.2 502 错误
+### 10.2 502 错误
 
 **原因分析：**
 1. 后端服务未运行
@@ -378,7 +626,7 @@ lsof -i :<port>
 # - vite.config.ts vs scripts/topems.sh
 ```
 
-### 9.3 503 错误
+### 10.3 503 错误
 
 **原因分析：**
 1. 代理目标端口错误（服务运行在其他端口）
@@ -392,7 +640,7 @@ lsof -i | grep <service-name>
 # 2. 更新vite.config.ts中的端口配置
 ```
 
-### 9.4 特殊服务路由格式
+### 10.4 特殊服务路由格式
 
 部分服务使用不同的路由前缀格式：
 
@@ -411,7 +659,7 @@ lsof -i | grep <service-name>
 },
 ```
 
-### 9.5 常见错误修复案例
+### 10.5 常见错误修复案例
 
 | 错误现象 | 根因 | 修复方案 |
 |---------|------|---------|
@@ -421,38 +669,51 @@ lsof -i | grep <service-name>
 | `/monitor/api/alerts` 返回 404 | Monitor 路由前缀为 `/api/v1/monitor` | 单独配置 Monitor 的 rewrite 规则 |
 | 重复代理规则 | 同一服务的代理规则定义多次 | 删除重复定义，保留包含日志配置的规则 |
 
-## 10. 变更流程
+## 11. 变更流程
 
-### 10.1 添加新服务代理
+### 11.1 添加新服务代理
 
 ```bash
-# 1. 在vite.config.ts中添加代理规则
-# 2. 更新scripts/test-proxy.sh添加测试用例
-# 3. 运行测试验证
-./scripts/test-proxy.sh
-# 4. 更新文档中的端口列表和映射表
+# 1. 在 vite.config.ts 的 services 数组中添加服务配置
+{ name: 'new-service', port: 80XX }
+
+# 2. 运行 typecheck 验证配置
+pnpm run typecheck
+
+# 3. 启动开发服务器验证
+pnpm run dev:web
+
+# 4. 测试代理
+curl http://localhost:3000/new-service/health
+
+# 5. 更新相关文档（如需）
 ```
 
-### 10.2 修改现有代理
+### 11.2 修改现有代理
 
 ```bash
-# 1. 修改vite.config.ts
-# 2. 运行测试验证
-./scripts/test-proxy.sh
-# 3. 确认所有相关服务正常运行
+# 1. 修改 vite.config.ts 中 services 数组的对应服务配置
+# 2. 运行 typecheck 验证配置
+pnpm run typecheck
+
+# 3. 运行代理测试
+./scripts/verify-vite-proxy.sh
+
+# 4. 确认所有相关服务正常运行
 ./scripts/topems.sh status
 ```
 
-## 11. 代码审查检查清单
+## 12. 代码审查检查清单
 
-- [ ] 代理规则顺序是否正确（精确匹配优先）
+- [ ] 服务是否已在 `services` 数组中正确配置（推荐方式）
 - [ ] 端口配置是否与 `scripts/topems.sh` 一致
-- [ ] 是否配置了 `createProxyLogger` 日志
-- [ ] 健康检查路径是否使用 `createHealthProxyConfig`（重写为 `/health`）
-- [ ] API路径是否使用 `createServiceProxyConfig`（重写为 `/api/service/xxx`）
-- [ ] 是否存在重复的代理规则定义
-- [ ] Rewrite 规则是否与后端路由匹配（后端路由格式为 `/api/service/xxx`）
-- [ ] 是否通过了 `scripts/test-proxy.sh` 测试
+- [ ] 特殊重写规则（apiRewrite、pageRewrite）是否正确配置
+- [ ] WebSocket 配置（hasWs、wsPath）是否正确
+- [ ] 是否正确设置 `useCoreService` 标记
+- [ ] 是否需要跳过 plugin-health（`skipPluginHealth`）
+- [ ] 是否存在重复的手动代理规则定义
+- [ ] 是否通过了 `scripts/verify-vite-proxy.sh` 测试
+- [ ] 是否通过了 `pnpm run typecheck` 类型检查
 - [ ] 是否更新了相关文档
 
 ## 附录：代理规则模板

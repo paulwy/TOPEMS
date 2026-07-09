@@ -28,7 +28,7 @@ import {
   Eye,
   MoreHorizontal,
 } from 'lucide-react';
-import PageContainer from '@/components/common/PageContainer';
+import { PageContainer } from '@/components';
 import { lowcodeApi } from '@/api';
 import type { FormSchema, PageSchema } from '@/api/lowcode';
 import { useNavigate } from 'react-router-dom';

@@ -39,7 +39,13 @@ import {
   FileText,
 } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
-import { MobileLayout, PullToRefresh, MobileSkeleton, MobileCard, MobileButton } from '@/components/mobile';
+import {
+  MobileLayout,
+  PullToRefresh,
+  MobileSkeleton,
+  MobileCard,
+  MobileButton,
+} from '@/components/mobile';
 import { useAppStore } from '@/store';
 import { mobileApi, type QualityTask, type DefectRecord } from '@/api/mobile';
 import { apiLogger } from '@/utils/logger';
@@ -584,11 +590,13 @@ const MobileQualityPage: React.FC = () => {
                             <MobileButton
                               size='small'
                               variant='outlined'
-                              onClick={() => addNotification({
-                                title: '查看报告',
-                                message: '查看检验报告详情',
-                                type: 'info',
-                              })}
+                              onClick={() =>
+                                addNotification({
+                                  title: '查看报告',
+                                  message: '查看检验报告详情',
+                                  type: 'info',
+                                })
+                              }
                             >
                               查看报告
                             </MobileButton>
@@ -693,7 +701,8 @@ const MobileQualityPage: React.FC = () => {
                           variant='caption'
                           color='text.secondary'
                         >
-                          {defect.reporter} · {new Date(defect.reported_at).toLocaleDateString('zh-CN')}
+                          {defect.reporter} ·{' '}
+                          {new Date(defect.reported_at).toLocaleDateString('zh-CN')}
                         </Typography>
                         <Chip
                           label={getStatusLabel(defect.status)}
@@ -755,9 +764,7 @@ const MobileQualityPage: React.FC = () => {
               fullWidth
               label='缺陷类型'
               value={defectForm.defect_type}
-              onChange={(e) =>
-                setDefectForm((prev) => ({ ...prev, defect_type: e.target.value }))
-              }
+              onChange={(e) => setDefectForm((prev) => ({ ...prev, defect_type: e.target.value }))}
               placeholder='请输入缺陷类型'
             />
             <TextField
@@ -795,9 +802,7 @@ const MobileQualityPage: React.FC = () => {
               rows={3}
               label='缺陷描述'
               value={defectForm.description}
-              onChange={(e) =>
-                setDefectForm((prev) => ({ ...prev, description: e.target.value }))
-              }
+              onChange={(e) => setDefectForm((prev) => ({ ...prev, description: e.target.value }))}
               placeholder='请详细描述缺陷情况'
             />
             <Box sx={{ display: 'flex', gap: 1 }}>

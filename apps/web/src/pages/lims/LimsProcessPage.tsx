@@ -91,10 +91,7 @@ const LimsProcessPage: React.FC = () => {
     return serviceStatuses[serviceName] || false;
   };
 
-  const checkServiceStatus = async (
-    serviceName: string,
-    setStatus: (up: boolean) => void
-  ) => {
+  const checkServiceStatus = async (serviceName: string, setStatus: (up: boolean) => void) => {
     try {
       const controller = new AbortController();
       const timeoutId = setTimeout(() => controller.abort(), 2000);
@@ -112,9 +109,7 @@ const LimsProcessPage: React.FC = () => {
 
   useEffect(() => {
     const checkAllServices = () => {
-      checkServiceStatus('lims', (up) =>
-        setServiceStatuses((prev) => ({ ...prev, lims: up }))
-      );
+      checkServiceStatus('lims', (up) => setServiceStatuses((prev) => ({ ...prev, lims: up })));
     };
 
     checkAllServices();

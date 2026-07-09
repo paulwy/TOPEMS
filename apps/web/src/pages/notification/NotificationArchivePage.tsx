@@ -10,7 +10,7 @@ import {
   Eye,
 } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
-import {Box, Typography, Button, useTheme} from '@mui/material';
+import { Box, Typography, Button, useTheme } from '@mui/material';
 import type { ArchiveConfig, ArchivedNotification, NotificationTypeEnum } from '@/api/notification';
 import {
   getArchivedNotifications,

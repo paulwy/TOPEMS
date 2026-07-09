@@ -172,14 +172,6 @@ service_groups:
       dependencies: [unified-core]
       service_dir: bi
 
-    - name: report
-      port: 8061
-      env_var: REPORT_PORT
-      description: 报表服务
-      status: implemented
-      dependencies: [unified-core]
-      service_dir: report
-
     - name: monitor
       port: 8062
       env_var: MONITOR_PORT
@@ -322,7 +314,6 @@ module_groups:
 
   analytics:
     - bi
-    - report
     - monitor
     - portal
 
@@ -350,7 +341,6 @@ module_groups:
     - ehs
     - rs
     - bi
-    - report
     - monitor
     - portal
     - mobile

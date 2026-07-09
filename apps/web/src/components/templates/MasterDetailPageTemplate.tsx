@@ -24,7 +24,7 @@ import {
 import { Search, Plus, X, PanelLeftClose, PanelLeftOpen, ChevronsRight } from 'lucide-react';
 import type { BreadcrumbItem, PageAction } from './PageHeader';
 import { PageHeader } from './PageHeader';
-import { EmptyState, ErrorEmptyState } from '../common/EmptyState';
+import { EmptyState, ErrorEmptyState } from '@topems/shared-components';
 
 // ============ 类型定义 ============
 

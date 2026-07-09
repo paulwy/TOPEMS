@@ -40,7 +40,8 @@ import type {
   FactoryMap,
   BusinessLocation,
 } from '@/api/gis';
-import {Box,
+import {
+  Box,
   Paper,
   Stack,
   Chip,
@@ -65,7 +66,9 @@ import {Box,
   FormControlLabel,
   InputAdornment,
   CircularProgress,
-  Button, useTheme} from '@mui/material';
+  Button,
+  useTheme,
+} from '@mui/material';
 import { PageContainer } from '@/components/common';
 import { designTokens } from '@/theme/tokens';
 
@@ -115,7 +118,9 @@ const GisContent: React.FC = () => {
   const addNotification = useAppStore((state) => state.addNotification);
   const [showModal, setShowModal] = useState(false);
   const [modalType, setModalType] = useState<ModalType>(null);
-  const [editingItem, setEditingItem] = useState<DevicePoint | StorageLocation | Pipeline | EvidenceRecord | FactoryMap | BusinessLocation | null>(null);
+  const [editingItem, setEditingItem] = useState<
+    DevicePoint | StorageLocation | Pipeline | EvidenceRecord | FactoryMap | BusinessLocation | null
+  >(null);
   const [formData, setFormData] = useState<Record<string, unknown>>({});
   const [formErrors, setFormErrors] = useState<FormErrors>({});
   const [notification, setNotification] = useState<{
@@ -238,8 +243,14 @@ const GisContent: React.FC = () => {
             name: formData.name as string,
             description: formData.description as string,
             pipeline_type: formData.pipeline_type as string,
-            start_point: [parseFloat(formData.start_lat as string), parseFloat(formData.start_lng as string)],
-            end_point: [parseFloat(formData.end_lat as string), parseFloat(formData.end_lng as string)],
+            start_point: [
+              parseFloat(formData.start_lat as string),
+              parseFloat(formData.start_lng as string),
+            ],
+            end_point: [
+              parseFloat(formData.end_lat as string),
+              parseFloat(formData.end_lng as string),
+            ],
             status: (formData.status as string) || 'active',
           });
           break;
@@ -251,7 +262,9 @@ const GisContent: React.FC = () => {
             latitude: parseFloat(formData.latitude as string),
             longitude: parseFloat(formData.longitude as string),
             capacity: formData.capacity ? parseFloat(formData.capacity as string) : undefined,
-            current_usage: formData.current_usage ? parseFloat(formData.current_usage as string) : undefined,
+            current_usage: formData.current_usage
+              ? parseFloat(formData.current_usage as string)
+              : undefined,
           });
           break;
         case 'evidenceRecords':
@@ -288,7 +301,9 @@ const GisContent: React.FC = () => {
             contact_person: formData.contact_person as string,
             contact_phone: formData.contact_phone as string,
             capacity: formData.capacity ? parseFloat(formData.capacity as string) : undefined,
-            current_usage: formData.current_usage ? parseFloat(formData.current_usage as string) : undefined,
+            current_usage: formData.current_usage
+              ? parseFloat(formData.current_usage as string)
+              : undefined,
             status: (formData.status as string) || 'active',
             properties: formData.properties ? JSON.parse(formData.properties as string) : undefined,
             description: formData.description as string,
@@ -313,22 +328,36 @@ const GisContent: React.FC = () => {
       switch (activeTab) {
         case 'devicePoints':
           await updateDevicePoint(editingItem.id, {
-            name: formData.name as string || (editingItem as DevicePoint).name,
-            description: formData.description as string || (editingItem as DevicePoint).description,
-            device_type: formData.device_type as string || (editingItem as DevicePoint).device_type,
-            latitude: parseFloat(formData.latitude as string || (editingItem as DevicePoint).latitude?.toString() || '0'),
-            longitude: parseFloat(formData.longitude as string || (editingItem as DevicePoint).longitude?.toString() || '0'),
+            name: (formData.name as string) || (editingItem as DevicePoint).name,
+            description:
+              (formData.description as string) || (editingItem as DevicePoint).description,
+            device_type:
+              (formData.device_type as string) || (editingItem as DevicePoint).device_type,
+            latitude: parseFloat(
+              (formData.latitude as string) ||
+                (editingItem as DevicePoint).latitude?.toString() ||
+                '0'
+            ),
+            longitude: parseFloat(
+              (formData.longitude as string) ||
+                (editingItem as DevicePoint).longitude?.toString() ||
+                '0'
+            ),
             status: (formData.status as string) || (editingItem as DevicePoint).status,
           });
           break;
         case 'pipelines':
           await updatePipeline(editingItem.id, {
-            name: formData.name as string || (editingItem as Pipeline).name,
-            description: formData.description as string || (editingItem as Pipeline).description,
-            pipeline_type: formData.pipeline_type as string || (editingItem as Pipeline).pipeline_type,
+            name: (formData.name as string) || (editingItem as Pipeline).name,
+            description: (formData.description as string) || (editingItem as Pipeline).description,
+            pipeline_type:
+              (formData.pipeline_type as string) || (editingItem as Pipeline).pipeline_type,
             start_point:
               formData.start_lat && formData.start_lng
-                ? [parseFloat(formData.start_lat as string), parseFloat(formData.start_lng as string)]
+                ? [
+                    parseFloat(formData.start_lat as string),
+                    parseFloat(formData.start_lng as string),
+                  ]
                 : (editingItem as Pipeline).start_point,
             end_point:
               formData.end_lat && formData.end_lng
@@ -339,12 +368,24 @@ const GisContent: React.FC = () => {
           break;
         case 'storageLocations':
           await updateStorageLocation(editingItem.id, {
-            name: formData.name as string || (editingItem as StorageLocation).name,
-            description: formData.description as string || (editingItem as StorageLocation).description,
-            location_type: formData.location_type as string || (editingItem as StorageLocation).location_type,
-            latitude: parseFloat(formData.latitude as string || (editingItem as StorageLocation).latitude?.toString() || '0'),
-            longitude: parseFloat(formData.longitude as string || (editingItem as StorageLocation).longitude?.toString() || '0'),
-            capacity: formData.capacity ? parseFloat(formData.capacity as string) : (editingItem as StorageLocation).capacity,
+            name: (formData.name as string) || (editingItem as StorageLocation).name,
+            description:
+              (formData.description as string) || (editingItem as StorageLocation).description,
+            location_type:
+              (formData.location_type as string) || (editingItem as StorageLocation).location_type,
+            latitude: parseFloat(
+              (formData.latitude as string) ||
+                (editingItem as StorageLocation).latitude?.toString() ||
+                '0'
+            ),
+            longitude: parseFloat(
+              (formData.longitude as string) ||
+                (editingItem as StorageLocation).longitude?.toString() ||
+                '0'
+            ),
+            capacity: formData.capacity
+              ? parseFloat(formData.capacity as string)
+              : (editingItem as StorageLocation).capacity,
             current_usage: formData.current_usage
               ? parseFloat(formData.current_usage as string)
               : (editingItem as StorageLocation).current_usage,
@@ -352,19 +393,23 @@ const GisContent: React.FC = () => {
           break;
         case 'factoryMaps':
           await updateFactoryMap(editingItem.id, {
-            name: formData.name as string || (editingItem as FactoryMap).name,
-            code: formData.code as string || (editingItem as FactoryMap).code,
-            map_type: formData.map_type as string || (editingItem as FactoryMap).map_type,
+            name: (formData.name as string) || (editingItem as FactoryMap).name,
+            code: (formData.code as string) || (editingItem as FactoryMap).code,
+            map_type: (formData.map_type as string) || (editingItem as FactoryMap).map_type,
             file_url: (formData.file_url as string) || (editingItem as FactoryMap).file_url,
-            description: formData.description as string || (editingItem as FactoryMap).description,
+            description:
+              (formData.description as string) || (editingItem as FactoryMap).description,
           });
           break;
         case 'businessLocations':
           await updateBusinessLocation(editingItem.id, {
-            business_type: formData.business_type as string || (editingItem as BusinessLocation).business_type,
-            business_name: formData.business_name as string || (editingItem as BusinessLocation).business_name,
-            business_code: formData.business_code as string || (editingItem as BusinessLocation).business_code,
-            category: formData.category as string || (editingItem as BusinessLocation).category,
+            business_type:
+              (formData.business_type as string) || (editingItem as BusinessLocation).business_type,
+            business_name:
+              (formData.business_name as string) || (editingItem as BusinessLocation).business_name,
+            business_code:
+              (formData.business_code as string) || (editingItem as BusinessLocation).business_code,
+            category: (formData.category as string) || (editingItem as BusinessLocation).category,
             position:
               formData.lat && formData.lng
                 ? {
@@ -372,10 +417,15 @@ const GisContent: React.FC = () => {
                     lng: parseFloat(formData.lng as string),
                   }
                 : (editingItem as BusinessLocation).position,
-            address: formData.address as string || (editingItem as BusinessLocation).address,
-            contact_person: formData.contact_person as string || (editingItem as BusinessLocation).contact_person,
-            contact_phone: formData.contact_phone as string || (editingItem as BusinessLocation).contact_phone,
-            capacity: formData.capacity ? parseFloat(formData.capacity as string) : (editingItem as BusinessLocation).capacity,
+            address: (formData.address as string) || (editingItem as BusinessLocation).address,
+            contact_person:
+              (formData.contact_person as string) ||
+              (editingItem as BusinessLocation).contact_person,
+            contact_phone:
+              (formData.contact_phone as string) || (editingItem as BusinessLocation).contact_phone,
+            capacity: formData.capacity
+              ? parseFloat(formData.capacity as string)
+              : (editingItem as BusinessLocation).capacity,
             current_usage: formData.current_usage
               ? parseFloat(formData.current_usage as string)
               : (editingItem as BusinessLocation).current_usage,
@@ -383,9 +433,12 @@ const GisContent: React.FC = () => {
             properties: formData.properties
               ? JSON.parse(formData.properties as string)
               : (editingItem as BusinessLocation).properties,
-            description: formData.description as string || (editingItem as BusinessLocation).description,
-            external_id: formData.external_id as string || (editingItem as BusinessLocation).external_id,
-            external_type: formData.external_type as string || (editingItem as BusinessLocation).external_type,
+            description:
+              (formData.description as string) || (editingItem as BusinessLocation).description,
+            external_id:
+              (formData.external_id as string) || (editingItem as BusinessLocation).external_id,
+            external_type:
+              (formData.external_type as string) || (editingItem as BusinessLocation).external_type,
           });
           break;
       }
@@ -433,7 +486,9 @@ const GisContent: React.FC = () => {
     setShowModal(true);
   };
 
-  const openEditModal = (item: DevicePoint | Pipeline | StorageLocation | EvidenceRecord | BusinessLocation | FactoryMap) => {
+  const openEditModal = (
+    item: DevicePoint | Pipeline | StorageLocation | EvidenceRecord | BusinessLocation | FactoryMap
+  ) => {
     setModalType('edit');
     setEditingItem(item);
     const itemData = item as unknown as Record<string, unknown>;
@@ -503,7 +558,9 @@ const GisContent: React.FC = () => {
     );
   };
 
-  const ActionButtons: React.FC<{ item: DevicePoint | StorageLocation | Pipeline | EvidenceRecord | FactoryMap | BusinessLocation }> = ({ item }) => (
+  const ActionButtons: React.FC<{
+    item: DevicePoint | StorageLocation | Pipeline | EvidenceRecord | FactoryMap | BusinessLocation;
+  }> = ({ item }) => (
     <Stack
       direction='row'
       spacing={1}
@@ -922,7 +979,10 @@ const GisContent: React.FC = () => {
               spacing={1.5}
               sx={{ alignItems: 'center' }}
             >
-              <IconButton onClick={() => navigate('/dashboard')} aria-label='返回首页'>
+              <IconButton
+                onClick={() => navigate('/dashboard')}
+                aria-label='返回首页'
+              >
                 <ChevronRight style={{ transform: 'rotate(180deg)' }} />
               </IconButton>
               <Box>
@@ -1354,12 +1414,12 @@ const GisContent: React.FC = () => {
                   {modalType === 'create' ? '新建' : '编辑'}
                 </Typography>
                 <IconButton
-          onClick={resetModal}
-          size='small'
-          aria-label='关闭新建点位对话框'
-        >
-          <X size={20} />
-        </IconButton>
+                  onClick={resetModal}
+                  size='small'
+                  aria-label='关闭新建点位对话框'
+                >
+                  <X size={20} />
+                </IconButton>
               </Stack>
             </DialogTitle>
             <DialogContent dividers>

@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { X, Maximize2, Minimize2, ZoomIn, ZoomOut } from 'lucide-react';
-import {Typography, Box, Button, useTheme} from '@mui/material';
+import { Typography, Box, Button, useTheme } from '@mui/material';
 
 interface FullscreenChartProps {
   children: React.ReactNode;

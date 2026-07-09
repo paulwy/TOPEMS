@@ -58,7 +58,7 @@ import {
 import { useAppStore } from '@/store';
 import { apiLogger } from '@/utils/logger';
 
-// TODO(v2-phase2): Replace CircularProgress with LoadingSpinner from '@/components/common/LoadingSpinner'. Complex usage found - manual review needed.
+// TODO(v2-phase2): Replace CircularProgress with LoadingSpinner from '@topems/shared-components'. Complex usage found - manual review needed.
 
 interface ExperimentWithProject extends Experiment {
   project_name?: string;

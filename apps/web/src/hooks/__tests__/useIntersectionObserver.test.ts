@@ -23,15 +23,18 @@ describe('useIntersectionObserver', () => {
     disconnectSpy = vi.fn();
     observerId = 0;
 
-    vi.stubGlobal('IntersectionObserver', function (this: unknown, callback: (entries: IntersectionObserverEntry[]) => void) {
-      mockObserverCallback = callback;
-      return {
-        observe: observeSpy,
-        disconnect: disconnectSpy,
-        unobserve: vi.fn(),
-        takeRecords: vi.fn().mockReturnValue([]),
-      };
-    });
+    vi.stubGlobal(
+      'IntersectionObserver',
+      function (this: unknown, callback: (entries: IntersectionObserverEntry[]) => void) {
+        mockObserverCallback = callback;
+        return {
+          observe: observeSpy,
+          disconnect: disconnectSpy,
+          unobserve: vi.fn(),
+          takeRecords: vi.fn().mockReturnValue([]),
+        };
+      }
+    );
   });
 
   afterEach(() => {
@@ -49,9 +52,7 @@ describe('useIntersectionObserver', () => {
   });
 
   it('should initialize with custom initial value', () => {
-    const { result } = renderHook(() =>
-      useIntersectionObserver({ initialIsIntersecting: true })
-    );
+    const { result } = renderHook(() => useIntersectionObserver({ initialIsIntersecting: true }));
 
     expect(result.current.isIntersecting).toBe(true);
     expect(result.current.intersectionRatio).toBe(0);

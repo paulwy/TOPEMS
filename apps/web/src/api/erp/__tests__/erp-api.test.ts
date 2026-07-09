@@ -258,13 +258,19 @@ describe('ERP purchaseOrderApi', () => {
   });
 
   it('should call PUT /purchase-orders/:id/approve for approve', async () => {
-    mockApiClient.put.mockResolvedValue({ success: true, data: { id: 'PO001', status: 'approved' } });
+    mockApiClient.put.mockResolvedValue({
+      success: true,
+      data: { id: 'PO001', status: 'approved' },
+    });
     await purchaseOrderApi.approve('PO001');
     expect(mockApiClient.put).toHaveBeenCalledWith('/purchase-orders/PO001/approve');
   });
 
   it('should call PUT /purchase-orders/:id/cancel for cancel', async () => {
-    mockApiClient.put.mockResolvedValue({ success: true, data: { id: 'PO001', status: 'cancelled' } });
+    mockApiClient.put.mockResolvedValue({
+      success: true,
+      data: { id: 'PO001', status: 'cancelled' },
+    });
     await purchaseOrderApi.cancel('PO001');
     expect(mockApiClient.put).toHaveBeenCalledWith('/purchase-orders/PO001/cancel');
   });
@@ -315,25 +321,37 @@ describe('ERP salesOrderApi', () => {
   });
 
   it('should call PUT /sales-orders/:id/approve for approve', async () => {
-    mockApiClient.put.mockResolvedValue({ success: true, data: { id: 'SO001', status: 'approved' } });
+    mockApiClient.put.mockResolvedValue({
+      success: true,
+      data: { id: 'SO001', status: 'approved' },
+    });
     await salesOrderApi.approve('SO001');
     expect(mockApiClient.put).toHaveBeenCalledWith('/sales-orders/SO001/approve');
   });
 
   it('should call PUT /sales-orders/:id/ship for ship', async () => {
-    mockApiClient.put.mockResolvedValue({ success: true, data: { id: 'SO001', status: 'shipped' } });
+    mockApiClient.put.mockResolvedValue({
+      success: true,
+      data: { id: 'SO001', status: 'shipped' },
+    });
     await salesOrderApi.ship('SO001');
     expect(mockApiClient.put).toHaveBeenCalledWith('/sales-orders/SO001/ship');
   });
 
   it('should call PUT /sales-orders/:id/complete for complete', async () => {
-    mockApiClient.put.mockResolvedValue({ success: true, data: { id: 'SO001', status: 'completed' } });
+    mockApiClient.put.mockResolvedValue({
+      success: true,
+      data: { id: 'SO001', status: 'completed' },
+    });
     await salesOrderApi.complete('SO001');
     expect(mockApiClient.put).toHaveBeenCalledWith('/sales-orders/SO001/complete');
   });
 
   it('should call PUT /sales-orders/:id/cancel for cancel', async () => {
-    mockApiClient.put.mockResolvedValue({ success: true, data: { id: 'SO001', status: 'cancelled' } });
+    mockApiClient.put.mockResolvedValue({
+      success: true,
+      data: { id: 'SO001', status: 'cancelled' },
+    });
     await salesOrderApi.cancel('SO001');
     expect(mockApiClient.put).toHaveBeenCalledWith('/sales-orders/SO001/cancel');
   });

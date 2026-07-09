@@ -2,7 +2,12 @@ import { Navigate, useParams } from 'react-router-dom';
 
 const RedirectDocumentDetail: React.FC = () => {
   const { id } = useParams<{ id: string }>();
-  return <Navigate to={`/doc/documents/${id}`} replace />;
+  return (
+    <Navigate
+      to={`/doc/documents/${id}`}
+      replace
+    />
+  );
 };
 
 export const legacyRedirects = [

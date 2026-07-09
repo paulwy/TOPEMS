@@ -4,7 +4,7 @@ import { Navigate, useLocation } from 'react-router-dom';
 import { useAuth } from '../../hooks/useAuth';
 import { usePermission } from '../../hooks/usePermission';
 import { useRole } from '../../hooks/useRole';
-import {Button, Box, Typography, useTheme} from '@mui/material';
+import { Button, Box, Typography, useTheme } from '@mui/material';
 
 interface ProtectedRouteProps {
   children: ReactNode;
@@ -222,7 +222,12 @@ export const PermissionRoute: React.FC<PermissionRouteProps> = ({
         >
           <Box sx={{ display: 'flex', alignItems: 'flex-start' }}>
             <Box sx={{ flexShrink: 0 }}>
-              <Box sx={{ height: 20, width: 20, color: 'warning.main' }} component='svg' viewBox='0 0 20 20' fill='currentColor'>
+              <Box
+                sx={{ height: 20, width: 20, color: 'warning.main' }}
+                component='svg'
+                viewBox='0 0 20 20'
+                fill='currentColor'
+              >
                 <path
                   fillRule='evenodd'
                   d='M8.257 3.099c.765-1.36 2.722-1.36 3.486 0l5.58 9.92c.75 1.334-.213 2.98-1.742 2.98H4.42c-1.53 0-2.493-1.646-1.743-2.98l5.58-9.92zM11 13a1 1 0 11-2 0 1 1 0 012 0zm-1-8a1 1 0 00-1 1v3a1 1 0 002 0V6a1 1 0 00-1-1z'
@@ -231,7 +236,9 @@ export const PermissionRoute: React.FC<PermissionRouteProps> = ({
               </Box>
             </Box>
             <Box sx={{ marginLeft: '12px' }}>
-              <Typography sx={{ fontSize: '14px', fontWeight: 500, color: 'warning.700' }}>权限提示</Typography>
+              <Typography sx={{ fontSize: '14px', fontWeight: 500, color: 'warning.700' }}>
+                权限提示
+              </Typography>
               <Box sx={{ marginTop: '8px', fontSize: '14px', color: 'warning.700' }}>
                 <p>
                   您没有访问 {module} 模块的 {action} 权限。

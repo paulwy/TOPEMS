@@ -1,6 +1,17 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
 import { apiClient } from '../../client';
-import { customerApi, tagApi, contactApi, opportunityApi, interactionApi, customerScoringApi, salesForecastApi, billingApi, customerSegmentationApi, customerRecommendationApi } from '../';
+import {
+  customerApi,
+  tagApi,
+  contactApi,
+  opportunityApi,
+  interactionApi,
+  customerScoringApi,
+  salesForecastApi,
+  billingApi,
+  customerSegmentationApi,
+  customerRecommendationApi,
+} from '../';
 
 vi.mock('../../client', () => ({
   apiClient: {
@@ -21,7 +32,9 @@ describe('CRM Module API Tests', () => {
   describe('customerApi', () => {
     it('list should call GET /customers with params', async () => {
       await customerApi.list({ page: 1, pagesize: 10, status: 'active' });
-      expect(apiClient.crm.get).toHaveBeenCalledWith('/customers', { params: { page: 1, pagesize: 10, status: 'active' } });
+      expect(apiClient.crm.get).toHaveBeenCalledWith('/customers', {
+        params: { page: 1, pagesize: 10, status: 'active' },
+      });
     });
 
     it('create should call POST /customers with data', async () => {
@@ -48,7 +61,9 @@ describe('CRM Module API Tests', () => {
 
     it('batchDelete should call POST /customers/batch-delete with ids', async () => {
       await customerApi.batchDelete(['cust-001', 'cust-002']);
-      expect(apiClient.crm.post).toHaveBeenCalledWith('/customers/batch-delete', { ids: ['cust-001', 'cust-002'] });
+      expect(apiClient.crm.post).toHaveBeenCalledWith('/customers/batch-delete', {
+        ids: ['cust-001', 'cust-002'],
+      });
     });
 
     it('getTags should call GET /customers/:id/tags', async () => {
@@ -58,7 +73,9 @@ describe('CRM Module API Tests', () => {
 
     it('addTag should call POST /customers/:id/tags with tag_id', async () => {
       await customerApi.addTag('cust-001', 'tag-001');
-      expect(apiClient.crm.post).toHaveBeenCalledWith('/customers/cust-001/tags', { tag_id: 'tag-001' });
+      expect(apiClient.crm.post).toHaveBeenCalledWith('/customers/cust-001/tags', {
+        tag_id: 'tag-001',
+      });
     });
 
     it('removeTag should call DELETE /customers/:id/tags/:tagId', async () => {
@@ -70,7 +87,9 @@ describe('CRM Module API Tests', () => {
   describe('tagApi', () => {
     it('list should call GET /tags with params', async () => {
       await tagApi.list({ page: 1, pagesize: 20 });
-      expect(apiClient.crm.get).toHaveBeenCalledWith('/tags', { params: { page: 1, pagesize: 20 } });
+      expect(apiClient.crm.get).toHaveBeenCalledWith('/tags', {
+        params: { page: 1, pagesize: 20 },
+      });
     });
 
     it('create should call POST /tags with data', async () => {
@@ -104,7 +123,9 @@ describe('CRM Module API Tests', () => {
   describe('contactApi', () => {
     it('list should call GET /contacts with params', async () => {
       await contactApi.list({ page: 1, pagesize: 10, customer_id: 'cust-001' });
-      expect(apiClient.crm.get).toHaveBeenCalledWith('/contacts', { params: { page: 1, pagesize: 10, customer_id: 'cust-001' } });
+      expect(apiClient.crm.get).toHaveBeenCalledWith('/contacts', {
+        params: { page: 1, pagesize: 10, customer_id: 'cust-001' },
+      });
     });
 
     it('create should call POST /contacts with data', async () => {
@@ -131,14 +152,18 @@ describe('CRM Module API Tests', () => {
 
     it('batchDelete should call POST /contacts/batch-delete with ids', async () => {
       await contactApi.batchDelete(['cont-001', 'cont-002']);
-      expect(apiClient.crm.post).toHaveBeenCalledWith('/contacts/batch-delete', { ids: ['cont-001', 'cont-002'] });
+      expect(apiClient.crm.post).toHaveBeenCalledWith('/contacts/batch-delete', {
+        ids: ['cont-001', 'cont-002'],
+      });
     });
   });
 
   describe('opportunityApi', () => {
     it('list should call GET /opportunities with params', async () => {
       await opportunityApi.list({ page: 1, pagesize: 10, stage: 'proposal' });
-      expect(apiClient.crm.get).toHaveBeenCalledWith('/opportunities', { params: { page: 1, pagesize: 10, stage: 'proposal' } });
+      expect(apiClient.crm.get).toHaveBeenCalledWith('/opportunities', {
+        params: { page: 1, pagesize: 10, stage: 'proposal' },
+      });
     });
 
     it('create should call POST /opportunities with data', async () => {
@@ -165,7 +190,9 @@ describe('CRM Module API Tests', () => {
 
     it('batchDelete should call POST /opportunities/batch-delete with ids', async () => {
       await opportunityApi.batchDelete(['opp-001', 'opp-002']);
-      expect(apiClient.crm.post).toHaveBeenCalledWith('/opportunities/batch-delete', { ids: ['opp-001', 'opp-002'] });
+      expect(apiClient.crm.post).toHaveBeenCalledWith('/opportunities/batch-delete', {
+        ids: ['opp-001', 'opp-002'],
+      });
     });
 
     it('getFunnel should call GET /opportunities/funnel', async () => {
@@ -180,14 +207,18 @@ describe('CRM Module API Tests', () => {
 
     it('getForecast should call GET /opportunities/forecast with params', async () => {
       await opportunityApi.getForecast({ months: 3 });
-      expect(apiClient.crm.get).toHaveBeenCalledWith('/opportunities/forecast', { params: { months: 3 } });
+      expect(apiClient.crm.get).toHaveBeenCalledWith('/opportunities/forecast', {
+        params: { months: 3 },
+      });
     });
   });
 
   describe('interactionApi', () => {
     it('list should call GET /interactions with params', async () => {
       await interactionApi.list({ page: 1, pagesize: 10, customer_id: 'cust-001' });
-      expect(apiClient.crm.get).toHaveBeenCalledWith('/interactions', { params: { page: 1, pagesize: 10, customer_id: 'cust-001' } });
+      expect(apiClient.crm.get).toHaveBeenCalledWith('/interactions', {
+        params: { page: 1, pagesize: 10, customer_id: 'cust-001' },
+      });
     });
 
     it('create should call POST /interactions with data', async () => {
@@ -214,14 +245,18 @@ describe('CRM Module API Tests', () => {
 
     it('batchDelete should call POST /interactions/batch-delete with ids', async () => {
       await interactionApi.batchDelete(['int-001', 'int-002']);
-      expect(apiClient.crm.post).toHaveBeenCalledWith('/interactions/batch-delete', { ids: ['int-001', 'int-002'] });
+      expect(apiClient.crm.post).toHaveBeenCalledWith('/interactions/batch-delete', {
+        ids: ['int-001', 'int-002'],
+      });
     });
   });
 
   describe('customerScoringApi', () => {
     it('list should call GET /customer-scoring with params', async () => {
       await customerScoringApi.list({ page: 1, pagesize: 10, scorelevel: 'high' });
-      expect(apiClient.crm.get).toHaveBeenCalledWith('/customer-scoring', { params: { page: 1, pagesize: 10, scorelevel: 'high' } });
+      expect(apiClient.crm.get).toHaveBeenCalledWith('/customer-scoring', {
+        params: { page: 1, pagesize: 10, scorelevel: 'high' },
+      });
     });
 
     it('get should call GET /customer-scoring/:id', async () => {
@@ -248,14 +283,18 @@ describe('CRM Module API Tests', () => {
 
     it('calculateBatch should call POST /customer-scoring/calculate with customer_ids', async () => {
       await customerScoringApi.calculateBatch(['cust-001', 'cust-002']);
-      expect(apiClient.crm.post).toHaveBeenCalledWith('/customer-scoring/calculate', { customer_ids: ['cust-001', 'cust-002'] });
+      expect(apiClient.crm.post).toHaveBeenCalledWith('/customer-scoring/calculate', {
+        customer_ids: ['cust-001', 'cust-002'],
+      });
     });
   });
 
   describe('salesForecastApi', () => {
     it('list should call GET /sales-forecast with params', async () => {
       await salesForecastApi.list({ page: 1, pagesize: 10, period_type: 'monthly' });
-      expect(apiClient.crm.get).toHaveBeenCalledWith('/sales-forecast', { params: { page: 1, pagesize: 10, period_type: 'monthly' } });
+      expect(apiClient.crm.get).toHaveBeenCalledWith('/sales-forecast', {
+        params: { page: 1, pagesize: 10, period_type: 'monthly' },
+      });
     });
 
     it('get should call GET /sales-forecast/:id', async () => {
@@ -290,7 +329,9 @@ describe('CRM Module API Tests', () => {
   describe('billingApi', () => {
     it('list should call GET /billing with params', async () => {
       await billingApi.list({ page: 1, pagesize: 10, status: 'overdue' });
-      expect(apiClient.crm.get).toHaveBeenCalledWith('/billing', { params: { page: 1, pagesize: 10, status: 'overdue' } });
+      expect(apiClient.crm.get).toHaveBeenCalledWith('/billing', {
+        params: { page: 1, pagesize: 10, status: 'overdue' },
+      });
     });
 
     it('get should call GET /billing/:id', async () => {
@@ -299,7 +340,12 @@ describe('CRM Module API Tests', () => {
     });
 
     it('create should call POST /billing with data', async () => {
-      const data = { customer_id: 'cust-001', amount: 1000, due_date: '2024-02-01', items: [{ name: 'Service', quantity: 1, unit_price: 1000, amount: 1000 }] };
+      const data = {
+        customer_id: 'cust-001',
+        amount: 1000,
+        due_date: '2024-02-01',
+        items: [{ name: 'Service', quantity: 1, unit_price: 1000, amount: 1000 }],
+      };
       await billingApi.create(data);
       expect(apiClient.crm.post).toHaveBeenCalledWith('/billing', data);
     });
@@ -329,7 +375,9 @@ describe('CRM Module API Tests', () => {
   describe('customerSegmentationApi', () => {
     it('list should call GET /segments with params', async () => {
       await customerSegmentationApi.list({ page: 1, pagesize: 10 });
-      expect(apiClient.crm.get).toHaveBeenCalledWith('/segments', { params: { page: 1, pagesize: 10 } });
+      expect(apiClient.crm.get).toHaveBeenCalledWith('/segments', {
+        params: { page: 1, pagesize: 10 },
+      });
     });
 
     it('create should call POST /segments with data', async () => {
@@ -350,7 +398,9 @@ describe('CRM Module API Tests', () => {
 
     it('getCustomers should call GET /segments/:id/customers with params', async () => {
       await customerSegmentationApi.getCustomers('seg-001', { page: 1, pagesize: 20 });
-      expect(apiClient.crm.get).toHaveBeenCalledWith('/segments/seg-001/customers', { params: { page: 1, pagesize: 20 } });
+      expect(apiClient.crm.get).toHaveBeenCalledWith('/segments/seg-001/customers', {
+        params: { page: 1, pagesize: 20 },
+      });
     });
 
     it('autoSegment should call GET /segments/auto', async () => {
@@ -361,8 +411,14 @@ describe('CRM Module API Tests', () => {
 
   describe('customerRecommendationApi', () => {
     it('list should call GET /recommendations with params', async () => {
-      await customerRecommendationApi.list({ page: 1, pagesize: 10, recommendation_type: 'product' });
-      expect(apiClient.crm.get).toHaveBeenCalledWith('/recommendations', { params: { page: 1, pagesize: 10, recommendation_type: 'product' } });
+      await customerRecommendationApi.list({
+        page: 1,
+        pagesize: 10,
+        recommendation_type: 'product',
+      });
+      expect(apiClient.crm.get).toHaveBeenCalledWith('/recommendations', {
+        params: { page: 1, pagesize: 10, recommendation_type: 'product' },
+      });
     });
 
     it('create should call POST /recommendations with data', async () => {
@@ -377,8 +433,12 @@ describe('CRM Module API Tests', () => {
     });
 
     it('getCustomerRecommendations should call GET /customers/:id/recommendations with params', async () => {
-      await customerRecommendationApi.getCustomerRecommendations('cust-001', { recommendation_type: 'service' });
-      expect(apiClient.crm.get).toHaveBeenCalledWith('/customers/cust-001/recommendations', { params: { recommendation_type: 'service' } });
+      await customerRecommendationApi.getCustomerRecommendations('cust-001', {
+        recommendation_type: 'service',
+      });
+      expect(apiClient.crm.get).toHaveBeenCalledWith('/customers/cust-001/recommendations', {
+        params: { recommendation_type: 'service' },
+      });
     });
   });
 });

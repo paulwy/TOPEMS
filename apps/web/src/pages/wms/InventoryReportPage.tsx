@@ -255,7 +255,9 @@ const InventoryReportPage: React.FC = () => {
           <Card sx={{ height: '100%' }}>
             <CardContent>
               <Box sx={{ display: 'flex', alignItems: 'center', mb: 2 }}>
-                <Package style={{ width: 20, height: 20, marginRight: 8, color: ct.success.main }} />
+                <Package
+                  style={{ width: 20, height: 20, marginRight: 8, color: ct.success.main }}
+                />
                 <Typography
                   variant='subtitle2'
                   color='text.secondary'
@@ -280,7 +282,9 @@ const InventoryReportPage: React.FC = () => {
           <Card sx={{ height: '100%' }}>
             <CardContent>
               <Box sx={{ display: 'flex', alignItems: 'center', mb: 2 }}>
-                <TrendingUp style={{ width: 20, height: 20, marginRight: 8, color: ct.warning.main }} />
+                <TrendingUp
+                  style={{ width: 20, height: 20, marginRight: 8, color: ct.warning.main }}
+                />
                 <Typography
                   variant='subtitle2'
                   color='text.secondary'
@@ -305,7 +309,9 @@ const InventoryReportPage: React.FC = () => {
           <Card sx={{ height: '100%' }}>
             <CardContent>
               <Box sx={{ display: 'flex', alignItems: 'center', mb: 2 }}>
-                <BarChart3 style={{ width: 20, height: 20, marginRight: 8, color: ct.secondary[500] }} />
+                <BarChart3
+                  style={{ width: 20, height: 20, marginRight: 8, color: ct.secondary[500] }}
+                />
                 <Typography
                   variant='subtitle2'
                   color='text.secondary'
@@ -371,7 +377,9 @@ const InventoryReportPage: React.FC = () => {
           <Card sx={{ height: '100%', bgcolor: 'warning.light' }}>
             <CardContent>
               <Box sx={{ display: 'flex', alignItems: 'center', mb: 2 }}>
-                <TrendingDown style={{ width: 20, height: 20, marginRight: 8, color: ct.warning.dark }} />
+                <TrendingDown
+                  style={{ width: 20, height: 20, marginRight: 8, color: ct.warning.dark }}
+                />
                 <Typography
                   variant='subtitle2'
                   color='warning.dark'
@@ -431,7 +439,9 @@ const InventoryReportPage: React.FC = () => {
           <Card sx={{ height: '100%', bgcolor: 'success.light' }}>
             <CardContent>
               <Box sx={{ display: 'flex', alignItems: 'center', mb: 2 }}>
-                <TrendingUp style={{ width: 20, height: 20, marginRight: 8, color: ct.success.dark }} />
+                <TrendingUp
+                  style={{ width: 20, height: 20, marginRight: 8, color: ct.success.dark }}
+                />
                 <Typography
                   variant='subtitle2'
                   color='success.dark'

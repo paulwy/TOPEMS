@@ -1,7 +1,7 @@
 use axum::{
     extract::{Extension, Path, Query, State},
     http::HeaderMap,
-    routing::{delete, get, post, put},
+    routing::{delete, get},
     Json, Router,
 };
 use chrono::Utc;

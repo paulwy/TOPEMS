@@ -143,9 +143,15 @@ const DesignCanvas: React.FC<DesignCanvasProps> = ({
               gap: 2,
             }}
           >
-            <Plus size={48} strokeWidth={1} />
-            <Typography variant="body1">{emptyText}</Typography>
-            <Typography variant="body2" color="text.secondary">
+            <Plus
+              size={48}
+              strokeWidth={1}
+            />
+            <Typography variant='body1'>{emptyText}</Typography>
+            <Typography
+              variant='body2'
+              color='text.secondary'
+            >
               从左侧组件库拖拽组件到这里
             </Typography>
           </Box>

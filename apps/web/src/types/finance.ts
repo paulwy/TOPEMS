@@ -1,3 +1,7 @@
+import type { ApiResponse } from '@topems/shared-types';
+
+export { ApiResponse };
+
 /**
  * 财务核心类型定义
  * 包含科目、凭证、财务报表、往来单位等核心实体类型
@@ -1022,18 +1026,8 @@ export interface ReportQueryParams {
 // ============================================
 
 /**
- * API统一响应
+ * API统一响应 - 从 @topems/shared-types 导入
  */
-export interface ApiResponse<T = any> {
-  success: boolean;
-  data?: T;
-  error?: {
-    code: string;
-    message: string;
-    details?: unknown;
-  };
-  timestamp: string;
-}
 
 /**
  * 批量操作结果

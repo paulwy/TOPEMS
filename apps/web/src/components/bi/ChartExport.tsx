@@ -1,12 +1,6 @@
 import { useState } from 'react';
-import {
-  Image,
-  Download,
-  FileImage,
-  Copy,
-  Check,
-} from 'lucide-react';
-import {Menu, MenuItem, Button, useTheme} from '@mui/material';
+import { Image, Download, FileImage, Copy, Check } from 'lucide-react';
+import { Menu, MenuItem, Button, useTheme } from '@mui/material';
 import { logger } from '@/utils/logger';
 
 interface ChartExportProps {
@@ -96,7 +90,9 @@ export const ChartExport = ({ chartRef, filename = 'chart' }: ChartExportProps) 
         onClose={() => setAnchorEl(null)}
       >
         <MenuItem disabled>
-          <span style={{ fontSize: 12, fontWeight: 500, color: theme.palette.text.secondary }}>导出格式</span>
+          <span style={{ fontSize: 12, fontWeight: 500, color: theme.palette.text.secondary }}>
+            导出格式
+          </span>
         </MenuItem>
         {exportFormats.map((format) => (
           <MenuItem

@@ -1,13 +1,15 @@
 import React from 'react';
-import type {
-  GridColDef,
-  GridRowSelectionModel,
-  GridPaginationModel,
-  GridFilterModel,
-  GridSortModel,
-  GridRowModel,
-} from '@mui/x-data-grid-pro';
-import type { ColumnDef } from './DataTable';
+import type { ColumnDef } from '@tanstack/react-table';
+
+type GridRowSelectionModel = (string | number)[];
+type GridPaginationModel = { page: number; pageSize: number };
+type GridFilterModel = {
+  items: unknown[];
+  quickFilterLogicOperator?: string;
+  quickFilterValues?: string[];
+};
+type GridSortModel = { field: string; sort: 'asc' | 'desc' }[];
+type GridRowModel = Record<string, unknown>;
 
 /**
  * ProDataTable adapter type definitions
@@ -483,10 +485,10 @@ export function migrateColumn<TData>(
   }
 
   // Map cell renderer
-  if (col.cell) {
-    const originalCell = col.cell;
+  if (col.cell && typeof col.cell === 'function') {
+    const originalCell = col.cell as any;
     result.renderCell = (params) =>
-      originalCell(params.value as any, params.row as TData, index);
+      originalCell({ value: params.value, row: params.row as TData, index });
   }
 
   // Map header renderer

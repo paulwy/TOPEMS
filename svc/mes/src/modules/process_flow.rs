@@ -138,10 +138,10 @@ pub struct ProcessFlowStepResponse {
     pub sequence: i32,
     pub work_station_id: Option<String>,
     pub work_station_name: Option<String>,
-    pub equipment_ids: Option<Vec<String>>,
+    pub equipment_ids: Option<String>,
     pub standard_time: Option<f64>,
     pub wait_time: Option<f64>,
-    pub transfer_time: Option<f64>,
+    pub transfer_time: Option<String>,
     pub quality_check_required: Option<bool>,
     pub description: Option<String>,
     pub created_at: String,
@@ -184,11 +184,6 @@ fn datetime_to_string(dt: Option<NaiveDateTime>) -> String {
 
 fn opt_big_decimal_to_f64(bd: Option<BigDecimal>) -> Option<f64> {
     bd.and_then(|d| d.to_string().parse::<f64>().ok())
-}
-
-fn big_decimal_to_f64(bd: Option<BigDecimal>) -> f64 {
-    bd.and_then(|d| d.to_string().parse::<f64>().ok())
-        .unwrap_or(0.0)
 }
 
 pub async fn list_process_flows(
@@ -624,18 +619,16 @@ pub async fn get_flow_steps(
                 .map(|s| ProcessFlowStepResponse {
                     id: s.id.to_string(),
                     flow_id: s.flow_id.to_string(),
-                    process_id: s.process_id.to_string(),
+                    process_id: s.process_id.map(|u| u.to_string()).unwrap_or_default(),
                     process_name: s.process_name,
                     process_code: s.process_code,
-                    sequence: s.sequence,
+                    sequence: s.sequence.unwrap_or(0),
                     work_station_id: s.work_station_id.map(|u| u.to_string()),
                     work_station_name: Some(s.work_station_name),
-                    equipment_ids: s
-                        .equipment_ids
-                        .map(|ids| ids.into_iter().map(|u| u.to_string()).collect()),
+                    equipment_ids: s.equipment_ids,
                     standard_time: opt_big_decimal_to_f64(s.standard_time),
                     wait_time: opt_big_decimal_to_f64(s.wait_time),
-                    transfer_time: opt_big_decimal_to_f64(s.transfer_time),
+                    transfer_time: s.transfer_time.map(|t| t.to_string()),
                     quality_check_required: s.quality_check_required,
                     description: s.description,
                     created_at: datetime_to_string(s.created_at),
@@ -690,14 +683,10 @@ pub async fn add_flow_step(
     let wait_time = body
         .wait_time
         .and_then(|v| BigDecimal::from_str(&v.to_string()).ok());
-    let transfer_time = body
-        .transfer_time
-        .and_then(|v| BigDecimal::from_str(&v.to_string()).ok());
-    let equipment_uuids: Option<Vec<Uuid>> = body.equipment_ids.map(|ids| {
-        ids.iter()
-            .filter_map(|id| Uuid::parse_str(id).ok())
-            .collect()
-    });
+    let transfer_time: Option<chrono::NaiveDateTime> = None;
+    let equipment_ids: Option<String> = body
+        .equipment_ids
+        .map(|ids| serde_json::to_string(&ids).unwrap_or_default());
 
     let result = sqlx::query!(
         r#"
@@ -716,7 +705,7 @@ pub async fn add_flow_step(
         process_uuid,
         body.sequence,
         work_station_uuid,
-        equipment_uuids.as_deref(),
+        equipment_ids,
         standard_time,
         wait_time,
         transfer_time,
@@ -746,18 +735,16 @@ pub async fn add_flow_step(
                 ProcessFlowStepResponse {
                     id: s.id.to_string(),
                     flow_id: s.flow_id.to_string(),
-                    process_id: s.process_id.to_string(),
+                    process_id: s.process_id.map(|u| u.to_string()).unwrap_or_default(),
                     process_name,
                     process_code,
-                    sequence: s.sequence,
+                    sequence: s.sequence.unwrap_or(0),
                     work_station_id: s.work_station_id.map(|u| u.to_string()),
                     work_station_name: None,
-                    equipment_ids: s
-                        .equipment_ids
-                        .map(|ids| ids.into_iter().map(|u| u.to_string()).collect()),
+                    equipment_ids: s.equipment_ids,
                     standard_time: opt_big_decimal_to_f64(s.standard_time),
                     wait_time: opt_big_decimal_to_f64(s.wait_time),
-                    transfer_time: opt_big_decimal_to_f64(s.transfer_time),
+                    transfer_time: s.transfer_time.map(|t| t.to_string()),
                     quality_check_required: s.quality_check_required,
                     description: s.description,
                     created_at: datetime_to_string(s.created_at),
@@ -801,14 +788,10 @@ pub async fn update_flow_step(
     let wait_time = body
         .wait_time
         .and_then(|v| BigDecimal::from_str(&v.to_string()).ok());
-    let transfer_time = body
-        .transfer_time
-        .and_then(|v| BigDecimal::from_str(&v.to_string()).ok());
-    let equipment_uuids: Option<Vec<Uuid>> = body.equipment_ids.map(|ids| {
-        ids.iter()
-            .filter_map(|id| Uuid::parse_str(id).ok())
-            .collect()
-    });
+    let transfer_time: Option<chrono::NaiveDateTime> = None;
+    let equipment_ids: Option<String> = body
+        .equipment_ids
+        .map(|ids| serde_json::to_string(&ids).unwrap_or_default());
 
     let result = sqlx::query!(
         r#"
@@ -830,7 +813,7 @@ pub async fn update_flow_step(
         "#,
         body.sequence,
         work_station_uuid,
-        equipment_uuids.as_deref(),
+        equipment_ids,
         standard_time,
         wait_time,
         transfer_time,
@@ -861,18 +844,16 @@ pub async fn update_flow_step(
                 ProcessFlowStepResponse {
                     id: s.id.to_string(),
                     flow_id: s.flow_id.to_string(),
-                    process_id: s.process_id.to_string(),
+                    process_id: s.process_id.map(|u| u.to_string()).unwrap_or_default(),
                     process_name,
                     process_code,
-                    sequence: s.sequence,
+                    sequence: s.sequence.unwrap_or(0),
                     work_station_id: s.work_station_id.map(|u| u.to_string()),
                     work_station_name: None,
-                    equipment_ids: s
-                        .equipment_ids
-                        .map(|ids| ids.into_iter().map(|u| u.to_string()).collect()),
+                    equipment_ids: s.equipment_ids,
                     standard_time: opt_big_decimal_to_f64(s.standard_time),
                     wait_time: opt_big_decimal_to_f64(s.wait_time),
-                    transfer_time: opt_big_decimal_to_f64(s.transfer_time),
+                    transfer_time: s.transfer_time.map(|t| t.to_string()),
                     quality_check_required: s.quality_check_required,
                     description: s.description,
                     created_at: datetime_to_string(s.created_at),
@@ -1002,18 +983,16 @@ pub async fn reorder_flow_steps(
                 .map(|s| ProcessFlowStepResponse {
                     id: s.id.to_string(),
                     flow_id: s.flow_id.to_string(),
-                    process_id: s.process_id.to_string(),
+                    process_id: s.process_id.map(|u| u.to_string()).unwrap_or_default(),
                     process_name: s.process_name,
                     process_code: s.process_code,
-                    sequence: s.sequence,
+                    sequence: s.sequence.unwrap_or(0),
                     work_station_id: s.work_station_id.map(|u| u.to_string()),
                     work_station_name: Some(s.work_station_name),
-                    equipment_ids: s
-                        .equipment_ids
-                        .map(|ids| ids.into_iter().map(|u| u.to_string()).collect()),
+                    equipment_ids: s.equipment_ids,
                     standard_time: opt_big_decimal_to_f64(s.standard_time),
                     wait_time: opt_big_decimal_to_f64(s.wait_time),
-                    transfer_time: opt_big_decimal_to_f64(s.transfer_time),
+                    transfer_time: s.transfer_time.map(|t| t.to_string()),
                     quality_check_required: s.quality_check_required,
                     description: s.description,
                     created_at: datetime_to_string(s.created_at),

@@ -1,6 +1,6 @@
 import type { ModuleNavConfig, NavItemConfig, NavItem, ModuleCardConfig, NavGroup } from './types';
 import { NAV_GROUPS } from './types';
-import { logger } from "@/utils/logger";
+import { logger } from '@/utils/logger';
 
 type EventListener = (...args: unknown[]) => void;
 
@@ -229,10 +229,7 @@ export class NavigationRegistryV2 {
       showInTabs: false,
     };
 
-    const findInTree = (
-      items: NavItemConfig[],
-      currentPath: NavItem[]
-    ): NavItem[] | null => {
+    const findInTree = (items: NavItemConfig[], currentPath: NavItem[]): NavItem[] | null => {
       for (const item of items) {
         let enriched = this.enrichNavItem(item, module);
 
@@ -344,7 +341,6 @@ export class NavigationRegistryV2 {
       showInTabs: item.showInTabs !== false,
     };
   }
-
 
   getNavItemsGroupedByBusinessDomain(
     hasPermission?: (perm: string) => boolean

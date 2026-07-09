@@ -59,7 +59,8 @@ import { PageContainer } from '@/components/common';
 import { eightDApi } from '@/api/qms';
 import type { EightDReport, EightDAuditLog } from '@/api/qms';
 import { designTokens } from '@/theme/tokens';
-import { logger } from "@/utils/logger";
+import { logger } from '@/utils/logger';
+
 const ct = designTokens.colors;
 
 const D_STEPS = [
@@ -840,7 +841,7 @@ const QmsEightDPage: React.FC = () => {
                   type='date'
                   value={formData.dueDate}
                   onChange={(e) => setFormData((prev) => ({ ...prev, dueDate: e.target.value }))}
-                  slotProps={{ inputLabel: { shrink: true } }}
+                  slotProps={{ inputLabel: { shrink: true } } as any}
                 />
               </Box>
             </Box>

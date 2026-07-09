@@ -596,7 +596,7 @@ export const BomPage: React.FC = () => {
               value={formData.effective_date}
               onChange={(e) => setFormData({ ...formData, effective_date: e.target.value })}
               fullWidth
-              slotProps={{ inputLabel: { shrink: true } }}
+              slotProps={{ inputLabel: { shrink: true } } as any}
             />
             <TextField
               label='描述'

@@ -54,7 +54,7 @@ function getNavigablePath(path: string): string | null {
     const segments = path.split('/').filter(Boolean);
     const paramIndex = segments.findIndex((s) => s.startsWith(':'));
     if (paramIndex > 0) {
-      return '/' + segments.slice(0, paramIndex).join('/');
+      return `/${segments.slice(0, paramIndex).join('/')}`;
     }
     return null;
   }
@@ -346,7 +346,9 @@ export const AppSidebar: React.FC<AppSidebarProps> = ({
               input: {
                 startAdornment: (
                   <InputAdornment position='start'>
-                    <Search style={{ width: 14, height: 14, color: theme.palette.text.secondary }} />
+                    <Search
+                      style={{ width: 14, height: 14, color: theme.palette.text.secondary }}
+                    />
                   </InputAdornment>
                 ),
                 endAdornment: searchQuery && (
@@ -410,14 +412,18 @@ export const AppSidebar: React.FC<AppSidebarProps> = ({
                 if (navigablePath) navigate(navigablePath);
                 setSearchAnchorEl(null);
                 setSearchQuery('');
-              }}>
+              }}
+            >
               <ListItemIcon sx={{ minWidth: 32 }}>
                 {item.icon ? renderIcon(item.icon, 16) : <Star style={{ width: 16, height: 16 }} />}
               </ListItemIcon>
               <ListItemText
                 primary={item.label}
                 secondary={item.path}
-                slotProps={{ primary: { sx: { fontSize: '0.875rem' } }, secondary: { sx: { fontSize: '0.75rem' } } }}
+                slotProps={{
+                  primary: { sx: { fontSize: '0.875rem' } },
+                  secondary: { sx: { fontSize: '0.75rem' } },
+                }}
               />
             </ListItemButton>
           ))}
@@ -462,7 +468,8 @@ export const AppSidebar: React.FC<AppSidebarProps> = ({
                     const navigablePath = getNavigablePath(item.path);
                     if (navigablePath) navigate(navigablePath);
                     setFavoritesAnchorEl(null);
-                  }}>
+                  }}
+                >
                   <ListItemIcon sx={{ minWidth: 32 }}>
                     {item.icon ? (
                       renderIcon(item.icon, 16)
@@ -482,7 +489,9 @@ export const AppSidebar: React.FC<AppSidebarProps> = ({
                     }}
                     sx={{ ml: 'auto', flexShrink: 0 }}
                   >
-                    <BookmarkCheck style={{ width: 14, height: 14, color: theme.palette.warning.main }} />
+                    <BookmarkCheck
+                      style={{ width: 14, height: 14, color: theme.palette.warning.main }}
+                    />
                   </IconButton>
                 </ListItemButton>
               ))}

@@ -20,7 +20,7 @@ import { Plus, Edit, Trash2, Check, XCircle, AlertCircle, Lock } from 'lucide-re
 import { apiLogger } from '@/utils/logger';
 import { ListPageTemplate, type ColumnDef } from '@/components/templates';
 import { PageContainer } from '@/components/common';
-import ConfirmDialog from '@/components/common/ConfirmDialog';
+import { ConfirmDialog } from '@topems/shared-components';
 
 const ScmPurchaseOrderPage: React.FC = () => {
   const [orders, setOrders] = useState<PurchaseOrder[]>([]);
@@ -489,7 +489,7 @@ const ScmPurchaseOrderPage: React.FC = () => {
                 onChange={(e) => setFormData({ ...formData, order_date: e.target.value })}
                 size='small'
                 required
-                slotProps={{ inputLabel: { shrink: true } }}
+                slotProps={{ inputLabel: { shrink: true } } as any}
                 disabled={isEditing}
               />
               <TextField
@@ -498,7 +498,7 @@ const ScmPurchaseOrderPage: React.FC = () => {
                 value={formData.delivery_date}
                 onChange={(e) => setFormData({ ...formData, delivery_date: e.target.value })}
                 size='small'
-                slotProps={{ inputLabel: { shrink: true } }}
+                slotProps={{ inputLabel: { shrink: true } } as any}
               />
               <TextField
                 label='总金额'

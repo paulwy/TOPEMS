@@ -922,9 +922,12 @@ export const MonitorLogsPage: React.FC = () => {
             <Typography variant='h6'>日志详情</Typography>
             {selectedLog && getLevelChip(selectedLog.level)}
           </Box>
-          <IconButton onClick={() => setDetailOpen(false)} aria-label='关闭日志详情对话框'>
-                  <X size={20} />
-                </IconButton>
+          <IconButton
+            onClick={() => setDetailOpen(false)}
+            aria-label='关闭日志详情对话框'
+          >
+            <X size={20} />
+          </IconButton>
         </DialogTitle>
         <DialogContent>
           {selectedLog && (

@@ -729,7 +729,7 @@ const AssetManagementPage: React.FC<AssetManagementPageProps> = ({ onNavigate })
                     })
                   }
                   fullWidth
-                  slotProps={{ inputLabel: { shrink: true } }}
+                  slotProps={{ inputLabel: { shrink: true } } as any}
                 />
                 <TextField
                   label='采购金额'
@@ -1044,7 +1044,7 @@ const AssetManagementPage: React.FC<AssetManagementPageProps> = ({ onNavigate })
                       })
                     }
                     fullWidth
-                    slotProps={{ inputLabel: { shrink: true } }}
+                    slotProps={{ inputLabel: { shrink: true } } as any}
                   />
                   <TextField
                     label='采购金额'

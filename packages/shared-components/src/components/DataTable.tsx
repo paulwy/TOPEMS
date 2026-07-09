@@ -2,12 +2,7 @@
  * Shared DataTable component
  * Extracted from apps/web with dependency decoupling.
  * Uses TanStack React Table - supports search, sort, filter, pagination, selection, export.
- * Enhanced features: column config persistence, row expansion, advanced filters, virtual scrolling.
- *
- * Decoupled from:
- * - @/store (useAppStore -> addNotification) -> replaced with onExportSuccess/onExportError props
- * - @/hooks/useDataTable (useExportData) -> inlined export logic
- * - @/utils -> removed
+ * Enhanced features: column config persistence, row expansion, advanced filters, virtual scrolling, mobile card view.
  */
 import React, { useState, useCallback, useEffect, useRef } from 'react';
 import {
@@ -62,14 +57,8 @@ import {
 
 // ============ Type Definitions ============
 
-/**
- * Row expansion content render function type
- */
 export type ExpandedRowRender<TData> = (row: TData) => React.ReactNode;
 
-/**
- * Advanced filter configuration
- */
 export interface AdvancedFilter {
   label: string;
   key: string;
@@ -79,180 +68,88 @@ export interface AdvancedFilter {
   onChange?: (value: string) => void;
 }
 
-/**
- * Export result type
- */
 export interface ExportResult {
   success: boolean;
   error?: unknown;
 }
 
-/**
- * Export function type for custom export handling
- */
 export type ExportDataFn = (format: string, columns: ColumnDef<any, any>[], rows: any[]) => Promise<ExportResult> | ExportResult;
 
-/**
- * DataTable props
- */
 export interface DataTableProps<TData, TValue> {
-  /** Column definitions */
   columns: ColumnDef<TData, TValue>[];
-
-  /** Data rows */
   data: TData[];
-
-  /** Search field name */
   searchKey?: string;
-
-  /** Search input placeholder */
   searchPlaceholder?: string;
-
-  /** Show search input */
   showSearch?: boolean;
-
-  /** Show filter button */
   showFilters?: boolean;
-
-  /** Show export button */
   showExport?: boolean;
-
-  /** Show row selection checkboxes */
   showSelection?: boolean;
-
-  /** Show create button */
   showCreate?: boolean;
-
-  /** Create button label */
   createLabel?: string;
-
-  /** Create button click callback */
   onCreate?: () => void;
-
-  /** Export file name */
   exportFileName?: string;
-
-  /** Enable pagination */
   enablePagination?: boolean;
-
-  /** Total pages (for server-side pagination) */
   totalPages?: number;
-
-  /** Total items (for server-side pagination) */
   totalItems?: number;
-
-  /** Page size */
   pageSize?: number;
-
-  /** Current page index (controlled) */
   currentPage?: number;
-
-  /** Page change callback */
   onPageChange?: (page: number) => void;
-
-  /** Page size change callback */
   onPageSizeChange?: (size: number) => void;
-
-  /** Row click callback */
   onRowClick?: (row: TData) => void;
-
-  /** Selection change callback */
-  onSelectionChange?: (keys: Set<string> | string[]) => void;
-
-  /** Show refresh button */
+  onSelectionChange?: (selectedRows: string[]) => void;
   showRefresh?: boolean;
-
-  /** Refresh callback */
   onRefresh?: () => void;
-
-  /** Loading state */
   loading?: boolean;
-
-  /** Responsive mode */
   responsive?: boolean;
-
-  /** Empty data message */
   emptyMessage?: string;
-
-  /** Get row key function */
   getRowKey?: (row: TData) => string;
-
-  /** Extra action buttons */
   extraActions?: React.ReactNode;
-
-  /** Custom styles */
   sx?: any;
-
-  /** Enable column config persistence (localStorage) */
   persistColumnConfig?: boolean;
-
-  /** Column config storage key prefix */
   columnConfigKey?: string;
-
-  /** Enable row expansion */
   enableRowExpansion?: boolean;
-
-  /** Row expansion content renderer */
   expandedRowRender?: ExpandedRowRender<TData>;
-
-  /** Enable virtual scrolling */
   enableVirtualization?: boolean;
-
-  /** Virtual scroll row height */
   rowHeight?: number;
-
-  /** Enable sticky header */
   enableStickyHeader?: boolean;
-
-  /** Show row numbers */
   showRowNumber?: boolean;
-
-  /** Enable advanced filters */
   enableAdvancedFilter?: boolean;
-
-  /** Advanced filter configs */
   advancedFilters?: AdvancedFilter[];
-
-  /** Striped rows */
   striped?: boolean;
-
-  /** Compact mode */
   compact?: boolean;
-
-  /** Empty state custom content */
   emptyState?: React.ReactNode;
-
-  /** Selection key property */
-  selectionKey?: keyof TData;
-
-  /** Controlled selected IDs */
   selectedIds?: string[];
+  selectedRows?: string[];
+
+  /** Mobile card view render function */
+  mobileCardRender?: (row: TData, index: number) => React.ReactNode;
+
+  /** Mobile card view title field key */
+  mobileCardTitleKey?: string;
+
+  /** Mobile card view subtitle field key */
+  mobileCardSubtitleKey?: string;
+
+  /** Custom field labels for mobile card view */
+  mobileFieldLabels?: Record<string, string>;
+
+  /** Fields to display in mobile card view */
+  mobileDisplayFields?: string[];
+
+  /** Should use mobile card view (controlled) */
+  useMobileCardView?: boolean;
 
   // --- Decoupled dependency props ---
-
-  /** Called when export succeeds (replaces addNotification success) */
   onExportSuccess?: () => void;
-
-  /** Called when export fails (replaces addNotification error) */
   onExportError?: (error: Error) => void;
-
-  /** Custom export data function (replaces useExportData hook) */
   exportData?: ExportDataFn;
 }
 
-/**
- * Row data type
- */
 export interface DataTableRow<TData> {
   original: TData;
   id: string;
 }
 
-// ============ Utility Functions ============
-
-/**
- * Read column visibility from localStorage
- */
 const loadColumnVisibility = (key: string): VisibilityState => {
   try {
     const stored = localStorage.getItem(`datatable:${key}`);
@@ -265,9 +162,6 @@ const loadColumnVisibility = (key: string): VisibilityState => {
   return {};
 };
 
-/**
- * Save column visibility to localStorage
- */
 const saveColumnVisibility = (key: string, visibility: VisibilityState): void => {
   try {
     localStorage.setItem(`datatable:${key}`, JSON.stringify(visibility));
@@ -276,9 +170,6 @@ const saveColumnVisibility = (key: string, visibility: VisibilityState): void =>
   }
 };
 
-/**
- * Export data to CSV format (inlined from useExportData)
- */
 function exportToCSV<TData extends RowData>(
   columns: ColumnDef<TData, any>[],
   data: TData[],
@@ -320,9 +211,6 @@ function exportToCSV<TData extends RowData>(
   }
 }
 
-/**
- * Export data to Excel (XLS) format via tab-separated values (inlined from useExportData)
- */
 function exportToExcel<TData extends RowData>(
   columns: ColumnDef<TData, any>[],
   data: TData[],
@@ -359,36 +247,222 @@ function exportToExcel<TData extends RowData>(
   }
 }
 
-// ============ DataTable Component ============
+export interface MobileCardViewProps<TData> {
+  data: TData[];
+  cardRender?: (row: TData, index: number) => React.ReactNode;
+  titleKey?: string;
+  subtitleKey?: string;
+  fieldLabels?: Record<string, string>;
+  displayFields?: string[];
+  onRowClick?: (row: TData) => void;
+  loading?: boolean;
+  emptyMessage?: string;
+  getRowKey?: (row: TData) => string;
+  showSelection?: boolean;
+  selectedIds?: string[];
+  onSelectionChange?: (row: TData, selected: boolean) => void;
+}
 
-/**
- * Shared DataTable component
- * Supports search, sort, filter, pagination, selection, export.
- * Enhanced features: column config persistence, row expansion, virtual scrolling.
- *
- * @example
- * ```tsx
- * <DataTable
- *   columns={columns}
- *   data={data}
- *   searchKey="name"
- *   showSelection
- *   showExport
- *   showCreate
- *   onCreate={handleCreate}
- *   onRowClick={handleRowClick}
- *   onSelectionChange={handleSelection}
- *   onExportSuccess={() => console.log('Exported!')}
- *   onExportError={(err) => console.error(err)}
- *   persistColumnConfig
- *   columnConfigKey="user-list"
- *   enableRowExpansion
- *   expandedRowRender={renderExpandedRow}
- *   enableVirtualization
- *   rowHeight={48}
- * />
- * ```
- */
+export function MobileCardView<TData>({
+  data,
+  cardRender,
+  titleKey,
+  subtitleKey,
+  fieldLabels = {},
+  displayFields,
+  onRowClick,
+  loading = false,
+  emptyMessage = '暂无数据',
+  getRowKey = (row: TData) => (row as any).id?.toString() || Math.random().toString(),
+  showSelection = false,
+  selectedIds = [],
+  onSelectionChange,
+}: MobileCardViewProps<TData>) {
+  const isEmpty = !loading && (!data || data.length === 0);
+
+  if (loading) {
+    return (
+      <Box sx={{ display: 'flex', flexDirection: 'column', gap: 1.5, p: 1 }}>
+        {[1, 2, 3].map((i) => (
+          <Skeleton
+            key={i}
+            variant='rectangular'
+            height={120}
+            sx={{ borderRadius: 1 }}
+          />
+        ))}
+      </Box>
+    );
+  }
+
+  if (isEmpty) {
+    return (
+      <Box sx={{ p: 4, textAlign: 'center' }}>
+        <Typography
+          variant='body2'
+          color='text.secondary'
+        >
+          {emptyMessage}
+        </Typography>
+      </Box>
+    );
+  }
+
+  return (
+    <Box sx={{ display: 'flex', flexDirection: 'column', gap: 1.5, p: 1 }}>
+      {data.map((row, index) => {
+        const rowKey = getRowKey(row);
+        const isSelected = selectedIds.includes(rowKey);
+
+        if (cardRender) {
+          return (
+            <Box
+              key={rowKey}
+              onClick={() => onRowClick?.(row)}
+              sx={{
+                cursor: onRowClick ? 'pointer' : 'default',
+                '&:active': onRowClick ? { opacity: 0.8 } : {},
+              }}
+            >
+              {cardRender(row, index)}
+            </Box>
+          );
+        }
+
+        const rowObj = row as any;
+        const title = titleKey
+          ? rowObj[titleKey]
+          : rowObj.name || rowObj.title || `项目 ${index + 1}`;
+        const subtitle = subtitleKey ? rowObj[subtitleKey] : rowObj.code || rowObj.no || '';
+
+        const allKeys = Object.keys(rowObj).filter(
+          (k) => !['id', 'key', 'created_at', 'updated_at', 'tenant_id'].includes(k)
+        );
+        const fields = displayFields || allKeys.slice(0, 4);
+
+        return (
+          <Box
+            key={rowKey}
+            onClick={() => onRowClick?.(row)}
+            sx={{
+              cursor: onRowClick ? 'pointer' : 'default',
+              bgcolor: 'background.paper',
+              border: 1,
+              borderColor: isSelected ? 'primary.main' : 'divider',
+              borderRadius: 1,
+              p: 1.5,
+              minHeight: 44,
+              '&:active': onRowClick ? { bgcolor: 'action.hover' } : {},
+              transition: 'background-color 150ms',
+            }}
+          >
+            <Box
+              sx={{
+                display: 'flex',
+                alignItems: 'flex-start',
+                justifyContent: 'space-between',
+                gap: 1,
+                mb: subtitle || fields.length > 0 ? 1 : 0,
+              }}
+            >
+              <Box sx={{ flex: 1, minWidth: 0 }}>
+                <Typography
+                  variant='subtitle2'
+                  sx={{
+                    fontWeight: 600,
+                    overflow: 'hidden',
+                    textOverflow: 'ellipsis',
+                    whiteSpace: 'nowrap',
+                  }}
+                >
+                  {String(title ?? '')}
+                </Typography>
+                {subtitle && (
+                  <Typography
+                    variant='body2'
+                    color='text.secondary'
+                    sx={{
+                      fontSize: 12,
+                      mt: 0.25,
+                      overflow: 'hidden',
+                      textOverflow: 'ellipsis',
+                      whiteSpace: 'nowrap',
+                    }}
+                  >
+                    {String(subtitle)}
+                  </Typography>
+                )}
+              </Box>
+              {showSelection && (
+                <Checkbox
+                  size='small'
+                  checked={isSelected}
+                  onClick={(e) => e.stopPropagation()}
+                  onChange={(e) => onSelectionChange?.(row, e.target.checked)}
+                  sx={{ p: 0.5 }}
+                />
+              )}
+            </Box>
+
+            {fields.length > 0 && (
+              <Box
+                sx={{
+                  display: 'grid',
+                  gridTemplateColumns: '1fr 1fr',
+                  gap: 0.75,
+                }}
+              >
+                {fields.map((field) => {
+                  const value = rowObj[field];
+                  const label = fieldLabels[field] || field;
+                  const displayValue =
+                    value == null || value === ''
+                      ? '-'
+                      : typeof value === 'boolean'
+                        ? value
+                          ? '是'
+                          : '否'
+                        : String(value);
+
+                  return (
+                    <Box
+                      key={field}
+                      sx={{
+                        display: 'flex',
+                        flexDirection: 'column',
+                        minWidth: 0,
+                      }}
+                    >
+                      <Typography
+                        variant='caption'
+                        color='text.secondary'
+                        sx={{ fontSize: 11, fontWeight: 500 }}
+                      >
+                        {label}
+                      </Typography>
+                      <Typography
+                        variant='body2'
+                        sx={{
+                          fontSize: 13,
+                          overflow: 'hidden',
+                          textOverflow: 'ellipsis',
+                          whiteSpace: 'nowrap',
+                        }}
+                      >
+                        {displayValue}
+                      </Typography>
+                    </Box>
+                  );
+                })}
+              </Box>
+            )}
+          </Box>
+        );
+      })}
+    </Box>
+  );
+}
+
 export function DataTable<TData, TValue>({
   columns,
   data,
@@ -430,9 +504,14 @@ export function DataTable<TData, TValue>({
   advancedFilters = [],
   striped = true,
   compact = false,
-  selectionKey,
   selectedIds = [],
-  // Decoupled dependency props
+  selectedRows,
+  mobileCardRender,
+  mobileCardTitleKey,
+  mobileCardSubtitleKey,
+  mobileFieldLabels,
+  mobileDisplayFields,
+  useMobileCardView: controlledMobileCardView,
   onExportSuccess,
   onExportError,
   exportData: customExportData,
@@ -455,7 +534,6 @@ export function DataTable<TData, TValue>({
   const [selectedKeys, setSelectedKeys] = useState<Set<string>>(new Set(selectedIds));
   const [expandedRows, setExpandedRows] = useState<Set<string>>(new Set());
 
-  // Virtual scrolling state
   const [scrollTop, setScrollTop] = useState(0);
   const [containerHeight, setContainerHeight] = useState(0);
   const scrollContainerRef = useRef<HTMLDivElement | null>(null);
@@ -472,7 +550,6 @@ export function DataTable<TData, TValue>({
     }
   }, [columnVisibility, persistColumnConfig, columnConfigKey]);
 
-  // Measure scroll container height with ResizeObserver
   useEffect(() => {
     if (!enableVirtualization || !rowHeight || !scrollContainerRef.current) return;
 
@@ -486,7 +563,6 @@ export function DataTable<TData, TValue>({
       }
     });
     observer.observe(container);
-    // Set initial height
     if (container.clientHeight > 0) {
       setContainerHeight(container.clientHeight);
     }
@@ -496,7 +572,6 @@ export function DataTable<TData, TValue>({
     };
   }, [enableVirtualization, rowHeight]);
 
-  // Reset scroll position when data changes
   useEffect(() => {
     if (enableVirtualization && scrollContainerRef.current) {
       scrollContainerRef.current.scrollTop = 0;
@@ -550,61 +625,35 @@ export function DataTable<TData, TValue>({
     [searchKey, table]
   );
 
+  const effectiveSelectedIds = selectedRows ?? selectedIds ?? [];
+
   const handleSelectionChange = useCallback(
-    (keys: Set<string>) => {
-      setSelectedKeys(keys);
-      onSelectionChange?.(keys);
+    (keys: Set<string> | string[]) => {
+      setSelectedKeys(keys instanceof Set ? keys : new Set(keys));
+      onSelectionChange?.(Array.from(keys));
     },
     [onSelectionChange]
   );
 
   const handleSelectAll = useCallback(() => {
     const filteredRows = table.getFilteredRowModel().rows;
-    if (selectionKey && onSelectionChange) {
-      if (selectedIds.length === filteredRows.length && filteredRows.length > 0) {
-        onSelectionChange([]);
-      } else {
-        const allIds = filteredRows.map((row) => String(row.original[selectionKey]));
-        onSelectionChange(allIds);
-      }
+    const allIds = filteredRows.map((row) => String(row.original[getRowKey(row.original)]));
+    if (effectiveSelectedIds.length === filteredRows.length && filteredRows.length > 0) {
+      handleSelectionChange([]);
     } else {
-      if (selectedKeys.size === filteredRows.length && filteredRows.length > 0) {
-        handleSelectionChange(new Set());
-      } else {
-        const allKeys = new Set(filteredRows.map((row) => getRowKey(row.original)));
-        handleSelectionChange(allKeys);
-      }
+      handleSelectionChange(allIds);
     }
-  }, [
-    selectedKeys,
-    table,
-    getRowKey,
-    handleSelectionChange,
-    selectedIds,
-    selectionKey,
-    onSelectionChange,
-  ]);
+  }, [table, getRowKey, effectiveSelectedIds, handleSelectionChange]);
 
   const handleSelectRow = useCallback(
     (row: TData) => {
-      if (selectionKey && onSelectionChange) {
-        const id = String(row[selectionKey]);
-        const newSelected = selectedIds.includes(id)
-          ? selectedIds.filter((selectedId) => selectedId !== id)
-          : [...selectedIds, id];
-        onSelectionChange(newSelected);
-      } else {
-        const key = getRowKey(row);
-        const newKeys = new Set(selectedKeys);
-        if (newKeys.has(key)) {
-          newKeys.delete(key);
-        } else {
-          newKeys.add(key);
-        }
-        handleSelectionChange(newKeys);
-      }
+      const key = getRowKey(row);
+      const newSelected = effectiveSelectedIds.includes(key)
+        ? effectiveSelectedIds.filter((id) => id !== key)
+        : [...effectiveSelectedIds, key];
+      handleSelectionChange(newSelected);
     },
-    [selectedKeys, getRowKey, handleSelectionChange, selectedIds, selectionKey, onSelectionChange]
+    [getRowKey, effectiveSelectedIds, handleSelectionChange]
   );
 
   const handleRowExpand = useCallback(
@@ -623,7 +672,6 @@ export function DataTable<TData, TValue>({
 
   const executeExport = useCallback(
     (format: string, exportFn: () => ExportResult) => {
-      // If custom export function is provided, use it
       if (customExportData) {
         const rows = table.getFilteredRowModel().rows.map((r) => r.original);
         const result = customExportData(format, columns, rows);
@@ -634,14 +682,12 @@ export function DataTable<TData, TValue>({
             onExportError?.(res.error instanceof Error ? res.error : new Error(String(res.error)));
           }
         };
-        // Support both sync and async results
         if ('then' in result && typeof (result as Promise<ExportResult>).then === 'function') {
           (result as Promise<ExportResult>).then(handleResult);
         } else {
           handleResult(result as ExportResult);
         }
       } else {
-        // Use built-in export logic
         const result = exportFn();
         if (result.success) {
           onExportSuccess?.();
@@ -667,10 +713,10 @@ export function DataTable<TData, TValue>({
     );
   }, [executeExport, columns, table, exportFileName]);
 
-  const hasSelected = selectedIds.length > 0 || selectedKeys.size > 0;
+  const hasSelected = effectiveSelectedIds.length > 0 || selectedKeys.size > 0;
   const isAllSelected =
     hasSelected &&
-    (selectedIds.length === table.getFilteredRowModel().rows.length ||
+    (effectiveSelectedIds.length === table.getFilteredRowModel().rows.length ||
       selectedKeys.size === table.getFilteredRowModel().rows.length);
 
   const currentPageIndex = currentPage;
@@ -685,7 +731,6 @@ export function DataTable<TData, TValue>({
     [currentPageIndex, pageSize]
   );
 
-  // Virtual scrolling calculations
   const isVirtualEnabled = enableVirtualization && !!rowHeight && containerHeight > 0;
   const allRows = table.getRowModel().rows;
   const totalHeight = isVirtualEnabled ? allRows.length * rowHeight : undefined;
@@ -711,9 +756,13 @@ export function DataTable<TData, TValue>({
     [isVirtualEnabled]
   );
 
-  /**
-   * Render a single data row (used by both virtual and non-virtual modes)
-   */
+  const shouldUseMobileCard =
+    controlledMobileCardView !== undefined
+      ? controlledMobileCardView
+      : typeof window !== 'undefined' &&
+        window.innerWidth < 600 &&
+        (Boolean(mobileCardRender) || Boolean(mobileCardTitleKey));
+
   const renderRow = (row: any, rowIndex: number) => {
     const rowKey = getRowKey(row.original);
     const isExpanded = expandedRows.has(rowKey);
@@ -744,7 +793,6 @@ export function DataTable<TData, TValue>({
             ...(compact && { fontSize: '0.875rem' }),
           }}
         >
-          {/* Selection column */}
           {showSelection && (
             <TableCell
               padding='checkbox'
@@ -757,17 +805,12 @@ export function DataTable<TData, TValue>({
               }}
             >
               <Checkbox
-                checked={
-                  selectionKey
-                    ? selectedIds.includes(String(row.original[selectionKey]))
-                    : selectedKeys.has(rowKey)
-                }
+                checked={effectiveSelectedIds.includes(String(row.original[getRowKey(row.original)]))}
                 onChange={() => handleSelectRow(row.original)}
                 onClick={(e) => e.stopPropagation()}
               />
             </TableCell>
           )}
-          {/* Row number column */}
           {showRowNumber && (
             <TableCell
               sx={{
@@ -783,7 +826,6 @@ export function DataTable<TData, TValue>({
               {renderRowNumber(rowIndex)}
             </TableCell>
           )}
-          {/* Expansion column */}
           {enableRowExpansion && (
             <TableCell
               sx={{
@@ -811,7 +853,6 @@ export function DataTable<TData, TValue>({
               </IconButton>
             </TableCell>
           )}
-          {/* Data columns */}
           {row.getVisibleCells().map((cell: any) => (
             <TableCell
               key={cell.id}
@@ -825,7 +866,6 @@ export function DataTable<TData, TValue>({
             </TableCell>
           ))}
         </TableRow>
-        {/* Expanded row */}
         {enableRowExpansion && isExpanded && expandedRowRender && (
           <TableRow key={`${row.id}-expanded`}>
             <TableCell
@@ -956,7 +996,6 @@ export function DataTable<TData, TValue>({
               </Button>
             </Box>
 
-            {/* Create button */}
             {showCreate && onCreate && (
               <Button
                 variant='contained'
@@ -968,7 +1007,6 @@ export function DataTable<TData, TValue>({
               </Button>
             )}
 
-            {/* Extra actions */}
             {extraActions}
           </Box>
         </Box>
@@ -989,7 +1027,7 @@ export function DataTable<TData, TValue>({
               <span style={{ fontSize: '0.875rem', color: 'primary.dark' }}>
                 已选择{' '}
                 <Chip
-                  label={selectedIds.length > 0 ? selectedIds.length : selectedKeys.size}
+                  label={effectiveSelectedIds.length > 0 ? effectiveSelectedIds.length : selectedKeys.size}
                   size='small'
                   color='primary'
                   sx={{ mx: 0.5 }}
@@ -997,17 +1035,11 @@ export function DataTable<TData, TValue>({
                 条记录
               </span>
             </Box>
-            {(onSelectionChange || (selectionKey && onSelectionChange)) && (
+            {onSelectionChange && (
               <Button
                 variant='outlined'
                 size='small'
-                onClick={() => {
-                  if (selectionKey && onSelectionChange) {
-                    onSelectionChange([]);
-                  } else {
-                    onSelectionChange?.(new Set());
-                  }
-                }}
+                onClick={() => onSelectionChange([])}
               >
                 取消选择
               </Button>
@@ -1016,7 +1048,6 @@ export function DataTable<TData, TValue>({
         )}
       </Box>
 
-      {/* Column settings menu */}
       <Menu
         anchorEl={anchorEl}
         open={Boolean(anchorEl)}
@@ -1057,209 +1088,235 @@ export function DataTable<TData, TValue>({
         </MenuItem>
       </Menu>
 
-      {/* Table area */}
-      <Box
-        sx={{
-          borderRadius: 1,
-          overflow: 'hidden',
-          border: '1px solid',
-          borderColor: 'divider',
-          bgcolor: 'background.paper',
-        }}
-      >
+      {shouldUseMobileCard ? (
         <Box
-          ref={scrollContainerRef}
-          onScroll={handleScroll}
           sx={{
-            overflowX: responsive ? 'auto' : 'hidden',
-            ...(isVirtualEnabled && {
-              overflowY: 'auto',
-              maxHeight: containerHeight || 400,
-            }),
+            borderRadius: 1,
+            border: '1px solid',
+            borderColor: 'divider',
+            bgcolor: 'background.paper',
+            overflow: 'hidden',
           }}
         >
-          {/* Virtual scrolling spacer for top */}
-          {isVirtualEnabled && (
-            <Box component="div" sx={{ height: visibleStart * rowHeight, width: '100%' }} />
-          )}
-          <Table
-            aria-label='数据表格'
+          <MobileCardView
+            data={data}
+            cardRender={mobileCardRender}
+            titleKey={mobileCardTitleKey}
+            subtitleKey={mobileCardSubtitleKey}
+            fieldLabels={mobileFieldLabels}
+            displayFields={mobileDisplayFields}
+            onRowClick={onRowClick}
+            loading={loading}
+            emptyMessage={emptyMessage}
+            getRowKey={getRowKey}
+            showSelection={showSelection}
+            selectedIds={effectiveSelectedIds}
+            onSelectionChange={(row, selected) => {
+              const rowKey = getRowKey(row);
+              const newSelected = selected
+                ? [...effectiveSelectedIds, rowKey]
+                : effectiveSelectedIds.filter((id) => id !== rowKey);
+              onSelectionChange?.(newSelected);
+            }}
+          />
+        </Box>
+      ) : (
+        <Box
+          sx={{
+            borderRadius: 1,
+            overflow: 'hidden',
+            border: '1px solid',
+            borderColor: 'divider',
+            bgcolor: 'background.paper',
+          }}
+        >
+          <Box
+            ref={scrollContainerRef}
+            onScroll={handleScroll}
             sx={{
-              minWidth: 640,
-              ...(enableStickyHeader && {
-                thead: {
-                  position: 'sticky',
-                  top: 0,
-                  zIndex: 1,
-                  bgcolor: 'grey.50',
-                },
+              overflowX: responsive ? 'auto' : 'hidden',
+              ...(isVirtualEnabled && {
+                overflowY: 'auto',
+                maxHeight: containerHeight || 400,
               }),
             }}
           >
-            <TableHead>
-              {table.getHeaderGroups().map((headerGroup) => (
-                <TableRow
-                  key={headerGroup.id}
-                  sx={{ bgcolor: 'grey.50' }}
-                >
-                  {/* Selection column */}
-                  {showSelection && (
-                    <TableCell
-                      scope='col'
-                      padding='checkbox'
-                      sx={{
-                        position: 'sticky',
-                        left: 0,
-                        zIndex: 2,
-                        bgcolor: 'grey.50',
-                        width: 40,
-                      }}
-                    >
-                      <Checkbox
-                        checked={isAllSelected}
-                        onChange={(_e) => handleSelectAll()}
-                        indeterminate={hasSelected && !isAllSelected}
-                      />
-                    </TableCell>
-                  )}
-                  {/* Row number column */}
-                  {showRowNumber && (
-                    <TableCell
-                      scope='col'
-                      sx={{
-                        whiteSpace: 'nowrap',
-                        fontWeight: 600,
-                        fontSize: 12,
-                        textTransform: 'uppercase',
-                        letterSpacing: 0.5,
-                        color: 'text.secondary',
-                        position: showSelection ? 'sticky' : 'relative',
-                        left: showSelection ? 56 : 0,
-                        zIndex: 2,
-                        bgcolor: 'grey.50',
-                      }}
-                    >
-                      #
-                    </TableCell>
-                  )}
-                  {/* Expansion column */}
-                  {enableRowExpansion && (
-                    <TableCell
-                      scope='col'
-                      sx={{
-                        whiteSpace: 'nowrap',
-                        fontWeight: 600,
-                        fontSize: 12,
-                        textTransform: 'uppercase',
-                        letterSpacing: 0.5,
-                        color: 'text.secondary',
-                        position: showSelection || showRowNumber ? 'sticky' : 'relative',
-                        left: (showSelection ? 56 : 0) + (showRowNumber ? 64 : 0),
-                        zIndex: 2,
-                        bgcolor: 'grey.50',
-                      }}
-                    >
-                      展开
-                    </TableCell>
-                  )}
-                  {/* Data columns */}
-                  {headerGroup.headers.map((header) => (
-                    <TableCell
-                      key={header.id}
-                      scope='col'
-                      sx={{
-                        whiteSpace: 'nowrap',
-                        fontWeight: 600,
-                        fontSize: 12,
-                        textTransform: 'uppercase',
-                        letterSpacing: 0.5,
-                        color: 'text.secondary',
-                      }}
-                    >
-                      {header.isPlaceholder
-                        ? null
-                        : flexRender(header.column.columnDef.header, header.getContext())}
-                    </TableCell>
-                  ))}
-                </TableRow>
-              ))}
-            </TableHead>
-            <TableBody>
-              {loading ? (
-                <TableRow>
-                  <TableCell
-                    colSpan={
-                      columns.length +
-                      (showSelection ? 1 : 0) +
-                      (showRowNumber ? 1 : 0) +
-                      (enableRowExpansion ? 1 : 0)
-                    }
-                    sx={{ height: 96, textAlign: 'center' }}
+            {isVirtualEnabled && (
+              <Box component="div" sx={{ height: visibleStart * rowHeight, width: '100%' }} />
+            )}
+            <Table
+              aria-label='数据表格'
+              sx={{
+                minWidth: 640,
+                ...(enableStickyHeader && {
+                  thead: {
+                    position: 'sticky',
+                    top: 0,
+                    zIndex: 1,
+                    bgcolor: 'grey.50',
+                  },
+                }),
+              }}
+            >
+              <TableHead>
+                {table.getHeaderGroups().map((headerGroup) => (
+                  <TableRow
+                    key={headerGroup.id}
+                    sx={{ bgcolor: 'grey.50' }}
                   >
-                    <Box
-                      sx={{
-                        display: 'flex',
-                        alignItems: 'center',
-                        justifyContent: 'center',
-                        gap: 1,
-                      }}
+                    {showSelection && (
+                      <TableCell
+                        scope='col'
+                        padding='checkbox'
+                        sx={{
+                          position: 'sticky',
+                          left: 0,
+                          zIndex: 2,
+                          bgcolor: 'grey.50',
+                          width: 40,
+                        }}
+                      >
+                        <Checkbox
+                          checked={isAllSelected}
+                          onChange={(_e) => handleSelectAll()}
+                          indeterminate={hasSelected && !isAllSelected}
+                        />
+                      </TableCell>
+                    )}
+                    {showRowNumber && (
+                      <TableCell
+                        scope='col'
+                        sx={{
+                          whiteSpace: 'nowrap',
+                          fontWeight: 600,
+                          fontSize: 12,
+                          textTransform: 'uppercase',
+                          letterSpacing: 0.5,
+                          color: 'text.secondary',
+                          position: showSelection ? 'sticky' : 'relative',
+                          left: showSelection ? 56 : 0,
+                          zIndex: 2,
+                          bgcolor: 'grey.50',
+                        }}
+                      >
+                        #
+                      </TableCell>
+                    )}
+                    {enableRowExpansion && (
+                      <TableCell
+                        scope='col'
+                        sx={{
+                          whiteSpace: 'nowrap',
+                          fontWeight: 600,
+                          fontSize: 12,
+                          textTransform: 'uppercase',
+                          letterSpacing: 0.5,
+                          color: 'text.secondary',
+                          position: showSelection || showRowNumber ? 'sticky' : 'relative',
+                          left: (showSelection ? 56 : 0) + (showRowNumber ? 64 : 0),
+                          zIndex: 2,
+                          bgcolor: 'grey.50',
+                        }}
+                      >
+                        展开
+                      </TableCell>
+                    )}
+                    {headerGroup.headers.map((header) => (
+                      <TableCell
+                        key={header.id}
+                        scope='col'
+                        sx={{
+                          whiteSpace: 'nowrap',
+                          fontWeight: 600,
+                          fontSize: 12,
+                          textTransform: 'uppercase',
+                          letterSpacing: 0.5,
+                          color: 'text.secondary',
+                        }}
+                      >
+                        {header.isPlaceholder
+                          ? null
+                          : flexRender(header.column.columnDef.header, header.getContext())}
+                      </TableCell>
+                    ))}
+                  </TableRow>
+                ))}
+              </TableHead>
+              <TableBody>
+                {loading ? (
+                  <TableRow>
+                    <TableCell
+                      colSpan={
+                        columns.length +
+                        (showSelection ? 1 : 0) +
+                        (showRowNumber ? 1 : 0) +
+                        (enableRowExpansion ? 1 : 0)
+                      }
+                      sx={{ height: 96, textAlign: 'center' }}
                     >
-                      <Skeleton
-                        variant='circular'
-                        width={24}
-                        height={24}
-                        animation='wave'
-                      />
+                      <Box
+                        sx={{
+                          display: 'flex',
+                          alignItems: 'center',
+                          justifyContent: 'center',
+                          gap: 1,
+                        }}
+                      >
+                        <Skeleton
+                          variant='circular'
+                          width={24}
+                          height={24}
+                          animation='wave'
+                        />
+                        <Typography
+                          variant='body2'
+                          color='text.secondary'
+                        >
+                          加载中...
+                        </Typography>
+                      </Box>
+                    </TableCell>
+                  </TableRow>
+                ) : allRows.length ? (
+                  visibleRows.map((row, rowIndex) => {
+                    const actualRowIndex = isVirtualEnabled ? visibleStart + rowIndex : rowIndex;
+                    return renderRow(row, actualRowIndex);
+                  })
+                ) : (
+                  <TableRow>
+                    <TableCell
+                      colSpan={
+                        columns.length +
+                        (showSelection ? 1 : 0) +
+                        (showRowNumber ? 1 : 0) +
+                        (enableRowExpansion ? 1 : 0)
+                      }
+                      sx={{ height: 120, textAlign: 'center' }}
+                    >
                       <Typography
                         variant='body2'
                         color='text.secondary'
                       >
-                        加载中...
+                        {emptyMessage}
                       </Typography>
-                    </Box>
-                  </TableCell>
-                </TableRow>
-              ) : allRows.length ? (
-                visibleRows.map((row, rowIndex) => {
-                  const actualRowIndex = isVirtualEnabled ? visibleStart + rowIndex : rowIndex;
-                  return renderRow(row, actualRowIndex);
-                })
-              ) : (
-                <TableRow>
-                  <TableCell
-                    colSpan={
-                      columns.length +
-                      (showSelection ? 1 : 0) +
-                      (showRowNumber ? 1 : 0) +
-                      (enableRowExpansion ? 1 : 0)
-                    }
-                    sx={{ height: 120, textAlign: 'center' }}
-                  >
-                    <Typography
-                      variant='body2'
-                      color='text.secondary'
-                    >
-                      {emptyMessage}
-                    </Typography>
-                  </TableCell>
-                </TableRow>
-              )}
-            </TableBody>
-          </Table>
-          {/* Virtual scrolling spacer for bottom */}
-          {isVirtualEnabled && totalHeight != null && (
-            <Box
-              component="div"
-              sx={{
-                height: Math.max(0, totalHeight - visibleEnd * rowHeight),
-                width: '100%',
-              }}
-            />
-          )}
+                    </TableCell>
+                  </TableRow>
+                )}
+              </TableBody>
+            </Table>
+            {isVirtualEnabled && totalHeight != null && (
+              <Box
+                component="div"
+                sx={{
+                  height: Math.max(0, totalHeight - visibleEnd * rowHeight),
+                  width: '100%',
+                }}
+              />
+            )}
+          </Box>
         </Box>
-      </Box>
+      )}
 
-      {/* Pagination bar */}
       {enablePagination && totalPageCount > 1 && (
         <Box
           sx={{
@@ -1271,7 +1328,6 @@ export function DataTable<TData, TValue>({
             py: 2,
           }}
         >
-          {/* Left: stats info */}
           <Box
             sx={{
               display: 'flex',
@@ -1280,7 +1336,6 @@ export function DataTable<TData, TValue>({
               flexWrap: 'wrap',
             }}
           >
-            {/* Selection info */}
             {showSelection && selectedKeys.size > 0 && (
               <Typography
                 variant='body2'
@@ -1289,7 +1344,6 @@ export function DataTable<TData, TValue>({
                 已选择 {selectedKeys.size} 条记录
               </Typography>
             )}
-            {/* Total count */}
             <Typography
               variant='body2'
               color='text.secondary'
@@ -1297,7 +1351,6 @@ export function DataTable<TData, TValue>({
             >
               共 {totalRecords} 条记录
             </Typography>
-            {/* Page size selector */}
             {onPageSizeChange && (
               <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5 }}>
                 <Typography
@@ -1322,9 +1375,7 @@ export function DataTable<TData, TValue>({
             )}
           </Box>
 
-          {/* Right: pagination buttons */}
           <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-            {/* Previous page */}
             <Button
               variant='outlined'
               size='small'
@@ -1343,7 +1394,6 @@ export function DataTable<TData, TValue>({
               <ChevronLeft style={{ width: 20, height: 20 }} />
             </IconButton>
 
-            {/* Current page */}
             <Typography
               variant='body2'
               sx={{ minWidth: 100, textAlign: 'center' }}
@@ -1351,7 +1401,6 @@ export function DataTable<TData, TValue>({
               第 {currentPageIndex + 1} / {totalPageCount} 页
             </Typography>
 
-            {/* Next page */}
             <Button
               variant='outlined'
               size='small'
@@ -1373,7 +1422,6 @@ export function DataTable<TData, TValue>({
         </Box>
       )}
 
-      {/* Advanced filter dialog */}
       {enableAdvancedFilter && advancedFilters.length > 0 && (
         <Dialog
           open={showAdvancedFilterDialog}
@@ -1467,8 +1515,6 @@ export function DataTable<TData, TValue>({
     </Box>
   );
 }
-
-// ============ Default Export ============
 
 const MemoizedDataTable = React.memo(DataTable) as typeof DataTable;
 export default MemoizedDataTable;

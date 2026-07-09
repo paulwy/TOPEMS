@@ -1,5 +1,5 @@
 import React from 'react';
-import {Box, Typography, Button, useTheme} from '@mui/material';
+import { Box, Typography, Button, useTheme } from '@mui/material';
 import { Building2, ChevronRight } from 'lucide-react';
 import { type Department, type Employee } from '@/api/hrm';
 import type { TreeNode } from '../common/TreeView';

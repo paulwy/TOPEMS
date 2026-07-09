@@ -1,7 +1,7 @@
 // modules/EvidenceModule/AudioCapture.tsx
 import React, { useRef, useState, useCallback, useEffect } from 'react';
 import { Mic, Square, Pause, Play, X, Check } from 'lucide-react';
-import {Box, IconButton, Typography, Paper, Button, useTheme} from '@mui/material';
+import { Box, IconButton, Typography, Paper, Button, useTheme } from '@mui/material';
 import { logger } from '@/utils/logger';
 
 interface AudioCaptureProps {

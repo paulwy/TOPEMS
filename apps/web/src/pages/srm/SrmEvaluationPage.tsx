@@ -6,7 +6,7 @@ import { ListPageTemplate, type ColumnDef, type RowAction } from '@/components/t
 import { srmApi, type SupplierEvaluation, type Supplier } from '@/api/srm';
 import { useAppStore } from '@/store';
 import { apiLogger } from '@/utils/logger';
-import ConfirmDialog from '@/components/common/ConfirmDialog';
+import { ConfirmDialog } from '@topems/shared-components';
 import { PageContainer } from '@/components/common';
 
 interface EvaluationWithSupplier extends SupplierEvaluation {

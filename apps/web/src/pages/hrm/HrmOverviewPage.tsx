@@ -20,6 +20,7 @@ import { designTokens } from '@/theme/tokens';
 import BarChartComponent from '../../components/charts/BarChart';
 import LineChartComponent from '../../components/charts/LineChart';
 import PieChartComponent from '../../components/charts/PieChart';
+
 const ct = designTokens.colors;
 
 const HrmOverviewPage: React.FC = () => {

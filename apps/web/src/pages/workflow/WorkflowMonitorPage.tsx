@@ -29,7 +29,7 @@ import { useAppStore } from '../../store';
 import { ListPageTemplate, type ColumnDef } from '@/components/templates';
 import { StatCardComponent } from '@/components/templates/dashboard/StatCardComponent';
 import { PageContainer } from '@/components/common';
-import ConfirmDialog from '@/components/common/ConfirmDialog';
+import { ConfirmDialog } from '@topems/shared-components';
 import { extractErrorMessage } from '@/utils/errors';
 
 type ExceptionType = 'timeout' | 'error' | 'stuck';

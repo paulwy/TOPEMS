@@ -20,7 +20,7 @@ import { Box, InputBase, Typography, Button } from '@mui/material';
 import { apiLogger } from '@/utils/logger';
 import { useNotification } from '@/hooks/useNotification';
 import { StatsChart } from '@/components/bi/StatsChart';
-import { StatusBadge } from '@/components/common/StatusBadge';
+import { StatusBadge } from '@topems/shared-components';
 import { ListPageTemplate, MuiStatCard as StatCard } from '@/components';
 import type { ColumnDef, RowAction } from '@/components';
 import {

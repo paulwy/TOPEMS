@@ -394,7 +394,10 @@ const ReportBuilderPage = () => {
                       </IconButton>
                     </Tooltip>
                     <Tooltip title='查看'>
-                      <IconButton size='small' aria-label='查看报表'>
+                      <IconButton
+                        size='small'
+                        aria-label='查看报表'
+                      >
                         <Eye size={16} />
                       </IconButton>
                     </Tooltip>

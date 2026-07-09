@@ -22,7 +22,7 @@ import React, { useState, useEffect, useMemo, useCallback } from 'react';
 import type { OeeRecord, OeeStatistics, ListParams } from '@/api/mes';
 import { mesApi } from '@/api/mes';
 import { useAppStore } from '@/store';
-import { LoadingSpinner } from '@/components/common/LoadingSpinner';
+import { LoadingSpinner } from '@topems/shared-components';
 import {
   ListPageTemplate,
   type ColumnDef,
@@ -42,6 +42,7 @@ import {
 } from 'lucide-react';
 import { apiLogger } from '@/utils/logger';
 import { designTokens } from '@/theme/tokens';
+
 const ct = designTokens.colors;
 
 const EquipmentOEEPage: React.FC = () => {
@@ -564,7 +565,9 @@ const EquipmentOEEPage: React.FC = () => {
                     {formatPercent(selectedRecord.performance)}
                   </Typography>
                 </Box>
-                <Box sx={{ p: 2, bgcolor: ct.secondary[100], borderRadius: 3, textAlign: 'center' }}>
+                <Box
+                  sx={{ p: 2, bgcolor: ct.secondary[100], borderRadius: 3, textAlign: 'center' }}
+                >
                   <Typography
                     variant='body2'
                     sx={{ color: 'text.secondary', mb: 0.5 }}

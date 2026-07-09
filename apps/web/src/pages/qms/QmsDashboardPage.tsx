@@ -25,7 +25,8 @@ import { PageContainer } from '@/components/common';
 import { qmsApi } from '@/api/qms';
 import type { QualityOverview } from '@/api/qms';
 import { designTokens } from '@/theme/tokens';
-import { logger } from "@/utils/logger";
+import { logger } from '@/utils/logger';
+
 const ct = designTokens.colors;
 
 const QmsDashboardPage: React.FC = () => {
@@ -167,7 +168,13 @@ const QmsDashboardPage: React.FC = () => {
           ) : overview?.topIssues && overview.topIssues.length > 0 ? (
             <Box sx={{ width: '100%', p: 2 }}>
               {overview.topIssues.map((item, index) => {
-                const colors = [ct.secondary[400], ct.warning.main, ct.error.main, ct.success.main, ct.secondary.main];
+                const colors = [
+                  ct.secondary[400],
+                  ct.warning.main,
+                  ct.error.main,
+                  ct.success.main,
+                  ct.secondary.main,
+                ];
                 return (
                   <Box
                     key={index}

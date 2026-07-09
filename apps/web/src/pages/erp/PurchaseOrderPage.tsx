@@ -23,7 +23,7 @@ import type {
 } from '@/api/erp';
 import { erpApi } from '@/api/erp';
 import { useAppStore } from '@/store';
-import { LoadingSpinner } from '@/components/common/LoadingSpinner';
+import { LoadingSpinner } from '@topems/shared-components';
 import {
   ListPageTemplate,
   type ColumnDef,
@@ -33,6 +33,7 @@ import {
 import { Plus, Edit, Trash2, Eye, CheckCircle, XCircle, ShoppingCart } from 'lucide-react';
 import { apiLogger } from '@/utils/logger';
 import { designTokens } from '@/theme/tokens';
+
 const ct = designTokens.colors;
 
 const PurchaseOrderPage: React.FC = () => {

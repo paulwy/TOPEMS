@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useMemo } from 'react';
-import {Typography, Box, Button, DialogContent, DialogActions, useTheme} from '@mui/material';
+import { Typography, Box, Button, DialogContent, DialogActions, useTheme } from '@mui/material';
 import { Briefcase, Plus, Edit, Trash2, Eye, Users, CheckCircle, XCircle } from 'lucide-react';
 import {
   positionApi,
@@ -95,7 +95,6 @@ const PositionManagementPage: React.FC<PositionManagementPageProps> = () => {
   useEffect(() => {
     fetchPositions();
     fetchDepartments();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   const handleAdd = () => {
@@ -431,7 +430,9 @@ const PositionManagementPage: React.FC<PositionManagementPageProps> = () => {
           ]}
           onRefresh={() => fetchPositions()}
           emptyMessage='暂无岗位数据'
-          emptyIcon={<Briefcase style={{ width: 48, height: 48, color: theme.palette.text.disabled }} />}
+          emptyIcon={
+            <Briefcase style={{ width: 48, height: 48, color: theme.palette.text.disabled }} />
+          }
           headerContent={
             <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 2 }}>
               <ModeToggle />

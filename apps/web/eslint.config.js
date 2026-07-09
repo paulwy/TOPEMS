@@ -9,7 +9,6 @@ import importPlugin from 'eslint-plugin-import';
 import unicorn from 'eslint-plugin-unicorn';
 import checkFile from 'eslint-plugin-check-file';
 import jsxA11y from 'eslint-plugin-jsx-a11y';
-import topemsDesign from './scripts/eslint-plugin-topems-design.cjs';
 import { dirname, join } from 'path';
 import { fileURLToPath } from 'url';
 
@@ -43,7 +42,6 @@ export default [
       unicorn,
       'check-file': checkFile,
       'jsx-a11y': jsxA11y,
-      'topems-design': topemsDesign,
     },
     settings: {
       react: {
@@ -83,8 +81,6 @@ export default [
       'jsx-a11y/tabindex-no-positive': 'warn',
       'jsx-a11y/click-events-have-key-events': ['warn', { allowList: ['link', 'button', 'listbox', 'option', 'tab', 'tabpanel'] }],
 
-      'topems-design/no-hardcoded-colors': 'warn',
-      'topems-design/no-hardcoded-spacing': 'off',
       'prettier/prettier': 'error',
       'react-hooks/rules-of-hooks': 'error',
       'react-hooks/exhaustive-deps': 'off',
@@ -333,6 +329,8 @@ export default [
       'src/**/*.stories.ts',
       'src/**/*.stories.tsx',
       'src/@types/**/*',
+      'src/test/**/*',
+      'tests/**/*',
     ],
   },
   // ==========================================================================

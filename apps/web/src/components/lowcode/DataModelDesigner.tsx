@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
-import {Box,
+import {
+  Box,
   Paper,
   List,
   ListItem,
@@ -13,7 +14,9 @@ import {Box,
   Tooltip,
   Typography,
   Tabs,
-  Tab, useTheme} from '@mui/material';
+  Tab,
+  useTheme,
+} from '@mui/material';
 import {
   Database,
   Plus,
@@ -76,7 +79,9 @@ const getFieldTypeIcon = (type: FieldType) => {
   }
 };
 
-const getFieldTypeColor = (type: FieldType): 'default' | 'primary' | 'secondary' | 'success' | 'warning' | 'info' | 'error' => {
+const getFieldTypeColor = (
+  type: FieldType
+): 'default' | 'primary' | 'secondary' | 'success' | 'warning' | 'info' | 'error' => {
   switch (type) {
     case 'id':
     case 'integer':
@@ -244,7 +249,7 @@ export const DataModelDesigner: React.FC<DataModelDesignerProps> = ({
   return (
     <Box sx={{ display: 'flex', height: '100%', flexDirection: 'column' }}>
       <Paper
-        variant="outlined"
+        variant='outlined'
         sx={{
           px: 2,
           py: 1,
@@ -258,27 +263,27 @@ export const DataModelDesigner: React.FC<DataModelDesignerProps> = ({
         <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
           <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
             <Database style={{ width: 20, height: 20, color: theme.palette.primary.main }} />
-            <Typography variant="h6">{localModel.label}</Typography>
+            <Typography variant='h6'>{localModel.label}</Typography>
             <Chip
               label={localModel.status === 'published' ? '已发布' : '草稿'}
-              size="small"
+              size='small'
               color={localModel.status === 'published' ? 'success' : 'default'}
-              variant="outlined"
+              variant='outlined'
             />
           </Box>
         </Box>
         <Box sx={{ display: 'flex', gap: 1 }}>
           <Button
-            variant="outlined"
-            size="small"
+            variant='outlined'
+            size='small'
             startIcon={<Upload style={{ width: 16, height: 16 }} />}
             onClick={() => onPublish?.(localModel.id)}
           >
             发布
           </Button>
           <Button
-            variant="contained"
-            size="small"
+            variant='contained'
+            size='small'
             startIcon={<Save style={{ width: 16, height: 16 }} />}
             onClick={() => onSave?.(localModel)}
           >
@@ -289,7 +294,7 @@ export const DataModelDesigner: React.FC<DataModelDesignerProps> = ({
 
       <Box sx={{ flex: 1, display: 'flex', overflow: 'hidden' }}>
         <Paper
-          variant="outlined"
+          variant='outlined'
           sx={{
             width: 280,
             display: 'flex',
@@ -299,10 +304,28 @@ export const DataModelDesigner: React.FC<DataModelDesignerProps> = ({
           }}
         >
           <Box sx={{ px: 2, py: 1, display: 'flex', alignItems: 'center', gap: 1 }}>
-            <Tabs value={activeTab} onChange={(_, v) => setActiveTab(v)}>
-              <Tab label="字段" value="fields" icon={<Table2 style={{ width: 16, height: 16 }} />} iconPosition="start" />
-              <Tab label="关系" value="relations" icon={<Network style={{ width: 16, height: 16 }} />} iconPosition="start" />
-              <Tab label="预览" value="preview" icon={<Eye style={{ width: 16, height: 16 }} />} iconPosition="start" />
+            <Tabs
+              value={activeTab}
+              onChange={(_, v) => setActiveTab(v)}
+            >
+              <Tab
+                label='字段'
+                value='fields'
+                icon={<Table2 style={{ width: 16, height: 16 }} />}
+                iconPosition='start'
+              />
+              <Tab
+                label='关系'
+                value='relations'
+                icon={<Network style={{ width: 16, height: 16 }} />}
+                iconPosition='start'
+              />
+              <Tab
+                label='预览'
+                value='preview'
+                icon={<Eye style={{ width: 16, height: 16 }} />}
+                iconPosition='start'
+              />
             </Tabs>
           </Box>
 
@@ -313,8 +336,8 @@ export const DataModelDesigner: React.FC<DataModelDesignerProps> = ({
               <Box sx={{ p: 1 }}>
                 <Button
                   fullWidth
-                  variant="outlined"
-                  size="small"
+                  variant='outlined'
+                  size='small'
                   startIcon={<Plus style={{ width: 16, height: 16 }} />}
                   onClick={handleAddField}
                 >
@@ -322,12 +345,22 @@ export const DataModelDesigner: React.FC<DataModelDesignerProps> = ({
                 </Button>
               </Box>
               <Divider />
-              <List dense sx={{ flex: 1, overflow: 'auto', py: 0 }}>
+              <List
+                dense
+                sx={{ flex: 1, overflow: 'auto', py: 0 }}
+              >
                 {systemFields.length > 0 && (
                   <>
                     <ListItem sx={{ bgcolor: 'action.hover' }}>
                       <ListItemText
-                        primary={<Typography variant="caption" color="text.secondary">系统字段</Typography>}
+                        primary={
+                          <Typography
+                            variant='caption'
+                            color='text.secondary'
+                          >
+                            系统字段
+                          </Typography>
+                        }
                       />
                     </ListItem>
                     {systemFields.map((field) => (
@@ -338,12 +371,14 @@ export const DataModelDesigner: React.FC<DataModelDesignerProps> = ({
                         dense
                         sx={{ pl: 2 }}
                       >
-                        <ListItemIcon sx={{ minWidth: 32, color: getFieldTypeColor(field.type) + '.main' }}>
+                        <ListItemIcon
+                          sx={{ minWidth: 32, color: `${getFieldTypeColor(field.type)}.main` }}
+                        >
                           {getFieldTypeIcon(field.type)}
                         </ListItemIcon>
                         <ListItemText
-                          primary={<Typography variant="body2">{field.label}</Typography>}
-                          secondary={<Typography variant="caption">{field.name}</Typography>}
+                          primary={<Typography variant='body2'>{field.label}</Typography>}
+                          secondary={<Typography variant='caption'>{field.name}</Typography>}
                         />
                       </ListItemButton>
                     ))}
@@ -352,7 +387,14 @@ export const DataModelDesigner: React.FC<DataModelDesignerProps> = ({
                 )}
                 <ListItem sx={{ bgcolor: 'action.hover' }}>
                   <ListItemText
-                    primary={<Typography variant="caption" color="text.secondary">业务字段</Typography>}
+                    primary={
+                      <Typography
+                        variant='caption'
+                        color='text.secondary'
+                      >
+                        业务字段
+                      </Typography>
+                    }
                   />
                 </ListItem>
                 {customFields.map((field) => (
@@ -363,12 +405,14 @@ export const DataModelDesigner: React.FC<DataModelDesignerProps> = ({
                     dense
                     sx={{ pl: 2 }}
                   >
-                    <ListItemIcon sx={{ minWidth: 32, color: getFieldTypeColor(field.type) + '.main' }}>
+                    <ListItemIcon
+                      sx={{ minWidth: 32, color: `${getFieldTypeColor(field.type)}.main` }}
+                    >
                       {getFieldTypeIcon(field.type)}
                     </ListItemIcon>
                     <ListItemText
-                      primary={<Typography variant="body2">{field.label}</Typography>}
-                      secondary={<Typography variant="caption">{field.name}</Typography>}
+                      primary={<Typography variant='body2'>{field.label}</Typography>}
+                      secondary={<Typography variant='caption'>{field.name}</Typography>}
                     />
                   </ListItemButton>
                 ))}
@@ -376,7 +420,11 @@ export const DataModelDesigner: React.FC<DataModelDesignerProps> = ({
                   <ListItem>
                     <ListItemText
                       primary={
-                        <Typography variant="body2" color="text.secondary" align="center">
+                        <Typography
+                          variant='body2'
+                          color='text.secondary'
+                          align='center'
+                        >
                           暂无业务字段
                         </Typography>
                       }
@@ -388,7 +436,10 @@ export const DataModelDesigner: React.FC<DataModelDesignerProps> = ({
           )}
 
           {activeTab === 'relations' && (
-            <List dense sx={{ flex: 1, overflow: 'auto', py: 0 }}>
+            <List
+              dense
+              sx={{ flex: 1, overflow: 'auto', py: 0 }}
+            >
               {(localModel.relations || []).map((rel) => (
                 <ListItemButton
                   key={rel.id}
@@ -398,8 +449,8 @@ export const DataModelDesigner: React.FC<DataModelDesignerProps> = ({
                     <Network style={{ width: 18, height: 18 }} />
                   </ListItemIcon>
                   <ListItemText
-                    primary={<Typography variant="body2">{rel.label}</Typography>}
-                    secondary={<Typography variant="caption">{rel.type}</Typography>}
+                    primary={<Typography variant='body2'>{rel.label}</Typography>}
+                    secondary={<Typography variant='caption'>{rel.type}</Typography>}
                   />
                 </ListItemButton>
               ))}
@@ -407,7 +458,11 @@ export const DataModelDesigner: React.FC<DataModelDesignerProps> = ({
                 <ListItem>
                   <ListItemText
                     primary={
-                      <Typography variant="body2" color="text.secondary" align="center">
+                      <Typography
+                        variant='body2'
+                        color='text.secondary'
+                        align='center'
+                      >
                         暂无关系配置
                       </Typography>
                     }
@@ -418,8 +473,20 @@ export const DataModelDesigner: React.FC<DataModelDesignerProps> = ({
           )}
 
           {activeTab === 'preview' && (
-            <Box sx={{ flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'text.secondary', p: 2 }}>
-              <Typography variant="body2" align="center">
+            <Box
+              sx={{
+                flex: 1,
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                color: 'text.secondary',
+                p: 2,
+              }}
+            >
+              <Typography
+                variant='body2'
+                align='center'
+              >
                 在右侧查看数据预览
               </Typography>
             </Box>
@@ -427,15 +494,15 @@ export const DataModelDesigner: React.FC<DataModelDesignerProps> = ({
         </Paper>
 
         <Paper
-          variant="outlined"
+          variant='outlined'
           sx={{
             flex: 1,
             borderRadius: 0,
             overflow: 'auto',
           }}
         >
-          {activeTab === 'fields' && (
-            (selectedField || isNewField) ? (
+          {activeTab === 'fields' &&
+            (selectedField || isNewField ? (
               <FieldEditor
                 field={selectedField}
                 models={models.map((m) => ({ id: m.id, label: m.label }))}
@@ -457,10 +524,9 @@ export const DataModelDesigner: React.FC<DataModelDesignerProps> = ({
               >
                 <Table2 style={{ width: 48, height: 48, marginBottom: 16, opacity: 0.3 }} />
                 <Typography>选择一个字段进行编辑</Typography>
-                <Typography variant="body2">或点击新增字段按钮创建新字段</Typography>
+                <Typography variant='body2'>或点击新增字段按钮创建新字段</Typography>
               </Box>
-            )
-          )}
+            ))}
 
           {activeTab === 'relations' && (
             <RelationEditor
@@ -473,7 +539,10 @@ export const DataModelDesigner: React.FC<DataModelDesignerProps> = ({
           )}
 
           {activeTab === 'preview' && (
-            <ModelPreview modelId={localModel.id} model={localModel} />
+            <ModelPreview
+              modelId={localModel.id}
+              model={localModel}
+            />
           )}
         </Paper>
       </Box>

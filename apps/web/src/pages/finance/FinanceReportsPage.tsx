@@ -1,6 +1,5 @@
 import React, { useState, useEffect, useMemo } from 'react';
 import { designTokens } from '@/theme/tokens';
-const ct = designTokens.colors;
 import {
   TrendingUp,
   TrendingDown,
@@ -24,7 +23,17 @@ import {
   type DepartmentFinancialSummary,
 } from '@/api/erp';
 import { useAppStore } from '@/store';
-import {Box, Button, FormControl, InputLabel, Select, MenuItem, Chip, Alert, useTheme} from '@mui/material';
+import {
+  Box,
+  Button,
+  FormControl,
+  InputLabel,
+  Select,
+  MenuItem,
+  Chip,
+  Alert,
+  useTheme,
+} from '@mui/material';
 import { StatsPageTemplate } from '@/components/templates/StatsPageTemplate';
 import type {
   StatCard,
@@ -34,6 +43,8 @@ import type {
 } from '@/components/templates/StatsPageTemplate';
 import { apiLogger } from '@/utils/logger';
 import { PageContainer } from '@/components/common';
+
+const ct = designTokens.colors;
 
 const FinanceReportsPage: React.FC = () => {
   const theme = useTheme();

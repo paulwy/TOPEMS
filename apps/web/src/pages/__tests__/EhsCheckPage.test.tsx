@@ -8,7 +8,9 @@ import { useAppStore } from '@/store';
 
 vi.mock('@/api/ehs', () => ({
   ehsApi: {
-    listChecks: vi.fn().mockResolvedValue({ success: true, data: { data: [], pagination: { total: 0 } } }),
+    listChecks: vi
+      .fn()
+      .mockResolvedValue({ success: true, data: { data: [], pagination: { total: 0 } } }),
     getCheck: vi.fn(),
     createCheck: vi.fn(),
     updateCheck: vi.fn(),

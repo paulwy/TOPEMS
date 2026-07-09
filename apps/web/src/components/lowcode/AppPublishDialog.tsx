@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
-import {Dialog,
+import {
+  Dialog,
   DialogTitle,
   DialogContent,
   DialogActions,
@@ -15,7 +16,9 @@ import {Dialog,
   Alert,
   FormControlLabel,
   Switch,
-  LinearProgress, useTheme} from '@mui/material';
+  LinearProgress,
+  useTheme,
+} from '@mui/material';
 import { Upload, CheckCircle, AlertTriangle, Rocket } from 'lucide-react';
 import type { LowCodeApp } from '../../api/lowcode/types';
 
@@ -23,7 +26,11 @@ interface AppPublishDialogProps {
   open: boolean;
   app: LowCodeApp | null;
   onClose: () => void;
-  onPublish: (params: { version: string; description: string; isMajor?: boolean }) => Promise<void> | void;
+  onPublish: (params: {
+    version: string;
+    description: string;
+    isMajor?: boolean;
+  }) => Promise<void> | void;
 }
 
 const steps = [
@@ -63,7 +70,9 @@ export const AppPublishDialog: React.FC<AppPublishDialogProps> = ({
     return parts.join('.');
   };
 
-  const suggestedVersion = isMajor ? getNextMajorVersion(currentVersion) : getNextMinorVersion(currentVersion);
+  const suggestedVersion = isMajor
+    ? getNextMajorVersion(currentVersion)
+    : getNextMinorVersion(currentVersion);
 
   React.useEffect(() => {
     if (open) {
@@ -78,7 +87,9 @@ export const AppPublishDialog: React.FC<AppPublishDialogProps> = ({
 
   React.useEffect(() => {
     if (open) {
-      setVersion(isMajor ? getNextMajorVersion(currentVersion) : getNextMinorVersion(currentVersion));
+      setVersion(
+        isMajor ? getNextMajorVersion(currentVersion) : getNextMinorVersion(currentVersion)
+      );
     }
   }, [isMajor, open, currentVersion]);
 
@@ -114,51 +125,72 @@ export const AppPublishDialog: React.FC<AppPublishDialogProps> = ({
   };
 
   return (
-    <Dialog open={open} onClose={handleClose} maxWidth="sm" fullWidth>
+    <Dialog
+      open={open}
+      onClose={handleClose}
+      maxWidth='sm'
+      fullWidth
+    >
       <DialogTitle sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
         <Rocket style={{ width: 24, height: 24, color: theme.palette.primary.main }} />
         发布应用
       </DialogTitle>
       <DialogContent dividers>
-        <Stepper activeStep={activeStep} orientation="vertical">
+        <Stepper
+          activeStep={activeStep}
+          orientation='vertical'
+        >
           <Step>
             <StepLabel>版本信息</StepLabel>
             <StepContent>
               <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2, py: 1 }}>
                 <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-                  <Typography variant="body2" color="text.secondary">当前版本:</Typography>
-                  <Chip label={`v${currentVersion}`} size="small" variant="outlined" />
+                  <Typography
+                    variant='body2'
+                    color='text.secondary'
+                  >
+                    当前版本:
+                  </Typography>
+                  <Chip
+                    label={`v${currentVersion}`}
+                    size='small'
+                    variant='outlined'
+                  />
                 </Box>
                 <FormControlLabel
                   control={
                     <Switch
                       checked={isMajor}
                       onChange={(e) => setIsMajor(e.target.checked)}
-                      size="small"
+                      size='small'
                     />
                   }
-                  label="主版本更新"
+                  label='主版本更新'
                 />
                 <TextField
-                  label="新版本号"
+                  label='新版本号'
                   value={version}
                   onChange={(e) => setVersion(e.target.value)}
-                  size="small"
-                  helperText="例如: 1.0.0, 1.1.0, 2.0.0"
+                  size='small'
+                  helperText='例如: 1.0.0, 1.1.0, 2.0.0'
                   slotProps={{
                     input: {
-                      startAdornment: <span style={{ color: theme.palette.text.secondary, marginRight: 4 }}>v</span>,
+                      startAdornment: (
+                        <span style={{ color: theme.palette.text.secondary, marginRight: 4 }}>
+                          v
+                        </span>
+                      ),
                     },
                   }}
                 />
                 <TextField
-                  label="发布说明"
+                  label='发布说明'
                   value={description}
                   onChange={(e) => setDescription(e.target.value)}
-                  size="small"
+                  size='small'
                   multiline
                   rows={3}
-                  placeholder="描述本次发布的内容..."
+                  placeholder='描述本次发布的内容...'
                 />
               </Box>
             </StepContent>
@@ -168,27 +200,50 @@ export const AppPublishDialog: React.FC<AppPublishDialogProps> = ({
             <StepLabel>发布确认</StepLabel>
             <StepContent>
               <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2, py: 1 }}>
-                <Alert severity="warning" icon={<AlertTriangle style={{ width: 20, height: 20 }} />}>
-                  <Typography variant="body2">
+                <Alert
+                  severity='warning'
+                  icon={<AlertTriangle style={{ width: 20, height: 20 }} />}
+                >
+                  <Typography variant='body2'>
                     即将发布 <strong>v{version}</strong> 版本
                   </Typography>
-                  <Typography variant="caption">
+                  <Typography variant='caption'>
                     发布后用户将看到新版本，请确保所有功能已测试通过
                   </Typography>
                 </Alert>
 
                 <Box sx={{ bgcolor: 'action.hover', p: 2, borderRadius: 1 }}>
-                  <Typography variant="subtitle2" gutterBottom>发布内容预览</Typography>
-                  <Typography variant="body2" color="text.secondary">
+                  <Typography
+                    variant='subtitle2'
+                    gutterBottom
+                  >
+                    发布内容预览
+                  </Typography>
+                  <Typography
+                    variant='body2'
+                    color='text.secondary'
+                  >
                     {app?.label || '应用名称'}
                   </Typography>
-                  <Typography variant="caption" color="text.secondary" sx={{ display: 'block' }}>
+                  <Typography
+                    variant='caption'
+                    color='text.secondary'
+                    sx={{ display: 'block' }}
+                  >
                     数据模型: {app?.modelCount || 0} 个
                   </Typography>
-                  <Typography variant="caption" color="text.secondary" sx={{ display: 'block' }}>
+                  <Typography
+                    variant='caption'
+                    color='text.secondary'
+                    sx={{ display: 'block' }}
+                  >
                     页面数量: {app?.pageCount || 0} 个
                   </Typography>
-                  <Typography variant="caption" color="text.secondary" sx={{ display: 'block' }}>
+                  <Typography
+                    variant='caption'
+                    color='text.secondary'
+                    sx={{ display: 'block' }}
+                  >
                     工作流: {app?.workflowCount || 0} 个
                   </Typography>
                 </Box>
@@ -199,27 +254,62 @@ export const AppPublishDialog: React.FC<AppPublishDialogProps> = ({
           <Step>
             <StepLabel>发布中</StepLabel>
             <StepContent>
-              <Box sx={{ py: 2, display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 2 }}>
+              <Box
+                sx={{
+                  py: 2,
+                  display: 'flex',
+                  flexDirection: 'column',
+                  alignItems: 'center',
+                  gap: 2,
+                }}
+              >
                 {publishResult === 'success' ? (
                   <>
-                    <CheckCircle style={{ width: 64, height: 64, color: theme.palette.success.main }} />
-                    <Typography variant="h6" color="success.main">发布成功</Typography>
-                    <Typography variant="body2" color="text.secondary">
+                    <CheckCircle
+                      style={{ width: 64, height: 64, color: theme.palette.success.main }}
+                    />
+                    <Typography
+                      variant='h6'
+                      color='success.main'
+                    >
+                      发布成功
+                    </Typography>
+                    <Typography
+                      variant='body2'
+                      color='text.secondary'
+                    >
                       v{version} 版本已成功发布
                     </Typography>
                   </>
                 ) : publishResult === 'error' ? (
                   <>
-                    <AlertTriangle style={{ width: 64, height: 64, color: theme.palette.error.main }} />
-                    <Typography variant="h6" color="error.main">发布失败</Typography>
-                    <Typography variant="body2" color="text.secondary">
+                    <AlertTriangle
+                      style={{ width: 64, height: 64, color: theme.palette.error.main }}
+                    />
+                    <Typography
+                      variant='h6'
+                      color='error.main'
+                    >
+                      发布失败
+                    </Typography>
+                    <Typography
+                      variant='body2'
+                      color='text.secondary'
+                    >
                       请稍后重试或联系技术支持
                     </Typography>
                   </>
                 ) : (
                   <>
-                    <Upload style={{ width: 64, height: 64, color: theme.palette.primary.main, animation: 'pulse 2s infinite' }} />
-                    <Typography variant="h6">正在发布...</Typography>
+                    <Upload
+                      style={{
+                        width: 64,
+                        height: 64,
+                        color: theme.palette.primary.main,
+                        animation: 'pulse 2s infinite',
+                      }}
+                    />
+                    <Typography variant='h6'>正在发布...</Typography>
                     <Box sx={{ width: '100%', maxWidth: 200 }}>
                       <LinearProgress />
                     </Box>
@@ -235,16 +325,20 @@ export const AppPublishDialog: React.FC<AppPublishDialogProps> = ({
           <>
             <Button onClick={handleClose}>取消</Button>
             <Box sx={{ flex: 1 }} />
-            {activeStep > 0 && (
-              <Button onClick={handleBack}>上一步</Button>
-            )}
-            <Button variant="contained" onClick={handleNext}>
+            {activeStep > 0 && <Button onClick={handleBack}>上一步</Button>}
+            <Button
+              variant='contained'
+              onClick={handleNext}
+            >
               {activeStep === 1 ? '确认发布' : '下一步'}
             </Button>
           </>
         )}
         {activeStep === 2 && publishResult !== null && (
-          <Button variant="contained" onClick={handleClose}>
+          <Button
+            variant='contained'
+            onClick={handleClose}
+          >
             完成
           </Button>
         )}

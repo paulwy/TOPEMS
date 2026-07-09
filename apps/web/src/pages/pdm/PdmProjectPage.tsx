@@ -784,7 +784,7 @@ export const PdmProjectPage: React.FC = () => {
                   value={formData.start_date}
                   onChange={(e) => setFormData({ ...formData, start_date: e.target.value })}
                   fullWidth
-                  slotProps={{ inputLabel: { shrink: true } }}
+                  slotProps={{ inputLabel: { shrink: true } } as any}
                 />
               </Grid>
               <Grid size={{ xs: 6 }}>
@@ -794,7 +794,7 @@ export const PdmProjectPage: React.FC = () => {
                   value={formData.end_date}
                   onChange={(e) => setFormData({ ...formData, end_date: e.target.value })}
                   fullWidth
-                  slotProps={{ inputLabel: { shrink: true } }}
+                  slotProps={{ inputLabel: { shrink: true } } as any}
                 />
               </Grid>
             </Grid>

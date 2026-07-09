@@ -39,7 +39,7 @@ import {
 } from '@/components/templates';
 import { EmptyState } from '@/components';
 import { AIHelperButton, AICodeGenerator } from '@/components/ai';
-import ConfirmDialog from '@/components/common/ConfirmDialog';
+import { ConfirmDialog } from '@topems/shared-components';
 import { PageContainer } from '@/components/common';
 
 interface NodeData {

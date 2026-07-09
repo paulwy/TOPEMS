@@ -1,4 +1,4 @@
-import React, { useEffect, Suspense, lazy, useState } from 'react';
+import { Suspense, lazy, useState } from 'react';
 import { BrowserRouter, Routes, Route, Navigate, useLocation } from 'react-router-dom';
 import { Box, Typography } from '@mui/material';
 import { AuthProvider, useAuth } from './hooks/useAuth';
@@ -8,7 +8,7 @@ import ErrorBoundary from './components/ErrorBoundary';
 import { NotificationProvider } from './components/notification/NotificationProvider';
 import { LoadingProvider } from './components/LoadingProvider';
 import { ThemeProvider } from './components/ThemeProvider';
-import { LoadingSpinner } from './components/common/LoadingSpinner';
+import { LoadingSpinner } from '@topems/shared-components';
 import { GlobalLayout } from './components/layout';
 import { logger } from '@/utils/logger';
 import { PluginProvider } from './context/PluginContext';
@@ -22,10 +22,13 @@ import {
   coreModuleCodes,
   type RouteConfig,
 } from './routes';
-
-const TemplateDemoPage = lazy(() => import('./components/templates/index').then((m) => ({ default: m.TemplateDemoPage })));
-const DynamicRouter = lazy(() => import('./modules/loader/DynamicRouter'));
 import { eventBus, ModuleEvents } from './modules/loader/EventBus';
+
+const TemplateDemoPage = lazy(() =>
+  import('./components/templates/index').then((m) => ({ default: m.TemplateDemoPage }))
+);
+const DynamicRouter = lazy(() => import('./modules/loader/DynamicRouter'));
+const PerformanceTestPage = lazy(() => import('./pages/performance/PerformanceTestPage'));
 
 const IS_STATIC_MODE = import.meta.env.VITE_DEPLOYMENT_MODE !== 'module-federation';
 
@@ -121,7 +124,7 @@ const DynamicRoutes: React.FC = () => {
       const pathParts = path.split('/').filter((p) => p);
       if (pathParts.length === 0) return null;
       const firstPart = pathParts[0];
-      if (coreModuleCodes.includes(firstPart as typeof coreModuleCodes[number])) {
+      if (coreModuleCodes.includes(firstPart as (typeof coreModuleCodes)[number])) {
         return firstPart;
       }
       return null;
@@ -135,7 +138,10 @@ const DynamicRoutes: React.FC = () => {
           logger.info(`[Dynamic Routes] Loading module: ${moduleCode}`);
           const moduleConfig = await loadModuleConfig(moduleCode);
           const flatRoutes = moduleConfig.routes.flatMap((route) => {
-            const flatten = (r: typeof route): typeof route[] => [r, ...(r.children || []).flatMap(flatten)];
+            const flatten = (r: typeof route): (typeof route)[] => [
+              r,
+              ...(r.children || []).flatMap(flatten),
+            ];
             return flatten(route);
           });
           const mappedRoutes: RouteConfig[] = flatRoutes.map((route) => ({
@@ -253,10 +259,22 @@ const AppContent: React.FC = () => {
           );
         })}
 
+        <Route
+          path='/performance'
+          element={
+            <Suspense fallback={<PageLoader />}>
+              <PerformanceTestPage />
+            </Suspense>
+          }
+        />
+
         {renderRoutes(dashboardRoutes)}
         {renderRoutes(commonRoutes)}
 
-        <Route path='*' element={<DynamicRoutes />} />
+        <Route
+          path='*'
+          element={<DynamicRoutes />}
+        />
 
         {legacyRedirects.map((redirect) => (
           <Route

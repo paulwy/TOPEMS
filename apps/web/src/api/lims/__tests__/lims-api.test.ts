@@ -94,7 +94,10 @@ describe('LIMS Module API Tests', () => {
       (apiClient.lims.post as vi.Mock).mockResolvedValue({ data: {} });
       const data = { stage: 'testing', operator: 'John' };
       await sampleApi.transitionSampleStage('sample-001', data as any);
-      expect(apiClient.lims.post).toHaveBeenCalledWith('/samples/sample-001/transition-stage', data);
+      expect(apiClient.lims.post).toHaveBeenCalledWith(
+        '/samples/sample-001/transition-stage',
+        data
+      );
     });
 
     it('getSampleTraceability should call GET /samples/:id/traceability', async () => {
@@ -299,7 +302,9 @@ describe('LIMS Module API Tests', () => {
       const { apiClient } = await import('../../client');
       (apiClient.lims.get as vi.Mock).mockResolvedValue({ data: [] });
       await reagentApi.listExpiring(30);
-      expect(apiClient.lims.get).toHaveBeenCalledWith('/reagents/expiring', { params: { days: 30 } });
+      expect(apiClient.lims.get).toHaveBeenCalledWith('/reagents/expiring', {
+        params: { days: 30 },
+      });
     });
   });
 
@@ -361,7 +366,10 @@ describe('LIMS Module API Tests', () => {
       (apiClient.lims.post as vi.Mock).mockResolvedValue({ data: {} });
       const data = { version: '2.0', change_log: 'Updated method' };
       await testMethodApi.createNewVersion('method-001', data as any);
-      expect(apiClient.lims.post).toHaveBeenCalledWith('/test-methods/method-001/new-version', data);
+      expect(apiClient.lims.post).toHaveBeenCalledWith(
+        '/test-methods/method-001/new-version',
+        data
+      );
     });
   });
 

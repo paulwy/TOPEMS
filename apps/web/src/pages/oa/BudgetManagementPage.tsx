@@ -197,7 +197,11 @@ const BudgetManagementPage: React.FC = () => {
   }, [budgets]);
 
   const getStatusBadge = (status: string) => {
-    const config = STATUS_MAP[status] || { label: status, bg: 'grey.100', color: ct.text.secondary };
+    const config = STATUS_MAP[status] || {
+      label: status,
+      bg: 'grey.100',
+      color: ct.text.secondary,
+    };
     return (
       <Chip
         label={config.label}

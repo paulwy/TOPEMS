@@ -37,6 +37,10 @@ hex = "0.4"
 [dev-dependencies]
 tokio-test.workspace = true
 
+[lib]
+name = "topems_erp"
+path = "src/lib.rs"
+
 [[bin]]
 name = "topems-erp"
 path = "src/main.rs"

@@ -20,6 +20,7 @@ import { qmsApi } from '@/api/qms';
 import type { QualityStandard, StandardRevision } from '@/api/qms';
 import { useAppStore } from '@/store';
 import { designTokens } from '@/theme/tokens';
+
 const ct = designTokens.colors;
 
 const QmsStandardDetailPage: React.FC = () => {

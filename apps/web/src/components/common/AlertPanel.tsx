@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { Bell, Filter, ChevronDown, ChevronUp } from 'lucide-react';
-import {Card, CardContent, CardHeader, Typography, Badge, Button, useTheme} from '@mui/material';
+import { Card, CardContent, CardHeader, Typography, Badge, Button, useTheme } from '@mui/material';
 import type { AlertLevel } from './AlertCard';
 import { AlertCard } from './AlertCard';
 

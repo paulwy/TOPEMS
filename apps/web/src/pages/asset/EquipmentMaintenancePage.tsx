@@ -434,7 +434,7 @@ const EquipmentMaintenancePage: React.FC = () => {
                   }
                   fullWidth
                   required
-                  slotProps={{ inputLabel: { shrink: true } }}
+                  slotProps={{ inputLabel: { shrink: true } } as any}
                 />
               </Box>
 
@@ -456,7 +456,7 @@ const EquipmentMaintenancePage: React.FC = () => {
                     })
                   }
                   fullWidth
-                  slotProps={{ inputLabel: { shrink: true } }}
+                  slotProps={{ inputLabel: { shrink: true } } as any}
                 />
                 <TextField
                   label='费用 (元)'

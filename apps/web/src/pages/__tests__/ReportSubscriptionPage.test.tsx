@@ -8,12 +8,16 @@ import { useAppStore } from '@/store';
 
 vi.mock('@/api/report', () => ({
   reportApi: {
-    listSubscriptions: vi.fn().mockResolvedValue({ success: true, data: { data: [], pagination: { total: 0 } } }),
+    listSubscriptions: vi
+      .fn()
+      .mockResolvedValue({ success: true, data: { data: [], pagination: { total: 0 } } }),
     createSubscription: vi.fn(),
     updateSubscription: vi.fn(),
     deleteSubscription: vi.fn(),
     getSubscription: vi.fn(),
-    listReports: vi.fn().mockResolvedValue({ success: true, data: { data: [], pagination: { total: 0 } } }),
+    listReports: vi
+      .fn()
+      .mockResolvedValue({ success: true, data: { data: [], pagination: { total: 0 } } }),
   },
 }));
 

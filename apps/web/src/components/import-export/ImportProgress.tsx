@@ -69,7 +69,16 @@ export const ImportProgress: React.FC<ImportProgressProps> = ({
           marginBottom: 16,
         }}
       >
-        <h3 style={{ fontSize: 18, fontWeight: 600, color: 'var(--mui-palette-text-primary)', margin: 0 }}>导入进度</h3>
+        <h3
+          style={{
+            fontSize: 18,
+            fontWeight: 600,
+            color: 'var(--mui-palette-text-primary)',
+            margin: 0,
+          }}
+        >
+          导入进度
+        </h3>
         {getStatusIcon()}
       </div>
 

@@ -64,6 +64,7 @@ import { apiLogger } from '@/utils/logger';
 import { useNavigate } from 'react-router-dom';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { designTokens } from '@/theme/tokens';
+
 const ct = designTokens.colors;
 
 /**
@@ -932,7 +933,7 @@ const VoucherManagementPage: React.FC = () => {
                 onChange={(e) =>
                   setNewVoucher((prev) => ({ ...prev, voucher_date: e.target.value }))
                 }
-                slotProps={{ inputLabel: { shrink: true } }}
+                slotProps={{ inputLabel: { shrink: true } } as any}
               />
               <TextField
                 size='small'

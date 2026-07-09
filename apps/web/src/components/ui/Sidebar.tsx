@@ -1,6 +1,6 @@
 import React, { useState, useRef, useEffect, useCallback } from 'react';
 import { Box, Typography, Paper, Chip, Button } from '@mui/material';
-import { SIDEBAR, COLORS } from '@/constants/colors';
+import { SIDEBAR, COLORS } from '@topems/shared-constants';
 
 interface SidebarItem {
   id: string;

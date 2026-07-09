@@ -595,7 +595,8 @@ const DatabaseStructurePage: React.FC = () => {
                                         col.is_nullable === 'YES'
                                           ? 'warning.light'
                                           : 'success.lighter',
-                                      color: col.is_nullable === 'YES' ? 'warning.700' : 'success.700',
+                                      color:
+                                        col.is_nullable === 'YES' ? 'warning.700' : 'success.700',
                                       fontWeight: 500,
                                       fontSize: '0.75rem',
                                     }}

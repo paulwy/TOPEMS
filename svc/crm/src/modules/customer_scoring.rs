@@ -5,7 +5,6 @@ use axum::{
     Json, Router,
 };
 use chrono::{DateTime, Utc};
-use rust_decimal::prelude::ToPrimitive;
 use rust_decimal::Decimal;
 use serde::Deserialize;
 use uuid::Uuid;

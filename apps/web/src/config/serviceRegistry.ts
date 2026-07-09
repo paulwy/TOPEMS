@@ -3,8 +3,10 @@
  *
  * 用途:
  * 1. api/client.ts 的 service getter 从此处读取配置
- * 2. vite.config.ts 的代理配置可从此处自动生成
- * 3. 新增模块只需在此处注册一次
+ * 2. vite.config.ts 的代理配置通过 services 数组程序化生成
+ * 3. 新增模块需同时在本文件和 vite.config.ts 的 services 数组中注册
+ *
+ * 注意：端口配置必须与 vite.config.ts 和 scripts/topems.sh 保持一致
  */
 export interface ServiceConfig {
   /** 服务标识 */
@@ -44,12 +46,21 @@ export const SERVICES: ServiceConfig[] = [
     envVar: 'VITE_ERP_URL',
   },
   {
+    code: 'finance',
+    name: 'Finance',
+    devPath: '/finance/api',
+    healthPath: '/finance/health',
+    core: false,
+    plugin: true,
+    envVar: 'VITE_FINANCE_URL',
+  },
+  {
     code: 'hrm',
     name: 'HRM',
-    devPath: '/iam/api',
-    healthPath: '/iam/health',
-    core: true,
-    plugin: false,
+    devPath: '/hrm/api',
+    healthPath: '/hrm/health',
+    core: false,
+    plugin: true,
     envVar: 'VITE_HRM_URL',
   },
   {
@@ -57,27 +68,27 @@ export const SERVICES: ServiceConfig[] = [
     name: 'MES',
     devPath: '/mes/api',
     healthPath: '/mes/health',
-    core: true,
-    plugin: false,
+    core: false,
+    plugin: true,
     envVar: 'VITE_MES_URL',
   },
   {
-    code: 'workflow',
+    code: 'flow',
     name: '工作流',
-    devPath: '/workflow/api',
-    healthPath: '/workflow/health',
+    devPath: '/flow/api',
+    healthPath: '/flow/health',
     core: true,
     plugin: false,
-    envVar: 'VITE_WORKFLOW_URL',
+    envVar: 'VITE_FLOW_URL',
   },
   {
-    code: 'docs',
+    code: 'doc',
     name: '文档',
-    devPath: '/docs/api',
-    healthPath: '/docs/health',
-    core: true,
-    plugin: false,
-    envVar: 'VITE_DOCS_URL',
+    devPath: '/doc/api',
+    healthPath: '/doc/health',
+    core: false,
+    plugin: true,
+    envVar: 'VITE_DOC_URL',
   },
   {
     code: 'im',
@@ -98,21 +109,12 @@ export const SERVICES: ServiceConfig[] = [
     envVar: 'VITE_NOTIFICATION_URL',
   },
   {
-    code: 'lowcode',
-    name: '低代码',
-    devPath: '/lowcode/api',
-    healthPath: '/lowcode/health',
-    core: true,
-    plugin: false,
-    envVar: 'VITE_LOWCODE_URL',
-  },
-  {
     code: 'report',
     name: '报表',
     devPath: '/report/api',
     healthPath: '/report/health',
-    core: true,
-    plugin: false,
+    core: false,
+    plugin: true,
     envVar: 'VITE_REPORT_URL',
   },
   {
@@ -120,8 +122,8 @@ export const SERVICES: ServiceConfig[] = [
     name: 'AI',
     devPath: '/ai/api',
     healthPath: '/ai/health',
-    core: true,
-    plugin: false,
+    core: false,
+    plugin: true,
     envVar: 'VITE_AI_URL',
   },
   {
@@ -129,35 +131,17 @@ export const SERVICES: ServiceConfig[] = [
     name: '监控',
     devPath: '/monitor/api',
     healthPath: '/monitor/health',
-    core: true,
-    plugin: false,
+    core: false,
+    plugin: true,
     envVar: 'VITE_MONITOR_URL',
-  },
-  {
-    code: 'plugin',
-    name: '插件管理',
-    devPath: '/plugin/api',
-    healthPath: '/plugin/health',
-    core: true,
-    plugin: false,
-    envVar: 'VITE_PLUGIN_URL',
-  },
-  {
-    code: 'tenant',
-    name: '租户',
-    devPath: '/tenant/api',
-    healthPath: '/tenant/health',
-    core: true,
-    plugin: false,
-    envVar: 'VITE_TENANT_URL',
   },
   {
     code: 'bi',
     name: 'BI',
     devPath: '/bi/api',
     healthPath: '/bi/health',
-    core: true,
-    plugin: false,
+    core: false,
+    plugin: true,
     envVar: 'VITE_BI_URL',
   },
   {
@@ -169,16 +153,43 @@ export const SERVICES: ServiceConfig[] = [
     plugin: false,
     envVar: 'VITE_FILE_URL',
   },
-  // 插件服务
   {
-    code: 'finance',
-    name: '财务',
-    devPath: '/finance/api',
-    healthPath: '/finance/health',
+    code: 'comm',
+    name: '通信',
+    devPath: '/comm/api',
+    healthPath: '/comm/health',
+    core: true,
+    plugin: false,
+    envVar: 'VITE_COMM_URL',
+  },
+  {
+    code: 'mail',
+    name: '邮件',
+    devPath: '/mail/api',
+    healthPath: '/mail/health',
+    core: true,
+    plugin: false,
+    envVar: 'VITE_MAIL_URL',
+  },
+  {
+    code: 'master',
+    name: '主服务',
+    devPath: '/master/api',
+    healthPath: '/master/health',
+    core: true,
+    plugin: false,
+    envVar: 'VITE_MASTER_URL',
+  },
+  {
+    code: 'integration',
+    name: '集成',
+    devPath: '/integration/api',
+    healthPath: '/integration/health',
     core: false,
     plugin: true,
-    envVar: 'VITE_FINANCE_URL',
+    envVar: 'VITE_INTEGRATION_URL',
   },
+  // 插件服务
   {
     code: 'crm',
     name: 'CRM',
@@ -287,6 +298,15 @@ export const SERVICES: ServiceConfig[] = [
     plugin: true,
     envVar: 'VITE_MOBILE_URL',
   },
+  {
+    code: 'portal',
+    name: '门户',
+    devPath: '/portal/api',
+    healthPath: '/portal/health',
+    core: false,
+    plugin: true,
+    envVar: 'VITE_PORTAL_URL',
+  },
 ];
 
 /** 获取服务配置 */
@@ -304,16 +324,43 @@ export function getPluginServices(): ServiceConfig[] {
   return SERVICES.filter((s) => s.plugin);
 }
 
-/** 生成 Vite 代理配置 (可用于 scripts/generate-vite-proxy.ts) */
+/** 生成 Vite 代理配置 */
 export function generateViteProxyConfig(): string {
   const lines: string[] = [];
   for (const svc of SERVICES) {
-    lines.push(
-      `    '${svc.devPath}': { target: process.env.${svc.envVar} || 'http://localhost:3001', changeOrigin: true },`
-    );
-    lines.push(
-      `    '${svc.healthPath}': { target: process.env.${svc.envVar} || 'http://localhost:3001', changeOrigin: true },`
-    );
+    const target = svc.core ? 'http://localhost:8000' : `http://localhost:${getServicePort(svc.code)}`;
+    lines.push(`    '${svc.devPath}': { target: '${target}', changeOrigin: true },`);
+    lines.push(`    '${svc.healthPath}': { target: '${target}', changeOrigin: true },`);
   }
   return lines.join('\n');
+}
+
+/** 获取服务端口（与 vite.config.ts 中的 services 数组一致） */
+export function getServicePort(code: string): number {
+  const portMap: Record<string, number> = {
+    erp: 8010,
+    finance: 8011,
+    doc: 8012,
+    ai: 8013,
+    hrm: 8020,
+    pm: 8023,
+    crm: 8029,
+    mes: 8030,
+    pdm: 8031,
+    scm: 8040,
+    wms: 8041,
+    srm: 8042,
+    qms: 8050,
+    lims: 8051,
+    ehs: 8052,
+    rs: 8053,
+    bi: 8060,
+    report: 8060,
+    monitor: 8062,
+    portal: 8063,
+    mobile: 8070,
+    gis: 8071,
+    integration: 8072,
+  };
+  return portMap[code] || 8000;
 }

@@ -32,7 +32,7 @@ function getNavigablePath(path: string): string | null {
     const segments = path.split('/').filter(Boolean);
     const paramIndex = segments.findIndex((s) => s.startsWith(':'));
     if (paramIndex > 0) {
-      return '/' + segments.slice(0, paramIndex).join('/');
+      return `/${segments.slice(0, paramIndex).join('/')}`;
     }
     return null;
   }

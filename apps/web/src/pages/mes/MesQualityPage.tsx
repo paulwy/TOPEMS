@@ -29,7 +29,7 @@ import type {
 import type { ListParams } from '@/api/mes';
 import { qualityApi } from '@/api/mes/quality';
 import { useAppStore } from '@/store';
-import { LoadingSpinner } from '@/components/common/LoadingSpinner';
+import { LoadingSpinner } from '@topems/shared-components';
 import {
   ListPageTemplate,
   type ColumnDef,
@@ -48,6 +48,7 @@ import {
 } from 'lucide-react';
 import { apiLogger } from '@/utils/logger';
 import { designTokens } from '@/theme/tokens';
+
 const ct = designTokens.colors;
 
 interface TabPanelProps {
@@ -1050,11 +1051,15 @@ const MesQualityPage: React.FC = () => {
                   </Box>
                   <Box>
                     <InputLabel sx={{ color: 'text.secondary', fontSize: 12 }}>质检类型</InputLabel>
-                    <Box component='span'>{(selectedItem as unknown as QualityStandard).inspection_type}</Box>
+                    <Box component='span'>
+                      {(selectedItem as unknown as QualityStandard).inspection_type}
+                    </Box>
                   </Box>
                   <Box>
                     <InputLabel sx={{ color: 'text.secondary', fontSize: 12 }}>版本</InputLabel>
-                    <Box component='span'>{(selectedItem as unknown as QualityStandard).version || '-'}</Box>
+                    <Box component='span'>
+                      {(selectedItem as unknown as QualityStandard).version || '-'}
+                    </Box>
                   </Box>
                   <Box>
                     <InputLabel sx={{ color: 'text.secondary', fontSize: 12 }}>状态</InputLabel>

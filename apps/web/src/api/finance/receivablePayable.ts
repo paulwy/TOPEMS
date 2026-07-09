@@ -99,11 +99,11 @@ export const receivablePayableApi = {
     page?: number;
     pagesize?: number;
   }): Promise<ApiResponse<PaginatedResult<CollectionRecord>>> => {
-    return createApiClient().get('/finance/ar/collections', { params });
+    return createApiClient().get('/erp/finance/ar/collections', { params });
   },
 
   createCollection: (data: Partial<CollectionRecord>): Promise<ApiResponse<CollectionRecord>> => {
-    return createApiClient().post('/finance/ar/collections', data);
+    return createApiClient().post('/erp/finance/ar/collections', data);
   },
 
   listPayments: (params?: {
@@ -113,11 +113,11 @@ export const receivablePayableApi = {
     page?: number;
     pagesize?: number;
   }): Promise<ApiResponse<PaginatedResult<PaymentRecord>>> => {
-    return createApiClient().get('/finance/ap/payments', { params });
+    return createApiClient().get('/erp/finance/ap/payments', { params });
   },
 
   createPayment: (data: Partial<PaymentRecord>): Promise<ApiResponse<PaymentRecord>> => {
-    return createApiClient().post('/finance/ap/payments', data);
+    return createApiClient().post('/erp/finance/ap/payments', data);
   },
 
   reconcile: (params: {
@@ -125,7 +125,7 @@ export const receivablePayableApi = {
     invoice_id: string;
     record_ids: string[];
   }): Promise<ApiResponse<void>> => {
-    return createApiClient().post('/finance/reconcile', params);
+    return createApiClient().post('/erp/finance/reconcile', params);
   },
 
   autoReconcile: (params: {
@@ -133,7 +133,7 @@ export const receivablePayableApi = {
     entity_id: string;
     period: string;
   }): Promise<ApiResponse<{ reconciled: number }>> => {
-    return createApiClient().post('/finance/reconcile/auto', params);
+    return createApiClient().post('/erp/finance/reconcile/auto', params);
   },
 
   getReceivableAging: (params: {
@@ -155,7 +155,7 @@ export const receivablePayableApi = {
       total: number;
     }>
   > => {
-    return createApiClient().get('/finance/ar/aging', { params });
+    return createApiClient().get('/erp/finance/ar/aging', { params });
   },
 
   getPayableAging: (params: {
@@ -177,7 +177,7 @@ export const receivablePayableApi = {
       total: number;
     }>
   > => {
-    return createApiClient().get('/finance/ap/aging', { params });
+    return createApiClient().get('/erp/finance/ap/aging', { params });
   },
 };
 

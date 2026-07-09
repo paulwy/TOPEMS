@@ -137,7 +137,11 @@ export function LoginFormV2({ onLogin, className }: LoginFormV2Props) {
           }
         />
         <CardContent>
-          <Box component='form' onSubmit={form.handleSubmit(onSubmit)} sx={{ display: 'flex', flexDirection: 'column', gap: 24 }}>
+          <Box
+            component='form'
+            onSubmit={form.handleSubmit(onSubmit)}
+            sx={{ display: 'flex', flexDirection: 'column', gap: 24 }}
+          >
             {/* 用户名 */}
             <Controller
               name='username'

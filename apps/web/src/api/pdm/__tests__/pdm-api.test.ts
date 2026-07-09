@@ -93,7 +93,15 @@ describe('PDM Module API Tests', () => {
 
     it('createItem should call POST /bom-items with data', async () => {
       const { bomApi } = await import('../bom');
-      const data = { bom_version_id: 'bom-001', level: 1, item_no: '001', part_number: 'PART-001', part_name: 'Part A', quantity: 10, unit: 'pcs' };
+      const data = {
+        bom_version_id: 'bom-001',
+        level: 1,
+        item_no: '001',
+        part_number: 'PART-001',
+        part_name: 'Part A',
+        quantity: 10,
+        unit: 'pcs',
+      };
       await bomApi.createItem(data);
       const { apiClient } = await import('../../client');
       expect(apiClient.pdm.post).toHaveBeenCalledWith('/bom-items', data);
@@ -116,17 +124,32 @@ describe('PDM Module API Tests', () => {
 
     it('batchCreateItems should call POST /bom-versions/:bomVersionId/items/batch with data', async () => {
       const { bomApi } = await import('../bom');
-      const items = [{ bom_version_id: 'bom-001', level: 1, item_no: '001', part_number: 'PART-001', part_name: 'Part A', quantity: 10, unit: 'pcs' }];
+      const items = [
+        {
+          bom_version_id: 'bom-001',
+          level: 1,
+          item_no: '001',
+          part_number: 'PART-001',
+          part_name: 'Part A',
+          quantity: 10,
+          unit: 'pcs',
+        },
+      ];
       await bomApi.batchCreateItems('bom-001', items as any);
       const { apiClient } = await import('../../client');
-      expect(apiClient.pdm.post).toHaveBeenCalledWith('/bom-versions/bom-001/items/batch', { items });
+      expect(apiClient.pdm.post).toHaveBeenCalledWith('/bom-versions/bom-001/items/batch', {
+        items,
+      });
     });
 
     it('compareVersions should call POST /bom-compare with data', async () => {
       const { bomApi } = await import('../bom');
       await bomApi.compareVersions('bom-a', 'bom-b');
       const { apiClient } = await import('../../client');
-      expect(apiClient.pdm.post).toHaveBeenCalledWith('/bom-compare', { bom_version_a_id: 'bom-a', bom_version_b_id: 'bom-b' });
+      expect(apiClient.pdm.post).toHaveBeenCalledWith('/bom-compare', {
+        bom_version_a_id: 'bom-a',
+        bom_version_b_id: 'bom-b',
+      });
     });
 
     it('getComparison should call GET /bom-compare/:id', async () => {
@@ -186,14 +209,18 @@ describe('PDM Module API Tests', () => {
       const { projectApi } = await import('../project');
       await projectApi.updateStatus('proj-001', 'completed');
       const { apiClient } = await import('../../client');
-      expect(apiClient.pdm.put).toHaveBeenCalledWith('/projects/proj-001/status', { status: 'completed' });
+      expect(apiClient.pdm.put).toHaveBeenCalledWith('/projects/proj-001/status', {
+        status: 'completed',
+      });
     });
 
     it('updatePhase should call PUT /projects/:id/phase with data', async () => {
       const { projectApi } = await import('../project');
       await projectApi.updatePhase('proj-001', 'execution');
       const { apiClient } = await import('../../client');
-      expect(apiClient.pdm.put).toHaveBeenCalledWith('/projects/proj-001/phase', { phase: 'execution' });
+      expect(apiClient.pdm.put).toHaveBeenCalledWith('/projects/proj-001/phase', {
+        phase: 'execution',
+      });
     });
 
     it('listMembers should call GET /projects/:projectId/members', async () => {
@@ -208,7 +235,10 @@ describe('PDM Module API Tests', () => {
       const data = { project_id: 'proj-001', user_id: 'user-001', role: 'developer' as const };
       await projectApi.addMember(data);
       const { apiClient } = await import('../../client');
-      expect(apiClient.pdm.post).toHaveBeenCalledWith('/projects/proj-001/members', { user_id: 'user-001', role: 'developer' });
+      expect(apiClient.pdm.post).toHaveBeenCalledWith('/projects/proj-001/members', {
+        user_id: 'user-001',
+        role: 'developer',
+      });
     });
 
     it('removeMember should call DELETE /projects/:projectId/members/:userId', async () => {
@@ -222,7 +252,9 @@ describe('PDM Module API Tests', () => {
       const { projectApi } = await import('../project');
       await projectApi.updateMemberRole('proj-001', 'user-001', 'manager');
       const { apiClient } = await import('../../client');
-      expect(apiClient.pdm.put).toHaveBeenCalledWith('/projects/proj-001/members/user-001', { role: 'manager' });
+      expect(apiClient.pdm.put).toHaveBeenCalledWith('/projects/proj-001/members/user-001', {
+        role: 'manager',
+      });
     });
 
     it('listPhases should call GET /projects/:projectId/phases', async () => {
@@ -261,7 +293,9 @@ describe('PDM Module API Tests', () => {
       const { documentApi } = await import('../document');
       await documentApi.list({ type: 'specification', status: 'approved' });
       const { apiClient } = await import('../../client');
-      expect(apiClient.pdm.get).toHaveBeenCalledWith('/documents', { params: { type: 'specification', status: 'approved' } });
+      expect(apiClient.pdm.get).toHaveBeenCalledWith('/documents', {
+        params: { type: 'specification', status: 'approved' },
+      });
     });
 
     it('search should call POST /documents/search with data', async () => {
@@ -306,7 +340,9 @@ describe('PDM Module API Tests', () => {
       const { documentApi } = await import('../document');
       await documentApi.updateStatus('doc-001', 'published');
       const { apiClient } = await import('../../client');
-      expect(apiClient.pdm.put).toHaveBeenCalledWith('/documents/doc-001/status', { status: 'published' });
+      expect(apiClient.pdm.put).toHaveBeenCalledWith('/documents/doc-001/status', {
+        status: 'published',
+      });
     });
 
     it('listVersions should call GET /documents/:documentId/versions', async () => {
@@ -325,7 +361,12 @@ describe('PDM Module API Tests', () => {
 
     it('createVersion should call POST /documents/:documentId/versions with data', async () => {
       const { documentApi } = await import('../document');
-      const data = { document_id: 'doc-001', version_number: '1.0', title: 'Version 1.0', changes: ['Initial version'] };
+      const data = {
+        document_id: 'doc-001',
+        version_number: '1.0',
+        title: 'Version 1.0',
+        changes: ['Initial version'],
+      };
       await documentApi.createVersion(data);
       const { apiClient } = await import('../../client');
       expect(apiClient.pdm.post).toHaveBeenCalledWith('/documents/doc-001/versions', data);
@@ -350,14 +391,19 @@ describe('PDM Module API Tests', () => {
       const { documentApi } = await import('../document');
       await documentApi.publishVersion('doc-001', 'ver-001');
       const { apiClient } = await import('../../client');
-      expect(apiClient.pdm.post).toHaveBeenCalledWith('/documents/doc-001/versions/ver-001/publish', {});
+      expect(apiClient.pdm.post).toHaveBeenCalledWith(
+        '/documents/doc-001/versions/ver-001/publish',
+        {}
+      );
     });
 
     it('downloadVersion should call GET /documents/:documentId/versions/:versionId/download', async () => {
       const { documentApi } = await import('../document');
       await documentApi.downloadVersion('doc-001', 'ver-001');
       const { apiClient } = await import('../../client');
-      expect(apiClient.pdm.get).toHaveBeenCalledWith('/documents/doc-001/versions/ver-001/download');
+      expect(apiClient.pdm.get).toHaveBeenCalledWith(
+        '/documents/doc-001/versions/ver-001/download'
+      );
     });
   });
 

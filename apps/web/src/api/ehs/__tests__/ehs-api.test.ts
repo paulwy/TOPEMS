@@ -108,9 +108,7 @@ describe('EHS Module API Tests', () => {
       const { hazardApi } = await import('../hazard');
       const { apiClient } = await import('../../client');
       await hazardApi.deleteControlMeasure('hazard-001', 'measure-001');
-      expect(apiClient.ehs.delete).toHaveBeenCalledWith(
-        '/hazards/hazard-001/controls/measure-001'
-      );
+      expect(apiClient.ehs.delete).toHaveBeenCalledWith('/hazards/hazard-001/controls/measure-001');
     });
   });
 
@@ -209,9 +207,7 @@ describe('EHS Module API Tests', () => {
       const { apiClient } = await import('../../client');
       (apiClient.ehs.get as vi.Mock).mockResolvedValue({ data: { items: [], total: 0 } });
       await safetyIssueApi.listSafetyIssues({ page: 1, pagesize: 10, status: 'open' });
-      expect(apiClient.ehs.get).toHaveBeenCalledWith(
-        '/issues?page=1&pagesize=10&status=open'
-      );
+      expect(apiClient.ehs.get).toHaveBeenCalledWith('/issues?page=1&pagesize=10&status=open');
     });
 
     it('getSafetyIssue should call GET /issues/:id', async () => {
@@ -226,7 +222,11 @@ describe('EHS Module API Tests', () => {
       const { safetyIssueApi } = await import('../safetyIssue');
       const { apiClient } = await import('../../client');
       (apiClient.ehs.post as vi.Mock).mockResolvedValue({ data: {} });
-      const data = { title: 'Test Issue', description: 'Safety issue description', severity: 'high' };
+      const data = {
+        title: 'Test Issue',
+        description: 'Safety issue description',
+        severity: 'high',
+      };
       await safetyIssueApi.createSafetyIssue(data as any);
       expect(apiClient.ehs.post).toHaveBeenCalledWith('/issues', data);
     });
@@ -261,10 +261,7 @@ describe('EHS Module API Tests', () => {
       const { apiClient } = await import('../../client');
       (apiClient.ehs.post as vi.Mock).mockResolvedValue({ data: {} });
       await safetyIssueApi.submitRectification('issue-001');
-      expect(apiClient.ehs.post).toHaveBeenCalledWith(
-        '/issues/issue-001/rectification/submit',
-        {}
-      );
+      expect(apiClient.ehs.post).toHaveBeenCalledWith('/issues/issue-001/rectification/submit', {});
     });
 
     it('verifySafetyIssue should call POST /issues/:id/verification with data', async () => {
@@ -291,9 +288,7 @@ describe('EHS Module API Tests', () => {
       const { apiClient } = await import('../../client');
       (apiClient.ehs.get as vi.Mock).mockResolvedValue({ data: { items: [], total: 0 } });
       await riskApi.listRisks({ page: 1, pagesize: 10, risklevel: 'high' });
-      expect(apiClient.ehs.get).toHaveBeenCalledWith(
-        '/hazards?page=1&pagesize=10&risklevel=high'
-      );
+      expect(apiClient.ehs.get).toHaveBeenCalledWith('/hazards?page=1&pagesize=10&risklevel=high');
     });
 
     it('getRisk should call GET /hazards/:id', async () => {
@@ -367,9 +362,7 @@ describe('EHS Module API Tests', () => {
       const { riskApi } = await import('../risk');
       const { apiClient } = await import('../../client');
       await riskApi.deleteRiskControlMeasure('risk-001', 'measure-001');
-      expect(apiClient.ehs.delete).toHaveBeenCalledWith(
-        '/hazards/risk-001/controls/measure-001'
-      );
+      expect(apiClient.ehs.delete).toHaveBeenCalledWith('/hazards/risk-001/controls/measure-001');
     });
   });
 

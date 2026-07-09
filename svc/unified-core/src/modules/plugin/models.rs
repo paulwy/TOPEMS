@@ -72,7 +72,7 @@ pub struct Plugin {
 
     pub screenshots: Option<serde_json::Value>,
 
-    pub tags: Option<Vec<String>>,
+    pub tags: Option<serde_json::Value>,
 
     pub category: Option<String>,
 
@@ -388,7 +388,7 @@ pub struct UploadPluginRequest {
     #[serde(rename = "homepage_url")]
     pub homepage_url: Option<String>,
     pub screenshots: Option<Vec<String>>,
-    pub tags: Option<Vec<String>>,
+    pub tags: Option<serde_json::Value>,
     pub category: Option<String>,
 }
 
@@ -425,7 +425,7 @@ pub struct UpdatePluginRequest {
     #[serde(rename = "entry_point")]
     pub entry_point: Option<String>,
     pub screenshots: Option<Vec<String>>,
-    pub tags: Option<Vec<String>>,
+    pub tags: Option<serde_json::Value>,
     pub category: Option<String>,
 }
 

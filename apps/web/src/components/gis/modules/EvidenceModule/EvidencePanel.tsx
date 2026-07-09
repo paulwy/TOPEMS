@@ -1,7 +1,8 @@
 // modules/EvidenceModule/EvidencePanel.tsx
 import React, { useState, useCallback } from 'react';
 import { Camera, Mic, Video, List, Grid, Search, X, Tag } from 'lucide-react';
-import {Box,
+import {
+  Box,
   Typography,
   Paper,
   TextField,
@@ -9,7 +10,9 @@ import {Box,
   Chip,
   Grid as MuiGrid,
   Stack,
-  Button, useTheme} from '@mui/material';
+  Button,
+  useTheme,
+} from '@mui/material';
 import type { EvidenceRecord, EvidenceType } from './types';
 import PhotoCapture from './PhotoCapture';
 import AudioCapture from './AudioCapture';

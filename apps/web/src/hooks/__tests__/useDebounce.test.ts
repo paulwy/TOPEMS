@@ -1,6 +1,6 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { renderHook, act, waitFor } from '@testing-library/react';
-import { useDebounce, useDebouncedCallback } from '../useDebounce';
+import { useDebounce, useDebouncedCallback } from '../index';
 
 describe('useDebounce', () => {
   beforeEach(() => {
@@ -17,10 +17,9 @@ describe('useDebounce', () => {
   });
 
   it('should debounce value changes', async () => {
-    const { result, rerender } = renderHook(
-      ({ value }) => useDebounce(value, 500),
-      { initialProps: { value: 'initial' } }
-    );
+    const { result, rerender } = renderHook(({ value }) => useDebounce(value, 500), {
+      initialProps: { value: 'initial' },
+    });
 
     expect(result.current).toBe('initial');
 
@@ -34,10 +33,9 @@ describe('useDebounce', () => {
   });
 
   it('should not update if value has not changed', async () => {
-    const { result, rerender } = renderHook(
-      ({ value }) => useDebounce(value, 500),
-      { initialProps: { value: 'same' } }
-    );
+    const { result, rerender } = renderHook(({ value }) => useDebounce(value, 500), {
+      initialProps: { value: 'same' },
+    });
 
     expect(result.current).toBe('same');
 
@@ -49,10 +47,9 @@ describe('useDebounce', () => {
   });
 
   it('should cancel pending updates when value changes again', async () => {
-    const { result, rerender } = renderHook(
-      ({ value }) => useDebounce(value, 500),
-      { initialProps: { value: 'first' } }
-    );
+    const { result, rerender } = renderHook(({ value }) => useDebounce(value, 500), {
+      initialProps: { value: 'first' },
+    });
 
     rerender({ value: 'second' });
     rerender({ value: 'third' });
@@ -103,9 +100,7 @@ describe('useDebouncedCallback', () => {
 
   it('should use latest callback reference', async () => {
     let callCount = 0;
-    const { result, rerender } = renderHook(
-      () => useDebouncedCallback(() => callCount++, 500)
-    );
+    const { result, rerender } = renderHook(() => useDebouncedCallback(() => callCount++, 500));
 
     result.current();
     callCount = 10;

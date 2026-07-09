@@ -240,7 +240,9 @@ const PerformanceMonitorPage: React.FC = () => {
         </div>
         {slowCalls.length === 0 ? (
           <div style={{ textAlign: 'center', padding: 32 }}>
-            <CheckCircle style={{ width: 48, height: 48, color: ct.success[500], marginBottom: 8 }} />
+            <CheckCircle
+              style={{ width: 48, height: 48, color: ct.success[500], marginBottom: 8 }}
+            />
             <p style={{ color: ct.grey[500] }}>没有慢 API 调用</p>
           </div>
         ) : (

@@ -28,7 +28,7 @@ import {
 } from 'lucide-react';
 import { Link as RouterLink, useLocation, useNavigate } from 'react-router-dom';
 import { useAutoBreadcrumbs } from '@/hooks';
-import { BackButton } from '../common';
+import { BackButton } from '@topems/shared-components';
 
 export interface BreadcrumbItem {
   label: string;
@@ -524,7 +524,7 @@ export const PageHeader: React.FC<PageHeaderProps> = ({
               {/* 返回按钮 */}
               {backButton && backButton.visible !== false && (
                 <BackButton
-                  size='sm'
+                  size='small'
                   onClick={backButton.onClick}
                   href={backButton.href}
                 />

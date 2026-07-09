@@ -14,6 +14,7 @@ import type {
 } from '@/components/templates/StatsPageTemplate';
 import { PageContainer } from '@/components/common';
 import { designTokens } from '@/theme/tokens';
+
 const ct = designTokens.colors;
 
 const CRMSalesForecastPage: React.FC = () => {

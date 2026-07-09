@@ -112,7 +112,9 @@ describe('ReportSchedulePage', () => {
 
   it('should render page title', async () => {
     renderWithProviders(<ReportSchedulePage />);
-    expect(await screen.findByRole('heading', { name: '定时任务管理' }, { timeout: 10000 })).toBeInTheDocument();
+    expect(
+      await screen.findByRole('heading', { name: '定时任务管理' }, { timeout: 10000 })
+    ).toBeInTheDocument();
   });
 
   it('should render schedule list', async () => {

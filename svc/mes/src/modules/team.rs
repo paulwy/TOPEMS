@@ -382,21 +382,23 @@ pub async fn create_team(
 
     if let Some(members) = req.members {
         for member in members {
-            let _ = sqlx::query!(
-                r#"
-                INSERT INTO team_members (
-                    team_id, employee_id, employee_name, employee_code, position, join_date
-                ) VALUES ($1, $2, $3, $4, $5, $6)
-                "#,
-                result.id,
-                member.employee_id,
-                member.employee_name,
-                member.employee_code,
-                member.position,
-                now.naive_utc(),
-            )
-            .execute(&state.pool)
-            .await;
+            if let Ok(emp_uuid) = Uuid::parse_str(&member.employee_id) {
+                let _ = sqlx::query!(
+                    r#"
+                    INSERT INTO team_members (
+                        team_id, employee_id, employee_name, employee_code, position, join_date
+                    ) VALUES ($1, $2, $3, $4, $5, $6)
+                    "#,
+                    result.id,
+                    emp_uuid,
+                    member.employee_name,
+                    member.employee_code,
+                    member.position,
+                    now.naive_utc(),
+                )
+                .execute(&state.pool)
+                .await;
+            }
         }
 
         let _ = sqlx::query!(
@@ -582,9 +584,9 @@ pub async fn get_team_members(
         .into_iter()
         .map(|r| TeamMemberResponse {
             id: r.id.to_string(),
-            team_id: r.team_id.to_string(),
-            employee_id: r.employee_id,
-            employee_name: r.employee_name,
+            team_id: r.team_id.map(|u| u.to_string()).unwrap_or_default(),
+            employee_id: r.employee_id.map(|u| u.to_string()).unwrap_or_default(),
+            employee_name: r.employee_name.unwrap_or_default(),
             employee_code: r.employee_code,
             position: r.position,
             join_date: r.join_date.map(|d| Utc.from_utc_datetime(&d).to_rfc3339()),
@@ -612,6 +614,13 @@ pub async fn add_team_member(
 
     let now = Utc::now();
 
+    let employee_uuid = match Uuid::parse_str(&req.employee_id) {
+        Ok(u) => u,
+        Err(_) => {
+            return Json(ApiResponse::error(400, "无效的员工ID格式"));
+        }
+    };
+
     let result = sqlx::query!(
         r#"
         INSERT INTO team_members (
@@ -622,7 +631,7 @@ pub async fn add_team_member(
             position, join_date, status
         "#,
         id,
-        req.employee_id,
+        employee_uuid,
         req.employee_name,
         req.employee_code,
         req.position,
@@ -653,9 +662,12 @@ pub async fn add_team_member(
 
     let member = TeamMemberResponse {
         id: result.id.to_string(),
-        team_id: result.team_id.to_string(),
-        employee_id: result.employee_id,
-        employee_name: result.employee_name,
+        team_id: result.team_id.map(|u| u.to_string()).unwrap_or_default(),
+        employee_id: result
+            .employee_id
+            .map(|u| u.to_string())
+            .unwrap_or_default(),
+        employee_name: result.employee_name.unwrap_or_default(),
         employee_code: result.employee_code,
         position: result.position,
         join_date: result

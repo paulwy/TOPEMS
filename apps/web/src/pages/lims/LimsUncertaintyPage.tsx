@@ -80,7 +80,8 @@ const LimsUncertaintyPage: React.FC = () => {
       setLoading(true);
       const response = await limsApi.listUncertaintyProjects();
       if (response.success && response.data) {
-        const data = response.data as LimsListResponse<UncertaintyProjectWithCount> | UncertaintyProjectWithCount[];
+        const data = response.data as
+          LimsListResponse<UncertaintyProjectWithCount> | UncertaintyProjectWithCount[];
         let rawProjects: UncertaintyProjectWithCount[] = [];
         if (Array.isArray(data)) {
           rawProjects = data;

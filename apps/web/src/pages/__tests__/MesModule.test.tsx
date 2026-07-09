@@ -3,7 +3,14 @@ import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { render, screen } from '@testing-library/react';
 import { BrowserRouter } from 'react-router-dom';
 import ProductionDashboardPage from '../mes/ProductionDashboardPage';
-import { mesApi, productionOrderApi, workStationApi, qualityApi, equipmentApi, mesEquipmentApi } from '@/api/mes';
+import {
+  mesApi,
+  productionOrderApi,
+  workStationApi,
+  qualityApi,
+  equipmentApi,
+  mesEquipmentApi,
+} from '@/api/mes';
 import { useAppStore } from '@/store';
 import { AuthProvider } from '@/hooks/useAuth';
 

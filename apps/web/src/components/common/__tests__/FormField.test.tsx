@@ -1,11 +1,12 @@
 import React from 'react';
 import { describe, it, expect, vi } from 'vitest';
-import { render, screen, fireEvent } from '@testing-library/react';
-import FormField from '../FormField';
+import { screen, fireEvent } from '@testing-library/react';
+import { FormField } from '@topems/shared-components';
+import { renderWithProviders } from '@/__tests__/test-utils';
 
 describe('FormField', () => {
   it('should render with name and label', () => {
-    render(
+    renderWithProviders(
       <FormField
         name='username'
         label='用户名'
@@ -17,7 +18,7 @@ describe('FormField', () => {
   });
 
   it('should render with default value', () => {
-    render(
+    renderWithProviders(
       <FormField
         name='username'
         label='用户名'
@@ -30,7 +31,7 @@ describe('FormField', () => {
 
   it('should call onChange when value changes', () => {
     const handleChange = vi.fn();
-    render(
+    renderWithProviders(
       <FormField
         name='username'
         label='用户名'
@@ -43,7 +44,7 @@ describe('FormField', () => {
   });
 
   it('should render with helper text', () => {
-    render(
+    renderWithProviders(
       <FormField
         name='username'
         label='用户名'
@@ -54,7 +55,7 @@ describe('FormField', () => {
   });
 
   it('should render error state with error message', () => {
-    render(
+    renderWithProviders(
       <FormField
         name='username'
         label='用户名'
@@ -68,7 +69,7 @@ describe('FormField', () => {
   });
 
   it('should render disabled state', () => {
-    render(
+    renderWithProviders(
       <FormField
         name='username'
         label='用户名'
@@ -80,7 +81,7 @@ describe('FormField', () => {
   });
 
   it('should render required field', () => {
-    render(
+    renderWithProviders(
       <FormField
         name='username'
         label='用户名'
@@ -92,7 +93,7 @@ describe('FormField', () => {
   });
 
   it('should render with placeholder', () => {
-    render(
+    renderWithProviders(
       <FormField
         name='username'
         label='用户名'
@@ -104,7 +105,7 @@ describe('FormField', () => {
   });
 
   it('should render with different types', () => {
-    render(
+    renderWithProviders(
       <FormField
         name='password'
         label='密码'
@@ -116,7 +117,7 @@ describe('FormField', () => {
   });
 
   it('should render in compact mode by default', () => {
-    render(
+    renderWithProviders(
       <FormField
         name='username'
         label='用户名'
@@ -127,7 +128,7 @@ describe('FormField', () => {
   });
 
   it('should render with custom size when compact is false', () => {
-    render(
+    renderWithProviders(
       <FormField
         name='username'
         label='用户名'
@@ -140,7 +141,7 @@ describe('FormField', () => {
   });
 
   it('should render with multiline', () => {
-    render(
+    renderWithProviders(
       <FormField
         name='description'
         label='描述'

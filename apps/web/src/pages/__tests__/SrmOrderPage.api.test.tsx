@@ -6,7 +6,9 @@ import { srmApi } from '@/api/srm';
 
 vi.mock('@/api/srm', () => ({
   srmApi: {
-    listPurchaseOrders: vi.fn().mockResolvedValue({ success: true, code: 200, message: 'OK', data: [] }),
+    listPurchaseOrders: vi
+      .fn()
+      .mockResolvedValue({ success: true, code: 200, message: 'OK', data: [] }),
     createPurchaseOrder: vi.fn(),
     getPurchaseOrder: vi.fn(),
     updatePurchaseOrder: vi.fn(),

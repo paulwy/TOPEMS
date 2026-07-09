@@ -9,7 +9,7 @@ use serde::{Deserialize, Serialize};
 use sqlx::{types::Uuid, FromRow};
 use topems_shared::ApiResponse;
 
-#[derive(Debug, Deserialize)]
+#[derive(Debug, Serialize, Deserialize)]
 pub struct IssueQuery {
     pub page: Option<i64>,
     pub page_size: Option<i64>,
@@ -33,7 +33,7 @@ pub struct QualityIssue {
     pub updated_at: Option<String>,
 }
 
-#[derive(Debug, Deserialize)]
+#[derive(Debug, Serialize, Deserialize)]
 pub struct CreateIssueRequest {
     pub title: String,
     pub description: Option<String>,
@@ -43,7 +43,7 @@ pub struct CreateIssueRequest {
     pub created_by: Option<String>,
 }
 
-#[derive(Debug, Deserialize)]
+#[derive(Debug, Serialize, Deserialize)]
 pub struct UpdateIssueRequest {
     pub title: Option<String>,
     pub description: Option<String>,

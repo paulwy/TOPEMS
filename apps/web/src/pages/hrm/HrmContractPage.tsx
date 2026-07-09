@@ -19,7 +19,8 @@ import { contractApi, contractRenewalApi, employeeApi } from '@/api/hrm';
 import { ListPageTemplate, MuiStatCard as StatCard } from '@/components';
 import type { ColumnDef, RowAction } from '@/components';
 
-import {Card,
+import {
+  Card,
   CardContent,
   CardHeader,
   Typography,
@@ -35,11 +36,10 @@ import {Card,
   FormLabel,
   Alert,
   Snackbar,
-  Chip, useTheme} from '@mui/material';
-import { ActionButton } from '@/components/common/ActionButton';
-import { FormField } from '@/components/common/FormField';
-import { FormSelect } from '@/components/common/FormSelect';
-import { StatusBadge } from '@/components/common/StatusBadge';
+  Chip,
+  useTheme,
+} from '@mui/material';
+import { ActionButton, FormField, FormSelect, StatusBadge } from '@topems/shared-components';
 import { Dialog } from '@/components/common/Dialog';
 import { FileUpload, PageContainer } from '@/components/common';
 import { designTokens } from '@/theme/tokens';
@@ -946,7 +946,7 @@ export default function ContractManagementPage() {
                   setFormState((s) => ({ ...s, start_date: e.target.value }))
                 }
                 fullWidth
-                slotProps={{ inputLabel: { shrink: true } }}
+                slotProps={{ inputLabel: { shrink: true } } as any}
               />
               <FormField
                 name='end_date'
@@ -958,7 +958,7 @@ export default function ContractManagementPage() {
                 }
                 placeholder='无固定期限'
                 fullWidth
-                slotProps={{ inputLabel: { shrink: true } }}
+                slotProps={{ inputLabel: { shrink: true } } as any}
               />
             </Stack>
 
@@ -1347,7 +1347,7 @@ export default function ContractManagementPage() {
                 setRenewFormState((s) => ({ ...s, new_start_date: e.target.value }))
               }
               fullWidth
-              slotProps={{ inputLabel: { shrink: true } }}
+              slotProps={{ inputLabel: { shrink: true } } as any}
             />
             <FormField
               name='new_end_date'
@@ -1359,7 +1359,7 @@ export default function ContractManagementPage() {
               }
               placeholder='无固定期限'
               fullWidth
-              slotProps={{ inputLabel: { shrink: true } }}
+              slotProps={{ inputLabel: { shrink: true } } as any}
             />
           </Stack>
 

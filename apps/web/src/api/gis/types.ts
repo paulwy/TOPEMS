@@ -1,16 +1,12 @@
+import type { PaginatedResponse } from '@topems/shared-types';
+
+export { PaginatedResponse };
+
 export interface ListQueryParams {
   page?: number;
   pagesize?: number;
   search?: string;
   status?: string;
-}
-
-export interface PaginatedResponse<T> {
-  data: T[];
-  total: number;
-  page: number;
-  pageSize: number;
-  totalPages: number;
 }
 
 export interface RawPaginatedResponse {

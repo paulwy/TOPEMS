@@ -41,7 +41,9 @@ describe('MobileHomePage', () => {
 
   it('should render page title', async () => {
     renderWithProviders(<MobileHomePage />);
-    expect(await screen.findByRole('heading', { name: '首页' }, { timeout: 10000 })).toBeInTheDocument();
+    expect(
+      await screen.findByRole('heading', { name: '首页' }, { timeout: 10000 })
+    ).toBeInTheDocument();
   });
 
   it('should render quick actions', async () => {

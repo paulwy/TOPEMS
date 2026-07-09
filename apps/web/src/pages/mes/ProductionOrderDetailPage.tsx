@@ -1,4 +1,12 @@
-import { Typography, Box, InputLabel, Chip, Card, CardContent, type ChipProps } from '@mui/material';
+import {
+  Typography,
+  Box,
+  InputLabel,
+  Chip,
+  Card,
+  CardContent,
+  type ChipProps,
+} from '@mui/material';
 import React, { useState, useEffect, useMemo } from 'react';
 import { useParams } from 'react-router-dom';
 import { Package, CheckCircle, AlertCircle, TrendingUp } from 'lucide-react';
@@ -9,6 +17,7 @@ import type { ProductionOrder, ProductionRecord, QualityRecord } from '@/api/mes
 import { apiLogger } from '@/utils/logger';
 import { useAppStore } from '@/store';
 import { designTokens } from '@/theme/tokens';
+
 const ct = designTokens.colors;
 
 const ProductionOrderDetailPage: React.FC = () => {

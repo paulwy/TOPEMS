@@ -1,4 +1,7 @@
 import type { ApiResponse } from '../client';
+import type { PaginatedResponse } from '@topems/shared-types';
+
+export { PaginatedResponse };
 
 export interface SafetyHazard {
   id: string;
@@ -518,14 +521,6 @@ export interface ListQueryParams {
   pagesize?: number;
   search?: string;
   status?: string;
-}
-
-export interface PaginatedResponse<T> {
-  data: T[];
-  total: number;
-  page: number;
-  pagesize: number;
-  total_pages: number;
 }
 
 // ============ Risk Management Types ============

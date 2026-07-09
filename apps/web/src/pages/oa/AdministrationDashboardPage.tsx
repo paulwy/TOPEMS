@@ -160,7 +160,13 @@ const mockMeetingBookings: MeetingBooking[] = [
 ];
 
 const quickActions: QuickAction[] = [
-  { label: '请假申请', icon: <CalendarDays />, color: 'orange', bg: ct.orange[100], path: '/oa/leave' },
+  {
+    label: '请假申请',
+    icon: <CalendarDays />,
+    color: 'orange',
+    bg: ct.orange[100],
+    path: '/oa/leave',
+  },
   {
     label: '报销申请',
     icon: <DollarSign />,
@@ -168,12 +174,36 @@ const quickActions: QuickAction[] = [
     bg: 'secondary.light',
     path: '/oa/expense',
   },
-  { label: '会议室预订', icon: <Calendar />, color: 'blue', bg: 'primary.100', path: '/oa/meeting' },
+  {
+    label: '会议室预订',
+    icon: <Calendar />,
+    color: 'blue',
+    bg: 'primary.100',
+    path: '/oa/meeting',
+  },
   { label: '办公用品', icon: <Package />, color: 'teal', bg: ct.teal[100], path: '/oa/supplies' },
   { label: '车辆预约', icon: <Car />, color: 'red', bg: 'error.lighter', path: '/oa/vehicle' },
-  { label: '公告通知', icon: <Bell />, color: 'purple', bg: 'secondary.100', path: '/oa/announcement' },
-  { label: '考勤查询', icon: <UserCheck />, color: 'green', bg: ct.success[100], path: '/oa/attendance' },
-  { label: '证明开具', icon: <FileText />, color: 'amber', bg: 'warning.100', path: '/oa/certificate' },
+  {
+    label: '公告通知',
+    icon: <Bell />,
+    color: 'purple',
+    bg: 'secondary.100',
+    path: '/oa/announcement',
+  },
+  {
+    label: '考勤查询',
+    icon: <UserCheck />,
+    color: 'green',
+    bg: ct.success[100],
+    path: '/oa/attendance',
+  },
+  {
+    label: '证明开具',
+    icon: <FileText />,
+    color: 'amber',
+    bg: 'warning.100',
+    path: '/oa/certificate',
+  },
 ];
 
 const statCards: StatCardData[] = [

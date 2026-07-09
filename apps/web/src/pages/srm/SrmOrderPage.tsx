@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useMemo } from 'react';
-import {Box,
+import {
+  Box,
   Dialog,
   DialogTitle,
   DialogContent,
@@ -9,7 +10,9 @@ import {Box,
   Card,
   CardContent,
   Typography,
-  Button, useTheme} from '@mui/material';
+  Button,
+  useTheme,
+} from '@mui/material';
 import {
   Plus,
   ClipboardList,
@@ -554,7 +557,9 @@ const SrmOrderPage: React.FC = () => {
           ]}
           onRefresh={loadOrders}
           emptyMessage='暂无订单数据'
-          emptyIcon={<ClipboardList style={{ width: 48, height: 48, color: theme.palette.text.disabled }} />}
+          emptyIcon={
+            <ClipboardList style={{ width: 48, height: 48, color: theme.palette.text.disabled }} />
+          }
           headerContent={headerContent}
           getRowId={(row) => row.id || row.po_no || Math.random().toString()}
         />

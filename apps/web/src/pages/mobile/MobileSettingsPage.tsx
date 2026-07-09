@@ -6,7 +6,7 @@ import {
   type SettingSection,
   type SettingValueType,
 } from '@/components/templates';
-import { logger } from "@/utils/logger";
+import { logger } from '@/utils/logger';
 
 interface MobileSetting {
   key: string;

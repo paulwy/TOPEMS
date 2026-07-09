@@ -46,8 +46,11 @@ import type {
 } from '@/api/lims';
 import { limsApi } from '@/api/lims';
 import { useAppStore } from '@/store';
-import { GRADIENTS } from '@/constants/colors';
+import { GRADIENTS } from '@topems/shared-constants';
 import { PageContainer } from '@/components/common';
+import { CardListTemplate } from '@/components/templates/CardListTemplate';
+import { apiLogger } from '@/utils/logger';
+import { designTokens } from '@/theme/tokens';
 
 interface RawSample extends Partial<Sample> {
   received_date?: string;
@@ -66,9 +69,6 @@ interface LimsListResponse<T> {
   tasks?: T[];
   records?: T[];
 }
-import { CardListTemplate } from '@/components/templates/CardListTemplate';
-import { apiLogger } from '@/utils/logger';
-import { designTokens } from '@/theme/tokens';
 
 const ct = designTokens.colors;
 
@@ -105,10 +105,7 @@ const LimsTaskPage: React.FC = () => {
     return serviceStatuses[serviceName] || false;
   };
 
-  const checkServiceStatus = async (
-    serviceName: string,
-    setStatus: (up: boolean) => void
-  ) => {
+  const checkServiceStatus = async (serviceName: string, setStatus: (up: boolean) => void) => {
     try {
       const controller = new AbortController();
       const timeoutId = setTimeout(() => controller.abort(), 2000);
@@ -126,9 +123,7 @@ const LimsTaskPage: React.FC = () => {
 
   useEffect(() => {
     const checkAllServices = () => {
-      checkServiceStatus('lims', (up) =>
-        setServiceStatuses((prev) => ({ ...prev, lims: up }))
-      );
+      checkServiceStatus('lims', (up) => setServiceStatuses((prev) => ({ ...prev, lims: up })));
     };
 
     checkAllServices();
@@ -233,7 +228,8 @@ const LimsTaskPage: React.FC = () => {
     try {
       const response = await limsApi.listProcesses();
       if (response.success && response.data) {
-        const processData = response.data as LimsListResponse<InspectionProcess> | InspectionProcess[];
+        const processData = response.data as
+          LimsListResponse<InspectionProcess> | InspectionProcess[];
         let rawProcesses: InspectionProcess[] = [];
 
         if (Array.isArray(processData)) {
@@ -921,7 +917,10 @@ const LimsTaskPage: React.FC = () => {
                 >
                   检验任务详情
                 </Typography>
-                <IconButton onClick={() => setShowDetailModal(false)} aria-label='关闭检验任务详情对话框'>
+                <IconButton
+                  onClick={() => setShowDetailModal(false)}
+                  aria-label='关闭检验任务详情对话框'
+                >
                   <X size={24} />
                 </IconButton>
               </Box>

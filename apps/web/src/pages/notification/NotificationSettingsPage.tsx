@@ -34,7 +34,7 @@ import {
 
 import { useAppStore } from '../../store';
 import { PageContainer } from '@/components/common';
-import ConfirmDialog from '@/components/common/ConfirmDialog';
+import { ConfirmDialog } from '@topems/shared-components';
 import { extractErrorMessage } from '@/utils/errors';
 import { designTokens } from '@/theme/tokens';
 
@@ -381,7 +381,7 @@ export const NotificationSettingsPage: React.FC = () => {
                 }}
                 size='small'
                 disabled={!generalSettings.doNotDisturbEnabled}
-                slotProps={{ inputLabel: { shrink: true } }}
+                slotProps={{ inputLabel: { shrink: true } } as any}
               />
             </Box>
             <Box sx={{ flex: 1, minWidth: { xs: '100%', sm: 'calc(50% - 8px)' } }}>
@@ -396,7 +396,7 @@ export const NotificationSettingsPage: React.FC = () => {
                 }}
                 size='small'
                 disabled={!generalSettings.doNotDisturbEnabled}
-                slotProps={{ inputLabel: { shrink: true } }}
+                slotProps={{ inputLabel: { shrink: true } } as any}
               />
             </Box>
           </Box>

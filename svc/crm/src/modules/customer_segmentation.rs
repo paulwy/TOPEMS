@@ -1,6 +1,6 @@
 use axum::{
     extract::{Extension, Query, State},
-    routing::{delete, get, post},
+    routing::{delete, get},
     Json, Router,
 };
 use chrono::{DateTime, Utc};

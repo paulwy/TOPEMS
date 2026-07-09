@@ -1,5 +1,5 @@
 export { OrgTree } from './components/OrgTree';
-export { UserSelect } from './components/UserSelect';
+export { UserSelect, type UserSelectProps } from './components/UserSelect';
 export { NumberField, type NumberFieldProps } from './components/NumberField';
 export { CurrencyField, type CurrencyFieldProps } from './components/CurrencyField';
 export { PercentField, type PercentFieldProps } from './components/PercentField';
@@ -11,7 +11,7 @@ export { EmptyState, ListEmptyState, SearchEmptyState, PermissionEmptyState, Err
 export { ActionButton, type ActionButtonProps, type ActionButtonVariant, type ActionButtonSize } from './components/ActionButton';
 export { FormField, type FormFieldProps } from './components/FormField';
 export { FormSelect, type FormSelectProps, type FormSelectOption } from './components/FormSelect';
-export { FilterBar, type FilterBarProps, type FilterConfig, type FilterOption } from './components/FilterBar';
+export { FilterBar, type FilterBarProps, type FilterConfig, type FilterOption, type FilterValue } from './components/FilterBar';
 export { ProgressBar, type ProgressBarProps } from './components/ProgressBar';
 export { Stepper, type StepperProps, type StepItem } from './components/Stepper';
 export { default as Pagination, type PaginationConfig } from './components/Pagination';
@@ -20,6 +20,9 @@ export { BackButton, type BackButtonProps } from './components/BackButton';
 export { default as ConfirmDialog, AlertDialog, InfoDialog, SuccessDialog, WarningDialog, ErrorDialog, ConfirmationDialog, type ConfirmDialogConfig, type DialogType, type DialogButtonType, type DialogSize, type DialogButton } from './components/ConfirmDialog';
 
 // Page-level components
-export { DataTable, type DataTableProps, type DataTableRow, type ExpandedRowRender, type AdvancedFilter, type ExportResult, type ExportDataFn } from './components/DataTable';
+export { DataTable, MobileCardView, type DataTableProps, type DataTableRow, type ExpandedRowRender, type AdvancedFilter, type ExportResult, type ExportDataFn, type MobileCardViewProps } from './components/DataTable';
 export { PageContainer, type PageContainerProps } from './components/PageContainer';
 export { CommandPalette, type CommandItem, type CommandGroup, type CommandPaletteProps } from './components/CommandPalette';
+
+// Media components
+export { LazyImage, type LazyImageProps } from './components/LazyImage';

@@ -328,7 +328,7 @@ const ScmEvaluationPage: React.FC = () => {
                 onChange={(e) => setFormData({ ...formData, evaluation_date: e.target.value })}
                 size='small'
                 required
-                slotProps={{ inputLabel: { shrink: true } }}
+                slotProps={{ inputLabel: { shrink: true } } as any}
                 disabled={isEditing}
               />
               <TextField

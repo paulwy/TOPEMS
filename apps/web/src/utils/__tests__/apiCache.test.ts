@@ -126,10 +126,7 @@ describe('apiCache', () => {
 
     it('should propagate errors to all waiting requests', async () => {
       const mockFn = vi.fn().mockRejectedValue(new Error('fail'));
-      const [p1, p2] = [
-        apiCache.dedup('key1', mockFn),
-        apiCache.dedup('key1', mockFn),
-      ];
+      const [p1, p2] = [apiCache.dedup('key1', mockFn), apiCache.dedup('key1', mockFn)];
       await expect(p1).rejects.toThrow('fail');
       await expect(p2).rejects.toThrow('fail');
       expect(mockFn).toHaveBeenCalledTimes(1);

@@ -26,7 +26,8 @@ import { useAppStore } from '../../store';
 import { useAuth } from '../../hooks/useAuth';
 import { PageContainer } from '@/components/common';
 
-import {Box,
+import {
+  Box,
   TextField,
   Typography,
   Card,
@@ -45,8 +46,11 @@ import {Box,
   IconButton,
   CircularProgress,
   Divider,
-  Button, useTheme} from '@mui/material';
+  Button,
+  useTheme,
+} from '@mui/material';
 import { designTokens } from '@/theme/tokens';
+
 const ct = designTokens.colors;
 
 interface ActivityItem {

@@ -52,6 +52,7 @@ import PieChartComponent from '@/components/charts/PieChart';
 import { useAppStore } from '@/store';
 import { logger } from '@/utils/logger';
 import { designTokens } from '@/theme/tokens';
+
 const ct = designTokens.colors;
 
 type SettingsTab = 'models' | 'config' | 'usage' | 'api';
@@ -862,7 +863,10 @@ export const AiModelSettingsPage: React.FC = () => {
                           </TableCell>
                           <TableCell>2024-01-15</TableCell>
                           <TableCell align='right'>
-                            <IconButton size='small' aria-label='编辑API密钥'>
+                            <IconButton
+                              size='small'
+                              aria-label='编辑API密钥'
+                            >
                               <Edit3 size={16} />
                             </IconButton>
                           </TableCell>
@@ -883,7 +887,10 @@ export const AiModelSettingsPage: React.FC = () => {
                           </TableCell>
                           <TableCell>2024-03-20</TableCell>
                           <TableCell align='right'>
-                            <IconButton size='small' aria-label='编辑API密钥'>
+                            <IconButton
+                              size='small'
+                              aria-label='编辑API密钥'
+                            >
                               <Edit3 size={16} />
                             </IconButton>
                           </TableCell>
@@ -904,7 +911,10 @@ export const AiModelSettingsPage: React.FC = () => {
                           </TableCell>
                           <TableCell>2024-02-10</TableCell>
                           <TableCell align='right'>
-                            <IconButton size='small' aria-label='编辑API密钥'>
+                            <IconButton
+                              size='small'
+                              aria-label='编辑API密钥'
+                            >
                               <Edit3 size={16} />
                             </IconButton>
                           </TableCell>

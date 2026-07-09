@@ -21,7 +21,7 @@ import {
   StatsPageTemplate,
   type StatsStatCard,
 } from '@/components/templates';
-import { StatusBadge } from '@/components/common/StatusBadge';
+import { StatusBadge } from '@topems/shared-components';
 import { PageContainer } from '@/components/common/PageContainerV2';
 import {
   Button,

@@ -28,7 +28,7 @@ import {
 import { apiLogger } from '@/utils/logger';
 import { ListPageTemplate, type ColumnDef } from '@/components/templates';
 import { PageContainer } from '@/components/common';
-import ConfirmDialog from '@/components/common/ConfirmDialog';
+import { ConfirmDialog } from '@topems/shared-components';
 import { designTokens } from '@/theme/tokens';
 
 const ct = designTokens.colors;
@@ -441,7 +441,7 @@ const MrpPlanPage: React.FC = () => {
                 onChange={(e) => setFormData({ ...formData, start_date: e.target.value })}
                 size='small'
                 required
-                slotProps={{ inputLabel: { shrink: true } }}
+                slotProps={{ inputLabel: { shrink: true } } as any}
               />
               <TextField
                 label='结束日期 *'
@@ -450,7 +450,7 @@ const MrpPlanPage: React.FC = () => {
                 onChange={(e) => setFormData({ ...formData, end_date: e.target.value })}
                 size='small'
                 required
-                slotProps={{ inputLabel: { shrink: true } }}
+                slotProps={{ inputLabel: { shrink: true } } as any}
               />
             </Box>
             <TextField
