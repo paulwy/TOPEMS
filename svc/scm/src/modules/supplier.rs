@@ -61,7 +61,7 @@ pub fn create_routes() -> Router<ApiState> {
         )
 }
 
-async fn list_suppliers(
+pub async fn list_suppliers(
     State(state): State<ApiState>,
     Extension(claims): Extension<Claims>,
     Query(params): Query<PaginationParams>,
@@ -145,7 +145,7 @@ async fn list_suppliers(
     }
 }
 
-async fn create_supplier(
+pub async fn create_supplier(
     State(state): State<ApiState>,
     Extension(claims): Extension<Claims>,
     headers: HeaderMap,
@@ -225,7 +225,7 @@ async fn create_supplier(
     response
 }
 
-async fn get_supplier(
+pub async fn get_supplier(
     State(state): State<ApiState>,
     Extension(claims): Extension<Claims>,
     Path(id): Path<Uuid>,
@@ -275,7 +275,7 @@ async fn get_supplier(
     }
 }
 
-async fn update_supplier(
+pub async fn update_supplier(
     State(state): State<ApiState>,
     Extension(claims): Extension<Claims>,
     Path(id): Path<Uuid>,
@@ -379,7 +379,7 @@ async fn update_supplier(
     response
 }
 
-async fn delete_supplier(
+pub async fn delete_supplier(
     State(state): State<ApiState>,
     Extension(claims): Extension<Claims>,
     Path(id): Path<Uuid>,

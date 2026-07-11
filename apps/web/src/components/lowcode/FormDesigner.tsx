@@ -376,7 +376,7 @@ const FormDesigner: React.FC<FormDesignerProps> = ({
             <Link
               color='inherit'
               underline='hover'
-              href='#'
+              href='/lowcode/home'
             >
               低代码平台
             </Link>

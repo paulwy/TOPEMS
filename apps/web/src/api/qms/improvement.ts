@@ -20,7 +20,7 @@ export const improvementApi = {
     return { ...response, data: adaptedData };
   },
 
-  getImprovement: async (id: string): Promise<ApiResponse<QualityImprovement>> => {
+  getImprovement: async (id: string): Promise<ApiResponse<QualityImprovement | undefined>> => {
     const response = await apiClient.qms.get<CorrectiveActionBackend>(`/actions/${id}`);
     return {
       ...response,
@@ -30,7 +30,7 @@ export const improvementApi = {
 
   createImprovement: async (
     data: CreateQualityImprovementRequest
-  ): Promise<ApiResponse<QualityImprovement>> => {
+  ): Promise<ApiResponse<QualityImprovement | undefined>> => {
     const backendData = adaptActionToBackend(data);
     const response = await apiClient.qms.post<CorrectiveActionBackend>('/actions', backendData);
     return {
@@ -42,7 +42,7 @@ export const improvementApi = {
   updateImprovement: async (
     id: string,
     data: CreateQualityImprovementRequest
-  ): Promise<ApiResponse<QualityImprovement>> => {
+  ): Promise<ApiResponse<QualityImprovement | undefined>> => {
     const backendData: UpdateCorrectiveActionRequestBackend = {
       title: data.title,
       description: data.description,

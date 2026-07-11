@@ -28,6 +28,7 @@ impl std::fmt::Display for PhaseStatus {
 #[derive(Debug, Clone, Serialize, Deserialize, FromRow, ToSchema)]
 pub struct ProjectPhase {
     pub id: Uuid,
+    pub tenant_id: Uuid,
     pub project_id: Uuid,
     pub phase_number: i32,
     pub name: String,

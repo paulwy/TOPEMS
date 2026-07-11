@@ -1,11 +1,103 @@
-import axios, { AxiosInstance, AxiosRequestConfig } from 'axios';
+import axios, { AxiosInstance, AxiosRequestConfig, CancelTokenSource } from 'axios';
 
 const BASE_URL = process.env.EXPO_PUBLIC_API_URL || 'http://localhost:3000/api';
+
+const MAX_CACHE_SIZE = 100;
+const DEFAULT_TTL = 5 * 60 * 1000;
+
+interface CacheEntry {
+  data: unknown;
+  timestamp: number;
+  ttl: number;
+  accessCount: number;
+  lastAccess: number;
+}
+
+const cache = new Map<string, CacheEntry>();
+const cancelTokenSources = new Map<string, CancelTokenSource>();
+
+const getCacheKey = (config: AxiosRequestConfig): string => {
+  const method = config.method?.toUpperCase() || 'GET';
+  const url = config.url || '';
+  const params = JSON.stringify(config.params || {});
+  return `${method}:${url}:${params}`;
+};
+
+const getFromCache = (config: AxiosRequestConfig): unknown | null => {
+  const key = getCacheKey(config);
+  const entry = cache.get(key);
+  if (!entry) return null;
+
+  const now = Date.now();
+  if (now - entry.timestamp > entry.ttl) {
+    cache.delete(key);
+    return null;
+  }
+
+  entry.accessCount += 1;
+  entry.lastAccess = now;
+
+  return entry.data;
+};
+
+const evictLeastUsed = (): void => {
+  if (cache.size < MAX_CACHE_SIZE) return;
+
+  let leastUsedKey: string | null = null;
+  let minScore = Infinity;
+
+  const now = Date.now();
+
+  cache.forEach((entry, key) => {
+    const age = now - entry.lastAccess;
+    const score = age / (entry.accessCount + 1);
+    if (score < minScore) {
+      minScore = score;
+      leastUsedKey = key;
+    }
+  });
+
+  if (leastUsedKey) {
+    cache.delete(leastUsedKey);
+  }
+};
+
+const saveToCache = (config: AxiosRequestConfig, data: unknown, ttl: number = DEFAULT_TTL): void => {
+  const key = getCacheKey(config);
+
+  evictLeastUsed();
+
+  cache.set(key, {
+    data,
+    timestamp: Date.now(),
+    ttl,
+    accessCount: 1,
+    lastAccess: Date.now(),
+  });
+};
+
+const cleanupExpiredCache = (): void => {
+  const now = Date.now();
+  cache.forEach((entry, key) => {
+    if (now - entry.timestamp > entry.ttl) {
+      cache.delete(key);
+    }
+  });
+};
+
+const cancelPendingRequest = (config: AxiosRequestConfig): void => {
+  const key = getCacheKey(config);
+  const source = cancelTokenSources.get(key);
+  if (source) {
+    source.cancel('Request cancelled due to new request');
+    cancelTokenSources.delete(key);
+  }
+};
 
 const createApiClient = (): AxiosInstance => {
   const client = axios.create({
     baseURL: BASE_URL,
-    timeout: 10000,
+    timeout: 15000,
     headers: {
       'Content-Type': 'application/json',
     },
@@ -17,6 +109,31 @@ const createApiClient = (): AxiosInstance => {
       if (token && config.headers) {
         config.headers.Authorization = `Bearer ${token}`;
       }
+
+      const cacheEnabled = config.method?.toUpperCase() === 'GET' && !(config as any)?.noCache;
+      if (cacheEnabled) {
+        const cachedData = getFromCache(config);
+        if (cachedData !== null) {
+          return {
+            ...config,
+            adapter: () => Promise.resolve({
+              data: cachedData,
+              status: 200,
+              statusText: 'OK',
+              headers: {},
+              config,
+            }),
+          };
+        }
+
+        cancelPendingRequest(config);
+
+        const source = axios.CancelToken.source();
+        config.cancelToken = source.token;
+        const key = getCacheKey(config);
+        cancelTokenSources.set(key, source);
+      }
+
       return config;
     },
     (error) => {
@@ -25,12 +142,51 @@ const createApiClient = (): AxiosInstance => {
   );
 
   client.interceptors.response.use(
-    (response) => response,
-    (error) => {
+    (response) => {
+      const config = response.config as AxiosRequestConfig;
+      const cacheEnabled = config.method?.toUpperCase() === 'GET' && !(config as any)?.noCache;
+      const cacheTtl = (config as any)?.cacheTtl || DEFAULT_TTL;
+
+      if (cacheEnabled && response.status === 200) {
+        saveToCache(config, response.data, cacheTtl);
+      }
+
+      const key = getCacheKey(config);
+      cancelTokenSources.delete(key);
+
+      return response;
+    },
+    async (error) => {
+      const config = error.config as AxiosRequestConfig;
+
+      const key = getCacheKey(config);
+      cancelTokenSources.delete(key);
+
+      if (axios.isCancel(error)) {
+        return Promise.reject(error);
+      }
+
       if (error.response?.status === 401) {
         localStorage.removeItem('token');
         window.location.reload();
+        return Promise.reject(error);
       }
+
+      const retryCount = (config as any)?.retryCount || 0;
+      const maxRetries = (config as any)?.maxRetries || 3;
+      const retryDelay = (config as any)?.retryDelay || 1000;
+
+      const shouldRetry =
+        maxRetries > retryCount &&
+        error.response &&
+        [429, 500, 502, 503, 504].includes(error.response.status);
+
+      if (shouldRetry) {
+        (config as any).retryCount = retryCount + 1;
+        await new Promise((resolve) => setTimeout(resolve, retryDelay * (retryCount + 1)));
+        return client(config);
+      }
+
       return Promise.reject(error);
     },
   );
@@ -39,5 +195,47 @@ const createApiClient = (): AxiosInstance => {
 };
 
 export const apiClient = createApiClient();
+
+export const clearCache = (): void => {
+  cache.clear();
+};
+
+export const clearCacheByKey = (url: string, method: string = 'GET', params?: Record<string, unknown>): void => {
+  const key = `${method.toUpperCase()}:${url}:${JSON.stringify(params || {})}`;
+  cache.delete(key);
+};
+
+export const getCacheSize = (): number => {
+  return cache.size;
+};
+
+export const getCacheStats = () => {
+  let totalAccessCount = 0;
+  let oldestTimestamp = Date.now();
+  let newestTimestamp = 0;
+
+  cache.forEach((entry) => {
+    totalAccessCount += entry.accessCount;
+    if (entry.timestamp < oldestTimestamp) {
+      oldestTimestamp = entry.timestamp;
+    }
+    if (entry.timestamp > newestTimestamp) {
+      newestTimestamp = entry.timestamp;
+    }
+  });
+
+  return {
+    size: cache.size,
+    maxSize: MAX_CACHE_SIZE,
+    totalAccessCount,
+    oldestAge: cache.size > 0 ? Date.now() - oldestTimestamp : 0,
+    newestAge: cache.size > 0 ? Date.now() - newestTimestamp : 0,
+  };
+};
+
+if (typeof window !== 'undefined') {
+  window.addEventListener('beforeunload', clearCache);
+  window.addEventListener('pagehide', cleanupExpiredCache);
+}
 
 export default apiClient;

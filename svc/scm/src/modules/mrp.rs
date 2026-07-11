@@ -106,7 +106,7 @@ fn mrp_suggestion_row_to_json(row: &sqlx::postgres::PgRow) -> serde_json::Value 
     })
 }
 
-async fn list_suggestions(
+pub async fn list_suggestions(
     State(state): State<ApiState>,
     Extension(claims): Extension<Claims>,
     Query(params): Query<PaginationParams>,
@@ -177,7 +177,7 @@ async fn list_suggestions(
     }
 }
 
-async fn get_suggestion(
+pub async fn get_suggestion(
     State(state): State<ApiState>,
     Extension(claims): Extension<Claims>,
     Path(id): Path<Uuid>,
@@ -212,7 +212,7 @@ async fn get_suggestion(
     }
 }
 
-async fn compute_mrp(
+pub async fn compute_mrp(
     State(state): State<ApiState>,
     Extension(claims): Extension<Claims>,
     headers: HeaderMap,
@@ -393,7 +393,7 @@ pub struct ConfirmSuggestionRequest {
     pub remarks: Option<String>,
 }
 
-async fn confirm_suggestion(
+pub async fn confirm_suggestion(
     State(state): State<ApiState>,
     Extension(claims): Extension<Claims>,
     Path(id): Path<Uuid>,
@@ -504,7 +504,7 @@ async fn confirm_suggestion(
     response
 }
 
-async fn material_requirement_summary(
+pub async fn material_requirement_summary(
     State(state): State<ApiState>,
     Extension(claims): Extension<Claims>,
     Query(params): Query<PaginationParams>,

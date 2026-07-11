@@ -1,7 +1,7 @@
 // Mobile Service Plugin Interface
 // 移动端服务插件接口实现
 
-use crate::AppState;
+use crate::shared::AppState;
 use axum::{extract::State, routing::get, Json, Router};
 use serde::{Deserialize, Serialize};
 use topems_shared::{ApiResponse, ServiceHealth};

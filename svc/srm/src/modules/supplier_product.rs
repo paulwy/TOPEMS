@@ -46,18 +46,34 @@ pub async fn create_routes(db: PgPool) -> Result<Router> {
     Ok(app)
 }
 
+fn get_tenant_id(claims: &Claims, headers: &axum::http::HeaderMap) -> Uuid {
+    claims
+        .tenant_id
+        .as_ref()
+        .and_then(|t| Uuid::parse_str(t).ok())
+        .or_else(|| {
+            headers
+                .get("x-tenant-id")
+                .and_then(|v| v.to_str().ok())
+                .and_then(|s| Uuid::parse_str(s).ok())
+        })
+        .unwrap_or_else(Uuid::new_v4)
+}
+
 // ==================== Product Handlers ====================
 
 async fn list_products(
     State(state): State<Arc<AppState>>,
     Extension(claims): Extension<Claims>,
     Query(params): Query<ProductQueryParams>,
+    headers: axum::http::HeaderMap,
 ) -> Json<ApiResponse<serde_json::Value>> {
     match check_permission(&state.db, &claims, &ModulePermission::SupplierRead).await {
         Ok(_) => {}
         Err(e) => return e,
     }
 
+    let tenant_id = get_tenant_id(&claims, &headers);
     let page = params.page.unwrap_or(1).max(1);
     let page_size = params.page_size.unwrap_or(20).min(100);
     let offset = (page - 1) * page_size;
@@ -72,16 +88,18 @@ async fn list_products(
 
     let result = sqlx::query_as::<_, SupplierProduct>(
         r#"
-        SELECT id, product_no, supplier_id, name, description, category, unit, unit_price, currency, min_order_qty, lead_time_days, status, specifications, created_by, created_at, updated_at
+        SELECT id, tenant_id, product_no, supplier_id, name, description, category, unit, unit_price, currency, min_order_qty, lead_time_days, status, specifications, created_by, created_at, updated_at
         FROM plugin_srm.supplier_products
-        WHERE ($1::text IS NULL OR name ILIKE $1 OR product_no ILIKE $1)
-          AND ($2::text IS NULL OR status = $2)
-          AND ($3::uuid IS NULL OR supplier_id = $3)
-          AND ($4::text IS NULL OR category = $4)
+        WHERE tenant_id = $1
+          AND ($2::text IS NULL OR name ILIKE $2 OR product_no ILIKE $2)
+          AND ($3::text IS NULL OR status = $3)
+          AND ($4::uuid IS NULL OR supplier_id = $4)
+          AND ($5::text IS NULL OR category = $5)
         ORDER BY created_at DESC
-        LIMIT $5 OFFSET $6
+        LIMIT $6 OFFSET $7
         "#,
     )
+    .bind(tenant_id)
     .bind(&search_pattern)
     .bind(&status_filter)
     .bind(supplier_id_filter)
@@ -96,12 +114,14 @@ async fn list_products(
             let count_result = sqlx::query_scalar::<_, i64>(
                 r#"
                 SELECT COUNT(*) FROM plugin_srm.supplier_products
-                WHERE ($1::text IS NULL OR name ILIKE $1 OR product_no ILIKE $1)
-                  AND ($2::text IS NULL OR status = $2)
-                  AND ($3::uuid IS NULL OR supplier_id = $3)
-                  AND ($4::text IS NULL OR category = $4)
+                WHERE tenant_id = $1
+                  AND ($2::text IS NULL OR name ILIKE $2 OR product_no ILIKE $2)
+                  AND ($3::text IS NULL OR status = $3)
+                  AND ($4::uuid IS NULL OR supplier_id = $4)
+                  AND ($5::text IS NULL OR category = $5)
                 "#,
             )
+            .bind(tenant_id)
             .bind(&search_pattern)
             .bind(&status_filter)
             .bind(supplier_id_filter)
@@ -134,6 +154,7 @@ async fn list_products(
 async fn create_product(
     State(state): State<Arc<AppState>>,
     Extension(claims): Extension<Claims>,
+    headers: axum::http::HeaderMap,
     Json(req): Json<CreateSupplierProductRequest>,
 ) -> Json<ApiResponse<SupplierProduct>> {
     match check_permission(&state.db, &claims, &ModulePermission::SupplierWrite).await {
@@ -141,7 +162,8 @@ async fn create_product(
         Err(e) => return e,
     }
 
-    // 数据验证
+    let tenant_id = get_tenant_id(&claims, &headers);
+
     if req.product_no.is_empty() || req.name.is_empty() {
         return Json(ApiResponse::<SupplierProduct>::error(
             400,
@@ -149,7 +171,6 @@ async fn create_product(
         ));
     }
 
-    // 验证供应商ID
     let supplier_id = match Uuid::parse_str(&req.supplier_id) {
         Ok(uuid) => uuid,
         Err(_) => {
@@ -160,10 +181,10 @@ async fn create_product(
         }
     };
 
-    // 检查供应商是否存在
     let supplier_exists = sqlx::query_scalar::<_, i64>(
-        "SELECT COUNT(*) FROM plugin_srm.suppliers WHERE id = $1 AND status != 'deleted'",
+        "SELECT COUNT(*) FROM plugin_srm.suppliers WHERE tenant_id = $1 AND id = $2 AND status != 'deleted'",
     )
+    .bind(tenant_id)
     .bind(supplier_id)
     .fetch_one(&state.db)
     .await;
@@ -175,10 +196,10 @@ async fn create_product(
         ));
     }
 
-    // 检查产品编号是否已存在
     let existing = sqlx::query_scalar::<_, i64>(
-        "SELECT COUNT(*) FROM plugin_srm.supplier_products WHERE product_no = $1",
+        "SELECT COUNT(*) FROM plugin_srm.supplier_products WHERE tenant_id = $1 AND product_no = $2",
     )
+    .bind(tenant_id)
     .bind(&req.product_no)
     .fetch_one(&state.db)
     .await;
@@ -187,14 +208,12 @@ async fn create_product(
         return Json(ApiResponse::<SupplierProduct>::error(400, "产品编号已存在"));
     }
 
-    // 验证价格
     if let Some(price) = req.unit_price {
         if price < 0.0 {
             return Json(ApiResponse::<SupplierProduct>::error(400, "单价不能为负数"));
         }
     }
 
-    // 验证最小订购量
     if let Some(min_qty) = req.min_order_qty {
         if min_qty < 0 {
             return Json(ApiResponse::<SupplierProduct>::error(
@@ -204,7 +223,6 @@ async fn create_product(
         }
     }
 
-    // 验证交货周期
     if let Some(lead_time) = req.lead_time_days {
         if lead_time < 0 {
             return Json(ApiResponse::<SupplierProduct>::error(
@@ -220,12 +238,13 @@ async fn create_product(
 
     let result = sqlx::query_as::<_, SupplierProduct>(
         r#"
-        INSERT INTO plugin_srm.supplier_products (id, product_no, supplier_id, name, description, category, unit, unit_price, currency, min_order_qty, lead_time_days, status, specifications, created_by, created_at, updated_at)
-        VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16)
-        RETURNING id, product_no, supplier_id, name, description, category, unit, unit_price, currency, min_order_qty, lead_time_days, status, specifications, created_by, created_at, updated_at
+        INSERT INTO plugin_srm.supplier_products (id, tenant_id, product_no, supplier_id, name, description, category, unit, unit_price, currency, min_order_qty, lead_time_days, status, specifications, created_by, created_at, updated_at)
+        VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, $17)
+        RETURNING id, tenant_id, product_no, supplier_id, name, description, category, unit, unit_price, currency, min_order_qty, lead_time_days, status, specifications, created_by, created_at, updated_at
         "#,
     )
     .bind(id)
+    .bind(tenant_id)
     .bind(&req.product_no)
     .bind(supplier_id)
     .bind(&req.name)
@@ -260,19 +279,23 @@ async fn get_product(
     State(state): State<Arc<AppState>>,
     Extension(claims): Extension<Claims>,
     Path(id): Path<Uuid>,
+    headers: axum::http::HeaderMap,
 ) -> Json<ApiResponse<SupplierProduct>> {
     match check_permission(&state.db, &claims, &ModulePermission::SupplierRead).await {
         Ok(_) => {}
         Err(e) => return e,
     }
 
+    let tenant_id = get_tenant_id(&claims, &headers);
+
     let result = sqlx::query_as::<_, SupplierProduct>(
         r#"
-        SELECT id, product_no, supplier_id, name, description, category, unit, unit_price, currency, min_order_qty, lead_time_days, status, specifications, created_by, created_at, updated_at
-        FROM plugin_srm.supplier_products WHERE id = $1
+        SELECT id, tenant_id, product_no, supplier_id, name, description, category, unit, unit_price, currency, min_order_qty, lead_time_days, status, specifications, created_by, created_at, updated_at
+        FROM plugin_srm.supplier_products WHERE id = $1 AND tenant_id = $2
         "#,
     )
     .bind(id)
+    .bind(tenant_id)
     .fetch_optional(&state.db)
     .await;
 
@@ -296,6 +319,7 @@ async fn update_product(
     State(state): State<Arc<AppState>>,
     Extension(claims): Extension<Claims>,
     Path(id): Path<Uuid>,
+    headers: axum::http::HeaderMap,
     Json(req): Json<UpdateSupplierProductRequest>,
 ) -> Json<ApiResponse<SupplierProduct>> {
     match check_permission(&state.db, &claims, &ModulePermission::SupplierWrite).await {
@@ -303,10 +327,13 @@ async fn update_product(
         Err(e) => return e,
     }
 
+    let tenant_id = get_tenant_id(&claims, &headers);
+
     let existing = sqlx::query_as::<_, SupplierProduct>(
-        "SELECT id, product_no, supplier_id, name, description, category, unit, unit_price, currency, min_order_qty, lead_time_days, status, specifications, created_by, created_at, updated_at FROM plugin_srm.supplier_products WHERE id = $1",
+        "SELECT id, tenant_id, product_no, supplier_id, name, description, category, unit, unit_price, currency, min_order_qty, lead_time_days, status, specifications, created_by, created_at, updated_at FROM plugin_srm.supplier_products WHERE id = $1 AND tenant_id = $2",
     )
     .bind(id)
+    .bind(tenant_id)
     .fetch_optional(&state.db)
     .await;
 
@@ -326,7 +353,6 @@ async fn update_product(
         }
     };
 
-    // 验证供应商ID（如果更新）
     let supplier_id = if let Some(supplier_id_str) = &req.supplier_id {
         let supplier_uuid_val = match Uuid::parse_str(supplier_id_str) {
             Ok(uuid) => uuid,
@@ -339,8 +365,9 @@ async fn update_product(
         };
 
         let supplier_exists = sqlx::query_scalar::<_, i64>(
-            "SELECT COUNT(*) FROM plugin_srm.suppliers WHERE id = $1 AND status != 'deleted'",
+            "SELECT COUNT(*) FROM plugin_srm.suppliers WHERE tenant_id = $1 AND id = $2 AND status != 'deleted'",
         )
+        .bind(tenant_id)
         .bind(supplier_uuid_val)
         .fetch_one(&state.db)
         .await;
@@ -357,14 +384,12 @@ async fn update_product(
         existing.supplier_id
     };
 
-    // 验证价格
     if let Some(price) = req.unit_price {
         if price < 0.0 {
             return Json(ApiResponse::<SupplierProduct>::error(400, "单价不能为负数"));
         }
     }
 
-    // 验证最小订购量
     if let Some(min_qty) = req.min_order_qty {
         if min_qty < 0 {
             return Json(ApiResponse::<SupplierProduct>::error(
@@ -374,7 +399,6 @@ async fn update_product(
         }
     }
 
-    // 验证交货周期
     if let Some(lead_time) = req.lead_time_days {
         if lead_time < 0 {
             return Json(ApiResponse::<SupplierProduct>::error(
@@ -401,8 +425,8 @@ async fn update_product(
         r#"
         UPDATE plugin_srm.supplier_products SET
             product_no = $2, supplier_id = $3, name = $4, description = $5, category = $6, unit = $7, unit_price = $8, currency = $9, min_order_qty = $10, lead_time_days = $11, status = $12, specifications = $13, updated_at = $14
-        WHERE id = $1
-        RETURNING id, product_no, supplier_id, name, description, category, unit, unit_price, currency, min_order_qty, lead_time_days, status, specifications, created_by, created_at, updated_at
+        WHERE id = $1 AND tenant_id = $15
+        RETURNING id, tenant_id, product_no, supplier_id, name, description, category, unit, unit_price, currency, min_order_qty, lead_time_days, status, specifications, created_by, created_at, updated_at
         "#,
     )
     .bind(id)
@@ -419,6 +443,7 @@ async fn update_product(
     .bind(status)
     .bind(specifications)
     .bind(now)
+    .bind(tenant_id)
     .fetch_one(&state.db)
     .await;
 
@@ -438,16 +463,21 @@ async fn delete_product(
     State(state): State<Arc<AppState>>,
     Extension(claims): Extension<Claims>,
     Path(id): Path<Uuid>,
+    headers: axum::http::HeaderMap,
 ) -> Json<ApiResponse<String>> {
     match check_permission(&state.db, &claims, &ModulePermission::SupplierWrite).await {
         Ok(_) => {}
         Err(e) => return e,
     }
 
-    let result = sqlx::query("DELETE FROM plugin_srm.supplier_products WHERE id = $1")
-        .bind(id)
-        .execute(&state.db)
-        .await;
+    let tenant_id = get_tenant_id(&claims, &headers);
+
+    let result =
+        sqlx::query("DELETE FROM plugin_srm.supplier_products WHERE id = $1 AND tenant_id = $2")
+            .bind(id)
+            .bind(tenant_id)
+            .execute(&state.db)
+            .await;
 
     match result {
         Ok(r) if r.rows_affected() > 0 => {

@@ -150,7 +150,7 @@ pub fn create_routes() -> Router<ApiState> {
         .route("/api/erp/bank-transactions/{id}", get(get_bank_transaction))
 }
 
-async fn list_bank_accounts(
+pub async fn list_bank_accounts(
     State(state): State<ApiState>,
     Query(params): Query<BankAccountParams>,
 ) -> Json<ApiResponse<PaginatedResponse<BankAccount>>> {
@@ -215,7 +215,7 @@ async fn list_bank_accounts(
     }
 }
 
-async fn create_bank_account(
+pub async fn create_bank_account(
     State(state): State<ApiState>,
     headers: HeaderMap,
     Json(req): Json<CreateBankAccountRequest>,
@@ -305,7 +305,7 @@ async fn create_bank_account(
     response
 }
 
-async fn get_bank_account(
+pub async fn get_bank_account(
     State(state): State<ApiState>,
     Path(id): Path<Uuid>,
 ) -> Json<ApiResponse<BankAccount>> {
@@ -333,7 +333,7 @@ async fn get_bank_account(
     }
 }
 
-async fn update_bank_account(
+pub async fn update_bank_account(
     State(state): State<ApiState>,
     Path(id): Path<Uuid>,
     headers: HeaderMap,
@@ -436,7 +436,7 @@ async fn update_bank_account(
     response
 }
 
-async fn delete_bank_account(
+pub async fn delete_bank_account(
     State(state): State<ApiState>,
     Path(id): Path<Uuid>,
     headers: HeaderMap,
@@ -494,7 +494,7 @@ async fn delete_bank_account(
     response
 }
 
-async fn list_bank_transactions(
+pub async fn list_bank_transactions(
     State(state): State<ApiState>,
     Query(params): Query<BankTransactionParams>,
 ) -> Json<ApiResponse<PaginatedResponse<BankTransaction>>> {
@@ -566,7 +566,7 @@ async fn list_bank_transactions(
     }
 }
 
-async fn create_bank_transaction(
+pub async fn create_bank_transaction(
     State(state): State<ApiState>,
     headers: HeaderMap,
     Json(req): Json<CreateBankTransactionRequest>,
@@ -672,7 +672,7 @@ async fn create_bank_transaction(
     response
 }
 
-async fn get_bank_transaction(
+pub async fn get_bank_transaction(
     State(state): State<ApiState>,
     Path(id): Path<Uuid>,
 ) -> Json<ApiResponse<BankTransaction>> {

@@ -12,7 +12,7 @@ use std::str::FromStr;
 use tracing::info;
 use uuid::Uuid;
 
-use crate::AppState;
+use crate::shared::AppState;
 
 pub fn create_routes() -> Router<AppState> {
     Router::new()
@@ -421,4 +421,68 @@ pub async fn get_execution_history(
         "data": result,
         "total": result.len()
     }))
+}
+
+pub async fn run_schedule(
+    State(state): State<AppState>,
+    Path(id): Path<Uuid>,
+) -> Json<serde_json::Value> {
+    info!("Running schedule: {}", id);
+
+    let now = chrono::Utc::now();
+
+    let result = sqlx::query(
+        r#"
+        UPDATE report_schedules
+        SET last_run_at = $1, run_count = run_count + 1, updated_at = $2
+        WHERE id = $3
+        "#,
+    )
+    .bind(now)
+    .bind(now)
+    .bind(id)
+    .execute(&state.pool)
+    .await;
+
+    match result {
+        Ok(_) => Json(serde_json::json!({
+            "success": true,
+            "message": "Schedule execution triggered"
+        })),
+        Err(e) => Json(serde_json::json!({
+            "success": false,
+            "message": format!("Failed to execute schedule: {}", e)
+        })),
+    }
+}
+
+pub async fn toggle_schedule(
+    State(state): State<AppState>,
+    Path(id): Path<Uuid>,
+) -> Json<serde_json::Value> {
+    info!("Toggling schedule: {}", id);
+
+    let result = sqlx::query(
+        r#"
+        UPDATE report_schedules
+        SET status = CASE WHEN status = 'active' THEN 'paused' ELSE 'active' END,
+            updated_at = $1
+        WHERE id = $2
+        "#,
+    )
+    .bind(chrono::Utc::now())
+    .bind(id)
+    .execute(&state.pool)
+    .await;
+
+    match result {
+        Ok(_) => Json(serde_json::json!({
+            "success": true,
+            "message": "Schedule status toggled"
+        })),
+        Err(e) => Json(serde_json::json!({
+            "success": false,
+            "message": format!("Failed to toggle schedule: {}", e)
+        })),
+    }
 }

@@ -6,6 +6,7 @@ use uuid::Uuid;
 #[derive(Debug, Clone, Serialize, Deserialize, sqlx::FromRow)]
 pub struct SalaryAdjustment {
     pub id: Uuid,
+    pub tenant_id: Uuid,
     pub employee_id: Uuid,
     pub employee_name: Option<String>,
     pub department: Option<String>,

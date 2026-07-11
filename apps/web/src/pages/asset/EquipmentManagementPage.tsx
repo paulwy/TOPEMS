@@ -384,13 +384,13 @@ const EquipmentManagementPage: React.FC = () => {
           {
             label: '点检记录',
             icon: <ClipboardCheck sx={{ width: 16, height: 16 }} />,
-            onClick: () => navigate('/equipment/inspections'),
+            onClick: () => navigate('/mes/equipment'),
             variant: 'outlined',
           },
           {
             label: '维护维修',
             icon: <Wrench sx={{ width: 16, height: 16 }} />,
-            onClick: () => navigate('/equipment/maintenances'),
+            onClick: () => navigate('/mes/equipment'),
             variant: 'outlined',
           },
           {

@@ -25,7 +25,7 @@ export const spcApi = {
     return { ...response, data: adaptedData };
   },
 
-  getSpcChart: async (id: string): Promise<ApiResponse<SpcChart>> => {
+  getSpcChart: async (id: string): Promise<ApiResponse<SpcChart | undefined>> => {
     const response = await apiClient.qms.get<SpcChartBackend>(`/spc/charts/${id}`);
     return {
       ...response,
@@ -33,7 +33,9 @@ export const spcApi = {
     };
   },
 
-  createSpcChart: async (data: CreateSpcChartRequest): Promise<ApiResponse<SpcChart>> => {
+  createSpcChart: async (
+    data: CreateSpcChartRequest
+  ): Promise<ApiResponse<SpcChart | undefined>> => {
     const backendData = adaptSpcChartToBackend(data);
     const response = await apiClient.qms.post<SpcChartBackend>('/spc/charts', backendData);
     return {
@@ -45,7 +47,7 @@ export const spcApi = {
   updateSpcChart: async (
     id: string,
     data: Partial<CreateSpcChartRequest>
-  ): Promise<ApiResponse<SpcChart>> => {
+  ): Promise<ApiResponse<SpcChart | undefined>> => {
     const backendData: UpdateSpcChartRequestBackend = {
       chart_name: data.chartName,
       chart_type: data.chartType,
@@ -95,7 +97,7 @@ export const spcApi = {
       | 'isOutOfControl'
       | 'violationRules'
     >
-  ): Promise<ApiResponse<SpcDataPoint>> => {
+  ): Promise<ApiResponse<SpcDataPoint | undefined>> => {
     const backendData: CreateSpcDataPointRequestBackend = {
       chart_id: chartId,
       sample_no: data.sampleNo,
@@ -111,7 +113,9 @@ export const spcApi = {
     };
   },
 
-  calculateControlLimits: async (chartId: string): Promise<ApiResponse<ControlLimitsResult>> => {
+  calculateControlLimits: async (
+    chartId: string
+  ): Promise<ApiResponse<ControlLimitsResult | undefined>> => {
     const response = await apiClient.qms.post<ControlLimitsResultBackend>(
       `/spc/charts/${chartId}/calculate`,
       {}

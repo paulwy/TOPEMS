@@ -1,6 +1,5 @@
 import React, { useState, useEffect, useMemo, useCallback } from 'react';
 import { Plus, Search, Eye, Users, CheckCircle2, Trash2, Package, Clock } from 'lucide-react';
-import { useNavigate } from 'react-router-dom';
 import { Box, Chip, Tooltip, IconButton } from '@mui/material';
 import type { ProjectResource, Project } from '@/api/pm';
 import { pmApi } from '@/api/pm';
@@ -35,7 +34,6 @@ const RESOURCE_TYPE_LABELS: Record<string, string> = {
 };
 
 const PmResourcePage: React.FC = () => {
-  const navigate = useNavigate();
   const [resources, setResources] = useState<ProjectResource[]>([]);
   const [projects, setProjects] = useState<Project[]>([]);
   const [loading, setLoading] = useState(true);
@@ -363,7 +361,7 @@ const PmResourcePage: React.FC = () => {
           {
             label: '新增资源',
             icon: <Plus size={16} />,
-            onClick: () => navigate('#'),
+            onClick: () => { /* TODO: 打开新增资源弹窗 */ },
             variant: 'contained',
           },
         ]}

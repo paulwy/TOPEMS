@@ -21,7 +21,7 @@ export const eightDApi = {
     return { ...response, data: adaptedData };
   },
 
-  getEightDReport: async (id: string): Promise<ApiResponse<EightDReport>> => {
+  getEightDReport: async (id: string): Promise<ApiResponse<EightDReport | undefined>> => {
     const response = await apiClient.qms.get<EightDReportBackend>(`/eightd/${id}`);
     return {
       ...response,
@@ -31,7 +31,7 @@ export const eightDApi = {
 
   createEightDReport: async (
     data: CreateEightDReportRequest
-  ): Promise<ApiResponse<EightDReport>> => {
+  ): Promise<ApiResponse<EightDReport | undefined>> => {
     const backendData = adaptEightDReportToBackend(data);
     const response = await apiClient.qms.post<EightDReportBackend>('/eightd', backendData);
     return {
@@ -43,7 +43,7 @@ export const eightDApi = {
   updateEightDReport: async (
     id: string,
     data: Partial<CreateEightDReportRequest>
-  ): Promise<ApiResponse<EightDReport>> => {
+  ): Promise<ApiResponse<EightDReport | undefined>> => {
     const backendData: UpdateEightDReportRequestBackend = {
       title: data.title,
       problem_description: data.problemDescription,
@@ -68,7 +68,7 @@ export const eightDApi = {
   updateD1Team: async (
     id: string,
     data: { teamLeader?: string; teamMembers?: string[]; content?: string }
-  ): Promise<ApiResponse<EightDReport>> => {
+  ): Promise<ApiResponse<EightDReport | undefined>> => {
     const response = await apiClient.qms.put<EightDReportBackend>(`/eightd/${id}/d1-team`, {
       team_leader: data.teamLeader,
       team_members: data.teamMembers,
@@ -83,7 +83,7 @@ export const eightDApi = {
   submitD3Containment: async (
     id: string,
     data: { content: string; operator?: string }
-  ): Promise<ApiResponse<EightDReport>> => {
+  ): Promise<ApiResponse<EightDReport | undefined>> => {
     const response = await apiClient.qms.post<EightDReportBackend>(
       `/eightd/${id}/d3-containment`,
       data
@@ -97,7 +97,7 @@ export const eightDApi = {
   submitD4RootCause: async (
     id: string,
     data: { content: string; operator?: string }
-  ): Promise<ApiResponse<EightDReport>> => {
+  ): Promise<ApiResponse<EightDReport | undefined>> => {
     const response = await apiClient.qms.post<EightDReportBackend>(
       `/eightd/${id}/d4-root-cause`,
       data
@@ -111,7 +111,7 @@ export const eightDApi = {
   submitD5PermanentAction: async (
     id: string,
     data: { content: string; operator?: string }
-  ): Promise<ApiResponse<EightDReport>> => {
+  ): Promise<ApiResponse<EightDReport | undefined>> => {
     const response = await apiClient.qms.post<EightDReportBackend>(
       `/eightd/${id}/d5-permanent-action`,
       data
@@ -125,7 +125,7 @@ export const eightDApi = {
   verifyD6Effectiveness: async (
     id: string,
     data: { content: string; operator?: string; isEffective: boolean }
-  ): Promise<ApiResponse<EightDReport>> => {
+  ): Promise<ApiResponse<EightDReport | undefined>> => {
     const response = await apiClient.qms.post<EightDReportBackend>(`/eightd/${id}/d6-verify`, data);
     return {
       ...response,
@@ -136,7 +136,7 @@ export const eightDApi = {
   submitD7Preventive: async (
     id: string,
     data: { content: string; operator?: string }
-  ): Promise<ApiResponse<EightDReport>> => {
+  ): Promise<ApiResponse<EightDReport | undefined>> => {
     const response = await apiClient.qms.post<EightDReportBackend>(
       `/eightd/${id}/d7-preventive`,
       data
@@ -150,7 +150,7 @@ export const eightDApi = {
   closeEightDReport: async (
     id: string,
     data: { content?: string; operator?: string }
-  ): Promise<ApiResponse<EightDReport>> => {
+  ): Promise<ApiResponse<EightDReport | undefined>> => {
     const response = await apiClient.qms.post<EightDReportBackend>(`/eightd/${id}/close`, data);
     return {
       ...response,

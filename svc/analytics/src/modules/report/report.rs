@@ -10,7 +10,7 @@ use sqlx::Row;
 use tracing::info;
 use uuid::Uuid;
 
-use crate::AppState;
+use crate::shared::AppState;
 
 pub fn create_routes() -> Router<AppState> {
     Router::new()
@@ -373,6 +373,44 @@ pub async fn export_report(
             "message": format!("Failed to export report: {}", e)
         })),
     }
+}
+
+pub async fn list_export_jobs(
+    State(_state): State<AppState>,
+    Path(_report_id): Path<Uuid>,
+) -> Json<serde_json::Value> {
+    info!("Listing export jobs");
+    Json(serde_json::json!({
+        "success": true,
+        "data": [],
+        "total": 0
+    }))
+}
+
+pub async fn get_export_job(
+    State(_state): State<AppState>,
+    Path(_job_id): Path<Uuid>,
+) -> Json<serde_json::Value> {
+    info!("Getting export job");
+    Json(serde_json::json!({
+        "success": true,
+        "data": {
+            "id": _job_id,
+            "status": "completed",
+            "downloadUrl": "/api/bi/download/placeholder"
+        }
+    }))
+}
+
+pub async fn download_export(
+    State(_state): State<AppState>,
+    Path(_job_id): Path<Uuid>,
+) -> Json<serde_json::Value> {
+    info!("Downloading export: {}", _job_id);
+    Json(serde_json::json!({
+        "success": true,
+        "message": "Download export"
+    }))
 }
 
 pub async fn run_report(

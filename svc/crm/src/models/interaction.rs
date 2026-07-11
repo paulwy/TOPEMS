@@ -6,6 +6,7 @@ use uuid::Uuid;
 #[derive(Debug, Clone, FromRow, Serialize, Deserialize)]
 pub struct Interaction {
     pub id: Uuid,
+    pub tenant_id: Uuid,
     pub customer_id: Option<Uuid>,
     pub contact_id: Option<Uuid>,
     pub type_: String,

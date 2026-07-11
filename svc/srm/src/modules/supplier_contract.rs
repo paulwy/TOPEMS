@@ -54,18 +54,34 @@ pub async fn create_routes(db: PgPool) -> Result<Router> {
     Ok(app)
 }
 
+fn get_tenant_id(claims: &Claims, headers: &axum::http::HeaderMap) -> Uuid {
+    claims
+        .tenant_id
+        .as_ref()
+        .and_then(|t| Uuid::parse_str(t).ok())
+        .or_else(|| {
+            headers
+                .get("x-tenant-id")
+                .and_then(|v| v.to_str().ok())
+                .and_then(|s| Uuid::parse_str(s).ok())
+        })
+        .unwrap_or_else(Uuid::new_v4)
+}
+
 // ==================== Contract Handlers ====================
 
 async fn list_contracts(
     State(state): State<Arc<AppState>>,
     Extension(claims): Extension<Claims>,
     Query(params): Query<ContractQueryParams>,
+    headers: axum::http::HeaderMap,
 ) -> Json<ApiResponse<serde_json::Value>> {
     match check_permission(&state.db, &claims, &ModulePermission::ContractRead).await {
         Ok(_) => {}
         Err(e) => return e,
     }
 
+    let tenant_id = get_tenant_id(&claims, &headers);
     let page = params.page.unwrap_or(1).max(1);
     let page_size = params.page_size.unwrap_or(20).min(100);
     let offset = (page - 1) * page_size;
@@ -80,16 +96,18 @@ async fn list_contracts(
 
     let result = sqlx::query_as::<_, SupplierContract>(
         r#"
-        SELECT id, contract_no, supplier_id, supplier_name, title, contract_type, total_amount, currency, sign_date, start_date, end_date, status, remarks, created_by, created_at, updated_at
+        SELECT id, tenant_id, contract_no, supplier_id, supplier_name, title, contract_type, total_amount, currency, sign_date, start_date, end_date, status, remarks, created_by, created_at, updated_at
         FROM plugin_srm.supplier_contracts
-        WHERE ($1::text IS NULL OR title ILIKE $1 OR contract_no ILIKE $1)
-          AND ($2::text IS NULL OR status = $2)
-          AND ($3::uuid IS NULL OR supplier_id = $3)
-          AND ($4::text IS NULL OR contract_type = $4)
+        WHERE tenant_id = $1
+          AND ($2::text IS NULL OR title ILIKE $2 OR contract_no ILIKE $2)
+          AND ($3::text IS NULL OR status = $3)
+          AND ($4::uuid IS NULL OR supplier_id = $4)
+          AND ($5::text IS NULL OR contract_type = $5)
         ORDER BY created_at DESC
-        LIMIT $5 OFFSET $6
+        LIMIT $6 OFFSET $7
         "#,
     )
+    .bind(tenant_id)
     .bind(&search_pattern)
     .bind(&status_filter)
     .bind(supplier_id_filter)
@@ -104,12 +122,14 @@ async fn list_contracts(
             let count_result = sqlx::query_scalar::<_, i64>(
                 r#"
                 SELECT COUNT(*) FROM plugin_srm.supplier_contracts
-                WHERE ($1::text IS NULL OR title ILIKE $1 OR contract_no ILIKE $1)
-                  AND ($2::text IS NULL OR status = $2)
-                  AND ($3::uuid IS NULL OR supplier_id = $3)
-                  AND ($4::text IS NULL OR contract_type = $4)
+                WHERE tenant_id = $1
+                  AND ($2::text IS NULL OR title ILIKE $2 OR contract_no ILIKE $2)
+                  AND ($3::text IS NULL OR status = $3)
+                  AND ($4::uuid IS NULL OR supplier_id = $4)
+                  AND ($5::text IS NULL OR contract_type = $5)
                 "#,
             )
+            .bind(tenant_id)
             .bind(&search_pattern)
             .bind(&status_filter)
             .bind(supplier_id_filter)
@@ -142,6 +162,7 @@ async fn list_contracts(
 async fn create_contract(
     State(state): State<Arc<AppState>>,
     Extension(claims): Extension<Claims>,
+    headers: axum::http::HeaderMap,
     Json(req): Json<CreateSupplierContractRequest>,
 ) -> Json<ApiResponse<SupplierContract>> {
     match check_permission(&state.db, &claims, &ModulePermission::ContractWrite).await {
@@ -149,7 +170,8 @@ async fn create_contract(
         Err(e) => return e,
     }
 
-    // 数据验证
+    let tenant_id = get_tenant_id(&claims, &headers);
+
     if req.contract_no.is_empty() || req.title.is_empty() {
         return Json(ApiResponse::<SupplierContract>::error(
             400,
@@ -157,7 +179,6 @@ async fn create_contract(
         ));
     }
 
-    // 验证供应商ID
     let supplier_id = match Uuid::parse_str(&req.supplier_id) {
         Ok(uuid) => uuid,
         Err(_) => {
@@ -168,10 +189,10 @@ async fn create_contract(
         }
     };
 
-    // 检查供应商是否存在
     let supplier_exists = sqlx::query_scalar::<_, i64>(
-        "SELECT COUNT(*) FROM plugin_srm.suppliers WHERE id = $1 AND status != 'deleted'",
+        "SELECT COUNT(*) FROM plugin_srm.suppliers WHERE tenant_id = $1 AND id = $2 AND status != 'deleted'",
     )
+    .bind(tenant_id)
     .bind(supplier_id)
     .fetch_one(&state.db)
     .await;
@@ -183,10 +204,10 @@ async fn create_contract(
         ));
     }
 
-    // 检查合同编号是否已存在
     let existing = sqlx::query_scalar::<_, i64>(
-        "SELECT COUNT(*) FROM plugin_srm.supplier_contracts WHERE contract_no = $1",
+        "SELECT COUNT(*) FROM plugin_srm.supplier_contracts WHERE tenant_id = $1 AND contract_no = $2",
     )
+    .bind(tenant_id)
     .bind(&req.contract_no)
     .fetch_one(&state.db)
     .await;
@@ -198,7 +219,6 @@ async fn create_contract(
         ));
     }
 
-    // 验证金额
     if let Some(amount) = req.total_amount {
         if amount < 0.0 {
             return Json(ApiResponse::<SupplierContract>::error(
@@ -208,7 +228,6 @@ async fn create_contract(
         }
     }
 
-    // 解析日期
     let sign_date = req.sign_date.as_ref().and_then(|s| {
         chrono::DateTime::parse_from_rfc3339(s)
             .ok()
@@ -227,7 +246,6 @@ async fn create_contract(
             .map(|d| d.with_timezone(&Utc))
     });
 
-    // 验证日期逻辑
     if let (Some(start), Some(end)) = (start_date, end_date) {
         if start > end {
             return Json(ApiResponse::<SupplierContract>::error(
@@ -243,12 +261,13 @@ async fn create_contract(
 
     let result = sqlx::query_as::<_, SupplierContract>(
         r#"
-        INSERT INTO plugin_srm.supplier_contracts (id, contract_no, supplier_id, supplier_name, title, contract_type, total_amount, currency, sign_date, start_date, end_date, status, remarks, created_by, created_at, updated_at)
-        VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16)
-        RETURNING id, contract_no, supplier_id, supplier_name, title, contract_type, total_amount, currency, sign_date, start_date, end_date, status, remarks, created_by, created_at, updated_at
+        INSERT INTO plugin_srm.supplier_contracts (id, tenant_id, contract_no, supplier_id, supplier_name, title, contract_type, total_amount, currency, sign_date, start_date, end_date, status, remarks, created_by, created_at, updated_at)
+        VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, $17)
+        RETURNING id, tenant_id, contract_no, supplier_id, supplier_name, title, contract_type, total_amount, currency, sign_date, start_date, end_date, status, remarks, created_by, created_at, updated_at
         "#,
     )
     .bind(id)
+    .bind(tenant_id)
     .bind(&req.contract_no)
     .bind(supplier_id)
     .bind(&req.supplier_name)
@@ -283,19 +302,23 @@ async fn get_contract(
     State(state): State<Arc<AppState>>,
     Extension(claims): Extension<Claims>,
     Path(id): Path<Uuid>,
+    headers: axum::http::HeaderMap,
 ) -> Json<ApiResponse<SupplierContract>> {
     match check_permission(&state.db, &claims, &ModulePermission::ContractRead).await {
         Ok(_) => {}
         Err(e) => return e,
     }
 
+    let tenant_id = get_tenant_id(&claims, &headers);
+
     let result = sqlx::query_as::<_, SupplierContract>(
         r#"
-        SELECT id, contract_no, supplier_id, supplier_name, title, contract_type, total_amount, currency, sign_date, start_date, end_date, status, remarks, created_by, created_at, updated_at
-        FROM plugin_srm.supplier_contracts WHERE id = $1
+        SELECT id, tenant_id, contract_no, supplier_id, supplier_name, title, contract_type, total_amount, currency, sign_date, start_date, end_date, status, remarks, created_by, created_at, updated_at
+        FROM plugin_srm.supplier_contracts WHERE id = $1 AND tenant_id = $2
         "#,
     )
     .bind(id)
+    .bind(tenant_id)
     .fetch_optional(&state.db)
     .await;
 
@@ -319,6 +342,7 @@ async fn update_contract(
     State(state): State<Arc<AppState>>,
     Extension(claims): Extension<Claims>,
     Path(id): Path<Uuid>,
+    headers: axum::http::HeaderMap,
     Json(req): Json<UpdateSupplierContractRequest>,
 ) -> Json<ApiResponse<SupplierContract>> {
     match check_permission(&state.db, &claims, &ModulePermission::ContractWrite).await {
@@ -326,10 +350,13 @@ async fn update_contract(
         Err(e) => return e,
     }
 
+    let tenant_id = get_tenant_id(&claims, &headers);
+
     let existing = sqlx::query_as::<_, SupplierContract>(
-        "SELECT id, contract_no, supplier_id, supplier_name, title, contract_type, total_amount, currency, sign_date, start_date, end_date, status, remarks, created_by, created_at, updated_at FROM plugin_srm.supplier_contracts WHERE id = $1",
+        "SELECT id, tenant_id, contract_no, supplier_id, supplier_name, title, contract_type, total_amount, currency, sign_date, start_date, end_date, status, remarks, created_by, created_at, updated_at FROM plugin_srm.supplier_contracts WHERE id = $1 AND tenant_id = $2",
     )
     .bind(id)
+    .bind(tenant_id)
     .fetch_optional(&state.db)
     .await;
 
@@ -349,7 +376,6 @@ async fn update_contract(
         }
     };
 
-    // 验证供应商ID（如果更新）
     let supplier_id = if let Some(supplier_id_str) = &req.supplier_id {
         let supplier_uuid_val = match Uuid::parse_str(supplier_id_str) {
             Ok(uuid) => uuid,
@@ -362,8 +388,9 @@ async fn update_contract(
         };
 
         let supplier_exists = sqlx::query_scalar::<_, i64>(
-            "SELECT COUNT(*) FROM plugin_srm.suppliers WHERE id = $1 AND status != 'deleted'",
+            "SELECT COUNT(*) FROM plugin_srm.suppliers WHERE tenant_id = $1 AND id = $2 AND status != 'deleted'",
         )
+        .bind(tenant_id)
         .bind(supplier_uuid_val)
         .fetch_one(&state.db)
         .await;
@@ -380,7 +407,6 @@ async fn update_contract(
         existing.supplier_id
     };
 
-    // 验证金额
     if let Some(amount) = req.total_amount {
         if amount < 0.0 {
             return Json(ApiResponse::<SupplierContract>::error(
@@ -390,12 +416,10 @@ async fn update_contract(
         }
     }
 
-    // 解析日期
     let sign_date = req.sign_date.or(existing.sign_date);
     let start_date = req.start_date.or(existing.start_date);
     let end_date = req.end_date.or(existing.end_date);
 
-    // 验证日期逻辑
     if let (Some(start), Some(end)) = (start_date, end_date) {
         if start > end {
             return Json(ApiResponse::<SupplierContract>::error(
@@ -419,8 +443,8 @@ async fn update_contract(
         r#"
         UPDATE plugin_srm.supplier_contracts SET
             contract_no = $2, supplier_id = $3, supplier_name = $4, title = $5, contract_type = $6, total_amount = $7, currency = $8, sign_date = $9, start_date = $10, end_date = $11, status = $12, remarks = $13, updated_at = $14
-        WHERE id = $1
-        RETURNING id, contract_no, supplier_id, supplier_name, title, contract_type, total_amount, currency, sign_date, start_date, end_date, status, remarks, created_by, created_at, updated_at
+        WHERE id = $1 AND tenant_id = $15
+        RETURNING id, tenant_id, contract_no, supplier_id, supplier_name, title, contract_type, total_amount, currency, sign_date, start_date, end_date, status, remarks, created_by, created_at, updated_at
         "#,
     )
     .bind(id)
@@ -437,6 +461,7 @@ async fn update_contract(
     .bind(status)
     .bind(remarks)
     .bind(now)
+    .bind(tenant_id)
     .fetch_one(&state.db)
     .await;
 
@@ -456,16 +481,21 @@ async fn delete_contract(
     State(state): State<Arc<AppState>>,
     Extension(claims): Extension<Claims>,
     Path(id): Path<Uuid>,
+    headers: axum::http::HeaderMap,
 ) -> Json<ApiResponse<String>> {
     match check_permission(&state.db, &claims, &ModulePermission::ContractWrite).await {
         Ok(_) => {}
         Err(e) => return e,
     }
 
-    let result = sqlx::query("DELETE FROM plugin_srm.supplier_contracts WHERE id = $1")
-        .bind(id)
-        .execute(&state.db)
-        .await;
+    let tenant_id = get_tenant_id(&claims, &headers);
+
+    let result =
+        sqlx::query("DELETE FROM plugin_srm.supplier_contracts WHERE id = $1 AND tenant_id = $2")
+            .bind(id)
+            .bind(tenant_id)
+            .execute(&state.db)
+            .await;
 
     match result {
         Ok(r) if r.rows_affected() > 0 => {
@@ -485,17 +515,20 @@ async fn get_contract_terms(
     State(state): State<Arc<AppState>>,
     Extension(claims): Extension<Claims>,
     Path(id): Path<Uuid>,
+    headers: axum::http::HeaderMap,
 ) -> Json<ApiResponse<Vec<ContractTerm>>> {
     match check_permission(&state.db, &claims, &ModulePermission::ContractRead).await {
         Ok(_) => {}
         Err(e) => return e,
     }
 
-    // 验证合同是否存在
+    let tenant_id = get_tenant_id(&claims, &headers);
+
     let contract_exists = sqlx::query_scalar::<_, i64>(
-        "SELECT COUNT(*) FROM plugin_srm.supplier_contracts WHERE id = $1",
+        "SELECT COUNT(*) FROM plugin_srm.supplier_contracts WHERE id = $1 AND tenant_id = $2",
     )
     .bind(id)
+    .bind(tenant_id)
     .fetch_one(&state.db)
     .await;
 
@@ -505,13 +538,14 @@ async fn get_contract_terms(
 
     let result = sqlx::query_as::<_, ContractTerm>(
         r#"
-        SELECT id, contract_id, term_type, title, content, sort_order, created_at, updated_at
+        SELECT id, tenant_id, contract_id, term_type, title, content, sort_order, created_at, updated_at
         FROM plugin_srm.contract_terms
-        WHERE contract_id = $1
+        WHERE contract_id = $1 AND tenant_id = $2
         ORDER BY sort_order
         "#,
     )
     .bind(id)
+    .bind(tenant_id)
     .fetch_all(&state.db)
     .await;
 

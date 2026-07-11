@@ -3,13 +3,14 @@
 use axum::{
     extract::State,
     routing::{get, post},
-    Json, Router,
+    Extension, Json, Router,
 };
 use serde::{Deserialize, Serialize};
 use sqlx::{types::Uuid, Row};
 use topems_shared::ApiResponse;
 
-use crate::AppState;
+use crate::middleware::tenant::TenantContext;
+use crate::shared::AppState;
 
 pub fn create_routes() -> Router<AppState> {
     Router::new()
@@ -28,6 +29,7 @@ pub fn create_routes() -> Router<AppState> {
 #[derive(Debug, Serialize)]
 pub struct SyncRecord {
     pub id: String,
+    pub tenant_id: String,
     pub sync_no: String,
     pub sync_type: String,
     pub source_id: Option<String>,
@@ -65,7 +67,7 @@ pub struct SyncReagentToEhsRequest {
 // ==================== Handler Functions ====================
 
 pub async fn list_sync_records(
-    State(state): State<crate::AppState>,
+    State(state): State<crate::shared::AppState>,
     axum::extract::Query(query): axum::extract::Query<SyncQuery>,
 ) -> Json<ApiResponse<Vec<SyncRecord>>> {
     let page = query.page.unwrap_or(1);
@@ -107,6 +109,7 @@ pub async fn list_sync_records(
         rows.into_iter()
             .map(|row| SyncRecord {
                 id: row.get("id"),
+                tenant_id: row.get("tenant_id"),
                 sync_no: row.get("sync_no"),
                 sync_type: row.get("sync_type"),
                 source_id: row.get("source_id"),
@@ -132,7 +135,7 @@ pub async fn list_sync_records(
 }
 
 pub async fn get_sync_record(
-    State(state): State<crate::AppState>,
+    State(state): State<crate::shared::AppState>,
     axum::extract::Path(id): axum::extract::Path<String>,
 ) -> Json<ApiResponse<SyncRecord>> {
     let id = match Uuid::parse_str(&id) {
@@ -151,6 +154,7 @@ pub async fn get_sync_record(
         Ok(r) => Json(ApiResponse::success(
             SyncRecord {
                 id: r.get("id"),
+                tenant_id: r.get("tenant_id"),
                 sync_no: r.get("sync_no"),
                 sync_type: r.get("sync_type"),
                 source_id: r.get("source_id"),
@@ -173,7 +177,7 @@ pub async fn get_sync_record(
 }
 
 pub async fn sync_record_to_qms(
-    State(state): State<crate::AppState>,
+    State(state): State<crate::shared::AppState>,
     Json(req): Json<SyncRecordToQmsRequest>,
 ) -> Json<ApiResponse<SyncRecord>> {
     let record_id = match Uuid::parse_str(&req.record_id) {
@@ -242,6 +246,7 @@ pub async fn sync_record_to_qms(
         Ok(r) => Json(ApiResponse::success(
             SyncRecord {
                 id: r.get("id"),
+                tenant_id: r.get("tenant_id"),
                 sync_no: r.get("sync_no"),
                 sync_type: r.get("sync_type"),
                 source_id: r.get("source_id"),
@@ -264,7 +269,7 @@ pub async fn sync_record_to_qms(
 }
 
 pub async fn sync_reagent_to_ehs(
-    State(state): State<crate::AppState>,
+    State(state): State<crate::shared::AppState>,
     Json(req): Json<SyncReagentToEhsRequest>,
 ) -> Json<ApiResponse<SyncRecord>> {
     let reagent_id = match Uuid::parse_str(&req.reagent_id) {
@@ -340,6 +345,7 @@ pub async fn sync_reagent_to_ehs(
         Ok(r) => Json(ApiResponse::success(
             SyncRecord {
                 id: r.get("id"),
+                tenant_id: r.get("tenant_id"),
                 sync_no: r.get("sync_no"),
                 sync_type: r.get("sync_type"),
                 source_id: r.get("source_id"),
@@ -362,7 +368,7 @@ pub async fn sync_reagent_to_ehs(
 }
 
 pub async fn retry_sync(
-    State(state): State<crate::AppState>,
+    State(state): State<crate::shared::AppState>,
     axum::extract::Path(id): axum::extract::Path<String>,
 ) -> Json<ApiResponse<SyncRecord>> {
     let id = match Uuid::parse_str(&id) {
@@ -381,6 +387,7 @@ pub async fn retry_sync(
         Ok(r) => Json(ApiResponse::success(
             SyncRecord {
                 id: r.get("id"),
+                tenant_id: r.get("tenant_id"),
                 sync_no: r.get("sync_no"),
                 sync_type: r.get("sync_type"),
                 source_id: r.get("source_id"),
@@ -403,7 +410,7 @@ pub async fn retry_sync(
 }
 
 pub async fn delete_sync_record(
-    State(state): State<crate::AppState>,
+    State(state): State<crate::shared::AppState>,
     axum::extract::Path(id): axum::extract::Path<String>,
 ) -> Json<ApiResponse<bool>> {
     let id = match Uuid::parse_str(&id) {

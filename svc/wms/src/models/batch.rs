@@ -6,6 +6,7 @@ use uuid::Uuid;
 #[derive(Debug, Clone, FromRow, Serialize, Deserialize)]
 pub struct Batch {
     pub id: Uuid,
+    pub tenant_id: Uuid,
     pub batch_no: String,
     pub sku: String,
     pub material_name: String,

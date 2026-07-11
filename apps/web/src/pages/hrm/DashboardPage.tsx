@@ -22,6 +22,7 @@ import {
   type Employee,
   type Department,
 } from '@/api/hrm';
+import { HRM_PATHS } from '@/modules/hrm/config';
 
 export const DashboardPage: React.FC = () => {
   const navigate = useNavigate();
@@ -280,25 +281,25 @@ export const DashboardPage: React.FC = () => {
         id: 'new-employee',
         label: '新增员工',
         icon: <ArrowRight size={18} />,
-        onClick: () => navigate('/hrm/employee/create'),
+        onClick: () => navigate(HRM_PATHS.employeeCreate),
       },
       {
         id: 'recruitment',
         label: '招聘管理',
         icon: <ArrowRight size={18} />,
-        onClick: () => navigate('/hrm/recruitment'),
+        onClick: () => navigate(HRM_PATHS.recruitment),
       },
       {
         id: 'training-plan',
         label: '培训计划',
         icon: <ArrowRight size={18} />,
-        onClick: () => navigate('/hrm/training'),
+        onClick: () => navigate(HRM_PATHS.training),
       },
       {
         id: 'performance-review',
         label: '绩效考核',
         icon: <ArrowRight size={18} />,
-        onClick: () => navigate('/hrm/performance'),
+        onClick: () => navigate(HRM_PATHS.performance),
       },
     ],
     [navigate]

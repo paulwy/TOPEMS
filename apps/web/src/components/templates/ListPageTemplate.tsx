@@ -355,7 +355,7 @@ export function ListPageTemplate<T>({
               position: 'sticky',
               left: 0,
               zIndex: 2,
-              bgcolor: 'grey.50',
+              bgcolor: theme.palette.mode === 'dark' ? 'rgba(255,255,255,0.04)' : 'grey.50',
             }}
           >
             <Checkbox
@@ -374,7 +374,7 @@ export function ListPageTemplate<T>({
               position: selectable ? 'sticky' : 'relative',
               left: selectable ? 48 : 0,
               zIndex: 2,
-              bgcolor: 'grey.50',
+              bgcolor: theme.palette.mode === 'dark' ? 'rgba(255,255,255,0.04)' : 'grey.50',
             }}
           >
             #
@@ -561,8 +561,13 @@ export function ListPageTemplate<T>({
             onClick={() => onRowClick?.(row)}
             sx={{
               '&:nth-of-type(even)': striped ? { bgcolor: 'action.hover' } : {},
-              '&:hover': { bgcolor: 'primary.50' },
-              '&.Mui-selected': { bgcolor: 'primary.50' },
+              '&:hover': {
+                bgcolor: theme.palette.mode === 'dark' ? 'rgba(59,130,246,0.08)' : 'primary.50',
+                transition: 'background-color 150ms ease',
+              },
+              '&.Mui-selected': {
+                bgcolor: theme.palette.mode === 'dark' ? 'rgba(59,130,246,0.12)' : 'primary.50',
+              },
               cursor: onRowClick ? 'pointer' : 'default',
               transition: 'background-color 150ms ease',
             }}

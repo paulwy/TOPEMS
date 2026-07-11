@@ -211,7 +211,7 @@ const RsOverviewPage: React.FC = () => {
         icon: <Bug size={18} />,
         status: 'error',
         tags: [{ label: '严重', color: ct.error.dark }],
-        onClick: () => navigate('/rs/bugs/bug1'),
+        onClick: () => navigate('/rs/bug'),
       },
       {
         id: 'bug2',
@@ -221,7 +221,7 @@ const RsOverviewPage: React.FC = () => {
         icon: <Bug size={18} />,
         status: 'warning',
         tags: [{ label: '中等', color: ct.warning.dark }],
-        onClick: () => navigate('/rs/bugs/bug2'),
+        onClick: () => navigate('/rs/bug'),
       },
       {
         id: 'build1',
@@ -230,7 +230,7 @@ const RsOverviewPage: React.FC = () => {
         time: '2026-06-29 08:00',
         icon: <Hammer size={18} />,
         status: 'success',
-        onClick: () => navigate('/rs/builds/build1'),
+        onClick: () => navigate('/rs/build'),
       },
       {
         id: 'rel1',
@@ -239,7 +239,7 @@ const RsOverviewPage: React.FC = () => {
         time: '2026-06-28 18:30',
         icon: <Rocket size={18} />,
         status: 'success',
-        onClick: () => navigate('/rs/releases/rel1'),
+        onClick: () => navigate('/rs/release'),
       },
       {
         id: 'commit1',

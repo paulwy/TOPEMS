@@ -7,6 +7,7 @@ use super::{db::Database, qa::QAService};
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct RecommendationRequest {
     pub user_id: Option<Uuid>,
+    pub tenant_id: Uuid,
     pub context: serde_json::Value,
     pub recommendation_type: String,
     pub top_k: Option<usize>,
@@ -57,22 +58,29 @@ impl RecommendationService {
     ) -> Result<RecommendationResponse, String> {
         let top_k = request.top_k.unwrap_or(10);
         let rec_type = &request.recommendation_type;
+        let tenant_id = request.tenant_id;
 
         let mut items = match rec_type.as_str() {
-            "documents" => self.recommend_documents(&request, top_k).await?,
-            "products" => self.recommend_products(&request, top_k).await?,
+            "documents" => self.recommend_documents(&request, top_k, tenant_id).await?,
+            "products" => self.recommend_products(&request, top_k, tenant_id).await?,
             "opportunities" => self.recommend_opportunities(&request, top_k).await?,
-            "tasks" => self.recommend_tasks(&request, top_k).await?,
-            "knowledge" => self.recommend_knowledge(&request, top_k).await?,
-            "similar" => self.recommend_similar(&request, top_k).await?,
-            "articles" => self.recommend_articles(&request, top_k).await?,
+            "tasks" => self.recommend_tasks(&request, top_k, tenant_id).await?,
+            "knowledge" => self.recommend_knowledge(&request, top_k, tenant_id).await?,
+            "similar" => self.recommend_similar(&request, top_k, tenant_id).await?,
+            "articles" => self.recommend_articles(&request, top_k, tenant_id).await?,
             "events" => self.recommend_events(&request, top_k).await?,
             "users" => self.recommend_users(&request, top_k).await?,
-            "content" => self.recommend_content(&request, top_k).await?,
-            "personalized" => self.recommend_personalized(&request, top_k).await?,
-            "cross-sell" => self.recommend_cross_sell(&request, top_k).await?,
-            "up-sell" => self.recommend_up_sell(&request, top_k).await?,
-            _ => self.recommend_general(&request, top_k).await?,
+            "content" => self.recommend_content(&request, top_k, tenant_id).await?,
+            "personalized" => {
+                self.recommend_personalized(&request, top_k, tenant_id)
+                    .await?
+            }
+            "cross-sell" => {
+                self.recommend_cross_sell(&request, top_k, tenant_id)
+                    .await?
+            }
+            "up-sell" => self.recommend_up_sell(&request, top_k, tenant_id).await?,
+            _ => self.recommend_general(&request, top_k, tenant_id).await?,
         };
 
         if let Some(user_id) = request.user_id {
@@ -94,17 +102,19 @@ impl RecommendationService {
         &self,
         _request: &RecommendationRequest,
         top_k: usize,
+        tenant_id: Uuid,
     ) -> Result<Vec<RecommendationItem>, String> {
         let query = sqlx::query(
             r#"
             SELECT id, title, description, document_type
             FROM ai.documents
-            WHERE is_processed = TRUE
+            WHERE is_processed = TRUE AND tenant_id = $2
             ORDER BY created_at DESC
             LIMIT $1
             "#,
         )
         .bind(top_k as i64)
+        .bind(tenant_id)
         .fetch_all(self.db.pool())
         .await
         .map_err(|e| format!("查询文档失败: {}", e))?;
@@ -132,6 +142,7 @@ impl RecommendationService {
         &self,
         request: &RecommendationRequest,
         top_k: usize,
+        tenant_id: Uuid,
     ) -> Result<Vec<RecommendationItem>, String> {
         let context_str = serde_json::to_string(&request.context)
             .map_err(|e| format!("序列化上下文失败: {}", e))?;
@@ -141,7 +152,11 @@ impl RecommendationService {
             context_str, top_k
         );
 
-        let response = self.qa_service.ask(&prompt, None, 5).await.map(|r| r.0)?;
+        let response = self
+            .qa_service
+            .ask(&prompt, None, 5, tenant_id)
+            .await
+            .map(|r| r.0)?;
         let cleaned: String = response
             .replace("```json", "")
             .replace("```", "")
@@ -193,6 +208,7 @@ impl RecommendationService {
         &self,
         request: &RecommendationRequest,
         top_k: usize,
+        tenant_id: Uuid,
     ) -> Result<Vec<RecommendationItem>, String> {
         let context_str = serde_json::to_string(&request.context)
             .map_err(|e| format!("序列化上下文失败: {}", e))?;
@@ -202,7 +218,11 @@ impl RecommendationService {
             context_str, top_k
         );
 
-        let response = self.qa_service.ask(&prompt, None, 5).await.map(|r| r.0)?;
+        let response = self
+            .qa_service
+            .ask(&prompt, None, 5, tenant_id)
+            .await
+            .map(|r| r.0)?;
         let cleaned: String = response
             .replace("```json", "")
             .replace("```", "")
@@ -219,6 +239,7 @@ impl RecommendationService {
         &self,
         request: &RecommendationRequest,
         top_k: usize,
+        tenant_id: Uuid,
     ) -> Result<Vec<RecommendationItem>, String> {
         let query = request
             .context
@@ -226,7 +247,10 @@ impl RecommendationService {
             .and_then(|v| v.as_str())
             .unwrap_or("");
 
-        let search_results = self.qa_service.semantic_search(query, top_k).await?;
+        let search_results = self
+            .qa_service
+            .semantic_search(query, top_k, tenant_id)
+            .await?;
 
         let items: Vec<RecommendationItem> = search_results
             .into_iter()
@@ -248,6 +272,7 @@ impl RecommendationService {
         &self,
         _request: &RecommendationRequest,
         top_k: usize,
+        _tenant_id: Uuid,
     ) -> Result<Vec<RecommendationItem>, String> {
         let items = vec![
             RecommendationItem {
@@ -274,6 +299,7 @@ impl RecommendationService {
         &self,
         request: &RecommendationRequest,
         top_k: usize,
+        _tenant_id: Uuid,
     ) -> Result<Vec<RecommendationItem>, String> {
         let context_str = serde_json::to_string(&request.context)
             .map_err(|e| format!("序列化上下文失败: {}", e))?;
@@ -283,7 +309,11 @@ impl RecommendationService {
             context_str, request.recommendation_type, top_k
         );
 
-        let response = self.qa_service.ask(&prompt, None, 5).await.map(|r| r.0)?;
+        let response = self
+            .qa_service
+            .ask(&prompt, None, 5, Uuid::nil())
+            .await
+            .map(|r| r.0)?;
         let cleaned: String = response
             .replace("```json", "")
             .replace("```", "")
@@ -400,17 +430,19 @@ impl RecommendationService {
         &self,
         _request: &RecommendationRequest,
         top_k: usize,
+        tenant_id: Uuid,
     ) -> Result<Vec<RecommendationItem>, String> {
         let query = sqlx::query(
             r#"
             SELECT id, title, description, category
             FROM ai.documents
-            WHERE document_type = 'article' AND is_processed = TRUE
+            WHERE document_type = 'article' AND is_processed = TRUE AND tenant_id = $2
             ORDER BY created_at DESC
             LIMIT $1
             "#,
         )
         .bind(top_k as i64)
+        .bind(tenant_id)
         .fetch_all(self.db.pool())
         .await
         .map_err(|e| format!("查询文章失败: {}", e))?;
@@ -498,13 +530,17 @@ impl RecommendationService {
         &self,
         request: &RecommendationRequest,
         top_k: usize,
+        tenant_id: Uuid,
     ) -> Result<Vec<RecommendationItem>, String> {
         let query = request
             .context
             .get("query")
             .and_then(|v| v.as_str())
             .unwrap_or("");
-        let search_results = self.qa_service.semantic_search(query, top_k).await?;
+        let search_results = self
+            .qa_service
+            .semantic_search(query, top_k, tenant_id)
+            .await?;
 
         let items: Vec<RecommendationItem> = search_results
             .into_iter()
@@ -526,6 +562,7 @@ impl RecommendationService {
         &self,
         _request: &RecommendationRequest,
         top_k: usize,
+        _tenant_id: Uuid,
     ) -> Result<Vec<RecommendationItem>, String> {
         let items = vec![
             RecommendationItem {
@@ -552,6 +589,7 @@ impl RecommendationService {
         &self,
         _request: &RecommendationRequest,
         top_k: usize,
+        _tenant_id: Uuid,
     ) -> Result<Vec<RecommendationItem>, String> {
         let items = vec![
             RecommendationItem {
@@ -582,6 +620,7 @@ impl RecommendationService {
         &self,
         _request: &RecommendationRequest,
         top_k: usize,
+        _tenant_id: Uuid,
     ) -> Result<Vec<RecommendationItem>, String> {
         let items = vec![
             RecommendationItem {
@@ -666,7 +705,11 @@ impl RecommendationService {
             titles_str, context_str
         );
 
-        let response = self.qa_service.ask(&prompt, None, 3).await.map(|r| r.0)?;
+        let response = self
+            .qa_service
+            .ask(&prompt, None, 3, Uuid::nil())
+            .await
+            .map(|r| r.0)?;
         let cleaned: String = response
             .replace("```json", "")
             .replace("```", "")

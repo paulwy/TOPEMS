@@ -64,18 +64,34 @@ pub async fn create_routes(db: PgPool) -> Result<Router> {
     Ok(app)
 }
 
+fn get_tenant_id(claims: &Claims, headers: &axum::http::HeaderMap) -> Uuid {
+    claims
+        .tenant_id
+        .as_ref()
+        .and_then(|t| Uuid::parse_str(t).ok())
+        .or_else(|| {
+            headers
+                .get("x-tenant-id")
+                .and_then(|v| v.to_str().ok())
+                .and_then(|s| Uuid::parse_str(s).ok())
+        })
+        .unwrap_or_else(Uuid::new_v4)
+}
+
 // ==================== Supplier Handlers ====================
 
 async fn list_suppliers(
     State(state): State<Arc<AppState>>,
     Extension(claims): Extension<Claims>,
     Query(params): Query<ListQueryParams>,
+    headers: axum::http::HeaderMap,
 ) -> Json<ApiResponse<serde_json::Value>> {
     match check_permission(&state.db, &claims, &ModulePermission::SupplierRead).await {
         Ok(_) => {}
         Err(e) => return e,
     }
 
+    let tenant_id = get_tenant_id(&claims, &headers);
     let page = params.page.unwrap_or(1).max(1);
     let page_size = params.page_size.unwrap_or(20).min(100);
     let offset = (page - 1) * page_size;
@@ -106,18 +122,20 @@ async fn list_suppliers(
 
     let query = format!(
         r#"
-        SELECT id, supplier_no, name, legal_name, category, status, tax_id, address, contact_person, phone, email, website, credit_rating, risk_level, created_by, created_at, updated_at
+        SELECT id, tenant_id, supplier_no, name, legal_name, category, status, tax_id, address, contact_person, phone, email, website, credit_rating, risk_level, created_by, created_at, updated_at
         FROM plugin_srm.suppliers
-        WHERE ($1::text IS NULL OR name ILIKE $1 OR supplier_no ILIKE $1)
-          AND ($2::text IS NULL OR status = $2)
-          AND ($3::text IS NULL OR category = $3)
+        WHERE tenant_id = $1
+          AND ($2::text IS NULL OR name ILIKE $2 OR supplier_no ILIKE $2)
+          AND ($3::text IS NULL OR status = $3)
+          AND ($4::text IS NULL OR category = $4)
         ORDER BY {} {}
-        LIMIT $4 OFFSET $5
+        LIMIT $5 OFFSET $6
         "#,
         sort_field, order_clause
     );
 
     let result = sqlx::query_as::<_, Supplier>(&query)
+        .bind(tenant_id)
         .bind(&search_pattern)
         .bind(&status_filter)
         .bind(&category_filter)
@@ -131,13 +149,15 @@ async fn list_suppliers(
             let count_query = format!(
                 r#"
                 SELECT COUNT(*) FROM plugin_srm.suppliers
-                WHERE ($1::text IS NULL OR name ILIKE $1 OR supplier_no ILIKE $1)
-                  AND ($2::text IS NULL OR status = $2)
-                  AND ($3::text IS NULL OR category = $3)
+                WHERE tenant_id = $1
+                  AND ($2::text IS NULL OR name ILIKE $2 OR supplier_no ILIKE $2)
+                  AND ($3::text IS NULL OR status = $3)
+                  AND ($4::text IS NULL OR category = $4)
                 "#,
             );
 
             let count_result = sqlx::query_scalar::<_, i64>(&count_query)
+                .bind(tenant_id)
                 .bind(&search_pattern)
                 .bind(&status_filter)
                 .bind(&category_filter)
@@ -169,6 +189,7 @@ async fn list_suppliers(
 async fn create_supplier(
     State(state): State<Arc<AppState>>,
     Extension(claims): Extension<Claims>,
+    headers: axum::http::HeaderMap,
     Json(req): Json<CreateSupplierRequest>,
 ) -> Json<ApiResponse<Supplier>> {
     match check_permission(&state.db, &claims, &ModulePermission::SupplierWrite).await {
@@ -176,7 +197,8 @@ async fn create_supplier(
         Err(e) => return e,
     }
 
-    // 数据验证
+    let tenant_id = get_tenant_id(&claims, &headers);
+
     if req.supplier_no.is_empty() || req.name.is_empty() {
         return Json(ApiResponse::<Supplier>::error(
             400,
@@ -184,10 +206,10 @@ async fn create_supplier(
         ));
     }
 
-    // 检查供应商编号是否已存在
     let existing = sqlx::query_scalar::<_, i64>(
-        "SELECT COUNT(*) FROM plugin_srm.suppliers WHERE supplier_no = $1",
+        "SELECT COUNT(*) FROM plugin_srm.suppliers WHERE tenant_id = $1 AND supplier_no = $2",
     )
+    .bind(tenant_id)
     .bind(&req.supplier_no)
     .fetch_one(&state.db)
     .await;
@@ -202,12 +224,13 @@ async fn create_supplier(
 
     let result = sqlx::query_as::<_, Supplier>(
         r#"
-        INSERT INTO plugin_srm.suppliers (id, supplier_no, name, legal_name, category, status, tax_id, address, contact_person, phone, email, website, credit_rating, risk_level, created_by, created_at, updated_at)
-        VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, $17)
-        RETURNING id, supplier_no, name, legal_name, category, status, tax_id, address, contact_person, phone, email, website, credit_rating, risk_level, created_by, created_at, updated_at
+        INSERT INTO plugin_srm.suppliers (id, tenant_id, supplier_no, name, legal_name, category, status, tax_id, address, contact_person, phone, email, website, credit_rating, risk_level, created_by, created_at, updated_at)
+        VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, $17, $18)
+        RETURNING id, tenant_id, supplier_no, name, legal_name, category, status, tax_id, address, contact_person, phone, email, website, credit_rating, risk_level, created_by, created_at, updated_at
         "#,
     )
     .bind(id)
+    .bind(tenant_id)
     .bind(&req.supplier_no)
     .bind(&req.name)
     .bind(&req.legal_name)
@@ -229,7 +252,6 @@ async fn create_supplier(
 
     match result {
         Ok(supplier) => {
-            // 记录审计日志
             record_audit_log(
                 &state.db,
                 "suppliers",
@@ -238,6 +260,7 @@ async fn create_supplier(
                 None,
                 Some(serde_json::to_value(&supplier).ok()),
                 user_id,
+                tenant_id,
             )
             .await;
 
@@ -254,19 +277,23 @@ async fn get_supplier(
     State(state): State<Arc<AppState>>,
     Extension(claims): Extension<Claims>,
     Path(id): Path<Uuid>,
+    headers: axum::http::HeaderMap,
 ) -> Json<ApiResponse<Supplier>> {
     match check_permission(&state.db, &claims, &ModulePermission::SupplierRead).await {
         Ok(_) => {}
         Err(e) => return e,
     }
 
+    let tenant_id = get_tenant_id(&claims, &headers);
+
     let result = sqlx::query_as::<_, Supplier>(
         r#"
-        SELECT id, supplier_no, name, legal_name, category, status, tax_id, address, contact_person, phone, email, website, credit_rating, risk_level, created_by, created_at, updated_at
-        FROM plugin_srm.suppliers WHERE id = $1
+        SELECT id, tenant_id, supplier_no, name, legal_name, category, status, tax_id, address, contact_person, phone, email, website, credit_rating, risk_level, created_by, created_at, updated_at
+        FROM plugin_srm.suppliers WHERE id = $1 AND tenant_id = $2
         "#,
     )
     .bind(id)
+    .bind(tenant_id)
     .fetch_optional(&state.db)
     .await;
 
@@ -284,6 +311,7 @@ async fn update_supplier(
     State(state): State<Arc<AppState>>,
     Extension(claims): Extension<Claims>,
     Path(id): Path<Uuid>,
+    headers: axum::http::HeaderMap,
     Json(req): Json<UpdateSupplierRequest>,
 ) -> Json<ApiResponse<Supplier>> {
     match check_permission(&state.db, &claims, &ModulePermission::SupplierWrite).await {
@@ -291,10 +319,13 @@ async fn update_supplier(
         Err(e) => return e,
     }
 
+    let tenant_id = get_tenant_id(&claims, &headers);
+
     let existing = sqlx::query_as::<_, Supplier>(
-        "SELECT id, supplier_no, name, legal_name, category, status, tax_id, address, contact_person, phone, email, website, credit_rating, risk_level, created_by, created_at, updated_at FROM plugin_srm.suppliers WHERE id = $1",
+        "SELECT id, tenant_id, supplier_no, name, legal_name, category, status, tax_id, address, contact_person, phone, email, website, credit_rating, risk_level, created_by, created_at, updated_at FROM plugin_srm.suppliers WHERE id = $1 AND tenant_id = $2",
     )
     .bind(id)
+    .bind(tenant_id)
     .fetch_optional(&state.db)
     .await;
 
@@ -331,8 +362,8 @@ async fn update_supplier(
         r#"
         UPDATE plugin_srm.suppliers SET
             supplier_no = $2, name = $3, legal_name = $4, category = $5, status = $6, tax_id = $7, address = $8, contact_person = $9, phone = $10, email = $11, website = $12, credit_rating = $13, risk_level = $14, updated_at = $15
-        WHERE id = $1
-        RETURNING id, supplier_no, name, legal_name, category, status, tax_id, address, contact_person, phone, email, website, credit_rating, risk_level, created_by, created_at, updated_at
+        WHERE id = $1 AND tenant_id = $16
+        RETURNING id, tenant_id, supplier_no, name, legal_name, category, status, tax_id, address, contact_person, phone, email, website, credit_rating, risk_level, created_by, created_at, updated_at
         "#,
     )
     .bind(id)
@@ -350,12 +381,12 @@ async fn update_supplier(
     .bind(credit_rating)
     .bind(risk_level)
     .bind(now)
+    .bind(tenant_id)
     .fetch_one(&state.db)
     .await;
 
     match result {
         Ok(supplier) => {
-            // 记录审计日志
             record_audit_log(
                 &state.db,
                 "suppliers",
@@ -364,6 +395,7 @@ async fn update_supplier(
                 Some(old_values),
                 Some(serde_json::to_value(&supplier).ok()),
                 user_id,
+                tenant_id,
             )
             .await;
 
@@ -380,17 +412,20 @@ async fn delete_supplier(
     State(state): State<Arc<AppState>>,
     Extension(claims): Extension<Claims>,
     Path(id): Path<Uuid>,
+    headers: axum::http::HeaderMap,
 ) -> Json<ApiResponse<String>> {
     match check_permission(&state.db, &claims, &ModulePermission::SupplierWrite).await {
         Ok(_) => {}
         Err(e) => return e,
     }
 
-    // 获取供应商信息用于审计日志
+    let tenant_id = get_tenant_id(&claims, &headers);
+
     let existing = sqlx::query_as::<_, Supplier>(
-        "SELECT id, supplier_no, name, legal_name, category, status, tax_id, address, contact_person, phone, email, website, credit_rating, risk_level, created_by, created_at, updated_at FROM plugin_srm.suppliers WHERE id = $1",
+        "SELECT id, tenant_id, supplier_no, name, legal_name, category, status, tax_id, address, contact_person, phone, email, website, credit_rating, risk_level, created_by, created_at, updated_at FROM plugin_srm.suppliers WHERE id = $1 AND tenant_id = $2",
     )
     .bind(id)
+    .bind(tenant_id)
     .fetch_optional(&state.db)
     .await;
 
@@ -400,18 +435,17 @@ async fn delete_supplier(
         .and_then(|s| serde_json::to_value(&s).ok());
     let user_id = Uuid::parse_str(&claims.sub).ok();
 
-    // 软删除：更新状态为deleted
     let result = sqlx::query(
-        "UPDATE plugin_srm.suppliers SET status = 'deleted', updated_at = $2 WHERE id = $1",
+        "UPDATE plugin_srm.suppliers SET status = 'deleted', updated_at = $2 WHERE id = $1 AND tenant_id = $3",
     )
     .bind(id)
     .bind(Utc::now())
+    .bind(tenant_id)
     .execute(&state.db)
     .await;
 
     match result {
         Ok(r) if r.rows_affected() > 0 => {
-            // 记录审计日志
             record_audit_log(
                 &state.db,
                 "suppliers",
@@ -420,6 +454,7 @@ async fn delete_supplier(
                 Some(old_values),
                 None,
                 user_id,
+                tenant_id,
             )
             .await;
 
@@ -439,21 +474,25 @@ async fn get_supplier_products(
     State(state): State<Arc<AppState>>,
     Extension(claims): Extension<Claims>,
     Path(id): Path<Uuid>,
+    headers: axum::http::HeaderMap,
 ) -> Json<ApiResponse<Vec<SupplierProduct>>> {
     match check_permission(&state.db, &claims, &ModulePermission::SupplierRead).await {
         Ok(_) => {}
         Err(e) => return e,
     }
 
+    let tenant_id = get_tenant_id(&claims, &headers);
+
     let result = sqlx::query_as::<_, SupplierProduct>(
         r#"
-        SELECT id, product_no, supplier_id, name, description, category, unit, unit_price, currency, min_order_qty, lead_time_days, status, specifications, created_by, created_at, updated_at
+        SELECT id, tenant_id, product_no, supplier_id, name, description, category, unit, unit_price, currency, min_order_qty, lead_time_days, status, specifications, created_by, created_at, updated_at
         FROM plugin_srm.supplier_products
-        WHERE supplier_id = $1
+        WHERE supplier_id = $1 AND tenant_id = $2
         ORDER BY created_at DESC
         "#,
     )
     .bind(id)
+    .bind(tenant_id)
     .fetch_all(&state.db)
     .await;
 
@@ -475,21 +514,25 @@ async fn get_supplier_contracts(
     State(state): State<Arc<AppState>>,
     Extension(claims): Extension<Claims>,
     Path(id): Path<Uuid>,
+    headers: axum::http::HeaderMap,
 ) -> Json<ApiResponse<Vec<SupplierContract>>> {
     match check_permission(&state.db, &claims, &ModulePermission::ContractRead).await {
         Ok(_) => {}
         Err(e) => return e,
     }
 
+    let tenant_id = get_tenant_id(&claims, &headers);
+
     let result = sqlx::query_as::<_, SupplierContract>(
         r#"
-        SELECT id, contract_no, supplier_id, supplier_name, title, contract_type, total_amount, currency, sign_date, start_date, end_date, status, remarks, created_by, created_at, updated_at
+        SELECT id, tenant_id, contract_no, supplier_id, supplier_name, title, contract_type, total_amount, currency, sign_date, start_date, end_date, status, remarks, created_by, created_at, updated_at
         FROM plugin_srm.supplier_contracts
-        WHERE supplier_id = $1
+        WHERE supplier_id = $1 AND tenant_id = $2
         ORDER BY created_at DESC
         "#,
     )
     .bind(id)
+    .bind(tenant_id)
     .fetch_all(&state.db)
     .await;
 
@@ -511,27 +554,31 @@ async fn get_supplier_performance(
     State(state): State<Arc<AppState>>,
     Extension(claims): Extension<Claims>,
     Path(id): Path<Uuid>,
+    headers: axum::http::HeaderMap,
 ) -> Json<ApiResponse<SupplierPerformance>> {
     match check_permission(&state.db, &claims, &ModulePermission::SupplierRead).await {
         Ok(_) => {}
         Err(e) => return e,
     }
 
-    // 并行执行三个独立查询，避免顺序执行造成的延迟
+    let tenant_id = get_tenant_id(&claims, &headers);
+
     let supplier_query = sqlx::query_as::<_, Supplier>(
-        "SELECT id, supplier_no, name, legal_name, category, status, tax_id, address, contact_person, phone, email, website, credit_rating, risk_level, created_by, created_at, updated_at FROM plugin_srm.suppliers WHERE id = $1",
+        "SELECT id, tenant_id, supplier_no, name, legal_name, category, status, tax_id, address, contact_person, phone, email, website, credit_rating, risk_level, created_by, created_at, updated_at FROM plugin_srm.suppliers WHERE id = $1 AND tenant_id = $2",
     )
     .bind(id)
+    .bind(tenant_id)
     .fetch_optional(&state.db);
 
     let order_stats_query = sqlx::query_as::<_, (i64, Option<f64>)>(
         r#"
         SELECT COUNT(*) as total_orders, COALESCE(SUM(total_amount), 0) as total_amount
-        FROM srm.purchase_orders
-        WHERE supplier_id = $1
+        FROM plugin_srm.purchase_orders
+        WHERE supplier_id = $1 AND tenant_id = $2
         "#,
     )
     .bind(id)
+    .bind(tenant_id)
     .fetch_one(&state.db);
 
     let eval_stats_query = sqlx::query_as::<
@@ -556,13 +603,13 @@ async fn get_supplier_performance(
             COUNT(*) as eval_count,
             MAX(evaluation_date) as last_eval_date
         FROM plugin_srm.supplier_evaluations
-        WHERE supplier_id = $1
+        WHERE supplier_id = $1 AND tenant_id = $2
         "#,
     )
     .bind(id)
+    .bind(tenant_id)
     .fetch_one(&state.db);
 
-    // 并行执行所有查询
     let (supplier_result, order_stats, eval_stats) =
         tokio::join!(supplier_query, order_stats_query, eval_stats_query);
 
@@ -624,16 +671,18 @@ async fn record_audit_log(
     old_values: Option<Option<serde_json::Value>>,
     new_values: Option<Option<serde_json::Value>>,
     changed_by: Option<Uuid>,
+    tenant_id: Uuid,
 ) {
     let log_id = Uuid::new_v4();
 
     let result = sqlx::query(
         r#"
-        INSERT INTO public.audit_logs (id, table_name, record_id, action, old_values, new_values, changed_by, changed_at)
-        VALUES ($1, $2, $3, $4, $5, $6, $7, $8)
+        INSERT INTO plugin_srm.audit_logs (id, tenant_id, table_name, record_id, action, old_values, new_values, changed_by, changed_at)
+        VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9)
         "#,
     )
     .bind(log_id)
+    .bind(tenant_id)
     .bind(table_name)
     .bind(record_id)
     .bind(action)

@@ -156,12 +156,15 @@ export const formApi = {
     const start = (page - 1) * pageSize;
     const end = start + pageSize;
 
+    const totalPages = Math.ceil(filtered.length / pageSize);
     return {
       items: filtered.slice(start, end),
       total: filtered.length,
       page,
       pageSize,
-      totalPages: Math.ceil(filtered.length / pageSize),
+      page_size: pageSize,
+      totalPages,
+      total_pages: totalPages,
     };
   },
 

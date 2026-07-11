@@ -6,6 +6,7 @@ use uuid::Uuid;
 #[derive(Debug, Clone, FromRow, Serialize, Deserialize)]
 pub struct TrainingPlan {
     pub id: Uuid,
+    pub tenant_id: Uuid,
     pub name: String,
     pub code: Option<String>,
     pub description: Option<String>,
@@ -41,6 +42,7 @@ pub struct UpdateTrainingPlanRequest {
 #[derive(Debug, Clone, FromRow, Serialize, Deserialize)]
 pub struct TrainingCourse {
     pub id: Uuid,
+    pub tenant_id: Uuid,
     pub plan_id: Uuid,
     pub name: String,
     pub code: Option<String>,
@@ -90,6 +92,7 @@ pub struct UpdateTrainingCourseRequest {
 #[derive(Debug, Clone, FromRow, Serialize, Deserialize)]
 pub struct TrainingRecord {
     pub id: Uuid,
+    pub tenant_id: Uuid,
     pub course_id: Uuid,
     pub employee_id: Uuid,
     pub enrollment_date: DateTime<Utc>,

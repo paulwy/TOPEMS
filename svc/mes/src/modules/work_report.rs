@@ -692,7 +692,7 @@ pub async fn approve_work_report(
         }
     };
 
-    let approver = claims.username.clone();
+    let approver = Uuid::parse_str(&claims.username).ok();
 
     let result = sqlx::query!(
         r#"
@@ -771,7 +771,7 @@ pub async fn reject_work_report(
         }
     };
 
-    let approver = claims.username.clone();
+    let approver = Uuid::parse_str(&claims.username).ok();
     let remark = body.remark.unwrap_or_default();
 
     let result = sqlx::query!(

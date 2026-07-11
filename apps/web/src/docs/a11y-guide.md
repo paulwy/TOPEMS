@@ -136,11 +136,11 @@ import Button from '@mui/material/Button';
 import Button from '@mui/material/Button';
 <Button onClick={handleAction}>操作</Button>
 
-// ✅ 正确：使用 IconButton + aria-label
+// ✅ 正确：使用 IconButton + aria-label（图标统一使用 lucide-react）
 import IconButton from '@mui/material/IconButton';
-import DeleteIcon from '@mui/icons-material/Delete';
+import { Trash2 } from 'lucide-react';
 <IconButton aria-label="删除记录" onClick={handleDelete}>
-  <DeleteIcon />
+  <Trash2 />
 </IconButton>
 
 // ❌ 错误：div + onClick 无法通过键盘触发

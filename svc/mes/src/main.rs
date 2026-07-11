@@ -37,8 +37,11 @@ async fn main() {
 
     tracing::info!("🚀 TOPEMS MES Service starting...");
 
-    let database_url = std::env::var("DATABASE_URL")
-        .unwrap_or_else(|_| "postgres://topems:topems_secret@localhost:5432/topems".to_string());
+    let database_url = std::env::var("DATABASE_URL").unwrap_or_else(|_| {
+        env::var("DATABASE_URL")
+            .expect("DATABASE_URL environment variable is required")
+            .to_string()
+    });
 
     let pool = match sqlx::postgres::PgPoolOptions::new()
         .max_connections(10)

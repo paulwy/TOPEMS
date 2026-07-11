@@ -1,9 +1,10 @@
-use axum::{extract::State, routing::get, Json, Router};
+use axum::{extract::State, routing::get, Extension, Json, Router};
 use serde::{Deserialize, Serialize};
 use sqlx::{types::Uuid, Row};
 use topems_shared::ApiResponse;
 
-use crate::AppState;
+use crate::middleware::tenant::TenantContext;
+use crate::shared::AppState;
 
 pub fn create_routes() -> Router<AppState> {
     Router::new()
@@ -20,6 +21,7 @@ pub fn create_routes() -> Router<AppState> {
 #[derive(Debug, Serialize)]
 pub struct InspectionProcess {
     pub id: String,
+    pub tenant_id: String,
     pub process_no: String,
     pub name: String,
     pub description: Option<String>,
@@ -63,6 +65,7 @@ pub async fn list_processes(
                     let is_active: bool = row.get("is_active");
                     InspectionProcess {
                         id: row.get("id"),
+                        tenant_id: row.get("tenant_id"),
                         process_no: row.get("id"),
                         name: row.get("process_name"),
                         description: row.get("description"),
@@ -105,6 +108,7 @@ pub async fn get_process(
             let is_active: bool = data.get("is_active");
             let process = InspectionProcess {
                 id: data.get("id"),
+                tenant_id: data.get("tenant_id"),
                 process_no: data.get("id"),
                 name: data.get("process_name"),
                 description: data.get("description"),
@@ -143,6 +147,7 @@ pub async fn create_process(
             let is_active: bool = data.get("is_active");
             let process = InspectionProcess {
                 id: data.get("id"),
+                tenant_id: data.get("tenant_id"),
                 process_no: data.get("id"),
                 name: data.get("process_name"),
                 description: data.get("description"),
@@ -193,6 +198,7 @@ pub async fn update_process(
             let is_active: bool = data.get("is_active");
             let process = InspectionProcess {
                 id: data.get("id"),
+                tenant_id: data.get("tenant_id"),
                 process_no: data.get("id"),
                 name: data.get("process_name"),
                 description: data.get("description"),

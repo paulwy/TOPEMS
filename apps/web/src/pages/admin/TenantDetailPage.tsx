@@ -60,6 +60,7 @@ import type {
   UserStatus,
   TenantInvoice,
 } from '@/api/tenant/types';
+import { ADMIN_PATHS } from '@/modules/admin/config';
 
 const statusColors: Record<string, 'success' | 'warning' | 'error' | 'default'> = {
   active: 'success',
@@ -881,7 +882,7 @@ const TenantDetailPage: React.FC = () => {
         title={tenant.name}
         subtitle={tenant.slug}
         loading={loading}
-        backHref='/admin/tenants'
+        backHref={ADMIN_PATHS.tenant}
         infoCard={infoCard}
         tabs={tabs}
         defaultTab='overview'

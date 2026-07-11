@@ -451,7 +451,7 @@ const VoucherDetailPage: React.FC = () => {
                 variant='body1'
                 sx={{ fontWeight: 500 }}
               >
-                {(voucher as any).poster_name || '-'}
+                {voucher.bookkeeper_name || voucher.poster_name || '-'}
               </Typography>
             </Box>
           </Box>
@@ -687,7 +687,8 @@ const VoucherDetailPage: React.FC = () => {
                   variant='caption'
                   color='text.secondary'
                 >
-                  {voucher.checker_name || '-'} - {formatDate((voucher as any).checked_at)}
+                  {voucher.checker_name || voucher.approver_name || '-'} -{' '}
+                  {formatDate(voucher.approved_at || '')}
                 </Typography>
               </Box>
             </Box>
@@ -727,7 +728,8 @@ const VoucherDetailPage: React.FC = () => {
                   variant='caption'
                   color='text.secondary'
                 >
-                  {(voucher as any).poster_name || '-'} - {formatDate((voucher as any).posted_at)}
+                  {voucher.bookkeeper_name || voucher.poster_name || '-'} -{' '}
+                  {formatDate(voucher.posted_at || '')}
                 </Typography>
               </Box>
             </Box>

@@ -2,13 +2,29 @@
 
 use axum::{
     extract::State,
+    http::HeaderMap,
     routing::{delete, get},
-    Json, Router,
+    Extension, Json, Router,
 };
 use serde::{Deserialize, Serialize};
-use topems_shared::ApiResponse;
+use topems_shared::{ApiResponse, Claims};
+use uuid::Uuid;
 
-use crate::AppState;
+use crate::shared::AppState;
+
+fn get_tenant_id(claims: &Claims, headers: &HeaderMap) -> Uuid {
+    claims
+        .tenant_id
+        .as_ref()
+        .and_then(|t| Uuid::parse_str(t).ok())
+        .or_else(|| {
+            headers
+                .get("x-tenant-id")
+                .and_then(|v| v.to_str().ok())
+                .and_then(|s| Uuid::parse_str(s).ok())
+        })
+        .unwrap_or_else(Uuid::new_v4)
+}
 
 pub fn create_routes() -> Router<AppState> {
     Router::new()
@@ -65,6 +81,7 @@ pub struct InspectionPlan {
     pub status: String,
     pub created_at: Option<String>,
     pub updated_at: Option<String>,
+    pub tenant_id: Uuid,
 }
 
 #[derive(Debug, Serialize)]
@@ -77,6 +94,7 @@ pub struct InspectionItem {
     pub category: String,
     pub standard: Option<String>,
     pub order_num: i32,
+    pub tenant_id: Uuid,
 }
 
 #[derive(Debug, Serialize)]
@@ -95,12 +113,15 @@ pub struct InspectionRecord {
     pub status: String,
     pub created_at: Option<String>,
     pub updated_at: Option<String>,
+    pub tenant_id: Uuid,
 }
 
 #[derive(Debug, Serialize)]
 pub struct InspectionRecordDetail {
     pub record: InspectionRecord,
     pub items: Vec<RecordItem>,
+
+    pub tenant_id: Uuid,
 }
 
 #[derive(Debug, Serialize)]
@@ -112,6 +133,7 @@ pub struct RecordItem {
     pub item_category: String,
     pub result: String,
     pub remarks: Option<String>,
+    pub tenant_id: Uuid,
 }
 
 #[derive(Debug, Deserialize)]
@@ -164,9 +186,12 @@ pub struct UpdateInspectionRecordRequest {
 }
 
 pub async fn list_plans(
-    State(_state): State<crate::AppState>,
+    State(_state): State<crate::shared::AppState>,
+    Extension(claims): Extension<Claims>,
+    headers: HeaderMap,
 ) -> Json<ApiResponse<Vec<InspectionPlan>>> {
     tracing::info!("Listing inspection plans");
+    let _tenant_id = get_tenant_id(&claims, &headers);
     Json(ApiResponse::success(
         Vec::<InspectionPlan>::new(),
         "获取检查计划列表成功",
@@ -174,10 +199,13 @@ pub async fn list_plans(
 }
 
 pub async fn create_plan(
-    State(_state): State<crate::AppState>,
+    State(_state): State<crate::shared::AppState>,
+    Extension(claims): Extension<Claims>,
+    headers: HeaderMap,
     Json(req): Json<CreateInspectionPlanRequest>,
 ) -> Json<ApiResponse<InspectionPlan>> {
     tracing::info!("Creating inspection plan: {:?}", req);
+    let tenant_id = get_tenant_id(&claims, &headers);
     Json(ApiResponse::success(
         InspectionPlan {
             id: uuid::Uuid::new_v4().to_string(),
@@ -195,15 +223,19 @@ pub async fn create_plan(
             status: "active".to_string(),
             created_at: Some(chrono::Utc::now().to_rfc3339()),
             updated_at: Some(chrono::Utc::now().to_rfc3339()),
+            tenant_id,
         },
         "检查计划创建成功",
     ))
 }
 
 pub async fn get_plan(
-    State(_state): State<crate::AppState>,
+    State(_state): State<crate::shared::AppState>,
+    Extension(claims): Extension<Claims>,
+    headers: HeaderMap,
     axum::extract::Path(id): axum::extract::Path<String>,
 ) -> Json<ApiResponse<InspectionPlan>> {
+    let tenant_id = get_tenant_id(&claims, &headers);
     tracing::info!("Getting inspection plan: {}", id);
     Json(ApiResponse::success(
         InspectionPlan {
@@ -219,16 +251,21 @@ pub async fn get_plan(
             status: "active".to_string(),
             created_at: Some(chrono::Utc::now().to_rfc3339()),
             updated_at: Some(chrono::Utc::now().to_rfc3339()),
+
+            tenant_id,
         },
         "获取检查计划成功",
     ))
 }
 
 pub async fn update_plan(
-    State(_state): State<crate::AppState>,
+    State(_state): State<crate::shared::AppState>,
+    Extension(claims): Extension<Claims>,
+    headers: HeaderMap,
     axum::extract::Path(id): axum::extract::Path<String>,
     Json(req): Json<serde_json::Value>,
 ) -> Json<ApiResponse<InspectionPlan>> {
+    let tenant_id = get_tenant_id(&claims, &headers);
     tracing::info!("Updating inspection plan {}: {:?}", id, req);
     Json(ApiResponse::success(
         InspectionPlan {
@@ -244,23 +281,31 @@ pub async fn update_plan(
             status: "active".to_string(),
             created_at: Some(chrono::Utc::now().to_rfc3339()),
             updated_at: Some(chrono::Utc::now().to_rfc3339()),
+
+            tenant_id,
         },
         "检查计划更新成功",
     ))
 }
 
 pub async fn delete_plan(
-    State(_state): State<crate::AppState>,
+    State(_state): State<crate::shared::AppState>,
+    Extension(claims): Extension<Claims>,
+    headers: HeaderMap,
     axum::extract::Path(id): axum::extract::Path<String>,
 ) -> Json<ApiResponse<()>> {
+    let tenant_id = get_tenant_id(&claims, &headers);
     tracing::info!("Deleting inspection plan: {}", id);
     Json(ApiResponse::success((), "检查计划删除成功"))
 }
 
 pub async fn list_plan_items(
-    State(_state): State<crate::AppState>,
+    State(_state): State<crate::shared::AppState>,
+    Extension(claims): Extension<Claims>,
+    headers: HeaderMap,
     axum::extract::Path(plan_id): axum::extract::Path<String>,
 ) -> Json<ApiResponse<Vec<InspectionItem>>> {
+    let tenant_id = get_tenant_id(&claims, &headers);
     tracing::info!("Listing inspection items for plan: {}", plan_id);
     Json(ApiResponse::success(
         vec![
@@ -273,6 +318,8 @@ pub async fn list_plan_items(
                 category: "消防".to_string(),
                 standard: Some("灭火器压力正常，有效期内".to_string()),
                 order_num: 1,
+
+                tenant_id,
             },
             InspectionItem {
                 id: "2".to_string(),
@@ -283,6 +330,8 @@ pub async fn list_plan_items(
                 category: "电气".to_string(),
                 standard: Some("无裸露电线，接地良好".to_string()),
                 order_num: 2,
+
+                tenant_id,
             },
             InspectionItem {
                 id: "3".to_string(),
@@ -293,6 +342,8 @@ pub async fn list_plan_items(
                 category: "机械".to_string(),
                 standard: Some("防护罩完好，无损坏".to_string()),
                 order_num: 3,
+
+                tenant_id,
             },
         ],
         "获取检查项列表成功",
@@ -300,10 +351,13 @@ pub async fn list_plan_items(
 }
 
 pub async fn create_plan_item(
-    State(_state): State<crate::AppState>,
+    State(_state): State<crate::shared::AppState>,
+    Extension(claims): Extension<Claims>,
+    headers: HeaderMap,
     axum::extract::Path(plan_id): axum::extract::Path<String>,
     Json(req): Json<CreateInspectionItemRequest>,
 ) -> Json<ApiResponse<InspectionItem>> {
+    let tenant_id = get_tenant_id(&claims, &headers);
     tracing::info!("Creating inspection item for plan {}: {:?}", plan_id, req);
     Json(ApiResponse::success(
         InspectionItem {
@@ -318,22 +372,30 @@ pub async fn create_plan_item(
             category: req.category,
             standard: req.standard,
             order_num: req.order_num,
+
+            tenant_id,
         },
         "检查项创建成功",
     ))
 }
 
 pub async fn delete_plan_item(
-    State(_state): State<crate::AppState>,
+    State(_state): State<crate::shared::AppState>,
+    Extension(claims): Extension<Claims>,
+    headers: HeaderMap,
     axum::extract::Path((plan_id, item_id)): axum::extract::Path<(String, String)>,
 ) -> Json<ApiResponse<()>> {
+    let tenant_id = get_tenant_id(&claims, &headers);
     tracing::info!("Deleting inspection item {} from plan {}", item_id, plan_id);
     Json(ApiResponse::success((), "检查项删除成功"))
 }
 
 pub async fn list_records(
-    State(_state): State<crate::AppState>,
+    State(_state): State<crate::shared::AppState>,
+    Extension(claims): Extension<Claims>,
+    headers: HeaderMap,
 ) -> Json<ApiResponse<Vec<InspectionRecord>>> {
+    let tenant_id = get_tenant_id(&claims, &headers);
     tracing::info!("Listing inspection records");
     Json(ApiResponse::success(
         Vec::<InspectionRecord>::new(),
@@ -342,9 +404,12 @@ pub async fn list_records(
 }
 
 pub async fn create_record(
-    State(_state): State<crate::AppState>,
+    State(_state): State<crate::shared::AppState>,
+    Extension(claims): Extension<Claims>,
+    headers: HeaderMap,
     Json(req): Json<CreateInspectionRecordRequest>,
 ) -> Json<ApiResponse<InspectionRecord>> {
+    let tenant_id = get_tenant_id(&claims, &headers);
     tracing::info!("Creating inspection record: {:?}", req);
     let result = req
         .items
@@ -374,15 +439,20 @@ pub async fn create_record(
             status: "completed".to_string(),
             created_at: Some(chrono::Utc::now().to_rfc3339()),
             updated_at: Some(chrono::Utc::now().to_rfc3339()),
+
+            tenant_id,
         },
         "检查记录创建成功",
     ))
 }
 
 pub async fn get_record(
-    State(_state): State<crate::AppState>,
+    State(_state): State<crate::shared::AppState>,
+    Extension(claims): Extension<Claims>,
+    headers: HeaderMap,
     axum::extract::Path(id): axum::extract::Path<String>,
 ) -> Json<ApiResponse<InspectionRecordDetail>> {
+    let tenant_id = get_tenant_id(&claims, &headers);
     tracing::info!("Getting inspection record: {}", id);
     Json(ApiResponse::success(
         InspectionRecordDetail {
@@ -401,6 +471,8 @@ pub async fn get_record(
                 status: "completed".to_string(),
                 created_at: Some(chrono::Utc::now().to_rfc3339()),
                 updated_at: Some(chrono::Utc::now().to_rfc3339()),
+
+                tenant_id,
             },
             items: vec![
                 RecordItem {
@@ -411,6 +483,8 @@ pub async fn get_record(
                     item_category: "消防".to_string(),
                     result: "pass".to_string(),
                     remarks: None,
+
+                    tenant_id,
                 },
                 RecordItem {
                     id: "2".to_string(),
@@ -420,18 +494,24 @@ pub async fn get_record(
                     item_category: "电气".to_string(),
                     result: "pass".to_string(),
                     remarks: None,
+
+                    tenant_id,
                 },
             ],
+            tenant_id,
         },
         "获取检查记录成功",
     ))
 }
 
 pub async fn update_record(
-    State(_state): State<crate::AppState>,
+    State(_state): State<crate::shared::AppState>,
+    Extension(claims): Extension<Claims>,
+    headers: HeaderMap,
     axum::extract::Path(id): axum::extract::Path<String>,
     Json(req): Json<UpdateInspectionRecordRequest>,
 ) -> Json<ApiResponse<InspectionRecord>> {
+    let tenant_id = get_tenant_id(&claims, &headers);
     tracing::info!("Updating inspection record {}: {:?}", id, req);
     Json(ApiResponse::success(
         InspectionRecord {
@@ -449,15 +529,20 @@ pub async fn update_record(
             status: req.status.unwrap_or("completed".to_string()),
             created_at: Some(chrono::Utc::now().to_rfc3339()),
             updated_at: Some(chrono::Utc::now().to_rfc3339()),
+
+            tenant_id,
         },
         "检查记录更新成功",
     ))
 }
 
 pub async fn delete_record(
-    State(_state): State<crate::AppState>,
+    State(_state): State<crate::shared::AppState>,
+    Extension(claims): Extension<Claims>,
+    headers: HeaderMap,
     axum::extract::Path(id): axum::extract::Path<String>,
 ) -> Json<ApiResponse<()>> {
+    let tenant_id = get_tenant_id(&claims, &headers);
     tracing::info!("Deleting inspection record: {}", id);
     Json(ApiResponse::success((), "检查记录删除成功"))
 }

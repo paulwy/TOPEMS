@@ -1,14 +1,26 @@
 //! Accident handlers - Reporting, investigation, treatment, and review
 
-use axum::{
-    extract::State,
-    routing::{get, post, put},
-    Json, Router,
-};
+use axum::{extract::State, http::HeaderMap, routing::*, Extension, Json, Router};
 use serde::{Deserialize, Serialize};
-use topems_shared::ApiResponse;
+use topems_shared::{ApiResponse, Claims};
 
-use crate::AppState;
+use uuid::Uuid;
+
+use crate::shared::AppState;
+
+fn get_tenant_id(claims: &Claims, headers: &HeaderMap) -> Uuid {
+    claims
+        .tenant_id
+        .as_ref()
+        .and_then(|t| Uuid::parse_str(t).ok())
+        .or_else(|| {
+            headers
+                .get("x-tenant-id")
+                .and_then(|v| v.to_str().ok())
+                .and_then(|s| Uuid::parse_str(s).ok())
+        })
+        .unwrap_or_else(Uuid::new_v4)
+}
 
 pub fn create_routes() -> Router<AppState> {
     Router::new()
@@ -67,6 +79,8 @@ pub struct Accident {
     pub reported_by: Option<String>,
     pub created_at: Option<String>,
     pub updated_at: Option<String>,
+
+    pub tenant_id: Uuid,
 }
 
 #[derive(Debug, Serialize)]
@@ -75,6 +89,8 @@ pub struct AccidentDetail {
     pub investigation: Option<Investigation>,
     pub treatment: Option<Treatment>,
     pub review: Option<Review>,
+
+    pub tenant_id: Uuid,
 }
 
 #[derive(Debug, Serialize)]
@@ -90,6 +106,8 @@ pub struct Investigation {
     pub completed_at: Option<String>,
     pub created_at: Option<String>,
     pub updated_at: Option<String>,
+
+    pub tenant_id: Uuid,
 }
 
 #[derive(Debug, Serialize, Deserialize)]
@@ -109,6 +127,8 @@ pub struct Treatment {
     pub completed_at: Option<String>,
     pub created_at: Option<String>,
     pub updated_at: Option<String>,
+
+    pub tenant_id: Uuid,
 }
 
 #[derive(Debug, Serialize)]
@@ -119,6 +139,8 @@ pub struct TreatmentAction {
     pub deadline: Option<String>,
     pub status: String,
     pub completed_at: Option<String>,
+
+    pub tenant_id: Uuid,
 }
 
 #[derive(Debug, Serialize)]
@@ -131,6 +153,8 @@ pub struct Review {
     pub reviewer: Option<String>,
     pub reviewed_at: Option<String>,
     pub created_at: Option<String>,
+
+    pub tenant_id: Uuid,
 }
 
 #[derive(Debug, Deserialize)]
@@ -189,8 +213,11 @@ pub struct CreateReviewRequest {
 }
 
 pub async fn list_accidents(
-    State(_state): State<crate::AppState>,
+    State(_state): State<crate::shared::AppState>,
+    Extension(claims): Extension<Claims>,
+    headers: HeaderMap,
 ) -> Json<ApiResponse<Vec<Accident>>> {
+    let tenant_id = get_tenant_id(&claims, &headers);
     tracing::info!("Listing accidents");
     Json(ApiResponse::success(
         Vec::<Accident>::new(),
@@ -199,9 +226,12 @@ pub async fn list_accidents(
 }
 
 pub async fn report_accident(
-    State(_state): State<crate::AppState>,
+    State(_state): State<crate::shared::AppState>,
+    Extension(claims): Extension<Claims>,
+    headers: HeaderMap,
     Json(req): Json<CreateAccidentRequest>,
 ) -> Json<ApiResponse<Accident>> {
+    let tenant_id = get_tenant_id(&claims, &headers);
     tracing::info!("Reporting accident: {:?}", req);
     Json(ApiResponse::success(
         Accident {
@@ -222,15 +252,20 @@ pub async fn report_accident(
             reported_by: req.reported_by,
             created_at: Some(chrono::Utc::now().to_rfc3339()),
             updated_at: Some(chrono::Utc::now().to_rfc3339()),
+
+            tenant_id,
         },
         "事故报告成功",
     ))
 }
 
 pub async fn get_accident(
-    State(_state): State<crate::AppState>,
+    State(_state): State<crate::shared::AppState>,
+    Extension(claims): Extension<Claims>,
+    headers: HeaderMap,
     axum::extract::Path(id): axum::extract::Path<String>,
 ) -> Json<ApiResponse<AccidentDetail>> {
+    let tenant_id = get_tenant_id(&claims, &headers);
     tracing::info!("Getting accident: {}", id);
     Json(ApiResponse::success(
         AccidentDetail {
@@ -249,6 +284,8 @@ pub async fn get_accident(
                 reported_by: Some("张三".to_string()),
                 created_at: Some(chrono::Utc::now().to_rfc3339()),
                 updated_at: Some(chrono::Utc::now().to_rfc3339()),
+
+                tenant_id,
             },
             investigation: Some(Investigation {
                 id: "inv-001".to_string(),
@@ -275,19 +312,25 @@ pub async fn get_accident(
                 completed_at: None,
                 created_at: Some(chrono::Utc::now().to_rfc3339()),
                 updated_at: Some(chrono::Utc::now().to_rfc3339()),
+
+                tenant_id,
             }),
             treatment: None,
             review: None,
+            tenant_id,
         },
         "获取事故详情成功",
     ))
 }
 
 pub async fn update_accident(
-    State(_state): State<crate::AppState>,
+    State(_state): State<crate::shared::AppState>,
+    Extension(claims): Extension<Claims>,
+    headers: HeaderMap,
     axum::extract::Path(id): axum::extract::Path<String>,
     Json(req): Json<serde_json::Value>,
 ) -> Json<ApiResponse<Accident>> {
+    let tenant_id = get_tenant_id(&claims, &headers);
     tracing::info!("Updating accident {}: {:?}", id, req);
     Json(ApiResponse::success(
         Accident {
@@ -305,24 +348,32 @@ pub async fn update_accident(
             reported_by: Some("张三".to_string()),
             created_at: Some(chrono::Utc::now().to_rfc3339()),
             updated_at: Some(chrono::Utc::now().to_rfc3339()),
+
+            tenant_id,
         },
         "事故更新成功",
     ))
 }
 
 pub async fn delete_accident(
-    State(_state): State<crate::AppState>,
+    State(_state): State<crate::shared::AppState>,
+    Extension(claims): Extension<Claims>,
+    headers: HeaderMap,
     axum::extract::Path(id): axum::extract::Path<String>,
 ) -> Json<ApiResponse<()>> {
+    let tenant_id = get_tenant_id(&claims, &headers);
     tracing::info!("Deleting accident: {}", id);
     Json(ApiResponse::success((), "事故删除成功"))
 }
 
 pub async fn start_investigation(
-    State(_state): State<crate::AppState>,
+    State(_state): State<crate::shared::AppState>,
+    Extension(claims): Extension<Claims>,
+    headers: HeaderMap,
     axum::extract::Path(id): axum::extract::Path<String>,
     Json(req): Json<CreateInvestigationRequest>,
 ) -> Json<ApiResponse<Investigation>> {
+    let tenant_id = get_tenant_id(&claims, &headers);
     tracing::info!("Starting investigation for accident {}: {:?}", id, req);
     Json(ApiResponse::success(
         Investigation {
@@ -337,16 +388,21 @@ pub async fn start_investigation(
             completed_at: None,
             created_at: Some(chrono::Utc::now().to_rfc3339()),
             updated_at: Some(chrono::Utc::now().to_rfc3339()),
+
+            tenant_id,
         },
         "调查启动成功",
     ))
 }
 
 pub async fn update_investigation(
-    State(_state): State<crate::AppState>,
+    State(_state): State<crate::shared::AppState>,
+    Extension(claims): Extension<Claims>,
+    headers: HeaderMap,
     axum::extract::Path(id): axum::extract::Path<String>,
     Json(req): Json<UpdateInvestigationRequest>,
 ) -> Json<ApiResponse<Investigation>> {
+    let tenant_id = get_tenant_id(&claims, &headers);
     tracing::info!("Updating investigation {}: {:?}", id, req);
     let status = req.status.unwrap_or("in_progress".to_string());
     let completed_at = if status == "completed" {
@@ -368,15 +424,20 @@ pub async fn update_investigation(
             completed_at,
             created_at: Some(chrono::Utc::now().to_rfc3339()),
             updated_at: Some(chrono::Utc::now().to_rfc3339()),
+
+            tenant_id,
         },
         "调查更新成功",
     ))
 }
 
 pub async fn complete_investigation(
-    State(_state): State<crate::AppState>,
+    State(_state): State<crate::shared::AppState>,
+    Extension(claims): Extension<Claims>,
+    headers: HeaderMap,
     axum::extract::Path(id): axum::extract::Path<String>,
 ) -> Json<ApiResponse<Investigation>> {
+    let tenant_id = get_tenant_id(&claims, &headers);
     tracing::info!("Completing investigation for accident: {}", id);
     Json(ApiResponse::success(
         Investigation {
@@ -408,16 +469,21 @@ pub async fn complete_investigation(
             completed_at: Some(chrono::Utc::now().to_rfc3339()),
             created_at: Some(chrono::Utc::now().to_rfc3339()),
             updated_at: Some(chrono::Utc::now().to_rfc3339()),
+
+            tenant_id,
         },
         "调查完成",
     ))
 }
 
 pub async fn create_treatment(
-    State(_state): State<crate::AppState>,
+    State(_state): State<crate::shared::AppState>,
+    Extension(claims): Extension<Claims>,
+    headers: HeaderMap,
     axum::extract::Path(id): axum::extract::Path<String>,
     Json(req): Json<CreateTreatmentRequest>,
 ) -> Json<ApiResponse<Treatment>> {
+    let tenant_id = get_tenant_id(&claims, &headers);
     tracing::info!("Creating treatment for accident {}: {:?}", id, req);
     let actions = req
         .actions
@@ -430,6 +496,8 @@ pub async fn create_treatment(
             deadline: a.deadline,
             status: "pending".to_string(),
             completed_at: None,
+
+            tenant_id,
         })
         .collect();
 
@@ -444,16 +512,21 @@ pub async fn create_treatment(
             completed_at: None,
             created_at: Some(chrono::Utc::now().to_rfc3339()),
             updated_at: Some(chrono::Utc::now().to_rfc3339()),
+
+            tenant_id,
         },
         "处理方案创建成功",
     ))
 }
 
 pub async fn update_treatment_action(
-    State(_state): State<crate::AppState>,
+    State(_state): State<crate::shared::AppState>,
+    Extension(claims): Extension<Claims>,
+    headers: HeaderMap,
     axum::extract::Path((accident_id, action_id)): axum::extract::Path<(String, String)>,
     Json(req): Json<UpdateTreatmentActionRequest>,
 ) -> Json<ApiResponse<TreatmentAction>> {
+    let tenant_id = get_tenant_id(&claims, &headers);
     tracing::info!(
         "Updating treatment action {} for accident {}: {:?}",
         action_id,
@@ -468,15 +541,20 @@ pub async fn update_treatment_action(
             deadline: Some("2024-02-15".to_string()),
             status: req.status.unwrap_or("in_progress".to_string()),
             completed_at: req.completed_at,
+
+            tenant_id,
         },
         "处理措施更新成功",
     ))
 }
 
 pub async fn complete_treatment(
-    State(_state): State<crate::AppState>,
+    State(_state): State<crate::shared::AppState>,
+    Extension(claims): Extension<Claims>,
+    headers: HeaderMap,
     axum::extract::Path(id): axum::extract::Path<String>,
 ) -> Json<ApiResponse<Treatment>> {
+    let tenant_id = get_tenant_id(&claims, &headers);
     tracing::info!("Completing treatment for accident: {}", id);
     Json(ApiResponse::success(
         Treatment {
@@ -490,6 +568,8 @@ pub async fn complete_treatment(
                     deadline: Some("2024-02-15".to_string()),
                     status: "completed".to_string(),
                     completed_at: Some(chrono::Utc::now().to_rfc3339()),
+
+                    tenant_id,
                 },
                 TreatmentAction {
                     id: "action-2".to_string(),
@@ -498,6 +578,8 @@ pub async fn complete_treatment(
                     deadline: Some("2024-02-20".to_string()),
                     status: "completed".to_string(),
                     completed_at: Some(chrono::Utc::now().to_rfc3339()),
+
+                    tenant_id,
                 },
             ],
             responsible: Some("安全经理".to_string()),
@@ -506,16 +588,21 @@ pub async fn complete_treatment(
             completed_at: Some(chrono::Utc::now().to_rfc3339()),
             created_at: Some(chrono::Utc::now().to_rfc3339()),
             updated_at: Some(chrono::Utc::now().to_rfc3339()),
+
+            tenant_id,
         },
         "处理完成",
     ))
 }
 
 pub async fn create_review(
-    State(_state): State<crate::AppState>,
+    State(_state): State<crate::shared::AppState>,
+    Extension(claims): Extension<Claims>,
+    headers: HeaderMap,
     axum::extract::Path(id): axum::extract::Path<String>,
     Json(req): Json<CreateReviewRequest>,
 ) -> Json<ApiResponse<Review>> {
+    let tenant_id = get_tenant_id(&claims, &headers);
     tracing::info!("Creating review for accident {}: {:?}", id, req);
     Json(ApiResponse::success(
         Review {
@@ -527,15 +614,20 @@ pub async fn create_review(
             reviewer: req.reviewer,
             reviewed_at: Some(chrono::Utc::now().to_rfc3339()),
             created_at: Some(chrono::Utc::now().to_rfc3339()),
+
+            tenant_id,
         },
         "复盘完成",
     ))
 }
 
 pub async fn close_accident(
-    State(_state): State<crate::AppState>,
+    State(_state): State<crate::shared::AppState>,
+    Extension(claims): Extension<Claims>,
+    headers: HeaderMap,
     axum::extract::Path(id): axum::extract::Path<String>,
 ) -> Json<ApiResponse<Accident>> {
+    let tenant_id = get_tenant_id(&claims, &headers);
     tracing::info!("Closing accident: {}", id);
     Json(ApiResponse::success(
         Accident {
@@ -553,6 +645,8 @@ pub async fn close_accident(
             reported_by: Some("张三".to_string()),
             created_at: Some(chrono::Utc::now().to_rfc3339()),
             updated_at: Some(chrono::Utc::now().to_rfc3339()),
+
+            tenant_id,
         },
         "事故已结案",
     ))

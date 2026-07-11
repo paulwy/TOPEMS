@@ -81,31 +81,31 @@ where
             get(list_stock_takes).post(create_stock_take),
         )
         .route(
-            "/api/v1/stock-takes/{id}",
+            "/api/wms/stock-takes/{id}",
             get(get_stock_take)
                 .put(update_stock_take)
                 .delete(delete_stock_take),
         )
         .route(
-            "/api/v1/stock-takes/{id}/items",
+            "/api/wms/stock-takes/{id}/items",
             get(list_stock_take_items).post(create_stock_take_item),
         )
         .route(
-            "/api/v1/stock-takes/{id}/items/{item_id}",
+            "/api/wms/stock-takes/{id}/items/{item_id}",
             get(get_stock_take_item)
                 .put(update_stock_take_item)
                 .delete(delete_stock_take_item),
         )
-        .route("/api/v1/stock-takes/{id}/start", post(start_stock_take))
-        .route("/api/v1/stock-takes/{id}/count", post(count_stock_take))
+        .route("/api/wms/stock-takes/{id}/start", post(start_stock_take))
+        .route("/api/wms/stock-takes/{id}/count", post(count_stock_take))
         .route(
-            "/api/v1/stock-takes/{id}/complete",
+            "/api/wms/stock-takes/{id}/complete",
             post(complete_stock_take),
         )
-        .route("/api/v1/stock-takes/{id}/adjust", post(adjust_stock_take))
+        .route("/api/wms/stock-takes/{id}/adjust", post(adjust_stock_take))
 }
 
-async fn list_stock_takes(
+pub async fn list_stock_takes(
     State(state): State<ApiState>,
     Extension(claims): Extension<Claims>,
     Query(params): Query<StockTakePaginationParams>,
@@ -184,7 +184,7 @@ async fn list_stock_takes(
     }
 }
 
-async fn create_stock_take(
+pub async fn create_stock_take(
     State(state): State<ApiState>,
     Extension(claims): Extension<Claims>,
     headers: HeaderMap,
@@ -260,7 +260,7 @@ async fn create_stock_take(
     response
 }
 
-async fn get_stock_take(
+pub async fn get_stock_take(
     State(state): State<ApiState>,
     Extension(claims): Extension<Claims>,
     Path(id): Path<Uuid>,
@@ -296,7 +296,7 @@ async fn get_stock_take(
     }
 }
 
-async fn update_stock_take(
+pub async fn update_stock_take(
     State(state): State<ApiState>,
     Extension(claims): Extension<Claims>,
     Path(id): Path<Uuid>,
@@ -393,7 +393,7 @@ async fn update_stock_take(
     response
 }
 
-async fn delete_stock_take(
+pub async fn delete_stock_take(
     State(state): State<ApiState>,
     Extension(claims): Extension<Claims>,
     Path(id): Path<Uuid>,
@@ -456,7 +456,7 @@ async fn delete_stock_take(
     response
 }
 
-async fn start_stock_take(
+pub async fn start_stock_take(
     State(state): State<ApiState>,
     Extension(claims): Extension<Claims>,
     Path(id): Path<Uuid>,
@@ -573,7 +573,7 @@ async fn start_stock_take(
     response
 }
 
-async fn list_stock_take_items(
+pub async fn list_stock_take_items(
     State(state): State<ApiState>,
     Extension(claims): Extension<Claims>,
     Path(id): Path<Uuid>,
@@ -642,7 +642,7 @@ async fn list_stock_take_items(
     }
 }
 
-async fn create_stock_take_item(
+pub async fn create_stock_take_item(
     State(state): State<ApiState>,
     Extension(claims): Extension<Claims>,
     Path(id): Path<Uuid>,
@@ -748,7 +748,7 @@ async fn create_stock_take_item(
     response
 }
 
-async fn count_stock_take(
+pub async fn count_stock_take(
     State(state): State<ApiState>,
     Extension(claims): Extension<Claims>,
     Path(_id): Path<Uuid>,
@@ -825,7 +825,7 @@ async fn count_stock_take(
     ))
 }
 
-async fn get_stock_take_item(
+pub async fn get_stock_take_item(
     State(state): State<ApiState>,
     Extension(claims): Extension<Claims>,
     Path((id, item_id)): Path<(Uuid, Uuid)>,
@@ -864,7 +864,7 @@ async fn get_stock_take_item(
     }
 }
 
-async fn update_stock_take_item(
+pub async fn update_stock_take_item(
     State(state): State<ApiState>,
     Extension(claims): Extension<Claims>,
     Path((id, item_id)): Path<(Uuid, Uuid)>,
@@ -997,7 +997,7 @@ async fn update_stock_take_item(
     response
 }
 
-async fn delete_stock_take_item(
+pub async fn delete_stock_take_item(
     State(state): State<ApiState>,
     Extension(claims): Extension<Claims>,
     Path((id, item_id)): Path<(Uuid, Uuid)>,
@@ -1059,7 +1059,7 @@ async fn delete_stock_take_item(
     response
 }
 
-async fn complete_stock_take(
+pub async fn complete_stock_take(
     State(state): State<ApiState>,
     Extension(claims): Extension<Claims>,
     Path(id): Path<Uuid>,
@@ -1202,7 +1202,7 @@ async fn complete_stock_take(
     response
 }
 
-async fn adjust_stock_take(
+pub async fn adjust_stock_take(
     State(state): State<ApiState>,
     Extension(claims): Extension<Claims>,
     Path(id): Path<Uuid>,

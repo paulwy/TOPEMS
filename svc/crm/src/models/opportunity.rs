@@ -7,6 +7,7 @@ use uuid::Uuid;
 #[derive(Debug, Clone, FromRow, Serialize, Deserialize)]
 pub struct Opportunity {
     pub id: Uuid,
+    pub tenant_id: Uuid,
     pub name: String,
     pub customer_id: Option<Uuid>,
     pub value: Option<Decimal>,

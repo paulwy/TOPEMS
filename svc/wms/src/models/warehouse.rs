@@ -6,6 +6,7 @@ use uuid::Uuid;
 #[derive(Debug, Clone, FromRow, Serialize, Deserialize)]
 pub struct Warehouse {
     pub id: Uuid,
+    pub tenant_id: Uuid,
     pub name: String,
     pub code: Option<String>,
     pub address: Option<String>,

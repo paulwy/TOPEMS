@@ -32,7 +32,7 @@ pub fn create_routes() -> Router<ApiState> {
         )
 }
 
-async fn list_assets(
+pub async fn list_assets(
     State(state): State<ApiState>,
     Extension(claims): Extension<Claims>,
     Query(params): Query<PaginationParams>,
@@ -94,7 +94,7 @@ async fn list_assets(
     }
 }
 
-async fn create_asset(
+pub async fn create_asset(
     State(state): State<ApiState>,
     Extension(claims): Extension<Claims>,
     headers: HeaderMap,
@@ -191,7 +191,7 @@ async fn create_asset(
     response
 }
 
-async fn get_asset(
+pub async fn get_asset(
     State(state): State<ApiState>,
     Extension(claims): Extension<Claims>,
     Path(id): Path<Uuid>,
@@ -221,7 +221,7 @@ async fn get_asset(
     }
 }
 
-async fn update_asset(
+pub async fn update_asset(
     State(state): State<ApiState>,
     Extension(claims): Extension<Claims>,
     Path(id): Path<Uuid>,
@@ -343,7 +343,7 @@ async fn update_asset(
     response
 }
 
-async fn delete_asset(
+pub async fn delete_asset(
     State(state): State<ApiState>,
     Extension(claims): Extension<Claims>,
     Path(id): Path<Uuid>,

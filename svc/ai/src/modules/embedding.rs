@@ -2,7 +2,7 @@ use axum::extract::{Json, State};
 use serde::{Deserialize, Serialize};
 use topems_shared::ApiResponse;
 
-use crate::AppState;
+use crate::shared::AppState;
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct EmbeddingRequest {

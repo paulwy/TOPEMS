@@ -158,6 +158,7 @@ impl QAService {
         question: &str,
         context: Option<&str>,
         _top_k: usize,
+        tenant_id: Uuid,
     ) -> Result<(String, Vec<SearchResult>, Uuid, f64), String> {
         // 构建提示词
         let prompt = if let Some(ctx) = context {
@@ -185,6 +186,7 @@ impl QAService {
                 &answer,
                 context.map(|c| serde_json::json!({ "context": c })),
                 None,
+                tenant_id,
             )
             .await?;
 
@@ -197,6 +199,7 @@ impl QAService {
         question: &str,
         document_ids: &[Uuid],
         context_chunks: &[SearchResult],
+        tenant_id: Uuid,
     ) -> Result<(String, Vec<SearchResult>, Uuid, f64), String> {
         // 构建上下文
         let context = context_chunks
@@ -232,6 +235,7 @@ impl QAService {
                 &answer,
                 Some(serde_json::json!({ "document_ids": document_ids })),
                 Some(context_chunks),
+                tenant_id,
             )
             .await?;
 
@@ -239,8 +243,12 @@ impl QAService {
     }
 
     /// 获取问答历史（支持分页）
-    pub async fn get_qa_history(&self, limit: usize) -> Result<Vec<QAHistory>, String> {
-        self.get_qa_history_paged(0, limit).await
+    pub async fn get_qa_history(
+        &self,
+        limit: usize,
+        tenant_id: Uuid,
+    ) -> Result<Vec<QAHistory>, String> {
+        self.get_qa_history_paged(0, limit, tenant_id).await
     }
 
     /// 获取问答历史（分页版本）
@@ -248,18 +256,20 @@ impl QAService {
         &self,
         offset: usize,
         limit: usize,
+        tenant_id: Uuid,
     ) -> Result<Vec<QAHistory>, String> {
         let rows = sqlx::query(
             r#"
-            SELECT id, question, answer, context, sources, feedback, rating, created_at
+            SELECT id, tenant_id, question, answer, context, sources, feedback, rating, created_at
             FROM ai.qa_history
-            WHERE deleted_at IS NULL
+            WHERE deleted_at IS NULL AND tenant_id = $3
             ORDER BY created_at DESC
             OFFSET $1 LIMIT $2
             "#,
         )
         .bind(offset as i64)
         .bind(limit as i64)
+        .bind(tenant_id)
         .fetch_all(self.db.pool())
         .await
         .map_err(|e| format!("查询问答历史失败: {}", e))?;
@@ -271,6 +281,7 @@ impl QAService {
                 let sources = sources_value.and_then(|v| serde_json::from_value(v).ok());
                 QAHistory {
                     id: row.get("id"),
+                    tenant_id: row.get("tenant_id"),
                     question: row.get("question"),
                     answer: row.get("answer"),
                     context: row.get("context"),
@@ -286,12 +297,13 @@ impl QAService {
     }
 
     /// 获取问答历史总数
-    pub async fn get_qa_history_count(&self) -> Result<i64, String> {
+    pub async fn get_qa_history_count(&self, tenant_id: Uuid) -> Result<i64, String> {
         let count: i64 = sqlx::query_scalar(
             r#"
-            SELECT COUNT(*) FROM ai.qa_history WHERE deleted_at IS NULL
+            SELECT COUNT(*) FROM ai.qa_history WHERE deleted_at IS NULL AND tenant_id = $1
             "#,
         )
+        .bind(tenant_id)
         .fetch_one(self.db.pool())
         .await
         .map_err(|e| format!("查询问答历史总数失败: {}", e))?;
@@ -305,12 +317,13 @@ impl QAService {
         query: &str,
         offset: usize,
         limit: usize,
+        tenant_id: Uuid,
     ) -> Result<Vec<QAHistory>, String> {
         let rows = sqlx::query(
             r#"
-            SELECT id, question, answer, context, sources, feedback, rating, created_at
+            SELECT id, tenant_id, question, answer, context, sources, feedback, rating, created_at
             FROM ai.qa_history
-            WHERE deleted_at IS NULL
+            WHERE deleted_at IS NULL AND tenant_id = $4
               AND (question ILIKE $1 OR answer ILIKE $1)
             ORDER BY created_at DESC
             OFFSET $2 LIMIT $3
@@ -319,6 +332,7 @@ impl QAService {
         .bind(format!("%{}%", query))
         .bind(offset as i64)
         .bind(limit as i64)
+        .bind(tenant_id)
         .fetch_all(self.db.pool())
         .await
         .map_err(|e| format!("搜索问答历史失败: {}", e))?;
@@ -330,6 +344,7 @@ impl QAService {
                 let sources = sources_value.and_then(|v| serde_json::from_value(v).ok());
                 QAHistory {
                     id: row.get("id"),
+                    tenant_id: row.get("tenant_id"),
                     question: row.get("question"),
                     answer: row.get("answer"),
                     context: row.get("context"),
@@ -345,15 +360,20 @@ impl QAService {
     }
 
     /// 搜索问答历史总数
-    pub async fn search_qa_history_count(&self, query: &str) -> Result<i64, String> {
+    pub async fn search_qa_history_count(
+        &self,
+        query: &str,
+        tenant_id: Uuid,
+    ) -> Result<i64, String> {
         let count: i64 = sqlx::query_scalar(
             r#"
             SELECT COUNT(*) FROM ai.qa_history 
-            WHERE deleted_at IS NULL
+            WHERE deleted_at IS NULL AND tenant_id = $2
               AND (question ILIKE $1 OR answer ILIKE $1)
             "#,
         )
         .bind(format!("%{}%", query))
+        .bind(tenant_id)
         .fetch_one(self.db.pool())
         .await
         .map_err(|e| format!("搜索问答历史总数失败: {}", e))?;
@@ -362,15 +382,16 @@ impl QAService {
     }
 
     /// 删除问答历史（软删除）
-    pub async fn delete_qa_history(&self, qa_id: Uuid) -> Result<bool, String> {
+    pub async fn delete_qa_history(&self, qa_id: Uuid, tenant_id: Uuid) -> Result<bool, String> {
         let result = sqlx::query(
             r#"
             UPDATE ai.qa_history
             SET deleted_at = CURRENT_TIMESTAMP
-            WHERE id = $1 AND deleted_at IS NULL
+            WHERE id = $1 AND deleted_at IS NULL AND tenant_id = $2
             "#,
         )
         .bind(qa_id)
+        .bind(tenant_id)
         .execute(self.db.pool())
         .await
         .map_err(|e| format!("删除问答历史失败: {}", e))?;
@@ -379,15 +400,20 @@ impl QAService {
     }
 
     /// 批量删除问答历史
-    pub async fn batch_delete_qa_history(&self, qa_ids: &[Uuid]) -> Result<i64, String> {
+    pub async fn batch_delete_qa_history(
+        &self,
+        qa_ids: &[Uuid],
+        tenant_id: Uuid,
+    ) -> Result<i64, String> {
         let result = sqlx::query(
             r#"
             UPDATE ai.qa_history
             SET deleted_at = CURRENT_TIMESTAMP
-            WHERE id = ANY($1) AND deleted_at IS NULL
+            WHERE id = ANY($1) AND deleted_at IS NULL AND tenant_id = $2
             "#,
         )
         .bind(qa_ids)
+        .bind(tenant_id)
         .execute(self.db.pool())
         .await
         .map_err(|e| format!("批量删除问答历史失败: {}", e))?;
@@ -401,17 +427,19 @@ impl QAService {
         qa_id: Uuid,
         feedback: &str,
         rating: Option<i32>,
+        tenant_id: Uuid,
     ) -> Result<(), String> {
         sqlx::query(
             r#"
             UPDATE ai.qa_history
             SET feedback = $1, rating = $2
-            WHERE id = $3
+            WHERE id = $3 AND tenant_id = $4
             "#,
         )
         .bind(feedback)
         .bind(rating)
         .bind(qa_id)
+        .bind(tenant_id)
         .execute(self.db.pool())
         .await
         .map_err(|e| format!("更新反馈失败: {}", e))?;
@@ -478,6 +506,7 @@ impl QAService {
         &self,
         question: &str,
         context_chunks: &[SearchResult],
+        tenant_id: Uuid,
     ) -> Result<StructuredAnswer, String> {
         // 分类问题类型
         let question_type = self.classify_question(question).await?;
@@ -651,6 +680,7 @@ impl QAService {
         question: &str,
         history: &[(String, String)],
         context_chunks: &[SearchResult],
+        tenant_id: Uuid,
     ) -> Result<(String, Vec<SearchResult>, Uuid, f64), String> {
         // 构建对话历史
         let history_str: String = history
@@ -708,6 +738,7 @@ impl QAService {
                     "history_length": history.len()
                 })),
                 Some(context_chunks),
+                tenant_id,
             )
             .await?;
 
@@ -721,14 +752,16 @@ impl QAService {
         answer: &str,
         context: Option<serde_json::Value>,
         sources: Option<&[SearchResult]>,
+        tenant_id: Uuid,
     ) -> Result<Uuid, String> {
         let id: Uuid = sqlx::query_scalar(
             r#"
-            INSERT INTO ai.qa_history (question, answer, context, sources)
-            VALUES ($1, $2, $3, $4)
+            INSERT INTO ai.qa_history (tenant_id, question, answer, context, sources)
+            VALUES ($1, $2, $3, $4, $5)
             RETURNING id
             "#,
         )
+        .bind(tenant_id)
         .bind(question)
         .bind(answer)
         .bind(context)
@@ -810,6 +843,7 @@ impl QAService {
         &self,
         query: &str,
         top_k: usize,
+        tenant_id: Uuid,
     ) -> Result<Vec<SearchResult>, String> {
         let query_embedding = self.generate_query_embedding(query).await?;
 
@@ -831,7 +865,7 @@ impl QAService {
                         d.title AS document_title
                     FROM ai.document_chunks c
                     JOIN plugin_ai.documents d ON c.document_id = d.id
-                    WHERE c.embedding IS NOT NULL
+                    WHERE c.embedding IS NOT NULL AND d.tenant_id = $3
                     ORDER BY c.embedding <=> $1::vector
                     LIMIT $2
                     "#,
@@ -844,7 +878,8 @@ impl QAService {
                         .collect::<Vec<_>>()
                         .join(",")
                 ))
-                .bind(top_k as i64),
+                .bind(top_k as i64)
+                .bind(tenant_id),
             )
             .await
             .map_err(|e| format!("语义搜索失败: {}", e))?;
@@ -870,8 +905,9 @@ impl QAService {
         top_k: usize,
         vector_weight: f64,
         keyword_weight: f64,
+        tenant_id: Uuid,
     ) -> Result<Vec<SearchResult>, String> {
-        let vector_results = self.semantic_search(query, top_k * 2).await?;
+        let vector_results = self.semantic_search(query, top_k * 2, tenant_id).await?;
 
         let keyword_results = self
             .db

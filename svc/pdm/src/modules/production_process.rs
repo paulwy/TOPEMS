@@ -1,12 +1,26 @@
-use axum::{extract::Path, extract::Query, extract::State, routing::get, Json, Router};
+use axum::{extract::Path, extract::Query, extract::State, routing::get, Extension, Json, Router};
 use chrono::Utc;
 use serde::{Deserialize, Serialize};
 use sqlx::types::BigDecimal;
 use sqlx::FromRow;
 use uuid::Uuid;
 
-use crate::AppState;
-use topems_shared::ApiResponse;
+use crate::shared::AppState;
+use topems_shared::{ApiResponse, Claims};
+
+fn get_tenant_id(claims: &Claims, headers: &axum::http::HeaderMap) -> Uuid {
+    claims
+        .tenant_id
+        .as_ref()
+        .and_then(|t| Uuid::parse_str(t).ok())
+        .or_else(|| {
+            headers
+                .get("x-tenant-id")
+                .and_then(|v| v.to_str().ok())
+                .and_then(|s| Uuid::parse_str(s).ok())
+        })
+        .unwrap_or_else(Uuid::new_v4)
+}
 
 pub fn create_routes() -> Router<AppState> {
     Router::new()
@@ -23,6 +37,7 @@ pub fn create_routes() -> Router<AppState> {
 #[derive(Debug, Serialize, Deserialize, FromRow)]
 pub struct ProductionProcess {
     pub id: Uuid,
+    pub tenant_id: Uuid,
     pub process_no: String,
     pub name: String,
     pub description: Option<String>,
@@ -66,8 +81,11 @@ pub struct ProcessQuery {
 
 pub async fn list_processes(
     State(state): State<AppState>,
+    Extension(claims): Extension<Claims>,
     Query(query): Query<ProcessQuery>,
+    headers: axum::http::HeaderMap,
 ) -> Json<ApiResponse<serde_json::Value>> {
+    let tenant_id = get_tenant_id(&claims, &headers);
     let page = query.page.unwrap_or(1).max(1);
     let page_size = query.page_size.unwrap_or(10).min(100);
     let offset = (page - 1) * page_size;
@@ -75,14 +93,16 @@ pub async fn list_processes(
 
     let result = sqlx::query_as::<_, ProductionProcess>(
         r#"
-        SELECT id, process_no, name, description, process_type, standard_time, unit, status, created_at, updated_at
+        SELECT id, tenant_id, process_no, name, description, process_type, standard_time, unit, status, created_at, updated_at
         FROM pdm_production_processes
-        WHERE ($1::text IS NULL OR process_no ILIKE $1 OR name ILIKE $1)
-          AND ($2::text IS NULL OR status = $2)
+        WHERE tenant_id = $1
+          AND ($2::text IS NULL OR process_no ILIKE $2 OR name ILIKE $2)
+          AND ($3::text IS NULL OR status = $3)
         ORDER BY created_at DESC
-        LIMIT $3 OFFSET $4
+        LIMIT $4 OFFSET $5
         "#,
     )
+    .bind(tenant_id)
     .bind(&search_pattern)
     .bind(&query.status)
     .bind(page_size)
@@ -95,10 +115,12 @@ pub async fn list_processes(
             let count_result = sqlx::query_scalar::<_, i64>(
                 r#"
                 SELECT COUNT(*) FROM pdm_production_processes
-                WHERE ($1::text IS NULL OR process_no ILIKE $1 OR name ILIKE $1)
-                  AND ($2::text IS NULL OR status = $2)
+                WHERE tenant_id = $1
+                  AND ($2::text IS NULL OR process_no ILIKE $2 OR name ILIKE $2)
+                  AND ($3::text IS NULL OR status = $3)
                 "#,
             )
+            .bind(tenant_id)
             .bind(&search_pattern)
             .bind(&query.status)
             .fetch_one(&state.pool)
@@ -125,8 +147,12 @@ pub async fn list_processes(
 
 pub async fn create_process(
     State(state): State<AppState>,
+    Extension(claims): Extension<Claims>,
+    headers: axum::http::HeaderMap,
     Json(req): Json<CreateProcessRequest>,
 ) -> Json<ApiResponse<ProductionProcess>> {
+    let tenant_id = get_tenant_id(&claims, &headers);
+
     if req.process_no.is_empty() {
         return Json(ApiResponse::error(400, "工序编号不能为空"));
     }
@@ -138,11 +164,12 @@ pub async fn create_process(
 
     let result = sqlx::query_as::<_, ProductionProcess>(
         r#"
-        INSERT INTO pdm_production_processes (process_no, name, description, process_type, standard_time, unit, status)
-        VALUES ($1, $2, $3, $4, $5, $6, $7)
-        RETURNING id, process_no, name, description, process_type, standard_time, unit, status, created_at, updated_at
+        INSERT INTO pdm_production_processes (tenant_id, process_no, name, description, process_type, standard_time, unit, status)
+        VALUES ($1, $2, $3, $4, $5, $6, $7, $8)
+        RETURNING id, tenant_id, process_no, name, description, process_type, standard_time, unit, status, created_at, updated_at
         "#,
     )
+    .bind(tenant_id)
     .bind(&req.process_no)
     .bind(&req.name)
     .bind(&req.description)
@@ -164,15 +191,20 @@ pub async fn create_process(
 
 pub async fn get_process(
     State(state): State<AppState>,
+    Extension(claims): Extension<Claims>,
     Path(id): Path<Uuid>,
+    headers: axum::http::HeaderMap,
 ) -> Json<ApiResponse<ProductionProcess>> {
+    let tenant_id = get_tenant_id(&claims, &headers);
+
     let result = sqlx::query_as::<_, ProductionProcess>(
         r#"
-        SELECT id, process_no, name, description, process_type, standard_time, unit, status, created_at, updated_at
-        FROM pdm_production_processes WHERE id = $1
+        SELECT id, tenant_id, process_no, name, description, process_type, standard_time, unit, status, created_at, updated_at
+        FROM pdm_production_processes WHERE id = $1 AND tenant_id = $2
         "#,
     )
     .bind(id)
+    .bind(tenant_id)
     .fetch_optional(&state.pool)
     .await;
 
@@ -188,9 +220,12 @@ pub async fn get_process(
 
 pub async fn update_process(
     State(state): State<AppState>,
+    Extension(claims): Extension<Claims>,
     Path(id): Path<Uuid>,
+    headers: axum::http::HeaderMap,
     Json(req): Json<UpdateProcessRequest>,
 ) -> Json<ApiResponse<ProductionProcess>> {
+    let tenant_id = get_tenant_id(&claims, &headers);
     let now = Utc::now();
 
     let result = sqlx::query_as::<_, ProductionProcess>(
@@ -204,8 +239,8 @@ pub async fn update_process(
             unit = COALESCE($7, unit),
             status = COALESCE($8, status),
             updated_at = $9
-        WHERE id = $1
-        RETURNING id, process_no, name, description, process_type, standard_time, unit, status, created_at, updated_at
+        WHERE id = $1 AND tenant_id = $10
+        RETURNING id, tenant_id, process_no, name, description, process_type, standard_time, unit, status, created_at, updated_at
         "#,
     )
     .bind(id)
@@ -217,6 +252,7 @@ pub async fn update_process(
     .bind(&req.unit)
     .bind(&req.status)
     .bind(now)
+    .bind(tenant_id)
     .fetch_optional(&state.pool)
     .await;
 
@@ -232,12 +268,18 @@ pub async fn update_process(
 
 pub async fn delete_process(
     State(state): State<AppState>,
+    Extension(claims): Extension<Claims>,
     Path(id): Path<Uuid>,
+    headers: axum::http::HeaderMap,
 ) -> Json<ApiResponse<bool>> {
-    let result = sqlx::query("DELETE FROM pdm_production_processes WHERE id = $1")
-        .bind(id)
-        .execute(&state.pool)
-        .await;
+    let tenant_id = get_tenant_id(&claims, &headers);
+
+    let result =
+        sqlx::query("DELETE FROM pdm_production_processes WHERE id = $1 AND tenant_id = $2")
+            .bind(id)
+            .bind(tenant_id)
+            .execute(&state.pool)
+            .await;
 
     match result {
         Ok(r) if r.rows_affected() > 0 => Json(ApiResponse::success(true, "工序删除成功")),

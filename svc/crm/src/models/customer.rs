@@ -8,6 +8,7 @@ use topems_shared::{DataMasking, EncryptionResult, FieldEncryptionService};
 #[derive(Debug, Clone, FromRow, Serialize, Deserialize)]
 pub struct Customer {
     pub id: Uuid,
+    pub tenant_id: Uuid,
     pub name: String,
     pub code: Option<String>,
     pub industry: Option<String>,
@@ -129,6 +130,7 @@ mod tests {
     fn test_customer_serialization() {
         let customer = Customer {
             id: Uuid::new_v4(),
+            tenant_id: Uuid::new_v4(),
             name: "Test Company".to_string(),
             code: Some("CUST-001".to_string()),
             industry: Some("Technology".to_string()),
@@ -227,6 +229,7 @@ mod tests {
 
         let mut customer = Customer {
             id,
+            tenant_id: Uuid::new_v4(),
             name: "测试客户".to_string(),
             code: None,
             industry: None,
@@ -275,6 +278,7 @@ mod tests {
 
         let mut customer = Customer {
             id,
+            tenant_id: Uuid::new_v4(),
             name: "测试客户".to_string(),
             code: None,
             industry: None,

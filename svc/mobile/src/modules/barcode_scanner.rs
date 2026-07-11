@@ -86,7 +86,8 @@ pub async fn scan_barcode(
         location_lng: payload.location_lng,
     };
 
-    let scan = match db_create_barcode_scan(&pool, user_id, create_data).await {
+    let tenant_id = Uuid::new_v4();
+    let scan = match db_create_barcode_scan(&pool, tenant_id, user_id, create_data).await {
         Ok(s) => s,
         Err(e) => {
             tracing::error!("保存扫描记录失败: {}", e);

@@ -37,7 +37,7 @@ where
         .route("/api/wms/transfers/{id}/complete", post(complete_transfer))
 }
 
-async fn list_transfers(
+pub async fn list_transfers(
     State(state): State<ApiState>,
     Extension(claims): Extension<Claims>,
     Query(params): Query<TransferOrderQueryParams>,
@@ -106,7 +106,7 @@ async fn list_transfers(
     }
 }
 
-async fn create_transfer(
+pub async fn create_transfer(
     State(state): State<ApiState>,
     Extension(claims): Extension<Claims>,
     Json(req): Json<CreateTransferOrderRequest>,
@@ -207,7 +207,7 @@ async fn create_transfer(
     }
 }
 
-async fn get_transfer(
+pub async fn get_transfer(
     State(state): State<ApiState>,
     Extension(claims): Extension<Claims>,
     Path(id): Path<String>,
@@ -238,7 +238,7 @@ async fn get_transfer(
     }
 }
 
-async fn list_transfer_items(
+pub async fn list_transfer_items(
     State(state): State<ApiState>,
     Extension(claims): Extension<Claims>,
     Path(id): Path<String>,
@@ -275,7 +275,7 @@ async fn list_transfer_items(
     }
 }
 
-async fn update_transfer(
+pub async fn update_transfer(
     State(state): State<ApiState>,
     Extension(claims): Extension<Claims>,
     Path(id): Path<String>,
@@ -336,7 +336,7 @@ async fn update_transfer(
     }
 }
 
-async fn delete_transfer(
+pub async fn delete_transfer(
     State(state): State<ApiState>,
     Extension(claims): Extension<Claims>,
     Path(id): Path<String>,
@@ -378,7 +378,7 @@ async fn delete_transfer(
     }
 }
 
-async fn confirm_transfer(
+pub async fn confirm_transfer(
     State(state): State<ApiState>,
     Extension(claims): Extension<Claims>,
     Path(id): Path<String>,
@@ -421,7 +421,7 @@ async fn confirm_transfer(
     }
 }
 
-async fn ship_transfer(
+pub async fn ship_transfer(
     State(state): State<ApiState>,
     Extension(claims): Extension<Claims>,
     Path(id): Path<String>,
@@ -464,7 +464,7 @@ async fn ship_transfer(
     }
 }
 
-async fn receive_transfer(
+pub async fn receive_transfer(
     State(state): State<ApiState>,
     Extension(claims): Extension<Claims>,
     Path(id): Path<String>,
@@ -536,7 +536,7 @@ async fn receive_transfer(
     }
 }
 
-async fn complete_transfer(
+pub async fn complete_transfer(
     State(state): State<ApiState>,
     Extension(claims): Extension<Claims>,
     Path(id): Path<String>,

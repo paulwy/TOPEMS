@@ -48,7 +48,7 @@ pub fn create_routes() -> Router<ApiState> {
         )
 }
 
-async fn list_requisitions(
+pub async fn list_requisitions(
     State(state): State<ApiState>,
     Extension(claims): Extension<Claims>,
     Query(params): Query<PurchaseRequisitionQueryParams>,
@@ -94,7 +94,7 @@ async fn list_requisitions(
     }
 }
 
-async fn create_requisition(
+pub async fn create_requisition(
     State(state): State<ApiState>,
     Extension(claims): Extension<Claims>,
     Json(data): Json<CreatePurchaseRequisitionRequest>,
@@ -157,7 +157,7 @@ async fn create_requisition(
     }
 }
 
-async fn get_requisition(
+pub async fn get_requisition(
     State(state): State<ApiState>,
     Extension(claims): Extension<Claims>,
     Path(id): Path<String>,
@@ -189,7 +189,7 @@ async fn get_requisition(
     }
 }
 
-async fn update_requisition(
+pub async fn update_requisition(
     State(state): State<ApiState>,
     Extension(claims): Extension<Claims>,
     Path(id): Path<String>,
@@ -249,7 +249,7 @@ async fn update_requisition(
     }
 }
 
-async fn delete_requisition(
+pub async fn delete_requisition(
     State(state): State<ApiState>,
     Extension(claims): Extension<Claims>,
     Path(id): Path<String>,

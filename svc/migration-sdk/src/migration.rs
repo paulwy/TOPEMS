@@ -147,7 +147,7 @@ impl MigrationBundle {
         }
     }
 
-    pub fn add<M: Migration + 'static>(mut self, migration: M) -> Self {
+    pub fn push_migration<M: Migration + 'static>(mut self, migration: M) -> Self {
         self.migrations.push(Box::new(migration));
         self
     }

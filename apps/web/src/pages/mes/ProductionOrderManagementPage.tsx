@@ -17,7 +17,7 @@ import {
   Button,
 } from '@mui/material';
 import { PageContainer } from '@/components/common';
-import React, { useState, useEffect, useMemo, useCallback } from 'react';
+import React, { useState, useMemo, useCallback } from 'react';
 import type {
   ProductionOrder,
   CreateProductionOrderRequest,
@@ -92,13 +92,13 @@ const ct = designTokens.colors;
  * 3. 保留 UI 状态（page, rowsPerPage, searchText, dialogOpen 等）的 useState
  */
 const ProductionOrderManagementPage: React.FC = () => {
-  const [orders, setOrders] = useState<ProductionOrder[]>([]);
-  const [loading, setLoading] = useState(true);
+  const { addNotification } = useAppStore();
+  const queryClient = useQueryClient();
+
   const [searchTerm, setSearchTerm] = useState('');
   const [statusFilter, setStatusFilter] = useState<string>('all');
   const [currentPage, setCurrentPage] = useState(1);
   const [pageSize] = useState(10);
-  const [total, setTotal] = useState(0);
   const [showDialog, setShowDialog] = useState(false);
   const [showDetailDialog, setShowDetailDialog] = useState(false);
   const [selectedOrder, setSelectedOrder] = useState<ProductionOrder | null>(null);
@@ -111,60 +111,116 @@ const ProductionOrderManagementPage: React.FC = () => {
     scheduled_end_date: '',
   });
 
-  const { addNotification } = useAppStore();
-
-  const loadOrders = useCallback(async () => {
-    try {
-      setLoading(true);
+  // React Query - 订单列表
+  const ordersQuery = useQuery({
+    queryKey: ['mes-production-orders', currentPage, pageSize, searchTerm, statusFilter],
+    queryFn: async () => {
       const params: ListParams = {
         page: currentPage - 1,
         pagesize: pageSize,
       };
       if (searchTerm) params.search = searchTerm;
       if (statusFilter !== 'all') params.status = statusFilter;
+      return mesApi.orders.list(params);
+    },
+    staleTime: 5 * 60 * 1000,
+  });
 
-      const response = await mesApi.orders.list(params);
-      if (response.success && response.data) {
-        setOrders(response.data.orders || []);
-        setTotal(response.data.total || 0);
-      }
-    } catch (error: unknown) {
-      apiLogger.error('加载生产订单列表失败:', error);
+  const orders =
+    ordersQuery.data?.success && ordersQuery.data.data ? ordersQuery.data.data.orders || [] : [];
+  const total =
+    ordersQuery.data?.success && ordersQuery.data.data ? ordersQuery.data.data.total || 0 : 0;
+  const loading = ordersQuery.isLoading;
+
+  // React Query - Mutations
+  const createMutation = useMutation({
+    mutationFn: (data: CreateProductionOrderRequest) => mesApi.orders.create(data),
+    onSuccess: () => {
+      addNotification({
+        type: 'success',
+        title: '创建成功',
+        message: '新生产订单已创建',
+      });
+      queryClient.invalidateQueries({ queryKey: ['mes-production-orders'] });
+    },
+    onError: () => {
       addNotification({
         type: 'error',
-        title: '加载失败',
-        message: '无法加载生产订单列表',
+        title: '操作失败',
+        message: '创建生产订单失败',
       });
-    } finally {
-      setLoading(false);
-    }
-  }, [currentPage, pageSize, searchTerm, statusFilter, addNotification]);
+    },
+  });
 
-  useEffect(() => {
-    loadOrders();
-  }, [loadOrders]);
+  const updateMutation = useMutation({
+    mutationFn: ({ id, data }: { id: string; data: UpdateProductionOrderRequest }) =>
+      mesApi.orders.update(id, data),
+    onSuccess: () => {
+      addNotification({
+        type: 'success',
+        title: '更新成功',
+        message: '生产订单信息已更新',
+      });
+      queryClient.invalidateQueries({ queryKey: ['mes-production-orders'] });
+    },
+    onError: () => {
+      addNotification({
+        type: 'error',
+        title: '操作失败',
+        message: '更新生产订单失败',
+      });
+    },
+  });
 
-  // 状态流转处理 - 使用专门的状态流转 API
-  const handleStatusChange = async (id: string, action: string) => {
-    try {
-      setLoading(true);
-      let response;
+  const deleteMutation = useMutation({
+    mutationFn: (id: string) => mesApi.orders.delete(id),
+    onSuccess: () => {
+      addNotification({
+        type: 'success',
+        title: '删除成功',
+        message: '生产订单已删除',
+      });
+      queryClient.invalidateQueries({ queryKey: ['mes-production-orders'] });
+    },
+    onError: () => {
+      addNotification({
+        type: 'error',
+        title: '删除失败',
+        message: '无法删除生产订单',
+      });
+    },
+  });
+
+  const statusMutation = useMutation({
+    mutationFn: async ({ id, action }: { id: string; action: string }) => {
       switch (action) {
         case 'release':
-          response = await mesApi.orders.release(id);
-          break;
+          return mesApi.orders.release(id);
         case 'start':
-          response = await mesApi.orders.start(id);
-          break;
+          return mesApi.orders.start(id);
         case 'complete':
-          response = await mesApi.orders.complete(id);
-          break;
+          return mesApi.orders.complete(id);
         case 'cancel':
-          response = await mesApi.orders.cancel(id);
-          break;
+          return mesApi.orders.cancel(id);
         default:
-          return;
+          throw new Error('Invalid action');
       }
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['mes-production-orders'] });
+    },
+    onError: () => {
+      addNotification({
+        type: 'error',
+        title: '状态更新失败',
+        message: '无法更新订单状态',
+      });
+    },
+  });
+
+  const handleStatusChange = async (id: string, action: string) => {
+    try {
+      const response = await statusMutation.mutateAsync({ id, action });
       if (response.success && response.data) {
         addNotification({
           type: 'success',
@@ -172,16 +228,8 @@ const ProductionOrderManagementPage: React.FC = () => {
           message: `订单状态已更新为"${getStatusText(response.data.status)}"`,
         });
       }
-      loadOrders();
     } catch (error: unknown) {
       apiLogger.error('状态更新失败:', error);
-      addNotification({
-        type: 'error',
-        title: '状态更新失败',
-        message: '无法更新订单状态',
-      });
-    } finally {
-      setLoading(false);
     }
   };
 
@@ -254,30 +302,17 @@ const ProductionOrderManagementPage: React.FC = () => {
     e.preventDefault();
     try {
       if (selectedOrder) {
-        await mesApi.orders.update(selectedOrder.id, formData as UpdateProductionOrderRequest);
-        addNotification({
-          type: 'success',
-          title: '更新成功',
-          message: '生产订单信息已更新',
+        await updateMutation.mutateAsync({
+          id: selectedOrder.id,
+          data: formData as UpdateProductionOrderRequest,
         });
       } else {
-        await mesApi.orders.create(formData);
-        addNotification({
-          type: 'success',
-          title: '创建成功',
-          message: '新生产订单已创建',
-        });
+        await createMutation.mutateAsync(formData);
       }
       setShowDialog(false);
       resetForm();
-      loadOrders();
     } catch (error: unknown) {
       apiLogger.error('操作失败:', error);
-      addNotification({
-        type: 'error',
-        title: '操作失败',
-        message: selectedOrder ? '更新生产订单失败' : '创建生产订单失败',
-      });
     }
   };
 
@@ -285,23 +320,12 @@ const ProductionOrderManagementPage: React.FC = () => {
     async (id: string) => {
       if (!window.confirm('确定要删除这个生产订单吗?')) return;
       try {
-        await mesApi.orders.delete(id);
-        addNotification({
-          type: 'success',
-          title: '删除成功',
-          message: '生产订单已删除',
-        });
-        loadOrders();
+        await deleteMutation.mutateAsync(id);
       } catch (error: unknown) {
         apiLogger.error('删除失败:', error);
-        addNotification({
-          type: 'error',
-          title: '删除失败',
-          message: '无法删除生产订单',
-        });
       }
     },
-    [loadOrders, addNotification]
+    [deleteMutation]
   );
 
   const handleEdit = useCallback((order: ProductionOrder) => {

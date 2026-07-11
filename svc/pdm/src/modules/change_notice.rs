@@ -3,15 +3,29 @@ use axum::{
     extract::Query,
     extract::State,
     routing::{get, post},
-    Json, Router,
+    Extension, Json, Router,
 };
 use chrono::Utc;
 use serde::{Deserialize, Serialize};
 use sqlx::FromRow;
 use uuid::Uuid;
 
-use crate::AppState;
-use topems_shared::ApiResponse;
+use crate::shared::AppState;
+use topems_shared::{ApiResponse, Claims};
+
+fn get_tenant_id(claims: &Claims, headers: &axum::http::HeaderMap) -> Uuid {
+    claims
+        .tenant_id
+        .as_ref()
+        .and_then(|t| Uuid::parse_str(t).ok())
+        .or_else(|| {
+            headers
+                .get("x-tenant-id")
+                .and_then(|v| v.to_str().ok())
+                .and_then(|s| Uuid::parse_str(s).ok())
+        })
+        .unwrap_or_else(Uuid::new_v4)
+}
 
 pub fn create_routes() -> Router<AppState> {
     Router::new()
@@ -42,6 +56,7 @@ pub fn create_routes() -> Router<AppState> {
 #[derive(Debug, Serialize, Deserialize, FromRow)]
 pub struct ChangeNotice {
     pub id: Uuid,
+    pub tenant_id: Uuid,
     pub ecn_no: String,
     pub title: String,
     pub description: Option<String>,
@@ -96,8 +111,11 @@ pub struct UpdateChangeNoticeRequest {
 
 pub async fn list_change_notices(
     State(state): State<AppState>,
+    Extension(claims): Extension<Claims>,
     Query(query): Query<ChangeNoticeQuery>,
+    headers: axum::http::HeaderMap,
 ) -> Json<ApiResponse<serde_json::Value>> {
+    let tenant_id = get_tenant_id(&claims, &headers);
     let page = query.page.unwrap_or(1).max(1);
     let page_size = query.page_size.unwrap_or(10).min(100);
     let offset = (page - 1) * page_size;
@@ -105,18 +123,20 @@ pub async fn list_change_notices(
 
     let result = sqlx::query_as::<_, ChangeNotice>(
         r#"
-        SELECT id, ecn_no, title, description, change_type, affected_items,
+        SELECT id, tenant_id, ecn_no, title, description, change_type, affected_items,
                reason, priority, status, initiator, approver, approved_at,
                effective_date, created_at, updated_at
         FROM pdm_change_notices
-        WHERE ($1::text IS NULL OR ecn_no ILIKE $1 OR title ILIKE $1)
-          AND ($2::text IS NULL OR status = $2)
-          AND ($3::text IS NULL OR change_type = $3)
-          AND ($4::text IS NULL OR priority = $4)
+        WHERE tenant_id = $1
+          AND ($2::text IS NULL OR ecn_no ILIKE $2 OR title ILIKE $2)
+          AND ($3::text IS NULL OR status = $3)
+          AND ($4::text IS NULL OR change_type = $4)
+          AND ($5::text IS NULL OR priority = $5)
         ORDER BY created_at DESC
-        LIMIT $5 OFFSET $6
+        LIMIT $6 OFFSET $7
         "#,
     )
+    .bind(tenant_id)
     .bind(&search_pattern)
     .bind(&query.status)
     .bind(&query.change_type)
@@ -131,12 +151,14 @@ pub async fn list_change_notices(
             let count_result = sqlx::query_scalar::<_, i64>(
                 r#"
                 SELECT COUNT(*) FROM pdm_change_notices
-                WHERE ($1::text IS NULL OR ecn_no ILIKE $1 OR title ILIKE $1)
-                  AND ($2::text IS NULL OR status = $2)
-                  AND ($3::text IS NULL OR change_type = $3)
-                  AND ($4::text IS NULL OR priority = $4)
+                WHERE tenant_id = $1
+                  AND ($2::text IS NULL OR ecn_no ILIKE $2 OR title ILIKE $2)
+                  AND ($3::text IS NULL OR status = $3)
+                  AND ($4::text IS NULL OR change_type = $4)
+                  AND ($5::text IS NULL OR priority = $5)
                 "#,
             )
+            .bind(tenant_id)
             .bind(&search_pattern)
             .bind(&query.status)
             .bind(&query.change_type)
@@ -165,8 +187,12 @@ pub async fn list_change_notices(
 
 pub async fn create_change_notice(
     State(state): State<AppState>,
+    Extension(claims): Extension<Claims>,
+    headers: axum::http::HeaderMap,
     Json(req): Json<CreateChangeNoticeRequest>,
 ) -> Json<ApiResponse<ChangeNotice>> {
+    let tenant_id = get_tenant_id(&claims, &headers);
+
     if req.title.is_empty() {
         return Json(ApiResponse::error(400, "变更通知标题不能为空"));
     }
@@ -190,15 +216,16 @@ pub async fn create_change_notice(
     let result = sqlx::query_as::<_, ChangeNotice>(
         r#"
         INSERT INTO pdm_change_notices (
-            id, ecn_no, title, description, change_type, affected_items,
+            id, tenant_id, ecn_no, title, description, change_type, affected_items,
             reason, priority, status, initiator, effective_date, created_at, updated_at
-        ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13)
-        RETURNING id, ecn_no, title, description, change_type, affected_items,
+        ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14)
+        RETURNING id, tenant_id, ecn_no, title, description, change_type, affected_items,
                   reason, priority, status, initiator, approver, approved_at,
                   effective_date, created_at, updated_at
         "#,
     )
     .bind(id)
+    .bind(tenant_id)
     .bind(&ecn_no)
     .bind(&req.title)
     .bind(&req.description)
@@ -225,17 +252,22 @@ pub async fn create_change_notice(
 
 pub async fn get_change_notice(
     State(state): State<AppState>,
+    Extension(claims): Extension<Claims>,
     Path(id): Path<Uuid>,
+    headers: axum::http::HeaderMap,
 ) -> Json<ApiResponse<ChangeNotice>> {
+    let tenant_id = get_tenant_id(&claims, &headers);
+
     let result = sqlx::query_as::<_, ChangeNotice>(
         r#"
-        SELECT id, ecn_no, title, description, change_type, affected_items,
+        SELECT id, tenant_id, ecn_no, title, description, change_type, affected_items,
                reason, priority, status, initiator, approver, approved_at,
                effective_date, created_at, updated_at
-        FROM pdm_change_notices WHERE id = $1
+        FROM pdm_change_notices WHERE id = $1 AND tenant_id = $2
         "#,
     )
     .bind(id)
+    .bind(tenant_id)
     .fetch_optional(&state.pool)
     .await;
 
@@ -251,18 +283,23 @@ pub async fn get_change_notice(
 
 pub async fn update_change_notice(
     State(state): State<AppState>,
+    Extension(claims): Extension<Claims>,
     Path(id): Path<Uuid>,
+    headers: axum::http::HeaderMap,
     Json(req): Json<UpdateChangeNoticeRequest>,
 ) -> Json<ApiResponse<ChangeNotice>> {
+    let tenant_id = get_tenant_id(&claims, &headers);
+
     let existing = sqlx::query_as::<_, ChangeNotice>(
         r#"
-        SELECT id, ecn_no, title, description, change_type, affected_items,
+        SELECT id, tenant_id, ecn_no, title, description, change_type, affected_items,
                reason, priority, status, initiator, approver, approved_at,
                effective_date, created_at, updated_at
-        FROM pdm_change_notices WHERE id = $1
+        FROM pdm_change_notices WHERE id = $1 AND tenant_id = $2
         "#,
     )
     .bind(id)
+    .bind(tenant_id)
     .fetch_optional(&state.pool)
     .await;
 
@@ -300,8 +337,8 @@ pub async fn update_change_notice(
             title = $2, description = $3, change_type = $4, affected_items = $5,
             reason = $6, priority = $7, status = $8, approver = $9,
             approved_at = $10, effective_date = $11, updated_at = $12
-        WHERE id = $1
-        RETURNING id, ecn_no, title, description, change_type, affected_items,
+        WHERE id = $1 AND tenant_id = $13
+        RETURNING id, tenant_id, ecn_no, title, description, change_type, affected_items,
                   reason, priority, status, initiator, approver, approved_at,
                   effective_date, created_at, updated_at
         "#,
@@ -318,6 +355,7 @@ pub async fn update_change_notice(
     .bind(approved_at)
     .bind(effective_date)
     .bind(now)
+    .bind(tenant_id)
     .fetch_one(&state.pool)
     .await;
 
@@ -332,10 +370,15 @@ pub async fn update_change_notice(
 
 pub async fn delete_change_notice(
     State(state): State<AppState>,
+    Extension(claims): Extension<Claims>,
     Path(id): Path<Uuid>,
+    headers: axum::http::HeaderMap,
 ) -> Json<ApiResponse<bool>> {
-    let result = sqlx::query("DELETE FROM pdm_change_notices WHERE id = $1")
+    let tenant_id = get_tenant_id(&claims, &headers);
+
+    let result = sqlx::query("DELETE FROM pdm_change_notices WHERE id = $1 AND tenant_id = $2")
         .bind(id)
+        .bind(tenant_id)
         .execute(&state.pool)
         .await;
 
@@ -351,15 +394,18 @@ pub async fn delete_change_notice(
 
 pub async fn submit_change_notice(
     State(state): State<AppState>,
+    Extension(claims): Extension<Claims>,
     Path(id): Path<Uuid>,
+    headers: axum::http::HeaderMap,
 ) -> Json<ApiResponse<ChangeNotice>> {
+    let tenant_id = get_tenant_id(&claims, &headers);
     let now = Utc::now();
 
     let result = sqlx::query_as::<_, ChangeNotice>(
         r#"
         UPDATE pdm_change_notices SET status = $2, updated_at = $3
-        WHERE id = $1 AND status = 'draft'
-        RETURNING id, ecn_no, title, description, change_type, affected_items,
+        WHERE id = $1 AND tenant_id = $4 AND status = 'draft'
+        RETURNING id, tenant_id, ecn_no, title, description, change_type, affected_items,
                   reason, priority, status, initiator, approver, approved_at,
                   effective_date, created_at, updated_at
         "#,
@@ -367,6 +413,7 @@ pub async fn submit_change_notice(
     .bind(id)
     .bind("pending")
     .bind(now)
+    .bind(tenant_id)
     .fetch_optional(&state.pool)
     .await;
 
@@ -382,9 +429,12 @@ pub async fn submit_change_notice(
 
 pub async fn approve_change_notice(
     State(state): State<AppState>,
+    Extension(claims): Extension<Claims>,
     Path(id): Path<Uuid>,
+    headers: axum::http::HeaderMap,
     Json(req): Json<serde_json::Value>,
 ) -> Json<ApiResponse<ChangeNotice>> {
+    let tenant_id = get_tenant_id(&claims, &headers);
     let approver = req
         .get("approver")
         .and_then(|v| v.as_str())
@@ -395,8 +445,8 @@ pub async fn approve_change_notice(
         r#"
         UPDATE pdm_change_notices SET
             status = $2, approver = $3, approved_at = $4, updated_at = $5
-        WHERE id = $1 AND status = 'pending'
-        RETURNING id, ecn_no, title, description, change_type, affected_items,
+        WHERE id = $1 AND tenant_id = $6 AND status = 'pending'
+        RETURNING id, tenant_id, ecn_no, title, description, change_type, affected_items,
                   reason, priority, status, initiator, approver, approved_at,
                   effective_date, created_at, updated_at
         "#,
@@ -406,6 +456,7 @@ pub async fn approve_change_notice(
     .bind(approver)
     .bind(now)
     .bind(now)
+    .bind(tenant_id)
     .fetch_optional(&state.pool)
     .await;
 
@@ -421,9 +472,12 @@ pub async fn approve_change_notice(
 
 pub async fn reject_change_notice(
     State(state): State<AppState>,
+    Extension(claims): Extension<Claims>,
     Path(id): Path<Uuid>,
+    headers: axum::http::HeaderMap,
     Json(req): Json<serde_json::Value>,
 ) -> Json<ApiResponse<ChangeNotice>> {
+    let tenant_id = get_tenant_id(&claims, &headers);
     let approver = req
         .get("approver")
         .and_then(|v| v.as_str())
@@ -438,8 +492,8 @@ pub async fn reject_change_notice(
         r#"
         UPDATE pdm_change_notices SET
             status = $2, approver = $3, approved_at = $4, reason = $5, updated_at = $6
-        WHERE id = $1 AND status = 'pending'
-        RETURNING id, ecn_no, title, description, change_type, affected_items,
+        WHERE id = $1 AND tenant_id = $7 AND status = 'pending'
+        RETURNING id, tenant_id, ecn_no, title, description, change_type, affected_items,
                   reason, priority, status, initiator, approver, approved_at,
                   effective_date, created_at, updated_at
         "#,
@@ -450,6 +504,7 @@ pub async fn reject_change_notice(
     .bind(now)
     .bind(reason)
     .bind(now)
+    .bind(tenant_id)
     .fetch_optional(&state.pool)
     .await;
 

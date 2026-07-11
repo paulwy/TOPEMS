@@ -54,7 +54,7 @@ where
         .route("/api/wms/serial-numbers/{id}/trace", get(get_trace))
 }
 
-async fn list_serial_numbers(
+pub async fn list_serial_numbers(
     State(state): State<ApiState>,
     Extension(claims): Extension<Claims>,
     Query(params): Query<SerialNumberQueryParams>,
@@ -135,7 +135,7 @@ async fn list_serial_numbers(
     }
 }
 
-async fn create_serial_number(
+pub async fn create_serial_number(
     State(state): State<ApiState>,
     Extension(claims): Extension<Claims>,
     Json(req): Json<CreateSerialNumberRequest>,
@@ -192,7 +192,7 @@ async fn create_serial_number(
     }
 }
 
-async fn bulk_create_serial_numbers(
+pub async fn bulk_create_serial_numbers(
     State(state): State<ApiState>,
     Extension(claims): Extension<Claims>,
     Json(req): Json<Vec<CreateSerialNumberRequest>>,
@@ -251,7 +251,7 @@ async fn bulk_create_serial_numbers(
     Json(ApiResponse::success(created_serials, "批量创建序列号成功"))
 }
 
-async fn get_serial_number(
+pub async fn get_serial_number(
     State(state): State<ApiState>,
     Extension(claims): Extension<Claims>,
     Path(id): Path<String>,
@@ -282,7 +282,7 @@ async fn get_serial_number(
     }
 }
 
-async fn get_by_serial_no(
+pub async fn get_by_serial_no(
     State(state): State<ApiState>,
     Extension(claims): Extension<Claims>,
     Path(serial_no): Path<String>,
@@ -308,7 +308,7 @@ async fn get_by_serial_no(
     }
 }
 
-async fn get_by_batch(
+pub async fn get_by_batch(
     State(state): State<ApiState>,
     Extension(claims): Extension<Claims>,
     Path(batch_no): Path<String>,
@@ -334,7 +334,7 @@ async fn get_by_batch(
     }
 }
 
-async fn update_serial_number(
+pub async fn update_serial_number(
     State(state): State<ApiState>,
     Extension(claims): Extension<Claims>,
     Path(id): Path<String>,
@@ -411,7 +411,7 @@ async fn update_serial_number(
     }
 }
 
-async fn delete_serial_number(
+pub async fn delete_serial_number(
     State(state): State<ApiState>,
     Extension(claims): Extension<Claims>,
     Path(id): Path<String>,
@@ -443,7 +443,7 @@ async fn delete_serial_number(
     }
 }
 
-async fn get_serial_number_statistics(
+pub async fn get_serial_number_statistics(
     State(state): State<ApiState>,
     Extension(claims): Extension<Claims>,
     Query(params): Query<serde_json::Value>,
@@ -489,7 +489,7 @@ async fn get_serial_number_statistics(
     }
 }
 
-async fn transfer_location(
+pub async fn transfer_location(
     State(state): State<ApiState>,
     Extension(claims): Extension<Claims>,
     Path(id): Path<String>,
@@ -534,7 +534,7 @@ async fn transfer_location(
     }
 }
 
-async fn get_trace(
+pub async fn get_trace(
     State(state): State<ApiState>,
     Extension(claims): Extension<Claims>,
     Path(id): Path<String>,

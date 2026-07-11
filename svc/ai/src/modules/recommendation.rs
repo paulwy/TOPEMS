@@ -1,9 +1,9 @@
-use axum::{extract::State, Json};
-use topems_shared::ApiResponse;
+use axum::{extract::State, Extension, Json};
+use topems_shared::{auth::Claims, ApiResponse};
 use uuid::Uuid;
 
 use crate::services::recommendation::{RecommendationRequest, RecommendationResponse, UserProfile};
-use crate::AppState;
+use crate::shared::AppState;
 
 pub struct RecommendationApi;
 
@@ -72,14 +72,17 @@ impl RecommendationApi {
 
     pub async fn recommend_documents(
         State(state): State<AppState>,
+        Extension(claims): Extension<topems_shared::auth::Claims>,
         Json(req): Json<serde_json::Value>,
     ) -> Json<ApiResponse<RecommendationResponse>> {
+        let tenant_id = crate::modules::qa::get_tenant_id(&claims);
         let request = RecommendationRequest {
             user_id: None,
             context: req,
             recommendation_type: "documents".to_string(),
             top_k: Some(10),
             filters: None,
+            tenant_id,
         };
         match state.recommendation_service.recommend(request).await {
             Ok(response) => Json(ApiResponse::success(response, "文档推荐成功")),
@@ -89,14 +92,17 @@ impl RecommendationApi {
 
     pub async fn recommend_opportunities(
         State(state): State<AppState>,
+        Extension(claims): Extension<topems_shared::auth::Claims>,
         Json(req): Json<serde_json::Value>,
     ) -> Json<ApiResponse<RecommendationResponse>> {
+        let tenant_id = crate::modules::qa::get_tenant_id(&claims);
         let request = RecommendationRequest {
             user_id: None,
             context: req,
             recommendation_type: "opportunities".to_string(),
             top_k: Some(10),
             filters: None,
+            tenant_id,
         };
         match state.recommendation_service.recommend(request).await {
             Ok(response) => Json(ApiResponse::success(response, "商机推荐成功")),
@@ -106,14 +112,17 @@ impl RecommendationApi {
 
     pub async fn recommend_knowledge(
         State(state): State<AppState>,
+        Extension(claims): Extension<topems_shared::auth::Claims>,
         Json(req): Json<serde_json::Value>,
     ) -> Json<ApiResponse<RecommendationResponse>> {
+        let tenant_id = crate::modules::qa::get_tenant_id(&claims);
         let request = RecommendationRequest {
             user_id: None,
             context: req,
             recommendation_type: "knowledge".to_string(),
             top_k: Some(10),
             filters: None,
+            tenant_id,
         };
         match state.recommendation_service.recommend(request).await {
             Ok(response) => Json(ApiResponse::success(response, "知识推荐成功")),

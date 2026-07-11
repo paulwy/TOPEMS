@@ -43,6 +43,7 @@ pub struct DatabaseMetricsResponse {
 #[derive(Debug, Serialize)]
 pub struct ApiPerformance {
     pub id: Uuid,
+    pub tenant_id: Uuid,
     pub endpoint: String,
     pub method: String,
     pub avg_response_time: f64,
@@ -108,13 +109,23 @@ async fn get_database_metrics(
     Json(ApiResponse::success(metrics, "获取数据库指标成功"))
 }
 
+fn get_tenant_id(claims: &Claims) -> Uuid {
+    claims
+        .tenant_id
+        .as_ref()
+        .and_then(|t| Uuid::parse_str(t).ok())
+        .unwrap_or_else(Uuid::new_v4)
+}
+
 async fn get_api_performance(
     State(_state): State<ApiState>,
-    Extension(_claims): Extension<Claims>,
+    Extension(claims): Extension<Claims>,
 ) -> Json<ApiResponse<Vec<ApiPerformance>>> {
+    let tenant_id = get_tenant_id(&claims);
     let performances = vec![
         ApiPerformance {
             id: Uuid::new_v4(),
+            tenant_id: tenant_id,
             endpoint: "/api/v1/customers".to_string(),
             method: "GET".to_string(),
             avg_response_time: 125.5,
@@ -129,6 +140,7 @@ async fn get_api_performance(
         },
         ApiPerformance {
             id: Uuid::new_v4(),
+            tenant_id: tenant_id,
             endpoint: "/api/v1/employees".to_string(),
             method: "GET".to_string(),
             avg_response_time: 98.2,
@@ -143,6 +155,7 @@ async fn get_api_performance(
         },
         ApiPerformance {
             id: Uuid::new_v4(),
+            tenant_id: tenant_id,
             endpoint: "/api/v1/projects".to_string(),
             method: "POST".to_string(),
             avg_response_time: 256.8,

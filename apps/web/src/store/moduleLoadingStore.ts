@@ -1,4 +1,5 @@
 import { create } from 'zustand';
+import { LOADER_TIMEOUT } from '@topems/shared-constants';
 
 export type ModuleStatus = 'idle' | 'loading' | 'loaded' | 'error';
 
@@ -34,7 +35,7 @@ export interface ModuleLoadingStore {
   unload: (moduleId: string) => void;
 }
 
-const DEFAULT_TIMEOUT = 30000;
+const DEFAULT_TIMEOUT = LOADER_TIMEOUT.MODULE;
 
 export const useModuleLoadingStore = create<ModuleLoadingStore>((set, get) => ({
   modules: {},

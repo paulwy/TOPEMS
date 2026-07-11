@@ -1,12 +1,26 @@
-use axum::{extract::Path, extract::Query, extract::State, routing::get, Json, Router};
+use axum::{extract::Path, extract::Query, extract::State, routing::get, Extension, Json, Router};
 use chrono::Utc;
 use serde::{Deserialize, Serialize};
 use sqlx::types::BigDecimal;
 use sqlx::FromRow;
 use uuid::Uuid;
 
-use crate::AppState;
-use topems_shared::ApiResponse;
+use crate::shared::AppState;
+use topems_shared::{ApiResponse, Claims};
+
+fn get_tenant_id(claims: &Claims, headers: &axum::http::HeaderMap) -> Uuid {
+    claims
+        .tenant_id
+        .as_ref()
+        .and_then(|t| Uuid::parse_str(t).ok())
+        .or_else(|| {
+            headers
+                .get("x-tenant-id")
+                .and_then(|v| v.to_str().ok())
+                .and_then(|s| Uuid::parse_str(s).ok())
+        })
+        .unwrap_or_else(Uuid::new_v4)
+}
 
 pub fn create_routes() -> Router<AppState> {
     Router::new()
@@ -23,6 +37,7 @@ pub fn create_routes() -> Router<AppState> {
 #[derive(Debug, Serialize, Deserialize, FromRow)]
 pub struct ProductionBatch {
     pub id: Uuid,
+    pub tenant_id: Uuid,
     pub batch_no: String,
     pub product_id: Option<Uuid>,
     pub product_name: Option<String>,
@@ -73,8 +88,11 @@ pub struct BatchQuery {
 
 pub async fn list_batches(
     State(state): State<AppState>,
+    Extension(claims): Extension<Claims>,
     Query(query): Query<BatchQuery>,
+    headers: axum::http::HeaderMap,
 ) -> Json<ApiResponse<serde_json::Value>> {
+    let tenant_id = get_tenant_id(&claims, &headers);
     let page = query.page.unwrap_or(1).max(1);
     let page_size = query.page_size.unwrap_or(10).min(100);
     let offset = (page - 1) * page_size;
@@ -82,16 +100,18 @@ pub async fn list_batches(
 
     let result = sqlx::query_as::<_, ProductionBatch>(
         r#"
-        SELECT id, batch_no, product_id, product_name, quantity, unit,
+        SELECT id, tenant_id, batch_no, product_id, product_name, quantity, unit,
                start_date, end_date, status, notes, created_at, updated_at
         FROM pdm_production_batches
-        WHERE ($1::text IS NULL OR batch_no ILIKE $1 OR product_name ILIKE $1)
-          AND ($2::text IS NULL OR status = $2)
-          AND ($3::uuid IS NULL OR product_id = $3)
+        WHERE tenant_id = $1
+          AND ($2::text IS NULL OR batch_no ILIKE $2 OR product_name ILIKE $2)
+          AND ($3::text IS NULL OR status = $3)
+          AND ($4::uuid IS NULL OR product_id = $4)
         ORDER BY created_at DESC
-        LIMIT $4 OFFSET $5
+        LIMIT $5 OFFSET $6
         "#,
     )
+    .bind(tenant_id)
     .bind(&search_pattern)
     .bind(&query.status)
     .bind(&query.product_id)
@@ -105,11 +125,13 @@ pub async fn list_batches(
             let count_result = sqlx::query_scalar::<_, i64>(
                 r#"
                 SELECT COUNT(*) FROM pdm_production_batches
-                WHERE ($1::text IS NULL OR batch_no ILIKE $1 OR product_name ILIKE $1)
-                  AND ($2::text IS NULL OR status = $2)
-                  AND ($3::uuid IS NULL OR product_id = $3)
+                WHERE tenant_id = $1
+                  AND ($2::text IS NULL OR batch_no ILIKE $2 OR product_name ILIKE $2)
+                  AND ($3::text IS NULL OR status = $3)
+                  AND ($4::uuid IS NULL OR product_id = $4)
                 "#,
             )
+            .bind(tenant_id)
             .bind(&search_pattern)
             .bind(&query.status)
             .bind(&query.product_id)
@@ -137,8 +159,12 @@ pub async fn list_batches(
 
 pub async fn create_batch(
     State(state): State<AppState>,
+    Extension(claims): Extension<Claims>,
+    headers: axum::http::HeaderMap,
     Json(req): Json<CreateBatchRequest>,
 ) -> Json<ApiResponse<ProductionBatch>> {
+    let tenant_id = get_tenant_id(&claims, &headers);
+
     if req.batch_no.is_empty() {
         return Json(ApiResponse::error(400, "批次编号不能为空"));
     }
@@ -148,17 +174,18 @@ pub async fn create_batch(
     let result = sqlx::query_as::<_, ProductionBatch>(
         r#"
         INSERT INTO pdm_production_batches (
-            batch_no, product_id, product_name, quantity, unit,
+            tenant_id, batch_no, product_id, product_name, quantity, unit,
             start_date, end_date, status, notes
-        ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9)
-        RETURNING id, batch_no, product_id, product_name, quantity, unit,
+        ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10)
+        RETURNING id, tenant_id, batch_no, product_id, product_name, quantity, unit,
                   start_date, end_date, status, notes, created_at, updated_at
         "#,
     )
+    .bind(tenant_id)
     .bind(&req.batch_no)
     .bind(req.product_id)
     .bind(&req.product_name)
-    .bind(req.quantity)
+    .bind(&req.quantity)
     .bind(&req.unit)
     .bind(req.start_date)
     .bind(req.end_date)
@@ -178,16 +205,21 @@ pub async fn create_batch(
 
 pub async fn get_batch(
     State(state): State<AppState>,
+    Extension(claims): Extension<Claims>,
     Path(id): Path<Uuid>,
+    headers: axum::http::HeaderMap,
 ) -> Json<ApiResponse<ProductionBatch>> {
+    let tenant_id = get_tenant_id(&claims, &headers);
+
     let result = sqlx::query_as::<_, ProductionBatch>(
         r#"
-        SELECT id, batch_no, product_id, product_name, quantity, unit,
+        SELECT id, tenant_id, batch_no, product_id, product_name, quantity, unit,
                start_date, end_date, status, notes, created_at, updated_at
-        FROM pdm_production_batches WHERE id = $1
+        FROM pdm_production_batches WHERE id = $1 AND tenant_id = $2
         "#,
     )
     .bind(id)
+    .bind(tenant_id)
     .fetch_optional(&state.pool)
     .await;
 
@@ -203,9 +235,12 @@ pub async fn get_batch(
 
 pub async fn update_batch(
     State(state): State<AppState>,
+    Extension(claims): Extension<Claims>,
     Path(id): Path<Uuid>,
+    headers: axum::http::HeaderMap,
     Json(req): Json<UpdateBatchRequest>,
 ) -> Json<ApiResponse<ProductionBatch>> {
+    let tenant_id = get_tenant_id(&claims, &headers);
     let now = Utc::now();
 
     let result = sqlx::query_as::<_, ProductionBatch>(
@@ -221,8 +256,8 @@ pub async fn update_batch(
             status = COALESCE(NULLIF($9, ''), status),
             notes = COALESCE($10, notes),
             updated_at = $11
-        WHERE id = $1
-        RETURNING id, batch_no, product_id, product_name, quantity, unit,
+        WHERE id = $1 AND tenant_id = $12
+        RETURNING id, tenant_id, batch_no, product_id, product_name, quantity, unit,
                   start_date, end_date, status, notes, created_at, updated_at
         "#,
     )
@@ -230,13 +265,14 @@ pub async fn update_batch(
     .bind(&req.batch_no)
     .bind(req.product_id)
     .bind(&req.product_name)
-    .bind(req.quantity)
+    .bind(&req.quantity)
     .bind(&req.unit)
     .bind(req.start_date)
     .bind(req.end_date)
     .bind(&req.status)
     .bind(&req.notes)
     .bind(now)
+    .bind(tenant_id)
     .fetch_optional(&state.pool)
     .await;
 
@@ -252,10 +288,15 @@ pub async fn update_batch(
 
 pub async fn delete_batch(
     State(state): State<AppState>,
+    Extension(claims): Extension<Claims>,
     Path(id): Path<Uuid>,
+    headers: axum::http::HeaderMap,
 ) -> Json<ApiResponse<bool>> {
-    let result = sqlx::query("DELETE FROM pdm_production_batches WHERE id = $1")
+    let tenant_id = get_tenant_id(&claims, &headers);
+
+    let result = sqlx::query("DELETE FROM pdm_production_batches WHERE id = $1 AND tenant_id = $2")
         .bind(id)
+        .bind(tenant_id)
         .execute(&state.pool)
         .await;
 

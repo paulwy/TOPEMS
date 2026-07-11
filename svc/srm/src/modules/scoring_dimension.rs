@@ -43,22 +43,41 @@ pub async fn create_routes(db: PgPool) -> Result<Router> {
     Ok(app)
 }
 
+fn get_tenant_id(claims: &Claims, headers: &axum::http::HeaderMap) -> Uuid {
+    claims
+        .tenant_id
+        .as_ref()
+        .and_then(|t| Uuid::parse_str(t).ok())
+        .or_else(|| {
+            headers
+                .get("x-tenant-id")
+                .and_then(|v| v.to_str().ok())
+                .and_then(|s| Uuid::parse_str(s).ok())
+        })
+        .unwrap_or_else(Uuid::new_v4)
+}
+
 async fn list_dimensions(
     State(state): State<Arc<AppState>>,
     Extension(claims): Extension<Claims>,
+    headers: axum::http::HeaderMap,
 ) -> Json<ApiResponse<Vec<ScoringDimension>>> {
     match check_permission(&state.db, &claims, &ModulePermission::VendorAssessmentRead).await {
         Ok(_) => {}
         Err(e) => return e,
     }
 
+    let tenant_id = get_tenant_id(&claims, &headers);
+
     let result = sqlx::query_as::<_, ScoringDimension>(
         r#"
-        SELECT id, name, code, weight, min_score, max_score, description, is_active, sort_order, created_by, created_at, updated_at
+        SELECT id, tenant_id, name, code, weight, min_score, max_score, description, is_active, sort_order, created_by, created_at, updated_at
         FROM plugin_srm.scoring_dimensions
+        WHERE tenant_id = $1
         ORDER BY sort_order ASC, created_at DESC
         "#,
     )
+    .bind(tenant_id)
     .fetch_all(&state.db)
     .await;
 
@@ -77,20 +96,24 @@ async fn list_dimensions(
 async fn list_active_dimensions(
     State(state): State<Arc<AppState>>,
     Extension(claims): Extension<Claims>,
+    headers: axum::http::HeaderMap,
 ) -> Json<ApiResponse<Vec<ScoringDimension>>> {
     match check_permission(&state.db, &claims, &ModulePermission::VendorAssessmentRead).await {
         Ok(_) => {}
         Err(e) => return e,
     }
 
+    let tenant_id = get_tenant_id(&claims, &headers);
+
     let result = sqlx::query_as::<_, ScoringDimension>(
         r#"
-        SELECT id, name, code, weight, min_score, max_score, description, is_active, sort_order, created_by, created_at, updated_at
+        SELECT id, tenant_id, name, code, weight, min_score, max_score, description, is_active, sort_order, created_by, created_at, updated_at
         FROM plugin_srm.scoring_dimensions
-        WHERE is_active = true
+        WHERE tenant_id = $1 AND is_active = true
         ORDER BY sort_order ASC
         "#,
     )
+    .bind(tenant_id)
     .fetch_all(&state.db)
     .await;
 
@@ -110,19 +133,23 @@ async fn get_dimension(
     State(state): State<Arc<AppState>>,
     Extension(claims): Extension<Claims>,
     Path(id): Path<Uuid>,
+    headers: axum::http::HeaderMap,
 ) -> Json<ApiResponse<ScoringDimension>> {
     match check_permission(&state.db, &claims, &ModulePermission::VendorAssessmentRead).await {
         Ok(_) => {}
         Err(e) => return e,
     }
 
+    let tenant_id = get_tenant_id(&claims, &headers);
+
     let result = sqlx::query_as::<_, ScoringDimension>(
         r#"
-        SELECT id, name, code, weight, min_score, max_score, description, is_active, sort_order, created_by, created_at, updated_at
-        FROM plugin_srm.scoring_dimensions WHERE id = $1
+        SELECT id, tenant_id, name, code, weight, min_score, max_score, description, is_active, sort_order, created_by, created_at, updated_at
+        FROM plugin_srm.scoring_dimensions WHERE id = $1 AND tenant_id = $2
         "#,
     )
     .bind(id)
+    .bind(tenant_id)
     .fetch_optional(&state.db)
     .await;
 
@@ -145,6 +172,7 @@ async fn get_dimension(
 async fn create_dimension(
     State(state): State<Arc<AppState>>,
     Extension(claims): Extension<Claims>,
+    headers: axum::http::HeaderMap,
     Json(req): Json<CreateScoringDimensionRequest>,
 ) -> Json<ApiResponse<ScoringDimension>> {
     match check_permission(&state.db, &claims, &ModulePermission::VendorAssessmentWrite).await {
@@ -180,10 +208,13 @@ async fn create_dimension(
         ));
     }
 
+    let tenant_id = get_tenant_id(&claims, &headers);
+
     let existing = sqlx::query_scalar::<_, i64>(
-        "SELECT COUNT(*) FROM plugin_srm.scoring_dimensions WHERE code = $1",
+        "SELECT COUNT(*) FROM plugin_srm.scoring_dimensions WHERE code = $1 AND tenant_id = $2",
     )
     .bind(&req.code)
+    .bind(tenant_id)
     .fetch_one(&state.db)
     .await;
 
@@ -200,12 +231,13 @@ async fn create_dimension(
 
     let result = sqlx::query_as::<_, ScoringDimension>(
         r#"
-        INSERT INTO plugin_srm.scoring_dimensions (id, name, code, weight, min_score, max_score, description, is_active, sort_order, created_by, created_at, updated_at)
-        VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12)
-        RETURNING id, name, code, weight, min_score, max_score, description, is_active, sort_order, created_by, created_at, updated_at
+        INSERT INTO plugin_srm.scoring_dimensions (id, tenant_id, name, code, weight, min_score, max_score, description, is_active, sort_order, created_by, created_at, updated_at)
+        VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13)
+        RETURNING id, tenant_id, name, code, weight, min_score, max_score, description, is_active, sort_order, created_by, created_at, updated_at
         "#,
     )
     .bind(id)
+    .bind(tenant_id)
     .bind(&req.name)
     .bind(&req.code)
     .bind(req.weight)
@@ -236,6 +268,7 @@ async fn update_dimension(
     State(state): State<Arc<AppState>>,
     Extension(claims): Extension<Claims>,
     Path(id): Path<Uuid>,
+    headers: axum::http::HeaderMap,
     Json(req): Json<UpdateScoringDimensionRequest>,
 ) -> Json<ApiResponse<ScoringDimension>> {
     match check_permission(&state.db, &claims, &ModulePermission::VendorAssessmentWrite).await {
@@ -243,10 +276,13 @@ async fn update_dimension(
         Err(e) => return e,
     }
 
+    let tenant_id = get_tenant_id(&claims, &headers);
+
     let existing = sqlx::query_as::<_, ScoringDimension>(
-        "SELECT id, name, code, weight, min_score, max_score, description, is_active, sort_order, created_by, created_at, updated_at FROM plugin_srm.scoring_dimensions WHERE id = $1",
+        "SELECT id, tenant_id, name, code, weight, min_score, max_score, description, is_active, sort_order, created_by, created_at, updated_at FROM plugin_srm.scoring_dimensions WHERE id = $1 AND tenant_id = $2",
     )
     .bind(id)
+    .bind(tenant_id)
     .fetch_optional(&state.db)
     .await;
 
@@ -276,10 +312,11 @@ async fn update_dimension(
 
         if code != &existing.code {
             let exists = sqlx::query_scalar::<_, i64>(
-                "SELECT COUNT(*) FROM plugin_srm.scoring_dimensions WHERE code = $1 AND id != $2",
+                "SELECT COUNT(*) FROM plugin_srm.scoring_dimensions WHERE code = $1 AND id != $2 AND tenant_id = $3",
             )
             .bind(code)
             .bind(id)
+            .bind(tenant_id)
             .fetch_one(&state.db)
             .await;
 
@@ -324,8 +361,8 @@ async fn update_dimension(
         r#"
         UPDATE plugin_srm.scoring_dimensions SET
             name = $2, code = $3, weight = $4, min_score = $5, max_score = $6, description = $7, is_active = $8, sort_order = $9, updated_at = $10
-        WHERE id = $1
-        RETURNING id, name, code, weight, min_score, max_score, description, is_active, sort_order, created_by, created_at, updated_at
+        WHERE id = $1 AND tenant_id = $11
+        RETURNING id, tenant_id, name, code, weight, min_score, max_score, description, is_active, sort_order, created_by, created_at, updated_at
         "#,
     )
     .bind(id)
@@ -338,6 +375,7 @@ async fn update_dimension(
     .bind(is_active)
     .bind(sort_order)
     .bind(now)
+    .bind(tenant_id)
     .fetch_one(&state.db)
     .await;
 
@@ -357,16 +395,21 @@ async fn delete_dimension(
     State(state): State<Arc<AppState>>,
     Extension(claims): Extension<Claims>,
     Path(id): Path<Uuid>,
+    headers: axum::http::HeaderMap,
 ) -> Json<ApiResponse<String>> {
     match check_permission(&state.db, &claims, &ModulePermission::VendorAssessmentWrite).await {
         Ok(_) => {}
         Err(e) => return e,
     }
 
-    let result = sqlx::query("DELETE FROM plugin_srm.scoring_dimensions WHERE id = $1")
-        .bind(id)
-        .execute(&state.db)
-        .await;
+    let tenant_id = get_tenant_id(&claims, &headers);
+
+    let result =
+        sqlx::query("DELETE FROM plugin_srm.scoring_dimensions WHERE id = $1 AND tenant_id = $2")
+            .bind(id)
+            .bind(tenant_id)
+            .execute(&state.db)
+            .await;
 
     match result {
         Ok(r) if r.rows_affected() > 0 => {

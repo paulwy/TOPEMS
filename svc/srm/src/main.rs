@@ -11,6 +11,7 @@
 #![allow(clippy::map_flatten)]
 #![allow(dead_code)]
 
+mod middleware;
 mod models;
 mod modules;
 mod services;
@@ -41,9 +42,11 @@ fn get_uptime() -> u64 {
 }
 
 use modules::{
-    create_category_routes, create_contract_routes, create_data_sync_routes,
-    create_evaluation_routes, create_performance_routes, create_product_routes,
-    create_scoring_dimension_routes, create_statistics_routes, create_supplier_routes,
+    create_bid_price_routes, create_category_routes, create_contract_routes,
+    create_data_sync_routes, create_evaluation_routes, create_performance_routes,
+    create_product_routes, create_purchase_order_routes, create_scoring_dimension_routes,
+    create_statistics_routes, create_supplier_portal_routes, create_supplier_routes,
+    create_tender_routes,
 };
 
 #[derive(Clone)]
@@ -88,7 +91,9 @@ async fn main() -> Result<()> {
     tracing::info!("🚀 TOPEMS-SRM 供应商关系管理系统启动中...");
 
     let db_config = DatabaseConfig {
-        url: "postgres://topems:topems_secret@localhost:5432/topems".to_string(),
+        url: env::var("DATABASE_URL")
+            .expect("DATABASE_URL environment variable is required")
+            .to_string(),
         max_connections: 10,
         min_connections: Some(2),
         connect_timeout: Some(30),
@@ -137,17 +142,25 @@ async fn main() -> Result<()> {
         .merge(create_evaluation_routes(pool.clone()).await?)
         .merge(create_contract_routes(pool.clone()).await?)
         .merge(create_product_routes(pool.clone()).await?)
+        .merge(create_purchase_order_routes(pool.clone()).await?)
+        .merge(create_bid_price_routes(pool.clone()).await?)
+        .merge(create_tender_routes(pool.clone()).await?)
+        .merge(create_supplier_portal_routes(pool.clone()).await?)
         .merge(create_performance_routes(pool.clone()).await?)
         .merge(create_data_sync_routes(pool.clone()).await?)
         .merge(create_scoring_dimension_routes(pool.clone()).await?)
         .merge(create_statistics_routes(pool.clone()))
         .layer(axum::middleware::from_fn_with_state(
-            app_state.auth_state.clone(),
-            auth_middleware,
+            app_state.pool.clone(),
+            rls_middleware,
         ))
         .layer(axum::middleware::from_fn_with_state(
             app_state.pool.clone(),
-            rls_middleware,
+            middleware::tenant::tenant_middleware,
+        ))
+        .layer(axum::middleware::from_fn_with_state(
+            app_state.auth_state.clone(),
+            auth_middleware,
         ));
 
     let app = Router::new()
@@ -158,7 +171,9 @@ async fn main() -> Result<()> {
         .layer(cors)
         .layer(prometheus_layer);
 
-    let port = env::var("SERVER_PORT").unwrap_or_else(|_| "8042".to_string());
+    let port = env::var("SRM_PORT")
+        .or_else(|_| env::var("SERVER_PORT"))
+        .unwrap_or_else(|_| "8042".to_string());
     let addr = format!("0.0.0.0:{}", port);
 
     tracing::info!("📦 端口: {}", port);

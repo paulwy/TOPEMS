@@ -21,6 +21,7 @@ pub struct ApqpProjectQuery {
 #[derive(Debug, Serialize, FromRow)]
 pub struct ApqpProject {
     pub id: String,
+    pub tenant_id: String,
     pub project_no: String,
     pub project_name: String,
     pub product_id: Option<String>,
@@ -76,6 +77,7 @@ pub struct UpdateApqpProjectRequest {
 #[derive(Debug, Serialize, FromRow)]
 pub struct ApqpPhase {
     pub id: String,
+    pub tenant_id: String,
     pub project_id: String,
     pub phase_code: String,
     pub phase_name: String,
@@ -118,6 +120,7 @@ pub struct UpdateApqpPhaseRequest {
 #[derive(Debug, Serialize, FromRow)]
 pub struct ApqpTask {
     pub id: String,
+    pub tenant_id: String,
     pub project_id: String,
     pub phase_id: String,
     pub task_name: String,
@@ -170,6 +173,7 @@ pub struct UpdateApqpTaskRequest {
 #[derive(Debug, Serialize, FromRow)]
 pub struct ApqpRisk {
     pub id: String,
+    pub tenant_id: String,
     pub project_id: String,
     pub risk_name: String,
     pub description: Option<String>,
@@ -252,6 +256,7 @@ pub struct StatusTransitionRequest {
 #[derive(Debug, Serialize, FromRow)]
 pub struct ApqpApproval {
     pub id: String,
+    pub tenant_id: String,
     pub project_id: String,
     pub approval_type: String,
     pub status: Option<String>,

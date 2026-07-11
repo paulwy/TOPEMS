@@ -1,14 +1,26 @@
 //! Emergency plan management - Plan CRUD, categories, versions, supplies, and approval workflow
 
-use axum::{
-    extract::State,
-    routing::{delete, get, post},
-    Json, Router,
-};
+use axum::{extract::State, http::HeaderMap, routing::*, Extension, Json, Router};
 use serde::{Deserialize, Serialize};
-use topems_shared::ApiResponse;
+use topems_shared::{ApiResponse, Claims};
 
-use crate::AppState;
+use uuid::Uuid;
+
+use crate::shared::AppState;
+
+fn get_tenant_id(claims: &Claims, headers: &HeaderMap) -> Uuid {
+    claims
+        .tenant_id
+        .as_ref()
+        .and_then(|t| Uuid::parse_str(t).ok())
+        .or_else(|| {
+            headers
+                .get("x-tenant-id")
+                .and_then(|v| v.to_str().ok())
+                .and_then(|s| Uuid::parse_str(s).ok())
+        })
+        .unwrap_or_else(Uuid::new_v4)
+}
 
 pub fn create_routes() -> Router<AppState> {
     Router::new()
@@ -74,6 +86,8 @@ pub struct EmergencyPlan {
     pub expiry_date: Option<String>,
     pub created_at: Option<String>,
     pub updated_at: Option<String>,
+
+    pub tenant_id: Uuid,
 }
 
 #[derive(Debug, Serialize)]
@@ -88,6 +102,8 @@ pub struct PlanSupply {
     pub responsible_person: Option<String>,
     pub remarks: Option<String>,
     pub created_at: Option<String>,
+
+    pub tenant_id: Uuid,
 }
 
 #[derive(Debug, Serialize)]
@@ -99,6 +115,8 @@ pub struct PlanVersion {
     pub changed_by: Option<String>,
     pub changed_at: Option<String>,
     pub content: Option<String>,
+
+    pub tenant_id: Uuid,
 }
 
 #[derive(Debug, Serialize)]
@@ -111,6 +129,8 @@ pub struct PlanApproval {
     pub opinion: Option<String>,
     pub approved_at: Option<String>,
     pub order_num: i32,
+
+    pub tenant_id: Uuid,
 }
 
 #[derive(Debug, Serialize)]
@@ -119,6 +139,8 @@ pub struct PlanDetail {
     pub supplies: Vec<PlanSupply>,
     pub versions: Vec<PlanVersion>,
     pub approvals: Vec<PlanApproval>,
+
+    pub tenant_id: Uuid,
 }
 
 #[derive(Debug, Deserialize)]
@@ -176,8 +198,11 @@ pub struct ApprovalRequest {
 }
 
 pub async fn list_plans(
-    State(_state): State<crate::AppState>,
+    State(_state): State<crate::shared::AppState>,
+    Extension(claims): Extension<Claims>,
+    headers: HeaderMap,
 ) -> Json<ApiResponse<Vec<EmergencyPlan>>> {
+    let tenant_id = get_tenant_id(&claims, &headers);
     tracing::info!("Listing emergency plans");
     Json(ApiResponse::success(
         Vec::<EmergencyPlan>::new(),
@@ -186,9 +211,12 @@ pub async fn list_plans(
 }
 
 pub async fn create_plan(
-    State(_state): State<crate::AppState>,
+    State(_state): State<crate::shared::AppState>,
+    Extension(claims): Extension<Claims>,
+    headers: HeaderMap,
     Json(req): Json<CreatePlanRequest>,
 ) -> Json<ApiResponse<EmergencyPlan>> {
+    let tenant_id = get_tenant_id(&claims, &headers);
     tracing::info!("Creating emergency plan: {:?}", req);
     Json(ApiResponse::success(
         EmergencyPlan {
@@ -215,15 +243,20 @@ pub async fn create_plan(
             expiry_date: req.expiry_date,
             created_at: Some(chrono::Utc::now().to_rfc3339()),
             updated_at: Some(chrono::Utc::now().to_rfc3339()),
+
+            tenant_id,
         },
         "应急预案创建成功",
     ))
 }
 
 pub async fn get_plan(
-    State(_state): State<crate::AppState>,
+    State(_state): State<crate::shared::AppState>,
+    Extension(claims): Extension<Claims>,
+    headers: HeaderMap,
     axum::extract::Path(id): axum::extract::Path<String>,
 ) -> Json<ApiResponse<PlanDetail>> {
+    let tenant_id = get_tenant_id(&claims, &headers);
     tracing::info!("Getting emergency plan: {}", id);
     Json(ApiResponse::success(
         PlanDetail {
@@ -248,6 +281,8 @@ pub async fn get_plan(
                 expiry_date: Some("2026-12-31".to_string()),
                 created_at: Some(chrono::Utc::now().to_rfc3339()),
                 updated_at: Some(chrono::Utc::now().to_rfc3339()),
+
+                tenant_id,
             },
             supplies: vec![
                 PlanSupply {
@@ -261,6 +296,8 @@ pub async fn get_plan(
                     responsible_person: Some("张安全".to_string()),
                     remarks: None,
                     created_at: Some(chrono::Utc::now().to_rfc3339()),
+
+                    tenant_id,
                 },
                 PlanSupply {
                     id: "supply-002".to_string(),
@@ -273,6 +310,8 @@ pub async fn get_plan(
                     responsible_person: Some("张安全".to_string()),
                     remarks: None,
                     created_at: Some(chrono::Utc::now().to_rfc3339()),
+
+                    tenant_id,
                 },
             ],
             versions: vec![PlanVersion {
@@ -283,6 +322,8 @@ pub async fn get_plan(
                 changed_by: Some("李主任".to_string()),
                 changed_at: Some(chrono::Utc::now().to_rfc3339()),
                 content: Some("初始版本内容...".to_string()),
+
+                tenant_id,
             }],
             approvals: vec![
                 PlanApproval {
@@ -294,6 +335,8 @@ pub async fn get_plan(
                     opinion: Some("同意".to_string()),
                     approved_at: Some(chrono::Utc::now().to_rfc3339()),
                     order_num: 1,
+
+                    tenant_id,
                 },
                 PlanApproval {
                     id: "appr-002".to_string(),
@@ -304,18 +347,24 @@ pub async fn get_plan(
                     opinion: Some("同意发布".to_string()),
                     approved_at: Some(chrono::Utc::now().to_rfc3339()),
                     order_num: 2,
+
+                    tenant_id,
                 },
             ],
+            tenant_id,
         },
         "获取应急预案详情成功",
     ))
 }
 
 pub async fn update_plan(
-    State(_state): State<crate::AppState>,
+    State(_state): State<crate::shared::AppState>,
+    Extension(claims): Extension<Claims>,
+    headers: HeaderMap,
     axum::extract::Path(id): axum::extract::Path<String>,
     Json(req): Json<UpdatePlanRequest>,
 ) -> Json<ApiResponse<EmergencyPlan>> {
+    let tenant_id = get_tenant_id(&claims, &headers);
     tracing::info!("Updating emergency plan {}: {:?}", id, req);
     Json(ApiResponse::success(
         EmergencyPlan {
@@ -339,23 +388,31 @@ pub async fn update_plan(
             expiry_date: req.expiry_date,
             created_at: Some(chrono::Utc::now().to_rfc3339()),
             updated_at: Some(chrono::Utc::now().to_rfc3339()),
+
+            tenant_id,
         },
         "应急预案更新成功",
     ))
 }
 
 pub async fn delete_plan(
-    State(_state): State<crate::AppState>,
+    State(_state): State<crate::shared::AppState>,
+    Extension(claims): Extension<Claims>,
+    headers: HeaderMap,
     axum::extract::Path(id): axum::extract::Path<String>,
 ) -> Json<ApiResponse<()>> {
+    let tenant_id = get_tenant_id(&claims, &headers);
     tracing::info!("Deleting emergency plan: {}", id);
     Json(ApiResponse::success((), "应急预案删除成功"))
 }
 
 pub async fn list_plan_supplies(
-    State(_state): State<crate::AppState>,
+    State(_state): State<crate::shared::AppState>,
+    Extension(claims): Extension<Claims>,
+    headers: HeaderMap,
     axum::extract::Path(id): axum::extract::Path<String>,
 ) -> Json<ApiResponse<Vec<PlanSupply>>> {
+    let tenant_id = get_tenant_id(&claims, &headers);
     tracing::info!("Listing supplies for plan: {}", id);
     Json(ApiResponse::success(
         Vec::<PlanSupply>::new(),
@@ -364,10 +421,13 @@ pub async fn list_plan_supplies(
 }
 
 pub async fn add_plan_supply(
-    State(_state): State<crate::AppState>,
+    State(_state): State<crate::shared::AppState>,
+    Extension(claims): Extension<Claims>,
+    headers: HeaderMap,
     axum::extract::Path(id): axum::extract::Path<String>,
     Json(req): Json<CreateSupplyRequest>,
 ) -> Json<ApiResponse<PlanSupply>> {
+    let tenant_id = get_tenant_id(&claims, &headers);
     tracing::info!("Adding supply to plan {}: {:?}", id, req);
     Json(ApiResponse::success(
         PlanSupply {
@@ -381,24 +441,32 @@ pub async fn add_plan_supply(
             responsible_person: req.responsible_person,
             remarks: req.remarks,
             created_at: Some(chrono::Utc::now().to_rfc3339()),
+
+            tenant_id,
         },
         "应急物资添加成功",
     ))
 }
 
 pub async fn delete_plan_supply(
-    State(_state): State<crate::AppState>,
+    State(_state): State<crate::shared::AppState>,
+    Extension(claims): Extension<Claims>,
+    headers: HeaderMap,
     axum::extract::Path((_plan_id, supply_id)): axum::extract::Path<(String, String)>,
 ) -> Json<ApiResponse<()>> {
+    let tenant_id = get_tenant_id(&claims, &headers);
     tracing::info!("Deleting supply: {}", supply_id);
     Json(ApiResponse::success((), "应急物资删除成功"))
 }
 
 pub async fn submit_plan_approval(
-    State(_state): State<crate::AppState>,
+    State(_state): State<crate::shared::AppState>,
+    Extension(claims): Extension<Claims>,
+    headers: HeaderMap,
     axum::extract::Path(id): axum::extract::Path<String>,
     Json(_req): Json<SubmitApprovalRequest>,
 ) -> Json<ApiResponse<EmergencyPlan>> {
+    let tenant_id = get_tenant_id(&claims, &headers);
     tracing::info!("Submitting plan for approval: {}", id);
     Json(ApiResponse::success(
         EmergencyPlan {
@@ -422,16 +490,21 @@ pub async fn submit_plan_approval(
             expiry_date: Some("2026-12-31".to_string()),
             created_at: Some(chrono::Utc::now().to_rfc3339()),
             updated_at: Some(chrono::Utc::now().to_rfc3339()),
+
+            tenant_id,
         },
         "预案已提交审批",
     ))
 }
 
 pub async fn approve_plan(
-    State(_state): State<crate::AppState>,
+    State(_state): State<crate::shared::AppState>,
+    Extension(claims): Extension<Claims>,
+    headers: HeaderMap,
     axum::extract::Path(id): axum::extract::Path<String>,
     Json(req): Json<ApprovalRequest>,
 ) -> Json<ApiResponse<PlanApproval>> {
+    let tenant_id = get_tenant_id(&claims, &headers);
     tracing::info!("Approving plan {}: {:?}", id, req);
     Json(ApiResponse::success(
         PlanApproval {
@@ -443,15 +516,20 @@ pub async fn approve_plan(
             opinion: req.opinion,
             approved_at: Some(chrono::Utc::now().to_rfc3339()),
             order_num: 1,
+
+            tenant_id,
         },
         "预案审批完成",
     ))
 }
 
 pub async fn list_plan_versions(
-    State(_state): State<crate::AppState>,
+    State(_state): State<crate::shared::AppState>,
+    Extension(claims): Extension<Claims>,
+    headers: HeaderMap,
     axum::extract::Path(id): axum::extract::Path<String>,
 ) -> Json<ApiResponse<Vec<PlanVersion>>> {
+    let tenant_id = get_tenant_id(&claims, &headers);
     tracing::info!("Listing versions for plan: {}", id);
     Json(ApiResponse::success(
         Vec::<PlanVersion>::new(),
@@ -460,10 +538,13 @@ pub async fn list_plan_versions(
 }
 
 pub async fn create_new_version(
-    State(_state): State<crate::AppState>,
+    State(_state): State<crate::shared::AppState>,
+    Extension(claims): Extension<Claims>,
+    headers: HeaderMap,
     axum::extract::Path(id): axum::extract::Path<String>,
     Json(req): Json<serde_json::Value>,
 ) -> Json<ApiResponse<PlanVersion>> {
+    let tenant_id = get_tenant_id(&claims, &headers);
     tracing::info!("Creating new version for plan {}: {:?}", id, req);
     Json(ApiResponse::success(
         PlanVersion {
@@ -477,14 +558,19 @@ pub async fn create_new_version(
                 .get("content")
                 .and_then(|v| v.as_str())
                 .map(|s| s.to_string()),
+
+            tenant_id,
         },
         "新版本创建成功",
     ))
 }
 
 pub async fn list_plan_categories(
-    State(_state): State<crate::AppState>,
+    State(_state): State<crate::shared::AppState>,
+    Extension(claims): Extension<Claims>,
+    headers: HeaderMap,
 ) -> Json<ApiResponse<Vec<serde_json::Value>>> {
+    let tenant_id = get_tenant_id(&claims, &headers);
     tracing::info!("Listing plan categories");
     let categories = vec![
         serde_json::json!({ "code": "fire", "name": "火灾", "icon": "flame" }),

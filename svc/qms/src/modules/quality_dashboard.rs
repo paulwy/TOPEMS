@@ -58,6 +58,7 @@ pub struct AlertRuleQuery {
 #[derive(Debug, Serialize, FromRow)]
 pub struct AlertRule {
     pub id: String,
+    pub tenant_id: String,
     pub rule_name: String,
     pub alert_type: String,
     pub metric: String,
@@ -116,6 +117,7 @@ pub struct AlertMessageQuery {
 #[derive(Debug, Serialize, FromRow)]
 pub struct AlertMessage {
     pub id: String,
+    pub tenant_id: String,
     pub rule_id: Option<String>,
     pub rule_name: Option<String>,
     pub alert_type: String,

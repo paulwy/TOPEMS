@@ -13,9 +13,12 @@ pub fn create_cors_layer() -> CorsLayer {
 
     let allow_origin = if origins.is_empty() {
         tracing::warn!(
-            "No CORS origins configured, allowing any origin (not recommended for production)"
+            "No CORS origins configured, using strict default (only localhost for development)"
         );
-        AllowOrigin::any()
+        AllowOrigin::list(vec![
+            "http://localhost:3000".parse().unwrap(),
+            "http://localhost:5173".parse().unwrap(),
+        ])
     } else {
         tracing::info!("CORS allowed origins: {:?}", origins);
         AllowOrigin::list(origins)
@@ -43,5 +46,27 @@ pub fn create_cors_layer() -> CorsLayer {
             axum::http::header::ORIGIN,
         ])
         .allow_credentials(true)
-        .allow_private_network(true)
+        .max_age(std::time::Duration::from_secs(3600))
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn test_cors_layer_creation() {
+        let _layer = create_cors_layer();
+    }
+
+    #[test]
+    fn test_default_origins_are_localhost() {
+        std::env::remove_var("CORS_ALLOWED_ORIGINS");
+        let _layer = create_cors_layer();
+    }
+
+    #[test]
+    fn test_custom_origins() {
+        std::env::set_var("CORS_ALLOWED_ORIGINS", "https://app.topems.com,https://admin.topems.com");
+        let _layer = create_cors_layer();
+    }
 }

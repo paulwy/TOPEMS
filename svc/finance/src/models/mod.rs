@@ -117,6 +117,7 @@ impl fmt::Display for VoucherStatus {
 #[derive(Debug, Clone, FromRow, Serialize)]
 pub struct VoucherLine {
     pub id: Uuid,
+    pub tenant_id: Uuid,
     pub voucher_id: Uuid,
     pub line_no: i32,
     pub account_id: Uuid,
@@ -416,6 +417,7 @@ pub struct AuxLedgerQuery {
 #[derive(Debug, Clone, FromRow, Serialize)]
 pub struct AuxLedgerEntry {
     pub id: Uuid,
+    pub tenant_id: Uuid,
     pub period: String,
     pub voucher_no: String,
     pub voucher_date: DateTime<Utc>,

@@ -214,6 +214,36 @@ button:disabled {
   }
 }
 
+@media (max-width: 480px) {
+  .tablet-desktop-only {
+    display: none;
+  }
+}
+
+@media (min-width: 480px) {
+  .phone-only {
+    display: none;
+  }
+}
+
+@media (min-width: 768px) {
+  .tablet-only {
+    display: none;
+  }
+}
+
+@media (max-width: 1024px) {
+  .large-desktop-only {
+    display: none;
+  }
+}
+
+@media (min-width: 1280px) {
+  .medium-desktop-only {
+    display: none;
+  }
+}
+
 .glass-effect {
   background: rgba(30, 41, 59, 0.8);
   backdrop-filter: blur(12px);
@@ -262,4 +292,98 @@ button:disabled {
     transition-duration: 0.01ms !important;
     scroll-behavior: auto !important;
   }
+}
+
+/* ===== Cyber Theme Enhancements (Dark Mode Only) ===== */
+.dark .MuiPaper-root,
+.dark .MuiCard-root {
+  border: 1px solid var(--color-border);
+  transition: border-color 0.2s ease, box-shadow 0.2s ease;
+}
+
+.dark .MuiPaper-root:hover,
+.dark .MuiCard-root:hover {
+  border-color: rgba(59, 130, 246, 0.3);
+  box-shadow: var(--cyber-glow-primary);
+}
+
+.dark .MuiChip-root {
+  border: 1px solid var(--color-border);
+  backdrop-filter: blur(4px);
+}
+
+/* Cyber stat card value gradient */
+.dark .cyber-value {
+  background: var(--cyber-gradient-text);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+
+/* Cyber card surface gradient overlay */
+.dark .cyber-surface {
+  background-image: var(--cyber-gradient-surface);
+  background-size: 100% 100%;
+}
+
+/* Sidebar active item glow */
+.dark .MuiListItemButton-root.Mui-selected {
+  box-shadow: inset 3px 0 0 var(--color-primary), 0 0 20px rgba(59, 130, 246, 0.1);
+}
+
+/* Table row hover with left accent bar */
+.dark .MuiTableRow-root:hover > td:first-child {
+  box-shadow: inset 3px 0 0 var(--color-primary);
+}
+
+/* Scrollbar cyber style */
+.dark ::-webkit-scrollbar-thumb {
+  background: rgba(59, 130, 246, 0.3);
+  border-radius: var(--radius-sm);
+}
+
+.dark ::-webkit-scrollbar-thumb:hover {
+  background: rgba(59, 130, 246, 0.5);
+}
+
+/* Input focus glow */
+.dark .MuiOutlinedInput-root.Mui-focused .MuiOutlinedInput-notchedOutline {
+  border-color: var(--color-primary) !important;
+  box-shadow: 0 0 0 2px rgba(59, 130, 246, 0.2);
+}
+
+/* Page enter animation */
+.cyber-page-enter {
+  animation: cyber-fade-in 0.4s ease-out;
+}
+
+@keyframes cyber-fade-in {
+  from {
+    opacity: 0;
+    transform: translateY(12px);
+    filter: blur(4px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+    filter: blur(0);
+  }
+}
+
+/* Subtle grid pattern overlay for dark surfaces */
+.dark .cyber-grid-bg {
+  background-image:
+    linear-gradient(rgba(59, 130, 246, 0.03) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(59, 130, 246, 0.03) 1px, transparent 1px);
+  background-size: 40px 40px;
+}
+
+/* Progress bar cyber glow */
+.dark .MuiLinearProgress-root {
+  box-shadow: 0 0 8px rgba(59, 130, 246, 0.3);
+}
+
+/* Badge/Chip accent glow for dark mode */
+.dark .MuiBadge-badge {
+  box-shadow: 0 0 8px rgba(239, 68, 68, 0.4);
 }

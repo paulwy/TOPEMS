@@ -18,6 +18,13 @@ export const PLUGIN_TIMEOUT = {
   TASK: 60000, // 任务 60 秒
 } as const;
 
+// ========== 模块/插件加载超时 ==========
+export const LOADER_TIMEOUT = {
+  DEFAULT: 30000, // 默认加载超时 30 秒
+  MODULE: 30000, // 模块加载超时
+  PLUGIN: 30000, // 插件加载超时
+} as const;
+
 // ========== WebSocket 配置 ==========
 export const WS_TIMEOUT = {
   HEARTBEAT: 30000, // 心跳间隔 30 秒

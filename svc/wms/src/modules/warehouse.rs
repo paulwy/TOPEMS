@@ -1,15 +1,12 @@
-use axum::{
-    extract::{FromRef, Path, Query, State},
-    http::HeaderMap,
-    routing::get,
-    Json, Router,
-};
+use axum::{extract::FromRef, http::HeaderMap, routing::get, Json, Router};
 use chrono::Utc;
 use uuid::Uuid;
 
+use crate::middleware::tenant::get_tenant_id;
 use crate::models::{CreateWarehouseRequest, UpdateWarehouseRequest, Warehouse};
 use crate::modules::audit::log_audit_event;
 use crate::modules::ApiState;
+use topems_shared::auth::Claims;
 use topems_shared::{api_error, ApiResponse, PaginationParams};
 
 pub fn create_routes<S>() -> Router<S>
@@ -23,16 +20,18 @@ where
             get(list_warehouses).post(create_warehouse),
         )
         .route(
-            "/api/v1/warehouses/{id}",
+            "/api/wms/warehouses/{id}",
             get(get_warehouse)
                 .put(update_warehouse)
                 .delete(delete_warehouse),
         )
 }
 
-async fn list_warehouses(
-    State(state): State<ApiState>,
-    Query(params): Query<PaginationParams>,
+pub async fn list_warehouses(
+    axum::extract::State(state): axum::extract::State<ApiState>,
+    axum::extract::Extension(claims): axum::extract::Extension<Claims>,
+    axum::extract::Query(params): axum::extract::Query<PaginationParams>,
+    headers: HeaderMap,
 ) -> Json<ApiResponse<serde_json::Value>> {
     let page = params.page.unwrap_or(1).max(1);
     let page_size = params.page_size.unwrap_or(20).min(100);
@@ -41,17 +40,21 @@ async fn list_warehouses(
     let search_pattern = params.search.as_deref().map(|s| format!("%{}%", s));
     let status_filter = params.status.clone();
 
+    let tenant_id = get_tenant_id(&claims, &headers);
+
     let result = sqlx::query_as::<_, Warehouse>(
         r#"
-        SELECT id, warehouse_name as name, warehouse_code as code, address, manager, contact_phone as phone, status, created_at, updated_at
+        SELECT id, tenant_id, warehouse_name as name, warehouse_code as code, address, manager, contact_phone as phone, status, created_at, updated_at
         FROM wms.warehouses
-        WHERE ($1::text IS NULL OR warehouse_name ILIKE $1 OR warehouse_code ILIKE $1)
-          AND ($2::text IS NULL OR status = $2)
+        WHERE tenant_id = $1
+          AND ($2::text IS NULL OR warehouse_name ILIKE $2 OR warehouse_code ILIKE $2)
+          AND ($3::text IS NULL OR status = $3)
           AND deleted_at IS NULL
         ORDER BY created_at DESC
-        LIMIT $3 OFFSET $4
+        LIMIT $4 OFFSET $5
         "#,
     )
+    .bind(tenant_id)
     .bind(&search_pattern)
     .bind(&status_filter)
     .bind(page_size)
@@ -64,11 +67,13 @@ async fn list_warehouses(
             let count_result = sqlx::query_scalar::<_, i64>(
                 r#"
                 SELECT COUNT(*) FROM wms.warehouses
-                WHERE ($1::text IS NULL OR warehouse_name ILIKE $1 OR warehouse_code ILIKE $1)
-                  AND ($2::text IS NULL OR status = $2)
+                WHERE tenant_id = $1
+                  AND ($2::text IS NULL OR warehouse_name ILIKE $2 OR warehouse_code ILIKE $2)
+                  AND ($3::text IS NULL OR status = $3)
                   AND deleted_at IS NULL
                 "#,
             )
+            .bind(tenant_id)
             .bind(&search_pattern)
             .bind(&status_filter)
             .fetch_one(&state.db)
@@ -93,23 +98,26 @@ async fn list_warehouses(
     }
 }
 
-async fn create_warehouse(
-    State(state): State<ApiState>,
+pub async fn create_warehouse(
+    axum::extract::State(state): axum::extract::State<ApiState>,
+    axum::extract::Extension(claims): axum::extract::Extension<Claims>,
     headers: HeaderMap,
-    Json(req): Json<CreateWarehouseRequest>,
+    axum::extract::Json(req): axum::extract::Json<CreateWarehouseRequest>,
 ) -> Json<ApiResponse<Warehouse>> {
     let request_data = serde_json::to_value(&req).ok();
     let id = Uuid::new_v4();
     let now = Utc::now();
+    let tenant_id = get_tenant_id(&claims, &headers);
 
     let result = sqlx::query_as::<_, Warehouse>(
         r#"
-        INSERT INTO wms.warehouses (id, organization_id, warehouse_name, warehouse_code, address, manager, contact_phone, status, created_at, updated_at)
-        VALUES ($1, '00000000-0000-0000-0000-000000000001', $2, $3, $4, $5, $6, 'active', $7, $8)
-        RETURNING id, warehouse_name as name, warehouse_code as code, address, manager, contact_phone as phone, status, created_at, updated_at
+        INSERT INTO wms.warehouses (id, tenant_id, organization_id, warehouse_name, warehouse_code, address, manager, contact_phone, status, created_at, updated_at)
+        VALUES ($1, $2, '00000000-0000-0000-0000-000000000001', $3, $4, $5, $6, $7, 'active', $8, $9)
+        RETURNING id, tenant_id, warehouse_name as name, warehouse_code as code, address, manager, contact_phone as phone, status, created_at, updated_at
         "#,
     )
     .bind(id)
+    .bind(tenant_id)
     .bind(&req.name)
     .bind(&req.code)
     .bind(&req.address)
@@ -161,17 +169,22 @@ async fn create_warehouse(
     response
 }
 
-async fn get_warehouse(
-    State(state): State<ApiState>,
-    Path(id): Path<Uuid>,
+pub async fn get_warehouse(
+    axum::extract::State(state): axum::extract::State<ApiState>,
+    axum::extract::Extension(claims): axum::extract::Extension<Claims>,
+    axum::extract::Path(id): axum::extract::Path<Uuid>,
+    headers: HeaderMap,
 ) -> Json<ApiResponse<Warehouse>> {
+    let tenant_id = get_tenant_id(&claims, &headers);
+
     let result = sqlx::query_as::<_, Warehouse>(
         r#"
-        SELECT id, warehouse_name as name, warehouse_code as code, address, manager, contact_phone as phone, status, created_at, updated_at
-        FROM wms.warehouses WHERE id = $1 AND deleted_at IS NULL
+        SELECT id, tenant_id, warehouse_name as name, warehouse_code as code, address, manager, contact_phone as phone, status, created_at, updated_at
+        FROM wms.warehouses WHERE id = $1 AND tenant_id = $2 AND deleted_at IS NULL
         "#,
     )
     .bind(id)
+    .bind(tenant_id)
     .fetch_optional(&state.db)
     .await;
 
@@ -185,21 +198,24 @@ async fn get_warehouse(
     }
 }
 
-async fn update_warehouse(
-    State(state): State<ApiState>,
-    Path(id): Path<Uuid>,
+pub async fn update_warehouse(
+    axum::extract::State(state): axum::extract::State<ApiState>,
+    axum::extract::Extension(claims): axum::extract::Extension<Claims>,
+    axum::extract::Path(id): axum::extract::Path<Uuid>,
     headers: HeaderMap,
-    Json(req): Json<UpdateWarehouseRequest>,
+    axum::extract::Json(req): axum::extract::Json<UpdateWarehouseRequest>,
 ) -> Json<ApiResponse<Warehouse>> {
     let request_data = serde_json::to_value(&req).ok();
+    let tenant_id = get_tenant_id(&claims, &headers);
 
     let existing = sqlx::query_as::<_, Warehouse>(
         r#"
-        SELECT id, warehouse_name as name, warehouse_code as code, address, manager, contact_phone as phone, status, created_at, updated_at
-        FROM wms.warehouses WHERE id = $1 AND deleted_at IS NULL
+        SELECT id, tenant_id, warehouse_name as name, warehouse_code as code, address, manager, contact_phone as phone, status, created_at, updated_at
+        FROM wms.warehouses WHERE id = $1 AND tenant_id = $2 AND deleted_at IS NULL
         "#,
     )
     .bind(id)
+    .bind(tenant_id)
     .fetch_optional(&state.db)
     .await;
 
@@ -221,8 +237,8 @@ async fn update_warehouse(
         r#"
         UPDATE wms.warehouses SET
             warehouse_name = $2, warehouse_code = $3, address = $4, manager = $5, contact_phone = $6, status = $7, updated_at = $8
-        WHERE id = $1 AND deleted_at IS NULL
-        RETURNING id, warehouse_name as name, warehouse_code as code, address, manager, contact_phone as phone, status, created_at, updated_at
+        WHERE id = $1 AND tenant_id = $9 AND deleted_at IS NULL
+        RETURNING id, tenant_id, warehouse_name as name, warehouse_code as code, address, manager, contact_phone as phone, status, created_at, updated_at
         "#,
     )
     .bind(id)
@@ -233,6 +249,7 @@ async fn update_warehouse(
     .bind(&phone)
     .bind(&status)
     .bind(now)
+    .bind(tenant_id)
     .fetch_one(&state.db)
     .await;
 
@@ -277,15 +294,19 @@ async fn update_warehouse(
     response
 }
 
-async fn delete_warehouse(
-    State(state): State<ApiState>,
-    Path(id): Path<Uuid>,
+pub async fn delete_warehouse(
+    axum::extract::State(state): axum::extract::State<ApiState>,
+    axum::extract::Extension(claims): axum::extract::Extension<Claims>,
+    axum::extract::Path(id): axum::extract::Path<Uuid>,
     headers: HeaderMap,
 ) -> Json<ApiResponse<String>> {
+    let tenant_id = get_tenant_id(&claims, &headers);
+
     let result = sqlx::query(
-        r#"UPDATE wms.warehouses SET deleted_at = NOW() WHERE id = $1 AND deleted_at IS NULL"#,
+        r#"UPDATE wms.warehouses SET deleted_at = NOW() WHERE id = $1 AND tenant_id = $2 AND deleted_at IS NULL"#,
     )
     .bind(id)
+    .bind(tenant_id)
     .execute(&state.db)
     .await;
 

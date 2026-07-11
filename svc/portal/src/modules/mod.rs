@@ -1,6 +1,11 @@
+pub mod announcements;
+pub mod dashboard;
 pub mod monitoring;
+pub mod navigation;
 pub mod notifications;
 pub mod portal_plugin;
+pub mod quick_actions;
 pub mod services;
+pub mod settings;
 pub mod todos;
 pub mod user;

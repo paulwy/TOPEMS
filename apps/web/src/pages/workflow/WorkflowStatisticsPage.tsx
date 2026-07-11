@@ -44,6 +44,7 @@ import PieChartComponent from '../../components/charts/PieChart';
 import { useAppStore } from '../../store';
 import { handleApiError, getErrorMessage } from '@/utils/errors';
 import { designTokens } from '@/theme/tokens';
+import { WORKFLOW_PATHS } from '@/modules/workflow/config';
 
 const ct = designTokens.colors;
 
@@ -364,7 +365,7 @@ export const WorkflowStatisticsPage: React.FC = () => {
           { label: `#${index + 1}`, color: index < 3 ? 'warning.main' : undefined },
           { label: `通过率 ${item.passRate}` },
         ],
-        onClick: () => navigate(`/workflow/definitions`),
+        onClick: () => navigate(WORKFLOW_PATHS.definitions),
       })),
     [navigate]
   );
@@ -410,7 +411,7 @@ export const WorkflowStatisticsPage: React.FC = () => {
         pageIcon: <BarChart3 size={20} />,
         pageGradient: `linear-gradient(135deg, ${ct.secondary[400]} 0%, ${ct.secondary.main} 100%)`,
         backButton: {
-          href: '/workflow/dashboard',
+          href: WORKFLOW_PATHS.dashboard,
           visible: true,
         },
         children: headerContent,

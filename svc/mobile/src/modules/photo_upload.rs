@@ -167,7 +167,8 @@ pub async fn upload_photo(
         location_lng,
     };
 
-    let upload = match db_create_photo_upload(&pool, user_id, create_data).await {
+    let tenant_id = Uuid::new_v4();
+    let upload = match db_create_photo_upload(&pool, tenant_id, user_id, create_data).await {
         Ok(u) => u,
         Err(e) => {
             tracing::error!("创建上传记录失败: {}", e);
@@ -245,7 +246,8 @@ pub async fn batch_upload_photos(
             location_lng: photo.location_lng,
         };
 
-        match db_create_photo_upload(&pool, user_id, create_data).await {
+        let tenant_id = Uuid::new_v4();
+        match db_create_photo_upload(&pool, tenant_id, user_id, create_data).await {
             Ok(upload) => {
                 let thumbnail_url = Some(format!("/api/mobile/photos/{}/thumbnail", upload.id));
                 let _ = db_update_photo_upload_status(

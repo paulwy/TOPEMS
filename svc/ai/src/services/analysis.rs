@@ -6,6 +6,7 @@ use crate::services::db::Database;
 use reqwest::Client;
 use serde::{Deserialize, Serialize};
 use sqlx::Row;
+use uuid::Uuid;
 
 #[derive(Clone)]
 pub struct AnalysisService {
@@ -31,7 +32,11 @@ impl AnalysisService {
     }
 
     /// 情感分析
-    pub async fn analyze_sentiment(&self, text: &str) -> Result<SentimentAnalysisResponse, String> {
+    pub async fn analyze_sentiment(
+        &self,
+        text: &str,
+        tenant_id: Uuid,
+    ) -> Result<SentimentAnalysisResponse, String> {
         let prompt = format!(
             "请分析以下文本的情感倾向。返回 JSON 格式结果：\n\
             {{\n  \"sentiment\": \"positive/negative/neutral\",\n  \"confidence\": 0.0-1.0,\n  \"details\": {{\n    \"positive_words\": [],\n    \"negative_words\": [],\n    \"emotional_intensity\": 0.0-1.0\n  }}\n}}\n\n文本：{}",
@@ -51,6 +56,7 @@ impl AnalysisService {
             text,
             &result,
             result.get("confidence").and_then(|v| v.as_f64()),
+            tenant_id,
         )
         .await?;
 
@@ -73,6 +79,7 @@ impl AnalysisService {
         &self,
         text: &str,
         categories: Option<&[String]>,
+        tenant_id: Uuid,
     ) -> Result<ClassifyTextResponse, String> {
         let categories_str = if let Some(cats) = categories {
             cats.join(", ")
@@ -99,6 +106,7 @@ impl AnalysisService {
             text,
             &result,
             result.get("confidence").and_then(|v| v.as_f64()),
+            tenant_id,
         )
         .await?;
 
@@ -136,6 +144,7 @@ impl AnalysisService {
         &self,
         text: &str,
         entity_types: Option<&[String]>,
+        tenant_id: Uuid,
     ) -> Result<ExtractEntitiesResponse, String> {
         let entity_types_str = if let Some(types) = entity_types {
             types.join(", ")
@@ -157,7 +166,7 @@ impl AnalysisService {
             .map_err(|e| format!("解析实体提取结果失败: {}", e))?;
 
         // 保存分析结果
-        self.save_analysis_result("entities", text, &result, None)
+        self.save_analysis_result("entities", text, &result, None, tenant_id)
             .await?;
 
         let entities: Vec<Entity> = result
@@ -189,6 +198,7 @@ impl AnalysisService {
         &self,
         text: &str,
         max_keywords: Option<i32>,
+        tenant_id: Uuid,
     ) -> Result<ExtractKeywordsResponse, String> {
         let max_count = max_keywords.unwrap_or(10);
 
@@ -206,7 +216,7 @@ impl AnalysisService {
             .map_err(|e| format!("解析关键词提取结果失败: {}", e))?;
 
         // 保存分析结果
-        self.save_analysis_result("keywords", text, &result, None)
+        self.save_analysis_result("keywords", text, &result, None, tenant_id)
             .await?;
 
         let keywords: Vec<Keyword> = result
@@ -233,29 +243,33 @@ impl AnalysisService {
         &self,
         analysis_type: Option<&str>,
         limit: usize,
+        tenant_id: Uuid,
     ) -> Result<Vec<AnalysisResult>, String> {
         let query = if let Some(type_) = analysis_type {
             sqlx::query(
                 r#"
-                SELECT id, analysis_type, input_text, result, confidence, created_at
+                SELECT id, analysis_type, input_text, result, confidence, created_at, tenant_id
                 FROM plugin_ai.analysis_results
-                WHERE analysis_type = $1
+                WHERE analysis_type = $1 AND tenant_id = $3
                 ORDER BY created_at DESC
                 LIMIT $2
                 "#,
             )
             .bind(type_)
             .bind(limit as i64)
+            .bind(tenant_id)
         } else {
             sqlx::query(
                 r#"
-                SELECT id, analysis_type, input_text, result, confidence, created_at
+                SELECT id, analysis_type, input_text, result, confidence, created_at, tenant_id
                 FROM plugin_ai.analysis_results
+                WHERE tenant_id = $2
                 ORDER BY created_at DESC
                 LIMIT $1
                 "#,
             )
             .bind(limit as i64)
+            .bind(tenant_id)
         };
 
         let rows = query
@@ -267,6 +281,7 @@ impl AnalysisService {
             .iter()
             .map(|row| AnalysisResult {
                 id: row.get("id"),
+                tenant_id: row.get("tenant_id"),
                 analysis_type: row.get("analysis_type"),
                 input_text: row.get("input_text"),
                 result: row.get("result"),
@@ -359,13 +374,15 @@ impl AnalysisService {
         input_text: &str,
         result: &serde_json::Value,
         confidence: Option<f64>,
+        tenant_id: Uuid,
     ) -> Result<(), String> {
         sqlx::query(
             r#"
-            INSERT INTO plugin_ai.analysis_results (analysis_type, input_text, result, confidence)
-            VALUES ($1, $2, $3, $4)
+            INSERT INTO plugin_ai.analysis_results (tenant_id, analysis_type, input_text, result, confidence)
+            VALUES ($1, $2, $3, $4, $5)
             "#,
         )
+        .bind(tenant_id)
         .bind(analysis_type)
         .bind(input_text)
         .bind(result)

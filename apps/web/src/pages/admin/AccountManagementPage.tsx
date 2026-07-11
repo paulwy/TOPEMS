@@ -1,4 +1,5 @@
 import React, { useState, useMemo } from 'react';
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import {
   Box,
   Typography,
@@ -18,13 +19,7 @@ import { Plus, Edit, Trash2, RefreshCw, Building2 } from 'lucide-react';
 import type { ColumnDef, RowAction } from '@/components/templates/ListPageTemplate';
 import { ListPageTemplate } from '@/components/templates/ListPageTemplate';
 import { PageContainer } from '@/components/common';
-import {
-  useAccounts,
-  useCreateAccount,
-  useUpdateAccount,
-  useDeleteAccount,
-  useAccountBalances,
-} from '@/hooks/useFinance';
+import { accountApi } from '@/api/finance/account';
 import type { Account, BalanceDirection } from '@/types/finance';
 import { useAppStore } from '@/store';
 import { logger } from '@/utils/logger';
@@ -70,25 +65,62 @@ export default function AccountManagementPage() {
   const [deletingId, setDeletingId] = useState<string | null>(null);
 
   const addNotification = useAppStore((state) => state.addNotification);
+  const queryClient = useQueryClient();
 
   const {
     data: accountsData,
     isLoading,
     refetch,
-  } = useAccounts({
-    type: typeFilter !== 'all' ? typeFilter : undefined,
-    is_detail:
-      isDetailFilter === 'detail' ? true : isDetailFilter === 'summary' ? false : undefined,
+  } = useQuery({
+    queryKey: ['admin-accounts', { category: typeFilter !== 'all' ? typeFilter : undefined }],
+    queryFn: () => accountApi.list({ category: typeFilter !== 'all' ? typeFilter : undefined }),
   });
 
-  const { data: balancesData } = useAccountBalances({
-    company_id: 'default',
-    period: new Date().toISOString().slice(0, 7),
+  const { data: balancesData } = useQuery({
+    queryKey: [
+      'admin-account-balances',
+      { company_id: 'default', period: new Date().toISOString().slice(0, 7) },
+    ],
+    queryFn: () =>
+      accountApi.getBalances({
+        company_id: 'default',
+        period: new Date().toISOString().slice(0, 7),
+      }),
   });
 
-  const createAccount = useCreateAccount();
-  const updateAccount = useUpdateAccount();
-  const deleteAccount = useDeleteAccount();
+  const createAccount = useMutation({
+    mutationFn: (data: Partial<Account>) => accountApi.create(data),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['admin-accounts'] });
+      addNotification({ title: '创建成功', message: '科目创建成功', type: 'success' });
+    },
+    onError: () => {
+      addNotification({ title: '创建失败', message: '创建科目失败', type: 'error' });
+    },
+  });
+
+  const updateAccount = useMutation({
+    mutationFn: ({ id, data }: { id: string; data: Partial<Account> }) =>
+      accountApi.update(id, data),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['admin-accounts'] });
+      addNotification({ title: '更新成功', message: '科目更新成功', type: 'success' });
+    },
+    onError: () => {
+      addNotification({ title: '更新失败', message: '更新科目失败', type: 'error' });
+    },
+  });
+
+  const deleteAccount = useMutation({
+    mutationFn: (id: string) => accountApi.delete(id),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['admin-accounts'] });
+      addNotification({ title: '删除成功', message: '科目删除成功', type: 'success' });
+    },
+    onError: () => {
+      addNotification({ title: '删除失败', message: '删除科目失败', type: 'error' });
+    },
+  });
 
   const filteredAccounts = useMemo(() => {
     if (!accountsData?.data?.items) return [];
@@ -112,19 +144,9 @@ export default function AccountManagementPage() {
     try {
       await createAccount.mutateAsync(data as any);
       setIsCreating(false);
-      addNotification({
-        title: '创建成功',
-        message: '科目创建成功',
-        type: 'success',
-      });
       refetch();
     } catch (error: unknown) {
       logger.error('创建科目失败:', error);
-      addNotification({
-        title: '创建失败',
-        message: '创建科目失败',
-        type: 'error',
-      });
     }
   };
 
@@ -134,19 +156,9 @@ export default function AccountManagementPage() {
       await updateAccount.mutateAsync({ id: selectedAccount.id, data });
       setIsEditing(false);
       setSelectedAccount(null);
-      addNotification({
-        title: '更新成功',
-        message: '科目更新成功',
-        type: 'success',
-      });
       refetch();
     } catch (error: unknown) {
       logger.error('更新科目失败:', error);
-      addNotification({
-        title: '更新失败',
-        message: '更新科目失败',
-        type: 'error',
-      });
     }
   };
 
@@ -155,19 +167,9 @@ export default function AccountManagementPage() {
     try {
       await deleteAccount.mutateAsync(deletingId);
       setDeletingId(null);
-      addNotification({
-        title: '删除成功',
-        message: '科目删除成功',
-        type: 'success',
-      });
       refetch();
     } catch (error: unknown) {
       logger.error('删除科目失败:', error);
-      addNotification({
-        title: '删除失败',
-        message: '删除科目失败',
-        type: 'error',
-      });
     }
   };
 
@@ -306,7 +308,6 @@ export default function AccountManagementPage() {
       title='会计科目管理'
       subtitle='管理企业会计科目体系，支持多级科目结构'
     >
-      {/* 统计卡片 */}
       <Box sx={{ p: 3, maxWidth: 1280, mx: 'auto' }}>
         <Box
           sx={{

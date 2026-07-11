@@ -1,13 +1,13 @@
 use axum::{
     extract::{Path, State},
-    Json,
+    Extension, Json,
 };
 use std::time::Instant;
-use topems_shared::ApiResponse;
+use topems_shared::{auth::Claims, ApiResponse};
 use uuid::Uuid;
 
 use crate::modules::models::*;
-use crate::AppState;
+use crate::shared::AppState;
 
 pub struct VectorApi;
 
@@ -15,8 +15,10 @@ impl VectorApi {
     /// POST /api/v1/vectors/store - 存储文档向量
     pub async fn store(
         State(state): State<AppState>,
+        Extension(claims): Extension<Claims>,
         Json(req): Json<StoreVectorRequest>,
     ) -> Json<ApiResponse<StoreVectorResponse>> {
+        let tenant_id = crate::modules::qa::get_tenant_id(&claims);
         let vector_req = crate::services::vector::SaveVectorRequest {
             document_id: req.document_id,
             chunk_id: req.chunk_id,
@@ -25,7 +27,11 @@ impl VectorApi {
             embedding: req.embedding.clone(),
         };
 
-        match state.vector_service.save_vectors(&[vector_req]).await {
+        match state
+            .vector_service
+            .save_vectors(&[vector_req], tenant_id)
+            .await
+        {
             Ok(_) => Json(ApiResponse::success(
                 StoreVectorResponse {
                     vector_id: Uuid::new_v4(),
@@ -43,8 +49,10 @@ impl VectorApi {
     /// POST /api/v1/vectors/search - 向量相似度搜索
     pub async fn search(
         State(state): State<AppState>,
+        Extension(claims): Extension<Claims>,
         Json(req): Json<VectorSearchRequest>,
     ) -> Json<ApiResponse<VectorSearchResponse>> {
+        let tenant_id = crate::modules::qa::get_tenant_id(&claims);
         let start = Instant::now();
 
         // 注意：这里需要生成查询向量
@@ -55,7 +63,7 @@ impl VectorApi {
 
         match state
             .vector_service
-            .search_similar(&query_embedding, top_k)
+            .search_similar(&query_embedding, top_k, tenant_id)
             .await
         {
             Ok(results) => {
@@ -80,8 +88,10 @@ impl VectorApi {
     pub async fn get(
         State(state): State<AppState>,
         Path(id): Path<Uuid>,
+        Extension(claims): Extension<Claims>,
     ) -> Json<ApiResponse<crate::services::vector::VectorEmbedding>> {
-        match state.vector_service.get_vector(id).await {
+        let tenant_id = crate::modules::qa::get_tenant_id(&claims);
+        match state.vector_service.get_vector(id, tenant_id).await {
             Ok(Some(vec)) => Json(ApiResponse::success(vec, "Success")),
             Ok(None) => Json(
                 ApiResponse::<crate::services::vector::VectorEmbedding>::error(404, "向量不存在"),
@@ -96,8 +106,10 @@ impl VectorApi {
     pub async fn delete(
         State(state): State<AppState>,
         Path(id): Path<Uuid>,
+        Extension(claims): Extension<Claims>,
     ) -> Json<ApiResponse<String>> {
-        match state.vector_service.delete_vector(id).await {
+        let tenant_id = crate::modules::qa::get_tenant_id(&claims);
+        match state.vector_service.delete_vector(id, tenant_id).await {
             Ok(true) => Json(ApiResponse::success("向量已删除".to_string(), "Success")),
             Ok(false) => Json(ApiResponse::<String>::error(404, "向量不存在")),
             Err(e) => Json(ApiResponse::<String>::error(500, &e.to_string())),
@@ -107,8 +119,10 @@ impl VectorApi {
     /// POST /api/v1/vectors/batch-store - 批量存储向量
     pub async fn batch_store(
         State(state): State<AppState>,
+        Extension(claims): Extension<Claims>,
         Json(req): Json<BatchStoreVectorsRequest>,
     ) -> Json<ApiResponse<BatchStoreVectorsResponse>> {
+        let tenant_id = crate::modules::qa::get_tenant_id(&claims);
         let vectors: Vec<crate::services::vector::SaveVectorRequest> = req
             .vectors
             .into_iter()
@@ -121,7 +135,7 @@ impl VectorApi {
             })
             .collect();
 
-        match state.vector_service.save_vectors(&vectors).await {
+        match state.vector_service.save_vectors(&vectors, tenant_id).await {
             Ok(_) => Json(ApiResponse::success(
                 BatchStoreVectorsResponse {
                     stored_count: vectors.len() as i32,
@@ -139,8 +153,10 @@ impl VectorApi {
     /// POST /api/v1/vectors/hybrid-search - 混合检索（向量+关键词）
     pub async fn hybrid_search(
         State(state): State<AppState>,
+        Extension(claims): Extension<Claims>,
         Json(req): Json<HybridSearchRequest>,
     ) -> Json<ApiResponse<HybridSearchResponse>> {
+        let tenant_id = crate::modules::qa::get_tenant_id(&claims);
         let start = Instant::now();
 
         // 注意：这里需要生成查询向量
@@ -158,6 +174,7 @@ impl VectorApi {
                 top_k,
                 vector_weight,
                 keyword_weight,
+                tenant_id,
             )
             .await
         {

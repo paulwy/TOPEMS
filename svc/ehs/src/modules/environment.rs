@@ -1,10 +1,26 @@
 //! Environment handlers
 
-use axum::{extract::State, routing::get, Json, Router};
+use axum::{extract::State, http::HeaderMap, routing::*, Extension, Json, Router};
 use serde::{Deserialize, Serialize};
-use topems_shared::ApiResponse;
+use topems_shared::{ApiResponse, Claims};
 
-use crate::AppState;
+use uuid::Uuid;
+
+use crate::shared::AppState;
+
+fn get_tenant_id(claims: &Claims, headers: &HeaderMap) -> Uuid {
+    claims
+        .tenant_id
+        .as_ref()
+        .and_then(|t| Uuid::parse_str(t).ok())
+        .or_else(|| {
+            headers
+                .get("x-tenant-id")
+                .and_then(|v| v.to_str().ok())
+                .and_then(|s| Uuid::parse_str(s).ok())
+        })
+        .unwrap_or_else(Uuid::new_v4)
+}
 
 pub fn create_routes() -> Router<AppState> {
     Router::new()
@@ -38,11 +54,16 @@ pub struct EnvironmentRecord {
     pub data: serde_json::Value,
     pub status: String,
     pub monitored_at: Option<String>,
+
+    pub tenant_id: Uuid,
 }
 
 pub async fn list_records(
-    State(_state): State<crate::AppState>,
+    State(_state): State<crate::shared::AppState>,
+    Extension(claims): Extension<Claims>,
+    headers: HeaderMap,
 ) -> Json<ApiResponse<Vec<EnvironmentRecord>>> {
+    let tenant_id = get_tenant_id(&claims, &headers);
     tracing::info!("Listing environment records");
     Json(ApiResponse::success(
         Vec::<EnvironmentRecord>::new(),
@@ -51,9 +72,12 @@ pub async fn list_records(
 }
 
 pub async fn create_record(
-    State(_state): State<crate::AppState>,
+    State(_state): State<crate::shared::AppState>,
+    Extension(claims): Extension<Claims>,
+    headers: HeaderMap,
     Json(req): Json<serde_json::Value>,
 ) -> Json<ApiResponse<EnvironmentRecord>> {
+    let tenant_id = get_tenant_id(&claims, &headers);
     tracing::info!("Creating environment record: {:?}", req);
     Json(ApiResponse::success(
         EnvironmentRecord {
@@ -67,6 +91,8 @@ pub async fn create_record(
             data: serde_json::json!({"pm25": 35, "so2": 0.02}),
             status: "normal".to_string(),
             monitored_at: Some(chrono::Utc::now().to_rfc3339()),
+
+            tenant_id,
         },
         "环境记录创建成功",
     ))

@@ -1,14 +1,3 @@
-#![allow(clippy::match_like_matches_macro)]
-#![allow(clippy::manual_ok_err)]
-#![allow(clippy::redundant_pattern_matching)]
-#![allow(clippy::useless_format)]
-#![allow(clippy::useless_vec)]
-#![allow(clippy::clone_on_copy)]
-#![allow(clippy::identity_op)]
-#![allow(clippy::needless_borrows_for_generic_args)]
-#![allow(clippy::unnecessary_cast)]
-#![allow(dead_code)]
-
 mod models;
 mod services;
 
@@ -42,14 +31,44 @@ async fn main() -> Result<()> {
 
     env::set_var("SEARCH_PATH", "shared, hrm, public");
 
+    let database_url =
+        env::var("DATABASE_URL").expect("DATABASE_URL environment variable is required");
     let db_config = DatabaseConfig {
-        url: "postgres://topems:topems_secret@localhost:5432/topems".to_string(),
-        max_connections: 10,
-        min_connections: Some(2),
-        connect_timeout: Some(30),
-        idle_timeout: Some(60),
-        max_lifetime: Some(1800),
-        test_interval: Some(60),
+        url: database_url,
+        max_connections: env::var("DB_MAX_CONNECTIONS")
+            .ok()
+            .and_then(|s| s.parse().ok())
+            .unwrap_or(10),
+        min_connections: Some(
+            env::var("DB_MIN_CONNECTIONS")
+                .ok()
+                .and_then(|s| s.parse().ok())
+                .unwrap_or(2),
+        ),
+        connect_timeout: Some(
+            env::var("DB_CONNECT_TIMEOUT")
+                .ok()
+                .and_then(|s| s.parse().ok())
+                .unwrap_or(30),
+        ),
+        idle_timeout: Some(
+            env::var("DB_IDLE_TIMEOUT")
+                .ok()
+                .and_then(|s| s.parse().ok())
+                .unwrap_or(60),
+        ),
+        max_lifetime: Some(
+            env::var("DB_MAX_LIFETIME")
+                .ok()
+                .and_then(|s| s.parse().ok())
+                .unwrap_or(1800),
+        ),
+        test_interval: Some(
+            env::var("DB_TEST_INTERVAL")
+                .ok()
+                .and_then(|s| s.parse().ok())
+                .unwrap_or(60),
+        ),
         enable_connection_reuse: Some(true),
     };
 
@@ -277,8 +296,8 @@ async fn check_iam_health() -> DependencyHealth {
 }
 
 fn init_encryption_service() -> FieldEncryptionService {
-    let encryption_key = env::var("ENCRYPTION_KEY")
-        .unwrap_or_else(|_| "base64:AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA=".to_string());
+    let encryption_key =
+        env::var("ENCRYPTION_KEY").expect("ENCRYPTION_KEY environment variable is required");
 
     let key_b64 = if let Some(stripped) = encryption_key.strip_prefix("base64:") {
         stripped.to_string()
@@ -290,14 +309,9 @@ fn init_encryption_service() -> FieldEncryptionService {
         base64::Engine::encode(&base64::engine::general_purpose::STANDARD, result)
     };
 
-    match KeyManager::from_base64_key(&key_b64) {
-        Ok(km) => FieldEncryptionService::new(km),
-        Err(e) => {
-            tracing::warn!("⚠️  加密密钥初始化失败，使用默认密钥: {}", e);
-            let default_key = [0u8; 32];
-            FieldEncryptionService::new(KeyManager::new(&default_key))
-        }
-    }
+    KeyManager::from_base64_key(&key_b64)
+        .map(FieldEncryptionService::new)
+        .expect("Failed to initialize encryption service with provided ENCRYPTION_KEY")
 }
 
 async fn init_db(_pool: &sqlx::PgPool) -> Result<()> {

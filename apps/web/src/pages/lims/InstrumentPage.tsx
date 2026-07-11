@@ -181,7 +181,7 @@ const InstrumentPage: React.FC = () => {
     {
       label: '维护记录',
       icon: <Settings style={{ width: 16, height: 16 }} />,
-      onClick: (row) => navigate(`/lims/instrument/${row.id}`),
+      onClick: (row) => navigate(`/lims/instrument-detail?id=${row.id}`),
     },
   ];
 

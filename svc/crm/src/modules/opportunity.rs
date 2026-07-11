@@ -9,6 +9,7 @@ use serde::{Deserialize, Serialize};
 use uuid::Uuid;
 
 use super::ApiState;
+use crate::middleware::tenant::get_tenant_id;
 use crate::models::{CreateOpportunityRequest, Opportunity, UpdateOpportunityRequest};
 use crate::modules::audit::log_audit_event;
 use crate::shared::permission::{check_permission, ModulePermission};
@@ -101,6 +102,7 @@ async fn list_opportunities(
     State(state): State<ApiState>,
     Extension(claims): Extension<Claims>,
     Query(params): Query<OpportunityPaginationParams>,
+    headers: HeaderMap,
 ) -> Json<ApiResponse<serde_json::Value>> {
     match check_permission(&state.db, &claims, &ModulePermission::OpportunityRead).await {
         Ok(_) => {}
@@ -114,18 +116,21 @@ async fn list_opportunities(
     let search_pattern = params.search.as_deref().map(|s| format!("%{}%", s));
     let stage_filter = params.stage.clone();
     let customer_filter = params.customer_id;
+    let tenant_id = get_tenant_id(&claims, &headers);
 
     let result = sqlx::query_as::<_, Opportunity>(
         r#"
-        SELECT id, name, customer_id, value, stage, probability, close_date, notes, created_at, updated_at
-        FROM plugin_crm.opportunities
-        WHERE ($1::text IS NULL OR name ILIKE $1)
-          AND ($2::text IS NULL OR stage = $2)
-          AND ($3::uuid IS NULL OR customer_id = $3)
+        SELECT id, tenant_id, name, customer_id, value, stage, probability, close_date, notes, created_at, updated_at
+        FROM crm.opportunities
+        WHERE tenant_id = $1
+          AND ($2::text IS NULL OR name ILIKE $2)
+          AND ($3::text IS NULL OR stage = $3)
+          AND ($4::uuid IS NULL OR customer_id = $4)
         ORDER BY created_at DESC
-        LIMIT $4 OFFSET $5
+        LIMIT $5 OFFSET $6
         "#,
     )
+    .bind(tenant_id)
     .bind(&search_pattern)
     .bind(&stage_filter)
     .bind(&customer_filter)
@@ -138,12 +143,14 @@ async fn list_opportunities(
         Ok(opportunities) => {
             let count_result = sqlx::query_scalar::<_, i64>(
                 r#"
-                SELECT COUNT(*) FROM plugin_crm.opportunities
-                WHERE ($1::text IS NULL OR name ILIKE $1)
-                  AND ($2::text IS NULL OR stage = $2)
-                  AND ($3::uuid IS NULL OR customer_id = $3)
+                SELECT COUNT(*) FROM crm.opportunities
+                WHERE tenant_id = $1
+                  AND ($2::text IS NULL OR name ILIKE $2)
+                  AND ($3::text IS NULL OR stage = $3)
+                  AND ($4::uuid IS NULL OR customer_id = $4)
                 "#,
             )
+            .bind(tenant_id)
             .bind(&search_pattern)
             .bind(&stage_filter)
             .bind(&customer_filter)
@@ -186,16 +193,18 @@ async fn create_opportunity(
 
     let id = Uuid::new_v4();
     let now = Utc::now();
+    let tenant_id = get_tenant_id(&claims, &headers);
 
     let result = sqlx::query_as::<_, Opportunity>(
         r#"
-        INSERT INTO plugin_crm.opportunities (
-            id, name, customer_id, value, stage, probability, close_date, notes, created_at, updated_at
-        ) VALUES ($1, $2, $3, $4, 'prospecting', $5, $6, $7, $8, $9)
-        RETURNING id, name, customer_id, value, stage, probability, close_date, notes, created_at, updated_at
+        INSERT INTO crm.opportunities (
+            id, tenant_id, name, customer_id, value, stage, probability, close_date, notes, created_at, updated_at
+        ) VALUES ($1, $2, $3, $4, $5, 'prospecting', $6, $7, $8, $9, $10)
+        RETURNING id, tenant_id, name, customer_id, value, stage, probability, close_date, notes, created_at, updated_at
         "#,
     )
     .bind(id)
+    .bind(tenant_id)
     .bind(&req.name)
     .bind(&req.customer_id)
     .bind(req.value)
@@ -256,19 +265,23 @@ async fn get_opportunity(
     State(state): State<ApiState>,
     Extension(claims): Extension<Claims>,
     Path(id): Path<Uuid>,
+    headers: HeaderMap,
 ) -> Json<ApiResponse<Opportunity>> {
     match check_permission(&state.db, &claims, &ModulePermission::OpportunityRead).await {
         Ok(_) => {}
         Err(e) => return e,
     }
 
+    let tenant_id = get_tenant_id(&claims, &headers);
+
     let result = sqlx::query_as::<_, Opportunity>(
         r#"
-        SELECT id, name, customer_id, value, stage, probability, close_date, notes, created_at, updated_at
-        FROM plugin_crm.opportunities WHERE id = $1
+        SELECT id, tenant_id, name, customer_id, value, stage, probability, close_date, notes, created_at, updated_at
+        FROM crm.opportunities WHERE id = $1 AND tenant_id = $2
         "#,
     )
     .bind(id)
+    .bind(tenant_id)
     .fetch_optional(&state.db)
     .await;
 
@@ -294,12 +307,15 @@ async fn update_opportunity(
         Err(e) => return e,
     }
 
+    let tenant_id = get_tenant_id(&claims, &headers);
+
     let existing = sqlx::query_as::<_, Opportunity>(
         r#"
-        SELECT id, name, customer_id, value, stage, probability, close_date, notes, created_at, updated_at FROM plugin_crm.opportunities WHERE id = $1
+        SELECT id, tenant_id, name, customer_id, value, stage, probability, close_date, notes, created_at, updated_at FROM crm.opportunities WHERE id = $1 AND tenant_id = $2
         "#,
     )
     .bind(id)
+    .bind(tenant_id)
     .fetch_optional(&state.db)
     .await;
 
@@ -322,11 +338,11 @@ async fn update_opportunity(
 
     let result = sqlx::query_as::<_, Opportunity>(
         r#"
-        UPDATE plugin_crm.opportunities SET
+        UPDATE crm.opportunities SET
             name = $2, customer_id = $3, value = $4, stage = $5, probability = $6, 
             close_date = $7, notes = $8, updated_at = $9
-        WHERE id = $1
-        RETURNING id, name, customer_id, value, stage, probability, close_date, notes, created_at, updated_at
+        WHERE id = $1 AND tenant_id = $10
+        RETURNING id, tenant_id, name, customer_id, value, stage, probability, close_date, notes, created_at, updated_at
         "#,
     )
     .bind(id)
@@ -338,6 +354,7 @@ async fn update_opportunity(
     .bind(&close_date)
     .bind(&notes)
     .bind(now)
+    .bind(tenant_id)
     .fetch_one(&state.db)
     .await;
 
@@ -396,8 +413,11 @@ async fn delete_opportunity(
         Err(e) => return e,
     }
 
-    let result = sqlx::query("DELETE FROM plugin_crm.opportunities WHERE id = $1")
+    let tenant_id = get_tenant_id(&claims, &headers);
+
+    let result = sqlx::query("DELETE FROM crm.opportunities WHERE id = $1 AND tenant_id = $2")
         .bind(id)
+        .bind(tenant_id)
         .execute(&state.db)
         .await;
 
@@ -462,8 +482,11 @@ async fn batch_delete_opportunities(
         return Json(api_error(400, "请选择要删除的销售机会"));
     }
 
-    let result = sqlx::query("DELETE FROM plugin_crm.opportunities WHERE id = ANY($1)")
+    let tenant_id = get_tenant_id(&claims, &headers);
+
+    let result = sqlx::query("DELETE FROM crm.opportunities WHERE id = ANY($1) AND tenant_id = $2")
         .bind(&req.ids)
+        .bind(tenant_id)
         .execute(&state.db)
         .await;
 
@@ -514,11 +537,14 @@ async fn batch_delete_opportunities(
 async fn get_sales_funnel(
     State(state): State<ApiState>,
     Extension(claims): Extension<Claims>,
+    headers: HeaderMap,
 ) -> Json<ApiResponse<Vec<FunnelStage>>> {
     match check_permission(&state.db, &claims, &ModulePermission::OpportunityRead).await {
         Ok(_) => {}
         Err(e) => return e,
     }
+
+    let tenant_id = get_tenant_id(&claims, &headers);
 
     let stages = vec![
         ("prospecting", "线索"),
@@ -532,24 +558,28 @@ async fn get_sales_funnel(
     let mut funnel_stages = Vec::new();
 
     for (stage, stage_label) in stages {
-        let count: i64 =
-            sqlx::query_scalar("SELECT COUNT(*) FROM plugin_crm.opportunities WHERE stage = $1")
-                .bind(stage)
-                .fetch_one(&state.db)
-                .await
-                .unwrap_or(0);
+        let count: i64 = sqlx::query_scalar(
+            "SELECT COUNT(*) FROM crm.opportunities WHERE tenant_id = $1 AND stage = $2",
+        )
+        .bind(tenant_id)
+        .bind(stage)
+        .fetch_one(&state.db)
+        .await
+        .unwrap_or(0);
 
         let total_value: Option<f64> = sqlx::query_scalar(
-            "SELECT COALESCE(SUM(value), 0) FROM plugin_crm.opportunities WHERE stage = $1 AND value IS NOT NULL"
+            "SELECT COALESCE(SUM(value), 0) FROM crm.opportunities WHERE tenant_id = $1 AND stage = $2 AND value IS NOT NULL"
         )
+        .bind(tenant_id)
         .bind(stage)
         .fetch_optional(&state.db)
         .await
         .unwrap_or(Some(0.0));
 
         let avg_probability: Option<f64> = sqlx::query_scalar(
-            "SELECT COALESCE(AVG(probability), 0) FROM plugin_crm.opportunities WHERE stage = $1 AND probability IS NOT NULL"
+            "SELECT COALESCE(AVG(probability), 0) FROM crm.opportunities WHERE tenant_id = $1 AND stage = $2 AND probability IS NOT NULL"
         )
+        .bind(tenant_id)
         .bind(stage)
         .fetch_optional(&state.db)
         .await
@@ -570,55 +600,66 @@ async fn get_sales_funnel(
 async fn get_opportunity_stats(
     State(state): State<ApiState>,
     Extension(claims): Extension<Claims>,
+    headers: HeaderMap,
 ) -> Json<ApiResponse<OpportunityStats>> {
     match check_permission(&state.db, &claims, &ModulePermission::OpportunityRead).await {
         Ok(_) => {}
         Err(e) => return e,
     }
 
-    let total_count: i64 = sqlx::query_scalar("SELECT COUNT(*) FROM plugin_crm.opportunities")
-        .fetch_one(&state.db)
-        .await
-        .unwrap_or(0);
+    let tenant_id = get_tenant_id(&claims, &headers);
+
+    let total_count: i64 =
+        sqlx::query_scalar("SELECT COUNT(*) FROM crm.opportunities WHERE tenant_id = $1")
+            .bind(tenant_id)
+            .fetch_one(&state.db)
+            .await
+            .unwrap_or(0);
 
     let total_value: Option<f64> = sqlx::query_scalar(
-        "SELECT COALESCE(SUM(value), 0) FROM plugin_crm.opportunities WHERE value IS NOT NULL",
+        "SELECT COALESCE(SUM(value), 0) FROM crm.opportunities WHERE tenant_id = $1 AND value IS NOT NULL",
     )
+    .bind(tenant_id)
     .fetch_optional(&state.db)
     .await
     .unwrap_or(Some(0.0));
 
     let weighted_value: Option<f64> = sqlx::query_scalar(
-        "SELECT COALESCE(SUM(value * probability / 100), 0) FROM plugin_crm.opportunities WHERE value IS NOT NULL AND probability IS NOT NULL"
+        "SELECT COALESCE(SUM(value * probability / 100), 0) FROM crm.opportunities WHERE tenant_id = $1 AND value IS NOT NULL AND probability IS NOT NULL"
     )
+    .bind(tenant_id)
     .fetch_optional(&state.db)
     .await
     .unwrap_or(Some(0.0));
 
     let won_count: i64 = sqlx::query_scalar(
-        "SELECT COUNT(*) FROM plugin_crm.opportunities WHERE stage = 'closed_won'",
+        "SELECT COUNT(*) FROM crm.opportunities WHERE tenant_id = $1 AND stage = 'closed_won'",
     )
+    .bind(tenant_id)
     .fetch_one(&state.db)
     .await
     .unwrap_or(0);
 
     let won_value: Option<f64> = sqlx::query_scalar(
-        "SELECT COALESCE(SUM(value), 0) FROM plugin_crm.opportunities WHERE stage = 'closed_won' AND value IS NOT NULL"
+        "SELECT COALESCE(SUM(value), 0) FROM crm.opportunities WHERE tenant_id = $1 AND stage = 'closed_won' AND value IS NOT NULL"
     )
+    .bind(tenant_id)
     .fetch_optional(&state.db)
     .await
     .unwrap_or(Some(0.0));
 
     let lost_count: i64 = sqlx::query_scalar(
-        "SELECT COUNT(*) FROM plugin_crm.opportunities WHERE stage = 'closed_lost'",
+        "SELECT COUNT(*) FROM crm.opportunities WHERE tenant_id = $1 AND stage = 'closed_lost'",
     )
+    .bind(tenant_id)
     .fetch_one(&state.db)
     .await
     .unwrap_or(0);
 
     let lost_value: Option<f64> = sqlx::query_scalar(
-        "SELECT COALESCE(SUM(value), 0) FROM plugin_crm.opportunities WHERE stage = 'closed_lost' AND value IS NOT NULL"
+        "SELECT COALESCE(SUM(value), 0) FROM crm.opportunities WHERE tenant_id = $1 AND stage = 'closed_lost' AND value IS NOT NULL"
     )
+    .bind(tenant_id)
     .fetch_optional(&state.db)
     .await
     .unwrap_or(Some(0.0));
@@ -640,12 +681,14 @@ async fn get_opportunity_forecast(
     State(state): State<ApiState>,
     Extension(claims): Extension<Claims>,
     Query(params): Query<ForecastParams>,
+    headers: HeaderMap,
 ) -> Json<ApiResponse<Vec<OpportunityForecast>>> {
     match check_permission(&state.db, &claims, &ModulePermission::OpportunityRead).await {
         Ok(_) => {}
         Err(e) => return e,
     }
 
+    let tenant_id = get_tenant_id(&claims, &headers);
     let months = params.months.unwrap_or(12).clamp(1, 24);
 
     let mut forecasts = Vec::new();
@@ -666,10 +709,11 @@ async fn get_opportunity_forecast(
         let forecast_value: f64 = sqlx::query_scalar(
             r#"
             SELECT COALESCE(SUM(value * probability / 100), 0) 
-            FROM plugin_crm.opportunities 
-            WHERE close_date >= $1 AND close_date < $2 AND stage NOT IN ('closed_won', 'closed_lost')
+            FROM crm.opportunities 
+            WHERE tenant_id = $1 AND close_date >= $2 AND close_date < $3 AND stage NOT IN ('closed_won', 'closed_lost')
             "#,
         )
+        .bind(tenant_id)
         .bind(month_start)
         .bind(month_end)
         .fetch_optional(&state.db)
@@ -680,10 +724,11 @@ async fn get_opportunity_forecast(
         let opportunity_count: i64 = sqlx::query_scalar(
             r#"
             SELECT COUNT(*) 
-            FROM plugin_crm.opportunities 
-            WHERE close_date >= $1 AND close_date < $2 AND stage NOT IN ('closed_won', 'closed_lost')
+            FROM crm.opportunities 
+            WHERE tenant_id = $1 AND close_date >= $2 AND close_date < $3 AND stage NOT IN ('closed_won', 'closed_lost')
             "#,
         )
+        .bind(tenant_id)
         .bind(month_start)
         .bind(month_end)
         .fetch_optional(&state.db)
@@ -694,10 +739,11 @@ async fn get_opportunity_forecast(
         let avg_probability: f64 = sqlx::query_scalar(
             r#"
             SELECT COALESCE(AVG(probability), 0) 
-            FROM plugin_crm.opportunities 
-            WHERE close_date >= $1 AND close_date < $2 AND stage NOT IN ('closed_won', 'closed_lost') AND probability IS NOT NULL
+            FROM crm.opportunities 
+            WHERE tenant_id = $1 AND close_date >= $2 AND close_date < $3 AND stage NOT IN ('closed_won', 'closed_lost') AND probability IS NOT NULL
             "#,
         )
+        .bind(tenant_id)
         .bind(month_start)
         .bind(month_end)
         .fetch_optional(&state.db)
@@ -719,20 +765,25 @@ async fn get_opportunity_forecast(
 async fn get_stage_transitions(
     State(state): State<ApiState>,
     Extension(claims): Extension<Claims>,
+    headers: HeaderMap,
 ) -> Json<ApiResponse<Vec<StageTransition>>> {
     match check_permission(&state.db, &claims, &ModulePermission::OpportunityRead).await {
         Ok(_) => {}
         Err(e) => return e,
     }
 
+    let tenant_id = get_tenant_id(&claims, &headers);
+
     let transitions: Vec<StageTransition> = sqlx::query_as(
         r#"
         SELECT stage AS from_stage, stage AS to_stage, COUNT(*) as count
-        FROM plugin_crm.opportunities
+        FROM crm.opportunities
+        WHERE tenant_id = $1
         GROUP BY stage
         ORDER BY count DESC
         "#,
     )
+    .bind(tenant_id)
     .fetch_all(&state.db)
     .await
     .unwrap_or_default();

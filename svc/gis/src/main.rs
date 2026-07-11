@@ -566,8 +566,10 @@ async fn main() -> Result<()> {
         .layer(prometheus_layer)
         .layer(cors);
 
-    let port = env::var("SERVER_PORT")
-        .unwrap_or_else(|_| env::var("PORT").unwrap_or_else(|_| "8071".to_string()));
+    let port = env::var("GIS_PORT")
+        .or_else(|_| env::var("SERVER_PORT"))
+        .or_else(|_| env::var("PORT"))
+        .unwrap_or_else(|_| "8071".to_string());
     let addr = format!("0.0.0.0:{}", port);
 
     tracing::info!("🚀 TOPEMS-GIS 厂区空间数字化系统启动中...");

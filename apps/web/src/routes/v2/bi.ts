@@ -9,6 +9,7 @@ export const biModuleConfig: RouteModuleConfig = {
   source: 'plugin',
   suite: 'enterprise',
   status: 'online',
+  frontendOnly: true,
   order: 9,
   description: '数据分析、报表、可视化、数据挖掘',
   permission: 'bi:read',

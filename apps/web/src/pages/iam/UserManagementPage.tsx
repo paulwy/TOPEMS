@@ -22,6 +22,7 @@ import { extractErrorMessage } from '@/utils/errors';
 import { PageContainer } from '@/components/common';
 import { ConfirmDialog } from '@topems/shared-components';
 import { designTokens } from '@/theme/tokens';
+import { IAM_PATHS } from '@/modules/iam/config';
 
 const ct = designTokens.colors;
 
@@ -582,7 +583,7 @@ const UserManagementPage: React.FC<UserManagementPageProps> = ({ onNavigate: _on
         ]}
         onRefresh={loadData}
         backButton={{
-          href: '/iam/dashboard',
+          href: IAM_PATHS.dashboard,
         }}
       />
 

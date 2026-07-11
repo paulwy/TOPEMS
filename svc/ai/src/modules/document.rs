@@ -1,12 +1,21 @@
 use axum::{
-    extract::{Multipart, Path, State},
+    extract::{Extension, Multipart, Path, State},
     Json,
 };
+use topems_shared::auth::Claims;
 use topems_shared::ApiResponse;
 use uuid::Uuid;
 
 use crate::modules::models::*;
-use crate::AppState;
+use crate::shared::AppState;
+
+fn get_tenant_id(claims: &Claims) -> Uuid {
+    claims
+        .tenant_id
+        .clone()
+        .and_then(|id| Uuid::parse_str(&id).ok())
+        .unwrap_or(Uuid::nil())
+}
 
 pub struct DocumentApi;
 
@@ -14,8 +23,10 @@ impl DocumentApi {
     /// POST /api/v1/documents/upload - 上传文档并处理
     pub async fn upload(
         State(state): State<AppState>,
+        Extension(claims): Extension<Claims>,
         mut multipart: Multipart,
     ) -> Json<ApiResponse<UploadDocumentResponse>> {
+        let tenant_id = get_tenant_id(&claims);
         // 处理 multipart 上传
         let mut title = String::new();
         let mut filename = String::new();
@@ -82,7 +93,14 @@ impl DocumentApi {
         // 使用 document_service 处理上传
         match state
             .document_service
-            .process_upload(title, filename.clone(), file_path, file_size, mime_type)
+            .process_upload(
+                title,
+                filename.clone(),
+                file_path,
+                file_size,
+                mime_type,
+                tenant_id,
+            )
             .await
         {
             Ok(doc_id) => Json(ApiResponse::success(
@@ -99,10 +117,16 @@ impl DocumentApi {
     /// POST /api/v1/documents/process - 处理文档（提取文本、分块）
     pub async fn process(
         State(state): State<AppState>,
+        Extension(claims): Extension<Claims>,
         Json(req): Json<ProcessDocumentRequest>,
     ) -> Json<ApiResponse<ProcessDocumentResponse>> {
+        let tenant_id = get_tenant_id(&claims);
         // 获取文档
-        match state.document_service.get_document(req.document_id).await {
+        match state
+            .document_service
+            .get_document(req.document_id, tenant_id)
+            .await
+        {
             Ok(Some(_doc)) => {
                 // 处理文档（分块和向量化）
                 // 这里需要调用向量服务生成向量
@@ -128,8 +152,10 @@ impl DocumentApi {
     pub async fn get(
         State(state): State<AppState>,
         Path(id): Path<Uuid>,
+        Extension(claims): Extension<Claims>,
     ) -> Json<ApiResponse<crate::services::vector::Document>> {
-        match state.document_service.get_document(id).await {
+        let tenant_id = get_tenant_id(&claims);
+        match state.document_service.get_document(id, tenant_id).await {
             Ok(Some(doc)) => Json(ApiResponse::success(doc, "Success")),
             Ok(None) => Json(ApiResponse::<crate::services::vector::Document>::error(
                 404,
@@ -145,8 +171,10 @@ impl DocumentApi {
     pub async fn delete(
         State(state): State<AppState>,
         Path(id): Path<Uuid>,
+        Extension(claims): Extension<Claims>,
     ) -> Json<ApiResponse<String>> {
-        match state.document_service.delete_document(id).await {
+        let tenant_id = get_tenant_id(&claims);
+        match state.document_service.delete_document(id, tenant_id).await {
             Ok(true) => Json(ApiResponse::success("文档已删除".to_string(), "Success")),
             Ok(false) => Json(ApiResponse::<String>::error(404, "文档不存在")),
             Err(e) => Json(ApiResponse::<String>::error(500, &e)),
@@ -156,8 +184,10 @@ impl DocumentApi {
     /// GET /api/v1/documents - 获取文档列表
     pub async fn list(
         State(state): State<AppState>,
+        Extension(claims): Extension<Claims>,
     ) -> Json<ApiResponse<Vec<crate::services::vector::Document>>> {
-        match state.document_service.list_documents().await {
+        let tenant_id = get_tenant_id(&claims);
+        match state.document_service.list_documents(tenant_id).await {
             Ok(docs) => Json(ApiResponse::success(docs, "Success")),
             Err(e) => Json(ApiResponse::<Vec<crate::services::vector::Document>>::error(500, &e)),
         }
@@ -167,11 +197,17 @@ impl DocumentApi {
     pub async fn extract(
         State(state): State<AppState>,
         Path(id): Path<Uuid>,
+        Extension(claims): Extension<Claims>,
         Json(req): Json<ExtractDocumentRequest>,
     ) -> Json<ApiResponse<ExtractDocumentResponse>> {
-        match state.document_service.get_document(id).await {
+        let tenant_id = get_tenant_id(&claims);
+        match state.document_service.get_document(id, tenant_id).await {
             Ok(Some(doc)) => {
-                let chunks = match state.document_service.get_document_chunks(id).await {
+                let chunks = match state
+                    .document_service
+                    .get_document_chunks(id, tenant_id)
+                    .await
+                {
                     Ok(c) => c,
                     Err(e) => {
                         return Json(ApiResponse::<ExtractDocumentResponse>::error(
@@ -333,11 +369,13 @@ impl DocumentApi {
     /// POST /api/v1/documents/vectorize-from-file - 从 File 服务向量化文档
     pub async fn vectorize_from_file(
         State(state): State<AppState>,
+        Extension(claims): Extension<topems_shared::auth::Claims>,
         Json(req): Json<VectorizeFromFileRequest>,
     ) -> Json<ApiResponse<VectorizeFromFileResponse>> {
+        let tenant_id = crate::modules::qa::get_tenant_id(&claims);
         match state
             .document_service
-            .vectorize_from_file_service(req.file_id)
+            .vectorize_from_file_service(req.file_id, tenant_id)
             .await
         {
             Ok(result) => Json(ApiResponse::success(
@@ -360,11 +398,13 @@ impl DocumentApi {
     pub async fn summarize(
         State(state): State<AppState>,
         Path(id): Path<Uuid>,
+        Extension(claims): Extension<topems_shared::auth::Claims>,
         Json(req): Json<SummarizeDocumentRequest>,
     ) -> Json<ApiResponse<SummarizeDocumentResponse>> {
+        let tenant_id = crate::modules::qa::get_tenant_id(&claims);
         match state
             .document_service
-            .generate_document_summary(id, req.max_length)
+            .generate_document_summary(id, req.max_length, tenant_id)
             .await
         {
             Ok(summary) => Json(ApiResponse::success(
@@ -382,11 +422,13 @@ impl DocumentApi {
     pub async fn extract_key_points(
         State(state): State<AppState>,
         Path(id): Path<Uuid>,
+        Extension(claims): Extension<topems_shared::auth::Claims>,
         Json(req): Json<ExtractKeyPointsRequest>,
     ) -> Json<ApiResponse<ExtractKeyPointsResponse>> {
+        let tenant_id = crate::modules::qa::get_tenant_id(&claims);
         match state
             .document_service
-            .extract_document_key_points(id, req.max_points)
+            .extract_document_key_points(id, req.max_points, tenant_id)
             .await
         {
             Ok(points) => Json(ApiResponse::success(
@@ -403,13 +445,15 @@ impl DocumentApi {
     /// POST /api/v1/documents/qa - 文档问答
     pub async fn document_qa(
         State(state): State<AppState>,
+        Extension(claims): Extension<topems_shared::auth::Claims>,
         Json(req): Json<DocumentQAQuestionRequest>,
     ) -> Json<ApiResponse<DocumentQAAnswerResponse>> {
+        let tenant_id = crate::modules::qa::get_tenant_id(&claims);
         let top_k = req.top_k.unwrap_or(5);
 
         match state
             .document_service
-            .ask_document_qa(&req.question, req.document_ids.as_deref(), top_k)
+            .ask_document_qa(&req.question, req.document_ids.as_deref(), top_k, tenant_id)
             .await
         {
             Ok(result) => Json(ApiResponse::success(

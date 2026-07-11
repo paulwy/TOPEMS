@@ -34,13 +34,13 @@ where
             get(list_cycle_count_configs).post(create_cycle_count_config),
         )
         .route(
-            "/api/v1/cycle-counts/{id}",
+            "/api/wms/cycle-counts/{id}",
             get(get_cycle_count_config)
                 .put(update_cycle_count_config)
                 .delete(delete_cycle_count_config),
         )
         .route(
-            "/api/v1/cycle-counts/{id}/generate",
+            "/api/wms/cycle-counts/{id}/generate",
             post(generate_cycle_count),
         )
         .route(
@@ -50,7 +50,7 @@ where
 }
 
 /// 获取循环盘点配置列表
-async fn list_cycle_count_configs(
+pub async fn list_cycle_count_configs(
     State(state): State<ApiState>,
     Extension(claims): Extension<Claims>,
     Query(params): Query<CycleCountQueryParams>,
@@ -120,7 +120,7 @@ async fn list_cycle_count_configs(
 }
 
 /// 创建循环盘点配置
-async fn create_cycle_count_config(
+pub async fn create_cycle_count_config(
     State(state): State<ApiState>,
     Extension(claims): Extension<Claims>,
     headers: HeaderMap,
@@ -204,7 +204,7 @@ async fn create_cycle_count_config(
 }
 
 /// 获取循环盘点配置详情
-async fn get_cycle_count_config(
+pub async fn get_cycle_count_config(
     State(state): State<ApiState>,
     Extension(claims): Extension<Claims>,
     Path(id): Path<Uuid>,
@@ -237,7 +237,7 @@ async fn get_cycle_count_config(
 }
 
 /// 更新循环盘点配置
-async fn update_cycle_count_config(
+pub async fn update_cycle_count_config(
     State(state): State<ApiState>,
     Extension(claims): Extension<Claims>,
     Path(id): Path<Uuid>,
@@ -323,7 +323,7 @@ async fn update_cycle_count_config(
 }
 
 /// 删除循环盘点配置
-async fn delete_cycle_count_config(
+pub async fn delete_cycle_count_config(
     State(state): State<ApiState>,
     Extension(claims): Extension<Claims>,
     Path(id): Path<Uuid>,
@@ -387,7 +387,7 @@ async fn delete_cycle_count_config(
 }
 
 /// 根据配置生成循环盘点
-async fn generate_cycle_count(
+pub async fn generate_cycle_count(
     State(state): State<ApiState>,
     Extension(claims): Extension<Claims>,
     Path(id): Path<Uuid>,
@@ -500,7 +500,7 @@ async fn generate_cycle_count(
 }
 
 /// 生成所有到期的循环盘点
-async fn generate_all_cycle_counts(
+pub async fn generate_all_cycle_counts(
     State(state): State<ApiState>,
     Extension(claims): Extension<Claims>,
     headers: HeaderMap,

@@ -108,10 +108,16 @@ export interface FinancialVoucher {
   summary?: string;
   maker_id?: string;
   maker_name?: string;
+  submitter_id?: string;
+  submitter_name?: string;
   checker_id?: string;
   checker_name?: string;
+  approver_id?: string;
+  approver_name?: string;
   bookkeeper_id?: string;
   bookkeeper_name?: string;
+  poster_id?: string;
+  poster_name?: string;
   status: string;
   total_debit: number;
   total_credit: number;
@@ -119,6 +125,10 @@ export interface FinancialVoucher {
   source_id?: string;
   project_id?: string;
   contract_id?: string;
+  submitted_at?: string;
+  approved_at?: string;
+  checked_at?: string;
+  posted_at?: string;
   created_at: string;
   updated_at: string;
 }

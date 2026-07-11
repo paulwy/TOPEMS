@@ -1,21 +1,7 @@
 pub mod models;
 pub mod modules;
 pub mod services;
-
-use sqlx::PgPool;
-use topems_shared::AuthState;
-
-#[derive(Clone)]
-pub struct AppState {
-    pub auth_state: AuthState,
-    pub pool: PgPool,
-}
-
-impl axum::extract::FromRef<AppState> for AuthState {
-    fn from_ref(state: &AppState) -> Self {
-        state.auth_state.clone()
-    }
-}
+pub mod shared;
 
 pub use models::*;
 pub use services::FinanceService;

@@ -1,5 +1,6 @@
 import apiClient from '../client';
 import type { ApiResponse } from '../client';
+import type { PdmDocument } from './document';
 
 import { bomApi } from './bom';
 import { documentApi } from './document';

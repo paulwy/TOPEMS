@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useMemo, useCallback } from 'react';
+import React, { useState, useMemo, useCallback } from 'react';
 import {
   Chip,
   Dialog,
@@ -88,18 +88,13 @@ const statusConfig: Record<
 
 const InventoryPage: React.FC = () => {
   const { addNotification } = useAppStore();
+  const queryClient = useQueryClient();
 
-  const [inventory, setInventory] = useState<InventoryItem[]>([]);
-  const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState('');
   const [statusFilter, setStatusFilter] = useState<string>('');
   const [warehouseFilter, setWarehouseFilter] = useState<string>('');
-  const [warehouses, setWarehouses] = useState<Warehouse[]>([]);
   const [currentPage, setCurrentPage] = useState(1);
   const [pageSize] = useState(10);
-  const [total, setTotal] = useState(0);
-  const [alertStats, setAlertStats] = useState<InventoryAlertStatistics | null>(null);
-  const [lowStockItems, setLowStockItems] = useState<InventoryItem[]>([]);
   const [showLowStockDialog, setShowLowStockDialog] = useState(false);
 
   // Dialog states
@@ -125,9 +120,10 @@ const InventoryPage: React.FC = () => {
 
   const [editItem, setEditItem] = useState<UpdateInventoryItemRequest>({});
 
-  const fetchInventory = useCallback(async () => {
-    try {
-      setLoading(true);
+  // React Query - 库存列表
+  const inventoryQuery = useQuery({
+    queryKey: ['wms-inventory', currentPage, pageSize, searchTerm, statusFilter, warehouseFilter],
+    queryFn: async () => {
       const params: Record<string, unknown> = {
         page: currentPage,
         pagesize: pageSize,
@@ -135,65 +131,123 @@ const InventoryPage: React.FC = () => {
       if (searchTerm) params.search = searchTerm;
       if (statusFilter) params.status = statusFilter;
       if (warehouseFilter) params.warehouse_id = warehouseFilter;
+      return wmsApi.inventory.list(params);
+    },
+    staleTime: 5 * 60 * 1000,
+  });
 
-      const response = await wmsApi.inventory.list(params);
-      if (response.success && response.data) {
-        setInventory(response.data.items || []);
-        setTotal(response.data.total || 0);
-      }
-    } catch (error: unknown) {
-      apiLogger.error('获取库存列表失败:', error);
-      addNotification({
-        type: 'error',
-        title: '加载失败',
-        message: '无法加载库存列表',
-      });
-    } finally {
-      setLoading(false);
-    }
-  }, [currentPage, pageSize, searchTerm, statusFilter, warehouseFilter, addNotification]);
+  const inventory =
+    inventoryQuery.data?.success && inventoryQuery.data.data
+      ? inventoryQuery.data.data.items || []
+      : [];
+  const total =
+    inventoryQuery.data?.success && inventoryQuery.data.data
+      ? inventoryQuery.data.data.total || 0
+      : 0;
+  const loading = inventoryQuery.isLoading;
 
-  const fetchWarehouses = async () => {
-    try {
-      const response = await wmsApi.warehouses.list({ page: 1, pagesize: 100 });
-      if (response.success && response.data) {
-        setWarehouses(response.data.items || []);
-      }
-    } catch (error: unknown) {
-      apiLogger.error('获取仓库列表失败:', error);
-    }
-  };
+  // React Query - 仓库列表
+  const warehousesQuery = useQuery({
+    queryKey: ['wms-warehouses'],
+    queryFn: () => wmsApi.warehouses.list({ page: 1, pagesize: 100 }),
+    staleTime: 10 * 60 * 1000,
+  });
 
-  const fetchAlertStats = useCallback(async () => {
-    try {
+  const warehouses =
+    warehousesQuery.data?.success && warehousesQuery.data.data
+      ? warehousesQuery.data.data.items || []
+      : [];
+
+  // React Query - 库存预警统计
+  const alertStatsQuery = useQuery({
+    queryKey: ['wms-alert-stats', warehouseFilter],
+    queryFn: async () => {
       const params: Record<string, unknown> = {};
       if (warehouseFilter) params.warehouse_id = warehouseFilter;
-      const response = await wmsApi.inventoryAlerts.getStatistics(params);
-      if (response.success && response.data) {
-        setAlertStats(response.data);
-      }
-    } catch (error: unknown) {
-      apiLogger.error('获取库存预警统计失败:', error);
-    }
-  }, [warehouseFilter]);
+      return wmsApi.inventoryAlerts.getStatistics(params);
+    },
+    staleTime: 5 * 60 * 1000,
+  });
 
-  const fetchLowStockItems = async () => {
-    try {
-      const response = await wmsApi.inventory.listLowStock();
-      if (response.success && response.data) {
-        setLowStockItems(response.data.items || []);
-      }
-    } catch (error: unknown) {
-      apiLogger.error('获取低库存列表失败:', error);
-    }
-  };
+  const alertStats =
+    alertStatsQuery.data?.success && alertStatsQuery.data.data ? alertStatsQuery.data.data : null;
 
-  useEffect(() => {
-    fetchInventory();
-    fetchWarehouses();
-    fetchAlertStats();
-    fetchLowStockItems();
-  }, [fetchInventory, fetchAlertStats]);
+  // React Query - 低库存列表
+  const lowStockQuery = useQuery({
+    queryKey: ['wms-low-stock'],
+    queryFn: () => wmsApi.inventory.listLowStock(),
+    staleTime: 5 * 60 * 1000,
+  });
+
+  const lowStockItems =
+    lowStockQuery.data?.success && lowStockQuery.data.data
+      ? lowStockQuery.data.data.items || []
+      : [];
+
+  // React Query - Mutations
+  const createMutation = useMutation({
+    mutationFn: (item: CreateInventoryItemRequest) => wmsApi.inventory.create(item),
+    onSuccess: () => {
+      addNotification({
+        type: 'success',
+        title: '创建成功',
+        message: '库存记录已创建',
+      });
+      queryClient.invalidateQueries({ queryKey: ['wms-inventory'] });
+      queryClient.invalidateQueries({ queryKey: ['wms-alert-stats'] });
+      queryClient.invalidateQueries({ queryKey: ['wms-low-stock'] });
+    },
+    onError: () => {
+      addNotification({
+        type: 'error',
+        title: '创建失败',
+        message: '创建库存记录失败',
+      });
+    },
+  });
+
+  const updateMutation = useMutation({
+    mutationFn: ({ id, item }: { id: string; item: UpdateInventoryItemRequest }) =>
+      wmsApi.inventory.update(id, item),
+    onSuccess: () => {
+      addNotification({
+        type: 'success',
+        title: '更新成功',
+        message: '库存记录已更新',
+      });
+      queryClient.invalidateQueries({ queryKey: ['wms-inventory'] });
+      queryClient.invalidateQueries({ queryKey: ['wms-alert-stats'] });
+      queryClient.invalidateQueries({ queryKey: ['wms-low-stock'] });
+    },
+    onError: () => {
+      addNotification({
+        type: 'error',
+        title: '更新失败',
+        message: '更新库存记录失败',
+      });
+    },
+  });
+
+  const deleteMutation = useMutation({
+    mutationFn: (id: string) => wmsApi.inventory.delete(id),
+    onSuccess: () => {
+      addNotification({
+        type: 'success',
+        title: '删除成功',
+        message: '库存记录已删除',
+      });
+      queryClient.invalidateQueries({ queryKey: ['wms-inventory'] });
+      queryClient.invalidateQueries({ queryKey: ['wms-alert-stats'] });
+      queryClient.invalidateQueries({ queryKey: ['wms-low-stock'] });
+    },
+    onError: () => {
+      addNotification({
+        type: 'error',
+        title: '删除失败',
+        message: '删除库存记录失败',
+      });
+    },
+  });
 
   const handleCreate = async () => {
     if (!newItem.sku || !newItem.name || !newItem.warehouse_id) {
@@ -206,26 +260,11 @@ const InventoryPage: React.FC = () => {
     }
 
     try {
-      const response = await wmsApi.inventory.create(newItem);
-      if (response.success) {
-        addNotification({
-          type: 'success',
-          title: '创建成功',
-          message: '库存记录已创建',
-        });
-        setShowCreateDialog(false);
-        resetNewItem();
-        fetchInventory();
-        fetchAlertStats();
-        fetchLowStockItems();
-      }
+      await createMutation.mutateAsync(newItem);
+      setShowCreateDialog(false);
+      resetNewItem();
     } catch (error: unknown) {
       apiLogger.error('创建库存失败:', error);
-      addNotification({
-        type: 'error',
-        title: '创建失败',
-        message: '创建库存记录失败',
-      });
     }
   };
 
@@ -233,25 +272,10 @@ const InventoryPage: React.FC = () => {
     if (!selectedItem) return;
 
     try {
-      const response = await wmsApi.inventory.update(selectedItem.id, editItem);
-      if (response.success) {
-        addNotification({
-          type: 'success',
-          title: '更新成功',
-          message: '库存记录已更新',
-        });
-        setShowEditDialog(false);
-        fetchInventory();
-        fetchAlertStats();
-        fetchLowStockItems();
-      }
+      await updateMutation.mutateAsync({ id: selectedItem.id, item: editItem });
+      setShowEditDialog(false);
     } catch (error: unknown) {
       apiLogger.error('更新库存失败:', error);
-      addNotification({
-        type: 'error',
-        title: '更新失败',
-        message: '更新库存记录失败',
-      });
     }
   };
 
@@ -264,26 +288,11 @@ const InventoryPage: React.FC = () => {
     if (!deleteItemId) return;
 
     try {
-      const response = await wmsApi.inventory.delete(deleteItemId);
-      if (response.success) {
-        addNotification({
-          type: 'success',
-          title: '删除成功',
-          message: '库存记录已删除',
-        });
-        fetchInventory();
-        fetchAlertStats();
-        fetchLowStockItems();
-      }
+      await deleteMutation.mutateAsync(deleteItemId);
     } catch (error: unknown) {
       apiLogger.error('删除库存失败:', error);
-      addNotification({
-        type: 'error',
-        title: '删除失败',
-        message: '删除库存记录失败',
-      });
     }
-  }, [addNotification, fetchInventory, fetchAlertStats, fetchLowStockItems, deleteItemId]);
+  }, [deleteMutation, deleteItemId]);
 
   const handleEdit = (item: InventoryItem) => {
     setSelectedItem(item);
@@ -415,7 +424,7 @@ const InventoryPage: React.FC = () => {
         onClick: (row) => handleDeleteClick(row.id),
       },
     ],
-    [handleDelete]
+    []
   );
 
   const handleSearch = (value: string) => {
@@ -460,7 +469,7 @@ const InventoryPage: React.FC = () => {
           '&:hover': { opacity: 0.9 },
         }}
         onClick={() => {
-          fetchLowStockItems();
+          lowStockQuery.refetch();
           setShowLowStockDialog(true);
         }}
       >

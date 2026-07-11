@@ -1,12 +1,27 @@
-use axum::{extract::State, routing::get, Json, Router};
+use axum::{extract::State, routing::get, Extension, Json, Router};
 use sqlx::postgres::PgPool;
 use std::sync::Arc;
+use uuid::Uuid;
 
 use crate::models::Supplier;
-use topems_shared::ApiResponse;
+use topems_shared::{ApiResponse, Claims};
 
 pub struct AppState {
     pub db: PgPool,
+}
+
+fn get_tenant_id(claims: &Claims, headers: &axum::http::HeaderMap) -> Uuid {
+    claims
+        .tenant_id
+        .as_ref()
+        .and_then(|t| Uuid::parse_str(t).ok())
+        .or_else(|| {
+            headers
+                .get("x-tenant-id")
+                .and_then(|v| v.to_str().ok())
+                .and_then(|s| Uuid::parse_str(s).ok())
+        })
+        .unwrap_or_else(Uuid::new_v4)
 }
 
 pub fn create_routes(db: PgPool) -> Router {
@@ -24,51 +39,64 @@ pub fn create_routes(db: PgPool) -> Router {
 
 pub async fn get_statistics(
     State(state): State<Arc<AppState>>,
+    Extension(claims): Extension<Claims>,
+    headers: axum::http::HeaderMap,
 ) -> Json<ApiResponse<serde_json::Value>> {
+    let tenant_id = get_tenant_id(&claims, &headers);
+
     let total_suppliers = sqlx::query_scalar::<_, i64>(
-        "SELECT COUNT(*) FROM plugin_srm.suppliers WHERE status != 'deleted'",
+        "SELECT COUNT(*) FROM plugin_srm.suppliers WHERE tenant_id = $1 AND status != 'deleted'",
     )
+    .bind(tenant_id)
     .fetch_one(&state.db)
     .await
     .unwrap_or(0);
 
     let active_suppliers = sqlx::query_scalar::<_, i64>(
-        "SELECT COUNT(*) FROM plugin_srm.suppliers WHERE status = 'active'",
+        "SELECT COUNT(*) FROM plugin_srm.suppliers WHERE tenant_id = $1 AND status = 'active'",
     )
+    .bind(tenant_id)
     .fetch_one(&state.db)
     .await
     .unwrap_or(0);
 
-    let total_evaluations =
-        sqlx::query_scalar::<_, i64>("SELECT COUNT(*) FROM plugin_srm.supplier_evaluations")
-            .fetch_one(&state.db)
-            .await
-            .unwrap_or(0);
+    let total_evaluations = sqlx::query_scalar::<_, i64>(
+        "SELECT COUNT(*) FROM plugin_srm.supplier_evaluations WHERE tenant_id = $1",
+    )
+    .bind(tenant_id)
+    .fetch_one(&state.db)
+    .await
+    .unwrap_or(0);
 
     let avg_score = sqlx::query_scalar::<_, Option<f64>>(
-        "SELECT AVG(overall_score) FROM plugin_srm.supplier_evaluations WHERE overall_score IS NOT NULL",
+        "SELECT AVG(overall_score) FROM plugin_srm.supplier_evaluations WHERE tenant_id = $1 AND overall_score IS NOT NULL",
     )
+    .bind(tenant_id)
     .fetch_one(&state.db)
     .await
     .unwrap_or(None)
     .unwrap_or(0.0);
 
-    let total_contracts =
-        sqlx::query_scalar::<_, i64>("SELECT COUNT(*) FROM plugin_srm.supplier_contracts")
-            .fetch_one(&state.db)
-            .await
-            .unwrap_or(0);
+    let total_contracts = sqlx::query_scalar::<_, i64>(
+        "SELECT COUNT(*) FROM plugin_srm.supplier_contracts WHERE tenant_id = $1",
+    )
+    .bind(tenant_id)
+    .fetch_one(&state.db)
+    .await
+    .unwrap_or(0);
 
     let active_contracts = sqlx::query_scalar::<_, i64>(
-        "SELECT COUNT(*) FROM plugin_srm.supplier_contracts WHERE status = 'active'",
+        "SELECT COUNT(*) FROM plugin_srm.supplier_contracts WHERE tenant_id = $1 AND status = 'active'",
     )
+    .bind(tenant_id)
     .fetch_one(&state.db)
     .await
     .unwrap_or(0);
 
     let total_products = sqlx::query_scalar::<_, i64>(
-        "SELECT COUNT(*) FROM plugin_srm.supplier_products WHERE status = 'active'",
+        "SELECT COUNT(*) FROM plugin_srm.supplier_products WHERE tenant_id = $1 AND status = 'active'",
     )
+    .bind(tenant_id)
     .fetch_one(&state.db)
     .await
     .unwrap_or(0);
@@ -88,86 +116,105 @@ pub async fn get_statistics(
 
 pub async fn get_detailed_statistics(
     State(state): State<Arc<AppState>>,
+    Extension(claims): Extension<Claims>,
+    headers: axum::http::HeaderMap,
 ) -> Json<ApiResponse<serde_json::Value>> {
+    let tenant_id = get_tenant_id(&claims, &headers);
+
     let total_suppliers = sqlx::query_scalar::<_, i64>(
-        "SELECT COUNT(*) FROM plugin_srm.suppliers WHERE status != 'deleted'",
+        "SELECT COUNT(*) FROM plugin_srm.suppliers WHERE tenant_id = $1 AND status != 'deleted'",
     )
+    .bind(tenant_id)
     .fetch_one(&state.db)
     .await
     .unwrap_or(0);
 
     let active_suppliers = sqlx::query_scalar::<_, i64>(
-        "SELECT COUNT(*) FROM plugin_srm.suppliers WHERE status = 'active'",
+        "SELECT COUNT(*) FROM plugin_srm.suppliers WHERE tenant_id = $1 AND status = 'active'",
     )
+    .bind(tenant_id)
     .fetch_one(&state.db)
     .await
     .unwrap_or(0);
 
-    let total_evaluations =
-        sqlx::query_scalar::<_, i64>("SELECT COUNT(*) FROM plugin_srm.supplier_evaluations")
-            .fetch_one(&state.db)
-            .await
-            .unwrap_or(0);
+    let total_evaluations = sqlx::query_scalar::<_, i64>(
+        "SELECT COUNT(*) FROM plugin_srm.supplier_evaluations WHERE tenant_id = $1",
+    )
+    .bind(tenant_id)
+    .fetch_one(&state.db)
+    .await
+    .unwrap_or(0);
 
     let avg_score = sqlx::query_scalar::<_, Option<f64>>(
-        "SELECT AVG(overall_score) FROM plugin_srm.supplier_evaluations WHERE overall_score IS NOT NULL",
+        "SELECT AVG(overall_score) FROM plugin_srm.supplier_evaluations WHERE tenant_id = $1 AND overall_score IS NOT NULL",
     )
+    .bind(tenant_id)
     .fetch_one(&state.db)
     .await
     .unwrap_or(None)
     .unwrap_or(0.0);
 
-    let total_contracts =
-        sqlx::query_scalar::<_, i64>("SELECT COUNT(*) FROM plugin_srm.supplier_contracts")
-            .fetch_one(&state.db)
-            .await
-            .unwrap_or(0);
+    let total_contracts = sqlx::query_scalar::<_, i64>(
+        "SELECT COUNT(*) FROM plugin_srm.supplier_contracts WHERE tenant_id = $1",
+    )
+    .bind(tenant_id)
+    .fetch_one(&state.db)
+    .await
+    .unwrap_or(0);
 
     let active_contracts = sqlx::query_scalar::<_, i64>(
-        "SELECT COUNT(*) FROM plugin_srm.supplier_contracts WHERE status = 'active'",
+        "SELECT COUNT(*) FROM plugin_srm.supplier_contracts WHERE tenant_id = $1 AND status = 'active'",
     )
+    .bind(tenant_id)
     .fetch_one(&state.db)
     .await
     .unwrap_or(0);
 
     let total_products = sqlx::query_scalar::<_, i64>(
-        "SELECT COUNT(*) FROM plugin_srm.supplier_products WHERE status = 'active'",
+        "SELECT COUNT(*) FROM plugin_srm.supplier_products WHERE tenant_id = $1 AND status = 'active'",
     )
+    .bind(tenant_id)
     .fetch_one(&state.db)
     .await
     .unwrap_or(0);
 
-    let total_orders =
-        sqlx::query_scalar::<_, i64>("SELECT COUNT(*) FROM plugin_srm.purchase_orders")
-            .fetch_one(&state.db)
-            .await
-            .unwrap_or(0);
+    let total_orders = sqlx::query_scalar::<_, i64>(
+        "SELECT COUNT(*) FROM plugin_srm.purchase_orders WHERE tenant_id = $1",
+    )
+    .bind(tenant_id)
+    .fetch_one(&state.db)
+    .await
+    .unwrap_or(0);
 
     let total_order_amount = sqlx::query_scalar::<_, Option<f64>>(
-        "SELECT COALESCE(SUM(total_amount), 0) FROM plugin_srm.purchase_orders WHERE status != 'cancelled'",
+        "SELECT COALESCE(SUM(total_amount), 0) FROM plugin_srm.purchase_orders WHERE tenant_id = $1 AND status != 'cancelled'",
     )
+    .bind(tenant_id)
     .fetch_one(&state.db)
     .await
     .unwrap_or(Some(0.0))
     .unwrap_or(0.0);
 
     let pending_orders = sqlx::query_scalar::<_, i64>(
-        "SELECT COUNT(*) FROM plugin_srm.purchase_orders WHERE status = 'pending'",
+        "SELECT COUNT(*) FROM plugin_srm.purchase_orders WHERE tenant_id = $1 AND status = 'pending'",
     )
+    .bind(tenant_id)
     .fetch_one(&state.db)
     .await
     .unwrap_or(0);
 
     let completed_orders = sqlx::query_scalar::<_, i64>(
-        "SELECT COUNT(*) FROM plugin_srm.purchase_orders WHERE status = 'completed'",
+        "SELECT COUNT(*) FROM plugin_srm.purchase_orders WHERE tenant_id = $1 AND status = 'completed'",
     )
+    .bind(tenant_id)
     .fetch_one(&state.db)
     .await
     .unwrap_or(0);
 
     let supplier_by_category = sqlx::query_as::<_, (String, i64)>(
-        "SELECT category, COUNT(*) FROM plugin_srm.suppliers WHERE status != 'deleted' GROUP BY category",
+        "SELECT category, COUNT(*) FROM plugin_srm.suppliers WHERE tenant_id = $1 AND status != 'deleted' GROUP BY category",
     )
+    .bind(tenant_id)
     .fetch_all(&state.db)
     .await
     .unwrap_or_default()
@@ -176,8 +223,9 @@ pub async fn get_detailed_statistics(
     .collect::<Vec<_>>();
 
     let supplier_by_status = sqlx::query_as::<_, (String, i64)>(
-        "SELECT status, COUNT(*) FROM plugin_srm.suppliers GROUP BY status",
+        "SELECT status, COUNT(*) FROM plugin_srm.suppliers WHERE tenant_id = $1 GROUP BY status",
     )
+    .bind(tenant_id)
     .fetch_all(&state.db)
     .await
     .unwrap_or_default()
@@ -186,8 +234,9 @@ pub async fn get_detailed_statistics(
     .collect::<Vec<_>>();
 
     let contract_by_status = sqlx::query_as::<_, (String, i64)>(
-        "SELECT status, COUNT(*) FROM plugin_srm.supplier_contracts GROUP BY status",
+        "SELECT status, COUNT(*) FROM plugin_srm.supplier_contracts WHERE tenant_id = $1 GROUP BY status",
     )
+    .bind(tenant_id)
     .fetch_all(&state.db)
     .await
     .unwrap_or_default()
@@ -196,8 +245,9 @@ pub async fn get_detailed_statistics(
     .collect::<Vec<_>>();
 
     let order_by_status = sqlx::query_as::<_, (String, i64)>(
-        "SELECT status, COUNT(*) FROM plugin_srm.purchase_orders GROUP BY status",
+        "SELECT status, COUNT(*) FROM plugin_srm.purchase_orders WHERE tenant_id = $1 GROUP BY status",
     )
+    .bind(tenant_id)
     .fetch_all(&state.db)
     .await
     .unwrap_or_default()
@@ -216,10 +266,11 @@ pub async fn get_detailed_statistics(
             END as range, \
             COUNT(*) as count \
         FROM plugin_srm.supplier_evaluations \
-        WHERE overall_score IS NOT NULL \
+        WHERE tenant_id = $1 AND overall_score IS NOT NULL \
         GROUP BY range \
         ORDER BY range",
     )
+    .bind(tenant_id)
     .fetch_all(&state.db)
     .await
     .unwrap_or_default()
@@ -233,10 +284,11 @@ pub async fn get_detailed_statistics(
             COUNT(*) as order_count, \
             COALESCE(SUM(total_amount), 0) as total_amount \
         FROM plugin_srm.purchase_orders \
-        WHERE created_at >= NOW() - INTERVAL '12 months' \
+        WHERE tenant_id = $1 AND created_at >= NOW() - INTERVAL '12 months' \
         GROUP BY TO_CHAR(created_at, 'YYYY-MM') \
         ORDER BY month",
     )
+    .bind(tenant_id)
     .fetch_all(&state.db)
     .await
     .unwrap_or_default()
@@ -277,10 +329,15 @@ pub async fn get_detailed_statistics(
 
 pub async fn get_suppliers_with_stats(
     State(state): State<Arc<AppState>>,
+    Extension(claims): Extension<Claims>,
+    headers: axum::http::HeaderMap,
 ) -> Json<ApiResponse<Vec<serde_json::Value>>> {
+    let tenant_id = get_tenant_id(&claims, &headers);
+
     let suppliers = sqlx::query_as::<_, Supplier>(
-        "SELECT id, supplier_no, name, legal_name, category, status, tax_id, address, contact_person, phone, email, website, credit_rating, risk_level, created_by, created_at, updated_at FROM plugin_srm.suppliers WHERE status != 'deleted' ORDER BY created_at DESC"
+        "SELECT id, tenant_id, supplier_no, name, legal_name, category, status, tax_id, address, contact_person, phone, email, website, credit_rating, risk_level, created_by, created_at, updated_at FROM plugin_srm.suppliers WHERE tenant_id = $1 AND status != 'deleted' ORDER BY created_at DESC"
     )
+    .bind(tenant_id)
     .fetch_all(&state.db)
     .await;
 
@@ -290,33 +347,37 @@ pub async fn get_suppliers_with_stats(
 
             for supplier in suppliers {
                 let product_count = sqlx::query_scalar::<_, i64>(
-                    "SELECT COUNT(*) FROM plugin_srm.supplier_products WHERE supplier_id = $1",
+                    "SELECT COUNT(*) FROM plugin_srm.supplier_products WHERE supplier_id = $1 AND tenant_id = $2",
                 )
                 .bind(supplier.id)
+                .bind(tenant_id)
                 .fetch_one(&state.db)
                 .await
                 .unwrap_or(0);
 
                 let contract_count = sqlx::query_scalar::<_, i64>(
-                    "SELECT COUNT(*) FROM plugin_srm.supplier_contracts WHERE supplier_id = $1",
+                    "SELECT COUNT(*) FROM plugin_srm.supplier_contracts WHERE supplier_id = $1 AND tenant_id = $2",
                 )
                 .bind(supplier.id)
+                .bind(tenant_id)
                 .fetch_one(&state.db)
                 .await
                 .unwrap_or(0);
 
                 let eval_count = sqlx::query_scalar::<_, i64>(
-                    "SELECT COUNT(*) FROM plugin_srm.supplier_evaluations WHERE supplier_id = $1",
+                    "SELECT COUNT(*) FROM plugin_srm.supplier_evaluations WHERE supplier_id = $1 AND tenant_id = $2",
                 )
                 .bind(supplier.id)
+                .bind(tenant_id)
                 .fetch_one(&state.db)
                 .await
                 .unwrap_or(0);
 
                 let avg_score = sqlx::query_scalar::<_, Option<f64>>(
-                    "SELECT AVG(overall_score) FROM plugin_srm.supplier_evaluations WHERE supplier_id = $1 AND overall_score IS NOT NULL"
+                    "SELECT AVG(overall_score) FROM plugin_srm.supplier_evaluations WHERE supplier_id = $1 AND tenant_id = $2 AND overall_score IS NOT NULL"
                 )
                 .bind(supplier.id)
+                .bind(tenant_id)
                 .fetch_one(&state.db)
                 .await
                 .unwrap_or(None);

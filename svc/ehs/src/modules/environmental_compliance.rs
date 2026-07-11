@@ -1,10 +1,26 @@
 //! Environmental compliance management - Regulations, compliance evaluation, monitoring, permits, and incidents
 
-use axum::{extract::State, routing::get, Json, Router};
+use axum::{extract::State, http::HeaderMap, routing::*, Extension, Json, Router};
 use serde::{Deserialize, Serialize};
-use topems_shared::ApiResponse;
+use topems_shared::{ApiResponse, Claims};
 
-use crate::AppState;
+use uuid::Uuid;
+
+use crate::shared::AppState;
+
+fn get_tenant_id(claims: &Claims, headers: &HeaderMap) -> Uuid {
+    claims
+        .tenant_id
+        .as_ref()
+        .and_then(|t| Uuid::parse_str(t).ok())
+        .or_else(|| {
+            headers
+                .get("x-tenant-id")
+                .and_then(|v| v.to_str().ok())
+                .and_then(|s| Uuid::parse_str(s).ok())
+        })
+        .unwrap_or_else(Uuid::new_v4)
+}
 
 pub fn create_routes() -> Router<AppState> {
     Router::new()
@@ -104,6 +120,8 @@ pub struct EnvironmentalRegulation {
     pub remarks: Option<String>,
     pub created_at: Option<String>,
     pub updated_at: Option<String>,
+
+    pub tenant_id: Uuid,
 }
 
 #[derive(Debug, Serialize)]
@@ -125,6 +143,8 @@ pub struct ComplianceEvaluation {
     pub attachments: Option<Vec<String>>,
     pub created_at: Option<String>,
     pub updated_at: Option<String>,
+
+    pub tenant_id: Uuid,
 }
 
 #[derive(Debug, Serialize)]
@@ -141,6 +161,8 @@ pub struct ComplianceItem {
     pub responsible_person: Option<String>,
     pub deadline: Option<String>,
     pub status: Option<String>,
+
+    pub tenant_id: Uuid,
 }
 
 #[derive(Debug, Serialize)]
@@ -165,6 +187,8 @@ pub struct EnvironmentMonitor {
     pub attachments: Option<Vec<String>>,
     pub created_at: Option<String>,
     pub updated_at: Option<String>,
+
+    pub tenant_id: Uuid,
 }
 
 #[derive(Debug, Serialize)]
@@ -187,6 +211,8 @@ pub struct DischargePermit {
     pub remarks: Option<String>,
     pub created_at: Option<String>,
     pub updated_at: Option<String>,
+
+    pub tenant_id: Uuid,
 }
 
 #[derive(Debug, Serialize)]
@@ -213,6 +239,8 @@ pub struct EnvironmentIncident {
     pub attachments: Option<Vec<String>>,
     pub created_at: Option<String>,
     pub updated_at: Option<String>,
+
+    pub tenant_id: Uuid,
 }
 
 #[derive(Debug, Serialize)]
@@ -229,6 +257,8 @@ pub struct ComplianceStatistics {
     pub open_incidents: i32,
     pub by_monitor_type: Vec<serde_json::Value>,
     pub by_incident_type: Vec<serde_json::Value>,
+
+    pub tenant_id: Uuid,
 }
 
 #[derive(Debug, Deserialize)]
@@ -350,8 +380,11 @@ pub struct UpdateIncidentRequest {
 }
 
 pub async fn list_regulations(
-    State(_state): State<crate::AppState>,
+    State(_state): State<crate::shared::AppState>,
+    Extension(claims): Extension<Claims>,
+    headers: HeaderMap,
 ) -> Json<ApiResponse<Vec<EnvironmentalRegulation>>> {
+    let tenant_id = get_tenant_id(&claims, &headers);
     tracing::info!("Listing environmental regulations");
     Json(ApiResponse::success(
         Vec::<EnvironmentalRegulation>::new(),
@@ -360,9 +393,12 @@ pub async fn list_regulations(
 }
 
 pub async fn create_regulation(
-    State(_state): State<crate::AppState>,
+    State(_state): State<crate::shared::AppState>,
+    Extension(claims): Extension<Claims>,
+    headers: HeaderMap,
     Json(req): Json<CreateRegulationRequest>,
 ) -> Json<ApiResponse<EnvironmentalRegulation>> {
+    let tenant_id = get_tenant_id(&claims, &headers);
     tracing::info!("Creating environmental regulation: {:?}", req);
     Json(ApiResponse::success(
         EnvironmentalRegulation {
@@ -386,15 +422,20 @@ pub async fn create_regulation(
             remarks: req.remarks,
             created_at: Some(chrono::Utc::now().to_rfc3339()),
             updated_at: Some(chrono::Utc::now().to_rfc3339()),
+
+            tenant_id,
         },
         "环保法规创建成功",
     ))
 }
 
 pub async fn get_regulation(
-    State(_state): State<crate::AppState>,
+    State(_state): State<crate::shared::AppState>,
+    Extension(claims): Extension<Claims>,
+    headers: HeaderMap,
     axum::extract::Path(id): axum::extract::Path<String>,
 ) -> Json<ApiResponse<EnvironmentalRegulation>> {
+    let tenant_id = get_tenant_id(&claims, &headers);
     tracing::info!("Getting environmental regulation: {}", id);
     Json(ApiResponse::success(
         EnvironmentalRegulation {
@@ -417,16 +458,21 @@ pub async fn get_regulation(
             remarks: None,
             created_at: Some(chrono::Utc::now().to_rfc3339()),
             updated_at: Some(chrono::Utc::now().to_rfc3339()),
+
+            tenant_id,
         },
         "获取法规详情成功",
     ))
 }
 
 pub async fn update_regulation(
-    State(_state): State<crate::AppState>,
+    State(_state): State<crate::shared::AppState>,
+    Extension(claims): Extension<Claims>,
+    headers: HeaderMap,
     axum::extract::Path(id): axum::extract::Path<String>,
     Json(req): Json<UpdateRegulationRequest>,
 ) -> Json<ApiResponse<EnvironmentalRegulation>> {
+    let tenant_id = get_tenant_id(&claims, &headers);
     tracing::info!("Updating environmental regulation {}: {:?}", id, req);
     Json(ApiResponse::success(
         EnvironmentalRegulation {
@@ -449,22 +495,30 @@ pub async fn update_regulation(
             remarks: req.remarks,
             created_at: Some(chrono::Utc::now().to_rfc3339()),
             updated_at: Some(chrono::Utc::now().to_rfc3339()),
+
+            tenant_id,
         },
         "法规更新成功",
     ))
 }
 
 pub async fn delete_regulation(
-    State(_state): State<crate::AppState>,
+    State(_state): State<crate::shared::AppState>,
+    Extension(claims): Extension<Claims>,
+    headers: HeaderMap,
     axum::extract::Path(id): axum::extract::Path<String>,
 ) -> Json<ApiResponse<()>> {
+    let tenant_id = get_tenant_id(&claims, &headers);
     tracing::info!("Deleting environmental regulation: {}", id);
     Json(ApiResponse::success((), "法规删除成功"))
 }
 
 pub async fn list_evaluations(
-    State(_state): State<crate::AppState>,
+    State(_state): State<crate::shared::AppState>,
+    Extension(claims): Extension<Claims>,
+    headers: HeaderMap,
 ) -> Json<ApiResponse<Vec<ComplianceEvaluation>>> {
+    let tenant_id = get_tenant_id(&claims, &headers);
     tracing::info!("Listing compliance evaluations");
     Json(ApiResponse::success(
         Vec::<ComplianceEvaluation>::new(),
@@ -473,9 +527,12 @@ pub async fn list_evaluations(
 }
 
 pub async fn create_evaluation(
-    State(_state): State<crate::AppState>,
+    State(_state): State<crate::shared::AppState>,
+    Extension(claims): Extension<Claims>,
+    headers: HeaderMap,
     Json(req): Json<CreateEvaluationRequest>,
 ) -> Json<ApiResponse<ComplianceEvaluation>> {
+    let tenant_id = get_tenant_id(&claims, &headers);
     tracing::info!("Creating compliance evaluation: {:?}", req);
     Json(ApiResponse::success(
         ComplianceEvaluation {
@@ -499,15 +556,20 @@ pub async fn create_evaluation(
             attachments: None,
             created_at: Some(chrono::Utc::now().to_rfc3339()),
             updated_at: Some(chrono::Utc::now().to_rfc3339()),
+
+            tenant_id,
         },
         "合规性评价创建成功",
     ))
 }
 
 pub async fn get_evaluation(
-    State(_state): State<crate::AppState>,
+    State(_state): State<crate::shared::AppState>,
+    Extension(claims): Extension<Claims>,
+    headers: HeaderMap,
     axum::extract::Path(id): axum::extract::Path<String>,
 ) -> Json<ApiResponse<ComplianceEvaluation>> {
+    let tenant_id = get_tenant_id(&claims, &headers);
     tracing::info!("Getting compliance evaluation: {}", id);
     Json(ApiResponse::success(
         ComplianceEvaluation {
@@ -528,16 +590,21 @@ pub async fn get_evaluation(
             attachments: None,
             created_at: Some(chrono::Utc::now().to_rfc3339()),
             updated_at: Some(chrono::Utc::now().to_rfc3339()),
+
+            tenant_id,
         },
         "获取评价详情成功",
     ))
 }
 
 pub async fn update_evaluation(
-    State(_state): State<crate::AppState>,
+    State(_state): State<crate::shared::AppState>,
+    Extension(claims): Extension<Claims>,
+    headers: HeaderMap,
     axum::extract::Path(id): axum::extract::Path<String>,
     Json(req): Json<UpdateEvaluationRequest>,
 ) -> Json<ApiResponse<ComplianceEvaluation>> {
+    let tenant_id = get_tenant_id(&claims, &headers);
     tracing::info!("Updating compliance evaluation {}: {:?}", id, req);
     let status = req
         .status
@@ -568,22 +635,30 @@ pub async fn update_evaluation(
             attachments: None,
             created_at: Some(chrono::Utc::now().to_rfc3339()),
             updated_at: Some(chrono::Utc::now().to_rfc3339()),
+
+            tenant_id,
         },
         "评价更新成功",
     ))
 }
 
 pub async fn delete_evaluation(
-    State(_state): State<crate::AppState>,
+    State(_state): State<crate::shared::AppState>,
+    Extension(claims): Extension<Claims>,
+    headers: HeaderMap,
     axum::extract::Path(id): axum::extract::Path<String>,
 ) -> Json<ApiResponse<()>> {
+    let tenant_id = get_tenant_id(&claims, &headers);
     tracing::info!("Deleting compliance evaluation: {}", id);
     Json(ApiResponse::success((), "评价删除成功"))
 }
 
 pub async fn list_monitor_records(
-    State(_state): State<crate::AppState>,
+    State(_state): State<crate::shared::AppState>,
+    Extension(claims): Extension<Claims>,
+    headers: HeaderMap,
 ) -> Json<ApiResponse<Vec<EnvironmentMonitor>>> {
+    let tenant_id = get_tenant_id(&claims, &headers);
     tracing::info!("Listing environment monitor records");
     Json(ApiResponse::success(
         Vec::<EnvironmentMonitor>::new(),
@@ -592,9 +667,12 @@ pub async fn list_monitor_records(
 }
 
 pub async fn create_monitor_record(
-    State(_state): State<crate::AppState>,
+    State(_state): State<crate::shared::AppState>,
+    Extension(claims): Extension<Claims>,
+    headers: HeaderMap,
     Json(req): Json<CreateMonitorRecordRequest>,
 ) -> Json<ApiResponse<EnvironmentMonitor>> {
+    let tenant_id = get_tenant_id(&claims, &headers);
     tracing::info!("Creating environment monitor record: {:?}", req);
     Json(ApiResponse::success(
         EnvironmentMonitor {
@@ -621,15 +699,20 @@ pub async fn create_monitor_record(
             attachments: None,
             created_at: Some(chrono::Utc::now().to_rfc3339()),
             updated_at: Some(chrono::Utc::now().to_rfc3339()),
+
+            tenant_id,
         },
         "监测记录创建成功",
     ))
 }
 
 pub async fn get_monitor_record(
-    State(_state): State<crate::AppState>,
+    State(_state): State<crate::shared::AppState>,
+    Extension(claims): Extension<Claims>,
+    headers: HeaderMap,
     axum::extract::Path(id): axum::extract::Path<String>,
 ) -> Json<ApiResponse<EnvironmentMonitor>> {
+    let tenant_id = get_tenant_id(&claims, &headers);
     tracing::info!("Getting environment monitor record: {}", id);
     Json(ApiResponse::success(
         EnvironmentMonitor {
@@ -653,22 +736,30 @@ pub async fn get_monitor_record(
             attachments: None,
             created_at: Some(chrono::Utc::now().to_rfc3339()),
             updated_at: Some(chrono::Utc::now().to_rfc3339()),
+
+            tenant_id,
         },
         "获取监测记录详情成功",
     ))
 }
 
 pub async fn delete_monitor_record(
-    State(_state): State<crate::AppState>,
+    State(_state): State<crate::shared::AppState>,
+    Extension(claims): Extension<Claims>,
+    headers: HeaderMap,
     axum::extract::Path(id): axum::extract::Path<String>,
 ) -> Json<ApiResponse<()>> {
+    let tenant_id = get_tenant_id(&claims, &headers);
     tracing::info!("Deleting environment monitor record: {}", id);
     Json(ApiResponse::success((), "监测记录删除成功"))
 }
 
 pub async fn list_permits(
-    State(_state): State<crate::AppState>,
+    State(_state): State<crate::shared::AppState>,
+    Extension(claims): Extension<Claims>,
+    headers: HeaderMap,
 ) -> Json<ApiResponse<Vec<DischargePermit>>> {
+    let tenant_id = get_tenant_id(&claims, &headers);
     tracing::info!("Listing discharge permits");
     Json(ApiResponse::success(
         Vec::<DischargePermit>::new(),
@@ -677,9 +768,12 @@ pub async fn list_permits(
 }
 
 pub async fn create_permit(
-    State(_state): State<crate::AppState>,
+    State(_state): State<crate::shared::AppState>,
+    Extension(claims): Extension<Claims>,
+    headers: HeaderMap,
     Json(req): Json<CreatePermitRequest>,
 ) -> Json<ApiResponse<DischargePermit>> {
+    let tenant_id = get_tenant_id(&claims, &headers);
     tracing::info!("Creating discharge permit: {:?}", req);
     Json(ApiResponse::success(
         DischargePermit {
@@ -704,15 +798,20 @@ pub async fn create_permit(
             remarks: req.remarks,
             created_at: Some(chrono::Utc::now().to_rfc3339()),
             updated_at: Some(chrono::Utc::now().to_rfc3339()),
+
+            tenant_id,
         },
         "排污许可创建成功",
     ))
 }
 
 pub async fn get_permit(
-    State(_state): State<crate::AppState>,
+    State(_state): State<crate::shared::AppState>,
+    Extension(claims): Extension<Claims>,
+    headers: HeaderMap,
     axum::extract::Path(id): axum::extract::Path<String>,
 ) -> Json<ApiResponse<DischargePermit>> {
+    let tenant_id = get_tenant_id(&claims, &headers);
     tracing::info!("Getting discharge permit: {}", id);
     Json(ApiResponse::success(
         DischargePermit {
@@ -738,16 +837,21 @@ pub async fn get_permit(
             remarks: None,
             created_at: Some(chrono::Utc::now().to_rfc3339()),
             updated_at: Some(chrono::Utc::now().to_rfc3339()),
+
+            tenant_id,
         },
         "获取排污许可详情成功",
     ))
 }
 
 pub async fn update_permit(
-    State(_state): State<crate::AppState>,
+    State(_state): State<crate::shared::AppState>,
+    Extension(claims): Extension<Claims>,
+    headers: HeaderMap,
     axum::extract::Path(id): axum::extract::Path<String>,
     Json(req): Json<UpdatePermitRequest>,
 ) -> Json<ApiResponse<DischargePermit>> {
+    let tenant_id = get_tenant_id(&claims, &headers);
     tracing::info!("Updating discharge permit {}: {:?}", id, req);
     Json(ApiResponse::success(
         DischargePermit {
@@ -769,22 +873,30 @@ pub async fn update_permit(
             remarks: req.remarks,
             created_at: Some(chrono::Utc::now().to_rfc3339()),
             updated_at: Some(chrono::Utc::now().to_rfc3339()),
+
+            tenant_id,
         },
         "排污许可更新成功",
     ))
 }
 
 pub async fn delete_permit(
-    State(_state): State<crate::AppState>,
+    State(_state): State<crate::shared::AppState>,
+    Extension(claims): Extension<Claims>,
+    headers: HeaderMap,
     axum::extract::Path(id): axum::extract::Path<String>,
 ) -> Json<ApiResponse<()>> {
+    let tenant_id = get_tenant_id(&claims, &headers);
     tracing::info!("Deleting discharge permit: {}", id);
     Json(ApiResponse::success((), "排污许可删除成功"))
 }
 
 pub async fn list_incidents(
-    State(_state): State<crate::AppState>,
+    State(_state): State<crate::shared::AppState>,
+    Extension(claims): Extension<Claims>,
+    headers: HeaderMap,
 ) -> Json<ApiResponse<Vec<EnvironmentIncident>>> {
+    let tenant_id = get_tenant_id(&claims, &headers);
     tracing::info!("Listing environment incidents");
     Json(ApiResponse::success(
         Vec::<EnvironmentIncident>::new(),
@@ -793,9 +905,12 @@ pub async fn list_incidents(
 }
 
 pub async fn create_incident(
-    State(_state): State<crate::AppState>,
+    State(_state): State<crate::shared::AppState>,
+    Extension(claims): Extension<Claims>,
+    headers: HeaderMap,
     Json(req): Json<CreateIncidentRequest>,
 ) -> Json<ApiResponse<EnvironmentIncident>> {
+    let tenant_id = get_tenant_id(&claims, &headers);
     tracing::info!("Creating environment incident: {:?}", req);
     Json(ApiResponse::success(
         EnvironmentIncident {
@@ -824,15 +939,20 @@ pub async fn create_incident(
             attachments: None,
             created_at: Some(chrono::Utc::now().to_rfc3339()),
             updated_at: Some(chrono::Utc::now().to_rfc3339()),
+
+            tenant_id,
         },
         "环境事件创建成功",
     ))
 }
 
 pub async fn get_incident(
-    State(_state): State<crate::AppState>,
+    State(_state): State<crate::shared::AppState>,
+    Extension(claims): Extension<Claims>,
+    headers: HeaderMap,
     axum::extract::Path(id): axum::extract::Path<String>,
 ) -> Json<ApiResponse<EnvironmentIncident>> {
+    let tenant_id = get_tenant_id(&claims, &headers);
     tracing::info!("Getting environment incident: {}", id);
     Json(ApiResponse::success(
         EnvironmentIncident {
@@ -858,16 +978,21 @@ pub async fn get_incident(
             attachments: None,
             created_at: Some(chrono::Utc::now().to_rfc3339()),
             updated_at: Some(chrono::Utc::now().to_rfc3339()),
+
+            tenant_id,
         },
         "获取环境事件详情成功",
     ))
 }
 
 pub async fn update_incident(
-    State(_state): State<crate::AppState>,
+    State(_state): State<crate::shared::AppState>,
+    Extension(claims): Extension<Claims>,
+    headers: HeaderMap,
     axum::extract::Path(id): axum::extract::Path<String>,
     Json(req): Json<UpdateIncidentRequest>,
 ) -> Json<ApiResponse<EnvironmentIncident>> {
+    let tenant_id = get_tenant_id(&claims, &headers);
     tracing::info!("Updating environment incident {}: {:?}", id, req);
     let status = req
         .status
@@ -903,22 +1028,30 @@ pub async fn update_incident(
             attachments: None,
             created_at: Some(chrono::Utc::now().to_rfc3339()),
             updated_at: Some(chrono::Utc::now().to_rfc3339()),
+
+            tenant_id,
         },
         "环境事件更新成功",
     ))
 }
 
 pub async fn delete_incident(
-    State(_state): State<crate::AppState>,
+    State(_state): State<crate::shared::AppState>,
+    Extension(claims): Extension<Claims>,
+    headers: HeaderMap,
     axum::extract::Path(id): axum::extract::Path<String>,
 ) -> Json<ApiResponse<()>> {
+    let tenant_id = get_tenant_id(&claims, &headers);
     tracing::info!("Deleting environment incident: {}", id);
     Json(ApiResponse::success((), "环境事件删除成功"))
 }
 
 pub async fn get_compliance_statistics(
-    State(_state): State<crate::AppState>,
+    State(_state): State<crate::shared::AppState>,
+    Extension(claims): Extension<Claims>,
+    headers: HeaderMap,
 ) -> Json<ApiResponse<ComplianceStatistics>> {
+    let tenant_id = get_tenant_id(&claims, &headers);
     tracing::info!("Getting compliance statistics");
     Json(ApiResponse::success(
         ComplianceStatistics {
@@ -943,14 +1076,19 @@ pub async fn get_compliance_statistics(
                 serde_json::json!({ "type": "wastegas_emission", "name": "废气超标", "count": 1 }),
                 serde_json::json!({ "type": "solid_waste", "name": "固废处置", "count": 1 }),
             ],
+
+            tenant_id,
         },
         "获取环保合规统计成功",
     ))
 }
 
 pub async fn list_regulation_categories(
-    State(_state): State<crate::AppState>,
+    State(_state): State<crate::shared::AppState>,
+    Extension(claims): Extension<Claims>,
+    headers: HeaderMap,
 ) -> Json<ApiResponse<Vec<serde_json::Value>>> {
+    let tenant_id = get_tenant_id(&claims, &headers);
     tracing::info!("Listing regulation categories");
     let categories = vec![
         serde_json::json!({ "code": "law", "name": "法律" }),
@@ -964,8 +1102,11 @@ pub async fn list_regulation_categories(
 }
 
 pub async fn list_monitor_types(
-    State(_state): State<crate::AppState>,
+    State(_state): State<crate::shared::AppState>,
+    Extension(claims): Extension<Claims>,
+    headers: HeaderMap,
 ) -> Json<ApiResponse<Vec<serde_json::Value>>> {
+    let tenant_id = get_tenant_id(&claims, &headers);
     tracing::info!("Listing monitor types");
     let types = vec![
         serde_json::json!({ "code": "wastewater", "name": "废水监测" }),

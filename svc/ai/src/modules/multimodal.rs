@@ -7,7 +7,7 @@ use topems_shared::ApiResponse;
 use crate::services::multimodal::{
     ImageAnalysisRequest, ImageAnalysisResponse, VideoAnalysisRequest, VideoAnalysisResponse,
 };
-use crate::AppState;
+use crate::shared::AppState;
 
 #[derive(Debug, Deserialize)]
 pub struct ImageQualityRequest {

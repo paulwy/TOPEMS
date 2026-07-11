@@ -1,13 +1,14 @@
 use axum::{
     extract::State,
     routing::{get, post},
-    Json, Router,
+    Extension, Json, Router,
 };
 use serde::{Deserialize, Serialize};
 use sqlx::{types::Uuid, Postgres, QueryBuilder, Row};
 use topems_shared::ApiResponse;
 
-use crate::AppState;
+use crate::middleware::tenant::TenantContext;
+use crate::shared::AppState;
 
 pub fn create_routes() -> Router<AppState> {
     Router::new()
@@ -73,6 +74,7 @@ pub struct InstrumentDataQuery {
 #[derive(Debug, Serialize)]
 pub struct InstrumentData {
     pub id: String,
+    pub tenant_id: String,
     pub data_no: String,
     pub instrument_id: Option<String>,
     pub instrument_no: Option<String>,
@@ -147,6 +149,7 @@ pub struct CollectionTaskQuery {
 #[derive(Debug, Serialize)]
 pub struct CollectionTask {
     pub id: String,
+    pub tenant_id: String,
     pub task_no: String,
     pub task_name: String,
     pub instrument_id: Option<String>,
@@ -201,6 +204,7 @@ pub struct ParseRuleQuery {
 #[derive(Debug, Serialize)]
 pub struct ParseRule {
     pub id: String,
+    pub tenant_id: String,
     pub rule_no: String,
     pub rule_name: String,
     pub protocol: String,
@@ -266,7 +270,7 @@ pub struct InstrumentStat {
 // ==================== 仪器数据 CRUD ====================
 
 pub async fn list_instrument_data(
-    State(state): State<crate::AppState>,
+    State(state): State<crate::shared::AppState>,
     axum::extract::Query(query): axum::extract::Query<InstrumentDataQuery>,
 ) -> Json<ApiResponse<Vec<InstrumentData>>> {
     let page = query.page.unwrap_or(1);
@@ -314,6 +318,7 @@ pub async fn list_instrument_data(
             rows.into_iter()
                 .map(|row| InstrumentData {
                     id: row.get("id"),
+                    tenant_id: row.get("tenant_id"),
                     data_no: row.get("data_no"),
                     instrument_id: row.get("instrument_id"),
                     instrument_no: row.get("instrument_no"),
@@ -344,7 +349,7 @@ pub async fn list_instrument_data(
 }
 
 pub async fn get_instrument_data(
-    State(state): State<crate::AppState>,
+    State(state): State<crate::shared::AppState>,
     axum::extract::Path(id): axum::extract::Path<String>,
 ) -> Json<ApiResponse<InstrumentData>> {
     let id = match Uuid::parse_str(&id) {
@@ -372,6 +377,7 @@ pub async fn get_instrument_data(
         Ok(Some(r)) => Json(ApiResponse::success(
             InstrumentData {
                 id: r.get("id"),
+                tenant_id: r.get("tenant_id"),
                 data_no: r.get("data_no"),
                 instrument_id: r.get("instrument_id"),
                 instrument_no: r.get("instrument_no"),
@@ -400,7 +406,7 @@ pub async fn get_instrument_data(
 }
 
 pub async fn create_instrument_data(
-    State(state): State<crate::AppState>,
+    State(state): State<crate::shared::AppState>,
     Json(req): Json<CreateInstrumentDataRequest>,
 ) -> Json<ApiResponse<InstrumentData>> {
     let data_id = Uuid::new_v4();
@@ -444,6 +450,7 @@ pub async fn create_instrument_data(
         Ok(r) => Json(ApiResponse::success(
             InstrumentData {
                 id: r.get("id"),
+                tenant_id: r.get("tenant_id"),
                 data_no: r.get("data_no"),
                 instrument_id: r.get("instrument_id"),
                 instrument_no: None,
@@ -471,7 +478,7 @@ pub async fn create_instrument_data(
 }
 
 pub async fn update_instrument_data(
-    State(state): State<crate::AppState>,
+    State(state): State<crate::shared::AppState>,
     axum::extract::Path(id): axum::extract::Path<String>,
     Json(req): Json<UpdateInstrumentDataRequest>,
 ) -> Json<ApiResponse<InstrumentData>> {
@@ -505,6 +512,7 @@ pub async fn update_instrument_data(
         Ok(Some(r)) => Json(ApiResponse::success(
             InstrumentData {
                 id: r.get("id"),
+                tenant_id: r.get("tenant_id"),
                 data_no: r.get("data_no"),
                 instrument_id: r.get("instrument_id"),
                 instrument_no: None,
@@ -533,7 +541,7 @@ pub async fn update_instrument_data(
 }
 
 pub async fn delete_instrument_data(
-    State(state): State<crate::AppState>,
+    State(state): State<crate::shared::AppState>,
     axum::extract::Path(id): axum::extract::Path<String>,
 ) -> Json<ApiResponse<bool>> {
     let id = match Uuid::parse_str(&id) {
@@ -558,7 +566,7 @@ pub async fn delete_instrument_data(
 // ==================== 数据解析功能 ====================
 
 pub async fn parse_instrument_data(
-    State(state): State<crate::AppState>,
+    State(state): State<crate::shared::AppState>,
     axum::extract::Path(id): axum::extract::Path<String>,
 ) -> Json<ApiResponse<InstrumentData>> {
     let id = match Uuid::parse_str(&id) {
@@ -624,6 +632,7 @@ pub async fn parse_instrument_data(
         Ok(Some(r)) => Json(ApiResponse::success(
             InstrumentData {
                 id: r.get("id"),
+                tenant_id: r.get("tenant_id"),
                 data_no: r.get("data_no"),
                 instrument_id: r.get("instrument_id"),
                 instrument_no: None,
@@ -656,7 +665,7 @@ pub async fn parse_instrument_data(
 }
 
 pub async fn test_parse_data(
-    State(_state): State<crate::AppState>,
+    State(_state): State<crate::shared::AppState>,
     Json(req): Json<ParseDataRequest>,
 ) -> Json<ApiResponse<ParseResult>> {
     let result = parse_data(&req.protocol, &req.raw_data);
@@ -950,7 +959,7 @@ fn calculate_quality_score(test_items: &[TestItemResult]) -> f64 {
 // ==================== 触发数据采集 ====================
 
 pub async fn trigger_collection(
-    State(state): State<crate::AppState>,
+    State(state): State<crate::shared::AppState>,
     axum::extract::Path(task_id): axum::extract::Path<String>,
 ) -> Json<ApiResponse<InstrumentData>> {
     let task_id = match Uuid::parse_str(&task_id) {
@@ -1060,6 +1069,7 @@ pub async fn trigger_collection(
             Json(ApiResponse::success(
                 InstrumentData {
                     id: r.get("id"),
+                    tenant_id: r.get("tenant_id"),
                     data_no: r.get("data_no"),
                     instrument_id: r.get("instrument_id"),
                     instrument_no: None,
@@ -1090,7 +1100,7 @@ pub async fn trigger_collection(
 // ==================== 采集任务 CRUD ====================
 
 pub async fn list_collection_tasks(
-    State(state): State<crate::AppState>,
+    State(state): State<crate::shared::AppState>,
     axum::extract::Query(query): axum::extract::Query<CollectionTaskQuery>,
 ) -> Json<ApiResponse<Vec<CollectionTask>>> {
     let page = query.page.unwrap_or(1);
@@ -1137,6 +1147,7 @@ pub async fn list_collection_tasks(
         rows.into_iter()
             .map(|row| CollectionTask {
                 id: row.get("id"),
+                tenant_id: row.get("tenant_id"),
                 task_no: row.get("task_no"),
                 task_name: row.get("task_name"),
                 instrument_id: row.get("instrument_id"),
@@ -1170,7 +1181,7 @@ pub async fn list_collection_tasks(
 }
 
 pub async fn get_collection_task(
-    State(state): State<crate::AppState>,
+    State(state): State<crate::shared::AppState>,
     axum::extract::Path(id): axum::extract::Path<String>,
 ) -> Json<ApiResponse<CollectionTask>> {
     let id = match Uuid::parse_str(&id) {
@@ -1199,6 +1210,7 @@ pub async fn get_collection_task(
         Ok(Some(r)) => Json(ApiResponse::success(
             CollectionTask {
                 id: r.get("id"),
+                tenant_id: r.get("tenant_id"),
                 task_no: r.get("task_no"),
                 task_name: r.get("task_name"),
                 instrument_id: r.get("instrument_id"),
@@ -1230,7 +1242,7 @@ pub async fn get_collection_task(
 }
 
 pub async fn create_collection_task(
-    State(state): State<crate::AppState>,
+    State(state): State<crate::shared::AppState>,
     Json(req): Json<CreateCollectionTaskRequest>,
 ) -> Json<ApiResponse<CollectionTask>> {
     let task_id = Uuid::new_v4();
@@ -1273,6 +1285,7 @@ pub async fn create_collection_task(
         Ok(r) => Json(ApiResponse::success(
             CollectionTask {
                 id: r.get("id"),
+                tenant_id: r.get("tenant_id"),
                 task_no: r.get("task_no"),
                 task_name: r.get("task_name"),
                 instrument_id: r.get("instrument_id"),
@@ -1303,7 +1316,7 @@ pub async fn create_collection_task(
 }
 
 pub async fn update_collection_task(
-    State(state): State<crate::AppState>,
+    State(state): State<crate::shared::AppState>,
     axum::extract::Path(id): axum::extract::Path<String>,
     Json(req): Json<UpdateCollectionTaskRequest>,
 ) -> Json<ApiResponse<CollectionTask>> {
@@ -1342,6 +1355,7 @@ pub async fn update_collection_task(
         Ok(Some(r)) => Json(ApiResponse::success(
             CollectionTask {
                 id: r.get("id"),
+                tenant_id: r.get("tenant_id"),
                 task_no: r.get("task_no"),
                 task_name: r.get("task_name"),
                 instrument_id: r.get("instrument_id"),
@@ -1373,7 +1387,7 @@ pub async fn update_collection_task(
 }
 
 pub async fn delete_collection_task(
-    State(state): State<crate::AppState>,
+    State(state): State<crate::shared::AppState>,
     axum::extract::Path(id): axum::extract::Path<String>,
 ) -> Json<ApiResponse<bool>> {
     let id = match Uuid::parse_str(&id) {
@@ -1398,7 +1412,7 @@ pub async fn delete_collection_task(
 // ==================== 解析规则 CRUD ====================
 
 pub async fn list_parse_rules(
-    State(state): State<crate::AppState>,
+    State(state): State<crate::shared::AppState>,
     axum::extract::Query(query): axum::extract::Query<ParseRuleQuery>,
 ) -> Json<ApiResponse<Vec<ParseRule>>> {
     let page = query.page.unwrap_or(1);
@@ -1459,6 +1473,7 @@ pub async fn list_parse_rules(
         rows.into_iter()
             .map(|row| ParseRule {
                 id: row.get("id"),
+                tenant_id: row.get("tenant_id"),
                 rule_no: row.get("rule_no"),
                 rule_name: row.get("rule_name"),
                 protocol: row.get("protocol"),
@@ -1485,7 +1500,7 @@ pub async fn list_parse_rules(
 }
 
 pub async fn get_parse_rule(
-    State(state): State<crate::AppState>,
+    State(state): State<crate::shared::AppState>,
     axum::extract::Path(id): axum::extract::Path<String>,
 ) -> Json<ApiResponse<ParseRule>> {
     let id = match Uuid::parse_str(&id) {
@@ -1510,6 +1525,7 @@ pub async fn get_parse_rule(
         Ok(Some(r)) => Json(ApiResponse::success(
             ParseRule {
                 id: r.get("id"),
+                tenant_id: r.get("tenant_id"),
                 rule_no: r.get("rule_no"),
                 rule_name: r.get("rule_name"),
                 protocol: r.get("protocol"),
@@ -1534,7 +1550,7 @@ pub async fn get_parse_rule(
 }
 
 pub async fn create_parse_rule(
-    State(state): State<crate::AppState>,
+    State(state): State<crate::shared::AppState>,
     Json(req): Json<CreateParseRuleRequest>,
 ) -> Json<ApiResponse<ParseRule>> {
     let rule_id = Uuid::new_v4();
@@ -1566,6 +1582,7 @@ pub async fn create_parse_rule(
         Ok(r) => Json(ApiResponse::success(
             ParseRule {
                 id: r.get("id"),
+                tenant_id: r.get("tenant_id"),
                 rule_no: r.get("rule_no"),
                 rule_name: r.get("rule_name"),
                 protocol: r.get("protocol"),
@@ -1589,7 +1606,7 @@ pub async fn create_parse_rule(
 }
 
 pub async fn update_parse_rule(
-    State(state): State<crate::AppState>,
+    State(state): State<crate::shared::AppState>,
     axum::extract::Path(id): axum::extract::Path<String>,
     Json(req): Json<UpdateParseRuleRequest>,
 ) -> Json<ApiResponse<ParseRule>> {
@@ -1627,6 +1644,7 @@ pub async fn update_parse_rule(
         Ok(Some(r)) => Json(ApiResponse::success(
             ParseRule {
                 id: r.get("id"),
+                tenant_id: r.get("tenant_id"),
                 rule_no: r.get("rule_no"),
                 rule_name: r.get("rule_name"),
                 protocol: r.get("protocol"),
@@ -1651,7 +1669,7 @@ pub async fn update_parse_rule(
 }
 
 pub async fn delete_parse_rule(
-    State(state): State<crate::AppState>,
+    State(state): State<crate::shared::AppState>,
     axum::extract::Path(id): axum::extract::Path<String>,
 ) -> Json<ApiResponse<bool>> {
     let id = match Uuid::parse_str(&id) {
@@ -1676,7 +1694,7 @@ pub async fn delete_parse_rule(
 // ==================== 统计接口 ====================
 
 pub async fn get_instrument_data_statistics(
-    State(state): State<crate::AppState>,
+    State(state): State<crate::shared::AppState>,
 ) -> Json<ApiResponse<InstrumentDataStatistics>> {
     let total_data: i64 = sqlx::query_scalar("SELECT COUNT(*) FROM qa_lims_instrument_data")
         .fetch_one(&state.pool)

@@ -302,11 +302,15 @@ const FinanceAssetPage: React.FC = () => {
         entries: [
           {
             account_id: '1602',
+            subject_code: '1602',
+            subject_name: '累计折旧',
             debit_amount: 1000,
             summary: `计提折旧`,
           },
           {
             account_id: selectedAsset.id,
+            subject_code: selectedAsset.code || '',
+            subject_name: selectedAsset.name || '',
             credit_amount: 1000,
             summary: `累计折旧`,
           },

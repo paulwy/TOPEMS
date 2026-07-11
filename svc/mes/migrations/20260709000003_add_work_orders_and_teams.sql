@@ -50,7 +50,7 @@ CREATE TABLE IF NOT EXISTS work_orders (
 -- Material Requirements
 CREATE TABLE IF NOT EXISTS material_requirements (
     id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-    requirement_no VARCHAR(64) NOT NULL UNIQUE,
+    mrp_no VARCHAR(64) NOT NULL UNIQUE,
     order_id UUID REFERENCES production_orders(id) ON DELETE SET NULL,
     order_no VARCHAR(64),
     bom_id UUID REFERENCES material_boms(id),
@@ -122,7 +122,7 @@ CREATE INDEX IF NOT EXISTS idx_work_orders_status ON work_orders(status);
 CREATE INDEX IF NOT EXISTS idx_work_orders_work_station_id ON work_orders(work_station_id);
 CREATE INDEX IF NOT EXISTS idx_work_orders_process_id ON work_orders(process_id);
 CREATE INDEX IF NOT EXISTS idx_work_orders_team_id ON work_orders(team_id);
-CREATE INDEX IF NOT EXISTS idx_material_requirements_requirement_no ON material_requirements(requirement_no);
+CREATE INDEX IF NOT EXISTS idx_material_requirements_mrp_no ON material_requirements(mrp_no);
 CREATE INDEX IF NOT EXISTS idx_material_requirements_order_id ON material_requirements(order_id);
 CREATE INDEX IF NOT EXISTS idx_material_requirement_items_requirement_id ON material_requirement_items(requirement_id);
 CREATE INDEX IF NOT EXISTS idx_production_kanbans_kanban_no ON production_kanbans(kanban_no);

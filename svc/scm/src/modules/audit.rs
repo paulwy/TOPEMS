@@ -30,7 +30,7 @@ pub fn create_routes() -> Router<ApiState> {
         .route("/api/v1/audit-logs/{id}", get(get_audit_log))
 }
 
-async fn list_audit_logs(
+pub async fn list_audit_logs(
     State(state): State<ApiState>,
     Query(params): Query<ListAuditLogsQuery>,
 ) -> Json<ApiResponse<serde_json::Value>> {
@@ -106,7 +106,7 @@ async fn list_audit_logs(
     }
 }
 
-async fn get_audit_log(
+pub async fn get_audit_log(
     State(state): State<ApiState>,
     Path(id): Path<Uuid>,
 ) -> Json<ApiResponse<AuditLog>> {

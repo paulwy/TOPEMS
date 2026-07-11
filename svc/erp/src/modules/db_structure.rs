@@ -53,7 +53,7 @@ pub fn create_routes() -> Router<ApiState> {
         .route("/api/erp/db/changes", get(list_db_changes))
 }
 
-async fn list_tables(
+pub async fn list_tables(
     State(state): State<ApiState>,
     Query(params): Query<TableQueryParams>,
 ) -> Json<ApiResponse<Vec<TableInfo>>> {
@@ -83,7 +83,7 @@ async fn list_tables(
     }
 }
 
-async fn get_table_detail(
+pub async fn get_table_detail(
     State(state): State<ApiState>,
     Path(table_name): Path<String>,
 ) -> Json<ApiResponse<TableDetail>> {
@@ -134,7 +134,7 @@ async fn get_table_detail(
     Json(ApiResponse::success(detail, "获取表详情成功"))
 }
 
-async fn preview_add_column(
+pub async fn preview_add_column(
     State(_state): State<ApiState>,
     Json(req): Json<crate::models::AddColumnRequest>,
 ) -> Json<ApiResponse<SqlPreview>> {
@@ -199,7 +199,7 @@ fn build_data_type(
     }
 }
 
-async fn execute_add_column(
+pub async fn execute_add_column(
     State(state): State<ApiState>,
     headers: HeaderMap,
     Json(req): Json<crate::models::AddColumnRequest>,
@@ -289,7 +289,7 @@ async fn execute_add_column(
     response
 }
 
-async fn execute_modify_column(
+pub async fn execute_modify_column(
     State(state): State<ApiState>,
     Path((table_name, column_name)): Path<(String, String)>,
     headers: HeaderMap,
@@ -386,7 +386,7 @@ async fn execute_modify_column(
     response
 }
 
-async fn execute_drop_column(
+pub async fn execute_drop_column(
     State(state): State<ApiState>,
     Path((table_name, column_name)): Path<(String, String)>,
     headers: HeaderMap,
@@ -453,7 +453,7 @@ async fn execute_drop_column(
     response
 }
 
-async fn list_db_changes(
+pub async fn list_db_changes(
     State(state): State<ApiState>,
     Query(params): Query<DbChangeQueryParams>,
 ) -> Json<ApiResponse<PaginatedResponse<DbChange>>> {

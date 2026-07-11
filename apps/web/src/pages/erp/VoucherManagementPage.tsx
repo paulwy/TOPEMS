@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useMemo } from 'react';
+import React, { useState, useMemo } from 'react';
 import {
   FileText,
   Plus,
@@ -109,6 +109,7 @@ const ct = designTokens.colors;
 const VoucherManagementPage: React.FC = () => {
   const navigate = useNavigate();
   const addNotification = useAppStore((state) => state.addNotification);
+  const queryClient = useQueryClient();
 
   const [activeTab, setActiveTab] = useState('all');
   const [searchQuery, setSearchQuery] = useState('');
@@ -116,14 +117,8 @@ const VoucherManagementPage: React.FC = () => {
   const [voucherTypeFilter, setVoucherTypeFilter] = useState('');
   const [periodFilter, setPeriodFilter] = useState('');
 
-  const [vouchers, setVouchers] = useState<FinancialVoucher[]>([]);
-  const [subjects, setSubjects] = useState<AccountingSubject[]>([]);
-  const [voucherItems, setVoucherItems] = useState<VoucherItem[]>([]);
-
-  const [loading, setLoading] = useState(true);
   const [page, setPage] = useState(0);
   const [rowsPerPage, setRowsPerPage] = useState(10);
-  const [totalCount, setTotalCount] = useState(0);
 
   const [showCreateModal, setShowCreateModal] = useState(false);
   const [showDetailModal, setShowDetailModal] = useState(false);
@@ -141,54 +136,105 @@ const VoucherManagementPage: React.FC = () => {
     items: [] as VoucherItemRequest[],
   });
 
-  useEffect(() => {
-    loadData();
-  }, [page, rowsPerPage, statusFilter, periodFilter, voucherTypeFilter, searchQuery]);
-
-  const loadData = async () => {
-    setLoading(true);
-    try {
-      const [voucherResult, subjectResult] = await Promise.all([
-        voucherApi.list({
-          page: page + 1,
-          pagesize: rowsPerPage,
-          search: searchQuery || undefined,
-          status: statusFilter || undefined,
-          period: periodFilter || undefined,
-        }),
-        accountingSubjectApi.list(),
-      ]);
-
-      if (voucherResult.success && voucherResult.data) {
-        setVouchers(voucherResult.data.items || []);
-        setTotalCount(voucherResult.data.total || 0);
-      }
-
-      if (subjectResult.success && subjectResult.data) {
-        setSubjects(subjectResult.data.items || []);
-      }
-    } catch (err: unknown) {
-      apiLogger.error('加载数据失败:', err);
-      addNotification({
-        title: '错误',
-        message: '加载数据失败',
-        type: 'error',
+  // React Query - 凭证列表
+  const vouchersQuery = useQuery({
+    queryKey: [
+      'erp-vouchers',
+      page,
+      rowsPerPage,
+      statusFilter,
+      periodFilter,
+      voucherTypeFilter,
+      searchQuery,
+    ],
+    queryFn: async () => {
+      return voucherApi.list({
+        page: page + 1,
+        pagesize: rowsPerPage,
+        search: searchQuery || undefined,
+        status: statusFilter || undefined,
+        period: periodFilter || undefined,
       });
-    } finally {
-      setLoading(false);
-    }
-  };
+    },
+    staleTime: 5 * 60 * 1000,
+  });
 
-  const loadVoucherItems = async (voucherId: string) => {
-    try {
-      const result = await voucherApi.getItems(voucherId);
-      if (result.success && result.data) {
-        setVoucherItems(result.data);
-      }
-    } catch (err: unknown) {
-      apiLogger.error('加载凭证明细失败:', err);
-    }
-  };
+  const vouchers =
+    vouchersQuery.data?.success && vouchersQuery.data.data
+      ? vouchersQuery.data.data.items || []
+      : [];
+  const totalCount =
+    vouchersQuery.data?.success && vouchersQuery.data.data ? vouchersQuery.data.data.total || 0 : 0;
+  const loading = vouchersQuery.isLoading;
+
+  // React Query - 会计科目列表
+  const subjectsQuery = useQuery({
+    queryKey: ['erp-subjects'],
+    queryFn: () => accountingSubjectApi.list(),
+    staleTime: 30 * 60 * 1000,
+  });
+
+  const subjects =
+    subjectsQuery.data?.success && subjectsQuery.data.data
+      ? subjectsQuery.data.data.items || []
+      : [];
+
+  // React Query - 凭证明细
+  const voucherItemsQuery = useQuery({
+    queryKey: ['erp-voucher-items', currentVoucher?.id],
+    queryFn: async () => {
+      if (!currentVoucher?.id) throw new Error('No voucher ID');
+      return voucherApi.getItems(currentVoucher.id);
+    },
+    enabled: !!currentVoucher?.id,
+    staleTime: 5 * 60 * 1000,
+  });
+
+  const voucherItems =
+    voucherItemsQuery.data?.success && voucherItemsQuery.data.data
+      ? voucherItemsQuery.data.data
+      : [];
+
+  // React Query - Mutations
+  const createMutation = useMutation({
+    mutationFn: (data: any) => voucherApi.create(data),
+    onSuccess: () => {
+      addNotification({
+        title: '成功',
+        message: '凭证创建成功',
+        type: 'success',
+      });
+      queryClient.invalidateQueries({ queryKey: ['erp-vouchers'] });
+    },
+    onError: () => {
+      addNotification({ title: '错误', message: '操作失败', type: 'error' });
+    },
+  });
+
+  const updateMutation = useMutation({
+    mutationFn: ({ id, data }: { id: string; data: any }) => voucherApi.update(id, data),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['erp-vouchers'] });
+    },
+    onError: () => {
+      addNotification({ title: '错误', message: '操作失败', type: 'error' });
+    },
+  });
+
+  const deleteMutation = useMutation({
+    mutationFn: (id: string) => voucherApi.delete(id),
+    onSuccess: () => {
+      addNotification({
+        title: '成功',
+        message: '删除成功',
+        type: 'success',
+      });
+      queryClient.invalidateQueries({ queryKey: ['erp-vouchers'] });
+    },
+    onError: () => {
+      addNotification({ title: '错误', message: '操作失败', type: 'error' });
+    },
+  });
 
   const formatCurrency = (amount: number) =>
     `¥${amount.toLocaleString('zh-CN', { minimumFractionDigits: 2 })}`;
@@ -267,7 +313,7 @@ const VoucherManagementPage: React.FC = () => {
     }
 
     try {
-      const result = await voucherApi.create({
+      const result = await createMutation.mutateAsync({
         voucher_number: `${newVoucher.voucher_type}-${newVoucher.voucher_number}`,
         voucher_date: newVoucher.voucher_date,
         period: newVoucher.period,
@@ -277,14 +323,8 @@ const VoucherManagementPage: React.FC = () => {
       });
 
       if (result.success) {
-        addNotification({
-          title: '成功',
-          message: '凭证创建成功',
-          type: 'success',
-        });
         setShowCreateModal(false);
         resetForm();
-        loadData();
       } else {
         addNotification({
           title: '失败',
@@ -293,20 +333,22 @@ const VoucherManagementPage: React.FC = () => {
         });
       }
     } catch (err: unknown) {
-      addNotification({ title: '错误', message: '操作失败', type: 'error' });
+      apiLogger.error('创建失败:', err);
     }
   };
 
   const handleAudit = async (voucher: FinancialVoucher) => {
     try {
-      const result = await voucherApi.update(voucher.id, { status: 'approved' });
+      const result = await updateMutation.mutateAsync({
+        id: voucher.id,
+        data: { status: 'approved' },
+      });
       if (result.success) {
         addNotification({
           title: '成功',
           message: '凭证审核成功',
           type: 'success',
         });
-        loadData();
       } else {
         addNotification({
           title: '失败',
@@ -315,20 +357,22 @@ const VoucherManagementPage: React.FC = () => {
         });
       }
     } catch (err: unknown) {
-      addNotification({ title: '错误', message: '操作失败', type: 'error' });
+      apiLogger.error('审核失败:', err);
     }
   };
 
   const handlePost = async (voucher: FinancialVoucher) => {
     try {
-      const result = await voucherApi.update(voucher.id, { status: 'posted' });
+      const result = await updateMutation.mutateAsync({
+        id: voucher.id,
+        data: { status: 'posted' },
+      });
       if (result.success) {
         addNotification({
           title: '成功',
           message: '凭证记账成功',
           type: 'success',
         });
-        loadData();
       } else {
         addNotification({
           title: '失败',
@@ -337,7 +381,7 @@ const VoucherManagementPage: React.FC = () => {
         });
       }
     } catch (err: unknown) {
-      addNotification({ title: '错误', message: '操作失败', type: 'error' });
+      apiLogger.error('记账失败:', err);
     }
   };
 
@@ -349,15 +393,8 @@ const VoucherManagementPage: React.FC = () => {
   const confirmDelete = async () => {
     if (!deletingId) return;
     try {
-      const result = await voucherApi.delete(deletingId);
-      if (result.success) {
-        addNotification({
-          title: '成功',
-          message: '删除成功',
-          type: 'success',
-        });
-        loadData();
-      } else {
+      const result = await deleteMutation.mutateAsync(deletingId);
+      if (!result.success) {
         addNotification({
           title: '失败',
           message: result.message || '删除失败',
@@ -365,7 +402,7 @@ const VoucherManagementPage: React.FC = () => {
         });
       }
     } catch (err: unknown) {
-      addNotification({ title: '错误', message: '操作失败', type: 'error' });
+      apiLogger.error('删除失败:', err);
     } finally {
       setDeleteDialogOpen(false);
       setDeletingId(null);
@@ -424,7 +461,7 @@ const VoucherManagementPage: React.FC = () => {
 
   const handleViewDetail = (voucher: FinancialVoucher) => {
     setCurrentVoucher(voucher);
-    loadVoucherItems(voucher.id);
+    voucherItemsQuery.refetch();
     setShowDetailModal(true);
   };
 
@@ -696,7 +733,7 @@ const VoucherManagementPage: React.FC = () => {
             variant='outlined'
             size='small'
             startIcon={<RefreshCw size={16} />}
-            onClick={loadData}
+            onClick={() => vouchersQuery.refetch()}
           >
             刷新
           </Button>

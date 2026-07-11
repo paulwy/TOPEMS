@@ -49,18 +49,34 @@ pub async fn create_routes(db: PgPool) -> Result<Router> {
     Ok(app)
 }
 
+fn get_tenant_id(claims: &Claims, headers: &axum::http::HeaderMap) -> Uuid {
+    claims
+        .tenant_id
+        .as_ref()
+        .and_then(|t| Uuid::parse_str(t).ok())
+        .or_else(|| {
+            headers
+                .get("x-tenant-id")
+                .and_then(|v| v.to_str().ok())
+                .and_then(|s| Uuid::parse_str(s).ok())
+        })
+        .unwrap_or_else(Uuid::new_v4)
+}
+
 // ==================== Category Handlers ====================
 
 async fn list_categories(
     State(state): State<Arc<AppState>>,
     Extension(claims): Extension<Claims>,
     Query(params): Query<CategoryQueryParams>,
+    headers: axum::http::HeaderMap,
 ) -> Json<ApiResponse<serde_json::Value>> {
     match check_permission(&state.db, &claims, &ModulePermission::SupplierRead).await {
         Ok(_) => {}
         Err(e) => return e,
     }
 
+    let tenant_id = get_tenant_id(&claims, &headers);
     let page = params.page.unwrap_or(1).max(1);
     let page_size = params.page_size.unwrap_or(20).min(100);
     let offset = (page - 1) * page_size;
@@ -74,15 +90,17 @@ async fn list_categories(
 
     let result = sqlx::query_as::<_, SupplierCategory>(
         r#"
-        SELECT id, category_no, name, description, parent_id, level, is_active, created_by, created_at, updated_at
+        SELECT id, tenant_id, category_no, name, description, parent_id, level, is_active, created_by, created_at, updated_at
         FROM plugin_srm.supplier_categories
-        WHERE ($1::text IS NULL OR name ILIKE $1 OR category_no ILIKE $1)
-          AND ($2::boolean IS NULL OR is_active = $2)
-          AND ($3::uuid IS NULL OR parent_id = $3)
+        WHERE tenant_id = $1
+          AND ($2::text IS NULL OR name ILIKE $2 OR category_no ILIKE $2)
+          AND ($3::boolean IS NULL OR is_active = $3)
+          AND ($4::uuid IS NULL OR parent_id = $4)
         ORDER BY level, category_no
-        LIMIT $4 OFFSET $5
+        LIMIT $5 OFFSET $6
         "#,
     )
+    .bind(tenant_id)
     .bind(&search_pattern)
     .bind(is_active_filter)
     .bind(parent_id_filter)
@@ -96,11 +114,13 @@ async fn list_categories(
             let count_result = sqlx::query_scalar::<_, i64>(
                 r#"
                 SELECT COUNT(*) FROM plugin_srm.supplier_categories
-                WHERE ($1::text IS NULL OR name ILIKE $1 OR category_no ILIKE $1)
-                  AND ($2::boolean IS NULL OR is_active = $2)
-                  AND ($3::uuid IS NULL OR parent_id = $3)
+                WHERE tenant_id = $1
+                  AND ($2::text IS NULL OR name ILIKE $2 OR category_no ILIKE $2)
+                  AND ($3::boolean IS NULL OR is_active = $3)
+                  AND ($4::uuid IS NULL OR parent_id = $4)
                 "#,
             )
+            .bind(tenant_id)
             .bind(&search_pattern)
             .bind(is_active_filter)
             .bind(parent_id_filter)
@@ -132,6 +152,7 @@ async fn list_categories(
 async fn create_category(
     State(state): State<Arc<AppState>>,
     Extension(claims): Extension<Claims>,
+    headers: axum::http::HeaderMap,
     Json(req): Json<CreateSupplierCategoryRequest>,
 ) -> Json<ApiResponse<SupplierCategory>> {
     match check_permission(&state.db, &claims, &ModulePermission::SupplierWrite).await {
@@ -139,7 +160,8 @@ async fn create_category(
         Err(e) => return e,
     }
 
-    // 数据验证
+    let tenant_id = get_tenant_id(&claims, &headers);
+
     if req.category_no.is_empty() || req.name.is_empty() {
         return Json(ApiResponse::<SupplierCategory>::error(
             400,
@@ -154,10 +176,10 @@ async fn create_category(
         ));
     }
 
-    // 检查分类编号是否已存在
     let existing = sqlx::query_scalar::<_, i64>(
-        "SELECT COUNT(*) FROM plugin_srm.supplier_categories WHERE category_no = $1",
+        "SELECT COUNT(*) FROM plugin_srm.supplier_categories WHERE tenant_id = $1 AND category_no = $2",
     )
+    .bind(tenant_id)
     .bind(&req.category_no)
     .fetch_one(&state.db)
     .await;
@@ -169,7 +191,6 @@ async fn create_category(
         ));
     }
 
-    // 验证父分类是否存在
     if let Some(parent_id_str) = &req.parent_id {
         let parent_uuid = match Uuid::parse_str(parent_id_str) {
             Ok(uuid) => uuid,
@@ -182,8 +203,9 @@ async fn create_category(
         };
 
         let parent_exists = sqlx::query_scalar::<_, i64>(
-            "SELECT COUNT(*) FROM plugin_srm.supplier_categories WHERE id = $1 AND is_active = true",
+            "SELECT COUNT(*) FROM plugin_srm.supplier_categories WHERE tenant_id = $1 AND id = $2 AND is_active = true",
         )
+        .bind(tenant_id)
         .bind(parent_uuid)
         .fetch_one(&state.db)
         .await;
@@ -203,12 +225,13 @@ async fn create_category(
 
     let result = sqlx::query_as::<_, SupplierCategory>(
         r#"
-        INSERT INTO plugin_srm.supplier_categories (id, category_no, name, description, parent_id, level, is_active, created_by, created_at, updated_at)
-        VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10)
-        RETURNING id, category_no, name, description, parent_id, level, is_active, created_by, created_at, updated_at
+        INSERT INTO plugin_srm.supplier_categories (id, tenant_id, category_no, name, description, parent_id, level, is_active, created_by, created_at, updated_at)
+        VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11)
+        RETURNING id, tenant_id, category_no, name, description, parent_id, level, is_active, created_by, created_at, updated_at
         "#,
     )
     .bind(id)
+    .bind(tenant_id)
     .bind(&req.category_no)
     .bind(&req.name)
     .bind(&req.description)
@@ -237,19 +260,23 @@ async fn get_category(
     State(state): State<Arc<AppState>>,
     Extension(claims): Extension<Claims>,
     Path(id): Path<Uuid>,
+    headers: axum::http::HeaderMap,
 ) -> Json<ApiResponse<SupplierCategory>> {
     match check_permission(&state.db, &claims, &ModulePermission::SupplierRead).await {
         Ok(_) => {}
         Err(e) => return e,
     }
 
+    let tenant_id = get_tenant_id(&claims, &headers);
+
     let result = sqlx::query_as::<_, SupplierCategory>(
         r#"
-        SELECT id, category_no, name, description, parent_id, level, is_active, created_by, created_at, updated_at
-        FROM plugin_srm.supplier_categories WHERE id = $1
+        SELECT id, tenant_id, category_no, name, description, parent_id, level, is_active, created_by, created_at, updated_at
+        FROM plugin_srm.supplier_categories WHERE id = $1 AND tenant_id = $2
         "#,
     )
     .bind(id)
+    .bind(tenant_id)
     .fetch_optional(&state.db)
     .await;
 
@@ -273,6 +300,7 @@ async fn update_category(
     State(state): State<Arc<AppState>>,
     Extension(claims): Extension<Claims>,
     Path(id): Path<Uuid>,
+    headers: axum::http::HeaderMap,
     Json(req): Json<UpdateSupplierCategoryRequest>,
 ) -> Json<ApiResponse<SupplierCategory>> {
     match check_permission(&state.db, &claims, &ModulePermission::SupplierWrite).await {
@@ -280,10 +308,13 @@ async fn update_category(
         Err(e) => return e,
     }
 
+    let tenant_id = get_tenant_id(&claims, &headers);
+
     let existing = sqlx::query_as::<_, SupplierCategory>(
-        "SELECT id, category_no, name, description, parent_id, level, is_active, created_by, created_at, updated_at FROM plugin_srm.supplier_categories WHERE id = $1",
+        "SELECT id, tenant_id, category_no, name, description, parent_id, level, is_active, created_by, created_at, updated_at FROM plugin_srm.supplier_categories WHERE id = $1 AND tenant_id = $2",
     )
     .bind(id)
+    .bind(tenant_id)
     .fetch_optional(&state.db)
     .await;
 
@@ -303,7 +334,6 @@ async fn update_category(
         }
     };
 
-    // 验证层级
     if let Some(level) = req.level {
         if level < 1 || level > 5 {
             return Json(ApiResponse::<SupplierCategory>::error(
@@ -313,7 +343,6 @@ async fn update_category(
         }
     }
 
-    // 验证父分类
     if let Some(parent_id_str) = &req.parent_id {
         let parent_uuid = match Uuid::parse_str(parent_id_str) {
             Ok(uuid) => uuid,
@@ -325,7 +354,6 @@ async fn update_category(
             }
         };
 
-        // 不能将自己设为父分类
         if &parent_uuid == &id {
             return Json(ApiResponse::<SupplierCategory>::error(
                 400,
@@ -334,8 +362,9 @@ async fn update_category(
         }
 
         let parent_exists = sqlx::query_scalar::<_, i64>(
-            "SELECT COUNT(*) FROM plugin_srm.supplier_categories WHERE id = $1 AND is_active = true",
+            "SELECT COUNT(*) FROM plugin_srm.supplier_categories WHERE tenant_id = $1 AND id = $2 AND is_active = true",
         )
+        .bind(tenant_id)
         .bind(parent_uuid)
         .fetch_one(&state.db)
         .await;
@@ -363,8 +392,8 @@ async fn update_category(
         r#"
         UPDATE plugin_srm.supplier_categories SET
             category_no = $2, name = $3, description = $4, parent_id = $5, level = $6, is_active = $7, updated_at = $8
-        WHERE id = $1
-        RETURNING id, category_no, name, description, parent_id, level, is_active, created_by, created_at, updated_at
+        WHERE id = $1 AND tenant_id = $9
+        RETURNING id, tenant_id, category_no, name, description, parent_id, level, is_active, created_by, created_at, updated_at
         "#,
     )
     .bind(id)
@@ -375,6 +404,7 @@ async fn update_category(
     .bind(level)
     .bind(is_active)
     .bind(now)
+    .bind(tenant_id)
     .fetch_one(&state.db)
     .await;
 
@@ -394,16 +424,19 @@ async fn delete_category(
     State(state): State<Arc<AppState>>,
     Extension(claims): Extension<Claims>,
     Path(id): Path<Uuid>,
+    headers: axum::http::HeaderMap,
 ) -> Json<ApiResponse<String>> {
     match check_permission(&state.db, &claims, &ModulePermission::SupplierWrite).await {
         Ok(_) => {}
         Err(e) => return e,
     }
 
-    // 检查是否有子分类
+    let tenant_id = get_tenant_id(&claims, &headers);
+
     let child_count = sqlx::query_scalar::<_, i64>(
-        "SELECT COUNT(*) FROM plugin_srm.supplier_categories WHERE parent_id = $1",
+        "SELECT COUNT(*) FROM plugin_srm.supplier_categories WHERE tenant_id = $1 AND parent_id = $2",
     )
+    .bind(tenant_id)
     .bind(id)
     .fetch_one(&state.db)
     .await;
@@ -415,10 +448,10 @@ async fn delete_category(
         ));
     }
 
-    // 检查是否有供应商使用该分类
     let supplier_count = sqlx::query_scalar::<_, i64>(
-        "SELECT COUNT(*) FROM srm.suppliers WHERE category = (SELECT category_no FROM plugin_srm.supplier_categories WHERE id = $1)"
+        "SELECT COUNT(*) FROM plugin_srm.suppliers WHERE tenant_id = $1 AND category_id = (SELECT id FROM plugin_srm.supplier_categories WHERE id = $2 AND tenant_id = $1)"
     )
+    .bind(tenant_id)
     .bind(id)
     .fetch_one(&state.db)
     .await;
@@ -430,10 +463,12 @@ async fn delete_category(
         ));
     }
 
-    let result = sqlx::query("DELETE FROM plugin_srm.supplier_categories WHERE id = $1")
-        .bind(id)
-        .execute(&state.db)
-        .await;
+    let result =
+        sqlx::query("DELETE FROM plugin_srm.supplier_categories WHERE id = $1 AND tenant_id = $2")
+            .bind(id)
+            .bind(tenant_id)
+            .execute(&state.db)
+            .await;
 
     match result {
         Ok(r) if r.rows_affected() > 0 => {

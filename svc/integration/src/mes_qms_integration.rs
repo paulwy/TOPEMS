@@ -15,6 +15,7 @@ use crate::sync_retry::{RetryConfig, RetryExecutor, RetryResult};
 #[derive(Debug, Clone, Serialize, Deserialize, FromRow)]
 pub struct MesQmsSync {
     pub id: Uuid,
+    pub tenant_id: Uuid,
     pub sync_type: String,
     pub direction: String,
     pub mes_record_id: Option<Uuid>,
@@ -41,6 +42,7 @@ pub struct MesQmsSync {
 
 #[derive(Debug, Clone, Deserialize)]
 pub struct CreateMesQmsSyncRequest {
+    pub tenant_id: Uuid,
     pub sync_type: String,
     pub direction: String,
     pub mes_record_id: Option<String>,
@@ -125,6 +127,7 @@ pub async fn init_mes_qms_tables(pool: &PgPool) -> Result<(), sqlx::Error> {
         r#"
         CREATE TABLE IF NOT EXISTS mes_qms_sync (
             id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+            tenant_id UUID NOT NULL,
             sync_type VARCHAR(50) NOT NULL,
             direction VARCHAR(30) NOT NULL,
             mes_record_id UUID,
@@ -159,6 +162,9 @@ pub async fn init_mes_qms_tables(pool: &PgPool) -> Result<(), sqlx::Error> {
     sqlx::query("CREATE INDEX IF NOT EXISTS idx_mes_qms_sync_direction ON mes_qms_sync(direction)")
         .execute(pool)
         .await?;
+    sqlx::query("CREATE INDEX IF NOT EXISTS idx_mes_qms_sync_tenant ON mes_qms_sync(tenant_id)")
+        .execute(pool)
+        .await?;
     sqlx::query(
         "CREATE INDEX IF NOT EXISTS idx_mes_qms_sync_mes_record ON mes_qms_sync(mes_record_id)",
     )
@@ -184,22 +190,23 @@ pub async fn init_mes_qms_tables(pool: &PgPool) -> Result<(), sqlx::Error> {
 
 pub async fn list_mes_qms_sync(
     pool: &PgPool,
+    tenant_id: Uuid,
     sync_type: Option<&str>,
     direction: Option<&str>,
     status: Option<&str>,
     limit: i64,
 ) -> Result<Vec<MesQmsSync>, sqlx::Error> {
     let mut sql = String::from(
-        "SELECT id, sync_type, direction, mes_record_id, mes_record_type, 
+        "SELECT id, tenant_id, sync_type, direction, mes_record_id, mes_record_type, 
                 qms_inspection_id, order_id, order_no, product_id, product_name,
                 product_code, batch_no, quantity, synced, sync_status, sync_error,
                 retry_count, max_retries, payload, result_payload, last_synced_at,
                 created_at, updated_at
-           FROM mes_qms_sync WHERE 1=1",
+           FROM mes_qms_sync WHERE tenant_id = $1",
     );
 
     let mut params: Vec<String> = Vec::new();
-    let mut param_idx = 1;
+    let mut param_idx = 2;
 
     if let Some(st) = sync_type {
         sql.push_str(&format!(" AND sync_type = ${}", param_idx));
@@ -219,7 +226,7 @@ pub async fn list_mes_qms_sync(
 
     sql.push_str(&format!(" ORDER BY created_at DESC LIMIT ${}", param_idx));
 
-    let mut query = sqlx::query_as::<_, MesQmsSync>(&sql);
+    let mut query = sqlx::query_as::<_, MesQmsSync>(&sql).bind(tenant_id);
     for p in &params {
         query = query.bind(p);
     }
@@ -230,7 +237,7 @@ pub async fn list_mes_qms_sync(
 
 pub async fn get_mes_qms_sync(pool: &PgPool, id: Uuid) -> Result<Option<MesQmsSync>, sqlx::Error> {
     sqlx::query_as::<_, MesQmsSync>(
-        "SELECT id, sync_type, direction, mes_record_id, mes_record_type, 
+        "SELECT id, tenant_id, sync_type, direction, mes_record_id, mes_record_type, 
                 qms_inspection_id, order_id, order_no, product_id, product_name,
                 product_code, batch_no, quantity, synced, sync_status, sync_error,
                 retry_count, max_retries, payload, result_payload, last_synced_at,
@@ -265,19 +272,20 @@ pub async fn create_sync_record(
 
     let result = sqlx::query_as::<_, MesQmsSync>(
         "INSERT INTO mes_qms_sync (
-            id, sync_type, direction, mes_record_id, mes_record_type,
+            id, tenant_id, sync_type, direction, mes_record_id, mes_record_type,
             qms_inspection_id, order_id, order_no, product_id, product_name,
             product_code, batch_no, quantity, synced, sync_status,
             retry_count, max_retries, payload, result_payload,
             last_synced_at, created_at, updated_at
-        ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, $17, $18, $19, $20, $21, $22)
-        RETURNING id, sync_type, direction, mes_record_id, mes_record_type,
+        ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, $17, $18, $19, $20, $21, $22, $23)
+        RETURNING id, tenant_id, sync_type, direction, mes_record_id, mes_record_type,
                   qms_inspection_id, order_id, order_no, product_id, product_name,
                   product_code, batch_no, quantity, synced, sync_status, sync_error,
                   retry_count, max_retries, payload, result_payload, last_synced_at,
                   created_at, updated_at"
     )
     .bind(id)
+    .bind(req.tenant_id)
     .bind(&req.sync_type)
     .bind(&req.direction)
     .bind(mes_uuid)
@@ -323,7 +331,7 @@ pub async fn update_sync_status(
             last_synced_at = COALESCE($6, last_synced_at),
             updated_at = $7
          WHERE id = $1
-         RETURNING id, sync_type, direction, mes_record_id, mes_record_type,
+         RETURNING id, tenant_id, sync_type, direction, mes_record_id, mes_record_type,
                   qms_inspection_id, order_id, order_no, product_id, product_name,
                   product_code, batch_no, quantity, synced, sync_status, sync_error,
                   retry_count, max_retries, payload, result_payload, last_synced_at,
@@ -363,6 +371,7 @@ pub async fn increment_retry_count(
 /// Trigger QMS inspection task from MES production record
 pub async fn trigger_qms_inspection(
     pool: &PgPool,
+    tenant_id: Uuid,
     mes_url: &str,
     qms_url: &str,
     req: &TriggerInspectionRequest,
@@ -421,6 +430,7 @@ pub async fn trigger_qms_inspection(
         .map(|s| s.to_string());
 
     let sync_req = CreateMesQmsSyncRequest {
+        tenant_id,
         sync_type: SYNC_TYPE_PRODUCTION_INSPECTION.to_string(),
         direction: DIRECTION_MES_TO_QMS.to_string(),
         mes_record_id: Some(req.production_record_id.clone()),
@@ -467,6 +477,7 @@ pub async fn trigger_qms_inspection(
 /// Sync QMS inspection result back to MES
 pub async fn sync_quality_result_to_mes(
     pool: &PgPool,
+    tenant_id: Uuid,
     mes_url: &str,
     qms_url: &str,
     req: &SyncQualityResultRequest,
@@ -531,6 +542,7 @@ pub async fn sync_quality_result_to_mes(
     let quantity = inspection_data.get("quantity").and_then(|v| v.as_f64());
 
     let sync_req = CreateMesQmsSyncRequest {
+        tenant_id,
         sync_type: SYNC_TYPE_QUALITY_RESULT.to_string(),
         direction: DIRECTION_QMS_TO_MES.to_string(),
         mes_record_id: mes_record_id_str.clone(),
@@ -574,6 +586,7 @@ pub async fn sync_quality_result_to_mes(
 /// Sync quality traceability chain data
 pub async fn sync_trace_chain_data(
     pool: &PgPool,
+    tenant_id: Uuid,
     mes_url: &str,
     _qms_url: &str,
     req: &TraceChainSyncRequest,
@@ -587,6 +600,7 @@ pub async fn sync_trace_chain_data(
     let trace_data = fetch_mes_trace_chain(pool, mes_url, order_id, direction).await?;
 
     let sync_req = CreateMesQmsSyncRequest {
+        tenant_id,
         sync_type: SYNC_TYPE_TRACE_CHAIN.to_string(),
         direction: DIRECTION_BIDIRECTIONAL.to_string(),
         mes_record_id: None,
@@ -649,6 +663,7 @@ pub async fn sync_trace_chain_data(
 /// Handle defective product processing flow linkage
 pub async fn handle_defect_handling(
     pool: &PgPool,
+    tenant_id: Uuid,
     mes_url: &str,
     qms_url: &str,
     req: &DefectHandlingRequest,
@@ -707,6 +722,7 @@ pub async fn handle_defect_handling(
         .unwrap_or_else(|_| serde_json::json!({"inspection_id": req.inspection_id.clone()}));
 
     let sync_req = CreateMesQmsSyncRequest {
+        tenant_id,
         sync_type: SYNC_TYPE_DEFECT_HANDLING.to_string(),
         direction: DIRECTION_QMS_TO_MES.to_string(),
         mes_record_id: req.production_record_id.clone(),
@@ -1099,7 +1115,7 @@ pub async fn retry_failed_sync(
 
     let result = executor
         .execute(|| async {
-            execute_sync_by_type(pool, mes_url, qms_url, &sync_type, &payload).await
+            execute_sync_by_type(pool, sync.tenant_id, mes_url, qms_url, &sync_type, &payload).await
         })
         .await;
 
@@ -1127,6 +1143,7 @@ pub async fn retry_failed_sync(
 
 async fn execute_sync_by_type(
     pool: &PgPool,
+    tenant_id: Uuid,
     mes_url: &str,
     qms_url: &str,
     sync_type: &str,
@@ -1141,7 +1158,7 @@ async fn execute_sync_by_type(
                 quantity: None,
                 triggered_by: Some("retry".to_string()),
             };
-            trigger_qms_inspection(pool, mes_url, qms_url, &req).await?;
+            trigger_qms_inspection(pool, tenant_id, mes_url, qms_url, &req).await?;
             Ok(())
         }
         SYNC_TYPE_QUALITY_RESULT => {
@@ -1150,7 +1167,7 @@ async fn execute_sync_by_type(
                 inspection_id: inspection_id.to_string(),
                 production_record_id: None,
             };
-            sync_quality_result_to_mes(pool, mes_url, qms_url, &req).await?;
+            sync_quality_result_to_mes(pool, tenant_id, mes_url, qms_url, &req).await?;
             Ok(())
         }
         _ => Err(format!("不支持的同步类型: {}", sync_type)),
@@ -1161,6 +1178,7 @@ async fn execute_sync_by_type(
 
 pub async fn handle_mes_production_completed(
     pool: &PgPool,
+    tenant_id: Uuid,
     mes_url: &str,
     qms_url: &str,
     payload: &serde_json::Value,
@@ -1184,7 +1202,7 @@ pub async fn handle_mes_production_completed(
         triggered_by: Some("auto_trigger".to_string()),
     };
 
-    match trigger_qms_inspection(pool, mes_url, qms_url, &req).await {
+    match trigger_qms_inspection(pool, tenant_id, mes_url, qms_url, &req).await {
         Ok(_) => info!("自动触发质检成功 - 记录ID: {}", record_id),
         Err(e) => error!("自动触发质检失败 - 记录ID: {}, 错误: {}", record_id, e),
     }
@@ -1194,6 +1212,7 @@ pub async fn handle_mes_production_completed(
 
 pub async fn handle_qms_inspection_completed(
     pool: &PgPool,
+    tenant_id: Uuid,
     mes_url: &str,
     qms_url: &str,
     payload: &serde_json::Value,
@@ -1220,7 +1239,7 @@ pub async fn handle_qms_inspection_completed(
         production_record_id,
     };
 
-    match sync_quality_result_to_mes(pool, mes_url, qms_url, &req).await {
+    match sync_quality_result_to_mes(pool, tenant_id, mes_url, qms_url, &req).await {
         Ok(_) => info!("质检结果自动回传成功 - 质检ID: {}", inspection_id),
         Err(e) => error!(
             "质检结果自动回传失败 - 质检ID: {}, 错误: {}",

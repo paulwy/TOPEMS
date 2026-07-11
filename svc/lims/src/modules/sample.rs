@@ -1,13 +1,14 @@
 use axum::{
     extract::State,
     routing::{get, post},
-    Json, Router,
+    Extension, Json, Router,
 };
 use serde::{Deserialize, Serialize};
 use sqlx::{types::Uuid, Row};
 use topems_shared::ApiResponse;
 
-use crate::AppState;
+use crate::middleware::tenant::TenantContext;
+use crate::shared::AppState;
 
 pub fn create_routes() -> Router<AppState> {
     Router::new()
@@ -44,6 +45,7 @@ pub struct SampleQuery {
 #[derive(Debug, Serialize)]
 pub struct Sample {
     pub id: String,
+    pub tenant_id: String,
     pub sample_no: String,
     pub sample_name: String,
     pub sample_type: Option<String>,
@@ -78,25 +80,27 @@ pub struct UpdateSampleRequest {
 }
 
 pub async fn list_samples(
-    State(state): State<crate::AppState>,
+    State(state): State<crate::shared::AppState>,
+    Extension(ctx): Extension<TenantContext>,
     axum::extract::Query(query): axum::extract::Query<SampleQuery>,
 ) -> Json<ApiResponse<Vec<Sample>>> {
     let page = query.page.unwrap_or(1);
     let page_size = query.page_size.unwrap_or(10);
     let offset = (page - 1) * page_size;
+    let tenant_id = ctx.tenant_id;
 
     let sql = match (query.status.as_ref(), query.sample_no.as_ref(), query.sample_name.as_ref()) {
-        (Some(_), Some(_), Some(_)) => "SELECT id, sample_no, sample_name, sample_type, source, quantity, unit, status, received_at::TEXT, expired_at::TEXT, created_at::TEXT, updated_at::TEXT FROM qa_lab_samples WHERE status = $1 AND sample_no LIKE $2 AND sample_name LIKE $3 ORDER BY created_at DESC LIMIT $4 OFFSET $5",
-        (Some(_), Some(_), None) => "SELECT id, sample_no, sample_name, sample_type, source, quantity, unit, status, received_at::TEXT, expired_at::TEXT, created_at::TEXT, updated_at::TEXT FROM qa_lab_samples WHERE status = $1 AND sample_no LIKE $2 ORDER BY created_at DESC LIMIT $3 OFFSET $4",
-        (Some(_), None, Some(_)) => "SELECT id, sample_no, sample_name, sample_type, source, quantity, unit, status, received_at::TEXT, expired_at::TEXT, created_at::TEXT, updated_at::TEXT FROM qa_lab_samples WHERE status = $1 AND sample_name LIKE $2 ORDER BY created_at DESC LIMIT $3 OFFSET $4",
-        (Some(_), None, None) => "SELECT id, sample_no, sample_name, sample_type, source, quantity, unit, status, received_at::TEXT, expired_at::TEXT, created_at::TEXT, updated_at::TEXT FROM qa_lab_samples WHERE status = $1 ORDER BY created_at DESC LIMIT $2 OFFSET $3",
-        (None, Some(_), Some(_)) => "SELECT id, sample_no, sample_name, sample_type, source, quantity, unit, status, received_at::TEXT, expired_at::TEXT, created_at::TEXT, updated_at::TEXT FROM qa_lab_samples WHERE sample_no LIKE $1 AND sample_name LIKE $2 ORDER BY created_at DESC LIMIT $3 OFFSET $4",
-        (None, Some(_), None) => "SELECT id, sample_no, sample_name, sample_type, source, quantity, unit, status, received_at::TEXT, expired_at::TEXT, created_at::TEXT, updated_at::TEXT FROM qa_lab_samples WHERE sample_no LIKE $1 ORDER BY created_at DESC LIMIT $2 OFFSET $3",
-        (None, None, Some(_)) => "SELECT id, sample_no, sample_name, sample_type, source, quantity, unit, status, received_at::TEXT, expired_at::TEXT, created_at::TEXT, updated_at::TEXT FROM qa_lab_samples WHERE sample_name LIKE $1 ORDER BY created_at DESC LIMIT $2 OFFSET $3",
-        (None, None, None) => "SELECT id, sample_no, sample_name, sample_type, source, quantity, unit, status, received_at::TEXT, expired_at::TEXT, created_at::TEXT, updated_at::TEXT FROM qa_lab_samples ORDER BY created_at DESC LIMIT $1 OFFSET $2",
+        (Some(_), Some(_), Some(_)) => "SELECT id, tenant_id, sample_no, sample_name, sample_type, source, quantity, unit, status, received_at::TEXT, expired_at::TEXT, created_at::TEXT, updated_at::TEXT FROM qa_lab_samples WHERE tenant_id = $1 AND status = $2 AND sample_no LIKE $3 AND sample_name LIKE $4 ORDER BY created_at DESC LIMIT $5 OFFSET $6",
+        (Some(_), Some(_), None) => "SELECT id, tenant_id, sample_no, sample_name, sample_type, source, quantity, unit, status, received_at::TEXT, expired_at::TEXT, created_at::TEXT, updated_at::TEXT FROM qa_lab_samples WHERE tenant_id = $1 AND status = $2 AND sample_no LIKE $3 ORDER BY created_at DESC LIMIT $4 OFFSET $5",
+        (Some(_), None, Some(_)) => "SELECT id, tenant_id, sample_no, sample_name, sample_type, source, quantity, unit, status, received_at::TEXT, expired_at::TEXT, created_at::TEXT, updated_at::TEXT FROM qa_lab_samples WHERE tenant_id = $1 AND status = $2 AND sample_name LIKE $3 ORDER BY created_at DESC LIMIT $4 OFFSET $5",
+        (Some(_), None, None) => "SELECT id, tenant_id, sample_no, sample_name, sample_type, source, quantity, unit, status, received_at::TEXT, expired_at::TEXT, created_at::TEXT, updated_at::TEXT FROM qa_lab_samples WHERE tenant_id = $1 AND status = $2 ORDER BY created_at DESC LIMIT $3 OFFSET $4",
+        (None, Some(_), Some(_)) => "SELECT id, tenant_id, sample_no, sample_name, sample_type, source, quantity, unit, status, received_at::TEXT, expired_at::TEXT, created_at::TEXT, updated_at::TEXT FROM qa_lab_samples WHERE tenant_id = $1 AND sample_no LIKE $2 AND sample_name LIKE $3 ORDER BY created_at DESC LIMIT $4 OFFSET $5",
+        (None, Some(_), None) => "SELECT id, tenant_id, sample_no, sample_name, sample_type, source, quantity, unit, status, received_at::TEXT, expired_at::TEXT, created_at::TEXT, updated_at::TEXT FROM qa_lab_samples WHERE tenant_id = $1 AND sample_no LIKE $2 ORDER BY created_at DESC LIMIT $3 OFFSET $4",
+        (None, None, Some(_)) => "SELECT id, tenant_id, sample_no, sample_name, sample_type, source, quantity, unit, status, received_at::TEXT, expired_at::TEXT, created_at::TEXT, updated_at::TEXT FROM qa_lab_samples WHERE tenant_id = $1 AND sample_name LIKE $2 ORDER BY created_at DESC LIMIT $3 OFFSET $4",
+        (None, None, None) => "SELECT id, tenant_id, sample_no, sample_name, sample_type, source, quantity, unit, status, received_at::TEXT, expired_at::TEXT, created_at::TEXT, updated_at::TEXT FROM qa_lab_samples WHERE tenant_id = $1 ORDER BY created_at DESC LIMIT $2 OFFSET $3",
     };
 
-    let mut query_builder = sqlx::query(sql);
+    let mut query_builder = sqlx::query(sql).bind(tenant_id);
     match (
         query.status.as_ref(),
         query.sample_no.as_ref(),
@@ -155,6 +159,7 @@ pub async fn list_samples(
         rows.into_iter()
             .map(|row| Sample {
                 id: row.get("id"),
+                tenant_id: row.get("tenant_id"),
                 sample_no: row.get("sample_no"),
                 sample_name: row.get("sample_name"),
                 sample_type: row.get("sample_type"),
@@ -180,17 +185,20 @@ pub async fn list_samples(
 }
 
 pub async fn register_sample(
-    State(state): State<crate::AppState>,
+    State(state): State<crate::shared::AppState>,
+    Extension(ctx): Extension<TenantContext>,
     Json(req): Json<CreateSampleRequest>,
 ) -> Json<ApiResponse<Sample>> {
     let sample_no = format!(
         "SMP-{}",
         uuid::Uuid::new_v4().to_string()[..8].to_uppercase()
     );
+    let tenant_id = ctx.tenant_id;
 
     let row = sqlx::query(
-        "INSERT INTO qa_lab_samples (sample_no, sample_name, sample_type, source, quantity, unit, status) VALUES ($1, $2, $3, $4, $5, $6, 'received') RETURNING id, sample_no, sample_name, sample_type, source, quantity, unit, status, received_at::TEXT, expired_at::TEXT, created_at::TEXT, updated_at::TEXT"
+        "INSERT INTO qa_lab_samples (tenant_id, sample_no, sample_name, sample_type, source, quantity, unit, status) VALUES ($1, $2, $3, $4, $5, $6, $7, 'received') RETURNING id, tenant_id, sample_no, sample_name, sample_type, source, quantity, unit, status, received_at::TEXT, expired_at::TEXT, created_at::TEXT, updated_at::TEXT"
     )
+    .bind(tenant_id)
     .bind(sample_no)
     .bind(&req.sample_name)
     .bind(&req.sample_type)
@@ -204,6 +212,7 @@ pub async fn register_sample(
         Ok(r) => Json(ApiResponse::success(
             Sample {
                 id: r.get("id"),
+                tenant_id: r.get("tenant_id"),
                 sample_no: r.get("sample_no"),
                 sample_name: r.get("sample_name"),
                 sample_type: r.get("sample_type"),
@@ -226,18 +235,21 @@ pub async fn register_sample(
 }
 
 pub async fn get_sample(
-    State(state): State<crate::AppState>,
+    State(state): State<crate::shared::AppState>,
+    Extension(ctx): Extension<TenantContext>,
     axum::extract::Path(id): axum::extract::Path<String>,
 ) -> Json<ApiResponse<Sample>> {
     let id = match Uuid::parse_str(&id) {
         Ok(u) => u,
         Err(_) => return Json(ApiResponse::error(400, "无效的样品ID")),
     };
+    let tenant_id = ctx.tenant_id;
 
     let row = sqlx::query(
-        "SELECT id, sample_no, sample_name, sample_type, source, quantity, unit, status, received_at::TEXT, expired_at::TEXT, created_at::TEXT, updated_at::TEXT FROM qa_lab_samples WHERE id = $1"
+        "SELECT id, tenant_id, sample_no, sample_name, sample_type, source, quantity, unit, status, received_at::TEXT, expired_at::TEXT, created_at::TEXT, updated_at::TEXT FROM qa_lab_samples WHERE id = $1 AND tenant_id = $2"
     )
     .bind(id)
+    .bind(tenant_id)
     .fetch_one(&state.pool)
     .await;
 
@@ -245,6 +257,7 @@ pub async fn get_sample(
         Ok(r) => Json(ApiResponse::success(
             Sample {
                 id: r.get("id"),
+                tenant_id: r.get("tenant_id"),
                 sample_no: r.get("sample_no"),
                 sample_name: r.get("sample_name"),
                 sample_type: r.get("sample_type"),
@@ -267,7 +280,8 @@ pub async fn get_sample(
 }
 
 pub async fn update_sample(
-    State(state): State<crate::AppState>,
+    State(state): State<crate::shared::AppState>,
+    Extension(ctx): Extension<TenantContext>,
     axum::extract::Path(id): axum::extract::Path<String>,
     Json(req): Json<UpdateSampleRequest>,
 ) -> Json<ApiResponse<Sample>> {
@@ -275,11 +289,13 @@ pub async fn update_sample(
         Ok(u) => u,
         Err(_) => return Json(ApiResponse::error(400, "无效的样品ID")),
     };
+    let tenant_id = ctx.tenant_id;
 
     let row = sqlx::query(
-        "UPDATE qa_lab_samples SET sample_name = COALESCE($2, sample_name), sample_type = COALESCE($3, sample_type), source = COALESCE($4, source), quantity = COALESCE($5, quantity), unit = COALESCE($6, unit), status = COALESCE($7, status), expired_at = COALESCE($8, expired_at), updated_at = NOW() WHERE id = $1 RETURNING id, sample_no, sample_name, sample_type, source, quantity, unit, status, received_at::TEXT, expired_at::TEXT, created_at::TEXT, updated_at::TEXT"
+        "UPDATE qa_lab_samples SET sample_name = COALESCE($3, sample_name), sample_type = COALESCE($4, sample_type), source = COALESCE($5, source), quantity = COALESCE($6, quantity), unit = COALESCE($7, unit), status = COALESCE($8, status), expired_at = COALESCE($9, expired_at), updated_at = NOW() WHERE id = $1 AND tenant_id = $2 RETURNING id, tenant_id, sample_no, sample_name, sample_type, source, quantity, unit, status, received_at::TEXT, expired_at::TEXT, created_at::TEXT, updated_at::TEXT"
     )
     .bind(id)
+    .bind(tenant_id)
     .bind(&req.sample_name)
     .bind(&req.sample_type)
     .bind(&req.source)
@@ -294,6 +310,7 @@ pub async fn update_sample(
         Ok(r) => Json(ApiResponse::success(
             Sample {
                 id: r.get("id"),
+                tenant_id: r.get("tenant_id"),
                 sample_no: r.get("sample_no"),
                 sample_name: r.get("sample_name"),
                 sample_type: r.get("sample_type"),
@@ -316,16 +333,19 @@ pub async fn update_sample(
 }
 
 pub async fn delete_sample(
-    State(state): State<crate::AppState>,
+    State(state): State<crate::shared::AppState>,
+    Extension(ctx): Extension<TenantContext>,
     axum::extract::Path(id): axum::extract::Path<String>,
 ) -> Json<ApiResponse<bool>> {
     let id = match Uuid::parse_str(&id) {
         Ok(u) => u,
         Err(_) => return Json(ApiResponse::error(400, "无效的样品ID")),
     };
+    let tenant_id = ctx.tenant_id;
 
-    let result = sqlx::query("DELETE FROM qa_lab_samples WHERE id = $1")
+    let result = sqlx::query("DELETE FROM qa_lab_samples WHERE id = $1 AND tenant_id = $2")
         .bind(id)
+        .bind(tenant_id)
         .execute(&state.pool)
         .await;
 
@@ -345,6 +365,7 @@ pub async fn delete_sample(
 #[derive(Debug, Serialize)]
 pub struct SampleLifecycleRecord {
     pub id: String,
+    pub tenant_id: String,
     pub sample_id: String,
     pub sample_no: String,
     pub lifecycle_stage: String,
@@ -384,24 +405,27 @@ const LIFECYCLE_STAGES: &[(&str, &str)] = &[
 ];
 
 pub async fn get_sample_lifecycle(
-    State(state): State<crate::AppState>,
+    State(state): State<crate::shared::AppState>,
+    Extension(ctx): Extension<TenantContext>,
     axum::extract::Path(sample_id): axum::extract::Path<String>,
 ) -> Json<ApiResponse<Vec<SampleLifecycleRecord>>> {
     let id = match Uuid::parse_str(&sample_id) {
         Ok(u) => u,
         Err(_) => return Json(ApiResponse::error(400, "无效的样品ID")),
     };
+    let tenant_id = ctx.tenant_id;
 
     let rows = sqlx::query(
         r#"
-        SELECT id, sample_id, sample_no, lifecycle_stage, stage_description,
+        SELECT id, tenant_id, sample_id, sample_no, lifecycle_stage, stage_description,
                operator, notes, location, created_at::TEXT
         FROM qa_lab_sample_lifecycle
-        WHERE sample_id = $1
+        WHERE sample_id = $1 AND tenant_id = $2
         ORDER BY created_at ASC
         "#,
     )
     .bind(id)
+    .bind(tenant_id)
     .fetch_all(&state.pool)
     .await;
 
@@ -411,6 +435,7 @@ pub async fn get_sample_lifecycle(
                 .into_iter()
                 .map(|row| SampleLifecycleRecord {
                     id: row.get("id"),
+                    tenant_id: row.get("tenant_id"),
                     sample_id: row.get("sample_id"),
                     sample_no: row.get("sample_no"),
                     lifecycle_stage: row.get("lifecycle_stage"),
@@ -431,19 +456,22 @@ pub async fn get_sample_lifecycle(
 }
 
 pub async fn record_lifecycle_event(
-    State(state): State<crate::AppState>,
+    State(state): State<crate::shared::AppState>,
+    Extension(ctx): Extension<TenantContext>,
     Json(req): Json<CreateLifecycleRecordRequest>,
 ) -> Json<ApiResponse<SampleLifecycleRecord>> {
     let sample_id = match Uuid::parse_str(&req.sample_id) {
         Ok(u) => u,
         Err(_) => return Json(ApiResponse::error(400, "无效的样品ID")),
     };
+    let tenant_id = ctx.tenant_id;
 
-    // Get sample info
-    let sample_row = sqlx::query("SELECT sample_no FROM qa_lab_samples WHERE id = $1")
-        .bind(sample_id)
-        .fetch_optional(&state.pool)
-        .await;
+    let sample_row =
+        sqlx::query("SELECT sample_no FROM qa_lab_samples WHERE id = $1 AND tenant_id = $2")
+            .bind(sample_id)
+            .bind(tenant_id)
+            .fetch_optional(&state.pool)
+            .await;
 
     let sample_no = match sample_row {
         Ok(Some(row)) => row.get::<String, _>("sample_no"),
@@ -451,7 +479,6 @@ pub async fn record_lifecycle_event(
         Err(e) => return Json(ApiResponse::error(500, &format!("查询样品失败: {}", e))),
     };
 
-    // Validate lifecycle stage
     let valid_stage = LIFECYCLE_STAGES
         .iter()
         .any(|(stage, _)| *stage == req.lifecycle_stage);
@@ -465,14 +492,15 @@ pub async fn record_lifecycle_event(
     let row = sqlx::query(
         r#"
         INSERT INTO qa_lab_sample_lifecycle (
-            id, sample_id, sample_no, lifecycle_stage, stage_description,
+            id, tenant_id, sample_id, sample_no, lifecycle_stage, stage_description,
             operator, notes, location, created_at
-        ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, NOW())
-        RETURNING id, sample_id, sample_no, lifecycle_stage, stage_description,
+        ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, NOW())
+        RETURNING id, tenant_id, sample_id, sample_no, lifecycle_stage, stage_description,
                   operator, notes, location, created_at::TEXT
         "#,
     )
     .bind(record_id)
+    .bind(tenant_id)
     .bind(sample_id)
     .bind(&sample_no)
     .bind(&req.lifecycle_stage)
@@ -485,18 +513,19 @@ pub async fn record_lifecycle_event(
 
     match row {
         Ok(r) => {
-            // Update sample status
             let _ = sqlx::query(
-                "UPDATE qa_lab_samples SET status = $2, updated_at = NOW() WHERE id = $1",
+                "UPDATE qa_lab_samples SET status = $2, updated_at = NOW() WHERE id = $1 AND tenant_id = $3",
             )
             .bind(sample_id)
             .bind(&req.lifecycle_stage)
+            .bind(tenant_id)
             .execute(&state.pool)
             .await;
 
             Json(ApiResponse::success(
                 SampleLifecycleRecord {
                     id: r.get("id"),
+                    tenant_id: r.get("tenant_id"),
                     sample_id: r.get("sample_id"),
                     sample_no: r.get("sample_no"),
                     lifecycle_stage: r.get("lifecycle_stage"),
@@ -517,7 +546,8 @@ pub async fn record_lifecycle_event(
 }
 
 pub async fn transition_sample_stage(
-    State(state): State<crate::AppState>,
+    State(state): State<crate::shared::AppState>,
+    Extension(ctx): Extension<TenantContext>,
     axum::extract::Path((sample_id, to_stage)): axum::extract::Path<(String, String)>,
     Json(req): Json<serde_json::Value>,
 ) -> Json<ApiResponse<SampleLifecycleRecord>> {
@@ -525,19 +555,21 @@ pub async fn transition_sample_stage(
         Ok(u) => u,
         Err(_) => return Json(ApiResponse::error(400, "无效的样品ID")),
     };
+    let tenant_id = ctx.tenant_id;
 
-    // Validate target stage
     let valid_stage = LIFECYCLE_STAGES.iter().any(|(stage, _)| *stage == to_stage);
 
     if !valid_stage {
         return Json(ApiResponse::error(400, "无效的目标阶段"));
     }
 
-    // Get current stage
-    let current_row = sqlx::query("SELECT sample_no, status FROM qa_lab_samples WHERE id = $1")
-        .bind(sample_uuid)
-        .fetch_optional(&state.pool)
-        .await;
+    let current_row = sqlx::query(
+        "SELECT sample_no, status FROM qa_lab_samples WHERE id = $1 AND tenant_id = $2",
+    )
+    .bind(sample_uuid)
+    .bind(tenant_id)
+    .fetch_optional(&state.pool)
+    .await;
 
     let (sample_no, current_stage) = match current_row {
         Ok(Some(row)) => (
@@ -562,14 +594,15 @@ pub async fn transition_sample_stage(
     let row = sqlx::query(
         r#"
         INSERT INTO qa_lab_sample_lifecycle (
-            id, sample_id, sample_no, lifecycle_stage, stage_description,
+            id, tenant_id, sample_id, sample_no, lifecycle_stage, stage_description,
             operator, notes, location, created_at
-        ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, NOW())
-        RETURNING id, sample_id, sample_no, lifecycle_stage, stage_description,
+        ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, NOW())
+        RETURNING id, tenant_id, sample_id, sample_no, lifecycle_stage, stage_description,
                   operator, notes, location, created_at::TEXT
         "#,
     )
     .bind(record_id)
+    .bind(tenant_id)
     .bind(sample_uuid)
     .bind(&sample_no)
     .bind(&to_stage)
@@ -582,18 +615,19 @@ pub async fn transition_sample_stage(
 
     match row {
         Ok(r) => {
-            // Update sample status
             let _ = sqlx::query(
-                "UPDATE qa_lab_samples SET status = $2, updated_at = NOW() WHERE id = $1",
+                "UPDATE qa_lab_samples SET status = $2, updated_at = NOW() WHERE id = $1 AND tenant_id = $3",
             )
             .bind(sample_uuid)
             .bind(&to_stage)
+            .bind(tenant_id)
             .execute(&state.pool)
             .await;
 
             Json(ApiResponse::success(
                 SampleLifecycleRecord {
                     id: r.get("id"),
+                    tenant_id: r.get("tenant_id"),
                     sample_id: r.get("sample_id"),
                     sample_no: r.get("sample_no"),
                     lifecycle_stage: r.get("lifecycle_stage"),
@@ -636,29 +670,32 @@ pub async fn get_lifecycle_stages() -> Json<ApiResponse<Vec<serde_json::Value>>>
 }
 
 pub async fn get_sample_traceability(
-    State(state): State<crate::AppState>,
+    State(state): State<crate::shared::AppState>,
+    Extension(ctx): Extension<TenantContext>,
     axum::extract::Path(sample_id): axum::extract::Path<String>,
 ) -> Json<ApiResponse<serde_json::Value>> {
     let id = match Uuid::parse_str(&sample_id) {
         Ok(u) => u,
         Err(_) => return Json(ApiResponse::error(400, "无效的样品ID")),
     };
+    let tenant_id = ctx.tenant_id;
 
-    // Get sample info
     let sample_row = sqlx::query(
         r#"
-        SELECT id, sample_no, sample_name, sample_type, source, quantity, unit,
+        SELECT id, tenant_id, sample_no, sample_name, sample_type, source, quantity, unit,
                status, received_at::TEXT, expired_at::TEXT, created_at::TEXT, updated_at::TEXT
-        FROM qa_lab_samples WHERE id = $1
+        FROM qa_lab_samples WHERE id = $1 AND tenant_id = $2
         "#,
     )
     .bind(id)
+    .bind(tenant_id)
     .fetch_optional(&state.pool)
     .await;
 
     let sample = match sample_row {
         Ok(Some(row)) => serde_json::json!({
             "id": row.get::<String, _>("id"),
+            "tenant_id": row.get::<String, _>("tenant_id"),
             "sample_no": row.get::<String, _>("sample_no"),
             "sample_name": row.get::<String, _>("sample_name"),
             "sample_type": row.get::<Option<String>, _>("sample_type"),
@@ -675,16 +712,16 @@ pub async fn get_sample_traceability(
         Err(e) => return Json(ApiResponse::error(500, &format!("查询样品失败: {}", e))),
     };
 
-    // Get lifecycle history
     let lifecycle_rows = sqlx::query(
         r#"
         SELECT id, lifecycle_stage, stage_description, operator, notes, location, created_at::TEXT
         FROM qa_lab_sample_lifecycle
-        WHERE sample_id = $1
+        WHERE sample_id = $1 AND tenant_id = $2
         ORDER BY created_at ASC
         "#,
     )
     .bind(id)
+    .bind(tenant_id)
     .fetch_all(&state.pool)
     .await;
 
@@ -711,7 +748,6 @@ pub async fn get_sample_traceability(
         }
     };
 
-    // Calculate lifecycle statistics
     let current_status = sample
         .get("status")
         .and_then(|v| v.as_str())

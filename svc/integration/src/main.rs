@@ -10,8 +10,7 @@
 #![allow(dead_code)]
 
 use axum::{
-    extract::FromRef,
-    extract::{Path, State},
+    extract::{Extension, FromRef, Path, State},
     routing::{delete, get, post, put},
     Json, Router,
 };
@@ -21,7 +20,7 @@ use sqlx::{postgres::PgPoolOptions, PgPool, Row};
 use uuid::Uuid;
 
 use topems_shared::{
-    auth_middleware, build_health_response, create_cors_layer, init_telemetry,
+    auth_middleware, build_health_response, create_cors_layer, init_telemetry, rls_middleware,
     telemetry_middleware, ApiResponse, AuthState, ServiceHealth,
 };
 
@@ -34,6 +33,14 @@ mod qms_lims_ehs;
 mod retry_handler;
 mod rule_engine;
 mod sync_retry;
+
+fn get_tenant_id(claims: &topems_shared::auth::Claims) -> Uuid {
+    claims
+        .tenant_id
+        .as_ref()
+        .and_then(|t| Uuid::parse_str(t).ok())
+        .unwrap_or_else(Uuid::new_v4)
+}
 
 use conversion_rules::{
     get_rule_executions, init_conversion_rules_table, insert_conversion_rule,
@@ -187,8 +194,11 @@ async fn main() {
 
     tracing::info!("🚀 TOPEMS Integration Service starting...");
 
-    let database_url = std::env::var("DATABASE_URL")
-        .unwrap_or_else(|_| "postgres://topems:topems_secret@localhost:5432/topems".to_string());
+    let database_url = std::env::var("DATABASE_URL").unwrap_or_else(|_| {
+        env::var("DATABASE_URL")
+            .expect("DATABASE_URL environment variable is required")
+            .to_string()
+    });
 
     let pool = match PgPoolOptions::new()
         .max_connections(5)
@@ -330,6 +340,10 @@ async fn main() {
             app_state.auth_state.clone(),
             auth_middleware,
         ))
+        .layer(axum::middleware::from_fn_with_state(
+            app_state.pool.clone(),
+            rls_middleware,
+        ))
         .with_state(app_state);
 
     let app = Router::new()
@@ -338,7 +352,8 @@ async fn main() {
         .layer(axum::middleware::from_fn(telemetry_middleware))
         .layer(cors);
 
-    let port = std::env::var("SERVER_PORT")
+    let port = std::env::var("INTEGRATION_PORT")
+        .or_else(|_| std::env::var("SERVER_PORT"))
         .unwrap_or_else(|_| "8072".to_string())
         .parse()
         .unwrap_or(8072);
@@ -1028,6 +1043,7 @@ async fn create_conversion_rule_api(
 
     let rule = ConversionRule {
         id,
+        tenant_id: req.tenant_id,
         code: req.code,
         name: req.name,
         description: req.description,
@@ -1096,6 +1112,7 @@ async fn update_conversion_rule_api(
         Ok(r) => Json(ApiResponse::success(
             ConversionRule {
                 id: r.get("id"),
+                tenant_id: r.get("tenant_id"),
                 code: r.get("code"),
                 name: r.get("name"),
                 description: r.get("description"),
@@ -1295,8 +1312,10 @@ async fn disable_conversion_rule_api(
 
 async fn list_mes_qms_sync_api(
     State(state): State<AppState>,
+    Extension(claims): Extension<topems_shared::auth::Claims>,
     axum::extract::Query(query): axum::extract::Query<std::collections::HashMap<String, String>>,
 ) -> Json<ApiResponse<Vec<mes_qms_integration::MesQmsSync>>> {
+    let tenant_id = get_tenant_id(&claims);
     let sync_type = query.get("sync_type").map(|s| s.as_str());
     let direction = query.get("direction").map(|s| s.as_str());
     let status = query.get("status").map(|s| s.as_str());
@@ -1305,8 +1324,15 @@ async fn list_mes_qms_sync_api(
         .and_then(|s| s.parse::<i64>().ok())
         .unwrap_or(100);
 
-    match mes_qms_integration::list_mes_qms_sync(&state.pool, sync_type, direction, status, limit)
-        .await
+    match mes_qms_integration::list_mes_qms_sync(
+        &state.pool,
+        tenant_id,
+        sync_type,
+        direction,
+        status,
+        limit,
+    )
+    .await
     {
         Ok(syncs) => Json(ApiResponse::success(
             syncs,
@@ -1359,10 +1385,13 @@ async fn get_mes_qms_stats_api(
 
 async fn trigger_qms_inspection_api(
     State(state): State<AppState>,
+    Extension(claims): Extension<topems_shared::auth::Claims>,
     Json(req): Json<mes_qms_integration::TriggerInspectionRequest>,
 ) -> Json<ApiResponse<mes_qms_integration::MesQmsSync>> {
+    let tenant_id = get_tenant_id(&claims);
     match mes_qms_integration::trigger_qms_inspection(
         &state.pool,
+        tenant_id,
         &state.mes_url,
         &state.qms_url,
         &req,
@@ -1385,10 +1414,13 @@ async fn trigger_qms_inspection_api(
 
 async fn sync_quality_result_api(
     State(state): State<AppState>,
+    Extension(claims): Extension<topems_shared::auth::Claims>,
     Json(req): Json<mes_qms_integration::SyncQualityResultRequest>,
 ) -> Json<ApiResponse<mes_qms_integration::MesQmsSync>> {
+    let tenant_id = get_tenant_id(&claims);
     match mes_qms_integration::sync_quality_result_to_mes(
         &state.pool,
+        tenant_id,
         &state.mes_url,
         &state.qms_url,
         &req,
@@ -1411,10 +1443,13 @@ async fn sync_quality_result_api(
 
 async fn sync_trace_chain_api(
     State(state): State<AppState>,
+    Extension(claims): Extension<topems_shared::auth::Claims>,
     Json(req): Json<mes_qms_integration::TraceChainSyncRequest>,
 ) -> Json<ApiResponse<mes_qms_integration::MesQmsSync>> {
+    let tenant_id = get_tenant_id(&claims);
     match mes_qms_integration::sync_trace_chain_data(
         &state.pool,
+        tenant_id,
         &state.mes_url,
         &state.qms_url,
         &req,
@@ -1437,10 +1472,13 @@ async fn sync_trace_chain_api(
 
 async fn defect_handling_api(
     State(state): State<AppState>,
+    Extension(claims): Extension<topems_shared::auth::Claims>,
     Json(req): Json<mes_qms_integration::DefectHandlingRequest>,
 ) -> Json<ApiResponse<mes_qms_integration::MesQmsSync>> {
+    let tenant_id = get_tenant_id(&claims);
     match mes_qms_integration::handle_defect_handling(
         &state.pool,
+        tenant_id,
         &state.mes_url,
         &state.qms_url,
         &req,
@@ -1496,8 +1534,10 @@ struct SyncMesToErpRequest {
 
 async fn sync_erp_order_to_mes(
     State(state): State<AppState>,
+    Extension(claims): Extension<topems_shared::auth::Claims>,
     Json(req): Json<SyncErpToMesRequest>,
 ) -> Json<ApiResponse<mes_erp_sync::SyncResult>> {
+    let tenant_id = get_tenant_id(&claims);
     let erp_order_id = match Uuid::parse_str(&req.erp_order_id) {
         Ok(id) => id,
         Err(e) => {
@@ -1510,7 +1550,7 @@ async fn sync_erp_order_to_mes(
 
     match state
         .mes_erp_sync_service
-        .sync_erp_to_mes(erp_order_id)
+        .sync_erp_to_mes(tenant_id, erp_order_id)
         .await
     {
         Ok(result) => Json(ApiResponse::success(result, "ERP→MES 同步成功")),
@@ -1523,8 +1563,10 @@ async fn sync_erp_order_to_mes(
 
 async fn sync_mes_progress_to_erp(
     State(state): State<AppState>,
+    Extension(claims): Extension<topems_shared::auth::Claims>,
     Json(req): Json<SyncMesToErpRequest>,
 ) -> Json<ApiResponse<mes_erp_sync::SyncResult>> {
+    let tenant_id = get_tenant_id(&claims);
     let mes_order_id = match Uuid::parse_str(&req.mes_order_id) {
         Ok(id) => id,
         Err(e) => {
@@ -1537,7 +1579,7 @@ async fn sync_mes_progress_to_erp(
 
     match state
         .mes_erp_sync_service
-        .sync_mes_progress_to_erp(mes_order_id)
+        .sync_mes_progress_to_erp(tenant_id, mes_order_id)
         .await
     {
         Ok(result) => Json(ApiResponse::success(result, "MES→ERP 进度同步成功")),

@@ -3,11 +3,11 @@
 use axum::{
     extract::State,
     routing::{delete, get, post, put},
-    Json, Router,
+    Extension, Json, Router,
 };
 use serde::{Deserialize, Serialize};
 use sqlx::{types::Uuid, FromRow};
-use topems_shared::ApiResponse;
+use topems_shared::{ApiResponse, Claims};
 
 #[derive(Debug, Serialize, Deserialize)]
 pub struct IssueQuery {
@@ -20,6 +20,7 @@ pub struct IssueQuery {
 #[derive(Debug, Serialize, FromRow)]
 pub struct QualityIssue {
     pub id: String,
+    pub tenant_id: String,
     pub issue_no: String,
     pub title: String,
     pub description: Option<String>,
@@ -51,25 +52,42 @@ pub struct UpdateIssueRequest {
     pub status: Option<String>,
 }
 
+fn get_tenant_id(claims: &Claims, headers: &axum::http::HeaderMap) -> Uuid {
+    claims
+        .tenant_id
+        .as_ref()
+        .and_then(|t| Uuid::parse_str(t).ok())
+        .or_else(|| {
+            headers
+                .get("x-tenant-id")
+                .and_then(|v| v.to_str().ok())
+                .and_then(|s| Uuid::parse_str(s).ok())
+        })
+        .unwrap_or_else(Uuid::new_v4)
+}
+
 pub async fn list_issues(
     State(state): State<crate::AppState>,
+    Extension(claims): Extension<Claims>,
     axum::extract::Query(query): axum::extract::Query<IssueQuery>,
+    headers: axum::http::HeaderMap,
 ) -> Json<ApiResponse<Vec<QualityIssue>>> {
     let page = query.page.unwrap_or(1);
     let page_size = query.page_size.unwrap_or(10);
     let offset = (page - 1) * page_size;
+    let tenant_id = get_tenant_id(&claims, &headers);
 
     let issues = match (query.status.as_ref(), query.severity.as_ref()) {
-        (Some(st), Some(sv)) => sqlx::query_as::<_, QualityIssue>(r#"SELECT id, issue_no, title, description, severity, status, source, related_inspection_id::TEXT, created_by, created_at::TEXT, resolved_at::TEXT, updated_at::TEXT FROM qa_quality_issues WHERE status = $1 AND severity = $2 ORDER BY created_at DESC LIMIT $3 OFFSET $4"#).bind(st).bind(sv).bind(page_size).bind(offset)
+        (Some(st), Some(sv)) => sqlx::query_as::<_, QualityIssue>(r#"SELECT id, tenant_id::TEXT, issue_no, title, description, severity, status, source, related_inspection_id::TEXT, created_by, created_at::TEXT, resolved_at::TEXT, updated_at::TEXT FROM qa_quality_issues WHERE tenant_id = $1 AND status = $2 AND severity = $3 ORDER BY created_at DESC LIMIT $4 OFFSET $5"#).bind(tenant_id).bind(st).bind(sv).bind(page_size).bind(offset)
         .fetch_all(&state.pool)
         .await,
-        (Some(st), None) => sqlx::query_as::<_, QualityIssue>(r#"SELECT id, issue_no, title, description, severity, status, source, related_inspection_id::TEXT, created_by, created_at::TEXT, resolved_at::TEXT, updated_at::TEXT FROM qa_quality_issues WHERE status = $1 ORDER BY created_at DESC LIMIT $2 OFFSET $3"#).bind(st).bind(page_size).bind(offset)
+        (Some(st), None) => sqlx::query_as::<_, QualityIssue>(r#"SELECT id, tenant_id::TEXT, issue_no, title, description, severity, status, source, related_inspection_id::TEXT, created_by, created_at::TEXT, resolved_at::TEXT, updated_at::TEXT FROM qa_quality_issues WHERE tenant_id = $1 AND status = $2 ORDER BY created_at DESC LIMIT $3 OFFSET $4"#).bind(tenant_id).bind(st).bind(page_size).bind(offset)
         .fetch_all(&state.pool)
         .await,
-        (None, Some(sv)) => sqlx::query_as::<_, QualityIssue>(r#"SELECT id, issue_no, title, description, severity, status, source, related_inspection_id::TEXT, created_by, created_at::TEXT, resolved_at::TEXT, updated_at::TEXT FROM qa_quality_issues WHERE severity = $1 ORDER BY created_at DESC LIMIT $2 OFFSET $3"#).bind(sv).bind(page_size).bind(offset)
+        (None, Some(sv)) => sqlx::query_as::<_, QualityIssue>(r#"SELECT id, tenant_id::TEXT, issue_no, title, description, severity, status, source, related_inspection_id::TEXT, created_by, created_at::TEXT, resolved_at::TEXT, updated_at::TEXT FROM qa_quality_issues WHERE tenant_id = $1 AND severity = $2 ORDER BY created_at DESC LIMIT $3 OFFSET $4"#).bind(tenant_id).bind(sv).bind(page_size).bind(offset)
         .fetch_all(&state.pool)
         .await,
-        (None, None) => sqlx::query_as::<_, QualityIssue>(r#"SELECT id, issue_no, title, description, severity, status, source, related_inspection_id::TEXT, created_by, created_at::TEXT, resolved_at::TEXT, updated_at::TEXT FROM qa_quality_issues ORDER BY created_at DESC LIMIT $1 OFFSET $2"#).bind(page_size).bind(offset)
+        (None, None) => sqlx::query_as::<_, QualityIssue>(r#"SELECT id, tenant_id::TEXT, issue_no, title, description, severity, status, source, related_inspection_id::TEXT, created_by, created_at::TEXT, resolved_at::TEXT, updated_at::TEXT FROM qa_quality_issues WHERE tenant_id = $1 ORDER BY created_at DESC LIMIT $2 OFFSET $3"#).bind(tenant_id).bind(page_size).bind(offset)
         .fetch_all(&state.pool)
         .await,
     };
@@ -85,19 +103,22 @@ pub async fn list_issues(
 
 pub async fn create_issue(
     State(state): State<crate::AppState>,
+    Extension(claims): Extension<Claims>,
+    headers: axum::http::HeaderMap,
     Json(req): Json<CreateIssueRequest>,
 ) -> Json<ApiResponse<QualityIssue>> {
     let issue_no = format!(
         "QI-{}",
         uuid::Uuid::new_v4().to_string()[..8].to_uppercase()
     );
+    let tenant_id = get_tenant_id(&claims, &headers);
 
     let related_inspection_id = req
         .related_inspection_id
         .as_ref()
         .and_then(|s| Uuid::parse_str(s).ok());
 
-    let issue = sqlx::query_as::<_, QualityIssue>(r#"INSERT INTO qa_quality_issues (issue_no, title, description, severity, source, related_inspection_id, status, created_by) VALUES ($1, $2, $3, $4, $5, $6, 'open', $7) RETURNING id, issue_no, title, description, severity, status, source, related_inspection_id::TEXT, created_by, created_at::TEXT, resolved_at::TEXT, updated_at::TEXT"#).bind(issue_no).bind(req.title).bind(req.description).bind(req.severity).bind(req.source).bind(related_inspection_id).bind(req.created_by)
+    let issue = sqlx::query_as::<_, QualityIssue>(r#"INSERT INTO qa_quality_issues (tenant_id, issue_no, title, description, severity, source, related_inspection_id, status, created_by) VALUES ($1, $2, $3, $4, $5, $6, $7, 'open', $8) RETURNING id, tenant_id::TEXT, issue_no, title, description, severity, status, source, related_inspection_id::TEXT, created_by, created_at::TEXT, resolved_at::TEXT, updated_at::TEXT"#).bind(tenant_id).bind(issue_no).bind(req.title).bind(req.description).bind(req.severity).bind(req.source).bind(related_inspection_id).bind(req.created_by)
     .fetch_one(&state.pool)
     .await;
 
@@ -112,14 +133,17 @@ pub async fn create_issue(
 
 pub async fn get_issue(
     State(state): State<crate::AppState>,
+    Extension(claims): Extension<Claims>,
     axum::extract::Path(id): axum::extract::Path<String>,
+    headers: axum::http::HeaderMap,
 ) -> Json<ApiResponse<QualityIssue>> {
     let id = match Uuid::parse_str(&id) {
         Ok(u) => u,
         Err(_) => return Json(ApiResponse::error(400, "无效的问题ID")),
     };
+    let tenant_id = get_tenant_id(&claims, &headers);
 
-    let issue = sqlx::query_as::<_, QualityIssue>(r#"SELECT id, issue_no, title, description, severity, status, source, related_inspection_id::TEXT, created_by, created_at::TEXT, resolved_at::TEXT, updated_at::TEXT FROM qa_quality_issues WHERE id = $1"#).bind(id)
+    let issue = sqlx::query_as::<_, QualityIssue>(r#"SELECT id, tenant_id::TEXT, issue_no, title, description, severity, status, source, related_inspection_id::TEXT, created_by, created_at::TEXT, resolved_at::TEXT, updated_at::TEXT FROM qa_quality_issues WHERE id = $1 AND tenant_id = $2"#).bind(id).bind(tenant_id)
     .fetch_one(&state.pool)
     .await;
 
@@ -134,15 +158,18 @@ pub async fn get_issue(
 
 pub async fn update_issue(
     State(state): State<crate::AppState>,
+    Extension(claims): Extension<Claims>,
     axum::extract::Path(id): axum::extract::Path<String>,
+    headers: axum::http::HeaderMap,
     Json(req): Json<UpdateIssueRequest>,
 ) -> Json<ApiResponse<QualityIssue>> {
     let id = match Uuid::parse_str(&id) {
         Ok(u) => u,
         Err(_) => return Json(ApiResponse::error(400, "无效的问题ID")),
     };
+    let tenant_id = get_tenant_id(&claims, &headers);
 
-    let issue = sqlx::query_as::<_, QualityIssue>(r#"UPDATE qa_quality_issues SET title = COALESCE($2, title), description = COALESCE($3, description), severity = COALESCE($4, severity), status = COALESCE($5, status), updated_at = NOW() WHERE id = $1 RETURNING id, issue_no, title, description, severity, status, source, related_inspection_id::TEXT, created_by, created_at::TEXT, resolved_at::TEXT, updated_at::TEXT"#).bind(id).bind(req.title).bind(req.description).bind(req.severity).bind(req.status)
+    let issue = sqlx::query_as::<_, QualityIssue>(r#"UPDATE qa_quality_issues SET title = COALESCE($2, title), description = COALESCE($3, description), severity = COALESCE($4, severity), status = COALESCE($5, status), updated_at = NOW() WHERE id = $1 AND tenant_id = $6 RETURNING id, tenant_id::TEXT, issue_no, title, description, severity, status, source, related_inspection_id::TEXT, created_by, created_at::TEXT, resolved_at::TEXT, updated_at::TEXT"#).bind(id).bind(req.title).bind(req.description).bind(req.severity).bind(req.status).bind(tenant_id)
     .fetch_one(&state.pool)
     .await;
 
@@ -157,15 +184,18 @@ pub async fn update_issue(
 
 pub async fn resolve_issue(
     State(state): State<crate::AppState>,
+    Extension(claims): Extension<Claims>,
     axum::extract::Path(id): axum::extract::Path<String>,
+    headers: axum::http::HeaderMap,
     Json(_req): Json<serde_json::Value>,
 ) -> Json<ApiResponse<QualityIssue>> {
     let id = match Uuid::parse_str(&id) {
         Ok(u) => u,
         Err(_) => return Json(ApiResponse::error(400, "无效的问题ID")),
     };
+    let tenant_id = get_tenant_id(&claims, &headers);
 
-    let issue = sqlx::query_as::<_, QualityIssue>(r#"UPDATE qa_quality_issues SET status = 'resolved', resolved_at = NOW(), updated_at = NOW() WHERE id = $1 RETURNING id, issue_no, title, description, severity, status, source, related_inspection_id::TEXT, created_by, created_at::TEXT, resolved_at::TEXT, updated_at::TEXT"#).bind(id)
+    let issue = sqlx::query_as::<_, QualityIssue>(r#"UPDATE qa_quality_issues SET status = 'resolved', resolved_at = NOW(), updated_at = NOW() WHERE id = $1 AND tenant_id = $2 RETURNING id, tenant_id::TEXT, issue_no, title, description, severity, status, source, related_inspection_id::TEXT, created_by, created_at::TEXT, resolved_at::TEXT, updated_at::TEXT"#).bind(id).bind(tenant_id)
     .fetch_one(&state.pool)
     .await;
 
@@ -180,15 +210,19 @@ pub async fn resolve_issue(
 
 pub async fn delete_issue(
     State(state): State<crate::AppState>,
+    Extension(claims): Extension<Claims>,
     axum::extract::Path(id): axum::extract::Path<String>,
+    headers: axum::http::HeaderMap,
 ) -> Json<ApiResponse<bool>> {
     let id = match Uuid::parse_str(&id) {
         Ok(u) => u,
         Err(_) => return Json(ApiResponse::error(400, "无效的问题ID")),
     };
+    let tenant_id = get_tenant_id(&claims, &headers);
 
-    let result = sqlx::query(r#"DELETE FROM qa_quality_issues WHERE id = $1"#)
+    let result = sqlx::query(r#"DELETE FROM qa_quality_issues WHERE id = $1 AND tenant_id = $2"#)
         .bind(id)
+        .bind(tenant_id)
         .execute(&state.pool)
         .await;
 

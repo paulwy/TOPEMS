@@ -46,6 +46,7 @@ pub struct UpdateInboundOrderItemRequest {
 #[derive(Debug, Clone, FromRow, Serialize, Deserialize)]
 pub struct OutboundOrderItem {
     pub id: Uuid,
+    pub tenant_id: Uuid,
     pub order_id: Uuid,
     pub inventory_item_id: Uuid,
     pub sku: String,

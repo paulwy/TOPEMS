@@ -12,86 +12,89 @@ impl DocumentService {
         Self { pool }
     }
 
-    pub async fn list_documents(&self) -> Result<Vec<Document>> {
-        sqlx::query_as!(
-            Document,
-            r#"SELECT * FROM doc.documents ORDER BY created_at DESC"#
+    pub async fn list_documents(&self, tenant_id: Uuid) -> Result<Vec<Document>> {
+        sqlx::query_as::<_, Document>(
+            r#"SELECT * FROM doc.documents WHERE tenant_id = $1 ORDER BY created_at DESC"#,
         )
+        .bind(tenant_id)
         .fetch_all(&self.pool)
         .await
     }
 
-    pub async fn get_document(&self, document_id: Uuid) -> Result<Option<Document>> {
-        sqlx::query_as!(
-            Document,
-            r#"SELECT * FROM doc.documents WHERE id = $1"#,
-            document_id
+    pub async fn get_document(
+        &self,
+        tenant_id: Uuid,
+        document_id: Uuid,
+    ) -> Result<Option<Document>> {
+        sqlx::query_as::<_, Document>(
+            r#"SELECT * FROM doc.documents WHERE tenant_id = $1 AND id = $2"#,
         )
+        .bind(tenant_id)
+        .bind(document_id)
         .fetch_optional(&self.pool)
         .await
     }
 
     pub async fn create_document(
         &self,
+        tenant_id: Uuid,
         req: CreateDocumentRequest,
         created_by: &str,
     ) -> Result<Document> {
         let id = Uuid::new_v4();
-        let tags = req.tags.as_ref().map(|t| t.as_slice());
-        sqlx::query_as!(
-            Document,
+        sqlx::query_as::<_, Document>(
             r#"
-            INSERT INTO doc.documents (id, title, folder_id, template_id, content, content_type, status, tags, description, created_by)
-            VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10)
+            INSERT INTO doc.documents (id, tenant_id, title, folder_id, template_id, content, content_type, status, tags, description, created_by)
+            VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11)
             RETURNING *
             "#,
-            id,
-            req.title,
-            req.folder_id,
-            req.template_id,
-            req.content,
-            req.content_type.unwrap_or_else(|| "html".to_string()),
-            req.status.unwrap_or_else(|| "draft".to_string()),
-            tags,
-            req.description,
-            Some(created_by.to_string())
         )
+        .bind(id)
+        .bind(tenant_id)
+        .bind(req.title)
+        .bind(req.folder_id)
+        .bind(req.template_id)
+        .bind(req.content)
+        .bind(req.content_type.unwrap_or_else(|| "html".to_string()))
+        .bind(req.status.unwrap_or_else(|| "draft".to_string()))
+        .bind(req.tags)
+        .bind(req.description)
+        .bind(Some(created_by.to_string()))
         .fetch_one(&self.pool)
         .await
     }
 
     pub async fn update_document(
         &self,
+        tenant_id: Uuid,
         document_id: Uuid,
         req: UpdateDocumentRequest,
     ) -> Result<Option<Document>> {
-        let tags = req.tags.as_ref().map(|t| t.as_slice());
-        sqlx::query_as!(
-            Document,
+        sqlx::query_as::<_, Document>(
             r#"
-            UPDATE doc.documents
-            SET title = COALESCE($2, title),
-                folder_id = COALESCE($3, folder_id),
-                content = COALESCE($4, content),
-                tags = COALESCE($5, tags),
-                description = COALESCE($6, description),
-                updated_at = NOW()
-            WHERE id = $1
+            UPDATE doc.documents 
+            SET title = COALESCE($1, title), folder_id = COALESCE($2, folder_id), 
+                content = COALESCE($3, content), tags = COALESCE($4, tags), 
+                description = COALESCE($5, description), updated_at = NOW()
+            WHERE tenant_id = $6 AND id = $7
             RETURNING *
             "#,
-            document_id,
-            req.title,
-            req.folder_id,
-            req.content,
-            tags,
-            req.description
         )
+        .bind(req.title)
+        .bind(req.folder_id)
+        .bind(req.content)
+        .bind(req.tags)
+        .bind(req.description)
+        .bind(tenant_id)
+        .bind(document_id)
         .fetch_optional(&self.pool)
         .await
     }
 
-    pub async fn delete_document(&self, document_id: Uuid) -> Result<bool> {
-        let result = sqlx::query!(r#"DELETE FROM doc.documents WHERE id = $1"#, document_id)
+    pub async fn delete_document(&self, tenant_id: Uuid, document_id: Uuid) -> Result<bool> {
+        let result = sqlx::query(r#"DELETE FROM doc.documents WHERE tenant_id = $1 AND id = $2"#)
+            .bind(tenant_id)
+            .bind(document_id)
             .execute(&self.pool)
             .await?;
         Ok(result.rows_affected() > 0)
@@ -99,26 +102,22 @@ impl DocumentService {
 }
 
 pub async fn init_database(pool: &PgPool) -> Result<()> {
-    sqlx::query(r#"CREATE SCHEMA IF NOT EXISTS doc;"#)
-        .execute(pool)
-        .await?;
-
     sqlx::query(
         r#"
         CREATE TABLE IF NOT EXISTS doc.documents (
             id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-            tenant_id UUID,
-            title VARCHAR(500) NOT NULL,
+            tenant_id UUID NOT NULL,
+            title VARCHAR(200) NOT NULL,
             folder_id UUID REFERENCES doc.folders(id),
             template_id UUID REFERENCES doc.templates(id),
             content TEXT,
             content_type VARCHAR(50) DEFAULT 'html',
-            status VARCHAR(50) DEFAULT 'draft',
+            status VARCHAR(20) DEFAULT 'draft',
             version INTEGER DEFAULT 1,
             tags TEXT[],
             description TEXT,
-            file_name VARCHAR(500),
-            file_path TEXT,
+            file_name VARCHAR(200),
+            file_path VARCHAR(500),
             file_size BIGINT,
             mime_type VARCHAR(100),
             published_at TIMESTAMPTZ,
@@ -128,25 +127,6 @@ pub async fn init_database(pool: &PgPool) -> Result<()> {
             created_by VARCHAR(100),
             created_at TIMESTAMPTZ DEFAULT NOW(),
             updated_at TIMESTAMPTZ DEFAULT NOW()
-        )
-        "#,
-    )
-    .execute(pool)
-    .await?;
-
-    sqlx::query(
-        r#"
-        CREATE TABLE IF NOT EXISTS doc.document_versions (
-            id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-            tenant_id UUID,
-            document_id UUID NOT NULL REFERENCES doc.documents(id) ON DELETE CASCADE,
-            version INTEGER NOT NULL,
-            content TEXT,
-            content_type VARCHAR(50) DEFAULT 'html',
-            change_log TEXT,
-            created_by VARCHAR(100),
-            created_at TIMESTAMPTZ DEFAULT NOW(),
-            UNIQUE(document_id, version)
         )
         "#,
     )

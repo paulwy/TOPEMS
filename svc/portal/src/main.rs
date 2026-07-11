@@ -1,9 +1,10 @@
 use axum::{
     extract::FromRef,
-    routing::{delete, get, post},
+    routing::{delete, get, post, put},
     Json, Router,
 };
 use reqwest::Client;
+use sqlx::PgPool;
 use std::env;
 use std::sync::Arc;
 use std::time::Instant;
@@ -13,13 +14,16 @@ use axum_prometheus::PrometheusMetricLayer;
 use prometheus::{default_registry, Gauge};
 use topems_shared::{
     auth_middleware, build_health_response, create_api_info_router, create_cors_layer,
-    init_telemetry, telemetry_middleware, ApiResponse, AuthState, LocalServiceRegistry,
-    PortalServiceAggregator, ServiceHealth,
+    init_telemetry, rls_middleware, telemetry_middleware, ApiResponse, AuthState,
+    LocalServiceRegistry, PortalServiceAggregator, ServiceHealth,
 };
 
 mod models;
 mod modules;
 mod services;
+mod shared;
+
+use crate::shared::AppState;
 
 use crate::modules::portal_plugin::{auto_register_to_core, get_plugin_info, plugin_health_check};
 
@@ -27,35 +31,6 @@ static START_TIME: std::sync::OnceLock<Instant> = std::sync::OnceLock::new();
 
 fn get_uptime() -> u64 {
     START_TIME.get_or_init(Instant::now).elapsed().as_secs()
-}
-
-#[derive(Clone)]
-#[allow(dead_code)]
-struct AppState {
-    auth_state: AuthState,
-    service_registry: Arc<LocalServiceRegistry>,
-    service_aggregator: Arc<PortalServiceAggregator>,
-    http_client: Client,
-}
-
-impl FromRef<AppState> for AuthState {
-    fn from_ref(state: &AppState) -> Self {
-        state.auth_state.clone()
-    }
-}
-
-impl AppState {
-    async fn new() -> Self {
-        let aggregator = PortalServiceAggregator::new();
-        aggregator.init_default_services().await;
-
-        Self {
-            auth_state: AuthState::from_env(),
-            service_registry: Arc::new(LocalServiceRegistry::new()),
-            service_aggregator: Arc::new(aggregator),
-            http_client: Client::new(),
-        }
-    }
 }
 
 #[tokio::main]
@@ -77,7 +52,28 @@ async fn main() -> anyhow::Result<()> {
     custom_gauge.set(42.0);
     tracing::info!("✅ Prometheus 监控已初始化");
 
-    let app_state = AppState::new().await;
+    let database_url = env::var("DATABASE_URL").unwrap_or_else(|_| {
+        env::var("DATABASE_URL")
+            .expect("DATABASE_URL environment variable is required")
+            .to_string()
+    });
+
+    let pool = match sqlx::postgres::PgPoolOptions::new()
+        .max_connections(5)
+        .connect(&database_url)
+        .await
+    {
+        Ok(p) => {
+            tracing::info!("🔗 数据库连接成功");
+            p
+        }
+        Err(e) => {
+            tracing::error!("数据库连接失败: {}", e);
+            panic!("无法连接到数据库: {}", e);
+        }
+    };
+
+    let app_state = AppState::new(pool.clone()).await;
 
     let cors = create_cors_layer();
 
@@ -140,9 +136,113 @@ async fn main() -> anyhow::Result<()> {
             "/api/portal/v1/notifications/mark-all-read",
             post(modules::notifications::mark_all_notifications_read),
         )
+        .route(
+            "/api/portal/v1/dashboard/stats",
+            get(modules::dashboard::get_dashboard_stats),
+        )
+        .route(
+            "/api/portal/v1/dashboard/quick-access",
+            get(modules::dashboard::get_quick_access),
+        )
+        .route(
+            "/api/portal/v1/dashboard/quick-access",
+            post(modules::dashboard::add_quick_access),
+        )
+        .route(
+            "/api/portal/v1/dashboard/quick-access/{id}",
+            delete(modules::dashboard::remove_quick_access),
+        )
+        .route(
+            "/api/portal/v1/announcements",
+            get(modules::announcements::get_announcements),
+        )
+        .route(
+            "/api/portal/v1/announcements/{id}",
+            get(modules::announcements::get_announcement),
+        )
+        .route(
+            "/api/portal/v1/announcements",
+            post(modules::announcements::create_announcement),
+        )
+        .route(
+            "/api/portal/v1/announcements/{id}",
+            put(modules::announcements::update_announcement),
+        )
+        .route(
+            "/api/portal/v1/announcements/{id}",
+            delete(modules::announcements::delete_announcement),
+        )
+        .route(
+            "/api/portal/v1/announcements/{id}/pin",
+            post(modules::announcements::toggle_announcement_pin),
+        )
+        .route(
+            "/api/portal/v1/announcements/pinned",
+            get(modules::announcements::get_pinned_announcements),
+        )
+        .route(
+            "/api/portal/v1/settings",
+            get(modules::settings::get_user_settings),
+        )
+        .route(
+            "/api/portal/v1/settings",
+            put(modules::settings::update_user_settings),
+        )
+        .route(
+            "/api/portal/v1/settings/reset",
+            post(modules::settings::reset_user_settings),
+        )
+        .route(
+            "/api/portal/v1/settings/themes",
+            get(modules::settings::get_available_themes),
+        )
+        .route(
+            "/api/portal/v1/settings/languages",
+            get(modules::settings::get_available_languages),
+        )
+        .route(
+            "/api/portal/v1/quick-actions",
+            get(modules::quick_actions::get_quick_actions),
+        )
+        .route(
+            "/api/portal/v1/quick-actions/favorites",
+            get(modules::quick_actions::get_favorite_actions),
+        )
+        .route(
+            "/api/portal/v1/quick-actions/{id}/favorite",
+            post(modules::quick_actions::toggle_favorite_action),
+        )
+        .route(
+            "/api/portal/v1/quick-actions/{id}/execute",
+            post(modules::quick_actions::execute_quick_action),
+        )
+        .route(
+            "/api/portal/v1/navigation/menu",
+            get(modules::navigation::get_navigation_menu),
+        )
+        .route(
+            "/api/portal/v1/navigation/pinned",
+            get(modules::navigation::get_pinned_apps),
+        )
+        .route(
+            "/api/portal/v1/navigation/pinned",
+            post(modules::navigation::add_pinned_app),
+        )
+        .route(
+            "/api/portal/v1/navigation/pinned/{id}",
+            delete(modules::navigation::remove_pinned_app),
+        )
+        .route(
+            "/api/portal/v1/navigation/pinned/reorder",
+            put(modules::navigation::reorder_pinned_apps),
+        )
         .layer(axum::middleware::from_fn_with_state(
             app_state.auth_state.clone(),
             auth_middleware,
+        ))
+        .layer(axum::middleware::from_fn_with_state(
+            app_state.pool.clone(),
+            rls_middleware,
         ))
         .with_state(app_state.clone());
 
@@ -155,7 +255,9 @@ async fn main() -> anyhow::Result<()> {
         .layer(CookieManagerLayer::new())
         .layer(prometheus_layer);
 
-    let port = env::var("SERVER_PORT").unwrap_or_else(|_| "8063".to_string());
+    let port = env::var("PORTAL_PORT")
+        .or_else(|_| env::var("SERVER_PORT"))
+        .unwrap_or_else(|_| "8063".to_string());
     let addr = format!("0.0.0.0:{}", port);
 
     tracing::info!("🚀 TOPEMS-PORTAL 统一门户系统启动中...");
@@ -199,25 +301,72 @@ async fn home() -> Json<ApiResponse<&'static str>> {
 Public Endpoints:
   GET  /              - API documentation
   GET  /health        - Health check
+  GET  /api/v1/health/detailed - Detailed health check
   GET  /api/info      - API information
   GET  /api/plugins/info     - Plugin info
   GET  /api/plugins/health   - Plugin health
+  GET  /metrics       - Prometheus metrics
 
 Protected Endpoints (require JWT token):
-  GET  /api/portal/v1/services        - List all services
-  GET  /api/portal/v1/todos           - Get todos
-  POST /api/portal/v1/todos           - Add todo
-  POST /api/portal/v1/todos/{id}      - Complete todo
-  DELETE /api/portal/v1/todos/{id}    - Delete todo
-  GET  /api/portal/v1/user            - Get user info
-  GET  /api/portal/v1/monitoring/services - Monitoring services
-  GET  /api/portal/v1/monitoring/metrics   - Monitoring metrics
-  GET  /api/portal/v1/monitoring/alerts    - Monitoring alerts
-  POST /api/portal/v1/monitoring/alerts/{id} - Acknowledge alert
-  GET  /api/portal/v1/monitoring/logs      - Monitoring logs
-  GET  /api/portal/v1/notifications        - Notifications
-  POST /api/portal/v1/notifications/{id}   - Mark notification read
-  POST /api/portal/v1/notifications/mark-all-read - Mark all read
+
+  Services:
+    GET  /api/portal/v1/services        - List all services
+
+  Todos:
+    GET  /api/portal/v1/todos           - Get todos
+    POST /api/portal/v1/todos           - Add todo
+    POST /api/portal/v1/todos/{id}      - Complete todo
+    DELETE /api/portal/v1/todos/{id}    - Delete todo
+
+  User:
+    GET  /api/portal/v1/user            - Get user info
+
+  Monitoring:
+    GET  /api/portal/v1/monitoring/services - Monitoring services
+    GET  /api/portal/v1/monitoring/metrics   - Monitoring metrics
+    GET  /api/portal/v1/monitoring/alerts    - Monitoring alerts
+    POST /api/portal/v1/monitoring/alerts/{id} - Acknowledge alert
+    GET  /api/portal/v1/monitoring/logs      - Monitoring logs
+
+  Notifications:
+    GET  /api/portal/v1/notifications        - Notifications
+    POST /api/portal/v1/notifications/{id}   - Mark notification read
+    POST /api/portal/v1/notifications/mark-all-read - Mark all read
+
+  Dashboard:
+    GET  /api/portal/v1/dashboard/stats      - Dashboard statistics
+    GET  /api/portal/v1/dashboard/quick-access - Quick access list
+    POST /api/portal/v1/dashboard/quick-access - Add quick access
+    DELETE /api/portal/v1/dashboard/quick-access/{id} - Remove quick access
+
+  Announcements:
+    GET  /api/portal/v1/announcements        - List announcements
+    GET  /api/portal/v1/announcements/{id}   - Get announcement detail
+    POST /api/portal/v1/announcements        - Create announcement
+    PUT  /api/portal/v1/announcements/{id}   - Update announcement
+    DELETE /api/portal/v1/announcements/{id} - Delete announcement
+    POST /api/portal/v1/announcements/{id}/pin - Toggle pin
+    GET  /api/portal/v1/announcements/pinned - Pinned announcements
+
+  Settings:
+    GET  /api/portal/v1/settings             - Get user settings
+    PUT  /api/portal/v1/settings             - Update user settings
+    POST /api/portal/v1/settings/reset       - Reset user settings
+    GET  /api/portal/v1/settings/themes      - Available themes
+    GET  /api/portal/v1/settings/languages   - Available languages
+
+  Quick Actions:
+    GET  /api/portal/v1/quick-actions        - Quick actions list
+    GET  /api/portal/v1/quick-actions/favorites - Favorite actions
+    POST /api/portal/v1/quick-actions/{id}/favorite - Toggle favorite
+    POST /api/portal/v1/quick-actions/{id}/execute - Execute action
+
+  Navigation:
+    GET  /api/portal/v1/navigation/menu      - Navigation menu
+    GET  /api/portal/v1/navigation/pinned    - Pinned apps
+    POST /api/portal/v1/navigation/pinned    - Add pinned app
+    DELETE /api/portal/v1/navigation/pinned/{id} - Remove pinned app
+    PUT  /api/portal/v1/navigation/pinned/reorder - Reorder pinned apps
 ",
         "首页",
     ))

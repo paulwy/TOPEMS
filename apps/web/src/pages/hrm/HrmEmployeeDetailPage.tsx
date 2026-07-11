@@ -25,6 +25,7 @@ import {
 import { useNavigate, useParams } from 'react-router-dom';
 import { hrmApi, type Employee } from '@/api/hrm';
 import { useNotification } from '@/hooks/useNotification';
+import { HRM_PATHS } from '@/modules/hrm/config';
 import { apiLogger } from '@/utils/logger';
 import { DetailPageTemplate, type TabConfig, type SectionConfig } from '@/components/templates';
 import { StatusBadge } from '@topems/shared-components';
@@ -73,7 +74,7 @@ const HrmEmployeeDetailPage: React.FC = () => {
   };
 
   const handleTransfer = () => {
-    navigate(`/hrm/employee/${id}`);
+    navigate(HRM_PATHS.employeeDetail.replace(':id', id!));
   };
 
   const getStatusConfig = (status: string) => {
@@ -336,10 +337,10 @@ const HrmEmployeeDetailPage: React.FC = () => {
       <DetailPageTemplate
         title=''
         subtitle=''
-        backHref='/hrm/employees'
+        backHref={HRM_PATHS.employees}
         loading={loading}
         error={errorMessage}
-        onEdit={() => navigate(`/hrm/employee/${id}`)}
+        onEdit={() => navigate(HRM_PATHS.employeeDetail.replace(':id', id!))}
         infoCard={infoCard}
         tabs={tabs}
         actions={[

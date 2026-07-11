@@ -9,6 +9,7 @@ import { DetailPageTemplate, type TabConfig, type SectionConfig } from '@/compon
 import { ConfirmDialog } from '@topems/shared-components';
 import { PageContainer } from '@/components/common';
 import { designTokens } from '@/theme/tokens';
+import { DOC_PATHS } from '@/modules/doc/config';
 
 const ct = designTokens.colors;
 

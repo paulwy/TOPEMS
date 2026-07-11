@@ -4,6 +4,9 @@
 mod models;
 mod modules;
 mod services;
+mod shared;
+
+use crate::shared::AppState;
 
 use axum::{
     extract::{FromRef, State},
@@ -18,18 +21,6 @@ use topems_shared::{
     telemetry_middleware, ApiResponse, AuthState, DependencyHealth, HealthStatus, ServiceHealth,
 };
 
-#[derive(Clone)]
-pub struct AppState {
-    pub auth_state: AuthState,
-    pub pool: sqlx::PgPool,
-}
-
-impl FromRef<AppState> for AuthState {
-    fn from_ref(state: &AppState) -> Self {
-        state.auth_state.clone()
-    }
-}
-
 #[tokio::main]
 async fn main() {
     dotenv::dotenv().ok();
@@ -37,8 +28,11 @@ async fn main() {
 
     tracing::info!("🚀 TOPEMS Document Service starting...");
 
-    let database_url = std::env::var("DATABASE_URL")
-        .unwrap_or_else(|_| "postgres://topems:topems_secret@localhost:5432/topems".to_string());
+    let database_url = std::env::var("DATABASE_URL").unwrap_or_else(|_| {
+        env::var("DATABASE_URL")
+            .expect("DATABASE_URL environment variable is required")
+            .to_string()
+    });
 
     let pool = match sqlx::postgres::PgPoolOptions::new()
         .max_connections(20)
@@ -51,13 +45,14 @@ async fn main() {
         }
         Err(e) => {
             tracing::error!("❌ Failed to connect to database: {}", e);
-            panic!("Cannot connect to database: {}", e);
+            std::process::exit(1);
         }
     };
 
-    services::init_database(&pool)
-        .await
-        .expect("Failed to init document database");
+    if let Err(e) = services::init_database(&pool).await {
+        tracing::error!("Failed to init document database: {}", e);
+        std::process::exit(1);
+    }
 
     let auth_state = AuthState::from_env();
 

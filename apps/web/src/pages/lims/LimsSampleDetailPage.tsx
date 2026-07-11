@@ -270,7 +270,7 @@ const LimsSampleDetailPage: React.FC = () => {
                 cursor: 'pointer',
                 '&:hover': { bgcolor: 'grey.50' },
               }}
-              onClick={() => navigate(`/lims/task/${task.id}`)}
+              onClick={() => navigate(`/lims/task-detail?id=${task.id}`)}
             >
               <CardContent sx={{ p: 2, '&:last-child': { pb: 2 } }}>
                 <Box

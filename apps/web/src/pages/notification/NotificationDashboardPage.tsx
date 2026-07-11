@@ -18,6 +18,7 @@ import {
 } from 'lucide-react';
 import { Box, Typography } from '@mui/material';
 import { useNavigate } from 'react-router-dom';
+import { NOTIFICATION_PATHS } from '@/modules/notification/config';
 
 import { PageContainer } from '@/components/common';
 import {
@@ -179,7 +180,7 @@ export const NotificationDashboardPage: React.FC = () => {
         icon: <Eye size={20} />,
         color: 'primary.light',
         onClick: () => {
-          navigate('/notification/list?filter=unread');
+          navigate(`${NOTIFICATION_PATHS.list}?filter=unread`);
           addNotification({
             message: '正在跳转到未读消息列表',
             type: 'info',
@@ -205,14 +206,14 @@ export const NotificationDashboardPage: React.FC = () => {
         label: '通知设置',
         icon: <Settings size={20} />,
         color: 'info.light',
-        onClick: () => navigate('/notification/settings'),
+        onClick: () => navigate(NOTIFICATION_PATHS.settings),
       },
       {
         id: 'template-management',
         label: '模板管理',
         icon: <FileText size={20} />,
         color: 'warning.light',
-        onClick: () => navigate('/notification/templates'),
+        onClick: () => navigate(NOTIFICATION_PATHS.templates),
       },
     ],
     [navigate, addNotification]
@@ -227,7 +228,7 @@ export const NotificationDashboardPage: React.FC = () => {
         time: '10分钟前',
         icon: <AlertCircle size={18} />,
         status: 'warning',
-        onClick: () => navigate('/notification/1'),
+        onClick: () => navigate(NOTIFICATION_PATHS.detail.replace(':id', '1')),
       },
       {
         id: '2',
@@ -236,7 +237,7 @@ export const NotificationDashboardPage: React.FC = () => {
         time: '30分钟前',
         icon: <CheckCircle size={18} />,
         status: 'success',
-        onClick: () => navigate('/notification/2'),
+        onClick: () => navigate(NOTIFICATION_PATHS.detail.replace(':id', '2')),
       },
       {
         id: '3',
@@ -245,7 +246,7 @@ export const NotificationDashboardPage: React.FC = () => {
         time: '1小时前',
         icon: <MessageSquare size={18} />,
         status: 'info',
-        onClick: () => navigate('/notification/3'),
+        onClick: () => navigate(NOTIFICATION_PATHS.detail.replace(':id', '3')),
       },
       {
         id: '4',
@@ -254,7 +255,7 @@ export const NotificationDashboardPage: React.FC = () => {
         time: '2小时前',
         icon: <Info size={18} />,
         status: 'default',
-        onClick: () => navigate('/notification/4'),
+        onClick: () => navigate(NOTIFICATION_PATHS.detail.replace(':id', '4')),
       },
       {
         id: '5',
@@ -263,7 +264,7 @@ export const NotificationDashboardPage: React.FC = () => {
         time: '昨天',
         icon: <FileText size={18} />,
         status: 'success',
-        onClick: () => navigate('/notification/5'),
+        onClick: () => navigate(NOTIFICATION_PATHS.detail.replace(':id', '5')),
       },
     ],
     [navigate]

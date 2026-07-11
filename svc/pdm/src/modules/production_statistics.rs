@@ -1,12 +1,26 @@
-use axum::{extract::Path, extract::Query, extract::State, routing::get, Json, Router};
+use axum::{extract::Path, extract::Query, extract::State, routing::get, Extension, Json, Router};
 use bigdecimal::BigDecimal;
 use serde::{Deserialize, Serialize};
 use sqlx::FromRow;
 use std::collections::HashMap;
 use uuid::Uuid;
 
-use crate::AppState;
-use topems_shared::ApiResponse;
+use crate::shared::AppState;
+use topems_shared::{ApiResponse, Claims};
+
+fn get_tenant_id(claims: &Claims, headers: &axum::http::HeaderMap) -> Uuid {
+    claims
+        .tenant_id
+        .as_ref()
+        .and_then(|t| Uuid::parse_str(t).ok())
+        .or_else(|| {
+            headers
+                .get("x-tenant-id")
+                .and_then(|v| v.to_str().ok())
+                .and_then(|s| Uuid::parse_str(s).ok())
+        })
+        .unwrap_or_else(Uuid::new_v4)
+}
 
 pub fn create_routes() -> Router<AppState> {
     Router::new()
@@ -46,8 +60,11 @@ pub struct StatisticsDetail {
 
 pub async fn list_statistics(
     State(state): State<AppState>,
+    Extension(claims): Extension<Claims>,
     Query(query): Query<StatisticsQuery>,
+    headers: axum::http::HeaderMap,
 ) -> Json<ApiResponse<serde_json::Value>> {
+    let tenant_id = get_tenant_id(&claims, &headers);
     let page = query.page.unwrap_or(1).max(1);
     let page_size = query.page_size.unwrap_or(10).min(100);
     let offset = (page - 1) * page_size;
@@ -56,11 +73,13 @@ pub async fn list_statistics(
         r#"
         SELECT product_id, product_name, COUNT(*) AS batch_count, SUM(quantity) AS total_quantity
         FROM pdm_production_batches
+        WHERE tenant_id = $1
         GROUP BY product_id, product_name
         ORDER BY batch_count DESC
-        LIMIT $1 OFFSET $2
+        LIMIT $2 OFFSET $3
         "#,
     )
+    .bind(tenant_id)
     .bind(page_size)
     .bind(offset)
     .fetch_all(&state.pool)
@@ -71,10 +90,13 @@ pub async fn list_statistics(
             let count_result = sqlx::query_scalar::<_, i64>(
                 r#"
                 SELECT COUNT(*) FROM (
-                    SELECT 1 FROM pdm_production_batches GROUP BY product_id, product_name
+                    SELECT 1 FROM pdm_production_batches
+                    WHERE tenant_id = $1
+                    GROUP BY product_id, product_name
                 ) AS grouped
                 "#,
             )
+            .bind(tenant_id)
             .fetch_one(&state.pool)
             .await;
 
@@ -99,17 +121,22 @@ pub async fn list_statistics(
 
 pub async fn get_statistics(
     State(state): State<AppState>,
+    Extension(claims): Extension<Claims>,
     Path(id): Path<Uuid>,
+    headers: axum::http::HeaderMap,
 ) -> Json<ApiResponse<serde_json::Value>> {
+    let tenant_id = get_tenant_id(&claims, &headers);
+
     let main_result = sqlx::query_as::<_, ProductStatistics>(
         r#"
         SELECT product_id, product_name, COUNT(*) AS batch_count, SUM(quantity) AS total_quantity
         FROM pdm_production_batches
-        WHERE product_id = $1
+        WHERE product_id = $1 AND tenant_id = $2
         GROUP BY product_id, product_name
         "#,
     )
     .bind(id)
+    .bind(tenant_id)
     .fetch_optional(&state.pool)
     .await;
 
@@ -121,11 +148,12 @@ pub async fn get_statistics(
                 r#"
                 SELECT status, COUNT(*) AS count, SUM(quantity) AS quantity
                 FROM pdm_production_batches
-                WHERE product_id = $1
+                WHERE product_id = $1 AND tenant_id = $2
                 GROUP BY status
                 "#,
             )
             .bind(id)
+            .bind(tenant_id)
             .fetch_all(&state.pool)
             .await;
 

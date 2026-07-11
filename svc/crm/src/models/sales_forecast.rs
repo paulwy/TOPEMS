@@ -6,6 +6,7 @@ use uuid::Uuid;
 #[derive(Debug, Clone, FromRow, Serialize, Deserialize)]
 pub struct SalesForecast {
     pub id: Uuid,
+    pub tenant_id: Uuid,
     pub period_type: String,
     pub period: String,
     pub predicted_amount: f64,

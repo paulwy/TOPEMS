@@ -4,31 +4,17 @@
 pub mod models;
 pub mod modules;
 pub mod services;
+pub mod shared;
 
-use axum::{
-    extract::{FromRef, State},
-    routing::get,
-    Json, Router,
-};
+use axum::{extract::State, routing::get, Json, Router};
 use axum_prometheus::PrometheusMetricLayer;
 use std::net::SocketAddr;
 
+use crate::shared::AppState;
 use topems_shared::{
     auth_middleware, create_api_info_router, create_cors_layer, init_telemetry,
     telemetry_middleware, ApiResponse, AuthState, DependencyHealth, HealthStatus, ServiceHealth,
 };
-
-#[derive(Clone)]
-pub struct AppState {
-    pub auth_state: AuthState,
-    pub pool: sqlx::PgPool,
-}
-
-impl FromRef<AppState> for AuthState {
-    fn from_ref(state: &AppState) -> Self {
-        state.auth_state.clone()
-    }
-}
 
 #[tokio::main]
 async fn main() {
@@ -38,8 +24,11 @@ async fn main() {
 
     tracing::info!("🚀 TOPEMS Finance Service starting...");
 
-    let database_url = std::env::var("DATABASE_URL")
-        .unwrap_or_else(|_| "postgres://topems:topems_secret@localhost:5432/topems".to_string());
+    let database_url = std::env::var("DATABASE_URL").unwrap_or_else(|_| {
+        env::var("DATABASE_URL")
+            .expect("DATABASE_URL environment variable is required")
+            .to_string()
+    });
 
     let pool = match sqlx::postgres::PgPoolOptions::new()
         .max_connections(20)
@@ -55,13 +44,14 @@ async fn main() {
         }
         Err(e) => {
             tracing::error!("❌ Failed to connect to database: {}", e);
-            panic!("Cannot connect to database: {}", e);
+            std::process::exit(1);
         }
     };
 
-    services::init_database(&pool)
-        .await
-        .expect("Failed to init finance database");
+    if let Err(e) = services::init_database(&pool).await {
+        tracing::error!("Failed to init finance database: {}", e);
+        std::process::exit(1);
+    }
 
     let auth_state = AuthState::from_env();
 

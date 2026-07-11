@@ -7,7 +7,7 @@ use serde::{Deserialize, Serialize};
 use sqlx::types::Uuid;
 use tracing::info;
 
-use crate::AppState;
+use crate::shared::AppState;
 
 #[derive(Debug, Deserialize)]
 pub struct CreateDrilldownPathRequest {

@@ -9,6 +9,7 @@ export const lowcodeModuleConfig: RouteModuleConfig = {
   source: 'plugin',
   suite: 'enterprise',
   status: 'online',
+  frontendOnly: true,
   order: 17,
   description: '应用管理、页面设计、表单设计、数据模型',
   permission: 'lowcode:read',

@@ -1,11 +1,25 @@
-use axum::{extract::Path, extract::Query, extract::State, routing::get, Json, Router};
+use axum::{extract::Path, extract::Query, extract::State, routing::get, Extension, Json, Router};
 use chrono::Utc;
 use serde::{Deserialize, Serialize};
 use sqlx::FromRow;
 use uuid::Uuid;
 
-use crate::AppState;
-use topems_shared::ApiResponse;
+use crate::shared::AppState;
+use topems_shared::{ApiResponse, Claims};
+
+fn get_tenant_id(claims: &Claims, headers: &axum::http::HeaderMap) -> Uuid {
+    claims
+        .tenant_id
+        .as_ref()
+        .and_then(|t| Uuid::parse_str(t).ok())
+        .or_else(|| {
+            headers
+                .get("x-tenant-id")
+                .and_then(|v| v.to_str().ok())
+                .and_then(|s| Uuid::parse_str(s).ok())
+        })
+        .unwrap_or_else(Uuid::new_v4)
+}
 
 pub fn create_routes() -> Router<AppState> {
     Router::new()
@@ -19,6 +33,7 @@ pub fn create_routes() -> Router<AppState> {
 #[derive(Debug, Serialize, Deserialize, FromRow)]
 pub struct Product {
     pub id: Uuid,
+    pub tenant_id: Uuid,
     pub product_no: String,
     pub name: String,
     pub description: Option<String>,
@@ -56,8 +71,11 @@ pub struct ProductQuery {
 
 pub async fn list_products(
     State(state): State<AppState>,
+    Extension(claims): Extension<Claims>,
     Query(query): Query<ProductQuery>,
+    headers: axum::http::HeaderMap,
 ) -> Json<ApiResponse<serde_json::Value>> {
+    let tenant_id = get_tenant_id(&claims, &headers);
     let page = query.page.unwrap_or(1).max(1);
     let page_size = query.page_size.unwrap_or(10).min(100);
     let offset = (page - 1) * page_size;
@@ -65,14 +83,16 @@ pub async fn list_products(
 
     let result = sqlx::query_as::<_, Product>(
         r#"
-        SELECT id, product_no, name, description, version, status, created_at, updated_at
+        SELECT id, tenant_id, product_no, name, description, version, status, created_at, updated_at
         FROM pdm_products
-        WHERE ($1::text IS NULL OR product_no ILIKE $1 OR name ILIKE $1)
-          AND ($2::text IS NULL OR status = $2)
+        WHERE tenant_id = $1
+          AND ($2::text IS NULL OR product_no ILIKE $2 OR name ILIKE $2)
+          AND ($3::text IS NULL OR status = $3)
         ORDER BY created_at DESC
-        LIMIT $3 OFFSET $4
+        LIMIT $4 OFFSET $5
         "#,
     )
+    .bind(tenant_id)
     .bind(&search_pattern)
     .bind(&query.status)
     .bind(page_size)
@@ -85,10 +105,12 @@ pub async fn list_products(
             let count_result = sqlx::query_scalar::<_, i64>(
                 r#"
                 SELECT COUNT(*) FROM pdm_products
-                WHERE ($1::text IS NULL OR product_no ILIKE $1 OR name ILIKE $1)
-                  AND ($2::text IS NULL OR status = $2)
+                WHERE tenant_id = $1
+                  AND ($2::text IS NULL OR product_no ILIKE $2 OR name ILIKE $2)
+                  AND ($3::text IS NULL OR status = $3)
                 "#,
             )
+            .bind(tenant_id)
             .bind(&search_pattern)
             .bind(&query.status)
             .fetch_one(&state.pool)
@@ -115,8 +137,12 @@ pub async fn list_products(
 
 pub async fn create_product(
     State(state): State<AppState>,
+    Extension(claims): Extension<Claims>,
+    headers: axum::http::HeaderMap,
     Json(req): Json<CreateProductRequest>,
 ) -> Json<ApiResponse<Product>> {
+    let tenant_id = get_tenant_id(&claims, &headers);
+
     if req.product_no.is_empty() {
         return Json(ApiResponse::error(400, "产品编号不能为空"));
     }
@@ -128,11 +154,12 @@ pub async fn create_product(
 
     let result = sqlx::query_as::<_, Product>(
         r#"
-        INSERT INTO pdm_products (product_no, name, description, version, status)
-        VALUES ($1, $2, $3, $4, $5)
-        RETURNING id, product_no, name, description, version, status, created_at, updated_at
+        INSERT INTO pdm_products (tenant_id, product_no, name, description, version, status)
+        VALUES ($1, $2, $3, $4, $5, $6)
+        RETURNING id, tenant_id, product_no, name, description, version, status, created_at, updated_at
         "#,
     )
+    .bind(tenant_id)
     .bind(&req.product_no)
     .bind(&req.name)
     .bind(&req.description)
@@ -152,15 +179,20 @@ pub async fn create_product(
 
 pub async fn get_product(
     State(state): State<AppState>,
+    Extension(claims): Extension<Claims>,
     Path(id): Path<Uuid>,
+    headers: axum::http::HeaderMap,
 ) -> Json<ApiResponse<Product>> {
+    let tenant_id = get_tenant_id(&claims, &headers);
+
     let result = sqlx::query_as::<_, Product>(
         r#"
-        SELECT id, product_no, name, description, version, status, created_at, updated_at
-        FROM pdm_products WHERE id = $1
+        SELECT id, tenant_id, product_no, name, description, version, status, created_at, updated_at
+        FROM pdm_products WHERE id = $1 AND tenant_id = $2
         "#,
     )
     .bind(id)
+    .bind(tenant_id)
     .fetch_optional(&state.pool)
     .await;
 
@@ -176,9 +208,12 @@ pub async fn get_product(
 
 pub async fn update_product(
     State(state): State<AppState>,
+    Extension(claims): Extension<Claims>,
     Path(id): Path<Uuid>,
+    headers: axum::http::HeaderMap,
     Json(req): Json<UpdateProductRequest>,
 ) -> Json<ApiResponse<Product>> {
+    let tenant_id = get_tenant_id(&claims, &headers);
     let now = Utc::now();
 
     let result = sqlx::query_as::<_, Product>(
@@ -190,8 +225,8 @@ pub async fn update_product(
             version = COALESCE($5, version),
             status = COALESCE($6, status),
             updated_at = $7
-        WHERE id = $1
-        RETURNING id, product_no, name, description, version, status, created_at, updated_at
+        WHERE id = $1 AND tenant_id = $8
+        RETURNING id, tenant_id, product_no, name, description, version, status, created_at, updated_at
         "#,
     )
     .bind(id)
@@ -201,6 +236,7 @@ pub async fn update_product(
     .bind(&req.version)
     .bind(&req.status)
     .bind(now)
+    .bind(tenant_id)
     .fetch_optional(&state.pool)
     .await;
 
@@ -216,10 +252,15 @@ pub async fn update_product(
 
 pub async fn delete_product(
     State(state): State<AppState>,
+    Extension(claims): Extension<Claims>,
     Path(id): Path<Uuid>,
+    headers: axum::http::HeaderMap,
 ) -> Json<ApiResponse<bool>> {
-    let result = sqlx::query("DELETE FROM pdm_products WHERE id = $1")
+    let tenant_id = get_tenant_id(&claims, &headers);
+
+    let result = sqlx::query("DELETE FROM pdm_products WHERE id = $1 AND tenant_id = $2")
         .bind(id)
+        .bind(tenant_id)
         .execute(&state.pool)
         .await;
 

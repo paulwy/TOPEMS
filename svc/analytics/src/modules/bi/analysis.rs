@@ -4,7 +4,9 @@ use axum::{extract::State, Json};
 use tracing::info;
 
 /// List analyses
-pub async fn list_analyses(State(_state): State<crate::AppState>) -> Json<serde_json::Value> {
+pub async fn list_analyses(
+    State(_state): State<crate::shared::AppState>,
+) -> Json<serde_json::Value> {
     info!("Listing analyses");
     Json(serde_json::json!({
         "success": true,
@@ -13,7 +15,9 @@ pub async fn list_analyses(State(_state): State<crate::AppState>) -> Json<serde_
 }
 
 /// Create analysis
-pub async fn create_analysis(State(_state): State<crate::AppState>) -> Json<serde_json::Value> {
+pub async fn create_analysis(
+    State(_state): State<crate::shared::AppState>,
+) -> Json<serde_json::Value> {
     info!("Creating analysis");
     Json(serde_json::json!({
         "success": true,
@@ -22,7 +26,9 @@ pub async fn create_analysis(State(_state): State<crate::AppState>) -> Json<serd
 }
 
 /// Get analysis
-pub async fn get_analysis(State(_state): State<crate::AppState>) -> Json<serde_json::Value> {
+pub async fn get_analysis(
+    State(_state): State<crate::shared::AppState>,
+) -> Json<serde_json::Value> {
     info!("Getting analysis");
     Json(serde_json::json!({
         "success": true,
@@ -31,7 +37,9 @@ pub async fn get_analysis(State(_state): State<crate::AppState>) -> Json<serde_j
 }
 
 /// Execute analysis
-pub async fn execute_analysis(State(_state): State<crate::AppState>) -> Json<serde_json::Value> {
+pub async fn execute_analysis(
+    State(_state): State<crate::shared::AppState>,
+) -> Json<serde_json::Value> {
     info!("Executing analysis");
     Json(serde_json::json!({
         "success": true,

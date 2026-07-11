@@ -2,15 +2,29 @@ use axum::{
     extract::Path,
     extract::State,
     routing::{get, post},
-    Json, Router,
+    Extension, Json, Router,
 };
 use chrono::Utc;
 use serde::{Deserialize, Serialize};
 use sqlx::FromRow;
 use uuid::Uuid;
 
-use crate::AppState;
-use topems_shared::ApiResponse;
+use crate::shared::AppState;
+use topems_shared::{ApiResponse, Claims};
+
+fn get_tenant_id(claims: &Claims, headers: &axum::http::HeaderMap) -> Uuid {
+    claims
+        .tenant_id
+        .as_ref()
+        .and_then(|t| Uuid::parse_str(t).ok())
+        .or_else(|| {
+            headers
+                .get("x-tenant-id")
+                .and_then(|v| v.to_str().ok())
+                .and_then(|s| Uuid::parse_str(s).ok())
+        })
+        .unwrap_or_else(Uuid::new_v4)
+}
 
 pub fn create_routes() -> Router<AppState> {
     Router::new()
@@ -39,6 +53,7 @@ pub fn create_routes() -> Router<AppState> {
 #[derive(Debug, Serialize, Deserialize, FromRow)]
 pub struct WorkflowDefinition {
     pub id: Uuid,
+    pub tenant_id: Uuid,
     pub name: String,
     pub description: Option<String>,
     pub workflow_type: String,
@@ -53,6 +68,7 @@ pub struct WorkflowDefinition {
 #[derive(Debug, Serialize, Deserialize, FromRow)]
 pub struct WorkflowInstance {
     pub id: Uuid,
+    pub tenant_id: Uuid,
     pub workflow_id: Uuid,
     pub workflow_name: String,
     pub target_type: String,
@@ -94,15 +110,23 @@ pub struct StartWorkflowRequest {
     pub created_by: String,
 }
 
-pub async fn list_workflows(State(state): State<AppState>) -> Json<ApiResponse<serde_json::Value>> {
+pub async fn list_workflows(
+    State(state): State<AppState>,
+    Extension(claims): Extension<Claims>,
+    headers: axum::http::HeaderMap,
+) -> Json<ApiResponse<serde_json::Value>> {
+    let tenant_id = get_tenant_id(&claims, &headers);
+
     let result = sqlx::query_as::<_, WorkflowDefinition>(
         r#"
-        SELECT id, name, description, workflow_type, steps, conditions,
+        SELECT id, tenant_id, name, description, workflow_type, steps, conditions,
                status, created_by, created_at, updated_at
         FROM pdm_workflows
+        WHERE tenant_id = $1
         ORDER BY created_at DESC
         "#,
     )
+    .bind(tenant_id)
     .fetch_all(&state.pool)
     .await;
 
@@ -123,8 +147,12 @@ pub async fn list_workflows(State(state): State<AppState>) -> Json<ApiResponse<s
 
 pub async fn create_workflow(
     State(state): State<AppState>,
+    Extension(claims): Extension<Claims>,
+    headers: axum::http::HeaderMap,
     Json(req): Json<CreateWorkflowRequest>,
 ) -> Json<ApiResponse<WorkflowDefinition>> {
+    let tenant_id = get_tenant_id(&claims, &headers);
+
     if req.name.is_empty() {
         return Json(ApiResponse::error(400, "工作流名称不能为空"));
     }
@@ -142,14 +170,15 @@ pub async fn create_workflow(
     let result = sqlx::query_as::<_, WorkflowDefinition>(
         r#"
         INSERT INTO pdm_workflows (
-            id, name, description, workflow_type, steps, conditions,
+            id, tenant_id, name, description, workflow_type, steps, conditions,
             status, created_by, created_at, updated_at
-        ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10)
-        RETURNING id, name, description, workflow_type, steps, conditions,
+        ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11)
+        RETURNING id, tenant_id, name, description, workflow_type, steps, conditions,
                   status, created_by, created_at, updated_at
         "#,
     )
     .bind(id)
+    .bind(tenant_id)
     .bind(&req.name)
     .bind(&req.description)
     .bind(&req.workflow_type)
@@ -173,16 +202,21 @@ pub async fn create_workflow(
 
 pub async fn get_workflow(
     State(state): State<AppState>,
+    Extension(claims): Extension<Claims>,
     Path(id): Path<Uuid>,
+    headers: axum::http::HeaderMap,
 ) -> Json<ApiResponse<WorkflowDefinition>> {
+    let tenant_id = get_tenant_id(&claims, &headers);
+
     let result = sqlx::query_as::<_, WorkflowDefinition>(
         r#"
-        SELECT id, name, description, workflow_type, steps, conditions,
+        SELECT id, tenant_id, name, description, workflow_type, steps, conditions,
                status, created_by, created_at, updated_at
-        FROM pdm_workflows WHERE id = $1
+        FROM pdm_workflows WHERE id = $1 AND tenant_id = $2
         "#,
     )
     .bind(id)
+    .bind(tenant_id)
     .fetch_optional(&state.pool)
     .await;
 
@@ -198,9 +232,12 @@ pub async fn get_workflow(
 
 pub async fn update_workflow(
     State(state): State<AppState>,
+    Extension(claims): Extension<Claims>,
     Path(id): Path<Uuid>,
+    headers: axum::http::HeaderMap,
     Json(req): Json<serde_json::Value>,
 ) -> Json<ApiResponse<WorkflowDefinition>> {
+    let tenant_id = get_tenant_id(&claims, &headers);
     let name = req.get("name").and_then(|v| v.as_str()).unwrap_or("");
     let description = req.get("description").and_then(|v| v.as_str());
     let status = req.get("status").and_then(|v| v.as_str()).unwrap_or("");
@@ -213,8 +250,8 @@ pub async fn update_workflow(
             description = COALESCE($3, description),
             status = COALESCE(NULLIF($4, ''), status),
             updated_at = $5
-        WHERE id = $1
-        RETURNING id, name, description, workflow_type, steps, conditions,
+        WHERE id = $1 AND tenant_id = $6
+        RETURNING id, tenant_id, name, description, workflow_type, steps, conditions,
                   status, created_by, created_at, updated_at
         "#,
     )
@@ -223,6 +260,7 @@ pub async fn update_workflow(
     .bind(description)
     .bind(status)
     .bind(now)
+    .bind(tenant_id)
     .fetch_optional(&state.pool)
     .await;
 
@@ -238,10 +276,15 @@ pub async fn update_workflow(
 
 pub async fn delete_workflow(
     State(state): State<AppState>,
+    Extension(claims): Extension<Claims>,
     Path(id): Path<Uuid>,
+    headers: axum::http::HeaderMap,
 ) -> Json<ApiResponse<bool>> {
-    let result = sqlx::query("DELETE FROM pdm_workflows WHERE id = $1")
+    let tenant_id = get_tenant_id(&claims, &headers);
+
+    let result = sqlx::query("DELETE FROM pdm_workflows WHERE id = $1 AND tenant_id = $2")
         .bind(id)
+        .bind(tenant_id)
         .execute(&state.pool)
         .await;
 
@@ -257,12 +300,17 @@ pub async fn delete_workflow(
 
 pub async fn start_workflow(
     State(state): State<AppState>,
+    Extension(claims): Extension<Claims>,
+    headers: axum::http::HeaderMap,
     Json(req): Json<StartWorkflowRequest>,
 ) -> Json<ApiResponse<WorkflowInstance>> {
+    let tenant_id = get_tenant_id(&claims, &headers);
+
     let workflow_result = sqlx::query_as::<_, WorkflowDefinition>(
-        "SELECT id, name, steps FROM pdm_workflows WHERE id = $1 AND status = 'active'",
+        "SELECT id, tenant_id, name, steps FROM pdm_workflows WHERE id = $1 AND status = 'active' AND tenant_id = $2",
     )
     .bind(req.workflow_id)
+    .bind(tenant_id)
     .fetch_optional(&state.pool)
     .await;
 
@@ -292,16 +340,17 @@ pub async fn start_workflow(
     let result = sqlx::query_as::<_, WorkflowInstance>(
         r#"
         INSERT INTO pdm_workflow_instances (
-            id, workflow_id, workflow_name, target_type, target_id,
+            id, tenant_id, workflow_id, workflow_name, target_type, target_id,
             current_step, status, assignees, history, created_by,
             created_at, updated_at
-        ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12)
-        RETURNING id, workflow_id, workflow_name, target_type, target_id,
+        ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13)
+        RETURNING id, tenant_id, workflow_id, workflow_name, target_type, target_id,
                   current_step, status, assignees, history, created_by,
                   created_at, updated_at
         "#,
     )
     .bind(id)
+    .bind(tenant_id)
     .bind(req.workflow_id)
     .bind(workflow.name)
     .bind(&req.target_type)
@@ -332,16 +381,22 @@ pub async fn start_workflow(
 
 pub async fn list_workflow_instances(
     State(state): State<AppState>,
+    Extension(claims): Extension<Claims>,
+    headers: axum::http::HeaderMap,
 ) -> Json<ApiResponse<serde_json::Value>> {
+    let tenant_id = get_tenant_id(&claims, &headers);
+
     let result = sqlx::query_as::<_, WorkflowInstance>(
         r#"
-        SELECT id, workflow_id, workflow_name, target_type, target_id,
+        SELECT id, tenant_id, workflow_id, workflow_name, target_type, target_id,
                current_step, status, assignees, history, created_by,
                created_at, updated_at
         FROM pdm_workflow_instances
+        WHERE tenant_id = $1
         ORDER BY created_at DESC
         "#,
     )
+    .bind(tenant_id)
     .fetch_all(&state.pool)
     .await;
 
@@ -362,17 +417,22 @@ pub async fn list_workflow_instances(
 
 pub async fn get_workflow_instance(
     State(state): State<AppState>,
+    Extension(claims): Extension<Claims>,
     Path(id): Path<Uuid>,
+    headers: axum::http::HeaderMap,
 ) -> Json<ApiResponse<WorkflowInstance>> {
+    let tenant_id = get_tenant_id(&claims, &headers);
+
     let result = sqlx::query_as::<_, WorkflowInstance>(
         r#"
-        SELECT id, workflow_id, workflow_name, target_type, target_id,
+        SELECT id, tenant_id, workflow_id, workflow_name, target_type, target_id,
                current_step, status, assignees, history, created_by,
                created_at, updated_at
-        FROM pdm_workflow_instances WHERE id = $1
+        FROM pdm_workflow_instances WHERE id = $1 AND tenant_id = $2
         "#,
     )
     .bind(id)
+    .bind(tenant_id)
     .fetch_optional(&state.pool)
     .await;
 
@@ -388,9 +448,12 @@ pub async fn get_workflow_instance(
 
 pub async fn advance_workflow(
     State(state): State<AppState>,
+    Extension(claims): Extension<Claims>,
     Path(id): Path<Uuid>,
+    headers: axum::http::HeaderMap,
     Json(req): Json<serde_json::Value>,
 ) -> Json<ApiResponse<WorkflowInstance>> {
+    let tenant_id = get_tenant_id(&claims, &headers);
     let action = req
         .get("action")
         .and_then(|v| v.as_str())
@@ -399,9 +462,10 @@ pub async fn advance_workflow(
     let comment = req.get("comment").and_then(|v| v.as_str()).unwrap_or("");
 
     let instance_result = sqlx::query_as::<_, WorkflowInstance>(
-        "SELECT id, workflow_id, current_step, status, history FROM pdm_workflow_instances WHERE id = $1",
+        "SELECT id, tenant_id, workflow_id, current_step, status, history FROM pdm_workflow_instances WHERE id = $1 AND tenant_id = $2",
     )
     .bind(id)
+    .bind(tenant_id)
     .fetch_optional(&state.pool)
     .await;
 
@@ -418,11 +482,13 @@ pub async fn advance_workflow(
         return Json(ApiResponse::error(400, "工作流状态不正确"));
     }
 
-    let workflow_result =
-        sqlx::query_as::<_, WorkflowDefinition>("SELECT steps FROM pdm_workflows WHERE id = $1")
-            .bind(instance.workflow_id)
-            .fetch_optional(&state.pool)
-            .await;
+    let workflow_result = sqlx::query_as::<_, WorkflowDefinition>(
+        "SELECT steps FROM pdm_workflows WHERE id = $1 AND tenant_id = $2",
+    )
+    .bind(instance.workflow_id)
+    .bind(tenant_id)
+    .fetch_optional(&state.pool)
+    .await;
 
     let workflow = match workflow_result {
         Ok(Some(w)) => w,
@@ -484,8 +550,8 @@ pub async fn advance_workflow(
         r#"
         UPDATE pdm_workflow_instances SET
             current_step = $2, status = $3, assignees = $4, history = $5, updated_at = $6
-        WHERE id = $1
-        RETURNING id, workflow_id, workflow_name, target_type, target_id,
+        WHERE id = $1 AND tenant_id = $7
+        RETURNING id, tenant_id, workflow_id, workflow_name, target_type, target_id,
                   current_step, status, assignees, history, created_by,
                   created_at, updated_at
         "#,
@@ -496,6 +562,7 @@ pub async fn advance_workflow(
     .bind(new_assignees)
     .bind(history_value)
     .bind(now)
+    .bind(tenant_id)
     .fetch_one(&state.pool)
     .await;
 

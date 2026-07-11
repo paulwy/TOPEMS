@@ -24,7 +24,7 @@ export const qualityCostApi = {
     return { ...response, data: adaptedData };
   },
 
-  getQualityCost: async (id: string): Promise<ApiResponse<QualityCost>> => {
+  getQualityCost: async (id: string): Promise<ApiResponse<QualityCost | undefined>> => {
     const response = await apiClient.qms.get<QualityCostBackend>(`/quality-costs/${id}`);
     return {
       ...response,
@@ -32,7 +32,9 @@ export const qualityCostApi = {
     };
   },
 
-  createQualityCost: async (data: CreateQualityCostRequest): Promise<ApiResponse<QualityCost>> => {
+  createQualityCost: async (
+    data: CreateQualityCostRequest
+  ): Promise<ApiResponse<QualityCost | undefined>> => {
     const backendData = adaptQualityCostToBackend(data);
     const response = await apiClient.qms.post<QualityCostBackend>('/quality-costs', backendData);
     return {
@@ -44,7 +46,7 @@ export const qualityCostApi = {
   updateQualityCost: async (
     id: string,
     data: Partial<CreateQualityCostRequest>
-  ): Promise<ApiResponse<QualityCost>> => {
+  ): Promise<ApiResponse<QualityCost | undefined>> => {
     const backendData: UpdateQualityCostRequestBackend = {
       cost_type: data.costType,
       cost_category: data.costCategory,
@@ -74,7 +76,7 @@ export const qualityCostApi = {
   getCostStatistics: async (params?: {
     startDate?: string;
     endDate?: string;
-  }): Promise<ApiResponse<CostStatistics>> => {
+  }): Promise<ApiResponse<CostStatistics | undefined>> => {
     const response = await apiClient.qms.get<CostStatisticsBackend>('/quality-costs/statistics', {
       params: {
         start_date: params?.startDate,

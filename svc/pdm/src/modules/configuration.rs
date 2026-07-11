@@ -1,11 +1,25 @@
-use axum::{extract::Path, extract::Query, extract::State, routing::get, Json, Router};
+use axum::{extract::Path, extract::Query, extract::State, routing::get, Extension, Json, Router};
 use chrono::Utc;
 use serde::{Deserialize, Serialize};
 use sqlx::FromRow;
 use uuid::Uuid;
 
-use crate::AppState;
-use topems_shared::ApiResponse;
+use crate::shared::AppState;
+use topems_shared::{ApiResponse, Claims};
+
+fn get_tenant_id(claims: &Claims, headers: &axum::http::HeaderMap) -> Uuid {
+    claims
+        .tenant_id
+        .as_ref()
+        .and_then(|t| Uuid::parse_str(t).ok())
+        .or_else(|| {
+            headers
+                .get("x-tenant-id")
+                .and_then(|v| v.to_str().ok())
+                .and_then(|s| Uuid::parse_str(s).ok())
+        })
+        .unwrap_or_else(Uuid::new_v4)
+}
 
 pub fn create_routes() -> Router<AppState> {
     Router::new()
@@ -24,6 +38,7 @@ pub fn create_routes() -> Router<AppState> {
 #[derive(Debug, Serialize, Deserialize, FromRow)]
 pub struct Configuration {
     pub id: Uuid,
+    pub tenant_id: Uuid,
     pub config_no: String,
     pub name: String,
     pub description: Option<String>,
@@ -67,8 +82,11 @@ pub struct ConfigurationQuery {
 
 pub async fn list_configurations(
     State(state): State<AppState>,
+    Extension(claims): Extension<Claims>,
     Query(query): Query<ConfigurationQuery>,
+    headers: axum::http::HeaderMap,
 ) -> Json<ApiResponse<serde_json::Value>> {
+    let tenant_id = get_tenant_id(&claims, &headers);
     let page = query.page.unwrap_or(1).max(1);
     let page_size = query.page_size.unwrap_or(10).min(100);
     let offset = (page - 1) * page_size;
@@ -76,16 +94,18 @@ pub async fn list_configurations(
 
     let result = sqlx::query_as::<_, Configuration>(
         r#"
-        SELECT id, config_no, name, description, product_id, config_items,
+        SELECT id, tenant_id, config_no, name, description, product_id, config_items,
                status, created_by, created_at, updated_at
         FROM pdm_configurations
-        WHERE ($1::text IS NULL OR config_no ILIKE $1 OR name ILIKE $1)
-          AND ($2::text IS NULL OR status = $2)
-          AND ($3::uuid IS NULL OR product_id = $3)
+        WHERE tenant_id = $1
+          AND ($2::text IS NULL OR config_no ILIKE $2 OR name ILIKE $2)
+          AND ($3::text IS NULL OR status = $3)
+          AND ($4::uuid IS NULL OR product_id = $4)
         ORDER BY created_at DESC
-        LIMIT $4 OFFSET $5
+        LIMIT $5 OFFSET $6
         "#,
     )
+    .bind(tenant_id)
     .bind(&search_pattern)
     .bind(&query.status)
     .bind(&query.product_id)
@@ -99,11 +119,13 @@ pub async fn list_configurations(
             let count_result = sqlx::query_scalar::<_, i64>(
                 r#"
                 SELECT COUNT(*) FROM pdm_configurations
-                WHERE ($1::text IS NULL OR config_no ILIKE $1 OR name ILIKE $1)
-                  AND ($2::text IS NULL OR status = $2)
-                  AND ($3::uuid IS NULL OR product_id = $3)
+                WHERE tenant_id = $1
+                  AND ($2::text IS NULL OR config_no ILIKE $2 OR name ILIKE $2)
+                  AND ($3::text IS NULL OR status = $3)
+                  AND ($4::uuid IS NULL OR product_id = $4)
                 "#,
             )
+            .bind(tenant_id)
             .bind(&search_pattern)
             .bind(&query.status)
             .bind(&query.product_id)
@@ -131,8 +153,12 @@ pub async fn list_configurations(
 
 pub async fn create_configuration(
     State(state): State<AppState>,
+    Extension(claims): Extension<Claims>,
+    headers: axum::http::HeaderMap,
     Json(req): Json<CreateConfigurationRequest>,
 ) -> Json<ApiResponse<Configuration>> {
+    let tenant_id = get_tenant_id(&claims, &headers);
+
     if req.config_no.is_empty() {
         return Json(ApiResponse::error(400, "配置编号不能为空"));
     }
@@ -153,14 +179,15 @@ pub async fn create_configuration(
     let result = sqlx::query_as::<_, Configuration>(
         r#"
         INSERT INTO pdm_configurations (
-            id, config_no, name, description, product_id, config_items,
+            id, tenant_id, config_no, name, description, product_id, config_items,
             status, created_by, created_at, updated_at
-        ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10)
-        RETURNING id, config_no, name, description, product_id, config_items,
+        ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11)
+        RETURNING id, tenant_id, config_no, name, description, product_id, config_items,
                   status, created_by, created_at, updated_at
         "#,
     )
     .bind(id)
+    .bind(tenant_id)
     .bind(&req.config_no)
     .bind(&req.name)
     .bind(&req.description)
@@ -184,16 +211,21 @@ pub async fn create_configuration(
 
 pub async fn get_configuration(
     State(state): State<AppState>,
+    Extension(claims): Extension<Claims>,
     Path(id): Path<Uuid>,
+    headers: axum::http::HeaderMap,
 ) -> Json<ApiResponse<Configuration>> {
+    let tenant_id = get_tenant_id(&claims, &headers);
+
     let result = sqlx::query_as::<_, Configuration>(
         r#"
-        SELECT id, config_no, name, description, product_id, config_items,
+        SELECT id, tenant_id, config_no, name, description, product_id, config_items,
                status, created_by, created_at, updated_at
-        FROM pdm_configurations WHERE id = $1
+        FROM pdm_configurations WHERE id = $1 AND tenant_id = $2
         "#,
     )
     .bind(id)
+    .bind(tenant_id)
     .fetch_optional(&state.pool)
     .await;
 
@@ -209,9 +241,12 @@ pub async fn get_configuration(
 
 pub async fn update_configuration(
     State(state): State<AppState>,
+    Extension(claims): Extension<Claims>,
     Path(id): Path<Uuid>,
+    headers: axum::http::HeaderMap,
     Json(req): Json<UpdateConfigurationRequest>,
 ) -> Json<ApiResponse<Configuration>> {
+    let tenant_id = get_tenant_id(&claims, &headers);
     let now = Utc::now();
     let config_items = req
         .config_items
@@ -228,8 +263,8 @@ pub async fn update_configuration(
             status = COALESCE(NULLIF($7, ''), status),
             created_by = COALESCE($8, created_by),
             updated_at = $9
-        WHERE id = $1
-        RETURNING id, config_no, name, description, product_id, config_items,
+        WHERE id = $1 AND tenant_id = $10
+        RETURNING id, tenant_id, config_no, name, description, product_id, config_items,
                   status, created_by, created_at, updated_at
         "#,
     )
@@ -242,6 +277,7 @@ pub async fn update_configuration(
     .bind(&req.status)
     .bind(&req.created_by)
     .bind(now)
+    .bind(tenant_id)
     .fetch_optional(&state.pool)
     .await;
 
@@ -257,10 +293,15 @@ pub async fn update_configuration(
 
 pub async fn delete_configuration(
     State(state): State<AppState>,
+    Extension(claims): Extension<Claims>,
     Path(id): Path<Uuid>,
+    headers: axum::http::HeaderMap,
 ) -> Json<ApiResponse<bool>> {
-    let result = sqlx::query("DELETE FROM pdm_configurations WHERE id = $1")
+    let tenant_id = get_tenant_id(&claims, &headers);
+
+    let result = sqlx::query("DELETE FROM pdm_configurations WHERE id = $1 AND tenant_id = $2")
         .bind(id)
+        .bind(tenant_id)
         .execute(&state.pool)
         .await;
 

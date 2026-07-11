@@ -17,6 +17,7 @@ import {
 } from 'lucide-react';
 
 import { useAppStore } from '../../store';
+import { NOTIFICATION_PATHS } from '@/modules/notification/config';
 import { ListPageTemplate, type ColumnDef } from '@/components/templates';
 import { extractErrorMessage } from '@/utils/errors';
 import { PageContainer, ConfirmDialog } from '@/components/common';
@@ -689,7 +690,7 @@ export const NotificationListPage: React.FC = () => {
       headerProps={{
         pageIcon: <Bell size={20} />,
         backButton: {
-          href: '/notification/dashboard',
+          href: NOTIFICATION_PATHS.dashboard,
         },
       }}
     >

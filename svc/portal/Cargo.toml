@@ -24,6 +24,7 @@ topems-shared = { path = "../../lib" }
 axum-prometheus.workspace = true
 prometheus.workspace = true
 tower-cookies.workspace = true
+sqlx = { workspace = true, features = ["runtime-tokio-native-tls", "postgres", "uuid"] }
 
 [dev-dependencies]
 tokio-test.workspace = true

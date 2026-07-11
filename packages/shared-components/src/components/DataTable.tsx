@@ -637,7 +637,7 @@ export function DataTable<TData, TValue>({
 
   const handleSelectAll = useCallback(() => {
     const filteredRows = table.getFilteredRowModel().rows;
-    const allIds = filteredRows.map((row) => String(row.original[getRowKey(row.original)]));
+    const allIds = filteredRows.map((row) => getRowKey(row.original));
     if (effectiveSelectedIds.length === filteredRows.length && filteredRows.length > 0) {
       handleSelectionChange([]);
     } else {

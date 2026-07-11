@@ -6,7 +6,10 @@
  */
 
 import { useState, useEffect, useCallback, useRef } from 'react';
-import type { ApiResponse as SharedApiResponse, PaginatedResponse as SharedPaginatedResponse } from '@topems/shared-types';
+import type {
+  ApiResponse as SharedApiResponse,
+  PaginatedResponse as SharedPaginatedResponse,
+} from '@topems/shared-types';
 
 export type ApiResponse<T = any> = SharedApiResponse<T>;
 export type PaginatedResponse<T = any> = SharedPaginatedResponse<T>;
@@ -18,7 +21,7 @@ export interface UseApiResult<T = any> {
   data: T | null;
   loading: boolean;
   error: Error | null;
-  refetch: () => Promise<void>;
+  refetch: () => Promise<T>;
 }
 
 /**

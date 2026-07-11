@@ -1,11 +1,25 @@
-use axum::{extract::Path, extract::Query, extract::State, routing::get, Json, Router};
+use axum::{extract::Path, extract::Query, extract::State, routing::get, Extension, Json, Router};
 use chrono::Utc;
 use serde::{Deserialize, Serialize};
 use sqlx::FromRow;
 use uuid::Uuid;
 
-use crate::AppState;
-use topems_shared::ApiResponse;
+use crate::shared::AppState;
+use topems_shared::{ApiResponse, Claims};
+
+fn get_tenant_id(claims: &Claims, headers: &axum::http::HeaderMap) -> Uuid {
+    claims
+        .tenant_id
+        .as_ref()
+        .and_then(|t| Uuid::parse_str(t).ok())
+        .or_else(|| {
+            headers
+                .get("x-tenant-id")
+                .and_then(|v| v.to_str().ok())
+                .and_then(|s| Uuid::parse_str(s).ok())
+        })
+        .unwrap_or_else(Uuid::new_v4)
+}
 
 pub fn create_routes() -> Router<AppState> {
     Router::new()
@@ -22,6 +36,7 @@ pub fn create_routes() -> Router<AppState> {
 #[derive(Debug, Serialize, Deserialize, FromRow)]
 pub struct ProductionFormula {
     pub id: Uuid,
+    pub tenant_id: Uuid,
     pub formula_no: String,
     pub name: String,
     pub product_id: Option<Uuid>,
@@ -63,8 +78,11 @@ pub struct FormulaQuery {
 
 pub async fn list_formulas(
     State(state): State<AppState>,
+    Extension(claims): Extension<Claims>,
     Query(query): Query<FormulaQuery>,
+    headers: axum::http::HeaderMap,
 ) -> Json<ApiResponse<serde_json::Value>> {
+    let tenant_id = get_tenant_id(&claims, &headers);
     let page = query.page.unwrap_or(1).max(1);
     let page_size = query.page_size.unwrap_or(10).min(100);
     let offset = (page - 1) * page_size;
@@ -72,16 +90,18 @@ pub async fn list_formulas(
 
     let result = sqlx::query_as::<_, ProductionFormula>(
         r#"
-        SELECT id, formula_no, name, product_id, description, formula_items,
+        SELECT id, tenant_id, formula_no, name, product_id, description, formula_items,
                status, created_at, updated_at
         FROM pdm_production_formulas
-        WHERE ($1::text IS NULL OR formula_no ILIKE $1 OR name ILIKE $1)
-          AND ($2::text IS NULL OR status = $2)
-          AND ($3::uuid IS NULL OR product_id = $3)
+        WHERE tenant_id = $1
+          AND ($2::text IS NULL OR formula_no ILIKE $2 OR name ILIKE $2)
+          AND ($3::text IS NULL OR status = $3)
+          AND ($4::uuid IS NULL OR product_id = $4)
         ORDER BY created_at DESC
-        LIMIT $4 OFFSET $5
+        LIMIT $5 OFFSET $6
         "#,
     )
+    .bind(tenant_id)
     .bind(&search_pattern)
     .bind(&query.status)
     .bind(&query.product_id)
@@ -95,11 +115,13 @@ pub async fn list_formulas(
             let count_result = sqlx::query_scalar::<_, i64>(
                 r#"
                 SELECT COUNT(*) FROM pdm_production_formulas
-                WHERE ($1::text IS NULL OR formula_no ILIKE $1 OR name ILIKE $1)
-                  AND ($2::text IS NULL OR status = $2)
-                  AND ($3::uuid IS NULL OR product_id = $3)
+                WHERE tenant_id = $1
+                  AND ($2::text IS NULL OR formula_no ILIKE $2 OR name ILIKE $2)
+                  AND ($3::text IS NULL OR status = $3)
+                  AND ($4::uuid IS NULL OR product_id = $4)
                 "#,
             )
+            .bind(tenant_id)
             .bind(&search_pattern)
             .bind(&query.status)
             .bind(&query.product_id)
@@ -127,8 +149,12 @@ pub async fn list_formulas(
 
 pub async fn create_formula(
     State(state): State<AppState>,
+    Extension(claims): Extension<Claims>,
+    headers: axum::http::HeaderMap,
     Json(req): Json<CreateFormulaRequest>,
 ) -> Json<ApiResponse<ProductionFormula>> {
+    let tenant_id = get_tenant_id(&claims, &headers);
+
     if req.formula_no.is_empty() {
         return Json(ApiResponse::error(400, "配方编号不能为空"));
     }
@@ -142,12 +168,13 @@ pub async fn create_formula(
     let result = sqlx::query_as::<_, ProductionFormula>(
         r#"
         INSERT INTO pdm_production_formulas (
-            formula_no, name, product_id, description, formula_items, status
-        ) VALUES ($1, $2, $3, $4, $5, $6)
-        RETURNING id, formula_no, name, product_id, description, formula_items,
+            tenant_id, formula_no, name, product_id, description, formula_items, status
+        ) VALUES ($1, $2, $3, $4, $5, $6, $7)
+        RETURNING id, tenant_id, formula_no, name, product_id, description, formula_items,
                   status, created_at, updated_at
         "#,
     )
+    .bind(tenant_id)
     .bind(&req.formula_no)
     .bind(&req.name)
     .bind(req.product_id)
@@ -168,16 +195,21 @@ pub async fn create_formula(
 
 pub async fn get_formula(
     State(state): State<AppState>,
+    Extension(claims): Extension<Claims>,
     Path(id): Path<Uuid>,
+    headers: axum::http::HeaderMap,
 ) -> Json<ApiResponse<ProductionFormula>> {
+    let tenant_id = get_tenant_id(&claims, &headers);
+
     let result = sqlx::query_as::<_, ProductionFormula>(
         r#"
-        SELECT id, formula_no, name, product_id, description, formula_items,
+        SELECT id, tenant_id, formula_no, name, product_id, description, formula_items,
                status, created_at, updated_at
-        FROM pdm_production_formulas WHERE id = $1
+        FROM pdm_production_formulas WHERE id = $1 AND tenant_id = $2
         "#,
     )
     .bind(id)
+    .bind(tenant_id)
     .fetch_optional(&state.pool)
     .await;
 
@@ -193,9 +225,12 @@ pub async fn get_formula(
 
 pub async fn update_formula(
     State(state): State<AppState>,
+    Extension(claims): Extension<Claims>,
     Path(id): Path<Uuid>,
+    headers: axum::http::HeaderMap,
     Json(req): Json<UpdateFormulaRequest>,
 ) -> Json<ApiResponse<ProductionFormula>> {
+    let tenant_id = get_tenant_id(&claims, &headers);
     let now = Utc::now();
 
     let result = sqlx::query_as::<_, ProductionFormula>(
@@ -208,8 +243,8 @@ pub async fn update_formula(
             formula_items = COALESCE($6, formula_items),
             status = COALESCE(NULLIF($7, ''), status),
             updated_at = $8
-        WHERE id = $1
-        RETURNING id, formula_no, name, product_id, description, formula_items,
+        WHERE id = $1 AND tenant_id = $9
+        RETURNING id, tenant_id, formula_no, name, product_id, description, formula_items,
                   status, created_at, updated_at
         "#,
     )
@@ -221,6 +256,7 @@ pub async fn update_formula(
     .bind(&req.formula_items)
     .bind(&req.status)
     .bind(now)
+    .bind(tenant_id)
     .fetch_optional(&state.pool)
     .await;
 
@@ -236,12 +272,18 @@ pub async fn update_formula(
 
 pub async fn delete_formula(
     State(state): State<AppState>,
+    Extension(claims): Extension<Claims>,
     Path(id): Path<Uuid>,
+    headers: axum::http::HeaderMap,
 ) -> Json<ApiResponse<bool>> {
-    let result = sqlx::query("DELETE FROM pdm_production_formulas WHERE id = $1")
-        .bind(id)
-        .execute(&state.pool)
-        .await;
+    let tenant_id = get_tenant_id(&claims, &headers);
+
+    let result =
+        sqlx::query("DELETE FROM pdm_production_formulas WHERE id = $1 AND tenant_id = $2")
+            .bind(id)
+            .bind(tenant_id)
+            .execute(&state.pool)
+            .await;
 
     match result {
         Ok(r) if r.rows_affected() > 0 => Json(ApiResponse::success(true, "配方删除成功")),

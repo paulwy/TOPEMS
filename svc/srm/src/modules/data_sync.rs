@@ -60,9 +60,24 @@ pub async fn create_routes(db: PgPool) -> Result<Router> {
     Ok(app)
 }
 
+fn get_tenant_id(claims: &Claims, headers: &axum::http::HeaderMap) -> Uuid {
+    claims
+        .tenant_id
+        .as_ref()
+        .and_then(|t| Uuid::parse_str(t).ok())
+        .or_else(|| {
+            headers
+                .get("x-tenant-id")
+                .and_then(|v| v.to_str().ok())
+                .and_then(|s| Uuid::parse_str(s).ok())
+        })
+        .unwrap_or_else(Uuid::new_v4)
+}
+
 async fn sync_supplier_from_scm(
     State(state): State<Arc<AppState>>,
     Extension(claims): Extension<Claims>,
+    headers: axum::http::HeaderMap,
     Json(req): Json<SyncSupplierFromScmRequest>,
 ) -> Json<ApiResponse<serde_json::Value>> {
     match check_permission(&state.db, &claims, &ModulePermission::VendorAssessmentWrite).await {
@@ -85,14 +100,17 @@ async fn sync_supplier_from_scm(
         }
     };
 
+    let tenant_id = get_tenant_id(&claims, &headers);
+
     let scm_supplier = sqlx::query_as::<_, (Uuid, String, Option<String>, Option<String>, Option<String>, Option<String>, Option<String>, Option<String>, Option<String>, String)>(
         r#"
         SELECT id, name, short_name, contact_name, contact_phone, email, address, bank_account, tax_number, status
         FROM plugin_scm.suppliers
-        WHERE id = $1 AND status != 'deleted'
+        WHERE id = $1 AND tenant_id = $2 AND status != 'deleted'
         "#,
     )
     .bind(supplier_id)
+    .bind(tenant_id)
     .fetch_optional(&state.db)
     .await;
 
@@ -126,12 +144,14 @@ async fn sync_supplier_from_scm(
         }
     };
 
-    let existing_count =
-        sqlx::query_scalar::<_, i64>("SELECT COUNT(*) FROM plugin_srm.suppliers WHERE id = $1")
-            .bind(id)
-            .fetch_one(&state.db)
-            .await
-            .unwrap_or(0);
+    let existing_count = sqlx::query_scalar::<_, i64>(
+        "SELECT COUNT(*) FROM plugin_srm.suppliers WHERE id = $1 AND tenant_id = $2",
+    )
+    .bind(id)
+    .bind(tenant_id)
+    .fetch_one(&state.db)
+    .await
+    .unwrap_or(0);
 
     let now = Utc::now();
     let action = if existing_count > 0 {
@@ -147,7 +167,7 @@ async fn sync_supplier_from_scm(
                                            phone = $5, email = $6, address = $7, 
                                            tax_id = $8, status = $9, sync_from_scm = TRUE,
                                            scm_supplier_id = $10, updated_at = $11
-            WHERE id = $1
+            WHERE id = $1 AND tenant_id = $12
             "#,
         )
         .bind(id)
@@ -161,6 +181,7 @@ async fn sync_supplier_from_scm(
         .bind(&status)
         .bind(id)
         .bind(now)
+        .bind(tenant_id)
         .execute(&state.db)
         .await;
 
@@ -168,6 +189,7 @@ async fn sync_supplier_from_scm(
             Ok(_) => {
                 let _ = record_sync_log(
                     &state.db,
+                    tenant_id,
                     "supplier_sync",
                     "scm",
                     "srm",
@@ -199,14 +221,15 @@ async fn sync_supplier_from_scm(
     } else {
         let result = sqlx::query(
             r#"
-            INSERT INTO plugin_srm.suppliers (id, supplier_no, name, legal_name, contact_person, 
+            INSERT INTO plugin_srm.suppliers (id, tenant_id, supplier_no, name, legal_name, contact_person, 
                                                phone, email, address, tax_id, status, 
                                                risk_level, sync_from_scm, scm_supplier_id,
                                                created_at, updated_at)
-            VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, 'low', TRUE, $11, $12, $13)
+            VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, 'low', TRUE, $12, $13, $14)
             "#,
         )
         .bind(id)
+        .bind(tenant_id)
         .bind(format!(
             "SUP-{}",
             id.to_string().split('-').next().unwrap_or("")
@@ -229,6 +252,7 @@ async fn sync_supplier_from_scm(
             Ok(_) => {
                 let _ = record_sync_log(
                     &state.db,
+                    tenant_id,
                     "supplier_sync",
                     "scm",
                     "srm",
@@ -263,19 +287,23 @@ async fn sync_supplier_from_scm(
 async fn sync_all_suppliers_from_scm(
     State(state): State<Arc<AppState>>,
     Extension(claims): Extension<Claims>,
+    headers: axum::http::HeaderMap,
 ) -> Json<ApiResponse<serde_json::Value>> {
     match check_permission(&state.db, &claims, &ModulePermission::VendorAssessmentWrite).await {
         Ok(_) => {}
         Err(e) => return e,
     }
 
+    let tenant_id = get_tenant_id(&claims, &headers);
+
     let scm_suppliers = sqlx::query_as::<_, (Uuid, String, Option<String>, Option<String>, Option<String>, Option<String>, Option<String>, Option<String>, Option<String>, String)>(
         r#"
         SELECT id, name, short_name, contact_name, contact_phone, email, address, bank_account, tax_number, status
         FROM plugin_scm.suppliers
-        WHERE status != 'deleted'
+        WHERE tenant_id = $1 AND status != 'deleted'
         "#,
     )
+    .bind(tenant_id)
     .fetch_all(&state.db)
     .await;
 
@@ -306,11 +334,13 @@ async fn sync_all_suppliers_from_scm(
         status,
     ) in scm_suppliers
     {
-        let existing =
-            sqlx::query_scalar::<_, i64>("SELECT COUNT(*) FROM plugin_srm.suppliers WHERE id = $1")
-                .bind(id)
-                .fetch_one(&state.db)
-                .await;
+        let existing = sqlx::query_scalar::<_, i64>(
+            "SELECT COUNT(*) FROM plugin_srm.suppliers WHERE id = $1 AND tenant_id = $2",
+        )
+        .bind(id)
+        .bind(tenant_id)
+        .fetch_one(&state.db)
+        .await;
 
         if existing.unwrap_or(0) > 0 {
             let result = sqlx::query(
@@ -319,7 +349,7 @@ async fn sync_all_suppliers_from_scm(
                                                phone = $5, email = $6, address = $7, 
                                                tax_id = $8, status = $9, sync_from_scm = TRUE,
                                                scm_supplier_id = $10, updated_at = $11
-                WHERE id = $1
+                WHERE id = $1 AND tenant_id = $12
                 "#,
             )
             .bind(id)
@@ -333,6 +363,7 @@ async fn sync_all_suppliers_from_scm(
             .bind(&status)
             .bind(id)
             .bind(now)
+            .bind(tenant_id)
             .execute(&state.db)
             .await;
 
@@ -344,14 +375,15 @@ async fn sync_all_suppliers_from_scm(
         } else {
             let result = sqlx::query(
                 r#"
-                INSERT INTO plugin_srm.suppliers (id, supplier_no, name, legal_name, contact_person, 
+                INSERT INTO plugin_srm.suppliers (id, tenant_id, supplier_no, name, legal_name, contact_person, 
                                                    phone, email, address, tax_id, status, 
                                                    risk_level, sync_from_scm, scm_supplier_id,
                                                    created_at, updated_at)
-                VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, 'low', TRUE, $11, $12, $13)
+                VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, 'low', TRUE, $12, $13, $14)
                 "#,
             )
             .bind(id)
+            .bind(tenant_id)
             .bind(format!("SUP-{}", id.to_string().split('-').next().unwrap_or("")))
             .bind(&name)
             .bind(short_name)
@@ -389,6 +421,7 @@ async fn sync_all_suppliers_from_scm(
 async fn sync_supplier_to_scm(
     State(state): State<Arc<AppState>>,
     Extension(claims): Extension<Claims>,
+    headers: axum::http::HeaderMap,
     Json(req): Json<SyncSupplierToScmRequest>,
 ) -> Json<ApiResponse<serde_json::Value>> {
     match check_permission(&state.db, &claims, &ModulePermission::VendorAssessmentWrite).await {
@@ -411,6 +444,8 @@ async fn sync_supplier_to_scm(
         }
     };
 
+    let tenant_id = get_tenant_id(&claims, &headers);
+
     let srm_supplier = sqlx::query_as::<
         _,
         (
@@ -428,10 +463,11 @@ async fn sync_supplier_to_scm(
         r#"
         SELECT id, name, legal_name, contact_person, phone, email, address, tax_id, status
         FROM plugin_srm.suppliers
-        WHERE id = $1 AND status != 'deleted'
+        WHERE id = $1 AND tenant_id = $2 AND status != 'deleted'
         "#,
     )
     .bind(supplier_id)
+    .bind(tenant_id)
     .fetch_optional(&state.db)
     .await;
 
@@ -455,12 +491,14 @@ async fn sync_supplier_to_scm(
             }
         };
 
-    let existing_count =
-        sqlx::query_scalar::<_, i64>("SELECT COUNT(*) FROM plugin_scm.suppliers WHERE id = $1")
-            .bind(id)
-            .fetch_one(&state.db)
-            .await
-            .unwrap_or(0);
+    let existing_count = sqlx::query_scalar::<_, i64>(
+        "SELECT COUNT(*) FROM plugin_scm.suppliers WHERE id = $1 AND tenant_id = $2",
+    )
+    .bind(id)
+    .bind(tenant_id)
+    .fetch_one(&state.db)
+    .await
+    .unwrap_or(0);
 
     let now = Utc::now();
     let action = if existing_count > 0 {
@@ -476,7 +514,7 @@ async fn sync_supplier_to_scm(
                                          contact_phone = $5, email = $6, address = $7, 
                                          tax_number = $8, status = $9, sync_from_srm = TRUE,
                                          srm_supplier_id = $10, updated_at = $11
-            WHERE id = $1
+            WHERE id = $1 AND tenant_id = $12
             "#,
         )
         .bind(id)
@@ -490,6 +528,7 @@ async fn sync_supplier_to_scm(
         .bind(&status)
         .bind(id)
         .bind(now)
+        .bind(tenant_id)
         .execute(&state.db)
         .await;
 
@@ -497,6 +536,7 @@ async fn sync_supplier_to_scm(
             Ok(_) => {
                 let _ = record_sync_log(
                     &state.db,
+                    tenant_id,
                     "supplier_sync",
                     "srm",
                     "scm",
@@ -528,13 +568,14 @@ async fn sync_supplier_to_scm(
     } else {
         let result = sqlx::query(
             r#"
-            INSERT INTO plugin_scm.suppliers (id, name, short_name, contact_name, contact_phone, 
+            INSERT INTO plugin_scm.suppliers (id, tenant_id, name, short_name, contact_name, contact_phone, 
                                            email, address, tax_number, status, sync_from_srm,
                                            srm_supplier_id, created_at, updated_at)
-            VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, TRUE, $10, $11, $12)
+            VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, TRUE, $11, $12, $13)
             "#,
         )
         .bind(id)
+        .bind(tenant_id)
         .bind(&name)
         .bind(legal_name)
         .bind(contact_person)
@@ -553,6 +594,7 @@ async fn sync_supplier_to_scm(
             Ok(_) => {
                 let _ = record_sync_log(
                     &state.db,
+                    tenant_id,
                     "supplier_sync",
                     "srm",
                     "scm",
@@ -587,11 +629,14 @@ async fn sync_supplier_to_scm(
 async fn sync_all_suppliers_to_scm(
     State(state): State<Arc<AppState>>,
     Extension(claims): Extension<Claims>,
+    headers: axum::http::HeaderMap,
 ) -> Json<ApiResponse<serde_json::Value>> {
     match check_permission(&state.db, &claims, &ModulePermission::VendorAssessmentWrite).await {
         Ok(_) => {}
         Err(e) => return e,
     }
+
+    let tenant_id = get_tenant_id(&claims, &headers);
 
     let srm_suppliers = sqlx::query_as::<
         _,
@@ -610,9 +655,10 @@ async fn sync_all_suppliers_to_scm(
         r#"
         SELECT id, name, legal_name, contact_person, phone, email, address, tax_id, status
         FROM plugin_srm.suppliers
-        WHERE status != 'deleted'
+        WHERE tenant_id = $1 AND status != 'deleted'
         "#,
     )
+    .bind(tenant_id)
     .fetch_all(&state.db)
     .await;
 
@@ -633,11 +679,13 @@ async fn sync_all_suppliers_to_scm(
     for (id, name, legal_name, contact_person, phone, email, address, tax_number, status) in
         srm_suppliers
     {
-        let existing =
-            sqlx::query_scalar::<_, i64>("SELECT COUNT(*) FROM plugin_scm.suppliers WHERE id = $1")
-                .bind(id)
-                .fetch_one(&state.db)
-                .await;
+        let existing = sqlx::query_scalar::<_, i64>(
+            "SELECT COUNT(*) FROM plugin_scm.suppliers WHERE id = $1 AND tenant_id = $2",
+        )
+        .bind(id)
+        .bind(tenant_id)
+        .fetch_one(&state.db)
+        .await;
 
         if existing.unwrap_or(0) > 0 {
             let result = sqlx::query(
@@ -646,7 +694,7 @@ async fn sync_all_suppliers_to_scm(
                                              contact_phone = $5, email = $6, address = $7, 
                                              tax_number = $8, status = $9, sync_from_srm = TRUE,
                                              srm_supplier_id = $10, updated_at = $11
-                WHERE id = $1
+                WHERE id = $1 AND tenant_id = $12
                 "#,
             )
             .bind(id)
@@ -660,6 +708,7 @@ async fn sync_all_suppliers_to_scm(
             .bind(&status)
             .bind(id)
             .bind(now)
+            .bind(tenant_id)
             .execute(&state.db)
             .await;
 
@@ -671,13 +720,14 @@ async fn sync_all_suppliers_to_scm(
         } else {
             let result = sqlx::query(
                 r#"
-                INSERT INTO plugin_scm.suppliers (id, name, short_name, contact_name, contact_phone, 
+                INSERT INTO plugin_scm.suppliers (id, tenant_id, name, short_name, contact_name, contact_phone, 
                                                email, address, tax_number, status, sync_from_srm,
                                                srm_supplier_id, created_at, updated_at)
-                VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, TRUE, $10, $11, $12)
+                VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, TRUE, $11, $12, $13)
                 "#,
             )
             .bind(id)
+            .bind(tenant_id)
             .bind(&name)
             .bind(legal_name)
             .bind(contact_person)
@@ -713,11 +763,15 @@ async fn sync_all_suppliers_to_scm(
 
 async fn get_sync_logs(
     State(state): State<Arc<AppState>>,
+    Extension(claims): Extension<Claims>,
+    headers: axum::http::HeaderMap,
     Json(req): Json<SyncLogsRequest>,
 ) -> Json<ApiResponse<serde_json::Value>> {
     let page = req.page.unwrap_or(1).max(1);
     let page_size = req.page_size.unwrap_or(20).min(100);
     let offset = (page - 1) * page_size;
+
+    let tenant_id = get_tenant_id(&claims, &headers);
 
     let rows = sqlx::query(
         r#"
@@ -725,13 +779,15 @@ async fn get_sync_logs(
                source_id, source_code, target_id, target_code, operation, status,
                error_message, retry_count, executed_at, created_at
         FROM unified_core.inter_module_sync
-        WHERE ($1::text IS NULL OR sync_type = $1)
-          AND ($2::text IS NULL OR status = $2)
-          AND ($3::text IS NULL OR source_module = $3)
+        WHERE tenant_id = $1
+          AND ($2::text IS NULL OR sync_type = $2)
+          AND ($3::text IS NULL OR status = $3)
+          AND ($4::text IS NULL OR source_module = $4)
         ORDER BY created_at DESC
-        LIMIT $4 OFFSET $5
+        LIMIT $5 OFFSET $6
         "#,
     )
+    .bind(tenant_id)
     .bind(&req.sync_type)
     .bind(&req.status)
     .bind(&req.source_module)
@@ -779,6 +835,7 @@ async fn get_sync_logs(
 
 async fn record_sync_log(
     db: &PgPool,
+    tenant_id: Uuid,
     sync_type: &str,
     source_module: &str,
     target_module: &str,
@@ -800,7 +857,7 @@ async fn record_sync_log(
         VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14)
         "#,
     )
-    .bind(Uuid::from_u128(1))
+    .bind(tenant_id)
     .bind(sync_type)
     .bind(source_module)
     .bind(target_module)

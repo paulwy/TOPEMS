@@ -1,5 +1,5 @@
 use axum::{
-    extract::{Path, Query, State},
+    extract::{Extension, Path, Query, State},
     http::HeaderMap,
     routing::{get, post},
     Json, Router,
@@ -13,7 +13,22 @@ use crate::models::{
     UpdateFormulaRequest,
 };
 use crate::modules::audit::log_audit_event;
+use topems_shared::auth::Claims;
 use topems_shared::response::ApiResponse;
+
+fn get_tenant_id(claims: &Claims, headers: &HeaderMap) -> Uuid {
+    claims
+        .tenant_id
+        .as_ref()
+        .and_then(|t| Uuid::parse_str(t).ok())
+        .or_else(|| {
+            headers
+                .get("x-tenant-id")
+                .and_then(|v| v.to_str().ok())
+                .and_then(|s| Uuid::parse_str(s).ok())
+        })
+        .unwrap_or_else(Uuid::new_v4)
+}
 
 #[derive(Debug, Deserialize)]
 pub struct PaginationParams {
@@ -40,26 +55,31 @@ pub fn create_routes() -> Router<super::ApiState> {
 
 async fn list_formulas(
     State(state): State<super::ApiState>,
+    Extension(claims): Extension<Claims>,
     Query(params): Query<PaginationParams>,
+    headers: HeaderMap,
 ) -> Json<ApiResponse<serde_json::Value>> {
+    let tenant_id = get_tenant_id(&claims, &headers);
     let page = params.page.unwrap_or(1).max(1);
     let page_size = params.page_size.unwrap_or(20).min(100);
     let offset = (page - 1) * page_size;
 
     let result = sqlx::query_as::<_, Formula>(
         r#"
-        SELECT id, name, code, version, category, description, project_id, status,
+        SELECT id, tenant_id, name, code, version, category, description, project_id, status,
                approval_status, approved_by, approved_at, effective_date, expiration_date,
                ingredients, process_steps, properties,
                created_by, created_at, updated_at
         FROM rs.formulas
-        WHERE ($1::text IS NULL OR name ILIKE $1 OR code ILIKE $1)
-          AND ($2::text IS NULL OR status = $2)
-          AND ($3::uuid IS NULL OR project_id = $3)
+        WHERE tenant_id = $1
+          AND ($2::text IS NULL OR name ILIKE $2 OR code ILIKE $2)
+          AND ($3::text IS NULL OR status = $3)
+          AND ($4::uuid IS NULL OR project_id = $4)
         ORDER BY created_at DESC
-        LIMIT $4 OFFSET $5
+        LIMIT $5 OFFSET $6
         "#,
     )
+    .bind(tenant_id)
     .bind(&params.search)
     .bind(&params.status)
     .bind(params.project_id)
@@ -73,11 +93,13 @@ async fn list_formulas(
             let count_result = sqlx::query_scalar::<_, i64>(
                 r#"
                 SELECT COUNT(*) FROM rs.formulas
-                WHERE ($1::text IS NULL OR name ILIKE $1 OR code ILIKE $1)
-                  AND ($2::text IS NULL OR status = $2)
-                  AND ($3::uuid IS NULL OR project_id = $3)
+                WHERE tenant_id = $1
+                  AND ($2::text IS NULL OR name ILIKE $2 OR code ILIKE $2)
+                  AND ($3::text IS NULL OR status = $3)
+                  AND ($4::uuid IS NULL OR project_id = $4)
                 "#,
             )
+            .bind(tenant_id)
             .bind(&params.search)
             .bind(&params.status)
             .bind(params.project_id)
@@ -105,9 +127,11 @@ async fn list_formulas(
 
 async fn create_formula(
     State(state): State<super::ApiState>,
+    Extension(claims): Extension<Claims>,
     headers: HeaderMap,
     Json(req): Json<CreateFormulaRequest>,
 ) -> Json<ApiResponse<Formula>> {
+    let tenant_id = get_tenant_id(&claims, &headers);
     if req.name.is_empty() {
         return Json(ApiResponse::error(400, "配方名称不能为空"));
     }
@@ -130,18 +154,19 @@ async fn create_formula(
     let result = sqlx::query_as::<_, Formula>(
         r#"
         INSERT INTO rs.formulas (
-            id, name, code, version, category, description, project_id, status,
+            id, tenant_id, name, code, version, category, description, project_id, status,
             approval_status, effective_date, expiration_date,
             ingredients, process_steps, process_params, properties, created_by,
             created_at, updated_at
-        ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, $17, $18)
-        RETURNING id, name, code, version, category, description, project_id, status,
+        ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, $17, $18, $19, $20)
+        RETURNING id, tenant_id, name, code, version, category, description, project_id, status,
                   approval_status, approved_by, approved_at, effective_date, expiration_date,
                   ingredients, process_steps, properties,
                   created_by, created_at, updated_at
         "#,
     )
     .bind(id)
+    .bind(tenant_id)
     .bind(&req_name)
     .bind(&req_code)
     .bind(req.version.unwrap_or_else(|| "v1.0".to_string()))
@@ -206,18 +231,22 @@ async fn create_formula(
 
 async fn get_formula(
     State(state): State<super::ApiState>,
+    Extension(claims): Extension<Claims>,
     Path(id): Path<Uuid>,
+    headers: HeaderMap,
 ) -> Json<ApiResponse<Formula>> {
+    let tenant_id = get_tenant_id(&claims, &headers);
     let result = sqlx::query_as::<_, Formula>(
         r#"
-        SELECT id, name, code, version, category, description, project_id, status,
+        SELECT id, tenant_id, name, code, version, category, description, project_id, status,
                approval_status, approved_by, approved_at, effective_date, expiration_date,
                ingredients, process_steps, properties,
                created_by, created_at, updated_at
-        FROM rs.formulas WHERE id = $1
+        FROM rs.formulas WHERE id = $1 AND tenant_id = $2
         "#,
     )
     .bind(id)
+    .bind(tenant_id)
     .fetch_optional(&state.db)
     .await;
 
@@ -233,20 +262,23 @@ async fn get_formula(
 
 async fn update_formula(
     State(state): State<super::ApiState>,
+    Extension(claims): Extension<Claims>,
     Path(id): Path<Uuid>,
     headers: HeaderMap,
     Json(req): Json<UpdateFormulaRequest>,
 ) -> Json<ApiResponse<Formula>> {
+    let tenant_id = get_tenant_id(&claims, &headers);
     let existing = sqlx::query_as::<_, Formula>(
         r#"
-        SELECT id, name, code, version, category, description, project_id, status,
+        SELECT id, tenant_id, name, code, version, category, description, project_id, status,
                approval_status, approved_by, approved_at, effective_date, expiration_date,
                ingredients, process_steps, properties,
                created_by, created_at, updated_at
-        FROM rs.formulas WHERE id = $1
+        FROM rs.formulas WHERE id = $1 AND tenant_id = $2
         "#,
     )
     .bind(id)
+    .bind(tenant_id)
     .fetch_optional(&state.db)
     .await;
 
@@ -275,8 +307,8 @@ async fn update_formula(
             name = $2, category = $3, description = $4, status = $5,
             effective_date = $6, expiration_date = $7,
             ingredients = $8, process_steps = $9, properties = $10, updated_at = $11
-        WHERE id = $1
-        RETURNING id, name, code, version, category, description, project_id, status,
+        WHERE id = $1 AND tenant_id = $12
+        RETURNING id, tenant_id, name, code, version, category, description, project_id, status,
                   approval_status, approved_by, approved_at, effective_date, expiration_date,
                   ingredients, process_steps, properties,
                   created_by, created_at, updated_at
@@ -293,6 +325,7 @@ async fn update_formula(
     .bind(&process_steps)
     .bind(properties)
     .bind(now)
+    .bind(tenant_id)
     .fetch_one(&state.db)
     .await;
 
@@ -339,11 +372,14 @@ async fn update_formula(
 
 async fn delete_formula(
     State(state): State<super::ApiState>,
+    Extension(claims): Extension<Claims>,
     Path(id): Path<Uuid>,
     headers: HeaderMap,
 ) -> Json<ApiResponse<String>> {
-    let result = sqlx::query("DELETE FROM rs.formulas WHERE id = $1")
+    let tenant_id = get_tenant_id(&claims, &headers);
+    let result = sqlx::query("DELETE FROM rs.formulas WHERE id = $1 AND tenant_id = $2")
         .bind(id)
+        .bind(tenant_id)
         .execute(&state.db)
         .await;
 
@@ -395,19 +431,23 @@ async fn delete_formula(
 
 async fn get_formula_versions(
     State(state): State<super::ApiState>,
+    Extension(claims): Extension<Claims>,
     Path(id): Path<Uuid>,
+    headers: HeaderMap,
 ) -> Json<ApiResponse<Vec<FormulaVersion>>> {
+    let tenant_id = get_tenant_id(&claims, &headers);
     let result = sqlx::query_as::<_, FormulaVersion>(
         r#"
-        SELECT id, formula_id, version, ingredients, process_steps, process_params,
+        SELECT id, tenant_id, formula_id, version, ingredients, process_steps, process_params,
                properties, changes, approval_status, approved_by, approved_at,
                created_by, created_at, updated_at
         FROM rs.formula_versions
-        WHERE formula_id = $1
+        WHERE formula_id = $1 AND tenant_id = $2
         ORDER BY version DESC, created_at DESC
         "#,
     )
     .bind(id)
+    .bind(tenant_id)
     .fetch_all(&state.db)
     .await;
 
@@ -422,22 +462,26 @@ async fn get_formula_versions(
 
 async fn create_formula_version(
     State(state): State<super::ApiState>,
+    Extension(claims): Extension<Claims>,
     Path(id): Path<Uuid>,
+    headers: HeaderMap,
     Json(req): Json<CreateFormulaVersionRequest>,
 ) -> Json<ApiResponse<FormulaVersion>> {
+    let tenant_id = get_tenant_id(&claims, &headers);
     let version_id = Uuid::new_v4();
     let now = Utc::now();
 
     let existing_formula = sqlx::query_as::<_, Formula>(
         r#"
-        SELECT id, name, code, version, category, description, project_id, status,
+        SELECT id, tenant_id, name, code, version, category, description, project_id, status,
                approval_status, approved_by, approved_at, effective_date, expiration_date,
                ingredients, process_steps, properties,
                created_by, created_at, updated_at
-        FROM rs.formulas WHERE id = $1
+        FROM rs.formulas WHERE id = $1 AND tenant_id = $2
         "#,
     )
     .bind(id)
+    .bind(tenant_id)
     .fetch_optional(&state.db)
     .await;
 
@@ -454,15 +498,16 @@ async fn create_formula_version(
     let result = sqlx::query_as::<_, FormulaVersion>(
         r#"
         INSERT INTO rs.formula_versions (
-            id, formula_id, version, ingredients, process_steps, process_params,
+            id, tenant_id, formula_id, version, ingredients, process_steps, process_params,
             properties, changes, created_by, created_at, updated_at
-        ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11)
-        RETURNING id, formula_id, version, ingredients, process_steps, process_params,
+        ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12)
+        RETURNING id, tenant_id, formula_id, version, ingredients, process_steps, process_params,
                   properties, changes, approval_status, approved_by, approved_at,
                   created_by, created_at, updated_at
         "#,
     )
     .bind(version_id)
+    .bind(tenant_id)
     .bind(id)
     .bind(&req.version)
     .bind(serde_json::to_value(&ingredients).unwrap_or_default())
@@ -505,9 +550,12 @@ async fn create_formula_version(
 
 async fn approve_formula(
     State(state): State<super::ApiState>,
+    Extension(claims): Extension<Claims>,
     Path(id): Path<Uuid>,
+    headers: HeaderMap,
     Json(_req): Json<crate::models::ApproveFormulaRequest>,
 ) -> Json<ApiResponse<Formula>> {
+    let tenant_id = get_tenant_id(&claims, &headers);
     let now = Utc::now();
 
     let result = sqlx::query_as::<_, Formula>(
@@ -517,8 +565,8 @@ async fn approve_formula(
             approval_status = 'approved',
             approved_at = $2,
             updated_at = $3
-        WHERE id = $1
-        RETURNING id, name, code, version, category, description, project_id, status,
+        WHERE id = $1 AND tenant_id = $4
+        RETURNING id, tenant_id, name, code, version, category, description, project_id, status,
                   approval_status, approved_by, approved_at, effective_date, expiration_date,
                   ingredients, process_steps, properties,
                   created_by, created_at, updated_at
@@ -527,6 +575,7 @@ async fn approve_formula(
     .bind(id)
     .bind(now)
     .bind(now)
+    .bind(tenant_id)
     .fetch_one(&state.db)
     .await;
 

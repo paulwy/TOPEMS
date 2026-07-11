@@ -373,6 +373,7 @@ import { semanticTokens } from '@/theme/tokens';
 
 ```tsx
 import { Button, IconButton, Tooltip } from '@mui/material';
+import { Trash2 } from 'lucide-react';
 import { Button } from '@mui/material';
 // Use: <Button loading>...</Button>
 
@@ -398,7 +399,7 @@ import { Button } from '@mui/material';
 // 图标按钮提供 Tooltip
 <Tooltip title="删除">
   <IconButton color="error" onClick={handleDelete}>
-    <DeleteIcon />
+    <Trash2 />
   </IconButton>
 </Tooltip>
 
@@ -551,7 +552,7 @@ function StatusCard() {
 
 ```tsx
 import { Button, IconButton, Tooltip, TextField, InputLabel } from '@mui/material';
-import DeleteIcon from '@mui/icons-material/Delete';
+import { Trash2 } from 'lucide-react';
 import { SkipToContent } from '@/components/layout/GlobalLayout';
 
 // 使用语义化 HTML — Button 而非 div
@@ -566,7 +567,7 @@ import { SkipToContent } from '@/components/layout/GlobalLayout';
     color="error"
     onClick={handleDelete}
   >
-    <DeleteIcon />
+    <Trash2 />
   </IconButton>
 </Tooltip>
 

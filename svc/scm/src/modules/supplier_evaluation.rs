@@ -37,7 +37,7 @@ pub fn create_routes() -> Router<ApiState> {
         )
 }
 
-async fn list_evaluations(
+pub async fn list_evaluations(
     State(state): State<ApiState>,
     Extension(claims): Extension<Claims>,
     Query(params): Query<SupplierEvaluationQueryParams>,
@@ -102,7 +102,7 @@ async fn list_evaluations(
     }
 }
 
-async fn create_evaluation(
+pub async fn create_evaluation(
     State(state): State<ApiState>,
     Extension(claims): Extension<Claims>,
     headers: HeaderMap,
@@ -188,7 +188,7 @@ async fn create_evaluation(
     response
 }
 
-async fn get_evaluation(
+pub async fn get_evaluation(
     State(state): State<ApiState>,
     Extension(claims): Extension<Claims>,
     Path(id): Path<Uuid>,
@@ -223,7 +223,7 @@ async fn get_evaluation(
     }
 }
 
-async fn update_evaluation(
+pub async fn update_evaluation(
     State(state): State<ApiState>,
     Extension(claims): Extension<Claims>,
     Path(id): Path<Uuid>,
@@ -328,7 +328,7 @@ async fn update_evaluation(
     response
 }
 
-async fn delete_evaluation(
+pub async fn delete_evaluation(
     State(state): State<ApiState>,
     Extension(claims): Extension<Claims>,
     Path(id): Path<Uuid>,

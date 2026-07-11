@@ -6,6 +6,7 @@ use uuid::Uuid;
 #[derive(Debug, Clone, FromRow, Serialize, Deserialize)]
 pub struct StockTake {
     pub id: Uuid,
+    pub tenant_id: Uuid,
     pub warehouse_id: Option<Uuid>,
     pub location_id: Option<Uuid>,
     pub stock_take_number: String,
@@ -37,6 +38,7 @@ pub struct UpdateStockTakeRequest {
 #[derive(Debug, Clone, FromRow, Serialize, Deserialize)]
 pub struct StockTakeItem {
     pub id: Uuid,
+    pub tenant_id: Uuid,
     pub stock_take_id: Uuid,
     pub inventory_item_id: Uuid,
     pub expected_quantity: f64,

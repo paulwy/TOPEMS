@@ -17,6 +17,7 @@ import { useAppStore } from '../../store';
 import { ListPageTemplate, type ColumnDef } from '@/components/templates';
 import { extractErrorMessage } from '@/utils/errors';
 import { PageContainer } from '@/components/common';
+import { IAM_PATHS } from '@/modules/iam/config';
 
 interface RoleManagementPageProps {
   onNavigate?: (page: string) => void;
@@ -358,7 +359,7 @@ const RoleManagementPage: React.FC<RoleManagementPageProps> = ({ onNavigate: _on
         ]}
         onRefresh={loadData}
         backButton={{
-          href: '/iam/dashboard',
+          href: IAM_PATHS.dashboard,
         }}
       />
 

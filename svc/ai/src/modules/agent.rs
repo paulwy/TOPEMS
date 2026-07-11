@@ -5,14 +5,14 @@ use axum::{
 };
 use topems_shared::ApiResponse;
 
-pub fn create_routes() -> Router<crate::AppState> {
+pub fn create_routes() -> Router<crate::shared::AppState> {
     Router::new()
         .route("/api/ai/agent/run", post(agent_run))
         .route("/api/ai/agent/tools", get(list_agent_tools))
 }
 
 async fn agent_run(
-    State(state): State<crate::AppState>,
+    State(state): State<crate::shared::AppState>,
     Json(req): Json<crate::services::AgentRequest>,
 ) -> Json<ApiResponse<crate::services::AgentResponse>> {
     match state.agent_service.run(req).await {

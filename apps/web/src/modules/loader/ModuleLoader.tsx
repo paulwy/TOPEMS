@@ -4,11 +4,12 @@
 
 import React, { Suspense, lazy, useEffect, useState, useCallback } from 'react';
 import { CircularProgress, Box, Typography } from '@mui/material';
+import { LOADER_TIMEOUT } from '@topems/shared-constants';
 import type { ModuleStatus } from '@/store/moduleLoadingStore';
 import { useModuleLoadingStore } from '@/store/moduleLoadingStore';
 import { ModuleLoadingProgress } from './ModuleLoadingProgress';
 
-const DEFAULT_TIMEOUT = 30000;
+const DEFAULT_TIMEOUT = LOADER_TIMEOUT.MODULE;
 
 interface ModuleLoaderProps {
   /** Component to load */

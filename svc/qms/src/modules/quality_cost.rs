@@ -3,13 +3,13 @@
 use axum::{
     extract::State,
     routing::{delete, get, post, put},
-    Json, Router,
+    Extension, Json, Router,
 };
 use bigdecimal::{BigDecimal, ToPrimitive};
 use chrono::NaiveDate;
 use serde::{Deserialize, Serialize};
 use sqlx::{types::Uuid, FromRow, Row};
-use topems_shared::ApiResponse;
+use topems_shared::{ApiResponse, Claims};
 
 #[derive(Debug, Deserialize)]
 pub struct QualityCostQuery {
@@ -24,6 +24,7 @@ pub struct QualityCostQuery {
 #[derive(Debug, Serialize, FromRow)]
 pub struct QualityCost {
     pub id: String,
+    pub tenant_id: String,
     pub cost_no: String,
     pub cost_category: String,
     pub cost_type: Option<String>,
@@ -101,58 +102,58 @@ pub struct QualityCostStatistics {
     pub department_summary: Vec<CostDepartmentSummary>,
 }
 
+fn get_tenant_id(claims: &Claims, headers: &axum::http::HeaderMap) -> Uuid {
+    claims
+        .tenant_id
+        .as_ref()
+        .and_then(|t| Uuid::parse_str(t).ok())
+        .or_else(|| {
+            headers
+                .get("x-tenant-id")
+                .and_then(|v| v.to_str().ok())
+                .and_then(|s| Uuid::parse_str(s).ok())
+        })
+        .unwrap_or_else(Uuid::new_v4)
+}
+
 pub async fn list_quality_costs(
     State(state): State<crate::AppState>,
+    Extension(claims): Extension<Claims>,
+    headers: axum::http::HeaderMap,
     axum::extract::Query(query): axum::extract::Query<QualityCostQuery>,
 ) -> Json<ApiResponse<ListQualityCostsResponse>> {
+    let tenant_id = get_tenant_id(&claims, &headers);
     let page = query.page.unwrap_or(1);
     let page_size = query.page_size.unwrap_or(10);
     let offset = (page - 1) * page_size;
 
     let mut params: Vec<serde_json::Value> = Vec::new();
-    let mut where_clause = String::new();
+    let mut where_clause = String::from(" WHERE tenant_id = $1");
+    params.push(serde_json::Value::String(tenant_id.to_string()));
 
     if let Some(category) = &query.cost_category {
-        where_clause.push_str(&format!(" WHERE cost_category = ${}", params.len() + 1));
+        where_clause.push_str(&format!(" AND cost_category = ${}", params.len() + 1));
         params.push(serde_json::Value::String(category.clone()));
     }
 
     if let Some(dept) = &query.department {
-        if where_clause.is_empty() {
-            where_clause.push_str(&format!(" WHERE department = ${}", params.len() + 1));
-        } else {
-            where_clause.push_str(&format!(" AND department = ${}", params.len() + 1));
-        }
+        where_clause.push_str(&format!(" AND department = ${}", params.len() + 1));
         params.push(serde_json::Value::String(dept.clone()));
     }
 
     if let Some(start) = &query.start_date {
-        if where_clause.is_empty() {
-            where_clause.push_str(&format!(
-                " WHERE incurred_date::date >= ${}::date",
-                params.len() + 1
-            ));
-        } else {
-            where_clause.push_str(&format!(
-                " AND incurred_date::date >= ${}::date",
-                params.len() + 1
-            ));
-        }
+        where_clause.push_str(&format!(
+            " AND incurred_date::date >= ${}::date",
+            params.len() + 1
+        ));
         params.push(serde_json::Value::String(start.clone()));
     }
 
     if let Some(end) = &query.end_date {
-        if where_clause.is_empty() {
-            where_clause.push_str(&format!(
-                " WHERE incurred_date::date <= ${}::date",
-                params.len() + 1
-            ));
-        } else {
-            where_clause.push_str(&format!(
-                " AND incurred_date::date <= ${}::date",
-                params.len() + 1
-            ));
-        }
+        where_clause.push_str(&format!(
+            " AND incurred_date::date <= ${}::date",
+            params.len() + 1
+        ));
         params.push(serde_json::Value::String(end.clone()));
     }
 
@@ -171,7 +172,7 @@ pub async fn list_quality_costs(
     };
 
     let fetch_sql = format!(
-        r#"SELECT id, cost_no, cost_category, cost_type, amount, department, description, related_issue_id::TEXT, incurred_date::TEXT, created_by, created_at::TEXT, updated_at::TEXT FROM qa_quality_costs{} ORDER BY incurred_date DESC LIMIT ${} OFFSET ${}"#,
+        r#"SELECT id, tenant_id, cost_no, cost_category, cost_type, amount, department, description, related_issue_id::TEXT, incurred_date::TEXT, created_by, created_at::TEXT, updated_at::TEXT FROM qa_quality_costs{} ORDER BY incurred_date DESC LIMIT ${} OFFSET ${}"#,
         where_clause,
         params.len() + 1,
         params.len() + 2
@@ -202,8 +203,11 @@ pub async fn list_quality_costs(
 
 pub async fn create_quality_cost(
     State(state): State<crate::AppState>,
+    Extension(claims): Extension<Claims>,
+    headers: axum::http::HeaderMap,
     Json(req): Json<CreateQualityCostRequest>,
 ) -> Json<ApiResponse<QualityCost>> {
+    let tenant_id = get_tenant_id(&claims, &headers);
     let cost_no = format!(
         "QC-{}",
         uuid::Uuid::new_v4().to_string()[..8].to_uppercase()
@@ -217,7 +221,7 @@ pub async fn create_quality_cost(
         .incurred_date
         .map(|d| d.and_hms_opt(0, 0, 0).unwrap_or_default());
 
-    let cost = sqlx::query_as::<_, QualityCost>(r#"INSERT INTO qa_quality_costs (cost_no, cost_category, cost_type, amount, department, description, related_issue_id, incurred_date, created_by) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9) RETURNING id, cost_no, cost_category, cost_type, amount, department, description, related_issue_id::TEXT, incurred_date::TEXT, created_by, created_at::TEXT, updated_at::TEXT"#).bind(cost_no).bind(req.cost_category).bind(req.cost_type).bind(req.amount).bind(req.department).bind(req.description).bind(related_issue_id).bind(incurred_dt).bind(req.created_by)
+    let cost = sqlx::query_as::<_, QualityCost>(r#"INSERT INTO qa_quality_costs (tenant_id, cost_no, cost_category, cost_type, amount, department, description, related_issue_id, incurred_date, created_by) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10) RETURNING id, tenant_id, cost_no, cost_category, cost_type, amount, department, description, related_issue_id::TEXT, incurred_date::TEXT, created_by, created_at::TEXT, updated_at::TEXT"#).bind(tenant_id).bind(cost_no).bind(req.cost_category).bind(req.cost_type).bind(req.amount).bind(req.department).bind(req.description).bind(related_issue_id).bind(incurred_dt).bind(req.created_by)
     .fetch_one(&state.pool)
     .await;
 
@@ -232,14 +236,17 @@ pub async fn create_quality_cost(
 
 pub async fn get_quality_cost(
     State(state): State<crate::AppState>,
+    Extension(claims): Extension<Claims>,
+    headers: axum::http::HeaderMap,
     axum::extract::Path(id): axum::extract::Path<String>,
 ) -> Json<ApiResponse<QualityCost>> {
+    let tenant_id = get_tenant_id(&claims, &headers);
     let id = match Uuid::parse_str(&id) {
         Ok(u) => u,
         Err(_) => return Json(ApiResponse::error(400, "无效的成本记录ID")),
     };
 
-    let cost = sqlx::query_as::<_, QualityCost>(r#"SELECT id, cost_no, cost_category, cost_type, amount, department, description, related_issue_id::TEXT, incurred_date::TEXT, created_by, created_at::TEXT, updated_at::TEXT FROM qa_quality_costs WHERE id = $1"#).bind(id)
+    let cost = sqlx::query_as::<_, QualityCost>(r#"SELECT id, tenant_id, cost_no, cost_category, cost_type, amount, department, description, related_issue_id::TEXT, incurred_date::TEXT, created_by, created_at::TEXT, updated_at::TEXT FROM qa_quality_costs WHERE id = $1 AND tenant_id = $2"#).bind(id).bind(tenant_id)
     .fetch_one(&state.pool)
     .await;
 
@@ -254,9 +261,12 @@ pub async fn get_quality_cost(
 
 pub async fn update_quality_cost(
     State(state): State<crate::AppState>,
+    Extension(claims): Extension<Claims>,
+    headers: axum::http::HeaderMap,
     axum::extract::Path(id): axum::extract::Path<String>,
     Json(req): Json<UpdateQualityCostRequest>,
 ) -> Json<ApiResponse<QualityCost>> {
+    let tenant_id = get_tenant_id(&claims, &headers);
     let id = match Uuid::parse_str(&id) {
         Ok(u) => u,
         Err(_) => return Json(ApiResponse::error(400, "无效的成本记录ID")),
@@ -270,7 +280,7 @@ pub async fn update_quality_cost(
         .incurred_date
         .map(|d| d.and_hms_opt(0, 0, 0).unwrap_or_default());
 
-    let cost = sqlx::query_as::<_, QualityCost>(r#"UPDATE qa_quality_costs SET cost_category = COALESCE($2, cost_category), cost_type = COALESCE($3, cost_type), amount = COALESCE($4, amount), department = COALESCE($5, department), description = COALESCE($6, description), related_issue_id = COALESCE($7, related_issue_id), incurred_date = COALESCE($8, incurred_date), updated_at = NOW() WHERE id = $1 RETURNING id, cost_no, cost_category, cost_type, amount, department, description, related_issue_id::TEXT, incurred_date::TEXT, created_by, created_at::TEXT, updated_at::TEXT"#).bind(id).bind(req.cost_category).bind(req.cost_type).bind(req.amount).bind(req.department).bind(req.description).bind(related_issue_id).bind(incurred_dt)
+    let cost = sqlx::query_as::<_, QualityCost>(r#"UPDATE qa_quality_costs SET cost_category = COALESCE($2, cost_category), cost_type = COALESCE($3, cost_type), amount = COALESCE($4, amount), department = COALESCE($5, department), description = COALESCE($6, description), related_issue_id = COALESCE($7, related_issue_id), incurred_date = COALESCE($8, incurred_date), updated_at = NOW() WHERE id = $1 AND tenant_id = $9 RETURNING id, tenant_id, cost_no, cost_category, cost_type, amount, department, description, related_issue_id::TEXT, incurred_date::TEXT, created_by, created_at::TEXT, updated_at::TEXT"#).bind(id).bind(req.cost_category).bind(req.cost_type).bind(req.amount).bind(req.department).bind(req.description).bind(related_issue_id).bind(incurred_dt).bind(tenant_id)
     .fetch_one(&state.pool)
     .await;
 
@@ -285,15 +295,19 @@ pub async fn update_quality_cost(
 
 pub async fn delete_quality_cost(
     State(state): State<crate::AppState>,
+    Extension(claims): Extension<Claims>,
+    headers: axum::http::HeaderMap,
     axum::extract::Path(id): axum::extract::Path<String>,
 ) -> Json<ApiResponse<bool>> {
+    let tenant_id = get_tenant_id(&claims, &headers);
     let id = match Uuid::parse_str(&id) {
         Ok(u) => u,
         Err(_) => return Json(ApiResponse::error(400, "无效的成本记录ID")),
     };
 
-    let result = sqlx::query(r#"DELETE FROM qa_quality_costs WHERE id = $1"#)
+    let result = sqlx::query(r#"DELETE FROM qa_quality_costs WHERE id = $1 AND tenant_id = $2"#)
         .bind(id)
+        .bind(tenant_id)
         .execute(&state.pool)
         .await;
 
@@ -308,52 +322,38 @@ pub async fn delete_quality_cost(
 
 pub async fn get_cost_statistics(
     State(state): State<crate::AppState>,
+    Extension(claims): Extension<Claims>,
+    headers: axum::http::HeaderMap,
     axum::extract::Query(query): axum::extract::Query<QualityCostQuery>,
 ) -> Json<ApiResponse<QualityCostStatistics>> {
+    let tenant_id = get_tenant_id(&claims, &headers);
     let mut params: Vec<serde_json::Value> = Vec::new();
-    let mut where_clause = String::new();
+    let mut where_clause = String::from(" WHERE tenant_id = $1");
+    params.push(serde_json::Value::String(tenant_id.to_string()));
 
     if let Some(category) = &query.cost_category {
-        where_clause.push_str(&format!(" WHERE cost_category = ${}", params.len() + 1));
+        where_clause.push_str(&format!(" AND cost_category = ${}", params.len() + 1));
         params.push(serde_json::Value::String(category.clone()));
     }
 
     if let Some(dept) = &query.department {
-        if where_clause.is_empty() {
-            where_clause.push_str(&format!(" WHERE department = ${}", params.len() + 1));
-        } else {
-            where_clause.push_str(&format!(" AND department = ${}", params.len() + 1));
-        }
+        where_clause.push_str(&format!(" AND department = ${}", params.len() + 1));
         params.push(serde_json::Value::String(dept.clone()));
     }
 
     if let Some(start) = &query.start_date {
-        if where_clause.is_empty() {
-            where_clause.push_str(&format!(
-                " WHERE incurred_date::date >= ${}::date",
-                params.len() + 1
-            ));
-        } else {
-            where_clause.push_str(&format!(
-                " AND incurred_date::date >= ${}::date",
-                params.len() + 1
-            ));
-        }
+        where_clause.push_str(&format!(
+            " AND incurred_date::date >= ${}::date",
+            params.len() + 1
+        ));
         params.push(serde_json::Value::String(start.clone()));
     }
 
     if let Some(end) = &query.end_date {
-        if where_clause.is_empty() {
-            where_clause.push_str(&format!(
-                " WHERE incurred_date::date <= ${}::date",
-                params.len() + 1
-            ));
-        } else {
-            where_clause.push_str(&format!(
-                " AND incurred_date::date <= ${}::date",
-                params.len() + 1
-            ));
-        }
+        where_clause.push_str(&format!(
+            " AND incurred_date::date <= ${}::date",
+            params.len() + 1
+        ));
         params.push(serde_json::Value::String(end.clone()));
     }
 
@@ -455,10 +455,14 @@ pub async fn get_cost_statistics(
 
 pub async fn get_cost_trend(
     State(state): State<crate::AppState>,
+    Extension(claims): Extension<Claims>,
+    headers: axum::http::HeaderMap,
     axum::extract::Query(query): axum::extract::Query<QualityCostQuery>,
 ) -> Json<ApiResponse<Vec<CostTrendItem>>> {
+    let tenant_id = get_tenant_id(&claims, &headers);
     let mut params: Vec<serde_json::Value> = Vec::new();
-    let mut where_clause = String::from(" WHERE 1=1");
+    let mut where_clause = String::from(" WHERE tenant_id = $1");
+    params.push(serde_json::Value::String(tenant_id.to_string()));
 
     if let Some(start) = &query.start_date {
         where_clause.push_str(&format!(

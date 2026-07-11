@@ -443,10 +443,13 @@ export const designTokens = {
   breakpoints: {
     values: {
       xs: 0,
-      sm: 600,
-      md: 900,
-      lg: 1200,
-      xl: 1536,
+      sm: 480,
+      md: 640,
+      lg: 768,
+      xl: 1024,
+      '2xl': 1280,
+      '3xl': 1536,
+      '4xl': 1920,
     },
   },
 };

@@ -1,10 +1,13 @@
-use axum::{extract::State, Json};
+use axum::{
+    extract::{Path, State},
+    Json,
+};
 use serde::{Deserialize, Serialize};
 use tracing::info;
 use uuid::Uuid;
 
 use crate::modules::bi::chart_service::{ChartQuery, ChartService, ChartType};
-use crate::AppState;
+use crate::shared::AppState;
 
 #[derive(Debug, Deserialize)]
 pub struct CreateVisualizationRequest {
@@ -202,6 +205,177 @@ pub async fn generate_gauge_chart(
             "data": null
         })),
     }
+}
+
+pub async fn get_drilldown_config(
+    State(_state): State<AppState>,
+    Path(widget_id): Path<String>,
+) -> Json<serde_json::Value> {
+    info!("Getting drilldown config for widget: {}", widget_id);
+    Json(serde_json::json!({
+        "success": true,
+        "message": "Get drilldown config",
+        "data": {
+            "widgetId": widget_id,
+            "levels": [],
+            "defaultLevel": 0
+        }
+    }))
+}
+
+pub async fn update_drilldown_config(
+    State(_state): State<AppState>,
+    Path(widget_id): Path<String>,
+    Json(_config): Json<serde_json::Value>,
+) -> Json<serde_json::Value> {
+    info!("Updating drilldown config for widget: {}", widget_id);
+    Json(serde_json::json!({
+        "success": true,
+        "message": "Update drilldown config"
+    }))
+}
+
+pub async fn execute_drilldown(
+    State(_state): State<AppState>,
+    Path(widget_id): Path<String>,
+    Json(req): Json<DrilldownRequest>,
+) -> Json<serde_json::Value> {
+    info!("Executing drilldown for widget: {}", widget_id);
+    Json(serde_json::json!({
+        "success": true,
+        "message": "Execute drilldown",
+        "data": {
+            "widgetId": widget_id,
+            "level": req.level,
+            "filters": req.filters,
+            "result": []
+        }
+    }))
+}
+
+pub async fn get_chart_link_config(
+    State(_state): State<AppState>,
+    Path(dashboard_id): Path<String>,
+) -> Json<serde_json::Value> {
+    info!("Getting chart link config for dashboard: {}", dashboard_id);
+    Json(serde_json::json!({
+        "success": true,
+        "message": "Get chart link config",
+        "data": {
+            "dashboardId": dashboard_id,
+            "links": []
+        }
+    }))
+}
+
+pub async fn update_chart_link_config(
+    State(_state): State<AppState>,
+    Path(dashboard_id): Path<String>,
+    Json(_config): Json<serde_json::Value>,
+) -> Json<serde_json::Value> {
+    info!("Updating chart link config for dashboard: {}", dashboard_id);
+    Json(serde_json::json!({
+        "success": true,
+        "message": "Update chart link config"
+    }))
+}
+
+pub async fn get_chart_annotations(
+    State(_state): State<AppState>,
+    Path(widget_id): Path<String>,
+) -> Json<serde_json::Value> {
+    info!("Getting annotations for widget: {}", widget_id);
+    Json(serde_json::json!({
+        "success": true,
+        "message": "Get chart annotations",
+        "data": []
+    }))
+}
+
+pub async fn create_chart_annotation(
+    State(_state): State<AppState>,
+    Path(widget_id): Path<String>,
+    Json(req): Json<AnnotationRequest>,
+) -> Json<serde_json::Value> {
+    info!("Creating annotation for widget: {}", widget_id);
+    Json(serde_json::json!({
+        "success": true,
+        "message": "Create chart annotation",
+        "data": {
+            "id": Uuid::new_v4(),
+            "widgetId": widget_id,
+            "type": req.r#type,
+            "position": req.position,
+            "content": req.content,
+            "color": req.color
+        }
+    }))
+}
+
+pub async fn delete_chart_annotation(
+    State(_state): State<AppState>,
+    Path(annotation_id): Path<String>,
+) -> Json<serde_json::Value> {
+    info!("Deleting annotation: {}", annotation_id);
+    Json(serde_json::json!({
+        "success": true,
+        "message": "Delete chart annotation"
+    }))
+}
+
+pub async fn export_chart(
+    State(_state): State<AppState>,
+    Path(widget_id): Path<String>,
+    Json(req): Json<ExportRequest>,
+) -> Json<serde_json::Value> {
+    info!(
+        "Exporting chart for widget: {} format: {}",
+        widget_id, req.format
+    );
+    Json(serde_json::json!({
+        "success": true,
+        "message": "Export chart",
+        "data": {
+            "widgetId": widget_id,
+            "format": req.format,
+            "url": "/api/bi/download/placeholder"
+        }
+    }))
+}
+
+pub async fn get_fullscreen_chart(
+    State(_state): State<AppState>,
+    Path(widget_id): Path<String>,
+) -> Json<serde_json::Value> {
+    info!("Getting fullscreen chart for widget: {}", widget_id);
+    Json(serde_json::json!({
+        "success": true,
+        "message": "Get fullscreen chart",
+        "data": {
+            "widgetId": widget_id,
+            "config": {}
+        }
+    }))
+}
+
+#[derive(Debug, Deserialize)]
+pub struct DrilldownRequest {
+    pub level: i64,
+    pub filters: Option<serde_json::Value>,
+}
+
+#[derive(Debug, Deserialize)]
+pub struct AnnotationRequest {
+    #[serde(rename = "type")]
+    pub r#type: String,
+    pub position: serde_json::Value,
+    pub content: String,
+    pub color: Option<String>,
+}
+
+#[derive(Debug, Deserialize)]
+pub struct ExportRequest {
+    pub format: String,
 }
 
 #[derive(Debug, Deserialize)]

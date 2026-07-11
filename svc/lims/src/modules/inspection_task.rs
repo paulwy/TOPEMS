@@ -1,13 +1,14 @@
 use axum::{
     extract::State,
     routing::{get, post},
-    Json, Router,
+    Extension, Json, Router,
 };
 use serde::{Deserialize, Serialize};
 use sqlx::{types::Uuid, Row};
 use topems_shared::ApiResponse;
 
-use crate::AppState;
+use crate::middleware::tenant::TenantContext;
+use crate::shared::AppState;
 
 pub fn create_routes() -> Router<AppState> {
     Router::new()
@@ -22,6 +23,7 @@ pub fn create_routes() -> Router<AppState> {
 #[derive(Debug, Serialize)]
 pub struct InspectionTask {
     pub id: String,
+    pub tenant_id: String,
     pub task_no: String,
     pub sample_id: String,
     pub sample_no: String,
@@ -65,7 +67,7 @@ pub struct SubmitResultRequest {
 }
 
 pub async fn list_tasks(
-    State(state): State<crate::AppState>,
+    State(state): State<crate::shared::AppState>,
 ) -> Json<ApiResponse<Vec<InspectionTask>>> {
     let rows = sqlx::query(
         "SELECT id, task_no, sample_id, sample_no, test_items, status, assigned_to, instrument_id, planned_date::TEXT, actual_start_date::TEXT, actual_end_date::TEXT, result, conclusion, recorded_by, created_at::TEXT, updated_at::TEXT FROM qa_lab_tasks ORDER BY created_at DESC"
@@ -79,6 +81,7 @@ pub async fn list_tasks(
                 .into_iter()
                 .map(|row| InspectionTask {
                     id: row.get("id"),
+                    tenant_id: row.get("tenant_id"),
                     task_no: row.get("task_no"),
                     sample_id: row.get("sample_id"),
                     sample_no: row.get("sample_no"),
@@ -106,7 +109,7 @@ pub async fn list_tasks(
 }
 
 pub async fn create_task(
-    State(state): State<crate::AppState>,
+    State(state): State<crate::shared::AppState>,
     Json(req): Json<CreateTaskRequest>,
 ) -> Json<ApiResponse<InspectionTask>> {
     let sample_id = match Uuid::parse_str(&req.sample_id) {
@@ -155,6 +158,7 @@ pub async fn create_task(
         Ok(r) => Json(ApiResponse::success(
             InspectionTask {
                 id: r.get("id"),
+                tenant_id: r.get("tenant_id"),
                 task_no: r.get("task_no"),
                 sample_id: r.get("sample_id"),
                 sample_no: r.get("sample_no"),
@@ -181,7 +185,7 @@ pub async fn create_task(
 }
 
 pub async fn get_task(
-    State(state): State<crate::AppState>,
+    State(state): State<crate::shared::AppState>,
     axum::extract::Path(id): axum::extract::Path<String>,
 ) -> Json<ApiResponse<InspectionTask>> {
     let id = match Uuid::parse_str(&id) {
@@ -200,6 +204,7 @@ pub async fn get_task(
         Ok(r) => Json(ApiResponse::success(
             InspectionTask {
                 id: r.get("id"),
+                tenant_id: r.get("tenant_id"),
                 task_no: r.get("task_no"),
                 sample_id: r.get("sample_id"),
                 sample_no: r.get("sample_no"),
@@ -226,7 +231,7 @@ pub async fn get_task(
 }
 
 pub async fn update_task(
-    State(state): State<crate::AppState>,
+    State(state): State<crate::shared::AppState>,
     axum::extract::Path(id): axum::extract::Path<String>,
     Json(req): Json<UpdateTaskRequest>,
 ) -> Json<ApiResponse<InspectionTask>> {
@@ -256,6 +261,7 @@ pub async fn update_task(
         Ok(r) => Json(ApiResponse::success(
             InspectionTask {
                 id: r.get("id"),
+                tenant_id: r.get("tenant_id"),
                 task_no: r.get("task_no"),
                 sample_id: r.get("sample_id"),
                 sample_no: r.get("sample_no"),
@@ -282,7 +288,7 @@ pub async fn update_task(
 }
 
 pub async fn submit_result(
-    State(state): State<crate::AppState>,
+    State(state): State<crate::shared::AppState>,
     axum::extract::Path(id): axum::extract::Path<String>,
     Json(req): Json<SubmitResultRequest>,
 ) -> Json<ApiResponse<InspectionTask>> {
@@ -305,6 +311,7 @@ pub async fn submit_result(
         Ok(r) => Json(ApiResponse::success(
             InspectionTask {
                 id: r.get("id"),
+                tenant_id: r.get("tenant_id"),
                 task_no: r.get("task_no"),
                 sample_id: r.get("sample_id"),
                 sample_no: r.get("sample_no"),
@@ -331,7 +338,7 @@ pub async fn submit_result(
 }
 
 pub async fn delete_task(
-    State(state): State<crate::AppState>,
+    State(state): State<crate::shared::AppState>,
     axum::extract::Path(id): axum::extract::Path<String>,
 ) -> Json<ApiResponse<bool>> {
     let id = match Uuid::parse_str(&id) {

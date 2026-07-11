@@ -11,7 +11,7 @@ import {
   billingApi,
   customerSegmentationApi,
   customerRecommendationApi,
-} from '../';
+} from '..';
 
 vi.mock('../../client', () => ({
   apiClient: {

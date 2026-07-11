@@ -13,6 +13,7 @@ import {
 import { Box, Typography, Chip, Button, Grid } from '@mui/material';
 
 import { useAppStore } from '../../store';
+import { NOTIFICATION_PATHS } from '@/modules/notification/config';
 import {
   ListPageTemplate,
   type ColumnDef,
@@ -653,7 +654,7 @@ export const NotificationTemplatesPage: React.FC = () => {
       headerProps={{
         pageIcon: <FileText size={20} />,
         backButton: {
-          href: '/notification/dashboard',
+          href: NOTIFICATION_PATHS.dashboard,
         },
       }}
     >

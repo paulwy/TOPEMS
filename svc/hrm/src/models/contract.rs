@@ -6,6 +6,7 @@ use uuid::Uuid;
 #[derive(Debug, Clone, FromRow, Serialize, Deserialize)]
 pub struct Contract {
     pub id: Uuid,
+    pub tenant_id: Uuid,
     pub employee_id: Uuid,
     pub contract_no: Option<String>,
     pub contract_type: String,
@@ -64,6 +65,7 @@ pub struct UpdateContractRequest {
 #[derive(Debug, Clone, FromRow, Serialize, Deserialize)]
 pub struct ContractRenewal {
     pub id: Uuid,
+    pub tenant_id: Uuid,
     pub contract_id: Uuid,
     pub previous_contract_id: Option<Uuid>,
     pub renewal_type: String,
@@ -114,6 +116,7 @@ mod tests {
 
         let contract = Contract {
             id,
+            tenant_id: Uuid::new_v4(),
             employee_id,
             contract_no: Some("CONTRACT-001".to_string()),
             contract_type: "full_time".to_string(),
@@ -198,6 +201,7 @@ mod tests {
 
         let renewal = ContractRenewal {
             id,
+            tenant_id: Uuid::new_v4(),
             contract_id,
             previous_contract_id: None,
             renewal_type: "annual".to_string(),

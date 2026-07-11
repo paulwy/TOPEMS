@@ -1,0 +1,240 @@
+use axum::{
+    extract::{Extension, Path, Query, State},
+    routing::*,
+    Json, Router,
+};
+use serde::Deserialize;
+use uuid::Uuid;
+
+use super::ApiState;
+use crate::models::material::{CreateMaterialRequest, Material, UpdateMaterialRequest};
+use crate::shared::permission::{check_permission, ModulePermission};
+use topems_shared::auth::Claims;
+use topems_shared::{api_error, ApiResponse, PaginatedResponse};
+
+#[derive(Debug, Deserialize)]
+pub struct PaginationParams {
+    pub page: Option<i64>,
+    pub pagesize: Option<i64>,
+    pub search: Option<String>,
+    pub status: Option<String>,
+    pub category: Option<String>,
+}
+
+pub fn create_routes() -> Router<ApiState> {
+    Router::new()
+        .route(
+            "/api/erp/materials",
+            get(list_materials).post(create_material),
+        )
+        .route(
+            "/api/erp/materials/:id",
+            get(get_material)
+                .put(update_material)
+                .delete(delete_material),
+        )
+}
+
+pub async fn list_materials(
+    State(state): State<ApiState>,
+    Extension(claims): Extension<Claims>,
+    Query(params): Query<PaginationParams>,
+) -> Json<ApiResponse<PaginatedResponse<Material>>> {
+    if let Err(e) = check_permission(&claims, &ModulePermission::FinanceRead).await {
+        return e;
+    }
+
+    let page = params.page.unwrap_or(1).max(1);
+    let page_size = params.pagesize.unwrap_or(20).min(100);
+    let offset = (page - 1) * page_size;
+
+    let search_pattern = params.search.as_deref().map(|s| format!("%{}%", s));
+    let status_filter = params.status.clone();
+    let category_filter = params.category.clone();
+
+    let materials_result = if search_pattern.is_some()
+        || status_filter.is_some()
+        || category_filter.is_some()
+    {
+        let search = search_pattern.unwrap_or_default();
+        let status = status_filter.clone();
+        let category = category_filter.clone();
+
+        sqlx::query_as::<_, Material>(
+            r#"SELECT id, code, name, specification, unit, category, brand, model, barcode, safety_stock, unit_price, tax_rate, description, status, created_at, updated_at 
+               FROM materials 
+               WHERE (code ILIKE $1 OR name ILIKE $1 OR specification ILIKE $1)
+                 AND ($2 = '' OR status = $2)
+                 AND ($3 = '' OR category = $3)
+               ORDER BY created_at DESC LIMIT $4 OFFSET $5"#
+        )
+        .bind(search)
+        .bind(status.unwrap_or_default())
+        .bind(category.unwrap_or_default())
+        .bind(page_size)
+        .bind(offset)
+        .fetch_all(&state.db)
+        .await
+    } else {
+        sqlx::query_as::<_, Material>(
+            "SELECT id, code, name, specification, unit, category, brand, model, barcode, safety_stock, unit_price, tax_rate, description, status, created_at, updated_at FROM materials ORDER BY created_at DESC LIMIT $1 OFFSET $2"
+        )
+        .bind(page_size)
+        .bind(offset)
+        .fetch_all(&state.db)
+        .await
+    };
+
+    let materials = match materials_result {
+        Ok(m) => m,
+        Err(e) => {
+            tracing::error!("查询物料失败: {}", e);
+            return Json(api_error(500, "查询物料失败"));
+        }
+    };
+
+    let total = match sqlx::query_scalar::<_, i64>("SELECT COUNT(*) FROM materials")
+        .fetch_one(&state.db)
+        .await
+    {
+        Ok(t) => t,
+        Err(e) => {
+            tracing::error!("查询物料总数失败: {}", e);
+            return Json(api_error(500, "查询物料总数失败"));
+        }
+    };
+
+    Json(ApiResponse::success(
+        PaginatedResponse::new(materials, total, page, page_size),
+        "获取物料列表成功",
+    ))
+}
+
+pub async fn get_material(
+    State(state): State<ApiState>,
+    Extension(claims): Extension<Claims>,
+    Path(id): Path<Uuid>,
+) -> Json<ApiResponse<Material>> {
+    if let Err(e) = check_permission(&claims, &ModulePermission::FinanceRead).await {
+        return e;
+    }
+
+    let result = sqlx::query_as::<_, Material>(
+        "SELECT id, code, name, specification, unit, category, brand, model, barcode, safety_stock, unit_price, tax_rate, description, status, created_at, updated_at FROM materials WHERE id = $1",
+    )
+    .bind(id)
+    .fetch_optional(&state.db)
+    .await;
+
+    match result {
+        Ok(Some(material)) => Json(ApiResponse::success(material, "获取物料成功")),
+        Ok(None) => Json(api_error(404, "物料不存在")),
+        Err(e) => {
+            tracing::error!("查询物料失败: {}", e);
+            Json(api_error(500, "查询物料失败"))
+        }
+    }
+}
+
+pub async fn create_material(
+    State(state): State<ApiState>,
+    Extension(claims): Extension<Claims>,
+    Json(body): Json<CreateMaterialRequest>,
+) -> Json<ApiResponse<Material>> {
+    if let Err(e) = check_permission(&claims, &ModulePermission::FinanceWrite).await {
+        return e;
+    }
+
+    let result = sqlx::query_as::<_, Material>(
+        "INSERT INTO materials (code, name, specification, unit, category, brand, model, barcode, safety_stock, unit_price, tax_rate, description, status) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13) RETURNING id, code, name, specification, unit, category, brand, model, barcode, safety_stock, unit_price, tax_rate, description, status, created_at, updated_at",
+    )
+    .bind(body.code)
+    .bind(body.name)
+    .bind(body.specification)
+    .bind(body.unit)
+    .bind(body.category)
+    .bind(body.brand)
+    .bind(body.model)
+    .bind(body.barcode)
+    .bind(body.safety_stock.unwrap_or(0.0))
+    .bind(body.unit_price.unwrap_or(0.0))
+    .bind(body.tax_rate.unwrap_or(0.0))
+    .bind(body.description)
+    .bind(body.status.unwrap_or_else(|| "active".to_string()))
+    .fetch_optional(&state.db)
+    .await;
+
+    match result {
+        Ok(Some(material)) => Json(ApiResponse::success(material, "创建物料成功")),
+        Ok(None) => Json(api_error(500, "创建物料失败")),
+        Err(e) => {
+            tracing::error!("创建物料失败: {}", e);
+            Json(api_error(500, "创建物料失败"))
+        }
+    }
+}
+
+pub async fn update_material(
+    State(state): State<ApiState>,
+    Extension(claims): Extension<Claims>,
+    Path(id): Path<Uuid>,
+    Json(body): Json<UpdateMaterialRequest>,
+) -> Json<ApiResponse<Material>> {
+    if let Err(e) = check_permission(&claims, &ModulePermission::FinanceWrite).await {
+        return e;
+    }
+
+    let result = sqlx::query_as::<_, Material>(
+        "UPDATE materials SET name = COALESCE($1, name), specification = COALESCE($2, specification), unit = COALESCE($3, unit), category = COALESCE($4, category), brand = COALESCE($5, brand), model = COALESCE($6, model), barcode = COALESCE($7, barcode), safety_stock = COALESCE($8, safety_stock), unit_price = COALESCE($9, unit_price), tax_rate = COALESCE($10, tax_rate), description = COALESCE($11, description), status = COALESCE($12, status), updated_at = NOW() WHERE id = $13 RETURNING id, code, name, specification, unit, category, brand, model, barcode, safety_stock, unit_price, tax_rate, description, status, created_at, updated_at",
+    )
+    .bind(body.name)
+    .bind(body.specification)
+    .bind(body.unit)
+    .bind(body.category)
+    .bind(body.brand)
+    .bind(body.model)
+    .bind(body.barcode)
+    .bind(body.safety_stock)
+    .bind(body.unit_price)
+    .bind(body.tax_rate)
+    .bind(body.description)
+    .bind(body.status)
+    .bind(id)
+    .fetch_optional(&state.db)
+    .await;
+
+    match result {
+        Ok(Some(material)) => Json(ApiResponse::success(material, "更新物料成功")),
+        Ok(None) => Json(api_error(404, "物料不存在")),
+        Err(e) => {
+            tracing::error!("更新物料失败: {}", e);
+            Json(api_error(500, "更新物料失败"))
+        }
+    }
+}
+
+pub async fn delete_material(
+    State(state): State<ApiState>,
+    Extension(claims): Extension<Claims>,
+    Path(id): Path<Uuid>,
+) -> Json<ApiResponse<String>> {
+    if let Err(e) = check_permission(&claims, &ModulePermission::FinanceWrite).await {
+        return e;
+    }
+
+    let result = sqlx::query("DELETE FROM materials WHERE id = $1")
+        .bind(id)
+        .execute(&state.db)
+        .await;
+
+    match result {
+        Ok(r) if r.rows_affected() > 0 => {
+            Json(ApiResponse::success("删除成功".to_string(), "删除物料成功"))
+        }
+        Ok(_) => Json(api_error(404, "物料不存在")),
+        Err(e) => {
+            tracing::error!("删除物料失败: {}", e);
+            Json(api_error(500, "删除物料失败"))
+        }
+    }
+}

@@ -315,10 +315,10 @@ const EquipmentDetailPage: React.FC = () => {
       <DetailPageTemplate
         title=''
         subtitle=''
-        backHref='/equipment'
+        backHref='/mes/equipment'
         loading={loading}
         error={errorMessage}
-        onEdit={() => navigate(`/equipment/${id}`)}
+        onEdit={() => navigate('/mes/equipment')}
         onDelete={() => setDeleteDialogOpen(true)}
         infoCard={infoCard}
         tabs={tabs}

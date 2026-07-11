@@ -4,6 +4,7 @@ pub mod audit_log;
 pub mod consolidation;
 pub mod dict;
 pub mod finance;
+pub mod material;
 pub mod meeting_room;
 pub mod office_supplies;
 pub mod production_order;

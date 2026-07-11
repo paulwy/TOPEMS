@@ -1,26 +1,18 @@
-//! Shared module for analytics service
-//! Contains unified types and utilities
+pub mod permission;
 
-use serde::{Deserialize, Serialize};
+use axum::extract::FromRef;
+use sqlx::PgPool;
+use topems_shared::{AuthState, SimpleHealthConfig};
 
-/// Chart configuration
-#[derive(Debug, Clone, Serialize, Deserialize)]
-pub struct ChartConfig {
-    pub chart_type: String,
-    pub title: Option<String>,
-    pub x_axis: String,
-    pub y_axis: Vec<String>,
-    pub color_scheme: Option<String>,
+#[derive(Clone)]
+pub struct AppState {
+    pub auth_state: AuthState,
+    pub pool: PgPool,
+    pub health_config: SimpleHealthConfig,
 }
 
-impl Default for ChartConfig {
-    fn default() -> Self {
-        Self {
-            chart_type: "line".to_string(),
-            title: None,
-            x_axis: String::new(),
-            y_axis: vec![],
-            color_scheme: None,
-        }
+impl FromRef<AppState> for AuthState {
+    fn from_ref(state: &AppState) -> Self {
+        state.auth_state.clone()
     }
 }

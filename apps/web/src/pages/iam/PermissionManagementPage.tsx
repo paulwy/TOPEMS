@@ -19,6 +19,7 @@ import { useAppStore } from '../../store';
 import { ListPageTemplate, type ColumnDef } from '@/components/templates';
 import { extractErrorMessage } from '@/utils/errors';
 import { PageContainer } from '@/components/common';
+import { IAM_PATHS } from '@/modules/iam/config';
 
 interface PermissionManagementPageProps {
   onNavigate?: (page: string) => void;
@@ -445,7 +446,7 @@ const PermissionManagementPage: React.FC<PermissionManagementPageProps> = ({
         subtitle=''
         breadcrumbs={[{ label: '首页', href: '/' }, { label: '身份权限' }, { label: '权限管理' }]}
         backButton={{
-          href: '/iam/dashboard',
+          href: IAM_PATHS.dashboard,
         }}
         columns={columns}
         data={paginatedPermissions}

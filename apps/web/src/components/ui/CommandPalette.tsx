@@ -116,7 +116,7 @@ export const CommandPalette: React.FC<CommandPaletteProps> = ({ open, onClose })
         label: '系统设置',
         description: '打开系统设置页面',
         icon: <Settings style={{ width: 18, height: 18 }} />,
-        action: () => navigate('/settings'),
+        action: () => navigate('/admin/system-settings'),
         category: 'action',
       },
       {

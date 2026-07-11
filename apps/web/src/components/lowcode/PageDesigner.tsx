@@ -260,7 +260,7 @@ const PageDesigner: React.FC<PageDesignerProps> = ({
             <Link
               color='inherit'
               underline='hover'
-              href='#'
+              href='/lowcode/home'
             >
               低代码平台
             </Link>

@@ -14,10 +14,11 @@ use dotenv::dotenv;
 use serde_json::json;
 use sqlx::{postgres::PgPoolOptions, PgPool};
 use std::env;
+use uuid::Uuid;
 
 use topems_shared::{
     auth_middleware, build_health_response, create_api_info_router, create_cors_layer,
-    init_telemetry, telemetry_middleware, ApiResponse, AuthState, ServiceHealth,
+    init_telemetry, rls_middleware, telemetry_middleware, ApiResponse, AuthState, ServiceHealth,
 };
 
 use db::repository::*;
@@ -77,24 +78,7 @@ use modules::user::{get_profile, update_profile, upload_avatar};
 use modules::workbench::get_workbench_data;
 
 use modules::mobile_plugin::create_routes;
-
-#[derive(Clone)]
-struct AppState {
-    auth_state: AuthState,
-    pool: PgPool,
-}
-
-impl FromRef<AppState> for AuthState {
-    fn from_ref(state: &AppState) -> Self {
-        state.auth_state.clone()
-    }
-}
-
-impl FromRef<AppState> for PgPool {
-    fn from_ref(state: &AppState) -> Self {
-        state.pool.clone()
-    }
-}
+use shared::AppState;
 
 async fn health_check() -> ServiceHealth {
     build_health_response("topems-mobile", true)
@@ -136,7 +120,8 @@ async fn create_scan_record(
     State(state): State<AppState>,
     Json(payload): Json<CreateScanRecord>,
 ) -> Json<ApiResponse<ScanRecord>> {
-    match db_create_scan_record(&state.pool, payload).await {
+    let tenant_id = Uuid::new_v4();
+    match db_create_scan_record(&state.pool, tenant_id, payload).await {
         Ok(record) => Json(ApiResponse::success(record, "创建扫码记录成功")),
         Err(e) => {
             tracing::error!("创建扫码记录失败: {}", e);
@@ -165,7 +150,8 @@ async fn create_photo_evidence(
     State(state): State<AppState>,
     Json(payload): Json<CreatePhotoEvidence>,
 ) -> Json<ApiResponse<PhotoEvidence>> {
-    match db_create_photo_evidence(&state.pool, payload).await {
+    let tenant_id = Uuid::new_v4();
+    match db_create_photo_evidence(&state.pool, tenant_id, payload).await {
         Ok(record) => Json(ApiResponse::success(record, "创建照片记录成功")),
         Err(e) => {
             tracing::error!("创建照片记录失败: {}", e);
@@ -194,7 +180,8 @@ async fn create_audio_recording(
     State(state): State<AppState>,
     Json(payload): Json<CreateAudioRecording>,
 ) -> Json<ApiResponse<AudioRecording>> {
-    match db_create_audio_recording(&state.pool, payload).await {
+    let tenant_id = Uuid::new_v4();
+    match db_create_audio_recording(&state.pool, tenant_id, payload).await {
         Ok(record) => Json(ApiResponse::success(record, "创建音频记录成功")),
         Err(e) => {
             tracing::error!("创建音频记录失败: {}", e);
@@ -223,7 +210,8 @@ async fn create_video_recording(
     State(state): State<AppState>,
     Json(payload): Json<CreateVideoRecording>,
 ) -> Json<ApiResponse<VideoRecording>> {
-    match db_create_video_recording(&state.pool, payload).await {
+    let tenant_id = Uuid::new_v4();
+    match db_create_video_recording(&state.pool, tenant_id, payload).await {
         Ok(record) => Json(ApiResponse::success(record, "创建视频记录成功")),
         Err(e) => {
             tracing::error!("创建视频记录失败: {}", e);
@@ -261,8 +249,11 @@ async fn main() -> anyhow::Result<()> {
 
     let _telemetry_guard = init_telemetry("topems-mobile");
 
-    let database_url = env::var("DATABASE_URL")
-        .unwrap_or_else(|_| "postgres://topems:topems_secret@localhost:5432/topems".to_string());
+    let database_url = env::var("DATABASE_URL").unwrap_or_else(|_| {
+        env::var("DATABASE_URL")
+            .expect("DATABASE_URL environment variable is required")
+            .to_string()
+    });
 
     let pool = match PgPoolOptions::new()
         .max_connections(5)
@@ -638,6 +629,10 @@ async fn main() -> anyhow::Result<()> {
         .layer(axum::middleware::from_fn_with_state(
             app_state.auth_state.clone(),
             auth_middleware,
+        ))
+        .layer(axum::middleware::from_fn_with_state(
+            app_state.pool.clone(),
+            rls_middleware,
         ));
 
     let app = Router::new()
@@ -648,7 +643,9 @@ async fn main() -> anyhow::Result<()> {
         .layer(axum::middleware::from_fn(telemetry_middleware))
         .layer(cors);
 
-    let port = env::var("SERVER_PORT").unwrap_or_else(|_| "8070".to_string());
+    let port = env::var("MOBILE_PORT")
+        .or_else(|_| env::var("SERVER_PORT"))
+        .unwrap_or_else(|_| "8070".to_string());
     let addr = format!("0.0.0.0:{}", port);
 
     tracing::info!("🚀 TOPEMS-MOBILE 统一移动工作台启动中...");

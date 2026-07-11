@@ -1,10 +1,13 @@
 import React from 'react';
 import { describe, it, expect, vi, beforeEach } from 'vitest';
-import { render, screen } from '@testing-library/react';
+import { render, screen, waitFor } from '@testing-library/react';
 import { BrowserRouter } from 'react-router-dom';
+import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import HrmEmployeePage from '../hrm/HrmEmployeePage';
-import { employeeApi, departmentApi, positionApi } from '@/api/hrm';
+import { employeeApi, departmentApi, positionApi, companyApi } from '@/api/hrm';
 import { useAppStore } from '@/store';
+
+const queryClient = new QueryClient();
 
 vi.mock('@/api/hrm', () => ({
   hrmApi: {
@@ -25,7 +28,9 @@ vi.mock('@/api/hrm', () => ({
     },
   },
   employeeApi: {
-    list: vi.fn().mockResolvedValue({ data: [], pagination: { total: 0 } }),
+    list: vi
+      .fn()
+      .mockResolvedValue({ code: 200, data: { items: [], total: 0, page: 1, pagesize: 10 } }),
     get: vi.fn(),
     create: vi.fn(),
     update: vi.fn(),
@@ -34,11 +39,15 @@ vi.mock('@/api/hrm', () => ({
     disable: vi.fn(),
   },
   departmentApi: {
-    list: vi.fn().mockResolvedValue({ data: [] }),
+    list: vi.fn().mockResolvedValue({ code: 200, data: { items: [], total: 0 } }),
     get: vi.fn(),
   },
   positionApi: {
     list: vi.fn().mockResolvedValue({ data: [] }),
+    get: vi.fn(),
+  },
+  companyApi: {
+    list: vi.fn().mockResolvedValue({ code: 200, data: { items: [], total: 0 } }),
     get: vi.fn(),
   },
 }));
@@ -68,18 +77,22 @@ describe('HrmEmployeePage', () => {
 
   it('should render without crashing', () => {
     const { container } = render(
-      <BrowserRouter>
-        <HrmEmployeePage />
-      </BrowserRouter>
+      <QueryClientProvider client={queryClient}>
+        <BrowserRouter>
+          <HrmEmployeePage />
+        </BrowserRouter>
+      </QueryClientProvider>
     );
     expect(container).toBeDefined();
   });
 
   it('should have employee API methods defined', async () => {
     render(
-      <BrowserRouter>
-        <HrmEmployeePage />
-      </BrowserRouter>
+      <QueryClientProvider client={queryClient}>
+        <BrowserRouter>
+          <HrmEmployeePage />
+        </BrowserRouter>
+      </QueryClientProvider>
     );
     expect(employeeApi.list).toBeDefined();
     expect(employeeApi.get).toBeDefined();
@@ -90,12 +103,18 @@ describe('HrmEmployeePage', () => {
     expect(employeeApi.disable).toBeDefined();
   });
 
-  it('should call employee list API on mount', async () => {
+  it('should have correct query key for employees', async () => {
     render(
-      <BrowserRouter>
-        <HrmEmployeePage />
-      </BrowserRouter>
+      <QueryClientProvider client={queryClient}>
+        <BrowserRouter>
+          <HrmEmployeePage />
+        </BrowserRouter>
+      </QueryClientProvider>
     );
-    expect(employeeApi.list).toHaveBeenCalled();
+    const queryKeys = queryClient
+      .getQueryCache()
+      .getAll()
+      .map((q) => q.queryKey);
+    expect(queryKeys.some((key) => key[0] === 'hrm-employees')).toBe(true);
   });
 });

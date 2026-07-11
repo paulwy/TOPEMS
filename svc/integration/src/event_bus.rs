@@ -16,6 +16,8 @@ use uuid::Uuid;
 pub struct IntegrationEvent {
     /// 事件 ID
     pub id: Uuid,
+    /// 租户 ID
+    pub tenant_id: Uuid,
     /// 源系统
     pub source_system: String,
     /// 目标系统
@@ -75,6 +77,7 @@ pub struct SubscribeRequest {
 /// 事件发布请求
 #[derive(Debug, Clone, Deserialize)]
 pub struct PublishEventRequest {
+    pub tenant_id: Uuid,
     pub source_system: String,
     pub target_system: String,
     pub event_type: String,
@@ -154,6 +157,7 @@ impl EventBus {
     pub async fn publish(&self, request: PublishEventRequest) -> IntegrationEvent {
         let event = IntegrationEvent {
             id: Uuid::new_v4(),
+            tenant_id: request.tenant_id,
             source_system: request.source_system.clone(),
             target_system: request.target_system.clone(),
             event_type: request.event_type.clone(),
@@ -391,6 +395,7 @@ mod tests {
 
         let event = bus
             .publish(PublishEventRequest {
+                tenant_id: Uuid::new_v4(),
                 source_system: "erp".to_string(),
                 target_system: "mes".to_string(),
                 event_type: "order.confirmed".to_string(),
@@ -451,6 +456,7 @@ mod tests {
 
         let event = bus
             .publish(PublishEventRequest {
+                tenant_id: Uuid::new_v4(),
                 source_system: "erp".to_string(),
                 target_system: "mes".to_string(),
                 event_type: "order.confirmed".to_string(),
@@ -506,6 +512,7 @@ mod tests {
         // 测试触发处理
         let event = IntegrationEvent {
             id: Uuid::new_v4(),
+            tenant_id: Uuid::new_v4(),
             source_system: "erp".to_string(),
             target_system: "mes".to_string(),
             event_type: "order.confirmed".to_string(),

@@ -30,7 +30,7 @@ export const gradients = {
   backgrounds: {
     page: 'linear-gradient(to bottom right, #f8fafc, #f1f5f9)',
     card: 'linear-gradient(to bottom, #ffffff, #fafafa)',
-    dark: 'linear-gradient(to bottom right, #111827, #1f2937)',
+    dark: 'linear-gradient(to bottom right, #080c18, #0c1222)',
     hero: 'linear-gradient(135deg, rgba(59,130,246,0.85) 0%, rgba(139,92,246,0.90) 100%)',
     cta: 'linear-gradient(135deg, #3b82f6 0%, #7c3aed 100%)',
   },
@@ -40,5 +40,16 @@ export const gradients = {
     cta: 'linear-gradient(135deg, #3b82f6 0%, #7c3aed 100%)',
     hero: 'linear-gradient(135deg, rgba(59,130,246,0.85) 0%, rgba(139,92,246,0.90) 100%)',
     heroText: 'linear-gradient(135deg, #ffffff 0%, #e0e7ff 50%, #ffffff 100%)',
+  },
+
+  // 赛博风格渐变
+  cyber: {
+    border: 'linear-gradient(135deg, rgba(59,130,246,0.3), rgba(6,182,212,0.1))',
+    glow: 'radial-gradient(ellipse at top left, rgba(59,130,246,0.08), transparent 70%)',
+    accent: 'linear-gradient(135deg, #3b82f6, #06b6d4)',
+    accentSubtle: 'linear-gradient(135deg, rgba(59,130,246,0.15), rgba(6,182,212,0.08))',
+    text: 'linear-gradient(135deg, #60a5fa, #22d3ee, #a78bfa)',
+    surface: 'linear-gradient(135deg, rgba(59,130,246,0.04), rgba(6,182,212,0.02))',
+    cardHover: 'linear-gradient(135deg, rgba(59,130,246,0.08), rgba(6,182,212,0.04))',
   },
 };

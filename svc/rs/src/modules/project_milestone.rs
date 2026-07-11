@@ -1,5 +1,6 @@
 use axum::{
-    extract::{Path, State},
+    extract::{Extension, Path, State},
+    http::HeaderMap,
     routing::{delete, get, post, put},
     Json, Router,
 };
@@ -13,7 +14,22 @@ use crate::models::project_milestone::{
     CreateMilestoneRequest, ProjectMilestone, UpdateMilestoneRequest,
 };
 use crate::services::project_progress;
+use topems_shared::auth::Claims;
 use topems_shared::response::ApiResponse;
+
+fn get_tenant_id(claims: &Claims, headers: &HeaderMap) -> Uuid {
+    claims
+        .tenant_id
+        .as_ref()
+        .and_then(|t| Uuid::parse_str(t).ok())
+        .or_else(|| {
+            headers
+                .get("x-tenant-id")
+                .and_then(|v| v.to_str().ok())
+                .and_then(|s| Uuid::parse_str(s).ok())
+        })
+        .unwrap_or_else(Uuid::new_v4)
+}
 
 pub fn create_routes() -> Router<super::ApiState> {
     Router::<super::ApiState>::new()
@@ -28,8 +44,11 @@ pub fn create_routes() -> Router<super::ApiState> {
 
 pub async fn create_milestone(
     State(state): State<super::ApiState>,
+    Extension(claims): Extension<Claims>,
+    headers: HeaderMap,
     Json(payload): Json<CreateMilestoneRequest>,
 ) -> Json<ApiResponse<ProjectMilestone>> {
+    let tenant_id = get_tenant_id(&claims, &headers);
     let request_id = Uuid::new_v4();
     let start_time = Utc::now();
 
@@ -53,13 +72,14 @@ pub async fn create_milestone(
     let result = sqlx::query_as::<_, ProjectMilestone>(
         r#"
         INSERT INTO rs.project_milestones (
-            id, project_id, phase_id, name, description, target_date, status
+            id, tenant_id, project_id, phase_id, name, description, target_date, status
         )
-        VALUES ($1, $2, $3, $4, $5, $6, $7)
-        RETURNING id, project_id, phase_id, name, description, target_date, actual_date, status, created_at, updated_at
+        VALUES ($1, $2, $3, $4, $5, $6, $7, $8)
+        RETURNING id, tenant_id, project_id, phase_id, name, description, target_date, actual_date, status, created_at, updated_at, deliverable_type, acceptance_criteria, acceptance_status, accepted_by, accepted_at
         "#,
     )
     .bind(id)
+    .bind(tenant_id)
     .bind(payload.project_id)
     .bind(payload.phase_id)
     .bind(payload.name.trim())
@@ -111,7 +131,10 @@ pub async fn create_milestone(
 pub async fn get_project_milestones(
     State(state): State<super::ApiState>,
     Path(project_id): Path<Uuid>,
+    Extension(claims): Extension<Claims>,
+    headers: HeaderMap,
 ) -> Json<ApiResponse<Vec<ProjectMilestone>>> {
+    let tenant_id = get_tenant_id(&claims, &headers);
     let request_id = Uuid::new_v4();
     let start_time = Utc::now();
     let cache_key = format!("milestones:{}", project_id);
@@ -133,13 +156,14 @@ pub async fn get_project_milestones(
 
     let result = sqlx::query_as::<_, ProjectMilestone>(
         r#"
-        SELECT id, project_id, phase_id, name, description, target_date, actual_date, status, created_at, updated_at
+        SELECT id, tenant_id, project_id, phase_id, name, description, target_date, actual_date, status, created_at, updated_at, deliverable_type, acceptance_criteria, acceptance_status, accepted_by, accepted_at
         FROM rs.project_milestones 
-        WHERE project_id = $1 
+        WHERE project_id = $1 AND tenant_id = $2
         ORDER BY target_date
         "#,
     )
     .bind(project_id)
+    .bind(tenant_id)
     .fetch_all(&state.db)
     .await;
 
@@ -175,8 +199,11 @@ pub async fn get_project_milestones(
 pub async fn update_milestone(
     State(state): State<super::ApiState>,
     Path(id): Path<Uuid>,
+    Extension(claims): Extension<Claims>,
+    headers: HeaderMap,
     Json(payload): Json<UpdateMilestoneRequest>,
 ) -> Json<ApiResponse<ProjectMilestone>> {
+    let tenant_id = get_tenant_id(&claims, &headers);
     let request_id = Uuid::new_v4();
     let start_time = Utc::now();
 
@@ -207,8 +234,8 @@ pub async fn update_milestone(
             actual_date = COALESCE($5, actual_date),
             status = COALESCE($6, status),
             updated_at = NOW()
-        WHERE id = $1
-        RETURNING id, project_id, phase_id, name, description, target_date, actual_date, status, created_at, updated_at
+        WHERE id = $1 AND tenant_id = $7
+        RETURNING id, tenant_id, project_id, phase_id, name, description, target_date, actual_date, status, created_at, updated_at, deliverable_type, acceptance_criteria, acceptance_status, accepted_by, accepted_at
         "#,
     )
     .bind(id)
@@ -217,6 +244,7 @@ pub async fn update_milestone(
     .bind(payload.target_date)
     .bind(payload.actual_date)
     .bind(payload.status.map(|s| s.to_string()))
+    .bind(tenant_id)
     .fetch_one(&state.db)
     .await;
 
@@ -280,7 +308,10 @@ pub async fn update_milestone(
 pub async fn delete_milestone(
     State(state): State<super::ApiState>,
     Path(id): Path<Uuid>,
+    Extension(claims): Extension<Claims>,
+    headers: HeaderMap,
 ) -> Json<ApiResponse<()>> {
+    let tenant_id = get_tenant_id(&claims, &headers);
     let request_id = Uuid::new_v4();
     let start_time = Utc::now();
 
@@ -290,19 +321,22 @@ pub async fn delete_milestone(
         "删除项目里程碑请求开始"
     );
 
-    let project_id_result =
-        sqlx::query_scalar::<_, Uuid>("SELECT project_id FROM rs.project_milestones WHERE id = $1")
-            .bind(id)
-            .fetch_optional(&state.db)
-            .await;
+    let project_id_result = sqlx::query_scalar::<_, Uuid>(
+        "SELECT project_id FROM rs.project_milestones WHERE id = $1 AND tenant_id = $2",
+    )
+    .bind(id)
+    .bind(tenant_id)
+    .fetch_optional(&state.db)
+    .await;
 
     let result = sqlx::query(
         r#"
         DELETE FROM rs.project_milestones 
-        WHERE id = $1
+        WHERE id = $1 AND tenant_id = $2
         "#,
     )
     .bind(id)
+    .bind(tenant_id)
     .execute(&state.db)
     .await;
 

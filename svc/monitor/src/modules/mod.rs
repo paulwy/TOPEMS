@@ -5,6 +5,7 @@ use std::time::Instant;
 use topems_shared::AuthState;
 use topems_shared::SystemMetrics;
 
+pub mod alert_evaluator;
 pub mod alerts;
 pub mod health_check;
 pub mod metrics;
@@ -35,4 +36,5 @@ pub fn create_routes() -> Router<ApiState> {
         .merge(metrics::create_routes())
         .merge(health_check::create_routes())
         .merge(alerts::create_routes())
+        .merge(alert_evaluator::create_routes())
 }

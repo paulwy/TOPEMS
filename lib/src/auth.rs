@@ -88,7 +88,6 @@ impl AuthState {
     }
 
     pub fn from_env() -> Self {
-        // 默认 JWT secret，与 Doc 服务保持一致
         let default_jwt_secret =
             "topems-jwt-secret-key-must-be-at-least-32-characters-long-for-hs256";
         let default_refresh_secret =
@@ -99,8 +98,6 @@ impl AuthState {
         let refresh_secret = std::env::var("JWT_REFRESH_SECRET")
             .or_else(|_| std::env::var("REFRESH_SECRET"))
             .unwrap_or_else(|_| default_refresh_secret.to_string());
-
-        tracing::info!("🔑 AuthState 读取到的 JWT_SECRET: {}", jwt_secret);
 
         if jwt_secret.len() < 32 {
             panic!("JWT_SECRET must be at least 32 characters long for security");
@@ -120,7 +117,6 @@ impl AuthState {
     }
 }
 
-/// 生成 JWT 访问令牌。`expire_minutes` 以分钟为单位。
 pub fn generate_jwt_token(user_id: &str, secret: &str, expire_minutes: i64) -> String {
     let now = chrono::Utc::now();
     let exp = (now + chrono::Duration::minutes(expire_minutes)).timestamp() as usize;
@@ -140,18 +136,20 @@ pub fn generate_jwt_token(user_id: &str, secret: &str, expire_minutes: i64) -> S
     claims.encode(secret).unwrap_or_else(|_| String::new())
 }
 
-/// 验证 JWT 令牌，返回 claims。
 pub fn verify_jwt_token(token: &str, secret: &str) -> Result<Claims, TopemsError> {
+    let mut validation = Validation::new(Algorithm::HS256);
+    validation.set_issuer(&["topems"]);
+    validation.leeway = 60;
+
     let token_data = decode::<Claims>(
         token,
         &DecodingKey::from_secret(secret.as_ref()),
-        &Validation::new(Algorithm::HS256),
+        &validation,
     )
     .map_err(|e| TopemsError::Auth(format!("JWT 验证失败: {}", e)))?;
     Ok(token_data.claims)
 }
 
-/// 生成一个随机的 refresh token。
 pub fn generate_refresh_token() -> String {
     use rand::RngCore;
     let mut bytes = [0u8; 32];
@@ -456,91 +454,75 @@ pub fn get_permission_by_id(permission_id: &str) -> Option<Permission> {
         .find(|p| p.id == permission_id)
 }
 
+fn is_public_path(path: &str) -> bool {
+    let public_paths = [
+        "/",
+        "/health",
+        "/api/v1/auth/login",
+        "/api/v1/auth/refresh",
+        "/api/integration/v1/webhooks",
+    ];
+    public_paths.contains(&path)
+}
+
+fn is_websocket_path(path: &str) -> bool {
+    path.starts_with("/ws/") || path.starts_with("/mes/ws/") || path.starts_with("/gis/ws/")
+}
+
+fn is_plugin_public_path(path: &str, method: &str) -> bool {
+    if path.starts_with("/api/plugins/health") || path.starts_with("/api/plugins/info") {
+        return true;
+    }
+    if path.starts_with("/api/core/plugin/marketplace") {
+        return true;
+    }
+    if path.starts_with("/api/core/plugins/") {
+        if path.ends_with("/install") || path.ends_with("/uninstall") || 
+           path.ends_with("/enable") || path.ends_with("/disable") {
+            return true;
+        }
+        if path == "/api/core/plugins" && method == "GET" {
+            return true;
+        }
+    }
+    if path.starts_with("/api/core/plugin/dev/plugins/") && path.ends_with("/register") {
+        return true;
+    }
+    false
+}
+
 pub async fn auth_middleware(
     State(auth_state): State<AuthState>,
     req: Request<Body>,
     next: Next,
 ) -> Response {
     let path = req.uri().path();
+    let method = req.method().as_str();
 
-    let public_paths = ["/", "/health", "/api/v1/auth/login", "/api/v1/auth/refresh"];
-    if public_paths.contains(&path) {
+    if is_public_path(path) {
         return next.run(req).await;
     }
 
-    if path.starts_with("/ws/") || path.starts_with("/mes/ws/") || path.starts_with("/gis/ws/") {
-        return next.run(req).await;
-    }
-
-    let is_websocket_upgrade = req
-        .headers()
-        .get(header::UPGRADE)
-        .map(|h| h.to_str().unwrap_or(""))
-        .map(|h| h.eq_ignore_ascii_case("websocket"))
-        .unwrap_or(false);
-    if is_websocket_upgrade {
-        return next.run(req).await;
-    }
-
-    if path.starts_with("/api/plugins/health") || path.starts_with("/api/plugins/info") {
-        return next.run(req).await;
-    }
-
-    if path.starts_with("/api/core/plugin/marketplace") {
-        return next.run(req).await;
-    }
-
-    if path.starts_with("/api/core/plugins/")
-        && (path.ends_with("/install")
-            || path.ends_with("/uninstall")
-            || path.ends_with("/enable")
-            || path.ends_with("/disable"))
-    {
-        return next.run(req).await;
-    }
-
-    if path == "/api/core/plugins"
-        || (path.starts_with("/api/core/plugins/") && path != "/api/core/plugins/my")
-    {
-        let method = req.method().as_str();
-        if method == "GET" {
+    if is_websocket_path(path) {
+        let is_websocket_upgrade = req
+            .headers()
+            .get(header::UPGRADE)
+            .map(|h| h.to_str().unwrap_or(""))
+            .map(|h| h.eq_ignore_ascii_case("websocket"))
+            .unwrap_or(false);
+        if is_websocket_upgrade {
             return next.run(req).await;
         }
     }
 
-    if path.starts_with("/api/core/plugin/dev/plugins/") && path.ends_with("/register") {
+    if is_plugin_public_path(path, method) {
         return next.run(req).await;
     }
 
     let (mut parts, body) = req.into_parts();
 
-    if let Some(user_id) = parts.headers.get("X-User-Id") {
-        if let Ok(user_id_str) = user_id.to_str() {
-            let claims = Claims {
-                sub: user_id_str.to_string(),
-                username: user_id_str.to_string(),
-                role: "user".to_string(),
-                roles: vec!["user".to_string()],
-                permissions: vec![],
-                is_superuser: false,
-                exp: 0,
-                iat: 0,
-                email: None,
-                department: None,
-                tenant_id: parts
-                    .headers
-                    .get("X-Tenant-Id")
-                    .and_then(|h| h.to_str().ok())
-                    .map(|s| s.to_string()),
-            };
-            parts.extensions.insert(claims);
-            let req = Request::from_parts(parts, body);
-            return next.run(req).await;
-        }
-    }
-
     if std::env::var("DEVELOPMENT_MODE").unwrap_or_default() == "true" {
-        tracing::info!("开发模式：跳过认证，路径: {}", parts.uri.path());
+        tracing::warn!("开发模式已启用 - 仅用于本地开发环境");
         let claims = Claims {
             sub: "dev_user".to_string(),
             username: "dev_user".to_string(),
@@ -566,45 +548,11 @@ pub async fn auth_middleware(
 
     let claims = if let Some(header) = auth_header {
         let token = header.strip_prefix("Bearer ").unwrap_or(header);
-        match decode::<Claims>(
-            token,
-            &DecodingKey::from_secret(auth_state.jwt_secret.as_ref()),
-            &Validation::new(Algorithm::HS256),
-        ) {
-            Ok(token_data) => token_data.claims,
+        match verify_jwt_token(token, &auth_state.jwt_secret) {
+            Ok(claims) => claims,
             Err(e) => {
                 tracing::error!("Token verification failed: {}", e);
                 return api_error::<()>(401, &format!("认证失败：{}", e)).into_response();
-            }
-        }
-    } else if let Some(query) = parts.uri.query() {
-        let token_value: Option<String> = query
-            .split('&')
-            .filter_map(|pair| {
-                let (key, value) = pair.split_once('=')?;
-
-                if key == "token" {
-                    Some(value.to_string())
-                } else {
-                    None
-                }
-            })
-            .next();
-
-        match token_value {
-            Some(token) => match decode::<Claims>(
-                &token,
-                &DecodingKey::from_secret(auth_state.jwt_secret.as_ref()),
-                &Validation::new(Algorithm::HS256),
-            ) {
-                Ok(token_data) => token_data.claims,
-                Err(e) => {
-                    tracing::error!("Token verification failed: {}", e);
-                    return api_error::<()>(401, &format!("认证失败：{}", e)).into_response();
-                }
-            },
-            None => {
-                return api_error::<()>(401, "未授权：缺少有效的认证令牌").into_response();
             }
         }
     } else {
@@ -612,7 +560,6 @@ pub async fn auth_middleware(
     };
 
     parts.extensions.insert(claims);
-
     let req = Request::from_parts(parts, body);
     next.run(req).await
 }
@@ -678,5 +625,80 @@ pub fn require_all_permissions<T>(
             403,
             &format!("权限不足：需要所有以下权限: {}", permissions.join(", ")),
         )))
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn test_claims_has_permission() {
+        let claims = Claims {
+            sub: "1".to_string(),
+            username: "test".to_string(),
+            role: "user".to_string(),
+            roles: vec!["user".to_string()],
+            permissions: vec!["iam:users_read".to_string()],
+            is_superuser: false,
+            exp: 0,
+            iat: 0,
+            email: None,
+            department: None,
+            tenant_id: None,
+        };
+        assert!(claims.has_permission("iam:users_read"));
+        assert!(!claims.has_permission("iam:users_create"));
+    }
+
+    #[test]
+    fn test_superuser_has_all_permissions() {
+        let claims = Claims {
+            sub: "1".to_string(),
+            username: "admin".to_string(),
+            role: "superadmin".to_string(),
+            roles: vec!["superadmin".to_string()],
+            permissions: vec![],
+            is_superuser: true,
+            exp: 0,
+            iat: 0,
+            email: None,
+            department: None,
+            tenant_id: None,
+        };
+        assert!(claims.has_permission("any_permission"));
+        assert!(claims.has_role("any_role"));
+    }
+
+    #[test]
+    fn test_is_public_path() {
+        assert!(is_public_path("/"));
+        assert!(is_public_path("/health"));
+        assert!(is_public_path("/api/v1/auth/login"));
+        assert!(!is_public_path("/api/v1/users"));
+    }
+
+    #[test]
+    fn test_is_websocket_path() {
+        assert!(is_websocket_path("/ws/mes"));
+        assert!(is_websocket_path("/mes/ws/orders"));
+        assert!(is_websocket_path("/gis/ws/location"));
+        assert!(!is_websocket_path("/api/v1/orders"));
+    }
+
+    #[test]
+    fn test_auth_state_validates_secret_length() {
+        assert!(std::panic::catch_unwind(|| {
+            AuthState {
+                jwt_secret: "short".to_string(),
+                refresh_secret: "this-is-a-very-long-secret-key-at-least-32-chars".to_string(),
+                token_expiry_hours: 24,
+            };
+        }).is_ok());
+
+        std::env::set_var("JWT_SECRET", "this-is-a-very-long-secret-key-at-least-32-chars");
+        std::env::set_var("JWT_REFRESH_SECRET", "this-is-also-a-very-long-secret-key-for-refresh");
+        let auth_state = AuthState::from_env();
+        assert_eq!(auth_state.token_expiry_hours, 24);
     }
 }

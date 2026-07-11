@@ -6,7 +6,10 @@ mod utils;
 pub mod modules;
 
 use anyhow::Result;
-use axum::{routing::get, Json, Router};
+use axum::{
+    routing::{delete, get, post, put},
+    Json, Router,
+};
 use axum_prometheus::PrometheusMetricLayer;
 use prometheus::{
     register_int_counter, register_int_gauge, Encoder, IntCounter, IntGauge, TextEncoder,
@@ -66,7 +69,9 @@ async fn main() -> Result<()> {
 
     let db_config = DatabaseConfig {
         url: env::var("DATABASE_URL").unwrap_or_else(|_| {
-            "postgres://topems:topems_secret@localhost:5432/topems".to_string()
+            env::var("DATABASE_URL")
+                .expect("DATABASE_URL environment variable is required")
+                .to_string()
         }),
         max_connections: 20,
         min_connections: Some(5),
@@ -152,6 +157,286 @@ async fn main() -> Result<()> {
         .with_state(api_state.clone());
 
     let protected_routes = modules::create_routes()
+        // Frontend aligned routes (ERP module)
+        // Production Order
+        .route(
+            "/erp/production-orders",
+            get(modules::production_order::list_production_orders)
+                .post(modules::production_order::create_production_order),
+        )
+        .route(
+            "/erp/production-orders/:id",
+            get(modules::production_order::get_production_order)
+                .put(modules::production_order::update_production_order)
+                .delete(modules::production_order::delete_production_order),
+        )
+        .route(
+            "/erp/production-orders/:id/progress",
+            put(modules::production_order::update_production_progress),
+        )
+        .route(
+            "/erp/production-orders/:id/status",
+            post(modules::production_order::update_production_status),
+        )
+        // Sales Order
+        .route(
+            "/erp/sales-orders",
+            get(modules::sales_order::list_sales_orders)
+                .post(modules::sales_order::create_sales_order),
+        )
+        .route(
+            "/erp/sales-orders/:id",
+            get(modules::sales_order::get_sales_order)
+                .put(modules::sales_order::update_sales_order)
+                .delete(modules::sales_order::delete_sales_order),
+        )
+        // Material
+        .route(
+            "/erp/materials",
+            get(modules::material::list_materials).post(modules::material::create_material),
+        )
+        .route(
+            "/erp/materials/:id",
+            get(modules::material::get_material)
+                .put(modules::material::update_material)
+                .delete(modules::material::delete_material),
+        )
+        // Inventory
+        .route(
+            "/erp/inventory",
+            get(modules::inventory::list_inventory).post(modules::inventory::create_inventory),
+        )
+        .route(
+            "/erp/inventory/:id",
+            get(modules::inventory::get_inventory)
+                .put(modules::inventory::update_inventory)
+                .delete(modules::inventory::delete_inventory),
+        )
+        .route(
+            "/erp/inventory/low-stock",
+            get(modules::inventory::get_low_stock),
+        )
+        // Supplier
+        .route(
+            "/erp/suppliers",
+            get(modules::supplier::list_suppliers).post(modules::supplier::create_supplier),
+        )
+        .route(
+            "/erp/suppliers/:id",
+            get(modules::supplier::get_supplier)
+                .put(modules::supplier::update_supplier)
+                .delete(modules::supplier::delete_supplier),
+        )
+        // Customer
+        .route(
+            "/erp/customers",
+            get(modules::customer::list_customers).post(modules::customer::create_customer),
+        )
+        .route(
+            "/erp/customers/:id",
+            get(modules::customer::get_customer)
+                .put(modules::customer::update_customer)
+                .delete(modules::customer::delete_customer),
+        )
+        // Finance
+        .route(
+            "/erp/expenses",
+            get(modules::finance::list_expenses).post(modules::finance::create_expense),
+        )
+        .route(
+            "/erp/expenses/:id",
+            get(modules::finance::get_expense)
+                .put(modules::finance::update_expense)
+                .delete(modules::finance::delete_expense),
+        )
+        .route(
+            "/erp/budgets",
+            get(modules::finance::list_budgets).post(modules::finance::create_budget),
+        )
+        .route(
+            "/erp/budgets/:id",
+            get(modules::finance::get_budget)
+                .put(modules::finance::update_budget)
+                .delete(modules::finance::delete_budget),
+        )
+        .route(
+            "/erp/receivables",
+            get(modules::finance::list_receivables).post(modules::finance::create_receivable),
+        )
+        .route(
+            "/erp/receivables/:id",
+            get(modules::finance::get_receivable)
+                .put(modules::finance::update_receivable)
+                .delete(modules::finance::delete_receivable),
+        )
+        .route(
+            "/erp/payables",
+            get(modules::finance::list_payables).post(modules::finance::create_payable),
+        )
+        .route(
+            "/erp/payables/:id",
+            get(modules::finance::get_payable)
+                .put(modules::finance::update_payable)
+                .delete(modules::finance::delete_payable),
+        )
+        // Voucher
+        .route(
+            "/erp/vouchers",
+            get(modules::voucher::list_vouchers).post(modules::voucher::create_voucher),
+        )
+        .route(
+            "/erp/vouchers/:id",
+            get(modules::voucher::get_voucher)
+                .put(modules::voucher::update_voucher)
+                .delete(modules::voucher::delete_voucher),
+        )
+        .route(
+            "/erp/vouchers/:id/approve",
+            post(modules::voucher::approve_voucher),
+        )
+        .route(
+            "/erp/vouchers/:id/post",
+            post(modules::voucher::post_voucher),
+        )
+        .route(
+            "/erp/voucher-templates",
+            get(modules::voucher::list_voucher_templates)
+                .post(modules::voucher::create_voucher_template),
+        )
+        .route(
+            "/erp/voucher-templates/:id",
+            get(modules::voucher::get_voucher_template)
+                .put(modules::voucher::update_voucher_template)
+                .delete(modules::voucher::delete_voucher_template),
+        )
+        .route(
+            "/erp/voucher-templates/:id/preview",
+            get(modules::voucher::preview_generated_vouchers),
+        )
+        .route(
+            "/erp/accounting-subjects",
+            get(modules::voucher::list_subjects).post(modules::voucher::create_subject),
+        )
+        .route(
+            "/erp/accounting-subjects/:id",
+            get(modules::voucher::get_subject)
+                .put(modules::voucher::update_subject)
+                .delete(modules::voucher::delete_subject),
+        )
+        // Asset
+        .route(
+            "/erp/assets",
+            get(modules::asset::list_assets).post(modules::asset::create_asset),
+        )
+        .route(
+            "/erp/assets/:id",
+            get(modules::asset::get_asset)
+                .put(modules::asset::update_asset)
+                .delete(modules::asset::delete_asset),
+        )
+        // Fixed Asset
+        .route(
+            "/erp/fixed-assets",
+            get(modules::fixed_asset::list_fixed_assets)
+                .post(modules::fixed_asset::create_fixed_asset),
+        )
+        .route(
+            "/erp/fixed-assets/:id",
+            get(modules::fixed_asset::get_fixed_asset)
+                .put(modules::fixed_asset::update_fixed_asset)
+                .delete(modules::fixed_asset::delete_fixed_asset),
+        )
+        // Bank
+        .route(
+            "/erp/bank-accounts",
+            get(modules::bank::list_bank_accounts).post(modules::bank::create_bank_account),
+        )
+        .route(
+            "/erp/bank-accounts/:id",
+            get(modules::bank::get_bank_account)
+                .put(modules::bank::update_bank_account)
+                .delete(modules::bank::delete_bank_account),
+        )
+        // Office Supplies
+        .route(
+            "/erp/office-supplies",
+            get(modules::office_supplies::list_supplies)
+                .post(modules::office_supplies::create_supply),
+        )
+        .route(
+            "/erp/office-supplies/:id",
+            get(modules::office_supplies::get_supply)
+                .put(modules::office_supplies::update_supply)
+                .delete(modules::office_supplies::delete_supply),
+        )
+        // Meeting Room
+        .route(
+            "/erp/meeting-rooms",
+            get(modules::meeting_room::list_rooms).post(modules::meeting_room::create_room),
+        )
+        .route(
+            "/erp/meeting-rooms/:id",
+            get(modules::meeting_room::get_room)
+                .put(modules::meeting_room::update_room)
+                .delete(modules::meeting_room::delete_room),
+        )
+        .route(
+            "/erp/meeting-bookings",
+            get(modules::meeting_room::list_bookings).post(modules::meeting_room::create_booking),
+        )
+        .route(
+            "/erp/meeting-bookings/:id",
+            get(modules::meeting_room::get_booking)
+                .put(modules::meeting_room::update_booking)
+                .delete(modules::meeting_room::delete_booking),
+        )
+        // Vehicles
+        .route(
+            "/erp/vehicles",
+            get(modules::vehicles::list_vehicles).post(modules::vehicles::create_vehicle),
+        )
+        .route(
+            "/erp/vehicles/:id",
+            get(modules::vehicles::get_vehicle)
+                .put(modules::vehicles::update_vehicle)
+                .delete(modules::vehicles::delete_vehicle),
+        )
+        .route(
+            "/erp/vehicle-requests",
+            get(modules::vehicles::list_vehicle_requests)
+                .post(modules::vehicles::create_vehicle_request),
+        )
+        .route(
+            "/erp/vehicle-requests/:id",
+            get(modules::vehicles::get_vehicle_request)
+                .put(modules::vehicles::update_vehicle_request)
+                .delete(modules::vehicles::delete_vehicle_request),
+        )
+        // Announcement
+        .route(
+            "/erp/announcements",
+            get(modules::announcement::list_announcements)
+                .post(modules::announcement::create_announcement),
+        )
+        .route(
+            "/erp/announcements/:id",
+            get(modules::announcement::get_announcement)
+                .put(modules::announcement::update_announcement)
+                .delete(modules::announcement::delete_announcement),
+        )
+        // Opening Balance
+        .route(
+            "/erp/opening-balances",
+            get(modules::opening_balance::list_opening_balances)
+                .post(modules::opening_balance::create_opening_balance),
+        )
+        .route(
+            "/erp/opening-balances/:id",
+            get(modules::opening_balance::get_opening_balance)
+                .put(modules::opening_balance::update_opening_balance)
+                .delete(modules::opening_balance::delete_opening_balance),
+        )
+        // Admin middleware
         .layer(axum::middleware::from_fn_with_state(
             api_state.auth_state.clone(),
             auth_middleware,
@@ -174,7 +459,8 @@ async fn main() -> Result<()> {
         .layer(prometheus_layer)
         .layer(cors);
 
-    let port = env::var("SERVER_PORT")
+    let port = env::var("ERP_PORT")
+        .or_else(|_| env::var("SERVER_PORT"))
         .or_else(|_| env::var("PORT"))
         .unwrap_or_else(|_| "8010".to_string());
     let addr = format!("0.0.0.0:{}", port);

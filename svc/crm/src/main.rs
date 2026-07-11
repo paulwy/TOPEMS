@@ -28,6 +28,7 @@ use topems_shared::{
     ServiceHealth, SystemMetrics,
 };
 
+mod middleware;
 mod models;
 mod shared;
 
@@ -45,7 +46,9 @@ async fn main() -> Result<()> {
     env::set_var("SEARCH_PATH", "crm, shared, public");
 
     let db_config = DatabaseConfig {
-        url: "postgres://topems:topems_secret@localhost:5432/topems".to_string(),
+        url: env::var("DATABASE_URL")
+            .expect("DATABASE_URL environment variable is required")
+            .to_string(),
         max_connections: 10,
         min_connections: Some(2),
         connect_timeout: Some(30),
@@ -98,6 +101,10 @@ async fn main() -> Result<()> {
         ))
         .layer(axum::middleware::from_fn_with_state(
             api_state.db.clone(),
+            middleware::tenant::tenant_middleware,
+        ))
+        .layer(axum::middleware::from_fn_with_state(
+            api_state.db.clone(),
             rls_middleware,
         ))
         .with_state(api_state.clone());
@@ -110,7 +117,9 @@ async fn main() -> Result<()> {
         .layer(prometheus_layer)
         .layer(cors);
 
-    let port = env::var("SERVER_PORT").unwrap_or_else(|_| "8029".to_string());
+    let port = env::var("CRM_PORT")
+        .or_else(|_| env::var("SERVER_PORT"))
+        .unwrap_or_else(|_| "8029".to_string());
     let addr = format!("0.0.0.0:{}", port);
 
     tracing::info!("🚀 TOPEMS-CRM 客户关系管理系统启动中...");

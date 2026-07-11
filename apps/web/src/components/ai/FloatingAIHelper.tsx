@@ -492,7 +492,7 @@ export const FloatingAIHelper: React.FC = () => {
                       icon={<FileText style={{ width: 14, height: 14 }} />}
                       label='数据补全'
                       size='small'
-                      onClick={() => navigate('/ai/assistant')}
+                      onClick={() => navigate('/ai/chat')}
                     />
                   </Box>
                 </Box>

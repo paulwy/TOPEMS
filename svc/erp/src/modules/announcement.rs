@@ -45,7 +45,7 @@ pub fn create_routes() -> Router<ApiState> {
         )
 }
 
-async fn list_announcements(
+pub async fn list_announcements(
     State(state): State<ApiState>,
     Query(params): Query<AnnouncementQueryParams>,
 ) -> Json<ApiResponse<PaginatedResponse<Announcement>>> {
@@ -106,7 +106,7 @@ async fn list_announcements(
     }
 }
 
-async fn create_announcement(
+pub async fn create_announcement(
     State(state): State<ApiState>,
     headers: HeaderMap,
     Json(req): Json<CreateAnnouncementRequest>,
@@ -184,7 +184,7 @@ async fn create_announcement(
     response
 }
 
-async fn get_announcement(
+pub async fn get_announcement(
     State(state): State<ApiState>,
     Path(id): Path<Uuid>,
 ) -> Json<ApiResponse<Announcement>> {
@@ -208,7 +208,7 @@ async fn get_announcement(
     }
 }
 
-async fn update_announcement(
+pub async fn update_announcement(
     State(state): State<ApiState>,
     Path(id): Path<Uuid>,
     headers: HeaderMap,
@@ -299,7 +299,7 @@ async fn update_announcement(
     response
 }
 
-async fn delete_announcement(
+pub async fn delete_announcement(
     State(state): State<ApiState>,
     Path(id): Path<Uuid>,
     headers: HeaderMap,
@@ -357,7 +357,7 @@ async fn delete_announcement(
     response
 }
 
-async fn publish_announcement(
+pub async fn publish_announcement(
     State(state): State<ApiState>,
     Path(id): Path<Uuid>,
     headers: HeaderMap,
@@ -426,7 +426,7 @@ async fn publish_announcement(
     response
 }
 
-async fn unpublish_announcement(
+pub async fn unpublish_announcement(
     State(state): State<ApiState>,
     Path(id): Path<Uuid>,
     headers: HeaderMap,

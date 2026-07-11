@@ -512,7 +512,7 @@ const LimsProcessPage: React.FC = () => {
           <Button
             onClick={() => {
               setShowTaskModal(false);
-              navigate('/lims/tasks');
+              navigate('/lims/task');
             }}
             variant='contained'
             color='secondary'

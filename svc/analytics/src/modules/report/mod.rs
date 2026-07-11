@@ -13,7 +13,7 @@ use axum::Router;
 use sqlx::PgPool;
 
 /// Create report API routes
-pub fn create_routes() -> Router<crate::AppState> {
+pub fn create_routes() -> Router<crate::shared::AppState> {
     Router::new()
         .merge(report::create_routes())
         .merge(template::create_routes())

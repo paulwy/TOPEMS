@@ -1,5 +1,6 @@
 use axum::{
-    extract::{Path, State},
+    extract::{Extension, Path, State},
+    http::HeaderMap,
     routing::{delete, get, post, put},
     Json, Router,
 };
@@ -10,7 +11,22 @@ use uuid::Uuid;
 use crate::models::project_member::{
     CreateMemberRequest, MemberStatus, ProjectMember, UpdateMemberRequest,
 };
+use topems_shared::auth::Claims;
 use topems_shared::response::ApiResponse;
+
+fn get_tenant_id(claims: &Claims, headers: &HeaderMap) -> Uuid {
+    claims
+        .tenant_id
+        .as_ref()
+        .and_then(|t| Uuid::parse_str(t).ok())
+        .or_else(|| {
+            headers
+                .get("x-tenant-id")
+                .and_then(|v| v.to_str().ok())
+                .and_then(|s| Uuid::parse_str(s).ok())
+        })
+        .unwrap_or_else(Uuid::new_v4)
+}
 
 pub fn create_routes() -> Router<super::ApiState> {
     Router::<super::ApiState>::new()
@@ -25,8 +41,11 @@ pub fn create_routes() -> Router<super::ApiState> {
 
 pub async fn create_member(
     State(state): State<super::ApiState>,
+    Extension(claims): Extension<Claims>,
+    headers: HeaderMap,
     Json(payload): Json<CreateMemberRequest>,
 ) -> Json<ApiResponse<ProjectMember>> {
+    let tenant_id = get_tenant_id(&claims, &headers);
     let request_id = Uuid::new_v4();
     let start_time = Utc::now();
 
@@ -53,13 +72,14 @@ pub async fn create_member(
     let result = sqlx::query_as::<_, ProjectMember>(
         r#"
         INSERT INTO rs.project_members (
-            id, project_id, employee_id, role, responsibility, allocation, join_date, status
+            id, tenant_id, project_id, employee_id, role, responsibility, allocation, join_date, status
         )
-        VALUES ($1, $2, $3, $4, $5, $6, $7, $8)
-        RETURNING id, project_id, employee_id, role, responsibility, allocation, join_date, leave_date, status, hourly_rate, cost_rate, budgeted_hours, actual_hours, created_at, updated_at
+        VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9)
+        RETURNING id, tenant_id, project_id, employee_id, role, responsibility, allocation, join_date, leave_date, status, hourly_rate, cost_rate, budgeted_hours, actual_hours, created_at, updated_at
         "#,
     )
     .bind(id)
+    .bind(tenant_id)
     .bind(payload.project_id)
     .bind(payload.employee_id)
     .bind(payload.role.to_string())
@@ -112,7 +132,10 @@ pub async fn create_member(
 pub async fn get_project_members(
     State(state): State<super::ApiState>,
     Path(project_id): Path<Uuid>,
+    Extension(claims): Extension<Claims>,
+    headers: HeaderMap,
 ) -> Json<ApiResponse<Vec<ProjectMember>>> {
+    let tenant_id = get_tenant_id(&claims, &headers);
     let request_id = Uuid::new_v4();
     let start_time = Utc::now();
 
@@ -123,10 +146,11 @@ pub async fn get_project_members(
     );
 
     let result = sqlx::query_as::<_, ProjectMember>(
-        r#"SELECT id, project_id, employee_id, role, responsibility, allocation, join_date, leave_date, status, hourly_rate, cost_rate, budgeted_hours, actual_hours, created_at, updated_at
-           FROM rs.project_members WHERE project_id = $1 ORDER BY join_date"#,
+        r#"SELECT id, tenant_id, project_id, employee_id, role, responsibility, allocation, join_date, leave_date, status, hourly_rate, cost_rate, budgeted_hours, actual_hours, created_at, updated_at
+           FROM rs.project_members WHERE project_id = $1 AND tenant_id = $2 ORDER BY join_date"#,
     )
     .bind(project_id)
+    .bind(tenant_id)
     .fetch_all(&state.db)
     .await;
 
@@ -159,8 +183,11 @@ pub async fn get_project_members(
 pub async fn update_member(
     State(state): State<super::ApiState>,
     Path(id): Path<Uuid>,
+    Extension(claims): Extension<Claims>,
+    headers: HeaderMap,
     Json(payload): Json<UpdateMemberRequest>,
 ) -> Json<ApiResponse<ProjectMember>> {
+    let tenant_id = get_tenant_id(&claims, &headers);
     let request_id = Uuid::new_v4();
     let start_time = Utc::now();
 
@@ -191,8 +218,8 @@ pub async fn update_member(
             leave_date = COALESCE($5, leave_date),
             status = COALESCE($6, status),
             updated_at = NOW()
-        WHERE id = $1
-        RETURNING id, project_id, employee_id, role, responsibility, allocation, join_date, leave_date, status, hourly_rate, cost_rate, budgeted_hours, actual_hours, created_at, updated_at
+        WHERE id = $1 AND tenant_id = $7
+        RETURNING id, tenant_id, project_id, employee_id, role, responsibility, allocation, join_date, leave_date, status, hourly_rate, cost_rate, budgeted_hours, actual_hours, created_at, updated_at
         "#,
     )
     .bind(id)
@@ -201,6 +228,7 @@ pub async fn update_member(
     .bind(payload.allocation)
     .bind(payload.leave_date)
     .bind(payload.status.map(|s| s.to_string()))
+    .bind(tenant_id)
     .fetch_one(&state.db)
     .await;
 
@@ -251,7 +279,10 @@ pub async fn update_member(
 pub async fn delete_member(
     State(state): State<super::ApiState>,
     Path(id): Path<Uuid>,
+    Extension(claims): Extension<Claims>,
+    headers: HeaderMap,
 ) -> Json<ApiResponse<()>> {
+    let tenant_id = get_tenant_id(&claims, &headers);
     let request_id = Uuid::new_v4();
     let start_time = Utc::now();
 
@@ -261,8 +292,9 @@ pub async fn delete_member(
         "删除项目成员请求开始"
     );
 
-    let result = sqlx::query(r#"DELETE FROM rs.project_members WHERE id = $1"#)
+    let result = sqlx::query(r#"DELETE FROM rs.project_members WHERE id = $1 AND tenant_id = $2"#)
         .bind(id)
+        .bind(tenant_id)
         .execute(&state.db)
         .await;
 

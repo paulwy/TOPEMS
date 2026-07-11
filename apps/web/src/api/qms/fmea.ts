@@ -27,7 +27,7 @@ export const fmeaApi = {
     return { ...response, data: adaptedData };
   },
 
-  getFmeaAnalysis: async (id: string): Promise<ApiResponse<FmeaAnalysis>> => {
+  getFmeaAnalysis: async (id: string): Promise<ApiResponse<FmeaAnalysis | undefined>> => {
     const response = await apiClient.qms.get<FmeaAnalysisBackend>(`/fmea/${id}`);
     return {
       ...response,
@@ -37,7 +37,7 @@ export const fmeaApi = {
 
   createFmeaAnalysis: async (
     data: CreateFmeaAnalysisRequest
-  ): Promise<ApiResponse<FmeaAnalysis>> => {
+  ): Promise<ApiResponse<FmeaAnalysis | undefined>> => {
     const backendData = adaptFmeaAnalysisToBackend(data);
     const response = await apiClient.qms.post<FmeaAnalysisBackend>('/fmea', backendData);
     return {
@@ -49,7 +49,7 @@ export const fmeaApi = {
   updateFmeaAnalysis: async (
     id: string,
     data: Partial<CreateFmeaAnalysisRequest>
-  ): Promise<ApiResponse<FmeaAnalysis>> => {
+  ): Promise<ApiResponse<FmeaAnalysis | undefined>> => {
     const backendData: UpdateFmeaAnalysisRequestBackend = {
       fmea_name: data.fmeaName,
       fmea_type: data.fmeaType,
@@ -75,7 +75,7 @@ export const fmeaApi = {
     return apiClient.qms.delete<boolean>(`/fmea/${id}`);
   },
 
-  getFmeaStatistics: async (fmeaId: string): Promise<ApiResponse<FmeaStatistics>> => {
+  getFmeaStatistics: async (fmeaId: string): Promise<ApiResponse<FmeaStatistics | undefined>> => {
     const response = await apiClient.qms.get<FmeaStatisticsBackend>(`/fmea/${fmeaId}/statistics`);
     return {
       ...response,
@@ -91,7 +91,7 @@ export const fmeaApi = {
     return { ...response, data: adaptedData };
   },
 
-  getFmeaItem: async (id: string): Promise<ApiResponse<FmeaItem>> => {
+  getFmeaItem: async (id: string): Promise<ApiResponse<FmeaItem | undefined>> => {
     const response = await apiClient.qms.get<FmeaItemBackend>(`/fmea-items/${id}`);
     return {
       ...response,
@@ -112,7 +112,7 @@ export const fmeaApi = {
       | 'occurrenceRevised'
       | 'detectionRevised'
     >
-  ): Promise<ApiResponse<FmeaItem>> => {
+  ): Promise<ApiResponse<FmeaItem | undefined>> => {
     const backendData = adaptFmeaItemToBackend(data);
     const response = await apiClient.qms.post<FmeaItemBackend>('/fmea-items', backendData);
     return {
@@ -126,7 +126,7 @@ export const fmeaApi = {
     data: Partial<
       Omit<FmeaItem, 'id' | 'fmeaId' | 'createdAt' | 'updatedAt' | 'rpn' | 'rpnRevised'>
     >
-  ): Promise<ApiResponse<FmeaItem>> => {
+  ): Promise<ApiResponse<FmeaItem | undefined>> => {
     const backendData: UpdateFmeaItemRequestBackend = {
       function_description: data.functionDescription,
       failure_mode: data.failureMode,

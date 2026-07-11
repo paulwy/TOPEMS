@@ -46,7 +46,7 @@ pub fn create_routes() -> Router<ApiState> {
         )
 }
 
-async fn list_rooms(
+pub async fn list_rooms(
     State(state): State<ApiState>,
     Query(params): Query<RoomQueryParams>,
 ) -> Json<ApiResponse<PaginatedResponse<MeetingRoom>>> {
@@ -102,7 +102,7 @@ async fn list_rooms(
     }
 }
 
-async fn create_room(
+pub async fn create_room(
     State(state): State<ApiState>,
     headers: HeaderMap,
     Json(req): Json<CreateMeetingRoomRequest>,
@@ -175,7 +175,7 @@ async fn create_room(
     response
 }
 
-async fn get_room(
+pub async fn get_room(
     State(state): State<ApiState>,
     Path(id): Path<Uuid>,
 ) -> Json<ApiResponse<MeetingRoom>> {
@@ -199,7 +199,7 @@ async fn get_room(
     }
 }
 
-async fn update_room(
+pub async fn update_room(
     State(state): State<ApiState>,
     Path(id): Path<Uuid>,
     headers: HeaderMap,
@@ -288,7 +288,7 @@ async fn update_room(
     response
 }
 
-async fn delete_room(
+pub async fn delete_room(
     State(state): State<ApiState>,
     Path(id): Path<Uuid>,
     headers: HeaderMap,
@@ -346,7 +346,7 @@ async fn delete_room(
     response
 }
 
-async fn list_bookings(
+pub async fn list_bookings(
     State(state): State<ApiState>,
     Query(params): Query<RoomQueryParams>,
 ) -> Json<ApiResponse<PaginatedResponse<MeetingBooking>>> {
@@ -402,7 +402,7 @@ async fn list_bookings(
     }
 }
 
-async fn create_booking(
+pub async fn create_booking(
     State(state): State<ApiState>,
     headers: HeaderMap,
     Json(req): Json<CreateMeetingBookingRequest>,
@@ -509,7 +509,7 @@ async fn create_booking(
     response
 }
 
-async fn get_booking(
+pub async fn get_booking(
     State(state): State<ApiState>,
     Path(id): Path<Uuid>,
 ) -> Json<ApiResponse<MeetingBooking>> {
@@ -533,7 +533,7 @@ async fn get_booking(
     }
 }
 
-async fn update_booking(
+pub async fn update_booking(
     State(state): State<ApiState>,
     Path(id): Path<Uuid>,
     headers: HeaderMap,
@@ -622,7 +622,7 @@ async fn update_booking(
     response
 }
 
-async fn delete_booking(
+pub async fn delete_booking(
     State(state): State<ApiState>,
     Path(id): Path<Uuid>,
     headers: HeaderMap,
@@ -680,7 +680,7 @@ async fn delete_booking(
     response
 }
 
-async fn get_room_bookings(
+pub async fn get_room_bookings(
     State(state): State<ApiState>,
     Path(id): Path<Uuid>,
 ) -> Json<ApiResponse<Vec<MeetingBooking>>> {

@@ -39,25 +39,25 @@ where
             get(list_transfers).post(create_transfer),
         )
         .route(
-            "/api/v1/transfers/{id}",
+            "/api/wms/transfers/{id}",
             get(get_transfer)
                 .put(update_transfer)
                 .delete(delete_transfer),
         )
         .route(
-            "/api/v1/transfers/{id}/items",
+            "/api/wms/transfers/{id}/items",
             get(list_transfer_items).post(create_transfer_item),
         )
         .route(
-            "/api/v1/transfers/{id}/items/{item_id}",
+            "/api/wms/transfers/{id}/items/{item_id}",
             get(get_transfer_item)
                 .put(update_transfer_item)
                 .delete(delete_transfer_item),
         )
-        .route("/api/v1/transfers/{id}/execute", post(execute_transfer))
+        .route("/api/wms/transfers/{id}/execute", post(execute_transfer))
 }
 
-async fn list_transfers(
+pub async fn list_transfers(
     State(state): State<ApiState>,
     Extension(claims): Extension<Claims>,
     Query(params): Query<TransferPaginationParams>,
@@ -133,7 +133,7 @@ async fn list_transfers(
     }
 }
 
-async fn create_transfer(
+pub async fn create_transfer(
     State(state): State<ApiState>,
     Extension(claims): Extension<Claims>,
     headers: HeaderMap,
@@ -207,7 +207,7 @@ async fn create_transfer(
     response
 }
 
-async fn get_transfer(
+pub async fn get_transfer(
     State(state): State<ApiState>,
     Extension(claims): Extension<Claims>,
     Path(id): Path<Uuid>,
@@ -236,7 +236,7 @@ async fn get_transfer(
     }
 }
 
-async fn update_transfer(
+pub async fn update_transfer(
     State(state): State<ApiState>,
     Extension(claims): Extension<Claims>,
     Path(id): Path<Uuid>,
@@ -333,7 +333,7 @@ async fn update_transfer(
     response
 }
 
-async fn delete_transfer(
+pub async fn delete_transfer(
     State(state): State<ApiState>,
     Extension(claims): Extension<Claims>,
     Path(id): Path<Uuid>,
@@ -394,7 +394,7 @@ async fn delete_transfer(
     response
 }
 
-async fn list_transfer_items(
+pub async fn list_transfer_items(
     State(state): State<ApiState>,
     Extension(claims): Extension<Claims>,
     Path(id): Path<Uuid>,
@@ -439,7 +439,7 @@ async fn list_transfer_items(
     }
 }
 
-async fn create_transfer_item(
+pub async fn create_transfer_item(
     State(state): State<ApiState>,
     Extension(claims): Extension<Claims>,
     Path(id): Path<Uuid>,
@@ -512,7 +512,7 @@ async fn create_transfer_item(
     response
 }
 
-async fn get_transfer_item(
+pub async fn get_transfer_item(
     State(state): State<ApiState>,
     Extension(claims): Extension<Claims>,
     Path((id, item_id)): Path<(Uuid, Uuid)>,
@@ -542,7 +542,7 @@ async fn get_transfer_item(
     }
 }
 
-async fn update_transfer_item(
+pub async fn update_transfer_item(
     State(state): State<ApiState>,
     Extension(claims): Extension<Claims>,
     Path((id, item_id)): Path<(Uuid, Uuid)>,
@@ -635,7 +635,7 @@ async fn update_transfer_item(
     response
 }
 
-async fn delete_transfer_item(
+pub async fn delete_transfer_item(
     State(state): State<ApiState>,
     Extension(claims): Extension<Claims>,
     Path((id, item_id)): Path<(Uuid, Uuid)>,
@@ -697,7 +697,7 @@ async fn delete_transfer_item(
     response
 }
 
-async fn execute_transfer(
+pub async fn execute_transfer(
     State(state): State<ApiState>,
     Extension(claims): Extension<Claims>,
     Path(id): Path<Uuid>,

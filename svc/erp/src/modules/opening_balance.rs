@@ -78,7 +78,7 @@ pub fn create_routes() -> Router<ApiState> {
         )
 }
 
-async fn list_opening_balances(
+pub async fn list_opening_balances(
     State(state): State<ApiState>,
     Query(params): Query<OpeningBalanceParams>,
 ) -> Json<ApiResponse<PaginatedResponse<OpeningBalance>>> {
@@ -146,7 +146,7 @@ async fn list_opening_balances(
     }
 }
 
-async fn create_opening_balance(
+pub async fn create_opening_balance(
     State(state): State<ApiState>,
     headers: HeaderMap,
     Json(req): Json<CreateOpeningBalanceRequest>,
@@ -228,7 +228,7 @@ async fn create_opening_balance(
     response
 }
 
-async fn get_opening_balance(
+pub async fn get_opening_balance(
     State(state): State<ApiState>,
     Path(id): Path<Uuid>,
 ) -> Json<ApiResponse<OpeningBalance>> {
@@ -252,7 +252,7 @@ async fn get_opening_balance(
     }
 }
 
-async fn update_opening_balance(
+pub async fn update_opening_balance(
     State(state): State<ApiState>,
     Path(id): Path<Uuid>,
     headers: HeaderMap,
@@ -334,7 +334,7 @@ async fn update_opening_balance(
     response
 }
 
-async fn delete_opening_balance(
+pub async fn delete_opening_balance(
     State(state): State<ApiState>,
     Path(id): Path<Uuid>,
     headers: HeaderMap,
@@ -392,7 +392,7 @@ async fn delete_opening_balance(
     response
 }
 
-async fn import_opening_balances(
+pub async fn import_opening_balances(
     State(state): State<ApiState>,
     headers: HeaderMap,
     Json(req): Json<Vec<CreateOpeningBalanceRequest>>,
@@ -479,7 +479,7 @@ async fn import_opening_balances(
     Json(ApiResponse::success(result, "期初余额批量导入完成"))
 }
 
-async fn carry_forward_opening_balance(
+pub async fn carry_forward_opening_balance(
     State(state): State<ApiState>,
     headers: HeaderMap,
     Json(req): Json<CarryForwardRequest>,

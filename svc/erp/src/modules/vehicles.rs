@@ -46,7 +46,7 @@ pub fn create_routes() -> Router<ApiState> {
         .route("/api/erp/vehicles/{id}/requests", get(get_vehicle_requests))
 }
 
-async fn list_vehicles(
+pub async fn list_vehicles(
     State(state): State<ApiState>,
     Query(params): Query<VehicleQueryParams>,
 ) -> Json<ApiResponse<PaginatedResponse<Vehicle>>> {
@@ -107,7 +107,7 @@ async fn list_vehicles(
     }
 }
 
-async fn create_vehicle(
+pub async fn create_vehicle(
     State(state): State<ApiState>,
     headers: HeaderMap,
     Json(req): Json<CreateVehicleRequest>,
@@ -183,7 +183,7 @@ async fn create_vehicle(
     response
 }
 
-async fn get_vehicle(
+pub async fn get_vehicle(
     State(state): State<ApiState>,
     Path(id): Path<Uuid>,
 ) -> Json<ApiResponse<Vehicle>> {
@@ -207,7 +207,7 @@ async fn get_vehicle(
     }
 }
 
-async fn update_vehicle(
+pub async fn update_vehicle(
     State(state): State<ApiState>,
     Path(id): Path<Uuid>,
     headers: HeaderMap,
@@ -304,7 +304,7 @@ async fn update_vehicle(
     response
 }
 
-async fn delete_vehicle(
+pub async fn delete_vehicle(
     State(state): State<ApiState>,
     Path(id): Path<Uuid>,
     headers: HeaderMap,
@@ -362,7 +362,7 @@ async fn delete_vehicle(
     response
 }
 
-async fn list_vehicle_requests(
+pub async fn list_vehicle_requests(
     State(state): State<ApiState>,
     Query(params): Query<VehicleQueryParams>,
 ) -> Json<ApiResponse<PaginatedResponse<VehicleApplication>>> {
@@ -418,7 +418,7 @@ async fn list_vehicle_requests(
     }
 }
 
-async fn create_vehicle_request(
+pub async fn create_vehicle_request(
     State(state): State<ApiState>,
     headers: HeaderMap,
     Json(req): Json<CreateVehicleRequestRequest>,
@@ -526,7 +526,7 @@ async fn create_vehicle_request(
     response
 }
 
-async fn get_vehicle_request(
+pub async fn get_vehicle_request(
     State(state): State<ApiState>,
     Path(id): Path<Uuid>,
 ) -> Json<ApiResponse<VehicleApplication>> {
@@ -550,7 +550,7 @@ async fn get_vehicle_request(
     }
 }
 
-async fn update_vehicle_request(
+pub async fn update_vehicle_request(
     State(state): State<ApiState>,
     Path(id): Path<Uuid>,
     headers: HeaderMap,
@@ -637,7 +637,7 @@ async fn update_vehicle_request(
     response
 }
 
-async fn delete_vehicle_request(
+pub async fn delete_vehicle_request(
     State(state): State<ApiState>,
     Path(id): Path<Uuid>,
     headers: HeaderMap,
@@ -695,7 +695,7 @@ async fn delete_vehicle_request(
     response
 }
 
-async fn get_vehicle_requests(
+pub async fn get_vehicle_requests(
     State(state): State<ApiState>,
     Path(id): Path<Uuid>,
 ) -> Json<ApiResponse<Vec<VehicleApplication>>> {

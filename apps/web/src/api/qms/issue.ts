@@ -17,7 +17,7 @@ export const issueApi = {
     return { ...response, data: adaptedData };
   },
 
-  getIssue: async (id: string): Promise<ApiResponse<QualityIssue>> => {
+  getIssue: async (id: string): Promise<ApiResponse<QualityIssue | undefined>> => {
     const response = await apiClient.qms.get<QualityIssueBackend>(`/issues/${id}`);
     return {
       ...response,
@@ -25,7 +25,9 @@ export const issueApi = {
     };
   },
 
-  createIssue: async (data: CreateQualityIssueRequest): Promise<ApiResponse<QualityIssue>> => {
+  createIssue: async (
+    data: CreateQualityIssueRequest
+  ): Promise<ApiResponse<QualityIssue | undefined>> => {
     const backendData = adaptIssueToBackend(data);
     const response = await apiClient.qms.post<QualityIssueBackend>('/issues', backendData);
     return {
@@ -37,7 +39,7 @@ export const issueApi = {
   updateIssue: async (
     id: string,
     data: CreateQualityIssueRequest
-  ): Promise<ApiResponse<QualityIssue>> => {
+  ): Promise<ApiResponse<QualityIssue | undefined>> => {
     const backendData: UpdateQualityIssueRequestBackend = {
       title: data.title,
       description: data.description,

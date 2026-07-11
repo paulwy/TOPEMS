@@ -29,6 +29,7 @@ impl std::fmt::Display for AlertType {
 #[derive(Debug, Clone, FromRow, Serialize, Deserialize)]
 pub struct InventoryAlert {
     pub id: Uuid,
+    pub tenant_id: Uuid,
     pub inventory_id: Uuid,
     pub material_code: String,
     pub material_name: String,
@@ -40,8 +41,8 @@ pub struct InventoryAlert {
     pub current_quantity: f64,
     pub threshold_value: Option<f64>,
     pub deviation_quantity: Option<f64>,
-    pub severity: String, // critical, warning, info
-    pub status: String,   // pending, acknowledged, resolved
+    pub severity: String,
+    pub status: String,
     pub remarks: Option<String>,
     pub created_at: DateTime<Utc>,
     pub updated_at: DateTime<Utc>,
@@ -116,11 +117,12 @@ pub struct UpdateAlertStatusRequest {
 #[derive(Debug, Clone, FromRow, Serialize, Deserialize)]
 pub struct CycleCountConfig {
     pub id: Uuid,
+    pub tenant_id: Uuid,
     pub warehouse_id: Uuid,
     pub location_id: Option<Uuid>,
     pub material_category: Option<String>,
-    pub count_frequency: String, // daily, weekly, monthly
-    pub priority_level: String,  // high, medium, low
+    pub count_frequency: String,
+    pub priority_level: String,
     pub last_count_date: Option<DateTime<Utc>>,
     pub next_count_date: DateTime<Utc>,
     pub is_active: bool,
@@ -142,6 +144,7 @@ pub struct CreateCycleCountConfigRequest {
 #[derive(Debug, Clone, FromRow, Serialize, Deserialize)]
 pub struct DiscrepancyRecord {
     pub id: Uuid,
+    pub tenant_id: Uuid,
     pub stock_take_id: Uuid,
     pub stock_take_item_id: Uuid,
     pub inventory_id: Uuid,
@@ -150,9 +153,9 @@ pub struct DiscrepancyRecord {
     pub system_quantity: f64,
     pub counted_quantity: f64,
     pub discrepancy_quantity: f64,
-    pub discrepancy_type: String, // over, under, none
+    pub discrepancy_type: String,
     pub adjustment_quantity: Option<f64>,
-    pub adjustment_status: String, // pending, approved, rejected, completed
+    pub adjustment_status: String,
     pub approved_by: Option<String>,
     pub approval_date: Option<DateTime<Utc>>,
     pub adjustment_date: Option<DateTime<Utc>>,

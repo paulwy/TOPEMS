@@ -49,7 +49,7 @@ pub fn create_routes() -> Router<ApiState> {
         )
 }
 
-async fn list_production_orders(
+pub async fn list_production_orders(
     State(state): State<ApiState>,
     Extension(_claims): Extension<Claims>,
     Query(params): Query<PaginationParams>,
@@ -112,7 +112,7 @@ async fn list_production_orders(
     }
 }
 
-async fn create_production_order(
+pub async fn create_production_order(
     State(state): State<ApiState>,
     Extension(_claims): Extension<Claims>,
     Json(req): Json<CreateProductionOrderRequest>,
@@ -179,7 +179,7 @@ async fn create_production_order(
     }
 }
 
-async fn get_production_order(
+pub async fn get_production_order(
     State(state): State<ApiState>,
     Extension(_claims): Extension<Claims>,
     Path(id): Path<Uuid>,
@@ -211,7 +211,7 @@ async fn get_production_order(
     }
 }
 
-async fn update_production_order(
+pub async fn update_production_order(
     State(state): State<ApiState>,
     Extension(_claims): Extension<Claims>,
     Path(id): Path<Uuid>,
@@ -264,7 +264,7 @@ async fn update_production_order(
     }
 }
 
-async fn delete_production_order(
+pub async fn delete_production_order(
     State(state): State<ApiState>,
     Extension(_claims): Extension<Claims>,
     Path(id): Path<Uuid>,
@@ -294,7 +294,7 @@ async fn delete_production_order(
     }
 }
 
-async fn update_production_progress(
+pub async fn update_production_progress(
     State(state): State<ApiState>,
     Extension(_claims): Extension<Claims>,
     Path(id): Path<Uuid>,
@@ -338,11 +338,11 @@ async fn update_production_progress(
 }
 
 #[derive(Debug, Clone, Deserialize)]
-struct UpdateStatusRequest {
+pub struct UpdateStatusRequest {
     pub status: String,
 }
 
-async fn update_production_status(
+pub async fn update_production_status(
     State(state): State<ApiState>,
     Extension(_claims): Extension<Claims>,
     Path(id): Path<Uuid>,
@@ -382,7 +382,7 @@ async fn update_production_status(
 }
 
 #[derive(Debug, Clone, Deserialize)]
-struct MesProgressUpdate {
+pub struct MesProgressUpdate {
     pub mes_order_id: Uuid,
     pub erp_order_id: Option<Uuid>,
     pub completed_quantity: Option<f64>,
@@ -391,7 +391,7 @@ struct MesProgressUpdate {
     pub actual_end_date: Option<DateTime<Utc>>,
 }
 
-async fn receive_mes_progress(
+pub async fn receive_mes_progress(
     State(state): State<ApiState>,
     Extension(_claims): Extension<Claims>,
     Json(req): Json<MesProgressUpdate>,

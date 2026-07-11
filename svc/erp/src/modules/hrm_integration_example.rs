@@ -23,7 +23,7 @@ pub fn create_routes() -> Router<ApiState> {
 }
 
 /// 从 HRM 服务获取所有员工列表
-async fn list_employees_from_hrm(
+pub async fn list_employees_from_hrm(
     State(state): State<ApiState>,
 ) -> Json<ApiResponse<Vec<Employee>>> {
     match state.hrm_client.list_employees().await {
@@ -36,7 +36,7 @@ async fn list_employees_from_hrm(
 }
 
 /// 从 HRM 服务获取单个员工
-async fn get_employee_from_hrm(
+pub async fn get_employee_from_hrm(
     axum::extract::Path(id): axum::extract::Path<String>,
     State(state): State<ApiState>,
 ) -> Json<ApiResponse<Employee>> {
@@ -54,7 +54,7 @@ async fn get_employee_from_hrm(
 }
 
 /// 从 HRM 服务获取所有部门列表
-async fn list_departments_from_hrm(
+pub async fn list_departments_from_hrm(
     State(state): State<ApiState>,
 ) -> Json<ApiResponse<Vec<Department>>> {
     match state.hrm_client.list_departments().await {
@@ -70,7 +70,9 @@ async fn list_departments_from_hrm(
 }
 
 /// 从 HRM 服务获取所有公司列表
-async fn list_companies_from_hrm(State(state): State<ApiState>) -> Json<ApiResponse<Vec<Company>>> {
+pub async fn list_companies_from_hrm(
+    State(state): State<ApiState>,
+) -> Json<ApiResponse<Vec<Company>>> {
     match state.hrm_client.list_companies().await {
         Ok(companies) => Json(ApiResponse::success(companies, "从HRM服务获取公司列表成功")),
         Err(e) => Json(ApiResponse::error(

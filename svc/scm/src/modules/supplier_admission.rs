@@ -47,7 +47,7 @@ pub fn create_routes() -> Router<ApiState> {
         )
 }
 
-async fn list_admissions(
+pub async fn list_admissions(
     State(state): State<ApiState>,
     Extension(claims): Extension<Claims>,
     Query(params): Query<SupplierAdmissionQueryParams>,
@@ -93,7 +93,7 @@ async fn list_admissions(
     }
 }
 
-async fn create_admission(
+pub async fn create_admission(
     State(state): State<ApiState>,
     Extension(claims): Extension<Claims>,
     Json(data): Json<CreateSupplierAdmissionRequest>,
@@ -144,7 +144,7 @@ async fn create_admission(
     }
 }
 
-async fn get_admission(
+pub async fn get_admission(
     State(state): State<ApiState>,
     Extension(claims): Extension<Claims>,
     Path(id): Path<String>,
@@ -176,7 +176,7 @@ async fn get_admission(
     }
 }
 
-async fn update_admission(
+pub async fn update_admission(
     State(state): State<ApiState>,
     Extension(claims): Extension<Claims>,
     Path(id): Path<String>,
@@ -247,7 +247,7 @@ async fn update_admission(
     }
 }
 
-async fn delete_admission(
+pub async fn delete_admission(
     State(state): State<ApiState>,
     Extension(claims): Extension<Claims>,
     Path(id): Path<String>,

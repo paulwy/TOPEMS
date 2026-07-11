@@ -33,6 +33,7 @@ import { useAppStore } from '../../store';
 import { DocumentPreviewModal } from '@/components/DocumentPreviewModal';
 import { apiLogger } from '@/utils/logger';
 import { ConfirmDialog } from '@topems/shared-components';
+import { DOC_PATHS } from '@/modules/doc/config';
 
 import {
   TextField,
@@ -1410,7 +1411,7 @@ const DocumentsPage: React.FC = () => {
                           ) : (
                             <tr
                               key={item.id}
-                              onClick={() => navigate(`/doc/documents/${item.id}`)}
+                              onClick={() => navigate(DOC_PATHS.documentDetail.replace(':id', item.id))}
                               style={{ cursor: 'pointer' }}
                             >
                               <td

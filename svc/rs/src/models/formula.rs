@@ -7,6 +7,7 @@ use uuid::Uuid;
 #[derive(Debug, Clone, Serialize, Deserialize, FromRow, ToSchema)]
 pub struct Formula {
     pub id: Uuid,
+    pub tenant_id: Uuid,
     pub name: String,
     pub code: String,
     pub version: String,
@@ -70,6 +71,7 @@ pub struct UpdateFormulaRequest {
 #[derive(Debug, Clone, Serialize, Deserialize, FromRow)]
 pub struct FormulaVersion {
     pub id: Uuid,
+    pub tenant_id: Uuid,
     pub formula_id: Uuid,
     pub version: String,
     pub ingredients: serde_json::Value,

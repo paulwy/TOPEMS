@@ -37,6 +37,7 @@ pub async fn db_get_patrol_records(pool: &Pool<Postgres>) -> sqlx::Result<Vec<Pa
 
 pub async fn db_create_patrol_record(
     pool: &Pool<Postgres>,
+    tenant_id: Uuid,
     data: CreatePatrolRecord,
 ) -> sqlx::Result<PatrolRecord> {
     let id = Uuid::new_v4();
@@ -44,10 +45,11 @@ pub async fn db_create_patrol_record(
     let status = data.status.unwrap_or_else(|| "pending".to_string());
 
     sqlx::query(
-        "INSERT INTO patrol_records (id, title, description, location_lat, location_lng, address, patrol_type, status, checked_by, checked_at, created_at)
-         VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11)"
+        "INSERT INTO patrol_records (id, tenant_id, title, description, location_lat, location_lng, address, patrol_type, status, checked_by, checked_at, created_at)
+         VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12)"
     )
     .bind(id)
+    .bind(tenant_id)
     .bind(&data.title)
     .bind(&data.description)
     .bind(data.location_lat)
@@ -63,6 +65,7 @@ pub async fn db_create_patrol_record(
 
     Ok(PatrolRecord {
         id,
+        tenant_id,
         title: data.title,
         description: data.description,
         location_lat: data.location_lat,
@@ -86,16 +89,18 @@ pub async fn db_get_scan_records(pool: &Pool<Postgres>) -> sqlx::Result<Vec<Scan
 
 pub async fn db_create_scan_record(
     pool: &Pool<Postgres>,
+    tenant_id: Uuid,
     data: CreateScanRecord,
 ) -> sqlx::Result<ScanRecord> {
     let id = Uuid::new_v4();
     let now = Utc::now();
 
     sqlx::query(
-        "INSERT INTO scan_records (id, barcode, location_lat, location_lng, item_type, quantity, operator, scanned_at, created_at)
-         VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9)"
+        "INSERT INTO scan_records (id, tenant_id, barcode, location_lat, location_lng, item_type, quantity, operator, scanned_at, created_at)
+         VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10)"
     )
     .bind(id)
+    .bind(tenant_id)
     .bind(&data.barcode)
     .bind(data.location_lat)
     .bind(data.location_lng)
@@ -109,6 +114,7 @@ pub async fn db_create_scan_record(
 
     Ok(ScanRecord {
         id,
+        tenant_id,
         barcode: data.barcode,
         location_lat: data.location_lat,
         location_lng: data.location_lng,
@@ -132,16 +138,18 @@ pub async fn db_get_photo_evidence(pool: &Pool<Postgres>) -> sqlx::Result<Vec<Ph
 
 pub async fn db_create_photo_evidence(
     pool: &Pool<Postgres>,
+    tenant_id: Uuid,
     data: CreatePhotoEvidence,
 ) -> sqlx::Result<PhotoEvidence> {
     let id = Uuid::new_v4();
     let now = Utc::now();
 
     sqlx::query(
-        "INSERT INTO photo_evidence (id, title, description, location_lat, location_lng, address, file_url, recorded_by, recorded_at, created_at)
-         VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10)"
+        "INSERT INTO photo_evidence (id, tenant_id, title, description, location_lat, location_lng, address, file_url, recorded_by, recorded_at, created_at)
+         VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11)"
     )
     .bind(id)
+    .bind(tenant_id)
     .bind(&data.title)
     .bind(&data.description)
     .bind(data.location_lat)
@@ -156,6 +164,7 @@ pub async fn db_create_photo_evidence(
 
     Ok(PhotoEvidence {
         id,
+        tenant_id,
         title: data.title,
         description: data.description,
         location_lat: data.location_lat,
@@ -180,16 +189,18 @@ pub async fn db_get_audio_recordings(pool: &Pool<Postgres>) -> sqlx::Result<Vec<
 
 pub async fn db_create_audio_recording(
     pool: &Pool<Postgres>,
+    tenant_id: Uuid,
     data: CreateAudioRecording,
 ) -> sqlx::Result<AudioRecording> {
     let id = Uuid::new_v4();
     let now = Utc::now();
 
     sqlx::query(
-        "INSERT INTO audio_recordings (id, title, description, location_lat, location_lng, address, duration_seconds, file_url, recorded_by, recorded_at, created_at)
-         VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11)"
+        "INSERT INTO audio_recordings (id, tenant_id, title, description, location_lat, location_lng, address, duration_seconds, file_url, recorded_by, recorded_at, created_at)
+         VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12)"
     )
     .bind(id)
+    .bind(tenant_id)
     .bind(&data.title)
     .bind(&data.description)
     .bind(data.location_lat)
@@ -205,6 +216,7 @@ pub async fn db_create_audio_recording(
 
     Ok(AudioRecording {
         id,
+        tenant_id,
         title: data.title,
         description: data.description,
         location_lat: data.location_lat,
@@ -230,16 +242,18 @@ pub async fn db_get_video_recordings(pool: &Pool<Postgres>) -> sqlx::Result<Vec<
 
 pub async fn db_create_video_recording(
     pool: &Pool<Postgres>,
+    tenant_id: Uuid,
     data: CreateVideoRecording,
 ) -> sqlx::Result<VideoRecording> {
     let id = Uuid::new_v4();
     let now = Utc::now();
 
     sqlx::query(
-        "INSERT INTO video_recordings (id, title, description, start_location_lat, start_location_lng, location_track, duration_seconds, file_url, thumbnail_url, recorded_by, recorded_at, created_at)
-         VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12)"
+        "INSERT INTO video_recordings (id, tenant_id, title, description, start_location_lat, start_location_lng, location_track, duration_seconds, file_url, thumbnail_url, recorded_by, recorded_at, created_at)
+         VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13)"
     )
     .bind(id)
+    .bind(tenant_id)
     .bind(&data.title)
     .bind(&data.description)
     .bind(data.start_location_lat)
@@ -256,6 +270,7 @@ pub async fn db_create_video_recording(
 
     Ok(VideoRecording {
         id,
+        tenant_id,
         title: data.title,
         description: data.description,
         start_location_lat: data.start_location_lat,
@@ -280,6 +295,7 @@ pub async fn db_get_mobile_tasks(pool: &Pool<Postgres>) -> sqlx::Result<Vec<Mobi
 
 pub async fn db_create_mobile_task(
     pool: &Pool<Postgres>,
+    tenant_id: Uuid,
     data: CreateMobileTask,
 ) -> sqlx::Result<MobileTask> {
     let id = Uuid::new_v4();
@@ -290,10 +306,11 @@ pub async fn db_create_mobile_task(
         .and_then(|s| chrono::NaiveDate::parse_from_str(&s, "%Y-%m-%d").ok());
 
     sqlx::query(
-        "INSERT INTO mobile_tasks (id, title, description, task_type, priority, status, assignee, location_lat, location_lng, due_date, created_at, updated_at)
-         VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12)"
+        "INSERT INTO mobile_tasks (id, tenant_id, title, description, task_type, priority, status, assignee, location_lat, location_lng, due_date, created_at, updated_at)
+         VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13)"
     )
     .bind(id)
+    .bind(tenant_id)
     .bind(&data.title)
     .bind(&data.description)
     .bind(&data.task_type)
@@ -310,6 +327,7 @@ pub async fn db_create_mobile_task(
 
     Ok(MobileTask {
         id,
+        tenant_id,
         title: data.title,
         description: data.description,
         task_type: data.task_type,
@@ -383,6 +401,7 @@ pub async fn db_get_offline_operations(
 
 pub async fn db_create_offline_operation(
     pool: &Pool<Postgres>,
+    tenant_id: Uuid,
     user_id: Uuid,
     data: CreateOfflineOperation,
 ) -> sqlx::Result<OfflineOperation> {
@@ -390,10 +409,11 @@ pub async fn db_create_offline_operation(
     let now = Utc::now();
 
     sqlx::query(
-        "INSERT INTO offline_operations (id, user_id, operation_type, entity_type, entity_id, operation_data, sync_status, sync_attempts, created_at)
-         VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9)",
+        "INSERT INTO offline_operations (id, tenant_id, user_id, operation_type, entity_type, entity_id, operation_data, sync_status, sync_attempts, created_at)
+         VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10)",
     )
     .bind(id)
+    .bind(tenant_id)
     .bind(user_id)
     .bind(&data.operation_type)
     .bind(&data.entity_type)
@@ -407,6 +427,7 @@ pub async fn db_create_offline_operation(
 
     Ok(OfflineOperation {
         id,
+        tenant_id,
         user_id,
         operation_type: data.operation_type,
         entity_type: data.entity_type,
@@ -464,6 +485,7 @@ pub async fn db_get_sync_policy(
 
 pub async fn db_create_or_update_sync_policy(
     pool: &Pool<Postgres>,
+    tenant_id: Uuid,
     user_id: Uuid,
     data: UpdateSyncPolicy,
 ) -> sqlx::Result<SyncPolicy> {
@@ -503,6 +525,7 @@ pub async fn db_create_or_update_sync_policy(
         let id = Uuid::new_v4();
         let policy = SyncPolicy {
             id,
+            tenant_id,
             user_id,
             auto_sync_enabled: data.auto_sync_enabled.unwrap_or(true),
             sync_interval_minutes: data.sync_interval_minutes.unwrap_or(5),
@@ -515,10 +538,11 @@ pub async fn db_create_or_update_sync_policy(
         };
 
         sqlx::query(
-            "INSERT INTO sync_policies (id, user_id, auto_sync_enabled, sync_interval_minutes, sync_on_network_change, conflict_strategy, created_at, updated_at)
-             VALUES ($1, $2, $3, $4, $5, $6, $7, $8)",
+            "INSERT INTO sync_policies (id, tenant_id, user_id, auto_sync_enabled, sync_interval_minutes, sync_on_network_change, conflict_strategy, created_at, updated_at)
+             VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9)",
         )
         .bind(policy.id)
+        .bind(policy.tenant_id)
         .bind(policy.user_id)
         .bind(policy.auto_sync_enabled)
         .bind(policy.sync_interval_minutes)
@@ -535,6 +559,7 @@ pub async fn db_create_or_update_sync_policy(
 
 pub async fn db_register_push_device(
     pool: &Pool<Postgres>,
+    tenant_id: Uuid,
     user_id: Uuid,
     data: CreatePushDevice,
 ) -> sqlx::Result<PushDevice> {
@@ -542,11 +567,12 @@ pub async fn db_register_push_device(
     let now = Utc::now();
 
     sqlx::query(
-        "INSERT INTO push_devices (id, user_id, device_token, platform, device_model, app_version, os_version, is_active, created_at, updated_at)
-         VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10)
-         ON CONFLICT (device_token) DO UPDATE SET user_id = $2, is_active = $8, updated_at = $10",
+        "INSERT INTO push_devices (id, tenant_id, user_id, device_token, platform, device_model, app_version, os_version, is_active, created_at, updated_at)
+         VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11)
+         ON CONFLICT (device_token) DO UPDATE SET tenant_id = $2, user_id = $3, is_active = $9, updated_at = $11",
     )
     .bind(id)
+    .bind(tenant_id)
     .bind(user_id)
     .bind(&data.device_token)
     .bind(&data.platform)
@@ -561,6 +587,7 @@ pub async fn db_register_push_device(
 
     Ok(PushDevice {
         id,
+        tenant_id,
         user_id,
         device_token: data.device_token,
         platform: data.platform,
@@ -589,16 +616,18 @@ pub async fn db_get_push_devices(
 
 pub async fn db_create_push_notification(
     pool: &Pool<Postgres>,
+    tenant_id: Uuid,
     data: CreatePushNotification,
 ) -> sqlx::Result<PushNotification> {
     let id = Uuid::new_v4();
     let now = Utc::now();
 
     sqlx::query(
-        "INSERT INTO push_notifications (id, title, body, notification_type, data, target_type, target_ids, status, sent_count, delivered_count, clicked_count, created_at)
-         VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12)",
+        "INSERT INTO push_notifications (id, tenant_id, title, body, notification_type, data, target_type, target_ids, status, sent_count, delivered_count, clicked_count, created_at)
+         VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13)",
     )
     .bind(id)
+    .bind(tenant_id)
     .bind(&data.title)
     .bind(&data.body)
     .bind(&data.notification_type)
@@ -615,6 +644,7 @@ pub async fn db_create_push_notification(
 
     Ok(PushNotification {
         id,
+        tenant_id,
         title: data.title,
         body: data.body,
         notification_type: data.notification_type,
@@ -664,6 +694,7 @@ pub async fn db_get_push_templates(pool: &Pool<Postgres>) -> sqlx::Result<Vec<Pu
 
 pub async fn db_create_push_template(
     pool: &Pool<Postgres>,
+    tenant_id: Uuid,
     name: &str,
     title_template: &str,
     body_template: &str,
@@ -674,10 +705,11 @@ pub async fn db_create_push_template(
     let now = Utc::now();
 
     sqlx::query(
-        "INSERT INTO push_templates (id, name, title_template, body_template, notification_type, description, is_active, created_at, updated_at)
-         VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9)",
+        "INSERT INTO push_templates (id, tenant_id, name, title_template, body_template, notification_type, description, is_active, created_at, updated_at)
+         VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10)",
     )
     .bind(id)
+    .bind(tenant_id)
     .bind(name)
     .bind(title_template)
     .bind(body_template)
@@ -691,6 +723,7 @@ pub async fn db_create_push_template(
 
     Ok(PushTemplate {
         id,
+        tenant_id,
         name: name.to_string(),
         title_template: title_template.to_string(),
         body_template: body_template.to_string(),
@@ -724,6 +757,7 @@ pub async fn db_get_barcode_scans(
 
 pub async fn db_create_barcode_scan(
     pool: &Pool<Postgres>,
+    tenant_id: Uuid,
     user_id: Uuid,
     data: CreateBarcodeScan,
 ) -> sqlx::Result<BarcodeScan> {
@@ -731,10 +765,11 @@ pub async fn db_create_barcode_scan(
     let now = Utc::now();
 
     sqlx::query(
-        "INSERT INTO barcode_scans (id, user_id, barcode, barcode_type, decoded_data, location_lat, location_lng, scanned_at, created_at)
-         VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9)",
+        "INSERT INTO barcode_scans (id, tenant_id, user_id, barcode, barcode_type, decoded_data, location_lat, location_lng, scanned_at, created_at)
+         VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10)",
     )
     .bind(id)
+    .bind(tenant_id)
     .bind(user_id)
     .bind(&data.barcode)
     .bind(&data.barcode_type)
@@ -748,6 +783,7 @@ pub async fn db_create_barcode_scan(
 
     Ok(BarcodeScan {
         id,
+        tenant_id,
         user_id,
         barcode: data.barcode,
         barcode_type: data.barcode_type,
@@ -783,6 +819,7 @@ pub async fn db_get_photo_uploads(
 
 pub async fn db_create_photo_upload(
     pool: &Pool<Postgres>,
+    tenant_id: Uuid,
     user_id: Uuid,
     data: CreatePhotoUpload,
 ) -> sqlx::Result<PhotoUpload> {
@@ -791,10 +828,11 @@ pub async fn db_create_photo_upload(
     let file_path = format!("/api/mobile/photos/{}", id);
 
     sqlx::query(
-        "INSERT INTO photo_uploads (id, user_id, file_name, file_path, file_size, mime_type, width, height, compression_ratio, has_watermark, watermark_text, upload_status, upload_progress, location_lat, location_lng, created_at)
-         VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16)",
+        "INSERT INTO photo_uploads (id, tenant_id, user_id, file_name, file_path, file_size, mime_type, width, height, compression_ratio, has_watermark, watermark_text, upload_status, upload_progress, location_lat, location_lng, created_at)
+         VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, $17)",
     )
     .bind(id)
+    .bind(tenant_id)
     .bind(user_id)
     .bind(&data.file_name)
     .bind(&file_path)
@@ -815,6 +853,7 @@ pub async fn db_create_photo_upload(
 
     Ok(PhotoUpload {
         id,
+        tenant_id,
         user_id,
         file_name: data.file_name,
         file_path,
@@ -884,37 +923,43 @@ pub async fn db_get_mobile_approvals(
 
 pub async fn db_create_mobile_approval(
     pool: &Pool<Postgres>,
+    tenant_id: Uuid,
     data: CreateMobileApproval,
 ) -> sqlx::Result<MobileApproval> {
     let id = Uuid::new_v4();
     let now = Utc::now();
-    let applicant_id = Uuid::parse_str(&data.applicant_id).unwrap_or_else(|_| Uuid::new_v4());
-    let assignee_id = Uuid::parse_str(&data.assignee_id).unwrap_or_else(|_| Uuid::new_v4());
-    let priority = data.priority.unwrap_or_else(|| "normal".to_string());
+    let user_id = Uuid::new_v4();
     let due_date = data
         .due_date
         .and_then(|s| chrono::DateTime::parse_from_rfc3339(&s).ok())
         .map(|d| d.with_timezone(&chrono::Utc));
 
     sqlx::query(
-        "INSERT INTO mobile_approvals (id, process_instance_id, process_definition_id, process_name, business_key, business_title, applicant_id, applicant_name, assignee_id, assignee_name, task_id, task_name, status, priority, due_date, created_at, updated_at)
-         VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, $17)",
+        "INSERT INTO mobile_approvals (id, tenant_id, user_id, approval_type, status, title, description, data, task_name, task_id, process_name, process_instance_id, process_definition_id, priority, due_date, comment, business_title, business_key, assignee_name, assignee_id, applicant_name, applicant_id, created_at, updated_at)
+         VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, $17, $18, $19, $20, $21, $22, $23, $24)",
     )
     .bind(id)
+    .bind(tenant_id)
+    .bind(user_id)
+    .bind(&data.approval_type)
+    .bind("pending")
+    .bind(&data.title)
+    .bind(&data.description)
+    .bind(&data.data)
+    .bind(&data.task_name)
+    .bind(&data.task_id)
+    .bind(&data.process_name)
     .bind(&data.process_instance_id)
     .bind(&data.process_definition_id)
-    .bind(&data.process_name)
-    .bind(&data.business_key)
-    .bind(&data.business_title)
-    .bind(applicant_id)
-    .bind(&data.applicant_name)
-    .bind(assignee_id)
-    .bind(&data.assignee_name)
-    .bind(&data.task_id)
-    .bind(&data.task_name)
-    .bind("pending")
-    .bind(&priority)
+    .bind(&data.priority)
     .bind(due_date)
+    .bind(&data.comment)
+    .bind(&data.business_title)
+    .bind(&data.business_key)
+    .bind(&data.assignee_name)
+    .bind(&data.assignee_id)
+    .bind(&data.applicant_name)
+    .bind(&data.applicant_id)
     .bind(now)
     .bind(now)
     .execute(pool)
@@ -922,21 +967,27 @@ pub async fn db_create_mobile_approval(
 
     Ok(MobileApproval {
         id,
+        tenant_id,
+        user_id,
+        approval_type: data.approval_type,
+        status: "pending".to_string(),
+        title: data.title,
+        description: data.description,
+        data: data.data,
+        task_name: data.task_name,
+        task_id: data.task_id,
+        process_name: data.process_name,
         process_instance_id: data.process_instance_id,
         process_definition_id: data.process_definition_id,
-        process_name: data.process_name,
-        business_key: data.business_key,
-        business_title: data.business_title,
-        applicant_id,
-        applicant_name: data.applicant_name,
-        assignee_id,
-        assignee_name: data.assignee_name,
-        task_id: data.task_id,
-        task_name: data.task_name,
-        status: "pending".to_string(),
-        priority,
+        priority: data.priority,
         due_date,
-        comment: None,
+        comment: data.comment,
+        business_title: data.business_title,
+        business_key: data.business_key,
+        assignee_name: data.assignee_name,
+        assignee_id: data.assignee_id,
+        applicant_name: data.applicant_name,
+        applicant_id: data.applicant_id,
         created_at: now,
         updated_at: now,
     })

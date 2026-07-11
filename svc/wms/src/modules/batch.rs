@@ -39,7 +39,7 @@ where
         )
 }
 
-async fn list_batches(
+pub async fn list_batches(
     State(state): State<ApiState>,
     Extension(claims): Extension<Claims>,
     Query(params): Query<BatchQueryParams>,
@@ -116,7 +116,7 @@ async fn list_batches(
     }
 }
 
-async fn create_batch(
+pub async fn create_batch(
     State(state): State<ApiState>,
     Extension(claims): Extension<Claims>,
     Json(req): Json<CreateBatchRequest>,
@@ -173,7 +173,7 @@ async fn create_batch(
     }
 }
 
-async fn get_batch(
+pub async fn get_batch(
     State(state): State<ApiState>,
     Extension(claims): Extension<Claims>,
     Path(id): Path<String>,
@@ -203,7 +203,7 @@ async fn get_batch(
     }
 }
 
-async fn update_batch(
+pub async fn update_batch(
     State(state): State<ApiState>,
     Extension(claims): Extension<Claims>,
     Path(id): Path<String>,
@@ -278,7 +278,7 @@ async fn update_batch(
     }
 }
 
-async fn delete_batch(
+pub async fn delete_batch(
     State(state): State<ApiState>,
     Extension(claims): Extension<Claims>,
     Path(id): Path<String>,
@@ -310,7 +310,7 @@ async fn delete_batch(
     }
 }
 
-async fn get_batch_statistics(
+pub async fn get_batch_statistics(
     State(state): State<ApiState>,
     Extension(claims): Extension<Claims>,
     Query(params): Query<serde_json::Value>,
@@ -362,7 +362,7 @@ async fn get_batch_statistics(
     }
 }
 
-async fn get_expiring_soon(
+pub async fn get_expiring_soon(
     State(state): State<ApiState>,
     Extension(claims): Extension<Claims>,
     Query(params): Query<serde_json::Value>,
@@ -397,7 +397,7 @@ async fn get_expiring_soon(
     }
 }
 
-async fn get_expired(
+pub async fn get_expired(
     State(state): State<ApiState>,
     Extension(claims): Extension<Claims>,
     Query(params): Query<serde_json::Value>,
@@ -430,7 +430,7 @@ async fn get_expired(
     }
 }
 
-async fn adjust_quantity(
+pub async fn adjust_quantity(
     State(state): State<ApiState>,
     Extension(claims): Extension<Claims>,
     Path(id): Path<String>,
@@ -473,7 +473,7 @@ async fn adjust_quantity(
     }
 }
 
-async fn transfer_location(
+pub async fn transfer_location(
     State(state): State<ApiState>,
     Extension(claims): Extension<Claims>,
     Path(id): Path<String>,

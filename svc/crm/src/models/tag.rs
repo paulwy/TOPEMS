@@ -6,6 +6,7 @@ use uuid::Uuid;
 #[derive(Debug, Clone, FromRow, Serialize, Deserialize)]
 pub struct Tag {
     pub id: Uuid,
+    pub tenant_id: Uuid,
     pub name: String,
     pub color: String,
     pub description: Option<String>,
@@ -16,6 +17,7 @@ pub struct Tag {
 #[derive(Debug, Clone, FromRow, Serialize, Deserialize)]
 pub struct CustomerTag {
     pub id: Uuid,
+    pub tenant_id: Uuid,
     pub customer_id: Uuid,
     pub tag_id: Uuid,
     pub created_at: DateTime<Utc>,

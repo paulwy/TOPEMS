@@ -1,13 +1,14 @@
 use axum::{
     extract::State,
     routing::{delete, get, post},
-    Json, Router,
+    Extension, Json, Router,
 };
 use serde::{Deserialize, Serialize};
 use sqlx::{types::Uuid, Row};
 use topems_shared::ApiResponse;
 
-use crate::AppState;
+use crate::middleware::tenant::TenantContext;
+use crate::shared::AppState;
 
 pub fn create_routes() -> Router<AppState> {
     Router::new()
@@ -57,6 +58,7 @@ pub struct BarcodeQuery {
 #[derive(Debug, Serialize)]
 pub struct SampleBarcode {
     pub id: String,
+    pub tenant_id: String,
     pub barcode: String,
     pub barcode_type: String,
     pub sample_id: Option<String>,
@@ -98,6 +100,7 @@ pub struct BarcodeScanRequest {
 #[derive(Debug, Serialize)]
 pub struct BarcodeScanRecord {
     pub id: String,
+    pub tenant_id: String,
     pub barcode: String,
     pub scan_type: String,
     pub sample_id: Option<String>,
@@ -119,6 +122,7 @@ pub struct RfidTagQuery {
 #[derive(Debug, Serialize)]
 pub struct RfidTag {
     pub id: String,
+    pub tenant_id: String,
     pub tag_id: String,
     pub tag_type: String,
     pub sample_id: Option<String>,
@@ -153,7 +157,7 @@ const BARCODE_TYPES: &[(&str, &str)] = &[
 ];
 
 pub async fn list_barcodes(
-    State(state): State<crate::AppState>,
+    State(state): State<crate::shared::AppState>,
     axum::extract::Query(query): axum::extract::Query<BarcodeQuery>,
 ) -> Json<ApiResponse<Vec<SampleBarcode>>> {
     let page = query.page.unwrap_or(1);
@@ -223,6 +227,7 @@ pub async fn list_barcodes(
         rows.into_iter()
             .map(|row| SampleBarcode {
                 id: row.get("id"),
+                tenant_id: row.get("tenant_id"),
                 barcode: row.get("barcode"),
                 barcode_type: row.get("barcode_type"),
                 sample_id: row.get("sample_id"),
@@ -249,7 +254,7 @@ pub async fn list_barcodes(
 }
 
 pub async fn generate_barcode(
-    State(state): State<crate::AppState>,
+    State(state): State<crate::shared::AppState>,
     Json(req): Json<CreateBarcodeRequest>,
 ) -> Json<ApiResponse<Vec<SampleBarcode>>> {
     let valid_type = BARCODE_TYPES.iter().any(|(t, _)| *t == req.barcode_type);
@@ -316,6 +321,7 @@ pub async fn generate_barcode(
         match row {
             Ok(r) => generated.push(SampleBarcode {
                 id: r.get("id"),
+                tenant_id: r.get("tenant_id"),
                 barcode: r.get("barcode"),
                 barcode_type: r.get("barcode_type"),
                 sample_id: r.get("sample_id"),
@@ -340,7 +346,7 @@ pub async fn generate_barcode(
 }
 
 pub async fn get_barcode(
-    State(state): State<crate::AppState>,
+    State(state): State<crate::shared::AppState>,
     axum::extract::Path(id): axum::extract::Path<String>,
 ) -> Json<ApiResponse<SampleBarcode>> {
     let id = match Uuid::parse_str(&id) {
@@ -359,6 +365,7 @@ pub async fn get_barcode(
         Ok(r) => Json(ApiResponse::success(
             SampleBarcode {
                 id: r.get("id"),
+                tenant_id: r.get("tenant_id"),
                 barcode: r.get("barcode"),
                 barcode_type: r.get("barcode_type"),
                 sample_id: r.get("sample_id"),
@@ -382,7 +389,7 @@ pub async fn get_barcode(
 }
 
 pub async fn update_barcode(
-    State(state): State<crate::AppState>,
+    State(state): State<crate::shared::AppState>,
     axum::extract::Path(id): axum::extract::Path<String>,
     Json(req): Json<UpdateBarcodeRequest>,
 ) -> Json<ApiResponse<SampleBarcode>> {
@@ -405,6 +412,7 @@ pub async fn update_barcode(
         Ok(r) => Json(ApiResponse::success(
             SampleBarcode {
                 id: r.get("id"),
+                tenant_id: r.get("tenant_id"),
                 barcode: r.get("barcode"),
                 barcode_type: r.get("barcode_type"),
                 sample_id: r.get("sample_id"),
@@ -428,7 +436,7 @@ pub async fn update_barcode(
 }
 
 pub async fn print_barcode(
-    State(state): State<crate::AppState>,
+    State(state): State<crate::shared::AppState>,
     axum::extract::Path(id): axum::extract::Path<String>,
 ) -> Json<ApiResponse<SampleBarcode>> {
     let id = match Uuid::parse_str(&id) {
@@ -447,6 +455,7 @@ pub async fn print_barcode(
         Ok(r) => Json(ApiResponse::success(
             SampleBarcode {
                 id: r.get("id"),
+                tenant_id: r.get("tenant_id"),
                 barcode: r.get("barcode"),
                 barcode_type: r.get("barcode_type"),
                 sample_id: r.get("sample_id"),
@@ -470,7 +479,7 @@ pub async fn print_barcode(
 }
 
 pub async fn delete_barcode(
-    State(state): State<crate::AppState>,
+    State(state): State<crate::shared::AppState>,
     axum::extract::Path(id): axum::extract::Path<String>,
 ) -> Json<ApiResponse<bool>> {
     let id = match Uuid::parse_str(&id) {
@@ -493,7 +502,7 @@ pub async fn delete_barcode(
 }
 
 pub async fn scan_barcode(
-    State(state): State<crate::AppState>,
+    State(state): State<crate::shared::AppState>,
     Json(req): Json<BarcodeScanRequest>,
 ) -> Json<ApiResponse<BarcodeScanRecord>> {
     let valid_scan_types = ["receive", "transfer", "destroy", "check"];
@@ -573,6 +582,7 @@ pub async fn scan_barcode(
             Json(ApiResponse::success(
                 BarcodeScanRecord {
                     id: r.get("id"),
+                    tenant_id: r.get("tenant_id"),
                     barcode: r.get("barcode"),
                     scan_type: r.get("scan_type"),
                     sample_id: r.get("sample_id"),
@@ -633,7 +643,7 @@ pub async fn update_print_config(
 }
 
 pub async fn list_rfid_tags(
-    State(state): State<crate::AppState>,
+    State(state): State<crate::shared::AppState>,
     axum::extract::Query(query): axum::extract::Query<RfidTagQuery>,
 ) -> Json<ApiResponse<Vec<RfidTag>>> {
     let page = query.page.unwrap_or(1);
@@ -674,6 +684,7 @@ pub async fn list_rfid_tags(
         rows.into_iter()
             .map(|row| RfidTag {
                 id: row.get("id"),
+                tenant_id: row.get("tenant_id"),
                 tag_id: row.get("tag_id"),
                 tag_type: row.get("tag_type"),
                 sample_id: row.get("sample_id"),
@@ -697,7 +708,7 @@ pub async fn list_rfid_tags(
 }
 
 pub async fn create_rfid_tag(
-    State(state): State<crate::AppState>,
+    State(state): State<crate::shared::AppState>,
     Json(req): Json<CreateRfidTagRequest>,
 ) -> Json<ApiResponse<RfidTag>> {
     let tag_type = req.tag_type.unwrap_or_else(|| "uhf".to_string());
@@ -719,6 +730,7 @@ pub async fn create_rfid_tag(
         Ok(r) => Json(ApiResponse::success(
             RfidTag {
                 id: r.get("id"),
+                tenant_id: r.get("tenant_id"),
                 tag_id: r.get("tag_id"),
                 tag_type: r.get("tag_type"),
                 sample_id: r.get("sample_id"),
@@ -739,7 +751,7 @@ pub async fn create_rfid_tag(
 }
 
 pub async fn assign_rfid_tag(
-    State(state): State<crate::AppState>,
+    State(state): State<crate::shared::AppState>,
     axum::extract::Path((tag_id, sample_id)): axum::extract::Path<(String, String)>,
 ) -> Json<ApiResponse<RfidTag>> {
     let tag_uuid = match Uuid::parse_str(&tag_id) {
@@ -782,6 +794,7 @@ pub async fn assign_rfid_tag(
         Ok(r) => Json(ApiResponse::success(
             RfidTag {
                 id: r.get("id"),
+                tenant_id: r.get("tenant_id"),
                 tag_id: r.get("tag_id"),
                 tag_type: r.get("tag_type"),
                 sample_id: r.get("sample_id"),
@@ -802,7 +815,7 @@ pub async fn assign_rfid_tag(
 }
 
 pub async fn unassign_rfid_tag(
-    State(state): State<crate::AppState>,
+    State(state): State<crate::shared::AppState>,
     axum::extract::Path(tag_id): axum::extract::Path<String>,
 ) -> Json<ApiResponse<RfidTag>> {
     let tag_uuid = match Uuid::parse_str(&tag_id) {
@@ -827,6 +840,7 @@ pub async fn unassign_rfid_tag(
         Ok(r) => Json(ApiResponse::success(
             RfidTag {
                 id: r.get("id"),
+                tenant_id: r.get("tenant_id"),
                 tag_id: r.get("tag_id"),
                 tag_type: r.get("tag_type"),
                 sample_id: r.get("sample_id"),
@@ -847,7 +861,7 @@ pub async fn unassign_rfid_tag(
 }
 
 pub async fn delete_rfid_tag(
-    State(state): State<crate::AppState>,
+    State(state): State<crate::shared::AppState>,
     axum::extract::Path(id): axum::extract::Path<String>,
 ) -> Json<ApiResponse<bool>> {
     let id = match Uuid::parse_str(&id) {
@@ -870,7 +884,7 @@ pub async fn delete_rfid_tag(
 }
 
 pub async fn trace_sample_by_barcode(
-    State(state): State<crate::AppState>,
+    State(state): State<crate::shared::AppState>,
     axum::extract::Path(barcode): axum::extract::Path<String>,
 ) -> Json<ApiResponse<serde_json::Value>> {
     let barcode_row = sqlx::query(

@@ -27,6 +27,7 @@ import { useAppStore } from '../../store';
 import { ListPageTemplate, type ColumnDef } from '@/components/templates';
 import { extractErrorMessage } from '@/utils/errors';
 import { PageContainer, ConfirmDialog } from '@/components/common';
+import { WORKFLOW_PATHS } from '@/modules/workflow/config';
 
 /**
  * 实例状态配置
@@ -193,14 +194,14 @@ export const WorkflowInstancesPage: React.FC = () => {
 
   const handleViewDetail = useCallback(
     (instance: WorkflowInstance) => {
-      navigate(`/workflow/instances/${instance.id}`);
+      navigate(WORKFLOW_PATHS.instanceDetail.replace(':id', instance.id));
     },
     [navigate]
   );
 
   const handleViewDiagram = useCallback(
     (instance: WorkflowInstance) => {
-      navigate(`/workflow/instances/${instance.id}/diagram`);
+      navigate(WORKFLOW_PATHS.instanceDetail.replace(':id', instance.id));
     },
     [navigate]
   );
@@ -549,7 +550,7 @@ export const WorkflowInstancesPage: React.FC = () => {
       headerProps={{
         pageIcon: <PlaySquare size={20} />,
         backButton: {
-          href: '/workflow/dashboard',
+          href: WORKFLOW_PATHS.dashboard,
         },
       }}
     >

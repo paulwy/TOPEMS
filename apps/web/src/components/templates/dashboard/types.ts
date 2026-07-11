@@ -1,5 +1,6 @@
 import type { BoxProps } from '@mui/material';
 import type React from 'react';
+import type { BreadcrumbItem } from '../PageHeader';
 
 export type ChartType = 'line' | 'bar' | 'pie' | 'area' | 'scatter' | 'radar' | 'gauge';
 
@@ -126,7 +127,7 @@ export interface LayoutConfig {
 export interface DashboardTemplateProps extends BoxProps {
   title: string;
   subtitle?: string;
-  breadcrumbs?: React.ReactNode;
+  breadcrumbs?: BreadcrumbItem[];
   stats?: StatCard[];
   cardGroups?: CardGroup[];
   charts?: ChartCard[];

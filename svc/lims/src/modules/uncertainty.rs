@@ -1,13 +1,14 @@
 use axum::{
     extract::State,
     routing::{get, post, put},
-    Json, Router,
+    Extension, Json, Router,
 };
 use serde::{Deserialize, Serialize};
 use sqlx::{types::Uuid, Row};
 use topems_shared::ApiResponse;
 
-use crate::AppState;
+use crate::middleware::tenant::TenantContext;
+use crate::shared::AppState;
 
 pub fn create_routes() -> Router<AppState> {
     Router::new()
@@ -61,6 +62,7 @@ pub struct UncertaintyProjectQuery {
 #[derive(Debug, Serialize)]
 pub struct UncertaintyProject {
     pub id: String,
+    pub tenant_id: String,
     pub project_no: String,
     pub project_name: String,
     pub method_id: Option<String>,
@@ -114,6 +116,7 @@ pub struct UpdateUncertaintyProjectRequest {
 #[derive(Debug, Serialize)]
 pub struct UncertaintySource {
     pub id: String,
+    pub tenant_id: String,
     pub project_id: String,
     pub source_name: String,
     pub source_type: String,
@@ -149,6 +152,7 @@ pub struct UpdateUncertaintySourceRequest {
 #[derive(Debug, Serialize)]
 pub struct UncertaintyComponent {
     pub id: String,
+    pub tenant_id: String,
     pub project_id: String,
     pub source_id: String,
     pub source_name: String,
@@ -214,7 +218,7 @@ pub struct TypeBCalculationRequest {
 }
 
 pub async fn list_projects(
-    State(state): State<crate::AppState>,
+    State(state): State<crate::shared::AppState>,
     axum::extract::Query(query): axum::extract::Query<UncertaintyProjectQuery>,
 ) -> Json<ApiResponse<Vec<UncertaintyProject>>> {
     let page = query.page.unwrap_or(1);
@@ -294,6 +298,7 @@ pub async fn list_projects(
         rows.into_iter()
             .map(|row| UncertaintyProject {
                 id: row.get("id"),
+                tenant_id: row.get("tenant_id"),
                 project_no: row.get("project_no"),
                 project_name: row.get("project_name"),
                 method_id: row.get("method_id"),
@@ -326,7 +331,7 @@ pub async fn list_projects(
 }
 
 pub async fn create_project(
-    State(state): State<crate::AppState>,
+    State(state): State<crate::shared::AppState>,
     Json(req): Json<CreateUncertaintyProjectRequest>,
 ) -> Json<ApiResponse<UncertaintyProject>> {
     let project_no = format!(
@@ -363,6 +368,7 @@ pub async fn create_project(
         Ok(r) => Json(ApiResponse::success(
             UncertaintyProject {
                 id: r.get("id"),
+                tenant_id: r.get("tenant_id"),
                 project_no: r.get("project_no"),
                 project_name: r.get("project_name"),
                 method_id: r.get("method_id"),
@@ -392,7 +398,7 @@ pub async fn create_project(
 }
 
 pub async fn get_project(
-    State(state): State<crate::AppState>,
+    State(state): State<crate::shared::AppState>,
     axum::extract::Path(id): axum::extract::Path<String>,
 ) -> Json<ApiResponse<UncertaintyProject>> {
     let id = match Uuid::parse_str(&id) {
@@ -411,6 +417,7 @@ pub async fn get_project(
         Ok(r) => Json(ApiResponse::success(
             UncertaintyProject {
                 id: r.get("id"),
+                tenant_id: r.get("tenant_id"),
                 project_no: r.get("project_no"),
                 project_name: r.get("project_name"),
                 method_id: r.get("method_id"),
@@ -440,7 +447,7 @@ pub async fn get_project(
 }
 
 pub async fn update_project(
-    State(state): State<crate::AppState>,
+    State(state): State<crate::shared::AppState>,
     axum::extract::Path(id): axum::extract::Path<String>,
     Json(req): Json<UpdateUncertaintyProjectRequest>,
 ) -> Json<ApiResponse<UncertaintyProject>> {
@@ -494,6 +501,7 @@ pub async fn update_project(
         Ok(r) => Json(ApiResponse::success(
             UncertaintyProject {
                 id: r.get("id"),
+                tenant_id: r.get("tenant_id"),
                 project_no: r.get("project_no"),
                 project_name: r.get("project_name"),
                 method_id: r.get("method_id"),
@@ -523,7 +531,7 @@ pub async fn update_project(
 }
 
 pub async fn delete_project(
-    State(state): State<crate::AppState>,
+    State(state): State<crate::shared::AppState>,
     axum::extract::Path(id): axum::extract::Path<String>,
 ) -> Json<ApiResponse<bool>> {
     let id = match Uuid::parse_str(&id) {
@@ -546,7 +554,7 @@ pub async fn delete_project(
 }
 
 pub async fn list_sources(
-    State(state): State<crate::AppState>,
+    State(state): State<crate::shared::AppState>,
     axum::extract::Path(project_id): axum::extract::Path<String>,
 ) -> Json<ApiResponse<Vec<UncertaintySource>>> {
     let id = match Uuid::parse_str(&project_id) {
@@ -574,6 +582,7 @@ pub async fn list_sources(
                 .into_iter()
                 .map(|row| UncertaintySource {
                     id: row.get("id"),
+                    tenant_id: row.get("tenant_id"),
                     project_id: row.get("project_id"),
                     source_name: row.get("source_name"),
                     source_type: row.get("source_type"),
@@ -595,7 +604,7 @@ pub async fn list_sources(
 }
 
 pub async fn create_source(
-    State(state): State<crate::AppState>,
+    State(state): State<crate::shared::AppState>,
     Json(req): Json<CreateUncertaintySourceRequest>,
 ) -> Json<ApiResponse<UncertaintySource>> {
     let project_id = match Uuid::parse_str(&req.project_id) {
@@ -630,6 +639,7 @@ pub async fn create_source(
         Ok(r) => Json(ApiResponse::success(
             UncertaintySource {
                 id: r.get("id"),
+                tenant_id: r.get("tenant_id"),
                 project_id: r.get("project_id"),
                 source_name: r.get("source_name"),
                 source_type: r.get("source_type"),
@@ -650,7 +660,7 @@ pub async fn create_source(
 }
 
 pub async fn update_source(
-    State(state): State<crate::AppState>,
+    State(state): State<crate::shared::AppState>,
     axum::extract::Path(id): axum::extract::Path<String>,
     Json(req): Json<UpdateUncertaintySourceRequest>,
 ) -> Json<ApiResponse<UncertaintySource>> {
@@ -689,6 +699,7 @@ pub async fn update_source(
         Ok(r) => Json(ApiResponse::success(
             UncertaintySource {
                 id: r.get("id"),
+                tenant_id: r.get("tenant_id"),
                 project_id: r.get("project_id"),
                 source_name: r.get("source_name"),
                 source_type: r.get("source_type"),
@@ -709,7 +720,7 @@ pub async fn update_source(
 }
 
 pub async fn delete_source(
-    State(state): State<crate::AppState>,
+    State(state): State<crate::shared::AppState>,
     axum::extract::Path(id): axum::extract::Path<String>,
 ) -> Json<ApiResponse<bool>> {
     let id = match Uuid::parse_str(&id) {
@@ -732,7 +743,7 @@ pub async fn delete_source(
 }
 
 pub async fn list_components(
-    State(state): State<crate::AppState>,
+    State(state): State<crate::shared::AppState>,
     axum::extract::Path(project_id): axum::extract::Path<String>,
 ) -> Json<ApiResponse<Vec<UncertaintyComponent>>> {
     let id = match Uuid::parse_str(&project_id) {
@@ -762,6 +773,7 @@ pub async fn list_components(
                 .into_iter()
                 .map(|row| UncertaintyComponent {
                     id: row.get("id"),
+                    tenant_id: row.get("tenant_id"),
                     project_id: row.get("project_id"),
                     source_id: row.get("source_id"),
                     source_name: row.get("source_name"),
@@ -788,7 +800,7 @@ pub async fn list_components(
 }
 
 pub async fn create_component(
-    State(state): State<crate::AppState>,
+    State(state): State<crate::shared::AppState>,
     Json(req): Json<CreateUncertaintyComponentRequest>,
 ) -> Json<ApiResponse<UncertaintyComponent>> {
     let project_id = match Uuid::parse_str(&req.project_id) {
@@ -845,6 +857,7 @@ pub async fn create_component(
         Ok(r) => Json(ApiResponse::success(
             UncertaintyComponent {
                 id: r.get("id"),
+                tenant_id: r.get("tenant_id"),
                 project_id: r.get("project_id"),
                 source_id: r.get("source_id"),
                 source_name: r.get("source_name"),
@@ -870,7 +883,7 @@ pub async fn create_component(
 }
 
 pub async fn update_component(
-    State(state): State<crate::AppState>,
+    State(state): State<crate::shared::AppState>,
     axum::extract::Path(id): axum::extract::Path<String>,
     Json(req): Json<UpdateUncertaintyComponentRequest>,
 ) -> Json<ApiResponse<UncertaintyComponent>> {
@@ -914,6 +927,7 @@ pub async fn update_component(
         Ok(r) => Json(ApiResponse::success(
             UncertaintyComponent {
                 id: r.get("id"),
+                tenant_id: r.get("tenant_id"),
                 project_id: r.get("project_id"),
                 source_id: r.get("source_id"),
                 source_name: r.get("source_name"),
@@ -939,7 +953,7 @@ pub async fn update_component(
 }
 
 pub async fn delete_component(
-    State(state): State<crate::AppState>,
+    State(state): State<crate::shared::AppState>,
     axum::extract::Path(id): axum::extract::Path<String>,
 ) -> Json<ApiResponse<bool>> {
     let id = match Uuid::parse_str(&id) {
@@ -962,7 +976,7 @@ pub async fn delete_component(
 }
 
 pub async fn calculate_type_a(
-    State(state): State<crate::AppState>,
+    State(state): State<crate::shared::AppState>,
     Json(req): Json<TypeACalculationRequest>,
 ) -> Json<ApiResponse<UncertaintyComponent>> {
     let project_id = match Uuid::parse_str(&req.project_id) {
@@ -1031,6 +1045,7 @@ pub async fn calculate_type_a(
         Ok(r) => Json(ApiResponse::success(
             UncertaintyComponent {
                 id: r.get("id"),
+                tenant_id: r.get("tenant_id"),
                 project_id: r.get("project_id"),
                 source_id: r.get("source_id"),
                 source_name: r.get("source_name"),
@@ -1056,7 +1071,7 @@ pub async fn calculate_type_a(
 }
 
 pub async fn calculate_type_b(
-    State(state): State<crate::AppState>,
+    State(state): State<crate::shared::AppState>,
     Json(req): Json<TypeBCalculationRequest>,
 ) -> Json<ApiResponse<UncertaintyComponent>> {
     let project_id = match Uuid::parse_str(&req.project_id) {
@@ -1115,6 +1130,7 @@ pub async fn calculate_type_b(
         Ok(r) => Json(ApiResponse::success(
             UncertaintyComponent {
                 id: r.get("id"),
+                tenant_id: r.get("tenant_id"),
                 project_id: r.get("project_id"),
                 source_id: r.get("source_id"),
                 source_name: r.get("source_name"),
@@ -1140,7 +1156,7 @@ pub async fn calculate_type_b(
 }
 
 pub async fn calculate_combined(
-    State(state): State<crate::AppState>,
+    State(state): State<crate::shared::AppState>,
     axum::extract::Path(project_id): axum::extract::Path<String>,
 ) -> Json<ApiResponse<serde_json::Value>> {
     let id = match Uuid::parse_str(&project_id) {
@@ -1231,7 +1247,7 @@ pub async fn calculate_combined(
 }
 
 pub async fn generate_report(
-    State(state): State<crate::AppState>,
+    State(state): State<crate::shared::AppState>,
     axum::extract::Path(project_id): axum::extract::Path<String>,
 ) -> Json<ApiResponse<serde_json::Value>> {
     let id = match Uuid::parse_str(&project_id) {

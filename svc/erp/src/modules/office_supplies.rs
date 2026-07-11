@@ -35,7 +35,7 @@ pub fn create_routes() -> Router<ApiState> {
         )
 }
 
-async fn list_supplies(
+pub async fn list_supplies(
     State(state): State<ApiState>,
     Query(params): Query<SupplyQueryParams>,
 ) -> Json<ApiResponse<PaginatedResponse<OfficeSupply>>> {
@@ -96,7 +96,7 @@ async fn list_supplies(
     }
 }
 
-async fn create_supply(
+pub async fn create_supply(
     State(state): State<ApiState>,
     headers: HeaderMap,
     Json(req): Json<CreateOfficeSupplyRequest>,
@@ -171,7 +171,7 @@ async fn create_supply(
     response
 }
 
-async fn get_supply(
+pub async fn get_supply(
     State(state): State<ApiState>,
     Path(id): Path<Uuid>,
 ) -> Json<ApiResponse<OfficeSupply>> {
@@ -195,7 +195,7 @@ async fn get_supply(
     }
 }
 
-async fn update_supply(
+pub async fn update_supply(
     State(state): State<ApiState>,
     Path(id): Path<Uuid>,
     headers: HeaderMap,
@@ -288,7 +288,7 @@ async fn update_supply(
     response
 }
 
-async fn delete_supply(
+pub async fn delete_supply(
     State(state): State<ApiState>,
     Path(id): Path<Uuid>,
     headers: HeaderMap,

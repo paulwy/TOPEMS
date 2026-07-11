@@ -1,15 +1,15 @@
 import { aiNavConfig } from './ai.nav';
-import { adminNavConfig } from './admin.nav';
+import { adminNavConfig } from '@/modules/admin/config';
 import { assetNavConfig } from './asset.nav';
 import { biNavConfig } from './bi.nav';
 import { crmNavConfig } from './crm.nav';
-import { docNavConfig } from './doc.nav';
+import { docNavConfig } from '@/modules/doc/config';
 import { ehsNavConfig } from './ehs.nav';
 import { erpNavConfig } from './erp.nav';
 import { financeNavConfig } from './finance.nav';
 import { gisNavConfig } from './gis.nav';
-import { hrmNavConfig } from './hrm.nav';
-import { iamNavConfig } from './iam.nav';
+import { hrmNavConfig } from '@/modules/hrm/config';
+import { iamNavConfig } from '@/modules/iam/config';
 import { imNavConfig } from './im.nav';
 import { integrationNavConfig } from './integration.nav';
 import { limsNavConfig } from './lims.nav';
@@ -17,7 +17,7 @@ import { lowcodeNavConfig } from './lowcode.nav';
 import { mesNavConfig } from './mes.nav';
 import { mobileNavConfig } from './mobile.nav';
 import { monitorNavConfig } from './monitor.nav';
-import { notificationNavConfig } from './notification.nav';
+import { notificationNavConfig } from '@/modules/notification/config';
 import { oaNavConfig } from './oa.nav';
 import { pdmNavConfig } from './pdm.nav';
 import { pmNavConfig } from './pm.nav';
@@ -28,7 +28,7 @@ import { rsNavConfig } from './rs.nav';
 import { scmNavConfig } from './scm.nav';
 import { srmNavConfig } from './srm.nav';
 import { wmsNavConfig } from './wms.nav';
-import { workflowNavConfig } from './workflow.nav';
+import { workflowNavConfig } from '@/modules/workflow/config';
 import type { ModuleNavConfig } from '../types';
 
 export const coreModuleNavConfigs: ModuleNavConfig[] = [

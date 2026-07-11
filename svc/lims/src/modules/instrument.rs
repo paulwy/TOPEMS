@@ -1,13 +1,14 @@
 use axum::{
     extract::State,
     routing::{get, post},
-    Json, Router,
+    Extension, Json, Router,
 };
 use serde::{Deserialize, Serialize};
 use sqlx::{types::Uuid, Row};
 use topems_shared::ApiResponse;
 
-use crate::AppState;
+use crate::middleware::tenant::TenantContext;
+use crate::shared::AppState;
 
 pub fn create_routes() -> Router<AppState> {
     Router::new()
@@ -35,6 +36,7 @@ pub struct InstrumentQuery {
 #[derive(Debug, Serialize)]
 pub struct Instrument {
     pub id: String,
+    pub tenant_id: String,
     pub instrument_no: String,
     pub name: String,
     pub model: Option<String>,
@@ -72,21 +74,23 @@ pub struct CalibrationRequest {
 }
 
 pub async fn list_instruments(
-    State(state): State<crate::AppState>,
+    State(state): State<crate::shared::AppState>,
+    Extension(ctx): Extension<TenantContext>,
     axum::extract::Query(query): axum::extract::Query<InstrumentQuery>,
 ) -> Json<ApiResponse<Vec<Instrument>>> {
     let page = query.page.unwrap_or(1);
     let page_size = query.page_size.unwrap_or(10);
     let offset = (page - 1) * page_size;
+    let tenant_id = ctx.tenant_id;
 
     let sql = match (query.status.as_ref(), query.name.as_ref()) {
-        (Some(_), Some(_)) => "SELECT id, instrument_no, name, model, manufacturer, status, location, last_calibration_at::TEXT, next_calibration_at::TEXT, created_at::TEXT, updated_at::TEXT FROM qa_lab_instruments WHERE status = $1 AND name LIKE $2 ORDER BY created_at DESC LIMIT $3 OFFSET $4",
-        (Some(_), None) => "SELECT id, instrument_no, name, model, manufacturer, status, location, last_calibration_at::TEXT, next_calibration_at::TEXT, created_at::TEXT, updated_at::TEXT FROM qa_lab_instruments WHERE status = $1 ORDER BY created_at DESC LIMIT $2 OFFSET $3",
-        (None, Some(_)) => "SELECT id, instrument_no, name, model, manufacturer, status, location, last_calibration_at::TEXT, next_calibration_at::TEXT, created_at::TEXT, updated_at::TEXT FROM qa_lab_instruments WHERE name LIKE $1 ORDER BY created_at DESC LIMIT $2 OFFSET $3",
-        (None, None) => "SELECT id, instrument_no, name, model, manufacturer, status, location, last_calibration_at::TEXT, next_calibration_at::TEXT, created_at::TEXT, updated_at::TEXT FROM qa_lab_instruments ORDER BY created_at DESC LIMIT $1 OFFSET $2",
+        (Some(_), Some(_)) => "SELECT id, tenant_id, instrument_no, name, model, manufacturer, status, location, last_calibration_at::TEXT, next_calibration_at::TEXT, created_at::TEXT, updated_at::TEXT FROM qa_lab_instruments WHERE tenant_id = $1 AND status = $2 AND name LIKE $3 ORDER BY created_at DESC LIMIT $4 OFFSET $5",
+        (Some(_), None) => "SELECT id, tenant_id, instrument_no, name, model, manufacturer, status, location, last_calibration_at::TEXT, next_calibration_at::TEXT, created_at::TEXT, updated_at::TEXT FROM qa_lab_instruments WHERE tenant_id = $1 AND status = $2 ORDER BY created_at DESC LIMIT $3 OFFSET $4",
+        (None, Some(_)) => "SELECT id, tenant_id, instrument_no, name, model, manufacturer, status, location, last_calibration_at::TEXT, next_calibration_at::TEXT, created_at::TEXT, updated_at::TEXT FROM qa_lab_instruments WHERE tenant_id = $1 AND name LIKE $2 ORDER BY created_at DESC LIMIT $3 OFFSET $4",
+        (None, None) => "SELECT id, tenant_id, instrument_no, name, model, manufacturer, status, location, last_calibration_at::TEXT, next_calibration_at::TEXT, created_at::TEXT, updated_at::TEXT FROM qa_lab_instruments WHERE tenant_id = $1 ORDER BY created_at DESC LIMIT $2 OFFSET $3",
     };
 
-    let mut query_builder = sqlx::query(sql);
+    let mut query_builder = sqlx::query(sql).bind(tenant_id);
     match (query.status.as_ref(), query.name.as_ref()) {
         (Some(st), Some(nm)) => {
             query_builder = query_builder
@@ -113,6 +117,7 @@ pub async fn list_instruments(
         rows.into_iter()
             .map(|row| Instrument {
                 id: row.get("id"),
+                tenant_id: row.get("tenant_id"),
                 instrument_no: row.get("instrument_no"),
                 name: row.get("name"),
                 model: row.get("model"),
@@ -137,17 +142,20 @@ pub async fn list_instruments(
 }
 
 pub async fn create_instrument(
-    State(state): State<crate::AppState>,
+    State(state): State<crate::shared::AppState>,
+    Extension(ctx): Extension<TenantContext>,
     Json(req): Json<CreateInstrumentRequest>,
 ) -> Json<ApiResponse<Instrument>> {
     let instrument_no = format!(
         "INS-{}",
         uuid::Uuid::new_v4().to_string()[..8].to_uppercase()
     );
+    let tenant_id = ctx.tenant_id;
 
     let row = sqlx::query(
-        "INSERT INTO qa_lab_instruments (instrument_no, name, model, manufacturer, status, location) VALUES ($1, $2, $3, $4, 'normal', $5) RETURNING id, instrument_no, name, model, manufacturer, status, location, last_calibration_at::TEXT, next_calibration_at::TEXT, created_at::TEXT, updated_at::TEXT"
+        "INSERT INTO qa_lab_instruments (tenant_id, instrument_no, name, model, manufacturer, status, location) VALUES ($1, $2, $3, $4, $5, 'normal', $6) RETURNING id, tenant_id, instrument_no, name, model, manufacturer, status, location, last_calibration_at::TEXT, next_calibration_at::TEXT, created_at::TEXT, updated_at::TEXT"
     )
+    .bind(tenant_id)
     .bind(instrument_no)
     .bind(&req.name)
     .bind(&req.model)
@@ -160,6 +168,7 @@ pub async fn create_instrument(
         Ok(r) => Json(ApiResponse::success(
             Instrument {
                 id: r.get("id"),
+                tenant_id: r.get("tenant_id"),
                 instrument_no: r.get("instrument_no"),
                 name: r.get("name"),
                 model: r.get("model"),
@@ -181,18 +190,21 @@ pub async fn create_instrument(
 }
 
 pub async fn get_instrument(
-    State(state): State<crate::AppState>,
+    State(state): State<crate::shared::AppState>,
+    Extension(ctx): Extension<TenantContext>,
     axum::extract::Path(id): axum::extract::Path<String>,
 ) -> Json<ApiResponse<Instrument>> {
     let id = match Uuid::parse_str(&id) {
         Ok(u) => u,
         Err(_) => return Json(ApiResponse::error(400, "无效的仪器ID")),
     };
+    let tenant_id = ctx.tenant_id;
 
     let row = sqlx::query(
-        "SELECT id, instrument_no, name, model, manufacturer, status, location, last_calibration_at::TEXT, next_calibration_at::TEXT, created_at::TEXT, updated_at::TEXT FROM qa_lab_instruments WHERE id = $1"
+        "SELECT id, tenant_id, instrument_no, name, model, manufacturer, status, location, last_calibration_at::TEXT, next_calibration_at::TEXT, created_at::TEXT, updated_at::TEXT FROM qa_lab_instruments WHERE id = $1 AND tenant_id = $2"
     )
     .bind(id)
+    .bind(tenant_id)
     .fetch_one(&state.pool)
     .await;
 
@@ -200,6 +212,7 @@ pub async fn get_instrument(
         Ok(r) => Json(ApiResponse::success(
             Instrument {
                 id: r.get("id"),
+                tenant_id: r.get("tenant_id"),
                 instrument_no: r.get("instrument_no"),
                 name: r.get("name"),
                 model: r.get("model"),
@@ -221,7 +234,8 @@ pub async fn get_instrument(
 }
 
 pub async fn update_instrument(
-    State(state): State<crate::AppState>,
+    State(state): State<crate::shared::AppState>,
+    Extension(ctx): Extension<TenantContext>,
     axum::extract::Path(id): axum::extract::Path<String>,
     Json(req): Json<UpdateInstrumentRequest>,
 ) -> Json<ApiResponse<Instrument>> {
@@ -229,9 +243,10 @@ pub async fn update_instrument(
         Ok(u) => u,
         Err(_) => return Json(ApiResponse::error(400, "无效的仪器ID")),
     };
+    let tenant_id = ctx.tenant_id;
 
     let row = sqlx::query(
-        "UPDATE qa_lab_instruments SET name = COALESCE($2, name), model = COALESCE($3, model), manufacturer = COALESCE($4, manufacturer), status = COALESCE($5, status), location = COALESCE($6, location), next_calibration_at = COALESCE($7, next_calibration_at), updated_at = NOW() WHERE id = $1 RETURNING id, instrument_no, name, model, manufacturer, status, location, last_calibration_at::TEXT, next_calibration_at::TEXT, created_at::TEXT, updated_at::TEXT"
+        "UPDATE qa_lab_instruments SET name = COALESCE($2, name), model = COALESCE($3, model), manufacturer = COALESCE($4, manufacturer), status = COALESCE($5, status), location = COALESCE($6, location), next_calibration_at = COALESCE($7, next_calibration_at), updated_at = NOW() WHERE id = $1 AND tenant_id = $8 RETURNING id, tenant_id, instrument_no, name, model, manufacturer, status, location, last_calibration_at::TEXT, next_calibration_at::TEXT, created_at::TEXT, updated_at::TEXT"
     )
     .bind(id)
     .bind(&req.name)
@@ -240,6 +255,7 @@ pub async fn update_instrument(
     .bind(&req.status)
     .bind(&req.location)
     .bind(&req.next_calibration_at)
+    .bind(tenant_id)
     .fetch_one(&state.pool)
     .await;
 
@@ -247,6 +263,7 @@ pub async fn update_instrument(
         Ok(r) => Json(ApiResponse::success(
             Instrument {
                 id: r.get("id"),
+                tenant_id: r.get("tenant_id"),
                 instrument_no: r.get("instrument_no"),
                 name: r.get("name"),
                 model: r.get("model"),
@@ -268,7 +285,8 @@ pub async fn update_instrument(
 }
 
 pub async fn calibrate(
-    State(state): State<crate::AppState>,
+    State(state): State<crate::shared::AppState>,
+    Extension(ctx): Extension<TenantContext>,
     axum::extract::Path(id): axum::extract::Path<String>,
     Json(req): Json<CalibrationRequest>,
 ) -> Json<ApiResponse<Instrument>> {
@@ -276,12 +294,14 @@ pub async fn calibrate(
         Ok(u) => u,
         Err(_) => return Json(ApiResponse::error(400, "无效的仪器ID")),
     };
+    let tenant_id = ctx.tenant_id;
 
     let row = sqlx::query(
-        "UPDATE qa_lab_instruments SET last_calibration_at = NOW(), next_calibration_at = COALESCE($2, next_calibration_at), status = 'calibrated', updated_at = NOW() WHERE id = $1 RETURNING id, instrument_no, name, model, manufacturer, status, location, last_calibration_at::TEXT, next_calibration_at::TEXT, created_at::TEXT, updated_at::TEXT"
+        "UPDATE qa_lab_instruments SET last_calibration_at = NOW(), next_calibration_at = COALESCE($2, next_calibration_at), status = 'calibrated', updated_at = NOW() WHERE id = $1 AND tenant_id = $3 RETURNING id, tenant_id, instrument_no, name, model, manufacturer, status, location, last_calibration_at::TEXT, next_calibration_at::TEXT, created_at::TEXT, updated_at::TEXT"
     )
     .bind(id)
     .bind(&req.next_calibration_at)
+    .bind(tenant_id)
     .fetch_one(&state.pool)
     .await;
 
@@ -289,6 +309,7 @@ pub async fn calibrate(
         Ok(r) => Json(ApiResponse::success(
             Instrument {
                 id: r.get("id"),
+                tenant_id: r.get("tenant_id"),
                 instrument_no: r.get("instrument_no"),
                 name: r.get("name"),
                 model: r.get("model"),
@@ -310,16 +331,19 @@ pub async fn calibrate(
 }
 
 pub async fn delete_instrument(
-    State(state): State<crate::AppState>,
+    State(state): State<crate::shared::AppState>,
+    Extension(ctx): Extension<TenantContext>,
     axum::extract::Path(id): axum::extract::Path<String>,
 ) -> Json<ApiResponse<bool>> {
     let id = match Uuid::parse_str(&id) {
         Ok(u) => u,
         Err(_) => return Json(ApiResponse::error(400, "无效的仪器ID")),
     };
+    let tenant_id = ctx.tenant_id;
 
-    let result = sqlx::query("DELETE FROM qa_lab_instruments WHERE id = $1")
+    let result = sqlx::query("DELETE FROM qa_lab_instruments WHERE id = $1 AND tenant_id = $2")
         .bind(id)
+        .bind(tenant_id)
         .execute(&state.pool)
         .await;
 
@@ -386,7 +410,7 @@ pub struct CreateCalibrationScheduleRequest {
 }
 
 pub async fn get_calibration_history(
-    State(state): State<crate::AppState>,
+    State(state): State<crate::shared::AppState>,
     axum::extract::Path(instrument_id): axum::extract::Path<String>,
 ) -> Json<ApiResponse<Vec<CalibrationRecord>>> {
     let id = match Uuid::parse_str(&instrument_id) {
@@ -437,7 +461,7 @@ pub async fn get_calibration_history(
 }
 
 pub async fn create_calibration_record(
-    State(state): State<crate::AppState>,
+    State(state): State<crate::shared::AppState>,
     Json(req): Json<CreateCalibrationRecordRequest>,
 ) -> Json<ApiResponse<CalibrationRecord>> {
     let instrument_id = match Uuid::parse_str(&req.instrument_id) {
@@ -530,7 +554,7 @@ pub async fn create_calibration_record(
 }
 
 pub async fn get_calibration_schedule(
-    State(state): State<crate::AppState>,
+    State(state): State<crate::shared::AppState>,
 ) -> Json<ApiResponse<Vec<CalibrationSchedule>>> {
     let rows = sqlx::query(
         r#"
@@ -599,7 +623,7 @@ pub async fn get_calibration_schedule(
 }
 
 pub async fn get_overdue_calibrations(
-    State(state): State<crate::AppState>,
+    State(state): State<crate::shared::AppState>,
 ) -> Json<ApiResponse<Vec<CalibrationSchedule>>> {
     let rows = sqlx::query(
         r#"

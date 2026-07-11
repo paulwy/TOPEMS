@@ -17,8 +17,6 @@ import type {
   PaginatedResult,
 } from './types';
 
-export * from './types';
-
 import { documentApi } from './documents';
 import { chatApi } from './chat';
 import { analysisApi } from './analysis';
@@ -26,6 +24,8 @@ import { codeApi } from './code';
 import { qaApi } from './qa';
 import { vectorApi } from './vector';
 import { recommendationApi } from './recommendation';
+
+export * from './types';
 
 export const aiApi = {
   ...documentApi,

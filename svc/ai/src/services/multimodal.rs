@@ -260,7 +260,7 @@ impl MultimodalService {
 
         let response = self
             .qa_service
-            .ask(&prompt_text, None, 5)
+            .ask(&prompt_text, None, 5, Uuid::nil())
             .await
             .map(|r| r.0)?;
 
@@ -280,7 +280,11 @@ impl MultimodalService {
             request.prompt.clone().unwrap_or_default()
         );
 
-        let response = self.qa_service.ask(&prompt, None, 5).await.map(|r| r.0)?;
+        let response = self
+            .qa_service
+            .ask(&prompt, None, 5, Uuid::nil())
+            .await
+            .map(|r| r.0)?;
 
         Ok(serde_json::json!({
             "analysis": response,
@@ -345,7 +349,11 @@ impl MultimodalService {
             "分析视频内容：{}，类型：{}",
             request.video_url, request.analysis_type
         );
-        let response = self.qa_service.ask(&prompt, None, 5).await.map(|r| r.0)?;
+        let response = self
+            .qa_service
+            .ask(&prompt, None, 5, Uuid::nil())
+            .await
+            .map(|r| r.0)?;
 
         Ok(serde_json::json!({
             "analysis": response,
@@ -616,7 +624,7 @@ impl MultimodalService {
 
         let ai_comparison = self
             .qa_service
-            .ask(&prompt, None, 3)
+            .ask(&prompt, None, 3, Uuid::nil())
             .await
             .map(|r| r.0)
             .unwrap_or_default();
