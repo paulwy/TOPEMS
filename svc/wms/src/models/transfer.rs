@@ -6,6 +6,7 @@ use uuid::Uuid;
 #[derive(Debug, Clone, FromRow, Serialize, Deserialize)]
 pub struct Transfer {
     pub id: Uuid,
+    pub tenant_id: Uuid,
     pub transfer_number: String,
     pub from_warehouse_id: Option<Uuid>,
     pub from_location_id: Option<Uuid>,
@@ -40,6 +41,7 @@ pub struct UpdateTransferRequest {
 #[derive(Debug, Clone, FromRow, Serialize, Deserialize)]
 pub struct TransferItem {
     pub id: Uuid,
+    pub tenant_id: Uuid,
     pub transfer_id: Uuid,
     pub inventory_item_id: Uuid,
     pub quantity: f64,

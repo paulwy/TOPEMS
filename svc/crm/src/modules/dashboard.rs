@@ -7,6 +7,7 @@ use chrono::{Datelike, TimeZone, Utc};
 use serde::Deserialize;
 use uuid::Uuid;
 
+use crate::middleware::tenant::get_tenant_id;
 use crate::models::{
     ContactStats, CustomerStats, CustomerWithDetails, DashboardStats, FunnelStage, IndustryCount,
     InteractionStats, OpportunityStats, SalesForecast, StageCount, TypeCount,
@@ -33,80 +34,103 @@ pub fn create_routes() -> Router<ApiState> {
 async fn get_dashboard_stats(
     State(state): State<ApiState>,
     Extension(claims): Extension<Claims>,
+    headers: HeaderMap,
 ) -> Json<ApiResponse<DashboardStats>> {
     match check_permission(&state.db, &claims, &ModulePermission::CustomerRead).await {
         Ok(_) => {}
         Err(e) => return e,
     }
 
-    let customers_total: i64 = sqlx::query_scalar("SELECT COUNT(*) FROM customers")
-        .fetch_one(&state.db)
-        .await
-        .unwrap_or(0);
+    let tenant_id = get_tenant_id(&claims, &headers);
 
-    let customers_active: i64 =
-        sqlx::query_scalar("SELECT COUNT(*) FROM customers WHERE status = 'active'")
+    let customers_total: i64 =
+        sqlx::query_scalar("SELECT COUNT(*) FROM crm.customers WHERE tenant_id = $1")
+            .bind(tenant_id)
             .fetch_one(&state.db)
             .await
             .unwrap_or(0);
 
-    let by_industry: Vec<IndustryCount> = sqlx::query_as(
-        "SELECT industry, COUNT(*) as count FROM customers WHERE industry IS NOT NULL GROUP BY industry ORDER BY count DESC"
+    let customers_active: i64 = sqlx::query_scalar(
+        "SELECT COUNT(*) FROM crm.customers WHERE tenant_id = $1 AND status = 'active'",
     )
+    .bind(tenant_id)
+    .fetch_one(&state.db)
+    .await
+    .unwrap_or(0);
+
+    let by_industry: Vec<IndustryCount> = sqlx::query_as(
+        "SELECT industry, COUNT(*) as count FROM crm.customers WHERE tenant_id = $1 AND industry IS NOT NULL GROUP BY industry ORDER BY count DESC"
+    )
+    .bind(tenant_id)
     .fetch_all(&state.db)
     .await
     .unwrap_or_default();
 
-    let contacts_total: i64 = sqlx::query_scalar("SELECT COUNT(*) FROM contacts")
-        .fetch_one(&state.db)
-        .await
-        .unwrap_or(0);
-
-    let contacts_active: i64 =
-        sqlx::query_scalar("SELECT COUNT(*) FROM contacts WHERE status = 'active'")
+    let contacts_total: i64 =
+        sqlx::query_scalar("SELECT COUNT(*) FROM crm.contacts WHERE tenant_id = $1")
+            .bind(tenant_id)
             .fetch_one(&state.db)
             .await
             .unwrap_or(0);
 
-    let opportunities_total: i64 = sqlx::query_scalar("SELECT COUNT(*) FROM opportunities")
-        .fetch_one(&state.db)
-        .await
-        .unwrap_or(0);
+    let contacts_active: i64 = sqlx::query_scalar(
+        "SELECT COUNT(*) FROM crm.contacts WHERE tenant_id = $1 AND status = 'active'",
+    )
+    .bind(tenant_id)
+    .fetch_one(&state.db)
+    .await
+    .unwrap_or(0);
+
+    let opportunities_total: i64 =
+        sqlx::query_scalar("SELECT COUNT(*) FROM crm.opportunities WHERE tenant_id = $1")
+            .bind(tenant_id)
+            .fetch_one(&state.db)
+            .await
+            .unwrap_or(0);
 
     let by_stage: Vec<StageCount> = sqlx::query_as(
-        "SELECT stage, COUNT(*) as count FROM opportunities GROUP BY stage ORDER BY count DESC",
+        "SELECT stage, COUNT(*) as count FROM crm.opportunities WHERE tenant_id = $1 GROUP BY stage ORDER BY count DESC",
     )
+    .bind(tenant_id)
     .fetch_all(&state.db)
     .await
     .unwrap_or_default();
 
     let total_value: Option<i64> = sqlx::query_scalar(
-        "SELECT COALESCE(SUM(value), 0) FROM opportunities WHERE value IS NOT NULL",
+        "SELECT COALESCE(SUM(value), 0) FROM crm.opportunities WHERE tenant_id = $1 AND value IS NOT NULL",
     )
+    .bind(tenant_id)
     .fetch_optional(&state.db)
     .await
     .unwrap_or(Some(0));
 
-    let interactions_total: i64 = sqlx::query_scalar("SELECT COUNT(*) FROM interactions")
-        .fetch_one(&state.db)
-        .await
-        .unwrap_or(0);
-
-    let interactions_scheduled: i64 =
-        sqlx::query_scalar("SELECT COUNT(*) FROM interactions WHERE status = 'scheduled'")
+    let interactions_total: i64 =
+        sqlx::query_scalar("SELECT COUNT(*) FROM crm.interactions WHERE tenant_id = $1")
+            .bind(tenant_id)
             .fetch_one(&state.db)
             .await
             .unwrap_or(0);
 
-    let interactions_completed: i64 =
-        sqlx::query_scalar("SELECT COUNT(*) FROM interactions WHERE status = 'completed'")
-            .fetch_one(&state.db)
-            .await
-            .unwrap_or(0);
+    let interactions_scheduled: i64 = sqlx::query_scalar(
+        "SELECT COUNT(*) FROM crm.interactions WHERE tenant_id = $1 AND status = 'scheduled'",
+    )
+    .bind(tenant_id)
+    .fetch_one(&state.db)
+    .await
+    .unwrap_or(0);
+
+    let interactions_completed: i64 = sqlx::query_scalar(
+        "SELECT COUNT(*) FROM crm.interactions WHERE tenant_id = $1 AND status = 'completed'",
+    )
+    .bind(tenant_id)
+    .fetch_one(&state.db)
+    .await
+    .unwrap_or(0);
 
     let by_type: Vec<TypeCount> = sqlx::query_as(
-        "SELECT type, COUNT(*) as count FROM interactions GROUP BY type ORDER BY count DESC",
+        "SELECT type, COUNT(*) as count FROM crm.interactions WHERE tenant_id = $1 GROUP BY type ORDER BY count DESC",
     )
+    .bind(tenant_id)
     .fetch_all(&state.db)
     .await
     .unwrap_or_default();
@@ -141,47 +165,54 @@ async fn get_customer_details(
     State(state): State<ApiState>,
     Extension(claims): Extension<Claims>,
     Path(id): Path<Uuid>,
+    headers: HeaderMap,
 ) -> Json<ApiResponse<CustomerWithDetails>> {
     match check_permission(&state.db, &claims, &ModulePermission::CustomerRead).await {
         Ok(_) => {}
         Err(e) => return e,
     }
 
+    let tenant_id = get_tenant_id(&claims, &headers);
+
     let customer = sqlx::query_as::<_, crate::models::Customer>(
         r#"
-        SELECT id, name, code, industry, website, email, phone, address, status, notes, created_at, updated_at
-        FROM customers WHERE id = $1
+        SELECT id, tenant_id, name, code, industry, website, email, phone, address, status, notes, created_at, updated_at
+        FROM crm.customers WHERE id = $1 AND tenant_id = $2
         "#,
     )
     .bind(id)
+    .bind(tenant_id)
     .fetch_optional(&state.db)
     .await;
 
     match customer {
         Ok(Some(customer)) => {
             let contacts = sqlx::query_as::<_, crate::models::Contact>(
-                "SELECT id, customer_id, first_name, last_name, email, phone, position, status, notes, created_at, updated_at
-                 FROM contacts WHERE customer_id = $1 ORDER BY created_at DESC"
+                "SELECT id, tenant_id, customer_id, first_name, last_name, email, phone, position, status, notes, created_at, updated_at
+                 FROM crm.contacts WHERE customer_id = $1 AND tenant_id = $2 ORDER BY created_at DESC"
             )
             .bind(id)
+            .bind(tenant_id)
             .fetch_all(&state.db)
             .await
             .unwrap_or_default();
 
             let opportunities = sqlx::query_as::<_, crate::models::Opportunity>(
-                "SELECT id, customer_id, name, value, stage, probability, close_date, notes, created_at, updated_at
-                 FROM opportunities WHERE customer_id = $1 ORDER BY created_at DESC"
+                "SELECT id, tenant_id, customer_id, name, value, stage, probability, close_date, notes, created_at, updated_at
+                 FROM crm.opportunities WHERE customer_id = $1 AND tenant_id = $2 ORDER BY created_at DESC"
             )
             .bind(id)
+            .bind(tenant_id)
             .fetch_all(&state.db)
             .await
             .unwrap_or_default();
 
             let recent_interactions = sqlx::query_as::<_, crate::models::Interaction>(
-                "SELECT id, customer_id, contact_id, type, subject, content, scheduled_at, completed_at, status, notes, created_at, updated_at
-                 FROM interactions WHERE customer_id = $1 ORDER BY created_at DESC LIMIT 10"
+                "SELECT id, tenant_id, customer_id, contact_id, type, subject, content, scheduled_at, completed_at, status, notes, created_at, updated_at
+                 FROM crm.interactions WHERE customer_id = $1 AND tenant_id = $2 ORDER BY created_at DESC LIMIT 10"
             )
             .bind(id)
+            .bind(tenant_id)
             .fetch_all(&state.db)
             .await
             .unwrap_or_default();
@@ -206,11 +237,14 @@ async fn get_customer_details(
 async fn get_sales_funnel(
     State(state): State<ApiState>,
     Extension(claims): Extension<Claims>,
+    headers: HeaderMap,
 ) -> Json<ApiResponse<Vec<FunnelStage>>> {
     match check_permission(&state.db, &claims, &ModulePermission::OpportunityRead).await {
         Ok(_) => {}
         Err(e) => return e,
     }
+
+    let tenant_id = get_tenant_id(&claims, &headers);
 
     let stages = vec![
         ("prospecting", "线索"),
@@ -224,17 +258,20 @@ async fn get_sales_funnel(
     let mut funnel_stages = Vec::new();
 
     for (stage, stage_label) in stages {
-        let count: i64 =
-            sqlx::query_scalar("SELECT COUNT(*) FROM plugin_crm.opportunities WHERE stage = $1")
-                .bind(stage)
-                .fetch_one(&state.db)
-                .await
-                .unwrap_or(0);
-
-        let total_value: Option<f64> = sqlx::query_scalar(
-            "SELECT COALESCE(SUM(value), 0) FROM plugin_crm.opportunities WHERE stage = $1 AND value IS NOT NULL"
+        let count: i64 = sqlx::query_scalar(
+            "SELECT COUNT(*) FROM plugin_crm.opportunities WHERE stage = $1 AND tenant_id = $2",
         )
         .bind(stage)
+        .bind(tenant_id)
+        .fetch_one(&state.db)
+        .await
+        .unwrap_or(0);
+
+        let total_value: Option<f64> = sqlx::query_scalar(
+            "SELECT COALESCE(SUM(value), 0) FROM plugin_crm.opportunities WHERE stage = $1 AND tenant_id = $2 AND value IS NOT NULL"
+        )
+        .bind(stage)
+        .bind(tenant_id)
         .fetch_optional(&state.db)
         .await
         .unwrap_or(Some(0.0));
@@ -253,12 +290,14 @@ async fn get_sales_forecast(
     State(state): State<ApiState>,
     Extension(claims): Extension<Claims>,
     Query(params): Query<ForecastParams>,
+    headers: HeaderMap,
 ) -> Json<ApiResponse<SalesForecast>> {
     match check_permission(&state.db, &claims, &ModulePermission::OpportunityRead).await {
         Ok(_) => {}
         Err(e) => return e,
     }
 
+    let tenant_id = get_tenant_id(&claims, &headers);
     let months = params.months.unwrap_or(12).min(24).max(1);
 
     let mut forecast_data = Vec::new();
@@ -280,11 +319,12 @@ async fn get_sales_forecast(
             r#"
             SELECT COALESCE(SUM(value * probability / 100), 0) 
             FROM plugin_crm.opportunities 
-            WHERE close_date >= $1 AND close_date < $2 AND stage NOT IN ('closed_won', 'closed_lost')
+            WHERE tenant_id = $3 AND close_date >= $1 AND close_date < $2 AND stage NOT IN ('closed_won', 'closed_lost')
             "#,
         )
         .bind(month_start)
         .bind(month_end)
+        .bind(tenant_id)
         .fetch_optional(&state.db)
         .await
         .unwrap_or(Some(0.0));
@@ -310,11 +350,12 @@ async fn get_sales_forecast(
         r#"
         SELECT COALESCE(SUM(value), 0) 
         FROM plugin_crm.opportunities 
-        WHERE close_date >= $1 AND close_date < $2 AND stage = 'closed_won'
+        WHERE tenant_id = $3 AND close_date >= $1 AND close_date < $2 AND stage = 'closed_won'
         "#,
     )
     .bind(last_month_start)
     .bind(last_month_end)
+    .bind(tenant_id)
     .fetch_optional(&state.db)
     .await
     .unwrap_or(Some(0.0));

@@ -6,6 +6,7 @@ use uuid::Uuid;
 #[derive(Debug, Clone, FromRow, Serialize, Deserialize)]
 pub struct BillingRecord {
     pub id: Uuid,
+    pub tenant_id: Uuid,
     pub customer_id: Uuid,
     pub customer_name: String,
     pub invoice_no: String,

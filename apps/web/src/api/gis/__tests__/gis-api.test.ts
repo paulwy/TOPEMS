@@ -23,7 +23,7 @@ describe('GIS API utils - adaptResponse', () => {
       pagesize: 10,
     };
     const result = adaptResponse(response, 'factory_maps');
-    expect(result.data).toEqual([{ id: '1', name: 'Test' }]);
+    expect(result.items).toEqual([{ id: '1', name: 'Test' }]);
     expect(result.total).toBe(1);
     expect(result.page).toBe(1);
     expect(result.pageSize).toBe(10);
@@ -44,7 +44,7 @@ describe('GIS API utils - adaptResponse', () => {
       page: 1,
     };
     const result = adaptResponse(response, 'nonexistent');
-    expect(result.data).toEqual([]);
+    expect(result.items).toEqual([]);
     expect(result.total).toBe(0);
   });
 

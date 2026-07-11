@@ -7,6 +7,7 @@ import type { FormSection, FormField } from '@/components/templates/FormPageTemp
 import { PageContainer } from '@/components/common';
 import { employeeApi, departmentApi, positionApi, type Department, type Position } from '@/api/hrm';
 import { useNotification } from '@/hooks/useNotification';
+import { HRM_PATHS } from '@/modules/hrm/config';
 import { logger } from '@/utils/logger';
 
 const employeeSchema = z.object({
@@ -77,7 +78,7 @@ const HrmEmployeeCreatePage: React.FC = () => {
         const res = await employeeApi.create(formData);
         if (res.code === 200 || res.code === 201) {
           success('员工创建成功');
-          navigate('/hrm/employees');
+          navigate(HRM_PATHS.employees);
         } else {
           error(res.message || '创建失败');
         }
@@ -92,7 +93,7 @@ const HrmEmployeeCreatePage: React.FC = () => {
   );
 
   const handleCancel = () => {
-    navigate('/hrm/employees');
+    navigate(HRM_PATHS.employees);
   };
 
   const sections: FormSection[] = [

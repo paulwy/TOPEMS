@@ -79,7 +79,7 @@ pub fn create_routes() -> Router<ApiState> {
         )
 }
 
-async fn list_expenses(
+pub async fn list_expenses(
     State(state): State<ApiState>,
     Extension(claims): Extension<Claims>,
     Query(params): Query<PaginationParams>,
@@ -140,7 +140,7 @@ async fn list_expenses(
     }
 }
 
-async fn create_expense(
+pub async fn create_expense(
     State(state): State<ApiState>,
     Extension(claims): Extension<Claims>,
     headers: HeaderMap,
@@ -226,7 +226,7 @@ async fn create_expense(
     response
 }
 
-async fn get_expense(
+pub async fn get_expense(
     State(state): State<ApiState>,
     Extension(claims): Extension<Claims>,
     Path(id): Path<Uuid>,
@@ -269,7 +269,7 @@ async fn get_expense(
     }
 }
 
-async fn update_expense(
+pub async fn update_expense(
     State(state): State<ApiState>,
     Extension(claims): Extension<Claims>,
     Path(id): Path<Uuid>,
@@ -378,7 +378,7 @@ async fn update_expense(
     response
 }
 
-async fn delete_expense(
+pub async fn delete_expense(
     State(state): State<ApiState>,
     Extension(claims): Extension<Claims>,
     Path(id): Path<Uuid>,
@@ -444,7 +444,7 @@ async fn delete_expense(
     response
 }
 
-async fn list_budgets(
+pub async fn list_budgets(
     State(state): State<ApiState>,
     Extension(claims): Extension<Claims>,
     Query(params): Query<PaginationParams>,
@@ -505,7 +505,7 @@ async fn list_budgets(
     }
 }
 
-async fn create_budget(
+pub async fn create_budget(
     State(state): State<ApiState>,
     Extension(claims): Extension<Claims>,
     headers: HeaderMap,
@@ -589,7 +589,7 @@ async fn create_budget(
     response
 }
 
-async fn get_budget(
+pub async fn get_budget(
     State(state): State<ApiState>,
     Extension(claims): Extension<Claims>,
     Path(id): Path<Uuid>,
@@ -632,7 +632,7 @@ async fn get_budget(
     }
 }
 
-async fn update_budget(
+pub async fn update_budget(
     State(state): State<ApiState>,
     Extension(claims): Extension<Claims>,
     Path(id): Path<Uuid>,
@@ -739,7 +739,7 @@ async fn update_budget(
     response
 }
 
-async fn delete_budget(
+pub async fn delete_budget(
     State(state): State<ApiState>,
     Extension(claims): Extension<Claims>,
     Path(id): Path<Uuid>,
@@ -805,7 +805,7 @@ async fn delete_budget(
     response
 }
 
-async fn list_receivables(
+pub async fn list_receivables(
     State(state): State<ApiState>,
     Extension(claims): Extension<Claims>,
     Query(params): Query<PaginationParams>,
@@ -866,7 +866,7 @@ async fn list_receivables(
     }
 }
 
-async fn create_receivable(
+pub async fn create_receivable(
     State(state): State<ApiState>,
     Extension(claims): Extension<Claims>,
     headers: HeaderMap,
@@ -950,7 +950,7 @@ async fn create_receivable(
     response
 }
 
-async fn get_receivable(
+pub async fn get_receivable(
     State(state): State<ApiState>,
     Extension(claims): Extension<Claims>,
     Path(id): Path<Uuid>,
@@ -993,7 +993,7 @@ async fn get_receivable(
     }
 }
 
-async fn update_receivable(
+pub async fn update_receivable(
     State(state): State<ApiState>,
     Extension(claims): Extension<Claims>,
     Path(id): Path<Uuid>,
@@ -1094,7 +1094,7 @@ async fn update_receivable(
     response
 }
 
-async fn delete_receivable(
+pub async fn delete_receivable(
     State(state): State<ApiState>,
     Extension(claims): Extension<Claims>,
     Path(id): Path<Uuid>,
@@ -1160,7 +1160,7 @@ async fn delete_receivable(
     response
 }
 
-async fn list_payables(
+pub async fn list_payables(
     State(state): State<ApiState>,
     Extension(claims): Extension<Claims>,
     Query(params): Query<PaginationParams>,
@@ -1221,7 +1221,7 @@ async fn list_payables(
     }
 }
 
-async fn create_payable(
+pub async fn create_payable(
     State(state): State<ApiState>,
     Extension(claims): Extension<Claims>,
     headers: HeaderMap,
@@ -1305,7 +1305,7 @@ async fn create_payable(
     response
 }
 
-async fn get_payable(
+pub async fn get_payable(
     State(state): State<ApiState>,
     Extension(claims): Extension<Claims>,
     Path(id): Path<Uuid>,
@@ -1348,7 +1348,7 @@ async fn get_payable(
     }
 }
 
-async fn update_payable(
+pub async fn update_payable(
     State(state): State<ApiState>,
     Extension(claims): Extension<Claims>,
     Path(id): Path<Uuid>,
@@ -1449,7 +1449,7 @@ async fn update_payable(
     response
 }
 
-async fn delete_payable(
+pub async fn delete_payable(
     State(state): State<ApiState>,
     Extension(claims): Extension<Claims>,
     Path(id): Path<Uuid>,
@@ -1530,7 +1530,7 @@ struct PeriodRequest {
     period: String,
 }
 
-async fn get_current_period(
+pub async fn get_current_period(
     State(_state): State<ApiState>,
     Extension(claims): Extension<Claims>,
 ) -> Json<ApiResponse<PeriodResponse>> {
@@ -1576,7 +1576,7 @@ fn get_days_in_month(year: i32, month: i32) -> i32 {
     }
 }
 
-async fn list_periods(
+pub async fn list_periods(
     State(_state): State<ApiState>,
     Extension(claims): Extension<Claims>,
     Query(params): Query<PeriodListParams>,
@@ -1617,7 +1617,7 @@ struct PeriodListParams {
     status: Option<String>,
 }
 
-async fn open_period(
+pub async fn open_period(
     State(_state): State<ApiState>,
     Extension(claims): Extension<Claims>,
     Json(req): Json<PeriodRequest>,
@@ -1632,7 +1632,7 @@ async fn open_period(
     ))
 }
 
-async fn close_period(
+pub async fn close_period(
     State(_state): State<ApiState>,
     Extension(claims): Extension<Claims>,
     Json(req): Json<PeriodRequest>,
@@ -1658,7 +1658,7 @@ struct AccountListParams {
     pagesize: Option<i32>,
 }
 
-async fn list_accounts(
+pub async fn list_accounts(
     State(state): State<ApiState>,
     Extension(claims): Extension<Claims>,
     Query(params): Query<AccountListParams>,
@@ -1803,7 +1803,7 @@ async fn list_accounts(
     }
 }
 
-async fn get_accounts_tree(
+pub async fn get_accounts_tree(
     State(state): State<ApiState>,
     Extension(claims): Extension<Claims>,
     Query(params): Query<AccountTreeParams>,
@@ -1839,7 +1839,7 @@ struct AccountTreeParams {
     include_disabled: Option<bool>,
 }
 
-async fn get_account(
+pub async fn get_account(
     State(state): State<ApiState>,
     Extension(claims): Extension<Claims>,
     Path(id): Path<Uuid>,
@@ -1868,7 +1868,7 @@ async fn get_account(
     }
 }
 
-async fn create_account(
+pub async fn create_account(
     State(state): State<ApiState>,
     Extension(claims): Extension<Claims>,
     _headers: HeaderMap,
@@ -1911,7 +1911,7 @@ async fn create_account(
     }
 }
 
-async fn update_account(
+pub async fn update_account(
     State(state): State<ApiState>,
     Extension(claims): Extension<Claims>,
     Path(id): Path<Uuid>,
@@ -1971,7 +1971,7 @@ async fn update_account(
     }
 }
 
-async fn delete_account(
+pub async fn delete_account(
     State(state): State<ApiState>,
     Extension(claims): Extension<Claims>,
     Path(id): Path<Uuid>,
@@ -2001,7 +2001,7 @@ struct BatchCreateChildrenRequest {
     accounts: Vec<CreateAccountingSubjectRequest>,
 }
 
-async fn batch_create_children(
+pub async fn batch_create_children(
     State(state): State<ApiState>,
     Extension(claims): Extension<Claims>,
     Path(parent_id): Path<Uuid>,
@@ -2082,7 +2082,7 @@ struct AccountBalance {
     balance: f64,
 }
 
-async fn get_account_balances(
+pub async fn get_account_balances(
     State(state): State<ApiState>,
     Extension(claims): Extension<Claims>,
     Query(params): Query<AccountBalancesParams>,
@@ -2229,7 +2229,7 @@ struct AccountOpeningBalance {
     updated_at: DateTime<Utc>,
 }
 
-async fn get_opening_balances(
+pub async fn get_opening_balances(
     State(state): State<ApiState>,
     Extension(claims): Extension<Claims>,
     Query(params): Query<OpeningBalancesParams>,
@@ -2283,7 +2283,7 @@ struct SetOpeningBalanceRequest {
     credit_amount: f64,
 }
 
-async fn set_opening_balance(
+pub async fn set_opening_balance(
     State(state): State<ApiState>,
     Extension(claims): Extension<Claims>,
     Path(account_id): Path<Uuid>,
@@ -2333,7 +2333,7 @@ struct CarryForwardRequest {
     company_id: Option<String>,
 }
 
-async fn carry_forward_opening_balance(
+pub async fn carry_forward_opening_balance(
     State(_state): State<ApiState>,
     Extension(claims): Extension<Claims>,
     Json(req): Json<CarryForwardRequest>,
@@ -2352,7 +2352,7 @@ async fn carry_forward_opening_balance(
     ))
 }
 
-async fn list_collections(
+pub async fn list_collections(
     State(state): State<ApiState>,
     Extension(claims): Extension<Claims>,
     Query(params): Query<PaginationParams>,
@@ -2459,7 +2459,7 @@ async fn list_collections(
     }
 }
 
-async fn create_collection(
+pub async fn create_collection(
     State(state): State<ApiState>,
     Extension(claims): Extension<Claims>,
     Json(req): Json<CreateCollectionRequest>,
@@ -2530,7 +2530,7 @@ async fn create_collection(
     }
 }
 
-async fn list_payments(
+pub async fn list_payments(
     State(state): State<ApiState>,
     Extension(claims): Extension<Claims>,
     Query(params): Query<PaginationParams>,
@@ -2620,7 +2620,7 @@ async fn list_payments(
     }
 }
 
-async fn create_payment(
+pub async fn create_payment(
     State(state): State<ApiState>,
     Extension(claims): Extension<Claims>,
     Json(req): Json<CreatePaymentRequest>,
@@ -2698,7 +2698,7 @@ struct ReconcileRequest {
     record_ids: Vec<String>,
 }
 
-async fn reconcile(
+pub async fn reconcile(
     State(_state): State<ApiState>,
     Extension(claims): Extension<Claims>,
     Json(_req): Json<ReconcileRequest>,
@@ -2717,7 +2717,7 @@ struct AutoReconcileRequest {
     period: String,
 }
 
-async fn auto_reconcile(
+pub async fn auto_reconcile(
     State(_state): State<ApiState>,
     Extension(claims): Extension<Claims>,
     Json(req): Json<AutoReconcileRequest>,
@@ -2737,12 +2737,12 @@ async fn auto_reconcile(
 }
 
 #[derive(Debug, Deserialize)]
-struct AgingParams {
+pub struct AgingParams {
     company_id: Option<String>,
     as_of_date: String,
 }
 
-async fn get_receivable_aging(
+pub async fn get_receivable_aging(
     State(_state): State<ApiState>,
     Extension(claims): Extension<Claims>,
     Query(params): Query<AgingParams>,
@@ -2755,46 +2755,13 @@ async fn get_receivable_aging(
         return Json(api_error(400, "截止日期不能为空"));
     }
 
-    let mock_data = serde_json::json!({
-        "items": [
-            {
-                "customer_id": "cust001",
-                "customer_name": "北京科技有限公司",
-                "total": 150000.0,
-                "current": 80000.0,
-                "over_30": 40000.0,
-                "over_60": 20000.0,
-                "over_90": 10000.0,
-                "over_180": 0.0
-            },
-            {
-                "customer_id": "cust002",
-                "customer_name": "上海贸易公司",
-                "total": 95000.0,
-                "current": 50000.0,
-                "over_30": 25000.0,
-                "over_60": 15000.0,
-                "over_90": 5000.0,
-                "over_180": 0.0
-            },
-            {
-                "customer_id": "cust003",
-                "customer_name": "广州制造集团",
-                "total": 200000.0,
-                "current": 100000.0,
-                "over_30": 50000.0,
-                "over_60": 30000.0,
-                "over_90": 15000.0,
-                "over_180": 5000.0
-            }
-        ],
-        "total": 445000.0
-    });
+    // TODO: 实现真实数据库查询，当前返回演示数据
+    let demo_data = super::demo_data::receivable_aging_demo();
 
-    Json(ApiResponse::success(mock_data, "获取应收账款账龄分析成功"))
+    Json(ApiResponse::success(demo_data, "获取应收账款账龄分析成功"))
 }
 
-async fn get_payable_aging(
+pub async fn get_payable_aging(
     State(_state): State<ApiState>,
     Extension(claims): Extension<Claims>,
     Query(params): Query<AgingParams>,
@@ -2807,31 +2774,8 @@ async fn get_payable_aging(
         return Json(api_error(400, "截止日期不能为空"));
     }
 
-    let mock_data = serde_json::json!({
-        "items": [
-            {
-                "supplier_id": "supp001",
-                "supplier_name": "深圳供应商有限公司",
-                "total": 85000.0,
-                "current": 50000.0,
-                "over_30": 20000.0,
-                "over_60": 10000.0,
-                "over_90": 5000.0,
-                "over_180": 0.0
-            },
-            {
-                "supplier_id": "supp002",
-                "supplier_name": "杭州原材料厂",
-                "total": 62000.0,
-                "current": 35000.0,
-                "over_30": 15000.0,
-                "over_60": 10000.0,
-                "over_90": 2000.0,
-                "over_180": 0.0
-            }
-        ],
-        "total": 147000.0
-    });
+    // TODO: 实现真实数据库查询，当前返回演示数据
+    let demo_data = super::demo_data::payable_aging_demo();
 
-    Json(ApiResponse::success(mock_data, "获取应付账款账龄分析成功"))
+    Json(ApiResponse::success(demo_data, "获取应付账款账龄分析成功"))
 }

@@ -65,18 +65,34 @@ pub async fn create_routes(db: PgPool) -> Result<Router> {
     Ok(app)
 }
 
+fn get_tenant_id(claims: &Claims, headers: &axum::http::HeaderMap) -> Uuid {
+    claims
+        .tenant_id
+        .as_ref()
+        .and_then(|t| Uuid::parse_str(t).ok())
+        .or_else(|| {
+            headers
+                .get("x-tenant-id")
+                .and_then(|v| v.to_str().ok())
+                .and_then(|s| Uuid::parse_str(s).ok())
+        })
+        .unwrap_or_else(Uuid::new_v4)
+}
+
 // ==================== Evaluation Handlers ====================
 
 async fn list_evaluations(
     State(state): State<Arc<AppState>>,
     Extension(claims): Extension<Claims>,
     Query(params): Query<EvaluationQueryParams>,
+    headers: axum::http::HeaderMap,
 ) -> Json<ApiResponse<serde_json::Value>> {
     match check_permission(&state.db, &claims, &ModulePermission::VendorAssessmentRead).await {
         Ok(_) => {}
         Err(e) => return e,
     }
 
+    let tenant_id = get_tenant_id(&claims, &headers);
     let page = params.page.unwrap_or(1).max(1);
     let page_size = params.page_size.unwrap_or(20).min(100);
     let offset = (page - 1) * page_size;
@@ -102,17 +118,19 @@ async fn list_evaluations(
 
     let result = sqlx::query_as::<_, SupplierEvaluation>(
         r#"
-        SELECT id, supplier_id, evaluation_no, evaluation_date, evaluator, overall_score, quality_score, delivery_score, service_score, price_score, comments, status, created_by, created_at, updated_at
+        SELECT id, tenant_id, supplier_id, evaluation_no, evaluation_date, evaluator, overall_score, quality_score, delivery_score, service_score, price_score, comments, status, created_by, created_at, updated_at
         FROM plugin_srm.supplier_evaluations
-        WHERE ($1::text IS NULL OR evaluation_no ILIKE $1)
-          AND ($2::text IS NULL OR status = $2)
-          AND ($3::uuid IS NULL OR supplier_id = $3)
-          AND ($4::timestamptz IS NULL OR evaluation_date >= $4)
-          AND ($5::timestamptz IS NULL OR evaluation_date <= $5)
+        WHERE tenant_id = $1
+          AND ($2::text IS NULL OR evaluation_no ILIKE $2)
+          AND ($3::text IS NULL OR status = $3)
+          AND ($4::uuid IS NULL OR supplier_id = $4)
+          AND ($5::timestamptz IS NULL OR evaluation_date >= $5)
+          AND ($6::timestamptz IS NULL OR evaluation_date <= $6)
         ORDER BY evaluation_date DESC
-        LIMIT $6 OFFSET $7
+        LIMIT $7 OFFSET $8
         "#,
     )
+    .bind(tenant_id)
     .bind(&search_pattern)
     .bind(&status_filter)
     .bind(supplier_id_filter)
@@ -128,13 +146,15 @@ async fn list_evaluations(
             let count_result = sqlx::query_scalar::<_, i64>(
                 r#"
                 SELECT COUNT(*) FROM plugin_srm.supplier_evaluations
-                WHERE ($1::text IS NULL OR evaluation_no ILIKE $1)
-                  AND ($2::text IS NULL OR status = $2)
-                  AND ($3::uuid IS NULL OR supplier_id = $3)
-                  AND ($4::timestamptz IS NULL OR evaluation_date >= $4)
-                  AND ($5::timestamptz IS NULL OR evaluation_date <= $5)
+                WHERE tenant_id = $1
+                  AND ($2::text IS NULL OR evaluation_no ILIKE $2)
+                  AND ($3::text IS NULL OR status = $3)
+                  AND ($4::uuid IS NULL OR supplier_id = $4)
+                  AND ($5::timestamptz IS NULL OR evaluation_date >= $5)
+                  AND ($6::timestamptz IS NULL OR evaluation_date <= $6)
                 "#,
             )
+            .bind(tenant_id)
             .bind(&search_pattern)
             .bind(&status_filter)
             .bind(supplier_id_filter)
@@ -168,6 +188,7 @@ async fn list_evaluations(
 async fn create_evaluation(
     State(state): State<Arc<AppState>>,
     Extension(claims): Extension<Claims>,
+    headers: axum::http::HeaderMap,
     Json(req): Json<CreateSupplierEvaluationRequest>,
 ) -> Json<ApiResponse<SupplierEvaluation>> {
     match check_permission(&state.db, &claims, &ModulePermission::VendorAssessmentWrite).await {
@@ -175,7 +196,8 @@ async fn create_evaluation(
         Err(e) => return e,
     }
 
-    // 数据验证
+    let tenant_id = get_tenant_id(&claims, &headers);
+
     if req.evaluation_no.is_empty() {
         return Json(ApiResponse::<SupplierEvaluation>::error(
             400,
@@ -183,7 +205,6 @@ async fn create_evaluation(
         ));
     }
 
-    // 验证供应商ID
     let supplier_id = match Uuid::parse_str(&req.supplier_id) {
         Ok(uuid) => uuid,
         Err(_) => {
@@ -194,10 +215,10 @@ async fn create_evaluation(
         }
     };
 
-    // 检查供应商是否存在
     let supplier_exists = sqlx::query_scalar::<_, i64>(
-        "SELECT COUNT(*) FROM plugin_srm.suppliers WHERE id = $1 AND status != 'deleted'",
+        "SELECT COUNT(*) FROM plugin_srm.suppliers WHERE tenant_id = $1 AND id = $2 AND status != 'deleted'",
     )
+    .bind(tenant_id)
     .bind(supplier_id)
     .fetch_one(&state.db)
     .await;
@@ -209,10 +230,10 @@ async fn create_evaluation(
         ));
     }
 
-    // 检查评估编号是否已存在
     let existing = sqlx::query_scalar::<_, i64>(
-        "SELECT COUNT(*) FROM plugin_srm.supplier_evaluations WHERE evaluation_no = $1",
+        "SELECT COUNT(*) FROM plugin_srm.supplier_evaluations WHERE tenant_id = $1 AND evaluation_no = $2",
     )
+    .bind(tenant_id)
     .bind(&req.evaluation_no)
     .fetch_one(&state.db)
     .await;
@@ -253,10 +274,11 @@ async fn create_evaluation(
             r#"
             SELECT code, weight 
             FROM plugin_srm.scoring_dimensions 
-            WHERE is_active = true
+            WHERE tenant_id = $1 AND is_active = true
             ORDER BY sort_order ASC
             "#,
         )
+        .bind(tenant_id)
         .fetch_all(&state.db)
         .await
         .unwrap_or_default();
@@ -314,12 +336,13 @@ async fn create_evaluation(
 
     let result = sqlx::query_as::<_, SupplierEvaluation>(
         r#"
-        INSERT INTO plugin_srm.supplier_evaluations (id, supplier_id, evaluation_no, evaluation_date, evaluator, overall_score, quality_score, delivery_score, service_score, price_score, comments, status, created_by, created_at, updated_at)
-        VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15)
-        RETURNING id, supplier_id, evaluation_no, evaluation_date, evaluator, overall_score, quality_score, delivery_score, service_score, price_score, comments, status, created_by, created_at, updated_at
+        INSERT INTO plugin_srm.supplier_evaluations (id, tenant_id, supplier_id, evaluation_no, evaluation_date, evaluator, overall_score, quality_score, delivery_score, service_score, price_score, comments, status, created_by, created_at, updated_at)
+        VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16)
+        RETURNING id, tenant_id, supplier_id, evaluation_no, evaluation_date, evaluator, overall_score, quality_score, delivery_score, service_score, price_score, comments, status, created_by, created_at, updated_at
         "#,
     )
     .bind(id)
+    .bind(tenant_id)
     .bind(supplier_id)
     .bind(&req.evaluation_no)
     .bind(now)
@@ -353,19 +376,23 @@ async fn get_evaluation(
     State(state): State<Arc<AppState>>,
     Extension(claims): Extension<Claims>,
     Path(id): Path<Uuid>,
+    headers: axum::http::HeaderMap,
 ) -> Json<ApiResponse<SupplierEvaluation>> {
     match check_permission(&state.db, &claims, &ModulePermission::VendorAssessmentRead).await {
         Ok(_) => {}
         Err(e) => return e,
     }
 
+    let tenant_id = get_tenant_id(&claims, &headers);
+
     let result = sqlx::query_as::<_, SupplierEvaluation>(
         r#"
-        SELECT id, supplier_id, evaluation_no, evaluation_date, evaluator, overall_score, quality_score, delivery_score, service_score, price_score, comments, status, created_by, created_at, updated_at
-        FROM plugin_srm.supplier_evaluations WHERE id = $1
+        SELECT id, tenant_id, supplier_id, evaluation_no, evaluation_date, evaluator, overall_score, quality_score, delivery_score, service_score, price_score, comments, status, created_by, created_at, updated_at
+        FROM plugin_srm.supplier_evaluations WHERE id = $1 AND tenant_id = $2
         "#,
     )
     .bind(id)
+    .bind(tenant_id)
     .fetch_optional(&state.db)
     .await;
 
@@ -389,6 +416,7 @@ async fn update_evaluation(
     State(state): State<Arc<AppState>>,
     Extension(claims): Extension<Claims>,
     Path(id): Path<Uuid>,
+    headers: axum::http::HeaderMap,
     Json(req): Json<UpdateSupplierEvaluationRequest>,
 ) -> Json<ApiResponse<SupplierEvaluation>> {
     match check_permission(&state.db, &claims, &ModulePermission::VendorAssessmentWrite).await {
@@ -396,10 +424,13 @@ async fn update_evaluation(
         Err(e) => return e,
     }
 
+    let tenant_id = get_tenant_id(&claims, &headers);
+
     let existing = sqlx::query_as::<_, SupplierEvaluation>(
-        "SELECT id, supplier_id, evaluation_no, evaluation_date, evaluator, overall_score, quality_score, delivery_score, service_score, price_score, comments, status, created_by, created_at, updated_at FROM plugin_srm.supplier_evaluations WHERE id = $1",
+        "SELECT id, tenant_id, supplier_id, evaluation_no, evaluation_date, evaluator, overall_score, quality_score, delivery_score, service_score, price_score, comments, status, created_by, created_at, updated_at FROM plugin_srm.supplier_evaluations WHERE id = $1 AND tenant_id = $2",
     )
     .bind(id)
+    .bind(tenant_id)
     .fetch_optional(&state.db)
     .await;
 
@@ -419,7 +450,6 @@ async fn update_evaluation(
         }
     };
 
-    // 验证供应商ID（如果更新）
     let supplier_id = if let Some(supplier_id_str) = &req.supplier_id {
         let supplier_uuid_val = match Uuid::parse_str(supplier_id_str) {
             Ok(uuid) => uuid,
@@ -432,8 +462,9 @@ async fn update_evaluation(
         };
 
         let supplier_exists = sqlx::query_scalar::<_, i64>(
-            "SELECT COUNT(*) FROM plugin_srm.suppliers WHERE id = $1 AND status != 'deleted'",
+            "SELECT COUNT(*) FROM plugin_srm.suppliers WHERE tenant_id = $1 AND id = $2 AND status != 'deleted'",
         )
+        .bind(tenant_id)
         .bind(supplier_uuid_val)
         .fetch_one(&state.db)
         .await;
@@ -450,7 +481,6 @@ async fn update_evaluation(
         existing.supplier_id
     };
 
-    // 验证评分范围
     let validate_score = |score: Option<f64>, name: &str| -> Result<(), String> {
         if let Some(s) = score {
             if s < 0.0 || s > 100.0 {
@@ -491,8 +521,8 @@ async fn update_evaluation(
         r#"
         UPDATE plugin_srm.supplier_evaluations SET
             supplier_id = $2, evaluation_no = $3, evaluator = $4, overall_score = $5, quality_score = $6, delivery_score = $7, service_score = $8, price_score = $9, comments = $10, status = $11, updated_at = $12
-        WHERE id = $1
-        RETURNING id, supplier_id, evaluation_no, evaluation_date, evaluator, overall_score, quality_score, delivery_score, service_score, price_score, comments, status, created_by, created_at, updated_at
+        WHERE id = $1 AND tenant_id = $13
+        RETURNING id, tenant_id, supplier_id, evaluation_no, evaluation_date, evaluator, overall_score, quality_score, delivery_score, service_score, price_score, comments, status, created_by, created_at, updated_at
         "#,
     )
     .bind(id)
@@ -507,6 +537,7 @@ async fn update_evaluation(
     .bind(comments)
     .bind(status)
     .bind(now)
+    .bind(tenant_id)
     .fetch_one(&state.db)
     .await;
 
@@ -526,16 +557,21 @@ async fn delete_evaluation(
     State(state): State<Arc<AppState>>,
     Extension(claims): Extension<Claims>,
     Path(id): Path<Uuid>,
+    headers: axum::http::HeaderMap,
 ) -> Json<ApiResponse<String>> {
     match check_permission(&state.db, &claims, &ModulePermission::VendorAssessmentWrite).await {
         Ok(_) => {}
         Err(e) => return e,
     }
 
-    let result = sqlx::query("DELETE FROM plugin_srm.supplier_evaluations WHERE id = $1")
-        .bind(id)
-        .execute(&state.db)
-        .await;
+    let tenant_id = get_tenant_id(&claims, &headers);
+
+    let result =
+        sqlx::query("DELETE FROM plugin_srm.supplier_evaluations WHERE id = $1 AND tenant_id = $2")
+            .bind(id)
+            .bind(tenant_id)
+            .execute(&state.db)
+            .await;
 
     match result {
         Ok(r) if r.rows_affected() > 0 => {
@@ -555,18 +591,22 @@ async fn get_evaluation_history(
     State(state): State<Arc<AppState>>,
     Extension(claims): Extension<Claims>,
     Path(id): Path<Uuid>,
+    headers: axum::http::HeaderMap,
 ) -> Json<ApiResponse<Vec<SupplierEvaluation>>> {
     match check_permission(&state.db, &claims, &ModulePermission::VendorAssessmentRead).await {
         Ok(_) => {}
         Err(e) => return e,
     }
 
-    // 验证供应商是否存在
-    let supplier_exists =
-        sqlx::query_scalar::<_, i64>("SELECT COUNT(*) FROM plugin_srm.suppliers WHERE id = $1")
-            .bind(id)
-            .fetch_one(&state.db)
-            .await;
+    let tenant_id = get_tenant_id(&claims, &headers);
+
+    let supplier_exists = sqlx::query_scalar::<_, i64>(
+        "SELECT COUNT(*) FROM plugin_srm.suppliers WHERE tenant_id = $1 AND id = $2",
+    )
+    .bind(tenant_id)
+    .bind(id)
+    .fetch_one(&state.db)
+    .await;
 
     if supplier_exists.unwrap_or(0) == 0 {
         return Json(ApiResponse::<Vec<SupplierEvaluation>>::error(
@@ -577,12 +617,13 @@ async fn get_evaluation_history(
 
     let result = sqlx::query_as::<_, SupplierEvaluation>(
         r#"
-        SELECT id, supplier_id, evaluation_no, evaluation_date, evaluator, overall_score, quality_score, delivery_score, service_score, price_score, comments, status, created_by, created_at, updated_at
+        SELECT id, tenant_id, supplier_id, evaluation_no, evaluation_date, evaluator, overall_score, quality_score, delivery_score, service_score, price_score, comments, status, created_by, created_at, updated_at
         FROM plugin_srm.supplier_evaluations
-        WHERE supplier_id = $1
+        WHERE tenant_id = $1 AND supplier_id = $2
         ORDER BY evaluation_date DESC
         "#,
     )
+    .bind(tenant_id)
     .bind(id)
     .fetch_all(&state.db)
     .await;
@@ -603,11 +644,14 @@ async fn get_performance_summary(
     State(state): State<Arc<AppState>>,
     Extension(claims): Extension<Claims>,
     Path(id): Path<Uuid>,
+    headers: axum::http::HeaderMap,
 ) -> Json<ApiResponse<serde_json::Value>> {
     match check_permission(&state.db, &claims, &ModulePermission::VendorAssessmentRead).await {
         Ok(_) => {}
         Err(e) => return e,
     }
+
+    let tenant_id = get_tenant_id(&claims, &headers);
 
     let result = sqlx::query_as::<_, EvaluationSummaryRow>(
         r#"
@@ -623,9 +667,10 @@ async fn get_performance_summary(
             MAX(evaluation_date) as latest_evaluation_date,
             MIN(evaluation_date) as earliest_evaluation_date
         FROM plugin_srm.supplier_evaluations
-        WHERE supplier_id = $1 AND status = 'completed'
+        WHERE tenant_id = $1 AND supplier_id = $2 AND status = 'completed'
         "#,
     )
+    .bind(tenant_id)
     .bind(id)
     .fetch_optional(&state.db)
     .await;
@@ -686,11 +731,14 @@ async fn get_score_trend(
     Extension(claims): Extension<Claims>,
     Path(id): Path<Uuid>,
     Query(params): Query<EvaluationQueryParams>,
+    headers: axum::http::HeaderMap,
 ) -> Json<ApiResponse<serde_json::Value>> {
     match check_permission(&state.db, &claims, &ModulePermission::VendorAssessmentRead).await {
         Ok(_) => {}
         Err(e) => return e,
     }
+
+    let tenant_id = get_tenant_id(&claims, &headers);
 
     let start_date = params.start_date.clone().and_then(|s| {
         chrono::DateTime::parse_from_rfc3339(&s)
@@ -715,13 +763,14 @@ async fn get_score_trend(
             price_score,
             evaluation_no
         FROM plugin_srm.supplier_evaluations
-        WHERE supplier_id = $1 
+        WHERE tenant_id = $1 AND supplier_id = $2
           AND status = 'completed'
-          AND ($2::timestamptz IS NULL OR evaluation_date >= $2)
-          AND ($3::timestamptz IS NULL OR evaluation_date <= $3)
+          AND ($3::timestamptz IS NULL OR evaluation_date >= $3)
+          AND ($4::timestamptz IS NULL OR evaluation_date <= $4)
         ORDER BY evaluation_date ASC
         "#,
     )
+    .bind(tenant_id)
     .bind(id)
     .bind(start_date)
     .bind(end_date)
@@ -795,38 +844,47 @@ async fn get_score_trend(
 async fn get_evaluation_statistics(
     State(state): State<Arc<AppState>>,
     Extension(claims): Extension<Claims>,
+    headers: axum::http::HeaderMap,
 ) -> Json<ApiResponse<serde_json::Value>> {
     match check_permission(&state.db, &claims, &ModulePermission::VendorAssessmentRead).await {
         Ok(_) => {}
         Err(e) => return e,
     }
 
-    let total_result =
-        sqlx::query_scalar::<_, i64>("SELECT COUNT(*) FROM plugin_srm.supplier_evaluations")
-            .fetch_one(&state.db)
-            .await;
+    let tenant_id = get_tenant_id(&claims, &headers);
+
+    let total_result = sqlx::query_scalar::<_, i64>(
+        "SELECT COUNT(*) FROM plugin_srm.supplier_evaluations WHERE tenant_id = $1",
+    )
+    .bind(tenant_id)
+    .fetch_one(&state.db)
+    .await;
 
     let completed_result = sqlx::query_scalar::<_, i64>(
-        "SELECT COUNT(*) FROM plugin_srm.supplier_evaluations WHERE status = 'completed'",
+        "SELECT COUNT(*) FROM plugin_srm.supplier_evaluations WHERE tenant_id = $1 AND status = 'completed'",
     )
+    .bind(tenant_id)
     .fetch_one(&state.db)
     .await;
 
     let pending_result = sqlx::query_scalar::<_, i64>(
-        "SELECT COUNT(*) FROM plugin_srm.supplier_evaluations WHERE status = 'pending'",
+        "SELECT COUNT(*) FROM plugin_srm.supplier_evaluations WHERE tenant_id = $1 AND status = 'pending'",
     )
+    .bind(tenant_id)
     .fetch_one(&state.db)
     .await;
 
     let avg_score_result = sqlx::query_scalar::<_, f64>(
-        "SELECT AVG(overall_score) FROM plugin_srm.supplier_evaluations WHERE status = 'completed' AND overall_score IS NOT NULL"
+        "SELECT AVG(overall_score) FROM plugin_srm.supplier_evaluations WHERE tenant_id = $1 AND status = 'completed' AND overall_score IS NOT NULL"
     )
+    .bind(tenant_id)
     .fetch_one(&state.db)
     .await;
 
     let supplier_count_result = sqlx::query_scalar::<_, i64>(
-        "SELECT COUNT(DISTINCT supplier_id) FROM plugin_srm.supplier_evaluations",
+        "SELECT COUNT(DISTINCT supplier_id) FROM plugin_srm.supplier_evaluations WHERE tenant_id = $1",
     )
+    .bind(tenant_id)
     .fetch_one(&state.db)
     .await;
 

@@ -18,6 +18,7 @@ use crate::sync_retry::{RetryConfig, RetryExecutor, RetryResult};
 #[derive(Debug, Clone, Serialize, Deserialize, sqlx::FromRow)]
 pub struct MesErpSyncRecord {
     pub id: Uuid,
+    pub tenant_id: Uuid,
     pub sync_direction: String,
     pub mes_order_id: Option<Uuid>,
     pub erp_order_id: Option<Uuid>,
@@ -80,6 +81,7 @@ pub struct MesProductionProgressData {
 #[derive(Debug, Clone, Serialize, Deserialize, sqlx::FromRow)]
 pub struct SyncLog {
     pub id: Uuid,
+    pub tenant_id: Uuid,
     pub sync_record_id: Uuid,
     pub sync_direction: String,
     pub sync_type: String,
@@ -126,7 +128,11 @@ impl MesErpSyncService {
 
     // ==================== ERP → MES 同步 ====================
 
-    pub async fn sync_erp_to_mes(&self, erp_order_id: Uuid) -> Result<SyncResult, String> {
+    pub async fn sync_erp_to_mes(
+        &self,
+        tenant_id: Uuid,
+        erp_order_id: Uuid,
+    ) -> Result<SyncResult, String> {
         let sync_id = Uuid::new_v4();
         let _now = Utc::now();
 
@@ -135,11 +141,12 @@ impl MesErpSyncService {
             erp_order_id
         );
 
-        let erp_order = self.fetch_erp_order(erp_order_id).await?;
+        let erp_order = self.fetch_erp_order(tenant_id, erp_order_id).await?;
 
         let _sync_record = self
             .create_sync_record(
                 sync_id,
+                tenant_id,
                 "erp_to_mes",
                 None,
                 Some(erp_order_id),
@@ -259,7 +266,11 @@ impl MesErpSyncService {
 
     // ==================== MES → ERP 进度回传 ====================
 
-    pub async fn sync_mes_progress_to_erp(&self, mes_order_id: Uuid) -> Result<SyncResult, String> {
+    pub async fn sync_mes_progress_to_erp(
+        &self,
+        tenant_id: Uuid,
+        mes_order_id: Uuid,
+    ) -> Result<SyncResult, String> {
         let sync_id = Uuid::new_v4();
 
         tracing::info!(
@@ -267,12 +278,17 @@ impl MesErpSyncService {
             mes_order_id
         );
 
-        let mes_progress = self.fetch_mes_order_progress(mes_order_id).await?;
+        let mes_progress = self
+            .fetch_mes_order_progress(tenant_id, mes_order_id)
+            .await?;
 
-        let erp_order_id = self.find_erp_order_by_mes_id(mes_order_id).await?;
+        let erp_order_id = self
+            .find_erp_order_by_mes_id(tenant_id, mes_order_id)
+            .await?;
 
         self.create_sync_record(
             sync_id,
+            tenant_id,
             "mes_to_erp",
             Some(mes_order_id),
             erp_order_id,
@@ -372,7 +388,11 @@ impl MesErpSyncService {
 
     // ==================== 辅助方法：获取外部数据 ====================
 
-    async fn fetch_erp_order(&self, erp_order_id: Uuid) -> Result<ErpProductionOrderData, String> {
+    async fn fetch_erp_order(
+        &self,
+        tenant_id: Uuid,
+        erp_order_id: Uuid,
+    ) -> Result<ErpProductionOrderData, String> {
         let client = reqwest::Client::new();
         let url = format!(
             "{}/api/erp/production-orders/{}",
@@ -458,6 +478,7 @@ impl MesErpSyncService {
 
     async fn fetch_mes_order_progress(
         &self,
+        tenant_id: Uuid,
         mes_order_id: Uuid,
     ) -> Result<MesOrderProgress, String> {
         let client = reqwest::Client::new();
@@ -508,12 +529,17 @@ impl MesErpSyncService {
         })
     }
 
-    async fn find_erp_order_by_mes_id(&self, mes_order_id: Uuid) -> Result<Option<Uuid>, String> {
+    async fn find_erp_order_by_mes_id(
+        &self,
+        tenant_id: Uuid,
+        mes_order_id: Uuid,
+    ) -> Result<Option<Uuid>, String> {
         let result = sqlx::query_scalar::<_, Option<Uuid>>(
             "SELECT erp_order_id FROM mes_erp_sync 
-             WHERE mes_order_id = $1 AND erp_order_id IS NOT NULL
+             WHERE tenant_id = $1 AND mes_order_id = $2 AND erp_order_id IS NOT NULL
              ORDER BY created_at DESC LIMIT 1",
         )
+        .bind(tenant_id)
         .bind(mes_order_id)
         .fetch_optional(&self.pool)
         .await
@@ -527,6 +553,7 @@ impl MesErpSyncService {
     async fn create_sync_record(
         &self,
         id: Uuid,
+        tenant_id: Uuid,
         direction: &str,
         mes_order_id: Option<Uuid>,
         erp_order_id: Option<Uuid>,
@@ -539,13 +566,14 @@ impl MesErpSyncService {
         sqlx::query(
             r#"
             INSERT INTO mes_erp_sync (
-                id, sync_direction, mes_order_id, erp_order_id, order_number,
+                id, tenant_id, sync_direction, mes_order_id, erp_order_id, order_number,
                 sync_type, payload, sync_status, retry_count, max_retries,
                 created_at, updated_at
-            ) VALUES ($1, $2, $3, $4, $5, $6, $7, 'pending', 0, 5, $8, $8)
+            ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, 'pending', 0, 5, $9, $9)
             "#,
         )
         .bind(id)
+        .bind(tenant_id)
         .bind(direction)
         .bind(mes_order_id)
         .bind(erp_order_id)
@@ -699,14 +727,16 @@ impl MesErpSyncService {
         match sync_record.sync_direction.as_str() {
             "erp_to_mes" => {
                 if let Some(erp_order_id) = sync_record.erp_order_id {
-                    self.sync_erp_to_mes(erp_order_id).await
+                    self.sync_erp_to_mes(sync_record.tenant_id, erp_order_id)
+                        .await
                 } else {
                     Err("缺少ERP订单ID，无法重试".to_string())
                 }
             }
             "mes_to_erp" => {
                 if let Some(mes_order_id) = sync_record.mes_order_id {
-                    self.sync_mes_progress_to_erp(mes_order_id).await
+                    self.sync_mes_progress_to_erp(sync_record.tenant_id, mes_order_id)
+                        .await
                 } else {
                     Err("缺少MES订单ID，无法重试".to_string())
                 }

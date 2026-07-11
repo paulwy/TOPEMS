@@ -6,6 +6,7 @@ pub mod chart_service;
 pub mod comparison_analysis;
 pub mod dashboard;
 pub mod data_drilldown;
+pub mod dataset;
 pub mod datasource;
 pub mod multidimensional_analysis;
 pub mod plugin;
@@ -450,6 +451,48 @@ pub async fn init_database(pool: &PgPool) -> Result<(), sqlx::Error> {
     sqlx::query("CREATE INDEX IF NOT EXISTS idx_comparison_results_generated_at ON analytics_comparison_results(generated_at)")
         .execute(pool)
         .await?;
+
+    // Create datasets table
+    sqlx::query(
+        r#"
+        CREATE TABLE IF NOT EXISTS analytics_datasets (
+            id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+            name VARCHAR(128) NOT NULL,
+            description TEXT,
+            datasource_id UUID NOT NULL REFERENCES analytics_datasources(id) ON DELETE CASCADE,
+            sql_query TEXT NOT NULL,
+            fields JSONB DEFAULT '[]',
+            filters JSONB,
+            config JSONB,
+            status VARCHAR(16) NOT NULL DEFAULT 'draft',
+            is_public BOOLEAN DEFAULT FALSE,
+            published_at TIMESTAMP,
+            last_refreshed_at TIMESTAMP,
+            owner_id VARCHAR(64) NOT NULL,
+            created_at TIMESTAMP DEFAULT NOW(),
+            updated_at TIMESTAMP DEFAULT NOW()
+        )
+        "#,
+    )
+    .execute(pool)
+    .await?;
+
+    sqlx::query("CREATE INDEX IF NOT EXISTS idx_datasets_owner ON analytics_datasets(owner_id)")
+        .execute(pool)
+        .await?;
+    sqlx::query(
+        "CREATE INDEX IF NOT EXISTS idx_datasets_datasource ON analytics_datasets(datasource_id)",
+    )
+    .execute(pool)
+    .await?;
+    sqlx::query("CREATE INDEX IF NOT EXISTS idx_datasets_status ON analytics_datasets(status)")
+        .execute(pool)
+        .await?;
+    sqlx::query(
+        "CREATE INDEX IF NOT EXISTS idx_datasets_is_public ON analytics_datasets(is_public)",
+    )
+    .execute(pool)
+    .await?;
 
     Ok(())
 }

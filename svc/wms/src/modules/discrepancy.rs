@@ -35,12 +35,12 @@ where
             "/api/wms/discrepancies",
             get(list_discrepancies).post(create_discrepancy),
         )
-        .route("/api/v1/discrepancies/{id}", get(get_discrepancy))
+        .route("/api/wms/discrepancies/{id}", get(get_discrepancy))
         .route(
-            "/api/v1/discrepancies/{id}/approve",
+            "/api/wms/discrepancies/{id}/approve",
             post(approve_discrepancy),
         )
-        .route("/api/v1/discrepancies/{id}/adjust", post(adjust_inventory))
+        .route("/api/wms/discrepancies/{id}/adjust", post(adjust_inventory))
         .route(
             "/api/wms/discrepancies/process-stock-take/{stock_take_id}",
             post(process_stock_take_discrepancies),
@@ -48,7 +48,7 @@ where
 }
 
 /// 获取差异处理列表
-async fn list_discrepancies(
+pub async fn list_discrepancies(
     State(state): State<ApiState>,
     Extension(claims): Extension<Claims>,
     Query(params): Query<DiscrepancyQueryParams>,
@@ -141,7 +141,7 @@ async fn list_discrepancies(
 }
 
 /// 获取差异处理详情
-async fn get_discrepancy(
+pub async fn get_discrepancy(
     State(state): State<ApiState>,
     Extension(claims): Extension<Claims>,
     Path(id): Path<Uuid>,
@@ -176,7 +176,7 @@ async fn get_discrepancy(
 }
 
 /// 创建差异处理记录
-async fn create_discrepancy(
+pub async fn create_discrepancy(
     State(state): State<ApiState>,
     Extension(claims): Extension<Claims>,
     headers: HeaderMap,
@@ -294,7 +294,7 @@ async fn create_discrepancy(
 }
 
 /// 审批差异处理
-async fn approve_discrepancy(
+pub async fn approve_discrepancy(
     State(state): State<ApiState>,
     Extension(claims): Extension<Claims>,
     Path(id): Path<Uuid>,
@@ -390,7 +390,7 @@ async fn approve_discrepancy(
 }
 
 /// 执行库存调整
-async fn adjust_inventory(
+pub async fn adjust_inventory(
     State(state): State<ApiState>,
     Extension(claims): Extension<Claims>,
     Path(id): Path<Uuid>,
@@ -498,7 +498,7 @@ async fn adjust_inventory(
 }
 
 /// 批量处理盘点差异（从盘点单自动生成差异记录）
-async fn process_stock_take_discrepancies(
+pub async fn process_stock_take_discrepancies(
     State(state): State<ApiState>,
     Extension(claims): Extension<Claims>,
     Path(stock_take_id): Path<Uuid>,

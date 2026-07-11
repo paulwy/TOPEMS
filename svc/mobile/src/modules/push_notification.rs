@@ -90,7 +90,8 @@ pub async fn register_device(
         );
     }
 
-    let device = match db_register_push_device(&pool, user_id, payload).await {
+    let tenant_id = Uuid::new_v4();
+    let device = match db_register_push_device(&pool, tenant_id, user_id, payload).await {
         Ok(d) => d,
         Err(e) => {
             tracing::error!("注册设备失败: {}", e);
@@ -192,7 +193,8 @@ pub async fn send_notification(
         target_ids: payload.target_ids.clone(),
     };
 
-    let notification = match db_create_push_notification(&pool, create_data).await {
+    let tenant_id = Uuid::new_v4();
+    let notification = match db_create_push_notification(&pool, tenant_id, create_data).await {
         Ok(n) => n,
         Err(e) => {
             tracing::error!("创建推送通知失败: {}", e);
@@ -292,7 +294,8 @@ pub async fn send_broadcast(
         target_ids: target_ids.clone(),
     };
 
-    let notification = match db_create_push_notification(&pool, create_data).await {
+    let tenant_id = Uuid::new_v4();
+    let notification = match db_create_push_notification(&pool, tenant_id, create_data).await {
         Ok(n) => n,
         Err(e) => {
             tracing::error!("创建推送通知失败: {}", e);
@@ -472,8 +475,10 @@ pub async fn create_template(
 ) -> impl IntoResponse {
     let _ = extract_user_id_from_token(&headers, &auth_state.jwt_secret);
 
+    let tenant_id = Uuid::new_v4();
     let template = match db_create_push_template(
         &pool,
+        tenant_id,
         &payload.name,
         &payload.title_template,
         &payload.body_template,

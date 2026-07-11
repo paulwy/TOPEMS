@@ -1,14 +1,26 @@
 //! Hazardous material management - Materials, inventory, MSDS, and warehouse records
 
-use axum::{
-    extract::State,
-    routing::{get, post},
-    Json, Router,
-};
+use axum::{extract::State, http::HeaderMap, routing::*, Extension, Json, Router};
 use serde::{Deserialize, Serialize};
-use topems_shared::ApiResponse;
+use topems_shared::{ApiResponse, Claims};
 
-use crate::AppState;
+use uuid::Uuid;
+
+use crate::shared::AppState;
+
+fn get_tenant_id(claims: &Claims, headers: &HeaderMap) -> Uuid {
+    claims
+        .tenant_id
+        .as_ref()
+        .and_then(|t| Uuid::parse_str(t).ok())
+        .or_else(|| {
+            headers
+                .get("x-tenant-id")
+                .and_then(|v| v.to_str().ok())
+                .and_then(|s| Uuid::parse_str(s).ok())
+        })
+        .unwrap_or_else(Uuid::new_v4)
+}
 
 pub fn create_routes() -> Router<AppState> {
     Router::new()
@@ -100,6 +112,8 @@ pub struct HazardousMaterial {
     pub remarks: Option<String>,
     pub created_at: Option<String>,
     pub updated_at: Option<String>,
+
+    pub tenant_id: Uuid,
 }
 
 #[derive(Debug, Serialize)]
@@ -118,6 +132,8 @@ pub struct MaterialStock {
     pub remarks: Option<String>,
     pub created_at: Option<String>,
     pub updated_at: Option<String>,
+
+    pub tenant_id: Uuid,
 }
 
 #[derive(Debug, Serialize)]
@@ -138,6 +154,8 @@ pub struct StockRecord {
     pub recipient: Option<String>,
     pub remarks: Option<String>,
     pub created_at: Option<String>,
+
+    pub tenant_id: Uuid,
 }
 
 #[derive(Debug, Serialize)]
@@ -162,6 +180,8 @@ pub struct MsdsData {
     pub regulatory_info: Option<String>,
     pub other_info: Option<String>,
     pub updated_at: Option<String>,
+
+    pub tenant_id: Uuid,
 }
 
 #[derive(Debug, Serialize)]
@@ -170,6 +190,8 @@ pub struct MaterialDetail {
     pub stocks: Vec<MaterialStock>,
     pub msds: Option<MsdsData>,
     pub recent_records: Vec<StockRecord>,
+
+    pub tenant_id: Uuid,
 }
 
 #[derive(Debug, Serialize)]
@@ -182,6 +204,8 @@ pub struct MaterialStatistics {
     pub by_category: Vec<serde_json::Value>,
     pub by_hazard_level: Vec<serde_json::Value>,
     pub monthly_in_out: Vec<serde_json::Value>,
+
+    pub tenant_id: Uuid,
 }
 
 #[derive(Debug, Deserialize)]
@@ -264,8 +288,11 @@ pub struct UpdateMsdsRequest {
 }
 
 pub async fn list_materials(
-    State(_state): State<crate::AppState>,
+    State(_state): State<crate::shared::AppState>,
+    Extension(claims): Extension<Claims>,
+    headers: HeaderMap,
 ) -> Json<ApiResponse<Vec<HazardousMaterial>>> {
+    let tenant_id = get_tenant_id(&claims, &headers);
     tracing::info!("Listing hazardous materials");
     Json(ApiResponse::success(
         Vec::<HazardousMaterial>::new(),
@@ -274,9 +301,12 @@ pub async fn list_materials(
 }
 
 pub async fn create_material(
-    State(_state): State<crate::AppState>,
+    State(_state): State<crate::shared::AppState>,
+    Extension(claims): Extension<Claims>,
+    headers: HeaderMap,
     Json(req): Json<CreateMaterialRequest>,
 ) -> Json<ApiResponse<HazardousMaterial>> {
+    let tenant_id = get_tenant_id(&claims, &headers);
     tracing::info!("Creating hazardous material: {:?}", req);
     Json(ApiResponse::success(
         HazardousMaterial {
@@ -307,15 +337,20 @@ pub async fn create_material(
             remarks: req.remarks,
             created_at: Some(chrono::Utc::now().to_rfc3339()),
             updated_at: Some(chrono::Utc::now().to_rfc3339()),
+
+            tenant_id,
         },
         "危险品创建成功",
     ))
 }
 
 pub async fn get_material(
-    State(_state): State<crate::AppState>,
+    State(_state): State<crate::shared::AppState>,
+    Extension(claims): Extension<Claims>,
+    headers: HeaderMap,
     axum::extract::Path(id): axum::extract::Path<String>,
 ) -> Json<ApiResponse<MaterialDetail>> {
+    let tenant_id = get_tenant_id(&claims, &headers);
     tracing::info!("Getting hazardous material: {}", id);
     Json(ApiResponse::success(
         MaterialDetail {
@@ -344,6 +379,8 @@ pub async fn get_material(
                 remarks: None,
                 created_at: Some(chrono::Utc::now().to_rfc3339()),
                 updated_at: Some(chrono::Utc::now().to_rfc3339()),
+
+                tenant_id,
             },
             stocks: vec![
                 MaterialStock {
@@ -361,6 +398,8 @@ pub async fn get_material(
                     remarks: None,
                     created_at: Some(chrono::Utc::now().to_rfc3339()),
                     updated_at: Some(chrono::Utc::now().to_rfc3339()),
+
+                    tenant_id,
                 },
                 MaterialStock {
                     id: "stock-002".to_string(),
@@ -377,6 +416,8 @@ pub async fn get_material(
                     remarks: None,
                     created_at: Some(chrono::Utc::now().to_rfc3339()),
                     updated_at: Some(chrono::Utc::now().to_rfc3339()),
+
+                    tenant_id,
                 },
             ],
             msds: Some(MsdsData {
@@ -402,18 +443,24 @@ pub async fn get_material(
                 regulatory_info: Some("化学危险物品安全管理条例...".to_string()),
                 other_info: None,
                 updated_at: Some(chrono::Utc::now().to_rfc3339()),
+
+                tenant_id,
             }),
             recent_records: vec![],
+            tenant_id,
         },
         "获取危险品详情成功",
     ))
 }
 
 pub async fn update_material(
-    State(_state): State<crate::AppState>,
+    State(_state): State<crate::shared::AppState>,
+    Extension(claims): Extension<Claims>,
+    headers: HeaderMap,
     axum::extract::Path(id): axum::extract::Path<String>,
     Json(req): Json<UpdateMaterialRequest>,
 ) -> Json<ApiResponse<HazardousMaterial>> {
+    let tenant_id = get_tenant_id(&claims, &headers);
     tracing::info!("Updating hazardous material {}: {:?}", id, req);
     Json(ApiResponse::success(
         HazardousMaterial {
@@ -441,23 +488,31 @@ pub async fn update_material(
             remarks: req.remarks,
             created_at: Some(chrono::Utc::now().to_rfc3339()),
             updated_at: Some(chrono::Utc::now().to_rfc3339()),
+
+            tenant_id,
         },
         "危险品更新成功",
     ))
 }
 
 pub async fn delete_material(
-    State(_state): State<crate::AppState>,
+    State(_state): State<crate::shared::AppState>,
+    Extension(claims): Extension<Claims>,
+    headers: HeaderMap,
     axum::extract::Path(id): axum::extract::Path<String>,
 ) -> Json<ApiResponse<()>> {
+    let tenant_id = get_tenant_id(&claims, &headers);
     tracing::info!("Deleting hazardous material: {}", id);
     Json(ApiResponse::success((), "危险品删除成功"))
 }
 
 pub async fn list_material_stocks(
-    State(_state): State<crate::AppState>,
+    State(_state): State<crate::shared::AppState>,
+    Extension(claims): Extension<Claims>,
+    headers: HeaderMap,
     axum::extract::Path(id): axum::extract::Path<String>,
 ) -> Json<ApiResponse<Vec<MaterialStock>>> {
+    let tenant_id = get_tenant_id(&claims, &headers);
     tracing::info!("Listing stocks for material: {}", id);
     Json(ApiResponse::success(
         Vec::<MaterialStock>::new(),
@@ -466,8 +521,11 @@ pub async fn list_material_stocks(
 }
 
 pub async fn list_stock_records(
-    State(_state): State<crate::AppState>,
+    State(_state): State<crate::shared::AppState>,
+    Extension(claims): Extension<Claims>,
+    headers: HeaderMap,
 ) -> Json<ApiResponse<Vec<StockRecord>>> {
+    let tenant_id = get_tenant_id(&claims, &headers);
     tracing::info!("Listing stock records");
     Json(ApiResponse::success(
         Vec::<StockRecord>::new(),
@@ -476,9 +534,12 @@ pub async fn list_stock_records(
 }
 
 pub async fn create_stock_in(
-    State(_state): State<crate::AppState>,
+    State(_state): State<crate::shared::AppState>,
+    Extension(claims): Extension<Claims>,
+    headers: HeaderMap,
     Json(req): Json<CreateStockRecordRequest>,
 ) -> Json<ApiResponse<StockRecord>> {
+    let tenant_id = get_tenant_id(&claims, &headers);
     tracing::info!("Creating stock in record: {:?}", req);
     Json(ApiResponse::success(
         StockRecord {
@@ -501,15 +562,20 @@ pub async fn create_stock_in(
             recipient: req.recipient,
             remarks: req.remarks,
             created_at: Some(chrono::Utc::now().to_rfc3339()),
+
+            tenant_id,
         },
         "入库记录创建成功",
     ))
 }
 
 pub async fn create_stock_out(
-    State(_state): State<crate::AppState>,
+    State(_state): State<crate::shared::AppState>,
+    Extension(claims): Extension<Claims>,
+    headers: HeaderMap,
     Json(req): Json<CreateStockRecordRequest>,
 ) -> Json<ApiResponse<StockRecord>> {
+    let tenant_id = get_tenant_id(&claims, &headers);
     tracing::info!("Creating stock out record: {:?}", req);
     Json(ApiResponse::success(
         StockRecord {
@@ -532,15 +598,20 @@ pub async fn create_stock_out(
             recipient: req.recipient,
             remarks: req.remarks,
             created_at: Some(chrono::Utc::now().to_rfc3339()),
+
+            tenant_id,
         },
         "出库记录创建成功",
     ))
 }
 
 pub async fn get_stock_record(
-    State(_state): State<crate::AppState>,
+    State(_state): State<crate::shared::AppState>,
+    Extension(claims): Extension<Claims>,
+    headers: HeaderMap,
     axum::extract::Path(id): axum::extract::Path<String>,
 ) -> Json<ApiResponse<StockRecord>> {
+    let tenant_id = get_tenant_id(&claims, &headers);
     tracing::info!("Getting stock record: {}", id);
     Json(ApiResponse::success(
         StockRecord {
@@ -560,15 +631,20 @@ pub async fn get_stock_record(
             recipient: None,
             remarks: None,
             created_at: Some(chrono::Utc::now().to_rfc3339()),
+
+            tenant_id,
         },
         "获取出入库记录详情成功",
     ))
 }
 
 pub async fn get_material_msds(
-    State(_state): State<crate::AppState>,
+    State(_state): State<crate::shared::AppState>,
+    Extension(claims): Extension<Claims>,
+    headers: HeaderMap,
     axum::extract::Path(id): axum::extract::Path<String>,
 ) -> Json<ApiResponse<MsdsData>> {
+    let tenant_id = get_tenant_id(&claims, &headers);
     tracing::info!("Getting MSDS for material: {}", id);
     Json(ApiResponse::success(
         MsdsData {
@@ -594,16 +670,21 @@ pub async fn get_material_msds(
             regulatory_info: Some("化学危险物品安全管理条例...".to_string()),
             other_info: None,
             updated_at: Some(chrono::Utc::now().to_rfc3339()),
+
+            tenant_id,
         },
         "获取MSDS成功",
     ))
 }
 
 pub async fn update_material_msds(
-    State(_state): State<crate::AppState>,
+    State(_state): State<crate::shared::AppState>,
+    Extension(claims): Extension<Claims>,
+    headers: HeaderMap,
     axum::extract::Path(id): axum::extract::Path<String>,
     Json(req): Json<UpdateMsdsRequest>,
 ) -> Json<ApiResponse<MsdsData>> {
+    let tenant_id = get_tenant_id(&claims, &headers);
     tracing::info!("Updating MSDS for material {}: {:?}", id, req);
     Json(ApiResponse::success(
         MsdsData {
@@ -627,14 +708,19 @@ pub async fn update_material_msds(
             regulatory_info: req.regulatory_info,
             other_info: req.other_info,
             updated_at: Some(chrono::Utc::now().to_rfc3339()),
+
+            tenant_id,
         },
         "MSDS更新成功",
     ))
 }
 
 pub async fn get_material_statistics(
-    State(_state): State<crate::AppState>,
+    State(_state): State<crate::shared::AppState>,
+    Extension(claims): Extension<Claims>,
+    headers: HeaderMap,
 ) -> Json<ApiResponse<MaterialStatistics>> {
+    let tenant_id = get_tenant_id(&claims, &headers);
     tracing::info!("Getting material statistics");
     Json(ApiResponse::success(
         MaterialStatistics {
@@ -663,14 +749,19 @@ pub async fn get_material_statistics(
                 serde_json::json!({ "month": "5月", "in": 480, "out": 420 }),
                 serde_json::json!({ "month": "6月", "in": 520, "out": 380 }),
             ],
+
+            tenant_id,
         },
         "获取危险品统计成功",
     ))
 }
 
 pub async fn list_material_categories(
-    State(_state): State<crate::AppState>,
+    State(_state): State<crate::shared::AppState>,
+    Extension(claims): Extension<Claims>,
+    headers: HeaderMap,
 ) -> Json<ApiResponse<Vec<serde_json::Value>>> {
+    let tenant_id = get_tenant_id(&claims, &headers);
     tracing::info!("Listing material categories");
     let categories = vec![
         serde_json::json!({ "code": "flammable", "name": "易燃" }),

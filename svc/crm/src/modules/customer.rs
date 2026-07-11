@@ -9,6 +9,7 @@ use serde::Deserialize;
 use uuid::Uuid;
 
 use super::ApiState;
+use crate::middleware::tenant::get_tenant_id;
 use crate::models::{CreateCustomerRequest, Customer, UpdateCustomerRequest};
 use crate::modules::audit::log_audit_event;
 use crate::shared::permission::{check_permission, ModulePermission};
@@ -53,6 +54,7 @@ async fn list_customers(
     State(state): State<ApiState>,
     Extension(claims): Extension<Claims>,
     Query(params): Query<CustomerPaginationParams>,
+    headers: HeaderMap,
 ) -> Json<ApiResponse<serde_json::Value>> {
     match check_permission(&state.db, &claims, &ModulePermission::CustomerRead).await {
         Ok(_) => {}
@@ -64,22 +66,25 @@ async fn list_customers(
     let offset = (page - 1) * page_size;
 
     let search_pattern = params.search.as_deref().map(|s| format!("%{}%", s));
+    let tenant_id = get_tenant_id(&claims, &headers);
 
     let result = sqlx::query_as::<_, Customer>(
         r#"
-        SELECT id, name, code, industry, company_size, website, email, phone, fax,
+        SELECT id, tenant_id, name, code, industry, company_size, website, email, phone, fax,
                address, city, province, country, postal_code, status, customer_type,
                source, rating, revenue, employee_count, notes, created_at, updated_at
         FROM crm.customers
-        WHERE ($1::text IS NULL OR name ILIKE $1 OR code ILIKE $1)
-          AND ($2::text IS NULL OR status = $2)
-          AND ($3::text IS NULL OR customer_type = $3)
-          AND ($4::text IS NULL OR rating = $4)
-          AND ($5::text IS NULL OR industry ILIKE $5)
+        WHERE tenant_id = $1
+          AND ($2::text IS NULL OR name ILIKE $2 OR code ILIKE $2)
+          AND ($3::text IS NULL OR status = $3)
+          AND ($4::text IS NULL OR customer_type = $4)
+          AND ($5::text IS NULL OR rating = $5)
+          AND ($6::text IS NULL OR industry ILIKE $6)
         ORDER BY created_at DESC
-        LIMIT $6 OFFSET $7
+        LIMIT $7 OFFSET $8
         "#,
     )
+    .bind(tenant_id)
     .bind(&search_pattern)
     .bind(&params.status)
     .bind(&params.customer_type)
@@ -95,13 +100,15 @@ async fn list_customers(
             let count_result = sqlx::query_scalar::<_, i64>(
                 r#"
                 SELECT COUNT(*) FROM crm.customers
-                WHERE ($1::text IS NULL OR name ILIKE $1 OR code ILIKE $1)
-                  AND ($2::text IS NULL OR status = $2)
-                  AND ($3::text IS NULL OR customer_type = $3)
-                  AND ($4::text IS NULL OR rating = $4)
-                  AND ($5::text IS NULL OR industry ILIKE $5)
+                WHERE tenant_id = $1
+                  AND ($2::text IS NULL OR name ILIKE $2 OR code ILIKE $2)
+                  AND ($3::text IS NULL OR status = $3)
+                  AND ($4::text IS NULL OR customer_type = $4)
+                  AND ($5::text IS NULL OR rating = $5)
+                  AND ($6::text IS NULL OR industry ILIKE $6)
                 "#,
             )
+            .bind(tenant_id)
             .bind(&search_pattern)
             .bind(&params.status)
             .bind(&params.customer_type)
@@ -151,6 +158,7 @@ async fn create_customer(
 
     let id = Uuid::new_v4();
     let now = Utc::now();
+    let tenant_id = get_tenant_id(&claims, &headers);
 
     let mut encrypted_email = req.email.clone();
     let mut encrypted_phone = req.phone.clone();
@@ -169,17 +177,18 @@ async fn create_customer(
     let result = sqlx::query_as::<_, Customer>(
         r#"
         INSERT INTO crm.customers (
-            id, name, code, industry, company_size, website, email, phone, fax,
+            id, tenant_id, name, code, industry, company_size, website, email, phone, fax,
             address, city, province, country, postal_code, customer_type, source,
             rating, revenue, employee_count, notes, status, created_at, updated_at
-        ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14,
-                  $15, $16, $17, $18, $19, $20, 'active', $21, $22)
-        RETURNING id, name, code, industry, company_size, website, email, phone, fax,
+        ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15,
+                  $16, $17, $18, $19, $20, $21, 'active', $22, $23)
+        RETURNING id, tenant_id, name, code, industry, company_size, website, email, phone, fax,
                   address, city, province, country, postal_code, status, customer_type,
                   source, rating, revenue, employee_count, notes, created_at, updated_at
         "#,
     )
     .bind(id)
+    .bind(tenant_id)
     .bind(&req.name)
     .bind(&req.code)
     .bind(&req.industry)
@@ -254,21 +263,25 @@ async fn get_customer(
     State(state): State<ApiState>,
     Extension(claims): Extension<Claims>,
     Path(id): Path<Uuid>,
+    headers: HeaderMap,
 ) -> Json<ApiResponse<Customer>> {
     match check_permission(&state.db, &claims, &ModulePermission::CustomerRead).await {
         Ok(_) => {}
         Err(e) => return e,
     }
 
+    let tenant_id = get_tenant_id(&claims, &headers);
+
     let result = sqlx::query_as::<_, Customer>(
         r#"
-        SELECT id, name, code, industry, company_size, website, email, phone, fax,
+        SELECT id, tenant_id, name, code, industry, company_size, website, email, phone, fax,
                address, city, province, country, postal_code, status, customer_type,
                source, rating, revenue, employee_count, notes, created_at, updated_at
-        FROM crm.customers WHERE id = $1
+        FROM crm.customers WHERE id = $1 AND tenant_id = $2
         "#,
     )
     .bind(id)
+    .bind(tenant_id)
     .fetch_optional(&state.db)
     .await;
 
@@ -297,15 +310,18 @@ async fn update_customer(
         Err(e) => return e,
     }
 
+    let tenant_id = get_tenant_id(&claims, &headers);
+
     let existing = sqlx::query_as::<_, Customer>(
         r#"
-        SELECT id, name, code, industry, company_size, website, email, phone, fax,
+        SELECT id, tenant_id, name, code, industry, company_size, website, email, phone, fax,
                address, city, province, country, postal_code, status, customer_type,
                source, rating, revenue, employee_count, notes, created_at, updated_at
-        FROM crm.customers WHERE id = $1
+        FROM crm.customers WHERE id = $1 AND tenant_id = $2
         "#,
     )
     .bind(id)
+    .bind(tenant_id)
     .fetch_optional(&state.db)
     .await;
 
@@ -363,8 +379,8 @@ async fn update_customer(
             address = $10, city = $11, province = $12, country = $13, postal_code = $14,
             status = $15, customer_type = $16, source = $17, rating = $18, revenue = $19,
             employee_count = $20, notes = $21, updated_at = $22
-        WHERE id = $1
-        RETURNING id, name, code, industry, company_size, website, email, phone, fax,
+        WHERE id = $1 AND tenant_id = $23
+        RETURNING id, tenant_id, name, code, industry, company_size, website, email, phone, fax,
                   address, city, province, country, postal_code, status, customer_type,
                   source, rating, revenue, employee_count, notes, created_at, updated_at
         "#,
@@ -391,6 +407,7 @@ async fn update_customer(
     .bind(&employee_count)
     .bind(&notes)
     .bind(now)
+    .bind(tenant_id)
     .fetch_one(&state.db)
     .await;
 
@@ -447,8 +464,11 @@ async fn delete_customer(
         Err(e) => return e,
     }
 
-    let result = sqlx::query("DELETE FROM crm.customers WHERE id = $1")
+    let tenant_id = get_tenant_id(&claims, &headers);
+
+    let result = sqlx::query("DELETE FROM crm.customers WHERE id = $1 AND tenant_id = $2")
         .bind(id)
+        .bind(tenant_id)
         .execute(&state.db)
         .await;
 
@@ -513,8 +533,11 @@ async fn batch_delete_customers(
         return Json(api_error(400, "请选择要删除的客户"));
     }
 
-    let result = sqlx::query("DELETE FROM crm.customers WHERE id = ANY($1)")
+    let tenant_id = get_tenant_id(&claims, &headers);
+
+    let result = sqlx::query("DELETE FROM crm.customers WHERE id = ANY($1) AND tenant_id = $2")
         .bind(&req.ids)
+        .bind(tenant_id)
         .execute(&state.db)
         .await;
 

@@ -23,7 +23,7 @@ export const inspectionApi = {
     return { ...response, data: adaptedData };
   },
 
-  getCheck: async (id: string): Promise<ApiResponse<QualityCheck>> => {
+  getCheck: async (id: string): Promise<ApiResponse<QualityCheck | undefined>> => {
     const response = await apiClient.qms.get<QualityInspectionBackend>(`/checks/${id}`);
     return {
       ...response,
@@ -31,7 +31,9 @@ export const inspectionApi = {
     };
   },
 
-  createCheck: async (data: CreateQualityCheckRequest): Promise<ApiResponse<QualityCheck>> => {
+  createCheck: async (
+    data: CreateQualityCheckRequest
+  ): Promise<ApiResponse<QualityCheck | undefined>> => {
     const backendData = adaptInspectionToBackend(data);
     const response = await apiClient.qms.post<QualityInspectionBackend>('/checks', backendData);
     return {
@@ -43,7 +45,7 @@ export const inspectionApi = {
   updateCheck: async (
     id: string,
     data: CreateQualityCheckRequest
-  ): Promise<ApiResponse<QualityCheck>> => {
+  ): Promise<ApiResponse<QualityCheck | undefined>> => {
     const backendData: UpdateQualityInspectionRequestBackend = {
       inspection_type: data.inspection_type,
       product_name: data.product_name,
@@ -67,7 +69,7 @@ export const inspectionApi = {
   assignCheck: async (
     id: string,
     data: AssignInspectionRequestBackend
-  ): Promise<ApiResponse<QualityCheck>> => {
+  ): Promise<ApiResponse<QualityCheck | undefined>> => {
     const response = await apiClient.qms.post<QualityInspectionBackend>(
       `/checks/${id}/assign`,
       data
@@ -81,7 +83,7 @@ export const inspectionApi = {
   submitCheckResult: async (
     id: string,
     data: SubmitInspectionResultRequestBackend
-  ): Promise<ApiResponse<QualityCheck>> => {
+  ): Promise<ApiResponse<QualityCheck | undefined>> => {
     const response = await apiClient.qms.post<QualityInspectionBackend>(
       `/checks/${id}/submit`,
       data
@@ -95,7 +97,7 @@ export const inspectionApi = {
   auditCheck: async (
     id: string,
     data: AuditInspectionRequestBackend
-  ): Promise<ApiResponse<QualityCheck>> => {
+  ): Promise<ApiResponse<QualityCheck | undefined>> => {
     const response = await apiClient.qms.post<QualityInspectionBackend>(
       `/checks/${id}/audit`,
       data
@@ -109,7 +111,7 @@ export const inspectionApi = {
   reworkCheck: async (
     id: string,
     data: AuditInspectionRequestBackend
-  ): Promise<ApiResponse<QualityCheck>> => {
+  ): Promise<ApiResponse<QualityCheck | undefined>> => {
     const response = await apiClient.qms.post<QualityInspectionBackend>(
       `/checks/${id}/rework`,
       data

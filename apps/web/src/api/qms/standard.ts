@@ -19,7 +19,7 @@ export const standardApi = {
     return { ...response, data: adaptedData };
   },
 
-  getStandard: async (id: string): Promise<ApiResponse<QualityStandard>> => {
+  getStandard: async (id: string): Promise<ApiResponse<QualityStandard | undefined>> => {
     const response = await apiClient.qms.get<QualityStandardBackend>(`/standards/${id}`);
     return {
       ...response,
@@ -29,7 +29,7 @@ export const standardApi = {
 
   createStandard: async (
     data: CreateQualityStandardRequest
-  ): Promise<ApiResponse<QualityStandard>> => {
+  ): Promise<ApiResponse<QualityStandard | undefined>> => {
     const backendData = adaptStandardToBackend(data);
     const response = await apiClient.qms.post<QualityStandardBackend>('/standards', backendData);
     return {
@@ -41,7 +41,7 @@ export const standardApi = {
   updateStandard: async (
     id: string,
     data: CreateQualityStandardRequest
-  ): Promise<ApiResponse<QualityStandard>> => {
+  ): Promise<ApiResponse<QualityStandard | undefined>> => {
     const backendData: UpdateQualityStandardRequestBackend = {
       name: data.name,
       description: data.description,

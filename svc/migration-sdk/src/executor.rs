@@ -269,7 +269,7 @@ impl MigrationExecutor {
     ) -> Result<()> {
         // 按版本倒序排列
         let mut sorted: Vec<&M> = migrations.iter().collect();
-        sorted.sort_by(|a, b| b.version().cmp(&a.version()));
+        sorted.sort_by_key(|b| std::cmp::Reverse(b.version()));
 
         let mut rolled_back = false;
         for migration in sorted {

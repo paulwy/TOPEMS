@@ -25,6 +25,7 @@ impl FromRef<AppState> for AuthState {
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct QualityStandard {
     pub id: String,
+    pub tenant_id: String,
     pub code: String,
     pub name: String,
     pub category: String,
@@ -36,6 +37,7 @@ impl Default for QualityStandard {
     fn default() -> Self {
         Self {
             id: uuid::Uuid::new_v4().to_string(),
+            tenant_id: uuid::Uuid::new_v4().to_string(),
             code: String::new(),
             name: String::new(),
             category: "quality".to_string(),

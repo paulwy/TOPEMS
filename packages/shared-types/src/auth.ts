@@ -12,6 +12,7 @@ export interface User {
   id: string;
   username: string;
   email: string;
+  name: string;
   realName: string;
   status: 'active' | 'inactive' | 'locked';
   permissions: string[];
@@ -50,6 +51,7 @@ export const mapApiUserToUser = (apiResponse: Record<string, any>): User => {
     id: apiResponse.id,
     username: apiResponse.username,
     email: apiResponse.email,
+    name: apiResponse.name || apiResponse.real_name || apiResponse.full_name || apiResponse.username,
     realName: apiResponse.real_name || apiResponse.full_name || apiResponse.username,
     status: apiResponse.is_active === false ? 'inactive' : (apiResponse.status || 'active'),
     permissions: apiResponse.permissions || [],

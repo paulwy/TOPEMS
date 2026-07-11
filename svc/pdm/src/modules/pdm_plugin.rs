@@ -1,7 +1,7 @@
 use axum::{extract::State, Json};
 use serde::{Deserialize, Serialize};
 
-use crate::AppState;
+use crate::shared::AppState;
 use topems_shared::ApiResponse;
 
 #[derive(Debug, Clone, Serialize, Deserialize)]

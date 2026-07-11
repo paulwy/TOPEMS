@@ -3,7 +3,7 @@ use axum::{
     http::{HeaderMap, HeaderValue},
     response::IntoResponse,
     routing::get,
-    Json, Router,
+    Extension, Json, Router,
 };
 use chrono::{DateTime, Utc};
 use serde::{Deserialize, Serialize};
@@ -11,7 +11,8 @@ use serde_json;
 use sqlx::Row;
 use uuid::Uuid;
 
-use crate::AppState;
+use crate::middleware::tenant::TenantContext;
+use crate::shared::AppState;
 use topems_shared::ApiResponse;
 
 fn validate_date_format(date_str: &str) -> bool {
@@ -36,6 +37,7 @@ fn validate_date_format(date_str: &str) -> bool {
 #[derive(Debug, Deserialize, Serialize)]
 pub struct AuditLog {
     pub id: Uuid,
+    pub tenant_id: Uuid,
     pub action: String,
     pub entity_type: Option<String>,
     pub entity_id: Option<Uuid>,
@@ -129,6 +131,7 @@ pub async fn list_audit_logs(
                 .into_iter()
                 .map(|row| AuditLog {
                     id: row.get("id"),
+                    tenant_id: row.get("tenant_id"),
                     action: row.get("action"),
                     entity_type: row.get("entity_type"),
                     entity_id: row.get("entity_id"),
@@ -204,6 +207,7 @@ pub async fn get_audit_log(
         Ok(Some(row)) => {
             let log = AuditLog {
                 id: row.get("id"),
+                tenant_id: row.get("tenant_id"),
                 action: row.get("action"),
                 entity_type: row.get("entity_type"),
                 entity_id: row.get("entity_id"),
@@ -282,6 +286,7 @@ pub async fn export_audit_logs(
                 .into_iter()
                 .map(|row| AuditLog {
                     id: row.get("id"),
+                    tenant_id: row.get("tenant_id"),
                     action: row.get("action"),
                     entity_type: row.get("entity_type"),
                     entity_id: row.get("entity_id"),

@@ -51,6 +51,8 @@ pub enum RetryTaskStatus {
 pub struct RetryTask {
     /// 任务 ID
     pub id: Uuid,
+    /// 租户 ID
+    pub tenant_id: Uuid,
     /// 关联的执行记录 ID
     pub execution_id: Uuid,
     /// 规则代码
@@ -209,6 +211,7 @@ impl RetryManager {
     /// 创建重试任务
     pub fn create_retry_task(
         &self,
+        tenant_id: Uuid,
         execution_id: Uuid,
         rule_code: String,
         policy: &RetryPolicy,
@@ -216,6 +219,7 @@ impl RetryManager {
         let now = Utc::now();
         RetryTask {
             id: Uuid::new_v4(),
+            tenant_id,
             execution_id,
             rule_code: rule_code.clone(),
             retry_count: 0,
@@ -494,7 +498,12 @@ mod tests {
         let manager = RetryManager::new();
         let policy = RetryPolicy::default();
 
-        let task = manager.create_retry_task(Uuid::new_v4(), "test_rule".to_string(), &policy);
+        let task = manager.create_retry_task(
+            Uuid::new_v4(),
+            Uuid::new_v4(),
+            "test_rule".to_string(),
+            &policy,
+        );
 
         manager.add_task(task.clone()).await;
         let pending = manager.get_pending_tasks().await;
@@ -506,7 +515,12 @@ mod tests {
         let manager = RetryManager::new();
         let policy = RetryPolicy::default();
 
-        let task = manager.create_retry_task(Uuid::new_v4(), "test_rule".to_string(), &policy);
+        let task = manager.create_retry_task(
+            Uuid::new_v4(),
+            Uuid::new_v4(),
+            "test_rule".to_string(),
+            &policy,
+        );
 
         manager.add_task(task.clone()).await;
         manager

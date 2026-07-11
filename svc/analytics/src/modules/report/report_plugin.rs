@@ -1,6 +1,6 @@
 // Report Service Plugin Interface
 
-use crate::AppState;
+use crate::shared::AppState;
 use axum::{extract::State, routing::get, Json, Router};
 use serde::{Deserialize, Serialize};
 

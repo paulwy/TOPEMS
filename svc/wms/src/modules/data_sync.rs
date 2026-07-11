@@ -58,7 +58,7 @@ where
         .route("/api/wms/sync/sync-logs", post(get_sync_logs))
 }
 
-async fn outbound_to_shipping(
+pub async fn outbound_to_shipping(
     State(state): State<ApiState>,
     Json(req): Json<OutboundToShippingRequest>,
 ) -> Json<ApiResponse<serde_json::Value>> {
@@ -87,14 +87,14 @@ async fn outbound_to_shipping(
         .await
 }
 
-async fn create_shipping_from_outbound(
+pub async fn create_shipping_from_outbound(
     State(state): State<ApiState>,
     Path(id): Path<Uuid>,
 ) -> Json<ApiResponse<serde_json::Value>> {
     create_shipping_from_outbound_internal(&state, id, None, None).await
 }
 
-async fn create_shipping_from_outbound_internal(
+pub async fn create_shipping_from_outbound_internal(
     state: &ApiState,
     outbound_order_id: Uuid,
     customer_id: Option<Uuid>,
@@ -249,7 +249,7 @@ pub struct InboundFromScmRequest {
     pub purchase_order_id: String,
 }
 
-async fn create_inbound_from_scm(
+pub async fn create_inbound_from_scm(
     State(state): State<ApiState>,
     Json(req): Json<InboundFromScmRequest>,
 ) -> Json<ApiResponse<serde_json::Value>> {
@@ -354,7 +354,7 @@ async fn create_inbound_from_scm(
     }
 }
 
-async fn get_sync_logs(
+pub async fn get_sync_logs(
     State(state): State<ApiState>,
     Json(req): Json<SyncLogsRequest>,
 ) -> Json<ApiResponse<serde_json::Value>> {
@@ -420,7 +420,7 @@ async fn get_sync_logs(
     }
 }
 
-async fn record_sync_log(
+pub async fn record_sync_log(
     state: &ApiState,
     sync_type: &str,
     source_module: &str,

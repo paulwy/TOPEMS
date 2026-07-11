@@ -69,7 +69,7 @@ pub fn create_routes() -> Router<ApiState> {
 
 const SELECT_COLUMNS: &str = "id, appointment_no, purchase_order_id, purchase_order_no, supplier_id, supplier_name, delivery_date, delivery_time, delivery_method, vehicle_no, driver_name, driver_phone, cargo_description, total_quantity, total_weight, destination_warehouse, expected_arrival_time, actual_arrival_time, status, applicant, approver, approved_at, rejection_reason, remarks, created_by, created_at, updated_at";
 
-async fn list_appointments(
+pub async fn list_appointments(
     State(state): State<ApiState>,
     Extension(claims): Extension<Claims>,
     Query(params): Query<SupplierDeliveryAppointmentQueryParams>,
@@ -159,7 +159,7 @@ fn generate_appointment_no() -> String {
     format!("DA{}", now.format("%Y%m%d%H%M%S%3f"))
 }
 
-async fn create_appointment(
+pub async fn create_appointment(
     State(state): State<ApiState>,
     Extension(claims): Extension<Claims>,
     headers: HeaderMap,
@@ -266,7 +266,7 @@ async fn create_appointment(
     response
 }
 
-async fn get_appointment(
+pub async fn get_appointment(
     State(state): State<ApiState>,
     Extension(claims): Extension<Claims>,
     Path(id): Path<Uuid>,
@@ -299,7 +299,7 @@ async fn get_appointment(
     }
 }
 
-async fn update_appointment(
+pub async fn update_appointment(
     State(state): State<ApiState>,
     Extension(claims): Extension<Claims>,
     Path(id): Path<Uuid>,
@@ -431,7 +431,7 @@ async fn update_appointment(
     response
 }
 
-async fn delete_appointment(
+pub async fn delete_appointment(
     State(state): State<ApiState>,
     Extension(claims): Extension<Claims>,
     Path(id): Path<Uuid>,

@@ -67,3 +67,64 @@ export const formatRelativeTime = (dateString: string): string => {
     return `${Math.floor(diff / year)}年前`;
   }
 };
+
+export const getWeekday = (date?: Date): number => {
+  const d = date ? new Date(date) : new Date();
+  return d.getDay();
+};
+
+const parseDateInternal = (date: Date | string): Date => {
+  if (typeof date === 'string' && /^\d{4}-\d{2}-\d{2}$/.test(date)) {
+    return new Date(`${date}T00:00:00`);
+  }
+  return new Date(date);
+};
+
+export const isToday = (date: Date | string): boolean => {
+  const d = parseDateInternal(date);
+  const today = new Date();
+  return (
+    d.getDate() === today.getDate() &&
+    d.getMonth() === today.getMonth() &&
+    d.getFullYear() === today.getFullYear()
+  );
+};
+
+export const isYesterday = (date: Date | string): boolean => {
+  const d = parseDateInternal(date);
+  const yesterday = new Date();
+  yesterday.setDate(yesterday.getDate() - 1);
+  return (
+    d.getDate() === yesterday.getDate() &&
+    d.getMonth() === yesterday.getMonth() &&
+    d.getFullYear() === yesterday.getFullYear()
+  );
+};
+
+export const isTomorrow = (date: Date | string): boolean => {
+  const d = parseDateInternal(date);
+  const tomorrow = new Date();
+  tomorrow.setDate(tomorrow.getDate() + 1);
+  return (
+    d.getDate() === tomorrow.getDate() &&
+    d.getMonth() === tomorrow.getMonth() &&
+    d.getFullYear() === tomorrow.getFullYear()
+  );
+};
+
+export const getWeekStart = (date?: Date): Date => {
+  const d = date ? new Date(date) : new Date();
+  const day = d.getDay();
+  const diff = day === 0 ? -6 : 1 - day;
+  d.setDate(d.getDate() + diff);
+  d.setHours(0, 0, 0, 0);
+  return d;
+};
+
+export const getWeekEnd = (date?: Date): Date => {
+  const start = getWeekStart(date);
+  const end = new Date(start);
+  end.setDate(end.getDate() + 6);
+  end.setHours(23, 59, 59, 999);
+  return end;
+};

@@ -27,6 +27,7 @@ import { ListPageTemplate, type ColumnDef } from '@/components/templates';
 import { extractErrorMessage } from '@/utils/errors';
 import { PageContainer } from '@/components/common';
 import { ConfirmDialog } from '@topems/shared-components';
+import { WORKFLOW_PATHS } from '@/modules/workflow/config';
 
 /**
  * 流程状态配置
@@ -381,7 +382,7 @@ export const WorkflowDefinitionsPage: React.FC = () => {
             <Button
               size='small'
               variant='text'
-              onClick={() => navigate(`/workflow/designer?id=${row.id}`)}
+              onClick={() => navigate(`${WORKFLOW_PATHS.designer}?id=${row.id}`)}
               startIcon={<Eye size={14} />}
             >
               查看
@@ -389,7 +390,7 @@ export const WorkflowDefinitionsPage: React.FC = () => {
             <Button
               size='small'
               variant='text'
-              onClick={() => navigate(`/workflow/instances?definition=${row.id}`)}
+              onClick={() => navigate(`${WORKFLOW_PATHS.instances}?definition=${row.id}`)}
               startIcon={<Play size={14} />}
               disabled={row.status !== 'active'}
             >
@@ -398,7 +399,7 @@ export const WorkflowDefinitionsPage: React.FC = () => {
             <Button
               size='small'
               variant='text'
-              onClick={() => navigate(`/workflow/designer?id=${row.id}&mode=edit`)}
+              onClick={() => navigate(`${WORKFLOW_PATHS.designer}?id=${row.id}&mode=edit`)}
               startIcon={<Edit size={14} />}
             >
               编辑
@@ -464,7 +465,7 @@ export const WorkflowDefinitionsPage: React.FC = () => {
   }, []);
 
   const handleCreate = useCallback(() => {
-    navigate('/workflow/designer?mode=create');
+    navigate(`${WORKFLOW_PATHS.designer}?mode=create`);
   }, [navigate]);
 
   return (
@@ -472,7 +473,7 @@ export const WorkflowDefinitionsPage: React.FC = () => {
       headerProps={{
         pageIcon: <FileCode size={20} />,
         backButton: {
-          href: '/workflow/dashboard',
+          href: WORKFLOW_PATHS.dashboard,
         },
       }}
     >

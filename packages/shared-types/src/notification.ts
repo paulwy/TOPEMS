@@ -8,3 +8,7 @@ export interface Notification {
   link?: string;
   createdAt: string;
 }
+
+export type NotificationType = 'info' | 'warning' | 'error' | 'success';
+
+export type NotificationStatus = 'unread' | 'read' | 'archived';

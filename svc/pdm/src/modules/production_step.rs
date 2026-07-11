@@ -1,11 +1,25 @@
-use axum::{extract::Path, extract::Query, extract::State, routing::get, Json, Router};
+use axum::{extract::Path, extract::Query, extract::State, routing::get, Extension, Json, Router};
 use serde::{Deserialize, Serialize};
 use sqlx::types::BigDecimal;
 use sqlx::FromRow;
 use uuid::Uuid;
 
-use crate::AppState;
-use topems_shared::ApiResponse;
+use crate::shared::AppState;
+use topems_shared::{ApiResponse, Claims};
+
+fn get_tenant_id(claims: &Claims, headers: &axum::http::HeaderMap) -> Uuid {
+    claims
+        .tenant_id
+        .as_ref()
+        .and_then(|t| Uuid::parse_str(t).ok())
+        .or_else(|| {
+            headers
+                .get("x-tenant-id")
+                .and_then(|v| v.to_str().ok())
+                .and_then(|s| Uuid::parse_str(s).ok())
+        })
+        .unwrap_or_else(Uuid::new_v4)
+}
 
 pub fn create_routes() -> Router<AppState> {
     Router::new()
@@ -22,6 +36,7 @@ pub fn create_routes() -> Router<AppState> {
 #[derive(Debug, Serialize, Deserialize, FromRow)]
 pub struct ProductionStep {
     pub id: Uuid,
+    pub tenant_id: Uuid,
     pub process_id: Uuid,
     pub step_no: i32,
     pub name: String,
@@ -65,21 +80,26 @@ pub struct StepQuery {
 
 pub async fn list_steps(
     State(state): State<AppState>,
+    Extension(claims): Extension<Claims>,
     Query(query): Query<StepQuery>,
+    headers: axum::http::HeaderMap,
 ) -> Json<ApiResponse<serde_json::Value>> {
+    let tenant_id = get_tenant_id(&claims, &headers);
     let page = query.page.unwrap_or(1).max(1);
     let page_size = query.page_size.unwrap_or(10).min(100);
     let offset = (page - 1) * page_size;
 
     let result = sqlx::query_as::<_, ProductionStep>(
         r#"
-        SELECT id, process_id, step_no, name, description, standard_time, equipment_requirement, quality_check, status
+        SELECT id, tenant_id, process_id, step_no, name, description, standard_time, equipment_requirement, quality_check, status
         FROM pdm_production_steps
-        WHERE ($1::uuid IS NULL OR process_id = $1)
+        WHERE tenant_id = $1
+          AND ($2::uuid IS NULL OR process_id = $2)
         ORDER BY process_id, step_no
-        LIMIT $2 OFFSET $3
+        LIMIT $3 OFFSET $4
         "#,
     )
+    .bind(tenant_id)
     .bind(query.process_id)
     .bind(page_size)
     .bind(offset)
@@ -91,9 +111,11 @@ pub async fn list_steps(
             let count_result = sqlx::query_scalar::<_, i64>(
                 r#"
                 SELECT COUNT(*) FROM pdm_production_steps
-                WHERE ($1::uuid IS NULL OR process_id = $1)
+                WHERE tenant_id = $1
+                  AND ($2::uuid IS NULL OR process_id = $2)
                 "#,
             )
+            .bind(tenant_id)
             .bind(query.process_id)
             .fetch_one(&state.pool)
             .await;
@@ -119,8 +141,12 @@ pub async fn list_steps(
 
 pub async fn create_step(
     State(state): State<AppState>,
+    Extension(claims): Extension<Claims>,
+    headers: axum::http::HeaderMap,
     Json(req): Json<CreateStepRequest>,
 ) -> Json<ApiResponse<ProductionStep>> {
+    let tenant_id = get_tenant_id(&claims, &headers);
+
     if req.name.is_empty() {
         return Json(ApiResponse::error(400, "工步名称不能为空"));
     }
@@ -129,11 +155,12 @@ pub async fn create_step(
 
     let result = sqlx::query_as::<_, ProductionStep>(
         r#"
-        INSERT INTO pdm_production_steps (process_id, step_no, name, description, standard_time, equipment_requirement, quality_check, status)
-        VALUES ($1, $2, $3, $4, $5, $6, $7, $8)
-        RETURNING id, process_id, step_no, name, description, standard_time, equipment_requirement, quality_check, status
+        INSERT INTO pdm_production_steps (tenant_id, process_id, step_no, name, description, standard_time, equipment_requirement, quality_check, status)
+        VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9)
+        RETURNING id, tenant_id, process_id, step_no, name, description, standard_time, equipment_requirement, quality_check, status
         "#,
     )
+    .bind(tenant_id)
     .bind(req.process_id)
     .bind(req.step_no)
     .bind(&req.name)
@@ -156,15 +183,20 @@ pub async fn create_step(
 
 pub async fn get_step(
     State(state): State<AppState>,
+    Extension(claims): Extension<Claims>,
     Path(id): Path<Uuid>,
+    headers: axum::http::HeaderMap,
 ) -> Json<ApiResponse<ProductionStep>> {
+    let tenant_id = get_tenant_id(&claims, &headers);
+
     let result = sqlx::query_as::<_, ProductionStep>(
         r#"
-        SELECT id, process_id, step_no, name, description, standard_time, equipment_requirement, quality_check, status
-        FROM pdm_production_steps WHERE id = $1
+        SELECT id, tenant_id, process_id, step_no, name, description, standard_time, equipment_requirement, quality_check, status
+        FROM pdm_production_steps WHERE id = $1 AND tenant_id = $2
         "#,
     )
     .bind(id)
+    .bind(tenant_id)
     .fetch_optional(&state.pool)
     .await;
 
@@ -180,9 +212,13 @@ pub async fn get_step(
 
 pub async fn update_step(
     State(state): State<AppState>,
+    Extension(claims): Extension<Claims>,
     Path(id): Path<Uuid>,
+    headers: axum::http::HeaderMap,
     Json(req): Json<UpdateStepRequest>,
 ) -> Json<ApiResponse<ProductionStep>> {
+    let tenant_id = get_tenant_id(&claims, &headers);
+
     let result = sqlx::query_as::<_, ProductionStep>(
         r#"
         UPDATE pdm_production_steps SET
@@ -194,8 +230,8 @@ pub async fn update_step(
             equipment_requirement = COALESCE($7, equipment_requirement),
             quality_check = COALESCE($8, quality_check),
             status = COALESCE($9, status)
-        WHERE id = $1
-        RETURNING id, process_id, step_no, name, description, standard_time, equipment_requirement, quality_check, status
+        WHERE id = $1 AND tenant_id = $10
+        RETURNING id, tenant_id, process_id, step_no, name, description, standard_time, equipment_requirement, quality_check, status
         "#,
     )
     .bind(id)
@@ -207,6 +243,7 @@ pub async fn update_step(
     .bind(&req.equipment_requirement)
     .bind(&req.quality_check)
     .bind(&req.status)
+    .bind(tenant_id)
     .fetch_optional(&state.pool)
     .await;
 
@@ -222,10 +259,15 @@ pub async fn update_step(
 
 pub async fn delete_step(
     State(state): State<AppState>,
+    Extension(claims): Extension<Claims>,
     Path(id): Path<Uuid>,
+    headers: axum::http::HeaderMap,
 ) -> Json<ApiResponse<bool>> {
-    let result = sqlx::query("DELETE FROM pdm_production_steps WHERE id = $1")
+    let tenant_id = get_tenant_id(&claims, &headers);
+
+    let result = sqlx::query("DELETE FROM pdm_production_steps WHERE id = $1 AND tenant_id = $2")
         .bind(id)
+        .bind(tenant_id)
         .execute(&state.pool)
         .await;
 

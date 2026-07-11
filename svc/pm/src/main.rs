@@ -1,6 +1,7 @@
 pub mod models;
 pub mod modules;
 pub mod services;
+pub mod shared;
 
 use axum::{routing::get, Router};
 use axum_prometheus::PrometheusMetricLayer;
@@ -35,7 +36,9 @@ async fn main() -> Result<()> {
     tracing::info!("✅ Prometheus 监控已初始化");
 
     let db_config = DatabaseConfig {
-        url: "postgres://topems:topems_secret@localhost:5432/topems".to_string(),
+        url: env::var("DATABASE_URL")
+            .expect("DATABASE_URL environment variable is required")
+            .to_string(),
         max_connections: 10,
         min_connections: Some(2),
         connect_timeout: Some(30),

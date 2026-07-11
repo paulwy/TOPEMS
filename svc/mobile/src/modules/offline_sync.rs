@@ -84,7 +84,8 @@ pub async fn sync_data(
     let mut failed_operations = Vec::new();
 
     for op in payload.operations {
-        match db_create_offline_operation(&pool, user_id, op.clone()).await {
+        let tenant_id = Uuid::new_v4();
+        match db_create_offline_operation(&pool, tenant_id, user_id, op.clone()).await {
             Ok(operation) => {
                 match db_update_offline_operation_status(&pool, operation.id, "syncing", None).await
                 {
@@ -111,7 +112,7 @@ pub async fn sync_data(
                             failed_operations.push(FailedOperation {
                                 operation_id: operation.id,
                                 entity_type: op.entity_type,
-                                entity_id: op.entity_id,
+                                entity_id: Some(op.entity_id),
                                 error: e.to_string(),
                             });
                         }
@@ -121,7 +122,7 @@ pub async fn sync_data(
                         failed_operations.push(FailedOperation {
                             operation_id: operation.id,
                             entity_type: op.entity_type,
-                            entity_id: op.entity_id,
+                            entity_id: Some(op.entity_id),
                             error: format!("更新状态失败: {}", e),
                         });
                     }
@@ -132,7 +133,7 @@ pub async fn sync_data(
                 failed_operations.push(FailedOperation {
                     operation_id: Uuid::new_v4(),
                     entity_type: op.entity_type,
-                    entity_id: op.entity_id,
+                    entity_id: Some(op.entity_id),
                     error: format!("创建操作记录失败: {}", e),
                 });
             }
@@ -420,7 +421,8 @@ pub async fn update_sync_policy(
         }
     };
 
-    let policy = match db_create_or_update_sync_policy(&pool, user_id, payload).await {
+    let tenant_id = Uuid::new_v4();
+    let policy = match db_create_or_update_sync_policy(&pool, tenant_id, user_id, payload).await {
         Ok(p) => p,
         Err(e) => {
             tracing::error!("更新同步策略失败: {}", e);

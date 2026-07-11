@@ -261,7 +261,7 @@ export const qmsApi = {
         data: statistics,
         message: 'Statistics calculated',
         code: 200,
-        timestamp: new Date().toISOString(),
+        timestamp: Date.now(),
       };
     } catch (error: unknown) {
       apiLogger.error('Failed to calculate QMS statistics:', error);
@@ -287,7 +287,7 @@ export const qmsApi = {
         data: fallbackStats,
         message: 'Using fallback statistics',
         code: 200,
-        timestamp: new Date().toISOString(),
+        timestamp: Date.now(),
       };
     }
   },

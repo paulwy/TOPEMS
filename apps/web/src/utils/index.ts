@@ -4,7 +4,17 @@ import apiCache from './apiCache';
 
 export { default as createLogger, type LoggerOptions, type LogLevel } from './logger';
 export * from './format';
-export * from './date';
+export {
+  parseDate,
+  isSameDay,
+  getDaysBetween,
+  getWeekday,
+  isToday,
+  isYesterday,
+  isTomorrow,
+  getWeekStart,
+  getWeekEnd,
+} from './date';
 export * from './string';
 export { default as session, type SessionUser } from './session';
 export * from './errors';

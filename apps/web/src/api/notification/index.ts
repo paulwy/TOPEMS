@@ -178,7 +178,7 @@ export const getNotifications = async (
           unread_count: 0,
         },
         message: 'Unauthorized',
-        timestamp: new Date().toISOString(),
+        timestamp: Date.now(),
       };
     }
     throw error;
@@ -204,7 +204,7 @@ export const getUnreadCount = async (): Promise<ApiResponse<number>> => {
         success: true,
         data: 0,
         message: 'Request canceled',
-        timestamp: new Date().toISOString(),
+        timestamp: Date.now(),
       };
     }
     // 401 errors are handled by the API client interceptor, suppress them here
@@ -215,7 +215,7 @@ export const getUnreadCount = async (): Promise<ApiResponse<number>> => {
         success: true,
         data: 0,
         message: 'Unauthorized',
-        timestamp: new Date().toISOString(),
+        timestamp: Date.now(),
       };
     }
     apiLogger.error('Failed to fetch unread count:', error);

@@ -2,9 +2,12 @@ import React from 'react';
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { render } from '@testing-library/react';
 import { BrowserRouter } from 'react-router-dom';
+import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import CustomerManagementPage from '../crm/CustomerManagementPage';
 import { crmApi } from '@/api/crm';
 import { useAppStore } from '@/store';
+
+const queryClient = new QueryClient();
 
 vi.mock('@/api/crm', () => ({
   crmApi: {
@@ -56,9 +59,11 @@ describe('CustomerManagementPage', () => {
 
   it('should render without crashing', () => {
     const { container } = render(
-      <BrowserRouter>
-        <CustomerManagementPage />
-      </BrowserRouter>
+      <QueryClientProvider client={queryClient}>
+        <BrowserRouter>
+          <CustomerManagementPage />
+        </BrowserRouter>
+      </QueryClientProvider>
     );
     expect(container).toBeDefined();
   });

@@ -33,6 +33,7 @@ import { ListPageTemplate, type ColumnDef } from '@/components/templates';
 import { extractErrorMessage } from '@/utils/errors';
 import { PageContainer, ConfirmDialog } from '@/components/common';
 import { designTokens } from '@/theme/tokens';
+import { WORKFLOW_PATHS } from '@/modules/workflow/config';
 
 const ct = designTokens.colors;
 
@@ -746,7 +747,7 @@ export const WorkflowApprovalsPage: React.FC = () => {
       headerProps={{
         pageIcon: <CheckSquare size={20} />,
         backButton: {
-          href: '/workflow/dashboard',
+          href: WORKFLOW_PATHS.dashboard,
         },
       }}
     >

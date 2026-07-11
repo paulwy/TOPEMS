@@ -1,14 +1,26 @@
 //! Risk handlers
 
-use axum::{
-    extract::State,
-    routing::{get, post, put},
-    Json, Router,
-};
+use axum::{extract::State, http::HeaderMap, routing::*, Extension, Json, Router};
 use serde::{Deserialize, Serialize};
-use topems_shared::ApiResponse;
+use topems_shared::{ApiResponse, Claims};
 
-use crate::AppState;
+use uuid::Uuid;
+
+use crate::shared::AppState;
+
+fn get_tenant_id(claims: &Claims, headers: &HeaderMap) -> Uuid {
+    claims
+        .tenant_id
+        .as_ref()
+        .and_then(|t| Uuid::parse_str(t).ok())
+        .or_else(|| {
+            headers
+                .get("x-tenant-id")
+                .and_then(|v| v.to_str().ok())
+                .and_then(|s| Uuid::parse_str(s).ok())
+        })
+        .unwrap_or_else(Uuid::new_v4)
+}
 
 pub fn create_routes() -> Router<AppState> {
     Router::new()
@@ -49,6 +61,8 @@ pub struct Risk {
     pub risk_level: Option<String>,
     pub control_measures: Option<String>,
     pub status: String,
+
+    pub tenant_id: Uuid,
 }
 
 #[derive(Debug, Serialize)]
@@ -60,17 +74,27 @@ pub struct RiskControlMeasure {
     pub measure_type: Option<String>,
     pub status: String,
     pub created_at: String,
+
+    pub tenant_id: Uuid,
 }
 
-pub async fn list_risks(State(_state): State<crate::AppState>) -> Json<ApiResponse<Vec<Risk>>> {
+pub async fn list_risks(
+    State(_state): State<crate::shared::AppState>,
+    Extension(claims): Extension<Claims>,
+    headers: HeaderMap,
+) -> Json<ApiResponse<Vec<Risk>>> {
+    let tenant_id = get_tenant_id(&claims, &headers);
     tracing::info!("Listing risks");
     Json(ApiResponse::success(Vec::<Risk>::new(), "获取风险列表成功"))
 }
 
 pub async fn create_risk(
-    State(_state): State<crate::AppState>,
+    State(_state): State<crate::shared::AppState>,
+    Extension(claims): Extension<Claims>,
+    headers: HeaderMap,
     Json(req): Json<serde_json::Value>,
 ) -> Json<ApiResponse<Risk>> {
+    let tenant_id = get_tenant_id(&claims, &headers);
     tracing::info!("Creating risk: {:?}", req);
     Json(ApiResponse::success(
         Risk {
@@ -88,15 +112,20 @@ pub async fn create_risk(
             risk_level: Some("medium".to_string()),
             control_measures: None,
             status: "identified".to_string(),
+
+            tenant_id,
         },
         "风险创建成功",
     ))
 }
 
 pub async fn get_risk(
-    State(_state): State<crate::AppState>,
+    State(_state): State<crate::shared::AppState>,
+    Extension(claims): Extension<Claims>,
+    headers: HeaderMap,
     axum::extract::Path(id): axum::extract::Path<String>,
 ) -> Json<ApiResponse<Risk>> {
+    let tenant_id = get_tenant_id(&claims, &headers);
     tracing::info!("Getting risk: {}", id);
     Json(ApiResponse::success(
         Risk {
@@ -111,16 +140,21 @@ pub async fn get_risk(
             risk_level: Some("high".to_string()),
             control_measures: Some("配备消防器材".to_string()),
             status: "assessed".to_string(),
+
+            tenant_id,
         },
         "获取风险成功",
     ))
 }
 
 pub async fn update_risk(
-    State(_state): State<crate::AppState>,
+    State(_state): State<crate::shared::AppState>,
+    Extension(claims): Extension<Claims>,
+    headers: HeaderMap,
     axum::extract::Path(id): axum::extract::Path<String>,
     Json(req): Json<serde_json::Value>,
 ) -> Json<ApiResponse<Risk>> {
+    let tenant_id = get_tenant_id(&claims, &headers);
     tracing::info!("Updating risk {}: {:?}", id, req);
     Json(ApiResponse::success(
         Risk {
@@ -135,16 +169,21 @@ pub async fn update_risk(
             risk_level: Some("high".to_string()),
             control_measures: Some("配备消防器材".to_string()),
             status: "assessed".to_string(),
+
+            tenant_id,
         },
         "风险更新成功",
     ))
 }
 
 pub async fn assess_risk(
-    State(_state): State<crate::AppState>,
+    State(_state): State<crate::shared::AppState>,
+    Extension(claims): Extension<Claims>,
+    headers: HeaderMap,
     axum::extract::Path(id): axum::extract::Path<String>,
     Json(req): Json<serde_json::Value>,
 ) -> Json<ApiResponse<Risk>> {
+    let tenant_id = get_tenant_id(&claims, &headers);
     tracing::info!("Assessing risk {}: {:?}", id, req);
     Json(ApiResponse::success(
         Risk {
@@ -159,23 +198,31 @@ pub async fn assess_risk(
             risk_level: Some("high".to_string()),
             control_measures: Some("配备消防器材".to_string()),
             status: "controlled".to_string(),
+
+            tenant_id,
         },
         "风险评估成功",
     ))
 }
 
 pub async fn delete_risk(
-    State(_state): State<crate::AppState>,
+    State(_state): State<crate::shared::AppState>,
+    Extension(claims): Extension<Claims>,
+    headers: HeaderMap,
     axum::extract::Path(id): axum::extract::Path<String>,
 ) -> Json<ApiResponse<()>> {
+    let tenant_id = get_tenant_id(&claims, &headers);
     tracing::info!("Deleting risk: {}", id);
     Json(ApiResponse::success((), "风险删除成功"))
 }
 
 pub async fn list_control_measures(
-    State(_state): State<crate::AppState>,
+    State(_state): State<crate::shared::AppState>,
+    Extension(claims): Extension<Claims>,
+    headers: HeaderMap,
     axum::extract::Path(id): axum::extract::Path<String>,
 ) -> Json<ApiResponse<Vec<RiskControlMeasure>>> {
+    let tenant_id = get_tenant_id(&claims, &headers);
     tracing::info!("Listing control measures for risk: {}", id);
     Json(ApiResponse::success(
         vec![
@@ -187,6 +234,8 @@ pub async fn list_control_measures(
                 measure_type: Some("engineering".to_string()),
                 status: "completed".to_string(),
                 created_at: "2024-01-15T10:00:00Z".to_string(),
+
+                tenant_id,
             },
             RiskControlMeasure {
                 id: uuid::Uuid::new_v4().to_string(),
@@ -196,6 +245,8 @@ pub async fn list_control_measures(
                 measure_type: Some("administrative".to_string()),
                 status: "in_progress".to_string(),
                 created_at: "2024-01-20T14:00:00Z".to_string(),
+
+                tenant_id,
             },
         ],
         "获取控制措施列表成功",
@@ -203,10 +254,13 @@ pub async fn list_control_measures(
 }
 
 pub async fn create_control_measure(
-    State(_state): State<crate::AppState>,
+    State(_state): State<crate::shared::AppState>,
+    Extension(claims): Extension<Claims>,
+    headers: HeaderMap,
     axum::extract::Path(id): axum::extract::Path<String>,
     Json(req): Json<serde_json::Value>,
 ) -> Json<ApiResponse<RiskControlMeasure>> {
+    let tenant_id = get_tenant_id(&claims, &headers);
     tracing::info!("Creating control measure for risk {}: {:?}", id, req);
     Json(ApiResponse::success(
         RiskControlMeasure {
@@ -227,16 +281,21 @@ pub async fn create_control_measure(
                 .map(|s| s.to_string()),
             status: "pending".to_string(),
             created_at: "2024-01-25T10:00:00Z".to_string(),
+
+            tenant_id,
         },
         "控制措施创建成功",
     ))
 }
 
 pub async fn update_control_measure(
-    State(_state): State<crate::AppState>,
+    State(_state): State<crate::shared::AppState>,
+    Extension(claims): Extension<Claims>,
+    headers: HeaderMap,
     axum::extract::Path((id, measure_id)): axum::extract::Path<(String, String)>,
     Json(req): Json<serde_json::Value>,
 ) -> Json<ApiResponse<RiskControlMeasure>> {
+    let tenant_id = get_tenant_id(&claims, &headers);
     tracing::info!(
         "Updating control measure {} for risk {}: {:?}",
         measure_id,
@@ -266,15 +325,20 @@ pub async fn update_control_measure(
                 .unwrap_or("pending")
                 .to_string(),
             created_at: "2024-01-25T10:00:00Z".to_string(),
+
+            tenant_id,
         },
         "控制措施更新成功",
     ))
 }
 
 pub async fn delete_control_measure(
-    State(_state): State<crate::AppState>,
+    State(_state): State<crate::shared::AppState>,
+    Extension(claims): Extension<Claims>,
+    headers: HeaderMap,
     axum::extract::Path((_id, measure_id)): axum::extract::Path<(String, String)>,
 ) -> Json<ApiResponse<()>> {
+    let tenant_id = get_tenant_id(&claims, &headers);
     tracing::info!("Deleting control measure: {}", measure_id);
     Json(ApiResponse::success((), "控制措施删除成功"))
 }

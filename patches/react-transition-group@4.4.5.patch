@@ -1,8 +1,8 @@
 diff --git a/package.json b/package.json
-index e9bd5377e808703df0d8cafb2964152ee6c0b4f3..aa75ef857b3139e71677dd8bb9edc082c9250c1e 100644
 --- a/package.json
 +++ b/package.json
-@@ -65,5 +65,23 @@
+@@ -50,4 +50,23 @@
+     "transform": [
        "loose-envify"
      ]
    },
@@ -36,4 +36,3 @@ index e9bd5377e808703df0d8cafb2964152ee6c0b4f3..aa75ef857b3139e71677dd8bb9edc082
 +      "require": "./cjs/SwitchTransition.js"
 +    }
 +  }
- }

@@ -51,42 +51,42 @@ where
             get(list_outbound_orders).post(create_outbound_order),
         )
         .route(
-            "/api/v1/outbound-orders/{id}",
+            "/api/wms/outbound-orders/{id}",
             get(get_outbound_order)
                 .put(update_outbound_order)
                 .delete(delete_outbound_order),
         )
         .route(
-            "/api/v1/outbound-orders/{id}/items",
+            "/api/wms/outbound-orders/{id}/items",
             get(list_outbound_order_items).post(create_outbound_order_item),
         )
         .route(
-            "/api/v1/outbound-orders/{id}/items/{item_id}",
+            "/api/wms/outbound-orders/{id}/items/{item_id}",
             put(update_outbound_order_item).delete(delete_outbound_order_item),
         )
         .route(
-            "/api/v1/outbound-orders/{id}/confirm",
+            "/api/wms/outbound-orders/{id}/confirm",
             post(confirm_outbound_order),
         )
         .route(
-            "/api/v1/outbound-orders/{id}/pick",
+            "/api/wms/outbound-orders/{id}/pick",
             post(pick_outbound_order),
         )
         .route(
-            "/api/v1/outbound-orders/{id}/pack",
+            "/api/wms/outbound-orders/{id}/pack",
             post(pack_outbound_order),
         )
         .route(
-            "/api/v1/outbound-orders/{id}/ship",
+            "/api/wms/outbound-orders/{id}/ship",
             post(ship_outbound_order),
         )
         .route(
-            "/api/v1/outbound-orders/{id}/complete",
+            "/api/wms/outbound-orders/{id}/complete",
             post(complete_outbound_order),
         )
 }
 
-async fn list_outbound_orders(
+pub async fn list_outbound_orders(
     State(state): State<ApiState>,
     Extension(claims): Extension<Claims>,
     Query(params): Query<PaginationParams>,
@@ -156,7 +156,7 @@ async fn list_outbound_orders(
     }
 }
 
-async fn create_outbound_order(
+pub async fn create_outbound_order(
     State(state): State<ApiState>,
     Extension(claims): Extension<Claims>,
     headers: HeaderMap,
@@ -236,7 +236,7 @@ async fn create_outbound_order(
     response
 }
 
-async fn get_outbound_order(
+pub async fn get_outbound_order(
     State(state): State<ApiState>,
     Extension(claims): Extension<Claims>,
     Path(id): Path<Uuid>,
@@ -267,7 +267,7 @@ async fn get_outbound_order(
     }
 }
 
-async fn update_outbound_order(
+pub async fn update_outbound_order(
     State(state): State<ApiState>,
     Extension(claims): Extension<Claims>,
     Path(id): Path<Uuid>,
@@ -371,7 +371,7 @@ async fn update_outbound_order(
     response
 }
 
-async fn delete_outbound_order(
+pub async fn delete_outbound_order(
     State(state): State<ApiState>,
     Extension(claims): Extension<Claims>,
     Path(id): Path<Uuid>,
@@ -434,7 +434,7 @@ async fn delete_outbound_order(
     response
 }
 
-async fn list_outbound_order_items(
+pub async fn list_outbound_order_items(
     State(state): State<ApiState>,
     Extension(claims): Extension<Claims>,
     Path(id): Path<Uuid>,
@@ -501,7 +501,7 @@ async fn list_outbound_order_items(
     }
 }
 
-async fn create_outbound_order_item(
+pub async fn create_outbound_order_item(
     State(state): State<ApiState>,
     Extension(claims): Extension<Claims>,
     Path(id): Path<Uuid>,
@@ -604,7 +604,7 @@ async fn create_outbound_order_item(
     response
 }
 
-async fn update_outbound_order_item(
+pub async fn update_outbound_order_item(
     State(state): State<ApiState>,
     Extension(claims): Extension<Claims>,
     Path((id, item_id)): Path<(Uuid, Uuid)>,
@@ -688,7 +688,7 @@ async fn update_outbound_order_item(
     response
 }
 
-async fn delete_outbound_order_item(
+pub async fn delete_outbound_order_item(
     State(state): State<ApiState>,
     Extension(claims): Extension<Claims>,
     Path((id, item_id)): Path<(Uuid, Uuid)>,
@@ -750,7 +750,7 @@ async fn delete_outbound_order_item(
     response
 }
 
-async fn confirm_outbound_order(
+pub async fn confirm_outbound_order(
     State(state): State<ApiState>,
     Extension(claims): Extension<Claims>,
     Path(id): Path<Uuid>,
@@ -818,7 +818,7 @@ async fn confirm_outbound_order(
     response
 }
 
-async fn pick_outbound_order(
+pub async fn pick_outbound_order(
     State(state): State<ApiState>,
     Extension(claims): Extension<Claims>,
     Path(id): Path<Uuid>,
@@ -886,7 +886,7 @@ async fn pick_outbound_order(
     response
 }
 
-async fn pack_outbound_order(
+pub async fn pack_outbound_order(
     State(state): State<ApiState>,
     Extension(claims): Extension<Claims>,
     Path(id): Path<Uuid>,
@@ -955,7 +955,7 @@ async fn pack_outbound_order(
     response
 }
 
-async fn ship_outbound_order(
+pub async fn ship_outbound_order(
     State(state): State<ApiState>,
     Extension(claims): Extension<Claims>,
     Path(id): Path<Uuid>,
@@ -1085,7 +1085,7 @@ async fn ship_outbound_order(
     response
 }
 
-async fn complete_outbound_order(
+pub async fn complete_outbound_order(
     State(state): State<ApiState>,
     Extension(claims): Extension<Claims>,
     Path(id): Path<Uuid>,

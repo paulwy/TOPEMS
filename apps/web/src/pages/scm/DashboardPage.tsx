@@ -307,7 +307,7 @@ export const DashboardPage: React.FC = () => {
         id: 'new-supplier',
         label: '新增供应商',
         icon: <ArrowRight size={18} />,
-        onClick: () => navigate('/scm/suppliers/create'),
+        onClick: () => navigate('/scm/suppliers'),
       },
     ],
     [navigate]

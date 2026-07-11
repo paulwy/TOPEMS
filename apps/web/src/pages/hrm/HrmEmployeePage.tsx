@@ -147,25 +147,16 @@ const HrmEmployeePage: React.FC = () => {
   const theme = useTheme();
   const isMobile = useMediaQuery(theme.breakpoints.down('md'));
   const addNotification = useAppStore((state) => state.addNotification);
+  const queryClient = useQueryClient();
 
   // 视图模式
   const [viewMode, setViewMode] = useState<ViewMode>('list');
 
-  // 数据状态
-  const [loading, setLoading] = useState(false);
-  const [data, setData] = useState<PaginatedResult<Employee>>({
-    items: [],
-    total: 0,
-    page: 1,
-    pagesize: 10,
-  });
-
   // 筛选状态
   const [searchText, setSearchText] = useState('');
   const [statusFilter, setStatusFilter] = useState('all');
-  const [departments, setDepartments] = useState<Department[]>([]);
   const [departmentFilter, setDepartmentFilter] = useState('all');
-  const [companies, setCompanies] = useState<Company[]>([]);
+  const [currentPage, setCurrentPage] = useState(1);
 
   // 模态框状态
   const [showCreateModal, setShowCreateModal] = useState(false);
@@ -183,75 +174,116 @@ const HrmEmployeePage: React.FC = () => {
   const [formData, setFormData] = useState<Partial<Employee>>({});
 
   // 树形视图状态
-  const [treeData, setTreeData] = useState<any[]>([]);
   const [selectedDeptId, setSelectedDeptId] = useState<string | undefined>();
-  const [filteredEmployees, setFilteredEmployees] = useState<Employee[]>([]);
 
   // 统计概览展开状态
   const [expandedStats, setExpandedStats] = useState(true);
 
-  // 获取员工列表
-  const fetchEmployees = useCallback(
-    async (params?: EmployeeListParams) => {
-      setLoading(true);
-      try {
-        const response = await employeeApi.list(params);
-        if (response.code === 200 && response.data) {
-          const responseData = response.data;
-          setData({
-            items: responseData.items || [],
-            total: responseData.total || 0,
-            page: responseData.page || 1,
-            pagesize: responseData.pagesize || 10,
-          });
-          if (viewMode === 'tree') {
-            setFilteredEmployees(responseData.items || []);
-          }
-        }
-      } catch (error: unknown) {
-        addNotification({
-          title: '失败',
-          message: (error as { message?: string }).message || '获取员工数据失败',
-          type: 'error',
-        });
-      } finally {
-        setLoading(false);
-      }
+  // React Query - 员工列表
+  const employeesQuery = useQuery({
+    queryKey: ['hrm-employees', currentPage, searchText, departmentFilter, statusFilter, viewMode],
+    queryFn: async () => {
+      const params: EmployeeListParams = { page: currentPage };
+      if (searchText) params.search = searchText;
+      if (departmentFilter && departmentFilter !== 'all') params.department_id = departmentFilter;
+      if (statusFilter && statusFilter !== 'all') params.status = statusFilter;
+      if (viewMode === 'tree') params.pagesize = 100;
+      return employeeApi.list(params);
     },
-    [addNotification, viewMode]
-  );
+    staleTime: 5 * 60 * 1000,
+  });
 
-  // 获取部门列表
-  const fetchDepartments = useCallback(async () => {
-    try {
-      const response = await departmentApi.list({ pagesize: 100 });
-      if (response.code === 200 && response.data) {
-        const depts = response.data.items || [];
-        setDepartments(depts);
-      }
-    } catch (error: unknown) {
-      apiLogger.error('Failed to fetch departments:', error);
-    }
-  }, []);
+  const data =
+    employeesQuery.data?.code === 200 && employeesQuery.data.data
+      ? {
+          items: employeesQuery.data.data.items || [],
+          total: employeesQuery.data.data.total || 0,
+          page: employeesQuery.data.data.page || 1,
+          pagesize: employeesQuery.data.data.pagesize || 10,
+        }
+      : { items: [], total: 0, page: 1, pagesize: 10 };
+  const loading = employeesQuery.isLoading;
 
-  // 获取公司列表
-  const fetchCompanies = useCallback(async () => {
-    try {
-      const response = await companyApi.list({ pagesize: 100 });
-      if (response.code === 200 && response.data) {
-        setCompanies(response.data.items || []);
-      }
-    } catch (error: unknown) {
-      apiLogger.error('Failed to fetch companies:', error);
-    }
-  }, []);
+  // React Query - 部门列表
+  const departmentsQuery = useQuery({
+    queryKey: ['hrm-departments'],
+    queryFn: () => departmentApi.list({ pagesize: 100 }),
+    staleTime: 30 * 60 * 1000,
+  });
+  const departments =
+    departmentsQuery.data?.code === 200 && departmentsQuery.data.data
+      ? departmentsQuery.data.data.items || []
+      : [];
 
-  // 初始加载
-  React.useEffect(() => {
-    fetchEmployees();
-    fetchDepartments();
-    fetchCompanies();
-  }, [fetchEmployees, fetchDepartments, fetchCompanies]);
+  // React Query - 公司列表
+  const companiesQuery = useQuery({
+    queryKey: ['hrm-companies'],
+    queryFn: () => companyApi.list({ pagesize: 100 }),
+    staleTime: 30 * 60 * 1000,
+  });
+  const companies =
+    companiesQuery.data?.code === 200 && companiesQuery.data.data
+      ? companiesQuery.data.data.items || []
+      : [];
+
+  // React Query - Mutations
+  const createMutation = useMutation({
+    mutationFn: (data: Partial<Employee>) => employeeApi.create(data),
+    onSuccess: () => {
+      addNotification({
+        title: '成功',
+        message: '员工创建成功',
+        type: 'success',
+      });
+      queryClient.invalidateQueries({ queryKey: ['hrm-employees'] });
+    },
+    onError: (error: unknown) => {
+      addNotification({
+        title: '失败',
+        message: (error as { message?: string }).message || '创建员工失败',
+        type: 'error',
+      });
+    },
+  });
+
+  const updateMutation = useMutation({
+    mutationFn: ({ id, data }: { id: string; data: Partial<Employee> }) =>
+      employeeApi.update(id, data),
+    onSuccess: () => {
+      addNotification({
+        title: '成功',
+        message: '员工更新成功',
+        type: 'success',
+      });
+      queryClient.invalidateQueries({ queryKey: ['hrm-employees'] });
+    },
+    onError: (error: unknown) => {
+      addNotification({
+        title: '失败',
+        message: (error as { message?: string }).message || '更新员工失败',
+        type: 'error',
+      });
+    },
+  });
+
+  const deleteMutation = useMutation({
+    mutationFn: (id: string) => employeeApi.delete(id),
+    onSuccess: () => {
+      addNotification({
+        title: '成功',
+        message: '员工删除成功',
+        type: 'success',
+      });
+      queryClient.invalidateQueries({ queryKey: ['hrm-employees'] });
+    },
+    onError: (error: unknown) => {
+      addNotification({
+        title: '失败',
+        message: (error as { message?: string }).message || '删除员工失败',
+        type: 'error',
+      });
+    },
+  });
 
   // 构建树形数据
   const buildTree = useCallback((depts: Department[], emps: Employee[]): TreeNode[] => {
@@ -292,57 +324,25 @@ const HrmEmployeePage: React.FC = () => {
     return rootNodes;
   }, []);
 
-  React.useEffect(() => {
-    if (viewMode === 'tree' && departments.length > 0 && filteredEmployees.length > 0) {
-      const tree = buildTree(departments, filteredEmployees);
-      setTreeData(tree);
+  const treeData = useMemo(() => {
+    if (viewMode === 'tree' && departments.length > 0 && data.items.length > 0) {
+      return buildTree(departments, data.items);
     }
-  }, [viewMode, departments, filteredEmployees, buildTree]);
+    return [];
+  }, [viewMode, departments, data.items, buildTree]);
 
   // 搜索处理
   const handleSearch = useCallback(() => {
-    const params: EmployeeListParams = { search: searchText };
-    if (departmentFilter && departmentFilter !== 'all') params.department_id = departmentFilter;
-    if (statusFilter && statusFilter !== 'all') params.status = statusFilter;
-
-    if (viewMode === 'list') {
-      fetchEmployees(params);
-    } else {
-      setLoading(true);
-      employeeApi
-        .list({ ...params, pagesize: 100 })
-        .then((response) => {
-          if (response.code === 200 && response.data) {
-            const emps = response.data.items || [];
-            setFilteredEmployees(emps);
-            const tree = buildTree(departments, emps);
-            setTreeData(tree);
-          }
-          setLoading(false);
-        })
-        .catch(() => setLoading(false));
-    }
-  }, [
-    searchText,
-    departmentFilter,
-    statusFilter,
-    viewMode,
-    fetchEmployees,
-    departments,
-    buildTree,
-  ]);
+    setCurrentPage(1);
+  }, []);
 
   // 重置筛选
   const handleReset = useCallback(() => {
     setSearchText('');
     setDepartmentFilter('all');
     setStatusFilter('all');
-    if (viewMode === 'list') {
-      fetchEmployees();
-    } else {
-      fetchEmployees({ pagesize: 100 });
-    }
-  }, [viewMode, fetchEmployees]);
+    setCurrentPage(1);
+  }, []);
 
   // 新增
   const handleAdd = useCallback(() => {
@@ -371,47 +371,14 @@ const HrmEmployeePage: React.FC = () => {
   const handleDeleteConfirm = useCallback(async () => {
     if (!deleteId) return;
     try {
-      const response = await employeeApi.delete(deleteId);
-      if (response.code === 200) {
-        addNotification({
-          title: '成功',
-          message: '员工删除成功',
-          type: 'success',
-        });
-        if (viewMode === 'list') {
-          fetchEmployees();
-        } else {
-          const newEmps = filteredEmployees.filter((e) => e.id !== deleteId);
-          setFilteredEmployees(newEmps);
-          const tree = buildTree(departments, newEmps);
-          setTreeData(tree);
-        }
-      } else {
-        addNotification({
-          title: '失败',
-          message: '删除员工失败',
-          type: 'error',
-        });
-      }
+      await deleteMutation.mutateAsync(deleteId);
     } catch (error: unknown) {
-      addNotification({
-        title: '失败',
-        message: (error as { message?: string }).message || '删除员工失败',
-        type: 'error',
-      });
+      apiLogger.error('删除失败:', error);
     } finally {
       setConfirmDeleteOpen(false);
       setDeleteId(null);
     }
-  }, [
-    deleteId,
-    addNotification,
-    viewMode,
-    fetchEmployees,
-    filteredEmployees,
-    departments,
-    buildTree,
-  ]);
+  }, [deleteId, deleteMutation]);
 
   // 删除
   const handleDelete = useCallback((id: string) => {
@@ -424,28 +391,14 @@ const HrmEmployeePage: React.FC = () => {
     async (e: React.FormEvent) => {
       e.preventDefault();
       try {
-        await employeeApi.create(formData);
-        addNotification({
-          title: '成功',
-          message: '员工创建成功',
-          type: 'success',
-        });
+        await createMutation.mutateAsync(formData);
         setShowCreateModal(false);
         setFormData({});
-        if (viewMode === 'list') {
-          fetchEmployees();
-        } else {
-          fetchEmployees({ pagesize: 100 });
-        }
       } catch (error: unknown) {
-        addNotification({
-          title: '失败',
-          message: (error as { message?: string }).message || '创建员工失败',
-          type: 'error',
-        });
+        apiLogger.error('创建失败:', error);
       }
     },
-    [addNotification, formData, viewMode, fetchEmployees]
+    [createMutation, formData]
   );
 
   // 更新
@@ -454,28 +407,14 @@ const HrmEmployeePage: React.FC = () => {
       e.preventDefault();
       if (!selectedEmployee) return;
       try {
-        await employeeApi.update(selectedEmployee.id, formData);
-        addNotification({
-          title: '成功',
-          message: '员工更新成功',
-          type: 'success',
-        });
+        await updateMutation.mutateAsync({ id: selectedEmployee.id, data: formData });
         setShowEditModal(false);
         setSelectedEmployee(null);
-        if (viewMode === 'list') {
-          fetchEmployees();
-        } else {
-          fetchEmployees({ pagesize: 100 });
-        }
       } catch (error: unknown) {
-        addNotification({
-          title: '失败',
-          message: (error as { message?: string }).message || '更新员工失败',
-          type: 'error',
-        });
+        apiLogger.error('更新失败:', error);
       }
     },
-    [addNotification, selectedEmployee, formData, viewMode, fetchEmployees]
+    [updateMutation, selectedEmployee, formData]
   );
 
   // 输入变化
@@ -1052,12 +991,12 @@ const HrmEmployeePage: React.FC = () => {
             icon: <Plus style={{ width: 18, height: 18 }} />,
             onClick: handleAdd,
           }}
-          onRefresh={() => fetchEmployees()}
+          onRefresh={() => employeesQuery.refetch()}
           pagination={{
             page: data.page,
             pageSize: data.pagesize,
             total: data.total,
-            onPageChange: (page) => fetchEmployees({ page }),
+            onPageChange: (page) => setCurrentPage(page),
           }}
           cardActions={cardActions}
           onCardClick={(item) => handleView(item as Employee)}
@@ -1163,13 +1102,13 @@ const HrmEmployeePage: React.FC = () => {
                     variant='body2'
                     color='text.secondary'
                   >
-                    {filteredEmployees.filter((e) => e.department_id === selectedDeptId).length}{' '}
+                    {data.items.filter((e: Employee) => e.department_id === selectedDeptId).length}{' '}
                     名员工
                   </Typography>
                 </Box>
                 <ListPageTemplate
                   columns={columns}
-                  data={filteredEmployees.filter((e) => e.department_id === selectedDeptId)}
+                  data={data.items.filter((e: Employee) => e.department_id === selectedDeptId)}
                   rowActions={rowActions}
                   onRowClick={handleView}
                   emptyMessage='该部门暂无员工'

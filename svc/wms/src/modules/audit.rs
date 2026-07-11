@@ -50,7 +50,7 @@ where
 {
     Router::new()
         .route("/api/wms/audit-logs", get(list_audit_logs))
-        .route("/api/v1/audit-logs/{id}", get(get_audit_log))
+        .route("/api/wms/audit-logs/{id}", get(get_audit_log))
 }
 
 #[derive(Debug, Deserialize)]
@@ -65,7 +65,7 @@ pub struct ListAuditLogsQuery {
     pub page_size: Option<i64>,
 }
 
-async fn list_audit_logs(
+pub async fn list_audit_logs(
     State(state): State<ApiState>,
     Query(params): Query<ListAuditLogsQuery>,
 ) -> Json<ApiResponse<serde_json::Value>> {
@@ -141,7 +141,7 @@ async fn list_audit_logs(
     }
 }
 
-async fn get_audit_log(
+pub async fn get_audit_log(
     State(state): State<ApiState>,
     Path(id): Path<Uuid>,
 ) -> Json<ApiResponse<AuditLog>> {

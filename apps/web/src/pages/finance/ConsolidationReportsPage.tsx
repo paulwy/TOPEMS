@@ -1,6 +1,5 @@
 import React, { useState, useEffect, useMemo } from 'react';
 import { designTokens } from '@/theme/tokens';
-import { useNavigate } from 'react-router-dom';
 import {
   GitMerge,
   Building2,
@@ -81,7 +80,6 @@ const APPROVAL_STATUS_CONFIG: Record<string, { label: string; color: string }> =
 };
 
 export default function ConsolidationReportsPage() {
-  const navigate = useNavigate();
   const { error: notifyError } = useNotification();
 
   const [searchKeyword, setSearchKeyword] = useState('');
@@ -285,7 +283,7 @@ export default function ConsolidationReportsPage() {
 
       <Button
         variant='contained'
-        onClick={() => navigate('#')}
+        onClick={() => { /* TODO: 打开生成合并报表弹窗 */ }}
       >
         <Plus sx={{ width: 16, height: 16, marginRight: 8 }} />
         生成合并报表

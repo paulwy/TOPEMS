@@ -330,7 +330,7 @@ const QmsDashboardPage: React.FC = () => {
       id: 'new-inspection',
       label: '新建检验',
       icon: <Plus style={{ width: 20, height: 20 }} />,
-      onClick: () => navigate('/qms/inspections'),
+      onClick: () => navigate('/qms/inspection'),
       color: ct.secondary[400],
     },
     {
@@ -358,7 +358,7 @@ const QmsDashboardPage: React.FC = () => {
       id: 'audit-management',
       label: '审核管理',
       icon: <ShieldCheck style={{ width: 20, height: 20 }} />,
-      onClick: () => navigate('/qms/audits'),
+      onClick: () => navigate('/qms/audit-management'),
       color: 'secondary.main',
     },
   ];
@@ -371,7 +371,7 @@ const QmsDashboardPage: React.FC = () => {
       icon: <ClipboardCheck style={{ width: 16, height: 16 }} />,
       status: 'info',
       time: '今天',
-      onClick: () => navigate('/qms/inspections'),
+      onClick: () => navigate('/qms/inspection'),
     },
     {
       id: 'recent-nonconformance',
@@ -398,7 +398,7 @@ const QmsDashboardPage: React.FC = () => {
       icon: <ClipboardList style={{ width: 16, height: 16 }} />,
       status: 'info',
       time: '本周',
-      onClick: () => navigate('/qms/audits'),
+      onClick: () => navigate('/qms/audit-management'),
     },
     {
       id: 'recent-apqp',

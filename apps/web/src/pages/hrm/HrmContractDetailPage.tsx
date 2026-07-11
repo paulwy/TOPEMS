@@ -22,6 +22,7 @@ import {
 import { useNavigate, useParams } from 'react-router-dom';
 import { hrmApi, type Contract } from '@/api/hrm';
 import { useNotification } from '@/hooks/useNotification';
+import { HRM_PATHS } from '@/modules/hrm/config';
 import { apiLogger } from '@/utils/logger';
 import { DetailPageTemplate, type TabConfig, type SectionConfig } from '@/components/templates';
 import { PageContainer } from '@/components/common';
@@ -88,7 +89,7 @@ const HrmContractDetailPage: React.FC = () => {
   };
 
   const handleRenew = () => {
-    navigate(`/hrm/contract/${id}`);
+    navigate(HRM_PATHS.contractDetail.replace(':id', id!));
   };
 
   const getStatusConfig = (status: string) => {
@@ -366,10 +367,10 @@ const HrmContractDetailPage: React.FC = () => {
       <DetailPageTemplate
         title=''
         subtitle=''
-        backHref='/hrm/contracts'
+        backHref={HRM_PATHS.contracts}
         loading={loading}
         error={errorMessage}
-        onEdit={() => navigate(`/hrm/contract/${id}`)}
+        onEdit={() => navigate(HRM_PATHS.contractDetail.replace(':id', id!))}
         infoCard={infoCard}
         tabs={tabs}
         actions={[

@@ -9,6 +9,7 @@ export const imModuleConfig: RouteModuleConfig = {
   source: 'plugin',
   suite: 'enterprise',
   status: 'online',
+  frontendOnly: true,
   order: 22,
   description: '邮件管理、即时通讯',
   permission: 'im:read',

@@ -6,6 +6,7 @@ use uuid::Uuid;
 #[derive(Debug, Clone, FromRow, Serialize, Deserialize)]
 pub struct InventoryItem {
     pub id: Uuid,
+    pub tenant_id: Uuid,
     pub sku: String,
     pub name: String,
     pub specification: Option<String>,

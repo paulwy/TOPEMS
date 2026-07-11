@@ -92,7 +92,7 @@ where
         )
 }
 
-async fn list_inventory(
+pub async fn list_inventory(
     State(state): State<ApiState>,
     Extension(claims): Extension<Claims>,
     Query(params): Query<InventoryPaginationParams>,
@@ -171,7 +171,7 @@ async fn list_inventory(
     }
 }
 
-async fn create_inventory(
+pub async fn create_inventory(
     State(state): State<ApiState>,
     Extension(claims): Extension<Claims>,
     headers: HeaderMap,
@@ -253,7 +253,7 @@ async fn create_inventory(
     response
 }
 
-async fn get_inventory(
+pub async fn get_inventory(
     State(state): State<ApiState>,
     Extension(claims): Extension<Claims>,
     Path(id): Path<Uuid>,
@@ -290,7 +290,7 @@ async fn get_inventory(
     }
 }
 
-async fn update_inventory(
+pub async fn update_inventory(
     State(state): State<ApiState>,
     Extension(claims): Extension<Claims>,
     Path(id): Path<Uuid>,
@@ -446,7 +446,7 @@ async fn update_inventory(
     response
 }
 
-async fn delete_inventory(
+pub async fn delete_inventory(
     State(state): State<ApiState>,
     Extension(claims): Extension<Claims>,
     Path(id): Path<Uuid>,
@@ -509,7 +509,7 @@ async fn delete_inventory(
     response
 }
 
-async fn list_low_stock_inventory(
+pub async fn list_low_stock_inventory(
     State(state): State<ApiState>,
     Extension(claims): Extension<Claims>,
 ) -> Json<ApiResponse<serde_json::Value>> {
@@ -551,7 +551,7 @@ async fn list_low_stock_inventory(
     }
 }
 
-async fn list_inventory_by_warehouse(
+pub async fn list_inventory_by_warehouse(
     State(state): State<ApiState>,
     Extension(claims): Extension<Claims>,
     Path(warehouse_id): Path<Uuid>,
@@ -604,7 +604,7 @@ async fn list_inventory_by_warehouse(
     }
 }
 
-async fn get_inventory_statistics(
+pub async fn get_inventory_statistics(
     State(state): State<ApiState>,
     Extension(claims): Extension<Claims>,
     Query(params): Query<InventoryPaginationParams>,
@@ -686,7 +686,7 @@ async fn get_inventory_statistics(
     }
 }
 
-async fn get_abc_analysis(
+pub async fn get_abc_analysis(
     State(state): State<ApiState>,
     Extension(claims): Extension<Claims>,
 ) -> Json<ApiResponse<serde_json::Value>> {
@@ -779,7 +779,7 @@ async fn get_abc_analysis(
     }
 }
 
-async fn get_turnover(
+pub async fn get_turnover(
     State(state): State<ApiState>,
     Extension(claims): Extension<Claims>,
 ) -> Json<ApiResponse<serde_json::Value>> {
@@ -842,7 +842,7 @@ async fn get_turnover(
     }
 }
 
-async fn get_value_by_warehouse(
+pub async fn get_value_by_warehouse(
     State(state): State<ApiState>,
     Extension(claims): Extension<Claims>,
 ) -> Json<ApiResponse<serde_json::Value>> {

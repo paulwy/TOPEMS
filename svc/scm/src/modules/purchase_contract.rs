@@ -51,7 +51,7 @@ pub fn create_routes() -> Router<ApiState> {
         )
 }
 
-async fn list_contracts(
+pub async fn list_contracts(
     State(state): State<ApiState>,
     Extension(claims): Extension<Claims>,
     Query(params): Query<PurchaseContractQueryParams>,
@@ -97,7 +97,7 @@ async fn list_contracts(
     }
 }
 
-async fn create_contract(
+pub async fn create_contract(
     State(state): State<ApiState>,
     Extension(claims): Extension<Claims>,
     Json(data): Json<CreatePurchaseContractRequest>,
@@ -168,7 +168,7 @@ async fn create_contract(
     }
 }
 
-async fn get_contract(
+pub async fn get_contract(
     State(state): State<ApiState>,
     Extension(claims): Extension<Claims>,
     Path(id): Path<String>,
@@ -216,7 +216,7 @@ async fn get_contract(
     }
 }
 
-async fn update_contract(
+pub async fn update_contract(
     State(state): State<ApiState>,
     Extension(claims): Extension<Claims>,
     Path(id): Path<String>,
@@ -309,7 +309,7 @@ async fn update_contract(
     }
 }
 
-async fn delete_contract(
+pub async fn delete_contract(
     State(state): State<ApiState>,
     Extension(claims): Extension<Claims>,
     Path(id): Path<String>,

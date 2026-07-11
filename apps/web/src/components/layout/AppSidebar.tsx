@@ -890,7 +890,7 @@ export const AppSidebar: React.FC<AppSidebarProps> = ({
             <Tooltip title='设置'>
               <IconButton
                 size='small'
-                onClick={() => navigate('/settings')}
+                onClick={() => navigate('/admin/system-settings')}
                 sx={{ width: 32, height: 32 }}
               >
                 <Settings style={{ width: 16, height: 16 }} />

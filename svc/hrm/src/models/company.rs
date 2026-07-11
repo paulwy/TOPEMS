@@ -6,6 +6,7 @@ use uuid::Uuid;
 #[derive(Debug, Clone, FromRow, Serialize, Deserialize)]
 pub struct Company {
     pub id: Uuid,
+    pub tenant_id: Uuid,
     pub organization_id: Option<Uuid>,
     pub name: String,
     pub short_name: Option<String>,

@@ -220,7 +220,11 @@ impl AgentService {
             tools_str, messages_str
         );
 
-        let response = self.qa_service.ask(&prompt, None, 5).await.map(|r| r.0)?;
+        let response = self
+            .qa_service
+            .ask(&prompt, None, 5, Uuid::nil())
+            .await
+            .map(|r| r.0)?;
 
         let response_json: serde_json::Value =
             serde_json::from_str(&response).map_err(|e| format!("解析工具调用响应失败: {}", e))?;
@@ -289,7 +293,7 @@ impl AgentService {
             .and_then(|v| v.as_str())
             .unwrap_or_default();
 
-        let result = self.qa_service.semantic_search(query, 5).await;
+        let result = self.qa_service.semantic_search(query, 5, Uuid::nil()).await;
 
         match result {
             Ok(results) => {
@@ -321,7 +325,7 @@ impl AgentService {
             .and_then(|v| v.as_str())
             .unwrap_or_default();
 
-        let result = self.qa_service.ask(question, None, 5).await;
+        let result = self.qa_service.ask(question, None, 5, Uuid::nil()).await;
 
         match result {
             Ok(response) => ToolResult {
@@ -700,7 +704,10 @@ impl AgentService {
             messages_str
         );
 
-        self.qa_service.ask(&prompt, None, 5).await.map(|r| r.0)
+        self.qa_service
+            .ask(&prompt, None, 5, Uuid::nil())
+            .await
+            .map(|r| r.0)
     }
 }
 
@@ -1098,7 +1105,7 @@ impl WorkflowOrchestrator {
             // Direct QA without tool
             self.agent_service
                 .qa_service
-                .ask(&prompt, None, 5)
+                .ask(&prompt, None, 5, Uuid::nil())
                 .await
                 .map(|r| r.0)
         }

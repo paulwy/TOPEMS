@@ -21,6 +21,7 @@ pub mod smart_replenishment;
 pub mod stock_take;
 pub mod transfer_order;
 pub mod warehouse;
+pub mod wave_pick;
 pub mod wms_plugin;
 
 #[derive(Clone)]
@@ -60,6 +61,7 @@ where
         .merge(outbound_order::create_routes())
         .merge(stock_take::create_routes())
         .merge(smart_replenishment::create_routes())
+        .merge(wave_pick::create_routes())
         // .merge(cycle_count::create_routes())
         // .merge(discrepancy::create_routes())
         .merge(audit::create_routes())

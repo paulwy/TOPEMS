@@ -72,6 +72,7 @@ impl TriggerType {
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct ConversionRule {
     pub id: Uuid,
+    pub tenant_id: Uuid,
     pub code: String,
     pub name: String,
     pub description: Option<String>,
@@ -174,6 +175,7 @@ pub struct FieldMapping {
 /// 创建转换规则请求
 #[derive(Debug, Clone, Deserialize)]
 pub struct CreateConversionRuleRequest {
+    pub tenant_id: Uuid,
     pub code: String,
     pub name: String,
     pub description: Option<String>,
@@ -212,6 +214,7 @@ pub struct UpdateConversionRuleRequest {
 #[derive(Debug, Clone, Serialize, Deserialize, sqlx::FromRow)]
 pub struct ConversionExecution {
     pub id: Uuid,
+    pub tenant_id: Uuid,
     pub rule_id: Uuid,
     pub rule_code: String,
     pub source_record_id: String,
@@ -248,11 +251,12 @@ pub struct ExecuteConversionResponse {
 // ==================== Predefined Rules ====================
 
 /// 预定义的转换规则
-pub fn get_predefined_rules() -> Vec<ConversionRule> {
+pub fn get_predefined_rules(tenant_id: Uuid) -> Vec<ConversionRule> {
     vec![
         // ERP 订单 → MES 工单
         ConversionRule {
             id: Uuid::new_v4(),
+            tenant_id,
             code: "order_to_workorder".to_string(),
             name: "销售订单转生产工单".to_string(),
             description: Some("销售订单确认后自动生成生产工单".to_string()),
@@ -288,6 +292,7 @@ pub fn get_predefined_rules() -> Vec<ConversionRule> {
         // ERP 采购 → SRM 合同
         ConversionRule {
             id: Uuid::new_v4(),
+            tenant_id,
             code: "purchase_to_contract".to_string(),
             name: "采购订单转供应合同".to_string(),
             description: Some("采购订单审批后自动生成供应合同".to_string()),
@@ -320,6 +325,7 @@ pub fn get_predefined_rules() -> Vec<ConversionRule> {
         // HRM 员工 → IAM 账号
         ConversionRule {
             id: Uuid::new_v4(),
+            tenant_id,
             code: "employee_to_account".to_string(),
             name: "员工入职自动创建账号".to_string(),
             description: Some("新员工入职自动创建系统登录账号".to_string()),
@@ -353,6 +359,7 @@ pub fn get_predefined_rules() -> Vec<ConversionRule> {
         // Project 项目 → MES 项目
         ConversionRule {
             id: Uuid::new_v4(),
+            tenant_id,
             code: "project_to_mes".to_string(),
             name: "项目立项同步到MES".to_string(),
             description: Some("项目立项后自动同步到MES系统".to_string()),
@@ -394,7 +401,8 @@ pub async fn init_conversion_rules_table(pool: &PgPool) -> Result<(), sqlx::Erro
         r#"
         CREATE TABLE IF NOT EXISTS conversion_rules (
             id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-            code VARCHAR(64) NOT NULL UNIQUE,
+            tenant_id UUID NOT NULL,
+            code VARCHAR(64) NOT NULL,
             name VARCHAR(128) NOT NULL,
             description TEXT,
             source_system VARCHAR(32) NOT NULL,
@@ -412,7 +420,8 @@ pub async fn init_conversion_rules_table(pool: &PgPool) -> Result<(), sqlx::Erro
             retry_interval_secs INT NOT NULL DEFAULT 60,
             stop_on_failure BOOLEAN NOT NULL DEFAULT false,
             created_at TIMESTAMP NOT NULL DEFAULT NOW(),
-            updated_at TIMESTAMP NOT NULL DEFAULT NOW()
+            updated_at TIMESTAMP NOT NULL DEFAULT NOW(),
+            CONSTRAINT uq_conversion_rules_tenant_code UNIQUE (tenant_id, code)
         )
         "#,
     )
@@ -423,6 +432,7 @@ pub async fn init_conversion_rules_table(pool: &PgPool) -> Result<(), sqlx::Erro
         r#"
         CREATE TABLE IF NOT EXISTS conversion_executions (
             id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+            tenant_id UUID NOT NULL,
             rule_id UUID NOT NULL REFERENCES conversion_rules(id),
             rule_code VARCHAR(64) NOT NULL,
             source_record_id VARCHAR(128) NOT NULL,
@@ -445,10 +455,18 @@ pub async fn init_conversion_rules_table(pool: &PgPool) -> Result<(), sqlx::Erro
     sqlx::query("CREATE INDEX IF NOT EXISTS idx_conversion_rules_code ON conversion_rules(code)")
         .execute(pool)
         .await?;
+    sqlx::query(
+        "CREATE INDEX IF NOT EXISTS idx_conversion_rules_tenant ON conversion_rules(tenant_id)",
+    )
+    .execute(pool)
+    .await?;
     sqlx::query("CREATE INDEX IF NOT EXISTS idx_conversion_rules_source ON conversion_rules(source_system, source_entity)")
         .execute(pool)
         .await?;
     sqlx::query("CREATE INDEX IF NOT EXISTS idx_conversion_executions_rule ON conversion_executions(rule_id)")
+        .execute(pool)
+        .await?;
+    sqlx::query("CREATE INDEX IF NOT EXISTS idx_conversion_executions_tenant ON conversion_executions(tenant_id)")
         .execute(pool)
         .await?;
     sqlx::query("CREATE INDEX IF NOT EXISTS idx_conversion_executions_status ON conversion_executions(status)")
@@ -490,14 +508,15 @@ pub async fn insert_conversion_rule(
     sqlx::query(
         r#"
         INSERT INTO conversion_rules (
-            id, code, name, description, source_system, source_entity,
+            id, tenant_id, code, name, description, source_system, source_entity,
             target_system, target_entity, trigger_type, trigger_condition,
             field_mappings, transform_script, status, priority, is_enabled,
             max_retries, retry_interval_secs, stop_on_failure, created_at, updated_at
-        ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, $17, $18, $19, $20)
+        ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, $17, $18, $19, $20, $21)
         "#,
     )
     .bind(rule.id)
+    .bind(rule.tenant_id)
     .bind(&rule.code)
     .bind(&rule.name)
     .bind(&rule.description)
@@ -529,6 +548,7 @@ impl<'r> sqlx::FromRow<'r, sqlx::postgres::PgRow> for ConversionRule {
         use sqlx::Row;
         Ok(ConversionRule {
             id: row.try_get("id")?,
+            tenant_id: row.try_get("tenant_id")?,
             code: row.try_get("code")?,
             name: row.try_get("name")?,
             description: row.try_get("description")?,

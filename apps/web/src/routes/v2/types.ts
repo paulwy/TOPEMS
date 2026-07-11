@@ -58,6 +58,7 @@ export interface RouteModuleConfig {
     | 'gis'
     | 'enterprise';
   status?: 'online' | 'beta' | 'plan' | 'new';
+  frontendOnly?: boolean;
   order?: number;
   description?: string;
   permission?: string;

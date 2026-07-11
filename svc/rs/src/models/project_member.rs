@@ -55,6 +55,7 @@ impl std::fmt::Display for MemberStatus {
 #[derive(Debug, Clone, Serialize, Deserialize, FromRow, ToSchema)]
 pub struct ProjectMember {
     pub id: Uuid,
+    pub tenant_id: Uuid,
     pub project_id: Uuid,
     pub employee_id: Uuid,
     pub role: String,

@@ -3,7 +3,7 @@
  *
  * 本文件提供两种导出方式：
  * 1. 独立领域 store（推荐使用）：useAuthStore, useThemeStore, useUIStore 等
- * 2. 向后兼容的聚合 store：useAppStore（基于独立 store 组合）
+ * 2. 向后兼容的聚合 store：useAppStore（已废弃，基于独立 store 组合）
  *
  * 推荐使用独立领域 store：
  * - useAuthStore：用户认证、权限管理
@@ -13,22 +13,36 @@
  * - useNotificationSettingsStore：通知设置
  * - useShortcutsStore：快捷方式管理
  * - useWorkflowStore：工作流状态
+ *
+ * 迁移指南（useAppStore → 独立 store）：
+ *   // 旧写法（已废弃）
+ *   const user = useAppStore((s) => s.user);
+ *   const sidebarCollapsed = useAppStore((s) => s.sidebarCollapsed);
+ *   const addNotification = useAppStore((s) => s.addNotification);
+ *
+ *   // 新写法（推荐）
+ *   const user = useAuthStore((s) => s.user);
+ *   const sidebarCollapsed = useUIStore((s) => s.sidebarCollapsed);
+ *   const addNotification = useNotificationStore((s) => s.addNotification);
+ *
+ * 字段到独立 store 的映射：
+ *   user/setUser/clearUser/isAuthenticated  → useAuthStore
+ *   theme/setTheme/toggleTheme              → useThemeStore
+ *   sidebarOpen/sidebarCollapsed/toggle*    → useUIStore
+ *   notifications/addNotification/clear*    → useNotificationStore
+ *   notificationSettings/setNotification*   → useNotificationSettingsStore
+ *   shortcuts/addShortcut/removeShortcut    → useShortcutsStore
+ *   selectedWorkflowId/setSelectedWorkflowId → useWorkflowStore
  */
 
 // 导出类型
 /**
  * 向后兼容的聚合 store
  *
- * @deprecated 推荐使用独立的领域 store：
- * - 用户相关：useAuthStore
- * - 主题相关：useThemeStore
- * - UI 相关：useUIStore
- * - 通知相关：useNotificationStore, useNotificationSettingsStore
- * - 快捷方式：useShortcutsStore
- * - 工作流：useWorkflowStore
- *
- * 此 hook 将在下一个主版本中移除
+ * @deprecated 推荐使用独立的领域 store（见文件顶部迁移指南）。
+ * 此 hook 将在下一个主版本中移除。新代码禁止使用 useAppStore。
  */
+import { useMemo } from 'react';
 import { useAuthStore } from './authStore';
 import { useThemeStore } from './themeStore';
 import { useUIStore } from './uiStore';
@@ -205,48 +219,72 @@ export function useAppStore<T = AppState>(selector?: (state: AppState) => T): T 
   const toggleSidebarCollapsed = useUIStore((state) => state.toggleSidebarCollapsed);
   const setSidebarCollapsed = useUIStore((state) => state.setSidebarCollapsed);
 
-  // 组合成兼容的状态对象
-  const appState: AppState = {
-    // 用户相关
-    user: authUser as AppUser | null,
-    setUser: authSetUser as (user: AppUser | null) => void,
-    clearUser: authClearAuth,
-    isAuthenticated: authIsAuthenticated,
+  // 使用 useMemo 缓存组合状态对象，避免每次渲染都创建新对象
+  const appState = useMemo<AppState>(
+    () => ({
+      user: authUser as AppUser | null,
+      setUser: authSetUser as (user: AppUser | null) => void,
+      clearUser: authClearAuth,
+      isAuthenticated: authIsAuthenticated,
 
-    // 主题相关
-    theme,
-    setTheme,
-    toggleTheme,
+      theme,
+      setTheme,
+      toggleTheme,
 
-    // 通知相关
-    notifications,
-    addNotification,
-    removeNotification,
-    clearNotifications,
+      notifications,
+      addNotification,
+      removeNotification,
+      clearNotifications,
 
-    // 通知设置
-    notificationSettings,
-    setNotificationSettings,
-    updateNotificationSetting,
+      notificationSettings,
+      setNotificationSettings,
+      updateNotificationSetting,
 
-    // 快捷方式
-    shortcuts,
-    setShortcuts,
-    addShortcut,
-    removeShortcut,
+      shortcuts,
+      setShortcuts,
+      addShortcut,
+      removeShortcut,
 
-    // 工作流
-    selectedWorkflowId,
-    setSelectedWorkflowId,
+      selectedWorkflowId,
+      setSelectedWorkflowId,
 
-    // UI 状态
-    sidebarOpen,
-    sidebarCollapsed,
-    toggleSidebar,
-    setSidebarOpen,
-    toggleSidebarCollapsed,
-    setSidebarCollapsed,
-  };
+      sidebarOpen,
+      sidebarCollapsed,
+      toggleSidebar,
+      setSidebarOpen,
+      toggleSidebarCollapsed,
+      setSidebarCollapsed,
+    }),
+    [
+      authUser,
+      authSetUser,
+      authClearAuth,
+      authIsAuthenticated,
+      theme,
+      setTheme,
+      toggleTheme,
+      notifications,
+      addNotification,
+      removeNotification,
+      clearNotifications,
+      notificationSettings,
+      setNotificationSettings,
+      updateNotificationSetting,
+      shortcuts,
+      setShortcuts,
+      addShortcut,
+      removeShortcut,
+      selectedWorkflowId,
+      setSelectedWorkflowId,
+      sidebarOpen,
+      sidebarCollapsed,
+      toggleSidebar,
+      setSidebarOpen,
+      toggleSidebarCollapsed,
+      setSidebarCollapsed,
+    ]
+  );
 
-  return (selector ? selector(appState) : appState) as T;
+  // 使用 useMemo 缓存 selector 结果，避免不必要的重新计算
+  return useMemo(() => (selector ? selector(appState) : appState), [selector, appState]) as T;
 }

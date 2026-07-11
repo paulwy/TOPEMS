@@ -6,6 +6,7 @@ use uuid::Uuid;
 #[derive(Debug, Clone, FromRow, Serialize, Deserialize)]
 pub struct AuditLog {
     pub id: Uuid,
+    pub tenant_id: Uuid,
     pub table_name: String,
     pub record_id: Uuid,
     pub action: String,

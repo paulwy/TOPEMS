@@ -1,1 +1,22 @@
 pub mod permission;
+
+use axum::extract::FromRef;
+use topems_shared::AuthState;
+
+#[derive(Clone)]
+pub struct AppState {
+    pub auth_state: AuthState,
+    pub document_service: crate::services::DocumentService,
+    pub vector_service: crate::services::VectorService,
+    pub qa_service: crate::services::QAService,
+    pub analysis_service: crate::services::AnalysisService,
+    pub agent_service: crate::services::AgentService,
+    pub recommendation_service: crate::services::RecommendationService,
+    pub multimodal_service: crate::services::MultimodalService,
+}
+
+impl FromRef<AppState> for AuthState {
+    fn from_ref(state: &AppState) -> Self {
+        state.auth_state.clone()
+    }
+}

@@ -25,6 +25,7 @@ utoipa.workspace = true
 axum-prometheus.workspace = true
 prometheus.workspace = true
 reqwest.workspace = true
+async-trait.workspace = true
 
 [dev-dependencies]
 tokio-test.workspace = true

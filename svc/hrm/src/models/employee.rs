@@ -26,6 +26,8 @@ use topems_shared::{DataMasking, EncryptionResult, FieldEncryptionService};
 pub struct Employee {
     #[schema(example = "550e8400-e29b-41d4-a716-446655440000")]
     pub id: Uuid,
+    #[schema(example = "550e8400-e29b-41d4-a716-446655440000")]
+    pub tenant_id: Uuid,
     #[schema(example = "550e8400-e29b-41d4-a716-446655440001")]
     pub company_id: Option<Uuid>,
     #[schema(example = "550e8400-e29b-41d4-a716-446655440002")]
@@ -264,6 +266,7 @@ mod tests {
 
         let employee = Employee {
             id,
+            tenant_id: Uuid::new_v4(),
             company_id: Some(company_id),
             department_id: None,
             position_id: None,
@@ -336,6 +339,7 @@ mod tests {
 
         let mut employee = Employee {
             id,
+            tenant_id: Uuid::new_v4(),
             company_id: None,
             department_id: None,
             position_id: None,
@@ -384,6 +388,7 @@ mod tests {
 
         let mut employee = Employee {
             id,
+            tenant_id: Uuid::new_v4(),
             company_id: None,
             department_id: None,
             position_id: None,

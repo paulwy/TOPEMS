@@ -22,7 +22,7 @@ export const syncApi = {
     return { ...response, data: adaptedData };
   },
 
-  getSyncRecord: async (id: string): Promise<ApiResponse<SyncRecord>> => {
+  getSyncRecord: async (id: string): Promise<ApiResponse<SyncRecord | undefined>> => {
     const response = await apiClient.qms.get<SyncRecordBackend>(`/sync-records/${id}`);
     return {
       ...response,
@@ -34,7 +34,7 @@ export const syncApi = {
     return apiClient.qms.delete<boolean>(`/sync-records/${id}`);
   },
 
-  retrySync: async (id: string): Promise<ApiResponse<SyncRecord>> => {
+  retrySync: async (id: string): Promise<ApiResponse<SyncRecord | undefined>> => {
     const response = await apiClient.qms.post<SyncRecordBackend>(`/sync-records/${id}/retry`, {});
     return {
       ...response,
@@ -42,7 +42,9 @@ export const syncApi = {
     };
   },
 
-  syncInspectionToLims: async (inspectionId: string): Promise<ApiResponse<SyncRecord>> => {
+  syncInspectionToLims: async (
+    inspectionId: string
+  ): Promise<ApiResponse<SyncRecord | undefined>> => {
     const response = await apiClient.qms.post<SyncRecordBackend>('/sync/inspection-to-lims', {
       inspection_id: inspectionId,
     });
@@ -52,7 +54,7 @@ export const syncApi = {
     };
   },
 
-  syncIssueToEhs: async (issueId: string): Promise<ApiResponse<SyncRecord>> => {
+  syncIssueToEhs: async (issueId: string): Promise<ApiResponse<SyncRecord | undefined>> => {
     const response = await apiClient.qms.post<SyncRecordBackend>('/sync/issue-to-ehs', {
       issue_id: issueId,
     });

@@ -14,7 +14,7 @@ pub mod risk;
 pub mod safety;
 pub mod training;
 
-use crate::AppState;
+use crate::shared::AppState;
 use axum::Router;
 
 pub fn create_api_routes() -> Router<AppState> {

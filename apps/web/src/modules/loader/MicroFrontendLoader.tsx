@@ -38,18 +38,26 @@ const loadRemoteEntry = async (remoteName: string): Promise<void> => {
       return;
     }
 
-    const remotes: Record<string, string> = {
-      topems_core: 'http://localhost:3001/remoteEntry.js',
-      topems_hrm: 'http://localhost:3002/remoteEntry.js',
-      topems_crm: 'http://localhost:3003/remoteEntry.js',
-      topems_finance: 'http://localhost:3004/remoteEntry.js',
-      topems_pm: 'http://localhost:3005/remoteEntry.js',
-      topems_mes: 'http://localhost:3006/remoteEntry.js',
-      topems_scm: 'http://localhost:3007/remoteEntry.js',
+    const remotePorts: Record<string, number> = {
+      topems_core: 3001,
+      topems_hrm: 3002,
+      topems_crm: 3003,
+      topems_finance: 3004,
+      topems_pm: 3005,
+      topems_mes: 3006,
+      topems_scm: 3007,
+    };
+
+    const getRemoteUrl = (name: string): string => {
+      const envKey = `VITE_${name.toUpperCase()}_REMOTE_ENTRY`;
+      const envUrl = import.meta.env[envKey];
+      if (envUrl) return envUrl;
+      const port = remotePorts[name] ?? 3001;
+      return `http://localhost:${port}/remoteEntry.js`;
     };
 
     const script = document.createElement('script');
-    script.src = remotes[remoteName] || `http://localhost:3001/remoteEntry.js`;
+    script.src = getRemoteUrl(remoteName);
     script.type = 'module';
     script.async = true;
 

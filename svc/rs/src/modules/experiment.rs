@@ -1,5 +1,5 @@
 use axum::{
-    extract::{Path, Query, State},
+    extract::{Extension, Path, Query, State},
     http::HeaderMap,
     routing::{get, post},
     Json, Router,
@@ -10,7 +10,22 @@ use uuid::Uuid;
 
 use crate::models::{CreateExperimentRequest, Experiment, UpdateExperimentRequest};
 use crate::modules::audit::log_audit_event;
+use topems_shared::auth::Claims;
 use topems_shared::response::ApiResponse;
+
+fn get_tenant_id(claims: &Claims, headers: &HeaderMap) -> Uuid {
+    claims
+        .tenant_id
+        .as_ref()
+        .and_then(|t| Uuid::parse_str(t).ok())
+        .or_else(|| {
+            headers
+                .get("x-tenant-id")
+                .and_then(|v| v.to_str().ok())
+                .and_then(|s| Uuid::parse_str(s).ok())
+        })
+        .unwrap_or_else(Uuid::new_v4)
+}
 
 #[derive(Debug, Deserialize)]
 pub struct PaginationParams {
@@ -56,26 +71,32 @@ pub fn create_routes() -> Router<super::ApiState> {
 
 async fn list_experiments(
     State(state): State<super::ApiState>,
+    Extension(claims): Extension<Claims>,
     Query(params): Query<PaginationParams>,
+    headers: HeaderMap,
 ) -> Json<ApiResponse<serde_json::Value>> {
+    let tenant_id = get_tenant_id(&claims, &headers);
     let page = params.page.unwrap_or(1).max(1);
     let page_size = params.page_size.unwrap_or(20).min(100);
     let offset = (page - 1) * page_size;
 
     let result = sqlx::query_as::<_, Experiment>(
         r#"
-        SELECT id, name, code, project_id, formula_id, experiment_type, status,
+        SELECT id, tenant_id, name, code, project_id, formula_id, experiment_type, phase, status,
                objective, method, results, conclusions, experimenter,
-               started_at, completed_at, created_by, created_at, updated_at
+               batch_number, scale, scale_unit, started_at, completed_at,
+               created_by, created_at, updated_at
         FROM rs.experiments
-        WHERE ($1::text IS NULL OR name ILIKE $1 OR code ILIKE $1)
-          AND ($2::text IS NULL OR status = $2)
-          AND ($3::uuid IS NULL OR project_id = $3)
-          AND ($4::text IS NULL OR experiment_type = $4)
+        WHERE tenant_id = $1
+          AND ($2::text IS NULL OR name ILIKE $2 OR code ILIKE $2)
+          AND ($3::text IS NULL OR status = $3)
+          AND ($4::uuid IS NULL OR project_id = $4)
+          AND ($5::text IS NULL OR experiment_type = $5)
         ORDER BY created_at DESC
-        LIMIT $5 OFFSET $6
+        LIMIT $6 OFFSET $7
         "#,
     )
+    .bind(tenant_id)
     .bind(&params.search)
     .bind(&params.status)
     .bind(params.project_id)
@@ -90,12 +111,14 @@ async fn list_experiments(
             let count_result = sqlx::query_scalar::<_, i64>(
                 r#"
                 SELECT COUNT(*) FROM rs.experiments
-                WHERE ($1::text IS NULL OR name ILIKE $1 OR code ILIKE $1)
-                  AND ($2::text IS NULL OR status = $2)
-                  AND ($3::uuid IS NULL OR project_id = $3)
-                  AND ($4::text IS NULL OR experiment_type = $4)
+                WHERE tenant_id = $1
+                  AND ($2::text IS NULL OR name ILIKE $2 OR code ILIKE $2)
+                  AND ($3::text IS NULL OR status = $3)
+                  AND ($4::uuid IS NULL OR project_id = $4)
+                  AND ($5::text IS NULL OR experiment_type = $5)
                 "#,
             )
+            .bind(tenant_id)
             .bind(&params.search)
             .bind(&params.status)
             .bind(params.project_id)
@@ -124,9 +147,11 @@ async fn list_experiments(
 
 async fn create_experiment(
     State(state): State<super::ApiState>,
+    Extension(claims): Extension<Claims>,
     headers: HeaderMap,
     Json(req): Json<CreateExperimentRequest>,
 ) -> Json<ApiResponse<Experiment>> {
+    let tenant_id = get_tenant_id(&claims, &headers);
     if req.name.is_empty() {
         return Json(ApiResponse::error(400, "试验名称不能为空"));
     }
@@ -142,18 +167,19 @@ async fn create_experiment(
     let result = sqlx::query_as::<_, Experiment>(
         r#"
         INSERT INTO rs.experiments (
-            id, name, code, project_id, formula_id, experiment_type, phase, status,
+            id, tenant_id, name, code, project_id, formula_id, experiment_type, phase, status,
             objective, method, results, conclusions, experimenter,
             batch_number, scale, scale_unit, started_at, completed_at,
             created_by, created_at, updated_at
-        ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, $17, $18, $19, $20, $21)
-        RETURNING id, name, code, project_id, formula_id, experiment_type, phase, status,
+        ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, $17, $18, $19, $20, $21, $22)
+        RETURNING id, tenant_id, name, code, project_id, formula_id, experiment_type, phase, status,
                   objective, method, results, conclusions, experimenter,
                   batch_number, scale, scale_unit, started_at, completed_at,
                   created_by, created_at, updated_at
         "#,
     )
     .bind(id)
+    .bind(tenant_id)
     .bind(&req.name)
     .bind(&req.code)
     .bind(req.project_id)
@@ -222,17 +248,21 @@ async fn create_experiment(
 async fn get_experiment(
     State(state): State<super::ApiState>,
     Path(id): Path<Uuid>,
+    Extension(claims): Extension<Claims>,
+    headers: HeaderMap,
 ) -> Json<ApiResponse<Experiment>> {
+    let tenant_id = get_tenant_id(&claims, &headers);
     let result = sqlx::query_as::<_, Experiment>(
         r#"
-        SELECT id, name, code, project_id, formula_id, experiment_type, phase, status,
+        SELECT id, tenant_id, name, code, project_id, formula_id, experiment_type, phase, status,
                objective, method, results, conclusions, experimenter,
                batch_number, scale, scale_unit, started_at, completed_at,
                created_by, created_at, updated_at
-        FROM rs.experiments WHERE id = $1
+        FROM rs.experiments WHERE id = $1 AND tenant_id = $2
         "#,
     )
     .bind(id)
+    .bind(tenant_id)
     .fetch_optional(&state.db)
     .await;
 
@@ -249,13 +279,16 @@ async fn get_experiment(
 async fn update_experiment(
     State(state): State<super::ApiState>,
     Path(id): Path<Uuid>,
+    Extension(claims): Extension<Claims>,
     headers: HeaderMap,
     Json(req): Json<UpdateExperimentRequest>,
 ) -> Json<ApiResponse<Experiment>> {
+    let tenant_id = get_tenant_id(&claims, &headers);
     let existing = sqlx::query_as::<_, Experiment>(
-        "SELECT id, name, code, project_id, formula_id, experiment_type, phase, status, objective, method, results, conclusions, experimenter, batch_number, scale, scale_unit, started_at, completed_at, created_by, created_at, updated_at FROM rs.experiments WHERE id = $1",
+        "SELECT id, tenant_id, name, code, project_id, formula_id, experiment_type, phase, status, objective, method, results, conclusions, experimenter, batch_number, scale, scale_unit, started_at, completed_at, created_by, created_at, updated_at FROM rs.experiments WHERE id = $1 AND tenant_id = $2",
     )
     .bind(id)
+    .bind(tenant_id)
     .fetch_optional(&state.db)
     .await;
 
@@ -282,8 +315,8 @@ async fn update_experiment(
         UPDATE rs.experiments SET
             name = $2, status = $3, results = $4, conclusions = $5,
             completed_at = $6, batch_number = $7, scale = $8, scale_unit = $9, updated_at = $10
-        WHERE id = $1
-        RETURNING id, name, code, project_id, formula_id, experiment_type, phase, status,
+        WHERE id = $1 AND tenant_id = $11
+        RETURNING id, tenant_id, name, code, project_id, formula_id, experiment_type, phase, status,
                   objective, method, results, conclusions, experimenter,
                   batch_number, scale, scale_unit, started_at, completed_at,
                   created_by, created_at, updated_at
@@ -299,6 +332,7 @@ async fn update_experiment(
     .bind(scale)
     .bind(scale_unit)
     .bind(now)
+    .bind(tenant_id)
     .fetch_one(&state.db)
     .await;
 
@@ -346,10 +380,13 @@ async fn update_experiment(
 async fn delete_experiment(
     State(state): State<super::ApiState>,
     Path(id): Path<Uuid>,
+    Extension(claims): Extension<Claims>,
     headers: HeaderMap,
 ) -> Json<ApiResponse<String>> {
-    let result = sqlx::query("DELETE FROM rs.experiments WHERE id = $1")
+    let tenant_id = get_tenant_id(&claims, &headers);
+    let result = sqlx::query("DELETE FROM rs.experiments WHERE id = $1 AND tenant_id = $2")
         .bind(id)
+        .bind(tenant_id)
         .execute(&state.db)
         .await;
 
@@ -402,7 +439,10 @@ async fn delete_experiment(
 async fn get_experiment_records(
     State(state): State<super::ApiState>,
     Path(id): Path<Uuid>,
+    Extension(claims): Extension<Claims>,
+    headers: HeaderMap,
 ) -> Json<ApiResponse<Vec<serde_json::Value>>> {
+    let tenant_id = get_tenant_id(&claims, &headers);
     let result = sqlx::query_as::<_, (Option<serde_json::Value>,)>(
         r#"
         SELECT json_agg(
@@ -416,12 +456,14 @@ async fn get_experiment_records(
                 'recorded_at', recorded_at
             )
         ) as records
-        FROM rs.experiment_records
-        WHERE experiment_id = $1
+        FROM rs.experiment_records er
+        JOIN rs.experiments e ON er.experiment_id = e.id
+        WHERE er.experiment_id = $1 AND e.tenant_id = $2
         ORDER BY recorded_at ASC
         "#,
     )
     .bind(id)
+    .bind(tenant_id)
     .fetch_one(&state.db)
     .await;
 
@@ -443,8 +485,11 @@ async fn get_experiment_records(
 async fn create_experiment_record(
     State(state): State<super::ApiState>,
     Path(id): Path<Uuid>,
+    Extension(claims): Extension<Claims>,
+    headers: HeaderMap,
     Json(req): Json<CreateRecordRequest>,
 ) -> Json<ApiResponse<serde_json::Value>> {
+    let tenant_id = get_tenant_id(&claims, &headers);
     let record_id = Uuid::new_v4();
     let now = Utc::now();
 
@@ -482,26 +527,31 @@ async fn create_experiment_record(
 
 async fn list_lab_experiments(
     State(state): State<super::ApiState>,
+    Extension(claims): Extension<Claims>,
     Query(params): Query<PaginationParams>,
+    headers: HeaderMap,
 ) -> Json<ApiResponse<serde_json::Value>> {
+    let tenant_id = get_tenant_id(&claims, &headers);
     let page = params.page.unwrap_or(1).max(1);
     let page_size = params.page_size.unwrap_or(20).min(100);
     let offset = (page - 1) * page_size;
 
     let result = sqlx::query_as::<_, Experiment>(
         r#"
-        SELECT id, name, code, project_id, formula_id, experiment_type, phase, status,
+        SELECT id, tenant_id, name, code, project_id, formula_id, experiment_type, phase, status,
                objective, method, results, conclusions, experimenter,
                batch_number, scale, scale_unit, started_at, completed_at,
                created_by, created_at, updated_at
         FROM rs.experiments
-        WHERE phase = 'lab'
-          AND ($1::text IS NULL OR name ILIKE $1 OR code ILIKE $1)
-          AND ($2::text IS NULL OR status = $2)
+        WHERE tenant_id = $1
+          AND phase = 'lab'
+          AND ($2::text IS NULL OR name ILIKE $2 OR code ILIKE $2)
+          AND ($3::text IS NULL OR status = $3)
         ORDER BY created_at DESC
-        LIMIT $3 OFFSET $4
+        LIMIT $4 OFFSET $5
         "#,
     )
+    .bind(tenant_id)
     .bind(&params.search)
     .bind(&params.status)
     .bind(page_size)
@@ -514,11 +564,13 @@ async fn list_lab_experiments(
             let count_result = sqlx::query_scalar::<_, i64>(
                 r#"
                 SELECT COUNT(*) FROM rs.experiments
-                WHERE phase = 'lab'
-                  AND ($1::text IS NULL OR name ILIKE $1 OR code ILIKE $1)
-                  AND ($2::text IS NULL OR status = $2)
+                WHERE tenant_id = $1
+                  AND phase = 'lab'
+                  AND ($2::text IS NULL OR name ILIKE $2 OR code ILIKE $2)
+                  AND ($3::text IS NULL OR status = $3)
                 "#,
             )
+            .bind(tenant_id)
             .bind(&params.search)
             .bind(&params.status)
             .fetch_one(&state.db)
@@ -545,26 +597,31 @@ async fn list_lab_experiments(
 
 async fn list_pilot_experiments(
     State(state): State<super::ApiState>,
+    Extension(claims): Extension<Claims>,
     Query(params): Query<PaginationParams>,
+    headers: HeaderMap,
 ) -> Json<ApiResponse<serde_json::Value>> {
+    let tenant_id = get_tenant_id(&claims, &headers);
     let page = params.page.unwrap_or(1).max(1);
     let page_size = params.page_size.unwrap_or(20).min(100);
     let offset = (page - 1) * page_size;
 
     let result = sqlx::query_as::<_, Experiment>(
         r#"
-        SELECT id, name, code, project_id, formula_id, experiment_type, phase, status,
+        SELECT id, tenant_id, name, code, project_id, formula_id, experiment_type, phase, status,
                objective, method, results, conclusions, experimenter,
                batch_number, scale, scale_unit, started_at, completed_at,
                created_by, created_at, updated_at
         FROM rs.experiments
-        WHERE phase = 'pilot'
-          AND ($1::text IS NULL OR name ILIKE $1 OR code ILIKE $1)
-          AND ($2::text IS NULL OR status = $2)
+        WHERE tenant_id = $1
+          AND phase = 'pilot'
+          AND ($2::text IS NULL OR name ILIKE $2 OR code ILIKE $2)
+          AND ($3::text IS NULL OR status = $3)
         ORDER BY created_at DESC
-        LIMIT $3 OFFSET $4
+        LIMIT $4 OFFSET $5
         "#,
     )
+    .bind(tenant_id)
     .bind(&params.search)
     .bind(&params.status)
     .bind(page_size)
@@ -577,11 +634,13 @@ async fn list_pilot_experiments(
             let count_result = sqlx::query_scalar::<_, i64>(
                 r#"
                 SELECT COUNT(*) FROM rs.experiments
-                WHERE phase = 'pilot'
-                  AND ($1::text IS NULL OR name ILIKE $1 OR code ILIKE $1)
-                  AND ($2::text IS NULL OR status = $2)
+                WHERE tenant_id = $1
+                  AND phase = 'pilot'
+                  AND ($2::text IS NULL OR name ILIKE $2 OR code ILIKE $2)
+                  AND ($3::text IS NULL OR status = $3)
                 "#,
             )
+            .bind(tenant_id)
             .bind(&params.search)
             .bind(&params.status)
             .fetch_one(&state.db)
@@ -608,26 +667,31 @@ async fn list_pilot_experiments(
 
 async fn list_scaleup_experiments(
     State(state): State<super::ApiState>,
+    Extension(claims): Extension<Claims>,
     Query(params): Query<PaginationParams>,
+    headers: HeaderMap,
 ) -> Json<ApiResponse<serde_json::Value>> {
+    let tenant_id = get_tenant_id(&claims, &headers);
     let page = params.page.unwrap_or(1).max(1);
     let page_size = params.page_size.unwrap_or(20).min(100);
     let offset = (page - 1) * page_size;
 
     let result = sqlx::query_as::<_, Experiment>(
         r#"
-        SELECT id, name, code, project_id, formula_id, experiment_type, phase, status,
+        SELECT id, tenant_id, name, code, project_id, formula_id, experiment_type, phase, status,
                objective, method, results, conclusions, experimenter,
                batch_number, scale, scale_unit, started_at, completed_at,
                created_by, created_at, updated_at
         FROM rs.experiments
-        WHERE phase = 'scaleup'
-          AND ($1::text IS NULL OR name ILIKE $1 OR code ILIKE $1)
-          AND ($2::text IS NULL OR status = $2)
+        WHERE tenant_id = $1
+          AND phase = 'scaleup'
+          AND ($2::text IS NULL OR name ILIKE $2 OR code ILIKE $2)
+          AND ($3::text IS NULL OR status = $3)
         ORDER BY created_at DESC
-        LIMIT $3 OFFSET $4
+        LIMIT $4 OFFSET $5
         "#,
     )
+    .bind(tenant_id)
     .bind(&params.search)
     .bind(&params.status)
     .bind(page_size)
@@ -640,11 +704,13 @@ async fn list_scaleup_experiments(
             let count_result = sqlx::query_scalar::<_, i64>(
                 r#"
                 SELECT COUNT(*) FROM rs.experiments
-                WHERE phase = 'scaleup'
-                  AND ($1::text IS NULL OR name ILIKE $1 OR code ILIKE $1)
-                  AND ($2::text IS NULL OR status = $2)
+                WHERE tenant_id = $1
+                  AND phase = 'scaleup'
+                  AND ($2::text IS NULL OR name ILIKE $2 OR code ILIKE $2)
+                  AND ($3::text IS NULL OR status = $3)
                 "#,
             )
+            .bind(tenant_id)
             .bind(&params.search)
             .bind(&params.status)
             .fetch_one(&state.db)
@@ -672,12 +738,16 @@ async fn list_scaleup_experiments(
 async fn advance_phase(
     State(state): State<super::ApiState>,
     Path(id): Path<Uuid>,
+    Extension(claims): Extension<Claims>,
+    headers: HeaderMap,
     Json(req): Json<AdvancePhaseRequest>,
 ) -> Json<ApiResponse<Experiment>> {
+    let tenant_id = get_tenant_id(&claims, &headers);
     let existing = sqlx::query_as::<_, Experiment>(
-        "SELECT id, phase, status FROM rs.experiments WHERE id = $1",
+        "SELECT id, tenant_id, phase, status FROM rs.experiments WHERE id = $1 AND tenant_id = $2",
     )
     .bind(id)
+    .bind(tenant_id)
     .fetch_optional(&state.db)
     .await;
 
@@ -698,8 +768,8 @@ async fn advance_phase(
         r#"
         UPDATE rs.experiments SET
             phase = $2, status = $3, updated_at = $4
-        WHERE id = $1
-        RETURNING id, name, code, project_id, formula_id, experiment_type, phase, status,
+        WHERE id = $1 AND tenant_id = $5
+        RETURNING id, tenant_id, name, code, project_id, formula_id, experiment_type, phase, status,
                   objective, method, results, conclusions, experimenter,
                   batch_number, scale, scale_unit, started_at, completed_at,
                   created_by, created_at, updated_at
@@ -709,6 +779,7 @@ async fn advance_phase(
     .bind(new_phase)
     .bind(req.new_status.unwrap_or("in_progress".to_string()))
     .bind(Utc::now())
+    .bind(tenant_id)
     .fetch_one(&state.db)
     .await;
 
@@ -724,7 +795,10 @@ async fn advance_phase(
 async fn trace_batch(
     State(state): State<super::ApiState>,
     Path(batch_number): Path<String>,
+    Extension(claims): Extension<Claims>,
+    headers: HeaderMap,
 ) -> Json<ApiResponse<Vec<serde_json::Value>>> {
+    let tenant_id = get_tenant_id(&claims, &headers);
     let result = sqlx::query_as::<_, (Option<serde_json::Value>,)>(
         r#"
         SELECT json_agg(
@@ -743,10 +817,11 @@ async fn trace_batch(
         ) as trace_items
         FROM rs.experiments e
         LEFT JOIN rs.formulas f ON e.formula_id = f.id
-        WHERE e.batch_number = $1
+        WHERE e.batch_number = $1 AND e.tenant_id = $2
         "#,
     )
     .bind(batch_number)
+    .bind(tenant_id)
     .fetch_one(&state.db)
     .await;
 

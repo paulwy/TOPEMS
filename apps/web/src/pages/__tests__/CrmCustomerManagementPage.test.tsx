@@ -1,15 +1,20 @@
 import React from 'react';
 import { describe, it, expect, vi, beforeEach } from 'vitest';
-import { render, screen } from '@testing-library/react';
+import { render, screen, waitFor } from '@testing-library/react';
 import { BrowserRouter } from 'react-router-dom';
+import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import CustomerManagementPage from '../crm/CustomerManagementPage';
 import { crmApi } from '@/api/crm';
 import { useAppStore } from '@/store';
 
+const queryClient = new QueryClient();
+
 vi.mock('@/api/crm', () => ({
   crmApi: {
     customers: {
-      list: vi.fn().mockResolvedValue({ data: [], pagination: { total: 0 } }),
+      list: vi
+        .fn()
+        .mockResolvedValue({ code: 200, data: { items: [], total: 0, page: 1, pageSize: 10 } }),
       get: vi.fn(),
       create: vi.fn(),
       update: vi.fn(),
@@ -20,7 +25,10 @@ vi.mock('@/api/crm', () => ({
       export: vi.fn(),
     },
     contacts: {
-      list: vi.fn().mockResolvedValue({ data: [] }),
+      list: vi.fn().mockResolvedValue({ code: 200, data: [] }),
+    },
+    tags: {
+      list: vi.fn().mockResolvedValue({ code: 200, data: { items: [], total: 0 } }),
     },
   },
 }));
@@ -50,18 +58,22 @@ describe('CustomerManagementPage', () => {
 
   it('should render without crashing', () => {
     const { container } = render(
-      <BrowserRouter>
-        <CustomerManagementPage />
-      </BrowserRouter>
+      <QueryClientProvider client={queryClient}>
+        <BrowserRouter>
+          <CustomerManagementPage />
+        </BrowserRouter>
+      </QueryClientProvider>
     );
     expect(container).toBeDefined();
   });
 
   it('should have customer API methods defined', async () => {
     render(
-      <BrowserRouter>
-        <CustomerManagementPage />
-      </BrowserRouter>
+      <QueryClientProvider client={queryClient}>
+        <BrowserRouter>
+          <CustomerManagementPage />
+        </BrowserRouter>
+      </QueryClientProvider>
     );
     expect(crmApi.customers.list).toBeDefined();
     expect(crmApi.customers.get).toBeDefined();
@@ -74,12 +86,18 @@ describe('CustomerManagementPage', () => {
     expect(crmApi.customers.export).toBeDefined();
   });
 
-  it('should call customer list API on mount', async () => {
+  it('should have correct query key for customers', async () => {
     render(
-      <BrowserRouter>
-        <CustomerManagementPage />
-      </BrowserRouter>
+      <QueryClientProvider client={queryClient}>
+        <BrowserRouter>
+          <CustomerManagementPage />
+        </BrowserRouter>
+      </QueryClientProvider>
     );
-    expect(crmApi.customers.list).toHaveBeenCalled();
+    const queryKeys = queryClient
+      .getQueryCache()
+      .getAll()
+      .map((q) => q.queryKey);
+    expect(queryKeys.some((key) => key[0] === 'crm-customers')).toBe(true);
   });
 });

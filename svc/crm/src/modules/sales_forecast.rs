@@ -10,6 +10,7 @@ use sqlx::Row;
 use uuid::Uuid;
 
 use super::ApiState;
+use crate::middleware::tenant::get_tenant_id;
 use crate::models::{CreateSalesForecastRequest, SalesForecast, SalesForecastQueryParams};
 use crate::modules::audit::log_audit_event;
 use crate::shared::permission::{check_permission, ModulePermission};
@@ -44,6 +45,7 @@ async fn list_sales_forecasts(
     State(state): State<ApiState>,
     Extension(claims): Extension<Claims>,
     Query(params): Query<SalesForecastQueryParams>,
+    headers: HeaderMap,
 ) -> Json<ApiResponse<serde_json::Value>> {
     match check_permission(&state.db, &claims, &ModulePermission::CustomerRead).await {
         Ok(_) => {}
@@ -56,17 +58,20 @@ async fn list_sales_forecasts(
 
     let period_type_filter = params.period_type.clone();
     let status_filter = params.status.clone();
+    let tenant_id = get_tenant_id(&claims, &headers);
 
     let result = sqlx::query_as::<_, SalesForecast>(
         r#"
-        SELECT id, period_type, period, predicted_amount, actual_amount, accuracy, trend, confidence_level, factors, status, created_at, updated_at
+        SELECT id, tenant_id, period_type, period, predicted_amount, actual_amount, accuracy, trend, confidence_level, factors, status, created_at, updated_at
         FROM plugin_crm.sales_forecasts
-        WHERE ($1::text IS NULL OR period_type = $1)
-          AND ($2::text IS NULL OR status = $2)
+        WHERE tenant_id = $1
+          AND ($2::text IS NULL OR period_type = $2)
+          AND ($3::text IS NULL OR status = $3)
         ORDER BY period DESC
-        LIMIT $3 OFFSET $4
+        LIMIT $4 OFFSET $5
         "#,
     )
+    .bind(tenant_id)
     .bind(&period_type_filter)
     .bind(&status_filter)
     .bind(page_size)
@@ -79,10 +84,12 @@ async fn list_sales_forecasts(
             let count_result = sqlx::query_scalar::<_, i64>(
                 r#"
                 SELECT COUNT(*) FROM plugin_crm.sales_forecasts
-                WHERE ($1::text IS NULL OR period_type = $1)
-                  AND ($2::text IS NULL OR status = $2)
+                WHERE tenant_id = $1
+                  AND ($2::text IS NULL OR period_type = $2)
+                  AND ($3::text IS NULL OR status = $3)
                 "#,
             )
+            .bind(tenant_id)
             .bind(&period_type_filter)
             .bind(&status_filter)
             .fetch_one(&state.db)
@@ -111,19 +118,23 @@ async fn get_sales_forecast(
     State(state): State<ApiState>,
     Extension(claims): Extension<Claims>,
     Path(id): Path<Uuid>,
+    headers: HeaderMap,
 ) -> Json<ApiResponse<SalesForecast>> {
     match check_permission(&state.db, &claims, &ModulePermission::CustomerRead).await {
         Ok(_) => {}
         Err(e) => return e,
     }
 
+    let tenant_id = get_tenant_id(&claims, &headers);
+
     let result = sqlx::query_as::<_, SalesForecast>(
         r#"
-        SELECT id, period_type, period, predicted_amount, actual_amount, accuracy, trend, confidence_level, factors, status, created_at, updated_at
-        FROM plugin_crm.sales_forecasts WHERE id = $1
+        SELECT id, tenant_id, period_type, period, predicted_amount, actual_amount, accuracy, trend, confidence_level, factors, status, created_at, updated_at
+        FROM plugin_crm.sales_forecasts WHERE id = $1 AND tenant_id = $2
         "#,
     )
     .bind(id)
+    .bind(tenant_id)
     .fetch_optional(&state.db)
     .await;
 
@@ -152,6 +163,7 @@ async fn create_sales_forecast(
         return Json(api_error(400, "周期类型和周期不能为空"));
     }
 
+    let tenant_id = get_tenant_id(&claims, &headers);
     let id = Uuid::new_v4();
     let now = Utc::now();
 
@@ -165,12 +177,13 @@ async fn create_sales_forecast(
     let result = sqlx::query_as::<_, SalesForecast>(
         r#"
         INSERT INTO plugin_crm.sales_forecasts (
-            id, period_type, period, predicted_amount, trend, confidence_level, factors, status, created_at, updated_at
-        ) VALUES ($1, $2, $3, 0, 'stable', 0.7, $4, 'draft', $5, $6)
-        RETURNING id, period_type, period, predicted_amount, actual_amount, accuracy, trend, confidence_level, factors, status, created_at, updated_at
+            id, tenant_id, period_type, period, predicted_amount, trend, confidence_level, factors, status, created_at, updated_at
+        ) VALUES ($1, $2, $3, 0, 'stable', 0.7, $4, 'draft', $5, $6, $7)
+        RETURNING id, tenant_id, period_type, period, predicted_amount, actual_amount, accuracy, trend, confidence_level, factors, status, created_at, updated_at
         "#,
     )
     .bind(id)
+    .bind(tenant_id)
     .bind(&req.period_type)
     .bind(&req.period)
     .bind(&factors)
@@ -224,6 +237,7 @@ async fn create_sales_forecast(
 async fn generate_forecast(
     State(state): State<ApiState>,
     Extension(claims): Extension<Claims>,
+    headers: HeaderMap,
     Json(req): Json<CreateSalesForecastRequest>,
 ) -> Json<ApiResponse<SalesForecast>> {
     match check_permission(&state.db, &claims, &ModulePermission::CustomerWrite).await {
@@ -235,6 +249,7 @@ async fn generate_forecast(
         return Json(api_error(400, "周期类型和周期不能为空"));
     }
 
+    let tenant_id = get_tenant_id(&claims, &headers);
     let id = Uuid::new_v4();
     let now = Utc::now();
 
@@ -256,12 +271,13 @@ async fn generate_forecast(
     let result = sqlx::query_as::<_, SalesForecast>(
         r#"
         INSERT INTO plugin_crm.sales_forecasts (
-            id, period_type, period, predicted_amount, trend, confidence_level, factors, status, created_at, updated_at
-        ) VALUES ($1, $2, $3, $4, $5, $6, $7, 'generated', $8, $9)
-        RETURNING id, period_type, period, predicted_amount, actual_amount, accuracy, trend, confidence_level, factors, status, created_at, updated_at
+            id, tenant_id, period_type, period, predicted_amount, trend, confidence_level, factors, status, created_at, updated_at
+        ) VALUES ($1, $2, $3, $4, $5, $6, $7, 'generated', $8, $9, $10)
+        RETURNING id, tenant_id, period_type, period, predicted_amount, actual_amount, accuracy, trend, confidence_level, factors, status, created_at, updated_at
         "#,
     )
     .bind(id)
+    .bind(tenant_id)
     .bind(&req.period_type)
     .bind(&req.period)
     .bind(predicted_amount)
@@ -294,12 +310,15 @@ async fn update_sales_forecast(
         Err(e) => return e,
     }
 
+    let tenant_id = get_tenant_id(&claims, &headers);
+
     let existing = sqlx::query_as::<_, SalesForecast>(
         r#"
-        SELECT id, period_type, period, predicted_amount, actual_amount, accuracy, trend, confidence_level, factors, status, created_at, updated_at FROM plugin_crm.sales_forecasts WHERE id = $1
+        SELECT id, tenant_id, period_type, period, predicted_amount, actual_amount, accuracy, trend, confidence_level, factors, status, created_at, updated_at FROM plugin_crm.sales_forecasts WHERE id = $1 AND tenant_id = $2
         "#,
     )
     .bind(id)
+    .bind(tenant_id)
     .fetch_optional(&state.db)
     .await;
 
@@ -337,8 +356,8 @@ async fn update_sales_forecast(
         r#"
         UPDATE plugin_crm.sales_forecasts SET
             predicted_amount = $2, actual_amount = $3, accuracy = $4, trend = $5, confidence_level = $6, status = $7, updated_at = $8
-        WHERE id = $1
-        RETURNING id, period_type, period, predicted_amount, actual_amount, accuracy, trend, confidence_level, factors, status, created_at, updated_at
+        WHERE id = $1 AND tenant_id = $9
+        RETURNING id, tenant_id, period_type, period, predicted_amount, actual_amount, accuracy, trend, confidence_level, factors, status, created_at, updated_at
         "#,
     )
     .bind(id)
@@ -349,6 +368,7 @@ async fn update_sales_forecast(
     .bind(confidence_level)
     .bind(&status)
     .bind(now)
+    .bind(tenant_id)
     .fetch_one(&state.db)
     .await;
 
@@ -404,10 +424,14 @@ async fn delete_sales_forecast(
         Err(e) => return e,
     }
 
-    let result = sqlx::query("DELETE FROM plugin_crm.sales_forecasts WHERE id = $1")
-        .bind(id)
-        .execute(&state.db)
-        .await;
+    let tenant_id = get_tenant_id(&claims, &headers);
+
+    let result =
+        sqlx::query("DELETE FROM plugin_crm.sales_forecasts WHERE id = $1 AND tenant_id = $2")
+            .bind(id)
+            .bind(tenant_id)
+            .execute(&state.db)
+            .await;
 
     let (response, status_str, error_msg) = match &result {
         Ok(r) if r.rows_affected() > 0 => (
@@ -466,6 +490,7 @@ async fn get_sales_trend(
     State(state): State<ApiState>,
     Extension(claims): Extension<Claims>,
     Query(params): Query<SalesTrendQuery>,
+    headers: HeaderMap,
 ) -> Json<ApiResponse<serde_json::Value>> {
     match check_permission(&state.db, &claims, &ModulePermission::CustomerRead).await {
         Ok(_) => {}
@@ -473,17 +498,20 @@ async fn get_sales_trend(
     }
 
     let period_type = params.period_type.unwrap_or("month".to_string());
+    let tenant_id = get_tenant_id(&claims, &headers);
 
     let result = sqlx::query(
         r#"
         SELECT period, predicted_amount, actual_amount, accuracy, trend
         FROM plugin_crm.sales_forecasts
-        WHERE period_type = $1
-          AND ($2::text IS NULL OR period >= $2)
-          AND ($3::text IS NULL OR period <= $3)
+        WHERE tenant_id = $1
+          AND period_type = $2
+          AND ($3::text IS NULL OR period >= $3)
+          AND ($4::text IS NULL OR period <= $4)
         ORDER BY period ASC
         "#,
     )
+    .bind(tenant_id)
     .bind(&period_type)
     .bind(&params.start_period)
     .bind(&params.end_period)
@@ -556,6 +584,7 @@ async fn compare_sales_forecasts(
     State(state): State<ApiState>,
     Extension(claims): Extension<Claims>,
     Query(params): Query<CompareForecastQuery>,
+    headers: HeaderMap,
 ) -> Json<ApiResponse<serde_json::Value>> {
     match check_permission(&state.db, &claims, &ModulePermission::CustomerRead).await {
         Ok(_) => {}
@@ -564,6 +593,7 @@ async fn compare_sales_forecasts(
 
     let periods = params.periods.unwrap_or_default();
     let period_type = params.period_type.unwrap_or("month".to_string());
+    let tenant_id = get_tenant_id(&claims, &headers);
 
     if periods.len() < 2 {
         return Json(api_error(400, "至少需要对比两个周期"));
@@ -573,10 +603,11 @@ async fn compare_sales_forecasts(
         r#"
         SELECT period, predicted_amount, actual_amount, accuracy, confidence_level, trend
         FROM plugin_crm.sales_forecasts
-        WHERE period_type = $1 AND period = ANY($2)
+        WHERE tenant_id = $1 AND period_type = $2 AND period = ANY($3)
         ORDER BY period ASC
         "#,
     )
+    .bind(tenant_id)
     .bind(&period_type)
     .bind(&periods)
     .fetch_all(&state.db)
@@ -662,6 +693,7 @@ async fn get_accuracy_report(
     State(state): State<ApiState>,
     Extension(claims): Extension<Claims>,
     Query(params): Query<SalesTrendQuery>,
+    headers: HeaderMap,
 ) -> Json<ApiResponse<serde_json::Value>> {
     match check_permission(&state.db, &claims, &ModulePermission::CustomerRead).await {
         Ok(_) => {}
@@ -669,18 +701,21 @@ async fn get_accuracy_report(
     }
 
     let period_type = params.period_type.unwrap_or("month".to_string());
+    let tenant_id = get_tenant_id(&claims, &headers);
 
     let result = sqlx::query(
         r#"
         SELECT period, predicted_amount, actual_amount, accuracy, confidence_level, trend
         FROM plugin_crm.sales_forecasts
-        WHERE period_type = $1
-          AND ($2::text IS NULL OR period >= $2)
-          AND ($3::text IS NULL OR period <= $3)
+        WHERE tenant_id = $1
+          AND period_type = $2
+          AND ($3::text IS NULL OR period >= $3)
+          AND ($4::text IS NULL OR period <= $4)
           AND actual_amount IS NOT NULL
         ORDER BY period ASC
         "#,
     )
+    .bind(tenant_id)
     .bind(&period_type)
     .bind(&params.start_period)
     .bind(&params.end_period)

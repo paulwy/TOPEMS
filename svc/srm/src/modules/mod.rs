@@ -1,5 +1,7 @@
+pub mod bid_price;
 pub mod data_sync;
 pub mod openapi;
+pub mod purchase_order;
 pub mod scoring_dimension;
 pub mod srm_plugin;
 pub mod statistics;
@@ -8,9 +10,13 @@ pub mod supplier_category;
 pub mod supplier_contract;
 pub mod supplier_evaluation;
 pub mod supplier_performance;
+pub mod supplier_portal;
 pub mod supplier_product;
+pub mod tender;
 
+pub use bid_price::create_routes as create_bid_price_routes;
 pub use data_sync::create_routes as create_data_sync_routes;
+pub use purchase_order::create_routes as create_purchase_order_routes;
 pub use scoring_dimension::create_routes as create_scoring_dimension_routes;
 pub use statistics::create_routes as create_statistics_routes;
 pub use supplier::create_routes as create_supplier_routes;
@@ -18,4 +24,6 @@ pub use supplier_category::create_routes as create_category_routes;
 pub use supplier_contract::create_routes as create_contract_routes;
 pub use supplier_evaluation::create_routes as create_evaluation_routes;
 pub use supplier_performance::create_routes as create_performance_routes;
+pub use supplier_portal::create_routes as create_supplier_portal_routes;
 pub use supplier_product::create_routes as create_product_routes;
+pub use tender::create_routes as create_tender_routes;

@@ -6,7 +6,7 @@ use uuid::Uuid;
 #[derive(Debug, Serialize, Deserialize, FromRow)]
 pub struct Document {
     pub id: Uuid,
-    pub tenant_id: Option<Uuid>,
+    pub tenant_id: Uuid,
     pub title: String,
     pub folder_id: Option<Uuid>,
     pub template_id: Option<Uuid>,
@@ -32,7 +32,7 @@ pub struct Document {
 #[derive(Debug, Serialize, Deserialize, FromRow)]
 pub struct Template {
     pub id: Uuid,
-    pub tenant_id: Option<Uuid>,
+    pub tenant_id: Uuid,
     pub name: String,
     pub category: Option<String>,
     pub description: Option<String>,
@@ -49,7 +49,7 @@ pub struct Template {
 #[derive(Debug, Serialize, Deserialize, FromRow)]
 pub struct Folder {
     pub id: Uuid,
-    pub tenant_id: Option<Uuid>,
+    pub tenant_id: Uuid,
     pub name: String,
     pub parent_id: Option<Uuid>,
     pub description: Option<String>,

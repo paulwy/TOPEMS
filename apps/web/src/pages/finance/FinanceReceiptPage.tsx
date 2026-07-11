@@ -62,8 +62,8 @@ const FinanceReceiptPage: React.FC = () => {
 
   const mapCollectionRecordToReceipt = (record: CollectionRecord): Receipt => {
     const bankAccount = record.bank_name
-      ? `${record.bank_name} ${record.bank_account_no}`
-      : record.bank_account_no;
+      ? `${record.bank_name} ${record.bank_account_no || ''}`
+      : record.bank_account_no || '';
 
     let statusText = '';
     switch (record.status) {
@@ -84,7 +84,7 @@ const FinanceReceiptPage: React.FC = () => {
       id: record.id,
       receipt_number: record.collection_no,
       receipt_date: record.collection_date,
-      customer: record.customer_name,
+      customer: record.customer_name || '',
       receipt_method: '银行转账',
       amount: record.amount,
       bank_account: bankAccount,

@@ -12,7 +12,7 @@ pub mod production_step;
 pub mod version;
 pub mod workflow;
 
-use crate::AppState;
+use crate::shared::AppState;
 use axum::Router;
 
 pub fn create_api_routes() -> Router<AppState> {

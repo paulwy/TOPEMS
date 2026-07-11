@@ -9,7 +9,7 @@ use serde::{Deserialize, Serialize};
 use sqlx::types::Uuid;
 use tracing::{info, warn};
 
-use crate::AppState;
+use crate::shared::AppState;
 
 #[derive(Debug, Deserialize)]
 pub struct CreateReportRequest {

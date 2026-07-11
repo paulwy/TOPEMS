@@ -1,8 +1,10 @@
 mod cache;
+mod middleware;
 mod models;
 mod modules;
 mod repositories;
 mod services;
+mod shared;
 
 use axum::{routing::get, Json, Router};
 use axum_prometheus::PrometheusMetricLayer;
@@ -41,7 +43,9 @@ async fn main() -> Result<()> {
     let config = Config::load().await?;
     let db_config = DatabaseConfig {
         url: env::var("DATABASE_URL").unwrap_or_else(|_| {
-            "postgres://topems:topems_secret@localhost:5432/topems".to_string()
+            env::var("DATABASE_URL")
+                .expect("DATABASE_URL environment variable is required")
+                .to_string()
         }),
         max_connections: 10,
         min_connections: Some(2),

@@ -1001,5 +1001,17 @@
     "total_budget": "Total Budget",
     "create_project": "Create Project",
     "create_contract": "Create Contract"
+  },
+  "layout": {
+    "skip_to_content": "Skip to main content",
+    "home": "Home",
+    "tasks": "Tasks",
+    "scan": "Scan",
+    "approval": "Approval",
+    "profile": "Profile",
+    "help_center": "Help Center",
+    "user_guide": "User Guide",
+    "contact_support": "Contact Support",
+    "copyright": "© {year} TOPEMS Digital Platform"
   }
 }

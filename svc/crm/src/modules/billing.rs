@@ -8,6 +8,7 @@ use chrono::Utc;
 use uuid::Uuid;
 
 use super::ApiState;
+use crate::middleware::tenant::get_tenant_id;
 use crate::models::{BillingQueryParams, BillingRecord, CreateBillingRequest};
 use crate::modules::audit::log_audit_event;
 use crate::shared::permission::{check_permission, ModulePermission};
@@ -37,6 +38,7 @@ async fn list_billing_records(
     State(state): State<ApiState>,
     Extension(claims): Extension<Claims>,
     Query(params): Query<BillingQueryParams>,
+    headers: HeaderMap,
 ) -> Json<ApiResponse<serde_json::Value>> {
     match check_permission(&state.db, &claims, &ModulePermission::CustomerRead).await {
         Ok(_) => {}
@@ -49,17 +51,20 @@ async fn list_billing_records(
 
     let customer_id_filter = params.customer_id;
     let status_filter = params.status.clone();
+    let tenant_id = get_tenant_id(&claims, &headers);
 
     let result = sqlx::query_as::<_, BillingRecord>(
         r#"
-        SELECT id, customer_id, customer_name, invoice_no, amount, currency, status, due_date, paid_at, items, created_at, updated_at
+        SELECT id, tenant_id, customer_id, customer_name, invoice_no, amount, currency, status, due_date, paid_at, items, created_at, updated_at
         FROM plugin_crm.billing_records
-        WHERE ($1::uuid IS NULL OR customer_id = $1)
-          AND ($2::text IS NULL OR status = $2)
+        WHERE tenant_id = $1
+          AND ($2::uuid IS NULL OR customer_id = $2)
+          AND ($3::text IS NULL OR status = $3)
         ORDER BY due_date DESC
-        LIMIT $3 OFFSET $4
+        LIMIT $4 OFFSET $5
         "#,
     )
+    .bind(tenant_id)
     .bind(&customer_id_filter)
     .bind(&status_filter)
     .bind(page_size)
@@ -72,10 +77,12 @@ async fn list_billing_records(
             let count_result = sqlx::query_scalar::<_, i64>(
                 r#"
                 SELECT COUNT(*) FROM plugin_crm.billing_records
-                WHERE ($1::uuid IS NULL OR customer_id = $1)
-                  AND ($2::text IS NULL OR status = $2)
+                WHERE tenant_id = $1
+                  AND ($2::uuid IS NULL OR customer_id = $2)
+                  AND ($3::text IS NULL OR status = $3)
                 "#,
             )
+            .bind(tenant_id)
             .bind(&customer_id_filter)
             .bind(&status_filter)
             .fetch_one(&state.db)
@@ -104,19 +111,23 @@ async fn get_billing_record(
     State(state): State<ApiState>,
     Extension(claims): Extension<Claims>,
     Path(id): Path<Uuid>,
+    headers: HeaderMap,
 ) -> Json<ApiResponse<BillingRecord>> {
     match check_permission(&state.db, &claims, &ModulePermission::CustomerRead).await {
         Ok(_) => {}
         Err(e) => return e,
     }
 
+    let tenant_id = get_tenant_id(&claims, &headers);
+
     let result = sqlx::query_as::<_, BillingRecord>(
         r#"
-        SELECT id, customer_id, customer_name, invoice_no, amount, currency, status, due_date, paid_at, items, created_at, updated_at
-        FROM plugin_crm.billing_records WHERE id = $1
+        SELECT id, tenant_id, customer_id, customer_name, invoice_no, amount, currency, status, due_date, paid_at, items, created_at, updated_at
+        FROM plugin_crm.billing_records WHERE id = $1 AND tenant_id = $2
         "#,
     )
     .bind(id)
+    .bind(tenant_id)
     .fetch_optional(&state.db)
     .await;
 
@@ -145,11 +156,15 @@ async fn create_billing_record(
         return Json(api_error(400, "金额必须大于零"));
     }
 
-    let customer =
-        sqlx::query_scalar::<_, String>("SELECT name FROM plugin_crm.customers WHERE id = $1")
-            .bind(&req.customer_id)
-            .fetch_optional(&state.db)
-            .await;
+    let tenant_id = get_tenant_id(&claims, &headers);
+
+    let customer = sqlx::query_scalar::<_, String>(
+        "SELECT name FROM plugin_crm.customers WHERE id = $1 AND tenant_id = $2",
+    )
+    .bind(&req.customer_id)
+    .bind(tenant_id)
+    .fetch_optional(&state.db)
+    .await;
 
     let customer_name = match customer {
         Ok(Some(name)) => name,
@@ -180,12 +195,13 @@ async fn create_billing_record(
     let result = sqlx::query_as::<_, BillingRecord>(
         r#"
         INSERT INTO plugin_crm.billing_records (
-            id, customer_id, customer_name, invoice_no, amount, currency, status, due_date, items, created_at, updated_at
-        ) VALUES ($1, $2, $3, $4, $5, $6, 'pending', $7, $8, $9, $10)
-        RETURNING id, customer_id, customer_name, invoice_no, amount, currency, status, due_date, paid_at, items, created_at, updated_at
+            id, tenant_id, customer_id, customer_name, invoice_no, amount, currency, status, due_date, items, created_at, updated_at
+        ) VALUES ($1, $2, $3, $4, $5, $6, $7, 'pending', $8, $9, $10, $11)
+        RETURNING id, tenant_id, customer_id, customer_name, invoice_no, amount, currency, status, due_date, paid_at, items, created_at, updated_at
         "#,
     )
     .bind(id)
+    .bind(tenant_id)
     .bind(&req.customer_id)
     .bind(&customer_name)
     .bind(&invoice_no)
@@ -252,12 +268,15 @@ async fn update_billing_record(
         Err(e) => return e,
     }
 
+    let tenant_id = get_tenant_id(&claims, &headers);
+
     let existing = sqlx::query_as::<_, BillingRecord>(
         r#"
-        SELECT id, customer_id, customer_name, invoice_no, amount, currency, status, due_date, paid_at, items, created_at, updated_at FROM plugin_crm.billing_records WHERE id = $1
+        SELECT id, tenant_id, customer_id, customer_name, invoice_no, amount, currency, status, due_date, paid_at, items, created_at, updated_at FROM plugin_crm.billing_records WHERE id = $1 AND tenant_id = $2
         "#,
     )
     .bind(id)
+    .bind(tenant_id)
     .fetch_optional(&state.db)
     .await;
 
@@ -274,13 +293,16 @@ async fn update_billing_record(
         .and_then(|v| v.as_str())
         .and_then(|s| Uuid::parse_str(s).ok());
     let customer_name = if customer_id.is_some() {
-        sqlx::query_scalar::<_, String>("SELECT name FROM plugin_crm.customers WHERE id = $1")
-            .bind(customer_id.as_ref())
-            .fetch_optional(&state.db)
-            .await
-            .ok()
-            .flatten()
-            .or(Some(existing.customer_name))
+        sqlx::query_scalar::<_, String>(
+            "SELECT name FROM plugin_crm.customers WHERE id = $1 AND tenant_id = $2",
+        )
+        .bind(customer_id.as_ref())
+        .bind(tenant_id)
+        .fetch_optional(&state.db)
+        .await
+        .ok()
+        .flatten()
+        .or(Some(existing.customer_name))
     } else {
         Some(existing.customer_name)
     };
@@ -322,8 +344,8 @@ async fn update_billing_record(
             due_date = COALESCE($7, due_date),
             status = $8,
             updated_at = $9
-        WHERE id = $1
-        RETURNING id, customer_id, customer_name, invoice_no, amount, currency, status, due_date, paid_at, items, created_at, updated_at
+        WHERE id = $1 AND tenant_id = $10
+        RETURNING id, tenant_id, customer_id, customer_name, invoice_no, amount, currency, status, due_date, paid_at, items, created_at, updated_at
         "#,
     )
     .bind(id)
@@ -335,6 +357,7 @@ async fn update_billing_record(
     .bind(&due_date)
     .bind(&status)
     .bind(now)
+    .bind(tenant_id)
     .fetch_one(&state.db)
     .await;
 
@@ -390,10 +413,14 @@ async fn delete_billing_record(
         Err(e) => return e,
     }
 
-    let result = sqlx::query("DELETE FROM plugin_crm.billing_records WHERE id = $1")
-        .bind(id)
-        .execute(&state.db)
-        .await;
+    let tenant_id = get_tenant_id(&claims, &headers);
+
+    let result =
+        sqlx::query("DELETE FROM plugin_crm.billing_records WHERE id = $1 AND tenant_id = $2")
+            .bind(id)
+            .bind(tenant_id)
+            .execute(&state.db)
+            .await;
 
     let (response, status_str, error_msg) = match &result {
         Ok(r) if r.rows_affected() > 0 => (
@@ -445,12 +472,14 @@ async fn mark_billing_paid(
     State(state): State<ApiState>,
     Extension(claims): Extension<Claims>,
     Path(id): Path<Uuid>,
+    headers: HeaderMap,
 ) -> Json<ApiResponse<BillingRecord>> {
     match check_permission(&state.db, &claims, &ModulePermission::CustomerWrite).await {
         Ok(_) => {}
         Err(e) => return e,
     }
 
+    let tenant_id = get_tenant_id(&claims, &headers);
     let now = Utc::now();
 
     let result = sqlx::query_as::<_, BillingRecord>(
@@ -459,12 +488,13 @@ async fn mark_billing_paid(
             status = 'paid',
             paid_at = $2,
             updated_at = $2
-        WHERE id = $1
-        RETURNING id, customer_id, customer_name, invoice_no, amount, currency, status, due_date, paid_at, items, created_at, updated_at
+        WHERE id = $1 AND tenant_id = $3
+        RETURNING id, tenant_id, customer_id, customer_name, invoice_no, amount, currency, status, due_date, paid_at, items, created_at, updated_at
         "#,
     )
     .bind(id)
     .bind(now)
+    .bind(tenant_id)
     .fetch_one(&state.db)
     .await;
 
@@ -481,16 +511,20 @@ async fn send_billing_notification(
     State(state): State<ApiState>,
     Extension(claims): Extension<Claims>,
     Path(id): Path<Uuid>,
+    headers: HeaderMap,
 ) -> Json<ApiResponse<String>> {
     match check_permission(&state.db, &claims, &ModulePermission::CustomerWrite).await {
         Ok(_) => {}
         Err(e) => return e,
     }
 
+    let tenant_id = get_tenant_id(&claims, &headers);
+
     let result = sqlx::query_as::<_, BillingRecord>(
-        "SELECT customer_name, invoice_no, amount FROM plugin_crm.billing_records WHERE id = $1",
+        "SELECT customer_name, invoice_no, amount FROM plugin_crm.billing_records WHERE id = $1 AND tenant_id = $2",
     )
     .bind(id)
+    .bind(tenant_id)
     .fetch_optional(&state.db)
     .await;
 

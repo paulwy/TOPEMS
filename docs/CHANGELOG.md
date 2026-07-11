@@ -2,6 +2,33 @@
 
 > 记录项目所有重要的变更、新功能、修复和改进
 
+## [3.4.0] - 2026-07-10
+
+### 🎉 重大变更
+- **API 定义共享** - Web 端 200+ 类型定义迁移至 `shared-types` 包，Web 端改为重新导出，消除类型重复
+- **响应式共享组件库** - 新增 7 个响应式组件和 5 个自定义 hooks，支持断点适配和媒体查询
+- **移动端功能增强** - 新增用户管理、任务管理、日程管理、设备管理、仪表盘 5 个 API 模块
+
+### ✨ 新功能
+- **响应式组件** - ResponsiveGrid、ResponsiveGridItem、ResponsiveStack、ResponsiveContainer、ResponsiveText、ResponsiveImage
+- **响应式 Hooks** - useResponsiveColumns、useResponsivePadding、useMediaQueryValue、useBreakpoint、useResponsiveSpacing
+- **移动端用户 API** - 用户信息获取、资料更新、密码修改、权限查询、部门成员管理
+- **移动端任务 API** - 任务列表、创建/更新/删除、状态变更、批量操作、搜索
+- **移动端日程 API** - 事件管理、今日/周/月视图、参会人管理、状态更新
+- **移动端设备 API** - 设备注册、推送测试、设备统计、激活/禁用
+- **移动端仪表盘 API** - 统计数据、KPI、图表、告警、公告
+
+### 🔧 性能优化
+- **请求缓存机制** - GET 请求自动缓存，支持 TTL 设置和手动清除
+- **请求取消** - 相同请求重复发送时自动取消之前的请求
+- **请求重试** - 429/500/502/503/504 错误自动重试（最多 3 次），指数退避延迟
+
+### 📚 文档
+- 更新 [TODO.md](./TODO.md) - Phase 4 多端支持统一已完成
+- 更新 [API_MOBILE.md](./api/API_MOBILE.md) - 添加新的 API 模块文档
+
+---
+
 ## [3.3.0] - 2026-07-06
 
 ### 🎉 重大变更

@@ -8,7 +8,7 @@ use uuid::Uuid;
 
 use crate::models::*;
 use crate::services::FinanceService;
-use crate::AppState;
+use crate::shared::AppState;
 use topems_shared::{ApiResponse, Claims};
 
 #[derive(Debug, Deserialize)]

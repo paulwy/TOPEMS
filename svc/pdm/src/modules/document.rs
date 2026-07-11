@@ -3,15 +3,29 @@ use axum::{
     extract::Query,
     extract::State,
     routing::{get, post},
-    Json, Router,
+    Extension, Json, Router,
 };
 use chrono::Utc;
 use serde::{Deserialize, Serialize};
 use sqlx::{FromRow, Row};
 use uuid::Uuid;
 
-use crate::AppState;
-use topems_shared::ApiResponse;
+use crate::shared::AppState;
+use topems_shared::{ApiResponse, Claims};
+
+fn get_tenant_id(claims: &Claims, headers: &axum::http::HeaderMap) -> Uuid {
+    claims
+        .tenant_id
+        .as_ref()
+        .and_then(|t| Uuid::parse_str(t).ok())
+        .or_else(|| {
+            headers
+                .get("x-tenant-id")
+                .and_then(|v| v.to_str().ok())
+                .and_then(|s| Uuid::parse_str(s).ok())
+        })
+        .unwrap_or_else(Uuid::new_v4)
+}
 
 pub fn create_routes() -> Router<AppState> {
     Router::new()
@@ -42,6 +56,7 @@ pub fn create_routes() -> Router<AppState> {
 #[derive(Debug, Serialize, Deserialize, FromRow)]
 pub struct Document {
     pub id: Uuid,
+    pub tenant_id: Uuid,
     pub document_no: String,
     pub name: String,
     pub description: Option<String>,
@@ -100,8 +115,11 @@ pub struct WorkflowStep {
 
 pub async fn list_documents(
     State(state): State<AppState>,
+    Extension(claims): Extension<Claims>,
     Query(query): Query<ListDocumentsQuery>,
+    headers: axum::http::HeaderMap,
 ) -> Json<ApiResponse<serde_json::Value>> {
+    let tenant_id = get_tenant_id(&claims, &headers);
     let page = query.page.unwrap_or(1).max(1);
     let page_size = query.page_size.unwrap_or(20).min(100);
     let offset = (page - 1) * page_size;
@@ -109,15 +127,17 @@ pub async fn list_documents(
 
     let result = sqlx::query_as::<_, Document>(
         r#"
-        SELECT id, document_no, name, description, document_type, file_path,
+        SELECT id, tenant_id, document_no, name, description, document_type, file_path,
                file_size, version, status, created_by, created_at, updated_at
         FROM pdm_documents
-        WHERE ($1::text IS NULL OR document_no ILIKE $1 OR name ILIKE $1 OR description ILIKE $1)
-          AND ($2::text IS NULL OR status = $2)
+        WHERE tenant_id = $1
+          AND ($2::text IS NULL OR document_no ILIKE $2 OR name ILIKE $2 OR description ILIKE $2)
+          AND ($3::text IS NULL OR status = $3)
         ORDER BY created_at DESC
-        LIMIT $3 OFFSET $4
+        LIMIT $4 OFFSET $5
         "#,
     )
+    .bind(tenant_id)
     .bind(&search_pattern)
     .bind(&query.status)
     .bind(page_size)
@@ -130,10 +150,12 @@ pub async fn list_documents(
             let count_result = sqlx::query_scalar::<_, i64>(
                 r#"
                 SELECT COUNT(*) FROM pdm_documents
-                WHERE ($1::text IS NULL OR document_no ILIKE $1 OR name ILIKE $1 OR description ILIKE $1)
-                  AND ($2::text IS NULL OR status = $2)
+                WHERE tenant_id = $1
+                  AND ($2::text IS NULL OR document_no ILIKE $2 OR name ILIKE $2 OR description ILIKE $2)
+                  AND ($3::text IS NULL OR status = $3)
                 "#,
             )
+            .bind(tenant_id)
             .bind(&search_pattern)
             .bind(&query.status)
             .fetch_one(&state.pool)
@@ -160,8 +182,12 @@ pub async fn list_documents(
 
 pub async fn create_document(
     State(state): State<AppState>,
+    Extension(claims): Extension<Claims>,
+    headers: axum::http::HeaderMap,
     Json(req): Json<CreateDocumentRequest>,
 ) -> Json<ApiResponse<Document>> {
+    let tenant_id = get_tenant_id(&claims, &headers);
+
     if req.document_no.is_empty() {
         return Json(ApiResponse::error(400, "文档编号不能为空"));
     }
@@ -177,14 +203,15 @@ pub async fn create_document(
     let result = sqlx::query_as::<_, Document>(
         r#"
         INSERT INTO pdm_documents (
-            id, document_no, name, description, document_type, file_path,
+            id, tenant_id, document_no, name, description, document_type, file_path,
             file_size, version, status, created_by, created_at, updated_at
-        ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12)
-        RETURNING id, document_no, name, description, document_type, file_path,
+        ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13)
+        RETURNING id, tenant_id, document_no, name, description, document_type, file_path,
                   file_size, version, status, created_by, created_at, updated_at
         "#,
     )
     .bind(id)
+    .bind(tenant_id)
     .bind(&req.document_no)
     .bind(&req.name)
     .bind(&req.description)
@@ -214,16 +241,21 @@ pub async fn create_document(
 
 pub async fn get_document(
     State(state): State<AppState>,
+    Extension(claims): Extension<Claims>,
     Path(id): Path<Uuid>,
+    headers: axum::http::HeaderMap,
 ) -> Json<ApiResponse<Document>> {
+    let tenant_id = get_tenant_id(&claims, &headers);
+
     let result = sqlx::query_as::<_, Document>(
         r#"
-        SELECT id, document_no, name, description, document_type, file_path,
+        SELECT id, tenant_id, document_no, name, description, document_type, file_path,
                file_size, version, status, created_by, created_at, updated_at
-        FROM pdm_documents WHERE id = $1
+        FROM pdm_documents WHERE id = $1 AND tenant_id = $2
         "#,
     )
     .bind(id)
+    .bind(tenant_id)
     .fetch_optional(&state.pool)
     .await;
 
@@ -239,17 +271,22 @@ pub async fn get_document(
 
 pub async fn update_document(
     State(state): State<AppState>,
+    Extension(claims): Extension<Claims>,
     Path(id): Path<Uuid>,
+    headers: axum::http::HeaderMap,
     Json(req): Json<UpdateDocumentRequest>,
 ) -> Json<ApiResponse<Document>> {
+    let tenant_id = get_tenant_id(&claims, &headers);
+
     let existing = sqlx::query_as::<_, Document>(
         r#"
-        SELECT id, document_no, name, description, document_type, file_path,
+        SELECT id, tenant_id, document_no, name, description, document_type, file_path,
                file_size, version, status, created_by, created_at, updated_at
-        FROM pdm_documents WHERE id = $1
+        FROM pdm_documents WHERE id = $1 AND tenant_id = $2
         "#,
     )
     .bind(id)
+    .bind(tenant_id)
     .fetch_optional(&state.pool)
     .await;
 
@@ -284,8 +321,8 @@ pub async fn update_document(
             version = $8,
             status = $9,
             updated_at = $10
-        WHERE id = $1
-        RETURNING id, document_no, name, description, document_type, file_path,
+        WHERE id = $1 AND tenant_id = $11
+        RETURNING id, tenant_id, document_no, name, description, document_type, file_path,
                   file_size, version, status, created_by, created_at, updated_at
         "#,
     )
@@ -299,6 +336,7 @@ pub async fn update_document(
     .bind(&version)
     .bind(&status)
     .bind(now)
+    .bind(tenant_id)
     .fetch_one(&state.pool)
     .await;
 
@@ -317,10 +355,15 @@ pub async fn update_document(
 
 pub async fn delete_document(
     State(state): State<AppState>,
+    Extension(claims): Extension<Claims>,
     Path(id): Path<Uuid>,
+    headers: axum::http::HeaderMap,
 ) -> Json<ApiResponse<bool>> {
-    let result = sqlx::query("DELETE FROM pdm_documents WHERE id = $1")
+    let tenant_id = get_tenant_id(&claims, &headers);
+
+    let result = sqlx::query("DELETE FROM pdm_documents WHERE id = $1 AND tenant_id = $2")
         .bind(id)
+        .bind(tenant_id)
         .execute(&state.pool)
         .await;
 
@@ -342,14 +385,20 @@ pub struct StartDocumentApprovalRequest {
 
 pub async fn start_document_approval(
     State(state): State<AppState>,
+    Extension(claims): Extension<Claims>,
     Path(id): Path<Uuid>,
+    headers: axum::http::HeaderMap,
     Json(req): Json<StartDocumentApprovalRequest>,
 ) -> Json<ApiResponse<serde_json::Value>> {
-    let document_result =
-        sqlx::query_as::<_, Document>("SELECT id, name, status FROM pdm_documents WHERE id = $1")
-            .bind(id)
-            .fetch_optional(&state.pool)
-            .await;
+    let tenant_id = get_tenant_id(&claims, &headers);
+
+    let document_result = sqlx::query_as::<_, Document>(
+        "SELECT id, tenant_id, name, status FROM pdm_documents WHERE id = $1 AND tenant_id = $2",
+    )
+    .bind(id)
+    .bind(tenant_id)
+    .fetch_optional(&state.pool)
+    .await;
 
     let document = match document_result {
         Ok(Some(d)) => d,
@@ -367,10 +416,11 @@ pub async fn start_document_approval(
     let workflow_result = sqlx::query(
         r#"
         SELECT id, name, steps FROM pdm_workflows 
-        WHERE id = $1 AND status = 'active'
+        WHERE id = $1 AND status = 'active' AND tenant_id = $2
         "#,
     )
     .bind(req.workflow_id)
+    .bind(tenant_id)
     .fetch_optional(&state.pool)
     .await;
 
@@ -402,14 +452,15 @@ pub async fn start_document_approval(
     let result = sqlx::query(
         r#"
         INSERT INTO pdm_workflow_instances (
-            id, workflow_id, workflow_name, target_type, target_id,
+            id, tenant_id, workflow_id, workflow_name, target_type, target_id,
             current_step, status, assignees, history, created_by,
             created_at, updated_at
-        ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12)
+        ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13)
         RETURNING id, workflow_id, workflow_name, current_step, status, created_at
         "#,
     )
     .bind(instance_id)
+    .bind(tenant_id)
     .bind(req.workflow_id)
     .bind(workflow_name)
     .bind("document")
@@ -434,10 +485,11 @@ pub async fn start_document_approval(
     match result {
         Ok(row) => {
             sqlx::query(
-                "UPDATE pdm_documents SET status = 'pending_approval', updated_at = $1 WHERE id = $2",
+                "UPDATE pdm_documents SET status = 'pending_approval', updated_at = $1 WHERE id = $2 AND tenant_id = $3",
             )
             .bind(now)
             .bind(id)
+            .bind(tenant_id)
             .execute(&state.pool)
             .await
             .ok();
@@ -465,18 +517,23 @@ pub async fn start_document_approval(
 
 pub async fn get_document_approval_history(
     State(state): State<AppState>,
+    Extension(claims): Extension<Claims>,
     Path(id): Path<Uuid>,
+    headers: axum::http::HeaderMap,
 ) -> Json<ApiResponse<serde_json::Value>> {
+    let tenant_id = get_tenant_id(&claims, &headers);
+
     let result = sqlx::query(
         r#"
         SELECT id, workflow_id, workflow_name, current_step, status, 
                assignees, history, created_by, created_at, updated_at
         FROM pdm_workflow_instances 
-        WHERE target_type = 'document' AND target_id = $1
+        WHERE target_type = 'document' AND target_id = $1 AND tenant_id = $2
         ORDER BY created_at DESC
         "#,
     )
     .bind(id)
+    .bind(tenant_id)
     .fetch_all(&state.pool)
     .await;
 
@@ -518,7 +575,11 @@ pub async fn get_document_approval_history(
 
 pub async fn list_pending_documents(
     State(state): State<AppState>,
+    Extension(claims): Extension<Claims>,
+    headers: axum::http::HeaderMap,
 ) -> Json<ApiResponse<serde_json::Value>> {
+    let tenant_id = get_tenant_id(&claims, &headers);
+
     let result = sqlx::query(
         r#"
         SELECT d.id, d.document_no, d.name, d.description, d.document_type,
@@ -526,11 +587,12 @@ pub async fn list_pending_documents(
                i.current_step, i.assignees
         FROM pdm_documents d
         LEFT JOIN pdm_workflow_instances i 
-            ON d.id = i.target_id AND i.target_type = 'document' AND i.status = 'running'
-        WHERE d.status = 'pending_approval'
+            ON d.id = i.target_id AND i.target_type = 'document' AND i.status = 'running' AND i.tenant_id = $1
+        WHERE d.status = 'pending_approval' AND d.tenant_id = $1
         ORDER BY d.updated_at DESC
         "#,
     )
+    .bind(tenant_id)
     .fetch_all(&state.pool)
     .await;
 

@@ -161,7 +161,7 @@ const FinanceDashboardPage: React.FC = () => {
         id: 'voucher-manage',
         label: '凭证管理',
         icon: <FileText size={20} />,
-        onClick: () => navigate('/finance/voucher'),
+        onClick: () => navigate('/finance/vouchers'),
         color: ct.primary.dark,
       },
       {
@@ -212,7 +212,7 @@ const FinanceDashboardPage: React.FC = () => {
         time: '2026-06-29 09:30',
         icon: <FileText size={18} />,
         status: 'success',
-        onClick: () => navigate('/finance/voucher/v1'),
+        onClick: () => navigate('/finance/vouchers'),
       },
       {
         id: 'v2',
@@ -221,7 +221,7 @@ const FinanceDashboardPage: React.FC = () => {
         time: '2026-06-29 08:15',
         icon: <Receipt size={18} />,
         status: 'success',
-        onClick: () => navigate('/finance/voucher/v2'),
+        onClick: () => navigate('/finance/vouchers'),
       },
       {
         id: 'inv1',
@@ -230,7 +230,7 @@ const FinanceDashboardPage: React.FC = () => {
         time: '2026-06-28 16:45',
         icon: <Receipt size={18} />,
         status: 'info',
-        onClick: () => navigate('/finance/invoices/inv1'),
+        onClick: () => navigate('/finance/invoices'),
       },
       {
         id: 'pay1',
@@ -239,7 +239,7 @@ const FinanceDashboardPage: React.FC = () => {
         time: '2026-06-28 14:20',
         icon: <Wallet size={18} />,
         status: 'warning',
-        onClick: () => navigate('/finance/payments/pay1'),
+        onClick: () => navigate('/finance/payments'),
       },
       {
         id: 'v3',
@@ -248,7 +248,7 @@ const FinanceDashboardPage: React.FC = () => {
         time: '2026-06-28 10:00',
         icon: <CreditCard size={18} />,
         status: 'default',
-        onClick: () => navigate('/finance/voucher/v3'),
+        onClick: () => navigate('/finance/vouchers'),
       },
     ],
     [navigate]

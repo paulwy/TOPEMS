@@ -8,11 +8,16 @@ use topems_shared::{api_error, ApiResponse, FieldEncryptionService};
 pub struct EmployeeService {
     db: PgPool,
     encryption: FieldEncryptionService,
+    tenant_id: Uuid,
 }
 
 impl EmployeeService {
-    pub fn new(db: PgPool, encryption: FieldEncryptionService) -> Self {
-        Self { db, encryption }
+    pub fn new(db: PgPool, encryption: FieldEncryptionService, tenant_id: Uuid) -> Self {
+        Self {
+            db,
+            encryption,
+            tenant_id,
+        }
     }
 
     pub async fn list_employees(
@@ -29,23 +34,25 @@ impl EmployeeService {
 
         let employees = sqlx::query_as::<_, Employee>(
             r#"
-            SELECT id, company_id, department_id, position_id,
+            SELECT id, tenant_id, company_id, department_id, position_id,
                    employee_number, name, gender, hire_date, email, phone, 
                    id_card_number, address, status,
                    created_at, updated_at
             FROM hrm.employees
-            WHERE ($1::text IS NULL OR name ILIKE $1 OR employee_number ILIKE $1)
+            WHERE tenant_id = $5
+              AND ($1::text IS NULL OR name ILIKE $1 OR employee_number ILIKE $1)
               AND ($2::text IS NULL OR status = $2)
               AND ($3::uuid IS NULL OR department_id = $3)
               AND ($4::uuid IS NULL OR company_id = $4)
             ORDER BY created_at DESC
-            LIMIT $5 OFFSET $6
+            LIMIT $6 OFFSET $7
             "#,
         )
         .bind(&search_pattern)
         .bind(&status)
         .bind(department_id)
         .bind(company_id)
+        .bind(self.tenant_id)
         .bind(page_size)
         .bind(offset)
         .fetch_all(&self.db)
@@ -56,7 +63,8 @@ impl EmployeeService {
                 let total = sqlx::query_scalar::<_, i64>(
                     r#"
                     SELECT COUNT(*) FROM hrm.employees AS e
-                    WHERE ($1::text IS NULL OR e.name ILIKE $1 OR e.employee_number ILIKE $1)
+                    WHERE e.tenant_id = $5
+                      AND ($1::text IS NULL OR e.name ILIKE $1 OR e.employee_number ILIKE $1)
                       AND ($2::text IS NULL OR e.status = $2)
                       AND ($3::uuid IS NULL OR e.department_id = $3)
                       AND ($4::uuid IS NULL OR e.company_id = $4)
@@ -66,6 +74,7 @@ impl EmployeeService {
                 .bind(&status)
                 .bind(department_id)
                 .bind(company_id)
+                .bind(self.tenant_id)
                 .fetch_one(&self.db)
                 .await
                 .unwrap_or(0);
@@ -94,14 +103,15 @@ impl EmployeeService {
     pub async fn get_employee(&self, id: &Uuid) -> ApiResponse<Employee> {
         let result = sqlx::query_as::<_, Employee>(
             r#"
-            SELECT id, company_id, department_id, position_id,
+            SELECT id, tenant_id, company_id, department_id, position_id,
                    employee_number, name, gender, hire_date, email, phone,
                    id_card_number, address, status,
                    created_at, updated_at
-            FROM hrm.employees WHERE id = $1
+            FROM hrm.employees WHERE id = $1 AND tenant_id = $2
             "#,
         )
         .bind(id)
+        .bind(self.tenant_id)
         .fetch_optional(&self.db)
         .await;
 
@@ -128,9 +138,10 @@ impl EmployeeService {
         }
 
         let exists = sqlx::query_scalar::<_, bool>(
-            "SELECT EXISTS(SELECT 1 FROM hrm.employees WHERE employee_number = $1)",
+            "SELECT EXISTS(SELECT 1 FROM hrm.employees WHERE employee_number = $1 AND tenant_id = $2)",
         )
         .bind(&req.employee_number)
+        .bind(self.tenant_id)
         .fetch_one(&self.db)
         .await
         .unwrap_or(false);
@@ -189,18 +200,20 @@ impl EmployeeService {
         let result = sqlx::query_as::<_, Employee>(
             r#"
             INSERT INTO hrm.employees (
-                id, company_id, department_id, position_id,
+                id, tenant_id, organization_id, company_id, department_id, position_id,
                 employee_number, name, gender, hire_date, email, phone,
                 id_card_number, address,
                 status, created_at, updated_at
-            ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, 'active', $13, $14)
-            RETURNING id, company_id, department_id, position_id,
+            ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, 'active', $15, $16)
+            RETURNING id, tenant_id, organization_id, company_id, department_id, position_id,
                       employee_number, name, gender, hire_date, email, phone,
                       id_card_number, address, status,
                       created_at, updated_at
             "#,
         )
         .bind(id)
+        .bind(self.tenant_id)
+        .bind(self.tenant_id)
         .bind(req.company_id)
         .bind(req.department_id)
         .bind(req.position_id)
@@ -236,13 +249,14 @@ impl EmployeeService {
     ) -> ApiResponse<Employee> {
         let existing = sqlx::query_as::<_, Employee>(
             r#"
-            SELECT id, company_id, department_id, position_id,
+            SELECT id, tenant_id, company_id, department_id, position_id,
                    employee_number, name, gender, hire_date, email, phone,
                    id_card_number, address, status,
-                   created_at, updated_at FROM hrm.employees WHERE id = $1
+                   created_at, updated_at FROM hrm.employees WHERE id = $1 AND tenant_id = $2
             "#,
         )
         .bind(id)
+        .bind(self.tenant_id)
         .fetch_optional(&self.db)
         .await;
 
@@ -311,18 +325,19 @@ impl EmployeeService {
         let result = sqlx::query_as::<_, Employee>(
             r#"
             UPDATE hrm.employees SET
-                company_id = $2, department_id = $3, position_id = $4,
-                name = $5, gender = $6, hire_date = $7, email = $8, phone = $9,
-                id_card_number = $10, address = $11,
-                status = $12, updated_at = $13
-            WHERE id = $1
-            RETURNING id, company_id, department_id, position_id,
+                company_id = $3, department_id = $4, position_id = $5,
+                name = $6, gender = $7, hire_date = $8, email = $9, phone = $10,
+                id_card_number = $11, address = $12,
+                status = $13, updated_at = $14
+            WHERE id = $1 AND tenant_id = $2
+            RETURNING id, tenant_id, company_id, department_id, position_id,
                       employee_number, name, gender, hire_date, email, phone,
                       id_card_number, address, status,
                       created_at, updated_at
             "#,
         )
         .bind(id)
+        .bind(self.tenant_id)
         .bind(company_id)
         .bind(department_id)
         .bind(position_id)
@@ -351,8 +366,9 @@ impl EmployeeService {
     }
 
     pub async fn delete_employee(&self, id: &Uuid) -> ApiResponse<String> {
-        let result = sqlx::query("DELETE FROM hrm.employees WHERE id = $1")
+        let result = sqlx::query("DELETE FROM hrm.employees WHERE id = $1 AND tenant_id = $2")
             .bind(id)
+            .bind(self.tenant_id)
             .execute(&self.db)
             .await;
 

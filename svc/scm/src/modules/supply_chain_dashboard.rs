@@ -32,7 +32,7 @@ pub struct DashboardQueryParams {
     pub warehouse_id: Option<Uuid>,
 }
 
-async fn overview(
+pub async fn overview(
     State(state): State<ApiState>,
     Extension(claims): Extension<Claims>,
     Query(params): Query<DashboardQueryParams>,
@@ -192,7 +192,7 @@ async fn overview(
     ))
 }
 
-async fn purchase_inbound_outbound_stats(
+pub async fn purchase_inbound_outbound_stats(
     State(state): State<ApiState>,
     Extension(claims): Extension<Claims>,
     Query(params): Query<DashboardQueryParams>,
@@ -327,7 +327,7 @@ pub struct SupplierPerformanceItem {
     pub level: Option<String>,
 }
 
-async fn supplier_performance(
+pub async fn supplier_performance(
     State(state): State<ApiState>,
     Extension(claims): Extension<Claims>,
     Query(params): Query<DashboardQueryParams>,

@@ -1,5 +1,6 @@
 [workspace]
 members = [
+    # [桌面应用] 排除在工作区外，独立构建
     "lib",
     # [核心平台] 统一核心平台
     "svc/unified-core",      # IAM + Doc + Flow + File + Communication
@@ -32,6 +33,9 @@ members = [
     "svc/doc",
     # [数据分析]
     "svc/analytics",
+]
+exclude = [
+    "apps/desktop/src-tauri",
 ]
 resolver = "2"
 
@@ -87,7 +91,7 @@ regex = "1"
 tokio-test = "0.4"
 
 async-trait = "0.1"
-axum-test = "18"
+axum-test = "21"
 bytes = "1"
 futures-util = "0.3"
 http = "1"
@@ -98,6 +102,9 @@ mime_guess = "2"
 pdf-extract = "0.7"
 rust_decimal = { version = "1", features = ["serde"] }
 rand = "0.8"
+
+# Force tonic version to avoid axum 0.6 conflict
+tonic = "0.14"
 socket2 = { version = "0.5", features = ["all"] }
 tempfile = "3.8"
 time = { version = "0.3", features = ["serde", "formatting", "parsing", "macros"] }

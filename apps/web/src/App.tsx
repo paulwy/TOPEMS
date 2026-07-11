@@ -1,4 +1,4 @@
-import { Suspense, lazy, useState } from 'react';
+import React, { Suspense, lazy, useState, useEffect } from 'react';
 import { BrowserRouter, Routes, Route, Navigate, useLocation } from 'react-router-dom';
 import { Box, Typography } from '@mui/material';
 import { AuthProvider, useAuth } from './hooks/useAuth';
@@ -49,69 +49,34 @@ const PageLoader: React.FC = () => (
   </Box>
 );
 
-const modulesWithOwnLayout: string[] = [];
-
 const ProtectedRouteWrapper: React.FC<{
   route: RouteConfig;
   children: React.ReactNode;
 }> = ({ route, children }) => {
-  const hasOwnLayout = route.module && modulesWithOwnLayout.includes(route.module);
+  const permissions = route.requiredPermissions || [];
+  const hasModuleGate = route.module && route.action;
 
-  if (hasOwnLayout) {
-    return (
-      <ProtectedRoute requiredPermissions={route.requiredPermissions || []}>
-        {route.module && route.action ? (
-          <ModuleGate
-            module={route.module}
-            action={route.action}
-          >
-            {children}
-          </ModuleGate>
-        ) : (
-          children
-        )}
-      </ProtectedRoute>
+  const renderContent = (withLayout: boolean) => {
+    const content = hasModuleGate ? (
+      <ModuleGate
+        module={route.module!}
+        action={route.action!}
+      >
+        {withLayout ? <GlobalLayout>{children}</GlobalLayout> : children}
+      </ModuleGate>
+    ) : withLayout ? (
+      <GlobalLayout>{children}</GlobalLayout>
+    ) : (
+      children
     );
-  }
+    return <ProtectedRoute requiredPermissions={permissions}>{content}</ProtectedRoute>;
+  };
 
   if (route.module === 'mobile') {
-    return (
-      <ProtectedRoute requiredPermissions={route.requiredPermissions || []}>
-        {route.module && route.action ? (
-          <ModuleGate
-            module={route.module}
-            action={route.action}
-          >
-            {children}
-          </ModuleGate>
-        ) : (
-          children
-        )}
-      </ProtectedRoute>
-    );
+    return renderContent(false);
   }
 
-  if (route.requiredPermissions && route.requiredPermissions.length > 0) {
-    return (
-      <ProtectedRoute requiredPermissions={route.requiredPermissions}>
-        {route.module && route.action ? (
-          <ModuleGate
-            module={route.module}
-            action={route.action}
-          >
-            <GlobalLayout>{children}</GlobalLayout>
-          </ModuleGate>
-        ) : (
-          <GlobalLayout>{children}</GlobalLayout>
-        )}
-      </ProtectedRoute>
-    );
-  }
-  return (
-    <ProtectedRoute>
-      <GlobalLayout>{children}</GlobalLayout>
-    </ProtectedRoute>
-  );
+  return renderContent(true);
 };
 
 const DynamicRoutes: React.FC = () => {
@@ -163,32 +128,29 @@ const DynamicRoutes: React.FC = () => {
     loadRoutes();
   }, [location.pathname]);
 
-  const renderElement = (route: RouteConfig) => {
-    const { element } = route;
-    if (React.isValidElement(element)) {
-      return element;
-    }
-    const Element = element as React.ComponentType;
-    return <Element />;
-  };
-
   if (loading) {
     return <PageLoader />;
   }
 
   return (
     <Routes>
-      {routes.map((route) => (
-        <Route
-          key={route.path}
-          path={route.path}
-          element={
-            <ProtectedRouteWrapper route={route}>
-              <Suspense fallback={<PageLoader />}>{renderElement(route)}</Suspense>
-            </ProtectedRouteWrapper>
-          }
-        />
-      ))}
+      {routes.map((route) => {
+        const { element } = route;
+        const routeElement = React.isValidElement(element)
+          ? element
+          : React.createElement(element as React.ComponentType);
+        return (
+          <Route
+            key={route.path}
+            path={route.path}
+            element={
+              <ProtectedRouteWrapper route={route}>
+                <Suspense fallback={<PageLoader />}>{routeElement}</Suspense>
+              </ProtectedRouteWrapper>
+            }
+          />
+        );
+      })}
     </Routes>
   );
 };
@@ -214,24 +176,19 @@ const AppContent: React.FC = () => {
     };
   }, []);
 
-  const renderElement = (route: RouteConfig) => {
-    const { element } = route;
-    if (React.isValidElement(element)) {
-      return element;
-    }
-    const Element = element as React.ComponentType;
-    return <Element />;
-  };
-
   const renderRoutes = (routes: RouteConfig[]) => {
     return routes.map((route) => {
+      const { element } = route;
+      const routeElement = React.isValidElement(element)
+        ? element
+        : React.createElement(element as React.ComponentType);
       return (
         <Route
           key={route.path}
           path={route.path}
           element={
             <ProtectedRouteWrapper route={route}>
-              <Suspense fallback={<PageLoader />}>{renderElement(route)}</Suspense>
+              <Suspense fallback={<PageLoader />}>{routeElement}</Suspense>
             </ProtectedRouteWrapper>
           }
         />

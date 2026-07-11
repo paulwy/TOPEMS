@@ -31,6 +31,7 @@ import { StatCardComponent } from '@/components/templates/dashboard/StatCardComp
 import { PageContainer } from '@/components/common';
 import { ConfirmDialog } from '@topems/shared-components';
 import { extractErrorMessage } from '@/utils/errors';
+import { WORKFLOW_PATHS } from '@/modules/workflow/config';
 
 type ExceptionType = 'timeout' | 'error' | 'stuck';
 type ExceptionStatus = 'pending' | 'processing' | 'resolved';
@@ -519,7 +520,7 @@ export const WorkflowMonitorPage: React.FC = () => {
       headerProps={{
         pageIcon: <Activity size={20} />,
         backButton: {
-          href: '/workflow/dashboard',
+          href: WORKFLOW_PATHS.dashboard,
         },
       }}
     >

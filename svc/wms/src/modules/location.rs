@@ -71,7 +71,7 @@ where
         )
 }
 
-async fn list_locations(
+pub async fn list_locations(
     State(state): State<ApiState>,
     Extension(claims): Extension<Claims>,
     Query(params): Query<LocationPaginationParams>,
@@ -142,7 +142,7 @@ async fn list_locations(
     }
 }
 
-async fn create_location(
+pub async fn create_location(
     State(state): State<ApiState>,
     Extension(claims): Extension<Claims>,
     headers: HeaderMap,
@@ -215,7 +215,7 @@ async fn create_location(
     response
 }
 
-async fn get_location(
+pub async fn get_location(
     State(state): State<ApiState>,
     Extension(claims): Extension<Claims>,
     Path(id): Path<String>,
@@ -250,7 +250,7 @@ async fn get_location(
     }
 }
 
-async fn update_location(
+pub async fn update_location(
     State(state): State<ApiState>,
     Extension(claims): Extension<Claims>,
     Path(id): Path<String>,
@@ -353,7 +353,7 @@ async fn update_location(
     response
 }
 
-async fn delete_location(
+pub async fn delete_location(
     State(state): State<ApiState>,
     Extension(claims): Extension<Claims>,
     Path(id): Path<String>,
@@ -425,7 +425,7 @@ pub struct LocationStatusParams {
     pub warehouse_id: Option<String>,
 }
 
-async fn get_location_status(
+pub async fn get_location_status(
     State(state): State<ApiState>,
     Extension(claims): Extension<Claims>,
     Query(params): Query<LocationStatusParams>,
@@ -472,7 +472,7 @@ async fn get_location_status(
     }
 }
 
-async fn batch_create_locations(
+pub async fn batch_create_locations(
     State(state): State<ApiState>,
     Extension(claims): Extension<Claims>,
     Json(req): Json<Vec<CreateLocationRequest>>,
@@ -519,7 +519,7 @@ async fn batch_create_locations(
     ))
 }
 
-async fn batch_update_locations(
+pub async fn batch_update_locations(
     State(state): State<ApiState>,
     Extension(claims): Extension<Claims>,
     Json(req): Json<BatchUpdateRequest>,
@@ -577,7 +577,7 @@ async fn batch_update_locations(
     }
 }
 
-async fn batch_delete_locations(
+pub async fn batch_delete_locations(
     State(state): State<ApiState>,
     Extension(claims): Extension<Claims>,
     Json(req): Json<serde_json::Value>,

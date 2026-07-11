@@ -28,7 +28,7 @@ pub fn create_routes() -> Router<ApiState> {
         .route("/api/scm/purchase-orders/{id}/reject", post(reject_order))
 }
 
-async fn list_orders(
+pub async fn list_orders(
     State(state): State<ApiState>,
     Extension(claims): Extension<Claims>,
     Query(params): Query<PaginationParams>,
@@ -94,7 +94,7 @@ async fn list_orders(
     }
 }
 
-async fn create_order(
+pub async fn create_order(
     State(state): State<ApiState>,
     Extension(claims): Extension<Claims>,
     headers: HeaderMap,
@@ -168,7 +168,7 @@ async fn create_order(
     response
 }
 
-async fn get_order(
+pub async fn get_order(
     State(state): State<ApiState>,
     Extension(claims): Extension<Claims>,
     Path(id): Path<Uuid>,
@@ -197,7 +197,7 @@ async fn get_order(
     }
 }
 
-async fn update_order(
+pub async fn update_order(
     State(state): State<ApiState>,
     Extension(claims): Extension<Claims>,
     Path(id): Path<Uuid>,
@@ -289,7 +289,7 @@ async fn update_order(
     response
 }
 
-async fn delete_order(
+pub async fn delete_order(
     State(state): State<ApiState>,
     Extension(claims): Extension<Claims>,
     Path(id): Path<Uuid>,
@@ -357,7 +357,7 @@ pub struct ApprovalRequest {
     pub remarks: Option<String>,
 }
 
-async fn approve_order(
+pub async fn approve_order(
     State(state): State<ApiState>,
     Extension(claims): Extension<Claims>,
     Path(id): Path<Uuid>,
@@ -468,7 +468,7 @@ async fn approve_order(
     response
 }
 
-async fn reject_order(
+pub async fn reject_order(
     State(state): State<ApiState>,
     Extension(claims): Extension<Claims>,
     Path(id): Path<Uuid>,

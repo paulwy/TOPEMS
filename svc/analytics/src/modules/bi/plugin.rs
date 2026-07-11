@@ -1,7 +1,7 @@
 use axum::{extract::State, routing::get, Json, Router};
 use serde::{Deserialize, Serialize};
 
-use crate::AppState;
+use crate::shared::AppState;
 use topems_shared::ApiResponse;
 
 /// 插件信息

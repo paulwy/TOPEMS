@@ -126,3 +126,111 @@ pub struct DetailedHealth {
     pub response_time_ms: Option<u64>,
     pub last_check: Option<String>,
 }
+
+#[derive(Serialize, Deserialize)]
+pub struct DashboardStats {
+    pub total_users: u64,
+    pub active_users: u64,
+    pub total_services: u64,
+    pub healthy_services: u64,
+    pub pending_tasks: u64,
+    pub pending_approvals: u64,
+    pub new_notifications: u64,
+    pub system_uptime: u64,
+}
+
+#[derive(Serialize, Deserialize)]
+pub struct QuickAccess {
+    pub id: String,
+    pub name: String,
+    pub icon: String,
+    pub url: String,
+    pub service: String,
+    pub category: String,
+}
+
+#[derive(Serialize, Deserialize)]
+pub struct Announcement {
+    pub id: String,
+    pub title: String,
+    pub content: String,
+    pub announcement_type: String,
+    pub priority: String,
+    pub is_pinned: bool,
+    pub is_active: bool,
+    #[serde(with = "chrono::serde::ts_seconds")]
+    pub created_at: chrono::DateTime<chrono::Utc>,
+    #[serde(with = "chrono::serde::ts_seconds")]
+    pub expires_at: chrono::DateTime<chrono::Utc>,
+    pub author: String,
+}
+
+#[derive(Serialize, Deserialize)]
+pub struct NewAnnouncement {
+    pub title: String,
+    pub content: String,
+    pub announcement_type: String,
+    pub priority: String,
+    pub expires_at: String,
+}
+
+#[derive(Serialize, Deserialize)]
+pub struct UserSettings {
+    pub id: String,
+    pub user_id: String,
+    pub theme: String,
+    pub language: String,
+    pub timezone: String,
+    pub notification_enabled: bool,
+    pub notification_sound: bool,
+    pub auto_refresh: bool,
+    pub refresh_interval: u32,
+    pub default_dashboard: String,
+}
+
+#[derive(Serialize, Deserialize)]
+pub struct UpdateUserSettings {
+    pub theme: Option<String>,
+    pub language: Option<String>,
+    pub timezone: Option<String>,
+    pub notification_enabled: Option<bool>,
+    pub notification_sound: Option<bool>,
+    pub auto_refresh: Option<bool>,
+    pub refresh_interval: Option<u32>,
+}
+
+#[derive(Serialize, Deserialize)]
+pub struct QuickAction {
+    pub id: String,
+    pub name: String,
+    pub description: String,
+    pub icon: String,
+    pub action_type: String,
+    pub target_url: String,
+    pub service: String,
+    pub is_favorite: bool,
+    pub usage_count: u64,
+}
+
+#[derive(Serialize, Deserialize)]
+pub struct NavigationMenu {
+    pub id: String,
+    pub name: String,
+    pub icon: String,
+    pub url: String,
+    pub service: String,
+    pub parent_id: Option<String>,
+    pub order: u32,
+    pub is_visible: bool,
+    pub badge_count: Option<u32>,
+}
+
+#[derive(Serialize, Deserialize)]
+pub struct PinnedApp {
+    pub id: String,
+    pub app_id: String,
+    pub app_name: String,
+    pub icon: String,
+    pub url: String,
+    pub order: u32,
+}

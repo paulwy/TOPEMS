@@ -8,14 +8,13 @@ use opentelemetry::global;
 use opentelemetry::propagation::Extractor;
 use std::time::Instant;
 use tracing::info_span;
-use tracing_opentelemetry::OpenTelemetrySpanExt;
 
 pub async fn telemetry_middleware(request: Request, next: Next) -> Response {
     let start = Instant::now();
     let method = request.method().clone();
     let path = request.uri().path().to_string();
 
-    let parent_context = global::get_text_map_propagator(|propagator| {
+    let _parent_context = global::get_text_map_propagator(|propagator| {
         propagator.extract(&HeaderMapExtractor(request.headers()))
     });
 
@@ -29,8 +28,6 @@ pub async fn telemetry_middleware(request: Request, next: Next) -> Response {
         http.host = %request.uri().host().unwrap_or("unknown"),
         net.host.name = %request.uri().host().unwrap_or("unknown"),
     );
-
-    span.set_parent(parent_context);
 
     let _enter = span.enter();
 

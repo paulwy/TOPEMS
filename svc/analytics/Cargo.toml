@@ -31,3 +31,6 @@ tokio-stream = { workspace = true }
 futures = { workspace = true }
 once_cell = { workspace = true }
 job_scheduler_ng.workspace = true
+
+[dev-dependencies]
+tokio-test.workspace = true

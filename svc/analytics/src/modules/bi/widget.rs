@@ -6,7 +6,7 @@ use sqlx::types::Uuid;
 use tracing::{info, warn};
 
 use crate::modules::bi::chart_service::{ChartQuery, ChartService, ChartType};
-use crate::AppState;
+use crate::shared::AppState;
 
 #[derive(Debug, Deserialize)]
 pub struct CreateWidgetRequest {
@@ -697,6 +697,9 @@ pub async fn invalidate_all_widget_cache() -> Json<serde_json::Value> {
     }))
 }
 
+/// 生成 widget 演示数据（仅用于图表生成失败时的降级回退）
+///
+/// TODO: 此演示数据应迁移至测试 fixtures，生产环境应返回空数据或错误。
 fn generate_mock_data_for_type(widget_type: &str) -> serde_json::Value {
     match widget_type {
         "chart-bar" | "chart-line" | "chart-area" => serde_json::json!([

@@ -1,14 +1,26 @@
 //! Occupational health records - Physical exams, health plans, contraindications, and follow-up
 
-use axum::{
-    extract::State,
-    routing::{get, put},
-    Json, Router,
-};
+use axum::{extract::State, http::HeaderMap, routing::*, Extension, Json, Router};
 use serde::{Deserialize, Serialize};
-use topems_shared::ApiResponse;
+use topems_shared::{ApiResponse, Claims};
 
-use crate::AppState;
+use uuid::Uuid;
+
+use crate::shared::AppState;
+
+fn get_tenant_id(claims: &Claims, headers: &HeaderMap) -> Uuid {
+    claims
+        .tenant_id
+        .as_ref()
+        .and_then(|t| Uuid::parse_str(t).ok())
+        .or_else(|| {
+            headers
+                .get("x-tenant-id")
+                .and_then(|v| v.to_str().ok())
+                .and_then(|s| Uuid::parse_str(s).ok())
+        })
+        .unwrap_or_else(Uuid::new_v4)
+}
 
 pub fn create_routes() -> Router<AppState> {
     Router::new()
@@ -100,6 +112,8 @@ pub struct HealthExamPlan {
     pub organizer: Option<String>,
     pub created_at: Option<String>,
     pub updated_at: Option<String>,
+
+    pub tenant_id: Uuid,
 }
 
 #[derive(Debug, Serialize)]
@@ -133,6 +147,8 @@ pub struct HealthExamRecord {
     pub attachments: Option<Vec<String>>,
     pub created_at: Option<String>,
     pub updated_at: Option<String>,
+
+    pub tenant_id: Uuid,
 }
 
 #[derive(Debug, Serialize)]
@@ -153,6 +169,8 @@ pub struct Contraindication {
     pub remarks: Option<String>,
     pub created_at: Option<String>,
     pub updated_at: Option<String>,
+
+    pub tenant_id: Uuid,
 }
 
 #[derive(Debug, Serialize)]
@@ -172,6 +190,8 @@ pub struct HealthAbnormality {
     pub responsible_person: Option<String>,
     pub created_at: Option<String>,
     pub updated_at: Option<String>,
+
+    pub tenant_id: Uuid,
 }
 
 #[derive(Debug, Serialize)]
@@ -186,6 +206,8 @@ pub struct HealthArchive {
     pub exam_records: Vec<HealthExamRecord>,
     pub contraindications: Vec<Contraindication>,
     pub abnormalities: Vec<HealthAbnormality>,
+
+    pub tenant_id: Uuid,
 }
 
 #[derive(Debug, Serialize)]
@@ -198,6 +220,8 @@ pub struct HealthStatistics {
     pub contraindication_count: i32,
     pub by_department: Vec<serde_json::Value>,
     pub by_abnormality_type: Vec<serde_json::Value>,
+
+    pub tenant_id: Uuid,
 }
 
 #[derive(Debug, Deserialize)]
@@ -312,8 +336,11 @@ pub struct UpdateAbnormalityRequest {
 }
 
 pub async fn list_exam_plans(
-    State(_state): State<crate::AppState>,
+    State(_state): State<crate::shared::AppState>,
+    Extension(claims): Extension<Claims>,
+    headers: HeaderMap,
 ) -> Json<ApiResponse<Vec<HealthExamPlan>>> {
+    let tenant_id = get_tenant_id(&claims, &headers);
     tracing::info!("Listing health exam plans");
     Json(ApiResponse::success(
         Vec::<HealthExamPlan>::new(),
@@ -322,9 +349,12 @@ pub async fn list_exam_plans(
 }
 
 pub async fn create_exam_plan(
-    State(_state): State<crate::AppState>,
+    State(_state): State<crate::shared::AppState>,
+    Extension(claims): Extension<Claims>,
+    headers: HeaderMap,
     Json(req): Json<CreateExamPlanRequest>,
 ) -> Json<ApiResponse<HealthExamPlan>> {
+    let tenant_id = get_tenant_id(&claims, &headers);
     tracing::info!("Creating health exam plan: {:?}", req);
     Json(ApiResponse::success(
         HealthExamPlan {
@@ -345,15 +375,20 @@ pub async fn create_exam_plan(
             organizer: req.organizer,
             created_at: Some(chrono::Utc::now().to_rfc3339()),
             updated_at: Some(chrono::Utc::now().to_rfc3339()),
+
+            tenant_id,
         },
         "体检计划创建成功",
     ))
 }
 
 pub async fn get_exam_plan(
-    State(_state): State<crate::AppState>,
+    State(_state): State<crate::shared::AppState>,
+    Extension(claims): Extension<Claims>,
+    headers: HeaderMap,
     axum::extract::Path(id): axum::extract::Path<String>,
 ) -> Json<ApiResponse<HealthExamPlan>> {
+    let tenant_id = get_tenant_id(&claims, &headers);
     tracing::info!("Getting health exam plan: {}", id);
     Json(ApiResponse::success(
         HealthExamPlan {
@@ -371,16 +406,21 @@ pub async fn get_exam_plan(
             organizer: Some("人力资源部".to_string()),
             created_at: Some(chrono::Utc::now().to_rfc3339()),
             updated_at: Some(chrono::Utc::now().to_rfc3339()),
+
+            tenant_id,
         },
         "获取体检计划详情成功",
     ))
 }
 
 pub async fn update_exam_plan(
-    State(_state): State<crate::AppState>,
+    State(_state): State<crate::shared::AppState>,
+    Extension(claims): Extension<Claims>,
+    headers: HeaderMap,
     axum::extract::Path(id): axum::extract::Path<String>,
     Json(req): Json<UpdateExamPlanRequest>,
 ) -> Json<ApiResponse<HealthExamPlan>> {
+    let tenant_id = get_tenant_id(&claims, &headers);
     tracing::info!("Updating health exam plan {}: {:?}", id, req);
     Json(ApiResponse::success(
         HealthExamPlan {
@@ -400,22 +440,30 @@ pub async fn update_exam_plan(
             organizer: Some("人力资源部".to_string()),
             created_at: Some(chrono::Utc::now().to_rfc3339()),
             updated_at: Some(chrono::Utc::now().to_rfc3339()),
+
+            tenant_id,
         },
         "体检计划更新成功",
     ))
 }
 
 pub async fn delete_exam_plan(
-    State(_state): State<crate::AppState>,
+    State(_state): State<crate::shared::AppState>,
+    Extension(claims): Extension<Claims>,
+    headers: HeaderMap,
     axum::extract::Path(id): axum::extract::Path<String>,
 ) -> Json<ApiResponse<()>> {
+    let tenant_id = get_tenant_id(&claims, &headers);
     tracing::info!("Deleting health exam plan: {}", id);
     Json(ApiResponse::success((), "体检计划删除成功"))
 }
 
 pub async fn list_exam_records(
-    State(_state): State<crate::AppState>,
+    State(_state): State<crate::shared::AppState>,
+    Extension(claims): Extension<Claims>,
+    headers: HeaderMap,
 ) -> Json<ApiResponse<Vec<HealthExamRecord>>> {
+    let tenant_id = get_tenant_id(&claims, &headers);
     tracing::info!("Listing health exam records");
     Json(ApiResponse::success(
         Vec::<HealthExamRecord>::new(),
@@ -424,9 +472,12 @@ pub async fn list_exam_records(
 }
 
 pub async fn create_exam_record(
-    State(_state): State<crate::AppState>,
+    State(_state): State<crate::shared::AppState>,
+    Extension(claims): Extension<Claims>,
+    headers: HeaderMap,
     Json(req): Json<CreateExamRecordRequest>,
 ) -> Json<ApiResponse<HealthExamRecord>> {
+    let tenant_id = get_tenant_id(&claims, &headers);
     tracing::info!("Creating health exam record: {:?}", req);
     Json(ApiResponse::success(
         HealthExamRecord {
@@ -462,15 +513,20 @@ pub async fn create_exam_record(
             attachments: None,
             created_at: Some(chrono::Utc::now().to_rfc3339()),
             updated_at: Some(chrono::Utc::now().to_rfc3339()),
+
+            tenant_id,
         },
         "体检记录创建成功",
     ))
 }
 
 pub async fn get_exam_record(
-    State(_state): State<crate::AppState>,
+    State(_state): State<crate::shared::AppState>,
+    Extension(claims): Extension<Claims>,
+    headers: HeaderMap,
     axum::extract::Path(id): axum::extract::Path<String>,
 ) -> Json<ApiResponse<HealthExamRecord>> {
+    let tenant_id = get_tenant_id(&claims, &headers);
     tracing::info!("Getting health exam record: {}", id);
     Json(ApiResponse::success(
         HealthExamRecord {
@@ -503,16 +559,21 @@ pub async fn get_exam_record(
             attachments: None,
             created_at: Some(chrono::Utc::now().to_rfc3339()),
             updated_at: Some(chrono::Utc::now().to_rfc3339()),
+
+            tenant_id,
         },
         "获取体检记录详情成功",
     ))
 }
 
 pub async fn update_exam_record(
-    State(_state): State<crate::AppState>,
+    State(_state): State<crate::shared::AppState>,
+    Extension(claims): Extension<Claims>,
+    headers: HeaderMap,
     axum::extract::Path(id): axum::extract::Path<String>,
     Json(req): Json<UpdateExamRecordRequest>,
 ) -> Json<ApiResponse<HealthExamRecord>> {
+    let tenant_id = get_tenant_id(&claims, &headers);
     tracing::info!("Updating health exam record {}: {:?}", id, req);
     Json(ApiResponse::success(
         HealthExamRecord {
@@ -545,23 +606,31 @@ pub async fn update_exam_record(
             attachments: None,
             created_at: Some(chrono::Utc::now().to_rfc3339()),
             updated_at: Some(chrono::Utc::now().to_rfc3339()),
+
+            tenant_id,
         },
         "体检记录更新成功",
     ))
 }
 
 pub async fn delete_exam_record(
-    State(_state): State<crate::AppState>,
+    State(_state): State<crate::shared::AppState>,
+    Extension(claims): Extension<Claims>,
+    headers: HeaderMap,
     axum::extract::Path(id): axum::extract::Path<String>,
 ) -> Json<ApiResponse<()>> {
+    let tenant_id = get_tenant_id(&claims, &headers);
     tracing::info!("Deleting health exam record: {}", id);
     Json(ApiResponse::success((), "体检记录删除成功"))
 }
 
 pub async fn get_health_archive(
-    State(_state): State<crate::AppState>,
+    State(_state): State<crate::shared::AppState>,
+    Extension(claims): Extension<Claims>,
+    headers: HeaderMap,
     axum::extract::Path(employee_id): axum::extract::Path<String>,
 ) -> Json<ApiResponse<HealthArchive>> {
+    let tenant_id = get_tenant_id(&claims, &headers);
     tracing::info!("Getting health archive for employee: {}", employee_id);
     Json(ApiResponse::success(
         HealthArchive {
@@ -575,14 +644,19 @@ pub async fn get_health_archive(
             exam_records: vec![],
             contraindications: vec![],
             abnormalities: vec![],
+
+            tenant_id,
         },
         "获取健康档案成功",
     ))
 }
 
 pub async fn list_contraindications(
-    State(_state): State<crate::AppState>,
+    State(_state): State<crate::shared::AppState>,
+    Extension(claims): Extension<Claims>,
+    headers: HeaderMap,
 ) -> Json<ApiResponse<Vec<Contraindication>>> {
+    let tenant_id = get_tenant_id(&claims, &headers);
     tracing::info!("Listing contraindications");
     Json(ApiResponse::success(
         Vec::<Contraindication>::new(),
@@ -591,9 +665,12 @@ pub async fn list_contraindications(
 }
 
 pub async fn create_contraindication(
-    State(_state): State<crate::AppState>,
+    State(_state): State<crate::shared::AppState>,
+    Extension(claims): Extension<Claims>,
+    headers: HeaderMap,
     Json(req): Json<CreateContraindicationRequest>,
 ) -> Json<ApiResponse<Contraindication>> {
+    let tenant_id = get_tenant_id(&claims, &headers);
     tracing::info!("Creating contraindication: {:?}", req);
     Json(ApiResponse::success(
         Contraindication {
@@ -613,16 +690,21 @@ pub async fn create_contraindication(
             remarks: req.remarks,
             created_at: Some(chrono::Utc::now().to_rfc3339()),
             updated_at: Some(chrono::Utc::now().to_rfc3339()),
+
+            tenant_id,
         },
         "职业禁忌症创建成功",
     ))
 }
 
 pub async fn update_contraindication(
-    State(_state): State<crate::AppState>,
+    State(_state): State<crate::shared::AppState>,
+    Extension(claims): Extension<Claims>,
+    headers: HeaderMap,
     axum::extract::Path(id): axum::extract::Path<String>,
     Json(req): Json<UpdateContraindicationRequest>,
 ) -> Json<ApiResponse<Contraindication>> {
+    let tenant_id = get_tenant_id(&claims, &headers);
     tracing::info!("Updating contraindication {}: {:?}", id, req);
     Json(ApiResponse::success(
         Contraindication {
@@ -644,22 +726,30 @@ pub async fn update_contraindication(
             remarks: req.remarks,
             created_at: Some(chrono::Utc::now().to_rfc3339()),
             updated_at: Some(chrono::Utc::now().to_rfc3339()),
+
+            tenant_id,
         },
         "职业禁忌症更新成功",
     ))
 }
 
 pub async fn delete_contraindication(
-    State(_state): State<crate::AppState>,
+    State(_state): State<crate::shared::AppState>,
+    Extension(claims): Extension<Claims>,
+    headers: HeaderMap,
     axum::extract::Path(id): axum::extract::Path<String>,
 ) -> Json<ApiResponse<()>> {
+    let tenant_id = get_tenant_id(&claims, &headers);
     tracing::info!("Deleting contraindication: {}", id);
     Json(ApiResponse::success((), "职业禁忌症删除成功"))
 }
 
 pub async fn list_abnormalities(
-    State(_state): State<crate::AppState>,
+    State(_state): State<crate::shared::AppState>,
+    Extension(claims): Extension<Claims>,
+    headers: HeaderMap,
 ) -> Json<ApiResponse<Vec<HealthAbnormality>>> {
+    let tenant_id = get_tenant_id(&claims, &headers);
     tracing::info!("Listing health abnormalities");
     Json(ApiResponse::success(
         Vec::<HealthAbnormality>::new(),
@@ -668,10 +758,13 @@ pub async fn list_abnormalities(
 }
 
 pub async fn update_abnormality(
-    State(_state): State<crate::AppState>,
+    State(_state): State<crate::shared::AppState>,
+    Extension(claims): Extension<Claims>,
+    headers: HeaderMap,
     axum::extract::Path(id): axum::extract::Path<String>,
     Json(req): Json<UpdateAbnormalityRequest>,
 ) -> Json<ApiResponse<HealthAbnormality>> {
+    let tenant_id = get_tenant_id(&claims, &headers);
     tracing::info!("Updating abnormality {}: {:?}", id, req);
     Json(ApiResponse::success(
         HealthAbnormality {
@@ -690,14 +783,19 @@ pub async fn update_abnormality(
             responsible_person: req.responsible_person,
             created_at: Some(chrono::Utc::now().to_rfc3339()),
             updated_at: Some(chrono::Utc::now().to_rfc3339()),
+
+            tenant_id,
         },
         "异常项更新成功",
     ))
 }
 
 pub async fn get_health_statistics(
-    State(_state): State<crate::AppState>,
+    State(_state): State<crate::shared::AppState>,
+    Extension(claims): Extension<Claims>,
+    headers: HeaderMap,
 ) -> Json<ApiResponse<HealthStatistics>> {
+    let tenant_id = get_tenant_id(&claims, &headers);
     tracing::info!("Getting health statistics");
     Json(ApiResponse::success(
         HealthStatistics {
@@ -718,14 +816,19 @@ pub async fn get_health_statistics(
                 serde_json::json!({ "type": "听力下降", "count": 12 }),
                 serde_json::json!({ "type": "视力异常", "count": 10 }),
             ],
+
+            tenant_id,
         },
         "获取健康统计成功",
     ))
 }
 
 pub async fn list_exam_types(
-    State(_state): State<crate::AppState>,
+    State(_state): State<crate::shared::AppState>,
+    Extension(claims): Extension<Claims>,
+    headers: HeaderMap,
 ) -> Json<ApiResponse<Vec<serde_json::Value>>> {
+    let tenant_id = get_tenant_id(&claims, &headers);
     tracing::info!("Listing exam types");
     let types = vec![
         serde_json::json!({ "code": "pre_employment", "name": "上岗前体检" }),

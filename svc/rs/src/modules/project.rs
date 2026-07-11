@@ -22,6 +22,20 @@ use crate::services::project_permission::{
 use topems_shared::auth::Claims;
 use topems_shared::response::ApiResponse;
 
+fn get_tenant_id(claims: &Claims, headers: &axum::http::HeaderMap) -> Uuid {
+    claims
+        .tenant_id
+        .as_ref()
+        .and_then(|t| Uuid::parse_str(t).ok())
+        .or_else(|| {
+            headers
+                .get("x-tenant-id")
+                .and_then(|v| v.to_str().ok())
+                .and_then(|s| Uuid::parse_str(s).ok())
+        })
+        .unwrap_or_else(Uuid::new_v4)
+}
+
 #[derive(Debug, Deserialize, IntoParams)]
 pub struct ListProjectsQuery {
     pub page: Option<i64>,
@@ -88,25 +102,30 @@ pub fn create_routes() -> Router<super::ApiState> {
 )]
 async fn list_projects(
     State(state): State<super::ApiState>,
+    Extension(claims): Extension<Claims>,
     Query(params): Query<ListProjectsQuery>,
+    headers: HeaderMap,
 ) -> Json<ApiResponse<serde_json::Value>> {
+    let tenant_id = get_tenant_id(&claims, &headers);
     let page = params.page.unwrap_or(1).max(1);
     let page_size = params.page_size.unwrap_or(20).min(100);
     let offset = (page - 1) * page_size;
 
     let result = sqlx::query_as::<_, Project>(
         r#"
-        SELECT id, name, code, description, project_type, status, leader,
+        SELECT id, tenant_id, name, code, description, project_type, status, leader,
                team_members, start_date, end_date, budget, progress,
                created_by, created_at, updated_at, project_config, benefit_target,
                risk_level, priority, tags, parent_id, workspace_id
         FROM projects
-        WHERE ($1::text IS NULL OR name ILIKE $1 OR code ILIKE $1)
-          AND ($2::text IS NULL OR status = $2)
+        WHERE tenant_id = $1
+          AND ($2::text IS NULL OR name ILIKE $2 OR code ILIKE $2)
+          AND ($3::text IS NULL OR status = $3)
         ORDER BY created_at DESC
-        LIMIT $3 OFFSET $4
+        LIMIT $4 OFFSET $5
         "#,
     )
+    .bind(tenant_id)
     .bind(&params.search)
     .bind(&params.status)
     .bind(page_size)
@@ -119,10 +138,12 @@ async fn list_projects(
             let count_result = sqlx::query_scalar::<_, i64>(
                 r#"
                 SELECT COUNT(*) FROM projects
-                WHERE ($1::text IS NULL OR name ILIKE $1 OR code ILIKE $1)
-                  AND ($2::text IS NULL OR status = $2)
+                WHERE tenant_id = $1
+                  AND ($2::text IS NULL OR name ILIKE $2 OR code ILIKE $2)
+                  AND ($3::text IS NULL OR status = $3)
                 "#,
             )
+            .bind(tenant_id)
             .bind(&params.search)
             .bind(&params.status)
             .fetch_one(&state.db)
@@ -162,28 +183,31 @@ async fn list_projects(
 )]
 async fn create_project(
     State(state): State<super::ApiState>,
+    Extension(claims): Extension<Claims>,
     headers: HeaderMap,
     Json(req): Json<CreateProjectRequest>,
 ) -> Json<ApiResponse<Project>> {
+    let tenant_id = get_tenant_id(&claims, &headers);
     let id = Uuid::new_v4();
     let now = Utc::now();
 
     let result = sqlx::query_as::<_, Project>(
         r#"
         INSERT INTO projects (
-            id, name, code, description, project_type, status, leader,
+            id, tenant_id, name, code, description, project_type, status, leader,
             team_members, start_date, end_date, budget, progress, created_by,
             created_at, updated_at, project_config, benefit_target, risk_level,
             priority, tags, parent_id, workspace_id
         ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15,
-                  $16, $17, $18, $19, $20, $21, $22)
-        RETURNING id, name, code, description, project_type, status, leader,
+                  $16, $17, $18, $19, $20, $21, $22, $23)
+        RETURNING id, tenant_id, name, code, description, project_type, status, leader,
                   team_members, start_date, end_date, budget, progress,
                   created_by, created_at, updated_at, project_config, benefit_target,
                   risk_level, priority, tags, parent_id, workspace_id
         "#,
     )
     .bind(id)
+    .bind(tenant_id)
     .bind(&req.name)
     .bind(&req.code)
     .bind(&req.description)
@@ -276,7 +300,9 @@ async fn get_project(
     State(state): State<super::ApiState>,
     Path(id): Path<Uuid>,
     Extension(claims): Extension<Claims>,
+    headers: HeaderMap,
 ) -> Json<ApiResponse<Project>> {
+    let tenant_id = get_tenant_id(&claims, &headers);
     match check_project_permission(&state.db, &claims, &id, &ProjectPermission::Read).await {
         Ok(_) => {}
         Err(e) => return e,
@@ -290,14 +316,15 @@ async fn get_project(
 
     let result = sqlx::query_as::<_, Project>(
         r#"
-        SELECT id, name, code, description, project_type, status, leader,
+        SELECT id, tenant_id, name, code, description, project_type, status, leader,
                team_members, start_date, end_date, budget, progress,
                created_by, created_at, updated_at, project_config, benefit_target,
                risk_level, priority, tags, parent_id, workspace_id
-        FROM projects WHERE id = $1
+        FROM projects WHERE id = $1 AND tenant_id = $2
         "#,
     )
     .bind(id)
+    .bind(tenant_id)
     .fetch_optional(&state.db)
     .await;
 
@@ -338,15 +365,17 @@ async fn update_project(
     headers: HeaderMap,
     Json(req): Json<UpdateProjectRequest>,
 ) -> Json<ApiResponse<Project>> {
+    let tenant_id = get_tenant_id(&claims, &headers);
     match check_project_permission(&state.db, &claims, &id, &ProjectPermission::Update).await {
         Ok(_) => {}
         Err(e) => return e,
     }
 
     let existing = sqlx::query_as::<_, Project>(
-        "SELECT id, name, code, description, project_type, status, leader, team_members, start_date, end_date, budget, progress, created_by, created_at, updated_at, project_config, benefit_target, risk_level, priority, tags, parent_id, workspace_id FROM projects WHERE id = $1",
+        "SELECT id, tenant_id, name, code, description, project_type, status, leader, team_members, start_date, end_date, budget, progress, created_by, created_at, updated_at, project_config, benefit_target, risk_level, priority, tags, parent_id, workspace_id FROM projects WHERE id = $1 AND tenant_id = $2",
     )
     .bind(id)
+    .bind(tenant_id)
     .fetch_optional(&state.db)
     .await;
 
@@ -371,8 +400,8 @@ async fn update_project(
         UPDATE projects SET
             name = $2, description = $3, status = $4, leader = $5,
             team_members = $6, end_date = $7, budget = $8, progress = $9, updated_at = $10
-        WHERE id = $1
-        RETURNING id, name, code, description, project_type, status, leader,
+        WHERE id = $1 AND tenant_id = $11
+        RETURNING id, tenant_id, name, code, description, project_type, status, leader,
                   team_members, start_date, end_date, budget, progress,
                   created_by, created_at, updated_at, project_config, benefit_target,
                   risk_level, priority, tags, parent_id, workspace_id
@@ -388,6 +417,7 @@ async fn update_project(
     .bind(budget)
     .bind(progress)
     .bind(now)
+    .bind(tenant_id)
     .fetch_one(&state.db)
     .await;
 
@@ -457,13 +487,15 @@ async fn delete_project(
     Extension(claims): Extension<Claims>,
     headers: HeaderMap,
 ) -> Json<ApiResponse<String>> {
+    let tenant_id = get_tenant_id(&claims, &headers);
     match check_project_owner(&state.db, &claims, &id).await {
         Ok(_) => {}
         Err(e) => return e,
     }
 
-    let result = sqlx::query("DELETE FROM projects WHERE id = $1")
+    let result = sqlx::query("DELETE FROM projects WHERE id = $1 AND tenant_id = $2")
         .bind(id)
+        .bind(tenant_id)
         .execute(&state.db)
         .await;
 
@@ -530,9 +562,11 @@ async fn delete_project(
 )]
 async fn batch_create_projects(
     State(state): State<super::ApiState>,
+    Extension(claims): Extension<Claims>,
     headers: HeaderMap,
     Json(req): Json<BatchCreateRequest>,
 ) -> Json<ApiResponse<BatchOperationResult>> {
+    let tenant_id = get_tenant_id(&claims, &headers);
     let mut success = 0;
     let mut errors = Vec::new();
 
@@ -543,19 +577,20 @@ async fn batch_create_projects(
         let result = sqlx::query_as::<_, Project>(
             r#"
             INSERT INTO projects (
-                id, name, code, description, project_type, status, leader,
+                id, tenant_id, name, code, description, project_type, status, leader,
                 team_members, start_date, end_date, budget, progress, created_by,
                 created_at, updated_at, project_config, benefit_target, risk_level,
                 priority, tags, parent_id, workspace_id
             ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15,
-                      $16, $17, $18, $19, $20, $21, $22)
-            RETURNING id, name, code, description, project_type, status, leader,
+                      $16, $17, $18, $19, $20, $21, $22, $23)
+            RETURNING id, tenant_id, name, code, description, project_type, status, leader,
                       team_members, start_date, end_date, budget, progress,
                       created_by, created_at, updated_at, project_config, benefit_target,
                       risk_level, priority, tags, parent_id, workspace_id
             "#,
         )
         .bind(id)
+        .bind(tenant_id)
         .bind(&project_req.name)
         .bind(&project_req.code)
         .bind(&project_req.description)
@@ -648,15 +683,18 @@ async fn batch_create_projects(
 )]
 async fn batch_delete_projects(
     State(state): State<super::ApiState>,
+    Extension(claims): Extension<Claims>,
     headers: HeaderMap,
     Json(req): Json<BatchDeleteRequest>,
 ) -> Json<ApiResponse<BatchOperationResult>> {
+    let tenant_id = get_tenant_id(&claims, &headers);
     if req.ids.is_empty() {
         return Json(ApiResponse::error(400, "未提供要删除的项目 ID"));
     }
 
-    let result = sqlx::query(r#"DELETE FROM projects WHERE id = ANY($1)"#)
+    let result = sqlx::query(r#"DELETE FROM projects WHERE id = ANY($1) AND tenant_id = $2"#)
         .bind(&req.ids)
+        .bind(tenant_id)
         .execute(&state.db)
         .await;
 
@@ -740,17 +778,24 @@ async fn batch_delete_projects(
         ("bearer_auth" = [])
     )
 )]
-async fn export_projects(State(state): State<super::ApiState>, headers: HeaderMap) -> Response {
+async fn export_projects(
+    State(state): State<super::ApiState>,
+    Extension(claims): Extension<Claims>,
+    headers: HeaderMap,
+) -> Response {
+    let tenant_id = get_tenant_id(&claims, &headers);
     let result = sqlx::query_as::<_, Project>(
         r#"
-        SELECT id, name, code, description, project_type, status, leader,
+        SELECT id, tenant_id, name, code, description, project_type, status, leader,
                team_members, start_date, end_date, budget, progress,
                created_by, created_at, updated_at, project_config, benefit_target,
                risk_level, priority, tags, parent_id, workspace_id
         FROM projects
+        WHERE tenant_id = $1
         ORDER BY created_at DESC
         "#,
     )
+    .bind(tenant_id)
     .fetch_all(&state.db)
     .await;
 
@@ -951,9 +996,11 @@ async fn export_projects(State(state): State<super::ApiState>, headers: HeaderMa
 )]
 async fn import_projects(
     State(state): State<super::ApiState>,
+    Extension(claims): Extension<Claims>,
     headers: HeaderMap,
     bytes: Bytes,
 ) -> Json<ApiResponse<BatchOperationResult>> {
+    let tenant_id = get_tenant_id(&claims, &headers);
     let mut rdr = csv::Reader::from_reader(&bytes[..]);
     let _ = match rdr.headers() {
         Ok(h) => h.clone(),
@@ -1034,19 +1081,20 @@ async fn import_projects(
                 let insert_result = sqlx::query_as::<_, Project>(
                     r#"
                     INSERT INTO projects (
-                        id, name, code, description, project_type, status, leader,
+                        id, tenant_id, name, code, description, project_type, status, leader,
                         team_members, start_date, end_date, budget, progress, created_by,
                         created_at, updated_at, project_config, benefit_target, risk_level,
                         priority, tags, parent_id, workspace_id
                     ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15,
-                              $16, $17, $18, $19, $20, $21, $22)
-                    RETURNING id, name, code, description, project_type, status, leader,
+                              $16, $17, $18, $19, $20, $21, $22, $23)
+                    RETURNING id, tenant_id, name, code, description, project_type, status, leader,
                               team_members, start_date, end_date, budget, progress,
                               created_by, created_at, updated_at, project_config, benefit_target,
                               risk_level, priority, tags, parent_id, workspace_id
                     "#,
                 )
                 .bind(id)
+                .bind(tenant_id)
                 .bind(&name)
                 .bind(&code)
                 .bind(&description)
@@ -1158,17 +1206,21 @@ pub struct ProjectDashboardResponse {
 async fn get_project_dashboard(
     State(state): State<super::ApiState>,
     Path(id): Path<Uuid>,
+    Extension(claims): Extension<Claims>,
+    headers: HeaderMap,
 ) -> Json<ApiResponse<ProjectDashboardResponse>> {
+    let tenant_id = get_tenant_id(&claims, &headers);
     let project_result = sqlx::query_as::<_, Project>(
         r#"
-        SELECT id, name, code, description, project_type, status, leader,
+        SELECT id, tenant_id, name, code, description, project_type, status, leader,
                team_members, start_date, end_date, budget, progress,
                created_by, created_at, updated_at,
                project_config, benefit_target, risk_level, priority, tags, parent_id, workspace_id
-        FROM projects WHERE id = $1
+        FROM projects WHERE id = $1 AND tenant_id = $2
         "#,
     )
     .bind(id)
+    .bind(tenant_id)
     .fetch_optional(&state.db)
     .await;
 
@@ -1345,16 +1397,20 @@ pub struct ProjectGanttResponse {
 async fn get_project_gantt(
     State(state): State<super::ApiState>,
     Path(id): Path<Uuid>,
+    Extension(claims): Extension<Claims>,
+    headers: HeaderMap,
 ) -> Json<ApiResponse<ProjectGanttResponse>> {
+    let tenant_id = get_tenant_id(&claims, &headers);
     let phases_result = sqlx::query_as::<_, crate::models::ProjectPhase>(
         r#"
-        SELECT id, project_id, phase_number, name, description, start_date, end_date,
+        SELECT id, tenant_id, project_id, phase_number, name, description, start_date, end_date,
                planned_duration_days, actual_duration_days, status, progress, weight,
                predecessor_id, created_at, updated_at
-        FROM rs.project_phases WHERE project_id = $1 ORDER BY phase_number
+        FROM rs.project_phases WHERE project_id = $1 AND tenant_id = $2 ORDER BY phase_number
         "#,
     )
     .bind(id)
+    .bind(tenant_id)
     .fetch_all(&state.db)
     .await;
 

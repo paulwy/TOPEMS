@@ -6,9 +6,11 @@ use axum::{
 };
 use chrono::Utc;
 use serde::Deserialize;
+use sqlx::Row;
 use uuid::Uuid;
 
 use super::ApiState;
+use crate::middleware::tenant::get_tenant_id;
 use crate::models::{
     AddTagToCustomerRequest, CreateTagRequest, CustomerWithTags, Tag, UpdateTagRequest,
 };
@@ -46,6 +48,7 @@ async fn list_tags(
     State(state): State<ApiState>,
     Extension(claims): Extension<Claims>,
     Query(params): Query<TagPaginationParams>,
+    headers: HeaderMap,
 ) -> Json<ApiResponse<serde_json::Value>> {
     match check_permission(&state.db, &claims, &ModulePermission::CustomerRead).await {
         Ok(_) => {}
@@ -57,16 +60,19 @@ async fn list_tags(
     let offset = (page - 1) * page_size;
 
     let search_pattern = params.search.as_deref().map(|s| format!("%{}%", s));
+    let tenant_id = get_tenant_id(&claims, &headers);
 
     let result = sqlx::query_as::<_, Tag>(
         r#"
-        SELECT id, name, color, description, created_at, updated_at
+        SELECT id, tenant_id, name, color, description, created_at, updated_at
         FROM crm.tags
-        WHERE ($1::text IS NULL OR name ILIKE $1)
+        WHERE tenant_id = $1
+          AND ($2::text IS NULL OR name ILIKE $2)
         ORDER BY created_at DESC
-        LIMIT $2 OFFSET $3
+        LIMIT $3 OFFSET $4
         "#,
     )
+    .bind(tenant_id)
     .bind(&search_pattern)
     .bind(page_size)
     .bind(offset)
@@ -78,9 +84,11 @@ async fn list_tags(
             let count_result = sqlx::query_scalar::<_, i64>(
                 r#"
                 SELECT COUNT(*) FROM crm.tags
-                WHERE ($1::text IS NULL OR name ILIKE $1)
+                WHERE tenant_id = $1
+                  AND ($2::text IS NULL OR name ILIKE $2)
                 "#,
             )
+            .bind(tenant_id)
             .bind(&search_pattern)
             .fetch_one(&state.db)
             .await;
@@ -122,15 +130,17 @@ async fn create_tag(
     let id = Uuid::new_v4();
     let now = Utc::now();
     let color = req.color.clone().unwrap_or_else(|| "#1890ff".to_string());
+    let tenant_id = get_tenant_id(&claims, &headers);
 
     let result = sqlx::query_as::<_, Tag>(
         r#"
-        INSERT INTO crm.tags (id, name, color, description, created_at, updated_at)
-        VALUES ($1, $2, $3, $4, $5, $6)
-        RETURNING id, name, color, description, created_at, updated_at
+        INSERT INTO crm.tags (id, tenant_id, name, color, description, created_at, updated_at)
+        VALUES ($1, $2, $3, $4, $5, $6, $7)
+        RETURNING id, tenant_id, name, color, description, created_at, updated_at
         "#,
     )
     .bind(id)
+    .bind(tenant_id)
     .bind(&req.name)
     .bind(&color)
     .bind(&req.description)
@@ -185,19 +195,23 @@ async fn get_tag(
     State(state): State<ApiState>,
     Extension(claims): Extension<Claims>,
     Path(id): Path<Uuid>,
+    headers: HeaderMap,
 ) -> Json<ApiResponse<Tag>> {
     match check_permission(&state.db, &claims, &ModulePermission::CustomerRead).await {
         Ok(_) => {}
         Err(e) => return e,
     }
 
+    let tenant_id = get_tenant_id(&claims, &headers);
+
     let result = sqlx::query_as::<_, Tag>(
         r#"
-        SELECT id, name, color, description, created_at, updated_at
-        FROM crm.tags WHERE id = $1
+        SELECT id, tenant_id, name, color, description, created_at, updated_at
+        FROM crm.tags WHERE id = $1 AND tenant_id = $2
         "#,
     )
     .bind(id)
+    .bind(tenant_id)
     .fetch_optional(&state.db)
     .await;
 
@@ -223,12 +237,15 @@ async fn update_tag(
         Err(e) => return e,
     }
 
+    let tenant_id = get_tenant_id(&claims, &headers);
+
     let existing = sqlx::query_as::<_, Tag>(
         r#"
-        SELECT id, name, color, description, created_at, updated_at FROM crm.tags WHERE id = $1
+        SELECT id, tenant_id, name, color, description, created_at, updated_at FROM crm.tags WHERE id = $1 AND tenant_id = $2
         "#,
     )
     .bind(id)
+    .bind(tenant_id)
     .fetch_optional(&state.db)
     .await;
 
@@ -241,7 +258,7 @@ async fn update_tag(
     let request_data = serde_json::to_value(&req).ok();
 
     let name = req.name.unwrap_or(existing.name);
-    let color = req.color.or(Some(existing.color));
+    let color = req.color.unwrap_or(existing.color);
     let description = req.description.or(existing.description);
     let now = Utc::now();
 
@@ -249,8 +266,8 @@ async fn update_tag(
         r#"
         UPDATE crm.tags SET
             name = $2, color = $3, description = $4, updated_at = $5
-        WHERE id = $1
-        RETURNING id, name, color, description, created_at, updated_at
+        WHERE id = $1 AND tenant_id = $6
+        RETURNING id, tenant_id, name, color, description, created_at, updated_at
         "#,
     )
     .bind(id)
@@ -258,6 +275,7 @@ async fn update_tag(
     .bind(&color)
     .bind(&description)
     .bind(now)
+    .bind(tenant_id)
     .fetch_one(&state.db)
     .await;
 
@@ -313,8 +331,11 @@ async fn delete_tag(
         Err(e) => return e,
     }
 
-    let result = sqlx::query("DELETE FROM crm.tags WHERE id = $1")
+    let tenant_id = get_tenant_id(&claims, &headers);
+
+    let result = sqlx::query("DELETE FROM crm.tags WHERE id = $1 AND tenant_id = $2")
         .bind(id)
+        .bind(tenant_id)
         .execute(&state.db)
         .await;
 
@@ -368,22 +389,26 @@ async fn get_customer_tags(
     State(state): State<ApiState>,
     Extension(claims): Extension<Claims>,
     Path(id): Path<Uuid>,
+    headers: HeaderMap,
 ) -> Json<ApiResponse<Vec<Tag>>> {
     match check_permission(&state.db, &claims, &ModulePermission::CustomerRead).await {
         Ok(_) => {}
         Err(e) => return e,
     }
 
+    let tenant_id = get_tenant_id(&claims, &headers);
+
     let result = sqlx::query_as::<_, Tag>(
         r#"
-        SELECT t.id, t.name, t.color, t.description, t.created_at, t.updated_at
+        SELECT t.id, t.tenant_id, t.name, t.color, t.description, t.created_at, t.updated_at
         FROM crm.tags t
         JOIN crm.customer_tags ct ON t.id = ct.tag_id
-        WHERE ct.customer_id = $1
+        WHERE ct.customer_id = $1 AND t.tenant_id = $2
         ORDER BY t.created_at DESC
         "#,
     )
     .bind(id)
+    .bind(tenant_id)
     .fetch_all(&state.db)
     .await;
 
@@ -410,12 +435,14 @@ async fn add_tag_to_customer(
 
     let customer_id = id;
     let tag_id = req.tag_id;
+    let tenant_id = get_tenant_id(&claims, &headers);
 
     let exists = sqlx::query_scalar::<_, bool>(
-        "SELECT EXISTS(SELECT 1 FROM crm.customer_tags WHERE customer_id = $1 AND tag_id = $2)",
+        "SELECT EXISTS(SELECT 1 FROM crm.customer_tags WHERE customer_id = $1 AND tag_id = $2 AND tenant_id = $3)",
     )
     .bind(customer_id)
     .bind(tag_id)
+    .bind(tenant_id)
     .fetch_one(&state.db)
     .await
     .unwrap_or(false);
@@ -424,11 +451,14 @@ async fn add_tag_to_customer(
         return Json(api_error(400, "标签已添加到客户"));
     }
 
-    let result = sqlx::query("INSERT INTO crm.customer_tags (customer_id, tag_id) VALUES ($1, $2)")
-        .bind(customer_id)
-        .bind(tag_id)
-        .execute(&state.db)
-        .await;
+    let result = sqlx::query(
+        "INSERT INTO crm.customer_tags (customer_id, tag_id, tenant_id) VALUES ($1, $2, $3)",
+    )
+    .bind(customer_id)
+    .bind(tag_id)
+    .bind(tenant_id)
+    .execute(&state.db)
+    .await;
 
     let (response, status_str, error_msg) = match &result {
         Ok(_) => (
@@ -477,13 +507,16 @@ async fn remove_tag_from_customer(
     }
 
     let customer_id = id;
+    let tenant_id = get_tenant_id(&claims, &headers);
 
-    let result =
-        sqlx::query("DELETE FROM crm.customer_tags WHERE customer_id = $1 AND tag_id = $2")
-            .bind(customer_id)
-            .bind(tag_id)
-            .execute(&state.db)
-            .await;
+    let result = sqlx::query(
+        "DELETE FROM crm.customer_tags WHERE customer_id = $1 AND tag_id = $2 AND tenant_id = $3",
+    )
+    .bind(customer_id)
+    .bind(tag_id)
+    .bind(tenant_id)
+    .execute(&state.db)
+    .await;
 
     let (response, status_str, error_msg) = match &result {
         Ok(r) if r.rows_affected() > 0 => (
@@ -529,22 +562,26 @@ async fn get_tagged_customers(
     State(state): State<ApiState>,
     Extension(claims): Extension<Claims>,
     Path(id): Path<Uuid>,
+    headers: HeaderMap,
 ) -> Json<ApiResponse<Vec<CustomerWithTags>>> {
     match check_permission(&state.db, &claims, &ModulePermission::CustomerRead).await {
         Ok(_) => {}
         Err(e) => return e,
     }
 
-    let customers = sqlx::query!(
+    let tenant_id = get_tenant_id(&claims, &headers);
+
+    let customers = sqlx::query(
         r#"
         SELECT c.id as customer_id, c.name as customer_name
         FROM crm.customers c
         JOIN crm.customer_tags ct ON c.id = ct.customer_id
-        WHERE ct.tag_id = $1
+        WHERE ct.tag_id = $1 AND c.tenant_id = $2
         ORDER BY c.created_at DESC
         "#,
-        id
     )
+    .bind(id)
+    .bind(tenant_id)
     .fetch_all(&state.db)
     .await;
 
@@ -552,22 +589,25 @@ async fn get_tagged_customers(
         Ok(customers) => {
             let mut result = Vec::new();
             for customer in customers {
+                let customer_id: Uuid = customer.get("customer_id");
+                let customer_name: String = customer.get("customer_name");
                 let tags = sqlx::query_as::<_, Tag>(
                     r#"
-                    SELECT t.id, t.name, t.color, t.description, t.created_at, t.updated_at
+                    SELECT t.id, t.tenant_id, t.name, t.color, t.description, t.created_at, t.updated_at
                     FROM crm.tags t
                     JOIN crm.customer_tags ct ON t.id = ct.tag_id
-                    WHERE ct.customer_id = $1
+                    WHERE ct.customer_id = $1 AND t.tenant_id = $2
                     "#,
                 )
-                .bind(customer.customer_id)
+                .bind(customer_id)
+                .bind(tenant_id)
                 .fetch_all(&state.db)
                 .await
                 .unwrap_or_default();
 
                 result.push(CustomerWithTags {
-                    customer_id: customer.customer_id,
-                    customer_name: customer.customer_name,
+                    customer_id,
+                    customer_name,
                     tags,
                 });
             }

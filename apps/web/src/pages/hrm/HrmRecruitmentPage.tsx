@@ -20,6 +20,7 @@ import {
 } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { Box, Typography, Chip } from '@mui/material';
+import { HRM_PATHS } from '@/modules/hrm/config';
 import { apiLogger } from '@/utils/logger';
 import { useNotification } from '@/hooks/useNotification';
 import { StatCardGroup } from '@/components';
@@ -387,7 +388,7 @@ const HrmRecruitmentPage: React.FC = () => {
               <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
                 <Box
                   component='button'
-                  onClick={() => navigate('/dashboard')}
+                  onClick={() => navigate(HRM_PATHS.root)}
                   sx={{
                     p: 1,
                     borderRadius: 2,
@@ -405,7 +406,7 @@ const HrmRecruitmentPage: React.FC = () => {
                   <Box sx={{ mb: 1 }}>
                     <Typography
                       component='a'
-                      href='/hrm'
+                      href={HRM_PATHS.root}
                       sx={{
                         color: 'text.secondary',
                         textDecoration: 'none',

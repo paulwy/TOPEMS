@@ -22,6 +22,7 @@ import { Box, Typography } from '@mui/material';
 import { useNavigate } from 'react-router-dom';
 
 import { PageContainer } from '@/components/common';
+import { WORKFLOW_PATHS } from '@/modules/workflow/config';
 import {
   DashboardTemplate,
   type StatCard,
@@ -103,28 +104,28 @@ export const WorkflowDashboardPage: React.FC = () => {
         label: '发起流程',
         icon: <PlaySquare size={20} />,
         color: 'primary',
-        onClick: () => navigate('/workflow/instances'),
+        onClick: () => navigate(WORKFLOW_PATHS.instances),
       },
       {
         id: 'approval',
         label: '我的审批',
         icon: <CheckSquare size={20} />,
         color: 'success',
-        onClick: () => navigate('/workflow/approvals'),
+        onClick: () => navigate(WORKFLOW_PATHS.approvals),
       },
       {
         id: 'designer',
         label: '流程设计',
         icon: <FileCode size={20} />,
         color: 'info',
-        onClick: () => navigate('/workflow/designer'),
+        onClick: () => navigate(WORKFLOW_PATHS.designer),
       },
       {
         id: 'monitor',
         label: '监控中心',
         icon: <Zap size={20} />,
         color: 'warning',
-        onClick: () => navigate('/workflow/monitor'),
+        onClick: () => navigate(WORKFLOW_PATHS.monitor),
       },
     ],
     [navigate]
@@ -138,7 +139,7 @@ export const WorkflowDashboardPage: React.FC = () => {
         subtitle: '提交人：张三 · 2小时前',
         status: 'info' as const,
         statusColor: 'primary',
-        onClick: () => navigate('/workflow/instances/1'),
+        onClick: () => navigate(WORKFLOW_PATHS.instanceDetail.replace(':id', '1')),
       },
       {
         id: '2',
@@ -146,7 +147,7 @@ export const WorkflowDashboardPage: React.FC = () => {
         subtitle: '提交人：李四 · 4小时前',
         status: 'success' as const,
         statusColor: 'success',
-        onClick: () => navigate('/workflow/instances/2'),
+        onClick: () => navigate(WORKFLOW_PATHS.instanceDetail.replace(':id', '2')),
       },
       {
         id: '3',
@@ -154,7 +155,7 @@ export const WorkflowDashboardPage: React.FC = () => {
         subtitle: '提交人：王五 · 昨天',
         status: 'warning' as const,
         statusColor: 'warning',
-        onClick: () => navigate('/workflow/approvals/3'),
+        onClick: () => navigate(WORKFLOW_PATHS.approvalDetail.replace(':id', '3')),
       },
       {
         id: '4',
@@ -162,7 +163,7 @@ export const WorkflowDashboardPage: React.FC = () => {
         subtitle: '提交人：赵六 · 昨天',
         status: 'error' as const,
         statusColor: 'error',
-        onClick: () => navigate('/workflow/instances/4'),
+        onClick: () => navigate(WORKFLOW_PATHS.instanceDetail.replace(':id', '4')),
       },
       {
         id: '5',
@@ -170,7 +171,7 @@ export const WorkflowDashboardPage: React.FC = () => {
         subtitle: '提交人：钱七 · 2天前',
         status: 'success' as const,
         statusColor: 'success',
-        onClick: () => navigate('/workflow/instances/5'),
+        onClick: () => navigate(WORKFLOW_PATHS.instanceDetail.replace(':id', '5')),
       },
     ],
     [navigate]

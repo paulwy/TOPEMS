@@ -1,4 +1,4 @@
-use axum::{extract::State, Json};
+use axum::{extract::State, Extension, Json};
 use serde::{Deserialize, Serialize};
 use sqlx::{types::Uuid, Row};
 use topems_shared::ApiResponse;
@@ -6,6 +6,7 @@ use topems_shared::ApiResponse;
 #[derive(Debug, Serialize)]
 pub struct InspectionReport {
     pub id: String,
+    pub tenant_id: String,
     pub report_no: String,
     pub sample_id: String,
     pub sample_no: String,
@@ -54,7 +55,7 @@ pub struct ReportQuery {
 }
 
 pub async fn list_reports(
-    State(state): State<crate::AppState>,
+    State(state): State<crate::shared::AppState>,
     axum::extract::Query(query): axum::extract::Query<ReportQuery>,
 ) -> Json<ApiResponse<Vec<serde_json::Value>>> {
     let page = query.page.unwrap_or(1);
@@ -112,7 +113,7 @@ pub async fn list_reports(
 }
 
 pub async fn get_report(
-    State(state): State<crate::AppState>,
+    State(state): State<crate::shared::AppState>,
     axum::extract::Path(id): axum::extract::Path<String>,
 ) -> Json<ApiResponse<serde_json::Value>> {
     let id = match Uuid::parse_str(&id) {
@@ -159,7 +160,7 @@ pub async fn get_report(
 }
 
 pub async fn generate_report(
-    State(state): State<crate::AppState>,
+    State(state): State<crate::shared::AppState>,
     Json(req): Json<GenerateReportRequest>,
 ) -> Json<ApiResponse<serde_json::Value>> {
     let sample_id = match Uuid::parse_str(&req.sample_id) {
@@ -328,7 +329,7 @@ fn is_result_conforming(result: &str, standard: &str) -> bool {
 }
 
 pub async fn approve_report(
-    State(state): State<crate::AppState>,
+    State(state): State<crate::shared::AppState>,
     axum::extract::Path(id): axum::extract::Path<String>,
 ) -> Json<ApiResponse<serde_json::Value>> {
     let id = match Uuid::parse_str(&id) {
@@ -376,7 +377,7 @@ pub async fn approve_report(
 }
 
 pub async fn export_report_pdf(
-    State(state): State<crate::AppState>,
+    State(state): State<crate::shared::AppState>,
     axum::extract::Path(id): axum::extract::Path<String>,
 ) -> Json<ApiResponse<serde_json::Value>> {
     let id = match Uuid::parse_str(&id) {

@@ -92,7 +92,7 @@ pub fn create_routes() -> Router<ApiState> {
         .route("/api/erp/fixed-assets/depreciate", post(depreciate_assets))
 }
 
-async fn list_fixed_assets(
+pub async fn list_fixed_assets(
     State(state): State<ApiState>,
     Extension(claims): Extension<Claims>,
     Query(params): Query<FixedAssetParams>,
@@ -173,7 +173,7 @@ async fn list_fixed_assets(
     }
 }
 
-async fn create_fixed_asset(
+pub async fn create_fixed_asset(
     State(state): State<ApiState>,
     Extension(claims): Extension<Claims>,
     headers: HeaderMap,
@@ -280,7 +280,7 @@ async fn create_fixed_asset(
     response
 }
 
-async fn get_fixed_asset(
+pub async fn get_fixed_asset(
     State(state): State<ApiState>,
     Extension(claims): Extension<Claims>,
     Path(id): Path<Uuid>,
@@ -312,7 +312,7 @@ async fn get_fixed_asset(
     }
 }
 
-async fn update_fixed_asset(
+pub async fn update_fixed_asset(
     State(state): State<ApiState>,
     Extension(claims): Extension<Claims>,
     Path(id): Path<Uuid>,
@@ -438,7 +438,7 @@ async fn update_fixed_asset(
     response
 }
 
-async fn delete_fixed_asset(
+pub async fn delete_fixed_asset(
     State(state): State<ApiState>,
     Extension(claims): Extension<Claims>,
     Path(id): Path<Uuid>,
@@ -507,7 +507,7 @@ pub struct DepreciateRequest {
     pub asset_ids: Option<Vec<Uuid>>,
 }
 
-async fn depreciate_assets(
+pub async fn depreciate_assets(
     State(state): State<ApiState>,
     Extension(claims): Extension<Claims>,
     headers: HeaderMap,

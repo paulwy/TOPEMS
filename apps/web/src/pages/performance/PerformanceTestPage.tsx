@@ -1,14 +1,98 @@
 import React, { useEffect, useState } from 'react';
 
 const icons: Record<string, React.ReactNode> = {
-  zap: <polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"></polygon>,
-  timer: <><circle cx="12" cy="12" r="10"></circle><polyline points="12 6 12 12 16 14"></polyline></>,
-  gauge: <><circle cx="12" cy="12" r="10"></circle><path d="M12 2a14.5 14.5 0 0 0 0 20 14.5 14.5 0 0 0 0-20"></path><path d="M12 2a14.5 14.5 0 0 1 0 20 14.5 14.5 0 0 1 0-20"></path></>,
-  layers: <><rect x="3" y="3" width="18" height="18" rx="2" ry="2"></rect><line x1="9" y1="9" x2="15" y2="9"></line><line x1="9" y1="15" x2="15" y2="15"></line></>,
-  shield: <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10"></path>,
-  globe: <><circle cx="12" cy="10" r="3"></circle><path d="M12 21.7C17.3 17 20 13 20 10a8 8 0 1 0-16 0c0 3 2.7 7 8 11.7z"></path></>,
-  cpu: <><rect x="4" y="4" width="16" height="16" rx="2"></rect><line x1="9" y1="9" x2="15" y2="9"></line><line x1="9" y1="15" x2="15" y2="15"></line></>,
-  database: <><ellipse cx="12" cy="5" rx="9" ry="3"></ellipse><path d="M21 12c0 1.66-4 3-9 3s-9-1.34-9-3"></path><path d="M3 5v14c0 1.66 4 3 9 3s9-1.34 9-3V5"></path></>,
+  zap: <polygon points='13 2 3 14 12 14 11 22 21 10 12 10 13 2'></polygon>,
+  timer: (
+    <>
+      <circle
+        cx='12'
+        cy='12'
+        r='10'
+      ></circle>
+      <polyline points='12 6 12 12 16 14'></polyline>
+    </>
+  ),
+  gauge: (
+    <>
+      <circle
+        cx='12'
+        cy='12'
+        r='10'
+      ></circle>
+      <path d='M12 2a14.5 14.5 0 0 0 0 20 14.5 14.5 0 0 0 0-20'></path>
+      <path d='M12 2a14.5 14.5 0 0 1 0 20 14.5 14.5 0 0 1 0-20'></path>
+    </>
+  ),
+  layers: (
+    <>
+      <rect
+        x='3'
+        y='3'
+        width='18'
+        height='18'
+        rx='2'
+        ry='2'
+      ></rect>
+      <line
+        x1='9'
+        y1='9'
+        x2='15'
+        y2='9'
+      ></line>
+      <line
+        x1='9'
+        y1='15'
+        x2='15'
+        y2='15'
+      ></line>
+    </>
+  ),
+  shield: <path d='M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10'></path>,
+  globe: (
+    <>
+      <circle
+        cx='12'
+        cy='10'
+        r='3'
+      ></circle>
+      <path d='M12 21.7C17.3 17 20 13 20 10a8 8 0 1 0-16 0c0 3 2.7 7 8 11.7z'></path>
+    </>
+  ),
+  cpu: (
+    <>
+      <rect
+        x='4'
+        y='4'
+        width='16'
+        height='16'
+        rx='2'
+      ></rect>
+      <line
+        x1='9'
+        y1='9'
+        x2='15'
+        y2='9'
+      ></line>
+      <line
+        x1='9'
+        y1='15'
+        x2='15'
+        y2='15'
+      ></line>
+    </>
+  ),
+  database: (
+    <>
+      <ellipse
+        cx='12'
+        cy='5'
+        rx='9'
+        ry='3'
+      ></ellipse>
+      <path d='M21 12c0 1.66-4 3-9 3s-9-1.34-9-3'></path>
+      <path d='M3 5v14c0 1.66 4 3 9 3s9-1.34 9-3V5'></path>
+    </>
+  ),
 };
 
 const iconKeys = ['zap', 'timer', 'gauge', 'layers', 'shield', 'globe', 'cpu', 'database'];
@@ -29,14 +113,62 @@ const PerformanceTestPage: React.FC = () => {
   }, []);
 
   const metrics = [
-    { label: '性能测试', value: '通过', color: '#16a34a', bgColor: '#dcfce7', description: 'Lighthouse性能基准测试页面' },
-    { label: '加载时间', value: loadTime ? `${loadTime.toFixed(2)}ms` : '测量中...', color: loadTime && loadTime < 100 ? '#16a34a' : '#d97706', bgColor: loadTime && loadTime < 100 ? '#dcfce7' : '#fef3c7', description: '页面首屏加载耗时' },
-    { label: 'CPU占用', value: '低', color: '#16a34a', bgColor: '#dcfce7', description: '静态页面CPU占用率' },
-    { label: 'DOM节点', value: '精简', color: '#16a34a', bgColor: '#dcfce7', description: '最小化DOM结构' },
-    { label: '安全性', value: '已启用', color: '#16a34a', bgColor: '#dcfce7', description: '安全头已配置' },
-    { label: '国际化', value: '支持', color: '#16a34a', bgColor: '#dcfce7', description: '多语言支持已就绪' },
-    { label: '框架', value: 'React', color: '#2563eb', bgColor: '#dbeafe', description: 'React 19 + Vite' },
-    { label: 'API', value: '独立', color: '#2563eb', bgColor: '#dbeafe', description: '无需后端依赖' },
+    {
+      label: '性能测试',
+      value: '通过',
+      color: '#16a34a',
+      bgColor: '#dcfce7',
+      description: 'Lighthouse性能基准测试页面',
+    },
+    {
+      label: '加载时间',
+      value: loadTime ? `${loadTime.toFixed(2)}ms` : '测量中...',
+      color: loadTime && loadTime < 100 ? '#16a34a' : '#d97706',
+      bgColor: loadTime && loadTime < 100 ? '#dcfce7' : '#fef3c7',
+      description: '页面首屏加载耗时',
+    },
+    {
+      label: 'CPU占用',
+      value: '低',
+      color: '#16a34a',
+      bgColor: '#dcfce7',
+      description: '静态页面CPU占用率',
+    },
+    {
+      label: 'DOM节点',
+      value: '精简',
+      color: '#16a34a',
+      bgColor: '#dcfce7',
+      description: '最小化DOM结构',
+    },
+    {
+      label: '安全性',
+      value: '已启用',
+      color: '#16a34a',
+      bgColor: '#dcfce7',
+      description: '安全头已配置',
+    },
+    {
+      label: '国际化',
+      value: '支持',
+      color: '#16a34a',
+      bgColor: '#dcfce7',
+      description: '多语言支持已就绪',
+    },
+    {
+      label: '框架',
+      value: 'React',
+      color: '#2563eb',
+      bgColor: '#dbeafe',
+      description: 'React 19 + Vite',
+    },
+    {
+      label: 'API',
+      value: '独立',
+      color: '#2563eb',
+      bgColor: '#dbeafe',
+      description: '无需后端依赖',
+    },
   ];
 
   return (
@@ -78,7 +210,16 @@ const PerformanceTestPage: React.FC = () => {
               backdropFilter: 'blur(10px)',
             }}
           >
-            <svg width="40" height="40" viewBox="0 0 24 24" fill="#fbbf24" stroke="#fbbf24" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+            <svg
+              width='40'
+              height='40'
+              viewBox='0 0 24 24'
+              fill='#fbbf24'
+              stroke='#fbbf24'
+              strokeWidth='2'
+              strokeLinecap='round'
+              strokeLinejoin='round'
+            >
               {icons.zap}
             </svg>
           </div>
@@ -119,7 +260,13 @@ const PerformanceTestPage: React.FC = () => {
           </span>
         </div>
 
-        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(300px, 1fr))', gap: '1rem' }}>
+        <div
+          style={{
+            display: 'grid',
+            gridTemplateColumns: 'repeat(auto-fit, minmax(300px, 1fr))',
+            gap: '1rem',
+          }}
+        >
           {metrics.map((metric, index) => (
             <div
               key={index}
@@ -141,7 +288,14 @@ const PerformanceTestPage: React.FC = () => {
                 (e.currentTarget as HTMLElement).style.boxShadow = '0 10px 40px rgba(0,0,0,0.1)';
               }}
             >
-              <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', marginBottom: '0.75rem' }}>
+              <div
+                style={{
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: '0.75rem',
+                  marginBottom: '0.75rem',
+                }}
+              >
                 <div
                   style={{
                     width: '48px',
@@ -153,7 +307,16 @@ const PerformanceTestPage: React.FC = () => {
                     justifyContent: 'center',
                   }}
                 >
-                  <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke={metric.color} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                  <svg
+                    width='24'
+                    height='24'
+                    viewBox='0 0 24 24'
+                    fill='none'
+                    stroke={metric.color}
+                    strokeWidth='2'
+                    strokeLinecap='round'
+                    strokeLinejoin='round'
+                  >
                     {icons[iconKeys[index]]}
                   </svg>
                 </div>
@@ -161,12 +324,17 @@ const PerformanceTestPage: React.FC = () => {
                   {metric.label}
                 </span>
               </div>
-              <div style={{ fontWeight: 700, fontSize: '1.5rem', marginBottom: '0.25rem', color: '#111827' }}>
+              <div
+                style={{
+                  fontWeight: 700,
+                  fontSize: '1.5rem',
+                  marginBottom: '0.25rem',
+                  color: '#111827',
+                }}
+              >
                 {metric.value}
               </div>
-              <div style={{ fontSize: '0.75rem', color: '#6b7280' }}>
-                {metric.description}
-              </div>
+              <div style={{ fontSize: '0.75rem', color: '#6b7280' }}>{metric.description}</div>
             </div>
           ))}
         </div>
@@ -184,7 +352,14 @@ const PerformanceTestPage: React.FC = () => {
               animation: 'fadeIn 0.5s ease-out 0.5s both',
             }}
           >
-            <div style={{ fontWeight: 600, fontSize: '1.125rem', marginBottom: '1rem', color: '#111827' }}>
+            <div
+              style={{
+                fontWeight: 600,
+                fontSize: '1.125rem',
+                marginBottom: '1rem',
+                color: '#111827',
+              }}
+            >
               页面信息
             </div>
             <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', gap: '1rem' }}>
@@ -205,7 +380,14 @@ const PerformanceTestPage: React.FC = () => {
                 <div style={{ fontWeight: 500, color: '#16a34a' }}>独立</div>
               </div>
             </div>
-            <div style={{ marginTop: '1.5rem', display: 'flex', gap: '0.75rem', justifyContent: 'center' }}>
+            <div
+              style={{
+                marginTop: '1.5rem',
+                display: 'flex',
+                gap: '0.75rem',
+                justifyContent: 'center',
+              }}
+            >
               <button
                 onClick={() => window.location.reload()}
                 style={{

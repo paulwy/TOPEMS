@@ -313,7 +313,7 @@ pub fn create_routes() -> Router<ApiState> {
         )
 }
 
-async fn balance_sheet(
+pub async fn balance_sheet(
     State(state): State<ApiState>,
     Extension(claims): Extension<Claims>,
     Query(params): Query<ReportParams>,
@@ -464,7 +464,7 @@ async fn balance_sheet(
     Json(ApiResponse::success(balance_sheet, "获取资产负债表成功"))
 }
 
-async fn income_statement(
+pub async fn income_statement(
     State(state): State<ApiState>,
     Extension(claims): Extension<Claims>,
     Query(params): Query<ReportParams>,
@@ -551,7 +551,7 @@ async fn income_statement(
     Json(ApiResponse::success(income_statement, "获取利润表成功"))
 }
 
-async fn cash_flow(
+pub async fn cash_flow(
     State(state): State<ApiState>,
     Extension(claims): Extension<Claims>,
     Query(params): Query<ReportParams>,
@@ -641,7 +641,7 @@ async fn cash_flow(
     Json(ApiResponse::success(cash_flow, "获取现金流量表成功"))
 }
 
-async fn voucher_summary(
+pub async fn voucher_summary(
     State(state): State<ApiState>,
     Extension(claims): Extension<Claims>,
     Query(params): Query<ReportParams>,
@@ -728,7 +728,7 @@ async fn voucher_summary(
     ))
 }
 
-async fn voucher_details(
+pub async fn voucher_details(
     State(state): State<ApiState>,
     Extension(claims): Extension<Claims>,
     Query(params): Query<ReportParams>,
@@ -782,7 +782,7 @@ async fn voucher_details(
     Json(ApiResponse::success(details, "获取凭证明细成功"))
 }
 
-async fn receivables_report(
+pub async fn receivables_report(
     State(state): State<ApiState>,
     Extension(claims): Extension<Claims>,
     Query(params): Query<ReportParams>,
@@ -828,7 +828,7 @@ async fn receivables_report(
     Json(ApiResponse::success(summary, "获取应收账款报表成功"))
 }
 
-async fn payables_report(
+pub async fn payables_report(
     State(state): State<ApiState>,
     Extension(claims): Extension<Claims>,
     Query(params): Query<ReportParams>,
@@ -874,7 +874,7 @@ async fn payables_report(
     Json(ApiResponse::success(summary, "获取应付账款报表成功"))
 }
 
-async fn budget_summary(
+pub async fn budget_summary(
     State(state): State<ApiState>,
     Extension(claims): Extension<Claims>,
     Query(params): Query<ReportParams>,
@@ -924,7 +924,7 @@ async fn budget_summary(
     Json(ApiResponse::success(summary, "获取预算汇总报表成功"))
 }
 
-async fn employee_summary(
+pub async fn employee_summary(
     State(state): State<ApiState>,
     Extension(claims): Extension<Claims>,
     Query(_params): Query<ReportParams>,
@@ -968,7 +968,7 @@ async fn employee_summary(
     Json(ApiResponse::success(summary, "获取员工汇总报表成功"))
 }
 
-async fn voucher_trend(
+pub async fn voucher_trend(
     State(state): State<ApiState>,
     Extension(claims): Extension<Claims>,
     Query(params): Query<ReportParams>,
@@ -1018,7 +1018,7 @@ async fn voucher_trend(
     Json(ApiResponse::success(trend, "获取凭证趋势报表成功"))
 }
 
-async fn category_summary(
+pub async fn category_summary(
     State(state): State<ApiState>,
     Extension(claims): Extension<Claims>,
     Query(params): Query<ReportParams>,
@@ -1069,7 +1069,7 @@ async fn category_summary(
     Json(ApiResponse::success(summary, "获取科目汇总报表成功"))
 }
 
-async fn aging_analysis(
+pub async fn aging_analysis(
     State(state): State<ApiState>,
     Extension(claims): Extension<Claims>,
     Query(params): Query<ReportParams>,
@@ -1151,7 +1151,7 @@ async fn aging_analysis(
     Json(ApiResponse::success(analysis, "获取账龄分析报表成功"))
 }
 
-async fn monthly_trend(
+pub async fn monthly_trend(
     State(state): State<ApiState>,
     Extension(claims): Extension<Claims>,
     Query(params): Query<ReportParams>,
@@ -1211,7 +1211,7 @@ async fn monthly_trend(
     Json(ApiResponse::success(trend, "获取月度趋势报表成功"))
 }
 
-async fn business_overview(
+pub async fn business_overview(
     State(state): State<ApiState>,
     Extension(claims): Extension<Claims>,
     Query(params): Query<ReportParams>,
@@ -1321,7 +1321,7 @@ async fn business_overview(
     Json(ApiResponse::success(overview, "获取经营概览成功"))
 }
 
-async fn project_summary(
+pub async fn project_summary(
     State(state): State<ApiState>,
     Extension(claims): Extension<Claims>,
     Query(_params): Query<ReportParams>,
@@ -1383,7 +1383,7 @@ async fn project_summary(
     Json(ApiResponse::success(summaries, "获取项目财务汇总成功"))
 }
 
-async fn department_summary(
+pub async fn department_summary(
     State(state): State<ApiState>,
     Extension(claims): Extension<Claims>,
     Query(_params): Query<ReportParams>,
@@ -1439,7 +1439,7 @@ async fn department_summary(
     Json(ApiResponse::success(summaries, "获取部门财务汇总成功"))
 }
 
-async fn cash_flow_analysis(
+pub async fn cash_flow_analysis(
     State(state): State<ApiState>,
     Extension(claims): Extension<Claims>,
     Query(params): Query<ReportParams>,
@@ -1501,7 +1501,7 @@ async fn cash_flow_analysis(
     Json(ApiResponse::success(analysis, "获取现金流分析成功"))
 }
 
-async fn expense_analysis(
+pub async fn expense_analysis(
     State(state): State<ApiState>,
     Extension(claims): Extension<Claims>,
     Query(params): Query<ReportParams>,
@@ -1615,7 +1615,7 @@ async fn expense_analysis(
     Json(ApiResponse::success(analysis, "获取费用分析成功"))
 }
 
-async fn profit_analysis(
+pub async fn profit_analysis(
     State(state): State<ApiState>,
     Extension(claims): Extension<Claims>,
     Query(params): Query<ReportParams>,
@@ -1685,7 +1685,7 @@ async fn profit_analysis(
     Json(ApiResponse::success(analysis, "获取利润分析成功"))
 }
 
-async fn financial_overview(
+pub async fn financial_overview(
     State(state): State<ApiState>,
     Extension(claims): Extension<Claims>,
     Query(params): Query<ReportParams>,

@@ -1,0 +1,432 @@
+import { lazyWithRetry } from '@/routes/utils';
+import type { RouteModuleConfig } from '@/routes/v2/types';
+import type { ModuleNavConfig } from '@/lib/navigation/types';
+
+// ---- 第一部分：路径常量（唯一真相源） ----
+// 组件中应引用 ADMIN_PATHS.xxx，而非硬编码字符串
+export const ADMIN_PATHS = {
+  root: '/admin',
+  dashboard: '/admin/dashboard',
+  tenant: '/admin/tenant',
+  tenantDetail: '/admin/tenant-detail',
+  tenantSettings: '/admin/tenant-settings',
+  tenantBilling: '/admin/tenant-billing',
+  account: '/admin/account',
+  bankAccount: '/admin/bank-account',
+  dictionary: '/admin/dictionary',
+  system: '/admin/system',
+  systemSettings: '/admin/system-settings',
+  plugin: '/admin/plugin',
+  database: '/admin/database',
+  migration: '/admin/migration',
+  configDebug: '/admin/config-debug',
+  auditLog: '/admin/audit-log',
+  monitor: '/admin/monitor',
+  performance: '/admin/performance',
+} as const;
+
+// ---- 第二部分：路由配置（供路由系统使用） ----
+export const adminModuleConfig: RouteModuleConfig = {
+  code: 'admin',
+  name: '系统管理',
+  icon: 'Settings',
+  path: ADMIN_PATHS.root,
+  source: 'core',
+  suite: 'enterprise',
+  status: 'online',
+  order: 2,
+  description: '租户管理、系统配置、监控运维',
+  permission: 'admin:read',
+  routes: [
+    // ========== 概览 ==========
+    {
+      path: ADMIN_PATHS.dashboard,
+      element: lazyWithRetry(() => import('@/pages/admin/DashboardPage'), 'DashboardPage'),
+      module: 'admin',
+      code: 'admin-dashboard',
+      title: '仪表盘',
+      template: 'dashboard',
+      group: 'overview',
+      requiredPermissions: ['admin:read'],
+    },
+
+    // ========== 租户管理 ==========
+    {
+      path: ADMIN_PATHS.tenant,
+      element: lazyWithRetry(
+        () => import('@/pages/admin/TenantManagementPage'),
+        'TenantManagementPage'
+      ),
+      module: 'admin',
+      title: '租户管理',
+      code: 'admin-tenant',
+      requiredPermissions: ['admin:tenant:read'],
+      template: 'list',
+      group: 'tenant',
+    },
+    {
+      path: ADMIN_PATHS.tenantDetail,
+      element: lazyWithRetry(() => import('@/pages/admin/TenantDetailPage'), 'TenantDetailPage'),
+      module: 'admin',
+      title: '租户详情',
+      code: 'admin-tenant-detail',
+      requiredPermissions: ['admin:tenant:read'],
+      template: 'detail',
+      group: 'tenant',
+    },
+    {
+      path: ADMIN_PATHS.tenantSettings,
+      element: lazyWithRetry(
+        () => import('@/pages/admin/TenantSettingsPage'),
+        'TenantSettingsPage'
+      ),
+      module: 'admin',
+      title: '租户设置',
+      code: 'admin-tenant-settings',
+      requiredPermissions: ['admin:tenant:write'],
+      template: 'form',
+      group: 'tenant',
+    },
+    {
+      path: ADMIN_PATHS.tenantBilling,
+      element: lazyWithRetry(
+        () => import('@/pages/admin/TenantBillingPage'),
+        'TenantBillingPage'
+      ),
+      module: 'admin',
+      title: '租户计费',
+      code: 'admin-tenant-billing',
+      requiredPermissions: ['admin:tenant:read'],
+      template: 'list',
+      group: 'tenant',
+    },
+
+    // ========== 账号管理 ==========
+    {
+      path: ADMIN_PATHS.account,
+      element: lazyWithRetry(
+        () => import('@/pages/admin/AccountManagementPage'),
+        'AccountManagementPage'
+      ),
+      module: 'admin',
+      title: '账号管理',
+      code: 'admin-account',
+      requiredPermissions: ['admin:account:read'],
+      template: 'list',
+      group: 'account',
+    },
+    {
+      path: ADMIN_PATHS.bankAccount,
+      element: lazyWithRetry(
+        () => import('@/pages/admin/BankAccountManagementPage'),
+        'BankAccountManagementPage'
+      ),
+      module: 'admin',
+      title: '银行账号',
+      code: 'admin-bank-account',
+      requiredPermissions: ['admin:bank:read'],
+      template: 'list',
+      group: 'account',
+    },
+
+    // ========== 系统配置 ==========
+    {
+      path: ADMIN_PATHS.dictionary,
+      element: lazyWithRetry(
+        () => import('@/pages/admin/DictionaryManagementPage'),
+        'DictionaryManagementPage'
+      ),
+      module: 'admin',
+      title: '数据字典',
+      code: 'admin-dictionary',
+      requiredPermissions: ['admin:dictionary:read'],
+      template: 'tree',
+      group: 'settings',
+    },
+    {
+      path: ADMIN_PATHS.system,
+      element: lazyWithRetry(
+        () => import('@/pages/admin/SystemManagementPage'),
+        'SystemManagementPage'
+      ),
+      module: 'admin',
+      title: '系统管理',
+      code: 'admin-system',
+      requiredPermissions: ['admin:system:read'],
+      template: 'settings',
+      group: 'settings',
+    },
+    {
+      path: ADMIN_PATHS.systemSettings,
+      element: lazyWithRetry(
+        () => import('@/pages/admin/SystemSettingsPage'),
+        'SystemSettingsPage'
+      ),
+      module: 'admin',
+      title: '系统设置',
+      code: 'admin-system-settings',
+      requiredPermissions: ['admin:system:write'],
+      template: 'settings',
+      group: 'settings',
+    },
+    {
+      path: ADMIN_PATHS.plugin,
+      element: lazyWithRetry(
+        () => import('@/pages/admin/PluginManagementPage'),
+        'PluginManagementPage'
+      ),
+      module: 'admin',
+      title: '插件管理',
+      code: 'admin-plugin',
+      requiredPermissions: ['admin:plugin:read'],
+      template: 'list',
+      group: 'settings',
+    },
+
+    // ========== 运维工具 ==========
+    {
+      path: ADMIN_PATHS.database,
+      element: lazyWithRetry(
+        () => import('@/pages/admin/DatabaseStructurePage'),
+        'DatabaseStructurePage'
+      ),
+      module: 'admin',
+      title: '数据库结构',
+      code: 'admin-database',
+      requiredPermissions: ['admin:database:read'],
+      template: 'list',
+      group: 'tools',
+    },
+    {
+      path: ADMIN_PATHS.migration,
+      element: lazyWithRetry(
+        () => import('@/pages/admin/MigrationAdminPage'),
+        'MigrationAdminPage'
+      ),
+      module: 'admin',
+      title: '数据迁移',
+      code: 'admin-migration',
+      requiredPermissions: ['system:migration'],
+      template: 'list',
+      group: 'tools',
+    },
+    {
+      path: ADMIN_PATHS.configDebug,
+      element: lazyWithRetry(() => import('@/pages/admin/ConfigDebugPage'), 'ConfigDebugPage'),
+      module: 'admin',
+      title: '配置调试',
+      code: 'admin-config-debug',
+      requiredPermissions: ['admin:debug:read'],
+      template: 'settings',
+      group: 'tools',
+    },
+
+    // ========== 监控审计 ==========
+    {
+      path: ADMIN_PATHS.auditLog,
+      element: lazyWithRetry(() => import('@/pages/admin/AuditLogPage'), 'AuditLogPage'),
+      module: 'admin',
+      title: '审计日志',
+      code: 'admin-audit-log',
+      requiredPermissions: ['admin:audit:read'],
+      template: 'list',
+      group: 'analytics',
+    },
+    {
+      path: ADMIN_PATHS.monitor,
+      element: lazyWithRetry(() => import('@/pages/admin/MonitorPage'), 'MonitorPage'),
+      module: 'admin',
+      title: '系统监控',
+      code: 'admin-monitor',
+      requiredPermissions: ['admin:monitor:read'],
+      template: 'stats',
+      group: 'analytics',
+    },
+    {
+      path: ADMIN_PATHS.performance,
+      element: lazyWithRetry(
+        () => import('@/pages/admin/PerformanceMonitorPage'),
+        'PerformanceMonitorPage'
+      ),
+      module: 'admin',
+      title: '性能监控',
+      code: 'admin-performance',
+      requiredPermissions: ['admin:monitor:read'],
+      template: 'stats',
+      group: 'analytics',
+    },
+  ],
+};
+
+// ---- 第三部分：导航配置（供导航注册表使用） ----
+export const adminNavConfig: ModuleNavConfig = {
+  code: 'admin',
+  name: '统一身份管理',
+  icon: 'Settings',
+  path: ADMIN_PATHS.root,
+  permission: 'admin:read',
+  source: 'core',
+  suite: 'enterprise',
+  status: 'online',
+  order: 1,
+  description: '租户管理、用户权限、系统配置、监控运维',
+  navItems: [
+    {
+      code: 'admin-dashboard',
+      label: '仪表盘',
+      icon: 'LayoutDashboard',
+      path: ADMIN_PATHS.dashboard,
+      permission: 'admin:read',
+      order: 0,
+      group: 'overview',
+      showInTabs: true,
+      description: '统一身份管理数据概览',
+    },
+    {
+      code: 'admin-tenant',
+      label: '租户管理',
+      icon: 'Building2',
+      path: ADMIN_PATHS.tenant,
+      permission: 'admin:tenant:read',
+      order: 1,
+      group: 'business',
+      showInTabs: true,
+      description: '多租户管理',
+    },
+    {
+      code: 'admin-tenant-billing',
+      label: '租户计费',
+      icon: 'Wallet',
+      path: ADMIN_PATHS.tenantBilling,
+      permission: 'admin:tenant:read',
+      order: 2,
+      group: 'business',
+      description: '租户计费管理',
+    },
+    {
+      code: 'admin-account',
+      label: '账号管理',
+      icon: 'UserCircle',
+      path: ADMIN_PATHS.account,
+      permission: 'admin:account:read',
+      order: 13,
+      group: 'business',
+      description: '账号信息管理',
+    },
+    {
+      code: 'admin-bank-account',
+      label: '银行账号',
+      icon: 'CreditCard',
+      path: ADMIN_PATHS.bankAccount,
+      permission: 'admin:bank:read',
+      order: 14,
+      group: 'business',
+      description: '银行账号管理',
+    },
+    {
+      code: 'admin-dictionary',
+      label: '数据字典',
+      icon: 'BookOpen',
+      path: ADMIN_PATHS.dictionary,
+      permission: 'admin:dictionary:read',
+      order: 20,
+      group: 'settings',
+      description: '系统数据字典',
+    },
+    {
+      code: 'admin-system',
+      label: '系统管理',
+      icon: 'Server',
+      path: ADMIN_PATHS.system,
+      permission: 'admin:system:read',
+      order: 21,
+      group: 'settings',
+      showInTabs: true,
+      description: '系统基础管理',
+    },
+    {
+      code: 'admin-system-settings',
+      label: '系统设置',
+      icon: 'Settings2',
+      path: ADMIN_PATHS.systemSettings,
+      permission: 'admin:system:write',
+      order: 22,
+      group: 'settings',
+      description: '系统参数设置',
+    },
+    {
+      code: 'admin-plugin',
+      label: '插件管理',
+      icon: 'Puzzle',
+      path: ADMIN_PATHS.plugin,
+      permission: 'admin:plugin:read',
+      order: 23,
+      group: 'settings',
+      description: '系统插件管理',
+    },
+    {
+      code: 'admin-database',
+      label: '数据库结构',
+      icon: 'Database',
+      path: ADMIN_PATHS.database,
+      permission: 'admin:database:read',
+      order: 24,
+      group: 'tools',
+      showInSidebar: false,
+      description: '数据库表结构',
+    },
+    {
+      code: 'admin-migration',
+      label: '数据迁移',
+      icon: 'RefreshCw',
+      path: ADMIN_PATHS.migration,
+      permission: 'admin:migration:read',
+      order: 25,
+      group: 'tools',
+      showInSidebar: false,
+      description: '数据迁移管理',
+    },
+    {
+      code: 'admin-config-debug',
+      label: '配置调试',
+      icon: 'Bug',
+      path: ADMIN_PATHS.configDebug,
+      permission: 'admin:debug:read',
+      order: 26,
+      group: 'tools',
+      showInSidebar: false,
+      description: '系统配置调试',
+    },
+    {
+      code: 'admin-audit-log',
+      label: '审计日志',
+      icon: 'ScrollText',
+      path: ADMIN_PATHS.auditLog,
+      permission: 'admin:audit:read',
+      order: 30,
+      group: 'analytics',
+      showInTabs: true,
+      description: '系统审计日志',
+    },
+    {
+      code: 'admin-monitor',
+      label: '系统监控',
+      icon: 'Activity',
+      path: ADMIN_PATHS.monitor,
+      permission: 'admin:monitor:read',
+      order: 31,
+      group: 'analytics',
+      description: '系统状态监控',
+    },
+    {
+      code: 'admin-performance',
+      label: '性能监控',
+      icon: 'Gauge',
+      path: ADMIN_PATHS.performance,
+      permission: 'admin:monitor:read',
+      order: 32,
+      group: 'analytics',
+      description: '性能指标监控',
+    },
+  ],
+};

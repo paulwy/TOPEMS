@@ -79,8 +79,8 @@ const FinancePaymentPage: React.FC = () => {
 
   const mapPaymentRecordToPayment = (record: PaymentRecord): Payment => {
     const bankAccount = record.bank_name
-      ? `${record.bank_name} ${record.bank_account_no}`
-      : record.bank_account_no;
+      ? `${record.bank_name} ${record.bank_account_no || ''}`
+      : record.bank_account_no || '';
 
     let statusText = '';
     switch (record.status) {
@@ -101,7 +101,7 @@ const FinancePaymentPage: React.FC = () => {
       id: record.id,
       payment_number: record.payment_no,
       payment_date: record.payment_date,
-      supplier: record.supplier_name,
+      supplier: record.supplier_name || '',
       payment_method: '银行转账',
       amount: record.amount,
       bank_account: bankAccount,

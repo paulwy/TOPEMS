@@ -1,23 +1,37 @@
 {
   "name": "@topems/shared-types",
   "version": "1.0.0",
-  "description": "Shared TypeScript types for TOPEMS",
-  "main": "./src/index.ts",
-  "types": "./src/index.ts",
-  "exports": {
-    ".": "./src/index.ts"
-  },
+  "description": "TOPEMS Shared TypeScript Types for Multi-Platform Support",
+  "main": "dist/index.js",
+  "module": "dist/index.mjs",
+  "types": "dist/index.d.ts",
   "scripts": {
-    "build": "tsc",
-    "clean": "rm -rf dist"
+    "build": "tsup src/index.ts --format cjs,esm --dts",
+    "dev": "tsup src/index.ts --format cjs,esm --dts --watch",
+    "lint": "eslint . --ext .ts",
+    "lint:fix": "eslint . --ext .ts --fix"
   },
-  "keywords": [
-    "types",
-    "topems"
+  "files": [
+    "dist",
+    "src"
   ],
-  "author": "TOPEMS Team",
+  "keywords": [
+    "topems",
+    "types",
+    "shared",
+    "multi-platform"
+  ],
+  "author": "TOPEMS Development Team",
   "license": "MIT",
+  "peerDependencies": {
+    "react": "^19.0.0"
+  },
   "devDependencies": {
-    "typescript": "^6.0.3"
+    "@types/node": "^20.0.0",
+    "@types/react": "^19.2.17",
+    "eslint": "^8.0.0",
+    "react": "^19.2.7",
+    "tsup": "^8.0.0",
+    "typescript": "^5.0.0"
   }
 }

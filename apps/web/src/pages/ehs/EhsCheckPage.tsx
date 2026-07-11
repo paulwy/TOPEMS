@@ -122,7 +122,9 @@ const EhsCheckPage: React.FC = () => {
       setLoading(true);
       const response = await ehsApi.listInspectionRecords({ pagesize: 100 });
       if (response.success && response.data) {
-        const recordsData = Array.isArray(response.data) ? response.data : response.data.items || [];
+        const recordsData = Array.isArray(response.data)
+          ? response.data
+          : response.data.items || [];
         const adapted = recordsData.map((item: InspectionRecord) => ({
           ...item,
           status:

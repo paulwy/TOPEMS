@@ -307,6 +307,67 @@ import type { User } from '@/types';
 }
 ```
 
+### 6. 路径规范
+
+> 详细方案见 [路径重构实施方案](../../superpowers/specs/2026-07-11-path-refactor-implementation-plan.md)
+
+#### 6.1 统一配置文件
+
+每个模块的路径常量、路由配置、导航配置必须合并到 `modules/{module}/config.ts`，禁止在 `routes/v2/*.ts` 和 `lib/navigation/modules/*.nav.ts` 中分散定义。
+
+#### 6.2 路径常量（唯一真相源）
+
+```typescript
+// modules/hrm/config.ts
+export const HRM_PATHS = {
+  root: '/hrm',
+  employees: '/hrm/employees',
+  employeeCreate: '/hrm/employees/create',
+  employeeDetail: '/hrm/employees/:id',
+  employeeEdit: '/hrm/employees/:id/edit',
+} as const;
+```
+
+- 常量名格式：`{MODULE}_PATHS`（如 `HRM_PATHS`）
+- 必须以 `as const` 断言
+- 列表页用复数名词（`employees`）
+- 详情/创建/编辑用单数 + 后缀（`employeeDetail`）
+
+#### 6.3 路径命名规范
+
+| 场景 | 规则 | 示例 |
+|------|------|------|
+| 模块根 | `/{module}` | `/hrm` |
+| 列表页 | `/{module}/{plural}` | `/hrm/employees` |
+| 详情页 | `/{module}/{plural}/:id` | `/hrm/employees/:id` |
+| 创建页 | `/{module}/{plural}/create` | `/hrm/employees/create` |
+| 编辑页 | `/{module}/{plural}/:id/edit` | `/hrm/employees/:id/edit` |
+
+- 路径全小写，多词用连字符（`salary-adjustment`）
+- 列表页资源名用复数
+- 创建页用 `create`（不是 `new`）
+
+#### 6.4 组件引用规范
+
+```typescript
+// ✅ 正确：引用路径常量
+import { HRM_PATHS } from '@/modules/hrm/config';
+navigate(HRM_PATHS.employees);
+navigate(HRM_PATHS.employeeDetail.replace(':id', id));
+
+// ❌ 禁止：硬编码路径
+navigate('/hrm/employees');
+navigate(`/hrm/employees/${id}`);
+```
+
+#### 6.5 路径校验
+
+CI 中运行路径校验脚本，检测死链、硬编码路径、命名规范：
+
+```bash
+python scripts/check-route-paths.py --ci
+```
+
 ---
 
 ## 数据库规范

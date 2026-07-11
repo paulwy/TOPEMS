@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import type { BoxProps } from '@mui/material';
+import { alpha } from '@mui/material/styles';
 import {
   Box,
   Paper,
@@ -330,7 +331,7 @@ const StatCardComponent: React.FC<StatCard & { loading?: boolean }> = ({
     <Card
       variant={variant}
       sx={{
-        borderRadius: 2,
+        borderRadius: 3,
         cursor: onClick ? 'pointer' : 'default',
         transition: 'transform 0.2s, box-shadow 0.2s',
         '&:hover': onClick
@@ -482,7 +483,8 @@ const StatCardComponent: React.FC<StatCard & { loading?: boolean }> = ({
                       sx={{
                         width: '100%',
                         height: 6,
-                        bgcolor: 'grey.200',
+                        bgcolor:
+                          theme.palette.mode === 'dark' ? 'rgba(255,255,255,0.1)' : 'grey.200',
                         borderRadius: 3,
                         overflow: 'hidden',
                       }}
@@ -512,7 +514,11 @@ const StatCardComponent: React.FC<StatCard & { loading?: boolean }> = ({
                 borderRadius: 2,
                 ...(customGradient
                   ? { background: customGradient, color: '#fff' }
-                  : { bgcolor: `${bgColor}15`, color: bgColor }),
+                  : {
+                      bgcolor:
+                        theme.palette.mode === 'dark' ? alpha(bgColor, 0.15) : alpha(bgColor, 0.08),
+                      color: bgColor,
+                    }),
                 display: 'flex',
                 alignItems: 'center',
                 justifyContent: 'center',
@@ -615,7 +621,7 @@ const ChartCardComponent: React.FC<ChartCard> = ({
     <Paper
       variant={variant}
       sx={{
-        borderRadius: 2,
+        borderRadius: 3,
         height: expandable && !expanded ? 'auto' : height,
         display: 'flex',
         flexDirection: 'column',
@@ -758,7 +764,7 @@ const CardGroupComponent: React.FC<CardGroup & { loading?: boolean }> = ({
   const [activeTab, setActiveTab] = useState(0);
 
   return (
-    <Paper sx={{ borderRadius: 2, mb: 2 }}>
+    <Paper sx={{ borderRadius: 3, mb: 2 }}>
       <Box
         sx={{
           p: 2,
@@ -961,7 +967,7 @@ export const DashboardTemplate: React.FC<DashboardTemplateProps> = ({
 
     if (statsLayout === 'tabs') {
       return (
-        <Paper sx={{ borderRadius: 2, mb: 3 }}>
+        <Paper sx={{ borderRadius: 3, mb: 3 }}>
           <Tabs
             value={statsTab}
             onChange={(_, newValue) => setStatsTab(newValue)}
@@ -1080,7 +1086,7 @@ export const DashboardTemplate: React.FC<DashboardTemplateProps> = ({
 
     if (chartsLayout === 'tabs') {
       return (
-        <Paper sx={{ borderRadius: 2, mb: 3 }}>
+        <Paper sx={{ borderRadius: 3, mb: 3 }}>
           <Tabs
             value={activeChartTab}
             onChange={(_, newValue) => setActiveChartTab(newValue)}
@@ -1189,7 +1195,7 @@ export const DashboardTemplate: React.FC<DashboardTemplateProps> = ({
 
     if (customRenderers?.recentItem) {
       return (
-        <Paper sx={{ borderRadius: 2 }}>
+        <Paper sx={{ borderRadius: 3 }}>
           <Box sx={{ p: 2, borderBottom: 1, borderColor: 'divider' }}>
             <Typography
               variant='subtitle1'
@@ -1207,7 +1213,7 @@ export const DashboardTemplate: React.FC<DashboardTemplateProps> = ({
     }
 
     return (
-      <Paper sx={{ borderRadius: 2 }}>
+      <Paper sx={{ borderRadius: 3 }}>
         <Box sx={{ p: 2, borderBottom: 1, borderColor: 'divider' }}>
           <Typography
             variant='subtitle1'
@@ -1355,7 +1361,7 @@ export const DashboardTemplate: React.FC<DashboardTemplateProps> = ({
 
     if (customRenderers?.quickAction) {
       return (
-        <Paper sx={{ borderRadius: 2 }}>
+        <Paper sx={{ borderRadius: 3 }}>
           <Box sx={{ p: 2, borderBottom: 1, borderColor: 'divider' }}>
             <Typography
               variant='subtitle1'
@@ -1373,7 +1379,7 @@ export const DashboardTemplate: React.FC<DashboardTemplateProps> = ({
     }
 
     return (
-      <Paper sx={{ borderRadius: 2 }}>
+      <Paper sx={{ borderRadius: 3 }}>
         <Box sx={{ p: 2, borderBottom: 1, borderColor: 'divider' }}>
           <Typography
             variant='subtitle1'

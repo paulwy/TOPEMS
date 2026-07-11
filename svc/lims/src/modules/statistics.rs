@@ -1,9 +1,10 @@
-use axum::{extract::State, routing::get, Json, Router};
+use axum::{extract::State, routing::get, Extension, Json, Router};
 use serde::Serialize;
 use sqlx::Row;
 use topems_shared::ApiResponse;
 
-use crate::AppState;
+use crate::middleware::tenant::TenantContext;
+use crate::shared::AppState;
 
 pub fn create_routes() -> Router<AppState> {
     Router::new().route("/api/lims/statistics", get(get_statistics))
@@ -31,7 +32,9 @@ pub struct Statistics {
     pub disabled_instruments: i64,
 }
 
-pub async fn get_statistics(State(state): State<crate::AppState>) -> Json<ApiResponse<Statistics>> {
+pub async fn get_statistics(
+    State(state): State<crate::shared::AppState>,
+) -> Json<ApiResponse<Statistics>> {
     let total_samples = sqlx::query("SELECT COUNT(*) FROM qa_lab_samples")
         .fetch_one(&state.pool)
         .await

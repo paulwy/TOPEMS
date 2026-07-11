@@ -364,8 +364,7 @@ pub async fn quick_bootstrap_with_db(
     db_url: Option<&str>,
 ) -> Result<()> {
     let database_url = db_url.map(|s| s.to_string()).unwrap_or_else(|| {
-        env::var("DATABASE_URL")
-            .unwrap_or_else(|_| "postgres://topems:topems_secret@localhost:5432/topems".to_string())
+        env::var("DATABASE_URL").expect("DATABASE_URL environment variable is required")
     });
 
     let config = BootstrapConfig {

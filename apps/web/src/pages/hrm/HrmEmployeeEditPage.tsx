@@ -14,6 +14,7 @@ import {
   type Position,
 } from '@/api/hrm';
 import { useNotification } from '@/hooks/useNotification';
+import { HRM_PATHS } from '@/modules/hrm/config';
 import { logger } from '@/utils/logger';
 
 const employeeSchema = z.object({
@@ -131,7 +132,7 @@ const HrmEmployeeEditPage: React.FC = () => {
         const res = await employeeApi.update(id, formData);
         if (res.code === 200) {
           success('员工信息更新成功');
-          navigate(`/hrm/employee/${id}`);
+          navigate(HRM_PATHS.employeeDetail.replace(':id', id));
         } else {
           error(res.message || '更新失败');
         }
@@ -147,9 +148,9 @@ const HrmEmployeeEditPage: React.FC = () => {
 
   const handleCancel = () => {
     if (id) {
-      navigate(`/hrm/employee/${id}`);
+      navigate(HRM_PATHS.employeeDetail.replace(':id', id));
     } else {
-      navigate('/hrm/employees');
+      navigate(HRM_PATHS.employees);
     }
   };
 

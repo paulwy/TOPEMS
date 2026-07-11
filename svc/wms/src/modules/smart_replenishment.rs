@@ -137,7 +137,7 @@ fn rule_row_to_json(row: &sqlx::postgres::PgRow) -> serde_json::Value {
     })
 }
 
-async fn list_suggestions(
+pub async fn list_suggestions(
     State(state): State<ApiState>,
     Extension(claims): Extension<Claims>,
     Query(params): Query<PaginationParams>,
@@ -216,7 +216,7 @@ async fn list_suggestions(
     }
 }
 
-async fn get_suggestion(
+pub async fn get_suggestion(
     State(state): State<ApiState>,
     Extension(claims): Extension<Claims>,
     Path(id): Path<Uuid>,
@@ -260,7 +260,7 @@ pub struct ReplenishmentComputeRequest {
     pub consumption_period_days: Option<i32>,
 }
 
-async fn compute_replenishment(
+pub async fn compute_replenishment(
     State(state): State<ApiState>,
     Extension(claims): Extension<Claims>,
     headers: HeaderMap,
@@ -465,7 +465,7 @@ pub struct ConfirmSuggestionRequest {
     pub remarks: Option<String>,
 }
 
-async fn confirm_suggestion(
+pub async fn confirm_suggestion(
     State(state): State<ApiState>,
     Extension(claims): Extension<Claims>,
     Path(id): Path<Uuid>,
@@ -571,7 +571,7 @@ async fn confirm_suggestion(
     response
 }
 
-async fn list_rules(
+pub async fn list_rules(
     State(state): State<ApiState>,
     Extension(claims): Extension<Claims>,
     Query(params): Query<PaginationParams>,
@@ -655,7 +655,7 @@ pub struct CreateReplenishmentRuleRequest {
     pub remarks: Option<String>,
 }
 
-async fn create_rule(
+pub async fn create_rule(
     State(state): State<ApiState>,
     Extension(claims): Extension<Claims>,
     headers: HeaderMap,
@@ -746,7 +746,7 @@ async fn create_rule(
     response
 }
 
-async fn get_rule(
+pub async fn get_rule(
     State(state): State<ApiState>,
     Extension(claims): Extension<Claims>,
     Path(id): Path<Uuid>,
@@ -796,7 +796,7 @@ pub struct UpdateReplenishmentRuleRequest {
     pub remarks: Option<String>,
 }
 
-async fn update_rule(
+pub async fn update_rule(
     State(state): State<ApiState>,
     Extension(claims): Extension<Claims>,
     Path(id): Path<Uuid>,
@@ -902,7 +902,7 @@ async fn update_rule(
     response
 }
 
-async fn delete_rule(
+pub async fn delete_rule(
     State(state): State<ApiState>,
     Extension(claims): Extension<Claims>,
     Path(id): Path<Uuid>,
@@ -960,7 +960,7 @@ async fn delete_rule(
     response
 }
 
-async fn get_statistics(
+pub async fn get_statistics(
     State(state): State<ApiState>,
     Extension(claims): Extension<Claims>,
     Query(params): Query<serde_json::Value>,
@@ -1015,7 +1015,7 @@ async fn get_statistics(
     }
 }
 
-async fn list_orders(
+pub async fn list_orders(
     State(state): State<ApiState>,
     Extension(claims): Extension<Claims>,
     Query(params): Query<PaginationParams>,
@@ -1079,7 +1079,7 @@ async fn list_orders(
     }
 }
 
-async fn create_order(
+pub async fn create_order(
     State(state): State<ApiState>,
     Extension(claims): Extension<Claims>,
     Json(req): Json<serde_json::Value>,
@@ -1179,7 +1179,7 @@ async fn create_order(
     }
 }
 
-async fn get_order(
+pub async fn get_order(
     State(state): State<ApiState>,
     Extension(claims): Extension<Claims>,
     Path(id): Path<Uuid>,
@@ -1223,7 +1223,7 @@ async fn get_order(
     }
 }
 
-async fn update_order(
+pub async fn update_order(
     State(state): State<ApiState>,
     Extension(claims): Extension<Claims>,
     Path(id): Path<Uuid>,
@@ -1279,7 +1279,7 @@ async fn update_order(
     }
 }
 
-async fn delete_order(
+pub async fn delete_order(
     State(state): State<ApiState>,
     Extension(claims): Extension<Claims>,
     Path(id): Path<Uuid>,
@@ -1311,7 +1311,7 @@ async fn delete_order(
     }
 }
 
-async fn list_order_items(
+pub async fn list_order_items(
     State(state): State<ApiState>,
     Extension(claims): Extension<Claims>,
     Path(id): Path<Uuid>,
@@ -1367,7 +1367,7 @@ async fn list_order_items(
     }
 }
 
-async fn confirm_order(
+pub async fn confirm_order(
     State(state): State<ApiState>,
     Extension(claims): Extension<Claims>,
     Path(id): Path<Uuid>,
@@ -1411,7 +1411,7 @@ async fn confirm_order(
     }
 }
 
-async fn complete_order(
+pub async fn complete_order(
     State(state): State<ApiState>,
     Extension(claims): Extension<Claims>,
     Path(id): Path<Uuid>,
@@ -1455,7 +1455,7 @@ async fn complete_order(
     }
 }
 
-async fn list_safety_stock(
+pub async fn list_safety_stock(
     State(state): State<ApiState>,
     Extension(claims): Extension<Claims>,
     Query(params): Query<PaginationParams>,
@@ -1525,7 +1525,7 @@ async fn list_safety_stock(
     }
 }
 
-async fn get_safety_stock(
+pub async fn get_safety_stock(
     State(state): State<ApiState>,
     Extension(claims): Extension<Claims>,
     Path(id): Path<Uuid>,
@@ -1576,7 +1576,7 @@ async fn get_safety_stock(
     }
 }
 
-async fn update_safety_stock(
+pub async fn update_safety_stock(
     State(state): State<ApiState>,
     Extension(claims): Extension<Claims>,
     Path(id): Path<Uuid>,
@@ -1651,7 +1651,7 @@ async fn update_safety_stock(
     }
 }
 
-async fn batch_update_safety_stock(
+pub async fn batch_update_safety_stock(
     State(state): State<ApiState>,
     Extension(claims): Extension<Claims>,
     Json(req): Json<serde_json::Value>,
@@ -1714,7 +1714,7 @@ async fn batch_update_safety_stock(
     ))
 }
 
-async fn calculate_safety_stock(
+pub async fn calculate_safety_stock(
     State(state): State<ApiState>,
     Extension(claims): Extension<Claims>,
     Json(_req): Json<serde_json::Value>,

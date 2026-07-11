@@ -87,7 +87,7 @@ export const legacyRedirects = [
     path: '/system/settings',
     element: (
       <Navigate
-        to='/iam/settings'
+        to='/admin/system-settings'
         replace
       />
     ),
@@ -114,7 +114,7 @@ export const legacyRedirects = [
     path: '/pm/tasks',
     element: (
       <Navigate
-        to='/pm/task-management'
+        to='/pm/task-kanban'
         replace
       />
     ),
@@ -123,7 +123,7 @@ export const legacyRedirects = [
     path: '/pm/gantt',
     element: (
       <Navigate
-        to='/pm/gantt-chart'
+        to='/pm/timeline'
         replace
       />
     ),
@@ -132,7 +132,7 @@ export const legacyRedirects = [
     path: '/pm/risk',
     element: (
       <Navigate
-        to='/pm/risk-management'
+        to='/pm/dashboard'
         replace
       />
     ),
@@ -141,7 +141,7 @@ export const legacyRedirects = [
     path: '/pm/timeline',
     element: (
       <Navigate
-        to='/pm/milestones'
+        to='/pm/dashboard'
         replace
       />
     ),
@@ -168,7 +168,7 @@ export const legacyRedirects = [
     path: '/ai/chat',
     element: (
       <Navigate
-        to='/ai/conversation'
+        to='/ai/chat'
         replace
       />
     ),
@@ -177,7 +177,7 @@ export const legacyRedirects = [
     path: '/ai/assistant',
     element: (
       <Navigate
-        to='/ai/conversation'
+        to='/ai/chat'
         replace
       />
     ),
@@ -186,7 +186,7 @@ export const legacyRedirects = [
     path: '/gis/fence',
     element: (
       <Navigate
-        to='/gis/geofence'
+        to='/gis/fence'
         replace
       />
     ),
@@ -195,7 +195,7 @@ export const legacyRedirects = [
     path: '/gis/tracking',
     element: (
       <Navigate
-        to='/gis/location-tracking'
+        to='/gis/tracking'
         replace
       />
     ),
@@ -1251,7 +1251,7 @@ export const legacyRedirects = [
     path: '/meeting-rooms',
     element: (
       <Navigate
-        to='/oa/meeting-rooms'
+        to='/oa/meeting-room'
         replace
       />
     ),
@@ -1269,7 +1269,7 @@ export const legacyRedirects = [
     path: '/announcements',
     element: (
       <Navigate
-        to='/oa/announcements'
+        to='/oa/announcement'
         replace
       />
     ),
@@ -1666,7 +1666,7 @@ export const legacyRedirects = [
     path: '/gis/fence',
     element: (
       <Navigate
-        to='/gis/geofence'
+        to='/gis/fence'
         replace
       />
     ),
@@ -1675,7 +1675,7 @@ export const legacyRedirects = [
     path: '/gis/tracking',
     element: (
       <Navigate
-        to='/gis/location-tracking'
+        to='/gis/tracking'
         replace
       />
     ),
@@ -2049,7 +2049,7 @@ export const legacyRedirects = [
     path: '/lims/sample/:id',
     element: (
       <Navigate
-        to='/lims/dashboard'
+        to='/lims/sample'
         replace
       />
     ),
@@ -2058,7 +2058,7 @@ export const legacyRedirects = [
     path: '/lims/task/:id',
     element: (
       <Navigate
-        to='/lims/dashboard'
+        to='/lims/sample'
         replace
       />
     ),
@@ -2067,7 +2067,7 @@ export const legacyRedirects = [
     path: '/lims/instrument/:id',
     element: (
       <Navigate
-        to='/lims/dashboard'
+        to='/lims/sample'
         replace
       />
     ),
@@ -2076,7 +2076,7 @@ export const legacyRedirects = [
     path: '/lims/instruments-manage',
     element: (
       <Navigate
-        to='/lims/dashboard'
+        to='/lims/sample'
         replace
       />
     ),
@@ -2085,7 +2085,7 @@ export const legacyRedirects = [
     path: '/lims/sample-receive',
     element: (
       <Navigate
-        to='/lims/dashboard'
+        to='/lims/sample'
         replace
       />
     ),
@@ -2094,7 +2094,7 @@ export const legacyRedirects = [
     path: '/lims/inspection-tasks',
     element: (
       <Navigate
-        to='/lims/dashboard'
+        to='/lims/sample'
         replace
       />
     ),
@@ -2103,7 +2103,7 @@ export const legacyRedirects = [
     path: '/lims/inspection-results',
     element: (
       <Navigate
-        to='/lims/dashboard'
+        to='/lims/sample'
         replace
       />
     ),
@@ -2112,7 +2112,7 @@ export const legacyRedirects = [
     path: '/lims/instrument-data',
     element: (
       <Navigate
-        to='/lims/dashboard'
+        to='/lims/sample'
         replace
       />
     ),
@@ -2166,7 +2166,7 @@ export const legacyRedirects = [
     path: '/ehs/hazard/:id',
     element: (
       <Navigate
-        to='/ehs/dashboard'
+        to='/ehs/check'
         replace
       />
     ),
@@ -2175,7 +2175,7 @@ export const legacyRedirects = [
     path: '/ehs/hazard-management',
     element: (
       <Navigate
-        to='/ehs/dashboard'
+        to='/ehs/check'
         replace
       />
     ),
@@ -2184,7 +2184,7 @@ export const legacyRedirects = [
     path: '/ehs/incident',
     element: (
       <Navigate
-        to='/ehs/dashboard'
+        to='/ehs/check'
         replace
       />
     ),
@@ -2193,7 +2193,7 @@ export const legacyRedirects = [
     path: '/ehs/environment',
     element: (
       <Navigate
-        to='/ehs/dashboard'
+        to='/ehs/check'
         replace
       />
     ),
@@ -2202,7 +2202,7 @@ export const legacyRedirects = [
     path: '/ehs/health',
     element: (
       <Navigate
-        to='/ehs/dashboard'
+        to='/ehs/check'
         replace
       />
     ),
@@ -2211,7 +2211,7 @@ export const legacyRedirects = [
     path: '/ehs/emergency',
     element: (
       <Navigate
-        to='/ehs/dashboard'
+        to='/ehs/check'
         replace
       />
     ),
@@ -2220,7 +2220,7 @@ export const legacyRedirects = [
     path: '/ehs/training',
     element: (
       <Navigate
-        to='/ehs/dashboard'
+        to='/ehs/check'
         replace
       />
     ),
@@ -2229,7 +2229,7 @@ export const legacyRedirects = [
     path: '/ehs/compliance',
     element: (
       <Navigate
-        to='/ehs/dashboard'
+        to='/ehs/check'
         replace
       />
     ),

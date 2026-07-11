@@ -328,7 +328,9 @@ export function getPluginServices(): ServiceConfig[] {
 export function generateViteProxyConfig(): string {
   const lines: string[] = [];
   for (const svc of SERVICES) {
-    const target = svc.core ? 'http://localhost:8000' : `http://localhost:${getServicePort(svc.code)}`;
+    const target = svc.core
+      ? 'http://localhost:8000'
+      : `http://localhost:${getServicePort(svc.code)}`;
     lines.push(`    '${svc.devPath}': { target: '${target}', changeOrigin: true },`);
     lines.push(`    '${svc.healthPath}': { target: '${target}', changeOrigin: true },`);
   }

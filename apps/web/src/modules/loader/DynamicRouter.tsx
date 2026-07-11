@@ -11,16 +11,49 @@ declare const __webpack_share_scopes__: any;
 declare const __webpack_init_sharing__: (scope: string) => Promise<void>;
 /* eslint-enable @typescript-eslint/naming-convention */
 
-const remoteModuleCache: Map<string, any> = new Map();
+interface CacheEntry<T> {
+  data: T;
+  timestamp: number;
+  expiresAt: number;
+}
+
+const remoteModuleCache: Map<string, CacheEntry<React.ComponentType>> = new Map();
+const routeConfigCache: Map<string, DynamicRouteProps[]> = new Map();
+const CACHE_TTL = 5 * 60 * 1000;
+const MAX_CACHE_SIZE = 100;
+
+function cleanupOldCache(): void {
+  const now = Date.now();
+
+  remoteModuleCache.forEach((entry, key) => {
+    if (entry.expiresAt < now) {
+      remoteModuleCache.delete(key);
+    }
+  });
+
+  if (remoteModuleCache.size > MAX_CACHE_SIZE) {
+    const oldestKeys = Array.from(remoteModuleCache.keys()).sort(
+      (a, b) =>
+        (remoteModuleCache.get(a)?.timestamp || 0) - (remoteModuleCache.get(b)?.timestamp || 0)
+    );
+    const keysToRemove = oldestKeys.slice(0, remoteModuleCache.size - MAX_CACHE_SIZE);
+    keysToRemove.forEach((key) => remoteModuleCache.delete(key));
+  }
+}
 
 async function loadRemoteModule(
   remoteName: string,
-  modulePath: string
+  modulePath: string,
+  forceRefresh = false
 ): Promise<React.ComponentType> {
   const cacheKey = `${remoteName}:${modulePath}`;
 
-  if (remoteModuleCache.has(cacheKey)) {
-    return remoteModuleCache.get(cacheKey);
+  if (!forceRefresh && remoteModuleCache.has(cacheKey)) {
+    const entry = remoteModuleCache.get(cacheKey)!;
+    if (entry.expiresAt > Date.now()) {
+      return entry.data;
+    }
+    remoteModuleCache.delete(cacheKey);
   }
 
   try {
@@ -37,7 +70,14 @@ async function loadRemoteModule(
     const module = await factory();
 
     const resolvedModule = module.default || module;
-    remoteModuleCache.set(cacheKey, resolvedModule);
+    const now = Date.now();
+    remoteModuleCache.set(cacheKey, {
+      data: resolvedModule,
+      timestamp: now,
+      expiresAt: now + CACHE_TTL,
+    });
+
+    cleanupOldCache();
 
     return resolvedModule;
   } catch (error: unknown) {

@@ -1,11 +1,14 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { Box, Typography, useTheme, useMediaQuery, Drawer } from '@mui/material';
 
+import { useTranslation } from 'react-i18next';
 import { useLocation, useNavigate } from 'react-router-dom';
 import { usePermission } from '../../hooks/usePermission';
 import { navigationRegistryV2 } from '@/lib/navigation';
 import type { NavItem } from '@/lib/navigation/types';
-import { useAppStore } from '@/store';
+import { useUIStore } from '@/store';
+import { getUnreadCount } from '@/api/notification';
+import { apiLogger } from '@/utils/logger';
 import { FloatingAIHelper } from '../ai/FloatingAIHelper';
 import { MobileNav } from './MobileNav';
 import { Sidebar as AIPluginSidebar } from './Sidebar';
@@ -15,30 +18,6 @@ import { CommandPalette } from '../ui/CommandPalette';
 import { BottomTabBar, type TabItem } from '../mobile/BottomTabBar';
 import { PageTransition } from '../mobile/PageTransition';
 import { Home, ListTodo, ScanLine, CheckSquare, User } from 'lucide-react';
-
-const SkipToContent = () => (
-  <Box
-    component='a'
-    href='#main-content'
-    sx={{
-      position: 'absolute',
-      left: '-9999px',
-      top: 0,
-      zIndex: 10000,
-      p: 2,
-      bgcolor: 'primary.main',
-      color: 'white',
-      textDecoration: 'none',
-      borderRadius: '0 0 8px 0',
-      fontWeight: 600,
-      '&:focus': {
-        left: 0,
-      },
-    }}
-  >
-    跳转到主要内容
-  </Box>
-);
 
 function getModuleFromPath(pathname: string): string | null {
   const segments = pathname.split('/').filter(Boolean);
@@ -51,12 +30,36 @@ interface GlobalLayoutProps {
 }
 
 export const GlobalLayout: React.FC<GlobalLayoutProps> = ({ children }) => {
+  const { t } = useTranslation();
   const location = useLocation();
   const theme = useTheme();
   const { checkPermission } = usePermission();
   const navigate = useNavigate();
-  const sidebarCollapsed = useAppStore((state) => state.sidebarCollapsed);
-  const toggleSidebarCollapsed = useAppStore((state) => state.toggleSidebarCollapsed);
+  const sidebarCollapsed = useUIStore((state) => state.sidebarCollapsed);
+  const toggleSidebarCollapsed = useUIStore((state) => state.toggleSidebarCollapsed);
+
+  // 动态获取未读通知数（移动端审批 Tab 徽章）
+  const [unreadCount, setUnreadCount] = useState<number>(0);
+
+  useEffect(() => {
+    let cancelled = false;
+    const fetchUnread = async () => {
+      try {
+        const res = await getUnreadCount();
+        if (!cancelled && res.success && typeof res.data === 'number') {
+          setUnreadCount(res.data);
+        }
+      } catch (err) {
+        apiLogger.debug('Failed to fetch unread count for badge:', err);
+      }
+    };
+    fetchUnread();
+    const timer = setInterval(fetchUnread, 60000);
+    return () => {
+      cancelled = true;
+      clearInterval(timer);
+    };
+  }, []);
 
   // 响应式断点：优化计划要求 < 900px 折叠，< 768px 隐藏为 overlay
   // md = 900px，自定义 tablet = 768px
@@ -155,16 +158,16 @@ export const GlobalLayout: React.FC<GlobalLayoutProps> = ({ children }) => {
 
   // 移动端底部Tab配置
   const mobileTabs: TabItem[] = [
-    { id: 'home', label: '首页', icon: <Home style={{ width: 22, height: 22 }} /> },
-    { id: 'tasks', label: '任务', icon: <ListTodo style={{ width: 22, height: 22 }} /> },
-    { id: 'scan', label: '扫码', icon: <ScanLine style={{ width: 22, height: 22 }} /> },
+    { id: 'home', label: t('layout.home'), icon: <Home style={{ width: 22, height: 22 }} /> },
+    { id: 'tasks', label: t('layout.tasks'), icon: <ListTodo style={{ width: 22, height: 22 }} /> },
+    { id: 'scan', label: t('layout.scan'), icon: <ScanLine style={{ width: 22, height: 22 }} /> },
     {
       id: 'approval',
-      label: '审批',
+      label: t('layout.approval'),
       icon: <CheckSquare style={{ width: 22, height: 22 }} />,
-      badge: 3,
+      badge: unreadCount > 0 ? unreadCount : undefined,
     },
-    { id: 'profile', label: '我的', icon: <User style={{ width: 22, height: 22 }} /> },
+    { id: 'profile', label: t('layout.profile'), icon: <User style={{ width: 22, height: 22 }} /> },
   ];
 
   // 根据路径判断当前激活的Tab
@@ -190,7 +193,7 @@ export const GlobalLayout: React.FC<GlobalLayoutProps> = ({ children }) => {
         navigate('/mobile/scan');
         break;
       case 'approval':
-        navigate('/approvals');
+        navigate('/mobile/approvals');
         break;
       case 'profile':
         navigate('/mobile/profile');
@@ -200,7 +203,27 @@ export const GlobalLayout: React.FC<GlobalLayoutProps> = ({ children }) => {
 
   return (
     <Box sx={{ display: 'flex', flexDirection: 'column', minHeight: '100vh' }}>
-      <SkipToContent />
+      <Box
+        component='a'
+        href='#main-content'
+        sx={{
+          position: 'absolute',
+          left: '-9999px',
+          top: 0,
+          zIndex: 10000,
+          p: 2,
+          bgcolor: 'primary.main',
+          color: 'white',
+          textDecoration: 'none',
+          borderRadius: '0 0 8px 0',
+          fontWeight: 600,
+          '&:focus': {
+            left: 0,
+          },
+        }}
+      >
+        {t('layout.skip_to_content')}
+      </Box>
 
       <AppHeader
         mobileMenuOpen={mobileMenuOpen}
@@ -264,12 +287,12 @@ export const GlobalLayout: React.FC<GlobalLayoutProps> = ({ children }) => {
               color='text.secondary'
               sx={{ fontSize: 12 }}
             >
-              © {new Date().getFullYear()} TOPEMS 化工新材料数字化平台
+              {t('layout.copyright', { year: new Date().getFullYear() })}
             </Typography>
             <Box sx={{ display: 'flex', gap: 2 }}>
               <Typography
                 component='a'
-                href='#'
+                href='/help'
                 sx={{
                   fontSize: 12,
                   color: 'text.secondary',
@@ -278,11 +301,11 @@ export const GlobalLayout: React.FC<GlobalLayoutProps> = ({ children }) => {
                   '&:hover': { color: 'primary.main' },
                 }}
               >
-                帮助中心
+                {t('layout.help_center')}
               </Typography>
               <Typography
                 component='a'
-                href='#'
+                href='/doc/knowledge-base'
                 sx={{
                   fontSize: 12,
                   color: 'text.secondary',
@@ -291,11 +314,11 @@ export const GlobalLayout: React.FC<GlobalLayoutProps> = ({ children }) => {
                   '&:hover': { color: 'primary.main' },
                 }}
               >
-                使用文档
+                {t('layout.user_guide')}
               </Typography>
               <Typography
                 component='a'
-                href='#'
+                href='mailto:support@topems.com'
                 sx={{
                   fontSize: 12,
                   color: 'text.secondary',
@@ -304,7 +327,7 @@ export const GlobalLayout: React.FC<GlobalLayoutProps> = ({ children }) => {
                   '&:hover': { color: 'primary.main' },
                 }}
               >
-                联系支持
+                {t('layout.contact_support')}
               </Typography>
             </Box>
           </Box>

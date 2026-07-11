@@ -240,7 +240,7 @@ const ScmSupplierPage: React.FC = () => {
     },
     {
       label: '详情',
-      onClick: (row: Supplier) => navigate(`/scm/suppliers/${row.id}`),
+      onClick: (row: Supplier) => navigate('/scm/suppliers'),
     },
   ];
 

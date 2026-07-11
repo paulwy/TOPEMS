@@ -51,3 +51,29 @@ export interface WorkflowTask {
   comment?: string;
   dueDate?: string;
 }
+
+export interface WorkflowStep {
+  id: string;
+  stepNumber: number;
+  nodeId: string;
+  nodeName: string;
+  status: 'pending' | 'completed' | 'skipped';
+  assigneeId?: string;
+  completedAt?: string;
+}
+
+export interface WorkflowTransition {
+  id: string;
+  sourceNodeId: string;
+  targetNodeId: string;
+  condition?: string;
+  priority?: number;
+}
+
+export interface WorkflowAction {
+  id: string;
+  type: 'approve' | 'reject' | 'delegate' | 'cancel';
+  userId: string;
+  comment?: string;
+  timestamp: string;
+}

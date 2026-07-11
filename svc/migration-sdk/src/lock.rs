@@ -20,7 +20,7 @@ impl DistLock {
         Self {
             redis_url: redis_url.to_string(),
             lock_prefix: "migration:lock:".to_string(),
-            default_ttl: Duration::from_secs(300), // 5分钟默认超时
+            default_ttl: Duration::from_secs(300),
         }
     }
 
@@ -58,7 +58,6 @@ impl DistLock {
         let client = self.get_client()?;
         let mut conn = client.get_multiplexed_async_connection().await?;
 
-        // 使用 SET NX EX 原子操作
         let result: bool = redis::cmd("SET")
             .arg(&lock_key)
             .arg(&lock_value)
@@ -67,7 +66,7 @@ impl DistLock {
             .arg(ttl.as_secs())
             .query_async(&mut conn)
             .await
-            .map_err(|e| MigrationError::Redis(e))?;
+            .map_err(MigrationError::Redis)?;
 
         if result {
             Ok(Some(LockGuard {
@@ -86,7 +85,6 @@ impl DistLock {
         let client = self.get_client()?;
         let mut conn = client.get_multiplexed_async_connection().await?;
 
-        // 使用 Lua 脚本确保原子性删除
         let script = r#"
             if redis.call("get", KEYS[1]) == ARGV[1] then
                 return redis.call("del", KEYS[1])
@@ -102,7 +100,7 @@ impl DistLock {
             .arg(lock_value)
             .query_async(&mut conn)
             .await
-            .map_err(|e| MigrationError::Redis(e))?;
+            .map_err(MigrationError::Redis)?;
 
         Ok(result == 1)
     }
@@ -123,7 +121,6 @@ impl DistLock {
         let client = self.get_client()?;
         let mut conn = client.get_multiplexed_async_connection().await?;
 
-        // 使用 Lua 脚本确保原子性
         let script = r#"
             if redis.call("get", KEYS[1]) == ARGV[1] then
                 return redis.call("expire", KEYS[1], ARGV[2])
@@ -140,7 +137,7 @@ impl DistLock {
             .arg(ttl.as_secs())
             .query_async(&mut conn)
             .await
-            .map_err(|e| MigrationError::Redis(e))?;
+            .map_err(MigrationError::Redis)?;
 
         Ok(result == 1)
     }
@@ -181,16 +178,12 @@ impl LockGuard {
 impl Drop for LockGuard {
     fn drop(&mut self) {
         if self.acquired {
-            // 异步释放锁
             let redis_url = self.redis_url.clone();
             let lock_key = self.lock_key.clone();
-            let _lock_value = self.lock_value.clone();
 
             tokio::spawn(async move {
-                if let Ok(lock) = DistLock::new(&redis_url).acquire(&lock_key).await {
-                    if lock.is_some() {
-                        let _ = lock.unwrap().release().await;
-                    }
+                if let Ok(Some(lock_guard)) = DistLock::new(&redis_url).acquire(&lock_key).await {
+                    let _ = lock_guard.release().await;
                 }
             });
         }
@@ -215,9 +208,6 @@ impl LockContext {
     }
 
     pub fn release(&mut self) {
-        if let Some(_guard) = self.lock.take() {
-            // 注意：这里需要同步等待
-            // 实际使用中建议使用 release().await
-        }
+        if let Some(_guard) = self.lock.take() {}
     }
 }

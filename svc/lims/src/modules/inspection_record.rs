@@ -1,9 +1,10 @@
-use axum::{extract::State, routing::get, Json, Router};
+use axum::{extract::State, routing::get, Extension, Json, Router};
 use serde::{Deserialize, Serialize};
 use sqlx::{types::Uuid, Row};
 use topems_shared::ApiResponse;
 
-use crate::AppState;
+use crate::middleware::tenant::TenantContext;
+use crate::shared::AppState;
 
 pub fn create_routes() -> Router<AppState> {
     Router::new()
@@ -24,6 +25,7 @@ pub struct RecordQuery {
 #[derive(Debug, Serialize)]
 pub struct InspectionRecord {
     pub id: String,
+    pub tenant_id: String,
     pub record_no: String,
     pub task_id: String,
     pub task_no: Option<String>,
@@ -43,7 +45,7 @@ pub struct CreateRecordRequest {
 }
 
 pub async fn list_records(
-    State(state): State<crate::AppState>,
+    State(state): State<crate::shared::AppState>,
     axum::extract::Query(query): axum::extract::Query<RecordQuery>,
 ) -> Json<ApiResponse<Vec<InspectionRecord>>> {
     let page = query.page.unwrap_or(1);
@@ -80,6 +82,7 @@ pub async fn list_records(
                 .into_iter()
                 .map(|row| InspectionRecord {
                     id: row.get("id"),
+                    tenant_id: row.get("tenant_id"),
                     record_no: row.get("record_no"),
                     task_id: row.get("task_id"),
                     task_no: row.get("task_no"),
@@ -100,7 +103,7 @@ pub async fn list_records(
 }
 
 pub async fn create_record(
-    State(state): State<crate::AppState>,
+    State(state): State<crate::shared::AppState>,
     Json(req): Json<CreateRecordRequest>,
 ) -> Json<ApiResponse<InspectionRecord>> {
     let record_no = format!(
@@ -136,6 +139,7 @@ pub async fn create_record(
             Json(ApiResponse::success(
                 InspectionRecord {
                     id: r.get("id"),
+                    tenant_id: r.get("tenant_id"),
                     record_no: r.get("record_no"),
                     task_id: r.get("task_id"),
                     task_no,
@@ -156,7 +160,7 @@ pub async fn create_record(
 }
 
 pub async fn get_record(
-    State(state): State<crate::AppState>,
+    State(state): State<crate::shared::AppState>,
     axum::extract::Path(id): axum::extract::Path<String>,
 ) -> Json<ApiResponse<InspectionRecord>> {
     let id = match Uuid::parse_str(&id) {
@@ -175,6 +179,7 @@ pub async fn get_record(
         Ok(r) => Json(ApiResponse::success(
             InspectionRecord {
                 id: r.get("id"),
+                tenant_id: r.get("tenant_id"),
                 record_no: r.get("record_no"),
                 task_id: r.get("task_id"),
                 task_no: r.get("task_no"),
@@ -194,7 +199,7 @@ pub async fn get_record(
 }
 
 pub async fn delete_record(
-    State(state): State<crate::AppState>,
+    State(state): State<crate::shared::AppState>,
     axum::extract::Path(id): axum::extract::Path<String>,
 ) -> Json<ApiResponse<bool>> {
     let id = match Uuid::parse_str(&id) {

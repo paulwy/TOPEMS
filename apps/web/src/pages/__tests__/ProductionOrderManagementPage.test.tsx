@@ -2,9 +2,12 @@ import React from 'react';
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { render } from '@testing-library/react';
 import { BrowserRouter } from 'react-router-dom';
+import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import ProductionOrderManagementPage from '../mes/ProductionOrderManagementPage';
 import { mesApi } from '@/api/mes';
 import { useAppStore } from '@/store';
+
+const queryClient = new QueryClient();
 
 vi.mock('@/api/mes', () => ({
   mesApi: {
@@ -45,9 +48,11 @@ describe('ProductionOrderManagementPage', () => {
 
   it('should render without crashing', () => {
     const { container } = render(
-      <BrowserRouter>
-        <ProductionOrderManagementPage />
-      </BrowserRouter>
+      <QueryClientProvider client={queryClient}>
+        <BrowserRouter>
+          <ProductionOrderManagementPage />
+        </BrowserRouter>
+      </QueryClientProvider>
     );
     expect(container).toBeDefined();
   });

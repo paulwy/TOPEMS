@@ -1,30 +1,9 @@
-import axios from 'axios';
+import { apiClient } from '../client';
 import type { ApiResponse } from '../../types/finance';
-
-const createApiClient = () => {
-  const client = axios.create({
-    baseURL: '/api',
-    timeout: 60000,
-    headers: {
-      'Content-Type': 'application/json',
-      Accept: 'application/json',
-    },
-  });
-
-  client.interceptors.request.use((config) => {
-    const token = localStorage.getItem('token');
-    if (token) {
-      config.headers['Authorization'] = `Bearer ${token}`;
-    }
-    return config;
-  });
-
-  return client;
-};
 
 export const periodApi = {
   getCurrent: (): Promise<ApiResponse<{ period: string; year: number; month: number }>> => {
-    return createApiClient().get('/erp/finance/period/current');
+    return apiClient.erp.get('/finance/period/current');
   },
 
   list: (params?: {
@@ -42,19 +21,19 @@ export const periodApi = {
       }[];
     }>
   > => {
-    return createApiClient().get('/erp/finance/periods', { params });
+    return apiClient.erp.get('/finance/periods', { params });
   },
 
   open: (period: string): Promise<ApiResponse<void>> => {
-    return createApiClient().post('/erp/finance/periods/open', { period });
+    return apiClient.erp.post('/finance/periods/open', { period });
   },
 
   close: (period: string): Promise<ApiResponse<void>> => {
-    return createApiClient().post('/erp/finance/periods/close', { period });
+    return apiClient.erp.post('/finance/periods/close', { period });
   },
 
   closePeriodIncome: (period: string): Promise<ApiResponse<{ voucher_id: string }>> => {
-    return createApiClient().post('/erp/finance/periods/close-income', {
+    return apiClient.erp.post('/finance/periods/close-income', {
       period,
     });
   },
@@ -66,7 +45,7 @@ export const periodApi = {
       vouchers: { voucher_id: string; description: string }[];
     }>
   > => {
-    return createApiClient().post('/erp/finance/periods/year-end-close', {
+    return apiClient.erp.post('/finance/periods/year-end-close', {
       year,
     });
   },

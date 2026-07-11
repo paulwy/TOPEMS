@@ -111,7 +111,7 @@ export const PdmBomPage: React.FC = () => {
       part_name: item.part_name,
       quantity: item.quantity,
       unit: item.unit,
-      unit_price: item.unit_price,
+      unit_price: item.unit_price ?? 0,
       level: item.level,
     });
     setOpenDialog(true);
@@ -149,6 +149,8 @@ export const PdmBomPage: React.FC = () => {
 
     try {
       const requestData = {
+        bom_version_id: '',
+        item_no: formData.part_number,
         product_id: selectedProduct,
         part_number: formData.part_number,
         part_name: formData.part_name,
@@ -156,7 +158,6 @@ export const PdmBomPage: React.FC = () => {
         unit: formData.unit,
         unit_price: formData.unit_price,
         level: formData.level,
-        total_price: formData.quantity * formData.unit_price,
       };
 
       if (editingItem) {
@@ -191,7 +192,7 @@ export const PdmBomPage: React.FC = () => {
   }, [bomItems, selectedProduct, searchTerm]);
 
   const totalCost = filteredBomItems.reduce(
-    (sum, item) => sum + (item.total_price || item.quantity * item.unit_price),
+    (sum, item) => sum + (item.total_price || item.quantity * (item.unit_price ?? 0)),
     0
   );
 
@@ -243,14 +244,15 @@ export const PdmBomPage: React.FC = () => {
         label: '单价',
         minWidth: 100,
         align: 'right',
-        render: (row) => `¥ ${row.unit_price.toFixed(2)}`,
+        render: (row) => `¥ ${(row.unit_price ?? 0).toFixed(2)}`,
       },
       {
         id: 'total_price',
         label: '总价',
         minWidth: 100,
         align: 'right',
-        render: (row) => `¥ ${(row.total_price || row.quantity * row.unit_price).toFixed(2)}`,
+        render: (row) =>
+          `¥ ${(row.total_price || row.quantity * (row.unit_price ?? 0)).toFixed(2)}`,
       },
     ],
     []

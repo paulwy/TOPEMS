@@ -11,7 +11,7 @@ use std::fmt;
 use tracing::info;
 use uuid::Uuid;
 
-use crate::AppState;
+use crate::shared::AppState;
 
 pub fn create_routes() -> Router<AppState> {
     Router::new()

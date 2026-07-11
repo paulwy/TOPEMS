@@ -26,3 +26,38 @@ export { CommandPalette, type CommandItem, type CommandGroup, type CommandPalett
 
 // Media components
 export { LazyImage, type LazyImageProps } from './components/LazyImage';
+
+// Responsive utilities
+export {
+  Responsive,
+  ResponsiveValue,
+  Hidden,
+  ResponsiveGrid,
+  ResponsiveGridItem,
+  ResponsiveStack,
+  ResponsiveContainer,
+  ResponsiveText,
+  ResponsiveImage,
+  useBreakpoint,
+  useResponsiveValue,
+  useIsMobile,
+  useIsTablet,
+  useIsDesktop,
+  useIsLargeScreen,
+  useMediaQueryValue,
+  useResponsiveColumns,
+  useResponsivePadding,
+  useResponsiveGap,
+  isMobile,
+  isTablet,
+  isDesktop,
+  isLargeScreen,
+  type Breakpoint,
+  type ResponsiveProps,
+  type ResponsiveGridProps,
+  type ResponsiveGridItemProps,
+  type ResponsiveStackProps,
+  type ResponsiveContainerProps,
+  type ResponsiveTextProps,
+  type ResponsiveImageProps,
+} from './components/Responsive';

@@ -701,7 +701,7 @@ export const CardListTemplate: React.FC<CardListTemplateProps> = ({
               borderColor: 'divider',
               display: 'flex',
               gap: 1,
-              bgcolor: 'grey.50',
+              bgcolor: theme.palette.mode === 'dark' ? 'rgba(255,255,255,0.03)' : 'grey.50',
             }}
             onClick={(e) => e.stopPropagation()}
           >
@@ -785,7 +785,7 @@ export const CardListTemplate: React.FC<CardListTemplateProps> = ({
             <Box
               sx={{
                 display: 'flex',
-                bgcolor: 'grey.100',
+                bgcolor: theme.palette.mode === 'dark' ? 'rgba(255,255,255,0.06)' : 'grey.100',
                 borderRadius: 1,
                 p: 0.5,
               }}

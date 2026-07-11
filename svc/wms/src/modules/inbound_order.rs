@@ -75,34 +75,34 @@ where
             get(list_inbound_orders).post(create_inbound_order),
         )
         .route(
-            "/api/v1/inbound-orders/{id}",
+            "/api/wms/inbound-orders/{id}",
             get(get_inbound_order)
                 .put(update_inbound_order)
                 .delete(delete_inbound_order),
         )
         .route(
-            "/api/v1/inbound-orders/{id}/items",
+            "/api/wms/inbound-orders/{id}/items",
             get(list_inbound_order_items).post(create_inbound_order_item),
         )
         .route(
-            "/api/v1/inbound-orders/{id}/items/{item_id}",
+            "/api/wms/inbound-orders/{id}/items/{item_id}",
             put(update_inbound_order_item).delete(delete_inbound_order_item),
         )
         .route(
-            "/api/v1/inbound-orders/{id}/confirm",
+            "/api/wms/inbound-orders/{id}/confirm",
             post(confirm_inbound_order),
         )
         .route(
-            "/api/v1/inbound-orders/{id}/receive",
+            "/api/wms/inbound-orders/{id}/receive",
             post(receive_inbound_order),
         )
         .route(
-            "/api/v1/inbound-orders/{id}/complete",
+            "/api/wms/inbound-orders/{id}/complete",
             post(complete_inbound_order),
         )
 }
 
-async fn list_inbound_orders(
+pub async fn list_inbound_orders(
     State(state): State<ApiState>,
     Extension(claims): Extension<Claims>,
     Query(params): Query<PaginationParams>,
@@ -172,7 +172,7 @@ async fn list_inbound_orders(
     }
 }
 
-async fn create_inbound_order(
+pub async fn create_inbound_order(
     State(state): State<ApiState>,
     Extension(claims): Extension<Claims>,
     headers: HeaderMap,
@@ -252,7 +252,7 @@ async fn create_inbound_order(
     response
 }
 
-async fn get_inbound_order(
+pub async fn get_inbound_order(
     State(state): State<ApiState>,
     Extension(claims): Extension<Claims>,
     Path(id): Path<Uuid>,
@@ -283,7 +283,7 @@ async fn get_inbound_order(
     }
 }
 
-async fn update_inbound_order(
+pub async fn update_inbound_order(
     State(state): State<ApiState>,
     Extension(claims): Extension<Claims>,
     Path(id): Path<Uuid>,
@@ -387,7 +387,7 @@ async fn update_inbound_order(
     response
 }
 
-async fn delete_inbound_order(
+pub async fn delete_inbound_order(
     State(state): State<ApiState>,
     Extension(claims): Extension<Claims>,
     Path(id): Path<Uuid>,
@@ -450,7 +450,7 @@ async fn delete_inbound_order(
     response
 }
 
-async fn list_inbound_order_items(
+pub async fn list_inbound_order_items(
     State(state): State<ApiState>,
     Extension(claims): Extension<Claims>,
     Path(id): Path<Uuid>,
@@ -500,7 +500,7 @@ async fn list_inbound_order_items(
     }
 }
 
-async fn create_inbound_order_item(
+pub async fn create_inbound_order_item(
     State(state): State<ApiState>,
     Extension(claims): Extension<Claims>,
     Path(id): Path<Uuid>,
@@ -595,7 +595,7 @@ async fn create_inbound_order_item(
     response
 }
 
-async fn update_inbound_order_item(
+pub async fn update_inbound_order_item(
     State(state): State<ApiState>,
     Extension(claims): Extension<Claims>,
     Path((id, item_id)): Path<(Uuid, Uuid)>,
@@ -672,7 +672,7 @@ async fn update_inbound_order_item(
     response
 }
 
-async fn delete_inbound_order_item(
+pub async fn delete_inbound_order_item(
     State(state): State<ApiState>,
     Extension(claims): Extension<Claims>,
     Path((id, item_id)): Path<(Uuid, Uuid)>,
@@ -734,7 +734,7 @@ async fn delete_inbound_order_item(
     response
 }
 
-async fn confirm_inbound_order(
+pub async fn confirm_inbound_order(
     State(state): State<ApiState>,
     Extension(claims): Extension<Claims>,
     Path(id): Path<Uuid>,
@@ -802,7 +802,7 @@ async fn confirm_inbound_order(
     response
 }
 
-async fn receive_inbound_order(
+pub async fn receive_inbound_order(
     State(state): State<ApiState>,
     Extension(claims): Extension<Claims>,
     Path(id): Path<Uuid>,
@@ -940,7 +940,7 @@ async fn receive_inbound_order(
     response
 }
 
-async fn complete_inbound_order(
+pub async fn complete_inbound_order(
     State(state): State<ApiState>,
     Extension(claims): Extension<Claims>,
     Path(id): Path<Uuid>,

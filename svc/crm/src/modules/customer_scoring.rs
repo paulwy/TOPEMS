@@ -10,6 +10,7 @@ use serde::Deserialize;
 use uuid::Uuid;
 
 use super::ApiState;
+use crate::middleware::tenant::get_tenant_id;
 use crate::models::{
     CreateCustomerScoreRequest, CustomerScore, CustomerScoringQueryParams,
     UpdateCustomerScoreRequest,
@@ -47,6 +48,7 @@ async fn list_customer_scores(
     State(state): State<ApiState>,
     Extension(claims): Extension<Claims>,
     Query(params): Query<CustomerScoringQueryParams>,
+    headers: HeaderMap,
 ) -> Json<ApiResponse<serde_json::Value>> {
     match check_permission(&state.db, &claims, &ModulePermission::CustomerRead).await {
         Ok(_) => {}
@@ -59,17 +61,20 @@ async fn list_customer_scores(
 
     let customer_id_filter = params.customer_id;
     let score_level_filter = params.score_level.clone();
+    let tenant_id = get_tenant_id(&claims, &headers);
 
     let result = sqlx::query_as::<_, CustomerScore>(
         r#"
-        SELECT id, customer_id, customer_name, score, score_level, scoring_date, factors, trend, last_score, created_at, updated_at
+        SELECT id, tenant_id, customer_id, customer_name, score, score_level, scoring_date, factors, trend, last_score, created_at, updated_at
         FROM plugin_crm.customer_scores
-        WHERE ($1::uuid IS NULL OR customer_id = $1)
-          AND ($2::text IS NULL OR score_level = $2)
+        WHERE tenant_id = $1
+          AND ($2::uuid IS NULL OR customer_id = $2)
+          AND ($3::text IS NULL OR score_level = $3)
         ORDER BY scoring_date DESC
-        LIMIT $3 OFFSET $4
+        LIMIT $4 OFFSET $5
         "#,
     )
+    .bind(tenant_id)
     .bind(&customer_id_filter)
     .bind(&score_level_filter)
     .bind(page_size)
@@ -82,10 +87,12 @@ async fn list_customer_scores(
             let count_result = sqlx::query_scalar::<_, i64>(
                 r#"
                 SELECT COUNT(*) FROM plugin_crm.customer_scores
-                WHERE ($1::uuid IS NULL OR customer_id = $1)
-                  AND ($2::text IS NULL OR score_level = $2)
+                WHERE tenant_id = $1
+                  AND ($2::uuid IS NULL OR customer_id = $2)
+                  AND ($3::text IS NULL OR score_level = $3)
                 "#,
             )
+            .bind(tenant_id)
             .bind(&customer_id_filter)
             .bind(&score_level_filter)
             .fetch_one(&state.db)
@@ -114,19 +121,23 @@ async fn get_customer_score(
     State(state): State<ApiState>,
     Extension(claims): Extension<Claims>,
     Path(id): Path<Uuid>,
+    headers: HeaderMap,
 ) -> Json<ApiResponse<CustomerScore>> {
     match check_permission(&state.db, &claims, &ModulePermission::CustomerRead).await {
         Ok(_) => {}
         Err(e) => return e,
     }
 
+    let tenant_id = get_tenant_id(&claims, &headers);
+
     let result = sqlx::query_as::<_, CustomerScore>(
         r#"
-        SELECT id, customer_id, customer_name, score, score_level, scoring_date, factors, trend, last_score, created_at, updated_at
-        FROM plugin_crm.customer_scores WHERE id = $1
+        SELECT id, tenant_id, customer_id, customer_name, score, score_level, scoring_date, factors, trend, last_score, created_at, updated_at
+        FROM plugin_crm.customer_scores WHERE id = $1 AND tenant_id = $2
         "#,
     )
     .bind(id)
+    .bind(tenant_id)
     .fetch_optional(&state.db)
     .await;
 
@@ -151,11 +162,15 @@ async fn create_customer_score(
         Err(e) => return e,
     }
 
-    let customer =
-        sqlx::query_scalar::<_, String>("SELECT name FROM plugin_crm.customers WHERE id = $1")
-            .bind(&req.customer_id)
-            .fetch_optional(&state.db)
-            .await;
+    let tenant_id = get_tenant_id(&claims, &headers);
+
+    let customer = sqlx::query_scalar::<_, String>(
+        "SELECT name FROM plugin_crm.customers WHERE id = $1 AND tenant_id = $2",
+    )
+    .bind(&req.customer_id)
+    .bind(tenant_id)
+    .fetch_optional(&state.db)
+    .await;
 
     let customer_name = match customer {
         Ok(Some(name)) => name,
@@ -172,9 +187,10 @@ async fn create_customer_score(
         .unwrap_or_else(|| calculate_score_level(score));
 
     let last_score = sqlx::query_scalar::<_, Option<i32>>(
-        "SELECT score FROM plugin_crm.customer_scores WHERE customer_id = $1 ORDER BY created_at DESC LIMIT 1",
+        "SELECT score FROM plugin_crm.customer_scores WHERE customer_id = $1 AND tenant_id = $2 ORDER BY created_at DESC LIMIT 1",
     )
     .bind(&req.customer_id)
+    .bind(tenant_id)
     .fetch_optional(&state.db)
     .await
     .unwrap_or(None)
@@ -187,12 +203,13 @@ async fn create_customer_score(
     let result = sqlx::query_as::<_, CustomerScore>(
         r#"
         INSERT INTO plugin_crm.customer_scores (
-            id, customer_id, customer_name, score, score_level, scoring_date, factors, trend, last_score, created_at, updated_at
-        ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11)
-        RETURNING id, customer_id, customer_name, score, score_level, scoring_date, factors, trend, last_score, created_at, updated_at
+            id, tenant_id, customer_id, customer_name, score, score_level, scoring_date, factors, trend, last_score, created_at, updated_at
+        ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12)
+        RETURNING id, tenant_id, customer_id, customer_name, score, score_level, scoring_date, factors, trend, last_score, created_at, updated_at
         "#,
     )
     .bind(id)
+    .bind(tenant_id)
     .bind(&req.customer_id)
     .bind(&customer_name)
     .bind(score)
@@ -260,12 +277,15 @@ async fn update_customer_score(
         Err(e) => return e,
     }
 
+    let tenant_id = get_tenant_id(&claims, &headers);
+
     let existing = sqlx::query_as::<_, CustomerScore>(
         r#"
-        SELECT id, customer_id, customer_name, score, score_level, scoring_date, factors, trend, last_score, created_at, updated_at FROM plugin_crm.customer_scores WHERE id = $1
+        SELECT id, tenant_id, customer_id, customer_name, score, score_level, scoring_date, factors, trend, last_score, created_at, updated_at FROM plugin_crm.customer_scores WHERE id = $1 AND tenant_id = $2
         "#,
     )
     .bind(id)
+    .bind(tenant_id)
     .fetch_optional(&state.db)
     .await;
 
@@ -286,8 +306,8 @@ async fn update_customer_score(
         r#"
         UPDATE plugin_crm.customer_scores SET
             score = $2, score_level = $3, factors = $4, updated_at = $5
-        WHERE id = $1
-        RETURNING id, customer_id, customer_name, score, score_level, scoring_date, factors, trend, last_score, created_at, updated_at
+        WHERE id = $1 AND tenant_id = $6
+        RETURNING id, tenant_id, customer_id, customer_name, score, score_level, scoring_date, factors, trend, last_score, created_at, updated_at
         "#,
     )
     .bind(id)
@@ -295,6 +315,7 @@ async fn update_customer_score(
     .bind(&score_level)
     .bind(&factors)
     .bind(now)
+    .bind(tenant_id)
     .fetch_one(&state.db)
     .await;
 
@@ -350,10 +371,14 @@ async fn delete_customer_score(
         Err(e) => return e,
     }
 
-    let result = sqlx::query("DELETE FROM plugin_crm.customer_scores WHERE id = $1")
-        .bind(id)
-        .execute(&state.db)
-        .await;
+    let tenant_id = get_tenant_id(&claims, &headers);
+
+    let result =
+        sqlx::query("DELETE FROM plugin_crm.customer_scores WHERE id = $1 AND tenant_id = $2")
+            .bind(id)
+            .bind(tenant_id)
+            .execute(&state.db)
+            .await;
 
     let (response, status_str, error_msg) = match &result {
         Ok(r) if r.rows_affected() > 0 => (
@@ -404,6 +429,7 @@ async fn delete_customer_score(
 async fn batch_calculate(
     State(state): State<ApiState>,
     Extension(claims): Extension<Claims>,
+    headers: HeaderMap,
     Json(req): Json<BatchCalculateRequest>,
 ) -> Json<ApiResponse<serde_json::Value>> {
     match check_permission(&state.db, &claims, &ModulePermission::CustomerWrite).await {
@@ -415,15 +441,17 @@ async fn batch_calculate(
         return Json(api_error(400, "请选择要计算评分的客户"));
     }
 
+    let tenant_id = get_tenant_id(&claims, &headers);
     let mut results = Vec::new();
     let now = Utc::now();
 
     for customer_id in &req.customer_ids {
         let customer_info =
             sqlx::query_scalar::<_, (String, DateTime<Utc>, Option<String>, Option<Decimal>)>(
-                "SELECT name, created_at, status, revenue FROM plugin_crm.customers WHERE id = $1",
+                "SELECT name, created_at, status, revenue FROM plugin_crm.customers WHERE id = $1 AND tenant_id = $2",
             )
             .bind(customer_id)
+            .bind(tenant_id)
             .fetch_optional(&state.db)
             .await
             .unwrap_or(None);
@@ -432,33 +460,37 @@ async fn batch_calculate(
             let id = Uuid::new_v4();
 
             let total_opportunity_value: Option<Decimal> = sqlx::query_scalar(
-                "SELECT COALESCE(SUM(value), 0) FROM plugin_crm.opportunities WHERE customer_id = $1",
+                "SELECT COALESCE(SUM(value), 0) FROM plugin_crm.opportunities WHERE customer_id = $1 AND tenant_id = $2",
             )
             .bind(customer_id)
+            .bind(tenant_id)
             .fetch_optional(&state.db)
             .await
             .unwrap_or(None);
 
             let opportunity_count: i64 = sqlx::query_scalar(
-                "SELECT COUNT(*) FROM plugin_crm.opportunities WHERE customer_id = $1",
+                "SELECT COUNT(*) FROM plugin_crm.opportunities WHERE customer_id = $1 AND tenant_id = $2",
             )
             .bind(customer_id)
+            .bind(tenant_id)
             .fetch_one(&state.db)
             .await
             .unwrap_or(0);
 
             let interaction_count: i64 = sqlx::query_scalar(
-                "SELECT COUNT(*) FROM plugin_crm.interactions WHERE customer_id = $1",
+                "SELECT COUNT(*) FROM plugin_crm.interactions WHERE customer_id = $1 AND tenant_id = $2",
             )
             .bind(customer_id)
+            .bind(tenant_id)
             .fetch_one(&state.db)
             .await
             .unwrap_or(0);
 
             let won_opportunity_count: i64 = sqlx::query_scalar(
-                "SELECT COUNT(*) FROM plugin_crm.opportunities WHERE customer_id = $1 AND stage = 'closed_won'",
+                "SELECT COUNT(*) FROM plugin_crm.opportunities WHERE customer_id = $1 AND tenant_id = $2 AND stage = 'closed_won'",
             )
             .bind(customer_id)
+            .bind(tenant_id)
             .fetch_one(&state.db)
             .await
             .unwrap_or(0);
@@ -481,9 +513,10 @@ async fn batch_calculate(
             let score_level = calculate_score_level(score);
 
             let last_score = sqlx::query_scalar::<_, Option<i32>>(
-                "SELECT score FROM plugin_crm.customer_scores WHERE customer_id = $1 ORDER BY created_at DESC LIMIT 1",
+                "SELECT score FROM plugin_crm.customer_scores WHERE customer_id = $1 AND tenant_id = $2 ORDER BY created_at DESC LIMIT 1",
             )
             .bind(customer_id)
+            .bind(tenant_id)
             .fetch_optional(&state.db)
             .await
             .unwrap_or(None)
@@ -501,12 +534,13 @@ async fn batch_calculate(
             let result = sqlx::query_as::<_, CustomerScore>(
                 r#"
                 INSERT INTO plugin_crm.customer_scores (
-                    id, customer_id, customer_name, score, score_level, scoring_date, factors, trend, last_score, created_at, updated_at
-                ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11)
-                RETURNING id, customer_id, customer_name, score, score_level, scoring_date, factors, trend, last_score, created_at, updated_at
+                    id, tenant_id, customer_id, customer_name, score, score_level, scoring_date, factors, trend, last_score, created_at, updated_at
+                ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12)
+                RETURNING id, tenant_id, customer_id, customer_name, score, score_level, scoring_date, factors, trend, last_score, created_at, updated_at
                 "#,
             )
             .bind(id)
+            .bind(tenant_id)
             .bind(customer_id)
             .bind(&name)
             .bind(score)

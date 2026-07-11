@@ -52,7 +52,7 @@ const DepartmentItem: React.FC<{
       {hasChildren && (
         <Collapse in={isExpanded}>
           <List component="div" disablePadding>
-            {department.children!.map((child) => (
+            {department.children!.map((child: Department) => (
               <DepartmentItem
                 key={child.id}
                 department={child}

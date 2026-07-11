@@ -21,7 +21,7 @@ macro_rules! log_audit {
 use super::ApiState;
 
 // Finance Core 审批 API 辅助函数
-async fn call_finance_core_approval(
+pub async fn call_finance_core_approval(
     doc_type: &str,
     doc_id: Uuid,
     doc_no: &str,
@@ -180,7 +180,7 @@ pub fn create_routes() -> Router<ApiState> {
 
 // ==================== 合并范围 ====================
 
-async fn list_scopes(
+pub async fn list_scopes(
     State(state): State<ApiState>,
     Extension(claims): Extension<Claims>,
     Query(params): Query<PaginationParams>,
@@ -277,7 +277,7 @@ async fn list_scopes(
     }
 }
 
-async fn get_scope(
+pub async fn get_scope(
     State(state): State<ApiState>,
     Path(scope_id): Path<Uuid>,
 ) -> Json<ApiResponse<ConsolidationScope>> {
@@ -297,7 +297,7 @@ async fn get_scope(
     }
 }
 
-async fn create_scope(
+pub async fn create_scope(
     State(state): State<ApiState>,
     _headers: HeaderMap,
     Json(req): Json<CreateConsolidationScopeRequest>,
@@ -336,7 +336,7 @@ async fn create_scope(
     }
 }
 
-async fn update_scope(
+pub async fn update_scope(
     State(state): State<ApiState>,
     Path(scope_id): Path<Uuid>,
     _headers: HeaderMap,
@@ -380,7 +380,7 @@ async fn update_scope(
     }
 }
 
-async fn delete_scope(
+pub async fn delete_scope(
     State(state): State<ApiState>,
     Path(scope_id): Path<Uuid>,
     _headers: HeaderMap,
@@ -413,7 +413,7 @@ async fn delete_scope(
 
 // ==================== 合并范围公司 ====================
 
-async fn list_scope_companies(
+pub async fn list_scope_companies(
     State(state): State<ApiState>,
     Path(scope_id): Path<Uuid>,
 ) -> Json<ApiResponse<Vec<ConsolidationScopeCompany>>> {
@@ -436,7 +436,7 @@ async fn list_scope_companies(
     }
 }
 
-async fn add_scope_company(
+pub async fn add_scope_company(
     State(state): State<ApiState>,
     _headers: HeaderMap,
     Json(req): Json<AddScopeCompanyRequest>,
@@ -480,7 +480,7 @@ async fn add_scope_company(
     }
 }
 
-async fn update_scope_company(
+pub async fn update_scope_company(
     State(state): State<ApiState>,
     Path(company_id): Path<Uuid>,
     _headers: HeaderMap,
@@ -525,7 +525,7 @@ async fn update_scope_company(
     }
 }
 
-async fn remove_scope_company(
+pub async fn remove_scope_company(
     State(state): State<ApiState>,
     Path(company_id): Path<Uuid>,
     _headers: HeaderMap,
@@ -558,7 +558,7 @@ async fn remove_scope_company(
 
 // ==================== 抵消规则 ====================
 
-async fn list_elimination_rules(
+pub async fn list_elimination_rules(
     State(state): State<ApiState>,
     Query(params): Query<PaginationParams>,
 ) -> Json<ApiResponse<PaginatedResponse<EliminationRule>>> {
@@ -618,7 +618,7 @@ async fn list_elimination_rules(
     }
 }
 
-async fn get_elimination_rule(
+pub async fn get_elimination_rule(
     State(state): State<ApiState>,
     Path(rule_id): Path<Uuid>,
 ) -> Json<ApiResponse<EliminationRule>> {
@@ -638,7 +638,7 @@ async fn get_elimination_rule(
     }
 }
 
-async fn create_elimination_rule(
+pub async fn create_elimination_rule(
     State(state): State<ApiState>,
     _headers: HeaderMap,
     Json(req): Json<CreateEliminationRuleRequest>,
@@ -687,7 +687,7 @@ async fn create_elimination_rule(
     }
 }
 
-async fn update_elimination_rule(
+pub async fn update_elimination_rule(
     State(state): State<ApiState>,
     Path(rule_id): Path<Uuid>,
     _headers: HeaderMap,
@@ -748,7 +748,7 @@ async fn update_elimination_rule(
     }
 }
 
-async fn delete_elimination_rule(
+pub async fn delete_elimination_rule(
     State(state): State<ApiState>,
     Path(rule_id): Path<Uuid>,
     _headers: HeaderMap,
@@ -781,7 +781,7 @@ async fn delete_elimination_rule(
 
 // ==================== 内部交易 ====================
 
-async fn list_internal_transactions(
+pub async fn list_internal_transactions(
     State(state): State<ApiState>,
     Query(params): Query<PaginationParams>,
 ) -> Json<ApiResponse<PaginatedResponse<InternalTransaction>>> {
@@ -832,7 +832,7 @@ async fn list_internal_transactions(
     }
 }
 
-async fn execute_elimination(
+pub async fn execute_elimination(
     State(state): State<ApiState>,
     _headers: HeaderMap,
     Json(req): Json<ExecuteEliminationRequest>,
@@ -929,7 +929,7 @@ async fn execute_elimination(
 
 // ==================== 合并报表 ====================
 
-async fn list_reports(
+pub async fn list_reports(
     State(state): State<ApiState>,
     Query(params): Query<PaginationParams>,
 ) -> Json<ApiResponse<PaginatedResponse<ConsolidationReport>>> {
@@ -990,7 +990,7 @@ async fn list_reports(
     }
 }
 
-async fn get_report(
+pub async fn get_report(
     State(state): State<ApiState>,
     Path(report_id): Path<Uuid>,
 ) -> Json<ApiResponse<ConsolidationReport>> {
@@ -1015,7 +1015,7 @@ async fn get_report(
     }
 }
 
-async fn generate_report(
+pub async fn generate_report(
     State(state): State<ApiState>,
     _headers: HeaderMap,
     Json(req): Json<GenerateConsolidationReportRequest>,
@@ -1116,7 +1116,7 @@ async fn generate_report(
     }
 }
 
-async fn get_report_lines(
+pub async fn get_report_lines(
     State(state): State<ApiState>,
     Path(report_id): Path<Uuid>,
 ) -> Json<ApiResponse<Vec<ConsolidationReportLine>>> {
@@ -1135,7 +1135,7 @@ async fn get_report_lines(
     }
 }
 
-async fn submit_report(
+pub async fn submit_report(
     State(state): State<ApiState>,
     Path(report_id): Path<Uuid>,
     headers: HeaderMap,
@@ -1209,7 +1209,7 @@ async fn submit_report(
     }
 }
 
-async fn approve_report(
+pub async fn approve_report(
     State(state): State<ApiState>,
     Path(report_id): Path<Uuid>,
     headers: HeaderMap,
@@ -1285,7 +1285,7 @@ async fn approve_report(
     }
 }
 
-async fn publish_report(
+pub async fn publish_report(
     State(state): State<ApiState>,
     Path(report_id): Path<Uuid>,
     _headers: HeaderMap,
@@ -1320,7 +1320,7 @@ async fn publish_report(
     }
 }
 
-async fn delete_report(
+pub async fn delete_report(
     State(state): State<ApiState>,
     Path(report_id): Path<Uuid>,
     _headers: HeaderMap,
@@ -1353,7 +1353,7 @@ async fn delete_report(
 
 // ==================== 公司关系 ====================
 
-async fn list_company_relations(
+pub async fn list_company_relations(
     State(state): State<ApiState>,
     Query(params): Query<PaginationParams>,
 ) -> Json<ApiResponse<Vec<CompanyRelation>>> {
@@ -1380,7 +1380,7 @@ async fn list_company_relations(
     }
 }
 
-async fn get_company_tree(
+pub async fn get_company_tree(
     State(state): State<ApiState>,
 ) -> Json<ApiResponse<Vec<CompanyTreeNode>>> {
     // 获取所有公司关系
@@ -1419,7 +1419,7 @@ async fn get_company_tree(
     Json(ApiResponse::success(tree, "获取公司架构树成功"))
 }
 
-async fn create_company_relation(
+pub async fn create_company_relation(
     State(state): State<ApiState>,
     _headers: HeaderMap,
     Json(req): Json<CreateCompanyRelationRequest>,
@@ -1459,7 +1459,7 @@ async fn create_company_relation(
     }
 }
 
-async fn update_company_relation(
+pub async fn update_company_relation(
     State(state): State<ApiState>,
     Path(relation_id): Path<Uuid>,
     _headers: HeaderMap,
@@ -1507,7 +1507,7 @@ async fn update_company_relation(
     }
 }
 
-async fn delete_company_relation(
+pub async fn delete_company_relation(
     State(state): State<ApiState>,
     Path(relation_id): Path<Uuid>,
     _headers: HeaderMap,
@@ -1538,7 +1538,7 @@ async fn delete_company_relation(
     }
 }
 
-async fn get_company_financial_data(
+pub async fn get_company_financial_data(
     State(_state): State<ApiState>,
     Path(company_id): Path<Uuid>,
     Query(params): Query<PaginationParams>,

@@ -1,5 +1,5 @@
 import React from 'react';
-import { Box, Typography, Button, ButtonGroup } from '@mui/material';
+import { Box, Typography, Button, ButtonGroup, useTheme } from '@mui/material';
 import { X } from 'lucide-react';
 import type { BatchAction } from './types';
 
@@ -16,6 +16,7 @@ export const ListBatchActions: React.FC<ListBatchActionsProps> = ({
   onClearSelection,
   batchActions,
 }) => {
+  const theme = useTheme();
   if (!show || selectedCount === 0) return null;
 
   const availableActions = batchActions.filter((action) => {
@@ -36,10 +37,10 @@ export const ListBatchActions: React.FC<ListBatchActionsProps> = ({
         gap: 2,
         mb: 2,
         p: 2,
-        bgcolor: 'primary.50',
+        bgcolor: theme.palette.mode === 'dark' ? 'rgba(59,130,246,0.12)' : 'primary.50',
         borderRadius: 1,
         border: '1px solid',
-        borderColor: 'primary.200',
+        borderColor: theme.palette.mode === 'dark' ? 'rgba(59,130,246,0.3)' : 'primary.200',
       }}
     >
       <Typography

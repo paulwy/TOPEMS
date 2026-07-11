@@ -16,6 +16,7 @@ import {
 import { DashboardTemplate } from '@/components/templates';
 import type { StatCard, ChartCard, QuickAction, RecentItem } from '@/components/templates';
 import { PageContainer } from '@/components/common';
+import { HRM_PATHS } from '@/modules/hrm/config';
 import { designTokens } from '@/theme/tokens';
 import BarChartComponent from '../../components/charts/BarChart';
 import LineChartComponent from '../../components/charts/LineChart';
@@ -160,42 +161,42 @@ const HrmOverviewPage: React.FC = () => {
         id: 'employee-manage',
         label: '员工管理',
         icon: <Users size={20} />,
-        onClick: () => navigate('/hrm/employees'),
+        onClick: () => navigate(HRM_PATHS.employees),
         color: ct.primary.dark,
       },
       {
         id: 'attendance-manage',
         label: '考勤管理',
         icon: <Clock size={20} />,
-        onClick: () => navigate('/hrm/attendance'),
+        onClick: () => navigate(HRM_PATHS.attendance),
         color: ct.secondary[700],
       },
       {
         id: 'leave-manage',
         label: '请假管理',
         icon: <Calendar size={20} />,
-        onClick: () => navigate('/hrm/leave'),
+        onClick: () => navigate(HRM_PATHS.leave),
         color: ct.success[700],
       },
       {
         id: 'salary-manage',
         label: '薪酬管理',
         icon: <DollarSign size={20} />,
-        onClick: () => navigate('/hrm/salary'),
+        onClick: () => navigate(HRM_PATHS.payroll),
         color: ct.warning[600],
       },
       {
         id: 'performance-review',
         label: '绩效考核',
         icon: <Award size={20} />,
-        onClick: () => navigate('/hrm/performance'),
+        onClick: () => navigate(HRM_PATHS.performance),
         color: ct.success[700],
       },
       {
         id: 'recruitment',
         label: '招聘管理',
         icon: <Briefcase size={20} />,
-        onClick: () => navigate('/hrm/recruitment'),
+        onClick: () => navigate(HRM_PATHS.recruitment),
         color: ct.error[700],
       },
     ],
@@ -212,7 +213,7 @@ const HrmOverviewPage: React.FC = () => {
         icon: <Calendar size={18} />,
         status: 'warning',
         tags: [{ label: '待审批', color: ct.warning[600] }],
-        onClick: () => navigate('/hrm/leave/leave1'),
+        onClick: () => navigate(HRM_PATHS.leave),
       },
       {
         id: 'emp1',
@@ -221,7 +222,7 @@ const HrmOverviewPage: React.FC = () => {
         time: '2026-06-29 08:00',
         icon: <UserPlus size={18} />,
         status: 'success',
-        onClick: () => navigate('/hrm/employees/emp1'),
+        onClick: () => navigate(HRM_PATHS.employees),
       },
       {
         id: 'att1',
@@ -230,7 +231,7 @@ const HrmOverviewPage: React.FC = () => {
         time: '2026-06-28 17:30',
         icon: <Clock size={18} />,
         status: 'error',
-        onClick: () => navigate('/hrm/attendance/att1'),
+        onClick: () => navigate(HRM_PATHS.attendance),
       },
       {
         id: 'perf1',
@@ -239,7 +240,7 @@ const HrmOverviewPage: React.FC = () => {
         time: '2026-06-28 16:00',
         icon: <Award size={18} />,
         status: 'success',
-        onClick: () => navigate('/hrm/performance'),
+        onClick: () => navigate(HRM_PATHS.performance),
       },
       {
         id: 'train1',
@@ -249,7 +250,7 @@ const HrmOverviewPage: React.FC = () => {
         icon: <GraduationCap size={18} />,
         status: 'info',
         tags: [{ label: '进行中', color: ct.primary.dark }],
-        onClick: () => navigate('/hrm/training/train1'),
+        onClick: () => navigate(HRM_PATHS.training),
       },
     ],
     [navigate]

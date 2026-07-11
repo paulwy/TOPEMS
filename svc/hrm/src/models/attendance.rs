@@ -6,6 +6,7 @@ use uuid::Uuid;
 #[derive(Debug, Clone, FromRow, Serialize, Deserialize)]
 pub struct AttendanceRecord {
     pub id: Uuid,
+    pub tenant_id: Uuid,
     pub employee_id: Uuid,
     pub date: DateTime<Utc>,
     pub check_in: Option<DateTime<Utc>>,

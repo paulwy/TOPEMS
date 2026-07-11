@@ -1199,7 +1199,7 @@ export const FormPageTemplate: React.FC<FormPageTemplateProps> = ({
                     <Skeleton
                       variant='rectangular'
                       height={56}
-                      sx={{ borderRadius: 1 }}
+                      sx={{ borderRadius: 1.5 }}
                     />
                   </Grid>
                 ))}

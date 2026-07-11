@@ -602,7 +602,7 @@ async fn submit_quote(
     }
 }
 
-async fn list_comparisons(
+pub async fn list_comparisons(
     State(state): State<ApiState>,
     Extension(claims): Extension<Claims>,
     Query(params): Query<InquiryPaginationParams>,
@@ -667,7 +667,7 @@ async fn list_comparisons(
     }
 }
 
-async fn create_comparison(
+pub async fn create_comparison(
     State(state): State<ApiState>,
     Extension(claims): Extension<Claims>,
     Json(req): Json<CreatePriceComparisonRequest>,
@@ -751,7 +751,7 @@ async fn create_comparison(
     }
 }
 
-async fn get_comparison(
+pub async fn get_comparison(
     State(state): State<ApiState>,
     Extension(claims): Extension<Claims>,
     Path(id): Path<Uuid>,
@@ -808,7 +808,7 @@ async fn get_comparison(
     }
 }
 
-async fn approve_comparison(
+pub async fn approve_comparison(
     State(state): State<ApiState>,
     Extension(claims): Extension<Claims>,
     Path(id): Path<Uuid>,

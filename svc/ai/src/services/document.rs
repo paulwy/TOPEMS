@@ -70,9 +70,10 @@ impl DocumentService {
     pub async fn get_document_chunks(
         &self,
         document_id: Uuid,
+        tenant_id: Uuid,
     ) -> Result<Vec<crate::services::vector::DocumentChunk>, String> {
         let vs = self.vector_service.read().await;
-        vs.get_document_chunks(document_id)
+        vs.get_document_chunks(document_id, tenant_id)
             .await
             .map_err(|e| format!("获取文档分块失败: {}", e))
     }
@@ -90,6 +91,7 @@ impl DocumentService {
         file_path: String,
         file_size: u64,
         mime_type: Option<String>,
+        tenant_id: Uuid,
     ) -> Result<String, String> {
         let mime = mime_type.as_deref().unwrap_or("application/octet-stream");
 
@@ -102,6 +104,7 @@ impl DocumentService {
             mime_type: mime_type.clone(),
             category: None,
             tags: None,
+            tenant_id,
             description: None,
         };
 
@@ -135,7 +138,7 @@ impl DocumentService {
 
         if chunks.is_empty() {
             let vs = self.vector_service.read().await;
-            vs.update_document_status(doc_id, "empty", Some("文档内容为空"))
+            vs.update_document_status(doc_id, "empty", Some("文档内容为空"), tenant_id)
                 .await
                 .ok();
             return Err("文档内容为空".to_string());
@@ -144,12 +147,13 @@ impl DocumentService {
         tracing::info!("📄 文档 '{}' 分割为 {} 个块", filename, chunks.len());
 
         // 保存分块和向量
-        self.save_chunks_and_vectors(doc_id, &chunks).await?;
+        self.save_chunks_and_vectors(doc_id, &chunks, tenant_id)
+            .await?;
 
         // 更新文档状态
         {
             let vs = self.vector_service.read().await;
-            vs.update_document_status(doc_id, "processed", None)
+            vs.update_document_status(doc_id, "processed", None, tenant_id)
                 .await
                 .ok();
         }
@@ -294,6 +298,7 @@ impl DocumentService {
         &self,
         doc_id: uuid::Uuid,
         chunks: &[String],
+        tenant_id: Uuid,
     ) -> Result<(), String> {
         let vs = self.vector_service.read().await;
         let total_chunks = chunks.len();
@@ -315,7 +320,7 @@ impl DocumentService {
             };
 
             let chunk_id = vs
-                .save_chunk(&chunk_request)
+                .save_chunk(&chunk_request, tenant_id)
                 .await
                 .map_err(|e| format!("保存分块失败: {}", e))?;
 
@@ -326,17 +331,20 @@ impl DocumentService {
     }
 
     /// 删除文档
-    pub async fn delete_document(&self, id: uuid::Uuid) -> Result<bool, String> {
+    pub async fn delete_document(&self, id: uuid::Uuid, tenant_id: Uuid) -> Result<bool, String> {
         let vs = self.vector_service.read().await;
-        vs.delete_document(id)
+        vs.delete_document(id, tenant_id)
             .await
             .map_err(|e| format!("删除文档失败: {}", e))
     }
 
     /// 列出所有文档
-    pub async fn list_documents(&self) -> Result<Vec<crate::services::vector::Document>, String> {
+    pub async fn list_documents(
+        &self,
+        tenant_id: Uuid,
+    ) -> Result<Vec<crate::services::vector::Document>, String> {
         let vs = self.vector_service.read().await;
-        vs.list_documents()
+        vs.list_documents(tenant_id)
             .await
             .map_err(|e| format!("查询文档列表失败: {}", e))
     }
@@ -345,9 +353,10 @@ impl DocumentService {
     pub async fn get_document(
         &self,
         id: uuid::Uuid,
+        tenant_id: Uuid,
     ) -> Result<Option<crate::services::vector::Document>, String> {
         let vs = self.vector_service.read().await;
-        vs.get_document(id)
+        vs.get_document(id, tenant_id)
             .await
             .map_err(|e| format!("查询文档失败: {}", e))
     }
@@ -356,6 +365,7 @@ impl DocumentService {
     pub async fn vectorize_from_file_service(
         &self,
         file_id: Uuid,
+        tenant_id: Uuid,
     ) -> Result<VectorizeResult, String> {
         let file_client = self
             .file_client
@@ -398,7 +408,8 @@ impl DocumentService {
 
         // 5. 保存分块
         let doc_id = Uuid::new_v4();
-        self.save_chunks_and_vectors(doc_id, &chunks).await?;
+        self.save_chunks_and_vectors(doc_id, &chunks, tenant_id)
+            .await?;
 
         Ok(VectorizeResult {
             file_id,
@@ -702,14 +713,16 @@ impl DocumentService {
         question: &str,
         document_ids: Option<&[Uuid]>,
         top_k: usize,
+        tenant_id: Uuid,
     ) -> Result<DocumentQAAnswer, String> {
         let config = self.qa_config.as_ref().ok_or("文档问答配置未初始化")?;
 
         let context_chunks = if let Some(doc_ids) = document_ids {
-            self.search_relevant_chunks(question, doc_ids, top_k)
+            self.search_relevant_chunks(question, doc_ids, top_k, tenant_id)
                 .await?
         } else {
-            self.search_all_relevant_chunks(question, top_k).await?
+            self.search_all_relevant_chunks(question, top_k, tenant_id)
+                .await?
         };
 
         if context_chunks.is_empty() {
@@ -786,13 +799,14 @@ impl DocumentService {
         question: &str,
         document_ids: &[Uuid],
         top_k: usize,
+        tenant_id: Uuid,
     ) -> Result<Vec<SearchResult>, String> {
         let vs = self.vector_service.read().await;
         let mut all_chunks: Vec<SearchResult> = Vec::new();
 
         for doc_id in document_ids {
-            if let Ok(chunks) = vs.get_document_chunks(*doc_id).await {
-                if let Ok(doc) = vs.get_document(*doc_id).await {
+            if let Ok(chunks) = vs.get_document_chunks(*doc_id, tenant_id).await {
+                if let Ok(doc) = vs.get_document(*doc_id, tenant_id).await {
                     let doc_title = doc.and_then(|d| Some(d.title));
                     for chunk in chunks {
                         let similarity = self.calculate_text_similarity(question, &chunk.content);
@@ -823,10 +837,11 @@ impl DocumentService {
         &self,
         question: &str,
         top_k: usize,
+        tenant_id: Uuid,
     ) -> Result<Vec<SearchResult>, String> {
         let vs = self.vector_service.read().await;
 
-        if let Ok(docs) = vs.list_documents().await {
+        if let Ok(docs) = vs.list_documents(tenant_id).await {
             let mut all_chunks: Vec<SearchResult> = Vec::new();
 
             for doc in docs {
@@ -834,7 +849,7 @@ impl DocumentService {
                     continue;
                 }
 
-                if let Ok(chunks) = vs.get_document_chunks(doc.id).await {
+                if let Ok(chunks) = vs.get_document_chunks(doc.id, tenant_id).await {
                     for chunk in chunks {
                         let similarity = self.calculate_text_similarity(question, &chunk.content);
                         if similarity > 0.1 {
@@ -923,6 +938,7 @@ impl DocumentService {
         &self,
         document_id: Uuid,
         max_length: Option<i32>,
+        tenant_id: Uuid,
     ) -> Result<String, String> {
         let config = self.qa_config.as_ref().ok_or("文档问答配置未初始化")?;
 
@@ -930,7 +946,7 @@ impl DocumentService {
             .vector_service
             .read()
             .await
-            .get_document_chunks(document_id)
+            .get_document_chunks(document_id, tenant_id)
             .await
             .map_err(|e| format!("获取文档分块失败: {}", e))?;
 
@@ -958,6 +974,7 @@ impl DocumentService {
         &self,
         document_id: Uuid,
         max_points: Option<i32>,
+        tenant_id: Uuid,
     ) -> Result<Vec<String>, String> {
         let config = self.qa_config.as_ref().ok_or("文档问答配置未初始化")?;
 
@@ -965,7 +982,7 @@ impl DocumentService {
             .vector_service
             .read()
             .await
-            .get_document_chunks(document_id)
+            .get_document_chunks(document_id, tenant_id)
             .await
             .map_err(|e| format!("获取文档分块失败: {}", e))?;
 

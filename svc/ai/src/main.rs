@@ -1,9 +1,12 @@
 // TOPEMS-AI Backend - with PostgreSQL/pgvector persistence and PDF support
 // =============================================================================
 
+mod middleware;
 mod modules;
 mod services;
 mod shared;
+
+use crate::shared::AppState;
 
 // 分析 API handlers
 use crate::modules::{
@@ -12,7 +15,7 @@ use crate::modules::{
 use crate::services::document::DocumentQAConfig;
 
 use axum::{
-    extract::{DefaultBodyLimit, FromRef, Query, State},
+    extract::{DefaultBodyLimit, Query, State},
     routing::{delete, get, post},
     Json, Router,
 };
@@ -231,19 +234,6 @@ struct Config {
     embedding_model: String,
 }
 
-/// 应用状态
-#[derive(Clone)]
-struct AppState {
-    auth_state: AuthState,
-    document_service: DocumentService,
-    vector_service: VectorService,
-    qa_service: QAService,
-    analysis_service: AnalysisService,
-    agent_service: crate::services::AgentService,
-    recommendation_service: RecommendationService,
-    multimodal_service: MultimodalService,
-}
-
 #[derive(Debug, Serialize, Deserialize)]
 struct ChatRequest {
     query: String,
@@ -358,12 +348,6 @@ struct ConnectorStatus {
 }
 
 static CONNECTORS: std::sync::OnceLock<Arc<Mutex<Vec<DataConnector>>>> = std::sync::OnceLock::new();
-
-impl FromRef<AppState> for AuthState {
-    fn from_ref(state: &AppState) -> Self {
-        state.auth_state.clone()
-    }
-}
 
 async fn load_documents_from_dir(dir: &str) -> Vec<Document> {
     let mut docs = Vec::new();
@@ -1788,8 +1772,11 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
     };
 
     // 初始化数据库
-    let database_url = std::env::var("DATABASE_URL")
-        .unwrap_or_else(|_| "postgres://topems:topems_secret@localhost:5432/topems".to_string());
+    let database_url = std::env::var("DATABASE_URL").unwrap_or_else(|_| {
+        env::var("DATABASE_URL")
+            .expect("DATABASE_URL environment variable is required")
+            .to_string()
+    });
 
     std::env::set_var("SEARCH_PATH", "ai_service, shared, public");
 
@@ -2010,6 +1997,9 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
             app_state.auth_state.clone(),
             auth_middleware,
         ))
+        .layer(axum::middleware::from_fn(
+            middleware::tenant::tenant_middleware,
+        ))
         .with_state(app_state.clone());
 
     // 分析 API - 使用 AnalysisApi 模块
@@ -2029,6 +2019,9 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
             app_state.auth_state.clone(),
             auth_middleware,
         ))
+        .layer(axum::middleware::from_fn(
+            middleware::tenant::tenant_middleware,
+        ))
         .with_state(app_state.clone());
 
     let agent_router = Router::new()
@@ -2036,6 +2029,9 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
         .layer(axum::middleware::from_fn_with_state(
             app_state.auth_state.clone(),
             auth_middleware,
+        ))
+        .layer(axum::middleware::from_fn(
+            middleware::tenant::tenant_middleware,
         ))
         .with_state(app_state.clone());
 
@@ -2064,6 +2060,9 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
         .layer(axum::middleware::from_fn_with_state(
             app_state.auth_state.clone(),
             auth_middleware,
+        ))
+        .layer(axum::middleware::from_fn(
+            middleware::tenant::tenant_middleware,
         ))
         .with_state(app_state.clone());
 
@@ -2115,9 +2114,9 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
         .layer(cors)
         .layer(DefaultBodyLimit::max(500 * 1024 * 1024));
 
-    let port = std::env::var("SERVER_PORT")
+    let port = std::env::var("AI_PORT")
+        .or_else(|_| std::env::var("SERVER_PORT"))
         .or_else(|_| std::env::var("PORT"))
-        .or_else(|_| std::env::var("AI_PORT"))
         .unwrap_or_else(|_| "8013".to_string())
         .parse()
         .unwrap_or(8013);

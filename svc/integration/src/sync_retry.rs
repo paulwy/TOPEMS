@@ -216,6 +216,7 @@ impl CircuitBreaker {
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct SyncTask {
     pub id: String,
+    pub tenant_id: String,
     pub source_service: String,
     pub target_service: String,
     pub sync_type: String,

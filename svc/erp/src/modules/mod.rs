@@ -16,7 +16,9 @@ pub mod asset;
 pub mod audit;
 pub mod bank;
 pub mod consolidation;
+pub mod customer;
 pub mod db_structure;
+pub mod demo_data;
 pub mod dict;
 pub mod erp_plugin;
 pub mod finance;
@@ -24,10 +26,15 @@ pub mod finance_reports;
 pub mod fixed_asset;
 pub mod health;
 pub mod hrm_integration_example;
+pub mod inventory;
+pub mod material;
 pub mod meeting_room;
 pub mod office_supplies;
 pub mod opening_balance;
 pub mod production_order;
+pub mod purchase_order;
+pub mod sales_order;
+pub mod supplier;
 pub mod vehicles;
 pub mod voucher;
 
@@ -84,5 +91,11 @@ pub fn create_routes() -> Router<ApiState> {
         .merge(announcement::create_routes())
         .merge(hrm_integration_example::create_routes())
         .merge(production_order::create_routes())
+        .merge(purchase_order::create_routes())
         .merge(erp_plugin::create_routes())
+        .merge(material::create_routes())
+        .merge(inventory::create_routes())
+        .merge(customer::create_routes())
+        .merge(supplier::create_routes())
+        .merge(sales_order::create_routes())
 }

@@ -122,7 +122,7 @@ impl MigrationRunner {
 
         // 按倒序回滚所有迁移
         let mut sorted = migrations;
-        sorted.sort_by(|a, b| b.version().cmp(&a.version()));
+        sorted.sort_by_key(|b| std::cmp::Reverse(b.version()));
 
         for m in sorted {
             if let Err(e) = self.executor.rollback(&m, true).await {

@@ -562,6 +562,7 @@ impl ConversionEngine {
         // 创建执行记录
         let execution = ConversionExecution {
             id: Uuid::new_v4(),
+            tenant_id: rule.tenant_id,
             rule_id: rule.id,
             rule_code: rule.code.clone(),
             source_record_id: source_record_id.to_string(),
@@ -589,6 +590,7 @@ impl ConversionEngine {
 
         ConversionExecution {
             id: Uuid::new_v4(),
+            tenant_id: rule.tenant_id,
             rule_id: rule.id,
             rule_code: rule.code.clone(),
             source_record_id: source_record_id.to_string(),
@@ -796,6 +798,7 @@ mod tests {
     fn test_can_execute() {
         let rule = ConversionRule {
             id: Uuid::new_v4(),
+            tenant_id: Uuid::new_v4(),
             code: "test".to_string(),
             name: "Test Rule".to_string(),
             description: None,

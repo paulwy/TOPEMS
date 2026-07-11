@@ -3,12 +3,12 @@
 use axum::{
     extract::State,
     routing::{delete, get, post, put},
-    Json, Router,
+    Extension, Json, Router,
 };
 use bigdecimal::{BigDecimal, ToPrimitive};
 use serde::{Deserialize, Serialize};
 use sqlx::{types::Uuid, FromRow};
-use topems_shared::ApiResponse;
+use topems_shared::{ApiResponse, Claims};
 
 #[derive(Debug, Deserialize)]
 pub struct SpcChartQuery {
@@ -21,6 +21,7 @@ pub struct SpcChartQuery {
 #[derive(Debug, Serialize, FromRow)]
 pub struct SpcChart {
     pub id: String,
+    pub tenant_id: String,
     pub chart_no: String,
     pub chart_type: String,
     pub product_id: Option<String>,
@@ -65,6 +66,7 @@ pub struct UpdateSpcChartRequest {
 #[derive(Debug, Serialize, FromRow)]
 pub struct SpcDataPoint {
     pub id: String,
+    pub tenant_id: String,
     pub chart_id: String,
     pub sample_no: i32,
     pub value: BigDecimal,
@@ -236,25 +238,42 @@ fn detect_trend(values: &[f64]) -> Option<String> {
     }
 }
 
+fn get_tenant_id(claims: &Claims, headers: &axum::http::HeaderMap) -> Uuid {
+    claims
+        .tenant_id
+        .as_ref()
+        .and_then(|t| Uuid::parse_str(t).ok())
+        .or_else(|| {
+            headers
+                .get("x-tenant-id")
+                .and_then(|v| v.to_str().ok())
+                .and_then(|s| Uuid::parse_str(s).ok())
+        })
+        .unwrap_or_else(Uuid::new_v4)
+}
+
 pub async fn list_spc_charts(
     State(state): State<crate::AppState>,
+    Extension(claims): Extension<Claims>,
+    headers: axum::http::HeaderMap,
     axum::extract::Query(query): axum::extract::Query<SpcChartQuery>,
 ) -> Json<ApiResponse<Vec<SpcChart>>> {
+    let tenant_id = get_tenant_id(&claims, &headers);
     let page = query.page.unwrap_or(1);
     let page_size = query.page_size.unwrap_or(10);
     let offset = (page - 1) * page_size;
 
     let charts = match (query.chart_type.as_ref(), query.product_id.as_ref()) {
-        (Some(ct), Some(pid)) => sqlx::query_as::<_, SpcChart>(r#"SELECT id, chart_no, chart_type, product_id::TEXT, product_name, parameter_name, ucl, cl, lcl, cp, cpk, pp, ppk, sample_count, status, created_by, created_at::TEXT, updated_at::TEXT FROM qa_spc_charts WHERE chart_type = $1 AND product_id::TEXT = $2 ORDER BY created_at DESC LIMIT $3 OFFSET $4"#).bind(ct).bind(pid).bind(page_size).bind(offset)
+        (Some(ct), Some(pid)) => sqlx::query_as::<_, SpcChart>(r#"SELECT id, tenant_id, chart_no, chart_type, product_id::TEXT, product_name, parameter_name, ucl, cl, lcl, cp, cpk, pp, ppk, sample_count, status, created_by, created_at::TEXT, updated_at::TEXT FROM qa_spc_charts WHERE tenant_id = $1 AND chart_type = $2 AND product_id::TEXT = $3 ORDER BY created_at DESC LIMIT $4 OFFSET $5"#).bind(tenant_id).bind(ct).bind(pid).bind(page_size).bind(offset)
         .fetch_all(&state.pool)
         .await,
-        (Some(ct), None) => sqlx::query_as::<_, SpcChart>(r#"SELECT id, chart_no, chart_type, product_id::TEXT, product_name, parameter_name, ucl, cl, lcl, cp, cpk, pp, ppk, sample_count, status, created_by, created_at::TEXT, updated_at::TEXT FROM qa_spc_charts WHERE chart_type = $1 ORDER BY created_at DESC LIMIT $2 OFFSET $3"#).bind(ct).bind(page_size).bind(offset)
+        (Some(ct), None) => sqlx::query_as::<_, SpcChart>(r#"SELECT id, tenant_id, chart_no, chart_type, product_id::TEXT, product_name, parameter_name, ucl, cl, lcl, cp, cpk, pp, ppk, sample_count, status, created_by, created_at::TEXT, updated_at::TEXT FROM qa_spc_charts WHERE tenant_id = $1 AND chart_type = $2 ORDER BY created_at DESC LIMIT $3 OFFSET $4"#).bind(tenant_id).bind(ct).bind(page_size).bind(offset)
         .fetch_all(&state.pool)
         .await,
-        (None, Some(pid)) => sqlx::query_as::<_, SpcChart>(r#"SELECT id, chart_no, chart_type, product_id::TEXT, product_name, parameter_name, ucl, cl, lcl, cp, cpk, pp, ppk, sample_count, status, created_by, created_at::TEXT, updated_at::TEXT FROM qa_spc_charts WHERE product_id::TEXT = $1 ORDER BY created_at DESC LIMIT $2 OFFSET $3"#).bind(pid).bind(page_size).bind(offset)
+        (None, Some(pid)) => sqlx::query_as::<_, SpcChart>(r#"SELECT id, tenant_id, chart_no, chart_type, product_id::TEXT, product_name, parameter_name, ucl, cl, lcl, cp, cpk, pp, ppk, sample_count, status, created_by, created_at::TEXT, updated_at::TEXT FROM qa_spc_charts WHERE tenant_id = $1 AND product_id::TEXT = $2 ORDER BY created_at DESC LIMIT $3 OFFSET $4"#).bind(tenant_id).bind(pid).bind(page_size).bind(offset)
         .fetch_all(&state.pool)
         .await,
-        (None, None) => sqlx::query_as::<_, SpcChart>(r#"SELECT id, chart_no, chart_type, product_id::TEXT, product_name, parameter_name, ucl, cl, lcl, cp, cpk, pp, ppk, sample_count, status, created_by, created_at::TEXT, updated_at::TEXT FROM qa_spc_charts ORDER BY created_at DESC LIMIT $1 OFFSET $2"#).bind(page_size).bind(offset)
+        (None, None) => sqlx::query_as::<_, SpcChart>(r#"SELECT id, tenant_id, chart_no, chart_type, product_id::TEXT, product_name, parameter_name, ucl, cl, lcl, cp, cpk, pp, ppk, sample_count, status, created_by, created_at::TEXT, updated_at::TEXT FROM qa_spc_charts WHERE tenant_id = $1 ORDER BY created_at DESC LIMIT $2 OFFSET $3"#).bind(tenant_id).bind(page_size).bind(offset)
         .fetch_all(&state.pool)
         .await,
     };
@@ -270,8 +289,11 @@ pub async fn list_spc_charts(
 
 pub async fn create_spc_chart(
     State(state): State<crate::AppState>,
+    Extension(claims): Extension<Claims>,
+    headers: axum::http::HeaderMap,
     Json(req): Json<CreateSpcChartRequest>,
 ) -> Json<ApiResponse<SpcChart>> {
+    let tenant_id = get_tenant_id(&claims, &headers);
     let chart_no = format!(
         "SPC-{}",
         uuid::Uuid::new_v4().to_string()[..8].to_uppercase()
@@ -282,7 +304,7 @@ pub async fn create_spc_chart(
         .as_ref()
         .and_then(|s| Uuid::parse_str(s).ok());
 
-    let chart = sqlx::query_as::<_, SpcChart>(r#"INSERT INTO qa_spc_charts (chart_no, chart_type, product_id, product_name, parameter_name, ucl, cl, lcl, status, created_by) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, 'active', $9) RETURNING id, chart_no, chart_type, product_id::TEXT, product_name, parameter_name, ucl, cl, lcl, cp, cpk, pp, ppk, sample_count, status, created_by, created_at::TEXT, updated_at::TEXT"#).bind(chart_no).bind(req.chart_type).bind(product_id).bind(req.product_name).bind(req.parameter_name).bind(req.ucl).bind(req.cl).bind(req.lcl).bind(req.created_by)
+    let chart = sqlx::query_as::<_, SpcChart>(r#"INSERT INTO qa_spc_charts (tenant_id, chart_no, chart_type, product_id, product_name, parameter_name, ucl, cl, lcl, status, created_by) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, 'active', $10) RETURNING id, tenant_id, chart_no, chart_type, product_id::TEXT, product_name, parameter_name, ucl, cl, lcl, cp, cpk, pp, ppk, sample_count, status, created_by, created_at::TEXT, updated_at::TEXT"#).bind(tenant_id).bind(chart_no).bind(req.chart_type).bind(product_id).bind(req.product_name).bind(req.parameter_name).bind(req.ucl).bind(req.cl).bind(req.lcl).bind(req.created_by)
     .fetch_one(&state.pool)
     .await;
 
@@ -297,14 +319,17 @@ pub async fn create_spc_chart(
 
 pub async fn get_spc_chart(
     State(state): State<crate::AppState>,
+    Extension(claims): Extension<Claims>,
+    headers: axum::http::HeaderMap,
     axum::extract::Path(id): axum::extract::Path<String>,
 ) -> Json<ApiResponse<SpcChart>> {
+    let tenant_id = get_tenant_id(&claims, &headers);
     let id = match Uuid::parse_str(&id) {
         Ok(u) => u,
         Err(_) => return Json(ApiResponse::error(400, "无效的控制图ID")),
     };
 
-    let chart = sqlx::query_as::<_, SpcChart>(r#"SELECT id, chart_no, chart_type, product_id::TEXT, product_name, parameter_name, ucl, cl, lcl, cp, cpk, pp, ppk, sample_count, status, created_by, created_at::TEXT, updated_at::TEXT FROM qa_spc_charts WHERE id = $1"#).bind(id)
+    let chart = sqlx::query_as::<_, SpcChart>(r#"SELECT id, tenant_id, chart_no, chart_type, product_id::TEXT, product_name, parameter_name, ucl, cl, lcl, cp, cpk, pp, ppk, sample_count, status, created_by, created_at::TEXT, updated_at::TEXT FROM qa_spc_charts WHERE id = $1 AND tenant_id = $2"#).bind(id).bind(tenant_id)
     .fetch_one(&state.pool)
     .await;
 
@@ -319,15 +344,18 @@ pub async fn get_spc_chart(
 
 pub async fn update_spc_chart(
     State(state): State<crate::AppState>,
+    Extension(claims): Extension<Claims>,
+    headers: axum::http::HeaderMap,
     axum::extract::Path(id): axum::extract::Path<String>,
     Json(req): Json<UpdateSpcChartRequest>,
 ) -> Json<ApiResponse<SpcChart>> {
+    let tenant_id = get_tenant_id(&claims, &headers);
     let id = match Uuid::parse_str(&id) {
         Ok(u) => u,
         Err(_) => return Json(ApiResponse::error(400, "无效的控制图ID")),
     };
 
-    let chart = sqlx::query_as::<_, SpcChart>(r#"UPDATE qa_spc_charts SET chart_type = COALESCE($2, chart_type), parameter_name = COALESCE($3, parameter_name), ucl = COALESCE($4, ucl), cl = COALESCE($5, cl), lcl = COALESCE($6, lcl), status = COALESCE($7, status), updated_at = NOW() WHERE id = $1 RETURNING id, chart_no, chart_type, product_id::TEXT, product_name, parameter_name, ucl, cl, lcl, cp, cpk, pp, ppk, sample_count, status, created_by, created_at::TEXT, updated_at::TEXT"#).bind(id).bind(req.chart_type).bind(req.parameter_name).bind(req.ucl).bind(req.cl).bind(req.lcl).bind(req.status)
+    let chart = sqlx::query_as::<_, SpcChart>(r#"UPDATE qa_spc_charts SET chart_type = COALESCE($2, chart_type), parameter_name = COALESCE($3, parameter_name), ucl = COALESCE($4, ucl), cl = COALESCE($5, cl), lcl = COALESCE($6, lcl), status = COALESCE($7, status), updated_at = NOW() WHERE id = $1 AND tenant_id = $8 RETURNING id, tenant_id, chart_no, chart_type, product_id::TEXT, product_name, parameter_name, ucl, cl, lcl, cp, cpk, pp, ppk, sample_count, status, created_by, created_at::TEXT, updated_at::TEXT"#).bind(id).bind(req.chart_type).bind(req.parameter_name).bind(req.ucl).bind(req.cl).bind(req.lcl).bind(req.status).bind(tenant_id)
     .fetch_one(&state.pool)
     .await;
 
@@ -342,15 +370,19 @@ pub async fn update_spc_chart(
 
 pub async fn delete_spc_chart(
     State(state): State<crate::AppState>,
+    Extension(claims): Extension<Claims>,
+    headers: axum::http::HeaderMap,
     axum::extract::Path(id): axum::extract::Path<String>,
 ) -> Json<ApiResponse<bool>> {
+    let tenant_id = get_tenant_id(&claims, &headers);
     let id = match Uuid::parse_str(&id) {
         Ok(u) => u,
         Err(_) => return Json(ApiResponse::error(400, "无效的控制图ID")),
     };
 
-    let result = sqlx::query(r#"DELETE FROM qa_spc_charts WHERE id = $1"#)
+    let result = sqlx::query(r#"DELETE FROM qa_spc_charts WHERE id = $1 AND tenant_id = $2"#)
         .bind(id)
+        .bind(tenant_id)
         .execute(&state.pool)
         .await;
 
@@ -365,8 +397,11 @@ pub async fn delete_spc_chart(
 
 pub async fn get_spc_data_points(
     State(state): State<crate::AppState>,
+    Extension(claims): Extension<Claims>,
+    headers: axum::http::HeaderMap,
     axum::extract::Query(query): axum::extract::Query<SpcDataQuery>,
 ) -> Json<ApiResponse<Vec<SpcDataPoint>>> {
+    let tenant_id = get_tenant_id(&claims, &headers);
     let chart_id = match Uuid::parse_str(&query.chart_id) {
         Ok(u) => u,
         Err(_) => return Json(ApiResponse::error(400, "无效的控制图ID")),
@@ -374,7 +409,7 @@ pub async fn get_spc_data_points(
 
     let limit = query.limit.unwrap_or(100);
 
-    let points = sqlx::query_as::<_, SpcDataPoint>(r#"SELECT id, chart_id, sample_no, value, subgroup_size, is_out_of_control, trend_flag, measured_at::TEXT, created_at::TEXT FROM qa_spc_data_points WHERE chart_id = $1 ORDER BY sample_no DESC LIMIT $2"#).bind(chart_id).bind(limit)
+    let points = sqlx::query_as::<_, SpcDataPoint>(r#"SELECT id, tenant_id, chart_id::TEXT, sample_no, value, subgroup_size, is_out_of_control, trend_flag, measured_at::TEXT, created_at::TEXT FROM qa_spc_data_points WHERE chart_id = $1 AND tenant_id = $2 ORDER BY sample_no DESC LIMIT $3"#).bind(chart_id).bind(tenant_id).bind(limit)
     .fetch_all(&state.pool)
     .await;
 
@@ -392,14 +427,17 @@ pub async fn get_spc_data_points(
 
 pub async fn add_spc_data_point(
     State(state): State<crate::AppState>,
+    Extension(claims): Extension<Claims>,
+    headers: axum::http::HeaderMap,
     Json(req): Json<CreateSpcDataRequest>,
 ) -> Json<ApiResponse<SpcDataPoint>> {
+    let tenant_id = get_tenant_id(&claims, &headers);
     let chart_id = match Uuid::parse_str(&req.chart_id) {
         Ok(u) => u,
         Err(_) => return Json(ApiResponse::error(400, "无效的控制图ID")),
     };
 
-    let chart = sqlx::query_as::<_, SpcChart>(r#"SELECT id, chart_no, chart_type, product_id::TEXT, product_name, parameter_name, ucl, cl, lcl, cp, cpk, pp, ppk, sample_count, status, created_by, created_at::TEXT, updated_at::TEXT FROM qa_spc_charts WHERE id = $1"#).bind(chart_id)
+    let chart = sqlx::query_as::<_, SpcChart>(r#"SELECT id, tenant_id, chart_no, chart_type, product_id::TEXT, product_name, parameter_name, ucl, cl, lcl, cp, cpk, pp, ppk, sample_count, status, created_by, created_at::TEXT, updated_at::TEXT FROM qa_spc_charts WHERE id = $1 AND tenant_id = $2"#).bind(chart_id).bind(tenant_id)
     .fetch_one(&state.pool)
     .await;
 
@@ -416,13 +454,13 @@ pub async fn add_spc_data_point(
     let value_f64 = req.value.to_f64().unwrap_or(0.0);
     let is_out_of_control = Some(value_f64 > ucl || value_f64 < lcl);
 
-    let point = sqlx::query_as::<_, SpcDataPoint>(r#"INSERT INTO qa_spc_data_points (chart_id, sample_no, value, subgroup_size, is_out_of_control) VALUES ($1, $2, $3, $4, $5) RETURNING id, chart_id, sample_no, value, subgroup_size, is_out_of_control, trend_flag, measured_at::TEXT, created_at::TEXT"#).bind(chart_id).bind(req.sample_no).bind(req.value).bind(req.subgroup_size).bind(is_out_of_control)
+    let point = sqlx::query_as::<_, SpcDataPoint>(r#"INSERT INTO qa_spc_data_points (tenant_id, chart_id, sample_no, value, subgroup_size, is_out_of_control) VALUES ($1, $2, $3, $4, $5, $6) RETURNING id, tenant_id, chart_id::TEXT, sample_no, value, subgroup_size, is_out_of_control, trend_flag, measured_at::TEXT, created_at::TEXT"#).bind(tenant_id).bind(chart_id).bind(req.sample_no).bind(req.value).bind(req.subgroup_size).bind(is_out_of_control)
     .fetch_one(&state.pool)
     .await;
 
     match point {
         Ok(data) => {
-            let _ = sqlx::query(r#"UPDATE qa_spc_charts SET sample_count = COALESCE(sample_count, 0) + 1, updated_at = NOW() WHERE id = $1"#).bind(chart_id)
+            let _ = sqlx::query(r#"UPDATE qa_spc_charts SET sample_count = COALESCE(sample_count, 0) + 1, updated_at = NOW() WHERE id = $1 AND tenant_id = $2"#).bind(chart_id).bind(tenant_id)
             .execute(&state.pool)
             .await;
             Json(ApiResponse::success(data, "SPC数据点添加成功"))

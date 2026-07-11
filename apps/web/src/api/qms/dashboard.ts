@@ -8,7 +8,7 @@ export const qualityDashboardApi = {
     startDate?: string;
     endDate?: string;
     department?: string;
-  }): Promise<ApiResponse<QualityOverview>> => {
+  }): Promise<ApiResponse<QualityOverview | undefined>> => {
     const response = await apiClient.qms.get<QualityOverviewBackend>(
       '/quality-dashboard/overview',
       {

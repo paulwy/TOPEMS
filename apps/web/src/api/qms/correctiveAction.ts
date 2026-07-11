@@ -12,7 +12,7 @@ export const correctiveActionApi = {
   completeAction: async (
     id: string,
     data: { verificationResult?: string; verifiedBy?: string; remark?: string }
-  ): Promise<ApiResponse<QualityImprovement>> => {
+  ): Promise<ApiResponse<QualityImprovement | undefined>> => {
     const response = await apiClient.qms.post<CorrectiveActionBackend>(`/actions/${id}/complete`, {
       verification_result: data.verificationResult,
       verified_by: data.verifiedBy,

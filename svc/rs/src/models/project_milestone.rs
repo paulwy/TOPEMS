@@ -26,6 +26,7 @@ impl std::fmt::Display for MilestoneStatus {
 #[derive(Debug, Clone, Serialize, Deserialize, FromRow, ToSchema)]
 pub struct ProjectMilestone {
     pub id: Uuid,
+    pub tenant_id: Uuid,
     pub project_id: Uuid,
     pub phase_id: Option<Uuid>,
     pub name: String,

@@ -306,22 +306,102 @@ const plugins = [
       short_name: 'TOPEMS',
       description: '企业数字化平台',
       theme_color: '#1976d2',
+      background_color: '#ffffff',
+      display: 'standalone',
+      display_override: ['standalone', 'fullscreen', 'minimal-ui'],
+      orientation: 'any',
+      lang: 'zh-CN',
+      dir: 'ltr',
+      scope: '/',
+      start_url: '/',
       icons: [
+        {
+          src: 'icons/icon-72x72.png',
+          sizes: '72x72',
+          type: 'image/png',
+          purpose: 'maskable any',
+        },
+        {
+          src: 'icons/icon-96x96.png',
+          sizes: '96x96',
+          type: 'image/png',
+          purpose: 'maskable any',
+        },
         {
           src: 'icons/icon-128x128.png',
           sizes: '128x128',
           type: 'image/png',
+          purpose: 'maskable any',
+        },
+        {
+          src: 'icons/icon-144x144.png',
+          sizes: '144x144',
+          type: 'image/png',
+          purpose: 'maskable any',
+        },
+        {
+          src: 'icons/icon-152x152.png',
+          sizes: '152x152',
+          type: 'image/png',
+          purpose: 'maskable any',
+        },
+        {
+          src: 'icons/icon-192x192.png',
+          sizes: '192x192',
+          type: 'image/png',
+          purpose: 'maskable any',
+        },
+        {
+          src: 'icons/icon-384x384.png',
+          sizes: '384x384',
+          type: 'image/png',
+          purpose: 'maskable any',
         },
         {
           src: 'icons/icon-512x512.png',
           sizes: '512x512',
           type: 'image/png',
+          purpose: 'maskable any',
         },
       ],
+      shortcuts: [
+        {
+          name: '首页',
+          short_name: '首页',
+          description: '快速访问首页',
+          url: '/dashboard',
+          icons: [{ src: 'icons/icon-96x96.png', sizes: '96x96' }],
+        },
+        {
+          name: '工单管理',
+          short_name: '工单',
+          description: '查看生产工单',
+          url: '/mes/work-orders',
+          icons: [{ src: 'icons/icon-96x96.png', sizes: '96x96' }],
+        },
+        {
+          name: '库存管理',
+          short_name: '库存',
+          description: '查看仓库库存',
+          url: '/wms/inventory',
+          icons: [{ src: 'icons/icon-96x96.png', sizes: '96x96' }],
+        },
+        {
+          name: '员工管理',
+          short_name: '员工',
+          description: '管理员工信息',
+          url: '/hrm/employees',
+          icons: [{ src: 'icons/icon-96x96.png', sizes: '96x96' }],
+        },
+      ],
+      categories: ['business', 'productivity', 'enterprise'],
     },
     workbox: {
-      globPatterns: ['**/*.{js,css,html,svg,png,jpg,jpeg,gif}'],
-      maximumFileSizeToCacheInBytes: 5 * 1024 * 1024,
+      globPatterns: ['**/*.{js,css,html,svg,png,jpg,jpeg,gif,woff,woff2}'],
+      maximumFileSizeToCacheInBytes: 10 * 1024 * 1024,
+      skipWaiting: true,
+      clientsClaim: true,
+      cleanupOutdatedCaches: true,
       runtimeCaching: [
         {
           urlPattern: /^https?:\/\/localhost/,
@@ -330,6 +410,10 @@ const plugins = [
             cacheName: 'api-cache',
             cacheableResponse: {
               statuses: [200],
+            },
+            expiration: {
+              maxAgeSeconds: 5 * 60,
+              maxEntries: 100,
             },
           },
         },
@@ -343,6 +427,49 @@ const plugins = [
             },
             expiration: {
               maxAgeSeconds: 30 * 24 * 60 * 60,
+              maxEntries: 50,
+            },
+          },
+        },
+        {
+          urlPattern: /^https?:\/\/cdn\.jsdelivr\.net/,
+          handler: 'StaleWhileRevalidate',
+          options: {
+            cacheName: 'cdn-cache',
+            cacheableResponse: {
+              statuses: [200],
+            },
+            expiration: {
+              maxAgeSeconds: 7 * 24 * 60 * 60,
+              maxEntries: 30,
+            },
+          },
+        },
+        {
+          urlPattern: /\.(png|jpg|jpeg|svg|gif|webp)$/i,
+          handler: 'CacheFirst',
+          options: {
+            cacheName: 'image-cache',
+            cacheableResponse: {
+              statuses: [200],
+            },
+            expiration: {
+              maxAgeSeconds: 30 * 24 * 60 * 60,
+              maxEntries: 200,
+            },
+          },
+        },
+        {
+          urlPattern: /\.(woff|woff2|ttf|eot)$/i,
+          handler: 'CacheFirst',
+          options: {
+            cacheName: 'font-files-cache',
+            cacheableResponse: {
+              statuses: [200],
+            },
+            expiration: {
+              maxAgeSeconds: 90 * 24 * 60 * 60,
+              maxEntries: 20,
             },
           },
         },
@@ -350,7 +477,10 @@ const plugins = [
     },
     devOptions: {
       enabled: false,
+      type: 'module',
     },
+    registerType: 'prompt',
+    includeAssets: ['favicon.ico', 'apple-touch-icon.png', 'mask-icon.svg'],
   }),
 ];
 
@@ -452,7 +582,25 @@ export default defineConfig({
             return 'iam-chunk';
           }
           if (id.includes('/pages/admin/')) {
-            return 'admin-chunk';
+            if (id.includes('/pages/admin/DashboardPage')) {
+              return 'admin-overview-chunk';
+            }
+            if (id.includes('/pages/admin/Tenant') || id.includes('/pages/admin/Billing')) {
+              return 'admin-tenant-chunk';
+            }
+            if (id.includes('/pages/admin/Account') || id.includes('/pages/admin/BankAccount')) {
+              return 'admin-account-chunk';
+            }
+            if (id.includes('/pages/admin/Dictionary') || id.includes('/pages/admin/System') || id.includes('/pages/admin/Plugin')) {
+              return 'admin-settings-chunk';
+            }
+            if (id.includes('/pages/admin/Database') || id.includes('/pages/admin/Migration') || id.includes('/pages/admin/ConfigDebug')) {
+              return 'admin-tools-chunk';
+            }
+            if (id.includes('/pages/admin/Audit') || id.includes('/pages/admin/Monitor') || id.includes('/pages/admin/Performance')) {
+              return 'admin-analytics-chunk';
+            }
+            return 'admin-other-chunk';
           }
           if (id.includes('/pages/hrm/')) {
             return 'hrm-chunk';

@@ -577,7 +577,7 @@ pub async fn get_equipment_statistics(
             SUM(CASE WHEN status = 'normal' THEN 1 ELSE 0 END) as normal_count,
             SUM(CASE WHEN status = 'maintenance' THEN 1 ELSE 0 END) as maintenance_count,
             SUM(CASE WHEN status = 'fault' THEN 1 ELSE 0 END) as fault_count,
-            SUM(CASE WHEN next_maintenance_date IS NOT NULL AND next_maintenance_date <= CURRENT_DATE THEN 1 ELSE 0 END) as pending_maintenance_count
+            SUM(CASE WHEN next_maintenance IS NOT NULL AND next_maintenance <= CURRENT_DATE THEN 1 ELSE 0 END) as pending_maintenance_count
         FROM equipment
         "#,
     )
@@ -744,10 +744,10 @@ pub async fn list_maintenances(
             equipment_id: r.equipment_id.unwrap_or_default(),
             equipment_name: Some(r.equipment_name),
             equipment_no: Some(r.equipment_no),
-            maintenance_type: r.maintenance_type,
+            maintenance_type: r.maintenance_type.unwrap_or_default(),
             description: r.description,
             maintainer: r.maintainer.unwrap_or_default(),
-            start_time: naive_to_utc(Some(r.start_time)),
+            start_time: naive_to_utc(r.start_time),
             end_time: r.end_time.map(|dt| naive_to_utc(Some(dt))),
             cost: opt_big_decimal_to_f64(r.cost),
             result: r.result,
@@ -878,10 +878,10 @@ pub async fn create_maintenance(
             equipment_id: result.equipment_id.unwrap_or_default(),
             equipment_name,
             equipment_no,
-            maintenance_type: result.maintenance_type,
+            maintenance_type: result.maintenance_type.unwrap_or_default(),
             description: result.description,
             maintainer: result.maintainer.unwrap_or_default(),
-            start_time: naive_to_utc(Some(result.start_time)),
+            start_time: naive_to_utc(result.start_time),
             end_time: result.end_time.map(|dt| naive_to_utc(Some(dt))),
             cost: opt_big_decimal_to_f64(result.cost),
             result: result.result,
@@ -959,10 +959,10 @@ pub async fn update_maintenance_status(
             equipment_id: result.equipment_id.unwrap_or_default(),
             equipment_name,
             equipment_no,
-            maintenance_type: result.maintenance_type,
+            maintenance_type: result.maintenance_type.unwrap_or_default(),
             description: result.description,
             maintainer: result.maintainer.unwrap_or_default(),
-            start_time: naive_to_utc(Some(result.start_time)),
+            start_time: naive_to_utc(result.start_time),
             end_time: result.end_time.map(|dt| naive_to_utc(Some(dt))),
             cost: opt_big_decimal_to_f64(result.cost),
             result: result.result,
@@ -1080,11 +1080,11 @@ pub async fn list_inspections(
                 .into_iter()
                 .map(|r| InspectionResponse {
                     id: r.id.to_string(),
-                    equipment_id: r.equipment_id.map(|u| u.to_string()).unwrap_or_default(),
+                    equipment_id: r.equipment_id.to_string(),
                     equipment_code: r.equipment_code.unwrap_or_default(),
                     equipment_name: r.equipment_name.unwrap_or_default(),
-                    inspector: r.inspector.unwrap_or_default(),
-                    inspection_date: r.inspection_date.map(|d| d.to_string()).unwrap_or_default(),
+                    inspector: r.inspector,
+                    inspection_date: r.inspection_date,
                     location: r.location,
                     temperature: r
                         .temperature
@@ -1096,7 +1096,7 @@ pub async fn list_inspections(
                         .noiselevel
                         .map(|d| d.to_string().parse::<f64>().unwrap_or(0.0)),
                     status: r.status.unwrap_or_else(|| "normal".to_string()),
-                    items: r.items.and_then(|s| serde_json::from_str(&s).ok()),
+                    items: r.items,
                     abnormalities: r.abnormalities,
                     remarks: r.remarks,
                     created_at: naive_to_utc(r.created_at).to_rfc3339(),
@@ -1158,13 +1158,8 @@ pub async fn create_inspection(
     let noiselevel = body
         .noiselevel
         .and_then(|v| BigDecimal::from_str(&v.to_string()).ok());
-    let inspection_date =
-        chrono::NaiveDateTime::parse_from_str(&body.inspection_date, "%Y-%m-%dT%H:%M:%S")
-            .unwrap_or_else(|_| chrono::Local::now().naive_local());
-    let items_str = body
-        .items
-        .as_ref()
-        .and_then(|v| serde_json::to_string(v).ok());
+    let inspection_date = body.inspection_date.clone();
+    let items_value = body.items.clone();
 
     let result = sqlx::query!(
         r#"
@@ -1187,7 +1182,7 @@ pub async fn create_inspection(
         vibration,
         noiselevel,
         body.status,
-        items_str,
+        items_value,
         body.abnormalities,
         body.remarks,
     )
@@ -1198,11 +1193,11 @@ pub async fn create_inspection(
         Ok(r) => Json(ApiResponse::success(
             InspectionResponse {
                 id: r.id.to_string(),
-                equipment_id: r.equipment_id.map(|u| u.to_string()).unwrap_or_default(),
+                equipment_id: r.equipment_id.to_string(),
                 equipment_code: r.equipment_code.unwrap_or_default(),
                 equipment_name: r.equipment_name.unwrap_or_default(),
-                inspector: r.inspector.unwrap_or_default(),
-                inspection_date: r.inspection_date.map(|d| d.to_string()).unwrap_or_default(),
+                inspector: r.inspector,
+                inspection_date: r.inspection_date,
                 location: r.location,
                 temperature: r
                     .temperature
@@ -1214,7 +1209,7 @@ pub async fn create_inspection(
                     .noiselevel
                     .map(|d| d.to_string().parse::<f64>().unwrap_or(0.0)),
                 status: r.status.unwrap_or_else(|| "normal".to_string()),
-                items: r.items.and_then(|s| serde_json::from_str(&s).ok()),
+                items: r.items,
                 abnormalities: r.abnormalities,
                 remarks: r.remarks,
                 created_at: naive_to_utc(r.created_at).to_rfc3339(),

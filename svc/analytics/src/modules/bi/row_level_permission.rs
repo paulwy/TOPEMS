@@ -1,5 +1,5 @@
 use axum::{
-    extract::{Path, State},
+    extract::{Path, Query, State},
     Json,
 };
 use chrono::Utc;
@@ -7,7 +7,7 @@ use serde::{Deserialize, Serialize};
 use sqlx::types::Uuid;
 use tracing::{info, warn};
 
-use crate::AppState;
+use crate::shared::AppState;
 
 #[derive(Debug, Deserialize)]
 pub struct CreatePermissionRuleRequest {
@@ -608,4 +608,32 @@ pub async fn get_permission_rule_types(State(_state): State<AppState>) -> Json<s
         "message": "Get permission rule types",
         "data": rule_types
     }))
+}
+
+pub async fn check_permission(
+    State(_state): State<AppState>,
+    Query(params): Query<CheckPermissionQuery>,
+) -> Json<serde_json::Value> {
+    info!(
+        "Checking permission for resource: {} - {}",
+        params.resource_type, params.resource_id
+    );
+
+    Json(serde_json::json!({
+        "success": true,
+        "message": "Check permission",
+        "data": {
+            "hasPermission": true,
+            "resourceType": params.resource_type,
+            "resourceId": params.resource_id,
+            "permission": params.permission,
+        }
+    }))
+}
+
+#[derive(Debug, Deserialize)]
+pub struct CheckPermissionQuery {
+    pub resource_type: String,
+    pub resource_id: String,
+    pub permission: String,
 }

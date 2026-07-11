@@ -9,6 +9,7 @@ export const oaModuleConfig: RouteModuleConfig = {
   source: 'plugin',
   suite: 'enterprise',
   status: 'online',
+  frontendOnly: true,
   order: 15,
   description: '公告管理、会议管理、办公用品、费用报销',
   permission: 'oa:read',

@@ -9,6 +9,7 @@ export const assetModuleConfig: RouteModuleConfig = {
   source: 'plugin',
   suite: 'enterprise',
   status: 'online',
+  frontendOnly: true,
   order: 19,
   description: '设备管理、资产台账、车辆管理、办公用品',
   permission: 'asset:read',

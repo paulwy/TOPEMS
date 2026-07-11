@@ -14,6 +14,7 @@
 #![allow(clippy::redundant_closure)]
 #![allow(dead_code)]
 
+mod middleware;
 mod models;
 mod modules;
 mod services;
@@ -33,19 +34,6 @@ use topems_shared::{
 
 pub use shared::*;
 
-#[derive(Clone)]
-pub struct AppState {
-    pub auth_state: AuthState,
-    pub pool: PgPool,
-    pub health_config: SimpleHealthConfig,
-}
-
-impl axum::extract::FromRef<AppState> for AuthState {
-    fn from_ref(state: &AppState) -> Self {
-        state.auth_state.clone()
-    }
-}
-
 #[tokio::main]
 async fn main() {
     _ = dotenv::dotenv();
@@ -54,8 +42,11 @@ async fn main() {
 
     tracing::info!("🚀 TOPEMS EHS Service starting...");
 
-    let database_url = std::env::var("DATABASE_URL")
-        .unwrap_or_else(|_| "postgres://topems:topems_secret@localhost:5432/topems".to_string());
+    let database_url = std::env::var("DATABASE_URL").unwrap_or_else(|_| {
+        env::var("DATABASE_URL")
+            .expect("DATABASE_URL environment variable is required")
+            .to_string()
+    });
 
     let pool = match sqlx::postgres::PgPoolOptions::new()
         .max_connections(10)
@@ -113,6 +104,9 @@ async fn main() {
         .layer(axum::middleware::from_fn_with_state(
             state.auth_state.clone(),
             auth_middleware,
+        ))
+        .layer(axum::middleware::from_fn(
+            middleware::tenant::tenant_middleware,
         ))
         .layer(axum::middleware::from_fn_with_state(
             state.pool.clone(),

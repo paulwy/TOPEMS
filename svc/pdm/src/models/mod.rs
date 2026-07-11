@@ -5,6 +5,7 @@ pub async fn init_database(pool: &PgPool) -> Result<(), sqlx::Error> {
         r#"
         CREATE TABLE IF NOT EXISTS pdm_products (
             id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+            tenant_id UUID NOT NULL,
             product_no VARCHAR(64) NOT NULL UNIQUE,
             name VARCHAR(256) NOT NULL,
             description TEXT,
@@ -22,6 +23,7 @@ pub async fn init_database(pool: &PgPool) -> Result<(), sqlx::Error> {
         r#"
         CREATE TABLE IF NOT EXISTS pdm_materials (
             id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+            tenant_id UUID NOT NULL,
             material_no VARCHAR(64) NOT NULL UNIQUE,
             name VARCHAR(256) NOT NULL,
             spec VARCHAR(256),
@@ -40,8 +42,16 @@ pub async fn init_database(pool: &PgPool) -> Result<(), sqlx::Error> {
     )
     .execute(pool)
     .await?;
+    sqlx::query("CREATE INDEX IF NOT EXISTS idx_pdm_products_tenant_id ON pdm_products(tenant_id)")
+        .execute(pool)
+        .await?;
     sqlx::query(
         "CREATE INDEX IF NOT EXISTS idx_pdm_materials_material_no ON pdm_materials(material_no)",
+    )
+    .execute(pool)
+    .await?;
+    sqlx::query(
+        "CREATE INDEX IF NOT EXISTS idx_pdm_materials_tenant_id ON pdm_materials(tenant_id)",
     )
     .execute(pool)
     .await?;
@@ -50,6 +60,7 @@ pub async fn init_database(pool: &PgPool) -> Result<(), sqlx::Error> {
         r#"
         CREATE TABLE IF NOT EXISTS pdm_change_notices (
             id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+            tenant_id UUID NOT NULL,
             ecn_no VARCHAR(64) NOT NULL UNIQUE,
             title VARCHAR(256) NOT NULL,
             description TEXT,
@@ -83,11 +94,17 @@ pub async fn init_database(pool: &PgPool) -> Result<(), sqlx::Error> {
     sqlx::query("CREATE INDEX IF NOT EXISTS idx_pdm_change_notices_priority ON pdm_change_notices(priority)")
         .execute(pool)
         .await?;
+    sqlx::query(
+        "CREATE INDEX IF NOT EXISTS idx_pdm_change_notices_tenant_id ON pdm_change_notices(tenant_id)",
+    )
+    .execute(pool)
+    .await?;
 
     sqlx::query(
         r#"
         CREATE TABLE IF NOT EXISTS pdm_workflows (
             id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+            tenant_id UUID NOT NULL,
             name VARCHAR(256) NOT NULL,
             description TEXT,
             workflow_type VARCHAR(64) NOT NULL,
@@ -107,6 +124,7 @@ pub async fn init_database(pool: &PgPool) -> Result<(), sqlx::Error> {
         r#"
         CREATE TABLE IF NOT EXISTS pdm_workflow_instances (
             id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+            tenant_id UUID NOT NULL,
             workflow_id UUID NOT NULL REFERENCES pdm_workflows(id),
             workflow_name VARCHAR(256) NOT NULL,
             target_type VARCHAR(64) NOT NULL,
@@ -129,17 +147,28 @@ pub async fn init_database(pool: &PgPool) -> Result<(), sqlx::Error> {
     )
     .execute(pool)
     .await?;
+    sqlx::query(
+        "CREATE INDEX IF NOT EXISTS idx_pdm_workflows_tenant_id ON pdm_workflows(tenant_id)",
+    )
+    .execute(pool)
+    .await?;
     sqlx::query("CREATE INDEX IF NOT EXISTS idx_pdm_workflow_instances_target ON pdm_workflow_instances(target_type, target_id)")
         .execute(pool)
         .await?;
     sqlx::query("CREATE INDEX IF NOT EXISTS idx_pdm_workflow_instances_status ON pdm_workflow_instances(status)")
         .execute(pool)
         .await?;
+    sqlx::query(
+        "CREATE INDEX IF NOT EXISTS idx_pdm_workflow_instances_tenant_id ON pdm_workflow_instances(tenant_id)",
+    )
+    .execute(pool)
+    .await?;
 
     sqlx::query(
         r#"
         CREATE TABLE IF NOT EXISTS pdm_documents (
             id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+            tenant_id UUID NOT NULL,
             document_no VARCHAR(64) NOT NULL UNIQUE,
             name VARCHAR(256) NOT NULL,
             description TEXT,
@@ -168,12 +197,18 @@ pub async fn init_database(pool: &PgPool) -> Result<(), sqlx::Error> {
     sqlx::query("CREATE INDEX IF NOT EXISTS idx_pdm_documents_name ON pdm_documents(name)")
         .execute(pool)
         .await?;
+    sqlx::query(
+        "CREATE INDEX IF NOT EXISTS idx_pdm_documents_tenant_id ON pdm_documents(tenant_id)",
+    )
+    .execute(pool)
+    .await?;
 
     // ==================== Versions ====================
     sqlx::query(
         r#"
         CREATE TABLE IF NOT EXISTS pdm_versions (
             id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+            tenant_id UUID NOT NULL,
             version_no VARCHAR(64) NOT NULL,
             target_type VARCHAR(64) NOT NULL,
             target_id UUID NOT NULL,
@@ -192,12 +227,16 @@ pub async fn init_database(pool: &PgPool) -> Result<(), sqlx::Error> {
     sqlx::query("CREATE INDEX IF NOT EXISTS idx_pdm_versions_target ON pdm_versions(target_type, target_id)")
         .execute(pool)
         .await?;
+    sqlx::query("CREATE INDEX IF NOT EXISTS idx_pdm_versions_tenant_id ON pdm_versions(tenant_id)")
+        .execute(pool)
+        .await?;
 
     // ==================== Configurations ====================
     sqlx::query(
         r#"
         CREATE TABLE IF NOT EXISTS pdm_configurations (
             id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+            tenant_id UUID NOT NULL,
             config_no VARCHAR(64) NOT NULL UNIQUE,
             name VARCHAR(256) NOT NULL,
             description TEXT,
@@ -215,12 +254,18 @@ pub async fn init_database(pool: &PgPool) -> Result<(), sqlx::Error> {
     sqlx::query("CREATE INDEX IF NOT EXISTS idx_pdm_configurations_product ON pdm_configurations(product_id)")
         .execute(pool)
         .await?;
+    sqlx::query(
+        "CREATE INDEX IF NOT EXISTS idx_pdm_configurations_tenant_id ON pdm_configurations(tenant_id)",
+    )
+    .execute(pool)
+    .await?;
 
     // ==================== BOM ====================
     sqlx::query(
         r#"
         CREATE TABLE IF NOT EXISTS pdm_boms (
             id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+            tenant_id UUID NOT NULL,
             bom_no VARCHAR(64) NOT NULL UNIQUE,
             product_id UUID,
             product_name VARCHAR(256) NOT NULL,
@@ -239,6 +284,7 @@ pub async fn init_database(pool: &PgPool) -> Result<(), sqlx::Error> {
         r#"
         CREATE TABLE IF NOT EXISTS pdm_bom_items (
             id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+            tenant_id UUID NOT NULL,
             bom_id UUID NOT NULL REFERENCES pdm_boms(id) ON DELETE CASCADE,
             material_id UUID,
             material_code VARCHAR(64) NOT NULL,
@@ -257,15 +303,24 @@ pub async fn init_database(pool: &PgPool) -> Result<(), sqlx::Error> {
     sqlx::query("CREATE INDEX IF NOT EXISTS idx_pdm_boms_product ON pdm_boms(product_id)")
         .execute(pool)
         .await?;
+    sqlx::query("CREATE INDEX IF NOT EXISTS idx_pdm_boms_tenant_id ON pdm_boms(tenant_id)")
+        .execute(pool)
+        .await?;
     sqlx::query("CREATE INDEX IF NOT EXISTS idx_pdm_bom_items_bom ON pdm_bom_items(bom_id)")
         .execute(pool)
         .await?;
+    sqlx::query(
+        "CREATE INDEX IF NOT EXISTS idx_pdm_bom_items_tenant_id ON pdm_bom_items(tenant_id)",
+    )
+    .execute(pool)
+    .await?;
 
     // ==================== Production Processes ====================
     sqlx::query(
         r#"
         CREATE TABLE IF NOT EXISTS pdm_production_processes (
             id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+            tenant_id UUID NOT NULL,
             process_no VARCHAR(64) NOT NULL UNIQUE,
             name VARCHAR(256) NOT NULL,
             description TEXT,
@@ -280,12 +335,18 @@ pub async fn init_database(pool: &PgPool) -> Result<(), sqlx::Error> {
     )
     .execute(pool)
     .await?;
+    sqlx::query(
+        "CREATE INDEX IF NOT EXISTS idx_pdm_production_processes_tenant_id ON pdm_production_processes(tenant_id)",
+    )
+    .execute(pool)
+    .await?;
 
     // ==================== Production Steps ====================
     sqlx::query(
         r#"
         CREATE TABLE IF NOT EXISTS pdm_production_steps (
             id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+            tenant_id UUID NOT NULL,
             process_id UUID NOT NULL REFERENCES pdm_production_processes(id) ON DELETE CASCADE,
             step_no INT NOT NULL,
             name VARCHAR(256) NOT NULL,
@@ -299,12 +360,18 @@ pub async fn init_database(pool: &PgPool) -> Result<(), sqlx::Error> {
     )
     .execute(pool)
     .await?;
+    sqlx::query(
+        "CREATE INDEX IF NOT EXISTS idx_pdm_production_steps_tenant_id ON pdm_production_steps(tenant_id)",
+    )
+    .execute(pool)
+    .await?;
 
     // ==================== Production Formulas ====================
     sqlx::query(
         r#"
         CREATE TABLE IF NOT EXISTS pdm_production_formulas (
             id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+            tenant_id UUID NOT NULL,
             formula_no VARCHAR(64) NOT NULL UNIQUE,
             name VARCHAR(256) NOT NULL,
             product_id UUID,
@@ -318,12 +385,18 @@ pub async fn init_database(pool: &PgPool) -> Result<(), sqlx::Error> {
     )
     .execute(pool)
     .await?;
+    sqlx::query(
+        "CREATE INDEX IF NOT EXISTS idx_pdm_production_formulas_tenant_id ON pdm_production_formulas(tenant_id)",
+    )
+    .execute(pool)
+    .await?;
 
     // ==================== Production Batches ====================
     sqlx::query(
         r#"
         CREATE TABLE IF NOT EXISTS pdm_production_batches (
             id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+            tenant_id UUID NOT NULL,
             batch_no VARCHAR(64) NOT NULL UNIQUE,
             product_id UUID,
             product_name VARCHAR(256),
@@ -337,6 +410,11 @@ pub async fn init_database(pool: &PgPool) -> Result<(), sqlx::Error> {
             updated_at TIMESTAMP DEFAULT NOW()
         )
         "#,
+    )
+    .execute(pool)
+    .await?;
+    sqlx::query(
+        "CREATE INDEX IF NOT EXISTS idx_pdm_production_batches_tenant_id ON pdm_production_batches(tenant_id)",
     )
     .execute(pool)
     .await?;

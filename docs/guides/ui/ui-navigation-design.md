@@ -436,6 +436,7 @@ export const navigationRegistry = NavigationRegistry.getInstance();
 | `suiteNavigation` | `registry.register()` | 按套件分组注册 |
 | `moduleTabsConfig` | `registry.getModuleTabs()` | 按模块获取 |
 | `navigation.ts` | `NavigationRegistry` | 整合所有导航 |
+| `routes/v2/*.ts` + `*.nav.ts` | `modules/{module}/config.ts` | 统一配置（V5.8） |
 
 **迁移步骤**：
 
@@ -444,6 +445,39 @@ export const navigationRegistry = NavigationRegistry.getInstance();
 3. 删除 `navigation-v2.ts` 或标记为废弃
 4. 更新 TopNav 组件使用 Registry
 5. 实现 Sidebar 组件使用 `getSidebarNavItems()`
+
+### 3.6.1 统一配置方案（V5.8 路径重构）
+
+> 详细方案见 [路径重构实施方案](../../superpowers/specs/2026-07-11-path-refactor-implementation-plan.md)
+
+**问题**：路径在 3 处重复定义（`routes/v2/*.ts`、`lib/navigation/modules/*.nav.ts`、组件硬编码），导致死链。
+
+**方案**：每个模块合并为 `modules/{module}/config.ts`，路径常量作为唯一真相源。
+
+```typescript
+// modules/hrm/config.ts
+export const HRM_PATHS = {
+  root: '/hrm',
+  employees: '/hrm/employees',
+  employeeDetail: '/hrm/employees/:id',
+} as const;
+
+export const hrmModuleConfig: RouteModuleConfig = { /* routes 引用 HRM_PATHS */ };
+export const hrmNavConfig: ModuleNavConfig = { /* navItems 引用 HRM_PATHS */ };
+```
+
+**组件引用**：
+
+```typescript
+// ✅ 引用路径常量
+import { HRM_PATHS } from '@/modules/hrm/config';
+navigate(HRM_PATHS.employees);
+
+// ❌ 禁止硬编码
+navigate('/hrm/employees');
+```
+
+**迁移进度**：hrm 试点完成，剩余 30 个模块分 5 个 Wave 迁移，全部完成后删除 `compatibility.tsx`。
 
 ### 3.7 TopNav 组件改造
 

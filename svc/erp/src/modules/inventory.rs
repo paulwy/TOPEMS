@@ -1,0 +1,269 @@
+use axum::{
+    extract::{Extension, Path, Query, State},
+    routing::*,
+    Json, Router,
+};
+use serde::Deserialize;
+use uuid::Uuid;
+
+use super::ApiState;
+use crate::models::material::{CreateInventoryRequest, Inventory, UpdateInventoryRequest};
+use crate::shared::permission::{check_permission, ModulePermission};
+use topems_shared::auth::Claims;
+use topems_shared::{api_error, ApiResponse, PaginatedResponse};
+
+#[derive(Debug, Deserialize)]
+pub struct PaginationParams {
+    pub page: Option<i64>,
+    pub pagesize: Option<i64>,
+    pub search: Option<String>,
+    pub status: Option<String>,
+}
+
+pub fn create_routes() -> Router<ApiState> {
+    Router::new()
+        .route(
+            "/api/erp/inventory",
+            get(list_inventory).post(create_inventory),
+        )
+        .route(
+            "/api/erp/inventory/:id",
+            get(get_inventory)
+                .put(update_inventory)
+                .delete(delete_inventory),
+        )
+        .route("/api/erp/inventory/low-stock", get(get_low_stock))
+}
+
+pub async fn list_inventory(
+    State(state): State<ApiState>,
+    Extension(claims): Extension<Claims>,
+    Query(params): Query<PaginationParams>,
+) -> Json<ApiResponse<PaginatedResponse<Inventory>>> {
+    if let Err(e) = check_permission(&claims, &ModulePermission::FinanceRead).await {
+        return e;
+    }
+
+    let page = params.page.unwrap_or(1).max(1);
+    let page_size = params.pagesize.unwrap_or(20).min(100);
+    let offset = (page - 1) * page_size;
+
+    let search_pattern = params.search.as_deref().map(|s| format!("%{}%", s));
+    let status_filter = params.status.clone();
+
+    let inventory_result = if search_pattern.is_some() || status_filter.is_some() {
+        let search = search_pattern.unwrap_or_default();
+        let status = status_filter.clone();
+
+        sqlx::query_as::<_, Inventory>(
+            r#"SELECT id, material_id, material_code, material_name, warehouse_id, warehouse_name, location_code, quantity, available_quantity, reserved_quantity, unit, unit_price, total_amount, batch_no, expire_date, status, created_at, updated_at 
+               FROM inventory 
+               WHERE (material_code ILIKE $1 OR material_name ILIKE $1 OR location_code ILIKE $1)
+                 AND ($2 = '' OR status = $2)
+               ORDER BY created_at DESC LIMIT $3 OFFSET $4"#
+        )
+        .bind(search)
+        .bind(status.unwrap_or_default())
+        .bind(page_size)
+        .bind(offset)
+        .fetch_all(&state.db)
+        .await
+    } else {
+        sqlx::query_as::<_, Inventory>(
+            "SELECT id, material_id, material_code, material_name, warehouse_id, warehouse_name, location_code, quantity, available_quantity, reserved_quantity, unit, unit_price, total_amount, batch_no, expire_date, status, created_at, updated_at FROM inventory ORDER BY created_at DESC LIMIT $1 OFFSET $2"
+        )
+        .bind(page_size)
+        .bind(offset)
+        .fetch_all(&state.db)
+        .await
+    };
+
+    let inventory = match inventory_result {
+        Ok(i) => i,
+        Err(e) => {
+            tracing::error!("查询库存失败: {}", e);
+            return Json(api_error(500, "查询库存失败"));
+        }
+    };
+
+    let total = match sqlx::query_scalar::<_, i64>("SELECT COUNT(*) FROM inventory")
+        .fetch_one(&state.db)
+        .await
+    {
+        Ok(t) => t,
+        Err(e) => {
+            tracing::error!("查询库存总数失败: {}", e);
+            return Json(api_error(500, "查询库存总数失败"));
+        }
+    };
+
+    Json(ApiResponse::success(
+        PaginatedResponse::new(inventory, total, page, page_size),
+        "获取库存列表成功",
+    ))
+}
+
+pub async fn get_inventory(
+    State(state): State<ApiState>,
+    Extension(claims): Extension<Claims>,
+    Path(id): Path<Uuid>,
+) -> Json<ApiResponse<Inventory>> {
+    if let Err(e) = check_permission(&claims, &ModulePermission::FinanceRead).await {
+        return e;
+    }
+
+    let result = sqlx::query_as::<_, Inventory>(
+        "SELECT id, material_id, material_code, material_name, warehouse_id, warehouse_name, location_code, quantity, available_quantity, reserved_quantity, unit, unit_price, total_amount, batch_no, expire_date, status, created_at, updated_at FROM inventory WHERE id = $1",
+    )
+    .bind(id)
+    .fetch_optional(&state.db)
+    .await;
+
+    match result {
+        Ok(Some(inventory)) => Json(ApiResponse::success(inventory, "获取库存成功")),
+        Ok(None) => Json(api_error(404, "库存不存在")),
+        Err(e) => {
+            tracing::error!("查询库存失败: {}", e);
+            Json(api_error(500, "查询库存失败"))
+        }
+    }
+}
+
+pub async fn create_inventory(
+    State(state): State<ApiState>,
+    Extension(claims): Extension<Claims>,
+    Json(body): Json<CreateInventoryRequest>,
+) -> Json<ApiResponse<Inventory>> {
+    if let Err(e) = check_permission(&claims, &ModulePermission::FinanceWrite).await {
+        return e;
+    }
+
+    let material_result = sqlx::query_as::<_, (String, String, String)>(
+        "SELECT code, name, unit FROM materials WHERE id = $1",
+    )
+    .bind(body.material_id)
+    .fetch_optional(&state.db)
+    .await;
+
+    let (material_code, material_name, unit) = match material_result {
+        Ok(Some((c, n, u))) => (c, n, u),
+        _ => ("".to_string(), "".to_string(), "".to_string()),
+    };
+
+    let unit_price = body.unit_price.unwrap_or(0.0);
+    let total_amount = unit_price * body.quantity;
+
+    let result = sqlx::query_as::<_, Inventory>(
+        "INSERT INTO inventory (material_id, material_code, material_name, warehouse_id, warehouse_name, location_code, quantity, available_quantity, reserved_quantity, unit, unit_price, total_amount, batch_no, expire_date, status) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15) RETURNING id, material_id, material_code, material_name, warehouse_id, warehouse_name, location_code, quantity, available_quantity, reserved_quantity, unit, unit_price, total_amount, batch_no, expire_date, status, created_at, updated_at",
+    )
+    .bind(body.material_id)
+    .bind(material_code)
+    .bind(material_name)
+    .bind(body.warehouse_id)
+    .bind("")
+    .bind(body.location_code)
+    .bind(body.quantity)
+    .bind(body.quantity)
+    .bind(0.0)
+    .bind(unit)
+    .bind(unit_price)
+    .bind(total_amount)
+    .bind(body.batch_no)
+    .bind(body.expire_date)
+    .bind(body.status.unwrap_or_else(|| "active".to_string()))
+    .fetch_optional(&state.db)
+    .await;
+
+    match result {
+        Ok(Some(inventory)) => Json(ApiResponse::success(inventory, "创建库存成功")),
+        Ok(None) => Json(api_error(500, "创建库存失败")),
+        Err(e) => {
+            tracing::error!("创建库存失败: {}", e);
+            Json(api_error(500, "创建库存失败"))
+        }
+    }
+}
+
+pub async fn update_inventory(
+    State(state): State<ApiState>,
+    Extension(claims): Extension<Claims>,
+    Path(id): Path<Uuid>,
+    Json(body): Json<UpdateInventoryRequest>,
+) -> Json<ApiResponse<Inventory>> {
+    if let Err(e) = check_permission(&claims, &ModulePermission::FinanceWrite).await {
+        return e;
+    }
+
+    let result = sqlx::query_as::<_, Inventory>(
+        "UPDATE inventory SET warehouse_id = COALESCE($1, warehouse_id), location_code = COALESCE($2, location_code), quantity = COALESCE($3, quantity), available_quantity = COALESCE($3, available_quantity), unit_price = COALESCE($4, unit_price), total_amount = COALESCE($4, unit_price) * COALESCE($3, quantity), batch_no = COALESCE($5, batch_no), expire_date = COALESCE($6, expire_date), status = COALESCE($7, status), updated_at = NOW() WHERE id = $8 RETURNING id, material_id, material_code, material_name, warehouse_id, warehouse_name, location_code, quantity, available_quantity, reserved_quantity, unit, unit_price, total_amount, batch_no, expire_date, status, created_at, updated_at",
+    )
+    .bind(body.warehouse_id)
+    .bind(body.location_code)
+    .bind(body.quantity)
+    .bind(body.unit_price)
+    .bind(body.batch_no)
+    .bind(body.expire_date)
+    .bind(body.status)
+    .bind(id)
+    .fetch_optional(&state.db)
+    .await;
+
+    match result {
+        Ok(Some(inventory)) => Json(ApiResponse::success(inventory, "更新库存成功")),
+        Ok(None) => Json(api_error(404, "库存不存在")),
+        Err(e) => {
+            tracing::error!("更新库存失败: {}", e);
+            Json(api_error(500, "更新库存失败"))
+        }
+    }
+}
+
+pub async fn delete_inventory(
+    State(state): State<ApiState>,
+    Extension(claims): Extension<Claims>,
+    Path(id): Path<Uuid>,
+) -> Json<ApiResponse<String>> {
+    if let Err(e) = check_permission(&claims, &ModulePermission::FinanceWrite).await {
+        return e;
+    }
+
+    let result = sqlx::query("DELETE FROM inventory WHERE id = $1")
+        .bind(id)
+        .execute(&state.db)
+        .await;
+
+    match result {
+        Ok(r) if r.rows_affected() > 0 => {
+            Json(ApiResponse::success("删除成功".to_string(), "删除库存成功"))
+        }
+        Ok(_) => Json(api_error(404, "库存不存在")),
+        Err(e) => {
+            tracing::error!("删除库存失败: {}", e);
+            Json(api_error(500, "删除库存失败"))
+        }
+    }
+}
+
+pub async fn get_low_stock(
+    State(state): State<ApiState>,
+    Extension(claims): Extension<Claims>,
+) -> Json<ApiResponse<Vec<Inventory>>> {
+    if let Err(e) = check_permission(&claims, &ModulePermission::FinanceRead).await {
+        return e;
+    }
+
+    let low_stock = match sqlx::query_as::<_, Inventory>(
+        "SELECT i.id, i.material_id, i.material_code, i.material_name, i.warehouse_id, i.warehouse_name, i.location_code, i.quantity, i.available_quantity, i.reserved_quantity, i.unit, i.unit_price, i.total_amount, i.batch_no, i.expire_date, i.status, i.created_at, i.updated_at FROM inventory i JOIN materials m ON i.material_id = m.id WHERE i.quantity < m.safety_stock AND i.status = 'active' ORDER BY i.quantity ASC",
+    )
+    .fetch_all(&state.db)
+    .await
+    {
+        Ok(l) => l,
+        Err(e) => {
+            tracing::error!("查询低库存失败: {}", e);
+            return Json(api_error(500, "查询低库存失败"));
+        }
+    };
+
+    Json(ApiResponse::success(low_stock, "获取低库存列表成功"))
+}

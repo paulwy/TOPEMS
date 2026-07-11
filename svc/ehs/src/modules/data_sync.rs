@@ -9,7 +9,7 @@ use serde::{Deserialize, Serialize};
 use sqlx::{types::Uuid, Row};
 use topems_shared::ApiResponse;
 
-use crate::AppState;
+use crate::shared::AppState;
 
 pub fn create_routes() -> Router<AppState> {
     Router::new()
@@ -74,7 +74,7 @@ pub struct SyncAccidentToLimsRequest {
 // ==================== Handler Functions ====================
 
 pub async fn list_sync_records(
-    State(state): State<crate::AppState>,
+    State(state): State<crate::shared::AppState>,
     axum::extract::Query(query): axum::extract::Query<SyncQuery>,
 ) -> Json<ApiResponse<Vec<SyncRecord>>> {
     let page = query.page.unwrap_or(1);
@@ -141,7 +141,7 @@ pub async fn list_sync_records(
 }
 
 pub async fn get_sync_record(
-    State(state): State<crate::AppState>,
+    State(state): State<crate::shared::AppState>,
     axum::extract::Path(id): axum::extract::Path<String>,
 ) -> Json<ApiResponse<SyncRecord>> {
     let id = match Uuid::parse_str(&id) {
@@ -182,7 +182,7 @@ pub async fn get_sync_record(
 }
 
 pub async fn sync_hazard_to_qms(
-    State(state): State<crate::AppState>,
+    State(state): State<crate::shared::AppState>,
     Json(req): Json<SyncHazardToQmsRequest>,
 ) -> Json<ApiResponse<SyncRecord>> {
     let hazard_id = match Uuid::parse_str(&req.hazard_id) {
@@ -276,7 +276,7 @@ pub async fn sync_hazard_to_qms(
 }
 
 pub async fn sync_accident_to_lims(
-    State(state): State<crate::AppState>,
+    State(state): State<crate::shared::AppState>,
     Json(req): Json<SyncAccidentToLimsRequest>,
 ) -> Json<ApiResponse<SyncRecord>> {
     let accident_id = match Uuid::parse_str(&req.accident_id) {
@@ -375,7 +375,7 @@ pub async fn sync_accident_to_lims(
 }
 
 pub async fn retry_sync(
-    State(state): State<crate::AppState>,
+    State(state): State<crate::shared::AppState>,
     axum::extract::Path(id): axum::extract::Path<String>,
 ) -> Json<ApiResponse<SyncRecord>> {
     let id = match Uuid::parse_str(&id) {
@@ -416,7 +416,7 @@ pub async fn retry_sync(
 }
 
 pub async fn delete_sync_record(
-    State(state): State<crate::AppState>,
+    State(state): State<crate::shared::AppState>,
     axum::extract::Path(id): axum::extract::Path<String>,
 ) -> Json<ApiResponse<bool>> {
     let id = match Uuid::parse_str(&id) {
@@ -450,7 +450,7 @@ pub struct SyncConfig {
 }
 
 pub async fn list_sync_configs(
-    State(_state): State<crate::AppState>,
+    State(_state): State<crate::shared::AppState>,
 ) -> Json<ApiResponse<SyncConfig>> {
     tracing::info!("Getting sync configs");
     let qms_url =
@@ -473,7 +473,7 @@ pub async fn list_sync_configs(
 }
 
 pub async fn update_sync_configs(
-    State(_state): State<crate::AppState>,
+    State(_state): State<crate::shared::AppState>,
     Json(req): Json<serde_json::Value>,
 ) -> Json<ApiResponse<SyncConfig>> {
     tracing::info!("Updating sync configs: {:?}", req);
@@ -517,7 +517,7 @@ pub async fn update_sync_configs(
 }
 
 pub async fn batch_retry_sync(
-    State(_state): State<crate::AppState>,
+    State(_state): State<crate::shared::AppState>,
     Json(req): Json<serde_json::Value>,
 ) -> Json<ApiResponse<serde_json::Value>> {
     tracing::info!("Batch retry sync: {:?}", req);

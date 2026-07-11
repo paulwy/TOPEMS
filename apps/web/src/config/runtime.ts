@@ -1,3 +1,4 @@
+import { API_TIMEOUT, WS_TIMEOUT } from '@topems/shared-constants';
 import type { RuntimeConfig } from './types';
 
 function getEnv(key: string, defaultValue: string = ''): string {
@@ -36,11 +37,11 @@ function getEnvNumber(key: string, defaultValue: number): number {
 const config: RuntimeConfig = {
   api: {
     baseUrl: getEnv('VITE_API_BASE_URL', '/api'),
-    timeout: getEnvNumber('VITE_API_TIMEOUT', 60000),
+    timeout: getEnvNumber('VITE_API_TIMEOUT', API_TIMEOUT.DEFAULT),
   },
   ws: {
-    reconnectInterval: getEnvNumber('VITE_WS_RECONNECT_INTERVAL', 5000),
-    maxReconnectAttempts: getEnvNumber('VITE_WS_MAX_RECONNECT_ATTEMPTS', 10),
+    reconnectInterval: getEnvNumber('VITE_WS_RECONNECT_INTERVAL', WS_TIMEOUT.RECONNECT_DELAY),
+    maxReconnectAttempts: getEnvNumber('VITE_WS_MAX_RECONNECT_ATTEMPTS', WS_TIMEOUT.MAX_RECONNECT_ATTEMPTS),
   },
   services: {
     iam: getEnv('VITE_IAM_SERVICE_URL', '/iam'),

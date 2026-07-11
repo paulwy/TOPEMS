@@ -27,7 +27,7 @@ export default defineConfig({
       path.resolve(__dirname, './src/__tests__/setup-env-vitest.ts'),
       path.resolve(__dirname, './src/__tests__/setup.ts'),
     ],
-    include: ['src/**/__tests__/**/*.{test,spec}.{ts,tsx}'],
+    include: ['src/**/__tests__/**/*.{test,spec}.{ts,tsx}', '../../packages/shared-components/src/**/__tests__/**/*.{test,spec}.{ts,tsx}'],
     css: false,
     isolate: true,
     testTimeout: 15000,

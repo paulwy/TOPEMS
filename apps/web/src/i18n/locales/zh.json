@@ -1001,5 +1001,17 @@
     "total_budget": "总预算",
     "create_project": "创建项目",
     "create_contract": "创建合同"
+  },
+  "layout": {
+    "skip_to_content": "跳转到主要内容",
+    "home": "首页",
+    "tasks": "任务",
+    "scan": "扫码",
+    "approval": "审批",
+    "profile": "我的",
+    "help_center": "帮助中心",
+    "user_guide": "使用文档",
+    "contact_support": "联系支持",
+    "copyright": "© {year} TOPEMS 化工新材料数字化平台"
   }
 }

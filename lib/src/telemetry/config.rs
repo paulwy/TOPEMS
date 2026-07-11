@@ -4,7 +4,6 @@ use serde::{Deserialize, Serialize};
 pub enum TelemetryExporter {
     Otlp,
     Stdout,
-    Jaeger,
 }
 
 impl TelemetryExporter {
@@ -13,7 +12,6 @@ impl TelemetryExporter {
             .map(|v| match v.to_lowercase().as_str() {
                 "otlp" => TelemetryExporter::Otlp,
                 "stdout" => TelemetryExporter::Stdout,
-                "jaeger" => TelemetryExporter::Jaeger,
                 _ => TelemetryExporter::Otlp,
             })
             .unwrap_or(TelemetryExporter::Otlp)

@@ -2,6 +2,7 @@ import React from 'react';
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { render } from '@testing-library/react';
 import { BrowserRouter } from 'react-router-dom';
+import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import BatchManagementPage from '../wms/BatchManagementPage';
 import DashboardPage from '../wms/DashboardPage';
 import InboundOrderPage from '../wms/InboundOrderPage';
@@ -19,6 +20,8 @@ import SupplierManagementPage from '../wms/SupplierManagementPage';
 import TransferPage from '../wms/TransferPage';
 import WarehouseManagementPage from '../wms/WarehouseManagementPage';
 import { useAppStore } from '@/store';
+
+const queryClient = new QueryClient();
 
 vi.mock('@/api/wms', () => ({
   wmsApi: {
@@ -249,9 +252,11 @@ describe('WmsModule', () => {
   describe('DashboardPage', () => {
     it('should render without crashing', () => {
       const { container } = render(
-        <BrowserRouter>
-          <DashboardPage />
-        </BrowserRouter>
+        <QueryClientProvider client={queryClient}>
+          <BrowserRouter>
+            <DashboardPage />
+          </BrowserRouter>
+        </QueryClientProvider>
       );
       expect(container).toBeDefined();
     });
@@ -260,9 +265,11 @@ describe('WmsModule', () => {
   describe('WarehouseManagementPage', () => {
     it('should render without crashing', () => {
       const { container } = render(
-        <BrowserRouter>
-          <WarehouseManagementPage />
-        </BrowserRouter>
+        <QueryClientProvider client={queryClient}>
+          <BrowserRouter>
+            <WarehouseManagementPage />
+          </BrowserRouter>
+        </QueryClientProvider>
       );
       expect(container).toBeDefined();
     });
@@ -271,9 +278,11 @@ describe('WmsModule', () => {
   describe('LocationPage', () => {
     it('should render without crashing', () => {
       const { container } = render(
-        <BrowserRouter>
-          <LocationPage />
-        </BrowserRouter>
+        <QueryClientProvider client={queryClient}>
+          <BrowserRouter>
+            <LocationPage />
+          </BrowserRouter>
+        </QueryClientProvider>
       );
       expect(container).toBeDefined();
     });
@@ -282,9 +291,11 @@ describe('WmsModule', () => {
   describe('InventoryPage', () => {
     it('should render without crashing', () => {
       const { container } = render(
-        <BrowserRouter>
-          <InventoryPage />
-        </BrowserRouter>
+        <QueryClientProvider client={queryClient}>
+          <BrowserRouter>
+            <InventoryPage />
+          </BrowserRouter>
+        </QueryClientProvider>
       );
       expect(container).toBeDefined();
     });
@@ -293,9 +304,11 @@ describe('WmsModule', () => {
   describe('InventoryReportPage', () => {
     it('should render without crashing', () => {
       const { container } = render(
-        <BrowserRouter>
-          <InventoryReportPage />
-        </BrowserRouter>
+        <QueryClientProvider client={queryClient}>
+          <BrowserRouter>
+            <InventoryReportPage />
+          </BrowserRouter>
+        </QueryClientProvider>
       );
       expect(container).toBeDefined();
     });
@@ -304,9 +317,11 @@ describe('WmsModule', () => {
   describe('InboundPage', () => {
     it('should render without crashing', () => {
       const { container } = render(
-        <BrowserRouter>
-          <InboundPage />
-        </BrowserRouter>
+        <QueryClientProvider client={queryClient}>
+          <BrowserRouter>
+            <InboundPage />
+          </BrowserRouter>
+        </QueryClientProvider>
       );
       expect(container).toBeDefined();
     });
@@ -315,9 +330,11 @@ describe('WmsModule', () => {
   describe('InboundOrderPage', () => {
     it('should render without crashing', () => {
       const { container } = render(
-        <BrowserRouter>
-          <InboundOrderPage />
-        </BrowserRouter>
+        <QueryClientProvider client={queryClient}>
+          <BrowserRouter>
+            <InboundOrderPage />
+          </BrowserRouter>
+        </QueryClientProvider>
       );
       expect(container).toBeDefined();
     });
@@ -326,9 +343,11 @@ describe('WmsModule', () => {
   describe('OutboundPage', () => {
     it('should render without crashing', () => {
       const { container } = render(
-        <BrowserRouter>
-          <OutboundPage />
-        </BrowserRouter>
+        <QueryClientProvider client={queryClient}>
+          <BrowserRouter>
+            <OutboundPage />
+          </BrowserRouter>
+        </QueryClientProvider>
       );
       expect(container).toBeDefined();
     });
@@ -337,9 +356,11 @@ describe('WmsModule', () => {
   describe('OutboundOrderPage', () => {
     it('should render without crashing', () => {
       const { container } = render(
-        <BrowserRouter>
-          <OutboundOrderPage />
-        </BrowserRouter>
+        <QueryClientProvider client={queryClient}>
+          <BrowserRouter>
+            <OutboundOrderPage />
+          </BrowserRouter>
+        </QueryClientProvider>
       );
       expect(container).toBeDefined();
     });
@@ -348,9 +369,11 @@ describe('WmsModule', () => {
   describe('TransferPage', () => {
     it('should render without crashing', () => {
       const { container } = render(
-        <BrowserRouter>
-          <TransferPage />
-        </BrowserRouter>
+        <QueryClientProvider client={queryClient}>
+          <BrowserRouter>
+            <TransferPage />
+          </BrowserRouter>
+        </QueryClientProvider>
       );
       expect(container).toBeDefined();
     });
@@ -359,9 +382,11 @@ describe('WmsModule', () => {
   describe('StockTakePage', () => {
     it('should render without crashing', () => {
       const { container } = render(
-        <BrowserRouter>
-          <StockTakePage />
-        </BrowserRouter>
+        <QueryClientProvider client={queryClient}>
+          <BrowserRouter>
+            <StockTakePage />
+          </BrowserRouter>
+        </QueryClientProvider>
       );
       expect(container).toBeDefined();
     });
@@ -370,9 +395,11 @@ describe('WmsModule', () => {
   describe('ReplenishmentPage', () => {
     it('should render without crashing', () => {
       const { container } = render(
-        <BrowserRouter>
-          <ReplenishmentPage />
-        </BrowserRouter>
+        <QueryClientProvider client={queryClient}>
+          <BrowserRouter>
+            <ReplenishmentPage />
+          </BrowserRouter>
+        </QueryClientProvider>
       );
       expect(container).toBeDefined();
     });
@@ -381,9 +408,11 @@ describe('WmsModule', () => {
   describe('BatchManagementPage', () => {
     it('should render without crashing', () => {
       const { container } = render(
-        <BrowserRouter>
-          <BatchManagementPage />
-        </BrowserRouter>
+        <QueryClientProvider client={queryClient}>
+          <BrowserRouter>
+            <BatchManagementPage />
+          </BrowserRouter>
+        </QueryClientProvider>
       );
       expect(container).toBeDefined();
     });
@@ -392,9 +421,11 @@ describe('WmsModule', () => {
   describe('SerialNumberPage', () => {
     it('should render without crashing', () => {
       const { container } = render(
-        <BrowserRouter>
-          <SerialNumberPage />
-        </BrowserRouter>
+        <QueryClientProvider client={queryClient}>
+          <BrowserRouter>
+            <SerialNumberPage />
+          </BrowserRouter>
+        </QueryClientProvider>
       );
       expect(container).toBeDefined();
     });
@@ -403,9 +434,11 @@ describe('WmsModule', () => {
   describe('SupplierManagementPage', () => {
     it('should render without crashing', () => {
       const { container } = render(
-        <BrowserRouter>
-          <SupplierManagementPage />
-        </BrowserRouter>
+        <QueryClientProvider client={queryClient}>
+          <BrowserRouter>
+            <SupplierManagementPage />
+          </BrowserRouter>
+        </QueryClientProvider>
       );
       expect(container).toBeDefined();
     });
@@ -414,9 +447,11 @@ describe('WmsModule', () => {
   describe('SupplierDetailPage', () => {
     it('should render without crashing', () => {
       const { container } = render(
-        <BrowserRouter>
-          <SupplierDetailPage />
-        </BrowserRouter>
+        <QueryClientProvider client={queryClient}>
+          <BrowserRouter>
+            <SupplierDetailPage />
+          </BrowserRouter>
+        </QueryClientProvider>
       );
       expect(container).toBeDefined();
     });

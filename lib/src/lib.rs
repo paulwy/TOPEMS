@@ -8,6 +8,7 @@ pub mod cluster;
 pub mod compression;
 pub mod config;
 pub mod cors;
+pub mod crud;
 pub mod database;
 pub mod embedding;
 pub mod error;

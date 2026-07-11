@@ -2,18 +2,18 @@ import type { RouteConfig, RouteModuleConfig } from './types';
 import { flattenRoutes, toFlatRouteConfig } from './types';
 
 const moduleImports: Record<string, () => Promise<{ default: RouteModuleConfig }>> = {
-  iam: () => import('./iam').then((m) => ({ default: m.iamModuleConfig })),
-  admin: () => import('./admin').then((m) => ({ default: m.adminModuleConfig })),
-  workflow: () => import('./workflow').then((m) => ({ default: m.workflowModuleConfig })),
+  iam: () => import('@/modules/iam/config').then((m) => ({ default: m.iamModuleConfig })),
+  admin: () => import('@/modules/admin/config').then((m) => ({ default: m.adminModuleConfig })),
+  workflow: () => import('@/modules/workflow/config').then((m) => ({ default: m.workflowModuleConfig })),
   notification: () =>
-    import('./notification').then((m) => ({ default: m.notificationModuleConfig })),
-  doc: () => import('./doc').then((m) => ({ default: m.docModuleConfig })),
+    import('@/modules/notification/config').then((m) => ({ default: m.notificationModuleConfig })),
+  doc: () => import('@/modules/doc/config').then((m) => ({ default: m.docModuleConfig })),
   report: () => import('./report').then((m) => ({ default: m.reportModuleConfig })),
   monitor: () => import('./monitor').then((m) => ({ default: m.monitorModuleConfig })),
   integration: () => import('./integration').then((m) => ({ default: m.integrationModuleConfig })),
   ai: () => import('./ai').then((m) => ({ default: m.aiModuleConfig })),
   mobile: () => import('./mobile').then((m) => ({ default: m.mobileModuleConfig })),
-  hrm: () => import('./hrm').then((m) => ({ default: m.hrmModuleConfig })),
+  hrm: () => import('@/modules/hrm/config').then((m) => ({ default: m.hrmModuleConfig })),
   finance: () => import('./finance').then((m) => ({ default: m.financeModuleConfig })),
   crm: () => import('./crm').then((m) => ({ default: m.crmModuleConfig })),
   mes: () => import('./mes').then((m) => ({ default: m.mesModuleConfig })),

@@ -401,7 +401,7 @@ async fn update_notice(
     response
 }
 
-async fn list_inspections(
+pub async fn list_inspections(
     State(state): State<ApiState>,
     Extension(claims): Extension<Claims>,
     Query(params): Query<PaginationParams>,
@@ -488,7 +488,7 @@ pub struct CreateInspectionRequest {
     pub remarks: Option<String>,
 }
 
-async fn create_inspection(
+pub async fn create_inspection(
     State(state): State<ApiState>,
     Extension(claims): Extension<Claims>,
     headers: HeaderMap,
@@ -588,7 +588,7 @@ async fn create_inspection(
     response
 }
 
-async fn get_inspection(
+pub async fn get_inspection(
     State(state): State<ApiState>,
     Extension(claims): Extension<Claims>,
     Path(id): Path<Uuid>,
@@ -633,7 +633,7 @@ pub struct UpdateInspectionRequest {
     pub remarks: Option<String>,
 }
 
-async fn update_inspection(
+pub async fn update_inspection(
     State(state): State<ApiState>,
     Extension(claims): Extension<Claims>,
     Path(id): Path<Uuid>,
@@ -736,7 +736,7 @@ pub struct InspectionResultRequest {
     pub remarks: Option<String>,
 }
 
-async fn inspection_pass(
+pub async fn inspection_pass(
     State(state): State<ApiState>,
     Extension(claims): Extension<Claims>,
     Path(id): Path<Uuid>,
@@ -845,7 +845,7 @@ async fn inspection_pass(
     response
 }
 
-async fn inspection_fail(
+pub async fn inspection_fail(
     State(state): State<ApiState>,
     Extension(claims): Extension<Claims>,
     Path(id): Path<Uuid>,

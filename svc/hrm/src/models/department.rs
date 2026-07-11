@@ -6,6 +6,7 @@ use uuid::Uuid;
 #[derive(Debug, Clone, FromRow, Serialize, Deserialize)]
 pub struct Department {
     pub id: Uuid,
+    pub tenant_id: Uuid,
     pub organization_id: Uuid,
     pub company_id: Option<Uuid>,
     pub name: String,
@@ -53,6 +54,7 @@ mod tests {
 
         let department = Department {
             id,
+            tenant_id: Uuid::new_v4(),
             organization_id: org_id,
             company_id: None,
             name: "Engineering".to_string(),

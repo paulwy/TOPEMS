@@ -289,7 +289,7 @@ export const KanbanPageTemplate: React.FC<KanbanPageTemplateProps> = ({
           flexWrap: 'wrap',
         }}
       >
-        <Paper sx={{ p: 2, borderRadius: 1, minWidth: 120 }}>
+        <Paper sx={{ p: 2, borderRadius: 2, minWidth: 120 }}>
           <Typography
             variant='caption'
             color='text.secondary'
@@ -303,7 +303,7 @@ export const KanbanPageTemplate: React.FC<KanbanPageTemplateProps> = ({
             {computedStats.totalCards}
           </Typography>
         </Paper>
-        <Paper sx={{ p: 2, borderRadius: 1, minWidth: 120 }}>
+        <Paper sx={{ p: 2, borderRadius: 2, minWidth: 120 }}>
           <Typography
             variant='caption'
             color='text.secondary'
@@ -317,7 +317,7 @@ export const KanbanPageTemplate: React.FC<KanbanPageTemplateProps> = ({
             {computedStats.totalColumns}
           </Typography>
         </Paper>
-        <Paper sx={{ p: 2, borderRadius: 1, minWidth: 120 }}>
+        <Paper sx={{ p: 2, borderRadius: 2, minWidth: 120 }}>
           <Typography
             variant='caption'
             color='error'
@@ -331,7 +331,7 @@ export const KanbanPageTemplate: React.FC<KanbanPageTemplateProps> = ({
             {computedStats.overdueCards}
           </Typography>
         </Paper>
-        <Paper sx={{ p: 2, borderRadius: 1, minWidth: 120 }}>
+        <Paper sx={{ p: 2, borderRadius: 2, minWidth: 120 }}>
           <Typography
             variant='caption'
             color='success'
@@ -423,7 +423,7 @@ export const KanbanPageTemplate: React.FC<KanbanPageTemplateProps> = ({
         onDragEnd={handleDragEnd}
         sx={{
           p: 2,
-          borderRadius: 1,
+          borderRadius: 2,
           cursor: 'pointer',
           marginBottom: 1,
           opacity: isDragging ? 0.5 : 1,
@@ -478,8 +478,10 @@ export const KanbanPageTemplate: React.FC<KanbanPageTemplateProps> = ({
               sx={{
                 height: 20,
                 fontSize: '0.6rem',
-                bgcolor: tag.color || 'grey.100',
-                color: tag.color || 'grey.700',
+                bgcolor:
+                  tag.color ||
+                  (theme.palette.mode === 'dark' ? 'rgba(255,255,255,0.06)' : 'grey.100'),
+                color: tag.color || (theme.palette.mode === 'dark' ? 'grey.400' : 'grey.700'),
               }}
             />
           ))}
@@ -508,7 +510,7 @@ export const KanbanPageTemplate: React.FC<KanbanPageTemplateProps> = ({
               sx={{
                 width: '100%',
                 height: 4,
-                bgcolor: 'grey.200',
+                bgcolor: theme.palette.mode === 'dark' ? 'rgba(255,255,255,0.1)' : 'grey.200',
                 borderRadius: 2,
                 overflow: 'hidden',
               }}
@@ -596,13 +598,17 @@ export const KanbanPageTemplate: React.FC<KanbanPageTemplateProps> = ({
       >
         <Paper
           sx={{
-            borderRadius: 2,
+            borderRadius: 3,
             display: 'flex',
             flexDirection: 'column',
             height: '100%',
             border: isDragOver ? '2px dashed' : 'none',
             borderColor: isDragOver ? 'primary.main' : undefined,
-            bgcolor: isDragOver ? 'primary.50' : undefined,
+            bgcolor: isDragOver
+              ? theme.palette.mode === 'dark'
+                ? 'rgba(59,130,246,0.15)'
+                : 'primary.50'
+              : undefined,
           }}
         >
           <Box
@@ -686,7 +692,7 @@ export const KanbanPageTemplate: React.FC<KanbanPageTemplateProps> = ({
                   key={index}
                   variant='rectangular'
                   height={80}
-                  sx={{ borderRadius: 1, mb: 1 }}
+                  sx={{ borderRadius: 2, mb: 1 }}
                 />
               ))
             ) : isCollapsed ? (
@@ -734,7 +740,7 @@ export const KanbanPageTemplate: React.FC<KanbanPageTemplateProps> = ({
     if (error) {
       return (
         <Box sx={{ flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-          <Paper sx={{ p: 4, borderRadius: 2 }}>
+          <Paper sx={{ p: 4, borderRadius: 3 }}>
             <Typography
               variant='body1'
               color='error'
@@ -765,7 +771,7 @@ export const KanbanPageTemplate: React.FC<KanbanPageTemplateProps> = ({
           >
             <Paper
               sx={{
-                borderRadius: 2,
+                borderRadius: 3,
                 p: 2,
                 border: '2px dashed',
                 borderColor: 'divider',
@@ -776,7 +782,7 @@ export const KanbanPageTemplate: React.FC<KanbanPageTemplateProps> = ({
                 cursor: 'pointer',
                 '&:hover': {
                   borderColor: 'primary.main',
-                  bgcolor: 'primary.50',
+                  bgcolor: theme.palette.mode === 'dark' ? 'rgba(59,130,246,0.15)' : 'primary.50',
                 },
               }}
             >

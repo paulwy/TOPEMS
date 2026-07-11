@@ -1,5 +1,6 @@
 use axum::{
     extract::{Extension, Path, State},
+    http::HeaderMap,
     routing::{delete, get, post, put},
     Json, Router,
 };
@@ -15,6 +16,20 @@ use crate::services::project_progress;
 use topems_shared::auth::Claims;
 use topems_shared::response::ApiResponse;
 
+fn get_tenant_id(claims: &Claims, headers: &HeaderMap) -> Uuid {
+    claims
+        .tenant_id
+        .as_ref()
+        .and_then(|t| Uuid::parse_str(t).ok())
+        .or_else(|| {
+            headers
+                .get("x-tenant-id")
+                .and_then(|v| v.to_str().ok())
+                .and_then(|s| Uuid::parse_str(s).ok())
+        })
+        .unwrap_or_else(Uuid::new_v4)
+}
+
 pub fn create_routes() -> Router<super::ApiState> {
     Router::<super::ApiState>::new()
         .route("/api/rs/phases", post(create_phase))
@@ -29,8 +44,10 @@ pub fn create_routes() -> Router<super::ApiState> {
 pub async fn create_phase(
     State(state): State<super::ApiState>,
     Extension(claims): Extension<Claims>,
+    headers: HeaderMap,
     Json(payload): Json<CreatePhaseRequest>,
 ) -> Json<ApiResponse<ProjectPhase>> {
+    let tenant_id = get_tenant_id(&claims, &headers);
     match check_project_permission(
         &state.db,
         &claims,
@@ -66,18 +83,19 @@ pub async fn create_phase(
 
     let result = sqlx::query_as::<_, ProjectPhase>(
         r#"
-        INSERT INTO project_phases (
-            id, project_id, phase_number, name, description, 
+        INSERT INTO rs.project_phases (
+            id, tenant_id, project_id, phase_number, name, description, 
             start_date, end_date, status, progress, weight, predecessor_id,
             planned_duration_days, actual_duration_days
         )
-        VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13)
-        RETURNING id, project_id, phase_number, name, description, 
+        VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14)
+        RETURNING id, tenant_id, project_id, phase_number, name, description, 
                   start_date, end_date, planned_duration_days, actual_duration_days,
                   status, progress, weight, predecessor_id, created_at, updated_at
         "#,
     )
     .bind(id)
+    .bind(tenant_id)
     .bind(payload.project_id)
     .bind(payload.phase_number)
     .bind(payload.name.trim())
@@ -137,7 +155,9 @@ pub async fn get_project_phases(
     State(state): State<super::ApiState>,
     Path(project_id): Path<Uuid>,
     Extension(claims): Extension<Claims>,
+    headers: HeaderMap,
 ) -> Json<ApiResponse<Vec<ProjectPhase>>> {
+    let tenant_id = get_tenant_id(&claims, &headers);
     match check_project_permission(&state.db, &claims, &project_id, &ProjectPermission::Read).await
     {
         Ok(_) => {}
@@ -160,14 +180,16 @@ pub async fn get_project_phases(
 
     let result = sqlx::query_as::<_, ProjectPhase>(
         r#"
-        SELECT id, project_id, phase_number, name, description, 
-                  start_date, end_date, status, progress, weight, predecessor_id, created_at, updated_at
-        FROM project_phases 
-        WHERE project_id = $1 
+        SELECT id, tenant_id, project_id, phase_number, name, description, 
+                  start_date, end_date, planned_duration_days, actual_duration_days,
+                  status, progress, weight, predecessor_id, created_at, updated_at
+        FROM rs.project_phases 
+        WHERE project_id = $1 AND tenant_id = $2
         ORDER BY phase_number
         "#,
     )
     .bind(project_id)
+    .bind(tenant_id)
     .fetch_all(&state.db)
     .await;
 
@@ -202,21 +224,25 @@ pub async fn update_phase(
     State(state): State<super::ApiState>,
     Path(id): Path<Uuid>,
     Extension(claims): Extension<Claims>,
+    headers: HeaderMap,
     Json(payload): Json<UpdatePhaseRequest>,
 ) -> Json<ApiResponse<ProjectPhase>> {
-    let project_id =
-        match sqlx::query_scalar::<_, Uuid>("SELECT project_id FROM project_phases WHERE id = $1")
-            .bind(id)
-            .fetch_optional(&state.db)
-            .await
-        {
-            Ok(Some(pid)) => pid,
-            Ok(None) => return Json(ApiResponse::error(404, "阶段不存在")),
-            Err(e) => {
-                tracing::error!("查询阶段所属项目失败: {}", e);
-                return Json(ApiResponse::error(500, "查询阶段失败"));
-            }
-        };
+    let tenant_id = get_tenant_id(&claims, &headers);
+    let project_id = match sqlx::query_scalar::<_, Uuid>(
+        "SELECT project_id FROM rs.project_phases WHERE id = $1 AND tenant_id = $2",
+    )
+    .bind(id)
+    .bind(tenant_id)
+    .fetch_optional(&state.db)
+    .await
+    {
+        Ok(Some(pid)) => pid,
+        Ok(None) => return Json(ApiResponse::error(404, "阶段不存在")),
+        Err(e) => {
+            tracing::error!("查询阶段所属项目失败: {}", e);
+            return Json(ApiResponse::error(500, "查询阶段失败"));
+        }
+    };
 
     match check_project_permission(
         &state.db,
@@ -252,7 +278,7 @@ pub async fn update_phase(
 
     let result = sqlx::query_as::<_, ProjectPhase>(
         r#"
-        UPDATE project_phases
+        UPDATE rs.project_phases
         SET 
             name = COALESCE($2, name),
             description = COALESCE($3, description),
@@ -263,9 +289,10 @@ pub async fn update_phase(
             weight = COALESCE($8, weight),
             predecessor_id = COALESCE($9, predecessor_id),
             updated_at = NOW()
-        WHERE id = $1
-        RETURNING id, project_id, phase_number, name, description, 
-                  start_date, end_date, status, progress, weight, predecessor_id, created_at, updated_at
+        WHERE id = $1 AND tenant_id = $10
+        RETURNING id, tenant_id, project_id, phase_number, name, description, 
+                  start_date, end_date, planned_duration_days, actual_duration_days,
+                  status, progress, weight, predecessor_id, created_at, updated_at
         "#,
     )
     .bind(id)
@@ -277,6 +304,7 @@ pub async fn update_phase(
     .bind(payload.progress)
     .bind(payload.weight)
     .bind(payload.predecessor_id)
+    .bind(tenant_id)
     .fetch_one(&state.db)
     .await;
 
@@ -331,7 +359,9 @@ pub async fn delete_phase(
     State(state): State<super::ApiState>,
     Path(id): Path<Uuid>,
     Extension(claims): Extension<Claims>,
+    headers: HeaderMap,
 ) -> Json<ApiResponse<()>> {
+    let tenant_id = get_tenant_id(&claims, &headers);
     let request_id = Uuid::new_v4();
     let start_time = Utc::now();
 
@@ -341,19 +371,21 @@ pub async fn delete_phase(
         "删除项目阶段请求开始"
     );
 
-    let project_id =
-        match sqlx::query_scalar::<_, Uuid>("SELECT project_id FROM project_phases WHERE id = $1")
-            .bind(id)
-            .fetch_optional(&state.db)
-            .await
-        {
-            Ok(Some(pid)) => pid,
-            Ok(None) => return Json(ApiResponse::error(404, "阶段不存在")),
-            Err(e) => {
-                tracing::error!("查询阶段所属项目失败: {}", e);
-                return Json(ApiResponse::error(500, "查询阶段失败"));
-            }
-        };
+    let project_id = match sqlx::query_scalar::<_, Uuid>(
+        "SELECT project_id FROM rs.project_phases WHERE id = $1 AND tenant_id = $2",
+    )
+    .bind(id)
+    .bind(tenant_id)
+    .fetch_optional(&state.db)
+    .await
+    {
+        Ok(Some(pid)) => pid,
+        Ok(None) => return Json(ApiResponse::error(404, "阶段不存在")),
+        Err(e) => {
+            tracing::error!("查询阶段所属项目失败: {}", e);
+            return Json(ApiResponse::error(500, "查询阶段失败"));
+        }
+    };
 
     match check_project_permission(
         &state.db,
@@ -367,13 +399,13 @@ pub async fn delete_phase(
         Err(e) => return e,
     }
 
-    // First get the project_id to invalidate cache
     let get_result = sqlx::query_scalar::<_, Uuid>(
         r#"
-        SELECT project_id FROM project_phases WHERE id = $1
+        SELECT project_id FROM rs.project_phases WHERE id = $1 AND tenant_id = $2
         "#,
     )
     .bind(id)
+    .bind(tenant_id)
     .fetch_optional(&state.db)
     .await;
 
@@ -392,11 +424,12 @@ pub async fn delete_phase(
 
     let result = sqlx::query(
         r#"
-        DELETE FROM project_phases 
-        WHERE id = $1
+        DELETE FROM rs.project_phases 
+        WHERE id = $1 AND tenant_id = $2
         "#,
     )
     .bind(id)
+    .bind(tenant_id)
     .execute(&state.db)
     .await;
 

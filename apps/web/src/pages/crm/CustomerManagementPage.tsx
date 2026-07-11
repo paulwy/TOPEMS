@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useMemo } from 'react';
+import React, { useState, useMemo } from 'react';
 import {
   Dialog,
   DialogTitle,
@@ -120,8 +120,9 @@ const ratingOptions = [
 
 const CustomerManagementPage: React.FC = () => {
   const navigate = useNavigate();
-  const [customers, setCustomers] = useState<Customer[]>([]);
-  const [loading, setLoading] = useState(true);
+  const { addNotification } = useAppStore();
+  const queryClient = useQueryClient();
+
   const [searchTerm, setSearchTerm] = useState('');
   const [statusFilter, setStatusFilter] = useState<string>('');
   const [customerTypeFilter, setCustomerTypeFilter] = useState<string>('');
@@ -131,7 +132,6 @@ const CustomerManagementPage: React.FC = () => {
   const [selectedCustomer, setSelectedCustomer] = useState<Customer | null>(null);
   const [showTagDialog, setShowTagDialog] = useState(false);
   const [customerTags, setCustomerTags] = useState<Tag[]>([]);
-  const [allTags, setAllTags] = useState<Tag[]>([]);
   const [formData, setFormData] = useState<CreateCustomerRequest>({
     name: '',
     code: '',
@@ -159,27 +159,19 @@ const CustomerManagementPage: React.FC = () => {
     total: 0,
   });
 
-  const { addNotification } = useAppStore();
-
-  useEffect(() => {
-    loadCustomers();
-  }, [
-    searchTerm,
-    statusFilter,
-    customerTypeFilter,
-    ratingFilter,
-    industryFilter,
-    pagination.page,
-    pagination.pageSize,
-  ]);
-
-  useEffect(() => {
-    loadAllTags();
-  }, []);
-
-  const loadCustomers = async () => {
-    try {
-      setLoading(true);
+  // React Query - 客户列表
+  const customersQuery = useQuery({
+    queryKey: [
+      'crm-customers',
+      pagination.page,
+      pagination.pageSize,
+      searchTerm,
+      statusFilter,
+      customerTypeFilter,
+      ratingFilter,
+      industryFilter,
+    ],
+    queryFn: async () => {
       const params: Record<string, unknown> = {
         page: pagination.page + 1,
         pagesize: pagination.pageSize,
@@ -189,37 +181,89 @@ const CustomerManagementPage: React.FC = () => {
       if (customerTypeFilter) params.customer_type = customerTypeFilter;
       if (ratingFilter) params.rating = ratingFilter;
       if (industryFilter) params.industry = industryFilter;
+      return crmApi.customers.list(params);
+    },
+    staleTime: 5 * 60 * 1000,
+  });
 
-      const response = await crmApi.customers.list(params);
-      if (response.success && response.data) {
-        setCustomers(response.data.items || []);
-        setPagination((prev) => ({
-          ...prev,
-          total: response.data?.total || 0,
-        }));
-      }
-    } catch (error: unknown) {
-      logger.error('加载客户列表失败:', error);
+  const customers =
+    customersQuery.data?.success && customersQuery.data.data
+      ? customersQuery.data.data.items || []
+      : [];
+  const total =
+    customersQuery.data?.success && customersQuery.data.data
+      ? customersQuery.data.data.total || 0
+      : 0;
+  const loading = customersQuery.isLoading;
+
+  // React Query - 所有标签
+  const allTagsQuery = useQuery({
+    queryKey: ['crm-tags'],
+    queryFn: () => crmApi.tags.list(),
+    staleTime: 30 * 60 * 1000,
+  });
+
+  const allTags =
+    allTagsQuery.data?.success && allTagsQuery.data.data ? allTagsQuery.data.data.items || [] : [];
+
+  // React Query - Mutations
+  const createMutation = useMutation({
+    mutationFn: (data: CreateCustomerRequest) => crmApi.customers.create(data),
+    onSuccess: () => {
+      addNotification({
+        type: 'success',
+        title: '创建成功',
+        message: '新客户已创建',
+      });
+      queryClient.invalidateQueries({ queryKey: ['crm-customers'] });
+    },
+    onError: () => {
       addNotification({
         type: 'error',
-        title: '加载失败',
-        message: '无法加载客户列表',
+        title: '操作失败',
+        message: '创建客户失败',
       });
-    } finally {
-      setLoading(false);
-    }
-  };
+    },
+  });
 
-  const loadAllTags = async () => {
-    try {
-      const response = await crmApi.tags.list();
-      if (response.success && response.data) {
-        setAllTags(response.data.items || []);
-      }
-    } catch (error: unknown) {
-      logger.error('加载标签列表失败:', error);
-    }
-  };
+  const updateMutation = useMutation({
+    mutationFn: ({ id, data }: { id: string; data: UpdateCustomerRequest }) =>
+      crmApi.customers.update(id, data),
+    onSuccess: () => {
+      addNotification({
+        type: 'success',
+        title: '更新成功',
+        message: '客户信息已更新',
+      });
+      queryClient.invalidateQueries({ queryKey: ['crm-customers'] });
+    },
+    onError: () => {
+      addNotification({
+        type: 'error',
+        title: '操作失败',
+        message: '更新客户失败',
+      });
+    },
+  });
+
+  const deleteMutation = useMutation({
+    mutationFn: (id: string) => crmApi.customers.delete(id),
+    onSuccess: () => {
+      addNotification({
+        type: 'success',
+        title: '删除成功',
+        message: '客户已删除',
+      });
+      queryClient.invalidateQueries({ queryKey: ['crm-customers'] });
+    },
+    onError: () => {
+      addNotification({
+        type: 'error',
+        title: '删除失败',
+        message: '无法删除客户',
+      });
+    },
+  });
 
   const loadCustomerTags = async (customerId: string) => {
     try {
@@ -236,50 +280,26 @@ const CustomerManagementPage: React.FC = () => {
     e.preventDefault();
     try {
       if (selectedCustomer) {
-        await crmApi.customers.update(selectedCustomer.id, formData as UpdateCustomerRequest);
-        addNotification({
-          type: 'success',
-          title: '更新成功',
-          message: '客户信息已更新',
+        await updateMutation.mutateAsync({
+          id: selectedCustomer.id,
+          data: formData as UpdateCustomerRequest,
         });
       } else {
-        await crmApi.customers.create(formData);
-        addNotification({
-          type: 'success',
-          title: '创建成功',
-          message: '新客户已创建',
-        });
+        await createMutation.mutateAsync(formData);
       }
       setShowDialog(false);
       resetForm();
-      loadCustomers();
     } catch (error: unknown) {
       logger.error('操作失败:', error);
-      addNotification({
-        type: 'error',
-        title: '操作失败',
-        message: selectedCustomer ? '更新客户失败' : '创建客户失败',
-      });
     }
   };
 
   const handleDelete = async (id: string) => {
     if (!window.confirm('确定要删除这个客户吗?')) return;
     try {
-      await crmApi.customers.delete(id);
-      addNotification({
-        type: 'success',
-        title: '删除成功',
-        message: '客户已删除',
-      });
-      loadCustomers();
+      await deleteMutation.mutateAsync(id);
     } catch (error: unknown) {
       logger.error('删除失败:', error);
-      addNotification({
-        type: 'error',
-        title: '删除失败',
-        message: '无法删除客户',
-      });
     }
   };
 
@@ -638,7 +658,7 @@ const CustomerManagementPage: React.FC = () => {
           pagination={{
             page: pagination.page,
             pageSize: pagination.pageSize,
-            total: pagination.total,
+            total,
             onPageChange: (page) => {
               setPagination((prev) => ({ ...prev, page }));
             },

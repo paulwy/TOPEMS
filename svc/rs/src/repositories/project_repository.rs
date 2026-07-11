@@ -164,7 +164,7 @@ impl ProjectRepository {
                 project_config = $8, benefit_target = $9, risk_level = $10,
                 priority = $11, tags = $12, parent_id = $13, workspace_id = $14
             WHERE id = $15
-            RETURNING id, name, code, description, project_type, status, leader,
+            RETURNING id, tenant_id, name, code, description, project_type, status, leader,
                       team_members, start_date, end_date, budget, progress,
                       created_by, created_at, updated_at, project_config,
                       benefit_target, risk_level, priority, tags, parent_id, workspace_id

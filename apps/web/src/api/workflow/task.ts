@@ -221,27 +221,4 @@ export const taskApi = {
   getTaskStats: () => {
     return apiClient.workflow.get('/tasks/my/stats');
   },
-
-  claimTask: (id: string) => {
-    return apiClient.workflow.post(`/tasks/${id}/claim`);
-  },
-
-  completeTask: (
-    id: string,
-    data?: { comment?: string; outcome?: string; variables?: Record<string, unknown> }
-  ) => {
-    return apiClient.workflow.post(`/tasks/${id}/complete`, data);
-  },
-
-  rejectTask: (id: string, data?: { comment?: string; variables?: Record<string, unknown> }) => {
-    return apiClient.workflow.post(`/tasks/${id}/reject`, data);
-  },
-
-  delegateTask: (id: string, data: TaskDelegateRequest) => {
-    return apiClient.workflow.post(`/tasks/${id}/delegate`, data);
-  },
-
-  transferTask: (id: string, data: TaskTransferRequest) => {
-    return apiClient.workflow.post(`/tasks/${id}/transfer`, data);
-  },
 };

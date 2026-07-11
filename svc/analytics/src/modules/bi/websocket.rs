@@ -11,7 +11,7 @@ use tracing::{info, warn};
 
 use crate::modules::bi::chart_service::{ChartQuery, ChartService, ChartType};
 use crate::modules::bi::widget::WIDGET_CACHE;
-use crate::AppState;
+use crate::shared::AppState;
 
 /// WebSocket endpoint for real-time dashboard data
 pub async fn dashboard_websocket(

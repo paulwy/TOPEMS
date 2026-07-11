@@ -11,7 +11,7 @@ use serde::{Deserialize, Serialize};
 use sqlx::types::Uuid;
 use tracing::{info, warn};
 
-use crate::AppState;
+use crate::shared::AppState;
 
 // ==================== Data Structures ====================
 
@@ -440,7 +440,7 @@ pub async fn delete_sync_record(
 pub async fn retry_sync(
     State(state): State<AppState>,
     Path(id): Path<Uuid>,
-    Json(req): Json<Option<RetrySyncRequest>>,
+    req: Option<Json<RetrySyncRequest>>,
 ) -> Json<serde_json::Value> {
     info!("Retrying BI sync record: {}", id);
 
@@ -488,7 +488,7 @@ pub async fn retry_sync(
         &Uuid::new_v4().to_string()[..8].to_uppercase()
     );
 
-    let note = req.and_then(|r| r.note).unwrap_or_default();
+    let note = req.and_then(|Json(r)| r.note).filter(|s| !s.is_empty());
 
     // Reset record to pending and clear error state
     let result = sqlx::query(
@@ -503,11 +503,7 @@ pub async fn retry_sync(
          updated_at = $2 \
          WHERE id = $3",
     )
-    .bind(if note.is_empty() {
-        None
-    } else {
-        Some(note.as_str())
-    })
+    .bind(note.as_deref())
     .bind(now)
     .bind(id)
     .execute(&state.pool)

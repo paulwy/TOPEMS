@@ -37,6 +37,7 @@ import { Settings, CheckSquare, Bell, FileText, Shield, Plug, Save, RotateCcw } 
 import { useAppStore } from '../../store';
 import { PageContainer } from '@/components/common';
 import { ConfirmDialog } from '@topems/shared-components';
+import { WORKFLOW_PATHS } from '@/modules/workflow/config';
 
 interface SettingGroup {
   id: string;
@@ -1793,7 +1794,7 @@ export const WorkflowSettingsPage: React.FC = () => {
       headerProps={{
         pageIcon: <Settings size={20} />,
         backButton: {
-          href: '/workflow/dashboard',
+          href: WORKFLOW_PATHS.dashboard,
         },
       }}
     >

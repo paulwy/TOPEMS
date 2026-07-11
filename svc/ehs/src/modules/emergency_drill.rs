@@ -1,14 +1,26 @@
 //! Emergency drill management - Drill plans, records, evaluation, rectification, and statistics
 
-use axum::{
-    extract::State,
-    routing::{get, post, put},
-    Json, Router,
-};
+use axum::{extract::State, http::HeaderMap, routing::*, Extension, Json, Router};
 use serde::{Deserialize, Serialize};
-use topems_shared::ApiResponse;
+use topems_shared::{ApiResponse, Claims};
 
-use crate::AppState;
+use uuid::Uuid;
+
+use crate::shared::AppState;
+
+fn get_tenant_id(claims: &Claims, headers: &HeaderMap) -> Uuid {
+    claims
+        .tenant_id
+        .as_ref()
+        .and_then(|t| Uuid::parse_str(t).ok())
+        .or_else(|| {
+            headers
+                .get("x-tenant-id")
+                .and_then(|v| v.to_str().ok())
+                .and_then(|s| Uuid::parse_str(s).ok())
+        })
+        .unwrap_or_else(Uuid::new_v4)
+}
 
 pub fn create_routes() -> Router<AppState> {
     Router::new()
@@ -75,6 +87,8 @@ pub struct DrillPlan {
     pub related_plan_id: Option<String>,
     pub created_at: Option<String>,
     pub updated_at: Option<String>,
+
+    pub tenant_id: Uuid,
 }
 
 #[derive(Debug, Serialize)]
@@ -98,6 +112,8 @@ pub struct DrillRecord {
     pub attachments: Option<Vec<String>>,
     pub created_at: Option<String>,
     pub updated_at: Option<String>,
+
+    pub tenant_id: Uuid,
 }
 
 #[derive(Debug, Serialize)]
@@ -114,6 +130,8 @@ pub struct DrillEvaluation {
     pub equipment_score: Option<i32>,
     pub evaluated_at: Option<String>,
     pub created_at: Option<String>,
+
+    pub tenant_id: Uuid,
 }
 
 #[derive(Debug, Serialize)]
@@ -132,6 +150,8 @@ pub struct DrillProblem {
     pub verified_at: Option<String>,
     pub created_at: Option<String>,
     pub updated_at: Option<String>,
+
+    pub tenant_id: Uuid,
 }
 
 #[derive(Debug, Serialize)]
@@ -139,6 +159,8 @@ pub struct DrillDetail {
     pub record: DrillRecord,
     pub evaluation: Option<DrillEvaluation>,
     pub problems: Vec<DrillProblem>,
+
+    pub tenant_id: Uuid,
 }
 
 #[derive(Debug, Serialize)]
@@ -152,6 +174,8 @@ pub struct DrillStatistics {
     pub problem_count: i32,
     pub rectified_count: i32,
     pub participant_count: i32,
+
+    pub tenant_id: Uuid,
 }
 
 #[derive(Debug, Deserialize)]
@@ -247,8 +271,11 @@ pub struct UpdateDrillProblemRequest {
 }
 
 pub async fn list_drill_plans(
-    State(_state): State<crate::AppState>,
+    State(_state): State<crate::shared::AppState>,
+    Extension(claims): Extension<Claims>,
+    headers: HeaderMap,
 ) -> Json<ApiResponse<Vec<DrillPlan>>> {
+    let tenant_id = get_tenant_id(&claims, &headers);
     tracing::info!("Listing drill plans");
     Json(ApiResponse::success(
         Vec::<DrillPlan>::new(),
@@ -257,9 +284,12 @@ pub async fn list_drill_plans(
 }
 
 pub async fn create_drill_plan(
-    State(_state): State<crate::AppState>,
+    State(_state): State<crate::shared::AppState>,
+    Extension(claims): Extension<Claims>,
+    headers: HeaderMap,
     Json(req): Json<CreateDrillPlanRequest>,
 ) -> Json<ApiResponse<DrillPlan>> {
+    let tenant_id = get_tenant_id(&claims, &headers);
     tracing::info!("Creating drill plan: {:?}", req);
     Json(ApiResponse::success(
         DrillPlan {
@@ -281,15 +311,20 @@ pub async fn create_drill_plan(
             related_plan_id: req.related_plan_id,
             created_at: Some(chrono::Utc::now().to_rfc3339()),
             updated_at: Some(chrono::Utc::now().to_rfc3339()),
+
+            tenant_id,
         },
         "演练计划创建成功",
     ))
 }
 
 pub async fn get_drill_plan(
-    State(_state): State<crate::AppState>,
+    State(_state): State<crate::shared::AppState>,
+    Extension(claims): Extension<Claims>,
+    headers: HeaderMap,
     axum::extract::Path(id): axum::extract::Path<String>,
 ) -> Json<ApiResponse<DrillPlan>> {
+    let tenant_id = get_tenant_id(&claims, &headers);
     tracing::info!("Getting drill plan: {}", id);
     Json(ApiResponse::success(
         DrillPlan {
@@ -308,16 +343,21 @@ pub async fn get_drill_plan(
             related_plan_id: Some("plan-001".to_string()),
             created_at: Some(chrono::Utc::now().to_rfc3339()),
             updated_at: Some(chrono::Utc::now().to_rfc3339()),
+
+            tenant_id,
         },
         "获取演练计划详情成功",
     ))
 }
 
 pub async fn update_drill_plan(
-    State(_state): State<crate::AppState>,
+    State(_state): State<crate::shared::AppState>,
+    Extension(claims): Extension<Claims>,
+    headers: HeaderMap,
     axum::extract::Path(id): axum::extract::Path<String>,
     Json(req): Json<UpdateDrillPlanRequest>,
 ) -> Json<ApiResponse<DrillPlan>> {
+    let tenant_id = get_tenant_id(&claims, &headers);
     tracing::info!("Updating drill plan {}: {:?}", id, req);
     Json(ApiResponse::success(
         DrillPlan {
@@ -338,22 +378,30 @@ pub async fn update_drill_plan(
             related_plan_id: Some("plan-001".to_string()),
             created_at: Some(chrono::Utc::now().to_rfc3339()),
             updated_at: Some(chrono::Utc::now().to_rfc3339()),
+
+            tenant_id,
         },
         "演练计划更新成功",
     ))
 }
 
 pub async fn delete_drill_plan(
-    State(_state): State<crate::AppState>,
+    State(_state): State<crate::shared::AppState>,
+    Extension(claims): Extension<Claims>,
+    headers: HeaderMap,
     axum::extract::Path(id): axum::extract::Path<String>,
 ) -> Json<ApiResponse<()>> {
+    let tenant_id = get_tenant_id(&claims, &headers);
     tracing::info!("Deleting drill plan: {}", id);
     Json(ApiResponse::success((), "演练计划删除成功"))
 }
 
 pub async fn list_drill_records(
-    State(_state): State<crate::AppState>,
+    State(_state): State<crate::shared::AppState>,
+    Extension(claims): Extension<Claims>,
+    headers: HeaderMap,
 ) -> Json<ApiResponse<Vec<DrillRecord>>> {
+    let tenant_id = get_tenant_id(&claims, &headers);
     tracing::info!("Listing drill records");
     Json(ApiResponse::success(
         Vec::<DrillRecord>::new(),
@@ -362,9 +410,12 @@ pub async fn list_drill_records(
 }
 
 pub async fn create_drill_record(
-    State(_state): State<crate::AppState>,
+    State(_state): State<crate::shared::AppState>,
+    Extension(claims): Extension<Claims>,
+    headers: HeaderMap,
     Json(req): Json<CreateDrillRecordRequest>,
 ) -> Json<ApiResponse<DrillRecord>> {
+    let tenant_id = get_tenant_id(&claims, &headers);
     tracing::info!("Creating drill record: {:?}", req);
     Json(ApiResponse::success(
         DrillRecord {
@@ -390,15 +441,20 @@ pub async fn create_drill_record(
             attachments: None,
             created_at: Some(chrono::Utc::now().to_rfc3339()),
             updated_at: Some(chrono::Utc::now().to_rfc3339()),
+
+            tenant_id,
         },
         "演练记录创建成功",
     ))
 }
 
 pub async fn get_drill_record(
-    State(_state): State<crate::AppState>,
+    State(_state): State<crate::shared::AppState>,
+    Extension(claims): Extension<Claims>,
+    headers: HeaderMap,
     axum::extract::Path(id): axum::extract::Path<String>,
 ) -> Json<ApiResponse<DrillDetail>> {
+    let tenant_id = get_tenant_id(&claims, &headers);
     tracing::info!("Getting drill record: {}", id);
     Json(ApiResponse::success(
         DrillDetail {
@@ -422,6 +478,8 @@ pub async fn get_drill_record(
                 attachments: None,
                 created_at: Some(chrono::Utc::now().to_rfc3339()),
                 updated_at: Some(chrono::Utc::now().to_rfc3339()),
+
+                tenant_id,
             },
             evaluation: Some(DrillEvaluation {
                 id: "eval-001".to_string(),
@@ -436,6 +494,8 @@ pub async fn get_drill_record(
                 equipment_score: Some(88),
                 evaluated_at: Some(chrono::Utc::now().to_rfc3339()),
                 created_at: Some(chrono::Utc::now().to_rfc3339()),
+
+                tenant_id,
             }),
             problems: vec![DrillProblem {
                 id: "prob-001".to_string(),
@@ -452,17 +512,23 @@ pub async fn get_drill_record(
                 verified_at: None,
                 created_at: Some(chrono::Utc::now().to_rfc3339()),
                 updated_at: Some(chrono::Utc::now().to_rfc3339()),
+
+                tenant_id,
             }],
+            tenant_id,
         },
         "获取演练详情成功",
     ))
 }
 
 pub async fn update_drill_record(
-    State(_state): State<crate::AppState>,
+    State(_state): State<crate::shared::AppState>,
+    Extension(claims): Extension<Claims>,
+    headers: HeaderMap,
     axum::extract::Path(id): axum::extract::Path<String>,
     Json(req): Json<UpdateDrillRecordRequest>,
 ) -> Json<ApiResponse<DrillRecord>> {
+    let tenant_id = get_tenant_id(&claims, &headers);
     tracing::info!("Updating drill record {}: {:?}", id, req);
     Json(ApiResponse::success(
         DrillRecord {
@@ -487,24 +553,32 @@ pub async fn update_drill_record(
             attachments: None,
             created_at: Some(chrono::Utc::now().to_rfc3339()),
             updated_at: Some(chrono::Utc::now().to_rfc3339()),
+
+            tenant_id,
         },
         "演练记录更新成功",
     ))
 }
 
 pub async fn delete_drill_record(
-    State(_state): State<crate::AppState>,
+    State(_state): State<crate::shared::AppState>,
+    Extension(claims): Extension<Claims>,
+    headers: HeaderMap,
     axum::extract::Path(id): axum::extract::Path<String>,
 ) -> Json<ApiResponse<()>> {
+    let tenant_id = get_tenant_id(&claims, &headers);
     tracing::info!("Deleting drill record: {}", id);
     Json(ApiResponse::success((), "演练记录删除成功"))
 }
 
 pub async fn create_drill_evaluation(
-    State(_state): State<crate::AppState>,
+    State(_state): State<crate::shared::AppState>,
+    Extension(claims): Extension<Claims>,
+    headers: HeaderMap,
     axum::extract::Path(id): axum::extract::Path<String>,
     Json(req): Json<CreateEvaluationRequest>,
 ) -> Json<ApiResponse<DrillEvaluation>> {
+    let tenant_id = get_tenant_id(&claims, &headers);
     tracing::info!("Creating drill evaluation for {}: {:?}", id, req);
     Json(ApiResponse::success(
         DrillEvaluation {
@@ -520,15 +594,20 @@ pub async fn create_drill_evaluation(
             equipment_score: req.equipment_score,
             evaluated_at: Some(chrono::Utc::now().to_rfc3339()),
             created_at: Some(chrono::Utc::now().to_rfc3339()),
+
+            tenant_id,
         },
         "演练评估创建成功",
     ))
 }
 
 pub async fn list_drill_problems(
-    State(_state): State<crate::AppState>,
+    State(_state): State<crate::shared::AppState>,
+    Extension(claims): Extension<Claims>,
+    headers: HeaderMap,
     axum::extract::Path(id): axum::extract::Path<String>,
 ) -> Json<ApiResponse<Vec<DrillProblem>>> {
+    let tenant_id = get_tenant_id(&claims, &headers);
     tracing::info!("Listing drill problems for: {}", id);
     Json(ApiResponse::success(
         Vec::<DrillProblem>::new(),
@@ -537,10 +616,13 @@ pub async fn list_drill_problems(
 }
 
 pub async fn create_drill_problem(
-    State(_state): State<crate::AppState>,
+    State(_state): State<crate::shared::AppState>,
+    Extension(claims): Extension<Claims>,
+    headers: HeaderMap,
     axum::extract::Path(id): axum::extract::Path<String>,
     Json(req): Json<CreateDrillProblemRequest>,
 ) -> Json<ApiResponse<DrillProblem>> {
+    let tenant_id = get_tenant_id(&claims, &headers);
     tracing::info!("Creating drill problem for {}: {:?}", id, req);
     Json(ApiResponse::success(
         DrillProblem {
@@ -558,16 +640,21 @@ pub async fn create_drill_problem(
             verified_at: None,
             created_at: Some(chrono::Utc::now().to_rfc3339()),
             updated_at: Some(chrono::Utc::now().to_rfc3339()),
+
+            tenant_id,
         },
         "问题创建成功",
     ))
 }
 
 pub async fn update_drill_problem(
-    State(_state): State<crate::AppState>,
+    State(_state): State<crate::shared::AppState>,
+    Extension(claims): Extension<Claims>,
+    headers: HeaderMap,
     axum::extract::Path((_drill_id, problem_id)): axum::extract::Path<(String, String)>,
     Json(req): Json<UpdateDrillProblemRequest>,
 ) -> Json<ApiResponse<DrillProblem>> {
+    let tenant_id = get_tenant_id(&claims, &headers);
     tracing::info!("Updating drill problem {}: {:?}", problem_id, req);
     let status = req
         .status
@@ -602,14 +689,19 @@ pub async fn update_drill_problem(
             verified_at,
             created_at: Some(chrono::Utc::now().to_rfc3339()),
             updated_at: Some(chrono::Utc::now().to_rfc3339()),
+
+            tenant_id,
         },
         "问题更新成功",
     ))
 }
 
 pub async fn get_drill_statistics(
-    State(_state): State<crate::AppState>,
+    State(_state): State<crate::shared::AppState>,
+    Extension(claims): Extension<Claims>,
+    headers: HeaderMap,
 ) -> Json<ApiResponse<DrillStatistics>> {
+    let tenant_id = get_tenant_id(&claims, &headers);
     tracing::info!("Getting drill statistics");
     Json(ApiResponse::success(
         DrillStatistics {
@@ -634,14 +726,19 @@ pub async fn get_drill_statistics(
             problem_count: 28,
             rectified_count: 24,
             participant_count: 1560,
+
+            tenant_id,
         },
         "获取统计数据成功",
     ))
 }
 
 pub async fn list_drill_types(
-    State(_state): State<crate::AppState>,
+    State(_state): State<crate::shared::AppState>,
+    Extension(claims): Extension<Claims>,
+    headers: HeaderMap,
 ) -> Json<ApiResponse<Vec<serde_json::Value>>> {
+    let tenant_id = get_tenant_id(&claims, &headers);
     tracing::info!("Listing drill types");
     let types = vec![
         serde_json::json!({ "code": "fire", "name": "火灾演练" }),

@@ -9,6 +9,7 @@ pub use crate::services::vector::SearchResult;
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct QAHistory {
     pub id: Uuid,
+    pub tenant_id: Uuid,
     pub question: String,
     pub answer: String,
     pub context: Option<serde_json::Value>,
@@ -22,6 +23,7 @@ pub struct QAHistory {
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct AnalysisResult {
     pub id: Uuid,
+    pub tenant_id: Uuid,
     pub analysis_type: String,
     pub input_text: String,
     pub result: serde_json::Value,

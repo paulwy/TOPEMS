@@ -6,6 +6,7 @@ use uuid::Uuid;
 #[derive(Debug, Clone, FromRow, Serialize, Deserialize)]
 pub struct SupplierEvaluation {
     pub id: Uuid,
+    pub tenant_id: Uuid,
     pub supplier_id: Uuid,
     pub evaluation_no: String,
     pub evaluation_date: DateTime<Utc>,

@@ -1,7 +1,23 @@
 //! Shared module for unified-core service
 //! Contains unified types and utilities for all core modules
 
+use axum::extract::FromRef;
 use serde::{Deserialize, Serialize};
+use sqlx::PgPool;
+use topems_shared::{AuthState, SimpleHealthConfig};
+
+#[derive(Clone)]
+pub struct AppState {
+    pub auth_state: AuthState,
+    pub pool: PgPool,
+    pub health_config: SimpleHealthConfig,
+}
+
+impl FromRef<AppState> for AuthState {
+    fn from_ref(state: &AppState) -> Self {
+        state.auth_state.clone()
+    }
+}
 
 /// Unified API response type for all core modules
 #[derive(Debug, Clone, Serialize, Deserialize)]

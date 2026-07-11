@@ -9,6 +9,7 @@ use serde::Deserialize;
 use uuid::Uuid;
 
 use super::ApiState;
+use crate::middleware::tenant::get_tenant_id;
 use crate::models::{Contact, CreateContactRequest, UpdateContactRequest};
 use crate::modules::audit::log_audit_event;
 use crate::shared::permission::{check_permission, ModulePermission};
@@ -46,6 +47,7 @@ async fn list_contacts(
     State(state): State<ApiState>,
     Extension(claims): Extension<Claims>,
     Query(params): Query<ContactPaginationParams>,
+    headers: HeaderMap,
 ) -> Json<ApiResponse<serde_json::Value>> {
     match check_permission(&state.db, &claims, &ModulePermission::ContactRead).await {
         Ok(_) => {}
@@ -59,18 +61,21 @@ async fn list_contacts(
     let search_pattern = params.search.as_deref().map(|s| format!("%{}%", s));
     let status_filter = params.status.clone();
     let customer_filter = params.customer_id;
+    let tenant_id = get_tenant_id(&claims, &headers);
 
     let result = sqlx::query_as::<_, Contact>(
         r#"
-        SELECT id, customer_id, first_name, last_name, email, phone, position, status, notes, created_at, updated_at
-        FROM plugin_crm.contacts
-        WHERE ($1::text IS NULL OR first_name ILIKE $1 OR last_name ILIKE $1)
-          AND ($2::text IS NULL OR status = $2)
-          AND ($3::uuid IS NULL OR customer_id = $3)
+        SELECT id, tenant_id, customer_id, first_name, last_name, email, phone, position, status, notes, created_at, updated_at
+        FROM crm.contacts
+        WHERE tenant_id = $1
+          AND ($2::text IS NULL OR first_name ILIKE $2 OR last_name ILIKE $2)
+          AND ($3::text IS NULL OR status = $3)
+          AND ($4::uuid IS NULL OR customer_id = $4)
         ORDER BY created_at DESC
-        LIMIT $4 OFFSET $5
+        LIMIT $5 OFFSET $6
         "#,
     )
+    .bind(tenant_id)
     .bind(&search_pattern)
     .bind(&status_filter)
     .bind(&customer_filter)
@@ -83,12 +88,14 @@ async fn list_contacts(
         Ok(contacts) => {
             let count_result = sqlx::query_scalar::<_, i64>(
                 r#"
-                SELECT COUNT(*) FROM plugin_crm.contacts
-                WHERE ($1::text IS NULL OR first_name ILIKE $1 OR last_name ILIKE $1)
-                  AND ($2::text IS NULL OR status = $2)
-                  AND ($3::uuid IS NULL OR customer_id = $3)
+                SELECT COUNT(*) FROM crm.contacts
+                WHERE tenant_id = $1
+                  AND ($2::text IS NULL OR first_name ILIKE $2 OR last_name ILIKE $2)
+                  AND ($3::text IS NULL OR status = $3)
+                  AND ($4::uuid IS NULL OR customer_id = $4)
                 "#,
             )
+            .bind(tenant_id)
             .bind(&search_pattern)
             .bind(&status_filter)
             .bind(&customer_filter)
@@ -131,16 +138,18 @@ async fn create_contact(
 
     let id = Uuid::new_v4();
     let now = Utc::now();
+    let tenant_id = get_tenant_id(&claims, &headers);
 
     let result = sqlx::query_as::<_, Contact>(
         r#"
-        INSERT INTO plugin_crm.contacts (
-            id, customer_id, first_name, last_name, email, phone, position, notes, status, created_at, updated_at
-        ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, 'active', $9, $10)
-        RETURNING id, customer_id, first_name, last_name, email, phone, position, status, notes, created_at, updated_at
+        INSERT INTO crm.contacts (
+            id, tenant_id, customer_id, first_name, last_name, email, phone, position, notes, status, created_at, updated_at
+        ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, 'active', $10, $11)
+        RETURNING id, tenant_id, customer_id, first_name, last_name, email, phone, position, status, notes, created_at, updated_at
         "#,
     )
     .bind(id)
+    .bind(tenant_id)
     .bind(&req.customer_id)
     .bind(&req.first_name)
     .bind(&req.last_name)
@@ -199,19 +208,23 @@ async fn get_contact(
     State(state): State<ApiState>,
     Extension(claims): Extension<Claims>,
     Path(id): Path<Uuid>,
+    headers: HeaderMap,
 ) -> Json<ApiResponse<Contact>> {
     match check_permission(&state.db, &claims, &ModulePermission::ContactRead).await {
         Ok(_) => {}
         Err(e) => return e,
     }
 
+    let tenant_id = get_tenant_id(&claims, &headers);
+
     let result = sqlx::query_as::<_, Contact>(
         r#"
-        SELECT id, customer_id, first_name, last_name, email, phone, position, status, notes, created_at, updated_at
-        FROM plugin_crm.contacts WHERE id = $1
+        SELECT id, tenant_id, customer_id, first_name, last_name, email, phone, position, status, notes, created_at, updated_at
+        FROM crm.contacts WHERE id = $1 AND tenant_id = $2
         "#,
     )
     .bind(id)
+    .bind(tenant_id)
     .fetch_optional(&state.db)
     .await;
 
@@ -237,12 +250,15 @@ async fn update_contact(
         Err(e) => return e,
     }
 
+    let tenant_id = get_tenant_id(&claims, &headers);
+
     let existing = sqlx::query_as::<_, Contact>(
         r#"
-        SELECT id, customer_id, first_name, last_name, email, phone, position, status, notes, created_at, updated_at FROM plugin_crm.contacts WHERE id = $1
+        SELECT id, tenant_id, customer_id, first_name, last_name, email, phone, position, status, notes, created_at, updated_at FROM crm.contacts WHERE id = $1 AND tenant_id = $2
         "#,
     )
     .bind(id)
+    .bind(tenant_id)
     .fetch_optional(&state.db)
     .await;
 
@@ -266,11 +282,11 @@ async fn update_contact(
 
     let result = sqlx::query_as::<_, Contact>(
         r#"
-        UPDATE plugin_crm.contacts SET
+        UPDATE crm.contacts SET
             first_name = $2, last_name = $3, email = $4, phone = $5, position = $6,
             customer_id = $7, status = $8, notes = $9, updated_at = $10
-        WHERE id = $1
-        RETURNING id, customer_id, first_name, last_name, email, phone, position, status, notes, created_at, updated_at
+        WHERE id = $1 AND tenant_id = $11
+        RETURNING id, tenant_id, customer_id, first_name, last_name, email, phone, position, status, notes, created_at, updated_at
         "#,
     )
     .bind(id)
@@ -283,6 +299,7 @@ async fn update_contact(
     .bind(&status)
     .bind(&notes)
     .bind(now)
+    .bind(tenant_id)
     .fetch_one(&state.db)
     .await;
 
@@ -338,8 +355,11 @@ async fn delete_contact(
         Err(e) => return e,
     }
 
-    let result = sqlx::query("DELETE FROM plugin_crm.contacts WHERE id = $1")
+    let tenant_id = get_tenant_id(&claims, &headers);
+
+    let result = sqlx::query("DELETE FROM crm.contacts WHERE id = $1 AND tenant_id = $2")
         .bind(id)
+        .bind(tenant_id)
         .execute(&state.db)
         .await;
 
@@ -404,8 +424,11 @@ async fn batch_delete_contacts(
         return Json(api_error(400, "请选择要删除的联系人"));
     }
 
-    let result = sqlx::query("DELETE FROM plugin_crm.contacts WHERE id = ANY($1)")
+    let tenant_id = get_tenant_id(&claims, &headers);
+
+    let result = sqlx::query("DELETE FROM crm.contacts WHERE id = ANY($1) AND tenant_id = $2")
         .bind(&req.ids)
+        .bind(tenant_id)
         .execute(&state.db)
         .await;
 

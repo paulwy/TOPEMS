@@ -1,6 +1,9 @@
 # OS
 .DS_Store
 Thumbs.db
+Desktop.ini
+$RECYCLE.BIN/
+*.lnk
 
 # IDE
 .vscode/
@@ -8,6 +11,13 @@ Thumbs.db
 *.swp
 *.swo
 *~
+.project
+.classpath
+.settings/
+*.idea/*
+*.iml
+*.ipr
+*.iws
 
 # Environment
 .env
@@ -15,7 +25,9 @@ Thumbs.db
 .env.development.local
 .env.test.local
 .env.production.local
+.env.*.local
 auth-state.json
+*.env.*
 
 # Frontend
 frontend/node_modules/
@@ -23,24 +35,38 @@ frontend/dist/
 frontend/build/
 frontend/.vite/
 frontend/test-results/
+frontend/.next/
+frontend/.nuxt/
 
 # Apps
 apps/core/dist/
 apps/core/.vite/
 apps/web/dist/
 apps/web/.vite/
+apps/web/.next/
+apps/web/.nuxt/
+apps/mobile/.expo/
+apps/mobile/dist/
+apps/mobile/build/
+apps/mobile/.vite/
+apps/desktop/dist/
+apps/desktop/.vite/
+apps/desktop/src-tauri/target/
 
 # Packages
 packages/**/dist/
 packages/**/.vite/
+packages/**/node_modules/
 
 # Backend Rust
 **/target/
 **/Cargo.lock
 **/.sqlx/
+**/sqlx-data.json
 
 # Docker
 docker-compose.override.yml
+docker-compose.*.yml
 *.log
 
 # Testing
@@ -51,6 +77,11 @@ apps/web/playwright-report/
 apps/web/test-results/
 test-results*.json
 test-latest.json
+*.test.ts
+*.spec.ts
+junit.xml
+allure-report/
+allure-results/
 
 # AI Contest decks (large files)
 docs/topems-ai-contest-deck/
@@ -61,6 +92,10 @@ trae-ai-contest/
 .bak-*/
 *.bak
 *.bak.*
+*.backup
+*.old
+*.orig
+*.rej
 
 # Lock files (large)
 # pnpm-lock.yaml is tracked for reproducibility
@@ -70,33 +105,72 @@ trae-ai-contest/
 *.dll
 *.so
 *.dylib
+*.a
+*.lib
 
 # Logs
 *.log
 npm-debug.log*
 yarn-debug.log*
 yarn-error.log*
+logs/
+*.log.*
 
 # Database
 *.db
 *.sqlite
 *.sqlite3
+*.db-journal
+*.db-wal
 
 # Cache
 .cache/
 *.tmp
 *.temp
+*.tmp.*
 node_modules
+.cache/
+.parcel-cache/
+.eslintcache
+.rpt2_cache/
+*.cache
+
+# Process IDs
+pids/
+*.pid
+*.pid.lock
+
+# nohup output
+nohup.out
 
 # Debug tools
 debug_jwt.rs
+debug*.rs
+*.debug
 
+# Temporary extraction files
+extract_routes.py
+routes_extracted.*
+*.pyc
+__pycache__/
+*.egg-info/
+
+# Archive directories
+svc/archive/
+archive/
+old/
+backup/
+
+# Storybook
 *storybook.log
 storybook-static
 apps/web/playwright-report/
 
-
+# Database data
 database/postgres_data/
+database/data/
+database/*.sql
+database/*.sql.gz
 
 # Lighthouse 性能报告，无需入库
 apps/web/.lighthouseci/
@@ -107,4 +181,38 @@ apps/web/stats.json
 chromewebdata_*.report.html
 localhost_*.report.html
 apps/web/lighthouse-report.html
-apps/web/lighthouse-report.html
+*.report.html
+lighthouse-*.json
+
+# Expo
+apps/mobile/.expo-shared/
+apps/mobile/ios/
+apps/mobile/android/
+
+# Tauri
+apps/desktop/src-tauri/gen/
+apps/desktop/src-tauri/cargo-crates/
+
+# Node.js
+node_modules/
+package-lock.json
+yarn.lock
+pnpm-lock.yaml
+shrinkwrap.json
+
+# TypeScript
+*.tsbuildinfo
+.tsbuildinfo
+
+# Vite
+.vite/
+dist/
+build/
+
+# Misc
+*.md.bak
+*.md.tmp
+*.txt.bak
+.traecache/
+.superpowers/
+*.code-workspace

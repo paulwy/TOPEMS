@@ -138,7 +138,7 @@ pub fn create_routes() -> Router<ApiState> {
         )
 }
 
-async fn list_subjects(
+pub async fn list_subjects(
     State(state): State<ApiState>,
     Extension(claims): Extension<Claims>,
     Query(params): Query<PaginationParams>,
@@ -198,7 +198,7 @@ async fn list_subjects(
     }
 }
 
-async fn create_subject(
+pub async fn create_subject(
     State(state): State<ApiState>,
     Extension(claims): Extension<Claims>,
     headers: HeaderMap,
@@ -286,7 +286,7 @@ async fn create_subject(
     response
 }
 
-async fn get_subject(
+pub async fn get_subject(
     State(state): State<ApiState>,
     Extension(claims): Extension<Claims>,
     Path(id): Path<Uuid>,
@@ -315,7 +315,7 @@ async fn get_subject(
     }
 }
 
-async fn update_subject(
+pub async fn update_subject(
     State(state): State<ApiState>,
     Extension(claims): Extension<Claims>,
     Path(id): Path<Uuid>,
@@ -411,7 +411,7 @@ async fn update_subject(
     response
 }
 
-async fn delete_subject(
+pub async fn delete_subject(
     State(state): State<ApiState>,
     Extension(claims): Extension<Claims>,
     Path(id): Path<Uuid>,
@@ -474,7 +474,7 @@ async fn delete_subject(
     response
 }
 
-async fn list_vouchers(
+pub async fn list_vouchers(
     State(state): State<ApiState>,
     Extension(claims): Extension<Claims>,
     Query(params): Query<PaginationParams>,
@@ -538,7 +538,7 @@ async fn list_vouchers(
     }
 }
 
-async fn create_voucher(
+pub async fn create_voucher(
     State(state): State<ApiState>,
     Extension(claims): Extension<Claims>,
     headers: HeaderMap,
@@ -662,7 +662,7 @@ async fn create_voucher(
     Json(ApiResponse::success(voucher.clone(), "财务凭证创建成功"))
 }
 
-async fn get_voucher(
+pub async fn get_voucher(
     State(state): State<ApiState>,
     Extension(claims): Extension<Claims>,
     Path(id): Path<Uuid>,
@@ -691,7 +691,7 @@ async fn get_voucher(
     }
 }
 
-async fn get_voucher_items(
+pub async fn get_voucher_items(
     State(state): State<ApiState>,
     Extension(claims): Extension<Claims>,
     Path(id): Path<Uuid>,
@@ -719,7 +719,7 @@ async fn get_voucher_items(
     }
 }
 
-async fn update_voucher(
+pub async fn update_voucher(
     State(state): State<ApiState>,
     Extension(claims): Extension<Claims>,
     Path(id): Path<Uuid>,
@@ -825,7 +825,7 @@ async fn update_voucher(
     response
 }
 
-async fn delete_voucher(
+pub async fn delete_voucher(
     State(state): State<ApiState>,
     Extension(claims): Extension<Claims>,
     Path(id): Path<Uuid>,
@@ -909,7 +909,7 @@ async fn delete_voucher(
     response
 }
 
-async fn approve_voucher(
+pub async fn approve_voucher(
     State(state): State<ApiState>,
     Extension(claims): Extension<Claims>,
     Path(id): Path<Uuid>,
@@ -1004,7 +1004,7 @@ async fn approve_voucher(
     response
 }
 
-async fn post_voucher(
+pub async fn post_voucher(
     State(state): State<ApiState>,
     Extension(claims): Extension<Claims>,
     Path(id): Path<Uuid>,
@@ -1096,7 +1096,7 @@ async fn post_voucher(
     response
 }
 
-async fn unpost_voucher(
+pub async fn unpost_voucher(
     State(state): State<ApiState>,
     Extension(claims): Extension<Claims>,
     Path(id): Path<Uuid>,
@@ -1181,7 +1181,7 @@ async fn unpost_voucher(
     response
 }
 
-async fn import_u8_vouchers(
+pub async fn import_u8_vouchers(
     State(state): State<ApiState>,
     Extension(claims): Extension<Claims>,
     headers: HeaderMap,
@@ -1338,7 +1338,7 @@ pub struct VoucherTemplateQueryParams {
     pub search: Option<String>,
 }
 
-async fn list_voucher_templates(
+pub async fn list_voucher_templates(
     State(state): State<ApiState>,
     Extension(claims): Extension<Claims>,
     Query(params): Query<VoucherTemplateQueryParams>,
@@ -1568,7 +1568,7 @@ async fn list_voucher_templates(
     }
 }
 
-async fn get_voucher_template(
+pub async fn get_voucher_template(
     State(state): State<ApiState>,
     Extension(claims): Extension<Claims>,
     Path(template_id): Path<Uuid>,
@@ -1615,7 +1615,7 @@ async fn get_voucher_template(
     }
 }
 
-async fn create_voucher_template(
+pub async fn create_voucher_template(
     State(state): State<ApiState>,
     Extension(claims): Extension<Claims>,
     Json(req): Json<CreateVoucherTemplateRequest>,
@@ -1682,7 +1682,7 @@ async fn create_voucher_template(
     }
 }
 
-async fn update_voucher_template(
+pub async fn update_voucher_template(
     State(state): State<ApiState>,
     Extension(claims): Extension<Claims>,
     Path(template_id): Path<Uuid>,
@@ -1801,7 +1801,7 @@ async fn update_voucher_template(
     }
 }
 
-async fn delete_voucher_template(
+pub async fn delete_voucher_template(
     State(state): State<ApiState>,
     Extension(claims): Extension<Claims>,
     Path(template_id): Path<Uuid>,
@@ -1824,7 +1824,7 @@ async fn delete_voucher_template(
     }
 }
 
-async fn copy_voucher_template(
+pub async fn copy_voucher_template(
     State(state): State<ApiState>,
     Extension(claims): Extension<Claims>,
     Path(template_id): Path<Uuid>,
@@ -1932,7 +1932,7 @@ async fn copy_voucher_template(
     }
 }
 
-async fn set_default_voucher_template(
+pub async fn set_default_voucher_template(
     State(state): State<ApiState>,
     Extension(claims): Extension<Claims>,
     Path(template_id): Path<Uuid>,
@@ -1961,7 +1961,7 @@ async fn set_default_voucher_template(
     Json(ApiResponse::success("".to_string(), "默认模板设置成功"))
 }
 
-async fn toggle_voucher_template(
+pub async fn toggle_voucher_template(
     State(state): State<ApiState>,
     Extension(claims): Extension<Claims>,
     Path(template_id): Path<Uuid>,
@@ -1986,7 +1986,7 @@ async fn toggle_voucher_template(
     Json(ApiResponse::success("".to_string(), "模板状态更新成功"))
 }
 
-async fn add_voucher_template_entry(
+pub async fn add_voucher_template_entry(
     State(state): State<ApiState>,
     Extension(claims): Extension<Claims>,
     Path(template_id): Path<Uuid>,
@@ -2028,7 +2028,7 @@ async fn add_voucher_template_entry(
     Json(ApiResponse::success(entry, "模板分录添加成功"))
 }
 
-async fn update_voucher_template_entry(
+pub async fn update_voucher_template_entry(
     State(state): State<ApiState>,
     Extension(claims): Extension<Claims>,
     Path((template_id, entry_id)): Path<(Uuid, String)>,
@@ -2071,7 +2071,7 @@ async fn update_voucher_template_entry(
     Json(ApiResponse::success(entry, "模板分录更新成功"))
 }
 
-async fn delete_voucher_template_entry(
+pub async fn delete_voucher_template_entry(
     State(state): State<ApiState>,
     Extension(claims): Extension<Claims>,
     Path((template_id, entry_id)): Path<(Uuid, String)>,
@@ -2112,7 +2112,7 @@ async fn delete_voucher_template_entry(
     Json(ApiResponse::success("".to_string(), "模板分录删除成功"))
 }
 
-async fn reorder_voucher_template_entries(
+pub async fn reorder_voucher_template_entries(
     State(state): State<ApiState>,
     Extension(claims): Extension<Claims>,
     Path(template_id): Path<Uuid>,
@@ -2167,7 +2167,7 @@ async fn reorder_voucher_template_entries(
     Json(ApiResponse::success("".to_string(), "模板分录排序成功"))
 }
 
-async fn preview_generated_vouchers(
+pub async fn preview_generated_vouchers(
     State(_state): State<ApiState>,
     Extension(claims): Extension<Claims>,
     Json(_req): Json<serde_json::Value>,
@@ -2200,7 +2200,7 @@ async fn preview_generated_vouchers(
     Json(ApiResponse::success(preview, "预览生成凭证成功"))
 }
 
-async fn generate_voucher_from_source(
+pub async fn generate_voucher_from_source(
     State(_state): State<ApiState>,
     Extension(claims): Extension<Claims>,
     Json(_req): Json<serde_json::Value>,
@@ -2220,7 +2220,7 @@ async fn generate_voucher_from_source(
     Json(ApiResponse::success(voucher, "凭证生成成功"))
 }
 
-async fn batch_generate_vouchers(
+pub async fn batch_generate_vouchers(
     State(_state): State<ApiState>,
     Extension(claims): Extension<Claims>,
     Json(_req): Json<serde_json::Value>,
@@ -2244,7 +2244,7 @@ async fn batch_generate_vouchers(
     Json(ApiResponse::success(result, "批量生成凭证成功"))
 }
 
-async fn auto_generate_vouchers(
+pub async fn auto_generate_vouchers(
     State(_state): State<ApiState>,
     Extension(claims): Extension<Claims>,
     Json(_req): Json<serde_json::Value>,
@@ -2262,7 +2262,7 @@ async fn auto_generate_vouchers(
     Json(ApiResponse::success(result, "自动生成凭证成功"))
 }
 
-async fn match_voucher_template(
+pub async fn match_voucher_template(
     State(_state): State<ApiState>,
     Extension(claims): Extension<Claims>,
     Json(_req): Json<serde_json::Value>,
@@ -2283,7 +2283,7 @@ async fn match_voucher_template(
     Json(ApiResponse::success(template, "模板匹配成功"))
 }
 
-async fn get_template_usage_stats(
+pub async fn get_template_usage_stats(
     State(_state): State<ApiState>,
     Extension(claims): Extension<Claims>,
     Path(_template_id): Path<Uuid>,
@@ -2313,7 +2313,7 @@ pub struct GenerationRuleQueryParams {
     pub isactive: Option<bool>,
 }
 
-async fn list_generation_rules(
+pub async fn list_generation_rules(
     State(_state): State<ApiState>,
     Extension(claims): Extension<Claims>,
     Query(params): Query<GenerationRuleQueryParams>,
@@ -2357,7 +2357,7 @@ async fn list_generation_rules(
     ))
 }
 
-async fn create_generation_rule(
+pub async fn create_generation_rule(
     State(_state): State<ApiState>,
     Extension(claims): Extension<Claims>,
     Json(_req): Json<serde_json::Value>,
@@ -2382,7 +2382,7 @@ async fn create_generation_rule(
     Json(ApiResponse::success(rule, "凭证生成规则创建成功"))
 }
 
-async fn get_generation_rule(
+pub async fn get_generation_rule(
     State(_state): State<ApiState>,
     Extension(claims): Extension<Claims>,
     Path(_rule_id): Path<String>,
@@ -2408,7 +2408,7 @@ async fn get_generation_rule(
     Json(ApiResponse::success(rule, "获取凭证生成规则成功"))
 }
 
-async fn update_generation_rule(
+pub async fn update_generation_rule(
     State(_state): State<ApiState>,
     Extension(claims): Extension<Claims>,
     Path(_rule_id): Path<String>,
@@ -2435,7 +2435,7 @@ async fn update_generation_rule(
     Json(ApiResponse::success(rule, "凭证生成规则更新成功"))
 }
 
-async fn delete_generation_rule(
+pub async fn delete_generation_rule(
     State(_state): State<ApiState>,
     Extension(claims): Extension<Claims>,
     Path(_rule_id): Path<String>,
@@ -2447,7 +2447,7 @@ async fn delete_generation_rule(
     Json(ApiResponse::success("".to_string(), "凭证生成规则删除成功"))
 }
 
-async fn toggle_generation_rule(
+pub async fn toggle_generation_rule(
     State(_state): State<ApiState>,
     Extension(claims): Extension<Claims>,
     Path(_rule_id): Path<String>,

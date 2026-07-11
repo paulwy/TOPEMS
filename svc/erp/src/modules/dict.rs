@@ -75,7 +75,7 @@ pub fn create_routes() -> Router<ApiState> {
         )
 }
 
-async fn list_dict_types(
+pub async fn list_dict_types(
     State(state): State<ApiState>,
     Query(params): Query<DictTypeQueryParams>,
 ) -> Json<ApiResponse<PaginatedResponse<DictType>>> {
@@ -158,7 +158,7 @@ async fn list_dict_types(
     }
 }
 
-async fn create_dict_type(
+pub async fn create_dict_type(
     State(state): State<ApiState>,
     headers: HeaderMap,
     Json(req): Json<CreateDictTypeRequest>,
@@ -238,7 +238,7 @@ async fn create_dict_type(
     response
 }
 
-async fn get_dict_type(
+pub async fn get_dict_type(
     State(state): State<ApiState>,
     Path(id): Path<Uuid>,
 ) -> Json<ApiResponse<DictType>> {
@@ -262,7 +262,7 @@ async fn get_dict_type(
     }
 }
 
-async fn update_dict_type(
+pub async fn update_dict_type(
     State(state): State<ApiState>,
     Path(id): Path<Uuid>,
     headers: HeaderMap,
@@ -352,7 +352,7 @@ async fn update_dict_type(
     response
 }
 
-async fn delete_dict_type(
+pub async fn delete_dict_type(
     State(state): State<ApiState>,
     Path(id): Path<Uuid>,
     headers: HeaderMap,
@@ -418,7 +418,7 @@ async fn delete_dict_type(
     response
 }
 
-async fn list_dict_items(
+pub async fn list_dict_items(
     State(state): State<ApiState>,
     Path(dict_type_id): Path<Uuid>,
     Query(params): Query<DictItemQueryParams>,
@@ -474,7 +474,7 @@ async fn list_dict_items(
     }
 }
 
-async fn create_dict_item(
+pub async fn create_dict_item(
     State(state): State<ApiState>,
     headers: HeaderMap,
     Json(req): Json<CreateDictItemRequest>,
@@ -547,7 +547,7 @@ async fn create_dict_item(
     response
 }
 
-async fn get_dict_item(
+pub async fn get_dict_item(
     State(state): State<ApiState>,
     Path(id): Path<Uuid>,
 ) -> Json<ApiResponse<DictItem>> {
@@ -571,7 +571,7 @@ async fn get_dict_item(
     }
 }
 
-async fn update_dict_item(
+pub async fn update_dict_item(
     State(state): State<ApiState>,
     Path(id): Path<Uuid>,
     headers: HeaderMap,
@@ -664,7 +664,7 @@ async fn update_dict_item(
     response
 }
 
-async fn delete_dict_item(
+pub async fn delete_dict_item(
     State(state): State<ApiState>,
     Path(id): Path<Uuid>,
     headers: HeaderMap,
@@ -722,7 +722,7 @@ async fn delete_dict_item(
     response
 }
 
-async fn batch_create_dict_items(
+pub async fn batch_create_dict_items(
     State(state): State<ApiState>,
     headers: HeaderMap,
     Json(req): Json<BatchCreateDictItemRequest>,
@@ -791,7 +791,7 @@ async fn batch_create_dict_items(
     ))
 }
 
-async fn export_dict_items(
+pub async fn export_dict_items(
     State(state): State<ApiState>,
     Path(dict_type_id): Path<Uuid>,
 ) -> Response<String> {

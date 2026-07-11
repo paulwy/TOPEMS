@@ -1,28 +1,16 @@
-//! Shared module for quality-assurance service
-//! Contains unified types and utilities
+use axum::extract::FromRef;
+use sqlx::PgPool;
+use topems_shared::{ApiResponse, AuthState, SimpleHealthConfig};
 
-use serde::{Deserialize, Serialize};
-
-/// Shared quality standards
-#[derive(Debug, Clone, Serialize, Deserialize)]
-pub struct QualityStandard {
-    pub id: String,
-    pub code: String,
-    pub name: String,
-    pub category: String,
-    pub level: String,
-    pub description: Option<String>,
+#[derive(Clone)]
+pub struct AppState {
+    pub auth_state: AuthState,
+    pub pool: PgPool,
+    pub health_config: SimpleHealthConfig,
 }
 
-impl Default for QualityStandard {
-    fn default() -> Self {
-        Self {
-            id: uuid::Uuid::new_v4().to_string(),
-            code: String::new(),
-            name: String::new(),
-            category: "quality".to_string(),
-            level: "national".to_string(),
-            description: None,
-        }
+impl FromRef<AppState> for AuthState {
+    fn from_ref(state: &AppState) -> Self {
+        state.auth_state.clone()
     }
 }

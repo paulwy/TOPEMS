@@ -48,7 +48,7 @@ pub struct InventoryTurnoverItem {
     pub inventory_value: f64,
 }
 
-async fn calculate_turnover(
+pub async fn calculate_turnover(
     State(state): State<ApiState>,
     Extension(claims): Extension<Claims>,
     Query(params): Query<TurnoverQueryParams>,
@@ -221,7 +221,7 @@ async fn calculate_turnover(
     }
 }
 
-async fn turnover_days(
+pub async fn turnover_days(
     State(state): State<ApiState>,
     Extension(claims): Extension<Claims>,
     Query(params): Query<TurnoverQueryParams>,
@@ -326,7 +326,7 @@ pub struct AbcAnalysisResult {
     pub avg_turnover_days: f64,
 }
 
-async fn abc_analysis(
+pub async fn abc_analysis(
     State(state): State<ApiState>,
     Extension(claims): Extension<Claims>,
     Query(params): Query<TurnoverQueryParams>,
@@ -439,7 +439,7 @@ async fn abc_analysis(
     }
 }
 
-async fn turnover_trend(
+pub async fn turnover_trend(
     State(state): State<ApiState>,
     Extension(claims): Extension<Claims>,
     Query(params): Query<TurnoverQueryParams>,

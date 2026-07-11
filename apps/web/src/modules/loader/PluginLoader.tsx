@@ -1,5 +1,6 @@
 import React, { Suspense, lazy, useEffect, useState, useCallback } from 'react';
 import { CircularProgress, Box, Typography, Alert, AlertTitle } from '@mui/material';
+import { LOADER_TIMEOUT } from '@topems/shared-constants';
 import { EventEmitter } from 'eventemitter3';
 
 export interface PluginManifest {
@@ -54,7 +55,7 @@ export interface PluginLoaderOptions {
 }
 
 const DEFAULT_MAX_SIZE = 1 * 1024 * 1024;
-const DEFAULT_TIMEOUT = 30000;
+const DEFAULT_TIMEOUT = LOADER_TIMEOUT.PLUGIN;
 const DEFAULT_MAX_RETRIES = 3;
 
 export const ModuleLoadingFallback: React.FC = () => (

@@ -10,6 +10,20 @@ use crate::services::employee_service::EmployeeService;
 use crate::shared::permission::{check_permission, ModulePermission};
 use topems_shared::{api_error, ApiResponse, Claims};
 
+fn get_tenant_id(claims: &Claims, headers: &axum::http::HeaderMap) -> Uuid {
+    claims
+        .tenant_id
+        .as_ref()
+        .and_then(|t| Uuid::parse_str(t).ok())
+        .or_else(|| {
+            headers
+                .get("x-tenant-id")
+                .and_then(|v| v.to_str().ok())
+                .and_then(|s| Uuid::parse_str(s).ok())
+        })
+        .unwrap_or_else(Uuid::new_v4)
+}
+
 pub fn create_routes() -> Router<ApiState> {
     Router::new()
         .route(
@@ -82,6 +96,7 @@ async fn list_employees(
     axum::extract::State(state): axum::extract::State<ApiState>,
     axum::extract::Extension(claims): axum::extract::Extension<Claims>,
     axum::extract::Query(params): axum::extract::Query<EmployeePaginationParams>,
+    headers: axum::http::HeaderMap,
 ) -> Json<ApiResponse<serde_json::Value>> {
     if let Err(e) = check_permission(&state.db, &claims, &ModulePermission::EmployeeRead).await {
         return e;
@@ -90,7 +105,8 @@ async fn list_employees(
     let page = params.page.unwrap_or(1).max(1);
     let page_size = params.page_size.unwrap_or(20).min(100);
 
-    let service = EmployeeService::new(state.db.clone(), (*state.encryption).clone());
+    let tenant_id = get_tenant_id(&claims, &headers);
+    let service = EmployeeService::new(state.db.clone(), (*state.encryption).clone(), tenant_id);
     let result = service
         .list_employees(
             page,
@@ -120,6 +136,7 @@ async fn get_employee(
     axum::extract::State(state): axum::extract::State<ApiState>,
     axum::extract::Extension(claims): axum::extract::Extension<Claims>,
     axum::extract::Path(id): axum::extract::Path<Uuid>,
+    headers: axum::http::HeaderMap,
 ) -> Json<ApiResponse<Employee>> {
     if let Err(e) = check_permission(&state.db, &claims, &ModulePermission::EmployeeRead).await {
         return e;
@@ -133,7 +150,8 @@ async fn get_employee(
         }
     }
 
-    let service = EmployeeService::new(state.db.clone(), (*state.encryption).clone());
+    let tenant_id = get_tenant_id(&claims, &headers);
+    let service = EmployeeService::new(state.db.clone(), (*state.encryption).clone(), tenant_id);
     let result = service.get_employee(&id).await;
 
     if let ApiResponse {
@@ -170,15 +188,17 @@ async fn get_employee_details(
     axum::extract::State(state): axum::extract::State<ApiState>,
     axum::extract::Extension(claims): axum::extract::Extension<Claims>,
     axum::extract::Path(id): axum::extract::Path<Uuid>,
+    headers: axum::http::HeaderMap,
 ) -> Json<ApiResponse<serde_json::Value>> {
     if let Err(e) = check_permission(&state.db, &claims, &ModulePermission::EmployeeRead).await {
         return e;
     }
 
+    let tenant_id = get_tenant_id(&claims, &headers);
     let result = sqlx::query(
         r#"
         SELECT 
-            e.id, e.company_id, e.department_id, e.position_id,
+            e.id, e.tenant_id, e.company_id, e.department_id, e.position_id,
             e.employee_number, e.name, e.gender, e.hire_date,
             e.email, e.phone, e.status,
             e.created_at, e.updated_at,
@@ -189,10 +209,11 @@ async fn get_employee_details(
         LEFT JOIN hrm.departments d ON e.department_id = d.id
         LEFT JOIN hrm.companies c ON e.company_id = c.id
         LEFT JOIN hrm.positions p ON e.position_id = p.id
-        WHERE e.id = $1
+        WHERE e.id = $1 AND e.tenant_id = $2
         "#,
     )
     .bind(id)
+    .bind(tenant_id)
     .fetch_optional(&state.db)
     .await;
 
@@ -249,7 +270,8 @@ async fn create_employee(
         return e;
     }
 
-    let service = EmployeeService::new(state.db.clone(), (*state.encryption).clone());
+    let tenant_id = get_tenant_id(&claims, &headers);
+    let service = EmployeeService::new(state.db.clone(), (*state.encryption).clone(), tenant_id);
     let result = service.create_employee(req).await;
 
     let status_str: String;
@@ -322,7 +344,8 @@ async fn update_employee(
         return e;
     }
 
-    let service = EmployeeService::new(state.db.clone(), (*state.encryption).clone());
+    let tenant_id = get_tenant_id(&claims, &headers);
+    let service = EmployeeService::new(state.db.clone(), (*state.encryption).clone(), tenant_id);
     let result = service.update_employee(&id, req).await;
 
     if result.code == 200 {
@@ -385,7 +408,8 @@ async fn delete_employee(
         return e;
     }
 
-    let service = EmployeeService::new(state.db.clone(), (*state.encryption).clone());
+    let tenant_id = get_tenant_id(&claims, &headers);
+    let service = EmployeeService::new(state.db.clone(), (*state.encryption).clone(), tenant_id);
     let result = service.delete_employee(&id).await;
 
     if result.code == 200 {
@@ -429,6 +453,7 @@ async fn delete_employee(
 async fn export_employees(
     axum::extract::State(state): axum::extract::State<ApiState>,
     axum::extract::Extension(claims): axum::extract::Extension<Claims>,
+    headers: axum::http::HeaderMap,
     axum::extract::Json(req): axum::extract::Json<ExportRequest>,
 ) -> Json<ApiResponse<serde_json::Value>> {
     if let Err(e) = check_permission(&state.db, &claims, &ModulePermission::EmployeeRead).await {
@@ -439,6 +464,8 @@ async fn export_employees(
 
     // 导出数量限制，防止大结果集导致的性能问题
     const MAX_EXPORT_COUNT: i64 = 10000;
+
+    let tenant_id = get_tenant_id(&claims, &headers);
 
     let employees = match &req.ids {
         Some(ids) => {
@@ -453,16 +480,17 @@ async fn export_employees(
             }
             sqlx::query_as::<_, Employee>(
                 r#"
-                SELECT id, company_id, department_id, position_id,
+                SELECT id, tenant_id, company_id, department_id, position_id,
                        employee_number, name, gender, hire_date,
                        email, phone, status,
                        created_at, updated_at
                 FROM hrm.employees
-                WHERE id = ANY($1)
-                LIMIT $2
+                WHERE tenant_id = $2 AND id = ANY($1)
+                LIMIT $3
                 "#,
             )
             .bind(ids)
+            .bind(tenant_id)
             .bind(MAX_EXPORT_COUNT)
             .fetch_all(&state.db)
             .await
@@ -470,14 +498,16 @@ async fn export_employees(
         None => {
             sqlx::query_as::<_, Employee>(
                 r#"
-                SELECT id, company_id, department_id, position_id,
+                SELECT id, tenant_id, company_id, department_id, position_id,
                        employee_number, name, gender, hire_date,
                        email, phone, status,
                        created_at, updated_at
                 FROM hrm.employees
-                LIMIT $1
+                WHERE tenant_id = $1
+                LIMIT $2
                 "#,
             )
+            .bind(tenant_id)
             .bind(MAX_EXPORT_COUNT)
             .fetch_all(&state.db)
             .await

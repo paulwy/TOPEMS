@@ -7,6 +7,7 @@ use axum::{
 use chrono::Utc;
 use num_traits::cast::ToPrimitive;
 use serde::{Deserialize, Serialize};
+use sqlx::Row;
 use uuid::Uuid;
 
 use crate::modules::audit::log_audit_event;
@@ -19,6 +20,7 @@ use topems_shared::{api_error, ApiResponse};
 pub struct AlertQueryParams {
     pub page: Option<i64>,
     pub page_size: Option<i64>,
+    pub search: Option<String>,
     pub alert_type: Option<String>,
     pub severity: Option<String>,
     pub status: Option<String>,
@@ -84,8 +86,8 @@ where
 {
     Router::new()
         .route("/api/wms/alerts", get(list_alerts))
-        .route("/api/v1/alerts/{id}", get(get_alert))
-        .route("/api/v1/alerts/{id}/acknowledge", post(acknowledge_alert))
+        .route("/api/wms/alerts/{id}", get(get_alert))
+        .route("/api/wms/alerts/{id}/acknowledge", post(acknowledge_alert))
         .route("/api/wms/alerts/statistics", get(get_alert_statistics))
         .route("/api/wms/alerts/summary", get(get_alert_summary))
         .route("/api/wms/alerts/by-warehouse", get(get_alerts_by_warehouse))
@@ -99,10 +101,29 @@ where
             "/api/wms/inventory-alerts/{id}/acknowledge",
             post(acknowledge_alert),
         )
+        .route(
+            "/api/wms/inventory-alerts/rules",
+            get(list_alert_rules).post(create_alert_rule),
+        )
+        .route(
+            "/api/wms/inventory-alerts/rules/{id}",
+            get(get_alert_rule)
+                .put(update_alert_rule)
+                .delete(delete_alert_rule),
+        )
+        .route("/api/wms/inventory-alerts/records", get(list_alert_records))
+        .route(
+            "/api/wms/inventory-alerts/records/{id}",
+            get(get_alert_record),
+        )
+        .route(
+            "/api/wms/inventory-alerts/records/{id}/confirm",
+            post(confirm_alert_record),
+        )
 }
 
 /// 获取库存预警列表
-async fn list_alerts(
+pub async fn list_alerts(
     State(state): State<ApiState>,
     Extension(claims): Extension<Claims>,
     Query(params): Query<AlertQueryParams>,
@@ -247,7 +268,7 @@ async fn list_alerts(
 }
 
 /// 获取单个预警详情
-async fn get_alert(
+pub async fn get_alert(
     State(state): State<ApiState>,
     Extension(claims): Extension<Claims>,
     Path(id): Path<Uuid>,
@@ -337,7 +358,7 @@ async fn get_alert(
 }
 
 /// 确认预警
-async fn acknowledge_alert(
+pub async fn acknowledge_alert(
     State(state): State<ApiState>,
     Extension(claims): Extension<Claims>,
     Path(id): Path<Uuid>,
@@ -388,7 +409,7 @@ async fn acknowledge_alert(
 }
 
 /// 获取预警统计信息
-async fn get_alert_statistics(
+pub async fn get_alert_statistics(
     State(state): State<ApiState>,
     Extension(claims): Extension<Claims>,
 ) -> Json<ApiResponse<serde_json::Value>> {
@@ -520,7 +541,7 @@ async fn get_alert_statistics(
 }
 
 /// 获取预警汇总（简化版）
-async fn get_alert_summary(
+pub async fn get_alert_summary(
     State(state): State<ApiState>,
     Extension(claims): Extension<Claims>,
 ) -> Json<ApiResponse<AlertSummary>> {
@@ -577,7 +598,7 @@ async fn get_alert_summary(
 }
 
 /// 按仓库获取预警列表
-async fn get_alerts_by_warehouse(
+pub async fn get_alerts_by_warehouse(
     State(state): State<ApiState>,
     Extension(claims): Extension<Claims>,
     Query(params): Query<AlertQueryParams>,
@@ -692,4 +713,631 @@ async fn get_alerts_by_warehouse(
             Json(api_error(500, "获取仓库预警列表失败"))
         }
     }
+}
+
+#[derive(Debug, Clone, Deserialize, Serialize)]
+pub struct InventoryAlertRule {
+    pub id: Uuid,
+    pub rule_name: String,
+    pub alert_type: String,
+    pub warehouse_id: Option<Uuid>,
+    pub material_code: Option<String>,
+    pub threshold_value: f64,
+    pub severity: String,
+    pub enabled: bool,
+    pub remarks: Option<String>,
+    pub created_at: chrono::DateTime<Utc>,
+    pub updated_at: chrono::DateTime<Utc>,
+}
+
+#[derive(Debug, Clone, Deserialize, Serialize)]
+pub struct CreateAlertRuleRequest {
+    pub rule_name: String,
+    pub alert_type: String,
+    pub warehouse_id: Option<Uuid>,
+    pub material_code: Option<String>,
+    pub threshold_value: f64,
+    pub severity: String,
+    pub enabled: Option<bool>,
+    pub remarks: Option<String>,
+}
+
+#[derive(Debug, Clone, Deserialize, Serialize)]
+pub struct UpdateAlertRuleRequest {
+    pub rule_name: Option<String>,
+    pub alert_type: Option<String>,
+    pub threshold_value: Option<f64>,
+    pub severity: Option<String>,
+    pub enabled: Option<bool>,
+    pub remarks: Option<String>,
+}
+
+pub async fn list_alert_rules(
+    State(state): State<ApiState>,
+    Extension(claims): Extension<Claims>,
+    Query(params): Query<AlertQueryParams>,
+) -> Json<ApiResponse<serde_json::Value>> {
+    match check_permission(&state.db, &claims, &ModulePermission::InventoryRead).await {
+        Ok(_) => {}
+        Err(e) => return e,
+    }
+    let page = params.page.unwrap_or(1).max(1);
+    let page_size = params.page_size.unwrap_or(20).min(100);
+    let offset = (page - 1) * page_size;
+
+    let result = sqlx::query(
+        r#"
+        SELECT id, rule_name, alert_type, warehouse_id, material_code, 
+               threshold_value, severity, enabled, remarks, created_at, updated_at
+        FROM wms.inventory_alert_rules
+        WHERE ($1::text IS NULL OR rule_name ILIKE $1)
+          AND ($2::text IS NULL OR alert_type = $2)
+        ORDER BY created_at DESC
+        LIMIT $3 OFFSET $4
+        "#,
+    )
+    .bind(params.search.as_deref().map(|s| format!("%{}%", s)))
+    .bind(params.alert_type.as_deref())
+    .bind(page_size)
+    .bind(offset)
+    .fetch_all(&state.db)
+    .await;
+
+    match result {
+        Ok(rules) => {
+            let total = sqlx::query_scalar::<_, i64>(
+                r#"
+                SELECT COUNT(*) FROM wms.inventory_alert_rules
+                WHERE ($1::text IS NULL OR rule_name ILIKE $1)
+                  AND ($2::text IS NULL OR alert_type = $2)
+                "#,
+            )
+            .bind(params.search.as_deref().map(|s| format!("%{}%", s)))
+            .bind(params.alert_type.as_deref())
+            .fetch_one(&state.db)
+            .await
+            .unwrap_or(0);
+
+            let rules_json: Vec<serde_json::Value> = rules
+                .iter()
+                .map(|row| {
+                    serde_json::json!({
+                        "id": row.try_get::<Uuid, _>("id").ok(),
+                        "rule_name": row.try_get::<String, _>("rule_name").ok(),
+                        "alert_type": row.try_get::<String, _>("alert_type").ok(),
+                        "warehouse_id": row.try_get::<Option<Uuid>, _>("warehouse_id").ok(),
+                        "material_code": row.try_get::<Option<String>, _>("material_code").ok(),
+                        "threshold_value": row.try_get::<f64, _>("threshold_value").ok(),
+                        "severity": row.try_get::<String, _>("severity").ok(),
+                        "enabled": row.try_get::<bool, _>("enabled").ok(),
+                        "remarks": row.try_get::<Option<String>, _>("remarks").ok(),
+                        "created_at": row.try_get::<chrono::DateTime<Utc>, _>("created_at").ok(),
+                        "updated_at": row.try_get::<chrono::DateTime<Utc>, _>("updated_at").ok(),
+                    })
+                })
+                .collect();
+
+            Json(ApiResponse::success(
+                serde_json::json!({
+                    "rules": rules_json,
+                    "total": total,
+                    "page": page,
+                    "page_size": page_size
+                }),
+                "获取预警规则列表成功",
+            ))
+        }
+        Err(e) => {
+            tracing::error!("获取预警规则列表失败: {}", e);
+            Json(api_error(500, "获取预警规则列表失败"))
+        }
+    }
+}
+
+pub async fn create_alert_rule(
+    State(state): State<ApiState>,
+    Extension(claims): Extension<Claims>,
+    headers: HeaderMap,
+    Json(req): Json<CreateAlertRuleRequest>,
+) -> Json<ApiResponse<serde_json::Value>> {
+    match check_permission(&state.db, &claims, &ModulePermission::InventoryWrite).await {
+        Ok(_) => {}
+        Err(e) => return e,
+    }
+    let request_data = serde_json::to_value(&req).ok();
+    let id = Uuid::new_v4();
+    let now = Utc::now();
+
+    let result = sqlx::query(
+        r#"
+        INSERT INTO wms.inventory_alert_rules (id, rule_name, alert_type, warehouse_id, 
+                                               material_code, threshold_value, severity, 
+                                               enabled, remarks, created_at, updated_at)
+        VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11)
+        RETURNING *
+        "#,
+    )
+    .bind(id)
+    .bind(&req.rule_name)
+    .bind(&req.alert_type)
+    .bind(req.warehouse_id)
+    .bind(&req.material_code)
+    .bind(req.threshold_value)
+    .bind(&req.severity)
+    .bind(req.enabled.unwrap_or(true))
+    .bind(&req.remarks)
+    .bind(now)
+    .bind(now)
+    .fetch_one(&state.db)
+    .await;
+
+    let (response, status_str, error_msg, response_data) = match &result {
+        Ok(row) => {
+            let rule_json = serde_json::json!({
+                "id": row.try_get::<Uuid, _>("id").ok(),
+                "rule_name": row.try_get::<String, _>("rule_name").ok(),
+                "alert_type": row.try_get::<String, _>("alert_type").ok(),
+                "warehouse_id": row.try_get::<Option<Uuid>, _>("warehouse_id").ok(),
+                "material_code": row.try_get::<Option<String>, _>("material_code").ok(),
+                "threshold_value": row.try_get::<f64, _>("threshold_value").ok(),
+                "severity": row.try_get::<String, _>("severity").ok(),
+                "enabled": row.try_get::<bool, _>("enabled").ok(),
+                "remarks": row.try_get::<Option<String>, _>("remarks").ok(),
+                "created_at": row.try_get::<chrono::DateTime<Utc>, _>("created_at").ok(),
+                "updated_at": row.try_get::<chrono::DateTime<Utc>, _>("updated_at").ok(),
+            });
+            (
+                Json(ApiResponse::success(rule_json.clone(), "预警规则创建成功")),
+                "success",
+                None,
+                Some(rule_json),
+            )
+        }
+        Err(e) => {
+            tracing::error!("创建预警规则失败: {}", e);
+            (
+                Json(api_error(500, "创建预警规则失败")),
+                "error",
+                Some(e.to_string()),
+                None,
+            )
+        }
+    };
+
+    log_audit_event(
+        &state.db,
+        "create".to_string(),
+        "inventory_alert_rule".to_string(),
+        Some(id),
+        None,
+        None,
+        None,
+        request_data,
+        response_data,
+        status_str.to_string(),
+        error_msg,
+        &headers,
+    )
+    .await;
+
+    response
+}
+
+pub async fn get_alert_rule(
+    State(state): State<ApiState>,
+    Extension(claims): Extension<Claims>,
+    Path(id): Path<Uuid>,
+) -> Json<ApiResponse<serde_json::Value>> {
+    match check_permission(&state.db, &claims, &ModulePermission::InventoryRead).await {
+        Ok(_) => {}
+        Err(e) => return e,
+    }
+
+    let result = sqlx::query("SELECT * FROM wms.inventory_alert_rules WHERE id = $1")
+        .bind(id)
+        .fetch_optional(&state.db)
+        .await;
+
+    match result {
+        Ok(Some(row)) => {
+            let rule_json = serde_json::json!({
+                "id": row.try_get::<Uuid, _>("id").ok(),
+                "rule_name": row.try_get::<String, _>("rule_name").ok(),
+                "alert_type": row.try_get::<String, _>("alert_type").ok(),
+                "warehouse_id": row.try_get::<Option<Uuid>, _>("warehouse_id").ok(),
+                "material_code": row.try_get::<Option<String>, _>("material_code").ok(),
+                "threshold_value": row.try_get::<f64, _>("threshold_value").ok(),
+                "severity": row.try_get::<String, _>("severity").ok(),
+                "enabled": row.try_get::<bool, _>("enabled").ok(),
+                "remarks": row.try_get::<Option<String>, _>("remarks").ok(),
+                "created_at": row.try_get::<chrono::DateTime<Utc>, _>("created_at").ok(),
+                "updated_at": row.try_get::<chrono::DateTime<Utc>, _>("updated_at").ok(),
+            });
+            Json(ApiResponse::success(rule_json, "获取预警规则成功"))
+        }
+        Ok(None) => Json(api_error(404, "预警规则不存在")),
+        Err(e) => {
+            tracing::error!("获取预警规则失败: {}", e);
+            Json(api_error(500, "获取预警规则失败"))
+        }
+    }
+}
+
+pub async fn update_alert_rule(
+    State(state): State<ApiState>,
+    Extension(claims): Extension<Claims>,
+    Path(id): Path<Uuid>,
+    headers: HeaderMap,
+    Json(req): Json<UpdateAlertRuleRequest>,
+) -> Json<ApiResponse<serde_json::Value>> {
+    match check_permission(&state.db, &claims, &ModulePermission::InventoryWrite).await {
+        Ok(_) => {}
+        Err(e) => return e,
+    }
+    let request_data = serde_json::to_value(&req).ok();
+    let now = Utc::now();
+
+    let result = sqlx::query(
+        r#"
+        UPDATE wms.inventory_alert_rules SET
+            rule_name = COALESCE($2, rule_name),
+            alert_type = COALESCE($3, alert_type),
+            threshold_value = COALESCE($4, threshold_value),
+            severity = COALESCE($5, severity),
+            enabled = COALESCE($6, enabled),
+            remarks = COALESCE($7, remarks),
+            updated_at = $8
+        WHERE id = $1
+        RETURNING *
+        "#,
+    )
+    .bind(id)
+    .bind(&req.rule_name)
+    .bind(&req.alert_type)
+    .bind(req.threshold_value)
+    .bind(&req.severity)
+    .bind(req.enabled)
+    .bind(&req.remarks)
+    .bind(now)
+    .fetch_one(&state.db)
+    .await;
+
+    let (response, status_str, error_msg, response_data) = match &result {
+        Ok(row) => {
+            let rule_json = serde_json::json!({
+                "id": row.try_get::<Uuid, _>("id").ok(),
+                "rule_name": row.try_get::<String, _>("rule_name").ok(),
+                "alert_type": row.try_get::<String, _>("alert_type").ok(),
+                "warehouse_id": row.try_get::<Option<Uuid>, _>("warehouse_id").ok(),
+                "material_code": row.try_get::<Option<String>, _>("material_code").ok(),
+                "threshold_value": row.try_get::<f64, _>("threshold_value").ok(),
+                "severity": row.try_get::<String, _>("severity").ok(),
+                "enabled": row.try_get::<bool, _>("enabled").ok(),
+                "remarks": row.try_get::<Option<String>, _>("remarks").ok(),
+                "created_at": row.try_get::<chrono::DateTime<Utc>, _>("created_at").ok(),
+                "updated_at": row.try_get::<chrono::DateTime<Utc>, _>("updated_at").ok(),
+            });
+            (
+                Json(ApiResponse::success(rule_json.clone(), "预警规则更新成功")),
+                "success",
+                None,
+                Some(rule_json),
+            )
+        }
+        Err(sqlx::Error::RowNotFound) => (
+            Json(api_error(404, "预警规则不存在")),
+            "error",
+            Some("预警规则不存在".to_string()),
+            None,
+        ),
+        Err(e) => {
+            tracing::error!("更新预警规则失败: {}", e);
+            (
+                Json(api_error(500, "更新预警规则失败")),
+                "error",
+                Some(e.to_string()),
+                None,
+            )
+        }
+    };
+
+    log_audit_event(
+        &state.db,
+        "update".to_string(),
+        "inventory_alert_rule".to_string(),
+        Some(id),
+        None,
+        None,
+        None,
+        request_data,
+        response_data,
+        status_str.to_string(),
+        error_msg,
+        &headers,
+    )
+    .await;
+
+    response
+}
+
+pub async fn delete_alert_rule(
+    State(state): State<ApiState>,
+    Extension(claims): Extension<Claims>,
+    Path(id): Path<Uuid>,
+    headers: HeaderMap,
+) -> Json<ApiResponse<String>> {
+    match check_permission(&state.db, &claims, &ModulePermission::InventoryWrite).await {
+        Ok(_) => {}
+        Err(e) => return e,
+    }
+
+    let result = sqlx::query("DELETE FROM wms.inventory_alert_rules WHERE id = $1")
+        .bind(id)
+        .execute(&state.db)
+        .await;
+
+    let (response, status_str, error_msg, response_data) = match &result {
+        Ok(r) if r.rows_affected() > 0 => (
+            Json(ApiResponse::success("".to_string(), "预警规则删除成功")),
+            "success",
+            None,
+            Some(serde_json::json!({ "rows_affected": r.rows_affected() })),
+        ),
+        Ok(_) => (
+            Json(api_error(404, "预警规则不存在")),
+            "error",
+            Some("预警规则不存在".to_string()),
+            None,
+        ),
+        Err(e) => {
+            tracing::error!("删除预警规则失败: {}", e);
+            (
+                Json(api_error(500, "删除预警规则失败")),
+                "error",
+                Some(e.to_string()),
+                None,
+            )
+        }
+    };
+
+    log_audit_event(
+        &state.db,
+        "delete".to_string(),
+        "inventory_alert_rule".to_string(),
+        Some(id),
+        None,
+        None,
+        None,
+        None,
+        response_data,
+        status_str.to_string(),
+        error_msg,
+        &headers,
+    )
+    .await;
+
+    response
+}
+
+pub async fn list_alert_records(
+    State(state): State<ApiState>,
+    Extension(claims): Extension<Claims>,
+    Query(params): Query<AlertQueryParams>,
+) -> Json<ApiResponse<serde_json::Value>> {
+    match check_permission(&state.db, &claims, &ModulePermission::InventoryRead).await {
+        Ok(_) => {}
+        Err(e) => return e,
+    }
+    let page = params.page.unwrap_or(1).max(1);
+    let page_size = params.page_size.unwrap_or(20).min(100);
+    let offset = (page - 1) * page_size;
+
+    let result = sqlx::query(
+        r#"
+        SELECT * FROM wms.inventory_alert_records
+        WHERE ($1::text IS NULL OR alert_type = $1)
+          AND ($2::text IS NULL OR severity = $2)
+          AND ($3::text IS NULL OR status = $3)
+          AND ($4::uuid IS NULL OR warehouse_id = $4)
+        ORDER BY created_at DESC
+        LIMIT $5 OFFSET $6
+        "#,
+    )
+    .bind(params.alert_type.as_deref())
+    .bind(params.severity.as_deref())
+    .bind(params.status.as_deref())
+    .bind(params.warehouse_id)
+    .bind(page_size)
+    .bind(offset)
+    .fetch_all(&state.db)
+    .await;
+
+    match result {
+        Ok(records) => {
+            let total = sqlx::query_scalar::<_, i64>(
+                r#"
+                SELECT COUNT(*) FROM wms.inventory_alert_records
+                WHERE ($1::text IS NULL OR alert_type = $1)
+                  AND ($2::text IS NULL OR severity = $2)
+                  AND ($3::text IS NULL OR status = $3)
+                  AND ($4::uuid IS NULL OR warehouse_id = $4)
+                "#,
+            )
+            .bind(params.alert_type.as_deref())
+            .bind(params.severity.as_deref())
+            .bind(params.status.as_deref())
+            .bind(params.warehouse_id)
+            .fetch_one(&state.db)
+            .await
+            .unwrap_or(0);
+
+            let records_json: Vec<serde_json::Value> = records
+                .iter()
+                .map(|row| serde_json::json!({
+                    "id": row.try_get::<Uuid, _>("id").ok(),
+                    "inventory_id": row.try_get::<Option<Uuid>, _>("inventory_id").ok(),
+                    "material_code": row.try_get::<String, _>("material_code").ok(),
+                    "material_name": row.try_get::<String, _>("material_name").ok(),
+                    "warehouse_id": row.try_get::<Option<Uuid>, _>("warehouse_id").ok(),
+                    "warehouse_name": row.try_get::<Option<String>, _>("warehouse_name").ok(),
+                    "location_id": row.try_get::<Option<Uuid>, _>("location_id").ok(),
+                    "location_code": row.try_get::<Option<String>, _>("location_code").ok(),
+                    "alert_type": row.try_get::<String, _>("alert_type").ok(),
+                    "current_quantity": row.try_get::<f64, _>("current_quantity").ok(),
+                    "threshold_value": row.try_get::<Option<f64>, _>("threshold_value").ok(),
+                    "deviation_quantity": row.try_get::<Option<f64>, _>("deviation_quantity").ok(),
+                    "severity": row.try_get::<String, _>("severity").ok(),
+                    "status": row.try_get::<String, _>("status").ok(),
+                    "remarks": row.try_get::<Option<String>, _>("remarks").ok(),
+                    "created_at": row.try_get::<chrono::DateTime<Utc>, _>("created_at").ok(),
+                    "updated_at": row.try_get::<chrono::DateTime<Utc>, _>("updated_at").ok(),
+                }))
+                .collect();
+
+            Json(ApiResponse::success(
+                serde_json::json!({
+                    "records": records_json,
+                    "total": total,
+                    "page": page,
+                    "page_size": page_size
+                }),
+                "获取预警记录列表成功",
+            ))
+        }
+        Err(e) => {
+            tracing::error!("获取预警记录列表失败: {}", e);
+            Json(api_error(500, "获取预警记录列表失败"))
+        }
+    }
+}
+
+pub async fn get_alert_record(
+    State(state): State<ApiState>,
+    Extension(claims): Extension<Claims>,
+    Path(id): Path<Uuid>,
+) -> Json<ApiResponse<serde_json::Value>> {
+    match check_permission(&state.db, &claims, &ModulePermission::InventoryRead).await {
+        Ok(_) => {}
+        Err(e) => return e,
+    }
+
+    let result = sqlx::query("SELECT * FROM wms.inventory_alert_records WHERE id = $1")
+        .bind(id)
+        .fetch_optional(&state.db)
+        .await;
+
+    match result {
+        Ok(Some(row)) => {
+            let record_json = serde_json::json!({
+                "id": row.try_get::<Uuid, _>("id").ok(),
+                "inventory_id": row.try_get::<Option<Uuid>, _>("inventory_id").ok(),
+                "material_code": row.try_get::<String, _>("material_code").ok(),
+                "material_name": row.try_get::<String, _>("material_name").ok(),
+                "warehouse_id": row.try_get::<Option<Uuid>, _>("warehouse_id").ok(),
+                "warehouse_name": row.try_get::<Option<String>, _>("warehouse_name").ok(),
+                "location_id": row.try_get::<Option<Uuid>, _>("location_id").ok(),
+                "location_code": row.try_get::<Option<String>, _>("location_code").ok(),
+                "alert_type": row.try_get::<String, _>("alert_type").ok(),
+                "current_quantity": row.try_get::<f64, _>("current_quantity").ok(),
+                "threshold_value": row.try_get::<Option<f64>, _>("threshold_value").ok(),
+                "deviation_quantity": row.try_get::<Option<f64>, _>("deviation_quantity").ok(),
+                "severity": row.try_get::<String, _>("severity").ok(),
+                "status": row.try_get::<String, _>("status").ok(),
+                "remarks": row.try_get::<Option<String>, _>("remarks").ok(),
+                "created_at": row.try_get::<chrono::DateTime<Utc>, _>("created_at").ok(),
+                "updated_at": row.try_get::<chrono::DateTime<Utc>, _>("updated_at").ok(),
+            });
+            Json(ApiResponse::success(record_json, "获取预警记录成功"))
+        }
+        Ok(None) => Json(api_error(404, "预警记录不存在")),
+        Err(e) => {
+            tracing::error!("获取预警记录失败: {}", e);
+            Json(api_error(500, "获取预警记录失败"))
+        }
+    }
+}
+
+#[derive(Debug, Clone, Deserialize, Serialize)]
+pub struct ConfirmAlertRecordRequest {
+    pub notes: Option<String>,
+}
+
+pub async fn confirm_alert_record(
+    State(state): State<ApiState>,
+    Extension(claims): Extension<Claims>,
+    Path(id): Path<Uuid>,
+    headers: HeaderMap,
+    Json(req): Json<ConfirmAlertRecordRequest>,
+) -> Json<ApiResponse<serde_json::Value>> {
+    match check_permission(&state.db, &claims, &ModulePermission::InventoryWrite).await {
+        Ok(_) => {}
+        Err(e) => return e,
+    }
+    let request_data = serde_json::to_value(&req).ok();
+    let now = Utc::now();
+
+    let result = sqlx::query(
+        r#"
+        UPDATE wms.inventory_alert_records SET
+            status = 'confirmed',
+            remarks = COALESCE(remarks || ' | ' || $2, $2),
+            updated_at = $3
+        WHERE id = $1
+        RETURNING *
+        "#,
+    )
+    .bind(id)
+    .bind(&req.notes.unwrap_or_else(|| "已确认".to_string()))
+    .bind(now)
+    .fetch_one(&state.db)
+    .await;
+
+    let (response, status_str, error_msg, response_data) = match &result {
+        Ok(row) => {
+            let record_json = serde_json::json!({
+                "id": row.try_get::<Uuid, _>("id").ok(),
+                "status": row.try_get::<String, _>("status").ok(),
+                "updated_at": row.try_get::<chrono::DateTime<Utc>, _>("updated_at").ok(),
+            });
+            (
+                Json(ApiResponse::success(record_json.clone(), "预警记录已确认")),
+                "success",
+                None,
+                Some(record_json),
+            )
+        }
+        Err(sqlx::Error::RowNotFound) => (
+            Json(api_error(404, "预警记录不存在")),
+            "error",
+            Some("预警记录不存在".to_string()),
+            None,
+        ),
+        Err(e) => {
+            tracing::error!("确认预警记录失败: {}", e);
+            (
+                Json(api_error(500, "确认预警记录失败")),
+                "error",
+                Some(e.to_string()),
+                None,
+            )
+        }
+    };
+
+    log_audit_event(
+        &state.db,
+        "confirm".to_string(),
+        "inventory_alert_record".to_string(),
+        Some(id),
+        None,
+        None,
+        None,
+        request_data,
+        response_data,
+        status_str.to_string(),
+        error_msg,
+        &headers,
+    )
+    .await;
+
+    response
 }

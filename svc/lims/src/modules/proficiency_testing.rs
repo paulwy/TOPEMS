@@ -1,13 +1,14 @@
 use axum::{
     extract::State,
     routing::{get, post, put},
-    Json, Router,
+    Extension, Json, Router,
 };
 use serde::{Deserialize, Serialize};
 use sqlx::{types::Uuid, Row};
 use topems_shared::ApiResponse;
 
-use crate::AppState;
+use crate::middleware::tenant::TenantContext;
+use crate::shared::AppState;
 
 pub fn create_routes() -> Router<AppState> {
     Router::new()
@@ -52,6 +53,7 @@ pub struct PtPlanQuery {
 #[derive(Debug, Serialize)]
 pub struct ProficiencyTestingPlan {
     pub id: String,
+    pub tenant_id: String,
     pub plan_no: String,
     pub plan_name: String,
     pub provider: Option<String>,
@@ -109,6 +111,7 @@ pub struct UpdatePtPlanRequest {
 #[derive(Debug, Serialize)]
 pub struct PtSample {
     pub id: String,
+    pub tenant_id: String,
     pub plan_id: String,
     pub plan_no: String,
     pub plan_name: String,
@@ -135,6 +138,7 @@ pub struct PtSampleReceiveRequest {
 #[derive(Debug, Serialize)]
 pub struct PtResult {
     pub id: String,
+    pub tenant_id: String,
     pub plan_id: String,
     pub plan_no: String,
     pub sample_id: String,
@@ -174,6 +178,7 @@ pub struct CreatePtResultRequest {
 #[derive(Debug, Serialize)]
 pub struct PtEvaluation {
     pub id: String,
+    pub tenant_id: String,
     pub plan_id: String,
     pub plan_no: String,
     pub sample_id: String,
@@ -210,6 +215,7 @@ pub struct PtEvaluateRequest {
 #[derive(Debug, Serialize)]
 pub struct PtCorrectiveAction {
     pub id: String,
+    pub tenant_id: String,
     pub plan_id: String,
     pub plan_no: String,
     pub evaluation_id: String,
@@ -249,7 +255,7 @@ pub struct UpdatePtCorrectiveActionRequest {
 }
 
 pub async fn list_plans(
-    State(state): State<crate::AppState>,
+    State(state): State<crate::shared::AppState>,
     axum::extract::Query(query): axum::extract::Query<PtPlanQuery>,
 ) -> Json<ApiResponse<Vec<ProficiencyTestingPlan>>> {
     let page = query.page.unwrap_or(1);
@@ -388,6 +394,7 @@ pub async fn list_plans(
         rows.into_iter()
             .map(|row| ProficiencyTestingPlan {
                 id: row.get("id"),
+                tenant_id: row.get("tenant_id"),
                 plan_no: row.get("plan_no"),
                 plan_name: row.get("plan_name"),
                 provider: row.get("provider"),
@@ -419,7 +426,7 @@ pub async fn list_plans(
 }
 
 pub async fn create_plan(
-    State(state): State<crate::AppState>,
+    State(state): State<crate::shared::AppState>,
     Json(req): Json<CreatePtPlanRequest>,
 ) -> Json<ApiResponse<ProficiencyTestingPlan>> {
     let plan_no = format!(
@@ -461,6 +468,7 @@ pub async fn create_plan(
         Ok(r) => Json(ApiResponse::success(
             ProficiencyTestingPlan {
                 id: r.get("id"),
+                tenant_id: r.get("tenant_id"),
                 plan_no: r.get("plan_no"),
                 plan_name: r.get("plan_name"),
                 provider: r.get("provider"),
@@ -489,7 +497,7 @@ pub async fn create_plan(
 }
 
 pub async fn get_plan(
-    State(state): State<crate::AppState>,
+    State(state): State<crate::shared::AppState>,
     axum::extract::Path(id): axum::extract::Path<String>,
 ) -> Json<ApiResponse<ProficiencyTestingPlan>> {
     let id = match Uuid::parse_str(&id) {
@@ -508,6 +516,7 @@ pub async fn get_plan(
         Ok(r) => Json(ApiResponse::success(
             ProficiencyTestingPlan {
                 id: r.get("id"),
+                tenant_id: r.get("tenant_id"),
                 plan_no: r.get("plan_no"),
                 plan_name: r.get("plan_name"),
                 provider: r.get("provider"),
@@ -536,7 +545,7 @@ pub async fn get_plan(
 }
 
 pub async fn update_plan(
-    State(state): State<crate::AppState>,
+    State(state): State<crate::shared::AppState>,
     axum::extract::Path(id): axum::extract::Path<String>,
     Json(req): Json<UpdatePtPlanRequest>,
 ) -> Json<ApiResponse<ProficiencyTestingPlan>> {
@@ -592,6 +601,7 @@ pub async fn update_plan(
         Ok(r) => Json(ApiResponse::success(
             ProficiencyTestingPlan {
                 id: r.get("id"),
+                tenant_id: r.get("tenant_id"),
                 plan_no: r.get("plan_no"),
                 plan_name: r.get("plan_name"),
                 provider: r.get("provider"),
@@ -620,7 +630,7 @@ pub async fn update_plan(
 }
 
 pub async fn delete_plan(
-    State(state): State<crate::AppState>,
+    State(state): State<crate::shared::AppState>,
     axum::extract::Path(id): axum::extract::Path<String>,
 ) -> Json<ApiResponse<bool>> {
     let id = match Uuid::parse_str(&id) {
@@ -643,7 +653,7 @@ pub async fn delete_plan(
 }
 
 pub async fn receive_sample(
-    State(state): State<crate::AppState>,
+    State(state): State<crate::shared::AppState>,
     Json(req): Json<PtSampleReceiveRequest>,
 ) -> Json<ApiResponse<PtSample>> {
     let plan_id = match Uuid::parse_str(&req.plan_id) {
@@ -701,6 +711,7 @@ pub async fn receive_sample(
         Ok(r) => Json(ApiResponse::success(
             PtSample {
                 id: r.get("id"),
+                tenant_id: r.get("tenant_id"),
                 plan_id: r.get("plan_id"),
                 plan_no: r.get("plan_no"),
                 plan_name: r.get("plan_name"),
@@ -723,7 +734,7 @@ pub async fn receive_sample(
 }
 
 pub async fn list_plan_samples(
-    State(state): State<crate::AppState>,
+    State(state): State<crate::shared::AppState>,
     axum::extract::Path(plan_id): axum::extract::Path<String>,
 ) -> Json<ApiResponse<Vec<PtSample>>> {
     let id = match Uuid::parse_str(&plan_id) {
@@ -751,6 +762,7 @@ pub async fn list_plan_samples(
                 .into_iter()
                 .map(|row| PtSample {
                     id: row.get("id"),
+                    tenant_id: row.get("tenant_id"),
                     plan_id: row.get("plan_id"),
                     plan_no: row.get("plan_no"),
                     plan_name: row.get("plan_name"),
@@ -774,7 +786,7 @@ pub async fn list_plan_samples(
 }
 
 pub async fn submit_result(
-    State(state): State<crate::AppState>,
+    State(state): State<crate::shared::AppState>,
     Json(req): Json<CreatePtResultRequest>,
 ) -> Json<ApiResponse<PtResult>> {
     let plan_id = match Uuid::parse_str(&req.plan_id) {
@@ -882,6 +894,7 @@ pub async fn submit_result(
         Ok(r) => Json(ApiResponse::success(
             PtResult {
                 id: r.get("id"),
+                tenant_id: r.get("tenant_id"),
                 plan_id: r.get("plan_id"),
                 plan_no: r.get("plan_no"),
                 sample_id: r.get("sample_id"),
@@ -912,7 +925,7 @@ pub async fn submit_result(
 }
 
 pub async fn list_plan_results(
-    State(state): State<crate::AppState>,
+    State(state): State<crate::shared::AppState>,
     axum::extract::Path(plan_id): axum::extract::Path<String>,
 ) -> Json<ApiResponse<Vec<PtResult>>> {
     let id = match Uuid::parse_str(&plan_id) {
@@ -941,6 +954,7 @@ pub async fn list_plan_results(
                 .into_iter()
                 .map(|row| PtResult {
                     id: row.get("id"),
+                    tenant_id: row.get("tenant_id"),
                     plan_id: row.get("plan_id"),
                     plan_no: row.get("plan_no"),
                     sample_id: row.get("sample_id"),
@@ -972,7 +986,7 @@ pub async fn list_plan_results(
 }
 
 pub async fn evaluate_result(
-    State(state): State<crate::AppState>,
+    State(state): State<crate::shared::AppState>,
     Json(req): Json<PtEvaluateRequest>,
 ) -> Json<ApiResponse<PtEvaluation>> {
     let plan_id = match Uuid::parse_str(&req.plan_id) {
@@ -1090,6 +1104,7 @@ pub async fn evaluate_result(
         Ok(r) => Json(ApiResponse::success(
             PtEvaluation {
                 id: r.get("id"),
+                tenant_id: r.get("tenant_id"),
                 plan_id: r.get("plan_id"),
                 plan_no: r.get("plan_no"),
                 sample_id: r.get("sample_id"),
@@ -1119,7 +1134,7 @@ pub async fn evaluate_result(
 }
 
 pub async fn list_plan_evaluations(
-    State(state): State<crate::AppState>,
+    State(state): State<crate::shared::AppState>,
     axum::extract::Path(plan_id): axum::extract::Path<String>,
 ) -> Json<ApiResponse<Vec<PtEvaluation>>> {
     let id = match Uuid::parse_str(&plan_id) {
@@ -1148,6 +1163,7 @@ pub async fn list_plan_evaluations(
                 .into_iter()
                 .map(|row| PtEvaluation {
                     id: row.get("id"),
+                    tenant_id: row.get("tenant_id"),
                     plan_id: row.get("plan_id"),
                     plan_no: row.get("plan_no"),
                     sample_id: row.get("sample_id"),
@@ -1181,7 +1197,7 @@ pub async fn list_plan_evaluations(
 }
 
 pub async fn create_corrective_action(
-    State(state): State<crate::AppState>,
+    State(state): State<crate::shared::AppState>,
     Json(req): Json<CreatePtCorrectiveActionRequest>,
 ) -> Json<ApiResponse<PtCorrectiveAction>> {
     let plan_id = match Uuid::parse_str(&req.plan_id) {
@@ -1232,6 +1248,7 @@ pub async fn create_corrective_action(
         Ok(r) => Json(ApiResponse::success(
             PtCorrectiveAction {
                 id: r.get("id"),
+                tenant_id: r.get("tenant_id"),
                 plan_id: r.get("plan_id"),
                 plan_no: r.get("plan_no"),
                 evaluation_id: r.get("evaluation_id"),
@@ -1257,7 +1274,7 @@ pub async fn create_corrective_action(
 }
 
 pub async fn update_corrective_action(
-    State(state): State<crate::AppState>,
+    State(state): State<crate::shared::AppState>,
     axum::extract::Path(id): axum::extract::Path<String>,
     Json(req): Json<UpdatePtCorrectiveActionRequest>,
 ) -> Json<ApiResponse<PtCorrectiveAction>> {
@@ -1307,6 +1324,7 @@ pub async fn update_corrective_action(
         Ok(r) => Json(ApiResponse::success(
             PtCorrectiveAction {
                 id: r.get("id"),
+                tenant_id: r.get("tenant_id"),
                 plan_id: r.get("plan_id"),
                 plan_no: r.get("plan_no"),
                 evaluation_id: r.get("evaluation_id"),
@@ -1332,7 +1350,7 @@ pub async fn update_corrective_action(
 }
 
 pub async fn list_plan_corrective_actions(
-    State(state): State<crate::AppState>,
+    State(state): State<crate::shared::AppState>,
     axum::extract::Path(plan_id): axum::extract::Path<String>,
 ) -> Json<ApiResponse<Vec<PtCorrectiveAction>>> {
     let id = match Uuid::parse_str(&plan_id) {
@@ -1361,6 +1379,7 @@ pub async fn list_plan_corrective_actions(
                 .into_iter()
                 .map(|row| PtCorrectiveAction {
                     id: row.get("id"),
+                    tenant_id: row.get("tenant_id"),
                     plan_id: row.get("plan_id"),
                     plan_no: row.get("plan_no"),
                     evaluation_id: row.get("evaluation_id"),

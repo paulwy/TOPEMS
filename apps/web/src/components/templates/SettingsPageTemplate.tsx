@@ -421,7 +421,7 @@ export const SettingsPageTemplate: React.FC<SettingsPageTemplateProps> = ({
     return (
       <Paper
         key={section.id}
-        sx={{ borderRadius: 2, mb: 2, overflow: 'hidden' }}
+        sx={{ borderRadius: 3, mb: 2, overflow: 'hidden' }}
       >
         <Box
           sx={{
@@ -489,7 +489,7 @@ export const SettingsPageTemplate: React.FC<SettingsPageTemplateProps> = ({
                 key={index}
                 variant='rectangular'
                 height={48}
-                sx={{ borderRadius: 1, mb: 2 }}
+                sx={{ borderRadius: 1.5, mb: 2 }}
               />
             ))
           ) : isExpanded || !section.collapsible ? (
@@ -539,7 +539,7 @@ export const SettingsPageTemplate: React.FC<SettingsPageTemplateProps> = ({
       <Paper
         sx={{
           p: 2,
-          borderRadius: 2,
+          borderRadius: 3,
           display: 'flex',
           alignItems: 'center',
           justifyContent: 'space-between',

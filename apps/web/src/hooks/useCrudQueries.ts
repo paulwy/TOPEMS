@@ -13,7 +13,7 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { useCallback, useMemo, useState } from 'react';
 import type { AxiosInstance } from 'axios';
-import { useAppStore } from '@/store';
+import { useNotificationStore } from '@/store';
 
 // ============ 类型定义 ============
 
@@ -325,7 +325,7 @@ export function useCrudQueries<
  *
  * 与现有 useErpBase 对比:
  * - 接受相同结构的 api 对象（list/get/create/update/delete）
- * - 自动集成 addNotification（从 useAppStore）
+ * - 自动集成 addNotification（从 useNotificationStore）
  * - 使用 React Query 管理缓存和状态
  *
  * @example
@@ -343,7 +343,7 @@ export function useModuleQueries<T extends { id?: string }>(
   const { api, queryKey, autoFetch = true, defaultPageSize = 10 } = options;
 
   const queryClient = useQueryClient();
-  const addNotification = useAppStore((state) => state.addNotification);
+  const addNotification = useNotificationStore((state) => state.addNotification);
 
   // ---- 分页状态 ----
   const [page, setPageState] = useState(1);

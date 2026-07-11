@@ -16,6 +16,7 @@ import {
 } from 'lucide-react';
 import type { Contract, ContractRenewal, Employee, PaginatedResult } from '@/api/hrm';
 import { contractApi, contractRenewalApi, employeeApi } from '@/api/hrm';
+import { HRM_PATHS } from '@/modules/hrm/config';
 import { ListPageTemplate, MuiStatCard as StatCard } from '@/components';
 import type { ColumnDef, RowAction } from '@/components';
 
@@ -693,7 +694,7 @@ export default function ContractManagementPage() {
           <Box sx={{ mb: 2 }}>
             <Typography
               component='a'
-              href='/hrm'
+              href={HRM_PATHS.root}
               sx={{
                 color: 'text.secondary',
                 textDecoration: 'none',

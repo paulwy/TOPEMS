@@ -40,6 +40,7 @@ import {
 import { tenantApi } from '@/api/tenant';
 import type { Tenant, TenantStatus, TenantPlan } from '@/api/tenant/types';
 import { logger } from '@/utils/logger';
+import { ADMIN_PATHS } from '@/modules/admin/config';
 
 const statusColors: Record<TenantStatus, 'success' | 'warning' | 'error' | 'default'> = {
   active: 'success',
@@ -340,7 +341,7 @@ const TenantManagementPage: React.FC = () => {
       {
         label: '查看详情',
         icon: <Eye size={16} />,
-        onClick: (row) => navigate(`/admin/tenants/${row.id}`),
+        onClick: (row) => navigate(ADMIN_PATHS.tenantDetail.replace(':id', row.id)),
       },
       {
         label: '编辑',

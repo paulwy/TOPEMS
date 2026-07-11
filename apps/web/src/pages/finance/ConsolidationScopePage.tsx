@@ -13,7 +13,6 @@ import {
   Button,
   useTheme,
 } from '@mui/material';
-import { useNavigate } from 'react-router-dom';
 import type { ColumnDef } from '@tanstack/react-table';
 import {
   Plus,
@@ -119,7 +118,6 @@ const CONTROL_TYPE_CONFIG = {
 
 export default function ConsolidationScopePage() {
   const theme = useTheme();
-  const navigate = useNavigate();
   const { error: notifyError } = useNotification();
 
   // 状态
@@ -296,7 +294,7 @@ export default function ConsolidationScopePage() {
           <Button
             variant='text'
             size='small'
-            onClick={() => navigate(`#`)}
+            onClick={() => { /* TODO: 打开规则配置弹窗 */ }}
             startIcon={<Settings sx={{ width: 16, height: 16 }} />}
           >
             规则
@@ -420,7 +418,7 @@ export default function ConsolidationScopePage() {
           {
             label: '新建合并范围',
             icon: <Plus sx={{ width: 16, height: 16 }} />,
-            onClick: () => navigate('#'),
+            onClick: () => { /* TODO: 打开新建合并范围弹窗 */ },
             variant: 'contained',
           },
         ],
@@ -535,7 +533,7 @@ export default function ConsolidationScopePage() {
                   <Button
                     variant='outlined'
                     size='small'
-                    onClick={() => navigate(`#`)}
+                    onClick={() => { /* TODO: 打开编辑弹窗 */ }}
                     startIcon={<Edit2 sx={{ width: 16, height: 16 }} />}
                   >
                     编辑
@@ -580,7 +578,7 @@ export default function ConsolidationScopePage() {
                       <Button
                         size='small'
                         variant='contained'
-                        onClick={() => navigate(`#`)}
+                        onClick={() => { /* TODO: 打开添加公司弹窗 */ }}
                         startIcon={<Plus sx={{ width: 16, height: 16 }} />}
                       >
                         添加公司
@@ -628,7 +626,7 @@ export default function ConsolidationScopePage() {
                       <Button
                         size='small'
                         variant='contained'
-                        onClick={() => navigate(`#`)}
+                        onClick={() => { /* TODO: 打开新建规则弹窗 */ }}
                         startIcon={<Plus sx={{ width: 16, height: 16 }} />}
                       >
                         新建规则

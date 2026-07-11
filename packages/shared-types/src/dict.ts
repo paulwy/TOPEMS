@@ -14,3 +14,12 @@ export interface DictData {
   sortOrder: number;
   status: 'active' | 'inactive';
 }
+
+export interface DictItem {
+  id: string;
+  typeCode: string;
+  label: string;
+  value: string;
+  sortOrder: number;
+  status: 'active' | 'inactive';
+}

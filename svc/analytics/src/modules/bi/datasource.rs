@@ -14,7 +14,7 @@ use sqlx::types::Uuid;
 use std::time::Duration;
 use tracing::{info, warn};
 
-use crate::AppState;
+use crate::shared::AppState;
 
 // ==================== Request / Response models ====================
 

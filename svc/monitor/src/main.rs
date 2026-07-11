@@ -11,6 +11,8 @@
 #![allow(dead_code)]
 #![allow(unused_imports)]
 
+mod shared;
+
 use anyhow::Result;
 use axum::{routing::get, Json, Router};
 use axum_prometheus::PrometheusMetricLayer;
@@ -22,10 +24,12 @@ use std::time::Instant;
 
 use topems_shared::{
     auth_middleware, check_http_health, create_api_info_router, create_cors_layer,
-    create_database_pool, init_telemetry, telemetry_middleware, ApiResponse, AuthState,
-    DatabaseConfig, DependencyHealth, HealthStatus, ServiceHealth, SystemMetrics,
+    create_database_pool, init_telemetry, security_headers_middleware, telemetry_middleware,
+    ApiResponse, AuthState, DatabaseConfig, DependencyHealth, HealthStatus, RateLimitConfig,
+    RateLimitMiddleware, SecurityHeadersConfig, SecurityHeadersLayer, ServiceHealth, SystemMetrics,
 };
 
+mod middleware;
 mod models;
 mod modules;
 
@@ -40,7 +44,9 @@ async fn main() -> Result<()> {
     env::set_var("SEARCH_PATH", "monitor, shared, public");
 
     let db_config = DatabaseConfig {
-        url: "postgres://topems:topems_secret@localhost:5432/topems".to_string(),
+        url: env::var("DATABASE_URL")
+            .expect("DATABASE_URL environment variable is required")
+            .to_string(),
         max_connections: 10,
         min_connections: Some(2),
         connect_timeout: Some(30),
@@ -60,6 +66,16 @@ async fn main() -> Result<()> {
 
     let start_time = Instant::now();
     let metrics = Arc::new(SystemMetrics::new());
+
+    let rate_limit_config = RateLimitConfig {
+        enabled: true,
+        requests: 500,
+        window_secs: 60,
+    };
+    let rate_limit_middleware = Arc::new(RateLimitMiddleware::new(rate_limit_config));
+
+    let security_headers_config = SecurityHeadersConfig::default();
+    let security_headers_layer = Arc::new(SecurityHeadersLayer::new(security_headers_config));
 
     let api_state = ApiState {
         db: pool.clone(),
@@ -108,11 +124,21 @@ async fn main() -> Result<()> {
         .merge(protected_routes)
         .merge(create_api_info_router("topems-monitor"))
         .layer(axum::middleware::from_fn(telemetry_middleware))
+        .layer(axum::middleware::from_fn(move |req, next| {
+            let middleware = rate_limit_middleware.clone();
+            async move { middleware.middleware(req, next).await }
+        }))
+        .layer(axum::middleware::from_fn(move |req, next| {
+            let layer = security_headers_layer.clone();
+            async move { security_headers_middleware(layer, req, next).await }
+        }))
         .layer(prometheus_layer)
         .layer(cors)
         .with_state(api_state.clone());
 
-    let port = env::var("SERVER_PORT").unwrap_or_else(|_| "8062".to_string());
+    let port = env::var("MONITOR_PORT")
+        .or_else(|_| env::var("SERVER_PORT"))
+        .unwrap_or_else(|_| "8062".to_string());
     let addr = format!("0.0.0.0:{}", port);
 
     tracing::info!("🚀 TOPEMS-Monitor 系统监控服务启动中...");

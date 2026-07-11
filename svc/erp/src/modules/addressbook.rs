@@ -6,7 +6,7 @@ use axum::extract::Query;
 use axum::{extract::State, Json, Router};
 use serde::Deserialize;
 use serde::Serialize;
-use topems_shared::{ApiResponse, Company, Department, Employee};
+use topems_shared::{ApiResponse, Company, Department, Employee, PaginatedResponse};
 use uuid::Uuid;
 
 #[derive(Deserialize)]
@@ -73,14 +73,6 @@ pub struct DepartmentNode {
     name: String,
     code: Option<String>,
     children: Vec<DepartmentNode>,
-}
-
-#[derive(Serialize)]
-pub struct PaginatedResponse<T> {
-    items: Vec<T>,
-    total: i64,
-    page: u32,
-    page_size: u32,
 }
 
 impl From<Employee> for AddressbookEntry {
@@ -184,7 +176,7 @@ fn build_node(
     }
 }
 
-async fn fetch_entries_by_type(
+pub async fn fetch_entries_by_type(
     state: &ApiState,
     contact_type: Option<&str>,
 ) -> Vec<AddressbookEntry> {
@@ -247,7 +239,7 @@ async fn fetch_entries_by_type(
     entries
 }
 
-async fn get_contacts(
+pub async fn get_contacts(
     State(state): State<ApiState>,
     Query(params): Query<AddressbookQueryParams>,
 ) -> Json<ApiResponse<PaginatedResponse<AddressbookEntry>>> {
@@ -285,17 +277,12 @@ async fn get_contacts(
     };
 
     Json(ApiResponse::success(
-        PaginatedResponse {
-            items: paginated_items,
-            total,
-            page,
-            page_size,
-        },
+        PaginatedResponse::new(paginated_items, total, page as i64, page_size as i64),
         "获取联系人列表成功",
     ))
 }
 
-async fn get_contact_detail(
+pub async fn get_contact_detail(
     State(state): State<ApiState>,
     Path(id): Path<String>,
     Query(params): Query<ContactDetailParams>,
@@ -396,7 +383,7 @@ pub struct ContactDetailParams {
     contact_type: String,
 }
 
-async fn search_contacts(
+pub async fn search_contacts(
     State(state): State<ApiState>,
     Query(params): Query<AddressbookSearchParams>,
 ) -> Json<ApiResponse<Vec<AddressbookEntry>>> {
@@ -424,7 +411,7 @@ async fn search_contacts(
     Json(ApiResponse::success(limited_entries, "搜索成功"))
 }
 
-async fn get_department_tree(
+pub async fn get_department_tree(
     State(state): State<ApiState>,
 ) -> Json<ApiResponse<Vec<DepartmentNode>>> {
     match state.hrm_client.list_departments().await {
@@ -443,7 +430,7 @@ async fn get_department_tree(
     }
 }
 
-async fn export_contacts(
+pub async fn export_contacts(
     State(state): State<ApiState>,
     Query(params): Query<ExportParams>,
 ) -> Json<ApiResponse<String>> {

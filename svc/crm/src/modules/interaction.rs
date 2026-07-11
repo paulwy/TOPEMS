@@ -9,6 +9,7 @@ use serde::Deserialize;
 use uuid::Uuid;
 
 use super::ApiState;
+use crate::middleware::tenant::get_tenant_id;
 use crate::models::{CreateInteractionRequest, Interaction, UpdateInteractionRequest};
 use crate::modules::audit::log_audit_event;
 use crate::shared::permission::{check_permission, ModulePermission};
@@ -52,6 +53,7 @@ async fn list_interactions(
     State(state): State<ApiState>,
     Extension(claims): Extension<Claims>,
     Query(params): Query<InteractionPaginationParams>,
+    headers: HeaderMap,
 ) -> Json<ApiResponse<serde_json::Value>> {
     match check_permission(&state.db, &claims, &ModulePermission::InteractionRead).await {
         Ok(_) => {}
@@ -66,19 +68,22 @@ async fn list_interactions(
     let status_filter = params.status.clone();
     let customer_filter = params.customer_id;
     let contact_filter = params.contact_id;
+    let tenant_id = get_tenant_id(&claims, &headers);
 
     let result = sqlx::query_as::<_, Interaction>(
         r#"
-        SELECT id, customer_id, contact_id, type as type_, subject, content, scheduled_at, completed_at, status, created_at, updated_at
-        FROM plugin_crm.interactions
-        WHERE ($1::text IS NULL OR subject ILIKE $1)
-          AND ($2::text IS NULL OR status = $2)
-          AND ($3::uuid IS NULL OR customer_id = $3)
-          AND ($4::uuid IS NULL OR contact_id = $4)
+        SELECT id, tenant_id, customer_id, contact_id, type as type_, subject, content, scheduled_at, completed_at, status, created_at, updated_at
+        FROM crm.interactions
+        WHERE tenant_id = $1
+          AND ($2::text IS NULL OR subject ILIKE $2)
+          AND ($3::text IS NULL OR status = $3)
+          AND ($4::uuid IS NULL OR customer_id = $4)
+          AND ($5::uuid IS NULL OR contact_id = $5)
         ORDER BY created_at DESC
-        LIMIT $5 OFFSET $6
+        LIMIT $6 OFFSET $7
         "#,
     )
+    .bind(tenant_id)
     .bind(&search_pattern)
     .bind(&status_filter)
     .bind(&customer_filter)
@@ -92,13 +97,15 @@ async fn list_interactions(
         Ok(interactions) => {
             let count_result = sqlx::query_scalar::<_, i64>(
                 r#"
-                SELECT COUNT(*) FROM plugin_crm.interactions
-                WHERE ($1::text IS NULL OR subject ILIKE $1)
-                  AND ($2::text IS NULL OR status = $2)
-                  AND ($3::uuid IS NULL OR customer_id = $3)
-                  AND ($4::uuid IS NULL OR contact_id = $4)
+                SELECT COUNT(*) FROM crm.interactions
+                WHERE tenant_id = $1
+                  AND ($2::text IS NULL OR subject ILIKE $2)
+                  AND ($3::text IS NULL OR status = $3)
+                  AND ($4::uuid IS NULL OR customer_id = $4)
+                  AND ($5::uuid IS NULL OR contact_id = $5)
                 "#,
             )
+            .bind(tenant_id)
             .bind(&search_pattern)
             .bind(&status_filter)
             .bind(&customer_filter)
@@ -142,16 +149,18 @@ async fn create_interaction(
 
     let id = Uuid::new_v4();
     let now = Utc::now();
+    let tenant_id = get_tenant_id(&claims, &headers);
 
     let result = sqlx::query_as::<_, Interaction>(
         r#"
-        INSERT INTO plugin_crm.interactions (
-            id, customer_id, contact_id, type, subject, content, scheduled_at, notes, status, created_at, updated_at
-        ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, 'scheduled', $9, $10)
-        RETURNING id, customer_id, contact_id, type as type_, subject, content, scheduled_at, completed_at, status, created_at, updated_at
+        INSERT INTO crm.interactions (
+            id, tenant_id, customer_id, contact_id, type, subject, content, scheduled_at, notes, status, created_at, updated_at
+        ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, 'scheduled', $10, $11)
+        RETURNING id, tenant_id, customer_id, contact_id, type as type_, subject, content, scheduled_at, completed_at, status, created_at, updated_at
         "#,
     )
     .bind(id)
+    .bind(tenant_id)
     .bind(&req.customer_id)
     .bind(&req.contact_id)
     .bind(&req.type_)
@@ -213,19 +222,23 @@ async fn get_interaction(
     State(state): State<ApiState>,
     Extension(claims): Extension<Claims>,
     Path(id): Path<Uuid>,
+    headers: HeaderMap,
 ) -> Json<ApiResponse<Interaction>> {
     match check_permission(&state.db, &claims, &ModulePermission::InteractionRead).await {
         Ok(_) => {}
         Err(e) => return e,
     }
 
+    let tenant_id = get_tenant_id(&claims, &headers);
+
     let result = sqlx::query_as::<_, Interaction>(
         r#"
-        SELECT id, customer_id, contact_id, type as type_, subject, content, scheduled_at, completed_at, status, created_at, updated_at
-        FROM plugin_crm.interactions WHERE id = $1
+        SELECT id, tenant_id, customer_id, contact_id, type as type_, subject, content, scheduled_at, completed_at, status, created_at, updated_at
+        FROM crm.interactions WHERE id = $1 AND tenant_id = $2
         "#,
     )
     .bind(id)
+    .bind(tenant_id)
     .fetch_optional(&state.db)
     .await;
 
@@ -251,12 +264,15 @@ async fn update_interaction(
         Err(e) => return e,
     }
 
+    let tenant_id = get_tenant_id(&claims, &headers);
+
     let existing = sqlx::query_as::<_, Interaction>(
         r#"
-        SELECT id, customer_id, contact_id, type as type_, subject, content, scheduled_at, completed_at, status, created_at, updated_at FROM plugin_crm.interactions WHERE id = $1
+        SELECT id, tenant_id, customer_id, contact_id, type as type_, subject, content, scheduled_at, completed_at, status, created_at, updated_at FROM crm.interactions WHERE id = $1 AND tenant_id = $2
         "#,
     )
     .bind(id)
+    .bind(tenant_id)
     .fetch_optional(&state.db)
     .await;
 
@@ -280,11 +296,11 @@ async fn update_interaction(
 
     let result = sqlx::query_as::<_, Interaction>(
         r#"
-        UPDATE plugin_crm.interactions SET
+        UPDATE crm.interactions SET
             customer_id = $2, contact_id = $3, type = $4, subject = $5, content = $6,
             scheduled_at = $7, completed_at = $8, status = $9, updated_at = $10
-        WHERE id = $1
-        RETURNING id, customer_id, contact_id, type as type_, subject, content, scheduled_at, completed_at, status, created_at, updated_at
+        WHERE id = $1 AND tenant_id = $11
+        RETURNING id, tenant_id, customer_id, contact_id, type as type_, subject, content, scheduled_at, completed_at, status, created_at, updated_at
         "#,
     )
     .bind(id)
@@ -297,6 +313,7 @@ async fn update_interaction(
     .bind(&completed_at)
     .bind(&status)
     .bind(now)
+    .bind(tenant_id)
     .fetch_one(&state.db)
     .await;
 
@@ -355,8 +372,11 @@ async fn delete_interaction(
         Err(e) => return e,
     }
 
-    let result = sqlx::query("DELETE FROM plugin_crm.interactions WHERE id = $1")
+    let tenant_id = get_tenant_id(&claims, &headers);
+
+    let result = sqlx::query("DELETE FROM crm.interactions WHERE id = $1 AND tenant_id = $2")
         .bind(id)
+        .bind(tenant_id)
         .execute(&state.db)
         .await;
 
@@ -421,8 +441,11 @@ async fn batch_delete_interactions(
         return Json(api_error(400, "请选择要删除的交互记录"));
     }
 
-    let result = sqlx::query("DELETE FROM plugin_crm.interactions WHERE id = ANY($1)")
+    let tenant_id = get_tenant_id(&claims, &headers);
+
+    let result = sqlx::query("DELETE FROM crm.interactions WHERE id = ANY($1) AND tenant_id = $2")
         .bind(&req.ids)
+        .bind(tenant_id)
         .execute(&state.db)
         .await;
 

@@ -1,13 +1,14 @@
 use axum::{
     extract::State,
     routing::{get, post, put},
-    Json, Router,
+    Extension, Json, Router,
 };
 use serde::{Deserialize, Serialize};
 use sqlx::{types::Uuid, Row};
 use topems_shared::ApiResponse;
 
-use crate::AppState;
+use crate::middleware::tenant::TenantContext;
+use crate::shared::AppState;
 
 pub fn create_routes() -> Router<AppState> {
     Router::new()
@@ -54,6 +55,7 @@ pub struct TestMethodQuery {
 #[derive(Debug, Serialize)]
 pub struct TestMethod {
     pub id: String,
+    pub tenant_id: String,
     pub method_code: String,
     pub method_name: String,
     pub category_id: Option<String>,
@@ -117,6 +119,7 @@ pub struct MethodCategoryQuery {
 #[derive(Debug, Serialize)]
 pub struct MethodCategory {
     pub id: String,
+    pub tenant_id: String,
     pub category_code: String,
     pub category_name: String,
     pub parent_id: Option<String>,
@@ -153,6 +156,7 @@ pub struct MethodValidationQuery {
 #[derive(Debug, Serialize)]
 pub struct MethodValidationRecord {
     pub id: String,
+    pub tenant_id: String,
     pub method_id: String,
     pub method_code: String,
     pub method_name: String,
@@ -183,6 +187,7 @@ pub struct CreateMethodValidationRequest {
 #[derive(Debug, Serialize)]
 pub struct MethodVersion {
     pub id: String,
+    pub tenant_id: String,
     pub method_id: String,
     pub version: String,
     pub version_description: Option<String>,
@@ -193,7 +198,7 @@ pub struct MethodVersion {
 }
 
 pub async fn list_methods(
-    State(state): State<crate::AppState>,
+    State(state): State<crate::shared::AppState>,
     axum::extract::Query(query): axum::extract::Query<TestMethodQuery>,
 ) -> Json<ApiResponse<Vec<TestMethod>>> {
     let page = query.page.unwrap_or(1);
@@ -346,6 +351,7 @@ pub async fn list_methods(
         rows.into_iter()
             .map(|row| TestMethod {
                 id: row.get("id"),
+                tenant_id: row.get("tenant_id"),
                 method_code: row.get("method_code"),
                 method_name: row.get("method_name"),
                 category_id: row.get("category_id"),
@@ -381,7 +387,7 @@ pub async fn list_methods(
 }
 
 pub async fn create_method(
-    State(state): State<crate::AppState>,
+    State(state): State<crate::shared::AppState>,
     Json(req): Json<CreateTestMethodRequest>,
 ) -> Json<ApiResponse<TestMethod>> {
     let version = "1.0".to_string();
@@ -420,6 +426,7 @@ pub async fn create_method(
         Ok(r) => Json(ApiResponse::success(
             TestMethod {
                 id: r.get("id"),
+                tenant_id: r.get("tenant_id"),
                 method_code: r.get("method_code"),
                 method_name: r.get("method_name"),
                 category_id: r.get("category_id"),
@@ -452,7 +459,7 @@ pub async fn create_method(
 }
 
 pub async fn get_method(
-    State(state): State<crate::AppState>,
+    State(state): State<crate::shared::AppState>,
     axum::extract::Path(id): axum::extract::Path<String>,
 ) -> Json<ApiResponse<TestMethod>> {
     let id = match Uuid::parse_str(&id) {
@@ -480,6 +487,7 @@ pub async fn get_method(
         Ok(r) => Json(ApiResponse::success(
             TestMethod {
                 id: r.get("id"),
+                tenant_id: r.get("tenant_id"),
                 method_code: r.get("method_code"),
                 method_name: r.get("method_name"),
                 category_id: r.get("category_id"),
@@ -512,7 +520,7 @@ pub async fn get_method(
 }
 
 pub async fn update_method(
-    State(state): State<crate::AppState>,
+    State(state): State<crate::shared::AppState>,
     axum::extract::Path(id): axum::extract::Path<String>,
     Json(req): Json<UpdateTestMethodRequest>,
 ) -> Json<ApiResponse<TestMethod>> {
@@ -565,6 +573,7 @@ pub async fn update_method(
         Ok(r) => Json(ApiResponse::success(
             TestMethod {
                 id: r.get("id"),
+                tenant_id: r.get("tenant_id"),
                 method_code: r.get("method_code"),
                 method_name: r.get("method_name"),
                 category_id: r.get("category_id"),
@@ -597,7 +606,7 @@ pub async fn update_method(
 }
 
 pub async fn delete_method(
-    State(state): State<crate::AppState>,
+    State(state): State<crate::shared::AppState>,
     axum::extract::Path(id): axum::extract::Path<String>,
 ) -> Json<ApiResponse<bool>> {
     let id = match Uuid::parse_str(&id) {
@@ -620,7 +629,7 @@ pub async fn delete_method(
 }
 
 pub async fn list_categories(
-    State(state): State<crate::AppState>,
+    State(state): State<crate::shared::AppState>,
     axum::extract::Query(query): axum::extract::Query<MethodCategoryQuery>,
 ) -> Json<ApiResponse<Vec<MethodCategory>>> {
     let sql = match query.parent_id.as_ref() {
@@ -638,6 +647,7 @@ pub async fn list_categories(
         rows.into_iter()
             .map(|row| MethodCategory {
                 id: row.get("id"),
+                tenant_id: row.get("tenant_id"),
                 category_code: row.get("category_code"),
                 category_name: row.get("category_name"),
                 parent_id: row.get("parent_id"),
@@ -660,7 +670,7 @@ pub async fn list_categories(
 }
 
 pub async fn create_category(
-    State(state): State<crate::AppState>,
+    State(state): State<crate::shared::AppState>,
     Json(req): Json<CreateMethodCategoryRequest>,
 ) -> Json<ApiResponse<MethodCategory>> {
     let sort_order = req.sort_order.unwrap_or(0);
@@ -684,6 +694,7 @@ pub async fn create_category(
         Ok(r) => Json(ApiResponse::success(
             MethodCategory {
                 id: r.get("id"),
+                tenant_id: r.get("tenant_id"),
                 category_code: r.get("category_code"),
                 category_name: r.get("category_name"),
                 parent_id: r.get("parent_id"),
@@ -703,7 +714,7 @@ pub async fn create_category(
 }
 
 pub async fn update_category(
-    State(state): State<crate::AppState>,
+    State(state): State<crate::shared::AppState>,
     axum::extract::Path(id): axum::extract::Path<String>,
     Json(req): Json<UpdateMethodCategoryRequest>,
 ) -> Json<ApiResponse<MethodCategory>> {
@@ -738,6 +749,7 @@ pub async fn update_category(
         Ok(r) => Json(ApiResponse::success(
             MethodCategory {
                 id: r.get("id"),
+                tenant_id: r.get("tenant_id"),
                 category_code: r.get("category_code"),
                 category_name: r.get("category_name"),
                 parent_id: r.get("parent_id"),
@@ -757,7 +769,7 @@ pub async fn update_category(
 }
 
 pub async fn delete_category(
-    State(state): State<crate::AppState>,
+    State(state): State<crate::shared::AppState>,
     axum::extract::Path(id): axum::extract::Path<String>,
 ) -> Json<ApiResponse<bool>> {
     let id = match Uuid::parse_str(&id) {
@@ -780,7 +792,7 @@ pub async fn delete_category(
 }
 
 pub async fn list_validations(
-    State(state): State<crate::AppState>,
+    State(state): State<crate::shared::AppState>,
     axum::extract::Query(query): axum::extract::Query<MethodValidationQuery>,
 ) -> Json<ApiResponse<Vec<MethodValidationRecord>>> {
     let sql = match query.method_id.as_ref() {
@@ -798,6 +810,7 @@ pub async fn list_validations(
         rows.into_iter()
             .map(|row| MethodValidationRecord {
                 id: row.get("id"),
+                tenant_id: row.get("tenant_id"),
                 method_id: row.get("method_id"),
                 method_code: row.get("method_code"),
                 method_name: row.get("method_name"),
@@ -825,7 +838,7 @@ pub async fn list_validations(
 }
 
 pub async fn create_validation(
-    State(state): State<crate::AppState>,
+    State(state): State<crate::shared::AppState>,
     Json(req): Json<CreateMethodValidationRequest>,
 ) -> Json<ApiResponse<MethodValidationRecord>> {
     let method_id = match Uuid::parse_str(&req.method_id) {
@@ -894,6 +907,7 @@ pub async fn create_validation(
         Ok(r) => Json(ApiResponse::success(
             MethodValidationRecord {
                 id: r.get("id"),
+                tenant_id: r.get("tenant_id"),
                 method_id: r.get("method_id"),
                 method_code: r.get("method_code"),
                 method_name: r.get("method_name"),
@@ -918,7 +932,7 @@ pub async fn create_validation(
 }
 
 pub async fn list_method_versions(
-    State(state): State<crate::AppState>,
+    State(state): State<crate::shared::AppState>,
     axum::extract::Path(method_id): axum::extract::Path<String>,
 ) -> Json<ApiResponse<Vec<MethodVersion>>> {
     let id = match Uuid::parse_str(&method_id) {
@@ -944,6 +958,7 @@ pub async fn list_method_versions(
                 .into_iter()
                 .map(|row| MethodVersion {
                     id: row.get("id"),
+                    tenant_id: row.get("tenant_id"),
                     method_id: row.get("method_id"),
                     version: row.get("version"),
                     version_description: row.get("version_description"),
@@ -963,7 +978,7 @@ pub async fn list_method_versions(
 }
 
 pub async fn create_new_version(
-    State(state): State<crate::AppState>,
+    State(state): State<crate::shared::AppState>,
     axum::extract::Path(method_id): axum::extract::Path<String>,
     Json(req): Json<serde_json::Value>,
 ) -> Json<ApiResponse<TestMethod>> {
@@ -1034,6 +1049,7 @@ pub async fn create_new_version(
         Ok(r) => Json(ApiResponse::success(
             TestMethod {
                 id: r.get("id"),
+                tenant_id: r.get("tenant_id"),
                 method_code: r.get("method_code"),
                 method_name: r.get("method_name"),
                 category_id: r.get("category_id"),

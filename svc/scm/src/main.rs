@@ -13,7 +13,12 @@
 use topems_scm::modules;
 
 use anyhow::Result;
-use axum::{extract::State, http::StatusCode, routing::get, Json, Router};
+use axum::{
+    extract::State,
+    http::StatusCode,
+    routing::{get, post},
+    Json, Router,
+};
 use std::env;
 use std::time::Instant;
 use utoipa::OpenApi;
@@ -60,7 +65,9 @@ async fn main() -> Result<()> {
     tracing::info!("✅ Prometheus 监控已初始化");
 
     let db_config = DatabaseConfig {
-        url: "postgres://topems:topems_secret@localhost:5432/topems".to_string(),
+        url: env::var("DATABASE_URL")
+            .expect("DATABASE_URL environment variable is required")
+            .to_string(),
         max_connections: 50,
         min_connections: Some(10),
         connect_timeout: Some(10),
@@ -123,6 +130,170 @@ async fn main() -> Result<()> {
         .route("/api-docs/openapi.json", get(serve_openapi_json));
 
     let protected_routes = modules::create_routes()
+        // Frontend aligned routes (SCM module)
+        // Supplier
+        .route(
+            "/scm/suppliers",
+            get(modules::supplier::list_suppliers).post(modules::supplier::create_supplier),
+        )
+        .route(
+            "/scm/suppliers/{id}",
+            get(modules::supplier::get_supplier)
+                .put(modules::supplier::update_supplier)
+                .delete(modules::supplier::delete_supplier),
+        )
+        // Purchase Order
+        .route(
+            "/scm/purchase-orders",
+            get(modules::purchase_order::list_orders).post(modules::purchase_order::create_order),
+        )
+        .route(
+            "/scm/purchase-orders/{id}",
+            get(modules::purchase_order::get_order)
+                .put(modules::purchase_order::update_order)
+                .delete(modules::purchase_order::delete_order),
+        )
+        .route(
+            "/scm/purchase-orders/{id}/approve",
+            post(modules::purchase_order::approve_order),
+        )
+        .route(
+            "/scm/purchase-orders/{id}/reject",
+            post(modules::purchase_order::reject_order),
+        )
+        // Purchase Requisition
+        .route(
+            "/scm/purchase-requisitions",
+            get(modules::purchase_requisition::list_requisitions)
+                .post(modules::purchase_requisition::create_requisition),
+        )
+        .route(
+            "/scm/purchase-requisitions/{id}",
+            get(modules::purchase_requisition::get_requisition)
+                .put(modules::purchase_requisition::update_requisition)
+                .delete(modules::purchase_requisition::delete_requisition),
+        )
+        // Purchase Contract
+        .route(
+            "/scm/purchase-contracts",
+            get(modules::purchase_contract::list_contracts)
+                .post(modules::purchase_contract::create_contract),
+        )
+        .route(
+            "/scm/purchase-contracts/{id}",
+            get(modules::purchase_contract::get_contract)
+                .put(modules::purchase_contract::update_contract)
+                .delete(modules::purchase_contract::delete_contract),
+        )
+        // MRP
+        .route(
+            "/scm/mrp/suggestions",
+            get(modules::mrp::list_suggestions).post(modules::mrp::compute_mrp),
+        )
+        .route(
+            "/scm/mrp/suggestions/{id}",
+            get(modules::mrp::get_suggestion).post(modules::mrp::confirm_suggestion),
+        )
+        // Inventory Turnover
+        .route(
+            "/scm/inventory-turnover",
+            get(modules::inventory_turnover::calculate_turnover),
+        )
+        .route(
+            "/scm/inventory-turnover/days",
+            get(modules::inventory_turnover::turnover_days),
+        )
+        .route(
+            "/scm/inventory-turnover/abc-analysis",
+            get(modules::inventory_turnover::abc_analysis),
+        )
+        .route(
+            "/scm/inventory-turnover/trend",
+            get(modules::inventory_turnover::turnover_trend),
+        )
+        // Incoming Inspection
+        .route(
+            "/scm/incoming-inspections",
+            get(modules::incoming_inspection::list_inspections)
+                .post(modules::incoming_inspection::create_inspection),
+        )
+        .route(
+            "/scm/incoming-inspections/{id}",
+            get(modules::incoming_inspection::get_inspection)
+                .put(modules::incoming_inspection::update_inspection),
+        )
+        .route(
+            "/scm/incoming-inspections/{id}/pass",
+            post(modules::incoming_inspection::inspection_pass),
+        )
+        .route(
+            "/scm/incoming-inspections/{id}/fail",
+            post(modules::incoming_inspection::inspection_fail),
+        )
+        // Supplier Admission
+        .route(
+            "/scm/supplier-admissions",
+            get(modules::supplier_admission::list_admissions)
+                .post(modules::supplier_admission::create_admission),
+        )
+        .route(
+            "/scm/supplier-admissions/{id}",
+            get(modules::supplier_admission::get_admission)
+                .put(modules::supplier_admission::update_admission)
+                .delete(modules::supplier_admission::delete_admission),
+        )
+        // Supplier Evaluation
+        .route(
+            "/scm/evaluations",
+            get(modules::supplier_evaluation::list_evaluations)
+                .post(modules::supplier_evaluation::create_evaluation),
+        )
+        .route(
+            "/scm/evaluations/{id}",
+            get(modules::supplier_evaluation::get_evaluation)
+                .put(modules::supplier_evaluation::update_evaluation)
+                .delete(modules::supplier_evaluation::delete_evaluation),
+        )
+        // Delivery Appointment
+        .route(
+            "/scm/delivery-appointments",
+            get(modules::supplier_delivery_appointment::list_appointments)
+                .post(modules::supplier_delivery_appointment::create_appointment),
+        )
+        .route(
+            "/scm/delivery-appointments/{id}",
+            get(modules::supplier_delivery_appointment::get_appointment)
+                .put(modules::supplier_delivery_appointment::update_appointment)
+                .delete(modules::supplier_delivery_appointment::delete_appointment),
+        )
+        // Price Comparison
+        .route(
+            "/scm/comparisons",
+            get(modules::price_comparison::list_comparisons)
+                .post(modules::price_comparison::create_comparison),
+        )
+        .route(
+            "/scm/comparisons/{id}",
+            get(modules::price_comparison::get_comparison)
+                .post(modules::price_comparison::approve_comparison),
+        )
+        // Audit Log
+        .route("/scm/audit-logs", get(modules::audit::list_audit_logs))
+        .route("/scm/audit-logs/{id}", get(modules::audit::get_audit_log))
+        // Dashboard
+        .route(
+            "/scm/dashboard/overview",
+            get(modules::supply_chain_dashboard::overview),
+        )
+        .route(
+            "/scm/dashboard/purchase-inbound-outbound",
+            get(modules::supply_chain_dashboard::purchase_inbound_outbound_stats),
+        )
+        .route(
+            "/scm/dashboard/supplier-performance",
+            get(modules::supply_chain_dashboard::supplier_performance),
+        )
+        // API v1 routes
         .route("/api/v1/health/detailed", get(health_check_detailed))
         .layer(axum::middleware::from_fn_with_state(
             api_state.auth_state.clone(),
@@ -147,7 +318,10 @@ async fn main() -> Result<()> {
             Duration::from_secs(30),
         ));
 
-    let port = env::var("PORT").unwrap_or_else(|_| "8040".to_string());
+    let port = env::var("SCM_PORT")
+        .or_else(|_| env::var("SERVER_PORT"))
+        .or_else(|_| env::var("PORT"))
+        .unwrap_or_else(|_| "8040".to_string());
     let addr = format!("0.0.0.0:{}", port);
 
     tracing::info!("🚀 TOPEMS-SCM 供应链管理系统启动中...");

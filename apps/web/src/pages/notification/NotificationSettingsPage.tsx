@@ -33,6 +33,7 @@ import {
 } from 'lucide-react';
 
 import { useAppStore } from '../../store';
+import { NOTIFICATION_PATHS } from '@/modules/notification/config';
 import { PageContainer } from '@/components/common';
 import { ConfirmDialog } from '@topems/shared-components';
 import { extractErrorMessage } from '@/utils/errors';
@@ -1593,7 +1594,7 @@ export const NotificationSettingsPage: React.FC = () => {
       headerProps={{
         pageIcon: <Settings size={20} />,
         backButton: {
-          href: '/notification/dashboard',
+          href: NOTIFICATION_PATHS.dashboard,
         },
       }}
     >

@@ -1,8 +1,9 @@
 // Quality Assurance Service Plugin Interface
 // 质量管理与安全服务插件接口实现
 
-use crate::AppState;
-use axum::{extract::State, routing::get, Json, Router};
+use crate::middleware::tenant::TenantContext;
+use crate::shared::AppState;
+use axum::{extract::State, routing::get, Extension, Json, Router};
 use serde::{Deserialize, Serialize};
 use std::env;
 

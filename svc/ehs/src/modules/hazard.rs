@@ -1,14 +1,26 @@
 //! Hazard management handlers - Reporting, classification, rectification, verification, and closure
 
-use axum::{
-    extract::State,
-    routing::{get, post},
-    Json, Router,
-};
+use axum::{extract::State, http::HeaderMap, routing::*, Extension, Json, Router};
 use serde::{Deserialize, Serialize};
-use topems_shared::ApiResponse;
+use topems_shared::{ApiResponse, Claims};
 
-use crate::AppState;
+use uuid::Uuid;
+
+use crate::shared::AppState;
+
+fn get_tenant_id(claims: &Claims, headers: &HeaderMap) -> Uuid {
+    claims
+        .tenant_id
+        .as_ref()
+        .and_then(|t| Uuid::parse_str(t).ok())
+        .or_else(|| {
+            headers
+                .get("x-tenant-id")
+                .and_then(|v| v.to_str().ok())
+                .and_then(|s| Uuid::parse_str(s).ok())
+        })
+        .unwrap_or_else(Uuid::new_v4)
+}
 
 pub fn create_routes() -> Router<AppState> {
     Router::new()
@@ -54,6 +66,8 @@ pub struct Hazard {
     pub inspection_id: Option<String>,
     pub created_at: Option<String>,
     pub updated_at: Option<String>,
+
+    pub tenant_id: Uuid,
 }
 
 #[derive(Debug, Serialize)]
@@ -61,6 +75,8 @@ pub struct HazardDetail {
     pub hazard: Hazard,
     pub rectification: Option<Rectification>,
     pub verification: Option<Verification>,
+
+    pub tenant_id: Uuid,
 }
 
 #[derive(Debug, Serialize)]
@@ -76,6 +92,8 @@ pub struct Rectification {
     pub completed_at: Option<String>,
     pub created_at: Option<String>,
     pub updated_at: Option<String>,
+
+    pub tenant_id: Uuid,
 }
 
 #[derive(Debug, Serialize)]
@@ -87,6 +105,8 @@ pub struct Verification {
     pub remarks: Option<String>,
     pub verified_at: Option<String>,
     pub created_at: Option<String>,
+
+    pub tenant_id: Uuid,
 }
 
 #[derive(Debug, Deserialize)]
@@ -124,7 +144,12 @@ pub struct CreateVerificationRequest {
     pub remarks: Option<String>,
 }
 
-pub async fn list_hazards(State(_state): State<crate::AppState>) -> Json<ApiResponse<Vec<Hazard>>> {
+pub async fn list_hazards(
+    State(_state): State<crate::shared::AppState>,
+    Extension(claims): Extension<Claims>,
+    headers: HeaderMap,
+) -> Json<ApiResponse<Vec<Hazard>>> {
+    let tenant_id = get_tenant_id(&claims, &headers);
     tracing::info!("Listing hazards");
     Json(ApiResponse::success(
         Vec::<Hazard>::new(),
@@ -133,9 +158,12 @@ pub async fn list_hazards(State(_state): State<crate::AppState>) -> Json<ApiResp
 }
 
 pub async fn create_hazard(
-    State(_state): State<crate::AppState>,
+    State(_state): State<crate::shared::AppState>,
+    Extension(claims): Extension<Claims>,
+    headers: HeaderMap,
     Json(req): Json<CreateHazardRequest>,
 ) -> Json<ApiResponse<Hazard>> {
+    let tenant_id = get_tenant_id(&claims, &headers);
     tracing::info!("Creating hazard: {:?}", req);
     Json(ApiResponse::success(
         Hazard {
@@ -156,15 +184,20 @@ pub async fn create_hazard(
             inspection_id: req.inspection_id,
             created_at: Some(chrono::Utc::now().to_rfc3339()),
             updated_at: Some(chrono::Utc::now().to_rfc3339()),
+
+            tenant_id,
         },
         "隐患上报成功",
     ))
 }
 
 pub async fn get_hazard(
-    State(_state): State<crate::AppState>,
+    State(_state): State<crate::shared::AppState>,
+    Extension(claims): Extension<Claims>,
+    headers: HeaderMap,
     axum::extract::Path(id): axum::extract::Path<String>,
 ) -> Json<ApiResponse<HazardDetail>> {
+    let tenant_id = get_tenant_id(&claims, &headers);
     tracing::info!("Getting hazard: {}", id);
     Json(ApiResponse::success(
         HazardDetail {
@@ -183,6 +216,8 @@ pub async fn get_hazard(
                 inspection_id: Some("IR-2024001".to_string()),
                 created_at: Some(chrono::Utc::now().to_rfc3339()),
                 updated_at: Some(chrono::Utc::now().to_rfc3339()),
+
+                tenant_id,
             },
             rectification: Some(Rectification {
                 id: "rect-001".to_string(),
@@ -196,18 +231,24 @@ pub async fn get_hazard(
                 completed_at: None,
                 created_at: Some(chrono::Utc::now().to_rfc3339()),
                 updated_at: Some(chrono::Utc::now().to_rfc3339()),
+
+                tenant_id,
             }),
             verification: None,
+            tenant_id,
         },
         "获取隐患详情成功",
     ))
 }
 
 pub async fn update_hazard(
-    State(_state): State<crate::AppState>,
+    State(_state): State<crate::shared::AppState>,
+    Extension(claims): Extension<Claims>,
+    headers: HeaderMap,
     axum::extract::Path(id): axum::extract::Path<String>,
     Json(req): Json<serde_json::Value>,
 ) -> Json<ApiResponse<Hazard>> {
+    let tenant_id = get_tenant_id(&claims, &headers);
     tracing::info!("Updating hazard {}: {:?}", id, req);
     Json(ApiResponse::success(
         Hazard {
@@ -225,24 +266,32 @@ pub async fn update_hazard(
             inspection_id: Some("IR-2024001".to_string()),
             created_at: Some(chrono::Utc::now().to_rfc3339()),
             updated_at: Some(chrono::Utc::now().to_rfc3339()),
+
+            tenant_id,
         },
         "隐患更新成功",
     ))
 }
 
 pub async fn delete_hazard(
-    State(_state): State<crate::AppState>,
+    State(_state): State<crate::shared::AppState>,
+    Extension(claims): Extension<Claims>,
+    headers: HeaderMap,
     axum::extract::Path(id): axum::extract::Path<String>,
 ) -> Json<ApiResponse<()>> {
+    let tenant_id = get_tenant_id(&claims, &headers);
     tracing::info!("Deleting hazard: {}", id);
     Json(ApiResponse::success((), "隐患删除成功"))
 }
 
 pub async fn start_rectification(
-    State(_state): State<crate::AppState>,
+    State(_state): State<crate::shared::AppState>,
+    Extension(claims): Extension<Claims>,
+    headers: HeaderMap,
     axum::extract::Path(id): axum::extract::Path<String>,
     Json(req): Json<CreateRectificationRequest>,
 ) -> Json<ApiResponse<Rectification>> {
+    let tenant_id = get_tenant_id(&claims, &headers);
     tracing::info!("Starting rectification for hazard {}: {:?}", id, req);
     Json(ApiResponse::success(
         Rectification {
@@ -257,16 +306,21 @@ pub async fn start_rectification(
             completed_at: None,
             created_at: Some(chrono::Utc::now().to_rfc3339()),
             updated_at: Some(chrono::Utc::now().to_rfc3339()),
+
+            tenant_id,
         },
         "整改方案创建成功",
     ))
 }
 
 pub async fn update_rectification(
-    State(_state): State<crate::AppState>,
+    State(_state): State<crate::shared::AppState>,
+    Extension(claims): Extension<Claims>,
+    headers: HeaderMap,
     axum::extract::Path(id): axum::extract::Path<String>,
     Json(req): Json<UpdateRectificationRequest>,
 ) -> Json<ApiResponse<Rectification>> {
+    let tenant_id = get_tenant_id(&claims, &headers);
     tracing::info!("Updating rectification {}: {:?}", id, req);
     let status = req
         .status
@@ -299,15 +353,20 @@ pub async fn update_rectification(
             completed_at,
             created_at: Some(chrono::Utc::now().to_rfc3339()),
             updated_at: Some(chrono::Utc::now().to_rfc3339()),
+
+            tenant_id,
         },
         "整改进度更新成功",
     ))
 }
 
 pub async fn submit_rectification(
-    State(_state): State<crate::AppState>,
+    State(_state): State<crate::shared::AppState>,
+    Extension(claims): Extension<Claims>,
+    headers: HeaderMap,
     axum::extract::Path(id): axum::extract::Path<String>,
 ) -> Json<ApiResponse<Rectification>> {
+    let tenant_id = get_tenant_id(&claims, &headers);
     tracing::info!("Submitting rectification for hazard: {}", id);
     Json(ApiResponse::success(
         Rectification {
@@ -322,16 +381,21 @@ pub async fn submit_rectification(
             completed_at: Some(chrono::Utc::now().to_rfc3339()),
             created_at: Some(chrono::Utc::now().to_rfc3339()),
             updated_at: Some(chrono::Utc::now().to_rfc3339()),
+
+            tenant_id,
         },
         "整改完成并提交验收",
     ))
 }
 
 pub async fn verify_hazard(
-    State(_state): State<crate::AppState>,
+    State(_state): State<crate::shared::AppState>,
+    Extension(claims): Extension<Claims>,
+    headers: HeaderMap,
     axum::extract::Path(id): axum::extract::Path<String>,
     Json(req): Json<CreateVerificationRequest>,
 ) -> Json<ApiResponse<Verification>> {
+    let tenant_id = get_tenant_id(&claims, &headers);
     tracing::info!("Verifying hazard {}: {:?}", id, req);
     Json(ApiResponse::success(
         Verification {
@@ -342,15 +406,20 @@ pub async fn verify_hazard(
             remarks: req.remarks,
             verified_at: Some(chrono::Utc::now().to_rfc3339()),
             created_at: Some(chrono::Utc::now().to_rfc3339()),
+
+            tenant_id,
         },
         "隐患验收完成",
     ))
 }
 
 pub async fn close_hazard(
-    State(_state): State<crate::AppState>,
+    State(_state): State<crate::shared::AppState>,
+    Extension(claims): Extension<Claims>,
+    headers: HeaderMap,
     axum::extract::Path(id): axum::extract::Path<String>,
 ) -> Json<ApiResponse<Hazard>> {
+    let tenant_id = get_tenant_id(&claims, &headers);
     tracing::info!("Closing hazard: {}", id);
     Json(ApiResponse::success(
         Hazard {
@@ -368,6 +437,8 @@ pub async fn close_hazard(
             inspection_id: Some("IR-2024001".to_string()),
             created_at: Some(chrono::Utc::now().to_rfc3339()),
             updated_at: Some(chrono::Utc::now().to_rfc3339()),
+
+            tenant_id,
         },
         "隐患已闭环",
     ))
