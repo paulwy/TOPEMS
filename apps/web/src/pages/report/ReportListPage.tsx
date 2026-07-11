@@ -19,6 +19,7 @@ import { useAppStore } from '@/store';
 import { apiLogger } from '@/utils/logger';
 import { ConfirmDialog } from '@topems/shared-components';
 import { designTokens } from '@/theme/tokens';
+import { REPORT_PATHS } from '@/modules/report/config';
 
 const ct = designTokens.colors;
 

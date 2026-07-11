@@ -50,6 +50,7 @@ import { ListPageTemplate, type ColumnDef } from '@/components/templates';
 import { extractErrorMessage } from '@/utils/errors';
 import { designTokens } from '@/theme/tokens';
 import { PageContainer, ConfirmDialog } from '@/components/common';
+import { MONITOR_PATHS } from '@/modules/monitor/config';
 
 const ct = designTokens.colors;
 
@@ -822,7 +823,7 @@ export const MonitorLogsPage: React.FC = () => {
       headerProps={{
         pageIcon: <FileText size={20} />,
         backButton: {
-          href: '/monitor/dashboard',
+          href: MONITOR_PATHS.dashboard,
         },
         children: (
           <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>

@@ -26,6 +26,7 @@ import { useNavigate } from 'react-router-dom';
 import { PageContainer } from '@/components/common';
 import { useAppStore } from '../../store';
 import { designTokens } from '@/theme/tokens';
+import { MOBILE_PATHS } from '@/modules/mobile/config';
 
 const ct = designTokens.colors;
 
@@ -35,42 +36,42 @@ const quickActions = [
     label: '考勤打卡',
     icon: <Clock size={24} />,
     color: ct.success.main,
-    path: '/mobile/attendance',
+    path: MOBILE_PATHS.attendance,
   },
   {
     id: 'approval',
     label: '审批任务',
     icon: <CheckSquare size={24} />,
     color: ct.primary.main,
-    path: '/mobile/approvals',
+    path: MOBILE_PATHS.approvals,
   },
   {
     id: 'scan',
     label: '扫码功能',
     icon: <Scan size={24} />,
     color: ct.warning.main,
-    path: '/mobile/scan',
+    path: MOBILE_PATHS.scan,
   },
   {
     id: 'workbench',
     label: '工作台',
     icon: <LayoutDashboard size={24} />,
     color: ct.secondary.main,
-    path: '/mobile/workbench',
+    path: MOBILE_PATHS.workbench,
   },
   {
     id: 'notification',
     label: '消息通知',
     icon: <Bell size={24} />,
     color: ct.error.main,
-    path: '/mobile/notifications',
+    path: MOBILE_PATHS.notifications,
   },
   {
     id: 'profile',
     label: '个人中心',
     icon: <User size={24} />,
     color: ct.text.secondary,
-    path: '/mobile/profile',
+    path: MOBILE_PATHS.profile,
   },
 ];
 
@@ -272,7 +273,7 @@ export const MobileHomePage: React.FC = () => {
           <Chip
             label='查看全部'
             size='small'
-            onClick={() => navigate('/mobile/tasks')}
+            onClick={() => navigate(MOBILE_PATHS.tasks)}
           />
         </Box>
         <Paper sx={{ mb: 2 }}>
@@ -287,7 +288,7 @@ export const MobileHomePage: React.FC = () => {
                   cursor: 'pointer',
                   '&:hover': { bgcolor: 'action.hover' },
                 }}
-                onClick={() => navigate('/mobile/tasks')}
+                onClick={() => navigate(MOBILE_PATHS.tasks)}
               >
                 <Box
                   sx={{

@@ -27,6 +27,7 @@ import {
   type QuickAction,
   type RecentItem,
 } from '@/components/templates';
+import { AI_PATHS } from '@/modules/ai/config';
 import { useAppStore } from '../../store';
 
 export const AiDashboardPage: React.FC = () => {
@@ -109,28 +110,28 @@ export const AiDashboardPage: React.FC = () => {
         label: '开始对话',
         icon: <MessageSquare size={20} />,
         color: 'primary',
-        onClick: () => navigate('/ai/chat'),
+        onClick: () => navigate(AI_PATHS.chat),
       },
       {
         id: 'doc-analysis',
         label: '文档分析',
         icon: <FileText size={20} />,
         color: 'info',
-        onClick: () => navigate('/ai/document'),
+        onClick: () => navigate(AI_PATHS.document),
       },
       {
         id: 'code-assistant',
         label: '代码助手',
         icon: <Code size={20} />,
         color: 'success',
-        onClick: () => navigate('/ai/code'),
+        onClick: () => navigate(AI_PATHS.code),
       },
       {
         id: 'knowledge-base',
         label: '知识库',
         icon: <BookOpen size={20} />,
         color: 'warning',
-        onClick: () => navigate('/ai/knowledge'),
+        onClick: () => navigate(AI_PATHS.knowledge),
       },
     ],
     [navigate]
@@ -143,35 +144,35 @@ export const AiDashboardPage: React.FC = () => {
         title: '智能问答 - 系统架构',
         description: '10分钟前 · 对话',
         status: 'success',
-        onClick: () => navigate('/ai/chat'),
+        onClick: () => navigate(AI_PATHS.chat),
       },
       {
         id: '2',
         title: '代码生成 - React组件',
         description: '30分钟前 · 代码',
         status: 'success',
-        onClick: () => navigate('/ai/code'),
+        onClick: () => navigate(AI_PATHS.code),
       },
       {
         id: '3',
         title: '文档分析 - API文档',
         description: '1小时前 · 分析',
         status: 'success',
-        onClick: () => navigate('/ai/document'),
+        onClick: () => navigate(AI_PATHS.document),
       },
       {
         id: '4',
         title: '数据解读 - 销售报表',
         description: '2小时前 · 对话',
         status: 'success',
-        onClick: () => navigate('/ai/chat'),
+        onClick: () => navigate(AI_PATHS.chat),
       },
       {
         id: '5',
         title: '代码审查 - 建议优化',
         description: '3小时前 · 代码',
         status: 'success',
-        onClick: () => navigate('/ai/code'),
+        onClick: () => navigate(AI_PATHS.code),
       },
     ],
     [navigate]

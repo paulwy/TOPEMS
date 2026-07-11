@@ -24,6 +24,7 @@ import { useAppStore } from '../../store';
 import { ListPageTemplate, type ColumnDef } from '@/components/templates';
 import { extractErrorMessage } from '@/utils/errors';
 import { PageContainer } from '@/components/common';
+import { INTEGRATION_PATHS } from '@/modules/integration/config';
 import { ConfirmDialog } from '@topems/shared-components';
 
 const CONNECTION_TYPE_CONFIG: Record<
@@ -407,7 +408,7 @@ export const IntegrationConnectionsPage: React.FC = () => {
 
   return (
     <PageContainer
-      headerProps={{ pageIcon: <Plug size={20} />, backButton: { href: '/integration/dashboard' } }}
+      headerProps={{ pageIcon: <Plug size={20} />, backButton: { href: INTEGRATION_PATHS.dashboard } }}
     >
       <ListPageTemplate
         title=''

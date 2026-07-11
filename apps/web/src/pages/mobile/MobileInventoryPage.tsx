@@ -49,6 +49,7 @@ import {
   type OutboundOrder,
 } from '@/api/mobile';
 import { apiLogger } from '@/utils/logger';
+import { MOBILE_PATHS } from '@/modules/mobile/config';
 
 const MobileInventoryPage: React.FC = () => {
   const theme = useTheme();
@@ -320,19 +321,19 @@ const MobileInventoryPage: React.FC = () => {
   const handleBottomTabChange = (tabId: string) => {
     switch (tabId) {
       case 'home':
-        navigate('/mobile/workbench');
+        navigate(MOBILE_PATHS.workbench);
         break;
       case 'tasks':
-        navigate('/mobile/tasks');
+        navigate(MOBILE_PATHS.tasks);
         break;
       case 'scan':
-        navigate('/mobile/scan-page');
+        navigate(MOBILE_PATHS.scanPage);
         break;
       case 'approval':
-        navigate('/mobile/approvals');
+        navigate(MOBILE_PATHS.approvals);
         break;
       case 'profile':
-        navigate('/mobile/settings');
+        navigate(MOBILE_PATHS.settings);
         break;
     }
   };
@@ -354,7 +355,7 @@ const MobileInventoryPage: React.FC = () => {
     <MobileLayout
       title='移动库存'
       showBack
-      onBackClick={() => navigate('/mobile/workbench')}
+      onBackClick={() => navigate(MOBILE_PATHS.workbench)}
       showNotifications
       notificationCount={5}
       showTabBar
@@ -365,7 +366,7 @@ const MobileInventoryPage: React.FC = () => {
         <IconButton
           size='large'
           sx={{ minWidth: 44, minHeight: 44 }}
-          onClick={() => navigate('/mobile/scan-page')}
+          onClick={() => navigate(MOBILE_PATHS.scanPage)}
         >
           <Barcode style={{ width: 20, height: 20 }} />
         </IconButton>

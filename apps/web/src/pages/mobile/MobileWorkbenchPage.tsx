@@ -38,6 +38,7 @@ import { MobileLayout, PullToRefresh, MobileSkeleton, MobileCard } from '@/compo
 import { useAppStore } from '@/store';
 import { mobileApi, type MobileWorkbenchData } from '@/api/mobile';
 import { apiLogger } from '@/utils/logger';
+import { MOBILE_PATHS } from '@/modules/mobile/config';
 
 interface StatCard {
   id: string;
@@ -81,21 +82,21 @@ const MobileWorkbenchPage: React.FC = () => {
       id: 'attendance',
       label: '考勤打卡',
       icon: <CalendarCheck style={{ width: 24, height: 24 }} />,
-      path: '/mobile/attendance',
+      path: MOBILE_PATHS.attendance,
       color: 'primary',
     },
     {
       id: 'scan',
       label: '扫码',
       icon: <ScanLine style={{ width: 24, height: 24 }} />,
-      path: '/mobile/scan-page',
+      path: MOBILE_PATHS.scanPage,
       color: 'success',
     },
     {
       id: 'approval',
       label: '审批',
       icon: <CheckSquare style={{ width: 24, height: 24 }} />,
-      path: '/mobile/approvals',
+      path: MOBILE_PATHS.approvals,
       color: 'warning',
       badge: 3,
     },
@@ -103,35 +104,35 @@ const MobileWorkbenchPage: React.FC = () => {
       id: 'inventory',
       label: '库存',
       icon: <Package style={{ width: 24, height: 24 }} />,
-      path: '/mobile/inventory',
+      path: MOBILE_PATHS.inventory,
       color: 'info',
     },
     {
       id: 'quality',
       label: '质检',
       icon: <ClipboardCheck style={{ width: 24, height: 24 }} />,
-      path: '/mobile/quality',
+      path: MOBILE_PATHS.quality,
       color: 'error',
     },
     {
       id: 'production',
       label: '生产',
       icon: <Factory style={{ width: 24, height: 24 }} />,
-      path: '/mobile/production',
+      path: MOBILE_PATHS.production,
       color: 'secondary',
     },
     {
       id: 'tasks',
       label: '任务',
       icon: <ListTodo style={{ width: 24, height: 24 }} />,
-      path: '/mobile/tasks',
+      path: MOBILE_PATHS.tasks,
       color: 'primary',
     },
     {
       id: 'more',
       label: '更多',
       icon: <Zap style={{ width: 24, height: 24 }} />,
-      path: '/mobile/home',
+      path: MOBILE_PATHS.home,
       color: 'info',
     },
   ];
@@ -339,19 +340,19 @@ const MobileWorkbenchPage: React.FC = () => {
   const handleTabChange = (tabId: string) => {
     switch (tabId) {
       case 'home':
-        navigate('/mobile/workbench');
+        navigate(MOBILE_PATHS.workbench);
         break;
       case 'tasks':
-        navigate('/mobile/tasks');
+        navigate(MOBILE_PATHS.tasks);
         break;
       case 'scan':
-        navigate('/mobile/scan-page');
+        navigate(MOBILE_PATHS.scanPage);
         break;
       case 'approval':
-        navigate('/mobile/approvals');
+        navigate(MOBILE_PATHS.approvals);
         break;
       case 'profile':
-        navigate('/mobile/settings');
+        navigate(MOBILE_PATHS.settings);
         break;
     }
   };
@@ -363,16 +364,16 @@ const MobileWorkbenchPage: React.FC = () => {
   const handleItemClick = (item: WorkbenchItem) => {
     switch (item.type) {
       case 'task':
-        navigate('/mobile/tasks');
+        navigate(MOBILE_PATHS.tasks);
         break;
       case 'approval':
-        navigate('/mobile/approvals');
+        navigate(MOBILE_PATHS.approvals);
         break;
       case 'production':
-        navigate('/mobile/production');
+        navigate(MOBILE_PATHS.production);
         break;
       case 'quality':
-        navigate('/mobile/quality');
+        navigate(MOBILE_PATHS.quality);
         break;
       case 'notification':
         navigate('/notifications');
@@ -638,7 +639,7 @@ const MobileWorkbenchPage: React.FC = () => {
                       color: 'primary.main',
                       cursor: 'pointer',
                     }}
-                    onClick={() => navigate('/mobile/tasks')}
+                    onClick={() => navigate(MOBILE_PATHS.tasks)}
                   >
                     <Typography variant='caption'>查看全部</Typography>
                     <ChevronRight style={{ width: 16, height: 16 }} />

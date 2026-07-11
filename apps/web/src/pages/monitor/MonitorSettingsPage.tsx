@@ -45,6 +45,7 @@ import {
 
 import { useAppStore } from '../../store';
 import { PageContainer } from '@/components/common';
+import { MONITOR_PATHS } from '@/modules/monitor/config';
 import { ConfirmDialog } from '@topems/shared-components';
 
 interface SettingGroup {
@@ -1979,7 +1980,7 @@ export const MonitorSettingsPage: React.FC = () => {
       headerProps={{
         pageIcon: <Settings size={20} />,
         backButton: {
-          href: '/monitor/dashboard',
+          href: MONITOR_PATHS.dashboard,
         },
       }}
     >

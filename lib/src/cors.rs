@@ -66,7 +66,10 @@ mod tests {
 
     #[test]
     fn test_custom_origins() {
-        std::env::set_var("CORS_ALLOWED_ORIGINS", "https://app.topems.com,https://admin.topems.com");
+        std::env::set_var(
+            "CORS_ALLOWED_ORIGINS",
+            "https://app.topems.com,https://admin.topems.com",
+        );
         let _layer = create_cors_layer();
     }
 }

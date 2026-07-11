@@ -477,8 +477,11 @@ fn is_plugin_public_path(path: &str, method: &str) -> bool {
         return true;
     }
     if path.starts_with("/api/core/plugins/") {
-        if path.ends_with("/install") || path.ends_with("/uninstall") || 
-           path.ends_with("/enable") || path.ends_with("/disable") {
+        if path.ends_with("/install")
+            || path.ends_with("/uninstall")
+            || path.ends_with("/enable")
+            || path.ends_with("/disable")
+        {
             return true;
         }
         if path == "/api/core/plugins" && method == "GET" {
@@ -694,10 +697,17 @@ mod tests {
                 refresh_secret: "this-is-a-very-long-secret-key-at-least-32-chars".to_string(),
                 token_expiry_hours: 24,
             };
-        }).is_ok());
+        })
+        .is_ok());
 
-        std::env::set_var("JWT_SECRET", "this-is-a-very-long-secret-key-at-least-32-chars");
-        std::env::set_var("JWT_REFRESH_SECRET", "this-is-also-a-very-long-secret-key-for-refresh");
+        std::env::set_var(
+            "JWT_SECRET",
+            "this-is-a-very-long-secret-key-at-least-32-chars",
+        );
+        std::env::set_var(
+            "JWT_REFRESH_SECRET",
+            "this-is-also-a-very-long-secret-key-for-refresh",
+        );
         let auth_state = AuthState::from_env();
         assert_eq!(auth_state.token_expiry_hours, 24);
     }

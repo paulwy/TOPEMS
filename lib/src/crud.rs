@@ -3,16 +3,15 @@ use uuid::Uuid;
 
 use crate::response::{PaginatedResponse, PaginationParams};
 
-pub async fn get_by_id<T>(
-    pool: &PgPool,
-    table_name: &str,
-    id: Uuid,
-) -> Result<T, sqlx::Error>
+pub async fn get_by_id<T>(pool: &PgPool, table_name: &str, id: Uuid) -> Result<T, sqlx::Error>
 where
     T: for<'r> FromRow<'r, sqlx::postgres::PgRow> + Send + Unpin,
 {
     let query = format!("SELECT * FROM {} WHERE id = $1", table_name);
-    sqlx::query_as::<sqlx::Postgres, T>(&query).bind(id).fetch_one(pool).await
+    sqlx::query_as::<sqlx::Postgres, T>(&query)
+        .bind(id)
+        .fetch_one(pool)
+        .await
 }
 
 pub async fn list_with_pagination<T>(
@@ -128,8 +127,6 @@ where
 
     Ok(PaginatedResponse::new(items, total, page, page_size))
 }
-
-
 
 pub async fn delete(pool: &PgPool, table_name: &str, id: Uuid) -> Result<(), sqlx::Error> {
     let query = format!("DELETE FROM {} WHERE id = $1", table_name);

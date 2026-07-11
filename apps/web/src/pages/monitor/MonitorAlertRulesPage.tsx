@@ -36,6 +36,7 @@ import { ListPageTemplate, type ColumnDef } from '@/components/templates';
 import { extractErrorMessage } from '@/utils/errors';
 import { PageContainer } from '@/components/common';
 import { ConfirmDialog } from '@topems/shared-components';
+import { MONITOR_PATHS } from '@/modules/monitor/config';
 
 const METRIC_TYPE_CONFIG: Record<
   string,
@@ -712,7 +713,7 @@ export const MonitorAlertRulesPage: React.FC = () => {
       headerProps={{
         pageIcon: <Settings size={20} />,
         backButton: {
-          href: '/monitor/dashboard',
+          href: MONITOR_PATHS.dashboard,
         },
       }}
     >

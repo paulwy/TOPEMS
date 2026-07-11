@@ -1,0 +1,218 @@
+import { lazyWithRetry } from '@/routes/utils';
+import type { RouteModuleConfig } from '@/routes/v2/types';
+import type { ModuleNavConfig } from '@/lib/navigation/types';
+
+// ---- 路径常量：唯一真相源 ----
+// 组件中应引用 REPORT_PATHS.xxx，而非硬编码字符串
+export const REPORT_PATHS = {
+  root: '/report',
+  dashboard: '/report/dashboard',
+  list: '/report/list',
+  viewer: '/report/viewer',
+  design: '/report/design',
+  builder: '/report/builder',
+  schedule: '/report/schedule',
+  subscription: '/report/subscription',
+  template: '/report/template',
+} as const;
+
+// ---- 路由配置（供路由系统使用） ----
+export const reportModuleConfig: RouteModuleConfig = {
+  code: 'report',
+  name: '报表中心',
+  icon: 'FileSpreadsheet',
+  path: REPORT_PATHS.root,
+  source: 'core',
+  suite: 'enterprise',
+  status: 'online',
+  order: 6,
+  description: '报表管理、订阅、定时任务、模板设计',
+  permission: 'report:read',
+  routes: [
+    {
+      path: REPORT_PATHS.dashboard,
+      element: lazyWithRetry(() => import('@/pages/report/ReportPage'), 'ReportPage'),
+      module: 'report',
+      title: '报表中心',
+      code: 'report-dashboard',
+      requiredPermissions: ['report:read'],
+      template: 'dashboard',
+      group: 'overview',
+    },
+    {
+      path: REPORT_PATHS.list,
+      element: lazyWithRetry(() => import('@/pages/report/ReportListPage'), 'ReportListPage'),
+      module: 'report',
+      title: '报表列表',
+      code: 'report-list',
+      requiredPermissions: ['report:read'],
+      template: 'list',
+      group: 'business',
+    },
+    {
+      path: REPORT_PATHS.viewer,
+      element: lazyWithRetry(() => import('@/pages/report/ReportViewer'), 'ReportViewer'),
+      module: 'report',
+      title: '报表查看',
+      code: 'report-viewer',
+      requiredPermissions: ['report:read'],
+      template: 'detail',
+      group: 'business',
+    },
+    {
+      path: REPORT_PATHS.design,
+      element: lazyWithRetry(
+        () => import('@/pages/report/ReportDesignPage'),
+        'ReportDesignPage'
+      ),
+      module: 'report',
+      title: '报表设计',
+      code: 'report-design',
+      requiredPermissions: ['report:design:write'],
+      template: 'form',
+      group: 'business',
+    },
+    {
+      path: REPORT_PATHS.builder,
+      element: lazyWithRetry(
+        () => import('@/pages/report/ReportBuilderPage'),
+        'ReportBuilderPage'
+      ),
+      module: 'report',
+      title: '报表构建',
+      code: 'report-builder',
+      requiredPermissions: ['report:builder:write'],
+      template: 'form',
+      group: 'business',
+    },
+    {
+      path: REPORT_PATHS.schedule,
+      element: lazyWithRetry(
+        () => import('@/pages/report/ReportSchedulePage'),
+        'ReportSchedulePage'
+      ),
+      module: 'report',
+      title: '定时任务',
+      code: 'report-schedule',
+      requiredPermissions: ['report:schedule:read'],
+      template: 'list',
+      group: 'process',
+    },
+    {
+      path: REPORT_PATHS.subscription,
+      element: lazyWithRetry(
+        () => import('@/pages/report/ReportSubscriptionPage'),
+        'ReportSubscriptionPage'
+      ),
+      module: 'report',
+      title: '报表订阅',
+      code: 'report-subscription',
+      requiredPermissions: ['report:subscription:read'],
+      template: 'list',
+      group: 'process',
+    },
+    {
+      path: REPORT_PATHS.template,
+      element: lazyWithRetry(
+        () => import('@/pages/report/TemplateManagementPage'),
+        'TemplateManagementPage'
+      ),
+      module: 'report',
+      title: '模板管理',
+      code: 'report-template',
+      requiredPermissions: ['report:template:read'],
+      template: 'list',
+      group: 'settings',
+    },
+  ],
+};
+
+// ---- 导航配置（供导航注册表使用） ----
+export const reportNavConfig: ModuleNavConfig = {
+  code: 'report',
+  name: '报表中心',
+  icon: 'FileSpreadsheet',
+  path: REPORT_PATHS.root,
+  permission: 'report:read',
+  source: 'core',
+  suite: 'enterprise',
+  status: 'online',
+  order: 6,
+  description: '报表管理、订阅、定时任务、模板设计',
+  navItems: [
+    {
+      code: 'report-dashboard',
+      label: '报表中心',
+      icon: 'LayoutDashboard',
+      path: REPORT_PATHS.dashboard,
+      permission: 'report:read',
+      order: 0,
+      group: 'overview',
+      showInTabs: true,
+      description: '报表概览',
+    },
+    {
+      code: 'report-list',
+      label: '报表列表',
+      icon: 'List',
+      path: REPORT_PATHS.list,
+      permission: 'report:read',
+      order: 1,
+      group: 'business',
+      showInTabs: true,
+      description: '报表列表管理',
+    },
+    {
+      code: 'report-design',
+      label: '报表设计',
+      icon: 'Wand2',
+      path: REPORT_PATHS.design,
+      permission: 'report:design:write',
+      order: 2,
+      group: 'business',
+      description: '自定义报表设计',
+    },
+    {
+      code: 'report-builder',
+      label: '报表构建',
+      icon: 'Blocks',
+      path: REPORT_PATHS.builder,
+      permission: 'report:builder:write',
+      order: 3,
+      group: 'business',
+      description: '报表构建器',
+    },
+    {
+      code: 'report-schedule',
+      label: '定时任务',
+      icon: 'Clock',
+      path: REPORT_PATHS.schedule,
+      permission: 'report:schedule:read',
+      order: 1,
+      group: 'process',
+      showInTabs: true,
+      description: '报表定时生成',
+    },
+    {
+      code: 'report-subscription',
+      label: '报表订阅',
+      icon: 'Bell',
+      path: REPORT_PATHS.subscription,
+      permission: 'report:subscription:read',
+      order: 2,
+      group: 'process',
+      showInTabs: true,
+      description: '报表订阅管理',
+    },
+    {
+      code: 'report-template',
+      label: '模板管理',
+      icon: 'FolderKanban',
+      path: REPORT_PATHS.template,
+      permission: 'report:template:read',
+      order: 1,
+      group: 'settings',
+      description: '报表模板管理',
+    },
+  ],
+};

@@ -33,6 +33,7 @@ import { useNavigate } from 'react-router-dom';
 import { MobileLayout, MobileCard } from '@/components/mobile';
 import { useAppStore } from '@/store';
 import { useResponsive } from '@/hooks';
+import { MOBILE_PATHS } from '@/modules/mobile/config';
 
 interface SettingGroup {
   title: string;
@@ -69,7 +70,7 @@ const MobileSettingsPage: React.FC = () => {
           label: '通知设置',
           subtitle: '推送、声音、振动',
           type: 'navigate',
-          path: '/mobile/notifications',
+          path: MOBILE_PATHS.notifications,
         },
         {
           id: 'scan',
@@ -77,7 +78,7 @@ const MobileSettingsPage: React.FC = () => {
           label: '扫码设置',
           subtitle: '条码格式、扫描模式',
           type: 'navigate',
-          path: '/mobile/scan',
+          path: MOBILE_PATHS.scan,
         },
         {
           id: 'offline',
@@ -85,7 +86,7 @@ const MobileSettingsPage: React.FC = () => {
           label: '离线同步',
           subtitle: '缓存、同步策略',
           type: 'navigate',
-          path: '/mobile/offline-sync',
+          path: MOBILE_PATHS.offlineSync,
           badge: (
             <Chip
               label='2.3 GB'
@@ -101,7 +102,7 @@ const MobileSettingsPage: React.FC = () => {
           label: '应用设置',
           subtitle: '更新、版本管理',
           type: 'navigate',
-          path: '/mobile/settings-app',
+          path: MOBILE_PATHS.settingsApp,
         },
       ],
     },
@@ -131,7 +132,7 @@ const MobileSettingsPage: React.FC = () => {
           label: '语言',
           subtitle: '简体中文',
           type: 'navigate',
-          path: '/mobile/settings',
+          path: MOBILE_PATHS.settings,
         },
       ],
     },
@@ -144,14 +145,14 @@ const MobileSettingsPage: React.FC = () => {
           label: '账号安全',
           subtitle: '密码、指纹、面容',
           type: 'navigate',
-          path: '/mobile/settings',
+          path: MOBILE_PATHS.settings,
         },
         {
           id: 'privacy',
           icon: <Shield style={{ width: 20, height: 20 }} />,
           label: '隐私设置',
           type: 'navigate',
-          path: '/mobile/settings',
+          path: MOBILE_PATHS.settings,
         },
       ],
     },
@@ -171,7 +172,7 @@ const MobileSettingsPage: React.FC = () => {
           label: '关于 TOPEMS',
           subtitle: '版本 2.1.0',
           type: 'navigate',
-          path: '/mobile/settings',
+          path: MOBILE_PATHS.settings,
         },
       ],
     },
@@ -185,16 +186,16 @@ const MobileSettingsPage: React.FC = () => {
   const handleBottomTabChange = (tabId: string) => {
     switch (tabId) {
       case 'home':
-        navigate('/mobile/home');
+        navigate(MOBILE_PATHS.home);
         break;
       case 'tasks':
-        navigate('/mobile/tasks');
+        navigate(MOBILE_PATHS.tasks);
         break;
       case 'scan':
-        navigate('/mobile/scan-page');
+        navigate(MOBILE_PATHS.scanPage);
         break;
       case 'approval':
-        navigate('/mobile/approvals');
+        navigate(MOBILE_PATHS.approvals);
         break;
       case 'profile':
         break;

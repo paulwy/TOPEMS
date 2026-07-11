@@ -50,6 +50,7 @@ import {
 import { useAppStore } from '@/store';
 import { mobileApi, type ProductionOrder, type WorkReport, type Equipment } from '@/api/mobile';
 import { apiLogger } from '@/utils/logger';
+import { MOBILE_PATHS } from '@/modules/mobile/config';
 
 const MobileProductionPage: React.FC = () => {
   const theme = useTheme();
@@ -419,19 +420,19 @@ const MobileProductionPage: React.FC = () => {
   const handleBottomTabChange = (tabId: string) => {
     switch (tabId) {
       case 'home':
-        navigate('/mobile/workbench');
+        navigate(MOBILE_PATHS.workbench);
         break;
       case 'tasks':
-        navigate('/mobile/tasks');
+        navigate(MOBILE_PATHS.tasks);
         break;
       case 'scan':
-        navigate('/mobile/scan-page');
+        navigate(MOBILE_PATHS.scanPage);
         break;
       case 'approval':
-        navigate('/mobile/approvals');
+        navigate(MOBILE_PATHS.approvals);
         break;
       case 'profile':
-        navigate('/mobile/settings');
+        navigate(MOBILE_PATHS.settings);
         break;
     }
   };
@@ -453,7 +454,7 @@ const MobileProductionPage: React.FC = () => {
     <MobileLayout
       title='移动生产'
       showBack
-      onBackClick={() => navigate('/mobile/workbench')}
+      onBackClick={() => navigate(MOBILE_PATHS.workbench)}
       showNotifications
       notificationCount={5}
       showTabBar
@@ -464,7 +465,7 @@ const MobileProductionPage: React.FC = () => {
         <IconButton
           size='large'
           sx={{ minWidth: 44, minHeight: 44 }}
-          onClick={() => navigate('/mobile/scan-page')}
+          onClick={() => navigate(MOBILE_PATHS.scanPage)}
         >
           <Barcode style={{ width: 20, height: 20 }} />
         </IconButton>
