@@ -47,6 +47,7 @@ import {
 } from '@/api/bi';
 import { designTokens } from '@/theme/tokens';
 import { logger } from '@/utils/logger';
+import { BI_PATHS } from '@/modules/bi/config';
 
 const ct = designTokens.colors;
 
@@ -342,7 +343,7 @@ const BIComparisonPage = () => {
               <Box sx={{ flex: 1 }} />
               <Button
                 variant='outlined'
-                onClick={() => navigate('/bi/dashboard')}
+                onClick={() => navigate(BI_PATHS.dashboard)}
               >
                 返回数据大屏
               </Button>

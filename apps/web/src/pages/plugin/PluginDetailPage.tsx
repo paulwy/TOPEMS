@@ -44,6 +44,7 @@ import { getPlugin, getPluginVersions, getPluginReviews, submitPluginReview } fr
 import { usePluginStore } from '@/store/pluginStore';
 import { useAppStore } from '@/store';
 import { logger } from '@/utils/logger';
+import { PLUGIN_PATHS } from '@/modules/plugin/config';
 
 const PluginDetailPage: React.FC = () => {
   const { pluginCode } = useParams<{ pluginCode: string }>();
@@ -212,7 +213,7 @@ const PluginDetailPage: React.FC = () => {
       <Box sx={{ mb: 4 }}>
         <Button
           startIcon={<ArrowLeft sx={{ width: 20, height: 20 }} />}
-          onClick={() => navigate('/plugin/marketplace')}
+          onClick={() => navigate(PLUGIN_PATHS.marketplace)}
           sx={{ mb: 3 }}
         >
           返回插件市场

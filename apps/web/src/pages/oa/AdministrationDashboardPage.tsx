@@ -26,6 +26,7 @@ import {
 } from 'lucide-react';
 import { PageContainer } from '@/components/common';
 import { designTokens } from '@/theme/tokens';
+import { OA_PATHS } from '@/modules/oa/config';
 
 const ct = designTokens.colors;
 
@@ -182,13 +183,13 @@ const quickActions: QuickAction[] = [
     path: '/oa/meeting',
   },
   { label: '办公用品', icon: <Package />, color: 'teal', bg: ct.teal[100], path: '/oa/supplies' },
-  { label: '车辆预约', icon: <Car />, color: 'red', bg: 'error.lighter', path: '/oa/vehicle' },
+  { label: '车辆预约', icon: <Car />, color: 'red', bg: 'error.lighter', path: OA_PATHS.vehicle },
   {
     label: '公告通知',
     icon: <Bell />,
     color: 'purple',
     bg: 'secondary.100',
-    path: '/oa/announcement',
+    path: OA_PATHS.announcement,
   },
   {
     label: '考勤查询',

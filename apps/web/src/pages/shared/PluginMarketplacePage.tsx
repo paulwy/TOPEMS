@@ -39,6 +39,7 @@ import { getPluginCategories, listPlugins, getMarketplaceSummary } from '@/api/p
 import { usePluginStore } from '@/store/pluginStore';
 import { useAppStore } from '@/store';
 import { logger } from '@/utils/logger';
+import { PLUGIN_PATHS } from '@/modules/plugin/config';
 
 type SortOption = 'popular' | 'rating' | 'newest' | 'price';
 type ViewMode = 'grid' | 'list';
@@ -168,7 +169,7 @@ const PluginMarketplacePage: React.FC = () => {
   }, [activeTab, activeCategory, searchQuery, plugins, featuredPlugins]);
 
   const handleViewDetails = (pluginCode: string) => {
-    navigate(`/plugin/${pluginCode}`);
+    navigate(PLUGIN_PATHS.detail.replace(':id', pluginCode));
   };
 
   if (loading) {

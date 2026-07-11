@@ -1,5 +1,6 @@
 import { useMemo } from 'react';
 import { useLocation } from 'react-router-dom';
+import { BI_PATHS } from '@/modules/bi/config';
 
 export interface AIRecommendation {
   id: string;
@@ -119,14 +120,14 @@ const moduleRecommendations: Record<string, AIRecommendation[]> = {
       id: 'anomaly-detection',
       label: '异常检测',
       description: '智能检测数据异常',
-      action: '/bi/dashboard',
+      action: BI_PATHS.dashboard,
       icon: 'alert-circle',
     },
     {
       id: 'data-summary',
       label: '数据摘要',
       description: '自动生成数据分析摘要',
-      action: '/bi/analytics',
+      action: BI_PATHS.analytics,
       icon: 'file-text',
     },
   ],

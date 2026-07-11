@@ -2,6 +2,8 @@ import React, { useEffect, useState, useCallback, useMemo, useRef } from 'react'
 import { apiLogger } from '@/utils/logger';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { GIS_PATHS } from '@/modules/gis/config';
+import { BI_PATHS } from '@/modules/bi/config';
+import { IM_PATHS } from '@/modules/im/config';
 import {
   Box,
   Typography,
@@ -779,7 +781,7 @@ const DashboardPage: React.FC<DashboardPageProps> = ({ onLogout }) => {
           title: '商业智能',
           icon: BarChart3,
           description: '数据大屏、概览分析、各模块数据统计',
-          path: '/bi/dashboard',
+          path: BI_PATHS.dashboard,
           color: 'bg-emerald-500',
           status: 'new' as const,
           permission: null,
@@ -869,7 +871,7 @@ const DashboardPage: React.FC<DashboardPageProps> = ({ onLogout }) => {
           title: '即时通讯',
           icon: MessageSquare,
           description: '聊天会话、项目群组、消息通知',
-          path: '/im',
+          path: IM_PATHS.root,
           color: 'bg-pink-500',
           status: 'new' as const,
           permission: 'im:read',

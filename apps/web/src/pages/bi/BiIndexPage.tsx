@@ -46,6 +46,7 @@ import {
 } from '@/api/bi';
 import { logger } from '@/utils/logger';
 import { designTokens } from '@/theme/tokens';
+import { BI_PATHS } from '@/modules/bi/config';
 
 const ct = designTokens.colors;
 
@@ -53,7 +54,7 @@ const quickActions = [
   {
     icon: <LayoutDashboard size={24} />,
     label: '新建仪表盘',
-    path: '/bi/dashboard',
+    path: BI_PATHS.dashboard,
     color: ct.secondary[400],
     bg: ct.secondary[50],
   },
@@ -439,7 +440,7 @@ const BiIndexPage = () => {
                           size='small'
                           endIcon={<ChevronRight size={16} />}
                           sx={{ textTransform: 'none' }}
-                          href='/bi/dashboard'
+                          href={BI_PATHS.dashboard}
                         >
                           查看全部
                         </Button>

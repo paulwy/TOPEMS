@@ -1,6 +1,11 @@
 import { Navigate, useParams } from 'react-router-dom';
 import { ERP_PATHS } from '@/modules/erp/config';
 import { GIS_PATHS } from '@/modules/gis/config';
+import { BI_PATHS } from '@/modules/bi/config';
+import { OA_PATHS } from '@/modules/oa/config';
+import { LOWCODE_PATHS } from '@/modules/lowcode/config';
+import { IM_PATHS } from '@/modules/im/config';
+import { PLUGIN_PATHS } from '@/modules/plugin/config';
 
 const RedirectDocumentDetail: React.FC = () => {
   const { id } = useParams<{ id: string }>();
@@ -1253,7 +1258,7 @@ export const legacyRedirects = [
     path: '/meeting-rooms',
     element: (
       <Navigate
-        to='/oa/meeting-room'
+        to={OA_PATHS.meetingRoom}
         replace
       />
     ),
@@ -1271,7 +1276,7 @@ export const legacyRedirects = [
     path: '/announcements',
     element: (
       <Navigate
-        to='/oa/announcement'
+        to={OA_PATHS.announcement}
         replace
       />
     ),
@@ -1381,7 +1386,7 @@ export const legacyRedirects = [
     path: '/bi/analysis',
     element: (
       <Navigate
-        to='/bi/data-analysis'
+        to={BI_PATHS.dataAnalysis}
         replace
       />
     ),
@@ -1390,7 +1395,7 @@ export const legacyRedirects = [
     path: '/bi/reports',
     element: (
       <Navigate
-        to='/bi/report'
+        to={BI_PATHS.report}
         replace
       />
     ),
@@ -1399,7 +1404,7 @@ export const legacyRedirects = [
     path: '/bi/datasets',
     element: (
       <Navigate
-        to='/bi/dataset'
+        to={BI_PATHS.dataset}
         replace
       />
     ),
@@ -1408,7 +1413,7 @@ export const legacyRedirects = [
     path: '/bi/datasources',
     element: (
       <Navigate
-        to='/bi/data-source'
+        to={BI_PATHS.dataSource}
         replace
       />
     ),
@@ -1417,7 +1422,7 @@ export const legacyRedirects = [
     path: '/bi/visualizations',
     element: (
       <Navigate
-        to='/bi/visualization'
+        to={BI_PATHS.visualization}
         replace
       />
     ),
@@ -1426,7 +1431,7 @@ export const legacyRedirects = [
     path: '/bi/permissions',
     element: (
       <Navigate
-        to='/bi/permission'
+        to={BI_PATHS.permission}
         replace
       />
     ),
@@ -1435,7 +1440,7 @@ export const legacyRedirects = [
     path: '/bi/module/:moduleId',
     element: (
       <Navigate
-        to='/bi/module-detail'
+        to={BI_PATHS.moduleDetail}
         replace
       />
     ),
@@ -1657,7 +1662,7 @@ export const legacyRedirects = [
     path: '/mail',
     element: (
       <Navigate
-        to='/im/mail'
+        to={IM_PATHS.mail}
         replace
       />
     ),
@@ -1688,7 +1693,7 @@ export const legacyRedirects = [
     path: '/admin/plugins',
     element: (
       <Navigate
-        to='/plugin/marketplace'
+        to={PLUGIN_PATHS.marketplace}
         replace
       />
     ),
@@ -1697,7 +1702,7 @@ export const legacyRedirects = [
     path: '/plugin/:pluginCode',
     element: (
       <Navigate
-        to='/plugin/:id'
+        to={PLUGIN_PATHS.detail}
         replace
       />
     ),
@@ -1887,7 +1892,7 @@ export const legacyRedirects = [
     path: '/lowcode/overview',
     element: (
       <Navigate
-        to='/lowcode/home'
+        to={LOWCODE_PATHS.home}
         replace
       />
     ),
@@ -1896,7 +1901,7 @@ export const legacyRedirects = [
     path: '/lowcode/apps/:appId',
     element: (
       <Navigate
-        to='/lowcode/app-detail'
+        to={LOWCODE_PATHS.appDetail}
         replace
       />
     ),
@@ -1905,7 +1910,7 @@ export const legacyRedirects = [
     path: '/lowcode/apps',
     element: (
       <Navigate
-        to='/lowcode/app'
+        to={LOWCODE_PATHS.app}
         replace
       />
     ),
@@ -1914,7 +1919,7 @@ export const legacyRedirects = [
     path: '/lowcode/models/:modelId',
     element: (
       <Navigate
-        to='/lowcode/data-model-designer'
+        to={LOWCODE_PATHS.dataModelDesigner}
         replace
       />
     ),
@@ -1923,7 +1928,7 @@ export const legacyRedirects = [
     path: '/lowcode/models',
     element: (
       <Navigate
-        to='/lowcode/data-model'
+        to={LOWCODE_PATHS.dataModel}
         replace
       />
     ),
@@ -1932,7 +1937,7 @@ export const legacyRedirects = [
     path: '/lowcode/datasources',
     element: (
       <Navigate
-        to='/lowcode/data-source'
+        to={LOWCODE_PATHS.dataSource}
         replace
       />
     ),
@@ -1941,7 +1946,7 @@ export const legacyRedirects = [
     path: '/lowcode/forms/new',
     element: (
       <Navigate
-        to='/lowcode/form-designer'
+        to={LOWCODE_PATHS.formDesigner}
         replace
       />
     ),
@@ -1950,7 +1955,7 @@ export const legacyRedirects = [
     path: '/lowcode/forms/:formId',
     element: (
       <Navigate
-        to='/lowcode/form-designer'
+        to={LOWCODE_PATHS.formDesigner}
         replace
       />
     ),
@@ -1959,7 +1964,7 @@ export const legacyRedirects = [
     path: '/lowcode/forms',
     element: (
       <Navigate
-        to='/lowcode/form'
+        to={LOWCODE_PATHS.form}
         replace
       />
     ),
@@ -1968,7 +1973,7 @@ export const legacyRedirects = [
     path: '/lowcode/pages/new',
     element: (
       <Navigate
-        to='/lowcode/page-designer'
+        to={LOWCODE_PATHS.pageDesigner}
         replace
       />
     ),
@@ -1977,7 +1982,7 @@ export const legacyRedirects = [
     path: '/lowcode/pages/:pageId',
     element: (
       <Navigate
-        to='/lowcode/page-designer'
+        to={LOWCODE_PATHS.pageDesigner}
         replace
       />
     ),
@@ -1986,7 +1991,7 @@ export const legacyRedirects = [
     path: '/lowcode/pages',
     element: (
       <Navigate
-        to='/lowcode/page'
+        to={LOWCODE_PATHS.page}
         replace
       />
     ),
