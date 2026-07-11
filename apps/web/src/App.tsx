@@ -17,7 +17,6 @@ import {
   authRoutes,
   dashboardRoutes,
   commonRoutes,
-  legacyRedirects,
   loadModuleConfig,
   coreModuleCodes,
   type RouteConfig,
@@ -232,14 +231,6 @@ const AppContent: React.FC = () => {
           path='*'
           element={<DynamicRoutes />}
         />
-
-        {legacyRedirects.map((redirect) => (
-          <Route
-            key={redirect.path}
-            path={redirect.path}
-            element={redirect.element}
-          />
-        ))}
 
         {!IS_STATIC_MODE && (
           <Route
