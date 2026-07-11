@@ -36,6 +36,7 @@ import {
   Button,
 } from '@mui/material';
 import { designTokens } from '@/theme/tokens';
+import { DASHBOARD_PATHS } from '@/routes/dashboard';
 
 const ct = designTokens.colors;
 
@@ -502,8 +503,8 @@ const AssetManagementPage: React.FC<AssetManagementPageProps> = ({ onNavigate })
         title=''
         subtitle=''
         backButton={{
-          href: '/dashboard',
-          onClick: () => navigate('/dashboard'),
+          href: DASHBOARD_PATHS.dashboard,
+          onClick: () => navigate(DASHBOARD_PATHS.dashboard),
         }}
         columns={columns}
         data={paginatedAssets}

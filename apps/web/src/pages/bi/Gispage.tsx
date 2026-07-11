@@ -71,6 +71,7 @@ import {
 } from '@mui/material';
 import { PageContainer } from '@/components/common';
 import { designTokens } from '@/theme/tokens';
+import { DASHBOARD_PATHS } from '@/routes/dashboard';
 
 const ct = designTokens.colors;
 
@@ -980,7 +981,7 @@ const GisContent: React.FC = () => {
               sx={{ alignItems: 'center' }}
             >
               <IconButton
-                onClick={() => navigate('/dashboard')}
+                onClick={() => navigate(DASHBOARD_PATHS.dashboard)}
                 aria-label='返回首页'
               >
                 <ChevronRight style={{ transform: 'rotate(180deg)' }} />

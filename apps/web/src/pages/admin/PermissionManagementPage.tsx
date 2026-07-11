@@ -21,6 +21,7 @@ import { ModeToggle } from '@/components/theme/ModeToggle';
 import { ListPageTemplate, type ColumnDef } from '@/components/templates';
 import { extractErrorMessage } from '@/utils/errors';
 import { PageContainer } from '@/components/common';
+import { DASHBOARD_PATHS } from '@/routes/dashboard';
 
 interface PermissionManagementPageProps {
   onNavigate?: (page: string) => void;
@@ -446,10 +447,10 @@ const PermissionManagementPage: React.FC<PermissionManagementPageProps> = ({
       <ListPageTemplate
         title=''
         subtitle=''
-        breadcrumbs={[{ label: '首页', href: '/' }, { label: '系统管理' }, { label: '权限管理' }]}
+        breadcrumbs={[{ label: '首页', href: DASHBOARD_PATHS.dashboard }, { label: '系统管理' }, { label: '权限管理' }]}
         backButton={{
-          href: '/dashboard',
-          onClick: () => navigate('/dashboard'),
+          href: DASHBOARD_PATHS.dashboard,
+          onClick: () => navigate(DASHBOARD_PATHS.dashboard),
         }}
         columns={columns}
         data={paginatedPermissions}

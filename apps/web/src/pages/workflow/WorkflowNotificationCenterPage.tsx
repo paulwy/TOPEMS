@@ -7,6 +7,7 @@ import { useAppStore } from '../../store';
 import { apiLogger } from '@/utils/logger';
 import { Box, Typography, Tabs, Tab, CircularProgress, Button } from '@mui/material';
 import { PageContainer } from '@/components/common';
+import { WORKFLOW_PATHS } from '@/modules/workflow/config';
 
 // TODO(v2-phase2): Replace CircularProgress with LoadingSpinner from '@topems/shared-components'. Complex usage found - manual review needed.
 
@@ -85,9 +86,9 @@ const FlowNotificationCenter: React.FC = () => {
 
     // Navigate based on notification type
     if (notification.workflow_instance_id) {
-      navigate(`/flow/instances`);
+      navigate(WORKFLOW_PATHS.instances);
     } else if (notification.approval_id) {
-      navigate(`/flow/approvals`);
+      navigate(WORKFLOW_PATHS.approvals);
     }
   };
 

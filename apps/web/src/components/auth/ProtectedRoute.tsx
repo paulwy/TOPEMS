@@ -5,6 +5,7 @@ import { useAuth } from '../../hooks/useAuth';
 import { usePermission } from '../../hooks/usePermission';
 import { useRole } from '../../hooks/useRole';
 import { Button, Box, Typography, useTheme } from '@mui/material';
+import { AUTH_PATHS } from '../../routes/auth';
 
 interface ProtectedRouteProps {
   children: ReactNode;
@@ -19,7 +20,7 @@ export const ProtectedRoute: React.FC<ProtectedRouteProps> = ({
   requiredPermissions = [],
   requiredRoles = [],
   requireAllPermissions = false,
-  fallbackPath = '/login',
+  fallbackPath = AUTH_PATHS.login,
 }) => {
   const { isAuthenticated, isLoading, logout } = useAuth();
   const { checkAnyPermission, checkAllPermissions } = usePermission();
@@ -106,7 +107,7 @@ export const ProtectedRoute: React.FC<ProtectedRouteProps> = ({
               <Button
                 onClick={() => {
                   logout();
-                  window.location.href = '/login';
+                  window.location.href = AUTH_PATHS.login;
                 }}
                 variant='contained'
                 color='primary'
@@ -157,7 +158,7 @@ export const ProtectedRoute: React.FC<ProtectedRouteProps> = ({
               <Button
                 onClick={() => {
                   logout();
-                  window.location.href = '/login';
+                  window.location.href = AUTH_PATHS.login;
                 }}
                 variant='contained'
                 color='primary'

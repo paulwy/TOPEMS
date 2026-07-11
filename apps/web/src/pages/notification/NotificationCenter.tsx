@@ -31,6 +31,7 @@ import NotificationSettings from '@/components/notifications/NotificationSetting
 import useNotificationSettings from '@/hooks/useNotificationSettings';
 import { apiLogger } from '@/utils/logger';
 import { PageContainer } from '@/components';
+import { NOTIFICATION_PATHS } from '@/modules/notification/config';
 import { designTokens } from '@/theme/tokens';
 
 const ct = designTokens.colors;
@@ -211,7 +212,7 @@ const NotificationCenter: React.FC = () => {
           <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
             <Box
               component='button'
-              onClick={() => navigate('/notifications/stats')}
+              onClick={() => navigate(NOTIFICATION_PATHS.statistics)}
               sx={{
                 p: 1,
                 borderRadius: 3,
@@ -226,7 +227,7 @@ const NotificationCenter: React.FC = () => {
             </Box>
             <Box
               component='button'
-              onClick={() => navigate('/notifications/templates')}
+              onClick={() => navigate(NOTIFICATION_PATHS.templates)}
               sx={{
                 p: 1,
                 borderRadius: 3,
@@ -241,7 +242,7 @@ const NotificationCenter: React.FC = () => {
             </Box>
             <Box
               component='button'
-              onClick={() => navigate('/notifications/archive')}
+              onClick={() => navigate(NOTIFICATION_PATHS.archive)}
               sx={{
                 p: 1,
                 borderRadius: 3,

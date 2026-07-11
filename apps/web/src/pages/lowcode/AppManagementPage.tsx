@@ -19,6 +19,7 @@ import {
 } from '@mui/material';
 import { Search, Plus, LayoutGrid, List, Filter } from 'lucide-react';
 import { PageContainer } from '@/components/common';
+import { LOWCODE_PATHS } from '@/modules/lowcode/config';
 import { listApps, createApp, deleteApp } from '../../api/lowcode';
 import type { LowCodeApp } from '../../api/lowcode/types';
 import AppCard from '../../components/lowcode/AppCard';
@@ -185,8 +186,8 @@ const AppManagementPage = () => {
             >
               <AppCard
                 app={app}
-                onClick={() => navigate(`/lowcode/apps/${app.id}`)}
-                onEdit={() => navigate(`/lowcode/apps/${app.id}`)}
+                onClick={() => navigate(LOWCODE_PATHS.appDetail.replace(':appId', app.id))}
+                onEdit={() => navigate(LOWCODE_PATHS.appDetail.replace(':appId', app.id))}
                 onPublish={() => handlePublishApp(app)}
                 onDelete={() => handleDeleteApp(app.id)}
               />

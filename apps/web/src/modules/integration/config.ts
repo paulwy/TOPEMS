@@ -11,6 +11,7 @@ export const INTEGRATION_PATHS = {
   mappings: '/integration/mappings',
   events: '/integration/events',
   erpOverview: '/integration/erp-overview',
+  externalErp: '/integration/external-erp',
   limsQms: '/integration/lims-qms',
   mesErp: '/integration/mes-erp',
   wmsScm: '/integration/wms-scm',

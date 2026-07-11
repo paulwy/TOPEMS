@@ -1,4 +1,5 @@
 import React from 'react';
+import { vi } from 'vitest';
 import { render, screen, fireEvent } from '@testing-library/react';
 import { StatusBadge, DEFAULT_STATUS_MAP } from '../components/StatusBadge';
 

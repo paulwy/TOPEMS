@@ -1,6 +1,11 @@
 import React, { lazy } from 'react';
 import { createSafeLazy, type RouteConfig } from './utils';
 
+export const AUTH_PATHS = {
+  login: '/login',
+  forgotPassword: '/forgot-password',
+} as const;
+
 const safeLazy = createSafeLazy();
 
 const LoginPage = safeLazy(() => import('../pages/shared/LoginPage'));
@@ -8,11 +13,11 @@ const ForgotPasswordPage = safeLazy(() => import('../pages/shared/ForgotPassword
 
 export const authRoutes: RouteConfig[] = [
   {
-    path: '/login',
+    path: AUTH_PATHS.login,
     element: LoginPage,
   },
   {
-    path: '/forgot-password',
+    path: AUTH_PATHS.forgotPassword,
     element: ForgotPasswordPage,
   },
 ];

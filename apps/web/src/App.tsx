@@ -21,6 +21,10 @@ import {
   coreModuleCodes,
   type RouteConfig,
 } from './routes';
+import { DASHBOARD_PATHS } from './routes/dashboard';
+import { HRM_PATHS } from './modules/hrm/config';
+import { CRM_PATHS } from './modules/crm/config';
+import { ADMIN_PATHS } from './modules/admin/config';
 import { eventBus, ModuleEvents } from './modules/loader/EventBus';
 
 const TemplateDemoPage = lazy(() =>
@@ -259,13 +263,13 @@ const AppContent: React.FC = () => {
                     <p>或者访问其他模块：</p>
                     <ul>
                       <li>
-                        <a href='/hrm'>人力资源管理</a>
+                        <a href={HRM_PATHS.root}>人力资源管理</a>
                       </li>
                       <li>
-                        <a href='/crm'>客户关系管理</a>
+                        <a href={CRM_PATHS.root}>客户关系管理</a>
                       </li>
                       <li>
-                        <a href='/dashboard'>仪表盘</a>
+                        <a href={DASHBOARD_PATHS.dashboard}>仪表盘</a>
                       </li>
                     </ul>
                   </div>
@@ -279,7 +283,7 @@ const AppContent: React.FC = () => {
           path='/departments'
           element={
             <Navigate
-              to='/hrm/departments'
+              to={HRM_PATHS.departments}
               replace
             />
           }
@@ -288,7 +292,7 @@ const AppContent: React.FC = () => {
           path='/employees'
           element={
             <Navigate
-              to='/hrm/employees'
+              to={HRM_PATHS.employees}
               replace
             />
           }
@@ -297,7 +301,7 @@ const AppContent: React.FC = () => {
           path='/contracts'
           element={
             <Navigate
-              to='/hrm/contracts'
+              to={HRM_PATHS.contracts}
               replace
             />
           }
@@ -306,7 +310,7 @@ const AppContent: React.FC = () => {
           path='/reports'
           element={
             <Navigate
-              to='/hrm/reports'
+              to={HRM_PATHS.reports}
               replace
             />
           }
@@ -315,7 +319,7 @@ const AppContent: React.FC = () => {
           path='/config-debug'
           element={
             <Navigate
-              to='/admin/config-debug'
+              to={ADMIN_PATHS.configDebug}
               replace
             />
           }
@@ -328,7 +332,7 @@ const AppContent: React.FC = () => {
           path='/'
           element={
             <Navigate
-              to='/dashboard'
+              to={DASHBOARD_PATHS.dashboard}
               replace
             />
           }

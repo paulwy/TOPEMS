@@ -12,6 +12,7 @@ import {
 import { ArrowLeft, Database, Save, Upload } from 'lucide-react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { PageContainer } from '@/components/common';
+import { LOWCODE_PATHS } from '@/modules/lowcode/config';
 import { getDataModel, updateDataModel, listDataModels, publishModel } from '../../api/lowcode';
 import type { DataModel } from '../../api/lowcode/types';
 import DataModelDesigner from '../../components/lowcode/DataModelDesigner';
@@ -93,7 +94,7 @@ const DataModelDesignerPage = () => {
             <Link
               underline='hover'
               color='inherit'
-              onClick={() => navigate('/lowcode/models')}
+              onClick={() => navigate(LOWCODE_PATHS.dataModel)}
               sx={{ cursor: 'pointer' }}
             >
               数据模型
@@ -104,7 +105,7 @@ const DataModelDesignerPage = () => {
           </Breadcrumbs>
           <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
             <IconButton
-              onClick={() => navigate('/lowcode/models')}
+              onClick={() => navigate(LOWCODE_PATHS.dataModel)}
               size='small'
             >
               <ArrowLeft style={{ width: 20, height: 20 }} />

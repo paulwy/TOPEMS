@@ -32,6 +32,7 @@ import { PageContainer } from '@/components';
 import { lowcodeApi } from '@/api';
 import type { FormSchema, PageSchema } from '@/api/lowcode';
 import { useNavigate } from 'react-router-dom';
+import { LOWCODE_PATHS } from '@/modules/lowcode/config';
 
 const LowCodeHomePage: React.FC = () => {
   const theme = useTheme();
@@ -93,28 +94,28 @@ const LowCodeHomePage: React.FC = () => {
       icon: FileText,
       title: '新建表单',
       description: '快速创建一个新的表单',
-      action: () => navigate('/lowcode/forms/new'),
+      action: () => navigate(LOWCODE_PATHS.formDesigner.replace(':id', 'new')),
       color: 'primary',
     },
     {
       icon: Layout,
       title: '新建页面',
       description: '可视化搭建业务页面',
-      action: () => navigate('/lowcode/pages/new'),
+      action: () => navigate(LOWCODE_PATHS.pageDesigner.replace(':id', 'new')),
       color: 'secondary',
     },
     {
       icon: FileEdit,
       title: '表单模板',
       description: '从模板快速创建',
-      action: () => navigate('/lowcode/forms'),
+      action: () => navigate(LOWCODE_PATHS.form),
       color: 'success',
     },
     {
       icon: TrendingUp,
       title: '数据大屏',
       description: '可视化数据看板',
-      action: () => navigate('/lowcode/pages'),
+      action: () => navigate(LOWCODE_PATHS.page),
       color: 'info',
     },
   ];
@@ -243,7 +244,7 @@ const LowCodeHomePage: React.FC = () => {
                 </Typography>
                 <Button
                   size='small'
-                  onClick={() => navigate('/lowcode/forms')}
+                  onClick={() => navigate(LOWCODE_PATHS.form)}
                 >
                   查看全部
                 </Button>
@@ -264,7 +265,7 @@ const LowCodeHomePage: React.FC = () => {
                         bgcolor: 'action.hover',
                       },
                     }}
-                    onClick={() => navigate(`/lowcode/forms/${form.id}`)}
+                    onClick={() => navigate(LOWCODE_PATHS.formDesigner.replace(':id', form.id))}
                   >
                     <CardContent sx={{ p: 2, '&:last-child': { pb: 2 } }}>
                       <Stack
@@ -340,7 +341,7 @@ const LowCodeHomePage: React.FC = () => {
                       size='small'
                       startIcon={<Plus size={16} />}
                       sx={{ mt: 1 }}
-                      onClick={() => navigate('/lowcode/forms/new')}
+                      onClick={() => navigate(LOWCODE_PATHS.formDesigner.replace(':id', 'new'))}
                     >
                       新建表单
                     </Button>
@@ -369,7 +370,7 @@ const LowCodeHomePage: React.FC = () => {
                 </Typography>
                 <Button
                   size='small'
-                  onClick={() => navigate('/lowcode/pages')}
+                  onClick={() => navigate(LOWCODE_PATHS.page)}
                 >
                   查看全部
                 </Button>
@@ -390,7 +391,7 @@ const LowCodeHomePage: React.FC = () => {
                         bgcolor: 'action.hover',
                       },
                     }}
-                    onClick={() => navigate(`/lowcode/pages/${page.id}`)}
+                    onClick={() => navigate(LOWCODE_PATHS.pageDesigner.replace(':id', page.id))}
                   >
                     <CardContent sx={{ p: 2, '&:last-child': { pb: 2 } }}>
                       <Stack
@@ -466,7 +467,7 @@ const LowCodeHomePage: React.FC = () => {
                       size='small'
                       startIcon={<Plus size={16} />}
                       sx={{ mt: 1 }}
-                      onClick={() => navigate('/lowcode/pages/new')}
+                      onClick={() => navigate(LOWCODE_PATHS.pageDesigner.replace(':id', 'new'))}
                     >
                       新建页面
                     </Button>

@@ -1024,9 +1024,10 @@ module.exports = {
 ```ts
 // Playwright 无障碍测试（未来集成）
 import AxeBuilder from '@axe-core/playwright';
+import { DASHBOARD_PATHS } from '@/routes/dashboard';
 
 test('Dashboard accessibility', async ({ page }) => {
-  await page.goto('/dashboard');
+  await page.goto(DASHBOARD_PATHS.dashboard);
   const accessibilityScanResults = await new AxeBuilder({ page }).analyze();
   expect(accessibilityScanResults.violations).toEqual([]);
 });

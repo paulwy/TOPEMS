@@ -32,6 +32,8 @@ import { useNavigate } from 'react-router-dom';
 import { navigationRegistryV2 } from '@/lib/navigation';
 import type { NavItem } from '@/lib/navigation/types';
 import { renderIcon } from '@/lib/iconMapping';
+import { DASHBOARD_PATHS } from '@/routes/dashboard';
+import { ADMIN_PATHS } from '@/modules/admin/config';
 
 export interface CommandPaletteProps {
   open: boolean;
@@ -116,7 +118,7 @@ export const CommandPalette: React.FC<CommandPaletteProps> = ({ open, onClose })
         label: '系统设置',
         description: '打开系统设置页面',
         icon: <Settings style={{ width: 18, height: 18 }} />,
-        action: () => navigate('/admin/system-settings'),
+        action: () => navigate(ADMIN_PATHS.systemSettings),
         category: 'action',
       },
       {
@@ -124,7 +126,7 @@ export const CommandPalette: React.FC<CommandPaletteProps> = ({ open, onClose })
         label: '个人中心',
         description: '查看和编辑个人信息',
         icon: <User style={{ width: 18, height: 18 }} />,
-        action: () => navigate('/profile'),
+        action: () => navigate(DASHBOARD_PATHS.profile),
         category: 'action',
       },
       {
@@ -132,7 +134,7 @@ export const CommandPalette: React.FC<CommandPaletteProps> = ({ open, onClose })
         label: '返回首页',
         description: '回到首页仪表盘',
         icon: <Home style={{ width: 18, height: 18 }} />,
-        action: () => navigate('/dashboard'),
+        action: () => navigate(DASHBOARD_PATHS.dashboard),
         category: 'action',
       },
     ],

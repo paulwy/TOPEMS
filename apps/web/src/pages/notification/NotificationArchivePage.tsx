@@ -18,6 +18,7 @@ import {
   updateArchiveConfig,
   runAutoArchive,
 } from '@/api/notification';
+import { NOTIFICATION_PATHS } from '@/modules/notification/config';
 import { useNotification } from '@/hooks/useNotification';
 import { apiLogger } from '@/utils/logger';
 import {
@@ -250,7 +251,7 @@ const NotificationArchivePage: React.FC = () => {
         title=''
         subtitle=''
         backButton={{
-          onClick: () => navigate('/notifications'),
+          onClick: () => navigate(NOTIFICATION_PATHS.list),
         }}
         columns={columns}
         data={filteredNotifications}

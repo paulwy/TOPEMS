@@ -41,11 +41,11 @@ export interface BackNavigationResult {
  * ```tsx
  * // 列表页跳转详情页时携带来源信息
  * const { createNavigateState } = useBackNavigation();
- * navigate(`/hrm/employee/${id}`, createNavigateState({ page: 1, filter: 'active' }));
+ * navigate(HRM_PATHS.employeeDetail.replace(':id', id), createNavigateState({ page: 1, filter: 'active' }));
  *
  * // 详情页返回时智能返回来源页
  * const { goBack, fromFullPath } = useBackNavigation();
- * <Button onClick={() => goBack('/hrm/employees')}>返回</Button>
+ * <Button onClick={() => goBack(HRM_PATHS.employees)}>返回</Button>
  * ```
  */
 export function useBackNavigation(): BackNavigationResult {

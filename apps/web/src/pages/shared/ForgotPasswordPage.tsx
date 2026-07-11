@@ -20,6 +20,7 @@ import {
 
 import { ModeToggle } from '@/components/theme/ModeToggle';
 import { designTokens } from '@/theme/tokens';
+import { AUTH_PATHS } from '@/routes/auth';
 
 const ct = designTokens.colors;
 
@@ -286,7 +287,7 @@ const ForgotPasswordPage: React.FC = () => {
                 我们已向您的邮箱发送了密码重置链接，请查收并点击链接完成重置。
               </Typography>
               <Button
-                onClick={() => navigate('/login')}
+                onClick={() => navigate(AUTH_PATHS.login)}
                 variant='contained'
                 fullWidth
                 sx={{
@@ -313,21 +314,21 @@ const ForgotPasswordPage: React.FC = () => {
                 您的密码已成功重置，请使用新密码登录。
               </Typography>
               <Button
-                onClick={() => navigate('/login')}
-                variant='contained'
-                fullWidth
-                sx={{
-                  height: 48,
-                  borderRadius: 1.5,
-                  fontWeight: 600,
-                  background: `linear-gradient(135deg, ${ct.secondary[400]} 0%, ${ct.secondary.dark} 100%)`,
-                  '&:hover': {
-                    background: `linear-gradient(135deg, ${ct.secondary[600]} 0%, ${ct.secondary[800]} 100%)`,
-                  },
-                }}
-              >
-                去登录
-              </Button>
+              onClick={() => navigate(AUTH_PATHS.login)}
+              variant='contained'
+              fullWidth
+              sx={{
+                height: 48,
+                borderRadius: 1.5,
+                fontWeight: 600,
+                background: `linear-gradient(135deg, ${ct.secondary[400]} 0%, ${ct.secondary.dark} 100%)`,
+                '&:hover': {
+                  background: `linear-gradient(135deg, ${ct.secondary[600]} 0%, ${ct.secondary[800]} 100%)`,
+                },
+              }}
+            >
+              去登录
+            </Button>
             </Box>
           )}
 
@@ -504,19 +505,19 @@ const ForgotPasswordPage: React.FC = () => {
 
           <Box sx={{ mt: 3, textAlign: 'center' }}>
             <Button
-              type='button'
-              onClick={() => navigate('/login')}
-              startIcon={<ArrowLeft size={16} />}
-              sx={{
-                color: ct.secondary[400],
-                '&:hover': { color: ct.secondary[600] },
-                fontSize: '0.875rem',
-                background: 'transparent',
-                fontWeight: 500,
-              }}
-            >
-              返回登录
-            </Button>
+            type='button'
+            onClick={() => navigate(AUTH_PATHS.login)}
+            startIcon={<ArrowLeft size={16} />}
+            sx={{
+              color: ct.secondary[400],
+              '&:hover': { color: ct.secondary[600] },
+              fontSize: '0.875rem',
+              background: 'transparent',
+              fontWeight: 500,
+            }}
+          >
+            返回登录
+          </Button>
           </Box>
         </CardContent>
       </MuiCard>

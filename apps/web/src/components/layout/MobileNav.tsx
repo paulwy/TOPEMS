@@ -27,6 +27,9 @@ import { usePermission } from '../../hooks/usePermission';
 import { navigationRegistryV2 } from '../../lib/navigation';
 import type { NavItem } from '../../lib/navigation/types';
 import { lucideIcons } from '../../lib/iconMapping';
+import { DASHBOARD_PATHS } from '@/routes/dashboard';
+import { AI_PATHS } from '@/modules/ai/config';
+import { NOTIFICATION_PATHS } from '@/modules/notification/config';
 
 function getNavigablePath(path: string): string | null {
   if (!path) return null;
@@ -263,16 +266,16 @@ export const MobileNav: React.FC<MobileNavProps> = ({ open, onClose, onOpen }) =
             <ListItem disablePadding>
               <ListItemButton
                 onClick={() => {
-                  navigate('/dashboard');
+                  navigate(DASHBOARD_PATHS.dashboard);
                   onClose();
                 }}
                 sx={{
                   pl: 2,
                   py: 1.75,
                   backgroundColor:
-                    location.pathname === '/dashboard' ? 'primary.50' : 'transparent',
+                    location.pathname === DASHBOARD_PATHS.dashboard ? 'primary.50' : 'transparent',
                   borderLeft:
-                    location.pathname === '/dashboard' ? '3px solid' : '3px solid transparent',
+                    location.pathname === DASHBOARD_PATHS.dashboard ? '3px solid' : '3px solid transparent',
                   borderColor: 'primary.main',
                   transition: 'all 0.2s ease-in-out',
                   '&:hover': {
@@ -288,12 +291,12 @@ export const MobileNav: React.FC<MobileNavProps> = ({ open, onClose, onOpen }) =
                       height: 32,
                       borderRadius: 1.5,
                       backgroundColor:
-                        location.pathname === '/dashboard' ? 'primary.main' : 'grey.100',
+                        location.pathname === DASHBOARD_PATHS.dashboard ? 'primary.main' : 'grey.100',
                       display: 'flex',
                       alignItems: 'center',
                       justifyContent: 'center',
                       transition: 'all 0.2s ease-in-out',
-                      color: location.pathname === '/dashboard' ? 'common.white' : 'text.secondary',
+                      color: location.pathname === DASHBOARD_PATHS.dashboard ? 'common.white' : 'text.secondary',
                     }}
                   >
                     <Home style={{ width: 18, height: 18 }} />
@@ -301,8 +304,8 @@ export const MobileNav: React.FC<MobileNavProps> = ({ open, onClose, onOpen }) =
                 </ListItemIcon>
                 <Typography
                   sx={{
-                    fontWeight: location.pathname === '/dashboard' ? 600 : 500,
-                    color: location.pathname === '/dashboard' ? 'primary.main' : 'text.primary',
+                    fontWeight: location.pathname === DASHBOARD_PATHS.dashboard ? 600 : 500,
+                    color: location.pathname === DASHBOARD_PATHS.dashboard ? 'primary.main' : 'text.primary',
                     fontSize: '0.95rem',
                     flex: 1,
                   }}
@@ -328,7 +331,7 @@ export const MobileNav: React.FC<MobileNavProps> = ({ open, onClose, onOpen }) =
             <IconButton
               size='small'
               onClick={() => {
-                navigate('/notifications');
+                navigate(NOTIFICATION_PATHS.list);
                 onClose();
               }}
             >
@@ -337,7 +340,7 @@ export const MobileNav: React.FC<MobileNavProps> = ({ open, onClose, onOpen }) =
             <IconButton
               size='small'
               onClick={() => {
-                navigate('/ai');
+                navigate(AI_PATHS.root);
                 onClose();
               }}
             >
@@ -346,7 +349,7 @@ export const MobileNav: React.FC<MobileNavProps> = ({ open, onClose, onOpen }) =
             <IconButton
               size='small'
               onClick={() => {
-                navigate('/help');
+                navigate(DASHBOARD_PATHS.help);
                 onClose();
               }}
             >

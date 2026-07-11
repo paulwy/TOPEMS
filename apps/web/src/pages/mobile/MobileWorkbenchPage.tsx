@@ -39,6 +39,7 @@ import { useAppStore } from '@/store';
 import { mobileApi, type MobileWorkbenchData } from '@/api/mobile';
 import { apiLogger } from '@/utils/logger';
 import { MOBILE_PATHS } from '@/modules/mobile/config';
+import { NOTIFICATION_PATHS } from '@/modules/notification/config';
 
 interface StatCard {
   id: string;
@@ -376,7 +377,7 @@ const MobileWorkbenchPage: React.FC = () => {
         navigate(MOBILE_PATHS.quality);
         break;
       case 'notification':
-        navigate('/notifications');
+        navigate(NOTIFICATION_PATHS.list);
         break;
     }
   };

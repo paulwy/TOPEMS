@@ -4,6 +4,7 @@ import { Box, CircularProgress } from '@mui/material';
 import { PageDesigner } from '@/components/lowcode';
 import { lowcodeApi } from '@/api';
 import type { PageSchema } from '@/api/lowcode';
+import { LOWCODE_PATHS } from '@/modules/lowcode/config';
 import { logger } from '@/utils/logger';
 
 const PageDesignerPage: React.FC = () => {
@@ -46,7 +47,7 @@ const PageDesignerPage: React.FC = () => {
           description: newSchema.description,
           components: newSchema.components,
         });
-        navigate(`/lowcode/pages/${created.id}`, { replace: true });
+        navigate(LOWCODE_PATHS.pageDesigner.replace(':id', created.id), { replace: true });
       }
     } catch (error) {
       logger.error('Failed to save page:', error);
@@ -84,7 +85,7 @@ const PageDesignerPage: React.FC = () => {
       initialSchema={schema || undefined}
       onSave={handleSave}
       onPublish={handlePublish}
-      onBack={() => navigate('/lowcode/pages')}
+      onBack={() => navigate(LOWCODE_PATHS.page)}
     />
   );
 };

@@ -4,6 +4,7 @@ import { Grid } from '@/components';
 import { useNavigate } from 'react-router-dom';
 import { MessageSquare, Phone } from 'lucide-react';
 import { useAuth } from '@/hooks';
+import { DASHBOARD_PATHS } from '@/routes/dashboard';
 
 // ── Mock Data ──────────────────────────────────────────────
 
@@ -219,7 +220,7 @@ const CompactHero: React.FC = () => {
             px: 2,
             '&:hover': { bgcolor: 'grey.100' },
           }}
-          onClick={() => navigate('/dashboard')}
+          onClick={() => navigate(DASHBOARD_PATHS.dashboard)}
         >
           进入工作台
         </Button>
@@ -257,7 +258,7 @@ const TodoList: React.FC = () => {
           </Badge>
           <Typography
             sx={{ fontSize: 13, color: 'primary.main', cursor: 'pointer' }}
-            onClick={() => navigate('/dashboard')}
+            onClick={() => navigate(DASHBOARD_PATHS.dashboard)}
           >
             查看全部
           </Typography>
@@ -317,7 +318,7 @@ const RecentActivities: React.FC = () => {
         </Typography>
         <Typography
           sx={{ fontSize: 13, color: 'primary.main', cursor: 'pointer' }}
-          onClick={() => navigate('/dashboard')}
+          onClick={() => navigate(DASHBOARD_PATHS.dashboard)}
         >
           查看全部
         </Typography>
@@ -385,7 +386,7 @@ const FrequentContacts: React.FC = () => {
         </Typography>
         <Typography
           sx={{ fontSize: 13, color: 'primary.main', cursor: 'pointer' }}
-          onClick={() => navigate('/addressbook')}
+          onClick={() => navigate(DASHBOARD_PATHS.addressbook)}
         >
           查看通讯录
         </Typography>

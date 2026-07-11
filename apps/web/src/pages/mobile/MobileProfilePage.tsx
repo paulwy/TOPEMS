@@ -34,6 +34,7 @@ import { MobileLayout, MobileCard } from '@/components/mobile';
 import { useAppStore } from '@/store';
 import { useResponsive } from '@/hooks';
 import { MOBILE_PATHS } from '@/modules/mobile/config';
+import { AUTH_PATHS } from '@/routes/auth';
 
 interface SettingGroup {
   title: string;
@@ -180,7 +181,7 @@ const MobileSettingsPage: React.FC = () => {
 
   const handleLogout = () => {
     setUser(null);
-    navigate('/login');
+    navigate(AUTH_PATHS.login);
   };
 
   const handleBottomTabChange = (tabId: string) => {

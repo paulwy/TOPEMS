@@ -31,6 +31,7 @@ import type { Supplier } from '@/api/scm';
 import { apiLogger } from '@/utils/logger';
 import { DetailPageTemplate, type TabConfig, type SectionConfig } from '@/components/templates';
 import { PageContainer } from '@/components/common';
+import { SCM_PATHS } from '@/modules/scm/config';
 
 const SupplierDetailPage: React.FC = () => {
   const { id } = useParams<{ id: string }>();
@@ -460,7 +461,7 @@ const SupplierDetailPage: React.FC = () => {
         <Box sx={{ textAlign: 'center' }}>
           <Typography sx={{ color: 'grey.500' }}>供应商不存在</Typography>
           <Button
-            onClick={() => navigate('/scm/suppliers')}
+            onClick={() => navigate(SCM_PATHS.suppliers)}
             sx={{ mt: 2 }}
           >
             返回列表
@@ -479,8 +480,8 @@ const SupplierDetailPage: React.FC = () => {
         title=''
         subtitle=''
         loading={loading}
-        backHref='/scm/suppliers'
-        onBack={() => navigate('/scm/suppliers')}
+        backHref={SCM_PATHS.suppliers}
+        onBack={() => navigate(SCM_PATHS.suppliers)}
         onEdit={() => setIsEditing(!isEditing)}
         infoCard={
           supplier

@@ -41,6 +41,7 @@ import { DetailPageTemplate } from '@/components/templates/DetailPageTemplate';
 import type { TabConfig, SectionConfig } from '@/components/templates/DetailPageTemplate';
 import { PageContainer } from '@/components/common';
 import { designTokens } from '@/theme/tokens';
+import { WORKFLOW_PATHS } from '@/modules/workflow/config';
 
 const ct = designTokens.colors;
 
@@ -872,7 +873,7 @@ const FlowApprovalDetailPage: React.FC = () => {
         subtitle={approval?.task_name}
         loading={loading}
         error={error}
-        backHref='/flow/approvals'
+        backHref={WORKFLOW_PATHS.approvals}
         tabs={tabs}
         actions={actions}
         infoCard={

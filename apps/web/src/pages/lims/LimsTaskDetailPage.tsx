@@ -37,6 +37,7 @@ import { useAppStore } from '@/store';
 import { DetailPageTemplate, type SectionConfig } from '@/components/templates';
 import { PageContainer } from '@/components/common';
 import { designTokens } from '@/theme/tokens';
+import { LIMS_PATHS } from '@/modules/lims/config';
 
 const ct = designTokens.colors;
 
@@ -409,7 +410,7 @@ const LimsTaskDetailPage: React.FC = () => {
           />
           <p style={{ color: ct.grey[600] }}>检验任务不存在或已被删除</p>
           <Button
-            onClick={() => navigate('/lims')}
+            onClick={() => navigate(LIMS_PATHS.root)}
             sx={{ mt: 2 }}
           >
             返回列表
@@ -456,10 +457,10 @@ const LimsTaskDetailPage: React.FC = () => {
         subtitle=''
         breadcrumbs={[
           { label: '首页', href: '/dashboard' },
-          { label: 'LIMS', href: '/lims' },
+          { label: 'LIMS', href: LIMS_PATHS.root },
           { label: '任务详情' },
         ]}
-        backHref='/lims'
+        backHref={LIMS_PATHS.root}
         loading={loading}
         infoCard={{
           avatar: <ClipboardCheck sx={{ fontSize: 40, color: 'secondary.dark' }} />,

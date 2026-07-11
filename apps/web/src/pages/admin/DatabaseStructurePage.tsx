@@ -61,6 +61,7 @@ import {
   type DbColumnDefinition,
   type SqlPreview,
 } from '@/api/system';
+import { DASHBOARD_PATHS } from '@/routes/dashboard';
 
 const DatabaseStructurePage: React.FC = () => {
   const navigate = useNavigate();
@@ -255,7 +256,7 @@ const DatabaseStructurePage: React.FC = () => {
       maxWidth='xl'
       headerProps={{
         backButton: {
-          onClick: () => navigate('/dashboard'),
+          onClick: () => navigate(DASHBOARD_PATHS.dashboard),
         },
       }}
     >

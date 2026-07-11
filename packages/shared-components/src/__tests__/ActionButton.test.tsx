@@ -1,4 +1,5 @@
 import React from 'react';
+import { vi } from 'vitest';
 import { render, screen, fireEvent } from '@testing-library/react';
 import { ActionButton } from '../components/ActionButton';
 
@@ -9,14 +10,14 @@ describe('ActionButton Component', () => {
   });
 
   it('handles click event', () => {
-    const handleClick = jest.fn();
+    const handleClick = vi.fn();
     render(<ActionButton label="点击我" onClick={handleClick} />);
     fireEvent.click(screen.getByText('点击我'));
     expect(handleClick).toHaveBeenCalledTimes(1);
   });
 
   it('disables button when disabled prop is true', () => {
-    const handleClick = jest.fn();
+    const handleClick = vi.fn();
     render(<ActionButton label="禁用按钮" disabled onClick={handleClick} />);
     fireEvent.click(screen.getByText('禁用按钮'));
     expect(handleClick).not.toHaveBeenCalled();
@@ -28,7 +29,7 @@ describe('ActionButton Component', () => {
   });
 
   it('disables button when loading', () => {
-    const handleClick = jest.fn();
+    const handleClick = vi.fn();
     render(<ActionButton label="加载中" loading onClick={handleClick} />);
     fireEvent.click(screen.getByRole('button'));
     expect(handleClick).not.toHaveBeenCalled();

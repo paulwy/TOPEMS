@@ -2,6 +2,7 @@ import { useState, useEffect, useCallback } from 'react';
 import { logger } from '@/utils/logger';
 import { useAppStore } from '@/store';
 import { useNavigate } from 'react-router-dom';
+import { BI_PATHS } from '@/modules/bi/config';
 import {
   BarChart3,
   TrendingUp,
@@ -460,7 +461,7 @@ const BIAnalyticsPage = () => {
   }));
 
   const handleModuleSelect = (moduleId: string) => {
-    navigate(`/bi/module/${moduleId}`);
+    navigate(BI_PATHS.module.replace(':moduleId', moduleId));
   };
 
   // 构建统计数据卡片
@@ -473,7 +474,7 @@ const BIAnalyticsPage = () => {
       changeLabel: '较上月',
       icon: <BarChart3 size={24} />,
       color: 'primary',
-      onClick: () => navigate('/bi/module/development'),
+      onClick: () => navigate(BI_PATHS.module.replace(':moduleId', 'development')),
     },
     {
       id: 'total-samples',
@@ -483,7 +484,7 @@ const BIAnalyticsPage = () => {
       changeLabel: '较上月',
       icon: <Database size={24} />,
       color: 'info',
-      onClick: () => navigate('/bi/module/laboratory'),
+      onClick: () => navigate(BI_PATHS.module.replace(':moduleId', 'laboratory')),
     },
     {
       id: 'pass-rate',
@@ -503,7 +504,7 @@ const BIAnalyticsPage = () => {
       changeLabel: '较上月',
       icon: <AlertCircle size={24} />,
       color: 'warning',
-      onClick: () => navigate('/bi/module/ehs'),
+      onClick: () => navigate(BI_PATHS.module.replace(':moduleId', 'ehs')),
     },
   ];
 

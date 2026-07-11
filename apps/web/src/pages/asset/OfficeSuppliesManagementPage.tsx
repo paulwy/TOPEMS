@@ -31,6 +31,7 @@ import { useAppStore } from '../../store';
 import { ListPageTemplate, type ColumnDef } from '@/components/templates';
 import { ModeToggle } from '@/components/theme/ModeToggle';
 import { PageContainer } from '@/components/common';
+import { DASHBOARD_PATHS } from '@/routes/dashboard';
 
 interface OfficeSuppliesManagementPageProps {
   onNavigate?: (page: string) => void;
@@ -425,8 +426,8 @@ const OfficeSuppliesManagementPage: React.FC<OfficeSuppliesManagementPageProps> 
         title=''
         subtitle=''
         backButton={{
-          href: '/dashboard',
-          onClick: () => navigate('/dashboard'),
+          href: DASHBOARD_PATHS.dashboard,
+          onClick: () => navigate(DASHBOARD_PATHS.dashboard),
         }}
         columns={columns}
         data={paginatedSupplies}

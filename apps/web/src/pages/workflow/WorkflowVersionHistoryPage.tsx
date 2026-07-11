@@ -32,6 +32,7 @@ import type { Workflow, WorkflowVersion } from '@/api/workflow';
 import { workflowApi } from '@/api/workflow';
 import { useAppStore } from '../../store';
 import { apiLogger } from '@/utils/logger';
+import { WORKFLOW_PATHS } from '@/modules/workflow/config';
 
 const FlowVersionHistoryPage: React.FC = () => {
   const theme = useTheme();
@@ -255,7 +256,7 @@ const FlowVersionHistoryPage: React.FC = () => {
   };
 
   const handleCompare = (version1: string, version2: string) => {
-    navigate(`/flow/definitions`);
+    navigate(WORKFLOW_PATHS.definitions);
   };
 
   const headerActions = useMemo(

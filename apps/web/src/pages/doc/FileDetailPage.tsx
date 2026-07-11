@@ -55,7 +55,7 @@ const DocsFileDetailPage: React.FC = () => {
       const res = await docApi.delete(id);
       if (res.code === 200) {
         success('文件删除成功');
-        navigate('/documents');
+        navigate(DOC_PATHS.documents);
       } else {
         error(res.message || '删除失败');
       }
@@ -222,10 +222,10 @@ const DocsFileDetailPage: React.FC = () => {
       <DetailPageTemplate
         title=''
         subtitle=''
-        backHref='/documents'
+        backHref={DOC_PATHS.documents}
         loading={loading}
         error={errorMessage}
-        onEdit={() => navigate(`/doc/documents/${id}`)}
+        onEdit={() => id && navigate(DOC_PATHS.documentDetail.replace(':id', id))}
         onDelete={() => setDeleteDialogOpen(true)}
         onDownload={() => {
           success('文件下载功能开发中');

@@ -17,6 +17,7 @@ export const BI_PATHS = {
   permission: '/bi/permission',
   index: '/bi/index',
   moduleDetail: '/bi/module-detail',
+  module: '/bi/module/:moduleId',
   dataAnalysis: '/bi/data-analysis',
   gis: '/bi/gis',
 } as const;

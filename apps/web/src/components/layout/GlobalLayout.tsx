@@ -18,6 +18,9 @@ import { CommandPalette } from '../ui/CommandPalette';
 import { BottomTabBar, type TabItem } from '../mobile/BottomTabBar';
 import { PageTransition } from '../mobile/PageTransition';
 import { Home, ListTodo, ScanLine, CheckSquare, User } from 'lucide-react';
+import { DASHBOARD_PATHS, MOBILE_TAB_PATHS } from '@/routes/dashboard';
+import { MOBILE_PATHS } from '@/modules/mobile/config';
+import { DOC_PATHS } from '@/modules/doc/config';
 
 function getModuleFromPath(pathname: string): string | null {
   const segments = pathname.split('/').filter(Boolean);
@@ -133,7 +136,7 @@ export const GlobalLayout: React.FC<GlobalLayoutProps> = ({ children }) => {
           const handleGH = (evt: KeyboardEvent) => {
             if (evt.key === 'h') {
               evt.preventDefault();
-              navigate('/dashboard');
+              navigate(DASHBOARD_PATHS.dashboard);
             }
             document.removeEventListener('keydown', handleGH);
           };
@@ -173,30 +176,30 @@ export const GlobalLayout: React.FC<GlobalLayoutProps> = ({ children }) => {
   // 根据路径判断当前激活的Tab
   const activeMobileTab = (() => {
     const path = location.pathname;
-    if (path === '/dashboard' || path === '/') return 'home';
-    if (path.startsWith('/tasks') || path.startsWith('/mobile/tasks')) return 'tasks';
-    if (path.startsWith('/scan') || path.startsWith('/mobile/scan')) return 'scan';
-    if (path.startsWith('/approval') || path.startsWith('/approvals')) return 'approval';
-    if (path.startsWith('/profile') || path.startsWith('/mobile/profile')) return 'profile';
+    if (path === DASHBOARD_PATHS.dashboard || path === DASHBOARD_PATHS.root) return 'home';
+    if (path.startsWith(MOBILE_TAB_PATHS.tasks) || path.startsWith(MOBILE_PATHS.tasks)) return 'tasks';
+    if (path.startsWith(MOBILE_TAB_PATHS.scan) || path.startsWith(MOBILE_PATHS.scan)) return 'scan';
+    if (path.startsWith(MOBILE_TAB_PATHS.approval) || path.startsWith(MOBILE_TAB_PATHS.approvals)) return 'approval';
+    if (path.startsWith(DASHBOARD_PATHS.profile) || path.startsWith(MOBILE_PATHS.profile)) return 'profile';
     return '';
   })();
 
   const handleTabChange = (tabId: string) => {
     switch (tabId) {
       case 'home':
-        navigate('/dashboard');
+        navigate(DASHBOARD_PATHS.dashboard);
         break;
       case 'tasks':
-        navigate('/mobile/tasks');
+        navigate(MOBILE_PATHS.tasks);
         break;
       case 'scan':
-        navigate('/mobile/scan');
+        navigate(MOBILE_PATHS.scan);
         break;
       case 'approval':
-        navigate('/mobile/approvals');
+        navigate(MOBILE_PATHS.approvals);
         break;
       case 'profile':
-        navigate('/mobile/profile');
+        navigate(MOBILE_PATHS.profile);
         break;
     }
   };
@@ -292,7 +295,7 @@ export const GlobalLayout: React.FC<GlobalLayoutProps> = ({ children }) => {
             <Box sx={{ display: 'flex', gap: 2 }}>
               <Typography
                 component='a'
-                href='/help'
+                href={DASHBOARD_PATHS.help}
                 sx={{
                   fontSize: 12,
                   color: 'text.secondary',
@@ -305,7 +308,7 @@ export const GlobalLayout: React.FC<GlobalLayoutProps> = ({ children }) => {
               </Typography>
               <Typography
                 component='a'
-                href='/doc/knowledge-base'
+                href={DOC_PATHS.knowledgeBase}
                 sx={{
                   fontSize: 12,
                   color: 'text.secondary',

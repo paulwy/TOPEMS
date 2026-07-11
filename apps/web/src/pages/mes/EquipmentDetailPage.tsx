@@ -54,7 +54,7 @@ const EquipmentDetailPage: React.FC = () => {
       const res = await assetApi.delete(id);
       if (res.code === 200) {
         success('设备删除成功');
-        navigate('/equipment');
+        navigate(MES_PATHS.equipment);
       } else {
         error(res.message || '删除失败');
       }

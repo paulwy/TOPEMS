@@ -40,6 +40,8 @@ import {
   Settings,
 } from 'lucide-react';
 import { renderIcon } from '@/lib/iconMapping';
+import { DASHBOARD_PATHS } from '@/routes/dashboard';
+import { ADMIN_PATHS } from '@/modules/admin/config';
 
 // ---- 从路径解析模块 code（与 GlobalLayout / useTopNav 一致） ----
 function getModuleFromPath(pathname: string): string | null {
@@ -121,7 +123,7 @@ export const AppSidebar: React.FC<AppSidebarProps> = ({
 
   // 记录访问历史
   useEffect(() => {
-    if (location.pathname === '/dashboard') return; // 跳过首页
+    if (location.pathname === DASHBOARD_PATHS.dashboard) return; // 跳过首页
 
     const pathSegments = location.pathname.split('/').filter(Boolean);
     if (pathSegments.length < 2) return; // 只需要模块级路径
@@ -528,11 +530,11 @@ export const AppSidebar: React.FC<AppSidebarProps> = ({
               component='button'
               role='menuitem'
               tabIndex={0}
-              onClick={() => navigate('/dashboard')}
+              onClick={() => navigate(DASHBOARD_PATHS.dashboard)}
               onKeyDown={(e) => {
                 if (e.key === 'Enter' || e.key === ' ') {
                   e.preventDefault();
-                  navigate('/dashboard');
+                  navigate(DASHBOARD_PATHS.dashboard);
                 }
               }}
               sx={navItemSx(false, true)}
@@ -890,7 +892,7 @@ export const AppSidebar: React.FC<AppSidebarProps> = ({
             <Tooltip title='设置'>
               <IconButton
                 size='small'
-                onClick={() => navigate('/admin/system-settings')}
+                onClick={() => navigate(ADMIN_PATHS.systemSettings)}
                 sx={{ width: 32, height: 32 }}
               >
                 <Settings style={{ width: 16, height: 16 }} />
@@ -918,7 +920,7 @@ export const AppSidebar: React.FC<AppSidebarProps> = ({
                   background: 'linear-gradient(135deg, primary.main, secondary.main)',
                   cursor: 'pointer',
                 }}
-                onClick={() => navigate('/profile')}
+                onClick={() => navigate(DASHBOARD_PATHS.profile)}
               >
                 陈
               </Avatar>

@@ -16,6 +16,7 @@ import { ChatSettingsModal } from './ChatSettingsModal';
 
 import { useAppStore } from '../../store';
 import { logger } from '@/utils/logger';
+import { DASHBOARD_PATHS } from '@/routes/dashboard';
 
 type TabType = 'all' | 'direct' | 'group' | 'notifications' | 'contacts';
 
@@ -460,7 +461,7 @@ export const ChatInterface: React.FC = () => {
               <Button
                 variant='text'
                 size='small'
-                onClick={() => navigate('/dashboard')}
+                onClick={() => navigate(DASHBOARD_PATHS.dashboard)}
               >
                 <ChevronLeft style={{ width: 20, height: 20 }} />
               </Button>

@@ -45,6 +45,13 @@ import {
 import { useNavigate } from 'react-router-dom';
 import { useAIContext } from '../../hooks';
 import { AIToolsPanel } from './AIToolsPanel';
+import { WORKFLOW_PATHS } from '@/modules/workflow/config';
+import { BI_PATHS } from '@/modules/bi/config';
+import { DOC_PATHS } from '@/modules/doc/config';
+import { NOTIFICATION_PATHS } from '@/modules/notification/config';
+import { AI_PATHS } from '@/modules/ai/config';
+import { HRM_PATHS } from '@/modules/hrm/config';
+import { CRM_PATHS } from '@/modules/crm/config';
 
 interface QuickCommand {
   id: string;
@@ -107,7 +114,7 @@ export const FloatingAIHelper: React.FC = () => {
       label: '查看审批',
       description: '查看待我审批的事项',
       icon: <FileText style={{ width: 18, height: 18 }} />,
-      action: () => navigate('/flow/approvals'),
+      action: () => navigate(WORKFLOW_PATHS.approvals),
     },
     {
       id: 'attendance',
@@ -115,7 +122,7 @@ export const FloatingAIHelper: React.FC = () => {
       label: '查考勤',
       description: '查看本月考勤情况',
       icon: <Calendar style={{ width: 18, height: 18 }} />,
-      action: () => navigate('/hrm/attendance'),
+      action: () => navigate(HRM_PATHS.attendance),
     },
     {
       id: 'customer',
@@ -123,7 +130,7 @@ export const FloatingAIHelper: React.FC = () => {
       label: '找客户',
       description: '查找最近未联系的客户',
       icon: <Search style={{ width: 18, height: 18 }} />,
-      action: () => navigate('/crm/customers'),
+      action: () => navigate(CRM_PATHS.customers),
     },
     {
       id: 'report',
@@ -131,7 +138,7 @@ export const FloatingAIHelper: React.FC = () => {
       label: '生成报表',
       description: '生成本月销售汇总',
       icon: <BarChart3 style={{ width: 18, height: 18 }} />,
-      action: () => navigate('/bi/reports'),
+      action: () => navigate(BI_PATHS.report),
     },
     {
       id: 'calculator',
@@ -171,7 +178,7 @@ export const FloatingAIHelper: React.FC = () => {
       label: '编码生成',
       icon: <Code style={{ width: 18, height: 18 }} />,
       description: '批量生成编号',
-      action: () => navigate('/ai/chat'),
+      action: () => navigate(AI_PATHS.chat),
     },
     {
       id: 'mask',
@@ -193,7 +200,7 @@ export const FloatingAIHelper: React.FC = () => {
 
   const handleSearch = useCallback(() => {
     if (searchQuery.trim()) {
-      navigate(`/ai?query=${encodeURIComponent(searchQuery)}`);
+      navigate(`${AI_PATHS.root}?query=${encodeURIComponent(searchQuery)}`);
       setIsOpen(false);
       setSearchQuery('');
     }
@@ -480,19 +487,19 @@ export const FloatingAIHelper: React.FC = () => {
                       icon={<Wand2 style={{ width: 14, height: 14 }} />}
                       label='文档生成'
                       size='small'
-                      onClick={() => navigate('/documents')}
+                      onClick={() => navigate(DOC_PATHS.documents)}
                     />
                     <Chip
                       icon={<BarChart3 style={{ width: 14, height: 14 }} />}
                       label='文本分析'
                       size='small'
-                      onClick={() => navigate('/ai')}
+                      onClick={() => navigate(AI_PATHS.root)}
                     />
                     <Chip
                       icon={<FileText style={{ width: 14, height: 14 }} />}
                       label='数据补全'
                       size='small'
-                      onClick={() => navigate('/ai/chat')}
+                      onClick={() => navigate(AI_PATHS.chat)}
                     />
                   </Box>
                 </Box>
@@ -846,7 +853,7 @@ export const FloatingAIHelper: React.FC = () => {
               <Button
                 size='small'
                 endIcon={<ChevronRight style={{ width: 16, height: 16 }} />}
-                onClick={() => navigate('/ai')}
+                onClick={() => navigate(AI_PATHS.root)}
               >
                 打开完整AI助手
               </Button>

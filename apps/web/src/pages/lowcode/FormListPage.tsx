@@ -29,6 +29,7 @@ import { Plus, Search, MoreVertical, Edit, Trash2, Copy, Eye, Send, FileText } f
 import { PageContainer } from '@/components';
 import { lowcodeApi } from '@/api';
 import type { FormSchema, ListParams } from '@/api/lowcode';
+import { LOWCODE_PATHS } from '@/modules/lowcode/config';
 import { logger } from '@/utils/logger';
 
 const FormListPage: React.FC = () => {
@@ -110,16 +111,16 @@ const FormListPage: React.FC = () => {
   };
 
   const handleCreate = () => {
-    navigate('/lowcode/forms/new');
+    navigate(LOWCODE_PATHS.formDesigner.replace(':id', 'new'));
   };
 
   const handleEdit = (form: FormSchema) => {
-    navigate(`/lowcode/forms/${form.id}`);
+    navigate(LOWCODE_PATHS.formDesigner.replace(':id', form.id));
     setMenuAnchor(null);
   };
 
   const handlePreview = (form: FormSchema) => {
-    navigate(`/lowcode/forms/${form.id}?preview=true`);
+    navigate(`${LOWCODE_PATHS.formDesigner.replace(':id', form.id)}?preview=true`);
     setMenuAnchor(null);
   };
 

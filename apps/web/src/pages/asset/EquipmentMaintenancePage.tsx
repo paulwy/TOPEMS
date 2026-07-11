@@ -18,6 +18,7 @@ import { Plus, Edit, Wrench } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { assetApi, type Asset } from '@/api/erp';
 import { mesEquipmentApi, type MaintenanceRecord } from '@/api/mes';
+import { ASSET_PATHS } from '@/modules/asset/config';
 import { useAppStore } from '../../store';
 import {
   ListPageTemplate,
@@ -302,7 +303,7 @@ const EquipmentMaintenancePage: React.FC = () => {
         title=''
         subtitle=''
         backButton={{
-          onClick: () => navigate('/equipment'),
+          onClick: () => navigate(ASSET_PATHS.equipment),
         }}
         columns={columns}
         data={maintenances}

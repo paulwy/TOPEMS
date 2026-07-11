@@ -512,7 +512,7 @@ const BiIndexPage = () => {
                           size='small'
                           endIcon={<ChevronRight size={16} />}
                           sx={{ textTransform: 'none' }}
-                          href='/bi/reports'
+                          href={BI_PATHS.report}
                         >
                           查看全部
                         </Button>
@@ -692,7 +692,7 @@ const BiIndexPage = () => {
                     variant='outlined'
                     size='small'
                     sx={{ mt: 2 }}
-                    href='/bi/datasets'
+                    href={BI_PATHS.dataset}
                   >
                     管理数据集
                   </Button>

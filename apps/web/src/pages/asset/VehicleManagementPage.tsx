@@ -24,6 +24,7 @@ import {
   type FilterConfig,
 } from '@/components/templates';
 import { PageContainer } from '@/components/common';
+import { DASHBOARD_PATHS } from '@/routes/dashboard';
 
 interface VehicleManagementPageProps {
   onNavigate?: (page: string) => void;
@@ -421,7 +422,7 @@ const VehicleManagementPage: React.FC<VehicleManagementPageProps> = ({ onNavigat
         title=''
         subtitle=''
         backButton={{
-          onClick: () => navigate('/dashboard'),
+          onClick: () => navigate(DASHBOARD_PATHS.dashboard),
         }}
         columns={columns}
         data={vehicles}

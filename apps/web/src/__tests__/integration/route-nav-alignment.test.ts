@@ -1,9 +1,29 @@
-import { describe, it, expect } from 'vitest';
-import { coreModuleRoutes, getAllRoutes } from '@/routes/v2';
+import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
+import { coreModuleRoutes, getAllRoutes, coreModuleCodes } from '@/routes/v2';
 import { coreModuleNavConfigs } from '@/lib/navigation/modules';
 import { flattenRoutes } from '@/routes/v2/types';
+import { pluginManager } from '@/modules/loader/PluginManager';
+
+vi.mock('@/modules/loader/PluginManager', () => ({
+  pluginManager: {
+    initialize: vi.fn(),
+    getActivePlugins: vi.fn(),
+    emitter: { on: vi.fn() },
+  },
+}));
+
+const mockPluginManager = pluginManager as any;
 
 describe('Route-Navigation Alignment', () => {
+  beforeEach(() => {
+    vi.clearAllMocks();
+    mockPluginManager.initialize.mockRejectedValue(new Error('Test: No server connection'));
+  });
+
+  afterEach(() => {
+    vi.clearAllMocks();
+  });
+
   it('should have matching routes for navigation config paths', async () => {
     const routePathMap = new Map<string, string>();
     const allRoutes = await getAllRoutes();
@@ -68,6 +88,136 @@ describe('Route-Navigation Alignment', () => {
         true,
         `Module "${code}" exists in navigation config but not in route config`
       );
+    });
+  });
+
+  describe('Edge Cases', () => {
+    it('should handle empty plugin list gracefully', async () => {
+      mockPluginManager.initialize.mockResolvedValue(undefined);
+      mockPluginManager.getActivePlugins.mockReturnValue([]);
+
+      const allRoutes = await getAllRoutes();
+      expect(allRoutes).toBeDefined();
+      expect(Array.isArray(allRoutes)).toBe(true);
+    });
+
+    it('should fall back to loading all modules when plugin manager fails', async () => {
+      mockPluginManager.initialize.mockRejectedValue(new Error('Server unavailable'));
+
+      const allRoutes = await getAllRoutes();
+      expect(allRoutes.length).toBeGreaterThan(0);
+      expect(allRoutes.some((r) => r.path.startsWith('/iam'))).toBe(true);
+      expect(allRoutes.some((r) => r.path.startsWith('/admin'))).toBe(true);
+    });
+
+    it('should handle plugin initialization failure without crashing', async () => {
+      mockPluginManager.initialize.mockRejectedValue(
+        new Error('Network timeout')
+      );
+
+      await expect(getAllRoutes()).resolves.not.toThrow();
+      const routes = await getAllRoutes();
+      expect(Array.isArray(routes)).toBe(true);
+    });
+
+    it('should validate route path format consistency', async () => {
+      const allRoutes = await getAllRoutes();
+
+      allRoutes.forEach((route) => {
+        expect(route.path).toBeDefined();
+        expect(route.path.startsWith('/')).toBe(
+          true,
+          `Route path "${route.path}" does not start with /`
+        );
+        expect(typeof route.code).toBe('string');
+        expect(route.code.length).toBeGreaterThan(0);
+        expect(typeof route.title).toBe('string');
+      });
+    });
+
+    it('should validate navigation item path format consistency', () => {
+      coreModuleNavConfigs.forEach((navConfig) => {
+        navConfig.navItems.forEach((item) => {
+          expect(item.path).toBeDefined();
+          expect(item.path.startsWith('/')).toBe(
+            true,
+            `Nav item "${item.code}" path "${item.path}" does not start with /`
+          );
+          expect(item.code).toBeDefined();
+          expect(item.label).toBeDefined();
+        });
+
+        navConfig.navItems.forEach((item) => {
+          item.children?.forEach((child) => {
+            expect(child.path).toBeDefined();
+            expect(child.path.startsWith('/')).toBe(
+              true,
+              `Nav child "${child.code}" path "${child.path}" does not start with /`
+            );
+          });
+        });
+      });
+    });
+
+    it('should detect duplicate paths across modules', async () => {
+      const allRoutes = await getAllRoutes();
+      const pathCounts = new Map<string, number>();
+
+      allRoutes.forEach((route) => {
+        pathCounts.set(route.path, (pathCounts.get(route.path) || 0) + 1);
+      });
+
+      const duplicatePaths = Array.from(pathCounts.entries()).filter(
+        ([, count]) => count > 1
+      );
+
+      expect(duplicatePaths).toHaveLength(
+        0,
+        `Found duplicate paths: ${duplicatePaths.map(([path]) => path).join(', ')}`
+      );
+    });
+
+    it('should detect navigation items without corresponding routes', async () => {
+      const routePathMap = new Map<string, string>();
+      const allRoutes = await getAllRoutes();
+      allRoutes.forEach((route) => {
+        routePathMap.set(route.path, route.code);
+      });
+
+      const missingRoutes: string[] = [];
+
+      coreModuleNavConfigs.forEach((navConfig) => {
+        navConfig.navItems.forEach((item) => {
+          if (!routePathMap.has(item.path)) {
+            missingRoutes.push(`Navigation "${item.code}" (${item.path})`);
+          }
+          item.children?.forEach((child) => {
+            if (!routePathMap.has(child.path)) {
+              missingRoutes.push(`Navigation child "${child.code}" (${child.path})`);
+            }
+          });
+        });
+      });
+
+      expect(missingRoutes).toHaveLength(
+        0,
+        `Navigation items without corresponding routes: ${missingRoutes.join(', ')}`
+      );
+    });
+
+    it('should verify dynamic path parameters are consistently formatted', async () => {
+      const allRoutes = await getAllRoutes();
+
+      allRoutes.forEach((route) => {
+        const params = route.path.match(/:([a-zA-Z][a-zA-Z0-9]*)/g) || [];
+        params.forEach((param) => {
+          expect(param.startsWith(':')).toBe(true);
+          expect(/^:[a-zA-Z][a-zA-Z0-9]*$/.test(param)).toBe(
+            true,
+            `Invalid parameter format "${param}" in path "${route.path}"`
+          );
+        });
+      });
     });
   });
 });

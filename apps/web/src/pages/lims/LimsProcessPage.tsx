@@ -28,6 +28,7 @@ import { MetricCard } from '@/components/bi/MetricCard';
 import { apiLogger } from '@/utils/logger';
 import { designTokens } from '@/theme/tokens';
 import { LIMS_PATHS } from '@/modules/lims/config';
+import { DASHBOARD_PATHS } from '@/routes/dashboard';
 
 const ct = designTokens.colors;
 
@@ -404,7 +405,7 @@ const LimsProcessPage: React.FC = () => {
           <Button
             variant='contained'
             color='primary'
-            onClick={() => navigate('/dashboard')}
+            onClick={() => navigate(DASHBOARD_PATHS.dashboard)}
           >
             返回首页
           </Button>
@@ -424,7 +425,7 @@ const LimsProcessPage: React.FC = () => {
         title=''
         subtitle=''
         backButton={{
-          onClick: () => navigate('/dashboard'),
+          onClick: () => navigate(DASHBOARD_PATHS.dashboard),
         }}
         columns={columns}
         data={processes}
