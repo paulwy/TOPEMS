@@ -52,7 +52,7 @@ export const workflowModuleConfig: RouteModuleConfig = {
       title: '流程定义',
       template: 'list',
       group: 'design',
-      requiredPermissions: ['workflow:definition:read'],
+      requiredPermissions: ['workflow:definition:read', 'workflow:read'],
       action: 'read',
     },
     {
@@ -63,7 +63,7 @@ export const workflowModuleConfig: RouteModuleConfig = {
       title: '流程设计器',
       template: 'form',
       group: 'design',
-      requiredPermissions: ['workflow:definition:write'],
+      requiredPermissions: ['workflow:definition:write', 'workflow:write'],
       action: 'write',
     },
     {
@@ -74,7 +74,7 @@ export const workflowModuleConfig: RouteModuleConfig = {
       title: '版本历史',
       template: 'list',
       group: 'design',
-      requiredPermissions: ['workflow:definition:read'],
+      requiredPermissions: ['workflow:definition:read', 'workflow:read'],
       action: 'read',
     },
     {
@@ -85,7 +85,7 @@ export const workflowModuleConfig: RouteModuleConfig = {
       title: '流程实例',
       template: 'list',
       group: 'runtime',
-      requiredPermissions: ['workflow:instance:read'],
+      requiredPermissions: ['workflow:instance:read', 'workflow:read'],
       action: 'read',
     },
     {
@@ -96,7 +96,7 @@ export const workflowModuleConfig: RouteModuleConfig = {
       title: '实例详情',
       template: 'detail',
       group: 'runtime',
-      requiredPermissions: ['workflow:instance:read'],
+      requiredPermissions: ['workflow:instance:read', 'workflow:read'],
       action: 'read',
     },
     {
@@ -107,7 +107,7 @@ export const workflowModuleConfig: RouteModuleConfig = {
       title: '审批任务',
       template: 'list',
       group: 'tasks',
-      requiredPermissions: ['workflow:approval:read'],
+      requiredPermissions: ['workflow:approval:read', 'workflow:read'],
       action: 'read',
     },
     {
@@ -118,7 +118,7 @@ export const workflowModuleConfig: RouteModuleConfig = {
       title: '审批详情',
       template: 'detail',
       group: 'tasks',
-      requiredPermissions: ['workflow:approval:read'],
+      requiredPermissions: ['workflow:approval:read', 'workflow:read'],
       action: 'read',
     },
     {
@@ -129,7 +129,7 @@ export const workflowModuleConfig: RouteModuleConfig = {
       title: '通知中心',
       template: 'list',
       group: 'tasks',
-      requiredPermissions: ['workflow:notification:read'],
+      requiredPermissions: ['workflow:notification:read', 'workflow:read'],
       action: 'read',
     },
     {
@@ -140,7 +140,7 @@ export const workflowModuleConfig: RouteModuleConfig = {
       title: '流程监控',
       template: 'stats',
       group: 'analytics',
-      requiredPermissions: ['workflow:monitor:read'],
+      requiredPermissions: ['workflow:monitor:read', 'workflow:read'],
       action: 'read',
     },
     {
@@ -151,7 +151,7 @@ export const workflowModuleConfig: RouteModuleConfig = {
       title: '统计分析',
       template: 'stats',
       group: 'analytics',
-      requiredPermissions: ['workflow:statistics:read'],
+      requiredPermissions: ['workflow:statistics:read', 'workflow:read'],
       action: 'read',
     },
     {
@@ -162,7 +162,7 @@ export const workflowModuleConfig: RouteModuleConfig = {
       title: '流程模板',
       template: 'list',
       group: 'settings',
-      requiredPermissions: ['workflow:template:read'],
+      requiredPermissions: ['workflow:template:read', 'workflow:read'],
       action: 'read',
     },
     {
