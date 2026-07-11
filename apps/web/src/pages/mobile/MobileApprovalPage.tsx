@@ -42,6 +42,7 @@ import { SwipeAction, type SwipeActionItem } from '@/components/mobile';
 import { useAppStore } from '@/store';
 import { approvalTaskApi } from '@/api/workflow/approval';
 import { apiLogger } from '@/utils/logger';
+import { MOBILE_PATHS } from '@/modules/mobile/config';
 
 interface ApprovalItem {
   id: string;
@@ -250,18 +251,18 @@ const MobileApprovalPage: React.FC = () => {
   const handleBottomTabChange = (tabId: string) => {
     switch (tabId) {
       case 'home':
-        navigate('/mobile/home');
+        navigate(MOBILE_PATHS.home);
         break;
       case 'tasks':
-        navigate('/mobile/tasks');
+        navigate(MOBILE_PATHS.tasks);
         break;
       case 'scan':
-        navigate('/mobile/scan-page');
+        navigate(MOBILE_PATHS.scanPage);
         break;
       case 'approval':
         break;
       case 'profile':
-        navigate('/mobile/settings');
+        navigate(MOBILE_PATHS.settings);
         break;
     }
   };

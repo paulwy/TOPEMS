@@ -34,6 +34,7 @@ import {
 } from '@mui/material';
 
 import { PageContainer } from '@/components/common';
+import { AI_PATHS } from '@/modules/ai/config';
 import { useAppStore } from '../../store';
 
 interface Message {
@@ -127,7 +128,7 @@ export const AiChatPage: React.FC = () => {
 
   return (
     <PageContainer
-      headerProps={{ pageIcon: <MessageSquare size={20} />, backButton: { href: '/ai/dashboard' } }}
+      headerProps={{ pageIcon: <MessageSquare size={20} />, backButton: { href: AI_PATHS.dashboard } }}
     >
       <Box sx={{ display: 'flex', height: 'calc(100vh - 140px)', bgcolor: 'background.default' }}>
         {/* 左侧会话列表 */}

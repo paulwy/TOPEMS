@@ -40,6 +40,7 @@ import { useNavigate } from 'react-router-dom';
 import { MobileLayout, MobileCard, MobileButton } from '@/components/mobile';
 import { useAppStore } from '@/store';
 import { designTokens } from '@/theme/tokens';
+import { MOBILE_PATHS } from '@/modules/mobile/config';
 
 const ct = designTokens.colors;
 
@@ -202,18 +203,18 @@ const MobileScanPage: React.FC = () => {
   const handleBottomTabChange = (tabId: string) => {
     switch (tabId) {
       case 'home':
-        navigate('/mobile/home');
+        navigate(MOBILE_PATHS.home);
         break;
       case 'tasks':
-        navigate('/mobile/tasks');
+        navigate(MOBILE_PATHS.tasks);
         break;
       case 'scan':
         break;
       case 'approval':
-        navigate('/mobile/approvals');
+        navigate(MOBILE_PATHS.approvals);
         break;
       case 'profile':
-        navigate('/mobile/settings');
+        navigate(MOBILE_PATHS.settings);
         break;
     }
   };
@@ -287,7 +288,7 @@ const MobileScanPage: React.FC = () => {
       rightActions={
         <IconButton
           size='large'
-          onClick={() => navigate('/mobile/scan')}
+          onClick={() => navigate(MOBILE_PATHS.scan)}
           sx={{ minWidth: 44, minHeight: 44 }}
         >
           <Settings size={20} />

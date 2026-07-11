@@ -36,6 +36,7 @@ import { MobileLayout, PullToRefresh, MobileSkeleton, MobileCard } from '@/compo
 import { SwipeAction, type SwipeActionItem } from '@/components/mobile';
 import { mobileApi } from '@/api/mobile';
 import { apiLogger } from '@/utils/logger';
+import { MOBILE_PATHS } from '@/modules/mobile/config';
 
 interface Task {
   id: string;
@@ -253,18 +254,18 @@ const MobileTaskListPage: React.FC = () => {
   const handleBottomTabChange = (tabId: string) => {
     switch (tabId) {
       case 'home':
-        navigate('/mobile/home');
+        navigate(MOBILE_PATHS.home);
         break;
       case 'tasks':
         break;
       case 'scan':
-        navigate('/mobile/scan-page');
+        navigate(MOBILE_PATHS.scanPage);
         break;
       case 'approval':
-        navigate('/mobile/approvals');
+        navigate(MOBILE_PATHS.approvals);
         break;
       case 'profile':
-        navigate('/mobile/settings');
+        navigate(MOBILE_PATHS.settings);
         break;
     }
   };

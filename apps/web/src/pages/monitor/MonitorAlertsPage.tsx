@@ -12,6 +12,7 @@ import {
   Avatar,
   Button,
 } from '@mui/material';
+import { MONITOR_PATHS } from '@/modules/monitor/config';
 import {
   AlertTriangle,
   AlertCircle,
@@ -883,7 +884,7 @@ export const MonitorAlertsPage: React.FC = () => {
       headerProps={{
         pageIcon: <AlertTriangle size={20} />,
         backButton: {
-          href: '/monitor/dashboard',
+          href: MONITOR_PATHS.dashboard,
         },
       }}
     >

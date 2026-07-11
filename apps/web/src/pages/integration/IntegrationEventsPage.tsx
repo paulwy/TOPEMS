@@ -21,6 +21,7 @@ import { useAppStore } from '../../store';
 import { ListPageTemplate, type ColumnDef } from '@/components/templates';
 import { extractErrorMessage } from '@/utils/errors';
 import { PageContainer } from '@/components/common';
+import { INTEGRATION_PATHS } from '@/modules/integration/config';
 import { ConfirmDialog } from '@topems/shared-components';
 
 const EVENT_TYPE_CONFIG: Record<
@@ -373,7 +374,7 @@ export const IntegrationEventsPage: React.FC = () => {
     <PageContainer
       headerProps={{
         pageIcon: <Activity size={20} />,
-        backButton: { href: '/integration/dashboard' },
+        backButton: { href: INTEGRATION_PATHS.dashboard },
       }}
     >
       <ListPageTemplate

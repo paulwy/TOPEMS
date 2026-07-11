@@ -27,6 +27,7 @@ import {
   type QuickAction,
   type RecentItem,
 } from '@/components/templates';
+import { INTEGRATION_PATHS } from '@/modules/integration/config';
 import { useAppStore } from '../../store';
 
 export const IntegrationDashboardPage: React.FC = () => {
@@ -125,28 +126,28 @@ export const IntegrationDashboardPage: React.FC = () => {
         label: '新建连接',
         icon: <Plug size={20} />,
         color: 'primary',
-        onClick: () => navigate('/integration/connections'),
+        onClick: () => navigate(INTEGRATION_PATHS.connections),
       },
       {
         id: 'view-logs',
         label: '查看日志',
         icon: <Activity size={20} />,
         color: 'info',
-        onClick: () => navigate('/integration/events'),
+        onClick: () => navigate(INTEGRATION_PATHS.events),
       },
       {
         id: 'data-mapping',
         label: '数据映射',
         icon: <GitMerge size={20} />,
         color: 'success',
-        onClick: () => navigate('/integration/mappings'),
+        onClick: () => navigate(INTEGRATION_PATHS.mappings),
       },
       {
         id: 'settings',
         label: '同步设置',
         icon: <Settings size={20} />,
         color: 'warning',
-        onClick: () => navigate('/integration/settings'),
+        onClick: () => navigate(INTEGRATION_PATHS.settings),
       },
     ],
     [navigate]
@@ -159,35 +160,35 @@ export const IntegrationDashboardPage: React.FC = () => {
         title: 'ERP - 采购订单同步',
         subtitle: '成功 · 2分钟前',
         status: 'success',
-        onClick: () => navigate('/integration/events'),
+        onClick: () => navigate(INTEGRATION_PATHS.events),
       },
       {
         id: '2',
         title: 'WMS - 库存数据同步',
         subtitle: '成功 · 5分钟前',
         status: 'success',
-        onClick: () => navigate('/integration/events'),
+        onClick: () => navigate(INTEGRATION_PATHS.events),
       },
       {
         id: '3',
         title: 'MES - 工单数据同步',
         subtitle: '成功 · 10分钟前',
         status: 'success',
-        onClick: () => navigate('/integration/events'),
+        onClick: () => navigate(INTEGRATION_PATHS.events),
       },
       {
         id: '4',
         title: 'CRM - 客户数据同步',
         subtitle: '警告 · 15分钟前',
         status: 'warning',
-        onClick: () => navigate('/integration/events'),
+        onClick: () => navigate(INTEGRATION_PATHS.events),
       },
       {
         id: '5',
         title: 'SCM - 供应商数据同步',
         subtitle: '失败 · 30分钟前',
         status: 'error',
-        onClick: () => navigate('/integration/events'),
+        onClick: () => navigate(INTEGRATION_PATHS.events),
       },
     ],
     [navigate]

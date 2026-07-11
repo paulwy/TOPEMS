@@ -41,6 +41,7 @@ import { BarChartComponent } from '../../components/charts/BarChart';
 import { useAppStore } from '../../store';
 import { handleApiError, getErrorMessage } from '@/utils/errors';
 import { designTokens } from '@/theme/tokens';
+import { MONITOR_PATHS } from '@/modules/monitor/config';
 
 const ct = designTokens.colors;
 
@@ -570,7 +571,7 @@ export const MonitorMetricsPage: React.FC = () => {
         pageIcon: <BarChart3 size={20} />,
         pageGradient: `linear-gradient(135deg, ${ct.secondary[400]} 0%, ${ct.secondary.main} 100%)`,
         backButton: {
-          href: '/monitor/dashboard',
+          href: MONITOR_PATHS.dashboard,
           visible: true,
         },
         children: headerContent,

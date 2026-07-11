@@ -51,6 +51,7 @@ import {
   type LeaveApplication,
 } from '@/api/mobile';
 import { apiLogger } from '@/utils/logger';
+import { MOBILE_PATHS } from '@/modules/mobile/config';
 
 const MobileAttendancePage: React.FC = () => {
   const theme = useTheme();
@@ -261,19 +262,19 @@ const MobileAttendancePage: React.FC = () => {
   const handleBottomTabChange = (tabId: string) => {
     switch (tabId) {
       case 'home':
-        navigate('/mobile/workbench');
+        navigate(MOBILE_PATHS.workbench);
         break;
       case 'tasks':
-        navigate('/mobile/tasks');
+        navigate(MOBILE_PATHS.tasks);
         break;
       case 'scan':
-        navigate('/mobile/scan-page');
+        navigate(MOBILE_PATHS.scanPage);
         break;
       case 'approval':
-        navigate('/mobile/approvals');
+        navigate(MOBILE_PATHS.approvals);
         break;
       case 'profile':
-        navigate('/mobile/settings');
+        navigate(MOBILE_PATHS.settings);
         break;
     }
   };
@@ -297,7 +298,7 @@ const MobileAttendancePage: React.FC = () => {
     <MobileLayout
       title='考勤打卡'
       showBack
-      onBackClick={() => navigate('/mobile/workbench')}
+      onBackClick={() => navigate(MOBILE_PATHS.workbench)}
       showNotifications
       notificationCount={5}
       showTabBar
