@@ -13,6 +13,7 @@ import apiClient from '../api/client';
 import type { User } from '@topems/shared-types';
 import { mapApiUserToUser } from '@topems/shared-types';
 import { authLogger } from '@/utils/logger';
+import { AUTH_PATHS } from '@/routes/auth';
 
 // Re-export User type for backward compatibility
 export type { User } from '@topems/shared-types';
@@ -202,7 +203,7 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
       localStorage.removeItem('roles');
       localStorage.removeItem('permissions');
       localStorage.removeItem('token_expiry');
-      window.location.href = '/login';
+      window.location.href = AUTH_PATHS.login;
       return false;
     }
     return false;

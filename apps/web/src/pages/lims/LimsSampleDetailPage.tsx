@@ -203,7 +203,7 @@ const LimsSampleDetailPage: React.FC = () => {
       const response = await limsApi.deleteSample(sample.id);
       if (response.success) {
         addNotification({ title: '成功', message: '样品删除成功', type: 'success' });
-        navigate('/lims');
+        navigate(LIMS_PATHS.root);
       } else {
         addNotification({ title: '错误', message: '删除失败，请稍后重试', type: 'error' });
       }
@@ -551,7 +551,7 @@ const LimsSampleDetailPage: React.FC = () => {
           />
           <p style={{ color: ct.grey[600] }}>样品不存在或已被删除</p>
           <Button
-            onClick={() => navigate('/lims')}
+            onClick={() => navigate(LIMS_PATHS.root)}
             sx={{ mt: 2 }}
           >
             返回列表
@@ -575,10 +575,10 @@ const LimsSampleDetailPage: React.FC = () => {
         subtitle=''
         breadcrumbs={[
           { label: '首页', href: '/dashboard' },
-          { label: 'LIMS', href: '/lims' },
+          { label: 'LIMS', href: LIMS_PATHS.root },
           { label: '样品详情' },
         ]}
-        backHref='/lims'
+        backHref={LIMS_PATHS.root}
         loading={loading}
         onEdit={() => setShowEditModal(true)}
         onDelete={handleDelete}

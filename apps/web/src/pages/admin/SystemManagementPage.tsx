@@ -6,6 +6,7 @@ import { MobileNav } from '@/components/layout/MobileNav';
 import { Box, Typography } from '@mui/material';
 import { PageContainer } from '@/components/common';
 import { designTokens } from '@/theme/tokens';
+import { DASHBOARD_PATHS } from '@/routes/dashboard';
 
 const ct = designTokens.colors;
 
@@ -117,7 +118,7 @@ const SystemManagementPage: React.FC<SystemManagementPageProps> = ({ onNavigate:
             <Box sx={{ display: 'flex', alignItems: 'center', height: 64 }}>
               <Box
                 component='button'
-                onClick={() => navigate('/dashboard')}
+                onClick={() => navigate(DASHBOARD_PATHS.dashboard)}
                 sx={{
                   p: 1,
                   borderRadius: 1,

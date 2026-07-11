@@ -51,6 +51,7 @@ import {
 } from '@mui/material';
 import { designTokens } from '@/theme/tokens';
 import { IM_PATHS } from '@/modules/im/config';
+import { AUTH_PATHS } from '@/routes/auth';
 
 const ct = designTokens.colors;
 
@@ -344,9 +345,9 @@ const ProfilePage: React.FC = () => {
           setShowPasswordDialog(false);
           passwordForm.reset();
           setTimeout(() => {
-            logout();
-            navigate('/login');
-          }, 2000);
+          logout();
+          navigate(AUTH_PATHS.login);
+        }, 2000);
         } else {
           addNotification({
             title: '失败',
@@ -807,7 +808,7 @@ const ProfilePage: React.FC = () => {
                       variant='outlined'
                       onClick={() => {
                         logout();
-                        navigate('/login');
+                        navigate(AUTH_PATHS.login);
                       }}
                     >
                       退出登录

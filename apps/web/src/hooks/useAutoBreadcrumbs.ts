@@ -2,6 +2,7 @@ import { useLocation } from 'react-router-dom';
 import { useMemo } from 'react';
 import { navigationRegistryV2 } from '@/lib/navigation';
 import type { NavItem } from '@/lib/navigation/types';
+import { DASHBOARD_PATHS } from '@/routes/dashboard';
 
 export interface AutoBreadcrumbItem {
   label: string;
@@ -24,7 +25,7 @@ export interface UseAutoBreadcrumbsOptions {
 export function useAutoBreadcrumbs(options: UseAutoBreadcrumbsOptions = {}): AutoBreadcrumbItem[] {
   const {
     includeHome = true,
-    homePath = '/dashboard',
+    homePath = DASHBOARD_PATHS.dashboard,
     homeLabel = '首页',
     fallbackToPath = true,
     customItems,

@@ -26,6 +26,7 @@ import {
 } from '@/components/templates';
 import { PageContainer } from '@/components/common';
 import { MES_PATHS } from '@/modules/mes/config';
+import { DASHBOARD_PATHS } from '@/routes/dashboard';
 
 const EquipmentManagementPage: React.FC = () => {
   const navigate = useNavigate();
@@ -359,7 +360,7 @@ const EquipmentManagementPage: React.FC = () => {
         title=''
         subtitle=''
         backButton={{
-          onClick: () => navigate('/dashboard'),
+          onClick: () => navigate(DASHBOARD_PATHS.dashboard),
         }}
         columns={columns}
         data={assets}

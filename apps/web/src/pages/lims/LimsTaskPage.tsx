@@ -51,6 +51,7 @@ import { PageContainer } from '@/components/common';
 import { CardListTemplate } from '@/components/templates/CardListTemplate';
 import { apiLogger } from '@/utils/logger';
 import { designTokens } from '@/theme/tokens';
+import { DASHBOARD_PATHS } from '@/routes/dashboard';
 
 interface RawSample extends Partial<Sample> {
   received_date?: string;
@@ -616,7 +617,7 @@ const LimsTaskPage: React.FC = () => {
           <Button
             variant='contained'
             color='primary'
-            onClick={() => navigate('/dashboard')}
+            onClick={() => navigate(DASHBOARD_PATHS.dashboard)}
           >
             返回首页
           </Button>

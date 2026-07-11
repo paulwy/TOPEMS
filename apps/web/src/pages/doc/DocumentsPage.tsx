@@ -34,6 +34,7 @@ import { DocumentPreviewModal } from '@/components/DocumentPreviewModal';
 import { apiLogger } from '@/utils/logger';
 import { ConfirmDialog } from '@topems/shared-components';
 import { DOC_PATHS } from '@/modules/doc/config';
+import { DASHBOARD_PATHS } from '@/routes/dashboard';
 
 import {
   TextField,
@@ -658,7 +659,7 @@ const DocumentsPage: React.FC = () => {
             <Box sx={{ display: 'flex', alignItems: 'center', gap: 3 }}>
               <Button
                 variant='text'
-                onClick={() => navigate('/dashboard')}
+                onClick={() => navigate(DASHBOARD_PATHS.dashboard)}
               >
                 <ChevronLeft sx={{ width: 20, height: 20 }} />
               </Button>
@@ -1244,7 +1245,7 @@ const DocumentsPage: React.FC = () => {
                       onPreview={handlePreview}
                       isSelected={selectedFiles.includes(item.id)}
                       onSelect={toggleFileSelect}
-                      onClick={(file) => navigate(`/doc/documents/${file.id}`)}
+                      onClick={(file) => navigate(DOC_PATHS.documentDetail.replace(':id', file.id))}
                     />
                   )
                 )}

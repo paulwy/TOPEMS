@@ -23,6 +23,7 @@ import { DetailPageTemplate } from '@/components/templates/DetailPageTemplate';
 import type { TabConfig } from '@/components/templates/DetailPageTemplate';
 import { PageContainer } from '@/components/common';
 import { designTokens } from '@/theme/tokens';
+import { WORKFLOW_PATHS } from '@/modules/workflow/config';
 
 const ct = designTokens.colors;
 
@@ -511,7 +512,7 @@ const FlowInstanceDetailPage: React.FC = () => {
         subtitle={details?.instance.id}
         loading={loading}
         error={error}
-        backHref='/flow/instances'
+        backHref={WORKFLOW_PATHS.instances}
         tabs={tabs}
         infoCard={
           details?.instance

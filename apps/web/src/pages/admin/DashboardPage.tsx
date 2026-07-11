@@ -4,6 +4,8 @@ import { Users, Shield, Activity, AlertTriangle, ArrowRight } from 'lucide-react
 import { DashboardTemplate } from '@/components/templates';
 import type { StatCard, ChartCard, QuickAction, RecentItem } from '@/components/templates';
 import { PageContainer } from '@/components/common';
+import { IAM_PATHS } from '@/modules/iam/config';
+import { ADMIN_PATHS } from '@/modules/admin/config';
 import PieChartComponent from '../../components/charts/PieChart';
 import { designTokens } from '@/theme/tokens';
 
@@ -119,25 +121,25 @@ export const DashboardPage: React.FC = () => {
       id: 'user-management',
       label: '用户管理',
       icon: <ArrowRight size={18} />,
-      onClick: () => navigate('/iam/users'),
+      onClick: () => navigate(IAM_PATHS.user),
     },
     {
       id: 'role-management',
       label: '角色管理',
       icon: <ArrowRight size={18} />,
-      onClick: () => navigate('/iam/roles'),
+      onClick: () => navigate(IAM_PATHS.role),
     },
     {
       id: 'permission-management',
       label: '权限管理',
       icon: <ArrowRight size={18} />,
-      onClick: () => navigate('/iam/permissions'),
+      onClick: () => navigate(IAM_PATHS.permission),
     },
     {
       id: 'audit-log',
       label: '审计日志',
       icon: <ArrowRight size={18} />,
-      onClick: () => navigate('/iam/audit-logs'),
+      onClick: () => navigate(ADMIN_PATHS.auditLog),
     },
   ];
 

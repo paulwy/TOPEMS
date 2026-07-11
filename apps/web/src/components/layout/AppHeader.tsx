@@ -38,6 +38,10 @@ import { useAppStore } from '@/store';
 import { navigationRegistryV2 } from '@/lib/navigation';
 import type { NavItem } from '@/lib/navigation/types';
 import { PLUGIN_PATHS } from '@/modules/plugin/config';
+import { NOTIFICATION_PATHS } from '@/modules/notification/config';
+import { DASHBOARD_PATHS } from '@/routes/dashboard';
+import { AUTH_PATHS } from '@/routes/auth';
+import { AI_PATHS } from '@/modules/ai/config';
 
 export interface AppHeaderProps {
   tabletDrawerOpen?: boolean;
@@ -105,7 +109,7 @@ export const AppHeader: React.FC<AppHeaderProps> = ({
 
   const handleLogout = () => {
     logout();
-    navigate('/login');
+    navigate(AUTH_PATHS.login);
     handleUserMenuClose();
   };
 
@@ -216,7 +220,7 @@ export const AppHeader: React.FC<AppHeaderProps> = ({
               marginRight: 3,
               cursor: 'pointer',
             }}
-            onClick={() => navigate('/dashboard')}
+            onClick={() => navigate(DASHBOARD_PATHS.dashboard)}
           >
             <Box
               sx={{
@@ -334,7 +338,7 @@ export const AppHeader: React.FC<AppHeaderProps> = ({
                 <IconButton
                   size='small'
                   aria-label='AI 助手'
-                  onClick={() => navigate('/ai')}
+                  onClick={() => navigate(AI_PATHS.root)}
                   sx={{
                     width: 36,
                     height: 36,
@@ -529,7 +533,7 @@ export const AppHeader: React.FC<AppHeaderProps> = ({
                 <MenuItem
                   sx={{ justifyContent: 'center', py: 1.5, fontSize: '0.8125rem' }}
                   onClick={() => {
-                    navigate('/notifications');
+                    navigate(NOTIFICATION_PATHS.list);
                     handleNotificationClose();
                   }}
                 >
@@ -578,9 +582,9 @@ export const AppHeader: React.FC<AppHeaderProps> = ({
               >
                 <MenuItem
                   onClick={() => {
-                    navigate('/profile');
-                    handleUserMenuClose();
-                  }}
+                  navigate(DASHBOARD_PATHS.profile);
+                  handleUserMenuClose();
+                }}
                 >
                   <User style={{ width: 18, height: 18, marginRight: 12 }} />
                   个人中心
@@ -640,7 +644,7 @@ export const AppHeader: React.FC<AppHeaderProps> = ({
                   color: 'primary.main',
                 },
               }}
-              onClick={() => navigate('/dashboard')}
+              onClick={() => navigate(DASHBOARD_PATHS.dashboard)}
             >
               <Home style={{ width: 14, height: 14 }} />
               首页

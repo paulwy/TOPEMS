@@ -116,13 +116,14 @@ TOPEMS 颜色系统采用三层结构：
 
 ```typescript
 import { getModuleTheme, getModuleThemeFromPath } from '@/lib/moduleThemes';
+import { CRM_PATHS } from '@/modules/crm/config';
 
 // 通过模块代码获取主题
 const crmTheme = getModuleTheme('crm');
 // => { code: 'crm', name: '客户关系管理', icon: Users, gradient: '...', color: '#0EA5E9' }
 
 // 通过当前路径自动获取
-const theme = getModuleThemeFromPath('/crm/customers');
+const theme = getModuleThemeFromPath(CRM_PATHS.customers);
 // => 自动识别 crm 模块
 ```
 

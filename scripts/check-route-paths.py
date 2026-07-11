@@ -32,7 +32,37 @@ WEB_SRC = PROJECT_ROOT / "apps" / "web" / "src"
 
 # 已迁移的模块列表（config.ts 中导出 {MODULE}_PATHS）
 MIGRATED_MODULES = {
+    "iam": "IAM_PATHS",
+    "admin": "ADMIN_PATHS",
+    "workflow": "WORKFLOW_PATHS",
+    "notification": "NOTIFICATION_PATHS",
+    "doc": "DOC_PATHS",
+    "report": "REPORT_PATHS",
+    "monitor": "MONITOR_PATHS",
+    "integration": "INTEGRATION_PATHS",
+    "ai": "AI_PATHS",
+    "mobile": "MOBILE_PATHS",
     "hrm": "HRM_PATHS",
+    "finance": "FINANCE_PATHS",
+    "crm": "CRM_PATHS",
+    "mes": "MES_PATHS",
+    "qms": "QMS_PATHS",
+    "lims": "LIMS_PATHS",
+    "ehs": "EHS_PATHS",
+    "scm": "SCM_PATHS",
+    "erp": "ERP_PATHS",
+    "wms": "WMS_PATHS",
+    "pm": "PM_PATHS",
+    "pdm": "PDM_PATHS",
+    "srm": "SRM_PATHS",
+    "oa": "OA_PATHS",
+    "lowcode": "LOWCODE_PATHS",
+    "rs": "RS_PATHS",
+    "asset": "ASSET_PATHS",
+    "plugin": "PLUGIN_PATHS",
+    "im": "IM_PATHS",
+    "bi": "BI_PATHS",
+    "gis": "GIS_PATHS",
 }
 
 # 所有模块列表

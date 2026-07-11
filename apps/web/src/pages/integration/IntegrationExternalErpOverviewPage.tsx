@@ -4,6 +4,7 @@ import { Box, Typography, Card, CardContent, Stack, Chip, Button } from '@mui/ma
 import { Settings, Database, Cloud, Zap, CheckCircle, AlertCircle, Clock } from 'lucide-react';
 import { useErpConnections } from '@/hooks/useExternalErp';
 import { PageContainer } from '@/components/common';
+import { INTEGRATION_PATHS } from '@/modules/integration/config';
 
 interface ErpConnection {
   id: string;
@@ -110,7 +111,7 @@ const IntegrationExternalErpOverviewPage: React.FC = () => {
           <Button
             variant='contained'
             startIcon={<Settings size={18} />}
-            onClick={() => navigate('/integration/external-erp')}
+            onClick={() => navigate(INTEGRATION_PATHS.externalErp)}
             sx={{ bgcolor: 'secondary.main', '&:hover': { bgcolor: 'secondary.dark' } }}
           >
             管理连接
@@ -385,7 +386,7 @@ const IntegrationExternalErpOverviewPage: React.FC = () => {
                     size='small'
                     variant='outlined'
                     startIcon={<Settings size={14} />}
-                    onClick={() => navigate('/integration/external-erp')}
+                    onClick={() => navigate(INTEGRATION_PATHS.externalErp)}
                     sx={{ mt: 2 }}
                   >
                     管理连接
@@ -405,7 +406,7 @@ const IntegrationExternalErpOverviewPage: React.FC = () => {
                   cursor: 'pointer',
                   '&:hover': { opacity: 0.8 },
                 }}
-                onClick={() => navigate('/integration/external-erp')}
+                onClick={() => navigate(INTEGRATION_PATHS.externalErp)}
               >
                 <CardContent>
                   <Stack
@@ -450,7 +451,7 @@ const IntegrationExternalErpOverviewPage: React.FC = () => {
                   cursor: 'pointer',
                   '&:hover': { opacity: 0.8 },
                 }}
-                onClick={() => navigate('/integration/external-erp')}
+                onClick={() => navigate(INTEGRATION_PATHS.externalErp)}
               >
                 <CardContent>
                   <Stack
@@ -495,7 +496,7 @@ const IntegrationExternalErpOverviewPage: React.FC = () => {
                   cursor: 'pointer',
                   '&:hover': { opacity: 0.8 },
                 }}
-                onClick={() => navigate('/integration/external-erp')}
+                onClick={() => navigate(INTEGRATION_PATHS.externalErp)}
               >
                 <CardContent>
                   <Stack

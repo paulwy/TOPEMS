@@ -200,7 +200,7 @@ const SrmSupplierPage: React.FC = () => {
       {
         label: '详情',
         icon: <Eye style={{ width: 16, height: 16 }} />,
-        onClick: (row) => navigate(`/srm/suppliers/${row.id}`),
+        onClick: (row) => navigate(SRM_PATHS.supplierDetail.replace(':id', row.id)),
       },
       {
         label: '编辑',

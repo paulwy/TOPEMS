@@ -50,6 +50,7 @@ import ReportViewer from './ReportViewer';
 import ExportModal from '@/components/export/ExportModal';
 import { apiLogger } from '@/utils/logger';
 import { designTokens } from '@/theme/tokens';
+import { DASHBOARD_PATHS } from '@/routes/dashboard';
 
 const ct = designTokens.colors;
 
@@ -570,7 +571,7 @@ const ReportPage: React.FC = () => {
             Report服务正在启动中，请稍后刷新页面，或者联系管理员启动服务。
           </Typography>
           <Button
-            onClick={() => navigate('/dashboard')}
+            onClick={() => navigate(DASHBOARD_PATHS.dashboard)}
             variant='contained'
             sx={{ px: 3, py: 1, borderRadius: 3 }}
           >
@@ -611,7 +612,7 @@ const ReportPage: React.FC = () => {
           >
             <Box sx={{ display: 'flex', alignItems: 'center', gap: 3 }}>
               <Button
-                onClick={() => navigate('/dashboard')}
+                onClick={() => navigate(DASHBOARD_PATHS.dashboard)}
                 sx={{
                   p: 1,
                   color: 'grey.600',

@@ -35,6 +35,7 @@ import type {
 import { useAppStore } from '@/store';
 import { apiLogger } from '@/utils/logger';
 import { designTokens } from '@/theme/tokens';
+import { DASHBOARD_PATHS } from '@/routes/dashboard';
 
 const ct = designTokens.colors;
 
@@ -498,11 +499,11 @@ const LimsUncertaintyPage: React.FC = () => {
         title=''
         subtitle=''
         breadcrumbs={[
-          { label: '首页', href: '/dashboard' },
+          { label: '首页', href: DASHBOARD_PATHS.dashboard },
           { label: 'LIMS' },
           { label: '不确定度评定' },
         ]}
-        backButton={{ onClick: () => navigate('/dashboard') }}
+        backButton={{ onClick: () => navigate(DASHBOARD_PATHS.dashboard) }}
         columns={columns}
         data={paginatedData}
         loading={loading}

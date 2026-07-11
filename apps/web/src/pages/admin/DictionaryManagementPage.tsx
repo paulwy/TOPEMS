@@ -43,6 +43,7 @@ import {
 } from '@mui/material';
 import { ListPageTemplate, type ColumnDef } from '@/components/templates';
 import { ConfirmDialog } from '@topems/shared-components';
+import { DASHBOARD_PATHS } from '@/routes/dashboard';
 
 interface DictionaryManagementPageProps {
   onNavigate?: (page: string) => void;
@@ -711,7 +712,7 @@ const DictionaryManagementPage: React.FC<DictionaryManagementPageProps> = ({ onN
             }}
           >
             <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
-              <BackButton href='/dashboard' />
+              <BackButton href={DASHBOARD_PATHS.dashboard} />
               <Box>
                 <Typography
                   variant='h5'

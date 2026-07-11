@@ -53,6 +53,7 @@ import { limsApi } from '@/api/lims';
 import { PageContainer } from '@/components/common';
 import { CardListTemplate } from '@/components/templates/CardListTemplate';
 import { apiLogger } from '@/utils/logger';
+import { DASHBOARD_PATHS } from '@/routes/dashboard';
 
 const ct = designTokens.colors;
 
@@ -657,7 +658,7 @@ const LimsInstrumentPage: React.FC = () => {
           <Button
             variant='contained'
             color='primary'
-            onClick={() => navigate('/dashboard')}
+            onClick={() => navigate(DASHBOARD_PATHS.dashboard)}
           >
             返回首页
           </Button>
@@ -679,11 +680,11 @@ const LimsInstrumentPage: React.FC = () => {
         pageIcon: <Settings style={{ width: 20, height: 20 }} />,
         pageGradient: `linear-gradient(135deg, ${ct.teal[400]}, ${ct.teal[600]})`,
         breadcrumbs: [
-          { label: '首页', href: '/dashboard' },
+          { label: '首页', href: DASHBOARD_PATHS.dashboard },
           { label: 'LIMS' },
           { label: '仪器管理' },
         ],
-        backButton: { onClick: () => navigate('/dashboard') },
+        backButton: { onClick: () => navigate(DASHBOARD_PATHS.dashboard) },
         loading,
       }}
     >

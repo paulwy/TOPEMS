@@ -28,6 +28,25 @@
 | Wave 5 | oa, lowcode, asset, bi, im, plugin | 6 | 📋 |
 | 收尾 | 删除 compatibility.tsx | - | 📋 |
 
+### 路径变更对照表（死链修复部分）
+
+> 以下为本次死链修复涉及的路径变更。V5.8 全量迁移完成后，将补充完整的 30 个模块路径对照表。
+
+| 模块 | 旧路径（硬编码） | 新路径（路径常量） | 常量名 | 更新文件 | 说明 |
+|------|------------------|-------------------|--------|----------|------|
+| lowcode | `/lowcode/apps/${id}` | `/lowcode/app-detail/:appId` | `LOWCODE_PATHS.appDetail` | AppOverviewPage.tsx、AppManagementPage.tsx | 复数路径 → 单数动态路径 |
+| lowcode | `/lowcode/apps` | `/lowcode/app` | `LOWCODE_PATHS.app` | AppDetailPage.tsx | 返回列表页，复数 → 单数 |
+| srm | `/srm/suppliers/${id}` | `/srm/supplier/:id` | `SRM_PATHS.supplierDetail` | SrmSupplierPage.tsx | 复数路径 → 单数动态路径 |
+| srm | `/srm/contracts` | `/srm/contract/:id` | `SRM_PATHS.contractDetail` | SrmContractPage.tsx（2处） | 复数列表页 → 单数详情页（修复行操作死链） |
+
+**新增详情页组件**：
+- `SrmSupplierDetailPage.tsx` - 供应商详情页
+- `SrmContractDetailPage.tsx` - 合同详情页
+
+**新增路由配置**：
+- `SRM_PATHS.supplierDetail: '/srm/supplier/:id'`
+- `SRM_PATHS.contractDetail: '/srm/contract/:id'`
+
 ### 单模块迁移 SOP
 
 ```

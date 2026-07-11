@@ -25,6 +25,7 @@ import { usePlugins } from '../../context/PluginContext';
 import { navigationRegistryV2 } from '../../lib/navigation';
 import type { NavItem } from '../../lib/navigation/types';
 import { usePermission } from '../../hooks/usePermission';
+import { DASHBOARD_PATHS } from '@/routes/dashboard';
 
 function getNavigablePath(path: string): string | null {
   if (!path) return null;
@@ -301,12 +302,12 @@ export const Sidebar: React.FC<SidebarProps> = ({ open, onClose, pluginCode }) =
       <List>
         <ListItem
           onClick={() => {
-            navigate('/dashboard');
+            navigate(DASHBOARD_PATHS.dashboard);
             onClose();
           }}
           sx={{
-            color: location.pathname === '/dashboard' ? 'primary.main' : 'text.secondary',
-            backgroundColor: location.pathname === '/dashboard' ? 'primary.50' : 'transparent',
+            color: location.pathname === DASHBOARD_PATHS.dashboard ? 'primary.main' : 'text.secondary',
+            backgroundColor: location.pathname === DASHBOARD_PATHS.dashboard ? 'primary.50' : 'transparent',
             borderRadius: 1,
             marginY: 0.5,
             marginX: 1,

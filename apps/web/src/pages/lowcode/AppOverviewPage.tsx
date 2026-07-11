@@ -10,6 +10,7 @@ import {
   Avatar,
   useTheme,
 } from '@mui/material';
+import { LOWCODE_PATHS } from '@/modules/lowcode/config';
 import {
   Database,
   LayoutGrid,
@@ -103,7 +104,7 @@ const AppOverviewPage = () => {
         <Button
           variant='contained'
           startIcon={<Plus style={{ width: 18, height: 18 }} />}
-          onClick={() => navigate('/lowcode/apps')}
+          onClick={() => navigate(LOWCODE_PATHS.app)}
         >
           创建应用
         </Button>
@@ -175,7 +176,7 @@ const AppOverviewPage = () => {
                   <Button
                     size='small'
                     endIcon={<ArrowRight style={{ width: 16, height: 16 }} />}
-                    onClick={() => navigate('/lowcode/apps')}
+                    onClick={() => navigate(LOWCODE_PATHS.app)}
                   >
                     查看全部
                   </Button>
@@ -191,7 +192,7 @@ const AppOverviewPage = () => {
                     >
                       <AppCard
                         app={app}
-                        onClick={() => navigate(`/lowcode/apps/${app.id}`)}
+                        onClick={() => navigate(LOWCODE_PATHS.appDetail.replace(':appId', app.id))}
                       />
                     </Grid>
                   ))}

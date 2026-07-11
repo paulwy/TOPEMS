@@ -29,6 +29,7 @@ import { Plus, Search, MoreVertical, Edit, Trash2, Copy, Eye, Send, Layout } fro
 import { PageContainer } from '@/components';
 import { lowcodeApi } from '@/api';
 import type { PageSchema, ListParams } from '@/api/lowcode';
+import { LOWCODE_PATHS } from '@/modules/lowcode/config';
 import { logger } from '@/utils/logger';
 
 const PageListPage: React.FC = () => {
@@ -110,16 +111,16 @@ const PageListPage: React.FC = () => {
   };
 
   const handleCreate = () => {
-    navigate('/lowcode/pages/new');
+    navigate(LOWCODE_PATHS.pageDesigner.replace(':id', 'new'));
   };
 
   const handleEdit = (pageItem: PageSchema) => {
-    navigate(`/lowcode/pages/${pageItem.id}`);
+    navigate(LOWCODE_PATHS.pageDesigner.replace(':id', pageItem.id));
     setMenuAnchor(null);
   };
 
   const handlePreview = (pageItem: PageSchema) => {
-    navigate(`/lowcode/pages/${pageItem.id}?preview=true`);
+    navigate(`${LOWCODE_PATHS.pageDesigner.replace(':id', pageItem.id)}?preview=true`);
     setMenuAnchor(null);
   };
 

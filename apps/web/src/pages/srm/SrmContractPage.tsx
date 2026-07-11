@@ -245,12 +245,12 @@ const SrmContractPage: React.FC = () => {
     {
       label: '查看详情',
       icon: <Eye size={16} />,
-      onClick: (row) => navigate(`/srm/contracts`),
+      onClick: (row) => navigate(SRM_PATHS.contractDetail.replace(':id', row.id)),
     },
     {
       label: '编辑',
       icon: <Edit size={16} />,
-      onClick: (row) => navigate(`/srm/contracts`),
+      onClick: (row) => navigate(SRM_PATHS.contractDetail.replace(':id', row.id)),
     },
     {
       label: '删除',

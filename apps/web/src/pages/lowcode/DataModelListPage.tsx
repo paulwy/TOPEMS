@@ -24,6 +24,7 @@ import { listDataModels, createDataModel, deleteDataModel, publishModel } from '
 import type { DataModel } from '../../api/lowcode/types';
 import { useNavigate } from 'react-router-dom';
 import { logger } from '@/utils/logger';
+import { LOWCODE_PATHS } from '@/modules/lowcode/config';
 
 const DataModelListPage = () => {
   const theme = useTheme();
@@ -159,7 +160,7 @@ const DataModelListPage = () => {
     {
       label: '设计',
       icon: <Edit style={{ width: 16, height: 16 }} />,
-      onClick: (row) => navigate(`/lowcode/models/${row.id}`),
+      onClick: (row) => navigate(LOWCODE_PATHS.dataModelDesigner.replace(':id', row.id)),
     },
     {
       label: '发布',
@@ -224,7 +225,7 @@ const DataModelListPage = () => {
             </Select>
           </FormControl>
         }
-        onRowClick={(row) => navigate(`/lowcode/models/${row.id}`)}
+        onRowClick={(row) => navigate(LOWCODE_PATHS.dataModelDesigner.replace(':id', row.id))}
       />
 
       <Dialog

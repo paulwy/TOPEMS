@@ -23,6 +23,7 @@ import { workflowApi } from '@/api/workflow';
 import { apiLogger } from '@/utils/logger';
 import { Save } from 'lucide-react';
 import { PageContainer } from '@/components/common';
+import { WORKFLOW_PATHS } from '@/modules/workflow/config';
 
 const WorkflowDesignerPage: React.FC = () => {
   const navigate = useNavigate();
@@ -188,7 +189,7 @@ const WorkflowDesignerPage: React.FC = () => {
           });
           setShowSaveDialog(false);
           // Navigate to edit mode
-          navigate(`/flow/definitions`);
+          navigate(WORKFLOW_PATHS.definitions);
         } else {
           addNotification({
             title: '保存失败',

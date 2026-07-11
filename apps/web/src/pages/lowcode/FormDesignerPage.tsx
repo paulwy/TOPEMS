@@ -4,6 +4,7 @@ import { Box, Typography, CircularProgress } from '@mui/material';
 import { FormDesigner } from '@/components/lowcode';
 import { lowcodeApi } from '@/api';
 import type { FormSchema } from '@/api/lowcode';
+import { LOWCODE_PATHS } from '@/modules/lowcode/config';
 import { logger } from '@/utils/logger';
 
 const FormDesignerPage: React.FC = () => {
@@ -46,7 +47,7 @@ const FormDesignerPage: React.FC = () => {
           description: newSchema.description,
           components: newSchema.components,
         });
-        navigate(`/lowcode/forms/${created.id}`, { replace: true });
+        navigate(LOWCODE_PATHS.formDesigner.replace(':id', created.id), { replace: true });
       }
     } catch (error) {
       logger.error('Failed to save form:', error);
@@ -84,7 +85,7 @@ const FormDesignerPage: React.FC = () => {
       initialSchema={schema || undefined}
       onSave={handleSave}
       onPublish={handlePublish}
-      onBack={() => navigate('/lowcode/forms')}
+      onBack={() => navigate(LOWCODE_PATHS.form)}
     />
   );
 };

@@ -34,6 +34,7 @@ import {
 } from 'lucide-react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { PageContainer } from '@/components/common';
+import { LOWCODE_PATHS } from '@/modules/lowcode/config';
 import { getApp, getAppVersions } from '../../api/lowcode';
 import type { LowCodeApp, AppVersion } from '../../api/lowcode/types';
 import AppVersionList from '../../components/lowcode/AppVersionList';
@@ -112,7 +113,7 @@ const AppDetailPage = () => {
         <Box>
           <Box sx={{ display: 'flex', alignItems: 'center', gap: 2, mb: 1 }}>
             <IconButton
-              onClick={() => navigate('/lowcode/apps')}
+              onClick={() => navigate(LOWCODE_PATHS.app)}
               size='small'
             >
               <ArrowLeft style={{ width: 20, height: 20 }} />
@@ -397,7 +398,7 @@ const AppDetailPage = () => {
                   size='small'
                   variant='contained'
                   startIcon={<Plus style={{ width: 16, height: 16 }} />}
-                  onClick={() => navigate('/lowcode/models')}
+                  onClick={() => navigate(LOWCODE_PATHS.dataModel)}
                 >
                   管理模型
                 </Button>
@@ -406,7 +407,7 @@ const AppDetailPage = () => {
                 {(app?.modelIds || []).map((modelId, idx) => (
                   <ListItem
                     key={modelId}
-                    onClick={() => navigate(`/lowcode/models/${modelId}`)}
+                    onClick={() => navigate(LOWCODE_PATHS.dataModelDesigner.replace(':id', modelId))}
                     sx={{ cursor: 'pointer' }}
                   >
                     <ListItemAvatar>

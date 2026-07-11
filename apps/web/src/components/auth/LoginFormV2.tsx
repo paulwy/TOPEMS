@@ -18,6 +18,7 @@ import { zodResolver } from '@hookform/resolvers/zod';
 import { Eye, EyeOff } from 'lucide-react';
 
 import { logger } from '@/utils/logger';
+import { DASHBOARD_PATHS } from '@/routes/dashboard';
 import { useAppStore } from '@/store';
 import { isDevelopment } from '../../config/runtime';
 
@@ -86,7 +87,7 @@ export function LoginFormV2({ onLogin, className }: LoginFormV2Props) {
           message: '登录成功',
           type: 'success',
         });
-        navigate('/dashboard');
+        navigate(DASHBOARD_PATHS.dashboard);
       }
     } catch (error: unknown) {
       logger.error('登录错误:', error);

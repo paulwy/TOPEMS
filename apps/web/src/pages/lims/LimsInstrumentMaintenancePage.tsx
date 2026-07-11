@@ -36,6 +36,7 @@ import { PageContainer } from '@/components/common';
 import { logger } from '@/utils/logger';
 import { useAppStore } from '@/store';
 import { designTokens } from '@/theme/tokens';
+import { LIMS_PATHS } from '@/modules/lims/config';
 
 const ct = designTokens.colors;
 
@@ -421,7 +422,7 @@ const LimsInstrumentMaintenancePage: React.FC = () => {
           />
           <p style={{ color: ct.grey[600] }}>仪器不存在或已被删除</p>
           <Button
-            onClick={() => navigate('/lims')}
+            onClick={() => navigate(LIMS_PATHS.root)}
             sx={{ mt: 2 }}
           >
             返回列表
@@ -448,7 +449,7 @@ const LimsInstrumentMaintenancePage: React.FC = () => {
       headerProps={{
         pageIcon: <Wrench style={{ width: 20, height: 20 }} />,
         pageGradient: `linear-gradient(135deg, ${ct.teal[400]}, ${ct.teal[600]})`,
-        backButton: { onClick: () => navigate('/lims') },
+        backButton: { onClick: () => navigate(LIMS_PATHS.root) },
         actions: headerActions,
       }}
       maxWidth='xl'

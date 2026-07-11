@@ -8,14 +8,14 @@ export const LOWCODE_PATHS = {
   root: '/lowcode',
   home: '/lowcode/home',
   app: '/lowcode/app',
-  appDetail: '/lowcode/app-detail',
+  appDetail: '/lowcode/app-detail/:appId',
   appOverview: '/lowcode/app-overview',
   page: '/lowcode/page',
-  pageDesigner: '/lowcode/page-designer',
+  pageDesigner: '/lowcode/page-designer/:id',
   form: '/lowcode/form',
-  formDesigner: '/lowcode/form-designer',
+  formDesigner: '/lowcode/form-designer/:id',
   dataModel: '/lowcode/data-model',
-  dataModelDesigner: '/lowcode/data-model-designer',
+  dataModelDesigner: '/lowcode/data-model-designer/:id',
   dataSource: '/lowcode/data-source',
 } as const;
 

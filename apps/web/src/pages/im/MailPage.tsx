@@ -62,6 +62,7 @@ import {
   TEMPLATE_CATEGORIES,
 } from '@/api/mail';
 import { designTokens } from '@/theme/tokens';
+import { DASHBOARD_PATHS } from '@/routes/dashboard';
 
 const ct = designTokens.colors;
 
@@ -883,7 +884,7 @@ const MailPage: React.FC = () => {
               <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
                 <Button
                   variant='text'
-                  onClick={() => navigate('/dashboard')}
+                  onClick={() => navigate(DASHBOARD_PATHS.dashboard)}
                 >
                   <ChevronLeft size={20} />
                 </Button>

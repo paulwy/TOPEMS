@@ -6,6 +6,7 @@ import NotificationSettings from './NotificationSettings';
 import type { Notification } from '@/api/notification';
 import { getNotifications, getUnreadCount, markAllAsRead } from '@/api/notification';
 import { logger } from '@/utils/logger';
+import { NOTIFICATION_PATHS } from '@/modules/notification/config';
 
 interface NotificationPanelProps {
   onClose: () => void;
@@ -324,7 +325,7 @@ const NotificationPanel: React.FC<NotificationPanelProps> = ({ onClose, onUnread
           }}
         >
           <a
-            href='/notifications'
+            href={NOTIFICATION_PATHS.list}
             style={{
               display: 'block',
               textAlign: 'center',

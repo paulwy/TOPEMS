@@ -18,6 +18,7 @@ import { Plus, Edit, ClipboardCheck } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { assetApi, type Asset } from '@/api/erp';
 import { mesEquipmentApi, type InspectionRecord } from '@/api/mes';
+import { ASSET_PATHS } from '@/modules/asset/config';
 import { useAppStore } from '../../store';
 import { ListPageTemplate, type ColumnDef, type RowAction } from '@/components/templates';
 import { apiLogger } from '@/utils/logger';
@@ -263,7 +264,7 @@ const EquipmentInspectionPage: React.FC = () => {
         title=''
         subtitle=''
         backButton={{
-          onClick: () => navigate('/equipment'),
+          onClick: () => navigate(ASSET_PATHS.equipment),
         }}
         columns={columns}
         data={inspections}

@@ -4,6 +4,7 @@ import { useNavigate, useLocation } from 'react-router-dom';
 import { GIS_PATHS } from '@/modules/gis/config';
 import { BI_PATHS } from '@/modules/bi/config';
 import { IM_PATHS } from '@/modules/im/config';
+import { AUTH_PATHS } from '@/routes/auth';
 import {
   Box,
   Typography,
@@ -483,7 +484,7 @@ const DashboardPage: React.FC<DashboardPageProps> = ({ onLogout }) => {
 
   useEffect(() => {
     if (!isAuthenticated) {
-      navigate('/login');
+      navigate(AUTH_PATHS.login);
       return;
     }
 
@@ -537,7 +538,7 @@ const DashboardPage: React.FC<DashboardPageProps> = ({ onLogout }) => {
 
   const handleLogout = useCallback(() => {
     authLogout();
-    navigate('/login');
+    navigate(AUTH_PATHS.login);
     onLogout?.();
   }, [authLogout, navigate, onLogout]);
 

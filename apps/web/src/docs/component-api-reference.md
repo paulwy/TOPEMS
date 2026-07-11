@@ -130,6 +130,7 @@ import { StatusBadge } from '@/components/common/StatusBadge';
 
 ```tsx
 import { DataTable } from '@/components/common/DataTable';
+import { HRM_PATHS } from '@/modules/hrm/config';
 import type { ColumnDef } from '@tanstack/react-table';
 
 const columns: ColumnDef<User>[] = [
@@ -150,7 +151,7 @@ const columns: ColumnDef<User>[] = [
   totalItems={100}
   pageSize={10}
   onPageChange={(page) => fetchUsers(page)}
-  onRowClick={(row) => navigate(`/users/${row.id}`)}
+  onRowClick={(row) => navigate(HRM_PATHS.employeeDetail.replace(':id', row.id))}
   loading={isLoading}
 />
 ```

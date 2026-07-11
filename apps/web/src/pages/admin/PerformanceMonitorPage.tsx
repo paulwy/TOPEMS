@@ -19,6 +19,7 @@ import {
 } from '@/components/templates/StatsPageTemplate';
 import { PageContainer } from '@/components/common';
 import { designTokens } from '@/theme/tokens';
+import { DASHBOARD_PATHS } from '@/routes/dashboard';
 
 const ct = designTokens.colors;
 
@@ -157,7 +158,7 @@ const PerformanceMonitorPage: React.FC = () => {
       subtitle='实时监控系统性能指标'
       headerProps={{
         backButton: {
-          onClick: () => navigate('/dashboard'),
+          onClick: () => navigate(DASHBOARD_PATHS.dashboard),
         },
         pageIcon: <Activity style={{ width: 20, height: 20 }} />,
         pageGradient: `linear-gradient(135deg, ${ct.secondary[400]}, ${ct.secondary.main})`,

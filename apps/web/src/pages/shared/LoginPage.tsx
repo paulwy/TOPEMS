@@ -8,6 +8,7 @@ import { zodResolver } from '@hookform/resolvers/zod';
 import { Eye, EyeOff, Lock, User, Shield, Fingerprint } from 'lucide-react';
 import { isDevelopment } from '../../config/runtime';
 import { useAppStore } from '../../store';
+import { AUTH_PATHS } from '@/routes/auth';
 
 import {
   Card as MuiCard,
@@ -432,7 +433,7 @@ const LoginPage: React.FC<LoginPageProps> = ({ onLogin }) => {
                 >
                   <Button
                     type='button'
-                    onClick={() => navigate('/forgot-password')}
+                    onClick={() => navigate(AUTH_PATHS.forgotPassword)}
                     sx={{
                       color: ct.secondary[400],
                       '&:hover': { color: ct.secondary[600] },
