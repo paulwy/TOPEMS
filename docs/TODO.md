@@ -23,9 +23,9 @@
 |------|------|------|------|
 | Wave 1 | iam, admin, workflow, notification, doc | 5 | ✅ |
 | Wave 2 | monitor, integration, ai, mobile, report | 5 | ✅ |
-| Wave 3 | crm, scm, wms, pm, pdm, srm, rs | 7 | 📋 |
-| Wave 4 | erp, mes, finance, qms, lims, ehs, gis | 7 | 📋 |
-| Wave 5 | oa, lowcode, asset, bi, im, plugin | 6 | 📋 |
+| Wave 3 | crm, scm, wms, pm, pdm, srm, rs | 7 | ✅ |
+| Wave 4 | erp, mes, finance, qms, lims, ehs, gis | 7 | ✅ |
+| Wave 5 | oa, lowcode, asset, bi, im, plugin | 6 | ✅ |
 | 收尾 | 删除 compatibility.tsx | - | ✅ |
 
 ### 路径变更对照表（完整 30 个模块）
