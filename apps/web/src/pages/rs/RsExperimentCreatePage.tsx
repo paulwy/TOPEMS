@@ -9,6 +9,7 @@ import { PageContainer } from '@/components/common';
 import { rsApi, formulaApi } from '@/api/rs';
 import { useAppStore } from '@/store';
 import type { Project, Formula } from '@/api/rs';
+import { RS_PATHS } from '@/modules/rs/config';
 
 const experimentTypes = ['活性测试', '稳定性测试', '配方优化', '工艺验证', '性能评估', '其他'];
 const phases = ['小试', '中试', '放大', '生产验证'];
@@ -275,7 +276,7 @@ const RsExperimentCreatePage: React.FC = () => {
           message: '试验已创建',
         });
       }
-      navigate('/rs/experiments');
+      navigate(RS_PATHS.experiment);
     } catch (err: unknown) {
       addNotification({
         type: 'error',
@@ -288,7 +289,7 @@ const RsExperimentCreatePage: React.FC = () => {
   };
 
   const handleCancel = () => {
-    navigate('/rs/experiments');
+    navigate(RS_PATHS.experiment);
   };
 
   return (

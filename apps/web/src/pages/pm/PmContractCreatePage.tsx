@@ -8,6 +8,7 @@ import { PageContainer } from '@/components/common';
 import { pmApi, type Project } from '@/api/pm';
 import { useNotification } from '@/hooks/useNotification';
 import { logger } from '@/utils/logger';
+import { PM_PATHS } from '@/modules/pm/config';
 
 const contractSchema = z.object({
   project_id: z.string().optional(),
@@ -100,7 +101,7 @@ const PmContractCreatePage: React.FC = () => {
 
         if (response.code === 200 || response.code === 201) {
           success('合同创建成功');
-          navigate('/pm/contracts');
+          navigate(PM_PATHS.contracts);
         } else {
           error(response.message || '创建失败');
         }
@@ -115,7 +116,7 @@ const PmContractCreatePage: React.FC = () => {
   );
 
   const handleCancel = () => {
-    navigate('/pm/contracts');
+    navigate(PM_PATHS.contracts);
   };
 
   const projectOptions = useMemo(() => {
@@ -284,8 +285,8 @@ const PmContractCreatePage: React.FC = () => {
         subtitle=''
         breadcrumbs={[
           { label: '首页', href: '/dashboard' },
-          { label: '项目管理', href: '/pm' },
-          { label: '合同管理', href: '/pm/contracts' },
+          { label: '项目管理', href: PM_PATHS.root },
+          { label: '合同管理', href: PM_PATHS.contracts },
           { label: '创建合同' },
         ]}
         sections={sections}

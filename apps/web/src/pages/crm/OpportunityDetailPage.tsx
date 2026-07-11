@@ -8,6 +8,7 @@ import { useNotification } from '@/hooks/useNotification';
 import { apiLogger } from '@/utils/logger';
 import { DetailPageTemplate, type TabConfig, type SectionConfig } from '@/components/templates';
 import { ConfirmDialog } from '@topems/shared-components';
+import { CRM_PATHS } from '@/modules/crm/config';
 import { PageContainer } from '@/components/common';
 import { designTokens } from '@/theme/tokens';
 
@@ -280,7 +281,7 @@ const OpportunityDetailPage: React.FC = () => {
       const res = await crmApi.opportunities.delete(id);
       if (res.success) {
         success('商机删除成功');
-        navigate('/crm/opportunities');
+        navigate(CRM_PATHS.opportunities);
       }
     } catch (err: unknown) {
       apiLogger.error('Failed to delete opportunity:', err);
@@ -299,10 +300,10 @@ const OpportunityDetailPage: React.FC = () => {
       <DetailPageTemplate
         title=''
         subtitle=''
-        backHref='/crm/opportunities'
+        backHref={CRM_PATHS.opportunities}
         loading={loading}
         error={errorMessage}
-        onEdit={() => navigate(`/crm/opportunities/${id}`)}
+        onEdit={() => navigate(CRM_PATHS.opportunityDetail.replace(':id', id!))}
         onDelete={() => setDeleteDialogOpen(true)}
         infoCard={infoCard}
         tabs={tabs}

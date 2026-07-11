@@ -1,6 +1,7 @@
 import { Grid } from '@/components';
 import React, { useState, useEffect } from 'react';
 import { Link, useParams, useNavigate } from 'react-router-dom';
+import { RS_PATHS } from '@/modules/rs/config';
 import {
   Box,
   Container,
@@ -292,7 +293,7 @@ const RsExperimentDetailPage: React.FC = () => {
             <Button
               variant='outlined'
               startIcon={<EditIcon />}
-              onClick={() => navigate(`/rs/experiments/${id}/edit`)}
+              onClick={() => navigate(`${RS_PATHS.experiment}/${id}/edit`)}
             >
               编辑
             </Button>

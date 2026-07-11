@@ -18,6 +18,7 @@ import { apiLogger } from '@/utils/logger';
 import { ListPageTemplate, type ColumnDef } from '@/components/templates';
 import { StatusBadge, PageContainer } from '@/components/common';
 import { designTokens } from '@/theme/tokens';
+import { PM_PATHS } from '@/modules/pm/config';
 
 const ct = designTokens.colors;
 
@@ -206,7 +207,7 @@ const PmContractListPage: React.FC = () => {
             <Tooltip title='查看详情'>
               <IconButton
                 size='small'
-                onClick={() => navigate(`/pm/contracts/${row.id}`)}
+                onClick={() => navigate(`${PM_PATHS.contracts}/${row.id}`)}
               >
                 <Eye size={16} />
               </IconButton>
@@ -214,7 +215,7 @@ const PmContractListPage: React.FC = () => {
             <Tooltip title='编辑'>
               <IconButton
                 size='small'
-                onClick={() => navigate(`'/pm/contracts'`)}
+                onClick={() => navigate(PM_PATHS.contracts)}
               >
                 <Edit size={16} />
               </IconButton>
@@ -307,7 +308,7 @@ const PmContractListPage: React.FC = () => {
           {
             label: '创建合同',
             icon: <Plus size={16} />,
-            onClick: () => navigate('/pm/contracts/create'),
+            onClick: () => navigate(PM_PATHS.contractCreate),
             variant: 'contained',
           },
         ]}

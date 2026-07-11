@@ -9,6 +9,7 @@ import PieChartComponent from '../../components/charts/PieChart';
 import { DashboardTemplate, type StatCard, type ChartCard } from '@/components/templates';
 import { PageContainer } from '@/components/common';
 import { pmApi, type Project } from '@/api/pm';
+import { PM_PATHS } from '@/modules/pm/config';
 
 export const DashboardPage: React.FC = () => {
   const navigate = useNavigate();
@@ -274,13 +275,13 @@ export const DashboardPage: React.FC = () => {
         id: 'create',
         label: '创建新项目',
         icon: <Plus size={20} />,
-        onClick: () => navigate('/pm/projects/create'),
+        onClick: () => navigate(PM_PATHS.projectCreate),
       },
       {
         id: 'report',
         label: '生成报表',
         icon: <Trophy size={20} />,
-        onClick: () => navigate('/pm/reports'),
+        onClick: () => navigate(PM_PATHS.reports),
       },
     ],
     [navigate]

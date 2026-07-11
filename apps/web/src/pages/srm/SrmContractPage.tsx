@@ -8,6 +8,7 @@ import { useAppStore } from '@/store';
 import { apiLogger } from '@/utils/logger';
 import { ConfirmDialog } from '@topems/shared-components';
 import { PageContainer } from '@/components/common';
+import { SRM_PATHS } from '@/modules/srm/config';
 
 const STATUS_OPTIONS = [
   { label: '全部', value: '' },

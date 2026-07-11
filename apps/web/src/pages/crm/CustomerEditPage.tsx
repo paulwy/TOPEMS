@@ -8,6 +8,7 @@ import { PageContainer } from '@/components/common';
 import { customerApi, type Customer } from '@/api/crm';
 import { useNotification } from '@/hooks/useNotification';
 import { logger } from '@/utils/logger';
+import { CRM_PATHS } from '@/modules/crm/config';
 
 const customerSchema = z.object({
   name: z.string().min(1, '客户名称不能为空'),
@@ -121,7 +122,7 @@ const CustomerEditPage: React.FC = () => {
 
         if (response.code === 200) {
           success('客户信息更新成功');
-          navigate(`/crm/customers/${id}`);
+          navigate(CRM_PATHS.customerDetail.replace(':id', id));
         } else {
           error(response.message || '更新失败');
         }
@@ -137,9 +138,9 @@ const CustomerEditPage: React.FC = () => {
 
   const handleCancel = () => {
     if (id) {
-      navigate(`/crm/customers/${id}`);
+      navigate(CRM_PATHS.customerDetail.replace(':id', id));
     } else {
-      navigate('/crm/customers');
+      navigate(CRM_PATHS.customers);
     }
   };
 
@@ -258,8 +259,8 @@ const CustomerEditPage: React.FC = () => {
         subtitle=''
         breadcrumbs={[
           { label: '首页', href: '/dashboard' },
-          { label: '客户管理', href: '/crm' },
-          { label: '客户列表', href: '/crm/customers' },
+          { label: '客户管理', href: CRM_PATHS.root },
+          { label: '客户列表', href: CRM_PATHS.customers },
           { label: '编辑客户' },
         ]}
         sections={sections}

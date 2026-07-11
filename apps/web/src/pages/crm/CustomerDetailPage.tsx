@@ -25,6 +25,7 @@ import type { Customer } from '@/api/crm';
 import { apiLogger } from '@/utils/logger';
 import { DetailPageTemplate, type TabConfig, type SectionConfig } from '@/components/templates';
 import { PageContainer } from '@/components/common';
+import { CRM_PATHS } from '@/modules/crm/config';
 
 const ct = designTokens.colors;
 
@@ -666,7 +667,7 @@ const CustomerDetailPage: React.FC = () => {
       <DetailPageTemplate
         title=''
         subtitle=''
-        backHref='/crm/customers'
+        backHref={CRM_PATHS.customers}
         loading={loading}
         onEdit={() => {}}
         infoCard={infoCard}

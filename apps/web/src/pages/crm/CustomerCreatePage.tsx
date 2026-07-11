@@ -8,6 +8,7 @@ import { PageContainer } from '@/components/common';
 import { customerApi } from '@/api/crm';
 import { useNotification } from '@/hooks/useNotification';
 import { logger } from '@/utils/logger';
+import { CRM_PATHS } from '@/modules/crm/config';
 
 const customerSchema = z.object({
   name: z.string().min(1, '客户名称不能为空'),
@@ -73,7 +74,7 @@ const CustomerCreatePage: React.FC = () => {
 
         if (response.code === 200 || response.code === 201) {
           success('客户创建成功');
-          navigate('/crm/customers');
+          navigate(CRM_PATHS.customers);
         } else {
           error(response.message || '创建失败');
         }
@@ -88,7 +89,7 @@ const CustomerCreatePage: React.FC = () => {
   );
 
   const handleCancel = () => {
-    navigate('/crm/customers');
+    navigate(CRM_PATHS.customers);
   };
 
   const sections: FormSection[] = [
@@ -207,8 +208,8 @@ const CustomerCreatePage: React.FC = () => {
         subtitle=''
         breadcrumbs={[
           { label: '首页', href: '/dashboard' },
-          { label: '客户管理', href: '/crm' },
-          { label: '客户列表', href: '/crm/customers' },
+          { label: '客户管理', href: CRM_PATHS.root },
+          { label: '客户列表', href: CRM_PATHS.customers },
           { label: '新建客户' },
         ]}
         sections={sections}

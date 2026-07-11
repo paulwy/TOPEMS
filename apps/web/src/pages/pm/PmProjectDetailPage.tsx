@@ -33,6 +33,7 @@ import type { Project, ProjectPhase, ProjectMilestone, GanttPhase, GanttMileston
 import { DetailPageTemplate, type TabConfig, type SectionConfig } from '@/components/templates';
 import { ActionButton, StatusBadge, PageContainer } from '@/components/common';
 import { designTokens } from '@/theme/tokens';
+import { PM_PATHS } from '@/modules/pm/config';
 
 const ct = designTokens.colors;
 
@@ -1141,13 +1142,13 @@ const PmProjectDetailPage: React.FC = () => {
         subtitle=''
         breadcrumbs={[
           { label: '首页', href: '/dashboard' },
-          { label: '项目管理', href: '/pm/projects' },
+          { label: '项目管理', href: PM_PATHS.projects },
           { label: '项目详情' },
         ]}
         loading={loading}
         error={error}
-        backHref='/pm/projects'
-        onEdit={() => id && navigate(`/pm/projects/${id}/edit`)}
+        backHref={PM_PATHS.projects}
+        onEdit={() => id && navigate(`${PM_PATHS.projects}/${id}/edit`)}
         tabs={tabs}
         defaultTab='overview'
         infoCard={infoCard}

@@ -15,6 +15,7 @@ import {
 import React, { useState, useEffect, useMemo, useCallback } from 'react';
 import type { InboundOrder, CreateInboundOrderRequest, UpdateInboundOrderRequest } from '@/api/wms';
 import { wmsApi } from '@/api/wms';
+import { WMS_PATHS } from '@/modules/wms/config';
 import { useAppStore } from '@/store';
 import {
   ListPageTemplate,
@@ -329,7 +330,7 @@ const InboundOrderPage: React.FC = () => {
         subtitle=''
         breadcrumbs={[
           { label: '首页', href: '/dashboard' },
-          { label: '仓储', href: '/wms' },
+          { label: '仓储', href: WMS_PATHS.root },
           { label: '入库订单' },
         ]}
         columns={columns}

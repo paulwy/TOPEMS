@@ -8,6 +8,7 @@ import { useAppStore } from '@/store';
 import { apiLogger } from '@/utils/logger';
 import { ConfirmDialog } from '@topems/shared-components';
 import { PageContainer } from '@/components/common';
+import { SRM_PATHS } from '@/modules/srm/config';
 
 interface EvaluationWithSupplier extends SupplierEvaluation {
   supplier_name?: string;
@@ -257,12 +258,12 @@ const SrmEvaluationPage: React.FC = () => {
       {
         label: '查看详情',
         icon: <Eye size={16} />,
-        onClick: (row) => navigate(`/srm/evaluations`),
+        onClick: (row) => navigate(SRM_PATHS.evaluation),
       },
       {
         label: '编辑',
         icon: <Edit size={16} />,
-        onClick: (row) => navigate(`/srm/evaluations`),
+        onClick: (row) => navigate(SRM_PATHS.evaluation),
       },
       {
         label: '删除',

@@ -33,6 +33,7 @@ import type {
   WavePickItem,
 } from '@/api/wms';
 import { wmsApi } from '@/api/wms';
+import { WMS_PATHS } from '@/modules/wms/config';
 import { useAppStore } from '@/store';
 import {
   Plus,
@@ -658,7 +659,7 @@ const OutboundPage: React.FC = () => {
           subtitle=''
           breadcrumbs={[
             { label: '首页', href: '/dashboard' },
-            { label: '仓储', href: '/wms' },
+            { label: '仓储', href: WMS_PATHS.root },
             { label: '出库管理' },
           ]}
           columns={orderColumns}
@@ -704,8 +705,8 @@ const OutboundPage: React.FC = () => {
           subtitle=''
           breadcrumbs={[
             { label: '首页', href: '/dashboard' },
-            { label: '仓储', href: '/wms' },
-            { label: '出库管理', href: '/wms/outbound' },
+            { label: '仓储', href: WMS_PATHS.root },
+            { label: '出库管理', href: WMS_PATHS.outbound },
             { label: '波次拣货' },
           ]}
           columns={wavePickColumns}

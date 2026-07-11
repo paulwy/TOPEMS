@@ -19,6 +19,7 @@ import ProjectTemplateModal from '@/components/pm/ProjectTemplateModal';
 import { pmApi } from '@/api/pm';
 import type { CreateProjectRequest } from '@/api/pm';
 import { PageContainer } from '@/components/common';
+import { PM_PATHS } from '@/modules/pm/config';
 
 const PmTemplatePage: React.FC = () => {
   const navigate = useNavigate();
@@ -115,7 +116,7 @@ const PmTemplatePage: React.FC = () => {
     try {
       const response = await pmApi.projects.create(data);
       if (response.success) {
-        navigate('/pm/projects');
+        navigate(PM_PATHS.projects);
       }
     } catch (error: unknown) {
       logger.error('Failed to create project:', error);
@@ -132,7 +133,7 @@ const PmTemplatePage: React.FC = () => {
           {
             label: '新建项目',
             icon: <Plus sx={{ width: 16, height: 16 }} />,
-            onClick: () => navigate('/pm/projects/create'),
+            onClick: () => navigate(PM_PATHS.projectCreate),
             variant: 'contained',
           },
         ],

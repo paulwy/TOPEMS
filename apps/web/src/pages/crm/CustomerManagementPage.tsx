@@ -22,6 +22,7 @@ import { crmApi } from '@/api/crm';
 import { useAppStore } from '@/store';
 import { logger } from '@/utils/logger';
 import { Plus, Edit, Trash2, Eye, Download, Upload, Tag as TagIcon, Users } from 'lucide-react';
+import { CRM_PATHS } from '@/modules/crm/config';
 import { useNavigate } from 'react-router-dom';
 import { ListPageTemplate } from '@/components/templates';
 
@@ -330,7 +331,7 @@ const CustomerManagementPage: React.FC = () => {
   };
 
   const handleViewDetail = (customer: Customer) => {
-    navigate(`/crm/customers/${customer.id}`);
+    navigate(CRM_PATHS.customerDetail.replace(':id', customer.id));
   };
 
   const handleManageTags = async (customer: Customer) => {

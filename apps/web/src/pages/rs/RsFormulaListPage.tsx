@@ -9,6 +9,7 @@ import type { Formula } from '@/api/rs';
 import { useAppStore } from '@/store';
 import { logger } from '@/utils/logger';
 import { ConfirmDialog } from '@topems/shared-components';
+import { RS_PATHS } from '@/modules/rs/config';
 
 const STATUS_OPTIONS = [
   { label: '全部', value: '' },
@@ -202,12 +203,12 @@ const RsFormulaListPage: React.FC = () => {
     {
       label: '查看',
       icon: <Eye size={16} />,
-      onClick: (row) => navigate(`/rs/formulas/${row.id}`),
+      onClick: (row) => navigate(`${RS_PATHS.formula}/${row.id}`),
     },
     {
       label: '编辑',
       icon: <Edit size={16} />,
-      onClick: (row) => navigate(`/rs/formulas/${row.id}/edit`),
+      onClick: (row) => navigate(`${RS_PATHS.formula}/${row.id}/edit`),
     },
     {
       label: '删除',
@@ -280,7 +281,7 @@ const RsFormulaListPage: React.FC = () => {
           {
             label: '新增配方',
             icon: <Plus size={18} />,
-            onClick: () => navigate('/rs/formulas/create'),
+            onClick: () => navigate(RS_PATHS.formulaCreate),
             variant: 'contained',
           },
         ]}

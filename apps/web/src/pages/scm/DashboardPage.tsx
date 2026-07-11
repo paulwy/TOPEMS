@@ -33,6 +33,7 @@ import type {
 } from '@/api/scm';
 import { useAppStore } from '@/store';
 import { apiLogger } from '@/utils/logger';
+import { SCM_PATHS } from '@/modules/scm/config';
 
 const barData = [
   { name: '供应商A', value: 35 },
@@ -307,7 +308,7 @@ export const DashboardPage: React.FC = () => {
         id: 'new-supplier',
         label: '新增供应商',
         icon: <ArrowRight size={18} />,
-        onClick: () => navigate('/scm/suppliers'),
+        onClick: () => navigate(SCM_PATHS.suppliers),
       },
     ],
     [navigate]

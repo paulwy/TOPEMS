@@ -8,6 +8,7 @@ import { PageContainer } from '@/components/common';
 import { pmApi } from '@/api/pm';
 import { useNotification } from '@/hooks/useNotification';
 import { logger } from '@/utils/logger';
+import { PM_PATHS } from '@/modules/pm/config';
 
 const projectSchema = z.object({
   name: z.string().min(1, '项目名称不能为空'),
@@ -57,7 +58,7 @@ const PmProjectCreatePage: React.FC = () => {
 
         if (response.code === 200 || response.code === 201) {
           success('项目创建成功');
-          navigate(`/pm/projects/${response.data?.id}`);
+          navigate(`${PM_PATHS.projects}/${response.data?.id}`);
         } else {
           error(response.message || '创建失败');
         }
@@ -72,7 +73,7 @@ const PmProjectCreatePage: React.FC = () => {
   );
 
   const handleCancel = () => {
-    navigate('/pm/projects');
+    navigate(PM_PATHS.projects);
   };
 
   const sections: FormSection[] = [
@@ -198,8 +199,8 @@ const PmProjectCreatePage: React.FC = () => {
         subtitle=''
         breadcrumbs={[
           { label: '首页', href: '/dashboard' },
-          { label: '项目管理', href: '/pm' },
-          { label: '项目列表', href: '/pm/projects' },
+          { label: '项目管理', href: PM_PATHS.root },
+          { label: '项目列表', href: PM_PATHS.projects },
           { label: '创建项目' },
         ]}
         sections={sections}

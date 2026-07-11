@@ -8,6 +8,7 @@ import { rsApi, type Experiment } from '@/api/rs';
 import { useAppStore } from '@/store';
 import { apiLogger } from '@/utils/logger';
 import { ConfirmDialog } from '@topems/shared-components';
+import { RS_PATHS } from '@/modules/rs/config';
 
 interface ExperimentWithProject extends Experiment {
   project_name?: string;
@@ -178,12 +179,12 @@ const RsExperimentListPage: React.FC = () => {
     {
       label: '查看详情',
       icon: <Eye size={16} />,
-      onClick: (row) => navigate(`/rs/experiments/${row.id}`),
+      onClick: (row) => navigate(`${RS_PATHS.experiment}/${row.id}`),
     },
     {
       label: '编辑',
       icon: <Edit size={16} />,
-      onClick: (row) => navigate(`/rs/experiments/${row.id}/edit`),
+      onClick: (row) => navigate(`${RS_PATHS.experiment}/${row.id}/edit`),
     },
     {
       label: '删除',
@@ -279,7 +280,7 @@ const RsExperimentListPage: React.FC = () => {
           {
             label: '新建试验',
             icon: <Plus size={18} />,
-            onClick: () => navigate('/rs/experiments/create'),
+            onClick: () => navigate(RS_PATHS.experimentCreate),
             variant: 'contained',
           },
         ]}

@@ -12,6 +12,7 @@ import {
   type ChartCard,
   type QuickAction,
 } from '@/components/templates';
+import { WMS_PATHS } from '@/modules/wms/config';
 
 const barData = [
   { name: 'A区', value: 1200 },
@@ -145,13 +146,13 @@ export const DashboardPage: React.FC = () => {
         id: 'inventory',
         label: '库存查询',
         icon: <ArrowRight size={16} />,
-        onClick: () => navigate('/wms/inventory'),
+        onClick: () => navigate(WMS_PATHS.inventory),
       },
       {
         id: 'warehouse-settings',
         label: '仓库设置',
         icon: <ArrowRight size={16} />,
-        onClick: () => navigate('/wms/warehouses'),
+        onClick: () => navigate(WMS_PATHS.warehouseManagement),
       },
     ],
     [navigate]
@@ -162,7 +163,7 @@ export const DashboardPage: React.FC = () => {
       <QuickSearch
         placeholder='搜索仓储内容...'
         onSearch={(query) => {
-          navigate(`/wms/inventory?search=${encodeURIComponent(query)}`);
+          navigate(`${WMS_PATHS.inventory}?search=${encodeURIComponent(query)}`);
         }}
         width={320}
       />

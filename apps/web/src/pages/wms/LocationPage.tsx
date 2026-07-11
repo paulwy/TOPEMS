@@ -29,6 +29,7 @@ import type {
   LocationStatusSummary,
 } from '@/api/wms';
 import { wmsApi } from '@/api/wms';
+import { WMS_PATHS } from '@/modules/wms/config';
 import { useAppStore } from '@/store';
 import { Plus, Edit, Trash2, Eye, MapPin } from 'lucide-react';
 import { apiLogger } from '@/utils/logger';
@@ -498,7 +499,7 @@ const LocationPage: React.FC = () => {
         subtitle=''
         breadcrumbs={[
           { label: '首页', href: '/dashboard' },
-          { label: '仓储', href: '/wms' },
+          { label: '仓储', href: WMS_PATHS.root },
           { label: '库位管理' },
         ]}
         columns={columns}

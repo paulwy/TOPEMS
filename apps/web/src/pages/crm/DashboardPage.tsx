@@ -25,6 +25,7 @@ import { PageContainer } from '@/components/common/PageContainerV2';
 import { crmApi } from '@/api/crm';
 import { logger } from '@/utils/logger';
 import type { FunnelStage, OpportunityStats } from '@/api/crm';
+import { CRM_PATHS } from '@/modules/crm/config';
 
 const iconMap: Record<string, React.ComponentType<{ size?: number; className?: string }>> = {
   TrendingUp,
@@ -179,28 +180,28 @@ export const DashboardPage: React.FC = () => {
       id: 'add-customer',
       label: '新增客户',
       icon: <ArrowRight size={20} />,
-      href: '/crm/customers/create',
+      href: CRM_PATHS.customerCreate,
       color: 'primary.main',
     },
     {
       id: 'create-opportunity',
       label: '创建商机',
       icon: <ArrowRight size={20} />,
-      href: '/crm/opportunities',
+      href: CRM_PATHS.opportunities,
       color: 'success.main',
     },
     {
       id: 'customer-scoring',
       label: '客户评分',
       icon: <ArrowRight size={20} />,
-      href: '/crm/scoring',
+      href: CRM_PATHS.customerScoring,
       color: 'secondary.main',
     },
     {
       id: 'sales-report',
       label: '销售预测',
       icon: <ArrowRight size={20} />,
-      href: '/crm/forecast',
+      href: CRM_PATHS.salesForecast,
       color: 'warning.main',
     },
   ];

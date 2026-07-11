@@ -28,6 +28,7 @@ import type {
   ReplenishmentStatistics,
 } from '@/api/wms';
 import { wmsApi } from '@/api/wms';
+import { WMS_PATHS } from '@/modules/wms/config';
 import { useAppStore } from '@/store';
 import {
   Plus,
@@ -665,8 +666,8 @@ const ReplenishmentPage: React.FC = () => {
         subtitle=''
         breadcrumbs={[
           { label: '首页', href: '/dashboard' },
-          { label: '仓储', href: '/wms' },
-          { label: '补货管理', href: '/wms/replenishment' },
+          { label: '仓储', href: WMS_PATHS.root },
+          { label: '补货管理', href: WMS_PATHS.replenishment },
           { label: currentBreadcrumb },
         ]}
         columns={currentColumns}

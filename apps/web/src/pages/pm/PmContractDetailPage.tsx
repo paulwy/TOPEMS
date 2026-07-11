@@ -21,6 +21,7 @@ import { pmApi } from '@/api/pm';
 import { DetailPageTemplate, type TabConfig } from '@/components/templates';
 import { PageContainer } from '@/components/common';
 import { designTokens } from '@/theme/tokens';
+import { PM_PATHS } from '@/modules/pm/config';
 
 const ct = designTokens.colors;
 
@@ -514,14 +515,14 @@ const PmContractDetailPage: React.FC = () => {
         subtitle=''
         breadcrumbs={[
           { label: '首页', href: '/dashboard' },
-          { label: '项目管理', href: '/pm/projects' },
-          { label: '合同', href: '/pm/contracts' },
+          { label: '项目管理', href: PM_PATHS.projects },
+          { label: '合同', href: PM_PATHS.contracts },
           { label: '合同详情' },
         ]}
         loading={loading}
         error={error}
-        backHref='/pm/contracts'
-        onEdit={() => id && navigate(`/pm/contracts/${id}`)}
+        backHref={PM_PATHS.contracts}
+        onEdit={() => id && navigate(`${PM_PATHS.contracts}/${id}`)}
         tabs={tabs}
         defaultTab='overview'
         infoCard={infoCard}

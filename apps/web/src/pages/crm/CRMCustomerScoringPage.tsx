@@ -15,6 +15,7 @@ import type { CustomerScore, ScoreFactor } from '@/api/crm';
 import { crmApi } from '@/api/crm';
 import { useAppStore } from '@/store';
 import { ListPageTemplate, type ColumnDef, type RowAction } from '@/components/templates';
+import { CRM_PATHS } from '@/modules/crm/config';
 import { PageContainer } from '@/components/common';
 import { apiLogger } from '@/utils/logger';
 import { Star, TrendingUp, TrendingDown, Minus, Award, Calculator, Eye } from 'lucide-react';
@@ -370,7 +371,7 @@ const CRMCustomerScoringPage: React.FC = () => {
           subtitle=''
           breadcrumbs={[
             { label: '首页', href: '/dashboard' },
-            { label: '客户关系管理', href: '/crm' },
+            { label: '客户关系管理', href: CRM_PATHS.root },
             { label: '客户评分' },
           ]}
           columns={columns}

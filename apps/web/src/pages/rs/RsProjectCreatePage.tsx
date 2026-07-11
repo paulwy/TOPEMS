@@ -9,6 +9,7 @@ import { PageContainer } from '@/components/common';
 import { rsApi } from '@/api/rs';
 import { useAppStore } from '@/store';
 import type { Project, TeamMember } from '@/api/rs';
+import { RS_PATHS } from '@/modules/rs/config';
 
 const projectTypes = ['新产品研发', '工艺改进', '配方优化', '技术攻关', '设备改造', '其他'];
 const riskLevels = ['低', '中', '高', '极高'];
@@ -224,7 +225,7 @@ const RsProjectCreatePage: React.FC = () => {
           message: '项目已创建',
         });
       }
-      navigate('/rs/projects');
+      navigate(RS_PATHS.project);
     } catch (err: unknown) {
       addNotification({
         type: 'error',
@@ -237,7 +238,7 @@ const RsProjectCreatePage: React.FC = () => {
   };
 
   const handleCancel = () => {
-    navigate('/rs/projects');
+    navigate(RS_PATHS.project);
   };
 
   return (
