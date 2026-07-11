@@ -59,7 +59,7 @@ export const financeModuleConfig: RouteModuleConfig = {
       title: '总账管理',
       template: 'list',
       group: 'business',
-      requiredPermissions: ['finance:ledger:read'],
+      requiredPermissions: ['finance:ledger:read', 'finance:read'],
       action: 'read',
     },
     {
@@ -70,7 +70,7 @@ export const financeModuleConfig: RouteModuleConfig = {
       title: '凭证管理',
       template: 'list',
       group: 'business',
-      requiredPermissions: ['finance:voucher:read'],
+      requiredPermissions: ['finance:voucher:read', 'finance:read'],
       action: 'read',
     },
     {
@@ -81,7 +81,7 @@ export const financeModuleConfig: RouteModuleConfig = {
       title: '创建凭证',
       template: 'form',
       group: 'business',
-      requiredPermissions: ['finance:voucher:create'],
+      requiredPermissions: ['finance:voucher:create', 'finance:write'],
       action: 'write',
     },
     {
@@ -92,7 +92,7 @@ export const financeModuleConfig: RouteModuleConfig = {
       title: '凭证详情',
       template: 'detail',
       group: 'business',
-      requiredPermissions: ['finance:voucher:read'],
+      requiredPermissions: ['finance:voucher:read', 'finance:read'],
       action: 'read',
     },
     {
@@ -106,7 +106,7 @@ export const financeModuleConfig: RouteModuleConfig = {
       title: '应收应付',
       template: 'list',
       group: 'business',
-      requiredPermissions: ['finance:receivable_payable:read'],
+      requiredPermissions: ['finance:receivable_payable:read', 'finance:read'],
       action: 'read',
     },
     {
@@ -117,7 +117,7 @@ export const financeModuleConfig: RouteModuleConfig = {
       title: '收款管理',
       template: 'list',
       group: 'business',
-      requiredPermissions: ['finance:receipt:read'],
+      requiredPermissions: ['finance:receipt:read', 'finance:read'],
       action: 'read',
     },
     {
@@ -128,7 +128,7 @@ export const financeModuleConfig: RouteModuleConfig = {
       title: '付款管理',
       template: 'list',
       group: 'business',
-      requiredPermissions: ['finance:payment:read'],
+      requiredPermissions: ['finance:payment:read', 'finance:read'],
       action: 'read',
     },
     {
@@ -139,7 +139,7 @@ export const financeModuleConfig: RouteModuleConfig = {
       title: '发票管理',
       template: 'list',
       group: 'business',
-      requiredPermissions: ['finance:invoice:read'],
+      requiredPermissions: ['finance:invoice:read', 'finance:read'],
       action: 'read',
     },
     {
@@ -150,7 +150,7 @@ export const financeModuleConfig: RouteModuleConfig = {
       title: '税务管理',
       template: 'list',
       group: 'business',
-      requiredPermissions: ['finance:tax:read'],
+      requiredPermissions: ['finance:tax:read', 'finance:read'],
       action: 'read',
     },
     {
@@ -161,7 +161,7 @@ export const financeModuleConfig: RouteModuleConfig = {
       title: '费用管理',
       template: 'list',
       group: 'business',
-      requiredPermissions: ['finance:expense:read'],
+      requiredPermissions: ['finance:expense:read', 'finance:read'],
       action: 'read',
     },
     {
@@ -172,7 +172,7 @@ export const financeModuleConfig: RouteModuleConfig = {
       title: '成本管理',
       template: 'list',
       group: 'business',
-      requiredPermissions: ['finance:cost:read'],
+      requiredPermissions: ['finance:cost:read', 'finance:read'],
       action: 'read',
     },
     {
@@ -183,7 +183,7 @@ export const financeModuleConfig: RouteModuleConfig = {
       title: '资产管理',
       template: 'list',
       group: 'business',
-      requiredPermissions: ['finance:asset:read'],
+      requiredPermissions: ['finance:asset:read', 'finance:read'],
       action: 'read',
     },
     {
@@ -194,7 +194,7 @@ export const financeModuleConfig: RouteModuleConfig = {
       title: '预算管理',
       template: 'list',
       group: 'business',
-      requiredPermissions: ['finance:budget:read'],
+      requiredPermissions: ['finance:budget:read', 'finance:read'],
       action: 'read',
     },
     {
@@ -205,7 +205,7 @@ export const financeModuleConfig: RouteModuleConfig = {
       title: '预算详情',
       template: 'detail',
       group: 'business',
-      requiredPermissions: ['finance:budget:read'],
+      requiredPermissions: ['finance:budget:read', 'finance:read'],
       action: 'read',
     },
     {
@@ -216,7 +216,7 @@ export const financeModuleConfig: RouteModuleConfig = {
       title: '期初余额',
       template: 'form',
       group: 'business',
-      requiredPermissions: ['finance:opening_balance:read'],
+      requiredPermissions: ['finance:opening_balance:read', 'finance:read'],
       action: 'read',
     },
     {
@@ -227,7 +227,7 @@ export const financeModuleConfig: RouteModuleConfig = {
       title: '合并报表',
       template: 'list',
       group: 'analytics',
-      requiredPermissions: ['finance:consolidation:read'],
+      requiredPermissions: ['finance:consolidation:read', 'finance:read'],
       action: 'read',
     },
     {
@@ -241,7 +241,7 @@ export const financeModuleConfig: RouteModuleConfig = {
       title: '合并报表详情',
       template: 'stats',
       group: 'analytics',
-      requiredPermissions: ['finance:consolidation:read'],
+      requiredPermissions: ['finance:consolidation:read', 'finance:read'],
       action: 'read',
     },
     {
@@ -252,7 +252,7 @@ export const financeModuleConfig: RouteModuleConfig = {
       title: '财务报表',
       template: 'stats',
       group: 'analytics',
-      requiredPermissions: ['finance:report:read'],
+      requiredPermissions: ['finance:report:read', 'finance:read'],
       action: 'read',
     },
   ],

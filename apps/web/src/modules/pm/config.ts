@@ -54,7 +54,7 @@ export const pmModuleConfig: RouteModuleConfig = {
       title: '项目列表',
       template: 'list',
       group: 'business',
-      requiredPermissions: ['pm:project:read'],
+      requiredPermissions: ['pm:project:read', 'pm:read'],
       action: 'read',
     },
     {
@@ -65,7 +65,7 @@ export const pmModuleConfig: RouteModuleConfig = {
       title: '创建项目',
       template: 'form',
       group: 'business',
-      requiredPermissions: ['pm:project:create'],
+      requiredPermissions: ['pm:project:create', 'pm:write'],
       action: 'write',
     },
     {
@@ -76,7 +76,7 @@ export const pmModuleConfig: RouteModuleConfig = {
       title: '项目详情',
       template: 'detail',
       group: 'business',
-      requiredPermissions: ['pm:project:read'],
+      requiredPermissions: ['pm:project:read', 'pm:read'],
       action: 'read',
     },
     {
@@ -87,7 +87,7 @@ export const pmModuleConfig: RouteModuleConfig = {
       title: '合同管理',
       template: 'list',
       group: 'business',
-      requiredPermissions: ['pm:contract:read'],
+      requiredPermissions: ['pm:contract:read', 'pm:read'],
       action: 'read',
     },
     {
@@ -98,7 +98,7 @@ export const pmModuleConfig: RouteModuleConfig = {
       title: '创建合同',
       template: 'form',
       group: 'business',
-      requiredPermissions: ['pm:contract:create'],
+      requiredPermissions: ['pm:contract:create', 'pm:write'],
       action: 'write',
     },
     {
@@ -109,7 +109,7 @@ export const pmModuleConfig: RouteModuleConfig = {
       title: '合同详情',
       template: 'detail',
       group: 'business',
-      requiredPermissions: ['pm:contract:read'],
+      requiredPermissions: ['pm:contract:read', 'pm:read'],
       action: 'read',
     },
     {
@@ -120,7 +120,7 @@ export const pmModuleConfig: RouteModuleConfig = {
       title: '资源管理',
       template: 'list',
       group: 'process',
-      requiredPermissions: ['pm:resource:read'],
+      requiredPermissions: ['pm:resource:read', 'pm:read'],
       action: 'read',
     },
     {
@@ -131,7 +131,7 @@ export const pmModuleConfig: RouteModuleConfig = {
       title: '模板管理',
       template: 'list',
       group: 'process',
-      requiredPermissions: ['pm:template:read'],
+      requiredPermissions: ['pm:template:read', 'pm:read'],
       action: 'read',
     },
     {
@@ -142,7 +142,7 @@ export const pmModuleConfig: RouteModuleConfig = {
       title: '项目报表',
       template: 'stats',
       group: 'analytics',
-      requiredPermissions: ['pm:report:read'],
+      requiredPermissions: ['pm:report:read', 'pm:read'],
       action: 'read',
     },
     {
@@ -153,7 +153,7 @@ export const pmModuleConfig: RouteModuleConfig = {
       title: '任务看板',
       template: 'kanban',
       group: 'business',
-      requiredPermissions: ['pm:task:read'],
+      requiredPermissions: ['pm:task:read', 'pm:read'],
       action: 'read',
     },
     {
@@ -164,7 +164,7 @@ export const pmModuleConfig: RouteModuleConfig = {
       title: '新建项目向导',
       template: 'wizard',
       group: 'business',
-      requiredPermissions: ['pm:project:create'],
+      requiredPermissions: ['pm:project:create', 'pm:write'],
       action: 'write',
     },
     {
@@ -186,7 +186,7 @@ export const pmModuleConfig: RouteModuleConfig = {
       title: '项目列表',
       template: 'master-detail',
       group: 'business',
-      requiredPermissions: ['pm:project:read'],
+      requiredPermissions: ['pm:project:read', 'pm:read'],
       action: 'read',
     },
   ],

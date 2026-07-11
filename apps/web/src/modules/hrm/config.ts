@@ -60,7 +60,7 @@ export const hrmModuleConfig: RouteModuleConfig = {
       title: '员工管理',
       template: 'list',
       group: 'business',
-      requiredPermissions: ['hrm:employee:read'],
+      requiredPermissions: ['hrm:employee:read', 'hrm:read'],
       action: 'read',
     },
     {
@@ -71,7 +71,7 @@ export const hrmModuleConfig: RouteModuleConfig = {
       title: '创建员工',
       template: 'form',
       group: 'business',
-      requiredPermissions: ['hrm:employee:create'],
+      requiredPermissions: ['hrm:employee:create', 'hrm:write'],
       action: 'write',
     },
     {
@@ -82,7 +82,7 @@ export const hrmModuleConfig: RouteModuleConfig = {
       title: '员工详情',
       template: 'detail',
       group: 'business',
-      requiredPermissions: ['hrm:employee:read'],
+      requiredPermissions: ['hrm:employee:read', 'hrm:read'],
       action: 'read',
     },
     {
@@ -93,7 +93,7 @@ export const hrmModuleConfig: RouteModuleConfig = {
       title: '编辑员工',
       template: 'form',
       group: 'business',
-      requiredPermissions: ['hrm:employee:update'],
+      requiredPermissions: ['hrm:employee:update', 'hrm:update'],
       action: 'update',
     },
     {
@@ -104,7 +104,7 @@ export const hrmModuleConfig: RouteModuleConfig = {
       title: '部门管理',
       template: 'list',
       group: 'business',
-      requiredPermissions: ['hrm:department:read'],
+      requiredPermissions: ['hrm:department:read', 'hrm:read'],
       action: 'read',
     },
     {
@@ -115,7 +115,7 @@ export const hrmModuleConfig: RouteModuleConfig = {
       title: '组织架构',
       template: 'tree',
       group: 'business',
-      requiredPermissions: ['hrm:organization:read'],
+      requiredPermissions: ['hrm:organization:read', 'hrm:read'],
       action: 'read',
     },
     {
@@ -126,7 +126,7 @@ export const hrmModuleConfig: RouteModuleConfig = {
       title: '岗位管理',
       template: 'list',
       group: 'business',
-      requiredPermissions: ['hrm:position:read'],
+      requiredPermissions: ['hrm:position:read', 'hrm:read'],
       action: 'read',
     },
     {
@@ -137,7 +137,7 @@ export const hrmModuleConfig: RouteModuleConfig = {
       title: '合同管理',
       template: 'list',
       group: 'business',
-      requiredPermissions: ['hrm:contract:read'],
+      requiredPermissions: ['hrm:contract:read', 'hrm:read'],
       action: 'read',
     },
     {
@@ -148,7 +148,7 @@ export const hrmModuleConfig: RouteModuleConfig = {
       title: '合同详情',
       template: 'detail',
       group: 'business',
-      requiredPermissions: ['hrm:contract:read'],
+      requiredPermissions: ['hrm:contract:read', 'hrm:read'],
       action: 'read',
     },
     {
@@ -159,7 +159,7 @@ export const hrmModuleConfig: RouteModuleConfig = {
       title: '公司信息',
       template: 'detail',
       group: 'business',
-      requiredPermissions: ['hrm:company:read'],
+      requiredPermissions: ['hrm:company:read', 'hrm:read'],
       action: 'read',
     },
     {
@@ -170,7 +170,7 @@ export const hrmModuleConfig: RouteModuleConfig = {
       title: '考勤管理',
       template: 'list',
       group: 'process',
-      requiredPermissions: ['hrm:attendance:read'],
+      requiredPermissions: ['hrm:attendance:read', 'hrm:read'],
       action: 'read',
     },
     {
@@ -181,7 +181,7 @@ export const hrmModuleConfig: RouteModuleConfig = {
       title: '请假管理',
       template: 'list',
       group: 'process',
-      requiredPermissions: ['hrm:leave:read'],
+      requiredPermissions: ['hrm:leave:read', 'hrm:read'],
       action: 'read',
     },
     {
@@ -192,7 +192,7 @@ export const hrmModuleConfig: RouteModuleConfig = {
       title: '薪资管理',
       template: 'list',
       group: 'process',
-      requiredPermissions: ['hrm:payroll:read'],
+      requiredPermissions: ['hrm:payroll:read', 'hrm:read'],
       action: 'read',
     },
     {
@@ -203,7 +203,7 @@ export const hrmModuleConfig: RouteModuleConfig = {
       title: '调薪管理',
       template: 'list',
       group: 'process',
-      requiredPermissions: ['hrm:salary_adjustment:read'],
+      requiredPermissions: ['hrm:salary_adjustment:read', 'hrm:read'],
       action: 'read',
     },
     {
@@ -214,7 +214,7 @@ export const hrmModuleConfig: RouteModuleConfig = {
       title: '招聘管理',
       template: 'list',
       group: 'process',
-      requiredPermissions: ['hrm:recruitment:read'],
+      requiredPermissions: ['hrm:recruitment:read', 'hrm:read'],
       action: 'read',
     },
     {
@@ -225,7 +225,7 @@ export const hrmModuleConfig: RouteModuleConfig = {
       title: '培训管理',
       template: 'list',
       group: 'process',
-      requiredPermissions: ['hrm:training:read'],
+      requiredPermissions: ['hrm:training:read', 'hrm:read'],
       action: 'read',
     },
     {
@@ -236,7 +236,7 @@ export const hrmModuleConfig: RouteModuleConfig = {
       title: '绩效管理',
       template: 'list',
       group: 'process',
-      requiredPermissions: ['hrm:performance:read'],
+      requiredPermissions: ['hrm:performance:read', 'hrm:read'],
       action: 'read',
     },
     {
@@ -247,7 +247,7 @@ export const hrmModuleConfig: RouteModuleConfig = {
       title: '统计报表',
       template: 'stats',
       group: 'analytics',
-      requiredPermissions: ['hrm:report:read'],
+      requiredPermissions: ['hrm:report:read', 'hrm:read'],
       action: 'read',
     },
     {

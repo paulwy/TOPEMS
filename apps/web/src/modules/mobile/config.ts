@@ -65,7 +65,7 @@ export const mobileModuleConfig: RouteModuleConfig = {
       title: '考勤打卡',
       template: 'form',
       group: 'attendance',
-      requiredPermissions: ['mobile:attendance:read'],
+      requiredPermissions: ['mobile:attendance:read', 'mobile:read'],
       action: 'read',
     },
     {
@@ -76,7 +76,7 @@ export const mobileModuleConfig: RouteModuleConfig = {
       title: '我的任务',
       template: 'list',
       group: 'tasks',
-      requiredPermissions: ['mobile:task:read'],
+      requiredPermissions: ['mobile:task:read', 'mobile:read'],
       action: 'read',
     },
     {
@@ -87,7 +87,7 @@ export const mobileModuleConfig: RouteModuleConfig = {
       title: '审批中心',
       template: 'list',
       group: 'tasks',
-      requiredPermissions: ['mobile:approval:read'],
+      requiredPermissions: ['mobile:approval:read', 'mobile:read'],
       action: 'read',
     },
     {
@@ -98,7 +98,7 @@ export const mobileModuleConfig: RouteModuleConfig = {
       title: '库存查询',
       template: 'list',
       group: 'business',
-      requiredPermissions: ['mobile:inventory:read'],
+      requiredPermissions: ['mobile:inventory:read', 'mobile:read'],
       action: 'read',
     },
     {
@@ -109,7 +109,7 @@ export const mobileModuleConfig: RouteModuleConfig = {
       title: '质量巡检',
       template: 'list',
       group: 'business',
-      requiredPermissions: ['mobile:quality:read'],
+      requiredPermissions: ['mobile:quality:read', 'mobile:read'],
       action: 'read',
     },
     {
@@ -120,7 +120,7 @@ export const mobileModuleConfig: RouteModuleConfig = {
       title: '生产报工',
       template: 'form',
       group: 'business',
-      requiredPermissions: ['mobile:production:read'],
+      requiredPermissions: ['mobile:production:read', 'mobile:read'],
       action: 'read',
     },
     {
@@ -131,7 +131,7 @@ export const mobileModuleConfig: RouteModuleConfig = {
       title: '扫码功能',
       template: 'form',
       group: 'tools',
-      requiredPermissions: ['mobile:scan:read'],
+      requiredPermissions: ['mobile:scan:read', 'mobile:read'],
       action: 'read',
     },
     {
@@ -142,7 +142,7 @@ export const mobileModuleConfig: RouteModuleConfig = {
       title: '消息通知',
       template: 'list',
       group: 'tools',
-      requiredPermissions: ['mobile:notification:read'],
+      requiredPermissions: ['mobile:notification:read', 'mobile:read'],
       action: 'read',
     },
     {

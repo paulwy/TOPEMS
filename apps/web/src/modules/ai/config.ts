@@ -46,7 +46,7 @@ export const aiModuleConfig: RouteModuleConfig = {
       title: '智能对话',
       template: 'form',
       group: 'chat',
-      requiredPermissions: ['ai:chat:read'],
+      requiredPermissions: ['ai:chat:read', 'ai:read'],
       action: 'read',
     },
     {
@@ -57,7 +57,7 @@ export const aiModuleConfig: RouteModuleConfig = {
       title: '代码助手',
       template: 'form',
       group: 'chat',
-      requiredPermissions: ['ai:code:read'],
+      requiredPermissions: ['ai:code:read', 'ai:read'],
       action: 'read',
     },
     {
@@ -71,7 +71,7 @@ export const aiModuleConfig: RouteModuleConfig = {
       title: '文档分析',
       template: 'form',
       group: 'tools',
-      requiredPermissions: ['ai:document:read'],
+      requiredPermissions: ['ai:document:read', 'ai:read'],
       action: 'read',
     },
     {
@@ -85,7 +85,7 @@ export const aiModuleConfig: RouteModuleConfig = {
       title: '知识库',
       template: 'list',
       group: 'knowledge',
-      requiredPermissions: ['ai:knowledge:read'],
+      requiredPermissions: ['ai:knowledge:read', 'ai:read'],
       action: 'read',
     },
     {
@@ -96,7 +96,7 @@ export const aiModuleConfig: RouteModuleConfig = {
       title: '提示词库',
       template: 'list',
       group: 'templates',
-      requiredPermissions: ['ai:prompt:read'],
+      requiredPermissions: ['ai:prompt:read', 'ai:read'],
       action: 'read',
     },
     {

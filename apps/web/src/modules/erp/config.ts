@@ -55,7 +55,7 @@ export const erpModuleConfig: RouteModuleConfig = {
       title: '总账管理',
       template: 'list',
       group: 'business',
-      requiredPermissions: ['erp:general_ledger:read'],
+      requiredPermissions: ['erp:general_ledger:read', 'erp:read'],
       action: 'read',
     },
     {
@@ -69,7 +69,7 @@ export const erpModuleConfig: RouteModuleConfig = {
       title: '客户管理',
       template: 'list',
       group: 'business',
-      requiredPermissions: ['erp:customer:read'],
+      requiredPermissions: ['erp:customer:read', 'erp:read'],
       action: 'read',
     },
     {
@@ -83,7 +83,7 @@ export const erpModuleConfig: RouteModuleConfig = {
       title: '供应商管理',
       template: 'list',
       group: 'business',
-      requiredPermissions: ['erp:supplier:read'],
+      requiredPermissions: ['erp:supplier:read', 'erp:read'],
       action: 'read',
     },
     {
@@ -97,7 +97,7 @@ export const erpModuleConfig: RouteModuleConfig = {
       title: '库存管理',
       template: 'list',
       group: 'business',
-      requiredPermissions: ['erp:inventory:read'],
+      requiredPermissions: ['erp:inventory:read', 'erp:read'],
       action: 'read',
     },
     {
@@ -111,7 +111,7 @@ export const erpModuleConfig: RouteModuleConfig = {
       title: '物料管理',
       template: 'list',
       group: 'business',
-      requiredPermissions: ['erp:material:read'],
+      requiredPermissions: ['erp:material:read', 'erp:read'],
       action: 'read',
     },
     {
@@ -122,7 +122,7 @@ export const erpModuleConfig: RouteModuleConfig = {
       title: '采购订单',
       template: 'list',
       group: 'process',
-      requiredPermissions: ['erp:purchase_order:read'],
+      requiredPermissions: ['erp:purchase_order:read', 'erp:read'],
       action: 'read',
     },
     {
@@ -133,7 +133,7 @@ export const erpModuleConfig: RouteModuleConfig = {
       title: '销售订单',
       template: 'list',
       group: 'process',
-      requiredPermissions: ['erp:sales_order:read'],
+      requiredPermissions: ['erp:sales_order:read', 'erp:read'],
       action: 'read',
     },
     {
@@ -147,7 +147,7 @@ export const erpModuleConfig: RouteModuleConfig = {
       title: '财务报表',
       template: 'stats',
       group: 'analytics',
-      requiredPermissions: ['erp:financial_statement:read'],
+      requiredPermissions: ['erp:financial_statement:read', 'erp:read'],
       action: 'read',
     },
     {
@@ -158,7 +158,7 @@ export const erpModuleConfig: RouteModuleConfig = {
       title: '数据字典',
       template: 'tree',
       group: 'settings',
-      requiredPermissions: ['erp:dictionary:read'],
+      requiredPermissions: ['erp:dictionary:read', 'erp:read'],
       action: 'read',
     },
     {
@@ -172,7 +172,7 @@ export const erpModuleConfig: RouteModuleConfig = {
       title: '数据库管理',
       template: 'list',
       group: 'settings',
-      requiredPermissions: ['erp:database:read'],
+      requiredPermissions: ['erp:database:read', 'erp:read'],
       action: 'read',
     },
     {
@@ -183,7 +183,7 @@ export const erpModuleConfig: RouteModuleConfig = {
       title: '审计日志',
       template: 'list',
       group: 'settings',
-      requiredPermissions: ['erp:audit:read'],
+      requiredPermissions: ['erp:audit:read', 'erp:read'],
       action: 'read',
     },
   ],
