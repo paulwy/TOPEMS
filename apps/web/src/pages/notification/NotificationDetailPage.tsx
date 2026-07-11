@@ -26,6 +26,7 @@ import { apiLogger } from '@/utils/logger';
 import { DetailPageTemplate, type TabConfig, type SectionConfig } from '@/components/templates';
 import { PageContainer } from '@/components/common';
 import { designTokens } from '@/theme/tokens';
+import { NOTIFICATION_PATHS } from '@/modules/notification/config';
 
 const ct = designTokens.colors;
 
@@ -329,7 +330,7 @@ const NotificationDetailPage: React.FC = () => {
       <DetailPageTemplate
         title=''
         subtitle=''
-        backHref='/notification'
+        backHref={NOTIFICATION_PATHS.root}
         loading={loading}
         error={errorMessage}
         infoCard={infoCard}
