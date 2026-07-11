@@ -46,6 +46,7 @@ export const crmModuleConfig: RouteModuleConfig = {
       template: 'dashboard',
       group: 'overview',
       requiredPermissions: ['crm:read'],
+      action: 'read',
     },
     {
       path: CRM_PATHS.customers,
@@ -56,6 +57,7 @@ export const crmModuleConfig: RouteModuleConfig = {
       template: 'list',
       group: 'business',
       requiredPermissions: ['crm:customer:read'],
+      action: 'read',
     },
     {
       path: CRM_PATHS.customerCreate,
@@ -66,6 +68,7 @@ export const crmModuleConfig: RouteModuleConfig = {
       template: 'form',
       group: 'business',
       requiredPermissions: ['crm:customer:create'],
+      action: 'write',
     },
     {
       path: CRM_PATHS.customerDetail,
@@ -76,6 +79,7 @@ export const crmModuleConfig: RouteModuleConfig = {
       template: 'detail',
       group: 'business',
       requiredPermissions: ['crm:customer:read'],
+      action: 'read',
     },
     {
       path: CRM_PATHS.customerEdit,
@@ -86,6 +90,7 @@ export const crmModuleConfig: RouteModuleConfig = {
       template: 'form',
       group: 'business',
       requiredPermissions: ['crm:customer:update'],
+      action: 'update',
     },
     {
       path: CRM_PATHS.contacts,
@@ -96,6 +101,7 @@ export const crmModuleConfig: RouteModuleConfig = {
       template: 'list',
       group: 'business',
       requiredPermissions: ['crm:contact:read'],
+      action: 'read',
     },
     {
       path: CRM_PATHS.contactDetail,
@@ -106,6 +112,7 @@ export const crmModuleConfig: RouteModuleConfig = {
       template: 'detail',
       group: 'business',
       requiredPermissions: ['crm:contact:read'],
+      action: 'read',
     },
     {
       path: CRM_PATHS.opportunities,
@@ -116,6 +123,7 @@ export const crmModuleConfig: RouteModuleConfig = {
       template: 'list',
       group: 'business',
       requiredPermissions: ['crm:opportunity:read'],
+      action: 'read',
     },
     {
       path: CRM_PATHS.opportunityDetail,
@@ -126,6 +134,7 @@ export const crmModuleConfig: RouteModuleConfig = {
       template: 'detail',
       group: 'business',
       requiredPermissions: ['crm:opportunity:read'],
+      action: 'read',
     },
     {
       path: CRM_PATHS.interactions,
@@ -146,6 +155,7 @@ export const crmModuleConfig: RouteModuleConfig = {
       template: 'list',
       group: 'business',
       requiredPermissions: ['crm:billing:read'],
+      action: 'read',
     },
     {
       path: CRM_PATHS.salesFunnel,
@@ -156,6 +166,7 @@ export const crmModuleConfig: RouteModuleConfig = {
       template: 'kanban',
       group: 'analytics',
       requiredPermissions: ['crm:sales_funnel:read'],
+      action: 'read',
     },
     {
       path: CRM_PATHS.customerScoring,
@@ -166,6 +177,7 @@ export const crmModuleConfig: RouteModuleConfig = {
       template: 'stats',
       group: 'analytics',
       requiredPermissions: ['crm:customer_scoring:read'],
+      action: 'read',
     },
     {
       path: CRM_PATHS.salesForecast,
@@ -176,6 +188,7 @@ export const crmModuleConfig: RouteModuleConfig = {
       template: 'stats',
       group: 'analytics',
       requiredPermissions: ['crm:sales_forecast:read'],
+      action: 'read',
     },
     {
       path: CRM_PATHS.customerSegmentation,
@@ -186,6 +199,7 @@ export const crmModuleConfig: RouteModuleConfig = {
       template: 'stats',
       group: 'analytics',
       requiredPermissions: ['crm:customer_segmentation:read'],
+      action: 'read',
     },
     {
       path: CRM_PATHS.recommendation,
@@ -196,6 +210,7 @@ export const crmModuleConfig: RouteModuleConfig = {
       template: 'dashboard',
       group: 'analytics',
       requiredPermissions: ['crm:recommendation:read'],
+      action: 'read',
     },
   ],
 };

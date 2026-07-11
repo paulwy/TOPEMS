@@ -50,6 +50,7 @@ export const hrmModuleConfig: RouteModuleConfig = {
       template: 'dashboard',
       group: 'overview',
       requiredPermissions: ['hrm:read'],
+      action: 'read',
     },
     {
       path: HRM_PATHS.employees,
@@ -60,6 +61,7 @@ export const hrmModuleConfig: RouteModuleConfig = {
       template: 'list',
       group: 'business',
       requiredPermissions: ['hrm:employee:read'],
+      action: 'read',
     },
     {
       path: HRM_PATHS.employeeCreate,
@@ -70,6 +72,7 @@ export const hrmModuleConfig: RouteModuleConfig = {
       template: 'form',
       group: 'business',
       requiredPermissions: ['hrm:employee:create'],
+      action: 'write',
     },
     {
       path: HRM_PATHS.employeeDetail,
@@ -80,6 +83,7 @@ export const hrmModuleConfig: RouteModuleConfig = {
       template: 'detail',
       group: 'business',
       requiredPermissions: ['hrm:employee:read'],
+      action: 'read',
     },
     {
       path: HRM_PATHS.employeeEdit,
@@ -90,6 +94,7 @@ export const hrmModuleConfig: RouteModuleConfig = {
       template: 'form',
       group: 'business',
       requiredPermissions: ['hrm:employee:update'],
+      action: 'update',
     },
     {
       path: HRM_PATHS.departments,
@@ -100,6 +105,7 @@ export const hrmModuleConfig: RouteModuleConfig = {
       template: 'list',
       group: 'business',
       requiredPermissions: ['hrm:department:read'],
+      action: 'read',
     },
     {
       path: HRM_PATHS.organization,
@@ -110,6 +116,7 @@ export const hrmModuleConfig: RouteModuleConfig = {
       template: 'tree',
       group: 'business',
       requiredPermissions: ['hrm:organization:read'],
+      action: 'read',
     },
     {
       path: HRM_PATHS.positions,
@@ -120,6 +127,7 @@ export const hrmModuleConfig: RouteModuleConfig = {
       template: 'list',
       group: 'business',
       requiredPermissions: ['hrm:position:read'],
+      action: 'read',
     },
     {
       path: HRM_PATHS.contracts,
@@ -130,6 +138,7 @@ export const hrmModuleConfig: RouteModuleConfig = {
       template: 'list',
       group: 'business',
       requiredPermissions: ['hrm:contract:read'],
+      action: 'read',
     },
     {
       path: HRM_PATHS.contractDetail,
@@ -140,6 +149,7 @@ export const hrmModuleConfig: RouteModuleConfig = {
       template: 'detail',
       group: 'business',
       requiredPermissions: ['hrm:contract:read'],
+      action: 'read',
     },
     {
       path: HRM_PATHS.company,
@@ -150,6 +160,7 @@ export const hrmModuleConfig: RouteModuleConfig = {
       template: 'detail',
       group: 'business',
       requiredPermissions: ['hrm:company:read'],
+      action: 'read',
     },
     {
       path: HRM_PATHS.attendance,
@@ -160,6 +171,7 @@ export const hrmModuleConfig: RouteModuleConfig = {
       template: 'list',
       group: 'process',
       requiredPermissions: ['hrm:attendance:read'],
+      action: 'read',
     },
     {
       path: HRM_PATHS.leave,
@@ -170,6 +182,7 @@ export const hrmModuleConfig: RouteModuleConfig = {
       template: 'list',
       group: 'process',
       requiredPermissions: ['hrm:leave:read'],
+      action: 'read',
     },
     {
       path: HRM_PATHS.payroll,
@@ -180,6 +193,7 @@ export const hrmModuleConfig: RouteModuleConfig = {
       template: 'list',
       group: 'process',
       requiredPermissions: ['hrm:payroll:read'],
+      action: 'read',
     },
     {
       path: HRM_PATHS.salaryAdjustment,
@@ -190,6 +204,7 @@ export const hrmModuleConfig: RouteModuleConfig = {
       template: 'list',
       group: 'process',
       requiredPermissions: ['hrm:salary_adjustment:read'],
+      action: 'read',
     },
     {
       path: HRM_PATHS.recruitment,
@@ -200,6 +215,7 @@ export const hrmModuleConfig: RouteModuleConfig = {
       template: 'list',
       group: 'process',
       requiredPermissions: ['hrm:recruitment:read'],
+      action: 'read',
     },
     {
       path: HRM_PATHS.training,
@@ -210,6 +226,7 @@ export const hrmModuleConfig: RouteModuleConfig = {
       template: 'list',
       group: 'process',
       requiredPermissions: ['hrm:training:read'],
+      action: 'read',
     },
     {
       path: HRM_PATHS.performance,
@@ -220,6 +237,7 @@ export const hrmModuleConfig: RouteModuleConfig = {
       template: 'list',
       group: 'process',
       requiredPermissions: ['hrm:performance:read'],
+      action: 'read',
     },
     {
       path: HRM_PATHS.reports,
@@ -230,6 +248,7 @@ export const hrmModuleConfig: RouteModuleConfig = {
       template: 'stats',
       group: 'analytics',
       requiredPermissions: ['hrm:report:read'],
+      action: 'read',
     },
     {
       path: HRM_PATHS.overview,
@@ -240,6 +259,7 @@ export const hrmModuleConfig: RouteModuleConfig = {
       template: 'dashboard',
       group: 'analytics',
       requiredPermissions: ['hrm:read'],
+      action: 'read',
     },
   ],
 };

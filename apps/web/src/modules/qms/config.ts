@@ -42,6 +42,7 @@ export const qmsModuleConfig: RouteModuleConfig = {
       template: 'dashboard',
       group: 'overview',
       requiredPermissions: ['qms:read'],
+      action: 'read',
     },
     {
       path: QMS_PATHS.inspection,
@@ -52,6 +53,7 @@ export const qmsModuleConfig: RouteModuleConfig = {
       template: 'list',
       group: 'business',
       requiredPermissions: ['qms:inspection:read'],
+      action: 'read',
     },
     {
       path: QMS_PATHS.qualityControl,
@@ -65,6 +67,7 @@ export const qmsModuleConfig: RouteModuleConfig = {
       template: 'list',
       group: 'business',
       requiredPermissions: ['qms:quality_control:read'],
+      action: 'read',
     },
     {
       path: QMS_PATHS.nonconformance,
@@ -78,6 +81,7 @@ export const qmsModuleConfig: RouteModuleConfig = {
       template: 'list',
       group: 'business',
       requiredPermissions: ['qms:nonconformance:read'],
+      action: 'read',
     },
     {
       path: QMS_PATHS.auditManagement,
@@ -91,6 +95,7 @@ export const qmsModuleConfig: RouteModuleConfig = {
       template: 'list',
       group: 'process',
       requiredPermissions: ['qms:audit:read'],
+      action: 'read',
     },
     {
       path: QMS_PATHS.standards,
@@ -104,6 +109,7 @@ export const qmsModuleConfig: RouteModuleConfig = {
       template: 'list',
       group: 'business',
       requiredPermissions: ['qms:standard:read'],
+      action: 'read',
     },
     {
       path: QMS_PATHS.standardDetail,
@@ -117,6 +123,7 @@ export const qmsModuleConfig: RouteModuleConfig = {
       template: 'detail',
       group: 'business',
       requiredPermissions: ['qms:standard:read'],
+      action: 'read',
     },
     {
       path: QMS_PATHS.apqp,
@@ -127,6 +134,7 @@ export const qmsModuleConfig: RouteModuleConfig = {
       template: 'list',
       group: 'process',
       requiredPermissions: ['qms:apqp:read'],
+      action: 'read',
     },
     {
       path: QMS_PATHS.fmea,
@@ -137,6 +145,7 @@ export const qmsModuleConfig: RouteModuleConfig = {
       template: 'list',
       group: 'process',
       requiredPermissions: ['qms:fmea:read'],
+      action: 'read',
     },
     {
       path: QMS_PATHS.spc,
@@ -147,6 +156,7 @@ export const qmsModuleConfig: RouteModuleConfig = {
       template: 'stats',
       group: 'analytics',
       requiredPermissions: ['qms:spc:read'],
+      action: 'read',
     },
     {
       path: QMS_PATHS.eightd,
@@ -157,6 +167,7 @@ export const qmsModuleConfig: RouteModuleConfig = {
       template: 'list',
       group: 'process',
       requiredPermissions: ['qms:eightd:read'],
+      action: 'read',
     },
     {
       path: QMS_PATHS.qualityCost,
@@ -167,6 +178,7 @@ export const qmsModuleConfig: RouteModuleConfig = {
       template: 'stats',
       group: 'analytics',
       requiredPermissions: ['qms:quality_cost:read'],
+      action: 'read',
     },
   ],
 };

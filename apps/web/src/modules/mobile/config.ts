@@ -44,6 +44,7 @@ export const mobileModuleConfig: RouteModuleConfig = {
       template: 'dashboard',
       group: 'home',
       requiredPermissions: ['mobile:read'],
+      action: 'read',
     },
     {
       path: MOBILE_PATHS.workbench,
@@ -54,6 +55,7 @@ export const mobileModuleConfig: RouteModuleConfig = {
       template: 'dashboard',
       group: 'home',
       requiredPermissions: ['mobile:read'],
+      action: 'read',
     },
     {
       path: MOBILE_PATHS.attendance,
@@ -64,6 +66,7 @@ export const mobileModuleConfig: RouteModuleConfig = {
       template: 'form',
       group: 'attendance',
       requiredPermissions: ['mobile:attendance:read'],
+      action: 'read',
     },
     {
       path: MOBILE_PATHS.tasks,
@@ -74,6 +77,7 @@ export const mobileModuleConfig: RouteModuleConfig = {
       template: 'list',
       group: 'tasks',
       requiredPermissions: ['mobile:task:read'],
+      action: 'read',
     },
     {
       path: MOBILE_PATHS.approvals,
@@ -84,6 +88,7 @@ export const mobileModuleConfig: RouteModuleConfig = {
       template: 'list',
       group: 'tasks',
       requiredPermissions: ['mobile:approval:read'],
+      action: 'read',
     },
     {
       path: MOBILE_PATHS.inventory,
@@ -94,6 +99,7 @@ export const mobileModuleConfig: RouteModuleConfig = {
       template: 'list',
       group: 'business',
       requiredPermissions: ['mobile:inventory:read'],
+      action: 'read',
     },
     {
       path: MOBILE_PATHS.quality,
@@ -104,6 +110,7 @@ export const mobileModuleConfig: RouteModuleConfig = {
       template: 'list',
       group: 'business',
       requiredPermissions: ['mobile:quality:read'],
+      action: 'read',
     },
     {
       path: MOBILE_PATHS.production,
@@ -114,6 +121,7 @@ export const mobileModuleConfig: RouteModuleConfig = {
       template: 'form',
       group: 'business',
       requiredPermissions: ['mobile:production:read'],
+      action: 'read',
     },
     {
       path: MOBILE_PATHS.scan,
@@ -124,6 +132,7 @@ export const mobileModuleConfig: RouteModuleConfig = {
       template: 'form',
       group: 'tools',
       requiredPermissions: ['mobile:scan:read'],
+      action: 'read',
     },
     {
       path: MOBILE_PATHS.notifications,
@@ -134,6 +143,7 @@ export const mobileModuleConfig: RouteModuleConfig = {
       template: 'list',
       group: 'tools',
       requiredPermissions: ['mobile:notification:read'],
+      action: 'read',
     },
     {
       path: MOBILE_PATHS.profile,
@@ -144,6 +154,7 @@ export const mobileModuleConfig: RouteModuleConfig = {
       template: 'detail',
       group: 'settings',
       requiredPermissions: ['mobile:read'],
+      action: 'read',
     },
     {
       path: MOBILE_PATHS.settings,
@@ -154,6 +165,7 @@ export const mobileModuleConfig: RouteModuleConfig = {
       template: 'settings',
       group: 'settings',
       requiredPermissions: ['mobile:admin'],
+      action: 'admin',
     },
   ],
 };

@@ -44,6 +44,7 @@ export const pmModuleConfig: RouteModuleConfig = {
       template: 'dashboard',
       group: 'overview',
       requiredPermissions: ['pm:read'],
+      action: 'read',
     },
     {
       path: PM_PATHS.projects,
@@ -54,6 +55,7 @@ export const pmModuleConfig: RouteModuleConfig = {
       template: 'list',
       group: 'business',
       requiredPermissions: ['pm:project:read'],
+      action: 'read',
     },
     {
       path: PM_PATHS.projectCreate,
@@ -64,6 +66,7 @@ export const pmModuleConfig: RouteModuleConfig = {
       template: 'form',
       group: 'business',
       requiredPermissions: ['pm:project:create'],
+      action: 'write',
     },
     {
       path: PM_PATHS.projectDetail,
@@ -74,6 +77,7 @@ export const pmModuleConfig: RouteModuleConfig = {
       template: 'detail',
       group: 'business',
       requiredPermissions: ['pm:project:read'],
+      action: 'read',
     },
     {
       path: PM_PATHS.contracts,
@@ -84,6 +88,7 @@ export const pmModuleConfig: RouteModuleConfig = {
       template: 'list',
       group: 'business',
       requiredPermissions: ['pm:contract:read'],
+      action: 'read',
     },
     {
       path: PM_PATHS.contractCreate,
@@ -94,6 +99,7 @@ export const pmModuleConfig: RouteModuleConfig = {
       template: 'form',
       group: 'business',
       requiredPermissions: ['pm:contract:create'],
+      action: 'write',
     },
     {
       path: PM_PATHS.contractDetail,
@@ -104,6 +110,7 @@ export const pmModuleConfig: RouteModuleConfig = {
       template: 'detail',
       group: 'business',
       requiredPermissions: ['pm:contract:read'],
+      action: 'read',
     },
     {
       path: PM_PATHS.resources,
@@ -114,6 +121,7 @@ export const pmModuleConfig: RouteModuleConfig = {
       template: 'list',
       group: 'process',
       requiredPermissions: ['pm:resource:read'],
+      action: 'read',
     },
     {
       path: PM_PATHS.templates,
@@ -124,6 +132,7 @@ export const pmModuleConfig: RouteModuleConfig = {
       template: 'list',
       group: 'process',
       requiredPermissions: ['pm:template:read'],
+      action: 'read',
     },
     {
       path: PM_PATHS.reports,
@@ -134,6 +143,7 @@ export const pmModuleConfig: RouteModuleConfig = {
       template: 'stats',
       group: 'analytics',
       requiredPermissions: ['pm:report:read'],
+      action: 'read',
     },
     {
       path: PM_PATHS.taskKanban,
@@ -144,6 +154,7 @@ export const pmModuleConfig: RouteModuleConfig = {
       template: 'kanban',
       group: 'business',
       requiredPermissions: ['pm:task:read'],
+      action: 'read',
     },
     {
       path: PM_PATHS.projectWizard,
@@ -154,6 +165,7 @@ export const pmModuleConfig: RouteModuleConfig = {
       template: 'wizard',
       group: 'business',
       requiredPermissions: ['pm:project:create'],
+      action: 'write',
     },
     {
       path: PM_PATHS.timeline,
@@ -164,6 +176,7 @@ export const pmModuleConfig: RouteModuleConfig = {
       template: 'timeline',
       group: 'analytics',
       requiredPermissions: ['pm:read'],
+      action: 'read',
     },
     {
       path: PM_PATHS.projectList,
@@ -174,6 +187,7 @@ export const pmModuleConfig: RouteModuleConfig = {
       template: 'master-detail',
       group: 'business',
       requiredPermissions: ['pm:project:read'],
+      action: 'read',
     },
   ],
 };
