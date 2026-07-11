@@ -9,6 +9,7 @@ import { DataExport, StatusBadge, PageContainer } from '@/components/common';
 import { apiLogger } from '@/utils/logger';
 import { ListPageTemplate, type ColumnDef } from '@/components/templates';
 import { designTokens } from '@/theme/tokens';
+import { PM_PATHS } from '@/modules/pm/config';
 
 const ct = designTokens.colors;
 
@@ -212,7 +213,7 @@ const PmProjectListPage: React.FC = () => {
             <Tooltip title='查看详情'>
               <IconButton
                 size='small'
-                onClick={() => navigate(`/pm/projects/${row.id}`)}
+                onClick={() => navigate(`${PM_PATHS.projects}/${row.id}`)}
               >
                 <Eye size={16} />
               </IconButton>
@@ -220,7 +221,7 @@ const PmProjectListPage: React.FC = () => {
             <Tooltip title='编辑'>
               <IconButton
                 size='small'
-                onClick={() => navigate(`/pm/projects/${row.id}/edit`)}
+                onClick={() => navigate(`${PM_PATHS.projects}/${row.id}/edit`)}
               >
                 <Edit size={16} />
               </IconButton>
@@ -316,7 +317,7 @@ const PmProjectListPage: React.FC = () => {
           {
             label: '创建项目',
             icon: <Plus size={16} />,
-            onClick: () => navigate('/pm/projects/create'),
+            onClick: () => navigate(PM_PATHS.projectCreate),
             variant: 'contained',
           },
         ]}

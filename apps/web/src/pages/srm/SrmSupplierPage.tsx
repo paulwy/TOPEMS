@@ -26,6 +26,7 @@ import type {
 import { useAppStore } from '@/store';
 import { apiLogger } from '@/utils/logger';
 import { PageContainer } from '@/components/common';
+import { SRM_PATHS } from '@/modules/srm/config';
 import { designTokens } from '@/theme/tokens';
 
 const ct = designTokens.colors;
@@ -650,7 +651,7 @@ const SrmSupplierPage: React.FC = () => {
           {
             label: '绩效报表',
             icon: <TrendingUp style={{ width: 18, height: 18 }} />,
-            onClick: () => navigate('/srm/performance'),
+            onClick: () => navigate(SRM_PATHS.performance),
             variant: 'outlined',
           },
         ]}

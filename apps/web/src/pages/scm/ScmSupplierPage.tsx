@@ -21,6 +21,7 @@ import type { Supplier, SupplierPerformance } from '@/api/scm';
 import { useAppStore } from '@/store';
 import { apiLogger } from '@/utils/logger';
 import { designTokens } from '@/theme/tokens';
+import { SCM_PATHS } from '@/modules/scm/config';
 
 const ct = designTokens.colors;
 
@@ -240,7 +241,7 @@ const ScmSupplierPage: React.FC = () => {
     },
     {
       label: '详情',
-      onClick: (row: Supplier) => navigate('/scm/suppliers'),
+      onClick: (row: Supplier) => navigate(SCM_PATHS.suppliers),
     },
   ];
 

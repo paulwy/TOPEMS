@@ -5,6 +5,7 @@ import { useNavigate } from 'react-router-dom';
 import { ListPageTemplate, type ColumnDef, type RowAction } from '@/components/templates';
 import { PageContainer } from '@/components/common';
 import apiClient from '@/api/client';
+import { CRM_PATHS } from '@/modules/crm/config';
 
 interface SegmentRule {
   field: string;
@@ -121,7 +122,7 @@ const CRMCustomerSegmentationPage: React.FC = () => {
       label: '查看客户',
       icon: <Users size={16} />,
       onClick: (row: CustomerSegment) => {
-        navigate(`/crm/customers?segment_id=${row.id}`);
+        navigate(`${CRM_PATHS.customers}?segment_id=${row.id}`);
       },
     },
     {

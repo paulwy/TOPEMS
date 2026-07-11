@@ -10,6 +10,7 @@ import { useAppStore } from '@/store';
 import type { Project } from '@/api/rs';
 import { ConfirmDialog } from '@topems/shared-components';
 import { designTokens } from '@/theme/tokens';
+import { RS_PATHS } from '@/modules/rs/config';
 
 const ct = designTokens.colors;
 
@@ -217,12 +218,12 @@ const RsProjectListPage: React.FC = () => {
       {
         label: '查看详情',
         icon: <Eye size={16} />,
-        onClick: (row: Project) => navigate(`/rs/projects/${row.id}`),
+        onClick: (row: Project) => navigate(`${RS_PATHS.project}/${row.id}`),
       },
       {
         label: '编辑',
         icon: <Edit size={16} />,
-        onClick: (row: Project) => navigate(`/rs/projects/${row.id}/edit`),
+        onClick: (row: Project) => navigate(`${RS_PATHS.project}/${row.id}/edit`),
       },
       {
         label: '删除',
@@ -279,7 +280,7 @@ const RsProjectListPage: React.FC = () => {
             label: '新建项目',
             variant: 'contained',
             icon: <Plus size={18} />,
-            onClick: () => navigate('/rs/projects/create'),
+            onClick: () => navigate(RS_PATHS.projectCreate),
           },
         ]}
         rowActions={rowActions}

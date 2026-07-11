@@ -37,6 +37,7 @@ import type { PmStatistics, ProjectBenefit } from '@/api/pm';
 import { StatsPageTemplate } from '@/components/templates/StatsPageTemplate';
 import type { StatCard, ChartConfig } from '@/components/templates/StatsPageTemplate';
 import { PageContainer } from '@/components/common';
+import { PM_PATHS } from '@/modules/pm/config';
 
 const PmReportPage: React.FC = () => {
   const navigate = useNavigate();
@@ -532,7 +533,7 @@ const PmReportPage: React.FC = () => {
             <CardContent sx={{ p: 2 }}>
               <Button
                 variant='outlined'
-                onClick={() => navigate('/pm/reports')}
+                onClick={() => navigate(PM_PATHS.reports)}
               >
                 返回全局报表
               </Button>

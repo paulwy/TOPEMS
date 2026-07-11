@@ -8,6 +8,7 @@ import { useNotification } from '@/hooks/useNotification';
 import { apiLogger } from '@/utils/logger';
 import { DetailPageTemplate, type TabConfig, type SectionConfig } from '@/components/templates';
 import { ConfirmDialog } from '@topems/shared-components';
+import { CRM_PATHS } from '@/modules/crm/config';
 import { PageContainer } from '@/components/common';
 import { designTokens } from '@/theme/tokens';
 
@@ -283,7 +284,7 @@ const ContactDetailPage: React.FC = () => {
       const res = await crmApi.contacts.delete(id);
       if (res.success) {
         success('联系人删除成功');
-        navigate('/crm/contacts');
+        navigate(CRM_PATHS.contacts);
       }
     } catch (err: unknown) {
       apiLogger.error('Failed to delete contact:', err);
@@ -302,10 +303,10 @@ const ContactDetailPage: React.FC = () => {
       <DetailPageTemplate
         title=''
         subtitle=''
-        backHref='/crm/contacts'
+        backHref={CRM_PATHS.contacts}
         loading={loading}
         error={errorMessage}
-        onEdit={() => navigate(`/crm/contacts/${id}`)}
+        onEdit={() => navigate(CRM_PATHS.contactDetail.replace(':id', id!))}
         onDelete={() => setDeleteDialogOpen(true)}
         infoCard={infoCard}
         tabs={tabs}

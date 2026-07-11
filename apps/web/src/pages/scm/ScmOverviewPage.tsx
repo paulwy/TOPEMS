@@ -19,6 +19,7 @@ import BarChartComponent from '../../components/charts/BarChart';
 import LineChartComponent from '../../components/charts/LineChart';
 import PieChartComponent from '../../components/charts/PieChart';
 import { designTokens } from '@/theme/tokens';
+import { SCM_PATHS } from '@/modules/scm/config';
 
 const ct = designTokens.colors;
 
@@ -149,35 +150,35 @@ const ScmOverviewPage: React.FC = () => {
         id: 'supplier-manage',
         label: '供应商管理',
         icon: <Users size={20} />,
-        onClick: () => navigate('/scm/suppliers'),
+        onClick: () => navigate(SCM_PATHS.suppliers),
         color: ct.primary.dark,
       },
       {
         id: 'purchase-order',
         label: '采购订单',
         icon: <ShoppingCart size={20} />,
-        onClick: () => navigate('/scm/purchase-orders'),
+        onClick: () => navigate(SCM_PATHS.purchaseOrders),
         color: ct.secondary[700],
       },
       {
         id: 'mrp-plan',
         label: 'MRP计划',
         icon: <Calculator size={20} />,
-        onClick: () => navigate('/scm/mrp-plan'),
+        onClick: () => navigate(SCM_PATHS.mrpPlan),
         color: ct.success[700],
       },
       {
         id: 'supplier-eval',
         label: '供应商评估',
         icon: <Award size={20} />,
-        onClick: () => navigate('/scm/supplier-evaluation'),
+        onClick: () => navigate(SCM_PATHS.supplierEvaluation),
         color: ct.warning[700],
       },
       {
         id: 'delivery-appointment',
         label: '送货预约',
         icon: <Truck size={20} />,
-        onClick: () => navigate('/scm/delivery-appointment'),
+        onClick: () => navigate(SCM_PATHS.deliveryAppointment),
         color: ct.teal[700],
       },
     ],
@@ -194,7 +195,7 @@ const ScmOverviewPage: React.FC = () => {
         icon: <ShoppingCart size={18} />,
         status: 'warning',
         tags: [{ label: '待审批', color: ct.warning[700] }],
-        onClick: () => navigate('/scm/purchase-orders'),
+        onClick: () => navigate(SCM_PATHS.purchaseOrders),
       },
       {
         id: 'sup1',
@@ -203,7 +204,7 @@ const ScmOverviewPage: React.FC = () => {
         time: '2026-06-28 16:30',
         icon: <Star size={18} />,
         status: 'success',
-        onClick: () => navigate('/scm/supplier-evaluation'),
+        onClick: () => navigate(SCM_PATHS.supplierEvaluation),
       },
       {
         id: 'mrp1',
@@ -213,7 +214,7 @@ const ScmOverviewPage: React.FC = () => {
         icon: <Calculator size={18} />,
         status: 'info',
         tags: [{ label: '已生成', color: ct.primary.dark }],
-        onClick: () => navigate('/scm/mrp-plan'),
+        onClick: () => navigate(SCM_PATHS.mrpPlan),
       },
       {
         id: 'po2',
@@ -223,7 +224,7 @@ const ScmOverviewPage: React.FC = () => {
         icon: <ShoppingCart size={18} />,
         status: 'success',
         tags: [{ label: '已入库', color: ct.success[700] }],
-        onClick: () => navigate('/scm/purchase-orders'),
+        onClick: () => navigate(SCM_PATHS.purchaseOrders),
       },
       {
         id: 'del1',
@@ -233,7 +234,7 @@ const ScmOverviewPage: React.FC = () => {
         icon: <Truck size={18} />,
         status: 'default',
         tags: [{ label: '运输中', color: ct.grey[600] }],
-        onClick: () => navigate('/scm/delivery-appointment'),
+        onClick: () => navigate(SCM_PATHS.deliveryAppointment),
       },
     ],
     [navigate]

@@ -30,6 +30,7 @@ import { ListPageTemplate, type ColumnDef } from '@/components/templates';
 import { PageContainer } from '@/components/common';
 import { ConfirmDialog } from '@topems/shared-components';
 import { designTokens } from '@/theme/tokens';
+import { SCM_PATHS } from '@/modules/scm/config';
 
 const ct = designTokens.colors;
 
@@ -201,7 +202,7 @@ const MrpPlanPage: React.FC = () => {
   );
 
   const handleViewSuggestions = (plan: MrpPlan) => {
-    window.location.href = `/scm/mrp-suggestion?plan_id=${plan.id}`;
+    window.location.href = `${SCM_PATHS.mrpSuggestion}?plan_id=${plan.id}`;
   };
 
   const resetForm = () => {

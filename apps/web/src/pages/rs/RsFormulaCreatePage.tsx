@@ -14,6 +14,7 @@ import type {
   UpdateFormulaRequest,
 } from '@/api/rs';
 import { useAppStore } from '@/store';
+import { RS_PATHS } from '@/modules/rs/config';
 import {
   Paper,
   Table,
@@ -246,7 +247,7 @@ const RsFormulaCreatePage: React.FC = () => {
             title: '更新成功',
             message: '配方已更新',
           });
-          navigate('/rs/formulas');
+          navigate(RS_PATHS.formula);
         } else {
           addNotification({
             type: 'error',
@@ -275,7 +276,7 @@ const RsFormulaCreatePage: React.FC = () => {
             title: '创建成功',
             message: '配方已创建',
           });
-          navigate('/rs/formulas');
+          navigate(RS_PATHS.formula);
         } else {
           addNotification({
             type: 'error',
@@ -296,7 +297,7 @@ const RsFormulaCreatePage: React.FC = () => {
   };
 
   const handleCancel = () => {
-    navigate('/rs/formulas');
+    navigate(RS_PATHS.formula);
   };
 
   const additionalContent = (

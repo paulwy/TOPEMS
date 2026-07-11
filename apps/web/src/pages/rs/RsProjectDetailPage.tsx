@@ -2,6 +2,7 @@ import { Grid } from '@/components';
 import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate, Link } from 'react-router-dom';
 import { logger } from '@/utils/logger';
+import { RS_PATHS } from '@/modules/rs/config';
 import {
   Box,
   Typography,
@@ -306,7 +307,7 @@ const RsProjectDetailPage: React.FC = () => {
                   </TableCell>
                   <TableCell>{exp.experimenter}</TableCell>
                   <TableCell align='center'>
-                    <Link to={`/rs/experiments/${exp.id}`}>
+                    <Link to={`${RS_PATHS.experiment}/${exp.id}`}>
                       <Button
                         size='small'
                         variant='outlined'
@@ -408,7 +409,7 @@ const RsProjectDetailPage: React.FC = () => {
     {
       label: '编辑',
       icon: <EditIcon size={18} />,
-      onClick: () => navigate(`/rs/projects/${id}/edit`),
+      onClick: () => navigate(`${RS_PATHS.project}/${id}/edit`),
       variant: 'outlined' as const,
     },
     {

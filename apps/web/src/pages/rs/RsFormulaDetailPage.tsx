@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
+import { RS_PATHS } from '@/modules/rs/config';
 import {
   Box,
   Typography,
@@ -107,7 +108,7 @@ const RsFormulaDetailPage: React.FC = () => {
 
   const handleEdit = () => {
     if (formula) {
-      navigate(`/rs/formulas/${formula.id}/edit`);
+      navigate(`${RS_PATHS.formula}/${formula.id}/edit`);
     }
   };
 

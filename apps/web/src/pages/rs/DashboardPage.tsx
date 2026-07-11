@@ -10,6 +10,7 @@ import LineChartComponent from '../../components/charts/LineChart';
 import { rsApi } from '@/api/rs';
 import { logger } from '@/utils/logger';
 import type { RsStatistics } from '@/api/rs';
+import { RS_PATHS } from '@/modules/rs/config';
 
 const iconMap: Record<string, React.ReactNode> = {
   FileText: <FileText size={24} />,
@@ -146,19 +147,19 @@ export const DashboardPage: React.FC = () => {
       id: 'create-research-project',
       label: '创建研发项目',
       icon: <ArrowRight size={18} />,
-      onClick: () => navigate('/rs/projects/create'),
+      onClick: () => navigate(RS_PATHS.projectCreate),
     },
     {
       id: 'write-test-case',
       label: '编写测试用例',
       icon: <ArrowRight size={18} />,
-      onClick: () => navigate('/rs/tests'),
+      onClick: () => navigate(RS_PATHS.test),
     },
     {
       id: 'release-new-version',
       label: '发布新版本',
       icon: <ArrowRight size={18} />,
-      onClick: () => navigate('/rs/deploy'),
+      onClick: () => navigate(RS_PATHS.deploy),
     },
   ];
 

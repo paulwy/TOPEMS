@@ -21,6 +21,7 @@ import BarChartComponent from '../../components/charts/BarChart';
 import LineChartComponent from '../../components/charts/LineChart';
 import PieChartComponent from '../../components/charts/PieChart';
 import { designTokens } from '@/theme/tokens';
+import { RS_PATHS } from '@/modules/rs/config';
 
 const ct = designTokens.colors;
 
@@ -159,42 +160,42 @@ const RsOverviewPage: React.FC = () => {
         id: 'new-project',
         label: '新建项目',
         icon: <Plus size={20} />,
-        onClick: () => navigate('/rs/projects/create'),
+        onClick: () => navigate(RS_PATHS.projectCreate),
         color: ct.primary.dark,
       },
       {
         id: 'bug-manage',
         label: '缺陷管理',
         icon: <Bug size={20} />,
-        onClick: () => navigate('/rs/bugs'),
+        onClick: () => navigate(RS_PATHS.bug),
         color: ct.error.dark,
       },
       {
         id: 'code-manage',
         label: '代码管理',
         icon: <GitBranch size={20} />,
-        onClick: () => navigate('/rs/code'),
+        onClick: () => navigate(RS_PATHS.code),
         color: ct.secondary.dark,
       },
       {
         id: 'build-manage',
         label: '构建管理',
         icon: <Hammer size={20} />,
-        onClick: () => navigate('/rs/builds'),
+        onClick: () => navigate(RS_PATHS.build),
         color: ct.warning.dark,
       },
       {
         id: 'release',
         label: '版本发布',
         icon: <Rocket size={20} />,
-        onClick: () => navigate('/rs/releases'),
+        onClick: () => navigate(RS_PATHS.release),
         color: ct.teal[700],
       },
       {
         id: 'review',
         label: '评审管理',
         icon: <ShieldCheck size={20} />,
-        onClick: () => navigate('/rs/reviews'),
+        onClick: () => navigate(RS_PATHS.review),
         color: ct.success.dark,
       },
     ],
@@ -211,7 +212,7 @@ const RsOverviewPage: React.FC = () => {
         icon: <Bug size={18} />,
         status: 'error',
         tags: [{ label: '严重', color: ct.error.dark }],
-        onClick: () => navigate('/rs/bug'),
+        onClick: () => navigate(RS_PATHS.bug),
       },
       {
         id: 'bug2',
@@ -221,7 +222,7 @@ const RsOverviewPage: React.FC = () => {
         icon: <Bug size={18} />,
         status: 'warning',
         tags: [{ label: '中等', color: ct.warning.dark }],
-        onClick: () => navigate('/rs/bug'),
+        onClick: () => navigate(RS_PATHS.bug),
       },
       {
         id: 'build1',
@@ -230,7 +231,7 @@ const RsOverviewPage: React.FC = () => {
         time: '2026-06-29 08:00',
         icon: <Hammer size={18} />,
         status: 'success',
-        onClick: () => navigate('/rs/build'),
+        onClick: () => navigate(RS_PATHS.build),
       },
       {
         id: 'rel1',
@@ -239,7 +240,7 @@ const RsOverviewPage: React.FC = () => {
         time: '2026-06-28 18:30',
         icon: <Rocket size={18} />,
         status: 'success',
-        onClick: () => navigate('/rs/release'),
+        onClick: () => navigate(RS_PATHS.release),
       },
       {
         id: 'commit1',
@@ -248,7 +249,7 @@ const RsOverviewPage: React.FC = () => {
         time: '2026-06-28 17:45',
         icon: <FileCode size={18} />,
         status: 'info',
-        onClick: () => navigate('/rs/code'),
+        onClick: () => navigate(RS_PATHS.code),
       },
     ],
     [navigate]

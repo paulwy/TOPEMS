@@ -8,6 +8,7 @@ import { Receipt, CheckCircle, Clock, AlertCircle, Send, TrendingUp } from 'luci
 import { ListPageTemplate, type ColumnDef, type RowAction } from '@/components/templates';
 import { PageContainer } from '@/components/common';
 import { apiLogger } from '@/utils/logger';
+import { CRM_PATHS } from '@/modules/crm/config';
 
 type TabType = 'invoices' | 'collections' | 'aging';
 
@@ -354,10 +355,10 @@ const CRMBillingPage: React.FC = () => {
         subtitle=''
         breadcrumbs={[
           { label: '首页', href: '/dashboard' },
-          { label: '客户关系管理', href: '/crm' },
+          { label: '客户关系管理', href: CRM_PATHS.root },
           { label: '账单管理' },
         ]}
-        backButton={{ onClick: () => navigate('/crm') }}
+        backButton={{ onClick: () => navigate(CRM_PATHS.root) }}
         columns={getColumns()}
         data={paginatedBills}
         loading={loading}
