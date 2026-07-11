@@ -1,4 +1,6 @@
 import { Navigate, useParams } from 'react-router-dom';
+import { ERP_PATHS } from '@/modules/erp/config';
+import { GIS_PATHS } from '@/modules/gis/config';
 
 const RedirectDocumentDetail: React.FC = () => {
   const { id } = useParams<{ id: string }>();
@@ -183,19 +185,19 @@ export const legacyRedirects = [
     ),
   },
   {
-    path: '/gis/fence',
+    path: GIS_PATHS.fence,
     element: (
       <Navigate
-        to='/gis/fence'
+        to={GIS_PATHS.fence}
         replace
       />
     ),
   },
   {
-    path: '/gis/tracking',
+    path: GIS_PATHS.tracking,
     element: (
       <Navigate
-        to='/gis/tracking'
+        to={GIS_PATHS.tracking}
         replace
       />
     ),
@@ -1242,7 +1244,7 @@ export const legacyRedirects = [
     path: '/office-supplies',
     element: (
       <Navigate
-        to='/erp/dashboard'
+        to={ERP_PATHS.dashboard}
         replace
       />
     ),
@@ -1260,7 +1262,7 @@ export const legacyRedirects = [
     path: '/vehicles',
     element: (
       <Navigate
-        to='/erp/dashboard'
+        to={ERP_PATHS.dashboard}
         replace
       />
     ),
@@ -1278,7 +1280,7 @@ export const legacyRedirects = [
     path: '/erp/financial-reports',
     element: (
       <Navigate
-        to='/erp/financial-report'
+        to={ERP_PATHS.financialReport}
         replace
       />
     ),
@@ -1287,7 +1289,7 @@ export const legacyRedirects = [
     path: '/erp/vouchers',
     element: (
       <Navigate
-        to='/erp/voucher-management'
+        to={ERP_PATHS.voucherManagement}
         replace
       />
     ),
@@ -1296,7 +1298,7 @@ export const legacyRedirects = [
     path: '/erp/audit-logs',
     element: (
       <Navigate
-        to='/erp/audit-log'
+        to={ERP_PATHS.auditLog}
         replace
       />
     ),
@@ -1305,7 +1307,7 @@ export const legacyRedirects = [
     path: '/erp/dict',
     element: (
       <Navigate
-        to='/erp/dict-management'
+        to={ERP_PATHS.dictManagement}
         replace
       />
     ),
@@ -1314,7 +1316,7 @@ export const legacyRedirects = [
     path: '/erp/database',
     element: (
       <Navigate
-        to='/erp/database-management'
+        to={ERP_PATHS.databaseManagement}
         replace
       />
     ),
@@ -1323,7 +1325,7 @@ export const legacyRedirects = [
     path: '/erp/purchase-orders',
     element: (
       <Navigate
-        to='/erp/purchase-order'
+        to={ERP_PATHS.purchaseOrder}
         replace
       />
     ),
@@ -1332,7 +1334,7 @@ export const legacyRedirects = [
     path: '/erp/sales-orders',
     element: (
       <Navigate
-        to='/erp/sales-order'
+        to={ERP_PATHS.salesOrder}
         replace
       />
     ),
@@ -1341,7 +1343,7 @@ export const legacyRedirects = [
     path: '/erp/inventory',
     element: (
       <Navigate
-        to='/erp/inventory-management'
+        to={ERP_PATHS.inventoryManagement}
         replace
       />
     ),
@@ -1350,7 +1352,7 @@ export const legacyRedirects = [
     path: '/erp/materials',
     element: (
       <Navigate
-        to='/erp/material-management'
+        to={ERP_PATHS.materialManagement}
         replace
       />
     ),
@@ -1359,7 +1361,7 @@ export const legacyRedirects = [
     path: '/erp/suppliers',
     element: (
       <Navigate
-        to='/erp/supplier-management'
+        to={ERP_PATHS.supplierManagement}
         replace
       />
     ),
@@ -1368,7 +1370,7 @@ export const legacyRedirects = [
     path: '/erp/customers',
     element: (
       <Navigate
-        to='/erp/customer-management'
+        to={ERP_PATHS.customerManagement}
         replace
       />
     ),
@@ -1663,19 +1665,19 @@ export const legacyRedirects = [
 
   // gis 模块
   {
-    path: '/gis/fence',
+    path: GIS_PATHS.fence,
     element: (
       <Navigate
-        to='/gis/fence'
+        to={GIS_PATHS.fence}
         replace
       />
     ),
   },
   {
-    path: '/gis/tracking',
+    path: GIS_PATHS.tracking,
     element: (
       <Navigate
-        to='/gis/tracking'
+        to={GIS_PATHS.tracking}
         replace
       />
     ),

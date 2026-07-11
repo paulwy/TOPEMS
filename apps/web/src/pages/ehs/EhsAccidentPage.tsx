@@ -34,6 +34,7 @@ import type { Accident, AccidentDetail, TreatmentAction } from '@/api/ehs';
 import { useAppStore } from '@/store';
 import { apiLogger } from '@/utils/logger';
 import { designTokens } from '@/theme/tokens';
+import { EHS_PATHS } from '@/modules/ehs/config';
 
 const ct = designTokens.colors;
 
@@ -458,7 +459,7 @@ const EhsAccidentPage: React.FC = () => {
           subtitle=''
           breadcrumbs={[
             { label: '首页', href: '/dashboard' },
-            { label: 'EHS管理', href: '/ehs' },
+            { label: 'EHS管理', href: EHS_PATHS.root },
             { label: '事故记录' },
           ]}
           columns={columns}

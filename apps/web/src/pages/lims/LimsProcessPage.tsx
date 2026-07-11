@@ -27,6 +27,7 @@ import {
 import { MetricCard } from '@/components/bi/MetricCard';
 import { apiLogger } from '@/utils/logger';
 import { designTokens } from '@/theme/tokens';
+import { LIMS_PATHS } from '@/modules/lims/config';
 
 const ct = designTokens.colors;
 
@@ -512,7 +513,7 @@ const LimsProcessPage: React.FC = () => {
           <Button
             onClick={() => {
               setShowTaskModal(false);
-              navigate('/lims/task');
+              navigate(LIMS_PATHS.task);
             }}
             variant='contained'
             color='secondary'

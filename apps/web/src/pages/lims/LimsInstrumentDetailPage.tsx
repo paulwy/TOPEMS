@@ -42,6 +42,7 @@ import { useAppStore } from '@/store';
 import { apiLogger } from '@/utils/logger';
 import dayjs from 'dayjs';
 import { designTokens } from '@/theme/tokens';
+import { LIMS_PATHS } from '@/modules/lims/config';
 
 const ct = designTokens.colors;
 
@@ -224,7 +225,7 @@ const LimsInstrumentDetailPage: React.FC = () => {
                 cursor: 'pointer',
                 '&:hover': { bgcolor: 'grey.50' },
               }}
-              onClick={() => navigate(`/lims/task-detail?id=${task.id}`)}
+              onClick={() => navigate(`${LIMS_PATHS.taskDetail}?id=${task.id}`)}
             >
               <CardContent sx={{ p: 2, '&:last-child': { pb: 2 } }}>
                 <Box
@@ -616,7 +617,7 @@ const LimsInstrumentDetailPage: React.FC = () => {
           />
           <p style={{ color: ct.grey[600] }}>{error || '仪器不存在或已被删除'}</p>
           <Button
-            onClick={() => navigate('/lims/instrument')}
+            onClick={() => navigate(LIMS_PATHS.instrument)}
             sx={{ mt: 2 }}
           >
             返回仪器列表
@@ -640,11 +641,11 @@ const LimsInstrumentDetailPage: React.FC = () => {
         subtitle=''
         breadcrumbs={[
           { label: '首页', href: '/dashboard' },
-          { label: 'LIMS', href: '/lims' },
-          { label: '仪器管理', href: '/lims/instrument' },
+          { label: 'LIMS', href: LIMS_PATHS.root },
+          { label: '仪器管理', href: LIMS_PATHS.instrument },
           { label: '仪器详情' },
         ]}
-        backHref='/lims/instrument'
+        backHref={LIMS_PATHS.instrument}
         loading={loading}
         onRefresh={loadInstrumentData}
         infoCard={{

@@ -54,6 +54,7 @@ import {
 } from 'recharts';
 import dayjs from 'dayjs';
 import { designTokens } from '@/theme/tokens';
+import { LIMS_PATHS } from '@/modules/lims/config';
 
 const ct = designTokens.colors;
 
@@ -270,7 +271,7 @@ const LimsSampleDetailPage: React.FC = () => {
                 cursor: 'pointer',
                 '&:hover': { bgcolor: 'grey.50' },
               }}
-              onClick={() => navigate(`/lims/task-detail?id=${task.id}`)}
+              onClick={() => navigate(`${LIMS_PATHS.taskDetail}?id=${task.id}`)}
             >
               <CardContent sx={{ p: 2, '&:last-child': { pb: 2 } }}>
                 <Box

@@ -9,6 +9,7 @@ import { designTokens } from '@/theme/tokens';
 import { DetailPageTemplate, type TabConfig, type SectionConfig } from '@/components/templates';
 import { ConfirmDialog } from '@topems/shared-components';
 import { PageContainer } from '@/components/common/PageContainerV2';
+import { MES_PATHS } from '@/modules/mes/config';
 
 const ct = designTokens.colors;
 
@@ -315,10 +316,10 @@ const EquipmentDetailPage: React.FC = () => {
       <DetailPageTemplate
         title=''
         subtitle=''
-        backHref='/mes/equipment'
+        backHref={MES_PATHS.equipment}
         loading={loading}
         error={errorMessage}
-        onEdit={() => navigate('/mes/equipment')}
+        onEdit={() => navigate(MES_PATHS.equipment)}
         onDelete={() => setDeleteDialogOpen(true)}
         infoCard={infoCard}
         tabs={tabs}

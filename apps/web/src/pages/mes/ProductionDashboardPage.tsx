@@ -1,5 +1,6 @@
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useAuth } from '@/hooks/useAuth';
+import { MES_PATHS } from '@/modules/mes/config';
 import {
   Box,
   Chip,
@@ -1502,7 +1503,7 @@ export const ProductionDashboardPage: React.FC = () => {
         pageGradient: `linear-gradient(135deg, ${ct.error.main} 0%, ${ct.error[700]} 100%)`,
         breadcrumbs: [
           { label: '首页', href: '/dashboard' },
-          { label: '生产执行', href: '/mes' },
+          { label: '生产执行', href: MES_PATHS.root },
           { label: '生产看板' },
         ],
         customToolbar: (

@@ -1,3 +1,4 @@
+import { FINANCE_PATHS } from '@/modules/finance/config';
 import {
   Card,
   CardContent,
@@ -221,7 +222,7 @@ const VoucherCreatePage: React.FC = () => {
           message: '凭证创建成功',
           type: 'success',
         });
-        navigate('/finance/vouchers');
+        navigate(FINANCE_PATHS.vouchers);
       } else {
         addNotification({
           title: '失败',
@@ -241,7 +242,7 @@ const VoucherCreatePage: React.FC = () => {
   };
 
   const handleCancel = () => {
-    navigate('/finance/vouchers');
+    navigate(FINANCE_PATHS.vouchers);
   };
 
   const formatCurrency = (amount: number) => {
@@ -599,7 +600,7 @@ const VoucherCreatePage: React.FC = () => {
   ];
 
   return (
-    <PageContainer backButton={{ href: '/finance/vouchers' }}>
+    <PageContainer backButton={{ href: FINANCE_PATHS.vouchers }}>
       <FormPageTemplate
         title=''
         sections={sections}

@@ -7,6 +7,7 @@ import { PageContainer } from '@/components/common';
 import BarChartComponent from '../../components/charts/BarChart';
 import LineChartComponent from '../../components/charts/LineChart';
 import PieChartComponent from '../../components/charts/PieChart';
+import { GIS_PATHS } from '@/modules/gis/config';
 
 const iconMap: Record<string, React.ReactNode> = {
   FileText: <FileText size={24} />,
@@ -124,7 +125,7 @@ export const DashboardPage: React.FC = () => {
       id: 'view-map',
       label: '查看地图',
       icon: <ArrowRight size={18} />,
-      onClick: () => navigate('/gis/map'),
+      onClick: () => navigate(GIS_PATHS.map),
     },
   ];
 

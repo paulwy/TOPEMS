@@ -43,6 +43,7 @@ import { PageContainer } from '@/components/common';
 import { qmsApi } from '@/api/qms';
 import type { ApqpProject, ApqpPhase, ApqpTask, ApqpRisk, ApqpProgressStatistics } from '@/api/qms';
 import { useAppStore } from '@/store';
+import { QMS_PATHS } from '@/modules/qms/config';
 
 const ct = designTokens.colors;
 
@@ -488,8 +489,8 @@ const QmsApqpPage: React.FC = () => {
         title=''
         subtitle=''
         backButton={{
-          href: '/qms',
-          onClick: () => navigate('/qms'),
+          href: QMS_PATHS.root,
+          onClick: () => navigate(QMS_PATHS.root),
         }}
         columns={columns}
         data={projects}
