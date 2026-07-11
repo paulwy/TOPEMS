@@ -20,6 +20,7 @@ import { qmsApi } from '@/api/qms';
 import type { QualityStandard, StandardRevision } from '@/api/qms';
 import { useAppStore } from '@/store';
 import { designTokens } from '@/theme/tokens';
+import { QMS_PATHS } from '@/modules/qms/config';
 
 const ct = designTokens.colors;
 
@@ -203,7 +204,7 @@ const QmsStandardDetailPage: React.FC = () => {
           type: 'success',
         });
         setShowRevisionModal(false);
-        navigate('/qms/standards');
+        navigate(QMS_PATHS.standards);
       } else {
         addNotification({
           title: '失败',
@@ -304,7 +305,7 @@ const QmsStandardDetailPage: React.FC = () => {
             />
           </Box>
           <Typography sx={{ color: 'grey.600', mb: 2 }}>质量标准不存在或已被删除</Typography>
-          <Button onClick={() => navigate('/qms')}>返回列表</Button>
+          <Button onClick={() => navigate(QMS_PATHS.root)}>返回列表</Button>
         </Box>
       </Box>
     );
@@ -318,8 +319,8 @@ const QmsStandardDetailPage: React.FC = () => {
       <DetailPageTemplate
         title=''
         subtitle=''
-        backHref='/qms'
-        onBack={() => navigate('/qms')}
+        backHref={QMS_PATHS.root}
+        onBack={() => navigate(QMS_PATHS.root)}
         onEdit={() => setShowEditModal(true)}
         loading={loading}
         infoCard={{

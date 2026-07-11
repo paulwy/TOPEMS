@@ -1,3 +1,4 @@
+import { FINANCE_PATHS } from '@/modules/finance/config';
 import {
   Card,
   CardContent,
@@ -91,7 +92,7 @@ const VoucherDetailPage: React.FC = () => {
   };
 
   const handleEdit = () => {
-    navigate(`/finance/voucher/${id}`);
+    navigate(FINANCE_PATHS.voucherDetail.replace(':id', id!));
   };
 
   const handleDelete = async () => {
@@ -105,7 +106,7 @@ const VoucherDetailPage: React.FC = () => {
           message: '删除成功',
           type: 'success',
         });
-        navigate('/finance/vouchers');
+        navigate(FINANCE_PATHS.vouchers);
       } else {
         addNotification({
           title: '失败',
@@ -251,7 +252,7 @@ const VoucherDetailPage: React.FC = () => {
             凭证不存在
           </Typography>
           <Button
-            onClick={() => navigate('/finance/vouchers')}
+            onClick={() => navigate(FINANCE_PATHS.vouchers)}
             sx={{ mt: 2 }}
           >
             返回列表
@@ -761,10 +762,10 @@ const VoucherDetailPage: React.FC = () => {
         breadcrumbs={[
           { label: '首页', href: '/dashboard' },
           { label: '财务', href: '/finance' },
-          { label: '凭证管理', href: '/finance/vouchers' },
+          { label: '凭证管理', href: FINANCE_PATHS.vouchers },
           { label: voucher.voucher_number },
         ]}
-        backHref='/finance/vouchers'
+        backHref={FINANCE_PATHS.vouchers}
         tabs={tabs}
         infoCard={infoCard}
         onEdit={handleEdit}

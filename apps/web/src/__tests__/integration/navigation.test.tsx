@@ -5,6 +5,7 @@ import { MemoryRouter, Routes, Route } from 'react-router-dom';
 import { navigationRegistryV2 } from '@/lib/navigation/NavigationRegistryV2';
 import { coreModuleNavConfigs } from '@/lib/navigation/modules';
 import { useAppStore } from '@/store';
+import { ERP_PATHS } from '@/modules/erp/config';
 
 vi.mock('@/store', () => ({
   useAppStore: vi.fn(),
@@ -95,7 +96,7 @@ describe('Navigation Integration', () => {
   });
 
   it('should find module by path', () => {
-    const module = navigationRegistryV2.findModuleByPath('/erp/dashboard');
+    const module = navigationRegistryV2.findModuleByPath(ERP_PATHS.dashboard);
     expect(module?.code).toBe('erp');
   });
 

@@ -57,6 +57,7 @@ import {
 import { useAppStore } from '@/store';
 import { apiLogger } from '@/utils/logger';
 import { useNavigate } from 'react-router-dom';
+import { ERP_PATHS } from '@/modules/erp/config';
 
 // TODO(v2-phase2): Replace CircularProgress with LoadingSpinner from '@topems/shared-components'. Complex usage found - manual review needed.
 
@@ -602,7 +603,7 @@ const DatabaseManagementPage: React.FC = () => {
       maxWidth='xl'
       headerProps={{
         backButton: {
-          onClick: () => navigate('/erp/dashboard'),
+          onClick: () => navigate(ERP_PATHS.dashboard),
         },
         actions: [
           {

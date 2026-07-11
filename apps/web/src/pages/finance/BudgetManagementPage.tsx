@@ -9,6 +9,7 @@ import { useAppStore } from '../../store';
 import { ListPageTemplate, StatCardGroup } from '@/components';
 import type { ColumnDef, RowAction, BatchAction } from '@/components';
 
+import { FINANCE_PATHS } from '@/modules/finance/config';
 import {
   TextField,
   FormControl,
@@ -545,7 +546,7 @@ const BudgetManagementPage: React.FC = () => {
             }}
           >
             <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
-              <BackButton href='/finance/dashboard' />
+              <BackButton href={FINANCE_PATHS.dashboard} />
               <Box>
                 <Typography
                   variant='h5'

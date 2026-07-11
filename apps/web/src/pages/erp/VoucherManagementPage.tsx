@@ -62,6 +62,7 @@ import type {
 import { useAppStore } from '@/store';
 import { apiLogger } from '@/utils/logger';
 import { useNavigate } from 'react-router-dom';
+import { ERP_PATHS } from '@/modules/erp/config';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { designTokens } from '@/theme/tokens';
 
@@ -508,7 +509,7 @@ const VoucherManagementPage: React.FC = () => {
         pageIcon: <Building2 style={{ width: 20, height: 20 }} />,
         pageGradient: `linear-gradient(135deg, ${ct.secondary.main} 0%, ${ct.secondary.dark} 100%)`,
         backButton: {
-          onClick: () => navigate('/erp/dashboard'),
+          onClick: () => navigate(ERP_PATHS.dashboard),
         },
         actions: [
           {

@@ -41,6 +41,7 @@ import { qmsApi } from '@/api/qms';
 import type { QualityCost, CostStatistics, CostTrendItem } from '@/api/qms';
 import { useAppStore } from '@/store';
 import { designTokens } from '@/theme/tokens';
+import { QMS_PATHS } from '@/modules/qms/config';
 
 const ct = designTokens.colors;
 
@@ -372,8 +373,8 @@ const QmsQualityCostPage: React.FC = () => {
         title=''
         subtitle=''
         backButton={{
-          href: '/qms',
-          onClick: () => navigate('/qms'),
+          href: QMS_PATHS.root,
+          onClick: () => navigate(QMS_PATHS.root),
         }}
         columns={columns}
         data={filteredCosts}

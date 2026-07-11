@@ -18,6 +18,7 @@ import type { TraceChain, QualityRecord } from '@/api/mes';
 import { apiLogger } from '@/utils/logger';
 import { designTokens } from '@/theme/tokens';
 import { useAppStore } from '@/store';
+import { MES_PATHS } from '@/modules/mes/config';
 
 const ct = designTokens.colors;
 
@@ -482,7 +483,7 @@ const TraceabilityDetailPage: React.FC = () => {
       <DetailPageTemplate
         title=''
         subtitle=''
-        backHref='/mes/quality-traceability'
+        backHref={MES_PATHS.traceability}
         loading={loading}
         error={errorMessage}
         infoCard={infoCard}

@@ -25,6 +25,7 @@ import {
   type FilterConfig,
 } from '@/components/templates';
 import { PageContainer } from '@/components/common';
+import { MES_PATHS } from '@/modules/mes/config';
 
 const EquipmentManagementPage: React.FC = () => {
   const navigate = useNavigate();
@@ -384,13 +385,13 @@ const EquipmentManagementPage: React.FC = () => {
           {
             label: '点检记录',
             icon: <ClipboardCheck sx={{ width: 16, height: 16 }} />,
-            onClick: () => navigate('/mes/equipment'),
+            onClick: () => navigate(MES_PATHS.equipment),
             variant: 'outlined',
           },
           {
             label: '维护维修',
             icon: <Wrench sx={{ width: 16, height: 16 }} />,
-            onClick: () => navigate('/mes/equipment'),
+            onClick: () => navigate(MES_PATHS.equipment),
             variant: 'outlined',
           },
           {

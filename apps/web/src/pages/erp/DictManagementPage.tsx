@@ -51,6 +51,7 @@ import {
 import { useAppStore } from '@/store';
 import { apiLogger } from '@/utils/logger';
 import { useNavigate } from 'react-router-dom';
+import { ERP_PATHS } from '@/modules/erp/config';
 
 export interface DictType {
   id: string;
@@ -714,7 +715,7 @@ const DictManagementPage: React.FC = () => {
       maxWidth='xl'
       headerProps={{
         backButton: {
-          onClick: () => navigate('/erp/dashboard'),
+          onClick: () => navigate(ERP_PATHS.dashboard),
         },
         actions: [
           {

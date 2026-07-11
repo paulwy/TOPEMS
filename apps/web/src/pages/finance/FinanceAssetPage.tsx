@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useMemo } from 'react';
+import { FINANCE_PATHS } from '@/modules/finance/config';
 import {
   Plus,
   Edit,
@@ -514,7 +515,7 @@ const FinanceAssetPage: React.FC = () => {
               sx={{ alignItems: 'center' }}
               spacing={2}
             >
-              <BackButton href='/finance/dashboard' />
+              <BackButton href={FINANCE_PATHS.dashboard} />
               <MuiBox>
                 <Typography
                   variant='h5'

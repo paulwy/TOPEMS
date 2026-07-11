@@ -38,6 +38,7 @@ import { DetailPageTemplate, type TabConfig, type SectionConfig } from '@/compon
 import { ConfirmDialog } from '@topems/shared-components';
 import { PageContainer } from '@/components/common/PageContainerV2';
 import { designTokens } from '@/theme/tokens';
+import { EHS_PATHS } from '@/modules/ehs/config';
 
 const ct = designTokens.colors;
 
@@ -587,7 +588,7 @@ const EhsHazardDetailPage: React.FC = () => {
         pageIcon: <AlertTriangle sx={{ width: 20, height: 20 }} />,
         pageGradient: `linear-gradient(135deg, ${ct.orange[500]} 0%, ${ct.orange[600]} 100%)`,
       }}
-      backButton={{ href: '/ehs/hazards' }}
+      backButton={{ href: EHS_PATHS.hazard }}
       maxWidth='xl'
     >
       <DetailPageTemplate

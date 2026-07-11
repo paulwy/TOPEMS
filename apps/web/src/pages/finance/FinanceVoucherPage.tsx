@@ -1,6 +1,7 @@
 import { Typography, Tabs, Tab, Box } from '@mui/material';
 import { designTokens } from '@/theme/tokens';
 import React, { useState, useEffect, useMemo } from 'react';
+import { FINANCE_PATHS } from '@/modules/finance/config';
 import {
   FileText,
   Plus,
@@ -663,7 +664,7 @@ const FinanceVoucherPage: React.FC = () => {
                 label='返回'
                 icon={<ChevronLeft size={20} />}
                 variant='text'
-                onClick={() => navigate('/finance/dashboard')}
+                onClick={() => navigate(FINANCE_PATHS.dashboard)}
               />
               <Box>
                 <Typography

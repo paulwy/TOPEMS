@@ -17,6 +17,7 @@ import type { ProductionOrder, ProductionRecord, QualityRecord } from '@/api/mes
 import { apiLogger } from '@/utils/logger';
 import { useAppStore } from '@/store';
 import { designTokens } from '@/theme/tokens';
+import { MES_PATHS } from '@/modules/mes/config';
 
 const ct = designTokens.colors;
 
@@ -513,7 +514,7 @@ const ProductionOrderDetailPage: React.FC = () => {
 
   return (
     <PageContainer
-      backButton={{ href: '/mes/production-orders' }}
+      backButton={{ href: MES_PATHS.productionOrders }}
       autoTitle
       autoBreadcrumbs
       headerProps={{
@@ -524,7 +525,7 @@ const ProductionOrderDetailPage: React.FC = () => {
       <DetailPageTemplate
         title=''
         subtitle=''
-        backHref='/mes/orders'
+        backHref={MES_PATHS.productionOrders}
         loading={loading}
         error={errorMessage}
         infoCard={infoCard}

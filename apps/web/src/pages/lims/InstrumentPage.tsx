@@ -38,6 +38,7 @@ import type { Instrument, CreateInstrumentRequest } from '@/api/lims';
 import { useAppStore } from '@/store';
 import { apiLogger } from '@/utils/logger';
 import { designTokens } from '@/theme/tokens';
+import { LIMS_PATHS } from '@/modules/lims/config';
 
 const ct = designTokens.colors;
 
@@ -181,7 +182,7 @@ const InstrumentPage: React.FC = () => {
     {
       label: '维护记录',
       icon: <Settings style={{ width: 16, height: 16 }} />,
-      onClick: (row) => navigate(`/lims/instrument-detail?id=${row.id}`),
+      onClick: (row) => navigate(`${LIMS_PATHS.instrumentDetail}?id=${row.id}`),
     },
   ];
 

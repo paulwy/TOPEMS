@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useMemo } from 'react';
 import { designTokens } from '@/theme/tokens';
+import { FINANCE_PATHS } from '@/modules/finance/config';
 import {
   Box,
   Typography,
@@ -568,7 +569,7 @@ const FinanceBudgetDetailPage: React.FC = () => {
       <DetailPageTemplate
         title=''
         subtitle=''
-        backHref='/finance/budget'
+        backHref={FINANCE_PATHS.budget}
         loading={loading}
         error={errorMessage}
         onDownload={handleExport}

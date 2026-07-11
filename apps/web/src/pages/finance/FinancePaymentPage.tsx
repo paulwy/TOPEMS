@@ -1,4 +1,5 @@
 import React, { useState, useMemo, useEffect } from 'react';
+import { FINANCE_PATHS } from '@/modules/finance/config';
 import {
   Plus,
   Trash2,
@@ -502,7 +503,7 @@ const FinancePaymentPage: React.FC = () => {
         title=''
         subtitle=''
         backButton={{
-          onClick: () => navigate('/finance/dashboard'),
+          onClick: () => navigate(FINANCE_PATHS.dashboard),
         }}
         columns={columns}
         data={filteredData}

@@ -8,6 +8,7 @@ import type { Account, AccountBalance } from '@/types/finance';
 import type { AccountingSubject } from '@/api/erp';
 import { apiLogger } from '@/utils/logger';
 
+import { FINANCE_PATHS } from '@/modules/finance/config';
 import {
   Dialog,
   DialogTitle,
@@ -302,7 +303,7 @@ const FinanceLedgerPage: React.FC = () => {
               sx={{ alignItems: 'center' }}
               spacing={2}
             >
-              <BackButton href='/finance/dashboard' />
+              <BackButton href={FINANCE_PATHS.dashboard} />
               <Box>
                 <Typography
                   variant='h5'

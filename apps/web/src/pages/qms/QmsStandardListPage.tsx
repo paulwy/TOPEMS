@@ -30,6 +30,7 @@ import { PageContainer } from '@/components/common';
 import { qmsApi } from '@/api/qms';
 import type { QualityStandard } from '@/api/qms';
 import { designTokens } from '@/theme/tokens';
+import { QMS_PATHS } from '@/modules/qms/config';
 
 const ct = designTokens.colors;
 
@@ -167,7 +168,7 @@ const QmsStandardListPage: React.FC = () => {
   ];
 
   const viewItem = (item: QualityStandard) => {
-    navigate(`/qms/standard/${item.id}`);
+    navigate(QMS_PATHS.standardDetail.replace(':id', item.id));
   };
 
   const editItem = (item: QualityStandard) => {

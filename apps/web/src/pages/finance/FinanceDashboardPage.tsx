@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useMemo } from 'react';
 import { designTokens } from '@/theme/tokens';
 import { useNavigate } from 'react-router-dom';
+import { FINANCE_PATHS } from '@/modules/finance/config';
 import {
   FileText,
   TrendingUp,
@@ -161,42 +162,42 @@ const FinanceDashboardPage: React.FC = () => {
         id: 'voucher-manage',
         label: '凭证管理',
         icon: <FileText size={20} />,
-        onClick: () => navigate('/finance/vouchers'),
+        onClick: () => navigate(FINANCE_PATHS.vouchers),
         color: ct.primary.dark,
       },
       {
         id: 'ledger-manage',
         label: '总账管理',
         icon: <BookOpen size={20} />,
-        onClick: () => navigate('/finance/ledger'),
+        onClick: () => navigate(FINANCE_PATHS.ledger),
         color: ct.purple[700],
       },
       {
         id: 'receivable-manage',
         label: '应收管理',
         icon: <TrendingUp size={20} />,
-        onClick: () => navigate('/finance/receivable'),
+        onClick: () => navigate(FINANCE_PATHS.receivablePayable),
         color: ct.success[700],
       },
       {
         id: 'payable-manage',
         label: '应付管理',
         icon: <TrendingDown size={20} />,
-        onClick: () => navigate('/finance/payable'),
+        onClick: () => navigate(FINANCE_PATHS.receivablePayable),
         color: ct.orange[600],
       },
       {
         id: 'report',
         label: '报表',
         icon: <BarChart3 size={20} />,
-        onClick: () => navigate('/finance/reports'),
+        onClick: () => navigate(FINANCE_PATHS.reports),
         color: ct.teal[700],
       },
       {
         id: 'budget-manage',
         label: '预算管理',
         icon: <Target size={20} />,
-        onClick: () => navigate('/finance/budget'),
+        onClick: () => navigate(FINANCE_PATHS.budget),
         color: ct.error[700],
       },
     ],
@@ -212,7 +213,7 @@ const FinanceDashboardPage: React.FC = () => {
         time: '2026-06-29 09:30',
         icon: <FileText size={18} />,
         status: 'success',
-        onClick: () => navigate('/finance/vouchers'),
+        onClick: () => navigate(FINANCE_PATHS.vouchers),
       },
       {
         id: 'v2',
@@ -221,7 +222,7 @@ const FinanceDashboardPage: React.FC = () => {
         time: '2026-06-29 08:15',
         icon: <Receipt size={18} />,
         status: 'success',
-        onClick: () => navigate('/finance/vouchers'),
+        onClick: () => navigate(FINANCE_PATHS.vouchers),
       },
       {
         id: 'inv1',
@@ -230,7 +231,7 @@ const FinanceDashboardPage: React.FC = () => {
         time: '2026-06-28 16:45',
         icon: <Receipt size={18} />,
         status: 'info',
-        onClick: () => navigate('/finance/invoices'),
+        onClick: () => navigate(FINANCE_PATHS.invoices),
       },
       {
         id: 'pay1',
@@ -239,7 +240,7 @@ const FinanceDashboardPage: React.FC = () => {
         time: '2026-06-28 14:20',
         icon: <Wallet size={18} />,
         status: 'warning',
-        onClick: () => navigate('/finance/payments'),
+        onClick: () => navigate(FINANCE_PATHS.payments),
       },
       {
         id: 'v3',
@@ -248,7 +249,7 @@ const FinanceDashboardPage: React.FC = () => {
         time: '2026-06-28 10:00',
         icon: <CreditCard size={18} />,
         status: 'default',
-        onClick: () => navigate('/finance/vouchers'),
+        onClick: () => navigate(FINANCE_PATHS.vouchers),
       },
     ],
     [navigate]

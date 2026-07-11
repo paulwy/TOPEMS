@@ -26,6 +26,7 @@ import { qmsApi } from '@/api/qms';
 import type { QualityOverview } from '@/api/qms';
 import { designTokens } from '@/theme/tokens';
 import { logger } from '@/utils/logger';
+import { QMS_PATHS } from '@/modules/qms/config';
 
 const ct = designTokens.colors;
 
@@ -330,35 +331,35 @@ const QmsDashboardPage: React.FC = () => {
       id: 'new-inspection',
       label: '新建检验',
       icon: <Plus style={{ width: 20, height: 20 }} />,
-      onClick: () => navigate('/qms/inspection'),
+      onClick: () => navigate(QMS_PATHS.inspection),
       color: ct.secondary[400],
     },
     {
       id: 'quality-standards',
       label: '质量标准',
       icon: <BookOpen style={{ width: 20, height: 20 }} />,
-      onClick: () => navigate('/qms/standards'),
+      onClick: () => navigate(QMS_PATHS.standards),
       color: 'success.main',
     },
     {
       id: 'nonconformance',
       label: '不合格品报告',
       icon: <AlertTriangle style={{ width: 20, height: 20 }} />,
-      onClick: () => navigate('/qms/nonconformance'),
+      onClick: () => navigate(QMS_PATHS.nonconformance),
       color: 'error.main',
     },
     {
       id: 'spc-analysis',
       label: 'SPC分析',
       icon: <LineChart style={{ width: 20, height: 20 }} />,
-      onClick: () => navigate('/qms/spc'),
+      onClick: () => navigate(QMS_PATHS.spc),
       color: 'warning.main',
     },
     {
       id: 'audit-management',
       label: '审核管理',
       icon: <ShieldCheck style={{ width: 20, height: 20 }} />,
-      onClick: () => navigate('/qms/audit-management'),
+      onClick: () => navigate(QMS_PATHS.auditManagement),
       color: 'secondary.main',
     },
   ];
@@ -371,7 +372,7 @@ const QmsDashboardPage: React.FC = () => {
       icon: <ClipboardCheck style={{ width: 16, height: 16 }} />,
       status: 'info',
       time: '今天',
-      onClick: () => navigate('/qms/inspection'),
+      onClick: () => navigate(QMS_PATHS.inspection),
     },
     {
       id: 'recent-nonconformance',
@@ -380,7 +381,7 @@ const QmsDashboardPage: React.FC = () => {
       icon: <XCircle style={{ width: 16, height: 16 }} />,
       status: 'warning',
       time: '今天',
-      onClick: () => navigate('/qms/nonconformance'),
+      onClick: () => navigate(QMS_PATHS.nonconformance),
     },
     {
       id: 'recent-8d',
@@ -389,7 +390,7 @@ const QmsDashboardPage: React.FC = () => {
       icon: <FileText style={{ width: 16, height: 16 }} />,
       status: 'default',
       time: '本周',
-      onClick: () => navigate('/qms/eightd'),
+      onClick: () => navigate(QMS_PATHS.eightd),
     },
     {
       id: 'recent-audit',
@@ -398,7 +399,7 @@ const QmsDashboardPage: React.FC = () => {
       icon: <ClipboardList style={{ width: 16, height: 16 }} />,
       status: 'info',
       time: '本周',
-      onClick: () => navigate('/qms/audit-management'),
+      onClick: () => navigate(QMS_PATHS.auditManagement),
     },
     {
       id: 'recent-apqp',
@@ -407,7 +408,7 @@ const QmsDashboardPage: React.FC = () => {
       icon: <BarChart3 style={{ width: 16, height: 16 }} />,
       status: 'default',
       time: '本月',
-      onClick: () => navigate('/qms/apqp'),
+      onClick: () => navigate(QMS_PATHS.apqp),
     },
   ];
 

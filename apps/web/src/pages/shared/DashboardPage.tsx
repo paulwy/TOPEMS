@@ -1,6 +1,7 @@
 import React, { useEffect, useState, useCallback, useMemo, useRef } from 'react';
 import { apiLogger } from '@/utils/logger';
 import { useNavigate, useLocation } from 'react-router-dom';
+import { GIS_PATHS } from '@/modules/gis/config';
 import {
   Box,
   Typography,
@@ -848,7 +849,7 @@ const DashboardPage: React.FC<DashboardPageProps> = ({ onLogout }) => {
           title: '厂区空间',
           icon: MapPin,
           description: '设备点位、管线、仓储管理',
-          path: '/gis',
+          path: GIS_PATHS.root,
           color: 'bg-teal-500',
           status: 'new' as const,
           permission: 'gis:read',
