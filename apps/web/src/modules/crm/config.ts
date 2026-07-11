@@ -56,7 +56,7 @@ export const crmModuleConfig: RouteModuleConfig = {
       title: '客户管理',
       template: 'list',
       group: 'business',
-      requiredPermissions: ['crm:customer:read'],
+      requiredPermissions: ['crm:customer:read', 'crm:read'],
       action: 'read',
     },
     {
@@ -67,7 +67,7 @@ export const crmModuleConfig: RouteModuleConfig = {
       title: '创建客户',
       template: 'form',
       group: 'business',
-      requiredPermissions: ['crm:customer:create'],
+      requiredPermissions: ['crm:customer:create', 'crm:write'],
       action: 'write',
     },
     {
@@ -78,7 +78,7 @@ export const crmModuleConfig: RouteModuleConfig = {
       title: '客户详情',
       template: 'detail',
       group: 'business',
-      requiredPermissions: ['crm:customer:read'],
+      requiredPermissions: ['crm:customer:read', 'crm:read'],
       action: 'read',
     },
     {
@@ -89,7 +89,7 @@ export const crmModuleConfig: RouteModuleConfig = {
       title: '编辑客户',
       template: 'form',
       group: 'business',
-      requiredPermissions: ['crm:customer:update'],
+      requiredPermissions: ['crm:customer:update', 'crm:update'],
       action: 'update',
     },
     {
@@ -100,7 +100,7 @@ export const crmModuleConfig: RouteModuleConfig = {
       title: '联系人管理',
       template: 'list',
       group: 'business',
-      requiredPermissions: ['crm:contact:read'],
+      requiredPermissions: ['crm:contact:read', 'crm:read'],
       action: 'read',
     },
     {
@@ -111,7 +111,7 @@ export const crmModuleConfig: RouteModuleConfig = {
       title: '联系人详情',
       template: 'detail',
       group: 'business',
-      requiredPermissions: ['crm:contact:read'],
+      requiredPermissions: ['crm:contact:read', 'crm:read'],
       action: 'read',
     },
     {
@@ -122,7 +122,7 @@ export const crmModuleConfig: RouteModuleConfig = {
       title: '商机管理',
       template: 'list',
       group: 'business',
-      requiredPermissions: ['crm:opportunity:read'],
+      requiredPermissions: ['crm:opportunity:read', 'crm:read'],
       action: 'read',
     },
     {
@@ -133,7 +133,7 @@ export const crmModuleConfig: RouteModuleConfig = {
       title: '商机详情',
       template: 'detail',
       group: 'business',
-      requiredPermissions: ['crm:opportunity:read'],
+      requiredPermissions: ['crm:opportunity:read', 'crm:read'],
       action: 'read',
     },
     {
@@ -144,7 +144,7 @@ export const crmModuleConfig: RouteModuleConfig = {
       title: '互动管理',
       template: 'list',
       group: 'business',
-      requiredPermissions: ['crm:interaction:read'],
+      requiredPermissions: ['crm:interaction:read', 'crm:read'],
     },
     {
       path: CRM_PATHS.billing,
@@ -154,7 +154,7 @@ export const crmModuleConfig: RouteModuleConfig = {
       title: '账单管理',
       template: 'list',
       group: 'business',
-      requiredPermissions: ['crm:billing:read'],
+      requiredPermissions: ['crm:billing:read', 'crm:read'],
       action: 'read',
     },
     {
@@ -165,7 +165,7 @@ export const crmModuleConfig: RouteModuleConfig = {
       title: '销售漏斗',
       template: 'kanban',
       group: 'analytics',
-      requiredPermissions: ['crm:sales_funnel:read'],
+      requiredPermissions: ['crm:sales_funnel:read', 'crm:read'],
       action: 'read',
     },
     {
@@ -176,7 +176,7 @@ export const crmModuleConfig: RouteModuleConfig = {
       title: '客户评分',
       template: 'stats',
       group: 'analytics',
-      requiredPermissions: ['crm:customer_scoring:read'],
+      requiredPermissions: ['crm:customer_scoring:read', 'crm:read'],
       action: 'read',
     },
     {
@@ -187,7 +187,7 @@ export const crmModuleConfig: RouteModuleConfig = {
       title: '销售预测',
       template: 'stats',
       group: 'analytics',
-      requiredPermissions: ['crm:sales_forecast:read'],
+      requiredPermissions: ['crm:sales_forecast:read', 'crm:read'],
       action: 'read',
     },
     {
@@ -198,7 +198,7 @@ export const crmModuleConfig: RouteModuleConfig = {
       title: '客户细分',
       template: 'stats',
       group: 'analytics',
-      requiredPermissions: ['crm:customer_segmentation:read'],
+      requiredPermissions: ['crm:customer_segmentation:read', 'crm:read'],
       action: 'read',
     },
     {
@@ -209,7 +209,7 @@ export const crmModuleConfig: RouteModuleConfig = {
       title: '智能推荐',
       template: 'dashboard',
       group: 'analytics',
-      requiredPermissions: ['crm:recommendation:read'],
+      requiredPermissions: ['crm:recommendation:read', 'crm:read'],
       action: 'read',
     },
   ],

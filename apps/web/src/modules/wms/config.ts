@@ -59,7 +59,7 @@ export const wmsModuleConfig: RouteModuleConfig = {
       title: '仓库管理',
       template: 'list',
       group: 'business',
-      requiredPermissions: ['wms:warehouse:read'],
+      requiredPermissions: ['wms:warehouse:read', 'wms:read'],
       action: 'read',
     },
     {
@@ -70,7 +70,7 @@ export const wmsModuleConfig: RouteModuleConfig = {
       title: '库位管理',
       template: 'tree',
       group: 'business',
-      requiredPermissions: ['wms:location:read'],
+      requiredPermissions: ['wms:location:read', 'wms:read'],
       action: 'read',
     },
     {
@@ -84,7 +84,7 @@ export const wmsModuleConfig: RouteModuleConfig = {
       title: '批次管理',
       template: 'list',
       group: 'business',
-      requiredPermissions: ['wms:batch:read'],
+      requiredPermissions: ['wms:batch:read', 'wms:read'],
       action: 'read',
     },
     {
@@ -95,7 +95,7 @@ export const wmsModuleConfig: RouteModuleConfig = {
       title: '序列号管理',
       template: 'list',
       group: 'business',
-      requiredPermissions: ['wms:serial_number:read'],
+      requiredPermissions: ['wms:serial_number:read', 'wms:read'],
       action: 'read',
     },
     {
@@ -106,7 +106,7 @@ export const wmsModuleConfig: RouteModuleConfig = {
       title: '入库管理',
       template: 'list',
       group: 'process',
-      requiredPermissions: ['wms:inbound:read'],
+      requiredPermissions: ['wms:inbound:read', 'wms:read'],
       action: 'read',
     },
     {
@@ -117,7 +117,7 @@ export const wmsModuleConfig: RouteModuleConfig = {
       title: '入库单',
       template: 'list',
       group: 'process',
-      requiredPermissions: ['wms:inbound:read'],
+      requiredPermissions: ['wms:inbound:read', 'wms:read'],
       action: 'read',
     },
     {
@@ -128,7 +128,7 @@ export const wmsModuleConfig: RouteModuleConfig = {
       title: '出库管理',
       template: 'list',
       group: 'process',
-      requiredPermissions: ['wms:outbound:read'],
+      requiredPermissions: ['wms:outbound:read', 'wms:read'],
       action: 'read',
     },
     {
@@ -142,7 +142,7 @@ export const wmsModuleConfig: RouteModuleConfig = {
       title: '出库单',
       template: 'list',
       group: 'process',
-      requiredPermissions: ['wms:outbound:read'],
+      requiredPermissions: ['wms:outbound:read', 'wms:read'],
       action: 'read',
     },
     {
@@ -153,7 +153,7 @@ export const wmsModuleConfig: RouteModuleConfig = {
       title: '调拨管理',
       template: 'list',
       group: 'process',
-      requiredPermissions: ['wms:transfer:read'],
+      requiredPermissions: ['wms:transfer:read', 'wms:read'],
       action: 'read',
     },
     {
@@ -164,7 +164,7 @@ export const wmsModuleConfig: RouteModuleConfig = {
       title: '库存盘点',
       template: 'list',
       group: 'process',
-      requiredPermissions: ['wms:inventory_check:read'],
+      requiredPermissions: ['wms:inventory_check:read', 'wms:read'],
       action: 'read',
     },
     {
@@ -178,7 +178,7 @@ export const wmsModuleConfig: RouteModuleConfig = {
       title: '补货管理',
       template: 'list',
       group: 'process',
-      requiredPermissions: ['wms:replenishment:read'],
+      requiredPermissions: ['wms:replenishment:read', 'wms:read'],
       action: 'read',
     },
     {
@@ -189,7 +189,7 @@ export const wmsModuleConfig: RouteModuleConfig = {
       title: '库存查询',
       template: 'list',
       group: 'analytics',
-      requiredPermissions: ['wms:inventory:read'],
+      requiredPermissions: ['wms:inventory:read', 'wms:read'],
       action: 'read',
     },
     {
@@ -203,7 +203,7 @@ export const wmsModuleConfig: RouteModuleConfig = {
       title: '库存报表',
       template: 'stats',
       group: 'analytics',
-      requiredPermissions: ['wms:report:read'],
+      requiredPermissions: ['wms:report:read', 'wms:read'],
       action: 'read',
     },
     {
@@ -217,7 +217,7 @@ export const wmsModuleConfig: RouteModuleConfig = {
       title: '供应商管理',
       template: 'list',
       group: 'business',
-      requiredPermissions: ['wms:supplier:read'],
+      requiredPermissions: ['wms:supplier:read', 'wms:read'],
       action: 'read',
     },
     {
@@ -231,7 +231,7 @@ export const wmsModuleConfig: RouteModuleConfig = {
       title: '供应商详情',
       template: 'detail',
       group: 'business',
-      requiredPermissions: ['wms:supplier:read'],
+      requiredPermissions: ['wms:supplier:read', 'wms:read'],
       action: 'read',
     },
   ],

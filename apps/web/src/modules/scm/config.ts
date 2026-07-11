@@ -54,7 +54,7 @@ export const scmModuleConfig: RouteModuleConfig = {
       title: '采购订单',
       template: 'list',
       group: 'business',
-      requiredPermissions: ['scm:purchase_order:read'],
+      requiredPermissions: ['scm:purchase_order:read', 'scm:read'],
       action: 'read',
     },
     {
@@ -65,7 +65,7 @@ export const scmModuleConfig: RouteModuleConfig = {
       title: '采购申请',
       template: 'list',
       group: 'business',
-      requiredPermissions: ['scm:purchase_requisition:read'],
+      requiredPermissions: ['scm:purchase_requisition:read', 'scm:read'],
       action: 'read',
     },
     {
@@ -76,7 +76,7 @@ export const scmModuleConfig: RouteModuleConfig = {
       title: '采购明细',
       template: 'list',
       group: 'business',
-      requiredPermissions: ['scm:purchase_item:read'],
+      requiredPermissions: ['scm:purchase_item:read', 'scm:read'],
       action: 'read',
     },
     {
@@ -87,7 +87,7 @@ export const scmModuleConfig: RouteModuleConfig = {
       title: '供应商管理',
       template: 'list',
       group: 'business',
-      requiredPermissions: ['scm:supplier:read'],
+      requiredPermissions: ['scm:supplier:read', 'scm:read'],
       action: 'read',
     },
     {
@@ -98,7 +98,7 @@ export const scmModuleConfig: RouteModuleConfig = {
       title: '供应商准入',
       template: 'list',
       group: 'business',
-      requiredPermissions: ['scm:supplier_admission:read'],
+      requiredPermissions: ['scm:supplier_admission:read', 'scm:read'],
       action: 'read',
     },
     {
@@ -109,7 +109,7 @@ export const scmModuleConfig: RouteModuleConfig = {
       title: '供应商评估',
       template: 'list',
       group: 'process',
-      requiredPermissions: ['scm:supplier_evaluation:read'],
+      requiredPermissions: ['scm:supplier_evaluation:read', 'scm:read'],
       action: 'read',
     },
     {
@@ -120,7 +120,7 @@ export const scmModuleConfig: RouteModuleConfig = {
       title: '合同管理',
       template: 'list',
       group: 'process',
-      requiredPermissions: ['scm:contract:read'],
+      requiredPermissions: ['scm:contract:read', 'scm:read'],
       action: 'read',
     },
     {
@@ -131,7 +131,7 @@ export const scmModuleConfig: RouteModuleConfig = {
       title: '交期预约',
       template: 'list',
       group: 'process',
-      requiredPermissions: ['scm:delivery_appointment:read'],
+      requiredPermissions: ['scm:delivery_appointment:read', 'scm:read'],
       action: 'read',
     },
     {
@@ -142,7 +142,7 @@ export const scmModuleConfig: RouteModuleConfig = {
       title: 'MRP计划',
       template: 'list',
       group: 'process',
-      requiredPermissions: ['scm:mrp_plan:read'],
+      requiredPermissions: ['scm:mrp_plan:read', 'scm:read'],
       action: 'read',
     },
     {
@@ -153,7 +153,7 @@ export const scmModuleConfig: RouteModuleConfig = {
       title: 'MRP建议',
       template: 'list',
       group: 'process',
-      requiredPermissions: ['scm:mrp_suggestion:read'],
+      requiredPermissions: ['scm:mrp_suggestion:read', 'scm:read'],
       action: 'read',
     },
     {
@@ -175,7 +175,7 @@ export const scmModuleConfig: RouteModuleConfig = {
       title: '库存周转',
       template: 'stats',
       group: 'analytics',
-      requiredPermissions: ['scm:inventory_turnover:read'],
+      requiredPermissions: ['scm:inventory_turnover:read', 'scm:read'],
       action: 'read',
     },
     {
@@ -186,7 +186,7 @@ export const scmModuleConfig: RouteModuleConfig = {
       title: '价格对比',
       template: 'stats',
       group: 'analytics',
-      requiredPermissions: ['scm:price_comparison:read'],
+      requiredPermissions: ['scm:price_comparison:read', 'scm:read'],
       action: 'read',
     },
   ],

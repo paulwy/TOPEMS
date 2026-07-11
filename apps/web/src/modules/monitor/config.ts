@@ -46,7 +46,7 @@ export const monitorModuleConfig: RouteModuleConfig = {
       title: '告警中心',
       template: 'list',
       group: 'alerts',
-      requiredPermissions: ['monitor:alert:read'],
+      requiredPermissions: ['monitor:alert:read', 'monitor:read'],
       action: 'read',
     },
     {
@@ -57,7 +57,7 @@ export const monitorModuleConfig: RouteModuleConfig = {
       title: '告警历史',
       template: 'list',
       group: 'alerts',
-      requiredPermissions: ['monitor:alert:read'],
+      requiredPermissions: ['monitor:alert:read', 'monitor:read'],
       action: 'read',
     },
     {
@@ -68,7 +68,7 @@ export const monitorModuleConfig: RouteModuleConfig = {
       title: '告警规则',
       template: 'list',
       group: 'alerts',
-      requiredPermissions: ['monitor:rule:read'],
+      requiredPermissions: ['monitor:rule:read', 'monitor:read'],
       action: 'read',
     },
     {
@@ -79,7 +79,7 @@ export const monitorModuleConfig: RouteModuleConfig = {
       title: '指标监控',
       template: 'stats',
       group: 'metrics',
-      requiredPermissions: ['monitor:metric:read'],
+      requiredPermissions: ['monitor:metric:read', 'monitor:read'],
       action: 'read',
     },
     {
@@ -90,7 +90,7 @@ export const monitorModuleConfig: RouteModuleConfig = {
       title: '系统日志',
       template: 'list',
       group: 'logs',
-      requiredPermissions: ['monitor:log:read'],
+      requiredPermissions: ['monitor:log:read', 'monitor:read'],
       action: 'read',
     },
     {

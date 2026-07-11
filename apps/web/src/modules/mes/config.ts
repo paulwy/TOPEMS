@@ -64,7 +64,7 @@ export const mesModuleConfig: RouteModuleConfig = {
       title: '生产订单',
       template: 'list',
       group: 'business',
-      requiredPermissions: ['mes:production_order:read'],
+      requiredPermissions: ['mes:production_order:read', 'mes:read'],
       action: 'read',
     },
     {
@@ -75,7 +75,7 @@ export const mesModuleConfig: RouteModuleConfig = {
       title: '生产订单详情',
       template: 'detail',
       group: 'business',
-      requiredPermissions: ['mes:production_order:read'],
+      requiredPermissions: ['mes:production_order:read', 'mes:read'],
       action: 'read',
     },
     {
@@ -86,7 +86,7 @@ export const mesModuleConfig: RouteModuleConfig = {
       title: '工单管理',
       template: 'list',
       group: 'business',
-      requiredPermissions: ['mes:work_order:read'],
+      requiredPermissions: ['mes:work_order:read', 'mes:read'],
       action: 'read',
     },
     {
@@ -97,7 +97,7 @@ export const mesModuleConfig: RouteModuleConfig = {
       title: '设备管理',
       template: 'list',
       group: 'business',
-      requiredPermissions: ['mes:equipment:read'],
+      requiredPermissions: ['mes:equipment:read', 'mes:read'],
       action: 'read',
     },
     {
@@ -108,7 +108,7 @@ export const mesModuleConfig: RouteModuleConfig = {
       title: '设备详情',
       template: 'detail',
       group: 'business',
-      requiredPermissions: ['mes:equipment:read'],
+      requiredPermissions: ['mes:equipment:read', 'mes:read'],
       action: 'read',
     },
     {
@@ -119,7 +119,7 @@ export const mesModuleConfig: RouteModuleConfig = {
       title: '工位管理',
       template: 'list',
       group: 'business',
-      requiredPermissions: ['mes:work_station:read'],
+      requiredPermissions: ['mes:work_station:read', 'mes:read'],
       action: 'read',
     },
     {
@@ -130,7 +130,7 @@ export const mesModuleConfig: RouteModuleConfig = {
       title: '班组管理',
       template: 'list',
       group: 'business',
-      requiredPermissions: ['mes:team:read'],
+      requiredPermissions: ['mes:team:read', 'mes:read'],
       action: 'read',
     },
     {
@@ -141,7 +141,7 @@ export const mesModuleConfig: RouteModuleConfig = {
       title: '物料需求',
       template: 'list',
       group: 'business',
-      requiredPermissions: ['mes:material:read'],
+      requiredPermissions: ['mes:material:read', 'mes:read'],
       action: 'read',
     },
     {
@@ -152,7 +152,7 @@ export const mesModuleConfig: RouteModuleConfig = {
       title: '工艺路线',
       template: 'list',
       group: 'process',
-      requiredPermissions: ['mes:process_route:read'],
+      requiredPermissions: ['mes:process_route:read', 'mes:read'],
       action: 'read',
     },
     {
@@ -163,7 +163,7 @@ export const mesModuleConfig: RouteModuleConfig = {
       title: '工艺流程',
       template: 'list',
       group: 'process',
-      requiredPermissions: ['mes:process_flow:read'],
+      requiredPermissions: ['mes:process_flow:read', 'mes:read'],
       action: 'read',
     },
     {
@@ -174,7 +174,7 @@ export const mesModuleConfig: RouteModuleConfig = {
       title: '生产过程',
       template: 'detail',
       group: 'process',
-      requiredPermissions: ['mes:production_process:read'],
+      requiredPermissions: ['mes:production_process:read', 'mes:read'],
       action: 'read',
     },
     {
@@ -185,7 +185,7 @@ export const mesModuleConfig: RouteModuleConfig = {
       title: '生产计划',
       template: 'list',
       group: 'process',
-      requiredPermissions: ['mes:production_schedule:read'],
+      requiredPermissions: ['mes:production_schedule:read', 'mes:read'],
       action: 'read',
     },
     {
@@ -196,7 +196,7 @@ export const mesModuleConfig: RouteModuleConfig = {
       title: '在制品',
       template: 'list',
       group: 'process',
-      requiredPermissions: ['mes:wip:read'],
+      requiredPermissions: ['mes:wip:read', 'mes:read'],
       action: 'read',
     },
     {
@@ -207,7 +207,7 @@ export const mesModuleConfig: RouteModuleConfig = {
       title: '过程质检',
       template: 'list',
       group: 'process',
-      requiredPermissions: ['mes:quality:read'],
+      requiredPermissions: ['mes:quality:read', 'mes:read'],
       action: 'read',
     },
     {
@@ -218,7 +218,7 @@ export const mesModuleConfig: RouteModuleConfig = {
       title: '质量追溯',
       template: 'detail',
       group: 'process',
-      requiredPermissions: ['mes:traceability:read'],
+      requiredPermissions: ['mes:traceability:read', 'mes:read'],
       action: 'read',
     },
     {
@@ -229,7 +229,7 @@ export const mesModuleConfig: RouteModuleConfig = {
       title: '生产看板',
       template: 'kanban',
       group: 'analytics',
-      requiredPermissions: ['mes:kanban:read'],
+      requiredPermissions: ['mes:kanban:read', 'mes:read'],
       action: 'read',
     },
     {
@@ -240,7 +240,7 @@ export const mesModuleConfig: RouteModuleConfig = {
       title: '生产记录',
       template: 'list',
       group: 'analytics',
-      requiredPermissions: ['mes:production_record:read'],
+      requiredPermissions: ['mes:production_record:read', 'mes:read'],
       action: 'read',
     },
     {
@@ -251,7 +251,7 @@ export const mesModuleConfig: RouteModuleConfig = {
       title: '工作报告',
       template: 'list',
       group: 'analytics',
-      requiredPermissions: ['mes:work_report:read'],
+      requiredPermissions: ['mes:work_report:read', 'mes:read'],
       action: 'read',
     },
     {
@@ -262,7 +262,7 @@ export const mesModuleConfig: RouteModuleConfig = {
       title: '设备OEE',
       template: 'stats',
       group: 'analytics',
-      requiredPermissions: ['mes:oee:read'],
+      requiredPermissions: ['mes:oee:read', 'mes:read'],
       action: 'read',
     },
     {
@@ -273,7 +273,7 @@ export const mesModuleConfig: RouteModuleConfig = {
       title: '物料BOM',
       template: 'tree',
       group: 'business',
-      requiredPermissions: ['mes:material:read'],
+      requiredPermissions: ['mes:material:read', 'mes:read'],
       action: 'read',
     },
     {
@@ -284,7 +284,7 @@ export const mesModuleConfig: RouteModuleConfig = {
       title: '物料出库',
       template: 'form',
       group: 'business',
-      requiredPermissions: ['mes:material:update'],
+      requiredPermissions: ['mes:material:update', 'mes:update'],
       action: 'update',
     },
     {
@@ -295,7 +295,7 @@ export const mesModuleConfig: RouteModuleConfig = {
       title: '物料退回',
       template: 'form',
       group: 'business',
-      requiredPermissions: ['mes:material:update'],
+      requiredPermissions: ['mes:material:update', 'mes:update'],
       action: 'update',
     },
     {

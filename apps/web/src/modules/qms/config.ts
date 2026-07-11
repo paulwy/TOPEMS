@@ -52,7 +52,7 @@ export const qmsModuleConfig: RouteModuleConfig = {
       title: '质检任务',
       template: 'list',
       group: 'business',
-      requiredPermissions: ['qms:inspection:read'],
+      requiredPermissions: ['qms:inspection:read', 'qms:read'],
       action: 'read',
     },
     {
@@ -66,7 +66,7 @@ export const qmsModuleConfig: RouteModuleConfig = {
       title: '质量控制',
       template: 'list',
       group: 'business',
-      requiredPermissions: ['qms:quality_control:read'],
+      requiredPermissions: ['qms:quality_control:read', 'qms:read'],
       action: 'read',
     },
     {
@@ -80,7 +80,7 @@ export const qmsModuleConfig: RouteModuleConfig = {
       title: '不合格品',
       template: 'list',
       group: 'business',
-      requiredPermissions: ['qms:nonconformance:read'],
+      requiredPermissions: ['qms:nonconformance:read', 'qms:read'],
       action: 'read',
     },
     {
@@ -94,7 +94,7 @@ export const qmsModuleConfig: RouteModuleConfig = {
       title: '审核管理',
       template: 'list',
       group: 'process',
-      requiredPermissions: ['qms:audit:read'],
+      requiredPermissions: ['qms:audit:read', 'qms:read'],
       action: 'read',
     },
     {
@@ -108,7 +108,7 @@ export const qmsModuleConfig: RouteModuleConfig = {
       title: '质量标准',
       template: 'list',
       group: 'business',
-      requiredPermissions: ['qms:standard:read'],
+      requiredPermissions: ['qms:standard:read', 'qms:read'],
       action: 'read',
     },
     {
@@ -122,7 +122,7 @@ export const qmsModuleConfig: RouteModuleConfig = {
       title: '标准详情',
       template: 'detail',
       group: 'business',
-      requiredPermissions: ['qms:standard:read'],
+      requiredPermissions: ['qms:standard:read', 'qms:read'],
       action: 'read',
     },
     {
@@ -133,7 +133,7 @@ export const qmsModuleConfig: RouteModuleConfig = {
       title: 'APQP管理',
       template: 'list',
       group: 'process',
-      requiredPermissions: ['qms:apqp:read'],
+      requiredPermissions: ['qms:apqp:read', 'qms:read'],
       action: 'read',
     },
     {
@@ -144,7 +144,7 @@ export const qmsModuleConfig: RouteModuleConfig = {
       title: 'FMEA分析',
       template: 'list',
       group: 'process',
-      requiredPermissions: ['qms:fmea:read'],
+      requiredPermissions: ['qms:fmea:read', 'qms:read'],
       action: 'read',
     },
     {
@@ -155,7 +155,7 @@ export const qmsModuleConfig: RouteModuleConfig = {
       title: 'SPC统计',
       template: 'stats',
       group: 'analytics',
-      requiredPermissions: ['qms:spc:read'],
+      requiredPermissions: ['qms:spc:read', 'qms:read'],
       action: 'read',
     },
     {
@@ -166,7 +166,7 @@ export const qmsModuleConfig: RouteModuleConfig = {
       title: '8D报告',
       template: 'list',
       group: 'process',
-      requiredPermissions: ['qms:eightd:read'],
+      requiredPermissions: ['qms:eightd:read', 'qms:read'],
       action: 'read',
     },
     {
@@ -177,7 +177,7 @@ export const qmsModuleConfig: RouteModuleConfig = {
       title: '质量成本',
       template: 'stats',
       group: 'analytics',
-      requiredPermissions: ['qms:quality_cost:read'],
+      requiredPermissions: ['qms:quality_cost:read', 'qms:read'],
       action: 'read',
     },
   ],

@@ -56,7 +56,7 @@ export const docModuleConfig: RouteModuleConfig = {
       title: '文档管理',
       template: 'list',
       group: 'documents',
-      requiredPermissions: ['doc:document:read'],
+      requiredPermissions: ['doc:document:read', 'doc:read'],
       action: 'read',
     },
     {
@@ -67,7 +67,7 @@ export const docModuleConfig: RouteModuleConfig = {
       title: '文档中心',
       template: 'list',
       group: 'documents',
-      requiredPermissions: ['doc:center:read'],
+      requiredPermissions: ['doc:center:read', 'doc:read'],
       action: 'read',
     },
     {
@@ -89,7 +89,7 @@ export const docModuleConfig: RouteModuleConfig = {
       title: '文档详情',
       template: 'detail',
       group: 'documents',
-      requiredPermissions: ['doc:document:read'],
+      requiredPermissions: ['doc:document:read', 'doc:read'],
       action: 'read',
     },
   ],

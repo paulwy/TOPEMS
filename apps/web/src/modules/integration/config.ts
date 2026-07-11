@@ -49,7 +49,7 @@ export const integrationModuleConfig: RouteModuleConfig = {
       title: '连接管理',
       template: 'list',
       group: 'connections',
-      requiredPermissions: ['integration:connection:read'],
+      requiredPermissions: ['integration:connection:read', 'integration:read'],
       action: 'read',
     },
     {
@@ -60,7 +60,7 @@ export const integrationModuleConfig: RouteModuleConfig = {
       title: '数据映射',
       template: 'list',
       group: 'mappings',
-      requiredPermissions: ['integration:mapping:read'],
+      requiredPermissions: ['integration:mapping:read', 'integration:read'],
       action: 'read',
     },
     {
@@ -71,7 +71,7 @@ export const integrationModuleConfig: RouteModuleConfig = {
       title: '事件日志',
       template: 'list',
       group: 'logs',
-      requiredPermissions: ['integration:event:read'],
+      requiredPermissions: ['integration:event:read', 'integration:read'],
       action: 'read',
     },
     {
@@ -82,7 +82,7 @@ export const integrationModuleConfig: RouteModuleConfig = {
       title: 'ERP集成',
       template: 'detail',
       group: 'scenarios',
-      requiredPermissions: ['integration:erp:read'],
+      requiredPermissions: ['integration:erp:read', 'integration:read'],
       action: 'read',
     },
     {
@@ -93,7 +93,7 @@ export const integrationModuleConfig: RouteModuleConfig = {
       title: 'LIMS-QMS集成',
       template: 'detail',
       group: 'scenarios',
-      requiredPermissions: ['integration:lims:read'],
+      requiredPermissions: ['integration:lims:read', 'integration:read'],
       action: 'read',
     },
     {
@@ -104,7 +104,7 @@ export const integrationModuleConfig: RouteModuleConfig = {
       title: 'MES-ERP集成',
       template: 'detail',
       group: 'scenarios',
-      requiredPermissions: ['integration:mes:read'],
+      requiredPermissions: ['integration:mes:read', 'integration:read'],
       action: 'read',
     },
     {
@@ -115,7 +115,7 @@ export const integrationModuleConfig: RouteModuleConfig = {
       title: 'WMS-SCM集成',
       template: 'detail',
       group: 'scenarios',
-      requiredPermissions: ['integration:wms:read'],
+      requiredPermissions: ['integration:wms:read', 'integration:read'],
       action: 'read',
     },
     {
