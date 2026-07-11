@@ -37,6 +37,7 @@ import { useAuth } from '@/hooks/useAuth';
 import { useAppStore } from '@/store';
 import { navigationRegistryV2 } from '@/lib/navigation';
 import type { NavItem } from '@/lib/navigation/types';
+import { PLUGIN_PATHS } from '@/modules/plugin/config';
 
 export interface AppHeaderProps {
   tabletDrawerOpen?: boolean;
@@ -348,7 +349,7 @@ export const AppHeader: React.FC<AppHeaderProps> = ({
                 <IconButton
                   size='small'
                   aria-label='插件市场'
-                  onClick={() => navigate('/plugin/marketplace')}
+                  onClick={() => navigate(PLUGIN_PATHS.marketplace)}
                   sx={{
                     width: 36,
                     height: 36,

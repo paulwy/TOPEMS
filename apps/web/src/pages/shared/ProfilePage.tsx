@@ -50,6 +50,7 @@ import {
   useTheme,
 } from '@mui/material';
 import { designTokens } from '@/theme/tokens';
+import { IM_PATHS } from '@/modules/im/config';
 
 const ct = designTokens.colors;
 
@@ -1096,7 +1097,7 @@ const ProfilePage: React.FC = () => {
                         title: '消息中心',
                         icon: MessageSquare,
                         iconName: 'MessageSquare',
-                        path: '/im',
+                        path: IM_PATHS.root,
                         color: 'primary.light',
                       },
                     ].map((item) => {

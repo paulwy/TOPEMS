@@ -17,6 +17,7 @@ import {
   HelpCircle,
 } from 'lucide-react';
 import { useAuth } from '../../hooks/useAuth';
+import { BI_PATHS } from '@/modules/bi/config';
 
 interface MobileMenuProps {
   isOpen: boolean;
@@ -45,7 +46,7 @@ export const MobileMenu: React.FC<MobileMenuProps> = ({
     { id: 'departments', label: '部门管理', icon: Folder, adminOnly: true },
     { id: 'employees', label: '员工管理', icon: Users, adminOnly: true },
     { id: 'documents', label: '文档中心', icon: BookOpen },
-    { id: 'bi', label: '商业智能', icon: BarChart3, path: '/bi/dashboard' },
+    { id: 'bi', label: '商业智能', icon: BarChart3, path: BI_PATHS.dashboard },
     { id: 'help', label: '帮助中心', icon: HelpCircle },
   ];
 

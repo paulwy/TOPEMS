@@ -1,0 +1,232 @@
+import { lazyWithRetry } from '@/routes/utils';
+import type { RouteModuleConfig } from '@/routes/v2/types';
+import type { ModuleNavConfig } from '@/lib/navigation/types';
+
+// ---- 路径常量：唯一真相源 ----
+// 组件中应引用 OA_PATHS.xxx，而非硬编码字符串
+export const OA_PATHS = {
+  root: '/oa',
+  dashboard: '/oa/dashboard',
+  announcement: '/oa/announcement',
+  addressbook: '/oa/addressbook',
+  meetingRoom: '/oa/meeting-room',
+  officeSupplies: '/oa/office-supplies',
+  vehicle: '/oa/vehicle',
+  expenseClaim: '/oa/expense-claim',
+  budget: '/oa/budget',
+} as const;
+
+// ---- 路由配置（供路由系统使用） ----
+export const oaModuleConfig: RouteModuleConfig = {
+  code: 'oa',
+  name: '行政办公',
+  icon: 'Briefcase',
+  path: OA_PATHS.root,
+  source: 'plugin',
+  suite: 'enterprise',
+  status: 'online',
+  frontendOnly: true,
+  order: 15,
+  description: '公告管理、会议管理、办公用品、费用报销',
+  permission: 'oa:read',
+  routes: [
+    {
+      path: OA_PATHS.dashboard,
+      element: lazyWithRetry(
+        () => import('@/pages/oa/AdministrationDashboardPage'),
+        'AdministrationDashboardPage'
+      ),
+      module: 'oa',
+      title: '办公仪表盘',
+      code: 'oa-dashboard',
+      requiredPermissions: ['oa:read'],
+      template: 'dashboard',
+      group: 'overview',
+    },
+    {
+      path: OA_PATHS.announcement,
+      element: lazyWithRetry(
+        () => import('@/pages/oa/AnnouncementManagementPage'),
+        'AnnouncementManagementPage'
+      ),
+      module: 'oa',
+      title: '公告管理',
+      code: 'oa-announcement',
+      requiredPermissions: ['oa:announcement:read'],
+      template: 'list',
+      group: 'business',
+    },
+    {
+      path: OA_PATHS.addressbook,
+      element: lazyWithRetry(() => import('@/pages/oa/AddressbookPage'), 'AddressbookPage'),
+      module: 'oa',
+      title: '通讯录',
+      code: 'oa-addressbook',
+      requiredPermissions: ['oa:addressbook:read'],
+      template: 'list',
+      group: 'business',
+    },
+    {
+      path: OA_PATHS.meetingRoom,
+      element: lazyWithRetry(
+        () => import('@/pages/oa/MeetingRoomManagementPage'),
+        'MeetingRoomManagementPage'
+      ),
+      module: 'oa',
+      title: '会议室管理',
+      code: 'oa-meeting-room',
+      requiredPermissions: ['oa:meeting-room:read'],
+      template: 'list',
+      group: 'business',
+    },
+    {
+      path: OA_PATHS.officeSupplies,
+      element: lazyWithRetry(
+        () => import('@/pages/oa/OfficeSuppliesPage'),
+        'OfficeSuppliesPage'
+      ),
+      module: 'oa',
+      title: '办公用品',
+      code: 'oa-office-supplies',
+      requiredPermissions: ['oa:office-supplies:read'],
+      template: 'list',
+      group: 'business',
+    },
+    {
+      path: OA_PATHS.vehicle,
+      element: lazyWithRetry(
+        () => import('@/pages/oa/VehicleManagementPage'),
+        'VehicleManagementPage'
+      ),
+      module: 'oa',
+      title: '车辆管理',
+      code: 'oa-vehicle',
+      requiredPermissions: ['oa:vehicle:read'],
+      template: 'list',
+      group: 'business',
+    },
+    {
+      path: OA_PATHS.expenseClaim,
+      element: lazyWithRetry(() => import('@/pages/oa/ExpenseClaimPage'), 'ExpenseClaimPage'),
+      module: 'oa',
+      title: '费用报销',
+      code: 'oa-expense-claim',
+      requiredPermissions: ['oa:expense:read'],
+      template: 'list',
+      group: 'process',
+    },
+    {
+      path: OA_PATHS.budget,
+      element: lazyWithRetry(
+        () => import('@/pages/oa/BudgetManagementPage'),
+        'BudgetManagementPage'
+      ),
+      module: 'oa',
+      title: '预算管理',
+      code: 'oa-budget',
+      requiredPermissions: ['oa:budget:read'],
+      template: 'list',
+      group: 'analytics',
+    },
+  ],
+};
+
+// ---- 导航配置（供导航注册表使用） ----
+export const oaNavConfig: ModuleNavConfig = {
+  code: 'oa',
+  name: '行政办公',
+  icon: 'Briefcase',
+  path: OA_PATHS.root,
+  permission: 'oa:read',
+  source: 'plugin',
+  suite: 'enterprise',
+  status: 'online',
+  order: 15,
+  description: '公告管理、会议管理、办公用品、费用报销',
+  navItems: [
+    {
+      code: 'oa-dashboard',
+      label: '仪表盘',
+      icon: 'LayoutDashboard',
+      path: OA_PATHS.dashboard,
+      permission: 'oa:read',
+      order: 0,
+      group: 'overview',
+      showInTabs: true,
+      description: '办公数据概览',
+    },
+    {
+      code: 'oa-announcement',
+      label: '公告管理',
+      icon: 'Megaphone',
+      path: OA_PATHS.announcement,
+      permission: 'oa:announcement:read',
+      order: 1,
+      group: 'business',
+      showInTabs: true,
+      description: '公司公告管理',
+    },
+    {
+      code: 'oa-addressbook',
+      label: '通讯录',
+      icon: 'Users',
+      path: OA_PATHS.addressbook,
+      permission: 'oa:addressbook:read',
+      order: 2,
+      group: 'business',
+      showInTabs: true,
+      description: '公司通讯录',
+    },
+    {
+      code: 'oa-meeting-room',
+      label: '会议室管理',
+      icon: 'CalendarDays',
+      path: OA_PATHS.meetingRoom,
+      permission: 'oa:meeting-room:read',
+      order: 3,
+      group: 'business',
+      description: '会议室预约管理',
+    },
+    {
+      code: 'oa-office-supplies',
+      label: '办公用品',
+      icon: 'Package',
+      path: OA_PATHS.officeSupplies,
+      permission: 'oa:office-supplies:read',
+      order: 4,
+      group: 'business',
+      description: '办公用品管理',
+    },
+    {
+      code: 'oa-vehicle',
+      label: '车辆管理',
+      icon: 'Car',
+      path: OA_PATHS.vehicle,
+      permission: 'oa:vehicle:read',
+      order: 5,
+      group: 'business',
+      description: '公司车辆管理',
+    },
+    {
+      code: 'oa-expense-claim',
+      label: '费用报销',
+      icon: 'Receipt',
+      path: OA_PATHS.expenseClaim,
+      permission: 'oa:expense:read',
+      order: 1,
+      group: 'process',
+      showInTabs: true,
+      description: '费用报销管理',
+    },
+    {
+      code: 'oa-budget',
+      label: '预算管理',
+      icon: 'PieChart',
+      path: OA_PATHS.budget,
+      permission: 'oa:budget:read',
+      order: 1,
+      group: 'analytics',
+      description: '办公预算管理',
+    },
+  ],
+};

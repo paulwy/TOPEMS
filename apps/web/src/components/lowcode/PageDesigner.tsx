@@ -26,6 +26,7 @@ import type {
   ComponentCategory,
   ComponentDefinition,
 } from '@/api/lowcode';
+import { LOWCODE_PATHS } from '@/modules/lowcode/config';
 
 interface PageDesignerProps {
   pageId?: string;
@@ -260,7 +261,7 @@ const PageDesigner: React.FC<PageDesignerProps> = ({
             <Link
               color='inherit'
               underline='hover'
-              href='/lowcode/home'
+              href={LOWCODE_PATHS.home}
             >
               低代码平台
             </Link>

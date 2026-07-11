@@ -69,6 +69,7 @@ import {
 } from 'recharts';
 import { BIChartColors } from '@/components/charts/chartTheme';
 import { designTokens } from '@/theme/tokens';
+import { BI_PATHS } from '@/modules/bi/config';
 
 const ct = designTokens.colors;
 
@@ -555,7 +556,7 @@ const BIModuleDetailPage = () => {
           subtitle=''
           breadcrumbs={[
             { label: '首页', href: '/dashboard' },
-            { label: 'BI', href: '/bi/analytics' },
+            { label: 'BI', href: BI_PATHS.analytics },
             { label: config.name },
           ]}
           loading={true}
@@ -576,7 +577,7 @@ const BIModuleDetailPage = () => {
         subtitle=''
         breadcrumbs={[
           { label: '首页', href: '/dashboard' },
-          { label: 'BI', href: '/bi/analytics' },
+          { label: 'BI', href: BI_PATHS.analytics },
           { label: config.name },
         ]}
         stats={statsCards}
