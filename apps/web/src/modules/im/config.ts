@@ -29,7 +29,7 @@ export const imModuleConfig: RouteModuleConfig = {
       module: 'im',
       title: '邮件管理',
       code: 'im-mail',
-      requiredPermissions: ['im:mail:read'],
+      requiredPermissions: ['im:mail:read', 'im:read'],
       action: 'read',
       template: 'list',
       group: 'business',

@@ -43,7 +43,7 @@ export const ehsModuleConfig: RouteModuleConfig = {
       title: '安全检查',
       template: 'list',
       group: 'business',
-      requiredPermissions: ['ehs:check:read'],
+      requiredPermissions: ['ehs:check:read', 'ehs:read'],
       action: 'read',
     },
     {
@@ -54,7 +54,7 @@ export const ehsModuleConfig: RouteModuleConfig = {
       title: '危险源管理',
       template: 'list',
       group: 'business',
-      requiredPermissions: ['ehs:hazard:read'],
+      requiredPermissions: ['ehs:hazard:read', 'ehs:read'],
       action: 'read',
     },
     {
@@ -68,7 +68,7 @@ export const ehsModuleConfig: RouteModuleConfig = {
       title: '危险源详情',
       template: 'detail',
       group: 'business',
-      requiredPermissions: ['ehs:hazard:read'],
+      requiredPermissions: ['ehs:hazard:read', 'ehs:read'],
       action: 'read',
     },
     {
@@ -79,7 +79,7 @@ export const ehsModuleConfig: RouteModuleConfig = {
       title: '事故管理',
       template: 'list',
       group: 'business',
-      requiredPermissions: ['ehs:accident:read'],
+      requiredPermissions: ['ehs:accident:read', 'ehs:read'],
       action: 'read',
     },
     {
@@ -90,7 +90,7 @@ export const ehsModuleConfig: RouteModuleConfig = {
       title: '工作计划',
       template: 'list',
       group: 'process',
-      requiredPermissions: ['ehs:plan:read'],
+      requiredPermissions: ['ehs:plan:read', 'ehs:read'],
       action: 'read',
     },
     {
@@ -101,7 +101,7 @@ export const ehsModuleConfig: RouteModuleConfig = {
       title: '合规管理',
       template: 'list',
       group: 'business',
-      requiredPermissions: ['ehs:compliance:read'],
+      requiredPermissions: ['ehs:compliance:read', 'ehs:read'],
       action: 'read',
     },
     {
@@ -112,7 +112,7 @@ export const ehsModuleConfig: RouteModuleConfig = {
       title: '环境监测',
       template: 'stats',
       group: 'analytics',
-      requiredPermissions: ['ehs:environment:read'],
+      requiredPermissions: ['ehs:environment:read', 'ehs:read'],
       action: 'read',
     },
     {
@@ -123,7 +123,7 @@ export const ehsModuleConfig: RouteModuleConfig = {
       title: '培训管理',
       template: 'list',
       group: 'process',
-      requiredPermissions: ['ehs:training:read'],
+      requiredPermissions: ['ehs:training:read', 'ehs:read'],
       action: 'read',
     },
     {
@@ -137,7 +137,7 @@ export const ehsModuleConfig: RouteModuleConfig = {
       title: '职业病管理',
       template: 'list',
       group: 'business',
-      requiredPermissions: ['ehs:occupational-disease:read'],
+      requiredPermissions: ['ehs:occupational-disease:read', 'ehs:read'],
       action: 'read',
     },
     {
@@ -151,7 +151,7 @@ export const ehsModuleConfig: RouteModuleConfig = {
       title: '健康管理',
       template: 'list',
       group: 'business',
-      requiredPermissions: ['ehs:health:read'],
+      requiredPermissions: ['ehs:health:read', 'ehs:read'],
       action: 'read',
     },
     {
@@ -165,7 +165,7 @@ export const ehsModuleConfig: RouteModuleConfig = {
       title: '危化品管理',
       template: 'list',
       group: 'business',
-      requiredPermissions: ['ehs:hazardous-material:read'],
+      requiredPermissions: ['ehs:hazardous-material:read', 'ehs:read'],
       action: 'read',
     },
     {
@@ -176,7 +176,7 @@ export const ehsModuleConfig: RouteModuleConfig = {
       title: '应急管理',
       template: 'list',
       group: 'business',
-      requiredPermissions: ['ehs:emergency:read'],
+      requiredPermissions: ['ehs:emergency:read', 'ehs:read'],
       action: 'read',
     },
     {
@@ -187,7 +187,7 @@ export const ehsModuleConfig: RouteModuleConfig = {
       title: '应急演练',
       template: 'list',
       group: 'process',
-      requiredPermissions: ['ehs:drill:read'],
+      requiredPermissions: ['ehs:drill:read', 'ehs:read'],
       action: 'read',
     },
     {
@@ -201,7 +201,7 @@ export const ehsModuleConfig: RouteModuleConfig = {
       title: '事件报告',
       template: 'form',
       group: 'business',
-      requiredPermissions: ['ehs:incident:read'],
+      requiredPermissions: ['ehs:incident:read', 'ehs:read'],
       action: 'read',
     },
   ],
