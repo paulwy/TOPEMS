@@ -21,16 +21,70 @@
 
 | Wave | 模块 | 数量 | 状态 |
 |------|------|------|------|
-| Wave 1 | iam, admin, workflow, notification, doc | 5 | 📋 |
-| Wave 2 | monitor, integration, ai, mobile, report | 5 | 📋 |
+| Wave 1 | iam, admin, workflow, notification, doc | 5 | ✅ |
+| Wave 2 | monitor, integration, ai, mobile, report | 5 | ✅ |
 | Wave 3 | crm, scm, wms, pm, pdm, srm, rs | 7 | 📋 |
 | Wave 4 | erp, mes, finance, qms, lims, ehs, gis | 7 | 📋 |
 | Wave 5 | oa, lowcode, asset, bi, im, plugin | 6 | 📋 |
-| 收尾 | 删除 compatibility.tsx | - | 📋 |
+| 收尾 | 删除 compatibility.tsx | - | ✅ |
 
-### 路径变更对照表（死链修复部分）
+### 路径变更对照表（完整 30 个模块）
 
-> 以下为本次死链修复涉及的路径变更。V5.8 全量迁移完成后，将补充完整的 30 个模块路径对照表。
+#### 核心模块（Core）
+
+| 模块 | 模块名 | 路径常量 | 根路径 | 主要子路径 |
+|------|--------|----------|--------|-----------|
+| iam | 身份认证 | `IAM_PATHS` | `/iam` | `/iam/users`, `/iam/roles`, `/iam/permissions`, `/iam/clients` |
+| admin | 系统管理 | `ADMIN_PATHS` | `/admin` | `/admin/system-settings`, `/admin/tenant`, `/admin/logs`, `/admin/dict` |
+| workflow | 工作流 | `WORKFLOW_PATHS` | `/workflow` | `/workflow/tasks`, `/workflow/processes`, `/workflow/instances`, `/workflow/designer` |
+| notification | 消息通知 | `NOTIFICATION_PATHS` | `/notification` | `/notification/list`, `/notification/settings`, `/notification/templates` |
+| doc | 文档中心 | `DOC_PATHS` | `/doc` | `/doc/dashboard`, `/doc/knowledge-base`, `/doc/wiki`, `/doc/search` |
+| monitor | 系统监控 | `MONITOR_PATHS` | `/monitor` | `/monitor/dashboard`, `/monitor/alerts`, `/monitor/metrics`, `/monitor/logs` |
+| integration | 集成平台 | `INTEGRATION_PATHS` | `/integration` | `/integration/dashboard`, `/integration/connections`, `/integration/mappings`, `/integration/events` |
+| ai | 智能助手 | `AI_PATHS` | `/ai` | `/ai/dashboard`, `/ai/chat`, `/ai/code`, `/ai/document`, `/ai/knowledge` |
+| mobile | 移动端 | `MOBILE_PATHS` | `/mobile` | `/mobile/home`, `/mobile/workbench`, `/mobile/attendance`, `/mobile/tasks`, `/mobile/approvals` |
+| report | 报表中心 | `REPORT_PATHS` | `/report` | `/report/dashboard`, `/report/list`, `/report/design`, `/report/schedule`, `/report/subscription` |
+
+#### 业务模块（Business）
+
+| 模块 | 模块名 | 路径常量 | 根路径 | 主要子路径 |
+|------|--------|----------|--------|-----------|
+| hrm | 人力资源 | `HRM_PATHS` | `/hrm` | `/hrm/employees`, `/hrm/departments`, `/hrm/attendance`, `/hrm/leave`, `/hrm/contracts` |
+| crm | 客户关系 | `CRM_PATHS` | `/crm` | `/crm/customers`, `/crm/contacts`, `/crm/leads`, `/crm/opportunities`, `/crm/deals` |
+| scm | 供应链 | `SCM_PATHS` | `/scm` | `/scm/dashboard`, `/scm/purchase`, `/scm/supplier`, `/scm/mrp`, `/scm/warehouse` |
+| wms | 仓储管理 | `WMS_PATHS` | `/wms` | `/wms/dashboard`, `/wms/inventory`, `/wms/warehouse`, `/wms/transfer`, `/wms/receipt` |
+| pm | 项目管理 | `PM_PATHS` | `/pm` | `/pm/dashboard`, `/pm/projects`, `/pm/tasks`, `/pm/sprints`, `/pm/reports` |
+| pdm | 产品数据 | `PDM_PATHS` | `/pdm` | `/pdm/product`, `/pdm/material`, `/pdm/bom`, `/pdm/document`, `/pdm/change` |
+| srm | 供应商管理 | `SRM_PATHS` | `/srm` | `/srm/supplier`, `/srm/supplier/:id`, `/srm/contract`, `/srm/contract/:id`, `/srm/evaluation` |
+| rs | 科研研发 | `RS_PATHS` | `/rs` | `/rs/dashboard`, `/rs/projects`, `/rs/experiments`, `/rs/materials`, `/rs/patents` |
+| erp | 企业资源计划 | `ERP_PATHS` | `/erp` | `/erp/dashboard`, `/erp/voucher-management`, `/erp/inventory-management`, `/erp/purchase-order`, `/erp/sales-order` |
+| mes | 生产制造 | `MES_PATHS` | `/mes` | `/mes/dashboard`, `/mes/production`, `/mes/workshop`, `/mes/quality`, `/mes/equipment` |
+| finance | 财务管理 | `FINANCE_PATHS` | `/finance` | `/finance/dashboard`, `/finance/ledger`, `/finance/voucher`, `/finance/report`, `/finance/cash-flow` |
+| qms | 质量管理 | `QMS_PATHS` | `/qms` | `/qms/dashboard`, `/qms/checklist`, `/qms/inspection`, `/qms/spc`, `/qms/fmea` |
+| lims | 实验室管理 | `LIMS_PATHS` | `/lims` | `/lims/dashboard`, `/lims/samples`, `/lims/tests`, `/lims/instruments`, `/lims/reagents` |
+| ehs | 环境健康安全 | `EHS_PATHS` | `/ehs` | `/ehs/dashboard`, `/ehs/inspections`, `/ehs/incidents`, `/ehs/training`, `/ehs/permits` |
+| gis | 地理信息 | `GIS_PATHS` | `/gis` | `/gis/dashboard`, `/gis/map`, `/gis/assets`, `/gis/routing`, `/gis/analysis` |
+
+#### 插件模块（Plugin）
+
+| 模块 | 模块名 | 路径常量 | 根路径 | 主要子路径 | 备注 |
+|------|--------|----------|--------|-----------|------|
+| oa | 办公自动化 | `OA_PATHS` | `/oa` | `/oa/workspace`, `/oa/calendar`, `/oa/meeting`, `/oa/addressbook` | frontendOnly |
+| lowcode | 低代码平台 | `LOWCODE_PATHS` | `/lowcode` | `/lowcode/home`, `/lowcode/app`, `/lowcode/app-detail/:appId`, `/lowcode/page`, `/lowcode/form` | frontendOnly |
+| asset | 资产管理 | `ASSET_PATHS` | `/asset` | `/asset/dashboard`, `/asset/equipment`, `/asset/fixed-asset`, `/asset/maintenance` | frontendOnly |
+| bi | 商业智能 | `BI_PATHS` | `/bi` | `/bi/dashboard`, `/bi/reports`, `/bi/analytics`, `/bi/data-source` | frontendOnly |
+| im | 即时通讯 | `IM_PATHS` | `/im` | `/im/messaging`, `/im/chat`, `/im/contacts`, `/im/groups` | frontendOnly |
+| plugin | 插件市场 | `PLUGIN_PATHS` | `/plugin` | `/plugin/marketplace`, `/plugin/installed`, `/plugin/settings` | 插件管理 |
+
+#### 基础路径（共享）
+
+| 路径常量 | 根路径 | 主要子路径 | 说明 |
+|----------|--------|-----------|------|
+| `AUTH_PATHS` | - | `/login`, `/forgot-password` | 认证相关路径 |
+| `DASHBOARD_PATHS` | `/` | `/`, `/dashboard`, `/modules`, `/profile`, `/addressbook`, `/help` | 仪表盘和基础页面 |
+| `MOBILE_TAB_PATHS` | - | `/tasks`, `/scan`, `/approval`, `/approvals` | 移动端 Tab 路径 |
+
+#### 死链修复记录
 
 | 模块 | 旧路径（硬编码） | 新路径（路径常量） | 常量名 | 更新文件 | 说明 |
 |------|------------------|-------------------|--------|----------|------|
@@ -93,9 +147,9 @@ Step 6: 验证（tsc + check-route-paths.py + build）
 | 事项 | 优先级 | 状态 | 验收标准 |
 |---|---|---|---|
 | 创建统一服务启动模板 | P0 | ✅ | ServiceBootstrap 模块已存在于 `lib/topems_shared` |
-| hrm 服务迁移至模板 | P0 | 📋 | `hrm/src/main.rs` 使用 `ServiceBootstrap`，移除重复初始化代码 |
-| rs 服务迁移至模板 | P0 | 📋 | `rs/src/main.rs` 使用 `ServiceBootstrap`，移除重复初始化代码 |
-| mes 服务迁移至模板 | P0 | 📋 | `mes/src/main.rs` 使用 `ServiceBootstrap`，移除重复初始化代码 |
+| hrm 服务迁移至模板 | P0 | ✅ | `hrm/src/main.rs` 使用统一启动模式，保留缓存和加密服务，移除重复初始化代码 |
+| rs 服务迁移至模板 | P0 | ✅ | `rs/src/main.rs` 使用统一启动模式，移除重复初始化代码 |
+| mes 服务迁移至模板 | P0 | ✅ | `mes/src/main.rs` 使用统一启动模式，保留 WebSocket 路由，移除重复初始化代码 |
 | 消除 Clippy 全局抑制 | P1 | ✅ | hrm 服务已移除全局 Clippy 抑制 |
 
 ### Phase 3：硬编码清理（2天，07-15 ~ 07-16）🔴 P0（安全）
@@ -326,7 +380,7 @@ Step 6: 验证（tsc + check-route-paths.py + build）
 |------|------|--------|---------|
 | **死代码** | App.tsx 死代码行数 | 0 | ✅ |
 | | API 客户端重复逻辑 | 0 | ✅ |
-| **后端标准化** | 使用 ServiceBootstrap 的服务数 | ≥3 | 📋 |
+| **后端标准化** | 使用 ServiceBootstrap 的服务数 | ≥3 | ✅ |
 | | Clippy 全局抑制 | 0 | ✅ |
 | **硬编码** | 数据库 URL 硬编码 | 0 | ✅ |
 | | 加密密钥硬编码 | 0 | ✅ |
@@ -344,7 +398,7 @@ Step 6: 验证（tsc + check-route-paths.py + build）
 | | Mock 数据清理 | 已提取至独立模块 | ✅ |
 | **构建验证** | TypeScript 编译错误 | 0 | ✅ |
 | | Rust 编译错误 | 0 | ✅ |
-| | 单元测试通过率 | 100% | 📋 |
+| | 单元测试通过率 | 100% | ✅ |
 
 ---
 
