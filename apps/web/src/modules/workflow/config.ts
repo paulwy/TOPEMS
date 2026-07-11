@@ -42,6 +42,7 @@ export const workflowModuleConfig: RouteModuleConfig = {
       template: 'dashboard',
       group: 'overview',
       requiredPermissions: ['workflow:read'],
+      action: 'read',
     },
     {
       path: WORKFLOW_PATHS.definitions,
@@ -52,6 +53,7 @@ export const workflowModuleConfig: RouteModuleConfig = {
       template: 'list',
       group: 'design',
       requiredPermissions: ['workflow:definition:read'],
+      action: 'read',
     },
     {
       path: WORKFLOW_PATHS.designer,
@@ -62,6 +64,7 @@ export const workflowModuleConfig: RouteModuleConfig = {
       template: 'form',
       group: 'design',
       requiredPermissions: ['workflow:definition:write'],
+      action: 'write',
     },
     {
       path: WORKFLOW_PATHS.versionHistory,
@@ -72,6 +75,7 @@ export const workflowModuleConfig: RouteModuleConfig = {
       template: 'list',
       group: 'design',
       requiredPermissions: ['workflow:definition:read'],
+      action: 'read',
     },
     {
       path: WORKFLOW_PATHS.instances,
@@ -82,6 +86,7 @@ export const workflowModuleConfig: RouteModuleConfig = {
       template: 'list',
       group: 'runtime',
       requiredPermissions: ['workflow:instance:read'],
+      action: 'read',
     },
     {
       path: WORKFLOW_PATHS.instanceDetail,
@@ -92,6 +97,7 @@ export const workflowModuleConfig: RouteModuleConfig = {
       template: 'detail',
       group: 'runtime',
       requiredPermissions: ['workflow:instance:read'],
+      action: 'read',
     },
     {
       path: WORKFLOW_PATHS.approvals,
@@ -102,6 +108,7 @@ export const workflowModuleConfig: RouteModuleConfig = {
       template: 'list',
       group: 'tasks',
       requiredPermissions: ['workflow:approval:read'],
+      action: 'read',
     },
     {
       path: WORKFLOW_PATHS.approvalDetail,
@@ -112,6 +119,7 @@ export const workflowModuleConfig: RouteModuleConfig = {
       template: 'detail',
       group: 'tasks',
       requiredPermissions: ['workflow:approval:read'],
+      action: 'read',
     },
     {
       path: WORKFLOW_PATHS.notificationCenter,
@@ -122,6 +130,7 @@ export const workflowModuleConfig: RouteModuleConfig = {
       template: 'list',
       group: 'tasks',
       requiredPermissions: ['workflow:notification:read'],
+      action: 'read',
     },
     {
       path: WORKFLOW_PATHS.monitor,
@@ -132,6 +141,7 @@ export const workflowModuleConfig: RouteModuleConfig = {
       template: 'stats',
       group: 'analytics',
       requiredPermissions: ['workflow:monitor:read'],
+      action: 'read',
     },
     {
       path: WORKFLOW_PATHS.statistics,
@@ -142,6 +152,7 @@ export const workflowModuleConfig: RouteModuleConfig = {
       template: 'stats',
       group: 'analytics',
       requiredPermissions: ['workflow:statistics:read'],
+      action: 'read',
     },
     {
       path: WORKFLOW_PATHS.templates,
@@ -152,6 +163,7 @@ export const workflowModuleConfig: RouteModuleConfig = {
       template: 'list',
       group: 'settings',
       requiredPermissions: ['workflow:template:read'],
+      action: 'read',
     },
     {
       path: WORKFLOW_PATHS.settings,
@@ -162,6 +174,7 @@ export const workflowModuleConfig: RouteModuleConfig = {
       template: 'settings',
       group: 'settings',
       requiredPermissions: ['workflow:admin'],
+      action: 'admin',
     },
   ],
 };

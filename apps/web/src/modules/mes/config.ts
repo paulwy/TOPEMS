@@ -54,6 +54,7 @@ export const mesModuleConfig: RouteModuleConfig = {
       template: 'dashboard',
       group: 'overview',
       requiredPermissions: ['mes:read'],
+      action: 'read',
     },
     {
       path: MES_PATHS.productionOrders,
@@ -64,6 +65,7 @@ export const mesModuleConfig: RouteModuleConfig = {
       template: 'list',
       group: 'business',
       requiredPermissions: ['mes:production_order:read'],
+      action: 'read',
     },
     {
       path: MES_PATHS.productionOrderDetail,
@@ -74,6 +76,7 @@ export const mesModuleConfig: RouteModuleConfig = {
       template: 'detail',
       group: 'business',
       requiredPermissions: ['mes:production_order:read'],
+      action: 'read',
     },
     {
       path: MES_PATHS.workOrders,
@@ -84,6 +87,7 @@ export const mesModuleConfig: RouteModuleConfig = {
       template: 'list',
       group: 'business',
       requiredPermissions: ['mes:work_order:read'],
+      action: 'read',
     },
     {
       path: MES_PATHS.equipment,
@@ -94,6 +98,7 @@ export const mesModuleConfig: RouteModuleConfig = {
       template: 'list',
       group: 'business',
       requiredPermissions: ['mes:equipment:read'],
+      action: 'read',
     },
     {
       path: MES_PATHS.equipmentDetail,
@@ -104,6 +109,7 @@ export const mesModuleConfig: RouteModuleConfig = {
       template: 'detail',
       group: 'business',
       requiredPermissions: ['mes:equipment:read'],
+      action: 'read',
     },
     {
       path: MES_PATHS.workStations,
@@ -114,6 +120,7 @@ export const mesModuleConfig: RouteModuleConfig = {
       template: 'list',
       group: 'business',
       requiredPermissions: ['mes:work_station:read'],
+      action: 'read',
     },
     {
       path: MES_PATHS.teams,
@@ -124,6 +131,7 @@ export const mesModuleConfig: RouteModuleConfig = {
       template: 'list',
       group: 'business',
       requiredPermissions: ['mes:team:read'],
+      action: 'read',
     },
     {
       path: MES_PATHS.materialRequirement,
@@ -134,6 +142,7 @@ export const mesModuleConfig: RouteModuleConfig = {
       template: 'list',
       group: 'business',
       requiredPermissions: ['mes:material:read'],
+      action: 'read',
     },
     {
       path: MES_PATHS.processRoutes,
@@ -144,6 +153,7 @@ export const mesModuleConfig: RouteModuleConfig = {
       template: 'list',
       group: 'process',
       requiredPermissions: ['mes:process_route:read'],
+      action: 'read',
     },
     {
       path: MES_PATHS.processFlow,
@@ -154,6 +164,7 @@ export const mesModuleConfig: RouteModuleConfig = {
       template: 'list',
       group: 'process',
       requiredPermissions: ['mes:process_flow:read'],
+      action: 'read',
     },
     {
       path: MES_PATHS.productionProcess,
@@ -164,6 +175,7 @@ export const mesModuleConfig: RouteModuleConfig = {
       template: 'detail',
       group: 'process',
       requiredPermissions: ['mes:production_process:read'],
+      action: 'read',
     },
     {
       path: MES_PATHS.productionSchedule,
@@ -174,6 +186,7 @@ export const mesModuleConfig: RouteModuleConfig = {
       template: 'list',
       group: 'process',
       requiredPermissions: ['mes:production_schedule:read'],
+      action: 'read',
     },
     {
       path: MES_PATHS.wip,
@@ -184,6 +197,7 @@ export const mesModuleConfig: RouteModuleConfig = {
       template: 'list',
       group: 'process',
       requiredPermissions: ['mes:wip:read'],
+      action: 'read',
     },
     {
       path: MES_PATHS.qualityInspection,
@@ -194,6 +208,7 @@ export const mesModuleConfig: RouteModuleConfig = {
       template: 'list',
       group: 'process',
       requiredPermissions: ['mes:quality:read'],
+      action: 'read',
     },
     {
       path: MES_PATHS.traceability,
@@ -204,6 +219,7 @@ export const mesModuleConfig: RouteModuleConfig = {
       template: 'detail',
       group: 'process',
       requiredPermissions: ['mes:traceability:read'],
+      action: 'read',
     },
     {
       path: MES_PATHS.productionKanban,
@@ -214,6 +230,7 @@ export const mesModuleConfig: RouteModuleConfig = {
       template: 'kanban',
       group: 'analytics',
       requiredPermissions: ['mes:kanban:read'],
+      action: 'read',
     },
     {
       path: MES_PATHS.productionRecord,
@@ -224,6 +241,7 @@ export const mesModuleConfig: RouteModuleConfig = {
       template: 'list',
       group: 'analytics',
       requiredPermissions: ['mes:production_record:read'],
+      action: 'read',
     },
     {
       path: MES_PATHS.workReport,
@@ -234,6 +252,7 @@ export const mesModuleConfig: RouteModuleConfig = {
       template: 'list',
       group: 'analytics',
       requiredPermissions: ['mes:work_report:read'],
+      action: 'read',
     },
     {
       path: MES_PATHS.equipmentOee,
@@ -244,6 +263,7 @@ export const mesModuleConfig: RouteModuleConfig = {
       template: 'stats',
       group: 'analytics',
       requiredPermissions: ['mes:oee:read'],
+      action: 'read',
     },
     {
       path: MES_PATHS.materialBom,
@@ -254,6 +274,7 @@ export const mesModuleConfig: RouteModuleConfig = {
       template: 'tree',
       group: 'business',
       requiredPermissions: ['mes:material:read'],
+      action: 'read',
     },
     {
       path: MES_PATHS.materialIssue,
@@ -264,6 +285,7 @@ export const mesModuleConfig: RouteModuleConfig = {
       template: 'form',
       group: 'business',
       requiredPermissions: ['mes:material:update'],
+      action: 'update',
     },
     {
       path: MES_PATHS.materialReturn,
@@ -274,6 +296,7 @@ export const mesModuleConfig: RouteModuleConfig = {
       template: 'form',
       group: 'business',
       requiredPermissions: ['mes:material:update'],
+      action: 'update',
     },
     {
       path: MES_PATHS.productionDashboard,
@@ -284,6 +307,7 @@ export const mesModuleConfig: RouteModuleConfig = {
       template: 'dashboard',
       group: 'analytics',
       requiredPermissions: ['mes:read'],
+      action: 'read',
     },
   ],
 };

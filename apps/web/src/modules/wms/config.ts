@@ -46,6 +46,7 @@ export const wmsModuleConfig: RouteModuleConfig = {
       template: 'dashboard',
       group: 'overview',
       requiredPermissions: ['wms:read'],
+      action: 'read',
     },
     {
       path: WMS_PATHS.warehouseManagement,
@@ -59,6 +60,7 @@ export const wmsModuleConfig: RouteModuleConfig = {
       template: 'list',
       group: 'business',
       requiredPermissions: ['wms:warehouse:read'],
+      action: 'read',
     },
     {
       path: WMS_PATHS.locationManagement,
@@ -69,6 +71,7 @@ export const wmsModuleConfig: RouteModuleConfig = {
       template: 'tree',
       group: 'business',
       requiredPermissions: ['wms:location:read'],
+      action: 'read',
     },
     {
       path: WMS_PATHS.batchManagement,
@@ -82,6 +85,7 @@ export const wmsModuleConfig: RouteModuleConfig = {
       template: 'list',
       group: 'business',
       requiredPermissions: ['wms:batch:read'],
+      action: 'read',
     },
     {
       path: WMS_PATHS.serialNumber,
@@ -92,6 +96,7 @@ export const wmsModuleConfig: RouteModuleConfig = {
       template: 'list',
       group: 'business',
       requiredPermissions: ['wms:serial_number:read'],
+      action: 'read',
     },
     {
       path: WMS_PATHS.inbound,
@@ -102,6 +107,7 @@ export const wmsModuleConfig: RouteModuleConfig = {
       template: 'list',
       group: 'process',
       requiredPermissions: ['wms:inbound:read'],
+      action: 'read',
     },
     {
       path: WMS_PATHS.inboundOrder,
@@ -112,6 +118,7 @@ export const wmsModuleConfig: RouteModuleConfig = {
       template: 'list',
       group: 'process',
       requiredPermissions: ['wms:inbound:read'],
+      action: 'read',
     },
     {
       path: WMS_PATHS.outbound,
@@ -122,6 +129,7 @@ export const wmsModuleConfig: RouteModuleConfig = {
       template: 'list',
       group: 'process',
       requiredPermissions: ['wms:outbound:read'],
+      action: 'read',
     },
     {
       path: WMS_PATHS.outboundOrder,
@@ -135,6 +143,7 @@ export const wmsModuleConfig: RouteModuleConfig = {
       template: 'list',
       group: 'process',
       requiredPermissions: ['wms:outbound:read'],
+      action: 'read',
     },
     {
       path: WMS_PATHS.transfer,
@@ -145,6 +154,7 @@ export const wmsModuleConfig: RouteModuleConfig = {
       template: 'list',
       group: 'process',
       requiredPermissions: ['wms:transfer:read'],
+      action: 'read',
     },
     {
       path: WMS_PATHS.stockTake,
@@ -155,6 +165,7 @@ export const wmsModuleConfig: RouteModuleConfig = {
       template: 'list',
       group: 'process',
       requiredPermissions: ['wms:inventory_check:read'],
+      action: 'read',
     },
     {
       path: WMS_PATHS.replenishment,
@@ -168,6 +179,7 @@ export const wmsModuleConfig: RouteModuleConfig = {
       template: 'list',
       group: 'process',
       requiredPermissions: ['wms:replenishment:read'],
+      action: 'read',
     },
     {
       path: WMS_PATHS.inventory,
@@ -178,6 +190,7 @@ export const wmsModuleConfig: RouteModuleConfig = {
       template: 'list',
       group: 'analytics',
       requiredPermissions: ['wms:inventory:read'],
+      action: 'read',
     },
     {
       path: WMS_PATHS.inventoryReport,
@@ -191,6 +204,7 @@ export const wmsModuleConfig: RouteModuleConfig = {
       template: 'stats',
       group: 'analytics',
       requiredPermissions: ['wms:report:read'],
+      action: 'read',
     },
     {
       path: WMS_PATHS.supplierManagement,
@@ -204,6 +218,7 @@ export const wmsModuleConfig: RouteModuleConfig = {
       template: 'list',
       group: 'business',
       requiredPermissions: ['wms:supplier:read'],
+      action: 'read',
     },
     {
       path: WMS_PATHS.supplierDetail,
@@ -217,6 +232,7 @@ export const wmsModuleConfig: RouteModuleConfig = {
       template: 'detail',
       group: 'business',
       requiredPermissions: ['wms:supplier:read'],
+      action: 'read',
     },
   ],
 };

@@ -42,6 +42,7 @@ export const erpModuleConfig: RouteModuleConfig = {
       template: 'dashboard',
       group: 'overview',
       requiredPermissions: ['erp:read'],
+      action: 'read',
     },
     {
       path: ERP_PATHS.voucherManagement,
@@ -55,6 +56,7 @@ export const erpModuleConfig: RouteModuleConfig = {
       template: 'list',
       group: 'business',
       requiredPermissions: ['erp:general_ledger:read'],
+      action: 'read',
     },
     {
       path: ERP_PATHS.customerManagement,
@@ -68,6 +70,7 @@ export const erpModuleConfig: RouteModuleConfig = {
       template: 'list',
       group: 'business',
       requiredPermissions: ['erp:customer:read'],
+      action: 'read',
     },
     {
       path: ERP_PATHS.supplierManagement,
@@ -81,6 +84,7 @@ export const erpModuleConfig: RouteModuleConfig = {
       template: 'list',
       group: 'business',
       requiredPermissions: ['erp:supplier:read'],
+      action: 'read',
     },
     {
       path: ERP_PATHS.inventoryManagement,
@@ -94,6 +98,7 @@ export const erpModuleConfig: RouteModuleConfig = {
       template: 'list',
       group: 'business',
       requiredPermissions: ['erp:inventory:read'],
+      action: 'read',
     },
     {
       path: ERP_PATHS.materialManagement,
@@ -107,6 +112,7 @@ export const erpModuleConfig: RouteModuleConfig = {
       template: 'list',
       group: 'business',
       requiredPermissions: ['erp:material:read'],
+      action: 'read',
     },
     {
       path: ERP_PATHS.purchaseOrder,
@@ -117,6 +123,7 @@ export const erpModuleConfig: RouteModuleConfig = {
       template: 'list',
       group: 'process',
       requiredPermissions: ['erp:purchase_order:read'],
+      action: 'read',
     },
     {
       path: ERP_PATHS.salesOrder,
@@ -127,6 +134,7 @@ export const erpModuleConfig: RouteModuleConfig = {
       template: 'list',
       group: 'process',
       requiredPermissions: ['erp:sales_order:read'],
+      action: 'read',
     },
     {
       path: ERP_PATHS.financialReport,
@@ -140,6 +148,7 @@ export const erpModuleConfig: RouteModuleConfig = {
       template: 'stats',
       group: 'analytics',
       requiredPermissions: ['erp:financial_statement:read'],
+      action: 'read',
     },
     {
       path: ERP_PATHS.dictManagement,
@@ -150,6 +159,7 @@ export const erpModuleConfig: RouteModuleConfig = {
       template: 'tree',
       group: 'settings',
       requiredPermissions: ['erp:dictionary:read'],
+      action: 'read',
     },
     {
       path: ERP_PATHS.databaseManagement,
@@ -163,6 +173,7 @@ export const erpModuleConfig: RouteModuleConfig = {
       template: 'list',
       group: 'settings',
       requiredPermissions: ['erp:database:read'],
+      action: 'read',
     },
     {
       path: ERP_PATHS.auditLog,
@@ -173,6 +184,7 @@ export const erpModuleConfig: RouteModuleConfig = {
       template: 'list',
       group: 'settings',
       requiredPermissions: ['erp:audit:read'],
+      action: 'read',
     },
   ],
 };

@@ -36,6 +36,7 @@ export const monitorModuleConfig: RouteModuleConfig = {
       template: 'dashboard',
       group: 'overview',
       requiredPermissions: ['monitor:read'],
+      action: 'read',
     },
     {
       path: MONITOR_PATHS.alerts,
@@ -46,6 +47,7 @@ export const monitorModuleConfig: RouteModuleConfig = {
       template: 'list',
       group: 'alerts',
       requiredPermissions: ['monitor:alert:read'],
+      action: 'read',
     },
     {
       path: MONITOR_PATHS.alertHistory,
@@ -56,6 +58,7 @@ export const monitorModuleConfig: RouteModuleConfig = {
       template: 'list',
       group: 'alerts',
       requiredPermissions: ['monitor:alert:read'],
+      action: 'read',
     },
     {
       path: MONITOR_PATHS.rules,
@@ -66,6 +69,7 @@ export const monitorModuleConfig: RouteModuleConfig = {
       template: 'list',
       group: 'alerts',
       requiredPermissions: ['monitor:rule:read'],
+      action: 'read',
     },
     {
       path: MONITOR_PATHS.metrics,
@@ -76,6 +80,7 @@ export const monitorModuleConfig: RouteModuleConfig = {
       template: 'stats',
       group: 'metrics',
       requiredPermissions: ['monitor:metric:read'],
+      action: 'read',
     },
     {
       path: MONITOR_PATHS.logs,
@@ -86,6 +91,7 @@ export const monitorModuleConfig: RouteModuleConfig = {
       template: 'list',
       group: 'logs',
       requiredPermissions: ['monitor:log:read'],
+      action: 'read',
     },
     {
       path: MONITOR_PATHS.settings,
@@ -96,6 +102,7 @@ export const monitorModuleConfig: RouteModuleConfig = {
       template: 'settings',
       group: 'settings',
       requiredPermissions: ['monitor:admin'],
+      action: 'admin',
     },
   ],
 };

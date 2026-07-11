@@ -35,6 +35,7 @@ export const docModuleConfig: RouteModuleConfig = {
       template: 'dashboard',
       group: 'overview',
       requiredPermissions: ['doc:read'],
+      action: 'read',
     },
     {
       path: DOC_PATHS.list,
@@ -45,6 +46,7 @@ export const docModuleConfig: RouteModuleConfig = {
       template: 'list',
       group: 'documents',
       requiredPermissions: ['doc:read'],
+      action: 'read',
     },
     {
       path: DOC_PATHS.documents,
@@ -55,6 +57,7 @@ export const docModuleConfig: RouteModuleConfig = {
       template: 'list',
       group: 'documents',
       requiredPermissions: ['doc:document:read'],
+      action: 'read',
     },
     {
       path: DOC_PATHS.documentCenter,
@@ -65,6 +68,7 @@ export const docModuleConfig: RouteModuleConfig = {
       template: 'list',
       group: 'documents',
       requiredPermissions: ['doc:center:read'],
+      action: 'read',
     },
     {
       path: DOC_PATHS.knowledgeBase,
@@ -75,6 +79,7 @@ export const docModuleConfig: RouteModuleConfig = {
       template: 'tree',
       group: 'knowledge',
       requiredPermissions: ['doc:read'],
+      action: 'read',
     },
     {
       path: DOC_PATHS.documentDetail,
@@ -85,6 +90,7 @@ export const docModuleConfig: RouteModuleConfig = {
       template: 'detail',
       group: 'documents',
       requiredPermissions: ['doc:document:read'],
+      action: 'read',
     },
   ],
 };

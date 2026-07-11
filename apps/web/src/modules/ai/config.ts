@@ -36,6 +36,7 @@ export const aiModuleConfig: RouteModuleConfig = {
       template: 'dashboard',
       group: 'overview',
       requiredPermissions: ['ai:read'],
+      action: 'read',
     },
     {
       path: AI_PATHS.chat,
@@ -46,6 +47,7 @@ export const aiModuleConfig: RouteModuleConfig = {
       template: 'form',
       group: 'chat',
       requiredPermissions: ['ai:chat:read'],
+      action: 'read',
     },
     {
       path: AI_PATHS.code,
@@ -56,6 +58,7 @@ export const aiModuleConfig: RouteModuleConfig = {
       template: 'form',
       group: 'chat',
       requiredPermissions: ['ai:code:read'],
+      action: 'read',
     },
     {
       path: AI_PATHS.document,
@@ -69,6 +72,7 @@ export const aiModuleConfig: RouteModuleConfig = {
       template: 'form',
       group: 'tools',
       requiredPermissions: ['ai:document:read'],
+      action: 'read',
     },
     {
       path: AI_PATHS.knowledge,
@@ -82,6 +86,7 @@ export const aiModuleConfig: RouteModuleConfig = {
       template: 'list',
       group: 'knowledge',
       requiredPermissions: ['ai:knowledge:read'],
+      action: 'read',
     },
     {
       path: AI_PATHS.prompts,
@@ -92,6 +97,7 @@ export const aiModuleConfig: RouteModuleConfig = {
       template: 'list',
       group: 'templates',
       requiredPermissions: ['ai:prompt:read'],
+      action: 'read',
     },
     {
       path: AI_PATHS.settings,
@@ -102,6 +108,7 @@ export const aiModuleConfig: RouteModuleConfig = {
       template: 'settings',
       group: 'settings',
       requiredPermissions: ['ai:admin'],
+      action: 'admin',
     },
   ],
 };

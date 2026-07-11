@@ -194,6 +194,7 @@ export const ModuleGate: React.FC<ModuleGateProps> = ({
       case 'read':
         return canAccessModule(module);
       case 'write':
+      case 'update':
         return canWriteModule(module);
       case 'delete':
         return canDeleteModule(module);

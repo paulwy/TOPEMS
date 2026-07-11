@@ -44,6 +44,7 @@ export const ehsModuleConfig: RouteModuleConfig = {
       template: 'list',
       group: 'business',
       requiredPermissions: ['ehs:check:read'],
+      action: 'read',
     },
     {
       path: EHS_PATHS.hazard,
@@ -54,6 +55,7 @@ export const ehsModuleConfig: RouteModuleConfig = {
       template: 'list',
       group: 'business',
       requiredPermissions: ['ehs:hazard:read'],
+      action: 'read',
     },
     {
       path: EHS_PATHS.hazardDetail,
@@ -67,6 +69,7 @@ export const ehsModuleConfig: RouteModuleConfig = {
       template: 'detail',
       group: 'business',
       requiredPermissions: ['ehs:hazard:read'],
+      action: 'read',
     },
     {
       path: EHS_PATHS.accident,
@@ -77,6 +80,7 @@ export const ehsModuleConfig: RouteModuleConfig = {
       template: 'list',
       group: 'business',
       requiredPermissions: ['ehs:accident:read'],
+      action: 'read',
     },
     {
       path: EHS_PATHS.plan,
@@ -87,6 +91,7 @@ export const ehsModuleConfig: RouteModuleConfig = {
       template: 'list',
       group: 'process',
       requiredPermissions: ['ehs:plan:read'],
+      action: 'read',
     },
     {
       path: EHS_PATHS.compliance,
@@ -97,6 +102,7 @@ export const ehsModuleConfig: RouteModuleConfig = {
       template: 'list',
       group: 'business',
       requiredPermissions: ['ehs:compliance:read'],
+      action: 'read',
     },
     {
       path: EHS_PATHS.environment,
@@ -107,6 +113,7 @@ export const ehsModuleConfig: RouteModuleConfig = {
       template: 'stats',
       group: 'analytics',
       requiredPermissions: ['ehs:environment:read'],
+      action: 'read',
     },
     {
       path: EHS_PATHS.training,
@@ -117,6 +124,7 @@ export const ehsModuleConfig: RouteModuleConfig = {
       template: 'list',
       group: 'process',
       requiredPermissions: ['ehs:training:read'],
+      action: 'read',
     },
     {
       path: EHS_PATHS.occupationalDisease,
@@ -130,6 +138,7 @@ export const ehsModuleConfig: RouteModuleConfig = {
       template: 'list',
       group: 'business',
       requiredPermissions: ['ehs:occupational-disease:read'],
+      action: 'read',
     },
     {
       path: EHS_PATHS.healthManagement,
@@ -143,6 +152,7 @@ export const ehsModuleConfig: RouteModuleConfig = {
       template: 'list',
       group: 'business',
       requiredPermissions: ['ehs:health:read'],
+      action: 'read',
     },
     {
       path: EHS_PATHS.hazardousMaterial,
@@ -156,6 +166,7 @@ export const ehsModuleConfig: RouteModuleConfig = {
       template: 'list',
       group: 'business',
       requiredPermissions: ['ehs:hazardous-material:read'],
+      action: 'read',
     },
     {
       path: EHS_PATHS.emergency,
@@ -166,6 +177,7 @@ export const ehsModuleConfig: RouteModuleConfig = {
       template: 'list',
       group: 'business',
       requiredPermissions: ['ehs:emergency:read'],
+      action: 'read',
     },
     {
       path: EHS_PATHS.drill,
@@ -176,6 +188,7 @@ export const ehsModuleConfig: RouteModuleConfig = {
       template: 'list',
       group: 'process',
       requiredPermissions: ['ehs:drill:read'],
+      action: 'read',
     },
     {
       path: EHS_PATHS.incidentReport,
@@ -189,6 +202,7 @@ export const ehsModuleConfig: RouteModuleConfig = {
       template: 'form',
       group: 'business',
       requiredPermissions: ['ehs:incident:read'],
+      action: 'read',
     },
   ],
 };

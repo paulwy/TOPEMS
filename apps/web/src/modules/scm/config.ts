@@ -44,6 +44,7 @@ export const scmModuleConfig: RouteModuleConfig = {
       template: 'dashboard',
       group: 'overview',
       requiredPermissions: ['scm:read'],
+      action: 'read',
     },
     {
       path: SCM_PATHS.purchaseOrders,
@@ -54,6 +55,7 @@ export const scmModuleConfig: RouteModuleConfig = {
       template: 'list',
       group: 'business',
       requiredPermissions: ['scm:purchase_order:read'],
+      action: 'read',
     },
     {
       path: SCM_PATHS.purchaseRequisition,
@@ -64,6 +66,7 @@ export const scmModuleConfig: RouteModuleConfig = {
       template: 'list',
       group: 'business',
       requiredPermissions: ['scm:purchase_requisition:read'],
+      action: 'read',
     },
     {
       path: SCM_PATHS.purchaseItems,
@@ -74,6 +77,7 @@ export const scmModuleConfig: RouteModuleConfig = {
       template: 'list',
       group: 'business',
       requiredPermissions: ['scm:purchase_item:read'],
+      action: 'read',
     },
     {
       path: SCM_PATHS.suppliers,
@@ -84,6 +88,7 @@ export const scmModuleConfig: RouteModuleConfig = {
       template: 'list',
       group: 'business',
       requiredPermissions: ['scm:supplier:read'],
+      action: 'read',
     },
     {
       path: SCM_PATHS.supplierAdmission,
@@ -94,6 +99,7 @@ export const scmModuleConfig: RouteModuleConfig = {
       template: 'list',
       group: 'business',
       requiredPermissions: ['scm:supplier_admission:read'],
+      action: 'read',
     },
     {
       path: SCM_PATHS.supplierEvaluation,
@@ -104,6 +110,7 @@ export const scmModuleConfig: RouteModuleConfig = {
       template: 'list',
       group: 'process',
       requiredPermissions: ['scm:supplier_evaluation:read'],
+      action: 'read',
     },
     {
       path: SCM_PATHS.contracts,
@@ -114,6 +121,7 @@ export const scmModuleConfig: RouteModuleConfig = {
       template: 'list',
       group: 'process',
       requiredPermissions: ['scm:contract:read'],
+      action: 'read',
     },
     {
       path: SCM_PATHS.deliveryAppointment,
@@ -124,6 +132,7 @@ export const scmModuleConfig: RouteModuleConfig = {
       template: 'list',
       group: 'process',
       requiredPermissions: ['scm:delivery_appointment:read'],
+      action: 'read',
     },
     {
       path: SCM_PATHS.mrpPlan,
@@ -134,6 +143,7 @@ export const scmModuleConfig: RouteModuleConfig = {
       template: 'list',
       group: 'process',
       requiredPermissions: ['scm:mrp_plan:read'],
+      action: 'read',
     },
     {
       path: SCM_PATHS.mrpSuggestion,
@@ -144,6 +154,7 @@ export const scmModuleConfig: RouteModuleConfig = {
       template: 'list',
       group: 'process',
       requiredPermissions: ['scm:mrp_suggestion:read'],
+      action: 'read',
     },
     {
       path: SCM_PATHS.overview,
@@ -154,6 +165,7 @@ export const scmModuleConfig: RouteModuleConfig = {
       template: 'dashboard',
       group: 'analytics',
       requiredPermissions: ['scm:read'],
+      action: 'read',
     },
     {
       path: SCM_PATHS.inventoryTurnover,
@@ -164,6 +176,7 @@ export const scmModuleConfig: RouteModuleConfig = {
       template: 'stats',
       group: 'analytics',
       requiredPermissions: ['scm:inventory_turnover:read'],
+      action: 'read',
     },
     {
       path: SCM_PATHS.priceComparison,
@@ -174,6 +187,7 @@ export const scmModuleConfig: RouteModuleConfig = {
       template: 'stats',
       group: 'analytics',
       requiredPermissions: ['scm:price_comparison:read'],
+      action: 'read',
     },
   ],
 };

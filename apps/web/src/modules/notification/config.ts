@@ -39,6 +39,7 @@ export const notificationModuleConfig: RouteModuleConfig = {
       template: 'dashboard',
       group: 'overview',
       requiredPermissions: ['notification:read'],
+      action: 'read',
     },
     {
       path: NOTIFICATION_PATHS.list,
@@ -52,6 +53,7 @@ export const notificationModuleConfig: RouteModuleConfig = {
       template: 'list',
       group: 'messages',
       requiredPermissions: ['notification:read'],
+      action: 'read',
     },
     {
       path: NOTIFICATION_PATHS.archive,
@@ -65,6 +67,7 @@ export const notificationModuleConfig: RouteModuleConfig = {
       template: 'list',
       group: 'messages',
       requiredPermissions: ['notification:read'],
+      action: 'read',
     },
     {
       path: NOTIFICATION_PATHS.detail,
@@ -78,6 +81,7 @@ export const notificationModuleConfig: RouteModuleConfig = {
       template: 'detail',
       group: 'messages',
       requiredPermissions: ['notification:read'],
+      action: 'read',
     },
     {
       path: NOTIFICATION_PATHS.center,
@@ -91,6 +95,7 @@ export const notificationModuleConfig: RouteModuleConfig = {
       template: 'list',
       group: 'messages',
       requiredPermissions: ['notification:read'],
+      action: 'read',
     },
     {
       path: NOTIFICATION_PATHS.templates,
@@ -104,6 +109,7 @@ export const notificationModuleConfig: RouteModuleConfig = {
       template: 'list',
       group: 'templates',
       requiredPermissions: ['notification:read'],
+      action: 'read',
     },
     {
       path: NOTIFICATION_PATHS.statistics,
@@ -117,6 +123,7 @@ export const notificationModuleConfig: RouteModuleConfig = {
       template: 'stats',
       group: 'analytics',
       requiredPermissions: ['notification:read'],
+      action: 'read',
     },
     {
       path: NOTIFICATION_PATHS.settings,
@@ -130,6 +137,7 @@ export const notificationModuleConfig: RouteModuleConfig = {
       template: 'settings',
       group: 'settings',
       requiredPermissions: ['notification:read'],
+      action: 'read',
     },
   ],
 };

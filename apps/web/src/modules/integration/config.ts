@@ -39,6 +39,7 @@ export const integrationModuleConfig: RouteModuleConfig = {
       template: 'dashboard',
       group: 'overview',
       requiredPermissions: ['integration:read'],
+      action: 'read',
     },
     {
       path: INTEGRATION_PATHS.connections,
@@ -49,6 +50,7 @@ export const integrationModuleConfig: RouteModuleConfig = {
       template: 'list',
       group: 'connections',
       requiredPermissions: ['integration:connection:read'],
+      action: 'read',
     },
     {
       path: INTEGRATION_PATHS.mappings,
@@ -59,6 +61,7 @@ export const integrationModuleConfig: RouteModuleConfig = {
       template: 'list',
       group: 'mappings',
       requiredPermissions: ['integration:mapping:read'],
+      action: 'read',
     },
     {
       path: INTEGRATION_PATHS.events,
@@ -69,6 +72,7 @@ export const integrationModuleConfig: RouteModuleConfig = {
       template: 'list',
       group: 'logs',
       requiredPermissions: ['integration:event:read'],
+      action: 'read',
     },
     {
       path: INTEGRATION_PATHS.erpOverview,
@@ -79,6 +83,7 @@ export const integrationModuleConfig: RouteModuleConfig = {
       template: 'detail',
       group: 'scenarios',
       requiredPermissions: ['integration:erp:read'],
+      action: 'read',
     },
     {
       path: INTEGRATION_PATHS.limsQms,
@@ -89,6 +94,7 @@ export const integrationModuleConfig: RouteModuleConfig = {
       template: 'detail',
       group: 'scenarios',
       requiredPermissions: ['integration:lims:read'],
+      action: 'read',
     },
     {
       path: INTEGRATION_PATHS.mesErp,
@@ -99,6 +105,7 @@ export const integrationModuleConfig: RouteModuleConfig = {
       template: 'detail',
       group: 'scenarios',
       requiredPermissions: ['integration:mes:read'],
+      action: 'read',
     },
     {
       path: INTEGRATION_PATHS.wmsScm,
@@ -109,6 +116,7 @@ export const integrationModuleConfig: RouteModuleConfig = {
       template: 'detail',
       group: 'scenarios',
       requiredPermissions: ['integration:wms:read'],
+      action: 'read',
     },
     {
       path: INTEGRATION_PATHS.settings,
@@ -119,6 +127,7 @@ export const integrationModuleConfig: RouteModuleConfig = {
       template: 'settings',
       group: 'settings',
       requiredPermissions: ['integration:admin'],
+      action: 'admin',
     },
   ],
 };

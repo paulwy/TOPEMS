@@ -49,6 +49,7 @@ export const financeModuleConfig: RouteModuleConfig = {
       template: 'dashboard',
       group: 'overview',
       requiredPermissions: ['finance:read'],
+      action: 'read',
     },
     {
       path: FINANCE_PATHS.ledger,
@@ -59,6 +60,7 @@ export const financeModuleConfig: RouteModuleConfig = {
       template: 'list',
       group: 'business',
       requiredPermissions: ['finance:ledger:read'],
+      action: 'read',
     },
     {
       path: FINANCE_PATHS.vouchers,
@@ -69,6 +71,7 @@ export const financeModuleConfig: RouteModuleConfig = {
       template: 'list',
       group: 'business',
       requiredPermissions: ['finance:voucher:read'],
+      action: 'read',
     },
     {
       path: FINANCE_PATHS.voucherCreate,
@@ -79,6 +82,7 @@ export const financeModuleConfig: RouteModuleConfig = {
       template: 'form',
       group: 'business',
       requiredPermissions: ['finance:voucher:create'],
+      action: 'write',
     },
     {
       path: FINANCE_PATHS.voucherDetail,
@@ -89,6 +93,7 @@ export const financeModuleConfig: RouteModuleConfig = {
       template: 'detail',
       group: 'business',
       requiredPermissions: ['finance:voucher:read'],
+      action: 'read',
     },
     {
       path: FINANCE_PATHS.receivablePayable,
@@ -102,6 +107,7 @@ export const financeModuleConfig: RouteModuleConfig = {
       template: 'list',
       group: 'business',
       requiredPermissions: ['finance:receivable_payable:read'],
+      action: 'read',
     },
     {
       path: FINANCE_PATHS.receipts,
@@ -112,6 +118,7 @@ export const financeModuleConfig: RouteModuleConfig = {
       template: 'list',
       group: 'business',
       requiredPermissions: ['finance:receipt:read'],
+      action: 'read',
     },
     {
       path: FINANCE_PATHS.payments,
@@ -122,6 +129,7 @@ export const financeModuleConfig: RouteModuleConfig = {
       template: 'list',
       group: 'business',
       requiredPermissions: ['finance:payment:read'],
+      action: 'read',
     },
     {
       path: FINANCE_PATHS.invoices,
@@ -132,6 +140,7 @@ export const financeModuleConfig: RouteModuleConfig = {
       template: 'list',
       group: 'business',
       requiredPermissions: ['finance:invoice:read'],
+      action: 'read',
     },
     {
       path: FINANCE_PATHS.tax,
@@ -142,6 +151,7 @@ export const financeModuleConfig: RouteModuleConfig = {
       template: 'list',
       group: 'business',
       requiredPermissions: ['finance:tax:read'],
+      action: 'read',
     },
     {
       path: FINANCE_PATHS.expense,
@@ -152,6 +162,7 @@ export const financeModuleConfig: RouteModuleConfig = {
       template: 'list',
       group: 'business',
       requiredPermissions: ['finance:expense:read'],
+      action: 'read',
     },
     {
       path: FINANCE_PATHS.cost,
@@ -162,6 +173,7 @@ export const financeModuleConfig: RouteModuleConfig = {
       template: 'list',
       group: 'business',
       requiredPermissions: ['finance:cost:read'],
+      action: 'read',
     },
     {
       path: FINANCE_PATHS.assets,
@@ -172,6 +184,7 @@ export const financeModuleConfig: RouteModuleConfig = {
       template: 'list',
       group: 'business',
       requiredPermissions: ['finance:asset:read'],
+      action: 'read',
     },
     {
       path: FINANCE_PATHS.budget,
@@ -182,6 +195,7 @@ export const financeModuleConfig: RouteModuleConfig = {
       template: 'list',
       group: 'business',
       requiredPermissions: ['finance:budget:read'],
+      action: 'read',
     },
     {
       path: FINANCE_PATHS.budgetDetail,
@@ -192,6 +206,7 @@ export const financeModuleConfig: RouteModuleConfig = {
       template: 'detail',
       group: 'business',
       requiredPermissions: ['finance:budget:read'],
+      action: 'read',
     },
     {
       path: FINANCE_PATHS.openingBalance,
@@ -202,6 +217,7 @@ export const financeModuleConfig: RouteModuleConfig = {
       template: 'form',
       group: 'business',
       requiredPermissions: ['finance:opening_balance:read'],
+      action: 'read',
     },
     {
       path: FINANCE_PATHS.consolidation,
@@ -212,6 +228,7 @@ export const financeModuleConfig: RouteModuleConfig = {
       template: 'list',
       group: 'analytics',
       requiredPermissions: ['finance:consolidation:read'],
+      action: 'read',
     },
     {
       path: FINANCE_PATHS.consolidationReports,
@@ -225,6 +242,7 @@ export const financeModuleConfig: RouteModuleConfig = {
       template: 'stats',
       group: 'analytics',
       requiredPermissions: ['finance:consolidation:read'],
+      action: 'read',
     },
     {
       path: FINANCE_PATHS.reports,
@@ -235,6 +253,7 @@ export const financeModuleConfig: RouteModuleConfig = {
       template: 'stats',
       group: 'analytics',
       requiredPermissions: ['finance:report:read'],
+      action: 'read',
     },
   ],
 };
