@@ -2,18 +2,6 @@
 //!
 //! Manufacturing Execution System Service
 
-#![allow(clippy::match_like_matches_macro)]
-#![allow(clippy::manual_ok_err)]
-#![allow(clippy::redundant_pattern_matching)]
-#![allow(clippy::useless_format)]
-#![allow(clippy::useless_vec)]
-#![allow(clippy::clone_on_copy)]
-#![allow(clippy::identity_op)]
-#![allow(clippy::needless_borrows_for_generic_args)]
-#![allow(clippy::unnecessary_cast)]
-#![allow(clippy::redundant_closure)]
-#![allow(dead_code)]
-
 use topems_mes::{modules, AppState};
 
 use std::net::SocketAddr;
@@ -26,8 +14,6 @@ use topems_shared::{
     simple_health_check, telemetry_middleware, ApiResponse, AuthState, ServiceHealth,
     SimpleHealthConfig,
 };
-
-// ==================== 主入口 ====================
 
 #[tokio::main]
 async fn main() {
@@ -75,7 +61,6 @@ async fn main() {
 
     let (prometheus_layer, metric_handle) = PrometheusMetricLayer::pair();
 
-    // Public routes (no auth required)
     let public_routes = Router::new()
         .route("/", get(home))
         .route("/health", get(health))
@@ -102,10 +87,8 @@ async fn main() {
             axum::routing::get(modules::dashboard_ws::dashboard_websocket),
         );
 
-    // Protected routes (auth required)
     let protected_routes = Router::new()
         .merge(modules::create_routes())
-        // Health & Metrics
         .route("/api/v1/health/detailed", get(detailed_health))
         .layer(axum::middleware::from_fn_with_state(
             state.auth_state.clone(),
@@ -125,13 +108,14 @@ async fn main() {
         .with_state(state);
 
     let port = std::env::var("MES_PORT")
+        .or_else(|_| std::env::var("SERVER_PORT"))
+        .or_else(|_| std::env::var("PORT"))
         .unwrap_or_else(|_| "8030".to_string())
         .parse()
         .unwrap_or(8030);
     let addr = SocketAddr::from(([0, 0, 0, 0], port));
     tracing::info!("✅ MES Service is running at http://{}", addr);
 
-    // 启动时自动注册到统一核心
     let core_url = std::env::var("CORE_URL").ok();
     tokio::spawn(async move {
         modules::mes_plugin::auto_register_to_core(core_url.as_deref()).await;
@@ -144,8 +128,6 @@ async fn main() {
     .await
     .unwrap();
 }
-
-// ==================== 公共处理函数 ====================
 
 async fn home() -> &'static str {
     "TOPEMS MES Service API\n\n\

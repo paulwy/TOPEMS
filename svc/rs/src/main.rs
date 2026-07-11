@@ -17,13 +17,12 @@ use std::time::Instant;
 use topems_shared::{
     auth_middleware, check_http_health, config::enhanced::DatabaseConfig, create_api_info_router,
     create_cors_layer, create_database_pool, init_telemetry, rls_middleware, telemetry_middleware,
-    test_database_connection, ApiResponse, AuthState, Config, DependencyHealth, HealthStatus,
-    Result, ServiceHealth, SystemMetrics,
+    ApiResponse, AuthState, Config, DependencyHealth, HealthStatus, ServiceHealth, SystemMetrics,
 };
 use utoipa::OpenApi;
 
 #[tokio::main]
-async fn main() -> Result<()> {
+async fn main() -> topems_shared::Result<()> {
     dotenv::dotenv().ok();
 
     let _telemetry_guard = init_telemetry("topems-rs");
@@ -56,40 +55,9 @@ async fn main() -> Result<()> {
         enable_connection_reuse: Some(true),
     };
     tracing::info!("Configuration loaded, environment: {}", config.env());
-    tracing::info!("=== DB Config ===");
-    tracing::info!("Database URL: {}", db_config.url);
 
     let pool = create_database_pool(&db_config).await?;
-    test_database_connection(&pool).await?;
-
-    let test_result = sqlx::query("SELECT current_database(), current_user")
-        .fetch_one(&pool)
-        .await;
-    tracing::info!("Test query result: {:?}", test_result);
-
-    let search_path = sqlx::query("SHOW search_path").fetch_one(&pool).await;
-    tracing::info!("Search path: {:?}", search_path);
-
-    let schemas =
-        sqlx::query("SELECT schema_name FROM information_schema.schemata ORDER BY schema_name")
-            .fetch_all(&pool)
-            .await;
-    tracing::info!("All schemas: {:?}", schemas);
-
-    let schema_name = std::env::var("SCHEMA_NAME").unwrap_or_else(|_| "rs".to_string());
-
-    let tables = sqlx::query(&format!(
-        "SELECT table_name FROM information_schema.tables WHERE table_schema = '{}'",
-        schema_name
-    ))
-    .fetch_all(&pool)
-    .await;
-    tracing::info!("{} tables: {:?}", schema_name.to_uppercase(), tables);
-
-    let test_projects_direct = sqlx::query(&format!("SELECT * FROM {} LIMIT 1", schema_name))
-        .fetch_one(&pool)
-        .await;
-    tracing::info!("Test direct projects query: {:?}", test_projects_direct);
+    tracing::info!("🔗 数据库连接成功");
 
     if let Err(e) = init_db(&pool).await {
         tracing::warn!("数据库初始化警告: {}", e);
@@ -98,8 +66,6 @@ async fn main() -> Result<()> {
     let start_time = Instant::now();
     let metrics = Arc::new(SystemMetrics::new());
     let auth_state = AuthState::from_env();
-
-    let cors = create_cors_layer();
 
     let api_state = modules::ApiState {
         db: pool.clone(),
@@ -139,26 +105,27 @@ async fn main() -> Result<()> {
         .with_state(api_state.clone());
 
     let app = Router::new()
-        .merge(public_routes)
+        .merge(public_routes.with_state(api_state.clone()))
         .merge(protected_routes)
         .merge(create_api_info_router("topems-rs"))
         .layer(axum::middleware::from_fn(telemetry_middleware))
         .layer(prometheus_layer)
-        .layer(cors)
-        .with_state(api_state.clone());
+        .layer(create_cors_layer());
 
-    let port = config.get_server().await.port;
+    let core_url = env::var("CORE_URL").ok();
+    tokio::spawn(async move {
+        modules::rs_plugin::auto_register_to_core(core_url.as_deref()).await;
+    });
+
+    let port = env::var("RS_PORT")
+        .or_else(|_| env::var("SERVER_PORT"))
+        .or_else(|_| env::var("PORT"))
+        .unwrap_or_else(|_| "8025".to_string());
     let addr = format!("0.0.0.0:{}", port);
 
     tracing::info!("🚀 TOPEMS-RS 科研研发管理系统启动中...");
     tracing::info!("📦 Port: {}", port);
     tracing::info!("🔒 认证保护已启用");
-
-    // 启动时自动注册到统一核心
-    let core_url = env::var("CORE_URL").ok();
-    tokio::spawn(async move {
-        modules::rs_plugin::auto_register_to_core(core_url.as_deref()).await;
-    });
 
     let listener = tokio::net::TcpListener::bind(&addr).await?;
     axum::serve(listener, app).await?;
@@ -309,6 +276,6 @@ async fn serve_openapi_json() -> axum::Json<utoipa::openapi::OpenApi> {
     axum::Json(modules::openapi::ApiDoc::openapi())
 }
 
-async fn init_db(_pool: &sqlx::PgPool) -> Result<()> {
+async fn init_db(_pool: &sqlx::PgPool) -> topems_shared::Result<()> {
     Ok(())
 }

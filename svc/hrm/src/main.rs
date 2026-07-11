@@ -17,10 +17,10 @@ use utoipa::OpenApi;
 use modules::ApiState;
 use topems_shared::redis::{RedisCacheService, RedisPool as RedisPoolTrait};
 use topems_shared::{
-    auth_middleware, check_http_health, config::CacheConfig, create_api_info_router,
-    create_cors_layer, create_database_pool, init_telemetry, rls_middleware, telemetry_middleware,
-    ApiResponse, AuthState, CacheService, DatabaseConfig, DependencyHealth, FieldEncryptionService,
-    HealthStatus, InMemoryCache, KeyManager, RedisConfig, ServiceHealth, SystemMetrics,
+    auth_middleware, check_http_health, config::CacheConfig, config::enhanced::DatabaseConfig,
+    create_api_info_router, create_cors_layer, init_telemetry, rls_middleware, telemetry_middleware,
+    ApiResponse, AuthState, CacheService, DependencyHealth, FieldEncryptionService, HealthStatus,
+    ServiceHealth, SystemMetrics,
 };
 
 #[tokio::main]
@@ -31,6 +31,25 @@ async fn main() -> Result<()> {
 
     env::set_var("SEARCH_PATH", "shared, hrm, public");
 
+    let app = build_routes().await?;
+
+    let port = env::var("HRM_PORT")
+        .or_else(|_| env::var("SERVER_PORT"))
+        .or_else(|_| env::var("PORT"))
+        .unwrap_or_else(|_| "8020".to_string());
+    let addr = format!("0.0.0.0:{}", port);
+
+    tracing::info!("🚀 TOPEMS-HRM 服务启动中...");
+    tracing::info!("📦 端口: {}", port);
+    tracing::info!("🔒 认证保护已启用");
+
+    let listener = tokio::net::TcpListener::bind(&addr).await?;
+    axum::serve(listener, app).await?;
+
+    Ok(())
+}
+
+async fn build_routes() -> Result<Router> {
     let database_url =
         env::var("DATABASE_URL").expect("DATABASE_URL environment variable is required");
     let db_config = DatabaseConfig {
@@ -72,8 +91,7 @@ async fn main() -> Result<()> {
         enable_connection_reuse: Some(true),
     };
 
-    let pool = create_database_pool(&db_config).await?;
-
+    let pool = topems_shared::create_database_pool(&db_config).await?;
     tracing::info!("🔗 数据库连接成功");
 
     if let Err(e) = init_db(&pool).await {
@@ -98,11 +116,10 @@ async fn main() -> Result<()> {
         encryption: Arc::new(encryption),
     };
 
-    let cors = create_cors_layer();
-
     let (prometheus_layer, _metric_handle) = PrometheusMetricLayer::pair();
 
     let health_router = Router::new()
+        .route("/health", get(simple_health_check))
         .route("/api/v1/health/detailed", get(health_check_detailed))
         .route("/api/v1/metrics", get(get_metrics))
         .route(
@@ -135,34 +152,28 @@ async fn main() -> Result<()> {
         .merge(create_api_info_router("topems-hrm"))
         .layer(axum::middleware::from_fn(telemetry_middleware))
         .layer(prometheus_layer)
-        .layer(cors);
+        .layer(create_cors_layer());
 
-    let port = env::var("HRM_PORT")
-        .or_else(|_| env::var("SERVER_PORT"))
-        .or_else(|_| env::var("PORT"))
-        .unwrap_or_else(|_| "8020".to_string());
-    let addr = format!("0.0.0.0:{}", port);
-
-    tracing::info!("🚀 TOPEMS-HRM 人力资源管理系统启动中...");
-    tracing::info!("📦 端口: {}", port);
-    tracing::info!("🔒 认证保护已启用");
-
-    // 启动时自动注册到统一核心
     let core_url = env::var("CORE_URL").ok();
     tokio::spawn(async move {
         modules::hrm_plugin::auto_register_to_core(core_url.as_deref()).await;
     });
 
-    let listener = tokio::net::TcpListener::bind(&addr).await?;
-    axum::serve(listener, app).await?;
+    Ok(app)
+}
 
-    Ok(())
+async fn simple_health_check(
+    axum::extract::State(state): axum::extract::State<ApiState>,
+) -> Json<ApiResponse<String>> {
+    let result = sqlx::query("SELECT 1").execute(&state.db).await;
+    let status = if result.is_ok() { "healthy" } else { "unhealthy" };
+    Json(ApiResponse::success(status.to_string(), "健康检查"))
 }
 
 async fn init_cache() -> Arc<dyn CacheService + Send + Sync> {
     match env::var("REDIS_URL") {
         Ok(_) => {
-            let redis_config = RedisConfig::default();
+            let redis_config = topems_shared::RedisConfig::default();
             match RedisPoolTrait::new(&redis_config).await {
                 Ok(pool) => {
                     tracing::info!("✅ 使用 Redis 缓存");
@@ -171,14 +182,14 @@ async fn init_cache() -> Arc<dyn CacheService + Send + Sync> {
                 Err(e) => {
                     tracing::warn!("⚠️ Redis 连接失败，回退到内存缓存: {}", e);
                     let cache_config = CacheConfig::default();
-                    Arc::new(InMemoryCache::new(cache_config))
+                    Arc::new(topems_shared::InMemoryCache::new(cache_config))
                 }
             }
         }
         Err(_) => {
             tracing::info!("⚠️ REDIS_URL 未设置，使用内存缓存");
             let cache_config = CacheConfig::default();
-            Arc::new(InMemoryCache::new(cache_config))
+            Arc::new(topems_shared::InMemoryCache::new(cache_config))
         }
     }
 }
@@ -309,7 +320,7 @@ fn init_encryption_service() -> FieldEncryptionService {
         base64::Engine::encode(&base64::engine::general_purpose::STANDARD, result)
     };
 
-    KeyManager::from_base64_key(&key_b64)
+    topems_shared::KeyManager::from_base64_key(&key_b64)
         .map(FieldEncryptionService::new)
         .expect("Failed to initialize encryption service with provided ENCRYPTION_KEY")
 }
