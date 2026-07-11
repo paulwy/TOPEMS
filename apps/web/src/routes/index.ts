@@ -1,7 +1,6 @@
 export { authRoutes } from './auth';
 export { dashboardRoutes } from './dashboard';
 export { commonRoutes } from './common';
-export { legacyRedirects } from './compatibility';
 
 export {
   getAllRoutes,
