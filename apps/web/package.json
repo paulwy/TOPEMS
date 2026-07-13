@@ -1,6 +1,6 @@
 {
   "name": "topems-portal",
-  "version": "1.0.0",
+  "version": "5.14.0",
   "type": "module",
   "private": true,
   "scripts": {
@@ -12,8 +12,10 @@
     "test:watch": "vitest",
     "test:coverage": "vitest run --coverage",
     "e2e": "playwright test",
+    "e2e:api": "playwright test -c playwright.config.api.ts",
     "e2e:ui": "playwright test --ui",
     "e2e:debug": "playwright test --debug",
+    "e2e:all": "npm run e2e:api && npm run e2e",
     "lint": "eslint .",
     "lint:fix": "eslint . --fix",
     "lint:error": "eslint . --quiet",
@@ -31,6 +33,16 @@
     "perf:analyze": "webpack-bundle-analyzer ./dist/stats.json"
   },
   "dependencies": {
+    "@opentelemetry/api": "^1.9.0",
+    "@opentelemetry/sdk-trace-web": "^1.27.0",
+    "@opentelemetry/exporter-trace-otlp-http": "^0.53.0",
+    "@opentelemetry/context-zone": "^1.27.0",
+    "@opentelemetry/instrumentation": "^0.53.0",
+    "@opentelemetry/instrumentation-xml-http-request": "^0.53.0",
+    "@opentelemetry/instrumentation-fetch": "^0.53.0",
+    "@opentelemetry/resources": "^1.27.0",
+    "@opentelemetry/semantic-conventions": "^1.27.0",
+    "@opentelemetry/propagator-b3": "^1.27.0",
     "@amap/amap-jsapi-loader": "^1.0.1",
     "@emotion/react": "^11.14.0",
     "@emotion/styled": "^11.14.1",
