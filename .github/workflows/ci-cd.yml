@@ -179,7 +179,7 @@ jobs:
     name: Build Services
     runs-on: ubuntu-latest
     needs: test
-    if: github.event_name == 'push' || (github.event_name == 'workflow_dispatch')
+    if: ${{ github.event_name == 'push' || (github.event_name == 'workflow_dispatch') }}
     outputs:
       version: ${{ steps.version.outputs.version }}
     steps:
@@ -262,7 +262,7 @@ jobs:
     name: Build Docker (${{ matrix.service }})
     runs-on: ubuntu-latest
     needs: build
-    if: github.event.inputs.skip_docker != 'true'
+    if: ${{ github.event.inputs.skip_docker != 'true' }}
     strategy:
       fail-fast: false
       matrix:
@@ -347,10 +347,7 @@ jobs:
             path: svc/ehs
             dockerfile: svc/ehs/Dockerfile
             port: 8052
-          - service: bi
-            path: svc/bi
-            dockerfile: svc/bi/Dockerfile
-            port: 8060
+
 
     steps:
       - name: Checkout code
@@ -415,7 +412,7 @@ jobs:
     name: Deploy to Staging
     runs-on: ubuntu-latest
     needs: [build, docker-build]
-    if: github.ref == 'refs/heads/develop' || (github.event_name == 'workflow_dispatch' && github.event.inputs.environment == 'staging')
+    if: ${{ github.ref == 'refs/heads/develop' || (github.event_name == 'workflow_dispatch' && github.event.inputs.environment == 'staging') }}
     environment: staging
     steps:
       - name: Checkout code
@@ -459,7 +456,7 @@ jobs:
               cp -r /opt/topems/staging/web /opt/topems/staging/web.backup.${TIMESTAMP}
             fi
 
-            for service in unified-core ai hrm crm pm erp gis rs scm wms srm mobile monitor portal mes pdm qms lims ehs bi; do
+            for service in unified-core ai hrm crm pm erp gis rs scm wms srm mobile monitor portal mes pdm qms lims ehs; do
               sudo systemctl stop topems-${service}-staging 2>/dev/null || true
             done
           EOF
@@ -469,14 +466,14 @@ jobs:
           scp -P ${{ secrets.STAGING_PORT || 22 }} -r dist/apps/core/dist/* ${{ secrets.STAGING_USER }}@${{ secrets.STAGING_HOST }}:/opt/topems/staging/core-remote/
 
           ssh ${{ secrets.STAGING_USER }}@${{ secrets.STAGING_HOST }} -p ${{ secrets.STAGING_PORT || 22 }} << 'EOF'
-            for service in unified-core ai hrm crm pm erp gis rs scm wms srm mobile monitor portal mes pdm qms lims ehs bi; do
+            for service in unified-core ai hrm crm pm erp gis rs scm wms srm mobile monitor portal mes pdm qms lims ehs; do
               sudo systemctl start topems-${service}-staging || true
             done
 
             sleep 15
 
             FAILURE=false
-            for port in 8000 8010 8020 8029 8023 8071 8053 8040 8041 8042 8070 8062 8063 8064 8072 8030 8031 8050 8051 8052 8060; do
+            for port in 8000 8010 8020 8029 8023 8071 8053 8040 8041 8042 8070 8062 8063 8064 8072 8030 8031 8050 8051 8052; do
               if ! curl -s -f -m 5 http://localhost:${port}/health; then
                 echo "Service on port ${port} not responding"
                 FAILURE=true
@@ -485,7 +482,7 @@ jobs:
 
             if [ "$FAILURE" = true ]; then
               echo "Health check failed, rolling back..."
-              for service in unified-core ai hrm crm pm erp gis rs scm wms srm mobile monitor portal mes pdm qms lims ehs bi; do
+              for service in unified-core ai hrm crm pm erp gis rs scm wms srm mobile monitor portal mes pdm qms lims ehs; do
                 sudo systemctl stop topems-${service}-staging 2>/dev/null || true
               done
 
@@ -499,7 +496,7 @@ jobs:
                 cp -r "$LATEST_WEB_BACKUP" /opt/topems/staging/web
               fi
 
-              for service in unified-core ai hrm crm pm erp gis rs scm wms srm mobile monitor portal mes pdm qms lims ehs bi; do
+              for service in unified-core ai hrm crm pm erp gis rs scm wms srm mobile monitor portal mes pdm qms lims ehs; do
                 sudo systemctl start topems-${service}-staging || true
               done
               exit 1
@@ -515,7 +512,7 @@ jobs:
     name: Deploy to Production
     runs-on: ubuntu-latest
     needs: [build, docker-build]
-    if: github.ref == 'refs/heads/main' || (github.event_name == 'workflow_dispatch' && github.event.inputs.environment == 'production')
+    if: ${{ github.ref == 'refs/heads/main' || (github.event_name == 'workflow_dispatch' && github.event.inputs.environment == 'production') }}
     environment: production
     concurrency: production
     steps:
@@ -557,7 +554,7 @@ jobs:
               cp -r /opt/topems/web /opt/topems/web.backup.${TIMESTAMP}
             fi
 
-            for service in unified-core ai hrm crm pm erp gis rs scm wms srm mobile monitor portal mes pdm qms lims ehs bi; do
+            for service in unified-core ai hrm crm pm erp gis rs scm wms srm mobile monitor portal mes pdm qms lims ehs; do
               sudo systemctl stop topems-${service} 2>/dev/null || true
             done
           EOF
@@ -568,14 +565,14 @@ jobs:
           scp -P ${{ secrets.PROD_PORT || 22 }} -r dist/apps/core/dist/* ${{ secrets.PROD_USER }}@${{ secrets.PROD_HOST }}:/opt/topems/core-remote/
 
           ssh ${{ secrets.PROD_USER }}@${{ secrets.PROD_HOST }} -p ${{ secrets.PROD_PORT || 22 }} << 'EOF'
-            for service in unified-core ai hrm crm pm erp gis rs scm wms srm mobile monitor portal mes pdm qms lims ehs bi; do
+            for service in unified-core ai hrm crm pm erp gis rs scm wms srm mobile monitor portal mes pdm qms lims ehs; do
               sudo systemctl start topems-${service} || true
             done
 
             sleep 30
 
             FAILURE=false
-            for port in 8000 8010 8020 8029 8023 8071 8053 8040 8041 8042 8070 8062 8063 8064 8072 8030 8031 8050 8051 8052 8060; do
+            for port in 8000 8010 8020 8029 8023 8071 8053 8040 8041 8042 8070 8062 8063 8064 8072 8030 8031 8050 8051 8052; do
               if ! curl -s -f -m 5 http://localhost:${port}/health; then
                 echo "Service on port ${port} not responding"
                 FAILURE=true
@@ -584,7 +581,7 @@ jobs:
 
             if [ "$FAILURE" = true ]; then
               echo "Health check failed, rolling back..."
-              for service in unified-core ai hrm crm pm erp gis rs scm wms srm mobile monitor portal mes pdm qms lims ehs bi; do
+              for service in unified-core ai hrm crm pm erp gis rs scm wms srm mobile monitor portal mes pdm qms lims ehs; do
                 sudo systemctl stop topems-${service} 2>/dev/null || true
               done
 
@@ -598,7 +595,7 @@ jobs:
                 cp -r "$LATEST_WEB_BACKUP" /opt/topems/web
               fi
 
-              for service in unified-core ai hrm crm pm erp gis rs scm wms srm mobile monitor portal mes pdm qms lims ehs bi; do
+              for service in unified-core ai hrm crm pm erp gis rs scm wms srm mobile monitor portal mes pdm qms lims ehs; do
                 sudo systemctl start topems-${service} || true
               done
               exit 1
@@ -610,22 +607,121 @@ jobs:
           echo "Production deployment completed"
           echo "Services should be available at: https://${{ secrets.PROD_DOMAIN }}/health"
 
+  build-desktop:
+    name: Build Desktop App
+    runs-on: ${{ matrix.os }}
+    needs: build
+    if: ${{ github.ref == 'refs/heads/main' || (github.event_name == 'workflow_dispatch') }}
+    strategy:
+      matrix:
+        os: [macos-latest, windows-latest]
+        include:
+          - os: macos-latest
+            target: macos
+          - os: windows-latest
+            target: windows
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Install Rust
+        uses: dtolnay/rust-toolchain@stable
+        with:
+          toolchain: ${{ env.RUST_VERSION }}
+
+      - name: Cache Rust dependencies
+        uses: Swatinem/rust-cache@v2
+        with:
+          prefix-key: "rust-${{ env.RUST_VERSION }}-desktop-${{ matrix.os }}"
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+
+      - name: Install pnpm
+        uses: pnpm/action-setup@v4
+        with:
+          version: ${{ env.PNPM_VERSION }}
+          run_install: false
+
+      - name: Get pnpm store directory
+        shell: bash
+        run: |
+          echo "STORE_PATH=$(pnpm store path --silent)" >> $GITHUB_ENV
+
+      - name: Setup pnpm cache
+        uses: actions/cache@v4
+        with:
+          path: ${{ env.STORE_PATH }}
+          key: ${{ runner.os }}-pnpm-store-${{ hashFiles('**/pnpm-lock.yaml') }}
+          restore-keys: |
+            ${{ runner.os }}-pnpm-store-
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Build desktop frontend
+        run: pnpm --filter topems-desktop build
+
+      - name: Build macOS app with signing
+        if: matrix.os == 'macos-latest'
+        env:
+          APPLE_CERTIFICATE: ${{ secrets.APPLE_CERTIFICATE }}
+          APPLE_CERTIFICATE_PASSWORD: ${{ secrets.APPLE_CERTIFICATE_PASSWORD }}
+          APPLE_ID: ${{ secrets.APPLE_ID }}
+          APPLE_PASSWORD: ${{ secrets.APPLE_APP_SPECIFIC_PASSWORD }}
+        run: |
+          echo "$APPLE_CERTIFICATE" | base64 --decode > certificate.p12
+          security create-keychain -p ${{ secrets.APPLE_CERTIFICATE_PASSWORD }} build.keychain
+          security default-keychain -s build.keychain
+          security unlock-keychain -p ${{ secrets.APPLE_CERTIFICATE_PASSWORD }} build.keychain
+          security import certificate.p12 -k build.keychain -P ${{ secrets.APPLE_CERTIFICATE_PASSWORD }} -T /usr/bin/codesign
+          security set-key-partition-list -S apple-tool:,apple: -s -k ${{ secrets.APPLE_CERTIFICATE_PASSWORD }} build.keychain
+          cd apps/desktop && pnpm tauri build --target universal-apple-darwin
+
+      - name: Build Windows app with signing
+        if: matrix.os == 'windows-latest'
+        env:
+          TAURI_SIGNING_PRIVATE_KEY: ${{ secrets.WINDOWS_CERTIFICATE }}
+          TAURI_SIGNING_PRIVATE_KEY_PASSWORD: ${{ secrets.WINDOWS_CERTIFICATE_PASSWORD }}
+        run: |
+          cd apps/desktop && pnpm tauri build --target x86_64-pc-windows-msvc
+
+      - name: Upload macOS artifact
+        if: matrix.os == 'macos-latest'
+        uses: actions/upload-artifact@v4
+        with:
+          name: topems-desktop-macos-${{ github.sha }}
+          path: apps/desktop/src-tauri/target/universal-apple-darwin/release/bundle/dmg/*.dmg
+          retention-days: 30
+
+      - name: Upload Windows artifact
+        if: matrix.os == 'windows-latest'
+        uses: actions/upload-artifact@v4
+        with:
+          name: topems-desktop-windows-${{ github.sha }}
+          path: apps/desktop/src-tauri/target/x86_64-pc-windows-msvc/release/bundle/nsis/*.exe
+          retention-days: 30
+
   notify:
     name: Notify Deployment
     runs-on: ubuntu-latest
-    needs: [deploy-staging, deploy-production]
+    needs: [deploy-staging, deploy-production, build-desktop]
     if: always()
     steps:
       - name: Notify success
-        if: needs.deploy-staging.result == 'success' || needs.deploy-production.result == 'success'
+        if: needs.deploy-staging.result == 'success' || needs.deploy-production.result == 'success' || needs.build-desktop.result == 'success'
         run: |
           echo "✅ Deployment successful!"
           echo "Staging: ${{ needs.deploy-staging.result }}"
           echo "Production: ${{ needs.deploy-production.result }}"
+          echo "Desktop: ${{ needs.build-desktop.result }}"
 
       - name: Notify failure
-        if: needs.deploy-staging.result == 'failure' || needs.deploy-production.result == 'failure'
+        if: needs.deploy-staging.result == 'failure' || needs.deploy-production.result == 'failure' || needs.build-desktop.result == 'failure'
         run: |
           echo "❌ Deployment failed!"
           echo "Staging: ${{ needs.deploy-staging.result }}"
           echo "Production: ${{ needs.deploy-production.result }}"
+          echo "Desktop: ${{ needs.build-desktop.result }}"
