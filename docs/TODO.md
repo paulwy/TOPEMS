@@ -13,7 +13,7 @@
 | 网络异常重试机制 | ✅ | maxRetries/retryDelay/retryableErrors配置 |
 | 批量操作日志记录 | ✅ | 详细错误日志、重试记录 |
 | 数据一致性校验 | ✅ | consistencyCheck回调支持 |
-| TypeScript 编译验证 | ✅ | 构建验证通过 |
+| TypeScript 编译验证 | ⚠️ | 存在 24 个预先存在的类型错误（Three.js JSX、ReactNode bigint、Material UI TextField 属性），与本次修改无关 |
 | 发布分支创建 | ✅ | release/v5.14.0 |
 | 版本号更新 | ✅ | 所有 package.json 和 Cargo.toml |
 | CHANGELOG 更新 | ✅ | 标记 V5.14.0 正式版 |
