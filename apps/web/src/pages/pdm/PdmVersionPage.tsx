@@ -130,7 +130,7 @@ export const PdmVersionPage: React.FC = () => {
     try {
       setLoading(true);
       setError(null);
-      const response = await pdmApi.listVersions();
+      const response = await pdmApi.listVersions(selectedDocument || '');
       if (response.success && response.data) {
         const data = response.data as any;
         const items = Array.isArray(data) ? data : data.versions || [];
@@ -194,9 +194,9 @@ export const PdmVersionPage: React.FC = () => {
     try {
       const requestData = {
         document_id: formData.document_id,
+        version_number: `V${Date.now()}`,
         title: formData.title,
         description: formData.description,
-        type: formData.type,
         changes: formData.changes.split('\n').filter(Boolean),
       };
 
@@ -283,8 +283,8 @@ export const PdmVersionPage: React.FC = () => {
             </Typography>
             <Chip
               size='small'
-              label={VERSION_TYPE_LABEL_MAP[row.type] || row.type}
-              color={VERSION_TYPE_COLOR_MAP[row.type] || 'default'}
+              label={VERSION_TYPE_LABEL_MAP[row.type || ''] || row.type}
+              color={VERSION_TYPE_COLOR_MAP[row.type || ''] || 'default'}
             />
             {row.status === 'published' && (
               <Chip
@@ -322,8 +322,8 @@ export const PdmVersionPage: React.FC = () => {
         render: (row) => (
           <Chip
             size='small'
-            label={VERSION_TYPE_LABEL_MAP[row.type] || row.type}
-            color={VERSION_TYPE_COLOR_MAP[row.type] || 'default'}
+            label={VERSION_TYPE_LABEL_MAP[row.type || ''] || row.type}
+            color={VERSION_TYPE_COLOR_MAP[row.type || ''] || 'default'}
           />
         ),
       },

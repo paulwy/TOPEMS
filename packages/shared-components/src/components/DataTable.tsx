@@ -637,7 +637,7 @@ export function DataTable<TData, TValue>({
 
   const handleSelectAll = useCallback(() => {
     const filteredRows = table.getFilteredRowModel().rows;
-    const allIds = filteredRows.map((row) => String(row.original[getRowKey(row.original)]));
+    const allIds = filteredRows.map((row) => String(getRowKey(row.original as TData)));
     if (effectiveSelectedIds.length === filteredRows.length && filteredRows.length > 0) {
       handleSelectionChange([]);
     } else {
@@ -805,7 +805,7 @@ export function DataTable<TData, TValue>({
               }}
             >
               <Checkbox
-                checked={effectiveSelectedIds.includes(String(row.original[getRowKey(row.original)]))}
+                checked={effectiveSelectedIds.includes(String(getRowKey(row.original as TData)))}
                 onChange={() => handleSelectRow(row.original)}
                 onClick={(e) => e.stopPropagation()}
               />

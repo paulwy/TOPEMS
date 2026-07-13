@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useMemo, useCallback } from 'react';
+import React, { useState, useMemo, useCallback } from 'react';
 import {
   Box,
   Dialog,
@@ -28,6 +28,8 @@ import {
 } from '@/components/templates';
 import { PageContainer } from '@/components/common';
 import { designTokens } from '@/theme/tokens';
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import { QUERY_KEYS } from '@/lib/reactQuery';
 
 const ct = designTokens.colors;
 
@@ -63,11 +65,9 @@ interface BomFormData {
 }
 
 export const BomPage: React.FC = () => {
+  const queryClient = useQueryClient();
   const [activeTab, setActiveTab] = useState(0);
   const [searchTerm, setSearchTerm] = useState('');
-  const [versions, setVersions] = useState<BomVersion[]>([]);
-  const [bomItems, setBomItems] = useState<BomItem[]>([]);
-  const [loading, setLoading] = useState(true);
   const [openDialog, setOpenDialog] = useState(false);
   const [compareDialogOpen, setCompareDialogOpen] = useState(false);
   const [editingVersion, setEditingVersion] = useState<BomVersion | null>(null);
@@ -85,40 +85,117 @@ export const BomPage: React.FC = () => {
   });
   const addNotification = useAppStore((state) => state.addNotification);
 
-  useEffect(() => {
-    loadVersions();
-  }, []);
+  const loadVersions = useCallback(() => {
+    queryClient.invalidateQueries({ queryKey: QUERY_KEYS.PDM.BOM_VERSIONS });
+  }, [queryClient]);
 
-  const loadVersions = async () => {
-    try {
-      setLoading(true);
+  const loadBomItems = useCallback((versionId: string) => {
+    queryClient.invalidateQueries({ queryKey: QUERY_KEYS.PDM.BOM_ITEMS });
+  }, [queryClient]);
+
+  const { data: versions = [], isLoading: loading } = useQuery({
+    queryKey: QUERY_KEYS.PDM.BOM_VERSIONS,
+    queryFn: async () => {
       const response = await bomApi.listVersions();
       if (response.success && response.data) {
-        setVersions(response.data as BomVersion[]);
-      } else {
-        setVersions([]);
+        return response.data as BomVersion[];
       }
-    } catch (err: unknown) {
-      apiLogger.error('加载BOM版本数据失败:', err);
-      setVersions([]);
-    } finally {
-      setLoading(false);
-    }
-  };
+      return [];
+    },
+    staleTime: 5 * 60 * 1000,
+  });
 
-  const loadBomItems = async (versionId: string) => {
-    try {
-      const response = await bomApi.listItems(versionId);
+  const { data: bomItems = [] } = useQuery({
+    queryKey: QUERY_KEYS.PDM.BOM_ITEMS,
+    queryFn: async () => {
+      if (!selectedVersionId) return [];
+      const response = await bomApi.listItems(selectedVersionId);
       if (response.success && response.data) {
-        setBomItems(response.data as BomItem[]);
-      } else {
-        setBomItems([]);
+        return response.data as BomItem[];
       }
-    } catch (err: unknown) {
-      apiLogger.error('加载BOM物料数据失败:', err);
-      setBomItems([]);
-    }
-  };
+      return [];
+    },
+    staleTime: 5 * 60 * 1000,
+    enabled: !!selectedVersionId,
+  });
+
+  const createVersionMutation = useMutation({
+    mutationFn: (data: CreateBomVersionRequest) => bomApi.createVersion(data),
+    onSuccess: () => {
+      addNotification({ title: '成功', message: 'BOM版本创建成功', type: 'success' });
+      setOpenDialog(false);
+      setEditingVersion(null);
+      queryClient.invalidateQueries({ queryKey: QUERY_KEYS.PDM.BOM_VERSIONS });
+    },
+    onError: () => {
+      addNotification({ title: '错误', message: '创建失败', type: 'error' });
+    },
+  });
+
+  const updateVersionMutation = useMutation({
+    mutationFn: ({ id, data }: { id: string; data: CreateBomVersionRequest }) =>
+      bomApi.updateVersion(id, data),
+    onSuccess: () => {
+      addNotification({ title: '成功', message: 'BOM版本更新成功', type: 'success' });
+      setOpenDialog(false);
+      setEditingVersion(null);
+      queryClient.invalidateQueries({ queryKey: QUERY_KEYS.PDM.BOM_VERSIONS });
+    },
+    onError: () => {
+      addNotification({ title: '错误', message: '更新失败', type: 'error' });
+    },
+  });
+
+  const deleteVersionMutation = useMutation({
+    mutationFn: (id: string) => bomApi.deleteVersion(id),
+    onSuccess: () => {
+      addNotification({ title: '成功', message: 'BOM版本删除成功', type: 'success' });
+      queryClient.invalidateQueries({ queryKey: QUERY_KEYS.PDM.BOM_VERSIONS });
+    },
+    onError: () => {
+      addNotification({ title: '错误', message: '删除失败', type: 'error' });
+    },
+  });
+
+  const activateVersionMutation = useMutation({
+    mutationFn: (id: string) => bomApi.activateVersion(id),
+    onSuccess: () => {
+      addNotification({ title: '成功', message: 'BOM版本已激活', type: 'success' });
+      queryClient.invalidateQueries({ queryKey: QUERY_KEYS.PDM.BOM_VERSIONS });
+    },
+    onError: () => {
+      addNotification({ title: '错误', message: '激活失败', type: 'error' });
+    },
+  });
+
+  const archiveVersionMutation = useMutation({
+    mutationFn: (id: string) => bomApi.archiveVersion(id),
+    onSuccess: () => {
+      addNotification({ title: '成功', message: 'BOM版本已归档', type: 'success' });
+      queryClient.invalidateQueries({ queryKey: QUERY_KEYS.PDM.BOM_VERSIONS });
+    },
+    onError: () => {
+      addNotification({ title: '错误', message: '归档失败', type: 'error' });
+    },
+  });
+
+  const compareVersionsMutation = useMutation({
+    mutationFn: ({ versionA, versionB }: { versionA: string; versionB: string }) =>
+      bomApi.compareVersions(versionA, versionB),
+    onSuccess: (response) => {
+      if (response.success && response.data) {
+        addNotification({
+          title: '对比完成',
+          message: `发现差异：新增 ${response.data.differences.addeditems.length} 项，移除 ${response.data.differences.removeditems.length} 项，修改 ${response.data.differences.modifieditems.length} 项`,
+          type: 'success',
+        });
+      }
+      setCompareDialogOpen(false);
+    },
+    onError: () => {
+      addNotification({ title: '错误', message: '对比失败', type: 'error' });
+    },
+  });
 
   const handleTabChange = (_event: React.SyntheticEvent, newValue: number) => {
     setActiveTab(newValue);
@@ -138,42 +215,20 @@ export const BomPage: React.FC = () => {
     setOpenDialog(true);
   };
 
-  const handleDeleteVersion = async (id: string) => {
-    try {
-      await bomApi.deleteVersion(id);
-      addNotification({ title: '成功', message: 'BOM版本删除成功', type: 'success' });
-      loadVersions();
-    } catch (err: unknown) {
-      addNotification({ title: '错误', message: '删除失败', type: 'error' });
-      apiLogger.error('删除BOM版本失败:', err);
-    }
+  const handleDeleteVersion = (id: string) => {
+    deleteVersionMutation.mutate(id);
   };
 
-  const handleActivateVersion = async (id: string) => {
-    try {
-      await bomApi.activateVersion(id);
-      addNotification({ title: '成功', message: 'BOM版本已激活', type: 'success' });
-      loadVersions();
-    } catch (err: unknown) {
-      addNotification({ title: '错误', message: '激活失败', type: 'error' });
-      apiLogger.error('激活BOM版本失败:', err);
-    }
+  const handleActivateVersion = (id: string) => {
+    activateVersionMutation.mutate(id);
   };
 
-  const handleArchiveVersion = async (id: string) => {
-    try {
-      await bomApi.archiveVersion(id);
-      addNotification({ title: '成功', message: 'BOM版本已归档', type: 'success' });
-      loadVersions();
-    } catch (err: unknown) {
-      addNotification({ title: '错误', message: '归档失败', type: 'error' });
-      apiLogger.error('归档BOM版本失败:', err);
-    }
+  const handleArchiveVersion = (id: string) => {
+    archiveVersionMutation.mutate(id);
   };
 
   const handleViewItems = (version: BomVersion) => {
     setSelectedVersionId(version.id);
-    loadBomItems(version.id);
     setActiveTab(1);
   };
 
@@ -191,57 +246,30 @@ export const BomPage: React.FC = () => {
     setOpenDialog(true);
   };
 
-  const handleSaveVersion = async () => {
-    try {
-      const requestData: CreateBomVersionRequest = {
-        bom_no: formData.bom_no,
-        name: formData.name,
-        product_id: formData.product_id,
-        version: formData.version,
-        status: formData.status,
-        effective_date: formData.effective_date || undefined,
-        description: formData.description,
-      };
+  const handleSaveVersion = () => {
+    const requestData: CreateBomVersionRequest = {
+      bom_no: formData.bom_no,
+      name: formData.name,
+      product_id: formData.product_id,
+      version: formData.version,
+      status: formData.status,
+      effective_date: formData.effective_date || undefined,
+      description: formData.description,
+    };
 
-      if (editingVersion) {
-        await bomApi.updateVersion(editingVersion.id, requestData);
-        addNotification({ title: '成功', message: 'BOM版本更新成功', type: 'success' });
-      } else {
-        await bomApi.createVersion(requestData);
-        addNotification({ title: '成功', message: 'BOM版本创建成功', type: 'success' });
-      }
-      setOpenDialog(false);
-      setEditingVersion(null);
-      loadVersions();
-    } catch (err: unknown) {
-      addNotification({
-        title: '错误',
-        message: editingVersion ? '更新失败' : '创建失败',
-        type: 'error',
-      });
-      apiLogger.error('保存BOM版本失败:', err);
+    if (editingVersion) {
+      updateVersionMutation.mutate({ id: editingVersion.id, data: requestData });
+    } else {
+      createVersionMutation.mutate(requestData);
     }
   };
 
-  const handleCompare = async () => {
+  const handleCompare = () => {
     if (!compareVersionA || !compareVersionB) {
       addNotification({ title: '提示', message: '请选择两个版本进行对比', type: 'warning' });
       return;
     }
-    try {
-      const response = await bomApi.compareVersions(compareVersionA, compareVersionB);
-      if (response.success && response.data) {
-        addNotification({
-          title: '对比完成',
-          message: `发现差异：新增 ${response.data.differences.addeditems.length} 项，移除 ${response.data.differences.removeditems.length} 项，修改 ${response.data.differences.modifieditems.length} 项`,
-          type: 'success',
-        });
-      }
-      setCompareDialogOpen(false);
-    } catch (err: unknown) {
-      addNotification({ title: '错误', message: '对比失败', type: 'error' });
-      apiLogger.error('BOM对比失败:', err);
-    }
+    compareVersionsMutation.mutate({ versionA: compareVersionA, versionB: compareVersionB });
   };
 
   const filteredVersions = useMemo(() => {

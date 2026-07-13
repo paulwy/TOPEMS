@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useMemo } from 'react';
+import React, { useState, useMemo } from 'react';
 import {
   Box,
   Dialog,
@@ -12,6 +12,7 @@ import {
 } from '@mui/material';
 import { apiLogger } from '@/utils/logger';
 import { Plus, Eye, Clock } from 'lucide-react';
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { PageContainer } from '@/components/common/PageContainerV2';
 import { ListPageTemplate } from '@/components/templates';
 
@@ -20,12 +21,29 @@ import { pdmApi } from '@/api/pdm';
 import type { ProductionFormula } from '@/api/pdm';
 import { useAppStore } from '@/store';
 import { designTokens } from '@/theme/tokens';
+import { QUERY_KEYS } from '@/lib/reactQuery';
 
 const ct = designTokens.colors;
 
+const adaptFormula = (item: { [key: string]: unknown }) => ({
+  ...item,
+  product_name: item.name || '',
+  status:
+    item.status === 'active'
+      ? '启用'
+      : item.status === 'inactive'
+        ? '禁用'
+        : item.status === 'draft'
+          ? '草稿'
+          : item.status === 'approved'
+            ? '已批准'
+            : item.status,
+});
+
 const PdmFormulaPage: React.FC = () => {
-  const [formulas, setFormulas] = useState<ProductionFormula[]>([]);
-  const [loading, setLoading] = useState(true);
+  const queryClient = useQueryClient();
+  const addNotification = useAppStore((state) => state.addNotification);
+
   const [searchTerm, setSearchTerm] = useState('');
   const [statusFilter, setStatusFilter] = useState<string>('');
   const [showCreateModal, setShowCreateModal] = useState(false);
@@ -38,42 +56,46 @@ const PdmFormulaPage: React.FC = () => {
     version: '1.0',
     process_id: '',
   });
-  const addNotification = useAppStore((state) => state.addNotification);
 
-  useEffect(() => {
-    loadFormulas();
-  }, []);
-
-  const loadFormulas = async () => {
-    try {
-      setLoading(true);
+  const { data: formulas = [], isLoading } = useQuery({
+    queryKey: QUERY_KEYS.PDM.FORMULAS,
+    queryFn: async () => {
       const response = await pdmApi.listFormulas();
       if (response.success && response.data) {
-        const adapted = (response.data as any).map((item: { [key: string]: unknown }) => ({
-          ...item,
-          product_name: item.name || '',
-          status:
-            item.status === 'active'
-              ? '启用'
-              : item.status === 'inactive'
-                ? '禁用'
-                : item.status === 'draft'
-                  ? '草稿'
-                  : item.status === 'approved'
-                    ? '已批准'
-                    : item.status,
-        }));
-        setFormulas(adapted);
-      } else {
-        setFormulas([]);
+        const adapted = (response.data as any).map(adaptFormula);
+        return adapted;
       }
-    } catch (err: unknown) {
-      apiLogger.error('加载配方数据失败:', err);
-      setFormulas([]);
-    } finally {
-      setLoading(false);
-    }
-  };
+      return [];
+    },
+    staleTime: 5 * 60 * 1000,
+  });
+
+  const createFormulaMutation = useMutation({
+    mutationFn: (data: {
+      formula_no: string;
+      name: string;
+      description?: string;
+      version: string;
+      process_id?: string;
+    }) =>
+      pdmApi.createFormula({
+        formula_no: data.formula_no,
+        name: data.name,
+        description: data.description || undefined,
+        version: data.version,
+        process_id: data.process_id || undefined,
+        status: 'draft',
+      }),
+    onSuccess: () => {
+      addNotification({ title: '成功', message: '配方创建成功', type: 'success' });
+      setShowCreateModal(false);
+      queryClient.invalidateQueries({ queryKey: QUERY_KEYS.PDM.FORMULAS });
+    },
+    onError: (err: unknown) => {
+      addNotification({ title: '错误', message: '创建失败', type: 'error' });
+      apiLogger.error('创建配方失败:', err);
+    },
+  });
 
   const getStatusBadge = (status: string) => {
     const statusMap: Record<string, { bg: string; color: string }> = {
@@ -97,7 +119,7 @@ const PdmFormulaPage: React.FC = () => {
   };
 
   const filteredFormulas = useMemo(() => {
-    return formulas.filter((formula) => {
+    return formulas.filter((formula: any) => {
       const matchesSearch =
         formula.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
         formula.formula_no.toLowerCase().includes(searchTerm.toLowerCase());
@@ -165,30 +187,15 @@ const PdmFormulaPage: React.FC = () => {
     setShowCreateModal(true);
   };
 
-  const handleSave = async () => {
-    try {
-      await pdmApi.createFormula({
-        formula_no: formData.formula_no,
-        name: formData.name,
-        description: formData.description || undefined,
-        version: formData.version,
-        process_id: formData.process_id || undefined,
-        status: 'draft',
-      });
-      addNotification({ title: '成功', message: '配方创建成功', type: 'success' });
-      setShowCreateModal(false);
-      loadFormulas();
-    } catch (err: unknown) {
-      addNotification({ title: '错误', message: '创建失败', type: 'error' });
-      apiLogger.error('创建配方失败:', err);
-    }
+  const handleSave = () => {
+    createFormulaMutation.mutate(formData);
   };
 
   const stats = {
     total: formulas.length,
-    active: formulas.filter((f) => f.status === '启用').length,
-    draft: formulas.filter((f) => f.status === '草稿').length,
-    approved: formulas.filter((f) => f.status === '已批准').length,
+    active: formulas.filter((f: any) => f.status === '启用').length,
+    draft: formulas.filter((f: any) => f.status === '草稿').length,
+    approved: formulas.filter((f: any) => f.status === '已批准').length,
   };
 
   const statsContent = (
@@ -272,7 +279,7 @@ const PdmFormulaPage: React.FC = () => {
         backButton={{ href: '/dashboard' }}
         columns={columns}
         data={filteredFormulas}
-        loading={loading}
+        loading={isLoading}
         searchable
         searchPlaceholder='搜索产品名称或配方编号...'
         searchValue={searchTerm}
@@ -349,6 +356,7 @@ const PdmFormulaPage: React.FC = () => {
           <Button
             variant='contained'
             onClick={handleSave}
+            disabled={createFormulaMutation.isPending}
             sx={{ bgcolor: ct.pink[500] }}
           >
             保存

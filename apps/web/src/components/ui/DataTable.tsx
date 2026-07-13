@@ -1,2 +1,1 @@
 export { DataTable, MobileCardView, type DataTableProps, type DataTableRow, type ExpandedRowRender, type AdvancedFilter, type ExportResult, type ExportDataFn, type MobileCardViewProps } from '@topems/shared-components';
-export { default } from '@topems/shared-components';

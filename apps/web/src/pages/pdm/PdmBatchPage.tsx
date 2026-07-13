@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useMemo } from 'react';
+import React, { useState, useMemo } from 'react';
 import {
   Box,
   Dialog,
@@ -14,18 +14,19 @@ import { apiLogger } from '@/utils/logger';
 import { Plus, Eye, Clock } from 'lucide-react';
 import { PageContainer } from '@/components/common/PageContainerV2';
 import { ListPageTemplate } from '@/components/templates';
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 
 import type { RowAction, FilterConfig, ColumnDef } from '@/components/templates';
 import { pdmApi } from '@/api/pdm';
 import type { ProductionBatch } from '@/api/pdm';
 import { useAppStore } from '@/store';
 import { designTokens } from '@/theme/tokens';
+import { QUERY_KEYS } from '@/lib/reactQuery';
 
 const ct = designTokens.colors;
 
 const PdmBatchPage: React.FC = () => {
-  const [batches, setBatches] = useState<ProductionBatch[]>([]);
-  const [loading, setLoading] = useState(true);
+  const queryClient = useQueryClient();
   const [searchTerm, setSearchTerm] = useState('');
   const [statusFilter, setStatusFilter] = useState<string>('');
   const [showCreateModal, setShowCreateModal] = useState(false);
@@ -39,13 +40,9 @@ const PdmBatchPage: React.FC = () => {
   });
   const addNotification = useAppStore((state) => state.addNotification);
 
-  useEffect(() => {
-    loadBatches();
-  }, []);
-
-  const loadBatches = async () => {
-    try {
-      setLoading(true);
+  const { data: batches = [], isLoading: loading } = useQuery({
+    queryKey: QUERY_KEYS.PDM.BATCHES,
+    queryFn: async () => {
       const response = await pdmApi.listBatches();
       if (response.success && response.data) {
         const adapted = (response.data as any).map((item: { [key: string]: unknown }) => ({
@@ -62,17 +59,31 @@ const PdmBatchPage: React.FC = () => {
                     ? '已取消'
                     : item.status,
         }));
-        setBatches(adapted);
-      } else {
-        setBatches([]);
+        return adapted;
       }
-    } catch (err: unknown) {
-      apiLogger.error('加载生产批次数据失败:', err);
-      setBatches([]);
-    } finally {
-      setLoading(false);
-    }
-  };
+      return [];
+    },
+    staleTime: 5 * 60 * 1000,
+  });
+
+  const createBatchMutation = useMutation({
+    mutationFn: (data: { batch_no: string; product_name: string; quantity: string; unit: string }) =>
+      pdmApi.createBatch({
+        batch_no: data.batch_no,
+        product_name: data.product_name,
+        planned_quantity: parseFloat(data.quantity) || 0,
+        unit: data.unit,
+        status: 'planning',
+      }),
+    onSuccess: () => {
+      addNotification({ title: '成功', message: '生产批次创建成功', type: 'success' });
+      setShowCreateModal(false);
+      queryClient.invalidateQueries({ queryKey: QUERY_KEYS.PDM.BATCHES });
+    },
+    onError: () => {
+      addNotification({ title: '错误', message: '创建失败', type: 'error' });
+    },
+  });
 
   const getStatusBadge = (status: string) => {
     const statusMap: Record<string, { bg: string; color: string }> = {
@@ -96,7 +107,7 @@ const PdmBatchPage: React.FC = () => {
   };
 
   const filteredBatches = useMemo(() => {
-    return batches.filter((batch) => {
+    return batches.filter((batch: any) => {
       const matchesSearch =
         batch.batch_no.toLowerCase().includes(searchTerm.toLowerCase()) ||
         batch.product_name.toLowerCase().includes(searchTerm.toLowerCase());
@@ -172,29 +183,20 @@ const PdmBatchPage: React.FC = () => {
     setShowCreateModal(true);
   };
 
-  const handleSave = async () => {
-    try {
-      await pdmApi.createBatch({
-        batch_no: formData.batch_no,
-        product_name: formData.product_name,
-        planned_quantity: parseFloat(formData.quantity) || 0,
-        unit: formData.unit,
-        status: 'planning',
-      });
-      addNotification({ title: '成功', message: '生产批次创建成功', type: 'success' });
-      setShowCreateModal(false);
-      loadBatches();
-    } catch (err: unknown) {
-      addNotification({ title: '错误', message: '创建失败', type: 'error' });
-      apiLogger.error('创建生产批次失败:', err);
-    }
+  const handleSave = () => {
+    createBatchMutation.mutate({
+      batch_no: formData.batch_no,
+      product_name: formData.product_name,
+      quantity: formData.quantity,
+      unit: formData.unit,
+    });
   };
 
   const stats = {
     total: batches.length,
-    planning: batches.filter((b) => b.status === '规划中').length,
-    inProgress: batches.filter((b) => b.status === '进行中').length,
-    completed: batches.filter((b) => b.status === '已完成').length,
+    planning: batches.filter((b: any) => b.status === '规划中').length,
+    inProgress: batches.filter((b: any) => b.status === '进行中').length,
+    completed: batches.filter((b: any) => b.status === '已完成').length,
   };
 
   const statsContent = (

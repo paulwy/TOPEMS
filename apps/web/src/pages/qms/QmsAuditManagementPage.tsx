@@ -1,4 +1,5 @@
-import React, { useState, useMemo, useEffect, useCallback } from 'react';
+import React, { useState, useMemo } from 'react';
+import { useQuery } from '@tanstack/react-query';
 import { FileText, CheckCircle, Eye } from 'lucide-react';
 import {
   Dialog,
@@ -12,7 +13,6 @@ import {
   Typography,
   Button,
 } from '@mui/material';
-import { useAppStore } from '@/store';
 import { ListPageTemplate, type ColumnDef, type RowAction } from '@/components/templates';
 import { PageContainer } from '@/components/common';
 import { qmsApi } from '@/api/qms';
@@ -25,34 +25,18 @@ const QmsAuditManagementPage: React.FC = () => {
   const [searchTerm, setSearchTerm] = useState('');
   const [showDetailModal, setShowDetailModal] = useState(false);
   const [selectedItem, setSelectedItem] = useState<AuditPlan | null>(null);
-  const [loading, setLoading] = useState(true);
-  const addNotification = useAppStore((state) => state.addNotification);
 
-  const [auditPlans, setAuditPlans] = useState<AuditPlan[]>([]);
-
-  const loadAuditPlans = useCallback(async () => {
-    try {
-      setLoading(true);
+  const { data: auditPlans = [], isLoading: loading } = useQuery({
+    queryKey: ['qms-audit-plans'],
+    queryFn: async () => {
       const response = await qmsApi.listAuditPlans();
       if (response.success && response.data) {
         const plansData = response.data as any;
-        const plansArray = Array.isArray(plansData) ? plansData : plansData.plans || [];
-        setAuditPlans(plansArray);
+        return Array.isArray(plansData) ? plansData : plansData.plans || [];
       }
-    } catch (error: unknown) {
-      addNotification({
-        title: '加载失败',
-        message: '加载审核数据失败',
-        type: 'error',
-      });
-    } finally {
-      setLoading(false);
-    }
-  }, [addNotification]);
-
-  useEffect(() => {
-    loadAuditPlans();
-  }, [loadAuditPlans]);
+      return [];
+    },
+  });
 
   const getStatusBadge = (status: string) => {
     const colors: Record<string, { bg: string; color: string }> = {
@@ -117,7 +101,7 @@ const QmsAuditManagementPage: React.FC = () => {
 
   const filteredAudits = useMemo(() => {
     return auditPlans.filter(
-      (item) =>
+      (item: AuditPlan) =>
         item.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
         (item.plan_no && item.plan_no.toLowerCase().includes(searchTerm.toLowerCase()))
     );
@@ -125,10 +109,12 @@ const QmsAuditManagementPage: React.FC = () => {
 
   const stats = {
     totalAudits: auditPlans.length,
-    completedAudits: auditPlans.filter((a) => a.status === 'completed' || a.status === '已完成')
-      .length,
-    inProgressAudits: auditPlans.filter((a) => a.status === 'in_progress' || a.status === '进行中')
-      .length,
+    completedAudits: auditPlans.filter(
+      (a: AuditPlan) => a.status === 'completed' || a.status === '已完成'
+    ).length,
+    inProgressAudits: auditPlans.filter(
+      (a: AuditPlan) => a.status === 'in_progress' || a.status === '进行中'
+    ).length,
   };
 
   const statsCards = (

@@ -20,7 +20,7 @@ export const correctiveActionApi = {
     });
     return {
       ...response,
-      data: response.data ? adaptActionToFrontend(response.data) : undefined,
+      data: response.data ? adaptActionToFrontend(response.data) : ({} as QualityImprovement),
     };
   },
 

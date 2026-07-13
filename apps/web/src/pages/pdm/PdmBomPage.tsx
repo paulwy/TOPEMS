@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useMemo, useCallback } from 'react';
+import React, { useState, useMemo, useCallback } from 'react';
 import {
   Box,
   Dialog,
@@ -14,6 +14,7 @@ import {
   Button,
 } from '@mui/material';
 import { Plus, Edit, Delete, Layers, ArrowDownRight, Database } from 'lucide-react';
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { pdmApi } from '@/api/pdm';
 import type { BomItem, Product } from '@/api/pdm';
 import { useAppStore } from '@/store';
@@ -26,6 +27,7 @@ import {
 } from '@/components/templates';
 import { PageContainer } from '@/components/common/PageContainerV2';
 import { designTokens } from '@/theme/tokens';
+import { QUERY_KEYS } from '@/lib/reactQuery';
 
 const ct = designTokens.colors;
 
@@ -39,11 +41,11 @@ interface BomItemFormData {
 }
 
 export const PdmBomPage: React.FC = () => {
+  const queryClient = useQueryClient();
+  const addNotification = useAppStore((state) => state.addNotification);
+
   const [selectedProduct, setSelectedProduct] = useState('');
   const [searchTerm, setSearchTerm] = useState('');
-  const [bomItems, setBomItems] = useState<BomItem[]>([]);
-  const [products, setProducts] = useState<Product[]>([]);
-  const [loading, setLoading] = useState(true);
   const [openDialog, setOpenDialog] = useState(false);
   const [editingItem, setEditingItem] = useState<BomItem | null>(null);
   const [formData, setFormData] = useState<BomItemFormData>({
@@ -54,55 +56,92 @@ export const PdmBomPage: React.FC = () => {
     unit_price: 0,
     level: 1,
   });
-  const addNotification = useAppStore((state) => state.addNotification);
 
-  useEffect(() => {
-    loadProducts();
-    loadBomItems();
-  }, []);
-
-  const loadProducts = async () => {
-    try {
+  const { data: products = [], isLoading: productsLoading } = useQuery({
+    queryKey: QUERY_KEYS.PDM.PRODUCTS,
+    queryFn: async () => {
       const response = await pdmApi.listProducts();
       if (response.success && response.data) {
         const data = response.data as any;
-        const items = Array.isArray(data) ? data : data.products || [];
-        setProducts(items);
-        if (items.length > 0 && !selectedProduct) {
-          setSelectedProduct(items[0].id);
-        }
+        return Array.isArray(data) ? data : data.products || [];
       }
-    } catch (err: unknown) {
-      apiLogger.error('加载产品数据失败:', err);
-      setProducts([]);
-    }
-  };
+      return [];
+    },
+    staleTime: 5 * 60 * 1000,
+  });
 
-  const loadBomItems = async () => {
-    try {
-      setLoading(true);
+  const { data: bomItems = [], isLoading } = useQuery({
+    queryKey: QUERY_KEYS.PDM.BOM_ITEMS,
+    queryFn: async () => {
       const response = await pdmApi.listBomItems();
       if (response.success && response.data) {
         const data = response.data as any;
         const items = Array.isArray(data) ? data : data.items || [];
-        const adapted = items.map((item: { [key: string]: unknown }) => ({
+        return items.map((item: { [key: string]: unknown }) => ({
           ...item,
           partNumber: item.part_number || item.partNumber || '',
           partName: item.part_name || item.partName || '',
           unitPrice: item.unit_price || item.unitPrice || 0,
           totalPrice: item.total_price || item.totalPrice || 0,
         }));
-        setBomItems(adapted as BomItem[]);
-      } else {
-        setBomItems([]);
       }
-    } catch (err: unknown) {
-      apiLogger.error('加载BOM数据失败:', err);
-      setBomItems([]);
-    } finally {
-      setLoading(false);
-    }
-  };
+      return [];
+    },
+    staleTime: 5 * 60 * 1000,
+  });
+
+  const createBomItemMutation = useMutation({
+    mutationFn: (data: {
+      bom_version_id: string;
+      item_no: string;
+      product_id: string;
+      part_number: string;
+      part_name: string;
+      quantity: number;
+      unit: string;
+      unit_price: number;
+      level: number;
+      total_price: number;
+    }) => pdmApi.createBomItem(data),
+    onSuccess: () => {
+      addNotification({ title: '成功', message: '物料添加成功', type: 'success' });
+      setOpenDialog(false);
+      queryClient.invalidateQueries({ queryKey: QUERY_KEYS.PDM.BOM_ITEMS });
+    },
+    onError: (err: unknown) => {
+      addNotification({ title: '错误', message: '创建失败', type: 'error' });
+      apiLogger.error('创建BOM物料失败:', err);
+    },
+  });
+
+  const updateBomItemMutation = useMutation({
+    mutationFn: ({ id, data }: { id: string; data: any }) => pdmApi.updateBomItem(id, data),
+    onSuccess: () => {
+      addNotification({ title: '成功', message: '物料更新成功', type: 'success' });
+      setOpenDialog(false);
+      queryClient.invalidateQueries({ queryKey: QUERY_KEYS.PDM.BOM_ITEMS });
+    },
+    onError: (err: unknown) => {
+      addNotification({ title: '错误', message: '更新失败', type: 'error' });
+      apiLogger.error('更新BOM物料失败:', err);
+    },
+  });
+
+  const deleteBomItemMutation = useMutation({
+    mutationFn: (id: string) => pdmApi.deleteBomItem(id),
+    onSuccess: () => {
+      addNotification({ title: '成功', message: '物料删除成功', type: 'success' });
+      queryClient.invalidateQueries({ queryKey: QUERY_KEYS.PDM.BOM_ITEMS });
+    },
+    onError: (err: unknown) => {
+      addNotification({ title: '错误', message: '删除失败', type: 'error' });
+      apiLogger.error('删除BOM物料失败:', err);
+    },
+  });
+
+  if (productsLoading && !selectedProduct && products.length > 0) {
+    setSelectedProduct(products[0].id);
+  }
 
   const handleEditItem = (item: BomItem) => {
     setEditingItem(item);
@@ -111,21 +150,14 @@ export const PdmBomPage: React.FC = () => {
       part_name: item.part_name,
       quantity: item.quantity,
       unit: item.unit,
-      unit_price: item.unit_price,
+      unit_price: item.unit_price || 0,
       level: item.level,
     });
     setOpenDialog(true);
   };
 
-  const handleDeleteItem = async (id: string) => {
-    try {
-      await pdmApi.deleteBomItem(id);
-      addNotification({ title: '成功', message: '物料删除成功', type: 'success' });
-      loadBomItems();
-    } catch (err: unknown) {
-      addNotification({ title: '错误', message: '删除失败', type: 'error' });
-      apiLogger.error('删除BOM物料失败:', err);
-    }
+  const handleDeleteItem = (id: string) => {
+    deleteBomItemMutation.mutate(id);
   };
 
   const handleCreate = () => {
@@ -141,46 +173,34 @@ export const PdmBomPage: React.FC = () => {
     setOpenDialog(true);
   };
 
-  const handleSaveItem = async () => {
+  const handleSaveItem = () => {
     if (!selectedProduct) {
       addNotification({ title: '提示', message: '请先选择产品', type: 'warning' });
       return;
     }
 
-    try {
-      const requestData = {
-        product_id: selectedProduct,
-        part_number: formData.part_number,
-        part_name: formData.part_name,
-        quantity: formData.quantity,
-        unit: formData.unit,
-        unit_price: formData.unit_price,
-        level: formData.level,
-        total_price: formData.quantity * formData.unit_price,
-      };
+    const requestData = {
+      bom_version_id: '',
+      item_no: `${formData.part_number}-${Date.now()}`,
+      product_id: selectedProduct,
+      part_number: formData.part_number,
+      part_name: formData.part_name,
+      quantity: formData.quantity,
+      unit: formData.unit,
+      unit_price: formData.unit_price,
+      level: formData.level,
+      total_price: formData.quantity * formData.unit_price,
+    };
 
-      if (editingItem) {
-        await pdmApi.updateBomItem(editingItem.id, requestData);
-        addNotification({ title: '成功', message: '物料更新成功', type: 'success' });
-      } else {
-        await pdmApi.createBomItem(requestData);
-        addNotification({ title: '成功', message: '物料添加成功', type: 'success' });
-      }
-      setOpenDialog(false);
-      setEditingItem(null);
-      loadBomItems();
-    } catch (err: unknown) {
-      addNotification({
-        title: '错误',
-        message: editingItem ? '更新失败' : '创建失败',
-        type: 'error',
-      });
-      apiLogger.error('保存BOM物料失败:', err);
+    if (editingItem) {
+      updateBomItemMutation.mutate({ id: editingItem.id, data: requestData });
+    } else {
+      createBomItemMutation.mutate(requestData);
     }
   };
 
   const filteredBomItems = useMemo(() => {
-    return bomItems.filter((item) => {
+    return bomItems.filter((item: any) => {
       const matchesProduct = !selectedProduct || item.product_id === selectedProduct;
       const matchesSearch =
         !searchTerm ||
@@ -191,12 +211,12 @@ export const PdmBomPage: React.FC = () => {
   }, [bomItems, selectedProduct, searchTerm]);
 
   const totalCost = filteredBomItems.reduce(
-    (sum, item) => sum + (item.total_price || item.quantity * item.unit_price),
+    (sum: number, item: any) => sum + (item.total_price || item.quantity * (item.unit_price || 0)),
     0
   );
 
   const productFilterOptions = useMemo(
-    () => products.map((p) => ({ label: `${p.name} (${p.code})`, value: p.id })),
+    () => products.map((p: any) => ({ label: `${p.name} (${p.code})`, value: p.id })),
     [products]
   );
 
@@ -243,14 +263,14 @@ export const PdmBomPage: React.FC = () => {
         label: '单价',
         minWidth: 100,
         align: 'right',
-        render: (row) => `¥ ${row.unit_price.toFixed(2)}`,
+        render: (row) => `¥ ${(row.unit_price || 0).toFixed(2)}`,
       },
       {
         id: 'total_price',
         label: '总价',
         minWidth: 100,
         align: 'right',
-        render: (row) => `¥ ${(row.total_price || row.quantity * row.unit_price).toFixed(2)}`,
+        render: (row) => `¥ ${(row.total_price || row.quantity * (row.unit_price || 0)).toFixed(2)}`,
       },
     ],
     []
@@ -294,7 +314,7 @@ export const PdmBomPage: React.FC = () => {
         >
           <Box sx={{ color: 'text.secondary', fontSize: '0.875rem', mb: 1 }}>物料总数</Box>
           <Box sx={{ fontWeight: 'bold', fontSize: '1.5rem' }}>
-            {loading ? '...' : `${filteredBomItems.length} 项`}
+            {isLoading ? '...' : `${filteredBomItems.length} 项`}
           </Box>
         </Box>
       </Grid>
@@ -310,7 +330,7 @@ export const PdmBomPage: React.FC = () => {
         >
           <Box sx={{ color: 'text.secondary', fontSize: '0.875rem', mb: 1 }}>物料总成本</Box>
           <Box sx={{ fontWeight: 'bold', fontSize: '1.5rem', color: 'primary.main' }}>
-            {loading ? '...' : `¥ ${totalCost.toLocaleString()}`}
+            {isLoading ? '...' : `¥ ${totalCost.toLocaleString()}`}
           </Box>
         </Box>
       </Grid>
@@ -329,7 +349,7 @@ export const PdmBomPage: React.FC = () => {
         subtitle=''
         columns={columns}
         data={filteredBomItems}
-        loading={loading}
+        loading={isLoading || productsLoading}
         searchable
         searchPlaceholder='搜索物料编号或名称...'
         onSearch={handleSearch}
@@ -345,7 +365,7 @@ export const PdmBomPage: React.FC = () => {
             variant: 'contained',
           },
         ]}
-        onRefresh={loadBomItems}
+        onRefresh={() => queryClient.invalidateQueries({ queryKey: QUERY_KEYS.PDM.BOM_ITEMS })}
         headerContent={statsCards}
         emptyMessage='暂无物料数据'
       />
@@ -440,6 +460,7 @@ export const PdmBomPage: React.FC = () => {
           <Button
             variant='contained'
             onClick={handleSaveItem}
+            disabled={createBomItemMutation.isPending || updateBomItemMutation.isPending}
           >
             保存
           </Button>

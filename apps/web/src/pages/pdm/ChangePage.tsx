@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useMemo, useCallback } from 'react';
+import React, { useState, useMemo, useCallback } from 'react';
 import {
   Box,
   Dialog,
@@ -14,7 +14,7 @@ import {
   Button,
   Chip,
 } from '@mui/material';
-import { Plus, Edit, Delete, FileWarning } from 'lucide-react';
+import { Plus, Edit, Delete, RefreshCw, AlertTriangle, FileWarning } from 'lucide-react';
 import { pdmApi } from '@/api/pdm';
 import type { ChangeOrder, CreateChangeOrderRequest } from '@/api/pdm';
 import { useAppStore } from '@/store';
@@ -27,6 +27,8 @@ import {
 } from '@/components/templates';
 import { PageContainer } from '@/components/common/PageContainerV2';
 import { designTokens } from '@/theme/tokens';
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import { QUERY_KEYS } from '@/lib/reactQuery';
 
 const ct = designTokens.colors;
 
@@ -89,9 +91,8 @@ const STATUS_OPTIONS = [
 ];
 
 export const ChangePage: React.FC = () => {
+  const queryClient = useQueryClient();
   const [searchTerm, setSearchTerm] = useState('');
-  const [changeOrders, setChangeOrders] = useState<ChangeOrder[]>([]);
-  const [loading, setLoading] = useState(true);
   const [openDialog, setOpenDialog] = useState(false);
   const [editingChange, setEditingChange] = useState<ChangeOrder | null>(null);
   const [formData, setFormData] = useState<ChangeOrderFormData>({
@@ -109,28 +110,60 @@ export const ChangePage: React.FC = () => {
   });
   const addNotification = useAppStore((state) => state.addNotification);
 
-  useEffect(() => {
-    loadChangeOrders();
-  }, []);
+  const loadChangeOrders = useCallback(() => {
+    queryClient.invalidateQueries({ queryKey: QUERY_KEYS.PDM.CHANGE_ORDERS });
+  }, [queryClient]);
 
-  const loadChangeOrders = async () => {
-    try {
-      setLoading(true);
+  const { data: changeOrders = [], isLoading: loading } = useQuery({
+    queryKey: QUERY_KEYS.PDM.CHANGE_ORDERS,
+    queryFn: async () => {
       const response = await pdmApi.listChangeOrders();
       if (response.success && response.data) {
         const data = response.data as any;
-        const items = Array.isArray(data) ? data : data.changeOrders || [];
-        setChangeOrders(items as ChangeOrder[]);
-      } else {
-        setChangeOrders([]);
+        return Array.isArray(data) ? data : data.changeOrders || [];
       }
-    } catch (err: unknown) {
-      apiLogger.error('加载变更单数据失败:', err);
-      setChangeOrders([]);
-    } finally {
-      setLoading(false);
-    }
-  };
+      return [];
+    },
+    staleTime: 5 * 60 * 1000,
+  });
+
+  const createChangeOrderMutation = useMutation({
+    mutationFn: (data: CreateChangeOrderRequest) => pdmApi.createChangeOrder(data),
+    onSuccess: () => {
+      addNotification({ title: '成功', message: '变更单创建成功', type: 'success' });
+      setOpenDialog(false);
+      setEditingChange(null);
+      queryClient.invalidateQueries({ queryKey: QUERY_KEYS.PDM.CHANGE_ORDERS });
+    },
+    onError: () => {
+      addNotification({ title: '错误', message: '创建失败', type: 'error' });
+    },
+  });
+
+  const updateChangeOrderMutation = useMutation({
+    mutationFn: ({ id, data }: { id: string; data: CreateChangeOrderRequest }) =>
+      pdmApi.updateChangeOrder(id, data),
+    onSuccess: () => {
+      addNotification({ title: '成功', message: '变更单更新成功', type: 'success' });
+      setOpenDialog(false);
+      setEditingChange(null);
+      queryClient.invalidateQueries({ queryKey: QUERY_KEYS.PDM.CHANGE_ORDERS });
+    },
+    onError: () => {
+      addNotification({ title: '错误', message: '更新失败', type: 'error' });
+    },
+  });
+
+  const deleteChangeOrderMutation = useMutation({
+    mutationFn: (id: string) => pdmApi.deleteChangeOrder(id),
+    onSuccess: () => {
+      addNotification({ title: '成功', message: '变更单删除成功', type: 'success' });
+      queryClient.invalidateQueries({ queryKey: QUERY_KEYS.PDM.CHANGE_ORDERS });
+    },
+    onError: () => {
+      addNotification({ title: '错误', message: '删除失败', type: 'error' });
+    },
+  });
 
   const handleEditChange = (change: ChangeOrder) => {
     setEditingChange(change);
@@ -150,15 +183,8 @@ export const ChangePage: React.FC = () => {
     setOpenDialog(true);
   };
 
-  const handleDeleteChange = async (id: string) => {
-    try {
-      await pdmApi.deleteChangeOrder(id);
-      addNotification({ title: '成功', message: '变更单删除成功', type: 'success' });
-      loadChangeOrders();
-    } catch (err: unknown) {
-      addNotification({ title: '错误', message: '删除失败', type: 'error' });
-      apiLogger.error('删除变更单失败:', err);
-    }
+  const handleDeleteChange = (id: string) => {
+    deleteChangeOrderMutation.mutate(id);
   };
 
   const handleCreate = () => {
@@ -179,44 +205,30 @@ export const ChangePage: React.FC = () => {
     setOpenDialog(true);
   };
 
-  const handleSaveChange = async () => {
-    try {
-      const requestData: CreateChangeOrderRequest = {
-        change_no: formData.change_no,
-        title: formData.title,
-        type: formData.type,
-        priority: formData.priority,
-        status: formData.status,
-        applicant: formData.applicant,
-        apply_date: formData.apply_date,
-        description: formData.description,
-        reason: formData.reason,
-        impact_analysis: formData.impact_analysis,
-        remarks: formData.remarks,
-      };
+  const handleSaveChange = () => {
+    const requestData: CreateChangeOrderRequest = {
+      change_no: formData.change_no,
+      title: formData.title,
+      type: formData.type,
+      priority: formData.priority,
+      status: formData.status,
+      applicant: formData.applicant,
+      apply_date: formData.apply_date,
+      description: formData.description,
+      reason: formData.reason,
+      impact_analysis: formData.impact_analysis,
+      remarks: formData.remarks,
+    };
 
-      if (editingChange) {
-        await pdmApi.updateChangeOrder(editingChange.id, requestData);
-        addNotification({ title: '成功', message: '变更单更新成功', type: 'success' });
-      } else {
-        await pdmApi.createChangeOrder(requestData);
-        addNotification({ title: '成功', message: '变更单创建成功', type: 'success' });
-      }
-      setOpenDialog(false);
-      setEditingChange(null);
-      loadChangeOrders();
-    } catch (err: unknown) {
-      addNotification({
-        title: '错误',
-        message: editingChange ? '更新失败' : '创建失败',
-        type: 'error',
-      });
-      apiLogger.error('保存变更单失败:', err);
+    if (editingChange) {
+      updateChangeOrderMutation.mutate({ id: editingChange.id, data: requestData });
+    } else {
+      createChangeOrderMutation.mutate(requestData);
     }
   };
 
   const filteredChanges = useMemo(() => {
-    return changeOrders.filter((change) => {
+    return changeOrders.filter((change: ChangeOrder) => {
       const matchesSearch =
         !searchTerm ||
         change.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
@@ -338,9 +350,9 @@ export const ChangePage: React.FC = () => {
     []
   );
 
-  const pendingCount = filteredChanges.filter((c) => c.status === 'pending').length;
-  const approvedCount = filteredChanges.filter((c) => c.status === 'approved').length;
-  const implementedCount = filteredChanges.filter((c) => c.status === 'implemented').length;
+  const pendingCount = filteredChanges.filter((c: ChangeOrder) => c.status === 'pending').length;
+  const approvedCount = filteredChanges.filter((c: ChangeOrder) => c.status === 'approved').length;
+  const implementedCount = filteredChanges.filter((c: ChangeOrder) => c.status === 'implemented').length;
 
   const statsCards = (
     <Grid
@@ -427,7 +439,7 @@ export const ChangePage: React.FC = () => {
             variant: 'contained',
           },
         ]}
-        onRefresh={loadChangeOrders}
+        onRefresh={() => queryClient.invalidateQueries({ queryKey: QUERY_KEYS.PDM.CHANGE_ORDERS })}
         headerContent={statsCards}
         emptyMessage='暂无变更单数据'
       />

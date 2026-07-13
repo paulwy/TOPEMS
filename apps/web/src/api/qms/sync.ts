@@ -26,7 +26,7 @@ export const syncApi = {
     const response = await apiClient.qms.get<SyncRecordBackend>(`/sync-records/${id}`);
     return {
       ...response,
-      data: response.data ? adaptSyncRecordToFrontend(response.data) : undefined,
+      data: response.data ? adaptSyncRecordToFrontend(response.data) : ({} as SyncRecord),
     };
   },
 
@@ -38,7 +38,7 @@ export const syncApi = {
     const response = await apiClient.qms.post<SyncRecordBackend>(`/sync-records/${id}/retry`, {});
     return {
       ...response,
-      data: response.data ? adaptSyncRecordToFrontend(response.data) : undefined,
+      data: response.data ? adaptSyncRecordToFrontend(response.data) : ({} as SyncRecord),
     };
   },
 
@@ -48,7 +48,7 @@ export const syncApi = {
     });
     return {
       ...response,
-      data: response.data ? adaptSyncRecordToFrontend(response.data) : undefined,
+      data: response.data ? adaptSyncRecordToFrontend(response.data) : ({} as SyncRecord),
     };
   },
 
@@ -58,7 +58,7 @@ export const syncApi = {
     });
     return {
       ...response,
-      data: response.data ? adaptSyncRecordToFrontend(response.data) : undefined,
+      data: response.data ? adaptSyncRecordToFrontend(response.data) : ({} as SyncRecord),
     };
   },
 };

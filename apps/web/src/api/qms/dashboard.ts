@@ -21,7 +21,7 @@ export const qualityDashboardApi = {
     );
     return {
       ...response,
-      data: response.data ? adaptQualityOverviewToFrontend(response.data) : undefined,
+      data: response.data ? adaptQualityOverviewToFrontend(response.data) : ({} as QualityOverview),
     };
   },
 };

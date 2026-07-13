@@ -27,7 +27,7 @@ export const inspectionApi = {
     const response = await apiClient.qms.get<QualityInspectionBackend>(`/checks/${id}`);
     return {
       ...response,
-      data: response.data ? adaptInspectionToFrontend(response.data) : undefined,
+      data: response.data ? adaptInspectionToFrontend(response.data) : ({} as QualityCheck),
     };
   },
 
@@ -36,7 +36,7 @@ export const inspectionApi = {
     const response = await apiClient.qms.post<QualityInspectionBackend>('/checks', backendData);
     return {
       ...response,
-      data: response.data ? adaptInspectionToFrontend(response.data) : undefined,
+      data: response.data ? adaptInspectionToFrontend(response.data) : ({} as QualityCheck),
     };
   },
 
@@ -56,7 +56,7 @@ export const inspectionApi = {
     );
     return {
       ...response,
-      data: response.data ? adaptInspectionToFrontend(response.data) : undefined,
+      data: response.data ? adaptInspectionToFrontend(response.data) : ({} as QualityCheck),
     };
   },
 
@@ -74,7 +74,7 @@ export const inspectionApi = {
     );
     return {
       ...response,
-      data: response.data ? adaptInspectionToFrontend(response.data) : undefined,
+      data: response.data ? adaptInspectionToFrontend(response.data) : ({} as QualityCheck),
     };
   },
 
@@ -88,7 +88,7 @@ export const inspectionApi = {
     );
     return {
       ...response,
-      data: response.data ? adaptInspectionToFrontend(response.data) : undefined,
+      data: response.data ? adaptInspectionToFrontend(response.data) : ({} as QualityCheck),
     };
   },
 
@@ -102,7 +102,7 @@ export const inspectionApi = {
     );
     return {
       ...response,
-      data: response.data ? adaptInspectionToFrontend(response.data) : undefined,
+      data: response.data ? adaptInspectionToFrontend(response.data) : ({} as QualityCheck),
     };
   },
 
@@ -116,7 +116,7 @@ export const inspectionApi = {
     );
     return {
       ...response,
-      data: response.data ? adaptInspectionToFrontend(response.data) : undefined,
+      data: response.data ? adaptInspectionToFrontend(response.data) : ({} as QualityCheck),
     };
   },
 

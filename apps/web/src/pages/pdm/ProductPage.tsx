@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useMemo, useCallback } from 'react';
+import React, { useState, useMemo, useCallback } from 'react';
 import {
   Box,
   Dialog,
@@ -27,6 +27,8 @@ import {
 } from '@/components/templates';
 import { PageContainer } from '@/components/common';
 import { designTokens } from '@/theme/tokens';
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import { QUERY_KEYS } from '@/lib/reactQuery';
 
 const ct = designTokens.colors;
 
@@ -51,9 +53,8 @@ const STATUS_COLORS: Record<
 };
 
 export const ProductPage: React.FC = () => {
+  const queryClient = useQueryClient();
   const [searchTerm, setSearchTerm] = useState('');
-  const [products, setProducts] = useState<Product[]>([]);
-  const [loading, setLoading] = useState(true);
   const [openDialog, setOpenDialog] = useState(false);
   const [editingProduct, setEditingProduct] = useState<Product | null>(null);
   const [formData, setFormData] = useState<ProductFormData>({
@@ -67,28 +68,61 @@ export const ProductPage: React.FC = () => {
   });
   const addNotification = useAppStore((state) => state.addNotification);
 
-  useEffect(() => {
-    loadProducts();
-  }, []);
+  const loadProducts = useCallback(() => {
+    queryClient.invalidateQueries({ queryKey: QUERY_KEYS.PDM.PRODUCTS });
+  }, [queryClient]);
 
-  const loadProducts = async () => {
-    try {
-      setLoading(true);
+  const { data: products = [], isLoading: loading } = useQuery({
+    queryKey: QUERY_KEYS.PDM.PRODUCTS,
+    queryFn: async () => {
       const response = await pdmApi.listProducts();
       if (response.success && response.data) {
         const data = response.data as any;
         const items = Array.isArray(data) ? data : data.products || [];
-        setProducts(items as Product[]);
-      } else {
-        setProducts([]);
+        return items as Product[];
       }
-    } catch (err: unknown) {
-      apiLogger.error('加载产品数据失败:', err);
-      setProducts([]);
-    } finally {
-      setLoading(false);
-    }
-  };
+      return [];
+    },
+    staleTime: 5 * 60 * 1000,
+  });
+
+  const createProductMutation = useMutation({
+    mutationFn: (data: CreateProductRequest) => pdmApi.createProduct(data),
+    onSuccess: () => {
+      addNotification({ title: '成功', message: '产品创建成功', type: 'success' });
+      setOpenDialog(false);
+      setEditingProduct(null);
+      queryClient.invalidateQueries({ queryKey: QUERY_KEYS.PDM.PRODUCTS });
+    },
+    onError: () => {
+      addNotification({ title: '错误', message: '创建失败', type: 'error' });
+    },
+  });
+
+  const updateProductMutation = useMutation({
+    mutationFn: ({ id, data }: { id: string; data: CreateProductRequest }) =>
+      pdmApi.updateProduct(id, data),
+    onSuccess: () => {
+      addNotification({ title: '成功', message: '产品更新成功', type: 'success' });
+      setOpenDialog(false);
+      setEditingProduct(null);
+      queryClient.invalidateQueries({ queryKey: QUERY_KEYS.PDM.PRODUCTS });
+    },
+    onError: () => {
+      addNotification({ title: '错误', message: '更新失败', type: 'error' });
+    },
+  });
+
+  const deleteProductMutation = useMutation({
+    mutationFn: (id: string) => pdmApi.deleteProduct(id),
+    onSuccess: () => {
+      addNotification({ title: '成功', message: '产品删除成功', type: 'success' });
+      queryClient.invalidateQueries({ queryKey: QUERY_KEYS.PDM.PRODUCTS });
+    },
+    onError: () => {
+      addNotification({ title: '错误', message: '删除失败', type: 'error' });
+    },
+  });
 
   const handleEditProduct = (product: Product) => {
     setEditingProduct(product);
@@ -104,15 +138,8 @@ export const ProductPage: React.FC = () => {
     setOpenDialog(true);
   };
 
-  const handleDeleteProduct = async (id: string) => {
-    try {
-      await pdmApi.deleteProduct(id);
-      addNotification({ title: '成功', message: '产品删除成功', type: 'success' });
-      loadProducts();
-    } catch (err: unknown) {
-      addNotification({ title: '错误', message: '删除失败', type: 'error' });
-      apiLogger.error('删除产品失败:', err);
-    }
+  const handleDeleteProduct = (id: string) => {
+    deleteProductMutation.mutate(id);
   };
 
   const handleCreate = () => {
@@ -129,35 +156,21 @@ export const ProductPage: React.FC = () => {
     setOpenDialog(true);
   };
 
-  const handleSaveProduct = async () => {
-    try {
-      const requestData: CreateProductRequest = {
-        name: formData.name,
-        code: formData.code,
-        version: formData.version,
-        status: formData.status,
-        description: formData.description,
-        category: formData.category,
-        unit: formData.unit,
-      };
+  const handleSaveProduct = () => {
+    const requestData: CreateProductRequest = {
+      name: formData.name,
+      code: formData.code,
+      version: formData.version,
+      status: formData.status,
+      description: formData.description,
+      category: formData.category,
+      unit: formData.unit,
+    };
 
-      if (editingProduct) {
-        await pdmApi.updateProduct(editingProduct.id, requestData);
-        addNotification({ title: '成功', message: '产品更新成功', type: 'success' });
-      } else {
-        await pdmApi.createProduct(requestData);
-        addNotification({ title: '成功', message: '产品创建成功', type: 'success' });
-      }
-      setOpenDialog(false);
-      setEditingProduct(null);
-      loadProducts();
-    } catch (err: unknown) {
-      addNotification({
-        title: '错误',
-        message: editingProduct ? '更新失败' : '创建失败',
-        type: 'error',
-      });
-      apiLogger.error('保存产品失败:', err);
+    if (editingProduct) {
+      updateProductMutation.mutate({ id: editingProduct.id, data: requestData });
+    } else {
+      createProductMutation.mutate(requestData);
     }
   };
 

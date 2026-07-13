@@ -32,7 +32,7 @@ const wrapResponse = <T>(data: T, success = true, message = 'Success'): ApiRespo
   success,
   data,
   message,
-  timestamp: new Date().toISOString(),
+  timestamp: Date.now(),
 });
 
 export const tenantApi = {

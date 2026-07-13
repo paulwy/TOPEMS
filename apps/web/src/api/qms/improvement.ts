@@ -24,7 +24,7 @@ export const improvementApi = {
     const response = await apiClient.qms.get<CorrectiveActionBackend>(`/actions/${id}`);
     return {
       ...response,
-      data: response.data ? adaptActionToFrontend(response.data) : undefined,
+      data: response.data ? adaptActionToFrontend(response.data) : ({} as QualityImprovement),
     };
   },
 
@@ -35,7 +35,7 @@ export const improvementApi = {
     const response = await apiClient.qms.post<CorrectiveActionBackend>('/actions', backendData);
     return {
       ...response,
-      data: response.data ? adaptActionToFrontend(response.data) : undefined,
+      data: response.data ? adaptActionToFrontend(response.data) : ({} as QualityImprovement),
     };
   },
 
@@ -57,7 +57,7 @@ export const improvementApi = {
     );
     return {
       ...response,
-      data: response.data ? adaptActionToFrontend(response.data) : undefined,
+      data: response.data ? adaptActionToFrontend(response.data) : ({} as QualityImprovement),
     };
   },
 

@@ -1,4 +1,5 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { apiLogger } from '@/utils/logger';
 import { useNavigate } from 'react-router-dom';
 import { designTokens } from '@/theme/tokens';
@@ -48,13 +49,7 @@ const ct = designTokens.colors;
 
 const QmsApqpPage: React.FC = () => {
   const navigate = useNavigate();
-  const [projects, setProjects] = useState<ApqpProject[]>([]);
   const [selectedProject, setSelectedProject] = useState<ApqpProject | null>(null);
-  const [phases, setPhases] = useState<ApqpPhase[]>([]);
-  const [tasks, setTasks] = useState<ApqpTask[]>([]);
-  const [risks, setRisks] = useState<ApqpRisk[]>([]);
-  const [progress, setProgress] = useState<ApqpProgressStatistics | null>(null);
-  const [loading, setLoading] = useState(true);
   const [submitting, setSubmitting] = useState(false);
   const [showAddModal, setShowAddModal] = useState(false);
   const [showDetailModal, setShowDetailModal] = useState(false);
@@ -70,80 +65,95 @@ const QmsApqpPage: React.FC = () => {
     target_date: '',
   });
   const addNotification = useAppStore((state) => state.addNotification);
+  const queryClient = useQueryClient();
 
-  useEffect(() => {
-    loadProjects();
-  }, []);
-
-  const loadProjects = async () => {
-    try {
-      setLoading(true);
+  const { data: projects = [], isLoading: loading } = useQuery({
+    queryKey: ['qms-apqp-projects'],
+    queryFn: async () => {
       const response = await qmsApi.listApqpProjects();
       if (response.success && response.data) {
         const data = response.data as any;
-        const projectsArray = Array.isArray(data) ? data : data.projects || [];
-        setProjects(projectsArray);
-      } else if (!response.success) {
-        addNotification({
-          title: '加载失败',
-          message: response.message || '加载APQP项目失败',
-          type: 'error',
-        });
+        return Array.isArray(data) ? data : data.projects || [];
       }
-    } catch (error: unknown) {
-      apiLogger.error('加载APQP项目失败:', error);
-      addNotification({
-        title: '加载失败',
-        message: '加载APQP项目失败',
-        type: 'error',
-      });
-    } finally {
-      setLoading(false);
-    }
-  };
+      return [];
+    },
+  });
 
-  const loadProjectDetails = async (projectId: string) => {
-    try {
+  const { data: projectDetails } = useQuery({
+    queryKey: ['qms-apqp-project-details', selectedProject?.id],
+    queryFn: async () => {
+      if (!selectedProject?.id) {
+        return { phases: [], tasks: [], risks: [], progress: null };
+      }
       const [phasesRes, tasksRes, risksRes, progressRes] = await Promise.all([
-        qmsApi.listApqpPhases(projectId),
-        qmsApi.listApqpTasks({ project_id: projectId }),
-        qmsApi.listApqpRisks({ project_id: projectId }),
-        qmsApi.getApqpProgress(projectId),
+        qmsApi.listApqpPhases(selectedProject.id),
+        qmsApi.listApqpTasks({ project_id: selectedProject.id }),
+        qmsApi.listApqpRisks({ project_id: selectedProject.id }),
+        qmsApi.getApqpProgress(selectedProject.id),
       ]);
 
-      if (phasesRes.success && phasesRes.data) {
-        const data = phasesRes.data as any;
-        setPhases(Array.isArray(data) ? data : data.phases || []);
-      }
+      return {
+        phases:
+          phasesRes.success && phasesRes.data
+            ? Array.isArray(phasesRes.data)
+              ? phasesRes.data
+              : (phasesRes.data as any).phases || []
+            : [],
+        tasks:
+          tasksRes.success && tasksRes.data
+            ? Array.isArray(tasksRes.data)
+              ? tasksRes.data
+              : (tasksRes.data as any).tasks || []
+            : [],
+        risks:
+          risksRes.success && risksRes.data
+            ? Array.isArray(risksRes.data)
+              ? risksRes.data
+              : (risksRes.data as any).risks || []
+            : [],
+        progress:
+          progressRes.success && progressRes.data
+            ? (progressRes.data as ApqpProgressStatistics)
+            : null,
+      };
+    },
+    enabled: !!selectedProject?.id,
+  });
 
-      if (tasksRes.success && tasksRes.data) {
-        const data = tasksRes.data as any;
-        setTasks(Array.isArray(data) ? data : data.tasks || []);
-      }
+  const phases = projectDetails?.phases || [];
+  const tasks = projectDetails?.tasks || [];
+  const risks = projectDetails?.risks || [];
+  const progress = projectDetails?.progress || null;
 
-      if (risksRes.success && risksRes.data) {
-        const data = risksRes.data as any;
-        setRisks(Array.isArray(data) ? data : data.risks || []);
-      }
+  const createProjectMutation = useMutation({
+    mutationFn: (data: Parameters<typeof qmsApi.createApqpProject>[0]) =>
+      qmsApi.createApqpProject(data),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['qms-apqp-projects'] });
+      addNotification({
+        title: '成功',
+        message: 'APQP项目创建成功',
+        type: 'success',
+      });
+    },
+    onError: () => {
+      addNotification({
+        title: '错误',
+        message: '创建APQP项目失败',
+        type: 'error',
+      });
+    },
+  });
 
-      if (progressRes.success && progressRes.data) {
-        setProgress(progressRes.data);
-      }
-    } catch (error: unknown) {
-      apiLogger.error('加载项目详情失败:', error);
-    }
-  };
-
-  const handleSelectProject = async (project: ApqpProject) => {
+  const handleSelectProject = (project: ApqpProject) => {
     setSelectedProject(project);
-    await loadProjectDetails(project.id);
     setShowDetailModal(true);
   };
 
   const handleCreateProject = async () => {
+    setSubmitting(true);
     try {
-      setSubmitting(true);
-      const response = await qmsApi.createApqpProject({
+      await createProjectMutation.mutateAsync({
         project_name: formData.project_name,
         product_name: formData.product_name,
         customer: formData.customer,
@@ -153,24 +163,9 @@ const QmsApqpPage: React.FC = () => {
         start_date: formData.start_date,
         target_date: formData.target_date,
       });
-      if (response.success) {
-        addNotification({
-          title: '成功',
-          message: 'APQP项目创建成功',
-          type: 'success',
-        });
-        setShowAddModal(false);
-        loadProjects();
-        resetForm();
-      } else {
-        addNotification({
-          title: '失败',
-          message: response.message || '创建APQP项目失败',
-          type: 'error',
-        });
-      }
+      setShowAddModal(false);
+      resetForm();
     } catch (error: unknown) {
-      apiLogger.error('创建APQP项目失败:', error);
       addNotification({
         title: '错误',
         message: '创建APQP项目时发生错误',
@@ -380,16 +375,16 @@ const QmsApqpPage: React.FC = () => {
 
   const stats = {
     total: projects.length,
-    planning: projects.filter((p) => p.status === 'planning').length,
-    developing: projects.filter((p) => p.status === 'developing').length,
-    verifying: projects.filter((p) => p.status === 'verifying').length,
-    released: projects.filter((p) => p.status === 'released').length,
+    planning: projects.filter((p: ApqpProject) => p.status === 'planning').length,
+    developing: projects.filter((p: ApqpProject) => p.status === 'developing').length,
+    verifying: projects.filter((p: ApqpProject) => p.status === 'verifying').length,
+    released: projects.filter((p: ApqpProject) => p.status === 'released').length,
   };
 
-  const completedTasks = tasks.filter((t) => t.status === 'completed').length;
+  const completedTasks = tasks.filter((t: ApqpTask) => t.status === 'completed').length;
   const totalTasks = tasks.length;
-  const openRisks = risks.filter((r) => r.status === 'open').length;
-  const highRisks = risks.filter((r) => (r.rpn || 0) >= 100).length;
+  const openRisks = risks.filter((r: ApqpRisk) => r.status === 'open').length;
+  const highRisks = risks.filter((r: ApqpRisk) => (r.rpn || 0) >= 100).length;
 
   const phaseColumns: ColumnDef<ApqpPhase>[] = [
     { id: 'phase_name', label: '阶段名称', render: (row) => row.phase_name },
@@ -667,7 +662,7 @@ const QmsApqpPage: React.FC = () => {
           </Box>
         }
         emptyMessage='暂无APQP项目'
-        onRefresh={loadProjects}
+        onRefresh={() => queryClient.invalidateQueries({ queryKey: ['qms-apqp-projects'] })}
       />
 
       <Dialog

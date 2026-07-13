@@ -46,8 +46,10 @@
     "@mui/system": "^9.1.2",
     "@mui/x-data-grid-pro": "7.19.0",
     "@react-leaflet/core": "^3.0.0",
+    "@types/node": "^25.9.2",
     "react-leaflet": "^5.0.0",
-    "react-transition-group": "^4.4.5"
+    "react-transition-group": "^4.4.5",
+    "vitest": "^4.1.9"
   },
   "devDependencies": {
     "@eslint/js": "^10.0.1",
@@ -63,10 +65,5 @@
     "lint-staged": "^17.0.8",
     "prettier": "^3.9.1",
     "typescript-eslint": "^8.62.0"
-  },
-  "pnpm": {
-    "patchedDependencies": {
-      "react-transition-group@4.4.5": "patches/react-transition-group@4.4.5.patch"
-    }
   }
 }
