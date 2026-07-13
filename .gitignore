@@ -77,8 +77,6 @@ apps/web/playwright-report/
 apps/web/test-results/
 test-results*.json
 test-latest.json
-*.test.ts
-*.spec.ts
 junit.xml
 allure-report/
 allure-results/
