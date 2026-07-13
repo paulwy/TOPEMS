@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useMemo, useCallback } from 'react';
+import React, { useState, useMemo, useCallback } from 'react';
 import {
   Box,
   Dialog,
@@ -30,6 +30,8 @@ import {
 } from '@/components/templates';
 import { PageContainer } from '@/components/common/PageContainerV2';
 import { designTokens } from '@/theme/tokens';
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import { QUERY_KEYS } from '@/lib/reactQuery';
 
 const ct = designTokens.colors;
 
@@ -54,11 +56,10 @@ interface FormData {
 }
 
 export const PdmProductConfigPage: React.FC = () => {
+  const queryClient = useQueryClient();
   const [searchTerm, setSearchTerm] = useState('');
   const [statusFilter, setStatusFilter] = useState('');
   const [openDialog, setOpenDialog] = useState(false);
-  const [configs, setConfigs] = useState<ProductConfig[]>([]);
-  const [loading, setLoading] = useState(true);
   const [editingConfig, setEditingConfig] = useState<ProductConfig | null>(null);
   const [formData, setFormData] = useState<FormData>({
     name: '',
@@ -104,28 +105,62 @@ export const PdmProductConfigPage: React.FC = () => {
     { name: '是否可定制', type: 'boolean', required: false },
   ];
 
-  useEffect(() => {
-    loadConfigs();
-  }, []);
+  const loadConfigs = useCallback(() => {
+    queryClient.invalidateQueries({ queryKey: QUERY_KEYS.PDM.PRODUCT_CONFIGS });
+  }, [queryClient]);
 
-  const loadConfigs = async () => {
-    try {
-      setLoading(true);
+  const { data: configs = [], isLoading: loading } = useQuery({
+    queryKey: QUERY_KEYS.PDM.PRODUCT_CONFIGS,
+    queryFn: async () => {
       const response = await pdmApi.listProductConfigs();
       if (response.success && response.data) {
         const data = response.data as any;
         const items = Array.isArray(data) ? data : data.configs || [];
-        setConfigs(items);
-      } else {
-        setConfigs([]);
+        return items;
       }
-    } catch (err: unknown) {
-      apiLogger.error('加载产品配置数据失败:', err);
-      setConfigs([]);
-    } finally {
-      setLoading(false);
-    }
-  };
+      return [];
+    },
+    staleTime: 5 * 60 * 1000,
+  });
+
+  const createConfigMutation = useMutation({
+    mutationFn: (data: { name: string; code: string; status: string; attributes: any; options: string[] }) =>
+      pdmApi.createProductConfig(data),
+    onSuccess: () => {
+      addNotification({ title: '成功', message: '配置创建成功', type: 'success' });
+      setOpenDialog(false);
+      setEditingConfig(null);
+      queryClient.invalidateQueries({ queryKey: QUERY_KEYS.PDM.PRODUCT_CONFIGS });
+    },
+    onError: () => {
+      addNotification({ title: '错误', message: '创建失败', type: 'error' });
+    },
+  });
+
+  const updateConfigMutation = useMutation({
+    mutationFn: ({ id, data }: { id: string; data: { name: string; code: string; status: string; attributes: any; options: string[] } }) =>
+      pdmApi.updateProductConfig(id, data),
+    onSuccess: () => {
+      addNotification({ title: '成功', message: '配置更新成功', type: 'success' });
+      setOpenDialog(false);
+      setEditingConfig(null);
+      queryClient.invalidateQueries({ queryKey: QUERY_KEYS.PDM.PRODUCT_CONFIGS });
+    },
+    onError: () => {
+      addNotification({ title: '错误', message: '更新失败', type: 'error' });
+    },
+  });
+
+  const deleteConfigMutation = useMutation({
+    mutationFn: (id: string) => pdmApi.deleteProductConfig(id),
+    onSuccess: () => {
+      addNotification({ title: '成功', message: '配置删除成功', type: 'success' });
+      queryClient.invalidateQueries({ queryKey: QUERY_KEYS.PDM.PRODUCT_CONFIGS });
+    },
+    onError: () => {
+      addNotification({ title: '错误', message: '删除失败', type: 'error' });
+    },
+  });
 
   const getStatusColor = (status: string) => {
     switch (status) {
@@ -165,15 +200,8 @@ export const PdmProductConfigPage: React.FC = () => {
     setOpenDialog(true);
   };
 
-  const handleDelete = async (id: string) => {
-    try {
-      await pdmApi.deleteProductConfig(id);
-      addNotification({ title: '成功', message: '配置删除成功', type: 'success' });
-      loadConfigs();
-    } catch (err: unknown) {
-      addNotification({ title: '错误', message: '删除失败', type: 'error' });
-      apiLogger.error('删除产品配置失败:', err);
-    }
+  const handleDelete = (id: string) => {
+    deleteConfigMutation.mutate(id);
   };
 
   const handleCreate = () => {
@@ -193,33 +221,19 @@ export const PdmProductConfigPage: React.FC = () => {
     setOpenDialog(true);
   };
 
-  const handleSave = async () => {
-    try {
-      const requestData = {
-        name: formData.name,
-        code: formData.code,
-        status: formData.status,
-        attributes: formData.attributes,
-        options: formData.options,
-      };
+  const handleSave = () => {
+    const requestData = {
+      name: formData.name,
+      code: formData.code,
+      status: formData.status,
+      attributes: formData.attributes,
+      options: formData.options,
+    };
 
-      if (editingConfig) {
-        await pdmApi.updateProductConfig(editingConfig.id, requestData);
-        addNotification({ title: '成功', message: '配置更新成功', type: 'success' });
-      } else {
-        await pdmApi.createProductConfig(requestData);
-        addNotification({ title: '成功', message: '配置创建成功', type: 'success' });
-      }
-      setOpenDialog(false);
-      setEditingConfig(null);
-      loadConfigs();
-    } catch (err: unknown) {
-      addNotification({
-        title: '错误',
-        message: editingConfig ? '更新失败' : '创建失败',
-        type: 'error',
-      });
-      apiLogger.error('保存产品配置失败:', err);
+    if (editingConfig) {
+      updateConfigMutation.mutate({ id: editingConfig.id, data: requestData });
+    } else {
+      createConfigMutation.mutate(requestData);
     }
   };
 
@@ -232,7 +246,7 @@ export const PdmProductConfigPage: React.FC = () => {
   };
 
   const filteredConfigs = useMemo(() => {
-    return configs.filter((config) => {
+    return configs.filter((config: any) => {
       const matchesSearch =
         !searchTerm ||
         config.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
@@ -245,9 +259,9 @@ export const PdmProductConfigPage: React.FC = () => {
   const stats = useMemo(
     () => ({
       total: configs.length,
-      active: configs.filter((c) => c.status === 'active').length,
-      draft: configs.filter((c) => c.status === 'draft').length,
-      archived: configs.filter((c) => c.status === 'archived').length,
+      active: configs.filter((c: any) => c.status === 'active').length,
+      draft: configs.filter((c: any) => c.status === 'draft').length,
+      archived: configs.filter((c: any) => c.status === 'archived').length,
     }),
     [configs]
   );

@@ -1,6 +1,7 @@
-import React, { useState, useEffect } from 'react';
+import React from 'react';
 import { Box, Typography } from '@mui/material';
 import { TrendingUp, Factory, ClipboardList, Package, Activity, CheckCircle } from 'lucide-react';
+import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { StatsPageTemplate } from '@/components/templates/StatsPageTemplate';
 import { PageContainer } from '@/components/common/PageContainerV2';
 import { useAppStore } from '@/store';
@@ -13,100 +14,125 @@ import type {
 } from '@/api/pdm';
 import { designTokens } from '@/theme/tokens';
 import { logger } from '@/utils/logger';
+import { QUERY_KEYS } from '@/lib/reactQuery';
 
 const ct = designTokens.colors;
 
+const adaptProcess = (item: { [key: string]: unknown }) => ({
+  ...item,
+  status:
+    item.status === 'active' ? '启用' : item.status === 'inactive' ? '禁用' : item.status,
+});
+
+const adaptStep = (item: { [key: string]: unknown }) => ({
+  ...item,
+  status:
+    item.status === 'active' ? '启用' : item.status === 'inactive' ? '禁用' : item.status,
+});
+
+const adaptFormula = (item: { [key: string]: unknown }) => ({
+  ...item,
+  status:
+    item.status === 'active' ? '启用' : item.status === 'inactive' ? '禁用' : item.status,
+});
+
+const adaptBatch = (item: { [key: string]: unknown }) => ({
+  ...item,
+  status:
+    item.status === 'planning'
+      ? '规划中'
+      : item.status === 'in_progress'
+        ? '进行中'
+        : item.status === 'completed'
+          ? '已完成'
+          : item.status === 'cancelled'
+            ? '已取消'
+            : item.status,
+});
+
 const PdmStatsPage: React.FC = () => {
-  const [processes, setProcesses] = useState<ProductionProcess[]>([]);
-  const [steps, setSteps] = useState<ProductionStep[]>([]);
-  const [formulas, setFormulas] = useState<ProductionFormula[]>([]);
-  const [batches, setBatches] = useState<ProductionBatch[]>([]);
-  const [loading, setLoading] = useState(true);
+  const queryClient = useQueryClient();
 
-  useEffect(() => {
-    loadData();
-  }, []);
-
-  const loadData = async () => {
-    try {
-      setLoading(true);
-      const [processRes, stepRes, formulaRes, batchRes] = await Promise.all([
-        pdmApi.listProcesses(),
-        pdmApi.listSteps(),
-        pdmApi.listFormulas(),
-        pdmApi.listBatches(),
-      ]);
-
-      if (processRes.success && processRes.data) {
-        const data = processRes.data as any;
+  const { data: processRes, isLoading: processesLoading } = useQuery({
+    queryKey: QUERY_KEYS.PDM.PROCESSES,
+    queryFn: async () => {
+      const response = await pdmApi.listProcesses();
+      if (response.success && response.data) {
+        const data = response.data as any;
         const items = Array.isArray(data) ? data : data.processes || [];
-        setProcesses(
-          items.map((item: { [key: string]: unknown }) => ({
-            ...item,
-            status:
-              item.status === 'active' ? '启用' : item.status === 'inactive' ? '禁用' : item.status,
-          }))
-        );
+        return items.map(adaptProcess);
       }
-      if (stepRes.success && stepRes.data) {
-        const data = stepRes.data as any;
+      return [];
+    },
+    staleTime: 5 * 60 * 1000,
+  });
+
+  const { data: stepRes, isLoading: stepsLoading } = useQuery({
+    queryKey: QUERY_KEYS.PDM.STEPS,
+    queryFn: async () => {
+      const response = await pdmApi.listSteps();
+      if (response.success && response.data) {
+        const data = response.data as any;
         const items = Array.isArray(data) ? data : data.steps || [];
-        setSteps(
-          items.map((item: { [key: string]: unknown }) => ({
-            ...item,
-            status:
-              item.status === 'active' ? '启用' : item.status === 'inactive' ? '禁用' : item.status,
-          }))
-        );
+        return items.map(adaptStep);
       }
-      if (formulaRes.success && formulaRes.data) {
-        const data = formulaRes.data as any;
+      return [];
+    },
+    staleTime: 5 * 60 * 1000,
+  });
+
+  const { data: formulaRes, isLoading: formulasLoading } = useQuery({
+    queryKey: QUERY_KEYS.PDM.FORMULAS,
+    queryFn: async () => {
+      const response = await pdmApi.listFormulas();
+      if (response.success && response.data) {
+        const data = response.data as any;
         const items = Array.isArray(data) ? data : data.formulas || [];
-        setFormulas(
-          items.map((item: { [key: string]: unknown }) => ({
-            ...item,
-            status:
-              item.status === 'active' ? '启用' : item.status === 'inactive' ? '禁用' : item.status,
-          }))
-        );
+        return items.map(adaptFormula);
       }
-      if (batchRes.success && batchRes.data) {
-        const data = batchRes.data as any;
+      return [];
+    },
+    staleTime: 5 * 60 * 1000,
+  });
+
+  const { data: batchRes, isLoading: batchesLoading } = useQuery({
+    queryKey: QUERY_KEYS.PDM.BATCHES,
+    queryFn: async () => {
+      const response = await pdmApi.listBatches();
+      if (response.success && response.data) {
+        const data = response.data as any;
         const items = Array.isArray(data) ? data : data.batches || [];
-        setBatches(
-          items.map((item: { [key: string]: unknown }) => ({
-            ...item,
-            status:
-              item.status === 'planning'
-                ? '规划中'
-                : item.status === 'in_progress'
-                  ? '进行中'
-                  : item.status === 'completed'
-                    ? '已完成'
-                    : item.status === 'cancelled'
-                      ? '已取消'
-                      : item.status,
-          }))
-        );
+        return items.map(adaptBatch);
       }
-    } catch (err: unknown) {
-      logger.error('加载统计数据失败:', err);
-    } finally {
-      setLoading(false);
-    }
+      return [];
+    },
+    staleTime: 5 * 60 * 1000,
+  });
+
+  const processes = processRes || [];
+  const steps = stepRes || [];
+  const formulas = formulaRes || [];
+  const batches = batchRes || [];
+  const loading = processesLoading || stepsLoading || formulasLoading || batchesLoading;
+
+  const handleRefresh = () => {
+    queryClient.invalidateQueries({ queryKey: QUERY_KEYS.PDM.PROCESSES });
+    queryClient.invalidateQueries({ queryKey: QUERY_KEYS.PDM.STEPS });
+    queryClient.invalidateQueries({ queryKey: QUERY_KEYS.PDM.FORMULAS });
+    queryClient.invalidateQueries({ queryKey: QUERY_KEYS.PDM.BATCHES });
   };
 
   const stats = {
     totalProcesses: processes.length,
-    activeProcesses: processes.filter((p) => p.status === '启用').length,
+    activeProcesses: processes.filter((p: any) => p.status === '启用').length,
     totalSteps: steps.length,
     totalFormulas: formulas.length,
-    activeFormulas: formulas.filter((f) => f.status === '启用').length,
+    activeFormulas: formulas.filter((f: any) => f.status === '启用').length,
     totalBatches: batches.length,
-    planningBatches: batches.filter((b) => b.status === '规划中').length,
-    inProgressBatches: batches.filter((b) => b.status === '进行中').length,
-    completedBatches: batches.filter((b) => b.status === '已完成').length,
-    cancelledBatches: batches.filter((b) => b.status === '已取消').length,
+    planningBatches: batches.filter((b: any) => b.status === '规划中').length,
+    inProgressBatches: batches.filter((b: any) => b.status === '进行中').length,
+    completedBatches: batches.filter((b: any) => b.status === '已完成').length,
+    cancelledBatches: batches.filter((b: any) => b.status === '已取消').length,
   };
 
   const statCards = [
@@ -251,7 +277,7 @@ const PdmStatsPage: React.FC = () => {
         showSearch={false}
         showExport={false}
         showRefresh={true}
-        onRefresh={loadData}
+        onRefresh={handleRefresh}
         chartSectionTitle=''
         showStatCards={true}
       />

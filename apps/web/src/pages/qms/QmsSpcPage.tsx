@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useCallback, useMemo } from 'react';
+import React, { useState, useMemo } from 'react';
 import {
   Dialog,
   DialogTitle,
@@ -49,6 +49,7 @@ import { PageContainer } from '@/components/common';
 import { spcApi, qmsApi } from '@/api/qms';
 import type { SpcChart, SpcDataPoint, ControlLimitsResult } from '@/api/qms';
 import { designTokens } from '@/theme/tokens';
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 
 const ct = designTokens.colors;
 
@@ -59,15 +60,10 @@ const QmsSpcPage: React.FC = () => {
   const [showDataPointModal, setShowDataPointModal] = useState(false);
   const [selectedChart, setSelectedChart] = useState<SpcChart | null>(null);
   const [selectedDataPoint, setSelectedDataPoint] = useState<SpcDataPoint | null>(null);
-  const [dataPoints, setDataPoints] = useState<SpcDataPoint[]>([]);
-  const [controlLimits, setControlLimits] = useState<ControlLimitsResult | null>(null);
   const [isEditing, setIsEditing] = useState(false);
-  const [loading, setLoading] = useState(true);
   const [submitting, setSubmitting] = useState(false);
-  const [loadingDataPoints, setLoadingDataPoints] = useState(false);
   const addNotification = useAppStore((state) => state.addNotification);
-
-  const [charts, setCharts] = useState<SpcChart[]>([]);
+  const queryClient = useQueryClient();
 
   const [formData, setFormData] = useState({
     chartName: '',
@@ -118,54 +114,167 @@ const QmsSpcPage: React.FC = () => {
     return true;
   };
 
-  const loadCharts = useCallback(async () => {
-    try {
-      setLoading(true);
+  const { data: charts = [], isLoading: loading } = useQuery({
+    queryKey: ['qms-spc-charts'],
+    queryFn: async () => {
       const response = await qmsApi.listSpcCharts();
       if (response.success && response.data) {
-        setCharts(response.data);
+        return response.data;
       }
-    } catch (error: unknown) {
-      addNotification({
-        title: '加载失败',
-        message: '加载 SPC 图表数据失败',
-        type: 'error',
-      });
-    } finally {
-      setLoading(false);
-    }
-  }, [addNotification]);
+      return [];
+    },
+    staleTime: 5 * 60 * 1000,
+  });
 
-  const loadDataPoints = useCallback(
-    async (chartId: string) => {
-      try {
-        setLoadingDataPoints(true);
-        const [dataPointsRes, controlLimitsRes] = await Promise.all([
-          qmsApi.getSpcDataPoints(chartId),
-          qmsApi.calculateControlLimits(chartId),
-        ]);
-        if (dataPointsRes.success && dataPointsRes.data) {
-          setDataPoints(dataPointsRes.data);
-        }
-        if (controlLimitsRes.success && controlLimitsRes.data) {
-          setControlLimits(controlLimitsRes.data);
-        }
-      } catch (error: unknown) {
+  const { data: dataPoints = [], isLoading: loadingDataPoints, refetch: refetchDataPoints } = useQuery({
+    queryKey: ['qms-spc-data-points', selectedChart?.id],
+    queryFn: async () => {
+      if (!selectedChart?.id) return [];
+      const response = await qmsApi.getSpcDataPoints(selectedChart.id);
+      if (response.success && response.data) {
+        return response.data;
+      }
+      return [];
+    },
+    staleTime: 0,
+    enabled: !!selectedChart?.id,
+  });
+
+  const { data: controlLimits, refetch: refetchControlLimits } = useQuery({
+    queryKey: ['qms-spc-control-limits', selectedChart?.id],
+    queryFn: async () => {
+      if (!selectedChart?.id) return null;
+      const response = await qmsApi.calculateControlLimits(selectedChart.id);
+      if (response.success && response.data) {
+        return response.data;
+      }
+      return null;
+    },
+    staleTime: 0,
+    enabled: !!selectedChart?.id,
+  });
+
+  const createSpcChartMutation = useMutation({
+    mutationFn: async (data: {
+      chartNo: string;
+      chartName: string;
+      chartType: string;
+      characteristic: string;
+      productName?: string;
+      processName?: string;
+      unit?: string;
+      usl?: number;
+      lsl?: number;
+      target?: number;
+      sampleSize: number;
+      samplingFrequency?: string;
+      description?: string;
+    }) => {
+      return qmsApi.createSpcChart(data);
+    },
+    onSuccess: (response) => {
+      if (response.success) {
+        addNotification({ title: '成功', message: '图表创建成功', type: 'success' });
+        queryClient.invalidateQueries({ queryKey: ['qms-spc-charts'] });
+      } else {
         addNotification({
-          title: '加载失败',
-          message: '加载数据点失败',
+          title: '失败',
+          message: response.message || '创建失败',
           type: 'error',
         });
-      } finally {
-        setLoadingDataPoints(false);
       }
     },
-    [addNotification]
-  );
+    onError: () => {
+      addNotification({ title: '错误', message: '操作失败，请重试', type: 'error' });
+    },
+  });
 
-  useEffect(() => {
-    loadCharts();
-  }, [loadCharts]);
+  const updateSpcChartMutation = useMutation({
+    mutationFn: async ({
+      id,
+      data,
+    }: {
+      id: string;
+      data: {
+        chartName: string;
+        chartType: string;
+        characteristic: string;
+        productName?: string;
+        processName?: string;
+        unit?: string;
+        usl?: number;
+        lsl?: number;
+        target?: number;
+        sampleSize: number;
+        samplingFrequency?: string;
+        description?: string;
+      };
+    }) => {
+      return qmsApi.updateSpcChart(id, data);
+    },
+    onSuccess: (response) => {
+      if (response.success) {
+        addNotification({ title: '成功', message: '图表更新成功', type: 'success' });
+        queryClient.invalidateQueries({ queryKey: ['qms-spc-charts'] });
+      } else {
+        addNotification({
+          title: '失败',
+          message: response.message || '更新失败',
+          type: 'error',
+        });
+      }
+    },
+    onError: () => {
+      addNotification({ title: '错误', message: '操作失败，请重试', type: 'error' });
+    },
+  });
+
+  const deleteSpcChartMutation = useMutation({
+    mutationFn: async (id: string) => {
+      return qmsApi.deleteSpcChart(id);
+    },
+    onSuccess: (response) => {
+      if (response.success) {
+        addNotification({ title: '成功', message: '图表删除成功', type: 'success' });
+        queryClient.invalidateQueries({ queryKey: ['qms-spc-charts'] });
+      } else {
+        addNotification({ title: '失败', message: response.message || '删除失败', type: 'error' });
+      }
+    },
+    onError: () => {
+      addNotification({ title: '错误', message: '删除图表时发生错误', type: 'error' });
+    },
+  });
+
+  const addSpcDataPointMutation = useMutation({
+    mutationFn: async ({
+      chartId,
+      data,
+    }: {
+      chartId: string;
+      data: {
+        sampleNo: string;
+        sampleTime: string;
+        values: number[];
+        operator?: string;
+        remark?: string;
+      };
+    }) => {
+      return qmsApi.addSpcDataPoint(chartId, data);
+    },
+    onSuccess: (response) => {
+      if (response.success) {
+        addNotification({ title: '成功', message: '数据点添加成功', type: 'success' });
+        refetchDataPoints();
+        refetchControlLimits();
+      } else {
+        addNotification({ title: '失败', message: response.message || '添加失败', type: 'error' });
+      }
+    },
+    onError: () => {
+      addNotification({ title: '错误', message: '操作失败，请重试', type: 'error' });
+    },
+  });
 
   const getStatusBadge = (status: string) => {
     const colors: Record<string, { bg: string; color: string }> = {
@@ -253,10 +362,9 @@ const QmsSpcPage: React.FC = () => {
     },
   ];
 
-  const viewChart = async (chart: SpcChart) => {
+  const viewChart = (chart: SpcChart) => {
     setSelectedChart(chart);
     setShowDetailModal(true);
-    await loadDataPoints(chart.id);
   };
 
   const editChart = (chart: SpcChart) => {
@@ -290,19 +398,9 @@ const QmsSpcPage: React.FC = () => {
     setShowDataPointModal(true);
   };
 
-  const deleteChart = async (id: string) => {
+  const deleteChart = (id: string) => {
     if (!confirm('确定要删除此 SPC 图表吗？')) return;
-    try {
-      const response = await qmsApi.deleteSpcChart(id);
-      if (response.success) {
-        setCharts((prev) => prev.filter((item) => item.id !== id));
-        addNotification({ title: '成功', message: '图表删除成功', type: 'success' });
-      } else {
-        addNotification({ title: '失败', message: response.message || '删除失败', type: 'error' });
-      }
-    } catch (error: unknown) {
-      addNotification({ title: '错误', message: '删除图表时发生错误', type: 'error' });
-    }
+    deleteSpcChartMutation.mutate(id);
   };
 
   const handleSubmit = async () => {
@@ -328,33 +426,10 @@ const QmsSpcPage: React.FC = () => {
       };
 
       if (isEditing && selectedChart) {
-        const response = await qmsApi.updateSpcChart(selectedChart.id, submitData);
-        if (response.success) {
-          setCharts((prev) =>
-            prev.map((item) =>
-              item.id === selectedChart.id ? { ...item, ...response.data } : item
-            )
-          );
-          addNotification({ title: '成功', message: '图表更新成功', type: 'success' });
-        } else {
-          addNotification({
-            title: '失败',
-            message: response.message || '更新失败',
-            type: 'error',
-          });
-        }
+        const { chartNo, ...updateData } = submitData;
+        await updateSpcChartMutation.mutateAsync({ id: selectedChart.id, data: updateData as any });
       } else {
-        const response = await qmsApi.createSpcChart(submitData);
-        if (response.success && response.data) {
-          setCharts((prev) => [response.data!, ...prev]);
-          addNotification({ title: '成功', message: '图表创建成功', type: 'success' });
-        } else {
-          addNotification({
-            title: '失败',
-            message: response.message || '创建失败',
-            type: 'error',
-          });
-        }
+        await createSpcChartMutation.mutateAsync(submitData);
       }
       setShowModal(false);
       setIsEditing(false);
@@ -373,8 +448,6 @@ const QmsSpcPage: React.FC = () => {
         description: '',
       });
       setErrors({});
-    } catch (error: unknown) {
-      addNotification({ title: '错误', message: '操作失败，请重试', type: 'error' });
     } finally {
       setSubmitting(false);
     }
@@ -395,25 +468,18 @@ const QmsSpcPage: React.FC = () => {
         addNotification({ title: '错误', message: '请输入有效的数值', type: 'error' });
         return;
       }
-      const response = await qmsApi.addSpcDataPoint(selectedChart.id, {
-        sampleNo: dataPointForm.sampleNo,
-        sampleTime: new Date().toISOString(),
-        values: valuesArray,
-        operator: dataPointForm.operator || undefined,
-        remark: dataPointForm.remark || undefined,
+      await addSpcDataPointMutation.mutateAsync({
+        chartId: selectedChart.id,
+        data: {
+          sampleNo: dataPointForm.sampleNo,
+          sampleTime: new Date().toISOString(),
+          values: valuesArray,
+          operator: dataPointForm.operator || undefined,
+          remark: dataPointForm.remark || undefined,
+        },
       });
-      if (response.success && response.data) {
-        setDataPoints((prev) => [...prev, response.data!]);
-        addNotification({ title: '成功', message: '数据点添加成功', type: 'success' });
-        setShowDataPointModal(false);
-        setDataPointForm({ sampleNo: '', values: '', operator: '', remark: '' });
-        // 重新计算控制限
-        await loadDataPoints(selectedChart.id);
-      } else {
-        addNotification({ title: '失败', message: response.message || '添加失败', type: 'error' });
-      }
-    } catch (error: unknown) {
-      addNotification({ title: '错误', message: '操作失败，请重试', type: 'error' });
+      setShowDataPointModal(false);
+      setDataPointForm({ sampleNo: '', values: '', operator: '', remark: '' });
     } finally {
       setSubmitting(false);
     }
@@ -638,7 +704,7 @@ const QmsSpcPage: React.FC = () => {
             searchable={false}
             filters={[]}
             actions={[]}
-            onRefresh={loadCharts}
+            onRefresh={() => queryClient.invalidateQueries({ queryKey: ['qms-spc-charts'] })}
           />
         </CardContent>
       </Card>

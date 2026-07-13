@@ -18,7 +18,7 @@ export interface UseApiResult<T = any> {
   data: T | null;
   loading: boolean;
   error: Error | null;
-  refetch: () => Promise<void>;
+  refetch: () => Promise<T>;
 }
 
 /**

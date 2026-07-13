@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useMemo, useCallback } from 'react';
+import React, { useState, useMemo, useCallback } from 'react';
 import {
   Box,
   Dialog,
@@ -27,6 +27,8 @@ import {
 } from '@/components/templates';
 import { PageContainer } from '@/components/common/PageContainerV2';
 import { designTokens } from '@/theme/tokens';
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import { QUERY_KEYS } from '@/lib/reactQuery';
 
 const ct = designTokens.colors;
 
@@ -63,9 +65,8 @@ const CATEGORY_OPTIONS = [
 ];
 
 export const MaterialPage: React.FC = () => {
+  const queryClient = useQueryClient();
   const [searchTerm, setSearchTerm] = useState('');
-  const [materials, setMaterials] = useState<Material[]>([]);
-  const [loading, setLoading] = useState(true);
   const [openDialog, setOpenDialog] = useState(false);
   const [editingMaterial, setEditingMaterial] = useState<Material | null>(null);
   const [formData, setFormData] = useState<MaterialFormData>({
@@ -82,28 +83,60 @@ export const MaterialPage: React.FC = () => {
   });
   const addNotification = useAppStore((state) => state.addNotification);
 
-  useEffect(() => {
-    loadMaterials();
-  }, []);
+  const loadMaterials = useCallback(() => {
+    queryClient.invalidateQueries({ queryKey: QUERY_KEYS.PDM.MATERIALS });
+  }, [queryClient]);
 
-  const loadMaterials = async () => {
-    try {
-      setLoading(true);
+  const { data: materials = [], isLoading: loading } = useQuery({
+    queryKey: QUERY_KEYS.PDM.MATERIALS,
+    queryFn: async () => {
       const response = await pdmApi.listMaterials();
       if (response.success && response.data) {
         const data = response.data as any;
-        const items = Array.isArray(data) ? data : data.materials || [];
-        setMaterials(items as Material[]);
-      } else {
-        setMaterials([]);
+        return Array.isArray(data) ? data : data.materials || [];
       }
-    } catch (err: unknown) {
-      apiLogger.error('加载物料数据失败:', err);
-      setMaterials([]);
-    } finally {
-      setLoading(false);
-    }
-  };
+      return [];
+    },
+    staleTime: 5 * 60 * 1000,
+  });
+
+  const createMaterialMutation = useMutation({
+    mutationFn: (data: CreateMaterialRequest) => pdmApi.createMaterial(data),
+    onSuccess: () => {
+      addNotification({ title: '成功', message: '物料创建成功', type: 'success' });
+      setOpenDialog(false);
+      setEditingMaterial(null);
+      queryClient.invalidateQueries({ queryKey: QUERY_KEYS.PDM.MATERIALS });
+    },
+    onError: () => {
+      addNotification({ title: '错误', message: '创建失败', type: 'error' });
+    },
+  });
+
+  const updateMaterialMutation = useMutation({
+    mutationFn: ({ id, data }: { id: string; data: CreateMaterialRequest }) =>
+      pdmApi.updateMaterial(id, data),
+    onSuccess: () => {
+      addNotification({ title: '成功', message: '物料更新成功', type: 'success' });
+      setOpenDialog(false);
+      setEditingMaterial(null);
+      queryClient.invalidateQueries({ queryKey: QUERY_KEYS.PDM.MATERIALS });
+    },
+    onError: () => {
+      addNotification({ title: '错误', message: '更新失败', type: 'error' });
+    },
+  });
+
+  const deleteMaterialMutation = useMutation({
+    mutationFn: (id: string) => pdmApi.deleteMaterial(id),
+    onSuccess: () => {
+      addNotification({ title: '成功', message: '物料删除成功', type: 'success' });
+      queryClient.invalidateQueries({ queryKey: QUERY_KEYS.PDM.MATERIALS });
+    },
+    onError: () => {
+      addNotification({ title: '错误', message: '删除失败', type: 'error' });
+    },
+  });
 
   const handleEditMaterial = (material: Material) => {
     setEditingMaterial(material);
@@ -122,15 +155,8 @@ export const MaterialPage: React.FC = () => {
     setOpenDialog(true);
   };
 
-  const handleDeleteMaterial = async (id: string) => {
-    try {
-      await pdmApi.deleteMaterial(id);
-      addNotification({ title: '成功', message: '物料删除成功', type: 'success' });
-      loadMaterials();
-    } catch (err: unknown) {
-      addNotification({ title: '错误', message: '删除失败', type: 'error' });
-      apiLogger.error('删除物料失败:', err);
-    }
+  const handleDeleteMaterial = (id: string) => {
+    deleteMaterialMutation.mutate(id);
   };
 
   const handleCreate = () => {
@@ -150,43 +176,29 @@ export const MaterialPage: React.FC = () => {
     setOpenDialog(true);
   };
 
-  const handleSaveMaterial = async () => {
-    try {
-      const requestData: CreateMaterialRequest = {
-        code: formData.code,
-        name: formData.name,
-        category: formData.category,
-        specification: formData.specification,
-        unit: formData.unit,
-        unit_price: formData.unit_price,
-        supplier: formData.supplier,
-        status: formData.status,
-        inventory_quantity: formData.inventory_quantity,
-        safety_stock: formData.safety_stock,
-      };
+  const handleSaveMaterial = () => {
+    const requestData: CreateMaterialRequest = {
+      code: formData.code,
+      name: formData.name,
+      category: formData.category,
+      specification: formData.specification,
+      unit: formData.unit,
+      unit_price: formData.unit_price,
+      supplier: formData.supplier,
+      status: formData.status,
+      inventory_quantity: formData.inventory_quantity,
+      safety_stock: formData.safety_stock,
+    };
 
-      if (editingMaterial) {
-        await pdmApi.updateMaterial(editingMaterial.id, requestData);
-        addNotification({ title: '成功', message: '物料更新成功', type: 'success' });
-      } else {
-        await pdmApi.createMaterial(requestData);
-        addNotification({ title: '成功', message: '物料创建成功', type: 'success' });
-      }
-      setOpenDialog(false);
-      setEditingMaterial(null);
-      loadMaterials();
-    } catch (err: unknown) {
-      addNotification({
-        title: '错误',
-        message: editingMaterial ? '更新失败' : '创建失败',
-        type: 'error',
-      });
-      apiLogger.error('保存物料失败:', err);
+    if (editingMaterial) {
+      updateMaterialMutation.mutate({ id: editingMaterial.id, data: requestData });
+    } else {
+      createMaterialMutation.mutate(requestData);
     }
   };
 
   const filteredMaterials = useMemo(() => {
-    return materials.filter((material) => {
+    return materials.filter((material: any) => {
       const matchesSearch =
         !searchTerm ||
         material.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
@@ -317,7 +329,7 @@ export const MaterialPage: React.FC = () => {
   );
 
   const totalValue = filteredMaterials.reduce(
-    (sum, m) => sum + (m.unit_price || 0) * (m.inventory_quantity || 0),
+    (sum: number, m: any) => sum + (m.unit_price || 0) * (m.inventory_quantity || 0),
     0
   );
 
@@ -357,7 +369,7 @@ export const MaterialPage: React.FC = () => {
           <Box sx={{ fontWeight: 'bold', fontSize: '1.5rem', color: 'primary.main' }}>
             {loading
               ? '...'
-              : `${filteredMaterials.reduce((sum, m) => sum + (m.inventory_quantity || 0), 0)} 件`}
+              : `${filteredMaterials.reduce((sum: number, m: any) => sum + (m.inventory_quantity || 0), 0)} 件`}
           </Box>
         </Box>
       </Grid>

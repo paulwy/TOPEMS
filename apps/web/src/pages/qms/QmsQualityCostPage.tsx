@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState } from 'react';
 import { apiLogger } from '@/utils/logger';
 import { useNavigate } from 'react-router-dom';
 import {
@@ -41,15 +41,12 @@ import { qmsApi } from '@/api/qms';
 import type { QualityCost, CostStatistics, CostTrendItem } from '@/api/qms';
 import { useAppStore } from '@/store';
 import { designTokens } from '@/theme/tokens';
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 
 const ct = designTokens.colors;
 
 const QmsQualityCostPage: React.FC = () => {
   const navigate = useNavigate();
-  const [costs, setCosts] = useState<QualityCost[]>([]);
-  const [statistics, setStatistics] = useState<CostStatistics | null>(null);
-  const [trendData, setTrendData] = useState<CostTrendItem[]>([]);
-  const [loading, setLoading] = useState(true);
   const [submitting, setSubmitting] = useState(false);
   const [showAddModal, setShowAddModal] = useState(false);
   const [showDetailModal, setShowDetailModal] = useState(false);
@@ -73,64 +70,94 @@ const QmsQualityCostPage: React.FC = () => {
     endDate: '',
   });
   const addNotification = useAppStore((state) => state.addNotification);
+  const queryClient = useQueryClient();
 
-  useEffect(() => {
-    loadCosts();
-    loadStatistics();
-  }, []);
-
-  const loadCosts = async () => {
-    try {
-      setLoading(true);
+  const { data: costs = [], isLoading: loading } = useQuery({
+    queryKey: ['qms-quality-costs'],
+    queryFn: async () => {
       const response = await qmsApi.listQualityCosts();
       if (response.success && response.data) {
         const data = response.data as any;
-        const costsArray = Array.isArray(data) ? data : data.costs || [];
-        setCosts(costsArray);
-      } else if (!response.success) {
+        return Array.isArray(data) ? data : data.costs || [];
+      }
+      return [];
+    },
+    staleTime: 5 * 60 * 1000,
+  });
+
+  const { data: statistics, isLoading: loadingStats } = useQuery({
+    queryKey: ['qms-cost-statistics'],
+    queryFn: async () => {
+      const response = await qmsApi.getCostStatistics();
+      if (response.success && response.data) {
+        return response.data;
+      }
+      return null;
+    },
+    staleTime: 5 * 60 * 1000,
+  });
+
+  const { data: trendData, isLoading: loadingTrend } = useQuery({
+    queryKey: ['qms-cost-trend'],
+    queryFn: async () => {
+      const response = await qmsApi.getCostTrend({ period: 'month' });
+      if (response.success && response.data) {
+        const data = response.data as any;
+        return Array.isArray(data) ? data : data.trend || [];
+      }
+      return [];
+    },
+    staleTime: 5 * 60 * 1000,
+  });
+
+  const createQualityCostMutation = useMutation({
+    mutationFn: async (data: {
+      costNo: string;
+      costType: string;
+      costCategory: string;
+      amount: number;
+      currency: string;
+      occurrenceDate: string;
+      department: string;
+      relatedOrderNo: string;
+      description: string;
+      responsiblePerson: string;
+      status: string;
+    }) => {
+      return qmsApi.createQualityCost(data);
+    },
+    onSuccess: (response) => {
+      if (response.success) {
         addNotification({
-          title: '加载失败',
-          message: response.message || '加载质量成本数据失败',
+          title: '成功',
+          message: '质量成本记录创建成功',
+          type: 'success',
+        });
+        queryClient.invalidateQueries({ queryKey: ['qms-quality-costs'] });
+        queryClient.invalidateQueries({ queryKey: ['qms-cost-statistics'] });
+        queryClient.invalidateQueries({ queryKey: ['qms-cost-trend'] });
+      } else {
+        addNotification({
+          title: '失败',
+          message: response.message || '创建质量成本记录失败',
           type: 'error',
         });
       }
-    } catch (error: unknown) {
-      apiLogger.error('加载质量成本失败:', error);
+    },
+    onError: () => {
+      apiLogger.error('创建质量成本记录失败');
       addNotification({
-        title: '加载失败',
-        message: '加载质量成本数据失败',
+        title: '错误',
+        message: '创建质量成本记录时发生错误',
         type: 'error',
       });
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  const loadStatistics = async () => {
-    try {
-      const response = await qmsApi.getCostStatistics();
-      if (response.success && response.data) {
-        setStatistics(response.data);
-      }
-    } catch (error: unknown) {
-      apiLogger.error('加载质量成本统计失败:', error);
-    }
-
-    try {
-      const trendRes = await qmsApi.getCostTrend({ period: 'month' });
-      if (trendRes.success && trendRes.data) {
-        const data = trendRes.data as any;
-        setTrendData(Array.isArray(data) ? data : data.trend || []);
-      }
-    } catch (error: unknown) {
-      apiLogger.error('加载质量成本趋势失败:', error);
-    }
-  };
+    },
+  });
 
   const handleCreateCost = async () => {
     try {
       setSubmitting(true);
-      const response = await qmsApi.createQualityCost({
+      await createQualityCostMutation.mutateAsync({
         costNo: `QC-${Date.now()}`,
         costType: formData.cost_type,
         costCategory: formData.cost_category,
@@ -143,30 +170,8 @@ const QmsQualityCostPage: React.FC = () => {
         responsiblePerson: formData.responsible_person,
         status: 'pending',
       });
-      if (response.success) {
-        addNotification({
-          title: '成功',
-          message: '质量成本记录创建成功',
-          type: 'success',
-        });
-        setShowAddModal(false);
-        loadCosts();
-        loadStatistics();
-        resetForm();
-      } else {
-        addNotification({
-          title: '失败',
-          message: response.message || '创建质量成本记录失败',
-          type: 'error',
-        });
-      }
-    } catch (error: unknown) {
-      apiLogger.error('创建质量成本记录失败:', error);
-      addNotification({
-        title: '错误',
-        message: '创建质量成本记录时发生错误',
-        type: 'error',
-      });
+      setShowAddModal(false);
+      resetForm();
     } finally {
       setSubmitting(false);
     }
@@ -296,7 +301,7 @@ const QmsQualityCostPage: React.FC = () => {
     },
   ];
 
-  const filteredCosts = costs.filter((cost) => {
+  const filteredCosts = costs.filter((cost: any) => {
     if (filterData.cost_type && cost.costType !== filterData.cost_type) return false;
     if (filterData.department && cost.department !== filterData.department) return false;
     return true;
@@ -552,7 +557,7 @@ const QmsQualityCostPage: React.FC = () => {
         filtersValue={filterData}
         onFilterChange={(filters) => setFilterData(filters as typeof filterData)}
         emptyMessage='暂无质量成本记录'
-        onRefresh={loadCosts}
+        onRefresh={() => queryClient.invalidateQueries({ queryKey: ['qms-quality-costs'] })}
       />
 
       <Dialog
@@ -883,7 +888,7 @@ const QmsQualityCostPage: React.FC = () => {
                   <ListPageTemplate
                     columns={costTypeColumns}
                     data={costTypeData}
-                    loading={false}
+                    loading={loadingStats}
                     pagination={{
                       page: 0,
                       pageSize: 10,
@@ -903,15 +908,16 @@ const QmsQualityCostPage: React.FC = () => {
                     趋势分析
                   </Typography>
                   <Box sx={{ p: 3, bgcolor: 'grey.50', borderRadius: 1 }}>
-                    <Typography
-                      variant='body2'
-                      sx={{ color: 'text.secondary' }}
-                    >
-                      趋势数据加载中...
-                    </Typography>
-                    {trendData.length > 0 ? (
+                    {loadingTrend ? (
+                      <Typography
+                        variant='body2'
+                        sx={{ color: 'text.secondary' }}
+                      >
+                        趋势数据加载中...
+                      </Typography>
+                    ) : trendData.length > 0 ? (
                       <Box sx={{ mt: 2 }}>
-                        {trendData.slice(0, 6).map((item, index) => (
+                        {trendData.slice(0, 6).map((item: any, index: number) => (
                           <Box
                             key={index}
                             sx={{

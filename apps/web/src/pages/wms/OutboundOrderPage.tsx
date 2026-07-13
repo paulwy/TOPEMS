@@ -8,7 +8,8 @@ import {
   Box,
   Button,
 } from '@mui/material';
-import React, { useState, useEffect, useMemo, useCallback } from 'react';
+import React, { useState, useMemo } from 'react';
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import type {
   OutboundOrder,
   CreateOutboundOrderRequest,
@@ -41,16 +42,13 @@ const statusConfig: Record<
 
 const OutboundOrderPage: React.FC = () => {
   const { addNotification } = useAppStore();
+  const queryClient = useQueryClient();
 
-  const [orders, setOrders] = useState<OutboundOrder[]>([]);
-  const [loading, setLoading] = useState(true);
   const [currentPage, setCurrentPage] = useState(1);
   const [pageSize] = useState(10);
-  const [total, setTotal] = useState(0);
   const [searchTerm, setSearchTerm] = useState('');
   const [statusFilter, setStatusFilter] = useState<string>('');
 
-  // Dialog states
   const [showCreateDialog, setShowCreateDialog] = useState(false);
   const [showEditDialog, setShowEditDialog] = useState(false);
   const [showDetailDialog, setShowDetailDialog] = useState(false);
@@ -58,7 +56,6 @@ const OutboundOrderPage: React.FC = () => {
   const [selectedOrder, setSelectedOrder] = useState<OutboundOrder | null>(null);
   const [deleteOrderId, setDeleteOrderId] = useState<string | null>(null);
 
-  // Form states
   const [formData, setFormData] = useState<CreateOutboundOrderRequest>({
     order_number: '',
     order_type: 'sales_out',
@@ -74,91 +71,81 @@ const OutboundOrderPage: React.FC = () => {
 
   const [editFormData, setEditFormData] = useState<UpdateOutboundOrderRequest>({});
 
-  const loadOrders = useCallback(async () => {
-    try {
-      setLoading(true);
-      const params: Record<string, unknown> = {
-        page: currentPage,
-        pagesize: pageSize,
-      };
+  const { data: ordersData = { items: [], total: 0 }, isLoading: ordersLoading } = useQuery({
+    queryKey: ['wms-outbound-orders-detail', currentPage, pageSize, searchTerm, statusFilter],
+    queryFn: async () => {
+      const params: Record<string, unknown> = { page: currentPage, pagesize: pageSize };
       if (searchTerm) params.search = searchTerm;
       if (statusFilter) params.status = statusFilter;
 
       const response = await wmsApi.outboundOrders.list(params);
-      if (response.success && response.data) {
-        setOrders(response.data.items || []);
-        setTotal(response.data.total || 0);
-      }
-    } catch (error: unknown) {
-      apiLogger.error('加载出库订单失败:', error);
-      addNotification({
-        type: 'error',
-        title: '加载失败',
-        message: '无法加载出库订单',
-      });
-    } finally {
-      setLoading(false);
-    }
-  }, [currentPage, pageSize, searchTerm, statusFilter, addNotification]);
+      return response.success && response.data ? response.data : { items: [], total: 0 };
+    },
+    staleTime: 5 * 60 * 1000,
+  });
 
-  useEffect(() => {
-    loadOrders();
-  }, [loadOrders]);
-
-  const handleCreate = async () => {
-    if (!formData.order_number) {
-      addNotification({
-        type: 'warning',
-        title: '验证错误',
-        message: '请填写订单号',
-      });
-      return;
-    }
-
-    try {
-      const response = await wmsApi.outboundOrders.create(formData);
+  const createMutation = useMutation({
+    mutationFn: async (data: CreateOutboundOrderRequest) => {
+      return await wmsApi.outboundOrders.create(data);
+    },
+    onSuccess: (response) => {
       if (response.success) {
-        addNotification({
-          type: 'success',
-          title: '创建成功',
-          message: '新出库订单已创建',
-        });
+        addNotification({ type: 'success', title: '创建成功', message: '新出库订单已创建' });
         setShowCreateDialog(false);
         resetForm();
-        loadOrders();
+        queryClient.invalidateQueries({ queryKey: ['wms-outbound-orders-detail'] });
       }
-    } catch (error: unknown) {
+    },
+    onError: (error: unknown) => {
       apiLogger.error('创建出库订单失败:', error);
-      addNotification({
-        type: 'error',
-        title: '创建失败',
-        message: '创建出库订单失败',
-      });
+      addNotification({ type: 'error', title: '创建失败', message: '创建出库订单失败' });
+    },
+  });
+
+  const updateMutation = useMutation({
+    mutationFn: async ({ id, data }: { id: string; data: UpdateOutboundOrderRequest }) => {
+      return await wmsApi.outboundOrders.update(id, data);
+    },
+    onSuccess: (response) => {
+      if (response.success) {
+        addNotification({ type: 'success', title: '更新成功', message: '出库订单已更新' });
+        setShowEditDialog(false);
+        queryClient.invalidateQueries({ queryKey: ['wms-outbound-orders-detail'] });
+      }
+    },
+    onError: (error: unknown) => {
+      apiLogger.error('更新出库订单失败:', error);
+      addNotification({ type: 'error', title: '更新失败', message: '更新出库订单失败' });
+    },
+  });
+
+  const deleteMutation = useMutation({
+    mutationFn: async (id: string) => {
+      return await wmsApi.outboundOrders.delete(id);
+    },
+    onSuccess: (response) => {
+      if (response.success) {
+        addNotification({ type: 'success', title: '删除成功', message: '出库订单已删除' });
+        queryClient.invalidateQueries({ queryKey: ['wms-outbound-orders-detail'] });
+      }
+    },
+    onError: (error: unknown) => {
+      apiLogger.error('删除出库订单失败:', error);
+      addNotification({ type: 'error', title: '删除失败', message: '删除出库订单失败' });
+    },
+  });
+
+  const handleCreate = () => {
+    if (!formData.order_number) {
+      addNotification({ type: 'warning', title: '验证错误', message: '请填写订单号' });
+      return;
     }
+    createMutation.mutate(formData);
   };
 
-  const handleUpdate = async () => {
+  const handleUpdate = () => {
     if (!selectedOrder) return;
-
-    try {
-      const response = await wmsApi.outboundOrders.update(selectedOrder.id, editFormData);
-      if (response.success) {
-        addNotification({
-          type: 'success',
-          title: '更新成功',
-          message: '出库订单已更新',
-        });
-        setShowEditDialog(false);
-        loadOrders();
-      }
-    } catch (error: unknown) {
-      apiLogger.error('更新出库订单失败:', error);
-      addNotification({
-        type: 'error',
-        title: '更新失败',
-        message: '更新出库订单失败',
-      });
-    }
+    updateMutation.mutate({ id: selectedOrder.id, data: editFormData });
   };
 
   const handleDeleteClick = (id: string) => {
@@ -166,28 +153,11 @@ const OutboundOrderPage: React.FC = () => {
     setShowDeleteConfirm(true);
   };
 
-  const handleDelete = useCallback(async () => {
+  const handleDelete = () => {
     if (!deleteOrderId) return;
-
-    try {
-      const response = await wmsApi.outboundOrders.delete(deleteOrderId);
-      if (response.success) {
-        addNotification({
-          type: 'success',
-          title: '删除成功',
-          message: '出库订单已删除',
-        });
-        loadOrders();
-      }
-    } catch (error: unknown) {
-      apiLogger.error('删除出库订单失败:', error);
-      addNotification({
-        type: 'error',
-        title: '删除失败',
-        message: '删除出库订单失败',
-      });
-    }
-  }, [addNotification, loadOrders, deleteOrderId]);
+    deleteMutation.mutate(deleteOrderId);
+    setShowDeleteConfirm(false);
+  };
 
   const handleEdit = (order: OutboundOrder) => {
     setSelectedOrder(order);
@@ -254,11 +224,7 @@ const OutboundOrderPage: React.FC = () => {
           row.expected_delivery ? new Date(row.expected_delivery).toLocaleDateString('zh-CN') : '-',
       },
       { id: 'total_amount', label: '总金额' },
-      {
-        id: 'status',
-        label: '状态',
-        render: (row) => getStatusBadge(row.status),
-      },
+      { id: 'status', label: '状态', render: (row) => getStatusBadge(row.status) },
     ],
     []
   );
@@ -291,16 +257,8 @@ const OutboundOrderPage: React.FC = () => {
 
   const rowActions: RowAction<OutboundOrder>[] = useMemo(
     () => [
-      {
-        label: '查看详情',
-        icon: <Eye size={16} />,
-        onClick: handleViewDetail,
-      },
-      {
-        label: '编辑',
-        icon: <Edit size={16} />,
-        onClick: handleEdit,
-      },
+      { label: '查看详情', icon: <Eye size={16} />, onClick: handleViewDetail },
+      { label: '编辑', icon: <Edit size={16} />, onClick: handleEdit },
       {
         label: '删除',
         icon: <Trash2 size={16} />,
@@ -308,7 +266,7 @@ const OutboundOrderPage: React.FC = () => {
         onClick: (row) => handleDeleteClick(row.id),
       },
     ],
-    [handleDelete]
+    []
   );
 
   const handleSearch = (value: string) => {
@@ -335,8 +293,8 @@ const OutboundOrderPage: React.FC = () => {
           { label: '出库订单' },
         ]}
         columns={columns}
-        data={orders}
-        loading={loading}
+        data={ordersData.items}
+        loading={ordersLoading}
         filters={filters}
         searchable
         searchPlaceholder='搜索订单号或客户...'
@@ -345,22 +303,15 @@ const OutboundOrderPage: React.FC = () => {
         pagination={{
           page: currentPage,
           pageSize,
-          total,
+          total: ordersData.total,
           onPageChange: setCurrentPage,
         }}
-        actions={[
-          {
-            label: '新增出库订单',
-            icon: <Plus size={16} />,
-            onClick: handleOpenCreate,
-          },
-        ]}
+        actions={[{ label: '新增出库订单', icon: <Plus size={16} />, onClick: handleOpenCreate }]}
         rowActions={rowActions}
         emptyMessage='暂无出库订单数据'
         getRowId={(row) => row.id}
       />
 
-      {/* 新增对话框 */}
       <Dialog
         open={showCreateDialog}
         onClose={() => setShowCreateDialog(false)}
@@ -420,12 +371,7 @@ const OutboundOrderPage: React.FC = () => {
               label='预计发货'
               type='date'
               value={formData.expected_delivery}
-              onChange={(e) =>
-                setFormData({
-                  ...formData,
-                  expected_delivery: e.target.value,
-                })
-              }
+              onChange={(e) => setFormData({ ...formData, expected_delivery: e.target.value })}
               size='small'
               fullWidth
               slotProps={{ inputLabel: { shrink: true } } as any}
@@ -435,10 +381,7 @@ const OutboundOrderPage: React.FC = () => {
               type='number'
               value={formData.total_amount}
               onChange={(e) =>
-                setFormData({
-                  ...formData,
-                  total_amount: parseFloat(e.target.value) || 0,
-                })
+                setFormData({ ...formData, total_amount: parseFloat(e.target.value) || 0 })
               }
               size='small'
               fullWidth
@@ -464,6 +407,7 @@ const OutboundOrderPage: React.FC = () => {
             <Button
               variant='contained'
               onClick={handleCreate}
+              disabled={createMutation.isPending}
             >
               保存
             </Button>
@@ -471,7 +415,6 @@ const OutboundOrderPage: React.FC = () => {
         </DialogContent>
       </Dialog>
 
-      {/* 编辑对话框 */}
       <Dialog
         open={showEditDialog}
         onClose={() => setShowEditDialog(false)}
@@ -565,6 +508,7 @@ const OutboundOrderPage: React.FC = () => {
             <Button
               variant='contained'
               onClick={handleUpdate}
+              disabled={updateMutation.isPending}
             >
               保存
             </Button>
@@ -572,7 +516,6 @@ const OutboundOrderPage: React.FC = () => {
         </DialogContent>
       </Dialog>
 
-      {/* 详情对话框 */}
       <Dialog
         open={showDetailDialog}
         onClose={() => setShowDetailDialog(false)}
@@ -669,7 +612,6 @@ const OutboundOrderPage: React.FC = () => {
         </DialogActions>
       </Dialog>
 
-      {/* 删除确认对话框 */}
       <ConfirmDialog
         isOpen={showDeleteConfirm}
         onClose={() => setShowDeleteConfirm(false)}

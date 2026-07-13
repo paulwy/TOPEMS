@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useMemo, useCallback, useRef } from 'react';
+import React, { useState, useMemo, useCallback, useRef, useEffect } from 'react';
 import {
   Box,
   Dialog,
@@ -56,6 +56,8 @@ import {
 } from '@/components/templates';
 import { PageContainer } from '@/components/common/PageContainerV2';
 import { designTokens } from '@/theme/tokens';
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import { QUERY_KEYS } from '@/lib/reactQuery';
 
 const ct = designTokens.colors;
 
@@ -103,12 +105,10 @@ interface DocumentFormData {
 }
 
 export const DocumentPage: React.FC = () => {
+  const queryClient = useQueryClient();
   const [activeTab, setActiveTab] = useState(0);
   const [searchTerm, setSearchTerm] = useState('');
   const [keyword, setKeyword] = useState('');
-  const [documents, setDocuments] = useState<PdmDocument[]>([]);
-  const [versions, setVersions] = useState<DocumentVersion[]>([]);
-  const [loading, setLoading] = useState(true);
   const [uploading, setUploading] = useState(false);
   const [openDialog, setOpenDialog] = useState(false);
   const [versionDialogOpen, setVersionDialogOpen] = useState(false);
@@ -126,68 +126,124 @@ export const DocumentPage: React.FC = () => {
   const fileInputRef = useRef<HTMLInputElement>(null);
   const addNotification = useAppStore((state) => state.addNotification);
 
-  useEffect(() => {
-    loadDocuments();
-  }, []);
+  const loadDocuments = useCallback(() => {
+    queryClient.invalidateQueries({ queryKey: QUERY_KEYS.PDM.DOCUMENTS });
+  }, [queryClient]);
 
-  const loadDocuments = async () => {
-    try {
-      setLoading(true);
+  const { data: documents = [], isLoading: loading } = useQuery({
+    queryKey: QUERY_KEYS.PDM.DOCUMENTS,
+    queryFn: async () => {
       const response = await documentApi.list();
       if (response.success && response.data) {
-        setDocuments(response.data as PdmDocument[]);
-      } else {
-        setDocuments([]);
+        return response.data as PdmDocument[];
       }
-    } catch (err: unknown) {
-      apiLogger.error('加载文档数据失败:', err);
-      setDocuments([]);
-    } finally {
-      setLoading(false);
-    }
-  };
+      return [];
+    },
+    staleTime: 5 * 60 * 1000,
+  });
 
-  const loadVersions = async (documentId: string) => {
-    try {
-      const response = await documentApi.listVersions(documentId);
+  const { data: versions = [] } = useQuery({
+    queryKey: QUERY_KEYS.PDM.DOCUMENT_VERSIONS(selectedDocumentId || ''),
+    queryFn: async () => {
+      if (!selectedDocumentId) return [];
+      const response = await documentApi.listVersions(selectedDocumentId);
       if (response.success && response.data) {
-        setVersions(response.data as DocumentVersion[]);
-      } else {
-        setVersions([]);
+        return response.data as DocumentVersion[];
       }
-    } catch (err: unknown) {
-      apiLogger.error('加载文档版本失败:', err);
-      setVersions([]);
-    }
-  };
+      return [];
+    },
+    staleTime: 5 * 60 * 1000,
+    enabled: !!selectedDocumentId,
+  });
 
   const handleTabChange = (_event: React.SyntheticEvent, newValue: number) => {
     setActiveTab(newValue);
   };
 
-  const handleSearchDocuments = async () => {
+  const searchDocumentsMutation = useMutation({
+    mutationFn: (keyword: string) => documentApi.search({ keyword }),
+    onSuccess: (response) => {
+      if (response.success && response.data) {
+        queryClient.setQueryData(QUERY_KEYS.PDM.DOCUMENTS, response.data.documents || []);
+      }
+    },
+    onError: () => {
+      addNotification({ title: '错误', message: '搜索失败', type: 'error' });
+    },
+  });
+
+  const handleSearchDocuments = () => {
     if (!keyword.trim()) {
-      loadDocuments();
+      queryClient.invalidateQueries({ queryKey: QUERY_KEYS.PDM.DOCUMENTS });
       return;
     }
-    try {
-      setLoading(true);
-      const response = await documentApi.search({ keyword });
-      if (response.success && response.data) {
-        setDocuments(response.data.documents);
-      } else {
-        setDocuments([]);
-      }
-    } catch (err: unknown) {
-      apiLogger.error('搜索文档失败:', err);
-    } finally {
-      setLoading(false);
-    }
+    searchDocumentsMutation.mutate(keyword);
   };
+
+  const createDocumentMutation = useMutation({
+    mutationFn: (data: CreatePdmDocumentRequest) => documentApi.create(data),
+    onSuccess: () => {
+      addNotification({ title: '成功', message: '文档创建成功', type: 'success' });
+      setOpenDialog(false);
+      setEditingDocument(null);
+      queryClient.invalidateQueries({ queryKey: QUERY_KEYS.PDM.DOCUMENTS });
+    },
+    onError: () => {
+      addNotification({ title: '错误', message: '创建失败', type: 'error' });
+    },
+  });
+
+  const updateDocumentMutation = useMutation({
+    mutationFn: ({ id, data }: { id: string; data: CreatePdmDocumentRequest }) =>
+      documentApi.update(id, data),
+    onSuccess: () => {
+      addNotification({ title: '成功', message: '文档更新成功', type: 'success' });
+      setOpenDialog(false);
+      setEditingDocument(null);
+      queryClient.invalidateQueries({ queryKey: QUERY_KEYS.PDM.DOCUMENTS });
+    },
+    onError: () => {
+      addNotification({ title: '错误', message: '更新失败', type: 'error' });
+    },
+  });
+
+  const deleteDocumentMutation = useMutation({
+    mutationFn: (id: string) => documentApi.delete(id),
+    onSuccess: () => {
+      addNotification({ title: '成功', message: '文档删除成功', type: 'success' });
+      queryClient.invalidateQueries({ queryKey: QUERY_KEYS.PDM.DOCUMENTS });
+    },
+    onError: () => {
+      addNotification({ title: '错误', message: '删除失败', type: 'error' });
+    },
+  });
+
+  const uploadVersionMutation = useMutation({
+    mutationFn: ({ documentId, file }: { documentId: string; file: File }) =>
+      documentApi.upload(documentId, file),
+    onSuccess: (_data, variables) => {
+      addNotification({ title: '成功', message: '文件上传成功', type: 'success' });
+      queryClient.invalidateQueries({ queryKey: QUERY_KEYS.PDM.DOCUMENT_VERSIONS(variables.documentId) });
+    },
+    onError: () => {
+      addNotification({ title: '错误', message: '上传失败', type: 'error' });
+    },
+  });
+
+  const publishVersionMutation = useMutation({
+    mutationFn: ({ documentId, versionId }: { documentId: string; versionId: string }) =>
+      documentApi.publishVersion(documentId, versionId),
+    onSuccess: (_data, variables) => {
+      addNotification({ title: '成功', message: '版本发布成功', type: 'success' });
+      queryClient.invalidateQueries({ queryKey: QUERY_KEYS.PDM.DOCUMENT_VERSIONS(variables.documentId) });
+    },
+    onError: () => {
+      addNotification({ title: '错误', message: '发布失败', type: 'error' });
+    },
+  });
 
   const handleViewDocument = (doc: PdmDocument) => {
     setSelectedDocumentId(doc.id);
-    loadVersions(doc.id);
     setActiveTab(1);
   };
 
@@ -205,15 +261,8 @@ export const DocumentPage: React.FC = () => {
     setOpenDialog(true);
   };
 
-  const handleDeleteDocument = async (id: string) => {
-    try {
-      await documentApi.delete(id);
-      addNotification({ title: '成功', message: '文档删除成功', type: 'success' });
-      loadDocuments();
-    } catch (err: unknown) {
-      addNotification({ title: '错误', message: '删除失败', type: 'error' });
-      apiLogger.error('删除文档失败:', err);
-    }
+  const handleDeleteDocument = (id: string) => {
+    deleteDocumentMutation.mutate(id);
   };
 
   const handleCreate = () => {
@@ -230,69 +279,38 @@ export const DocumentPage: React.FC = () => {
     setOpenDialog(true);
   };
 
-  const handleSaveDocument = async () => {
-    try {
-      const requestData: CreatePdmDocumentRequest = {
-        document_no: formData.document_no,
-        name: formData.name,
-        type: formData.type,
-        category: formData.category || undefined,
-        status: formData.status,
-        tags: formData.tags ? formData.tags.split(',').map((t) => t.trim()) : undefined,
-        description: formData.description || undefined,
-      };
+  const handleSaveDocument = () => {
+    const requestData: CreatePdmDocumentRequest = {
+      document_no: formData.document_no,
+      name: formData.name,
+      type: formData.type,
+      category: formData.category || undefined,
+      status: formData.status,
+      tags: formData.tags ? formData.tags.split(',').map((t) => t.trim()) : undefined,
+      description: formData.description || undefined,
+    };
 
-      if (editingDocument) {
-        await documentApi.update(editingDocument.id, requestData);
-        addNotification({ title: '成功', message: '文档更新成功', type: 'success' });
-      } else {
-        await documentApi.create(requestData);
-        addNotification({ title: '成功', message: '文档创建成功', type: 'success' });
-      }
-      setOpenDialog(false);
-      setEditingDocument(null);
-      loadDocuments();
-    } catch (err: unknown) {
-      addNotification({
-        title: '错误',
-        message: editingDocument ? '更新失败' : '创建失败',
-        type: 'error',
-      });
-      apiLogger.error('保存文档失败:', err);
+    if (editingDocument) {
+      updateDocumentMutation.mutate({ id: editingDocument.id, data: requestData });
+    } else {
+      createDocumentMutation.mutate(requestData);
     }
   };
 
-  const handleUpload = async (event: React.ChangeEvent<HTMLInputElement>) => {
+  const handleUpload = (event: React.ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0];
     if (!file || !selectedDocumentId) return;
 
-    try {
-      setUploading(true);
-      const response = await documentApi.upload(selectedDocumentId, file);
-      if (response.success) {
-        addNotification({ title: '成功', message: '文件上传成功', type: 'success' });
-        loadVersions(selectedDocumentId);
-      }
-    } catch (err: unknown) {
-      addNotification({ title: '错误', message: '上传失败', type: 'error' });
-      apiLogger.error('上传文件失败:', err);
-    } finally {
-      setUploading(false);
-      if (fileInputRef.current) {
-        fileInputRef.current.value = '';
-      }
+    setUploading(true);
+    uploadVersionMutation.mutate({ documentId: selectedDocumentId, file });
+    setUploading(false);
+    if (fileInputRef.current) {
+      fileInputRef.current.value = '';
     }
   };
 
-  const handlePublishVersion = async (documentId: string, versionId: string) => {
-    try {
-      await documentApi.publishVersion(documentId, versionId);
-      addNotification({ title: '成功', message: '版本发布成功', type: 'success' });
-      loadVersions(documentId);
-    } catch (err: unknown) {
-      addNotification({ title: '错误', message: '发布失败', type: 'error' });
-      apiLogger.error('发布版本失败:', err);
-    }
+  const handlePublishVersion = (documentId: string, versionId: string) => {
+    publishVersionMutation.mutate({ documentId, versionId });
   };
 
   const filteredDocuments = useMemo(() => {
@@ -534,7 +552,7 @@ export const DocumentPage: React.FC = () => {
               variant: 'contained',
             },
           ]}
-          onRefresh={loadDocuments}
+          onRefresh={() => queryClient.invalidateQueries({ queryKey: QUERY_KEYS.PDM.DOCUMENTS })}
           headerContent={statsCards}
           emptyMessage='暂无文档数据'
         />
@@ -705,7 +723,7 @@ export const DocumentPage: React.FC = () => {
             searchable={false}
             rowActions={rowActions}
             actions={[]}
-            onRefresh={loadDocuments}
+            onRefresh={() => queryClient.invalidateQueries({ queryKey: QUERY_KEYS.PDM.DOCUMENTS })}
             emptyMessage='输入关键词搜索文档'
           />
         </Box>

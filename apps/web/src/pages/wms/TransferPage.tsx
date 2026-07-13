@@ -1,4 +1,3 @@
-import React, { useState, useEffect, useMemo, useCallback } from 'react';
 import {
   Chip,
   Dialog,
@@ -16,6 +15,8 @@ import {
   Button,
   IconButton,
 } from '@mui/material';
+import React, { useState, useMemo } from 'react';
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import {
   ListPageTemplate,
   type ColumnDef,
@@ -62,18 +63,14 @@ const priorityConfig: Record<
 
 const TransferPage: React.FC = () => {
   const { addNotification } = useAppStore();
+  const queryClient = useQueryClient();
 
-  const [transfers, setTransfers] = useState<TransferOrder[]>([]);
-  const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState('');
   const [statusFilter, setStatusFilter] = useState<string>('');
   const [warehouseFilter, setWarehouseFilter] = useState<string>('');
-  const [warehouses, setWarehouses] = useState<Warehouse[]>([]);
   const [currentPage, setCurrentPage] = useState(1);
   const [pageSize] = useState(10);
-  const [total, setTotal] = useState(0);
 
-  // Dialog states
   const [showCreateDialog, setShowCreateDialog] = useState(false);
   const [showEditDialog, setShowEditDialog] = useState(false);
   const [showDetailDialog, setShowDetailDialog] = useState(false);
@@ -81,7 +78,6 @@ const TransferPage: React.FC = () => {
   const [selectedTransfer, setSelectedTransfer] = useState<TransferOrder | null>(null);
   const [deleteTransferId, setDeleteTransferId] = useState<string | null>(null);
 
-  // Form states
   const [newItem, setNewItem] = useState<CreateTransferOrderRequest>({
     transfer_type: 'internal',
     from_warehouse_id: '',
@@ -95,51 +91,128 @@ const TransferPage: React.FC = () => {
     items: [],
   });
 
-  const fetchTransfers = useCallback(async () => {
-    try {
-      setLoading(true);
-      const params: Record<string, unknown> = {
-        page: currentPage,
-        pagesize: pageSize,
-      };
+  const { data: transfersData = { items: [], total: 0 }, isLoading: transfersLoading } = useQuery({
+    queryKey: ['wms-transfers', currentPage, pageSize, searchTerm, statusFilter, warehouseFilter],
+    queryFn: async () => {
+      const params: Record<string, unknown> = { page: currentPage, pagesize: pageSize };
       if (searchTerm) params.search = searchTerm;
       if (statusFilter) params.status = statusFilter;
       if (warehouseFilter) params.warehouse_id = warehouseFilter;
 
       const response = await wmsApi.transfers.list(params);
-      if (response.success && response.data) {
-        setTransfers(response.data.items || []);
-        setTotal(response.data.total || 0);
-      }
-    } catch (error: unknown) {
-      apiLogger.error('获取调拨单列表失败:', error);
-      addNotification({
-        type: 'error',
-        title: '加载失败',
-        message: '无法加载调拨单列表',
-      });
-    } finally {
-      setLoading(false);
-    }
-  }, [currentPage, pageSize, searchTerm, statusFilter, warehouseFilter, addNotification]);
+      return response.success && response.data ? response.data : { items: [], total: 0 };
+    },
+    staleTime: 5 * 60 * 1000,
+  });
 
-  const fetchWarehouses = async () => {
-    try {
+  const { data: warehouses = [] } = useQuery({
+    queryKey: ['wms-warehouses-for-transfer'],
+    queryFn: async () => {
       const response = await wmsApi.warehouses.list({ page: 1, pagesize: 100 });
-      if (response.success && response.data) {
-        setWarehouses(response.data.items || []);
+      return response.success && response.data ? response.data.items || [] : [];
+    },
+    staleTime: 5 * 60 * 1000,
+  });
+
+  const createMutation = useMutation({
+    mutationFn: async (data: CreateTransferOrderRequest) => {
+      return await wmsApi.transfers.create(data);
+    },
+    onSuccess: (response) => {
+      if (response.success) {
+        addNotification({ type: 'success', title: '创建成功', message: '调拨单已创建' });
+        setShowCreateDialog(false);
+        resetNewItem();
+        queryClient.invalidateQueries({ queryKey: ['wms-transfers'] });
       }
-    } catch (error: unknown) {
-      apiLogger.error('获取仓库列表失败:', error);
-    }
-  };
+    },
+    onError: (error: unknown) => {
+      apiLogger.error('创建调拨单失败:', error);
+      addNotification({ type: 'error', title: '创建失败', message: '创建调拨单失败' });
+    },
+  });
 
-  useEffect(() => {
-    fetchTransfers();
-    fetchWarehouses();
-  }, [fetchTransfers]);
+  const confirmMutation = useMutation({
+    mutationFn: async (id: string) => {
+      return await wmsApi.transfers.confirm(id);
+    },
+    onSuccess: (response) => {
+      if (response.success) {
+        addNotification({ type: 'success', title: '确认成功', message: '调拨单已确认' });
+        queryClient.invalidateQueries({ queryKey: ['wms-transfers'] });
+      }
+    },
+    onError: (error: unknown) => {
+      apiLogger.error('确认调拨单失败:', error);
+      addNotification({ type: 'error', title: '确认失败', message: '确认调拨单失败' });
+    },
+  });
 
-  const handleCreate = async () => {
+  const shipMutation = useMutation({
+    mutationFn: async (id: string) => {
+      return await wmsApi.transfers.ship(id);
+    },
+    onSuccess: (response) => {
+      if (response.success) {
+        addNotification({ type: 'success', title: '发货成功', message: '调拨单已发货' });
+        queryClient.invalidateQueries({ queryKey: ['wms-transfers'] });
+      }
+    },
+    onError: (error: unknown) => {
+      apiLogger.error('发货失败:', error);
+      addNotification({ type: 'error', title: '发货失败', message: '发货失败' });
+    },
+  });
+
+  const receiveMutation = useMutation({
+    mutationFn: async (id: string) => {
+      return await wmsApi.transfers.receive(id);
+    },
+    onSuccess: (response) => {
+      if (response.success) {
+        addNotification({ type: 'success', title: '收货成功', message: '调拨单已收货' });
+        queryClient.invalidateQueries({ queryKey: ['wms-transfers'] });
+      }
+    },
+    onError: (error: unknown) => {
+      apiLogger.error('收货失败:', error);
+      addNotification({ type: 'error', title: '收货失败', message: '收货失败' });
+    },
+  });
+
+  const completeMutation = useMutation({
+    mutationFn: async (id: string) => {
+      return await wmsApi.transfers.complete(id);
+    },
+    onSuccess: (response) => {
+      if (response.success) {
+        addNotification({ type: 'success', title: '完成成功', message: '调拨单已完成' });
+        queryClient.invalidateQueries({ queryKey: ['wms-transfers'] });
+      }
+    },
+    onError: (error: unknown) => {
+      apiLogger.error('完成调拨单失败:', error);
+      addNotification({ type: 'error', title: '完成失败', message: '完成调拨单失败' });
+    },
+  });
+
+  const deleteMutation = useMutation({
+    mutationFn: async (id: string) => {
+      return await wmsApi.transfers.delete(id);
+    },
+    onSuccess: (response) => {
+      if (response.success) {
+        addNotification({ type: 'success', title: '删除成功', message: '调拨单已删除' });
+        queryClient.invalidateQueries({ queryKey: ['wms-transfers'] });
+      }
+    },
+    onError: (error: unknown) => {
+      apiLogger.error('删除调拨单失败:', error);
+      addNotification({ type: 'error', title: '删除失败', message: '删除调拨单失败' });
+    },
+  });
+
+  const handleCreate = () => {
     if (!newItem.from_warehouse_id || !newItem.to_warehouse_id) {
       addNotification({
         type: 'warning',
@@ -148,111 +221,23 @@ const TransferPage: React.FC = () => {
       });
       return;
     }
-
-    try {
-      const response = await wmsApi.transfers.create(newItem);
-      if (response.success) {
-        addNotification({
-          type: 'success',
-          title: '创建成功',
-          message: '调拨单已创建',
-        });
-        setShowCreateDialog(false);
-        resetNewItem();
-        fetchTransfers();
-      }
-    } catch (error: unknown) {
-      apiLogger.error('创建调拨单失败:', error);
-      addNotification({
-        type: 'error',
-        title: '创建失败',
-        message: '创建调拨单失败',
-      });
-    }
+    createMutation.mutate(newItem);
   };
 
-  const handleConfirm = async (id: string) => {
-    try {
-      const response = await wmsApi.transfers.confirm(id);
-      if (response.success) {
-        addNotification({
-          type: 'success',
-          title: '确认成功',
-          message: '调拨单已确认',
-        });
-        fetchTransfers();
-      }
-    } catch (error: unknown) {
-      apiLogger.error('确认调拨单失败:', error);
-      addNotification({
-        type: 'error',
-        title: '确认失败',
-        message: '确认调拨单失败',
-      });
-    }
+  const handleConfirm = (id: string) => {
+    confirmMutation.mutate(id);
   };
 
-  const handleShip = async (id: string) => {
-    try {
-      const response = await wmsApi.transfers.ship(id);
-      if (response.success) {
-        addNotification({
-          type: 'success',
-          title: '发货成功',
-          message: '调拨单已发货',
-        });
-        fetchTransfers();
-      }
-    } catch (error: unknown) {
-      apiLogger.error('发货失败:', error);
-      addNotification({
-        type: 'error',
-        title: '发货失败',
-        message: '发货失败',
-      });
-    }
+  const handleShip = (id: string) => {
+    shipMutation.mutate(id);
   };
 
-  const handleReceive = async (id: string) => {
-    try {
-      const response = await wmsApi.transfers.receive(id);
-      if (response.success) {
-        addNotification({
-          type: 'success',
-          title: '收货成功',
-          message: '调拨单已收货',
-        });
-        fetchTransfers();
-      }
-    } catch (error: unknown) {
-      apiLogger.error('收货失败:', error);
-      addNotification({
-        type: 'error',
-        title: '收货失败',
-        message: '收货失败',
-      });
-    }
+  const handleReceive = (id: string) => {
+    receiveMutation.mutate(id);
   };
 
-  const handleComplete = async (id: string) => {
-    try {
-      const response = await wmsApi.transfers.complete(id);
-      if (response.success) {
-        addNotification({
-          type: 'success',
-          title: '完成成功',
-          message: '调拨单已完成',
-        });
-        fetchTransfers();
-      }
-    } catch (error: unknown) {
-      apiLogger.error('完成调拨单失败:', error);
-      addNotification({
-        type: 'error',
-        title: '完成失败',
-        message: '完成调拨单失败',
-      });
-    }
+  const handleComplete = (id: string) => {
+    completeMutation.mutate(id);
   };
 
   const handleDeleteClick = (id: string) => {
@@ -260,28 +245,11 @@ const TransferPage: React.FC = () => {
     setShowDeleteConfirm(true);
   };
 
-  const handleDelete = useCallback(async () => {
+  const handleDelete = () => {
     if (!deleteTransferId) return;
-
-    try {
-      const response = await wmsApi.transfers.delete(deleteTransferId);
-      if (response.success) {
-        addNotification({
-          type: 'success',
-          title: '删除成功',
-          message: '调拨单已删除',
-        });
-        fetchTransfers();
-      }
-    } catch (error: unknown) {
-      apiLogger.error('删除调拨单失败:', error);
-      addNotification({
-        type: 'error',
-        title: '删除失败',
-        message: '删除调拨单失败',
-      });
-    }
-  }, [addNotification, fetchTransfers, deleteTransferId]);
+    deleteMutation.mutate(deleteTransferId);
+    setShowDeleteConfirm(false);
+  };
 
   const handleViewDetail = (item: TransferOrder) => {
     setSelectedTransfer(item);
@@ -306,24 +274,14 @@ const TransferPage: React.FC = () => {
   const getStatusBadge = (status: string) => {
     const config = statusConfig[status] || { label: status, color: 'default' as const };
     return (
-      <Chip
-        size='small'
-        color={config.color}
-        label={config.label}
-        variant='outlined'
-      />
+      <Chip size='small' color={config.color} label={config.label} variant='outlined' />
     );
   };
 
   const getPriorityBadge = (priority: string) => {
     const config = priorityConfig[priority] || { label: priority, color: 'default' as const };
     return (
-      <Chip
-        size='small'
-        color={config.color}
-        label={config.label}
-        variant='filled'
-      />
+      <Chip size='small' color={config.color} label={config.label} variant='filled' />
     );
   };
 
@@ -406,76 +364,52 @@ const TransferPage: React.FC = () => {
     [statusFilter, warehouseFilter, warehouses]
   );
 
-  const renderRowActions = useCallback(
-    (row: TransferOrder): React.ReactNode => {
-      const actions: RowAction<TransferOrder>[] = [
-        {
-          label: '查看详情',
-          icon: <Eye size={16} />,
-          onClick: () => handleViewDetail(row),
-        },
-      ];
+  const renderRowActions = useMemo(
+    () =>
+      (row: TransferOrder): React.ReactNode => {
+        const actions: RowAction<TransferOrder>[] = [
+          { label: '查看详情', icon: <Eye size={16} />, onClick: () => handleViewDetail(row) },
+        ];
 
-      if (row.status === 'pending') {
-        actions.push({
-          label: '确认',
-          icon: <Check size={16} />,
-          onClick: () => handleConfirm(row.id),
-        });
-      }
+        if (row.status === 'pending') {
+          actions.push({ label: '确认', icon: <Check size={16} />, onClick: () => handleConfirm(row.id) });
+        }
 
-      if (row.status === 'confirmed') {
-        actions.push({
-          label: '发货',
-          icon: <Truck size={16} />,
-          onClick: () => handleShip(row.id),
-        });
-      }
+        if (row.status === 'confirmed') {
+          actions.push({ label: '发货', icon: <Truck size={16} />, onClick: () => handleShip(row.id) });
+        }
 
-      if (row.status === 'shipped') {
-        actions.push({
-          label: '收货',
-          icon: <Package size={16} />,
-          onClick: () => handleReceive(row.id),
-        });
-      }
+        if (row.status === 'shipped') {
+          actions.push({ label: '收货', icon: <Package size={16} />, onClick: () => handleReceive(row.id) });
+        }
 
-      if (row.status === 'received') {
-        actions.push({
-          label: '完成',
-          icon: <Check size={16} />,
-          onClick: () => handleComplete(row.id),
-        });
-      }
+        if (row.status === 'received') {
+          actions.push({ label: '完成', icon: <Check size={16} />, onClick: () => handleComplete(row.id) });
+        }
 
-      if (row.status === 'pending' || row.status === 'cancelled') {
-        actions.push({
-          label: '删除',
-          icon: <Trash2 size={16} />,
-          color: 'error',
-          onClick: () => handleDeleteClick(row.id),
-        });
-      }
+        if (row.status === 'pending' || row.status === 'cancelled') {
+          actions.push({ label: '删除', icon: <Trash2 size={16} />, color: 'error', onClick: () => handleDeleteClick(row.id) });
+        }
 
-      return (
-        <Box sx={{ display: 'flex', gap: 0.5 }}>
-          {actions.map((action, index) => (
-            <IconButton
-              key={index}
-              size='small'
-              color={action.color as 'primary' | 'secondary' | 'error' | 'inherit' | 'default'}
-              onClick={(e: React.MouseEvent) => {
-                e.stopPropagation();
-                if (action.onClick) action.onClick(row);
-              }}
-            >
-              {action.icon}
-            </IconButton>
-          ))}
-        </Box>
-      );
-    },
-    [handleConfirm, handleShip, handleReceive, handleComplete, handleDeleteClick]
+        return (
+          <Box sx={{ display: 'flex', gap: 0.5 }}>
+            {actions.map((action, index) => (
+              <IconButton
+                key={index}
+                size='small'
+                color={action.color as 'primary' | 'secondary' | 'error' | 'inherit' | 'default'}
+                onClick={(e: React.MouseEvent) => {
+                  e.stopPropagation();
+                  if (action.onClick) action.onClick(row);
+                }}
+              >
+                {action.icon}
+              </IconButton>
+            ))}
+          </Box>
+        );
+      },
+    []
   );
 
   const handleSearch = (value: string) => {
@@ -489,68 +423,27 @@ const TransferPage: React.FC = () => {
   };
 
   const statsContent = (
-    <Box
-      sx={{
-        display: 'grid',
-        gridTemplateColumns: { xs: 'repeat(2, 1fr)', md: 'repeat(4, 1fr)' },
-        gap: 2,
-        mb: 3,
-      }}
-    >
+    <Box sx={{ display: 'grid', gridTemplateColumns: { xs: 'repeat(2, 1fr)', md: 'repeat(4, 1fr)' }, gap: 2, mb: 3 }}>
       <Box sx={{ p: 2, bgcolor: 'grey.100', borderRadius: 3 }}>
-        <Typography
-          variant='body2'
-          sx={{ color: 'text.secondary' }}
-        >
-          调拨单总数
-        </Typography>
-        <Typography
-          variant='h5'
-          sx={{ fontWeight: 700 }}
-        >
-          {total}
-        </Typography>
+        <Typography variant='body2' sx={{ color: 'text.secondary' }}>调拨单总数</Typography>
+        <Typography variant='h5' sx={{ fontWeight: 700 }}>{transfersData.total}</Typography>
       </Box>
       <Box sx={{ p: 2, bgcolor: 'warning.light', borderRadius: 3 }}>
-        <Typography
-          variant='body2'
-          sx={{ color: 'text.secondary' }}
-        >
-          待处理
-        </Typography>
-        <Typography
-          variant='h5'
-          sx={{ fontWeight: 700, color: 'warning.dark' }}
-        >
-          {transfers.filter((t) => t.status === 'pending').length}
+        <Typography variant='body2' sx={{ color: 'text.secondary' }}>待处理</Typography>
+        <Typography variant='h5' sx={{ fontWeight: 700, color: 'warning.dark' }}>
+          {transfersData.items.filter((t) => t.status === 'pending').length}
         </Typography>
       </Box>
       <Box sx={{ p: 2, bgcolor: 'info.light', borderRadius: 3 }}>
-        <Typography
-          variant='body2'
-          sx={{ color: 'text.secondary' }}
-        >
-          已发货
-        </Typography>
-        <Typography
-          variant='h5'
-          sx={{ fontWeight: 700, color: 'info.dark' }}
-        >
-          {transfers.filter((t) => t.status === 'shipped').length}
+        <Typography variant='body2' sx={{ color: 'text.secondary' }}>已发货</Typography>
+        <Typography variant='h5' sx={{ fontWeight: 700, color: 'info.dark' }}>
+          {transfersData.items.filter((t) => t.status === 'shipped').length}
         </Typography>
       </Box>
       <Box sx={{ p: 2, bgcolor: 'success.light', borderRadius: 3 }}>
-        <Typography
-          variant='body2'
-          sx={{ color: 'text.secondary' }}
-        >
-          已完成
-        </Typography>
-        <Typography
-          variant='h5'
-          sx={{ fontWeight: 700, color: 'success.dark' }}
-        >
-          {transfers.filter((t) => t.status === 'completed').length}
+        <Typography variant='body2' sx={{ color: 'text.secondary' }}>已完成</Typography>
+        <Typography variant='h5' sx={{ fontWeight: 700, color: 'success.dark' }}>
+          {transfersData.items.filter((t) => t.status === 'completed').length}
         </Typography>
       </Box>
     </Box>
@@ -568,407 +461,156 @@ const TransferPage: React.FC = () => {
       <ListPageTemplate
         title=''
         subtitle=''
-        breadcrumbs={[
-          { label: '首页', href: '/dashboard' },
-          { label: '仓储', href: '/wms' },
-          { label: '库存调拨' },
-        ]}
+        breadcrumbs={[{ label: '首页', href: '/dashboard' }, { label: '仓储', href: '/wms' }, { label: '库存调拨' }]}
         columns={columns}
-        data={transfers}
-        loading={loading}
+        data={transfersData.items}
+        loading={transfersLoading}
         filters={filters}
         searchable
         searchPlaceholder='搜索调拨单号...'
         onSearch={handleSearch}
         searchValue={searchTerm}
-        pagination={{
-          page: currentPage,
-          pageSize,
-          total,
-          onPageChange: setCurrentPage,
-        }}
-        actions={[
-          {
-            label: '新增调拨',
-            icon: <Plus size={16} />,
-            onClick: handleOpenCreate,
-          },
-        ]}
+        pagination={{ page: currentPage, pageSize, total: transfersData.total, onPageChange: setCurrentPage }}
+        actions={[{ label: '新增调拨', icon: <Plus size={16} />, onClick: handleOpenCreate }]}
         renderRowActions={renderRowActions}
         headerContent={statsContent}
         emptyMessage='暂无调拨单数据'
         getRowId={(row) => row.id}
       />
 
-      {/* 新增对话框 */}
-      <Dialog
-        open={showCreateDialog}
-        onClose={() => setShowCreateDialog(false)}
-        maxWidth='md'
-        fullWidth
-      >
+      <Dialog open={showCreateDialog} onClose={() => setShowCreateDialog(false)} maxWidth='md' fullWidth>
         <DialogTitle>新增调拨单</DialogTitle>
         <DialogContent>
-          <Box
-            sx={{
-              display: 'grid',
-              gridTemplateColumns: { xs: '1fr', md: 'repeat(2, 1fr)' },
-              gap: 2,
-              py: 2,
-            }}
-          >
-            <FormControl
-              fullWidth
-              size='small'
-            >
+          <Box sx={{ display: 'grid', gridTemplateColumns: { xs: '1fr', md: 'repeat(2, 1fr)' }, gap: 2, py: 2 }}>
+            <FormControl fullWidth size='small'>
               <InputLabel>调拨类型</InputLabel>
-              <Select
-                value={newItem.transfer_type}
-                label='调拨类型'
-                onChange={(e) => setNewItem({ ...newItem, transfer_type: e.target.value })}
-              >
+              <Select value={newItem.transfer_type} label='调拨类型' onChange={(e) => setNewItem({ ...newItem, transfer_type: e.target.value })}>
                 {Object.entries(transferTypeConfig).map(([key, label]) => (
-                  <MenuItem
-                    key={key}
-                    value={key}
-                  >
-                    {label}
-                  </MenuItem>
+                  <MenuItem key={key} value={key}>{label}</MenuItem>
                 ))}
               </Select>
             </FormControl>
-            <FormControl
-              fullWidth
-              size='small'
-            >
+            <FormControl fullWidth size='small'>
               <InputLabel>优先级</InputLabel>
-              <Select
-                value={newItem.priority}
-                label='优先级'
-                onChange={(e) => setNewItem({ ...newItem, priority: e.target.value })}
-              >
+              <Select value={newItem.priority} label='优先级' onChange={(e) => setNewItem({ ...newItem, priority: e.target.value })}>
                 {Object.entries(priorityConfig).map(([key, config]) => (
-                  <MenuItem
-                    key={key}
-                    value={key}
-                  >
-                    {config.label}
-                  </MenuItem>
+                  <MenuItem key={key} value={key}>{config.label}</MenuItem>
                 ))}
               </Select>
             </FormControl>
-            <FormControl
-              fullWidth
-              size='small'
-            >
+            <FormControl fullWidth size='small'>
               <InputLabel>源仓库 *</InputLabel>
-              <Select
-                value={newItem.from_warehouse_id}
-                label='源仓库 *'
-                onChange={(e) => setNewItem({ ...newItem, from_warehouse_id: e.target.value })}
-              >
+              <Select value={newItem.from_warehouse_id} label='源仓库 *' onChange={(e) => setNewItem({ ...newItem, from_warehouse_id: e.target.value })}>
                 {warehouses.map((w) => (
-                  <MenuItem
-                    key={w.id}
-                    value={w.id}
-                  >
-                    {w.name}
-                  </MenuItem>
+                  <MenuItem key={w.id} value={w.id}>{w.name}</MenuItem>
                 ))}
               </Select>
             </FormControl>
-            <FormControl
-              fullWidth
-              size='small'
-            >
+            <FormControl fullWidth size='small'>
               <InputLabel>目标仓库 *</InputLabel>
-              <Select
-                value={newItem.to_warehouse_id}
-                label='目标仓库 *'
-                onChange={(e) => setNewItem({ ...newItem, to_warehouse_id: e.target.value })}
-              >
+              <Select value={newItem.to_warehouse_id} label='目标仓库 *' onChange={(e) => setNewItem({ ...newItem, to_warehouse_id: e.target.value })}>
                 {warehouses.map((w) => (
-                  <MenuItem
-                    key={w.id}
-                    value={w.id}
-                  >
-                    {w.name}
-                  </MenuItem>
+                  <MenuItem key={w.id} value={w.id}>{w.name}</MenuItem>
                 ))}
               </Select>
             </FormControl>
-            <TextField
-              label='计划日期'
-              type='date'
-              value={newItem.planned_date}
-              onChange={(e) => setNewItem({ ...newItem, planned_date: e.target.value })}
-              fullWidth
-              size='small'
-              slotProps={{ inputLabel: { shrink: true } } as any}
-            />
-            <TextField
-              label='承运人'
-              value={newItem.transporter}
-              onChange={(e) => setNewItem({ ...newItem, transporter: e.target.value })}
-              fullWidth
-              size='small'
-            />
+            <TextField label='计划日期' type='date' value={newItem.planned_date} onChange={(e) => setNewItem({ ...newItem, planned_date: e.target.value })} fullWidth size='small' slotProps={{ inputLabel: { shrink: true } } as any} />
+            <TextField label='承运人' value={newItem.transporter} onChange={(e) => setNewItem({ ...newItem, transporter: e.target.value })} fullWidth size='small' />
             <Box sx={{ gridColumn: '1 / -1' }}>
-              <TextField
-                label='备注'
-                value={newItem.remarks}
-                onChange={(e) => setNewItem({ ...newItem, remarks: e.target.value })}
-                fullWidth
-                size='small'
-                multiline
-                rows={2}
-              />
+              <TextField label='备注' value={newItem.remarks} onChange={(e) => setNewItem({ ...newItem, remarks: e.target.value })} fullWidth size='small' multiline rows={2} />
             </Box>
           </Box>
-          <Typography
-            variant='body2'
-            color='text.secondary'
-            sx={{ mt: 2 }}
-          >
-            提示：调拨单物料需要在详情页中添加
-          </Typography>
+          <Typography variant='body2' color='text.secondary' sx={{ mt: 2 }}>提示：调拨单物料需要在详情页中添加</Typography>
         </DialogContent>
         <DialogActions>
-          <Button
-            variant='outlined'
-            onClick={() => setShowCreateDialog(false)}
-          >
-            取消
-          </Button>
-          <Button
-            variant='contained'
-            onClick={handleCreate}
-          >
-            创建
-          </Button>
+          <Button variant='outlined' onClick={() => setShowCreateDialog(false)}>取消</Button>
+          <Button variant='contained' onClick={handleCreate} disabled={createMutation.isPending}>创建</Button>
         </DialogActions>
       </Dialog>
 
-      {/* 详情对话框 */}
-      <Dialog
-        open={showDetailDialog}
-        onClose={() => setShowDetailDialog(false)}
-        maxWidth='md'
-        fullWidth
-      >
+      <Dialog open={showDetailDialog} onClose={() => setShowDetailDialog(false)} maxWidth='md' fullWidth>
         <DialogTitle>调拨单详情</DialogTitle>
         <DialogContent>
           {selectedTransfer && (
             <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
-              <Box
-                sx={{
-                  display: 'grid',
-                  gridTemplateColumns: { xs: '1fr', md: 'repeat(2, 1fr)' },
-                  gap: 2,
-                }}
-              >
+              <Box sx={{ display: 'grid', gridTemplateColumns: { xs: '1fr', md: 'repeat(2, 1fr)' }, gap: 2 }}>
                 <Box>
-                  <Typography
-                    variant='caption'
-                    color='text.secondary'
-                  >
-                    调拨单号
-                  </Typography>
-                  <Typography
-                    variant='body1'
-                    sx={{ fontWeight: 500 }}
-                  >
-                    {selectedTransfer.order_number}
-                  </Typography>
+                  <Typography variant='caption' color='text.secondary'>调拨单号</Typography>
+                  <Typography variant='body1' sx={{ fontWeight: 500 }}>{selectedTransfer.order_number}</Typography>
                 </Box>
                 <Box>
-                  <Typography
-                    variant='caption'
-                    color='text.secondary'
-                  >
-                    调拨类型
-                  </Typography>
-                  <Typography variant='body1'>
-                    {transferTypeConfig[selectedTransfer.transfer_type] ||
-                      selectedTransfer.transfer_type}
-                  </Typography>
+                  <Typography variant='caption' color='text.secondary'>调拨类型</Typography>
+                  <Typography variant='body1'>{transferTypeConfig[selectedTransfer.transfer_type] || selectedTransfer.transfer_type}</Typography>
                 </Box>
                 <Box>
-                  <Typography
-                    variant='caption'
-                    color='text.secondary'
-                  >
-                    源仓库
-                  </Typography>
-                  <Typography variant='body1'>
-                    {getWarehouseName(selectedTransfer.from_warehouse_id)}
-                  </Typography>
+                  <Typography variant='caption' color='text.secondary'>源仓库</Typography>
+                  <Typography variant='body1'>{getWarehouseName(selectedTransfer.from_warehouse_id)}</Typography>
                 </Box>
                 <Box>
-                  <Typography
-                    variant='caption'
-                    color='text.secondary'
-                  >
-                    源库位
-                  </Typography>
-                  <Typography variant='body1'>
-                    {selectedTransfer.from_location_code || '-'}
-                  </Typography>
+                  <Typography variant='caption' color='text.secondary'>源库位</Typography>
+                  <Typography variant='body1'>{selectedTransfer.from_location_code || '-'}</Typography>
                 </Box>
                 <Box>
-                  <Typography
-                    variant='caption'
-                    color='text.secondary'
-                  >
-                    目标仓库
-                  </Typography>
-                  <Typography variant='body1'>
-                    {getWarehouseName(selectedTransfer.to_warehouse_id)}
-                  </Typography>
+                  <Typography variant='caption' color='text.secondary'>目标仓库</Typography>
+                  <Typography variant='body1'>{getWarehouseName(selectedTransfer.to_warehouse_id)}</Typography>
                 </Box>
                 <Box>
-                  <Typography
-                    variant='caption'
-                    color='text.secondary'
-                  >
-                    目标库位
-                  </Typography>
-                  <Typography variant='body1'>
-                    {selectedTransfer.to_location_code || '-'}
-                  </Typography>
+                  <Typography variant='caption' color='text.secondary'>目标库位</Typography>
+                  <Typography variant='body1'>{selectedTransfer.to_location_code || '-'}</Typography>
                 </Box>
                 <Box>
-                  <Typography
-                    variant='caption'
-                    color='text.secondary'
-                  >
-                    优先级
-                  </Typography>
-                  <Box sx={{ mt: 0.5 }}>
-                    {getPriorityBadge(selectedTransfer.priority || 'normal')}
-                  </Box>
+                  <Typography variant='caption' color='text.secondary'>优先级</Typography>
+                  <Box sx={{ mt: 0.5 }}>{getPriorityBadge(selectedTransfer.priority || 'normal')}</Box>
                 </Box>
                 <Box>
-                  <Typography
-                    variant='caption'
-                    color='text.secondary'
-                  >
-                    状态
-                  </Typography>
+                  <Typography variant='caption' color='text.secondary'>状态</Typography>
                   <Box sx={{ mt: 0.5 }}>{getStatusBadge(selectedTransfer.status)}</Box>
                 </Box>
                 <Box>
-                  <Typography
-                    variant='caption'
-                    color='text.secondary'
-                  >
-                    总数量
-                  </Typography>
+                  <Typography variant='caption' color='text.secondary'>总数量</Typography>
                   <Typography variant='body1'>{selectedTransfer.total_quantity || 0}</Typography>
                 </Box>
                 <Box>
-                  <Typography
-                    variant='caption'
-                    color='text.secondary'
-                  >
-                    计划日期
-                  </Typography>
-                  <Typography variant='body1'>
-                    {selectedTransfer.planned_date
-                      ? new Date(selectedTransfer.planned_date).toLocaleDateString('zh-CN')
-                      : '-'}
-                  </Typography>
+                  <Typography variant='caption' color='text.secondary'>计划日期</Typography>
+                  <Typography variant='body1'>{selectedTransfer.planned_date ? new Date(selectedTransfer.planned_date).toLocaleDateString('zh-CN') : '-'}</Typography>
                 </Box>
                 <Box>
-                  <Typography
-                    variant='caption'
-                    color='text.secondary'
-                  >
-                    承运人
-                  </Typography>
+                  <Typography variant='caption' color='text.secondary'>承运人</Typography>
                   <Typography variant='body1'>{selectedTransfer.transporter || '-'}</Typography>
                 </Box>
                 <Box>
-                  <Typography
-                    variant='caption'
-                    color='text.secondary'
-                  >
-                    物流单号
-                  </Typography>
+                  <Typography variant='caption' color='text.secondary'>物流单号</Typography>
                   <Typography variant='body1'>{selectedTransfer.tracking_number || '-'}</Typography>
                 </Box>
                 <Box sx={{ gridColumn: '1 / -1' }}>
-                  <Typography
-                    variant='caption'
-                    color='text.secondary'
-                  >
-                    备注
-                  </Typography>
+                  <Typography variant='caption' color='text.secondary'>备注</Typography>
                   <Typography variant='body1'>{selectedTransfer.remarks || '-'}</Typography>
                 </Box>
               </Box>
 
-              {/* 操作时间线 */}
-              {(selectedTransfer.shipped_at ||
-                selectedTransfer.received_at ||
-                selectedTransfer.approved_at) && (
+              {(selectedTransfer.shipped_at || selectedTransfer.received_at || selectedTransfer.approved_at) && (
                 <Box sx={{ mt: 2 }}>
-                  <Typography
-                    variant='subtitle2'
-                    sx={{ mb: 1 }}
-                  >
-                    操作记录
-                  </Typography>
+                  <Typography variant='subtitle2' sx={{ mb: 1 }}>操作记录</Typography>
                   <Stack spacing={1}>
                     {selectedTransfer.approved_at && (
                       <Box sx={{ display: 'flex', gap: 1 }}>
-                        <Typography
-                          variant='caption'
-                          color='text.secondary'
-                        >
-                          {new Date(selectedTransfer.approved_at).toLocaleString('zh-CN')}
-                        </Typography>
+                        <Typography variant='caption' color='text.secondary'>{new Date(selectedTransfer.approved_at).toLocaleString('zh-CN')}</Typography>
                         <Typography variant='caption'>已确认</Typography>
-                        <Typography
-                          variant='caption'
-                          color='text.secondary'
-                        >
-                          by {selectedTransfer.approved_by || '-'}
-                        </Typography>
+                        <Typography variant='caption' color='text.secondary'>by {selectedTransfer.approved_by || '-'}</Typography>
                       </Box>
                     )}
                     {selectedTransfer.shipped_at && (
                       <Box sx={{ display: 'flex', gap: 1 }}>
-                        <Typography
-                          variant='caption'
-                          color='text.secondary'
-                        >
-                          {new Date(selectedTransfer.shipped_at).toLocaleString('zh-CN')}
-                        </Typography>
+                        <Typography variant='caption' color='text.secondary'>{new Date(selectedTransfer.shipped_at).toLocaleString('zh-CN')}</Typography>
                         <Typography variant='caption'>已发货</Typography>
-                        <Typography
-                          variant='caption'
-                          color='text.secondary'
-                        >
-                          by {selectedTransfer.shipped_by || '-'}
-                        </Typography>
+                        <Typography variant='caption' color='text.secondary'>by {selectedTransfer.shipped_by || '-'}</Typography>
                       </Box>
                     )}
                     {selectedTransfer.received_at && (
                       <Box sx={{ display: 'flex', gap: 1 }}>
-                        <Typography
-                          variant='caption'
-                          color='text.secondary'
-                        >
-                          {new Date(selectedTransfer.received_at).toLocaleString('zh-CN')}
-                        </Typography>
+                        <Typography variant='caption' color='text.secondary'>{new Date(selectedTransfer.received_at).toLocaleString('zh-CN')}</Typography>
                         <Typography variant='caption'>已收货</Typography>
-                        <Typography
-                          variant='caption'
-                          color='text.secondary'
-                        >
-                          by {selectedTransfer.received_by || '-'}
-                        </Typography>
+                        <Typography variant='caption' color='text.secondary'>by {selectedTransfer.received_by || '-'}</Typography>
                       </Box>
                     )}
                   </Stack>
@@ -978,24 +620,11 @@ const TransferPage: React.FC = () => {
           )}
         </DialogContent>
         <DialogActions>
-          <Button
-            variant='outlined'
-            onClick={() => setShowDetailDialog(false)}
-          >
-            关闭
-          </Button>
+          <Button variant='outlined' onClick={() => setShowDetailDialog(false)}>关闭</Button>
         </DialogActions>
       </Dialog>
 
-      {/* 删除确认对话框 */}
-      <ConfirmDialog
-        isOpen={showDeleteConfirm}
-        onClose={() => setShowDeleteConfirm(false)}
-        onConfirm={handleDelete}
-        title='确认删除'
-        message='确定要删除这个调拨单吗？此操作不可撤销。'
-        danger
-      />
+      <ConfirmDialog isOpen={showDeleteConfirm} onClose={() => setShowDeleteConfirm(false)} onConfirm={handleDelete} title='确认删除' message='确定要删除这个调拨单吗？此操作不可撤销。' danger />
     </PageContainer>
   );
 };

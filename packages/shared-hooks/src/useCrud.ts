@@ -91,7 +91,6 @@ export function useCrud<
       const currentController = new AbortController();
       abortControllerRef.current = currentController;
 
-      const cacheKey = `${basePath}_${JSON.stringify(params || {})}_${page}_${pageSize}`;
 
       if (cacheTime > 0 && cacheRef.current) {
         const now = Date.now();

@@ -21,7 +21,7 @@ export const issueApi = {
     const response = await apiClient.qms.get<QualityIssueBackend>(`/issues/${id}`);
     return {
       ...response,
-      data: response.data ? adaptIssueToFrontend(response.data) : undefined,
+      data: response.data ? adaptIssueToFrontend(response.data) : ({} as QualityIssue),
     };
   },
 
@@ -30,7 +30,7 @@ export const issueApi = {
     const response = await apiClient.qms.post<QualityIssueBackend>('/issues', backendData);
     return {
       ...response,
-      data: response.data ? adaptIssueToFrontend(response.data) : undefined,
+      data: response.data ? adaptIssueToFrontend(response.data) : ({} as QualityIssue),
     };
   },
 
@@ -48,7 +48,7 @@ export const issueApi = {
     const response = await apiClient.qms.put<QualityIssueBackend>(`/issues/${id}`, backendData);
     return {
       ...response,
-      data: response.data ? adaptIssueToFrontend(response.data) : undefined,
+      data: response.data ? adaptIssueToFrontend(response.data) : ({} as QualityIssue),
     };
   },
 

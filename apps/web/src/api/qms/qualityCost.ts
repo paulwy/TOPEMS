@@ -28,7 +28,7 @@ export const qualityCostApi = {
     const response = await apiClient.qms.get<QualityCostBackend>(`/quality-costs/${id}`);
     return {
       ...response,
-      data: response.data ? adaptQualityCostToFrontend(response.data) : undefined,
+      data: response.data ? adaptQualityCostToFrontend(response.data) : ({} as QualityCost),
     };
   },
 
@@ -37,7 +37,7 @@ export const qualityCostApi = {
     const response = await apiClient.qms.post<QualityCostBackend>('/quality-costs', backendData);
     return {
       ...response,
-      data: response.data ? adaptQualityCostToFrontend(response.data) : undefined,
+      data: response.data ? adaptQualityCostToFrontend(response.data) : ({} as QualityCost),
     };
   },
 
@@ -63,7 +63,7 @@ export const qualityCostApi = {
     );
     return {
       ...response,
-      data: response.data ? adaptQualityCostToFrontend(response.data) : undefined,
+      data: response.data ? adaptQualityCostToFrontend(response.data) : ({} as QualityCost),
     };
   },
 
@@ -83,7 +83,7 @@ export const qualityCostApi = {
     });
     return {
       ...response,
-      data: response.data ? adaptCostStatisticsToFrontend(response.data) : undefined,
+      data: response.data ? adaptCostStatisticsToFrontend(response.data) : ({} as CostStatistics),
     };
   },
 

@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useMemo } from 'react';
 import {
   Box,
   Dialog,
@@ -11,25 +11,39 @@ import {
   CardContent,
   CardHeader,
   Typography,
-  Stack,
   Button,
   useTheme,
 } from '@mui/material';
 import { apiLogger } from '@/utils/logger';
 import { Plus, Eye, ClipboardList, Clock, ListOrdered } from 'lucide-react';
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { ListPageTemplate, type ColumnDef } from '@/components/templates';
 import { PageContainer } from '@/components/common';
 import { pdmApi } from '@/api/pdm';
 import type { ProductionStep } from '@/api/pdm';
 import { useAppStore } from '@/store';
 import { designTokens } from '@/theme/tokens';
+import { QUERY_KEYS } from '@/lib/reactQuery';
 
 const ct = designTokens.colors;
 
+const adaptStep = (item: { [key: string]: unknown }) => ({
+  ...item,
+  sort_order: item.sort_order || item.order || 0,
+  duration: item.duration_hours || item.duration || 0,
+  status:
+    item.status === 'active'
+      ? '启用'
+      : item.status === 'inactive'
+        ? '禁用'
+        : item.status || '正常',
+});
+
 const PdmStepPage: React.FC = () => {
-  const [steps, setSteps] = useState<ProductionStep[]>([]);
+  const queryClient = useQueryClient();
   const theme = useTheme();
-  const [loading, setLoading] = useState(true);
+  const addNotification = useAppStore((state) => state.addNotification);
+
   const [searchTerm, setSearchTerm] = useState('');
   const [showCreateModal, setShowCreateModal] = useState(false);
   const [showDetailModal, setShowDetailModal] = useState(false);
@@ -43,43 +57,52 @@ const PdmStepPage: React.FC = () => {
     duration_hours: '',
     equipment_required: '',
   });
-  const addNotification = useAppStore((state) => state.addNotification);
 
-  // 分页状态
   const [page, setPage] = useState(0);
   const [pageSize, setPageSize] = useState(10);
 
-  useEffect(() => {
-    loadSteps();
-  }, []);
-
-  const loadSteps = async () => {
-    try {
-      setLoading(true);
+  const { data: steps = [], isLoading } = useQuery({
+    queryKey: QUERY_KEYS.PDM.STEPS,
+    queryFn: async () => {
       const response = await pdmApi.listSteps();
       if (response.success && response.data) {
-        const adapted = (response.data as any).map((item: { [key: string]: unknown }) => ({
-          ...item,
-          sort_order: item.sort_order || item.order || 0,
-          duration: item.duration_hours || item.duration || 0,
-          status:
-            item.status === 'active'
-              ? '启用'
-              : item.status === 'inactive'
-                ? '禁用'
-                : item.status || '正常',
-        }));
-        setSteps(adapted);
-      } else {
-        setSteps([]);
+        const adapted = (response.data as any).map(adaptStep);
+        return adapted;
       }
-    } catch (err: unknown) {
-      apiLogger.error('加载工序步骤数据失败:', err);
-      setSteps([]);
-    } finally {
-      setLoading(false);
-    }
-  };
+      return [];
+    },
+    staleTime: 5 * 60 * 1000,
+  });
+
+  const createStepMutation = useMutation({
+    mutationFn: (data: {
+      step_no: string;
+      name: string;
+      description?: string;
+      process_id: string;
+      sort_order: number;
+      duration_hours?: string;
+      equipment_required?: string;
+    }) =>
+      pdmApi.createStep({
+        step_no: data.step_no,
+        name: data.name,
+        description: data.description || undefined,
+        process_id: data.process_id || '',
+        sort_order: data.sort_order,
+        duration_hours: data.duration_hours ? parseFloat(data.duration_hours) : undefined,
+        equipment_required: data.equipment_required || undefined,
+      }),
+    onSuccess: () => {
+      addNotification({ title: '成功', message: '工序步骤创建成功', type: 'success' });
+      setShowCreateModal(false);
+      queryClient.invalidateQueries({ queryKey: QUERY_KEYS.PDM.STEPS });
+    },
+    onError: (err: unknown) => {
+      addNotification({ title: '错误', message: '创建失败', type: 'error' });
+      apiLogger.error('创建工序步骤失败:', err);
+    },
+  });
 
   const getStatusBadge = (status: string) => {
     const statusMap: Record<string, { bg: string; color: string }> = {
@@ -101,67 +124,72 @@ const PdmStepPage: React.FC = () => {
     );
   };
 
-  const columns: ColumnDef<ProductionStep>[] = [
-    {
-      id: 'sort_order',
-      label: '序号',
-      width: 80,
-      render: (row) => (
-        <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5 }}>
-          <ListOrdered sx={{ width: 14, height: 14 }} />
-          {row.sort_order}
-        </Box>
-      ),
-    },
-    {
-      id: 'step_no',
-      label: '步骤编号',
-    },
-    {
-      id: 'name',
-      label: '步骤名称',
-    },
-    {
-      id: 'duration',
-      label: '耗时(小时)',
-      render: (row) => (
-        <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5 }}>
-          <Clock sx={{ width: 14, height: 14 }} />
-          {row.duration || '-'}
-        </Box>
-      ),
-    },
-    {
-      id: 'status',
-      label: '状态',
-      render: (row) => getStatusBadge(row.status || ''),
-    },
-    {
-      id: 'actions',
-      label: '操作',
-      align: 'right',
-      render: (row) => (
-        <Button
-          size='small'
-          onClick={() => handleView(row)}
-          startIcon={<Eye style={{ width: 16, height: 16 }} />}
-        >
-          详情
-        </Button>
-      ),
-    },
-  ];
+  const columns = useMemo<ColumnDef<ProductionStep>[]>(
+    () => [
+      {
+        id: 'sort_order',
+        label: '序号',
+        width: 80,
+        render: (row) => (
+          <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5 }}>
+            <ListOrdered sx={{ width: 14, height: 14 }} />
+            {row.sort_order}
+          </Box>
+        ),
+      },
+      {
+        id: 'step_no',
+        label: '步骤编号',
+      },
+      {
+        id: 'name',
+        label: '步骤名称',
+      },
+      {
+        id: 'duration',
+        label: '耗时(小时)',
+        render: (row) => (
+          <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5 }}>
+            <Clock sx={{ width: 14, height: 14 }} />
+            {row.duration || '-'}
+          </Box>
+        ),
+      },
+      {
+        id: 'status',
+        label: '状态',
+        render: (row) => getStatusBadge(row.status || ''),
+      },
+      {
+        id: 'actions',
+        label: '操作',
+        align: 'right',
+        render: (row) => (
+          <Button
+            size='small'
+            onClick={() => handleView(row)}
+            startIcon={<Eye style={{ width: 16, height: 16 }} />}
+          >
+            详情
+          </Button>
+        ),
+      },
+    ],
+    []
+  );
 
-  // 搜索过滤
-  const filteredSteps = steps.filter((step) => {
-    return (
-      step.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      step.step_no.toLowerCase().includes(searchTerm.toLowerCase())
-    );
-  });
+  const filteredSteps = useMemo(() => {
+    return steps.filter((step: any) => {
+      return (
+        step.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        step.step_no.toLowerCase().includes(searchTerm.toLowerCase())
+      );
+    });
+  }, [steps, searchTerm]);
 
-  // 分页数据
-  const paginatedSteps = filteredSteps.slice(page * pageSize, page * pageSize + pageSize);
+  const paginatedSteps = useMemo(() => {
+    return filteredSteps.slice(page * pageSize, page * pageSize + pageSize);
+  }, [filteredSteps, page, pageSize]);
 
   const handleView = (step: ProductionStep) => {
     setSelectedStep(step);
@@ -181,31 +209,15 @@ const PdmStepPage: React.FC = () => {
     setShowCreateModal(true);
   };
 
-  const handleSave = async () => {
-    try {
-      await pdmApi.createStep({
-        step_no: formData.step_no,
-        name: formData.name,
-        description: formData.description || undefined,
-        process_id: formData.process_id || '',
-        sort_order: formData.sort_order,
-        duration_hours: formData.duration_hours ? parseFloat(formData.duration_hours) : undefined,
-        equipment_required: formData.equipment_required || undefined,
-      });
-      addNotification({ title: '成功', message: '工序步骤创建成功', type: 'success' });
-      setShowCreateModal(false);
-      loadSteps();
-    } catch (err: unknown) {
-      addNotification({ title: '错误', message: '创建失败', type: 'error' });
-      apiLogger.error('创建工序步骤失败:', err);
-    }
+  const handleSave = () => {
+    createStepMutation.mutate(formData);
   };
 
-  const stats = {
+  const stats = useMemo(() => ({
     total: steps.length,
-    active: steps.filter((s) => s.status === '启用' || s.status === '正常').length,
-    inactive: steps.filter((s) => s.status === '禁用').length,
-  };
+    active: steps.filter((s: any) => s.status === '启用' || s.status === '正常').length,
+    inactive: steps.filter((s: any) => s.status === '禁用').length,
+  }), [steps]);
 
   const headerActions = [
     {
@@ -359,7 +371,7 @@ const PdmStepPage: React.FC = () => {
           <ListPageTemplate
             columns={columns}
             data={paginatedSteps}
-            loading={loading}
+            loading={isLoading}
             searchable
             searchPlaceholder='搜索步骤名称或编号...'
             searchValue={searchTerm}
@@ -455,6 +467,7 @@ const PdmStepPage: React.FC = () => {
           <Button
             variant='contained'
             onClick={handleSave}
+            disabled={createStepMutation.isPending}
             sx={{ bgcolor: 'success.dark' }}
           >
             保存
