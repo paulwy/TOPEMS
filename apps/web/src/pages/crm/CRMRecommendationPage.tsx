@@ -31,14 +31,14 @@ import {
   Eye,
   Sparkles,
 } from 'lucide-react';
-import { useAppStore } from '../../store';
+import { useNotificationStore } from '../../store';
 import { ListPageTemplate, type ColumnDef, type RowAction } from '@/components/templates';
 import { PageContainer } from '@/components/common';
 import { crmApi } from '@/api/crm';
 import type { RecommendationResult, RecommendationItem, RecommendationRequest } from '@/api/crm';
 
 const CRMRecommendationPage: React.FC = () => {
-  const addNotification = useAppStore((state) => state.addNotification);
+  const addNotification = useNotificationStore((state) => state.addNotification);
   const [recommendations, setRecommendations] = useState<RecommendationResult[]>([]);
   const [loading, setLoading] = useState(true);
   const [selectedRecommendation, setSelectedRecommendation] = useState<RecommendationResult | null>(
@@ -431,7 +431,7 @@ const CRMRecommendationPage: React.FC = () => {
             type='number'
             value={formData.top_k}
             onChange={(e) => setFormData({ ...formData, top_k: parseInt(e.target.value) || 10 })}
-            slotProps={{ input: { min: 1, max: 20 } }}
+            slotProps={{ input: { min: 1, max: 20 } } as any}
             fullWidth
           />
         </Box>
