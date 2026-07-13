@@ -29,7 +29,7 @@ export const spcApi = {
     const response = await apiClient.qms.get<SpcChartBackend>(`/spc/charts/${id}`);
     return {
       ...response,
-      data: response.data ? adaptSpcChartToFrontend(response.data) : undefined,
+      data: response.data ? adaptSpcChartToFrontend(response.data) : ({} as SpcChart),
     };
   },
 
@@ -40,7 +40,7 @@ export const spcApi = {
     const response = await apiClient.qms.post<SpcChartBackend>('/spc/charts', backendData);
     return {
       ...response,
-      data: response.data ? adaptSpcChartToFrontend(response.data) : undefined,
+      data: response.data ? adaptSpcChartToFrontend(response.data) : ({} as SpcChart),
     };
   },
 
@@ -68,7 +68,7 @@ export const spcApi = {
     const response = await apiClient.qms.put<SpcChartBackend>(`/spc/charts/${id}`, backendData);
     return {
       ...response,
-      data: response.data ? adaptSpcChartToFrontend(response.data) : undefined,
+      data: response.data ? adaptSpcChartToFrontend(response.data) : ({} as SpcChart),
     };
   },
 
@@ -109,7 +109,7 @@ export const spcApi = {
     const response = await apiClient.qms.post<SpcDataPointBackend>('/spc/data-points', backendData);
     return {
       ...response,
-      data: response.data ? adaptSpcDataPointToFrontend(response.data) : undefined,
+      data: response.data ? adaptSpcDataPointToFrontend(response.data) : ({} as SpcDataPoint),
     };
   },
 
@@ -122,7 +122,7 @@ export const spcApi = {
     );
     return {
       ...response,
-      data: response.data ? adaptControlLimitsToFrontend(response.data) : undefined,
+      data: response.data ? adaptControlLimitsToFrontend(response.data) : ({ ucl: 0, lcl: 0, cl: 0, dataPointsCount: 0 } as ControlLimitsResult),
     };
   },
 };

@@ -1,4 +1,5 @@
-import React, { useState, useEffect, useCallback, useMemo } from 'react';
+import React, { useState, useMemo, useCallback } from 'react';
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { designTokens } from '@/theme/tokens';
 import {
   Dialog,
@@ -44,7 +45,7 @@ import {
   RefreshCw,
   BarChart3,
 } from 'lucide-react';
-import { useNotificationStore } from '@/store';
+import { useAppStore } from '@/store';
 import * as z from 'zod';
 import { ListPageTemplate, type ColumnDef, type RowAction } from '@/components/templates';
 import { PageContainer } from '@/components/common';
@@ -60,17 +61,12 @@ const QmsFmeaPage: React.FC = () => {
   const [showItemModal, setShowItemModal] = useState(false);
   const [selectedAnalysis, setSelectedAnalysis] = useState<FmeaAnalysis | null>(null);
   const [selectedItem, setSelectedItem] = useState<FmeaItem | null>(null);
-  const [fmeaItems, setFmeaItems] = useState<FmeaItem[]>([]);
-  const [statistics, setStatistics] = useState<FmeaStatistics | null>(null);
   const [isEditing, setIsEditing] = useState(false);
   const [isEditingItem, setIsEditingItem] = useState(false);
-  const [loading, setLoading] = useState(true);
   const [submitting, setSubmitting] = useState(false);
-  const [loadingItems, setLoadingItems] = useState(false);
   const [activeTab, setActiveTab] = useState(0);
-  const addNotification = useNotificationStore((state) => state.addNotification);
-
-  const [analyses, setAnalyses] = useState<FmeaAnalysis[]>([]);
+  const addNotification = useAppStore((state) => state.addNotification);
+  const queryClient = useQueryClient();
 
   const [formData, setFormData] = useState({
     fmeaName: '',
@@ -145,54 +141,39 @@ const QmsFmeaPage: React.FC = () => {
     return true;
   };
 
-  const loadAnalyses = useCallback(async () => {
-    try {
-      setLoading(true);
+  const loadAnalyses = useCallback(() => {
+    queryClient.invalidateQueries({ queryKey: ['qms-fmea-analyses'] });
+  }, [queryClient]);
+
+  const { data: analyses = [], isLoading: loading } = useQuery({
+    queryKey: ['qms-fmea-analyses'],
+    queryFn: async () => {
       const response = await fmeaApi.listFmeaAnalyses();
       if (response.success && response.data) {
-        setAnalyses(response.data);
+        return response.data as FmeaAnalysis[];
       }
-    } catch (error: unknown) {
-      addNotification({
-        title: '加载失败',
-        message: '加载 FMEA 分析数据失败',
-        type: 'error',
-      });
-    } finally {
-      setLoading(false);
-    }
-  }, [addNotification]);
-
-  const loadFmeaItems = useCallback(
-    async (fmeaId: string) => {
-      try {
-        setLoadingItems(true);
-        const [itemsRes, statsRes] = await Promise.all([
-          fmeaApi.listFmeaItems(fmeaId),
-          fmeaApi.getFmeaStatistics(fmeaId),
-        ]);
-        if (itemsRes.success && itemsRes.data) {
-          setFmeaItems(itemsRes.data);
-        }
-        if (statsRes.success && statsRes.data) {
-          setStatistics(statsRes.data);
-        }
-      } catch (error: unknown) {
-        addNotification({
-          title: '加载失败',
-          message: '加载 FMEA 项目数据失败',
-          type: 'error',
-        });
-      } finally {
-        setLoadingItems(false);
-      }
+      return [];
     },
-    [addNotification]
-  );
+  });
 
-  useEffect(() => {
-    loadAnalyses();
-  }, [loadAnalyses]);
+  const { data: fmeaItemsData, isLoading: loadingItems } = useQuery({
+    queryKey: ['qms-fmea-items', selectedAnalysis?.id],
+    queryFn: async () => {
+      if (!selectedAnalysis?.id) return { items: [], statistics: null };
+      const [itemsRes, statsRes] = await Promise.all([
+        fmeaApi.listFmeaItems(selectedAnalysis.id),
+        fmeaApi.getFmeaStatistics(selectedAnalysis.id),
+      ]);
+      return {
+        items: itemsRes.success && itemsRes.data ? (itemsRes.data as FmeaItem[]) : [],
+        statistics: statsRes.success && statsRes.data ? (statsRes.data as FmeaStatistics) : null,
+      };
+    },
+    enabled: !!selectedAnalysis?.id,
+  });
+
+  const fmeaItems = fmeaItemsData?.items || [];
+  const statistics = fmeaItemsData?.statistics || null;
 
   const getStatusBadge = (status: string) => {
     const colors: Record<string, { bg: string; color: string }> = {
@@ -364,10 +345,89 @@ const QmsFmeaPage: React.FC = () => {
     },
   ];
 
-  const viewAnalysis = async (analysis: FmeaAnalysis) => {
+  const deleteAnalysisMutation = useMutation({
+    mutationFn: (id: string) => fmeaApi.deleteFmeaAnalysis(id),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['qms-fmea-analyses'] });
+      addNotification({ title: '成功', message: 'FMEA 分析删除成功', type: 'success' });
+    },
+    onError: () => {
+      addNotification({ title: '错误', message: '删除时发生错误', type: 'error' });
+    },
+  });
+
+  const createAnalysisMutation = useMutation({
+    mutationFn: (data: Parameters<typeof fmeaApi.createFmeaAnalysis>[0]) =>
+      fmeaApi.createFmeaAnalysis(data),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['qms-fmea-analyses'] });
+      addNotification({ title: '成功', message: 'FMEA 分析创建成功', type: 'success' });
+    },
+    onError: () => {
+      addNotification({ title: '错误', message: '创建失败', type: 'error' });
+    },
+  });
+
+  const updateAnalysisMutation = useMutation({
+    mutationFn: ({
+      id,
+      data,
+    }: {
+      id: string;
+      data: Parameters<typeof fmeaApi.updateFmeaAnalysis>[1];
+    }) => fmeaApi.updateFmeaAnalysis(id, data),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['qms-fmea-analyses'] });
+      addNotification({ title: '成功', message: 'FMEA 分析更新成功', type: 'success' });
+    },
+    onError: () => {
+      addNotification({ title: '错误', message: '更新失败', type: 'error' });
+    },
+  });
+
+  const deleteItemMutation = useMutation({
+    mutationFn: (id: string) => fmeaApi.deleteFmeaItem(id),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['qms-fmea-items'] });
+      addNotification({ title: '成功', message: 'FMEA 项目删除成功', type: 'success' });
+    },
+    onError: () => {
+      addNotification({ title: '错误', message: '删除时发生错误', type: 'error' });
+    },
+  });
+
+  const createItemMutation = useMutation({
+    mutationFn: (data: Parameters<typeof fmeaApi.createFmeaItem>[0]) =>
+      fmeaApi.createFmeaItem(data),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['qms-fmea-items'] });
+      addNotification({ title: '成功', message: 'FMEA 项目创建成功', type: 'success' });
+    },
+    onError: () => {
+      addNotification({ title: '错误', message: '创建失败', type: 'error' });
+    },
+  });
+
+  const updateItemMutation = useMutation({
+    mutationFn: ({
+      id,
+      data,
+    }: {
+      id: string;
+      data: Parameters<typeof fmeaApi.updateFmeaItem>[1];
+    }) => fmeaApi.updateFmeaItem(id, data),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['qms-fmea-items'] });
+      addNotification({ title: '成功', message: 'FMEA 项目更新成功', type: 'success' });
+    },
+    onError: () => {
+      addNotification({ title: '错误', message: '更新失败', type: 'error' });
+    },
+  });
+
+  const viewAnalysis = (analysis: FmeaAnalysis) => {
     setSelectedAnalysis(analysis);
     setShowDetailModal(true);
-    await loadFmeaItems(analysis.id);
   };
 
   const editAnalysis = (analysis: FmeaAnalysis) => {
@@ -387,19 +447,9 @@ const QmsFmeaPage: React.FC = () => {
     setShowModal(true);
   };
 
-  const deleteAnalysis = async (id: string) => {
+  const deleteAnalysis = (id: string) => {
     if (!confirm('确定要删除此 FMEA 分析吗？')) return;
-    try {
-      const response = await fmeaApi.deleteFmeaAnalysis(id);
-      if (response.success) {
-        setAnalyses((prev) => prev.filter((item) => item.id !== id));
-        addNotification({ title: '成功', message: 'FMEA 分析删除成功', type: 'success' });
-      } else {
-        addNotification({ title: '失败', message: response.message || '删除失败', type: 'error' });
-      }
-    } catch (error: unknown) {
-      addNotification({ title: '错误', message: '删除时发生错误', type: 'error' });
-    }
+    deleteAnalysisMutation.mutate(id);
   };
 
   const handleSubmit = async () => {
@@ -426,36 +476,12 @@ const QmsFmeaPage: React.FC = () => {
       };
 
       if (isEditing && selectedAnalysis) {
-        const response = await fmeaApi.updateFmeaAnalysis(selectedAnalysis.id, submitData);
-        if (response.success) {
-          setAnalyses((prev) =>
-            prev.map((item) =>
-              item.id === selectedAnalysis.id ? { ...item, ...response.data } : item
-            )
-          );
-          addNotification({ title: '成功', message: 'FMEA 分析更新成功', type: 'success' });
-        } else {
-          addNotification({
-            title: '失败',
-            message: response.message || '更新失败',
-            type: 'error',
-          });
-        }
+        await updateAnalysisMutation.mutateAsync({ id: selectedAnalysis.id, data: submitData });
       } else {
-        const response = await fmeaApi.createFmeaAnalysis({
+        await createAnalysisMutation.mutateAsync({
           ...submitData,
           fmeaNo: `FMEA-${Date.now()}`,
         });
-        if (response.success && response.data) {
-          setAnalyses((prev) => [response.data!, ...prev]);
-          addNotification({ title: '成功', message: 'FMEA 分析创建成功', type: 'success' });
-        } else {
-          addNotification({
-            title: '失败',
-            message: response.message || '创建失败',
-            type: 'error',
-          });
-        }
       }
       setShowModal(false);
       setIsEditing(false);
@@ -518,20 +544,10 @@ const QmsFmeaPage: React.FC = () => {
     setShowItemModal(true);
   };
 
-  const deleteItem = async (id: string) => {
+  const deleteItem = (id: string) => {
     if (!selectedAnalysis) return;
     if (!confirm('确定要删除此 FMEA 项目吗？')) return;
-    try {
-      const response = await fmeaApi.deleteFmeaItem(id);
-      if (response.success) {
-        setFmeaItems((prev) => prev.filter((item) => item.id !== id));
-        addNotification({ title: '成功', message: 'FMEA 项目删除成功', type: 'success' });
-      } else {
-        addNotification({ title: '失败', message: response.message || '删除失败', type: 'error' });
-      }
-    } catch (error: unknown) {
-      addNotification({ title: '错误', message: '删除时发生错误', type: 'error' });
-    }
+    deleteItemMutation.mutate(id);
   };
 
   const handleItemSubmit = async () => {
@@ -541,8 +557,6 @@ const QmsFmeaPage: React.FC = () => {
     if (!selectedAnalysis) return;
     setSubmitting(true);
     try {
-      const calculatedRpn =
-        itemFormData.severity * itemFormData.occurrence * itemFormData.detection;
       const submitData = {
         itemNo: itemFormData.itemNo || `Item-${fmeaItems.length + 1}`,
         functionDescription: itemFormData.functionDescription,
@@ -559,35 +573,13 @@ const QmsFmeaPage: React.FC = () => {
       };
 
       if (isEditingItem && selectedItem) {
-        const response = await fmeaApi.updateFmeaItem(selectedItem.id, submitData);
-        if (response.success) {
-          setFmeaItems((prev) =>
-            prev.map((item) => (item.id === selectedItem.id ? { ...item, ...response.data } : item))
-          );
-          addNotification({ title: '成功', message: 'FMEA 项目更新成功', type: 'success' });
-        } else {
-          addNotification({
-            title: '失败',
-            message: response.message || '更新失败',
-            type: 'error',
-          });
-        }
+        await updateItemMutation.mutateAsync({ id: selectedItem.id, data: submitData });
       } else {
-        const response = await fmeaApi.createFmeaItem({
+        await createItemMutation.mutateAsync({
           ...submitData,
           fmeaId: selectedAnalysis.id,
           status: 'open',
         });
-        if (response.success && response.data) {
-          setFmeaItems((prev) => [...prev, response.data!]);
-          addNotification({ title: '成功', message: 'FMEA 项目创建成功', type: 'success' });
-        } else {
-          addNotification({
-            title: '失败',
-            message: response.message || '创建失败',
-            type: 'error',
-          });
-        }
       }
       setShowItemModal(false);
       setIsEditingItem(false);
@@ -606,11 +598,6 @@ const QmsFmeaPage: React.FC = () => {
         targetDate: '',
       });
       setItemErrors({});
-      // 刷新统计数据
-      const statsRes = await fmeaApi.getFmeaStatistics(selectedAnalysis.id);
-      if (statsRes.success && statsRes.data) {
-        setStatistics(statsRes.data);
-      }
     } catch (error: unknown) {
       addNotification({ title: '错误', message: '操作失败，请重试', type: 'error' });
     } finally {

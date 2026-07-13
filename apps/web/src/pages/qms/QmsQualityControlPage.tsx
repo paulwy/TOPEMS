@@ -1,4 +1,5 @@
-import React, { useState, useMemo, useEffect, useCallback } from 'react';
+import React, { useState, useMemo } from 'react';
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { motion } from 'framer-motion';
 import { Shield, AlertCircle, CheckCircle, FileText, Plus, Edit, Trash2, Eye } from 'lucide-react';
 import { designTokens } from '@/theme/tokens';
@@ -19,7 +20,7 @@ import {
   MenuItem,
   Button,
 } from '@mui/material';
-import { useNotificationStore } from '@/store';
+import { useAppStore } from '@/store';
 import * as z from 'zod';
 import {
   ListPageTemplate,
@@ -40,7 +41,6 @@ const QmsQualityControlPage: React.FC = () => {
   const [showDetailModal, setShowDetailModal] = useState(false);
   const [selectedItem, setSelectedItem] = useState<QualityIssue | AuditPlan | null>(null);
   const [isEditing, setIsEditing] = useState(false);
-  const [loading, setLoading] = useState(true);
   const [submitting, setSubmitting] = useState(false);
   const [formData, setFormData] = useState({
     code: '',
@@ -51,10 +51,8 @@ const QmsQualityControlPage: React.FC = () => {
   });
 
   const [errors, setErrors] = useState<Record<string, string>>({});
-  const addNotification = useNotificationStore((state) => state.addNotification);
-
-  const [issues, setIssues] = useState<QualityIssue[]>([]);
-  const [auditPlans, setAuditPlans] = useState<AuditPlan[]>([]);
+  const addNotification = useAppStore((state) => state.addNotification);
+  const queryClient = useQueryClient();
 
   const nonconformanceSchema = z.object({
     title: z.string().min(2, '标题至少需要2个字符').max(100, '标题不能超过100个字符'),
@@ -78,51 +76,30 @@ const QmsQualityControlPage: React.FC = () => {
     return true;
   };
 
-  const loadIssues = useCallback(async () => {
-    try {
-      setLoading(true);
+  const { data: issues = [], isLoading: issuesLoading } = useQuery({
+    queryKey: ['qms-issues'],
+    queryFn: async () => {
       const response = await qmsApi.listIssues();
       if (response.success && response.data) {
-        setIssues(response.data);
+        return response.data as QualityIssue[];
       }
-    } catch (error: unknown) {
-      addNotification({
-        title: '加载失败',
-        message: '加载不合格品数据失败',
-        type: 'error',
-      });
-    } finally {
-      setLoading(false);
-    }
-  }, [addNotification]);
+      return [];
+    },
+  });
 
-  const loadAuditPlans = useCallback(async () => {
-    try {
-      setLoading(true);
+  const { data: auditPlans = [], isLoading: auditsLoading } = useQuery({
+    queryKey: ['qms-audit-plans'],
+    queryFn: async () => {
       const response = await qmsApi.listAuditPlans();
       if (response.success && response.data) {
         const plansData = response.data as any;
-        const plansArray = Array.isArray(plansData) ? plansData : plansData.plans || [];
-        setAuditPlans(plansArray);
+        return Array.isArray(plansData) ? plansData : plansData.plans || [];
       }
-    } catch (error: unknown) {
-      addNotification({
-        title: '加载失败',
-        message: '加载审核数据失败',
-        type: 'error',
-      });
-    } finally {
-      setLoading(false);
-    }
-  }, [addNotification]);
+      return [];
+    },
+  });
 
-  useEffect(() => {
-    if (activeTab === 'nonconformance') {
-      loadIssues();
-    } else {
-      loadAuditPlans();
-    }
-  }, [activeTab, loadIssues, loadAuditPlans]);
+  const loading = issuesLoading || auditsLoading;
 
   const getSeverityBadge = (severity: string) => {
     const colors = {
@@ -283,6 +260,40 @@ const QmsQualityControlPage: React.FC = () => {
     },
   ];
 
+  const deleteMutation = useMutation({
+    mutationFn: (id: string) => qmsApi.deleteIssue(id),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['qms-issues'] });
+      addNotification({ title: '成功', message: '记录删除成功', type: 'success' });
+    },
+    onError: () => {
+      addNotification({ title: '错误', message: '删除记录时发生错误', type: 'error' });
+    },
+  });
+
+  const createIssueMutation = useMutation({
+    mutationFn: (data: Parameters<typeof qmsApi.createIssue>[0]) => qmsApi.createIssue(data),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['qms-issues'] });
+      addNotification({ title: '成功', message: '记录创建成功', type: 'success' });
+    },
+    onError: () => {
+      addNotification({ title: '错误', message: '创建记录失败', type: 'error' });
+    },
+  });
+
+  const updateIssueMutation = useMutation({
+    mutationFn: ({ id, data }: { id: string; data: Parameters<typeof qmsApi.updateIssue>[1] }) =>
+      qmsApi.updateIssue(id, data),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['qms-issues'] });
+      addNotification({ title: '成功', message: '记录更新成功', type: 'success' });
+    },
+    onError: () => {
+      addNotification({ title: '错误', message: '更新记录失败', type: 'error' });
+    },
+  });
+
   const viewItem = (item: QualityIssue | AuditPlan) => {
     setSelectedItem(item);
     setShowDetailModal(true);
@@ -301,19 +312,9 @@ const QmsQualityControlPage: React.FC = () => {
     });
   };
 
-  const deleteItem = async (id: string) => {
+  const deleteItem = (id: string) => {
     if (!confirm('确定要删除此记录吗？')) return;
-    try {
-      const response = await qmsApi.deleteIssue(id);
-      if (response.success) {
-        setIssues((prev) => prev.filter((item) => item.id !== id));
-        addNotification({ title: '成功', message: '记录删除成功', type: 'success' });
-      } else {
-        addNotification({ title: '失败', message: response.message || '删除失败', type: 'error' });
-      }
-    } catch (error: unknown) {
-      addNotification({ title: '错误', message: '删除记录时发生错误', type: 'error' });
-    }
+    deleteMutation.mutate(id);
   };
 
   const handleSubmit = async () => {
@@ -323,29 +324,20 @@ const QmsQualityControlPage: React.FC = () => {
     setSubmitting(true);
     try {
       if (isEditing && selectedItem && 'issue_no' in selectedItem) {
-        const response = await qmsApi.updateIssue(selectedItem.id, {
-          issue_no: formData.code,
-          title: formData.title,
-          description: formData.description,
-          severity: formData.severity,
-          category: formData.category,
-          status: selectedItem.status,
-          assignee: selectedItem.assignee,
+        await updateIssueMutation.mutateAsync({
+          id: selectedItem.id,
+          data: {
+            issue_no: formData.code,
+            title: formData.title,
+            description: formData.description,
+            severity: formData.severity,
+            category: formData.category,
+            status: selectedItem.status,
+            assignee: selectedItem.assignee,
+          },
         });
-        if (response.success) {
-          setIssues((prev) =>
-            prev.map((item) => (item.id === selectedItem.id ? { ...item, ...response.data } : item))
-          );
-          addNotification({ title: '成功', message: '记录更新成功', type: 'success' });
-        } else {
-          addNotification({
-            title: '失败',
-            message: response.message || '更新失败',
-            type: 'error',
-          });
-        }
       } else {
-        const response = await qmsApi.createIssue({
+        await createIssueMutation.mutateAsync({
           issue_no: formData.code || `NC-${Date.now()}`,
           title: formData.title,
           description: formData.description,
@@ -354,16 +346,6 @@ const QmsQualityControlPage: React.FC = () => {
           status: 'open',
           assignee: '',
         });
-        if (response.success && response.data) {
-          setIssues((prev) => [response.data!, ...prev]);
-          addNotification({ title: '成功', message: '记录创建成功', type: 'success' });
-        } else {
-          addNotification({
-            title: '失败',
-            message: response.message || '创建失败',
-            type: 'error',
-          });
-        }
       }
       setShowModal(false);
       setIsEditing(false);
@@ -392,7 +374,7 @@ const QmsQualityControlPage: React.FC = () => {
 
   const filteredAudits = useMemo(() => {
     return auditPlans.filter(
-      (item) =>
+      (item: any) =>
         item.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
         (item.plan_no && item.plan_no.toLowerCase().includes(searchTerm.toLowerCase()))
     );
@@ -405,9 +387,9 @@ const QmsQualityControlPage: React.FC = () => {
       (n) => n.status === 'closed' || n.status === 'resolved' || n.status === '已关闭'
     ).length,
     totalAudits: auditPlans.length,
-    completedAudits: auditPlans.filter((a) => a.status === 'completed' || a.status === '已完成')
+    completedAudits: auditPlans.filter((a: any) => a.status === 'completed' || a.status === '已完成')
       .length,
-    inProgressAudits: auditPlans.filter((a) => a.status === 'in_progress' || a.status === '进行中')
+    inProgressAudits: auditPlans.filter((a: any) => a.status === 'in_progress' || a.status === '进行中')
       .length,
   };
 

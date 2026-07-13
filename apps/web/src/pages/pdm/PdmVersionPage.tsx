@@ -19,7 +19,7 @@ import {
 import { GitBranch, Plus, Check, Clock, User, Tag, Edit } from 'lucide-react';
 import { pdmApi } from '@/api/pdm';
 import type { DocumentVersion, Document } from '@/api/pdm';
-import { useNotificationStore } from '@/store';
+import { useAppStore } from '@/store';
 import {
   ListPageTemplate,
   type ColumnDef,
@@ -93,7 +93,7 @@ export const PdmVersionPage: React.FC = () => {
     changes: '',
   });
 
-  const addNotification = useNotificationStore((state) => state.addNotification);
+  const addNotification = useAppStore((state) => state.addNotification);
 
   useEffect(() => {
     const timer = setTimeout(() => {
@@ -130,9 +130,7 @@ export const PdmVersionPage: React.FC = () => {
     try {
       setLoading(true);
       setError(null);
-      const response = selectedDocument
-        ? await pdmApi.listVersions(selectedDocument)
-        : await pdmApi.listVersions('');
+      const response = await pdmApi.listVersions(selectedDocument || '');
       if (response.success && response.data) {
         const data = response.data as any;
         const items = Array.isArray(data) ? data : data.versions || [];
@@ -196,8 +194,7 @@ export const PdmVersionPage: React.FC = () => {
     try {
       const requestData = {
         document_id: formData.document_id,
-        version_number:
-          formData.type === 'major' ? '1.0.0' : formData.type === 'minor' ? '0.1.0' : '0.0.1',
+        version_number: `V${Date.now()}`,
         title: formData.title,
         description: formData.description,
         changes: formData.changes.split('\n').filter(Boolean),
@@ -286,7 +283,7 @@ export const PdmVersionPage: React.FC = () => {
             </Typography>
             <Chip
               size='small'
-              label={VERSION_TYPE_LABEL_MAP[row.type || ''] || row.type || ''}
+              label={VERSION_TYPE_LABEL_MAP[row.type || ''] || row.type}
               color={VERSION_TYPE_COLOR_MAP[row.type || ''] || 'default'}
             />
             {row.status === 'published' && (
@@ -325,7 +322,7 @@ export const PdmVersionPage: React.FC = () => {
         render: (row) => (
           <Chip
             size='small'
-            label={VERSION_TYPE_LABEL_MAP[row.type || ''] || row.type || ''}
+            label={VERSION_TYPE_LABEL_MAP[row.type || ''] || row.type}
             color={VERSION_TYPE_COLOR_MAP[row.type || ''] || 'default'}
           />
         ),

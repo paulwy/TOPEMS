@@ -15,10 +15,9 @@ import {
   Chip,
 } from '@mui/material';
 import { Plus, Edit, Delete, Package } from 'lucide-react';
-import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { pdmApi } from '@/api/pdm';
 import type { Product, CreateProductRequest } from '@/api/pdm';
-import { useNotificationStore } from '@/store';
+import { useAppStore } from '@/store';
 import { apiLogger } from '@/utils/logger';
 import {
   ListPageTemplate,
@@ -28,6 +27,8 @@ import {
 } from '@/components/templates';
 import { PageContainer } from '@/components/common';
 import { designTokens } from '@/theme/tokens';
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import { QUERY_KEYS } from '@/lib/reactQuery';
 
 const ct = designTokens.colors;
 
@@ -52,6 +53,7 @@ const STATUS_COLORS: Record<
 };
 
 export const ProductPage: React.FC = () => {
+  const queryClient = useQueryClient();
   const [searchTerm, setSearchTerm] = useState('');
   const [openDialog, setOpenDialog] = useState(false);
   const [editingProduct, setEditingProduct] = useState<Product | null>(null);
@@ -64,11 +66,14 @@ export const ProductPage: React.FC = () => {
     category: '',
     unit: '',
   });
-  const queryClient = useQueryClient();
-  const addNotification = useNotificationStore((state) => state.addNotification);
+  const addNotification = useAppStore((state) => state.addNotification);
 
-  const productsQuery = useQuery({
-    queryKey: ['pdm-products'],
+  const loadProducts = useCallback(() => {
+    queryClient.invalidateQueries({ queryKey: QUERY_KEYS.PDM.PRODUCTS });
+  }, [queryClient]);
+
+  const { data: products = [], isLoading: loading } = useQuery({
+    queryKey: QUERY_KEYS.PDM.PRODUCTS,
     queryFn: async () => {
       const response = await pdmApi.listProducts();
       if (response.success && response.data) {
@@ -79,62 +84,43 @@ export const ProductPage: React.FC = () => {
       return [];
     },
     staleTime: 5 * 60 * 1000,
-    retry: 2,
   });
 
-  const products = productsQuery.data || [];
-  const loading = productsQuery.isLoading;
-
-  const createMutation = useMutation({
-    mutationFn: async (data: CreateProductRequest) => {
-      const response = await pdmApi.createProduct(data);
-      if (!response.success) {
-        throw new Error(response.message || '创建失败');
-      }
-      return response.data;
-    },
+  const createProductMutation = useMutation({
+    mutationFn: (data: CreateProductRequest) => pdmApi.createProduct(data),
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['pdm-products'] });
       addNotification({ title: '成功', message: '产品创建成功', type: 'success' });
+      setOpenDialog(false);
+      setEditingProduct(null);
+      queryClient.invalidateQueries({ queryKey: QUERY_KEYS.PDM.PRODUCTS });
     },
-    onError: (err) => {
+    onError: () => {
       addNotification({ title: '错误', message: '创建失败', type: 'error' });
-      apiLogger.error('创建产品失败:', err);
     },
   });
 
-  const updateMutation = useMutation({
-    mutationFn: async ({ id, data }: { id: string; data: CreateProductRequest }) => {
-      const response = await pdmApi.updateProduct(id, data);
-      if (!response.success) {
-        throw new Error(response.message || '更新失败');
-      }
-      return response.data;
-    },
+  const updateProductMutation = useMutation({
+    mutationFn: ({ id, data }: { id: string; data: CreateProductRequest }) =>
+      pdmApi.updateProduct(id, data),
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['pdm-products'] });
       addNotification({ title: '成功', message: '产品更新成功', type: 'success' });
+      setOpenDialog(false);
+      setEditingProduct(null);
+      queryClient.invalidateQueries({ queryKey: QUERY_KEYS.PDM.PRODUCTS });
     },
-    onError: (err) => {
+    onError: () => {
       addNotification({ title: '错误', message: '更新失败', type: 'error' });
-      apiLogger.error('更新产品失败:', err);
     },
   });
 
-  const deleteMutation = useMutation({
-    mutationFn: async (id: string) => {
-      const response = await pdmApi.deleteProduct(id);
-      if (!response.success) {
-        throw new Error('删除失败');
-      }
-    },
+  const deleteProductMutation = useMutation({
+    mutationFn: (id: string) => pdmApi.deleteProduct(id),
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['pdm-products'] });
       addNotification({ title: '成功', message: '产品删除成功', type: 'success' });
+      queryClient.invalidateQueries({ queryKey: QUERY_KEYS.PDM.PRODUCTS });
     },
-    onError: (err) => {
+    onError: () => {
       addNotification({ title: '错误', message: '删除失败', type: 'error' });
-      apiLogger.error('删除产品失败:', err);
     },
   });
 
@@ -152,8 +138,8 @@ export const ProductPage: React.FC = () => {
     setOpenDialog(true);
   };
 
-  const handleDeleteProduct = async (id: string) => {
-    await deleteMutation.mutateAsync(id);
+  const handleDeleteProduct = (id: string) => {
+    deleteProductMutation.mutate(id);
   };
 
   const handleCreate = () => {
@@ -170,7 +156,7 @@ export const ProductPage: React.FC = () => {
     setOpenDialog(true);
   };
 
-  const handleSaveProduct = async () => {
+  const handleSaveProduct = () => {
     const requestData: CreateProductRequest = {
       name: formData.name,
       code: formData.code,
@@ -182,12 +168,10 @@ export const ProductPage: React.FC = () => {
     };
 
     if (editingProduct) {
-      await updateMutation.mutateAsync({ id: editingProduct.id, data: requestData });
+      updateProductMutation.mutate({ id: editingProduct.id, data: requestData });
     } else {
-      await createMutation.mutateAsync(requestData);
+      createProductMutation.mutate(requestData);
     }
-    setOpenDialog(false);
-    setEditingProduct(null);
   };
 
   const filteredProducts = useMemo(() => {
@@ -373,7 +357,7 @@ export const ProductPage: React.FC = () => {
             variant: 'contained',
           },
         ]}
-        onRefresh={() => productsQuery.refetch()}
+        onRefresh={loadProducts}
         headerContent={statsCards}
         emptyMessage='暂无产品数据'
       />

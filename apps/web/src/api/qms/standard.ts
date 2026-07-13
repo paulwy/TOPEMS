@@ -23,7 +23,7 @@ export const standardApi = {
     const response = await apiClient.qms.get<QualityStandardBackend>(`/standards/${id}`);
     return {
       ...response,
-      data: response.data ? adaptStandardToFrontend(response.data) : undefined,
+      data: response.data ? adaptStandardToFrontend(response.data) : ({} as QualityStandard),
     };
   },
 
@@ -34,7 +34,7 @@ export const standardApi = {
     const response = await apiClient.qms.post<QualityStandardBackend>('/standards', backendData);
     return {
       ...response,
-      data: response.data ? adaptStandardToFrontend(response.data) : undefined,
+      data: response.data ? adaptStandardToFrontend(response.data) : ({} as QualityStandard),
     };
   },
 
@@ -55,7 +55,7 @@ export const standardApi = {
     );
     return {
       ...response,
-      data: response.data ? adaptStandardToFrontend(response.data) : undefined,
+      data: response.data ? adaptStandardToFrontend(response.data) : ({} as QualityStandard),
     };
   },
 
