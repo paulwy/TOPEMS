@@ -15,7 +15,7 @@ import {
 import React, { useState, useEffect, useMemo } from 'react';
 import { Plus, Edit, Trash2, Shield, UserPlus, UserMinus } from 'lucide-react';
 import { authApi, type User, type Role } from '@/api/iam';
-import { useAppStore } from '../../store';
+import { useNotificationStore } from '../../store';
 import { RoleBadge } from '@/components/PermissionGate';
 import { ListPageTemplate, type ColumnDef } from '@/components/templates';
 import { extractErrorMessage } from '@/utils/errors';
@@ -30,7 +30,7 @@ interface UserManagementPageProps {
 }
 
 const UserManagementPage: React.FC<UserManagementPageProps> = ({ onNavigate: _onNavigate }) => {
-  const addNotification = useAppStore((state) => state.addNotification);
+  const addNotification = useNotificationStore((state) => state.addNotification);
 
   const [users, setUsers] = useState<User[]>([]);
   const [roles, setRoles] = useState<Role[]>([]);

@@ -39,7 +39,7 @@ import { ListPageTemplate, type ColumnDef } from '@/components/templates';
 import { ehsApi } from '@/api/ehs';
 import { PageContainer } from '@/components/common/PageContainerV2';
 import type { SafetyIssue, Rectification, Verification } from '@/api/ehs';
-import { useAppStore } from '@/store';
+import { useNotificationStore } from '@/store';
 import { designTokens } from '@/theme/tokens';
 
 const ct = designTokens.colors;
@@ -67,7 +67,7 @@ const EhsHazardPage: React.FC = () => {
     location: '',
     reported_by: '',
   });
-  const addNotification = useAppStore((state) => state.addNotification);
+  const addNotification = useNotificationStore((state) => state.addNotification);
   const [rectificationFormData, setRectificationFormData] = useState({
     description: '',
     responsible: '',

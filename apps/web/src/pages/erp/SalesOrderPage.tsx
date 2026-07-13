@@ -18,7 +18,7 @@ import { PageContainer } from '@/components/common';
 import React, { useState, useEffect, useMemo, useCallback } from 'react';
 import type { SalesOrder, CreateSalesOrderRequest, UpdateSalesOrderRequest } from '@/api/erp';
 import { erpApi } from '@/api/erp';
-import { useAppStore } from '@/store';
+import { useNotificationStore } from '@/store';
 import { LoadingSpinner } from '@topems/shared-components';
 import {
   ListPageTemplate,
@@ -54,7 +54,7 @@ const SalesOrderPage: React.FC = () => {
     remark: '',
   });
 
-  const { addNotification } = useAppStore();
+  const { addNotification } = useNotificationStore();
 
   const loadOrders = useCallback(async () => {
     try {

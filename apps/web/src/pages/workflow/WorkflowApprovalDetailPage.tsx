@@ -35,7 +35,7 @@ import {
 import { useParams, useNavigate } from 'react-router-dom';
 import type { Approval, ApprovalRecord } from '@/api/workflow';
 import { workflowApi } from '@/api/workflow';
-import { useAppStore } from '../../store';
+import { useNotificationStore, useAuthStore } from '../../store';
 import { apiLogger } from '@/utils/logger';
 import { DetailPageTemplate } from '@/components/templates/DetailPageTemplate';
 import type { TabConfig, SectionConfig } from '@/components/templates/DetailPageTemplate';
@@ -48,8 +48,8 @@ const ct = designTokens.colors;
 const FlowApprovalDetailPage: React.FC = () => {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
-  const addNotification = useAppStore((state) => state.addNotification);
-  const user = useAppStore((state) => state.user);
+  const addNotification = useNotificationStore((state) => state.addNotification);
+  const user = useAuthStore((state) => state.user);
   const theme = useTheme();
 
   const [approval, setApproval] = useState<Approval | null>(null);

@@ -29,7 +29,7 @@ import type {
 } from '@/api/wms';
 import { wmsApi } from '@/api/wms';
 import { WMS_PATHS } from '@/modules/wms/config';
-import { useAppStore } from '@/store';
+import { useNotificationStore } from '@/store';
 import {
   Plus,
   Edit,
@@ -41,7 +41,7 @@ import {
   RefreshCw,
 } from 'lucide-react';
 import { apiLogger } from '@/utils/logger';
-import { ConfirmDialog, PageContainer } from '@/components/common';
+import { ConfirmDialog, PageContainer, StatusBadge } from '@/components/common';
 import { designTokens } from '@/theme/tokens';
 
 const ct = designTokens.colors;
@@ -81,7 +81,7 @@ const priorityConfig: Record<
 type TabValue = 'suggestions' | 'orders';
 
 const ReplenishmentPage: React.FC = () => {
-  const { addNotification } = useAppStore();
+  const { addNotification } = useNotificationStore();
 
   const [activeTab, setActiveTab] = useState<TabValue>('suggestions');
   const [suggestions, setSuggestions] = useState<ReplenishmentSuggestion[]>([]);
@@ -349,10 +349,11 @@ const ReplenishmentPage: React.FC = () => {
         ? suggestionStatusConfig[status] || { label: status, color: 'default' as const }
         : orderStatusConfig[status] || { label: status, color: 'default' as const };
     return (
-      <Chip
-        size='small'
-        color={config.color}
+      <StatusBadge
+        status={status}
         label={config.label}
+        color={config.color}
+        size='sm'
         variant='outlined'
       />
     );
@@ -361,11 +362,11 @@ const ReplenishmentPage: React.FC = () => {
   const getPriorityBadge = (priority: string) => {
     const config = priorityConfig[priority] || { label: priority, color: 'default' as const };
     return (
-      <Chip
-        size='small'
-        color={config.color}
+      <StatusBadge
+        status={priority}
         label={config.label}
-        variant='filled'
+        color={config.color}
+        size='sm'
       />
     );
   };

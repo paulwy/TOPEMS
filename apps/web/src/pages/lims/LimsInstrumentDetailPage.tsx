@@ -38,7 +38,7 @@ import {
 } from '@/components/templates';
 import { limsApi } from '@/api/lims';
 import type { Instrument, CalibrationRecord, MaintenanceRecord, InspectionTask } from '@/api/lims';
-import { useAppStore } from '@/store';
+import { useNotificationStore } from '@/store';
 import { apiLogger } from '@/utils/logger';
 import dayjs from 'dayjs';
 import { designTokens } from '@/theme/tokens';
@@ -72,7 +72,7 @@ const LimsInstrumentDetailPage: React.FC = () => {
   const [relatedTasks, setRelatedTasks] = useState<InspectionTask[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const addNotification = useAppStore((state) => state.addNotification);
+  const addNotification = useNotificationStore((state) => state.addNotification);
 
   const loadInstrumentData = useCallback(async () => {
     if (!id) return;

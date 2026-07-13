@@ -7,7 +7,7 @@ import BIVisualizationPage from '../bi/BIVisualizationPage';
 import BIReportPage from '../bi/BIReportPage';
 import BIDataSourcePage from '../bi/BIDataSourcePage';
 import { biApi } from '@/api/bi';
-import { useAppStore } from '@/store';
+import { useNotificationStore, useAuthStore } from '@/store';
 
 vi.mock('@/api/bi', () => ({
   biApi: {
@@ -66,19 +66,24 @@ vi.mock('@/api/bi', () => ({
 }));
 
 vi.mock('@/store', () => ({
-  useAppStore: vi.fn((selector?: any) =>
+  useNotificationStore: vi.fn((selector?: any) =>
     selector
       ? selector({
           addNotification: vi.fn(),
           notifications: [],
-          user: { permissions: ['bi:dashboard:read'] },
-          theme: 'light',
         })
       : {
           addNotification: vi.fn(),
           notifications: [],
-          user: { permissions: ['bi:dashboard:read'] },
-          theme: 'light',
+        }
+  ),
+  useAuthStore: vi.fn((selector?: any) =>
+    selector
+      ? selector({
+          user: null,
+        })
+      : {
+          user: null,
         }
   ),
 }));

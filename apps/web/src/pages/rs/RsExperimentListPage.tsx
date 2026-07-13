@@ -5,7 +5,7 @@ import { useNavigate } from 'react-router-dom';
 import { ListPageTemplate, type ColumnDef, type RowAction } from '@/components/templates';
 import { PageContainer } from '@/components/common';
 import { rsApi, type Experiment } from '@/api/rs';
-import { useAppStore } from '@/store';
+import { useNotificationStore } from '@/store';
 import { apiLogger } from '@/utils/logger';
 import { ConfirmDialog } from '@topems/shared-components';
 import { RS_PATHS } from '@/modules/rs/config';
@@ -18,7 +18,7 @@ const RsExperimentListPage: React.FC = () => {
   const navigate = useNavigate();
   const theme = useTheme();
   const isMobile = useMediaQuery(theme.breakpoints.down('md'));
-  const addNotification = useAppStore((state) => state.addNotification);
+  const addNotification = useNotificationStore((state) => state.addNotification);
   const [experiments, setExperiments] = useState<ExperimentWithProject[]>([]);
   const [loading, setLoading] = useState(false);
   const [page, setPage] = useState(0);

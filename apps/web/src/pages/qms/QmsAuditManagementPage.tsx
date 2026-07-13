@@ -1,4 +1,4 @@
-import React, { useState, useMemo, useEffect, useCallback } from 'react';
+import React, { useState, useMemo } from 'react';
 import { FileText, CheckCircle, Eye } from 'lucide-react';
 import {
   Dialog,
@@ -12,47 +12,40 @@ import {
   Typography,
   Button,
 } from '@mui/material';
-import { useAppStore } from '@/store';
+import { useNotificationStore } from '@/store';
 import { ListPageTemplate, type ColumnDef, type RowAction } from '@/components/templates';
 import { PageContainer } from '@/components/common';
 import { qmsApi } from '@/api/qms';
 import type { AuditPlan } from '@/api/qms';
 import { designTokens } from '@/theme/tokens';
+import { useQuery } from '@tanstack/react-query';
 
 const ct = designTokens.colors;
 
 const QmsAuditManagementPage: React.FC = () => {
+  const addNotification = useNotificationStore((state) => state.addNotification);
+
   const [searchTerm, setSearchTerm] = useState('');
   const [showDetailModal, setShowDetailModal] = useState(false);
   const [selectedItem, setSelectedItem] = useState<AuditPlan | null>(null);
-  const [loading, setLoading] = useState(true);
-  const addNotification = useAppStore((state) => state.addNotification);
 
-  const [auditPlans, setAuditPlans] = useState<AuditPlan[]>([]);
-
-  const loadAuditPlans = useCallback(async () => {
-    try {
-      setLoading(true);
+  // React Query - 审核计划列表
+  const auditPlansQuery = useQuery({
+    queryKey: ['qms-audit-plans'],
+    queryFn: async () => {
       const response = await qmsApi.listAuditPlans();
-      if (response.success && response.data) {
-        const plansData = response.data as any;
-        const plansArray = Array.isArray(plansData) ? plansData : plansData.plans || [];
-        setAuditPlans(plansArray);
+      if (!response.success || !response.data) {
+        throw new Error(response.message || '加载审核数据失败');
       }
-    } catch (error: unknown) {
-      addNotification({
-        title: '加载失败',
-        message: '加载审核数据失败',
-        type: 'error',
-      });
-    } finally {
-      setLoading(false);
-    }
-  }, [addNotification]);
+      const plansData = response.data as any;
+      const plansArray = Array.isArray(plansData) ? plansData : plansData.plans || [];
+      return plansArray as AuditPlan[];
+    },
+    staleTime: 5 * 60 * 1000,
+  });
 
-  useEffect(() => {
-    loadAuditPlans();
-  }, [loadAuditPlans]);
+  const auditPlans = auditPlansQuery.data || [];
+  const loading = auditPlansQuery.isLoading;
 
   const getStatusBadge = (status: string) => {
     const colors: Record<string, { bg: string; color: string }> = {

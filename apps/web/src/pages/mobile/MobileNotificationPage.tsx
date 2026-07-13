@@ -47,7 +47,7 @@ import {
 
 import { PageContainer } from '@/components/common';
 import { ListPageTemplate, type ColumnDef } from '@/components/templates';
-import { useAppStore } from '../../store';
+import { useNotificationStore } from '../../store';
 import { extractErrorMessage } from '@/utils/errors';
 
 type NotificationType = 'system' | 'approval' | 'task' | 'message';
@@ -163,7 +163,7 @@ const PRIORITY_COLORS: Record<NotificationPriority, 'error' | 'warning' | 'info'
 const getTypeIcon = (type: NotificationType) => TYPE_ICONS[type];
 
 export const MobileNotificationPage: React.FC = () => {
-  const addNotification = useAppStore((state) => state.addNotification);
+  const addNotification = useNotificationStore((state) => state.addNotification);
 
   const [notifications, setNotifications] = useState<Notification[]>(MOCK_NOTIFICATIONS);
   const [loading, setLoading] = useState(false);

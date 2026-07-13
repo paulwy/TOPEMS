@@ -103,23 +103,23 @@ export const dictTypeApi = {
     if (params?.status) searchParams.set('status', params.status);
 
     const queryString = searchParams.toString();
-    return apiClient.erp.get(`/system/dict-types${queryString ? `?${queryString}` : ''}`);
+    return apiClient.core.get(`/dict/v1/dict-types${queryString ? `?${queryString}` : ''}`);
   },
 
   async get(id: string): Promise<ApiResponse<DictType>> {
-    return apiClient.erp.get(`/system/dict-types/${id}`);
+    return apiClient.core.get(`/dict/v1/dict-types/${id}`);
   },
 
   async create(data: Partial<DictType>): Promise<ApiResponse<DictType>> {
-    return apiClient.erp.post('/system/dict-types', data);
+    return apiClient.core.post('/dict/v1/dict-types', data);
   },
 
   async update(id: string, data: Partial<DictType>): Promise<ApiResponse<DictType>> {
-    return apiClient.erp.put(`/system/dict-types/${id}`, data);
+    return apiClient.core.put(`/dict/v1/dict-types/${id}`, data);
   },
 
   async delete(id: string): Promise<ApiResponse<string>> {
-    return apiClient.erp.delete(`/system/dict-types/${id}`);
+    return apiClient.core.delete(`/dict/v1/dict-types/${id}`);
   },
 };
 
@@ -147,33 +147,33 @@ export const dictItemApi = {
     if (params?.search) searchParams.set('search', params.search);
 
     const queryString = searchParams.toString();
-    return apiClient.erp.get(
-      `/system/dict-types/${dictTypeId}/items${queryString ? `?${queryString}` : ''}`
+    return apiClient.core.get(
+      `/dict/v1/dict-types/${dictTypeId}/items${queryString ? `?${queryString}` : ''}`
     );
   },
 
   async get(id: string): Promise<ApiResponse<DictItem>> {
-    return apiClient.erp.get(`/system/dict-items/${id}`);
+    return apiClient.core.get(`/dict/v1/dict-items/${id}`);
   },
 
   async create(data: Partial<DictItem>): Promise<ApiResponse<DictItem>> {
-    return apiClient.erp.post('/system/dict-items', data);
+    return apiClient.core.post('/dict/v1/dict-items', data);
   },
 
   async update(id: string, data: Partial<DictItem>): Promise<ApiResponse<DictItem>> {
-    return apiClient.erp.put(`/system/dict-items/${id}`, data);
+    return apiClient.core.put(`/dict/v1/dict-items/${id}`, data);
   },
 
   async delete(id: string): Promise<ApiResponse<string>> {
-    return apiClient.erp.delete(`/system/dict-items/${id}`);
+    return apiClient.core.delete(`/dict/v1/dict-items/${id}`);
   },
 
   async batchCreate(data: BatchCreateDictItemRequest): Promise<ApiResponse<DictItem[]>> {
-    return apiClient.erp.post('/system/dict-items/batch', data);
+    return apiClient.core.post('/dict/v1/dict-items/batch', data);
   },
 
   async export(dictTypeId: string): Promise<string> {
-    const response = await apiClient.erp.get(`/system/dict-types/${dictTypeId}/items/export`, {
+    const response = await apiClient.core.get(`/dict/v1/dict-types/${dictTypeId}/items/export`, {
       responseType: 'text',
     });
     return response.data;

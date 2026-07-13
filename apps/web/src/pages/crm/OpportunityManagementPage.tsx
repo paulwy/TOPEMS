@@ -8,7 +8,7 @@ import type {
   OpportunityStats,
 } from '@/api/crm';
 import { crmApi } from '@/api/crm';
-import { useAppStore } from '@/store';
+import { useNotificationStore } from '@/store';
 import { logger } from '@/utils/logger';
 import {
   DataExport,
@@ -55,7 +55,7 @@ const OpportunityManagementPage: React.FC = () => {
   const [funnelData, setFunnelData] = useState<FunnelStage[]>([]);
   const [stats, setStats] = useState<OpportunityStats | null>(null);
 
-  const { addNotification } = useAppStore();
+  const { addNotification } = useNotificationStore();
 
   useEffect(() => {
     loadOpportunities();

@@ -57,7 +57,7 @@ import {
   submitPluginReview,
 } from '@/api/plugin';
 import { usePluginStore } from '@/store/pluginStore';
-import { useAppStore } from '@/store';
+import { useNotificationStore } from '@/store';
 import { PageContainer } from '@/components/common';
 import { logger } from '@/utils/logger';
 
@@ -72,7 +72,7 @@ interface PluginCardProps {
 
 const PluginCard: React.FC<PluginCardProps> = ({ plugin, healthStatus, onViewDetails }) => {
   const { installPlugin, isPluginInstalled } = usePluginStore();
-  const addNotification = useAppStore((state) => state.addNotification);
+  const addNotification = useNotificationStore((state) => state.addNotification);
   const [isInstalling, setIsInstalling] = useState(false);
   const installed = isPluginInstalled(plugin.code);
 
@@ -257,7 +257,7 @@ const PluginDetailModal: React.FC<{
   onClose: () => void;
 }> = ({ plugin, onClose }) => {
   const { installPlugin, isPluginInstalled } = usePluginStore();
-  const addNotification = useAppStore((state) => state.addNotification);
+  const addNotification = useNotificationStore((state) => state.addNotification);
   const [reviews, setReviews] = useState<PluginReview[]>([]);
   const [versions, setVersions] = useState<PluginVersion[]>([]);
   const [rating, setRating] = useState(0);
@@ -706,7 +706,7 @@ const PluginMarketplacePage: React.FC = () => {
   const [sortBy, setSortBy] = useState<SortOption>('popular');
   const [viewMode, setViewMode] = useState<ViewMode>('grid');
   const [selectedPlugin, setSelectedPlugin] = useState<Plugin | null>(null);
-  const addNotification = useAppStore((state) => state.addNotification);
+  const addNotification = useNotificationStore((state) => state.addNotification);
 
   useEffect(() => {
     const fetchData = async () => {

@@ -1,5 +1,7 @@
 import { create } from 'zustand';
 import type { DashboardStats, Task, Event } from '@/types';
+import { dashboardApi } from '@/api/dashboard';
+import { taskApi } from '@/api/task';
 
 interface DashboardStore {
   stats: DashboardStats;
@@ -12,84 +14,71 @@ interface DashboardStore {
   fetchEvents: () => void;
 }
 
-const mockStats: DashboardStats = {
-  totalTasks: 15,
-  completedTasks: 8,
-  pendingTasks: 7,
-  upcomingEvents: 3,
+const defaultStats: DashboardStats = {
+  todayPatrols: 0,
+  todayScans: 0,
+  pendingTasks: 0,
+  completedTasks: 0,
 };
 
-const mockTasks: Task[] = [
-  {
-    id: '1',
-    title: '完成月度报告',
-    description: '准备本月的销售报告',
-    status: 'in_progress',
-    priority: 'high',
-    dueDate: '2024-01-15',
-    createdAt: '2024-01-10',
-  },
-  {
-    id: '2',
-    title: '团队会议',
-    description: '组织团队周会',
-    status: 'pending',
-    priority: 'medium',
-    dueDate: '2024-01-16',
-    createdAt: '2024-01-11',
-  },
-  {
-    id: '3',
-    title: '更新文档',
-    description: '更新产品文档',
-    status: 'completed',
-    priority: 'low',
-    dueDate: '2024-01-12',
-    createdAt: '2024-01-08',
-  },
-];
-
-const mockEvents: Event[] = [
-  {
-    id: '1',
-    title: '产品发布会',
-    date: '2024-01-18',
-    time: '10:00',
-    location: '会议室A',
-  },
-  {
-    id: '2',
-    title: '客户回访',
-    date: '2024-01-19',
-    time: '14:00',
-    location: '线上会议',
-  },
-];
-
 export const useDashboardStore = create<DashboardStore>((set) => ({
-  stats: mockStats,
-  tasks: mockTasks,
-  events: mockEvents,
+  stats: defaultStats,
+  tasks: [],
+  events: [],
   isLoading: false,
 
-  fetchStats: () => {
+  fetchStats: async () => {
     set({ isLoading: true });
-    setTimeout(() => {
-      set({ stats: mockStats, isLoading: false });
-    }, 500);
+    try {
+      const res = await dashboardApi.getStats();
+      if (res.success && res.data) {
+        set({ stats: res.data });
+      }
+    } catch (err) {
+      console.error('加载统计数据失败:', err);
+    } finally {
+      set({ isLoading: false });
+    }
   },
 
-  fetchTasks: () => {
+  fetchTasks: async () => {
     set({ isLoading: true });
-    setTimeout(() => {
-      set({ tasks: mockTasks, isLoading: false });
-    }, 500);
+    try {
+      const res = await taskApi.getMyTasks({ page: 1, pageSize: 10 });
+      if (res.success && res.data) {
+        set({ tasks: res.data.items || [] });
+      }
+    } catch (err) {
+      console.error('加载任务失败:', err);
+    } finally {
+      set({ isLoading: false });
+    }
   },
 
-  fetchEvents: () => {
+  fetchEvents: async () => {
     set({ isLoading: true });
-    setTimeout(() => {
-      set({ events: mockEvents, isLoading: false });
-    }, 500);
+    try {
+      const res = await dashboardApi.getRecentActivities({ limit: 5 });
+      if (res.success && res.data) {
+        const events: Event[] = res.data.map((activity) => ({
+          id: activity.id,
+          title: activity.title,
+          description: activity.description,
+          startTime: activity.time || '',
+          endTime: '',
+          location: '',
+          eventType: activity.type,
+          status: 'active',
+          organizerId: '',
+          createdAt: activity.time || '',
+          updatedAt: activity.time || '',
+        }));
+        set({ events });
+      }
+    } catch (err) {
+      console.error('加载活动失败:', err);
+    } finally {
+      set({ isLoading: false });
+    }
   },
 }));

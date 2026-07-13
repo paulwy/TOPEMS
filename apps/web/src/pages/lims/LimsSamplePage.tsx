@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState, useMemo } from 'react';
 import { PageContainer } from '@/components/common';
 import { useNavigate } from 'react-router-dom';
 import { FlaskConical, Plus, Edit, Eye, Download, Upload, Filter, Trash2 } from 'lucide-react';
@@ -24,17 +24,24 @@ import {
 } from '@/components/templates';
 import { limsApi } from '@/api/lims';
 import type { Sample, CreateSampleRequest, UpdateSampleRequest } from '@/api/lims';
-import { useAppStore } from '@/store';
+import { useNotificationStore } from '@/store';
 import { apiLogger } from '@/utils/logger';
 import { designTokens } from '@/theme/tokens';
 import { DASHBOARD_PATHS } from '@/routes/dashboard';
+import { useCrudOperations } from '@/hooks/useCrudQueries';
 
 const ct = designTokens.colors;
 
+const sampleCrudApi = {
+  list: (params?: Record<string, unknown>) => limsApi.listSamples(params as any),
+  get: (id: string) => limsApi.getSample(id),
+  create: (data: CreateSampleRequest) => limsApi.createSample(data),
+  update: (id: string, data: UpdateSampleRequest) => limsApi.updateSample(id, data),
+  delete: (id: string) => limsApi.deleteSample(id),
+} as any;
+
 const LimsSamplePage: React.FC = () => {
   const navigate = useNavigate();
-  const [samples, setSamples] = useState<Sample[]>([]);
-  const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState('');
   const [statusFilter, setStatusFilter] = useState('all');
   const [showCreateModal, setShowCreateModal] = useState(false);
@@ -56,43 +63,20 @@ const LimsSamplePage: React.FC = () => {
   const [page, setPage] = useState(0);
   const [pageSize, setPageSize] = useState(10);
   const [isEditing, setIsEditing] = useState(false);
-  const [saving, setSaving] = useState(false);
-  const addNotification = useAppStore((state) => state.addNotification);
+  const addNotification = useNotificationStore((state) => state.addNotification);
 
-  const loadSamples = useCallback(async () => {
-    try {
-      setLoading(true);
-      const response = await limsApi.listSamples();
-      if (response.success && response.data) {
-        const data = response.data as any;
-        let rawSamples: Sample[] = [];
-        if (Array.isArray(data)) {
-          rawSamples = data;
-        } else if (data.items && Array.isArray(data.items)) {
-          rawSamples = data.items;
-        } else if (data.samples && Array.isArray(data.samples)) {
-          rawSamples = data.samples;
-        }
-        setSamples(rawSamples);
-      } else {
-        setSamples([]);
-      }
-    } catch (err: unknown) {
-      apiLogger.error('加载样品列表失败:', err);
-      setSamples([]);
-      addNotification({
-        title: '错误',
-        message: '加载样品列表失败，请稍后重试',
-        type: 'error',
-      });
-    } finally {
-      setLoading(false);
-    }
-  }, [addNotification]);
-
-  useEffect(() => {
-    loadSamples();
-  }, [loadSamples]);
+  const {
+    data: samples,
+    loading,
+    refresh,
+    create: createSample,
+    update: updateSample,
+    delete: deleteSample,
+  } = useCrudOperations<Sample, CreateSampleRequest, UpdateSampleRequest>({
+    api: sampleCrudApi,
+    queryKey: 'lims-samples',
+    defaultPageSize: 100,
+  });
 
   const getStatusBadge = (status: string) => {
     const statusMap: Record<string, { bg: string; color: string }> = {
@@ -156,46 +140,6 @@ const LimsSamplePage: React.FC = () => {
     },
   ];
 
-  const rowActions: RowAction<Sample>[] = [
-    {
-      label: '查看',
-      icon: <Eye style={{ width: 16, height: 16 }} />,
-      onClick: (row) => handleView(row),
-    },
-    {
-      label: '编辑',
-      icon: <Edit style={{ width: 16, height: 16 }} />,
-      onClick: (row) => handleEdit(row),
-    },
-  ];
-
-  const filters: FilterConfig[] = [
-    {
-      id: 'status',
-      label: '状态',
-      type: 'select',
-      options: [
-        { label: '全部', value: 'all' },
-        { label: '待接收', value: '待接收' },
-        { label: '待检测', value: '待检测' },
-        { label: '检测中', value: '检测中' },
-        { label: '已完成', value: '已完成' },
-      ],
-      value: statusFilter,
-      onChange: (value: unknown) => setStatusFilter(value as string),
-    },
-  ];
-
-  const filteredSamples = samples.filter((sample) => {
-    const matchesSearch =
-      sample.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      (sample.sample_no || '').toLowerCase().includes(searchTerm.toLowerCase());
-    const matchesStatus = statusFilter === 'all' || sample.status === statusFilter;
-    return matchesSearch && matchesStatus;
-  });
-
-  const paginatedData = filteredSamples.slice(page * pageSize, page * pageSize + pageSize);
-
   const handleView = (sample: Sample) => {
     setSelectedSample(sample);
     setShowDetailModal(true);
@@ -251,86 +195,60 @@ const LimsSamplePage: React.FC = () => {
       return;
     }
 
-    try {
-      setSaving(true);
-      if (isEditing && selectedSample) {
-        const response = await limsApi.updateSample(
-          selectedSample.id,
-          formData as UpdateSampleRequest
-        );
-        if (response.success) {
-          addNotification({
-            title: '成功',
-            message: '样品更新成功',
-            type: 'success',
-          });
-          setShowCreateModal(false);
-          loadSamples();
-        } else {
-          addNotification({
-            title: '错误',
-            message: response.message || '更新失败，请稍后重试',
-            type: 'error',
-          });
-        }
-      } else {
-        const response = await limsApi.createSample(formData);
-        if (response.success) {
-          addNotification({
-            title: '成功',
-            message: '样品创建成功',
-            type: 'success',
-          });
-          setShowCreateModal(false);
-          loadSamples();
-        } else {
-          addNotification({
-            title: '错误',
-            message: response.message || '创建失败，请稍后重试',
-            type: 'error',
-          });
-        }
-      }
-    } catch (err: unknown) {
-      apiLogger.error('保存样品失败:', err);
-      addNotification({
-        title: '错误',
-        message: isEditing ? '更新样品失败，请稍后重试' : '创建样品失败，请稍后重试',
-        type: 'error',
-      });
-    } finally {
-      setSaving(false);
+    if (isEditing && selectedSample) {
+      await updateSample(selectedSample.id, formData as UpdateSampleRequest);
+      setShowCreateModal(false);
+    } else {
+      await createSample(formData);
+      setShowCreateModal(false);
     }
   };
 
   const handleDelete = async (sample: Sample) => {
     if (!confirm(`确定要删除样品 "${sample.name}" 吗？`)) return;
-    try {
-      const response = await limsApi.deleteSample(sample.id);
-      if (response.success) {
-        addNotification({
-          title: '成功',
-          message: '样品删除成功',
-          type: 'success',
-        });
-        setShowDetailModal(false);
-        loadSamples();
-      } else {
-        addNotification({
-          title: '错误',
-          message: response.message || '删除失败，请稍后重试',
-          type: 'error',
-        });
-      }
-    } catch (err: unknown) {
-      apiLogger.error('删除样品失败:', err);
-      addNotification({
-        title: '错误',
-        message: '删除样品失败，请稍后重试',
-        type: 'error',
-      });
-    }
+    await deleteSample(sample.id);
+    setShowDetailModal(false);
   };
+
+  const rowActions: RowAction<Sample>[] = [
+    {
+      label: '查看',
+      icon: <Eye style={{ width: 16, height: 16 }} />,
+      onClick: (row) => handleView(row),
+    },
+    {
+      label: '编辑',
+      icon: <Edit style={{ width: 16, height: 16 }} />,
+      onClick: (row) => handleEdit(row),
+    },
+  ];
+
+  const filters: FilterConfig[] = [
+    {
+      id: 'status',
+      label: '状态',
+      type: 'select',
+      options: [
+        { label: '全部', value: 'all' },
+        { label: '待接收', value: '待接收' },
+        { label: '待检测', value: '待检测' },
+        { label: '检测中', value: '检测中' },
+        { label: '已完成', value: '已完成' },
+      ],
+      value: statusFilter,
+      onChange: (value: unknown) => setStatusFilter(value as string),
+    },
+  ];
+
+  const filteredSamples = samples.filter((sample) => {
+    const matchesSearch =
+      sample.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      (sample.sample_no || '').toLowerCase().includes(searchTerm.toLowerCase());
+    const matchesStatus = statusFilter === 'all' || sample.status === statusFilter;
+    return matchesSearch && matchesStatus;
+  });
+
+  const paginatedData = filteredSamples.slice(page * pageSize, page * pageSize + pageSize);
 
   const stats = {
     total: samples.length,
@@ -484,37 +402,6 @@ const LimsSamplePage: React.FC = () => {
       </Card>
     </Box>
   );
-
-  if (loading) {
-    return (
-      <Box
-        sx={{
-          minHeight: '100vh',
-          display: 'flex',
-          alignItems: 'center',
-          justifyContent: 'center',
-          background: `linear-gradient(135deg, ${ct.teal[50]} 0%, ${ct.background.default} 100%)`,
-        }}
-      >
-        <Box sx={{ textAlign: 'center' }}>
-          <Box
-            sx={{
-              width: 48,
-              height: 48,
-              border: 4,
-              borderColor: 'info.main',
-              borderTopColor: 'cyan.dark',
-              borderRadius: '50%',
-              animation: 'spin 1s linear infinite',
-              mx: 'auto',
-              mb: 2,
-            }}
-          />
-          <Typography sx={{ color: 'slate.600' }}>加载中...</Typography>
-        </Box>
-      </Box>
-    );
-  }
 
   return (
     <PageContainer
@@ -692,10 +579,10 @@ const LimsSamplePage: React.FC = () => {
           <Button
             variant='contained'
             onClick={handleSave}
-            disabled={saving}
+            disabled={loading}
             sx={{ bgcolor: 'info.main' }}
           >
-            {saving ? '保存中...' : '保存'}
+            {loading ? '保存中...' : '保存'}
           </Button>
         </DialogActions>
       </Dialog>

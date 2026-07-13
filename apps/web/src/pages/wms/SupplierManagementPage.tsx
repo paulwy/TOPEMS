@@ -17,8 +17,8 @@ import {
 import React, { useState, useEffect, useCallback } from 'react';
 import type { Supplier, CreateSupplierRequest, UpdateSupplierRequest } from '@/api/scm';
 import { scmApi } from '@/api/scm';
-import { useAppStore } from '@/store';
-import { LoadingSpinner } from '@topems/shared-components';
+import { useNotificationStore } from '@/store';
+import { LoadingSpinner, FormField } from '@topems/shared-components';
 import { ListPageTemplate, type ColumnDef, type FilterConfig } from '@/components/templates';
 import { Search, Plus, Edit, Trash2, Eye } from 'lucide-react';
 import { ImageUpload, PageContainer } from '@/components/common';
@@ -47,7 +47,7 @@ const SupplierManagementPage: React.FC = () => {
     tax_number: '',
   } as any);
 
-  const { addNotification } = useAppStore();
+  const { addNotification } = useNotificationStore();
 
   useEffect(() => {
     loadSuppliers();
@@ -316,15 +316,15 @@ const SupplierManagementPage: React.FC = () => {
           <form onSubmit={handleSubmit}>
             <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2, pt: 1 }}>
               <Box sx={{ display: 'flex', gap: 2 }}>
-                <TextField
-                  label='供应商名称 *'
+                <FormField
+                  name='name' label='供应商名称 *'
                   value={formData.name}
                   onChange={(e) => setFormData({ ...formData, name: e.target.value })}
                   size='small'
                   fullWidth
                 />
-                <TextField
-                  label='简称'
+                <FormField
+                  name='short_name' label='简称'
                   value={formData.short_name}
                   onChange={(e) => setFormData({ ...formData, short_name: e.target.value })}
                   size='small'
@@ -332,15 +332,15 @@ const SupplierManagementPage: React.FC = () => {
                 />
               </Box>
               <Box sx={{ display: 'flex', gap: 2 }}>
-                <TextField
-                  label='联系人'
+                <FormField
+                  name='contact_name' label='联系人'
                   value={formData.contact_name}
                   onChange={(e) => setFormData({ ...formData, contact_name: e.target.value })}
                   size='small'
                   fullWidth
                 />
-                <TextField
-                  label='联系电话'
+                <FormField
+                  name='contact_phone' label='联系电话'
                   value={formData.contact_phone}
                   onChange={(e) => setFormData({ ...formData, contact_phone: e.target.value })}
                   size='small'
@@ -348,31 +348,31 @@ const SupplierManagementPage: React.FC = () => {
                 />
               </Box>
               <Box sx={{ display: 'flex', gap: 2 }}>
-                <TextField
-                  label='邮箱'
+                <FormField
+                  name='email' label='邮箱'
                   type='email'
                   value={formData.email}
                   onChange={(e) => setFormData({ ...formData, email: e.target.value })}
                   size='small'
                   fullWidth
                 />
-                <TextField
-                  label='银行账户'
+                <FormField
+                  name='bank_account' label='银行账户'
                   value={formData.bank_account}
                   onChange={(e) => setFormData({ ...formData, bank_account: e.target.value })}
                   size='small'
                   fullWidth
                 />
               </Box>
-              <TextField
-                label='地址'
+              <FormField
+                name='address' label='地址'
                 value={formData.address}
                 onChange={(e) => setFormData({ ...formData, address: e.target.value })}
                 size='small'
                 fullWidth
               />
-              <TextField
-                label='税号'
+              <FormField
+                name='tax_number' label='税号'
                 value={formData.tax_number}
                 onChange={(e) => setFormData({ ...formData, tax_number: e.target.value })}
                 size='small'

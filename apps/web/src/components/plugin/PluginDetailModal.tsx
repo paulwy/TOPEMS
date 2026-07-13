@@ -18,7 +18,7 @@ import {
 import type { Plugin, PluginReview, PluginVersion } from '@/api/plugin';
 import { getPluginReviews, getPluginVersions, submitPluginReview } from '@/api/plugin';
 import { usePluginStore } from '@/store/pluginStore';
-import { useAppStore } from '@/store';
+import { useNotificationStore } from '@/store';
 
 interface PluginDetailModalProps {
   plugin: Plugin;
@@ -33,7 +33,7 @@ export const PluginDetailModal: React.FC<PluginDetailModalProps> = ({ plugin, on
   const [reviewContent, setReviewContent] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
   const { isPluginInstalled, installPlugin, loading } = usePluginStore();
-  const addNotification = useAppStore((state) => state.addNotification);
+  const addNotification = useNotificationStore((state) => state.addNotification);
 
   const installed = isPluginInstalled(plugin.code);
 

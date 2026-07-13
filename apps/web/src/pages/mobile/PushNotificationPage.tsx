@@ -25,7 +25,7 @@ import {
 } from 'lucide-react';
 import { MobileLayout, MobileSkeleton, MobileCard } from '@/components/mobile';
 import { useNavigate } from 'react-router-dom';
-import { useAppStore } from '@/store';
+import { useNotificationStore } from '@/store';
 import { logger } from '@/utils/logger';
 
 interface PushTemplate {
@@ -49,7 +49,7 @@ interface PushConfig {
 const PushNotificationPage: React.FC = () => {
   const theme = useTheme();
   const navigate = useNavigate();
-  const { addNotification } = useAppStore();
+  const { addNotification } = useNotificationStore();
   const [loading, setLoading] = useState(true);
   const [config, setConfig] = useState<PushConfig>({
     enabled: true,

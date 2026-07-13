@@ -23,6 +23,7 @@ use axum_prometheus::PrometheusMetricLayer;
 use prometheus::{default_registry, Gauge};
 use reqwest::Client;
 use serde::{Deserialize, Serialize};
+use std::env;
 use std::net::SocketAddr;
 use std::path::Path;
 use std::sync::{Arc, Mutex};

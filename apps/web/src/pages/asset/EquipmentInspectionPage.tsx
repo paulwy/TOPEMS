@@ -13,13 +13,14 @@ import {
   Button,
 } from '@mui/material';
 import { PageContainer } from '@/components/common';
-import React, { useState, useEffect, useMemo, useCallback } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { Plus, Edit, ClipboardCheck } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { assetApi, type Asset } from '@/api/erp';
-import { mesEquipmentApi, type InspectionRecord } from '@/api/mes';
+import { mesEquipmentApi, type InspectionRecord, type CreateInspectionRecord } from '@/api/mes';
 import { ASSET_PATHS } from '@/modules/asset/config';
-import { useAppStore } from '../../store';
+import { useNotificationStore } from '../../store';
 import { ListPageTemplate, type ColumnDef, type RowAction } from '@/components/templates';
 import { apiLogger } from '@/utils/logger';
 
@@ -35,17 +36,13 @@ const STATUS_LABEL_MAP: Record<string, string> = {
 
 const EquipmentInspectionPage: React.FC = () => {
   const navigate = useNavigate();
-  const addNotification = useAppStore((state) => state.addNotification);
+  const queryClient = useQueryClient();
+  const addNotification = useNotificationStore((state) => state.addNotification);
 
-  const [assets, setAssets] = useState<Asset[]>([]);
-  const [inspections, setInspections] = useState<InspectionRecord[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
   const [searchQuery, setSearchQuery] = useState('');
   const [debouncedSearch, setDebouncedSearch] = useState('');
   const [currentPage, setCurrentPage] = useState(0);
   const [pageSize, setPageSize] = useState(20);
-  const [totalInspections, setTotalInspections] = useState(0);
 
   const [showInspectionModal, setShowInspectionModal] = useState(false);
   const [selectedForInspection, setSelectedForInspection] = useState<Asset | null>(null);
@@ -64,14 +61,24 @@ const EquipmentInspectionPage: React.FC = () => {
     return () => clearTimeout(timer);
   }, [searchQuery]);
 
-  useEffect(() => {
-    loadData();
-  }, [currentPage, pageSize, debouncedSearch]);
+  const assetsQuery = useQuery({
+    queryKey: ['erp-assets'],
+    queryFn: async () => {
+      const response = await assetApi.list();
+      if (!response.success || !response.data) {
+        throw new Error(response.message || '加载资产列表失败');
+      }
+      return response.data.items || [];
+    },
+    staleTime: 10 * 60 * 1000,
+    retry: 2,
+  });
 
-  const loadData = useCallback(async () => {
-    setLoading(true);
-    setError(null);
-    try {
+  const assets = assetsQuery.data ?? [];
+
+  const inspectionsQuery = useQuery({
+    queryKey: ['mes-inspections', currentPage, pageSize, debouncedSearch],
+    queryFn: async () => {
       const params: Record<string, unknown> = {
         page: currentPage + 1,
         pagesize: pageSize,
@@ -80,74 +87,71 @@ const EquipmentInspectionPage: React.FC = () => {
         params.search = debouncedSearch;
       }
 
-      const [assetRes, inspectionRes] = await Promise.all([
-        assetApi.list(),
-        mesEquipmentApi.listInspections(params),
-      ]);
-
-      if (assetRes.success && assetRes.data) {
-        setAssets(assetRes.data.items || []);
+      const response = await mesEquipmentApi.listInspections(params);
+      if (!response.success || !response.data) {
+        throw new Error(response.message || '加载点检记录失败');
       }
+      return {
+        items: response.data.items || [],
+        total: response.data.total || 0,
+      };
+    },
+    staleTime: 5 * 60 * 1000,
+    retry: 2,
+  });
 
-      if (inspectionRes.success && inspectionRes.data) {
-        setInspections(inspectionRes.data.items || []);
-        setTotalInspections(inspectionRes.data.total || 0);
+  const inspections = inspectionsQuery.data?.items ?? [];
+  const totalInspections = inspectionsQuery.data?.total ?? 0;
+  const loading = inspectionsQuery.isLoading || assetsQuery.isLoading;
+  const error = inspectionsQuery.error?.message || assetsQuery.error?.message;
+
+  const createMutation = useMutation({
+    mutationFn: async (data: CreateInspectionRecord) => {
+      const response = await mesEquipmentApi.createInspection(data);
+      if (!response.success) {
+        throw new Error(response.message || '创建点检记录失败');
       }
-    } catch (err: unknown) {
-      const message = (err as { message?: string }).message || '加载数据失败';
-      setError(message);
-      apiLogger.error('加载点检记录失败:', err);
+      return response.data;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['mes-inspections'] });
       addNotification({
-        title: '加载失败',
-        message: '加载数据失败',
+        title: '成功',
+        message: '点检记录创建成功',
+        type: 'success',
+      });
+      setShowInspectionModal(false);
+      setSelectedForInspection(null);
+    },
+    onError: (err: unknown) => {
+      apiLogger.error('创建点检记录失败:', err);
+      const message = (err as { message?: string }).message || '创建点检记录失败';
+      addNotification({
+        title: '失败',
+        message,
         type: 'error',
       });
-    } finally {
-      setLoading(false);
-    }
-  }, [currentPage, pageSize, debouncedSearch, addNotification]);
+    },
+  });
 
   const handleCreateInspection = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!selectedForInspection) return;
-    try {
-      const data = {
-        equipment_id: selectedForInspection.id,
-        inspector: newInspection.inspector || '',
-        inspection_date: newInspection.inspection_date || '',
-        status: newInspection.status || 'normal',
-        location: newInspection.location,
-        temperature: newInspection.temperature,
-        vibration: newInspection.vibration,
-        noiselevel: newInspection.noiselevel,
-        abnormalities: newInspection.abnormalities,
-        remarks: newInspection.remarks,
-      };
-      const res = await mesEquipmentApi.createInspection(data);
-      if (res.success) {
-        addNotification({
-          title: '成功',
-          message: '点检记录创建成功',
-          type: 'success',
-        });
-        setShowInspectionModal(false);
-        setSelectedForInspection(null);
-        loadData();
-      } else {
-        addNotification({
-          title: '失败',
-          message: res.message || '创建点检记录失败',
-          type: 'error',
-        });
-      }
-    } catch (err: unknown) {
-      apiLogger.error('创建点检记录失败:', err);
-      addNotification({
-        title: '失败',
-        message: (err as { message?: string }).message || '创建点检记录失败',
-        type: 'error',
-      });
-    }
+
+    const data = {
+      equipment_id: selectedForInspection.id,
+      inspector: newInspection.inspector || '',
+      inspection_date: newInspection.inspection_date || '',
+      status: newInspection.status || 'normal',
+      location: newInspection.location,
+      temperature: newInspection.temperature,
+      vibration: newInspection.vibration,
+      noiselevel: newInspection.noiselevel,
+      abnormalities: newInspection.abnormalities,
+      remarks: newInspection.remarks,
+    };
+
+    await createMutation.mutateAsync(data as CreateInspectionRecord);
   };
 
   const handlePageChange = (page: number) => {
@@ -157,6 +161,11 @@ const EquipmentInspectionPage: React.FC = () => {
   const handlePageSizeChange = (size: number) => {
     setPageSize(size);
     setCurrentPage(0);
+  };
+
+  const handleRefresh = () => {
+    queryClient.invalidateQueries({ queryKey: ['mes-inspections'] });
+    queryClient.invalidateQueries({ queryKey: ['erp-assets'] });
   };
 
   const getStatusBadge = (status: string) => (
@@ -286,7 +295,7 @@ const EquipmentInspectionPage: React.FC = () => {
           onPageSizeChange: handlePageSizeChange,
         }}
         rowActions={rowActions}
-        onRefresh={loadData}
+        onRefresh={handleRefresh}
         actions={[
           {
             label: '新增点检',
@@ -472,8 +481,9 @@ const EquipmentInspectionPage: React.FC = () => {
               <Button
                 variant='contained'
                 type='submit'
+                disabled={createMutation.isPending}
               >
-                提交
+                {createMutation.isPending ? '提交中...' : '提交'}
               </Button>
             </Box>
           </form>

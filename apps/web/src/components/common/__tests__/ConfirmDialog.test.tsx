@@ -2,14 +2,33 @@ import React from 'react';
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { render, screen, fireEvent, waitFor } from '@testing-library/react';
 import { ConfirmDialog } from '@topems/shared-components';
-import { useAppStore } from '@/store';
+import { useNotificationStore, useAuthStore } from '@/store';
 
 vi.mock('@/store', () => ({
-  useAppStore: vi.fn(),
+  useNotificationStore: vi.fn((selector?: any) =>
+    selector
+      ? selector({
+          addNotification: vi.fn(),
+          notifications: [],
+        })
+      : {
+          addNotification: vi.fn(),
+          notifications: [],
+        }
+  ),
+  useAuthStore: vi.fn((selector?: any) =>
+    selector
+      ? selector({
+          user: null,
+        })
+      : {
+          user: null,
+        }
+  ),
 }));
 
 const mockAddNotification = vi.fn();
-const mockUseAppStore = useAppStore as vi.Mock;
+const mockUseAppStore = useNotificationStore as vi.Mock;
 
 describe('ConfirmDialog', () => {
   beforeEach(() => {

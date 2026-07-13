@@ -62,7 +62,7 @@ pub async fn create_sync_task(
 
     let row = sqlx::query_as::<_, SyncTaskRow>(
         r#"
-        INSERT INTO unified_core.inter_module_sync 
+        INSERT INTO core_inter_module_sync 
             (id, tenant_id, sync_type, source_module, target_module, source_entity,
              source_id, source_code, status, retry_count, max_retries,
              created_at, updated_at)
@@ -96,7 +96,7 @@ pub async fn update_sync_task_status(
 
     let row = sqlx::query_as::<_, SyncTaskRow>(
         r#"
-        UPDATE unified_core.inter_module_sync 
+        UPDATE core_inter_module_sync 
         SET status = $2, 
             error_message = $3, 
             executed_at = $4,
@@ -126,7 +126,7 @@ pub async fn increment_retry_count(
 
     let row = sqlx::query_as::<_, SyncTaskRow>(
         r#"
-        UPDATE unified_core.inter_module_sync 
+        UPDATE core_inter_module_sync 
         SET retry_count = retry_count + 1,
             status = 'failed',
             error_message = $2,
@@ -147,12 +147,11 @@ pub async fn increment_retry_count(
 }
 
 pub async fn get_sync_task_by_id(db: &PgPool, task_id: Uuid) -> Result<Option<SyncTask>, Error> {
-    let row = sqlx::query_as::<_, SyncTaskRow>(
-        "SELECT * FROM unified_core.inter_module_sync WHERE id = $1",
-    )
-    .bind(task_id)
-    .fetch_optional(db)
-    .await?;
+    let row =
+        sqlx::query_as::<_, SyncTaskRow>("SELECT * FROM core_inter_module_sync WHERE id = $1")
+            .bind(task_id)
+            .fetch_optional(db)
+            .await?;
 
     Ok(row.map(|r| r.into()))
 }
@@ -160,7 +159,7 @@ pub async fn get_sync_task_by_id(db: &PgPool, task_id: Uuid) -> Result<Option<Sy
 pub async fn get_pending_sync_tasks(db: &PgPool) -> Result<Vec<SyncTask>, Error> {
     let rows = sqlx::query_as::<_, SyncTaskRow>(
         r#"
-        SELECT * FROM unified_core.inter_module_sync 
+        SELECT * FROM core_inter_module_sync 
         WHERE status = 'pending' OR (status = 'failed' AND retry_count < max_retries AND next_retry_at <= NOW())
         ORDER BY created_at ASC
         "#,
@@ -172,31 +171,30 @@ pub async fn get_pending_sync_tasks(db: &PgPool) -> Result<Vec<SyncTask>, Error>
 }
 
 pub async fn get_sync_statistics(db: &PgPool) -> Result<SyncStatistics, Error> {
-    let total_tasks =
-        sqlx::query_scalar::<_, i64>("SELECT COUNT(*) FROM unified_core.inter_module_sync")
-            .fetch_one(db)
-            .await?;
+    let total_tasks = sqlx::query_scalar::<_, i64>("SELECT COUNT(*) FROM core_inter_module_sync")
+        .fetch_one(db)
+        .await?;
 
     let pending_tasks = sqlx::query_scalar::<_, i64>(
-        "SELECT COUNT(*) FROM unified_core.inter_module_sync WHERE status = 'pending'",
+        "SELECT COUNT(*) FROM core_inter_module_sync WHERE status = 'pending'",
     )
     .fetch_one(db)
     .await?;
 
     let success_tasks = sqlx::query_scalar::<_, i64>(
-        "SELECT COUNT(*) FROM unified_core.inter_module_sync WHERE status = 'success'",
+        "SELECT COUNT(*) FROM core_inter_module_sync WHERE status = 'success'",
     )
     .fetch_one(db)
     .await?;
 
     let failed_tasks = sqlx::query_scalar::<_, i64>(
-        "SELECT COUNT(*) FROM unified_core.inter_module_sync WHERE status = 'failed' AND retry_count >= max_retries",
+        "SELECT COUNT(*) FROM core_inter_module_sync WHERE status = 'failed' AND retry_count >= max_retries",
     )
     .fetch_one(db)
     .await?;
 
     let in_progress_tasks = sqlx::query_scalar::<_, i64>(
-        "SELECT COUNT(*) FROM unified_core.inter_module_sync WHERE status = 'in_progress'",
+        "SELECT COUNT(*) FROM core_inter_module_sync WHERE status = 'in_progress'",
     )
     .fetch_one(db)
     .await?;
@@ -220,7 +218,7 @@ pub async fn retry_failed_tasks(
     let result = if sync_type.is_some() && source_module.is_some() {
         sqlx::query(
             r#"
-            UPDATE unified_core.inter_module_sync 
+            UPDATE core_inter_module_sync 
             SET status = 'pending',
                 retry_count = 0,
                 next_retry_at = NULL,
@@ -238,7 +236,7 @@ pub async fn retry_failed_tasks(
     } else if sync_type.is_some() {
         sqlx::query(
             r#"
-            UPDATE unified_core.inter_module_sync 
+            UPDATE core_inter_module_sync 
             SET status = 'pending',
                 retry_count = 0,
                 next_retry_at = NULL,
@@ -254,7 +252,7 @@ pub async fn retry_failed_tasks(
     } else if source_module.is_some() {
         sqlx::query(
             r#"
-            UPDATE unified_core.inter_module_sync 
+            UPDATE core_inter_module_sync 
             SET status = 'pending',
                 retry_count = 0,
                 next_retry_at = NULL,
@@ -270,7 +268,7 @@ pub async fn retry_failed_tasks(
     } else {
         sqlx::query(
             r#"
-            UPDATE unified_core.inter_module_sync 
+            UPDATE core_inter_module_sync 
             SET status = 'pending',
                 retry_count = 0,
                 next_retry_at = NULL,

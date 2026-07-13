@@ -3,7 +3,7 @@ import { Bell, CheckCircle, XCircle, Clock, Check, Play, CheckCircle2 } from 'lu
 import { useNavigate } from 'react-router-dom';
 import type { Notification, ListParams } from '@/api/workflow';
 import { workflowApi } from '@/api/workflow';
-import { useAppStore } from '../../store';
+import { useNotificationStore, useAuthStore } from '../../store';
 import { apiLogger } from '@/utils/logger';
 import { Box, Typography, Tabs, Tab, CircularProgress, Button } from '@mui/material';
 import { PageContainer } from '@/components/common';
@@ -13,8 +13,8 @@ import { WORKFLOW_PATHS } from '@/modules/workflow/config';
 
 const FlowNotificationCenter: React.FC = () => {
   const navigate = useNavigate();
-  const addNotification = useAppStore((state) => state.addNotification);
-  const user = useAppStore((state) => state.user);
+  const addNotification = useNotificationStore((state) => state.addNotification);
+  const user = useAuthStore((state) => state.user);
   const [notifications, setNotifications] = useState<Notification[]>([]);
   const [loading, setLoading] = useState(true);
   const [unreadCount, setUnreadCount] = useState(0);

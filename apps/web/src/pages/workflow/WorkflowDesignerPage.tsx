@@ -17,7 +17,7 @@ import React, { useState, useEffect } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import type { NodeData, EdgeData } from '@/components/workflow/WorkflowDesigner';
 import WorkflowDesigner from '@/components/workflow/WorkflowDesigner';
-import { useAppStore } from '../../store';
+import { useNotificationStore } from '../../store';
 import type { Workflow, CreateWorkflowRequest, UpdateWorkflowRequest } from '@/api/workflow';
 import { workflowApi } from '@/api/workflow';
 import { apiLogger } from '@/utils/logger';
@@ -30,7 +30,7 @@ const WorkflowDesignerPage: React.FC = () => {
   const [searchParams] = useSearchParams();
   const workflowId = searchParams.get('id');
 
-  const { addNotification } = useAppStore();
+  const { addNotification } = useNotificationStore();
   const [loading, setLoading] = useState(false);
   const [saving, setSaving] = useState(false);
   const [showSaveDialog, setShowSaveDialog] = useState(false);

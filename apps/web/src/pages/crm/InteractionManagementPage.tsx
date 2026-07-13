@@ -12,11 +12,11 @@ import {
 import React, { useState, useEffect, useMemo } from 'react';
 import type { Interaction, CreateInteractionRequest, UpdateInteractionRequest } from '@/api/crm';
 import { crmApi } from '@/api/crm';
-import { useAppStore } from '@/store';
+import { useNotificationStore } from '@/store';
 import { logger } from '@/utils/logger';
 import { Plus, Edit, Trash2, Eye } from 'lucide-react';
 import { ListPageTemplate, type ColumnDef } from '@/components/templates';
-import { PageContainer } from '@/components/common';
+import { PageContainer, StatusBadge, FormField } from '@/components/common';
 import type { RowAction, FilterConfig } from '@/components';
 
 const InteractionManagementPage: React.FC = () => {
@@ -36,7 +36,7 @@ const InteractionManagementPage: React.FC = () => {
     notes: '',
   });
 
-  const { addNotification } = useAppStore();
+  const { addNotification } = useNotificationStore();
 
   useEffect(() => {
     loadInteractions();
@@ -166,10 +166,11 @@ const InteractionManagementPage: React.FC = () => {
     };
     const t = typeMap[type] || { label: type, color: 'default' };
     return (
-      <Chip
-        size='small'
-        color={t.color}
+      <StatusBadge
+        status={type}
         label={t.label}
+        color={t.color}
+        size='sm'
       />
     );
   };
@@ -188,10 +189,11 @@ const InteractionManagementPage: React.FC = () => {
     };
     const s = statusMap[status] || { label: status, color: 'default' };
     return (
-      <Chip
-        size='small'
-        color={s.color}
+      <StatusBadge
+        status={status}
         label={s.label}
+        color={s.color}
+        size='sm'
       />
     );
   };
@@ -353,29 +355,29 @@ const InteractionManagementPage: React.FC = () => {
                   gap: 2,
                 }}
               >
-                <TextField
-                  label='主题'
+                <FormField
+                  name='subject' label='主题'
                   value={formData.subject}
                   onChange={(e) => setFormData({ ...formData, subject: e.target.value })}
                   fullWidth
                 />
-                <TextField
-                  label='内容'
+                <FormField
+                  name='content' label='内容'
                   multiline
                   rows={3}
                   value={formData.content}
                   onChange={(e) => setFormData({ ...formData, content: e.target.value })}
                   fullWidth
                 />
-                <TextField
-                  label='计划时间'
+                <FormField
+                  name='scheduled_at' label='计划时间'
                   type='datetime-local'
                   value={formData.scheduled_at}
                   onChange={(e) => setFormData({ ...formData, scheduled_at: e.target.value })}
                   fullWidth
                 />
-                <TextField
-                  label='备注'
+                <FormField
+                  name='notes' label='备注'
                   multiline
                   rows={2}
                   value={formData.notes}

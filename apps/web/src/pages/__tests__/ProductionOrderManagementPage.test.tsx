@@ -5,7 +5,7 @@ import { BrowserRouter } from 'react-router-dom';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import ProductionOrderManagementPage from '../mes/ProductionOrderManagementPage';
 import { mesApi } from '@/api/mes';
-import { useAppStore } from '@/store';
+import { useNotificationStore, useAuthStore } from '@/store';
 
 const queryClient = new QueryClient();
 
@@ -24,19 +24,24 @@ vi.mock('@/api/mes', () => ({
 }));
 
 vi.mock('@/store', () => ({
-  useAppStore: vi.fn((selector?: any) =>
+  useNotificationStore: vi.fn((selector?: any) =>
     selector
       ? selector({
           addNotification: vi.fn(),
           notifications: [],
-          user: { permissions: ['mes:order:read'] },
-          theme: 'light',
         })
       : {
           addNotification: vi.fn(),
           notifications: [],
-          user: { permissions: ['mes:order:read'] },
-          theme: 'light',
+        }
+  ),
+  useAuthStore: vi.fn((selector?: any) =>
+    selector
+      ? selector({
+          user: null,
+        })
+      : {
+          user: null,
         }
   ),
 }));

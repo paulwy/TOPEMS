@@ -6,7 +6,7 @@ import { Plus, Download, Eye, Edit, Trash2, Code2 } from 'lucide-react';
 import { ListPageTemplate, type ColumnDef, type FilterConfig } from '@/components/templates';
 import { PageContainer } from '@/components/common';
 import { rsApi } from '@/api/rs';
-import { useAppStore } from '@/store';
+import { useNotificationStore } from '@/store';
 import type { Project } from '@/api/rs';
 import { ConfirmDialog } from '@topems/shared-components';
 import { designTokens } from '@/theme/tokens';
@@ -16,7 +16,7 @@ const ct = designTokens.colors;
 
 const RsProjectListPage: React.FC = () => {
   const navigate = useNavigate();
-  const { addNotification } = useAppStore();
+  const { addNotification } = useNotificationStore();
   const [projects, setProjects] = useState<Project[]>([]);
   const [loading, setLoading] = useState(false);
   const [page, setPage] = useState(0);

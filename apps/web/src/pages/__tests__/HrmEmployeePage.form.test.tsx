@@ -23,15 +23,24 @@ vi.mock('@/api/hrm', () => ({
 }));
 
 vi.mock('@/store', () => ({
-  useAppStore: vi.fn((selector?: any) =>
+  useNotificationStore: vi.fn((selector?: any) =>
     selector
       ? selector({
           addNotification: vi.fn(),
-          user: { permissions: ['hrm:employee:read', 'hrm:employee:create'] },
+          notifications: [],
         })
       : {
           addNotification: vi.fn(),
-          user: { permissions: ['hrm:employee:read', 'hrm:employee:create'] },
+          notifications: [],
+        }
+  ),
+  useAuthStore: vi.fn((selector?: any) =>
+    selector
+      ? selector({
+          user: null,
+        })
+      : {
+          user: null,
         }
   ),
 }));

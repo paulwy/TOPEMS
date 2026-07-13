@@ -38,3 +38,8 @@ export const useNotificationStore = create<NotificationState>()((set) => ({
     })),
   clearNotifications: () => set({ notifications: [] }),
 }));
+
+export const useNotifications = () => useNotificationStore((state) => state.notifications);
+export const useAddNotification = () => useNotificationStore((state) => state.addNotification);
+export const useRemoveNotification = () => useNotificationStore((state) => state.removeNotification);
+export const useClearNotifications = () => useNotificationStore((state) => state.clearNotifications);

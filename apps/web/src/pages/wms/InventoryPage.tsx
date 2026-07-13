@@ -15,6 +15,7 @@ import {
   Stack,
   Button,
 } from '@mui/material';
+import { ConfirmDialog } from '@topems/shared-components';
 import {
   ListPageTemplate,
   type ColumnDef,
@@ -30,10 +31,10 @@ import type {
 } from '@/api/wms';
 import { wmsApi } from '@/api/wms';
 import { WMS_PATHS } from '@/modules/wms/config';
-import { useAppStore } from '@/store';
+import { useNotificationStore } from '@/store';
 import { Plus, Edit, Trash2, Eye, Package, AlertTriangle } from 'lucide-react';
 import { apiLogger } from '@/utils/logger';
-import { ConfirmDialog, PageContainer } from '@/components/common';
+import { PageContainer } from '@/components/common';
 import { designTokens } from '@/theme/tokens';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 
@@ -88,7 +89,7 @@ const statusConfig: Record<
 };
 
 const InventoryPage: React.FC = () => {
-  const { addNotification } = useAppStore();
+  const { addNotification } = useNotificationStore();
   const queryClient = useQueryClient();
 
   const [searchTerm, setSearchTerm] = useState('');
@@ -249,6 +250,36 @@ const InventoryPage: React.FC = () => {
       });
     },
   });
+
+  const [batchDeleteIds, setBatchDeleteIds] = useState<string[]>([]);
+  const [confirmBatchDeleteOpen, setConfirmBatchDeleteOpen] = useState(false);
+
+  const handleBatchDelete = useCallback((items: InventoryItem[]) => {
+    const ids = items.map((i) => i.id);
+    setBatchDeleteIds(ids);
+    setConfirmBatchDeleteOpen(true);
+  }, []);
+
+  const handleBatchDeleteConfirm = useCallback(async () => {
+    try {
+      for (const id of batchDeleteIds) {
+        await deleteMutation.mutateAsync(id);
+      }
+      addNotification({
+        type: 'success',
+        title: '批量删除成功',
+        message: `成功删除 ${batchDeleteIds.length} 条库存记录`,
+      });
+      setConfirmBatchDeleteOpen(false);
+      setBatchDeleteIds([]);
+    } catch {
+      addNotification({
+        type: 'error',
+        title: '批量删除失败',
+        message: '删除部分库存记录失败',
+      });
+    }
+  }, [batchDeleteIds, deleteMutation]);
 
   const handleCreate = async () => {
     if (!newItem.sku || !newItem.name || !newItem.warehouse_id) {
@@ -584,6 +615,22 @@ const InventoryPage: React.FC = () => {
           available_quantity: '可用数量',
           warehouse_name: '仓库',
         }}
+        exportable
+        exportFileName='库存列表'
+        persistFilters
+        persistSearch
+        emptyActionButton={{
+          label: '新增库存',
+          icon: <Plus size={16} />,
+          onClick: handleOpenCreate,
+        }}
+        batchActions={[
+          {
+            label: '批量删除',
+            icon: <Trash2 size={16} />,
+            onClick: handleBatchDelete,
+          },
+        ]}
       />
 
       {/* 新增对话框 */}
@@ -1054,6 +1101,15 @@ const InventoryPage: React.FC = () => {
           </Button>
         </DialogActions>
       </Dialog>
+
+      <ConfirmDialog
+        isOpen={confirmBatchDeleteOpen}
+        onClose={() => setConfirmBatchDeleteOpen(false)}
+        onConfirm={handleBatchDeleteConfirm}
+        title='批量删除确认'
+        message={`确定要删除选中的 ${batchDeleteIds.length} 条库存记录吗？`}
+        danger
+      />
     </PageContainer>
   );
 };

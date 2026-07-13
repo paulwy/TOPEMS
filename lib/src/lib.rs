@@ -133,7 +133,7 @@ pub use redis::{
 pub use repository::{
     PaginatedQuery, PaginatedResult as RepoPaginatedResult, QueryBuilder, Repository,
 };
-pub use response::{api_error, ApiResponse, PaginatedResponse, PaginationParams};
+pub use response::{api_error, api_success, ApiResponse, PaginatedResponse, PaginationParams};
 pub use rls::rls_middleware;
 pub use schema::{
     ai_table, bi_table, crm_table, ehs_table, erp_table, gis_table, hrm_table, im_table,
@@ -159,8 +159,8 @@ pub use service_discovery::{
 };
 pub use storage::{FileMetadata, LocalStorage, StorageConfig, StorageService};
 pub use telemetry::{
-    init_telemetry, inject_trace_context, telemetry_middleware, TelemetryConfig, TelemetryExporter,
-    TelemetryGuard,
+    get_current_trace_context, init_telemetry, inject_trace_context, telemetry_middleware,
+    TelemetryConfig, TelemetryExporter, TelemetryExt, TelemetryGuard,
 };
 pub use tenant::{
     Tenant, TenantContext, TenantError, TenantManager, TenantPlan, TenantRole, TenantSettings,

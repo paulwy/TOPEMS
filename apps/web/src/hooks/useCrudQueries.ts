@@ -550,9 +550,258 @@ export function useModuleQueries<T extends { id?: string }>(
   };
 }
 
+// ============ useCrudOperations ============
+
+export interface CrudOperations<T, TCreate = Partial<T>, TUpdate = Partial<T>> {
+  list: (params?: any) => Promise<{
+    success: boolean;
+    code: number;
+    message: string;
+    data?: { items: T[]; total: number; page?: number; pagesize?: number };
+  }>;
+  get: (id: string) => Promise<{ success: boolean; code: number; message: string; data?: T }>;
+  create: (data: TCreate) => Promise<{ success: boolean; code: number; message: string; data?: T }>;
+  update: (id: string, data: TUpdate) => Promise<{ success: boolean; code: number; message: string; data?: T }>;
+  delete: (id: string) => Promise<{ success: boolean; code: number; message: string; data?: string }>;
+}
+
+export interface UseCrudOperationsOptions<T, TCreate = Partial<T>, TUpdate = Partial<T>> {
+  api: CrudOperations<T, TCreate, TUpdate>;
+  queryKey: string;
+  autoFetch?: boolean;
+  defaultPageSize?: number;
+  pageParamName?: string;
+  pageSizeParamName?: string;
+}
+
+/**
+ * 适配标准 CrudOperations 接口的 React Query hook。
+ *
+ * 适用于所有实现了 list/get/create/update/delete 标准接口的 API 模块，
+ * 如 hrm/departmentApi、hrm/companyApi、hrm/employeeApi 等。
+ *
+ * @example
+ * ```tsx
+ * const { data, loading, create, update, delete: remove, pagination } = useCrudOperations<Department>({
+ *   api: departmentApi,
+ *   queryKey: 'hrm-departments',
+ *   defaultPageSize: 20,
+ * });
+ * ```
+ */
+export function useCrudOperations<T extends { id?: string }, TCreate = Partial<T>, TUpdate = Partial<T>>(
+  options: UseCrudOperationsOptions<T, TCreate, TUpdate>
+): UseCrudQueriesResult<T, TCreate, TUpdate> {
+  const {
+    api,
+    queryKey,
+    autoFetch = true,
+    defaultPageSize = 10,
+    pageParamName = 'page',
+    pageSizeParamName = 'pagesize',
+  } = options;
+
+  const queryClient = useQueryClient();
+  const addNotification = useNotificationStore((state) => state.addNotification);
+
+  const [page, setPageState] = useState(1);
+  const [pageSize, setPageSizeState] = useState(defaultPageSize);
+  const [extraParams, setExtraParams] = useState<Record<string, unknown>>({});
+
+  const setPage = useCallback((newPage: number) => {
+    setPageState(Math.max(1, newPage));
+  }, []);
+
+  const setPageSize = useCallback((newSize: number) => {
+    setPageSizeState(newSize);
+    setPageState(1);
+  }, []);
+
+  const pagination = useMemo(
+    () => ({ page, pageSize, total: 0, setPage, setPageSize }),
+    [page, pageSize, setPage, setPageSize]
+  );
+
+  const listQueryKey = useMemo(
+    () => [queryKey, 'list', page, pageSize, extraParams],
+    [queryKey, page, pageSize, extraParams]
+  );
+
+  const listQuery = useQuery({
+    queryKey: listQueryKey,
+    queryFn: async () => {
+      const response = await api.list({
+        [pageParamName]: page,
+        [pageSizeParamName]: pageSize,
+        ...extraParams,
+      });
+      if (!response.success || !response.data) {
+        throw new Error(response.message || '加载数据失败');
+      }
+      return { items: response.data.items, total: response.data.total };
+    },
+    enabled: autoFetch,
+    staleTime: 5 * 60 * 1000,
+    retry: 2,
+  });
+
+  const data = listQuery.data?.items ?? [];
+  const total = listQuery.data?.total ?? 0;
+  pagination.total = total;
+
+  const fetch = useCallback(
+    (params?: Record<string, unknown>) => {
+      if (params) {
+        setExtraParams(params);
+      }
+      queryClient.invalidateQueries({ queryKey: [queryKey, 'list'] });
+    },
+    [queryClient, queryKey]
+  );
+
+  const getItem = useCallback(
+    async (id: string): Promise<T | null> => {
+      try {
+        const cached = queryClient.getQueryData<T>([queryKey, 'detail', id]);
+        if (cached) return cached;
+
+        const response = await api.get(id);
+        if (response.success && response.data) {
+          queryClient.setQueryData([queryKey, 'detail', id], response.data);
+          return response.data;
+        }
+        return null;
+      } catch (err: unknown) {
+        const errAny = err as { response?: { data?: { message?: string } }; message?: string };
+        const message = errAny?.response?.data?.message || errAny?.message || '获取数据失败';
+        addNotification({ title: '错误', message, type: 'error' });
+        return null;
+      }
+    },
+    [api, queryKey, queryClient, addNotification]
+  );
+
+  const refresh = useCallback(() => {
+    queryClient.invalidateQueries({ queryKey: [queryKey] });
+  }, [queryClient, queryKey]);
+
+  const notifyError = useCallback(
+    (err: unknown, defaultMessage: string) => {
+      const errAny = err as { response?: { data?: { message?: string } }; message?: string };
+      const message = errAny?.response?.data?.message || errAny?.message || defaultMessage;
+      addNotification({ title: '错误', message, type: 'error' });
+      return Promise.reject(err);
+    },
+    [addNotification]
+  );
+
+  const notifySuccess = useCallback(
+    (message: string) => {
+      addNotification({ title: '成功', message, type: 'success' });
+    },
+    [addNotification]
+  );
+
+  const createMutation = useMutation({
+    mutationFn: async (item: TCreate) => {
+      const response = await api.create(item);
+      if (!response.success) {
+        throw new Error(response.message || '创建失败');
+      }
+      return response.data ?? null;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: [queryKey, 'list'] });
+      notifySuccess('创建成功');
+    },
+    onError: (err) => notifyError(err, '创建失败'),
+  });
+
+  const updateMutation = useMutation({
+    mutationFn: async ({ id, item }: { id: string; item: TUpdate }) => {
+      const response = await api.update(id, item);
+      if (!response.success) {
+        throw new Error(response.message || '更新失败');
+      }
+      return response.data ?? null;
+    },
+    onSuccess: (_data, variables) => {
+      queryClient.invalidateQueries({ queryKey: [queryKey, 'list'] });
+      queryClient.invalidateQueries({ queryKey: [queryKey, 'detail', variables.id] });
+      notifySuccess('更新成功');
+    },
+    onError: (err) => notifyError(err, '更新失败'),
+  });
+
+  const deleteMutation = useMutation({
+    mutationFn: async (id: string) => {
+      const response = await api.delete(id);
+      if (!response.success) {
+        throw new Error(response.message || '删除失败');
+      }
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: [queryKey] });
+      notifySuccess('删除成功');
+    },
+    onError: (err) => notifyError(err, '删除失败'),
+  });
+
+  const bulkDeleteMutation = useMutation({
+    mutationFn: async (ids: string[]) => {
+      await Promise.all(ids.map((id) => api.delete(id)));
+    },
+    onSuccess: (_data, variables) => {
+      queryClient.invalidateQueries({ queryKey: [queryKey] });
+      notifySuccess(`已删除 ${variables.length} 条记录`);
+    },
+    onError: (err) => notifyError(err, '批量删除失败'),
+  });
+
+  const create = useCallback(
+    (item: TCreate) => createMutation.mutateAsync(item) as Promise<T | null>,
+    [createMutation]
+  );
+
+  const update = useCallback(
+    (id: string, item: TUpdate) => updateMutation.mutateAsync({ id, item }) as Promise<T | null>,
+    [updateMutation]
+  );
+
+  const deleteItem = useCallback((id: string) => deleteMutation.mutateAsync(id), [deleteMutation]);
+
+  const bulkDelete = useCallback(
+    (ids: string[]) => bulkDeleteMutation.mutateAsync(ids),
+    [bulkDeleteMutation]
+  );
+
+  const loading =
+    listQuery.isLoading ||
+    createMutation.isPending ||
+    updateMutation.isPending ||
+    deleteMutation.isPending ||
+    bulkDeleteMutation.isPending;
+
+  const error: string | null = (listQuery.error as Error)?.message ?? null;
+
+  return {
+    data,
+    loading,
+    error,
+    pagination,
+    fetch,
+    get: getItem,
+    refresh,
+    create,
+    update,
+    delete: deleteItem,
+    bulkDelete,
+  };
+}
+
 // ============ 导出 ============
 
-export default { useCrudQueries, useModuleQueries };
+export default { useCrudQueries, useModuleQueries, useCrudOperations };
 
 // ============ 使用示例（参考） ============
 

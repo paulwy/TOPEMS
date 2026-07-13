@@ -1,4 +1,4 @@
-import React, { useState, useMemo, useEffect, useCallback } from 'react';
+import React, { useState, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { ClipboardCheck, FileCheck, Plus, Edit, Trash2, Eye, FileText } from 'lucide-react';
 import {
@@ -18,7 +18,7 @@ import {
   MenuItem,
   Button,
 } from '@mui/material';
-import { useAppStore } from '@/store';
+import { useNotificationStore } from '@/store';
 import * as z from 'zod';
 import {
   ListPageTemplate,
@@ -28,21 +28,23 @@ import {
 } from '@/components/templates';
 import { PageContainer } from '@/components/common';
 import { qmsApi } from '@/api/qms';
-import type { QualityStandard } from '@/api/qms';
+import type { QualityStandard, CreateQualityStandardRequest } from '@/api/qms';
 import { designTokens } from '@/theme/tokens';
 import { QMS_PATHS } from '@/modules/qms/config';
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 
 const ct = designTokens.colors;
 
 const QmsStandardListPage: React.FC = () => {
   const navigate = useNavigate();
+  const queryClient = useQueryClient();
+  const addNotification = useNotificationStore((state) => state.addNotification);
+
   const [searchTerm, setSearchTerm] = useState('');
   const [statusFilter, setStatusFilter] = useState('all');
   const [showModal, setShowModal] = useState(false);
   const [selectedItem, setSelectedItem] = useState<QualityStandard | null>(null);
   const [isEditing, setIsEditing] = useState(false);
-  const [loading, setLoading] = useState(true);
-  const [submitting, setSubmitting] = useState(false);
   const [formData, setFormData] = useState({
     code: '',
     name: '',
@@ -54,9 +56,6 @@ const QmsStandardListPage: React.FC = () => {
   });
 
   const [errors, setErrors] = useState<Record<string, string>>({});
-  const addNotification = useAppStore((state) => state.addNotification);
-
-  const [standards, setStandards] = useState<QualityStandard[]>([]);
 
   const standardSchema = z.object({
     name: z.string().min(2, '标准名称至少需要2个字符').max(100, '标准名称不能超过100个字符'),
@@ -82,27 +81,85 @@ const QmsStandardListPage: React.FC = () => {
     return true;
   };
 
-  const loadStandards = useCallback(async () => {
-    try {
-      setLoading(true);
+  const standardsQuery = useQuery({
+    queryKey: ['qms-standards'],
+    queryFn: async () => {
       const response = await qmsApi.listStandards();
-      if (response.success && response.data) {
-        setStandards(response.data);
+      if (!response.success || !response.data) {
+        throw new Error(response.message || '加载质量标准数据失败');
       }
-    } catch (error: unknown) {
-      addNotification({
-        title: '加载失败',
-        message: '加载质量标准数据失败',
-        type: 'error',
-      });
-    } finally {
-      setLoading(false);
-    }
-  }, [addNotification]);
+      return response.data;
+    },
+    staleTime: 5 * 60 * 1000,
+  });
 
-  useEffect(() => {
-    loadStandards();
-  }, [loadStandards]);
+  const standards = standardsQuery.data || [];
+  const loading = standardsQuery.isLoading;
+
+  const createMutation = useMutation({
+    mutationFn: (data: CreateQualityStandardRequest) => qmsApi.createStandard(data),
+    onSuccess: (response) => {
+      if (response.success) {
+        addNotification({ title: '成功', message: '创建成功', type: 'success' });
+        queryClient.invalidateQueries({ queryKey: ['qms-standards'] });
+        setShowModal(false);
+        resetForm();
+      } else {
+        addNotification({
+          title: '失败',
+          message: response.message || '创建失败',
+          type: 'error',
+        });
+      }
+    },
+    onError: () => {
+      addNotification({ title: '错误', message: '操作失败，请重试', type: 'error' });
+    },
+  });
+
+  const updateMutation = useMutation({
+    mutationFn: ({ id, data }: { id: string; data: CreateQualityStandardRequest }) =>
+      qmsApi.updateStandard(id, data),
+    onSuccess: (response) => {
+      if (response.success) {
+        addNotification({ title: '成功', message: '更新成功', type: 'success' });
+        queryClient.invalidateQueries({ queryKey: ['qms-standards'] });
+        setShowModal(false);
+        resetForm();
+      } else {
+        addNotification({
+          title: '失败',
+          message: response.message || '更新失败',
+          type: 'error',
+        });
+      }
+    },
+    onError: () => {
+      addNotification({ title: '错误', message: '操作失败，请重试', type: 'error' });
+    },
+  });
+
+  const deleteMutation = useMutation({
+    mutationFn: (id: string) => qmsApi.deleteStandard(id),
+    onSuccess: (response) => {
+      if (response.success) {
+        addNotification({ title: '成功', message: '删除成功', type: 'success' });
+        queryClient.invalidateQueries({ queryKey: ['qms-standards'] });
+      } else {
+        addNotification({
+          title: '失败',
+          message: response.message || '删除失败',
+          type: 'error',
+        });
+      }
+    },
+    onError: () => {
+      addNotification({ title: '错误', message: '删除时发生错误', type: 'error' });
+    },
+  });
+
+  const submitting =
+    createMutation.isPending || updateMutation.isPending || deleteMutation.isPending;
 
   const getStatusBadge = (status: string) => {
     const colors: Record<string, { bg: string; color: string }> = {
@@ -189,18 +246,8 @@ const QmsStandardListPage: React.FC = () => {
   };
 
   const deleteItem = async (id: string) => {
-    if (!confirm('确定要删除此质量标准吗？')) return;
-    try {
-      const response = await qmsApi.deleteStandard(id);
-      if (response.success) {
-        setStandards((prev) => prev.filter((item) => item.id !== id));
-        addNotification({ title: '成功', message: '删除成功', type: 'success' });
-      } else {
-        addNotification({ title: '失败', message: response.message || '删除失败', type: 'error' });
-      }
-    } catch (error: unknown) {
-      addNotification({ title: '错误', message: '删除时发生错误', type: 'error' });
-    }
+    if (!window.confirm('确定要删除此质量标准吗？')) return;
+    await deleteMutation.mutateAsync(id);
   };
 
   const standardRowActions: RowAction<QualityStandard>[] = [
@@ -226,10 +273,10 @@ const QmsStandardListPage: React.FC = () => {
     if (!validateForm(formData)) {
       return;
     }
-    setSubmitting(true);
-    try {
-      if (isEditing && selectedItem) {
-        const response = await qmsApi.updateStandard(selectedItem.id, {
+    if (isEditing && selectedItem) {
+      await updateMutation.mutateAsync({
+        id: selectedItem.id,
+        data: {
           name: formData.name,
           code: formData.code,
           category: formData.category,
@@ -238,58 +285,35 @@ const QmsStandardListPage: React.FC = () => {
           description: formData.description,
           content: selectedItem.content || '',
           effective_date: formData.effective_date,
-        });
-        if (response.success) {
-          setStandards((prev) =>
-            prev.map((item) => (item.id === selectedItem.id ? { ...item, ...response.data } : item))
-          );
-          addNotification({ title: '成功', message: '更新成功', type: 'success' });
-        } else {
-          addNotification({
-            title: '失败',
-            message: response.message || '更新失败',
-            type: 'error',
-          });
-        }
-      } else {
-        const response = await qmsApi.createStandard({
-          name: formData.name,
-          code: formData.code,
-          category: formData.category,
-          version: formData.version || '1.0',
-          status: formData.status,
-          description: formData.description,
-          content: '',
-          effective_date: formData.effective_date,
-        });
-        if (response.success && response.data) {
-          setStandards((prev) => [response.data!, ...prev]);
-          addNotification({ title: '成功', message: '创建成功', type: 'success' });
-        } else {
-          addNotification({
-            title: '失败',
-            message: response.message || '创建失败',
-            type: 'error',
-          });
-        }
-      }
-      setShowModal(false);
-      setIsEditing(false);
-      setFormData({
-        code: '',
-        name: '',
-        category: '',
-        version: '',
-        status: 'active',
-        description: '',
-        effective_date: '',
+        },
       });
-      setErrors({});
-    } catch (error: unknown) {
-      addNotification({ title: '错误', message: '操作失败，请重试', type: 'error' });
-    } finally {
-      setSubmitting(false);
+    } else {
+      await createMutation.mutateAsync({
+        name: formData.name,
+        code: formData.code,
+        category: formData.category,
+        version: formData.version || '1.0',
+        status: formData.status,
+        description: formData.description,
+        content: '',
+        effective_date: formData.effective_date,
+      });
     }
+  };
+
+  const resetForm = () => {
+    setSelectedItem(null);
+    setIsEditing(false);
+    setFormData({
+      code: '',
+      name: '',
+      category: '',
+      version: '',
+      status: 'active',
+      description: '',
+      effective_date: '',
+    });
+    setErrors({});
   };
 
   const filteredStandards = useMemo(() => {
@@ -446,18 +470,7 @@ const QmsStandardListPage: React.FC = () => {
       variant: 'contained' as const,
       color: 'primary' as const,
       onClick: () => {
-        setIsEditing(false);
-        setSelectedItem(null);
-        setFormData({
-          code: '',
-          name: '',
-          category: '',
-          version: '1.0',
-          status: 'active',
-          description: '',
-          effective_date: '',
-        });
-        setErrors({});
+        resetForm();
         setShowModal(true);
       },
     },

@@ -13,13 +13,14 @@ import {
   Button,
 } from '@mui/material';
 import { PageContainer } from '@/components/common';
-import React, { useState, useEffect, useMemo, useCallback } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { Plus, Edit, Wrench } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { assetApi, type Asset } from '@/api/erp';
-import { mesEquipmentApi, type MaintenanceRecord } from '@/api/mes';
+import { mesEquipmentApi, type MaintenanceRecord, type CreateMaintenanceRecord } from '@/api/mes';
 import { ASSET_PATHS } from '@/modules/asset/config';
-import { useAppStore } from '../../store';
+import { useNotificationStore } from '@/store';
 import {
   ListPageTemplate,
   type ColumnDef,
@@ -49,18 +50,14 @@ const STATUS_OPTIONS = [
 
 const EquipmentMaintenancePage: React.FC = () => {
   const navigate = useNavigate();
-  const addNotification = useAppStore((state) => state.addNotification);
+  const queryClient = useQueryClient();
+  const addNotification = useNotificationStore((state) => state.addNotification);
 
-  const [assets, setAssets] = useState<Asset[]>([]);
-  const [maintenances, setMaintenances] = useState<MaintenanceRecord[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
   const [searchQuery, setSearchQuery] = useState('');
   const [debouncedSearch, setDebouncedSearch] = useState('');
   const [filterStatus, setFilterStatus] = useState<string>('');
   const [currentPage, setCurrentPage] = useState(0);
   const [pageSize, setPageSize] = useState(20);
-  const [totalMaintenances, setTotalMaintenances] = useState(0);
 
   const [showMaintenanceModal, setShowMaintenanceModal] = useState(false);
   const [selectedForMaintenance, setSelectedForMaintenance] = useState<Asset | null>(null);
@@ -81,14 +78,24 @@ const EquipmentMaintenancePage: React.FC = () => {
     return () => clearTimeout(timer);
   }, [searchQuery]);
 
-  useEffect(() => {
-    loadData();
-  }, [currentPage, pageSize, debouncedSearch, filterStatus]);
+  const assetsQuery = useQuery({
+    queryKey: ['erp-assets'],
+    queryFn: async () => {
+      const response = await assetApi.list();
+      if (!response.success || !response.data) {
+        throw new Error(response.message || '加载资产列表失败');
+      }
+      return response.data.items || [];
+    },
+    staleTime: 10 * 60 * 1000,
+    retry: 2,
+  });
 
-  const loadData = useCallback(async () => {
-    setLoading(true);
-    setError(null);
-    try {
+  const assets = assetsQuery.data ?? [];
+
+  const maintenancesQuery = useQuery({
+    queryKey: ['mes-maintenances', currentPage, pageSize, debouncedSearch, filterStatus],
+    queryFn: async () => {
       const params: Record<string, unknown> = {
         page: currentPage + 1,
         pagesize: pageSize,
@@ -100,73 +107,70 @@ const EquipmentMaintenancePage: React.FC = () => {
         params.status = filterStatus;
       }
 
-      const [assetRes, maintenanceRes] = await Promise.all([
-        assetApi.list(),
-        mesEquipmentApi.listMaintenances(params),
-      ]);
-
-      if (assetRes.success && assetRes.data) {
-        setAssets(assetRes.data.items || []);
+      const response = await mesEquipmentApi.listMaintenances(params);
+      if (!response.success || !response.data) {
+        throw new Error(response.message || '加载维护记录失败');
       }
+      return {
+        items: response.data.items || [],
+        total: response.data.total || 0,
+      };
+    },
+    staleTime: 5 * 60 * 1000,
+    retry: 2,
+  });
 
-      if (maintenanceRes.success && maintenanceRes.data) {
-        setMaintenances(maintenanceRes.data.items || []);
-        setTotalMaintenances(maintenanceRes.data.total || 0);
+  const maintenances = maintenancesQuery.data?.items ?? [];
+  const totalMaintenances = maintenancesQuery.data?.total ?? 0;
+  const loading = maintenancesQuery.isLoading || assetsQuery.isLoading;
+  const error = maintenancesQuery.error?.message || assetsQuery.error?.message;
+
+  const createMutation = useMutation({
+    mutationFn: async (data: CreateMaintenanceRecord) => {
+      const response = await mesEquipmentApi.createMaintenance(data);
+      if (!response.success) {
+        throw new Error(response.message || '创建维护记录失败');
       }
-    } catch (err: unknown) {
-      const message = (err as { message?: string }).message || '加载数据失败';
-      setError(message);
-      apiLogger.error('加载维护记录失败:', err);
+      return response.data;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['mes-maintenances'] });
       addNotification({
-        title: '加载失败',
-        message: '加载数据失败',
+        title: '成功',
+        message: '维护记录创建成功',
+        type: 'success',
+      });
+      setShowMaintenanceModal(false);
+      setSelectedForMaintenance(null);
+    },
+    onError: (err: unknown) => {
+      apiLogger.error('创建维护记录失败:', err);
+      const message = (err as { message?: string }).message || '创建维护记录失败';
+      addNotification({
+        title: '失败',
+        message,
         type: 'error',
       });
-    } finally {
-      setLoading(false);
-    }
-  }, [currentPage, pageSize, debouncedSearch, filterStatus, addNotification]);
+    },
+  });
 
   const handleCreateMaintenance = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!selectedForMaintenance) return;
-    try {
-      const data = {
-        equipment_id: selectedForMaintenance.id,
-        maintenance_type: newMaintenance.maintenance_type || '',
-        description: newMaintenance.description || '',
-        maintainer: newMaintenance.maintainer || '',
-        start_time: newMaintenance.start_time || new Date().toISOString(),
-        end_time: newMaintenance.end_time,
-        cost: newMaintenance.cost,
-        status: newMaintenance.status || 'pending',
-        remarks: newMaintenance.remarks,
-      };
-      const res = await mesEquipmentApi.createMaintenance(data);
-      if (res.success) {
-        addNotification({
-          title: '成功',
-          message: '维护记录创建成功',
-          type: 'success',
-        });
-        setShowMaintenanceModal(false);
-        setSelectedForMaintenance(null);
-        loadData();
-      } else {
-        addNotification({
-          title: '失败',
-          message: res.message || '创建维护记录失败',
-          type: 'error',
-        });
-      }
-    } catch (err: unknown) {
-      apiLogger.error('创建维护记录失败:', err);
-      addNotification({
-        title: '失败',
-        message: (err as { message?: string }).message || '创建维护记录失败',
-        type: 'error',
-      });
-    }
+
+    const data = {
+      equipment_id: selectedForMaintenance.id,
+      maintenance_type: newMaintenance.maintenance_type || '',
+      description: newMaintenance.description || '',
+      maintainer: newMaintenance.maintainer || '',
+      start_time: newMaintenance.start_time || new Date().toISOString(),
+      end_time: newMaintenance.end_time,
+      cost: newMaintenance.cost,
+      status: newMaintenance.status || 'pending',
+      remarks: newMaintenance.remarks,
+    };
+
+    await createMutation.mutateAsync(data as CreateMaintenanceRecord);
   };
 
   const handlePageChange = (page: number) => {
@@ -183,6 +187,11 @@ const EquipmentMaintenancePage: React.FC = () => {
       setFilterStatus(filters.status as string);
       setCurrentPage(0);
     }
+  };
+
+  const handleRefresh = () => {
+    queryClient.invalidateQueries({ queryKey: ['mes-maintenances'] });
+    queryClient.invalidateQueries({ queryKey: ['erp-assets'] });
   };
 
   const getStatusBadge = (status: string) => (
@@ -328,7 +337,7 @@ const EquipmentMaintenancePage: React.FC = () => {
           onPageSizeChange: handlePageSizeChange,
         }}
         rowActions={rowActions}
-        onRefresh={loadData}
+        onRefresh={handleRefresh}
         actions={[
           {
             label: '新增维护',
@@ -524,8 +533,9 @@ const EquipmentMaintenancePage: React.FC = () => {
               <Button
                 variant='contained'
                 type='submit'
+                disabled={createMutation.isPending}
               >
-                提交
+                {createMutation.isPending ? '提交中...' : '提交'}
               </Button>
             </Box>
           </form>

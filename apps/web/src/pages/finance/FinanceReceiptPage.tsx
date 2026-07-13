@@ -1,4 +1,4 @@
-import React, { useState, useMemo, useEffect } from 'react';
+import React, { useState, useMemo } from 'react';
 import { Plus, Trash2, Banknote, CheckCircle, Clock, Eye, Check, RefreshCw } from 'lucide-react';
 import { DataExport, BackButton, PageContainer, CurrencyField } from '@/components/common';
 import { ListPageTemplate, StatCardGroup } from '@/components';
@@ -6,6 +6,7 @@ import { useNotification } from '@/hooks/useNotification';
 import { apiLogger } from '@/utils/logger';
 import { financeApi } from '@/api/finance';
 import type { CollectionRecord } from '@/types/finance';
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 
 import { FINANCE_PATHS } from '@/modules/finance/config';
 import {
@@ -40,10 +41,8 @@ interface Receipt {
 
 const FinanceReceiptPage: React.FC = () => {
   const { success, error, notifications, hideNotification } = useNotification();
+  const queryClient = useQueryClient();
 
-  const [receiptData, setReceiptData] = useState<Receipt[]>([]);
-  const [loading, setLoading] = useState(false);
-  const [createLoading, setCreateLoading] = useState(false);
   const [filterMethod, setFilterMethod] = useState('');
   const [filterStatus, setFilterStatus] = useState('');
   const [searchQuery, setSearchQuery] = useState('');
@@ -93,28 +92,58 @@ const FinanceReceiptPage: React.FC = () => {
     };
   };
 
-  const fetchCollections = async () => {
-    setLoading(true);
-    try {
+  const receiptsQuery = useQuery({
+    queryKey: ['finance', 'receipts'],
+    queryFn: async () => {
       const response = await financeApi.receivablePayable.listCollections({
         page: 1,
         pagesize: 100,
       });
       if (response.success && response.data) {
-        const receipts = response.data.items.map(mapCollectionRecordToReceipt);
-        setReceiptData(receipts);
+        return response.data.items.map(mapCollectionRecordToReceipt);
       }
-    } catch (err) {
-      error('获取收款记录失败');
-      apiLogger.error('Failed to fetch collections', err);
-    } finally {
-      setLoading(false);
-    }
-  };
+      throw new Error(response.message || '获取收款记录失败');
+    },
+    staleTime: 60000,
+  });
 
-  useEffect(() => {
-    fetchCollections();
-  }, []);
+  const receiptData = receiptsQuery.data || [];
+  const loading = receiptsQuery.isLoading;
+
+  const createMutation = useMutation({
+    mutationFn: async (data: {
+      customer_id: string;
+      customer_name: string;
+      amount: number;
+      collection_date: string;
+      bank_account_id: string;
+      bank_account_no: string;
+      bank_name: string;
+      invoice_ids: string[];
+      status: string;
+    }) => {
+      const response = await financeApi.receivablePayable.createCollection(data as Partial<CollectionRecord>);
+      if (!response.success) {
+        throw new Error(response.message || '收款登记失败');
+      }
+      return response.data;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['finance', 'receipts'] });
+      success('收款登记成功');
+      setShowCreateModal(false);
+      setNewReceipt({
+        customer: '',
+        receipt_method: '银行转账',
+        amount: 0,
+        bank_account: '',
+      });
+    },
+    onError: (err: unknown) => {
+      error((err as { message?: string }).message || '收款登记失败');
+      apiLogger.error('Failed to create collection', err);
+    },
+  });
 
   const filteredData = useMemo(() => {
     return receiptData.filter((receipt) => {
@@ -191,46 +220,23 @@ const FinanceReceiptPage: React.FC = () => {
     return configs[status] || { color: 'default', icon: null };
   };
 
-  const handleCreate = async () => {
+  const handleCreate = () => {
     if (!newReceipt.customer || !newReceipt.amount) {
       error('请填写客户和收款金额');
       return;
     }
 
-    setCreateLoading(true);
-    try {
-      const response = await financeApi.receivablePayable.createCollection({
-        customer_id: '',
-        customer_name: newReceipt.customer,
-        amount: newReceipt.amount,
-        collection_date: new Date().toISOString().split('T')[0],
-        bank_account_id: '',
-        bank_account_no: newReceipt.bank_account || '默认账户',
-        bank_name: '',
-        invoice_ids: [],
-        status: 'recorded',
-      });
-
-      if (response.success && response.data) {
-        const newEntry = mapCollectionRecordToReceipt(response.data);
-        setReceiptData([newEntry, ...receiptData]);
-        success('收款登记成功');
-        setShowCreateModal(false);
-        setNewReceipt({
-          customer: '',
-          receipt_method: '银行转账',
-          amount: 0,
-          bank_account: '',
-        });
-      } else {
-        error(response.message || '收款登记失败');
-      }
-    } catch (err) {
-      error('收款登记失败');
-      apiLogger.error('Failed to create collection', err);
-    } finally {
-      setCreateLoading(false);
-    }
+    createMutation.mutate({
+      customer_id: '',
+      customer_name: newReceipt.customer,
+      amount: newReceipt.amount,
+      collection_date: new Date().toISOString().split('T')[0],
+      bank_account_id: '',
+      bank_account_no: newReceipt.bank_account || '默认账户',
+      bank_name: '',
+      invoice_ids: [],
+      status: 'recorded',
+    });
   };
 
   const handleConfirm = (receipt: Receipt) => {
@@ -240,15 +246,21 @@ const FinanceReceiptPage: React.FC = () => {
 
   const confirmReceipt = () => {
     if (!selectedReceipt) return;
-    setReceiptData(
-      receiptData.map((r) => (r.id === selectedReceipt.id ? { ...r, status: '已到账' } : r))
+    queryClient.setQueryData(
+      ['finance', 'receipts'],
+      (old: Receipt[] | undefined) =>
+        old?.map((r) => (r.id === selectedReceipt.id ? { ...r, status: '已到账' } : r)) || []
     );
     success('收款已确认到账');
     setShowConfirmModal(false);
   };
 
   const handleVerify = (receipt: Receipt) => {
-    setReceiptData(receiptData.map((r) => (r.id === receipt.id ? { ...r, status: '已核销' } : r)));
+    queryClient.setQueryData(
+      ['finance', 'receipts'],
+      (old: Receipt[] | undefined) =>
+        old?.map((r) => (r.id === receipt.id ? { ...r, status: '已核销' } : r)) || []
+    );
     success('收款已核销');
   };
 
@@ -259,8 +271,13 @@ const FinanceReceiptPage: React.FC = () => {
 
   const handleDelete = () => {
     if (!deletingId) return;
-    setReceiptData(receiptData.filter((r) => r.id !== deletingId));
+    queryClient.setQueryData(
+      ['finance', 'receipts'],
+      (old: Receipt[] | undefined) => old?.filter((r) => r.id !== deletingId) || []
+    );
     success('收款记录已删除');
+    setDeleteDialogOpen(false);
+    setDeletingId(null);
   };
 
   const handleSearch = () => {};
@@ -272,7 +289,7 @@ const FinanceReceiptPage: React.FC = () => {
   };
 
   const handleRefresh = () => {
-    fetchCollections();
+    receiptsQuery.refetch();
   };
 
   const columns = useMemo(
@@ -615,9 +632,9 @@ const FinanceReceiptPage: React.FC = () => {
           <Button
             variant='contained'
             onClick={handleCreate}
-            disabled={createLoading}
+            disabled={createMutation.isPending}
           >
-            {createLoading ? '登记中...' : '登记'}
+            {createMutation.isPending ? '登记中...' : '登记'}
           </Button>
         </DialogActions>
       </Dialog>

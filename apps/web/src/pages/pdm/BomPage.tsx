@@ -18,7 +18,7 @@ import {
 } from '@mui/material';
 import { Plus, Edit, Delete, Package, GitCompare, CheckCircle, Archive } from 'lucide-react';
 import { bomApi, type BomVersion, type BomItem, type CreateBomVersionRequest } from '@/api/pdm/bom';
-import { useAppStore } from '@/store';
+import { useNotificationStore } from '@/store';
 import { apiLogger } from '@/utils/logger';
 import {
   ListPageTemplate,
@@ -83,7 +83,7 @@ export const BomPage: React.FC = () => {
     effective_date: '',
     description: '',
   });
-  const addNotification = useAppStore((state) => state.addNotification);
+  const addNotification = useNotificationStore((state) => state.addNotification);
 
   useEffect(() => {
     loadVersions();

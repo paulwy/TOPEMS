@@ -11,3 +11,5 @@ export { taskApi } from './task';
 export { scheduleApi } from './schedule';
 export { deviceApi } from './device';
 export { dashboardApi } from './dashboard';
+export { scanApi } from './scan';
+export { pushApi } from './push';

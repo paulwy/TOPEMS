@@ -31,13 +31,13 @@ import {
 import { ListPageTemplate, StatCardGroup, type ColumnDef, type RowAction } from '@/components';
 import { financeApi } from '@/api/finance';
 import type { SalesInvoice, PurchaseInvoice, InvoiceStatus } from '../../types/finance';
-import { useAppStore } from '../../store';
+import { useNotificationStore } from '../../store';
 import { apiLogger } from '@/utils/logger';
 
 const ct = designTokens.colors;
 
 const FinanceReceivablePayablePage: React.FC = () => {
-  const addNotification = useAppStore((state) => state.addNotification);
+  const addNotification = useNotificationStore((state) => state.addNotification);
 
   const [activeTab, setActiveTab] = useState<string>('receivable');
   const [receivables, setReceivables] = useState<SalesInvoice[]>([]);

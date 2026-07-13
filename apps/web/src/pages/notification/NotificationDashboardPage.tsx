@@ -28,7 +28,7 @@ import {
   type QuickAction,
   type RecentItem,
 } from '@/components/templates';
-import { useAppStore } from '../../store';
+import { useNotificationStore } from '@/store';
 import { logError } from '@/utils/errors';
 import { designTokens } from '@/theme/tokens';
 
@@ -36,7 +36,7 @@ const ct = designTokens.colors;
 
 export const NotificationDashboardPage: React.FC = () => {
   const navigate = useNavigate();
-  const addNotification = useAppStore((state) => state.addNotification);
+  const addNotification = useNotificationStore((state) => state.addNotification);
   const [loading, setLoading] = useState(false);
 
   const stats: StatCard[] = useMemo(

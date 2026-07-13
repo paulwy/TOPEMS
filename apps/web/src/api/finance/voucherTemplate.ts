@@ -9,41 +9,41 @@ export const voucherTemplateApi = {
     page?: number;
     pagesize?: number;
   }): Promise<ApiResponse<PaginatedResult<VoucherTemplate>>> => {
-    return apiClient.erp.get('/finance/voucher-templates', {
+    return apiClient.finance.get('/voucher-templates', {
       params,
     });
   },
 
   get: (id: string): Promise<ApiResponse<VoucherTemplate>> => {
-    return apiClient.erp.get(`/finance/voucher-templates/${id}`);
+    return apiClient.finance.get(`/voucher-templates/${id}`);
   },
 
   create: (data: Partial<VoucherTemplate>): Promise<ApiResponse<VoucherTemplate>> => {
-    return apiClient.erp.post('/finance/voucher-templates', data);
+    return apiClient.finance.post('/voucher-templates', data);
   },
 
   update: (id: string, data: Partial<VoucherTemplate>): Promise<ApiResponse<VoucherTemplate>> => {
-    return apiClient.erp.put(`/finance/voucher-templates/${id}`, data);
+    return apiClient.finance.put(`/voucher-templates/${id}`, data);
   },
 
   delete: (id: string): Promise<ApiResponse<void>> => {
-    return apiClient.erp.delete(`/finance/voucher-templates/${id}`);
+    return apiClient.finance.delete(`/voucher-templates/${id}`);
   },
 
   copy: (id: string, newName: string): Promise<ApiResponse<VoucherTemplate>> => {
-    return apiClient.erp.post(`/finance/voucher-templates/${id}/copy`, {
+    return apiClient.finance.post(`/voucher-templates/${id}/copy`, {
       name: newName,
     });
   },
 
   preview: (id: string, sourceData: Record<string, any>): Promise<ApiResponse<Voucher>> => {
-    return apiClient.erp.post(`/finance/voucher-templates/${id}/preview`, {
+    return apiClient.finance.post(`/voucher-templates/${id}/preview`, {
       source_data: sourceData,
     });
   },
 
   setDefault: (id: string): Promise<ApiResponse<void>> => {
-    return apiClient.erp.post(`/finance/voucher-templates/${id}/set-default`, {});
+    return apiClient.finance.post(`/voucher-templates/${id}/set-default`, {});
   },
 };
 

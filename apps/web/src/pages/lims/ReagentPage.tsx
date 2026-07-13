@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState } from 'react';
 import { PageContainer } from '@/components/common';
 import { useNavigate } from 'react-router-dom';
 import {
@@ -34,17 +34,16 @@ import {
 } from '@/components/templates';
 import { limsApi } from '@/api/lims';
 import type { Reagent, CreateReagentRequest, UpdateReagentRequest } from '@/api/lims';
-import { useAppStore } from '@/store';
+import { useNotificationStore } from '@/store';
 import { apiLogger } from '@/utils/logger';
 import { designTokens } from '@/theme/tokens';
 import { DASHBOARD_PATHS } from '@/routes/dashboard';
+import { useCrudOperations } from '@/hooks/useCrudQueries';
 
 const ct = designTokens.colors;
 
 const ReagentPage: React.FC = () => {
   const navigate = useNavigate();
-  const [reagents, setReagents] = useState<Reagent[]>([]);
-  const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState('');
   const [statusFilter, setStatusFilter] = useState('all');
   const [showCreateModal, setShowCreateModal] = useState(false);
@@ -76,41 +75,20 @@ const ReagentPage: React.FC = () => {
   const [page, setPage] = useState(0);
   const [pageSize, setPageSize] = useState(10);
   const [isEditing, setIsEditing] = useState(false);
-  const [saving, setSaving] = useState(false);
-  const addNotification = useAppStore((state) => state.addNotification);
+  const addNotification = useNotificationStore((state) => state.addNotification);
 
-  const loadReagents = useCallback(async () => {
-    try {
-      setLoading(true);
-      const response = await limsApi.listReagents();
-      if (response.success && response.data) {
-        const data = response.data as any;
-        let rawReagents: Reagent[] = [];
-        if (Array.isArray(data)) {
-          rawReagents = data;
-        } else if (data.items && Array.isArray(data.items)) {
-          rawReagents = data.items;
-        }
-        setReagents(rawReagents);
-      } else {
-        setReagents([]);
-      }
-    } catch (err: unknown) {
-      apiLogger.error('加载试剂列表失败:', err);
-      setReagents([]);
-      addNotification({
-        title: '错误',
-        message: '加载试剂列表失败，请稍后重试',
-        type: 'error',
-      });
-    } finally {
-      setLoading(false);
-    }
-  }, [addNotification]);
-
-  useEffect(() => {
-    loadReagents();
-  }, [loadReagents]);
+  const {
+    data: reagents,
+    loading,
+    refresh,
+    create: createReagent,
+    update: updateReagent,
+    delete: deleteReagent,
+  } = useCrudOperations<Reagent, CreateReagentRequest, UpdateReagentRequest>({
+    api: limsApi.reagents,
+    queryKey: 'lims-reagents',
+    defaultPageSize: 100,
+  });
 
   const getStatusBadge = (status: string) => {
     const statusMap: Record<string, { bg: string; color: string }> = {
@@ -313,83 +291,24 @@ const ReagentPage: React.FC = () => {
     }
 
     try {
-      setSaving(true);
       if (isEditing && selectedReagent) {
-        const response = await limsApi.updateReagent(
-          selectedReagent.id,
-          formData as UpdateReagentRequest
-        );
-        if (response.success) {
-          addNotification({
-            title: '成功',
-            message: '试剂更新成功',
-            type: 'success',
-          });
-          setShowCreateModal(false);
-          loadReagents();
-        } else {
-          addNotification({
-            title: '错误',
-            message: response.message || '更新失败，请稍后重试',
-            type: 'error',
-          });
-        }
+        await updateReagent(selectedReagent.id, formData as UpdateReagentRequest);
       } else {
-        const response = await limsApi.createReagent(formData);
-        if (response.success) {
-          addNotification({
-            title: '成功',
-            message: '试剂创建成功',
-            type: 'success',
-          });
-          setShowCreateModal(false);
-          loadReagents();
-        } else {
-          addNotification({
-            title: '错误',
-            message: response.message || '创建失败，请稍后重试',
-            type: 'error',
-          });
-        }
+        await createReagent(formData);
       }
+      setShowCreateModal(false);
     } catch (err: unknown) {
       apiLogger.error('保存试剂失败:', err);
-      addNotification({
-        title: '错误',
-        message: isEditing ? '更新试剂失败，请稍后重试' : '创建试剂失败，请稍后重试',
-        type: 'error',
-      });
-    } finally {
-      setSaving(false);
     }
   };
 
   const handleDelete = async (reagent: Reagent) => {
     if (!confirm(`确定要删除试剂 "${reagent.name}" 吗？`)) return;
     try {
-      const response = await limsApi.deleteReagent(reagent.id);
-      if (response.success) {
-        addNotification({
-          title: '成功',
-          message: '试剂删除成功',
-          type: 'success',
-        });
-        setShowDetailModal(false);
-        loadReagents();
-      } else {
-        addNotification({
-          title: '错误',
-          message: response.message || '删除失败，请稍后重试',
-          type: 'error',
-        });
-      }
+      await deleteReagent(reagent.id);
+      setShowDetailModal(false);
     } catch (err: unknown) {
       apiLogger.error('删除试剂失败:', err);
-      addNotification({
-        title: '错误',
-        message: '删除试剂失败，请稍后重试',
-        type: 'error',
-      });
     }
   };
 
@@ -840,10 +759,9 @@ const ReagentPage: React.FC = () => {
           <Button
             variant='contained'
             onClick={handleSave}
-            disabled={saving}
             sx={{ bgcolor: 'info.main' }}
           >
-            {saving ? '保存中...' : '保存'}
+            保存
           </Button>
         </DialogActions>
       </Dialog>

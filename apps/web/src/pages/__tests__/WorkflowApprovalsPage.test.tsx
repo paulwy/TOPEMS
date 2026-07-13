@@ -4,15 +4,24 @@ import { renderWithProviders, screen, waitFor, userEvent } from '@/__tests__/tes
 import WorkflowApprovalsPage from '../workflow/WorkflowApprovalsPage';
 
 vi.mock('@/store', () => ({
-  useAppStore: vi.fn((selector?: any) =>
+  useNotificationStore: vi.fn((selector?: any) =>
     selector
       ? selector({
           addNotification: vi.fn(),
-          user: { permissions: ['workflow:approvals:read', 'workflow:approvals:approve'] },
+          notifications: [],
         })
       : {
           addNotification: vi.fn(),
-          user: { permissions: ['workflow:approvals:read', 'workflow:approvals:approve'] },
+          notifications: [],
+        }
+  ),
+  useAuthStore: vi.fn((selector?: any) =>
+    selector
+      ? selector({
+          user: null,
+        })
+      : {
+          user: null,
         }
   ),
 }));

@@ -2,7 +2,7 @@
 
 import React, { useEffect, useState } from 'react';
 import { X, CheckCircle2, AlertCircle, Info, AlertTriangle } from 'lucide-react';
-import { useAppStore } from '@/store';
+import { useNotificationStore } from '@/store';
 import { Box, Typography, Button } from '@mui/material';
 
 type NotificationType = 'success' | 'error' | 'info' | 'warning';
@@ -150,8 +150,8 @@ const Toast = ({ id: _, title, message, type, duration, onClose }: ToastProps) =
 };
 
 export function Toaster() {
-  const notifications = useAppStore((state) => state.notifications);
-  const removeNotification = useAppStore((state) => state.removeNotification);
+  const notifications = useNotificationStore((state) => state.notifications);
+  const removeNotification = useNotificationStore((state) => state.removeNotification);
 
   if (notifications.length === 0) {
     return null;

@@ -1,4 +1,5 @@
-import React, { useState, useEffect, useMemo } from 'react';
+import React, { useState, useMemo } from 'react';
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { apiLogger } from '@/utils/logger';
 import {
   Box,
@@ -24,16 +25,14 @@ import { ListPageTemplate } from '@/components/templates';
 import type { RowAction, FilterConfig, ColumnDef } from '@/components/templates';
 import { PageContainer } from '@/components/common';
 import { rsApi } from '@/api/rs';
-import { useAppStore } from '@/store';
+import { useNotificationStore } from '@/store';
 import type { Bug, CreateBugRequest, UpdateBugRequest } from '@/api/rs';
 
 const RsBugPage: React.FC = () => {
-  const { addNotification } = useAppStore();
-  const [bugs, setBugs] = useState<Bug[]>([]);
-  const [loading, setLoading] = useState(false);
+  const { addNotification } = useNotificationStore();
+  const queryClient = useQueryClient();
   const [page, setPage] = useState(0);
   const [rowsPerPage, setRowsPerPage] = useState(10);
-  const [total, setTotal] = useState(0);
   const [searchTerm, setSearchTerm] = useState('');
   const [severityFilter, setSeverityFilter] = useState<string>('');
   const [priorityFilter, setPriorityFilter] = useState<string>('');
@@ -49,13 +48,9 @@ const RsBugPage: React.FC = () => {
     description: '',
   });
 
-  useEffect(() => {
-    loadBugs();
-  }, [searchTerm, severityFilter, priorityFilter, statusFilter, assigneeFilter, page, rowsPerPage]);
-
-  const loadBugs = async () => {
-    try {
-      setLoading(true);
+  const bugListQuery = useQuery({
+    queryKey: ['rs-bugs', page, rowsPerPage, searchTerm, severityFilter, priorityFilter, statusFilter, assigneeFilter],
+    queryFn: async () => {
       const params: Record<string, unknown> = {
         page: page + 1,
         pagesize: rowsPerPage,
@@ -67,21 +62,67 @@ const RsBugPage: React.FC = () => {
       if (assigneeFilter) params.assignee = assigneeFilter;
 
       const response = await rsApi.listBugs(params);
-      if (response.success && response.data) {
-        setBugs(response.data.bugs || []);
-        setTotal(response.data.total || 0);
+      if (!response.success || !response.data) {
+        throw new Error(response.message || '加载缺陷列表失败');
       }
-    } catch (error: unknown) {
-      apiLogger.error('加载缺陷列表失败:', error);
+      return {
+        bugs: response.data.bugs || [],
+        total: response.data.total || 0,
+      };
+    },
+    staleTime: 5 * 60 * 1000,
+  });
+
+  const createBugMutation = useMutation({
+    mutationFn: async (data: CreateBugRequest) => {
+      const response = await rsApi.createBug(data);
+      if (!response.success) {
+        throw new Error(response.message || '创建缺陷失败');
+      }
+      return response.data;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['rs-bugs'] });
+      addNotification({
+        type: 'success',
+        title: '创建成功',
+        message: '新缺陷已创建',
+      });
+    },
+    onError: (error: any) => {
+      apiLogger.error('创建缺陷失败:', error);
       addNotification({
         type: 'error',
-        title: '加载失败',
-        message: '无法加载缺陷列表',
+        title: '创建失败',
+        message: error.message || '无法创建缺陷',
       });
-    } finally {
-      setLoading(false);
-    }
-  };
+    },
+  });
+
+  const updateBugMutation = useMutation({
+    mutationFn: async ({ id, data }: { id: string; data: UpdateBugRequest }) => {
+      const response = await rsApi.updateBug(id, data);
+      if (!response.success) {
+        throw new Error(response.message || '更新缺陷失败');
+      }
+      return response.data;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['rs-bugs'] });
+    },
+    onError: (error: any) => {
+      apiLogger.error('更新缺陷失败:', error);
+      addNotification({
+        type: 'error',
+        title: '操作失败',
+        message: error.message || '更新缺陷失败',
+      });
+    },
+  });
+
+  const bugs = bugListQuery.data?.bugs || [];
+  const total = bugListQuery.data?.total || 0;
+  const loading = bugListQuery.isLoading || createBugMutation.isPending || updateBugMutation.isPending;
 
   const uniqueAssignees = useMemo(() => [...new Set(bugs.map((b) => b.assignee))], [bugs]);
 
@@ -166,20 +207,13 @@ const RsBugPage: React.FC = () => {
   const handleCloseBug = async (bug: Bug) => {
     try {
       const updateData: UpdateBugRequest = { status: 'closed' };
-      await rsApi.updateBug(bug.id, updateData);
+      await updateBugMutation.mutateAsync({ id: bug.id, data: updateData });
       addNotification({
         type: 'success',
         title: '操作成功',
         message: '缺陷已关闭',
       });
-      loadBugs();
-    } catch (error: unknown) {
-      apiLogger.error('关闭缺陷失败:', error);
-      addNotification({
-        type: 'error',
-        title: '操作失败',
-        message: '关闭缺陷失败',
-      });
+    } catch {
     }
   };
 
@@ -191,12 +225,7 @@ const RsBugPage: React.FC = () => {
         priority: newBugForm.priority,
         description: newBugForm.description,
       };
-      await rsApi.createBug(createData);
-      addNotification({
-        type: 'success',
-        title: '创建成功',
-        message: '新缺陷已创建',
-      });
+      await createBugMutation.mutateAsync(createData);
       setNewBugDialogOpen(false);
       setNewBugForm({
         bug_title: '',
@@ -204,14 +233,7 @@ const RsBugPage: React.FC = () => {
         priority: 'medium',
         description: '',
       });
-      loadBugs();
-    } catch (error: unknown) {
-      apiLogger.error('创建缺陷失败:', error);
-      addNotification({
-        type: 'error',
-        title: '创建失败',
-        message: '无法创建缺陷',
-      });
+    } catch {
     }
   };
 

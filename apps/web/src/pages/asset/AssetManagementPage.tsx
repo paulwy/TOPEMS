@@ -14,7 +14,7 @@ import {
 import { useNavigate } from 'react-router-dom';
 import { assetApi, type Asset } from '@/api/erp';
 import { employeeApi, type Employee } from '@/api/hrm';
-import { useAppStore } from '../../store';
+import { useNotificationStore } from '@/store';
 import { ListPageTemplate, type ColumnDef } from '@/components/templates';
 import { ModeToggle } from '@/components/theme/ModeToggle';
 import { PageContainer } from '@/components/common';
@@ -46,7 +46,7 @@ interface AssetManagementPageProps {
 
 const AssetManagementPage: React.FC<AssetManagementPageProps> = ({ onNavigate }) => {
   const navigate = useNavigate();
-  const addNotification = useAppStore((state) => state.addNotification);
+  const addNotification = useNotificationStore((state) => state.addNotification);
 
   const [assets, setAssets] = useState<Asset[]>([]);
   const [employees, setEmployees] = useState<Employee[]>([]);

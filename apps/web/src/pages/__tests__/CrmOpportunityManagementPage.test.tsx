@@ -4,7 +4,7 @@ import { render, screen } from '@testing-library/react';
 import { BrowserRouter } from 'react-router-dom';
 import OpportunityManagementPage from '../crm/OpportunityManagementPage';
 import { crmApi } from '@/api/crm';
-import { useAppStore } from '@/store';
+import { useNotificationStore, useAuthStore } from '@/store';
 
 vi.mock('@/api/crm', () => ({
   crmApi: {
@@ -24,19 +24,24 @@ vi.mock('@/api/crm', () => ({
 }));
 
 vi.mock('@/store', () => ({
-  useAppStore: vi.fn((selector?: any) =>
+  useNotificationStore: vi.fn((selector?: any) =>
     selector
       ? selector({
           addNotification: vi.fn(),
           notifications: [],
-          user: { permissions: ['crm:opportunity:read'] },
-          theme: 'light',
         })
       : {
           addNotification: vi.fn(),
           notifications: [],
-          user: { permissions: ['crm:opportunity:read'] },
-          theme: 'light',
+        }
+  ),
+  useAuthStore: vi.fn((selector?: any) =>
+    selector
+      ? selector({
+          user: null,
+        })
+      : {
+          user: null,
         }
   ),
 }));

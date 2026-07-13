@@ -34,7 +34,7 @@ import {
 } from 'lucide-react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { useAuth } from '@/hooks/useAuth';
-import { useAppStore } from '@/store';
+import { useThemeStore } from '@/store';
 import { navigationRegistryV2 } from '@/lib/navigation';
 import type { NavItem } from '@/lib/navigation/types';
 import { PLUGIN_PATHS } from '@/modules/plugin/config';
@@ -42,6 +42,7 @@ import { NOTIFICATION_PATHS } from '@/modules/notification/config';
 import { DASHBOARD_PATHS } from '@/routes/dashboard';
 import { AUTH_PATHS } from '@/routes/auth';
 import { AI_PATHS } from '@/modules/ai/config';
+import GlobalSearchBar from '../GlobalSearchBar';
 
 export interface AppHeaderProps {
   tabletDrawerOpen?: boolean;
@@ -78,8 +79,8 @@ export const AppHeader: React.FC<AppHeaderProps> = ({
   const location = useLocation();
   const theme = useTheme();
   const { logout } = useAuth();
-  const appTheme = useAppStore((state) => state.theme);
-  const toggleTheme = useAppStore((state) => state.toggleTheme);
+  const appTheme = useThemeStore((state) => state.theme);
+  const toggleTheme = useThemeStore((state) => state.toggleTheme);
   const isDark = appTheme === 'dark';
 
   // 响应式断点：优化计划要求 < 768px 隐藏 Sidebar，使用汉堡菜单
@@ -323,6 +324,18 @@ export const AppHeader: React.FC<AppHeaderProps> = ({
           </Box>
         )}
 
+        {/* 全局搜索栏（桌面端） */}
+        <Box
+          sx={{
+            display: { xs: 'none', lg: 'flex' },
+            width: 480,
+            flexShrink: 0,
+            mx: 2,
+          }}
+        >
+          <GlobalSearchBar />
+        </Box>
+
         {/* 右侧工具栏 */}
         <Box
           sx={{
@@ -332,6 +345,9 @@ export const AppHeader: React.FC<AppHeaderProps> = ({
             ml: 'auto',
           }}
         >
+          <Box sx={{ display: { xs: 'flex', lg: 'none' } }}>
+            <GlobalSearchBar variant="icon" />
+          </Box>
           {rightActions || (
             <>
               <Tooltip title='AI 助手'>

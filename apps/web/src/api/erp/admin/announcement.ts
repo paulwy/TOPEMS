@@ -1,6 +1,7 @@
 import apiClient from '../../client';
 import type { ApiResponse } from '../../client';
 import type { Announcement, PaginationParams, PaginatedResult } from '../types';
+import type { CrudOperations } from '@/hooks/useCrudQueries';
 
 export const announcementApi = {
   async list(
@@ -41,3 +42,17 @@ export const announcementApi = {
     return apiClient.erp.post(`/announcements/${id}/unpublish`);
   },
 };
+
+export const announcementCrudApi: CrudOperations<Announcement> = {
+  list: (params?) => announcementApi.list({
+    page: params?.page,
+    pagesize: params?.pagesize,
+    ...(params as any),
+  }),
+  get: announcementApi.get,
+  create: announcementApi.create,
+  update: announcementApi.update,
+  delete: announcementApi.delete,
+};
+
+export default announcementApi;

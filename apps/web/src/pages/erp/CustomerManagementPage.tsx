@@ -19,7 +19,7 @@ import React, { useState, useEffect, useMemo, useCallback } from 'react';
 import { designTokens } from '@/theme/tokens';
 import type { Customer, CreateCustomerRequest, UpdateCustomerRequest } from '@/api/erp';
 import { erpApi } from '@/api/erp';
-import { useAppStore } from '@/store';
+import { useNotificationStore } from '@/store';
 import { LoadingSpinner } from '@topems/shared-components';
 import {
   ListPageTemplate,
@@ -69,7 +69,7 @@ const CustomerManagementPage: React.FC = () => {
     remark: '',
   });
 
-  const { addNotification } = useAppStore();
+  const { addNotification } = useNotificationStore();
 
   const loadCustomers = useCallback(async () => {
     try {

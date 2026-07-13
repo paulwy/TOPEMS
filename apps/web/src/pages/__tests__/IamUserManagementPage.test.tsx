@@ -4,7 +4,7 @@ import { render, screen } from '@testing-library/react';
 import { BrowserRouter } from 'react-router-dom';
 import UserManagementPage from '../iam/UserManagementPage';
 import { authApi } from '@/api/iam';
-import { useAppStore } from '@/store';
+import { useNotificationStore, useAuthStore } from '@/store';
 
 vi.mock('@/api/iam', () => {
   const mock = {
@@ -30,7 +30,7 @@ vi.mock('@/store', () => {
     theme: 'light',
   };
   return {
-    useAppStore: vi.fn((selector?: any) => (selector ? selector(state) : state)),
+    useNotificationStore: vi.fn((selector?: any) => (selector ? selector(state) : state)),
   };
 });
 

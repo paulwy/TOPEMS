@@ -19,7 +19,7 @@ import {
 import { GitBranch, Plus, Check, Clock, User, Tag, Edit } from 'lucide-react';
 import { pdmApi } from '@/api/pdm';
 import type { DocumentVersion, Document } from '@/api/pdm';
-import { useAppStore } from '@/store';
+import { useNotificationStore } from '@/store';
 import {
   ListPageTemplate,
   type ColumnDef,
@@ -93,7 +93,7 @@ export const PdmVersionPage: React.FC = () => {
     changes: '',
   });
 
-  const addNotification = useAppStore((state) => state.addNotification);
+  const addNotification = useNotificationStore((state) => state.addNotification);
 
   useEffect(() => {
     const timer = setTimeout(() => {

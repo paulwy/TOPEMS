@@ -4,7 +4,7 @@ import { render } from '@testing-library/react';
 import { BrowserRouter } from 'react-router-dom';
 import ReportSubscriptionPage from '../report/ReportSubscriptionPage';
 import { reportApi } from '@/api/report';
-import { useAppStore } from '@/store';
+import { useNotificationStore, useAuthStore } from '@/store';
 
 vi.mock('@/api/report', () => ({
   reportApi: {
@@ -22,19 +22,24 @@ vi.mock('@/api/report', () => ({
 }));
 
 vi.mock('@/store', () => ({
-  useAppStore: vi.fn((selector?: any) =>
+  useNotificationStore: vi.fn((selector?: any) =>
     selector
       ? selector({
           addNotification: vi.fn(),
           notifications: [],
-          user: { permissions: ['report:subscription:read'] },
-          theme: 'light',
         })
       : {
           addNotification: vi.fn(),
           notifications: [],
-          user: { permissions: ['report:subscription:read'] },
-          theme: 'light',
+        }
+  ),
+  useAuthStore: vi.fn((selector?: any) =>
+    selector
+      ? selector({
+          user: null,
+        })
+      : {
+          user: null,
         }
   ),
 }));

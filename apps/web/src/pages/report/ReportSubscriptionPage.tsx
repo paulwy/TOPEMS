@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useMemo, useCallback } from 'react';
+import React, { useState, useMemo, useCallback } from 'react';
 import {
   Box,
   Dialog,
@@ -41,7 +41,9 @@ import {
   type UpdateSubscriptionRequest,
   type SubscriptionFrequency,
 } from '@/api/report';
-import { logger } from '@/utils/logger';
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import { useNotificationStore } from '@/store';
+import { apiLogger } from '@/utils/logger';
 
 const FREQUENCY_OPTIONS: { value: SubscriptionFrequency; label: string }[] = [
   { value: 'daily', label: '每天' },
@@ -56,16 +58,14 @@ const STATUS_OPTIONS = [
 ];
 
 const ReportSubscriptionPage: React.FC = () => {
-  const [subscriptions, setSubscriptions] = useState<ReportSubscription[]>([]);
-  const [templates, setTemplates] = useState<ReportTemplate[]>([]);
   const theme = useTheme();
-  const [loading, setLoading] = useState(false);
-  const [error, setError] = useState<string>('');
+  const queryClient = useQueryClient();
+  const addNotification = useNotificationStore((state) => state.addNotification);
+
   const [dialogOpen, setDialogOpen] = useState(false);
   const [editMode, setEditMode] = useState(false);
   const [currentSubscription, setCurrentSubscription] = useState<ReportSubscription | null>(null);
 
-  // 搜索和筛选状态
   const [searchValue, setSearchValue] = useState('');
   const [filtersValue, setFiltersValue] = useState<Record<string, any>>({});
 
@@ -77,38 +77,133 @@ const ReportSubscriptionPage: React.FC = () => {
     enabled: true,
   });
 
-  useEffect(() => {
-    fetchSubscriptions();
-    fetchTemplates();
-  }, []);
-
-  const fetchSubscriptions = async () => {
-    setLoading(true);
-    setError('');
-    try {
+  const subscriptionsQuery = useQuery({
+    queryKey: ['report-subscriptions'],
+    queryFn: async () => {
       const response = await reportApi.listSubscriptions();
-      if (response.success && response.data) {
-        setSubscriptions(response.data);
-      } else {
-        setError(response.message || '获取订阅列表失败');
+      if (!response.success) {
+        throw new Error(response.message || '获取订阅列表失败');
       }
-    } catch (err: unknown) {
-      setError('获取订阅列表失败');
-    } finally {
-      setLoading(false);
-    }
-  };
+      return response.data || [];
+    },
+    staleTime: 5 * 60 * 1000,
+  });
 
-  const fetchTemplates = async () => {
-    try {
+  const templatesQuery = useQuery({
+    queryKey: ['report-templates'],
+    queryFn: async () => {
       const response = await reportApi.listTemplates();
-      if (response.success && response.data) {
-        setTemplates(response.data);
+      if (!response.success) {
+        throw new Error(response.message || '获取报表模板失败');
       }
-    } catch (err: unknown) {
-      logger.error('获取报表模板失败', err);
-    }
-  };
+      return response.data || [];
+    },
+    staleTime: 5 * 60 * 1000,
+  });
+
+  const subscriptions = subscriptionsQuery.data || [];
+  const templates = templatesQuery.data || [];
+  const loading = subscriptionsQuery.isLoading || templatesQuery.isLoading;
+  const error = subscriptionsQuery.error ? (subscriptionsQuery.error as Error).message : '';
+
+  const createMutation = useMutation({
+    mutationFn: async (data: CreateSubscriptionRequest) => {
+      const response = await reportApi.createSubscription(data);
+      if (!response.success) {
+        throw new Error(response.message || '创建订阅失败');
+      }
+      return response.data;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['report-subscriptions'] });
+      addNotification({
+        type: 'success',
+        title: '创建成功',
+        message: '订阅创建成功',
+      });
+    },
+    onError: (err: unknown) => {
+      apiLogger.error('创建订阅失败:', err);
+      addNotification({
+        type: 'error',
+        title: '创建失败',
+        message: (err as Error).message || '创建订阅失败',
+      });
+    },
+  });
+
+  const updateMutation = useMutation({
+    mutationFn: async ({ id, data }: { id: string; data: UpdateSubscriptionRequest }) => {
+      const response = await reportApi.updateSubscription(id, data);
+      if (!response.success) {
+        throw new Error(response.message || '更新订阅失败');
+      }
+      return response.data;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['report-subscriptions'] });
+      addNotification({
+        type: 'success',
+        title: '更新成功',
+        message: '订阅更新成功',
+      });
+    },
+    onError: (err: unknown) => {
+      apiLogger.error('更新订阅失败:', err);
+      addNotification({
+        type: 'error',
+        title: '更新失败',
+        message: (err as Error).message || '更新订阅失败',
+      });
+    },
+  });
+
+  const deleteMutation = useMutation({
+    mutationFn: async (id: string) => {
+      const response = await reportApi.deleteSubscription(id);
+      if (!response.success) {
+        throw new Error(response.message || '删除订阅失败');
+      }
+      return id;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['report-subscriptions'] });
+      addNotification({
+        type: 'success',
+        title: '删除成功',
+        message: '订阅删除成功',
+      });
+    },
+    onError: (err: unknown) => {
+      apiLogger.error('删除订阅失败:', err);
+      addNotification({
+        type: 'error',
+        title: '删除失败',
+        message: (err as Error).message || '删除订阅失败',
+      });
+    },
+  });
+
+  const toggleMutation = useMutation({
+    mutationFn: async ({ id, enabled }: { id: string; enabled: boolean }) => {
+      const response = await reportApi.updateSubscription(id, { enabled });
+      if (!response.success) {
+        throw new Error(response.message || '切换订阅状态失败');
+      }
+      return response.data;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['report-subscriptions'] });
+    },
+    onError: (err: unknown) => {
+      apiLogger.error('切换订阅状态失败:', err);
+      addNotification({
+        type: 'error',
+        title: '操作失败',
+        message: (err as Error).message || '切换订阅状态失败',
+      });
+    },
+  });
 
   // 筛选和搜索后的数据
   const filteredData = useMemo(() => {
@@ -178,62 +273,25 @@ const ReportSubscriptionPage: React.FC = () => {
   };
 
   const handleSubmit = async () => {
-    setError('');
-    try {
-      if (editMode && currentSubscription) {
-        const response = await reportApi.updateSubscription(
-          currentSubscription.id,
-          formData as UpdateSubscriptionRequest
-        );
-        if (response.success) {
-          setDialogOpen(false);
-          fetchSubscriptions();
-        } else {
-          setError(response.message || '更新订阅失败');
-        }
-      } else {
-        const response = await reportApi.createSubscription(formData as CreateSubscriptionRequest);
-        if (response.success) {
-          setDialogOpen(false);
-          fetchSubscriptions();
-        } else {
-          setError(response.message || '创建订阅失败');
-        }
-      }
-    } catch (err: unknown) {
-      setError(editMode ? '更新订阅失败' : '创建订阅失败');
+    if (editMode && currentSubscription) {
+      await updateMutation.mutateAsync({
+        id: currentSubscription.id,
+        data: formData as UpdateSubscriptionRequest,
+      });
+      setDialogOpen(false);
+    } else {
+      await createMutation.mutateAsync(formData as CreateSubscriptionRequest);
+      setDialogOpen(false);
     }
   };
 
   const handleDelete = async (id: string) => {
     if (!window.confirm('确定要删除这个订阅吗？')) return;
-    setError('');
-    try {
-      const response = await reportApi.deleteSubscription(id);
-      if (response.success) {
-        fetchSubscriptions();
-      } else {
-        setError(response.message || '删除订阅失败');
-      }
-    } catch (err: unknown) {
-      setError('删除订阅失败');
-    }
+    await deleteMutation.mutateAsync(id);
   };
 
   const handleToggle = async (id: string, currentEnabled: boolean) => {
-    setError('');
-    try {
-      const response = await reportApi.updateSubscription(id, {
-        enabled: !currentEnabled,
-      });
-      if (response.success) {
-        fetchSubscriptions();
-      } else {
-        setError(response.message || '切换订阅状态失败');
-      }
-    } catch (err: unknown) {
-      setError('切换订阅状态失败');
-    }
+    await toggleMutation.mutateAsync({ id, enabled: !currentEnabled });
   };
 
   const getFrequencyLabel = (frequency: SubscriptionFrequency) => {
@@ -388,7 +446,9 @@ const ReportSubscriptionPage: React.FC = () => {
             variant: 'contained',
           },
         ]}
-        onRefresh={fetchSubscriptions}
+        onRefresh={() => {
+          queryClient.invalidateQueries({ queryKey: ['report-subscriptions'] });
+        }}
         emptyMessage='暂无订阅数据'
       />
 

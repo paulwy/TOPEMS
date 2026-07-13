@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useMemo } from 'react';
 import {
   Box,
   TextField,
@@ -28,6 +28,7 @@ import {
   Divider,
   useTheme,
 } from '@mui/material';
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import {
   Search,
   Plus,
@@ -45,7 +46,6 @@ import { PageContainer } from '@/components/common';
 import { ListPageTemplate, type ColumnDef, type RowAction } from '@/components/templates';
 import {
   listDataSources,
-  getDataSource,
   createDataSource,
   updateDataSource,
   deleteDataSource,
@@ -56,12 +56,9 @@ import type { DataSource, TableInfo } from '../../api/lowcode/types';
 import { logger } from '@/utils/logger';
 
 const DataSourcePage = () => {
-  const [datasources, setDatasources] = useState<DataSource[]>([]);
   const theme = useTheme();
-  const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState('');
   const [typeFilter, setTypeFilter] = useState<string>('');
-  const [total, setTotal] = useState(0);
   const [page, setPage] = useState(0);
   const [pageSize, setPageSize] = useState(10);
 
@@ -76,16 +73,12 @@ const DataSourcePage = () => {
 
   const [tablesDialogOpen, setTablesDialogOpen] = useState(false);
   const [selectedDs, setSelectedDs] = useState<DataSource | null>(null);
-  const [tables, setTables] = useState<TableInfo[]>([]);
-  const [tablesLoading, setTablesLoading] = useState(false);
 
-  useEffect(() => {
-    loadDataSources();
-  }, [page, pageSize, typeFilter]);
+  const queryClient = useQueryClient();
 
-  const loadDataSources = async () => {
-    setLoading(true);
-    try {
+  const dataSourcesQuery = useQuery({
+    queryKey: ['lowcode-datasources', page, pageSize, typeFilter, searchTerm],
+    queryFn: async () => {
       const res = await listDataSources({
         page: page + 1,
         pageSize,
@@ -93,15 +86,104 @@ const DataSourcePage = () => {
         search: searchTerm || undefined,
       });
       if (res.success) {
-        setDatasources(res.data.items || []);
-        setTotal(res.data.total || 0);
+        return {
+          items: res.data.items || [],
+          total: res.data.total || 0,
+        };
       }
-    } catch (error) {
-      logger.error('Failed to load datasources:', error);
-    } finally {
-      setLoading(false);
-    }
-  };
+      return { items: [], total: 0 };
+    },
+    staleTime: 5 * 60 * 1000,
+    retry: 2,
+  });
+
+  const datasources = dataSourcesQuery.data?.items || [];
+  const total = dataSourcesQuery.data?.total || 0;
+  const loading = dataSourcesQuery.isLoading;
+
+  const tablesQuery = useQuery({
+    queryKey: ['lowcode-datasource-tables', selectedDs?.id],
+    queryFn: async () => {
+      if (!selectedDs?.id) return [];
+      const res = await listTables(selectedDs.id);
+      if (res.success) {
+        return res.data || [];
+      }
+      return [];
+    },
+    enabled: !!selectedDs?.id && tablesDialogOpen,
+    staleTime: 5 * 60 * 1000,
+    retry: 2,
+  });
+
+  const tables = tablesQuery.data || [];
+  const tablesLoading = tablesQuery.isLoading;
+
+  const createMutation = useMutation({
+    mutationFn: async (data: Omit<DataSource, 'id' | 'status' | 'createdAt' | 'updatedAt'>) => {
+      const res = await createDataSource(data);
+      if (!res.success) {
+        throw new Error('创建失败');
+      }
+      return res.data;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['lowcode-datasources'] });
+    },
+    onError: (error) => {
+      logger.error('Failed to create datasource:', error);
+    },
+  });
+
+  const updateMutation = useMutation({
+    mutationFn: async ({ id, data }: { id: string; data: Partial<DataSource> }) => {
+      const res = await updateDataSource(id, data);
+      if (!res.success) {
+        throw new Error('更新失败');
+      }
+      return res.data;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['lowcode-datasources'] });
+    },
+    onError: (error) => {
+      logger.error('Failed to update datasource:', error);
+    },
+  });
+
+  const deleteMutation = useMutation({
+    mutationFn: async (id: string) => {
+      const res = await deleteDataSource(id);
+      if (!res.success) {
+        throw new Error('删除失败');
+      }
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['lowcode-datasources'] });
+    },
+    onError: (error) => {
+      logger.error('Failed to delete datasource:', error);
+    },
+  });
+
+  const testMutation = useMutation({
+    mutationFn: async (id: string) => {
+      const res = await testDataSource(id);
+      if (!res.success || !res.data) {
+        throw new Error('连接失败');
+      }
+      return res.data;
+    },
+    onMutate: () => {
+      setTestResult({ status: 'testing' });
+    },
+    onSuccess: () => {
+      setTestResult({ status: 'success', message: '连接成功' });
+    },
+    onError: () => {
+      setTestResult({ status: 'error', message: '连接失败，请检查配置' });
+    },
+  });
 
   const handleSearch = (value: string) => {
     setSearchTerm(value);
@@ -132,64 +214,33 @@ const DataSourcePage = () => {
   };
 
   const handleSave = async () => {
-    try {
-      if (editingDs) {
-        await updateDataSource(editingDs.id!, formData);
-      } else {
-        await createDataSource(
-          formData as Omit<DataSource, 'id' | 'status' | 'createdAt' | 'updatedAt'>
-        );
-      }
-      setDialogOpen(false);
-      loadDataSources();
-    } catch (error) {
-      logger.error('Failed to save datasource:', error);
+    if (editingDs) {
+      await updateMutation.mutateAsync({ id: editingDs.id!, data: formData });
+    } else {
+      await createMutation.mutateAsync(
+        formData as Omit<DataSource, 'id' | 'status' | 'createdAt' | 'updatedAt'>
+      );
     }
+    setDialogOpen(false);
   };
 
   const handleDelete = async (id: string) => {
     if (window.confirm('确定要删除这个数据源吗？')) {
-      try {
-        await deleteDataSource(id);
-        loadDataSources();
-      } catch (error) {
-        logger.error('Failed to delete datasource:', error);
-      }
+      await deleteMutation.mutateAsync(id);
     }
   };
 
   const handleTest = async () => {
-    setTestResult({ status: 'testing' });
-    try {
-      if (editingDs && editingDs.id) {
-        const res = await testDataSource(editingDs.id);
-        if (res.success && res.data) {
-          setTestResult({ status: 'success', message: '连接成功' });
-        } else {
-          setTestResult({ status: 'error', message: '连接失败' });
-        }
-      } else {
-        setTestResult({ status: 'success', message: '测试连接成功（模拟）' });
-      }
-    } catch (error) {
-      setTestResult({ status: 'error', message: '连接失败，请检查配置' });
+    if (editingDs && editingDs.id) {
+      await testMutation.mutateAsync(editingDs.id);
+    } else {
+      setTestResult({ status: 'success', message: '测试连接成功（模拟）' });
     }
   };
 
   const handleViewTables = async (ds: DataSource) => {
     setSelectedDs(ds);
     setTablesDialogOpen(true);
-    setTablesLoading(true);
-    try {
-      const res = await listTables(ds.id);
-      if (res.success) {
-        setTables(res.data || []);
-      }
-    } catch (error) {
-      logger.error('Failed to load tables:', error);
-    } finally {
-      setTablesLoading(false);
-    }
   };
 
   const getTypeIcon = (type: string) => {
@@ -239,66 +290,72 @@ const DataSourcePage = () => {
     }
   };
 
-  const columns: ColumnDef<DataSource>[] = [
-    {
-      id: 'name',
-      label: '数据源名称',
-      render: (row) => (
-        <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
-          <Box sx={{ fontSize: 24 }}>{getTypeIcon(row.type)}</Box>
-          <Box>
-            <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-              <span style={{ fontWeight: 500 }}>{row.name}</span>
-              <Chip
-                label={getStatusConfig(row.status).label}
-                size='small'
-                color={getStatusConfig(row.status).color}
-                variant='outlined'
-              />
+  const columns: ColumnDef<DataSource>[] = useMemo(
+    () => [
+      {
+        id: 'name',
+        label: '数据源名称',
+        render: (row) => (
+          <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
+            <Box sx={{ fontSize: 24 }}>{getTypeIcon(row.type)}</Box>
+            <Box>
+              <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                <span style={{ fontWeight: 500 }}>{row.name}</span>
+                <Chip
+                  label={getStatusConfig(row.status).label}
+                  size='small'
+                  color={getStatusConfig(row.status).color}
+                  variant='outlined'
+                />
+              </Box>
+              <span style={{ fontSize: 12, color: theme.palette.text.secondary }}>
+                {getTypeLabel(row.type)} · {row.host}:{row.port}
+              </span>
             </Box>
-            <span style={{ fontSize: 12, color: theme.palette.text.secondary }}>
-              {getTypeLabel(row.type)} · {row.host}:{row.port}
-            </span>
           </Box>
-        </Box>
-      ),
-    },
-    {
-      id: 'database',
-      label: '数据库',
-      render: (row) => row.database || '-',
-    },
-    {
-      id: 'description',
-      label: '描述',
-      render: (row) => row.description || '-',
-    },
-    {
-      id: 'updatedAt',
-      label: '更新时间',
-      width: 180,
-      render: (row) => new Date(row.updatedAt).toLocaleString('zh-CN'),
-    },
-  ];
+        ),
+      },
+      {
+        id: 'database',
+        label: '数据库',
+        render: (row) => row.database || '-',
+      },
+      {
+        id: 'description',
+        label: '描述',
+        render: (row) => row.description || '-',
+      },
+      {
+        id: 'updatedAt',
+        label: '更新时间',
+        width: 180,
+        render: (row) => new Date(row.updatedAt).toLocaleString('zh-CN'),
+      },
+    ],
+    [theme.palette.text.secondary]
+  );
 
-  const rowActions: RowAction<DataSource>[] = [
-    {
-      label: '查看表',
-      icon: <Table style={{ width: 16, height: 16 }} />,
-      onClick: (row) => handleViewTables(row),
-    },
-    {
-      label: '编辑',
-      icon: <Edit style={{ width: 16, height: 16 }} />,
-      onClick: (row) => handleEdit(row),
-    },
-    {
-      label: '删除',
-      icon: <Trash2 style={{ width: 16, height: 16 }} />,
-      onClick: (row) => handleDelete(row.id),
-      color: 'error',
-    },
-  ];
+  const rowActions: RowAction<DataSource>[] = useMemo(
+    () => [
+      {
+        label: '查看表',
+        icon: <Table style={{ width: 16, height: 16 }} />,
+        onClick: (row) => handleViewTables(row),
+      },
+      {
+        label: '编辑',
+        icon: <Edit style={{ width: 16, height: 16 }} />,
+        onClick: (row) => handleEdit(row),
+      },
+      {
+        label: '删除',
+        icon: <Trash2 style={{ width: 16, height: 16 }} />,
+        onClick: (row) => handleDelete(row.id),
+        color: 'error',
+      },
+    ],
+    []
+  );
 
   return (
     <PageContainer
@@ -462,7 +519,7 @@ const DataSourcePage = () => {
               variant='outlined'
               startIcon={<RefreshCw style={{ width: 16, height: 16 }} />}
               onClick={handleTest}
-              disabled={testResult.status === 'testing'}
+              disabled={testResult.status === 'testing' || testMutation.isPending}
             >
               测试连接
             </Button>
@@ -473,6 +530,7 @@ const DataSourcePage = () => {
           <Button
             variant='contained'
             onClick={handleSave}
+            disabled={createMutation.isPending || updateMutation.isPending}
           >
             保存
           </Button>

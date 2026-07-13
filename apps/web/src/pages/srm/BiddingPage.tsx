@@ -23,7 +23,7 @@ import {
 } from '@mui/material';
 import type { Bidding, CreateBiddingRequest } from '@/api/srm';
 import { srmApi } from '@/api/srm';
-import { useAppStore } from '@/store';
+import { useNotificationStore } from '@/store';
 import { Plus, Edit, Trash2, Send, Check, XCircle, Gavel, Users, FileText } from 'lucide-react';
 import { apiLogger } from '@/utils/logger';
 import { ListPageTemplate, type ColumnDef } from '@/components/templates';
@@ -98,7 +98,7 @@ const BiddingPage: React.FC = () => {
     remarks: '',
   });
 
-  const { addNotification } = useAppStore();
+  const { addNotification } = useNotificationStore();
 
   useEffect(() => {
     loadBiddings();

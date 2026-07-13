@@ -35,7 +35,7 @@ export const deviceApi = {
       appVersion?: string;
       osVersion?: string;
       isActive?: boolean;
-    }
+    },
   ): Promise<ApiResponse<DeviceInfo>> => {
     const response = await apiClient.put(`/device/${id}`, data);
     return response.data;
@@ -66,12 +66,14 @@ export const deviceApi = {
     return response.data;
   },
 
-  getDeviceStats: async (): Promise<ApiResponse<{
-    total: number;
-    active: number;
-    ios: number;
-    android: number;
-  }>> => {
+  getDeviceStats: async (): Promise<
+    ApiResponse<{
+      total: number;
+      active: number;
+      ios: number;
+      android: number;
+    }>
+  > => {
     const response = await apiClient.get('/device/stats');
     return response.data;
   },

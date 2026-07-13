@@ -179,3 +179,6 @@ export type { StatCardProps as MuiStatCardProps, StatCardGroupProps } from './Mu
 export { NumberField, type NumberFieldProps } from './NumberFields';
 export { CurrencyField, type CurrencyFieldProps } from './NumberFields';
 export { PercentField, type PercentFieldProps } from './NumberFields';
+
+// ErrorBoundary - 错误边界组件
+export { ErrorBoundary } from './ErrorBoundary';

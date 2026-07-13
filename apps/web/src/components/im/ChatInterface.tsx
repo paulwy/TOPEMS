@@ -14,7 +14,7 @@ import { NotificationList } from './NotificationList';
 import { ContactList } from './ContactList';
 import { ChatSettingsModal } from './ChatSettingsModal';
 
-import { useAppStore } from '../../store';
+import { useNotificationStore } from '@/store';
 import { logger } from '@/utils/logger';
 import { DASHBOARD_PATHS } from '@/routes/dashboard';
 
@@ -23,7 +23,7 @@ type TabType = 'all' | 'direct' | 'group' | 'notifications' | 'contacts';
 export const ChatInterface: React.FC = () => {
   const theme = useTheme();
   const navigate = useNavigate();
-  const addNotification = useAppStore((state) => state.addNotification);
+  const addNotification = useNotificationStore((state) => state.addNotification);
 
   const [activeTab, setActiveTab] = useState<TabType>('all');
   const [chatRooms, setChatRooms] = useState<ChatRoom[]>([]);

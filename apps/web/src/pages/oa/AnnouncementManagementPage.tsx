@@ -1,8 +1,10 @@
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState, useMemo } from 'react';
 import { ListPageTemplate } from '@/components/templates/ListPageTemplate';
 import { PageContainer } from '@/components/common';
-import { announcementApi, type Announcement } from '@/api/erp';
-import { useAppStore } from '@/store';
+import { announcementCrudApi, announcementApi, type Announcement } from '@/api/erp';
+import { useCrudOperations } from '@/hooks/useCrudQueries';
+import { useMutation, useQueryClient } from '@tanstack/react-query';
+import { useNotificationStore } from '@/store';
 import {
   Bell,
   Plus,
@@ -12,7 +14,6 @@ import {
   XCircle,
   Calendar,
   User,
-  AlertCircle,
 } from 'lucide-react';
 import {
   Dialog,
@@ -33,17 +34,12 @@ import { designTokens } from '@/theme/tokens';
 const ct = designTokens.colors;
 
 const AnnouncementManagementPage: React.FC = () => {
-  const addNotification = useAppStore((state) => state.addNotification);
+  const addNotification = useNotificationStore((state) => state.addNotification);
+  const queryClient = useQueryClient();
 
-  const [announcements, setAnnouncements] = useState<Announcement[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
   const [showCreateModal, setShowCreateModal] = useState(false);
   const [showEditModal, setShowEditModal] = useState(false);
   const [selectedAnnouncement, setSelectedAnnouncement] = useState<Announcement | null>(null);
-  const [currentPage, setCurrentPage] = useState(1);
-  const [pageSize, setPageSize] = useState(20);
-  const [total, setTotal] = useState(0);
   const [searchQuery, setSearchQuery] = useState('');
 
   const [newAnnouncement, setNewAnnouncement] = useState<Partial<Announcement>>({
@@ -54,98 +50,83 @@ const AnnouncementManagementPage: React.FC = () => {
     priority: 'normal',
   });
 
-  const loadData = useCallback(async () => {
-    setLoading(true);
-    setError(null);
-    try {
-      const res = await announcementApi.list({
-        page: currentPage,
-        pagesize: pageSize,
-        search: searchQuery,
-      });
-      if (res.success && res.data) {
-        setAnnouncements(res.data.items || []);
-        setTotal(res.data.total);
-      }
-    } catch (err: unknown) {
-      const errorMsg = (err as { message?: string }).message || '加载数据失败';
-      setError(errorMsg);
-      addNotification({
-        title: '加载失败',
-        message: errorMsg,
-        type: 'error',
-      });
-      setAnnouncements([]);
-    } finally {
-      setLoading(false);
-    }
-  }, [currentPage, pageSize, searchQuery, addNotification]);
+  const {
+    data: announcements,
+    loading,
+    error,
+    pagination,
+    fetch,
+    refresh,
+    create: createItem,
+    update: updateItem,
+    delete: deleteItem,
+  } = useCrudOperations<Announcement>({
+    api: announcementCrudApi,
+    queryKey: 'oa-announcements',
+    defaultPageSize: 20,
+    pageParamName: 'page',
+    pageSizeParamName: 'pagesize',
+  });
 
-  useEffect(() => {
-    loadData();
-  }, [loadData]);
+  const publishMutation = useMutation({
+    mutationFn: (id: string) => announcementApi.publish(id),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['oa-announcements'] });
+      addNotification({ title: '成功', message: '公告发布成功', type: 'success' });
+    },
+    onError: (err: unknown) => {
+      const errAny = err as { response?: { data?: { message?: string } }; message?: string };
+      const message = errAny?.response?.data?.message || errAny?.message || '发布公告失败';
+      addNotification({ title: '失败', message, type: 'error' });
+    },
+  });
+
+  const unpublishMutation = useMutation({
+    mutationFn: (id: string) => announcementApi.unpublish(id),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['oa-announcements'] });
+      addNotification({ title: '成功', message: '公告已下架', type: 'success' });
+    },
+    onError: (err: unknown) => {
+      const errAny = err as { response?: { data?: { message?: string } }; message?: string };
+      const message = errAny?.response?.data?.message || errAny?.message || '下架公告失败';
+      addNotification({ title: '失败', message, type: 'error' });
+    },
+  });
+
+  const handleSearch = (value: string) => {
+    setSearchQuery(value);
+    pagination.setPage(1);
+    if (value) {
+      fetch({ search: value });
+    } else {
+      fetch({});
+    }
+  };
 
   const handleCreateAnnouncement = async (e: React.FormEvent) => {
     e.preventDefault();
     try {
-      const res = await announcementApi.create(newAnnouncement);
-      if (res.success) {
-        addNotification({
-          title: '成功',
-          message: '公告创建成功',
-          type: 'success',
-        });
-        setShowCreateModal(false);
-        setNewAnnouncement({
-          title: '',
-          content: '',
-          author: '',
-          status: 'draft',
-          priority: 'normal',
-        });
-        loadData();
-      } else {
-        addNotification({
-          title: '失败',
-          message: res.message || '创建公告失败',
-          type: 'error',
-        });
-      }
-    } catch (err: unknown) {
-      const errorMsg = (err as { message?: string }).message || '创建公告失败';
-      addNotification({
-        title: '失败',
-        message: errorMsg,
-        type: 'error',
+      await createItem(newAnnouncement);
+      setShowCreateModal(false);
+      setNewAnnouncement({
+        title: '',
+        content: '',
+        author: '',
+        status: 'draft',
+        priority: 'normal',
       });
+    } catch (_err: unknown) {
+      // 错误已由 useCrudOperations 处理
     }
   };
 
   const handleDeleteAnnouncement = async (id: string) => {
     if (!confirm('确定要删除这条公告吗？')) return;
     try {
-      const res = await announcementApi.delete(id);
-      if (res.success) {
-        addNotification({
-          title: '成功',
-          message: '公告删除成功',
-          type: 'success',
-        });
-        loadData();
-      } else {
-        addNotification({
-          title: '失败',
-          message: res.message || '删除公告失败',
-          type: 'error',
-        });
-      }
-    } catch (err: unknown) {
-      const errorMsg = (err as { message?: string }).message || '删除公告失败';
-      addNotification({
-        title: '失败',
-        message: errorMsg,
-        type: 'error',
-      });
+      await deleteItem(id);
+    } catch (_err: unknown) {
+      // 错误已由 useCrudOperations 处理
     }
   };
 
@@ -153,85 +134,20 @@ const AnnouncementManagementPage: React.FC = () => {
     e.preventDefault();
     if (!selectedAnnouncement) return;
     try {
-      const res = await announcementApi.update(selectedAnnouncement.id, selectedAnnouncement);
-      if (res.success) {
-        addNotification({
-          title: '成功',
-          message: '公告信息更新成功',
-          type: 'success',
-        });
-        setShowEditModal(false);
-        setSelectedAnnouncement(null);
-        loadData();
-      } else {
-        addNotification({
-          title: '失败',
-          message: res.message || '更新公告失败',
-          type: 'error',
-        });
-      }
-    } catch (err: unknown) {
-      const errorMsg = (err as { message?: string }).message || '更新公告失败';
-      addNotification({
-        title: '失败',
-        message: errorMsg,
-        type: 'error',
-      });
+      await updateItem(selectedAnnouncement.id, selectedAnnouncement);
+      setShowEditModal(false);
+      setSelectedAnnouncement(null);
+    } catch (_err: unknown) {
+      // 错误已由 useCrudOperations 处理
     }
   };
 
   const handlePublish = async (id: string) => {
-    try {
-      const res = await announcementApi.publish(id);
-      if (res.success) {
-        addNotification({
-          title: '成功',
-          message: '公告发布成功',
-          type: 'success',
-        });
-        loadData();
-      } else {
-        addNotification({
-          title: '失败',
-          message: res.message || '发布公告失败',
-          type: 'error',
-        });
-      }
-    } catch (err: unknown) {
-      const errorMsg = (err as { message?: string }).message || '发布公告失败';
-      addNotification({
-        title: '失败',
-        message: errorMsg,
-        type: 'error',
-      });
-    }
+    publishMutation.mutate(id);
   };
 
   const handleUnpublish = async (id: string) => {
-    try {
-      const res = await announcementApi.unpublish(id);
-      if (res.success) {
-        addNotification({
-          title: '成功',
-          message: '公告已下架',
-          type: 'success',
-        });
-        loadData();
-      } else {
-        addNotification({
-          title: '失败',
-          message: res.message || '下架公告失败',
-          type: 'error',
-        });
-      }
-    } catch (err: unknown) {
-      const errorMsg = (err as { message?: string }).message || '下架公告失败';
-      addNotification({
-        title: '失败',
-        message: errorMsg,
-        type: 'error',
-      });
-    }
+    unpublishMutation.mutate(id);
   };
 
   const getStatusBadge = (status: string) => {
@@ -380,18 +296,18 @@ const AnnouncementManagementPage: React.FC = () => {
         subtitle=''
         columns={columns}
         data={announcements}
-        loading={loading}
+        loading={loading || publishMutation.isPending || unpublishMutation.isPending}
         error={error ?? undefined}
         searchable
         searchPlaceholder='搜索公告标题、作者...'
         searchValue={searchQuery}
-        onSearch={setSearchQuery}
+        onSearch={handleSearch}
         pagination={{
-          page: currentPage,
-          pageSize,
-          total,
-          onPageChange: setCurrentPage,
-          onPageSizeChange: setPageSize,
+          page: pagination.page,
+          pageSize: pagination.pageSize,
+          total: pagination.total,
+          onPageChange: pagination.setPage,
+          onPageSizeChange: pagination.setPageSize,
         }}
         sortable
         actions={[
@@ -402,7 +318,7 @@ const AnnouncementManagementPage: React.FC = () => {
           },
         ]}
         rowActions={rowActions}
-        onRefresh={loadData}
+        onRefresh={refresh}
       />
 
       <Dialog
@@ -526,6 +442,7 @@ const AnnouncementManagementPage: React.FC = () => {
             <Button
               type='submit'
               variant='contained'
+              disabled={loading}
             >
               创建
             </Button>
@@ -662,6 +579,7 @@ const AnnouncementManagementPage: React.FC = () => {
               <Button
                 type='submit'
                 variant='contained'
+                disabled={loading}
               >
                 保存
               </Button>

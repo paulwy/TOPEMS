@@ -43,13 +43,32 @@
     "copyright": "Copyright 2024 TOPEMS Team",
     "category": "Business",
     "shortDescription": "Enterprise Management System",
-    "longDescription": "TOPEMS is a comprehensive enterprise management system providing integrated solutions for HR, CRM, ERP, and more."
+    "longDescription": "TOPEMS is a comprehensive enterprise management system providing integrated solutions for HR, CRM, ERP, and more.",
+    "macOS": {
+      "signingIdentity": "Developer ID Application: TOPEMS Team",
+      "entitlements": "../entitlements.plist",
+      "entitlementsInherit": "../entitlements.plist",
+      "notarize": true,
+      "hardenedRuntime": true
+    },
+    "windows": {
+      "certificateThumbprint": null,
+      "digestAlgorithm": "sha256",
+      "timestampUrl": "http://timestamp.digicert.com"
+    }
   },
   "plugins": {
     "shell": {},
     "fs": {},
     "dialog": {},
     "opener": {},
-    "log": {}
+    "log": {},
+    "updater": {
+      "active": true,
+      "endpoints": [
+        "https://releases.topems.com/update/{{target}}/{{current_version}}"
+      ],
+      "pubkey": "dW50cnVzdGVkIGNvbW1lbnQ6IG1pbmltdW0gc2lnbmluZyBwdWJsaWMga2V5IDggZHVyYXRpb24gMTY="
+    }
   }
 }

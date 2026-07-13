@@ -34,10 +34,11 @@ import {
   Play,
   Pause,
 } from 'lucide-react';
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 
 import { PageContainer, ConfirmDialog } from '@/components/common';
 import { ListPageTemplate, type ColumnDef } from '@/components/templates';
-import { useAppStore } from '../../store';
+import { useNotificationStore } from '@/store';
 import { extractErrorMessage } from '@/utils/errors';
 
 type MappingType = 'field' | 'transform' | 'filter' | 'validate';
@@ -140,17 +141,72 @@ const STATUS_COLORS: Record<MappingStatus, 'success' | 'default' | 'warning'> = 
 };
 
 export const IntegrationMappingsPage: React.FC = () => {
-  const addNotification = useAppStore((state) => state.addNotification);
+  const addNotification = useNotificationStore((state) => state.addNotification);
+  const queryClient = useQueryClient();
 
-  const [mappings, setMappings] = useState<Mapping[]>(MOCK_MAPPINGS);
-  const [loading, setLoading] = useState(false);
+  const { data: mappings = [], isLoading: loading } = useQuery({
+    queryKey: ['integration-mappings'],
+    queryFn: async () => {
+      await new Promise((resolve) => setTimeout(resolve, 300));
+      return MOCK_MAPPINGS;
+    },
+    staleTime: 5 * 60 * 1000,
+  });
+
+  const deleteMutation = useMutation({
+    mutationFn: async (mappingId: string) => {
+      return mappingId;
+    },
+    onMutate: async (mappingId) => {
+      await queryClient.cancelQueries({ queryKey: ['integration-mappings'] });
+      const previousMappings = queryClient.getQueryData<Mapping[]>(['integration-mappings']);
+      queryClient.setQueryData<Mapping[]>(['integration-mappings'], (old) =>
+        old ? old.filter((m) => m.id !== mappingId) : []
+      );
+      return { previousMappings };
+    },
+    onError: (_err, _id, context) => {
+      if (context?.previousMappings) {
+        queryClient.setQueryData(['integration-mappings'], context.previousMappings);
+      }
+      addNotification({
+        title: '删除失败',
+        message: '删除操作失败',
+        type: 'error',
+      });
+    },
+  });
+
+  const batchDeleteMutation = useMutation({
+    mutationFn: async (ids: string[]) => {
+      return ids;
+    },
+    onMutate: async (ids) => {
+      await queryClient.cancelQueries({ queryKey: ['integration-mappings'] });
+      const previousMappings = queryClient.getQueryData<Mapping[]>(['integration-mappings']);
+      queryClient.setQueryData<Mapping[]>(['integration-mappings'], (old) =>
+        old ? old.filter((m) => !ids.includes(m.id)) : []
+      );
+      return { previousMappings };
+    },
+    onError: (_err, _ids, context) => {
+      if (context?.previousMappings) {
+        queryClient.setQueryData(['integration-mappings'], context.previousMappings);
+      }
+      addNotification({
+        title: '删除失败',
+        message: '批量删除失败',
+        type: 'error',
+      });
+    },
+  });
+
   const [searchQuery, setSearchQuery] = useState('');
   const [typeFilter, setTypeFilter] = useState<string>('all');
   const [statusFilter, setStatusFilter] = useState<string>('all');
   const [selectedIds, setSelectedIds] = useState<(string | number)[]>([]);
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
   const [batchDeleteDialogOpen, setBatchDeleteDialogOpen] = useState(false);
-  const [actionLoading, setActionLoading] = useState(false);
 
   const filteredMappings = useMemo(() => {
     let result = mappings;
@@ -213,76 +269,57 @@ export const IntegrationMappingsPage: React.FC = () => {
     ];
   }, [mappings]);
 
+  const actionLoading = deleteMutation.isPending || batchDeleteMutation.isPending;
+
   const handleDelete = useCallback(
     (mapping: Mapping) => {
-      try {
-        setActionLoading(true);
-        setMappings((prev) => prev.filter((m) => m.id !== mapping.id));
-        addNotification({
-          title: '删除成功',
-          message: `已删除映射规则「${mapping.name}」`,
-          type: 'success',
-        });
-        setDeleteDialogOpen(false);
-      } catch (_err: unknown) {
-        addNotification({
-          title: '删除失败',
-          message: extractErrorMessage(_err, '删除操作失败'),
-          type: 'error',
-        });
-      } finally {
-        setActionLoading(false);
-      }
+      deleteMutation.mutate(mapping.id, {
+        onSuccess: () => {
+          addNotification({
+            title: '删除成功',
+            message: `已删除映射规则「${mapping.name}」`,
+            type: 'success',
+          });
+          setDeleteDialogOpen(false);
+        },
+      });
     },
-    [addNotification]
+    [deleteMutation, addNotification]
   );
 
   const handleBatchDelete = useCallback(async () => {
-    try {
-      setActionLoading(true);
-      setMappings((prev) => prev.filter((m) => !selectedIds.includes(m.id)));
-      addNotification({
-        title: '批量删除成功',
-        message: `已删除 ${selectedIds.length} 条映射规则`,
-        type: 'success',
-      });
-      setSelectedIds([]);
-      setBatchDeleteDialogOpen(false);
-    } catch (_err: unknown) {
-      addNotification({
-        title: '删除失败',
-        message: extractErrorMessage(_err, '批量删除失败'),
-        type: 'error',
-      });
-    } finally {
-      setActionLoading(false);
-    }
-  }, [selectedIds, addNotification]);
+    const ids = selectedIds.map((id) => String(id));
+    batchDeleteMutation.mutate(ids, {
+      onSuccess: () => {
+        addNotification({
+          title: '批量删除成功',
+          message: `已删除 ${selectedIds.length} 条映射规则`,
+          type: 'success',
+        });
+        setSelectedIds([]);
+        setBatchDeleteDialogOpen(false);
+      },
+    });
+  }, [selectedIds, batchDeleteMutation, addNotification]);
 
   const handleToggleStatus = useCallback(
     (mapping: Mapping) => {
-      try {
-        setMappings((prev) =>
-          prev.map((m) =>
-            m.id === mapping.id
-              ? { ...m, status: m.status === 'active' ? 'inactive' : 'active' }
-              : m
-          )
-        );
-        addNotification({
-          title: '状态更新',
-          message: `映射规则「${mapping.name}」已${mapping.status === 'active' ? '停用' : '启用'}`,
-          type: 'success',
-        });
-      } catch (_err: unknown) {
-        addNotification({
-          title: '操作失败',
-          message: extractErrorMessage(_err, '状态更新失败'),
-          type: 'error',
-        });
-      }
+      queryClient.setQueryData<Mapping[]>(['integration-mappings'], (old) =>
+        old
+          ? old.map((m) =>
+              m.id === mapping.id
+                ? { ...m, status: m.status === 'active' ? 'inactive' : 'active' }
+                : m
+            )
+          : []
+      );
+      addNotification({
+        title: '状态更新',
+        message: `映射规则「${mapping.name}」已${mapping.status === 'active' ? '停用' : '启用'}`,
+        type: 'success',
+      });
     },
-    [addNotification]
+    [queryClient, addNotification]
   );
 
   const handleExport = useCallback(() => {

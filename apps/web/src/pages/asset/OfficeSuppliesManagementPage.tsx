@@ -27,7 +27,7 @@ import {
 } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { officeSupplyApi, type OfficeSupply } from '@/api/erp';
-import { useAppStore } from '../../store';
+import { useNotificationStore } from '@/store';
 import { ListPageTemplate, type ColumnDef } from '@/components/templates';
 import { ModeToggle } from '@/components/theme/ModeToggle';
 import { PageContainer } from '@/components/common';
@@ -41,7 +41,7 @@ const OfficeSuppliesManagementPage: React.FC<OfficeSuppliesManagementPageProps> 
   onNavigate,
 }) => {
   const navigate = useNavigate();
-  const addNotification = useAppStore((state) => state.addNotification);
+  const addNotification = useNotificationStore((state) => state.addNotification);
 
   const [supplies, setSupplies] = useState<OfficeSupply[]>([]);
   const [loading, setLoading] = useState(true);

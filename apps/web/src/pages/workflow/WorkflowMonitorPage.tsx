@@ -24,8 +24,9 @@ import {
   EyeOff,
   FileText,
 } from 'lucide-react';
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 
-import { useAppStore } from '../../store';
+import { useNotificationStore } from '../../store';
 import { ListPageTemplate, type ColumnDef } from '@/components/templates';
 import { StatCardComponent } from '@/components/templates/dashboard/StatCardComponent';
 import { PageContainer } from '@/components/common';
@@ -145,7 +146,63 @@ const MOCK_DATA: WorkflowException[] = [
 ];
 
 export const WorkflowMonitorPage: React.FC = () => {
-  const addNotification = useAppStore((state) => state.addNotification);
+  const addNotification = useNotificationStore((state) => state.addNotification);
+  const queryClient = useQueryClient();
+
+  const { data: exceptions = [], isLoading: loading } = useQuery({
+    queryKey: ['workflow-monitor-exceptions'],
+    queryFn: async () => {
+      await new Promise((resolve) => setTimeout(resolve, 300));
+      return MOCK_DATA;
+    },
+    staleTime: 5 * 60 * 1000,
+  });
+
+  const retryMutation = useMutation({
+    mutationFn: async (exceptionId: string) => {
+      return exceptionId;
+    },
+    onMutate: async (exceptionId) => {
+      await queryClient.cancelQueries({ queryKey: ['workflow-monitor-exceptions'] });
+      const previousData = queryClient.getQueryData<WorkflowException[]>(['workflow-monitor-exceptions']);
+      queryClient.setQueryData<WorkflowException[]>(['workflow-monitor-exceptions'], (old) =>
+        old
+          ? old.map((e) =>
+              e.id === exceptionId ? { ...e, status: 'processing' as const } : e
+            )
+          : []
+      );
+      return { previousData };
+    },
+    onError: (_err, _id, context) => {
+      if (context?.previousData) {
+        queryClient.setQueryData(['workflow-monitor-exceptions'], context.previousData);
+      }
+    },
+  });
+
+  const ignoreMutation = useMutation({
+    mutationFn: async (exceptionId: string) => {
+      return exceptionId;
+    },
+    onMutate: async (exceptionId) => {
+      await queryClient.cancelQueries({ queryKey: ['workflow-monitor-exceptions'] });
+      const previousData = queryClient.getQueryData<WorkflowException[]>(['workflow-monitor-exceptions']);
+      queryClient.setQueryData<WorkflowException[]>(['workflow-monitor-exceptions'], (old) =>
+        old
+          ? old.map((e) =>
+              e.id === exceptionId ? { ...e, status: 'resolved' as const } : e
+            )
+          : []
+      );
+      return { previousData };
+    },
+    onError: (_err, _id, context) => {
+      if (context?.previousData) {
+        queryClient.setQueryData(['workflow-monitor-exceptions'], context.previousData);
+      }
+    },
+  });
 
   const [searchQuery, setSearchQuery] = useState('');
   const [typeFilter, setTypeFilter] = useState<string>('all');
@@ -163,7 +220,7 @@ export const WorkflowMonitorPage: React.FC = () => {
   } | null>(null);
 
   const filteredData = useMemo(() => {
-    let result = [...MOCK_DATA];
+    let result = [...exceptions];
 
     if (searchQuery) {
       const query = searchQuery.toLowerCase();
@@ -183,7 +240,7 @@ export const WorkflowMonitorPage: React.FC = () => {
     }
 
     return result;
-  }, [searchQuery, typeFilter, statusFilter]);
+  }, [exceptions, searchQuery, typeFilter, statusFilter]);
 
   const paginatedData = useMemo(() => {
     const start = page * pageSize;
@@ -191,11 +248,11 @@ export const WorkflowMonitorPage: React.FC = () => {
   }, [filteredData, page, pageSize]);
 
   const stats = useMemo(() => {
-    const total = MOCK_DATA.length;
-    const timeoutCount = MOCK_DATA.filter((d) => d.exceptionType === 'timeout').length;
-    const errorCount = MOCK_DATA.filter((d) => d.exceptionType === 'error').length;
+    const total = exceptions.length;
+    const timeoutCount = exceptions.filter((d) => d.exceptionType === 'timeout').length;
+    const errorCount = exceptions.filter((d) => d.exceptionType === 'error').length;
     const today = new Date().toISOString().split('T')[0];
-    const todayCount = MOCK_DATA.filter((d) => d.occurredAt.startsWith(today)).length;
+    const todayCount = exceptions.filter((d) => d.occurredAt.startsWith(today)).length;
 
     return [
       {
@@ -227,7 +284,7 @@ export const WorkflowMonitorPage: React.FC = () => {
         color: 'primary' as const,
       },
     ];
-  }, []);
+  }, [exceptions]);
 
   const handleViewDetail = useCallback(
     (row: WorkflowException) => {
@@ -247,25 +304,28 @@ export const WorkflowMonitorPage: React.FC = () => {
         message: `确定要重试实例 ${row.instanceId} 吗？`,
         danger: false,
         onConfirm: () => {
-          try {
-            addNotification({
-              title: '重试成功',
-              message: `实例 ${row.instanceId} 已重新执行`,
-              type: 'success',
-            });
-          } catch (_err: unknown) {
-            addNotification({
-              title: '重试失败',
-              message: extractErrorMessage(_err, '重试操作失败'),
-              type: 'error',
-            });
-          }
+          retryMutation.mutate(row.id, {
+            onSuccess: () => {
+              addNotification({
+                title: '重试成功',
+                message: `实例 ${row.instanceId} 已重新执行`,
+                type: 'success',
+              });
+            },
+            onError: () => {
+              addNotification({
+                title: '重试失败',
+                message: '重试操作失败',
+                type: 'error',
+              });
+            },
+          });
           setConfirmDialogOpen(false);
         },
       });
       setConfirmDialogOpen(true);
     },
-    [addNotification]
+    [retryMutation, addNotification]
   );
 
   const handleIgnore = useCallback(
@@ -275,25 +335,28 @@ export const WorkflowMonitorPage: React.FC = () => {
         message: `确定要忽略实例 ${row.instanceId} 的异常吗？`,
         danger: true,
         onConfirm: () => {
-          try {
-            addNotification({
-              title: '已忽略',
-              message: `实例 ${row.instanceId} 的异常已标记为忽略`,
-              type: 'success',
-            });
-          } catch (_err: unknown) {
-            addNotification({
-              title: '操作失败',
-              message: extractErrorMessage(_err, '忽略操作失败'),
-              type: 'error',
-            });
-          }
+          ignoreMutation.mutate(row.id, {
+            onSuccess: () => {
+              addNotification({
+                title: '已忽略',
+                message: `实例 ${row.instanceId} 的异常已标记为忽略`,
+                type: 'success',
+              });
+            },
+            onError: () => {
+              addNotification({
+                title: '操作失败',
+                message: '忽略操作失败',
+                type: 'error',
+              });
+            },
+          });
           setConfirmDialogOpen(false);
         },
       });
       setConfirmDialogOpen(true);
     },
-    [addNotification]
+    [ignoreMutation, addNotification]
   );
 
   const columns: ColumnDef<WorkflowException>[] = useMemo(
@@ -530,6 +593,7 @@ export const WorkflowMonitorPage: React.FC = () => {
           subtitle=''
           columns={columns}
           data={paginatedData}
+          loading={loading}
           searchable
           searchPlaceholder='搜索流程名称、实例ID...'
           searchValue={searchQuery}

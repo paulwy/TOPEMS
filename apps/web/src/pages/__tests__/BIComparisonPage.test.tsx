@@ -4,23 +4,28 @@ import { render, screen, waitFor, fireEvent, act } from '@testing-library/react'
 import { BrowserRouter } from 'react-router-dom';
 import BIComparisonPage from '../bi/BIComparisonPage';
 import { getComparisonResult, runComparison, listComparisons } from '@/api/bi';
-import { useAppStore } from '@/store';
+import { useNotificationStore, useAuthStore } from '@/store';
 
 vi.mock('@/api/bi');
 vi.mock('@/store', () => ({
-  useAppStore: vi.fn((selector?: any) =>
+  useNotificationStore: vi.fn((selector?: any) =>
     selector
       ? selector({
-          addNotification: mockAddNotification,
+          addNotification: vi.fn(),
           notifications: [],
-          user: null,
-          theme: 'light',
         })
       : {
-          addNotification: mockAddNotification,
+          addNotification: vi.fn(),
           notifications: [],
+        }
+  ),
+  useAuthStore: vi.fn((selector?: any) =>
+    selector
+      ? selector({
           user: null,
-          theme: 'light',
+        })
+      : {
+          user: null,
         }
   ),
 }));
@@ -61,7 +66,7 @@ const mockComparisonsResult = {
 describe('BIComparisonPage', () => {
   beforeEach(() => {
     vi.clearAllMocks();
-    (useAppStore as vi.Mock).mockImplementation((selector?: any) =>
+    (useNotificationStore as vi.Mock).mockImplementation((selector?: any) =>
       selector
         ? selector({
             addNotification: mockAddNotification,

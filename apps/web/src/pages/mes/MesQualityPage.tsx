@@ -28,7 +28,7 @@ import type {
 } from '@/api/mes/quality';
 import type { ListParams } from '@/api/mes';
 import { qualityApi } from '@/api/mes/quality';
-import { useAppStore } from '@/store';
+import { useNotificationStore } from '@/store';
 import { LoadingSpinner } from '@topems/shared-components';
 import {
   ListPageTemplate,
@@ -109,7 +109,7 @@ const MesQualityPage: React.FC = () => {
     memo: '',
   });
 
-  const { addNotification } = useAppStore();
+  const { addNotification } = useNotificationStore();
 
   const loadData = useCallback(async () => {
     try {

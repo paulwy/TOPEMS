@@ -13,7 +13,7 @@ import {
 import React, { useState, useEffect, useCallback } from 'react';
 import type { MrpPlan, CreateMrpPlanRequest, MrpCalculationResult } from '@/api/scm';
 import { scmApi } from '@/api/scm';
-import { useAppStore } from '@/store';
+import { useNotificationStore } from '@/store';
 import {
   Plus,
   Edit,
@@ -61,7 +61,7 @@ const MrpPlanPage: React.FC = () => {
     description: '',
   });
 
-  const { addNotification } = useAppStore();
+  const { addNotification } = useNotificationStore();
 
   useEffect(() => {
     loadPlans();

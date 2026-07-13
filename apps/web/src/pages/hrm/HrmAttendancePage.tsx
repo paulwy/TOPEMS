@@ -13,7 +13,7 @@ import {
 } from 'lucide-react';
 import { attendanceApi, leaveApi, type AttendanceRecord, type LeaveRequest } from '@/api/hrm';
 import { apiLogger } from '@/utils/logger';
-import { useAppStore } from '../../store';
+import { useNotificationStore } from '../../store';
 import {
   ListPageTemplate,
   type ColumnDef,
@@ -40,7 +40,7 @@ import {
 } from '@mui/material';
 
 const HrmAttendancePage: React.FC = () => {
-  const addNotification = useAppStore((state) => state.addNotification);
+  const addNotification = useNotificationStore((state) => state.addNotification);
 
   const [activeTab, setActiveTab] = useState<'records' | 'leaves' | 'statistics'>('records');
   const [searchQuery, setSearchQuery] = useState('');
@@ -460,6 +460,10 @@ const HrmAttendancePage: React.FC = () => {
               searchValue={searchQuery}
               onSearch={setSearchQuery}
               onRefresh={loadData}
+              exportable
+              exportFileName='考勤记录'
+              persistFilters
+              persistSearch
             />
           )}
 
@@ -484,6 +488,15 @@ const HrmAttendancePage: React.FC = () => {
                 },
               ]}
               onRefresh={loadData}
+              exportable
+              exportFileName='请假申请列表'
+              persistFilters
+              persistSearch
+              emptyActionButton={{
+                label: '发起请假',
+                icon: <Plus size={16} />,
+                onClick: () => setShowLeaveModal(true),
+              }}
             />
           )}
         </>

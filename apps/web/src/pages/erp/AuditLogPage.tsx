@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useMemo } from 'react';
+import React, { useState, useEffect, useMemo, useCallback } from 'react';
 import {
   FileText,
   Search,
@@ -45,126 +45,16 @@ import {
   DialogActions,
   InputAdornment,
 } from '@mui/material';
-import { useAppStore } from '@/store';
+import { useNotificationStore } from '@/store';
 import { apiLogger } from '@/utils/logger';
 import { useNavigate } from 'react-router-dom';
 import { ERP_PATHS } from '@/modules/erp/config';
-
-export interface AuditLog {
-  id: string;
-  operator_id: string;
-  operator_name: string;
-  operation_type: string;
-  operation_module: string;
-  operation_content: string;
-  ip_address: string;
-  user_agent: string;
-  status: 'success' | 'failed' | 'warning';
-  created_at: string;
-}
-
-const mockAuditLogs: AuditLog[] = [
-  {
-    id: '1',
-    operator_id: 'u001',
-    operator_name: '张三',
-    operation_type: '创建',
-    operation_module: '凭证管理',
-    operation_content: '创建凭证记-202406001',
-    ip_address: '192.168.1.100',
-    user_agent: 'Chrome 120.0 / Windows 10',
-    status: 'success',
-    created_at: '2024-06-15T10:30:00',
-  },
-  {
-    id: '2',
-    operator_id: 'u002',
-    operator_name: '李四',
-    operation_type: '修改',
-    operation_module: '用户管理',
-    operation_content: '修改用户信息：王五',
-    ip_address: '192.168.1.101',
-    user_agent: 'Firefox 121.0 / macOS',
-    status: 'success',
-    created_at: '2024-06-15T09:45:00',
-  },
-  {
-    id: '3',
-    operator_id: 'u001',
-    operator_name: '张三',
-    operation_type: '删除',
-    operation_module: '凭证管理',
-    operation_content: '删除凭证记-202405099',
-    ip_address: '192.168.1.100',
-    user_agent: 'Chrome 120.0 / Windows 10',
-    status: 'failed',
-    created_at: '2024-06-14T16:20:00',
-  },
-  {
-    id: '4',
-    operator_id: 'u003',
-    operator_name: '王五',
-    operation_type: '登录',
-    operation_module: '系统登录',
-    operation_content: '用户登录系统',
-    ip_address: '10.0.0.50',
-    user_agent: 'Safari 17.0 / iOS 17',
-    status: 'success',
-    created_at: '2024-06-14T08:00:00',
-  },
-  {
-    id: '5',
-    operator_id: 'u002',
-    operator_name: '李四',
-    operation_type: '审核',
-    operation_module: '凭证管理',
-    operation_content: '审核凭证记-202406005',
-    ip_address: '192.168.1.101',
-    user_agent: 'Firefox 121.0 / macOS',
-    status: 'success',
-    created_at: '2024-06-13T14:30:00',
-  },
-  {
-    id: '6',
-    operator_id: 'u001',
-    operator_name: '张三',
-    operation_type: '导出',
-    operation_module: '报表中心',
-    operation_content: '导出资产负债表 2024年5月',
-    ip_address: '192.168.1.100',
-    user_agent: 'Chrome 120.0 / Windows 10',
-    status: 'success',
-    created_at: '2024-06-12T11:15:00',
-  },
-  {
-    id: '7',
-    operator_id: 'u004',
-    operator_name: '赵六',
-    operation_type: '备份',
-    operation_module: '系统管理',
-    operation_content: '创建数据库备份',
-    ip_address: '192.168.1.1',
-    user_agent: 'Chrome 120.0 / Windows Server',
-    status: 'warning',
-    created_at: '2024-06-11T02:00:00',
-  },
-  {
-    id: '8',
-    operator_id: 'u003',
-    operator_name: '王五',
-    operation_type: '修改',
-    operation_module: '字典管理',
-    operation_content: '修改字典项：凭证类型',
-    ip_address: '10.0.0.50',
-    user_agent: 'Safari 17.0 / iOS 17',
-    status: 'success',
-    created_at: '2024-06-10T15:45:00',
-  },
-];
+import { auditApi, type AuditLog } from '@/api/erp/audit';
+import { extractErrorMessage } from '@/utils/errors';
 
 const AuditLogPage: React.FC = () => {
   const navigate = useNavigate();
-  const addNotification = useAppStore((state) => state.addNotification);
+  const addNotification = useNotificationStore((state) => state.addNotification);
 
   const [searchQuery, setSearchQuery] = useState('');
   const [operatorFilter, setOperatorFilter] = useState('');
@@ -182,55 +72,68 @@ const AuditLogPage: React.FC = () => {
   const [showDetailModal, setShowDetailModal] = useState(false);
   const [currentLog, setCurrentLog] = useState<AuditLog | null>(null);
 
-  useEffect(() => {
-    loadLogs();
-  }, [page, rowsPerPage, operatorFilter, moduleFilter, typeFilter, statusFilter]);
-
-  const loadLogs = async () => {
+  const loadLogs = useCallback(async () => {
     setLoading(true);
     try {
-      await new Promise((resolve) => setTimeout(resolve, 500));
-      setLogs(mockAuditLogs);
-      setTotalCount(mockAuditLogs.length);
+      const params = {
+        page: page + 1,
+        page_size: rowsPerPage,
+        action: typeFilter || undefined,
+        entity_type: moduleFilter || undefined,
+        user_id: operatorFilter || undefined,
+        status: statusFilter || undefined,
+        start_date: dateRange.start || undefined,
+        end_date: dateRange.end || undefined,
+      };
+      const res = await auditApi.list(params);
+      if (res.success && res.data) {
+        setLogs(res.data.audit_logs || []);
+        setTotalCount(res.data.total || 0);
+      }
     } catch (err: unknown) {
       apiLogger.error('加载审计日志失败:', err);
       addNotification({
         title: '错误',
-        message: '加载审计日志失败',
+        message: extractErrorMessage(err, '加载审计日志失败'),
         type: 'error',
       });
     } finally {
       setLoading(false);
     }
-  };
+  }, [page, rowsPerPage, typeFilter, moduleFilter, operatorFilter, statusFilter, dateRange, addNotification]);
+
+  useEffect(() => {
+    loadLogs();
+  }, [loadLogs]);
 
   const filteredLogs = useMemo(() => {
     return logs.filter((log) => {
       const matchesSearch =
         !searchQuery ||
-        log.operator_name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-        log.operation_content.toLowerCase().includes(searchQuery.toLowerCase()) ||
-        log.ip_address.includes(searchQuery);
-      const matchesOperator = !operatorFilter || log.operator_name === operatorFilter;
-      const matchesModule = !moduleFilter || log.operation_module === moduleFilter;
-      const matchesType = !typeFilter || log.operation_type === typeFilter;
+        (log.user_name?.toLowerCase().includes(searchQuery.toLowerCase()) || false) ||
+        (log.action?.toLowerCase().includes(searchQuery.toLowerCase()) || false) ||
+        (log.entity_type?.toLowerCase().includes(searchQuery.toLowerCase()) || false) ||
+        (log.ip_address?.includes(searchQuery) || false);
+      const matchesOperator = !operatorFilter || log.user_name === operatorFilter;
+      const matchesModule = !moduleFilter || log.entity_type === moduleFilter;
+      const matchesType = !typeFilter || log.action === typeFilter;
       const matchesStatus = !statusFilter || log.status === statusFilter;
       return matchesSearch && matchesOperator && matchesModule && matchesType && matchesStatus;
     });
   }, [logs, searchQuery, operatorFilter, moduleFilter, typeFilter, statusFilter]);
 
   const operators = useMemo(() => {
-    const unique = new Set(logs.map((l) => l.operator_name));
+    const unique = new Set(logs.map((l) => l.user_name).filter(Boolean));
     return Array.from(unique);
   }, [logs]);
 
   const modules = useMemo(() => {
-    const unique = new Set(logs.map((l) => l.operation_module));
+    const unique = new Set(logs.map((l) => l.entity_type));
     return Array.from(unique);
   }, [logs]);
 
   const operationTypes = useMemo(() => {
-    const unique = new Set(logs.map((l) => l.operation_type));
+    const unique = new Set(logs.map((l) => l.action));
     return Array.from(unique);
   }, [logs]);
 
@@ -619,7 +522,7 @@ const AuditLogPage: React.FC = () => {
                             >
                               <User size={14} />
                             </Box>
-                            <Typography sx={{ fontWeight: 500 }}>{log.operator_name}</Typography>
+                            <Typography sx={{ fontWeight: 500 }}>{log.user_name || '-'}</Typography>
                           </Box>
                         </TableCell>
                         <TableCell>
@@ -628,10 +531,10 @@ const AuditLogPage: React.FC = () => {
                               size={14}
                               style={{ opacity: 0.5 }}
                             />
-                            {log.operation_module}
+                            {log.entity_type}
                           </Box>
                         </TableCell>
-                        <TableCell>{getTypeChip(log.operation_type)}</TableCell>
+                        <TableCell>{getTypeChip(log.action)}</TableCell>
                         <TableCell>
                           <Typography
                             sx={{
@@ -641,12 +544,12 @@ const AuditLogPage: React.FC = () => {
                               whiteSpace: 'nowrap',
                             }}
                           >
-                            {log.operation_content}
+                            {log.action} {log.entity_type}
                           </Typography>
                         </TableCell>
                         <TableCell>
                           <Typography sx={{ fontFamily: 'monospace', fontSize: '0.875rem' }}>
-                            {log.ip_address}
+                            {log.ip_address || '-'}
                           </Typography>
                         </TableCell>
                         <TableCell>{getStatusBadge(log.status)}</TableCell>
@@ -716,7 +619,7 @@ const AuditLogPage: React.FC = () => {
                   >
                     操作人
                   </Typography>
-                  <Typography sx={{ fontWeight: 500 }}>{currentLog.operator_name}</Typography>
+                  <Typography sx={{ fontWeight: 500 }}>{currentLog.user_name || '-'}</Typography>
                 </Box>
                 <Box sx={{ p: 2, bgcolor: 'grey.50', borderRadius: 1 }}>
                   <Typography
@@ -742,7 +645,7 @@ const AuditLogPage: React.FC = () => {
                   >
                     操作模块
                   </Typography>
-                  <Typography sx={{ fontWeight: 500 }}>{currentLog.operation_module}</Typography>
+                  <Typography sx={{ fontWeight: 500 }}>{currentLog.entity_type}</Typography>
                 </Box>
                 <Box sx={{ p: 2, bgcolor: 'grey.50', borderRadius: 1 }}>
                   <Typography
@@ -751,7 +654,7 @@ const AuditLogPage: React.FC = () => {
                   >
                     操作类型
                   </Typography>
-                  <Box sx={{ mt: 0.5 }}>{getTypeChip(currentLog.operation_type)}</Box>
+                  <Box sx={{ mt: 0.5 }}>{getTypeChip(currentLog.action)}</Box>
                 </Box>
               </Box>
               <Box sx={{ p: 2, bgcolor: 'grey.50', borderRadius: 1 }}>
@@ -761,7 +664,7 @@ const AuditLogPage: React.FC = () => {
                 >
                   操作内容
                 </Typography>
-                <Typography>{currentLog.operation_content}</Typography>
+                <Typography>{currentLog.action} {currentLog.entity_type}</Typography>
               </Box>
               <Box
                 sx={{
@@ -777,7 +680,7 @@ const AuditLogPage: React.FC = () => {
                   >
                     IP地址
                   </Typography>
-                  <Typography sx={{ fontFamily: 'monospace' }}>{currentLog.ip_address}</Typography>
+                  <Typography sx={{ fontFamily: 'monospace' }}>{currentLog.ip_address || '-'}</Typography>
                 </Box>
                 <Box sx={{ p: 2, bgcolor: 'grey.50', borderRadius: 1 }}>
                   <Typography
@@ -796,7 +699,7 @@ const AuditLogPage: React.FC = () => {
                 >
                   浏览器/系统
                 </Typography>
-                <Typography>{currentLog.user_agent}</Typography>
+                <Typography>{currentLog.user_agent || '-'}</Typography>
               </Box>
             </Box>
           )}

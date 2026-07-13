@@ -19,7 +19,7 @@ import type { ColumnDef, RowAction, FilterConfig } from '@/components';
 import { PageContainer } from '@/components/common';
 import { ehsApi } from '@/api/ehs';
 import type { EmergencyPlan } from '@/api/ehs';
-import { useAppStore } from '@/store';
+import { useNotificationStore } from '@/store';
 import { apiLogger } from '@/utils/logger';
 import { designTokens } from '@/theme/tokens';
 
@@ -46,7 +46,7 @@ const EhsPlanPage: React.FC = () => {
     responsible_persons: '',
     contact_info: '',
   });
-  const addNotification = useAppStore((state) => state.addNotification);
+  const addNotification = useNotificationStore((state) => state.addNotification);
 
   useEffect(() => {
     loadPlans();

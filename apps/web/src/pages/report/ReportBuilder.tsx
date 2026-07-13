@@ -14,7 +14,7 @@ import {
 import { Box, Typography, TextField, Checkbox, FormControlLabel, Button } from '@mui/material';
 import { PageContainer } from '@/components/common';
 import type { ReportTypeInfo, ReportType, ExportFormat, CreateReportRequest } from '@/api/report';
-import { useAppStore } from '@/store';
+import { useNotificationStore } from '@/store';
 import { logger } from '@/utils/logger';
 
 interface ReportBuilderProps {
@@ -60,7 +60,7 @@ const ReportBuilder: React.FC<ReportBuilderProps> = ({
   onSuccess = () => {},
   isModal = true,
 }) => {
-  const addNotification = useAppStore((state) => state.addNotification);
+  const addNotification = useNotificationStore((state) => state.addNotification);
   const [formData, setFormData] = useState({
     title: '',
     description: '',

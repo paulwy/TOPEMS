@@ -12,7 +12,7 @@ import {
   Activity,
 } from 'lucide-react';
 import BarChartComponent from '../../components/charts/BarChart';
-import { useAppStore } from '@/store';
+import { useNotificationStore } from '@/store';
 import LineChartComponent from '../../components/charts/LineChart';
 import PieChartComponent from '../../components/charts/PieChart';
 import {

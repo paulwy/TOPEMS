@@ -8,26 +8,25 @@ import {
   Chip,
   Button,
 } from '@mui/material';
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState, useMemo, useCallback } from 'react';
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import type {
   PurchaseOrder,
   CreatePurchaseOrderRequest,
   UpdatePurchaseOrderRequest,
 } from '@/api/scm';
 import { scmApi } from '@/api/scm';
-import { useAppStore } from '@/store';
-import { Plus, Edit, Trash2, Check, XCircle, AlertCircle, Lock } from 'lucide-react';
+import { useNotificationStore } from '@/store';
+import { Plus, Edit, Trash2, Check, XCircle, Lock } from 'lucide-react';
 import { apiLogger } from '@/utils/logger';
 import { ListPageTemplate, type ColumnDef } from '@/components/templates';
 import { PageContainer } from '@/components/common';
 import { ConfirmDialog } from '@topems/shared-components';
 
 const ScmPurchaseOrderPage: React.FC = () => {
-  const [orders, setOrders] = useState<PurchaseOrder[]>([]);
-  const [loading, setLoading] = useState(true);
+  const queryClient = useQueryClient();
   const [currentPage, setCurrentPage] = useState(1);
   const [pageSize, setPageSize] = useState(10);
-  const [total, setTotal] = useState(0);
   const [showDialog, setShowDialog] = useState(false);
   const [isEditing, setIsEditing] = useState(false);
   const [selectedOrder, setSelectedOrder] = useState<PurchaseOrder | null>(null);
@@ -47,34 +46,186 @@ const ScmPurchaseOrderPage: React.FC = () => {
     remarks: '',
   });
 
-  const { addNotification } = useAppStore();
+  const { addNotification } = useNotificationStore();
 
-  useEffect(() => {
-    loadOrders();
-  }, [currentPage, pageSize]);
-
-  const loadOrders = async () => {
-    try {
-      setLoading(true);
+  const ordersQuery = useQuery({
+    queryKey: ['scm-purchase-orders', currentPage, pageSize],
+    queryFn: async () => {
       const response = await scmApi.purchaseOrders.list({
         page: currentPage,
         pageSize,
       });
-      if (response.success && response.data) {
-        setOrders(response.data.items || []);
-        setTotal(response.data.total || 0);
+      if (!response.success || !response.data) {
+        throw new Error(response.message || '加载采购订单失败');
       }
-    } catch (error: unknown) {
-      apiLogger.error('加载采购订单失败:', error);
+      return {
+        items: response.data.items || [],
+        total: response.data.total || 0,
+      };
+    },
+    staleTime: 5 * 60 * 1000,
+    retry: 2,
+  });
+
+  const orders = ordersQuery.data?.items ?? [];
+  const total = ordersQuery.data?.total ?? 0;
+  const loading = ordersQuery.isLoading;
+
+  const createMutation = useMutation({
+    mutationFn: async (data: CreatePurchaseOrderRequest) => {
+      const response = await scmApi.purchaseOrders.create(data);
+      if (!response.success) {
+        throw new Error(response.message || '创建采购订单失败');
+      }
+      return response.data;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['scm-purchase-orders'] });
+      addNotification({
+        type: 'success',
+        title: '创建成功',
+        message: '新采购订单已创建',
+      });
+    },
+    onError: (error: unknown) => {
+      apiLogger.error('创建采购订单失败:', error);
       addNotification({
         type: 'error',
-        title: '加载失败',
-        message: '无法加载采购订单',
+        title: '操作失败',
+        message: '创建采购订单失败',
       });
-    } finally {
-      setLoading(false);
-    }
-  };
+    },
+  });
+
+  const updateMutation = useMutation({
+    mutationFn: async ({ id, data }: { id: string; data: UpdatePurchaseOrderRequest }) => {
+      const response = await scmApi.purchaseOrders.update(id, data);
+      if (!response.success) {
+        throw new Error(response.message || '更新采购订单失败');
+      }
+      return response.data;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['scm-purchase-orders'] });
+      addNotification({
+        type: 'success',
+        title: '更新成功',
+        message: '采购订单已更新',
+      });
+    },
+    onError: (error: unknown) => {
+      apiLogger.error('更新采购订单失败:', error);
+      addNotification({
+        type: 'error',
+        title: '操作失败',
+        message: '更新采购订单失败',
+      });
+    },
+  });
+
+  const approveMutation = useMutation({
+    mutationFn: async (id: string) => {
+      const response = await scmApi.purchaseOrders.approve(id);
+      if (!response.success) {
+        throw new Error(response.message || '审批采购订单失败');
+      }
+      return response.data;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['scm-purchase-orders'] });
+      addNotification({
+        type: 'success',
+        title: '审批成功',
+        message: '采购订单已审批通过',
+      });
+    },
+    onError: (error: unknown) => {
+      apiLogger.error('审批采购订单失败:', error);
+      addNotification({
+        type: 'error',
+        title: '审批失败',
+        message: '审批采购订单失败',
+      });
+    },
+  });
+
+  const confirmMutation = useMutation({
+    mutationFn: async (id: string) => {
+      const response = await scmApi.purchaseOrders.confirm(id);
+      if (!response.success) {
+        throw new Error(response.message || '确认采购订单失败');
+      }
+      return response.data;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['scm-purchase-orders'] });
+      addNotification({
+        type: 'success',
+        title: '确认成功',
+        message: '采购订单已确认',
+      });
+    },
+    onError: (error: unknown) => {
+      apiLogger.error('确认采购订单失败:', error);
+      addNotification({
+        type: 'error',
+        title: '确认失败',
+        message: '确认采购订单失败',
+      });
+    },
+  });
+
+  const cancelMutation = useMutation({
+    mutationFn: async (id: string) => {
+      const response = await scmApi.purchaseOrders.cancel(id);
+      if (!response.success) {
+        throw new Error(response.message || '取消采购订单失败');
+      }
+      return response.data;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['scm-purchase-orders'] });
+      addNotification({
+        type: 'success',
+        title: '取消成功',
+        message: '采购订单已取消',
+      });
+    },
+    onError: (error: unknown) => {
+      apiLogger.error('取消采购订单失败:', error);
+      addNotification({
+        type: 'error',
+        title: '取消失败',
+        message: '取消采购订单失败',
+      });
+    },
+  });
+
+  const closeMutation = useMutation({
+    mutationFn: async (id: string) => {
+      const response = await scmApi.purchaseOrders.close(id);
+      if (!response.success) {
+        throw new Error(response.message || '关闭采购订单失败');
+      }
+      return response.data;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['scm-purchase-orders'] });
+      addNotification({
+        type: 'success',
+        title: '关闭成功',
+        message: '采购订单已关闭',
+      });
+    },
+    onError: (error: unknown) => {
+      apiLogger.error('关闭采购订单失败:', error);
+      addNotification({
+        type: 'error',
+        title: '关闭失败',
+        message: '关闭采购订单失败',
+      });
+    },
+  });
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -87,30 +238,13 @@ const ScmPurchaseOrderPage: React.FC = () => {
           status: selectedOrder.status,
           remarks: formData.remarks,
         };
-        await scmApi.purchaseOrders.update(selectedOrder.id, updateData);
-        addNotification({
-          type: 'success',
-          title: '更新成功',
-          message: '采购订单已更新',
-        });
+        await updateMutation.mutateAsync({ id: selectedOrder.id, data: updateData });
       } else {
-        await scmApi.purchaseOrders.create(formData);
-        addNotification({
-          type: 'success',
-          title: '创建成功',
-          message: '新采购订单已创建',
-        });
+        await createMutation.mutateAsync(formData);
       }
       setShowDialog(false);
       resetForm();
-      loadOrders();
-    } catch (error: unknown) {
-      apiLogger.error('操作失败:', error);
-      addNotification({
-        type: 'error',
-        title: '操作失败',
-        message: isEditing ? '更新采购订单失败' : '创建采购订单失败',
-      });
+    } catch {
     }
   };
 
@@ -134,20 +268,16 @@ const ScmPurchaseOrderPage: React.FC = () => {
       message: `确定要删除采购订单 "${order.order_number}" 吗？`,
       onConfirm: async () => {
         try {
-          await scmApi.purchaseOrders.update(order.id, { status: 'cancelled' } as any);
+          await updateMutation.mutateAsync({
+            id: order.id,
+            data: { status: 'cancelled' } as UpdatePurchaseOrderRequest,
+          });
           addNotification({
             type: 'success',
             title: '删除成功',
             message: '采购订单已删除',
           });
-          loadOrders();
-        } catch (error: unknown) {
-          apiLogger.error('删除失败:', error);
-          addNotification({
-            type: 'error',
-            title: '删除失败',
-            message: '删除采购订单失败',
-          });
+        } catch {
         }
       },
       danger: true,
@@ -161,25 +291,13 @@ const ScmPurchaseOrderPage: React.FC = () => {
         message: `确定要审批采购订单 "${order.order_number}" 吗？`,
         onConfirm: async () => {
           try {
-            await scmApi.purchaseOrders.approve(order.id);
-            addNotification({
-              type: 'success',
-              title: '审批成功',
-              message: '采购订单已审批通过',
-            });
-            loadOrders();
-          } catch (error: unknown) {
-            apiLogger.error('审批失败:', error);
-            addNotification({
-              type: 'error',
-              title: '审批失败',
-              message: '审批采购订单失败',
-            });
+            await approveMutation.mutateAsync(order.id);
+          } catch {
           }
         },
       });
     },
-    [addNotification]
+    [approveMutation]
   );
 
   const handleConfirm = useCallback(
@@ -189,25 +307,13 @@ const ScmPurchaseOrderPage: React.FC = () => {
         message: `确定要确认采购订单 "${order.order_number}" 吗？`,
         onConfirm: async () => {
           try {
-            await scmApi.purchaseOrders.confirm(order.id);
-            addNotification({
-              type: 'success',
-              title: '确认成功',
-              message: '采购订单已确认',
-            });
-            loadOrders();
-          } catch (error: unknown) {
-            apiLogger.error('确认失败:', error);
-            addNotification({
-              type: 'error',
-              title: '确认失败',
-              message: '确认采购订单失败',
-            });
+            await confirmMutation.mutateAsync(order.id);
+          } catch {
           }
         },
       });
     },
-    [addNotification]
+    [confirmMutation]
   );
 
   const handleCancel = useCallback(
@@ -217,26 +323,14 @@ const ScmPurchaseOrderPage: React.FC = () => {
         message: `确定要取消采购订单 "${order.order_number}" 吗？`,
         onConfirm: async () => {
           try {
-            await scmApi.purchaseOrders.cancel(order.id);
-            addNotification({
-              type: 'success',
-              title: '取消成功',
-              message: '采购订单已取消',
-            });
-            loadOrders();
-          } catch (error: unknown) {
-            apiLogger.error('取消失败:', error);
-            addNotification({
-              type: 'error',
-              title: '取消失败',
-              message: '取消采购订单失败',
-            });
+            await cancelMutation.mutateAsync(order.id);
+          } catch {
           }
         },
         danger: true,
       });
     },
-    [addNotification]
+    [cancelMutation]
   );
 
   const handleClose = useCallback(
@@ -246,25 +340,13 @@ const ScmPurchaseOrderPage: React.FC = () => {
         message: `确定要关闭采购订单 "${order.order_number}" 吗？`,
         onConfirm: async () => {
           try {
-            await scmApi.purchaseOrders.close(order.id);
-            addNotification({
-              type: 'success',
-              title: '关闭成功',
-              message: '采购订单已关闭',
-            });
-            loadOrders();
-          } catch (error: unknown) {
-            apiLogger.error('关闭失败:', error);
-            addNotification({
-              type: 'error',
-              title: '关闭失败',
-              message: '关闭采购订单失败',
-            });
+            await closeMutation.mutateAsync(order.id);
+          } catch {
           }
         },
       });
     },
-    [addNotification]
+    [closeMutation]
   );
 
   const resetForm = () => {
@@ -290,119 +372,133 @@ const ScmPurchaseOrderPage: React.FC = () => {
     setConfirmDialogOpen(true);
   };
 
-  // 表格列定义
-  const columns: ColumnDef<PurchaseOrder>[] = [
-    {
-      id: 'order_number',
-      label: '订单号',
-      render: (row) => <Box sx={{ fontWeight: 500 }}>{row.order_number}</Box>,
-    },
-    {
-      id: 'supplier_id',
-      label: '供应商ID',
-    },
-    {
-      id: 'order_date',
-      label: '订单日期',
-      render: (row) => (
-        <Box sx={{ fontSize: '0.875rem' }}>
-          {new Date(row.order_date).toLocaleDateString('zh-CN')}
-        </Box>
-      ),
-    },
-    {
-      id: 'delivery_date',
-      label: '交付日期',
-      render: (row) => (
-        <Box sx={{ fontSize: '0.875rem' }}>
-          {row.delivery_date ? new Date(row.delivery_date).toLocaleDateString('zh-CN') : '-'}
-        </Box>
-      ),
-    },
-    {
-      id: 'total_amount',
-      label: '总金额',
-      align: 'right',
-      render: (row) => <Box>{row.total_amount || 0}</Box>,
-    },
-    {
-      id: 'status',
-      label: '状态',
-      render: (row) => (
-        <Chip
-          size='small'
-          label={row.status}
-          variant='outlined'
-        />
-      ),
-    },
-    {
-      id: 'remarks',
-      label: '备注',
-      render: (row) => <Box sx={{ fontSize: '0.875rem' }}>{row.remarks || '-'}</Box>,
-    },
-    {
-      id: 'status_actions',
-      label: '状态操作',
-      align: 'center',
-      render: (row) => (
-        <Box sx={{ display: 'flex', gap: 1, flexWrap: 'wrap' }}>
-          {row.status === 'pending' && (
-            <>
-              <Button
-                size='small'
-                color='success'
-                onClick={() => handleApprove(row)}
-                startIcon={<Check size={12} />}
-              >
-                审批
-              </Button>
-              <Button
-                size='small'
-                color='error'
-                onClick={() => handleCancel(row)}
-                startIcon={<XCircle size={12} />}
-              >
-                取消
-              </Button>
-            </>
-          )}
-          {row.status === 'approved' && (
-            <>
-              <Button
-                size='small'
-                color='success'
-                onClick={() => handleConfirm(row)}
-                startIcon={<Check size={12} />}
-              >
-                确认
-              </Button>
-              <Button
-                size='small'
-                color='error'
-                onClick={() => handleCancel(row)}
-                startIcon={<XCircle size={12} />}
-              >
-                取消
-              </Button>
-            </>
-          )}
-          {row.status === 'confirmed' && (
-            <Button
-              size='small'
-              color='warning'
-              onClick={() => handleClose(row)}
-              startIcon={<Lock size={12} />}
-            >
-              关闭
-            </Button>
-          )}
-        </Box>
-      ),
-    },
-  ];
+  const isMutationPending =
+    createMutation.isPending ||
+    updateMutation.isPending ||
+    approveMutation.isPending ||
+    confirmMutation.isPending ||
+    cancelMutation.isPending ||
+    closeMutation.isPending;
 
-  // 行操作
+  const columns: ColumnDef<PurchaseOrder>[] = useMemo(
+    () => [
+      {
+        id: 'order_number',
+        label: '订单号',
+        render: (row) => <Box sx={{ fontWeight: 500 }}>{row.order_number}</Box>,
+      },
+      {
+        id: 'supplier_id',
+        label: '供应商ID',
+      },
+      {
+        id: 'order_date',
+        label: '订单日期',
+        render: (row) => (
+          <Box sx={{ fontSize: '0.875rem' }}>
+            {new Date(row.order_date).toLocaleDateString('zh-CN')}
+          </Box>
+        ),
+      },
+      {
+        id: 'delivery_date',
+        label: '交付日期',
+        render: (row) => (
+          <Box sx={{ fontSize: '0.875rem' }}>
+            {row.delivery_date ? new Date(row.delivery_date).toLocaleDateString('zh-CN') : '-'}
+          </Box>
+        ),
+      },
+      {
+        id: 'total_amount',
+        label: '总金额',
+        align: 'right',
+        render: (row) => <Box>{row.total_amount || 0}</Box>,
+      },
+      {
+        id: 'status',
+        label: '状态',
+        render: (row) => (
+          <Chip
+            size='small'
+            label={row.status}
+            variant='outlined'
+          />
+        ),
+      },
+      {
+        id: 'remarks',
+        label: '备注',
+        render: (row) => <Box sx={{ fontSize: '0.875rem' }}>{row.remarks || '-'}</Box>,
+      },
+      {
+        id: 'status_actions',
+        label: '状态操作',
+        align: 'center',
+        render: (row) => (
+          <Box sx={{ display: 'flex', gap: 1, flexWrap: 'wrap' }}>
+            {row.status === 'pending' && (
+              <>
+                <Button
+                  size='small'
+                  color='success'
+                  onClick={() => handleApprove(row)}
+                  startIcon={<Check size={12} />}
+                  disabled={approveMutation.isPending}
+                >
+                  审批
+                </Button>
+                <Button
+                  size='small'
+                  color='error'
+                  onClick={() => handleCancel(row)}
+                  startIcon={<XCircle size={12} />}
+                  disabled={cancelMutation.isPending}
+                >
+                  取消
+                </Button>
+              </>
+            )}
+            {row.status === 'approved' && (
+              <>
+                <Button
+                  size='small'
+                  color='success'
+                  onClick={() => handleConfirm(row)}
+                  startIcon={<Check size={12} />}
+                  disabled={confirmMutation.isPending}
+                >
+                  确认
+                </Button>
+                <Button
+                  size='small'
+                  color='error'
+                  onClick={() => handleCancel(row)}
+                  startIcon={<XCircle size={12} />}
+                  disabled={cancelMutation.isPending}
+                >
+                  取消
+                </Button>
+              </>
+            )}
+            {row.status === 'confirmed' && (
+              <Button
+                size='small'
+                color='warning'
+                onClick={() => handleClose(row)}
+                startIcon={<Lock size={12} />}
+                disabled={closeMutation.isPending}
+              >
+                关闭
+              </Button>
+            )}
+          </Box>
+        ),
+      },
+    ],
+    [handleApprove, handleConfirm, handleCancel, handleClose, approveMutation.isPending, confirmMutation.isPending, cancelMutation.isPending, closeMutation.isPending]
+  );
+
   const rowActions = [
     {
       label: '编辑',
@@ -424,7 +520,7 @@ const ScmPurchaseOrderPage: React.FC = () => {
         subtitle=''
         columns={columns}
         data={orders}
-        loading={loading}
+        loading={loading || isMutationPending}
         pagination={{
           page: currentPage - 1,
           pageSize,
@@ -447,7 +543,7 @@ const ScmPurchaseOrderPage: React.FC = () => {
           },
         ]}
         rowActions={rowActions}
-        onRefresh={loadOrders}
+        onRefresh={() => queryClient.invalidateQueries({ queryKey: ['scm-purchase-orders'] })}
         emptyMessage='暂无采购订单数据'
       />
 
@@ -533,6 +629,7 @@ const ScmPurchaseOrderPage: React.FC = () => {
               <Button
                 type='submit'
                 variant='contained'
+                disabled={createMutation.isPending || updateMutation.isPending}
               >
                 {isEditing ? '更新' : '保存'}
               </Button>

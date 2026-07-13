@@ -2,7 +2,7 @@ import React, { useEffect, useState, useMemo, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Users, UserPlus, GraduationCap, Award, ArrowRight } from 'lucide-react';
 import { apiLogger } from '@/utils/logger';
-import { useAppStore } from '@/store';
+import { useNotificationStore } from '@/store';
 import BarChartComponent from '../../components/charts/BarChart';
 import LineChartComponent from '../../components/charts/LineChart';
 import PieChartComponent from '../../components/charts/PieChart';

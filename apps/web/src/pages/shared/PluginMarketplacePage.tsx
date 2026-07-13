@@ -37,7 +37,7 @@ import { PluginCard, PluginCategoryNav } from '@/components/plugin';
 import type { Plugin, PluginCategory } from '@/api/plugin';
 import { getPluginCategories, listPlugins, getMarketplaceSummary } from '@/api/plugin';
 import { usePluginStore } from '@/store/pluginStore';
-import { useAppStore } from '@/store';
+import { useNotificationStore } from '@/store';
 import { logger } from '@/utils/logger';
 import { PLUGIN_PATHS } from '@/modules/plugin/config';
 
@@ -47,7 +47,7 @@ type ViewMode = 'grid' | 'list';
 const PluginMarketplacePage: React.FC = () => {
   const navigate = useNavigate();
   const { healthStatus, fetchHealthStatus } = usePluginStore();
-  const addNotification = useAppStore((state) => state.addNotification);
+  const addNotification = useNotificationStore((state) => state.addNotification);
 
   const [plugins, setPlugins] = useState<Plugin[]>([]);
   const [categories, setCategories] = useState<PluginCategory[]>([]);

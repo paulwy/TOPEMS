@@ -27,6 +27,12 @@ interface ListSearchBarProps {
   filtersValue?: Record<string, any>;
   onFilterChange?: (filters: Record<string, any>) => void;
   onRefresh?: () => void;
+  quickFilters?: Array<{
+    label: string;
+    filters: Record<string, any>;
+    searchValue?: string;
+  }>;
+  onQuickFilter?: (quickFilter: { filters: Record<string, any>; searchValue?: string }) => void;
 }
 
 export const ListSearchBar: React.FC<ListSearchBarProps> = ({
@@ -38,6 +44,8 @@ export const ListSearchBar: React.FC<ListSearchBarProps> = ({
   filters,
   onFilterChange,
   onRefresh,
+  quickFilters,
+  onQuickFilter,
 }) => {
   const renderFilter = (filter: FilterConfig) => {
     const filterValue = filter.value || (filter.type === 'multiselect' ? [] : '');
@@ -199,6 +207,25 @@ export const ListSearchBar: React.FC<ListSearchBarProps> = ({
       )}
 
       {filters?.map((filter) => renderFilter(filter))}
+
+      {quickFilters?.map((quickFilter, index) => (
+        <button
+          key={index}
+          onClick={() => onQuickFilter?.(quickFilter)}
+          style={{
+            padding: '6px 12px',
+            borderRadius: '4px',
+            border: '1px solid #e0e0e0',
+            backgroundColor: '#f5f5f5',
+            cursor: 'pointer',
+            fontSize: '12px',
+            fontWeight: 500,
+            color: '#333',
+          }}
+        >
+          {quickFilter.label}
+        </button>
+      ))}
 
       {onRefresh && (
         <Tooltip title='刷新'>

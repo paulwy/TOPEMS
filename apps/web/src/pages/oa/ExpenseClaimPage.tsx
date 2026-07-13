@@ -27,7 +27,7 @@ import {
 import React, { useState, useMemo } from 'react';
 import { Plus, Eye, Filter, CheckSquare, XCircle, X } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
-import { useAppStore } from '../../store';
+import { useNotificationStore } from '@/store';
 import { PageContainer, CurrencyField } from '@/components/common';
 
 interface ExpenseClaim {
@@ -53,7 +53,7 @@ const EXPENSE_CATEGORIES = ['差旅费', '办公费', '招待费', '培训费', 
 
 const ExpenseClaimPage: React.FC = () => {
   const navigate = useNavigate();
-  const addNotification = useAppStore((state) => state.addNotification);
+  const addNotification = useNotificationStore((state) => state.addNotification);
 
   const [showModal, setShowModal] = useState(false);
   const [currentModalType, setCurrentModalType] = useState<ModalType>('create');

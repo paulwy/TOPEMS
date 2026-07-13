@@ -1,4 +1,4 @@
-import React, { useState, useCallback, useEffect } from 'react';
+import React, { useState, useCallback } from 'react';
 import {
   Box,
   Typography,
@@ -18,6 +18,7 @@ import {
   DialogActions,
   MenuItem,
 } from '@mui/material';
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import {
   Home,
   ListTodo,
@@ -43,7 +44,7 @@ import {
   MobileCard,
   MobileButton,
 } from '@/components/mobile';
-import { useAppStore } from '@/store';
+import { useNotificationStore, useAuthStore } from '@/store';
 import {
   mobileApi,
   type AttendanceStats,
@@ -56,13 +57,9 @@ import { MOBILE_PATHS } from '@/modules/mobile/config';
 const MobileAttendancePage: React.FC = () => {
   const theme = useTheme();
   const navigate = useNavigate();
-  const { user, addNotification } = useAppStore();
+  const { user } = useAuthStore();
+  const { addNotification } = useNotificationStore();
   const [activeTab, setActiveTab] = useState(0);
-  const [loading, setLoading] = useState(true);
-  const [attendanceStats, setAttendanceStats] = useState<AttendanceStats | null>(null);
-  const [records, setRecords] = useState<AttendanceRecord[]>([]);
-  const [leaves, setLeaves] = useState<LeaveApplication[]>([]);
-  const [checkingIn, setCheckingIn] = useState(false);
   const [leaveDialogOpen, setLeaveDialogOpen] = useState(false);
   const [leaveForm, setLeaveForm] = useState({
     leave_type: 'annual' as LeaveApplication['leave_type'],
@@ -71,114 +68,154 @@ const MobileAttendancePage: React.FC = () => {
     reason: '',
   });
 
+  const queryClient = useQueryClient();
   const tabs = ['打卡', '记录', '请假'];
 
-  const loadData = useCallback(async () => {
-    setLoading(true);
-    try {
-      const [statsRes, recordsRes, leavesRes] = await Promise.all([
-        mobileApi.getAttendanceStats(),
-        mobileApi.listAttendanceRecords({ page: 1, pagesize: 20 }),
-        mobileApi.listLeaveApplications({ page: 1, pagesize: 20 }),
-      ]);
+  const statsQuery = useQuery({
+    queryKey: ['mobile-attendance-stats'],
+    queryFn: async () => {
+      const res = await mobileApi.getAttendanceStats();
+      return res.data ?? null;
+    },
+    staleTime: 5 * 60 * 1000,
+    retry: 2,
+  });
 
-      setAttendanceStats(statsRes.data ?? null);
-      setRecords(recordsRes.data?.items || []);
-      setLeaves(leavesRes.data?.items || []);
-    } catch (err) {
-      apiLogger.error('加载考勤数据失败:', err);
-    } finally {
-      setLoading(false);
-    }
-  }, []);
+  const recordsQuery = useQuery({
+    queryKey: ['mobile-attendance-records'],
+    queryFn: async () => {
+      const res = await mobileApi.listAttendanceRecords({ page: 1, pagesize: 20 });
+      return res.data?.items || [];
+    },
+    staleTime: 5 * 60 * 1000,
+    retry: 2,
+  });
 
-  useEffect(() => {
-    loadData();
-  }, [loadData]);
+  const leavesQuery = useQuery({
+    queryKey: ['mobile-leave-applications'],
+    queryFn: async () => {
+      const res = await mobileApi.listLeaveApplications({ page: 1, pagesize: 20 });
+      return res.data?.items || [];
+    },
+    staleTime: 5 * 60 * 1000,
+    retry: 2,
+  });
 
-  const handleRefresh = useCallback(async () => {
-    await loadData();
-  }, [loadData]);
+  const loading = statsQuery.isLoading || recordsQuery.isLoading || leavesQuery.isLoading;
+  const attendanceStats = statsQuery.data ?? null;
+  const records = recordsQuery.data || [];
+  const leaves = leavesQuery.data || [];
 
-  const handleTabChange = (_event: React.SyntheticEvent, newValue: number) => {
-    setActiveTab(newValue);
-  };
-
-  const handleCheckIn = async () => {
-    if (attendanceStats?.today_status !== 'not_checked_in') return;
-    setCheckingIn(true);
-    try {
+  const checkInMutation = useMutation({
+    mutationFn: async () => {
       const result = await mobileApi.checkIn({ lat: 0, lng: 0 });
-      const newStats: AttendanceStats = {
-        ...attendanceStats!,
-        today_status: 'checked_in',
-        today_check_in: result.data?.check_in_time,
-      };
-      setAttendanceStats(newStats);
+      return result.data;
+    },
+    onMutate: async () => {
+      await queryClient.cancelQueries({ queryKey: ['mobile-attendance-stats'] });
+      const previousStats = queryClient.getQueryData<AttendanceStats | null>(['mobile-attendance-stats']);
+      if (previousStats) {
+        queryClient.setQueryData(['mobile-attendance-stats'], {
+          ...previousStats,
+          today_status: 'checked_in',
+        } as AttendanceStats);
+      }
+      return { previousStats };
+    },
+    onSuccess: (data) => {
+      queryClient.setQueryData<AttendanceStats | null>(['mobile-attendance-stats'], (old) => {
+        if (!old) return old;
+        return {
+          ...old,
+          today_status: 'checked_in',
+          today_check_in: data?.check_in_time,
+        };
+      });
       addNotification({
         title: '打卡成功',
         message: '上班打卡成功，祝您工作顺利！',
         type: 'success',
       });
-      loadData();
-    } catch (err) {
+    },
+    onError: (err, _, context) => {
+      if (context?.previousStats) {
+        queryClient.setQueryData(['mobile-attendance-stats'], context.previousStats);
+      }
       apiLogger.error('打卡失败:', err);
       addNotification({
         title: '打卡失败',
         message: '打卡失败，请稍后重试',
         type: 'error',
       });
-    } finally {
-      setCheckingIn(false);
-    }
-  };
+    },
+    onSettled: () => {
+      queryClient.invalidateQueries({ queryKey: ['mobile-attendance-stats'] });
+      queryClient.invalidateQueries({ queryKey: ['mobile-attendance-records'] });
+    },
+  });
 
-  const handleCheckOut = async () => {
-    if (attendanceStats?.today_status !== 'checked_in') return;
-    setCheckingIn(true);
-    try {
+  const checkOutMutation = useMutation({
+    mutationFn: async () => {
       const result = await mobileApi.checkOut({ lat: 0, lng: 0 });
-      const newStats: AttendanceStats = {
-        ...attendanceStats!,
-        today_status: 'checked_out',
-        today_check_out: result.data?.check_out_time,
-      };
-      setAttendanceStats(newStats);
+      return result.data;
+    },
+    onMutate: async () => {
+      await queryClient.cancelQueries({ queryKey: ['mobile-attendance-stats'] });
+      const previousStats = queryClient.getQueryData<AttendanceStats | null>(['mobile-attendance-stats']);
+      if (previousStats) {
+        queryClient.setQueryData(['mobile-attendance-stats'], {
+          ...previousStats,
+          today_status: 'checked_out',
+        } as AttendanceStats);
+      }
+      return { previousStats };
+    },
+    onSuccess: (data) => {
+      queryClient.setQueryData<AttendanceStats | null>(['mobile-attendance-stats'], (old) => {
+        if (!old) return old;
+        return {
+          ...old,
+          today_status: 'checked_out',
+          today_check_out: data?.check_out_time,
+        };
+      });
       addNotification({
         title: '打卡成功',
         message: '下班打卡成功，辛苦了！',
         type: 'success',
       });
-      loadData();
-    } catch (err) {
+    },
+    onError: (err, _, context) => {
+      if (context?.previousStats) {
+        queryClient.setQueryData(['mobile-attendance-stats'], context.previousStats);
+      }
       apiLogger.error('打卡失败:', err);
       addNotification({
         title: '打卡失败',
         message: '打卡失败，请稍后重试',
         type: 'error',
       });
-    } finally {
-      setCheckingIn(false);
-    }
-  };
+    },
+    onSettled: () => {
+      queryClient.invalidateQueries({ queryKey: ['mobile-attendance-stats'] });
+      queryClient.invalidateQueries({ queryKey: ['mobile-attendance-records'] });
+    },
+  });
 
-  const handleSubmitLeave = async () => {
-    if (!leaveForm.start_date || !leaveForm.end_date || !leaveForm.reason) {
-      addNotification({
-        title: '请填写完整',
-        message: '请填写完整的请假信息',
-        type: 'warning',
-      });
-      return;
-    }
-
-    try {
-      await mobileApi.applyLeave({
-        leave_type: leaveForm.leave_type,
-        start_date: leaveForm.start_date,
-        end_date: leaveForm.end_date,
-        reason: leaveForm.reason,
-      });
+  const applyLeaveMutation = useMutation({
+    mutationFn: async (data: {
+      leave_type: LeaveApplication['leave_type'];
+      start_date: string;
+      end_date: string;
+      reason: string;
+    }) => {
+      const res = await mobileApi.applyLeave(data);
+      if (!res.success) {
+        throw new Error('提交失败');
+      }
+      return res.data;
+    },
+    onSuccess: () => {
       setLeaveDialogOpen(false);
       setLeaveForm({
         leave_type: 'annual',
@@ -191,16 +228,53 @@ const MobileAttendancePage: React.FC = () => {
         message: '请假申请已提交，请等待审批',
         type: 'success',
       });
-      loadData();
-    } catch (err) {
+      queryClient.invalidateQueries({ queryKey: ['mobile-leave-applications'] });
+    },
+    onError: (err) => {
       apiLogger.error('提交请假申请失败:', err);
       addNotification({
         title: '提交失败',
         message: '提交失败，请稍后重试',
         type: 'error',
       });
-    }
+    },
+  });
+
+  const handleRefresh = useCallback(async () => {
+    await Promise.all([
+      statsQuery.refetch(),
+      recordsQuery.refetch(),
+      leavesQuery.refetch(),
+    ]);
+  }, [statsQuery, recordsQuery, leavesQuery]);
+
+  const handleTabChange = (_event: React.SyntheticEvent, newValue: number) => {
+    setActiveTab(newValue);
   };
+
+  const handleCheckIn = () => {
+    if (attendanceStats?.today_status !== 'not_checked_in') return;
+    checkInMutation.mutate();
+  };
+
+  const handleCheckOut = () => {
+    if (attendanceStats?.today_status !== 'checked_in') return;
+    checkOutMutation.mutate();
+  };
+
+  const handleSubmitLeave = () => {
+    if (!leaveForm.start_date || !leaveForm.end_date || !leaveForm.reason) {
+      addNotification({
+        title: '请填写完整',
+        message: '请填写完整的请假信息',
+        type: 'warning',
+      });
+      return;
+    }
+    applyLeaveMutation.mutate(leaveForm);
+  };
+
+  const checkingIn = checkInMutation.isPending || checkOutMutation.isPending;
 
   const getStatusLabel = (status: string) => {
     const map: Record<string, string> = {
@@ -790,6 +864,7 @@ const MobileAttendancePage: React.FC = () => {
           <MobileButton
             variant='contained'
             onClick={handleSubmitLeave}
+            disabled={applyLeaveMutation.isPending}
           >
             提交申请
           </MobileButton>

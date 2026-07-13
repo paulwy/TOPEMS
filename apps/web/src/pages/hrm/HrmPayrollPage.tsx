@@ -819,6 +819,15 @@ const HrmPayrollPage: React.FC = () => {
           }
           expandable={(row) => (selectedRunId === row.id ? renderPayrollItemDetail(row.id) : null)}
           onRowClick={(row) => setSelectedRunId(selectedRunId === row.id ? null : row.id)}
+          exportable
+          exportFileName='工资发放批次'
+          persistFilters
+          persistSearch
+          emptyActionButton={{
+            label: '发起薪资核算',
+            icon: <Plus size={16} />,
+            onClick: handleCreatePayroll,
+          }}
         />
       )}
 
@@ -848,6 +857,10 @@ const HrmPayrollPage: React.FC = () => {
               </Button>
             </Box>
           }
+          exportable
+          exportFileName='调薪记录'
+          persistFilters
+          persistSearch
         />
       )}
 

@@ -10,7 +10,7 @@ import ProductPage from '../pdm/ProductPage';
 import PdmProcessPage from '../pdm/PdmProcessPage';
 import PdmVersionPage from '../pdm/PdmVersionPage';
 import { pdmApi } from '@/api/pdm';
-import { useAppStore } from '@/store';
+import { useNotificationStore, useAuthStore } from '@/store';
 
 vi.mock('@/api/pdm', () => ({
   pdmApi: {
@@ -72,19 +72,24 @@ vi.mock('@/api/pdm', () => ({
 }));
 
 vi.mock('@/store', () => ({
-  useAppStore: vi.fn((selector?: any) =>
+  useNotificationStore: vi.fn((selector?: any) =>
     selector
       ? selector({
           addNotification: vi.fn(),
           notifications: [],
-          user: { permissions: ['pdm:read'] },
-          theme: 'light',
         })
       : {
           addNotification: vi.fn(),
           notifications: [],
-          user: { permissions: ['pdm:read'] },
-          theme: 'light',
+        }
+  ),
+  useAuthStore: vi.fn((selector?: any) =>
+    selector
+      ? selector({
+          user: null,
+        })
+      : {
+          user: null,
         }
   ),
 }));

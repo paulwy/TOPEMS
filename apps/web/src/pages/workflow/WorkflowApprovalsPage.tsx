@@ -27,17 +27,20 @@ import {
   FileText,
   AlertCircle,
 } from 'lucide-react';
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 
-import { useAppStore } from '../../store';
+import { useNotificationStore } from '../../store';
 import { ListPageTemplate, type ColumnDef } from '@/components/templates';
 import { extractErrorMessage } from '@/utils/errors';
 import { PageContainer, ConfirmDialog } from '@/components/common';
 import { designTokens } from '@/theme/tokens';
 import { WORKFLOW_PATHS } from '@/modules/workflow/config';
+import { approvalTaskApi } from '@/api/workflow/approval';
+import type { ApiResponse } from '@/api/client';
 
 const ct = designTokens.colors;
 
-type ApprovalStatus = 'pending' | 'approved' | 'rejected';
+type ApprovalStatus = 'pending' | 'approved' | 'rejected' | 'claimed';
 type ApprovalPriority = 'high' | 'medium' | 'low';
 type TabType = 'pending' | 'approved' | 'initiated' | 'cc';
 
@@ -55,128 +58,16 @@ interface ApprovalTask {
   nodeName: string;
 }
 
-const MOCK_TASKS: ApprovalTask[] = [
-  {
-    id: 'task-001',
-    title: '2024年度采购计划审批',
-    workflowName: '采购审批流程',
-    workflowType: '采购管理',
-    initiator: '张三',
-    receivedAt: '2024-01-15 09:30:00',
-    priority: 'high',
-    status: 'pending',
-    instanceId: 'inst-001',
-    nodeName: '部门经理审批',
-  },
-  {
-    id: 'task-002',
-    title: '员工李四年假申请',
-    workflowName: '请假审批流程',
-    workflowType: '人事管理',
-    initiator: '李四',
-    receivedAt: '2024-01-15 10:15:00',
-    priority: 'medium',
-    status: 'pending',
-    instanceId: 'inst-002',
-    nodeName: '直属上级审批',
-  },
-  {
-    id: 'task-003',
-    title: '项目启动经费申请',
-    workflowName: '费用报销流程',
-    workflowType: '财务管理',
-    initiator: '王五',
-    receivedAt: '2024-01-14 14:20:00',
-    priority: 'high',
-    status: 'pending',
-    instanceId: 'inst-003',
-    nodeName: '财务主管审批',
-  },
-  {
-    id: 'task-004',
-    title: '办公设备采购申请',
-    workflowName: '采购审批流程',
-    workflowType: '采购管理',
-    initiator: '赵六',
-    receivedAt: '2024-01-14 16:45:00',
-    priority: 'low',
-    status: 'pending',
-    instanceId: 'inst-004',
-    nodeName: '行政主管审批',
-  },
-  {
-    id: 'task-005',
-    title: '2024年Q1市场预算审批',
-    workflowName: '预算审批流程',
-    workflowType: '财务管理',
-    initiator: '钱七',
-    receivedAt: '2024-01-13 11:00:00',
-    priority: 'high',
-    status: 'approved',
-    instanceId: 'inst-005',
-    nodeName: '总经理审批',
-  },
-  {
-    id: 'task-006',
-    title: '新员工入职审批',
-    workflowName: '入职审批流程',
-    workflowType: '人事管理',
-    initiator: '孙八',
-    receivedAt: '2024-01-13 09:30:00',
-    priority: 'medium',
-    status: 'approved',
-    instanceId: 'inst-006',
-    nodeName: 'HR总监审批',
-  },
-  {
-    id: 'task-007',
-    title: '差旅费用报销',
-    workflowName: '费用报销流程',
-    workflowType: '财务管理',
-    initiator: '周九',
-    receivedAt: '2024-01-12 15:30:00',
-    priority: 'medium',
-    status: 'rejected',
-    instanceId: 'inst-007',
-    nodeName: '财务主管审批',
-  },
-  {
-    id: 'task-008',
-    title: '合同续签审批',
-    workflowName: '合同审批流程',
-    workflowType: '法务管理',
-    initiator: '吴十',
-    receivedAt: '2024-01-12 10:00:00',
-    priority: 'high',
-    status: 'pending',
-    instanceId: 'inst-008',
-    nodeName: '法务总监审批',
-  },
-  {
-    id: 'task-009',
-    title: '系统升级变更申请',
-    workflowName: '变更管理流程',
-    workflowType: 'IT管理',
-    initiator: '郑十一',
-    receivedAt: '2024-01-11 14:00:00',
-    priority: 'low',
-    status: 'approved',
-    instanceId: 'inst-009',
-    nodeName: 'IT经理审批',
-  },
-  {
-    id: 'task-010',
-    title: '加班申请审批',
-    workflowName: '加班审批流程',
-    workflowType: '人事管理',
-    initiator: '冯十二',
-    receivedAt: '2024-01-11 18:30:00',
-    priority: 'low',
-    status: 'rejected',
-    instanceId: 'inst-010',
-    nodeName: '部门经理审批',
-  },
-];
+interface ApprovalTaskApiItem {
+  id: string;
+  task_name: string;
+  workflow_name: string;
+  initiator_id: string;
+  status: string;
+  node_name: string;
+  created_at: string;
+  priority?: string;
+}
 
 const PRIORITY_LABELS: Record<ApprovalPriority, string> = {
   high: '高',
@@ -194,12 +85,14 @@ const STATUS_LABELS: Record<ApprovalStatus, string> = {
   pending: '待审批',
   approved: '已通过',
   rejected: '已驳回',
+  claimed: '已认领',
 };
 
-const STATUS_COLORS: Record<ApprovalStatus, 'warning' | 'success' | 'error'> = {
+const STATUS_COLORS: Record<ApprovalStatus, 'warning' | 'success' | 'error' | 'info'> = {
   pending: 'warning',
   approved: 'success',
   rejected: 'error',
+  claimed: 'info',
 };
 
 const WORKFLOW_TYPE_COLORS: Record<string, string> = {
@@ -211,11 +104,10 @@ const WORKFLOW_TYPE_COLORS: Record<string, string> = {
 };
 
 export const WorkflowApprovalsPage: React.FC = () => {
-  const addNotification = useAppStore((state) => state.addNotification);
+  const addNotification = useNotificationStore((state) => state.addNotification);
+  const queryClient = useQueryClient();
 
   const [activeTab, setActiveTab] = useState<TabType>('pending');
-  const [tasks, setTasks] = useState<ApprovalTask[]>(MOCK_TASKS);
-  const [loading, setLoading] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
   const [statusFilter, setStatusFilter] = useState<string>('all');
   const [priorityFilter, setPriorityFilter] = useState<string>('all');
@@ -225,25 +117,126 @@ export const WorkflowApprovalsPage: React.FC = () => {
   const [rejectDialogOpen, setRejectDialogOpen] = useState(false);
   const [rejectReason, setRejectReason] = useState('');
   const [selectedTask, setSelectedTask] = useState<ApprovalTask | null>(null);
-  const [actionLoading, setActionLoading] = useState(false);
+
+  const statusParam = activeTab === 'pending' ? 'pending' : activeTab === 'approved' ? undefined : undefined;
+
+  const { data: tasks = [], isLoading: loading, error } = useQuery({
+    queryKey: ['workflow-approvals', statusParam, page, pageSize],
+    queryFn: async () => {
+      const params = {
+        page,
+        page_size: pageSize,
+        status: statusParam,
+      };
+      const res = await approvalTaskApi.listApprovalTasks(params);
+      const apiRes = res as unknown as ApiResponse<{ items: ApprovalTaskApiItem[]; total: number }>;
+
+      if (apiRes.success && apiRes.data) {
+        return apiRes.data.items.map((item: ApprovalTaskApiItem) => ({
+          id: item.id,
+          title: item.task_name,
+          workflowName: item.workflow_name || '工作流',
+          workflowType: '工作流管理',
+          initiator: item.initiator_id || '未知用户',
+          receivedAt: item.created_at || '',
+          priority: (item.priority as ApprovalPriority) || 'medium',
+          status: (item.status as ApprovalStatus) || 'pending',
+          instanceId: item.id,
+          nodeName: item.node_name || '审批节点',
+        }));
+      }
+      return [];
+    },
+    staleTime: 5 * 60 * 1000,
+  });
+
+  const approveMutation = useMutation({
+    mutationFn: async (taskId: string) => {
+      const res = await approvalTaskApi.approveTask(taskId, { comment: '' });
+      return res;
+    },
+    onMutate: async (taskId) => {
+      await queryClient.cancelQueries({ queryKey: ['workflow-approvals'] });
+      const previousTasks = queryClient.getQueryData<ApprovalTask[]>(['workflow-approvals']);
+      queryClient.setQueryData<ApprovalTask[]>(['workflow-approvals'], (old) =>
+        old ? old.map((t: ApprovalTask) => (t.id === taskId ? { ...t, status: 'approved' as const } : t)) : []
+      );
+      return { previousTasks };
+    },
+    onError: (_err, _id, context) => {
+      if (context?.previousTasks) {
+        queryClient.setQueryData(['workflow-approvals'], context.previousTasks);
+      }
+      addNotification({
+        title: '操作失败',
+        message: extractErrorMessage(_err, '审批操作失败'),
+        type: 'error',
+      });
+    },
+    onSuccess: (_data, taskId) => {
+      const task = tasks.find((t: ApprovalTask) => t.id === taskId);
+      addNotification({
+        title: '审批成功',
+        message: `已通过「${task?.title || ''}」的审批`,
+        type: 'success',
+      });
+      queryClient.invalidateQueries({ queryKey: ['workflow-approvals'] });
+    },
+  });
+
+  const rejectMutation = useMutation({
+    mutationFn: async ({ taskId, reason }: { taskId: string; reason: string }) => {
+      const res = await approvalTaskApi.rejectTask(taskId, { comment: reason });
+      return res;
+    },
+    onMutate: async ({ taskId }) => {
+      await queryClient.cancelQueries({ queryKey: ['workflow-approvals'] });
+      const previousTasks = queryClient.getQueryData<ApprovalTask[]>(['workflow-approvals']);
+      queryClient.setQueryData<ApprovalTask[]>(['workflow-approvals'], (old) =>
+        old ? old.map((t: ApprovalTask) => (t.id === taskId ? { ...t, status: 'rejected' as const } : t)) : []
+      );
+      return { previousTasks };
+    },
+    onError: (_err, _vars, context) => {
+      if (context?.previousTasks) {
+        queryClient.setQueryData(['workflow-approvals'], context.previousTasks);
+      }
+      addNotification({
+        title: '操作失败',
+        message: extractErrorMessage(_err, '驳回操作失败'),
+        type: 'error',
+      });
+    },
+    onSuccess: () => {
+      setRejectDialogOpen(false);
+      setSelectedTask(null);
+      queryClient.invalidateQueries({ queryKey: ['workflow-approvals'] });
+    },
+  });
+
+  const actionLoading = approveMutation.isPending || rejectMutation.isPending;
+
+  const handleRefresh = useCallback(() => {
+    queryClient.invalidateQueries({ queryKey: ['workflow-approvals'] });
+  }, [queryClient]);
 
   const filteredTasks = useMemo(() => {
-    let result = tasks;
+    let result: ApprovalTask[] = tasks;
 
     if (activeTab === 'pending') {
-      result = result.filter((t) => t.status === 'pending');
+      result = result.filter((t: ApprovalTask) => t.status === 'pending' || t.status === 'claimed');
     } else if (activeTab === 'approved') {
-      result = result.filter((t) => t.status === 'approved' || t.status === 'rejected');
+      result = result.filter((t: ApprovalTask) => t.status === 'approved' || t.status === 'rejected');
     } else if (activeTab === 'initiated') {
-      result = result.filter((t) => t.initiator === '当前用户');
+      result = result.filter((t: ApprovalTask) => t.initiator === '当前用户');
     } else if (activeTab === 'cc') {
-      result = result.filter((t) => t.status === 'approved');
+      result = result.filter((t: ApprovalTask) => t.status === 'approved');
     }
 
     if (searchQuery) {
       const query = searchQuery.toLowerCase();
       result = result.filter(
-        (t) =>
+        (t: ApprovalTask) =>
           t.title.toLowerCase().includes(query) ||
           t.workflowName.toLowerCase().includes(query) ||
           t.initiator.toLowerCase().includes(query)
@@ -251,11 +244,11 @@ export const WorkflowApprovalsPage: React.FC = () => {
     }
 
     if (statusFilter !== 'all') {
-      result = result.filter((t) => t.status === statusFilter);
+      result = result.filter((t: ApprovalTask) => t.status === statusFilter);
     }
 
     if (priorityFilter !== 'all') {
-      result = result.filter((t) => t.priority === priorityFilter);
+      result = result.filter((t: ApprovalTask) => t.priority === priorityFilter);
     }
 
     return result;
@@ -269,11 +262,11 @@ export const WorkflowApprovalsPage: React.FC = () => {
   const total = filteredTasks.length;
 
   const stats = useMemo(() => {
-    const pendingCount = tasks.filter((t) => t.status === 'pending').length;
-    const approvedCount = tasks.filter((t) => t.status === 'approved').length;
-    const rejectedCount = tasks.filter((t) => t.status === 'rejected').length;
+    const pendingCount = tasks.filter((t: ApprovalTask) => t.status === 'pending').length;
+    const approvedCount = tasks.filter((t: ApprovalTask) => t.status === 'approved').length;
+    const rejectedCount = tasks.filter((t: ApprovalTask) => t.status === 'rejected').length;
     const timeoutCount = tasks.filter(
-      (t) => t.status === 'pending' && t.priority === 'high'
+      (t: ApprovalTask) => t.status === 'pending' && t.priority === 'high'
     ).length;
 
     return [
@@ -332,27 +325,9 @@ export const WorkflowApprovalsPage: React.FC = () => {
 
   const handleApprove = useCallback(
     (task: ApprovalTask) => {
-      try {
-        setActionLoading(true);
-        setTasks((prev) =>
-          prev.map((t) => (t.id === task.id ? { ...t, status: 'approved' as const } : t))
-        );
-        addNotification({
-          title: '审批成功',
-          message: `已通过「${task.title}」的审批`,
-          type: 'success',
-        });
-      } catch (_err: unknown) {
-        addNotification({
-          title: '操作失败',
-          message: extractErrorMessage(_err, '审批操作失败'),
-          type: 'error',
-        });
-      } finally {
-        setActionLoading(false);
-      }
+      approveMutation.mutate(task.id);
     },
-    [addNotification]
+    [approveMutation]
   );
 
   const handleRejectClick = useCallback((task: ApprovalTask) => {
@@ -363,28 +338,13 @@ export const WorkflowApprovalsPage: React.FC = () => {
 
   const handleRejectConfirm = useCallback(async () => {
     if (!selectedTask) return;
-    try {
-      setActionLoading(true);
-      setTasks((prev) =>
-        prev.map((t) => (t.id === selectedTask.id ? { ...t, status: 'rejected' as const } : t))
-      );
-      addNotification({
-        title: '已驳回',
-        message: `已驳回「${selectedTask.title}」的审批`,
-        type: 'warning',
-      });
-      setRejectDialogOpen(false);
-      setSelectedTask(null);
-    } catch (_err: unknown) {
-      addNotification({
-        title: '操作失败',
-        message: extractErrorMessage(_err, '驳回操作失败'),
-        type: 'error',
-      });
-    } finally {
-      setActionLoading(false);
-    }
-  }, [selectedTask, addNotification]);
+    rejectMutation.mutate({ taskId: selectedTask.id, reason: rejectReason });
+    addNotification({
+      title: '已驳回',
+      message: `已驳回「${selectedTask.title}」的审批`,
+      type: 'warning',
+    });
+  }, [selectedTask, rejectMutation, rejectReason, addNotification]);
 
   const handleViewDetail = useCallback(
     (task: ApprovalTask) => {
@@ -513,7 +473,7 @@ export const WorkflowApprovalsPage: React.FC = () => {
               variant='body2'
               color='text.secondary'
             >
-              {new Date(row.receivedAt).toLocaleString('zh-CN')}
+              {row.receivedAt ? new Date(row.receivedAt).toLocaleString('zh-CN') : '-'}
             </Typography>
           </Stack>
         ),
@@ -543,7 +503,7 @@ export const WorkflowApprovalsPage: React.FC = () => {
               gap: 0.5,
             }}
           >
-            {row.status === 'pending' && (
+            {(row.status === 'pending' || row.status === 'claimed') && (
               <>
                 <Button
                   size='small'
@@ -576,7 +536,7 @@ export const WorkflowApprovalsPage: React.FC = () => {
             >
               <Eye size={16} />
             </IconButton>
-            {row.status === 'pending' && (
+            {(row.status === 'pending' || row.status === 'claimed') && (
               <IconButton
                 size='small'
                 onClick={() => handleTransfer(row)}
@@ -611,6 +571,7 @@ export const WorkflowApprovalsPage: React.FC = () => {
           { label: '待审批', value: 'pending' },
           { label: '已通过', value: 'approved' },
           { label: '已驳回', value: 'rejected' },
+          { label: '已认领', value: 'claimed' },
         ],
       },
       {
@@ -760,7 +721,7 @@ export const WorkflowApprovalsPage: React.FC = () => {
         columns={columns}
         data={pagedTasks}
         loading={loading}
-        error={undefined}
+        error={error ? extractErrorMessage(error, '加载失败') : undefined}
         searchable
         searchPlaceholder='搜索流程名称、发起人...'
         searchValue={searchQuery}
@@ -777,10 +738,7 @@ export const WorkflowApprovalsPage: React.FC = () => {
           total,
           onPageChange: handlePageChange,
         }}
-        onRefresh={() => {
-          setLoading(true);
-          setTimeout(() => setLoading(false), 500);
-        }}
+        onRefresh={handleRefresh}
         emptyMessage='暂无审批任务'
         getRowId={(row) => row.id}
       />

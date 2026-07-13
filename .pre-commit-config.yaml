@@ -1,6 +1,6 @@
 repos:
   - repo: https://github.com/pre-commit/pre-commit-hooks
-    rev: v4.6.0
+    rev: v6.0.0
     hooks:
       - id: trailing-whitespace
         description: "Trim trailing whitespace"
@@ -20,8 +20,8 @@ repos:
         description: "Check that executables have shebangs"
       - id: check-shebang-scripts-are-executable
         description: "Check that scripts with shebangs are executable"
-      - id: check-large-files
-        args: [--maxkb=500]
+      - id: check-added-large-files
+        args: ["--maxkb", "500"]
         exclude: |
           (?x)^(
             database/postgres_data/|
@@ -30,27 +30,27 @@ repos:
         description: "Check for large files (>500KB)"
 
   - repo: https://github.com/psf/black
-    rev: 24.4.2
+    rev: 26.5.1
     hooks:
       - id: black
         description: "Python code formatting"
         language_version: python3
 
   - repo: https://github.com/PyCQA/flake8
-    rev: 7.0.0
+    rev: 7.3.0
     hooks:
       - id: flake8
         description: "Python linting"
         additional_dependencies: [flake8-isort]
 
   - repo: https://github.com/PyCQA/isort
-    rev: 5.13.2
+    rev: 9.0.0b1
     hooks:
       - id: isort
         description: "Python import sorting"
 
   - repo: https://github.com/adrienverge/yamllint
-    rev: v1.35.1
+    rev: v1.38.0
     hooks:
       - id: yamllint
         description: "YAML linting"

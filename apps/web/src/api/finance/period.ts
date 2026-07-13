@@ -3,7 +3,7 @@ import type { ApiResponse } from '../../types/finance';
 
 export const periodApi = {
   getCurrent: (): Promise<ApiResponse<{ period: string; year: number; month: number }>> => {
-    return apiClient.erp.get('/finance/period/current');
+    return apiClient.finance.get('/period/current');
   },
 
   list: (params?: {
@@ -21,19 +21,19 @@ export const periodApi = {
       }[];
     }>
   > => {
-    return apiClient.erp.get('/finance/periods', { params });
+    return apiClient.finance.get('/periods', { params });
   },
 
   open: (period: string): Promise<ApiResponse<void>> => {
-    return apiClient.erp.post('/finance/periods/open', { period });
+    return apiClient.finance.post('/periods/open', { period });
   },
 
   close: (period: string): Promise<ApiResponse<void>> => {
-    return apiClient.erp.post('/finance/periods/close', { period });
+    return apiClient.finance.post('/periods/close', { period });
   },
 
   closePeriodIncome: (period: string): Promise<ApiResponse<{ voucher_id: string }>> => {
-    return apiClient.erp.post('/finance/periods/close-income', {
+    return apiClient.finance.post('/periods/close-income', {
       period,
     });
   },
@@ -45,7 +45,7 @@ export const periodApi = {
       vouchers: { voucher_id: string; description: string }[];
     }>
   > => {
-    return apiClient.erp.post('/finance/periods/year-end-close', {
+    return apiClient.finance.post('/periods/year-end-close', {
       year,
     });
   },

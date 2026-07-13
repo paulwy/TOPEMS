@@ -6,7 +6,7 @@ import { zodResolver } from '@hookform/resolvers/zod';
 import { Eye, EyeOff, Lock, Mail, ArrowLeft, CheckCircle } from 'lucide-react';
 import { authApi } from '@/api/iam';
 import { apiLogger } from '@/utils/logger';
-import { useAppStore } from '@/store';
+import { useNotificationStore } from '@/store';
 
 import {
   Card as MuiCard,
@@ -45,7 +45,7 @@ type ResetPasswordValues = z.infer<typeof resetPasswordSchema>;
 const ForgotPasswordPage: React.FC = () => {
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
-  const addNotification = useAppStore((state) => state.addNotification);
+  const addNotification = useNotificationStore((state) => state.addNotification);
 
   const token = searchParams.get('token');
   const isResetMode = !!token;

@@ -46,7 +46,7 @@ import {
   type CreatePdmDocumentRequest,
   type DocumentSearchParams,
 } from '@/api/pdm/document';
-import { useAppStore } from '@/store';
+import { useNotificationStore } from '@/store';
 import { apiLogger } from '@/utils/logger';
 import {
   ListPageTemplate,
@@ -124,7 +124,7 @@ export const DocumentPage: React.FC = () => {
     description: '',
   });
   const fileInputRef = useRef<HTMLInputElement>(null);
-  const addNotification = useAppStore((state) => state.addNotification);
+  const addNotification = useNotificationStore((state) => state.addNotification);
 
   useEffect(() => {
     loadDocuments();

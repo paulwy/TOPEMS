@@ -21,7 +21,7 @@ import { ListPageTemplate, type ColumnDef } from '@/components/templates';
 import { PageContainer } from '@/components/common';
 import { pdmApi } from '@/api/pdm';
 import type { ProductionStep } from '@/api/pdm';
-import { useAppStore } from '@/store';
+import { useNotificationStore } from '@/store';
 import { designTokens } from '@/theme/tokens';
 
 const ct = designTokens.colors;
@@ -43,7 +43,7 @@ const PdmStepPage: React.FC = () => {
     duration_hours: '',
     equipment_required: '',
   });
-  const addNotification = useAppStore((state) => state.addNotification);
+  const addNotification = useNotificationStore((state) => state.addNotification);
 
   // 分页状态
   const [page, setPage] = useState(0);

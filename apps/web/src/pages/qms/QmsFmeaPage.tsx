@@ -44,7 +44,7 @@ import {
   RefreshCw,
   BarChart3,
 } from 'lucide-react';
-import { useAppStore } from '@/store';
+import { useNotificationStore } from '@/store';
 import * as z from 'zod';
 import { ListPageTemplate, type ColumnDef, type RowAction } from '@/components/templates';
 import { PageContainer } from '@/components/common';
@@ -68,7 +68,7 @@ const QmsFmeaPage: React.FC = () => {
   const [submitting, setSubmitting] = useState(false);
   const [loadingItems, setLoadingItems] = useState(false);
   const [activeTab, setActiveTab] = useState(0);
-  const addNotification = useAppStore((state) => state.addNotification);
+  const addNotification = useNotificationStore((state) => state.addNotification);
 
   const [analyses, setAnalyses] = useState<FmeaAnalysis[]>([]);
 

@@ -39,7 +39,7 @@ import {
 import { ListPageTemplate, type ColumnDef } from '@/components/templates';
 import { PageContainer } from '@/components/common';
 import { rsApi } from '@/api/rs';
-import { useAppStore } from '@/store';
+import { useNotificationStore } from '@/store';
 import type { RsStatistics } from '@/api/rs';
 import { designTokens } from '@/theme/tokens';
 import { logger } from '@/utils/logger';
@@ -63,7 +63,7 @@ interface SettingItem {
 }
 
 const RsSettingsPage: React.FC = () => {
-  const { addNotification } = useAppStore();
+  const { addNotification } = useNotificationStore();
   const [activeTab, setActiveTab] = useState<string>('repo');
   const [repos, setRepos] = useState<RepoConfig[]>([
     {

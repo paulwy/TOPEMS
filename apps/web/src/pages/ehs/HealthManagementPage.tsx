@@ -23,7 +23,7 @@ import type { ColumnDef, RowAction, FilterConfig } from '@/components';
 import { PageContainer } from '@/components/common/PageContainerV2';
 import { ehsApi } from '@/api/ehs';
 import type { HealthRecord } from '@/api/ehs';
-import { useAppStore } from '@/store';
+import { useNotificationStore } from '@/store';
 import { apiLogger } from '@/utils/logger';
 import { designTokens } from '@/theme/tokens';
 
@@ -53,7 +53,7 @@ const HealthManagementPage: React.FC = () => {
     contact_info: '',
     status: 'active' as const,
   });
-  const addNotification = useAppStore((state) => state.addNotification);
+  const addNotification = useNotificationStore((state) => state.addNotification);
 
   useEffect(() => {
     loadRecords();

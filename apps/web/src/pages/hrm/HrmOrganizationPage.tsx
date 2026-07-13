@@ -30,7 +30,7 @@ import {
   type Employee,
   type PaginatedResult,
 } from '@/api/hrm';
-import { useAppStore } from '../../store';
+import { useNotificationStore } from '../../store';
 import {
   TreePageTemplate,
   type TreeNode,
@@ -48,7 +48,7 @@ interface NodeData {
 }
 
 const HrmOrganizationPage: React.FC = () => {
-  const addNotification = useAppStore((state) => state.addNotification);
+  const addNotification = useNotificationStore((state) => state.addNotification);
 
   const [loading, setLoading] = useState(false);
   const [companies, setCompanies] = useState<Company[]>([]);

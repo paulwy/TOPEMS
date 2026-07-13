@@ -33,7 +33,7 @@ import type { ColumnDef } from '@tanstack/react-table';
 import { limsApi } from '@/api/lims';
 import type { InspectionTask, InspectionRecord, InspectionProcess } from '@/api/lims';
 import { apiLogger } from '@/utils/logger';
-import { useAppStore } from '@/store';
+import { useNotificationStore } from '@/store';
 import { DetailPageTemplate, type SectionConfig } from '@/components/templates';
 import { PageContainer } from '@/components/common';
 import { designTokens } from '@/theme/tokens';
@@ -72,7 +72,7 @@ const LimsTaskDetailPage: React.FC = () => {
     conclusion: '',
     inspector: '',
   });
-  const addNotification = useAppStore((state) => state.addNotification);
+  const addNotification = useNotificationStore((state) => state.addNotification);
 
   useEffect(() => {
     if (id) {

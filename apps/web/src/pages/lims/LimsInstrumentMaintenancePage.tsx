@@ -34,7 +34,7 @@ import type { Instrument, MaintenanceRecord } from '@/api/lims';
 import { ListPageTemplate, type ColumnDef } from '@/components/templates';
 import { PageContainer } from '@/components/common';
 import { logger } from '@/utils/logger';
-import { useAppStore } from '@/store';
+import { useNotificationStore } from '@/store';
 import { designTokens } from '@/theme/tokens';
 import { LIMS_PATHS } from '@/modules/lims/config';
 
@@ -59,7 +59,7 @@ const LimsInstrumentMaintenancePage: React.FC = () => {
     cost: '',
     notes: '',
   });
-  const addNotification = useAppStore((state) => state.addNotification);
+  const addNotification = useNotificationStore((state) => state.addNotification);
 
   useEffect(() => {
     if (id) {

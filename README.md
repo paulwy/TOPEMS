@@ -2,9 +2,9 @@
 
 > 统一身份认证与授权管理、文档管理、AI协作、流程自动化、数据分析、质量管理、供应链管理
 
-![Version](https://img.shields.io/badge/version-3.2.0-blue)
+![Version](https://img.shields.io/badge/version-5.14.0-blue)
 ![License](https://img.shields.io/badge/license-MIT-green)
-![Rust](https://img.shields.io/badge/rust-1.76%2B-orange)
+![Rust](https://img.shields.io/badge/rust-1.75-orange)
 ![React](https://img.shields.io/badge/react-19-blue)
 
 ## 🌟 功能特性
@@ -51,6 +51,38 @@
 - 🗄️ **共享Schema** - 跨服务数据统一管理
 - 🚀 **服务整合** - 4组服务已整合为统一服务，降低运维复杂度
 
+## 🛠️ 技术栈
+
+### 前端
+| 技术 | 版本 | 说明 |
+|------|------|------|
+| React | ^19.2.7 | UI 框架 |
+| TypeScript | ^6.0.3 | 类型安全 |
+| Vite | ^8.0.16 | 构建工具 |
+| MUI | ^9.1.1 | UI 组件库 |
+| React Three Fiber | ^8.x | 3D 可视化 |
+| OpenTelemetry | - | 可观测性 |
+
+### 后端
+| 技术 | 版本 | 说明 |
+|------|------|------|
+| Rust | 1.75 | 编程语言 |
+| Axum | ^0.7 | Web 框架 |
+| SQLx | ^0.8 | 数据库访问 |
+| PostgreSQL | ^16 | 主数据库 |
+| Redis | 7+ | 缓存/消息 |
+
+### 桌面端
+| 技术 | 版本 | 说明 |
+|------|------|------|
+| Tauri | 2.0 | 桌面框架 |
+| React | ^19.2.7 | 前端框架 |
+
+### API 路径规范
+所有 API 路径统一为 `/api/core/{service}/v1` 格式，例如：
+- `GET /api/core/erp/v1/orders`
+- `POST /api/core/finance/v1/payments`
+
 ## 📁 项目结构
 
 ```
@@ -63,14 +95,19 @@ topems/
 │   ├── services/                 # 服务文档
 │   └── user/                     # 用户手册
 ├── apps/                          # 前端应用目录
-│   ├── web/                      # Host Shell 应用 (端口 3000)
+│   ├── web/                      # Web 主应用 (端口 3000)
 │   │   ├── src/components/       # 可复用组件
-│   │   ├── src/pages/           # 页面组件
-│   │   ├── src/hooks/           # 自定义 hooks
-│   │   ├── src/api/             # API 客户端
-│   │   └── src/store/           # 状态管理
-│   └── core/                     # Remote Module (端口 3001)
-│       └── src/                 # 可复用组件、stores、API
+│   │   ├── src/pages/            # 页面组件
+│   │   ├── src/hooks/            # 自定义 hooks
+│   │   ├── src/api/              # API 客户端
+│   │   └── src/store/            # 状态管理
+│   ├── desktop/                  # Tauri 桌面应用
+│   │   ├── src/                  # 桌面端前端代码
+│   │   ├── src-tauri/            # Tauri Rust 后端
+│   │   ├── app/                  # 应用资源
+│   │   └── icons/                # 图标资源
+│   └── mobile/                   # 移动端应用 (Expo)
+│       └── src/                  # 移动端代码
 ├── svc/                          # 后端服务 (Rust)
 │   ├── unified-core/            # 统一核心服务 (8000)
 │   ├── mes/                     # 制造执行系统 (8030)
@@ -115,8 +152,8 @@ topems/
 
 ### 系统要求
 
-- **前端**: Node.js 18+, pnpm 8+
-- **后端**: Rust 1.76+, Cargo
+- **前端**: Node.js 20+, pnpm 8+
+- **后端**: Rust 1.75, Cargo
 - **数据库**: PostgreSQL 16+ （本地安装，推荐 Homebrew 或 apt）
 - **缓存**: Redis 7+ （本地安装，可选）
 - **工具**: 可选 Docker（仅用于容器化打包场景）
@@ -201,16 +238,6 @@ pnpm run dev
 
 访问 http://localhost:3000
 
-**Remote Module (核心组件):**
-
-```bash
-cd apps/core
-pnpm install
-pnpm run dev
-```
-
-访问 http://localhost:3001
-
 ### 后端开发
 
 项目采用 Cargo Workspace 架构，所有服务共享依赖。
@@ -273,7 +300,6 @@ curl -s http://localhost:8000/api/plugins/info | python3 -m json.tool
 | 8060-8069 | 分析与扩展服务 | BI, Report, Monitor, Portal |
 | 8000 | 核心服务 | Unified-Core (IAM) |
 | 3000 | 前端 | Host Shell 开发服务器 |
-| 3001 | 前端 | Remote Module 开发服务器 |
 
 ### 服务端口清单
 
@@ -305,7 +331,6 @@ curl -s http://localhost:8000/api/plugins/info | python3 -m json.tool
 | 应用 | 端口 | 路径 | 说明 |
 |------|------|------|------|
 | Host Shell | 3000 | apps/web | 主应用 |
-| Remote Module | 3001 | apps/core | 核心组件模块 |
 
 ### WebSocket 路径映射
 
@@ -680,67 +705,6 @@ bash scripts/start-local.sh
 - **相似度搜索** - 员工/技能匹配
 - **RAG** - 检索增强生成
 
-## 🚀 统一服务管理
-
-### 主脚本
-
-TOPEMS 提供统一的服务管理脚本 `scripts/topems.sh`，简化服务管理操作：
-
-```bash
-# 查看帮助
-./scripts/topems.sh --help
-
-# 服务管理
-./scripts/topems.sh status                    # 查看所有服务状态
-./scripts/topems.sh start <服务>               # 启动单个服务
-./scripts/topems.sh stop <服务>                # 停止单个服务
-./scripts/topems.sh restart <服务>             # 重启单个服务
-./scripts/topems.sh logs <服务> [行数]         # 查看服务日志
-./scripts/topems.sh build <服务>               # 编译单个服务
-
-# 批量操作
-./scripts/topems.sh start-all                  # 启动所有服务（含前端）
-./scripts/topems.sh stop-all                   # 停止所有服务（含前端）
-
-# 开发环境
-./scripts/topems.sh dev                        # 启动 macOS 开发环境
-./scripts/topems.sh install-deps               # 安装所有依赖
-
-# 数据库
-./scripts/topems.sh reset-password             # 重置 admin 密码为 admin123
-./scripts/topems.sh reset-password admin <密码> # 重置指定用户密码
-
-# 部署
-./scripts/topems.sh deploy                     # 一键部署
-```
-
-### 支持的服务
-
-| 服务名 | 说明 | 端口 |
-|--------|------|------|
-| unified-core | 统一核心服务 | 8000 |
-| erp | 企业资源计划 | 8010 |
-| hrm | 人力资源管理 | 8020 |
-| pm | 项目管理 | 8023 |
-| crm | 客户关系管理 | 8029 |
-| mes | 制造执行系统 | 8030 |
-| pdm | 产品数据管理 | 8031 |
-| scm | 供应链管理 | 8040 |
-| wms | 仓库管理 | 8041 |
-| srm | 供应商管理 | 8042 |
-| qms | 质量管理系统 | 8050 |
-| lims | 实验室信息管理 | 8051 |
-| ehs | 环境健康安全 | 8052 |
-| rs | 研发管理 | 8053 |
-| bi | 商业智能 | 8060 |
-| report | 报表服务 | 8061 |
-| monitor | 系统监控 | 8062 |
-| portal | 企业门户 | 8063 |
-| mobile | 移动端服务 | 8070 |
-| gis | 地理信息系统 | 8071 |
-| integration | 系统集成服务 | 8072 |
-| web | 前端应用 | 3000 |
-
 ## 📦 配置文件
 
 ### 前端配置
@@ -761,16 +725,28 @@ TOPEMS 提供统一的服务管理脚本 `scripts/topems.sh`，简化服务管�
 
 ## 🔧 开发命令
 
-### 前端
+### 前端（Web）
 
 ```bash
-npm run dev          # 启动开发服务器
-npm run build        # 构建生产版本
-npm run preview      # 预览生产版本
-npm run lint         # 代码检查
-npm run test         # 运行单元测试
-npm run e2e          # 运行端到端测试
-npm run format       # 代码格式化
+cd apps/web
+pnpm run dev          # 启动开发服务器
+pnpm run build        # 构建生产版本
+pnpm run preview      # 预览生产版本
+pnpm run lint         # 代码检查
+pnpm run test         # 运行单元测试
+pnpm run e2e          # 运行端到端测试
+pnpm run format       # 代码格式化
+```
+
+### 桌面端（Tauri）
+
+```bash
+cd apps/desktop
+pnpm install          # 安装依赖
+pnpm run dev          # 启动开发模式
+pnpm run build        # 构建前端
+pnpm tauri build      # 构建桌面应用（生产版本）
+pnpm tauri dev        # 启动桌面应用开发模式
 ```
 
 ### 后端（Rust）
@@ -797,6 +773,6 @@ MIT License
 
 ---
 
-**最后更新**: 2026-07-06
-**版本**: v3.3.0 (WebSocket统一版)
-**文档版本**: v2.1
+**最后更新**: 2026-07-13
+**版本**: v5.14.0 (正式版)
+**文档版本**: v5.1

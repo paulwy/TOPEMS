@@ -17,7 +17,8 @@ import {
   Button,
 } from '@mui/material';
 import { PageContainer } from '@/components/common';
-import React, { useState, useEffect, useMemo, useCallback } from 'react';
+import React, { useState, useMemo, useCallback } from 'react';
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { designTokens } from '@/theme/tokens';
 import type {
   Equipment,
@@ -28,7 +29,7 @@ import type {
   ListParams,
 } from '@/api/mes';
 import { mesApi } from '@/api/mes';
-import { useAppStore } from '@/store';
+import { useNotificationStore } from '@/store';
 import { LoadingSpinner } from '@topems/shared-components';
 import {
   ListPageTemplate,
@@ -53,19 +54,16 @@ import { apiLogger } from '@/utils/logger';
 const ct = designTokens.colors;
 
 const EquipmentManagementPage: React.FC = () => {
-  const [equipment, setEquipment] = useState<Equipment[]>([]);
-  const [loading, setLoading] = useState(true);
+  const queryClient = useQueryClient();
   const [searchTerm, setSearchTerm] = useState('');
   const [statusFilter, setStatusFilter] = useState<string>('all');
   const [currentPage, setCurrentPage] = useState(1);
   const [pageSize] = useState(10);
-  const [total, setTotal] = useState(0);
   const [showDialog, setShowDialog] = useState(false);
   const [showDetailDialog, setShowDetailDialog] = useState(false);
   const [showMaintenanceDialog, setShowMaintenanceDialog] = useState(false);
   const [selectedEquipment, setSelectedEquipment] = useState<Equipment | null>(null);
   const [selectedIds, setSelectedIds] = useState<string[]>([]);
-  const [statistics, setStatistics] = useState<EquipmentStatistics | null>(null);
   const [formData, setFormData] = useState<CreateEquipmentRequest>({
     code: '',
     name: '',
@@ -82,11 +80,11 @@ const EquipmentManagementPage: React.FC = () => {
     start_time: '',
   });
 
-  const { addNotification } = useAppStore();
+  const { addNotification } = useNotificationStore();
 
-  const loadEquipment = useCallback(async () => {
-    try {
-      setLoading(true);
+  const equipmentQuery = useQuery({
+    queryKey: ['mes-equipment', currentPage, pageSize, searchTerm, statusFilter],
+    queryFn: async () => {
       const params: ListParams = {
         page: currentPage - 1,
         pagesize: pageSize,
@@ -95,37 +93,142 @@ const EquipmentManagementPage: React.FC = () => {
       if (statusFilter !== 'all') params.status = statusFilter;
 
       const response = await mesApi.equipment.list(params);
-      if (response.success && response.data) {
-        setEquipment(response.data.equipments || []);
-        setTotal(response.data.total || 0);
+      if (!response.success || !response.data) {
+        throw new Error(response.message || '加载设备列表失败');
       }
-    } catch (error: unknown) {
-      apiLogger.error('加载设备列表失败:', error);
+      return {
+        items: response.data.equipments || [],
+        total: response.data.total || 0,
+      };
+    },
+    staleTime: 5 * 60 * 1000,
+    retry: 2,
+  });
+
+  const statisticsQuery = useQuery({
+    queryKey: ['mes-equipment-statistics'],
+    queryFn: async () => {
+      const response = await mesApi.equipment.getStatistics();
+      if (!response.success || !response.data) {
+        throw new Error(response.message || '加载设备统计失败');
+      }
+      return response.data;
+    },
+    staleTime: 5 * 60 * 1000,
+    retry: 2,
+  });
+
+  const equipment = equipmentQuery.data?.items ?? [];
+  const total = equipmentQuery.data?.total ?? 0;
+  const loading = equipmentQuery.isLoading || statisticsQuery.isLoading;
+  const statistics = statisticsQuery.data ?? null;
+
+  const createMutation = useMutation({
+    mutationFn: async (data: CreateEquipmentRequest) => {
+      const response = await mesApi.equipment.create(data);
+      if (!response.success) {
+        throw new Error(response.message || '创建设备失败');
+      }
+      return response.data;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['mes-equipment'] });
+      queryClient.invalidateQueries({ queryKey: ['mes-equipment-statistics'] });
+      addNotification({
+        type: 'success',
+        title: '创建成功',
+        message: '新设备已创建',
+      });
+    },
+    onError: (error: unknown) => {
+      apiLogger.error('创建设备失败:', error);
       addNotification({
         type: 'error',
-        title: '加载失败',
-        message: '无法加载设备列表',
+        title: '操作失败',
+        message: '创建设备失败',
       });
-    } finally {
-      setLoading(false);
-    }
-  }, [currentPage, pageSize, searchTerm, statusFilter, addNotification]);
+    },
+  });
 
-  const loadStatistics = useCallback(async () => {
-    try {
-      const response = await mesApi.equipment.getStatistics();
-      if (response.success && response.data) {
-        setStatistics(response.data);
+  const updateMutation = useMutation({
+    mutationFn: async ({ id, data }: { id: string; data: UpdateEquipmentRequest }) => {
+      const response = await mesApi.equipment.update(id, data);
+      if (!response.success) {
+        throw new Error(response.message || '更新设备失败');
       }
-    } catch (error: unknown) {
-      apiLogger.error('加载设备统计失败:', error);
-    }
-  }, []);
+      return response.data;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['mes-equipment'] });
+      queryClient.invalidateQueries({ queryKey: ['mes-equipment-statistics'] });
+      addNotification({
+        type: 'success',
+        title: '更新成功',
+        message: '设备信息已更新',
+      });
+    },
+    onError: (error: unknown) => {
+      apiLogger.error('更新设备失败:', error);
+      addNotification({
+        type: 'error',
+        title: '操作失败',
+        message: '更新设备失败',
+      });
+    },
+  });
 
-  useEffect(() => {
-    loadEquipment();
-    loadStatistics();
-  }, [loadEquipment, loadStatistics]);
+  const deleteMutation = useMutation({
+    mutationFn: async (id: string) => {
+      const response = await mesApi.equipment.delete(id);
+      if (!response.success) {
+        throw new Error(response.message || '删除设备失败');
+      }
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['mes-equipment'] });
+      queryClient.invalidateQueries({ queryKey: ['mes-equipment-statistics'] });
+      addNotification({
+        type: 'success',
+        title: '删除成功',
+        message: '设备已删除',
+      });
+    },
+    onError: (error: unknown) => {
+      apiLogger.error('删除设备失败:', error);
+      addNotification({
+        type: 'error',
+        title: '操作失败',
+        message: '删除设备失败',
+      });
+    },
+  });
+
+  const maintenanceMutation = useMutation({
+    mutationFn: async ({ id, data }: { id: string; data: MaintenanceEquipmentRequest }) => {
+      const response = await mesApi.equipment.maintenance(id, data);
+      if (!response.success) {
+        throw new Error(response.message || '创建设备维护记录失败');
+      }
+      return response.data;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['mes-equipment'] });
+      queryClient.invalidateQueries({ queryKey: ['mes-equipment-statistics'] });
+      addNotification({
+        type: 'success',
+        title: '维护成功',
+        message: '设备维护记录已创建',
+      });
+    },
+    onError: (error: unknown) => {
+      apiLogger.error('创建设备维护失败:', error);
+      addNotification({
+        type: 'error',
+        title: '操作失败',
+        message: '创建设备维护记录失败',
+      });
+    },
+  });
 
   const getStatusText = (status: string) => {
     const statusMap: Record<string, string> = {
@@ -141,31 +244,16 @@ const EquipmentManagementPage: React.FC = () => {
     e.preventDefault();
     try {
       if (selectedEquipment) {
-        await mesApi.equipment.update(selectedEquipment.id, formData as UpdateEquipmentRequest);
-        addNotification({
-          type: 'success',
-          title: '更新成功',
-          message: '设备信息已更新',
+        await updateMutation.mutateAsync({
+          id: selectedEquipment.id,
+          data: formData as UpdateEquipmentRequest,
         });
       } else {
-        await mesApi.equipment.create(formData);
-        addNotification({
-          type: 'success',
-          title: '创建成功',
-          message: '新设备已创建',
-        });
+        await createMutation.mutateAsync(formData);
       }
       setShowDialog(false);
       resetForm();
-      loadEquipment();
-      loadStatistics();
-    } catch (error: unknown) {
-      apiLogger.error('操作失败:', error);
-      addNotification({
-        type: 'error',
-        title: '操作失败',
-        message: selectedEquipment ? '更新设备失败' : '创建设备失败',
-      });
+    } catch {
     }
   };
 
@@ -173,23 +261,13 @@ const EquipmentManagementPage: React.FC = () => {
     e.preventDefault();
     if (!selectedEquipment) return;
     try {
-      await mesApi.equipment.maintenance(selectedEquipment.id, maintenanceData);
-      addNotification({
-        type: 'success',
-        title: '维护成功',
-        message: '设备维护记录已创建',
+      await maintenanceMutation.mutateAsync({
+        id: selectedEquipment.id,
+        data: maintenanceData,
       });
       setShowMaintenanceDialog(false);
       resetMaintenanceForm();
-      loadEquipment();
-      loadStatistics();
-    } catch (error: unknown) {
-      apiLogger.error('创建设备维护失败:', error);
-      addNotification({
-        type: 'error',
-        title: '操作失败',
-        message: '创建设备维护记录失败',
-      });
+    } catch {
     }
   };
 
@@ -197,24 +275,11 @@ const EquipmentManagementPage: React.FC = () => {
     async (id: string) => {
       if (!window.confirm('确定要删除这个设备吗?')) return;
       try {
-        await mesApi.equipment.delete(id);
-        addNotification({
-          type: 'success',
-          title: '删除成功',
-          message: '设备已删除',
-        });
-        loadEquipment();
-        loadStatistics();
-      } catch (error: unknown) {
-        apiLogger.error('删除失败:', error);
-        addNotification({
-          type: 'error',
-          title: '删除失败',
-          message: '无法删除设备',
-        });
+        await deleteMutation.mutateAsync(id);
+      } catch {
       }
     },
-    [loadEquipment, loadStatistics, addNotification]
+    [deleteMutation]
   );
 
   const handleEdit = useCallback((eq: Equipment) => {
@@ -295,6 +360,12 @@ const EquipmentManagementPage: React.FC = () => {
       />
     );
   };
+
+  const isMutationPending =
+    createMutation.isPending ||
+    updateMutation.isPending ||
+    deleteMutation.isPending ||
+    maintenanceMutation.isPending;
 
   const columns: ColumnDef<Equipment>[] = useMemo(
     () => [
@@ -482,7 +553,7 @@ const EquipmentManagementPage: React.FC = () => {
         subtitle=''
         columns={columns}
         data={equipment}
-        loading={loading}
+        loading={loading || isMutationPending}
         filters={filters}
         searchable
         searchPlaceholder='搜索设备编号或名称...'
@@ -516,6 +587,10 @@ const EquipmentManagementPage: React.FC = () => {
           location: '位置',
           department: '部门',
           next_maintenance_date: '下次维护',
+        }}
+        onRefresh={() => {
+          queryClient.invalidateQueries({ queryKey: ['mes-equipment'] });
+          queryClient.invalidateQueries({ queryKey: ['mes-equipment-statistics'] });
         }}
       />
 
@@ -669,6 +744,7 @@ const EquipmentManagementPage: React.FC = () => {
               <Button
                 type='submit'
                 variant='contained'
+                disabled={createMutation.isPending || updateMutation.isPending}
               >
                 保存
               </Button>
@@ -823,6 +899,7 @@ const EquipmentManagementPage: React.FC = () => {
               <Button
                 type='submit'
                 variant='contained'
+                disabled={maintenanceMutation.isPending}
               >
                 创建维护
               </Button>

@@ -5,7 +5,7 @@ import { ListPageTemplate, type ColumnDef } from '@/components/templates';
 import { PageContainer } from '@/components/common';
 import { scmApi } from '@/api/scm';
 import type { InventoryTurnoverStat } from '@/api/scm';
-import { useAppStore } from '@/store';
+import { useNotificationStore } from '@/store';
 import { designTokens } from '@/theme/tokens';
 import { logger } from '@/utils/logger';
 
@@ -18,7 +18,7 @@ const ScmInventoryTurnoverPage: React.FC = () => {
   const [page, setPage] = useState(0);
   const [pageSize, setPageSize] = useState(10);
   const [total, setTotal] = useState(0);
-  const addNotification = useAppStore((state) => state.addNotification);
+  const addNotification = useNotificationStore((state) => state.addNotification);
 
   useEffect(() => {
     loadData();

@@ -1,4 +1,4 @@
-import React, { useState, useMemo, useEffect, useCallback } from 'react';
+import React, { useState, useMemo } from 'react';
 import { AlertCircle, CheckCircle, Plus, Edit, Trash2, Eye } from 'lucide-react';
 import {
   Dialog,
@@ -17,24 +17,26 @@ import {
   MenuItem,
   Button,
 } from '@mui/material';
-import { useAppStore } from '@/store';
+import { useNotificationStore } from '@/store';
 import * as z from 'zod';
 import { ListPageTemplate, type ColumnDef, type RowAction } from '@/components/templates';
 import { PageContainer } from '@/components/common';
 import { qmsApi } from '@/api/qms';
 import type { QualityIssue } from '@/api/qms';
 import { designTokens } from '@/theme/tokens';
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 
 const ct = designTokens.colors;
 
 const QmsNonconformancePage: React.FC = () => {
+  const queryClient = useQueryClient();
+  const addNotification = useNotificationStore((state) => state.addNotification);
+
   const [searchTerm, setSearchTerm] = useState('');
   const [showModal, setShowModal] = useState(false);
   const [showDetailModal, setShowDetailModal] = useState(false);
   const [selectedItem, setSelectedItem] = useState<QualityIssue | null>(null);
   const [isEditing, setIsEditing] = useState(false);
-  const [loading, setLoading] = useState(true);
-  const [submitting, setSubmitting] = useState(false);
   const [formData, setFormData] = useState({
     code: '',
     title: '',
@@ -44,9 +46,110 @@ const QmsNonconformancePage: React.FC = () => {
   });
 
   const [errors, setErrors] = useState<Record<string, string>>({});
-  const addNotification = useAppStore((state) => state.addNotification);
 
-  const [issues, setIssues] = useState<QualityIssue[]>([]);
+  // React Query - 不合格品列表
+  const issuesQuery = useQuery({
+    queryKey: ['qms-issues'],
+    queryFn: async () => {
+      const response = await qmsApi.listIssues();
+      if (!response.success || !response.data) {
+        throw new Error(response.message || '加载不合格品数据失败');
+      }
+      return response.data;
+    },
+    staleTime: 5 * 60 * 1000,
+  });
+
+  const issues = issuesQuery.data || [];
+  const loading = issuesQuery.isLoading;
+
+  // React Query - Mutations
+  const createMutation = useMutation({
+    mutationFn: (data: {
+      issue_no: string;
+      title: string;
+      description: string;
+      severity: 'high' | 'medium' | 'low';
+      category: string;
+      status: string;
+      assignee: string;
+    }) => qmsApi.createIssue(data),
+    onSuccess: (response) => {
+      if (response.success) {
+        addNotification({ title: '成功', message: '记录创建成功', type: 'success' });
+        queryClient.invalidateQueries({ queryKey: ['qms-issues'] });
+        setShowModal(false);
+        setIsEditing(false);
+        resetForm();
+      } else {
+        addNotification({
+          title: '失败',
+          message: response.message || '创建失败',
+          type: 'error',
+        });
+      }
+    },
+    onError: () => {
+      addNotification({ title: '错误', message: '操作失败，请重试', type: 'error' });
+    },
+  });
+
+  const updateMutation = useMutation({
+    mutationFn: ({
+      id,
+      data,
+    }: {
+      id: string;
+      data: {
+        issue_no: string;
+        title: string;
+        description: string;
+        severity: 'high' | 'medium' | 'low';
+        category: string;
+        status: string;
+        assignee: string;
+      };
+    }) => qmsApi.updateIssue(id, data),
+    onSuccess: (response) => {
+      if (response.success) {
+        addNotification({ title: '成功', message: '记录更新成功', type: 'success' });
+        queryClient.invalidateQueries({ queryKey: ['qms-issues'] });
+        setShowModal(false);
+        setIsEditing(false);
+        resetForm();
+      } else {
+        addNotification({
+          title: '失败',
+          message: response.message || '更新失败',
+          type: 'error',
+        });
+      }
+    },
+    onError: () => {
+      addNotification({ title: '错误', message: '操作失败，请重试', type: 'error' });
+    },
+  });
+
+  const deleteMutation = useMutation({
+    mutationFn: (id: string) => qmsApi.deleteIssue(id),
+    onSuccess: (response) => {
+      if (response.success) {
+        addNotification({ title: '成功', message: '记录删除成功', type: 'success' });
+        queryClient.invalidateQueries({ queryKey: ['qms-issues'] });
+      } else {
+        addNotification({
+          title: '失败',
+          message: response.message || '删除失败',
+          type: 'error',
+        });
+      }
+    },
+    onError: () => {
+      addNotification({ title: '错误', message: '删除记录时发生错误', type: 'error' });
+    },
+  });
+
+  const submitting = createMutation.isPending || updateMutation.isPending || deleteMutation.isPending;
 
   const nonconformanceSchema = z.object({
     title: z.string().min(2, '标题至少需要2个字符').max(100, '标题不能超过100个字符'),
@@ -70,27 +173,16 @@ const QmsNonconformancePage: React.FC = () => {
     return true;
   };
 
-  const loadIssues = useCallback(async () => {
-    try {
-      setLoading(true);
-      const response = await qmsApi.listIssues();
-      if (response.success && response.data) {
-        setIssues(response.data);
-      }
-    } catch (error: unknown) {
-      addNotification({
-        title: '加载失败',
-        message: '加载不合格品数据失败',
-        type: 'error',
-      });
-    } finally {
-      setLoading(false);
-    }
-  }, [addNotification]);
-
-  useEffect(() => {
-    loadIssues();
-  }, [loadIssues]);
+  const resetForm = () => {
+    setFormData({
+      code: '',
+      title: '',
+      description: '',
+      severity: 'medium',
+      category: '',
+    });
+    setErrors({});
+  };
 
   const getSeverityBadge = (severity: string) => {
     const colors = {
@@ -196,18 +288,8 @@ const QmsNonconformancePage: React.FC = () => {
   };
 
   const deleteItem = async (id: string) => {
-    if (!confirm('确定要删除此记录吗？')) return;
-    try {
-      const response = await qmsApi.deleteIssue(id);
-      if (response.success) {
-        setIssues((prev) => prev.filter((item) => item.id !== id));
-        addNotification({ title: '成功', message: '记录删除成功', type: 'success' });
-      } else {
-        addNotification({ title: '失败', message: response.message || '删除失败', type: 'error' });
-      }
-    } catch (error: unknown) {
-      addNotification({ title: '错误', message: '删除记录时发生错误', type: 'error' });
-    }
+    if (!window.confirm('确定要删除此记录吗？')) return;
+    await deleteMutation.mutateAsync(id);
   };
 
   const nonconformanceRowActions: RowAction<QualityIssue>[] = [
@@ -233,10 +315,10 @@ const QmsNonconformancePage: React.FC = () => {
     if (!validateForm(formData)) {
       return;
     }
-    setSubmitting(true);
-    try {
-      if (isEditing && selectedItem) {
-        const response = await qmsApi.updateIssue(selectedItem.id, {
+    if (isEditing && selectedItem) {
+      await updateMutation.mutateAsync({
+        id: selectedItem.id,
+        data: {
           issue_no: formData.code,
           title: formData.title,
           description: formData.description,
@@ -244,54 +326,18 @@ const QmsNonconformancePage: React.FC = () => {
           category: formData.category,
           status: selectedItem.status,
           assignee: selectedItem.assignee,
-        });
-        if (response.success) {
-          setIssues((prev) =>
-            prev.map((item) => (item.id === selectedItem.id ? { ...item, ...response.data } : item))
-          );
-          addNotification({ title: '成功', message: '记录更新成功', type: 'success' });
-        } else {
-          addNotification({
-            title: '失败',
-            message: response.message || '更新失败',
-            type: 'error',
-          });
-        }
-      } else {
-        const response = await qmsApi.createIssue({
-          issue_no: formData.code || `NC-${Date.now()}`,
-          title: formData.title,
-          description: formData.description,
-          severity: formData.severity,
-          category: formData.category,
-          status: 'open',
-          assignee: '',
-        });
-        if (response.success && response.data) {
-          setIssues((prev) => [response.data!, ...prev]);
-          addNotification({ title: '成功', message: '记录创建成功', type: 'success' });
-        } else {
-          addNotification({
-            title: '失败',
-            message: response.message || '创建失败',
-            type: 'error',
-          });
-        }
-      }
-      setShowModal(false);
-      setIsEditing(false);
-      setFormData({
-        code: '',
-        title: '',
-        description: '',
-        severity: 'medium',
-        category: '',
+        },
       });
-      setErrors({});
-    } catch (error: unknown) {
-      addNotification({ title: '错误', message: '操作失败，请重试', type: 'error' });
-    } finally {
-      setSubmitting(false);
+    } else {
+      await createMutation.mutateAsync({
+        issue_no: formData.code || `NC-${Date.now()}`,
+        title: formData.title,
+        description: formData.description,
+        severity: formData.severity,
+        category: formData.category,
+        status: 'open',
+        assignee: '',
+      });
     }
   };
 
@@ -433,13 +479,7 @@ const QmsNonconformancePage: React.FC = () => {
       color: 'primary' as const,
       onClick: () => {
         setIsEditing(false);
-        setFormData({
-          code: '',
-          title: '',
-          description: '',
-          severity: 'medium',
-          category: '',
-        });
+        resetForm();
         setShowModal(true);
       },
     },

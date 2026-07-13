@@ -29,7 +29,7 @@ import {
 import { ListPageTemplate, type ColumnDef, type RowAction } from '@/components/templates';
 import { PageContainer } from '@/components/common/PageContainerV2';
 import { ehsApi } from '@/api/ehs';
-import { useAppStore } from '@/store';
+import { useNotificationStore } from '@/store';
 import { apiLogger } from '@/utils/logger';
 import { designTokens } from '@/theme/tokens';
 
@@ -105,7 +105,7 @@ const EhsHazardousMaterialPage: React.FC = () => {
     description: '',
   });
 
-  const addNotification = useAppStore((state) => state.addNotification);
+  const addNotification = useNotificationStore((state) => state.addNotification);
 
   useEffect(() => {
     loadMaterials();

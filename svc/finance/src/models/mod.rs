@@ -547,6 +547,24 @@ pub struct ExportVoucherResponse {
     pub created_at: DateTime<Utc>,
 }
 
+#[derive(Debug, Clone, Deserialize)]
+pub struct ExportPaymentRequest {
+    pub format: ExportFormat,
+    pub status: Option<String>,
+    pub start_date: Option<String>,
+    pub end_date: Option<String>,
+}
+
+#[derive(Debug, Clone, Serialize)]
+pub struct ExportPaymentResponse {
+    pub file_name: String,
+    pub format: ExportFormat,
+    pub total_count: usize,
+    pub total_amount: Decimal,
+    pub file_data: String,
+    pub created_at: DateTime<Utc>,
+}
+
 #[derive(Debug, Clone, Serialize)]
 pub struct VoucherExportRow {
     pub voucher_no: String,
@@ -676,4 +694,201 @@ pub struct ApprovalListResponse {
     pub total: i64,
     pub page: i64,
     pub page_size: i64,
+}
+
+#[derive(Debug, Clone, FromRow, Serialize)]
+pub struct Payment {
+    pub id: Uuid,
+    pub tenant_id: Uuid,
+    pub voucher_id: Uuid,
+    pub payment_no: String,
+    pub supplier_id: Option<Uuid>,
+    pub supplier_name: Option<String>,
+    pub payment_method: String,
+    pub bank_account_id: Option<Uuid>,
+    pub bank_name: Option<String>,
+    pub bank_account_no: Option<String>,
+    pub total_amount: Decimal,
+    pub currency: String,
+    pub exchange_rate: Option<Decimal>,
+    pub payment_date: Option<chrono::NaiveDate>,
+    pub actual_payment_date: Option<chrono::NaiveDate>,
+    pub bank_transaction_no: Option<String>,
+    pub executed_by: Option<String>,
+    pub executed_at: Option<DateTime<Utc>>,
+    pub remark: Option<String>,
+    pub attachment_url: Option<String>,
+    pub created_by: String,
+    pub approved_by: Option<String>,
+    pub created_at: DateTime<Utc>,
+    pub updated_at: DateTime<Utc>,
+}
+
+#[derive(Debug, Clone, FromRow, Serialize)]
+pub struct PaymentItem {
+    pub id: Uuid,
+    pub tenant_id: Uuid,
+    pub payment_id: Uuid,
+    pub line_no: i32,
+    pub invoice_id: Option<Uuid>,
+    pub invoice_no: Option<String>,
+    pub payable_id: Option<Uuid>,
+    pub payable_amount: Decimal,
+    pub payment_amount: Decimal,
+    pub write_off_amount: Option<Decimal>,
+    pub write_off_status: Option<String>,
+    pub write_off_date: Option<chrono::NaiveDate>,
+    pub write_off_by: Option<String>,
+    pub remaining_amount: Option<Decimal>,
+    pub remark: Option<String>,
+    pub created_at: DateTime<Utc>,
+}
+
+#[derive(Debug, Clone, Deserialize)]
+pub struct CreatePaymentRequest {
+    pub supplier_id: Option<Uuid>,
+    pub supplier_name: Option<String>,
+    pub payment_method: String,
+    pub bank_account_id: Option<Uuid>,
+    pub bank_name: Option<String>,
+    pub bank_account_no: Option<String>,
+    pub total_amount: Decimal,
+    pub currency: Option<String>,
+    pub payment_date: Option<chrono::NaiveDate>,
+    pub remark: Option<String>,
+    pub items: Vec<PaymentItemRequest>,
+}
+
+#[derive(Debug, Clone, Deserialize)]
+pub struct PaymentItemRequest {
+    pub invoice_id: Option<Uuid>,
+    pub invoice_no: Option<String>,
+    pub payable_id: Option<Uuid>,
+    pub payable_amount: Decimal,
+    pub payment_amount: Decimal,
+    pub remark: Option<String>,
+}
+
+#[derive(Debug, Clone, Deserialize)]
+pub struct ExecutePaymentRequest {
+    pub bank_transaction_no: String,
+    pub actual_payment_date: chrono::NaiveDate,
+}
+
+#[derive(Debug, Clone, Serialize)]
+pub struct PaymentResponse {
+    pub id: Uuid,
+    pub payment_no: String,
+    pub supplier_id: Option<Uuid>,
+    pub supplier_name: Option<String>,
+    pub payment_method: String,
+    pub total_amount: Decimal,
+    pub currency: String,
+    pub payment_date: Option<chrono::NaiveDate>,
+    pub actual_payment_date: Option<chrono::NaiveDate>,
+    pub bank_transaction_no: Option<String>,
+    pub executed_by: Option<String>,
+    pub executed_at: Option<DateTime<Utc>>,
+    pub status: VoucherStatus,
+    pub remark: Option<String>,
+    pub items: Vec<PaymentItem>,
+    pub voucher_id: Uuid,
+    pub created_at: DateTime<Utc>,
+}
+
+#[derive(Debug, Clone, Deserialize)]
+pub struct PaymentQueryParams {
+    pub supplier_id: Option<Uuid>,
+    pub status: Option<String>,
+    pub start_date: Option<String>,
+    pub end_date: Option<String>,
+    pub page: Option<i64>,
+    pub page_size: Option<i64>,
+}
+
+#[derive(Debug, Clone, Serialize)]
+pub struct PaymentListResponse {
+    pub items: Vec<PaymentResponse>,
+    pub total: i64,
+    pub page: i64,
+    pub page_size: i64,
+}
+
+#[derive(Debug, Clone, FromRow, Serialize)]
+pub struct PaymentApprovalConfig {
+    pub id: Uuid,
+    pub tenant_id: Uuid,
+    pub name: String,
+    pub description: Option<String>,
+    pub amount_threshold: Decimal,
+    pub max_amount: Option<Decimal>,
+    pub workflow_id: Option<Uuid>,
+    pub approval_levels: i32,
+    pub node_config: Option<serde_json::Value>,
+    pub priority: i32,
+    pub is_active: bool,
+    pub created_by: String,
+    pub created_at: DateTime<Utc>,
+    pub updated_at: DateTime<Utc>,
+}
+
+#[derive(Debug, Clone, FromRow, Serialize)]
+pub struct ApprovalNode {
+    pub id: Uuid,
+    pub tenant_id: Uuid,
+    pub config_id: Uuid,
+    pub node_level: i32,
+    pub node_name: String,
+    pub approver_type: String,
+    pub approver_role: Option<String>,
+    pub approver_users: Option<Vec<String>>,
+    pub approval_type: String,
+    pub timeout_hours: Option<i32>,
+    pub notify_users: Option<Vec<String>>,
+    pub conditions: Option<serde_json::Value>,
+    pub is_active: bool,
+    pub created_at: DateTime<Utc>,
+    pub updated_at: DateTime<Utc>,
+}
+
+#[derive(Debug, Clone, Deserialize)]
+pub struct CreateApprovalConfigRequest {
+    pub name: String,
+    pub description: Option<String>,
+    pub amount_threshold: Decimal,
+    pub max_amount: Option<Decimal>,
+    pub workflow_id: Option<Uuid>,
+    pub approval_levels: Option<i32>,
+    pub priority: Option<i32>,
+    pub is_active: Option<bool>,
+    pub nodes: Option<Vec<CreateApprovalNodeRequest>>,
+}
+
+#[derive(Debug, Clone, Deserialize)]
+pub struct CreateApprovalNodeRequest {
+    pub node_level: i32,
+    pub node_name: String,
+    pub approver_type: String,
+    pub approver_role: Option<String>,
+    pub approver_users: Option<Vec<String>>,
+    pub approval_type: Option<String>,
+    pub timeout_hours: Option<i32>,
+    pub notify_users: Option<Vec<String>>,
+    pub conditions: Option<serde_json::Value>,
+}
+
+#[derive(Debug, Clone, Serialize)]
+pub struct ApprovalConfigResponse {
+    pub id: Uuid,
+    pub name: String,
+    pub description: Option<String>,
+    pub amount_threshold: Decimal,
+    pub max_amount: Option<Decimal>,
+    pub workflow_id: Option<Uuid>,
+    pub approval_levels: i32,
+    pub priority: i32,
+    pub is_active: bool,
+    pub nodes: Vec<ApprovalNode>,
+    pub created_at: DateTime<Utc>,
+    pub updated_at: DateTime<Utc>,
 }

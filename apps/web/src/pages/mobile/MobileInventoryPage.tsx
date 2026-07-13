@@ -40,7 +40,7 @@ import {
   MobileCard,
   MobileButton,
 } from '@/components/mobile';
-import { useAppStore } from '@/store';
+import { useNotificationStore } from '@/store';
 import {
   mobileApi,
   type InventoryItem,
@@ -54,7 +54,7 @@ import { MOBILE_PATHS } from '@/modules/mobile/config';
 const MobileInventoryPage: React.FC = () => {
   const theme = useTheme();
   const navigate = useNavigate();
-  const { addNotification } = useAppStore();
+  const { addNotification } = useNotificationStore();
   const [activeTab, setActiveTab] = useState(0);
   const [loading, setLoading] = useState(true);
   const [searchQuery, setSearchQuery] = useState('');

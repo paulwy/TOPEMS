@@ -52,8 +52,10 @@
 
 ### 3.2 兼容性保障
 
+> ⚠️ 注意：`compatibility.tsx` 已在 V5.8 路径重构阶段删除。以下为历史记录。
+
 - 所有旧路径添加 301 重定向到新路径
-- 重定向规则统一在 `compatibility.tsx` 中维护
+- 重定向规则统一在 `compatibility.tsx` 中维护（已删除）
 - 旧路径保留至少 2 个版本周期
 - 开发环境下控制台输出 deprecation warning
 
@@ -162,7 +164,7 @@
 - [ ] 删除 `routes/professional.ts`（聚合旧路由）
 - [ ] 删除 `routes/docs.ts`（旧文档路由）
 - [ ] 删除 `routes/common.ts`（公共旧路由）
-- [ ] 清理 `compatibility.tsx` 中已迁移模块的重定向
+- [x] 清理 `compatibility.tsx` 中已迁移模块的重定向（已删除文件）
 - [ ] 更新 `routes/index.ts`，改为直接导出 V2 路由
 
 **验证标准**：

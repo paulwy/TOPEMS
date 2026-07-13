@@ -1,6 +1,6 @@
 import { useState, useEffect, useCallback } from 'react';
 import { logger } from '@/utils/logger';
-import { useAppStore } from '@/store';
+import { useNotificationStore } from '@/store';
 import { useNavigate } from 'react-router-dom';
 import { BI_PATHS } from '@/modules/bi/config';
 import {

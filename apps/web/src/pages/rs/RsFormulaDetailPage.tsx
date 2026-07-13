@@ -23,13 +23,13 @@ import { DetailPageTemplate, type SectionConfig } from '@/components/templates';
 import { formulaApi } from '@/api/rs';
 import { PageContainer } from '@/components/common';
 import type { Formula, FormulaVersion } from '@/api/rs';
-import { useAppStore } from '@/store';
+import { useNotificationStore } from '@/store';
 import { logger } from '@/utils/logger';
 
 const RsFormulaDetailPage: React.FC = () => {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
-  const { addNotification } = useAppStore();
+  const { addNotification } = useNotificationStore();
   const [formula, setFormula] = useState<Formula | null>(null);
   const [versions, setVersions] = useState<FormulaVersion[]>([]);
   const [loading, setLoading] = useState(true);

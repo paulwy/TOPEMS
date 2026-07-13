@@ -31,7 +31,7 @@ export const productionApi = {
       status?: string;
       actualStartDate?: string;
       actualEndDate?: string;
-    }
+    },
   ): Promise<ApiResponse<ProductionOrder>> => {
     return apiClient.put(`/production/orders/${id}`, data);
   },

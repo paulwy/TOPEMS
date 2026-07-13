@@ -3,7 +3,7 @@ import { useTheme } from '@mui/material';
 import { User, Search, Plus, Users, ChevronRight, MoreVertical, Check, X } from 'lucide-react';
 import type { Friend, ContactGroup } from '../../api/im';
 import { imApi } from '../../api/im';
-import { useAppStore } from '../../store';
+import { useNotificationStore } from '@/store';
 import { logger } from '@/utils/logger';
 
 interface ContactListProps {
@@ -12,7 +12,7 @@ interface ContactListProps {
 
 export const ContactList: React.FC<ContactListProps> = ({ onSelectContact }) => {
   const theme = useTheme();
-  const addNotification = useAppStore((state) => state.addNotification);
+  const addNotification = useNotificationStore((state) => state.addNotification);
   const [friends, setFriends] = useState<Friend[]>([]);
   const [groups, setGroups] = useState<ContactGroup[]>([]);
   const [searchQuery, setSearchQuery] = useState('');

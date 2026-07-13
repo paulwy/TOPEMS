@@ -12,7 +12,7 @@ import {
 } from '@mui/material';
 import { z } from 'zod';
 import { zodResolver } from '@hookform/resolvers/zod';
-import { useAppStore } from '@/store';
+import { useNotificationStore } from '@/store';
 import { logger } from '@/utils/logger';
 
 // 定义表单验证 schema
@@ -36,7 +36,7 @@ interface WorkflowFormExampleProps {
 }
 
 export function WorkflowFormExample({ onSubmit, initialValues }: WorkflowFormExampleProps) {
-  const addNotification = useAppStore((state) => state.addNotification);
+  const addNotification = useNotificationStore((state) => state.addNotification);
 
   const {
     control,

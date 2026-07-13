@@ -14,7 +14,7 @@ import {
   XCircle,
   DollarSign,
 } from 'lucide-react';
-import { useAppStore } from '../../store';
+import { useNotificationStore } from '@/store';
 import { DataExport, BackButton, PageContainer } from '@/components/common';
 import { ListPageTemplate, StatCardGroup } from '@/components';
 import { financeApi, accountApi } from '@/api/finance';
@@ -42,7 +42,7 @@ import {
 import { ConfirmDialog } from '@topems/shared-components';
 
 const FinanceAssetPage: React.FC = () => {
-  const addNotification = useAppStore((state) => state.addNotification);
+  const addNotification = useNotificationStore((state) => state.addNotification);
 
   const [assetData, setAssetData] = useState<Account[]>([]);
   const [loading, setLoading] = useState(true);

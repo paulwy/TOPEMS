@@ -295,6 +295,7 @@ describe('useGlobalSearch', () => {
 
       act(() => {
         result.current.setQuery('test');
+        result.current.setOpen(true);
       });
 
       await waitFor(() => {
@@ -392,6 +393,133 @@ describe('useGlobalSearch', () => {
 
       expect(result.current.open).toBe(false);
       expect(result.current.query).toBe('');
+    });
+
+    it('should handle Ctrl+K to open search', async () => {
+      const mockNavigate = vi.fn();
+      const { result } = renderHook(() => useGlobalSearch(mockNavigate));
+
+      act(() => {
+        document.dispatchEvent(new KeyboardEvent('keydown', { key: 'k', ctrlKey: true }));
+      });
+
+      await waitFor(() => {
+        expect(result.current.open).toBe(true);
+      });
+    });
+
+    it('should handle Cmd+K to open search', async () => {
+      const mockNavigate = vi.fn();
+      const { result } = renderHook(() => useGlobalSearch(mockNavigate));
+
+      act(() => {
+        document.dispatchEvent(new KeyboardEvent('keydown', { key: 'k', metaKey: true }));
+      });
+
+      await waitFor(() => {
+        expect(result.current.open).toBe(true);
+      });
+    });
+
+    it('should handle Home key to go to first result', async () => {
+      const mockNavigate = vi.fn();
+      const { searchApi } = await import('@/api/search');
+      const { result } = renderHook(() => useGlobalSearch(mockNavigate));
+
+      act(() => {
+        result.current.setQuery('test');
+        result.current.setOpen(true);
+      });
+
+      await waitFor(() => {
+        expect(result.current.results).toHaveLength(1);
+      });
+
+      act(() => {
+        result.current.handleKeyDown({ key: 'Home', preventDefault: vi.fn() } as unknown as React.KeyboardEvent);
+      });
+
+      expect(result.current.selectedIndex).toBe(0);
+    });
+
+    it('should handle End key to go to last result', async () => {
+      const mockNavigate = vi.fn();
+      const { searchApi } = await import('@/api/search');
+      const { result } = renderHook(() => useGlobalSearch(mockNavigate));
+
+      act(() => {
+        result.current.setQuery('test');
+        result.current.setOpen(true);
+      });
+
+      await waitFor(() => {
+        expect(result.current.results).toHaveLength(1);
+      });
+
+      act(() => {
+        result.current.handleKeyDown({ key: 'End', preventDefault: vi.fn() } as unknown as React.KeyboardEvent);
+      });
+
+      expect(result.current.selectedIndex).toBe(0);
+    });
+
+    it('should handle / key to open search when not focused', () => {
+      const mockNavigate = vi.fn();
+      const { result } = renderHook(() => useGlobalSearch(mockNavigate));
+
+      act(() => {
+        document.dispatchEvent(new KeyboardEvent('keydown', { key: '/' }));
+      });
+
+      expect(result.current.open).toBe(true);
+    });
+
+    it('should wrap around when navigating past last result', async () => {
+      const mockNavigate = vi.fn();
+      const { searchApi } = await import('@/api/search');
+      const { result } = renderHook(() => useGlobalSearch(mockNavigate));
+
+      act(() => {
+        result.current.setQuery('test');
+      });
+
+      await waitFor(() => {
+        expect(result.current.results).toHaveLength(1);
+      });
+
+      act(() => {
+        result.current.setSelectedIndex(0);
+      });
+
+      act(() => {
+        result.current.handleKeyDown({ key: 'ArrowDown', preventDefault: vi.fn() } as unknown as React.KeyboardEvent);
+      });
+
+      expect(result.current.selectedIndex).toBe(0);
+    });
+
+    it('should wrap around when navigating before first result', async () => {
+      const mockNavigate = vi.fn();
+      const { searchApi } = await import('@/api/search');
+      const { result } = renderHook(() => useGlobalSearch(mockNavigate));
+
+      act(() => {
+        result.current.setQuery('test');
+      });
+
+      await waitFor(() => {
+        expect(result.current.results).toHaveLength(1);
+      });
+
+      act(() => {
+        result.current.setSelectedIndex(0);
+      });
+
+      act(() => {
+        result.current.handleKeyDown({ key: 'ArrowUp', preventDefault: vi.fn() } as unknown as React.KeyboardEvent);
+      });
+
+      expect(result.current.selectedIndex).toBe(0);
     });
   });
 

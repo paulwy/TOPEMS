@@ -16,7 +16,7 @@ import {
 import { Plus, Edit, Delete, Layers, ArrowDownRight, Database } from 'lucide-react';
 import { pdmApi } from '@/api/pdm';
 import type { BomItem, Product } from '@/api/pdm';
-import { useAppStore } from '@/store';
+import { useNotificationStore } from '@/store';
 import { apiLogger } from '@/utils/logger';
 import {
   ListPageTemplate,
@@ -54,7 +54,7 @@ export const PdmBomPage: React.FC = () => {
     unit_price: 0,
     level: 1,
   });
-  const addNotification = useAppStore((state) => state.addNotification);
+  const addNotification = useNotificationStore((state) => state.addNotification);
 
   useEffect(() => {
     loadProducts();

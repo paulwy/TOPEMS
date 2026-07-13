@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { useAppStore } from '@/store';
+import { useNotificationStore } from '@/store';
 import {
   Activity,
   Clock,
@@ -25,7 +25,7 @@ const ct = designTokens.colors;
 
 const PerformanceMonitorPage: React.FC = () => {
   const navigate = useNavigate();
-  const addNotification = useAppStore((state) => state.addNotification);
+  const addNotification = useNotificationStore((state) => state.addNotification);
   const {
     metrics,
     getApiCallHistory,

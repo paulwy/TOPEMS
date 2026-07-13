@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useMemo } from 'react';
+import React, { useState, useMemo } from 'react';
 import {
   FileText,
   ChevronLeft,
@@ -17,10 +17,10 @@ import {
   FolderOpen,
 } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
-import { financeApi, accountApi, voucherApi, receivablePayableApi } from '@/api/finance';
+import { financeApi } from '@/api/finance';
 import type { Account } from '@/types/finance';
-import { useAppStore } from '../../store';
-import type { ColumnDef } from '@tanstack/react-table';
+import { useNotificationStore } from '../../store';
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { ListPageTemplate, type ColumnDef as ListColumnDef } from '@/components';
 import type { StatCard } from '@/components/templates/DashboardTemplate';
 import type { OrganizationFilterValue } from '@/components/ui/OrganizationFilter';
@@ -48,10 +48,9 @@ import { ConfirmDialog, StatusBadge } from '@topems/shared-components';
 
 const FinanceExpensePage: React.FC = () => {
   const navigate = useNavigate();
-  const addNotification = useAppStore((state) => state.addNotification);
+  const addNotification = useNotificationStore((state) => state.addNotification);
+  const queryClient = useQueryClient();
 
-  const [expenses, setExpenses] = useState<Account[]>([]);
-  const [loading, setLoading] = useState(true);
   const [showCreateModal, setShowCreateModal] = useState(false);
   const [editingExpense, setEditingExpense] = useState<Account | null>(null);
   const [filterStatus, setFilterStatus] = useState('');
@@ -76,212 +75,167 @@ const FinanceExpensePage: React.FC = () => {
     description: '',
   });
 
-  useEffect(() => {
-    loadData();
-  }, [organizationFilter]);
-
-  const loadData = async () => {
-    setLoading(true);
-    try {
+  const expensesQuery = useQuery({
+    queryKey: ['finance', 'expenses', filterStatus, filterType, organizationFilter],
+    queryFn: async () => {
       const response = await financeApi.account.list({
         category: 'expense',
         keyword: filterType || undefined,
         status: filterStatus || undefined,
       });
-
       if (response.success && response.data) {
-        setExpenses(response.data.items || []);
+        return response.data.items || [];
       }
-    } catch (err: unknown) {
-      apiLogger.error('加载费用数据失败:', err);
+      throw new Error(response.message || '加载数据失败');
+    },
+    staleTime: 60000,
+  });
+
+  const expenses = expensesQuery.data || [];
+  const loading = expensesQuery.isLoading;
+
+  const createMutation = useMutation({
+    mutationFn: async (data: Partial<Account>) => {
+      const res = await financeApi.account.create(data);
+      if (!res.success) {
+        throw new Error(
+          (res as unknown as { error?: { message?: string } }).error?.message || '创建失败'
+        );
+      }
+      return res.data;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['finance', 'expenses'] });
       addNotification({
-        title: '加载失败',
-        message: (err as { message?: string }).message || '加载数据失败',
-        type: 'error',
+        title: '成功',
+        message: '费用科目创建成功',
+        type: 'success',
       });
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  const handleCreate = async () => {
-    try {
-      const res = await financeApi.account.create(newExpense);
-
-      if (res.success) {
-        addNotification({
-          title: '成功',
-          message: '费用科目创建成功',
-          type: 'success',
-        });
-        setShowCreateModal(false);
-        setNewExpense({
-          code: '',
-          name: '',
-          category: 'expense',
-          balance_direction: 'debit',
-          level: 1,
-          status: 'active',
-          description: '',
-        });
-        loadData();
-      } else {
-        addNotification({
-          title: '失败',
-          message:
-            (res as unknown as { error?: { message?: string } }).error?.message || '创建失败',
-          type: 'error',
-        });
-      }
-    } catch (err: unknown) {
+      setShowCreateModal(false);
+      setNewExpense({
+        code: '',
+        name: '',
+        category: 'expense',
+        balance_direction: 'debit',
+        level: 1,
+        status: 'active',
+        description: '',
+      });
+    },
+    onError: (err: unknown) => {
       apiLogger.error('创建费用科目失败:', err);
       addNotification({
         title: '错误',
         message: (err as { message?: string }).message || '创建失败',
         type: 'error',
       });
-    }
-  };
+    },
+  });
 
-  const handleUpdate = async () => {
-    if (!editingExpense) return;
-
-    try {
-      const res = await financeApi.account.update(editingExpense.id, editingExpense);
-
-      if (res.success) {
-        addNotification({
-          title: '成功',
-          message: '费用科目更新成功',
-          type: 'success',
-        });
-        setEditingExpense(null);
-        loadData();
-      } else {
-        addNotification({
-          title: '失败',
-          message:
-            (res as unknown as { error?: { message?: string } }).error?.message || '更新失败',
-          type: 'error',
-        });
+  const updateMutation = useMutation({
+    mutationFn: async ({ id, data }: { id: string; data: Partial<Account> }) => {
+      const res = await financeApi.account.update(id, data);
+      if (!res.success) {
+        throw new Error(
+          (res as unknown as { error?: { message?: string } }).error?.message || '更新失败'
+        );
       }
-    } catch (err: unknown) {
+      return res.data;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['finance', 'expenses'] });
+      addNotification({
+        title: '成功',
+        message: '费用科目更新成功',
+        type: 'success',
+      });
+      setEditingExpense(null);
+    },
+    onError: (err: unknown) => {
       apiLogger.error('更新费用科目失败:', err);
       addNotification({
         title: '错误',
         message: (err as { message?: string }).message || '更新失败',
         type: 'error',
       });
-    }
-  };
+    },
+  });
 
-  const handleDelete = async () => {
-    if (!deletingId) return;
-
-    try {
-      const res = await financeApi.account.delete(deletingId);
-      if (res.success) {
-        addNotification({
-          title: '成功',
-          message: '费用科目删除成功',
-          type: 'success',
-        });
-        loadData();
-      } else {
-        addNotification({
-          title: '失败',
-          message:
-            (res as unknown as { error?: { message?: string } }).error?.message || '删除失败',
-          type: 'error',
-        });
+  const deleteMutation = useMutation({
+    mutationFn: async (id: string) => {
+      const res = await financeApi.account.delete(id);
+      if (!res.success) {
+        throw new Error(
+          (res as unknown as { error?: { message?: string } }).error?.message || '删除失败'
+        );
       }
-    } catch (err: unknown) {
+      return res.data;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['finance', 'expenses'] });
+      addNotification({
+        title: '成功',
+        message: '费用科目删除成功',
+        type: 'success',
+      });
+    },
+    onError: (err: unknown) => {
       apiLogger.error('删除费用科目失败:', err);
       addNotification({
         title: '错误',
         message: (err as { message?: string }).message || '删除失败',
         type: 'error',
       });
-    } finally {
+    },
+    onSettled: () => {
       setDeleteDialogOpen(false);
       setDeletingId(null);
-    }
-  };
+    },
+  });
 
-  const handleApprove = async (expense: Account) => {
-    try {
-      const res = await financeApi.account.update(expense.id, {
-        status: 'active',
-      });
-
-      if (res.success) {
-        addNotification({
-          title: '成功',
-          message: '科目已启用',
-          type: 'success',
-        });
-        loadData();
-      } else {
-        addNotification({
-          title: '失败',
-          message:
-            (res as unknown as { error?: { message?: string } }).error?.message || '操作失败',
-          type: 'error',
-        });
-      }
-    } catch (err: unknown) {
-      apiLogger.error('启用科目失败:', err);
-      addNotification({
-        title: '错误',
-        message: (err as { message?: string }).message || '操作失败',
-        type: 'error',
-      });
-    }
-  };
-
-  const handleBatchApprove = async () => {
-    if (selectedIds.length === 0) return;
-
-    try {
-      const promises = selectedIds.map((id) => financeApi.account.update(id, { status: 'active' }));
+  const batchUpdateMutation = useMutation({
+    mutationFn: async ({ ids, data }: { ids: string[]; data: Partial<Account> }) => {
+      const promises = ids.map((id) => financeApi.account.update(id, data));
       const results = await Promise.all(promises);
       const successCount = results.filter((r) => r.success).length;
-
-      if (successCount === selectedIds.length) {
+      return { successCount, total: ids.length };
+    },
+    onSuccess: ({ successCount, total }) => {
+      queryClient.invalidateQueries({ queryKey: ['finance', 'expenses'] });
+      if (successCount === total) {
         addNotification({
           title: '成功',
-          message: `批量启用成功，共 ${successCount} 条记录`,
+          message: `批量操作成功，共 ${successCount} 条记录`,
           type: 'success',
         });
       } else {
         addNotification({
           title: '部分成功',
-          message: `成功启用 ${successCount} 条，失败 ${selectedIds.length - successCount} 条`,
+          message: `成功 ${successCount} 条，失败 ${total - successCount} 条`,
           type: 'warning',
         });
       }
-
       setSelectedIds([]);
-      loadData();
-    } catch (err: unknown) {
-      apiLogger.error('批量启用科目失败:', err);
+    },
+    onError: (err: unknown) => {
       addNotification({
         title: '错误',
-        message: (err as { message?: string }).message || '批量启用失败',
+        message: (err as { message?: string }).message || '批量操作失败',
         type: 'error',
       });
-    }
-  };
+    },
+  });
 
-  const handleBatchDelete = async () => {
-    if (selectedIds.length === 0) return;
-
-    try {
-      const promises = selectedIds.map((id) => financeApi.account.delete(id));
+  const batchDeleteMutation = useMutation({
+    mutationFn: async (ids: string[]) => {
+      const promises = ids.map((id) => financeApi.account.delete(id));
       const results = await Promise.all(promises);
       const successCount = results.filter((r) => r.success).length;
-
-      if (successCount === selectedIds.length) {
+      return { successCount, total: ids.length };
+    },
+    onSuccess: ({ successCount, total }) => {
+      queryClient.invalidateQueries({ queryKey: ['finance', 'expenses'] });
+      if (successCount === total) {
         addNotification({
           title: '成功',
           message: `批量删除成功，共 ${successCount} 条记录`,
@@ -290,59 +244,56 @@ const FinanceExpensePage: React.FC = () => {
       } else {
         addNotification({
           title: '部分成功',
-          message: `成功删除 ${successCount} 条，失败 ${selectedIds.length - successCount} 条`,
+          message: `成功删除 ${successCount} 条，失败 ${total - successCount} 条`,
           type: 'warning',
         });
       }
-
       setSelectedIds([]);
-      loadData();
-    } catch (err: unknown) {
+    },
+    onError: (err: unknown) => {
       apiLogger.error('批量删除科目失败:', err);
       addNotification({
         title: '错误',
         message: (err as { message?: string }).message || '批量删除失败',
         type: 'error',
       });
-    } finally {
+    },
+    onSettled: () => {
       setBatchDeleteDialogOpen(false);
-    }
+    },
+  });
+
+  const handleCreate = () => {
+    createMutation.mutate(newExpense);
   };
 
-  const handleBatchReject = async () => {
+  const handleUpdate = () => {
+    if (!editingExpense) return;
+    updateMutation.mutate({ id: editingExpense.id, data: editingExpense });
+  };
+
+  const handleDelete = () => {
+    if (!deletingId) return;
+    deleteMutation.mutate(deletingId);
+  };
+
+  const handleApprove = (expense: Account) => {
+    updateMutation.mutate({ id: expense.id, data: { status: 'active' } });
+  };
+
+  const handleBatchApprove = () => {
     if (selectedIds.length === 0) return;
+    batchUpdateMutation.mutate({ ids: selectedIds, data: { status: 'active' } });
+  };
 
-    try {
-      const promises = selectedIds.map((id) =>
-        financeApi.account.update(id, { status: 'disabled' })
-      );
-      const results = await Promise.all(promises);
-      const successCount = results.filter((r) => r.success).length;
+  const handleBatchDelete = () => {
+    if (selectedIds.length === 0) return;
+    batchDeleteMutation.mutate(selectedIds);
+  };
 
-      if (successCount === selectedIds.length) {
-        addNotification({
-          title: '成功',
-          message: `批量停用成功，共 ${successCount} 条记录`,
-          type: 'success',
-        });
-      } else {
-        addNotification({
-          title: '部分成功',
-          message: `成功停用 ${successCount} 条，失败 ${selectedIds.length - successCount} 条`,
-          type: 'warning',
-        });
-      }
-
-      setSelectedIds([]);
-      loadData();
-    } catch (err: unknown) {
-      apiLogger.error('批量停用科目失败:', err);
-      addNotification({
-        title: '错误',
-        message: (err as { message?: string }).message || '批量停用失败',
-        type: 'error',
-      });
-    }
+  const handleBatchReject = () => {
+    if (selectedIds.length === 0) return;
+    batchUpdateMutation.mutate({ ids: selectedIds, data: { status: 'disabled' } });
   };
 
   const filteredExpenses = useMemo(() => {
@@ -571,7 +522,7 @@ const FinanceExpensePage: React.FC = () => {
         title=''
         subtitle=''
         stats={statsCards}
-        onRefresh={loadData}
+        onRefresh={() => expensesQuery.refetch()}
         headerContent={
           <Stack
             direction='row'
@@ -660,7 +611,7 @@ const FinanceExpensePage: React.FC = () => {
             label='刷新'
             variant='secondary'
             icon={<RefreshCw sx={{ width: 16, height: 16 }} />}
-            onClick={loadData}
+            onClick={() => expensesQuery.refetch()}
           />
         </Stack>
 
@@ -736,7 +687,7 @@ const FinanceExpensePage: React.FC = () => {
             if (filters.status) setFilterStatus(filters.status);
             if (filters.expense_type) setFilterType(filters.expense_type);
           }}
-          onRefresh={loadData}
+          onRefresh={() => expensesQuery.refetch()}
           batchActions={[
             {
               label: '批量启用',

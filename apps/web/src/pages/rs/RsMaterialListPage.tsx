@@ -1,4 +1,5 @@
-import React, { useState, useEffect, useMemo, useCallback } from 'react';
+import React, { useState, useMemo, useCallback } from 'react';
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { Box, Card, CardContent, Typography, Chip } from '@mui/material';
 import { Plus, Trash2, Upload, Download, Edit, Package } from 'lucide-react';
 import {
@@ -9,8 +10,8 @@ import {
 } from '@/components/templates';
 import { PageContainer } from '@/components/common';
 import { materialApi } from '@/api/rs';
-import type { Material } from '@/api/rs';
-import { useAppStore } from '@/store';
+import type { Material, CreateMaterialRequest, UpdateMaterialRequest } from '@/api/rs';
+import { useNotificationStore } from '@/store';
 import { logger } from '@/utils/logger';
 import { ConfirmDialog } from '@topems/shared-components';
 
@@ -23,25 +24,21 @@ const STATUS_OPTIONS = [
 ];
 
 const RsMaterialListPage: React.FC = () => {
-  const { addNotification } = useAppStore();
-  const [materials, setMaterials] = useState<Material[]>([]);
+  const { addNotification } = useNotificationStore();
+  const queryClient = useQueryClient();
   const [page, setPage] = useState(0);
   const [rowsPerPage, setRowsPerPage] = useState(10);
   const [searchTerm, setSearchTerm] = useState('');
-  const [loading, setLoading] = useState(false);
-  const [error, setError] = useState<string>('');
   const [selectedIds, setSelectedIds] = useState<string[]>([]);
   const [categoryFilter, setCategoryFilter] = useState<string>('');
   const [statusFilter, setStatusFilter] = useState<string>('');
-  const [total, setTotal] = useState(0);
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
   const [deletingId, setDeletingId] = useState<string | null>(null);
   const [batchDeleteDialogOpen, setBatchDeleteDialogOpen] = useState(false);
 
-  const loadMaterials = useCallback(async () => {
-    try {
-      setLoading(true);
-      setError('');
+  const materialListQuery = useQuery({
+    queryKey: ['rs-materials', page, rowsPerPage, searchTerm, categoryFilter, statusFilter],
+    queryFn: async () => {
       const params: Record<string, string> = {
         page: String(page + 1),
         pagesize: String(rowsPerPage),
@@ -51,28 +48,116 @@ const RsMaterialListPage: React.FC = () => {
       if (statusFilter) params.status = statusFilter;
 
       const response = await materialApi.listMaterials(params);
-      if (response.success && response.data) {
-        setMaterials(response.data.materials || []);
-        setTotal(response.data.total || 0);
-      } else {
-        setError(response.message || '加载物料列表失败');
+      if (!response.success || !response.data) {
+        throw new Error(response.message || '加载物料列表失败');
       }
-    } catch (err: unknown) {
-      logger.error('加载物料列表失败:', err);
-      setError('加载物料列表失败');
+      return {
+        materials: response.data.materials || [],
+        total: response.data.total || 0,
+      };
+    },
+    staleTime: 5 * 60 * 1000,
+  });
+
+  const deleteMaterialMutation = useMutation({
+    mutationFn: async (id: string) => {
+      const response = await materialApi.deleteMaterial(id);
+      if (!response.success) {
+        throw new Error(response.message || '删除物料失败');
+      }
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['rs-materials'] });
+      addNotification({
+        type: 'success',
+        title: '删除成功',
+        message: '物料已删除',
+      });
+    },
+    onError: (error: any) => {
+      logger.error('删除物料失败:', error);
       addNotification({
         type: 'error',
-        title: '加载失败',
-        message: '无法加载物料列表',
+        title: '删除失败',
+        message: error.message || '无法删除物料',
       });
-    } finally {
-      setLoading(false);
-    }
-  }, [page, rowsPerPage, searchTerm, categoryFilter, statusFilter, addNotification]);
+    },
+  });
 
-  useEffect(() => {
-    loadMaterials();
-  }, [loadMaterials]);
+  const batchDeleteMaterialMutation = useMutation({
+    mutationFn: async (ids: string[]) => {
+      const response = await materialApi.batchDeleteMaterials(ids);
+      if (!response.success || !response.data) {
+        throw new Error(response.message || '批量删除物料失败');
+      }
+      return response.data;
+    },
+    onSuccess: (data) => {
+      queryClient.invalidateQueries({ queryKey: ['rs-materials'] });
+      const { success, failed } = data;
+      if (failed === 0) {
+        addNotification({
+          type: 'success',
+          title: '批量删除成功',
+          message: `成功删除 ${success} 条物料`,
+        });
+      } else {
+        addNotification({
+          type: 'warning',
+          title: '部分成功',
+          message: `成功删除 ${success} 条，失败 ${failed} 条`,
+        });
+      }
+    },
+    onError: (error: any) => {
+      logger.error('批量删除物料失败:', error);
+      addNotification({
+        type: 'error',
+        title: '删除失败',
+        message: error.message || '无法批量删除物料',
+      });
+    },
+  });
+
+  const importMaterialMutation = useMutation({
+    mutationFn: async (file: File) => {
+      const response = await materialApi.importMaterials(file);
+      if (!response.success || !response.data) {
+        throw new Error(response.message || '导入物料失败');
+      }
+      return response.data;
+    },
+    onSuccess: (data) => {
+      queryClient.invalidateQueries({ queryKey: ['rs-materials'] });
+      const { success, failed } = data;
+      if (failed === 0) {
+        addNotification({
+          type: 'success',
+          title: '导入成功',
+          message: `成功导入 ${success} 条物料`,
+        });
+      } else {
+        addNotification({
+          type: 'warning',
+          title: '部分成功',
+          message: `成功导入 ${success} 条，失败 ${failed} 条`,
+        });
+      }
+    },
+    onError: (error: any) => {
+      logger.error('导入物料失败:', error);
+      addNotification({
+        type: 'error',
+        title: '导入失败',
+        message: error.message || '无法导入物料',
+      });
+    },
+  });
+
+  const materials = materialListQuery.data?.materials || [];
+  const total = materialListQuery.data?.total || 0;
+  const loading = materialListQuery.isLoading || deleteMaterialMutation.isPending || batchDeleteMaterialMutation.isPending || importMaterialMutation.isPending;
+  const error = materialListQuery.error?.message || '';
 
   const handleDeleteClick = useCallback((id: string) => {
     setDeletingId(id);
@@ -82,29 +167,13 @@ const RsMaterialListPage: React.FC = () => {
   const handleDelete = useCallback(async () => {
     if (!deletingId) return;
     try {
-      const response = await materialApi.deleteMaterial(deletingId);
-      if (response.success) {
-        addNotification({
-          type: 'success',
-          title: '删除成功',
-          message: '物料已删除',
-        });
-        loadMaterials();
-      } else {
-        throw new Error('无法删除物料');
-      }
-    } catch (err: unknown) {
-      logger.error('删除物料失败:', err);
-      addNotification({
-        type: 'error',
-        title: '删除失败',
-        message: '无法删除物料',
-      });
+      await deleteMaterialMutation.mutateAsync(deletingId);
+    } catch {
     } finally {
       setDeleteDialogOpen(false);
       setDeletingId(null);
     }
-  }, [deletingId, addNotification, loadMaterials]);
+  }, [deletingId, deleteMaterialMutation]);
 
   const handleBatchDeleteClick = useCallback(() => {
     if (selectedIds.length === 0) return;
@@ -114,38 +183,13 @@ const RsMaterialListPage: React.FC = () => {
   const handleBatchDelete = useCallback(async () => {
     if (selectedIds.length === 0) return;
     try {
-      const response = await materialApi.batchDeleteMaterials(selectedIds);
-      if (response.success && response.data) {
-        const { success, failed } = response.data;
-        if (failed === 0) {
-          addNotification({
-            type: 'success',
-            title: '批量删除成功',
-            message: `成功删除 ${success} 条物料`,
-          });
-        } else {
-          addNotification({
-            type: 'warning',
-            title: '部分成功',
-            message: `成功删除 ${success} 条，失败 ${failed} 条`,
-          });
-        }
-        setSelectedIds([]);
-        loadMaterials();
-      } else {
-        throw new Error('无法批量删除物料');
-      }
-    } catch (err: unknown) {
-      logger.error('批量删除物料失败:', err);
-      addNotification({
-        type: 'error',
-        title: '删除失败',
-        message: '无法批量删除物料',
-      });
+      await batchDeleteMaterialMutation.mutateAsync(selectedIds);
+      setSelectedIds([]);
+    } catch {
     } finally {
       setBatchDeleteDialogOpen(false);
     }
-  }, [selectedIds, addNotification, loadMaterials]);
+  }, [selectedIds, batchDeleteMaterialMutation]);
 
   const handleImport = useCallback(
     async (event: React.ChangeEvent<HTMLInputElement>) => {
@@ -153,42 +197,13 @@ const RsMaterialListPage: React.FC = () => {
       if (!file) return;
 
       try {
-        const response = await materialApi.importMaterials(file);
-        if (response.success && response.data) {
-          const { success, failed } = response.data;
-          if (failed === 0) {
-            addNotification({
-              type: 'success',
-              title: '导入成功',
-              message: `成功导入 ${success} 条物料`,
-            });
-          } else {
-            addNotification({
-              type: 'warning',
-              title: '部分成功',
-              message: `成功导入 ${success} 条，失败 ${failed} 条`,
-            });
-          }
-          loadMaterials();
-        } else {
-          addNotification({
-            type: 'error',
-            title: '导入失败',
-            message: '无法导入物料',
-          });
-        }
-      } catch (err: unknown) {
-        logger.error('导入物料失败:', err);
-        addNotification({
-          type: 'error',
-          title: '导入失败',
-          message: '无法导入物料',
-        });
+        await importMaterialMutation.mutateAsync(file);
+      } catch {
       } finally {
         event.target.value = '';
       }
     },
-    [addNotification, loadMaterials]
+    [importMaterialMutation]
   );
 
   const handleExport = useCallback(async () => {
@@ -595,7 +610,7 @@ const RsMaterialListPage: React.FC = () => {
         rowActions={rowActions}
         headerContent={headerContent}
         getRowId={(row) => row.id}
-        onRefresh={loadMaterials}
+        onRefresh={() => materialListQuery.refetch()}
         emptyMessage='暂无物料数据'
         showRowNumber
         columnConfigurable

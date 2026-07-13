@@ -1,13 +1,13 @@
 import { defineConfig, devices } from '@playwright/test';
 
 export default defineConfig({
-  testDir: './e2e',
-  fullyParallel: true,
+  testDir: './e2e/ui',
+  fullyParallel: false,
   forbidOnly: !!process.env.CI,
   retries: process.env.CI ? 2 : 0,
-  workers: process.env.CI ? 1 : undefined,
+  workers: 1,
   reporter: [
-    ['html', { outputFolder: 'playwright-report' }],
+    ['html', { outputFolder: 'playwright-report/ui' }],
     ['list'],
   ],
 
@@ -19,37 +19,26 @@ export default defineConfig({
   },
 
   projects: [
-    // Chromium - 桌面
     {
       name: 'chromium',
       use: { ...devices['Desktop Chrome'] },
     },
-
-    // Firefox - 桌面
     {
       name: 'firefox',
       use: { ...devices['Desktop Firefox'] },
     },
-
-    // WebKit - 桌面
     {
       name: 'webkit',
       use: { ...devices['Desktop Safari'] },
     },
-
-    // iPhone 12 - 移动端
     {
       name: 'mobile-iphone',
       use: { ...devices['iPhone 12'] },
     },
-
-    // iPad - 平板
     {
       name: 'tablet-ipad',
       use: { ...devices['iPad (gen 7)'] },
     },
-
-    // Pixel 5 - Android
     {
       name: 'mobile-android',
       use: { ...devices['Pixel 5'] },

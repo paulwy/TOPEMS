@@ -1,6 +1,9 @@
 use axum::{
+    body::Body,
     extract::{Path, Query, State},
-    http::{HeaderMap, Response},
+    http::{header, HeaderMap, Request, Response, StatusCode},
+    middleware::Next,
+    response::IntoResponse,
     routing::*,
     Json, Router,
 };
@@ -15,7 +18,7 @@ use crate::models::{
 };
 use crate::modules::audit::{log_audit_event, AuditEventParams};
 use crate::utils::validate_required_field;
-use topems_shared::{api_error, ApiResponse, PaginatedResponse};
+use topems_shared::{api_error, auth::Claims, ApiResponse, PaginatedResponse};
 
 #[derive(Debug, Clone, Deserialize, Serialize)]
 pub struct BatchCreateDictItemRequest {
@@ -48,31 +51,137 @@ pub struct DictItemQueryParams {
     pub search: Option<String>,
 }
 
+fn extract_claims(req: &Request<Body>) -> Option<Claims> {
+    req.extensions().get::<Claims>().cloned()
+}
+
+async fn require_dict_read_permission(req: Request<Body>, next: Next) -> Response<Body> {
+    let claims = match extract_claims(&req) {
+        Some(c) => c,
+        None => {
+            return (
+                StatusCode::UNAUTHORIZED,
+                [(header::CONTENT_TYPE, "application/json")],
+                r#"{"success":false,"message":"未授权：缺少认证信息","code":401}"#,
+            )
+                .into_response();
+        }
+    };
+
+    if !claims.has_permission("iam:dictionaries_read") && !claims.is_superuser {
+        tracing::warn!(
+            "Permission denied: user={}, permission=iam:dictionaries_read",
+            claims.username
+        );
+        return (
+            StatusCode::FORBIDDEN,
+            [(header::CONTENT_TYPE, "application/json")],
+            r#"{"success":false,"message":"权限不足：需要字典读取权限","code":403}"#,
+        )
+            .into_response();
+    }
+
+    next.run(req).await
+}
+
+async fn require_dict_write_permission(req: Request<Body>, next: Next) -> Response<Body> {
+    let claims = match extract_claims(&req) {
+        Some(c) => c,
+        None => {
+            return (
+                StatusCode::UNAUTHORIZED,
+                [(header::CONTENT_TYPE, "application/json")],
+                r#"{"success":false,"message":"未授权：缺少认证信息","code":401}"#,
+            )
+                .into_response();
+        }
+    };
+
+    if !claims.has_permission("iam:dictionaries_update") && !claims.is_superuser {
+        tracing::warn!(
+            "Permission denied: user={}, permission=iam:dictionaries_update",
+            claims.username
+        );
+        return (
+            StatusCode::FORBIDDEN,
+            [(header::CONTENT_TYPE, "application/json")],
+            r#"{"success":false,"message":"权限不足：需要字典更新权限","code":403}"#,
+        )
+            .into_response();
+    }
+
+    next.run(req).await
+}
+
+async fn require_dict_delete_permission(req: Request<Body>, next: Next) -> Response<Body> {
+    let claims = match extract_claims(&req) {
+        Some(c) => c,
+        None => {
+            return (
+                StatusCode::UNAUTHORIZED,
+                [(header::CONTENT_TYPE, "application/json")],
+                r#"{"success":false,"message":"未授权：缺少认证信息","code":401}"#,
+            )
+                .into_response();
+        }
+    };
+
+    if !claims.is_superuser && !claims.has_permission("iam:dictionaries_update") {
+        tracing::warn!(
+            "Permission denied: user={}, permission=iam:dictionaries_update",
+            claims.username
+        );
+        return (
+            StatusCode::FORBIDDEN,
+            [(header::CONTENT_TYPE, "application/json")],
+            r#"{"success":false,"message":"权限不足：需要超级管理员或字典更新权限","code":403}"#,
+        )
+            .into_response();
+    }
+
+    next.run(req).await
+}
+
 pub fn create_routes() -> Router<ApiState> {
     Router::new()
         .route(
-            "/api/erp/dict-types",
-            get(list_dict_types).post(create_dict_type),
+            "/api/erp/system/dict-types",
+            get(list_dict_types)
+                .post(create_dict_type)
+                .layer(axum::middleware::from_fn(require_dict_write_permission)),
         )
         .route(
-            "/api/erp/dict-types/{id}",
+            "/api/erp/system/dict-types/{id}",
             get(get_dict_type)
                 .put(update_dict_type)
-                .delete(delete_dict_type),
+                .delete(delete_dict_type)
+                .layer(axum::middleware::from_fn(require_dict_write_permission)),
         )
-        .route("/api/erp/dict-types/{id}/items", get(list_dict_items))
         .route(
-            "/api/erp/dict-types/{id}/items/export",
+            "/api/erp/system/dict-types/{id}/items",
+            get(list_dict_items),
+        )
+        .route(
+            "/api/erp/system/dict-types/{id}/items/export",
             get(export_dict_items),
         )
-        .route("/api/erp/dict-items", post(create_dict_item))
-        .route("/api/erp/dict-items/batch", post(batch_create_dict_items))
         .route(
-            "/api/erp/dict-items/{id}",
+            "/api/erp/system/dict-items",
+            post(create_dict_item).layer(axum::middleware::from_fn(require_dict_write_permission)),
+        )
+        .route(
+            "/api/erp/system/dict-items/batch",
+            post(batch_create_dict_items)
+                .layer(axum::middleware::from_fn(require_dict_write_permission)),
+        )
+        .route(
+            "/api/erp/system/dict-items/{id}",
             get(get_dict_item)
                 .put(update_dict_item)
-                .delete(delete_dict_item),
+                .delete(delete_dict_item)
+                .layer(axum::middleware::from_fn(require_dict_write_permission)),
         )
+        .layer(axum::middleware::from_fn(require_dict_read_permission))
 }
 
 pub async fn list_dict_types(

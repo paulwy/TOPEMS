@@ -25,7 +25,7 @@ import type {
   MrpMaterialSummaryQueryParams,
 } from '@/api/scm';
 import { scmApi } from '@/api/scm';
-import { useAppStore } from '@/store';
+import { useNotificationStore } from '@/store';
 import {
   Plus,
   Edit,
@@ -66,7 +66,7 @@ const MrpSuggestionPage: React.FC = () => {
   const [selectedRows, setSelectedRows] = useState<string[]>([]);
   const [showFilterDialog, setShowFilterDialog] = useState(false);
 
-  const { addNotification } = useAppStore();
+  const { addNotification } = useNotificationStore();
 
   useEffect(() => {
     loadSuggestions();

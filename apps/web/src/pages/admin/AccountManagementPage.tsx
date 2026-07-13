@@ -21,7 +21,7 @@ import { ListPageTemplate } from '@/components/templates/ListPageTemplate';
 import { PageContainer } from '@/components/common';
 import { accountApi } from '@/api/finance/account';
 import type { Account, BalanceDirection } from '@/types/finance';
-import { useAppStore } from '@/store';
+import { useNotificationStore } from '@/store';
 import { logger } from '@/utils/logger';
 
 const ACCOUNT_TYPE_CONFIG: Record<
@@ -64,7 +64,7 @@ export default function AccountManagementPage() {
   const [isCreating, setIsCreating] = useState(false);
   const [deletingId, setDeletingId] = useState<string | null>(null);
 
-  const addNotification = useAppStore((state) => state.addNotification);
+  const addNotification = useNotificationStore((state) => state.addNotification);
   const queryClient = useQueryClient();
 
   const {

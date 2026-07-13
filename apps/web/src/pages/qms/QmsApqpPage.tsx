@@ -42,7 +42,7 @@ import { ListPageTemplate, type ColumnDef } from '@/components/templates';
 import { PageContainer } from '@/components/common';
 import { qmsApi } from '@/api/qms';
 import type { ApqpProject, ApqpPhase, ApqpTask, ApqpRisk, ApqpProgressStatistics } from '@/api/qms';
-import { useAppStore } from '@/store';
+import { useNotificationStore } from '@/store';
 import { QMS_PATHS } from '@/modules/qms/config';
 
 const ct = designTokens.colors;
@@ -70,7 +70,7 @@ const QmsApqpPage: React.FC = () => {
     start_date: '',
     target_date: '',
   });
-  const addNotification = useAppStore((state) => state.addNotification);
+  const addNotification = useNotificationStore((state) => state.addNotification);
 
   useEffect(() => {
     loadProjects();

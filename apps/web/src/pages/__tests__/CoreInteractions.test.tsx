@@ -4,7 +4,7 @@ import { render, screen, waitFor, fireEvent } from '@testing-library/react';
 import { BrowserRouter } from 'react-router-dom';
 import WorkStationPage from '../mes/WorkStationPage';
 import { mesApi } from '@/api/mes';
-import { useAppStore } from '@/store';
+import { useNotificationStore, useAuthStore } from '@/store';
 
 const mockAddNotification = vi.fn();
 
@@ -20,19 +20,24 @@ vi.mock('@/api/mes', () => ({
 }));
 
 vi.mock('@/store', () => ({
-  useAppStore: vi.fn((selector?: any) =>
+  useNotificationStore: vi.fn((selector?: any) =>
     selector
       ? selector({
-          addNotification: mockAddNotification,
+          addNotification: vi.fn(),
           notifications: [],
-          user: null,
-          theme: 'light',
         })
       : {
-          addNotification: mockAddNotification,
+          addNotification: vi.fn(),
           notifications: [],
+        }
+  ),
+  useAuthStore: vi.fn((selector?: any) =>
+    selector
+      ? selector({
           user: null,
-          theme: 'light',
+        })
+      : {
+          user: null,
         }
   ),
 }));
@@ -69,19 +74,15 @@ const mockWorkStations = [
 describe('WorkStationPage Interactions', () => {
   beforeEach(() => {
     vi.clearAllMocks();
-    (useAppStore as vi.Mock).mockImplementation((selector?: any) =>
+    (useNotificationStore as vi.Mock).mockImplementation((selector?: any) =>
       selector
         ? selector({
             addNotification: mockAddNotification,
             notifications: [],
-            user: null,
-            theme: 'light',
           })
         : {
             addNotification: mockAddNotification,
             notifications: [],
-            user: null,
-            theme: 'light',
           }
     );
     (mesApi.workstations.list as vi.Mock).mockResolvedValue({
@@ -191,64 +192,5 @@ describe('SrmOrderPage Interactions', () => {
     expect(srmApi.createPurchaseOrder).toBeDefined();
     expect(srmApi.updatePurchaseOrder).toBeDefined();
     expect(srmApi.deletePurchaseOrder).toBeDefined();
-  });
-});
-
-describe('NavigationRegistryV2 Interactions', () => {
-  it('should register and emit events', async () => {
-    const { NavigationRegistryV2 } = await import('@/lib/navigation/NavigationRegistryV2');
-    const registry = NavigationRegistryV2.getInstance();
-    const listener = vi.fn();
-
-    registry.emitter.on('navigationUpdated', listener);
-    registry.registerModule({
-      code: 'test-interaction',
-      name: 'Test',
-      icon: 'Test',
-      path: '/test-interaction',
-      source: 'core',
-      navItems: [],
-    });
-
-    expect(listener).toHaveBeenCalledWith('test-interaction');
-    expect(registry.getModule('test-interaction')).toBeDefined();
-
-    registry.unregisterModule('test-interaction');
-    expect(listener).toHaveBeenCalledTimes(2);
-    expect(registry.getModule('test-interaction')).toBeUndefined();
-
-    registry.emitter.off('navigationUpdated', listener);
-  });
-
-  it('should group modules by business domain correctly', async () => {
-    const { NavigationRegistryV2 } = await import('@/lib/navigation/NavigationRegistryV2');
-    const registry = NavigationRegistryV2.getInstance();
-
-    registry.registerModule({
-      code: 'test-finance-1',
-      name: 'Finance 1',
-      icon: 'Test',
-      path: '/test-finance-1',
-      source: 'core',
-      suite: 'finance',
-      navItems: [],
-    });
-
-    registry.registerModule({
-      code: 'test-hr-1',
-      name: 'HR 1',
-      icon: 'Test',
-      path: '/test-hr-1',
-      source: 'core',
-      suite: 'hr',
-      navItems: [],
-    });
-
-    const grouped = registry.getNavItemsGroupedByBusinessDomain();
-    expect(grouped['finance']).toBeDefined();
-    expect(grouped['hr']).toBeDefined();
-
-    registry.unregisterModule('test-finance-1');
-    registry.unregisterModule('test-hr-1');
   });
 });

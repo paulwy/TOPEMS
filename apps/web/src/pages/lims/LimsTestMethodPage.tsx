@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState, useMemo } from 'react';
 import { PageContainer } from '@/components/common';
 import { useNavigate } from 'react-router-dom';
 import { BookOpen, Plus, Eye, Edit, Trash2, Search } from 'lucide-react';
@@ -28,26 +28,28 @@ import {
 } from '@/components/templates';
 import { limsApi } from '@/api/lims';
 import type { TestMethod, CreateTestMethodRequest, UpdateTestMethodRequest } from '@/api/lims';
-import { useAppStore } from '@/store';
+import { useNotificationStore } from '@/store';
 import { apiLogger } from '@/utils/logger';
 import { designTokens } from '@/theme/tokens';
 import { DASHBOARD_PATHS } from '@/routes/dashboard';
+import { useCrudOperations } from '@/hooks/useCrudQueries';
 
 const ct = designTokens.colors;
-
-interface LimsListResponse<T> {
-  items?: T[];
-  test_methods?: T[];
-}
 
 interface TestMethodForm extends CreateTestMethodRequest {
   status?: string;
 }
 
+const testMethodCrudApi = {
+  list: (params?: Record<string, unknown>) => limsApi.listTestMethods(params as any),
+  get: (id: string) => limsApi.getTestMethod(id),
+  create: (data: CreateTestMethodRequest) => limsApi.createTestMethod(data),
+  update: (id: string, data: UpdateTestMethodRequest) => limsApi.updateTestMethod(id, data),
+  delete: (id: string) => limsApi.deleteTestMethod(id),
+} as any;
+
 const LimsTestMethodPage: React.FC = () => {
   const navigate = useNavigate();
-  const [methods, setMethods] = useState<TestMethod[]>([]);
-  const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState('');
   const [categoryFilter, setCategoryFilter] = useState('all');
   const [statusFilter, setStatusFilter] = useState('all');
@@ -55,10 +57,9 @@ const LimsTestMethodPage: React.FC = () => {
   const [showDetailModal, setShowDetailModal] = useState(false);
   const [selectedMethod, setSelectedMethod] = useState<TestMethod | null>(null);
   const [isEditing, setIsEditing] = useState(false);
-  const [saving, setSaving] = useState(false);
   const [page, setPage] = useState(0);
   const [pageSize, setPageSize] = useState(10);
-  const addNotification = useAppStore((state) => state.addNotification);
+  const addNotification = useNotificationStore((state) => state.addNotification);
 
   const initialFormData: TestMethodForm = {
     method_code: '',
@@ -70,40 +71,18 @@ const LimsTestMethodPage: React.FC = () => {
 
   const [formData, setFormData] = useState<TestMethodForm>(initialFormData);
 
-  const loadMethods = useCallback(async () => {
-    try {
-      setLoading(true);
-      const response = await limsApi.listTestMethods();
-      if (response.success && response.data) {
-        const data = response.data as LimsListResponse<TestMethod> | TestMethod[];
-        let rawMethods: TestMethod[] = [];
-        if (Array.isArray(data)) {
-          rawMethods = data;
-        } else if (data.items && Array.isArray(data.items)) {
-          rawMethods = data.items;
-        } else if (data.test_methods && Array.isArray(data.test_methods)) {
-          rawMethods = data.test_methods;
-        }
-        setMethods(rawMethods);
-      } else {
-        setMethods([]);
-      }
-    } catch (err: unknown) {
-      apiLogger.error('加载检测方法列表失败:', err);
-      setMethods([]);
-      addNotification({
-        title: '错误',
-        message: '加载检测方法列表失败，请稍后重试',
-        type: 'error',
-      });
-    } finally {
-      setLoading(false);
-    }
-  }, [addNotification]);
-
-  useEffect(() => {
-    loadMethods();
-  }, [loadMethods]);
+  const {
+    data: methods,
+    loading,
+    refresh,
+    create: createMethod,
+    update: updateMethod,
+    delete: deleteMethod,
+  } = useCrudOperations<TestMethod, CreateTestMethodRequest, UpdateTestMethodRequest>({
+    api: testMethodCrudApi,
+    queryKey: 'lims-test-methods',
+    defaultPageSize: 100,
+  });
 
   const getStatusBadge = (status: string) => {
     const statusMap: Record<string, { bg: string; color: string }> = {
@@ -139,6 +118,58 @@ const LimsTestMethodPage: React.FC = () => {
         row.updated_at ? new Date(row.updated_at).toLocaleDateString('zh-CN') : '-',
     },
   ];
+
+  const handleView = (method: TestMethod) => {
+    setSelectedMethod(method);
+    setShowDetailModal(true);
+  };
+
+  const handleEdit = (method: TestMethod) => {
+    setSelectedMethod(method);
+    setIsEditing(true);
+    setFormData({
+      method_code: method.method_code,
+      method_name: method.method_name,
+      standard: method.standard || '',
+      description: method.description || '',
+    });
+    setShowCreateModal(true);
+  };
+
+  const handleCreate = () => {
+    setSelectedMethod(null);
+    setIsEditing(false);
+    setFormData(initialFormData);
+    setShowCreateModal(true);
+  };
+
+  const handleSave = async () => {
+    if (!formData.method_code.trim() || !formData.method_name.trim()) {
+      addNotification({
+        title: '错误',
+        message: '请输入方法编号和方法名称',
+        type: 'error',
+      });
+      return;
+    }
+
+    if (isEditing && selectedMethod) {
+      const updateData: UpdateTestMethodRequest = {
+        method_name: formData.method_name,
+        standard: formData.standard,
+        description: formData.description,
+      };
+      await updateMethod(selectedMethod.id, updateData);
+      setShowCreateModal(false);
+    } else {
+      await createMethod(formData);
+      setShowCreateModal(false);
+    }
+  };
+
+  const handleDelete = async (method: TestMethod) => {
+    await deleteMethod(method.id);
+  };
 
   const rowActions: RowAction<TestMethod>[] = [
     {
@@ -201,121 +232,6 @@ const LimsTestMethodPage: React.FC = () => {
   });
 
   const paginatedData = filteredMethods.slice(page * pageSize, page * pageSize + pageSize);
-
-  const handleView = (method: TestMethod) => {
-    setSelectedMethod(method);
-    setShowDetailModal(true);
-  };
-
-  const handleEdit = (method: TestMethod) => {
-    setSelectedMethod(method);
-    setIsEditing(true);
-    setFormData({
-      method_code: method.method_code,
-      method_name: method.method_name,
-      standard: method.standard || '',
-      description: method.description || '',
-    });
-    setShowCreateModal(true);
-  };
-
-  const handleCreate = () => {
-    setSelectedMethod(null);
-    setIsEditing(false);
-    setFormData(initialFormData);
-    setShowCreateModal(true);
-  };
-
-  const handleSave = async () => {
-    if (!formData.method_code.trim() || !formData.method_name.trim()) {
-      addNotification({
-        title: '错误',
-        message: '请输入方法编号和方法名称',
-        type: 'error',
-      });
-      return;
-    }
-
-    try {
-      setSaving(true);
-      if (isEditing && selectedMethod) {
-        const updateData: UpdateTestMethodRequest = {
-          method_name: formData.method_name,
-          standard: formData.standard,
-          description: formData.description,
-        };
-        const response = await limsApi.updateTestMethod(selectedMethod.id, updateData);
-        if (response.success) {
-          addNotification({
-            title: '成功',
-            message: '检测方法更新成功',
-            type: 'success',
-          });
-          setShowCreateModal(false);
-          loadMethods();
-        } else {
-          addNotification({
-            title: '错误',
-            message: response.message || '更新失败，请稍后重试',
-            type: 'error',
-          });
-        }
-      } else {
-        const response = await limsApi.createTestMethod(formData);
-        if (response.success) {
-          addNotification({
-            title: '成功',
-            message: '检测方法创建成功',
-            type: 'success',
-          });
-          setShowCreateModal(false);
-          loadMethods();
-        } else {
-          addNotification({
-            title: '错误',
-            message: response.message || '创建失败，请稍后重试',
-            type: 'error',
-          });
-        }
-      }
-    } catch (err: unknown) {
-      apiLogger.error('保存检测方法失败:', err);
-      addNotification({
-        title: '错误',
-        message: isEditing ? '更新检测方法失败，请稍后重试' : '创建检测方法失败，请稍后重试',
-        type: 'error',
-      });
-    } finally {
-      setSaving(false);
-    }
-  };
-
-  const handleDelete = async (method: TestMethod) => {
-    try {
-      const response = await limsApi.deleteTestMethod(method.id);
-      if (response.success) {
-        addNotification({
-          title: '成功',
-          message: '检测方法删除成功',
-          type: 'success',
-        });
-        loadMethods();
-      } else {
-        addNotification({
-          title: '错误',
-          message: response.message || '删除失败，请稍后重试',
-          type: 'error',
-        });
-      }
-    } catch (err: unknown) {
-      apiLogger.error('删除检测方法失败:', err);
-      addNotification({
-        title: '错误',
-        message: '删除检测方法失败，请稍后重试',
-        type: 'error',
-      });
-    }
-  };
 
   const stats = {
     total: methods.length,
@@ -470,37 +386,6 @@ const LimsTestMethodPage: React.FC = () => {
     </Box>
   );
 
-  if (loading) {
-    return (
-      <Box
-        sx={{
-          minHeight: '100vh',
-          display: 'flex',
-          alignItems: 'center',
-          justifyContent: 'center',
-          background: `linear-gradient(135deg, ${ct.success[50]} 0%, ${ct.background.default} 100%)`,
-        }}
-      >
-        <Box sx={{ textAlign: 'center' }}>
-          <Box
-            sx={{
-              width: 48,
-              height: 48,
-              border: 4,
-              borderColor: 'success.main',
-              borderTopColor: 'success.700',
-              borderRadius: '50%',
-              animation: 'spin 1s linear infinite',
-              mx: 'auto',
-              mb: 2,
-            }}
-          />
-          <Typography sx={{ color: 'slate.600' }}>加载中...</Typography>
-        </Box>
-      </Box>
-    );
-  }
-
   return (
     <PageContainer
       title='检测方法管理'
@@ -547,7 +432,6 @@ const LimsTestMethodPage: React.FC = () => {
         headerContent={statsCards}
       />
 
-      {/* 创建/编辑 Dialog */}
       <Dialog
         open={showCreateModal}
         onClose={() => setShowCreateModal(false)}
@@ -628,15 +512,14 @@ const LimsTestMethodPage: React.FC = () => {
           <Button
             variant='contained'
             onClick={handleSave}
-            disabled={saving}
+            disabled={loading}
             sx={{ bgcolor: ct.success[600] }}
           >
-            {saving ? '保存中...' : '保存'}
+            {loading ? '保存中...' : '保存'}
           </Button>
         </DialogActions>
       </Dialog>
 
-      {/* 查看 Dialog */}
       <Dialog
         open={showDetailModal}
         onClose={() => setShowDetailModal(false)}

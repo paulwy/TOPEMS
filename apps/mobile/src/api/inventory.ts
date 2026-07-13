@@ -36,7 +36,7 @@ export const inventoryApi = {
       location?: string;
       batchNo?: string;
       expiryDate?: string;
-    }
+    },
   ): Promise<ApiResponse<InventoryItem>> => {
     return apiClient.put(`/inventory/${id}`, data);
   },

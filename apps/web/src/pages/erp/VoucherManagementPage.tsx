@@ -59,7 +59,7 @@ import type {
   VoucherItemRequest,
   AccountingSubject,
 } from '@/api/erp/types';
-import { useAppStore } from '@/store';
+import { useNotificationStore } from '@/store';
 import { apiLogger } from '@/utils/logger';
 import { useNavigate } from 'react-router-dom';
 import { ERP_PATHS } from '@/modules/erp/config';
@@ -109,7 +109,7 @@ const ct = designTokens.colors;
  */
 const VoucherManagementPage: React.FC = () => {
   const navigate = useNavigate();
-  const addNotification = useAppStore((state) => state.addNotification);
+  const addNotification = useNotificationStore((state) => state.addNotification);
   const queryClient = useQueryClient();
 
   const [activeTab, setActiveTab] = useState('all');

@@ -17,7 +17,7 @@ import {
 import { Plus, Edit2, Trash2, Eye } from 'lucide-react';
 import { ListPageTemplate, type ColumnDef, type RowAction } from '@/components/templates';
 import { PageContainer } from '@/components/common';
-import { useAppStore } from '@/store';
+import { useNotificationStore } from '@/store';
 import { designTokens } from '@/theme/tokens';
 import { logger } from '@/utils/logger';
 
@@ -156,7 +156,7 @@ const VehicleManagementPage: React.FC = () => {
   const [formData, setFormData] = useState<VehicleFormData>(defaultFormData);
   const [page, setPage] = useState(0);
   const [pageSize, setPageSize] = useState(10);
-  const addNotification = useAppStore((state) => state.addNotification);
+  const addNotification = useNotificationStore((state) => state.addNotification);
 
   useEffect(() => {
     loadData();

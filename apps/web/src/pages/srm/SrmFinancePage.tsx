@@ -16,7 +16,7 @@ import {
 import { Plus, DollarSign, CreditCard, Receipt, TrendingUp } from 'lucide-react';
 import { srmApi } from '@/api/srm';
 import type { SupplierContract, PurchaseOrder } from '@/api/srm';
-import { useAppStore } from '@/store';
+import { useNotificationStore } from '@/store';
 import { apiLogger } from '@/utils/logger';
 import { ListPageTemplate, type ColumnDef } from '@/components/templates';
 import { PageContainer } from '@/components/common/PageContainerV2';
@@ -62,7 +62,7 @@ const SrmFinancePage: React.FC = () => {
     date: '',
     description: '',
   });
-  const addNotification = useAppStore((state) => state.addNotification);
+  const addNotification = useNotificationStore((state) => state.addNotification);
 
   useEffect(() => {
     loadRecords();

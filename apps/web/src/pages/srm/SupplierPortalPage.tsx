@@ -32,7 +32,7 @@ import {
 } from 'lucide-react';
 import { srmApi } from '@/api/srm';
 import type { SupplierPortalStats, Supplier } from '@/api/srm';
-import { useAppStore } from '@/store';
+import { useNotificationStore } from '@/store';
 import { apiLogger } from '@/utils/logger';
 import { DashboardTemplate } from '@/components/templates';
 import { PageContainer } from '@/components/common/PageContainerV2';
@@ -47,7 +47,7 @@ const SupplierPortalPage: React.FC = () => {
   const [supplier, setSupplier] = useState<Supplier | null>(null);
   const [orders, setOrders] = useState<any[]>([]);
   const [announcements, setAnnouncements] = useState<any[]>([]);
-  const { addNotification } = useAppStore();
+  const { addNotification } = useNotificationStore();
 
   useEffect(() => {
     loadData();

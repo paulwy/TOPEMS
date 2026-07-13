@@ -34,6 +34,7 @@ pub mod opening_balance;
 pub mod production_order;
 pub mod purchase_order;
 pub mod sales_order;
+pub mod search;
 pub mod supplier;
 pub mod vehicles;
 pub mod voucher;
@@ -98,4 +99,5 @@ pub fn create_routes() -> Router<ApiState> {
         .merge(customer::create_routes())
         .merge(supplier::create_routes())
         .merge(sales_order::create_routes())
+        .merge(search::create_routes())
 }

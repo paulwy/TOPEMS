@@ -1,6 +1,6 @@
 import { flattenRoutes, toFlatRouteConfig } from './types';
 import type { RouteModuleConfig, RouteConfigV2, RouteConfig } from './types';
-import { pluginManager } from '../../modules/loader/PluginManager';
+import { pluginManager } from '../../lib/plugin-loader/PluginManager';
 import { apiLogger } from '../../utils/logger';
 
 const moduleImports: Record<string, () => Promise<{ [key: string]: RouteModuleConfig }>> = {

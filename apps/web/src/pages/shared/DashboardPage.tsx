@@ -86,7 +86,7 @@ import { useAuth } from '@/hooks/useAuth';
 import { useServiceStatus } from '@/hooks/useServiceStatus';
 import { StatsChart } from '@/components/bi/StatsChart';
 import { MetricCard } from '@/components/bi/MetricCard';
-import { useAppStore } from '../../store';
+import { useShortcutsStore } from '../../store';
 import {
   DashboardQuickActions,
   defaultQuickActions,
@@ -145,7 +145,7 @@ const DashboardPage: React.FC<DashboardPageProps> = ({ onLogout }) => {
   const { user, logout: authLogout, isAuthenticated, hasPermission } = useAuth();
   const { serviceStatuses, refresh: refreshServiceStatuses } = useServiceStatus();
   const { installedPlugins, isPluginInstalled } = useInstalledPlugins();
-  const shortcuts = useAppStore((state) => state.shortcuts);
+  const shortcuts = useShortcutsStore((state) => state.shortcuts);
   const [loading, setLoading] = useState(true);
   const [statsLoading, setStatsLoading] = useState(false);
   const [moduleStatsLoading, setModuleStatsLoading] = useState(false);

@@ -5,12 +5,15 @@ pub mod models;
 pub mod modules;
 pub mod services;
 pub mod shared;
+pub mod workflow;
 
 use axum::{extract::State, routing::get, Json, Router};
 use axum_prometheus::PrometheusMetricLayer;
+use std::env;
 use std::net::SocketAddr;
 
 use crate::shared::AppState;
+use crate::workflow::WorkflowClient;
 use topems_shared::{
     auth_middleware, create_api_info_router, create_cors_layer, init_telemetry,
     telemetry_middleware, ApiResponse, AuthState, DependencyHealth, HealthStatus, ServiceHealth,
@@ -55,9 +58,14 @@ async fn main() {
 
     let auth_state = AuthState::from_env();
 
+    let workflow_url = std::env::var("WORKFLOW_SERVICE_URL")
+        .unwrap_or_else(|_| "http://localhost:8001".to_string());
+    let workflow_client = WorkflowClient::new(&workflow_url);
+
     let state = AppState {
         auth_state: auth_state.clone(),
         pool: pool.clone(),
+        workflow_client,
     };
 
     let cors = create_cors_layer();

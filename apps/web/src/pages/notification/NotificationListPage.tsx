@@ -1,4 +1,4 @@
-import { Box, Typography, Chip, IconButton, Tabs, Tab, Grid, Paper, Avatar } from '@mui/material';
+import { Box, Typography, Chip, Tabs, Tab } from '@mui/material';
 import React, { useState, useMemo, useCallback } from 'react';
 import {
   Bell,
@@ -8,36 +8,32 @@ import {
   StarOff,
   Mail,
   Settings,
-  AlertCircle,
   CheckSquare,
   MessageSquare,
   Calendar,
   Eye,
   EyeOff,
 } from 'lucide-react';
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 
-import { useAppStore } from '../../store';
+import { useNotificationStore } from '../../store';
 import { NOTIFICATION_PATHS } from '@/modules/notification/config';
 import { ListPageTemplate, type ColumnDef } from '@/components/templates';
 import { extractErrorMessage } from '@/utils/errors';
 import { PageContainer, ConfirmDialog } from '@/components/common';
 import { designTokens } from '@/theme/tokens';
+import {
+  getNotifications,
+  markAsRead,
+  deleteNotification,
+  markAllAsRead,
+  type Notification,
+} from '@/api/notification';
 
 const ct = designTokens.colors;
 
 type NotificationType = 'system' | 'approval' | 'task' | 'message';
-type NotificationStatus = 'unread' | 'read';
 type NotificationTab = 'all' | 'unread' | 'read' | 'important';
-
-interface NotificationItem {
-  id: string;
-  title: string;
-  content: string;
-  type: NotificationType;
-  status: NotificationStatus;
-  important: boolean;
-  createdAt: string;
-}
 
 const TYPE_LABELS: Record<NotificationType, string> = {
   system: '系统通知',
@@ -67,148 +63,77 @@ const TYPE_ICONS: Record<NotificationType, React.ReactNode> = {
   message: <MessageSquare size={16} />,
 };
 
-const generateMockData = (): NotificationItem[] => {
-  const now = new Date();
-  const data: NotificationItem[] = [
-    {
-      id: '1',
-      title: '系统维护通知',
-      content: '系统将于今晚22:00-24:00进行维护升级，请提前保存您的工作。',
-      type: 'system',
-      status: 'unread',
-      important: true,
-      createdAt: new Date(now.getTime() - 1000 * 60 * 30).toISOString(),
-    },
-    {
-      id: '2',
-      title: '采购订单审批待处理',
-      content: '您有一个采购订单 PO-2024-001 等待审批，请及时处理。',
-      type: 'approval',
-      status: 'unread',
-      important: true,
-      createdAt: new Date(now.getTime() - 1000 * 60 * 60 * 2).toISOString(),
-    },
-    {
-      id: '3',
-      title: '新任务分配',
-      content: '您被分配了一个新任务：QMS质量检测，请在截止日期前完成。',
-      type: 'task',
-      status: 'unread',
-      important: false,
-      createdAt: new Date(now.getTime() - 1000 * 60 * 60 * 5).toISOString(),
-    },
-    {
-      id: '4',
-      title: '张三给您发送了一条消息',
-      content: '关于项目进度的讨论，希望能尽快回复。',
-      type: 'message',
-      status: 'read',
-      important: false,
-      createdAt: new Date(now.getTime() - 1000 * 60 * 60 * 8).toISOString(),
-    },
-    {
-      id: '5',
-      title: '密码安全提醒',
-      content: '您的密码即将过期，请及时更新以确保账户安全。',
-      type: 'system',
-      status: 'read',
-      important: true,
-      createdAt: new Date(now.getTime() - 1000 * 60 * 60 * 24).toISOString(),
-    },
-    {
-      id: '6',
-      title: '请假审批已通过',
-      content: '您的请假申请（2024-06-15至2024-06-16）已通过审批。',
-      type: 'approval',
-      status: 'read',
-      important: false,
-      createdAt: new Date(now.getTime() - 1000 * 60 * 60 * 26).toISOString(),
-    },
-    {
-      id: '7',
-      title: '任务完成提醒',
-      content: '您负责的任务"设备维护"已接近截止日期，请尽快完成。',
-      type: 'task',
-      status: 'unread',
-      important: false,
-      createdAt: new Date(now.getTime() - 1000 * 60 * 60 * 48).toISOString(),
-    },
-    {
-      id: '8',
-      title: '李四回复了您的消息',
-      content: '好的，我会按计划进行。',
-      type: 'message',
-      status: 'read',
-      important: false,
-      createdAt: new Date(now.getTime() - 1000 * 60 * 60 * 50).toISOString(),
-    },
-    {
-      id: '9',
-      title: '系统升级公告',
-      content: '系统已成功升级到v4.0版本，体验新功能。',
-      type: 'system',
-      status: 'read',
-      important: false,
-      createdAt: new Date(now.getTime() - 1000 * 60 * 60 * 72).toISOString(),
-    },
-    {
-      id: '10',
-      title: '报销审批被驳回',
-      content: '您的报销申请BX-2024-056被驳回，请查看详情并修改后重新提交。',
-      type: 'approval',
-      status: 'unread',
-      important: true,
-      createdAt: new Date(now.getTime() - 1000 * 60 * 60 * 80).toISOString(),
-    },
-    {
-      id: '11',
-      title: '周报提交提醒',
-      content: '请于本周五前提交本周工作周报。',
-      type: 'task',
-      status: 'read',
-      important: false,
-      createdAt: new Date(now.getTime() - 1000 * 60 * 60 * 96).toISOString(),
-    },
-  ];
-  return data;
-};
-
 export const NotificationListPage: React.FC = () => {
-  const addNotification = useAppStore((state) => state.addNotification);
+  const addNotification = useNotificationStore((state) => state.addNotification);
+  const queryClient = useQueryClient();
 
-  const [notifications, setNotifications] = useState<NotificationItem[]>(generateMockData());
-  const [loading, setLoading] = useState(false);
-  const [error, setError] = useState<string | null>(null);
+  const [activeTab, setActiveTab] = useState<NotificationTab>('all');
   const [searchQuery, setSearchQuery] = useState('');
   const [typeFilter, setTypeFilter] = useState<string>('all');
   const [statusFilter, setStatusFilter] = useState<string>('all');
   const [importantFilter, setImportantFilter] = useState<string>('all');
-  const [activeTab, setActiveTab] = useState<NotificationTab>('all');
   const [page, setPage] = useState(1);
-  const pageSize = 10;
+  const [pageSize] = useState(10);
+  const [selectedIds, setSelectedIds] = useState<string[]>([]);
 
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
-  const [deleteTarget, setDeleteTarget] = useState<NotificationItem | null>(null);
+  const [deleteTarget, setDeleteTarget] = useState<Notification | null>(null);
   const [bulkDeleteDialogOpen, setBulkDeleteDialogOpen] = useState(false);
-  const [selectedIds, setSelectedIds] = useState<(string | number)[]>([]);
+
+  const { data: notifications = [], isLoading: loading } = useQuery({
+    queryKey: ['notifications', activeTab, typeFilter],
+    queryFn: async () => {
+      const response = await getNotifications(
+        page,
+        100,
+        typeFilter !== 'all' ? (typeFilter as any) : undefined
+      );
+      if (response.success && response.data?.notifications) {
+        return response.data.notifications.map((n: Notification) => ({
+          ...n,
+          important: (n as any).important || false,
+        }));
+      }
+      return [];
+    },
+  });
+
+  const markAsReadMutation = useMutation({
+    mutationFn: (id: string) => markAsRead(id),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['notifications'] });
+    },
+  });
+
+  const deleteMutation = useMutation({
+    mutationFn: (id: string) => deleteNotification(id),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['notifications'] });
+    },
+  });
+
+  const markAllAsReadMutation = useMutation({
+    mutationFn: () => markAllAsRead(),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['notifications'] });
+    },
+  });
 
   const filteredByTab = useMemo(() => {
-    let result = notifications;
-
+    let result = notifications as Notification[];
     switch (activeTab) {
       case 'unread':
-        result = result.filter((n) => n.status === 'unread');
+        result = result.filter((n) => !n.is_read);
         break;
       case 'read':
-        result = result.filter((n) => n.status === 'read');
+        result = result.filter((n) => n.is_read);
         break;
       case 'important':
-        result = result.filter((n) => n.important);
+        result = result.filter((n) => (n as any).important);
         break;
       default:
         break;
     }
-
     return result;
   }, [notifications, activeTab]);
 
@@ -218,20 +143,24 @@ export const NotificationListPage: React.FC = () => {
     if (searchQuery) {
       const query = searchQuery.toLowerCase();
       result = result.filter(
-        (n) => n.title.toLowerCase().includes(query) || n.content.toLowerCase().includes(query)
+        (n) => n.title.toLowerCase().includes(query) || n.content?.toLowerCase().includes(query)
       );
     }
 
     if (typeFilter !== 'all') {
-      result = result.filter((n) => n.type === typeFilter);
+      result = result.filter((n) => n.notification_type === typeFilter);
     }
 
     if (statusFilter !== 'all') {
-      result = result.filter((n) => n.status === statusFilter);
+      result = result.filter((n) =>
+        statusFilter === 'unread' ? !n.is_read : !!n.is_read
+      );
     }
 
     if (importantFilter !== 'all') {
-      result = result.filter((n) => (importantFilter === 'important' ? n.important : !n.important));
+      result = result.filter((n) =>
+        importantFilter === 'important' ? (n as any).important : !(n as any).important
+      );
     }
 
     return result;
@@ -241,16 +170,20 @@ export const NotificationListPage: React.FC = () => {
   const paginatedData = useMemo(() => {
     const start = (page - 1) * pageSize;
     return filteredData.slice(start, start + pageSize);
-  }, [filteredData, page]);
+  }, [filteredData, page, pageSize]);
 
   const stats = useMemo(() => {
-    const unreadCount = notifications.filter((n) => n.status === 'unread').length;
+    const unreadCount = (notifications as Notification[]).filter((n) => !n.is_read).length;
     const today = new Date();
     today.setHours(0, 0, 0, 0);
-    const todayCount = notifications.filter((n) => new Date(n.createdAt) >= today).length;
+    const todayCount = (notifications as Notification[]).filter(
+      (n) => new Date(n.created_at) >= today
+    ).length;
     const weekAgo = new Date(today.getTime() - 7 * 24 * 60 * 60 * 1000);
-    const weekCount = notifications.filter((n) => new Date(n.createdAt) >= weekAgo).length;
-    const readCount = notifications.filter((n) => n.status === 'read').length;
+    const weekCount = (notifications as Notification[]).filter(
+      (n) => new Date(n.created_at) >= weekAgo
+    ).length;
+    const readCount = (notifications as Notification[]).filter((n) => n.is_read).length;
     const readRate =
       notifications.length > 0 ? Math.round((readCount / notifications.length) * 100) : 0;
 
@@ -287,48 +220,48 @@ export const NotificationListPage: React.FC = () => {
   }, [notifications]);
 
   const handleMarkAsRead = useCallback(
-    (row: NotificationItem) => {
-      setNotifications((prev) =>
-        prev.map((n) => (n.id === row.id ? { ...n, status: 'read' as const } : n))
-      );
-      addNotification({
-        title: '操作成功',
-        message: '通知已标记为已读',
-        type: 'success',
-      });
+    async (row: Notification) => {
+      try {
+        await markAsReadMutation.mutateAsync(row.id);
+        addNotification({
+          title: '操作成功',
+          message: '通知已标记为已读',
+          type: 'success',
+        });
+      } catch (err) {
+        addNotification({
+          title: '操作失败',
+          message: extractErrorMessage(err, '标记已读失败'),
+          type: 'error',
+        });
+      }
     },
-    [addNotification]
+    [addNotification, markAsReadMutation]
   );
 
   const handleMarkAsUnread = useCallback(
-    (row: NotificationItem) => {
-      setNotifications((prev) =>
-        prev.map((n) => (n.id === row.id ? { ...n, status: 'unread' as const } : n))
-      );
+    (row: Notification) => {
       addNotification({
-        title: '操作成功',
-        message: '通知已标记为未读',
-        type: 'success',
+        title: '提示',
+        message: '标记为未读功能开发中',
+        type: 'info',
       });
     },
     [addNotification]
   );
 
   const handleToggleImportant = useCallback(
-    (row: NotificationItem) => {
-      setNotifications((prev) =>
-        prev.map((n) => (n.id === row.id ? { ...n, important: !n.important } : n))
-      );
+    (row: Notification) => {
       addNotification({
-        title: '操作成功',
-        message: row.important ? '已取消重要标记' : '已标记为重要',
-        type: 'success',
+        title: '提示',
+        message: '重要标记功能开发中',
+        type: 'info',
       });
     },
     [addNotification]
   );
 
-  const handleDeleteClick = useCallback((row: NotificationItem) => {
+  const handleDeleteClick = useCallback((row: Notification) => {
     setDeleteTarget(row);
     setDeleteDialogOpen(true);
   }, []);
@@ -336,7 +269,7 @@ export const NotificationListPage: React.FC = () => {
   const handleConfirmDelete = useCallback(async () => {
     if (!deleteTarget) return;
     try {
-      setNotifications((prev) => prev.filter((n) => n.id !== deleteTarget.id));
+      await deleteMutation.mutateAsync(deleteTarget.id);
       addNotification({
         title: '删除成功',
         message: '通知已删除',
@@ -352,29 +285,24 @@ export const NotificationListPage: React.FC = () => {
       setDeleteDialogOpen(false);
       setDeleteTarget(null);
     }
-  }, [deleteTarget, addNotification]);
+  }, [deleteTarget, addNotification, deleteMutation]);
 
-  const handleMarkAllAsRead = useCallback(() => {
-    const unreadItems = filteredData.filter((n) => n.status === 'unread');
-    if (unreadItems.length === 0) {
+  const handleMarkAllAsRead = useCallback(async () => {
+    try {
+      await markAllAsReadMutation.mutateAsync();
       addNotification({
-        title: '提示',
-        message: '没有未读通知',
-        type: 'info',
+        title: '操作成功',
+        message: '已将全部通知标记为已读',
+        type: 'success',
       });
-      return;
+    } catch (err) {
+      addNotification({
+        title: '操作失败',
+        message: extractErrorMessage(err, '标记已读失败'),
+        type: 'error',
+      });
     }
-    setNotifications((prev) =>
-      prev.map((n) =>
-        unreadItems.some((u) => u.id === n.id) ? { ...n, status: 'read' as const } : n
-      )
-    );
-    addNotification({
-      title: '操作成功',
-      message: `已将 ${unreadItems.length} 条通知标记为已读`,
-      type: 'success',
-    });
-  }, [filteredData, addNotification]);
+  }, [addNotification, markAllAsReadMutation]);
 
   const handleBulkDelete = useCallback(() => {
     if (selectedIds.length === 0) {
@@ -390,7 +318,9 @@ export const NotificationListPage: React.FC = () => {
 
   const handleConfirmBulkDelete = useCallback(async () => {
     try {
-      setNotifications((prev) => prev.filter((n) => !selectedIds.includes(n.id)));
+      for (const id of selectedIds) {
+        await deleteMutation.mutateAsync(id);
+      }
       setSelectedIds([]);
       addNotification({
         title: '删除成功',
@@ -406,7 +336,7 @@ export const NotificationListPage: React.FC = () => {
     } finally {
       setBulkDeleteDialogOpen(false);
     }
-  }, [selectedIds, addNotification]);
+  }, [selectedIds, addNotification, deleteMutation]);
 
   const handleFilterImportant = useCallback(() => {
     if (importantFilter === 'important') {
@@ -417,7 +347,7 @@ export const NotificationListPage: React.FC = () => {
     setPage(1);
   }, [importantFilter]);
 
-  const columns: ColumnDef<NotificationItem>[] = useMemo(
+  const columns: ColumnDef<Notification>[] = useMemo(
     () => [
       {
         id: 'title',
@@ -430,22 +360,22 @@ export const NotificationListPage: React.FC = () => {
                 width: 32,
                 height: 32,
                 borderRadius: '50%',
-                bgcolor: TYPE_BG_COLORS[row.type].bg,
+                bgcolor: TYPE_BG_COLORS[row.notification_type as NotificationType].bg,
                 display: 'flex',
                 alignItems: 'center',
                 justifyContent: 'center',
-                color: TYPE_BG_COLORS[row.type].color,
+                color: TYPE_BG_COLORS[row.notification_type as NotificationType].color,
                 flexShrink: 0,
               }}
             >
-              {TYPE_ICONS[row.type]}
+              {TYPE_ICONS[row.notification_type as NotificationType]}
             </Box>
             <Box sx={{ minWidth: 0, flex: 1 }}>
               <Typography
                 variant='body2'
                 sx={{
-                  fontWeight: row.status === 'unread' ? 600 : 400,
-                  color: row.status === 'unread' ? 'text.primary' : 'text.secondary',
+                  fontWeight: !row.is_read ? 600 : 400,
+                  color: !row.is_read ? 'text.primary' : 'text.secondary',
                   overflow: 'hidden',
                   textOverflow: 'ellipsis',
                   whiteSpace: 'nowrap',
@@ -466,7 +396,7 @@ export const NotificationListPage: React.FC = () => {
                 {row.content}
               </Typography>
             </Box>
-            {row.important && (
+            {(row as any).important && (
               <Star
                 size={14}
                 color='warning.main'
@@ -483,8 +413,8 @@ export const NotificationListPage: React.FC = () => {
         render: (row) => (
           <Chip
             size='small'
-            color={TYPE_COLORS[row.type]}
-            label={TYPE_LABELS[row.type]}
+            color={TYPE_COLORS[row.notification_type as NotificationType]}
+            label={TYPE_LABELS[row.notification_type as NotificationType]}
             variant='outlined'
           />
         ),
@@ -498,192 +428,179 @@ export const NotificationListPage: React.FC = () => {
             variant='body2'
             color='text.secondary'
           >
-            {new Date(row.createdAt).toLocaleString('zh-CN')}
+            {new Date(row.created_at).toLocaleString('zh-CN')}
           </Typography>
         ),
-      },
-      {
-        id: 'status',
-        label: '状态',
-        width: 100,
-        render: (row) => (
-          <Chip
-            size='small'
-            color={row.status === 'unread' ? 'primary' : 'default'}
-            label={row.status === 'unread' ? '未读' : '已读'}
-            variant={row.status === 'unread' ? 'filled' : 'outlined'}
-          />
-        ),
-      },
-      {
-        id: 'actions',
-        label: '操作',
-        align: 'right',
-        width: 160,
-        render: (row) => (
-          <Box sx={{ display: 'flex', justifyContent: 'flex-end', gap: 0.5 }}>
-            <IconButton
-              size='small'
-              onClick={() =>
-                row.status === 'unread' ? handleMarkAsRead(row) : handleMarkAsUnread(row)
-              }
-              title={row.status === 'unread' ? '标记已读' : '标记未读'}
-            >
-              {row.status === 'unread' ? <Eye size={16} /> : <EyeOff size={16} />}
-            </IconButton>
-            <IconButton
-              size='small'
-              onClick={() => handleToggleImportant(row)}
-              title={row.important ? '取消重要' : '标记重要'}
-              color={row.important ? 'warning' : 'default'}
-            >
-              {row.important ? (
-                <Star
-                  size={16}
-                  fill='currentColor'
-                />
-              ) : (
-                <StarOff size={16} />
-              )}
-            </IconButton>
-            <IconButton
-              size='small'
-              onClick={() => handleDeleteClick(row)}
-              title='删除'
-              color='error'
-            >
-              <Trash2 size={16} />
-            </IconButton>
-          </Box>
-        ),
-      },
-    ],
-    [handleMarkAsRead, handleMarkAsUnread, handleToggleImportant, handleDeleteClick]
-  );
-
-  const filterOptions = useMemo(
-    () => [
-      {
-        id: 'type',
-        label: '类型',
-        type: 'select' as const,
-        options: [
-          { label: '全部类型', value: 'all' },
-          ...Object.entries(TYPE_LABELS).map(([value, label]) => ({
-            label,
-            value,
-          })),
-        ],
-      },
-      {
-        id: 'status',
-        label: '状态',
-        type: 'select' as const,
-        options: [
-          { label: '全部状态', value: 'all' },
-          { label: '未读', value: 'unread' },
-          { label: '已读', value: 'read' },
-        ],
-      },
-      {
-        id: 'important',
-        label: '重要性',
-        type: 'select' as const,
-        options: [
-          { label: '全部', value: 'all' },
-          { label: '重要', value: 'important' },
-          { label: '普通', value: 'normal' },
-        ],
       },
     ],
     []
   );
 
-  const handleFilterChange = useCallback((filters: Record<string, unknown>) => {
-    if (typeof filters.type === 'string') {
-      setTypeFilter(filters.type);
-    }
-    if (typeof filters.status === 'string') {
-      setStatusFilter(filters.status);
-    }
-    if (typeof filters.important === 'string') {
-      setImportantFilter(filters.important);
-    }
-    setPage(1);
-  }, []);
+  const rowActions = useMemo(
+    () => [
+      {
+        label: '标记已读',
+        icon: <Eye size={16} />,
+        onClick: handleMarkAsRead,
+      },
+      {
+        label: '标记未读',
+        icon: <EyeOff size={16} />,
+        onClick: handleMarkAsUnread,
+      },
+      {
+        label: '重要',
+        icon: <Star size={16} />,
+        onClick: handleToggleImportant,
+      },
+      {
+        label: '删除',
+        icon: <Trash2 size={16} />,
+        onClick: handleDeleteClick,
+        color: 'error' as const,
+      },
+    ],
+    [handleMarkAsRead, handleMarkAsUnread, handleToggleImportant, handleDeleteClick]
+  );
 
-  const handlePageChange = useCallback((newPage: number) => {
-    setPage(newPage);
-  }, []);
+  const tabActions = useMemo(
+    () => [
+      {
+        label: '全部已读',
+        icon: <Check size={16} />,
+        onClick: handleMarkAllAsRead,
+      },
+      {
+        label: '重要筛选',
+        icon: <Star size={16} />,
+        onClick: handleFilterImportant,
+        color: importantFilter === 'important' ? 'warning' : undefined,
+      },
+      {
+        label: '批量删除',
+        icon: <Trash2 size={16} />,
+        onClick: handleBulkDelete,
+        color: 'error' as const,
+      },
+    ],
+    [handleMarkAllAsRead, handleFilterImportant, handleBulkDelete, importantFilter]
+  );
 
-  const handleTabChange = useCallback((_event: React.SyntheticEvent, newValue: NotificationTab) => {
-    setActiveTab(newValue);
-    setPage(1);
-  }, []);
-
-  const headerContent = useMemo(() => {
-    const tabs: { key: NotificationTab; label: string }[] = [
-      { key: 'all', label: '全部' },
-      { key: 'unread', label: '未读' },
-      { key: 'read', label: '已读' },
-      { key: 'important', label: '重要' },
-    ];
-    return (
-      <Box sx={{ mb: 2 }}>
-        <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 2, mb: 2 }}>
-          {stats.map((stat) => (
-            <Box
-              key={stat.id}
-              sx={{ flex: 1, minWidth: { xs: '50%', sm: 'calc(25% - 8px)' } }}
-            >
-              <Paper sx={{ p: 2, borderRadius: 3 }}>
-                <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
-                  <Avatar
-                    sx={{
-                      bgcolor: `${stat.color}.light`,
-                      color: `${stat.color}.main`,
-                      width: 40,
-                      height: 40,
-                    }}
-                  >
-                    {stat.icon}
-                  </Avatar>
-                  <Box>
-                    <Typography
-                      variant='caption'
-                      color='text.secondary'
-                    >
-                      {stat.title}
-                    </Typography>
-                    <Typography
-                      variant='h6'
-                      sx={{ fontWeight: 600 }}
-                    >
-                      {stat.value}
-                    </Typography>
-                  </Box>
-                </Box>
-              </Paper>
-            </Box>
-          ))}
-        </Box>
-        <Box sx={{ borderBottom: 1, borderColor: 'divider', bgcolor: 'background.paper' }}>
-          <Tabs
-            value={activeTab}
-            onChange={handleTabChange}
+  const headerContent = (
+    <Box sx={{ px: { xs: 2, sm: 3 }, py: 3, borderBottom: 1, borderColor: 'divider' }}>
+      <Box
+        sx={{
+          display: 'grid',
+          gridTemplateColumns: { xs: 'repeat(2, 1fr)', md: 'repeat(4, 1fr)' },
+          gap: 2,
+          mb: 3,
+        }}
+      >
+        {stats.map((stat) => (
+          <Box
+            key={stat.id}
+            sx={{
+              display: 'flex',
+              alignItems: 'center',
+              gap: 2,
+              p: 2,
+              bgcolor: `${stat.color}.50`,
+              borderRadius: 3,
+            }}
           >
-            {tabs.map((tab) => (
-              <Tab
-                key={tab.key}
-                value={tab.key}
-                label={tab.label}
-              />
-            ))}
-          </Tabs>
-        </Box>
+            <Box
+              sx={{
+                width: 40,
+                height: 40,
+                borderRadius: '50%',
+                bgcolor: `${stat.color}.main`,
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                color: 'white',
+              }}
+            >
+              {stat.icon}
+            </Box>
+            <Box>
+              <Typography
+                variant='caption'
+                color='text.secondary'
+              >
+                {stat.title}
+              </Typography>
+              <Typography
+                variant='h6'
+                sx={{ fontWeight: 700, color: `${stat.color}.main` }}
+              >
+                {stat.value}
+              </Typography>
+            </Box>
+          </Box>
+        ))}
       </Box>
-    );
-  }, [activeTab, handleTabChange, stats]);
+
+      <Tabs
+        value={activeTab}
+        onChange={(_, newValue) => {
+          setActiveTab(newValue);
+          setPage(1);
+        }}
+        sx={{
+          '& .MuiTab-root': {
+            textTransform: 'none',
+            fontWeight: 500,
+            minHeight: 40,
+          },
+        }}
+      >
+        <Tab
+          label='全部通知'
+          value='all'
+        />
+        <Tab
+          label='未读通知'
+          value='unread'
+        />
+        <Tab
+          label='已读通知'
+          value='read'
+        />
+        <Tab
+          label='重要通知'
+          value='important'
+        />
+      </Tabs>
+    </Box>
+  );
+
+  const filters = useMemo(
+    () => [
+      {
+        id: 'type',
+        label: '通知类型',
+        type: 'select' as const,
+        options: [
+          { value: 'all', label: '全部类型' },
+          { value: 'system', label: '系统通知' },
+          { value: 'approval', label: '审批通知' },
+          { value: 'task', label: '任务通知' },
+          { value: 'message', label: '消息通知' },
+        ],
+      },
+      {
+        id: 'status',
+        label: '阅读状态',
+        type: 'select' as const,
+        options: [
+          { value: 'all', label: '全部状态' },
+          { value: 'unread', label: '未读' },
+          { value: 'read', label: '已读' },
+        ],
+      },
+    ],
+    []
+  );
 
   return (
     <PageContainer
@@ -695,149 +612,67 @@ export const NotificationListPage: React.FC = () => {
       }}
     >
       <ListPageTemplate
-        title=''
-        subtitle=''
+        title='通知中心'
+        subtitle='查看和管理您的所有通知'
         columns={columns}
         data={paginatedData}
         loading={loading}
-        error={error || undefined}
+        getRowId={(row) => row.id}
+        rowActions={rowActions}
         searchable
-        searchPlaceholder='搜索标题、内容...'
+        searchPlaceholder='搜索通知标题、内容...'
         searchValue={searchQuery}
-        onSearch={setSearchQuery}
-        filters={filterOptions}
-        filtersValue={{
-          type: typeFilter,
-          status: statusFilter,
-          important: importantFilter,
+        onSearch={(value) => {
+          setSearchQuery(value);
+          setPage(1);
         }}
-        onFilterChange={handleFilterChange}
+        filters={filters}
+        filtersValue={{ type: typeFilter, status: statusFilter }}
+        onFilterChange={(filters) => {
+          if (filters.type !== undefined) {
+            setTypeFilter(filters.type);
+            setPage(1);
+          }
+          if (filters.status !== undefined) {
+            setStatusFilter(filters.status);
+            setPage(1);
+          }
+        }}
         pagination={{
-          page,
+          page: page - 1,
           pageSize,
           total,
-          onPageChange: handlePageChange,
+          onPageChange: (p) => setPage(p + 1),
         }}
-        actions={[
-          {
-            label: '全部已读',
-            icon: <Check size={16} />,
-            onClick: handleMarkAllAsRead,
-            variant: 'outlined',
-          },
-          {
-            label: '全部删除',
-            icon: <Trash2 size={16} />,
-            onClick: handleBulkDelete,
-            variant: 'outlined',
-          },
-          {
-            label: importantFilter === 'important' ? '取消筛选重要' : '筛选重要',
-            icon: <Star size={16} />,
-            onClick: handleFilterImportant,
-            variant: 'outlined',
-          },
-        ]}
+        headerContent={headerContent}
         selectable
         selectedIds={selectedIds}
-        onSelectionChange={setSelectedIds}
-        batchActions={[
-          {
-            label: '批量已读',
-            icon: <Check size={16} />,
-            onClick: () => {
-              setNotifications((prev) =>
-                prev.map((n) =>
-                  selectedIds.includes(n.id) ? { ...n, status: 'read' as const } : n
-                )
-              );
-              setSelectedIds([]);
-              addNotification({
-                title: '操作成功',
-                message: '已标记为已读',
-                type: 'success',
-              });
-            },
-            showWhenSelected: true,
-          },
-          {
-            label: '批量删除',
-            icon: <Trash2 size={16} />,
-            color: 'error',
-            onClick: handleBulkDelete,
-            confirm: true,
-            showWhenSelected: true,
-          },
-        ]}
-        onRefresh={() => {
-          setNotifications(generateMockData());
-          addNotification({
-            title: '刷新成功',
-            message: '通知列表已刷新',
-            type: 'success',
-          });
-        }}
-        emptyMessage='暂无通知'
-        headerContent={headerContent}
-        getRowId={(row) => row.id}
+        onSelectionChange={(ids) => setSelectedIds(ids.map(String))}
+        emptyIcon={<Bell style={{ width: 48, height: 48, color: ct.grey[400] }} />}
+        emptyMessage='暂无通知数据'
       />
 
       <ConfirmDialog
         isOpen={deleteDialogOpen}
-        onClose={() => setDeleteDialogOpen(false)}
+        onClose={() => {
+          setDeleteDialogOpen(false);
+          setDeleteTarget(null);
+        }}
         onConfirm={handleConfirmDelete}
-        title='删除通知'
-        message={
-          <Box>
-            <AlertCircle
-              size={48}
-              color='error.main'
-              style={{ marginBottom: 16 }}
-            />
-            <Typography variant='body1'>确定要删除这条通知吗？</Typography>
-            <Typography
-              variant='body2'
-              color='text.secondary'
-              sx={{ mt: 1 }}
-            >
-              {deleteTarget?.title}
-            </Typography>
-          </Box>
-        }
-        type='confirm'
-        confirmLabel='删除'
-        cancelLabel='取消'
+        title='确认删除'
+        message='确定要删除这条通知吗？此操作不可恢复。'
         danger
+        confirmLabel='删除'
       />
 
       <ConfirmDialog
         isOpen={bulkDeleteDialogOpen}
         onClose={() => setBulkDeleteDialogOpen(false)}
         onConfirm={handleConfirmBulkDelete}
-        title='批量删除'
-        message={
-          <Box>
-            <AlertCircle
-              size={48}
-              color='error.main'
-              style={{ marginBottom: 16 }}
-            />
-            <Typography variant='body1'>
-              确定要删除选中的 {selectedIds.length} 条通知吗？
-            </Typography>
-            <Typography
-              variant='body2'
-              color='text.secondary'
-              sx={{ mt: 1 }}
-            >
-              此操作不可恢复
-            </Typography>
-          </Box>
-        }
-        type='confirm'
-        confirmLabel='删除'
-        cancelLabel='取消'
+        title='确认批量删除'
+        message={`确定要删除选中的 ${selectedIds.length} 条通知吗？此操作不可恢复。`}
         danger
+        confirmLabel='删除'
       />
     </PageContainer>
   );

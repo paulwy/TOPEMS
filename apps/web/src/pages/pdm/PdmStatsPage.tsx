@@ -3,7 +3,6 @@ import { Box, Typography } from '@mui/material';
 import { TrendingUp, Factory, ClipboardList, Package, Activity, CheckCircle } from 'lucide-react';
 import { StatsPageTemplate } from '@/components/templates/StatsPageTemplate';
 import { PageContainer } from '@/components/common/PageContainerV2';
-import { useAppStore } from '@/store';
 import { pdmApi } from '@/api/pdm';
 import type {
   ProductionProcess,

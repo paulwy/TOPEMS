@@ -23,7 +23,7 @@ import {
 } from '@/components';
 import { StatusBadge, ActionButton, FormField, FormSelect } from '@topems/shared-components';
 import { Dialog } from '@/components/common/Dialog';
-import { useAppStore } from '@/store';
+import { useNotificationStore } from '@/store';
 import { logger } from '@/utils/logger';
 import {
   leaveApi,
@@ -37,7 +37,7 @@ const ct = designTokens.colors;
 
 const LeaveManagementPage: React.FC = () => {
   const [loading, setLoading] = useState(false);
-  const addNotification = useAppStore((state) => state.addNotification);
+  const addNotification = useNotificationStore((state) => state.addNotification);
   const [data, setData] = useState<PaginatedResult<LeaveRequest>>({
     items: [],
     total: 0,
@@ -429,6 +429,15 @@ const LeaveManagementPage: React.FC = () => {
               onClick: handleReset,
             },
           ]}
+          exportable
+          exportFileName='休假申请列表'
+          persistFilters
+          persistSearch
+          emptyActionButton={{
+            label: '新增休假申请',
+            icon: <Plus size={16} />,
+            onClick: handleAdd,
+          }}
         />
 
         {/* 新增/编辑 Dialog */}

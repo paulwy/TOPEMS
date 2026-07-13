@@ -48,7 +48,7 @@ import {
   type QuickAction,
   type RecentItem,
 } from '@/components/templates';
-import { useAppStore } from '../../store';
+import { useNotificationStore } from '@/store';
 import { designTokens } from '@/theme/tokens';
 
 const ct = designTokens.colors;
@@ -216,7 +216,7 @@ const getStatusColor = (status: SyncStatus) => {
 };
 
 export const IntegrationErpOverviewPage: React.FC = () => {
-  const addNotification = useAppStore((state) => state.addNotification);
+  const addNotification = useNotificationStore((state) => state.addNotification);
   const [loading, setLoading] = useState(false);
 
   const stats: StatCard[] = useMemo(

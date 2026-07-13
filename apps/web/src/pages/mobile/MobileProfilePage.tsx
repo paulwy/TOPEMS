@@ -31,7 +31,7 @@ import {
 } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { MobileLayout, MobileCard } from '@/components/mobile';
-import { useAppStore } from '@/store';
+import { useAuthStore } from '@/store';
 import { useResponsive } from '@/hooks';
 import { MOBILE_PATHS } from '@/modules/mobile/config';
 import { AUTH_PATHS } from '@/routes/auth';
@@ -56,7 +56,7 @@ interface SettingItem {
 const MobileSettingsPage: React.FC = () => {
   const theme = useTheme();
   const navigate = useNavigate();
-  const { user, setUser } = useAppStore();
+  const { user, setUser } = useAuthStore();
   const { isMobile } = useResponsive();
   const [darkMode, setDarkMode] = useState(false);
   const [pushEnabled, setPushEnabled] = useState(true);

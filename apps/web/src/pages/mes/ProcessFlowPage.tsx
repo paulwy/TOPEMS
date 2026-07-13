@@ -22,7 +22,7 @@ import type {
 } from '@/api/mes/processFlow';
 import type { ListParams } from '@/api/mes';
 import { processFlowApi } from '@/api/mes/processFlow';
-import { useAppStore } from '@/store';
+import { useNotificationStore } from '@/store';
 import { LoadingSpinner } from '@topems/shared-components';
 import {
   ListPageTemplate,
@@ -61,7 +61,7 @@ const ProcessFlowPage: React.FC = () => {
     unit: '件/小时',
   });
 
-  const { addNotification } = useAppStore();
+  const { addNotification } = useNotificationStore();
 
   const loadFlows = useCallback(async () => {
     try {

@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState } from 'react';
 import { PageContainer } from '@/components/common';
 import { useNavigate } from 'react-router-dom';
 import {
@@ -35,18 +35,17 @@ import {
 } from '@/components/templates';
 import { limsApi } from '@/api/lims';
 import type { Instrument, CreateInstrumentRequest } from '@/api/lims';
-import { useAppStore } from '@/store';
+import { useNotificationStore } from '@/store';
 import { apiLogger } from '@/utils/logger';
 import { designTokens } from '@/theme/tokens';
 import { LIMS_PATHS } from '@/modules/lims/config';
 import { DASHBOARD_PATHS } from '@/routes/dashboard';
+import { useCrudOperations } from '@/hooks/useCrudQueries';
 
 const ct = designTokens.colors;
 
 const InstrumentPage: React.FC = () => {
   const navigate = useNavigate();
-  const [instruments, setInstruments] = useState<Instrument[]>([]);
-  const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState('');
   const [statusFilter, setStatusFilter] = useState('all');
   const [showCreateModal, setShowCreateModal] = useState(false);
@@ -70,41 +69,20 @@ const InstrumentPage: React.FC = () => {
   const [page, setPage] = useState(0);
   const [pageSize, setPageSize] = useState(10);
   const [isEditing, setIsEditing] = useState(false);
-  const [saving, setSaving] = useState(false);
-  const addNotification = useAppStore((state) => state.addNotification);
+  const addNotification = useNotificationStore((state) => state.addNotification);
 
-  const loadInstruments = useCallback(async () => {
-    try {
-      setLoading(true);
-      const response = await limsApi.listInstruments();
-      if (response.success && response.data) {
-        const data = response.data as any;
-        let rawInstruments: Instrument[] = [];
-        if (Array.isArray(data)) {
-          rawInstruments = data;
-        } else if (data.items && Array.isArray(data.items)) {
-          rawInstruments = data.items;
-        }
-        setInstruments(rawInstruments);
-      } else {
-        setInstruments([]);
-      }
-    } catch (err: unknown) {
-      apiLogger.error('加载仪器列表失败:', err);
-      setInstruments([]);
-      addNotification({
-        title: '错误',
-        message: '加载仪器列表失败，请稍后重试',
-        type: 'error',
-      });
-    } finally {
-      setLoading(false);
-    }
-  }, [addNotification]);
-
-  useEffect(() => {
-    loadInstruments();
-  }, [loadInstruments]);
+  const {
+    data: instruments,
+    loading,
+    refresh,
+    create: createInstrument,
+    update: updateInstrument,
+    delete: deleteInstrument,
+  } = useCrudOperations<Instrument, CreateInstrumentRequest>({
+    api: limsApi.instruments,
+    queryKey: 'lims-instruments',
+    defaultPageSize: 100,
+  });
 
   const getStatusBadge = (status: string) => {
     const statusMap: Record<string, { bg: string; color: string }> = {
@@ -281,80 +259,24 @@ const InstrumentPage: React.FC = () => {
     }
 
     try {
-      setSaving(true);
       if (isEditing && selectedInstrument) {
-        const response = await limsApi.updateInstrument(selectedInstrument.id, formData);
-        if (response.success) {
-          addNotification({
-            title: '成功',
-            message: '仪器更新成功',
-            type: 'success',
-          });
-          setShowCreateModal(false);
-          loadInstruments();
-        } else {
-          addNotification({
-            title: '错误',
-            message: response.message || '更新失败，请稍后重试',
-            type: 'error',
-          });
-        }
+        await updateInstrument(selectedInstrument.id, formData);
       } else {
-        const response = await limsApi.createInstrument(formData);
-        if (response.success) {
-          addNotification({
-            title: '成功',
-            message: '仪器创建成功',
-            type: 'success',
-          });
-          setShowCreateModal(false);
-          loadInstruments();
-        } else {
-          addNotification({
-            title: '错误',
-            message: response.message || '创建失败，请稍后重试',
-            type: 'error',
-          });
-        }
+        await createInstrument(formData);
       }
+      setShowCreateModal(false);
     } catch (err: unknown) {
       apiLogger.error('保存仪器失败:', err);
-      addNotification({
-        title: '错误',
-        message: isEditing ? '更新仪器失败，请稍后重试' : '创建仪器失败，请稍后重试',
-        type: 'error',
-      });
-    } finally {
-      setSaving(false);
     }
   };
 
   const handleDelete = async (instrument: Instrument) => {
     if (!confirm(`确定要删除仪器 "${instrument.name}" 吗？`)) return;
     try {
-      const response = await limsApi.deleteInstrument(instrument.id);
-      if (response.success) {
-        addNotification({
-          title: '成功',
-          message: '仪器删除成功',
-          type: 'success',
-        });
-        setShowDetailModal(false);
-        loadInstruments();
-      } else {
-        addNotification({
-          title: '错误',
-          message: response.message || '删除失败，请稍后重试',
-          type: 'error',
-        });
-      }
+      await deleteInstrument(instrument.id);
+      setShowDetailModal(false);
     } catch (err: unknown) {
       apiLogger.error('删除仪器失败:', err);
-      addNotification({
-        title: '错误',
-        message: '删除仪器失败，请稍后重试',
-        type: 'error',
-      });
     }
   };
 
@@ -768,10 +690,9 @@ const InstrumentPage: React.FC = () => {
           <Button
             variant='contained'
             onClick={handleSave}
-            disabled={saving}
             sx={{ bgcolor: 'info.main' }}
           >
-            {saving ? '保存中...' : '保存'}
+            保存
           </Button>
         </DialogActions>
       </Dialog>

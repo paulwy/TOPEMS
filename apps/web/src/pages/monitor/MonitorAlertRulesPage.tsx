@@ -31,7 +31,7 @@ import {
 } from 'lucide-react';
 import { Box, Typography, Chip, Button, Switch } from '@mui/material';
 
-import { useAppStore } from '../../store';
+import { useNotificationStore } from '@/store';
 import { ListPageTemplate, type ColumnDef } from '@/components/templates';
 import { extractErrorMessage } from '@/utils/errors';
 import { PageContainer } from '@/components/common';
@@ -232,7 +232,7 @@ const mockRules: AlertRule[] = [
 ];
 
 export const MonitorAlertRulesPage: React.FC = () => {
-  const addNotification = useAppStore((state) => state.addNotification);
+  const addNotification = useNotificationStore((state) => state.addNotification);
 
   const [rules, setRules] = useState<AlertRule[]>(mockRules);
   const [loading, setLoading] = useState(false);

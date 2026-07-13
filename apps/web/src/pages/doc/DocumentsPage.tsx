@@ -1,5 +1,5 @@
 import { Grid, PageContainer } from '@/components';
-import React, { useState, useEffect, useRef, useCallback, useMemo } from 'react';
+import React, { useState, useRef, useCallback, useMemo, useEffect } from 'react';
 import {
   FileText,
   Folder,
@@ -29,12 +29,13 @@ import {
 } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { docApi, type Folder as FolderType } from '@/api/doc';
-import { useAppStore } from '../../store';
+import { useNotificationStore } from '@/store';
 import { DocumentPreviewModal } from '@/components/DocumentPreviewModal';
 import { apiLogger } from '@/utils/logger';
 import { ConfirmDialog } from '@topems/shared-components';
 import { DOC_PATHS } from '@/modules/doc/config';
 import { DASHBOARD_PATHS } from '@/routes/dashboard';
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 
 import {
   TextField,
@@ -60,7 +61,15 @@ import { designTokens } from '@/theme/tokens';
 
 const ct = designTokens.colors;
 
-interface File {
+const formatFileSize = (bytes: number): string => {
+  if (bytes === 0) return '0 B';
+  const k = 1024;
+  const sizes = ['B', 'KB', 'MB', 'GB'];
+  const i = Math.floor(Math.log(bytes) / Math.log(k));
+  return `${parseFloat((bytes / Math.pow(k, i)).toFixed(2))} ${sizes[i]}`;
+};
+
+interface FileItem {
   id: string;
   name: string;
   type: 'file' | 'folder';
@@ -78,7 +87,8 @@ const CreateFolderModal: React.FC<{
   onClose: () => void;
   onSuccess: () => void;
   parentId?: string | null;
-}> = ({ isOpen, onClose, onSuccess, parentId }) => {
+  createFolderMutation: any;
+}> = ({ isOpen, onClose, onSuccess, parentId, createFolderMutation }) => {
   const theme = useTheme();
   const [folderName, setFolderName] = useState('');
   const [creating, setCreating] = useState(false);
@@ -106,7 +116,7 @@ const CreateFolderModal: React.FC<{
       if (parentId) {
         request.parent_id = parentId;
       }
-      const response = await docApi.createFolder(request);
+      const response = await createFolderMutation.mutateAsync(request);
       if (response.success) {
         onSuccess();
         onClose();
@@ -184,12 +194,11 @@ const CreateFolderModal: React.FC<{
 const DocumentsPage: React.FC = () => {
   const theme = useTheme();
   const navigate = useNavigate();
-  const addNotification = useAppStore((state) => state.addNotification);
+  const addNotification = useNotificationStore((state) => state.addNotification);
+  const queryClient = useQueryClient();
 
   const [searchQuery, setSearchQuery] = useState('');
   const [viewMode, setViewMode] = useState<'grid' | 'list'>('grid');
-  const [files, setFiles] = useState<File[]>([]);
-  const [folders, setFolders] = useState<FolderType[]>([]);
   const [selectedFolderId, setSelectedFolderId] = useState<string | null>(null);
   const [uploading, setUploading] = useState(false);
   const [uploadProgress, setUploadProgress] = useState(0);
@@ -210,61 +219,68 @@ const DocumentsPage: React.FC = () => {
   const fileInputRef = useRef<HTMLInputElement>(null);
   const dropZoneRef = useRef<HTMLDivElement>(null);
 
-  useEffect(() => {
-    loadFolders();
-    loadFiles();
-  }, []);
-
-  useEffect(() => {
-    loadFiles();
-  }, [selectedFolderId]);
-
-  const loadFolders = async () => {
-    try {
+  const { data: folders = [] } = useQuery({
+    queryKey: ['doc-folders'],
+    queryFn: async () => {
       const response = await docApi.listFolders();
       if (response.success && response.data?.folders) {
-        setFolders(response.data.folders);
+        return response.data.folders;
       }
-    } catch (err: unknown) {
-      apiLogger.error('加载文件夹列表失败:', err);
-    }
-  };
+      return [];
+    },
+  });
 
-  const loadFiles = async () => {
-    try {
+  const { data: files = [], isLoading: filesLoading } = useQuery<FileItem[]>({
+    queryKey: ['doc-files', selectedFolderId],
+    queryFn: async () => {
       const response = await docApi.list(selectedFolderId || undefined);
       if (response.success && response.data?.files) {
-        const mappedFiles: File[] = response.data.files.map((f) => ({
+        return response.data.files.map((f): FileItem => ({
           id: f.id,
           name: f.name,
-          type: 'file' as const,
+          type: 'file',
           size: formatFileSize(f.size),
           sizeBytes: f.size,
           updatedAt: new Date(f.updated_at).toLocaleString('zh-CN'),
           starred: false,
-          tags: [],
+          tags: [] as string[],
           content_type: f.content_type,
           folder_id: f.folder_id,
         }));
-        setFiles(mappedFiles);
       }
-    } catch (err: unknown) {
-      apiLogger.error('加载文件列表失败:', err);
-      addNotification({
-        title: '加载失败',
-        message: '加载文件列表失败',
-        type: 'error',
-      });
-    }
-  };
+      return [];
+    },
+  });
 
-  const formatFileSize = (bytes: number): string => {
-    if (bytes === 0) return '0 B';
-    const k = 1024;
-    const sizes = ['B', 'KB', 'MB', 'GB'];
-    const i = Math.floor(Math.log(bytes) / Math.log(k));
-    return `${parseFloat((bytes / Math.pow(k, i)).toFixed(2))} ${sizes[i]}`;
-  };
+  const deleteMutation = useMutation({
+    mutationFn: (id: string) => docApi.delete(id),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['doc-files'] });
+    },
+  });
+
+  const deleteFolderMutation = useMutation({
+    mutationFn: (id: string) => docApi.deleteFolder(id),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['doc-folders'] });
+      queryClient.invalidateQueries({ queryKey: ['doc-files'] });
+    },
+  });
+
+  const uploadMutation = useMutation({
+    mutationFn: ({ file, folderId }: { file: File; folderId?: string }) =>
+      docApi.upload(file, folderId),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['doc-files'] });
+    },
+  });
+
+  const createFolderMutation = useMutation({
+    mutationFn: (data: { name: string; parent_id?: string }) => docApi.createFolder(data),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['doc-folders'] });
+    },
+  });
 
   const handleFileUpload = async (event: React.ChangeEvent<HTMLInputElement>) => {
     const target = event.target;
@@ -279,26 +295,14 @@ const DocumentsPage: React.FC = () => {
     }, 200);
 
     try {
-      const response = await docApi.upload(file, selectedFolderId || undefined);
+      const response = await uploadMutation.mutateAsync({
+        file,
+        folderId: selectedFolderId || undefined,
+      });
       clearInterval(progressInterval);
       setUploadProgress(100);
 
       if (response.success && response.data) {
-        const newFile: File = {
-          id: response.data.id,
-          name: response.data.name,
-          type: 'file',
-          size: formatFileSize(response.data.size),
-          sizeBytes: response.data.size,
-          updatedAt: new Date(response.data.created_at || response.data.updated_at).toLocaleString(
-            'zh-CN'
-          ),
-          starred: false,
-          tags: [],
-          content_type: response.data.content_type,
-          folder_id: response.data.folder_id,
-        };
-        setFiles((prev) => [newFile, ...prev]);
         addNotification({
           title: '成功',
           message: '文件上传成功！',
@@ -342,21 +346,12 @@ const DocumentsPage: React.FC = () => {
       message: '确定要删除这个文件吗？',
       onConfirm: async () => {
         try {
-          const response = await docApi.delete(id);
-          if (response.success) {
-            await loadFiles();
-            addNotification({
-              title: '成功',
-              message: '文件删除成功',
-              type: 'success',
-            });
-          } else {
-            addNotification({
-              title: '失败',
-              message: '文件删除失败',
-              type: 'error',
-            });
-          }
+          await deleteMutation.mutateAsync(id);
+          addNotification({
+            title: '成功',
+            message: '文件删除成功',
+            type: 'success',
+          });
         } catch (err: unknown) {
           apiLogger.error('删除文件失败:', err);
           addNotification({
@@ -376,12 +371,10 @@ const DocumentsPage: React.FC = () => {
       message: `确定要删除文件夹 "${name}" 吗？文件夹内的文件不会被删除。`,
       onConfirm: async () => {
         try {
-          await docApi.deleteFolder(id);
+          await deleteFolderMutation.mutateAsync(id);
           if (selectedFolderId === id) {
             setSelectedFolderId(null);
           }
-          await loadFolders();
-          await loadFiles();
           addNotification({
             title: '成功',
             message: '文件夹删除成功',
@@ -400,7 +393,7 @@ const DocumentsPage: React.FC = () => {
     });
   };
 
-  const handleDownload = async (file: File) => {
+  const handleDownload = async (file: FileItem) => {
     try {
       const blob = await docApi.download(file.id);
       const url = window.URL.createObjectURL(blob);
@@ -432,7 +425,7 @@ const DocumentsPage: React.FC = () => {
     contentType: string;
   } | null>(null);
 
-  const handlePreview = (file: File) => {
+  const handlePreview = (file: FileItem) => {
     setPreviewingFile({
       id: file.id,
       name: file.name,
@@ -441,8 +434,11 @@ const DocumentsPage: React.FC = () => {
   };
 
   const toggleStar = useCallback((id: string) => {
-    setFiles((prev) => prev.map((f) => (f.id === id ? { ...f, starred: !f.starred } : f)));
-  }, []);
+    queryClient.setQueryData(['doc-files', selectedFolderId], (old: any) => {
+      if (!old) return old;
+      return old.map((f: any) => (f.id === id ? { ...f, starred: !f.starred } : f));
+    });
+  }, [queryClient, selectedFolderId]);
 
   const handleFolderSelect = useCallback((folderId: string | null) => {
     setSelectedFolderId(folderId);
@@ -450,9 +446,9 @@ const DocumentsPage: React.FC = () => {
   }, []);
 
   const handleCreateFolderSuccess = useCallback(() => {
-    loadFolders();
-    loadFiles();
-  }, []);
+    queryClient.invalidateQueries({ queryKey: ['doc-folders'] });
+    queryClient.invalidateQueries({ queryKey: ['doc-files'] });
+  }, [queryClient]);
 
   const toggleFileSelect = useCallback((fileId: string) => {
     setSelectedFiles((prev) =>
@@ -477,10 +473,9 @@ const DocumentsPage: React.FC = () => {
       message: `确定要删除选中的 ${selectedFiles.length} 个文件吗？`,
       onConfirm: async () => {
         try {
-          const deletePromises = selectedFiles.map((id) => docApi.delete(id));
+          const deletePromises = selectedFiles.map((id) => deleteMutation.mutateAsync(id));
           await Promise.all(deletePromises);
 
-          await loadFiles();
           setSelectedFiles([]);
           addNotification({
             title: '成功',
@@ -498,7 +493,7 @@ const DocumentsPage: React.FC = () => {
       },
       danger: true,
     });
-  }, [selectedFiles, addNotification]);
+  }, [selectedFiles, addNotification, deleteMutation]);
 
   const handleDragOver = useCallback((e: React.DragEvent) => {
     e.preventDefault();
@@ -524,7 +519,10 @@ const DocumentsPage: React.FC = () => {
       for (let i = 0; i < files.length; i++) {
         const file = files[i];
         try {
-          const response = await docApi.upload(file, selectedFolderId || undefined);
+          const response = await uploadMutation.mutateAsync({
+            file,
+            folderId: selectedFolderId || undefined,
+          });
           if (response.success && response.data) {
             uploadedCount++;
           }
@@ -534,7 +532,6 @@ const DocumentsPage: React.FC = () => {
         setUploadProgress(Math.round(((i + 1) / files.length) * 100));
       }
 
-      await loadFiles();
       setUploading(false);
       setUploadProgress(0);
 
@@ -547,7 +544,7 @@ const DocumentsPage: React.FC = () => {
       }
     },
 
-    [selectedFolderId, addNotification]
+    [selectedFolderId, addNotification, uploadMutation]
   );
 
   const toggleSort = useCallback(
@@ -1554,6 +1551,7 @@ const DocumentsPage: React.FC = () => {
         onClose={() => setShowCreateFolderModal(false)}
         onSuccess={handleCreateFolderSuccess}
         parentId={selectedFolderId}
+        createFolderMutation={createFolderMutation}
       />
 
       <DocumentPreviewModal
@@ -1639,13 +1637,13 @@ const StatCard: React.FC<StatCardProps> = ({ icon: Icon, title, value, color }) 
 };
 
 interface FileCardProps {
-  file: File;
+  file: FileItem;
   onStarToggle: (id: string) => void;
-  onDownload: (file: File) => void;
-  onPreview: (file: File) => void;
+  onDownload: (file: FileItem) => void;
+  onPreview: (file: FileItem) => void;
   isSelected?: boolean;
   onSelect?: (id: string) => void;
-  onClick?: (file: File) => void;
+  onClick?: (file: FileItem) => void;
 }
 
 const FileCard: React.FC<FileCardProps> = ({

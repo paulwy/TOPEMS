@@ -3,7 +3,7 @@ import { Box, Card, CardContent, Typography, Chip, Rating, Divider } from '@mui/
 import { TrendingUp, TrendingDown, Award, Target, BarChart3, RefreshCw } from 'lucide-react';
 import { ListPageTemplate, type ColumnDef } from '@/components/templates';
 import { srmApi, type SupplierPerformance, type PerformanceSummary } from '@/api/srm';
-import { useAppStore } from '@/store';
+import { useNotificationStore } from '@/store';
 import { apiLogger } from '@/utils/logger';
 import { PageContainer } from '@/components/common';
 import { designTokens } from '@/theme/tokens';
@@ -11,7 +11,7 @@ import { designTokens } from '@/theme/tokens';
 const ct = designTokens.colors;
 
 const SrmPerformancePage: React.FC = () => {
-  const addNotification = useAppStore((state) => state.addNotification);
+  const addNotification = useNotificationStore((state) => state.addNotification);
   const [performances, setPerformances] = useState<SupplierPerformance[]>([]);
   const [summary, setSummary] = useState<PerformanceSummary | null>(null);
   const [loading, setLoading] = useState(false);

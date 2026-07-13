@@ -3,7 +3,7 @@ import { Box, Button } from '@mui/material';
 import { Plus, TrendingUp, Target, Calendar, Calculator, BarChart3 } from 'lucide-react';
 import type { SalesForecast, ForecastFactor } from '@/api/crm';
 import { crmApi } from '@/api/crm';
-import { useAppStore } from '@/store';
+import { useNotificationStore } from '@/store';
 import { apiLogger } from '@/utils/logger';
 import { StatsPageTemplate } from '@/components/templates/StatsPageTemplate';
 import type {
@@ -22,7 +22,7 @@ const CRMSalesForecastPage: React.FC = () => {
   const [forecasts, setForecasts] = useState<SalesForecast[]>([]);
   const [timeRange, setTimeRange] = useState('monthly');
 
-  const { addNotification } = useAppStore();
+  const { addNotification } = useNotificationStore();
 
   useEffect(() => {
     loadForecasts();

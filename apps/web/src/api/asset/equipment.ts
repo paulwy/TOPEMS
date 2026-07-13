@@ -1,6 +1,7 @@
 import apiClient from '../client';
 import type { ApiResponse } from '../client';
 import type { Equipment, PaginationParams, PaginatedResult } from './types';
+import type { CrudOperations } from '@/hooks/useCrudQueries';
 
 export const equipmentApi = {
   listEquipments: async (
@@ -55,6 +56,18 @@ export const equipmentApi = {
   > => {
     return apiClient.erp.get('/asset/equipments/stats');
   },
+};
+
+export const equipmentCrudApi: CrudOperations<Equipment> = {
+  list: (params?) => equipmentApi.listEquipments({
+    page: params?.page,
+    pagesize: params?.pagesize,
+    ...(params as any),
+  }),
+  get: equipmentApi.getEquipment,
+  create: equipmentApi.createEquipment,
+  update: equipmentApi.updateEquipment,
+  delete: equipmentApi.deleteEquipment,
 };
 
 export default equipmentApi;

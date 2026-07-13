@@ -18,7 +18,7 @@ import { PageContainer } from '@/components/common';
 import React, { useState, useEffect, useMemo, useCallback } from 'react';
 import type { Supplier, CreateSupplierRequest, UpdateSupplierRequest } from '@/api/erp';
 import { erpApi } from '@/api/erp';
-import { useAppStore } from '@/store';
+import { useNotificationStore } from '@/store';
 import { LoadingSpinner } from '@topems/shared-components';
 import {
   ListPageTemplate,
@@ -26,7 +26,7 @@ import {
   type RowAction,
   type FilterConfig,
 } from '@/components/templates';
-import { Plus, Edit, Trash2, Eye, Users } from 'lucide-react';
+import { Plus, Edit, Trash2, Eye, Users, CheckCircle, XCircle } from 'lucide-react';
 import { apiLogger } from '@/utils/logger';
 
 const SupplierManagementPage: React.FC = () => {
@@ -63,7 +63,7 @@ const SupplierManagementPage: React.FC = () => {
     remark: '',
   });
 
-  const { addNotification } = useAppStore();
+  const { addNotification } = useNotificationStore();
 
   const loadSuppliers = useCallback(async () => {
     try {
@@ -150,6 +150,75 @@ const SupplierManagementPage: React.FC = () => {
     },
     [loadSuppliers, addNotification]
   );
+
+  const handleBatchDelete = useCallback(async () => {
+    if (selectedIds.length === 0) return;
+    try {
+      for (const id of selectedIds) {
+        await erpApi.suppliers.delete(id);
+      }
+      addNotification({
+        type: 'success',
+        title: '批量删除成功',
+        message: `已删除 ${selectedIds.length} 个供应商`,
+      });
+      setSelectedIds([]);
+      loadSuppliers();
+    } catch (error: unknown) {
+      apiLogger.error('批量删除失败:', error);
+      addNotification({
+        type: 'error',
+        title: '批量删除失败',
+        message: '部分供应商删除失败',
+      });
+    }
+  }, [selectedIds, loadSuppliers, addNotification]);
+
+  const handleBatchEnable = useCallback(async () => {
+    if (selectedIds.length === 0) return;
+    try {
+      for (const id of selectedIds) {
+        await erpApi.suppliers.update(id, { status: 'active' });
+      }
+      addNotification({
+        type: 'success',
+        title: '批量启用成功',
+        message: `已启用 ${selectedIds.length} 个供应商`,
+      });
+      setSelectedIds([]);
+      loadSuppliers();
+    } catch (error: unknown) {
+      apiLogger.error('批量启用失败:', error);
+      addNotification({
+        type: 'error',
+        title: '批量启用失败',
+        message: '部分供应商启用失败',
+      });
+    }
+  }, [selectedIds, loadSuppliers, addNotification]);
+
+  const handleBatchDisable = useCallback(async () => {
+    if (selectedIds.length === 0) return;
+    try {
+      for (const id of selectedIds) {
+        await erpApi.suppliers.update(id, { status: 'inactive' });
+      }
+      addNotification({
+        type: 'success',
+        title: '批量停用成功',
+        message: `已停用 ${selectedIds.length} 个供应商`,
+      });
+      setSelectedIds([]);
+      loadSuppliers();
+    } catch (error: unknown) {
+      apiLogger.error('批量停用失败:', error);
+      addNotification({
+        type: 'error',
+        title: '批量停用失败',
+        message: '部分供应商停用失败',
+      });
+    }
+  }, [selectedIds, loadSuppliers, addNotification]);
 
   const handleEdit = useCallback((supplier: Supplier) => {
     setSelectedSupplier(supplier);
@@ -422,6 +491,28 @@ const SupplierManagementPage: React.FC = () => {
         selectable
         selectedIds={selectedIds}
         onSelectionChange={(ids) => setSelectedIds(ids.map(String))}
+        batchActions={[
+          {
+            label: '批量启用',
+            icon: <CheckCircle size={16} />,
+            color: 'primary',
+            onClick: handleBatchEnable,
+          },
+          {
+            label: '批量停用',
+            icon: <XCircle size={16} />,
+            color: 'secondary',
+            onClick: handleBatchDisable,
+          },
+          {
+            label: '批量删除',
+            icon: <Trash2 size={16} />,
+            color: 'error',
+            confirm: true,
+            confirmMessage: '确定要删除选中的供应商吗？',
+            onClick: handleBatchDelete,
+          },
+        ]}
         actions={[
           {
             label: '新增供应商',
@@ -433,6 +524,15 @@ const SupplierManagementPage: React.FC = () => {
         headerContent={statsContent}
         emptyMessage='暂无供应商数据'
         getRowId={(row) => row.id}
+        exportable
+        exportFileName='供应商列表'
+        persistFilters
+        persistSearch
+        emptyActionButton={{
+          label: '新增供应商',
+          icon: <Plus size={16} />,
+          onClick: handleOpenCreate,
+        }}
       />
 
       <Dialog

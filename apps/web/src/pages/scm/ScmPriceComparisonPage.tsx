@@ -5,7 +5,7 @@ import { ListPageTemplate, type ColumnDef, type RowAction } from '@/components/t
 import { PageContainer } from '@/components/common';
 import { scmApi } from '@/api/scm';
 import type { PriceComparison } from '@/api/scm';
-import { useAppStore } from '@/store';
+import { useNotificationStore } from '@/store';
 import { designTokens } from '@/theme/tokens';
 import { logger } from '@/utils/logger';
 
@@ -26,7 +26,7 @@ const ScmPriceComparisonPage: React.FC = () => {
   const [page, setPage] = useState(0);
   const [pageSize, setPageSize] = useState(10);
   const [total, setTotal] = useState(0);
-  const addNotification = useAppStore((state) => state.addNotification);
+  const addNotification = useNotificationStore((state) => state.addNotification);
 
   useEffect(() => {
     loadComparisons();

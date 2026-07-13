@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useMemo, useCallback } from 'react';
 import {
   Plus,
   Edit2,
@@ -42,11 +42,13 @@ import {
 } from '@mui/material';
 import { PageContainer } from '@/components/common';
 import { DashboardTemplate } from '@/components/templates';
+import { useCrudOperations } from '@/hooks/useCrudQueries';
+import { useMutation, useQueryClient } from '@tanstack/react-query';
 import {
-  listDatasets,
-  createDataset,
-  updateDataset,
-  deleteDataset,
+  datasetCrudApi,
+  publishDataset,
+  refreshDataset,
+  testSqlQuery,
   type Dataset,
   type DatasetField,
   type DataSource,
@@ -171,9 +173,8 @@ const mockDatasets: Dataset[] = [
 ];
 
 const DatasetPage = () => {
+  const queryClient = useQueryClient();
   const [viewMode, setViewMode] = useState<ViewMode>('list');
-  const [datasets, setDatasets] = useState<Dataset[]>(mockDatasets);
-  const [loading, setLoading] = useState(false);
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedDataset, setSelectedDataset] = useState<Dataset | null>(null);
   const [editorTab, setEditorTab] = useState(0);
@@ -186,32 +187,68 @@ const DatasetPage = () => {
     fields: [],
   });
 
-  const loadDatasets = async () => {
-    setLoading(true);
-    try {
-      const res = await listDatasets();
-      if (res.success && res.data) {
-        setDatasets(res.data.items || mockDatasets);
+  const {
+    data: datasets,
+    loading,
+    error,
+    pagination,
+    fetch,
+    refresh,
+    create: createItem,
+    update: updateItem,
+    delete: deleteItem,
+  } = useCrudOperations<Dataset>({
+    api: datasetCrudApi,
+    queryKey: 'bi-datasets',
+    defaultPageSize: 10,
+    pageParamName: 'page',
+    pageSizeParamName: 'pageSize',
+  });
+
+  const publishMutation = useMutation({
+    mutationFn: (id: string) => publishDataset(id),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['bi-datasets'] });
+      logger.info('Dataset published successfully');
+    },
+  });
+
+  const refreshMutation = useMutation({
+    mutationFn: (id: string) => refreshDataset(id),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['bi-datasets'] });
+      logger.info('Dataset refreshed successfully');
+    },
+  });
+
+  const testSqlMutation = useMutation({
+    mutationFn: ({ dataSourceId, sql }: { dataSourceId: string; sql: string }) =>
+      testSqlQuery(dataSourceId, sql),
+  });
+
+  const displayDatasets = datasets.length > 0 ? datasets : mockDatasets;
+
+  const filteredDatasets = useMemo(() => {
+    return displayDatasets.filter(
+      (d) =>
+        d.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        d.description?.toLowerCase().includes(searchTerm.toLowerCase())
+    );
+  }, [displayDatasets, searchTerm]);
+
+  const handleSearch = useCallback(
+    (value: string) => {
+      setSearchTerm(value);
+      if (value) {
+        fetch({ search: value });
+      } else {
+        fetch({});
       }
-    } catch (error: unknown) {
-      logger.error('Failed to load datasets:', error);
-      setDatasets(mockDatasets);
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  useEffect(() => {
-    loadDatasets();
-  }, []);
-
-  const filteredDatasets = datasets.filter(
-    (d) =>
-      d.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      d.description?.toLowerCase().includes(searchTerm.toLowerCase())
+    },
+    [fetch]
   );
 
-  const handleCreate = () => {
+  const handleCreate = useCallback(() => {
     setSelectedDataset(null);
     setFormData({
       name: '',
@@ -222,40 +259,74 @@ const DatasetPage = () => {
     });
     setViewMode('editor');
     setEditorTab(0);
-  };
+  }, []);
 
-  const handleEdit = (dataset: Dataset) => {
+  const handleEdit = useCallback((dataset: Dataset) => {
     setSelectedDataset(dataset);
     setFormData(dataset);
     setViewMode('editor');
     setEditorTab(0);
-  };
+  }, []);
 
-  const handleDelete = async (id: string) => {
-    if (!confirm('确定要删除这个数据集吗？')) return;
-    try {
-      await deleteDataset(id);
-      setDatasets(datasets.filter((d) => d.id !== id));
-    } catch (error: unknown) {
-      logger.error('Failed to delete dataset:', error);
-      setDatasets(datasets.filter((d) => d.id !== id));
-    }
-  };
+  const handleDelete = useCallback(
+    async (id: string) => {
+      if (!confirm('确定要删除这个数据集吗？')) return;
+      try {
+        await deleteItem(id);
+      } catch (e: unknown) {
+        logger.error('Failed to delete dataset:', e);
+      }
+    },
+    [deleteItem]
+  );
 
-  const handleSave = async () => {
+  const handleSave = useCallback(async () => {
     try {
       if (selectedDataset) {
-        await updateDataset(selectedDataset.id, formData);
+        await updateItem(selectedDataset.id, formData);
       } else {
-        await createDataset(formData);
+        await createItem(formData);
       }
       setViewMode('list');
-      loadDatasets();
-    } catch (error: unknown) {
-      logger.error('Failed to save dataset:', error);
+    } catch (e: unknown) {
+      logger.error('Failed to save dataset:', e);
       setViewMode('list');
     }
-  };
+  }, [selectedDataset, formData, createItem, updateItem]);
+
+  const handlePublish = useCallback(
+    async (id: string) => {
+      try {
+        await publishMutation.mutateAsync(id);
+      } catch (e: unknown) {
+        logger.error('Failed to publish dataset:', e);
+      }
+    },
+    [publishMutation]
+  );
+
+  const handleRefreshDataset = useCallback(
+    async (id: string) => {
+      try {
+        await refreshMutation.mutateAsync(id);
+      } catch (e: unknown) {
+        logger.error('Failed to refresh dataset:', e);
+      }
+    },
+    [refreshMutation]
+  );
+
+  const handleTestSql = useCallback(async () => {
+    if (!formData.data_source_id || !formData.sql_query) return;
+    try {
+      await testSqlMutation.mutateAsync({
+        dataSourceId: formData.data_source_id,
+        sql: formData.sql_query,
+      });
+    } catch (e: unknown) {
+      logger.error('SQL test failed:', e);
+    }
+  }, [formData.data_source_id, formData.sql_query, testSqlMutation]);
 
   const getStatusChip = (status: string) => {
     const configs: Record<string, { color: 'success' | 'warning' | 'primary'; label: string }> = {
@@ -301,6 +372,12 @@ const DatasetPage = () => {
     });
   };
 
+  const actionLoading =
+    loading ||
+    publishMutation.isPending ||
+    refreshMutation.isPending ||
+    testSqlMutation.isPending;
+
   const renderListView = () => (
     <Box sx={{ p: 3 }}>
       <Box
@@ -330,7 +407,7 @@ const DatasetPage = () => {
         <TextField
           placeholder='搜索数据集...'
           value={searchTerm}
-          onChange={(e) => setSearchTerm(e.target.value)}
+          onChange={(e) => handleSearch(e.target.value)}
           size='small'
           sx={{ width: 300 }}
         />
@@ -338,13 +415,13 @@ const DatasetPage = () => {
           variant='outlined'
           size='small'
           startIcon={<RefreshCw size={16} />}
-          onClick={loadDatasets}
+          onClick={refresh}
         >
           刷新
         </Button>
       </Box>
 
-      {loading ? (
+      {actionLoading ? (
         <Box sx={{ display: 'flex', justifyContent: 'center', py: 8 }}>
           <CircularProgress />
         </Box>
@@ -449,6 +526,28 @@ const DatasetPage = () => {
                         <Eye size={16} />
                       </IconButton>
                     </Tooltip>
+                    {dataset.status === 'draft' && (
+                      <Tooltip title='发布'>
+                        <IconButton
+                          size='small'
+                          onClick={() => handlePublish(dataset.id)}
+                          aria-label='发布数据集'
+                        >
+                          <FileText size={16} />
+                        </IconButton>
+                      </Tooltip>
+                    )}
+                    {dataset.status === 'published' && (
+                      <Tooltip title='刷新数据'>
+                        <IconButton
+                          size='small'
+                          onClick={() => handleRefreshDataset(dataset.id)}
+                          aria-label='刷新数据集'
+                        >
+                          <RefreshCw size={16} />
+                        </IconButton>
+                      </Tooltip>
+                    )}
                     <Tooltip title='删除'>
                       <IconButton
                         size='small'
@@ -689,6 +788,8 @@ const DatasetPage = () => {
                   variant='outlined'
                   size='small'
                   startIcon={<Play size={16} />}
+                  onClick={handleTestSql}
+                  disabled={testSqlMutation.isPending}
                 >
                   运行查询
                 </Button>

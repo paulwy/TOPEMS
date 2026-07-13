@@ -3,7 +3,7 @@
 import * as React from 'react';
 import { ThemeProvider as MuiThemeProvider, useColorScheme } from '@mui/material/styles';
 import { CssBaseline } from '@mui/material';
-import { useAppStore } from '@/store';
+import { useThemeStore } from '@/store';
 import { createCustomTheme } from '@/theme';
 
 // 模块级别创建一次主题（CSS Variables 模式下无需根据 mode 重建）
@@ -14,7 +14,7 @@ type ThemeProviderProps = {
 };
 
 function ThemeSync({ children }: ThemeProviderProps) {
-  const storeTheme = useAppStore((state) => state.theme);
+  const storeTheme = useThemeStore((state) => state.theme);
   const { setMode } = useColorScheme();
 
   React.useEffect(() => {

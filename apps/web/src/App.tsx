@@ -25,12 +25,12 @@ import { DASHBOARD_PATHS } from './routes/dashboard';
 import { HRM_PATHS } from './modules/hrm/config';
 import { CRM_PATHS } from './modules/crm/config';
 import { ADMIN_PATHS } from './modules/admin/config';
-import { eventBus, ModuleEvents } from './modules/loader/EventBus';
+import { eventBus, ModuleEvents } from './lib/plugin-loader/EventBus';
 
 const TemplateDemoPage = lazy(() =>
   import('./components/templates/index').then((m) => ({ default: m.TemplateDemoPage }))
 );
-const DynamicRouter = lazy(() => import('./modules/loader/DynamicRouter'));
+const DynamicRouter = lazy(() => import('./lib/plugin-loader/DynamicRouter'));
 const PerformanceTestPage = lazy(() => import('./pages/performance/PerformanceTestPage'));
 
 const IS_STATIC_MODE = import.meta.env.VITE_DEPLOYMENT_MODE !== 'module-federation';

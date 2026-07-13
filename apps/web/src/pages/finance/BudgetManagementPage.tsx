@@ -5,7 +5,7 @@ import { BackButton, PageContainer } from '@/components/common';
 import { departmentApi, type Department } from '@/api/hrm';
 import { financeApi } from '@/api/finance';
 import { apiLogger } from '@/utils/logger';
-import { useAppStore } from '../../store';
+import { useNotificationStore } from '@/store';
 import { ListPageTemplate, StatCardGroup } from '@/components';
 import type { ColumnDef, RowAction, BatchAction } from '@/components';
 
@@ -33,7 +33,7 @@ import OrganizationFilter, {
 } from '@/components/ui/OrganizationFilter';
 
 const BudgetManagementPage: React.FC = () => {
-  const addNotification = useAppStore((state) => state.addNotification);
+  const addNotification = useNotificationStore((state) => state.addNotification);
 
   const [budgets, setBudgets] = useState<Budget[]>([]);
   const [departments, setDepartments] = useState<Department[]>([]);

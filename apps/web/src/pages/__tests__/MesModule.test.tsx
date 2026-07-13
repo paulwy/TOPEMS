@@ -11,7 +11,7 @@ import {
   equipmentApi,
   mesEquipmentApi,
 } from '@/api/mes';
-import { useAppStore } from '@/store';
+import { useNotificationStore, useAuthStore } from '@/store';
 import { AuthProvider } from '@/hooks/useAuth';
 
 vi.mock('@/api/mes', () => ({
@@ -115,19 +115,24 @@ vi.mock('@/api/mes', () => ({
 }));
 
 vi.mock('@/store', () => ({
-  useAppStore: vi.fn((selector?: any) =>
+  useNotificationStore: vi.fn((selector?: any) =>
     selector
       ? selector({
           addNotification: vi.fn(),
           notifications: [],
-          user: { permissions: ['mes:production:read'] },
-          theme: 'light',
         })
       : {
           addNotification: vi.fn(),
           notifications: [],
-          user: { permissions: ['mes:production:read'] },
-          theme: 'light',
+        }
+  ),
+  useAuthStore: vi.fn((selector?: any) =>
+    selector
+      ? selector({
+          user: null,
+        })
+      : {
+          user: null,
         }
   ),
 }));

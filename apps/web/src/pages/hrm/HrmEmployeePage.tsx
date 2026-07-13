@@ -51,7 +51,7 @@ import {
   type Company,
   type PaginatedResult,
 } from '@/api/hrm';
-import { useAppStore } from '../../store';
+import { useNotificationStore } from '../../store';
 import {
   CardListTemplate,
   type CardAction,
@@ -146,7 +146,7 @@ const HrmEmployeePage: React.FC = () => {
   const navigate = useNavigate();
   const theme = useTheme();
   const isMobile = useMediaQuery(theme.breakpoints.down('md'));
-  const addNotification = useAppStore((state) => state.addNotification);
+  const addNotification = useNotificationStore((state) => state.addNotification);
   const queryClient = useQueryClient();
 
   // 视图模式
@@ -385,6 +385,37 @@ const HrmEmployeePage: React.FC = () => {
     setDeleteId(id);
     setConfirmDeleteOpen(true);
   }, []);
+
+  // 批量删除
+  const [batchDeleteIds, setBatchDeleteIds] = useState<string[]>([]);
+  const [confirmBatchDeleteOpen, setConfirmBatchDeleteOpen] = useState(false);
+
+  const handleBatchDelete = useCallback((employees: Employee[]) => {
+    const ids = employees.map((e) => e.id);
+    setBatchDeleteIds(ids);
+    setConfirmBatchDeleteOpen(true);
+  }, []);
+
+  const handleBatchDeleteConfirm = useCallback(async () => {
+    try {
+      for (const id of batchDeleteIds) {
+        await deleteMutation.mutateAsync(id);
+      }
+      addNotification({
+        title: '成功',
+        message: `成功删除 ${batchDeleteIds.length} 名员工`,
+        type: 'success',
+      });
+      setConfirmBatchDeleteOpen(false);
+      setBatchDeleteIds([]);
+    } catch (error: unknown) {
+      addNotification({
+        title: '失败',
+        message: (error as { message?: string }).message || '批量删除失败',
+        type: 'error',
+      });
+    }
+  }, [batchDeleteIds, deleteMutation]);
 
   // 创建
   const handleCreate = useCallback(
@@ -1112,6 +1143,26 @@ const HrmEmployeePage: React.FC = () => {
                   rowActions={rowActions}
                   onRowClick={handleView}
                   emptyMessage='该部门暂无员工'
+                  exportable
+                  exportFileName='员工列表'
+                  exportTransform={(row: Employee) => ({
+                    id: row.id,
+                    name: row.name,
+                    employee_no: row.employee_no || '',
+                    email: row.email || '',
+                    phone: row.phone || '',
+                    department_name: row.department_name || '',
+                    position_name: row.position || '',
+                    status: row.status === 'active' ? '在职' : '离职',
+                    hired_date: row.hire_date || '',
+                  })}
+                  batchActions={[
+                    {
+                      label: '批量删除',
+                      icon: <Trash2 size={16} />,
+                      onClick: handleBatchDelete,
+                    },
+                  ]}
                 />
               </>
             ) : (
@@ -1292,6 +1343,16 @@ const HrmEmployeePage: React.FC = () => {
         onConfirm={handleDeleteConfirm}
         title='确认删除'
         message='确定要删除这个员工吗？'
+        danger
+      />
+
+      {/* 批量删除确认对话框 */}
+      <ConfirmDialog
+        isOpen={confirmBatchDeleteOpen}
+        onClose={() => setConfirmBatchDeleteOpen(false)}
+        onConfirm={handleBatchDeleteConfirm}
+        title='批量删除确认'
+        message={`确定要删除选中的 ${batchDeleteIds.length} 名员工吗？`}
         danger
       />
     </PageContainer>

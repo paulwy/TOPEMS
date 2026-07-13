@@ -22,10 +22,11 @@ import {
   Paper,
 } from '@mui/material';
 import { PageContainer } from '@/components/common';
-import React, { useState, useEffect, useMemo, useCallback } from 'react';
-import type { Team, TeamMember, CreateTeamRequest, UpdateTeamRequest, ListParams } from '@/api/mes';
+import React, { useState, useMemo, useCallback } from 'react';
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import type { Team, TeamMember, CreateTeamRequest, UpdateTeamRequest } from '@/api/mes';
 import { mesApi } from '@/api/mes';
-import { useAppStore } from '@/store';
+import { useNotificationStore } from '@/store';
 import { LoadingSpinner } from '@topems/shared-components';
 import {
   ListPageTemplate,
@@ -40,19 +41,15 @@ import { designTokens } from '@/theme/tokens';
 const ct = designTokens.colors;
 
 const TeamManagementPage: React.FC = () => {
-  const [teams, setTeams] = useState<Team[]>([]);
-  const [loading, setLoading] = useState(true);
+  const queryClient = useQueryClient();
   const [searchTerm, setSearchTerm] = useState('');
   const [statusFilter, setStatusFilter] = useState<string>('all');
   const [currentPage, setCurrentPage] = useState(1);
   const [pageSize] = useState(10);
-  const [total, setTotal] = useState(0);
   const [showDialog, setShowDialog] = useState(false);
   const [showDetailDialog, setShowDetailDialog] = useState(false);
   const [selectedTeam, setSelectedTeam] = useState<Team | null>(null);
   const [selectedIds, setSelectedIds] = useState<string[]>([]);
-  const [teamMembers, setTeamMembers] = useState<TeamMember[]>([]);
-  const [membersLoading, setMembersLoading] = useState(false);
   const [formData, setFormData] = useState<CreateTeamRequest>({
     team_code: '',
     team_name: '',
@@ -60,12 +57,12 @@ const TeamManagementPage: React.FC = () => {
     description: '',
   });
 
-  const { addNotification } = useAppStore();
+  const { addNotification } = useNotificationStore();
 
-  const loadTeams = useCallback(async () => {
-    try {
-      setLoading(true);
-      const params: ListParams = {
+  const teamsQuery = useQuery({
+    queryKey: ['mes-teams', currentPage, pageSize, searchTerm, statusFilter],
+    queryFn: async () => {
+      const params: Record<string, unknown> = {
         page: currentPage - 1,
         pagesize: pageSize,
       };
@@ -73,86 +70,130 @@ const TeamManagementPage: React.FC = () => {
       if (statusFilter !== 'all') params.status = statusFilter;
 
       const response = await mesApi.teams.list(params);
-      if (response.success && response.data) {
-        setTeams(response.data.teams || []);
-        setTotal(response.data.total || 0);
+      if (!response.success || !response.data) {
+        throw new Error(response.message || '加载班组列表失败');
       }
-    } catch (error: unknown) {
-      apiLogger.error('加载班组列表失败:', error);
+      return {
+        items: response.data.teams || [],
+        total: response.data.total || 0,
+      };
+    },
+    staleTime: 5 * 60 * 1000,
+    retry: 2,
+  });
+
+  const teams = teamsQuery.data?.items ?? [];
+  const total = teamsQuery.data?.total ?? 0;
+  const loading = teamsQuery.isLoading;
+
+  const teamMembersQuery = useQuery({
+    queryKey: ['mes-team-members', selectedTeam?.id],
+    queryFn: async () => {
+      if (!selectedTeam?.id) return { items: [] as TeamMember[] };
+      const response = await mesApi.teams.getMembers(selectedTeam.id);
+      if (!response.success || !response.data) {
+        throw new Error(response.message || '加载班组成员失败');
+      }
+      return { items: response.data.members || [] };
+    },
+    enabled: !!selectedTeam?.id && showDetailDialog,
+    staleTime: 5 * 60 * 1000,
+  });
+
+  const teamMembers = teamMembersQuery.data?.items ?? [];
+  const membersLoading = teamMembersQuery.isLoading;
+
+  const createMutation = useMutation({
+    mutationFn: async (data: CreateTeamRequest) => {
+      const response = await mesApi.teams.create(data);
+      if (!response.success) {
+        throw new Error(response.message || '创建班组失败');
+      }
+      return response.data;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['mes-teams'] });
+      addNotification({
+        type: 'success',
+        title: '创建成功',
+        message: '新班组已创建',
+      });
+    },
+    onError: (error: unknown) => {
+      apiLogger.error('创建班组失败:', error);
       addNotification({
         type: 'error',
-        title: '加载失败',
-        message: '无法加载班组列表',
+        title: '操作失败',
+        message: '创建班组失败',
       });
-    } finally {
-      setLoading(false);
-    }
-  }, [currentPage, pageSize, searchTerm, statusFilter, addNotification]);
+    },
+  });
 
-  useEffect(() => {
-    loadTeams();
-  }, [loadTeams]);
-
-  const loadTeamMembers = useCallback(async (teamId: string) => {
-    try {
-      setMembersLoading(true);
-      const response = await mesApi.teams.getMembers(teamId);
-      if (response.success && response.data) {
-        setTeamMembers(response.data.members || []);
+  const updateMutation = useMutation({
+    mutationFn: async ({ id, data }: { id: string; data: UpdateTeamRequest }) => {
+      const response = await mesApi.teams.update(id, data);
+      if (!response.success) {
+        throw new Error(response.message || '更新班组失败');
       }
-    } catch (error: unknown) {
-      apiLogger.error('加载班组成员失败:', error);
-    } finally {
-      setMembersLoading(false);
-    }
-  }, []);
+      return response.data;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['mes-teams'] });
+      addNotification({
+        type: 'success',
+        title: '更新成功',
+        message: '班组信息已更新',
+      });
+    },
+    onError: (error: unknown) => {
+      apiLogger.error('更新班组失败:', error);
+      addNotification({
+        type: 'error',
+        title: '操作失败',
+        message: '更新班组失败',
+      });
+    },
+  });
 
-  const getStatusText = (status: string) => {
-    const statusMap: Record<string, string> = {
-      active: '活跃',
-      inactive: '停用',
-    };
-    return statusMap[status] || status;
-  };
-
-  const getTeamTypeText = (type?: string) => {
-    const typeMap: Record<string, string> = {
-      production: '生产班组',
-      maintenance: '维修班组',
-      quality: '质检班组',
-      logistics: '物流班组',
-    };
-    return typeMap[type || ''] || type || '-';
-  };
+  const deleteMutation = useMutation({
+    mutationFn: async (id: string) => {
+      const response = await mesApi.teams.delete(id);
+      if (!response.success) {
+        throw new Error(response.message || '删除班组失败');
+      }
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['mes-teams'] });
+      addNotification({
+        type: 'success',
+        title: '删除成功',
+        message: '班组已删除',
+      });
+    },
+    onError: (error: unknown) => {
+      apiLogger.error('删除班组失败:', error);
+      addNotification({
+        type: 'error',
+        title: '删除失败',
+        message: '无法删除班组',
+      });
+    },
+  });
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     try {
       if (selectedTeam) {
-        await mesApi.teams.update(selectedTeam.id, formData as UpdateTeamRequest);
-        addNotification({
-          type: 'success',
-          title: '更新成功',
-          message: '班组信息已更新',
+        await updateMutation.mutateAsync({
+          id: selectedTeam.id,
+          data: formData as UpdateTeamRequest,
         });
       } else {
-        await mesApi.teams.create(formData);
-        addNotification({
-          type: 'success',
-          title: '创建成功',
-          message: '新班组已创建',
-        });
+        await createMutation.mutateAsync(formData);
       }
       setShowDialog(false);
       resetForm();
-      loadTeams();
-    } catch (error: unknown) {
-      apiLogger.error('操作失败:', error);
-      addNotification({
-        type: 'error',
-        title: '操作失败',
-        message: selectedTeam ? '更新班组失败' : '创建班组失败',
-      });
+    } catch {
     }
   };
 
@@ -160,23 +201,11 @@ const TeamManagementPage: React.FC = () => {
     async (id: string) => {
       if (!window.confirm('确定要删除这个班组吗?')) return;
       try {
-        await mesApi.teams.delete(id);
-        addNotification({
-          type: 'success',
-          title: '删除成功',
-          message: '班组已删除',
-        });
-        loadTeams();
-      } catch (error: unknown) {
-        apiLogger.error('删除失败:', error);
-        addNotification({
-          type: 'error',
-          title: '删除失败',
-          message: '无法删除班组',
-        });
+        await deleteMutation.mutateAsync(id);
+      } catch {
       }
     },
-    [loadTeams, addNotification]
+    [deleteMutation]
   );
 
   const handleEdit = useCallback((team: Team) => {
@@ -195,10 +224,9 @@ const TeamManagementPage: React.FC = () => {
   const handleViewDetail = useCallback(
     (team: Team) => {
       setSelectedTeam(team);
-      loadTeamMembers(team.id);
       setShowDetailDialog(true);
     },
-    [loadTeamMembers]
+    []
   );
 
   const resetForm = () => {
@@ -231,6 +259,16 @@ const TeamManagementPage: React.FC = () => {
         sx={{ backgroundColor: s.bg, color: s.color, fontWeight: 500 }}
       />
     );
+  };
+
+  const getTeamTypeText = (type?: string) => {
+    const typeMap: Record<string, string> = {
+      production: '生产班组',
+      maintenance: '维修班组',
+      quality: '质检班组',
+      logistics: '物流班组',
+    };
+    return typeMap[type || ''] || type || '-';
   };
 
   const columns: ColumnDef<Team>[] = useMemo(
@@ -402,7 +440,7 @@ const TeamManagementPage: React.FC = () => {
         subtitle=''
         columns={columns}
         data={teams}
-        loading={loading}
+        loading={loading || createMutation.isPending || updateMutation.isPending || deleteMutation.isPending}
         filters={filters}
         searchable
         searchPlaceholder='搜索班组编码或名称...'
@@ -536,6 +574,7 @@ const TeamManagementPage: React.FC = () => {
               <Button
                 type='submit'
                 variant='contained'
+                disabled={createMutation.isPending || updateMutation.isPending}
               >
                 保存
               </Button>

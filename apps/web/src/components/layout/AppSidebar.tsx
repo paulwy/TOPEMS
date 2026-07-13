@@ -24,7 +24,7 @@ import { useNavigate, useLocation } from 'react-router-dom';
 import { usePermission } from '@/hooks/usePermission';
 import { navigationRegistryV2 } from '@/lib/navigation';
 import type { NavItem } from '@/lib/navigation/types';
-import { useAppStore } from '@/store';
+import { useUIStore } from '@/store';
 
 import {
   ChevronLeft,

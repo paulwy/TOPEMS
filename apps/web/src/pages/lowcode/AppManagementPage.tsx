@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useMemo } from 'react';
 import {
   Box,
   Grid,
@@ -17,6 +17,7 @@ import {
   ToggleButtonGroup,
   ToggleButton,
 } from '@mui/material';
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { Search, Plus, LayoutGrid, List, Filter } from 'lucide-react';
 import { PageContainer } from '@/components/common';
 import { LOWCODE_PATHS } from '@/modules/lowcode/config';
@@ -29,12 +30,9 @@ import { logger } from '@/utils/logger';
 
 const AppManagementPage = () => {
   const navigate = useNavigate();
-  const [apps, setApps] = useState<LowCodeApp[]>([]);
-  const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState('');
   const [statusFilter, setStatusFilter] = useState<string>('');
   const [viewMode, setViewMode] = useState<'grid' | 'list'>('grid');
-  const [total, setTotal] = useState(0);
   const [page, setPage] = useState(1);
   const [pageSize, setPageSize] = useState(12);
 
@@ -44,13 +42,11 @@ const AppManagementPage = () => {
   const [publishDialogOpen, setPublishDialogOpen] = useState(false);
   const [publishingApp, setPublishingApp] = useState<LowCodeApp | null>(null);
 
-  useEffect(() => {
-    loadApps();
-  }, [page, pageSize, statusFilter]);
+  const queryClient = useQueryClient();
 
-  const loadApps = async () => {
-    setLoading(true);
-    try {
+  const appsQuery = useQuery({
+    queryKey: ['lowcode-apps', page, pageSize, statusFilter, searchTerm],
+    queryFn: async () => {
       const res = await listApps({
         page,
         pageSize,
@@ -58,15 +54,51 @@ const AppManagementPage = () => {
         search: searchTerm || undefined,
       });
       if (res.success) {
-        setApps(res.data.items || []);
-        setTotal(res.data.total || 0);
+        return {
+          items: res.data.items || [],
+          total: res.data.total || 0,
+        };
       }
-    } catch (error) {
-      logger.error('Failed to load apps:', error);
-    } finally {
-      setLoading(false);
-    }
-  };
+      return { items: [], total: 0 };
+    },
+    staleTime: 5 * 60 * 1000,
+    retry: 2,
+  });
+
+  const apps = appsQuery.data?.items || [];
+  const total = appsQuery.data?.total || 0;
+  const loading = appsQuery.isLoading;
+
+  const createMutation = useMutation({
+    mutationFn: async (data: { name: string; label: string; description: string; category: string }) => {
+      const res = await createApp(data);
+      if (!res.success) {
+        throw new Error('创建失败');
+      }
+      return res.data;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['lowcode-apps'] });
+    },
+    onError: (error) => {
+      logger.error('Failed to create app:', error);
+    },
+  });
+
+  const deleteMutation = useMutation({
+    mutationFn: async (appId: string) => {
+      const res = await deleteApp(appId);
+      if (!res.success) {
+        throw new Error('删除失败');
+      }
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['lowcode-apps'] });
+    },
+    onError: (error) => {
+      logger.error('Failed to delete app:', error);
+    },
+  });
 
   const handleSearch = (value: string) => {
     setSearchTerm(value);
@@ -74,25 +106,13 @@ const AppManagementPage = () => {
   };
 
   const handleCreateApp = async () => {
-    try {
-      const res = await createApp(newApp);
-      if (res.success) {
-        setCreateDialogOpen(false);
-        loadApps();
-      }
-    } catch (error) {
-      logger.error('Failed to create app:', error);
-    }
+    await createMutation.mutateAsync(newApp);
+    setCreateDialogOpen(false);
   };
 
   const handleDeleteApp = async (appId: string) => {
     if (window.confirm('确定要删除这个应用吗？')) {
-      try {
-        await deleteApp(appId);
-        loadApps();
-      } catch (error) {
-        logger.error('Failed to delete app:', error);
-      }
+      await deleteMutation.mutateAsync(appId);
     }
   };
 
@@ -103,7 +123,7 @@ const AppManagementPage = () => {
 
   const handlePublish = async (_params: { version: string; description: string }) => {
     if (publishingApp) {
-      // publishing handled by parent dialog
+      queryClient.invalidateQueries({ queryKey: ['lowcode-apps'] });
     }
   };
 

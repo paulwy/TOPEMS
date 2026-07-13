@@ -44,7 +44,7 @@ import {
   Button,
 } from '@mui/material';
 import { EmptyState, Grid } from '@/components';
-import { useAppStore } from '@/store';
+import { useNotificationStore } from '@/store';
 import { DashboardTemplate, type StatCard } from '@/components/templates';
 import { PageContainer } from '@/components/common';
 import { fetchWidgets, createWidget, updateWidget, deleteWidget, type Widget } from '@/api/bi';

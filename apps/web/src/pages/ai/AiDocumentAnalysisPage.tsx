@@ -41,7 +41,7 @@ import {
   Zap,
 } from 'lucide-react';
 import { PageContainer, Grid } from '@/components/common';
-import { useAppStore } from '@/store';
+import { useNotificationStore } from '@/store';
 import { logger } from '@/utils/logger';
 import { designTokens } from '@/theme/tokens';
 
@@ -94,7 +94,7 @@ const keyPoints = [
 ];
 
 export const AiDocumentAnalysisPage: React.FC = () => {
-  const addNotification = useAppStore((state) => state.addNotification);
+  const addNotification = useNotificationStore((state) => state.addNotification);
   const [activeTab, setActiveTab] = useState<AnalysisTab>('summary');
   const [selectedDocument, setSelectedDocument] = useState<string>('');
   const [uploadedFile, setUploadedFile] = useState<File | null>(null);

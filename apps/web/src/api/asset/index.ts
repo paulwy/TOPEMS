@@ -13,7 +13,7 @@ import type {
 import type { Vehicle, VehicleRequest, OfficeSupply, FixedAsset, Asset } from '../erp/types';
 
 export * from './types';
-export { equipmentApi } from './equipment';
+export { equipmentApi, equipmentCrudApi } from './equipment';
 export { maintenanceApi, inspectionApi } from './maintenance';
 
 export const assetApi = {

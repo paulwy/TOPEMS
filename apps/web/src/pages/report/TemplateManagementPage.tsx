@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useMemo } from 'react';
 import {
   FileText,
   Plus,
@@ -20,7 +20,8 @@ import {
   type TemplateCategory,
   type CreateTemplateRequest,
 } from '@/api/template';
-import { useNotification } from '@/hooks/useNotification';
+import { useNotificationStore } from '@/store';
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { apiLogger } from '@/utils/logger';
 import {
   Box,
@@ -45,11 +46,9 @@ import {
 import { PageContainer } from '@/components';
 
 const TemplateManagementPage: React.FC = () => {
-  const { success, error, notifications, hideNotification } = useNotification();
+  const queryClient = useQueryClient();
+  const addNotification = useNotificationStore((state) => state.addNotification);
 
-  const [templates, setTemplates] = useState<Template[]>([]);
-  const [categories, setCategories] = useState<TemplateCategory[]>([]);
-  const [loading, setLoading] = useState(true);
   const [viewMode, setViewMode] = useState<'grid' | 'list'>('grid');
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedCategory, setSelectedCategory] = useState<string>('');
@@ -58,105 +57,166 @@ const TemplateManagementPage: React.FC = () => {
   const [showPreviewModal, setShowPreviewModal] = useState(false);
   const [selectedTemplate, setSelectedTemplate] = useState<Template | null>(null);
 
-  useEffect(() => {
-    loadData();
-  }, []);
-
-  const loadData = async () => {
-    setLoading(true);
-    try {
-      // Use real API
-      const [templatesRes, categoriesRes] = await Promise.all([
-        templateApi.list({ search: searchQuery, category: selectedCategory }),
-        templateApi.listCategories(),
-      ]);
-
-      if (templatesRes.success && templatesRes.data) {
-        setTemplates(templatesRes.data.items || []);
+  const templatesQuery = useQuery({
+    queryKey: ['templates', searchQuery, selectedCategory],
+    queryFn: async () => {
+      const response = await templateApi.list({ search: searchQuery, category: selectedCategory });
+      if (!response.success || !response.data) {
+        throw new Error(response.message || '加载模板数据失败');
       }
-      if (categoriesRes.success && categoriesRes.data) {
-        setCategories(categoriesRes.data);
+      return response.data.items || [];
+    },
+    staleTime: 5 * 60 * 1000,
+  });
+
+  const categoriesQuery = useQuery({
+    queryKey: ['template-categories'],
+    queryFn: async () => {
+      const response = await templateApi.listCategories();
+      if (!response.success || !response.data) {
+        throw new Error(response.message || '加载模板分类失败');
       }
-    } catch (err: unknown) {
-      apiLogger.error('Error loading templates:', err);
-    } finally {
-      setLoading(false);
-    }
-  };
+      return response.data;
+    },
+    staleTime: 5 * 60 * 1000,
+  });
+
+  const templates = templatesQuery.data || [];
+  const categories = categoriesQuery.data || [];
+  const loading = templatesQuery.isLoading || categoriesQuery.isLoading;
+
+  const createMutation = useMutation({
+    mutationFn: async (data: CreateTemplateRequest) => {
+      const response = await templateApi.create(data);
+      if (!response.success) {
+        throw new Error(response.message || '创建失败');
+      }
+      return response.data;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['templates'] });
+      addNotification({ type: 'success', title: '成功', message: '模板创建成功' });
+      setShowCreateModal(false);
+    },
+    onError: (err: unknown) => {
+      apiLogger.error('创建模板失败:', err);
+      addNotification({
+        type: 'error',
+        title: '失败',
+        message: (err as Error).message || '创建失败',
+      });
+    },
+  });
+
+  const updateMutation = useMutation({
+    mutationFn: async ({ id, data }: { id: string; data: Partial<CreateTemplateRequest> }) => {
+      const response = await templateApi.update(id, data);
+      if (!response.success) {
+        throw new Error(response.message || '更新失败');
+      }
+      return response.data;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['templates'] });
+      addNotification({ type: 'success', title: '成功', message: '模板更新成功' });
+      setShowEditModal(false);
+      setSelectedTemplate(null);
+    },
+    onError: (err: unknown) => {
+      apiLogger.error('更新模板失败:', err);
+      addNotification({
+        type: 'error',
+        title: '失败',
+        message: (err as Error).message || '更新失败',
+      });
+    },
+  });
+
+  const deleteMutation = useMutation({
+    mutationFn: async (id: string) => {
+      const response = await templateApi.delete(id);
+      if (!response.success) {
+        throw new Error(response.message || '删除失败');
+      }
+      return id;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['templates'] });
+      addNotification({ type: 'success', title: '成功', message: '模板删除成功' });
+    },
+    onError: (err: unknown) => {
+      apiLogger.error('删除模板失败:', err);
+      addNotification({
+        type: 'error',
+        title: '失败',
+        message: (err as Error).message || '删除失败',
+      });
+    },
+  });
+
+  const duplicateMutation = useMutation({
+    mutationFn: async (id: string) => {
+      const response = await templateApi.duplicate(id);
+      if (!response.success) {
+        throw new Error(response.message || '复制失败');
+      }
+      return response.data;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['templates'] });
+      addNotification({ type: 'success', title: '成功', message: '模板复制成功' });
+    },
+    onError: (err: unknown) => {
+      apiLogger.error('复制模板失败:', err);
+      addNotification({
+        type: 'error',
+        title: '失败',
+        message: (err as Error).message || '复制失败',
+      });
+    },
+  });
+
+  const toggleStatusMutation = useMutation({
+    mutationFn: async (id: string) => {
+      const response = await templateApi.toggleStatus(id);
+      if (!response.success) {
+        throw new Error(response.message || '更新失败');
+      }
+      return response.data;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['templates'] });
+      addNotification({ type: 'success', title: '成功', message: '状态更新成功' });
+    },
+    onError: (err: unknown) => {
+      apiLogger.error('切换模板状态失败:', err);
+      addNotification({
+        type: 'error',
+        title: '失败',
+        message: (err as Error).message || '更新失败',
+      });
+    },
+  });
 
   const handleCreateTemplate = async (data: CreateTemplateRequest) => {
-    try {
-      const res = await templateApi.create(data);
-      if (res.success) {
-        success('模板创建成功');
-        setShowCreateModal(false);
-        loadData();
-      } else {
-        error(res.message || '创建失败');
-      }
-    } catch (err: unknown) {
-      error((err as { message?: string }).message || '创建失败');
-    }
+    await createMutation.mutateAsync(data);
   };
 
   const handleUpdateTemplate = async (id: string, data: Partial<CreateTemplateRequest>) => {
-    try {
-      const res = await templateApi.update(id, data);
-      if (res.success) {
-        success('模板更新成功');
-        setShowEditModal(false);
-        setSelectedTemplate(null);
-        loadData();
-      } else {
-        error(res.message || '更新失败');
-      }
-    } catch (err: unknown) {
-      error((err as { message?: string }).message || '更新失败');
-    }
+    await updateMutation.mutateAsync({ id, data });
   };
 
   const handleDeleteTemplate = async (id: string) => {
     if (!confirm('确定要删除这个模板吗？')) return;
-
-    try {
-      const res = await templateApi.delete(id);
-      if (res.success) {
-        success('模板删除成功');
-        loadData();
-      } else {
-        error(res.message || '删除失败');
-      }
-    } catch (err: unknown) {
-      error((err as { message?: string }).message || '删除失败');
-    }
+    await deleteMutation.mutateAsync(id);
   };
 
   const handleDuplicateTemplate = async (id: string) => {
-    try {
-      const res = await templateApi.duplicate(id);
-      if (res.success) {
-        success('模板复制成功');
-        loadData();
-      } else {
-        error(res.message || '复制失败');
-      }
-    } catch (err: unknown) {
-      error((err as { message?: string }).message || '复制失败');
-    }
+    await duplicateMutation.mutateAsync(id);
   };
 
   const handleToggleStatus = async (id: string) => {
-    try {
-      const res = await templateApi.toggleStatus(id);
-      if (res.success) {
-        success('状态更新成功');
-        loadData();
-      } else {
-        error(res.message || '更新失败');
-      }
-    } catch (err: unknown) {
-      error((err as { message?: string }).message || '更新失败');
-    }
+    await toggleStatusMutation.mutateAsync(id);
   };
 
   const filteredTemplates = templates.filter(
@@ -249,7 +309,10 @@ const TemplateManagementPage: React.FC = () => {
 
           <Button
             variant='outlined'
-            onClick={loadData}
+            onClick={() => {
+              queryClient.invalidateQueries({ queryKey: ['templates'] });
+              queryClient.invalidateQueries({ queryKey: ['template-categories'] });
+            }}
           >
             刷新
           </Button>

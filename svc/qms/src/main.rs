@@ -19,6 +19,8 @@ mod shared;
 
 pub mod modules;
 
+use std::env;
+
 use std::net::SocketAddr;
 
 use axum::{extract::State, routing::get, Json, Router};

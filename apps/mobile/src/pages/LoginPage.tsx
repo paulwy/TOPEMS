@@ -4,7 +4,7 @@ import { TextInput, Button, Text, Card, Title } from 'react-native-paper';
 import { useAuthStore } from '@/store/authStore';
 import type { LoginCredentials } from '@/types';
 
-const LoginPage: React.FC<{ onLoginSuccess: () => void }> = ({ onLoginSuccess }) => {
+const LoginPage: React.FC = () => {
   const [username, setUsername] = useState('');
   const [password, setPassword] = useState('');
   const { login, isLoading, error, clearError } = useAuthStore();
@@ -21,10 +21,6 @@ const LoginPage: React.FC<{ onLoginSuccess: () => void }> = ({ onLoginSuccess })
     };
 
     await login(credentials);
-
-    if (!error) {
-      onLoginSuccess();
-    }
   };
 
   return (

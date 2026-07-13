@@ -30,7 +30,7 @@ import {
   Button,
 } from '@mui/material';
 import { Grid } from '@/components';
-import { useAppStore } from '@/store';
+import { useNotificationStore } from '@/store';
 import { LoadingSpinner } from '@topems/shared-components';
 import ExportButton from '@/components/export/ExportButton';
 import { apiLogger, logger } from '@/utils/logger';

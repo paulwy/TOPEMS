@@ -49,7 +49,7 @@ import {
   type QuickAction,
   type RecentItem,
 } from '@/components/templates';
-import { useAppStore } from '../../store';
+import { useNotificationStore } from '../../store';
 import { designTokens } from '@/theme/tokens';
 
 const ct = designTokens.colors;
@@ -310,7 +310,7 @@ const MiniPieChart: React.FC<{
 
 export const MonitorDashboardPage: React.FC = () => {
   const theme = useTheme();
-  const addNotification = useAppStore((state) => state.addNotification);
+  const addNotification = useNotificationStore((state) => state.addNotification);
   const [loading, setLoading] = useState(false);
   const [timeRange, setTimeRange] = useState<TimeRange>('24h');
   const [timeRangeAnchorEl, setTimeRangeAnchorEl] = useState<null | HTMLElement>(null);

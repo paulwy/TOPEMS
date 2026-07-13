@@ -7,7 +7,7 @@ import {
 } from '@/components/templates/FormPageTemplate';
 import { PageContainer } from '@/components/common';
 import { rsApi } from '@/api/rs';
-import { useAppStore } from '@/store';
+import { useNotificationStore } from '@/store';
 import type { Project, TeamMember } from '@/api/rs';
 import { RS_PATHS } from '@/modules/rs/config';
 
@@ -24,7 +24,7 @@ const RsProjectCreatePage: React.FC = () => {
   const navigate = useNavigate();
   const { id } = useParams<{ id: string }>();
   const isEdit = Boolean(id);
-  const { addNotification } = useAppStore();
+  const { addNotification } = useNotificationStore();
 
   const [loading, setLoading] = useState(false);
   const [submitting, setSubmitting] = useState(false);

@@ -16,7 +16,7 @@ import { Plus, Flag, Calendar, Link2, Eye, Edit } from 'lucide-react';
 import { ListPageTemplate, type ColumnDef, type FilterConfig } from '@/components/templates';
 import { PageContainer } from '@/components/common';
 import { rsApi } from '@/api/rs';
-import { useAppStore } from '@/store';
+import { useNotificationStore } from '@/store';
 import type { Build, CreateBuildRequest } from '@/api/rs';
 import { logger } from '@/utils/logger';
 
@@ -31,7 +31,7 @@ interface Milestone {
 }
 
 const RsMilestonePage: React.FC = () => {
-  const { addNotification } = useAppStore();
+  const { addNotification } = useNotificationStore();
   const [milestones, setMilestones] = useState<Milestone[]>([]);
   const [loading, setLoading] = useState(false);
   const [page, setPage] = useState(0);

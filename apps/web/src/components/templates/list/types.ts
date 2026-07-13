@@ -98,7 +98,7 @@ export interface ColumnConfig {
 /**
  * 批量操作接口
  */
-export interface BatchAction {
+export interface BatchAction<T = any> {
   /** 操作标签 */
   label: string;
   /** 操作图标 */
@@ -106,7 +106,7 @@ export interface BatchAction {
   /** 按钮颜色 */
   color?: 'primary' | 'secondary' | 'error' | 'warning' | 'success' | 'info';
   /** 点击回调 */
-  onClick?: () => void;
+  onClick: (selectedRows: T[]) => void;
   /** 是否需要确认 */
   confirm?: boolean;
   /** 确认提示信息 */
@@ -115,6 +115,10 @@ export interface BatchAction {
   showWhenSelected?: boolean;
   /** 最小选择数量 */
   minSelected?: number;
+  /** 是否禁用 */
+  disabled?: boolean;
+  /** 根据选中行智能判断是否禁用 */
+  disabledWhen?: (selectedRows: T[]) => boolean;
 }
 
 export interface ListPageTemplateProps<T = any> extends BoxProps {
@@ -214,8 +218,6 @@ export interface ListPageTemplateProps<T = any> extends BoxProps {
    */
   customActions?: React.ReactNode;
   onRefresh?: () => void;
-  /** 批量操作按钮 */
-  batchActions?: BatchAction[];
   /** 是否在顶部显示批量操作栏 */
   showBatchActionBar?: boolean;
 
@@ -265,7 +267,42 @@ export interface ListPageTemplateProps<T = any> extends BoxProps {
     gradient?: string;
   };
 
-  // ============ 移动端卡片视图 ============
+  /** 是否启用导出功能 */
+  exportable?: boolean;
+  /** 导出文件名（不含扩展名） */
+  exportFileName?: string;
+  /** 导出格式：csv 或 excel（默认 csv） */
+  exportFormat?: 'csv' | 'excel';
+  /** 自定义导出数据转换函数 */
+  exportTransform?: (row: T) => Record<string, unknown>;
+
+  /** 是否持久化筛选条件到 localStorage */
+  persistFilters?: boolean;
+  /** 筛选条件存储的 key（默认使用页面路径） */
+  filterStorageKey?: string;
+
+  /** 是否持久化搜索关键词到 localStorage */
+  persistSearch?: boolean;
+
+  /** 空状态操作按钮 */
+  emptyActionButton?: {
+    label: string;
+    icon?: React.ReactNode;
+    onClick?: () => void;
+  };
+
+  /** 快捷筛选预设 */
+  quickFilters?: Array<{
+    label: string;
+    filters: Record<string, any>;
+    searchValue?: string;
+  }>;
+
+  /** 批量操作配置 */
+  batchActions?: BatchAction<T>[];
+
+  /** 是否启用批量选择 */
+  enableBatchSelection?: boolean;
 
   /**
    * 移动端卡片视图渲染函数

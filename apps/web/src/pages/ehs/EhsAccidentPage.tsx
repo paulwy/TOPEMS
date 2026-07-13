@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useMemo } from 'react';
+import React, { useState, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
 import {
   Box,
@@ -31,17 +31,16 @@ import { ListPageTemplate, type ColumnDef, type RowAction } from '@/components/t
 import { PageContainer } from '@/components/common/PageContainerV2';
 import { ehsApi } from '@/api/ehs';
 import type { Accident, AccidentDetail, TreatmentAction } from '@/api/ehs';
-import { useAppStore } from '@/store';
+import { useNotificationStore } from '@/store';
 import { apiLogger } from '@/utils/logger';
 import { designTokens } from '@/theme/tokens';
 import { EHS_PATHS } from '@/modules/ehs/config';
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 
 const ct = designTokens.colors;
 
 const EhsAccidentPage: React.FC = () => {
   const navigate = useNavigate();
-  const [accidents, setAccidents] = useState<Accident[]>([]);
-  const [loading, setLoading] = useState(true);
   const [searchQuery, setSearchQuery] = useState('');
   const [severityFilter, setSeverityFilter] = useState('');
   const [statusFilter, setStatusFilter] = useState('');
@@ -50,8 +49,7 @@ const EhsAccidentPage: React.FC = () => {
 
   const [showCreateModal, setShowCreateModal] = useState(false);
   const [showDetailModal, setShowDetailModal] = useState(false);
-  const [selectedAccident, setSelectedAccident] = useState<AccidentDetail | null>(null);
-  const [detailLoading, setDetailLoading] = useState(false);
+  const [selectedAccident, setSelectedAccident] = useState<Accident | null>(null);
   const [formData, setFormData] = useState({
     title: '',
     description: '',
@@ -64,60 +62,8 @@ const EhsAccidentPage: React.FC = () => {
     economic_loss: 0,
   });
 
-  const addNotification = useAppStore((state) => state.addNotification);
-
-  useEffect(() => {
-    loadAccidents();
-  }, []);
-
-  const loadAccidents = async () => {
-    try {
-      setLoading(true);
-      const response = await ehsApi.listAccidents({ pagesize: 100 });
-      if (response.success && response.data) {
-        const data = response.data as any;
-        const accidentsData = Array.isArray(data) ? data : data.data || [];
-        const adapted = accidentsData.map((item: Accident) => ({
-          ...item,
-          status: translateStatus(item.status),
-          severity: translateSeverity(item.severity),
-        }));
-        setAccidents(adapted);
-      } else {
-        setAccidents([]);
-      }
-    } catch (err: unknown) {
-      apiLogger.error('加载事故记录失败:', err);
-      addNotification({ title: '错误', message: '加载事故记录失败', type: 'error' });
-      setAccidents([]);
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  const loadAccidentDetail = async (accidentId: string) => {
-    try {
-      setDetailLoading(true);
-      const response = await ehsApi.getAccident(accidentId);
-      if (response.success && response.data) {
-        const data = response.data as any;
-        const detailData: AccidentDetail = {
-          ...data,
-          accident: {
-            ...data.accident,
-            status: translateStatus(data.accident.status),
-            severity: translateSeverity(data.accident.severity),
-          },
-        };
-        setSelectedAccident(detailData);
-      }
-    } catch (err: unknown) {
-      apiLogger.error('加载事故详情失败:', err);
-      addNotification({ title: '错误', message: '加载事故详情失败', type: 'error' });
-    } finally {
-      setDetailLoading(false);
-    }
-  };
+  const addNotification = useNotificationStore((state) => state.addNotification);
+  const queryClient = useQueryClient();
 
   const translateStatus = (status: string) => {
     const statusMap: Record<string, string> = {
@@ -139,6 +85,83 @@ const EhsAccidentPage: React.FC = () => {
     };
     return severityMap[severity] || severity;
   };
+
+  const accidentsQuery = useQuery<Accident[]>({
+    queryKey: ['ehs-accidents'],
+    queryFn: async () => {
+      const response = await ehsApi.listAccidents({ pagesize: 100 });
+      if (response.success && response.data) {
+        const data = response.data as any;
+        const accidentsData = Array.isArray(data) ? data : data.data || [];
+        return accidentsData.map((item: Accident) => ({
+          ...item,
+          status: translateStatus(item.status),
+          severity: translateSeverity(item.severity),
+        }));
+      }
+      return [];
+    },
+    staleTime: 5 * 60 * 1000,
+  });
+
+  const accidents = accidentsQuery.data || [];
+  const loading = accidentsQuery.isLoading;
+
+  const accidentDetailQuery = useQuery({
+    queryKey: ['ehs-accident-detail', selectedAccident?.id],
+    queryFn: async () => {
+      if (!selectedAccident?.id) return null;
+      const response = await ehsApi.getAccident(selectedAccident.id);
+      if (response.success && response.data) {
+        const data = response.data as any;
+        const detailData: AccidentDetail = {
+          ...data,
+          accident: {
+            ...data.accident,
+            status: translateStatus(data.accident.status),
+            severity: translateSeverity(data.accident.severity),
+          },
+        };
+        return detailData;
+      }
+      return null;
+    },
+    enabled: !!selectedAccident?.id && showDetailModal,
+    staleTime: 5 * 60 * 1000,
+  });
+
+  const detailLoading = accidentDetailQuery.isFetching;
+  const accidentDetail = accidentDetailQuery.data;
+
+  const createAccidentMutation = useMutation({
+    mutationFn: async (data: any) => {
+      return ehsApi.createAccident(data);
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['ehs-accidents'] });
+      addNotification({ title: '成功', message: '事故上报成功', type: 'success' });
+      setShowCreateModal(false);
+    },
+    onError: (err) => {
+      addNotification({ title: '错误', message: '上报失败', type: 'error' });
+      apiLogger.error('创建事故记录失败:', err);
+    },
+  });
+
+  const deleteAccidentMutation = useMutation({
+    mutationFn: async (id: string) => {
+      return ehsApi.deleteIncident(id);
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['ehs-accidents'] });
+      addNotification({ title: '成功', message: '删除成功', type: 'success' });
+      setShowDetailModal(false);
+    },
+    onError: (err) => {
+      addNotification({ title: '错误', message: '删除失败', type: 'error' });
+      apiLogger.error('删除事故记录失败:', err);
+    },
+  });
 
   const getSeverityChip = (severity: string) => {
     const severityMap: Record<string, { bg: string; color: string }> = {
@@ -291,8 +314,8 @@ const EhsAccidentPage: React.FC = () => {
     {
       label: '详情',
       icon: <Eye size={16} />,
-      onClick: async (row) => {
-        await loadAccidentDetail(row.id);
+      onClick: (row) => {
+        setSelectedAccident(row);
         setShowDetailModal(true);
       },
       color: 'primary',
@@ -412,43 +435,27 @@ const EhsAccidentPage: React.FC = () => {
     setShowCreateModal(true);
   };
 
-  const handleSave = async () => {
+  const handleSave = () => {
     if (!formData.title.trim()) {
       addNotification({ title: '错误', message: '请输入事故标题', type: 'error' });
       return;
     }
-    try {
-      await ehsApi.createAccident({
-        title: formData.title,
-        description: formData.description || null,
-        accident_type: formData.accident_type || null,
-        severity: formData.severity,
-        location: formData.location || null,
-        occurred_at: formData.occurred_at || null,
-        casualties: formData.casualties || null,
-        economic_loss: formData.economic_loss || null,
-        reported_by: formData.reported_by || null,
-      });
-      addNotification({ title: '成功', message: '事故上报成功', type: 'success' });
-      setShowCreateModal(false);
-      loadAccidents();
-    } catch (err: unknown) {
-      addNotification({ title: '错误', message: '上报失败', type: 'error' });
-      apiLogger.error('创建事故记录失败:', err);
-    }
+    createAccidentMutation.mutate({
+      title: formData.title,
+      description: formData.description || null,
+      accident_type: formData.accident_type || null,
+      severity: formData.severity,
+      location: formData.location || null,
+      occurred_at: formData.occurred_at || null,
+      casualties: formData.casualties || null,
+      economic_loss: formData.economic_loss || null,
+      reported_by: formData.reported_by || null,
+    });
   };
 
-  const handleDelete = async (id: string) => {
+  const handleDelete = (id: string) => {
     if (!confirm('确定要删除此事故记录吗？')) return;
-    try {
-      await ehsApi.deleteIncident(id);
-      addNotification({ title: '成功', message: '删除成功', type: 'success' });
-      setShowDetailModal(false);
-      loadAccidents();
-    } catch (err: unknown) {
-      addNotification({ title: '错误', message: '删除失败', type: 'error' });
-      apiLogger.error('删除事故记录失败:', err);
-    }
+    deleteAccidentMutation.mutate(id);
   };
 
   return (
@@ -523,7 +530,7 @@ const EhsAccidentPage: React.FC = () => {
             },
           ]}
           rowActions={rowActions}
-          onRefresh={loadAccidents}
+          onRefresh={() => accidentsQuery.refetch()}
           showRowNumber
           headerContent={headerContent}
         />
@@ -663,7 +670,7 @@ const EhsAccidentPage: React.FC = () => {
                 />
                 <Typography sx={{ color: 'slate.600' }}>加载中...</Typography>
               </Box>
-            ) : selectedAccident?.accident ? (
+            ) : accidentDetail?.accident ? (
               <Box sx={{ pt: 2 }}>
                 <Box
                   sx={{
@@ -678,27 +685,27 @@ const EhsAccidentPage: React.FC = () => {
                       事故编号
                     </Typography>
                     <Typography sx={{ fontWeight: 500 }}>
-                      {selectedAccident.accident.accident_no}
+                      {accidentDetail.accident.accident_no}
                     </Typography>
                   </Box>
                   <Box>
                     <Typography sx={{ color: 'text.secondary', fontSize: '0.875rem' }}>
                       事故标题
                     </Typography>
-                    <Typography>{selectedAccident.accident.title}</Typography>
+                    <Typography>{accidentDetail.accident.title}</Typography>
                   </Box>
                   <Box>
                     <Typography sx={{ color: 'text.secondary', fontSize: '0.875rem' }}>
                       事故类型
                     </Typography>
-                    <Typography>{selectedAccident.accident.accident_type || '-'}</Typography>
+                    <Typography>{accidentDetail.accident.accident_type || '-'}</Typography>
                   </Box>
                   <Box>
                     <Typography sx={{ color: 'text.secondary', fontSize: '0.875rem' }}>
                       严重程度
                     </Typography>
                     <Typography sx={{ mt: 0.5 }}>
-                      {getSeverityChip(selectedAccident.accident.severity)}
+                      {getSeverityChip(accidentDetail.accident.severity)}
                     </Typography>
                   </Box>
                   <Box>
@@ -707,7 +714,7 @@ const EhsAccidentPage: React.FC = () => {
                     </Typography>
                     <Typography sx={{ display: 'flex', alignItems: 'center', gap: 0.5 }}>
                       <MapPin style={{ width: 16, height: 16 }} />
-                      {selectedAccident.accident.location || '-'}
+                      {accidentDetail.accident.location || '-'}
                     </Typography>
                   </Box>
                   <Box>
@@ -716,8 +723,8 @@ const EhsAccidentPage: React.FC = () => {
                     </Typography>
                     <Typography sx={{ display: 'flex', alignItems: 'center', gap: 0.5 }}>
                       <Calendar style={{ width: 16, height: 16 }} />
-                      {selectedAccident.accident.occurred_at
-                        ? new Date(selectedAccident.accident.occurred_at).toLocaleString('zh-CN')
+                      {accidentDetail.accident.occurred_at
+                        ? new Date(accidentDetail.accident.occurred_at).toLocaleString('zh-CN')
                         : '-'}
                     </Typography>
                   </Box>
@@ -727,7 +734,7 @@ const EhsAccidentPage: React.FC = () => {
                     </Typography>
                     <Typography sx={{ display: 'flex', alignItems: 'center', gap: 0.5 }}>
                       <User style={{ width: 16, height: 16 }} />
-                      {selectedAccident.accident.reported_by || '-'}
+                      {accidentDetail.accident.reported_by || '-'}
                     </Typography>
                   </Box>
                   <Box>
@@ -735,20 +742,20 @@ const EhsAccidentPage: React.FC = () => {
                       状态
                     </Typography>
                     <Typography sx={{ mt: 0.5 }}>
-                      {getStatusChip(selectedAccident.accident.status)}
+                      {getStatusChip(accidentDetail.accident.status)}
                     </Typography>
                   </Box>
                   <Box>
                     <Typography sx={{ color: 'text.secondary', fontSize: '0.875rem' }}>
                       伤亡人数
                     </Typography>
-                    <Typography>{selectedAccident.accident.casualties ?? 0} 人</Typography>
+                    <Typography>{accidentDetail.accident.casualties ?? 0} 人</Typography>
                   </Box>
                   <Box>
                     <Typography sx={{ color: 'text.secondary', fontSize: '0.875rem' }}>
                       经济损失
                     </Typography>
-                    <Typography>{selectedAccident.accident.economic_loss ?? 0} 万元</Typography>
+                    <Typography>{accidentDetail.accident.economic_loss ?? 0} 万元</Typography>
                   </Box>
                 </Box>
 
@@ -759,10 +766,10 @@ const EhsAccidentPage: React.FC = () => {
                   >
                     事故描述
                   </Typography>
-                  <Typography>{selectedAccident.accident.description || '暂无描述'}</Typography>
+                  <Typography>{accidentDetail.accident.description || '暂无描述'}</Typography>
                 </Box>
 
-                {selectedAccident.investigation && (
+                {accidentDetail.investigation && (
                   <Card sx={{ mb: 3 }}>
                     <CardContent>
                       <Typography
@@ -776,15 +783,15 @@ const EhsAccidentPage: React.FC = () => {
                           <Typography sx={{ color: 'text.secondary', fontSize: '0.875rem' }}>
                             调查状态
                           </Typography>
-                          <Typography>{selectedAccident.investigation.status || '-'}</Typography>
+                          <Typography>{accidentDetail.investigation.status || '-'}</Typography>
                         </Box>
                         <Box>
                           <Typography sx={{ color: 'text.secondary', fontSize: '0.875rem' }}>
                             调查团队
                           </Typography>
                           <Typography>
-                            {Array.isArray(selectedAccident.investigation.team)
-                              ? selectedAccident.investigation.team.join(', ')
+                            {Array.isArray(accidentDetail.investigation.team)
+                              ? accidentDetail.investigation.team.join(', ')
                               : '-'}
                           </Typography>
                         </Box>
@@ -792,14 +799,14 @@ const EhsAccidentPage: React.FC = () => {
                           <Typography sx={{ color: 'text.secondary', fontSize: '0.875rem' }}>
                             调查发现
                           </Typography>
-                          <Typography>{selectedAccident.investigation.findings || '-'}</Typography>
+                          <Typography>{accidentDetail.investigation.findings || '-'}</Typography>
                         </Box>
                         <Box sx={{ gridColumn: '1 / -1' }}>
                           <Typography sx={{ color: 'text.secondary', fontSize: '0.875rem' }}>
                             根本原因
                           </Typography>
                           <Typography>
-                            {selectedAccident.investigation.root_cause || '-'}
+                            {accidentDetail.investigation.root_cause || '-'}
                           </Typography>
                         </Box>
                       </Box>
@@ -807,7 +814,7 @@ const EhsAccidentPage: React.FC = () => {
                   </Card>
                 )}
 
-                {selectedAccident.treatment && (
+                {accidentDetail.treatment && (
                   <Card sx={{ mb: 3 }}>
                     <CardContent>
                       <Typography
@@ -821,17 +828,17 @@ const EhsAccidentPage: React.FC = () => {
                           <Typography sx={{ color: 'text.secondary', fontSize: '0.875rem' }}>
                             处理状态
                           </Typography>
-                          <Typography>{selectedAccident.treatment.status || '-'}</Typography>
+                          <Typography>{accidentDetail.treatment.status || '-'}</Typography>
                         </Box>
                         <Box>
                           <Typography sx={{ color: 'text.secondary', fontSize: '0.875rem' }}>
                             负责人
                           </Typography>
-                          <Typography>{selectedAccident.treatment.responsible || '-'}</Typography>
+                          <Typography>{accidentDetail.treatment.responsible || '-'}</Typography>
                         </Box>
                       </Box>
-                      {selectedAccident.treatment.actions &&
-                        selectedAccident.treatment.actions.length > 0 && (
+                      {accidentDetail.treatment.actions &&
+                        accidentDetail.treatment.actions.length > 0 && (
                           <Box>
                             <Typography
                               sx={{ color: 'text.secondary', fontSize: '0.875rem', mb: 1 }}
@@ -839,7 +846,7 @@ const EhsAccidentPage: React.FC = () => {
                               处理行动
                             </Typography>
                             <Box sx={{ display: 'flex', flexDirection: 'column', gap: 1 }}>
-                              {(selectedAccident.treatment.actions as TreatmentAction[]).map(
+                              {(accidentDetail.treatment.actions as TreatmentAction[]).map(
                                 (action, index) => (
                                   <Box
                                     key={index}
@@ -876,7 +883,7 @@ const EhsAccidentPage: React.FC = () => {
                   </Card>
                 )}
 
-                {selectedAccident.review && (
+                {accidentDetail.review && (
                   <Card>
                     <CardContent>
                       <Typography
@@ -890,15 +897,15 @@ const EhsAccidentPage: React.FC = () => {
                           <Typography sx={{ color: 'text.secondary', fontSize: '0.875rem' }}>
                             评审人
                           </Typography>
-                          <Typography>{selectedAccident.review.reviewer || '-'}</Typography>
+                          <Typography>{accidentDetail.review.reviewer || '-'}</Typography>
                         </Box>
                         <Box>
                           <Typography sx={{ color: 'text.secondary', fontSize: '0.875rem' }}>
                             评审时间
                           </Typography>
                           <Typography>
-                            {selectedAccident.review.reviewed_at
-                              ? new Date(selectedAccident.review.reviewed_at).toLocaleString(
+                            {accidentDetail.review.reviewed_at
+                              ? new Date(accidentDetail.review.reviewed_at).toLocaleString(
                                   'zh-CN'
                                 )
                               : '-'}
@@ -908,10 +915,10 @@ const EhsAccidentPage: React.FC = () => {
                           <Typography sx={{ color: 'text.secondary', fontSize: '0.875rem' }}>
                             总结
                           </Typography>
-                          <Typography>{selectedAccident.review.summary || '-'}</Typography>
+                          <Typography>{accidentDetail.review.summary || '-'}</Typography>
                         </Box>
-                        {selectedAccident.review.lessons_learned &&
-                          selectedAccident.review.lessons_learned.length > 0 && (
+                        {accidentDetail.review.lessons_learned &&
+                          accidentDetail.review.lessons_learned.length > 0 && (
                             <Box sx={{ gridColumn: '1 / -1' }}>
                               <Typography sx={{ color: 'text.secondary', fontSize: '0.875rem' }}>
                                 经验教训
@@ -920,14 +927,14 @@ const EhsAccidentPage: React.FC = () => {
                                 component='ul'
                                 sx={{ m: 0, pl: 2 }}
                               >
-                                {selectedAccident.review.lessons_learned.map((lesson, index) => (
+                                {accidentDetail.review.lessons_learned.map((lesson, index) => (
                                   <li key={index}>{lesson}</li>
                                 ))}
                               </Box>
                             </Box>
                           )}
-                        {selectedAccident.review.recommendations &&
-                          selectedAccident.review.recommendations.length > 0 && (
+                        {accidentDetail.review.recommendations &&
+                          accidentDetail.review.recommendations.length > 0 && (
                             <Box sx={{ gridColumn: '1 / -1' }}>
                               <Typography sx={{ color: 'text.secondary', fontSize: '0.875rem' }}>
                                 改进建议
@@ -936,7 +943,7 @@ const EhsAccidentPage: React.FC = () => {
                                 component='ul'
                                 sx={{ m: 0, pl: 2 }}
                               >
-                                {selectedAccident.review.recommendations.map((rec, index) => (
+                                {accidentDetail.review.recommendations.map((rec, index) => (
                                   <li key={index}>{rec}</li>
                                 ))}
                               </Box>
@@ -952,11 +959,11 @@ const EhsAccidentPage: React.FC = () => {
             )}
           </DialogContent>
           <DialogActions>
-            {selectedAccident?.accident && (
+            {accidentDetail?.accident && (
               <Button
                 variant='text'
                 color='error'
-                onClick={() => handleDelete(selectedAccident.accident.id)}
+                onClick={() => handleDelete(accidentDetail.accident.id)}
                 startIcon={<Trash2 style={{ width: 16, height: 16 }} />}
               >
                 删除

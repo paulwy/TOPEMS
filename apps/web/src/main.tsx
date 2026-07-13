@@ -7,9 +7,11 @@ import { createPermissionInterceptor } from './api/permissionInterceptor';
 import { queryClient } from './lib/reactQuery';
 import { logger } from '@/utils/logger';
 import { applySecurityHeaders } from '@/config/security';
+import { initTelemetry } from '@/utils/telemetry';
 
 applySecurityHeaders();
 createPermissionInterceptor();
+initTelemetry();
 
 import('./index.css').catch(logger.error);
 

@@ -7,7 +7,7 @@ import WorkflowDefinitionsPage from '../workflow/WorkflowDefinitionsPage';
 import WorkflowInstancesPage from '../workflow/WorkflowInstancesPage';
 import WorkflowApprovalsPage from '../workflow/WorkflowApprovalsPage';
 import { workflowApi } from '@/api/workflow';
-import { useAppStore } from '@/store';
+import { useNotificationStore, useAuthStore } from '@/store';
 
 vi.mock('@/api/workflow', () => ({
   workflowApi: {
@@ -66,19 +66,24 @@ vi.mock('@/api/workflow', () => ({
 }));
 
 vi.mock('@/store', () => ({
-  useAppStore: vi.fn((selector?: any) =>
+  useNotificationStore: vi.fn((selector?: any) =>
     selector
       ? selector({
           addNotification: vi.fn(),
           notifications: [],
-          user: { permissions: ['workflow:dashboard:read'] },
-          theme: 'light',
         })
       : {
           addNotification: vi.fn(),
           notifications: [],
-          user: { permissions: ['workflow:dashboard:read'] },
-          theme: 'light',
+        }
+  ),
+  useAuthStore: vi.fn((selector?: any) =>
+    selector
+      ? selector({
+          user: null,
+        })
+      : {
+          user: null,
         }
   ),
 }));

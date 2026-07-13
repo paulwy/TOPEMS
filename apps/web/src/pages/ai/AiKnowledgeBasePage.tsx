@@ -48,9 +48,10 @@ import {
   Download,
   Edit3,
 } from 'lucide-react';
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { PageContainer, Grid } from '@/components/common';
 import { ListPageTemplate, type ColumnDef, type RowAction } from '@/components/templates';
-import { useAppStore } from '@/store';
+import { useNotificationStore } from '@/store';
 import { logger } from '@/utils/logger';
 import { designTokens } from '@/theme/tokens';
 
@@ -267,7 +268,49 @@ const getFileIcon = (fileType: string) => {
 };
 
 export const AiKnowledgeBasePage: React.FC = () => {
-  const addNotification = useAppStore((state) => state.addNotification);
+  const addNotification = useNotificationStore((state) => state.addNotification);
+  const queryClient = useQueryClient();
+
+  const { data: collections = [] } = useQuery({
+    queryKey: ['ai-collections'],
+    queryFn: async () => {
+      return mockCollections;
+    },
+    staleTime: 5 * 60 * 1000,
+  });
+
+  const { data: documents = [], isLoading: loading } = useQuery({
+    queryKey: ['ai-documents'],
+    queryFn: async () => {
+      return mockDocuments;
+    },
+    staleTime: 5 * 60 * 1000,
+  });
+
+  const deleteDocumentMutation = useMutation({
+    mutationFn: async (docId: string) => {
+      return docId;
+    },
+    onMutate: async (docId) => {
+      await queryClient.cancelQueries({ queryKey: ['ai-documents'] });
+      const previousDocuments = queryClient.getQueryData<KnowledgeDocument[]>(['ai-documents']);
+      queryClient.setQueryData<KnowledgeDocument[]>(['ai-documents'], (old) =>
+        old ? old.filter((d) => d.id !== docId) : []
+      );
+      return { previousDocuments };
+    },
+    onError: (_err, _id, context) => {
+      if (context?.previousDocuments) {
+        queryClient.setQueryData(['ai-documents'], context.previousDocuments);
+      }
+      addNotification({
+        title: '删除失败',
+        message: '文档删除失败',
+        type: 'error',
+      });
+    },
+  });
+
   const [activeTab, setActiveTab] = useState<'collections' | 'documents'>('collections');
   const [searchQuery, setSearchQuery] = useState('');
   const [uploadDialogOpen, setUploadDialogOpen] = useState(false);
@@ -386,10 +429,14 @@ export const AiKnowledgeBasePage: React.FC = () => {
       color: 'error',
       divider: true,
       onClick: (row) => {
-        addNotification({
-          title: '删除成功',
-          message: `文档「${row.title}」已删除`,
-          type: 'success',
+        deleteDocumentMutation.mutate(row.id, {
+          onSuccess: () => {
+            addNotification({
+              title: '删除成功',
+              message: `文档「${row.title}」已删除`,
+              type: 'success',
+            });
+          },
         });
       },
     },
@@ -437,7 +484,7 @@ export const AiKnowledgeBasePage: React.FC = () => {
   const stats = [
     {
       label: '向量库数量',
-      value: mockCollections.length,
+      value: collections.length,
       icon: <Database size={20} />,
       color: 'primary',
     },
@@ -576,7 +623,7 @@ export const AiKnowledgeBasePage: React.FC = () => {
                 container
                 spacing={2}
               >
-                {mockCollections.map((collection) => (
+                {collections.map((collection) => (
                   <Grid
                     item
                     xs={12}
@@ -703,7 +750,7 @@ export const AiKnowledgeBasePage: React.FC = () => {
           {activeTab === 'documents' && (
             <ListPageTemplate
               columns={columns}
-              data={mockDocuments.filter(
+              data={documents.filter(
                 (d) =>
                   !searchQuery ||
                   d.title.includes(searchQuery) ||
@@ -718,7 +765,7 @@ export const AiKnowledgeBasePage: React.FC = () => {
               pagination={{
                 page: 0,
                 pageSize: 10,
-                total: mockDocuments.length,
+                total: documents.length,
                 onPageChange: () => {},
               }}
               showRowNumber
@@ -760,7 +807,7 @@ export const AiKnowledgeBasePage: React.FC = () => {
                 onChange={(e) => setSelectedCollection(e.target.value)}
               >
                 <MenuItem value=''>请选择向量库</MenuItem>
-                {mockCollections.map((c) => (
+                {collections.map((c) => (
                   <MenuItem
                     key={c.id}
                     value={c.id}

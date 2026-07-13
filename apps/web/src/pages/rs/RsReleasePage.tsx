@@ -27,7 +27,7 @@ import {
   type RowAction,
 } from '@/components/templates';
 import { rsApi } from '@/api/rs';
-import { useAppStore } from '@/store';
+import { useNotificationStore } from '@/store';
 import type { Deploy, CreateDeployRequest } from '@/api/rs';
 import { logger } from '@/utils/logger';
 
@@ -42,7 +42,7 @@ interface Release {
 }
 
 const RsReleasePage: React.FC = () => {
-  const { addNotification } = useAppStore();
+  const { addNotification } = useNotificationStore();
   const [releases, setReleases] = useState<Release[]>([]);
   const [loading, setLoading] = useState(false);
   const [page, setPage] = useState(0);

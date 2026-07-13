@@ -138,7 +138,6 @@ pub fn generate_jwt_token(user_id: &str, secret: &str, expire_minutes: i64) -> S
 
 pub fn verify_jwt_token(token: &str, secret: &str) -> Result<Claims, TopemsError> {
     let mut validation = Validation::new(Algorithm::HS256);
-    validation.set_issuer(&["topems"]);
     validation.leeway = 60;
 
     let token_data = decode::<Claims>(

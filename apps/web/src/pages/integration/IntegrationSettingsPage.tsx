@@ -37,7 +37,7 @@ import {
 
 import { PageContainer, ConfirmDialog } from '@/components/common';
 import { SettingsPageTemplate, type SettingSection } from '@/components/templates';
-import { useAppStore } from '../../store';
+import { useNotificationStore } from '@/store';
 import { extractErrorMessage } from '@/utils/errors';
 
 interface IntegrationConfig {
@@ -81,7 +81,7 @@ const MOCK_CONFIGS: IntegrationConfig[] = [
 ];
 
 export const IntegrationSettingsPage: React.FC = () => {
-  const addNotification = useAppStore((state) => state.addNotification);
+  const addNotification = useNotificationStore((state) => state.addNotification);
 
   const [configs, setConfigs] = useState<IntegrationConfig[]>(MOCK_CONFIGS);
   const [loading, setLoading] = useState(false);

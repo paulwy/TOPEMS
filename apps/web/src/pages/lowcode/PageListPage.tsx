@@ -65,9 +65,11 @@ const PageListPage: React.FC = () => {
         keyword: searchKeyword || undefined,
         status: statusFilter !== 'all' ? statusFilter : undefined,
       };
-      const res = await lowcodeApi.pageApi.list(params);
-      setPages(res.items);
-      setTotal(res.total);
+      const res = await lowcodeApi.pageApi.listPages(params);
+      if (res.success) {
+        setPages(res.data.items);
+        setTotal(res.data.total);
+      }
     } catch (error) {
       logger.error('Failed to load pages:', error);
     } finally {
@@ -126,7 +128,7 @@ const PageListPage: React.FC = () => {
 
   const handleCopy = async (pageItem: PageSchema) => {
     try {
-      await lowcodeApi.pageApi.copy(pageItem.id);
+      await lowcodeApi.pageApi.createPage({ ...pageItem, name: `${pageItem.name} (副本)` });
       loadPages();
     } catch (error) {
       logger.error('Failed to copy page:', error);
@@ -136,7 +138,7 @@ const PageListPage: React.FC = () => {
 
   const handlePublish = async (pageItem: PageSchema) => {
     try {
-      await lowcodeApi.pageApi.publish(pageItem.id);
+      await lowcodeApi.pageApi.publishPage(pageItem.id);
       loadPages();
     } catch (error) {
       logger.error('Failed to publish page:', error);
@@ -147,7 +149,7 @@ const PageListPage: React.FC = () => {
   const handleDelete = async () => {
     if (!deleteDialog) return;
     try {
-      await lowcodeApi.pageApi.delete(deleteDialog.id);
+      await lowcodeApi.pageApi.deletePage(deleteDialog.id);
       setDeleteDialog(null);
       loadPages();
     } catch (error) {

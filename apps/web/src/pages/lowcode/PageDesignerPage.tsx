@@ -22,9 +22,9 @@ const PageDesignerPage: React.FC = () => {
   const loadPage = async () => {
     try {
       setLoading(true);
-      const page = await lowcodeApi.pageApi.get(pageId!);
-      if (page) {
-        setSchema(page);
+      const pageRes = await lowcodeApi.pageApi.getPage(pageId!);
+      if (pageRes.success) {
+        setSchema(pageRes.data);
       }
     } catch (error) {
       logger.error('Failed to load page:', error);
@@ -36,18 +36,20 @@ const PageDesignerPage: React.FC = () => {
   const handleSave = async (newSchema: PageSchema) => {
     try {
       if (pageId && pageId !== 'new') {
-        await lowcodeApi.pageApi.update(pageId, {
+        await lowcodeApi.pageApi.updatePage(pageId, {
           name: newSchema.name,
           description: newSchema.description,
           components: newSchema.components,
         });
       } else {
-        const created = await lowcodeApi.pageApi.create({
+        const createdRes = await lowcodeApi.pageApi.createPage({
           name: newSchema.name,
           description: newSchema.description,
           components: newSchema.components,
         });
-        navigate(LOWCODE_PATHS.pageDesigner.replace(':id', created.id), { replace: true });
+        if (createdRes.success) {
+          navigate(LOWCODE_PATHS.pageDesigner.replace(':id', createdRes.data.id), { replace: true });
+        }
       }
     } catch (error) {
       logger.error('Failed to save page:', error);
@@ -57,7 +59,7 @@ const PageDesignerPage: React.FC = () => {
   const handlePublish = async (newSchema: PageSchema) => {
     try {
       if (pageId && pageId !== 'new') {
-        await lowcodeApi.pageApi.publish(pageId);
+        await lowcodeApi.pageApi.publishPage(pageId);
       }
     } catch (error) {
       logger.error('Failed to publish page:', error);

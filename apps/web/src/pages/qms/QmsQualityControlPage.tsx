@@ -19,7 +19,7 @@ import {
   MenuItem,
   Button,
 } from '@mui/material';
-import { useAppStore } from '@/store';
+import { useNotificationStore } from '@/store';
 import * as z from 'zod';
 import {
   ListPageTemplate,
@@ -51,7 +51,7 @@ const QmsQualityControlPage: React.FC = () => {
   });
 
   const [errors, setErrors] = useState<Record<string, string>>({});
-  const addNotification = useAppStore((state) => state.addNotification);
+  const addNotification = useNotificationStore((state) => state.addNotification);
 
   const [issues, setIssues] = useState<QualityIssue[]>([]);
   const [auditPlans, setAuditPlans] = useState<AuditPlan[]>([]);

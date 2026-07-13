@@ -18,6 +18,8 @@ mod shared;
 
 pub mod modules;
 
+use std::env;
+
 use shared::AppState;
 use std::net::SocketAddr;
 

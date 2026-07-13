@@ -21,7 +21,7 @@ import { PageContainer } from '@/components/common/PageContainerV2';
 import React, { useState, useEffect, useMemo, useCallback } from 'react';
 import type { OeeRecord, OeeStatistics, ListParams } from '@/api/mes';
 import { mesApi } from '@/api/mes';
-import { useAppStore } from '@/store';
+import { useNotificationStore } from '@/store';
 import { LoadingSpinner } from '@topems/shared-components';
 import {
   ListPageTemplate,
@@ -60,7 +60,7 @@ const EquipmentOEEPage: React.FC = () => {
   const [startDate, setStartDate] = useState('');
   const [endDate, setEndDate] = useState('');
 
-  const { addNotification } = useAppStore();
+  const { addNotification } = useNotificationStore();
 
   const loadRecords = useCallback(async () => {
     try {

@@ -28,7 +28,7 @@ import {
   type VehicleRequest,
   type Announcement,
 } from '@/api/erp';
-import { useAppStore } from '../store';
+import { useNotificationStore } from '../store';
 
 export interface UseErpResult<T> {
   data: T[];
@@ -68,7 +68,7 @@ function useErpBase<T extends { id?: string }>(
   const [page, setPageState] = useState(1);
   const [pageSize, setPageSizeState] = useState(10);
   const [total, setTotal] = useState(0);
-  const addNotification = useAppStore((state) => state.addNotification);
+  const addNotification = useNotificationStore((state) => state.addNotification);
 
   const handleError = useCallback(
     (err: unknown, defaultMessage: string) => {
@@ -319,7 +319,7 @@ export function useAnnouncements() {
 export function useFinanceReports() {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const addNotification = useAppStore((state) => state.addNotification);
+  const addNotification = useNotificationStore((state) => state.addNotification);
 
   const handleError = useCallback(
     (err: unknown, defaultMessage: string) => {

@@ -20,7 +20,7 @@ import {
 import { Settings, Plus, Edit, Delete, Zap, Package, Shield } from 'lucide-react';
 import { pdmApi } from '@/api/pdm';
 import type { ProductConfig } from '@/api/pdm';
-import { useAppStore } from '@/store';
+import { useNotificationStore } from '@/store';
 import { apiLogger } from '@/utils/logger';
 import {
   ListPageTemplate,
@@ -72,7 +72,7 @@ export const PdmProductConfigPage: React.FC = () => {
     },
     options: [],
   });
-  const addNotification = useAppStore((state) => state.addNotification);
+  const addNotification = useNotificationStore((state) => state.addNotification);
 
   const configAttributes: ConfigAttribute[] = [
     {

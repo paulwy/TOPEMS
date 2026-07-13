@@ -21,12 +21,12 @@ import { ListPageTemplate } from '@/components/templates';
 import type { RowAction, FilterConfig, ColumnDef } from '@/components/templates';
 import { PageContainer } from '@/components/common';
 import { rsApi } from '@/api/rs';
-import { useAppStore } from '@/store';
+import { useNotificationStore } from '@/store';
 import type { Build, CreateBuildRequest } from '@/api/rs';
 import { logger } from '@/utils/logger';
 
 const RsBuildPage: React.FC = () => {
-  const { addNotification } = useAppStore();
+  const { addNotification } = useNotificationStore();
   const [builds, setBuilds] = useState<Build[]>([]);
   const [loading, setLoading] = useState(false);
   const [page, setPage] = useState(0);

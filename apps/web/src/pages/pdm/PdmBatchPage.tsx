@@ -18,7 +18,7 @@ import { ListPageTemplate } from '@/components/templates';
 import type { RowAction, FilterConfig, ColumnDef } from '@/components/templates';
 import { pdmApi } from '@/api/pdm';
 import type { ProductionBatch } from '@/api/pdm';
-import { useAppStore } from '@/store';
+import { useNotificationStore } from '@/store';
 import { designTokens } from '@/theme/tokens';
 
 const ct = designTokens.colors;
@@ -37,7 +37,7 @@ const PdmBatchPage: React.FC = () => {
     quantity: '',
     unit: 'kg',
   });
-  const addNotification = useAppStore((state) => state.addNotification);
+  const addNotification = useNotificationStore((state) => state.addNotification);
 
   useEffect(() => {
     loadBatches();

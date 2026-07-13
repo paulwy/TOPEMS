@@ -45,6 +45,9 @@ export interface ServicesConfig {
   qms: string;
   mes: string;
   master: string;
+  // 统一核心服务
+  core: string;
+  finance: string;
 }
 
 export interface FeaturesConfig {

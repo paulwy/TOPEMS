@@ -51,6 +51,7 @@ export const BottomTabBar: React.FC<BottomTabBarProps> = ({
         borderRadius: 0,
         borderTop: 1,
         borderColor: 'divider',
+        paddingBottom: 'env(safe-area-inset-bottom, 0px)',
       }}
     >
       <BottomNavigation

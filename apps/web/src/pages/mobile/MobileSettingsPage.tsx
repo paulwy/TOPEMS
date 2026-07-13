@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useCallback } from 'react';
-import { useAppStore } from '../../store';
+import { useNotificationStore } from '../../store';
 import { Smartphone, Shield, Bell, Battery, RefreshCw } from 'lucide-react';
 import {
   SettingsPageTemplate,
@@ -17,7 +17,7 @@ interface MobileSetting {
 }
 
 const MobileSettingsPage: React.FC = () => {
-  const addNotification = useAppStore((state) => state.addNotification);
+  const addNotification = useNotificationStore((state) => state.addNotification);
   const [loading, setLoading] = useState(false);
   const [saving, setSaving] = useState(false);
   const [mobileSettings, setMobileSettings] = useState<MobileSetting[]>([

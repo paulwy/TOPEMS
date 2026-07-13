@@ -34,7 +34,7 @@ import { PageContainer } from '@/components/common';
 import type { ColumnDef } from '@tanstack/react-table';
 import { limsApi } from '@/api/lims';
 import type { Sample, InspectionTask, InspectionRecord } from '@/api/lims';
-import { useAppStore } from '@/store';
+import { useNotificationStore } from '@/store';
 import { logger } from '@/utils/logger';
 import {
   DetailPageTemplate,
@@ -92,7 +92,7 @@ const LimsSampleDetailPage: React.FC = () => {
     description: '',
     status: '',
   });
-  const addNotification = useAppStore((state) => state.addNotification);
+  const addNotification = useNotificationStore((state) => state.addNotification);
 
   useEffect(() => {
     if (id) {

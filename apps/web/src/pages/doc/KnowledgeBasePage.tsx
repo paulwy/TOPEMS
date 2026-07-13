@@ -2,7 +2,7 @@ import { Box, Typography, Chip, Stack, useTheme } from '@mui/material';
 import React, { useState, useMemo, useCallback } from 'react';
 import { BookOpen, FolderOpen, FileText, Eye, User, Calendar, BarChart3 } from 'lucide-react';
 
-import { useAppStore } from '../../store';
+import { useNotificationStore } from '@/store';
 import {
   TreePageTemplate,
   type TreeNode,
@@ -195,7 +195,7 @@ const STATUS_COLORS: Record<string, string> = {
 
 export const DocumentKnowledgeBasePage: React.FC = () => {
   const theme = useTheme();
-  const addNotification = useAppStore((state) => state.addNotification);
+  const addNotification = useNotificationStore((state) => state.addNotification);
 
   const [loading, setLoading] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');

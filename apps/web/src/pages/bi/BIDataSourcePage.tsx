@@ -1,6 +1,6 @@
-import { useState, useEffect, useMemo } from 'react';
+import { useState, useMemo, useCallback } from 'react';
 import { logger } from '@/utils/logger';
-import { useAppStore } from '@/store';
+import { useMutation, useQueryClient } from '@tanstack/react-query';
 import {
   Plus,
   RefreshCw,
@@ -22,9 +22,9 @@ import {
   type FilterConfig,
 } from '@/components/templates';
 import { PageContainer } from '@/components/common';
+import { useCrudOperations } from '@/hooks/useCrudQueries';
 import {
-  listDataSources,
-  deleteDataSource,
+  dataSourceCrudApi,
   testDataSource,
   refreshDataSource,
   type DataSource,
@@ -81,89 +81,82 @@ const getTypeConfig = (type: string) => {
 };
 
 const BIDataSourcePage = () => {
-  const [datasources, setDatasources] = useState<DataSource[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
+  const queryClient = useQueryClient();
   const [searchTerm, setSearchTerm] = useState('');
   const [filterType, setFilterType] = useState<string>('');
   const [filterStatus, setFilterStatus] = useState<string>('');
-  const [page, setPage] = useState(0);
-  const [rowsPerPage, setRowsPerPage] = useState(10);
-  const [total, setTotal] = useState(0);
 
-  useEffect(() => {
-    loadDatasources();
-  }, [page, rowsPerPage, filterType, filterStatus]);
+  const {
+    data: datasources,
+    loading,
+    error,
+    pagination,
+    fetch,
+    refresh,
+    delete: deleteItem,
+  } = useCrudOperations<DataSource>({
+    api: dataSourceCrudApi,
+    queryKey: 'bi-data-sources',
+    defaultPageSize: 10,
+    pageParamName: 'page',
+    pageSizeParamName: 'pageSize',
+  });
 
-  const loadDatasources = async () => {
-    setLoading(true);
-    setError(null);
+  const testConnectionMutation = useMutation({
+    mutationFn: (id: string) => testDataSource(id),
+    onSuccess: () => {
+      logger.info('Connection test successful');
+    },
+  });
+
+  const refreshMutation = useMutation({
+    mutationFn: (id: string) => refreshDataSource(id),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['bi-data-sources'] });
+      logger.info('Sync successful');
+    },
+  });
+
+  const handleSearch = useCallback((value: string) => {
+    setSearchTerm(value);
+    fetch({ search: value || undefined, type: filterType || undefined, status: filterStatus || undefined });
+  }, [fetch, filterType, filterStatus]);
+
+  const handleFilterTypeChange = useCallback((value: string) => {
+    setFilterType(value);
+    pagination.setPage(1);
+    fetch({ search: searchTerm || undefined, type: value || undefined, status: filterStatus || undefined });
+  }, [fetch, searchTerm, filterStatus, pagination]);
+
+  const handleFilterStatusChange = useCallback((value: string) => {
+    setFilterStatus(value);
+    pagination.setPage(1);
+    fetch({ search: searchTerm || undefined, type: filterType || undefined, status: value || undefined });
+  }, [fetch, searchTerm, filterType, pagination]);
+
+  const handleSync = useCallback(async (ds: DataSource) => {
     try {
-      const res = await listDataSources({
-        page: page + 1,
-        pageSize: rowsPerPage,
-        search: searchTerm || undefined,
-        type: filterType || undefined,
-        status: filterStatus || undefined,
-      });
-      if (res.success && res.data) {
-        setDatasources(res.data.items || []);
-        setTotal(res.data.total || 0);
-      }
-    } catch (e: unknown) {
-      logger.error('Failed to load datasources:', e);
-      setError('加载数据源列表失败，请稍后重试');
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  const handleChangePage = (newPage: number) => {
-    setPage(newPage);
-  };
-
-  const handleChangeRowsPerPage = (newPageSize: number) => {
-    setRowsPerPage(newPageSize);
-    setPage(0);
-  };
-
-  const handleSync = async (ds: DataSource) => {
-    try {
-      const res = await refreshDataSource(ds.id);
-      if (res.success) {
-        logger.info('Sync successful:', ds.id);
-        loadDatasources();
-      }
+      await refreshMutation.mutateAsync(ds.id);
     } catch (e: unknown) {
       logger.error('Failed to sync datasource:', e);
-      setError('同步数据源失败');
     }
-  };
+  }, [refreshMutation]);
 
-  const handleTestConnection = async (ds: DataSource) => {
+  const handleTestConnection = useCallback(async (ds: DataSource) => {
     try {
-      const res = await testDataSource(ds.id);
-      if (res.success) {
-        logger.info('Connection test successful:', ds.id);
-      }
+      await testConnectionMutation.mutateAsync(ds.id);
     } catch (e: unknown) {
       logger.error('Connection test failed:', e);
-      setError('连接测试失败');
     }
-  };
+  }, [testConnectionMutation]);
 
-  const handleDelete = async (ds: DataSource) => {
+  const handleDelete = useCallback(async (ds: DataSource) => {
     try {
-      const res = await deleteDataSource(ds.id);
-      if (res.success) {
-        logger.info('Delete successful:', ds.id);
-        loadDatasources();
-      }
+      await deleteItem(ds.id);
     } catch (e: unknown) {
       logger.error('Failed to delete datasource:', e);
-      setError('删除数据源失败');
     }
-  };
+  }, [deleteItem]);
 
   const columns = useMemo<ColumnDef<DataSource>[]>(
     () => [
@@ -287,7 +280,7 @@ const BIDataSourcePage = () => {
         confirmMessage: '确定要删除这个数据源吗?',
       },
     ],
-    []
+    [handleSync, handleTestConnection, handleDelete]
   );
 
   const filters = useMemo<FilterConfig[]>(
@@ -307,7 +300,7 @@ const BIDataSourcePage = () => {
           { value: 'file', label: '文件' },
         ],
         value: filterType,
-        onChange: (value) => setFilterType(value as string),
+        onChange: (value) => handleFilterTypeChange(value as string),
       },
       {
         id: 'status',
@@ -320,22 +313,24 @@ const BIDataSourcePage = () => {
           { value: 'error', label: '异常' },
         ],
         value: filterStatus,
-        onChange: (value) => setFilterStatus(value as string),
+        onChange: (value) => handleFilterStatusChange(value as string),
       },
     ],
-    [filterType, filterStatus]
+    [filterType, filterStatus, handleFilterTypeChange, handleFilterStatusChange]
   );
 
-  const pagination = useMemo(
+  const paginationConfig = useMemo(
     () => ({
-      page,
-      pageSize: rowsPerPage,
-      total,
-      onPageChange: handleChangePage,
-      onPageSizeChange: handleChangeRowsPerPage,
+      page: pagination.page - 1,
+      pageSize: pagination.pageSize,
+      total: pagination.total,
+      onPageChange: (newPage: number) => pagination.setPage(newPage + 1),
+      onPageSizeChange: (newPageSize: number) => pagination.setPageSize(newPageSize),
     }),
-    [page, rowsPerPage, total]
+    [pagination]
   );
+
+  const actionLoading = loading || testConnectionMutation.isPending || refreshMutation.isPending;
 
   return (
     <PageContainer
@@ -347,14 +342,16 @@ const BIDataSourcePage = () => {
         subtitle=''
         columns={columns}
         data={datasources}
-        loading={loading}
+        loading={actionLoading}
+        error={error || undefined}
         searchable
         searchPlaceholder='搜索数据源名称...'
         searchValue={searchTerm}
-        onSearch={(value) => setSearchTerm(value)}
+        onSearch={handleSearch}
         filters={filters}
-        pagination={pagination}
+        pagination={paginationConfig}
         rowActions={rowActions}
+        onRefresh={refresh}
         actions={[
           {
             label: '返回数据大屏',

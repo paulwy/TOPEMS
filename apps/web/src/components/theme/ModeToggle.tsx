@@ -3,11 +3,11 @@
 import { useState } from 'react';
 import { Moon, Sun, Monitor } from 'lucide-react';
 import { Menu, MenuItem, Button } from '@mui/material';
-import { useAppStore } from '@/store';
+import { useThemeStore } from '@/store';
 
 export function ModeToggle() {
-  const setTheme = useAppStore((state) => state.setTheme);
-  const theme = useAppStore((state) => state.theme);
+  const setTheme = useThemeStore((state) => state.setTheme);
+  const theme = useThemeStore((state) => state.theme);
   const [anchorEl, setAnchorEl] = useState<null | HTMLElement>(null);
 
   const getIcon = () => {

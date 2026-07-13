@@ -1,4 +1,4 @@
-import React, { useState, useCallback, useMemo, useEffect } from 'react';
+import React, { useState, useCallback, useMemo, useEffect, useRef } from 'react';
 import {
   Box,
   Paper,
@@ -27,9 +27,15 @@ import {
   Breadcrumbs,
   Link,
   Button,
+  Dialog,
+  DialogTitle,
+  DialogContent,
+  DialogActions,
+  LinearProgress,
 } from '@mui/material';
+import { AlertTriangle as WarningIcon } from 'lucide-react';
 import { EmptyState, ErrorEmptyState, BackButton } from '@topems/shared-components';
-import { MoreHorizontal, ChevronRight, Columns3, RefreshCw } from 'lucide-react';
+import { MoreHorizontal, ChevronRight, Columns3, RefreshCw, Download, FileText, FileSpreadsheet } from 'lucide-react';
 import { Link as RouterLink } from 'react-router-dom';
 import { useAutoBreadcrumbs } from '@/hooks';
 
@@ -77,10 +83,9 @@ export function ListPageTemplate<T>({
   data,
   loading,
   error,
-  getRowId,
+  getRowId = (row: T) => (row as any).id,
   onRowClick,
   selectable,
-  selectedIds = [],
   onSelectionChange,
   selection,
   sortable,
@@ -107,7 +112,6 @@ export function ListPageTemplate<T>({
   renderRowActions,
   rowActions,
   onRefresh,
-  batchActions = [],
   showBatchActionBar = true,
   emptyMessage = '暂无数据',
   emptyIcon,
@@ -132,6 +136,23 @@ export function ListPageTemplate<T>({
   mobileCardSubtitleKey,
   mobileCardDisplayFields,
   mobileCardFieldLabels,
+  // 导出功能
+  exportable,
+  exportFileName,
+  exportFormat = 'csv',
+  exportTransform,
+  // 筛选记忆
+  persistFilters,
+  filterStorageKey,
+  // 搜索记忆
+  persistSearch,
+  // 空状态操作
+  emptyActionButton,
+  // 快捷筛选
+  quickFilters,
+  // 批量操作
+  batchActions,
+  enableBatchSelection,
   // 排除自定义属性的剩余props
   ...props
 }: ListPageTemplateProps<T>) {
@@ -176,9 +197,58 @@ export function ListPageTemplate<T>({
 
   const [sortBy, setSortBy] = useState(defaultSortBy || '');
   const [sortOrder, setSortOrder] = useState<'asc' | 'desc'>(defaultSortOrder);
-  const [searchInput, setSearchInput] = useState(searchValue || '');
+  const [searchInput, setSearchInput] = useState(() => {
+    if (persistSearch) {
+      const key = filterStorageKey || window.location.pathname;
+      try {
+        const stored = localStorage.getItem(`listpage:search:${key}`);
+        if (stored) {
+          return stored;
+        }
+      } catch {
+        // ignore
+      }
+    }
+    return searchValue || '';
+  });
   const [anchorEl, setAnchorEl] = useState<null | HTMLElement>(null);
   const [selectedRow, setSelectedRow] = useState<T | null>(null);
+
+  // 批量选择状态 - 从 localStorage 恢复
+  const [selectedIds, setSelectedIds] = useState<Set<string | number>>(() => {
+    const key = filterStorageKey || window.location.pathname;
+    try {
+      const stored = localStorage.getItem(`listpage:selectedIds:${key}`);
+      if (stored) {
+        return new Set(JSON.parse(stored));
+      }
+    } catch {
+      // ignore
+    }
+    return new Set();
+  });
+
+  // 批量操作状态
+  const [batchOperationState, setBatchOperationState] = useState<{
+    isProcessing: boolean;
+    processed: number;
+    total: number;
+    actionLabel: string;
+    isCancelled: boolean;
+  }>({
+    isProcessing: false,
+    processed: 0,
+    total: 0,
+    actionLabel: '',
+    isCancelled: false,
+  });
+
+  // 批量操作取消控制器
+  const batchAbortController = useRef<AbortController | null>(null);
+
+  // 批量操作确认对话框
+  const [confirmDialogOpen, setConfirmDialogOpen] = useState(false);
+  const [pendingAction, setPendingAction] = useState<{ onClick: (selectedRows: T[]) => void; label: string } | null>(null);
 
   // 行展开状态
   const [expandedIds, setExpandedIds] = useState<(string | number)[]>(defaultExpandedIds);
@@ -204,12 +274,192 @@ export function ListPageTemplate<T>({
   // 列配置 Popover 状态
   const [columnConfigAnchor, setColumnConfigAnchor] = useState<HTMLElement | null>(null);
 
+  // 导出状态
+  const [exporting, setExporting] = useState(false);
+  const [exportComplete, setExportComplete] = useState(false);
+  const [exportAnchorEl, setExportAnchorEl] = useState<HTMLElement | null>(null);
+
   // 列配置持久化
   useEffect(() => {
     if (persistColumnConfig) {
       saveColumnConfig(columnConfigStorageKey, columnConfig);
     }
   }, [columnConfig, persistColumnConfig, columnConfigStorageKey]);
+
+  // 批量选择状态持久化
+  useEffect(() => {
+    const key = filterStorageKey || window.location.pathname;
+    try {
+      localStorage.setItem(`listpage:selectedIds:${key}`, JSON.stringify([...selectedIds]));
+    } catch {
+      // ignore
+    }
+  }, [selectedIds, filterStorageKey]);
+
+  // 筛选记忆功能
+  const [localFilters, setLocalFilters] = useState<Record<string, any>>(() => {
+    if (persistFilters) {
+      const key = filterStorageKey || window.location.pathname;
+      try {
+        const stored = localStorage.getItem(`listpage:filters:${key}`);
+        if (stored) {
+          return JSON.parse(stored);
+        }
+      } catch {
+        // ignore
+      }
+    }
+    return filtersValue || {};
+  });
+
+  useEffect(() => {
+    if (persistFilters && onFilterChange) {
+      const key = filterStorageKey || window.location.pathname;
+      localStorage.setItem(`listpage:filters:${key}`, JSON.stringify(localFilters));
+    }
+  }, [localFilters, persistFilters, filterStorageKey, onFilterChange]);
+
+  useEffect(() => {
+    if (persistSearch) {
+      const key = filterStorageKey || window.location.pathname;
+      localStorage.setItem(`listpage:search:${key}`, searchInput);
+    }
+  }, [searchInput, persistSearch, filterStorageKey]);
+
+  // 批量选择逻辑
+  const hasBatchActions = batchActions && batchActions.length > 0;
+  const isBatchSelectionEnabled = enableBatchSelection || hasBatchActions;
+
+  const handleBatchSelect = useCallback((row: T, event?: React.MouseEvent) => {
+    const rowId = getRowId(row);
+    if (event?.ctrlKey || event?.metaKey) {
+      setSelectedIds((prev) => {
+        const next = new Set(prev);
+        if (next.has(rowId)) {
+          next.delete(rowId);
+        } else {
+          next.add(rowId);
+        }
+        return next;
+      });
+    } else {
+      setSelectedIds((prev) => {
+        const next = new Set(prev);
+        if (next.has(rowId)) {
+          next.delete(rowId);
+        } else {
+          next.add(rowId);
+        }
+        return next;
+      });
+    }
+  }, [getRowId]);
+
+  const handleBatchSelectAll = useCallback(() => {
+    if (selectedIds.size === data.length) {
+      setSelectedIds(new Set());
+    } else {
+      const allIds = new Set(data.map((row) => getRowId(row)));
+      setSelectedIds(allIds);
+    }
+  }, [selectedIds.size, data, getRowId]);
+
+  // 键盘快捷键支持
+  useEffect(() => {
+    const handleKeyDown = (event: KeyboardEvent) => {
+      if ((event.ctrlKey || event.metaKey) && event.key === 'a') {
+        const target = event.target as HTMLElement;
+        const isInput = target?.tagName === 'INPUT' || target?.tagName === 'TEXTAREA';
+        if (isBatchSelectionEnabled && !isInput) {
+          event.preventDefault();
+          handleBatchSelectAll();
+        }
+      }
+    };
+
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, [isBatchSelectionEnabled, handleBatchSelectAll]);
+
+  const getSelectedRows = useCallback(() => {
+    return data.filter((row) => selectedIds.has(getRowId(row)));
+  }, [data, selectedIds, getRowId]);
+
+  const handleBatchAction = useCallback(
+    (action: { onClick: (selectedRows: T[]) => void; label: string; confirm?: boolean; confirmMessage?: string }) => {
+      const rows = getSelectedRows();
+      if (action.confirm !== false) {
+        setPendingAction({ onClick: action.onClick, label: action.label });
+        setConfirmDialogOpen(true);
+      } else {
+        action.onClick(rows);
+        setSelectedIds(new Set());
+      }
+    },
+    [getSelectedRows]
+  );
+
+  const handleConfirmBatchAction = useCallback(() => {
+    if (pendingAction) {
+      const rows = getSelectedRows();
+      batchAbortController.current = new AbortController();
+      setBatchOperationState({
+        isProcessing: true,
+        processed: 0,
+        total: rows.length,
+        actionLabel: pendingAction.label,
+        isCancelled: false,
+      });
+      pendingAction.onClick(rows);
+      setConfirmDialogOpen(false);
+      setPendingAction(null);
+    }
+  }, [pendingAction, getSelectedRows]);
+
+  const handleCancelBatchOperation = useCallback(() => {
+    batchAbortController.current?.abort();
+    setBatchOperationState((prev) => ({
+      ...prev,
+      isCancelled: true,
+    }));
+  }, []);
+
+  const handleCancelConfirm = useCallback(() => {
+    setConfirmDialogOpen(false);
+    setPendingAction(null);
+  }, []);
+
+  const updateBatchProgress = useCallback((processed: number, total: number) => {
+    setBatchOperationState((prev) => ({
+      ...prev,
+      processed,
+      total,
+      isProcessing: processed < total,
+    }));
+    if (processed >= total) {
+      setSelectedIds(new Set());
+    }
+  }, []);
+
+  const handleFilterChange = useCallback(
+    (newFilters: Record<string, any>) => {
+      setLocalFilters(newFilters);
+      onFilterChange?.(newFilters);
+    },
+    [onFilterChange]
+  );
+
+  const handleQuickFilter = useCallback(
+    (quickFilter: { filters: Record<string, any>; searchValue?: string }) => {
+      setLocalFilters(quickFilter.filters);
+      onFilterChange?.(quickFilter.filters);
+      if (quickFilter.searchValue !== undefined) {
+        setSearchInput(quickFilter.searchValue);
+        resolvedOnSearch?.(quickFilter.searchValue);
+      }
+    },
+    [onFilterChange, resolvedOnSearch]
+  );
 
   // 获取可见的列（按order排序）
   const visibleColumns = useMemo(() => {
@@ -227,7 +477,7 @@ export function ListPageTemplate<T>({
     });
   }, [columns, columnConfig, columnConfigurable]);
 
-  const effectiveSelectedIds = selection?.selected ?? selectedIds;
+  const effectiveSelectedIds = Array.from(selection?.selected ?? selectedIds);
   const effectiveOnSelectionChange = selection?.onChange ?? onSelectionChange;
 
   // 处理排序
@@ -343,6 +593,57 @@ export function ListPageTemplate<T>({
     setColumnConfigAnchor(null);
   }, [columns, onColumnConfigChange]);
 
+  // 导出功能
+  const handleExport = useCallback(async (format?: string) => {
+    if (!exportable || data.length === 0 || exporting) return;
+
+    try {
+      setExporting(true);
+      setExportAnchorEl(null);
+
+      const finalFormat = format || exportFormat;
+      const headers = visibleColumns.map((col) => col.label || col.header || col.id);
+      const exportData = data.map((row) => {
+        const transformed = exportTransform ? exportTransform(row) : (row as Record<string, unknown>);
+        return headers.map((header) => {
+          const col = visibleColumns.find((c) => c.label === header || c.header === header || c.id === header);
+          const colId = col?.id || header;
+          const value = transformed[colId] ?? '';
+          if (typeof value === 'string') {
+            return `"${value.replace(/"/g, '""')}"`;
+          }
+          return String(value ?? '');
+        }).join(',');
+      });
+
+      const csvContent = [headers.join(','), ...exportData].join('\n');
+      const blob = new Blob([`\uFEFF${csvContent}`], {
+        type: finalFormat === 'excel'
+          ? 'application/vnd.ms-excel;charset=utf-8;'
+          : 'text/csv;charset=utf-8;',
+      });
+      const url = URL.createObjectURL(blob);
+      const link = document.createElement('a');
+      link.href = url;
+      const timestamp = new Date().toISOString().split('T')[0];
+      const ext = finalFormat === 'excel' ? 'xls' : 'csv';
+      link.setAttribute('download', `${exportFileName || 'export'}-${timestamp}.${ext}`);
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+      URL.revokeObjectURL(url);
+
+      setExportComplete(true);
+      setTimeout(() => {
+        setExportComplete(false);
+      }, 2000);
+    } catch (error) {
+      console.error('导出失败:', error);
+    } finally {
+      setExporting(false);
+    }
+  }, [exportable, data, visibleColumns, exportTransform, exportFormat, exportFileName, exporting]);
+
   // 渲染表格头部
   const renderTableHead = () => (
     <TableHead>
@@ -364,6 +665,24 @@ export function ListPageTemplate<T>({
               }
               checked={data.length > 0 && effectiveSelectedIds.length === data.length}
               onChange={handleSelectAll}
+            />
+          </TableCell>
+        )}
+        {isBatchSelectionEnabled && !selectable && (
+          <TableCell
+            padding='checkbox'
+            sx={{
+              width: 48,
+              position: 'sticky',
+              left: 0,
+              zIndex: 2,
+              bgcolor: theme.palette.mode === 'dark' ? 'rgba(255,255,255,0.04)' : 'grey.50',
+            }}
+          >
+            <Checkbox
+              indeterminate={selectedIds.size > 0 && selectedIds.size < data.length}
+              checked={data.length > 0 && selectedIds.size === data.length}
+              onChange={handleBatchSelectAll}
             />
           </TableCell>
         )}
@@ -542,6 +861,7 @@ export function ListPageTemplate<T>({
               icon={emptyIcon}
               title={emptyMessage}
               description='暂无数据，点击添加按钮创建新记录'
+              action={emptyActionButton ? { label: emptyActionButton.label, onClick: emptyActionButton.onClick } : undefined}
             />
           </TableCell>
         </TableRow>
@@ -587,6 +907,25 @@ export function ListPageTemplate<T>({
                   onClick={(e) => {
                     e.stopPropagation();
                     handleSelectRow(row);
+                  }}
+                />
+              </TableCell>
+            )}
+            {isBatchSelectionEnabled && !selectable && (
+              <TableCell
+                padding='checkbox'
+                sx={{
+                  position: 'sticky',
+                  left: 0,
+                  zIndex: 1,
+                  bgcolor: 'inherit',
+                }}
+              >
+                <Checkbox
+                  checked={selectedIds.has(rowId)}
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    handleBatchSelect(row);
                   }}
                 />
               </TableCell>
@@ -785,7 +1124,7 @@ export function ListPageTemplate<T>({
       <Box sx={{ display: 'flex', flexDirection: 'column', gap: 1.5, p: 1.5 }}>
         {data.map((row, index) => {
           const rowId = getRowId ? getRowId(row) : ((row as any).id ?? index);
-          const isSelected = selectedIds?.includes(rowId as string | number);
+          const isSelected = selectedIds.has(rowId);
 
           // 优先使用自定义渲染函数
           if (mobileCardRender) {
@@ -1054,6 +1393,39 @@ export function ListPageTemplate<T>({
                     </IconButton>
                   </Tooltip>
                 )}
+                {/* 导出按钮 */}
+                {exportable && (
+                  <div>
+                    <Tooltip title={exporting ? '导出中...' : exportComplete ? '导出成功' : '导出数据'}>
+                      <IconButton
+                        onClick={(e) => setExportAnchorEl(e.currentTarget)}
+                        size='small'
+                        disabled={data.length === 0 || exporting}
+                        color={exportComplete ? 'primary' : 'inherit'}
+                      >
+                        <Download size={18} />
+                      </IconButton>
+                    </Tooltip>
+                    <Menu
+                      anchorEl={exportAnchorEl}
+                      open={Boolean(exportAnchorEl)}
+                      onClose={() => setExportAnchorEl(null)}
+                    >
+                      <MenuItem onClick={() => handleExport('csv')}>
+                        <ListItemIcon>
+                          <FileText style={{ width: 16, height: 16 }} />
+                        </ListItemIcon>
+                        <ListItemText>导出 CSV</ListItemText>
+                      </MenuItem>
+                      <MenuItem onClick={() => handleExport('excel')}>
+                        <ListItemIcon>
+                          <FileSpreadsheet style={{ width: 16, height: 16 }} />
+                        </ListItemIcon>
+                        <ListItemText>导出 Excel</ListItemText>
+                      </MenuItem>
+                    </Menu>
+                  </div>
+                )}
                 {/* 自定义操作按钮 */}
                 {(actions || []).map((action, index) => (
                   <Button
@@ -1067,6 +1439,41 @@ export function ListPageTemplate<T>({
                     {action.label}
                   </Button>
                 ))}
+                {/* 批量操作按钮 */}
+                {hasBatchActions && selectedIds.size > 0 && (
+                  <div>
+                    <Button
+                      variant='outlined'
+                      size='small'
+                      color='primary'
+                      sx={{ whiteSpace: 'nowrap' }}
+                    >
+                      已选择 {selectedIds.size} 项
+                    </Button>
+                    {batchActions?.map((action, index) => (
+                      <Button
+                        key={index}
+                        variant='contained'
+                        size='small'
+                        startIcon={action.icon}
+                        onClick={() => handleBatchAction(action)}
+                        disabled={action.disabled || selectedIds.size === 0}
+                        color={action.color || 'primary'}
+                        sx={{ whiteSpace: 'nowrap' }}
+                      >
+                        {action.label}
+                      </Button>
+                    ))}
+                    <Button
+                      variant='text'
+                      size='small'
+                      onClick={() => setSelectedIds(new Set())}
+                      sx={{ whiteSpace: 'nowrap' }}
+                    >
+                      取消选择
+                    </Button>
+                  </div>
+                )}
               </Box>
             )}
           </Box>
@@ -1077,8 +1484,10 @@ export function ListPageTemplate<T>({
       <ListBatchActions
         show={showBatchActionBar && !!selectable}
         selectedCount={effectiveSelectedIds.length}
+        selectedRows={getSelectedRows()}
         onClearSelection={() => effectiveOnSelectionChange?.([])}
-        batchActions={batchActions}
+        batchActions={batchActions || []}
+        onBatchAction={handleBatchAction}
       />
 
       {/* 搜索和筛选 */}
@@ -1089,8 +1498,10 @@ export function ListPageTemplate<T>({
         onSearchChange={handleSearch}
         globalSearch={globalSearch}
         filters={filters}
-        filtersValue={filtersValue}
-        onFilterChange={onFilterChange}
+        filtersValue={localFilters}
+        onFilterChange={handleFilterChange}
+        quickFilters={quickFilters}
+        onQuickFilter={handleQuickFilter}
       />
 
       {/* 自定义头部内容 */}
@@ -1152,6 +1563,63 @@ export function ListPageTemplate<T>({
           );
         })}
       </Menu>
+
+      {/* 批量操作确认对话框 */}
+      <Dialog
+        open={confirmDialogOpen}
+        onClose={handleCancelConfirm}
+        sx={{ '& .MuiDialog-paper': { borderRadius: 2, minWidth: 400 } }}
+      >
+        <DialogTitle sx={{ fontWeight: 600 }}>确认{pendingAction?.label}</DialogTitle>
+        <DialogContent sx={{ mt: 2 }}>
+          <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
+            <WarningIcon sx={{ color: 'warning.main', fontSize: 28 }} />
+            <Typography variant="body1">
+              确定要对 <strong>{selectedIds.size}</strong> 条选中的数据执行
+              <strong>{pendingAction?.label}</strong> 操作吗？
+            </Typography>
+          </Box>
+        </DialogContent>
+        <DialogActions sx={{ gap: 2 }}>
+          <Button onClick={handleCancelConfirm}>取消</Button>
+          <Button onClick={handleConfirmBatchAction} color="primary" variant="contained">
+            确认{pendingAction?.label}
+          </Button>
+        </DialogActions>
+      </Dialog>
+
+      {/* 批量操作进度显示 */}
+      <Dialog
+        open={batchOperationState.isProcessing}
+        sx={{ '& .MuiDialog-paper': { borderRadius: 2, minWidth: 400 } }}
+      >
+        <DialogTitle sx={{ fontWeight: 600 }}>
+          {batchOperationState.isCancelled ? `${batchOperationState.actionLabel}已取消` : `${batchOperationState.actionLabel}中...`}
+        </DialogTitle>
+        <DialogContent sx={{ mt: 2 }}>
+          <Box sx={{ mb: 3 }}>
+            <Typography variant="body1">
+              {batchOperationState.isCancelled ? (
+                <span>操作已取消，正在回滚...</span>
+              ) : (
+                <span>正在处理 <strong>{batchOperationState.processed}/{batchOperationState.total}</strong> 条数据</span>
+              )}
+            </Typography>
+          </Box>
+          <LinearProgress
+            variant="determinate"
+            value={(batchOperationState.processed / batchOperationState.total) * 100}
+            sx={{ height: 8, borderRadius: 4 }}
+          />
+        </DialogContent>
+        <DialogActions sx={{ gap: 2 }}>
+          {!batchOperationState.isCancelled && (
+            <Button onClick={handleCancelBatchOperation} color="error">
+              取消操作
+            </Button>
+          )}
+        </DialogActions>
+      </Dialog>
     </Box>
   );
 }

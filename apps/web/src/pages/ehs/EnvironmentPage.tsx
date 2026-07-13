@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useMemo } from 'react';
+import React, { useState, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
 import {
   Box,
@@ -23,23 +23,22 @@ import type { ColumnDef, RowAction, FilterConfig } from '@/components';
 import { PageContainer } from '@/components/common';
 import { ehsApi } from '@/api/ehs';
 import type { EnvironmentMonitor } from '@/api/ehs';
-import { useAppStore } from '@/store';
+import { useNotificationStore } from '@/store';
 import { apiLogger } from '@/utils/logger';
 import { designTokens } from '@/theme/tokens';
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 
 const ct = designTokens.colors;
 
 const EnvironmentPage: React.FC = () => {
   const navigate = useNavigate();
-  const [monitors, setMonitors] = useState<EnvironmentMonitor[]>([]);
-  const [loading, setLoading] = useState(true);
+  const queryClient = useQueryClient();
   const [searchTerm, setSearchTerm] = useState('');
   const [typeFilter, setTypeFilter] = useState('');
   const [statusFilter, setStatusFilter] = useState('');
   const [showCreateModal, setShowCreateModal] = useState(false);
   const [showDetailModal, setShowDetailModal] = useState(false);
   const [selectedMonitor, setSelectedMonitor] = useState<EnvironmentMonitor | null>(null);
-  const [detailLoading, setDetailLoading] = useState(false);
   const [formData, setFormData] = useState({
     name: '',
     monitor_type: '',
@@ -52,15 +51,11 @@ const EnvironmentPage: React.FC = () => {
     unit: '',
     status: 'active' as const,
   });
-  const addNotification = useAppStore((state) => state.addNotification);
+  const addNotification = useNotificationStore((state) => state.addNotification);
 
-  useEffect(() => {
-    loadMonitors();
-  }, [searchTerm, typeFilter, statusFilter]);
-
-  const loadMonitors = async () => {
-    try {
-      setLoading(true);
+  const monitorsQuery = useQuery<EnvironmentMonitor[]>({
+    queryKey: ['ehs-environment-monitors', searchTerm, typeFilter, statusFilter],
+    queryFn: async () => {
       const response = await ehsApi.listEnvironmentMonitors({
         search: searchTerm || undefined,
         monitor_type: typeFilter || undefined,
@@ -80,33 +75,32 @@ const EnvironmentPage: React.FC = () => {
                   ? '维护中'
                   : item.status,
         }));
-        setMonitors(adapted);
-      } else {
-        setMonitors([]);
+        return adapted;
       }
-    } catch (err: unknown) {
-      apiLogger.error('加载环境监测数据失败:', err);
-      addNotification({ title: '错误', message: '加载环境监测数据失败', type: 'error' });
-      setMonitors([]);
-    } finally {
-      setLoading(false);
-    }
-  };
+      return [];
+    },
+    staleTime: 5 * 60 * 1000,
+  });
 
-  const loadMonitorDetail = async (monitorId: string) => {
-    try {
-      setDetailLoading(true);
-      const response = await ehsApi.getEnvironmentMonitor(monitorId);
+  const monitors = monitorsQuery.data || [];
+  const loading = monitorsQuery.isLoading;
+
+  const monitorDetailQuery = useQuery({
+    queryKey: ['ehs-environment-monitor-detail', selectedMonitor?.id],
+    queryFn: async () => {
+      if (!selectedMonitor?.id) return null;
+      const response = await ehsApi.getEnvironmentMonitor(selectedMonitor.id);
       if (response.success && response.data) {
-        setSelectedMonitor(response.data as EnvironmentMonitor);
+        return response.data as EnvironmentMonitor;
       }
-    } catch (err: unknown) {
-      apiLogger.error('加载环境监测点详情失败:', err);
-      addNotification({ title: '错误', message: '加载详情失败', type: 'error' });
-    } finally {
-      setDetailLoading(false);
-    }
-  };
+      return null;
+    },
+    enabled: !!selectedMonitor?.id && showDetailModal,
+    staleTime: 5 * 60 * 1000,
+  });
+
+  const detailLoading = monitorDetailQuery.isLoading;
+  const monitorDetail = monitorDetailQuery.data;
 
   const getStatusBadge = (status: string) => {
     const statusMap: Record<string, { bg: string; color: string }> = {
@@ -173,10 +167,9 @@ const EnvironmentPage: React.FC = () => {
     []
   );
 
-  const handleViewDetail = async (monitor: EnvironmentMonitor) => {
+  const handleViewDetail = (monitor: EnvironmentMonitor) => {
     setSelectedMonitor(monitor);
     setShowDetailModal(true);
-    await loadMonitorDetail(monitor.id);
   };
 
   const rowActions = useMemo<RowAction<EnvironmentMonitor>[]>(
@@ -250,27 +243,34 @@ const EnvironmentPage: React.FC = () => {
     setShowCreateModal(true);
   };
 
-  const handleSave = async () => {
-    try {
-      await ehsApi.createEnvironmentMonitor({
-        name: formData.name,
-        monitor_type: formData.monitor_type,
-        location: formData.location || null,
-        description: formData.description || null,
-        monitor_frequency: formData.monitor_frequency || null,
-        standard_value: formData.standard_value || null,
-        warning_threshold: formData.warning_threshold ? Number(formData.warning_threshold) : null,
-        alarm_threshold: formData.alarm_threshold ? Number(formData.alarm_threshold) : null,
-        unit: formData.unit || null,
-        status: formData.status,
+  const createMonitorMutation = useMutation({
+    mutationFn: async (data: typeof formData) => {
+      return ehsApi.createEnvironmentMonitor({
+        name: data.name,
+        monitor_type: data.monitor_type,
+        location: data.location || null,
+        description: data.description || null,
+        monitor_frequency: data.monitor_frequency || null,
+        standard_value: data.standard_value || null,
+        warning_threshold: data.warning_threshold ? Number(data.warning_threshold) : null,
+        alarm_threshold: data.alarm_threshold ? Number(data.alarm_threshold) : null,
+        unit: data.unit || null,
+        status: data.status,
       });
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['ehs-environment-monitors'] });
       addNotification({ title: '成功', message: '环境监测点创建成功', type: 'success' });
       setShowCreateModal(false);
-      loadMonitors();
-    } catch (err: unknown) {
+    },
+    onError: (err) => {
       addNotification({ title: '错误', message: '创建失败', type: 'error' });
       apiLogger.error('创建环境监测点失败:', err);
-    }
+    },
+  });
+
+  const handleSave = () => {
+    createMonitorMutation.mutate(formData);
   };
 
   const stats = useMemo(
@@ -421,7 +421,7 @@ const EnvironmentPage: React.FC = () => {
         onSearch={(value) => setSearchTerm(value)}
         filters={filters}
         rowActions={rowActions}
-        onRefresh={loadMonitors}
+        onRefresh={() => monitorsQuery.refetch()}
       />
 
       <Dialog
@@ -569,7 +569,7 @@ const EnvironmentPage: React.FC = () => {
               <Typography sx={{ color: 'slate.600' }}>加载中...</Typography>
             </Box>
           ) : (
-            selectedMonitor && (
+            monitorDetail && (
               <Box
                 sx={{
                   pt: 2,
@@ -585,7 +585,7 @@ const EnvironmentPage: React.FC = () => {
                   >
                     监测点编号
                   </Box>
-                  <Box sx={{ fontWeight: 500 }}>{(selectedMonitor as any).monitor_no || '-'}</Box>
+                  <Box sx={{ fontWeight: 500 }}>{(monitorDetail as any).monitor_no || '-'}</Box>
                 </Box>
                 <Box>
                   <Box
@@ -594,7 +594,7 @@ const EnvironmentPage: React.FC = () => {
                   >
                     监测点名称
                   </Box>
-                  <Box>{selectedMonitor.name}</Box>
+                  <Box>{monitorDetail.name}</Box>
                 </Box>
                 <Box>
                   <Box
@@ -603,7 +603,7 @@ const EnvironmentPage: React.FC = () => {
                   >
                     监测类型
                   </Box>
-                  <Box>{selectedMonitor.monitor_type}</Box>
+                  <Box>{monitorDetail.monitor_type}</Box>
                 </Box>
                 <Box>
                   <Box
@@ -612,7 +612,7 @@ const EnvironmentPage: React.FC = () => {
                   >
                     状态
                   </Box>
-                  <Box sx={{ mt: 0.5 }}>{getStatusBadge(selectedMonitor.status)}</Box>
+                  <Box sx={{ mt: 0.5 }}>{getStatusBadge(monitorDetail.status)}</Box>
                 </Box>
                 <Box>
                   <Box
@@ -621,7 +621,7 @@ const EnvironmentPage: React.FC = () => {
                   >
                     位置
                   </Box>
-                  <Box>{selectedMonitor.location || '-'}</Box>
+                  <Box>{monitorDetail.location || '-'}</Box>
                 </Box>
                 <Box>
                   <Box
@@ -630,7 +630,7 @@ const EnvironmentPage: React.FC = () => {
                   >
                     监测频率
                   </Box>
-                  <Box>{selectedMonitor.monitor_frequency || '-'}</Box>
+                  <Box>{monitorDetail.monitor_frequency || '-'}</Box>
                 </Box>
                 <Box>
                   <Box
@@ -640,7 +640,7 @@ const EnvironmentPage: React.FC = () => {
                     标准值
                   </Box>
                   <Box>
-                    {selectedMonitor.standard_value || '-'} {selectedMonitor.unit || ''}
+                    {monitorDetail.standard_value || '-'} {monitorDetail.unit || ''}
                   </Box>
                 </Box>
                 <Box>
@@ -650,7 +650,7 @@ const EnvironmentPage: React.FC = () => {
                   >
                     预警阈值
                   </Box>
-                  <Box>{selectedMonitor.warning_threshold ?? '-'}</Box>
+                  <Box>{monitorDetail.warning_threshold ?? '-'}</Box>
                 </Box>
                 <Box>
                   <Box
@@ -659,7 +659,7 @@ const EnvironmentPage: React.FC = () => {
                   >
                     报警阈值
                   </Box>
-                  <Box>{selectedMonitor.alarm_threshold ?? '-'}</Box>
+                  <Box>{monitorDetail.alarm_threshold ?? '-'}</Box>
                 </Box>
                 <Box sx={{ gridColumn: '1 / -1' }}>
                   <Box
@@ -668,7 +668,7 @@ const EnvironmentPage: React.FC = () => {
                   >
                     描述
                   </Box>
-                  <Box>{selectedMonitor.description || '-'}</Box>
+                  <Box>{monitorDetail.description || '-'}</Box>
                 </Box>
               </Box>
             )

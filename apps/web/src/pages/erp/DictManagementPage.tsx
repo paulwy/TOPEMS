@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useMemo } from 'react';
+import React, { useState, useEffect, useMemo, useCallback } from 'react';
 import {
   Book,
   Plus,
@@ -48,267 +48,33 @@ import {
   TablePagination,
   InputAdornment,
 } from '@mui/material';
-import { useAppStore } from '@/store';
+import { useNotificationStore } from '@/store';
 import { apiLogger } from '@/utils/logger';
+import { extractErrorMessage } from '@/utils/errors';
 import { useNavigate } from 'react-router-dom';
 import { ERP_PATHS } from '@/modules/erp/config';
+import { dictTypeApi, dictItemApi, type DictType, type DictItem } from '@/api/system';
 
-export interface DictType {
-  id: string;
-  dict_code: string;
-  dict_name: string;
-  description: string;
-  status: 'active' | 'inactive';
-  item_count: number;
-  created_at: string;
-  updated_at: string;
-}
-
-export interface DictItem {
-  id: string;
-  dict_code: string;
-  item_code: string;
-  item_name: string;
-  item_value: string;
-  sort_order: number;
-  status: 'active' | 'inactive';
-  remark?: string;
-  created_at: string;
-  updated_at: string;
-}
-
-const mockDictTypes: DictType[] = [
-  {
-    id: '1',
-    dict_code: 'voucher_type',
-    dict_name: '凭证类型',
-    description: '会计凭证的类型分类',
-    status: 'active',
-    item_count: 4,
-    created_at: '2024-01-01T00:00:00',
-    updated_at: '2024-06-01T00:00:00',
-  },
-  {
-    id: '2',
-    dict_code: 'voucher_status',
-    dict_name: '凭证状态',
-    description: '会计凭证的状态枚举',
-    status: 'active',
-    item_count: 5,
-    created_at: '2024-01-01T00:00:00',
-    updated_at: '2024-06-01T00:00:00',
-  },
-  {
-    id: '3',
-    dict_code: 'asset_category',
-    dict_name: '资产分类',
-    description: '固定资产的分类',
-    status: 'active',
-    item_count: 6,
-    created_at: '2024-01-01T00:00:00',
-    updated_at: '2024-05-15T00:00:00',
-  },
-  {
-    id: '4',
-    dict_code: 'expense_type',
-    dict_name: '费用类型',
-    description: '费用报销的类型',
-    status: 'active',
-    item_count: 8,
-    created_at: '2024-01-01T00:00:00',
-    updated_at: '2024-04-20T00:00:00',
-  },
-  {
-    id: '5',
-    dict_code: 'payment_method',
-    dict_name: '支付方式',
-    description: '收付款的支付方式',
-    status: 'inactive',
-    item_count: 3,
-    created_at: '2024-01-01T00:00:00',
-    updated_at: '2024-03-10T00:00:00',
-  },
-];
-
-const mockDictItems: Record<string, DictItem[]> = {
-  voucher_type: [
-    {
-      id: '1',
-      dict_code: 'voucher_type',
-      item_code: 'receipt',
-      item_name: '收款凭证',
-      item_value: '收',
-      sort_order: 1,
-      status: 'active',
-      created_at: '2024-01-01T00:00:00',
-      updated_at: '2024-01-01T00:00:00',
-    },
-    {
-      id: '2',
-      dict_code: 'voucher_type',
-      item_code: 'payment',
-      item_name: '付款凭证',
-      item_value: '付',
-      sort_order: 2,
-      status: 'active',
-      created_at: '2024-01-01T00:00:00',
-      updated_at: '2024-01-01T00:00:00',
-    },
-    {
-      id: '3',
-      dict_code: 'voucher_type',
-      item_code: 'transfer',
-      item_name: '转账凭证',
-      item_value: '转',
-      sort_order: 3,
-      status: 'active',
-      created_at: '2024-01-01T00:00:00',
-      updated_at: '2024-01-01T00:00:00',
-    },
-    {
-      id: '4',
-      dict_code: 'voucher_type',
-      item_code: 'general',
-      item_name: '记账凭证',
-      item_value: '记',
-      sort_order: 4,
-      status: 'active',
-      created_at: '2024-01-01T00:00:00',
-      updated_at: '2024-01-01T00:00:00',
-    },
-  ],
-  voucher_status: [
-    {
-      id: '5',
-      dict_code: 'voucher_status',
-      item_code: 'draft',
-      item_name: '草稿',
-      item_value: 'draft',
-      sort_order: 1,
-      status: 'active',
-      created_at: '2024-01-01T00:00:00',
-      updated_at: '2024-01-01T00:00:00',
-    },
-    {
-      id: '6',
-      dict_code: 'voucher_status',
-      item_code: 'pending',
-      item_name: '待审核',
-      item_value: 'pending',
-      sort_order: 2,
-      status: 'active',
-      created_at: '2024-01-01T00:00:00',
-      updated_at: '2024-01-01T00:00:00',
-    },
-    {
-      id: '7',
-      dict_code: 'voucher_status',
-      item_code: 'approved',
-      item_name: '已审核',
-      item_value: 'approved',
-      sort_order: 3,
-      status: 'active',
-      created_at: '2024-01-01T00:00:00',
-      updated_at: '2024-01-01T00:00:00',
-    },
-    {
-      id: '8',
-      dict_code: 'voucher_status',
-      item_code: 'posted',
-      item_name: '已记账',
-      item_value: 'posted',
-      sort_order: 4,
-      status: 'active',
-      created_at: '2024-01-01T00:00:00',
-      updated_at: '2024-01-01T00:00:00',
-    },
-    {
-      id: '9',
-      dict_code: 'voucher_status',
-      item_code: 'closed',
-      item_name: '已结账',
-      item_value: 'closed',
-      sort_order: 5,
-      status: 'active',
-      created_at: '2024-01-01T00:00:00',
-      updated_at: '2024-01-01T00:00:00',
-    },
-  ],
-  asset_category: [
-    {
-      id: '10',
-      dict_code: 'asset_category',
-      item_code: 'house',
-      item_name: '房屋建筑物',
-      item_value: '1',
-      sort_order: 1,
-      status: 'active',
-      created_at: '2024-01-01T00:00:00',
-      updated_at: '2024-01-01T00:00:00',
-    },
-    {
-      id: '11',
-      dict_code: 'asset_category',
-      item_code: 'equipment',
-      item_name: '机器设备',
-      item_value: '2',
-      sort_order: 2,
-      status: 'active',
-      created_at: '2024-01-01T00:00:00',
-      updated_at: '2024-01-01T00:00:00',
-    },
-    {
-      id: '12',
-      dict_code: 'asset_category',
-      item_code: 'transport',
-      item_name: '运输设备',
-      item_value: '3',
-      sort_order: 3,
-      status: 'active',
-      created_at: '2024-01-01T00:00:00',
-      updated_at: '2024-01-01T00:00:00',
-    },
-    {
-      id: '13',
-      dict_code: 'asset_category',
-      item_code: 'electronic',
-      item_name: '电子设备',
-      item_value: '4',
-      sort_order: 4,
-      status: 'active',
-      created_at: '2024-01-01T00:00:00',
-      updated_at: '2024-01-01T00:00:00',
-    },
-    {
-      id: '14',
-      dict_code: 'asset_category',
-      item_code: 'furniture',
-      item_name: '家具器具',
-      item_value: '5',
-      sort_order: 5,
-      status: 'active',
-      created_at: '2024-01-01T00:00:00',
-      updated_at: '2024-01-01T00:00:00',
-    },
-    {
-      id: '15',
-      dict_code: 'asset_category',
-      item_code: 'other',
-      item_name: '其他',
-      item_value: '9',
-      sort_order: 6,
-      status: 'active',
-      created_at: '2024-01-01T00:00:00',
-      updated_at: '2024-01-01T00:00:00',
-    },
-  ],
-  expense_type: [],
-  payment_method: [],
+const categoryLabels: Record<string, string> = {
+  system: '系统字典',
+  iam: 'IAM字典',
+  workflow: '审批字典',
+  hrm: 'HRM字典',
+  crm: 'CRM字典',
+  erp: 'ERP字典',
+  wms: 'WMS字典',
+  mes: 'MES字典',
+  common: '通用字典',
+  notification: '通知字典',
+  audit: '审计字典',
+  business: '业务字典',
+  basic: '基础数据',
+  custom: '自定义字典',
 };
 
 const DictManagementPage: React.FC = () => {
   const navigate = useNavigate();
-  const addNotification = useAppStore((state) => state.addNotification);
+  const addNotification = useNotificationStore((state) => state.addNotification);
 
   const [searchQuery, setSearchQuery] = useState('');
   const [statusFilter, setStatusFilter] = useState('');
@@ -334,20 +100,21 @@ const DictManagementPage: React.FC = () => {
   const [deletingTypeId, setDeletingTypeId] = useState<string | null>(null);
   const [deletingItemId, setDeletingItemId] = useState<string | null>(null);
 
-  const [newType, setNewType] = useState({
-    dict_code: '',
-    dict_name: '',
+  const [newType, setNewType] = useState<Partial<DictType>>({
+    code: '',
+    name: '',
+    category: 'business',
     description: '',
-    status: 'active' as 'active' | 'inactive',
+    status: 'active',
   });
 
-  const [newItem, setNewItem] = useState({
-    item_code: '',
-    item_name: '',
-    item_value: '',
-    sort_order: 1,
-    status: 'active' as 'active' | 'inactive',
-    remark: '',
+  const [newItem, setNewItem] = useState<Partial<DictItem>>({
+    code: '',
+    name: '',
+    value: '',
+    sort_order: 0,
+    parent_id: undefined,
+    status: 'active',
   });
 
   useEffect(() => {
@@ -356,54 +123,63 @@ const DictManagementPage: React.FC = () => {
 
   useEffect(() => {
     if (selectedDict) {
-      loadDictItems(selectedDict.dict_code);
+      loadDictItems(selectedDict.id);
     }
   }, [selectedDict]);
 
-  const loadDictTypes = async () => {
+  const loadDictTypes = useCallback(async () => {
     setLoading(true);
     try {
-      await new Promise((resolve) => setTimeout(resolve, 300));
-      setDictTypes(mockDictTypes);
-      setTotalCount(mockDictTypes.length);
-      if (mockDictTypes.length > 0) {
-        setSelectedDict(mockDictTypes[0]);
+      const res = await dictTypeApi.list();
+      if (res.success && res.data) {
+        setDictTypes(res.data.items || []);
+        setTotalCount(res.data.total || 0);
+        if (!selectedDict && res.data.items && res.data.items.length > 0) {
+          setSelectedDict(res.data.items[0]);
+        }
+      } else {
+        setDictTypes([]);
+        setTotalCount(0);
       }
     } catch (err: unknown) {
       apiLogger.error('加载字典类型失败:', err);
       addNotification({
         title: '错误',
-        message: '加载字典类型失败',
+        message: extractErrorMessage(err, '加载字典类型失败'),
         type: 'error',
       });
     } finally {
       setLoading(false);
     }
-  };
+  }, [addNotification, selectedDict]);
 
-  const loadDictItems = async (dictCode: string) => {
+  const loadDictItems = useCallback(async (dictTypeId: string) => {
     setItemLoading(true);
     try {
-      await new Promise((resolve) => setTimeout(resolve, 200));
-      setDictItems(mockDictItems[dictCode] || []);
+      const res = await dictItemApi.list(dictTypeId);
+      if (res.success && res.data) {
+        setDictItems(res.data.items || []);
+      } else {
+        setDictItems([]);
+      }
     } catch (err: unknown) {
       apiLogger.error('加载字典项失败:', err);
       addNotification({
         title: '错误',
-        message: '加载字典项失败',
+        message: extractErrorMessage(err, '加载字典项失败'),
         type: 'error',
       });
     } finally {
       setItemLoading(false);
     }
-  };
+  }, [addNotification]);
 
   const filteredDictTypes = useMemo(() => {
     return dictTypes.filter((dict) => {
       const matchesSearch =
         !searchQuery ||
-        dict.dict_name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-        dict.dict_code.toLowerCase().includes(searchQuery.toLowerCase());
+        dict.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
+        dict.code.toLowerCase().includes(searchQuery.toLowerCase());
       const matchesStatus = !statusFilter || dict.status === statusFilter;
       return matchesSearch && matchesStatus;
     });
@@ -413,15 +189,15 @@ const DictManagementPage: React.FC = () => {
     return dictItems.filter((item) => {
       return (
         !itemSearchQuery ||
-        item.item_name.toLowerCase().includes(itemSearchQuery.toLowerCase()) ||
-        item.item_code.toLowerCase().includes(itemSearchQuery.toLowerCase()) ||
-        item.item_value.toLowerCase().includes(itemSearchQuery.toLowerCase())
+        item.name.toLowerCase().includes(itemSearchQuery.toLowerCase()) ||
+        item.code.toLowerCase().includes(itemSearchQuery.toLowerCase()) ||
+        (item.value && item.value.toLowerCase().includes(itemSearchQuery.toLowerCase()))
       );
     });
   }, [dictItems, itemSearchQuery]);
 
   const handleCreateType = async () => {
-    if (!newType.dict_code || !newType.dict_name) {
+    if (!newType.code || !newType.name) {
       addNotification({
         title: '提示',
         message: '请填写必填字段',
@@ -431,30 +207,34 @@ const DictManagementPage: React.FC = () => {
     }
 
     try {
-      const newId = Date.now().toString();
-      const newDict: DictType = {
-        id: newId,
-        ...newType,
-        item_count: 0,
-        created_at: new Date().toISOString(),
-        updated_at: new Date().toISOString(),
-      };
-      setDictTypes((prev) => [...prev, newDict]);
-      mockDictItems[newType.dict_code] = [];
-      addNotification({
-        title: '成功',
-        message: '字典类型创建成功',
-        type: 'success',
-      });
-      setShowTypeModal(false);
-      resetTypeForm();
+      const res = await dictTypeApi.create(newType);
+      if (res.success) {
+        addNotification({
+          title: '成功',
+          message: '字典类型创建成功',
+          type: 'success',
+        });
+        setShowTypeModal(false);
+        resetTypeForm();
+        loadDictTypes();
+      } else {
+        addNotification({
+          title: '失败',
+          message: res.message || '创建失败',
+          type: 'error',
+        });
+      }
     } catch (err: unknown) {
-      addNotification({ title: '错误', message: '操作失败', type: 'error' });
+      addNotification({
+        title: '错误',
+        message: extractErrorMessage(err, '创建失败'),
+        type: 'error',
+      });
     }
   };
 
   const handleUpdateType = async () => {
-    if (!editingType || !newType.dict_code || !newType.dict_name) {
+    if (!editingType || !newType.code || !newType.name) {
       addNotification({
         title: '提示',
         message: '请填写必填字段',
@@ -464,33 +244,38 @@ const DictManagementPage: React.FC = () => {
     }
 
     try {
-      setDictTypes((prev) =>
-        prev.map((d) =>
-          d.id === editingType.id ? { ...d, ...newType, updated_at: new Date().toISOString() } : d
-        )
-      );
-      if (selectedDict?.id === editingType.id) {
-        setSelectedDict((prev) =>
-          prev ? { ...prev, ...newType, updated_at: new Date().toISOString() } : null
-        );
+      const res = await dictTypeApi.update(editingType.id, newType);
+      if (res.success) {
+        addNotification({
+          title: '成功',
+          message: '字典类型更新成功',
+          type: 'success',
+        });
+        setShowTypeModal(false);
+        resetTypeForm();
+        loadDictTypes();
+      } else {
+        addNotification({
+          title: '失败',
+          message: res.message || '更新失败',
+          type: 'error',
+        });
       }
-      addNotification({
-        title: '成功',
-        message: '字典类型更新成功',
-        type: 'success',
-      });
-      setShowTypeModal(false);
-      resetTypeForm();
     } catch (err: unknown) {
-      addNotification({ title: '错误', message: '操作失败', type: 'error' });
+      addNotification({
+        title: '错误',
+        message: extractErrorMessage(err, '更新失败'),
+        type: 'error',
+      });
     }
   };
 
   const handleEditType = (dict: DictType) => {
     setEditingType(dict);
     setNewType({
-      dict_code: dict.dict_code,
-      dict_name: dict.dict_name,
+      code: dict.code,
+      name: dict.name,
+      category: dict.category,
       description: dict.description,
       status: dict.status,
     });
@@ -505,21 +290,30 @@ const DictManagementPage: React.FC = () => {
   const confirmDeleteType = async () => {
     if (!deletingTypeId) return;
     try {
-      const dict = dictTypes.find((d) => d.id === deletingTypeId);
-      if (dict) {
-        delete mockDictItems[dict.dict_code];
+      const res = await dictTypeApi.delete(deletingTypeId);
+      if (res.success) {
+        addNotification({
+          title: '成功',
+          message: '删除成功',
+          type: 'success',
+        });
+        if (selectedDict?.id === deletingTypeId) {
+          setSelectedDict(null);
+        }
+        loadDictTypes();
+      } else {
+        addNotification({
+          title: '失败',
+          message: res.message || '删除失败',
+          type: 'error',
+        });
       }
-      setDictTypes((prev) => prev.filter((d) => d.id !== deletingTypeId));
-      if (selectedDict?.id === deletingTypeId) {
-        setSelectedDict(dictTypes.find((d) => d.id !== deletingTypeId) || null);
-      }
-      addNotification({
-        title: '成功',
-        message: '删除成功',
-        type: 'success',
-      });
     } catch (err: unknown) {
-      addNotification({ title: '错误', message: '操作失败', type: 'error' });
+      addNotification({
+        title: '错误',
+        message: extractErrorMessage(err, '删除失败'),
+        type: 'error',
+      });
     } finally {
       setDeleteTypeDialogOpen(false);
       setDeletingTypeId(null);
@@ -528,8 +322,9 @@ const DictManagementPage: React.FC = () => {
 
   const resetTypeForm = () => {
     setNewType({
-      dict_code: '',
-      dict_name: '',
+      code: '',
+      name: '',
+      category: 'business',
       description: '',
       status: 'active',
     });
@@ -537,7 +332,7 @@ const DictManagementPage: React.FC = () => {
   };
 
   const handleCreateItem = async () => {
-    if (!newItem.item_code || !newItem.item_name) {
+    if (!newItem.code || !newItem.name) {
       addNotification({
         title: '提示',
         message: '请填写必填字段',
@@ -549,39 +344,38 @@ const DictManagementPage: React.FC = () => {
     if (!selectedDict) return;
 
     try {
-      const newId = Date.now().toString();
-      const item: DictItem = {
-        id: newId,
-        dict_code: selectedDict.dict_code,
+      const res = await dictItemApi.create({
         ...newItem,
-        created_at: new Date().toISOString(),
-        updated_at: new Date().toISOString(),
-      };
-      setDictItems((prev) => [...prev, item].sort((a, b) => a.sort_order - b.sort_order));
-      mockDictItems[selectedDict.dict_code] = [
-        ...(mockDictItems[selectedDict.dict_code] || []),
-        item,
-      ].sort((a, b) => a.sort_order - b.sort_order);
-      setDictTypes((prev) =>
-        prev.map((d) => (d.id === selectedDict.id ? { ...d, item_count: d.item_count + 1 } : d))
-      );
-      if (selectedDict) {
-        setSelectedDict((prev) => (prev ? { ...prev, item_count: prev.item_count + 1 } : null));
-      }
-      addNotification({
-        title: '成功',
-        message: '字典项创建成功',
-        type: 'success',
+        dict_type_id: selectedDict.id,
       });
-      setShowItemModal(false);
-      resetItemForm();
+      if (res.success) {
+        addNotification({
+          title: '成功',
+          message: '字典项创建成功',
+          type: 'success',
+        });
+        setShowItemModal(false);
+        resetItemForm();
+        loadDictItems(selectedDict.id);
+        loadDictTypes();
+      } else {
+        addNotification({
+          title: '失败',
+          message: res.message || '创建失败',
+          type: 'error',
+        });
+      }
     } catch (err: unknown) {
-      addNotification({ title: '错误', message: '操作失败', type: 'error' });
+      addNotification({
+        title: '错误',
+        message: extractErrorMessage(err, '创建失败'),
+        type: 'error',
+      });
     }
   };
 
   const handleUpdateItem = async () => {
-    if (!editingItem || !newItem.item_code || !newItem.item_name) {
+    if (!editingItem || !newItem.code || !newItem.name) {
       addNotification({
         title: '提示',
         message: '请填写必填字段',
@@ -591,34 +385,41 @@ const DictManagementPage: React.FC = () => {
     }
 
     try {
-      setDictItems((prev) =>
-        prev
-          .map((i) =>
-            i.id === editingItem.id ? { ...i, ...newItem, updated_at: new Date().toISOString() } : i
-          )
-          .sort((a, b) => a.sort_order - b.sort_order)
-      );
-      addNotification({
-        title: '成功',
-        message: '字典项更新成功',
-        type: 'success',
-      });
-      setShowItemModal(false);
-      resetItemForm();
+      const res = await dictItemApi.update(editingItem.id, newItem);
+      if (res.success) {
+        addNotification({
+          title: '成功',
+          message: '字典项更新成功',
+          type: 'success',
+        });
+        setShowItemModal(false);
+        resetItemForm();
+        if (selectedDict) loadDictItems(selectedDict.id);
+      } else {
+        addNotification({
+          title: '失败',
+          message: res.message || '更新失败',
+          type: 'error',
+        });
+      }
     } catch (err: unknown) {
-      addNotification({ title: '错误', message: '操作失败', type: 'error' });
+      addNotification({
+        title: '错误',
+        message: extractErrorMessage(err, '更新失败'),
+        type: 'error',
+      });
     }
   };
 
   const handleEditItem = (item: DictItem) => {
     setEditingItem(item);
     setNewItem({
-      item_code: item.item_code,
-      item_name: item.item_name,
-      item_value: item.item_value,
+      code: item.code,
+      name: item.name,
+      value: item.value,
       sort_order: item.sort_order,
+      parent_id: item.parent_id,
       status: item.status,
-      remark: item.remark || '',
     });
     setShowItemModal(true);
   };
@@ -631,24 +432,28 @@ const DictManagementPage: React.FC = () => {
   const confirmDeleteItem = async () => {
     if (!deletingItemId || !selectedDict) return;
     try {
-      setDictItems((prev) => prev.filter((i) => i.id !== deletingItemId));
-      setDictTypes((prev) =>
-        prev.map((d) =>
-          d.id === selectedDict.id ? { ...d, item_count: Math.max(0, d.item_count - 1) } : d
-        )
-      );
-      if (selectedDict) {
-        setSelectedDict((prev) =>
-          prev ? { ...prev, item_count: Math.max(0, prev.item_count - 1) } : null
-        );
+      const res = await dictItemApi.delete(deletingItemId);
+      if (res.success) {
+        addNotification({
+          title: '成功',
+          message: '删除成功',
+          type: 'success',
+        });
+        loadDictItems(selectedDict.id);
+        loadDictTypes();
+      } else {
+        addNotification({
+          title: '失败',
+          message: res.message || '删除失败',
+          type: 'error',
+        });
       }
-      addNotification({
-        title: '成功',
-        message: '删除成功',
-        type: 'success',
-      });
     } catch (err: unknown) {
-      addNotification({ title: '错误', message: '操作失败', type: 'error' });
+      addNotification({
+        title: '错误',
+        message: extractErrorMessage(err, '删除失败'),
+        type: 'error',
+      });
     } finally {
       setDeleteItemDialogOpen(false);
       setDeletingItemId(null);
@@ -657,12 +462,12 @@ const DictManagementPage: React.FC = () => {
 
   const resetItemForm = () => {
     setNewItem({
-      item_code: '',
-      item_name: '',
-      item_value: '',
-      sort_order: 1,
+      code: '',
+      name: '',
+      value: '',
+      sort_order: 0,
+      parent_id: undefined,
       status: 'active',
-      remark: '',
     });
     setEditingItem(null);
   };
@@ -670,43 +475,60 @@ const DictManagementPage: React.FC = () => {
   const handleToggleTypeStatus = async (dict: DictType) => {
     try {
       const newStatus = dict.status === 'active' ? 'inactive' : 'active';
-      setDictTypes((prev) =>
-        prev.map((d) =>
-          d.id === dict.id ? { ...d, status: newStatus, updated_at: new Date().toISOString() } : d
-        )
-      );
-      if (selectedDict?.id === dict.id) {
-        setSelectedDict((prev) =>
-          prev ? { ...prev, status: newStatus, updated_at: new Date().toISOString() } : null
-        );
+      const res = await dictTypeApi.update(dict.id, { status: newStatus });
+      if (res.success) {
+        addNotification({
+          title: '成功',
+          message: `已${newStatus === 'active' ? '启用' : '禁用'}`,
+          type: 'success',
+        });
+        loadDictTypes();
+      } else {
+        addNotification({
+          title: '失败',
+          message: res.message || '状态切换失败',
+          type: 'error',
+        });
       }
-      addNotification({
-        title: '成功',
-        message: `已${newStatus === 'active' ? '启用' : '禁用'}`,
-        type: 'success',
-      });
     } catch (err: unknown) {
-      addNotification({ title: '错误', message: '操作失败', type: 'error' });
+      addNotification({
+        title: '错误',
+        message: extractErrorMessage(err, '状态切换失败'),
+        type: 'error',
+      });
     }
   };
 
   const handleToggleItemStatus = async (item: DictItem) => {
     try {
       const newStatus = item.status === 'active' ? 'inactive' : 'active';
-      setDictItems((prev) =>
-        prev.map((i) =>
-          i.id === item.id ? { ...i, status: newStatus, updated_at: new Date().toISOString() } : i
-        )
-      );
-      addNotification({
-        title: '成功',
-        message: `已${newStatus === 'active' ? '启用' : '禁用'}`,
-        type: 'success',
-      });
+      const res = await dictItemApi.update(item.id, { status: newStatus });
+      if (res.success) {
+        addNotification({
+          title: '成功',
+          message: `已${newStatus === 'active' ? '启用' : '禁用'}`,
+          type: 'success',
+        });
+        if (selectedDict) loadDictItems(selectedDict.id);
+      } else {
+        addNotification({
+          title: '失败',
+          message: res.message || '状态切换失败',
+          type: 'error',
+        });
+      }
     } catch (err: unknown) {
-      addNotification({ title: '错误', message: '操作失败', type: 'error' });
+      addNotification({
+        title: '错误',
+        message: extractErrorMessage(err, '状态切换失败'),
+        type: 'error',
+      });
     }
   };
+
+  const parentItems = useMemo(() => {
+    return dictItems.filter((item) => !item.parent_id);
+  }, [dictItems]);
 
   return (
     <PageContainer
@@ -862,7 +684,7 @@ const DictManagementPage: React.FC = () => {
                       }}
                     >
                       <Typography sx={{ fontWeight: 600, fontSize: '0.9375rem' }}>
-                        {dict.dict_name}
+                        {dict.name}
                       </Typography>
                       <StatusBadge
                         status={dict.status}
@@ -874,14 +696,20 @@ const DictManagementPage: React.FC = () => {
                       variant='body2'
                       sx={{ color: 'text.secondary', fontFamily: 'monospace' }}
                     >
-                      {dict.dict_code}
+                      {dict.code}
+                    </Typography>
+                    <Typography
+                      variant='caption'
+                      sx={{ color: 'text.disabled' }}
+                    >
+                      {categoryLabels[dict.category] || dict.category}
                     </Typography>
                     <Box sx={{ display: 'flex', justifyContent: 'space-between', mt: 1 }}>
                       <Typography
                         variant='caption'
                         sx={{ color: 'text.disabled' }}
                       >
-                        {dict.item_count} 个字典项
+                        {dict.description || '-'}
                       </Typography>
                       <Box sx={{ display: 'flex', gap: 0.5 }}>
                         <Tooltip title='编辑'>
@@ -941,9 +769,9 @@ const DictManagementPage: React.FC = () => {
                     variant='subtitle2'
                     sx={{ fontWeight: 600 }}
                   >
-                    {selectedDict.dict_name}
+                    {selectedDict.name}
                     <Chip
-                      label={selectedDict.dict_code}
+                      label={selectedDict.code}
                       size='small'
                       sx={{ ml: 1, height: 20 }}
                       variant='outlined'
@@ -957,6 +785,12 @@ const DictManagementPage: React.FC = () => {
                       {selectedDict.description}
                     </Typography>
                   )}
+                  <Typography
+                    variant='caption'
+                    sx={{ color: 'text.disabled', mt: 0.5, display: 'block' }}
+                  >
+                    分类: {categoryLabels[selectedDict.category] || selectedDict.category}
+                  </Typography>
                 </Box>
                 <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
                   <FormControlLabel
@@ -1023,7 +857,6 @@ const DictManagementPage: React.FC = () => {
                         <TableCell sx={{ fontWeight: 'bold' }}>项目名称</TableCell>
                         <TableCell sx={{ fontWeight: 'bold' }}>项目值</TableCell>
                         <TableCell sx={{ fontWeight: 'bold' }}>状态</TableCell>
-                        <TableCell sx={{ fontWeight: 'bold' }}>备注</TableCell>
                         <TableCell
                           align='center'
                           sx={{ fontWeight: 'bold', width: 160 }}
@@ -1036,7 +869,7 @@ const DictManagementPage: React.FC = () => {
                       {filteredDictItems.length === 0 ? (
                         <TableRow>
                           <TableCell
-                            colSpan={7}
+                            colSpan={6}
                             sx={{ py: 8, textAlign: 'center' }}
                           >
                             <List
@@ -1065,13 +898,25 @@ const DictManagementPage: React.FC = () => {
                             <TableCell>{item.sort_order}</TableCell>
                             <TableCell>
                               <Typography sx={{ fontFamily: 'monospace' }}>
-                                {item.item_code}
+                                {item.code}
                               </Typography>
                             </TableCell>
-                            <TableCell sx={{ fontWeight: 500 }}>{item.item_name}</TableCell>
+                            <TableCell sx={{ fontWeight: 500 }}>
+                              <Box sx={{ display: 'flex', alignItems: 'center' }}>
+                                {item.parent_id && (
+                                  <Box
+                                    component='span'
+                                    sx={{ color: 'text.disabled', mr: 0.5 }}
+                                  >
+                                    └─
+                                  </Box>
+                                )}
+                                {item.name}
+                              </Box>
+                            </TableCell>
                             <TableCell>
                               <Chip
-                                label={item.item_value}
+                                label={item.value || '-'}
                                 size='small'
                                 variant='outlined'
                               />
@@ -1082,19 +927,6 @@ const DictManagementPage: React.FC = () => {
                                 label={item.status === 'active' ? '启用' : '禁用'}
                                 color={item.status === 'active' ? 'success' : 'default'}
                               />
-                            </TableCell>
-                            <TableCell>
-                              <Typography
-                                sx={{
-                                  color: 'text.secondary',
-                                  maxWidth: 200,
-                                  overflow: 'hidden',
-                                  textOverflow: 'ellipsis',
-                                  whiteSpace: 'nowrap',
-                                }}
-                              >
-                                {item.remark || '-'}
-                              </Typography>
                             </TableCell>
                             <TableCell align='center'>
                               <Box sx={{ display: 'flex', justifyContent: 'center', gap: 0.5 }}>
@@ -1173,31 +1005,57 @@ const DictManagementPage: React.FC = () => {
             <TextField
               size='small'
               label='字典编码 *'
-              value={newType.dict_code}
-              onChange={(e) => setNewType((prev) => ({ ...prev, dict_code: e.target.value }))}
+              value={newType.code || ''}
+              onChange={(e) => setNewType((prev) => ({ ...prev, code: e.target.value }))}
               placeholder='如: voucher_type'
               disabled={!!editingType}
             />
             <TextField
               size='small'
               label='字典名称 *'
-              value={newType.dict_name}
-              onChange={(e) => setNewType((prev) => ({ ...prev, dict_name: e.target.value }))}
+              value={newType.name || ''}
+              onChange={(e) => setNewType((prev) => ({ ...prev, name: e.target.value }))}
               placeholder='如: 凭证类型'
             />
+            <FormControl
+              size='small'
+              fullWidth
+            >
+              <InputLabel>分类</InputLabel>
+              <Select
+                value={newType.category || 'business'}
+                label='分类'
+                onChange={(e) => setNewType((prev) => ({ ...prev, category: e.target.value }))}
+              >
+                <MenuItem value='system'>系统字典</MenuItem>
+                <MenuItem value='iam'>IAM字典</MenuItem>
+                <MenuItem value='workflow'>审批字典</MenuItem>
+                <MenuItem value='hrm'>HRM字典</MenuItem>
+                <MenuItem value='crm'>CRM字典</MenuItem>
+                <MenuItem value='erp'>ERP字典</MenuItem>
+                <MenuItem value='wms'>WMS字典</MenuItem>
+                <MenuItem value='mes'>MES字典</MenuItem>
+                <MenuItem value='common'>通用字典</MenuItem>
+                <MenuItem value='notification'>通知字典</MenuItem>
+                <MenuItem value='audit'>审计字典</MenuItem>
+                <MenuItem value='business'>业务字典</MenuItem>
+                <MenuItem value='basic'>基础数据</MenuItem>
+                <MenuItem value='custom'>自定义字典</MenuItem>
+              </Select>
+            </FormControl>
             <TextField
               size='small'
               label='描述'
               multiline
               rows={2}
-              value={newType.description}
+              value={newType.description || ''}
               onChange={(e) => setNewType((prev) => ({ ...prev, description: e.target.value }))}
               placeholder='字典类型描述'
             />
             <FormControlLabel
               control={
                 <Switch
-                  checked={newType.status === 'active'}
+                  checked={(newType.status || 'active') === 'active'}
                   onChange={(e) =>
                     setNewType((prev) => ({
                       ...prev,
@@ -1206,7 +1064,7 @@ const DictManagementPage: React.FC = () => {
                   }
                 />
               }
-              label={newType.status === 'active' ? '启用' : '禁用'}
+              label={(newType.status || 'active') === 'active' ? '启用' : '禁用'}
             />
           </Box>
         </DialogContent>
@@ -1249,16 +1107,16 @@ const DictManagementPage: React.FC = () => {
               <TextField
                 size='small'
                 label='项目编码 *'
-                value={newItem.item_code}
-                onChange={(e) => setNewItem((prev) => ({ ...prev, item_code: e.target.value }))}
+                value={newItem.code || ''}
+                onChange={(e) => setNewItem((prev) => ({ ...prev, code: e.target.value }))}
                 placeholder='项目编码'
                 disabled={!!editingItem}
               />
               <TextField
                 size='small'
                 label='项目名称 *'
-                value={newItem.item_name}
-                onChange={(e) => setNewItem((prev) => ({ ...prev, item_name: e.target.value }))}
+                value={newItem.name || ''}
+                onChange={(e) => setNewItem((prev) => ({ ...prev, name: e.target.value }))}
                 placeholder='项目名称'
               />
             </Box>
@@ -1266,36 +1124,53 @@ const DictManagementPage: React.FC = () => {
               <TextField
                 size='small'
                 label='项目值'
-                value={newItem.item_value}
-                onChange={(e) => setNewItem((prev) => ({ ...prev, item_value: e.target.value }))}
+                value={newItem.value || ''}
+                onChange={(e) => setNewItem((prev) => ({ ...prev, value: e.target.value }))}
                 placeholder='项目值'
               />
               <TextField
                 size='small'
                 label='排序'
                 type='number'
-                value={newItem.sort_order}
+                value={newItem.sort_order || 0}
                 onChange={(e) =>
                   setNewItem((prev) => ({
                     ...prev,
-                    sort_order: parseInt(e.target.value) || 1,
+                    sort_order: parseInt(e.target.value) || 0,
                   }))
                 }
               />
             </Box>
-            <TextField
+            <FormControl
               size='small'
-              label='备注'
-              multiline
-              rows={2}
-              value={newItem.remark}
-              onChange={(e) => setNewItem((prev) => ({ ...prev, remark: e.target.value }))}
-              placeholder='备注说明'
-            />
+              fullWidth
+            >
+              <InputLabel>上级字典项</InputLabel>
+              <Select
+                value={newItem.parent_id || ''}
+                label='上级字典项'
+                onChange={(e) => {
+                  const parentId = e.target.value || undefined;
+                  setNewItem((prev) => ({ ...prev, parent_id: parentId }));
+                }}
+              >
+                <MenuItem value=''>无（顶级）</MenuItem>
+                {parentItems
+                  .filter((item) => item.id !== editingItem?.id)
+                  .map((item) => (
+                    <MenuItem
+                      key={item.id}
+                      value={item.id}
+                    >
+                      {item.name}
+                    </MenuItem>
+                  ))}
+              </Select>
+            </FormControl>
             <FormControlLabel
               control={
                 <Switch
-                  checked={newItem.status === 'active'}
+                  checked={(newItem.status || 'active') === 'active'}
                   onChange={(e) =>
                     setNewItem((prev) => ({
                       ...prev,
@@ -1304,7 +1179,7 @@ const DictManagementPage: React.FC = () => {
                   }
                 />
               }
-              label={newItem.status === 'active' ? '启用' : '禁用'}
+              label={(newItem.status || 'active') === 'active' ? '启用' : '禁用'}
             />
           </Box>
         </DialogContent>

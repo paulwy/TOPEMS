@@ -32,7 +32,7 @@ import type {
   ListParams,
 } from '@/api/mes';
 import { mesApi } from '@/api/mes';
-import { useAppStore } from '@/store';
+import { useNotificationStore } from '@/store';
 import { LoadingSpinner } from '@topems/shared-components';
 import {
   ListPageTemplate,
@@ -75,7 +75,7 @@ const MaterialIssuePage: React.FC = () => {
     remark: '',
   });
 
-  const { addNotification } = useAppStore();
+  const { addNotification } = useNotificationStore();
 
   const loadIssues = useCallback(async () => {
     try {

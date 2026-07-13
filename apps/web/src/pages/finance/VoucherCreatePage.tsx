@@ -31,7 +31,7 @@ import {
   type AccountingSubject,
   type VoucherItemRequest,
 } from '@/api/erp';
-import { useAppStore } from '@/store';
+import { useNotificationStore } from '@/store';
 import { apiLogger } from '@/utils/logger';
 
 interface FormSection {
@@ -51,7 +51,7 @@ interface FormSection {
 
 const VoucherCreatePage: React.FC = () => {
   const navigate = useNavigate();
-  const addNotification = useAppStore((state) => state.addNotification);
+  const addNotification = useNotificationStore((state) => state.addNotification);
 
   const [subjects, setSubjects] = useState<AccountingSubject[]>([]);
   const [loading, setLoading] = useState(false);

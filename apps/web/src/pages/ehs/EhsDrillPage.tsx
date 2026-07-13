@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useMemo, useCallback } from 'react';
+import React, { useState, useMemo } from 'react';
 import {
   Box,
   Chip,
@@ -17,22 +17,20 @@ import { ListPageTemplate, type ColumnDef, type RowAction } from '@/components/t
 import { ehsApi } from '@/api/ehs';
 import { PageContainer } from '@/components/common/PageContainerV2';
 import type { DrillRecord } from '@/api/ehs';
-import { useAppStore } from '@/store';
+import { useNotificationStore } from '@/store';
 import { apiLogger } from '@/utils/logger';
 import { designTokens } from '@/theme/tokens';
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 
 const ct = designTokens.colors;
 
 const EhsDrillPage: React.FC = () => {
-  const [drills, setDrills] = useState<DrillRecord[]>([]);
-  const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState('');
   const [typeFilter, setTypeFilter] = useState('all');
   const [statusFilter, setStatusFilter] = useState('all');
   const [showCreateModal, setShowCreateModal] = useState(false);
   const [showDetailModal, setShowDetailModal] = useState(false);
   const [selectedDrill, setSelectedDrill] = useState<DrillRecord | null>(null);
-  const [detailLoading, setDetailLoading] = useState(false);
   const [currentPage, setCurrentPage] = useState(0);
   const pageSize = 10;
   const [formData, setFormData] = useState({
@@ -47,7 +45,8 @@ const EhsDrillPage: React.FC = () => {
     issues: '',
   });
 
-  const addNotification = useAppStore((state) => state.addNotification);
+  const addNotification = useNotificationStore((state) => state.addNotification);
+  const queryClient = useQueryClient();
 
   const translateStatus = (status: string) => {
     const statusMap: Record<string, string> = {
@@ -58,53 +57,60 @@ const EhsDrillPage: React.FC = () => {
     return statusMap[status] || status;
   };
 
-  const loadDrills = useCallback(async () => {
-    try {
-      setLoading(true);
+  const drillsQuery = useQuery<DrillRecord[]>({
+    queryKey: ['ehs-drills'],
+    queryFn: async () => {
       const response = await ehsApi.listDrills();
       if (response.success && response.data) {
         const data = response.data as any;
         const drillsData = Array.isArray(data) ? data : data.data || [];
-        const adapted = drillsData.map((item: { [key: string]: unknown }) => ({
+        return drillsData.map((item: { [key: string]: unknown }) => ({
           ...item,
           status: translateStatus(item.status as string),
         }));
-        setDrills(adapted);
-      } else {
-        setDrills([]);
       }
-    } catch (err: unknown) {
-      apiLogger.error('加载演练记录数据失败:', err);
-      addNotification({ title: '错误', message: '加载演练记录失败', type: 'error' });
-      setDrills([]);
-    } finally {
-      setLoading(false);
-    }
-  }, [addNotification]);
+      return [];
+    },
+    staleTime: 5 * 60 * 1000,
+  });
 
-  useEffect(() => {
-    loadDrills();
-  }, [loadDrills]);
+  const drills = drillsQuery.data || [];
+  const loading = drillsQuery.isLoading;
 
-  const loadDrillDetail = async (drillId: string) => {
-    try {
-      setDetailLoading(true);
-      const response = await ehsApi.getDrill(drillId);
+  const drillDetailQuery = useQuery({
+    queryKey: ['ehs-drill-detail', selectedDrill?.id],
+    queryFn: async () => {
+      if (!selectedDrill?.id) return null;
+      const response = await ehsApi.getDrill(selectedDrill.id);
       if (response.success && response.data) {
         const drillData = response.data as any;
-        const adapted = {
+        return {
           ...drillData,
           status: translateStatus(drillData.status),
         };
-        setSelectedDrill(adapted);
       }
-    } catch (err: unknown) {
-      apiLogger.error('加载演练记录详情失败:', err);
-      addNotification({ title: '错误', message: '加载详情失败', type: 'error' });
-    } finally {
-      setDetailLoading(false);
-    }
-  };
+      return null;
+    },
+    enabled: !!selectedDrill?.id && showDetailModal,
+    staleTime: 5 * 60 * 1000,
+  });
+
+  const detailLoading = drillDetailQuery.isFetching;
+
+  const createDrillMutation = useMutation({
+    mutationFn: async (data: any) => {
+      return ehsApi.createDrill(data);
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['ehs-drills'] });
+      addNotification({ title: '成功', message: '演练记录创建成功', type: 'success' });
+      setShowCreateModal(false);
+    },
+    onError: (err) => {
+      addNotification({ title: '错误', message: '创建失败', type: 'error' });
+      apiLogger.error('创建演练记录失败:', err);
+    },
+  });
 
   const getStatusBadge = (status: string) => {
     const statusMap: Record<string, { bg: string; color: string }> = {
@@ -151,10 +157,9 @@ const EhsDrillPage: React.FC = () => {
     [drills]
   );
 
-  const handleView = async (drill: DrillRecord) => {
+  const handleView = (drill: DrillRecord) => {
     setSelectedDrill(drill);
     setShowDetailModal(true);
-    await loadDrillDetail(drill.id);
   };
 
   const handleCreate = () => {
@@ -172,28 +177,20 @@ const EhsDrillPage: React.FC = () => {
     setShowCreateModal(true);
   };
 
-  const handleSave = async () => {
-    try {
-      await ehsApi.createDrill({
-        drill_no: formData.drill_no,
-        drill_name: formData.name,
-        drill_date: formData.date || null,
-        participants: formData.participants
-          .split(',')
-          .map((s) => s.trim())
-          .filter((s) => s),
-        location: formData.location || null,
-        duration_hours: parseInt(formData.duration) || 0,
-        summary: formData.evaluation || null,
-        issues_found: formData.issues || null,
-      });
-      addNotification({ title: '成功', message: '演练记录创建成功', type: 'success' });
-      setShowCreateModal(false);
-      loadDrills();
-    } catch (err: unknown) {
-      addNotification({ title: '错误', message: '创建失败', type: 'error' });
-      apiLogger.error('创建演练记录失败:', err);
-    }
+  const handleSave = () => {
+    createDrillMutation.mutate({
+      drill_no: formData.drill_no,
+      drill_name: formData.name,
+      drill_date: formData.date || null,
+      participants: formData.participants
+        .split(',')
+        .map((s) => s.trim())
+        .filter((s) => s),
+      location: formData.location || null,
+      duration_hours: parseInt(formData.duration) || 0,
+      summary: formData.evaluation || null,
+      issues_found: formData.issues || null,
+    });
   };
 
   const columns: ColumnDef<DrillRecord>[] = [
@@ -366,7 +363,7 @@ const EhsDrillPage: React.FC = () => {
           }
         }}
         rowActions={rowActions}
-        onRefresh={loadDrills}
+        onRefresh={() => drillsQuery.refetch()}
         showRowNumber
         columnConfigurable
         persistColumnConfig
@@ -497,7 +494,7 @@ const EhsDrillPage: React.FC = () => {
               <Typography sx={{ color: 'slate.600' }}>加载中...</Typography>
             </Box>
           ) : (
-            selectedDrill && (
+            (drillDetailQuery.data || selectedDrill) && (
               <Box
                 sx={{
                   pt: 2,
@@ -510,19 +507,23 @@ const EhsDrillPage: React.FC = () => {
                   <Typography sx={{ color: 'text.secondary', fontSize: '0.875rem' }}>
                     演练编号
                   </Typography>
-                  <Typography sx={{ fontWeight: 500 }}>{selectedDrill.drill_no}</Typography>
+                  <Typography sx={{ fontWeight: 500 }}>
+                    {(drillDetailQuery.data || selectedDrill)?.drill_no}
+                  </Typography>
                 </Box>
                 <Box>
                   <Typography sx={{ color: 'text.secondary', fontSize: '0.875rem' }}>
                     演练名称
                   </Typography>
-                  <Typography>{selectedDrill.drill_name}</Typography>
+                  <Typography>{(drillDetailQuery.data || selectedDrill)?.drill_name}</Typography>
                 </Box>
                 <Box>
                   <Typography sx={{ color: 'text.secondary', fontSize: '0.875rem' }}>
                     状态
                   </Typography>
-                  <Box sx={{ mt: 0.5 }}>{getStatusBadge(selectedDrill.status)}</Box>
+                  <Box sx={{ mt: 0.5 }}>
+                    {getStatusBadge((drillDetailQuery.data || selectedDrill)?.status || '')}
+                  </Box>
                 </Box>
                 <Box>
                   <Typography sx={{ color: 'text.secondary', fontSize: '0.875rem' }}>
@@ -530,7 +531,7 @@ const EhsDrillPage: React.FC = () => {
                   </Typography>
                   <Typography sx={{ display: 'flex', alignItems: 'center', gap: 0.5 }}>
                     <Calendar style={{ width: 16, height: 16 }} />
-                    {selectedDrill.drill_date || '-'}
+                    {(drillDetailQuery.data || selectedDrill)?.drill_date || '-'}
                   </Typography>
                 </Box>
                 <Box>
@@ -539,16 +540,16 @@ const EhsDrillPage: React.FC = () => {
                   </Typography>
                   <Typography sx={{ display: 'flex', alignItems: 'center', gap: 0.5 }}>
                     <Users style={{ width: 16, height: 16 }} />
-                    {Array.isArray(selectedDrill.participants)
-                      ? selectedDrill.participants.join(', ')
-                      : selectedDrill.participants || '-'}
+                    {Array.isArray((drillDetailQuery.data || selectedDrill)?.participants)
+                      ? (drillDetailQuery.data || selectedDrill)?.participants?.join(', ')
+                      : (drillDetailQuery.data || selectedDrill)?.participants || '-'}
                   </Typography>
                 </Box>
                 <Box>
                   <Typography sx={{ color: 'text.secondary', fontSize: '0.875rem' }}>
                     演练地点
                   </Typography>
-                  <Typography>{selectedDrill.location || '-'}</Typography>
+                  <Typography>{(drillDetailQuery.data || selectedDrill)?.location || '-'}</Typography>
                 </Box>
                 <Box>
                   <Typography sx={{ color: 'text.secondary', fontSize: '0.875rem' }}>
@@ -556,20 +557,20 @@ const EhsDrillPage: React.FC = () => {
                   </Typography>
                   <Typography sx={{ display: 'flex', alignItems: 'center', gap: 0.5 }}>
                     <Clock style={{ width: 16, height: 16 }} />
-                    {selectedDrill.duration_hours || '-'}小时
+                    {(drillDetailQuery.data || selectedDrill)?.duration_hours || '-'}小时
                   </Typography>
                 </Box>
                 <Box sx={{ gridColumn: '1 / -1' }}>
                   <Typography sx={{ color: 'text.secondary', fontSize: '0.875rem' }}>
                     演练评估
                   </Typography>
-                  <Typography>{selectedDrill.summary || '-'}</Typography>
+                  <Typography>{(drillDetailQuery.data || selectedDrill)?.summary || '-'}</Typography>
                 </Box>
                 <Box sx={{ gridColumn: '1 / -1' }}>
                   <Typography sx={{ color: 'text.secondary', fontSize: '0.875rem' }}>
                     发现问题
                   </Typography>
-                  <Typography>{selectedDrill.issues_found || '-'}</Typography>
+                  <Typography>{(drillDetailQuery.data || selectedDrill)?.issues_found || '-'}</Typography>
                 </Box>
               </Box>
             )

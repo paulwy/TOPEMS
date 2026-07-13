@@ -19,7 +19,7 @@ import SupplierDetailPage from '../wms/SupplierDetailPage';
 import SupplierManagementPage from '../wms/SupplierManagementPage';
 import TransferPage from '../wms/TransferPage';
 import WarehouseManagementPage from '../wms/WarehouseManagementPage';
-import { useAppStore } from '@/store';
+import { useNotificationStore, useAuthStore } from '@/store';
 
 const queryClient = new QueryClient();
 
@@ -227,19 +227,24 @@ vi.mock('@/api/wms', () => ({
 }));
 
 vi.mock('@/store', () => ({
-  useAppStore: vi.fn((selector?: any) =>
+  useNotificationStore: vi.fn((selector?: any) =>
     selector
       ? selector({
           addNotification: vi.fn(),
           notifications: [],
-          user: { permissions: ['wms:read'] },
-          theme: 'light',
         })
       : {
           addNotification: vi.fn(),
           notifications: [],
-          user: { permissions: ['wms:read'] },
-          theme: 'light',
+        }
+  ),
+  useAuthStore: vi.fn((selector?: any) =>
+    selector
+      ? selector({
+          user: null,
+        })
+      : {
+          user: null,
         }
   ),
 }));

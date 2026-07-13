@@ -40,7 +40,7 @@ import {
 } from 'lucide-react';
 import { ListPageTemplate, type ColumnDef, type RowAction } from '@/components/templates';
 import { PageContainer } from '@/components/common';
-import { useAppStore } from '@/store';
+import { useNotificationStore } from '@/store';
 import { type Plugin, fetchAllPluginInfo, PLUGIN_REGISTRY } from '@/api/plugin';
 import { usePluginStore } from '@/store/pluginStore';
 import { extractErrorMessage } from '@/utils/errors';
@@ -114,9 +114,10 @@ const PluginManagementPage: React.FC = () => {
     disablePlugin,
     uninstallPlugin,
     installPlugin,
+    upgradePlugin,
   } = usePluginStore();
 
-  const addNotification = useAppStore((state) => state.addNotification);
+  const addNotification = useNotificationStore((state) => state.addNotification);
 
   const [plugins, setPlugins] = useState<Plugin[]>([]);
   const [searchQuery, setSearchQuery] = useState('');
@@ -203,17 +204,37 @@ const PluginManagementPage: React.FC = () => {
     });
   };
 
+  const [uninstallTier, setUninstallTier] = useState<'disable' | 'uninstall' | 'delete'>('uninstall');
+
+  const getUninstallMessage = (pluginCode: string, tier: 'disable' | 'uninstall' | 'delete') => {
+    switch (tier) {
+      case 'disable':
+        return `确定要禁用 "${pluginCode}" 插件吗？禁用后数据将保留，可重新启用。`;
+      case 'uninstall':
+        return `确定要卸载 "${pluginCode}" 插件吗？数据将保留90天，可重新安装恢复。`;
+      case 'delete':
+        return `确定要彻底删除 "${pluginCode}" 插件吗？此操作将删除所有相关数据，无法恢复！`;
+      default:
+        return `确定要卸载 "${pluginCode}" 插件吗？`;
+    }
+  };
+
   const handleUninstall = async (pluginCode: string) => {
+    setUninstallTier('uninstall');
     setConfirmDialog({
       open: true,
       title: '卸载插件',
-      message: `确定要卸载 "${pluginCode}" 插件吗？此操作无法撤销。`,
+      message: getUninstallMessage(pluginCode, 'uninstall'),
       action: async () => {
-        const success = await uninstallPlugin(pluginCode);
+        const success = await uninstallPlugin(pluginCode, uninstallTier);
         if (success) {
           addNotification({
-            title: '卸载成功',
-            message: `${pluginCode} 插件已卸载`,
+            title: '操作成功',
+            message: uninstallTier === 'delete' 
+              ? `${pluginCode} 插件已彻底删除` 
+              : uninstallTier === 'disable'
+                ? `${pluginCode} 插件已禁用`
+                : `${pluginCode} 插件已卸载`,
             type: 'success',
           });
           loadPlugins();
@@ -408,7 +429,24 @@ const PluginManagementPage: React.FC = () => {
       {
         id: 'version',
         label: '版本',
-        width: 100,
+        width: 150,
+        render: (row) => {
+          const marketplacePlugin = allMarketplacePlugins.find((p) => p.code === row.code);
+          const hasUpdate = marketplacePlugin && marketplacePlugin.latest_version !== row.version;
+          return (
+            <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+              <code style={{ fontSize: 12 }}>{row.version}</code>
+              {hasUpdate && (
+                <Chip
+                  label={`${marketplacePlugin?.latest_version}`}
+                  size='small'
+                  color='success'
+                  variant='outlined'
+                />
+              )}
+            </Box>
+          );
+        },
       },
       {
         id: 'plugin_type',
@@ -446,6 +484,26 @@ const PluginManagementPage: React.FC = () => {
     []
   );
 
+  const handleUpgrade = async (pluginCode: string) => {
+    setConfirmDialog({
+      open: true,
+      title: '升级插件',
+      message: `确定要升级 "${pluginCode}" 插件吗？`,
+      action: async () => {
+        const success = await upgradePlugin(pluginCode);
+        if (success) {
+          addNotification({
+            title: '升级成功',
+            message: `${pluginCode} 插件已升级`,
+            type: 'success',
+          });
+          loadPlugins();
+        }
+        setConfirmDialog((prev) => ({ ...prev, open: false }));
+      },
+    });
+  };
+
   const rowActions: RowAction<Plugin>[] = [
     {
       label: '启用',
@@ -460,6 +518,16 @@ const PluginManagementPage: React.FC = () => {
       onClick: (row) => handleDisable(row.code),
       color: 'warning',
       show: (row) => row.runtime_status === 'running',
+    },
+    {
+      label: '升级',
+      icon: <Download size={16} />,
+      onClick: (row) => handleUpgrade(row.code),
+      color: 'primary',
+      show: (row) => {
+        const marketplacePlugin = allMarketplacePlugins.find((p) => p.code === row.code);
+        return !!marketplacePlugin && marketplacePlugin.latest_version !== row.version;
+      },
     },
     {
       label: '卸载',
@@ -545,7 +613,59 @@ const PluginManagementPage: React.FC = () => {
       >
         <DialogTitle>{confirmDialog.title}</DialogTitle>
         <DialogContent>
-          <Typography>{confirmDialog.message}</Typography>
+          <Typography sx={{ mb: 3 }}>{confirmDialog.message}</Typography>
+          <Box sx={{ mb: 2 }}>
+            <Typography variant='body2' sx={{ fontWeight: 500, mb: 1 }}>
+              卸载级别：
+            </Typography>
+            <Stack direction='row' spacing={2}>
+              <Button
+                variant={uninstallTier === 'disable' ? 'contained' : 'outlined'}
+                size='small'
+                onClick={() => {
+                  setUninstallTier('disable');
+                  setConfirmDialog((prev) => ({
+                    ...prev,
+                    message: getUninstallMessage(prev.message.match(/"([^"]+)"/)?.[1] || '', 'disable'),
+                  }));
+                }}
+              >
+                禁用
+              </Button>
+              <Button
+                variant={uninstallTier === 'uninstall' ? 'contained' : 'outlined'}
+                size='small'
+                onClick={() => {
+                  setUninstallTier('uninstall');
+                  setConfirmDialog((prev) => ({
+                    ...prev,
+                    message: getUninstallMessage(prev.message.match(/"([^"]+)"/)?.[1] || '', 'uninstall'),
+                  }));
+                }}
+              >
+                卸载
+              </Button>
+              <Button
+                variant={uninstallTier === 'delete' ? 'contained' : 'outlined'}
+                size='small'
+                color='error'
+                onClick={() => {
+                  setUninstallTier('delete');
+                  setConfirmDialog((prev) => ({
+                    ...prev,
+                    message: getUninstallMessage(prev.message.match(/"([^"]+)"/)?.[1] || '', 'delete'),
+                  }));
+                }}
+              >
+                彻底删除
+              </Button>
+            </Stack>
+          </Box>
+          <Typography variant='caption' color='textSecondary'>
+            {uninstallTier === 'disable' && '禁用：仅停止插件运行，数据完整保留'}
+            {uninstallTier === 'uninstall' && '卸载：移除插件安装记录，数据保留90天'}
+            {uninstallTier === 'delete' && '彻底删除：删除所有数据，不可恢复'}
+          </Typography>
         </DialogContent>
         <DialogActions>
           <Button onClick={() => setConfirmDialog((prev) => ({ ...prev, open: false }))}>
@@ -554,9 +674,9 @@ const PluginManagementPage: React.FC = () => {
           <Button
             onClick={confirmDialog.action}
             variant='contained'
-            color='error'
+            color={uninstallTier === 'delete' ? 'error' : 'primary'}
           >
-            确认
+            {uninstallTier === 'delete' ? '确认删除' : '确认'}
           </Button>
         </DialogActions>
       </Dialog>

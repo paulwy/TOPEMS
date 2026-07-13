@@ -350,6 +350,8 @@ Step 6: 验证
 
 ### 3.3 compatibility.tsx 删除计划
 
+> ✅ **已完成**：`compatibility.tsx` 已在 V5.8 阶段删除。以下为历史记录。
+
 `compatibility.tsx`（2276 行、233 条重定向）的删除时机：
 
 1. **全部 30 个模块迁移完成后**，执行删除

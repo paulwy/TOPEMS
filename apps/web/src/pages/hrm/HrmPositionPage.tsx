@@ -9,7 +9,7 @@ import {
   type PaginatedResult,
   type ListParams,
 } from '@/api/hrm';
-import { useAppStore } from '../../store';
+import { useNotificationStore } from '../../store';
 import { ListPageTemplate, type ColumnDef, type RowAction } from '@/components/templates';
 import { ModeToggle } from '@/components/theme/ModeToggle';
 import {
@@ -25,7 +25,7 @@ interface PositionManagementPageProps {}
 
 const PositionManagementPage: React.FC<PositionManagementPageProps> = () => {
   const theme = useTheme();
-  const addNotification = useAppStore((state) => state.addNotification);
+  const addNotification = useNotificationStore((state) => state.addNotification);
 
   const [loading, setLoading] = useState(false);
   const [data, setData] = useState<PaginatedResult<Position>>({
@@ -444,6 +444,15 @@ const PositionManagementPage: React.FC<PositionManagementPageProps> = () => {
               />
             </Box>
           }
+          exportable
+          exportFileName='岗位列表'
+          persistFilters
+          persistSearch
+          emptyActionButton={{
+            label: '新增岗位',
+            icon: <Plus size={16} />,
+            onClick: handleAdd,
+          }}
         />
       </Box>
 

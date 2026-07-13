@@ -22,7 +22,7 @@ import {
   type ProjectFinancialSummary,
   type DepartmentFinancialSummary,
 } from '@/api/erp';
-import { useAppStore } from '@/store';
+import { useNotificationStore } from '@/store';
 import {
   Box,
   Button,
@@ -48,7 +48,7 @@ const ct = designTokens.colors;
 
 const FinanceReportsPage: React.FC = () => {
   const theme = useTheme();
-  const addNotification = useAppStore((state) => state.addNotification);
+  const addNotification = useNotificationStore((state) => state.addNotification);
 
   const [period, setPeriod] = useState<string>('');
   const [activeTab, setActiveTab] = useState('overview');

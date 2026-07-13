@@ -15,22 +15,27 @@ import SrmScoringDimensionPage from '../srm/SrmScoringDimensionPage';
 import SrmSupplierPage from '../srm/SrmSupplierPage';
 import SrmSupplierProductPage from '../srm/SrmSupplierProductPage';
 import SupplierPortalPage from '../srm/SupplierPortalPage';
-import { useAppStore } from '@/store';
+import { useNotificationStore, useAuthStore } from '@/store';
 
 vi.mock('@/store', () => ({
-  useAppStore: vi.fn((selector?: any) =>
+  useNotificationStore: vi.fn((selector?: any) =>
     selector
       ? selector({
           addNotification: vi.fn(),
           notifications: [],
-          user: { permissions: ['srm:read'] },
-          theme: 'light',
         })
       : {
           addNotification: vi.fn(),
           notifications: [],
-          user: { permissions: ['srm:read'] },
-          theme: 'light',
+        }
+  ),
+  useAuthStore: vi.fn((selector?: any) =>
+    selector
+      ? selector({
+          user: null,
+        })
+      : {
+          user: null,
         }
   ),
 }));

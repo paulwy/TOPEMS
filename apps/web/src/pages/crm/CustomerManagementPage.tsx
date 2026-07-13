@@ -1,4 +1,4 @@
-import React, { useState, useMemo } from 'react';
+import React, { useState, useMemo, useCallback } from 'react';
 import {
   Dialog,
   DialogTitle,
@@ -10,6 +10,7 @@ import {
   Grid,
   OutlinedInput,
 } from '@mui/material';
+import { StatusBadge } from '@topems/shared-components';
 import {
   FormField,
   FormSelect,
@@ -19,7 +20,7 @@ import {
 } from '@/components/common';
 import type { Customer, CreateCustomerRequest, UpdateCustomerRequest, Tag } from '@/api/crm';
 import { crmApi } from '@/api/crm';
-import { useAppStore } from '@/store';
+import { useNotificationStore } from '@/store';
 import { logger } from '@/utils/logger';
 import { Plus, Edit, Trash2, Eye, Download, Upload, Tag as TagIcon, Users } from 'lucide-react';
 import { CRM_PATHS } from '@/modules/crm/config';
@@ -121,7 +122,7 @@ const ratingOptions = [
 
 const CustomerManagementPage: React.FC = () => {
   const navigate = useNavigate();
-  const { addNotification } = useAppStore();
+  const { addNotification } = useNotificationStore();
   const queryClient = useQueryClient();
 
   const [searchTerm, setSearchTerm] = useState('');
@@ -159,6 +160,7 @@ const CustomerManagementPage: React.FC = () => {
     pageSize: 20,
     total: 0,
   });
+  const [selectedIds, setSelectedIds] = useState<string[]>([]);
 
   // React Query - 客户列表
   const customersQuery = useQuery({
@@ -304,6 +306,29 @@ const CustomerManagementPage: React.FC = () => {
     }
   };
 
+  const handleBatchDelete = useCallback(async () => {
+    if (selectedIds.length === 0) return;
+    try {
+      for (const id of selectedIds) {
+        await crmApi.customers.delete(id);
+      }
+      addNotification({
+        type: 'success',
+        title: '批量删除成功',
+        message: `已删除 ${selectedIds.length} 个客户`,
+      });
+      setSelectedIds([]);
+      queryClient.invalidateQueries({ queryKey: ['crm-customers'] });
+    } catch (error: unknown) {
+      logger.error('批量删除失败:', error);
+      addNotification({
+        type: 'error',
+        title: '批量删除失败',
+        message: '部分客户删除失败',
+      });
+    }
+  }, [selectedIds, addNotification, queryClient]);
+
   const handleEdit = (customer: Customer) => {
     setSelectedCustomer(customer);
     setFormData({
@@ -419,10 +444,11 @@ const CustomerManagementPage: React.FC = () => {
     };
     const s = statusMap[status] || { label: status, color: 'default' };
     return (
-      <Chip
+      <StatusBadge
+        status={status}
         label={s.label}
         color={s.color}
-        size='small'
+        size='sm'
       />
     );
   };
@@ -446,10 +472,11 @@ const CustomerManagementPage: React.FC = () => {
       color: 'default',
     };
     return (
-      <Chip
+      <StatusBadge
+        status={customerType}
         label={t.label}
         color={t.color}
-        size='small'
+        size='sm'
       />
     );
   };
@@ -470,10 +497,11 @@ const CustomerManagementPage: React.FC = () => {
     if (!rating) return '-';
     const r = ratingMap[rating] || { label: rating, color: 'default' };
     return (
-      <Chip
+      <StatusBadge
+        status={rating}
         label={r.label}
         color={r.color}
-        size='small'
+        size='sm'
       />
     );
   };
@@ -667,16 +695,23 @@ const CustomerManagementPage: React.FC = () => {
               setPagination((prev) => ({ ...prev, pageSize, page: 0 }));
             },
           }}
+          selectable
+          selectedIds={selectedIds}
+          onSelectionChange={(ids) => setSelectedIds(ids.map(String))}
+          batchActions={[
+            {
+              label: '批量删除',
+              icon: <Trash2 size={16} />,
+              color: 'error',
+              confirm: true,
+              confirmMessage: '确定要删除选中的客户吗？',
+              onClick: handleBatchDelete,
+            },
+          ]}
           actions={[
             {
               label: '导入',
               icon: <Upload size={18} />,
-              onClick: () => {},
-              variant: 'outlined',
-            },
-            {
-              label: '导出',
-              icon: <Download size={18} />,
               onClick: () => {},
               variant: 'outlined',
             },
@@ -698,6 +733,18 @@ const CustomerManagementPage: React.FC = () => {
               buttonText=''
             />
           }
+          exportable
+          exportFileName='客户列表'
+          persistFilters
+          persistSearch
+          emptyActionButton={{
+            label: '新建客户',
+            icon: <Plus size={18} />,
+            onClick: () => {
+              resetForm();
+              setShowDialog(true);
+            },
+          }}
         />
 
         <Dialog

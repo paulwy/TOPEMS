@@ -8,51 +8,51 @@ import type {
   TenantPlugin,
 } from './types';
 
-const API_BASE = '/api/core/plugins';
+const API_BASE = '/api/core/plugin';
 
 export const pluginApi = {
   listMarketplace: async (): Promise<ApiResponse<Plugin[]>> => {
-    const response = await pluginAxios.get(API_BASE);
+    const response = await pluginAxios.get(`${API_BASE}/marketplace/list`);
     return response.data;
   },
 
   listInstalled: async (): Promise<ApiResponse<TenantInstalledPlugin[]>> => {
-    const response = await pluginAxios.get(`${API_BASE}/my`);
+    const response = await pluginAxios.get(`${API_BASE}/tenant/my/plugins`);
     return response.data;
   },
 
   getDetails: async (pluginCode: string): Promise<ApiResponse<PluginDetails>> => {
-    const response = await pluginAxios.get(`${API_BASE}/${pluginCode}`);
+    const response = await pluginAxios.get(`${API_BASE}/plugins/${pluginCode}`);
     return response.data;
   },
 
   install: async (pluginCode: string): Promise<ApiResponse<TenantPlugin>> => {
-    const response = await pluginAxios.post(`${API_BASE}/${pluginCode}/install`);
+    const response = await pluginAxios.post(`${API_BASE}/tenant/my/plugins/${pluginCode}/install`);
     return response.data;
   },
 
-  uninstall: async (pluginCode: string): Promise<ApiResponse<boolean>> => {
-    const response = await pluginAxios.post(`${API_BASE}/${pluginCode}/uninstall`);
+  uninstall: async (pluginCode: string, tier?: 'disable' | 'uninstall' | 'delete'): Promise<ApiResponse<boolean>> => {
+    const response = await pluginAxios.post(`${API_BASE}/tenant/my/plugins/${pluginCode}/uninstall`, { uninstall_tier: tier || 'uninstall' });
     return response.data;
   },
 
   enable: async (pluginCode: string): Promise<ApiResponse<TenantPlugin>> => {
-    const response = await pluginAxios.post(`${API_BASE}/${pluginCode}/enable`);
+    const response = await pluginAxios.post(`${API_BASE}/tenant/my/plugins/${pluginCode}/activate`);
     return response.data;
   },
 
   disable: async (pluginCode: string): Promise<ApiResponse<TenantPlugin>> => {
-    const response = await pluginAxios.post(`${API_BASE}/${pluginCode}/disable`);
+    const response = await pluginAxios.post(`${API_BASE}/tenant/my/plugins/${pluginCode}/deactivate`);
     return response.data;
   },
 
   upgrade: async (pluginCode: string, version?: string): Promise<ApiResponse<TenantPlugin>> => {
-    const response = await pluginAxios.post(`${API_BASE}/${pluginCode}/upgrade`, { version });
+    const response = await pluginAxios.post(`${API_BASE}/tenant/my/plugins/${pluginCode}/install`, { version });
     return response.data;
   },
 
   getUpgradeHistory: async (pluginCode: string): Promise<ApiResponse<PluginVersion[]>> => {
-    const response = await pluginAxios.get(`${API_BASE}/${pluginCode}/upgrade-history`);
+    const response = await pluginAxios.get(`${API_BASE}/plugins/${pluginCode}/versions`);
     return response.data;
   },
 };

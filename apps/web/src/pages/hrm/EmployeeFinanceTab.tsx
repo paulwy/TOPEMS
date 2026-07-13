@@ -5,7 +5,7 @@
 
 import React, { useState, useMemo } from 'react';
 import { logger } from '@/utils/logger';
-import { useAppStore } from '@/store';
+import { useNotificationStore } from '@/store';
 import { useEmployeeFinanceInfo, useUpdateEmployeeFinanceInfo } from '@/hooks/useHrmFinance';
 import {
   TextField,

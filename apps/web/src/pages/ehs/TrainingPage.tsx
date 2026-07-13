@@ -23,7 +23,7 @@ import { ListPageTemplate, type ColumnDef } from '@/components/templates';
 import { ehsApi } from '@/api/ehs';
 import { PageContainer } from '@/components/common/PageContainerV2';
 import type { TrainingPlan, TrainingRecord, TrainingCertificate } from '@/api/ehs';
-import { useAppStore } from '@/store';
+import { useNotificationStore } from '@/store';
 import { apiLogger } from '@/utils/logger';
 import { designTokens } from '@/theme/tokens';
 
@@ -38,7 +38,7 @@ const TrainingPage: React.FC = () => {
   const [searchTerm, setSearchTerm] = useState('');
   const [statusFilter, setStatusFilter] = useState('all');
   const [showCreateModal, setShowCreateModal] = useState(false);
-  const addNotification = useAppStore((state) => state.addNotification);
+  const addNotification = useNotificationStore((state) => state.addNotification);
 
   const [planFormData, setPlanFormData] = useState({
     title: '',

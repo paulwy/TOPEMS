@@ -8,7 +8,7 @@ import InventoryManagementPage from '../erp/InventoryManagementPage';
 import CustomerManagementPage from '../erp/CustomerManagementPage';
 import SupplierManagementPage from '../erp/SupplierManagementPage';
 import { erpApi } from '@/api/erp';
-import { useAppStore } from '@/store';
+import { useNotificationStore, useAuthStore } from '@/store';
 
 vi.mock('@/api/erp', () => ({
   erpApi: {
@@ -73,19 +73,24 @@ vi.mock('@/api/erp', () => ({
 }));
 
 vi.mock('@/store', () => ({
-  useAppStore: vi.fn((selector?: any) =>
+  useNotificationStore: vi.fn((selector?: any) =>
     selector
       ? selector({
           addNotification: vi.fn(),
           notifications: [],
-          user: { permissions: ['erp:sales:read'] },
-          theme: 'light',
         })
       : {
           addNotification: vi.fn(),
           notifications: [],
-          user: { permissions: ['erp:sales:read'] },
-          theme: 'light',
+        }
+  ),
+  useAuthStore: vi.fn((selector?: any) =>
+    selector
+      ? selector({
+          user: null,
+        })
+      : {
+          user: null,
         }
   ),
 }));

@@ -1,5 +1,5 @@
 import { useCallback } from 'react';
-import { useAppStore, type Notification } from '@/store';
+import { useNotificationStore, type Notification } from '@/store';
 
 export type NotificationType = 'success' | 'error' | 'info' | 'warning';
 
@@ -42,10 +42,10 @@ function parseArgs(
 }
 
 export function useNotification(): UseNotificationResult {
-  const notifications = useAppStore((state) => state.notifications);
-  const addNotificationStore = useAppStore((state) => state.addNotification);
-  const removeNotification = useAppStore((state) => state.removeNotification);
-  const clearNotifications = useAppStore((state) => state.clearNotifications);
+  const notifications = useNotificationStore((state) => state.notifications);
+  const addNotificationStore = useNotificationStore((state) => state.addNotification);
+  const removeNotification = useNotificationStore((state) => state.removeNotification);
+  const clearNotifications = useNotificationStore((state) => state.clearNotifications);
 
   const showNotification = useCallback(
     (

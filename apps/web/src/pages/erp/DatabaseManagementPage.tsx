@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useMemo } from 'react';
+import React, { useState, useEffect, useMemo, useCallback } from 'react';
 import {
   Database,
   Table,
@@ -54,38 +54,12 @@ import {
   CardContent,
   InputAdornment,
 } from '@mui/material';
-import { useAppStore } from '@/store';
+import { useNotificationStore } from '@/store';
 import { apiLogger } from '@/utils/logger';
 import { useNavigate } from 'react-router-dom';
 import { ERP_PATHS } from '@/modules/erp/config';
-
-// TODO(v2-phase2): Replace CircularProgress with LoadingSpinner from '@topems/shared-components'. Complex usage found - manual review needed.
-
-export interface DatabaseTable {
-  id: string;
-  table_name: string;
-  table_comment: string;
-  record_count: number;
-  datasize: string;
-  indexsize: string;
-  totalsize: string;
-  engine: string;
-  collation: string;
-  create_time: string;
-  update_time: string;
-  rows: number;
-}
-
-export interface TableColumn {
-  column_name: string;
-  data_type: string;
-  character_maximum_length: number | null;
-  is_nullable: string;
-  column_default: string | null;
-  column_comment: string;
-  column_key: string;
-  extra: string;
-}
+import { databaseApi, type TableInfo, type ColumnInfo } from '@/api/erp/database';
+import { extractErrorMessage } from '@/utils/errors';
 
 export interface BackupRecord {
   id: string;
@@ -97,272 +71,6 @@ export interface BackupRecord {
   created_by: string;
   remark?: string;
 }
-
-const mockTables: DatabaseTable[] = [
-  {
-    id: '1',
-    table_name: 'sys_user',
-    table_comment: '用户表',
-    record_count: 1256,
-    datasize: '2.4 MB',
-    indexsize: '896 KB',
-    totalsize: '3.3 MB',
-    engine: 'InnoDB',
-    collation: 'utf8mb4_general_ci',
-    create_time: '2024-01-01 00:00:00',
-    update_time: '2024-06-15 10:30:00',
-    rows: 1256,
-  },
-  {
-    id: '2',
-    table_name: 'sys_role',
-    table_comment: '角色表',
-    record_count: 24,
-    datasize: '16 KB',
-    indexsize: '32 KB',
-    totalsize: '48 KB',
-    engine: 'InnoDB',
-    collation: 'utf8mb4_general_ci',
-    create_time: '2024-01-01 00:00:00',
-    update_time: '2024-06-10 14:20:00',
-    rows: 24,
-  },
-  {
-    id: '3',
-    table_name: 'erp_voucher',
-    table_comment: '会计凭证表',
-    record_count: 8932,
-    datasize: '15.6 MB',
-    indexsize: '4.2 MB',
-    totalsize: '19.8 MB',
-    engine: 'InnoDB',
-    collation: 'utf8mb4_general_ci',
-    create_time: '2024-01-01 00:00:00',
-    update_time: '2024-06-15 16:45:00',
-    rows: 8932,
-  },
-  {
-    id: '4',
-    table_name: 'erp_voucheritem',
-    table_comment: '凭证明细表',
-    record_count: 45672,
-    datasize: '32.8 MB',
-    indexsize: '8.5 MB',
-    totalsize: '41.3 MB',
-    engine: 'InnoDB',
-    collation: 'utf8mb4_general_ci',
-    create_time: '2024-01-01 00:00:00',
-    update_time: '2024-06-15 16:45:00',
-    rows: 45672,
-  },
-  {
-    id: '5',
-    table_name: 'erp_accounting_subject',
-    table_comment: '会计科目表',
-    record_count: 156,
-    datasize: '128 KB',
-    indexsize: '64 KB',
-    totalsize: '192 KB',
-    engine: 'InnoDB',
-    collation: 'utf8mb4_general_ci',
-    create_time: '2024-01-01 00:00:00',
-    update_time: '2024-05-20 09:15:00',
-    rows: 156,
-  },
-  {
-    id: '6',
-    table_name: 'erp_fixed_asset',
-    table_comment: '固定资产表',
-    record_count: 328,
-    datasize: '2.1 MB',
-    indexsize: '512 KB',
-    totalsize: '2.6 MB',
-    engine: 'InnoDB',
-    collation: 'utf8mb4_general_ci',
-    create_time: '2024-01-01 00:00:00',
-    update_time: '2024-06-12 11:30:00',
-    rows: 328,
-  },
-  {
-    id: '7',
-    table_name: 'erp_bank_account',
-    table_comment: '银行账户表',
-    record_count: 42,
-    datasize: '64 KB',
-    indexsize: '32 KB',
-    totalsize: '96 KB',
-    engine: 'InnoDB',
-    collation: 'utf8mb4_general_ci',
-    create_time: '2024-01-01 00:00:00',
-    update_time: '2024-06-08 15:00:00',
-    rows: 42,
-  },
-  {
-    id: '8',
-    table_name: 'erp_bank_transaction',
-    table_comment: '银行交易表',
-    record_count: 5621,
-    datasize: '8.3 MB',
-    indexsize: '2.1 MB',
-    totalsize: '10.4 MB',
-    engine: 'InnoDB',
-    collation: 'utf8mb4_general_ci',
-    create_time: '2024-01-01 00:00:00',
-    update_time: '2024-06-15 08:00:00',
-    rows: 5621,
-  },
-  {
-    id: '9',
-    table_name: 'sys_dict_type',
-    table_comment: '字典类型表',
-    record_count: 36,
-    datasize: '32 KB',
-    indexsize: '16 KB',
-    totalsize: '48 KB',
-    engine: 'InnoDB',
-    collation: 'utf8mb4_general_ci',
-    create_time: '2024-01-01 00:00:00',
-    update_time: '2024-06-05 10:00:00',
-    rows: 36,
-  },
-  {
-    id: '10',
-    table_name: 'sys_dictitem',
-    table_comment: '字典项表',
-    record_count: 258,
-    datasize: '256 KB',
-    indexsize: '128 KB',
-    totalsize: '384 KB',
-    engine: 'InnoDB',
-    collation: 'utf8mb4_general_ci',
-    create_time: '2024-01-01 00:00:00',
-    update_time: '2024-06-05 10:00:00',
-    rows: 258,
-  },
-];
-
-const mockColumns: TableColumn[] = [
-  {
-    column_name: 'id',
-    data_type: 'varchar',
-    character_maximum_length: 36,
-    is_nullable: 'NO',
-    column_default: null,
-    column_comment: '主键ID',
-    column_key: 'PRI',
-    extra: '',
-  },
-  {
-    column_name: 'voucher_number',
-    data_type: 'varchar',
-    character_maximum_length: 50,
-    is_nullable: 'NO',
-    column_default: null,
-    column_comment: '凭证编号',
-    column_key: 'UNI',
-    extra: '',
-  },
-  {
-    column_name: 'voucher_date',
-    data_type: 'date',
-    character_maximum_length: null,
-    is_nullable: 'NO',
-    column_default: null,
-    column_comment: '凭证日期',
-    column_key: 'MUL',
-    extra: '',
-  },
-  {
-    column_name: 'period',
-    data_type: 'varchar',
-    character_maximum_length: 10,
-    is_nullable: 'NO',
-    column_default: null,
-    column_comment: '会计期间',
-    column_key: 'MUL',
-    extra: '',
-  },
-  {
-    column_name: 'summary',
-    data_type: 'varchar',
-    character_maximum_length: 500,
-    is_nullable: 'YES',
-    column_default: null,
-    column_comment: '摘要',
-    column_key: '',
-    extra: '',
-  },
-  {
-    column_name: 'total_debit',
-    data_type: 'decimal',
-    character_maximum_length: null,
-    is_nullable: 'NO',
-    column_default: '0.00',
-    column_comment: '借方合计',
-    column_key: '',
-    extra: '',
-  },
-  {
-    column_name: 'total_credit',
-    data_type: 'decimal',
-    character_maximum_length: null,
-    is_nullable: 'NO',
-    column_default: '0.00',
-    column_comment: '贷方合计',
-    column_key: '',
-    extra: '',
-  },
-  {
-    column_name: 'status',
-    data_type: 'varchar',
-    character_maximum_length: 20,
-    is_nullable: 'NO',
-    column_default: 'draft',
-    column_comment: '状态',
-    column_key: 'MUL',
-    extra: '',
-  },
-  {
-    column_name: 'maker_id',
-    data_type: 'varchar',
-    character_maximum_length: 36,
-    is_nullable: 'YES',
-    column_default: null,
-    column_comment: '制单人ID',
-    column_key: '',
-    extra: '',
-  },
-  {
-    column_name: 'maker_name',
-    data_type: 'varchar',
-    character_maximum_length: 50,
-    is_nullable: 'YES',
-    column_default: null,
-    column_comment: '制单人姓名',
-    column_key: '',
-    extra: '',
-  },
-  {
-    column_name: 'created_at',
-    data_type: 'datetime',
-    character_maximum_length: null,
-    is_nullable: 'NO',
-    column_default: 'CURRENT_TIMESTAMP',
-    column_comment: '创建时间',
-    column_key: '',
-    extra: '',
-  },
-  {
-    column_name: 'updated_at',
-    data_type: 'datetime',
-    character_maximum_length: null,
-    is_nullable: 'NO',
-    column_default: 'CURRENT_TIMESTAMP',
-    column_comment: '更新时间',
-    column_key: '',
-    extra: 'on update CURRENT_TIMESTAMP',
-  },
-];
 
 const mockBackups: BackupRecord[] = [
   {
@@ -419,14 +127,14 @@ const mockBackups: BackupRecord[] = [
 
 const DatabaseManagementPage: React.FC = () => {
   const navigate = useNavigate();
-  const addNotification = useAppStore((state) => state.addNotification);
+  const addNotification = useNotificationStore((state) => state.addNotification);
 
   const [activeTab, setActiveTab] = useState('tables');
   const [searchQuery, setSearchQuery] = useState('');
   const [tableFilter, setTableFilter] = useState('');
 
-  const [tables, setTables] = useState<DatabaseTable[]>([]);
-  const [backups, setBackups] = useState<BackupRecord[]>([]);
+  const [tables, setTables] = useState<TableInfo[]>([]);
+  const [backups, setBackups] = useState<BackupRecord[]>(mockBackups);
 
   const [loading, setLoading] = useState(true);
   const [page, setPage] = useState(0);
@@ -434,8 +142,9 @@ const DatabaseManagementPage: React.FC = () => {
   const [totalCount, setTotalCount] = useState(0);
 
   const [showStructureModal, setShowStructureModal] = useState(false);
-  const [currentTable, setCurrentTable] = useState<DatabaseTable | null>(null);
-  const [tableColumns, setTableColumns] = useState<TableColumn[]>([]);
+  const [currentTable, setCurrentTable] = useState<TableInfo | null>(null);
+  const [tableColumns, setTableColumns] = useState<ColumnInfo[]>([]);
+  const [tableRowCount, setTableRowCount] = useState<number | null>(null);
 
   const [showBackupModal, setShowBackupModal] = useState(false);
   const [showRestoreModal, setShowRestoreModal] = useState(false);
@@ -447,44 +156,61 @@ const DatabaseManagementPage: React.FC = () => {
 
   const [restoreBackupId, setRestoreBackupId] = useState<string | null>(null);
 
-  useEffect(() => {
-    loadData();
-  }, []);
-
-  const loadData = async () => {
+  const loadTables = useCallback(async () => {
     setLoading(true);
     try {
-      await Promise.all([new Promise((resolve) => setTimeout(resolve, 400))]);
-      setTables(mockTables);
-      setBackups(mockBackups);
-      setTotalCount(mockTables.length);
+      const res = await databaseApi.listTables({ search: searchQuery || undefined });
+      if (res.success && res.data) {
+        setTables(res.data);
+        setTotalCount(res.data.length);
+      }
     } catch (err: unknown) {
-      apiLogger.error('加载数据失败:', err);
+      apiLogger.error('加载数据表失败:', err);
       addNotification({
         title: '错误',
-        message: '加载数据失败',
+        message: extractErrorMessage(err, '加载数据表失败'),
         type: 'error',
       });
     } finally {
       setLoading(false);
     }
-  };
+  }, [searchQuery, addNotification]);
+
+  useEffect(() => {
+    if (activeTab === 'tables') {
+      loadTables();
+    } else {
+      setLoading(false);
+    }
+  }, [activeTab, loadTables]);
 
   const filteredTables = useMemo(() => {
     return tables.filter((table) => {
       const matchesSearch =
         !searchQuery ||
-        table.table_name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-        table.table_comment.toLowerCase().includes(searchQuery.toLowerCase());
+        table.table_name.toLowerCase().includes(searchQuery.toLowerCase());
       return matchesSearch;
     });
   }, [tables, searchQuery]);
 
-  const handleViewStructure = (table: DatabaseTable) => {
+  const handleViewStructure = useCallback(async (table: TableInfo) => {
     setCurrentTable(table);
-    setTableColumns(mockColumns);
+    try {
+      const res = await databaseApi.getTableDetail(table.table_name);
+      if (res.success && res.data) {
+        setTableColumns(res.data.columns);
+        setTableRowCount(res.data.row_count);
+      }
+    } catch (err: unknown) {
+      apiLogger.error('获取表结构失败:', err);
+      addNotification({
+        title: '错误',
+        message: extractErrorMessage(err, '获取表结构失败'),
+        type: 'error',
+      });
+    }
     setShowStructureModal(true);
-  };
+  }, [addNotification]);
 
   const handleBackup = () => {
     setShowBackupModal(true);
@@ -580,18 +306,8 @@ const DatabaseManagementPage: React.FC = () => {
   };
 
   const stats = useMemo(() => {
-    const totalRecords = tables.reduce((sum, t) => sum + t.record_count, 0);
-    const totalSizeMB = tables.reduce((sum, t) => {
-      const size = parseFloat(t.totalsize);
-      return sum + (t.totalsize.includes('GB') ? size * 1024 : size);
-    }, 0);
     return {
       tableCount: tables.length,
-      totalRecords,
-      totalSize:
-        totalSizeMB > 1024
-          ? `${(totalSizeMB / 1024).toFixed(2)} GB`
-          : `${totalSizeMB.toFixed(1)} MB`,
       backupCount: backups.filter((b) => b.status === 'success').length,
     };
   }, [tables, backups]);
@@ -609,7 +325,7 @@ const DatabaseManagementPage: React.FC = () => {
           {
             label: '刷新',
             icon: <RefreshCw size={16} />,
-            onClick: loadData,
+            onClick: loadTables,
             variant: 'outlined',
           },
           {
@@ -654,20 +370,6 @@ const DatabaseManagementPage: React.FC = () => {
             icon: <Table size={20} />,
             color: 'primary',
             bg: 'primary.100',
-          },
-          {
-            label: '总记录数',
-            value: stats.totalRecords.toLocaleString(),
-            icon: <FileText size={20} />,
-            color: 'success',
-            bg: 'success.100',
-          },
-          {
-            label: '数据大小',
-            value: stats.totalSize,
-            icon: <HardDrive size={20} />,
-            color: 'warning',
-            bg: 'warning.100',
           },
           {
             label: '可用备份',
@@ -759,9 +461,12 @@ const DatabaseManagementPage: React.FC = () => {
             >
               <TextField
                 size='small'
-                placeholder='搜索表名或备注...'
+                placeholder='搜索表名...'
                 value={searchQuery}
-                onChange={(e) => setSearchQuery(e.target.value)}
+                onChange={(e) => {
+                  setSearchQuery(e.target.value);
+                  setPage(0);
+                }}
                 slotProps={{
                   input: {
                     startAdornment: (
@@ -788,8 +493,6 @@ const DatabaseManagementPage: React.FC = () => {
                 >
                   <MenuItem value=''>默认排序</MenuItem>
                   <MenuItem value='name'>按表名</MenuItem>
-                  <MenuItem value='size'>按大小</MenuItem>
-                  <MenuItem value='records'>按记录数</MenuItem>
                   <MenuItem value='time'>按更新时间</MenuItem>
                 </Select>
               </FormControl>
@@ -806,33 +509,7 @@ const DatabaseManagementPage: React.FC = () => {
                     <TableHead>
                       <TableRow sx={{ bgcolor: 'grey.50' }}>
                         <TableCell sx={{ fontWeight: 'bold' }}>表名</TableCell>
-                        <TableCell sx={{ fontWeight: 'bold' }}>说明</TableCell>
-                        <TableCell
-                          align='right'
-                          sx={{ fontWeight: 'bold' }}
-                        >
-                          记录数
-                        </TableCell>
-                        <TableCell
-                          align='right'
-                          sx={{ fontWeight: 'bold' }}
-                        >
-                          数据大小
-                        </TableCell>
-                        <TableCell
-                          align='right'
-                          sx={{ fontWeight: 'bold' }}
-                        >
-                          索引大小
-                        </TableCell>
-                        <TableCell
-                          align='right'
-                          sx={{ fontWeight: 'bold' }}
-                        >
-                          总大小
-                        </TableCell>
-                        <TableCell sx={{ fontWeight: 'bold' }}>引擎</TableCell>
-                        <TableCell sx={{ fontWeight: 'bold' }}>最后更新</TableCell>
+                        <TableCell sx={{ fontWeight: 'bold' }}>类型</TableCell>
                         <TableCell
                           align='center'
                           sx={{ fontWeight: 'bold', width: 120 }}
@@ -845,7 +522,7 @@ const DatabaseManagementPage: React.FC = () => {
                       {filteredTables.length === 0 ? (
                         <TableRow>
                           <TableCell
-                            colSpan={9}
+                            colSpan={3}
                             sx={{ py: 8, textAlign: 'center' }}
                           >
                             <Database
@@ -868,7 +545,7 @@ const DatabaseManagementPage: React.FC = () => {
                       ) : (
                         filteredTables.map((table) => (
                           <TableRow
-                            key={table.id}
+                            key={table.table_name}
                             hover
                           >
                             <TableCell>
@@ -889,34 +566,12 @@ const DatabaseManagementPage: React.FC = () => {
                                 </Typography>
                               </Box>
                             </TableCell>
-                            <TableCell>{table.table_comment}</TableCell>
-                            <TableCell align='right'>
-                              {table.record_count.toLocaleString()}
-                            </TableCell>
-                            <TableCell align='right'>{table.datasize}</TableCell>
-                            <TableCell align='right'>{table.indexsize}</TableCell>
-                            <TableCell align='right'>
-                              <Chip
-                                label={table.totalsize}
-                                size='small'
-                                color='primary'
-                                variant='outlined'
-                              />
-                            </TableCell>
                             <TableCell>
                               <Chip
-                                label={table.engine}
+                                label={table.table_type}
                                 size='small'
                                 variant='outlined'
                               />
-                            </TableCell>
-                            <TableCell>
-                              <Typography
-                                variant='body2'
-                                sx={{ color: 'text.secondary' }}
-                              >
-                                {table.update_time}
-                              </Typography>
                             </TableCell>
                             <TableCell align='center'>
                               <Tooltip title='查看结构'>
@@ -1168,18 +823,9 @@ const DatabaseManagementPage: React.FC = () => {
                     variant='body2'
                     sx={{ color: 'text.secondary', mb: 0.5 }}
                   >
-                    引擎
+                    类型
                   </Typography>
-                  <Typography sx={{ fontWeight: 500 }}>{currentTable.engine}</Typography>
-                </Box>
-                <Box sx={{ p: 2, bgcolor: 'grey.50', borderRadius: 1 }}>
-                  <Typography
-                    variant='body2'
-                    sx={{ color: 'text.secondary', mb: 0.5 }}
-                  >
-                    字符集
-                  </Typography>
-                  <Typography sx={{ fontWeight: 500 }}>{currentTable.collation}</Typography>
+                  <Typography sx={{ fontWeight: 500 }}>{currentTable.table_type}</Typography>
                 </Box>
                 <Box sx={{ p: 2, bgcolor: 'grey.50', borderRadius: 1 }}>
                   <Typography
@@ -1189,19 +835,9 @@ const DatabaseManagementPage: React.FC = () => {
                     记录数
                   </Typography>
                   <Typography sx={{ fontWeight: 500 }}>
-                    {currentTable.record_count.toLocaleString()}
+                    {tableRowCount?.toLocaleString() || '-'}
                   </Typography>
                 </Box>
-              </Box>
-
-              <Box sx={{ p: 2, bgcolor: 'grey.50', borderRadius: 1 }}>
-                <Typography
-                  variant='body2'
-                  sx={{ color: 'text.secondary', mb: 0.5 }}
-                >
-                  说明
-                </Typography>
-                <Typography>{currentTable.table_comment}</Typography>
               </Box>
 
               <Typography
@@ -1223,7 +859,6 @@ const DatabaseManagementPage: React.FC = () => {
                       <TableCell sx={{ fontWeight: 'bold' }}>长度</TableCell>
                       <TableCell sx={{ fontWeight: 'bold' }}>可空</TableCell>
                       <TableCell sx={{ fontWeight: 'bold' }}>默认值</TableCell>
-                      <TableCell sx={{ fontWeight: 'bold' }}>键</TableCell>
                       <TableCell sx={{ fontWeight: 'bold' }}>说明</TableCell>
                     </TableRow>
                   </TableHead>
@@ -1265,33 +900,7 @@ const DatabaseManagementPage: React.FC = () => {
                             {col.column_default || '-'}
                           </Typography>
                         </TableCell>
-                        <TableCell>
-                          {col.column_key === 'PRI' && (
-                            <Chip
-                              label='主键'
-                              size='small'
-                              color='primary'
-                            />
-                          )}
-                          {col.column_key === 'UNI' && (
-                            <Chip
-                              label='唯一'
-                              size='small'
-                              color='success'
-                              variant='outlined'
-                            />
-                          )}
-                          {col.column_key === 'MUL' && (
-                            <Chip
-                              label='索引'
-                              size='small'
-                              color='default'
-                              variant='outlined'
-                            />
-                          )}
-                          {!col.column_key && '-'}
-                        </TableCell>
-                        <TableCell>{col.column_comment}</TableCell>
+                        <TableCell>-</TableCell>
                       </TableRow>
                     ))}
                   </TableBody>

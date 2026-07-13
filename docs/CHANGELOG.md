@@ -2,6 +2,30 @@
 
 > 记录项目所有重要的变更、新功能、修复和改进
 
+## [3.5.0] - 2026-07-13
+
+### 🎉 重大变更
+- **OpenTelemetry 宏代码优化** - 重构 `lib/src/telemetry/` 模块，添加性能优化和重复初始化保护
+- **CI/CD 工作流修复** - 移除对不存在的 `bi` 服务的引用，修复 split-services.yml 和 ci-cd.yml
+
+### ✨ 新功能
+- **`init_service_telemetry!` 宏** - 简化 OpenTelemetry 初始化流程
+- **`TelemetryExt` trait** - 为 Axum Router 添加 `.with_telemetry()` 方法
+- **分布式追踪链路验证** - 支持 traceparent 传播和 ParentSpanId 设置
+
+### 🔧 性能优化
+- **`HeaderMapExtractor::keys()`** - 返回空 Vec 避免每请求分配内存
+- **Trace ID 获取** - 直接从 span 获取，避免重复查询 Context
+- **Span Name 延迟格式化** - 使用 `tracing::field::display()` 延迟格式化
+- **重复初始化保护** - 设置新 provider 前先 shutdown 旧 provider
+
+### 📚 文档
+- 新增 [OpenTelemetry 分布式追踪指南](./guides/devops/opentelemetry-guide.md) - 完整记录配置说明、宏代码使用、关键优化点和排查步骤
+- 更新 [TODO.md](./TODO.md) - 标记分布式追踪任务为已完成
+- 更新 [运维手册 README](./guides/devops/README.md) - 添加分布式追踪指南入口
+
+---
+
 ## [3.4.0] - 2026-07-10
 
 ### 🎉 重大变更

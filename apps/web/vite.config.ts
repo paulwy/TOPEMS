@@ -59,7 +59,7 @@ const services: ServiceConfig[] = [
   { name: 'master', port: 8000, useCoreService: true, apiRewrite: (path) => path.replace(/^\/master\/api/, '/api') },
   { name: 'migration', port: 8000, useCoreService: true, apiRewrite: (path) => path.replace(/^\/migration\/api/, '/api') },
   { name: 'ai', port: 8013, skipPluginHealth: true },
-  { name: 'flow', port: 8000, useCoreService: true, pageRewrite: (path) => path.replace(/^\/flow/, '/api/flow') },
+  { name: 'flow', port: 8000, useCoreService: true, pageRewrite: (path) => path.replace(/^\/flow/, '/api/core/flow') },
   { name: 'manufacturing', port: 8030, skipPluginHealth: true },
 ];
 
@@ -785,13 +785,13 @@ export default defineConfig({
       '/iam/api/iam/auth/': {
         target: 'http://localhost:8000',
         changeOrigin: true,
-        rewrite: (path: string) => path.replace(/^\/iam\/api\/iam\/auth\//, '/api/v1/auth/'),
+        rewrite: (path: string) => path.replace(/^\/iam\/api\/iam\/auth\//, '/api/core/iam/auth/'),
         configure: createProxyLogger('iam-auth', 'http://localhost:8000'),
       },
       '/iam/auth/': {
         target: 'http://localhost:8000',
         changeOrigin: true,
-        rewrite: (path: string) => path.replace(/^\/iam\/auth\//, '/api/v1/auth/'),
+        rewrite: (path: string) => path.replace(/^\/iam\/auth\//, '/api/core/iam/auth/'),
         configure: createProxyLogger('iam-auth', 'http://localhost:8000'),
       },
       '/notification/v1': {
