@@ -16,7 +16,7 @@ import React, { useState, useEffect, useMemo } from 'react';
 import { Car, Plus, Edit, Trash2, Calendar, User } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { vehicleApi, vehicleRequestApi, type Vehicle, type VehicleRequest } from '@/api/erp';
-import { useAppStore } from '../../store';
+import { useNotificationStore } from '../../store';
 import {
   ListPageTemplate,
   type ColumnDef,
@@ -32,7 +32,7 @@ interface VehicleManagementPageProps {
 
 const VehicleManagementPage: React.FC<VehicleManagementPageProps> = ({ onNavigate }) => {
   const navigate = useNavigate();
-  const addNotification = useAppStore((state) => state.addNotification);
+  const addNotification = useNotificationStore((state) => state.addNotification);
 
   const [vehicles, setVehicles] = useState<Vehicle[]>([]);
   const [requests, setRequests] = useState<VehicleRequest[]>([]);

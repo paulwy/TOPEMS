@@ -95,7 +95,7 @@ backHref={HRM_PATHS.employees}
 
 ## 后续推广
 
-hrm 试点验证后，逐模块迁移其余 30 个模块，最终删除 compatibility.tsx。
+hrm 试点验证后，逐模块迁移其余 30 个模块，最终删除 compatibility.tsx。✅ **已完成**：V5.8 阶段已完成全部 31 个模块迁移，`compatibility.tsx` 已删除。
 
 > 详细实施方案见 [2026-07-11-path-refactor-implementation-plan.md](./2026-07-11-path-refactor-implementation-plan.md)
 

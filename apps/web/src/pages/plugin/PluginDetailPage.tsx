@@ -42,7 +42,7 @@ import { PluginRating } from '@/components/plugin';
 import type { Plugin, PluginVersion, PluginReview } from '@/api/plugin';
 import { getPlugin, getPluginVersions, getPluginReviews, submitPluginReview } from '@/api/plugin';
 import { usePluginStore } from '@/store/pluginStore';
-import { useAppStore } from '@/store';
+import { useNotificationStore } from '@/store';
 import { logger } from '@/utils/logger';
 import { PLUGIN_PATHS } from '@/modules/plugin/config';
 
@@ -50,7 +50,7 @@ const PluginDetailPage: React.FC = () => {
   const { pluginCode } = useParams<{ pluginCode: string }>();
   const navigate = useNavigate();
   const { installPlugin, isPluginInstalled, fetchHealthStatus, healthStatus } = usePluginStore();
-  const addNotification = useAppStore((state) => state.addNotification);
+  const addNotification = useNotificationStore((state) => state.addNotification);
 
   const [plugin, setPlugin] = useState<Plugin | null>(null);
   const [versions, setVersions] = useState<PluginVersion[]>([]);

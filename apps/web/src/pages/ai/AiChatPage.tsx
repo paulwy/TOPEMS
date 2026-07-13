@@ -35,7 +35,7 @@ import {
 
 import { PageContainer } from '@/components/common';
 import { AI_PATHS } from '@/modules/ai/config';
-import { useAppStore } from '../../store';
+import { useNotificationStore } from '@/store';
 
 interface Message {
   id: string;
@@ -74,7 +74,7 @@ const mockMessages: Message[] = [
 ];
 
 export const AiChatPage: React.FC = () => {
-  const addNotification = useAppStore((state) => state.addNotification);
+  const addNotification = useNotificationStore((state) => state.addNotification);
   const [messages, setMessages] = useState<Message[]>(mockMessages);
   const [inputValue, setInputValue] = useState('');
   const [selectedModel, setSelectedModel] = useState('gpt-4');

@@ -1,6 +1,7 @@
 import { create } from 'zustand';
 import type { User, LoginCredentials } from '@/types';
 import { authApi } from '@/api/auth';
+import { storage } from '@/utils/storage';
 
 interface AuthStore {
   user: User | null;
@@ -10,8 +11,8 @@ interface AuthStore {
   error: string | null;
 
   login: (credentials: LoginCredentials) => Promise<void>;
-  logout: () => void;
-  checkAuth: () => void;
+  logout: () => Promise<void>;
+  checkAuth: () => Promise<void>;
   clearError: () => void;
 }
 
@@ -26,25 +27,32 @@ export const useAuthStore = create<AuthStore>((set) => ({
     set({ isLoading: true, error: null });
     try {
       const response = await authApi.login(credentials);
-      if (response.success) {
-        const { user, token } = response.data;
-        localStorage.setItem('token', token);
-        set({
-          user,
-          token,
-          isAuthenticated: true,
-          isLoading: false,
-        });
+      if (response.success && response.data) {
+        const user = response.data.user;
+        const token = response.data.token || response.data.access_token;
+        if (token) {
+          await storage.setToken(token);
+          await storage.setUser(user);
+          set({
+            user,
+            token,
+            isAuthenticated: true,
+            isLoading: false,
+          });
+        } else {
+          set({ error: '登录失败：未获取到令牌', isLoading: false });
+        }
       } else {
-        set({ error: response.message, isLoading: false });
+        set({ error: response.message || '登录失败', isLoading: false });
       }
-    } catch {
+    } catch (err) {
       set({ error: '登录失败，请检查网络连接', isLoading: false });
     }
   },
 
-  logout: () => {
-    localStorage.removeItem('token');
+  logout: async () => {
+    await storage.removeToken();
+    await storage.removeUser();
     set({
       user: null,
       token: null,
@@ -53,10 +61,11 @@ export const useAuthStore = create<AuthStore>((set) => ({
     });
   },
 
-  checkAuth: () => {
-    const token = localStorage.getItem('token');
+  checkAuth: async () => {
+    const token = await storage.getToken();
+    const user = await storage.getUser<User>();
     if (token) {
-      set({ token, isAuthenticated: true });
+      set({ token, user, isAuthenticated: true });
     }
   },
 

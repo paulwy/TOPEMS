@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useMemo } from 'react';
+import React, { useState, useMemo } from 'react';
 import { designTokens } from '@/theme/tokens';
 import {
   Plus,
@@ -19,7 +19,9 @@ import { useNavigate } from 'react-router-dom';
 import { budgetApi, type Budget, type PaginatedResult } from '@/api/erp';
 import { financeApi } from '@/api/finance';
 import type { AccountBalance } from '@/types/finance';
-import { useAppStore } from '../../store';
+import { useNotificationStore } from '@/store';
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import { useCrudOperations } from '@/hooks/useCrudQueries';
 import {
   Typography,
   Box,
@@ -49,11 +51,9 @@ const ct = designTokens.colors;
 
 const FinanceBudgetPage: React.FC = () => {
   const navigate = useNavigate();
-  const addNotification = useAppStore((state) => state.addNotification);
+  const addNotification = useNotificationStore((state) => state.addNotification);
+  const queryClient = useQueryClient();
 
-  const [budgets, setBudgets] = useState<Budget[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | undefined>(undefined);
   const [searchTerm, setSearchTerm] = useState('');
   const [filterType, setFilterType] = useState('');
   const [filterStatus, setFilterStatus] = useState('');
@@ -63,7 +63,6 @@ const FinanceBudgetPage: React.FC = () => {
   const [selectedBudget, setSelectedBudget] = useState<Budget | null>(null);
   const [organizationFilter, setOrganizationFilter] = useState<OrganizationFilterValue>({});
   const [selectedIds, setSelectedIds] = useState<(string | number)[]>([]);
-  const [accountBalances, setAccountBalances] = useState<AccountBalance[]>([]);
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
   const [deletingId, setDeletingId] = useState<string | null>(null);
 
@@ -75,41 +74,39 @@ const FinanceBudgetPage: React.FC = () => {
     status: 'active',
   });
 
-  useEffect(() => {
-    loadBudgets();
-  }, []);
+  const {
+    data: budgets,
+    loading: budgetsLoading,
+    create: createBudget,
+    update: updateBudget,
+    delete: deleteBudget,
+    fetch: fetchBudgets,
+  } = useCrudOperations<Budget>({
+    api: budgetApi as any,
+    queryKey: 'finance-budgets',
+    defaultPageSize: 50,
+  });
 
-  const loadBudgets = async () => {
-    setLoading(true);
-    setError(undefined);
-    try {
-      const [budgetRes, periodRes] = await Promise.all([
-        budgetApi.list(),
-        financeApi.period.getCurrent(),
-      ]);
-      if (budgetRes.success && budgetRes.data) {
-        setBudgets(budgetRes.data.items || []);
-      }
+  const accountBalancesQuery = useQuery({
+    queryKey: ['finance-account-balances'],
+    queryFn: async () => {
+      const periodRes = await financeApi.period.getCurrent();
       if (periodRes.success && periodRes.data) {
         const balancesRes = await financeApi.account.getBalances({
           period: periodRes.data.period,
         });
         if (balancesRes.success && balancesRes.data) {
-          setAccountBalances(balancesRes.data);
+          return balancesRes.data;
         }
       }
-    } catch (err: unknown) {
-      apiLogger.error('加载预算数据失败:', err);
-      setError('加载预算数据失败');
-      addNotification({
-        title: '错误',
-        message: '加载预算数据失败',
-        type: 'error',
-      });
-    } finally {
-      setLoading(false);
-    }
-  };
+      return [];
+    },
+    staleTime: 5 * 60 * 1000,
+  });
+
+  const accountBalances = accountBalancesQuery.data || [];
+  const loading = budgetsLoading || accountBalancesQuery.isLoading;
+  const error = budgetsLoading ? undefined : (accountBalancesQuery.error as Error)?.message;
 
   const handleCreate = async () => {
     try {
@@ -117,24 +114,13 @@ const FinanceBudgetPage: React.FC = () => {
         ...formData,
         total_budget: parseFloat(formData.total_budget),
       };
-      const response = await budgetApi.create(data);
-      if (response.success) {
-        addNotification({
-          title: '成功',
-          message: '预算创建成功',
-          type: 'success',
-        });
+      const result = await createBudget(data as any);
+      if (result) {
         setShowCreateDialog(false);
         resetForm();
-        loadBudgets();
       }
     } catch (err: unknown) {
-      apiLogger.error('创建预算失败:', err);
-      addNotification({
-        title: '错误',
-        message: '创建预算失败',
-        type: 'error',
-      });
+      // 错误已在 mutation 中处理
     }
   };
 
@@ -145,25 +131,14 @@ const FinanceBudgetPage: React.FC = () => {
         ...formData,
         total_budget: parseFloat(formData.total_budget),
       };
-      const response = await budgetApi.update(editingBudget.id, data);
-      if (response.success) {
-        addNotification({
-          title: '成功',
-          message: '预算更新成功',
-          type: 'success',
-        });
+      const result = await updateBudget(editingBudget.id, data as any);
+      if (result) {
         setEditingBudget(null);
         setShowCreateDialog(false);
         resetForm();
-        loadBudgets();
       }
     } catch (err: unknown) {
-      apiLogger.error('更新预算失败:', err);
-      addNotification({
-        title: '错误',
-        message: '更新预算失败',
-        type: 'error',
-      });
+      // 错误已在 mutation 中处理
     }
   };
 
@@ -174,16 +149,10 @@ const FinanceBudgetPage: React.FC = () => {
 
   const handleDelete = async () => {
     if (!deletingId) return;
-    const response = await budgetApi.delete(deletingId);
-    if (response.success) {
-      addNotification({
-        title: '成功',
-        message: '预算删除成功',
-        type: 'success',
-      });
-      loadBudgets();
-    } else {
-      throw new Error('删除预算失败');
+    try {
+      await deleteBudget(deletingId);
+    } catch (err: unknown) {
+      // 错误已在 mutation 中处理
     }
   };
 
@@ -673,7 +642,9 @@ const FinanceBudgetPage: React.FC = () => {
         selectedIds={selectedIds}
         onSelectionChange={setSelectedIds}
         rowActions={rowActions}
-        onRefresh={loadBudgets}
+        onRefresh={() => {
+          queryClient.invalidateQueries({ queryKey: ['finance-budgets'] });
+        }}
         emptyMessage='暂无预算数据'
         emptyIcon={<AlertCircle sx={{ width: 48, height: 48, color: 'grey.300' }} />}
         actions={[
@@ -681,7 +652,9 @@ const FinanceBudgetPage: React.FC = () => {
             label: '刷新',
             icon: <RefreshCw sx={{ width: 16, height: 16 }} />,
             variant: 'outlined',
-            onClick: loadBudgets,
+            onClick: () => {
+              queryClient.invalidateQueries({ queryKey: ['finance-budgets'] });
+            },
           },
         ]}
       />

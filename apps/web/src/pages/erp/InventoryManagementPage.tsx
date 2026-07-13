@@ -17,7 +17,7 @@ import { PageContainer } from '@/components/common';
 import React, { useState, useEffect, useMemo, useCallback } from 'react';
 import type { Inventory, CreateInventoryRequest, UpdateInventoryRequest } from '@/api/erp';
 import { erpApi } from '@/api/erp';
-import { useAppStore } from '@/store';
+import { useNotificationStore } from '@/store';
 import { LoadingSpinner } from '@topems/shared-components';
 import {
   ListPageTemplate,
@@ -60,7 +60,7 @@ const InventoryManagementPage: React.FC = () => {
     batch_number: '',
   });
 
-  const { addNotification } = useAppStore();
+  const { addNotification } = useNotificationStore();
 
   const loadItems = useCallback(async () => {
     try {

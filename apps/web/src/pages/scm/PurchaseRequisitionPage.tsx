@@ -19,7 +19,7 @@ import type {
   UpdatePurchaseRequisitionRequest,
 } from '@/api/scm';
 import { scmApi } from '@/api/scm';
-import { useAppStore } from '@/store';
+import { useNotificationStore } from '@/store';
 import { Plus, Edit, Trash2, Check, XCircle, Send, FileText } from 'lucide-react';
 import { apiLogger } from '@/utils/logger';
 import { ListPageTemplate, type ColumnDef } from '@/components/templates';
@@ -77,7 +77,7 @@ const PurchaseRequisitionPage: React.FC = () => {
     remarks: '',
   });
 
-  const { addNotification } = useAppStore();
+  const { addNotification } = useNotificationStore();
 
   useEffect(() => {
     loadRequisitions();

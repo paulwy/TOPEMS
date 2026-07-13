@@ -40,6 +40,63 @@ impl SecurityHeadersConfig {
         Self::default()
     }
 
+    pub fn production() -> Self {
+        Self {
+            x_content_type_options: Some("nosniff".to_string()),
+            x_frame_options: Some("DENY".to_string()),
+            x_xss_protection: Some("1; mode=block".to_string()),
+            strict_transport_security: Some(format!(
+                "max-age={}; includeSubDomains; preload",
+                Duration::from_secs(31536000).as_secs()
+            )),
+            content_security_policy: Some(format!(
+                "default-src 'self'; \
+                 script-src 'self' 'strict-dynamic'; \
+                 style-src 'self' 'unsafe-inline'; \
+                 img-src 'self' data: https:; \
+                 font-src 'self'; \
+                 object-src 'none'; \
+                 frame-src 'none'; \
+                 connect-src 'self'; \
+                 base-uri 'self'; \
+                 form-action 'self'; \
+                 upgrade-insecure-requests;"
+            )),
+            referrer_policy: Some("strict-origin-when-cross-origin".to_string()),
+            permissions_policy: Some(
+                "geolocation=(), microphone=(), camera=(), payment=(), usb=(), vr=()".to_string(),
+            ),
+        }
+    }
+
+    pub fn development() -> Self {
+        Self {
+            x_content_type_options: Some("nosniff".to_string()),
+            x_frame_options: Some("SAMEORIGIN".to_string()),
+            x_xss_protection: Some("1; mode=block".to_string()),
+            strict_transport_security: None,
+            content_security_policy: Some(format!(
+                "default-src 'self' 'unsafe-inline' 'unsafe-eval'; \
+                 script-src 'self' 'unsafe-inline' 'unsafe-eval'; \
+                 style-src 'self' 'unsafe-inline'; \
+                 img-src 'self' data: http: https:; \
+                 font-src 'self'; \
+                 connect-src 'self' http://localhost:* ws://localhost:*; \
+                 frame-src 'self' http://localhost:*;"
+            )),
+            referrer_policy: Some("strict-origin-when-cross-origin".to_string()),
+            permissions_policy: Some("geolocation=(), microphone=(), camera=()".to_string()),
+        }
+    }
+
+    pub fn from_env() -> Self {
+        match std::env::var("ENVIRONMENT").unwrap_or_default().as_str() {
+            "production" | "prod" => Self::production(),
+            "development" | "dev" => Self::development(),
+            _ => Self::default(),
+        }
+    }
+
     pub fn with_x_content_type_options(mut self, value: impl Into<String>) -> Self {
         self.x_content_type_options = Some(value.into());
         self
@@ -63,6 +120,23 @@ impl SecurityHeadersConfig {
         let mut value = format!("max-age={}", max_age.as_secs());
         if include_subdomains {
             value.push_str("; includeSubDomains");
+        }
+        self.strict_transport_security = Some(value);
+        self
+    }
+
+    pub fn with_strict_transport_security_with_preload(
+        mut self,
+        max_age: Duration,
+        include_subdomains: bool,
+        preload: bool,
+    ) -> Self {
+        let mut value = format!("max-age={}", max_age.as_secs());
+        if include_subdomains {
+            value.push_str("; includeSubDomains");
+        }
+        if preload {
+            value.push_str("; preload");
         }
         self.strict_transport_security = Some(value);
         self
@@ -100,6 +174,11 @@ impl SecurityHeadersConfig {
             referrer_policy: Some("strict-origin-when-cross-origin".to_string()),
             permissions_policy: Some("geolocation=(), microphone=(), camera=()".to_string()),
         }
+    }
+
+    pub fn enable_feature_policy(mut self, features: &[&str]) -> Self {
+        self.permissions_policy = Some(features.join(", "));
+        self
     }
 }
 

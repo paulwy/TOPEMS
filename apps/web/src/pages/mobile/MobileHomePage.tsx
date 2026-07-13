@@ -24,7 +24,7 @@ import { Box, Typography, Avatar, Paper, IconButton, Badge, Chip, Divider } from
 import { useNavigate } from 'react-router-dom';
 
 import { PageContainer } from '@/components/common';
-import { useAppStore } from '../../store';
+import { useNotificationStore } from '../../store';
 import { designTokens } from '@/theme/tokens';
 import { MOBILE_PATHS } from '@/modules/mobile/config';
 
@@ -95,7 +95,7 @@ const mockActivities = [
 
 export const MobileHomePage: React.FC = () => {
   const navigate = useNavigate();
-  const addNotification = useAppStore((state) => state.addNotification);
+  const addNotification = useNotificationStore((state) => state.addNotification);
   const [checkedIn, setCheckedIn] = useState(false);
   const [checkInTime, setCheckInTime] = useState('');
 

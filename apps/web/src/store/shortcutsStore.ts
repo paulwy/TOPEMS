@@ -40,3 +40,8 @@ export const useShortcutsStore = create<ShortcutsState>()(
     }
   )
 );
+
+export const useShortcuts = () => useShortcutsStore((state) => state.shortcuts);
+export const useSetShortcuts = () => useShortcutsStore((state) => state.setShortcuts);
+export const useAddShortcut = () => useShortcutsStore((state) => state.addShortcut);
+export const useRemoveShortcut = () => useShortcutsStore((state) => state.removeShortcut);

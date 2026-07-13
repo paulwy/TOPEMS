@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useMemo } from 'react';
+import React, { useState, useMemo } from 'react';
 import {
   Box,
   Dialog,
@@ -10,6 +10,7 @@ import {
   Typography,
   Button,
 } from '@mui/material';
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { apiLogger } from '@/utils/logger';
 import { Plus, Eye, Clock } from 'lucide-react';
 import { PageContainer } from '@/components/common/PageContainerV2';
@@ -17,15 +18,13 @@ import { ListPageTemplate } from '@/components/templates';
 
 import type { RowAction, FilterConfig, ColumnDef } from '@/components/templates';
 import { pdmApi } from '@/api/pdm';
-import type { ProductionProcess } from '@/api/pdm';
-import { useAppStore } from '@/store';
+import type { ProductionProcess, CreateProductionProcessRequest } from '@/api/pdm';
+import { useNotificationStore } from '@/store';
 import { designTokens } from '@/theme/tokens';
 
 const ct = designTokens.colors;
 
 const PdmProcessPage: React.FC = () => {
-  const [processes, setProcesses] = useState<ProductionProcess[]>([]);
-  const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState('');
   const [statusFilter, setStatusFilter] = useState<string>('');
   const [showCreateModal, setShowCreateModal] = useState(false);
@@ -37,15 +36,12 @@ const PdmProcessPage: React.FC = () => {
     description: '',
     version: '1.0',
   });
-  const addNotification = useAppStore((state) => state.addNotification);
+  const queryClient = useQueryClient();
+  const addNotification = useNotificationStore((state) => state.addNotification);
 
-  useEffect(() => {
-    loadProcesses();
-  }, []);
-
-  const loadProcesses = async () => {
-    try {
-      setLoading(true);
+  const processesQuery = useQuery({
+    queryKey: ['pdm-processes'],
+    queryFn: async () => {
       const response = await pdmApi.listProcesses();
       if (response.success && response.data) {
         const adapted = (response.data as any).map((item: { [key: string]: unknown }) => ({
@@ -53,17 +49,34 @@ const PdmProcessPage: React.FC = () => {
           status:
             item.status === 'active' ? '启用' : item.status === 'inactive' ? '禁用' : item.status,
         }));
-        setProcesses(adapted);
-      } else {
-        setProcesses([]);
+        return adapted as ProductionProcess[];
       }
-    } catch (err: unknown) {
-      apiLogger.error('加载生产工艺数据失败:', err);
-      setProcesses([]);
-    } finally {
-      setLoading(false);
-    }
-  };
+      return [];
+    },
+    staleTime: 5 * 60 * 1000,
+    retry: 2,
+  });
+
+  const processes = processesQuery.data || [];
+  const loading = processesQuery.isLoading;
+
+  const createMutation = useMutation({
+    mutationFn: async (data: CreateProductionProcessRequest) => {
+      const response = await pdmApi.createProcess(data);
+      if (!response.success) {
+        throw new Error(response.message || '创建失败');
+      }
+      return response.data;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['pdm-processes'] });
+      addNotification({ title: '成功', message: '生产工艺创建成功', type: 'success' });
+    },
+    onError: (err) => {
+      addNotification({ title: '错误', message: '创建失败', type: 'error' });
+      apiLogger.error('创建生产工艺失败:', err);
+    },
+  });
 
   const getStatusBadge = (status: string) => {
     const statusMap: Record<string, { bg: string; color: string }> = {
@@ -151,21 +164,14 @@ const PdmProcessPage: React.FC = () => {
   };
 
   const handleSave = async () => {
-    try {
-      await pdmApi.createProcess({
-        process_no: formData.process_no,
-        name: formData.name,
-        description: formData.description || undefined,
-        version: formData.version,
-        status: 'active',
-      });
-      addNotification({ title: '成功', message: '生产工艺创建成功', type: 'success' });
-      setShowCreateModal(false);
-      loadProcesses();
-    } catch (err: unknown) {
-      addNotification({ title: '错误', message: '创建失败', type: 'error' });
-      apiLogger.error('创建生产工艺失败:', err);
-    }
+    await createMutation.mutateAsync({
+      process_no: formData.process_no,
+      name: formData.name,
+      description: formData.description || undefined,
+      version: formData.version,
+      status: 'active',
+    });
+    setShowCreateModal(false);
   };
 
   const stats = {

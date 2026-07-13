@@ -23,7 +23,7 @@ import {
 } from '@/components/templates';
 import { PageContainer } from '@/components/common';
 import { rsApi } from '@/api/rs';
-import { useAppStore } from '@/store';
+import { useNotificationStore } from '@/store';
 import type { Build, CreateBuildRequest } from '@/api/rs';
 import { logger } from '@/utils/logger';
 
@@ -38,7 +38,7 @@ interface Review {
 }
 
 const RsReviewPage: React.FC = () => {
-  const { addNotification } = useAppStore();
+  const { addNotification } = useNotificationStore();
   const [reviews, setReviews] = useState<Review[]>([]);
   const [loading, setLoading] = useState(false);
   const [page, setPage] = useState(0);

@@ -4,7 +4,7 @@ import { CardListTemplate, type CardRenderConfig, type CardAction } from '@/comp
 import { docApi } from '@/api/doc';
 import type { FileMetadata, FileVersion, Folder as FolderType } from '@/api/doc';
 import { logger } from '@/utils/logger';
-import { useAppStore } from '@/store';
+import { useNotificationStore } from '@/store';
 import {
   File,
   Folder,
@@ -48,7 +48,7 @@ interface DocumentWithFavorite extends FileMetadata {
 
 const DocumentCenterPage: React.FC = () => {
   const navigate = useNavigate();
-  const addNotification = useAppStore((state) => state.addNotification);
+  const addNotification = useNotificationStore((state) => state.addNotification);
   const theme = useTheme();
 
   const [documents, setDocuments] = useState<DocumentWithFavorite[]>([]);

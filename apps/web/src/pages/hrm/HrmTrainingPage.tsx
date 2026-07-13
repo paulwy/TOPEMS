@@ -23,7 +23,7 @@ import {
   type Employee,
 } from '@/api/hrm';
 import { apiLogger } from '@/utils/logger';
-import { useAppStore } from '../../store';
+import { useNotificationStore } from '../../store';
 import {
   ListPageTemplate,
   type ColumnDef,
@@ -52,7 +52,7 @@ import {
 
 const HrmTrainingPage: React.FC = () => {
   const navigate = useNavigate();
-  const addNotification = useAppStore((state) => state.addNotification);
+  const addNotification = useNotificationStore((state) => state.addNotification);
 
   const [activeTab, setActiveTab] = useState<'plans' | 'courses' | 'records'>('plans');
   const [plans, setPlans] = useState<TrainingPlan[]>([]);
@@ -633,6 +633,15 @@ const HrmTrainingPage: React.FC = () => {
             },
           ]}
           onRefresh={loadData}
+          exportable
+          exportFileName='培训计划列表'
+          persistFilters
+          persistSearch
+          emptyActionButton={{
+            label: '新增计划',
+            icon: <Plus size={16} />,
+            onClick: () => handleOpenModal(),
+          }}
         />
       )}
 
@@ -657,6 +666,15 @@ const HrmTrainingPage: React.FC = () => {
             },
           ]}
           onRefresh={loadData}
+          exportable
+          exportFileName='培训课程列表'
+          persistFilters
+          persistSearch
+          emptyActionButton={{
+            label: '新增课程',
+            icon: <Plus size={16} />,
+            onClick: () => handleOpenModal(),
+          }}
         />
       )}
 
@@ -673,6 +691,14 @@ const HrmTrainingPage: React.FC = () => {
           searchValue={searchTerm}
           onSearch={setSearchTerm}
           onRefresh={loadData}
+          exportable
+          exportFileName='培训记录列表'
+          persistFilters
+          persistSearch
+          emptyActionButton={{
+            label: '查看培训课程',
+            onClick: () => setActiveTab('courses'),
+          }}
         />
       )}
 

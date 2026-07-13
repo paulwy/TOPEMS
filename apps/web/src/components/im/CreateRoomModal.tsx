@@ -14,7 +14,7 @@ import React, { useState } from 'react';
 import { X, Users, User, Save, MessageSquare } from 'lucide-react';
 
 import { imApi, type CreateChatRoomRequest, type CreateProjectGroupRequest } from '../../api/im';
-import { useAppStore } from '../../store';
+import { useNotificationStore } from '@/store';
 import { logger } from '@/utils/logger';
 
 interface CreateRoomModalProps {
@@ -31,7 +31,7 @@ export const CreateRoomModal: React.FC<CreateRoomModalProps> = ({
   currentUserId = 'current-user',
 }) => {
   const theme = useTheme();
-  const addNotification = useAppStore((state) => state.addNotification);
+  const addNotification = useNotificationStore((state) => state.addNotification);
   const [loading, setLoading] = useState(false);
   const [activeTab, setActiveTab] = useState<'chat' | 'group'>('chat');
 

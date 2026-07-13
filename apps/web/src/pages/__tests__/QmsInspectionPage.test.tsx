@@ -4,7 +4,7 @@ import { render, screen, waitFor, fireEvent } from '@testing-library/react';
 import { BrowserRouter } from 'react-router-dom';
 import QmsInspectionPage from '../qms/QmsInspectionPage';
 import { qmsApi } from '@/api/qms';
-import { useAppStore } from '@/store';
+import { useNotificationStore, useAuthStore } from '@/store';
 
 vi.mock('@/api/qms', () => ({
   qmsApi: {
@@ -22,19 +22,24 @@ vi.mock('@/api/qms', () => ({
   },
 }));
 vi.mock('@/store', () => ({
-  useAppStore: vi.fn((selector?: any) =>
+  useNotificationStore: vi.fn((selector?: any) =>
     selector
       ? selector({
-          addNotification: mockAddNotification,
+          addNotification: vi.fn(),
           notifications: [],
-          user: null,
-          theme: 'light',
         })
       : {
-          addNotification: mockAddNotification,
+          addNotification: vi.fn(),
           notifications: [],
+        }
+  ),
+  useAuthStore: vi.fn((selector?: any) =>
+    selector
+      ? selector({
           user: null,
-          theme: 'light',
+        })
+      : {
+          user: null,
         }
   ),
 }));
@@ -67,7 +72,7 @@ const mockInspections = [
 describe('QmsInspectionPage', () => {
   beforeEach(() => {
     vi.clearAllMocks();
-    (useAppStore as vi.Mock).mockImplementation((selector?: any) =>
+    (useNotificationStore as vi.Mock).mockImplementation((selector?: any) =>
       selector
         ? selector({
             addNotification: mockAddNotification,

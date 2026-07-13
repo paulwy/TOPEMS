@@ -1,8 +1,12 @@
 use axum::extract::{Json, State};
 use serde::{Deserialize, Serialize};
+use sqlx::Row;
 use uuid::Uuid;
 
-use super::models::{CreateSyncTaskRequest, RetryFailedRequest, SyncStatistics, SyncTask};
+use super::models::{
+    CreateSyncTaskRequest, MobileSyncRequest, MobileSyncResponse, RetryFailedRequest,
+    SyncStatistics, SyncTask,
+};
 use super::service::{
     create_sync_task, get_pending_sync_tasks, get_sync_statistics, get_sync_task_by_id,
     retry_failed_tasks, trigger_scm_to_wms_sync, trigger_srm_to_scm_sync, trigger_wms_to_crm_sync,
@@ -171,5 +175,148 @@ pub async fn trigger_srm_scm(
             }
         },
         Err(_) => Json(api_error(400, "供应商ID格式错误")),
+    }
+}
+
+pub async fn mobile_sync_records(
+    State(state): State<AppState>,
+    Json(req): Json<MobileSyncRequest>,
+) -> Json<ApiResponse<MobileSyncResponse>> {
+    let mut success: Vec<String> = Vec::new();
+    let mut failed: Vec<super::models::MobileSyncFailedItem> = Vec::new();
+
+    for record in req.records {
+        let tenant_id = Uuid::nil();
+        let user_id = Uuid::nil();
+
+        match sqlx::query(
+            r#"
+            INSERT INTO core_mobile_offline_records
+            (id, tenant_id, user_id, module, action, data, status)
+            VALUES ($1, $2, $3, $4, $5, $6, 'pending')
+            ON CONFLICT (id) DO UPDATE SET data = $6, status = 'pending', updated_at = NOW()
+            "#,
+        )
+        .bind(Uuid::parse_str(&record.id).unwrap_or_else(|_| Uuid::new_v4()))
+        .bind(tenant_id)
+        .bind(user_id)
+        .bind(&record.module)
+        .bind(&record.action)
+        .bind(&record.data)
+        .execute(&state.pool)
+        .await
+        {
+            Ok(_) => {
+                success.push(record.id);
+            }
+            Err(e) => {
+                tracing::error!("保存离线记录失败: {}", e);
+                failed.push(super::models::MobileSyncFailedItem {
+                    id: record.id,
+                    error: e.to_string(),
+                });
+            }
+        }
+    }
+
+    let response = MobileSyncResponse {
+        success,
+        failed: failed.clone(),
+    };
+
+    if failed.is_empty() {
+        Json(ApiResponse::success(response, "同步成功"))
+    } else {
+        Json(ApiResponse::success(response, "部分同步成功"))
+    }
+}
+
+pub async fn mobile_get_pending_records(
+    State(state): State<AppState>,
+) -> Json<ApiResponse<Vec<serde_json::Value>>> {
+    match sqlx::query(
+        r#"
+        SELECT id, tenant_id, user_id, module, action, data, status,
+               retry_count, max_retries, error_message, created_at, updated_at
+        FROM core_mobile_offline_records
+        WHERE status = 'pending'
+        ORDER BY created_at ASC
+        "#,
+    )
+    .fetch_all(&state.pool)
+    .await
+    {
+        Ok(rows) => {
+            let records: Vec<serde_json::Value> = rows
+                .into_iter()
+                .map(|row| {
+                    serde_json::json!({
+                        "id": row.get::<Uuid, _>("id"),
+                        "tenant_id": row.get::<Uuid, _>("tenant_id"),
+                        "user_id": row.get::<Uuid, _>("user_id"),
+                        "module": row.get::<String, _>("module"),
+                        "action": row.get::<String, _>("action"),
+                        "data": row.get::<serde_json::Value, _>("data"),
+                        "status": row.get::<String, _>("status"),
+                        "retry_count": row.get::<i32, _>("retry_count"),
+                        "max_retries": row.get::<i32, _>("max_retries"),
+                        "error_message": row.get::<Option<String>, _>("error_message"),
+                        "created_at": row.get::<chrono::DateTime<chrono::Utc>, _>("created_at"),
+                        "updated_at": row.get::<chrono::DateTime<chrono::Utc>, _>("updated_at"),
+                    })
+                })
+                .collect();
+            Json(ApiResponse::success(records, "查询成功"))
+        }
+        Err(e) => {
+            tracing::error!("查询离线记录失败: {}", e);
+            Json(api_error(500, "查询离线记录失败"))
+        }
+    }
+}
+
+pub async fn mobile_mark_synced(
+    State(state): State<AppState>,
+    axum::extract::Path(record_id): axum::extract::Path<String>,
+) -> Json<ApiResponse<()>> {
+    match Uuid::parse_str(&record_id) {
+        Ok(id) => {
+            match sqlx::query(
+                r#"
+                UPDATE core_mobile_offline_records
+                SET status = 'synced', updated_at = NOW()
+                WHERE id = $1
+                "#,
+            )
+            .bind(id)
+            .execute(&state.pool)
+            .await
+            {
+                Ok(_) => Json(ApiResponse::success((), "标记同步成功")),
+                Err(e) => {
+                    tracing::error!("更新离线记录状态失败: {}", e);
+                    Json(api_error(500, "更新状态失败"))
+                }
+            }
+        }
+        Err(_) => Json(api_error(400, "记录ID格式错误")),
+    }
+}
+
+pub async fn mobile_clear_synced(State(state): State<AppState>) -> Json<ApiResponse<()>> {
+    match sqlx::query(
+        r#"
+        DELETE FROM core_mobile_offline_records
+        WHERE status = 'synced'
+        "#,
+    )
+    .execute(&state.pool)
+    .await
+    {
+        Ok(_) => Json(ApiResponse::success((), "清理已同步记录成功")),
+        Err(e) => {
+            tracing::error!("清理已同步记录失败: {}", e);
+            Json(api_error(500, "清理失败"))
+        }
     }
 }

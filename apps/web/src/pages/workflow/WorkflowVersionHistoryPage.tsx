@@ -30,7 +30,7 @@ import {
 import { PageContainer } from '@/components/common';
 import type { Workflow, WorkflowVersion } from '@/api/workflow';
 import { workflowApi } from '@/api/workflow';
-import { useAppStore } from '../../store';
+import { useNotificationStore } from '../../store';
 import { apiLogger } from '@/utils/logger';
 import { WORKFLOW_PATHS } from '@/modules/workflow/config';
 
@@ -38,7 +38,7 @@ const FlowVersionHistoryPage: React.FC = () => {
   const theme = useTheme();
   const navigate = useNavigate();
   const { id } = useParams<{ id: string }>();
-  const addNotification = useAppStore((state) => state.addNotification);
+  const addNotification = useNotificationStore((state) => state.addNotification);
   const [workflow, setWorkflow] = useState<Workflow | null>(null);
   const [versions, setVersions] = useState<WorkflowVersion[]>([]);
   const [loading, setLoading] = useState(true);

@@ -17,15 +17,24 @@ vi.mock('@/api/srm', () => ({
 }));
 
 vi.mock('@/store', () => ({
-  useAppStore: vi.fn((selector?: any) =>
+  useNotificationStore: vi.fn((selector?: any) =>
     selector
       ? selector({
           addNotification: vi.fn(),
-          user: { permissions: ['srm:order:read', 'srm:order:create'] },
+          notifications: [],
         })
       : {
           addNotification: vi.fn(),
-          user: { permissions: ['srm:order:read', 'srm:order:create'] },
+          notifications: [],
+        }
+  ),
+  useAuthStore: vi.fn((selector?: any) =>
+    selector
+      ? selector({
+          user: null,
+        })
+      : {
+          user: null,
         }
   ),
 }));

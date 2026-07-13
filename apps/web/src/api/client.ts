@@ -17,6 +17,7 @@ import {
   csrfResponseInterceptor,
   initCsrfProtection,
 } from '@/components/security';
+import { injectTraceContext } from '@/utils/telemetry';
 
 const logger = createLogger('ApiClient');
 
@@ -61,6 +62,7 @@ interface TimeoutError {
   message?: string;
   response?: {
     statusText?: string;
+    status?: number;
   };
 }
 
@@ -70,6 +72,16 @@ const isTimeoutError = (error: TimeoutError): boolean => {
     (error.response?.statusText || '').toLowerCase() === 'timeout' ||
     (error.message || '').includes('timeout')
   );
+};
+
+const isNetworkError = (error: TimeoutError): boolean => {
+  return !error.response || error.code === 'ERR_NETWORK';
+};
+
+const shouldRetry = (error: TimeoutError, retries: number): boolean => {
+  if (retries >= 3) return false;
+  return isTimeoutError(error) || isNetworkError(error) || 
+    (error.response?.status !== undefined && error.response.status >= 500);
 };
 
 const handleTimeoutError = (url: string): void => {
@@ -160,6 +172,11 @@ export const createAxiosClient = ({
         requestConfig.headers['Authorization'] = `Bearer ${token}`;
       }
 
+      const traceHeaders = injectTraceContext();
+      Object.entries(traceHeaders).forEach(([key, value]) => {
+        requestConfig.headers[key] = value;
+      });
+
       if (withCsrf) {
         return csrfRequestInterceptor(requestConfig);
       }
@@ -205,10 +222,11 @@ export const createAxiosClient = ({
 
       return returnData ? response.data : response;
     },
-    (error) => {
+    async (error) => {
       const url = error.config?.url || '';
       const baseURL = error.config?.baseURL || '';
       const fullUrl = `${baseURL}${url}`;
+      const retries = error.config?.headers?.['X-Retry-Count'] || 0;
 
       apiLogger.error(`[API Error] ${error.response?.status || 'N/A'} ${fullUrl}`, {
         url: fullUrl,
@@ -217,6 +235,7 @@ export const createAxiosClient = ({
         statusText: error.response?.statusText,
         errorCode: error.code,
         errorMessage: error.message,
+        retries,
         responseData: error.response?.data
           ? JSON.stringify(error.response?.data).length > 2000
             ? 'Truncated (over 2000 chars)'
@@ -245,12 +264,10 @@ export const createAxiosClient = ({
 
       if (isTimeoutError(error)) {
         handleTimeoutError(url);
-        return Promise.reject(error);
       }
 
       if (!error.response || error.code === 'ERR_NETWORK') {
         handleNetworkError(url);
-        return Promise.reject(error);
       }
 
       if (error.response?.status === 401) {
@@ -258,6 +275,19 @@ export const createAxiosClient = ({
         if (currentPath !== '/login' && currentPath !== '/register') {
           handleAuthError();
         }
+        return Promise.reject(error);
+      }
+
+      if (shouldRetry(error, retries)) {
+        const delay = Math.pow(2, retries) * 1000;
+        logger.info(`Retrying request (${retries + 1}/3): ${fullUrl}, delay: ${delay}ms`);
+        
+        await new Promise((resolve) => setTimeout(resolve, delay));
+        
+        const newConfig = { ...error.config };
+        newConfig.headers = { ...newConfig.headers, 'X-Retry-Count': retries + 1 };
+        
+        return client(newConfig);
       }
 
       const isHealthCheck = url.includes('/health');
@@ -417,6 +447,9 @@ class ApiClient {
   get master() {
     return this.clients.master;
   }
+  get core() {
+    return this.clients.core;
+  }
   get mail() {
     return this.clients.mail;
   }
@@ -428,6 +461,9 @@ class ApiClient {
   }
   get migration() {
     return this.clients.migration;
+  }
+  get finance() {
+    return this.clients.finance;
   }
 
   async get<T = unknown>(url: string, config?: AxiosRequestConfig): Promise<ApiResponse<T>> {

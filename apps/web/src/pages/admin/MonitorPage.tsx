@@ -12,7 +12,7 @@ import {
 import React, { useState, useEffect } from 'react';
 import { monitorApi } from '@/api/monitor';
 import { apiLogger } from '@/utils/logger';
-import { useAppStore } from '@/store';
+import { useNotificationStore } from '@/store';
 import { LoadingSpinner } from '@topems/shared-components';
 import {
   Cpu,
@@ -61,7 +61,7 @@ const MonitorPage: React.FC = () => {
     }[]
   >([]);
 
-  const { addNotification } = useAppStore();
+  const { addNotification } = useNotificationStore();
 
   useEffect(() => {
     loadData();

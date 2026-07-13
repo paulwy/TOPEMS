@@ -2,6 +2,7 @@ import apiClient from '../client';
 import type { ApiResponse } from '../client';
 import type { PaginatedResponse } from '@topems/shared-types';
 import { apiLogger } from '../../utils/logger';
+import type { CrudOperations } from '@/hooks/useCrudQueries';
 
 export interface SystemMetrics {
   cpu_usage: number;
@@ -276,3 +277,26 @@ export const monitorApi = {
 };
 
 export default monitorApi;
+
+export const alertCrudApi: CrudOperations<Alert, AlertQueryParams> = {
+  list: (params?) => monitorApi.listAlerts({
+    page: params?.page,
+    pagesize: params?.pagesize,
+    ...(params as any),
+  }) as Promise<{
+    success: boolean;
+    code: number;
+    message: string;
+    data?: { items: Alert[]; total: number; page?: number; pagesize?: number };
+  }>,
+  get: monitorApi.getAlert as (id: string) => Promise<{ success: boolean; code: number; message: string; data?: Alert }>,
+  create: (() => {
+    throw new Error('Not implemented');
+  }) as any,
+  update: (() => {
+    throw new Error('Not implemented');
+  }) as any,
+  delete: (() => {
+    throw new Error('Not implemented');
+  }) as any,
+};

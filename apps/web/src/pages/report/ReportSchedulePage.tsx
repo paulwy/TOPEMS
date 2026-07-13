@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
 import {
   Box,
   Typography,
@@ -39,6 +39,7 @@ import {
   Check as CheckIcon,
   X as XIcon,
 } from 'lucide-react';
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import {
   reportApi,
   type ReportSchedule,
@@ -69,15 +70,12 @@ const SCHEDULE_STATUS_OPTIONS: {
 ];
 
 const ReportSchedulePage: React.FC = () => {
-  const [schedules, setSchedules] = useState<ReportSchedule[]>([]);
-  const [templates, setTemplates] = useState<ReportTemplate[]>([]);
-  const [loading, setLoading] = useState(false);
-  const [error, setError] = useState<string>('');
   const [dialogOpen, setDialogOpen] = useState(false);
   const [editMode, setEditMode] = useState(false);
   const [currentSchedule, setCurrentSchedule] = useState<ReportSchedule | null>(null);
   const [historyDialogOpen, setHistoryDialogOpen] = useState(false);
   const [executionHistory, setExecutionHistory] = useState<ScheduleExecutionRecord[]>([]);
+  const [error, setError] = useState<string>('');
 
   const [formData, setFormData] = useState<CreateScheduleRequest | UpdateScheduleRequest>({
     name: '',
@@ -87,42 +85,123 @@ const ReportSchedulePage: React.FC = () => {
     recipients: [],
   });
 
-  useEffect(() => {
-    fetchSchedules();
-    fetchTemplates();
-  }, []);
+  const queryClient = useQueryClient();
 
-  const fetchSchedules = async () => {
-    setLoading(true);
-    setError('');
-    try {
+  const schedulesQuery = useQuery({
+    queryKey: ['report-schedules'],
+    queryFn: async () => {
       const response = await reportApi.listSchedules();
-      if (response.success && response.data) {
-        setSchedules(response.data);
-      } else {
-        setError(response.message || '获取定时任务列表失败');
+      if (!response.success) {
+        throw new Error(response.message || '获取定时任务列表失败');
       }
-    } catch (err: unknown) {
-      setError('获取定时任务列表失败');
-    } finally {
-      setLoading(false);
-    }
-  };
+      return response.data || [];
+    },
+    staleTime: 5 * 60 * 1000,
+  });
 
-  const fetchTemplates = async () => {
-    try {
+  const templatesQuery = useQuery({
+    queryKey: ['report-templates'],
+    queryFn: async () => {
       const response = await reportApi.listTemplates();
-      if (response.success && response.data) {
-        setTemplates(response.data);
+      if (!response.success) {
+        throw new Error(response.message || '获取报表模板失败');
       }
-    } catch (err: unknown) {
-      logger.error('获取报表模板失败', err);
-    }
-  };
+      return response.data || [];
+    },
+    staleTime: 5 * 60 * 1000,
+  });
+
+  const createMutation = useMutation({
+    mutationFn: async (data: CreateScheduleRequest) => {
+      const response = await reportApi.createSchedule(data);
+      if (!response.success) {
+        throw new Error(response.message || '创建定时任务失败');
+      }
+      return response.data;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['report-schedules'] });
+    },
+    onError: (err: unknown) => {
+      setError((err as Error).message || '创建定时任务失败');
+    },
+  });
+
+  const updateMutation = useMutation({
+    mutationFn: async ({ id, data }: { id: string; data: UpdateScheduleRequest }) => {
+      const response = await reportApi.updateSchedule(id, data);
+      if (!response.success) {
+        throw new Error(response.message || '更新定时任务失败');
+      }
+      return response.data;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['report-schedules'] });
+    },
+    onError: (err: unknown) => {
+      setError((err as Error).message || '更新定时任务失败');
+    },
+  });
+
+  const deleteMutation = useMutation({
+    mutationFn: async (id: string) => {
+      const response = await reportApi.deleteSchedule(id);
+      if (!response.success) {
+        throw new Error(response.message || '删除定时任务失败');
+      }
+      return id;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['report-schedules'] });
+    },
+    onError: (err: unknown) => {
+      setError((err as Error).message || '删除定时任务失败');
+    },
+  });
+
+  const executeMutation = useMutation({
+    mutationFn: async (id: string) => {
+      const response = await reportApi.executeSchedule(id);
+      if (!response.success) {
+        throw new Error(response.message || '执行定时任务失败');
+      }
+      return id;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['report-schedules'] });
+    },
+    onError: (err: unknown) => {
+      setError((err as Error).message || '执行定时任务失败');
+    },
+  });
+
+  const historyQuery = useQuery({
+    queryKey: ['report-schedule-history', currentSchedule?.id],
+    queryFn: async () => {
+      if (!currentSchedule?.id) return [];
+      const response = await reportApi.getExecutionHistory(currentSchedule.id);
+      if (!response.success) {
+        throw new Error(response.message || '获取执行历史失败');
+      }
+      return response.data || [];
+    },
+    enabled: historyDialogOpen && !!currentSchedule?.id,
+    staleTime: 1 * 60 * 1000,
+  });
+
+  const schedules = schedulesQuery.data || [];
+  const templates = templatesQuery.data || [];
+  const loading =
+    schedulesQuery.isLoading ||
+    createMutation.isPending ||
+    updateMutation.isPending ||
+    deleteMutation.isPending ||
+    executeMutation.isPending;
 
   const handleOpenCreateDialog = () => {
     setEditMode(false);
     setCurrentSchedule(null);
+    setError('');
     setFormData({
       name: '',
       template_id: '',
@@ -136,6 +215,7 @@ const ReportSchedulePage: React.FC = () => {
   const handleOpenEditDialog = (schedule: ReportSchedule) => {
     setEditMode(true);
     setCurrentSchedule(schedule);
+    setError('');
     setFormData({
       name: schedule.name,
       template_id: schedule.template_id,
@@ -148,6 +228,7 @@ const ReportSchedulePage: React.FC = () => {
 
   const handleCloseDialog = () => {
     setDialogOpen(false);
+    setError('');
     setFormData({
       name: '',
       template_id: '',
@@ -183,27 +264,16 @@ const ReportSchedulePage: React.FC = () => {
     setError('');
     try {
       if (editMode && currentSchedule) {
-        const response = await reportApi.updateSchedule(
-          currentSchedule.id,
-          formData as UpdateScheduleRequest
-        );
-        if (response.success) {
-          setDialogOpen(false);
-          fetchSchedules();
-        } else {
-          setError(response.message || '更新定时任务失败');
-        }
+        await updateMutation.mutateAsync({
+          id: currentSchedule.id,
+          data: formData as UpdateScheduleRequest,
+        });
       } else {
-        const response = await reportApi.createSchedule(formData as CreateScheduleRequest);
-        if (response.success) {
-          setDialogOpen(false);
-          fetchSchedules();
-        } else {
-          setError(response.message || '创建定时任务失败');
-        }
+        await createMutation.mutateAsync(formData as CreateScheduleRequest);
       }
-    } catch (err: unknown) {
-      setError(editMode ? '更新定时任务失败' : '创建定时任务失败');
+      setDialogOpen(false);
+    } catch (err) {
+      // Error handled by mutation onError
     }
   };
 
@@ -211,44 +281,25 @@ const ReportSchedulePage: React.FC = () => {
     if (!window.confirm('确定要删除这个定时任务吗？')) return;
     setError('');
     try {
-      const response = await reportApi.deleteSchedule(id);
-      if (response.success) {
-        fetchSchedules();
-      } else {
-        setError(response.message || '删除定时任务失败');
-      }
-    } catch (err: unknown) {
-      setError('删除定时任务失败');
+      await deleteMutation.mutateAsync(id);
+    } catch (err) {
+      // Error handled by mutation onError
     }
   };
 
   const handleExecute = async (id: string) => {
     setError('');
     try {
-      const response = await reportApi.executeSchedule(id);
-      if (response.success) {
-        fetchSchedules();
-      } else {
-        setError(response.message || '执行定时任务失败');
-      }
-    } catch (err: unknown) {
-      setError('执行定时任务失败');
+      await executeMutation.mutateAsync(id);
+    } catch (err) {
+      // Error handled by mutation onError
     }
   };
 
-  const handleViewHistory = async (id: string) => {
+  const handleViewHistory = async (schedule: ReportSchedule) => {
+    setCurrentSchedule(schedule);
     setError('');
-    try {
-      const response = await reportApi.getExecutionHistory(id);
-      if (response.success && response.data) {
-        setExecutionHistory(response.data);
-        setHistoryDialogOpen(true);
-      } else {
-        setError(response.message || '获取执行历史失败');
-      }
-    } catch (err: unknown) {
-      setError('获取执行历史失败');
-    }
+    setHistoryDialogOpen(true);
   };
 
   const getStatusChip = (status: ScheduleStatus) => {
@@ -370,7 +421,7 @@ const ReportSchedulePage: React.FC = () => {
                             <IconButton
                               size='small'
                               color='info'
-                              onClick={() => handleViewHistory(schedule.id)}
+                              onClick={() => handleViewHistory(schedule)}
                             >
                               <HistoryIcon />
                             </IconButton>
@@ -544,7 +595,16 @@ const ReportSchedulePage: React.FC = () => {
                 </TableRow>
               </TableHead>
               <TableBody>
-                {executionHistory.length === 0 ? (
+                {historyQuery.isLoading ? (
+                  <TableRow>
+                    <TableCell
+                      colSpan={5}
+                      align='center'
+                    >
+                      <Typography variant='body1'>加载中...</Typography>
+                    </TableCell>
+                  </TableRow>
+                ) : (historyQuery.data || []).length === 0 ? (
                   <TableRow>
                     <TableCell
                       colSpan={5}
@@ -554,7 +614,7 @@ const ReportSchedulePage: React.FC = () => {
                     </TableCell>
                   </TableRow>
                 ) : (
-                  executionHistory.map((record) => (
+                  (historyQuery.data || []).map((record) => (
                     <TableRow key={record.id}>
                       <TableCell>{new Date(record.started_at).toLocaleString()}</TableCell>
                       <TableCell>

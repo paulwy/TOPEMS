@@ -1,18 +1,24 @@
 use chrono::{DateTime, Datelike, NaiveDate, Utc};
+use csv::Writer;
 use rust_decimal::Decimal;
 use sqlx::{postgres::PgPool, Row};
 use uuid::Uuid;
 
 use super::super::models::*;
+use crate::workflow::WorkflowClient;
 use topems_shared::error::TopemsError;
 
 pub struct FinanceService {
     db_pool: PgPool,
+    workflow_client: WorkflowClient,
 }
 
 impl FinanceService {
-    pub fn new(db_pool: PgPool) -> Self {
-        Self { db_pool }
+    pub fn new(db_pool: PgPool, workflow_client: WorkflowClient) -> Self {
+        Self {
+            db_pool,
+            workflow_client,
+        }
     }
 
     pub async fn create_account(
@@ -255,6 +261,25 @@ impl FinanceService {
         .bind(tenant_id)
         .bind(voucher_id)
         .bind(approved_by)
+        .fetch_one(&self.db_pool)
+        .await?;
+
+        Ok(voucher)
+    }
+
+    pub async fn reject_voucher(
+        &self,
+        tenant_id: Uuid,
+        voucher_id: Uuid,
+        rejected_by: &str,
+    ) -> Result<Voucher, TopemsError> {
+        let voucher = sqlx::query_as(
+            "UPDATE core_finance_vouchers SET status = 'rejected', updated_at = CURRENT_TIMESTAMP
+             WHERE tenant_id = $1 AND id = $2 AND status = 'submitted'
+             RETURNING *",
+        )
+        .bind(tenant_id)
+        .bind(voucher_id)
         .fetch_one(&self.db_pool)
         .await?;
 
@@ -1534,6 +1559,1542 @@ impl FinanceService {
         };
 
         Ok((workflows, total.0))
+    }
+
+    pub async fn create_payment(
+        &self,
+        tenant_id: Uuid,
+        req: CreatePaymentRequest,
+        created_by: &str,
+    ) -> Result<PaymentResponse, TopemsError> {
+        let payment_date = req.payment_date.unwrap_or_else(|| Utc::now().date_naive());
+        let voucher_date = chrono::DateTime::<Utc>::from_naive_utc_and_offset(
+            payment_date.and_hms_opt(0, 0, 0).unwrap(),
+            Utc,
+        );
+        let period = format!("{:04}{:02}", payment_date.year(), payment_date.month());
+        let currency = req.currency.unwrap_or_else(|| "CNY".to_string());
+
+        self.check_period_open(tenant_id, period.clone()).await?;
+
+        let total_amount: Decimal = req.items.iter().map(|i| i.payment_amount).sum();
+        if (total_amount - req.total_amount).abs() > Decimal::new(1, 4) {
+            return Err(TopemsError::ValidationFailed(
+                "付款明细金额合计与总金额不一致".to_string(),
+            ));
+        }
+
+        let mut tx = self.db_pool.begin().await?;
+
+        let voucher_lines = vec![
+            VoucherLineRequest {
+                account_code: "2202".to_string(),
+                description: Some(format!(
+                    "付款-{}",
+                    req.supplier_name.clone().unwrap_or_default()
+                )),
+                debit: total_amount,
+                credit: Decimal::new(0, 0),
+                project_id: None,
+                department_id: None,
+            },
+            VoucherLineRequest {
+                account_code: "1002".to_string(),
+                description: Some(format!(
+                    "付款-{}",
+                    req.supplier_name.clone().unwrap_or_default()
+                )),
+                debit: Decimal::new(0, 0),
+                credit: total_amount,
+                project_id: None,
+                department_id: None,
+            },
+        ];
+
+        let voucher_req = CreateVoucherRequest {
+            voucher_date,
+            voucher_type: VoucherType::Payment,
+            lines: voucher_lines,
+            description: req.remark.clone(),
+        };
+
+        let voucher = self
+            .create_voucher_with_tx(&mut tx, tenant_id, voucher_req, created_by)
+            .await?;
+
+        let payment_no = self.generate_payment_no(tenant_id).await?;
+
+        let payment: Payment = sqlx::query_as(
+            "INSERT INTO core_finance_payments (tenant_id, voucher_id, payment_no, supplier_id, supplier_name, payment_method, bank_account_id, bank_name, bank_account_no, total_amount, currency, payment_date, remark, created_by)
+             VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14)
+             RETURNING *",
+        )
+        .bind(tenant_id)
+        .bind(voucher.id)
+        .bind(&payment_no)
+        .bind(req.supplier_id)
+        .bind(&req.supplier_name)
+        .bind(&req.payment_method)
+        .bind(req.bank_account_id)
+        .bind(&req.bank_name)
+        .bind(&req.bank_account_no)
+        .bind(req.total_amount)
+        .bind(&currency)
+        .bind(payment_date)
+        .bind(&req.remark)
+        .bind(created_by)
+        .fetch_one(&mut *tx)
+        .await?;
+
+        let mut items = Vec::new();
+        for (i, item) in req.items.iter().enumerate() {
+            let payment_item: PaymentItem = sqlx::query_as(
+                "INSERT INTO core_finance_payment_items (tenant_id, payment_id, line_no, invoice_id, invoice_no, payable_id, payable_amount, payment_amount, remark, remaining_amount)
+                 VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10)
+                 RETURNING *",
+            )
+            .bind(tenant_id)
+            .bind(payment.id)
+            .bind(i as i32 + 1)
+            .bind(item.invoice_id)
+            .bind(&item.invoice_no)
+            .bind(item.payable_id)
+            .bind(item.payable_amount)
+            .bind(item.payment_amount)
+            .bind(&item.remark)
+            .bind(item.payable_amount - item.payment_amount)
+            .fetch_one(&mut *tx)
+            .await?;
+            items.push(payment_item);
+        }
+
+        tx.commit().await?;
+
+        Ok(PaymentResponse {
+            id: payment.id,
+            payment_no: payment.payment_no,
+            supplier_id: payment.supplier_id,
+            supplier_name: payment.supplier_name,
+            payment_method: payment.payment_method,
+            total_amount: payment.total_amount,
+            currency: payment.currency,
+            payment_date: payment.payment_date,
+            actual_payment_date: payment.actual_payment_date,
+            bank_transaction_no: payment.bank_transaction_no,
+            executed_by: payment.executed_by,
+            executed_at: payment.executed_at,
+            status: voucher.status,
+            remark: payment.remark,
+            items,
+            voucher_id: voucher.id,
+            created_at: payment.created_at,
+        })
+    }
+
+    pub async fn get_payment(
+        &self,
+        tenant_id: Uuid,
+        payment_id: Uuid,
+    ) -> Result<PaymentResponse, TopemsError> {
+        let payment: Payment =
+            sqlx::query_as("SELECT * FROM core_finance_payments WHERE tenant_id = $1 AND id = $2")
+                .bind(tenant_id)
+                .bind(payment_id)
+                .fetch_one(&self.db_pool)
+                .await?;
+
+        let voucher = self.get_voucher(tenant_id, payment.voucher_id).await?;
+
+        let items: Vec<PaymentItem> = sqlx::query_as(
+            "SELECT * FROM core_finance_payment_items WHERE tenant_id = $1 AND payment_id = $2 ORDER BY line_no",
+        )
+        .bind(tenant_id)
+        .bind(payment_id)
+        .fetch_all(&self.db_pool)
+        .await?;
+
+        Ok(PaymentResponse {
+            id: payment.id,
+            payment_no: payment.payment_no,
+            supplier_id: payment.supplier_id,
+            supplier_name: payment.supplier_name,
+            payment_method: payment.payment_method,
+            total_amount: payment.total_amount,
+            currency: payment.currency,
+            payment_date: payment.payment_date,
+            actual_payment_date: payment.actual_payment_date,
+            bank_transaction_no: payment.bank_transaction_no,
+            executed_by: payment.executed_by,
+            executed_at: payment.executed_at,
+            status: voucher.status,
+            remark: payment.remark,
+            items,
+            voucher_id: payment.voucher_id,
+            created_at: payment.created_at,
+        })
+    }
+
+    pub async fn list_payments(
+        &self,
+        tenant_id: Uuid,
+        params: PaymentQueryParams,
+    ) -> Result<(Vec<PaymentResponse>, i64), TopemsError> {
+        let page = params.page.unwrap_or(1);
+        let page_size = params.page_size.unwrap_or(20);
+        let offset = (page - 1) * page_size;
+
+        let total: (i64,) =
+            sqlx::query_as("SELECT COUNT(*) FROM core_finance_payments WHERE tenant_id = $1")
+                .bind(tenant_id)
+                .fetch_one(&self.db_pool)
+                .await?;
+
+        let payments: Vec<Payment> = sqlx::query_as(
+            "SELECT * FROM core_finance_payments WHERE tenant_id = $1 ORDER BY created_at DESC LIMIT $2 OFFSET $3",
+        )
+        .bind(tenant_id)
+        .bind(page_size)
+        .bind(offset)
+        .fetch_all(&self.db_pool)
+        .await?;
+
+        let mut results = Vec::new();
+        for payment in payments {
+            let voucher = self.get_voucher(tenant_id, payment.voucher_id).await?;
+            results.push(PaymentResponse {
+                id: payment.id,
+                payment_no: payment.payment_no,
+                supplier_id: payment.supplier_id,
+                supplier_name: payment.supplier_name,
+                payment_method: payment.payment_method,
+                total_amount: payment.total_amount,
+                currency: payment.currency,
+                payment_date: payment.payment_date,
+                actual_payment_date: payment.actual_payment_date,
+                bank_transaction_no: payment.bank_transaction_no,
+                executed_by: payment.executed_by,
+                executed_at: payment.executed_at,
+                status: voucher.status,
+                remark: payment.remark,
+                items: vec![],
+                voucher_id: payment.voucher_id,
+                created_at: payment.created_at,
+            });
+        }
+
+        Ok((results, total.0))
+    }
+
+    async fn get_payment_response(
+        &self,
+        tenant_id: Uuid,
+        payment_id: Uuid,
+    ) -> Result<PaymentResponse, TopemsError> {
+        let payment: Payment =
+            sqlx::query_as("SELECT * FROM core_finance_payments WHERE tenant_id = $1 AND id = $2")
+                .bind(tenant_id)
+                .bind(payment_id)
+                .fetch_one(&self.db_pool)
+                .await?;
+
+        let voucher = self.get_voucher(tenant_id, payment.voucher_id).await?;
+
+        let items: Vec<PaymentItem> = sqlx::query_as(
+            "SELECT * FROM core_finance_payment_items WHERE tenant_id = $1 AND payment_id = $2 ORDER BY line_no",
+        )
+        .bind(tenant_id)
+        .bind(payment_id)
+        .fetch_all(&self.db_pool)
+        .await?;
+
+        Ok(PaymentResponse {
+            id: payment.id,
+            payment_no: payment.payment_no,
+            supplier_id: payment.supplier_id,
+            supplier_name: payment.supplier_name,
+            payment_method: payment.payment_method,
+            total_amount: payment.total_amount,
+            currency: payment.currency,
+            payment_date: payment.payment_date,
+            actual_payment_date: payment.actual_payment_date,
+            bank_transaction_no: payment.bank_transaction_no,
+            executed_by: payment.executed_by,
+            executed_at: payment.executed_at,
+            status: voucher.status,
+            remark: payment.remark,
+            items,
+            voucher_id: payment.voucher_id,
+            created_at: payment.created_at,
+        })
+    }
+
+    pub async fn update_payment(
+        &self,
+        tenant_id: Uuid,
+        payment_id: Uuid,
+        req: CreatePaymentRequest,
+        updated_by: &str,
+    ) -> Result<PaymentResponse, TopemsError> {
+        let payment: Payment =
+            sqlx::query_as("SELECT * FROM core_finance_payments WHERE tenant_id = $1 AND id = $2")
+                .bind(tenant_id)
+                .bind(payment_id)
+                .fetch_one(&self.db_pool)
+                .await?;
+
+        let voucher = self.get_voucher(tenant_id, payment.voucher_id).await?;
+        if voucher.status != VoucherStatus::Draft {
+            return Err(TopemsError::ValidationFailed(
+                "仅草稿状态的付款单可编辑".to_string(),
+            ));
+        }
+
+        let mut tx = self.db_pool.begin().await?;
+
+        sqlx::query("DELETE FROM core_finance_voucher_lines WHERE voucher_id = $1")
+            .bind(payment.voucher_id)
+            .execute(&mut *tx)
+            .await?;
+
+        let total_amount: Decimal = req.items.iter().map(|i| i.payment_amount).sum();
+
+        let voucher_lines = vec![
+            VoucherLineRequest {
+                account_code: "2202".to_string(),
+                description: Some(format!(
+                    "付款-{}",
+                    req.supplier_name.clone().unwrap_or_default()
+                )),
+                debit: total_amount,
+                credit: Decimal::new(0, 0),
+                project_id: None,
+                department_id: None,
+            },
+            VoucherLineRequest {
+                account_code: "1002".to_string(),
+                description: Some(format!(
+                    "付款-{}",
+                    req.supplier_name.clone().unwrap_or_default()
+                )),
+                debit: Decimal::new(0, 0),
+                credit: total_amount,
+                project_id: None,
+                department_id: None,
+            },
+        ];
+
+        self.update_voucher_lines_with_tx(
+            &mut tx,
+            tenant_id,
+            payment.voucher_id,
+            voucher_lines,
+            updated_by,
+        )
+        .await?;
+
+        sqlx::query(
+            "UPDATE core_finance_payments SET supplier_id = $1, supplier_name = $2, payment_method = $3, bank_account_id = $4, bank_name = $5, bank_account_no = $6, total_amount = $7, remark = $8, updated_at = NOW() \
+             WHERE tenant_id = $9 AND id = $10",
+        )
+        .bind(req.supplier_id)
+        .bind(&req.supplier_name)
+        .bind(&req.payment_method)
+        .bind(req.bank_account_id)
+        .bind(&req.bank_name)
+        .bind(&req.bank_account_no)
+        .bind(req.total_amount)
+        .bind(&req.remark)
+        .bind(tenant_id)
+        .bind(payment_id)
+        .execute(&mut *tx)
+        .await?;
+
+        sqlx::query("DELETE FROM core_finance_payment_items WHERE payment_id = $1")
+            .bind(payment_id)
+            .execute(&mut *tx)
+            .await?;
+
+        let mut items = Vec::new();
+        for (i, item) in req.items.iter().enumerate() {
+            let payment_item: PaymentItem = sqlx::query_as(
+                "INSERT INTO core_finance_payment_items (tenant_id, payment_id, line_no, invoice_id, invoice_no, payable_amount, payment_amount, remark)
+                 VALUES ($1, $2, $3, $4, $5, $6, $7, $8)
+                 RETURNING *",
+            )
+            .bind(tenant_id)
+            .bind(payment_id)
+            .bind(i as i32 + 1)
+            .bind(item.invoice_id)
+            .bind(&item.invoice_no)
+            .bind(item.payable_amount)
+            .bind(item.payment_amount)
+            .bind(&item.remark)
+            .fetch_one(&mut *tx)
+            .await?;
+            items.push(payment_item);
+        }
+
+        tx.commit().await?;
+
+        self.get_payment(tenant_id, payment_id).await
+    }
+
+    pub async fn delete_payment(
+        &self,
+        tenant_id: Uuid,
+        payment_id: Uuid,
+    ) -> Result<(), TopemsError> {
+        let payment: Payment =
+            sqlx::query_as("SELECT * FROM core_finance_payments WHERE tenant_id = $1 AND id = $2")
+                .bind(tenant_id)
+                .bind(payment_id)
+                .fetch_one(&self.db_pool)
+                .await?;
+
+        let voucher = self.get_voucher(tenant_id, payment.voucher_id).await?;
+        if voucher.status != VoucherStatus::Draft {
+            return Err(TopemsError::ValidationFailed(
+                "仅草稿状态的付款单可删除".to_string(),
+            ));
+        }
+
+        sqlx::query("DELETE FROM core_finance_payments WHERE id = $1")
+            .bind(payment_id)
+            .execute(&self.db_pool)
+            .await?;
+
+        Ok(())
+    }
+
+    async fn generate_payment_no(&self, tenant_id: Uuid) -> Result<String, TopemsError> {
+        let today = Utc::now();
+        let date_str = format!("{}{:02}{:02}", today.year(), today.month(), today.day());
+        let prefix = format!("FK{}", date_str);
+
+        let count: (i64,) = sqlx::query_as(
+            "SELECT COUNT(*) FROM core_finance_payments WHERE tenant_id = $1 AND payment_no LIKE $2",
+        )
+        .bind(tenant_id)
+        .bind(format!("{}%", prefix))
+        .fetch_one(&self.db_pool)
+        .await?;
+
+        Ok(format!("{}{:04}", prefix, count.0 + 1))
+    }
+
+    pub async fn submit_payment(
+        &self,
+        tenant_id: Uuid,
+        payment_id: Uuid,
+        submitted_by: &str,
+    ) -> Result<PaymentResponse, TopemsError> {
+        tracing::info!(
+            "开始提交付款单, payment_id={}, tenant_id={}, submitted_by={}",
+            payment_id,
+            tenant_id,
+            submitted_by
+        );
+
+        let payment = sqlx::query_as::<_, Payment>(
+            "SELECT * FROM core_finance_payments WHERE tenant_id = $1 AND id = $2",
+        )
+        .bind(tenant_id)
+        .bind(payment_id)
+        .fetch_one(&self.db_pool)
+        .await?;
+
+        tracing::info!(
+            "查询付款单信息成功, payment_no={}, total_amount={}, supplier_name={}",
+            payment.payment_no,
+            payment.total_amount,
+            payment.supplier_name.as_deref().unwrap_or("")
+        );
+
+        let voucher = self.get_voucher(tenant_id, payment.voucher_id).await?;
+        if voucher.status != VoucherStatus::Draft {
+            tracing::warn!(
+                "付款单状态校验失败, 当前状态={}, 期望状态=Draft",
+                voucher.status
+            );
+            return Err(TopemsError::ValidationFailed(
+                "仅草稿状态的付款单可提交".to_string(),
+            ));
+        }
+
+        tracing::info!(
+            "付款单状态校验通过, voucher_id={}, voucher_status={}",
+            voucher.id,
+            voucher.status
+        );
+
+        let workflow_id = self
+            .get_approval_workflow(tenant_id, payment.total_amount)
+            .await?;
+
+        tracing::info!(
+            "审批流程匹配完成, total_amount={}, matched_workflow_id={}",
+            payment.total_amount,
+            workflow_id
+                .map(|id| id.to_string())
+                .unwrap_or("None".to_string())
+        );
+
+        let _workflow_instance = if let Some(wf_id) = workflow_id {
+            tracing::info!(
+                "开始创建工作流实例, workflow_id={}, payment_no={}",
+                wf_id,
+                payment.payment_no
+            );
+
+            let request = crate::workflow::client::CreateInstanceRequest {
+                workflow_id: wf_id,
+                title: format!("付款单审批: {}", payment.payment_no),
+                variables: Some(serde_json::json!({
+                    "payment_id": payment.id.to_string(),
+                    "payment_no": payment.payment_no,
+                    "amount": payment.total_amount.to_string(),
+                    "supplier_name": payment.supplier_name,
+                })),
+            };
+
+            match self.workflow_client.create_instance(request).await {
+                Ok(instance) => {
+                    tracing::info!(
+                        "工作流实例创建成功, instance_id={}, workflow_id={}, title={}",
+                        instance.id,
+                        instance.workflow_id,
+                        instance.title
+                    );
+
+                    sqlx::query(
+                        "INSERT INTO core_finance_payment_workflow (tenant_id, payment_id, workflow_id, workflow_instance_id, current_approver, current_level, status)
+                         VALUES ($1, $2, $3, $4, $5, $6, $7)",
+                    )
+                    .bind(tenant_id)
+                    .bind(payment_id)
+                    .bind(wf_id)
+                    .bind(instance.id)
+                    .bind(submitted_by)
+                    .bind(1)
+                    .bind("pending")
+                    .execute(&self.db_pool)
+                    .await?;
+
+                    tracing::info!(
+                        "付款单工作流关联记录创建成功, payment_id={}, workflow_instance_id={}",
+                        payment_id,
+                        instance.id
+                    );
+
+                    Some(instance.id)
+                }
+                Err(e) => {
+                    tracing::error!(
+                        "工作流实例创建失败, payment_id={}, workflow_id={}, error={}",
+                        payment_id,
+                        wf_id,
+                        e
+                    );
+                    tracing::warn!(
+                        "工作流创建失败但继续提交付款单, 将使用默认审批流程, payment_id={}",
+                        payment_id
+                    );
+                    None
+                }
+            }
+        } else {
+            tracing::info!(
+                "未匹配到审批流程配置, 将使用默认审批流程, payment_id={}",
+                payment_id
+            );
+            None
+        };
+
+        tracing::info!(
+            "开始提交凭证, voucher_id={}, payment_id={}",
+            payment.voucher_id,
+            payment_id
+        );
+        self.submit_voucher(tenant_id, payment.voucher_id).await?;
+        tracing::info!(
+            "凭证提交成功, voucher_id={}, payment_id={}",
+            payment.voucher_id,
+            payment_id
+        );
+
+        let result = self.get_payment_response(tenant_id, payment_id).await;
+        tracing::info!(
+            "付款单提交流程完成, payment_id={}, payment_no={}",
+            payment_id,
+            payment.payment_no
+        );
+
+        result
+    }
+
+    async fn get_approval_workflow(
+        &self,
+        tenant_id: Uuid,
+        amount: Decimal,
+    ) -> Result<Option<Uuid>, TopemsError> {
+        let workflow_id: Option<Uuid> = sqlx::query_scalar(
+            "SELECT workflow_id FROM core_finance_payment_approval_config
+             WHERE tenant_id = $1 AND is_active = true AND amount_threshold <= $2
+             AND (max_amount IS NULL OR max_amount > $2)
+             ORDER BY priority DESC, amount_threshold DESC LIMIT 1",
+        )
+        .bind(tenant_id)
+        .bind(amount)
+        .fetch_optional(&self.db_pool)
+        .await?;
+
+        Ok(workflow_id)
+    }
+
+    pub async fn approve_payment(
+        &self,
+        tenant_id: Uuid,
+        payment_id: Uuid,
+        approved_by: &str,
+    ) -> Result<PaymentResponse, TopemsError> {
+        tracing::info!(
+            "开始审批付款单, payment_id={}, tenant_id={}, approved_by={}",
+            payment_id,
+            tenant_id,
+            approved_by
+        );
+
+        let payment = sqlx::query_as::<_, Payment>(
+            "SELECT * FROM core_finance_payments WHERE tenant_id = $1 AND id = $2",
+        )
+        .bind(tenant_id)
+        .bind(payment_id)
+        .fetch_one(&self.db_pool)
+        .await?;
+
+        tracing::info!(
+            "查询付款单信息成功, payment_no={}, total_amount={}, supplier_name={}",
+            payment.payment_no,
+            payment.total_amount,
+            payment.supplier_name.as_deref().unwrap_or("")
+        );
+
+        let voucher = self.get_voucher(tenant_id, payment.voucher_id).await?;
+        if voucher.status != VoucherStatus::Submitted {
+            tracing::warn!(
+                "付款单状态校验失败, 当前状态={}, 期望状态=Submitted",
+                voucher.status
+            );
+            return Err(TopemsError::ValidationFailed(
+                "仅待审批状态的付款单可审批".to_string(),
+            ));
+        }
+
+        tracing::info!(
+            "付款单状态校验通过, voucher_id={}, voucher_status={}",
+            voucher.id,
+            voucher.status
+        );
+
+        let workflow_instance_id: Option<Uuid> = sqlx::query_scalar(
+            "SELECT workflow_instance_id FROM core_finance_payment_workflow WHERE tenant_id = $1 AND payment_id = $2",
+        )
+        .bind(tenant_id)
+        .bind(payment_id)
+        .fetch_optional(&self.db_pool)
+        .await?;
+
+        tracing::info!(
+            "查询工作流实例关联, payment_id={}, workflow_instance_id={}",
+            payment_id,
+            workflow_instance_id
+                .map(|id| id.to_string())
+                .unwrap_or("None".to_string())
+        );
+
+        let mut workflow_approved = false;
+        if let Some(instance_id) = workflow_instance_id {
+            tracing::info!(
+                "存在工作流实例, 开始调用工作流审批, instance_id={}, payment_no={}",
+                instance_id,
+                payment.payment_no
+            );
+
+            match self
+                .workflow_client
+                .approve_instance(instance_id, None)
+                .await
+            {
+                Ok(instance) => {
+                    tracing::info!(
+                        "工作流审批调用成功, instance_id={}, workflow_id={}, status={}, current_node_id={}",
+                        instance.id,
+                        instance.workflow_id,
+                        instance.status,
+                        instance.current_node_id.as_deref().unwrap_or("None")
+                    );
+
+                    if instance.status == "approved" {
+                        tracing::info!(
+                            "工作流审批完全通过, instance_id={}, payment_id={}",
+                            instance.id,
+                            payment_id
+                        );
+                        workflow_approved = true;
+                    } else {
+                        tracing::info!(
+                            "工作流审批进入下一节点, instance_id={}, current_status={}, payment_id={}",
+                            instance.id,
+                            instance.status,
+                            payment_id
+                        );
+                    }
+
+                    let instance_status = instance.status;
+                    sqlx::query(
+                        "UPDATE core_finance_payment_workflow SET current_approver = $1, current_level = current_level + 1, status = $2, updated_at = NOW() WHERE tenant_id = $3 AND payment_id = $4",
+                    )
+                    .bind(approved_by)
+                    .bind(instance_status.clone())
+                    .bind(tenant_id)
+                    .bind(payment_id)
+                    .execute(&self.db_pool)
+                    .await?;
+
+                    tracing::info!(
+                        "付款单工作流关联记录更新成功, payment_id={}, current_approver={}, current_status={}",
+                        payment_id,
+                        approved_by,
+                        instance_status
+                    );
+                }
+                Err(e) => {
+                    tracing::error!(
+                        "工作流审批调用失败, instance_id={}, payment_id={}, error={}",
+                        instance_id,
+                        payment_id,
+                        e
+                    );
+                    tracing::warn!(
+                        "工作流审批失败但继续处理, 将使用默认审批逻辑, payment_id={}",
+                        payment_id
+                    );
+                }
+            }
+        } else {
+            tracing::info!(
+                "未关联工作流实例, 使用默认审批逻辑, payment_id={}",
+                payment_id
+            );
+            workflow_approved = true;
+        }
+
+        if workflow_approved {
+            tracing::info!(
+                "开始审批凭证, voucher_id={}, payment_id={}, approved_by={}",
+                payment.voucher_id,
+                payment_id,
+                approved_by
+            );
+            self.approve_voucher(tenant_id, payment.voucher_id, approved_by)
+                .await?;
+            tracing::info!(
+                "凭证审批成功, voucher_id={}, payment_id={}",
+                payment.voucher_id,
+                payment_id
+            );
+
+            sqlx::query(
+                "UPDATE core_finance_payments SET approved_by = $1, updated_at = NOW() WHERE tenant_id = $2 AND id = $3",
+            )
+            .bind(approved_by)
+            .bind(tenant_id)
+            .bind(payment_id)
+            .execute(&self.db_pool)
+            .await?;
+
+            tracing::info!(
+                "付款单审批信息更新成功, payment_id={}, approved_by={}",
+                payment_id,
+                approved_by
+            );
+        } else {
+            tracing::info!(
+                "工作流未完全通过, 等待下一审批节点, payment_id={}, payment_no={}",
+                payment_id,
+                payment.payment_no
+            );
+        }
+
+        let result = self.get_payment_response(tenant_id, payment_id).await;
+        tracing::info!(
+            "付款单审批流程完成, payment_id={}, payment_no={}, workflow_approved={}",
+            payment_id,
+            payment.payment_no,
+            workflow_approved
+        );
+
+        result
+    }
+
+    pub async fn reject_payment(
+        &self,
+        tenant_id: Uuid,
+        payment_id: Uuid,
+        rejected_by: &str,
+    ) -> Result<PaymentResponse, TopemsError> {
+        tracing::info!(
+            "开始拒绝付款单, payment_id={}, tenant_id={}, rejected_by={}",
+            payment_id,
+            tenant_id,
+            rejected_by
+        );
+
+        let payment = sqlx::query_as::<_, Payment>(
+            "SELECT * FROM core_finance_payments WHERE tenant_id = $1 AND id = $2",
+        )
+        .bind(tenant_id)
+        .bind(payment_id)
+        .fetch_one(&self.db_pool)
+        .await?;
+
+        tracing::info!(
+            "查询付款单信息成功, payment_no={}, total_amount={}, supplier_name={}",
+            payment.payment_no,
+            payment.total_amount,
+            payment.supplier_name.as_deref().unwrap_or("")
+        );
+
+        let voucher = self.get_voucher(tenant_id, payment.voucher_id).await?;
+        if voucher.status != VoucherStatus::Submitted {
+            tracing::warn!(
+                "付款单状态校验失败, 当前状态={}, 期望状态=Submitted",
+                voucher.status
+            );
+            return Err(TopemsError::ValidationFailed(
+                "仅待审批状态的付款单可拒绝".to_string(),
+            ));
+        }
+
+        tracing::info!(
+            "付款单状态校验通过, voucher_id={}, voucher_status={}",
+            voucher.id,
+            voucher.status
+        );
+
+        let workflow_instance_id: Option<Uuid> = sqlx::query_scalar(
+            "SELECT workflow_instance_id FROM core_finance_payment_workflow WHERE tenant_id = $1 AND payment_id = $2",
+        )
+        .bind(tenant_id)
+        .bind(payment_id)
+        .fetch_optional(&self.db_pool)
+        .await?;
+
+        tracing::info!(
+            "查询工作流实例关联, payment_id={}, workflow_instance_id={}",
+            payment_id,
+            workflow_instance_id
+                .map(|id| id.to_string())
+                .unwrap_or("None".to_string())
+        );
+
+        if let Some(instance_id) = workflow_instance_id {
+            tracing::info!(
+                "存在工作流实例, 开始调用工作流拒绝, instance_id={}, payment_no={}",
+                instance_id,
+                payment.payment_no
+            );
+
+            match self
+                .workflow_client
+                .reject_instance(instance_id, None)
+                .await
+            {
+                Ok(instance) => {
+                    tracing::info!(
+                        "工作流拒绝调用成功, instance_id={}, workflow_id={}, status={}",
+                        instance.id,
+                        instance.workflow_id,
+                        instance.status
+                    );
+
+                    let instance_status = instance.status;
+                    sqlx::query(
+                        "UPDATE core_finance_payment_workflow SET current_approver = $1, status = $2, updated_at = NOW() WHERE tenant_id = $3 AND payment_id = $4",
+                    )
+                    .bind(rejected_by)
+                    .bind(instance_status.clone())
+                    .bind(tenant_id)
+                    .bind(payment_id)
+                    .execute(&self.db_pool)
+                    .await?;
+
+                    tracing::info!(
+                        "付款单工作流关联记录更新成功, payment_id={}, current_approver={}, current_status={}",
+                        payment_id,
+                        rejected_by,
+                        instance_status
+                    );
+                }
+                Err(e) => {
+                    tracing::error!(
+                        "工作流拒绝调用失败, instance_id={}, payment_id={}, error={}",
+                        instance_id,
+                        payment_id,
+                        e
+                    );
+                    tracing::warn!(
+                        "工作流拒绝失败但继续处理, 将使用默认拒绝逻辑, payment_id={}",
+                        payment_id
+                    );
+                }
+            }
+        }
+
+        tracing::info!(
+            "开始拒绝凭证, voucher_id={}, payment_id={}, rejected_by={}",
+            payment.voucher_id,
+            payment_id,
+            rejected_by
+        );
+        self.reject_voucher(tenant_id, payment.voucher_id, rejected_by)
+            .await?;
+        tracing::info!(
+            "凭证拒绝成功, voucher_id={}, payment_id={}",
+            payment.voucher_id,
+            payment_id
+        );
+
+        let result = self.get_payment_response(tenant_id, payment_id).await;
+        tracing::info!(
+            "付款单拒绝流程完成, payment_id={}, payment_no={}",
+            payment_id,
+            payment.payment_no
+        );
+
+        result
+    }
+
+    pub async fn execute_payment(
+        &self,
+        tenant_id: Uuid,
+        payment_id: Uuid,
+        req: ExecutePaymentRequest,
+        executed_by: &str,
+    ) -> Result<PaymentResponse, TopemsError> {
+        let payment = sqlx::query_as::<_, Payment>(
+            "SELECT * FROM core_finance_payments WHERE tenant_id = $1 AND id = $2",
+        )
+        .bind(tenant_id)
+        .bind(payment_id)
+        .fetch_one(&self.db_pool)
+        .await?;
+
+        let voucher = self.get_voucher(tenant_id, payment.voucher_id).await?;
+        if voucher.status != VoucherStatus::Approved {
+            return Err(TopemsError::ValidationFailed(
+                "仅已审批状态的付款单可执行付款".to_string(),
+            ));
+        }
+
+        sqlx::query(
+            "UPDATE core_finance_payments SET actual_payment_date = $1, bank_transaction_no = $2, executed_by = $3, executed_at = NOW(), updated_at = NOW() WHERE tenant_id = $4 AND id = $5",
+        )
+        .bind(req.actual_payment_date)
+        .bind(&req.bank_transaction_no)
+        .bind(executed_by)
+        .bind(tenant_id)
+        .bind(payment_id)
+        .execute(&self.db_pool)
+        .await?;
+
+        self.get_payment_response(tenant_id, payment_id).await
+    }
+
+    pub async fn write_off_payment_item(
+        &self,
+        tenant_id: Uuid,
+        item_id: Uuid,
+        write_off_amount: Decimal,
+        write_off_by: &str,
+    ) -> Result<PaymentResponse, TopemsError> {
+        let item: PaymentItem = sqlx::query_as::<_, PaymentItem>(
+            "SELECT * FROM core_finance_payment_items WHERE tenant_id = $1 AND id = $2",
+        )
+        .bind(tenant_id)
+        .bind(item_id)
+        .fetch_one(&self.db_pool)
+        .await?;
+
+        if write_off_amount > item.payment_amount {
+            return Err(TopemsError::ValidationFailed(
+                "核销金额不能超过付款金额".to_string(),
+            ));
+        }
+
+        let payment_id = item.payment_id;
+
+        sqlx::query(
+            "UPDATE core_finance_payment_items SET write_off_amount = $1, write_off_status = 'completed', write_off_date = CURRENT_DATE, write_off_by = $2, remaining_amount = $3 WHERE tenant_id = $4 AND id = $5",
+        )
+        .bind(write_off_amount)
+        .bind(write_off_by)
+        .bind(item.payable_amount - write_off_amount)
+        .bind(tenant_id)
+        .bind(item_id)
+        .execute(&self.db_pool)
+        .await?;
+
+        self.get_payment_response(tenant_id, payment_id).await
+    }
+
+    pub async fn export_payments(
+        &self,
+        tenant_id: Uuid,
+        req: ExportPaymentRequest,
+    ) -> Result<ExportPaymentResponse, TopemsError> {
+        tracing::info!(
+            "开始导出付款单, tenant_id={}, format={}, status={}, start_date={}, end_date={}",
+            tenant_id,
+            req.format,
+            req.status.as_deref().unwrap_or("None"),
+            req.start_date.as_deref().unwrap_or("None"),
+            req.end_date.as_deref().unwrap_or("None")
+        );
+
+        let mut query = "SELECT * FROM core_finance_payments WHERE tenant_id = $1".to_string();
+
+        if let Some(status) = req.status {
+            if !status.is_empty() {
+                query.push_str(" AND status = $2");
+            }
+        }
+        if let Some(start_date) = req.start_date {
+            if !start_date.is_empty() {
+                query.push_str(" AND payment_date >= $3");
+            }
+        }
+        if let Some(end_date) = req.end_date {
+            if !end_date.is_empty() {
+                query.push_str(" AND payment_date <= $4");
+            }
+        }
+
+        let rows = sqlx::query_as::<_, Payment>(&query)
+            .bind(tenant_id)
+            .fetch_all(&self.db_pool)
+            .await?;
+
+        tracing::info!("查询付款单数据成功, 共{}条记录", rows.len());
+
+        let mut total_amount = Decimal::ZERO;
+        let mut export_rows = Vec::new();
+
+        for payment in rows {
+            total_amount += payment.total_amount;
+
+            let voucher = match self.get_voucher(tenant_id, payment.voucher_id).await {
+                Ok(v) => v,
+                Err(_) => {
+                    tracing::warn!(
+                        "无法获取付款单关联凭证, payment_id={}, voucher_id={}",
+                        payment.id,
+                        payment.voucher_id
+                    );
+                    continue;
+                }
+            };
+
+            export_rows.push(serde_json::json!({
+                "payment_no": payment.payment_no,
+                "supplier_name": payment.supplier_name,
+                "payment_method": payment.payment_method,
+                "total_amount": payment.total_amount.to_string(),
+                "currency": payment.currency,
+                "payment_date": payment.payment_date.map(|d| d.to_string()),
+                "actual_payment_date": payment.actual_payment_date.map(|d| d.to_string()),
+                "bank_transaction_no": payment.bank_transaction_no,
+                "status": voucher.status.to_string(),
+                "created_at": payment.created_at.to_rfc3339(),
+            }));
+        }
+
+        let total_count = export_rows.len();
+
+        let file_data = match req.format {
+            ExportFormat::Json => serde_json::to_string(&export_rows).map_err(|e| {
+                TopemsError::Internal(format!("Failed to serialize export data: {}", e))
+            })?,
+            ExportFormat::Csv => {
+                let mut wtr = Writer::from_writer(vec![]);
+                wtr.write_record(&[
+                    "付款单号",
+                    "供应商",
+                    "付款方式",
+                    "金额",
+                    "币种",
+                    "付款日期",
+                    "实际付款日期",
+                    "银行流水号",
+                    "状态",
+                    "创建时间",
+                ])
+                .map_err(|e| TopemsError::Internal(format!("Failed to write CSV header: {}", e)))?;
+                for row in &export_rows {
+                    wtr.write_record(&[
+                        row["payment_no"].as_str().unwrap_or(""),
+                        row["supplier_name"].as_str().unwrap_or(""),
+                        row["payment_method"].as_str().unwrap_or(""),
+                        row["total_amount"].as_str().unwrap_or(""),
+                        row["currency"].as_str().unwrap_or(""),
+                        row["payment_date"].as_str().unwrap_or(""),
+                        row["actual_payment_date"].as_str().unwrap_or(""),
+                        row["bank_transaction_no"].as_str().unwrap_or(""),
+                        row["status"].as_str().unwrap_or(""),
+                        row["created_at"].as_str().unwrap_or(""),
+                    ])
+                    .map_err(|e| {
+                        TopemsError::Internal(format!("Failed to write CSV row: {}", e))
+                    })?;
+                }
+                String::from_utf8(wtr.into_inner().map_err(|e| {
+                    TopemsError::Internal(format!("Failed to flush CSV writer: {}", e))
+                })?)
+                .map_err(|e| {
+                    TopemsError::Internal(format!("Failed to convert CSV to string: {}", e))
+                })?
+            }
+            _ => serde_json::to_string(&export_rows).map_err(|e| {
+                TopemsError::Internal(format!("Failed to serialize export data: {}", e))
+            })?,
+        };
+
+        let file_name = format!("payments_export_{}.{}", Utc::now().timestamp(), req.format);
+
+        tracing::info!(
+            "付款单导出完成, file_name={}, total_count={}, total_amount={}",
+            file_name,
+            total_count,
+            total_amount
+        );
+
+        Ok(ExportPaymentResponse {
+            file_name,
+            format: req.format,
+            total_count,
+            total_amount,
+            file_data,
+            created_at: Utc::now(),
+        })
+    }
+
+    async fn create_voucher_with_tx(
+        &self,
+        tx: &mut sqlx::PgConnection,
+        tenant_id: Uuid,
+        req: CreateVoucherRequest,
+        created_by: &str,
+    ) -> Result<VoucherResponse, TopemsError> {
+        let period = format!(
+            "{:04}{:02}",
+            req.voucher_date.year(),
+            req.voucher_date.month()
+        );
+
+        let total_debit: Decimal = req.lines.iter().map(|l| l.debit).sum();
+        let total_credit: Decimal = req.lines.iter().map(|l| l.credit).sum();
+
+        let voucher_no = self
+            .generate_voucher_no_with_tx(tx, tenant_id, req.voucher_type.clone())
+            .await?;
+
+        let voucher: Voucher = sqlx::query_as(
+            "INSERT INTO core_finance_vouchers (tenant_id, voucher_no, voucher_date, period, voucher_type, total_debit, total_credit, status, description, created_by)
+             VALUES ($1, $2, $3, $4, $5, $6, $7, 'draft', $8, $9)
+             RETURNING *",
+        )
+        .bind(tenant_id)
+        .bind(voucher_no)
+        .bind(req.voucher_date)
+        .bind(period)
+        .bind(req.voucher_type)
+        .bind(total_debit)
+        .bind(total_credit)
+        .bind(req.description)
+        .bind(created_by)
+        .fetch_one(&mut *tx)
+        .await?;
+
+        let mut lines = Vec::new();
+        for (i, line) in req.lines.iter().enumerate() {
+            let account: Account = sqlx::query_as(
+                "SELECT * FROM core_finance_accounts WHERE tenant_id = $1 AND code = $2",
+            )
+            .bind(tenant_id)
+            .bind(&line.account_code)
+            .fetch_one(&mut *tx)
+            .await?;
+
+            let voucher_line: VoucherLine = sqlx::query_as(
+                "INSERT INTO core_finance_voucher_lines (voucher_id, line_no, account_id, account_code, account_name, description, debit, credit, project_id, department_id)
+                 VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10)
+                 RETURNING *",
+            )
+            .bind(voucher.id)
+            .bind(i as i32 + 1)
+            .bind(account.id)
+            .bind(account.code)
+            .bind(account.name)
+            .bind(line.description.clone())
+            .bind(line.debit)
+            .bind(line.credit)
+            .bind(line.project_id)
+            .bind(line.department_id)
+            .fetch_one(&mut *tx)
+            .await?;
+
+            lines.push(voucher_line);
+        }
+
+        Ok(VoucherResponse {
+            id: voucher.id,
+            voucher_no: voucher.voucher_no,
+            voucher_date: voucher.voucher_date,
+            voucher_type: voucher.voucher_type,
+            status: voucher.status,
+            total_debit: voucher.total_debit,
+            total_credit: voucher.total_credit,
+            lines,
+            description: voucher.description,
+            created_at: voucher.created_at,
+        })
+    }
+
+    async fn generate_voucher_no_with_tx(
+        &self,
+        tx: &mut sqlx::PgConnection,
+        tenant_id: Uuid,
+        voucher_type: VoucherType,
+    ) -> Result<String, TopemsError> {
+        let today = Utc::now();
+        let prefix = match voucher_type {
+            VoucherType::General => "记",
+            VoucherType::Payment => "付",
+            VoucherType::Receipt => "收",
+            VoucherType::Transfer => "转",
+        };
+
+        let year = today.year();
+        let month = today.month();
+        let period_prefix = format!("{}{:02}", year, month);
+
+        let count: (i64,) = sqlx::query_as(
+            "SELECT COUNT(*) FROM core_finance_vouchers WHERE tenant_id = $1 AND voucher_no LIKE $2",
+        )
+        .bind(tenant_id)
+        .bind(format!("{}{}%", prefix, period_prefix))
+        .fetch_one(&mut *tx)
+        .await?;
+
+        Ok(format!("{}{}{:04}", prefix, period_prefix, count.0 + 1))
+    }
+
+    async fn update_voucher_lines_with_tx(
+        &self,
+        tx: &mut sqlx::PgConnection,
+        tenant_id: Uuid,
+        voucher_id: Uuid,
+        lines: Vec<VoucherLineRequest>,
+        updated_by: &str,
+    ) -> Result<(), TopemsError> {
+        let total_debit: Decimal = lines.iter().map(|l| l.debit).sum();
+        let total_credit: Decimal = lines.iter().map(|l| l.credit).sum();
+
+        sqlx::query(
+            "UPDATE core_finance_vouchers SET total_debit = $1, total_credit = $2, updated_at = NOW() WHERE id = $3",
+        )
+        .bind(total_debit)
+        .bind(total_credit)
+        .bind(voucher_id)
+        .execute(&mut *tx)
+        .await?;
+
+        for (i, line) in lines.iter().enumerate() {
+            let account: Account = sqlx::query_as(
+                "SELECT * FROM core_finance_accounts WHERE tenant_id = $1 AND code = $2",
+            )
+            .bind(tenant_id)
+            .bind(&line.account_code)
+            .fetch_one(&mut *tx)
+            .await?;
+
+            sqlx::query(
+                "INSERT INTO core_finance_voucher_lines (voucher_id, line_no, account_id, account_code, account_name, description, debit, credit, project_id, department_id)
+                 VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10)",
+            )
+            .bind(voucher_id)
+            .bind(i as i32 + 1)
+            .bind(account.id)
+            .bind(account.code)
+            .bind(account.name)
+            .bind(line.description.clone())
+            .bind(line.debit)
+            .bind(line.credit)
+            .bind(line.project_id)
+            .bind(line.department_id)
+            .execute(&mut *tx)
+            .await?;
+        }
+
+        Ok(())
+    }
+
+    pub async fn list_approval_configs(
+        &self,
+        tenant_id: Uuid,
+    ) -> Result<Vec<ApprovalConfigResponse>, TopemsError> {
+        let configs: Vec<PaymentApprovalConfig> = sqlx::query_as(
+            "SELECT * FROM core_finance_payment_approval_config WHERE tenant_id = $1 ORDER BY priority DESC, amount_threshold ASC",
+        )
+        .bind(tenant_id)
+        .fetch_all(&self.db_pool)
+        .await?;
+
+        let mut results = Vec::new();
+        for config in configs {
+            let nodes = self.get_approval_nodes(config.id).await?;
+            results.push(ApprovalConfigResponse {
+                id: config.id,
+                name: config.name,
+                description: config.description,
+                amount_threshold: config.amount_threshold,
+                max_amount: config.max_amount,
+                workflow_id: config.workflow_id,
+                approval_levels: config.approval_levels,
+                priority: config.priority,
+                is_active: config.is_active,
+                nodes,
+                created_at: config.created_at,
+                updated_at: config.updated_at,
+            });
+        }
+
+        Ok(results)
+    }
+
+    pub async fn get_approval_config(
+        &self,
+        tenant_id: Uuid,
+        config_id: Uuid,
+    ) -> Result<ApprovalConfigResponse, TopemsError> {
+        let config: PaymentApprovalConfig = sqlx::query_as(
+            "SELECT * FROM core_finance_payment_approval_config WHERE tenant_id = $1 AND id = $2",
+        )
+        .bind(tenant_id)
+        .bind(config_id)
+        .fetch_one(&self.db_pool)
+        .await?;
+
+        let nodes = self.get_approval_nodes(config.id).await?;
+
+        Ok(ApprovalConfigResponse {
+            id: config.id,
+            name: config.name,
+            description: config.description,
+            amount_threshold: config.amount_threshold,
+            max_amount: config.max_amount,
+            workflow_id: config.workflow_id,
+            approval_levels: config.approval_levels,
+            priority: config.priority,
+            is_active: config.is_active,
+            nodes,
+            created_at: config.created_at,
+            updated_at: config.updated_at,
+        })
+    }
+
+    pub async fn create_approval_config(
+        &self,
+        tenant_id: Uuid,
+        req: CreateApprovalConfigRequest,
+        created_by: &str,
+    ) -> Result<ApprovalConfigResponse, TopemsError> {
+        let mut tx = self.db_pool.begin().await?;
+
+        let config: PaymentApprovalConfig = sqlx::query_as(
+            "INSERT INTO core_finance_payment_approval_config (tenant_id, name, description, amount_threshold, max_amount, workflow_id, approval_levels, priority, is_active, created_by)
+             VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10) RETURNING *",
+        )
+        .bind(tenant_id)
+        .bind(req.name)
+        .bind(req.description)
+        .bind(req.amount_threshold)
+        .bind(req.max_amount)
+        .bind(req.workflow_id)
+        .bind(req.approval_levels.unwrap_or(1))
+        .bind(req.priority.unwrap_or(0))
+        .bind(req.is_active.unwrap_or(true))
+        .bind(created_by)
+        .fetch_one(&mut *tx)
+        .await?;
+
+        if let Some(nodes) = req.nodes {
+            for node in nodes {
+                sqlx::query(
+                    "INSERT INTO core_finance_approval_nodes (tenant_id, config_id, node_level, node_name, approver_type, approver_role, approver_users, approval_type, timeout_hours, notify_users, conditions, is_active)
+                     VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12)",
+                )
+                .bind(tenant_id)
+                .bind(config.id)
+                .bind(node.node_level)
+                .bind(node.node_name)
+                .bind(node.approver_type)
+                .bind(node.approver_role)
+                .bind(node.approver_users)
+                .bind(node.approval_type.unwrap_or("single".to_string()))
+                .bind(node.timeout_hours)
+                .bind(node.notify_users)
+                .bind(node.conditions)
+                .bind(true)
+                .execute(&mut *tx)
+                .await?;
+            }
+        }
+
+        tx.commit().await?;
+
+        let nodes = self.get_approval_nodes(config.id).await?;
+
+        Ok(ApprovalConfigResponse {
+            id: config.id,
+            name: config.name,
+            description: config.description,
+            amount_threshold: config.amount_threshold,
+            max_amount: config.max_amount,
+            workflow_id: config.workflow_id,
+            approval_levels: config.approval_levels,
+            priority: config.priority,
+            is_active: config.is_active,
+            nodes,
+            created_at: config.created_at,
+            updated_at: config.updated_at,
+        })
+    }
+
+    pub async fn update_approval_config(
+        &self,
+        tenant_id: Uuid,
+        config_id: Uuid,
+        req: CreateApprovalConfigRequest,
+        updated_by: &str,
+    ) -> Result<ApprovalConfigResponse, TopemsError> {
+        let mut tx = self.db_pool.begin().await?;
+
+        let config: PaymentApprovalConfig = sqlx::query_as(
+            "UPDATE core_finance_payment_approval_config SET name = $1, description = $2, amount_threshold = $3, max_amount = $4, workflow_id = $5, approval_levels = $6, priority = $7, is_active = $8, updated_at = CURRENT_TIMESTAMP
+             WHERE tenant_id = $9 AND id = $10 RETURNING *",
+        )
+        .bind(req.name)
+        .bind(req.description)
+        .bind(req.amount_threshold)
+        .bind(req.max_amount)
+        .bind(req.workflow_id)
+        .bind(req.approval_levels.unwrap_or(1))
+        .bind(req.priority.unwrap_or(0))
+        .bind(req.is_active.unwrap_or(true))
+        .bind(tenant_id)
+        .bind(config_id)
+        .fetch_one(&mut *tx)
+        .await?;
+
+        if let Some(nodes) = req.nodes {
+            sqlx::query(
+                "DELETE FROM core_finance_approval_nodes WHERE tenant_id = $1 AND config_id = $2",
+            )
+            .bind(tenant_id)
+            .bind(config_id)
+            .execute(&mut *tx)
+            .await?;
+
+            for node in nodes {
+                sqlx::query(
+                    "INSERT INTO core_finance_approval_nodes (tenant_id, config_id, node_level, node_name, approver_type, approver_role, approver_users, approval_type, timeout_hours, notify_users, conditions, is_active)
+                     VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12)",
+                )
+                .bind(tenant_id)
+                .bind(config.id)
+                .bind(node.node_level)
+                .bind(node.node_name)
+                .bind(node.approver_type)
+                .bind(node.approver_role)
+                .bind(node.approver_users)
+                .bind(node.approval_type.unwrap_or("single".to_string()))
+                .bind(node.timeout_hours)
+                .bind(node.notify_users)
+                .bind(node.conditions)
+                .bind(true)
+                .execute(&mut *tx)
+                .await?;
+            }
+        }
+
+        tx.commit().await?;
+
+        let nodes = self.get_approval_nodes(config.id).await?;
+
+        Ok(ApprovalConfigResponse {
+            id: config.id,
+            name: config.name,
+            description: config.description,
+            amount_threshold: config.amount_threshold,
+            max_amount: config.max_amount,
+            workflow_id: config.workflow_id,
+            approval_levels: config.approval_levels,
+            priority: config.priority,
+            is_active: config.is_active,
+            nodes,
+            created_at: config.created_at,
+            updated_at: config.updated_at,
+        })
+    }
+
+    pub async fn delete_approval_config(
+        &self,
+        tenant_id: Uuid,
+        config_id: Uuid,
+    ) -> Result<(), TopemsError> {
+        let mut tx = self.db_pool.begin().await?;
+
+        sqlx::query(
+            "DELETE FROM core_finance_approval_nodes WHERE tenant_id = $1 AND config_id = $2",
+        )
+        .bind(tenant_id)
+        .bind(config_id)
+        .execute(&mut *tx)
+        .await?;
+
+        sqlx::query(
+            "DELETE FROM core_finance_payment_approval_config WHERE tenant_id = $1 AND id = $2",
+        )
+        .bind(tenant_id)
+        .bind(config_id)
+        .execute(&mut *tx)
+        .await?;
+
+        tx.commit().await?;
+
+        Ok(())
+    }
+
+    async fn get_approval_nodes(&self, config_id: Uuid) -> Result<Vec<ApprovalNode>, TopemsError> {
+        let nodes: Vec<ApprovalNode> = sqlx::query_as(
+            "SELECT * FROM core_finance_approval_nodes WHERE config_id = $1 ORDER BY node_level ASC",
+        )
+        .bind(config_id)
+        .fetch_all(&self.db_pool)
+        .await?;
+
+        Ok(nodes)
     }
 }
 

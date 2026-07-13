@@ -17,7 +17,7 @@ import { PageContainer } from '@/components/common';
 import React, { useState, useEffect, useMemo, useCallback } from 'react';
 import type { Material, CreateMaterialRequest, UpdateMaterialRequest } from '@/api/erp';
 import { erpApi } from '@/api/erp';
-import { useAppStore } from '@/store';
+import { useNotificationStore } from '@/store';
 import { LoadingSpinner } from '@topems/shared-components';
 import {
   ListPageTemplate,
@@ -57,7 +57,7 @@ const MaterialManagementPage: React.FC = () => {
     volume: 0,
   });
 
-  const { addNotification } = useAppStore();
+  const { addNotification } = useNotificationStore();
 
   const loadMaterials = useCallback(async () => {
     try {

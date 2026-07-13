@@ -39,7 +39,7 @@ import {
 import { useNavigate } from 'react-router-dom';
 import { MobileLayout, PullToRefresh, MobileSkeleton, MobileButton } from '@/components/mobile';
 import { SwipeAction, type SwipeActionItem } from '@/components/mobile';
-import { useAppStore } from '@/store';
+import { useNotificationStore, useAuthStore } from '@/store';
 import { approvalTaskApi } from '@/api/workflow/approval';
 import { apiLogger } from '@/utils/logger';
 import { MOBILE_PATHS } from '@/modules/mobile/config';
@@ -137,7 +137,8 @@ const mapApiApprovalToApprovalItem = (apiApproval: ApiApproval): ApprovalItem =>
 const MobileApprovalPage: React.FC = () => {
   const theme = useTheme();
   const navigate = useNavigate();
-  const { user, addNotification } = useAppStore();
+  const { user } = useAuthStore();
+  const { addNotification } = useNotificationStore();
   const [activeTab, setActiveTab] = useState(0);
   const [searchQuery, setSearchQuery] = useState('');
   const [loading, setLoading] = useState(true);

@@ -1,24 +1,81 @@
 # TOPEMS 待办事项
 
-> 最后更新：2026-07-13（V5.14.0 正式版已发布）
-> V5.15 架构完善 + V5.8 路径重构 + V5.7 全面优化计划
+> 最后更新：2026-07-13（V5.18.0 开发中）
+> V5.18 Desktop端完善 + 历史版本汇总
 
-## 当前版本：V5.14.0 正式版 ✅
+## 当前阶段：V5.18 Desktop端完善 🖥️
 
-### 已完成事项
+> 目标：完善桌面端（Tauri）功能，修复缺失的系统托盘命令，提升测试覆盖率
 
-| 事项 | 状态 | 说明 |
-|------|------|------|
-| 批量操作错误边界处理 | ✅ | try-catch包裹整个批量操作流程 |
-| 网络异常重试机制 | ✅ | maxRetries/retryDelay/retryableErrors配置 |
-| 批量操作日志记录 | ✅ | 详细错误日志、重试记录 |
-| 数据一致性校验 | ✅ | consistencyCheck回调支持 |
-| TypeScript 编译验证 | ⚠️ | 存在 24 个预先存在的类型错误（Three.js JSX、ReactNode bigint、Material UI TextField 属性），与本次修改无关 |
-| 发布分支创建 | ✅ | release/v5.14.0 |
-| 版本号更新 | ✅ | 所有 package.json 和 Cargo.toml |
-| CHANGELOG 更新 | ✅ | 标记 V5.14.0 正式版 |
+### Phase 1：Tauri 命令完善（1天）⚡ P0 ✅
 
-## 下一阶段：V5.15 架构完善 📋
+| 事项 | 优先级 | 状态 | 验收标准 | 涉及文件 |
+|------|--------|------|----------|----------|
+| 添加 update_tray_status 命令 | P0 | ✅ | 更新系统托盘提示信息和徽章计数 | `apps/desktop/src-tauri/src/main.rs` |
+| 添加 send_system_notification 命令 | P0 | ✅ | 发送系统通知（标题+正文） | `apps/desktop/src-tauri/src/main.rs` |
+| 添加 trigger_tray_notification 命令 | P0 | ✅ | 触发托盘通知，更新提示信息 | `apps/desktop/src-tauri/src/main.rs` |
+| 注册托盘 ID 便于查找 | P1 | ✅ | 设置 `tray` ID，支持 `tray_handle_by_id` | `apps/desktop/src-tauri/src/main.rs` |
+
+### Phase 2：测试覆盖率提升（1天）⚡ P0 ✅
+
+| 事项 | 优先级 | 状态 | 验收标准 | 涉及文件 |
+|------|--------|------|----------|----------|
+| 添加 test 脚本 | P0 | ✅ | package.json 添加 `test: vitest run` | `apps/desktop/package.json` |
+| 安装测试依赖 | P0 | ✅ | vitest、@testing-library/react、@testing-library/jest-dom | `apps/desktop/package.json` |
+| 验证测试数量 | P0 | ✅ | 现有测试 32 个（目标 ≥20） | 自动统计 |
+
+### Phase 3：验证与发布准备（0.5天）🔧 P1 ✅
+
+| 事项 | 优先级 | 状态 | 验收标准 |
+|------|--------|------|----------|
+| Rust 编译验证 | P0 | ✅ | `cargo check` 0 错误 |
+| TypeScript 编译验证 | P0 | ✅ | `npm run typecheck` 0 错误 |
+| 前端构建验证 | P0 | ✅ | `npm run build` 成功 |
+| 测试执行验证 | P1 | ✅ | 32个测试用例执行完成 |
+
+### 验收标准总表
+
+| 维度 | 指标 | 目标值 | 当前状态 |
+|------|------|--------|----------|
+| **Tauri命令** | 缺失命令数 | 0 | ✅ |
+| **测试覆盖** | 桌面端测试用例数 | ≥20 | ✅（32个） |
+| **构建验证** | Rust 编译错误 | 0 | ✅ |
+| **构建验证** | TypeScript 编译错误 | 0 | ✅ |
+
+---
+
+## 历史版本汇总 ✅
+
+### V5.14-V5.17 已完成 ✅
+
+- **V5.14**: 功能完整性与稳定性提升（Optimistic更新、错误边界、重试机制）
+- **V5.15**: 架构完善（路径重构、API统一、Mock数据清理）
+- **V5.16**: 架构分析整改（编译修复、API路径统一、Mobile端页面）
+- **V5.17**: 收尾优化（系统兼容性、前后端对齐、安全中间件）
+
+### V5.13 批量操作性能与体验优化 ✅
+
+- 并发优化、进度追踪、确认对话框、固定操作栏、键盘快捷键
+
+### V5.12 批量操作与高级功能完善 ✅
+
+- ListPageTemplate批量操作支持、HRM/WMS/ERP/CRM批量操作
+
+### V5.11 功能完整性提升 ✅
+
+- 数据导出、高级筛选、空状态优化、筛选记忆
+
+### V5.10 移动端测试与响应式优化 ✅
+
+- Playwright配置修复、响应式测试、Safe Area适配
+
+### V5.9 质量提升与技术债务清理 ✅
+
+- IAM安全修复、Store架构完善、测试代码质量提升
+
+---
+
+## 下一阶段：V5.15 架构完善 📋（历史记录）
 
 > 目标：消除路径重复定义、消除硬编码路径、删除 compatibility.tsx、死链归零
 >
@@ -380,7 +437,7 @@ Step 6: 验证（tsc + check-route-paths.py + build）
 | 安全中间件清理 | P1 | ✅ | 清理未使用的导入（StatusCode、Bytes、Utc） |
 | 输入验证中间件 | P0 | ✅ | 后端添加统一输入验证（SQL注入/XSS/路径遍历/Content-Type检查） |
 | API权限检查完善 | P0 | ✅ | 所有22个路由组均配备 require_permission 中间件（32个权限检查点） |
-| 分布式追踪集成 | P1 | ✅ | 添加OpenTelemetry追踪，支持链路分析 |
+| 分布式追踪集成 | P1 | ✅ | 添加OpenTelemetry追踪，支持链路分析，宏代码封装，文档完善 |
 | 性能监控集成 | P1 | ✅ | 前端添加性能监控SDK，后端添加指标 |
 | 移动端扫码签到功能 | P1 | ✅ | 使用 expo-barcode-scanner 实现扫码签到，后端已修复外键约束问题 |
 | 统一日志系统 | P1 | ✅ | 后端初始化 tracing_subscriber（env_filter/格式化），前端已有完善 logger 模块 |

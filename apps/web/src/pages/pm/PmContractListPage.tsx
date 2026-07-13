@@ -1,4 +1,5 @@
-import React, { useState, useEffect, useMemo, useCallback } from 'react';
+import React, { useState, useMemo, useCallback } from 'react';
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import {
   Plus,
   Search,
@@ -19,6 +20,7 @@ import { ListPageTemplate, type ColumnDef } from '@/components/templates';
 import { StatusBadge, PageContainer } from '@/components/common';
 import { designTokens } from '@/theme/tokens';
 import { PM_PATHS } from '@/modules/pm/config';
+import { useNotificationStore } from '@/store';
 
 const ct = designTokens.colors;
 
@@ -67,65 +69,85 @@ const CONTRACT_TYPE_LABELS: Record<string, string> = {
 
 const PmContractListPage: React.FC = () => {
   const navigate = useNavigate();
-  const [contracts, setContracts] = useState<Contract[]>([]);
-  const [loading, setLoading] = useState(true);
+  const queryClient = useQueryClient();
+  const { addNotification } = useNotificationStore();
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedType, setSelectedType] = useState('');
   const [selectedStatus, setSelectedStatus] = useState('');
   const [currentPage, setCurrentPage] = useState(1);
-  const [totalPages, setTotalPages] = useState(1);
-  const [totalCount, setTotalCount] = useState(0);
   const pageSize = 10;
 
-  const loadContracts = useCallback(
-    async (page: number) => {
-      setLoading(true);
-      try {
-        const response = await pmApi.contracts.list();
-        if (response.success && response.data) {
-          let filtered = response.data;
-          if (selectedType) {
-            filtered = filtered.filter((c: Contract) => c.contract_type === selectedType);
-          }
-          if (selectedStatus) {
-            filtered = filtered.filter((c: Contract) => c.status === selectedStatus);
-          }
-          setContracts(filtered);
-          setTotalCount(filtered.length);
-          setTotalPages(Math.ceil(filtered.length / pageSize));
-        }
-      } catch (error: unknown) {
-        apiLogger.error('Failed to load contracts:', error);
-      } finally {
-        setLoading(false);
+  const contractListQuery = useQuery({
+    queryKey: ['pm-contracts'],
+    queryFn: async () => {
+      const response = await pmApi.contracts.list();
+      if (!response.success || !response.data) {
+        throw new Error(response.message || '加载合同列表失败');
+      }
+      return response.data as Contract[];
+    },
+    staleTime: 5 * 60 * 1000,
+  });
+
+  const deleteContractMutation = useMutation({
+    mutationFn: async (id: string) => {
+      const response = await pmApi.contracts.delete(id);
+      if (!response.success) {
+        throw new Error(response.message || '删除合同失败');
       }
     },
-    [selectedType, selectedStatus]
-  );
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['pm-contracts'] });
+      addNotification({
+        type: 'success',
+        title: '删除成功',
+        message: '合同已删除',
+      });
+    },
+    onError: (error: any) => {
+      apiLogger.error('Failed to delete contract:', error);
+      addNotification({
+        type: 'error',
+        title: '删除失败',
+        message: error.message || '无法删除合同',
+      });
+    },
+  });
 
-  useEffect(() => {
+  const allContracts = contractListQuery.data || [];
+  
+  const filteredContracts = useMemo(() => {
+    let filtered = allContracts;
+    if (selectedType) {
+      filtered = filtered.filter((c) => c.contract_type === selectedType);
+    }
+    if (selectedStatus) {
+      filtered = filtered.filter((c) => c.status === selectedStatus);
+    }
+    return filtered;
+  }, [allContracts, selectedType, selectedStatus]);
+
+  const contracts = filteredContracts;
+  const totalCount = filteredContracts.length;
+  const loading = contractListQuery.isLoading || deleteContractMutation.isPending;
+
+  React.useEffect(() => {
     setCurrentPage(1);
-    loadContracts(1);
-  }, [selectedType, selectedStatus, loadContracts]);
+  }, [selectedType, selectedStatus]);
 
   const handlePageChange = (page: number) => {
     setCurrentPage(page);
-    loadContracts(page);
   };
 
   const handleDelete = useCallback(
     async (id: string) => {
       if (!window.confirm('确定要删除这个合同吗？')) return;
       try {
-        const response = await pmApi.contracts.delete(id);
-        if (response.success) {
-          loadContracts(currentPage);
-        }
-      } catch (error: unknown) {
-        apiLogger.error('Failed to delete contract:', error);
+        await deleteContractMutation.mutateAsync(id);
+      } catch {
       }
     },
-    [currentPage, loadContracts]
+    [deleteContractMutation]
   );
 
   const formatDate = (dateStr?: string) => {
@@ -316,7 +338,7 @@ const PmContractListPage: React.FC = () => {
         columnConfigurable
         persistColumnConfig
         columnConfigStorageKey='pm-contracts-columns'
-        onRefresh={() => loadContracts(currentPage)}
+        onRefresh={() => contractListQuery.refetch()}
         headerContent={
           <Box
             sx={{

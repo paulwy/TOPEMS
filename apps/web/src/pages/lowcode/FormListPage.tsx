@@ -65,9 +65,11 @@ const FormListPage: React.FC = () => {
         keyword: searchKeyword || undefined,
         status: statusFilter !== 'all' ? statusFilter : undefined,
       };
-      const res = await lowcodeApi.formApi.list(params);
-      setForms(res.items);
-      setTotal(res.total);
+      const res = await lowcodeApi.formApi.listForms(params);
+      if (res.success) {
+        setForms(res.data.items);
+        setTotal(res.data.total);
+      }
     } catch (error) {
       logger.error('Failed to load forms:', error);
     } finally {
@@ -126,7 +128,7 @@ const FormListPage: React.FC = () => {
 
   const handleCopy = async (form: FormSchema) => {
     try {
-      await lowcodeApi.formApi.copy(form.id);
+      await lowcodeApi.formApi.createForm({ ...form, name: `${form.name} (副本)` });
       loadForms();
     } catch (error) {
       logger.error('Failed to copy form:', error);
@@ -136,7 +138,7 @@ const FormListPage: React.FC = () => {
 
   const handlePublish = async (form: FormSchema) => {
     try {
-      await lowcodeApi.formApi.publish(form.id);
+      await lowcodeApi.formApi.publishForm(form.id);
       loadForms();
     } catch (error) {
       logger.error('Failed to publish form:', error);
@@ -147,7 +149,7 @@ const FormListPage: React.FC = () => {
   const handleDelete = async () => {
     if (!deleteDialog) return;
     try {
-      await lowcodeApi.formApi.delete(deleteDialog.id);
+      await lowcodeApi.formApi.deleteForm(deleteDialog.id);
       setDeleteDialog(null);
       loadForms();
     } catch (error) {

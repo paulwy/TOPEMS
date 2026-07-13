@@ -58,3 +58,29 @@ pub struct SyncStatistics {
     pub failed_tasks: i64,
     pub in_progress_tasks: i64,
 }
+
+#[derive(Debug, Serialize, Deserialize)]
+pub struct MobileSyncRequest {
+    pub records: Vec<MobileSyncRecordItem>,
+}
+
+#[derive(Debug, Serialize, Deserialize)]
+pub struct MobileSyncRecordItem {
+    pub id: String,
+    pub module: String,
+    pub action: String,
+    pub data: serde_json::Value,
+    pub created_at: i64,
+}
+
+#[derive(Debug, Serialize, Deserialize)]
+pub struct MobileSyncResponse {
+    pub success: Vec<String>,
+    pub failed: Vec<MobileSyncFailedItem>,
+}
+
+#[derive(Debug, Serialize, Deserialize, Clone)]
+pub struct MobileSyncFailedItem {
+    pub id: String,
+    pub error: String,
+}

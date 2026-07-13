@@ -18,7 +18,7 @@ import {
   Button,
   useTheme,
 } from '@mui/material';
-import { useAppStore } from '@/store';
+import { useNotificationStore } from '@/store';
 import { ListPageTemplate, type ColumnDef } from '@/components/templates';
 import { PageContainer } from '@/components/common';
 import { migrationApi, type MigrationService, type MigrationStatus } from '@/api/migration';
@@ -29,7 +29,7 @@ interface ServiceStatusMap {
 
 const MigrationAdminPage: React.FC = () => {
   const theme = useTheme();
-  const addNotification = useAppStore((state) => state.addNotification);
+  const addNotification = useNotificationStore((state) => state.addNotification);
   const [services, setServices] = useState<MigrationService[]>([]);
   const [loading, setLoading] = useState(true);
   const [applyingService, setApplyingService] = useState<string | null>(null);

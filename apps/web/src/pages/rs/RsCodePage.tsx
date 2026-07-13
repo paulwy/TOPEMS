@@ -21,7 +21,7 @@ import { ListPageTemplate } from '@/components/templates';
 import type { RowAction, FilterConfig, ColumnDef } from '@/components/templates';
 import { PageContainer } from '@/components/common';
 import { rsApi } from '@/api/rs';
-import { useAppStore } from '@/store';
+import { useNotificationStore } from '@/store';
 import type { Project } from '@/api/rs';
 import { logger } from '@/utils/logger';
 
@@ -37,7 +37,7 @@ interface CodeRepo {
 }
 
 const RsCodePage: React.FC = () => {
-  const { addNotification } = useAppStore();
+  const { addNotification } = useNotificationStore();
   const [repos, setRepos] = useState<CodeRepo[]>([]);
   const [loading, setLoading] = useState(false);
   const [page, setPage] = useState(0);

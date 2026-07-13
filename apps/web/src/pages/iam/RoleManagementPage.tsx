@@ -13,7 +13,7 @@ import {
 import React, { useState, useEffect, useMemo } from 'react';
 import { Shield, Plus, Trash2, Edit, Key, CheckCircle } from 'lucide-react';
 import { authApi, type Role, type Permission } from '@/api/iam';
-import { useAppStore } from '../../store';
+import { useNotificationStore } from '../../store';
 import { ListPageTemplate, type ColumnDef } from '@/components/templates';
 import { extractErrorMessage } from '@/utils/errors';
 import { PageContainer } from '@/components/common';
@@ -24,7 +24,7 @@ interface RoleManagementPageProps {
 }
 
 const RoleManagementPage: React.FC<RoleManagementPageProps> = ({ onNavigate: _onNavigate }) => {
-  const addNotification = useAppStore((state) => state.addNotification);
+  const addNotification = useNotificationStore((state) => state.addNotification);
 
   const [roles, setRoles] = useState<Role[]>([]);
   const [loading, setLoading] = useState(true);

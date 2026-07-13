@@ -28,7 +28,7 @@ import {
 } from '@/components/templates';
 import { limsApi } from '@/api/lims';
 import type { PtPlan, CreatePtPlanRequest, UpdatePtPlanRequest } from '@/api/lims';
-import { useAppStore } from '@/store';
+import { useNotificationStore } from '@/store';
 import { apiLogger } from '@/utils/logger';
 import { designTokens } from '@/theme/tokens';
 import { DASHBOARD_PATHS } from '@/routes/dashboard';
@@ -58,7 +58,7 @@ const LimsProficiencyTestingPage: React.FC = () => {
   const [saving, setSaving] = useState(false);
   const [page, setPage] = useState(0);
   const [pageSize, setPageSize] = useState(10);
-  const addNotification = useAppStore((state) => state.addNotification);
+  const addNotification = useNotificationStore((state) => state.addNotification);
 
   const initialFormData: CreatePtPlanRequest = {
     plan_name: '',

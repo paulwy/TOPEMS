@@ -45,7 +45,7 @@ import {
   type PaginatedResult,
   type ListParams,
 } from '@/api/hrm';
-import { useAppStore } from '../../store';
+import { useNotificationStore } from '../../store';
 import {
   TreePageTemplate,
   type TreeNode,
@@ -56,7 +56,7 @@ import { EmptyState } from '@/components';
 import { ConfirmDialog } from '@topems/shared-components';
 
 const HrmCompanyPage: React.FC = () => {
-  const addNotification = useAppStore((state) => state.addNotification);
+  const addNotification = useNotificationStore((state) => state.addNotification);
 
   const [loading, setLoading] = useState(false);
   const [companies, setCompanies] = useState<Company[]>([]);

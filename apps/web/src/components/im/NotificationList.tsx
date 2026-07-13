@@ -3,7 +3,7 @@ import React, { useEffect, useState } from 'react';
 import { Bell, Check, CheckCheck, Clock } from 'lucide-react';
 
 import { imApi, type Notification } from '../../api/im';
-import { useAppStore } from '../../store';
+import { useNotificationStore } from '@/store';
 import { logger } from '@/utils/logger';
 
 interface NotificationListProps {
@@ -12,7 +12,7 @@ interface NotificationListProps {
 
 export const NotificationList: React.FC<NotificationListProps> = ({ userId = 'current-user' }) => {
   const theme = useTheme();
-  const addNotification = useAppStore((state) => state.addNotification);
+  const addNotification = useNotificationStore((state) => state.addNotification);
   const [notifications, setNotifications] = useState<Notification[]>([]);
   const [loading, setLoading] = useState(false);
 

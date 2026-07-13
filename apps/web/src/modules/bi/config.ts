@@ -176,7 +176,7 @@ export const biModuleConfig: RouteModuleConfig = {
     },
     {
       path: BI_PATHS.gis,
-      element: lazyWithRetry(() => import('@/pages/bi/Gispage'), 'Gispage'),
+      element: lazyWithRetry(() => import('@/pages/bi/GisPage'), 'GisPage'),
       module: 'bi',
       title: 'GIS分析',
       code: 'bi-gis',

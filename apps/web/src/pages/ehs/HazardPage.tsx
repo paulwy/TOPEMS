@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useCallback, useMemo } from 'react';
+import React, { useState, useCallback, useMemo } from 'react';
 import {
   Box,
   Dialog,
@@ -23,16 +23,23 @@ import { Plus, Eye, AlertTriangle, MapPin, ShieldAlert, Clock } from 'lucide-rea
 import { ListPageTemplate, type ColumnDef } from '@/components/templates';
 import { ehsApi } from '@/api/ehs';
 import { PageContainer } from '@/components/common/PageContainerV2';
-import type { Hazard, RiskAssessment, ControlMeasure } from '@/api/ehs';
-import { useAppStore } from '@/store';
+import type { Hazard, RiskAssessment, ControlMeasure, CreateSafetyHazardRequest } from '@/api/ehs';
+import { useNotificationStore } from '@/store';
 import { apiLogger } from '@/utils/logger';
 import { designTokens } from '@/theme/tokens';
+import { useCrudOperations } from '@/hooks/useCrudQueries';
 
 const ct = designTokens.colors;
 
+const hazardCrudApi = {
+  list: (params?: Record<string, unknown>) => ehsApi.listHazards(params as any),
+  get: (id: string) => ehsApi.getHazard(id),
+  create: (data: CreateSafetyHazardRequest) => ehsApi.createHazard(data),
+  update: (id: string, data: Partial<CreateSafetyHazardRequest>) => ehsApi.updateHazard(id, data),
+  delete: (id: string) => ehsApi.deleteHazard(id),
+} as any;
+
 const HazardPage: React.FC = () => {
-  const [hazards, setHazards] = useState<Hazard[]>([]);
-  const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState('');
   const [severityFilter, setSeverityFilter] = useState('all');
   const [statusFilter, setStatusFilter] = useState('all');
@@ -41,7 +48,18 @@ const HazardPage: React.FC = () => {
   const [selectedHazard, setSelectedHazard] = useState<Hazard | null>(null);
   const [riskAssessments, setRiskAssessments] = useState<RiskAssessment[]>([]);
   const [controlMeasures, setControlMeasures] = useState<ControlMeasure[]>([]);
-  const addNotification = useAppStore((state) => state.addNotification);
+  const addNotification = useNotificationStore((state) => state.addNotification);
+
+  const {
+    data: hazards,
+    loading,
+    refresh,
+    create: createHazard,
+  } = useCrudOperations<Hazard, CreateSafetyHazardRequest>({
+    api: hazardCrudApi,
+    queryKey: 'ehs-hazards',
+    defaultPageSize: 100,
+  });
 
   const [formData, setFormData] = useState({
     name: '',
@@ -52,29 +70,6 @@ const HazardPage: React.FC = () => {
     exposure: 'medium' as 'high' | 'medium' | 'low',
     likelihood: 'medium' as 'high' | 'medium' | 'low',
   });
-
-  const loadHazards = useCallback(async () => {
-    try {
-      setLoading(true);
-      const response = await ehsApi.listHazards({
-        pagesize: 100,
-        search: searchTerm || undefined,
-      });
-      if (response.success && response.data) {
-        const data = response.data as any;
-        const hazardsData = Array.isArray(data) ? data : data.data || [];
-        setHazards(hazardsData);
-      }
-    } catch (err: unknown) {
-      apiLogger.error('加载危险源列表失败:', err);
-    } finally {
-      setLoading(false);
-    }
-  }, [searchTerm]);
-
-  useEffect(() => {
-    loadHazards();
-  }, [loadHazards]);
 
   const loadHazardDetail = async (hazardId: string) => {
     try {
@@ -296,7 +291,7 @@ const HazardPage: React.FC = () => {
       const level = levelScore >= 9 ? 'high' : levelScore >= 4 ? 'medium' : 'low';
       const hazardNo = `HZ-${Date.now()}`;
 
-      await ehsApi.createHazard({
+      await createHazard({
         hazard_no: hazardNo,
         name: formData.name,
         category: formData.category,
@@ -306,11 +301,8 @@ const HazardPage: React.FC = () => {
         control_measures: [] as string[],
         status: 'active',
       });
-      addNotification({ title: '成功', message: '危险源登记成功', type: 'success' });
       setShowCreateModal(false);
-      loadHazards();
     } catch (err: unknown) {
-      addNotification({ title: '错误', message: '登记失败', type: 'error' });
       apiLogger.error('创建危险源失败:', err);
     }
   };
@@ -497,7 +489,7 @@ const HazardPage: React.FC = () => {
         searchPlaceholder='搜索危险源名称或位置...'
         searchValue={searchTerm}
         onSearch={(value) => setSearchTerm(value)}
-        onRefresh={loadHazards}
+        onRefresh={refresh}
         rowActions={rowActions}
       />
 

@@ -24,7 +24,7 @@ import {
   type FormSection,
 } from '@/components/templates';
 import { integrationApi } from '@/api/integration';
-import { useAppStore } from '@/store';
+import { useNotificationStore } from '@/store';
 import type { WmsScmSync, CreateWmsScmSyncRequest } from '@/api/integration';
 import { logger } from '@/utils/logger';
 import { useNotification } from '@/hooks/useNotification';

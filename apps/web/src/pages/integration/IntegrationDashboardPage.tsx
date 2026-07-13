@@ -28,11 +28,10 @@ import {
   type RecentItem,
 } from '@/components/templates';
 import { INTEGRATION_PATHS } from '@/modules/integration/config';
-import { useAppStore } from '../../store';
-
+import { useNotificationStore } from '@/store';
 export const IntegrationDashboardPage: React.FC = () => {
   const navigate = useNavigate();
-  const addNotification = useAppStore((state) => state.addNotification);
+  const addNotification = useNotificationStore((state) => state.addNotification);
   const [loading, setLoading] = useState(false);
 
   const stats: StatCard[] = useMemo(

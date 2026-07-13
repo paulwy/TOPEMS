@@ -9,7 +9,7 @@
  * 5. 每个分组有图标和描述
  * 6. 右侧显示当前选中分组的设置内容
  * 7. 每个设置项有保存按钮
- * 8. 使用 useAppStore 的 addNotification 通知保存成功
+ * 8. 使用 useNotificationStore 的 addNotification 通知保存成功
  * 9. 模拟设置数据
  *
  * @module pages/monitor
@@ -43,7 +43,7 @@ import {
   RotateCcw,
 } from 'lucide-react';
 
-import { useAppStore } from '../../store';
+import { useNotificationStore } from '@/store';
 import { PageContainer } from '@/components/common';
 import { MONITOR_PATHS } from '@/modules/monitor/config';
 import { ConfirmDialog } from '@topems/shared-components';
@@ -95,7 +95,7 @@ const SETTING_GROUPS: SettingGroup[] = [
 ];
 
 export const MonitorSettingsPage: React.FC = () => {
-  const addNotification = useAppStore((state) => state.addNotification);
+  const addNotification = useNotificationStore((state) => state.addNotification);
 
   const [activeGroup, setActiveGroup] = useState('general');
 

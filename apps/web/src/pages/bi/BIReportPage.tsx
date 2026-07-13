@@ -1,6 +1,5 @@
-import { useState, useEffect, useMemo, useCallback } from 'react';
+import { useState, useMemo, useCallback } from 'react';
 import { logger } from '@/utils/logger';
-import { useAppStore } from '@/store';
 import { Plus, Edit, Trash2, Eye, Download, FileText, Calendar, User } from 'lucide-react';
 import { Chip, Box, Typography, Tooltip, IconButton, Alert, Button } from '@mui/material';
 import {
@@ -10,11 +9,9 @@ import {
   type FilterConfig,
 } from '@/components/templates';
 import { PageContainer } from '@/components/common';
+import { useCrudOperations } from '@/hooks/useCrudQueries';
 import {
-  fetchReports,
-  createReport,
-  updateReport,
-  deleteReport,
+  reportCrudApi,
   type Report as ApiReport,
 } from '@/api/bi';
 
@@ -73,49 +70,39 @@ const apiReportToReport = (apiReport: ApiReport): Report => ({
 });
 
 const BIReportPage = () => {
-  const [reports, setReports] = useState<Report[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
   const [searchTerm, setSearchTerm] = useState('');
   const [filterType, setFilterType] = useState<string>('');
   const [filterStatus, setFilterStatus] = useState<string>('');
-  const [page, setPage] = useState(0);
-  const [rowsPerPage, setRowsPerPage] = useState(10);
 
-  const loadReports = useCallback(async () => {
-    setLoading(true);
-    setError(null);
-    try {
-      const res = await fetchReports();
-      if (res.success && res.data) {
-        const apiReports: ApiReport[] = res.data.items || res.data || [];
-        const mappedReports = apiReports.map(apiReportToReport);
-        setReports(mappedReports);
-      }
-    } catch (e: unknown) {
-      logger.error('Failed to load reports:', e);
-      setError('加载报表列表失败，请稍后重试');
-    } finally {
-      setLoading(false);
-    }
-  }, []);
+  const {
+    data: apiReports,
+    loading,
+    error,
+    pagination,
+    fetch,
+    refresh,
+    delete: deleteItem,
+  } = useCrudOperations<ApiReport>({
+    api: reportCrudApi,
+    queryKey: 'bi-reports',
+    defaultPageSize: 10,
+    pageParamName: 'page',
+    pageSizeParamName: 'pageSize',
+  });
 
-  useEffect(() => {
-    loadReports();
-  }, [loadReports]);
+  const reports = useMemo(() => {
+    return apiReports.map(apiReportToReport);
+  }, [apiReports]);
 
   const handleDeleteReport = useCallback(
     async (id: string) => {
       try {
-        const res = await deleteReport(id);
-        if (res.success) {
-          setReports(reports.filter((r) => r.id !== id));
-        }
+        await deleteItem(id);
       } catch (e: unknown) {
         logger.error('Failed to delete report:', e);
       }
     },
-    [reports]
+    [deleteItem]
   );
 
   const filteredReports = useMemo(() => {
@@ -129,14 +116,43 @@ const BIReportPage = () => {
     });
   }, [reports, searchTerm, filterType, filterStatus]);
 
-  const handleChangePage = (newPage: number) => {
-    setPage(newPage);
-  };
+  const handleSearch = useCallback(
+    (value: string) => {
+      setSearchTerm(value);
+      fetch({
+        search: value || undefined,
+        reportType: filterType || undefined,
+        status: filterStatus || undefined,
+      });
+    },
+    [fetch, filterType, filterStatus]
+  );
 
-  const handleChangeRowsPerPage = (newPageSize: number) => {
-    setRowsPerPage(newPageSize);
-    setPage(0);
-  };
+  const handleFilterTypeChange = useCallback(
+    (value: string) => {
+      setFilterType(value);
+      pagination.setPage(1);
+      fetch({
+        search: searchTerm || undefined,
+        reportType: value || undefined,
+        status: filterStatus || undefined,
+      });
+    },
+    [fetch, searchTerm, filterStatus, pagination]
+  );
+
+  const handleFilterStatusChange = useCallback(
+    (value: string) => {
+      setFilterStatus(value);
+      pagination.setPage(1);
+      fetch({
+        search: searchTerm || undefined,
+        reportType: filterType || undefined,
+        status: value || undefined,
+      });
+    },
+    [fetch, searchTerm, filterType, pagination]
+  );
 
   const columns = useMemo<ColumnDef<Report>[]>(
     () => [
@@ -275,7 +291,7 @@ const BIReportPage = () => {
           { value: 'custom', label: '自定义' },
         ],
         value: filterType,
-        onChange: (value) => setFilterType(value as string),
+        onChange: (value) => handleFilterTypeChange(value as string),
       },
       {
         id: 'status',
@@ -288,21 +304,21 @@ const BIReportPage = () => {
           { value: 'archived', label: '归档' },
         ],
         value: filterStatus,
-        onChange: (value) => setFilterStatus(value as string),
+        onChange: (value) => handleFilterStatusChange(value as string),
       },
     ],
-    [filterType, filterStatus]
+    [filterType, filterStatus, handleFilterTypeChange, handleFilterStatusChange]
   );
 
-  const pagination = useMemo(
+  const paginationConfig = useMemo(
     () => ({
-      page,
-      pageSize: rowsPerPage,
-      total: filteredReports.length,
-      onPageChange: handleChangePage,
-      onPageSizeChange: handleChangeRowsPerPage,
+      page: pagination.page - 1,
+      pageSize: pagination.pageSize,
+      total: pagination.total,
+      onPageChange: (newPage: number) => pagination.setPage(newPage + 1),
+      onPageSizeChange: (newPageSize: number) => pagination.setPageSize(newPageSize),
     }),
-    [page, rowsPerPage, filteredReports.length]
+    [pagination]
   );
 
   return (
@@ -327,10 +343,11 @@ const BIReportPage = () => {
         searchable
         searchPlaceholder='搜索报表名称或创建人...'
         searchValue={searchTerm}
-        onSearch={(value) => setSearchTerm(value)}
+        onSearch={handleSearch}
         filters={filters}
-        pagination={pagination}
+        pagination={paginationConfig}
         rowActions={rowActions}
+        onRefresh={refresh}
         actions={[
           {
             label: '返回数据大屏',

@@ -1,5 +1,6 @@
 import apiClient from '../client';
 import type { Dataset, DatasetQueryParams, DatasetQueryResult } from './types';
+import type { CrudOperations } from '@/hooks/useCrudQueries';
 
 export async function listDatasets(params?: {
   page?: number;
@@ -26,6 +27,18 @@ export async function updateDataset(id: string, data: Partial<Dataset>) {
 export async function deleteDataset(id: string) {
   return await apiClient.bi.delete(`/datasets/${id}`);
 }
+
+export const datasetCrudApi: CrudOperations<Dataset> = {
+  list: (params?) => listDatasets({
+    page: params?.page,
+    pageSize: params?.pagesize,
+    ...(params as any),
+  }),
+  get: getDataset,
+  create: createDataset,
+  update: updateDataset,
+  delete: deleteDataset,
+};
 
 export async function queryDataset(params: DatasetQueryParams): Promise<DatasetQueryResult> {
   return await apiClient.bi.post('/datasets/query', params);

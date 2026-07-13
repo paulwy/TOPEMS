@@ -2,7 +2,6 @@ import React, { useEffect, useState, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { FileText, ArrowRight, FlaskConical, CheckCircle, Rocket } from 'lucide-react';
 import { DashboardTemplate } from '@/components/templates';
-import { useAppStore } from '@/store';
 import type { StatCard, ChartCard, QuickAction } from '@/components/templates';
 import { PageContainer } from '@/components/common';
 import BarChartComponent from '../../components/charts/BarChart';

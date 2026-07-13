@@ -22,9 +22,9 @@ const FormDesignerPage: React.FC = () => {
   const loadForm = async () => {
     try {
       setLoading(true);
-      const form = await lowcodeApi.formApi.get(formId!);
-      if (form) {
-        setSchema(form);
+      const formRes = await lowcodeApi.formApi.getForm(formId!);
+      if (formRes.success) {
+        setSchema(formRes.data);
       }
     } catch (error) {
       logger.error('Failed to load form:', error);
@@ -36,18 +36,20 @@ const FormDesignerPage: React.FC = () => {
   const handleSave = async (newSchema: FormSchema) => {
     try {
       if (formId && formId !== 'new') {
-        await lowcodeApi.formApi.update(formId, {
+        await lowcodeApi.formApi.updateForm(formId, {
           name: newSchema.name,
           description: newSchema.description,
           components: newSchema.components,
         });
       } else {
-        const created = await lowcodeApi.formApi.create({
+        const createdRes = await lowcodeApi.formApi.createForm({
           name: newSchema.name,
           description: newSchema.description,
           components: newSchema.components,
         });
-        navigate(LOWCODE_PATHS.formDesigner.replace(':id', created.id), { replace: true });
+        if (createdRes.success) {
+          navigate(LOWCODE_PATHS.formDesigner.replace(':id', createdRes.data.id), { replace: true });
+        }
       }
     } catch (error) {
       logger.error('Failed to save form:', error);
@@ -57,7 +59,7 @@ const FormDesignerPage: React.FC = () => {
   const handlePublish = async (newSchema: FormSchema) => {
     try {
       if (formId && formId !== 'new') {
-        await lowcodeApi.formApi.publish(formId);
+        await lowcodeApi.formApi.publishForm(formId);
       }
     } catch (error) {
       logger.error('Failed to publish form:', error);

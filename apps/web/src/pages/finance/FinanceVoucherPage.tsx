@@ -1,6 +1,8 @@
 import { Typography, Tabs, Tab, Box } from '@mui/material';
 import { designTokens } from '@/theme/tokens';
-import React, { useState, useEffect, useMemo } from 'react';
+import React, { useState, useMemo } from 'react';
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import { useCrudOperations } from '@/hooks/useCrudQueries';
 import { FINANCE_PATHS } from '@/modules/finance/config';
 import {
   FileText,
@@ -40,7 +42,7 @@ import {
   type VoucherItemRequest,
   type AccountingSubject,
 } from '@/api/erp';
-import { useAppStore } from '../../store';
+import { useNotificationStore } from '@/store';
 import { ListPageTemplate } from '@/components/templates';
 import type { ColumnDef, RowAction, FilterConfig } from '@/components/templates';
 import { StatCardGroup } from '@/components';
@@ -50,18 +52,16 @@ const ct = designTokens.colors;
 
 const FinanceVoucherPage: React.FC = () => {
   const navigate = useNavigate();
-  const addNotification = useAppStore((state) => state.addNotification);
+  const addNotification = useNotificationStore((state) => state.addNotification);
+  const queryClient = useQueryClient();
 
   const [activeTab, setActiveTab] = useState<string>('vouchers');
   const [searchQuery, setSearchQuery] = useState('');
   const [periodFilter, setPeriodFilter] = useState('');
   const [statusFilter, setStatusFilter] = useState('');
 
-  const [vouchers, setVouchers] = useState<FinancialVoucher[]>([]);
-  const [subjects, setSubjects] = useState<AccountingSubject[]>([]);
   const [voucherItems, setVoucherItems] = useState<VoucherItem[]>([]);
 
-  const [loading, setLoading] = useState(true);
   const [showCreateModal, setShowCreateModal] = useState(false);
   const [showImportModal, setShowImportModal] = useState(false);
   const [showDetailModal, setShowDetailModal] = useState(false);
@@ -81,36 +81,33 @@ const FinanceVoucherPage: React.FC = () => {
     items: [] as VoucherItemRequest[],
   });
 
-  useEffect(() => {
-    loadData();
-  }, []);
+  const {
+    data: vouchers,
+    loading: vouchersLoading,
+    create: createVoucher,
+    update: updateVoucher,
+    delete: deleteVoucher,
+    fetch: fetchVouchers,
+  } = useCrudOperations<FinancialVoucher>({
+    api: voucherApi as any,
+    queryKey: 'finance-vouchers',
+    defaultPageSize: 50,
+  });
 
-  const loadData = async () => {
-    setLoading(true);
-    try {
-      const [voucherResult, subjectResult] = await Promise.all([
-        voucherApi.list(),
-        accountingSubjectApi.list(),
-      ]);
-
-      if (voucherResult.success && voucherResult.data) {
-        setVouchers(voucherResult.data.items || []);
+  const subjectsQuery = useQuery({
+    queryKey: ['finance-accounting-subjects'],
+    queryFn: async () => {
+      const response = await accountingSubjectApi.list();
+      if (!response.success || !response.data) {
+        throw new Error(response.message || '加载会计科目失败');
       }
+      return response.data.items || [];
+    },
+    staleTime: 5 * 60 * 1000,
+  });
 
-      if (subjectResult.success && subjectResult.data) {
-        setSubjects(subjectResult.data.items || []);
-      }
-    } catch (err: unknown) {
-      apiLogger.error('加载数据失败:', err);
-      addNotification({
-        title: '错误',
-        message: '加载数据失败',
-        type: 'error',
-      });
-    } finally {
-      setLoading(false);
-    }
-  };
+  const subjects = subjectsQuery.data || [];
+  const loading = vouchersLoading || subjectsQuery.isLoading;
 
   const loadVoucherItems = async (voucherId: string) => {
     try {
@@ -146,29 +143,17 @@ const FinanceVoucherPage: React.FC = () => {
     }
 
     try {
-      const result = await voucherApi.create({
+      const result = await createVoucher({
         ...newVoucher,
         items: newVoucher.items,
-      });
+      } as any);
 
-      if (result.success) {
-        addNotification({
-          title: '成功',
-          message: '凭证创建成功',
-          type: 'success',
-        });
+      if (result) {
         setShowCreateModal(false);
         resetForm();
-        loadData();
-      } else {
-        addNotification({
-          title: '失败',
-          message: result.message || '创建失败',
-          type: 'error',
-        });
       }
     } catch (err: unknown) {
-      addNotification({ title: '错误', message: '操作失败', type: 'error' });
+      // 错误已在 mutation 中处理
     }
   };
 
@@ -180,23 +165,9 @@ const FinanceVoucherPage: React.FC = () => {
   const confirmDelete = async () => {
     if (!deletingId) return;
     try {
-      const result = await voucherApi.delete(deletingId);
-      if (result.success) {
-        addNotification({
-          title: '成功',
-          message: '删除成功',
-          type: 'success',
-        });
-        loadData();
-      } else {
-        addNotification({
-          title: '失败',
-          message: result.message || '删除失败',
-          type: 'error',
-        });
-      }
+      await deleteVoucher(deletingId);
     } catch (err: unknown) {
-      addNotification({ title: '错误', message: '操作失败', type: 'error' });
+      // 错误已在 mutation 中处理
     } finally {
       setDeleteDialogOpen(false);
       setDeletingId(null);
@@ -210,9 +181,9 @@ const FinanceVoucherPage: React.FC = () => {
 
   const confirmBatchDelete = async () => {
     try {
-      const promises = selectedIds.map((id) => voucherApi.delete(id));
-      const results = await Promise.all(promises);
-      const successCount = results.filter((r) => r.success).length;
+      const promises = selectedIds.map((id) => deleteVoucher(id));
+      const results = await Promise.allSettled(promises);
+      const successCount = results.filter((r) => r.status === 'fulfilled').length;
 
       if (successCount === selectedIds.length) {
         addNotification({
@@ -229,7 +200,6 @@ const FinanceVoucherPage: React.FC = () => {
       }
 
       setSelectedIds([]);
-      loadData();
     } catch (err: unknown) {
       addNotification({
         title: '错误',
@@ -245,9 +215,9 @@ const FinanceVoucherPage: React.FC = () => {
     if (selectedIds.length === 0) return;
 
     try {
-      const promises = selectedIds.map((id) => voucherApi.update(id, { status: 'approved' }));
-      const results = await Promise.all(promises);
-      const successCount = results.filter((r) => r.success).length;
+      const promises = selectedIds.map((id) => updateVoucher(id, { status: 'approved' } as any));
+      const results = await Promise.allSettled(promises);
+      const successCount = results.filter((r) => r.status === 'fulfilled').length;
 
       if (successCount === selectedIds.length) {
         addNotification({
@@ -264,7 +234,6 @@ const FinanceVoucherPage: React.FC = () => {
       }
 
       setSelectedIds([]);
-      loadData();
     } catch (err: unknown) {
       addNotification({
         title: '错误',
@@ -274,36 +243,49 @@ const FinanceVoucherPage: React.FC = () => {
     }
   };
 
-  const handleImport = async (fileContent: string) => {
-    try {
+  const importMutation = useMutation({
+    mutationFn: async (fileContent: string) => {
       const result = await voucherApi.importU8({
         file_name: 'u8_vouchers.json',
         file_content: fileContent,
         import_mode: 'insert',
       });
-
-      if (result.success && result.data) {
-        const { success_count: successCount, failed_count: failedCount, errors } = result.data;
-        if (failedCount === 0) {
-          addNotification({
-            title: '成功',
-            message: `成功导入${successCount}张凭证`,
-            type: 'success',
-          });
-        } else {
-          addNotification({
-            title: '部分成功',
-            message: `成功导入${successCount}张，失败${failedCount}张`,
-            type: 'warning',
-          });
-          errors.forEach((err) => apiLogger.warn('导入错误:', err));
-        }
-        setShowImportModal(false);
-        loadData();
+      if (!result.success) {
+        throw new Error(result.message || '导入失败');
       }
-    } catch (err: unknown) {
-      addNotification({ title: '错误', message: '导入失败', type: 'error' });
-    }
+      return result.data;
+    },
+    onSuccess: (data) => {
+      queryClient.invalidateQueries({ queryKey: ['finance-vouchers'] });
+      const { success_count: successCount, failed_count: failedCount, errors } = data || {} as any;
+      if (failedCount === 0) {
+        addNotification({
+          title: '成功',
+          message: `成功导入${successCount}张凭证`,
+          type: 'success',
+        });
+      } else {
+        addNotification({
+          title: '部分成功',
+          message: `成功导入${successCount}张，失败${failedCount}张`,
+          type: 'warning',
+        });
+        errors?.forEach((err: string) => apiLogger.warn('导入错误:', err));
+      }
+      setShowImportModal(false);
+    },
+    onError: (err: unknown) => {
+      apiLogger.error('导入凭证失败:', err);
+      addNotification({
+        title: '错误',
+        message: (err as Error).message || '导入失败',
+        type: 'error',
+      });
+    },
+  });
+
+  const handleImport = async (fileContent: string) => {
+    await importMutation.mutateAsync(fileContent);
   };
 
   const resetForm = () => {

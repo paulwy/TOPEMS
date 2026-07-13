@@ -6,12 +6,31 @@ export const attendanceApi = {
     return apiClient.get('/attendance/today');
   },
 
-  checkIn: async (): Promise<ApiResponse<AttendanceRecord>> => {
-    return apiClient.post('/attendance/check-in');
+  getAttendanceStats: async (): Promise<ApiResponse<Record<string, unknown>>> => {
+    return apiClient.get('/attendance/stats');
   },
 
-  checkOut: async (): Promise<ApiResponse<AttendanceRecord>> => {
-    return apiClient.post('/attendance/check-out');
+  getAttendanceRecords: async (params: {
+    page?: number;
+    pageSize?: number;
+    startDate?: string;
+    endDate?: string;
+  }): Promise<ApiResponse<{ items: AttendanceRecord[]; total: number }>> => {
+    return apiClient.get('/attendance', { params });
+  },
+
+  checkIn: async (data?: {
+    latitude?: number;
+    longitude?: number;
+  }): Promise<ApiResponse<AttendanceRecord>> => {
+    return apiClient.post('/attendance/check-in', data);
+  },
+
+  checkOut: async (data?: {
+    latitude?: number;
+    longitude?: number;
+  }): Promise<ApiResponse<AttendanceRecord>> => {
+    return apiClient.post('/attendance/check-out', data);
   },
 
   getRecords: async (params: {
@@ -43,7 +62,7 @@ export const attendanceApi = {
       checkOutTime?: string;
       status?: string;
       note?: string;
-    }
+    },
   ): Promise<ApiResponse<AttendanceRecord>> => {
     return apiClient.put(`/attendance/${id}`, data);
   },

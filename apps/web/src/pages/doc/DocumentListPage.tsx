@@ -15,117 +15,26 @@ import {
   Share2,
   Trash2,
 } from 'lucide-react';
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 
-import { useAppStore } from '../../store';
+import { useNotificationStore } from '@/store';
 import { ListPageTemplate, type ColumnDef, type FilterConfig } from '@/components/templates';
 import { PageContainer } from '@/components/common';
 import { ConfirmDialog } from '@topems/shared-components';
 import { designTokens } from '@/theme/tokens';
+import { docApi, type FileMetadata } from '@/api/doc';
+import { apiLogger } from '@/utils/logger';
 
 const ct = designTokens.colors;
 
-interface Document {
-  id: string;
-  name: string;
-  type: 'pdf' | 'word' | 'excel' | 'ppt' | 'image';
-  size: string;
-  folder: string;
-  category: 'work' | 'personal' | 'project';
-  updatedAt: string;
-}
-
-const MOCK_DOCUMENTS: Document[] = [
-  {
-    id: '1',
-    name: '2024年度工作总结报告.pdf',
-    type: 'pdf',
-    size: '2.4 MB',
-    folder: '工作文档',
-    category: 'work',
-    updatedAt: '2024-12-15 14:30',
-  },
-  {
-    id: '2',
-    name: '产品需求规格说明书.docx',
-    type: 'word',
-    size: '1.8 MB',
-    folder: '项目文档',
-    category: 'project',
-    updatedAt: '2024-12-14 16:20',
-  },
-  {
-    id: '3',
-    name: '财务报表-第四季度.xlsx',
-    type: 'excel',
-    size: '3.2 MB',
-    folder: '财务文档',
-    category: 'work',
-    updatedAt: '2024-12-13 10:15',
-  },
-  {
-    id: '4',
-    name: '项目进度汇报.pptx',
-    type: 'ppt',
-    size: '5.6 MB',
-    folder: '项目文档',
-    category: 'project',
-    updatedAt: '2024-12-12 09:45',
-  },
-  {
-    id: '5',
-    name: '产品架构设计图.png',
-    type: 'image',
-    size: '890 KB',
-    folder: '技术文档',
-    category: 'project',
-    updatedAt: '2024-12-11 11:30',
-  },
-  {
-    id: '6',
-    name: '员工手册.pdf',
-    type: 'pdf',
-    size: '1.2 MB',
-    folder: '规章制度',
-    category: 'work',
-    updatedAt: '2024-12-10 15:00',
-  },
-  {
-    id: '7',
-    name: '个人简历模板.docx',
-    type: 'word',
-    size: '520 KB',
-    folder: '个人文档',
-    category: 'personal',
-    updatedAt: '2024-12-09 08:20',
-  },
-  {
-    id: '8',
-    name: '季度销售数据.xlsx',
-    type: 'excel',
-    size: '2.1 MB',
-    folder: '销售报表',
-    category: 'work',
-    updatedAt: '2024-12-08 17:40',
-  },
-  {
-    id: '9',
-    name: '培训课件-新员工入职.pptx',
-    type: 'ppt',
-    size: '8.3 MB',
-    folder: '培训资料',
-    category: 'work',
-    updatedAt: '2024-12-07 13:10',
-  },
-  {
-    id: '10',
-    name: '产品原型设计稿.jpg',
-    type: 'image',
-    size: '1.5 MB',
-    folder: '设计文档',
-    category: 'project',
-    updatedAt: '2024-12-06 16:55',
-  },
-];
+const getFileType = (contentType: string): string => {
+  if (contentType.includes('pdf')) return 'pdf';
+  if (contentType.includes('word') || contentType.includes('doc')) return 'word';
+  if (contentType.includes('sheet') || contentType.includes('excel')) return 'excel';
+  if (contentType.includes('presentation') || contentType.includes('ppt')) return 'ppt';
+  if (contentType.startsWith('image/')) return 'image';
+  return 'pdf';
+};
 
 const TYPE_LABELS: Record<string, string> = {
   pdf: 'PDF',
@@ -141,12 +50,6 @@ const TYPE_COLORS: Record<string, string> = {
   excel: 'success.main',
   ppt: 'warning.main',
   image: 'secondary.main',
-};
-
-const CATEGORY_LABELS: Record<string, string> = {
-  work: '工作',
-  personal: '个人',
-  project: '项目',
 };
 
 const getFileIcon = (type: string) => {
@@ -197,11 +100,18 @@ const getFileIcon = (type: string) => {
   }
 };
 
-export const DocumentListPage: React.FC = () => {
-  const addNotification = useAppStore((state) => state.addNotification);
+const formatFileSize = (bytes: number): string => {
+  if (bytes === 0) return '0 B';
+  const k = 1024;
+  const sizes = ['B', 'KB', 'MB', 'GB'];
+  const i = Math.floor(Math.log(bytes) / Math.log(k));
+  return `${parseFloat((bytes / Math.pow(k, i)).toFixed(2))} ${sizes[i]}`;
+};
 
-  const [documents, setDocuments] = useState<Document[]>(MOCK_DOCUMENTS);
-  const [loading, setLoading] = useState(false);
+export const DocumentListPage: React.FC = () => {
+  const addNotification = useNotificationStore((state) => state.addNotification);
+  const queryClient = useQueryClient();
+
   const [searchQuery, setSearchQuery] = useState('');
   const [typeFilter, setTypeFilter] = useState<string>('all');
   const [categoryFilter, setCategoryFilter] = useState<string>('all');
@@ -216,6 +126,24 @@ export const DocumentListPage: React.FC = () => {
     danger?: boolean;
   } | null>(null);
 
+  const { data: files = [], isLoading: loading } = useQuery({
+    queryKey: ['document-list'],
+    queryFn: async () => {
+      const response = await docApi.list();
+      if (response.success && response.data?.files) {
+        return response.data.files;
+      }
+      return [];
+    },
+  });
+
+  const deleteMutation = useMutation({
+    mutationFn: (id: string) => docApi.delete(id),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['document-list'] });
+    },
+  });
+
   const openConfirmDialog = useCallback(
     (config: { title: string; message: string; onConfirm: () => void; danger?: boolean }) => {
       setConfirmDialogConfig(config);
@@ -223,6 +151,18 @@ export const DocumentListPage: React.FC = () => {
     },
     []
   );
+
+  const documents = useMemo(() => {
+    return files.map((f: FileMetadata) => ({
+      id: f.id,
+      name: f.name,
+      type: getFileType(f.content_type || ''),
+      size: formatFileSize(f.size || 0),
+      folder: f.folder_id || '根目录',
+      category: 'work' as const,
+      updatedAt: new Date(f.updated_at).toLocaleString('zh-CN'),
+    }));
+  }, [files]);
 
   const filteredDocuments = useMemo(() => {
     return documents.filter((doc) => {
@@ -247,50 +187,73 @@ export const DocumentListPage: React.FC = () => {
   const total = filteredDocuments.length;
 
   const handleRefresh = useCallback(() => {
-    setLoading(true);
-    setTimeout(() => {
-      setDocuments([...MOCK_DOCUMENTS]);
-      setLoading(false);
-      addNotification({
-        title: '成功',
-        message: '刷新成功',
-        type: 'success',
-      });
-    }, 500);
-  }, [addNotification]);
+    queryClient.invalidateQueries({ queryKey: ['document-list'] });
+    addNotification({
+      title: '成功',
+      message: '刷新成功',
+      type: 'success',
+    });
+  }, [addNotification, queryClient]);
 
   const handleDelete = useCallback(
-    (doc: Document) => {
+    (doc: { id: string; name: string }) => {
       openConfirmDialog({
         title: '确认删除',
         message: `确定要删除文档"${doc.name}"吗？此操作可以在回收站中恢复。`,
         danger: true,
-        onConfirm: () => {
-          setDocuments((prev) => prev.filter((d) => d.id !== doc.id));
-          addNotification({
-            title: '成功',
-            message: '文档已删除',
-            type: 'success',
-          });
+        onConfirm: async () => {
+          try {
+            await deleteMutation.mutateAsync(doc.id);
+            addNotification({
+              title: '成功',
+              message: '文档已删除',
+              type: 'success',
+            });
+          } catch (err: unknown) {
+            apiLogger.error('删除文档失败:', err);
+            addNotification({
+              title: '失败',
+              message: '删除文档失败',
+              type: 'error',
+            });
+          }
         },
       });
     },
-    [addNotification, openConfirmDialog]
+    [addNotification, openConfirmDialog, deleteMutation]
   );
 
   const handleDownload = useCallback(
-    (doc: Document) => {
-      addNotification({
-        title: '下载中',
-        message: `正在下载"${doc.name}"...`,
-        type: 'info',
-      });
+    async (doc: { id: string; name: string }) => {
+      try {
+        const blob = await docApi.download(doc.id);
+        const url = window.URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = doc.name;
+        document.body.appendChild(a);
+        a.click();
+        a.remove();
+        window.URL.revokeObjectURL(url);
+        addNotification({
+          title: '成功',
+          message: '文件下载成功',
+          type: 'success',
+        });
+      } catch (err: unknown) {
+        apiLogger.error('下载失败:', err);
+        addNotification({
+          title: '失败',
+          message: '文件下载失败',
+          type: 'error',
+        });
+      }
     },
     [addNotification]
   );
 
   const handleShare = useCallback(
-    (doc: Document) => {
+    (doc: { name: string }) => {
       addNotification({
         title: '提示',
         message: `分享功能开发中 - ${doc.name}`,
@@ -301,7 +264,7 @@ export const DocumentListPage: React.FC = () => {
   );
 
   const handleOpen = useCallback(
-    (doc: Document) => {
+    (doc: { name: string }) => {
       addNotification({
         title: '打开文档',
         message: `正在打开"${doc.name}"...`,
@@ -352,7 +315,7 @@ export const DocumentListPage: React.FC = () => {
     },
   ];
 
-  const columns: ColumnDef<Document>[] = useMemo(
+  const columns: ColumnDef<{ id: string; name: string; type: string; size: string; folder: string; category: string; updatedAt: string }>[] = useMemo(
     () => [
       {
         id: 'name',
@@ -383,7 +346,7 @@ export const DocumentListPage: React.FC = () => {
                 variant='caption'
                 color='text.secondary'
               >
-                {CATEGORY_LABELS[row.category]}
+                {row.category}
               </Typography>
             </Box>
           </Box>

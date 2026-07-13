@@ -22,7 +22,7 @@ import {
 import { useNavigate } from 'react-router-dom';
 import { useForm } from 'react-hook-form';
 import { authApi, type User as UserType, type AccessLog } from '@/api/iam';
-import { useAppStore } from '../../store';
+import { useNotificationStore, useAuthStore, useShortcutsStore, useNotificationSettingsStore } from '@/store';
 import { useAuth } from '../../hooks/useAuth';
 import { PageContainer } from '@/components/common';
 
@@ -88,12 +88,12 @@ const ProfilePage: React.FC = () => {
   const theme = useTheme();
   const navigate = useNavigate();
   const initialized = useRef(false);
-  const addNotification = useAppStore((state) => state.addNotification);
-  const setUser = useAppStore((state) => state.setUser);
-  const shortcuts = useAppStore((state) => state.shortcuts);
-  const setShortcuts = useAppStore((state) => state.setShortcuts);
-  const notificationSettings = useAppStore((state) => state.notificationSettings);
-  const setNotificationSettings = useAppStore((state) => state.setNotificationSettings);
+  const addNotification = useNotificationStore((state) => state.addNotification);
+  const setUser = useAuthStore((state) => state.setUser);
+  const shortcuts = useShortcutsStore((state) => state.shortcuts);
+  const setShortcuts = useShortcutsStore((state) => state.setShortcuts);
+  const notificationSettings = useNotificationSettingsStore((state) => state.notificationSettings);
+  const setNotificationSettings = useNotificationSettingsStore((state) => state.setNotificationSettings);
   const { logout } = useAuth();
 
   const [user, setUserState] = useState<UserType | null>(null);

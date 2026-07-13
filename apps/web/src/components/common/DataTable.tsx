@@ -56,7 +56,7 @@ import {
   type PaginationState,
   type VisibilityState,
 } from '@tanstack/react-table';
-import { useAppStore } from '@/store';
+import { useNotificationStore } from '@/store';
 import { useExportData } from '@/hooks/useDataTable';
 import { useResponsive } from '@/hooks/useResponsive';
 
@@ -376,7 +376,7 @@ export function DataTable<TData, TValue>({
       ? effectiveSelectedIds
       : internalSelected
     : [];
-  const addNotification = useAppStore((state) => state.addNotification);
+  const addNotification = useNotificationStore((state) => state.addNotification);
 
   const { exportToCSV, exportToExcel } = useExportData(columns);
 

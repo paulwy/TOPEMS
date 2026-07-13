@@ -10,7 +10,7 @@ import {
   Download,
 } from 'lucide-react';
 import { DataExport, BackButton, PageContainer } from '@/components/common';
-import { useAppStore } from '@/store';
+import { useNotificationStore } from '@/store';
 import { ListPageTemplate, StatCardGroup } from '@/components';
 import { financeApi, accountApi } from '@/api/finance';
 import type { Account, AccountBalance } from '@/types/finance';
@@ -29,7 +29,7 @@ import {
 } from '@mui/material';
 
 const FinanceCostPage: React.FC = () => {
-  const addNotification = useAppStore((state) => state.addNotification);
+  const addNotification = useNotificationStore((state) => state.addNotification);
 
   const [costData, setCostData] = useState<Account[]>([]);
   const [balanceData, setBalanceData] = useState<AccountBalance[]>([]);

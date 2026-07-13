@@ -14,7 +14,7 @@ import {
 } from 'lucide-react';
 import { BackButton, PageContainer } from '@/components/common';
 import { dictTypeApi, dictItemApi, type DictType, type DictItem } from '@/api/system';
-import { useAppStore } from '../../store';
+import { useNotificationStore } from '../../store';
 import { apiLogger } from '@/utils/logger';
 import { extractErrorMessage } from '@/utils/errors';
 import {
@@ -63,7 +63,7 @@ const statusLabels: Record<string, string> = {
 
 const DictionaryManagementPage: React.FC<DictionaryManagementPageProps> = ({ onNavigate }) => {
   const theme = useTheme();
-  const addNotification = useAppStore((state) => state.addNotification);
+  const addNotification = useNotificationStore((state) => state.addNotification);
 
   const [dictTypes, setDictTypes] = useState<DictType[]>([]);
   const [selectedType, setSelectedType] = useState<DictType | null>(null);

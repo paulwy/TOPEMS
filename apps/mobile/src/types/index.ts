@@ -1,24 +1,4 @@
-export {
-  ApiResponse,
-  User,
-  LoginCredentials,
-  Account,
-  Voucher,
-  InvoiceStatus,
-  BalanceSheet,
-  IncomeStatement,
-  CashFlowStatement,
-  ResponsiveProps,
-  EmployeeFinance,
-  ProjectFinance,
-  Task,
-  TaskPriority,
-  TaskStatus,
-  Event,
-  DeviceInfo,
-  DashboardStats,
-  QuickAction,
-} from '@topems/shared-types';
+
 
 export type ApiResponse<T> = {
   success: boolean;
@@ -34,17 +14,22 @@ export type LoginCredentials = {
 
 export type User = {
   id: string;
-  name: string;
   username: string;
   email: string;
-  phone: string;
+  full_name?: string;
+  name?: string;
+  is_active: boolean;
+  is_superuser: boolean;
+  created_at?: string;
+  roles: string[];
+  permissions: string[];
+  phone?: string;
   avatar?: string;
   departmentId?: string;
   departmentName?: string;
-  role: string;
-  status: 'active' | 'inactive' | 'locked';
-  createdAt: string;
-  updatedAt: string;
+  status?: 'active' | 'inactive' | 'locked';
+  createdAt?: string;
+  updatedAt?: string;
 };
 
 export type Task = {
@@ -103,14 +88,10 @@ export type DeviceInfo = {
 };
 
 export type DashboardStats = {
-  totalTasks: number;
-  completedTasks: number;
+  todayPatrols: number;
+  todayScans: number;
   pendingTasks: number;
-  overdueTasks: number;
-  todayEvents: number;
-  pendingApprovals: number;
-  inventoryAlerts: number;
-  productionAlerts: number;
+  completedTasks: number;
 };
 
 export type QuickAction = {
@@ -119,4 +100,96 @@ export type QuickAction = {
   icon: string;
   action: string;
   badge?: number;
+};
+
+export type Approval = ApprovalTask;
+
+export type ApprovalTask = {
+  id: string;
+  title: string;
+  description?: string;
+  type: string;
+  status: string;
+  priority: string;
+  applicantId: string;
+  applicantName?: string;
+  assigneeId?: string;
+  assigneeName?: string;
+  createdAt: string;
+  updatedAt: string;
+  dueDate?: string;
+};
+
+export type AttendanceRecord = {
+  id: string;
+  userId: string;
+  userName?: string;
+  checkInTime: string;
+  checkOutTime?: string;
+  date?: string;
+  locationLat?: number;
+  locationLng?: number;
+  status: 'normal' | 'late' | 'early_leave' | 'absent' | 'overtime';
+  createdAt: string;
+  updatedAt: string;
+};
+
+export type AttendanceStats = {
+  totalDays: number;
+  presentDays: number;
+  lateDays: number;
+  absentDays: number;
+  overtimeHours: number;
+  attendanceDays?: number;
+  lateCount?: number;
+  earlyLeaveCount?: number;
+  absentCount?: number;
+};
+
+export type InventoryItem = {
+  id: string;
+  code: string;
+  name: string;
+  category: string;
+  quantity: number;
+  unit: string;
+  location: string;
+  status: string;
+  createdAt: string;
+  updatedAt: string;
+};
+
+export type Notification = {
+  id: string;
+  title: string;
+  message: string;
+  type: 'info' | 'warning' | 'error' | 'success';
+  module?: string;
+  entityId?: string;
+  isRead: boolean;
+  userId: string;
+  createdAt: string;
+  updatedAt: string;
+};
+
+export type OfflineSyncRecord = {
+  id: string;
+  module: string;
+  action: string;
+  data: Record<string, unknown>;
+  status: 'pending' | 'synced' | 'failed';
+  createdAt: string;
+  updatedAt: string;
+};
+
+export type ProductionOrder = {
+  id: string;
+  code: string;
+  productName: string;
+  quantity: number;
+  status: 'pending' | 'in_progress' | 'completed' | 'cancelled';
+  startDate?: string;
+  endDate?: string;
+  createdAt: string;
+  updatedAt: string;
 };

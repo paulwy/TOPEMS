@@ -37,7 +37,7 @@ import {
   Map,
 } from 'lucide-react';
 import { GisMapTemplate, type MapMarker, type TrackPoint } from '@/components/templates';
-import { useAppStore } from '../../store';
+import { useNotificationStore } from '@/store';
 import { PageContainer } from '@/components/common';
 import { gisApi } from '@/api/gis';
 import type { DevicePoint, DeviceLocationRecord } from '@/api/gis';
@@ -46,7 +46,7 @@ import { designTokens } from '@/theme/tokens';
 const ct = designTokens.colors;
 
 export const GisTrackingPage: React.FC = () => {
-  const addNotification = useAppStore((state) => state.addNotification);
+  const addNotification = useNotificationStore((state) => state.addNotification);
 
   const [selectedDevice, setSelectedDevice] = useState('');
   const [playbackSpeed, setPlaybackSpeed] = useState(1);

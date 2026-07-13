@@ -32,7 +32,7 @@ import {
   Layers,
 } from 'lucide-react';
 
-import { useAppStore } from '../../store';
+import { useNotificationStore } from '@/store';
 import { NOTIFICATION_PATHS } from '@/modules/notification/config';
 import { PageContainer } from '@/components/common';
 import { ConfirmDialog } from '@topems/shared-components';
@@ -82,7 +82,7 @@ const SETTING_GROUPS: SettingGroup[] = [
 ];
 
 export const NotificationSettingsPage: React.FC = () => {
-  const addNotification = useAppStore((state) => state.addNotification);
+  const addNotification = useNotificationStore((state) => state.addNotification);
 
   const [activeGroup, setActiveGroup] = useState('general');
 

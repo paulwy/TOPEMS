@@ -1,5 +1,6 @@
 import apiClient from '../client';
 import type { DataSource } from './types';
+import type { CrudOperations } from '@/hooks/useCrudQueries';
 
 export async function listDataSources(params?: {
   page?: number;
@@ -34,3 +35,15 @@ export async function testDataSource(id: string) {
 export async function refreshDataSource(id: string) {
   return await apiClient.bi.post(`/data-sources/${id}/refresh`);
 }
+
+export const dataSourceCrudApi: CrudOperations<DataSource> = {
+  list: (params?) => listDataSources({
+    page: params?.page,
+    pageSize: params?.pagesize,
+    ...(params as any),
+  }),
+  get: getDataSource,
+  create: createDataSource,
+  update: updateDataSource,
+  delete: deleteDataSource,
+};

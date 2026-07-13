@@ -28,11 +28,11 @@ import {
   type RecentItem,
 } from '@/components/templates';
 import { AI_PATHS } from '@/modules/ai/config';
-import { useAppStore } from '../../store';
+import { useNotificationStore } from '@/store';
 
 export const AiDashboardPage: React.FC = () => {
   const navigate = useNavigate();
-  const addNotification = useAppStore((state) => state.addNotification);
+  const addNotification = useNotificationStore((state) => state.addNotification);
   const [loading, setLoading] = useState(false);
 
   const stats: StatCard[] = useMemo(

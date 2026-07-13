@@ -19,7 +19,7 @@ import { Eye, EyeOff } from 'lucide-react';
 
 import { logger } from '@/utils/logger';
 import { DASHBOARD_PATHS } from '@/routes/dashboard';
-import { useAppStore } from '@/store';
+import { useNotificationStore } from '@/store';
 import { isDevelopment } from '../../config/runtime';
 
 // 登录表单验证 schema
@@ -42,7 +42,7 @@ interface LoginFormV2Props {
 
 export function LoginFormV2({ onLogin, className }: LoginFormV2Props) {
   const navigate = useNavigate();
-  const addNotification = useAppStore((state) => state.addNotification);
+  const addNotification = useNotificationStore((state) => state.addNotification);
 
   const [showPassword, setShowPassword] = useState(false);
   const [loading, setLoading] = useState(false);

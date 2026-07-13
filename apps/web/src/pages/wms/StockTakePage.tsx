@@ -29,10 +29,10 @@ import type {
 } from '@/api/wms';
 import { wmsApi } from '@/api/wms';
 import { WMS_PATHS } from '@/modules/wms/config';
-import { useAppStore } from '@/store';
+import { useNotificationStore } from '@/store';
 import { Plus, Edit, Trash2, Play, CheckCircle2, Eye, Package } from 'lucide-react';
 import { apiLogger } from '@/utils/logger';
-import { PageContainer } from '@/components/common';
+import { PageContainer, StatusBadge } from '@/components/common';
 
 const statusConfig: Record<
   string,
@@ -53,7 +53,7 @@ const discrepancyTypeConfig: Record<
 };
 
 const StockTakePage: React.FC = () => {
-  const { addNotification } = useAppStore();
+  const { addNotification } = useNotificationStore();
 
   const [stockTakes, setStockTakes] = useState<StockTake[]>([]);
   const [loading, setLoading] = useState(true);
@@ -322,10 +322,11 @@ const StockTakePage: React.FC = () => {
   const getStatusBadge = (status: string) => {
     const config = statusConfig[status] || { label: status, color: 'default' as const };
     return (
-      <Chip
-        size='small'
-        color={config.color}
+      <StatusBadge
+        status={status}
         label={config.label}
+        color={config.color}
+        size='sm'
         variant='outlined'
       />
     );
@@ -334,10 +335,11 @@ const StockTakePage: React.FC = () => {
   const getDiscrepancyTypeBadge = (type: string) => {
     const config = discrepancyTypeConfig[type] || { label: type, color: 'default' as const };
     return (
-      <Chip
-        size='small'
-        color={config.color}
+      <StatusBadge
+        status={type}
         label={config.label}
+        color={config.color}
+        size='sm'
         variant='outlined'
       />
     );

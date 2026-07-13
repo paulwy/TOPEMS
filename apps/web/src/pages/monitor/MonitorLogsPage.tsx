@@ -45,7 +45,7 @@ import {
   Radio,
 } from 'lucide-react';
 
-import { useAppStore } from '../../store';
+import { useNotificationStore } from '../../store';
 import { ListPageTemplate, type ColumnDef } from '@/components/templates';
 import { extractErrorMessage } from '@/utils/errors';
 import { designTokens } from '@/theme/tokens';
@@ -279,7 +279,7 @@ const truncateText = (text: string, maxLength: number): string => {
 };
 
 export const MonitorLogsPage: React.FC = () => {
-  const addNotification = useAppStore((state) => state.addNotification);
+  const addNotification = useNotificationStore((state) => state.addNotification);
 
   const [logs, setLogs] = useState<SystemLog[]>([]);
   const [loading, setLoading] = useState(true);

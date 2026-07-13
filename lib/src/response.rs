@@ -52,6 +52,16 @@ pub fn api_error<T>(code: u16, message: &str) -> ApiResponse<T> {
     }
 }
 
+pub fn api_success<T>(data: T) -> ApiResponse<T> {
+    ApiResponse {
+        code: 200,
+        success: true,
+        data: Some(data),
+        message: "success".to_string(),
+        timestamp: Utc::now().to_rfc3339(),
+    }
+}
+
 impl<T> axum::response::IntoResponse for ApiResponse<T>
 where
     T: Serialize,

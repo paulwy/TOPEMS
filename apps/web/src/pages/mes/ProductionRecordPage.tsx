@@ -11,7 +11,8 @@ import {
   Button,
 } from '@mui/material';
 import { PageContainer } from '@/components/common/PageContainerV2';
-import React, { useState, useEffect, useMemo, useCallback } from 'react';
+import React, { useState, useMemo, useCallback } from 'react';
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import type {
   ProductionRecord,
   CreateProductionRecordRequest,
@@ -19,7 +20,7 @@ import type {
   ListParams,
 } from '@/api/mes';
 import { mesApi } from '@/api/mes';
-import { useAppStore } from '@/store';
+import { useNotificationStore } from '@/store';
 import { LoadingSpinner } from '@topems/shared-components';
 import {
   ListPageTemplate,
@@ -34,13 +35,11 @@ import { designTokens } from '@/theme/tokens';
 const ct = designTokens.colors;
 
 const ProductionRecordPage: React.FC = () => {
-  const [records, setRecords] = useState<ProductionRecord[]>([]);
-  const [loading, setLoading] = useState(true);
+  const queryClient = useQueryClient();
   const [searchTerm, setSearchTerm] = useState('');
   const [statusFilter, setStatusFilter] = useState<string>('');
   const [currentPage, setCurrentPage] = useState(1);
   const [pageSize] = useState(10);
-  const [total, setTotal] = useState(0);
   const [showDialog, setShowDialog] = useState(false);
   const [showDetailDialog, setShowDetailDialog] = useState(false);
   const [selectedRecord, setSelectedRecord] = useState<ProductionRecord | null>(null);
@@ -54,11 +53,11 @@ const ProductionRecordPage: React.FC = () => {
     start_time: '',
   });
 
-  const { addNotification } = useAppStore();
+  const { addNotification } = useNotificationStore();
 
-  const loadRecords = useCallback(async () => {
-    try {
-      setLoading(true);
+  const recordQuery = useQuery({
+    queryKey: ['mes-records', currentPage, pageSize, searchTerm, statusFilter],
+    queryFn: async () => {
       const params: ListParams = {
         page: currentPage - 1,
         pagesize: pageSize,
@@ -67,58 +66,114 @@ const ProductionRecordPage: React.FC = () => {
       if (statusFilter) params.status = statusFilter;
 
       const response = await mesApi.records.list(params);
-      if (response.success && response.data) {
-        setRecords(response.data.records || []);
-        setTotal(response.data.total || 0);
+      if (!response.success || !response.data) {
+        throw new Error(response.message || '加载生产记录失败');
       }
-    } catch (error: unknown) {
-      apiLogger.error('加载生产记录失败:', error);
+      return {
+        items: response.data.records || [],
+        total: response.data.total || 0,
+      };
+    },
+    staleTime: 5 * 60 * 1000,
+    retry: 2,
+  });
+
+  const records = recordQuery.data?.items ?? [];
+  const total = recordQuery.data?.total ?? 0;
+  const loading = recordQuery.isLoading;
+
+  const createMutation = useMutation({
+    mutationFn: async (data: CreateProductionRecordRequest) => {
+      const response = await mesApi.records.create(data);
+      if (!response.success) {
+        throw new Error(response.message || '创建生产记录失败');
+      }
+      return response.data;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['mes-records'] });
       addNotification({
-        type: 'error',
-        title: '加载失败',
-        message: '无法加载生产记录',
+        type: 'success',
+        title: '创建成功',
+        message: '新生产记录已创建',
       });
-    } finally {
-      setLoading(false);
-    }
-  }, [currentPage, pageSize, searchTerm, statusFilter, addNotification]);
-
-  useEffect(() => {
-    loadRecords();
-  }, [loadRecords]);
-
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    try {
-      if (selectedRecord) {
-        await mesApi.records.update(selectedRecord.id, {
-          quantity_completed: formData.quantity_completed,
-          quantity_rejected: formData.quantity_rejected,
-        } as UpdateProductionRecordRequest);
-        addNotification({
-          type: 'success',
-          title: '更新成功',
-          message: '生产记录已更新',
-        });
-      } else {
-        await mesApi.records.create(formData);
-        addNotification({
-          type: 'success',
-          title: '创建成功',
-          message: '新生产记录已创建',
-        });
-      }
-      setShowDialog(false);
-      resetForm();
-      loadRecords();
-    } catch (error: unknown) {
-      apiLogger.error('操作失败:', error);
+    },
+    onError: (error: unknown) => {
+      apiLogger.error('创建生产记录失败:', error);
       addNotification({
         type: 'error',
         title: '操作失败',
-        message: selectedRecord ? '更新生产记录失败' : '创建生产记录失败',
+        message: '创建生产记录失败',
       });
+    },
+  });
+
+  const updateMutation = useMutation({
+    mutationFn: async ({ id, data }: { id: string; data: UpdateProductionRecordRequest }) => {
+      const response = await mesApi.records.update(id, data);
+      if (!response.success) {
+        throw new Error(response.message || '更新生产记录失败');
+      }
+      return response.data;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['mes-records'] });
+      addNotification({
+        type: 'success',
+        title: '更新成功',
+        message: '生产记录已更新',
+      });
+    },
+    onError: (error: unknown) => {
+      apiLogger.error('更新生产记录失败:', error);
+      addNotification({
+        type: 'error',
+        title: '操作失败',
+        message: '更新生产记录失败',
+      });
+    },
+  });
+
+  const deleteMutation = useMutation({
+    mutationFn: async (id: string) => {
+      const response = await mesApi.records.delete(id);
+      if (!response.success) {
+        throw new Error(response.message || '删除生产记录失败');
+      }
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['mes-records'] });
+      addNotification({
+        type: 'success',
+        title: '删除成功',
+        message: '生产记录已删除',
+      });
+    },
+    onError: (error: unknown) => {
+      apiLogger.error('删除生产记录失败:', error);
+      addNotification({
+        type: 'error',
+        title: '操作失败',
+        message: '删除生产记录失败',
+      });
+    },
+  });
+
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (selectedRecord) {
+      await updateMutation.mutateAsync({
+        id: selectedRecord.id,
+        data: {
+          quantity_completed: formData.quantity_completed,
+          quantity_rejected: formData.quantity_rejected,
+        } as UpdateProductionRecordRequest,
+      });
+    } else {
+      await createMutation.mutateAsync(formData);
     }
+    setShowDialog(false);
+    resetForm();
   };
 
   const handleEdit = useCallback((record: ProductionRecord) => {
@@ -143,23 +198,9 @@ const ProductionRecordPage: React.FC = () => {
   const handleDelete = useCallback(
     async (id: string) => {
       if (!window.confirm('确定要删除这条生产记录吗?')) return;
-      try {
-        apiLogger.warn('Delete not implemented for production records');
-        addNotification({
-          type: 'error',
-          title: '删除失败',
-          message: '当前版本不支持删除生产记录',
-        });
-      } catch (error: unknown) {
-        apiLogger.error('删除失败:', error);
-        addNotification({
-          type: 'error',
-          title: '删除失败',
-          message: '无法删除生产记录',
-        });
-      }
+      await deleteMutation.mutateAsync(id);
     },
-    [addNotification]
+    [deleteMutation]
   );
 
   const resetForm = () => {
@@ -310,7 +351,6 @@ const ProductionRecordPage: React.FC = () => {
     setCurrentPage(1);
   };
 
-  // 生产记录统计
   const stats = useMemo(() => {
     return {
       total: records.length,
@@ -441,18 +481,21 @@ const ProductionRecordPage: React.FC = () => {
                 onChange={(e) => setFormData({ ...formData, order_id: e.target.value })}
                 size='small'
                 required
+                disabled={!!selectedRecord}
               />
               <TextField
                 label='工序ID'
                 value={formData.process_id}
                 onChange={(e) => setFormData({ ...formData, process_id: e.target.value })}
                 size='small'
+                disabled={!!selectedRecord}
               />
               <TextField
                 label='工作站ID'
                 value={formData.work_station_id}
                 onChange={(e) => setFormData({ ...formData, work_station_id: e.target.value })}
                 size='small'
+                disabled={!!selectedRecord}
               />
               <TextField
                 label='操作员 *'
@@ -460,6 +503,7 @@ const ProductionRecordPage: React.FC = () => {
                 onChange={(e) => setFormData({ ...formData, operator: e.target.value })}
                 size='small'
                 required
+                disabled={!!selectedRecord}
               />
               <TextField
                 label='完成数量 *'
@@ -494,6 +538,7 @@ const ProductionRecordPage: React.FC = () => {
                 size='small'
                 required
                 slotProps={{ inputLabel: { shrink: true } } as any}
+                disabled={!!selectedRecord}
               />
             </Box>
             <DialogActions sx={{ mt: 2 }}>
@@ -506,6 +551,7 @@ const ProductionRecordPage: React.FC = () => {
               <Button
                 type='submit'
                 variant='contained'
+                disabled={createMutation.isPending || updateMutation.isPending}
               >
                 保存
               </Button>
@@ -514,7 +560,6 @@ const ProductionRecordPage: React.FC = () => {
         </DialogContent>
       </Dialog>
 
-      {/* 详情对话框 */}
       <Dialog
         open={showDetailDialog}
         onClose={() => setShowDetailDialog(false)}

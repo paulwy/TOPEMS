@@ -13,7 +13,7 @@ import {
 import React, { useState, useEffect, useMemo } from 'react';
 import type { CustomerScore, ScoreFactor } from '@/api/crm';
 import { crmApi } from '@/api/crm';
-import { useAppStore } from '@/store';
+import { useNotificationStore } from '@/store';
 import { ListPageTemplate, type ColumnDef, type RowAction } from '@/components/templates';
 import { CRM_PATHS } from '@/modules/crm/config';
 import { PageContainer } from '@/components/common';
@@ -29,7 +29,7 @@ const CRMCustomerScoringPage: React.FC = () => {
   const [currentPage, setCurrentPage] = useState(0);
   const pageSize = 10;
 
-  const { addNotification } = useAppStore();
+  const { addNotification } = useNotificationStore();
 
   const loadCustomerScores = async () => {
     try {

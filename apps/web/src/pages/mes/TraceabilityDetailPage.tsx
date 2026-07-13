@@ -17,14 +17,14 @@ import { traceabilityApi } from '@/api/mes';
 import type { TraceChain, QualityRecord } from '@/api/mes';
 import { apiLogger } from '@/utils/logger';
 import { designTokens } from '@/theme/tokens';
-import { useAppStore } from '@/store';
+import { useNotificationStore } from '@/store';
 import { MES_PATHS } from '@/modules/mes/config';
 
 const ct = designTokens.colors;
 
 const TraceabilityDetailPage: React.FC = () => {
   const { batchNo } = useParams<{ batchNo: string }>();
-  const { addNotification } = useAppStore();
+  const { addNotification } = useNotificationStore();
 
   const [traceChain, setTraceChain] = useState<TraceChain | null>(null);
   const [qualityRecords, setQualityRecords] = useState<QualityRecord[]>([]);

@@ -31,12 +31,12 @@ import { ListPageTemplate } from '@/components/templates';
 
 import type { RowAction, FilterConfig, ColumnDef } from '@/components/templates';
 import { rsApi } from '@/api/rs';
-import { useAppStore } from '@/store';
+import { useNotificationStore } from '@/store';
 import type { TestCase, CreateTestCaseRequest, UpdateTestCaseRequest } from '@/api/rs';
 import { logger } from '@/utils/logger';
 
 const RsTestPage: React.FC = () => {
-  const { addNotification } = useAppStore();
+  const { addNotification } = useNotificationStore();
   const [testCases, setTestCases] = useState<TestCase[]>([]);
   const [loading, setLoading] = useState(false);
   const [page, setPage] = useState(0);

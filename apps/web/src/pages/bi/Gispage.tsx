@@ -1,5 +1,5 @@
 import { Grid } from '@/components';
-import { useAppStore } from '@/store';
+import { useNotificationStore } from '@/store';
 import React, { useState, useMemo, useCallback } from 'react';
 import { apiLogger } from '@/utils/logger';
 import {
@@ -116,7 +116,7 @@ const GisContent: React.FC = () => {
   } = useGis();
 
   const [activeTab, setActiveTab] = useState<TabType>('map');
-  const addNotification = useAppStore((state) => state.addNotification);
+  const addNotification = useNotificationStore((state) => state.addNotification);
   const [showModal, setShowModal] = useState(false);
   const [modalType, setModalType] = useState<ModalType>(null);
   const [editingItem, setEditingItem] = useState<
@@ -2024,7 +2024,7 @@ const GisContent: React.FC = () => {
   );
 };
 
-const Gispage: React.FC = () => {
+const GisPage: React.FC = () => {
   return (
     <GisProvider>
       <GisContent />
@@ -2032,4 +2032,4 @@ const Gispage: React.FC = () => {
   );
 };
 
-export default Gispage;
+export default GisPage;

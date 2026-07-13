@@ -17,13 +17,13 @@ import {
 } from '@mui/material';
 import type { SerialNumber, CreateSerialNumberRequest, UpdateSerialNumberRequest } from '@/api/wms';
 import { wmsApi } from '@/api/wms';
-import { useAppStore } from '@/store';
+import { useNotificationStore } from '@/store';
 import { Plus, Edit, Trash2, Hash, Search, Package, ArrowRightLeft, History } from 'lucide-react';
 import { apiLogger } from '@/utils/logger';
 import { ListPageTemplate, type ColumnDef } from '@/components/templates';
 import { designTokens } from '@/theme/tokens';
 import { PageContainer } from '@/components/common';
-import { ConfirmDialog } from '@topems/shared-components';
+import { ConfirmDialog, FormField } from '@topems/shared-components';
 
 const ct = designTokens.colors;
 
@@ -85,7 +85,7 @@ const SerialNumberPage: React.FC = () => {
     remark: '',
   });
 
-  const { addNotification } = useAppStore();
+  const { addNotification } = useNotificationStore();
 
   useEffect(() => {
     loadSerials();
@@ -432,7 +432,7 @@ const SerialNumberPage: React.FC = () => {
         emptyMessage='暂无序列号数据'
         headerContent={
           <Box sx={{ display: 'flex', gap: 1, alignItems: 'center' }}>
-            <TextField
+            <FormField name='searchValue'
               size='small'
               placeholder='搜索序列号...'
               value={searchValue}
@@ -486,76 +486,76 @@ const SerialNumberPage: React.FC = () => {
                   py: 1,
                 }}
               >
-                <TextField
-                  label='序列号 *'
+                <FormField
+                  name='serial_no' label='序列号 *'
                   value={formData.serial_no}
                   onChange={(e) => setFormData({ ...formData, serial_no: e.target.value })}
                   size='small'
                   required
                   disabled={isEditing}
                 />
-                <TextField
-                  label='SKU编码 *'
+                <FormField
+                  name='sku' label='SKU编码 *'
                   value={formData.sku}
                   onChange={(e) => setFormData({ ...formData, sku: e.target.value })}
                   size='small'
                   required
                   disabled={isEditing}
                 />
-                <TextField
-                  label='物料名称 *'
+                <FormField
+                  name='material_name' label='物料名称 *'
                   value={formData.material_name}
                   onChange={(e) => setFormData({ ...formData, material_name: e.target.value })}
                   size='small'
                   required
                   disabled={isEditing}
                 />
-                <TextField
-                  label='规格型号'
+                <FormField
+                  name='specification' label='规格型号'
                   value={formData.specification}
                   onChange={(e) => setFormData({ ...formData, specification: e.target.value })}
                   size='small'
                 />
-                <TextField
-                  label='单位'
+                <FormField
+                  name='unit' label='单位'
                   value={formData.unit}
                   onChange={(e) => setFormData({ ...formData, unit: e.target.value })}
                   size='small'
                 />
-                <TextField
-                  label='批次号'
+                <FormField
+                  name='batch_no' label='批次号'
                   value={formData.batch_no}
                   onChange={(e) => setFormData({ ...formData, batch_no: e.target.value })}
                   size='small'
                 />
-                <TextField
-                  label='仓库ID'
+                <FormField
+                  name='warehouse_id' label='仓库ID'
                   value={formData.warehouse_id}
                   onChange={(e) => setFormData({ ...formData, warehouse_id: e.target.value })}
                   size='small'
                 />
-                <TextField
-                  label='库位ID'
+                <FormField
+                  name='location_id' label='库位ID'
                   value={formData.location_id}
                   onChange={(e) => setFormData({ ...formData, location_id: e.target.value })}
                   size='small'
                 />
-                <TextField
-                  label='供应商ID'
+                <FormField
+                  name='supplier_id' label='供应商ID'
                   value={formData.supplier_id}
                   onChange={(e) => setFormData({ ...formData, supplier_id: e.target.value })}
                   size='small'
                 />
-                <TextField
-                  label='生产日期'
+                <FormField
+                  name='production_date' label='生产日期'
                   type='date'
                   value={formData.production_date}
                   onChange={(e) => setFormData({ ...formData, production_date: e.target.value })}
                   size='small'
                   slotProps={{ inputLabel: { shrink: true } } as any}
                 />
-                <TextField
-                  label='有效期至'
+                <FormField
+                  name='expiry_date' label='有效期至'
                   type='date'
                   value={formData.expiry_date}
                   onChange={(e) => setFormData({ ...formData, expiry_date: e.target.value })}
@@ -586,8 +586,8 @@ const SerialNumberPage: React.FC = () => {
                   py: 1,
                 }}
               >
-                <TextField
-                  label='保修开始日期'
+                <FormField
+                  name='warranty_start_date' label='保修开始日期'
                   type='date'
                   value={formData.warranty_start_date}
                   onChange={(e) =>
@@ -596,16 +596,16 @@ const SerialNumberPage: React.FC = () => {
                   size='small'
                   slotProps={{ inputLabel: { shrink: true } } as any}
                 />
-                <TextField
-                  label='保修结束日期'
+                <FormField
+                  name='warranty_end_date' label='保修结束日期'
                   type='date'
                   value={formData.warranty_end_date}
                   onChange={(e) => setFormData({ ...formData, warranty_end_date: e.target.value })}
                   size='small'
                   slotProps={{ inputLabel: { shrink: true } } as any}
                 />
-                <TextField
-                  label='单价'
+                <FormField
+                  name='unit_price' label='单价'
                   type='number'
                   value={formData.unit_price}
                   onChange={(e) => setFormData({ ...formData, unit_price: Number(e.target.value) })}
@@ -613,8 +613,8 @@ const SerialNumberPage: React.FC = () => {
                 />
               </Box>
             )}
-            <TextField
-              label='备注'
+            <FormField
+              name='remark' label='备注'
               multiline
               rows={2}
               value={formData.remark}

@@ -167,7 +167,7 @@
 | /admin/audit-log | AuditLogPage | admin:audit:read |
 
 #### 2.2 添加兼容性重定向
-在 compatibility.tsx 中添加 IAM 旧路径重定向：
+> ⚠️ 注意：`compatibility.tsx` 已在 V5.8 路径重构阶段删除。以下仅为历史记录，实际重定向已不再需要。
 
 | 旧路径 | 新路径 |
 |--------|--------|

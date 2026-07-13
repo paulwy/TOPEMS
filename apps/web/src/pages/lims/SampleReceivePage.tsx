@@ -40,7 +40,7 @@ import {
 } from '@/components/templates';
 import { limsApi } from '@/api/lims';
 import type { Sample, CreateSampleRequest, UpdateSampleRequest, LifecycleEvent } from '@/api/lims';
-import { useAppStore } from '@/store';
+import { useNotificationStore } from '@/store';
 import { apiLogger } from '@/utils/logger';
 import { designTokens } from '@/theme/tokens';
 import { DASHBOARD_PATHS } from '@/routes/dashboard';
@@ -74,7 +74,7 @@ const SampleReceivePage: React.FC = () => {
   const [pageSize, setPageSize] = useState(10);
   const [isEditing, setIsEditing] = useState(false);
   const [saving, setSaving] = useState(false);
-  const addNotification = useAppStore((state) => state.addNotification);
+  const addNotification = useNotificationStore((state) => state.addNotification);
 
   const loadSamples = useCallback(async () => {
     try {

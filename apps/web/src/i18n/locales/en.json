@@ -1013,5 +1013,25 @@
     "user_guide": "User Guide",
     "contact_support": "Contact Support",
     "copyright": "© {year} TOPEMS Digital Platform"
+  },
+  "help_center": {
+    "title": "Help Center",
+    "subtitle": "Find the help and support you need",
+    "search_placeholder": "Search help documents, FAQs, guides...",
+    "search_faq": "Search frequently asked questions...",
+    "search_guides": "Search operation guides...",
+    "categories": "Help Categories",
+    "faq": "Frequently Asked Questions",
+    "faq_subtitle": "Find answers to common questions",
+    "guides": "Operation Guides",
+    "guide_subtitle": "Learn how to use the system",
+    "latest_updates": "Latest Updates",
+    "contact_support": "Contact Support",
+    "no_results": "No results found",
+    "try_other_keywords": "Try different keywords or select another category",
+    "filter_category": "Filter by category",
+    "found": "Found",
+    "results": "results",
+    "try_different": "Try different keywords"
   }
 }

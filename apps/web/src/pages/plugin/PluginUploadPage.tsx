@@ -31,10 +31,10 @@ import {
   InputAdornment,
 } from '@mui/material';
 import { PageContainer } from '@/components/common';
-import { useAppStore } from '@/store';
+import { useNotificationStore } from '@/store';
 
 const PluginUploadPage: React.FC = () => {
-  const addNotification = useAppStore((state) => state.addNotification);
+  const addNotification = useNotificationStore((state) => state.addNotification);
   const [activeStep, setActiveStep] = useState(0);
   const [isSubmitting, setIsSubmitting] = useState(false);
 

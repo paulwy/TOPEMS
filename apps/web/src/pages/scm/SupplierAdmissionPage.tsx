@@ -21,7 +21,7 @@ import type {
   UpdateSupplierAdmissionRequest,
 } from '@/api/scm';
 import { scmApi } from '@/api/scm';
-import { useAppStore } from '@/store';
+import { useNotificationStore } from '@/store';
 import { Plus, Edit, Trash2, Check, XCircle, Send, UserCheck, ClipboardCheck } from 'lucide-react';
 import { apiLogger } from '@/utils/logger';
 import { ListPageTemplate, type ColumnDef } from '@/components/templates';
@@ -99,7 +99,7 @@ const SupplierAdmissionPage: React.FC = () => {
     remarks: '',
   });
 
-  const { addNotification } = useAppStore();
+  const { addNotification } = useNotificationStore();
 
   useEffect(() => {
     loadAdmissions();

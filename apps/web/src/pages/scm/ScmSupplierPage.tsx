@@ -17,30 +17,25 @@ import { useNavigate } from 'react-router-dom';
 import { ListPageTemplate, type ColumnDef } from '@/components/templates';
 import { PageContainer } from '@/components/common';
 import { scmApi } from '@/api/scm';
-import type { Supplier, SupplierPerformance } from '@/api/scm';
-import { useAppStore } from '@/store';
+import type { Supplier, SupplierPerformance, CreateSupplierRequest, UpdateSupplierRequest } from '@/api/scm';
+import { useNotificationStore } from '@/store';
 import { apiLogger } from '@/utils/logger';
 import { designTokens } from '@/theme/tokens';
 import { SCM_PATHS } from '@/modules/scm/config';
+import { useCrudOperations } from '@/hooks/useCrudQueries';
+import { useQuery } from '@tanstack/react-query';
 
 const ct = designTokens.colors;
 
 const ScmSupplierPage: React.FC = () => {
   const navigate = useNavigate();
-  const [suppliers, setSuppliers] = useState<Supplier[]>([]);
-  const [supplierPerformance, setSupplierPerformance] = useState<SupplierPerformance[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [performanceLoading, setPerformanceLoading] = useState(true);
-  const [currentPage, setCurrentPage] = useState(1);
-  const [pageSize, setPageSize] = useState(10);
-  const [total, setTotal] = useState(0);
   const [searchTerm, setSearchTerm] = useState('');
   const [showCreateModal, setShowCreateModal] = useState(false);
   const [showDetailModal, setShowDetailModal] = useState(false);
   const [showPerformanceModal, setShowPerformanceModal] = useState(false);
   const [selectedSupplier, setSelectedSupplier] = useState<Supplier | null>(null);
   const [selectedPerformance, setSelectedPerformance] = useState<SupplierPerformance | null>(null);
-  const [formData, setFormData] = useState({
+  const [formData, setFormData] = useState<CreateSupplierRequest & { status?: string }>({
     name: '',
     short_name: '',
     contact_name: '',
@@ -51,60 +46,53 @@ const ScmSupplierPage: React.FC = () => {
     tax_number: '',
     status: 'active',
   });
-  const addNotification = useAppStore((state) => state.addNotification);
+  const addNotification = useNotificationStore((state) => state.addNotification);
 
-  useEffect(() => {
-    loadSuppliers();
-    loadSupplierPerformance();
-  }, [currentPage, pageSize, searchTerm]);
+  const {
+    data: suppliers,
+    loading,
+    pagination,
+    create,
+    fetch,
+  } = useCrudOperations<Supplier, CreateSupplierRequest, UpdateSupplierRequest>({
+    api: scmApi.suppliers as any,
+    queryKey: 'scm-suppliers',
+    defaultPageSize: 10,
+  });
 
-  const loadSuppliers = async () => {
-    try {
-      setLoading(true);
-      const response = await scmApi.suppliers.list({
-        page: currentPage,
-        pageSize,
-      });
-      if (response.success && response.data) {
-        setSuppliers(response.data.items || []);
-        setTotal(response.data.total || 0);
-      }
-    } catch (error: unknown) {
-      addNotification({ title: '错误', message: '加载供应商失败', type: 'error' });
-    } finally {
-      setLoading(false);
-    }
+  const handleSearch = (value: string) => {
+    setSearchTerm(value);
+    const params: Record<string, unknown> = {};
+    if (value) params.search = value;
+    fetch(params);
+    pagination.setPage(1);
   };
 
-  const loadSupplierPerformance = useCallback(async () => {
-    try {
-      setPerformanceLoading(true);
+  const performanceQuery = useQuery({
+    queryKey: ['scm-supplier-performance'],
+    queryFn: async () => {
       const response = await scmApi.supplyChainDashboard.supplierPerformance({
         page: 1,
         pageSize: 20,
       });
-      if (response.success && response.data) {
-        setSupplierPerformance(response.data.items || []);
+      if (!response.success || !response.data) {
+        throw new Error('加载供应商绩效失败');
       }
-    } catch (error: unknown) {
-      apiLogger.error('加载供应商绩效失败:', error);
-      addNotification({ title: '错误', message: '加载供应商绩效失败', type: 'error' });
-    } finally {
-      setPerformanceLoading(false);
-    }
-  }, [addNotification]);
+      return response.data.items || [];
+    },
+    staleTime: 5 * 60 * 1000,
+  });
+
+  const supplierPerformance = performanceQuery.data || [];
+  const performanceLoading = performanceQuery.isLoading;
 
   const handleCreate = async () => {
     try {
-      const response = await scmApi.suppliers.create(formData);
-      if (response.success) {
-        addNotification({ title: '成功', message: '创建成功', type: 'success' });
-        setShowCreateModal(false);
-        // 重置分页到第一页，确保新数据显示在列表中
-        setCurrentPage(1);
-      }
+      await create(formData);
+      setShowCreateModal(false);
+      pagination.setPage(1);
     } catch (error: unknown) {
-      addNotification({ title: '错误', message: '创建失败', type: 'error' });
+      apiLogger.error('创建供应商失败:', error);
     }
   };
 
@@ -258,18 +246,15 @@ const ScmSupplierPage: React.FC = () => {
         data={suppliers}
         loading={loading}
         pagination={{
-          page: currentPage - 1,
-          pageSize,
-          total,
-          onPageChange: (page) => setCurrentPage(page + 1),
-          onPageSizeChange: (size) => {
-            setPageSize(size);
-            setCurrentPage(1);
-          },
+          page: pagination.page - 1,
+          pageSize: pagination.pageSize,
+          total: pagination.total,
+          onPageChange: (page) => pagination.setPage(page + 1),
+          onPageSizeChange: (size) => pagination.setPageSize(size),
         }}
         searchable
         searchValue={searchTerm}
-        onSearch={setSearchTerm}
+        onSearch={handleSearch}
         searchPlaceholder='搜索供应商...'
         actions={[
           {
@@ -280,7 +265,7 @@ const ScmSupplierPage: React.FC = () => {
           },
         ]}
         rowActions={rowActions}
-        onRefresh={loadSuppliers}
+        onRefresh={() => fetch()}
         emptyMessage='暂无供应商数据'
       />
 

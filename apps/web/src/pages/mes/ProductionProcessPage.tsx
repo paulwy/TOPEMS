@@ -15,7 +15,8 @@ import {
   Button,
 } from '@mui/material';
 import { PageContainer } from '@/components/common/PageContainerV2';
-import React, { useState, useEffect, useMemo } from 'react';
+import React, { useState, useMemo, useCallback } from 'react';
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import type {
   ProductionProcess,
   CreateProductionProcessRequest,
@@ -23,7 +24,7 @@ import type {
   ListParams,
 } from '@/api/mes';
 import { mesApi } from '@/api/mes';
-import { useAppStore } from '@/store';
+import { useNotificationStore } from '@/store';
 import { LoadingSpinner } from '@topems/shared-components';
 import {
   ListPageTemplate,
@@ -38,13 +39,11 @@ import { designTokens } from '@/theme/tokens';
 const ct = designTokens.colors;
 
 const ProductionProcessPage: React.FC = () => {
-  const [processes, setProcesses] = useState<ProductionProcess[]>([]);
-  const [loading, setLoading] = useState(true);
+  const queryClient = useQueryClient();
   const [searchTerm, setSearchTerm] = useState('');
   const [statusFilter, setStatusFilter] = useState<string>('');
   const [currentPage, setCurrentPage] = useState(1);
   const [pageSize] = useState(10);
-  const [total, setTotal] = useState(0);
   const [showDialog, setShowDialog] = useState(false);
   const [showDetailDialog, setShowDetailDialog] = useState(false);
   const [selectedProcess, setSelectedProcess] = useState<ProductionProcess | null>(null);
@@ -57,15 +56,11 @@ const ProductionProcessPage: React.FC = () => {
     work_station_id: '',
   });
 
-  const { addNotification } = useAppStore();
+  const { addNotification } = useNotificationStore();
 
-  useEffect(() => {
-    loadProcesses();
-  }, [currentPage, searchTerm, statusFilter]);
-
-  const loadProcesses = async () => {
-    try {
-      setLoading(true);
+  const processQuery = useQuery({
+    queryKey: ['mes-processes', currentPage, pageSize, searchTerm, statusFilter],
+    queryFn: async () => {
       const params: ListParams = {
         page: currentPage - 1,
         pagesize: pageSize,
@@ -74,57 +69,89 @@ const ProductionProcessPage: React.FC = () => {
       if (statusFilter) params.status = statusFilter;
 
       const response = await mesApi.processes.list(params);
-      if (response.success && response.data) {
-        setProcesses(response.data.processes || []);
-        setTotal(response.data.total || 0);
+      if (!response.success || !response.data) {
+        throw new Error(response.message || '加载工序列表失败');
       }
-    } catch (error: unknown) {
-      apiLogger.error('加载工序列表失败:', error);
-      addNotification({
-        type: 'error',
-        title: '加载失败',
-        message: '无法加载工序列表',
-      });
-    } finally {
-      setLoading(false);
-    }
-  };
+      return {
+        items: response.data.processes || [],
+        total: response.data.total || 0,
+      };
+    },
+    staleTime: 5 * 60 * 1000,
+    retry: 2,
+  });
 
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    try {
-      if (selectedProcess) {
-        await mesApi.processes.update(
-          selectedProcess.id,
-          formData as UpdateProductionProcessRequest
-        );
-        addNotification({
-          type: 'success',
-          title: '更新成功',
-          message: '工序信息已更新',
-        });
-      } else {
-        await mesApi.processes.create(formData);
-        addNotification({
-          type: 'success',
-          title: '创建成功',
-          message: '新工序已创建',
-        });
+  const processes = processQuery.data?.items ?? [];
+  const total = processQuery.data?.total ?? 0;
+  const loading = processQuery.isLoading;
+
+  const createMutation = useMutation({
+    mutationFn: async (data: CreateProductionProcessRequest) => {
+      const response = await mesApi.processes.create(data);
+      if (!response.success) {
+        throw new Error(response.message || '创建工序失败');
       }
-      setShowDialog(false);
-      resetForm();
-      loadProcesses();
-    } catch (error: unknown) {
-      apiLogger.error('操作失败:', error);
+      return response.data;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['mes-processes'] });
+      addNotification({
+        type: 'success',
+        title: '创建成功',
+        message: '新工序已创建',
+      });
+    },
+    onError: (error: unknown) => {
+      apiLogger.error('创建工序失败:', error);
       addNotification({
         type: 'error',
         title: '操作失败',
-        message: selectedProcess ? '更新工序失败' : '创建工序失败',
+        message: '创建工序失败',
       });
+    },
+  });
+
+  const updateMutation = useMutation({
+    mutationFn: async ({ id, data }: { id: string; data: UpdateProductionProcessRequest }) => {
+      const response = await mesApi.processes.update(id, data);
+      if (!response.success) {
+        throw new Error(response.message || '更新工序失败');
+      }
+      return response.data;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['mes-processes'] });
+      addNotification({
+        type: 'success',
+        title: '更新成功',
+        message: '工序信息已更新',
+      });
+    },
+    onError: (error: unknown) => {
+      apiLogger.error('更新工序失败:', error);
+      addNotification({
+        type: 'error',
+        title: '操作失败',
+        message: '更新工序失败',
+      });
+    },
+  });
+
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (selectedProcess) {
+      await updateMutation.mutateAsync({
+        id: selectedProcess.id,
+        data: formData as UpdateProductionProcessRequest,
+      });
+    } else {
+      await createMutation.mutateAsync(formData);
     }
+    setShowDialog(false);
+    resetForm();
   };
 
-  const handleEdit = (process: ProductionProcess) => {
+  const handleEdit = useCallback((process: ProductionProcess) => {
     setSelectedProcess(process);
     setFormData({
       name: process.name,
@@ -135,12 +162,12 @@ const ProductionProcessPage: React.FC = () => {
       work_station_id: process.work_station_id || '',
     });
     setShowDialog(true);
-  };
+  }, []);
 
-  const handleViewDetail = (process: ProductionProcess) => {
+  const handleViewDetail = useCallback((process: ProductionProcess) => {
     setSelectedProcess(process);
     setShowDetailDialog(true);
-  };
+  }, []);
 
   const resetForm = () => {
     setSelectedProcess(null);
@@ -240,7 +267,6 @@ const ProductionProcessPage: React.FC = () => {
     setCurrentPage(1);
   };
 
-  // 工序统计
   const stats = useMemo(() => {
     return {
       total: processes.length,
@@ -429,6 +455,7 @@ const ProductionProcessPage: React.FC = () => {
               <Button
                 type='submit'
                 variant='contained'
+                disabled={createMutation.isPending || updateMutation.isPending}
               >
                 保存
               </Button>
@@ -437,7 +464,6 @@ const ProductionProcessPage: React.FC = () => {
         </DialogContent>
       </Dialog>
 
-      {/* 详情对话框 */}
       <Dialog
         open={showDetailDialog}
         onClose={() => setShowDetailDialog(false)}

@@ -50,7 +50,7 @@ import {
   type CreateInspectionTaskRequest,
   type CreateInspectionRecordRequest,
 } from '@/api/lims';
-import { useAppStore } from '@/store';
+import { useNotificationStore } from '@/store';
 import { apiLogger } from '@/utils/logger';
 import { GRADIENTS } from '@topems/shared-constants';
 import { DASHBOARD_PATHS } from '@/routes/dashboard';
@@ -102,7 +102,7 @@ const InspectionTaskPage: React.FC = () => {
     type: 'success' | 'error';
     message: string;
   } | null>(null);
-  const addNotification = useAppStore((state) => state.addNotification);
+  const addNotification = useNotificationStore((state) => state.addNotification);
 
   const loadSamples = useCallback(async () => {
     try {

@@ -1,9 +1,10 @@
-import React, { useState, useEffect, useMemo, useCallback } from 'react';
+import React, { useState, useMemo, useCallback } from 'react';
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { Plus, Search, Edit, Trash2, Eye, FolderKanban } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { Box, LinearProgress, IconButton, Tooltip, MenuItem } from '@mui/material';
 import type { Project } from '@/api/pm';
-import { useAppStore } from '@/store';
+import { useNotificationStore } from '@/store';
 import { pmApi } from '@/api/pm';
 import { DataExport, StatusBadge, PageContainer } from '@/components/common';
 import { apiLogger } from '@/utils/logger';
@@ -60,67 +61,82 @@ const PROJECT_TYPES_MAP: Record<string, string> = {
 
 const PmProjectListPage: React.FC = () => {
   const navigate = useNavigate();
-  const [projects, setProjects] = useState<Project[]>([]);
-  const [loading, setLoading] = useState(true);
+  const queryClient = useQueryClient();
+  const { addNotification } = useNotificationStore();
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedType, setSelectedType] = useState('');
   const [selectedStatus, setSelectedStatus] = useState('');
   const [currentPage, setCurrentPage] = useState(1);
-  const [totalPages, setTotalPages] = useState(1);
-  const [totalCount, setTotalCount] = useState(0);
   const pageSize = 10;
 
-  const loadProjects = useCallback(
-    async (page: number) => {
-      setLoading(true);
-      try {
-        const response = await pmApi.projects.list({
-          project_type: selectedType || undefined,
-          status: selectedStatus || undefined,
-          page,
-          pagesize: pageSize,
-        });
-        if (response.success && response.data) {
-          setProjects(response.data.projects || []);
-          setTotalPages(response.data.total_pages || 1);
-          setTotalCount(response.data.total_count || 0);
-        }
-      } catch (error: unknown) {
-        apiLogger.error('Failed to load projects:', error);
-      } finally {
-        setLoading(false);
+  const projectListQuery = useQuery({
+    queryKey: ['pm-projects', currentPage, pageSize, selectedType, selectedStatus],
+    queryFn: async () => {
+      const response = await pmApi.projects.list({
+        project_type: selectedType || undefined,
+        status: selectedStatus || undefined,
+        page: currentPage,
+        pagesize: pageSize,
+      });
+      if (!response.success || !response.data) {
+        throw new Error(response.message || '加载项目列表失败');
+      }
+      return {
+        projects: response.data.projects || [],
+        total_pages: response.data.total_pages || 1,
+        total_count: response.data.total_count || 0,
+      };
+    },
+    staleTime: 5 * 60 * 1000,
+  });
+
+  const deleteProjectMutation = useMutation({
+    mutationFn: async (id: string) => {
+      const response = await pmApi.projects.delete(id);
+      if (!response.success) {
+        throw new Error(response.message || '删除项目失败');
       }
     },
-    [selectedType, selectedStatus]
-  );
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['pm-projects'] });
+      addNotification({
+        type: 'success',
+        title: '删除成功',
+        message: '项目已删除',
+      });
+    },
+    onError: (error: any) => {
+      apiLogger.error('Failed to delete project:', error);
+      addNotification({
+        type: 'error',
+        title: '删除失败',
+        message: error.message || '无法删除项目',
+      });
+    },
+  });
 
-  useEffect(() => {
-    setCurrentPage(1);
-    loadProjects(1);
-  }, [selectedType, selectedStatus, loadProjects]);
+  const projects: Project[] = projectListQuery.data?.projects || [];
+  const totalCount = projectListQuery.data?.total_count || 0;
+  const loading = projectListQuery.isLoading || deleteProjectMutation.isPending;
 
   const handlePageChange = (page: number) => {
     setCurrentPage(page);
-    loadProjects(page);
   };
 
   const handleDelete = useCallback(
     async (id: string) => {
       if (!window.confirm('确定要删除这个项目吗？')) return;
       try {
-        const response = await pmApi.projects.delete(id);
-        if (response.success) {
-          setCurrentPage((prev) => {
-            loadProjects(prev);
-            return prev;
-          });
-        }
-      } catch (error: unknown) {
-        apiLogger.error('Failed to delete project:', error);
+        await deleteProjectMutation.mutateAsync(id);
+      } catch {
       }
     },
-    [loadProjects]
+    [deleteProjectMutation]
   );
+
+  React.useEffect(() => {
+    setCurrentPage(1);
+  }, [selectedType, selectedStatus]);
 
   const formatDate = (dateStr?: string) => {
     if (!dateStr) return '-';
@@ -342,7 +358,7 @@ const PmProjectListPage: React.FC = () => {
         columnConfigurable
         persistColumnConfig
         columnConfigStorageKey='pm-projects-columns'
-        onRefresh={() => loadProjects(currentPage)}
+        onRefresh={() => projectListQuery.refetch()}
         mobileCardTitleKey='name'
         mobileCardSubtitleKey='code'
         mobileCardDisplayFields={['project_type', 'status', 'progress', 'start_date']}

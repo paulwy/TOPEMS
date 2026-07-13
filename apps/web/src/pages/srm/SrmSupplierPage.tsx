@@ -23,7 +23,7 @@ import type {
   ScoreLevelDistribution,
   CreateSupplierRequest,
 } from '@/api/srm';
-import { useAppStore } from '@/store';
+import { useNotificationStore } from '@/store';
 import { apiLogger } from '@/utils/logger';
 import { PageContainer } from '@/components/common';
 import { SRM_PATHS } from '@/modules/srm/config';
@@ -52,7 +52,7 @@ const SrmSupplierPage: React.FC = () => {
     risklevel: 'medium',
     status: 'active',
   });
-  const addNotification = useAppStore((state) => state.addNotification);
+  const addNotification = useNotificationStore((state) => state.addNotification);
 
   useEffect(() => {
     loadSuppliers();
@@ -658,6 +658,8 @@ const SrmSupplierPage: React.FC = () => {
         headerContent={headerContent}
         getRowId={(row) => row.id}
         emptyMessage='暂无供应商数据'
+        exportable
+        exportFileName='供应商列表'
       />
       <Dialog
         open={showCreateModal}

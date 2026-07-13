@@ -10,6 +10,7 @@ import { useUIStore } from '@/store';
 import { getUnreadCount } from '@/api/notification';
 import { apiLogger } from '@/utils/logger';
 import { FloatingAIHelper } from '../ai/FloatingAIHelper';
+import { ContextHelpButton } from '../ContextHelpButton';
 import { MobileNav } from './MobileNav';
 import { Sidebar as AIPluginSidebar } from './Sidebar';
 import { AppSidebar } from './AppSidebar';
@@ -295,7 +296,7 @@ export const GlobalLayout: React.FC<GlobalLayoutProps> = ({ children }) => {
             <Box sx={{ display: 'flex', gap: 2 }}>
               <Typography
                 component='a'
-                href={DASHBOARD_PATHS.help}
+                href={DASHBOARD_PATHS.helpCenter}
                 sx={{
                   fontSize: 12,
                   color: 'text.secondary',
@@ -343,6 +344,7 @@ export const GlobalLayout: React.FC<GlobalLayoutProps> = ({ children }) => {
         pluginCode={currentModule || undefined}
       />
       <FloatingAIHelper />
+      <ContextHelpButton />
 
       <CommandPalette
         open={commandPaletteOpen}

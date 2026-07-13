@@ -35,7 +35,7 @@ export interface PluginState {
   fetchAllData: () => Promise<void>;
 
   installPlugin: (code: string) => Promise<boolean>;
-  uninstallPlugin: (code: string) => Promise<boolean>;
+  uninstallPlugin: (code: string, tier?: 'disable' | 'uninstall' | 'delete') => Promise<boolean>;
   enablePlugin: (code: string) => Promise<boolean>;
   disablePlugin: (code: string) => Promise<boolean>;
   upgradePlugin: (code: string, version?: string) => Promise<boolean>;
@@ -195,10 +195,10 @@ export const usePluginStore = create<PluginState>()(
         }
       },
 
-      uninstallPlugin: async (code) => {
+      uninstallPlugin: async (code, tier: 'disable' | 'uninstall' | 'delete' = 'uninstall') => {
         try {
           set({ loading: true, error: null });
-          const response = await pluginApi.uninstall(code);
+          const response = await pluginApi.uninstall(code, tier);
           if (response.success) {
             await get().fetchInstalledPlugins(true);
             await get().fetchHealthStatus(true);
@@ -456,3 +456,22 @@ export const usePluginStore = create<PluginState>()(
     }
   )
 );
+
+export const useInstalledPlugins = () =>
+  usePluginStore((state) => state.installedPlugins);
+export const useMarketplacePlugins = () =>
+  usePluginStore((state) => state.marketplacePlugins);
+export const usePluginHealthStatus = () =>
+  usePluginStore((state) => state.healthStatus);
+export const usePluginLoading = () =>
+  usePluginStore((state) => state.loading);
+export const usePluginError = () =>
+  usePluginStore((state) => state.error);
+export const useSelectedPluginCode = () =>
+  usePluginStore((state) => state.selectedPluginCode);
+export const useSelectedPlugins = () =>
+  usePluginStore((state) => state.selectedPlugins);
+export const useSearchQuery = () =>
+  usePluginStore((state) => state.searchQuery);
+export const useActiveCategory = () =>
+  usePluginStore((state) => state.activeCategory);

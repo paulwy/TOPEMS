@@ -19,7 +19,7 @@ import React, { useState, useEffect, useMemo, useCallback } from 'react';
 import type { QualityInspection } from '@/api/mes/quality';
 import type { ListParams } from '@/api/mes';
 import { qualityApi } from '@/api/mes/quality';
-import { useAppStore } from '@/store';
+import { useNotificationStore } from '@/store';
 import { LoadingSpinner } from '@topems/shared-components';
 import {
   ListPageTemplate,
@@ -27,9 +27,10 @@ import {
   type RowAction,
   type FilterConfig,
 } from '@/components/templates';
-import { Plus, Edit, Trash2, Eye, CheckCircle, XCircle } from 'lucide-react';
+import { Plus, Edit, Trash2, Eye, CheckCircle, XCircle, Download } from 'lucide-react';
 import { apiLogger } from '@/utils/logger';
 import { designTokens } from '@/theme/tokens';
+import * as XLSX from 'xlsx';
 
 const ct = designTokens.colors;
 
@@ -61,7 +62,7 @@ const QualityInspectionPage: React.FC = () => {
     memo: '',
   });
 
-  const { addNotification } = useAppStore();
+  const { addNotification } = useNotificationStore();
 
   const loadInspections = useCallback(async () => {
     try {
@@ -176,6 +177,52 @@ const QualityInspectionPage: React.FC = () => {
     },
     [loadInspections, addNotification]
   );
+
+  const handleBatchExport = useCallback((inspections: QualityInspection[]) => {
+    if (inspections.length === 0) {
+      addNotification({
+        type: 'warning',
+        title: '提示',
+        message: '请选择要导出的质检记录',
+      });
+      return;
+    }
+
+    try {
+      const exportData = inspections.map((item) => ({
+        '检验单号': item.inspection_no,
+        '产品编码': item.product_code,
+        '产品名称': item.product_name,
+        '检验类型': getInspectionTypeText(item.inspection_type),
+        '检验数量': item.quantity,
+        '合格数': item.qualified_quantity,
+        '不合格数': item.unqualified_quantity,
+        '合格率': item.qualification_rate,
+        '检验员': item.inspector,
+        '检验时间': item.inspection_time,
+        '检验结果': item.result,
+        '状态': getStatusText(item.status),
+      }));
+
+      const worksheet = XLSX.utils.json_to_sheet(exportData);
+      const workbook = XLSX.utils.book_new();
+      XLSX.utils.book_append_sheet(workbook, worksheet, '质检记录');
+      XLSX.writeFile(workbook, `质检记录_${new Date().toISOString().split('T')[0]}.xlsx`);
+
+      addNotification({
+        type: 'success',
+        title: '导出成功',
+        message: `已导出 ${inspections.length} 条质检记录`,
+      });
+    } catch (error: unknown) {
+      apiLogger.error('批量导出失败:', error);
+      addNotification({
+        type: 'error',
+        title: '导出失败',
+        message: '无法导出质检记录',
+      });
+    }
+  }, [addNotification]);
 
   const handleEdit = useCallback((inspection: QualityInspection) => {
     setSelectedInspection(inspection);
@@ -499,6 +546,14 @@ const QualityInspectionPage: React.FC = () => {
           },
         ]}
         rowActions={rowActions}
+        batchActions={[
+          {
+            label: '批量导出',
+            icon: <Download size={16} />,
+            onClick: handleBatchExport,
+            color: 'secondary',
+          },
+        ]}
         headerContent={statsContent}
         emptyMessage='暂无质检数据'
         getRowId={(row) => row.id}

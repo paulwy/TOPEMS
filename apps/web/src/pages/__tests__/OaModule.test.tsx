@@ -10,22 +10,27 @@ import ExpenseClaimPage from '../oa/ExpenseClaimPage';
 import MeetingRoomManagementPage from '../oa/MeetingRoomManagementPage';
 import OfficeSuppliesPage from '../oa/OfficeSuppliesPage';
 import VehicleManagementPage from '../oa/VehicleManagementPage';
-import { useAppStore } from '@/store';
+import { useNotificationStore, useAuthStore } from '@/store';
 
 vi.mock('@/store', () => ({
-  useAppStore: vi.fn((selector?: any) =>
+  useNotificationStore: vi.fn((selector?: any) =>
     selector
       ? selector({
           addNotification: vi.fn(),
           notifications: [],
-          user: { permissions: ['oa:read'] },
-          theme: 'light',
         })
       : {
           addNotification: vi.fn(),
           notifications: [],
-          user: { permissions: ['oa:read'] },
-          theme: 'light',
+        }
+  ),
+  useAuthStore: vi.fn((selector?: any) =>
+    selector
+      ? selector({
+          user: null,
+        })
+      : {
+          user: null,
         }
   ),
 }));

@@ -41,7 +41,7 @@ import {
   type ProjectPhase,
   type CreatePdmProjectRequest,
 } from '@/api/pdm/project';
-import { useAppStore } from '@/store';
+import { useNotificationStore } from '@/store';
 import { apiLogger } from '@/utils/logger';
 import {
   ListPageTemplate,
@@ -118,7 +118,7 @@ export const PdmProjectPage: React.FC = () => {
     end_date: '',
     budget: '',
   });
-  const addNotification = useAppStore((state) => state.addNotification);
+  const addNotification = useNotificationStore((state) => state.addNotification);
 
   useEffect(() => {
     loadProjects();

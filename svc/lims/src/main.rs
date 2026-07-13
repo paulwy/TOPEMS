@@ -18,6 +18,8 @@ mod middleware;
 mod shared;
 
 pub mod models;
+
+use std::env;
 pub mod modules;
 pub mod services;
 

@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState, useCallback, useMemo } from 'react';
 import {
   Box,
   Card,
@@ -40,13 +40,15 @@ import {
   CheckCircle,
   Clock,
   AlertCircle,
+  RefreshCw,
 } from 'lucide-react';
 import { GisMapTemplate, type MapMarker, type GeoFence } from '@/components/templates';
 import { PageContainer } from '@/components/common';
-import { useAppStore } from '../../store';
+import { useNotificationStore } from '@/store';
 import { gisApi } from '@/api/gis';
 import type { MapMarker as GisMapMarker } from '@/api/gis';
 import { designTokens } from '@/theme/tokens';
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 
 const ct = designTokens.colors;
 
@@ -64,88 +66,109 @@ interface FenceData {
   triggerCount: number;
 }
 
+const MOCK_FENCES: FenceData[] = [
+  {
+    id: 'F001',
+    name: '仓库区域',
+    type: 'polygon',
+    coordinates: '39.9042, 116.4074',
+    alertOnEnter: true,
+    alertOnExit: true,
+    status: 'active',
+    createdAt: '2024-01-10 09:00:00',
+    lastTriggered: '2024-01-15 14:30:00',
+    triggerCount: 156,
+  },
+  {
+    id: 'F002',
+    name: '危险区域 A',
+    type: 'circle',
+    radius: 50,
+    coordinates: '39.9142, 116.4174',
+    alertOnEnter: true,
+    alertOnExit: false,
+    status: 'active',
+    createdAt: '2024-01-12 10:00:00',
+    lastTriggered: '2024-01-15 13:20:00',
+    triggerCount: 89,
+  },
+  {
+    id: 'F003',
+    name: '办公区域',
+    type: 'rectangle',
+    coordinates: '39.9242, 116.4274',
+    alertOnEnter: false,
+    alertOnExit: true,
+    status: 'active',
+    createdAt: '2024-01-08 11:00:00',
+    lastTriggered: '2024-01-15 12:00:00',
+    triggerCount: 45,
+  },
+  {
+    id: 'F004',
+    name: '测试区域',
+    type: 'circle',
+    radius: 30,
+    coordinates: '39.8942, 116.3974',
+    alertOnEnter: true,
+    alertOnExit: true,
+    status: 'inactive',
+    createdAt: '2024-01-05 09:00:00',
+    triggerCount: 12,
+  },
+];
+
 export const GisFencePage: React.FC = () => {
-  const addNotification = useAppStore((state) => state.addNotification);
+  const addNotification = useNotificationStore((state) => state.addNotification);
+  const queryClient = useQueryClient();
 
   const [searchTerm, setSearchTerm] = useState('');
   const [openDialog, setOpenDialog] = useState(false);
-  const [loading, setLoading] = useState(false);
-  const [error, setError] = useState<string>('');
 
-  const [fences, setFences] = useState<FenceData[]>([
-    {
-      id: 'F001',
-      name: '仓库区域',
-      type: 'polygon',
-      coordinates: '39.9042, 116.4074',
-      alertOnEnter: true,
-      alertOnExit: true,
-      status: 'active',
-      createdAt: '2024-01-10 09:00:00',
-      lastTriggered: '2024-01-15 14:30:00',
-      triggerCount: 156,
-    },
-    {
-      id: 'F002',
-      name: '危险区域 A',
-      type: 'circle',
-      radius: 50,
-      coordinates: '39.9142, 116.4174',
-      alertOnEnter: true,
-      alertOnExit: false,
-      status: 'active',
-      createdAt: '2024-01-12 10:00:00',
-      lastTriggered: '2024-01-15 13:20:00',
-      triggerCount: 89,
-    },
-    {
-      id: 'F003',
-      name: '办公区域',
-      type: 'rectangle',
-      coordinates: '39.9242, 116.4274',
-      alertOnEnter: false,
-      alertOnExit: true,
-      status: 'active',
-      createdAt: '2024-01-08 11:00:00',
-      lastTriggered: '2024-01-15 12:00:00',
-      triggerCount: 45,
-    },
-    {
-      id: 'F004',
-      name: '测试区域',
-      type: 'circle',
-      radius: 30,
-      coordinates: '39.8942, 116.3974',
-      alertOnEnter: true,
-      alertOnExit: true,
-      status: 'inactive',
-      createdAt: '2024-01-05 09:00:00',
-      triggerCount: 12,
-    },
-  ]);
-
-  const [mapMarkers, setMapMarkers] = useState<GisMapMarker[]>([]);
-
-  const loadMapMarkers = useCallback(async () => {
-    try {
-      setLoading(true);
-      setError('');
+  const { data: mapMarkers = [], isLoading: markersLoading, error: markersError } = useQuery({
+    queryKey: ['gis-map-markers'],
+    queryFn: async () => {
       const res = await gisApi.listMapMarkers({ pagesize: 50 });
       if (res.success && res.data) {
-        setMapMarkers(res.data.items || []);
+        return res.data.items || [];
       }
-    } catch (err: unknown) {
-      const msg = err instanceof Error ? err.message : '加载地图标记失败';
-      setError(msg);
-      addNotification({ title: '加载失败', message: msg, type: 'error' });
-    } finally {
-      setLoading(false);
-    }
-  }, [addNotification]);
+      throw new Error(res.message || '加载地图标记失败');
+    },
+  });
 
-  useEffect(() => {
-    loadMapMarkers();
-  }, [loadMapMarkers]);
+  const { data: fences = MOCK_FENCES } = useQuery({
+    queryKey: ['gis-fences'],
+    queryFn: async () => {
+      return MOCK_FENCES;
+    },
+    staleTime: 5 * 60 * 1000,
+  });
+
+  const deleteFenceMutation = useMutation({
+    mutationFn: async (fenceId: string) => {
+      return fenceId;
+    },
+    onMutate: async (fenceId) => {
+      await queryClient.cancelQueries({ queryKey: ['gis-fences'] });
+      const previousFences = queryClient.getQueryData<FenceData[]>(['gis-fences']);
+      queryClient.setQueryData<FenceData[]>(['gis-fences'], (old) =>
+        old ? old.filter((f) => f.id !== fenceId) : []
+      );
+      return { previousFences };
+    },
+    onError: (_err, _fenceId, context) => {
+      if (context?.previousFences) {
+        queryClient.setQueryData(['gis-fences'], context.previousFences);
+      }
+      addNotification({ title: '删除失败', message: '删除围栏失败', type: 'error' });
+    },
+    onSuccess: () => {
+      addNotification({ title: '成功', message: '围栏删除成功', type: 'success' });
+    },
+  });
+
+  const loading = markersLoading;
+  const error = markersError ? (markersError as Error).message : '';
 
   const getTypeLabel = (type: string) => {
     switch (type) {
@@ -296,20 +319,25 @@ export const GisFencePage: React.FC = () => {
   }, []);
 
   const handleSaveFence = useCallback(() => {
-    addNotification({ title: '成功', message: '围栏创建成功', type: 'success' });
+    queryClient.invalidateQueries({ queryKey: ['gis-fences'] });
     setOpenDialog(false);
-  }, [addNotification]);
+  }, [queryClient]);
 
   const handleDeleteFence = useCallback(
     (fenceId: string) => {
-      addNotification({ title: '成功', message: '围栏删除成功', type: 'success' });
-      setFences((prev) => prev.filter((f) => f.id !== fenceId));
+      deleteFenceMutation.mutate(fenceId);
     },
-    [addNotification]
+    [deleteFenceMutation]
   );
 
-  const filteredFences = fences.filter((f) =>
-    f.name.toLowerCase().includes(searchTerm.toLowerCase())
+  const handleRefresh = useCallback(() => {
+    queryClient.invalidateQueries({ queryKey: ['gis-map-markers'] });
+    queryClient.invalidateQueries({ queryKey: ['gis-fences'] });
+  }, [queryClient]);
+
+  const filteredFences = useMemo(
+    () => fences.filter((f) => f.name.toLowerCase().includes(searchTerm.toLowerCase())),
+    [fences, searchTerm]
   );
 
   if (loading) {

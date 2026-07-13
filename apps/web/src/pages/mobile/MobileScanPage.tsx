@@ -38,7 +38,7 @@ import {
 } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { MobileLayout, MobileCard, MobileButton } from '@/components/mobile';
-import { useAppStore } from '@/store';
+import { useNotificationStore } from '@/store';
 import { designTokens } from '@/theme/tokens';
 import { MOBILE_PATHS } from '@/modules/mobile/config';
 
@@ -60,7 +60,7 @@ interface ScanHistoryItem {
 const MobileScanPage: React.FC = () => {
   const theme = useTheme();
   const navigate = useNavigate();
-  const { addNotification } = useAppStore();
+  const { addNotification } = useNotificationStore();
   const [activeTab, setActiveTab] = useState(0);
   const [flashOn, setFlashOn] = useState(false);
   const [scanning, setScanning] = useState(true);

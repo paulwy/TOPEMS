@@ -18,6 +18,8 @@ mod middleware;
 mod models;
 mod modules;
 mod services;
+
+use std::env;
 mod shared;
 
 use std::net::SocketAddr;

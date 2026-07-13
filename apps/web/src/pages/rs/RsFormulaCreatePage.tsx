@@ -13,7 +13,7 @@ import type {
   CreateFormulaRequest,
   UpdateFormulaRequest,
 } from '@/api/rs';
-import { useAppStore } from '@/store';
+import { useNotificationStore } from '@/store';
 import { RS_PATHS } from '@/modules/rs/config';
 import {
   Paper,
@@ -40,7 +40,7 @@ const statuses = [
 const RsFormulaCreatePage: React.FC = () => {
   const navigate = useNavigate();
   const { id } = useParams<{ id: string }>();
-  const { addNotification } = useAppStore();
+  const { addNotification } = useNotificationStore();
   const isEdit = Boolean(id);
 
   const [loading, setLoading] = useState(false);

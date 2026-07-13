@@ -48,11 +48,11 @@ const LowCodeHomePage: React.FC = () => {
 
   const loadRecentData = async () => {
     const [formsRes, pagesRes] = await Promise.all([
-      lowcodeApi.formApi.list({ pageSize: 5 }),
-      lowcodeApi.pageApi.list({ pageSize: 5 }),
+      lowcodeApi.formApi.listForms({ pageSize: 5 }),
+      lowcodeApi.pageApi.listPages({ pageSize: 5 }),
     ]);
-    setRecentForms(formsRes.items);
-    setRecentPages(pagesRes.items);
+    setRecentForms(formsRes.success ? formsRes.data.items : []);
+    setRecentPages(pagesRes.success ? pagesRes.data.items : []);
   };
 
   const getStatusColor = (status: string) => {

@@ -35,7 +35,7 @@ import {
 } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { MobileLayout, PullToRefresh, MobileSkeleton, MobileCard } from '@/components/mobile';
-import { useAppStore } from '@/store';
+import { useAuthStore } from '@/store';
 import { mobileApi, type MobileWorkbenchData } from '@/api/mobile';
 import { apiLogger } from '@/utils/logger';
 import { MOBILE_PATHS } from '@/modules/mobile/config';
@@ -72,7 +72,7 @@ interface WorkbenchItem {
 const MobileWorkbenchPage: React.FC = () => {
   const theme = useTheme();
   const navigate = useNavigate();
-  const { user } = useAppStore();
+  const { user } = useAuthStore();
   const [loading, setLoading] = useState(true);
   const [stats, setStats] = useState<StatCard[]>([]);
   const [workbenchItems, setWorkbenchItems] = useState<WorkbenchItem[]>([]);

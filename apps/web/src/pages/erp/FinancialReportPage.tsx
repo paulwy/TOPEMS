@@ -44,11 +44,11 @@ import type {
   IncomeItem,
   CashFlowItem,
 } from '@/api/erp/types';
-import { useAppStore } from '@/store';
 import { apiLogger } from '@/utils/logger';
+import { useNotificationStore } from '@/store';
 
 const FinancialReportPage: React.FC = () => {
-  const addNotification = useAppStore((state) => state.addNotification);
+  const addNotification = useNotificationStore((state) => state.addNotification);
 
   const [activeTab, setActiveTab] = useState('balance-sheet');
   const [periodType, setPeriodType] = useState('year');

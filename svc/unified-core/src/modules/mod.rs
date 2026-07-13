@@ -3,10 +3,18 @@
 
 pub mod billing;
 pub mod communication;
+pub mod crm;
+pub mod dict;
+pub mod erp;
 pub mod file;
+pub mod finance;
 pub mod flow;
+pub mod help;
+pub mod hrm;
 pub mod iam;
 pub mod migration;
+pub mod mobile;
 pub mod plugin;
 pub mod sync;
 pub mod tenant;
+pub mod wms;

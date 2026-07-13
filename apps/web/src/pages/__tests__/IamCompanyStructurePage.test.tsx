@@ -10,7 +10,7 @@ import {
   useUpdateCompanyRelation,
   useDeleteCompanyRelation,
 } from '@/hooks/useConsolidation';
-import { useAppStore } from '@/store';
+import { useNotificationStore, useAuthStore } from '@/store';
 
 vi.mock('@/hooks/useConsolidation', () => ({
   useCompanyRelations: vi.fn(() => ({ data: { data: [] }, isLoading: false })),
@@ -28,7 +28,7 @@ vi.mock('@/store', () => {
     theme: 'light',
   };
   return {
-    useAppStore: vi.fn((selector?: any) => (selector ? selector(state) : state)),
+    useNotificationStore: vi.fn((selector?: any) => (selector ? selector(state) : state)),
   };
 });
 

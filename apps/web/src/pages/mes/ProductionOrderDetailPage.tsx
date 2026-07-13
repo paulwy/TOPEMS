@@ -15,7 +15,7 @@ import { DetailPageTemplate, type TabConfig } from '@/components/templates';
 import { mesApi } from '@/api/mes';
 import type { ProductionOrder, ProductionRecord, QualityRecord } from '@/api/mes';
 import { apiLogger } from '@/utils/logger';
-import { useAppStore } from '@/store';
+import { useNotificationStore } from '@/store';
 import { designTokens } from '@/theme/tokens';
 import { MES_PATHS } from '@/modules/mes/config';
 
@@ -23,7 +23,7 @@ const ct = designTokens.colors;
 
 const ProductionOrderDetailPage: React.FC = () => {
   const { id } = useParams<{ id: string }>();
-  const { addNotification } = useAppStore();
+  const { addNotification } = useNotificationStore();
 
   const [order, setOrder] = useState<ProductionOrder | null>(null);
   const [records, setRecords] = useState<ProductionRecord[]>([]);

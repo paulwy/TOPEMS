@@ -17,7 +17,7 @@ import {
 import { useParams, useNavigate } from 'react-router-dom';
 import type { WorkflowInstance, Approval, ApprovalRecord } from '@/api/workflow';
 import { workflowApi } from '@/api/workflow';
-import { useAppStore } from '../../store';
+import { useNotificationStore } from '../../store';
 import { apiLogger } from '@/utils/logger';
 import { DetailPageTemplate } from '@/components/templates/DetailPageTemplate';
 import type { TabConfig } from '@/components/templates/DetailPageTemplate';
@@ -36,7 +36,7 @@ interface InstanceDetails {
 const FlowInstanceDetailPage: React.FC = () => {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
-  const addNotification = useAppStore((state) => state.addNotification);
+  const addNotification = useNotificationStore((state) => state.addNotification);
   const theme = useTheme();
 
   const [details, setDetails] = useState<InstanceDetails | null>(null);

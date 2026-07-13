@@ -45,7 +45,7 @@ export const taskApi = {
       status?: string;
       assigneeId?: string;
       dueDate?: string;
-    }
+    },
   ): Promise<ApiResponse<Task>> => {
     const response = await apiClient.put(`/task/${id}`, data);
     return response.data;
@@ -87,7 +87,7 @@ export const taskApi = {
 
   batchUpdateStatus: async (
     ids: string[],
-    status: string
+    status: string,
   ): Promise<ApiResponse<{ success: number; failed: number }>> => {
     const response = await apiClient.post('/task/batch/status', { ids, status });
     return response.data;

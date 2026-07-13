@@ -49,13 +49,13 @@ import {
 import { DetailPageTemplate, type TabConfig } from '@/components/templates';
 import { rsApi } from '@/api/rs';
 import { PageContainer } from '@/components/common';
-import { useAppStore } from '@/store';
+import { useNotificationStore } from '@/store';
 import type { Project, GanttPhase, GanttMilestone, Experiment } from '@/api/rs';
 
 const RsProjectDetailPage: React.FC = () => {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
-  const { addNotification } = useAppStore();
+  const { addNotification } = useNotificationStore();
   const [activeTab, setActiveTab] = useState(0);
   const [loading, setLoading] = useState(false);
   const [project, setProject] = useState<Project | null>(null);

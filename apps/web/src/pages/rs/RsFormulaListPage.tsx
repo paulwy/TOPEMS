@@ -6,7 +6,7 @@ import { ListPageTemplate, type ColumnDef, type RowAction } from '@/components/t
 import { PageContainer } from '@/components/common';
 import { formulaApi } from '@/api/rs';
 import type { Formula } from '@/api/rs';
-import { useAppStore } from '@/store';
+import { useNotificationStore } from '@/store';
 import { logger } from '@/utils/logger';
 import { ConfirmDialog } from '@topems/shared-components';
 import { RS_PATHS } from '@/modules/rs/config';
@@ -20,7 +20,7 @@ const STATUS_OPTIONS = [
 
 const RsFormulaListPage: React.FC = () => {
   const navigate = useNavigate();
-  const { addNotification } = useAppStore();
+  const { addNotification } = useNotificationStore();
   const [formulas, setFormulas] = useState<Formula[]>([]);
   const [page, setPage] = useState(0);
   const [rowsPerPage, setRowsPerPage] = useState(10);

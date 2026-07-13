@@ -18,7 +18,7 @@ import type { StatCard, ChartCard, QuickAction, RecentItem } from '@/components/
 import { PageContainer } from '@/components/common';
 import PieChartComponent from '../../components/charts/PieChart';
 import LineChartComponent from '../../components/charts/LineChart';
-import { useAppStore } from '../../store';
+import { useNotificationStore } from '@/store';
 import { designTokens } from '@/theme/tokens';
 
 const ct = designTokens.colors;
@@ -59,7 +59,7 @@ const getGreeting = (): string => {
 
 export const DocumentDashboardPage: React.FC = () => {
   const navigate = useNavigate();
-  const addNotification = useAppStore((state) => state.addNotification);
+  const addNotification = useNotificationStore((state) => state.addNotification);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {

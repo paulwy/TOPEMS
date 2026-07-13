@@ -20,6 +20,7 @@ mod modules;
 mod services;
 mod shared;
 
+use std::env;
 use std::net::SocketAddr;
 
 use axum::{extract::State, routing::get, Json, Router};

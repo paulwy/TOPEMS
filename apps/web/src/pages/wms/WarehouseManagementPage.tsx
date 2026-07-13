@@ -11,8 +11,8 @@ import {
 import React, { useState, useEffect, useMemo, useCallback } from 'react';
 import type { Warehouse, CreateWarehouseRequest, UpdateWarehouseRequest } from '@/api/wms';
 import { wmsApi } from '@/api/wms';
-import { useAppStore } from '@/store';
-import { LoadingSpinner } from '@topems/shared-components';
+import { useNotificationStore } from '@/store';
+import { LoadingSpinner, StatusBadge, FormField } from '@topems/shared-components';
 import { EmptyState } from '@/components';
 import { Search, Plus, Edit, Trash2, Eye } from 'lucide-react';
 import { apiLogger } from '@/utils/logger';
@@ -45,7 +45,7 @@ const WarehouseManagementPage: React.FC = () => {
     phone: '',
   });
 
-  const { addNotification } = useAppStore();
+  const { addNotification } = useNotificationStore();
 
   const loadWarehouses = useCallback(async () => {
     try {
@@ -174,10 +174,11 @@ const WarehouseManagementPage: React.FC = () => {
       maintenance: '维护中',
     };
     return (
-      <Chip
-        size='small'
-        color={statusMap[status] || 'default'}
+      <StatusBadge
+        status={status}
         label={labels[status] || status}
+        color={statusMap[status] || 'default'}
+        size='sm'
         variant='outlined'
       />
     );
@@ -310,33 +311,33 @@ const WarehouseManagementPage: React.FC = () => {
                 py: 2,
               }}
             >
-              <TextField
-                label='仓库名称 *'
+              <FormField
+                name='name' label='仓库名称 *'
                 value={formData.name}
                 onChange={(e) => setFormData({ ...formData, name: e.target.value })}
                 fullWidth
                 required
               />
-              <TextField
-                label='仓库编码'
+              <FormField
+                name='code' label='仓库编码'
                 value={formData.code}
                 onChange={(e) => setFormData({ ...formData, code: e.target.value })}
                 fullWidth
               />
-              <TextField
-                label='地址'
+              <FormField
+                name='address' label='地址'
                 value={formData.address}
                 onChange={(e) => setFormData({ ...formData, address: e.target.value })}
                 fullWidth
               />
-              <TextField
-                label='负责人'
+              <FormField
+                name='manager' label='负责人'
                 value={formData.manager}
                 onChange={(e) => setFormData({ ...formData, manager: e.target.value })}
                 fullWidth
               />
-              <TextField
-                label='联系电话'
+              <FormField
+                name='phone' label='联系电话'
                 value={formData.phone}
                 onChange={(e) => setFormData({ ...formData, phone: e.target.value })}
                 fullWidth

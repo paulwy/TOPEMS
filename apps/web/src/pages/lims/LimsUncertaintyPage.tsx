@@ -32,7 +32,7 @@ import type {
   CreateUncertaintyProjectRequest,
   UpdateUncertaintyProjectRequest,
 } from '@/api/lims';
-import { useAppStore } from '@/store';
+import { useNotificationStore } from '@/store';
 import { apiLogger } from '@/utils/logger';
 import { designTokens } from '@/theme/tokens';
 import { DASHBOARD_PATHS } from '@/routes/dashboard';
@@ -66,7 +66,7 @@ const LimsUncertaintyPage: React.FC = () => {
   const [saving, setSaving] = useState(false);
   const [page, setPage] = useState(0);
   const [pageSize, setPageSize] = useState(10);
-  const addNotification = useAppStore((state) => state.addNotification);
+  const addNotification = useNotificationStore((state) => state.addNotification);
 
   const initialFormData: UncertaintyProjectForm = {
     project_name: '',

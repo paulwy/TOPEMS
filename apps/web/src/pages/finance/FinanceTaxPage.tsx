@@ -9,7 +9,7 @@ import {
   TrendingUp,
   DollarSign,
 } from 'lucide-react';
-import { useAppStore } from '../../store';
+import { useNotificationStore } from '@/store';
 import { DataExport, PageContainer } from '@/components/common';
 import { ListPageTemplate } from '@/components/templates/ListPageTemplate';
 import { StatCardGroup } from '@/components';
@@ -46,7 +46,7 @@ interface TaxEntry {
 }
 
 const FinanceTaxPage: React.FC = () => {
-  const addNotification = useAppStore((state) => state.addNotification);
+  const addNotification = useNotificationStore((state) => state.addNotification);
 
   const [taxData, setTaxData] = useState<TaxEntry[]>([]);
   const [loading, setLoading] = useState(true);

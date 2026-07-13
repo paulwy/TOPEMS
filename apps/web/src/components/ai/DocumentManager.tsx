@@ -27,7 +27,7 @@ import {
 } from 'lucide-react';
 import type { Document } from '@/api/ai';
 import { aiApi } from '@/api/ai';
-import { useAppStore } from '@/store';
+import { useNotificationStore } from '@/store';
 import { logger } from '@/utils/logger';
 
 export interface DocumentManagerProps {
@@ -35,7 +35,7 @@ export interface DocumentManagerProps {
 }
 
 export const DocumentManager: React.FC<DocumentManagerProps> = ({ className }) => {
-  const addNotification = useAppStore((state) => state.addNotification);
+  const addNotification = useNotificationStore((state) => state.addNotification);
   const [documents, setDocuments] = useState<Document[]>([]);
   const [stats, setStats] = useState<{
     total_documents: number;

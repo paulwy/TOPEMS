@@ -7,12 +7,12 @@ import type { SrmDetailedStatistics } from '@/api/srm';
 import { apiLogger } from '@/utils/logger';
 import { DashboardTemplate, type StatCard, type ChartCard } from '@/components/templates';
 import { PageContainer } from '@/components/common';
-import { useAppStore } from '@/store';
+import { useNotificationStore } from '@/store';
 
 const SrmDashboardPage: React.FC = () => {
   const [statistics, setStatistics] = useState<SrmDetailedStatistics | null>(null);
   const [loading, setLoading] = useState(true);
-  const addNotification = useAppStore((state) => state.addNotification);
+  const addNotification = useNotificationStore((state) => state.addNotification);
 
   useEffect(() => {
     loadStatistics();

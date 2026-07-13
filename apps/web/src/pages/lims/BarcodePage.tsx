@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState, useMemo } from 'react';
 import { PageContainer } from '@/components/common';
 import { useNavigate } from 'react-router-dom';
 import {
@@ -39,17 +39,25 @@ import type {
   CreateBarcodeRequest,
   UpdateBarcodeRequest,
 } from '@/api/lims';
-import { useAppStore } from '@/store';
+import { useNotificationStore } from '@/store';
 import { apiLogger } from '@/utils/logger';
 import { designTokens } from '@/theme/tokens';
 import { DASHBOARD_PATHS } from '@/routes/dashboard';
+import { useCrudOperations } from '@/hooks/useCrudQueries';
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 
 const ct = designTokens.colors;
 
+const barcodeCrudApi = {
+  list: (params?: Record<string, unknown>) => limsApi.listBarcodes(params as any),
+  get: (id: string) => limsApi.getBarcode(id),
+  create: (data: CreateBarcodeRequest) => limsApi.generateBarcode(data),
+  update: (id: string, data: UpdateBarcodeRequest) => limsApi.updateBarcode(id, data),
+  delete: (id: string) => limsApi.deleteBarcode(id),
+} as any;
+
 const BarcodePage: React.FC = () => {
   const navigate = useNavigate();
-  const [barcodes, setBarcodes] = useState<BarcodeType[]>([]);
-  const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState('');
   const [statusFilter, setStatusFilter] = useState('all');
   const [typeFilter, setTypeFilter] = useState('all');
@@ -67,61 +75,153 @@ const BarcodePage: React.FC = () => {
   const [page, setPage] = useState(0);
   const [pageSize, setPageSize] = useState(10);
   const [isEditing, setIsEditing] = useState(false);
-  const [saving, setSaving] = useState(false);
-  const [barcodeTypes, setBarcodeTypes] = useState<{ id: string; name: string; code: string }[]>(
-    []
-  );
-  const addNotification = useAppStore((state) => state.addNotification);
+  const addNotification = useNotificationStore((state) => state.addNotification);
+  const queryClient = useQueryClient();
 
-  const loadBarcodes = useCallback(async () => {
-    try {
-      setLoading(true);
-      const response = await limsApi.listBarcodes();
-      if (response.success && response.data) {
-        const data = response.data as any;
-        let rawBarcodes: BarcodeType[] = [];
-        if (Array.isArray(data)) {
-          rawBarcodes = data;
-        } else if (data.items && Array.isArray(data.items)) {
-          rawBarcodes = data.items;
-        }
-        setBarcodes(rawBarcodes);
-      } else {
-        setBarcodes([]);
-      }
-    } catch (err: unknown) {
-      apiLogger.error('加载条码列表失败:', err);
-      setBarcodes([]);
-      addNotification({
-        title: '错误',
-        message: '加载条码列表失败，请稍后重试',
-        type: 'error',
-      });
-    } finally {
-      setLoading(false);
-    }
-  }, [addNotification]);
+  const {
+    data: barcodes,
+    loading,
+    refresh,
+    delete: deleteBarcode,
+  } = useCrudOperations<BarcodeType, CreateBarcodeRequest, UpdateBarcodeRequest>({
+    api: barcodeCrudApi,
+    queryKey: 'lims-barcodes',
+    defaultPageSize: 100,
+  });
 
-  const loadBarcodeTypes = useCallback(async () => {
-    try {
+  const barcodeTypesQuery = useQuery({
+    queryKey: ['lims-barcode-types'],
+    queryFn: async () => {
       const response = await limsApi.getBarcodeTypes();
       if (response.success && response.data) {
         const data = response.data as any;
-        if (Array.isArray(data)) {
-          setBarcodeTypes(data);
-        } else if (data.items && Array.isArray(data.items)) {
-          setBarcodeTypes(data.items);
-        }
+        if (Array.isArray(data)) return data;
+        if (data.items && Array.isArray(data.items)) return data.items;
+        return [];
       }
-    } catch (err: unknown) {
-      apiLogger.error('加载条码类型失败:', err);
-    }
-  }, []);
+      return [];
+    },
+    staleTime: 5 * 60 * 1000,
+  });
 
-  useEffect(() => {
-    loadBarcodes();
-    loadBarcodeTypes();
-  }, [loadBarcodes, loadBarcodeTypes]);
+  const barcodeTypes = barcodeTypesQuery.data || [];
+
+  const printMutation = useMutation({
+    mutationFn: async (barcodeIds: string[]) => {
+      const response = await limsApi.printBarcode({ barcode_ids: barcodeIds });
+      if (!response.success) {
+        throw new Error(response.message || '打印失败');
+      }
+      return response.data;
+    },
+    onSuccess: () => {
+      addNotification({ title: '成功', message: '条码已开始打印', type: 'success' });
+      queryClient.invalidateQueries({ queryKey: ['lims-barcodes'] });
+    },
+    onError: (err: unknown) => {
+      const errAny = err as { message?: string };
+      addNotification({
+        title: '错误',
+        message: errAny.message || '打印条码失败，请稍后重试',
+        type: 'error',
+      });
+    },
+  });
+
+  const scanMutation = useMutation({
+    mutationFn: async (barcode: string) => {
+      const response = await limsApi.scanBarcode(barcode);
+      if (!response.success) {
+        throw new Error(response.message || '扫描失败');
+      }
+      return response.data;
+    },
+    onSuccess: (_data, variables) => {
+      addNotification({
+        title: '扫描成功',
+        message: `条码 ${variables} 扫描成功`,
+        type: 'success',
+      });
+      queryClient.invalidateQueries({ queryKey: ['lims-barcodes'] });
+    },
+    onError: (err: unknown) => {
+      const errAny = err as { message?: string };
+      addNotification({
+        title: '扫描失败',
+        message: errAny.message || '条码扫描失败，请稍后重试',
+        type: 'error',
+      });
+    },
+  });
+
+  const generateMutation = useMutation({
+    mutationFn: async (data: CreateBarcodeRequest) => {
+      const response = await limsApi.generateBarcode(data);
+      if (!response.success) {
+        throw new Error(response.message || '生成失败');
+      }
+      return response.data;
+    },
+    onSuccess: () => {
+      addNotification({ title: '成功', message: '条码生成成功', type: 'success' });
+      setShowCreateModal(false);
+      queryClient.invalidateQueries({ queryKey: ['lims-barcodes'] });
+    },
+    onError: (err: unknown) => {
+      const errAny = err as { message?: string };
+      addNotification({
+        title: '错误',
+        message: errAny.message || '生成条码失败，请稍后重试',
+        type: 'error',
+      });
+    },
+  });
+
+  const updateMutation = useMutation({
+    mutationFn: async ({ id, data }: { id: string; data: UpdateBarcodeRequest }) => {
+      const response = await limsApi.updateBarcode(id, data);
+      if (!response.success) {
+        throw new Error(response.message || '更新失败');
+      }
+      return response.data;
+    },
+    onSuccess: () => {
+      addNotification({ title: '成功', message: '条码更新成功', type: 'success' });
+      setShowCreateModal(false);
+      queryClient.invalidateQueries({ queryKey: ['lims-barcodes'] });
+    },
+    onError: (err: unknown) => {
+      const errAny = err as { message?: string };
+      addNotification({
+        title: '错误',
+        message: errAny.message || '更新条码失败，请稍后重试',
+        type: 'error',
+      });
+    },
+  });
+
+  const deleteMutation = useMutation({
+    mutationFn: async (id: string) => {
+      const response = await limsApi.deleteBarcode(id);
+      if (!response.success) {
+        throw new Error(response.message || '删除失败');
+      }
+      return response.data;
+    },
+    onSuccess: () => {
+      addNotification({ title: '成功', message: '条码删除成功', type: 'success' });
+      setShowDetailModal(false);
+      queryClient.invalidateQueries({ queryKey: ['lims-barcodes'] });
+    },
+    onError: (err: unknown) => {
+      const errAny = err as { message?: string };
+      addNotification({
+        title: '错误',
+        message: errAny.message || '删除条码失败，请稍后重试',
+        type: 'error',
+      });
+    },
+  });
 
   const getStatusBadge = (status: string) => {
     const statusMap: Record<string, { bg: string; color: string }> = {
@@ -201,7 +301,7 @@ const BarcodePage: React.FC = () => {
       type: 'select',
       options: [
         { label: '全部类型', value: 'all' },
-        ...barcodeTypes.map((t) => ({ label: t.name, value: t.code })),
+        ...barcodeTypes.map((t: any) => ({ label: t.name, value: t.code })),
       ],
       value: typeFilter,
       onChange: (value: unknown) => setTypeFilter(value as string),
@@ -264,140 +364,31 @@ const BarcodePage: React.FC = () => {
     setShowCreateModal(true);
   };
 
-  const handlePrint = async (barcode: BarcodeType) => {
-    try {
-      const response = await limsApi.printBarcode({ barcode_ids: [barcode.id] });
-      if (response.success) {
-        addNotification({
-          title: '成功',
-          message: '条码已开始打印',
-          type: 'success',
-        });
-        loadBarcodes();
-      } else {
-        addNotification({
-          title: '错误',
-          message: response.message || '打印失败，请稍后重试',
-          type: 'error',
-        });
-      }
-    } catch (err: unknown) {
-      apiLogger.error('打印条码失败:', err);
-      addNotification({
-        title: '错误',
-        message: '打印条码失败，请稍后重试',
-        type: 'error',
-      });
-    }
+  const handlePrint = (barcode: BarcodeType) => {
+    printMutation.mutate([barcode.id]);
   };
 
-  const handleSave = async () => {
-    try {
-      setSaving(true);
-      if (isEditing && selectedBarcode) {
-        const response = await limsApi.updateBarcode(selectedBarcode.id, {
+  const handleSave = () => {
+    if (isEditing && selectedBarcode) {
+      updateMutation.mutate({
+        id: selectedBarcode.id,
+        data: {
           ...formData,
           status: (formData as any).status || selectedBarcode.status,
-        } as UpdateBarcodeRequest);
-        if (response.success) {
-          addNotification({
-            title: '成功',
-            message: '条码更新成功',
-            type: 'success',
-          });
-          setShowCreateModal(false);
-          loadBarcodes();
-        } else {
-          addNotification({
-            title: '错误',
-            message: response.message || '更新失败，请稍后重试',
-            type: 'error',
-          });
-        }
-      } else {
-        const response = await limsApi.generateBarcode(formData);
-        if (response.success) {
-          addNotification({
-            title: '成功',
-            message: '条码生成成功',
-            type: 'success',
-          });
-          setShowCreateModal(false);
-          loadBarcodes();
-        } else {
-          addNotification({
-            title: '错误',
-            message: response.message || '生成失败，请稍后重试',
-            type: 'error',
-          });
-        }
-      }
-    } catch (err: unknown) {
-      apiLogger.error('保存条码失败:', err);
-      addNotification({
-        title: '错误',
-        message: isEditing ? '更新条码失败，请稍后重试' : '生成条码失败，请稍后重试',
-        type: 'error',
+        } as UpdateBarcodeRequest,
       });
-    } finally {
-      setSaving(false);
+    } else {
+      generateMutation.mutate(formData);
     }
   };
 
-  const handleDelete = async (barcode: BarcodeType) => {
+  const handleDelete = (barcode: BarcodeType) => {
     if (!confirm(`确定要删除条码 "${barcode.barcode}" 吗？`)) return;
-    try {
-      const response = await limsApi.deleteBarcode(barcode.id);
-      if (response.success) {
-        addNotification({
-          title: '成功',
-          message: '条码删除成功',
-          type: 'success',
-        });
-        setShowDetailModal(false);
-        loadBarcodes();
-      } else {
-        addNotification({
-          title: '错误',
-          message: response.message || '删除失败，请稍后重试',
-          type: 'error',
-        });
-      }
-    } catch (err: unknown) {
-      apiLogger.error('删除条码失败:', err);
-      addNotification({
-        title: '错误',
-        message: '删除条码失败，请稍后重试',
-        type: 'error',
-      });
-    }
+    deleteMutation.mutate(barcode.id);
   };
 
-  const handleScan = async (barcode: BarcodeType) => {
-    try {
-      const response = await limsApi.scanBarcode(barcode.barcode);
-      if (response.success) {
-        addNotification({
-          title: '扫描成功',
-          message: `条码 ${barcode.barcode} 扫描成功`,
-          type: 'success',
-        });
-        loadBarcodes();
-      } else {
-        addNotification({
-          title: '扫描失败',
-          message: response.message || '条码扫描失败，请稍后重试',
-          type: 'error',
-        });
-      }
-    } catch (err: unknown) {
-      apiLogger.error('扫描条码失败:', err);
-      addNotification({
-        title: '错误',
-        message: '扫描条码失败，请稍后重试',
-        type: 'error',
-      });
-    }
+  const handleScan = (barcode: BarcodeType) => {
+    scanMutation.mutate(barcode.barcode);
   };
 
   const stats = {
@@ -551,36 +542,7 @@ const BarcodePage: React.FC = () => {
     </Box>
   );
 
-  if (loading) {
-    return (
-      <Box
-        sx={{
-          minHeight: '100vh',
-          display: 'flex',
-          alignItems: 'center',
-          justifyContent: 'center',
-          background: `linear-gradient(135deg, ${ct.teal[50]} 0%, ${ct.background.default} 100%)`,
-        }}
-      >
-        <Box sx={{ textAlign: 'center' }}>
-          <Box
-            sx={{
-              width: 48,
-              height: 48,
-              border: 4,
-              borderColor: 'info.main',
-              borderTopColor: 'cyan.dark',
-              borderRadius: '50%',
-              animation: 'spin 1s linear infinite',
-              mx: 'auto',
-              mb: 2,
-            }}
-          />
-          <Typography sx={{ color: 'slate.600' }}>加载中...</Typography>
-        </Box>
-      </Box>
-    );
-  }
+  const isSaving = generateMutation.isPending || updateMutation.isPending;
 
   return (
     <PageContainer
@@ -654,7 +616,7 @@ const BarcodePage: React.FC = () => {
               value={formData.barcode_type}
               onChange={(e) => setFormData({ ...formData, barcode_type: e.target.value })}
             >
-              {barcodeTypes.map((t) => (
+              {barcodeTypes.map((t: any) => (
                 <MenuItem
                   key={t.id}
                   value={t.code}
@@ -727,10 +689,10 @@ const BarcodePage: React.FC = () => {
           <Button
             variant='contained'
             onClick={handleSave}
-            disabled={saving}
+            disabled={isSaving}
             sx={{ bgcolor: 'info.main' }}
           >
-            {saving ? '处理中...' : isEditing ? '保存' : '生成'}
+            {isSaving ? '处理中...' : isEditing ? '保存' : '生成'}
           </Button>
         </DialogActions>
       </Dialog>

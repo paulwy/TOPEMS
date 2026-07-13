@@ -12,7 +12,14 @@ import {
 } from 'react-native-paper';
 import { useDashboardStore } from '@/store/dashboardStore';
 import { useAuthStore } from '@/store/authStore';
-import { TaskSquare, CheckCircle, Clock, Calendar, LogOut } from 'lucide-react-native';
+import {
+  Square,
+  CheckCircle,
+  Calendar,
+  LogOut,
+  ScanLine,
+  ClipboardCheck,
+} from 'lucide-react-native';
 
 const DashboardPage: React.FC = () => {
   const { stats, tasks, events, fetchStats, fetchTasks, fetchEvents, isLoading } =
@@ -28,6 +35,7 @@ const DashboardPage: React.FC = () => {
   const getPriorityColor = (priority: string) => {
     switch (priority) {
       case 'high':
+      case 'critical':
         return '#dc2626';
       case 'medium':
         return '#d97706';
@@ -46,6 +54,8 @@ const DashboardPage: React.FC = () => {
         return '进行中';
       case 'pending':
         return '待处理';
+      case 'cancelled':
+        return '已取消';
       default:
         return status;
     }
@@ -66,7 +76,7 @@ const DashboardPage: React.FC = () => {
           <Avatar.Text size={48} label={user?.name?.charAt(0) || 'U'} />
           <View>
             <Title style={styles.greeting}>您好, {user?.name}</Title>
-            <Paragraph style={styles.role}>{user?.role}</Paragraph>
+            <Paragraph style={styles.role}>{user?.roles?.[0]}</Paragraph>
           </View>
         </View>
         <Button icon={LogOut} mode="outlined" onPress={logout} style={styles.logoutButton}>
@@ -78,10 +88,10 @@ const DashboardPage: React.FC = () => {
         <Card style={styles.statCard}>
           <Card.Content>
             <View style={styles.statIcon}>
-              <TaskSquare size={24} color="#3b82f6" />
+              <ClipboardCheck size={24} color="#3b82f6" />
             </View>
-            <Text style={styles.statValue}>{stats.totalTasks}</Text>
-            <Text style={styles.statLabel}>总任务</Text>
+            <Text style={styles.statValue}>{stats.pendingTasks}</Text>
+            <Text style={styles.statLabel}>待处理任务</Text>
           </Card.Content>
         </Card>
 
@@ -91,27 +101,27 @@ const DashboardPage: React.FC = () => {
               <CheckCircle size={24} color="#10b981" />
             </View>
             <Text style={styles.statValue}>{stats.completedTasks}</Text>
-            <Text style={styles.statLabel}>已完成</Text>
+            <Text style={styles.statLabel}>已完成任务</Text>
           </Card.Content>
         </Card>
 
         <Card style={styles.statCard}>
           <Card.Content>
             <View style={styles.statIcon}>
-              <Clock size={24} color="#f59e0b" />
+              <ScanLine size={24} color="#f59e0b" />
             </View>
-            <Text style={styles.statValue}>{stats.pendingTasks}</Text>
-            <Text style={styles.statLabel}>待处理</Text>
+            <Text style={styles.statValue}>{stats.todayScans}</Text>
+            <Text style={styles.statLabel}>今日扫码</Text>
           </Card.Content>
         </Card>
 
         <Card style={styles.statCard}>
           <Card.Content>
             <View style={styles.statIcon}>
-              <Calendar size={24} color="#8b5cf6" />
+              <Square size={24} color="#8b5cf6" />
             </View>
-            <Text style={styles.statValue}>{stats.upcomingEvents}</Text>
-            <Text style={styles.statLabel}>近期活动</Text>
+            <Text style={styles.statValue}>{stats.todayPatrols}</Text>
+            <Text style={styles.statLabel}>今日巡检</Text>
           </Card.Content>
         </Card>
       </View>
@@ -120,24 +130,32 @@ const DashboardPage: React.FC = () => {
         <Card.Content>
           <Title style={styles.sectionTitle}>近期任务</Title>
           <View style={styles.tasksList}>
-            {tasks.map((task) => (
-              <View key={task.id} style={styles.taskItem}>
-                <View style={styles.taskInfo}>
-                  <Text style={styles.taskTitle}>{task.title}</Text>
-                  <Text style={styles.taskDescription}>{task.description}</Text>
-                  <View style={styles.taskMeta}>
-                    <Chip
-                      mode="outlined"
-                      style={{ backgroundColor: getPriorityColor(task.priority) + '20' }}
-                      textStyle={{ color: getPriorityColor(task.priority) }}
-                    >
-                      {task.priority === 'high' ? '高' : task.priority === 'medium' ? '中' : '低'}
-                    </Chip>
-                    <Chip mode="outlined">{getStatusLabel(task.status)}</Chip>
+            {tasks.length > 0 ? (
+              tasks.map((task) => (
+                <View key={task.id} style={styles.taskItem}>
+                  <View style={styles.taskInfo}>
+                    <Text style={styles.taskTitle}>{task.title}</Text>
+                    <Text style={styles.taskDescription}>{task.description || '暂无描述'}</Text>
+                    <View style={styles.taskMeta}>
+                      <Chip
+                        mode="outlined"
+                        style={{ backgroundColor: getPriorityColor(task.priority) + '20' }}
+                        textStyle={{ color: getPriorityColor(task.priority) }}
+                      >
+                        {task.priority === 'high' || task.priority === 'critical'
+                          ? '高'
+                          : task.priority === 'medium'
+                            ? '中'
+                            : '低'}
+                      </Chip>
+                      <Chip mode="outlined">{getStatusLabel(task.status)}</Chip>
+                    </View>
                   </View>
                 </View>
-              </View>
-            ))}
+              ))
+            ) : (
+              <Text style={styles.emptyText}>暂无任务</Text>
+            )}
           </View>
         </Card.Content>
       </Card>
@@ -146,19 +164,21 @@ const DashboardPage: React.FC = () => {
         <Card.Content>
           <Title style={styles.sectionTitle}>近期活动</Title>
           <View style={styles.eventsList}>
-            {events.map((event) => (
-              <View key={event.id} style={styles.eventItem}>
-                <View style={styles.eventIcon}>
-                  <Calendar size={20} color="#3b82f6" />
+            {events.length > 0 ? (
+              events.map((event) => (
+                <View key={event.id} style={styles.eventItem}>
+                  <View style={styles.eventIcon}>
+                    <Calendar size={20} color="#3b82f6" />
+                  </View>
+                  <View style={styles.eventInfo}>
+                    <Text style={styles.eventTitle}>{event.title}</Text>
+                    <Text style={styles.eventTime}>{event.startTime}</Text>
+                  </View>
                 </View>
-                <View style={styles.eventInfo}>
-                  <Text style={styles.eventTitle}>{event.title}</Text>
-                  <Text style={styles.eventTime}>
-                    {event.date} {event.time} · {event.location}
-                  </Text>
-                </View>
-              </View>
-            ))}
+              ))
+            ) : (
+              <Text style={styles.emptyText}>暂无活动</Text>
+            )}
           </View>
         </Card.Content>
       </Card>
@@ -249,6 +269,9 @@ const styles = StyleSheet.create({
     borderBottomWidth: 1,
     borderBottomColor: '#e5e7eb',
   },
+  taskInfo: {
+    flex: 1,
+  },
   taskTitle: {
     fontSize: 16,
     fontWeight: '600',
@@ -295,6 +318,12 @@ const styles = StyleSheet.create({
     fontSize: 14,
     color: '#6b7280',
     marginTop: 4,
+  },
+  emptyText: {
+    fontSize: 14,
+    color: '#9ca3af',
+    textAlign: 'center',
+    paddingVertical: 16,
   },
 });
 

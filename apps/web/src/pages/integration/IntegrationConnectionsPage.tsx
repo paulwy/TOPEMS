@@ -19,8 +19,9 @@ import {
   Cloud,
 } from 'lucide-react';
 import { Box, Typography, Chip, Button } from '@mui/material';
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 
-import { useAppStore } from '../../store';
+import { useNotificationStore } from '@/store';
 import { ListPageTemplate, type ColumnDef } from '@/components/templates';
 import { extractErrorMessage } from '@/utils/errors';
 import { PageContainer } from '@/components/common';
@@ -119,9 +120,8 @@ const mockConnections: IntegrationConnection[] = [
 ];
 
 export const IntegrationConnectionsPage: React.FC = () => {
-  const addNotification = useAppStore((state) => state.addNotification);
-  const [connections, setConnections] = useState<IntegrationConnection[]>(mockConnections);
-  const [loading, setLoading] = useState(false);
+  const addNotification = useNotificationStore((state) => state.addNotification);
+  const queryClient = useQueryClient();
   const [searchQuery, setSearchQuery] = useState('');
   const [typeFilter, setTypeFilter] = useState<string>('all');
   const [statusFilter, setStatusFilter] = useState<string>('all');
@@ -143,21 +143,37 @@ export const IntegrationConnectionsPage: React.FC = () => {
     []
   );
 
-  const loadData = useCallback(async () => {
-    setLoading(true);
-    try {
+  const { data: connections = [], isLoading: loading } = useQuery({
+    queryKey: ['integration-connections'],
+    queryFn: async () => {
       await new Promise((resolve) => setTimeout(resolve, 300));
-      setConnections(mockConnections);
-    } catch (_err: unknown) {
-      addNotification({
-        title: '加载失败',
-        message: extractErrorMessage(_err, '加载连接列表失败'),
-        type: 'error',
-      });
-    } finally {
-      setLoading(false);
-    }
-  }, [addNotification]);
+      return mockConnections;
+    },
+    staleTime: 5 * 60 * 1000,
+  });
+
+  const deleteMutation = useMutation({
+    mutationFn: async (connectionId: string) => {
+      return connectionId;
+    },
+    onMutate: async (connectionId) => {
+      await queryClient.cancelQueries({ queryKey: ['integration-connections'] });
+      const previousConnections = queryClient.getQueryData<IntegrationConnection[]>(['integration-connections']);
+      queryClient.setQueryData<IntegrationConnection[]>(['integration-connections'], (old) =>
+        old ? old.filter((c) => c.id !== connectionId) : []
+      );
+      return { previousConnections };
+    },
+    onError: (_err, _id, context) => {
+      if (context?.previousConnections) {
+        queryClient.setQueryData(['integration-connections'], context.previousConnections);
+      }
+      addNotification({ title: '失败', message: '删除连接失败', type: 'error' });
+    },
+    onSuccess: () => {
+      addNotification({ title: '成功', message: '连接删除成功', type: 'success' });
+    },
+  });
 
   const handleDelete = useCallback(
     (connectionId: string) => {
@@ -167,13 +183,16 @@ export const IntegrationConnectionsPage: React.FC = () => {
         message: `确定要删除连接"${conn?.name || ''}"吗？`,
         danger: true,
         onConfirm: () => {
-          setConnections((prev) => prev.filter((c) => c.id !== connectionId));
-          addNotification({ title: '成功', message: '连接删除成功', type: 'success' });
+          deleteMutation.mutate(connectionId);
         },
       });
     },
-    [connections, addNotification, openConfirmDialog]
+    [connections, deleteMutation, openConfirmDialog]
   );
+
+  const handleRefresh = useCallback(() => {
+    queryClient.invalidateQueries({ queryKey: ['integration-connections'] });
+  }, [queryClient]);
 
   const filteredConnections = useMemo(() => {
     return connections.filter((conn) => {
@@ -429,10 +448,10 @@ export const IntegrationConnectionsPage: React.FC = () => {
         }}
         pagination={{ page, pageSize, total: filteredConnections.length, onPageChange: setPage }}
         actions={[
-          { label: '刷新', icon: <RefreshCw size={16} />, onClick: loadData, variant: 'outlined' },
+          { label: '刷新', icon: <RefreshCw size={16} />, onClick: handleRefresh, variant: 'outlined' },
           { label: '新建连接', icon: <Plus size={16} />, onClick: () => {}, variant: 'contained' },
         ]}
-        onRefresh={loadData}
+        onRefresh={handleRefresh}
         emptyMessage='暂无连接'
       />
       <ConfirmDialog

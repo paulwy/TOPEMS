@@ -41,7 +41,7 @@ import {
 } from '@/components/templates';
 import { PageContainer } from '@/components/common';
 import { qmsApi, type QualityCheck, type CreateQualityCheckRequest } from '@/api/qms';
-import { useAppStore } from '@/store';
+import { useNotificationStore } from '@/store';
 import { designTokens } from '@/theme/tokens';
 import { logger } from '@/utils/logger';
 
@@ -104,7 +104,7 @@ const QmsInspectionPage: React.FC = () => {
   });
   const [page, setPage] = useState(0);
   const [pageSize, setPageSize] = useState(10);
-  const addNotification = useAppStore((state) => state.addNotification);
+  const addNotification = useNotificationStore((state) => state.addNotification);
 
   useEffect(() => {
     loadInspections();

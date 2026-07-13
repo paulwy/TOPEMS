@@ -1,792 +1,1244 @@
-import React, { useState, useMemo, useEffect } from 'react';
-import { FINANCE_PATHS } from '@/modules/finance/config';
+import React, { useState, useEffect } from 'react';
 import {
-  Plus,
-  Trash2,
-  Download,
-  CreditCard,
-  CheckCircle,
-  Clock,
-  XCircle,
-  Send,
-  Eye,
-  RefreshCw,
-} from 'lucide-react';
-import {
-  Grid,
+  Box,
+  Typography,
+  Button,
+  Card,
+  CardContent,
+  Table,
+  TableBody,
+  TableCell,
+  TableContainer,
+  TableHead,
+  TableRow,
+  TablePagination,
   TextField,
+  MenuItem,
+  Select,
   FormControl,
   InputLabel,
-  Select,
-  MenuItem,
   Dialog,
   DialogTitle,
   DialogContent,
   DialogActions,
-  Chip,
-  Box as MuiBox,
-  Typography,
-  Stack,
   IconButton,
   Tooltip,
-  Button,
+  Chip,
+  Stack,
+  Paper,
+  Divider,
+  InputAdornment,
 } from '@mui/material';
-import { useNavigate } from 'react-router-dom';
-import { useAppStore } from '../../store';
-import type { ColumnDef } from '@/components';
-import { ListPageTemplate, MuiStatCard as StatCard } from '@/components';
-import { DataExport, PageContainer } from '@/components/common';
+import { Grid } from '@/components/common';
+import {
+  Plus,
+  Search,
+  Eye,
+  Edit,
+  Trash2,
+  CheckCircle,
+  XCircle,
+  Clock,
+  FileText,
+  ArrowUpCircle,
+  RefreshCw,
+  Filter,
+  ChevronRight,
+  Download,
+  Link2,
+  Printer,
+} from 'lucide-react';
+import { createLogger } from '@/utils/logger';
+import { useNotificationStore } from '@/store';
 import { financeApi } from '@/api/finance';
-import { apiLogger } from '@/utils/logger';
-import type { PaymentRecord } from '@/types/finance';
+import type { Payment, PaymentItem, CreatePaymentRequest } from '@/api/finance/payment';
+import { PaymentPrintTemplate } from './PaymentPrintTemplate';
 
-import { ConfirmDialog } from '@topems/shared-components';
+const logger = createLogger('FinancePaymentPage');
 
-interface Payment {
-  id: string;
-  payment_number: string;
-  payment_date: string;
-  supplier: string;
-  payment_method: string;
-  amount: number;
-  bank_account: string;
-  status: string;
-}
+const paymentMethodOptions = [
+  { value: 'bank_transfer', label: '银行转账' },
+  { value: 'cash', label: '现金' },
+  { value: 'check', label: '支票' },
+  { value: 'acceptance_bill', label: '承兑汇票' },
+  { value: 'other', label: '其他' },
+];
+
+const statusOptions = [
+  { value: '', label: '全部状态' },
+  { value: 'draft', label: '草稿' },
+  { value: 'submitted', label: '待审批' },
+  { value: 'approved', label: '已审批' },
+  { value: 'posted', label: '已过账' },
+  { value: 'rejected', label: '已拒绝' },
+  { value: 'cancelled', label: '已取消' },
+];
+
+const getStatusConfig = (status: string) => {
+  const configs: Record<
+    string,
+    { color: 'success' | 'warning' | 'error' | 'default' | 'info'; label: string }
+  > = {
+    draft: { color: 'default', label: '草稿' },
+    submitted: { color: 'warning', label: '待审批' },
+    approved: { color: 'info', label: '已审批' },
+    posted: { color: 'success', label: '已过账' },
+    rejected: { color: 'error', label: '已拒绝' },
+    cancelled: { color: 'default', label: '已取消' },
+  };
+  return configs[status] || { color: 'default', label: status };
+};
 
 const FinancePaymentPage: React.FC = () => {
-  const navigate = useNavigate();
-  const addNotification = useAppStore((state) => state.addNotification);
+  const addNotification = useNotificationStore((state) => state.addNotification);
 
-  const [paymentData, setPaymentData] = useState<Payment[]>([]);
+  const [payments, setPayments] = useState<Payment[]>([]);
   const [loading, setLoading] = useState(false);
-  const [createLoading, setCreateLoading] = useState(false);
-  const [filterMethod, setFilterMethod] = useState('');
-  const [filterStatus, setFilterStatus] = useState('');
-  const [searchQuery, setSearchQuery] = useState('');
-  const [showCreateModal, setShowCreateModal] = useState(false);
-  const [showApproveModal, setShowApproveModal] = useState(false);
-  const [selectedPayment, setSelectedPayment] = useState<Payment | null>(null);
-  const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
-  const [rejectDialogOpen, setRejectDialogOpen] = useState(false);
-  const [deletingId, setDeletingId] = useState<string | null>(null);
-  const [rejectingPayment, setRejectingPayment] = useState<Payment | null>(null);
+  const [page, setPage] = useState(0);
+  const [pageSize, setPageSize] = useState(10);
+  const [total, setTotal] = useState(0);
+  const [searchText, setSearchText] = useState('');
+  const [statusFilter, setStatusFilter] = useState('');
 
-  const [newPayment, setNewPayment] = useState({
-    supplier: '',
-    payment_method: '银行转账',
-    amount: 0,
-    bank_account: '',
+  const [showCreateDialog, setShowCreateDialog] = useState(false);
+  const [showDetailDialog, setShowDetailDialog] = useState(false);
+  const [showExecuteDialog, setShowExecuteDialog] = useState(false);
+  const [showWriteOffDialog, setShowWriteOffDialog] = useState(false);
+  const [showPrintPreview, setShowPrintPreview] = useState(false);
+  const [selectedPayment, setSelectedPayment] = useState<Payment | null>(null);
+  const [selectedItem, setSelectedItem] = useState<PaymentItem | null>(null);
+  const [editMode, setEditMode] = useState(false);
+  const [actionLoading, setActionLoading] = useState(false);
+
+  const [executeFormData, setExecuteFormData] = useState({
+    bankTransactionNo: '',
+    actualPaymentDate: '',
   });
 
-  const mapPaymentRecordToPayment = (record: PaymentRecord): Payment => {
-    const bankAccount = record.bank_name
-      ? `${record.bank_name} ${record.bank_account_no || ''}`
-      : record.bank_account_no || '';
+  const [writeOffFormData, setWriteOffFormData] = useState({
+    writeOffAmount: '',
+  });
 
-    let statusText = '';
-    switch (record.status) {
-      case 'recorded':
-        statusText = '待审批';
-        break;
-      case 'matched':
-        statusText = '已付款';
-        break;
-      case 'cancelled':
-        statusText = '已拒绝';
-        break;
-      default:
-        statusText = record.status;
-    }
+  const [formData, setFormData] = useState<CreatePaymentRequest>({
+    supplierName: '',
+    paymentMethod: 'bank_transfer',
+    bankName: '',
+    bankAccountNo: '',
+    totalAmount: 0,
+    remark: '',
+    items: [{ payableAmount: 0, paymentAmount: 0, invoiceNo: '' }],
+  });
 
-    return {
-      id: record.id,
-      payment_number: record.payment_no,
-      payment_date: record.payment_date,
-      supplier: record.supplier_name || '',
-      payment_method: '银行转账',
-      amount: record.amount,
-      bank_account: bankAccount,
-      status: statusText,
-    };
-  };
-
-  const fetchPayments = async () => {
+  const loadPayments = async () => {
     setLoading(true);
     try {
-      const response = await financeApi.receivablePayable.listPayments({
-        page: 1,
-        pagesize: 100,
+      const res = await financeApi.payment.list({
+        page: page + 1,
+        pageSize,
+        status: statusFilter || undefined,
       });
-      if (response.success && response.data) {
-        const payments = response.data.items.map(mapPaymentRecordToPayment);
-        setPaymentData(payments);
+      if (res.success) {
+        setPayments(res.data.items);
+        setTotal(res.data.total);
       }
-    } catch (err) {
+    } catch (error) {
+      logger.error('Failed to load payments:', error);
       addNotification({
         title: '错误',
-        message: '获取付款记录失败',
+        message: '加载付款单列表失败',
         type: 'error',
       });
-      apiLogger.error('Failed to fetch payments', err);
     } finally {
       setLoading(false);
     }
   };
 
-  useEffect(() => {
-    fetchPayments();
-  }, []);
-
-  const filteredData = useMemo(() => {
-    return paymentData.filter((payment) => {
-      if (filterMethod && payment.payment_method !== filterMethod) return false;
-      if (filterStatus && payment.status !== filterStatus) return false;
-      if (searchQuery) {
-        const query = searchQuery.toLowerCase();
-        if (
-          !payment.payment_number.toLowerCase().includes(query) &&
-          !payment.supplier.toLowerCase().includes(query)
-        ) {
-          return false;
-        }
+  const handleExport = async () => {
+    try {
+      const res = await financeApi.payment.list({
+        page: 1,
+        pageSize: 9999,
+        status: statusFilter || undefined,
+      });
+      if (res.success && res.data.items) {
+        exportToCSV(res.data.items);
       }
-      return true;
-    });
-  }, [paymentData, filterMethod, filterStatus, searchQuery]);
-
-  const getStatusConfig = (status: string) => {
-    const configs: Record<
-      string,
-      {
-        color: 'success' | 'warning' | 'error' | 'default';
-        icon: React.ReactNode;
-      }
-    > = {
-      已付款: { color: 'success', icon: <CheckCircle size={12} /> },
-      审批中: { color: 'warning', icon: <Clock size={12} /> },
-      待审批: { color: 'default', icon: <Clock size={12} /> },
-      已拒绝: { color: 'error', icon: <XCircle size={12} /> },
-    };
-    return configs[status] || { color: 'default', icon: null };
-  };
-
-  const handleCreate = async () => {
-    if (!newPayment.supplier || !newPayment.amount) {
+    } catch (error) {
+      logger.error('Failed to export payments:', error);
       addNotification({
         title: '错误',
-        message: '请填写供应商和付款金额',
+        message: '导出失败',
+        type: 'error',
+      });
+    }
+  };
+
+  const exportToCSV = (payments: Payment[]) => {
+    const headers = [
+      '付款单号',
+      '供应商',
+      '付款方式',
+      '付款金额',
+      '币种',
+      '付款日期',
+      '实际付款日期',
+      '银行流水号',
+      '状态',
+      '创建时间',
+    ];
+
+    const rows = payments.map((p) => [
+      p.paymentNo,
+      p.supplierName || '',
+      paymentMethodOptions.find((m) => m.value === p.paymentMethod)?.label || p.paymentMethod,
+      p.totalAmount,
+      p.currency,
+      p.paymentDate || '',
+      p.actualPaymentDate || '',
+      p.bankTransactionNo || '',
+      getStatusConfig(p.status).label,
+      p.createdAt,
+    ]);
+
+    const csvContent = [headers.join(','), ...rows.map((row) => row.join(','))].join('\n');
+    const blob = new Blob(['\uFEFF' + csvContent], { type: 'text/csv;charset=utf-8;' });
+    const link = document.createElement('a');
+    link.href = URL.createObjectURL(blob);
+    link.download = `付款单_${new Date().toISOString().split('T')[0]}.csv`;
+    link.click();
+  };
+
+  useEffect(() => {
+    loadPayments();
+  }, [page, pageSize, statusFilter]);
+
+  const handleCreate = () => {
+    setFormData({
+      supplierName: '',
+      paymentMethod: 'bank_transfer',
+      bankName: '',
+      bankAccountNo: '',
+      totalAmount: 0,
+      remark: '',
+      items: [{ payableAmount: 0, paymentAmount: 0, invoiceNo: '' }],
+    });
+    setEditMode(false);
+    setShowCreateDialog(true);
+  };
+
+  const handleEdit = (payment: Payment) => {
+    setSelectedPayment(payment);
+    setFormData({
+      supplierName: payment.supplierName || '',
+      paymentMethod: payment.paymentMethod,
+      bankName: payment.bankName || '',
+      bankAccountNo: payment.bankAccountNo || '',
+      totalAmount: payment.totalAmount,
+      remark: payment.remark || '',
+      items: payment.items?.length
+        ? payment.items.map((item) => ({
+            invoiceId: item.invoiceId,
+            invoiceNo: item.invoiceNo || '',
+            payableAmount: item.payableAmount,
+            paymentAmount: item.paymentAmount,
+            remark: item.remark,
+          }))
+        : [{ payableAmount: 0, paymentAmount: 0, invoiceNo: '' }],
+    });
+    setEditMode(true);
+    setShowCreateDialog(true);
+  };
+
+  const handleView = async (payment: Payment) => {
+    setActionLoading(true);
+    try {
+      const res = await financeApi.payment.get(payment.id);
+      if (res.success) {
+        setSelectedPayment(res.data);
+        setShowDetailDialog(true);
+      }
+    } catch (error) {
+      logger.error('Failed to get payment detail:', error);
+      addNotification({
+        title: '错误',
+        message: '获取付款单详情失败',
+        type: 'error',
+      });
+    } finally {
+      setActionLoading(false);
+    }
+  };
+
+  const handleSubmit = async () => {
+    if (!formData.supplierName || formData.totalAmount <= 0) {
+      addNotification({
+        title: '提示',
+        message: '请填写供应商名称和付款金额',
+        type: 'warning',
+      });
+      return;
+    }
+
+    const totalItemAmount = formData.items.reduce((sum, item) => sum + item.paymentAmount, 0);
+    if (Math.abs(totalItemAmount - formData.totalAmount) > 0.01) {
+      addNotification({
+        title: '提示',
+        message: '明细付款金额合计应等于总金额',
+        type: 'warning',
+      });
+      return;
+    }
+
+    setActionLoading(true);
+    try {
+      if (editMode && selectedPayment) {
+        const res = await financeApi.payment.update(selectedPayment.id, formData);
+        if (res.success) {
+          addNotification({
+            title: '成功',
+            message: '付款单更新成功',
+            type: 'success',
+          });
+          setShowCreateDialog(false);
+          loadPayments();
+        }
+      } else {
+        const res = await financeApi.payment.create(formData);
+        if (res.success) {
+          addNotification({
+            title: '成功',
+            message: '付款单创建成功',
+            type: 'success',
+          });
+          setShowCreateDialog(false);
+          loadPayments();
+        }
+      }
+    } catch (error) {
+      logger.error('Failed to submit payment:', error);
+      addNotification({
+        title: '错误',
+        message: editMode ? '更新付款单失败' : '创建付款单失败',
+        type: 'error',
+      });
+    } finally {
+      setActionLoading(false);
+    }
+  };
+
+  const handleDelete = async (payment: Payment) => {
+    if (!window.confirm('确定要删除该付款单吗？')) return;
+
+    setActionLoading(true);
+    try {
+      const res = await financeApi.payment.remove(payment.id);
+      if (res.success) {
+        addNotification({
+          title: '成功',
+          message: '付款单删除成功',
+          type: 'success',
+        });
+        loadPayments();
+      }
+    } catch (error) {
+      logger.error('Failed to delete payment:', error);
+      addNotification({
+        title: '错误',
+        message: '删除付款单失败',
+        type: 'error',
+      });
+    } finally {
+      setActionLoading(false);
+    }
+  };
+
+  const handleSubmitForApproval = async (payment: Payment) => {
+    if (!window.confirm('确定要提交审批吗？')) return;
+
+    setActionLoading(true);
+    try {
+      const res = await financeApi.payment.submit(payment.id);
+      if (res.success) {
+        addNotification({
+          title: '成功',
+          message: '提交审批成功',
+          type: 'success',
+        });
+        loadPayments();
+      }
+    } catch (error) {
+      logger.error('Failed to submit payment:', error);
+      addNotification({
+        title: '错误',
+        message: '提交审批失败',
+        type: 'error',
+      });
+    } finally {
+      setActionLoading(false);
+    }
+  };
+
+  const handleApprove = async (payment: Payment) => {
+    if (!window.confirm('确定要审批通过吗？')) return;
+
+    setActionLoading(true);
+    try {
+      const res = await financeApi.payment.approve(payment.id);
+      if (res.success) {
+        addNotification({
+          title: '成功',
+          message: '审批通过',
+          type: 'success',
+        });
+        setShowDetailDialog(false);
+        loadPayments();
+      }
+    } catch (error) {
+      logger.error('Failed to approve payment:', error);
+      addNotification({
+        title: '错误',
+        message: '审批失败',
+        type: 'error',
+      });
+    } finally {
+      setActionLoading(false);
+    }
+  };
+
+  const handleReject = async (payment: Payment) => {
+    if (!window.confirm('确定要拒绝该付款单吗？')) return;
+
+    setActionLoading(true);
+    try {
+      const res = await financeApi.payment.reject(payment.id);
+      if (res.success) {
+        addNotification({
+          title: '成功',
+          message: '已拒绝',
+          type: 'success',
+        });
+        setShowDetailDialog(false);
+        loadPayments();
+      }
+    } catch (error) {
+      logger.error('Failed to reject payment:', error);
+      addNotification({
+        title: '错误',
+        message: '操作失败',
+        type: 'error',
+      });
+    } finally {
+      setActionLoading(false);
+    }
+  };
+
+  const handleExecute = (payment: Payment) => {
+    setSelectedPayment(payment);
+    setExecuteFormData({
+      bankTransactionNo: '',
+      actualPaymentDate: '',
+    });
+    setShowExecuteDialog(true);
+  };
+
+  const handleExecutePayment = async () => {
+    if (!selectedPayment || !executeFormData.bankTransactionNo || !executeFormData.actualPaymentDate) {
+      addNotification({
+        title: '提示',
+        message: '请填写完整的执行信息',
         type: 'error',
       });
       return;
     }
 
-    setCreateLoading(true);
+    setActionLoading(true);
     try {
-      const response = await financeApi.receivablePayable.createPayment({
-        supplier_id: '',
-        supplier_name: newPayment.supplier,
-        amount: newPayment.amount,
-        payment_date: new Date().toISOString().split('T')[0],
-        bank_account_id: '',
-        bank_account_no: newPayment.bank_account || '默认账户',
-        bank_name: '',
-        invoice_ids: [],
-        status: 'recorded',
+      const res = await financeApi.payment.execute(selectedPayment.id, {
+        bankTransactionNo: executeFormData.bankTransactionNo,
+        actualPaymentDate: executeFormData.actualPaymentDate,
       });
-
-      if (response.success && response.data) {
-        const newEntry = mapPaymentRecordToPayment(response.data);
-        setPaymentData([newEntry, ...paymentData]);
+      if (res.success) {
         addNotification({
           title: '成功',
-          message: '付款申请已提交',
+          message: '付款执行成功',
           type: 'success',
         });
-        setShowCreateModal(false);
-        setNewPayment({
-          supplier: '',
-          payment_method: '银行转账',
-          amount: 0,
-          bank_account: '',
-        });
-      } else {
-        addNotification({
-          title: '错误',
-          message: response.message || '付款申请提交失败',
-          type: 'error',
-        });
+        setShowExecuteDialog(false);
+        loadPayments();
       }
-    } catch (err) {
+    } catch (error) {
+      logger.error('Failed to execute payment:', error);
       addNotification({
         title: '错误',
-        message: '付款申请提交失败',
+        message: '操作失败',
         type: 'error',
       });
-      apiLogger.error('Failed to create payment', err);
     } finally {
-      setCreateLoading(false);
+      setActionLoading(false);
     }
   };
 
-  const handleApprove = (payment: Payment) => {
+  const handleWriteOff = (item: PaymentItem) => {
+    setSelectedItem(item);
+    setWriteOffFormData({
+      writeOffAmount: String(item.paymentAmount || 0),
+    });
+    setShowWriteOffDialog(true);
+  };
+
+  const handleWriteOffPayment = async () => {
+    if (!selectedItem || !writeOffFormData.writeOffAmount) {
+      addNotification({
+        title: '提示',
+        message: '请填写核销金额',
+        type: 'error',
+      });
+      return;
+    }
+
+    const amount = parseFloat(writeOffFormData.writeOffAmount);
+    if (isNaN(amount) || amount <= 0) {
+      addNotification({
+        title: '提示',
+        message: '请输入有效的核销金额',
+        type: 'error',
+      });
+      return;
+    }
+
+    setActionLoading(true);
+    try {
+      const res = await financeApi.payment.writeOff({
+        itemId: selectedItem.id!,
+        writeOffAmount: amount,
+      });
+      if (res.success) {
+        addNotification({
+          title: '成功',
+          message: '核销成功',
+          type: 'success',
+        });
+        setShowWriteOffDialog(false);
+        loadPayments();
+      }
+    } catch (error) {
+      logger.error('Failed to write off payment:', error);
+      addNotification({
+        title: '错误',
+        message: '操作失败',
+        type: 'error',
+      });
+    } finally {
+      setActionLoading(false);
+    }
+  };
+
+  const handlePrint = (payment: Payment) => {
     setSelectedPayment(payment);
-    setShowApproveModal(true);
+    setShowPrintPreview(true);
   };
 
-  const confirmApprove = () => {
-    if (!selectedPayment) return;
-    setPaymentData(
-      paymentData.map((p) => (p.id === selectedPayment.id ? { ...p, status: '已付款' } : p))
-    );
-    addNotification({ title: '成功', message: '付款已确认', type: 'success' });
-    setShowApproveModal(false);
+  const handlePrintExecute = () => {
+    window.print();
   };
 
-  const handleRejectClick = (payment: Payment) => {
-    setRejectingPayment(payment);
-    setRejectDialogOpen(true);
-  };
-
-  const handleReject = () => {
-    if (!rejectingPayment) return;
-    setPaymentData(
-      paymentData.map((p) => (p.id === rejectingPayment.id ? { ...p, status: '已拒绝' } : p))
-    );
-    addNotification({
-      title: '已拒绝',
-      message: '付款申请已拒绝',
-      type: 'warning',
+  const addItem = () => {
+    setFormData({
+      ...formData,
+      items: [...formData.items, { payableAmount: 0, paymentAmount: 0, invoiceNo: '' }],
     });
   };
 
-  const handleDeleteClick = (id: string) => {
-    setDeletingId(id);
-    setDeleteDialogOpen(true);
+  const removeItem = (index: number) => {
+    if (formData.items.length <= 1) return;
+    const newItems = formData.items.filter((_, i) => i !== index);
+    setFormData({ ...formData, items: newItems });
   };
 
-  const handleDelete = () => {
-    if (!deletingId) return;
-    setPaymentData(paymentData.filter((p) => p.id !== deletingId));
-    addNotification({
-      title: '成功',
-      message: '付款记录已删除',
-      type: 'success',
-    });
+  const updateItem = (index: number, field: keyof PaymentItem, value: string | number) => {
+    const newItems = [...formData.items];
+    (newItems[index] as any)[field] = value;
+    setFormData({ ...formData, items: newItems });
   };
 
-  const handleExport = () => {
-    addNotification({
-      title: '导出成功',
-      message: '付款数据已导出',
-      type: 'success',
-    });
-  };
-
-  const handleRefresh = () => {
-    fetchPayments();
-  };
-
-  const statsData = useMemo(() => {
-    const totalPayments = paymentData.length;
-    const paidAmount = paymentData
-      .filter((p) => p.status === '已付款')
-      .reduce((sum, p) => sum + p.amount, 0);
-    const pendingApproval = paymentData.filter((p) => p.status === '待审批').length;
-    const inApproval = paymentData.filter((p) => p.status === '审批中').length;
-
-    return [
-      {
-        title: '总付款次数',
-        value: totalPayments,
-        icon: <CreditCard size={24} />,
-        color: 'primary' as const,
-      },
-      {
-        title: '已付款金额',
-        value: `¥${paidAmount.toLocaleString()}`,
-        icon: <CheckCircle size={24} />,
-        color: 'success' as const,
-      },
-      {
-        title: '待审批',
-        value: pendingApproval,
-        icon: <Clock size={24} />,
-        color: 'warning' as const,
-      },
-      {
-        title: '审批中',
-        value: inApproval,
-        icon: <Send size={24} />,
-        color: 'info' as const,
-      },
-    ];
-  }, [paymentData]);
-
-  const columns = useMemo<ColumnDef<Payment>[]>(
-    () => [
-      {
-        id: 'payment_number',
-        label: '付款单号',
-        render: (row) => (
-          <MuiBox sx={{ fontWeight: 600, color: 'success.main' }}>{row.payment_number}</MuiBox>
-        ),
-      },
-      {
-        id: 'payment_date',
-        label: '付款日期',
-        render: (row) => (
-          <MuiBox sx={{ color: 'text.secondary', fontSize: '0.875rem' }}>{row.payment_date}</MuiBox>
-        ),
-      },
-      {
-        id: 'supplier',
-        label: '供应商',
-        render: (row) => <MuiBox sx={{ fontWeight: 500 }}>{row.supplier}</MuiBox>,
-      },
-      {
-        id: 'payment_method',
-        label: '付款方式',
-        render: (row) => (
-          <Chip
-            label={row.payment_method}
-            size='small'
-          />
-        ),
-      },
-      {
-        id: 'amount',
-        label: '付款金额',
-        align: 'right' as const,
-        render: (row) => (
-          <MuiBox
-            sx={{
-              fontWeight: 700,
-              color: 'error.main',
-              fontFamily: 'monospace',
-            }}
-          >
-            ¥{row.amount.toLocaleString()}
-          </MuiBox>
-        ),
-      },
-      {
-        id: 'bank_account',
-        label: '银行账户',
-        render: (row) => (
-          <MuiBox sx={{ color: 'text.secondary', fontSize: '0.875rem' }}>{row.bank_account}</MuiBox>
-        ),
-      },
-      {
-        id: 'status',
-        label: '状态',
-        render: (row) => {
-          const config = getStatusConfig(row.status);
-          return (
-            <Chip
-              label={row.status}
-              size='small'
-              color={config.color}
-              icon={config.icon as React.ReactElement}
-            />
-          );
-        },
-      },
-    ],
-    []
-  );
-
-  const renderRowActions = (row: Payment) => (
-    <Stack
-      direction='row'
-      spacing={1}
-    >
-      {row.status === '待审批' && (
-        <>
-          <Tooltip title='审批'>
-            <IconButton
-              size='small'
-              color='success'
-              onClick={() => handleApprove(row)}
-              aria-label='审批'
-            >
-              <CheckCircle sx={{ width: 16, height: 16 }} />
-            </IconButton>
-          </Tooltip>
-          <Tooltip title='拒绝'>
-            <IconButton
-              size='small'
-              color='error'
-              onClick={() => handleRejectClick(row)}
-              aria-label='拒绝'
-            >
-              <XCircle sx={{ width: 16, height: 16 }} />
-            </IconButton>
-          </Tooltip>
-        </>
-      )}
-      {row.status === '已付款' && (
-        <>
-          <Tooltip title='查看'>
-            <IconButton
-              size='small'
-              aria-label='查看'
-            >
-              <Eye sx={{ width: 16, height: 16 }} />
-            </IconButton>
-          </Tooltip>
-          <Tooltip title='删除'>
-            <IconButton
-              size='small'
-              color='error'
-              onClick={() => handleDeleteClick(row.id)}
-              aria-label='删除'
-            >
-              <Trash2 sx={{ width: 16, height: 16 }} />
-            </IconButton>
-          </Tooltip>
-        </>
-      )}
-    </Stack>
-  );
-
-  const advancedFilters = useMemo(
-    () => [
-      {
-        id: 'payment_method',
-        label: '付款方式',
-        type: 'select' as const,
-        options: [
-          { value: '银行转账', label: '银行转账' },
-          { value: '银行承兑汇票', label: '银行承兑汇票' },
-          { value: '商业承兑汇票', label: '商业承兑汇票' },
-          { value: '现金', label: '现金' },
-        ],
-        value: filterMethod,
-        onChange: (value: unknown) => setFilterMethod(value as string),
-      },
-      {
-        id: 'status',
-        label: '状态',
-        type: 'select' as const,
-        options: [
-          { value: '已付款', label: '已付款' },
-          { value: '审批中', label: '审批中' },
-          { value: '待审批', label: '待审批' },
-          { value: '已拒绝', label: '已拒绝' },
-        ],
-        value: filterStatus,
-        onChange: (value: unknown) => setFilterStatus(value as string),
-      },
-    ],
-    [filterMethod, filterStatus]
-  );
-
-  const exportFields = useMemo(
-    () => [
-      { key: 'payment_number', title: '付款单号' },
-      { key: 'payment_date', title: '付款日期' },
-      { key: 'supplier', title: '供应商' },
-      { key: 'payment_method', title: '付款方式' },
-      { key: 'amount', title: '付款金额' },
-      { key: 'bank_account', title: '银行账户' },
-      { key: 'status', title: '状态' },
-    ],
-    []
-  );
+  const canEdit = (status: string) => status === 'draft';
+  const canDelete = (status: string) => status === 'draft';
+  const canSubmit = (status: string) => status === 'draft';
+  const canApprove = (status: string) => status === 'submitted';
+  const canExecute = (status: string) => status === 'approved';
 
   return (
-    <PageContainer
-      title='付款管理'
-      subtitle='管理供应商付款申请，审批和确认付款'
-    >
-      <ListPageTemplate
-        title=''
-        subtitle=''
-        backButton={{
-          onClick: () => navigate(FINANCE_PATHS.dashboard),
-        }}
-        columns={columns}
-        data={filteredData}
-        searchable
-        searchPlaceholder='搜索付款单号、供应商...'
-        searchValue={searchQuery}
-        onSearch={setSearchQuery}
-        filters={advancedFilters}
-        renderRowActions={renderRowActions}
-        headerContent={
-          <Grid
-            container
-            spacing={2}
-            sx={{ mb: 3 }}
-          >
-            {statsData.map((stat, index) => (
-              <Grid
-                key={index}
-                size={{ xs: 12, sm: 6, md: 3 }}
-              >
-                <StatCard {...stat} />
-              </Grid>
-            ))}
-          </Grid>
-        }
-        actions={[
-          {
-            label: '刷新',
-            variant: 'outlined',
-            icon: <RefreshCw sx={{ width: 20, height: 20 }} />,
-            onClick: handleRefresh,
-          },
-          {
-            label: '导出',
-            variant: 'outlined',
-            icon: <Download sx={{ width: 20, height: 20 }} />,
-            onClick: handleExport,
-          },
-          {
-            label: '付款申请',
-            variant: 'contained',
-            icon: <Plus sx={{ width: 20, height: 20 }} />,
-            onClick: () => setShowCreateModal(true),
-          },
-        ]}
-        loading={loading}
-      />
+    <Box sx={{ p: 3 }}>
+      <Stack direction='row' sx={{ justifyContent: 'space-between', alignItems: 'center', mb: 3 }}>
+        <Typography variant='h5' sx={{ fontWeight: 600 }}>
+          付款单管理
+        </Typography>
+        <Button variant='contained' startIcon={<Plus size={18} />} onClick={handleCreate}>
+          新建付款单
+        </Button>
+      </Stack>
 
-      <DataExport
-        data={paymentData as unknown as Record<string, unknown>[]}
-        fields={exportFields}
-        defaultFileName='付款数据'
-        buttonText='数据导出'
-      />
+      <Card sx={{ mb: 3 }}>
+        <CardContent>
+          <Stack direction='row' spacing={2} sx={{ flexWrap: 'wrap', gap: 2 }}>
+            <TextField
+              size='small'
+              placeholder='搜索供应商名称...'
+              value={searchText}
+              onChange={(e) => setSearchText(e.target.value)}
+              sx={{ width: 280 }}
+            />
+            <FormControl size='small' sx={{ minWidth: 150 }}>
+              <InputLabel>状态</InputLabel>
+              <Select
+                value={statusFilter}
+                label='状态'
+                onChange={(e) => setStatusFilter(e.target.value)}
+              >
+                {statusOptions.map((opt) => (
+                  <MenuItem key={opt.value} value={opt.value}>
+                    {opt.label}
+                  </MenuItem>
+                ))}
+              </Select>
+            </FormControl>
+            <Button
+              variant='outlined'
+              size='small'
+              startIcon={<RefreshCw size={16} />}
+              onClick={loadPayments}
+            >
+              刷新
+            </Button>
+            <Button
+              variant='outlined'
+              size='small'
+              startIcon={<Download size={16} />}
+              onClick={handleExport}
+              disabled={loading}
+            >
+              导出
+            </Button>
+          </Stack>
+        </CardContent>
+      </Card>
+
+      <Card>
+        <TableContainer>
+          <Table>
+            <TableHead>
+              <TableRow sx={{ bgcolor: 'grey.50' }}>
+                <TableCell>付款单号</TableCell>
+                <TableCell>供应商</TableCell>
+                <TableCell>付款方式</TableCell>
+                <TableCell align='right'>付款金额</TableCell>
+                <TableCell>状态</TableCell>
+                <TableCell>付款日期</TableCell>
+                <TableCell align='center'>操作</TableCell>
+              </TableRow>
+            </TableHead>
+            <TableBody>
+              {loading ? (
+                <TableRow>
+                  <TableCell colSpan={7} align='center' sx={{ py: 4 }}>
+                    <Typography color='text.secondary'>加载中...</Typography>
+                  </TableCell>
+                </TableRow>
+              ) : payments.length === 0 ? (
+                <TableRow>
+                  <TableCell colSpan={7} align='center' sx={{ py: 4 }}>
+                    <Box sx={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 1 }}>
+                      <FileText size={40} style={{ opacity: 0.3 }} />
+                      <Typography color='text.secondary'>暂无付款单数据</Typography>
+                    </Box>
+                  </TableCell>
+                </TableRow>
+              ) : (
+                payments.map((payment) => {
+                  const statusConfig = getStatusConfig(payment.status);
+                  return (
+                    <TableRow key={payment.id} hover>
+                      <TableCell sx={{ fontFamily: 'monospace' }}>{payment.paymentNo}</TableCell>
+                      <TableCell>{payment.supplierName || '-'}</TableCell>
+                      <TableCell>
+                        {paymentMethodOptions.find((m) => m.value === payment.paymentMethod)?.label ||
+                          payment.paymentMethod}
+                      </TableCell>
+                      <TableCell align='right' sx={{ fontWeight: 600 }}>
+                        ¥{payment.totalAmount.toLocaleString('zh-CN', { minimumFractionDigits: 2 })}
+                      </TableCell>
+                      <TableCell>
+                        <Chip
+                          label={statusConfig.label}
+                          size='small'
+                          color={statusConfig.color}
+                          variant='outlined'
+                        />
+                      </TableCell>
+                      <TableCell>{payment.paymentDate || '-'}</TableCell>
+                      <TableCell align='center'>
+                        <Stack direction='row' spacing={0.5} sx={{ justifyContent: 'center' }}>
+                          <Tooltip title='查看详情'>
+                            <IconButton size='small' onClick={() => handleView(payment)}>
+                              <Eye size={16} />
+                            </IconButton>
+                          </Tooltip>
+                          {canEdit(payment.status) && (
+                            <Tooltip title='编辑'>
+                              <IconButton size='small' onClick={() => handleEdit(payment)}>
+                                <Edit size={16} />
+                              </IconButton>
+                            </Tooltip>
+                          )}
+                          {canSubmit(payment.status) && (
+                            <Tooltip title='提交审批'>
+                              <IconButton size='small' color='primary' onClick={() => handleSubmitForApproval(payment)}>
+                                <ArrowUpCircle size={16} />
+                              </IconButton>
+                            </Tooltip>
+                          )}
+                          {canDelete(payment.status) && (
+                            <Tooltip title='删除'>
+                              <IconButton size='small' color='error' onClick={() => handleDelete(payment)}>
+                                <Trash2 size={16} />
+                              </IconButton>
+                            </Tooltip>
+                          )}
+                        </Stack>
+                      </TableCell>
+                    </TableRow>
+                  );
+                })
+              )}
+            </TableBody>
+          </Table>
+        </TableContainer>
+        <TablePagination
+          component='div'
+          count={total}
+          page={page}
+          onPageChange={(_, newPage) => setPage(newPage)}
+          rowsPerPage={pageSize}
+          onRowsPerPageChange={(e) => {
+            setPageSize(parseInt(e.target.value, 10));
+            setPage(0);
+          }}
+          labelRowsPerPage='每页行数'
+          labelDisplayedRows={({ from, to, count }) =>
+            `第 ${from}-${to} 条，共 ${count} 条`
+          }
+        />
+      </Card>
 
       <Dialog
-        open={showCreateModal}
-        onClose={() => setShowCreateModal(false)}
-        maxWidth='sm'
+        open={showCreateDialog}
+        onClose={() => !actionLoading && setShowCreateDialog(false)}
+        maxWidth='md'
         fullWidth
       >
-        <DialogTitle>付款申请</DialogTitle>
-        <DialogContent>
-          <Stack
-            spacing={3}
-            sx={{ pt: 2 }}
-          >
-            <TextField
-              label='供应商 *'
-              fullWidth
-              value={newPayment.supplier}
-              onChange={(e) => setNewPayment({ ...newPayment, supplier: e.target.value })}
-            />
-            <Stack
-              direction='row'
-              spacing={2}
-            >
-              <FormControl fullWidth>
+        <DialogTitle>{editMode ? '编辑付款单' : '新建付款单'}</DialogTitle>
+        <DialogContent dividers>
+          <Grid container spacing={2.5} sx={{ mt: 0.5 }}>
+            <Grid item xs={12} sm={6}>
+              <TextField
+                fullWidth
+                label='供应商名称'
+                value={formData.supplierName}
+                onChange={(e) => setFormData({ ...formData, supplierName: e.target.value })}
+                required
+              />
+            </Grid>
+            <Grid item xs={12} sm={6}>
+              <FormControl fullWidth required>
                 <InputLabel>付款方式</InputLabel>
                 <Select
-                  value={newPayment.payment_method}
+                  value={formData.paymentMethod}
                   label='付款方式'
                   onChange={(e) =>
-                    setNewPayment({
-                      ...newPayment,
-                      payment_method: e.target.value,
-                    })
+                    setFormData({ ...formData, paymentMethod: e.target.value })
                   }
                 >
-                  <MenuItem value='银行转账'>银行转账</MenuItem>
-                  <MenuItem value='银行承兑汇票'>银行承兑汇票</MenuItem>
-                  <MenuItem value='商业承兑汇票'>商业承兑汇票</MenuItem>
-                  <MenuItem value='现金'>现金</MenuItem>
+                  {paymentMethodOptions.map((opt) => (
+                    <MenuItem key={opt.value} value={opt.value}>
+                      {opt.label}
+                    </MenuItem>
+                  ))}
                 </Select>
               </FormControl>
+            </Grid>
+            <Grid item xs={12} sm={6}>
               <TextField
-                label='付款金额 *'
-                type='number'
                 fullWidth
-                value={newPayment.amount}
-                onChange={(e) =>
-                  setNewPayment({
-                    ...newPayment,
-                    amount: parseFloat(e.target.value) || 0,
-                  })
-                }
+                label='开户银行'
+                value={formData.bankName}
+                onChange={(e) => setFormData({ ...formData, bankName: e.target.value })}
               />
-            </Stack>
-            <TextField
-              label='银行账户'
-              fullWidth
-              value={newPayment.bank_account}
-              onChange={(e) => setNewPayment({ ...newPayment, bank_account: e.target.value })}
-              placeholder='请输入银行账户'
-            />
+            </Grid>
+            <Grid item xs={12} sm={6}>
+              <TextField
+                fullWidth
+                label='银行账号'
+                value={formData.bankAccountNo}
+                onChange={(e) => setFormData({ ...formData, bankAccountNo: e.target.value })}
+              />
+            </Grid>
+            <Grid item xs={12} sm={6}>
+              <TextField
+                fullWidth
+                label='付款总金额'
+                type='number'
+                value={formData.totalAmount || ''}
+                onChange={(e) =>
+                  setFormData({ ...formData, totalAmount: parseFloat(e.target.value) || 0 })
+                }
+                required
+              />
+            </Grid>
+            <Grid item xs={12}>
+              <TextField
+                fullWidth
+                label='备注'
+                multiline
+                rows={2}
+                value={formData.remark}
+                onChange={(e) => setFormData({ ...formData, remark: e.target.value })}
+              />
+            </Grid>
+          </Grid>
+
+          <Divider sx={{ my: 2.5 }} />
+
+          <Stack direction='row' sx={{ justifyContent: 'space-between', alignItems: 'center', mb: 2 }}>
+            <Typography variant='subtitle2' sx={{ fontWeight: 600 }}>
+              付款明细
+            </Typography>
+            <Button size='small' onClick={addItem} startIcon={<Plus size={14} />}>
+              添加明细
+            </Button>
+          </Stack>
+
+          <TableContainer component={Paper} variant='outlined' sx={{ mb: 1 }}>
+            <Table size='small'>
+              <TableHead>
+                <TableRow sx={{ bgcolor: 'grey.50' }}>
+                  <TableCell sx={{ width: 40 }}>#</TableCell>
+                  <TableCell>发票号</TableCell>
+                  <TableCell align='right'>应付金额</TableCell>
+                  <TableCell align='right'>本次付款</TableCell>
+                  <TableCell>备注</TableCell>
+                  <TableCell sx={{ width: 60 }}></TableCell>
+                </TableRow>
+              </TableHead>
+              <TableBody>
+                {formData.items.map((item, index) => (
+                  <TableRow key={index}>
+                    <TableCell>{index + 1}</TableCell>
+                    <TableCell>
+                      <TextField
+                        size='small'
+                        fullWidth
+                        value={item.invoiceNo || ''}
+                        onChange={(e) => updateItem(index, 'invoiceNo', e.target.value)}
+                        placeholder='输入发票号'
+                      />
+                    </TableCell>
+                    <TableCell align='right' sx={{ width: 150 }}>
+                      <TextField
+                        size='small'
+                        type='number'
+                        value={item.payableAmount || ''}
+                        onChange={(e) =>
+                          updateItem(index, 'payableAmount', parseFloat(e.target.value) || 0)
+                        }
+                        sx={{ '& input': { textAlign: 'right' } }}
+                      />
+                    </TableCell>
+                    <TableCell align='right' sx={{ width: 150 }}>
+                      <TextField
+                        size='small'
+                        type='number'
+                        value={item.paymentAmount || ''}
+                        onChange={(e) =>
+                          updateItem(index, 'paymentAmount', parseFloat(e.target.value) || 0)
+                        }
+                        sx={{ '& input': { textAlign: 'right' } }}
+                      />
+                    </TableCell>
+                    <TableCell>
+                      <TextField
+                        size='small'
+                        fullWidth
+                        value={item.remark || ''}
+                        onChange={(e) => updateItem(index, 'remark', e.target.value)}
+                        placeholder='备注'
+                      />
+                    </TableCell>
+                    <TableCell align='center'>
+                      <IconButton
+                        size='small'
+                        color='error'
+                        onClick={() => removeItem(index)}
+                        disabled={formData.items.length <= 1}
+                      >
+                        <Trash2 size={14} />
+                      </IconButton>
+                    </TableCell>
+                  </TableRow>
+                ))}
+              </TableBody>
+            </Table>
+          </TableContainer>
+
+          <Stack direction='row' sx={{ justifyContent: 'flex-end' }}>
+            <Typography variant='body2' color='text.secondary'>
+              明细合计：
+              <Box component='span' sx={{ ml: 1, color: 'primary.main', fontWeight: 600 }}>
+                ¥
+                {formData.items
+                  .reduce((sum, item) => sum + (item.paymentAmount || 0), 0)
+                  .toLocaleString('zh-CN', { minimumFractionDigits: 2 })}
+              </Box>
+            </Typography>
           </Stack>
         </DialogContent>
-        <DialogActions>
-          <Button onClick={() => setShowCreateModal(false)}>取消</Button>
-          <Button
-            variant='contained'
-            onClick={handleCreate}
-            disabled={createLoading}
-          >
-            {createLoading ? '提交中...' : '提交申请'}
+        <DialogActions sx={{ px: 3, py: 2 }}>
+          <Button onClick={() => setShowCreateDialog(false)} disabled={actionLoading}>
+            取消
+          </Button>
+          <Button variant='contained' onClick={handleSubmit} disabled={actionLoading}>
+            {editMode ? '保存修改' : '创建'}
           </Button>
         </DialogActions>
       </Dialog>
 
       <Dialog
-        open={showApproveModal}
-        onClose={() => setShowApproveModal(false)}
-        maxWidth='sm'
+        open={showDetailDialog}
+        onClose={() => setShowDetailDialog(false)}
+        maxWidth='md'
         fullWidth
       >
-        <DialogTitle>确认付款</DialogTitle>
-        <DialogContent>
+        <DialogTitle>
+          <Stack direction='row' sx={{ justifyContent: 'space-between', alignItems: 'center' }}>
+            <span>付款单详情</span>
+            {selectedPayment && (
+              <Chip
+                label={getStatusConfig(selectedPayment.status).label}
+                size='small'
+                color={getStatusConfig(selectedPayment.status).color}
+              />
+            )}
+          </Stack>
+        </DialogTitle>
+        <DialogContent dividers>
           {selectedPayment && (
-            <Stack
-              spacing={3}
-              sx={{ pt: 2 }}
-            >
-              <MuiBox
-                sx={{
-                  display: 'grid',
-                  gridTemplateColumns: 'repeat(2, 1fr)',
-                  gap: 2,
-                }}
-              >
-                <MuiBox>
-                  <Typography
-                    variant='body2'
-                    color='text.secondary'
-                  >
+            <>
+              <Grid container spacing={2.5} sx={{ mb: 2 }}>
+                <Grid item xs={12} sm={6}>
+                  <Typography variant='body2' color='text.secondary'>
                     付款单号
                   </Typography>
-                  <Typography
-                    variant='body1'
-                    sx={{ fontWeight: 600, color: 'success.main' }}
-                  >
-                    {selectedPayment.payment_number}
+                  <Typography sx={{ fontWeight: 600, fontFamily: 'monospace' }}>
+                    {selectedPayment.paymentNo}
                   </Typography>
-                </MuiBox>
-                <MuiBox>
-                  <Typography
-                    variant='body2'
-                    color='text.secondary'
-                  >
-                    付款日期
+                </Grid>
+                <Grid item xs={12} sm={6}>
+                  <Typography variant='body2' color='text.secondary'>
+                    供应商
                   </Typography>
-                  <Typography
-                    variant='body1'
-                    sx={{ fontWeight: 500 }}
-                  >
-                    {selectedPayment.payment_date}
+                  <Typography sx={{ fontWeight: 600 }}>
+                    {selectedPayment.supplierName || '-'}
                   </Typography>
-                </MuiBox>
-              </MuiBox>
-              <MuiBox>
-                <Typography
-                  variant='body2'
-                  color='text.secondary'
-                >
-                  供应商
-                </Typography>
-                <Typography
-                  variant='body1'
-                  sx={{ fontWeight: 500 }}
-                >
-                  {selectedPayment.supplier}
-                </Typography>
-              </MuiBox>
-              <MuiBox
-                sx={{
-                  display: 'grid',
-                  gridTemplateColumns: 'repeat(2, 1fr)',
-                  gap: 2,
-                }}
-              >
-                <MuiBox sx={{ p: 2, bgcolor: 'primary.light', borderRadius: 1 }}>
-                  <Typography
-                    variant='body2'
-                    color='text.secondary'
-                  >
+                </Grid>
+                <Grid item xs={12} sm={6}>
+                  <Typography variant='body2' color='text.secondary'>
                     付款方式
                   </Typography>
-                  <Typography
-                    variant='body1'
-                    sx={{ fontWeight: 500 }}
-                  >
-                    {selectedPayment.payment_method}
+                  <Typography>
+                    {paymentMethodOptions.find((m) => m.value === selectedPayment.paymentMethod)
+                      ?.label || selectedPayment.paymentMethod}
                   </Typography>
-                </MuiBox>
-                <MuiBox sx={{ p: 2, bgcolor: 'error.light', borderRadius: 1 }}>
-                  <Typography
-                    variant='body2'
-                    color='text.secondary'
-                  >
+                </Grid>
+                <Grid item xs={12} sm={6}>
+                  <Typography variant='body2' color='text.secondary'>
                     付款金额
                   </Typography>
-                  <Typography
-                    variant='h5'
-                    sx={{ fontWeight: 700, color: 'error.main' }}
-                  >
-                    ¥{selectedPayment.amount.toLocaleString()}
+                  <Typography sx={{ fontWeight: 600, color: 'primary.main' }}>
+                    ¥
+                    {selectedPayment.totalAmount.toLocaleString('zh-CN', {
+                      minimumFractionDigits: 2,
+                    })}
                   </Typography>
-                </MuiBox>
-              </MuiBox>
-              <MuiBox>
-                <Typography
-                  variant='body2'
-                  color='text.secondary'
-                >
-                  银行账户
-                </Typography>
-                <Typography
-                  variant='body1'
-                  sx={{ fontWeight: 500 }}
-                >
-                  {selectedPayment.bank_account}
-                </Typography>
-              </MuiBox>
-            </Stack>
+                </Grid>
+                <Grid item xs={12} sm={6}>
+                  <Typography variant='body2' color='text.secondary'>
+                    开户银行
+                  </Typography>
+                  <Typography>{selectedPayment.bankName || '-'}</Typography>
+                </Grid>
+                <Grid item xs={12} sm={6}>
+                  <Typography variant='body2' color='text.secondary'>
+                    银行账号
+                  </Typography>
+                  <Typography>{selectedPayment.bankAccountNo || '-'}</Typography>
+                </Grid>
+                <Grid item xs={12}>
+                  <Typography variant='body2' color='text.secondary'>
+                    备注
+                  </Typography>
+                  <Typography>{selectedPayment.remark || '-'}</Typography>
+                </Grid>
+              </Grid>
+
+              {selectedPayment.items && selectedPayment.items.length > 0 && (
+                <>
+                  <Divider sx={{ my: 2.5 }} />
+                  <Typography variant='subtitle2' sx={{ mb: 2, fontWeight: 600 }}>
+                    付款明细
+                  </Typography>
+                  <TableContainer component={Paper} variant='outlined'>
+                    <Table size='small'>
+                      <TableHead>
+                        <TableRow sx={{ bgcolor: 'grey.50' }}>
+                          <TableCell sx={{ width: 40 }}>#</TableCell>
+                          <TableCell>发票号</TableCell>
+                          <TableCell align='right'>应付金额</TableCell>
+                          <TableCell align='right'>本次付款</TableCell>
+                          <TableCell align='right'>已核销金额</TableCell>
+                          <TableCell>核销状态</TableCell>
+                          <TableCell sx={{ width: 80 }}>操作</TableCell>
+                        </TableRow>
+                      </TableHead>
+                      <TableBody>
+                        {selectedPayment.items.map((item, index) => (
+                          <TableRow key={item.id || index}>
+                            <TableCell>{index + 1}</TableCell>
+                            <TableCell>{item.invoiceNo || '-'}</TableCell>
+                            <TableCell align='right'>
+                              {(item.payableAmount || 0).toLocaleString('zh-CN', {
+                                minimumFractionDigits: 2,
+                              })}
+                            </TableCell>
+                            <TableCell align='right'>
+                              {(item.paymentAmount || 0).toLocaleString('zh-CN', {
+                                minimumFractionDigits: 2,
+                              })}
+                            </TableCell>
+                            <TableCell align='right'>
+                              {(item.writeOffAmount || 0).toLocaleString('zh-CN', {
+                                minimumFractionDigits: 2,
+                              })}
+                            </TableCell>
+                            <TableCell>
+                              <Chip
+                                size='small'
+                                label={
+                                  item.writeOffStatus === 'completed'
+                                    ? '已核销'
+                                    : item.writeOffStatus === 'partial'
+                                    ? '部分核销'
+                                    : '待核销'
+                                }
+                                color={
+                                  item.writeOffStatus === 'completed'
+                                    ? 'success'
+                                    : item.writeOffStatus === 'partial'
+                                    ? 'warning'
+                                    : 'default'
+                                }
+                              />
+                            </TableCell>
+                            <TableCell>
+                              {item.writeOffStatus !== 'completed' && (
+                                <Button
+                                  size='small'
+                                  color='primary'
+                                  startIcon={<Link2 size={12} />}
+                                  onClick={() => handleWriteOff(item)}
+                                >
+                                  核销
+                                </Button>
+                              )}
+                            </TableCell>
+                          </TableRow>
+                        ))}
+                      </TableBody>
+                    </Table>
+                  </TableContainer>
+                </>
+              )}
+            </>
           )}
         </DialogContent>
-        <DialogActions>
-          <Button onClick={() => setShowApproveModal(false)}>取消</Button>
+        <DialogActions sx={{ px: 3, py: 2 }}>
+          <Button onClick={() => setShowDetailDialog(false)}>关闭</Button>
+          {selectedPayment && (
+            <Button
+              startIcon={<Printer size={16} />}
+              onClick={() => handlePrint(selectedPayment)}
+            >
+              打印
+            </Button>
+          )}
+          {selectedPayment && canApprove(selectedPayment.status) && (
+            <>
+              <Button
+                color='error'
+                onClick={() => handleReject(selectedPayment)}
+                disabled={actionLoading}
+                startIcon={<XCircle size={16} />}
+              >
+                拒绝
+              </Button>
+              <Button
+                variant='contained'
+                color='success'
+                onClick={() => handleApprove(selectedPayment)}
+                disabled={actionLoading}
+                startIcon={<CheckCircle size={16} />}
+              >
+                审批通过
+              </Button>
+            </>
+          )}
+          {selectedPayment && canExecute(selectedPayment.status) && (
+            <Button
+              variant='contained'
+              onClick={() => {
+                setShowDetailDialog(false);
+                handleExecute(selectedPayment);
+              }}
+              disabled={actionLoading}
+              startIcon={<ArrowUpCircle size={16} />}
+            >
+              执行付款
+            </Button>
+          )}
+        </DialogActions>
+      </Dialog>
+
+      <Dialog open={showExecuteDialog} onClose={() => setShowExecuteDialog(false)} maxWidth='sm' fullWidth>
+        <DialogTitle>执行付款</DialogTitle>
+        <DialogContent dividers>
+          <Grid container spacing={2.5} sx={{ mt: 0.5 }}>
+            <Grid item xs={12}>
+              <TextField
+                fullWidth
+                label='银行流水号'
+                value={executeFormData.bankTransactionNo}
+                onChange={(e) =>
+                  setExecuteFormData({ ...executeFormData, bankTransactionNo: e.target.value })
+                }
+                required
+              />
+            </Grid>
+            <Grid item xs={12}>
+              <TextField
+                fullWidth
+                label='实际付款日期'
+                type='date'
+                value={executeFormData.actualPaymentDate}
+                onChange={(e) =>
+                  setExecuteFormData({ ...executeFormData, actualPaymentDate: e.target.value })
+                }
+                required
+              />
+            </Grid>
+          </Grid>
+        </DialogContent>
+        <DialogActions sx={{ px: 3, py: 2 }}>
+          <Button onClick={() => setShowExecuteDialog(false)}>取消</Button>
           <Button
             variant='contained'
-            color='success'
-            onClick={confirmApprove}
+            onClick={handleExecutePayment}
+            disabled={actionLoading}
           >
-            确认付款
+            确认执行
           </Button>
         </DialogActions>
       </Dialog>
 
-      <ConfirmDialog
-        isOpen={rejectDialogOpen}
-        onClose={() => {
-          setRejectDialogOpen(false);
-          setRejectingPayment(null);
-        }}
-        onConfirm={handleReject}
-        title='确认拒绝'
-        message='确定要拒绝该付款申请吗？'
-        type='warning'
-        confirmLabel='拒绝'
-        cancelLabel='取消'
-      />
+      <Dialog open={showWriteOffDialog} onClose={() => setShowWriteOffDialog(false)} maxWidth='sm' fullWidth>
+        <DialogTitle>核销付款</DialogTitle>
+        <DialogContent dividers>
+          <Grid container spacing={2.5} sx={{ mt: 0.5 }}>
+            <Grid item xs={12}>
+              <TextField
+                fullWidth
+                label='发票号'
+                value={selectedItem?.invoiceNo || '-'}
+                disabled
+              />
+            </Grid>
+            <Grid item xs={12}>
+              <TextField
+                fullWidth
+                label='应付金额'
+                value={`¥${(selectedItem?.payableAmount || 0).toLocaleString('zh-CN', { minimumFractionDigits: 2 })}`}
+                disabled
+              />
+            </Grid>
+            <Grid item xs={12}>
+              <TextField
+                fullWidth
+                label='本次付款'
+                value={`¥${(selectedItem?.paymentAmount || 0).toLocaleString('zh-CN', { minimumFractionDigits: 2 })}`}
+                disabled
+              />
+            </Grid>
+            <Grid item xs={12}>
+              <TextField
+                fullWidth
+                label='核销金额'
+                type='number'
+                value={writeOffFormData.writeOffAmount}
+                onChange={(e) =>
+                  setWriteOffFormData({ ...writeOffFormData, writeOffAmount: e.target.value })
+                }
+                required
+              />
+            </Grid>
+          </Grid>
+        </DialogContent>
+        <DialogActions sx={{ px: 3, py: 2 }}>
+          <Button onClick={() => setShowWriteOffDialog(false)}>取消</Button>
+          <Button
+            variant='contained'
+            onClick={handleWriteOffPayment}
+            disabled={actionLoading}
+            startIcon={<Link2 size={16} />}
+          >
+            确认核销
+          </Button>
+        </DialogActions>
+      </Dialog>
 
-      <ConfirmDialog
-        isOpen={deleteDialogOpen}
-        onClose={() => {
-          setDeleteDialogOpen(false);
-          setDeletingId(null);
-        }}
-        onConfirm={handleDelete}
-        title='确认删除'
-        message='确定要删除该付款记录吗？'
-        danger
-      />
-    </PageContainer>
+      <Dialog
+        open={showPrintPreview}
+        onClose={() => setShowPrintPreview(false)}
+        maxWidth='lg'
+        fullWidth
+        slotProps={{ paper: { sx: { maxHeight: '90vh', overflow: 'auto' } } }}
+      >
+        <DialogTitle>
+          <Stack direction='row' sx={{ justifyContent: 'space-between', alignItems: 'center' }}>
+            <span>付款单打印预览</span>
+          </Stack>
+        </DialogTitle>
+        <DialogContent dividers>
+          {selectedPayment && <PaymentPrintTemplate payment={selectedPayment} />}
+        </DialogContent>
+        <DialogActions sx={{ px: 3, py: 2 }}>
+          <Button onClick={() => setShowPrintPreview(false)}>关闭</Button>
+          <Button
+            variant='contained'
+            onClick={handlePrintExecute}
+            startIcon={<Printer size={16} />}
+          >
+            打印
+          </Button>
+        </DialogActions>
+      </Dialog>
+    </Box>
   );
 };
 

@@ -16,8 +16,9 @@ import {
   Eye,
 } from 'lucide-react';
 import { Box, Typography, Chip, Button } from '@mui/material';
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 
-import { useAppStore } from '../../store';
+import { useNotificationStore } from '@/store';
 import { ListPageTemplate, type ColumnDef } from '@/components/templates';
 import { extractErrorMessage } from '@/utils/errors';
 import { PageContainer } from '@/components/common';
@@ -128,9 +129,30 @@ const mockEvents: IntegrationEvent[] = [
 ];
 
 export const IntegrationEventsPage: React.FC = () => {
-  const addNotification = useAppStore((state) => state.addNotification);
-  const [events, setEvents] = useState<IntegrationEvent[]>(mockEvents);
-  const [loading, setLoading] = useState(false);
+  const addNotification = useNotificationStore((state) => state.addNotification);
+  const queryClient = useQueryClient();
+
+  const { data: events = [], isLoading: loading } = useQuery({
+    queryKey: ['integration-events'],
+    queryFn: async () => {
+      await new Promise((resolve) => setTimeout(resolve, 300));
+      return mockEvents;
+    },
+    staleTime: 5 * 60 * 1000,
+  });
+
+  const retryMutation = useMutation({
+    mutationFn: async (_eventId: string) => {
+      return;
+    },
+    onSuccess: () => {
+      addNotification({ title: '成功', message: '重试任务已提交', type: 'success' });
+    },
+    onError: () => {
+      addNotification({ title: '失败', message: '重试任务提交失败', type: 'error' });
+    },
+  });
+
   const [searchQuery, setSearchQuery] = useState('');
   const [typeFilter, setTypeFilter] = useState<string>('all');
   const [statusFilter, setStatusFilter] = useState<string>('all');
@@ -152,21 +174,9 @@ export const IntegrationEventsPage: React.FC = () => {
     []
   );
 
-  const loadData = useCallback(async () => {
-    setLoading(true);
-    try {
-      await new Promise((resolve) => setTimeout(resolve, 300));
-      setEvents(mockEvents);
-    } catch (_err: unknown) {
-      addNotification({
-        title: '加载失败',
-        message: extractErrorMessage(_err, '加载事件日志失败'),
-        type: 'error',
-      });
-    } finally {
-      setLoading(false);
-    }
-  }, [addNotification]);
+  const handleRefresh = useCallback(() => {
+    queryClient.invalidateQueries({ queryKey: ['integration-events'] });
+  }, [queryClient]);
 
   const handleRetry = useCallback(
     (eventId: string) => {
@@ -174,11 +184,11 @@ export const IntegrationEventsPage: React.FC = () => {
         title: '确认重试',
         message: '确定要重试此同步任务吗？',
         onConfirm: () => {
-          addNotification({ title: '成功', message: '重试任务已提交', type: 'success' });
+          retryMutation.mutate(eventId);
         },
       });
     },
-    [addNotification, openConfirmDialog]
+    [retryMutation, openConfirmDialog]
   );
 
   const filteredEvents = useMemo(() => {
@@ -396,9 +406,9 @@ export const IntegrationEventsPage: React.FC = () => {
         }}
         pagination={{ page, pageSize, total: filteredEvents.length, onPageChange: setPage }}
         actions={[
-          { label: '刷新', icon: <RefreshCw size={16} />, onClick: loadData, variant: 'outlined' },
+          { label: '刷新', icon: <RefreshCw size={16} />, onClick: handleRefresh, variant: 'outlined' },
         ]}
-        onRefresh={loadData}
+        onRefresh={handleRefresh}
         emptyMessage='暂无事件记录'
       />
       <ConfirmDialog

@@ -28,7 +28,7 @@ import {
 } from 'lucide-react';
 import { ListPageTemplate, type ColumnDef, type FilterConfig } from '@/components/templates';
 import { rsApi } from '@/api/rs';
-import { useAppStore } from '@/store';
+import { useNotificationStore } from '@/store';
 import type { RsStatistics } from '@/api/rs';
 
 interface Document {
@@ -42,7 +42,7 @@ interface Document {
 }
 
 const RsDocPage: React.FC = () => {
-  const { addNotification } = useAppStore();
+  const { addNotification } = useNotificationStore();
   const [docs, setDocs] = useState<Document[]>([]);
   const [loading, setLoading] = useState(false);
   const [page, setPage] = useState(0);

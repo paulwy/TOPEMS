@@ -4,7 +4,7 @@ import { render } from '@testing-library/react';
 import { BrowserRouter } from 'react-router-dom';
 import HrmAttendancePage from '../hrm/HrmAttendancePage';
 import { hrmApi } from '@/api/hrm';
-import { useAppStore } from '@/store';
+import { useNotificationStore, useAuthStore } from '@/store';
 
 vi.mock('@/api/hrm', () => ({
   hrmApi: {
@@ -22,19 +22,24 @@ vi.mock('@/api/hrm', () => ({
 }));
 
 vi.mock('@/store', () => ({
-  useAppStore: vi.fn((selector?: any) =>
+  useNotificationStore: vi.fn((selector?: any) =>
     selector
       ? selector({
           addNotification: vi.fn(),
           notifications: [],
-          user: null,
-          theme: 'light',
         })
       : {
           addNotification: vi.fn(),
           notifications: [],
+        }
+  ),
+  useAuthStore: vi.fn((selector?: any) =>
+    selector
+      ? selector({
           user: null,
-          theme: 'light',
+        })
+      : {
+          user: null,
         }
   ),
 }));

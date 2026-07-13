@@ -7,6 +7,7 @@ use axum::{routing::get, Router};
 use axum_prometheus::PrometheusMetricLayer;
 use modules::{auth, pm_plugin};
 use prometheus::{default_registry, Gauge};
+use std::env;
 use topems_shared::{
     auth_middleware, build_health_response, create_api_info_router, create_cors_layer,
     create_database_pool, init_telemetry, rls_middleware, telemetry_middleware,

@@ -37,9 +37,9 @@ import {
   AlertCircle,
 } from 'lucide-react';
 import { DetailPageTemplate } from '@/components/templates';
-import { voucherApi, type FinancialVoucher, type VoucherItem } from '@/api/erp';
-import { PageContainer } from '@/components/common';
-import { useAppStore } from '@/store';
+import { voucherApi } from '@/api/finance';
+import type { Voucher, VoucherEntry } from '@/types/finance';
+import { useNotificationStore } from '@/store';
 import { apiLogger } from '@/utils/logger';
 
 const ct = designTokens.colors;
@@ -55,10 +55,10 @@ interface TabConfig {
 const VoucherDetailPage: React.FC = () => {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
-  const addNotification = useAppStore((state) => state.addNotification);
+  const addNotification = useNotificationStore((state) => state.addNotification);
 
-  const [voucher, setVoucher] = useState<FinancialVoucher | null>(null);
-  const [voucherItems, setVoucherItems] = useState<VoucherItem[]>([]);
+  const [voucher, setVoucher] = useState<Voucher | null>(null);
+  const [voucherItems, setVoucherItems] = useState<VoucherEntry[]>([]);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
@@ -73,11 +73,16 @@ const VoucherDetailPage: React.FC = () => {
       const result = await voucherApi.get(voucherId);
       if (result.success && result.data) {
         setVoucher(result.data);
+        if (result.data.entries && result.data.entries.length > 0) {
+          setVoucherItems(result.data.entries);
+        }
       }
 
-      const itemsResult = await voucherApi.getItems(voucherId);
-      if (itemsResult.success && itemsResult.data) {
-        setVoucherItems(itemsResult.data);
+      if (!voucherItems.length) {
+        const itemsResult = await voucherApi.getItems(voucherId);
+        if (itemsResult.success && itemsResult.data) {
+          setVoucherItems(itemsResult.data);
+        }
       }
     } catch (err: unknown) {
       apiLogger.error('加载凭证详情失败:', err);
@@ -127,7 +132,7 @@ const VoucherDetailPage: React.FC = () => {
     if (!confirm('确定要审核该凭证吗？')) return;
 
     try {
-      const result = await voucherApi.update(id!, { status: 'approved' });
+      const result = await voucherApi.approve(id!);
       if (result.success) {
         addNotification({
           title: '成功',
@@ -138,7 +143,7 @@ const VoucherDetailPage: React.FC = () => {
       } else {
         addNotification({
           title: '失败',
-          message: result.message || '审核失败',
+          message: '审核失败',
           type: 'error',
         });
       }
@@ -155,7 +160,7 @@ const VoucherDetailPage: React.FC = () => {
     if (!confirm('确定要记账该凭证吗？')) return;
 
     try {
-      const result = await voucherApi.update(id!, { status: 'posted' });
+      const result = await voucherApi.post(id!);
       if (result.success) {
         addNotification({
           title: '成功',
@@ -166,7 +171,7 @@ const VoucherDetailPage: React.FC = () => {
       } else {
         addNotification({
           title: '失败',
-          message: result.message || '记账失败',
+          message: '记账失败',
           type: 'error',
         });
       }
@@ -200,9 +205,10 @@ const VoucherDetailPage: React.FC = () => {
       }
     > = {
       draft: { label: '草稿', color: 'default' },
-      pending: { label: '待审核', color: 'warning' },
+      submitted: { label: '待审核', color: 'warning' },
       approved: { label: '已审核', color: 'info' },
       posted: { label: '已记账', color: 'success' },
+      reversed: { label: '已冲销', color: 'secondary' },
       imported: { label: '已导入', color: 'secondary' },
     };
     const config = statusConfig[status] || { label: status, color: 'default' };
@@ -262,9 +268,11 @@ const VoucherDetailPage: React.FC = () => {
     );
   }
 
+  const voucherNumber = voucher.voucher_no || voucher.voucher_number || '';
+
   const infoCard = {
     avatar: <FileText size={32} />,
-    title: voucher.voucher_number,
+    title: voucherNumber,
     subtitle: `期间: ${voucher.period}`,
     tags: [getStatusBadge(voucher.status)] as unknown as string[],
     stats: [
@@ -304,7 +312,7 @@ const VoucherDetailPage: React.FC = () => {
               variant='body1'
               sx={{ fontWeight: 600, color: 'primary.main' }}
             >
-              {voucher.voucher_number}
+              {voucherNumber}
             </Typography>
           </Box>
           <Box>
@@ -423,7 +431,7 @@ const VoucherDetailPage: React.FC = () => {
                 variant='body1'
                 sx={{ fontWeight: 500 }}
               >
-                {voucher.checker_name || '-'}
+                {voucher.checker_name || voucher.approver_name || '-'}
               </Typography>
             </Box>
           </Box>
@@ -531,11 +539,11 @@ const VoucherDetailPage: React.FC = () => {
                   key={item.id}
                   hover
                 >
-                  <TableCell>{item.line_number}</TableCell>
+                  <TableCell>{item.line_no || item.line_number || 0}</TableCell>
                   <TableCell sx={{ fontWeight: 500, color: 'primary.main' }}>
-                    {item.subject_code}
+                    {item.subject_code || item.account_code}
                   </TableCell>
-                  <TableCell>{item.subject_name}</TableCell>
+                  <TableCell>{item.subject_name || item.account_name}</TableCell>
                   <TableCell>{item.summary || '-'}</TableCell>
                   <TableCell
                     sx={{
@@ -752,26 +760,21 @@ const VoucherDetailPage: React.FC = () => {
   ];
 
   return (
-    <PageContainer
-      title={voucher.voucher_number}
+    <DetailPageTemplate
+      title={voucherNumber}
       subtitle={`期间: ${voucher.period}`}
-    >
-      <DetailPageTemplate
-        title=''
-        subtitle=''
-        breadcrumbs={[
-          { label: '首页', href: '/dashboard' },
-          { label: '财务', href: '/finance' },
-          { label: '凭证管理', href: FINANCE_PATHS.vouchers },
-          { label: voucher.voucher_number },
-        ]}
-        backHref={FINANCE_PATHS.vouchers}
-        tabs={tabs}
-        infoCard={infoCard}
-        onEdit={handleEdit}
-        onDelete={handleDelete}
-      />
-    </PageContainer>
+      breadcrumbs={[
+        { label: '首页', href: '/dashboard' },
+        { label: '财务', href: '/finance' },
+        { label: '凭证管理', href: FINANCE_PATHS.vouchers },
+        { label: voucherNumber },
+      ]}
+      backHref={FINANCE_PATHS.vouchers}
+      tabs={tabs}
+      infoCard={infoCard}
+      onEdit={handleEdit}
+      onDelete={handleDelete}
+    />
   );
 };
 

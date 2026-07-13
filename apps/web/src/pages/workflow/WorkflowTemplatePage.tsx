@@ -1,7 +1,8 @@
-import React, { useState, useEffect, useCallback, useMemo } from 'react';
+import React, { useState, useCallback, useMemo } from 'react';
 import { apiLogger } from '@/utils/logger';
-import { workflowApi } from '@/api/workflow';
+import { workflowDefinitionApi } from '@/api/workflow';
 import type { Workflow } from '@/api/workflow';
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { useNotification } from '@/hooks/useNotification';
 import {
   Box,
@@ -43,43 +44,60 @@ const getTypeText = (type: string) => {
 };
 
 const FlowTemplatePage: React.FC = () => {
-  const { success, error } = useNotification();
+  const { success, error: notifyError } = useNotification();
+  const queryClient = useQueryClient();
 
-  const [data, setData] = useState<FlowTemplate[]>([]);
-  const [loading, setLoading] = useState(false);
   const [searchTerm, setSearchTerm] = useState('');
   const [typeFilter, setTypeFilter] = useState<string>('');
   const [showDeleteDialog, setShowDeleteDialog] = useState(false);
   const [selectedTemplate, setSelectedTemplate] = useState<FlowTemplate | null>(null);
+  const [page, setPage] = useState(1);
+  const [pageSize] = useState(10);
 
-  const loadData = useCallback(async () => {
-    try {
-      setLoading(true);
-      const res = await workflowApi.listWorkflows();
-      if (res.success && res.data) {
-        const workflows = res.data.items || [];
-        const templates: FlowTemplate[] = workflows.map((w: Workflow) => ({
-          id: w.id,
-          name: w.name,
-          type: w.data?.type || 'approval',
-          scope: w.data?.scope || '全公司',
-          usageCount: w.data?.usageCount || 0,
-          creator: w.created_by || '-',
-          createdAt: new Date(w.created_at).toISOString().split('T')[0],
-        }));
-        setData(templates);
+  const { data: workflows = [], isLoading: loading } = useQuery({
+    queryKey: ['workflow-templates', page, pageSize, searchTerm, typeFilter],
+    queryFn: async () => {
+      const response = await workflowDefinitionApi.list({
+        page,
+        pagesize: pageSize,
+        ...(searchTerm ? { search: searchTerm } : {}),
+        ...(typeFilter ? { type: typeFilter } : {}),
+      });
+      if (response.success && response.data?.items) {
+        return response.data.items;
       }
-    } catch (err: unknown) {
-      apiLogger.error('Error loading templates:', err);
-      error('加载流程模板失败');
-    } finally {
-      setLoading(false);
-    }
-  }, [error]);
+      return [];
+    },
+  });
 
-  useEffect(() => {
-    loadData();
-  }, [loadData]);
+  const deleteMutation = useMutation({
+    mutationFn: (id: string) => workflowDefinitionApi.delete(id),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['workflow-templates'] });
+    },
+  });
+
+  const createMutation = useMutation({
+    mutationFn: (data: Partial<Workflow>) => workflowDefinitionApi.create(data),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['workflow-templates'] });
+    },
+  });
+
+  const data: FlowTemplate[] = useMemo(() => {
+    return workflows.map((w: Workflow) => {
+      const wData = (w as any).data || {};
+      return {
+        id: w.id,
+        name: w.name,
+        type: String(wData.type || 'approval'),
+        scope: String(wData.scope || '全公司'),
+        usageCount: Number(wData.usageCount || 0),
+        creator: (w as any).created_by || '-',
+        createdAt: new Date((w as any).created_at).toISOString().split('T')[0],
+      };
+    });
+  }, [workflows]);
 
   const filteredData = data.filter((item) => {
     const matchesSearch = item.name.toLowerCase().includes(searchTerm.toLowerCase());
@@ -97,21 +115,20 @@ const FlowTemplatePage: React.FC = () => {
 
   const handleCopy = async (template: FlowTemplate) => {
     try {
-      const workflowRes = await workflowApi.getWorkflow(template.id);
-      if (workflowRes.success && workflowRes.data) {
-        const workflow = workflowRes.data;
-        await workflowApi.createWorkflow({
+      const response = await workflowDefinitionApi.get(template.id);
+      if (response.success && response.data) {
+        const workflow = response.data;
+        await createMutation.mutateAsync({
           name: `${workflow.name} (副本)`,
-          description: workflow.description,
-          definition: workflow.definition,
+          description: (workflow as any).description,
+          definition: (workflow as any).definition,
           isactive: false,
-        });
+        } as Partial<Workflow>);
         success('模板复制成功');
-        loadData();
       }
     } catch (err: unknown) {
       apiLogger.error('Error copying template:', err);
-      error('复制模板失败');
+      notifyError('复制模板失败');
     }
   };
 
@@ -123,12 +140,11 @@ const FlowTemplatePage: React.FC = () => {
   const confirmDelete = async () => {
     if (!selectedTemplate) return;
     try {
-      await workflowApi.deleteWorkflow(selectedTemplate.id);
-      setData((prev) => prev.filter((t) => t.id !== selectedTemplate.id));
+      await deleteMutation.mutateAsync(selectedTemplate.id);
       success('模板删除成功');
     } catch (err: unknown) {
       apiLogger.error('Error deleting template:', err);
-      error('删除模板失败');
+      notifyError('删除模板失败');
     } finally {
       setShowDeleteDialog(false);
       setSelectedTemplate(null);
@@ -162,7 +178,7 @@ const FlowTemplatePage: React.FC = () => {
       {
         id: 'usageCount',
         label: '使用次数',
-        render: (row) => row.usageCount,
+        render: (row) => row.usageCount.toString(),
       },
       {
         id: 'creator',
@@ -183,112 +199,110 @@ const FlowTemplatePage: React.FC = () => {
       {
         label: '查看',
         icon: <Eye size={16} />,
-        onClick: (row) => handleView(row),
+        onClick: handleView,
       },
       {
         label: '编辑',
         icon: <Edit size={16} />,
-        onClick: (row) => handleEdit(row),
+        onClick: handleEdit,
       },
       {
         label: '复制',
         icon: <Copy size={16} />,
-        onClick: (row) => handleCopy(row),
+        onClick: handleCopy,
       },
       {
         label: '删除',
         icon: <Trash2 size={16} />,
+        onClick: handleDelete,
         color: 'error',
-        onClick: (row) => handleDelete(row),
       },
     ],
-    []
+    [handleView, handleEdit, handleCopy, handleDelete]
   );
 
   const filters = useMemo<FilterConfig[]>(
     () => [
       {
         id: 'type',
-        label: '模板类型',
+        label: '类型',
         type: 'select',
         options: [
-          { value: '', label: '全部' },
+          { value: '', label: '全部类型' },
           { value: 'approval', label: '审批流程' },
           { value: 'reimbursement', label: '报销流程' },
           { value: 'purchase', label: '采购流程' },
           { value: 'contract', label: '合同流程' },
         ],
-        value: typeFilter,
-        onChange: (value) => {
-          setTypeFilter(value as string);
-        },
       },
     ],
-    [typeFilter]
+    []
   );
 
   return (
     <PageContainer
-      title='流程模板'
-      subtitle='管理和使用流程模板'
+      headerProps={{
+        pageIcon: <FileText size={20} />,
+      }}
     >
-      <ListPageTemplate<FlowTemplate>
-        title=''
-        subtitle=''
-        backButton={{
-          href: '/dashboard',
-        }}
+      <ListPageTemplate
+        title='流程模板'
+        subtitle='管理工作流模板定义'
         columns={columns}
         data={filteredData}
         loading={loading}
+        getRowId={(row) => row.id}
+        rowActions={rowActions}
         searchable
         searchPlaceholder='搜索模板名称...'
         searchValue={searchTerm}
         onSearch={(value) => {
           setSearchTerm(value);
+          setPage(1);
         }}
         filters={filters}
-        rowActions={rowActions}
+        filtersValue={{ type: typeFilter }}
+        onFilterChange={(filters) => {
+          if (filters.type !== undefined) {
+            setTypeFilter(filters.type);
+            setPage(1);
+          }
+        }}
+        pagination={{
+          page: page - 1,
+          pageSize,
+          total: filteredData.length,
+          onPageChange: (p) => setPage(p + 1),
+        }}
+        onRefresh={() => {
+          queryClient.invalidateQueries({ queryKey: ['workflow-templates'] });
+        }}
         actions={[
           {
             label: '新建模板',
-            icon: <Plus size={18} />,
-            onClick: () => {},
+            icon: <Plus size={16} />,
+            onClick: () => apiLogger.info('新建模板'),
             variant: 'contained',
           },
         ]}
-        onRefresh={loadData}
       />
 
       <Dialog
         open={showDeleteDialog}
         onClose={() => setShowDeleteDialog(false)}
       >
-        <DialogTitle>删除模板</DialogTitle>
+        <DialogTitle>确认删除</DialogTitle>
         <DialogContent>
-          <Typography>
-            确定要删除模板 <strong>{selectedTemplate?.name}</strong> 吗？
-          </Typography>
-          <Typography
-            variant='body2'
-            sx={{ color: 'grey.500', mt: 1 }}
-          >
-            删除后无法恢复
-          </Typography>
+          <Typography>确定要删除模板「{selectedTemplate?.name}」吗？此操作不可恢复。</Typography>
         </DialogContent>
         <DialogActions>
+          <Button onClick={() => setShowDeleteDialog(false)}>取消</Button>
           <Button
-            color='inherit'
-            onClick={() => setShowDeleteDialog(false)}
-          >
-            取消
-          </Button>
-          <Button
-            variant='contained'
-            color='error'
             onClick={confirmDelete}
+            color='error'
+            variant='contained'
           >
-            确认删除
+            删除
           </Button>
         </DialogActions>
       </Dialog>

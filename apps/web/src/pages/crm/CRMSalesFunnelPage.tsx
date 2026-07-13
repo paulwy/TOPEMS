@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { Box, Typography, Card, CardContent, LinearProgress, Chip } from '@mui/material';
 import { TrendingUp, TrendingDown, Users, Target, DollarSign } from 'lucide-react';
-import { useAppStore } from '../../store';
+import { useNotificationStore } from '../../store';
 import { StatsPageTemplate, type StatsStatCard, type ChartConfig } from '@/components/templates';
 import apiClient from '@/api/client';
 import { PageContainer } from '@/components/common';
@@ -38,7 +38,7 @@ const stageLabelMap: Record<string, string> = {
 };
 
 const CRMSalesFunnelPage: React.FC = () => {
-  const addNotification = useAppStore((state) => state.addNotification);
+  const addNotification = useNotificationStore((state) => state.addNotification);
   const [metrics, setMetrics] = useState<FunnelMetrics | null>(null);
   const [stages, setStages] = useState<FunnelStage[]>([]);
   const [loading, setLoading] = useState(true);

@@ -1,5 +1,6 @@
 import apiClient from '../client';
 import type { Report, ReportSchedule, ReportExportJob } from './types';
+import type { CrudOperations } from '@/hooks/useCrudQueries';
 
 export async function fetchReports(params?: {
   page?: number;
@@ -25,6 +26,18 @@ export async function updateReport(id: string, data: Partial<Report>) {
 export async function deleteReport(id: string) {
   return await apiClient.bi.delete(`/analytics/report/${id}`);
 }
+
+export const reportCrudApi: CrudOperations<Report> = {
+  list: (params?) => fetchReports({
+    page: params?.page,
+    pageSize: params?.pagesize,
+    ...(params as any),
+  }),
+  get: fetchReport,
+  create: createReport,
+  update: updateReport,
+  delete: deleteReport,
+};
 
 export async function exportReport(id: string, format: 'pdf' | 'excel' | 'csv' | 'word') {
   return await apiClient.bi.post(`/analytics/report/${id}/export`, { format });

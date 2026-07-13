@@ -12,6 +12,7 @@ export interface MobileLayoutProps extends MobileHeaderProps {
   onTabChange?: (tabId: string) => void;
   bottomPadding?: boolean;
   enableTransition?: boolean;
+  safeAreaBottom?: boolean;
 }
 
 export const MobileLayout: React.FC<MobileLayoutProps> = ({
@@ -22,6 +23,7 @@ export const MobileLayout: React.FC<MobileLayoutProps> = ({
   onTabChange,
   bottomPadding = true,
   enableTransition = true,
+  safeAreaBottom = true,
   ...headerProps
 }) => {
   const theme = useTheme();
@@ -33,7 +35,7 @@ export const MobileLayout: React.FC<MobileLayoutProps> = ({
       sx={{
         display: 'flex',
         flexDirection: 'column',
-        minHeight: '100vh',
+        minHeight: '100dvh',
         backgroundColor: theme.palette.background.default,
         maxWidth: '100%',
         overflow: 'hidden',
@@ -55,11 +57,13 @@ export const MobileLayout: React.FC<MobileLayoutProps> = ({
       </Box>
 
       {showTabBar && tabs && tabs.length > 0 && (
-        <BottomTabBar
-          tabs={tabs}
-          activeTab={activeTab || ''}
-          onChange={onTabChange}
-        />
+        <Box sx={{ pb: safeAreaBottom ? 'env(safe-area-inset-bottom, 20px)' : 0 }}>
+          <BottomTabBar
+            tabs={tabs}
+            activeTab={activeTab || ''}
+            onChange={onTabChange}
+          />
+        </Box>
       )}
     </Box>
   );

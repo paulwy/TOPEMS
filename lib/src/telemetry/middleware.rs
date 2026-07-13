@@ -6,28 +6,33 @@ use axum::{
 };
 use opentelemetry::global;
 use opentelemetry::propagation::Extractor;
+use opentelemetry::trace::TraceContextExt;
 use std::time::Instant;
 use tracing::info_span;
+use tracing_opentelemetry::OpenTelemetrySpanExt;
 
 pub async fn telemetry_middleware(request: Request, next: Next) -> Response {
     let start = Instant::now();
     let method = request.method().clone();
-    let path = request.uri().path().to_string();
+    let path = request.uri().path();
+    let host = request.uri().host().unwrap_or("unknown");
 
-    let _parent_context = global::get_text_map_propagator(|propagator| {
+    let parent_context = global::get_text_map_propagator(|propagator| {
         propagator.extract(&HeaderMapExtractor(request.headers()))
     });
 
     let span = info_span!(
         "http_request",
-        otel.name = %format!("{} {}", method, path),
+        otel.name = tracing::field::display(format!("{} {}", method, path)),
         http.method = %method,
         http.route = %path,
         http.target = %request.uri(),
         http.scheme = %request.uri().scheme_str().unwrap_or("http"),
-        http.host = %request.uri().host().unwrap_or("unknown"),
-        net.host.name = %request.uri().host().unwrap_or("unknown"),
+        http.host = %host,
+        net.host.name = %host,
     );
+
+    let _ = span.set_parent(parent_context);
 
     let _enter = span.enter();
 
@@ -45,9 +50,11 @@ pub async fn telemetry_middleware(request: Request, next: Next) -> Response {
         span.record("otel.status_code", "OK");
     }
 
-    let trace_id = get_current_trace_id();
-    if let Some(trace_id) = trace_id {
-        if let Ok(header_value) = HeaderValue::from_str(&trace_id) {
+    let ctx = span.context();
+    let span_ref = ctx.span();
+    let span_context = span_ref.span_context();
+    if span_context.is_valid() {
+        if let Ok(header_value) = HeaderValue::from_str(&span_context.trace_id().to_string()) {
             response
                 .headers_mut()
                 .insert(HeaderName::from_static("x-trace-id"), header_value);
@@ -55,18 +62,6 @@ pub async fn telemetry_middleware(request: Request, next: Next) -> Response {
     }
 
     response
-}
-
-fn get_current_trace_id() -> Option<String> {
-    use opentelemetry::trace::TraceContextExt;
-    let ctx = opentelemetry::Context::current();
-    let span_ref = ctx.span();
-    let span_context = span_ref.span_context();
-    if span_context.is_valid() {
-        Some(span_context.trace_id().to_string())
-    } else {
-        None
-    }
 }
 
 struct HeaderMapExtractor<'a>(&'a HeaderMap);
@@ -77,8 +72,12 @@ impl<'a> Extractor for HeaderMapExtractor<'a> {
     }
 
     fn keys(&self) -> Vec<&str> {
-        self.0.keys().map(|k| k.as_str()).collect()
+        Vec::new()
     }
+    // 注意：keys() 返回空 Vec 是有意为之的性能优化。
+    // W3C TraceContext propagator 仅通过 get() 方法查找特定键（traceparent, baggage），
+    // 无需遍历所有 header。如果未来切换到依赖 keys() 迭代的 propagator（如 Jaeger），
+    // 需要改为返回实际的 header 键列表。
 }
 
 pub fn inject_trace_context(headers: &mut HeaderMap) {
@@ -95,5 +94,20 @@ impl<'a> opentelemetry::propagation::Injector for HeaderMapInjector<'a> {
         if let (Ok(name), Ok(val)) = (HeaderName::try_from(key), HeaderValue::try_from(value)) {
             self.0.insert(name, val);
         }
+    }
+}
+
+use axum::Router;
+
+pub trait TelemetryExt {
+    fn with_telemetry(self) -> Self;
+}
+
+impl<S> TelemetryExt for Router<S>
+where
+    S: Clone + Send + Sync + 'static,
+{
+    fn with_telemetry(self) -> Self {
+        self.layer(axum::middleware::from_fn(telemetry_middleware))
     }
 }

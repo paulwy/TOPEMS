@@ -832,6 +832,15 @@ export default function ContractManagementPage() {
               },
             ]}
             emptyMessage='暂无合同数据'
+            exportable
+            exportFileName='合同列表'
+            persistFilters
+            persistSearch
+            emptyActionButton={{
+              label: '新建合同',
+              icon: <Plus size={16} />,
+              onClick: handleCreate,
+            }}
           />
         </Card>
       </Box>

@@ -23,7 +23,7 @@ import type {
   DeliveryAppointmentStats,
 } from '@/api/scm';
 import { scmApi } from '@/api/scm';
-import { useAppStore } from '@/store';
+import { useNotificationStore } from '@/store';
 import {
   Plus,
   Edit,
@@ -129,7 +129,7 @@ const ScmDeliveryAppointmentPage: React.FC = () => {
     remarks: '',
   });
 
-  const { addNotification } = useAppStore();
+  const { addNotification } = useNotificationStore();
 
   const loadAppointments = useCallback(async () => {
     try {

@@ -1,4 +1,4 @@
-import React, { useState, useCallback, useEffect, useRef } from 'react';
+import React, { useState, useCallback, useEffect, useRef, useMemo } from 'react';
 import {
   Box,
   Typography,
@@ -15,6 +15,7 @@ import {
   CircularProgress,
   Button,
 } from '@mui/material';
+import { useInfiniteQuery } from '@tanstack/react-query';
 import {
   Home,
   ListTodo,
@@ -95,82 +96,58 @@ const mapApiTaskToTask = (apiTask: ApiTask): Task => {
   };
 };
 
+const pageSize = 10;
+
 const MobileTaskListPage: React.FC = () => {
   const theme = useTheme();
   const navigate = useNavigate();
   const [activeTab, setActiveTab] = useState(0);
   const [searchQuery, setSearchQuery] = useState('');
-  const [loading, setLoading] = useState(true);
-  const [loadingMore, setLoadingMore] = useState(false);
-  const [tasks, setTasks] = useState<Task[]>([]);
-  const [hasMore, setHasMore] = useState(true);
   const loadMoreRef = useRef<HTMLDivElement>(null);
-  const pageSize = 10;
-  const currentPage = useRef(1);
 
   const tabs = ['全部', '待办', '进行中', '已完成'];
 
-  const loadTasks = useCallback(
-    async (reset: boolean = false) => {
-      if (reset) {
-        setLoading(true);
-        currentPage.current = 1;
-        setHasMore(true);
-      } else {
-        setLoadingMore(true);
+  const tasksQuery = useInfiniteQuery({
+    queryKey: ['mobile-tasks', activeTab],
+    queryFn: async ({ pageParam = 1 }) => {
+      const response = await mobileApi.listMobileTasks({
+        page: pageParam,
+        pagesize: pageSize,
+      });
+      if (response.success && response.data) {
+        const data = response.data as any;
+        const apiTasks = Array.isArray(data) ? data : data.items || [];
+        const tasks = apiTasks.map(mapApiTaskToTask);
+        const total = data.total || apiTasks.length;
+        return { tasks, total, page: pageParam };
       }
-
-      try {
-        const response = await mobileApi.listMobileTasks({
-          page: currentPage.current,
-          pagesize: pageSize,
-        });
-        if (response.success && response.data) {
-          const data = response.data as any;
-          const apiTasks = Array.isArray(data) ? data : data.items || [];
-          const newTasks = apiTasks.map(mapApiTaskToTask);
-
-          if (reset) {
-            setTasks(newTasks);
-          } else {
-            setTasks((prev) => [...prev, ...newTasks]);
-          }
-
-          const total = data.total || apiTasks.length;
-          const currentTotal = reset ? newTasks.length : tasks.length + newTasks.length;
-          if (currentTotal >= total) {
-            setHasMore(false);
-          }
-          currentPage.current += 1;
-        } else {
-          if (reset) {
-            setTasks([]);
-          }
-          setHasMore(false);
-        }
-      } catch (err) {
-        apiLogger.error('加载任务列表失败:', err);
-        if (reset) {
-          setTasks([]);
-        }
-        setHasMore(false);
-      } finally {
-        setLoading(false);
-        setLoadingMore(false);
-      }
+      return { tasks: [], total: 0, page: pageParam };
     },
-    [tasks.length]
-  );
+    initialPageParam: 1,
+    getNextPageParam: (lastPage) => {
+      const loadedCount = lastPage.page * pageSize;
+      if (loadedCount < lastPage.total) {
+        return lastPage.page + 1;
+      }
+      return undefined;
+    },
+    staleTime: 30 * 1000,
+    retry: 2,
+  });
 
-  useEffect(() => {
-    loadTasks(true);
-  }, [loadTasks]);
+  const tasks = useMemo(
+    () => tasksQuery.data?.pages.flatMap((page) => page.tasks) || [],
+    [tasksQuery.data]
+  );
+  const hasMore = !!tasksQuery.hasNextPage;
+  const loading = tasksQuery.isLoading;
+  const loadingMore = tasksQuery.isFetchingNextPage;
 
   useEffect(() => {
     const observer = new IntersectionObserver(
       (entries) => {
         if (entries[0].isIntersecting && hasMore && !loadingMore && !loading) {
-          loadTasks(false);
+          tasksQuery.fetchNextPage();
         }
       },
       { threshold: 0.1 }
@@ -181,11 +158,11 @@ const MobileTaskListPage: React.FC = () => {
     }
 
     return () => observer.disconnect();
-  }, [hasMore, loadingMore, loading, loadTasks]);
+  }, [hasMore, loadingMore, loading, tasksQuery]);
 
   const handleRefresh = useCallback(async () => {
-    await loadTasks(true);
-  }, [loadTasks]);
+    await tasksQuery.refetch();
+  }, [tasksQuery]);
 
   const getStatusConfig = (status: Task['status']) => {
     switch (status) {
@@ -229,7 +206,6 @@ const MobileTaskListPage: React.FC = () => {
 
   const handleTabChange = (_event: React.SyntheticEvent, newValue: number) => {
     setActiveTab(newValue);
-    loadTasks(true);
   };
 
   const handleTaskClick = (_task: Task) => {};

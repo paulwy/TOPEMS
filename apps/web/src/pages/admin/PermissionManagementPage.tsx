@@ -16,7 +16,7 @@ import React, { useState, useEffect, useMemo, useCallback } from 'react';
 import { Key, Plus, Trash2, ChevronLeft, Shield, AlertCircle, RefreshCw, Edit } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { authApi, type Permission } from '@/api/iam';
-import { useAppStore } from '../../store';
+import { useNotificationStore } from '../../store';
 import { ModeToggle } from '@/components/theme/ModeToggle';
 import { ListPageTemplate, type ColumnDef } from '@/components/templates';
 import { extractErrorMessage } from '@/utils/errors';
@@ -51,7 +51,7 @@ const PermissionManagementPage: React.FC<PermissionManagementPageProps> = ({
   onNavigate: _onNavigate,
 }) => {
   const navigate = useNavigate();
-  const addNotification = useAppStore((state) => state.addNotification);
+  const addNotification = useNotificationStore((state) => state.addNotification);
   const [permissions, setPermissions] = useState<Permission[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);

@@ -17,6 +17,7 @@ use axum::{
 use chrono::{DateTime, Utc};
 use serde::{Deserialize, Serialize};
 use sqlx::{postgres::PgPoolOptions, PgPool, Row};
+use std::env;
 use uuid::Uuid;
 
 use topems_shared::{

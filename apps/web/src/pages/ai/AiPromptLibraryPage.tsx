@@ -50,9 +50,10 @@ import {
   Check,
 } from 'lucide-react';
 import { PageContainer, Grid } from '@/components/common';
-import { useAppStore } from '@/store';
+import { useNotificationStore } from '@/store';
 import { logger } from '@/utils/logger';
 import { designTokens } from '@/theme/tokens';
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 
 const ct = designTokens.colors;
 
@@ -191,7 +192,59 @@ const getCategoryColor = (category: string) => {
 };
 
 export const AiPromptLibraryPage: React.FC = () => {
-  const addNotification = useAppStore((state) => state.addNotification);
+  const addNotification = useNotificationStore((state) => state.addNotification);
+  const queryClient = useQueryClient();
+
+  const { data: prompts = [] } = useQuery({
+    queryKey: ['ai-prompts'],
+    queryFn: async () => {
+      return mockPrompts;
+    },
+    staleTime: 5 * 60 * 1000,
+  });
+
+  const toggleFavoriteMutation = useMutation({
+    mutationFn: async (promptId: string) => {
+      return promptId;
+    },
+    onMutate: async (promptId) => {
+      await queryClient.cancelQueries({ queryKey: ['ai-prompts'] });
+      const previousPrompts = queryClient.getQueryData<PromptTemplate[]>(['ai-prompts']);
+      queryClient.setQueryData<PromptTemplate[]>(['ai-prompts'], (old) =>
+        old
+          ? old.map((p) =>
+              p.id === promptId ? { ...p, is_favorite: !p.is_favorite } : p
+            )
+          : []
+      );
+      return { previousPrompts };
+    },
+    onError: (_err, _id, context) => {
+      if (context?.previousPrompts) {
+        queryClient.setQueryData(['ai-prompts'], context.previousPrompts);
+      }
+    },
+  });
+
+  const deletePromptMutation = useMutation({
+    mutationFn: async (promptId: string) => {
+      return promptId;
+    },
+    onMutate: async (promptId) => {
+      await queryClient.cancelQueries({ queryKey: ['ai-prompts'] });
+      const previousPrompts = queryClient.getQueryData<PromptTemplate[]>(['ai-prompts']);
+      queryClient.setQueryData<PromptTemplate[]>(['ai-prompts'], (old) =>
+        old ? old.filter((p) => p.id !== promptId) : []
+      );
+      return { previousPrompts };
+    },
+    onError: (_err, _id, context) => {
+      if (context?.previousPrompts) {
+        queryClient.setQueryData(['ai-prompts'], context.previousPrompts);
+      }
+    },
+  });
+
   const [activeCategory, setActiveCategory] = useState<PromptCategory>('all');
   const [searchQuery, setSearchQuery] = useState('');
   const [showFavoritesOnly, setShowFavoritesOnly] = useState(false);
@@ -202,7 +255,7 @@ export const AiPromptLibraryPage: React.FC = () => {
   const [generating, setGenerating] = useState(false);
   const [viewTab, setViewTab] = useState<'all' | 'mine'>('all');
 
-  const filteredPrompts = mockPrompts.filter((p) => {
+  const filteredPrompts = prompts.filter((p) => {
     const matchCategory = activeCategory === 'all' || p.category === activeCategory;
     const matchSearch =
       !searchQuery ||
@@ -259,10 +312,14 @@ export const AiPromptLibraryPage: React.FC = () => {
   };
 
   const handleToggleFavorite = (id: string) => {
-    addNotification({
-      title: '成功',
-      message: '收藏状态已更新',
-      type: 'success',
+    toggleFavoriteMutation.mutate(id, {
+      onSuccess: () => {
+        addNotification({
+          title: '成功',
+          message: '收藏状态已更新',
+          type: 'success',
+        });
+      },
     });
   };
 

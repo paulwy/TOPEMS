@@ -7,7 +7,7 @@ import { z } from 'zod';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { Eye, EyeOff, Lock, User, Shield, Fingerprint } from 'lucide-react';
 import { isDevelopment } from '../../config/runtime';
-import { useAppStore } from '../../store';
+import { useNotificationStore } from '../../store';
 import { AUTH_PATHS } from '@/routes/auth';
 
 import {
@@ -44,7 +44,7 @@ interface LoginPageProps {
 const LoginPage: React.FC<LoginPageProps> = ({ onLogin }) => {
   const navigate = useNavigate();
   const { login, isAuthenticated, logout, user } = useAuth();
-  const addNotification = useAppStore((state) => state.addNotification);
+  const addNotification = useNotificationStore((state) => state.addNotification);
 
   const [isRegister, setIsRegister] = useState(false);
   const [showPassword, setShowPassword] = useState(false);

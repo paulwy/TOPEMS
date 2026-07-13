@@ -12,12 +12,13 @@ import {
   Box,
   Button,
 } from '@mui/material';
-import React, { useState, useEffect, useMemo } from 'react';
+import React, { useState, useMemo, useCallback, useEffect } from 'react';
 import { Plus, Edit, Trash2, DollarSign, ClipboardCheck, Wrench } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
-import { assetApi, type Asset } from '@/api/erp';
+import { useCrudOperations } from '@/hooks/useCrudQueries';
+import { useQuery } from '@tanstack/react-query';
+import { equipmentCrudApi, type Equipment } from '@/api/asset';
 import { employeeApi, type Employee } from '@/api/hrm';
-import { useAppStore } from '../../store';
 import {
   ListPageTemplate,
   type ColumnDef,
@@ -30,25 +31,17 @@ import { DASHBOARD_PATHS } from '@/routes/dashboard';
 
 const EquipmentManagementPage: React.FC = () => {
   const navigate = useNavigate();
-  const addNotification = useAppStore((state) => state.addNotification);
 
-  const [assets, setAssets] = useState<Asset[]>([]);
-  const [employees, setEmployees] = useState<Employee[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
   const [searchQuery, setSearchQuery] = useState('');
   const [debouncedSearch, setDebouncedSearch] = useState('');
   const [filterStatus, setFilterStatus] = useState<string>('all');
-  const [currentPage, setCurrentPage] = useState(1);
-  const [pageSize] = useState(20);
-  const [totalAssets, setTotalAssets] = useState(0);
 
   const [showCreateModal, setShowCreateModal] = useState(false);
   const [showEditModal, setShowEditModal] = useState(false);
-  const [selectedAsset, setSelectedAsset] = useState<Asset | null>(null);
+  const [selectedAsset, setSelectedAsset] = useState<Equipment | null>(null);
 
-  const [newAsset, setNewAsset] = useState<Partial<Asset>>({
-    asset_number: '',
+  const [newAsset, setNewAsset] = useState<Partial<Equipment>>({
+    equipment_code: '',
     name: '',
     category: '',
     brand: '',
@@ -60,153 +53,99 @@ const EquipmentManagementPage: React.FC = () => {
     status: 'idle',
   });
 
-  // 防抖搜索
+  const {
+    data: equipments,
+    loading,
+    error,
+    pagination,
+    fetch,
+    refresh,
+    create: createItem,
+    update: updateItem,
+    delete: deleteItem,
+  } = useCrudOperations<Equipment>({
+    api: equipmentCrudApi,
+    queryKey: 'asset-equipments',
+    defaultPageSize: 20,
+    pageParamName: 'page',
+    pageSizeParamName: 'pagesize',
+  });
+
+  const { data: employeesData } = useQuery({
+    queryKey: ['hrm-employees-all'],
+    queryFn: async () => {
+      const res = await employeeApi.list();
+      if (res.success && res.data) {
+        return res.data.items || [];
+      }
+      return [];
+    },
+    staleTime: 5 * 60 * 1000,
+  });
+
+  const employees = employeesData || [];
+
   useEffect(() => {
     const timer = setTimeout(() => {
       setDebouncedSearch(searchQuery);
-      setCurrentPage(1);
+      pagination.setPage(1);
     }, 300);
     return () => clearTimeout(timer);
-  }, [searchQuery]);
+  }, [searchQuery, pagination]);
 
   useEffect(() => {
-    loadData();
-  }, [currentPage, debouncedSearch, filterStatus]);
-
-  const loadData = async () => {
-    setLoading(true);
-    setError(null);
-    try {
-      const params: Record<string, unknown> = {
-        page: currentPage,
-        pagesize: pageSize,
-      };
-      if (debouncedSearch) {
-        params.search = debouncedSearch;
-      }
-      if (filterStatus !== 'all') {
-        params.status = filterStatus;
-      }
-
-      const [assetRes, employeeRes] = await Promise.all([
-        assetApi.list(params),
-        employeeApi.list(),
-      ]);
-
-      if (assetRes.success && assetRes.data) {
-        setAssets(assetRes.data.items || []);
-        setTotalAssets(assetRes.data.total || 0);
-      }
-
-      if (employeeRes.success && employeeRes.data) {
-        setEmployees(employeeRes.data.items || []);
-      }
-    } catch (err: unknown) {
-      setError((err as { message?: string }).message || '加载数据失败');
-      addNotification({
-        title: '加载失败',
-        message: '加载数据失败',
-        type: 'error',
-      });
-    } finally {
-      setLoading(false);
+    const params: Record<string, unknown> = {};
+    if (debouncedSearch) {
+      params.search = debouncedSearch;
     }
-  };
+    if (filterStatus !== 'all') {
+      params.status = filterStatus;
+    }
+    fetch(params);
+  }, [debouncedSearch, filterStatus, fetch]);
 
   const handleCreateAsset = async (e: React.FormEvent) => {
     e.preventDefault();
     try {
-      const res = await assetApi.create(newAsset);
-      if (res.success) {
-        addNotification({
-          title: '成功',
-          message: '设备创建成功',
-          type: 'success',
-        });
-        setShowCreateModal(false);
-        setNewAsset({
-          asset_number: '',
-          name: '',
-          category: '',
-          brand: '',
-          model: '',
-          purchase_date: '',
-          purchase_amount: 0,
-          location: '',
-          responsible_id: '',
-          status: 'idle',
-        });
-        loadData();
-      } else {
-        addNotification({
-          title: '失败',
-          message: res.message || '创建设备失败',
-          type: 'error',
-        });
-      }
-    } catch (err: unknown) {
-      addNotification({
-        title: '失败',
-        message: (err as { message?: string }).message || '创建设备失败',
-        type: 'error',
+      await createItem(newAsset);
+      setShowCreateModal(false);
+      setNewAsset({
+        equipment_code: '',
+        name: '',
+        category: '',
+        brand: '',
+        model: '',
+        purchase_date: '',
+        purchase_amount: 0,
+        location: '',
+        responsible_id: '',
+        status: 'idle',
       });
+    } catch (_err: unknown) {
+      // 错误已由 useCrudOperations 处理
     }
   };
 
-  const handleDeleteAsset = async (id: string) => {
-    if (!confirm('确定要删除这个设备吗？')) return;
-    try {
-      const res = await assetApi.delete(id);
-      if (res.success) {
-        addNotification({
-          title: '成功',
-          message: '设备删除成功',
-          type: 'success',
-        });
-        loadData();
-      } else {
-        addNotification({
-          title: '失败',
-          message: res.message || '删除设备失败',
-          type: 'error',
-        });
+  const handleDeleteAsset = useCallback(
+    async (id: string) => {
+      try {
+        await deleteItem(id);
+      } catch (_err: unknown) {
+        // 错误已由 useCrudOperations 处理
       }
-    } catch (err: unknown) {
-      addNotification({
-        title: '失败',
-        message: (err as { message?: string }).message || '删除设备失败',
-        type: 'error',
-      });
-    }
-  };
+    },
+    [deleteItem]
+  );
 
   const handleEditAsset = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!selectedAsset) return;
     try {
-      const res = await assetApi.update(selectedAsset.id, selectedAsset);
-      if (res.success) {
-        addNotification({
-          title: '成功',
-          message: '设备信息更新成功',
-          type: 'success',
-        });
-        setShowEditModal(false);
-        setSelectedAsset(null);
-        loadData();
-      } else {
-        addNotification({
-          title: '失败',
-          message: res.message || '更新设备失败',
-          type: 'error',
-        });
-      }
-    } catch (err: unknown) {
-      addNotification({
-        title: '失败',
-        message: (err as { message?: string }).message || '更新设备失败',
-        type: 'error',
-      });
+      await updateItem(selectedAsset.id, selectedAsset);
+      setShowEditModal(false);
+      setSelectedAsset(null);
+    } catch (_err: unknown) {
+      // 错误已由 useCrudOperations 处理
     }
   };
 
@@ -255,17 +194,17 @@ const EquipmentManagementPage: React.FC = () => {
   const handleFilterChange = (filters: Record<string, unknown>) => {
     if (filters.status !== undefined) {
       setFilterStatus(filters.status as string);
-      setCurrentPage(1);
+      pagination.setPage(1);
     }
   };
 
-  const columns = useMemo<ColumnDef<Asset>[]>(
+  const columns = useMemo<ColumnDef<Equipment>[]>(
     () => [
       {
-        id: 'asset_number',
+        id: 'equipment_code',
         label: '设备编号',
         render: (row) => (
-          <Typography sx={{ fontWeight: 500, color: 'grey.900' }}>{row.asset_number}</Typography>
+          <Typography sx={{ fontWeight: 500, color: 'grey.900' }}>{row.equipment_code}</Typography>
         ),
       },
       {
@@ -328,7 +267,7 @@ const EquipmentManagementPage: React.FC = () => {
     [employees]
   );
 
-  const rowActions = useMemo<RowAction<Asset>[]>(
+  const rowActions = useMemo<RowAction<Equipment>[]>(
     () => [
       {
         label: '编辑',
@@ -348,7 +287,7 @@ const EquipmentManagementPage: React.FC = () => {
       },
     ],
 
-    []
+    [handleDeleteAsset]
   );
 
   return (
@@ -363,7 +302,7 @@ const EquipmentManagementPage: React.FC = () => {
           onClick: () => navigate(DASHBOARD_PATHS.dashboard),
         }}
         columns={columns}
-        data={assets}
+        data={equipments}
         loading={loading}
         error={error || undefined}
         getRowId={(row) => row.id}
@@ -375,13 +314,13 @@ const EquipmentManagementPage: React.FC = () => {
         filtersValue={{ status: filterStatus }}
         onFilterChange={handleFilterChange}
         pagination={{
-          page: currentPage,
-          pageSize,
-          total: totalAssets,
-          onPageChange: setCurrentPage,
+          page: pagination.page,
+          pageSize: pagination.pageSize,
+          total: pagination.total,
+          onPageChange: pagination.setPage,
         }}
         rowActions={rowActions}
-        onRefresh={loadData}
+        onRefresh={refresh}
         actions={[
           {
             label: '点检记录',
@@ -423,8 +362,8 @@ const EquipmentManagementPage: React.FC = () => {
               >
                 <TextField
                   label='设备编号 *'
-                  value={newAsset.asset_number || ''}
-                  onChange={(e) => setNewAsset({ ...newAsset, asset_number: e.target.value })}
+                  value={newAsset.equipment_code || ''}
+                  onChange={(e) => setNewAsset({ ...newAsset, equipment_code: e.target.value })}
                   fullWidth
                   required
                 />
@@ -484,62 +423,14 @@ const EquipmentManagementPage: React.FC = () => {
                 />
                 <TextField
                   label='制造商'
-                  value={newAsset.manufacturer || ''}
-                  onChange={(e) => setNewAsset({ ...newAsset, manufacturer: e.target.value })}
+                  value={newAsset.brand || ''}
+                  onChange={(e) => setNewAsset({ ...newAsset, brand: e.target.value })}
                   fullWidth
                 />
                 <TextField
                   label='部门'
                   value={newAsset.department || ''}
                   onChange={(e) => setNewAsset({ ...newAsset, department: e.target.value })}
-                  fullWidth
-                />
-              </div>
-
-              <div
-                style={{
-                  display: 'grid',
-                  gridTemplateColumns: '1fr 1fr 1fr',
-                  gap: 16,
-                }}
-              >
-                <TextField
-                  label='额定功率 (kW)'
-                  type='number'
-                  slotProps={{ htmlInput: { step: '0.01' } }}
-                  value={newAsset.rated_power || ''}
-                  onChange={(e) =>
-                    setNewAsset({
-                      ...newAsset,
-                      rated_power: Number(e.target.value),
-                    })
-                  }
-                  fullWidth
-                />
-                <TextField
-                  label='额定电压 (V)'
-                  type='number'
-                  slotProps={{ htmlInput: { step: '0.01' } }}
-                  value={newAsset.rated_voltage || ''}
-                  onChange={(e) =>
-                    setNewAsset({
-                      ...newAsset,
-                      rated_voltage: Number(e.target.value),
-                    })
-                  }
-                  fullWidth
-                />
-                <TextField
-                  label='额定电流 (A)'
-                  type='number'
-                  slotProps={{ htmlInput: { step: '0.01' } }}
-                  value={newAsset.rated_current || ''}
-                  onChange={(e) =>
-                    setNewAsset({
-                      ...newAsset,
-                      rated_current: Number(e.target.value),
-                    })
-                  }
                   fullWidth
                 />
               </div>
@@ -604,7 +495,7 @@ const EquipmentManagementPage: React.FC = () => {
                       })
                     }
                   >
-                    <MenuItem value='none'>无</MenuItem>
+                    <MenuItem value=''>无</MenuItem>
                     {employees.map((emp) => (
                       <MenuItem
                         key={emp.id}
@@ -617,33 +508,19 @@ const EquipmentManagementPage: React.FC = () => {
                 </FormControl>
               </div>
 
-              <div
-                style={{
-                  display: 'grid',
-                  gridTemplateColumns: '1fr 1fr',
-                  gap: 16,
-                }}
-              >
-                <FormControl fullWidth>
-                  <InputLabel>状态</InputLabel>
-                  <Select
-                    value={newAsset.status || 'idle'}
-                    label='状态'
-                    onChange={(e) => setNewAsset({ ...newAsset, status: e.target.value })}
-                  >
-                    <MenuItem value='idle'>闲置</MenuItem>
-                    <MenuItem value='in_use'>使用中</MenuItem>
-                    <MenuItem value='maintenance'>维护中</MenuItem>
-                    <MenuItem value='scrapped'>报废</MenuItem>
-                  </Select>
-                </FormControl>
-                <TextField
-                  label='图片URL'
-                  value={newAsset.image_url || ''}
-                  onChange={(e) => setNewAsset({ ...newAsset, image_url: e.target.value })}
-                  fullWidth
-                />
-              </div>
+              <FormControl fullWidth>
+                <InputLabel>状态</InputLabel>
+                <Select
+                  value={newAsset.status || 'idle'}
+                  label='状态'
+                  onChange={(e) => setNewAsset({ ...newAsset, status: e.target.value })}
+                >
+                  <MenuItem value='idle'>闲置</MenuItem>
+                  <MenuItem value='in_use'>使用中</MenuItem>
+                  <MenuItem value='maintenance'>维护中</MenuItem>
+                  <MenuItem value='scrapped'>报废</MenuItem>
+                </Select>
+              </FormControl>
 
               <TextField
                 label='技术规格'
@@ -700,11 +577,11 @@ const EquipmentManagementPage: React.FC = () => {
                 >
                   <TextField
                     label='设备编号 *'
-                    value={selectedAsset.asset_number}
+                    value={selectedAsset.equipment_code}
                     onChange={(e) =>
                       setSelectedAsset({
                         ...selectedAsset,
-                        asset_number: e.target.value,
+                        equipment_code: e.target.value,
                       })
                     }
                     fullWidth
@@ -786,11 +663,11 @@ const EquipmentManagementPage: React.FC = () => {
                   />
                   <TextField
                     label='制造商'
-                    value={selectedAsset.manufacturer || ''}
+                    value={selectedAsset.brand || ''}
                     onChange={(e) =>
                       setSelectedAsset({
                         ...selectedAsset,
-                        manufacturer: e.target.value,
+                        brand: e.target.value,
                       })
                     }
                     fullWidth
@@ -802,54 +679,6 @@ const EquipmentManagementPage: React.FC = () => {
                       setSelectedAsset({
                         ...selectedAsset,
                         department: e.target.value,
-                      })
-                    }
-                    fullWidth
-                  />
-                </div>
-
-                <div
-                  style={{
-                    display: 'grid',
-                    gridTemplateColumns: '1fr 1fr 1fr',
-                    gap: 16,
-                  }}
-                >
-                  <TextField
-                    label='额定功率 (kW)'
-                    type='number'
-                    slotProps={{ htmlInput: { step: '0.01' } }}
-                    value={selectedAsset.rated_power || ''}
-                    onChange={(e) =>
-                      setSelectedAsset({
-                        ...selectedAsset,
-                        rated_power: Number(e.target.value),
-                      })
-                    }
-                    fullWidth
-                  />
-                  <TextField
-                    label='额定电压 (V)'
-                    type='number'
-                    slotProps={{ htmlInput: { step: '0.01' } }}
-                    value={selectedAsset.rated_voltage || ''}
-                    onChange={(e) =>
-                      setSelectedAsset({
-                        ...selectedAsset,
-                        rated_voltage: Number(e.target.value),
-                      })
-                    }
-                    fullWidth
-                  />
-                  <TextField
-                    label='额定电流 (A)'
-                    type='number'
-                    slotProps={{ htmlInput: { step: '0.01' } }}
-                    value={selectedAsset.rated_current || ''}
-                    onChange={(e) =>
-                      setSelectedAsset({
-                        ...selectedAsset,
-                        rated_current: Number(e.target.value),
                       })
                     }
                     fullWidth
@@ -922,7 +751,7 @@ const EquipmentManagementPage: React.FC = () => {
                         })
                       }
                     >
-                      <MenuItem value='none'>无</MenuItem>
+                      <MenuItem value=''>无</MenuItem>
                       {employees.map((emp) => (
                         <MenuItem
                           key={emp.id}

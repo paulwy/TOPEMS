@@ -39,7 +39,7 @@ import type { AuditLog as LimsAuditLog } from '@/api/lims';
 import { auditLimsApi } from '@/api/lims';
 import type { AuditLog as RsAuditLog } from '@/api/rs';
 import { auditRsApi } from '@/api/rs';
-import { useAppStore } from '../../store';
+import { useNotificationStore } from '@/store';
 import { apiLogger } from '@/utils/logger';
 import { ListPageTemplate, type ColumnDef, type FilterConfig } from '@/components/templates';
 import { extractErrorMessage } from '@/utils/errors';
@@ -67,7 +67,7 @@ type AuditLogSource = 'lims' | 'rs';
 type AuditLog = LimsAuditLog | RsAuditLog;
 
 const AuditLogPage: React.FC<AuditLogPageProps> = ({ onNavigate }) => {
-  const addNotification = useAppStore((state) => state.addNotification);
+  const addNotification = useNotificationStore((state) => state.addNotification);
 
   const [logs, setLogs] = useState<AuditLog[]>([]);
   const [loading, setLoading] = useState(true);

@@ -54,6 +54,7 @@ export const MobileHeader: React.FC<MobileHeaderProps> = ({
         color: theme.palette.text.primary,
         backgroundImage: 'none',
         zIndex: theme.zIndex.appBar,
+        paddingTop: 'env(safe-area-inset-top, 0px)',
       }}
     >
       <Toolbar

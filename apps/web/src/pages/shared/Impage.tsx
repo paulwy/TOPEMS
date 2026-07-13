@@ -1,8 +1,8 @@
 import React from 'react';
 import { ChatInterface } from '@/components/im/ChatInterface';
 
-const Impage: React.FC = () => {
+const IMPage: React.FC = () => {
   return <ChatInterface />;
 };
 
-export default Impage;
+export default IMPage;

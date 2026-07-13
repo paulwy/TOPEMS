@@ -8,6 +8,9 @@ export const DASHBOARD_PATHS = {
   profile: '/profile',
   addressbook: '/addressbook',
   help: '/help',
+  helpCenter: '/help/center',
+  helpFaq: '/help/faq',
+  helpGuide: '/help/guide',
 } as const;
 
 export const MOBILE_TAB_PATHS = {
@@ -24,6 +27,9 @@ const HybridHomePage = safeLazy(() => import('../pages/shared/HybridHomePage'));
 const ModulesOverviewPage = safeLazy(() => import('../pages/shared/ModulesOverviewPage'));
 const ProfilePage = safeLazy(() => import('../pages/shared/ProfilePage'));
 const AddressbookPage = safeLazy(() => import('../pages/oa/AddressbookPage'));
+const HelpCenterPage = safeLazy(() => import('../pages/help/HelpCenterPage'));
+const FaqPage = safeLazy(() => import('../pages/help/FaqPage'));
+const GuidePage = safeLazy(() => import('../pages/help/GuidePage'));
 
 export const dashboardRoutes: RouteConfig[] = [
   {
@@ -48,5 +54,17 @@ export const dashboardRoutes: RouteConfig[] = [
     requiredPermissions: ['hrm:read'],
     module: 'hrm',
     action: 'read',
+  },
+  {
+    path: DASHBOARD_PATHS.helpCenter,
+    element: HelpCenterPage,
+  },
+  {
+    path: DASHBOARD_PATHS.helpFaq,
+    element: FaqPage,
+  },
+  {
+    path: DASHBOARD_PATHS.helpGuide,
+    element: GuidePage,
   },
 ];

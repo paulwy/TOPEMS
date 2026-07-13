@@ -31,7 +31,7 @@ import type {
   InventoryTurnoverStat,
   PriceComparison,
 } from '@/api/scm';
-import { useAppStore } from '@/store';
+import { useNotificationStore } from '@/store';
 import { apiLogger } from '@/utils/logger';
 import { SCM_PATHS } from '@/modules/scm/config';
 
@@ -57,7 +57,7 @@ const lineData = [
 
 export const DashboardPage: React.FC = () => {
   const navigate = useNavigate();
-  const { addNotification } = useAppStore();
+  const { addNotification } = useNotificationStore();
 
   const [loading, setLoading] = useState(true);
   const [overviewLoading, setOverviewLoading] = useState(true);

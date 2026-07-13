@@ -106,7 +106,7 @@ function createRemoteLazyComponent(
 
 interface DynamicRouteProps {
   path: string;
-  element: React.ReactNode;
+  element: React.ReactElement;
 }
 
 export const DynamicRouter: React.FC = () => {

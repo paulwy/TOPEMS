@@ -37,7 +37,7 @@ import { ListPageTemplate, type ColumnDef } from '@/components/templates';
 import { ehsApi } from '@/api/ehs';
 import { PageContainer } from '@/components/common/PageContainerV2';
 import type { Incident, IncidentAction } from '@/api/ehs';
-import { useAppStore } from '@/store';
+import { useNotificationStore } from '@/store';
 import { designTokens } from '@/theme/tokens';
 
 const ct = designTokens.colors;
@@ -61,7 +61,7 @@ const EhsIncidentReportPage: React.FC = () => {
     reported_at: new Date().toISOString().split('T')[0],
     status: 'pending' as 'pending' | 'investigating' | 'resolved' | 'closed',
   });
-  const addNotification = useAppStore((state) => state.addNotification);
+  const addNotification = useNotificationStore((state) => state.addNotification);
 
   useEffect(() => {
     loadIncidents();

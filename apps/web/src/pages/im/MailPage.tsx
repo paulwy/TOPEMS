@@ -48,7 +48,7 @@ import {
   MessageSquare,
 } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
-import { useAppStore } from '../../store';
+import { useNotificationStore } from '@/store';
 import { ConfirmDialog } from '@topems/shared-components';
 import { PageContainer } from '@/components/common';
 import {
@@ -96,7 +96,7 @@ const validateJson = (jsonString: string): boolean => {
 const MailPage: React.FC = () => {
   const theme = useTheme();
   const navigate = useNavigate();
-  const addNotification = useAppStore((state) => state.addNotification);
+  const addNotification = useNotificationStore((state) => state.addNotification);
 
   const [activeTab, setActiveTab] = useState('emails');
   const [emails, setEmails] = useState<Email[]>([]);

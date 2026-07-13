@@ -2,7 +2,7 @@ import React, { useState, useEffect, useMemo } from 'react';
 import { Box, Typography } from '@mui/material';
 import type { Contact, CreateContactRequest, UpdateContactRequest } from '@/api/crm';
 import { crmApi } from '@/api/crm';
-import { useAppStore } from '@/store';
+import { useNotificationStore } from '@/store';
 import { logger } from '@/utils/logger';
 import {
   DataExport,
@@ -38,7 +38,7 @@ const ContactManagementPage: React.FC = () => {
     total: 0,
   });
 
-  const { addNotification } = useAppStore();
+  const { addNotification } = useNotificationStore();
 
   useEffect(() => {
     loadContacts();

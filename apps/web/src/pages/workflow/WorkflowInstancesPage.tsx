@@ -1,5 +1,5 @@
 /**
- * 工作流实例列表页面 - V4.0 标准化改造
+ * 工作流实例列表页面 - V4.0 标准化改造 (React Query 迁移)
  *
  * @module pages/workflow
  * @path /workflow/instances
@@ -22,12 +22,16 @@ import {
 } from 'lucide-react';
 import { Box, Typography, Chip, Avatar } from '@mui/material';
 import { useNavigate } from 'react-router-dom';
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 
-import { useAppStore } from '../../store';
+import { useNotificationStore } from '../../store';
 import { ListPageTemplate, type ColumnDef } from '@/components/templates';
 import { extractErrorMessage } from '@/utils/errors';
 import { PageContainer, ConfirmDialog } from '@/components/common';
 import { WORKFLOW_PATHS } from '@/modules/workflow/config';
+import { instanceApi } from '@/api/workflow';
+import type { WorkflowInstance } from '@/api/workflow';
+import { apiLogger } from '@/utils/logger';
 
 /**
  * 实例状态配置
@@ -40,6 +44,9 @@ const STATUS_CONFIG: Record<
   completed: { label: '已完成', color: 'success' },
   cancelled: { label: '已取消', color: 'error' },
   suspended: { label: '已挂起', color: 'warning' },
+  terminated: { label: '已终止', color: 'error' },
+  pending: { label: '待处理', color: 'warning' },
+  rejected: { label: '已拒绝', color: 'error' },
 };
 
 /**
@@ -55,105 +62,11 @@ const TYPE_CONFIG: Record<
   automation: { label: '自动化', color: 'warning' },
 };
 
-interface WorkflowInstance {
-  id: string;
-  workflow_name: string;
-  workflow_code: string;
-  workflow_type: string;
-  initiator_name: string;
-  initiator_avatar?: string;
-  current_node: string;
-  status: string;
-  started_at: string;
-  duration?: number;
-}
-
-const mockInstances: WorkflowInstance[] = [
-  {
-    id: '1',
-    workflow_name: '采购订单审批',
-    workflow_code: 'purchase-order-approval',
-    workflow_type: 'approval',
-    initiator_name: '张三',
-    current_node: '部门经理审批',
-    status: 'running',
-    started_at: '2024-01-15 09:30:00',
-    duration: 3600,
-  },
-  {
-    id: '2',
-    workflow_name: '请假审批',
-    workflow_code: 'leave-approval',
-    workflow_type: 'approval',
-    initiator_name: '李四',
-    current_node: '已完成',
-    status: 'completed',
-    started_at: '2024-01-14 14:20:00',
-    duration: 7200,
-  },
-  {
-    id: '3',
-    workflow_name: '费用报销',
-    workflow_code: 'expense-reimbursement',
-    workflow_type: 'approval',
-    initiator_name: '王五',
-    current_node: '财务审核',
-    status: 'running',
-    started_at: '2024-01-15 10:15:00',
-    duration: 1800,
-  },
-  {
-    id: '4',
-    workflow_name: '数据同步任务',
-    workflow_code: 'data-sync-task',
-    workflow_type: 'automation',
-    initiator_name: '系统',
-    current_node: '已挂起',
-    status: 'suspended',
-    started_at: '2024-01-15 08:00:00',
-    duration: 5400,
-  },
-  {
-    id: '5',
-    workflow_name: '合同审批',
-    workflow_code: 'contract-approval',
-    workflow_type: 'approval',
-    initiator_name: '赵六',
-    current_node: '已取消',
-    status: 'cancelled',
-    started_at: '2024-01-13 16:45:00',
-    duration: 10800,
-  },
-  {
-    id: '6',
-    workflow_name: '库存预警通知',
-    workflow_code: 'inventory-alert',
-    workflow_type: 'notification',
-    initiator_name: '系统',
-    current_node: '已完成',
-    status: 'completed',
-    started_at: '2024-01-15 07:30:00',
-    duration: 300,
-  },
-  {
-    id: '7',
-    workflow_name: '生产工单流转',
-    workflow_code: 'production-workorder',
-    workflow_type: 'business',
-    initiator_name: '孙七',
-    current_node: '车间执行',
-    status: 'running',
-    started_at: '2024-01-15 06:00:00',
-    duration: 14400,
-  },
-];
-
 export const WorkflowInstancesPage: React.FC = () => {
   const navigate = useNavigate();
-  const addNotification = useAppStore((state) => state.addNotification);
+  const addNotification = useNotificationStore((state) => state.addNotification);
+  const queryClient = useQueryClient();
 
-  const [instances, setInstances] = useState<WorkflowInstance[]>(mockInstances);
-  const [loading, setLoading] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
   const [statusFilter, setStatusFilter] = useState<string>('all');
   const [typeFilter, setTypeFilter] = useState<string>('all');
@@ -168,6 +81,47 @@ export const WorkflowInstancesPage: React.FC = () => {
     danger?: boolean;
   } | null>(null);
 
+  const { data: instances = [], isLoading: loading } = useQuery({
+    queryKey: ['workflow-instances', page, pageSize, searchQuery, statusFilter, typeFilter],
+    queryFn: async () => {
+      const response = await instanceApi.list({
+        page,
+        pagesize: pageSize,
+        ...(searchQuery ? { search: searchQuery } : {}),
+        ...(statusFilter !== 'all' ? { status: statusFilter } : {}),
+      });
+      if (response.success && response.data?.items) {
+        return response.data.items;
+      }
+      return [];
+    },
+  });
+
+  const deleteMutation = useMutation({
+    mutationFn: (id: string) => instanceApi.delete(id),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['workflow-instances'] });
+    },
+  });
+
+  const suspendMutation = useMutation({
+    mutationFn: (id: string) => instanceApi.suspendInstance(id),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['workflow-instances'] });
+    },
+  });
+
+  const cancelMutation = useMutation({
+    mutationFn: (id: string) => instanceApi.cancelInstance(id),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['workflow-instances'] });
+    },
+  });
+
+  const refresh = useCallback(() => {
+    queryClient.invalidateQueries({ queryKey: ['workflow-instances'] });
+  }, [queryClient]);
+
   const openConfirmDialog = useCallback(
     (config: { title: string; message: string; onConfirm: () => void; danger?: boolean }) => {
       setConfirmDialogConfig(config);
@@ -175,22 +129,6 @@ export const WorkflowInstancesPage: React.FC = () => {
     },
     []
   );
-
-  const loadData = useCallback(async () => {
-    setLoading(true);
-    try {
-      await new Promise((resolve) => setTimeout(resolve, 300));
-      setInstances(mockInstances);
-    } catch (_err: unknown) {
-      addNotification({
-        title: '加载失败',
-        message: extractErrorMessage(_err, '加载流程实例失败'),
-        type: 'error',
-      });
-    } finally {
-      setLoading(false);
-    }
-  }, [addNotification]);
 
   const handleViewDetail = useCallback(
     (instance: WorkflowInstance) => {
@@ -210,16 +148,10 @@ export const WorkflowInstancesPage: React.FC = () => {
     (instance: WorkflowInstance) => {
       openConfirmDialog({
         title: '确认挂起',
-        message: `确定要挂起流程"${instance.workflow_name}"吗？`,
-        onConfirm: () => {
+        message: `确定要挂起流程"${instance.workflow_name || instance.name || ''}"吗？`,
+        onConfirm: async () => {
           try {
-            setInstances((prev) =>
-              prev.map((item) =>
-                item.id === instance.id
-                  ? { ...item, status: 'suspended', current_node: '已挂起' }
-                  : item
-              )
-            );
+            await suspendMutation.mutateAsync(instance.id);
             addNotification({
               title: '成功',
               message: '流程已挂起',
@@ -235,24 +167,18 @@ export const WorkflowInstancesPage: React.FC = () => {
         },
       });
     },
-    [addNotification, openConfirmDialog]
+    [addNotification, openConfirmDialog, suspendMutation]
   );
 
   const handleCancel = useCallback(
     (instance: WorkflowInstance) => {
       openConfirmDialog({
         title: '确认取消',
-        message: `确定要取消流程"${instance.workflow_name}"吗？此操作不可撤销。`,
+        message: `确定要取消流程"${instance.workflow_name || instance.name || ''}"吗？此操作不可撤销。`,
         danger: true,
-        onConfirm: () => {
+        onConfirm: async () => {
           try {
-            setInstances((prev) =>
-              prev.map((item) =>
-                item.id === instance.id
-                  ? { ...item, status: 'cancelled', current_node: '已取消' }
-                  : item
-              )
-            );
+            await cancelMutation.mutateAsync(instance.id);
             addNotification({
               title: '成功',
               message: '流程已取消',
@@ -268,40 +194,54 @@ export const WorkflowInstancesPage: React.FC = () => {
         },
       });
     },
-    [addNotification, openConfirmDialog]
+    [addNotification, openConfirmDialog, cancelMutation]
   );
 
   const filteredInstances = useMemo(() => {
-    return instances.filter((instance) => {
+    return (instances as WorkflowInstance[]).filter((instance: WorkflowInstance) => {
+      const workflowName = instance.workflow_name || instance.name || '';
+      const initiatorName = instance.start_user_name || '';
       const matchesSearch =
         !searchQuery ||
-        instance.workflow_name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-        instance.initiator_name.toLowerCase().includes(searchQuery.toLowerCase());
+        workflowName.toLowerCase().includes(searchQuery.toLowerCase()) ||
+        initiatorName.toLowerCase().includes(searchQuery.toLowerCase());
 
       const matchesStatus = statusFilter === 'all' || instance.status === statusFilter;
-      const matchesType = typeFilter === 'all' || instance.workflow_type === typeFilter;
+
+      const workflowType = (instance as any).data?.type as string;
+      const matchesType = typeFilter === 'all' || workflowType === typeFilter;
 
       return matchesSearch && matchesStatus && matchesType;
     });
   }, [instances, searchQuery, statusFilter, typeFilter]);
 
   const stats = useMemo(() => {
-    const runningCount = instances.filter((i) => i.status === 'running').length;
-    const completedCount = instances.filter((i) => i.status === 'completed').length;
-    const todayCount = instances.filter((i) => {
+    const instancesArray = instances as WorkflowInstance[];
+    const runningCount = instancesArray.filter((i: WorkflowInstance) => i.status === 'running').length;
+    const completedCount = instancesArray.filter((i: WorkflowInstance) => i.status === 'completed').length;
+    const todayCount = instancesArray.filter((i: WorkflowInstance) => {
       const today = new Date().toDateString();
-      return new Date(i.started_at).toDateString() === today;
+      const date = i.started_at || i.created_at;
+      return date && new Date(date).toDateString() === today;
     }).length;
-    const avgDuration =
-      instances.length > 0
-        ? Math.round(instances.reduce((sum, i) => sum + (i.duration || 0), 0) / instances.length)
-        : 0;
 
     const formatDuration = (seconds: number) => {
       if (seconds < 60) return `${seconds}秒`;
       if (seconds < 3600) return `${Math.round(seconds / 60)}分钟`;
       return `${Math.round(seconds / 3600)}小时`;
     };
+
+    let totalDuration = 0;
+    let completedWithDuration = 0;
+    instancesArray.forEach((i: WorkflowInstance) => {
+      if (i.status === 'completed' && i.started_at && i.completed_at) {
+        const duration =
+          (new Date(i.completed_at).getTime() - new Date(i.started_at).getTime()) / 1000;
+        totalDuration += duration;
+        completedWithDuration++;
+      }
+    });
+    const avgDuration = completedWithDuration > 0 ? Math.round(totalDuration / completedWithDuration) : 0;
 
     return [
       {
@@ -363,13 +303,13 @@ export const WorkflowInstancesPage: React.FC = () => {
                 variant='body2'
                 sx={{ fontWeight: 600 }}
               >
-                {row.workflow_name}
+                {row.workflow_name || row.name || '-'}
               </Typography>
               <Typography
                 variant='caption'
                 color='text.secondary'
               >
-                {row.workflow_code}
+                {row.workflow_id || ''}
               </Typography>
             </Box>
           </Box>
@@ -379,11 +319,12 @@ export const WorkflowInstancesPage: React.FC = () => {
         id: 'workflow_type',
         label: '流程类型',
         render: (row) => {
-          const typeConfig = TYPE_CONFIG[row.workflow_type];
+          const workflowType = (row as any).data?.type as string;
+          const typeConfig = TYPE_CONFIG[workflowType];
           return (
             <Chip
               size='small'
-              label={typeConfig?.label || row.workflow_type}
+              label={typeConfig?.label || workflowType || '-'}
               color={typeConfig?.color || 'default'}
               variant='outlined'
             />
@@ -404,9 +345,9 @@ export const WorkflowInstancesPage: React.FC = () => {
                 color: 'primary.main',
               }}
             >
-              {row.initiator_name.charAt(0)}
+              {(row.start_user_name || 'U').charAt(0)}
             </Avatar>
-            <Typography variant='body2'>{row.initiator_name}</Typography>
+            <Typography variant='body2'>{row.start_user_name || '-'}</Typography>
           </Box>
         ),
       },
@@ -423,7 +364,7 @@ export const WorkflowInstancesPage: React.FC = () => {
               variant='body2'
               color='text.secondary'
             >
-              {row.current_node}
+              {row.currentnode || '-'}
             </Typography>
           </Box>
         ),
@@ -455,7 +396,7 @@ export const WorkflowInstancesPage: React.FC = () => {
               variant='body2'
               color='text.secondary'
             >
-              {row.started_at}
+              {row.started_at || row.created_at || '-'}
             </Typography>
           </Box>
         ),
@@ -576,7 +517,7 @@ export const WorkflowInstancesPage: React.FC = () => {
           total: filteredInstances.length,
           onPageChange: handlePageChange,
         }}
-        onRefresh={loadData}
+        onRefresh={refresh}
         emptyMessage='暂无流程实例'
       />
 
@@ -586,7 +527,10 @@ export const WorkflowInstancesPage: React.FC = () => {
         title={confirmDialogConfig?.title || ''}
         message={confirmDialogConfig?.message || ''}
         danger={confirmDialogConfig?.danger}
-        onConfirm={confirmDialogConfig?.onConfirm}
+        onConfirm={() => {
+          confirmDialogConfig?.onConfirm();
+          setConfirmDialogOpen(false);
+        }}
       />
     </PageContainer>
   );

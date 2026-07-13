@@ -1,4 +1,4 @@
-import React, { useState, useMemo, useCallback } from 'react';
+import React, { useState, useMemo } from 'react';
 import {
   Box,
   Typography,
@@ -28,138 +28,20 @@ import {
   CheckSquare,
 } from 'lucide-react';
 
-import { useAppStore } from '../../store';
+import { useNotificationStore } from '../../store';
 import { ListPageTemplate, type ColumnDef } from '@/components/templates';
 import { extractErrorMessage } from '@/utils/errors';
 import { PageContainer, ConfirmDialog } from '@/components/common';
 import { designTokens } from '@/theme/tokens';
+import { monitorApi, alertCrudApi, type Alert } from '@/api/monitor';
+import { useCrudOperations } from '@/hooks/useCrudQueries';
+import { useMutation, useQueryClient } from '@tanstack/react-query';
 
 const ct = designTokens.colors;
 
 type AlertSeverity = 'critical' | 'warning' | 'info';
 type AlertStatus = 'active' | 'acknowledged' | 'resolved';
 type TabType = 'all' | 'critical' | 'warning' | 'info' | 'resolved';
-
-interface Alert {
-  id: string;
-  name: string;
-  severity: AlertSeverity;
-  service: string;
-  description: string;
-  triggeredAt: string;
-  status: AlertStatus;
-  acknowledgedBy?: string;
-  resolvedAt?: string;
-}
-
-const MOCK_ALERTS: Alert[] = [
-  {
-    id: 'alert-001',
-    name: 'CPU使用率过高',
-    severity: 'critical',
-    service: '用户服务',
-    description: 'CPU使用率持续超过90%，已持续5分钟',
-    triggeredAt: '2024-01-15 09:30:00',
-    status: 'active',
-  },
-  {
-    id: 'alert-002',
-    name: '内存使用率警告',
-    severity: 'warning',
-    service: '订单服务',
-    description: '内存使用率达到85%，接近阈值',
-    triggeredAt: '2024-01-15 10:15:00',
-    status: 'active',
-  },
-  {
-    id: 'alert-003',
-    name: '磁盘空间不足',
-    severity: 'critical',
-    service: '数据库服务',
-    description: '磁盘剩余空间不足10%',
-    triggeredAt: '2024-01-15 08:45:00',
-    status: 'acknowledged',
-    acknowledgedBy: '运维工程师',
-  },
-  {
-    id: 'alert-004',
-    name: '服务响应延迟',
-    severity: 'warning',
-    service: '支付服务',
-    description: '接口平均响应时间超过2秒',
-    triggeredAt: '2024-01-15 11:00:00',
-    status: 'active',
-  },
-  {
-    id: 'alert-005',
-    name: '新服务部署成功',
-    severity: 'info',
-    service: '消息服务',
-    description: '消息队列服务v2.1.0部署完成',
-    triggeredAt: '2024-01-15 07:30:00',
-    status: 'resolved',
-    resolvedAt: '2024-01-15 07:35:00',
-  },
-  {
-    id: 'alert-006',
-    name: '数据库连接池耗尽',
-    severity: 'critical',
-    service: '数据库服务',
-    description: '数据库连接池使用率达到100%',
-    triggeredAt: '2024-01-14 22:10:00',
-    status: 'resolved',
-    acknowledgedBy: 'DBA',
-    resolvedAt: '2024-01-14 22:30:00',
-  },
-  {
-    id: 'alert-007',
-    name: '缓存命中率下降',
-    severity: 'warning',
-    service: '缓存服务',
-    description: 'Redis缓存命中率降至70%以下',
-    triggeredAt: '2024-01-15 09:00:00',
-    status: 'acknowledged',
-    acknowledgedBy: '后端工程师',
-  },
-  {
-    id: 'alert-008',
-    name: 'API错误率上升',
-    severity: 'critical',
-    service: '网关服务',
-    description: '5xx错误率超过5%',
-    triggeredAt: '2024-01-15 10:30:00',
-    status: 'active',
-  },
-  {
-    id: 'alert-009',
-    name: '证书即将过期',
-    severity: 'info',
-    service: '网关服务',
-    description: 'SSL证书将在30天后过期',
-    triggeredAt: '2024-01-15 06:00:00',
-    status: 'active',
-  },
-  {
-    id: 'alert-010',
-    name: '定时任务执行失败',
-    severity: 'warning',
-    service: '任务调度服务',
-    description: '每日数据同步任务执行失败',
-    triggeredAt: '2024-01-15 02:00:00',
-    status: 'resolved',
-    acknowledgedBy: '后端工程师',
-    resolvedAt: '2024-01-15 03:15:00',
-  },
-  {
-    id: 'alert-011',
-    name: '日志磁盘空间告警',
-    severity: 'warning',
-    service: '日志服务',
-    description: '日志存储磁盘使用率达到80%',
-    triggeredAt: '2024-01-14 18:00:00',
-    status: 'active',
-  },
-];
 
 const SEVERITY_LABELS: Record<AlertSeverity, string> = {
   critical: '严重',
@@ -187,15 +69,6 @@ const STATUS_COLORS: Record<AlertStatus, 'error' | 'warning' | 'success'> = {
 
 const SERVICE_OPTIONS = [
   { label: '全部服务', value: 'all' },
-  { label: '用户服务', value: '用户服务' },
-  { label: '订单服务', value: '订单服务' },
-  { label: '支付服务', value: '支付服务' },
-  { label: '数据库服务', value: '数据库服务' },
-  { label: '缓存服务', value: '缓存服务' },
-  { label: '网关服务', value: '网关服务' },
-  { label: '消息服务', value: '消息服务' },
-  { label: '任务调度服务', value: '任务调度服务' },
-  { label: '日志服务', value: '日志服务' },
 ];
 
 const getSeverityIcon = (severity: AlertSeverity) => {
@@ -210,22 +83,60 @@ const getSeverityIcon = (severity: AlertSeverity) => {
 };
 
 export const MonitorAlertsPage: React.FC = () => {
-  const addNotification = useAppStore((state) => state.addNotification);
+  const addNotification = useNotificationStore((state) => state.addNotification);
+  const queryClient = useQueryClient();
 
   const [activeTab, setActiveTab] = useState<TabType>('all');
-  const [alerts, setAlerts] = useState<Alert[]>(MOCK_ALERTS);
-  const [loading, setLoading] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
   const [severityFilter, setSeverityFilter] = useState<string>('all');
   const [statusFilter, setStatusFilter] = useState<string>('all');
   const [serviceFilter, setServiceFilter] = useState<string>('all');
-  const [page, setPage] = useState(1);
-  const pageSize = 10;
 
   const [selectedIds, setSelectedIds] = useState<(string | number)[]>([]);
   const [batchAcknowledgeDialogOpen, setBatchAcknowledgeDialogOpen] = useState(false);
   const [batchResolveDialogOpen, setBatchResolveDialogOpen] = useState(false);
-  const [actionLoading, setActionLoading] = useState(false);
+
+  const {
+    data: alerts,
+    loading,
+    error,
+    pagination,
+    fetch,
+    refresh,
+  } = useCrudOperations<Alert>({
+    api: alertCrudApi,
+    queryKey: 'monitor-alerts',
+    defaultPageSize: 10,
+    pageParamName: 'page',
+    pageSizeParamName: 'pagesize',
+    autoFetch: true,
+  });
+
+  const acknowledgeMutation = useMutation({
+    mutationFn: (id: string) => monitorApi.acknowledgeAlert(id),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['monitor-alerts'] });
+      addNotification({ title: '确认成功', message: '告警已确认', type: 'success' });
+    },
+    onError: (err: unknown) => {
+      const message = extractErrorMessage(err, '确认操作失败');
+      addNotification({ title: '操作失败', message, type: 'error' });
+    },
+  });
+
+  const resolveMutation = useMutation({
+    mutationFn: (id: string) => monitorApi.resolveAlert(id),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['monitor-alerts'] });
+      addNotification({ title: '已解决', message: '告警已标记为已解决', type: 'success' });
+    },
+    onError: (err: unknown) => {
+      const message = extractErrorMessage(err, '解决操作失败');
+      addNotification({ title: '操作失败', message, type: 'error' });
+    },
+  });
+
+  const actionLoading = acknowledgeMutation.isPending || resolveMutation.isPending;
 
   const filteredAlerts = useMemo(() => {
     let result = alerts;
@@ -243,7 +154,7 @@ export const MonitorAlertsPage: React.FC = () => {
     if (searchQuery) {
       const query = searchQuery.toLowerCase();
       result = result.filter(
-        (a) => a.name.toLowerCase().includes(query) || a.service.toLowerCase().includes(query)
+        (a) => a.title.toLowerCase().includes(query) || a.service_name.toLowerCase().includes(query)
       );
     }
 
@@ -256,18 +167,11 @@ export const MonitorAlertsPage: React.FC = () => {
     }
 
     if (serviceFilter !== 'all') {
-      result = result.filter((a) => a.service === serviceFilter);
+      result = result.filter((a) => a.service_name === serviceFilter);
     }
 
     return result;
   }, [alerts, activeTab, searchQuery, severityFilter, statusFilter, serviceFilter]);
-
-  const pagedAlerts = useMemo(() => {
-    const start = (page - 1) * pageSize;
-    return filteredAlerts.slice(start, start + pageSize);
-  }, [filteredAlerts, page]);
-
-  const total = filteredAlerts.length;
 
   const stats = useMemo(() => {
     const activeCount = alerts.filter((a) => a.status === 'active').length;
@@ -279,7 +183,7 @@ export const MonitorAlertsPage: React.FC = () => {
     ).length;
     const todayCount = alerts.filter((a) => {
       const today = new Date().toDateString();
-      return new Date(a.triggeredAt).toDateString() === today;
+      return new Date(a.created_at).toDateString() === today;
     }).length;
 
     return [
@@ -314,118 +218,64 @@ export const MonitorAlertsPage: React.FC = () => {
     ];
   }, [alerts]);
 
-  const getSeverityChip = useCallback((severity: AlertSeverity) => {
-    return (
-      <Chip
-        size='small'
-        color={SEVERITY_COLORS[severity]}
-        label={SEVERITY_LABELS[severity]}
-        variant='outlined'
-      />
-    );
-  }, []);
-
-  const getStatusChip = useCallback((status: AlertStatus) => {
-    return (
-      <Chip
-        size='small'
-        color={STATUS_COLORS[status]}
-        label={STATUS_LABELS[status]}
-        variant='outlined'
-      />
-    );
-  }, []);
-
-  const handleAcknowledge = useCallback(
-    (alert: Alert) => {
-      try {
-        setActionLoading(true);
-        setAlerts((prev) =>
-          prev.map((a) =>
-            a.id === alert.id
-              ? { ...a, status: 'acknowledged' as const, acknowledgedBy: '当前用户' }
-              : a
-          )
-        );
-        addNotification({
-          title: '确认成功',
-          message: `已确认「${alert.name}」告警`,
-          type: 'success',
-        });
-      } catch (_err: unknown) {
-        addNotification({
-          title: '操作失败',
-          message: extractErrorMessage(_err, '确认操作失败'),
-          type: 'error',
-        });
-      } finally {
-        setActionLoading(false);
-      }
-    },
-    [addNotification]
-  );
-
-  const handleResolve = useCallback(
-    (alert: Alert) => {
-      try {
-        setActionLoading(true);
-        setAlerts((prev) =>
-          prev.map((a) =>
-            a.id === alert.id
-              ? { ...a, status: 'resolved' as const, resolvedAt: new Date().toISOString() }
-              : a
-          )
-        );
-        addNotification({
-          title: '已解决',
-          message: `已标记「${alert.name}」为已解决`,
-          type: 'success',
-        });
-      } catch (_err: unknown) {
-        addNotification({
-          title: '操作失败',
-          message: extractErrorMessage(_err, '解决操作失败'),
-          type: 'error',
-        });
-      } finally {
-        setActionLoading(false);
-      }
-    },
-    [addNotification]
-  );
-
-  const handleViewDetail = useCallback(
-    (alert: Alert) => {
-      addNotification({
-        title: '查看详情',
-        message: `查看「${alert.name}」的详情`,
-        type: 'info',
-      });
-    },
-    [addNotification]
-  );
-
-  const handleSuppress = useCallback(
-    (alert: Alert) => {
-      addNotification({
-        title: '屏蔽告警',
-        message: `已屏蔽「${alert.name}」告警`,
-        type: 'warning',
-      });
-    },
-    [addNotification]
-  );
-
-  const handleBatchAcknowledge = useCallback(async () => {
-    try {
-      setActionLoading(true);
-      setAlerts((prev) =>
-        prev.map((a) =>
-          selectedIds.includes(a.id)
-            ? { ...a, status: 'acknowledged' as const, acknowledgedBy: '当前用户' }
-            : a
-        )
+  const getSeverityChip = useMemo(
+    () => (severity: AlertSeverity) => {
+      return (
+        <Chip
+          size='small'
+          color={SEVERITY_COLORS[severity]}
+          label={SEVERITY_LABELS[severity]}
+          variant='outlined'
+        />
       );
+    },
+    []
+  );
+
+  const getStatusChip = useMemo(
+    () => (status: AlertStatus) => {
+      return (
+        <Chip
+          size='small'
+          color={STATUS_COLORS[status]}
+          label={STATUS_LABELS[status]}
+          variant='outlined'
+        />
+      );
+    },
+    []
+  );
+
+  const handleAcknowledge = (alert: Alert) => {
+    acknowledgeMutation.mutate(alert.id);
+  };
+
+  const handleResolve = (alert: Alert) => {
+    resolveMutation.mutate(alert.id);
+  };
+
+  const handleViewDetail = (alert: Alert) => {
+    addNotification({
+      title: '查看详情',
+      message: `查看「${alert.title}」的详情`,
+      type: 'info',
+    });
+  };
+
+  const handleSuppress = (alert: Alert) => {
+    addNotification({
+      title: '屏蔽告警',
+      message: `已屏蔽「${alert.title}」告警`,
+      type: 'warning',
+    });
+  };
+
+  const handleBatchAcknowledge = async () => {
+    try {
+      await Promise.all(
+        selectedIds.map((id) => monitorApi.acknowledgeAlert(String(id)))
+      );
+      queryClient.invalidateQueries({ queryKey: ['monitor-alerts'] });
       addNotification({
         title: '批量确认成功',
         message: `已确认 ${selectedIds.length} 条告警`,
@@ -433,27 +283,18 @@ export const MonitorAlertsPage: React.FC = () => {
       });
       setSelectedIds([]);
       setBatchAcknowledgeDialogOpen(false);
-    } catch (_err: unknown) {
-      addNotification({
-        title: '操作失败',
-        message: extractErrorMessage(_err, '批量确认失败'),
-        type: 'error',
-      });
-    } finally {
-      setActionLoading(false);
+    } catch (err: unknown) {
+      const message = extractErrorMessage(err, '批量确认失败');
+      addNotification({ title: '操作失败', message, type: 'error' });
     }
-  }, [selectedIds, addNotification]);
+  };
 
-  const handleBatchResolve = useCallback(async () => {
+  const handleBatchResolve = async () => {
     try {
-      setActionLoading(true);
-      setAlerts((prev) =>
-        prev.map((a) =>
-          selectedIds.includes(a.id)
-            ? { ...a, status: 'resolved' as const, resolvedAt: new Date().toISOString() }
-            : a
-        )
+      await Promise.all(
+        selectedIds.map((id) => monitorApi.resolveAlert(String(id)))
       );
+      queryClient.invalidateQueries({ queryKey: ['monitor-alerts'] });
       addNotification({
         title: '批量解决成功',
         message: `已解决 ${selectedIds.length} 条告警`,
@@ -461,28 +302,23 @@ export const MonitorAlertsPage: React.FC = () => {
       });
       setSelectedIds([]);
       setBatchResolveDialogOpen(false);
-    } catch (_err: unknown) {
-      addNotification({
-        title: '操作失败',
-        message: extractErrorMessage(_err, '批量解决失败'),
-        type: 'error',
-      });
-    } finally {
-      setActionLoading(false);
+    } catch (err: unknown) {
+      const message = extractErrorMessage(err, '批量解决失败');
+      addNotification({ title: '操作失败', message, type: 'error' });
     }
-  }, [selectedIds, addNotification]);
+  };
 
-  const handleExport = useCallback(() => {
+  const handleExport = () => {
     try {
       const exportData = filteredAlerts.map((alert) => ({
-        告警名称: alert.name,
-        严重级别: SEVERITY_LABELS[alert.severity],
-        所属服务: alert.service,
-        告警描述: alert.description,
-        触发时间: alert.triggeredAt,
-        状态: STATUS_LABELS[alert.status],
-        确认人: alert.acknowledgedBy || '-',
-        解决时间: alert.resolvedAt || '-',
+        告警名称: alert.title,
+        严重级别: SEVERITY_LABELS[alert.severity as AlertSeverity] || alert.severity,
+        所属服务: alert.service_name,
+        告警描述: alert.message,
+        触发时间: alert.created_at,
+        状态: STATUS_LABELS[alert.status as AlertStatus] || alert.status,
+        确认人: alert.acknowledged_at ? '已确认' : '-',
+        解决时间: alert.resolved_at || '-',
       }));
 
       const blob = new Blob([JSON.stringify(exportData, null, 2)], {
@@ -502,19 +338,34 @@ export const MonitorAlertsPage: React.FC = () => {
         message: '告警数据导出成功',
         type: 'success',
       });
-    } catch (_err: unknown) {
-      addNotification({
-        title: '导出失败',
-        message: extractErrorMessage(_err, '导出失败'),
-        type: 'error',
-      });
+    } catch (err: unknown) {
+      const message = extractErrorMessage(err, '导出失败');
+      addNotification({ title: '导出失败', message, type: 'error' });
     }
-  }, [filteredAlerts, addNotification]);
+  };
+
+  const handleTabChange = (_: unknown, newValue: TabType) => {
+    setActiveTab(newValue);
+    pagination.setPage(1);
+  };
+
+  const handleFilterChange = (filters: Record<string, unknown>) => {
+    if (typeof filters.severity === 'string') {
+      setSeverityFilter(filters.severity);
+    }
+    if (typeof filters.status === 'string') {
+      setStatusFilter(filters.status);
+    }
+    if (typeof filters.service === 'string') {
+      setServiceFilter(filters.service);
+    }
+    pagination.setPage(1);
+  };
 
   const columns: ColumnDef<Alert>[] = useMemo(
     () => [
       {
-        id: 'name',
+        id: 'title',
         label: '告警名称',
         minWidth: 200,
         render: (row) => (
@@ -527,11 +378,11 @@ export const MonitorAlertsPage: React.FC = () => {
               sx={{
                 width: 36,
                 height: 36,
-                bgcolor: `${SEVERITY_COLORS[row.severity]}.light`,
-                color: `${SEVERITY_COLORS[row.severity]}.main`,
+                bgcolor: `${SEVERITY_COLORS[row.severity as AlertSeverity]}.light`,
+                color: `${SEVERITY_COLORS[row.severity as AlertSeverity]}.main`,
               }}
             >
-              {getSeverityIcon(row.severity)}
+              {getSeverityIcon(row.severity as AlertSeverity)}
             </Avatar>
             <Box sx={{ minWidth: 0 }}>
               <Typography
@@ -543,14 +394,14 @@ export const MonitorAlertsPage: React.FC = () => {
                   whiteSpace: 'nowrap',
                 }}
               >
-                {row.name}
+                {row.title}
               </Typography>
               <Typography
                 variant='caption'
                 sx={{ color: 'text.secondary', display: 'flex', alignItems: 'center', gap: 0.5 }}
               >
                 <Server size={12} />
-                {row.service}
+                {row.service_name}
               </Typography>
             </Box>
           </Stack>
@@ -560,7 +411,7 @@ export const MonitorAlertsPage: React.FC = () => {
         id: 'severity',
         label: '严重级别',
         width: 100,
-        render: (row) => getSeverityChip(row.severity),
+        render: (row) => getSeverityChip(row.severity as AlertSeverity),
       },
       {
         id: 'service',
@@ -580,13 +431,13 @@ export const MonitorAlertsPage: React.FC = () => {
               variant='body2'
               color='text.secondary'
             >
-              {row.service}
+              {row.service_name}
             </Typography>
           </Stack>
         ),
       },
       {
-        id: 'description',
+        id: 'message',
         label: '告警描述',
         minWidth: 240,
         render: (row) => (
@@ -600,12 +451,12 @@ export const MonitorAlertsPage: React.FC = () => {
               maxWidth: 300,
             }}
           >
-            {row.description}
+            {row.message}
           </Typography>
         ),
       },
       {
-        id: 'triggeredAt',
+        id: 'created_at',
         label: '触发时间',
         width: 160,
         render: (row) => (
@@ -622,7 +473,7 @@ export const MonitorAlertsPage: React.FC = () => {
               variant='body2'
               color='text.secondary'
             >
-              {new Date(row.triggeredAt).toLocaleString('zh-CN')}
+              {new Date(row.created_at).toLocaleString('zh-CN')}
             </Typography>
           </Stack>
         ),
@@ -631,7 +482,7 @@ export const MonitorAlertsPage: React.FC = () => {
         id: 'status',
         label: '状态',
         width: 100,
-        render: (row) => getStatusChip(row.status),
+        render: (row) => getStatusChip(row.status as AlertStatus),
       },
       {
         id: 'actions',
@@ -691,15 +542,7 @@ export const MonitorAlertsPage: React.FC = () => {
         ),
       },
     ],
-    [
-      getSeverityChip,
-      getStatusChip,
-      handleAcknowledge,
-      handleResolve,
-      handleViewDetail,
-      handleSuppress,
-      actionLoading,
-    ]
+    [getSeverityChip, getStatusChip, handleAcknowledge, handleResolve, actionLoading]
   );
 
   const filterOptions = useMemo(
@@ -736,32 +579,12 @@ export const MonitorAlertsPage: React.FC = () => {
     []
   );
 
-  const handleFilterChange = useCallback((filters: Record<string, unknown>) => {
-    if (typeof filters.severity === 'string') {
-      setSeverityFilter(filters.severity);
-    }
-    if (typeof filters.status === 'string') {
-      setStatusFilter(filters.status);
-    }
-    if (typeof filters.service === 'string') {
-      setServiceFilter(filters.service);
-    }
-    setPage(1);
-  }, []);
-
-  const handlePageChange = useCallback((newPage: number) => {
-    setPage(newPage);
-  }, []);
-
   const tabHeaders = useMemo(
     () => (
       <Box sx={{ borderBottom: 1, borderColor: 'divider', mb: 3 }}>
         <Tabs
           value={activeTab}
-          onChange={(_, newValue) => {
-            setActiveTab(newValue);
-            setPage(1);
-          }}
+          onChange={handleTabChange}
           sx={{
             '& .MuiTab-root': {
               textTransform: 'none',
@@ -895,9 +718,9 @@ export const MonitorAlertsPage: React.FC = () => {
         title=''
         subtitle=''
         columns={columns}
-        data={pagedAlerts}
-        loading={loading}
-        error={undefined}
+        data={filteredAlerts}
+        loading={loading || actionLoading}
+        error={error || undefined}
         searchable
         searchPlaceholder='搜索告警名称、服务名...'
         searchValue={searchQuery}
@@ -910,10 +733,10 @@ export const MonitorAlertsPage: React.FC = () => {
         }}
         onFilterChange={handleFilterChange}
         pagination={{
-          page,
-          pageSize,
-          total,
-          onPageChange: handlePageChange,
+          page: pagination.page,
+          pageSize: pagination.pageSize,
+          total: pagination.total,
+          onPageChange: pagination.setPage,
         }}
         selectable
         selectedIds={selectedIds}
@@ -923,10 +746,7 @@ export const MonitorAlertsPage: React.FC = () => {
           {
             label: '刷新',
             icon: <RefreshCw size={16} />,
-            onClick: () => {
-              setLoading(true);
-              setTimeout(() => setLoading(false), 500);
-            },
+            onClick: refresh,
             variant: 'outlined',
           },
           {
@@ -936,10 +756,7 @@ export const MonitorAlertsPage: React.FC = () => {
             variant: 'outlined',
           },
         ]}
-        onRefresh={() => {
-          setLoading(true);
-          setTimeout(() => setLoading(false), 500);
-        }}
+        onRefresh={refresh}
         emptyMessage='暂无告警数据'
         getRowId={(row) => row.id}
       />

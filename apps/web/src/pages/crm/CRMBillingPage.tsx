@@ -3,7 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { Box, Chip, Typography, Tabs, Tab, LinearProgress, Button } from '@mui/material';
 import type { BillingRecord } from '@/api/crm';
 import { crmApi } from '@/api/crm';
-import { useAppStore } from '@/store';
+import { useNotificationStore } from '@/store';
 import { Receipt, CheckCircle, Clock, AlertCircle, Send, TrendingUp } from 'lucide-react';
 import { ListPageTemplate, type ColumnDef, type RowAction } from '@/components/templates';
 import { PageContainer } from '@/components/common';
@@ -21,7 +21,7 @@ const CRMBillingPage: React.FC = () => {
   const [currentPage, setCurrentPage] = useState(0);
   const pageSize = 10;
 
-  const { addNotification } = useAppStore();
+  const { addNotification } = useNotificationStore();
 
   const loadBills = useCallback(async () => {
     try {

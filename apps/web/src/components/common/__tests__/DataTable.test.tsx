@@ -3,11 +3,30 @@ import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { render, screen, fireEvent } from '@testing-library/react';
 import { ColumnDef } from '@tanstack/react-table';
 import DataTable from '../DataTable';
-import { useAppStore } from '@/store';
+import { useNotificationStore, useAuthStore } from '@/store';
 import { useExportData } from '@/hooks/useDataTable';
 
 vi.mock('@/store', () => ({
-  useAppStore: vi.fn(),
+  useNotificationStore: vi.fn((selector?: any) =>
+    selector
+      ? selector({
+          addNotification: vi.fn(),
+          notifications: [],
+        })
+      : {
+          addNotification: vi.fn(),
+          notifications: [],
+        }
+  ),
+  useAuthStore: vi.fn((selector?: any) =>
+    selector
+      ? selector({
+          user: null,
+        })
+      : {
+          user: null,
+        }
+  ),
 }));
 
 vi.mock('@/hooks/useDataTable', () => ({
@@ -15,7 +34,7 @@ vi.mock('@/hooks/useDataTable', () => ({
 }));
 
 const mockAddNotification = vi.fn();
-const mockUseAppStore = useAppStore as vi.Mock;
+const mockUseAppStore = useNotificationStore as vi.Mock;
 const mockUseExportData = useExportData as vi.Mock;
 
 interface TestData {

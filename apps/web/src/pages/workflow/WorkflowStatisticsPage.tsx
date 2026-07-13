@@ -41,7 +41,7 @@ import {
 } from '@/components/templates';
 import LineChartComponent from '../../components/charts/LineChart';
 import PieChartComponent from '../../components/charts/PieChart';
-import { useAppStore } from '../../store';
+import { useNotificationStore } from '../../store';
 import { handleApiError, getErrorMessage } from '@/utils/errors';
 import { designTokens } from '@/theme/tokens';
 import { WORKFLOW_PATHS } from '@/modules/workflow/config';
@@ -120,7 +120,7 @@ const topWorkflows = [
 
 export const WorkflowStatisticsPage: React.FC = () => {
   const navigate = useNavigate();
-  const addNotification = useAppStore((state) => state.addNotification);
+  const addNotification = useNotificationStore((state) => state.addNotification);
   const [loading, setLoading] = useState(false);
   const [timeRange, setTimeRange] = useState<TimeRange>('month');
   const [anchorEl, setAnchorEl] = useState<null | HTMLElement>(null);

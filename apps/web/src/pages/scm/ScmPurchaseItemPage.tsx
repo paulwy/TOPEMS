@@ -8,21 +8,20 @@ import {
   Chip,
   Button,
 } from '@mui/material';
-import React, { useState, useEffect } from 'react';
+import React, { useState, useMemo } from 'react';
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import type { PurchaseItem, CreatePurchaseItemRequest } from '@/api/scm';
 import { scmApi } from '@/api/scm';
-import { useAppStore } from '@/store';
-import { Plus, Eye, Edit, Trash2 } from 'lucide-react';
+import { useNotificationStore } from '@/store';
+import { Plus, Edit, Trash2 } from 'lucide-react';
 import { apiLogger } from '@/utils/logger';
 import { ListPageTemplate, type ColumnDef } from '@/components/templates';
 import { PageContainer } from '@/components/common';
 
 const ScmPurchaseItemPage: React.FC = () => {
-  const [items, setItems] = useState<PurchaseItem[]>([]);
-  const [loading, setLoading] = useState(true);
+  const queryClient = useQueryClient();
   const [currentPage, setCurrentPage] = useState(1);
   const [pageSize, setPageSize] = useState(10);
-  const [total, setTotal] = useState(0);
   const [showDialog, setShowDialog] = useState(false);
   const [isEditing, setIsEditing] = useState(false);
   const [selectedItem, setSelectedItem] = useState<PurchaseItem | null>(null);
@@ -37,63 +36,120 @@ const ScmPurchaseItemPage: React.FC = () => {
     amount: 0,
   });
 
-  const { addNotification } = useAppStore();
+  const { addNotification } = useNotificationStore();
 
-  useEffect(() => {
-    loadItems();
-  }, [currentPage, pageSize]);
-
-  const loadItems = async () => {
-    try {
-      setLoading(true);
+  const itemsQuery = useQuery({
+    queryKey: ['scm-purchase-items', currentPage, pageSize],
+    queryFn: async () => {
       const response = await scmApi.purchaseItems.list({
         page: currentPage,
         pageSize,
       });
-      if (response.success && response.data) {
-        setItems(response.data.items || []);
-        setTotal(response.data.total || 0);
+      if (!response.success || !response.data) {
+        throw new Error(response.message || '加载采购明细失败');
       }
-    } catch (error: unknown) {
-      apiLogger.error('加载采购明细失败:', error);
+      return {
+        items: response.data.items || [],
+        total: response.data.total || 0,
+      };
+    },
+    staleTime: 5 * 60 * 1000,
+    retry: 2,
+  });
+
+  const items = itemsQuery.data?.items ?? [];
+  const total = itemsQuery.data?.total ?? 0;
+  const loading = itemsQuery.isLoading;
+
+  const createMutation = useMutation({
+    mutationFn: async (data: CreatePurchaseItemRequest) => {
+      const response = await scmApi.purchaseItems.create(data);
+      if (!response.success) {
+        throw new Error(response.message || '创建采购明细失败');
+      }
+      return response.data;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['scm-purchase-items'] });
+      addNotification({
+        type: 'success',
+        title: '创建成功',
+        message: '新采购明细已创建',
+      });
+    },
+    onError: (error: unknown) => {
+      apiLogger.error('创建采购明细失败:', error);
       addNotification({
         type: 'error',
-        title: '加载失败',
-        message: '无法加载采购明细',
+        title: '操作失败',
+        message: '创建采购明细失败',
       });
-    } finally {
-      setLoading(false);
-    }
-  };
+    },
+  });
+
+  const updateMutation = useMutation({
+    mutationFn: async ({ id, data }: { id: string; data: Partial<PurchaseItem> }) => {
+      const response = await scmApi.purchaseItems.update(id, data);
+      if (!response.success) {
+        throw new Error(response.message || '更新采购明细失败');
+      }
+      return response.data;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['scm-purchase-items'] });
+      addNotification({
+        type: 'success',
+        title: '更新成功',
+        message: '采购明细已更新',
+      });
+    },
+    onError: (error: unknown) => {
+      apiLogger.error('更新采购明细失败:', error);
+      addNotification({
+        type: 'error',
+        title: '操作失败',
+        message: '更新采购明细失败',
+      });
+    },
+  });
+
+  const deleteMutation = useMutation({
+    mutationFn: async (id: string) => {
+      const response = await scmApi.purchaseItems.update(id, { product_name: '' } as any);
+      if (!response.success) {
+        throw new Error(response.message || '删除采购明细失败');
+      }
+      return response.data;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['scm-purchase-items'] });
+      addNotification({
+        type: 'success',
+        title: '删除成功',
+        message: '采购明细已删除',
+      });
+    },
+    onError: (error: unknown) => {
+      apiLogger.error('删除采购明细失败:', error);
+      addNotification({
+        type: 'error',
+        title: '操作失败',
+        message: '删除采购明细失败',
+      });
+    },
+  });
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     try {
       if (isEditing && selectedItem) {
-        await scmApi.purchaseItems.update(selectedItem.id, formData);
-        addNotification({
-          type: 'success',
-          title: '更新成功',
-          message: '采购明细已更新',
-        });
+        await updateMutation.mutateAsync({ id: selectedItem.id, data: formData });
       } else {
-        await scmApi.purchaseItems.create(formData);
-        addNotification({
-          type: 'success',
-          title: '创建成功',
-          message: '新采购明细已创建',
-        });
+        await createMutation.mutateAsync(formData);
       }
       setShowDialog(false);
       resetForm();
-      loadItems();
-    } catch (error: unknown) {
-      apiLogger.error('操作失败:', error);
-      addNotification({
-        type: 'error',
-        title: '操作失败',
-        message: isEditing ? '更新采购明细失败' : '创建采购明细失败',
-      });
+    } catch {
     }
   };
 
@@ -118,20 +174,8 @@ const ScmPurchaseItemPage: React.FC = () => {
       return;
     }
     try {
-      await scmApi.purchaseItems.update(item.id, { product_name: '' } as any);
-      addNotification({
-        type: 'success',
-        title: '删除成功',
-        message: '采购明细已删除',
-      });
-      loadItems();
-    } catch (error: unknown) {
-      apiLogger.error('删除失败:', error);
-      addNotification({
-        type: 'error',
-        title: '删除失败',
-        message: '删除采购明细失败',
-      });
+      await deleteMutation.mutateAsync(item.id);
+    } catch {
     }
   };
 
@@ -150,57 +194,63 @@ const ScmPurchaseItemPage: React.FC = () => {
     setSelectedItem(null);
   };
 
-  // 表格列定义
-  const columns: ColumnDef<PurchaseItem>[] = [
-    {
-      id: 'order_id',
-      label: '订单ID',
-    },
-    {
-      id: 'product_code',
-      label: '产品编码',
-    },
-    {
-      id: 'product_name',
-      label: '产品名称',
-      render: (row) => <Box sx={{ fontWeight: 500 }}>{row.product_name}</Box>,
-    },
-    {
-      id: 'specification',
-      label: '规格',
-      render: (row) => <Box sx={{ fontSize: '0.875rem' }}>{row.specification || '-'}</Box>,
-    },
-    {
-      id: 'unit',
-      label: '单位',
-      render: (row) => (
-        <Chip
-          size='small'
-          label={row.unit || '-'}
-          variant='outlined'
-        />
-      ),
-    },
-    {
-      id: 'quantity',
-      label: '数量',
-      align: 'right',
-    },
-    {
-      id: 'unit_price',
-      label: '单价',
-      align: 'right',
-      render: (row) => <Box>{row.unit_price || 0}</Box>,
-    },
-    {
-      id: 'amount',
-      label: '金额',
-      align: 'right',
-      render: (row) => <Box sx={{ fontWeight: 500 }}>{row.amount || 0}</Box>,
-    },
-  ];
+  const isMutationPending =
+    createMutation.isPending ||
+    updateMutation.isPending ||
+    deleteMutation.isPending;
 
-  // 行操作
+  const columns: ColumnDef<PurchaseItem>[] = useMemo(
+    () => [
+      {
+        id: 'order_id',
+        label: '订单ID',
+      },
+      {
+        id: 'product_code',
+        label: '产品编码',
+      },
+      {
+        id: 'product_name',
+        label: '产品名称',
+        render: (row) => <Box sx={{ fontWeight: 500 }}>{row.product_name}</Box>,
+      },
+      {
+        id: 'specification',
+        label: '规格',
+        render: (row) => <Box sx={{ fontSize: '0.875rem' }}>{row.specification || '-'}</Box>,
+      },
+      {
+        id: 'unit',
+        label: '单位',
+        render: (row) => (
+          <Chip
+            size='small'
+            label={row.unit || '-'}
+            variant='outlined'
+          />
+        ),
+      },
+      {
+        id: 'quantity',
+        label: '数量',
+        align: 'right',
+      },
+      {
+        id: 'unit_price',
+        label: '单价',
+        align: 'right',
+        render: (row) => <Box>{row.unit_price || 0}</Box>,
+      },
+      {
+        id: 'amount',
+        label: '金额',
+        align: 'right',
+        render: (row) => <Box sx={{ fontWeight: 500 }}>{row.amount || 0}</Box>,
+      },
+    ],
+    []
+  );
+
   const rowActions = [
     {
       label: '编辑',
@@ -225,7 +275,7 @@ const ScmPurchaseItemPage: React.FC = () => {
         subtitle=''
         columns={columns}
         data={items}
-        loading={loading}
+        loading={loading || isMutationPending}
         pagination={{
           page: currentPage - 1,
           pageSize,
@@ -248,7 +298,7 @@ const ScmPurchaseItemPage: React.FC = () => {
           },
         ]}
         rowActions={rowActions}
-        onRefresh={loadItems}
+        onRefresh={() => queryClient.invalidateQueries({ queryKey: ['scm-purchase-items'] })}
         emptyMessage='暂无采购明细数据'
       />
 
@@ -349,6 +399,7 @@ const ScmPurchaseItemPage: React.FC = () => {
               <Button
                 type='submit'
                 variant='contained'
+                disabled={createMutation.isPending || updateMutation.isPending}
               >
                 {isEditing ? '更新' : '保存'}
               </Button>

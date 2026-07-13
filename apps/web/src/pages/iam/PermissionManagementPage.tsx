@@ -15,7 +15,7 @@ import {
 import React, { useState, useEffect, useMemo, useCallback } from 'react';
 import { Key, Plus, Trash2, Shield, AlertCircle, Edit } from 'lucide-react';
 import { authApi, type Permission } from '@/api/iam';
-import { useAppStore } from '../../store';
+import { useNotificationStore } from '../../store';
 import { ListPageTemplate, type ColumnDef } from '@/components/templates';
 import { extractErrorMessage } from '@/utils/errors';
 import { PageContainer } from '@/components/common';
@@ -48,7 +48,7 @@ const categoryLabels: Record<string, string> = {
 const PermissionManagementPage: React.FC<PermissionManagementPageProps> = ({
   onNavigate: _onNavigate,
 }) => {
-  const addNotification = useAppStore((state) => state.addNotification);
+  const addNotification = useNotificationStore((state) => state.addNotification);
   const [permissions, setPermissions] = useState<Permission[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);

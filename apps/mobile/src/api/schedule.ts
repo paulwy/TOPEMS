@@ -41,7 +41,7 @@ export const scheduleApi = {
       endTime?: string;
       location?: string;
       attendees?: string[];
-    }
+    },
   ): Promise<ApiResponse<Event>> => {
     const response = await apiClient.put(`/schedule/events/${id}`, data);
     return response.data;

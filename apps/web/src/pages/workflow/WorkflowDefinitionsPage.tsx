@@ -21,8 +21,9 @@ import {
 } from 'lucide-react';
 import { Box, Typography, Chip, Button } from '@mui/material';
 import { useNavigate } from 'react-router-dom';
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 
-import { useAppStore } from '../../store';
+import { useNotificationStore } from '../../store';
 import { ListPageTemplate, type ColumnDef } from '@/components/templates';
 import { extractErrorMessage } from '@/utils/errors';
 import { PageContainer } from '@/components/common';
@@ -131,10 +132,9 @@ const mockDefinitions: WorkflowDefinition[] = [
 
 export const WorkflowDefinitionsPage: React.FC = () => {
   const navigate = useNavigate();
-  const addNotification = useAppStore((state) => state.addNotification);
+  const addNotification = useNotificationStore((state) => state.addNotification);
+  const queryClient = useQueryClient();
 
-  const [definitions, setDefinitions] = useState<WorkflowDefinition[]>(mockDefinitions);
-  const [loading, setLoading] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
   const [categoryFilter, setCategoryFilter] = useState<string>('all');
   const [statusFilter, setStatusFilter] = useState<string>('all');
@@ -157,21 +157,45 @@ export const WorkflowDefinitionsPage: React.FC = () => {
     []
   );
 
-  const loadData = useCallback(async () => {
-    setLoading(true);
-    try {
+  const { data: definitions = [], isLoading: loading } = useQuery({
+    queryKey: ['workflow-definitions'],
+    queryFn: async () => {
       await new Promise((resolve) => setTimeout(resolve, 300));
-      setDefinitions(mockDefinitions);
-    } catch (_err: unknown) {
+      return mockDefinitions;
+    },
+    staleTime: 5 * 60 * 1000,
+  });
+
+  const deleteMutation = useMutation({
+    mutationFn: async (definitionId: string) => {
+      return definitionId;
+    },
+    onMutate: async (definitionId) => {
+      await queryClient.cancelQueries({ queryKey: ['workflow-definitions'] });
+      const previousDefinitions = queryClient.getQueryData<WorkflowDefinition[]>(['workflow-definitions']);
+      queryClient.setQueryData<WorkflowDefinition[]>(['workflow-definitions'], (old) =>
+        old ? old.filter((d) => d.id !== definitionId) : []
+      );
+      return { previousDefinitions };
+    },
+    onError: (_err, _id, context) => {
+      if (context?.previousDefinitions) {
+        queryClient.setQueryData(['workflow-definitions'], context.previousDefinitions);
+      }
       addNotification({
-        title: '加载失败',
-        message: extractErrorMessage(_err, '加载流程定义失败'),
+        title: '失败',
+        message: '删除流程失败',
         type: 'error',
       });
-    } finally {
-      setLoading(false);
-    }
-  }, [addNotification]);
+    },
+    onSuccess: () => {
+      addNotification({
+        title: '成功',
+        message: '流程删除成功',
+        type: 'success',
+      });
+    },
+  });
 
   const handleDelete = useCallback(
     (definitionId: string) => {
@@ -181,25 +205,16 @@ export const WorkflowDefinitionsPage: React.FC = () => {
         message: `确定要删除流程"${def?.name || ''}"吗？`,
         danger: true,
         onConfirm: () => {
-          try {
-            setDefinitions((prev) => prev.filter((d) => d.id !== definitionId));
-            addNotification({
-              title: '成功',
-              message: '流程删除成功',
-              type: 'success',
-            });
-          } catch (_err: unknown) {
-            addNotification({
-              title: '失败',
-              message: extractErrorMessage(_err, '删除流程失败'),
-              type: 'error',
-            });
-          }
+          deleteMutation.mutate(definitionId);
         },
       });
     },
-    [definitions, addNotification, openConfirmDialog]
+    [definitions, deleteMutation, openConfirmDialog]
   );
+
+  const handleRefresh = useCallback(() => {
+    queryClient.invalidateQueries({ queryKey: ['workflow-definitions'] });
+  }, [queryClient]);
 
   const filteredDefinitions = useMemo(() => {
     return definitions.filter((def) => {
@@ -503,7 +518,7 @@ export const WorkflowDefinitionsPage: React.FC = () => {
           {
             label: '刷新',
             icon: <RefreshCw size={16} />,
-            onClick: loadData,
+            onClick: handleRefresh,
             variant: 'outlined',
           },
           {
@@ -525,7 +540,7 @@ export const WorkflowDefinitionsPage: React.FC = () => {
             variant: 'contained',
           },
         ]}
-        onRefresh={loadData}
+        onRefresh={handleRefresh}
         emptyMessage='暂无流程定义'
       />
 

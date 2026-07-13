@@ -44,7 +44,7 @@ import type {
   CreateReportFromTemplateRequest,
 } from '@/api/report';
 import { reportApi } from '@/api/report';
-import { useAppStore } from '@/store';
+import { useNotificationStore } from '@/store';
 import ReportBuilder from './ReportBuilder';
 import ReportViewer from './ReportViewer';
 import ExportModal from '@/components/export/ExportModal';

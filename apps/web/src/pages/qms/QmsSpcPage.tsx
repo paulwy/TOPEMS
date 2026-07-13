@@ -42,7 +42,7 @@ import {
   Download,
   BarChart3,
 } from 'lucide-react';
-import { useAppStore } from '@/store';
+import { useNotificationStore } from '@/store';
 import * as z from 'zod';
 import { ListPageTemplate, type ColumnDef, type RowAction } from '@/components/templates';
 import { PageContainer } from '@/components/common';
@@ -65,7 +65,7 @@ const QmsSpcPage: React.FC = () => {
   const [loading, setLoading] = useState(true);
   const [submitting, setSubmitting] = useState(false);
   const [loadingDataPoints, setLoadingDataPoints] = useState(false);
-  const addNotification = useAppStore((state) => state.addNotification);
+  const addNotification = useNotificationStore((state) => state.addNotification);
 
   const [charts, setCharts] = useState<SpcChart[]>([]);
 

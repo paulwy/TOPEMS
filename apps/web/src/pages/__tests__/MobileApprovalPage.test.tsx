@@ -3,22 +3,27 @@ import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { render, screen, waitFor, fireEvent } from '@testing-library/react';
 import { BrowserRouter } from 'react-router-dom';
 import MobileApprovalPage from '../mobile/MobileApprovalPage';
-import { useAppStore } from '@/store';
+import { useNotificationStore, useAuthStore } from '@/store';
 
 vi.mock('@/store', () => ({
-  useAppStore: vi.fn((selector?: any) =>
+  useNotificationStore: vi.fn((selector?: any) =>
     selector
       ? selector({
-          user: mockUser,
-          addNotification: mockAddNotification,
+          addNotification: vi.fn(),
           notifications: [],
-          theme: 'light',
         })
       : {
-          user: mockUser,
-          addNotification: mockAddNotification,
+          addNotification: vi.fn(),
           notifications: [],
-          theme: 'light',
+        }
+  ),
+  useAuthStore: vi.fn((selector?: any) =>
+    selector
+      ? selector({
+          user: null,
+        })
+      : {
+          user: null,
         }
   ),
 }));

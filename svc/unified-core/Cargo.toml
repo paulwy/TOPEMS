@@ -32,8 +32,11 @@ reqwest.workspace = true
 lettre.workspace = true
 handlebars.workspace = true
 dashmap.workspace = true
-lazy_static.workspace = true
+lazy_static = "1"
+regex.workspace = true
 migration-sdk = { path = "../migration-sdk" }
+
+rand = "0.8"
 
 [[bin]]
 name = "unified-core-service"

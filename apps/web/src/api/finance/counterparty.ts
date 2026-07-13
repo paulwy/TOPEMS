@@ -9,25 +9,25 @@ import type {
 
 export const counterpartyFinanceApi = {
   getCustomerFinance: (customerId: string): Promise<ApiResponse<CounterpartyFinanceInfo>> => {
-    return apiClient.erp.get(`/finance/counterparty/customers/${customerId}`);
+    return apiClient.finance.get(`/counterparty/customers/${customerId}`);
   },
 
   updateCustomerFinance: (
     customerId: string,
     data: Partial<CounterpartyFinanceInfo>
   ): Promise<ApiResponse<CounterpartyFinanceInfo>> => {
-    return apiClient.erp.put(`/finance/counterparty/customers/${customerId}`, data);
+    return apiClient.finance.put(`/counterparty/customers/${customerId}`, data);
   },
 
   getSupplierFinance: (supplierId: string): Promise<ApiResponse<CounterpartyFinanceInfo>> => {
-    return apiClient.erp.get(`/finance/counterparty/suppliers/${supplierId}`);
+    return apiClient.finance.get(`/counterparty/suppliers/${supplierId}`);
   },
 
   updateSupplierFinance: (
     supplierId: string,
     data: Partial<CounterpartyFinanceInfo>
   ): Promise<ApiResponse<CounterpartyFinanceInfo>> => {
-    return apiClient.erp.put(`/finance/counterparty/suppliers/${supplierId}`, data);
+    return apiClient.finance.put(`/counterparty/suppliers/${supplierId}`, data);
   },
 
   listCustomersWithFinance: (params?: {
@@ -37,7 +37,7 @@ export const counterpartyFinanceApi = {
   }): Promise<
     ApiResponse<PaginatedResult<Customer & { finance_info?: CounterpartyFinanceInfo }>>
   > => {
-    return apiClient.erp.get('/finance/counterparty/customers', {
+    return apiClient.finance.get('/counterparty/customers', {
       params,
     });
   },
@@ -49,7 +49,7 @@ export const counterpartyFinanceApi = {
   }): Promise<
     ApiResponse<PaginatedResult<Supplier & { finance_info?: CounterpartyFinanceInfo }>>
   > => {
-    return apiClient.erp.get('/finance/counterparty/suppliers', {
+    return apiClient.finance.get('/counterparty/suppliers', {
       params,
     });
   },

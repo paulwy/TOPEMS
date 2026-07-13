@@ -5,7 +5,28 @@ import React from 'react';
 
 import { Timeline } from '../Timeline';
 
-vi.mock('@/store', () => ({ useAppStore: vi.fn() }));
+vi.mock('@/store', () => ({
+  useNotificationStore: vi.fn((selector?: any) =>
+    selector
+      ? selector({
+          addNotification: vi.fn(),
+          notifications: [],
+        })
+      : {
+          addNotification: vi.fn(),
+          notifications: [],
+        }
+  ),
+  useAuthStore: vi.fn((selector?: any) =>
+    selector
+      ? selector({
+          user: null,
+        })
+      : {
+          user: null,
+        }
+  ),
+}));
 
 const mockItems = [
   {

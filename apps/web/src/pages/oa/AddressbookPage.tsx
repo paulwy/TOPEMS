@@ -4,12 +4,12 @@ import { CardListTemplate, type CardRenderConfig } from '@/components/templates/
 import { addressbookApi } from '@/api/addressbook';
 import type { AddressbookEntry, AddressbookDetail, DepartmentNode } from '@/types/addressbook';
 import { logger } from '@/utils/logger';
-import { useAppStore } from '@/store';
+import { useNotificationStore } from '@/store';
 import { Users, Mail, Phone, Building2, Briefcase, Filter, Plus } from 'lucide-react';
 import { ContactDetailModal } from '@/components/addressbook/ContactDetailModal';
 
 const AddressbookPage: React.FC = () => {
-  const addNotification = useAppStore((state) => state.addNotification);
+  const addNotification = useNotificationStore((state) => state.addNotification);
 
   const [contacts, setContacts] = useState<AddressbookEntry[]>([]);
   const [departments, setDepartments] = useState<DepartmentNode[]>([]);

@@ -36,7 +36,7 @@ import {
   type PaginatedResult,
   type ListParams,
 } from '@/api/hrm';
-import { useAppStore } from '../../store';
+import { useNotificationStore } from '../../store';
 import { AIHelperButton, AICodeGenerator, AITextOptimizer, AIFormValidator } from '@/components/ai';
 import type { ValidationIssue, Suggestion } from '@/types/ai';
 import {
@@ -51,7 +51,7 @@ import { ImageUpload, PageContainer } from '@/components/common';
 const HrmDepartmentPage: React.FC = () => {
   const theme = useTheme();
   const isMobile = useMediaQuery(theme.breakpoints.down('md'));
-  const addNotification = useAppStore((state) => state.addNotification);
+  const addNotification = useNotificationStore((state) => state.addNotification);
 
   const [loading, setLoading] = useState(false);
   const [departments, setDepartments] = useState<Department[]>([]);

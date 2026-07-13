@@ -1,5 +1,5 @@
 import { Grid } from '@/components';
-import { useAppStore } from '@/store';
+import { useNotificationStore } from '@/store';
 import React, { useEffect, useState, useMemo, useCallback } from 'react';
 import { designTokens } from '@/theme/tokens';
 import {

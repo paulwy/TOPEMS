@@ -1,14 +1,15 @@
-import React, { useState, useEffect, useMemo, useCallback } from 'react';
+import React, { useState, useMemo, useCallback } from 'react';
 import { Box, Chip } from '@mui/material';
 import { Plus, Eye, Edit, Trash2, FileText } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { ListPageTemplate, type ColumnDef, type RowAction } from '@/components/templates';
-import { srmApi, type SupplierContract } from '@/api/srm';
-import { useAppStore } from '@/store';
+import { srmApi, type SupplierContract, type CreateSupplierContractRequest } from '@/api/srm';
+import { useNotificationStore } from '@/store';
 import { apiLogger } from '@/utils/logger';
 import { ConfirmDialog } from '@topems/shared-components';
 import { PageContainer } from '@/components/common';
 import { SRM_PATHS } from '@/modules/srm/config';
+import { useCrudOperations } from '@/hooks/useCrudQueries';
 
 const STATUS_OPTIONS = [
   { label: '全部', value: '' },
@@ -18,53 +19,48 @@ const STATUS_OPTIONS = [
   { label: '已终止', value: 'terminated' },
 ];
 
+const contractCrudApi = {
+  list: async (params?: Record<string, unknown>) => {
+    const response = await srmApi.listContracts();
+    const items = (response.data || []) as SupplierContract[];
+    return {
+      success: response.success,
+      message: response.message,
+      code: (response as any).code,
+      data: {
+        items,
+        total: items.length,
+      },
+    };
+  },
+  get: (id: string) => srmApi.getContract(id),
+  create: (data: CreateSupplierContractRequest) => srmApi.createContract(data),
+  update: (id: string, data: Partial<CreateSupplierContractRequest>) =>
+    srmApi.updateContract(id, data as CreateSupplierContractRequest),
+  delete: (id: string) => srmApi.deleteContract(id),
+} as any;
+
 const SrmContractPage: React.FC = () => {
   const navigate = useNavigate();
-  const addNotification = useAppStore((state) => state.addNotification);
-  const [contracts, setContracts] = useState<SupplierContract[]>([]);
-  const [allContracts, setAllContracts] = useState<SupplierContract[]>([]);
-  const [loading, setLoading] = useState(false);
-  const [error, setError] = useState<string>('');
+  const addNotification = useNotificationStore((state) => state.addNotification);
   const [page, setPage] = useState(0);
   const [rowsPerPage, setRowsPerPage] = useState(10);
-  const [total, setTotal] = useState(0);
   const [searchTerm, setSearchTerm] = useState('');
   const [statusFilter, setStatusFilter] = useState<string>('');
   const [typeFilter, setTypeFilter] = useState<string>('');
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
   const [selectedContract, setSelectedContract] = useState<SupplierContract | null>(null);
 
-  const loadContracts = useCallback(async () => {
-    setLoading(true);
-    setError('');
-    try {
-      const response = await srmApi.listContracts();
-      if (response.success && response.data) {
-        setAllContracts(response.data);
-      } else {
-        setError(response.message || '加载合同数据失败');
-        addNotification({
-          type: 'error',
-          title: '加载失败',
-          message: response.message || '加载合同数据失败',
-        });
-      }
-    } catch (err: unknown) {
-      apiLogger.error('加载合同数据失败:', err);
-      setError('加载合同数据失败');
-      addNotification({
-        type: 'error',
-        title: '加载失败',
-        message: '加载合同数据失败',
-      });
-    } finally {
-      setLoading(false);
-    }
-  }, [addNotification]);
-
-  useEffect(() => {
-    loadContracts();
-  }, [loadContracts]);
+  const {
+    data: allContracts,
+    loading,
+    refresh,
+    delete: deleteContract,
+  } = useCrudOperations<SupplierContract, CreateSupplierContractRequest>({
+    api: contractCrudApi,
+    queryKey: 'srm-contracts',
+    defaultPageSize: 100,
+  });
 
   const filteredContracts = useMemo(() => {
     let filtered = [...allContracts];
@@ -85,10 +81,8 @@ const SrmContractPage: React.FC = () => {
     return filtered;
   }, [allContracts, searchTerm, statusFilter, typeFilter]);
 
-  useEffect(() => {
-    setTotal(filteredContracts.length);
-    setContracts(filteredContracts.slice(page * rowsPerPage, (page + 1) * rowsPerPage));
-  }, [filteredContracts, page, rowsPerPage]);
+  const total = filteredContracts.length;
+  const contracts = filteredContracts.slice(page * rowsPerPage, (page + 1) * rowsPerPage);
 
   const contractTypes = useMemo(() => {
     return [...new Set(allContracts.map((c) => c.contract_type))];
@@ -102,29 +96,14 @@ const SrmContractPage: React.FC = () => {
   const handleDeleteConfirm = useCallback(async () => {
     if (!selectedContract) return;
     try {
-      const response = await srmApi.deleteContract(selectedContract.id);
-      if (response.success) {
-        addNotification({
-          type: 'success',
-          title: '删除成功',
-          message: '删除合同成功',
-        });
-        setAllContracts((prev) => prev.filter((c) => c.id !== selectedContract.id));
-      } else {
-        throw new Error(response.message || '删除合同失败');
-      }
+      await deleteContract(selectedContract.id);
     } catch (err: unknown) {
       apiLogger.error('删除合同失败:', err);
-      addNotification({
-        type: 'error',
-        title: '删除失败',
-        message: '删除合同失败',
-      });
     } finally {
       setDeleteDialogOpen(false);
       setSelectedContract(null);
     }
-  }, [selectedContract, addNotification]);
+  }, [selectedContract, deleteContract]);
 
   const getStatusColor = useCallback(
     (status: string): 'primary' | 'success' | 'warning' | 'error' | 'default' => {
@@ -307,7 +286,6 @@ const SrmContractPage: React.FC = () => {
         columns={columns}
         data={contracts}
         loading={loading}
-        error={error}
         pagination={{
           page,
           pageSize: rowsPerPage,
@@ -340,7 +318,7 @@ const SrmContractPage: React.FC = () => {
         actions={[]}
         rowActions={rowActions}
         getRowId={(row) => row.id}
-        onRefresh={loadContracts}
+        onRefresh={refresh}
         emptyMessage='暂无合同数据'
         showRowNumber
         columnConfigurable

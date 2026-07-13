@@ -1,13 +1,16 @@
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState, useMemo } from 'react';
 import { ListPageTemplate } from '@/components/templates/ListPageTemplate';
 import { PageContainer } from '@/components/common';
 import {
-  meetingRoomApi,
+  meetingRoomCrudApi,
+  meetingBookingCrudApi,
   meetingBookingApi,
   type MeetingRoom,
   type MeetingBooking,
 } from '@/api/erp';
-import { useAppStore } from '@/store';
+import { useCrudOperations } from '@/hooks/useCrudQueries';
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import { useNotificationStore } from '@/store';
 import {
   Calendar,
   Plus,
@@ -15,8 +18,6 @@ import {
   Trash2,
   Users,
   MapPin,
-  CheckCircle,
-  AlertCircle,
 } from 'lucide-react';
 import {
   Dialog,
@@ -38,21 +39,15 @@ import { designTokens } from '@/theme/tokens';
 const ct = designTokens.colors;
 
 const MeetingRoomManagementPage: React.FC = () => {
-  const addNotification = useAppStore((state) => state.addNotification);
+  const addNotification = useNotificationStore((state) => state.addNotification);
+  const queryClient = useQueryClient();
 
-  const [rooms, setRooms] = useState<MeetingRoom[]>([]);
-  const [bookings, setBookings] = useState<MeetingBooking[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | undefined>(undefined);
   const [showCreateModal, setShowCreateModal] = useState(false);
   const [showEditModal, setShowEditModal] = useState(false);
   const [showBookingModal, setShowBookingModal] = useState(false);
   const [selectedRoom, setSelectedRoom] = useState<MeetingRoom | null>(null);
   const [selectedBooking, setSelectedBooking] = useState<Partial<MeetingBooking>>({});
 
-  const [currentPage, setCurrentPage] = useState(1);
-  const [pageSize, setPageSize] = useState(20);
-  const [total, setTotal] = useState(0);
   const [searchQuery, setSearchQuery] = useState('');
   const [statusFilter, setStatusFilter] = useState('');
 
@@ -64,108 +59,92 @@ const MeetingRoomManagementPage: React.FC = () => {
     status: 'active',
   });
 
-  const loadData = useCallback(async () => {
-    setLoading(true);
-    setError(undefined);
-    try {
-      const [roomsRes, bookingsRes] = await Promise.all([
-        meetingRoomApi.list({
-          page: currentPage,
-          pagesize: pageSize,
-          search: searchQuery,
-          status: statusFilter,
-        }),
-        meetingBookingApi.list(),
-      ]);
+  const {
+    data: rooms,
+    loading,
+    error,
+    pagination,
+    fetch,
+    refresh,
+    create: createRoom,
+    update: updateRoom,
+    delete: deleteRoom,
+  } = useCrudOperations<MeetingRoom>({
+    api: meetingRoomCrudApi,
+    queryKey: 'oa-meeting-rooms',
+    defaultPageSize: 20,
+    pageParamName: 'page',
+    pageSizeParamName: 'pagesize',
+  });
 
-      if (roomsRes.success && roomsRes.data) {
-        setRooms(roomsRes.data.items || []);
-        setTotal(roomsRes.data.total);
+  const { data: bookingsData } = useQuery({
+    queryKey: ['oa-meeting-bookings'],
+    queryFn: async () => {
+      const res = await meetingBookingApi.list();
+      if (res.success && res.data) {
+        return res.data.items || [];
       }
+      return [];
+    },
+    staleTime: 5 * 60 * 1000,
+  });
 
-      if (bookingsRes.success && bookingsRes.data) {
-        setBookings(bookingsRes.data.items || []);
-      }
-    } catch (err: unknown) {
-      const errorMsg = (err as { message?: string }).message || '加载数据失败';
-      setError(errorMsg);
-      addNotification({
-        title: '加载失败',
-        message: errorMsg,
-        type: 'error',
-      });
-      setRooms([]);
-      setBookings([]);
-    } finally {
-      setLoading(false);
-    }
-  }, [currentPage, pageSize, searchQuery, statusFilter, addNotification]);
+  const bookings = bookingsData || [];
 
-  useEffect(() => {
-    loadData();
-  }, [loadData]);
+  const createBookingMutation = useMutation({
+    mutationFn: (data: Partial<MeetingBooking>) => meetingBookingApi.create(data),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['oa-meeting-bookings'] });
+      addNotification({ title: '成功', message: '预约成功', type: 'success' });
+    },
+    onError: (err: unknown) => {
+      const errAny = err as { response?: { data?: { message?: string } }; message?: string };
+      const message = errAny?.response?.data?.message || errAny?.message || '预约失败';
+      addNotification({ title: '失败', message, type: 'error' });
+    },
+  });
+
+  const handleSearch = (value: string) => {
+    setSearchQuery(value);
+    pagination.setPage(1);
+    const params: Record<string, unknown> = {};
+    if (value) params.search = value;
+    if (statusFilter) params.status = statusFilter;
+    fetch(params);
+  };
+
+  const handleStatusFilterChange = (value: string) => {
+    setStatusFilter(value);
+    pagination.setPage(1);
+    const params: Record<string, unknown> = {};
+    if (searchQuery) params.search = searchQuery;
+    if (value) params.status = value;
+    fetch(params);
+  };
 
   const handleCreateRoom = async (e: React.FormEvent) => {
     e.preventDefault();
     try {
-      const res = await meetingRoomApi.create(newRoom);
-      if (res.success) {
-        addNotification({
-          title: '成功',
-          message: '会议室创建成功',
-          type: 'success',
-        });
-        setShowCreateModal(false);
-        setNewRoom({
-          name: '',
-          capacity: 0,
-          location: '',
-          facilities: [],
-          status: 'active',
-        });
-        loadData();
-      } else {
-        addNotification({
-          title: '失败',
-          message: res.message || '创建会议室失败',
-          type: 'error',
-        });
-      }
-    } catch (err: unknown) {
-      const errorMsg = (err as { message?: string }).message || '创建会议室失败';
-      addNotification({
-        title: '失败',
-        message: errorMsg,
-        type: 'error',
+      await createRoom(newRoom);
+      setShowCreateModal(false);
+      setNewRoom({
+        name: '',
+        capacity: 0,
+        location: '',
+        facilities: [],
+        status: 'active',
       });
+    } catch (_err: unknown) {
+      // 错误已由 useCrudOperations 处理
     }
   };
 
   const handleDeleteRoom = async (id: string) => {
     if (!confirm('确定要删除这个会议室吗？')) return;
     try {
-      const res = await meetingRoomApi.delete(id);
-      if (res.success) {
-        addNotification({
-          title: '成功',
-          message: '会议室删除成功',
-          type: 'success',
-        });
-        loadData();
-      } else {
-        addNotification({
-          title: '失败',
-          message: res.message || '删除会议室失败',
-          type: 'error',
-        });
-      }
-    } catch (err: unknown) {
-      const errorMsg = (err as { message?: string }).message || '删除会议室失败';
-      addNotification({
-        title: '失败',
-        message: errorMsg,
-        type: 'error',
-      });
+      await deleteRoom(id);
+    } catch (_err: unknown) {
+      // 错误已由 useCrudOperations 处理
     }
   };
 
@@ -173,60 +152,22 @@ const MeetingRoomManagementPage: React.FC = () => {
     e.preventDefault();
     if (!selectedRoom) return;
     try {
-      const res = await meetingRoomApi.update(selectedRoom.id, selectedRoom);
-      if (res.success) {
-        addNotification({
-          title: '成功',
-          message: '会议室信息更新成功',
-          type: 'success',
-        });
-        setShowEditModal(false);
-        setSelectedRoom(null);
-        loadData();
-      } else {
-        addNotification({
-          title: '失败',
-          message: res.message || '更新会议室失败',
-          type: 'error',
-        });
-      }
-    } catch (err: unknown) {
-      const errorMsg = (err as { message?: string }).message || '更新会议室失败';
-      addNotification({
-        title: '失败',
-        message: errorMsg,
-        type: 'error',
-      });
+      await updateRoom(selectedRoom.id, selectedRoom);
+      setShowEditModal(false);
+      setSelectedRoom(null);
+    } catch (_err: unknown) {
+      // 错误已由 useCrudOperations 处理
     }
   };
 
   const handleCreateBooking = async (e: React.FormEvent) => {
     e.preventDefault();
     try {
-      const res = await meetingBookingApi.create(selectedBooking);
-      if (res.success) {
-        addNotification({
-          title: '成功',
-          message: '预约成功',
-          type: 'success',
-        });
-        setShowBookingModal(false);
-        setSelectedBooking({});
-        loadData();
-      } else {
-        addNotification({
-          title: '失败',
-          message: res.message || '预约失败',
-          type: 'error',
-        });
-      }
-    } catch (err: unknown) {
-      const errorMsg = (err as { message?: string }).message || '预约失败';
-      addNotification({
-        title: '失败',
-        message: errorMsg,
-        type: 'error',
-      });
+      await createBookingMutation.mutateAsync(selectedBooking);
+      setShowBookingModal(false);
+      setSelectedBooking({});
+    } catch (_err: unknown) {
+      // 错误已由 mutation 处理
     }
   };
 
@@ -399,12 +340,12 @@ const MeetingRoomManagementPage: React.FC = () => {
           subtitle=''
           columns={roomsColumns}
           data={rooms}
-          loading={loading}
-          error={error}
+          loading={loading || createBookingMutation.isPending}
+          error={error ?? undefined}
           searchable
           searchPlaceholder='搜索会议室名称、位置...'
           searchValue={searchQuery}
-          onSearch={setSearchQuery}
+          onSearch={handleSearch}
           filters={[
             {
               id: 'status',
@@ -417,17 +358,16 @@ const MeetingRoomManagementPage: React.FC = () => {
               ],
               value: statusFilter,
               onChange: (value: unknown) => {
-                setStatusFilter(value as string);
-                setCurrentPage(1);
+                handleStatusFilterChange(value as string);
               },
             },
           ]}
           pagination={{
-            page: currentPage,
-            pageSize,
-            total,
-            onPageChange: setCurrentPage,
-            onPageSizeChange: setPageSize,
+            page: pagination.page,
+            pageSize: pagination.pageSize,
+            total: pagination.total,
+            onPageChange: pagination.setPage,
+            onPageSizeChange: pagination.setPageSize,
           }}
           sortable
           actions={[
@@ -438,7 +378,7 @@ const MeetingRoomManagementPage: React.FC = () => {
             },
           ]}
           rowActions={roomsRowActions}
-          onRefresh={loadData}
+          onRefresh={refresh}
         />
 
         {bookings.length > 0 && (
@@ -541,6 +481,7 @@ const MeetingRoomManagementPage: React.FC = () => {
                 <Button
                   type='submit'
                   variant='contained'
+                  disabled={loading}
                 >
                   创建
                 </Button>
@@ -647,6 +588,7 @@ const MeetingRoomManagementPage: React.FC = () => {
                   <Button
                     type='submit'
                     variant='contained'
+                    disabled={loading}
                   >
                     保存
                   </Button>
@@ -758,6 +700,7 @@ const MeetingRoomManagementPage: React.FC = () => {
                 <Button
                   type='submit'
                   variant='contained'
+                  disabled={createBookingMutation.isPending}
                 >
                   预约
                 </Button>

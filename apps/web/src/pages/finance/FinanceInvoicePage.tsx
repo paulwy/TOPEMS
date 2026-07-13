@@ -1,4 +1,4 @@
-import React, { useState, useMemo, useEffect, useCallback } from 'react';
+import React, { useState, useMemo } from 'react';
 import { FINANCE_PATHS } from '@/modules/finance/config';
 import {
   Box,
@@ -11,6 +11,7 @@ import {
   Eye,
   RefreshCw,
 } from 'lucide-react';
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { DataExport, BackButton, PageContainer, CurrencyField } from '@/components/common';
 import { ListPageTemplate } from '@/components/templates';
 import type { ColumnDef, RowAction, FilterConfig } from '@/components/templates';
@@ -43,27 +44,12 @@ interface InvoiceListItem extends SalesInvoice {
   tax_rate: number;
 }
 
-interface GetInvoiceListParams {
-  customer_id?: string;
-  status?: string | string[];
-  start_date?: string;
-  end_date?: string;
-  page?: number;
-  pagesize?: number;
-  keyword?: string;
-}
-
 const FinanceInvoicePage: React.FC = () => {
-  const { success, error, notifications, hideNotification } = useNotification();
+  const { success, error } = useNotification();
+  const queryClient = useQueryClient();
 
-  const [loading, setLoading] = useState(false);
-  const [invoiceData, setInvoiceData] = useState<InvoiceListItem[]>([]);
-  const [pagination, setPagination] = useState({
-    page: 1,
-    pageSize: 10,
-    total: 0,
-  });
-
+  const [page, setPage] = useState(1);
+  const [pageSize, setPageSize] = useState(10);
   const [filterType, setFilterType] = useState<string>('');
   const [filterStatus, setFilterStatus] = useState<string>('');
   const [searchQuery, setSearchQuery] = useState('');
@@ -80,47 +66,97 @@ const FinanceInvoicePage: React.FC = () => {
     invoice_type: 'normal' as 'normal' | 'special',
   });
 
-  // 获取发票列表
-  const fetchInvoiceList = useCallback(
-    async (params?: GetInvoiceListParams) => {
-      setLoading(true);
-      try {
-        const response = await receivablePayableApi.listSalesInvoices({
-          status: filterStatus || undefined,
-          page: params?.page || pagination.page,
-          pagesize: params?.pagesize || pagination.pageSize,
-        });
+  const invoiceListQuery = useQuery({
+    queryKey: ['finance-invoices', page, pageSize, filterStatus],
+    queryFn: async () => {
+      const response = await receivablePayableApi.listSalesInvoices({
+        status: filterStatus || undefined,
+        page,
+        pagesize: pageSize,
+      });
+      if (!response.success || !response.data) {
+        throw new Error(response.message || '获取发票列表失败');
+      }
+      const itemsWithTaxRate = (response.data.items || []).map((item) => ({
+        ...item,
+        tax_rate: item.amount > 0 ? Math.round((item.tax_amount / item.amount) * 100) : 0,
+      }));
+      return {
+        items: itemsWithTaxRate,
+        page: response.data.page || 1,
+        pagesize: response.data.pagesize || 10,
+        total: response.data.total || 0,
+      };
+    },
+    staleTime: 5 * 60 * 1000,
+  });
 
-        if (response.success && response.data) {
-          // 计算税率 (tax_amount / amount * 100)
-          const itemsWithTaxRate = (response.data.items || []).map((item) => ({
-            ...item,
-            tax_rate: item.amount > 0 ? Math.round((item.tax_amount / item.amount) * 100) : 0,
-          }));
-          setInvoiceData(itemsWithTaxRate);
-          setPagination({
-            page: response.data.page || 1,
-            pageSize: response.data.pagesize || 10,
-            total: response.data.total || 0,
-          });
-        }
-      } catch (err: unknown) {
-        apiLogger.error('获取发票列表失败:', err);
-        error('获取发票列表失败');
-      } finally {
-        setLoading(false);
+  const createInvoiceMutation = useMutation({
+    mutationFn: async (data: {
+      customer_id: string;
+      invoice_date: string;
+      amount: number;
+      tax_amount: number;
+      total_amount: number;
+      invoice_type: 'normal' | 'special';
+    }) => {
+      const response = await receivablePayableApi.createSalesInvoice(data);
+      if (!response.success) {
+        throw new Error((response as any).message || '开具失败');
+      }
+      return response.data;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['finance-invoices'] });
+      success('发票开具成功');
+    },
+    onError: (err: any) => {
+      apiLogger.error('开具发票失败:', err);
+      error(err.message || '开具发票失败');
+    },
+  });
+
+  const updateInvoiceMutation = useMutation({
+    mutationFn: async ({ id, data }: { id: string; data: Partial<SalesInvoice> }) => {
+      const response = await receivablePayableApi.updateSalesInvoice(id, data);
+      if (!response.success) {
+        throw new Error((response as any).message || '更新失败');
+      }
+      return response.data;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['finance-invoices'] });
+    },
+    onError: (err: any) => {
+      apiLogger.error('更新发票失败:', err);
+      error(err.message || '更新发票失败');
+    },
+  });
+
+  const deleteInvoiceMutation = useMutation({
+    mutationFn: async (id: string) => {
+      const response = await receivablePayableApi.deleteSalesInvoice(id);
+      if (!response.success) {
+        throw new Error((response as any).message || '删除失败');
       }
     },
-    [filterStatus, pagination.page, pagination.pageSize, error]
-  );
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['finance-invoices'] });
+      success('发票删除成功');
+    },
+    onError: (err: any) => {
+      apiLogger.error('删除发票失败:', err);
+      error(err.message || '删除发票失败');
+    },
+  });
 
-  useEffect(() => {
-    fetchInvoiceList();
-  }, [fetchInvoiceList]);
+  const invoiceData = invoiceListQuery.data?.items || [];
+  const total = invoiceListQuery.data?.total || 0;
+  const loading = invoiceListQuery.isLoading || createInvoiceMutation.isPending || updateInvoiceMutation.isPending || deleteInvoiceMutation.isPending;
 
   // 统计卡片数据
   const statCards = useMemo(() => {
-    const totalCount = pagination.total;
+    const totalCount = total;
     const verifiedCount = invoiceData.filter(
       (i) => i.status === 'approved' || i.status === 'invoiced'
     ).length;
@@ -167,7 +203,7 @@ const FinanceInvoicePage: React.FC = () => {
         color: 'info' as const,
       },
     ];
-  }, [invoiceData, pagination.total]);
+  }, [invoiceData, total]);
 
   const getStatusConfig = (status: string) => {
     const configs: Record<
@@ -211,7 +247,7 @@ const FinanceInvoicePage: React.FC = () => {
     }
 
     try {
-      const response = await receivablePayableApi.createSalesInvoice({
+      await createInvoiceMutation.mutateAsync({
         customer_id: newInvoice.customer_id,
         invoice_date: new Date().toISOString().split('T')[0],
         amount: newInvoice.amount,
@@ -219,42 +255,26 @@ const FinanceInvoicePage: React.FC = () => {
         total_amount: newInvoice.amount * (1 + newInvoice.tax_rate / 100),
         invoice_type: newInvoice.invoice_type,
       });
-
-      if (response.success) {
-        success('发票开具成功');
-        setShowCreateModal(false);
-        fetchInvoiceList();
-        setNewInvoice({
-          customer_id: '',
-          customer_name: '',
-          amount: 0,
-          tax_rate: 13,
-          invoice_type: 'normal',
-        });
-      } else {
-        error((response as any).message || '开具失败');
-      }
-    } catch (err: unknown) {
-      apiLogger.error('开具发票失败:', err);
-      error('开具发票失败');
+      setShowCreateModal(false);
+      setNewInvoice({
+        customer_id: '',
+        customer_name: '',
+        amount: 0,
+        tax_rate: 13,
+        invoice_type: 'normal',
+      });
+    } catch {
     }
   };
 
   const handleVerify = async (invoice: InvoiceListItem) => {
     try {
-      const response = await receivablePayableApi.updateSalesInvoice(invoice.id, {
-        status: 'invoiced',
+      await updateInvoiceMutation.mutateAsync({
+        id: invoice.id,
+        data: { status: 'invoiced' },
       });
-
-      if (response.success) {
-        success('发票认证成功');
-        fetchInvoiceList();
-      } else {
-        error((response as any).message || '认证失败');
-      }
-    } catch (err: unknown) {
-      apiLogger.error('认证发票失败:', err);
-      error('认证发票失败');
+      success('发票认证成功');
+    } catch {
     }
   };
 
@@ -265,42 +285,30 @@ const FinanceInvoicePage: React.FC = () => {
 
   const handleDelete = async (id: string) => {
     if (!confirm('确定要删除该发票吗？')) return;
-
     try {
-      const response = await receivablePayableApi.deleteSalesInvoice(id);
-      if (response.success) {
-        success('发票删除成功');
-        fetchInvoiceList();
-      } else {
-        error((response as any).message || '删除失败');
-      }
-    } catch (err: unknown) {
-      apiLogger.error('删除发票失败:', err);
-      error('删除发票失败');
+      await deleteInvoiceMutation.mutateAsync(id);
+    } catch {
     }
   };
 
-  const handlePageChange = (page: number) => {
-    setPagination((prev) => ({ ...prev, page: page + 1 }));
-    fetchInvoiceList({ page: page + 1 });
+  const handlePageChange = (newPage: number) => {
+    setPage(newPage + 1);
   };
 
-  const handlePageSizeChange = (pageSize: number) => {
-    setPagination((prev) => ({ ...prev, pageSize, page: 1 }));
-    fetchInvoiceList({ pagesize: pageSize, page: 1 });
+  const handlePageSizeChange = (newSize: number) => {
+    setPageSize(newSize);
+    setPage(1);
   };
 
   const handleSearch = () => {
-    setPagination((prev) => ({ ...prev, page: 1 }));
-    fetchInvoiceList({ page: 1 });
+    setPage(1);
   };
 
   const handleReset = () => {
     setSearchQuery('');
     setFilterStatus('');
     setFilterType('');
-    setPagination((prev) => ({ ...prev, page: 1 }));
-    fetchInvoiceList({ page: 1 });
+    setPage(1);
   };
 
   const columns = useMemo(
@@ -520,7 +528,7 @@ const FinanceInvoicePage: React.FC = () => {
               spacing={1}
             >
               <IconButton
-                onClick={() => fetchInvoiceList()}
+                onClick={() => invoiceListQuery.refetch()}
                 disabled={loading}
               >
                 <RefreshCw sx={{ width: 20, height: 20 }} />
@@ -575,9 +583,9 @@ const FinanceInvoicePage: React.FC = () => {
           onSelectionChange={setSelectedIds}
           rowActions={rowActions}
           pagination={{
-            page: pagination.page - 1,
-            pageSize: pagination.pageSize,
-            total: pagination.total,
+            page: page - 1,
+            pageSize,
+            total,
             onPageChange: handlePageChange,
             onPageSizeChange: handlePageSizeChange,
           }}

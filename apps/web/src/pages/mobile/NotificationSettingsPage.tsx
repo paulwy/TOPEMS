@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useCallback } from 'react';
-import { useAppStore } from '../../store';
+import { useNotificationStore } from '../../store';
 import { Bell, MessageCircle, Mail, Smartphone, Clock, Shield } from 'lucide-react';
 import {
   SettingsPageTemplate,
@@ -17,7 +17,7 @@ interface NotificationSetting {
 }
 
 const NotificationSettingsPage: React.FC = () => {
-  const addNotification = useAppStore((state) => state.addNotification);
+  const addNotification = useNotificationStore((state) => state.addNotification);
   const [loading, setLoading] = useState(false);
   const [saving, setSaving] = useState(false);
   const [notificationSettings, setNotificationSettings] = useState<NotificationSetting[]>([

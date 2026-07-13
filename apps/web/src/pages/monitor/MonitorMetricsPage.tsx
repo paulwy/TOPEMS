@@ -38,7 +38,7 @@ import { DashboardTemplate, type StatCard, type ChartCard } from '@/components/t
 import LineChartComponent from '../../components/charts/LineChart';
 import { AreaChart } from '../../components/charts/AreaChart';
 import { BarChartComponent } from '../../components/charts/BarChart';
-import { useAppStore } from '../../store';
+import { useNotificationStore } from '@/store';
 import { handleApiError, getErrorMessage } from '@/utils/errors';
 import { designTokens } from '@/theme/tokens';
 import { MONITOR_PATHS } from '@/modules/monitor/config';
@@ -126,7 +126,7 @@ const generateMultiServiceTrendData = (labels: string[], services: string[]) => 
 };
 
 export const MonitorMetricsPage: React.FC = () => {
-  const addNotification = useAppStore((state) => state.addNotification);
+  const addNotification = useNotificationStore((state) => state.addNotification);
   const [loading, setLoading] = useState(false);
   const [timeRange, setTimeRange] = useState<TimeRange>('24h');
   const [timeRangeAnchorEl, setTimeRangeAnchorEl] = useState<null | HTMLElement>(null);

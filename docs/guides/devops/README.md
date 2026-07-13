@@ -20,6 +20,7 @@ devops/
 | [部署指南](./deployment-guide.md) | Docker Compose / Kubernetes 部署 | 全新部署、扩容、迁移 |
 | [数据库维护指南](./database-maintenance.md) | 备份、恢复、迁移 | 数据管理、灾备 |
 | [监控告警运维指南](./monitoring-alerting.md) | Prometheus/Grafana/Loki/AlertManager | 日常监控、告警处理 |
+| [分布式追踪指南](./opentelemetry-guide.md) | OpenTelemetry 配置、宏代码使用、排查步骤 | 链路追踪、性能分析 |
 | [故障排查指南](./troubleshooting.md) | 常见问题诊断与解决 | 故障处理 |
 | [日志管理指南](./logging-guide.md) | 日志收集、分析、轮转 | 日志分析、审计 |
 | [脚本工具说明](./scripts-guide.md) | topems.sh 及部署脚本 | 运维操作 |

@@ -56,7 +56,7 @@ import {
   type ExperimentRecord,
   type CreateExperimentRecordRequest,
 } from '@/api/rs';
-import { useAppStore } from '@/store';
+import { useNotificationStore } from '@/store';
 import { apiLogger } from '@/utils/logger';
 
 // TODO(v2-phase2): Replace CircularProgress with LoadingSpinner from '@topems/shared-components'. Complex usage found - manual review needed.
@@ -68,7 +68,7 @@ interface ExperimentWithProject extends Experiment {
 const RsExperimentDetailPage: React.FC = () => {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
-  const addNotification = useAppStore((state) => state.addNotification);
+  const addNotification = useNotificationStore((state) => state.addNotification);
 
   const [experiment, setExperiment] = useState<ExperimentWithProject | null>(null);
   const [records, setRecords] = useState<ExperimentRecord[]>([]);

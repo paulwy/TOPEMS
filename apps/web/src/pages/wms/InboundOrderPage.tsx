@@ -16,7 +16,7 @@ import React, { useState, useEffect, useMemo, useCallback } from 'react';
 import type { InboundOrder, CreateInboundOrderRequest, UpdateInboundOrderRequest } from '@/api/wms';
 import { wmsApi } from '@/api/wms';
 import { WMS_PATHS } from '@/modules/wms/config';
-import { useAppStore } from '@/store';
+import { useNotificationStore } from '@/store';
 import {
   ListPageTemplate,
   type ColumnDef,
@@ -25,7 +25,7 @@ import {
 } from '@/components/templates';
 import { Plus, Edit, Trash2, Eye } from 'lucide-react';
 import { apiLogger } from '@/utils/logger';
-import { ConfirmDialog, PageContainer } from '@/components/common';
+import { ConfirmDialog, PageContainer, StatusBadge } from '@/components/common';
 
 const orderTypeConfig: Record<string, string> = {
   purchase_in: '采购入库',
@@ -46,7 +46,7 @@ const statusConfig: Record<
 };
 
 const InboundOrderPage: React.FC = () => {
-  const { addNotification } = useAppStore();
+  const { addNotification } = useNotificationStore();
 
   const [orders, setOrders] = useState<InboundOrder[]>([]);
   const [loading, setLoading] = useState(true);
@@ -225,10 +225,11 @@ const InboundOrderPage: React.FC = () => {
   const getStatusBadge = (status: string) => {
     const config = statusConfig[status] || { label: status, color: 'default' as const };
     return (
-      <Chip
-        size='small'
-        color={config.color}
+      <StatusBadge
+        status={status}
         label={config.label}
+        color={config.color}
+        size='sm'
         variant='outlined'
       />
     );

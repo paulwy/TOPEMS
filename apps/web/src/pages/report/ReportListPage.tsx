@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useMemo, useCallback } from 'react';
+import React, { useState, useMemo } from 'react';
 import { Box, Card, CardContent, Typography, Chip } from '@mui/material';
 import {
   FileText as FileTextIcon,
@@ -11,11 +11,12 @@ import {
   FileBarChart,
 } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { ListPageTemplate, type ColumnDef, type RowAction } from '@/components/templates';
 import { PageContainer } from '@/components/common';
 import { reportApi } from '@/api/report';
 import type { ReportData } from '@/api/report';
-import { useAppStore } from '@/store';
+import { useNotificationStore } from '@/store';
 import { apiLogger } from '@/utils/logger';
 import { ConfirmDialog } from '@topems/shared-components';
 import { designTokens } from '@/theme/tokens';
@@ -25,57 +26,93 @@ const ct = designTokens.colors;
 
 const ReportListPage: React.FC = () => {
   const navigate = useNavigate();
-  const [reports, setReports] = useState<ReportData[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string>('');
   const [searchTerm, setSearchTerm] = useState('');
   const [page, setPage] = useState(0);
   const [rowsPerPage, setRowsPerPage] = useState(10);
-  const [stats, setStats] = useState({ total: 0, today: 0, scheduled: 0, subscribed: 0 });
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
   const [selectedReport, setSelectedReport] = useState<ReportData | null>(null);
-  const addNotification = useAppStore((state) => state.addNotification);
+  const addNotification = useNotificationStore((state) => state.addNotification);
+  const queryClient = useQueryClient();
 
-  const loadReports = useCallback(async () => {
-    try {
-      setLoading(true);
-      setError('');
+  const reportsQuery = useQuery({
+    queryKey: ['report-list'],
+    queryFn: async () => {
       const response = await reportApi.listReports();
-      if (response.success && response.data) {
-        const items = Array.isArray(response.data) ? response.data : [];
-        setReports(items);
-        setStats({
-          total: items.length,
-          today: items.filter((r) => {
-            const date = new Date(r.created_at);
-            const today = new Date();
-            return date.toDateString() === today.toDateString();
-          }).length,
-          scheduled: 0,
-          subscribed: 0,
-        });
-      } else {
-        setReports([]);
-        setStats({ total: 0, today: 0, scheduled: 0, subscribed: 0 });
-        setError(response.message || '加载报表数据失败');
+      if (!response.success) {
+        throw new Error(response.message || '加载报表数据失败');
       }
-    } catch (err: unknown) {
-      apiLogger.error('加载报表数据失败:', err);
-      setError('加载报表数据失败');
+      return Array.isArray(response.data) ? response.data : [];
+    },
+    staleTime: 5 * 60 * 1000,
+  });
+
+  const deleteMutation = useMutation({
+    mutationFn: async (id: string) => {
+      const response = await reportApi.deleteReport(id);
+      if (!response.success) {
+        throw new Error(response.message || '删除报表失败');
+      }
+      return id;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['report-list'] });
+      addNotification({
+        type: 'success',
+        title: '删除成功',
+        message: '删除报表成功',
+      });
+    },
+    onError: (error: unknown) => {
+      apiLogger.error('删除报表失败:', error);
       addNotification({
         type: 'error',
-        title: '加载失败',
-        message: '加载报表数据失败',
+        title: '删除失败',
+        message: '删除报表失败',
       });
-      setReports([]);
-    } finally {
-      setLoading(false);
-    }
-  }, [addNotification]);
+    },
+  });
 
-  useEffect(() => {
-    loadReports();
-  }, [loadReports]);
+  const exportMutation = useMutation({
+    mutationFn: async (report: ReportData) => {
+      const response = await reportApi.exportReport(report.id, { format: 'excel' });
+      if (!response.success || !response.data) {
+        throw new Error(response.message || '导出报表失败');
+      }
+      return response.data;
+    },
+    onSuccess: () => {
+      addNotification({
+        type: 'success',
+        title: '导出成功',
+        message: '导出报表成功',
+      });
+    },
+    onError: (error: unknown) => {
+      apiLogger.error('导出报表失败:', error);
+      addNotification({
+        type: 'error',
+        title: '导出失败',
+        message: '导出报表失败',
+      });
+    },
+  });
+
+  const reports = reportsQuery.data || [];
+  const loading = reportsQuery.isLoading || deleteMutation.isPending || exportMutation.isPending;
+  const error = reportsQuery.error ? (reportsQuery.error as Error).message : '';
+
+  const stats = useMemo(() => {
+    return {
+      total: reports.length,
+      today: reports.filter((r) => {
+        const date = new Date(r.created_at);
+        const today = new Date();
+        return date.toDateString() === today.toDateString();
+      }).length,
+      scheduled: 0,
+      subscribed: 0,
+    };
+  }, [reports]);
 
   const filteredReports = useMemo(() => {
     return reports.filter((r) => r.config.title?.toLowerCase().includes(searchTerm.toLowerCase()));
@@ -93,54 +130,22 @@ const ReportListPage: React.FC = () => {
 
   const handleDeleteConfirm = async () => {
     if (!selectedReport) return;
-    try {
-      const response = await reportApi.deleteReport(selectedReport.id);
-      if (response.success) {
-        addNotification({
-          type: 'success',
-          title: '删除成功',
-          message: '删除报表成功',
-        });
-        setReports((prev) => prev.filter((r) => r.id !== selectedReport.id));
-        setStats((prev) => ({ ...prev, total: Math.max(0, prev.total - 1) }));
-      } else {
-        throw new Error(response.message || '删除报表失败');
-      }
-    } catch (err: unknown) {
-      apiLogger.error('删除报表失败:', err);
-      addNotification({
-        type: 'error',
-        title: '删除失败',
-        message: '删除报表失败',
-      });
-    }
+    await deleteMutation.mutateAsync(selectedReport.id);
+    setDeleteDialogOpen(false);
+    setSelectedReport(null);
   };
 
-  const handleExport = async (report: ReportData) => {
-    try {
-      const response = await reportApi.exportReport(report.id, { format: 'excel' });
-      if (response.success && response.data) {
-        addNotification({
-          type: 'success',
-          title: '导出成功',
-          message: '导出报表成功',
-        });
-      } else {
-        throw new Error(response.message || '导出报表失败');
-      }
-    } catch (err: unknown) {
-      apiLogger.error('导出报表失败:', err);
-      addNotification({
-        type: 'error',
-        title: '导出失败',
-        message: '导出报表失败',
-      });
-    }
+  const handleExport = (report: ReportData) => {
+    exportMutation.mutate(report);
   };
 
   const formatDate = (dateStr: string) => {
     const date = new Date(dateStr);
     return date.toLocaleString('zh-CN');
+  };
+
+  const handleRefresh = () => {
+    queryClient.invalidateQueries({ queryKey: ['report-list'] });
   };
 
   const columns: ColumnDef<ReportData>[] = useMemo(
@@ -354,7 +359,7 @@ const ReportListPage: React.FC = () => {
         rowActions={rowActions}
         headerContent={headerContent}
         getRowId={(row) => row.id}
-        onRefresh={loadReports}
+        onRefresh={handleRefresh}
         emptyMessage='暂无报表数据'
         showRowNumber
         columnConfigurable

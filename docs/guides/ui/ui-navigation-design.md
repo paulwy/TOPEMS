@@ -477,7 +477,7 @@ navigate(HRM_PATHS.employees);
 navigate('/hrm/employees');
 ```
 
-**迁移进度**：hrm 试点完成，剩余 30 个模块分 5 个 Wave 迁移，全部完成后删除 `compatibility.tsx`。
+**迁移进度**：✅ 已完成全部 31 个模块迁移，`compatibility.tsx` 已在 V5.8 阶段删除。
 
 ### 3.7 TopNav 组件改造
 

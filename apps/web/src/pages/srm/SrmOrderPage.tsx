@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useMemo } from 'react';
+import React, { useState, useMemo, useCallback } from 'react';
 import {
   Box,
   Dialog,
@@ -27,17 +27,54 @@ import {
 import { ListPageTemplate, type ColumnDef, type RowAction } from '@/components/templates';
 import { srmApi } from '@/api/srm';
 import type { PurchaseOrder, CreatePurchaseOrderRequest } from '@/api/srm';
-import { useAppStore } from '@/store';
+import { useNotificationStore } from '@/store';
 import { apiLogger } from '@/utils/logger';
 import { PageContainer } from '@/components/common';
 import { designTokens } from '@/theme/tokens';
+import { useCrudOperations } from '@/hooks/useCrudQueries';
 
 const ct = designTokens.colors;
 
+const orderCrudApi = {
+  list: async (params?: Record<string, unknown>) => {
+    const response = await srmApi.listPurchaseOrders();
+    const items = (response.data || []) as PurchaseOrder[];
+    const adapted = items.map((item) => ({
+      ...item,
+      total_amount: (item as any).total_amount || (item as any).amount || 0,
+      status:
+        item.status === 'pending'
+          ? '待处理'
+          : item.status === 'processing'
+            ? '处理中'
+            : item.status === 'delivered'
+              ? '已交付'
+              : item.status === 'completed'
+                ? '已完成'
+                : item.status === 'cancelled'
+                  ? '已取消'
+                  : item.status,
+      order_date: (item as any).order_date || (item as any).created_at,
+    }));
+    return {
+      success: response.success,
+      message: response.message,
+      code: (response as any).code,
+      data: {
+        items: adapted,
+        total: adapted.length,
+      },
+    };
+  },
+  get: (id: string) => srmApi.getPurchaseOrder(id),
+  create: (data: CreatePurchaseOrderRequest) => srmApi.createPurchaseOrder(data),
+  update: (id: string, data: Partial<CreatePurchaseOrderRequest>) =>
+    srmApi.updatePurchaseOrder(id, data as CreatePurchaseOrderRequest),
+  delete: (id: string) => srmApi.deletePurchaseOrder(id),
+} as any;
+
 const SrmOrderPage: React.FC = () => {
-  const [orders, setOrders] = useState<PurchaseOrder[]>([]);
   const theme = useTheme();
-  const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState('');
   const [showCreateModal, setShowCreateModal] = useState(false);
   const [showEditModal, setShowEditModal] = useState(false);
@@ -49,47 +86,20 @@ const SrmOrderPage: React.FC = () => {
     status: 'pending',
     currency: 'CNY',
   });
-  const addNotification = useAppStore((state) => state.addNotification);
+  const addNotification = useNotificationStore((state) => state.addNotification);
 
-  useEffect(() => {
-    loadOrders();
-  }, []);
-
-  const loadOrders = async () => {
-    try {
-      setLoading(true);
-      const response = await srmApi.listPurchaseOrders();
-      if (response.success && response.data) {
-        const data = response.data as any;
-        const items = Array.isArray(data) ? data : data.orders || [];
-        const adapted = items.map((item: { [key: string]: unknown }) => ({
-          ...item,
-          total_amount: item.total_amount || item.amount || 0,
-          status:
-            item.status === 'pending'
-              ? '待处理'
-              : item.status === 'processing'
-                ? '处理中'
-                : item.status === 'delivered'
-                  ? '已交付'
-                  : item.status === 'completed'
-                    ? '已完成'
-                    : item.status === 'cancelled'
-                      ? '已取消'
-                      : item.status,
-          order_date: item.order_date || item.created_at,
-        }));
-        setOrders(adapted);
-      } else {
-        setOrders([]);
-      }
-    } catch (err: unknown) {
-      apiLogger.error('加载订单数据失败:', err);
-      setOrders([]);
-    } finally {
-      setLoading(false);
-    }
-  };
+  const {
+    data: orders,
+    loading,
+    refresh,
+    create: createOrder,
+    update: updateOrder,
+    delete: deleteOrder,
+  } = useCrudOperations<PurchaseOrder, CreatePurchaseOrderRequest>({
+    api: orderCrudApi,
+    queryKey: 'srm-orders',
+    defaultPageSize: 100,
+  });
 
   const getStatusBadge = (status: string) => {
     const statusMap: Record<string, { bg: string; color: string }> = {
@@ -161,18 +171,15 @@ const SrmOrderPage: React.FC = () => {
 
   const handleSave = async () => {
     try {
-      await srmApi.createPurchaseOrder({
+      await createOrder({
         po_no: formData.po_no || '',
         supplier_id: formData.supplier_id || '',
         total_amount: formData.total_amount || 0,
         status: formData.status || 'pending',
         currency: formData.currency || 'CNY',
       });
-      addNotification({ title: '成功', message: '订单创建成功', type: 'success' });
       setShowCreateModal(false);
-      loadOrders();
     } catch (err: unknown) {
-      addNotification({ title: '错误', message: '创建失败', type: 'error' });
       apiLogger.error('创建订单失败:', err);
     }
   };
@@ -204,7 +211,7 @@ const SrmOrderPage: React.FC = () => {
   const handleUpdate = async () => {
     if (!editingId) return;
     try {
-      await srmApi.updatePurchaseOrder(editingId, {
+      await updateOrder(editingId, {
         po_no: formData.po_no || '',
         supplier_id: formData.supplier_id || '',
         total_amount: formData.total_amount || 0,
@@ -212,34 +219,24 @@ const SrmOrderPage: React.FC = () => {
         currency: formData.currency || 'CNY',
         remarks: formData.remarks,
       });
-      addNotification({ title: '成功', message: '订单更新成功', type: 'success' });
       setShowEditModal(false);
       setEditingId(null);
-      loadOrders();
     } catch (err: unknown) {
-      addNotification({ title: '错误', message: '更新失败', type: 'error' });
       apiLogger.error('更新订单失败:', err);
     }
   };
 
   const handleDelete = async (row: PurchaseOrder) => {
     try {
-      const response = await srmApi.deletePurchaseOrder(row.id);
-      if (response.success) {
-        addNotification({ title: '成功', message: '订单删除成功', type: 'success' });
-        loadOrders();
-      } else {
-        addNotification({ title: '错误', message: '删除失败', type: 'error' });
-      }
+      await deleteOrder(row.id);
     } catch (err: unknown) {
-      addNotification({ title: '错误', message: '删除失败', type: 'error' });
       apiLogger.error('删除订单失败:', err);
     }
   };
 
   const handleConfirm = async (row: PurchaseOrder) => {
     try {
-      await srmApi.updatePurchaseOrder(row.id, {
+      await updateOrder(row.id, {
         po_no: row.po_no,
         supplier_id: row.supplier_id,
         total_amount: row.total_amount || 0,
@@ -247,17 +244,14 @@ const SrmOrderPage: React.FC = () => {
         currency: row.currency,
         remarks: row.remarks,
       });
-      addNotification({ title: '成功', message: '订单已确认', type: 'success' });
-      loadOrders();
     } catch (err: unknown) {
-      addNotification({ title: '错误', message: '确认失败', type: 'error' });
       apiLogger.error('确认订单失败:', err);
     }
   };
 
   const handleProcess = async (row: PurchaseOrder) => {
     try {
-      await srmApi.updatePurchaseOrder(row.id, {
+      await updateOrder(row.id, {
         po_no: row.po_no,
         supplier_id: row.supplier_id,
         total_amount: row.total_amount || 0,
@@ -265,17 +259,14 @@ const SrmOrderPage: React.FC = () => {
         currency: row.currency,
         remarks: row.remarks,
       });
-      addNotification({ title: '成功', message: '订单已交付', type: 'success' });
-      loadOrders();
     } catch (err: unknown) {
-      addNotification({ title: '错误', message: '更新失败', type: 'error' });
       apiLogger.error('更新订单状态失败:', err);
     }
   };
 
   const handleClose = async (row: PurchaseOrder) => {
     try {
-      await srmApi.updatePurchaseOrder(row.id, {
+      await updateOrder(row.id, {
         po_no: row.po_no,
         supplier_id: row.supplier_id,
         total_amount: row.total_amount || 0,
@@ -283,10 +274,7 @@ const SrmOrderPage: React.FC = () => {
         currency: row.currency,
         remarks: row.remarks,
       });
-      addNotification({ title: '成功', message: '订单已关闭', type: 'success' });
-      loadOrders();
     } catch (err: unknown) {
-      addNotification({ title: '错误', message: '关闭失败', type: 'error' });
       apiLogger.error('关闭订单失败:', err);
     }
   };
@@ -555,7 +543,7 @@ const SrmOrderPage: React.FC = () => {
               variant: 'contained',
             },
           ]}
-          onRefresh={loadOrders}
+          onRefresh={refresh}
           emptyMessage='暂无订单数据'
           emptyIcon={
             <ClipboardList style={{ width: 48, height: 48, color: theme.palette.text.disabled }} />

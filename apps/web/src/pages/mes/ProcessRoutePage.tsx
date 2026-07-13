@@ -15,7 +15,8 @@ import {
   Stack,
 } from '@mui/material';
 import { PageContainer } from '@/components/common';
-import React, { useState, useEffect, useMemo, useCallback } from 'react';
+import React, { useState, useMemo, useCallback } from 'react';
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import type {
   ProcessRoute,
   CreateProcessRouteRequest,
@@ -24,7 +25,7 @@ import type {
 } from '@/api/mes/process';
 import type { ListParams } from '@/api/mes';
 import { processRouteApi } from '@/api/mes/process';
-import { useAppStore } from '@/store';
+import { useNotificationStore } from '@/store';
 import { LoadingSpinner } from '@topems/shared-components';
 import {
   ListPageTemplate,
@@ -39,13 +40,11 @@ import { designTokens } from '@/theme/tokens';
 const ct = designTokens.colors;
 
 const ProcessRoutePage: React.FC = () => {
-  const [routes, setRoutes] = useState<ProcessRoute[]>([]);
-  const [loading, setLoading] = useState(true);
+  const queryClient = useQueryClient();
   const [searchTerm, setSearchTerm] = useState('');
   const [statusFilter, setStatusFilter] = useState<string>('all');
   const [currentPage, setCurrentPage] = useState(1);
   const [pageSize] = useState(10);
-  const [total, setTotal] = useState(0);
   const [showDialog, setShowDialog] = useState(false);
   const [showDetailDialog, setShowDetailDialog] = useState(false);
   const [selectedRoute, setSelectedRoute] = useState<ProcessRoute | null>(null);
@@ -59,11 +58,11 @@ const ProcessRoutePage: React.FC = () => {
     standard_time: 0,
   });
 
-  const { addNotification } = useAppStore();
+  const { addNotification } = useNotificationStore();
 
-  const loadRoutes = useCallback(async () => {
-    try {
-      setLoading(true);
+  const routeQuery = useQuery({
+    queryKey: ['mes-process-routes', currentPage, pageSize, searchTerm, statusFilter],
+    queryFn: async () => {
       const params: ListParams = {
         page: currentPage - 1,
         pagesize: pageSize,
@@ -72,21 +71,98 @@ const ProcessRoutePage: React.FC = () => {
       if (statusFilter !== 'all') params.status = statusFilter;
 
       const response = await processRouteApi.list(params);
-      if (response.success && response.data) {
-        setRoutes(response.data.routes || []);
-        setTotal(response.data.total || 0);
+      if (!response.success || !response.data) {
+        throw new Error(response.message || '加载工序路线列表失败');
       }
-    } catch (error: unknown) {
-      apiLogger.error('加载工序路线列表失败:', error);
+      return {
+        items: response.data.routes || [],
+        total: response.data.total || 0,
+      };
+    },
+    staleTime: 5 * 60 * 1000,
+    retry: 2,
+  });
+
+  const routes = routeQuery.data?.items ?? [];
+  const total = routeQuery.data?.total ?? 0;
+  const loading = routeQuery.isLoading;
+
+  const createMutation = useMutation({
+    mutationFn: async (data: CreateProcessRouteRequest) => {
+      const response = await processRouteApi.create(data);
+      if (!response.success) {
+        throw new Error(response.message || '创建工序路线失败');
+      }
+      return response.data;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['mes-process-routes'] });
+      addNotification({
+        type: 'success',
+        title: '创建成功',
+        message: '新工序路线已创建',
+      });
+    },
+    onError: (error: unknown) => {
+      apiLogger.error('创建工序路线失败:', error);
       addNotification({
         type: 'error',
-        title: '加载失败',
-        message: '无法加载工序路线列表',
+        title: '操作失败',
+        message: '创建工序路线失败',
       });
-    } finally {
-      setLoading(false);
-    }
-  }, [currentPage, pageSize, searchTerm, statusFilter, addNotification]);
+    },
+  });
+
+  const updateMutation = useMutation({
+    mutationFn: async ({ id, data }: { id: string; data: UpdateProcessRouteRequest }) => {
+      const response = await processRouteApi.update(id, data);
+      if (!response.success) {
+        throw new Error(response.message || '更新工序路线失败');
+      }
+      return response.data;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['mes-process-routes'] });
+      addNotification({
+        type: 'success',
+        title: '更新成功',
+        message: '工序路线信息已更新',
+      });
+    },
+    onError: (error: unknown) => {
+      apiLogger.error('更新工序路线失败:', error);
+      addNotification({
+        type: 'error',
+        title: '操作失败',
+        message: '更新工序路线失败',
+      });
+    },
+  });
+
+  const deleteMutation = useMutation({
+    mutationFn: async (id: string) => {
+      const response = await processRouteApi.delete(id);
+      if (!response.success) {
+        throw new Error(response.message || '删除工序路线失败');
+      }
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['mes-process-routes'] });
+      addNotification({
+        type: 'success',
+        title: '删除成功',
+        message: '工序路线已删除',
+      });
+    },
+    onError: (error: unknown) => {
+      apiLogger.error('删除工序路线失败:', error);
+      addNotification({
+        type: 'error',
+        title: '操作失败',
+        message: '删除工序路线失败',
+      });
+    },
+  });
 
   const loadRouteSteps = useCallback(async (routeId: string) => {
     try {
@@ -99,71 +175,26 @@ const ProcessRoutePage: React.FC = () => {
     }
   }, []);
 
-  useEffect(() => {
-    loadRoutes();
-  }, [loadRoutes]);
-
-  const getStatusText = (status: string) => {
-    const statusMap: Record<string, string> = {
-      active: '启用',
-      inactive: '停用',
-      draft: '草稿',
-    };
-    return statusMap[status] || status;
-  };
-
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    try {
-      if (selectedRoute) {
-        await processRouteApi.update(selectedRoute.id, formData as UpdateProcessRouteRequest);
-        addNotification({
-          type: 'success',
-          title: '更新成功',
-          message: '工序路线信息已更新',
-        });
-      } else {
-        await processRouteApi.create(formData);
-        addNotification({
-          type: 'success',
-          title: '创建成功',
-          message: '新工序路线已创建',
-        });
-      }
-      setShowDialog(false);
-      resetForm();
-      loadRoutes();
-    } catch (error: unknown) {
-      apiLogger.error('操作失败:', error);
-      addNotification({
-        type: 'error',
-        title: '操作失败',
-        message: selectedRoute ? '更新工序路线失败' : '创建工序路线失败',
+    if (selectedRoute) {
+      await updateMutation.mutateAsync({
+        id: selectedRoute.id,
+        data: formData as UpdateProcessRouteRequest,
       });
+    } else {
+      await createMutation.mutateAsync(formData);
     }
+    setShowDialog(false);
+    resetForm();
   };
 
   const handleDelete = useCallback(
     async (id: string) => {
       if (!window.confirm('确定要删除这个工序路线吗?')) return;
-      try {
-        await processRouteApi.delete(id);
-        addNotification({
-          type: 'success',
-          title: '删除成功',
-          message: '工序路线已删除',
-        });
-        loadRoutes();
-      } catch (error: unknown) {
-        apiLogger.error('删除失败:', error);
-        addNotification({
-          type: 'error',
-          title: '删除失败',
-          message: '无法删除工序路线',
-        });
-      }
+      await deleteMutation.mutateAsync(id);
     },
-    [loadRoutes, addNotification]
+    [deleteMutation]
   );
 
   const handleEdit = useCallback((route: ProcessRoute) => {
@@ -196,6 +227,15 @@ const ProcessRoutePage: React.FC = () => {
       version: '1.0',
       standard_time: 0,
     });
+  };
+
+  const getStatusText = (status: string) => {
+    const statusMap: Record<string, string> = {
+      active: '启用',
+      inactive: '停用',
+      draft: '草稿',
+    };
+    return statusMap[status] || status;
   };
 
   const getStatusBadge = (status: string) => {
@@ -341,7 +381,6 @@ const ProcessRoutePage: React.FC = () => {
         getRowId={(row) => row.id}
       />
 
-      {/* 新增/编辑对话框 */}
       <Dialog
         open={showDialog}
         onClose={() => setShowDialog(false)}
@@ -437,6 +476,7 @@ const ProcessRoutePage: React.FC = () => {
               <Button
                 type='submit'
                 variant='contained'
+                disabled={createMutation.isPending || updateMutation.isPending}
               >
                 保存
               </Button>
@@ -445,7 +485,6 @@ const ProcessRoutePage: React.FC = () => {
         </DialogContent>
       </Dialog>
 
-      {/* 详情对话框 */}
       <Dialog
         open={showDetailDialog}
         onClose={() => setShowDetailDialog(false)}

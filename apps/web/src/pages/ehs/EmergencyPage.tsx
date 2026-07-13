@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useMemo } from 'react';
+import React, { useState, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
 import {
   Box,
@@ -22,17 +22,24 @@ import { ListPageTemplate } from '@/components';
 import type { ColumnDef, RowAction, FilterConfig } from '@/components';
 import { PageContainer } from '@/components/common';
 import { ehsApi } from '@/api/ehs';
-import type { DrillRecord } from '@/api/ehs';
-import { useAppStore } from '@/store';
+import type { DrillRecord, CreateDrillRecordRequest } from '@/api/ehs';
+import { useNotificationStore } from '@/store';
 import { apiLogger } from '@/utils/logger';
 import { designTokens } from '@/theme/tokens';
+import { useCrudOperations } from '@/hooks/useCrudQueries';
 
 const ct = designTokens.colors;
 
+const drillCrudApi = {
+  list: (params?: Record<string, unknown>) => ehsApi.listDrills(params as any),
+  get: (id: string) => ehsApi.getDrill(id),
+  create: (data: CreateDrillRecordRequest) => ehsApi.createDrill(data),
+  update: (id: string, data: Partial<CreateDrillRecordRequest>) => ehsApi.updateDrill(id, data),
+  delete: (id: string) => ehsApi.deleteDrill(id),
+} as any;
+
 const EmergencyPage: React.FC = () => {
   const navigate = useNavigate();
-  const [drills, setDrills] = useState<DrillRecord[]>([]);
-  const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState('');
   const [statusFilter, setStatusFilter] = useState('');
   const [showCreateModal, setShowCreateModal] = useState(false);
@@ -52,33 +59,18 @@ const EmergencyPage: React.FC = () => {
     improvements: '',
     status: 'draft' as const,
   });
-  const addNotification = useAppStore((state) => state.addNotification);
+  const addNotification = useNotificationStore((state) => state.addNotification);
 
-  useEffect(() => {
-    loadDrills();
-  }, [searchTerm, statusFilter]);
-
-  const loadDrills = async () => {
-    try {
-      setLoading(true);
-      const response = await ehsApi.listDrills({
-        search: searchTerm || undefined,
-      });
-      if (response.success && response.data) {
-        const data = response.data as any;
-        const drillsData = Array.isArray(data) ? data : data.data || [];
-        setDrills(drillsData);
-      } else {
-        setDrills([]);
-      }
-    } catch (err: unknown) {
-      apiLogger.error('加载应急演练数据失败:', err);
-      addNotification({ title: '错误', message: '加载应急演练失败', type: 'error' });
-      setDrills([]);
-    } finally {
-      setLoading(false);
-    }
-  };
+  const {
+    data: drills,
+    loading,
+    refresh,
+    create: createDrill,
+  } = useCrudOperations<DrillRecord, CreateDrillRecordRequest>({
+    api: drillCrudApi,
+    queryKey: 'ehs-emergency-drills',
+    defaultPageSize: 100,
+  });
 
   const loadDrillDetail = async (drillId: string) => {
     try {
@@ -235,7 +227,7 @@ const EmergencyPage: React.FC = () => {
 
   const handleSave = async () => {
     try {
-      await ehsApi.createDrill({
+      await createDrill({
         drill_no: formData.drill_no,
         drill_name: formData.drill_name,
         plan_id: formData.plan_id || null,
@@ -252,7 +244,6 @@ const EmergencyPage: React.FC = () => {
       });
       addNotification({ title: '成功', message: '应急演练创建成功', type: 'success' });
       setShowCreateModal(false);
-      loadDrills();
     } catch (err: unknown) {
       addNotification({ title: '错误', message: '创建失败', type: 'error' });
       apiLogger.error('创建应急演练失败:', err);
@@ -407,7 +398,7 @@ const EmergencyPage: React.FC = () => {
         onSearch={(value) => setSearchTerm(value)}
         filters={filters}
         rowActions={rowActions}
-        onRefresh={loadDrills}
+        onRefresh={refresh}
       />
 
       <Dialog

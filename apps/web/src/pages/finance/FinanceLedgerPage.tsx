@@ -1,11 +1,10 @@
-import React, { useState, useEffect, useMemo } from 'react';
+import React, { useState, useMemo } from 'react';
 import { FileText, Eye, Calculator, TrendingUp, TrendingDown, Wallet } from 'lucide-react';
+import { useQuery } from '@tanstack/react-query';
 import { ListPageTemplate, StatCardGroup } from '@/components';
-import { useAppStore } from '@/store';
 import { DataExport, BackButton, PageContainer } from '@/components/common';
 import { financeApi } from '@/api/finance';
 import type { Account, AccountBalance } from '@/types/finance';
-import type { AccountingSubject } from '@/api/erp';
 import { apiLogger } from '@/utils/logger';
 
 import { FINANCE_PATHS } from '@/modules/finance/config';
@@ -22,50 +21,58 @@ import {
 } from '@mui/material';
 
 const FinanceLedgerPage: React.FC = () => {
-  const [ledgerData, setLedgerData] = useState<Account[]>([]);
-  const [accountBalances, setAccountBalances] = useState<AccountBalance[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | undefined>(undefined);
   const [filterPeriod, setFilterPeriod] = useState('');
   const [filterCategory, setFilterCategory] = useState('');
   const [searchQuery, setSearchQuery] = useState('');
   const [showDetailModal, setShowDetailModal] = useState(false);
   const [selectedEntry, setSelectedEntry] = useState<Account | null>(null);
 
-  useEffect(() => {
-    loadLedger();
-  }, []);
-
-  const loadLedger = async () => {
-    setLoading(true);
-    setError(undefined);
-    try {
-      const [accountRes, periodRes] = await Promise.all([
-        financeApi.account.list({
-          keyword: searchQuery || undefined,
-        }),
-        financeApi.period.getCurrent(),
-      ]);
-
-      if (accountRes.success && accountRes.data) {
-        setLedgerData(accountRes.data.items || []);
+  const currentPeriodQuery = useQuery({
+    queryKey: ['finance-period-current'],
+    queryFn: async () => {
+      const res = await financeApi.period.getCurrent();
+      if (!res.success || !res.data) {
+        throw new Error(res.message || '获取当前期间失败');
       }
+      return res.data;
+    },
+    staleTime: 5 * 60 * 1000,
+  });
 
-      if (periodRes.success && periodRes.data) {
-        const balancesRes = await financeApi.account.getBalances({
-          period: periodRes.data.period,
-        });
-        if (balancesRes.success && balancesRes.data) {
-          setAccountBalances(balancesRes.data);
-        }
+  const accountsQuery = useQuery({
+    queryKey: ['finance-accounts-list', searchQuery],
+    queryFn: async () => {
+      const res = await financeApi.account.list({
+        keyword: searchQuery || undefined,
+      });
+      if (!res.success || !res.data) {
+        throw new Error(res.message || '加载科目列表失败');
       }
-    } catch (err: unknown) {
-      apiLogger.error('加载总账数据失败:', err);
-      setError('加载总账数据失败');
-    } finally {
-      setLoading(false);
-    }
-  };
+      return res.data.items || [];
+    },
+    staleTime: 5 * 60 * 1000,
+  });
+
+  const balancesQuery = useQuery({
+    queryKey: ['finance-account-balances', currentPeriodQuery.data?.period],
+    queryFn: async () => {
+      if (!currentPeriodQuery.data?.period) return [];
+      const res = await financeApi.account.getBalances({
+        period: currentPeriodQuery.data.period,
+      });
+      if (!res.success || !res.data) {
+        throw new Error(res.message || '加载账户余额失败');
+      }
+      return res.data;
+    },
+    enabled: !!currentPeriodQuery.data?.period,
+    staleTime: 5 * 60 * 1000,
+  });
+
+  const ledgerData = accountsQuery.data || [];
+  const accountBalances = balancesQuery.data || [];
+  const loading = accountsQuery.isLoading || currentPeriodQuery.isLoading || balancesQuery.isLoading;
+  const error = accountsQuery.error?.message || currentPeriodQuery.error?.message || balancesQuery.error?.message;
 
   const filteredData = useMemo(() => {
     return ledgerData.filter((entry) => {
@@ -376,7 +383,11 @@ const FinanceLedgerPage: React.FC = () => {
             if (filters.category !== undefined) setFilterCategory(filters.category as string);
           }}
           rowActions={rowActions}
-          onRefresh={loadLedger}
+          onRefresh={() => {
+            accountsQuery.refetch();
+            currentPeriodQuery.refetch();
+            balancesQuery.refetch();
+          }}
         />
       </Box>
 

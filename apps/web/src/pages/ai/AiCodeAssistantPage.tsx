@@ -39,7 +39,7 @@ import {
   FileCode,
 } from 'lucide-react';
 import { PageContainer, Grid } from '@/components/common';
-import { useAppStore } from '@/store';
+import { useNotificationStore } from '@/store';
 import { logger } from '@/utils/logger';
 import { designTokens } from '@/theme/tokens';
 
@@ -169,7 +169,7 @@ const reviewIssues = [
 ];
 
 export const AiCodeAssistantPage: React.FC = () => {
-  const addNotification = useAppStore((state) => state.addNotification);
+  const addNotification = useNotificationStore((state) => state.addNotification);
   const [activeTab, setActiveTab] = useState<CodeTab>('generate');
   const [prompt, setPrompt] = useState('');
   const [language, setLanguage] = useState('typescript');

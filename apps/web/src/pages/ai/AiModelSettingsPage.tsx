@@ -49,7 +49,7 @@ import { PageContainer, Grid } from '@/components/common';
 import LineChartComponent from '@/components/charts/LineChart';
 import BarChartComponent from '@/components/charts/BarChart';
 import PieChartComponent from '@/components/charts/PieChart';
-import { useAppStore } from '@/store';
+import { useNotificationStore } from '@/store';
 import { logger } from '@/utils/logger';
 import { designTokens } from '@/theme/tokens';
 
@@ -176,7 +176,7 @@ const getStatusConfig = (status: AIModel['status']) => {
 };
 
 export const AiModelSettingsPage: React.FC = () => {
-  const addNotification = useAppStore((state) => state.addNotification);
+  const addNotification = useNotificationStore((state) => state.addNotification);
   const [activeTab, setActiveTab] = useState<SettingsTab>('models');
   const [selectedModel, setSelectedModel] = useState<AIModel>(mockModels[0]);
   const [temperature, setTemperature] = useState(0.7);

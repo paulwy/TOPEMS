@@ -1,5 +1,5 @@
 import { Grid } from '@/components';
-import { useAppStore } from '@/store';
+import { useNotificationStore } from '@/store';
 import { apiLogger } from '@/utils/logger';
 import { extractErrorMessage } from '@/utils/errors';
 import React, { useState, useEffect } from 'react';

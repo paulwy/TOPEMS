@@ -8,20 +8,18 @@ import {
   Box,
   Stack,
   Typography,
-  IconButton,
-  Tooltip,
   Button,
 } from '@mui/material';
 import { PageContainer } from '@/components/common';
-import React, { useState, useEffect, useMemo } from 'react';
+import React, { useState, useMemo, useCallback } from 'react';
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import type {
   WorkStation,
   CreateWorkStationRequest,
   UpdateWorkStationRequest,
-  ListParams,
 } from '@/api/mes';
 import { mesApi } from '@/api/mes';
-import { useAppStore } from '@/store';
+import { useNotificationStore } from '@/store';
 import { LoadingSpinner } from '@topems/shared-components';
 import {
   ListPageTemplate,
@@ -29,20 +27,18 @@ import {
   type RowAction,
   type FilterConfig,
 } from '@/components/templates';
-import { Plus, Edit, Eye, MapPin, Clock, Settings } from 'lucide-react';
+import { Plus, Edit, Eye, MapPin, Clock } from 'lucide-react';
 import { apiLogger } from '@/utils/logger';
 import { designTokens } from '@/theme/tokens';
 
 const ct = designTokens.colors;
 
 const WorkStationPage: React.FC = () => {
-  const [workstations, setWorkstations] = useState<WorkStation[]>([]);
-  const [loading, setLoading] = useState(true);
+  const queryClient = useQueryClient();
   const [searchTerm, setSearchTerm] = useState('');
   const [statusFilter, setStatusFilter] = useState<string>('');
   const [currentPage, setCurrentPage] = useState(1);
   const [pageSize] = useState(10);
-  const [total, setTotal] = useState(0);
   const [showDialog, setShowDialog] = useState(false);
   const [showDetailDialog, setShowDetailDialog] = useState(false);
   const [selectedWorkStation, setSelectedWorkStation] = useState<WorkStation | null>(null);
@@ -54,16 +50,12 @@ const WorkStationPage: React.FC = () => {
     supervisor: '',
   });
 
-  const { addNotification } = useAppStore();
+  const { addNotification } = useNotificationStore();
 
-  useEffect(() => {
-    loadWorkStations();
-  }, [currentPage, searchTerm, statusFilter]);
-
-  const loadWorkStations = async () => {
-    try {
-      setLoading(true);
-      const params: ListParams = {
+  const workstationsQuery = useQuery({
+    queryKey: ['mes-workstations', currentPage, pageSize, searchTerm, statusFilter],
+    queryFn: async () => {
+      const params: Record<string, unknown> = {
         page: currentPage - 1,
         pagesize: pageSize,
       };
@@ -71,57 +63,92 @@ const WorkStationPage: React.FC = () => {
       if (statusFilter) params.status = statusFilter;
 
       const response = await mesApi.workstations.list(params);
-      if (response.success && response.data) {
-        setWorkstations(response.data.workstations || []);
-        setTotal(response.data.total || 0);
+      if (!response.success || !response.data) {
+        throw new Error(response.message || '加载工作站列表失败');
       }
-    } catch (error: unknown) {
-      apiLogger.error('加载工作站列表失败:', error);
+      return {
+        items: response.data.workstations || [],
+        total: response.data.total || 0,
+      };
+    },
+    staleTime: 5 * 60 * 1000,
+    retry: 2,
+  });
+
+  const workstations = workstationsQuery.data?.items ?? [];
+  const total = workstationsQuery.data?.total ?? 0;
+  const loading = workstationsQuery.isLoading;
+
+  const createMutation = useMutation({
+    mutationFn: async (data: CreateWorkStationRequest) => {
+      const response = await mesApi.workstations.create(data);
+      if (!response.success) {
+        throw new Error(response.message || '创建工作站失败');
+      }
+      return response.data;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['mes-workstations'] });
+      addNotification({
+        type: 'success',
+        title: '创建成功',
+        message: '新工作站已创建',
+      });
+    },
+    onError: (error: unknown) => {
+      apiLogger.error('创建工作站失败:', error);
       addNotification({
         type: 'error',
-        title: '加载失败',
-        message: '无法加载工作站列表',
+        title: '操作失败',
+        message: '创建工作站失败',
       });
-    } finally {
-      setLoading(false);
-    }
-  };
+    },
+  });
+
+  const updateMutation = useMutation({
+    mutationFn: async ({ id, data }: { id: string; data: UpdateWorkStationRequest }) => {
+      const response = await mesApi.workstations.update(id, data);
+      if (!response.success) {
+        throw new Error(response.message || '更新工作站失败');
+      }
+      return response.data;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['mes-workstations'] });
+      addNotification({
+        type: 'success',
+        title: '更新成功',
+        message: '工作站信息已更新',
+      });
+    },
+    onError: (error: unknown) => {
+      apiLogger.error('更新工作站失败:', error);
+      addNotification({
+        type: 'error',
+        title: '操作失败',
+        message: '更新工作站失败',
+      });
+    },
+  });
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     try {
       if (selectedWorkStation) {
-        await mesApi.workstations.update(
-          selectedWorkStation.id,
-          formData as UpdateWorkStationRequest
-        );
-        addNotification({
-          type: 'success',
-          title: '更新成功',
-          message: '工作站信息已更新',
+        await updateMutation.mutateAsync({
+          id: selectedWorkStation.id,
+          data: formData as UpdateWorkStationRequest,
         });
       } else {
-        await mesApi.workstations.create(formData);
-        addNotification({
-          type: 'success',
-          title: '创建成功',
-          message: '新工作站已创建',
-        });
+        await createMutation.mutateAsync(formData);
       }
       setShowDialog(false);
       resetForm();
-      loadWorkStations();
-    } catch (error: unknown) {
-      apiLogger.error('操作失败:', error);
-      addNotification({
-        type: 'error',
-        title: '操作失败',
-        message: selectedWorkStation ? '更新工作站失败' : '创建工作站失败',
-      });
+    } catch {
     }
   };
 
-  const handleEdit = (station: WorkStation) => {
+  const handleEdit = useCallback((station: WorkStation) => {
     setSelectedWorkStation(station);
     setFormData({
       name: station.name,
@@ -131,12 +158,12 @@ const WorkStationPage: React.FC = () => {
       supervisor: station.supervisor || '',
     });
     setShowDialog(true);
-  };
+  }, []);
 
-  const handleViewDetail = (station: WorkStation) => {
+  const handleViewDetail = useCallback((station: WorkStation) => {
     setSelectedWorkStation(station);
     setShowDetailDialog(true);
-  };
+  }, []);
 
   const resetForm = () => {
     setSelectedWorkStation(null);
@@ -218,7 +245,7 @@ const WorkStationPage: React.FC = () => {
         onClick: handleEdit,
       },
     ],
-    []
+    [handleViewDetail, handleEdit]
   );
 
   const handleOpenCreate = () => {
@@ -231,7 +258,6 @@ const WorkStationPage: React.FC = () => {
     setCurrentPage(1);
   };
 
-  // 工作站统计
   const stats = useMemo(() => {
     return {
       total: workstations.length,
@@ -240,6 +266,8 @@ const WorkStationPage: React.FC = () => {
       maintenance: workstations.filter((w) => w.status === 'maintenance').length,
     };
   }, [workstations]);
+
+  if (loading) return <LoadingSpinner />;
 
   const statsContent = (
     <Box
@@ -309,8 +337,6 @@ const WorkStationPage: React.FC = () => {
     </Box>
   );
 
-  if (loading) return <LoadingSpinner />;
-
   return (
     <PageContainer
       title='工作站管理'
@@ -325,7 +351,7 @@ const WorkStationPage: React.FC = () => {
         subtitle=''
         columns={columns}
         data={workstations}
-        loading={loading}
+        loading={loading || createMutation.isPending || updateMutation.isPending}
         filters={filters}
         searchable
         searchPlaceholder='搜索工作站名称或编码...'
@@ -394,7 +420,7 @@ const WorkStationPage: React.FC = () => {
                 onChange={(e) =>
                   setFormData({
                     ...formData,
-                    capacity: parseInt(e.target.value),
+                    capacity: parseInt(e.target.value) || 0,
                   })
                 }
                 size='small'
@@ -416,6 +442,7 @@ const WorkStationPage: React.FC = () => {
               <Button
                 type='submit'
                 variant='contained'
+                disabled={createMutation.isPending || updateMutation.isPending}
               >
                 保存
               </Button>
@@ -424,7 +451,6 @@ const WorkStationPage: React.FC = () => {
         </DialogContent>
       </Dialog>
 
-      {/* 详情对话框 */}
       <Dialog
         open={showDetailDialog}
         onClose={() => setShowDetailDialog(false)}

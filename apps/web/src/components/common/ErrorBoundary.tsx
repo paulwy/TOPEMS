@@ -1,0 +1,88 @@
+import React, { Component, ErrorInfo, ReactNode } from 'react';
+import { Alert, AlertTitle, Button, Box } from '@mui/material';
+import { RefreshCw, AlertTriangle } from 'lucide-react';
+
+interface Props {
+  children: ReactNode;
+  fallback?: ReactNode;
+  onRetry?: () => void;
+}
+
+interface State {
+  hasError: boolean;
+  error: Error | null;
+  errorInfo: ErrorInfo | null;
+}
+
+class ErrorBoundary extends Component<Props, State> {
+  constructor(props: Props) {
+    super(props);
+    this.state = {
+      hasError: false,
+      error: null,
+      errorInfo: null,
+    };
+  }
+
+  static getDerivedStateFromError(error: Error): State {
+    return {
+      hasError: true,
+      error,
+      errorInfo: null,
+    };
+  }
+
+  componentDidCatch(error: Error, errorInfo: ErrorInfo): void {
+    this.setState({
+      error,
+      errorInfo,
+    });
+    
+    console.error('ErrorBoundary caught error:', error);
+    console.error('Error info:', errorInfo);
+  }
+
+  handleRetry = (): void => {
+    this.setState({
+      hasError: false,
+      error: null,
+      errorInfo: null,
+    });
+    this.props.onRetry?.();
+  };
+
+  render(): ReactNode {
+    if (this.state.hasError) {
+      if (this.props.fallback) {
+        return this.props.fallback;
+      }
+
+      return (
+        <Box sx={{ p: 4, display: 'flex', justifyContent: 'center' }}>
+          <Alert severity="error" sx={{ maxWidth: 600 }}>
+            <AlertTitle>
+              <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
+                <AlertTriangle sx={{ width: 24, height: 24 }} />
+                操作出现错误
+              </Box>
+            </AlertTitle>
+            <p>{this.state.error?.message || '未知错误'}</p>
+            <Button
+              onClick={this.handleRetry}
+              startIcon={<RefreshCw />}
+              color="inherit"
+              sx={{ mt: 2 }}
+            >
+              重试操作
+            </Button>
+          </Alert>
+        </Box>
+      );
+    }
+
+    return this.props.children;
+  }
+}
+
+export { ErrorBoundary };
+export default ErrorBoundary;

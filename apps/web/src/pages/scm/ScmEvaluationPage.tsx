@@ -15,7 +15,7 @@ import type {
   UpdateSupplierEvaluationRequest,
 } from '@/api/scm';
 import { scmApi } from '@/api/scm';
-import { useAppStore } from '@/store';
+import { useNotificationStore } from '@/store';
 import { Plus, Edit, Trash2 } from 'lucide-react';
 import { apiLogger } from '@/utils/logger';
 import { ListPageTemplate, type ColumnDef } from '@/components/templates';
@@ -42,7 +42,7 @@ const ScmEvaluationPage: React.FC = () => {
     evaluator: '',
   });
 
-  const { addNotification } = useAppStore();
+  const { addNotification } = useNotificationStore();
 
   useEffect(() => {
     loadEvaluations();

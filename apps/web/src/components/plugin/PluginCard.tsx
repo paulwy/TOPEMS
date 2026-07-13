@@ -11,7 +11,7 @@ import {
 import { Card, CardContent, Typography, Button, Chip, Box } from '@mui/material';
 import type { Plugin } from '@/api/plugin';
 import { usePluginStore } from '@/store/pluginStore';
-import { useAppStore } from '@/store';
+import { useNotificationStore } from '@/store';
 import { PluginRating } from './PluginRating';
 
 interface PluginCardProps {
@@ -28,7 +28,7 @@ export const PluginCard: React.FC<PluginCardProps> = ({
   variant = 'grid',
 }) => {
   const { installPlugin, isPluginInstalled } = usePluginStore();
-  const addNotification = useAppStore((state) => state.addNotification);
+  const addNotification = useNotificationStore((state) => state.addNotification);
   const [isInstalling, setIsInstalling] = useState(false);
   const installed = isPluginInstalled(plugin.code);
 

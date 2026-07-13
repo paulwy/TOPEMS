@@ -2,7 +2,7 @@ import React, { useState, useEffect, useCallback } from 'react';
 import { Box, Chip, Typography } from '@mui/material';
 import { TrendingUp, Plus, TrendingDown, CheckCircle, XCircle, Clock } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
-import { useAppStore } from '../../store';
+import { useNotificationStore } from '../../store';
 import { ListPageTemplate, type ColumnDef, type RowAction } from '@/components/templates';
 import { salaryAdjustmentApi } from '@/api/hrm';
 import type { SalaryAdjustment } from '@/api/hrm';
@@ -10,7 +10,7 @@ import { PageContainer } from '@/components/common';
 
 const HrmSalaryAdjustmentPage: React.FC = () => {
   const navigate = useNavigate();
-  const addNotification = useAppStore((state) => state.addNotification);
+  const addNotification = useNotificationStore((state) => state.addNotification);
   const [adjustments, setAdjustments] = useState<SalaryAdjustment[]>([]);
   const [loading, setLoading] = useState(true);
 
@@ -231,6 +231,17 @@ const HrmSalaryAdjustmentPage: React.FC = () => {
         rowActions={rowActions}
         searchable
         onRefresh={loadAdjustments}
+        exportable
+        exportFileName='薪资调整列表'
+        persistFilters
+        persistSearch
+        emptyActionButton={{
+          label: '发起调薪',
+          icon: <Plus size={16} />,
+          onClick: () => {
+            addNotification({ title: '功能开发中', type: 'info', message: '调薪申请功能即将上线' });
+          },
+        }}
       />
     </PageContainer>
   );

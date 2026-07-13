@@ -18,7 +18,7 @@ import { DetailPageTemplate, ListPageTemplate, type ColumnDef } from '@/componen
 import { PageContainer } from '@/components/common';
 import { qmsApi } from '@/api/qms';
 import type { QualityStandard, StandardRevision } from '@/api/qms';
-import { useAppStore } from '@/store';
+import { useNotificationStore } from '@/store';
 import { designTokens } from '@/theme/tokens';
 import { QMS_PATHS } from '@/modules/qms/config';
 
@@ -42,7 +42,7 @@ const QmsStandardDetailPage: React.FC = () => {
     category: '',
     effective_date: '',
   });
-  const addNotification = useAppStore((state) => state.addNotification);
+  const addNotification = useNotificationStore((state) => state.addNotification);
 
   useEffect(() => {
     if (id) {

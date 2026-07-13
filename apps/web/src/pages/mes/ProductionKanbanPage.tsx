@@ -19,7 +19,7 @@ import { PageContainer } from '@/components/common/PageContainerV2';
 import React, { useState, useEffect, useCallback } from 'react';
 import { mesApi } from '@/api/mes';
 import type { ProductionKanbanData } from '@/api/mes';
-import { useAppStore } from '@/store';
+import { useNotificationStore } from '@/store';
 import { LoadingSpinner } from '@topems/shared-components';
 import {
   Factory,
@@ -40,7 +40,7 @@ const ProductionKanbanPage: React.FC = () => {
   const [kanbanData, setKanbanData] = useState<ProductionKanbanData | null>(null);
   const [loading, setLoading] = useState(true);
 
-  const { addNotification } = useAppStore();
+  const { addNotification } = useNotificationStore();
 
   const loadKanbanData = useCallback(async () => {
     try {

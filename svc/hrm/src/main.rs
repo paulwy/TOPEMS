@@ -17,10 +17,10 @@ use utoipa::OpenApi;
 use modules::ApiState;
 use topems_shared::redis::{RedisCacheService, RedisPool as RedisPoolTrait};
 use topems_shared::{
-    auth_middleware, check_http_health, config::CacheConfig, config::enhanced::DatabaseConfig,
-    create_api_info_router, create_cors_layer, init_telemetry, rls_middleware, telemetry_middleware,
-    ApiResponse, AuthState, CacheService, DependencyHealth, FieldEncryptionService, HealthStatus,
-    ServiceHealth, SystemMetrics,
+    auth_middleware, check_http_health, config::enhanced::DatabaseConfig, config::CacheConfig,
+    create_api_info_router, create_cors_layer, init_telemetry, rls_middleware,
+    telemetry_middleware, ApiResponse, AuthState, CacheService, DependencyHealth,
+    FieldEncryptionService, HealthStatus, ServiceHealth, SystemMetrics,
 };
 
 #[tokio::main]
@@ -166,7 +166,11 @@ async fn simple_health_check(
     axum::extract::State(state): axum::extract::State<ApiState>,
 ) -> Json<ApiResponse<String>> {
     let result = sqlx::query("SELECT 1").execute(&state.db).await;
-    let status = if result.is_ok() { "healthy" } else { "unhealthy" };
+    let status = if result.is_ok() {
+        "healthy"
+    } else {
+        "unhealthy"
+    };
     Json(ApiResponse::success(status.to_string(), "健康检查"))
 }
 

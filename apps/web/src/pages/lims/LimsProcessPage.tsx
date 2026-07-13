@@ -1,3 +1,4 @@
+import React, { useState, useMemo } from 'react';
 import {
   Box,
   Paper,
@@ -13,11 +14,18 @@ import {
   Button,
 } from '@mui/material';
 import { PageContainer } from '@/components/common';
-import React, { useEffect, useState, useMemo, useCallback } from 'react';
-import { ClipboardList, ChevronRight, FileText, Play, Clock, CheckCircle, X } from 'lucide-react';
+import {
+  ClipboardList,
+  ChevronRight,
+  FileText,
+  Play,
+  Clock,
+  CheckCircle,
+  X,
+} from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { limsApi, type InspectionProcess, type LimsStatistics, type ListParams } from '@/api/lims';
-import { useAppStore } from '@/store';
+import { useNotificationStore } from '@/store';
 import {
   ListPageTemplate,
   type ColumnDef,
@@ -29,6 +37,7 @@ import { apiLogger } from '@/utils/logger';
 import { designTokens } from '@/theme/tokens';
 import { LIMS_PATHS } from '@/modules/lims/config';
 import { DASHBOARD_PATHS } from '@/routes/dashboard';
+import { useQuery, useQueryClient } from '@tanstack/react-query';
 
 const ct = designTokens.colors;
 
@@ -53,33 +62,12 @@ const STATUS_OPTIONS = [
 
 const LimsProcessPage: React.FC = () => {
   const navigate = useNavigate();
-  const addNotification = useAppStore((state) => state.addNotification);
-  const [processes, setProcesses] = useState<InspectionProcess[]>([]);
-  const [stats, setStats] = useState<LimsStatistics>({
-    total_samples: 0,
-    pending_samples: 0,
-    testing_samples: 0,
-    completed_samples: 0,
-    cancelled_samples: 0,
-    total_tasks: 0,
-    pending_tasks: 0,
-    in_progress_tasks: 0,
-    completed_tasks: 0,
-    total_processes: 0,
-    total_instruments: 0,
-    normal_instruments: 0,
-    calibration_instruments: 0,
-    maintenance_instruments: 0,
-    disabled_instruments: 0,
-  });
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
+  const addNotification = useNotificationStore((state) => state.addNotification);
   const [searchQuery, setSearchQuery] = useState('');
   const [debouncedSearch, setDebouncedSearch] = useState('');
   const [filterStatus, setFilterStatus] = useState<string>('');
   const [currentPage, setCurrentPage] = useState(0);
   const [pageSize, setPageSize] = useState(10);
-  const [totalProcesses, setTotalProcesses] = useState(0);
   const [serviceStatuses, setServiceStatuses] = useState<{
     [key: string]: boolean;
   }>({
@@ -88,6 +76,8 @@ const LimsProcessPage: React.FC = () => {
 
   const [showTaskModal, setShowTaskModal] = useState(false);
   const [selectedProcess, setSelectedProcess] = useState<InspectionProcess | null>(null);
+
+  const queryClient = useQueryClient();
 
   const isServiceUp = (serviceName: string): boolean => {
     return serviceStatuses[serviceName] || false;
@@ -109,7 +99,7 @@ const LimsProcessPage: React.FC = () => {
     }
   };
 
-  useEffect(() => {
+  React.useEffect(() => {
     const checkAllServices = () => {
       checkServiceStatus('lims', (up) => setServiceStatuses((prev) => ({ ...prev, lims: up })));
     };
@@ -120,7 +110,7 @@ const LimsProcessPage: React.FC = () => {
     return () => clearInterval(intervalId);
   }, []);
 
-  useEffect(() => {
+  React.useEffect(() => {
     const timer = setTimeout(() => {
       setDebouncedSearch(searchQuery);
       setCurrentPage(0);
@@ -128,46 +118,40 @@ const LimsProcessPage: React.FC = () => {
     return () => clearTimeout(timer);
   }, [searchQuery]);
 
-  useEffect(() => {
-    if (isServiceUp('lims')) {
-      loadAllData();
-    } else {
-      setLoading(false);
-    }
-  }, [serviceStatuses.lims, currentPage, pageSize, debouncedSearch, filterStatus]);
-
-  const loadStatistics = async () => {
-    try {
+  const statisticsQuery = useQuery({
+    queryKey: ['lims-statistics'],
+    queryFn: async () => {
       const response = await limsApi.getStatistics();
       if (response.success && response.data) {
-        setStats(response.data);
+        return response.data;
       }
-    } catch (err: unknown) {
-      apiLogger.error('加载统计数据失败:', err);
-    }
+      return null;
+    },
+    enabled: isServiceUp('lims'),
+    staleTime: 5 * 60 * 1000,
+  });
+
+  const stats = statisticsQuery.data || {
+    total_samples: 0,
+    pending_samples: 0,
+    testing_samples: 0,
+    completed_samples: 0,
+    cancelled_samples: 0,
+    total_tasks: 0,
+    pending_tasks: 0,
+    in_progress_tasks: 0,
+    completed_tasks: 0,
+    total_processes: 0,
+    total_instruments: 0,
+    normal_instruments: 0,
+    calibration_instruments: 0,
+    maintenance_instruments: 0,
+    disabled_instruments: 0,
   };
 
-  const loadAllData = useCallback(async () => {
-    try {
-      setLoading(true);
-      setError(null);
-      await Promise.all([loadProcesses(), loadStatistics()]);
-    } catch (err: unknown) {
-      const message = (err as { message?: string }).message || '加载数据失败';
-      setError(message);
-    } finally {
-      setLoading(false);
-    }
-  }, []);
-
-  interface ProcessListResponse {
-    items?: InspectionProcess[];
-    processes?: InspectionProcess[];
-    total?: number;
-  }
-
-  const loadProcesses = async () => {
-    try {
+  const processesQuery = useQuery({
+    queryKey: ['lims-processes', currentPage, pageSize, debouncedSearch, filterStatus],
+    queryFn: async () => {
       const params: ListParams = {
         page: currentPage + 1,
         pagesize: pageSize,
@@ -181,21 +165,21 @@ const LimsProcessPage: React.FC = () => {
 
       const response = await limsApi.processes.list(params);
       if (response.success && response.data) {
-        const data = response.data as ProcessListResponse;
+        const data = response.data as any;
         const items = data.items || data.processes || [];
         const total = data.total || items.length;
-        setProcesses(items);
-        setTotalProcesses(total);
-      } else {
-        setProcesses([]);
-        setTotalProcesses(0);
+        return { items, total };
       }
-    } catch (err: unknown) {
-      apiLogger.error('加载检验流程失败:', err);
-      setProcesses([]);
-      setTotalProcesses(0);
-    }
-  };
+      return { items: [], total: 0 };
+    },
+    enabled: isServiceUp('lims'),
+    staleTime: 5 * 60 * 1000,
+  });
+
+  const processes = processesQuery.data?.items || [];
+  const totalProcesses = processesQuery.data?.total || 0;
+  const loading = processesQuery.isLoading || statisticsQuery.isLoading;
+  const error = processesQuery.error ? '加载数据失败' : null;
 
   const openTaskModal = (process?: InspectionProcess) => {
     setSelectedProcess(process || null);
@@ -450,7 +434,10 @@ const LimsProcessPage: React.FC = () => {
           onPageSizeChange: handlePageSizeChange,
         }}
         rowActions={rowActions}
-        onRefresh={loadAllData}
+        onRefresh={() => {
+          queryClient.invalidateQueries({ queryKey: ['lims-processes'] });
+          queryClient.invalidateQueries({ queryKey: ['lims-statistics'] });
+        }}
         headerContent={headerContent}
         actions={[
           {

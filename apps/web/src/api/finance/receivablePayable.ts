@@ -17,26 +17,26 @@ export const receivablePayableApi = {
     page?: number;
     pagesize?: number;
   }): Promise<ApiResponse<PaginatedResult<SalesInvoice>>> => {
-    return apiClient.erp.get('/receivables', { params });
+    return apiClient.finance.get('/receivables', { params });
   },
 
   getSalesInvoice: (id: string): Promise<ApiResponse<SalesInvoice>> => {
-    return apiClient.erp.get(`/receivables/${id}`);
+    return apiClient.finance.get(`/receivables/${id}`);
   },
 
   createSalesInvoice: (data: Partial<SalesInvoice>): Promise<ApiResponse<SalesInvoice>> => {
-    return apiClient.erp.post('/receivables', data);
+    return apiClient.finance.post('/receivables', data);
   },
 
   updateSalesInvoice: (
     id: string,
     data: Partial<SalesInvoice>
   ): Promise<ApiResponse<SalesInvoice>> => {
-    return apiClient.erp.put(`/receivables/${id}`, data);
+    return apiClient.finance.put(`/receivables/${id}`, data);
   },
 
   deleteSalesInvoice: (id: string): Promise<ApiResponse<void>> => {
-    return apiClient.erp.delete(`/receivables/${id}`);
+    return apiClient.finance.delete(`/receivables/${id}`);
   },
 
   listPurchaseInvoices: (params?: {
@@ -47,28 +47,28 @@ export const receivablePayableApi = {
     page?: number;
     pagesize?: number;
   }): Promise<ApiResponse<PaginatedResult<PurchaseInvoice>>> => {
-    return apiClient.erp.get('/payables', { params });
+    return apiClient.finance.get('/payables', { params });
   },
 
   getPurchaseInvoice: (id: string): Promise<ApiResponse<PurchaseInvoice>> => {
-    return apiClient.erp.get(`/payables/${id}`);
+    return apiClient.finance.get(`/payables/${id}`);
   },
 
   createPurchaseInvoice: (
     data: Partial<PurchaseInvoice>
   ): Promise<ApiResponse<PurchaseInvoice>> => {
-    return apiClient.erp.post('/payables', data);
+    return apiClient.finance.post('/payables', data);
   },
 
   updatePurchaseInvoice: (
     id: string,
     data: Partial<PurchaseInvoice>
   ): Promise<ApiResponse<PurchaseInvoice>> => {
-    return apiClient.erp.put(`/payables/${id}`, data);
+    return apiClient.finance.put(`/payables/${id}`, data);
   },
 
   deletePurchaseInvoice: (id: string): Promise<ApiResponse<void>> => {
-    return apiClient.erp.delete(`/payables/${id}`);
+    return apiClient.finance.delete(`/payables/${id}`);
   },
 
   listCollections: (params?: {
@@ -78,11 +78,11 @@ export const receivablePayableApi = {
     page?: number;
     pagesize?: number;
   }): Promise<ApiResponse<PaginatedResult<CollectionRecord>>> => {
-    return apiClient.erp.get('/finance/ar/collections', { params });
+    return apiClient.finance.get('/ar/collections', { params });
   },
 
   createCollection: (data: Partial<CollectionRecord>): Promise<ApiResponse<CollectionRecord>> => {
-    return apiClient.erp.post('/finance/ar/collections', data);
+    return apiClient.finance.post('/ar/collections', data);
   },
 
   listPayments: (params?: {
@@ -92,11 +92,19 @@ export const receivablePayableApi = {
     page?: number;
     pagesize?: number;
   }): Promise<ApiResponse<PaginatedResult<PaymentRecord>>> => {
-    return apiClient.erp.get('/finance/ap/payments', { params });
+    return apiClient.finance.get('/ap/payments', { params });
   },
 
   createPayment: (data: Partial<PaymentRecord>): Promise<ApiResponse<PaymentRecord>> => {
-    return apiClient.erp.post('/finance/ap/payments', data);
+    return apiClient.finance.post('/ap/payments', data);
+  },
+
+  approvePayment: (id: string): Promise<ApiResponse<PaymentRecord>> => {
+    return apiClient.finance.post(`/ap/payments/${id}/approve`);
+  },
+
+  rejectPayment: (id: string): Promise<ApiResponse<PaymentRecord>> => {
+    return apiClient.finance.post(`/ap/payments/${id}/reject`);
   },
 
   reconcile: (params: {
@@ -104,7 +112,7 @@ export const receivablePayableApi = {
     invoice_id: string;
     record_ids: string[];
   }): Promise<ApiResponse<void>> => {
-    return apiClient.erp.post('/finance/reconcile', params);
+    return apiClient.finance.post('/reconcile', params);
   },
 
   autoReconcile: (params: {
@@ -112,7 +120,7 @@ export const receivablePayableApi = {
     entity_id: string;
     period: string;
   }): Promise<ApiResponse<{ reconciled: number }>> => {
-    return apiClient.erp.post('/finance/reconcile/auto', params);
+    return apiClient.finance.post('/reconcile/auto', params);
   },
 
   getReceivableAging: (params: {
@@ -134,7 +142,7 @@ export const receivablePayableApi = {
       total: number;
     }>
   > => {
-    return apiClient.erp.get('/finance/ar/aging', { params });
+    return apiClient.finance.get('/ar/aging', { params });
   },
 
   getPayableAging: (params: {
@@ -156,7 +164,7 @@ export const receivablePayableApi = {
       total: number;
     }>
   > => {
-    return apiClient.erp.get('/finance/ap/aging', { params });
+    return apiClient.finance.get('/ap/aging', { params });
   },
 };
 

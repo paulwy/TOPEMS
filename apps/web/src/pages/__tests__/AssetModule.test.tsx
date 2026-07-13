@@ -10,26 +10,31 @@ import EquipmentManagementPage from '../asset/EquipmentManagementPage';
 import OfficeSuppliesManagementPage from '../asset/OfficeSuppliesManagementPage';
 import VehicleManagementPage from '../asset/VehicleManagementPage';
 import VoucherTemplatePage from '../asset/VoucherTemplatePage';
-import { useAppStore } from '@/store';
+import { useNotificationStore, useAuthStore } from '@/store';
 
 const queryClient = new QueryClient({
   defaultOptions: { queries: { retry: false } },
 });
 
 vi.mock('@/store', () => ({
-  useAppStore: vi.fn((selector?: any) =>
+  useNotificationStore: vi.fn((selector?: any) =>
     selector
       ? selector({
           addNotification: vi.fn(),
           notifications: [],
-          user: { permissions: ['asset:read'] },
-          theme: 'light',
         })
       : {
           addNotification: vi.fn(),
           notifications: [],
-          user: { permissions: ['asset:read'] },
-          theme: 'light',
+        }
+  ),
+  useAuthStore: vi.fn((selector?: any) =>
+    selector
+      ? selector({
+          user: null,
+        })
+      : {
+          user: null,
         }
   ),
 }));

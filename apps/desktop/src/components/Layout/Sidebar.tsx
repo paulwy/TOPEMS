@@ -11,17 +11,31 @@ import {
   Typography,
   Divider,
 } from '@mui/material';
+import {
+  LayoutDashboard,
+  Users,
+  UserCircle,
+  Briefcase,
+  BarChart3,
+  Settings,
+  ChevronLeft,
+  ChevronRight,
+  Moon,
+  Sun,
+  LogOut,
+} from 'lucide-react';
 
 import { useNavigate, useLocation } from 'react-router-dom';
 import { routes } from '../../routes';
 import { useThemeStore } from '../../store/themeStore';
+import { useAuthStore } from '../../store/authStore';
 
 const iconMap: Record<string, React.ElementType> = {
-  LayoutDashboard: DashboardOutlined,
-  Users: People,
-  UserCircle: PersonPinCircle,
-  Briefcase: CasesOutlined,
-  BarChart3: BarChart,
+  LayoutDashboard,
+  Users,
+  UserCircle,
+  Briefcase,
+  BarChart3,
   Settings,
 };
 
@@ -30,9 +44,15 @@ const Sidebar = () => {
   const navigate = useNavigate();
   const location = useLocation();
   const { mode, toggleTheme } = useThemeStore();
+  const { logout } = useAuthStore();
 
   const handleDrawerToggle = () => {
     setOpen(!open);
+  };
+
+  const handleLogout = () => {
+    logout();
+    navigate('/login');
   };
 
   return (
@@ -56,7 +76,7 @@ const Sidebar = () => {
           )}
         </div>
         <IconButton onClick={handleDrawerToggle}>
-          {open ? <ChevronLeft /> : <ChevronRight />}
+          {open ? <ChevronLeft size={20} /> : <ChevronRight size={20} />}
         </IconButton>
       </Toolbar>
       <Divider />
@@ -71,7 +91,7 @@ const Sidebar = () => {
                 selected={isActive}
               >
                 <ListItemIcon>
-                  <IconComponent />
+                  <IconComponent size={20} />
                 </ListItemIcon>
                 {open && <ListItemText primary={route.name} />}
               </ListItemButton>
@@ -83,8 +103,14 @@ const Sidebar = () => {
       <List>
         <ListItem disablePadding>
           <ListItemButton onClick={toggleTheme}>
-            <ListItemIcon>{mode === 'light' ? <DarkMode /> : <LightMode />}</ListItemIcon>
+            <ListItemIcon>{mode === 'light' ? <Moon size={20} /> : <Sun size={20} />}</ListItemIcon>
             {open && <ListItemText primary={mode === 'light' ? '深色模式' : '浅色模式'} />}
+          </ListItemButton>
+        </ListItem>
+        <ListItem disablePadding>
+          <ListItemButton onClick={handleLogout}>
+            <ListItemIcon><LogOut size={20} /></ListItemIcon>
+            {open && <ListItemText primary="退出登录" />}
           </ListItemButton>
         </ListItem>
       </List>

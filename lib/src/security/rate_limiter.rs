@@ -1,9 +1,8 @@
 use axum::{
-    http::{Request, StatusCode, HeaderName, HeaderValue},
+    http::{HeaderName, HeaderValue, Request, StatusCode},
     middleware::Next,
     response::Response,
 };
-use chrono::Utc;
 use serde_json::json;
 use std::collections::HashMap;
 use std::sync::Arc;
@@ -76,14 +75,21 @@ impl RateLimitStore {
         }
     }
 
-    async fn check_and_increment(&self, key: &str, max_requests: u32, window: Duration) -> (bool, u32, u64) {
+    async fn check_and_increment(
+        &self,
+        key: &str,
+        max_requests: u32,
+        window: Duration,
+    ) -> (bool, u32, u64) {
         let mut store = self.inner.write().await;
         let now = Instant::now();
 
-        let entry = store.entry(key.to_string()).or_insert_with(|| RateLimitEntry {
-            count: 0,
-            window_start: now,
-        });
+        let entry = store
+            .entry(key.to_string())
+            .or_insert_with(|| RateLimitEntry {
+                count: 0,
+                window_start: now,
+            });
 
         if now.duration_since(entry.window_start) >= window {
             entry.count = 1;
@@ -186,24 +192,15 @@ fn add_rate_limit_headers(response: &mut Response, limit: u32, remaining: u32, r
     let headers = response.headers_mut();
 
     if let Ok(value) = HeaderValue::from_str(&limit.to_string()) {
-        headers.insert(
-            HeaderName::from_static("x-ratelimit-limit"),
-            value,
-        );
+        headers.insert(HeaderName::from_static("x-ratelimit-limit"), value);
     }
 
     if let Ok(value) = HeaderValue::from_str(&remaining.to_string()) {
-        headers.insert(
-            HeaderName::from_static("x-ratelimit-remaining"),
-            value,
-        );
+        headers.insert(HeaderName::from_static("x-ratelimit-remaining"), value);
     }
 
     if let Ok(value) = HeaderValue::from_str(&reset.to_string()) {
-        headers.insert(
-            HeaderName::from_static("x-ratelimit-reset"),
-            value,
-        );
+        headers.insert(HeaderName::from_static("x-ratelimit-reset"), value);
     }
 }
 

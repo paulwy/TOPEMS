@@ -16,13 +16,14 @@ import {
 } from '@mui/material';
 import { PageContainer } from '@/components/common';
 import React, { useState, useEffect, useMemo, useCallback } from 'react';
+import { useQueryClient } from '@tanstack/react-query';
 import type {
   PurchaseOrder,
   CreatePurchaseOrderRequest,
   UpdatePurchaseOrderRequest,
 } from '@/api/erp';
 import { erpApi } from '@/api/erp';
-import { useAppStore } from '@/store';
+import { useNotificationStore } from '@/store';
 import { LoadingSpinner } from '@topems/shared-components';
 import {
   ListPageTemplate,
@@ -58,7 +59,8 @@ const PurchaseOrderPage: React.FC = () => {
     remark: '',
   });
 
-  const { addNotification } = useAppStore();
+  const { addNotification } = useNotificationStore();
+  const queryClient = useQueryClient();
 
   const loadOrders = useCallback(async () => {
     try {
@@ -124,6 +126,86 @@ const PurchaseOrderPage: React.FC = () => {
       setLoading(false);
     }
   };
+
+  const handleBatchApprove = useCallback(async (orders: PurchaseOrder[]) => {
+    const pendingOrders = orders.filter((o) => o.status === 'pending');
+    if (pendingOrders.length === 0) {
+      addNotification({
+        type: 'warning',
+        title: '没有可审批的订单',
+        message: '请选择待审批状态的订单',
+      });
+      return;
+    }
+
+    try {
+      setLoading(true);
+
+      queryClient.setQueryData<PurchaseOrder[]>(['erp-purchase-orders'], (existing) => {
+        if (!existing) return existing;
+        return existing.map((order) =>
+          pendingOrders.some((o) => o.id === order.id)
+            ? { ...order, status: 'approved' as const }
+            : order
+        );
+      });
+
+      const results = await Promise.allSettled(
+        pendingOrders.map((order) => erpApi.purchaseOrders.approve(order.id))
+      );
+
+      const successCount = results.filter((r) => r.status === 'fulfilled' && r.value.success).length;
+      const failureCount = results.length - successCount;
+
+      if (failureCount > 0) {
+        queryClient.setQueryData<PurchaseOrder[]>(['erp-purchase-orders'], (existing) => {
+          if (!existing) return existing;
+          const failedIds = pendingOrders.filter((_, index) => {
+            const result = results[index];
+            return result.status !== 'fulfilled' || !result.value.success;
+          }).map((o) => o.id);
+          return existing.map((order) =>
+            failedIds.includes(order.id)
+              ? { ...order, status: 'pending' as const }
+              : order
+          );
+        });
+      }
+
+      if (successCount > 0) {
+        addNotification({
+          type: 'success',
+          title: '批量审批完成',
+          message: `成功审批 ${successCount} 个订单${failureCount > 0 ? `，失败 ${failureCount} 个` : ''}`,
+        });
+      }
+      if (failureCount > 0) {
+        addNotification({
+          type: 'error',
+          title: '部分审批失败',
+          message: `有 ${failureCount} 个订单审批失败`,
+        });
+      }
+      loadOrders();
+    } catch (error: unknown) {
+      apiLogger.error('批量审批失败:', error);
+      queryClient.setQueryData<PurchaseOrder[]>(['erp-purchase-orders'], (existing) => {
+        if (!existing) return existing;
+        return existing.map((order) =>
+          pendingOrders.some((o) => o.id === order.id)
+            ? { ...order, status: 'pending' as const }
+            : order
+        );
+      });
+      addNotification({
+        type: 'error',
+        title: '批量审批失败',
+        message: '批量审批过程中发生错误',
+      });
+    } finally {
+      setLoading(false);
+    }
+  }, [addNotification, loadOrders, queryClient]);
 
   const getStatusText = (status: string) => {
     const statusMap: Record<string, string> = {
@@ -503,6 +585,14 @@ const PurchaseOrderPage: React.FC = () => {
           },
         ]}
         rowActions={rowActions}
+        batchActions={[
+          {
+            label: '批量审批',
+            icon: <CheckCircle size={16} />,
+            onClick: handleBatchApprove,
+            color: 'success',
+          },
+        ]}
         headerContent={statsContent}
         emptyMessage='暂无采购订单数据'
         getRowId={(row) => row.id}

@@ -4,7 +4,7 @@ import { render, waitFor } from '@testing-library/react';
 import { BrowserRouter } from 'react-router-dom';
 import LimsInstrumentPage from '../lims/LimsInstrumentPage';
 import { limsApi } from '@/api/lims';
-import { useAppStore } from '@/store';
+import { useNotificationStore, useAuthStore } from '@/store';
 
 vi.mock('@/api/lims', () => ({
   limsApi: {
@@ -20,19 +20,24 @@ vi.mock('@/api/lims', () => ({
 }));
 
 vi.mock('@/store', () => ({
-  useAppStore: vi.fn((selector?: any) =>
+  useNotificationStore: vi.fn((selector?: any) =>
     selector
       ? selector({
           addNotification: vi.fn(),
           notifications: [],
-          user: { permissions: ['lims:instrument:read'] },
-          theme: 'light',
         })
       : {
           addNotification: vi.fn(),
           notifications: [],
-          user: { permissions: ['lims:instrument:read'] },
-          theme: 'light',
+        }
+  ),
+  useAuthStore: vi.fn((selector?: any) =>
+    selector
+      ? selector({
+          user: null,
+        })
+      : {
+          user: null,
         }
   ),
 }));
