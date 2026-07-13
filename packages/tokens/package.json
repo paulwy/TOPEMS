@@ -1,6 +1,6 @@
 {
   "name": "@topems/tokens",
-  "version": "1.0.0",
+  "version": "5.14.0",
   "description": "TOPEMS Design System Tokens",
   "main": "dist/index.js",
   "types": "dist/index.d.ts",

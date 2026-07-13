@@ -1,6 +1,6 @@
 {
   "name": "@topems/shared-types",
-  "version": "1.0.0",
+  "version": "5.14.0",
   "description": "TOPEMS Shared TypeScript Types for Multi-Platform Support",
   "main": "dist/index.js",
   "module": "dist/index.mjs",

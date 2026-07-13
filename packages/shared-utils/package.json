@@ -1,6 +1,6 @@
 {
   "name": "@topems/shared-utils",
-  "version": "1.0.0",
+  "version": "5.14.0",
   "description": "Shared utility functions for TOPEMS",
   "main": "./src/index.ts",
   "types": "./src/index.ts",
