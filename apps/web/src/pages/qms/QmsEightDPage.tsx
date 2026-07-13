@@ -1,4 +1,5 @@
-import React, { useState, useEffect, useCallback, useMemo } from 'react';
+import React, { useState, useMemo, useCallback } from 'react';
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import {
   Dialog,
   DialogTitle,
@@ -52,7 +53,7 @@ import {
   User,
   AlertTriangle,
 } from 'lucide-react';
-import { useNotificationStore } from '@/store';
+import { useAppStore } from '@/store';
 import * as z from 'zod';
 import { ListPageTemplate, type ColumnDef, type RowAction } from '@/components/templates';
 import { PageContainer } from '@/components/common';
@@ -79,15 +80,12 @@ const QmsEightDPage: React.FC = () => {
   const [showModal, setShowModal] = useState(false);
   const [showDetailModal, setShowDetailModal] = useState(false);
   const [selectedReport, setSelectedReport] = useState<EightDReport | null>(null);
-  const [auditLogs, setAuditLogs] = useState<EightDAuditLog[]>([]);
   const [isEditing, setIsEditing] = useState(false);
-  const [loading, setLoading] = useState(true);
   const [submitting, setSubmitting] = useState(false);
   const [activeStep, setActiveStep] = useState(0);
   const [stepContent, setStepContent] = useState('');
-  const addNotification = useNotificationStore((state) => state.addNotification);
-
-  const [reports, setReports] = useState<EightDReport[]>([]);
+  const addNotification = useAppStore((state) => state.addNotification);
+  const queryClient = useQueryClient();
 
   const [formData, setFormData] = useState({
     title: '',
@@ -123,38 +121,33 @@ const QmsEightDPage: React.FC = () => {
     return true;
   };
 
-  const loadReports = useCallback(async () => {
-    try {
-      setLoading(true);
+  const loadReports = useCallback(() => {
+    queryClient.invalidateQueries({ queryKey: ['qms-eightd-reports'] });
+  }, [queryClient]);
+
+  const { data: reports = [], isLoading: loading } = useQuery({
+    queryKey: ['qms-eightd-reports'],
+    queryFn: async () => {
       const response = await eightDApi.listEightDReports();
       if (response.success && response.data) {
-        setReports(response.data);
+        return response.data as EightDReport[];
       }
-    } catch (error: unknown) {
-      addNotification({
-        title: '加载失败',
-        message: '加载 8D 报告数据失败',
-        type: 'error',
-      });
-    } finally {
-      setLoading(false);
-    }
-  }, [addNotification]);
+      return [];
+    },
+  });
 
-  const loadAuditLogs = useCallback(async (reportId: string) => {
-    try {
-      const response = await eightDApi.getEightDAuditLogs(reportId);
+  const { data: auditLogs = [] } = useQuery({
+    queryKey: ['qms-eightd-audit-logs', selectedReport?.id],
+    queryFn: async () => {
+      if (!selectedReport?.id) return [];
+      const response = await eightDApi.getEightDAuditLogs(selectedReport.id);
       if (response.success && response.data) {
-        setAuditLogs(response.data);
+        return response.data as EightDAuditLog[];
       }
-    } catch (error: unknown) {
-      logger.error('Failed to load audit logs:', error);
-    }
-  }, []);
-
-  useEffect(() => {
-    loadReports();
-  }, [loadReports]);
+      return [];
+    },
+    enabled: !!selectedReport?.id,
+  });
 
   const getSeverityBadge = (severity: string) => {
     const colors: Record<string, { bg: string; color: string }> = {
@@ -300,11 +293,107 @@ const QmsEightDPage: React.FC = () => {
     },
   ];
 
-  const viewReport = async (report: EightDReport) => {
+  const deleteReportMutation = useMutation({
+    mutationFn: (id: string) => eightDApi.deleteEightDReport(id),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['qms-eightd-reports'] });
+      addNotification({ title: '成功', message: '报告删除成功', type: 'success' });
+    },
+    onError: () => {
+      addNotification({ title: '错误', message: '删除报告时发生错误', type: 'error' });
+    },
+  });
+
+  const createReportMutation = useMutation({
+    mutationFn: (data: Parameters<typeof eightDApi.createEightDReport>[0]) =>
+      eightDApi.createEightDReport(data),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['qms-eightd-reports'] });
+      addNotification({ title: '成功', message: '报告创建成功', type: 'success' });
+    },
+    onError: () => {
+      addNotification({ title: '错误', message: '创建失败', type: 'error' });
+    },
+  });
+
+  const updateReportMutation = useMutation({
+    mutationFn: ({
+      id,
+      data,
+    }: {
+      id: string;
+      data: Parameters<typeof eightDApi.updateEightDReport>[1];
+    }) => eightDApi.updateEightDReport(id, data),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['qms-eightd-reports'] });
+      addNotification({ title: '成功', message: '报告更新成功', type: 'success' });
+    },
+    onError: () => {
+      addNotification({ title: '错误', message: '更新失败', type: 'error' });
+    },
+  });
+
+  const submitStepMutation = useMutation({
+    mutationFn: async ({
+      reportId,
+      step,
+      content,
+      teamLeader,
+      teamMembers,
+    }: {
+      reportId: string;
+      step: number;
+      content: string;
+      teamLeader?: string;
+      teamMembers?: string[];
+    }) => {
+      let response;
+      switch (step) {
+        case 0:
+          response = await eightDApi.updateD1Team(reportId, {
+            content,
+            teamLeader: teamLeader || undefined,
+            teamMembers,
+          });
+          break;
+        case 2:
+          response = await eightDApi.submitD3Containment(reportId, { content });
+          break;
+        case 3:
+          response = await eightDApi.submitD4RootCause(reportId, { content });
+          break;
+        case 4:
+          response = await eightDApi.submitD5PermanentAction(reportId, { content });
+          break;
+        case 5:
+          response = await eightDApi.verifyD6Effectiveness(reportId, {
+            content,
+            isEffective: true,
+          });
+          break;
+        case 6:
+          response = await eightDApi.submitD7Preventive(reportId, { content });
+          break;
+        case 7:
+          response = await eightDApi.closeEightDReport(reportId, { content });
+          break;
+        default:
+          throw new Error('Invalid step');
+      }
+      return response;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['qms-eightd-reports'] });
+      queryClient.invalidateQueries({ queryKey: ['qms-eightd-audit-logs'] });
+    },
+    onError: () => {
+      addNotification({ title: '错误', message: '操作失败', type: 'error' });
+    },
+  });
+
+  const viewReport = (report: EightDReport) => {
     setSelectedReport(report);
     setShowDetailModal(true);
-    await loadAuditLogs(report.id);
-    // 找到当前活跃的步骤
     const completedSteps = D_STEPS.filter((step) => {
       const value = report[step.key as keyof EightDReport];
       return value === true || value === 'true';
@@ -328,19 +417,9 @@ const QmsEightDPage: React.FC = () => {
     setShowModal(true);
   };
 
-  const deleteReport = async (id: string) => {
+  const deleteReport = (id: string) => {
     if (!confirm('确定要删除此 8D 报告吗？')) return;
-    try {
-      const response = await eightDApi.deleteEightDReport(id);
-      if (response.success) {
-        setReports((prev) => prev.filter((item) => item.id !== id));
-        addNotification({ title: '成功', message: '报告删除成功', type: 'success' });
-      } else {
-        addNotification({ title: '失败', message: response.message || '删除失败', type: 'error' });
-      }
-    } catch (error: unknown) {
-      addNotification({ title: '错误', message: '删除报告时发生错误', type: 'error' });
-    }
+    deleteReportMutation.mutate(id);
   };
 
   const handleSubmit = async () => {
@@ -366,36 +445,12 @@ const QmsEightDPage: React.FC = () => {
       };
 
       if (isEditing && selectedReport) {
-        const response = await eightDApi.updateEightDReport(selectedReport.id, submitData);
-        if (response.success) {
-          setReports((prev) =>
-            prev.map((item) =>
-              item.id === selectedReport.id ? { ...item, ...response.data } : item
-            )
-          );
-          addNotification({ title: '成功', message: '报告更新成功', type: 'success' });
-        } else {
-          addNotification({
-            title: '失败',
-            message: response.message || '更新失败',
-            type: 'error',
-          });
-        }
+        await updateReportMutation.mutateAsync({ id: selectedReport.id, data: submitData });
       } else {
-        const response = await eightDApi.createEightDReport({
+        await createReportMutation.mutateAsync({
           ...submitData,
           reportNo: `8D-${Date.now()}`,
         });
-        if (response.success && response.data) {
-          setReports((prev) => [response.data!, ...prev]);
-          addNotification({ title: '成功', message: '报告创建成功', type: 'success' });
-        } else {
-          addNotification({
-            title: '失败',
-            message: response.message || '创建失败',
-            type: 'error',
-          });
-        }
       }
       setShowModal(false);
       setIsEditing(false);
@@ -424,62 +479,21 @@ const QmsEightDPage: React.FC = () => {
     }
     setSubmitting(true);
     try {
-      const currentStepKey = D_STEPS[activeStep].key;
-      let response;
-
-      switch (activeStep) {
-        case 0: // D1 团队建立
-          response = await eightDApi.updateD1Team(selectedReport.id, {
-            content: stepContent,
-            teamLeader: formData.teamLeader || undefined,
-            teamMembers: formData.teamMembers
-              ? formData.teamMembers
-                  .split(',')
-                  .map((s) => s.trim())
-                  .filter(Boolean)
-              : undefined,
-          });
-          break;
-        case 2: // D3 临时措施
-          response = await eightDApi.submitD3Containment(selectedReport.id, {
-            content: stepContent,
-          });
-          break;
-        case 3: // D4 根本原因分析
-          response = await eightDApi.submitD4RootCause(selectedReport.id, {
-            content: stepContent,
-          });
-          break;
-        case 4: // D5 永久措施
-          response = await eightDApi.submitD5PermanentAction(selectedReport.id, {
-            content: stepContent,
-          });
-          break;
-        case 5: // D6 效果验证
-          response = await eightDApi.verifyD6Effectiveness(selectedReport.id, {
-            content: stepContent,
-            isEffective: true,
-          });
-          break;
-        case 6: // D7 预防措施
-          response = await eightDApi.submitD7Preventive(selectedReport.id, {
-            content: stepContent,
-          });
-          break;
-        case 7: // D8 团队认可
-          response = await eightDApi.closeEightDReport(selectedReport.id, {
-            content: stepContent,
-          });
-          break;
-        default:
-          return;
-      }
+      const response = await submitStepMutation.mutateAsync({
+        reportId: selectedReport.id,
+        step: activeStep,
+        content: stepContent,
+        teamLeader: formData.teamLeader,
+        teamMembers: formData.teamMembers
+          ? formData.teamMembers
+              .split(',')
+              .map((s) => s.trim())
+              .filter(Boolean)
+          : undefined,
+      });
 
       if (response.success) {
         setSelectedReport(response.data!);
-        setReports((prev) =>
-          prev.map((item) => (item.id === selectedReport.id ? { ...item, ...response.data } : item))
-        );
         addNotification({
           title: '成功',
           message: `${D_STEPS[activeStep].label}完成`,
@@ -489,7 +503,6 @@ const QmsEightDPage: React.FC = () => {
         if (activeStep < 7) {
           setActiveStep(activeStep + 1);
         }
-        await loadAuditLogs(selectedReport.id);
       } else {
         addNotification({ title: '失败', message: response.message || '操作失败', type: 'error' });
       }

@@ -25,7 +25,7 @@ export const eightDApi = {
     const response = await apiClient.qms.get<EightDReportBackend>(`/eightd/${id}`);
     return {
       ...response,
-      data: response.data ? adaptEightDReportToFrontend(response.data) : undefined,
+      data: response.data ? adaptEightDReportToFrontend(response.data) : ({} as EightDReport),
     };
   },
 
@@ -36,7 +36,7 @@ export const eightDApi = {
     const response = await apiClient.qms.post<EightDReportBackend>('/eightd', backendData);
     return {
       ...response,
-      data: response.data ? adaptEightDReportToFrontend(response.data) : undefined,
+      data: response.data ? adaptEightDReportToFrontend(response.data) : ({} as EightDReport),
     };
   },
 
@@ -57,7 +57,7 @@ export const eightDApi = {
     const response = await apiClient.qms.put<EightDReportBackend>(`/eightd/${id}`, backendData);
     return {
       ...response,
-      data: response.data ? adaptEightDReportToFrontend(response.data) : undefined,
+      data: response.data ? adaptEightDReportToFrontend(response.data) : ({} as EightDReport),
     };
   },
 
@@ -76,7 +76,7 @@ export const eightDApi = {
     });
     return {
       ...response,
-      data: response.data ? adaptEightDReportToFrontend(response.data) : undefined,
+      data: response.data ? adaptEightDReportToFrontend(response.data) : ({} as EightDReport),
     };
   },
 
@@ -90,7 +90,7 @@ export const eightDApi = {
     );
     return {
       ...response,
-      data: response.data ? adaptEightDReportToFrontend(response.data) : undefined,
+      data: response.data ? adaptEightDReportToFrontend(response.data) : ({} as EightDReport),
     };
   },
 
@@ -104,7 +104,7 @@ export const eightDApi = {
     );
     return {
       ...response,
-      data: response.data ? adaptEightDReportToFrontend(response.data) : undefined,
+      data: response.data ? adaptEightDReportToFrontend(response.data) : ({} as EightDReport),
     };
   },
 
@@ -118,7 +118,7 @@ export const eightDApi = {
     );
     return {
       ...response,
-      data: response.data ? adaptEightDReportToFrontend(response.data) : undefined,
+      data: response.data ? adaptEightDReportToFrontend(response.data) : ({} as EightDReport),
     };
   },
 
@@ -129,7 +129,7 @@ export const eightDApi = {
     const response = await apiClient.qms.post<EightDReportBackend>(`/eightd/${id}/d6-verify`, data);
     return {
       ...response,
-      data: response.data ? adaptEightDReportToFrontend(response.data) : undefined,
+      data: response.data ? adaptEightDReportToFrontend(response.data) : ({} as EightDReport),
     };
   },
 
@@ -143,7 +143,7 @@ export const eightDApi = {
     );
     return {
       ...response,
-      data: response.data ? adaptEightDReportToFrontend(response.data) : undefined,
+      data: response.data ? adaptEightDReportToFrontend(response.data) : ({} as EightDReport),
     };
   },
 
@@ -154,7 +154,7 @@ export const eightDApi = {
     const response = await apiClient.qms.post<EightDReportBackend>(`/eightd/${id}/close`, data);
     return {
       ...response,
-      data: response.data ? adaptEightDReportToFrontend(response.data) : undefined,
+      data: response.data ? adaptEightDReportToFrontend(response.data) : ({} as EightDReport),
     };
   },
 

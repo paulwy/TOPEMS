@@ -10,21 +10,31 @@ import {
   Typography,
   Button,
 } from '@mui/material';
-import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { apiLogger } from '@/utils/logger';
 import { Plus, Eye, Clock } from 'lucide-react';
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { PageContainer } from '@/components/common/PageContainerV2';
 import { ListPageTemplate } from '@/components/templates';
 
 import type { RowAction, FilterConfig, ColumnDef } from '@/components/templates';
 import { pdmApi } from '@/api/pdm';
-import type { ProductionProcess, CreateProductionProcessRequest } from '@/api/pdm';
-import { useNotificationStore } from '@/store';
+import type { ProductionProcess } from '@/api/pdm';
+import { useAppStore } from '@/store';
 import { designTokens } from '@/theme/tokens';
+import { QUERY_KEYS } from '@/lib/reactQuery';
 
 const ct = designTokens.colors;
 
+const adaptProcess = (item: { [key: string]: unknown }) => ({
+  ...item,
+  status:
+    item.status === 'active' ? '启用' : item.status === 'inactive' ? '禁用' : item.status,
+});
+
 const PdmProcessPage: React.FC = () => {
+  const queryClient = useQueryClient();
+  const addNotification = useAppStore((state) => state.addNotification);
+
   const [searchTerm, setSearchTerm] = useState('');
   const [statusFilter, setStatusFilter] = useState<string>('');
   const [showCreateModal, setShowCreateModal] = useState(false);
@@ -36,43 +46,40 @@ const PdmProcessPage: React.FC = () => {
     description: '',
     version: '1.0',
   });
-  const queryClient = useQueryClient();
-  const addNotification = useNotificationStore((state) => state.addNotification);
 
-  const processesQuery = useQuery({
-    queryKey: ['pdm-processes'],
+  const { data: processes = [], isLoading } = useQuery({
+    queryKey: QUERY_KEYS.PDM.PROCESSES,
     queryFn: async () => {
       const response = await pdmApi.listProcesses();
       if (response.success && response.data) {
-        const adapted = (response.data as any).map((item: { [key: string]: unknown }) => ({
-          ...item,
-          status:
-            item.status === 'active' ? '启用' : item.status === 'inactive' ? '禁用' : item.status,
-        }));
-        return adapted as ProductionProcess[];
+        const adapted = (response.data as any).map(adaptProcess);
+        return adapted;
       }
       return [];
     },
     staleTime: 5 * 60 * 1000,
-    retry: 2,
   });
 
-  const processes = processesQuery.data || [];
-  const loading = processesQuery.isLoading;
-
-  const createMutation = useMutation({
-    mutationFn: async (data: CreateProductionProcessRequest) => {
-      const response = await pdmApi.createProcess(data);
-      if (!response.success) {
-        throw new Error(response.message || '创建失败');
-      }
-      return response.data;
-    },
+  const createProcessMutation = useMutation({
+    mutationFn: (data: {
+      process_no: string;
+      name: string;
+      description?: string;
+      version: string;
+    }) =>
+      pdmApi.createProcess({
+        process_no: data.process_no,
+        name: data.name,
+        description: data.description || undefined,
+        version: data.version,
+        status: 'active',
+      }),
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['pdm-processes'] });
       addNotification({ title: '成功', message: '生产工艺创建成功', type: 'success' });
+      setShowCreateModal(false);
+      queryClient.invalidateQueries({ queryKey: QUERY_KEYS.PDM.PROCESSES });
     },
-    onError: (err) => {
+    onError: (err: unknown) => {
       addNotification({ title: '错误', message: '创建失败', type: 'error' });
       apiLogger.error('创建生产工艺失败:', err);
     },
@@ -98,7 +105,7 @@ const PdmProcessPage: React.FC = () => {
   };
 
   const filteredProcesses = useMemo(() => {
-    return processes.filter((process) => {
+    return processes.filter((process: ProductionProcess) => {
       const matchesSearch =
         process.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
         process.process_no.toLowerCase().includes(searchTerm.toLowerCase());
@@ -163,21 +170,14 @@ const PdmProcessPage: React.FC = () => {
     setShowCreateModal(true);
   };
 
-  const handleSave = async () => {
-    await createMutation.mutateAsync({
-      process_no: formData.process_no,
-      name: formData.name,
-      description: formData.description || undefined,
-      version: formData.version,
-      status: 'active',
-    });
-    setShowCreateModal(false);
+  const handleSave = () => {
+    createProcessMutation.mutate(formData);
   };
 
   const stats = {
     total: processes.length,
-    active: processes.filter((p) => p.status === '启用').length,
-    inactive: processes.filter((p) => p.status === '禁用').length,
+    active: processes.filter((p: ProductionProcess) => p.status === '启用').length,
+    inactive: processes.filter((p: ProductionProcess) => p.status === '禁用').length,
   };
 
   const statsContent = (
@@ -247,7 +247,7 @@ const PdmProcessPage: React.FC = () => {
         backButton={{ href: '/dashboard' }}
         columns={columns}
         data={filteredProcesses}
-        loading={loading}
+        loading={isLoading}
         searchable
         searchPlaceholder='搜索工艺名称或编号...'
         searchValue={searchTerm}
@@ -317,6 +317,7 @@ const PdmProcessPage: React.FC = () => {
           <Button
             variant='contained'
             onClick={handleSave}
+            disabled={createProcessMutation.isPending}
             sx={{ bgcolor: 'info.main' }}
           >
             保存

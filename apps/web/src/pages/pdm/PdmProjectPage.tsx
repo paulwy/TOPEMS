@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useMemo, useCallback } from 'react';
+import React, { useState, useMemo, useCallback } from 'react';
 import {
   Box,
   Dialog,
@@ -51,6 +51,8 @@ import {
 } from '@/components/templates';
 import { PageContainer } from '@/components/common/PageContainerV2';
 import { designTokens } from '@/theme/tokens';
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import { QUERY_KEYS } from '@/lib/reactQuery';
 
 const ct = designTokens.colors;
 
@@ -98,12 +100,9 @@ interface ProjectFormData {
 }
 
 export const PdmProjectPage: React.FC = () => {
+  const queryClient = useQueryClient();
   const [activeTab, setActiveTab] = useState(0);
   const [searchTerm, setSearchTerm] = useState('');
-  const [projects, setProjects] = useState<PdmProject[]>([]);
-  const [members, setMembers] = useState<ProjectMember[]>([]);
-  const [phases, setPhases] = useState<ProjectPhase[]>([]);
-  const [loading, setLoading] = useState(true);
   const [openDialog, setOpenDialog] = useState(false);
   const [memberDialogOpen, setMemberDialogOpen] = useState(false);
   const [editingProject, setEditingProject] = useState<PdmProject | null>(null);
@@ -120,54 +119,127 @@ export const PdmProjectPage: React.FC = () => {
   });
   const addNotification = useNotificationStore((state) => state.addNotification);
 
-  useEffect(() => {
-    loadProjects();
-  }, []);
+  const loadProjects = useCallback(() => {
+    queryClient.invalidateQueries({ queryKey: QUERY_KEYS.PDM.PROJECTS });
+  }, [queryClient]);
 
-  const loadProjects = async () => {
-    try {
-      setLoading(true);
+  const { data: projects = [], isLoading: loading } = useQuery({
+    queryKey: QUERY_KEYS.PDM.PROJECTS,
+    queryFn: async () => {
       const response = await projectApi.list();
       if (response.success && response.data) {
-        setProjects(response.data as PdmProject[]);
-      } else {
-        setProjects([]);
+        return response.data as PdmProject[];
       }
-    } catch (err: unknown) {
-      apiLogger.error('加载项目数据失败:', err);
-      setProjects([]);
-    } finally {
-      setLoading(false);
-    }
-  };
+      return [];
+    },
+    staleTime: 5 * 60 * 1000,
+  });
 
-  const loadMembers = async (projectId: string) => {
-    try {
-      const response = await projectApi.listMembers(projectId);
+  const { data: members = [] } = useQuery({
+    queryKey: QUERY_KEYS.PDM.PROJECT_MEMBERS(selectedProjectId || ''),
+    queryFn: async () => {
+      if (!selectedProjectId) return [];
+      const response = await projectApi.listMembers(selectedProjectId);
       if (response.success && response.data) {
-        setMembers(response.data as ProjectMember[]);
-      } else {
-        setMembers([]);
+        return response.data as ProjectMember[];
       }
-    } catch (err: unknown) {
-      apiLogger.error('加载项目成员失败:', err);
-      setMembers([]);
-    }
-  };
+      return [];
+    },
+    staleTime: 5 * 60 * 1000,
+    enabled: !!selectedProjectId,
+  });
 
-  const loadPhases = async (projectId: string) => {
-    try {
-      const response = await projectApi.listPhases(projectId);
+  const loadPhases = useCallback((projectId: string) => {
+    queryClient.invalidateQueries({ queryKey: QUERY_KEYS.PDM.PROJECT_PHASES(projectId) });
+  }, [queryClient]);
+
+  const { data: phases = [] } = useQuery({
+    queryKey: QUERY_KEYS.PDM.PROJECT_PHASES(selectedProjectId || ''),
+    queryFn: async () => {
+      if (!selectedProjectId) return [];
+      const response = await projectApi.listPhases(selectedProjectId);
       if (response.success && response.data) {
-        setPhases(response.data as ProjectPhase[]);
-      } else {
-        setPhases([]);
+        return response.data as ProjectPhase[];
       }
-    } catch (err: unknown) {
-      apiLogger.error('加载项目阶段失败:', err);
-      setPhases([]);
-    }
-  };
+      return [];
+    },
+    staleTime: 5 * 60 * 1000,
+    enabled: !!selectedProjectId,
+  });
+
+  const createProjectMutation = useMutation({
+    mutationFn: (data: CreatePdmProjectRequest) => projectApi.create(data),
+    onSuccess: () => {
+      addNotification({ title: '成功', message: '项目创建成功', type: 'success' });
+      setOpenDialog(false);
+      setEditingProject(null);
+      queryClient.invalidateQueries({ queryKey: QUERY_KEYS.PDM.PROJECTS });
+    },
+    onError: () => {
+      addNotification({ title: '错误', message: '创建失败', type: 'error' });
+    },
+  });
+
+  const updateProjectMutation = useMutation({
+    mutationFn: ({ id, data }: { id: string; data: CreatePdmProjectRequest }) =>
+      projectApi.update(id, data),
+    onSuccess: () => {
+      addNotification({ title: '成功', message: '项目更新成功', type: 'success' });
+      setOpenDialog(false);
+      setEditingProject(null);
+      queryClient.invalidateQueries({ queryKey: QUERY_KEYS.PDM.PROJECTS });
+    },
+    onError: () => {
+      addNotification({ title: '错误', message: '更新失败', type: 'error' });
+    },
+  });
+
+  const deleteProjectMutation = useMutation({
+    mutationFn: (id: string) => projectApi.delete(id),
+    onSuccess: () => {
+      addNotification({ title: '成功', message: '项目删除成功', type: 'success' });
+      queryClient.invalidateQueries({ queryKey: QUERY_KEYS.PDM.PROJECTS });
+    },
+    onError: () => {
+      addNotification({ title: '错误', message: '删除失败', type: 'error' });
+    },
+  });
+
+  const updateStatusMutation = useMutation({
+    mutationFn: ({ id, status }: { id: string; status: string }) =>
+      projectApi.updateStatus(id, status),
+    onSuccess: () => {
+      addNotification({ title: '成功', message: '状态更新成功', type: 'success' });
+      queryClient.invalidateQueries({ queryKey: QUERY_KEYS.PDM.PROJECTS });
+    },
+    onError: () => {
+      addNotification({ title: '错误', message: '状态更新失败', type: 'error' });
+    },
+  });
+
+  const updatePhaseMutation = useMutation({
+    mutationFn: ({ id, phase }: { id: string; phase: string }) =>
+      projectApi.updatePhase(id, phase),
+    onSuccess: () => {
+      addNotification({ title: '成功', message: '阶段更新成功', type: 'success' });
+      queryClient.invalidateQueries({ queryKey: QUERY_KEYS.PDM.PROJECTS });
+    },
+    onError: () => {
+      addNotification({ title: '错误', message: '阶段更新失败', type: 'error' });
+    },
+  });
+
+  const removeMemberMutation = useMutation({
+    mutationFn: ({ projectId, userId }: { projectId: string; userId: string }) =>
+      projectApi.removeMember(projectId, userId),
+    onSuccess: (_data, variables) => {
+      addNotification({ title: '成功', message: '成员移除成功', type: 'success' });
+      queryClient.invalidateQueries({ queryKey: QUERY_KEYS.PDM.PROJECT_MEMBERS(variables.projectId) });
+    },
+    onError: () => {
+      addNotification({ title: '错误', message: '移除成员失败', type: 'error' });
+    },
+  });
 
   const handleTabChange = (_event: React.SyntheticEvent, newValue: number) => {
     setActiveTab(newValue);
@@ -175,8 +247,6 @@ export const PdmProjectPage: React.FC = () => {
 
   const handleViewProject = (project: PdmProject) => {
     setSelectedProjectId(project.id);
-    loadMembers(project.id);
-    loadPhases(project.id);
     setActiveTab(1);
   };
 
@@ -195,37 +265,16 @@ export const PdmProjectPage: React.FC = () => {
     setOpenDialog(true);
   };
 
-  const handleDeleteProject = async (id: string) => {
-    try {
-      await projectApi.delete(id);
-      addNotification({ title: '成功', message: '项目删除成功', type: 'success' });
-      loadProjects();
-    } catch (err: unknown) {
-      addNotification({ title: '错误', message: '删除失败', type: 'error' });
-      apiLogger.error('删除项目失败:', err);
-    }
+  const handleDeleteProject = (id: string) => {
+    deleteProjectMutation.mutate(id);
   };
 
-  const handleUpdateStatus = async (id: string, status: string) => {
-    try {
-      await projectApi.updateStatus(id, status);
-      addNotification({ title: '成功', message: '状态更新成功', type: 'success' });
-      loadProjects();
-    } catch (err: unknown) {
-      addNotification({ title: '错误', message: '状态更新失败', type: 'error' });
-      apiLogger.error('更新项目状态失败:', err);
-    }
+  const handleUpdateStatus = (id: string, status: string) => {
+    updateStatusMutation.mutate({ id, status });
   };
 
-  const handleUpdatePhase = async (id: string, phase: string) => {
-    try {
-      await projectApi.updatePhase(id, phase);
-      addNotification({ title: '成功', message: '阶段更新成功', type: 'success' });
-      loadProjects();
-    } catch (err: unknown) {
-      addNotification({ title: '错误', message: '阶段更新失败', type: 'error' });
-      apiLogger.error('更新项目阶段失败:', err);
-    }
+  const handleUpdatePhase = (id: string, phase: string) => {
+    updatePhaseMutation.mutate({ id, phase });
   };
 
   const handleCreate = () => {
@@ -243,48 +292,27 @@ export const PdmProjectPage: React.FC = () => {
     setOpenDialog(true);
   };
 
-  const handleSaveProject = async () => {
-    try {
-      const requestData: CreatePdmProjectRequest = {
-        project_no: formData.project_no,
-        name: formData.name,
-        description: formData.description || undefined,
-        status: formData.status,
-        phase: formData.phase,
-        start_date: formData.start_date || undefined,
-        end_date: formData.end_date || undefined,
-        budget: formData.budget ? parseFloat(formData.budget) : undefined,
-      };
+  const handleSaveProject = () => {
+    const requestData: CreatePdmProjectRequest = {
+      project_no: formData.project_no,
+      name: formData.name,
+      description: formData.description || undefined,
+      status: formData.status,
+      phase: formData.phase,
+      start_date: formData.start_date || undefined,
+      end_date: formData.end_date || undefined,
+      budget: formData.budget ? parseFloat(formData.budget) : undefined,
+    };
 
-      if (editingProject) {
-        await projectApi.update(editingProject.id, requestData);
-        addNotification({ title: '成功', message: '项目更新成功', type: 'success' });
-      } else {
-        await projectApi.create(requestData);
-        addNotification({ title: '成功', message: '项目创建成功', type: 'success' });
-      }
-      setOpenDialog(false);
-      setEditingProject(null);
-      loadProjects();
-    } catch (err: unknown) {
-      addNotification({
-        title: '错误',
-        message: editingProject ? '更新失败' : '创建失败',
-        type: 'error',
-      });
-      apiLogger.error('保存项目失败:', err);
+    if (editingProject) {
+      updateProjectMutation.mutate({ id: editingProject.id, data: requestData });
+    } else {
+      createProjectMutation.mutate(requestData);
     }
   };
 
-  const handleRemoveMember = async (projectId: string, userId: string) => {
-    try {
-      await projectApi.removeMember(projectId, userId);
-      addNotification({ title: '成功', message: '成员移除成功', type: 'success' });
-      loadMembers(projectId);
-    } catch (err: unknown) {
-      addNotification({ title: '错误', message: '移除成员失败', type: 'error' });
-      apiLogger.error('移除项目成员失败:', err);
-    }
+  const handleRemoveMember = (projectId: string, userId: string) => {
+    removeMemberMutation.mutate({ projectId, userId });
   };
 
   const filteredProjects = useMemo(() => {

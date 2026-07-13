@@ -31,7 +31,7 @@ export const fmeaApi = {
     const response = await apiClient.qms.get<FmeaAnalysisBackend>(`/fmea/${id}`);
     return {
       ...response,
-      data: response.data ? adaptFmeaAnalysisToFrontend(response.data) : undefined,
+      data: response.data ? adaptFmeaAnalysisToFrontend(response.data) : ({} as FmeaAnalysis),
     };
   },
 
@@ -42,7 +42,7 @@ export const fmeaApi = {
     const response = await apiClient.qms.post<FmeaAnalysisBackend>('/fmea', backendData);
     return {
       ...response,
-      data: response.data ? adaptFmeaAnalysisToFrontend(response.data) : undefined,
+      data: response.data ? adaptFmeaAnalysisToFrontend(response.data) : ({} as FmeaAnalysis),
     };
   },
 
@@ -67,7 +67,7 @@ export const fmeaApi = {
     const response = await apiClient.qms.put<FmeaAnalysisBackend>(`/fmea/${id}`, backendData);
     return {
       ...response,
-      data: response.data ? adaptFmeaAnalysisToFrontend(response.data) : undefined,
+      data: response.data ? adaptFmeaAnalysisToFrontend(response.data) : ({} as FmeaAnalysis),
     };
   },
 
@@ -79,7 +79,7 @@ export const fmeaApi = {
     const response = await apiClient.qms.get<FmeaStatisticsBackend>(`/fmea/${fmeaId}/statistics`);
     return {
       ...response,
-      data: response.data ? adaptFmeaStatisticsToFrontend(response.data) : undefined,
+      data: response.data ? adaptFmeaStatisticsToFrontend(response.data) : ({} as FmeaStatistics),
     };
   },
 
@@ -95,7 +95,7 @@ export const fmeaApi = {
     const response = await apiClient.qms.get<FmeaItemBackend>(`/fmea-items/${id}`);
     return {
       ...response,
-      data: response.data ? adaptFmeaItemToFrontend(response.data) : undefined,
+      data: response.data ? adaptFmeaItemToFrontend(response.data) : ({} as FmeaItem),
     };
   },
 
@@ -117,7 +117,7 @@ export const fmeaApi = {
     const response = await apiClient.qms.post<FmeaItemBackend>('/fmea-items', backendData);
     return {
       ...response,
-      data: response.data ? adaptFmeaItemToFrontend(response.data) : undefined,
+      data: response.data ? adaptFmeaItemToFrontend(response.data) : ({} as FmeaItem),
     };
   },
 
@@ -148,7 +148,7 @@ export const fmeaApi = {
     const response = await apiClient.qms.put<FmeaItemBackend>(`/fmea-items/${id}`, backendData);
     return {
       ...response,
-      data: response.data ? adaptFmeaItemToFrontend(response.data) : undefined,
+      data: response.data ? adaptFmeaItemToFrontend(response.data) : ({} as FmeaItem),
     };
   },
 
