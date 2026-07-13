@@ -1,0 +1,44 @@
+---
+# yamllint 配置: https://yamllint.readthedocs.io/en/stable/rules.html
+extends: default
+
+rules:
+  # GitHub Actions 的 on: 会被误判为 truthy，需禁用
+  truthy:
+    level: warning
+    check-keys: false
+  # 行长限制放宽，workflow 中常有长命令
+  line-length:
+    max: 120
+    level: warning
+  # document-start 的 --- 在部分文件中非必需
+  document-start: disable
+  # 注释不强制要求起始空格
+  comments:
+    require-starting-space: false
+  # 注释缩进在 workflow 中较灵活
+  comments-indentation: disable
+  # 尾随空格降为 warning（pre-commit 的 trailing-whitespace 钩子已处理）
+  trailing-spaces:
+    level: warning
+  # 缩进: 2 空格，序列缩进保持一致（历史文件降为 warning）
+  indentation:
+    spaces: 2
+    indent-sequences: consistent
+    level: warning
+  # 空行规则放宽
+  empty-lines:
+    max: 2
+    max-start: 0
+    max-end: 0
+  # 文件结尾换行（历史文件降为 warning）
+  new-line-at-end-of-file:
+    level: warning
+
+# 忽略自动生成/第三方文件
+ignore: |
+  pnpm-lock.yaml
+  node_modules/
+  target/
+  apps/web/dist/
+  *.patch

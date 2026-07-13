@@ -17,6 +17,12 @@ MAX_SIZE=512000
 
 for file in $STAGED_FILES; do
   if [ -f "$file" ]; then
+    # 排除 lock 文件和数据库文件（与 .pre-commit-config.yaml 保持一致）
+    case "$file" in
+      pnpm-lock.yaml|*-lock.yaml|database/postgres_data/*)
+        continue
+        ;;
+    esac
     FILE_SIZE=$(wc -c < "$file")
     if [ "$FILE_SIZE" -gt "$MAX_SIZE" ]; then
       SIZE_KB=$((FILE_SIZE / 1024))
