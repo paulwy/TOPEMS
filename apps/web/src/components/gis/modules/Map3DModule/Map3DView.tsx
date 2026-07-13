@@ -197,7 +197,7 @@ export const Map3DView: React.FC<Map3DViewProps> = ({
           ))}
 
         {/* 子组件 */}
-        {children}
+        {children as React.ReactNode}
       </MapContainer>
 
       {/* 3D控制面板 */}

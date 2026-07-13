@@ -46,7 +46,7 @@ import {
   MobileCard,
   MobileButton,
 } from '@/components/mobile';
-import { useAppStore } from '@/store';
+import { useNotificationStore, useAuthStore } from '@/store';
 import { mobileApi, type QualityTask, type DefectRecord } from '@/api/mobile';
 import { apiLogger } from '@/utils/logger';
 import { MOBILE_PATHS } from '@/modules/mobile/config';
@@ -54,7 +54,8 @@ import { MOBILE_PATHS } from '@/modules/mobile/config';
 const MobileQualityPage: React.FC = () => {
   const theme = useTheme();
   const navigate = useNavigate();
-  const { user, addNotification } = useAppStore();
+  const { user } = useAuthStore();
+  const { addNotification } = useNotificationStore();
   const [activeTab, setActiveTab] = useState(0);
   const [loading, setLoading] = useState(true);
   const [searchQuery, setSearchQuery] = useState('');
@@ -795,7 +796,7 @@ const MobileQualityPage: React.FC = () => {
                   quantity: parseInt(e.target.value) || 0,
                 }))
               }
-              slotProps={{ input: { min: 1 } }}
+              slotProps={{ input: { min: 1 } } as any}
             />
             <TextField
               fullWidth

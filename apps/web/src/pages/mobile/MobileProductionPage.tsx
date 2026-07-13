@@ -47,7 +47,7 @@ import {
   MobileCard,
   MobileButton,
 } from '@/components/mobile';
-import { useAppStore } from '@/store';
+import { useNotificationStore, useAuthStore } from '@/store';
 import { mobileApi, type ProductionOrder, type WorkReport, type Equipment } from '@/api/mobile';
 import { apiLogger } from '@/utils/logger';
 import { MOBILE_PATHS } from '@/modules/mobile/config';
@@ -55,7 +55,8 @@ import { MOBILE_PATHS } from '@/modules/mobile/config';
 const MobileProductionPage: React.FC = () => {
   const theme = useTheme();
   const navigate = useNavigate();
-  const { user, addNotification } = useAppStore();
+  const { user } = useAuthStore();
+  const { addNotification } = useNotificationStore();
   const [activeTab, setActiveTab] = useState(0);
   const [loading, setLoading] = useState(true);
   const [searchQuery, setSearchQuery] = useState('');
@@ -926,7 +927,7 @@ const MobileProductionPage: React.FC = () => {
                   quantity: parseInt(e.target.value) || 0,
                 }))
               }
-              slotProps={{ input: { min: 0 } }}
+              slotProps={{ input: { min: 0 } } as any}
             />
             <TextField
               fullWidth
@@ -939,7 +940,7 @@ const MobileProductionPage: React.FC = () => {
                   good_quantity: parseInt(e.target.value) || 0,
                 }))
               }
-              slotProps={{ input: { min: 0 } }}
+              slotProps={{ input: { min: 0 } } as any}
             />
             <TextField
               fullWidth
@@ -952,7 +953,7 @@ const MobileProductionPage: React.FC = () => {
                   bad_quantity: parseInt(e.target.value) || 0,
                 }))
               }
-              slotProps={{ input: { min: 0 } }}
+              slotProps={{ input: { min: 0 } } as any}
             />
           </Box>
         </DialogContent>
