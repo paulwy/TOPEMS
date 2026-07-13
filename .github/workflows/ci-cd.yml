@@ -370,7 +370,7 @@ jobs:
           password: ${{ secrets.GITHUB_TOKEN }}
 
       - name: Login to Docker Hub (optional)
-        if: secrets.DOCKER_USERNAME != ''
+        if: ${{ secrets.DOCKER_USERNAME != '' }}
         uses: docker/login-action@v3
         with:
           username: ${{ secrets.DOCKER_USERNAME }}
@@ -382,7 +382,6 @@ jobs:
         with:
           images: |
             ghcr.io/${{ github.repository_owner }}/${{ env.DOCKER_IMAGE_PREFIX }}-${{ matrix.service }}
-            ${{ secrets.DOCKER_USERNAME }}/${{ env.DOCKER_IMAGE_PREFIX }}-${{ matrix.service }}
           tags: |
             type=ref,event=branch
             type=ref,event=pr
@@ -467,7 +466,7 @@ jobs:
               cp -r /opt/topems/staging/web /opt/topems/staging/web.backup.${TIMESTAMP}
             fi
 
-            for service in unified-core ai analytics manufacturing quality-assurance hrm crm pm erp gis rs scm wms mobile monitor portal mes pdm qms lims ehs bi; do
+            for service in unified-core ai hrm crm pm erp gis rs scm wms srm mobile monitor portal mes pdm qms lims ehs bi; do
               sudo systemctl stop topems-${service}-staging 2>/dev/null || true
             done
           EOF
@@ -477,7 +476,7 @@ jobs:
           scp -P ${{ secrets.STAGING_PORT || 22 }} -r dist/apps/core/dist/* ${{ secrets.STAGING_USER }}@${{ secrets.STAGING_HOST }}:/opt/topems/staging/core-remote/
 
           ssh ${{ secrets.STAGING_USER }}@${{ secrets.STAGING_HOST }} -p ${{ secrets.STAGING_PORT || 22 }} << 'EOF'
-            for service in unified-core ai analytics manufacturing quality-assurance hrm crm pm erp gis rs scm wms mobile monitor portal mes pdm qms lims ehs bi; do
+            for service in unified-core ai hrm crm pm erp gis rs scm wms srm mobile monitor portal mes pdm qms lims ehs bi; do
               sudo systemctl start topems-${service}-staging || true
             done
 
@@ -493,7 +492,7 @@ jobs:
 
             if [ "$FAILURE" = true ]; then
               echo "Health check failed, rolling back..."
-              for service in unified-core ai analytics manufacturing quality-assurance hrm crm pm erp gis rs scm wms mobile monitor portal mes pdm qms lims ehs bi; do
+              for service in unified-core ai hrm crm pm erp gis rs scm wms srm mobile monitor portal mes pdm qms lims ehs bi; do
                 sudo systemctl stop topems-${service}-staging 2>/dev/null || true
               done
 
@@ -507,7 +506,7 @@ jobs:
                 cp -r "$LATEST_WEB_BACKUP" /opt/topems/staging/web
               fi
 
-              for service in unified-core ai analytics manufacturing quality-assurance hrm crm pm erp gis rs scm wms mobile monitor portal mes pdm qms lims ehs bi; do
+              for service in unified-core ai hrm crm pm erp gis rs scm wms srm mobile monitor portal mes pdm qms lims ehs bi; do
                 sudo systemctl start topems-${service}-staging || true
               done
               exit 1
@@ -565,7 +564,7 @@ jobs:
               cp -r /opt/topems/web /opt/topems/web.backup.${TIMESTAMP}
             fi
 
-            for service in unified-core ai analytics manufacturing quality-assurance hrm crm pm erp gis rs scm wms mobile monitor portal mes pdm qms lims ehs bi; do
+            for service in unified-core ai hrm crm pm erp gis rs scm wms srm mobile monitor portal mes pdm qms lims ehs bi; do
               sudo systemctl stop topems-${service} 2>/dev/null || true
             done
           EOF
@@ -576,7 +575,7 @@ jobs:
           scp -P ${{ secrets.PROD_PORT || 22 }} -r dist/apps/core/dist/* ${{ secrets.PROD_USER }}@${{ secrets.PROD_HOST }}:/opt/topems/core-remote/
 
           ssh ${{ secrets.PROD_USER }}@${{ secrets.PROD_HOST }} -p ${{ secrets.PROD_PORT || 22 }} << 'EOF'
-            for service in unified-core ai analytics manufacturing quality-assurance hrm crm pm erp gis rs scm wms mobile monitor portal mes pdm qms lims ehs bi; do
+            for service in unified-core ai hrm crm pm erp gis rs scm wms srm mobile monitor portal mes pdm qms lims ehs bi; do
               sudo systemctl start topems-${service} || true
             done
 
@@ -584,16 +583,15 @@ jobs:
 
             FAILURE=false
             for port in 8000 8010 8020 8029 8023 8071 8053 8040 8041 8042 8070 8062 8063 8064 8072 8030 8031 8050 8051 8052 8060; do
-              if ! curl -s -f -m 5 https://${{ secrets.PROD_DOMAIN }}/health; then
-                echo "Service health check failed"
+              if ! curl -s -f -m 5 http://localhost:${port}/health; then
+                echo "Service on port ${port} not responding"
                 FAILURE=true
-                break
               fi
             done
 
             if [ "$FAILURE" = true ]; then
               echo "Health check failed, rolling back..."
-              for service in unified-core ai analytics manufacturing quality-assurance hrm crm pm erp gis rs scm wms mobile monitor portal mes pdm qms lims ehs bi; do
+              for service in unified-core ai hrm crm pm erp gis rs scm wms srm mobile monitor portal mes pdm qms lims ehs bi; do
                 sudo systemctl stop topems-${service} 2>/dev/null || true
               done
 
@@ -607,7 +605,7 @@ jobs:
                 cp -r "$LATEST_WEB_BACKUP" /opt/topems/web
               fi
 
-              for service in unified-core ai analytics manufacturing quality-assurance hrm crm pm erp gis rs scm wms mobile monitor portal mes pdm qms lims ehs bi; do
+              for service in unified-core ai hrm crm pm erp gis rs scm wms srm mobile monitor portal mes pdm qms lims ehs bi; do
                 sudo systemctl start topems-${service} || true
               done
               exit 1
