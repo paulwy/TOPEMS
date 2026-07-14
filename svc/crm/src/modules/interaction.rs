@@ -34,15 +34,15 @@ pub struct BatchDeleteRequest {
 pub fn create_routes() -> Router<ApiState> {
     Router::new()
         .route(
-            "/api/crm/interactions",
+            "/api/core/crm/v1/interactions",
             get(list_interactions).post(create_interaction),
         )
         .route(
-            "/api/crm/interactions/batch-delete",
+            "/api/core/crm/v1/interactions/batch-delete",
             post(batch_delete_interactions),
         )
         .route(
-            "/api/crm/interactions/{id}",
+            "/api/core/crm/v1/interactions/{id}",
             get(get_interaction)
                 .put(update_interaction)
                 .delete(delete_interaction),

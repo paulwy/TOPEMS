@@ -10,43 +10,43 @@ deployment:
   base_path: /api/bi
 
 permissions:
-  - code: bi:analysis:read
+  - code: bi:read
     name: 查看分析
     resource_type: analysis
     action: read
-  - code: bi:analysis:write
+  - code: bi:write
     name: 管理分析
     resource_type: analysis
     action: write
-  - code: bi:dashboard:read
+  - code: bi:read
     name: 查看仪表盘
     resource_type: dashboard
     action: read
-  - code: bi:dashboard:write
+  - code: bi:write
     name: 管理仪表盘
     resource_type: dashboard
     action: write
-  - code: bi:datasource:read
+  - code: bi:read
     name: 查看数据源
     resource_type: datasource
     action: read
-  - code: bi:datasource:write
+  - code: bi:write
     name: 管理数据源
     resource_type: datasource
     action: write
-  - code: bi:visualization:read
+  - code: bi:read
     name: 查看可视化
     resource_type: visualization
     action: read
-  - code: bi:visualization:write
+  - code: bi:write
     name: 管理可视化
     resource_type: visualization
     action: write
-  - code: bi:widget:read
+  - code: bi:read
     name: 查看组件
     resource_type: widget
     action: read
-  - code: bi:widget:write
+  - code: bi:write
     name: 管理组件
     resource_type: widget
     action: write

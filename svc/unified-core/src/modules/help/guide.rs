@@ -306,6 +306,9 @@ pub fn create_guide_routes() -> axum::Router<AppState> {
             "/guides/categories",
             axum::routing::get(get_guide_categories),
         )
-        .route("/guides/:id", axum::routing::get(get_guide))
-        .route("/guides/:guide_id/lessons", axum::routing::post(add_lesson))
+        .route("/guides/{id}", axum::routing::get(get_guide))
+        .route(
+            "/guides/{guide_id}/lessons",
+            axum::routing::post(add_lesson),
+        )
 }

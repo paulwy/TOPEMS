@@ -1,9 +1,11 @@
+use axum::http::HeaderMap;
 use axum::{extract::State, Extension, Json};
 use serde::{Deserialize, Serialize};
 use sqlx::Row;
 use uuid::Uuid;
 
 use crate::modules::communication::mail::send_email_async;
+use crate::modules::login_log::handlers::record_login_event;
 use topems_shared::auth::Claims;
 use topems_shared::generate_refresh_token;
 
@@ -48,8 +50,10 @@ struct UserInfo {
     permissions: Vec<String>,
 }
 
+#[axum::debug_handler]
 pub async fn login(
     State(state): State<crate::AppState>,
+    headers: HeaderMap,
     Json(payload): Json<serde_json::Value>,
 ) -> Json<serde_json::Value> {
     let username = payload
@@ -61,10 +65,31 @@ pub async fn login(
         .and_then(|v| v.as_str())
         .unwrap_or("");
 
+    let ip_address = headers
+        .get("X-Forwarded-For")
+        .and_then(|h| h.to_str().ok())
+        .or_else(|| headers.get("X-Real-IP").and_then(|h| h.to_str().ok()))
+        .unwrap_or("unknown");
+
+    let user_agent = headers
+        .get("User-Agent")
+        .and_then(|h| h.to_str().ok())
+        .map(|s| s.to_string());
+
     tracing::info!("IAM auth login called with username: {}", username);
 
-    // 验证输入
     if username.is_empty() || password.is_empty() {
+        let _ = record_login_event(
+            &state.pool,
+            Uuid::nil(),
+            None,
+            username,
+            ip_address,
+            user_agent.as_deref(),
+            "failed",
+            Some("用户名和密码不能为空"),
+        )
+        .await;
         return Json(serde_json::json!({
             "success": false,
             "message": "用户名和密码不能为空",
@@ -83,6 +108,17 @@ pub async fn login(
         Ok(Some(u)) => u,
         Ok(None) => {
             tracing::warn!("Login failed: user not found - {}", username);
+            let _ = record_login_event(
+                &state.pool,
+                Uuid::nil(),
+                None,
+                username,
+                ip_address,
+                user_agent.as_deref(),
+                "failed",
+                Some("用户不存在"),
+            )
+            .await;
             return Json(serde_json::json!({
                 "success": false,
                 "message": "用户名或密码错误",
@@ -92,6 +128,17 @@ pub async fn login(
         }
         Err(e) => {
             tracing::error!("查询用户失败: {}", e);
+            let _ = record_login_event(
+                &state.pool,
+                Uuid::nil(),
+                None,
+                username,
+                ip_address,
+                user_agent.as_deref(),
+                "failed",
+                Some("内部服务器错误"),
+            )
+            .await;
             return Json(serde_json::json!({
                 "success": false,
                 "message": "内部服务器错误",
@@ -103,6 +150,17 @@ pub async fn login(
 
     if user.status != "active" {
         tracing::warn!("Login failed: user is not active - {}", username);
+        let _ = record_login_event(
+            &state.pool,
+            user.tenant_id.unwrap_or(Uuid::nil()),
+            Some(user.id),
+            &user.username,
+            ip_address,
+            user_agent.as_deref(),
+            "failed",
+            Some("用户账号已被禁用"),
+        )
+        .await;
         return Json(serde_json::json!({
             "success": false,
             "message": "用户账号已被禁用",
@@ -113,6 +171,17 @@ pub async fn login(
 
     if !verify_password(password, &user.password_hash) {
         tracing::warn!("Login failed: invalid password for user - {}", username);
+        let _ = record_login_event(
+            &state.pool,
+            user.tenant_id.unwrap_or(Uuid::nil()),
+            Some(user.id),
+            &user.username,
+            ip_address,
+            user_agent.as_deref(),
+            "failed",
+            Some("密码错误"),
+        )
+        .await;
         return Json(serde_json::json!({
             "success": false,
             "message": "用户名或密码错误",
@@ -181,6 +250,8 @@ pub async fn login(
         Err(e) => tracing::warn!("会话保存失败: {}", e),
     }
 
+    let username_clone = user.username.clone();
+
     let response_data = LoginResponseData {
         access_token,
         refresh_token,
@@ -200,6 +271,18 @@ pub async fn login(
     };
 
     tracing::info!("Login successful for user: {}", username);
+
+    let _ = record_login_event(
+        &state.pool,
+        user.tenant_id.unwrap_or(Uuid::nil()),
+        Some(user.id),
+        &username_clone,
+        ip_address,
+        user_agent.as_deref(),
+        "success",
+        None,
+    )
+    .await;
 
     Json(serde_json::json!({
         "success": true,

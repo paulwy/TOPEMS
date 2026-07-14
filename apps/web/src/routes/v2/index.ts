@@ -9,6 +9,7 @@ const moduleImports: Record<string, () => Promise<{ [key: string]: RouteModuleCo
   workflow: () => import('@/modules/workflow/config').then(m => ({ workflowModuleConfig: m.workflowModuleConfig })),
   notification: () => import('@/modules/notification/config').then(m => ({ notificationModuleConfig: m.notificationModuleConfig })),
   doc: () => import('@/modules/doc/config').then(m => ({ docModuleConfig: m.docModuleConfig })),
+  // report 与 bi 为不同功能页面，但后端均调用 analytics 服务（端口 8060）
   report: () => import('@/modules/report/config').then(m => ({ reportModuleConfig: m.reportModuleConfig })),
   monitor: () => import('@/modules/monitor/config').then(m => ({ monitorModuleConfig: m.monitorModuleConfig })),
   integration: () => import('@/modules/integration/config').then(m => ({ integrationModuleConfig: m.integrationModuleConfig })),
@@ -27,14 +28,15 @@ const moduleImports: Record<string, () => Promise<{ [key: string]: RouteModuleCo
   pm: () => import('@/modules/pm/config').then(m => ({ pmModuleConfig: m.pmModuleConfig })),
   pdm: () => import('@/modules/pdm/config').then(m => ({ pdmModuleConfig: m.pdmModuleConfig })),
   srm: () => import('@/modules/srm/config').then(m => ({ srmModuleConfig: m.srmModuleConfig })),
-  oa: () => import('@/modules/oa/config').then(m => ({ oaModuleConfig: m.oaModuleConfig })),
-  lowcode: () => import('@/modules/lowcode/config').then(m => ({ lowcodeModuleConfig: m.lowcodeModuleConfig })),
-  rs: () => import('@/modules/rs/config').then(m => ({ rsModuleConfig: m.rsModuleConfig })),
-  asset: () => import('@/modules/asset/config').then(m => ({ assetModuleConfig: m.assetModuleConfig })),
+  rd: () => import('@/modules/rd/config').then(m => ({ rdModuleConfig: m.rdModuleConfig })),
   plugin: () => import('@/modules/plugin/config').then(m => ({ pluginModuleConfig: m.pluginModuleConfig })),
   im: () => import('@/modules/im/config').then(m => ({ imModuleConfig: m.imModuleConfig })),
+  // bi 与 report 为不同功能页面，但后端均调用 analytics 服务（端口 8060）
   bi: () => import('@/modules/bi/config').then(m => ({ biModuleConfig: m.biModuleConfig })),
   gis: () => import('@/modules/gis/config').then(m => ({ gisModuleConfig: m.gisModuleConfig })),
+  asset: () => import('@/modules/asset/config').then(m => ({ assetModuleConfig: m.assetModuleConfig })),
+  lowcode: () => import('@/modules/lowcode/config').then(m => ({ lowcodeModuleConfig: m.lowcodeModuleConfig })),
+  oa: () => import('@/modules/oa/config').then(m => ({ oaModuleConfig: m.oaModuleConfig })),
 };
 
 const loadedModules = new Map<string, RouteModuleConfig>();
@@ -182,37 +184,24 @@ export async function getActiveRouteConfigs(): Promise<RouteConfig[]> {
 }
 
 export const coreModuleCodes = [
+  // 核心模块
   'iam',
   'admin',
   'workflow',
-  'notification',
-  'doc',
-  'report',
-  'monitor',
-  'integration',
-  'ai',
-  'mobile',
-  'hrm',
-  'finance',
-  'crm',
-  'mes',
-  'qms',
-  'lims',
-  'ehs',
-  'scm',
-  'erp',
-  'wms',
-  'pm',
-  'pdm',
-  'srm',
-  'oa',
-  'lowcode',
-  'rs',
-  'asset',
+  'communication',
+  'file',
+  'tenant',
+  'billing',
   'plugin',
-  'im',
-  'bi',
-  'gis',
+  'sync',
+  'dict',
+  'help',
+  'migration',
+  // 核心轻量版（基础功能随核心提供）
+  'erp',
+  'pm',
+  'mobile',
+  'portal',
 ] as const;
 
 export const coreModuleRoutes = Object.keys(moduleImports).map((code) => ({

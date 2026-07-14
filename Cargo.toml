@@ -14,7 +14,7 @@ members = [
     "svc/crm",
     "svc/pm",
     "svc/portal",
-    "svc/rs",
+    "svc/rd",
     "svc/scm",
     "svc/srm",
     "svc/wms",

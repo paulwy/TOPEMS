@@ -17,7 +17,8 @@ import {
   Button,
 } from '@mui/material';
 import { PageContainer } from '@/components/common';
-import React, { useState, useEffect, useMemo, useCallback } from 'react';
+import React, { useState, useMemo, useCallback } from 'react';
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import type {
   WorkOrder,
   CreateWorkOrderRequest,
@@ -51,13 +52,10 @@ import { designTokens } from '@/theme/tokens';
 const ct = designTokens.colors;
 
 const WorkOrderPage: React.FC = () => {
-  const [workOrders, setWorkOrders] = useState<WorkOrder[]>([]);
-  const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState('');
   const [statusFilter, setStatusFilter] = useState<string>('all');
   const [currentPage, setCurrentPage] = useState(1);
   const [pageSize] = useState(10);
-  const [total, setTotal] = useState(0);
   const [showDialog, setShowDialog] = useState(false);
   const [showDetailDialog, setShowDetailDialog] = useState(false);
   const [selectedWorkOrder, setSelectedWorkOrder] = useState<WorkOrder | null>(null);
@@ -71,10 +69,11 @@ const WorkOrderPage: React.FC = () => {
   });
 
   const { addNotification } = useNotificationStore();
+  const queryClient = useQueryClient();
 
-  const loadWorkOrders = useCallback(async () => {
-    try {
-      setLoading(true);
+  const workOrdersQuery = useQuery({
+    queryKey: ['mes-work-orders', searchTerm, statusFilter, currentPage, pageSize],
+    queryFn: async () => {
       const params: ListParams = {
         page: currentPage - 1,
         pagesize: pageSize,
@@ -84,66 +83,122 @@ const WorkOrderPage: React.FC = () => {
 
       const response = await mesApi.workOrders.list(params);
       if (response.success && response.data) {
-        setWorkOrders(response.data.work_orders || []);
-        setTotal(response.data.total || 0);
+        return { workOrders: response.data.work_orders || [], total: response.data.total || 0 };
       }
-    } catch (error: unknown) {
+      return { workOrders: [], total: 0 };
+    },
+    staleTime: 5 * 60 * 1000,
+    onError: (error: unknown) => {
       apiLogger.error('加载工单列表失败:', error);
       addNotification({
         type: 'error',
         title: '加载失败',
         message: '无法加载工单列表',
       });
-    } finally {
-      setLoading(false);
-    }
-  }, [currentPage, pageSize, searchTerm, statusFilter, addNotification]);
+    },
+  });
+  const workOrders = workOrdersQuery.data?.workOrders || [];
+  const total = workOrdersQuery.data?.total || 0;
+  const loading = workOrdersQuery.isLoading;
 
-  useEffect(() => {
-    loadWorkOrders();
-  }, [loadWorkOrders]);
+  const createWorkOrderMutation = useMutation({
+    mutationFn: (data: CreateWorkOrderRequest) => mesApi.workOrders.create(data),
+    onSuccess: () => {
+      addNotification({
+        type: 'success',
+        title: '创建成功',
+        message: '新工单已创建',
+      });
+      queryClient.invalidateQueries({ queryKey: ['mes-work-orders'] });
+    },
+    onError: (error: unknown) => {
+      apiLogger.error('创建失败:', error);
+      addNotification({
+        type: 'error',
+        title: '操作失败',
+        message: '创建工单失败',
+      });
+    },
+  });
 
-  const handleStatusChange = async (id: string, action: string) => {
-    try {
-      setLoading(true);
-      let response;
+  const updateWorkOrderMutation = useMutation({
+    mutationFn: ({ id, data }: { id: string; data: UpdateWorkOrderRequest }) =>
+      mesApi.workOrders.update(id, data),
+    onSuccess: () => {
+      addNotification({
+        type: 'success',
+        title: '更新成功',
+        message: '工单信息已更新',
+      });
+      queryClient.invalidateQueries({ queryKey: ['mes-work-orders'] });
+    },
+    onError: (error: unknown) => {
+      apiLogger.error('更新失败:', error);
+      addNotification({
+        type: 'error',
+        title: '操作失败',
+        message: '更新工单失败',
+      });
+    },
+  });
+
+  const deleteWorkOrderMutation = useMutation({
+    mutationFn: (id: string) => mesApi.workOrders.delete(id),
+    onSuccess: () => {
+      addNotification({
+        type: 'success',
+        title: '删除成功',
+        message: '工单已删除',
+      });
+      queryClient.invalidateQueries({ queryKey: ['mes-work-orders'] });
+    },
+    onError: (error: unknown) => {
+      apiLogger.error('删除失败:', error);
+      addNotification({
+        type: 'error',
+        title: '删除失败',
+        message: '无法删除工单',
+      });
+    },
+  });
+
+  const statusMutation = useMutation({
+    mutationFn: ({ id, action }: { id: string; action: string }) => {
       switch (action) {
         case 'start':
-          response = await mesApi.workOrders.start(id);
-          break;
+          return mesApi.workOrders.start(id);
         case 'complete':
-          response = await mesApi.workOrders.complete(id);
-          break;
+          return mesApi.workOrders.complete(id);
         case 'cancel':
-          response = await mesApi.workOrders.cancel(id);
-          break;
+          return mesApi.workOrders.cancel(id);
         case 'pause':
-          response = await mesApi.workOrders.pause(id);
-          break;
+          return mesApi.workOrders.pause(id);
         case 'resume':
-          response = await mesApi.workOrders.resume(id);
-          break;
+          return mesApi.workOrders.resume(id);
         default:
-          return;
+          throw new Error(`Unknown action: ${action}`);
       }
-      if (response.success && response.data) {
-        addNotification({
-          type: 'success',
-          title: '状态更新成功',
-          message: `工单状态已更新为"${getStatusText(response.data.status)}"`,
-        });
-      }
-      loadWorkOrders();
-    } catch (error: unknown) {
+    },
+    onSuccess: (response) => {
+      addNotification({
+        type: 'success',
+        title: '状态更新成功',
+        message: `工单状态已更新为"${getStatusText(response.data?.status)}"`,
+      });
+      queryClient.invalidateQueries({ queryKey: ['mes-work-orders'] });
+    },
+    onError: (error: unknown) => {
       apiLogger.error('状态更新失败:', error);
       addNotification({
         type: 'error',
         title: '状态更新失败',
         message: '无法更新工单状态',
       });
-    } finally {
-      setLoading(false);
-    }
+    },
+  });
+
+  const handleStatusChange = async (id: string, action: string) => {
+    await statusMutation.mutateAsync({ id, action });
   };
 
   const getStatusText = (status: string) => {
@@ -214,54 +269,26 @@ const WorkOrderPage: React.FC = () => {
     e.preventDefault();
     try {
       if (selectedWorkOrder) {
-        await mesApi.workOrders.update(selectedWorkOrder.id, formData as UpdateWorkOrderRequest);
-        addNotification({
-          type: 'success',
-          title: '更新成功',
-          message: '工单信息已更新',
+        await updateWorkOrderMutation.mutateAsync({
+          id: selectedWorkOrder.id,
+          data: formData as UpdateWorkOrderRequest,
         });
       } else {
-        await mesApi.workOrders.create(formData);
-        addNotification({
-          type: 'success',
-          title: '创建成功',
-          message: '新工单已创建',
-        });
+        await createWorkOrderMutation.mutateAsync(formData);
       }
       setShowDialog(false);
       resetForm();
-      loadWorkOrders();
     } catch (error: unknown) {
       apiLogger.error('操作失败:', error);
-      addNotification({
-        type: 'error',
-        title: '操作失败',
-        message: selectedWorkOrder ? '更新工单失败' : '创建工单失败',
-      });
     }
   };
 
   const handleDelete = useCallback(
     async (id: string) => {
       if (!window.confirm('确定要删除这个工单吗?')) return;
-      try {
-        await mesApi.workOrders.delete(id);
-        addNotification({
-          type: 'success',
-          title: '删除成功',
-          message: '工单已删除',
-        });
-        loadWorkOrders();
-      } catch (error: unknown) {
-        apiLogger.error('删除失败:', error);
-        addNotification({
-          type: 'error',
-          title: '删除失败',
-          message: '无法删除工单',
-        });
-      }
+      await deleteWorkOrderMutation.mutateAsync(id);
     },
-    [loadWorkOrders, addNotification]
+    [deleteWorkOrderMutation]
   );
 
   const handleEdit = useCallback((workOrder: WorkOrder) => {

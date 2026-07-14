@@ -187,11 +187,11 @@ pub fn create_routes() -> Router<PgPool> {
     Router::new()
         .route("/pipelines", axum::routing::get(list_pipelines))
         .route("/pipelines", axum::routing::post(create_pipeline))
-        .route("/pipelines/:id", axum::routing::get(get_pipeline))
-        .route("/pipelines/:id", axum::routing::put(update_pipeline))
-        .route("/pipelines/:id", axum::routing::delete(delete_pipeline))
+        .route("/pipelines/{id}", axum::routing::get(get_pipeline))
+        .route("/pipelines/{id}", axum::routing::put(update_pipeline))
+        .route("/pipelines/{id}", axum::routing::delete(delete_pipeline))
         .route(
-            "/pipelines/map/:map_id",
+            "/pipelines/map/{map_id}",
             axum::routing::get(list_pipelines_by_map),
         )
 }

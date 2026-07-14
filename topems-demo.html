@@ -1,0 +1,1772 @@
+<!DOCTYPE html>
+<html lang="zh-CN" data-theme="dark">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>TOPEMS - 企业数字化平台 | Demo</title>
+<style>
+/* ========== Design Tokens ========== */
+:root[data-theme="dark"] {
+  --bg-base: #080c18;
+  --bg-surface: #0c1222;
+  --bg-elevated: #111b30;
+  --bg-hover: #162242;
+  --border: #1a2d4d;
+  --border-hover: #2563eb;
+  --text-primary: #e2e8f0;
+  --text-secondary: #94a3b8;
+  --text-muted: #64748b;
+  --accent: #3b82f6;
+  --accent-glow: rgba(59, 130, 246, 0.5);
+  --accent-glow-strong: rgba(59, 130, 246, 0.8);
+  --accent-secondary: #06b6d4;
+  --success: #22c55e;
+  --warning: #f59e0b;
+  --danger: #ef4444;
+  --radius-sm: 6px;
+  --radius-md: 8px;
+  --radius-lg: 12px;
+  --sidebar-width: 260px;
+  --header-height: 56px;
+  --shadow-card: 0 0 0 1px var(--border), 0 4px 24px rgba(0,0,0,0.3);
+  --glow-primary: 0 0 20px rgba(59,130,246,0.15);
+  --grid-color: rgba(26,45,77,0.3);
+}
+:root[data-theme="light"] {
+  --bg-base: #f1f5f9;
+  --bg-surface: #ffffff;
+  --bg-elevated: #ffffff;
+  --bg-hover: #f1f5f9;
+  --border: #e2e8f0;
+  --border-hover: #3b82f6;
+  --text-primary: #0f172a;
+  --text-secondary: #475569;
+  --text-muted: #94a3b8;
+  --accent: #3b82f6;
+  --accent-glow: rgba(59, 130, 246, 0.2);
+  --accent-glow-strong: rgba(59, 130, 246, 0.4);
+  --accent-secondary: #06b6d4;
+  --success: #22c55e;
+  --warning: #f59e0b;
+  --danger: #ef4444;
+  --radius-sm: 6px;
+  --radius-md: 8px;
+  --radius-lg: 12px;
+  --sidebar-width: 260px;
+  --header-height: 56px;
+  --shadow-card: 0 0 0 1px var(--border), 0 2px 8px rgba(0,0,0,0.06);
+  --glow-primary: none;
+  --grid-color: transparent;
+}
+* { margin: 0; padding: 0; box-sizing: border-box; }
+body {
+  font-family: -apple-system, 'Segoe UI', 'PingFang SC', 'Noto Sans CJK SC', sans-serif;
+  background: var(--bg-base);
+  color: var(--text-primary);
+  overflow: hidden;
+  transition: background 0.3s, color 0.3s;
+}
+/* ========== Cyber Grid Background ========== */
+body::before {
+  content: '';
+  position: fixed;
+  top: 0; left: 0; right: 0; bottom: 0;
+  background-image:
+    linear-gradient(var(--grid-color) 1px, transparent 1px),
+    linear-gradient(90deg, var(--grid-color) 1px, transparent 1px);
+  background-size: 40px 40px;
+  pointer-events: none;
+  z-index: 0;
+}
+
+/* ========== Login Page ========== */
+#loginPage {
+  position: fixed;
+  top: 0; left: 0; right: 0; bottom: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 100;
+  background: var(--bg-base);
+}
+#loginPage::before {
+  content: '';
+  position: absolute;
+  top: 0; left: 0; right: 0; bottom: 0;
+  background-image:
+    radial-gradient(ellipse at 30% 20%, rgba(59,130,246,0.15) 0%, transparent 50%),
+    radial-gradient(ellipse at 70% 80%, rgba(6,182,212,0.1) 0%, transparent 50%);
+  pointer-events: none;
+}
+.login-card {
+  position: relative;
+  width: 400px;
+  max-width: 90vw;
+  padding: 40px;
+  background: var(--bg-surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow-card), var(--glow-primary);
+  z-index: 1;
+}
+.login-logo {
+  text-align: center;
+  margin-bottom: 32px;
+}
+.login-logo h1 {
+  font-size: 32px;
+  font-weight: 800;
+  letter-spacing: 2px;
+  background: linear-gradient(135deg, var(--accent), var(--accent-secondary));
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+.login-logo p {
+  color: var(--text-muted);
+  font-size: 13px;
+  margin-top: 4px;
+}
+.login-field {
+  margin-bottom: 20px;
+}
+.login-field label {
+  display: block;
+  font-size: 13px;
+  color: var(--text-secondary);
+  margin-bottom: 6px;
+}
+.login-field input {
+  width: 100%;
+  padding: 12px 16px;
+  background: var(--bg-elevated);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-md);
+  color: var(--text-primary);
+  font-size: 14px;
+  outline: none;
+  transition: border-color 0.2s, box-shadow 0.2s;
+}
+.login-field input:focus {
+  border-color: var(--accent);
+  box-shadow: 0 0 0 3px var(--accent-glow);
+}
+.login-btn {
+  width: 100%;
+  padding: 14px;
+  background: linear-gradient(135deg, var(--accent), #2563eb);
+  border: none;
+  border-radius: var(--radius-md);
+  color: white;
+  font-size: 15px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: transform 0.1s, box-shadow 0.2s;
+}
+.login-btn:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 4px 20px var(--accent-glow-strong);
+}
+.login-btn:active { transform: translateY(0); }
+.login-hint {
+  text-align: center;
+  margin-top: 16px;
+  font-size: 12px;
+  color: var(--text-muted);
+}
+.login-theme-toggle {
+  position: absolute;
+  top: 20px;
+  right: 20px;
+  background: var(--bg-elevated);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  width: 36px;
+  height: 36px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  font-size: 18px;
+  transition: border-color 0.2s;
+}
+.login-theme-toggle:hover { border-color: var(--accent); }
+
+/* ========== App Layout ========== */
+#appLayout {
+  display: none;
+  height: 100vh;
+  width: 100vw;
+}
+#appLayout.active { display: flex; }
+
+/* Sidebar */
+.sidebar {
+  width: var(--sidebar-width);
+  min-width: var(--sidebar-width);
+  background: var(--bg-surface);
+  border-right: 1px solid var(--border);
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  transition: width 0.3s, min-width 0.3s;
+  position: relative;
+  z-index: 10;
+}
+.sidebar.collapsed {
+  width: 64px;
+  min-width: 64px;
+}
+.sidebar-header {
+  height: var(--header-height);
+  display: flex;
+  align-items: center;
+  padding: 0 20px;
+  border-bottom: 1px solid var(--border);
+  gap: 12px;
+}
+.sidebar-logo {
+  font-size: 20px;
+  font-weight: 800;
+  letter-spacing: 1px;
+  background: linear-gradient(135deg, var(--accent), var(--accent-secondary));
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+  white-space: nowrap;
+}
+.sidebar.collapsed .sidebar-logo { display: none; }
+.sidebar-collapse-btn {
+  margin-left: auto;
+  background: none;
+  border: none;
+  color: var(--text-muted);
+  cursor: pointer;
+  font-size: 18px;
+  padding: 4px;
+}
+.sidebar.collapsed .sidebar-collapse-btn { margin: 0 auto; }
+.sidebar-nav {
+  flex: 1;
+  overflow-y: auto;
+  padding: 12px 8px;
+}
+.sidebar-nav::-webkit-scrollbar { width: 4px; }
+.sidebar-nav::-webkit-scrollbar-thumb {
+  background: var(--border);
+  border-radius: 2px;
+}
+.nav-section {
+  margin-bottom: 8px;
+}
+.nav-section-title {
+  padding: 8px 12px 4px;
+  font-size: 11px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+  color: var(--text-muted);
+}
+.sidebar.collapsed .nav-section-title { display: none; }
+.nav-item {
+  display: flex;
+  align-items: center;
+  padding: 10px 12px;
+  border-radius: var(--radius-md);
+  cursor: pointer;
+  color: var(--text-secondary);
+  font-size: 14px;
+  gap: 12px;
+  transition: all 0.2s;
+  margin-bottom: 2px;
+  white-space: nowrap;
+}
+.nav-item:hover {
+  background: var(--bg-hover);
+  color: var(--text-primary);
+}
+.nav-item.active {
+  background: var(--accent);
+  color: white;
+  box-shadow: 0 0 16px var(--accent-glow);
+}
+.nav-item-icon {
+  font-size: 18px;
+  min-width: 20px;
+  text-align: center;
+}
+.sidebar.collapsed .nav-item-label { display: none; }
+.sidebar-footer {
+  padding: 12px 8px;
+  border-top: 1px solid var(--border);
+}
+.sidebar-user {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 8px 12px;
+  border-radius: var(--radius-md);
+  cursor: pointer;
+  transition: background 0.2s;
+}
+.sidebar-user:hover { background: var(--bg-hover); }
+.sidebar-user-avatar {
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  background: linear-gradient(135deg, var(--accent), var(--accent-secondary));
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: white;
+  font-size: 14px;
+  font-weight: 600;
+  min-width: 32px;
+}
+.sidebar-user-info { overflow: hidden; }
+.sidebar.collapsed .sidebar-user-info { display: none; }
+.sidebar-user-name {
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--text-primary);
+}
+.sidebar-user-role {
+  font-size: 11px;
+  color: var(--text-muted);
+}
+
+/* Main Content */
+.main-content {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  position: relative;
+  z-index: 1;
+}
+.app-header {
+  height: var(--header-height);
+  background: var(--bg-surface);
+  border-bottom: 1px solid var(--border);
+  display: flex;
+  align-items: center;
+  padding: 0 20px;
+  gap: 16px;
+}
+.header-search {
+  flex: 1;
+  max-width: 400px;
+  position: relative;
+}
+.header-search input {
+  width: 100%;
+  padding: 8px 12px 8px 36px;
+  background: var(--bg-elevated);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-md);
+  color: var(--text-primary);
+  font-size: 13px;
+  outline: none;
+  transition: border-color 0.2s;
+}
+.header-search input:focus { border-color: var(--accent); }
+.header-search::before {
+  content: '🔍';
+  position: absolute;
+  left: 10px;
+  top: 50%;
+  transform: translateY(-50%);
+  font-size: 14px;
+  opacity: 0.5;
+}
+.header-actions {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-left: auto;
+}
+.header-btn {
+  width: 36px;
+  height: 36px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: var(--bg-elevated);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  cursor: pointer;
+  font-size: 16px;
+  color: var(--text-secondary);
+  transition: all 0.2s;
+  position: relative;
+}
+.header-btn:hover {
+  border-color: var(--accent);
+  color: var(--text-primary);
+}
+.header-btn .badge {
+  position: absolute;
+  top: -4px;
+  right: -4px;
+  background: var(--danger);
+  color: white;
+  font-size: 10px;
+  font-weight: 600;
+  border-radius: 10px;
+  padding: 1px 5px;
+  min-width: 18px;
+  text-align: center;
+}
+.content-area {
+  flex: 1;
+  overflow-y: auto;
+  padding: 24px;
+}
+.content-area::-webkit-scrollbar { width: 6px; }
+.content-area::-webkit-scrollbar-thumb {
+  background: var(--border);
+  border-radius: 3px;
+}
+.page { display: none; animation: pageEnter 0.3s ease; }
+.page.active { display: block; }
+@keyframes pageEnter {
+  from { opacity: 0; transform: translateY(8px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+.page-header {
+  margin-bottom: 24px;
+}
+.page-title {
+  font-size: 24px;
+  font-weight: 700;
+  color: var(--text-primary);
+}
+.page-subtitle {
+  font-size: 13px;
+  color: var(--text-muted);
+  margin-top: 4px;
+}
+
+/* ========== Stats Cards ========== */
+.stats-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  gap: 16px;
+  margin-bottom: 24px;
+}
+.stat-card {
+  background: var(--bg-surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-lg);
+  padding: 20px;
+  transition: border-color 0.2s, box-shadow 0.2s;
+}
+.stat-card:hover {
+  border-color: var(--accent);
+  box-shadow: var(--glow-primary);
+}
+.stat-card-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 12px;
+}
+.stat-card-label {
+  font-size: 13px;
+  color: var(--text-secondary);
+}
+.stat-card-icon {
+  width: 36px;
+  height: 36px;
+  border-radius: var(--radius-md);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 18px;
+  background: rgba(59,130,246,0.1);
+}
+.stat-card-value {
+  font-size: 28px;
+  font-weight: 700;
+  color: var(--text-primary);
+}
+.stat-card-trend {
+  font-size: 12px;
+  margin-top: 4px;
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+.stat-card-trend.up { color: var(--success); }
+.stat-card-trend.down { color: var(--danger); }
+
+/* ========== Cards ========== */
+.card {
+  background: var(--bg-surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-lg);
+  padding: 20px;
+  margin-bottom: 16px;
+  transition: border-color 0.2s, box-shadow 0.2s;
+}
+.card:hover {
+  border-color: var(--border-hover);
+}
+.card-title {
+  font-size: 16px;
+  font-weight: 600;
+  color: var(--text-primary);
+  margin-bottom: 16px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+.grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
+.grid-3 { display: grid; grid-template-columns: repeat(3, 1fr); gap: 16px; }
+
+/* ========== Table ========== */
+.data-table {
+  width: 100%;
+  border-collapse: collapse;
+}
+.data-table th {
+  text-align: left;
+  padding: 12px 16px;
+  font-size: 12px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  color: var(--text-muted);
+  border-bottom: 1px solid var(--border);
+}
+.data-table td {
+  padding: 12px 16px;
+  font-size: 14px;
+  color: var(--text-primary);
+  border-bottom: 1px solid var(--border);
+  transition: background 0.2s;
+}
+.data-table tr:hover td {
+  background: var(--bg-hover);
+}
+.data-table tr:last-child td { border-bottom: none; }
+
+/* ========== Badges ========== */
+.badge-tag {
+  display: inline-flex;
+  align-items: center;
+  padding: 2px 10px;
+  border-radius: 12px;
+  font-size: 12px;
+  font-weight: 500;
+}
+.badge-success { background: rgba(34,197,94,0.15); color: var(--success); }
+.badge-warning { background: rgba(245,158,11,0.15); color: var(--warning); }
+.badge-danger { background: rgba(239,68,68,0.15); color: var(--danger); }
+.badge-info { background: rgba(59,130,246,0.15); color: var(--accent); }
+
+/* ========== Kanban ========== */
+.kanban-board {
+  display: flex;
+  gap: 16px;
+  overflow-x: auto;
+  padding-bottom: 8px;
+}
+.kanban-column {
+  min-width: 280px;
+  flex: 1;
+  background: var(--bg-elevated);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-lg);
+  padding: 16px;
+}
+.kanban-column-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 12px;
+}
+.kanban-column-title {
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--text-primary);
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+.kanban-column-count {
+  background: var(--bg-hover);
+  color: var(--text-secondary);
+  padding: 1px 8px;
+  border-radius: 10px;
+  font-size: 12px;
+}
+.kanban-card {
+  background: var(--bg-surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-md);
+  padding: 14px;
+  margin-bottom: 10px;
+  cursor: pointer;
+  transition: border-color 0.2s, box-shadow 0.2s;
+}
+.kanban-card:hover {
+  border-color: var(--accent);
+  box-shadow: 0 0 12px var(--accent-glow);
+}
+.kanban-card-title {
+  font-size: 14px;
+  font-weight: 500;
+  color: var(--text-primary);
+  margin-bottom: 6px;
+}
+.kanban-card-meta {
+  font-size: 12px;
+  color: var(--text-muted);
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+/* ========== Progress Bar ========== */
+.progress-bar {
+  width: 100%;
+  height: 8px;
+  background: var(--bg-elevated);
+  border-radius: 4px;
+  overflow: hidden;
+}
+.progress-bar-fill {
+  height: 100%;
+  border-radius: 4px;
+  transition: width 0.3s;
+}
+
+/* ========== AI Chat ========== */
+.chat-container {
+  display: flex;
+  flex-direction: column;
+  height: calc(100vh - var(--header-height) - 48px);
+  max-width: 800px;
+  margin: 0 auto;
+}
+.chat-messages {
+  flex: 1;
+  overflow-y: auto;
+  padding: 16px 0;
+}
+.chat-message {
+  display: flex;
+  gap: 12px;
+  margin-bottom: 20px;
+}
+.chat-avatar {
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 16px;
+  min-width: 36px;
+}
+.chat-avatar.ai {
+  background: linear-gradient(135deg, var(--accent), var(--accent-secondary));
+  color: white;
+}
+.chat-avatar.user {
+  background: var(--bg-elevated);
+  color: var(--text-secondary);
+}
+.chat-bubble {
+  background: var(--bg-surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-md);
+  padding: 12px 16px;
+  font-size: 14px;
+  color: var(--text-primary);
+  line-height: 1.6;
+  max-width: 70%;
+}
+.chat-bubble.ai {
+  background: var(--bg-surface);
+}
+.chat-bubble.user {
+  background: var(--accent);
+  color: white;
+  border-color: var(--accent);
+}
+.chat-input-area {
+  display: flex;
+  gap: 12px;
+  padding: 16px 0;
+  border-top: 1px solid var(--border);
+}
+.chat-input {
+  flex: 1;
+  padding: 12px 16px;
+  background: var(--bg-surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-md);
+  color: var(--text-primary);
+  font-size: 14px;
+  outline: none;
+  transition: border-color 0.2s;
+}
+.chat-input:focus { border-color: var(--accent); }
+.chat-send-btn {
+  padding: 12px 24px;
+  background: var(--accent);
+  border: none;
+  border-radius: var(--radius-md);
+  color: white;
+  font-size: 14px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: box-shadow 0.2s;
+}
+.chat-send-btn:hover { box-shadow: 0 0 16px var(--accent-glow); }
+
+/* ========== Charts (CSS-based) ========== */
+.chart-bar-container {
+  display: flex;
+  align-items: flex-end;
+  gap: 12px;
+  height: 200px;
+  padding: 16px 0;
+}
+.chart-bar {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 6px;
+}
+.chart-bar-fill {
+  width: 100%;
+  background: linear-gradient(180deg, var(--accent), rgba(59,130,246,0.3));
+  border-radius: 4px 4px 0 0;
+  transition: height 0.5s;
+  min-height: 4px;
+}
+.chart-bar-label {
+  font-size: 11px;
+  color: var(--text-muted);
+}
+.chart-bar-value {
+  font-size: 12px;
+  color: var(--text-secondary);
+  font-weight: 600;
+}
+
+/* Donut Chart */
+.donut-chart {
+  width: 160px;
+  height: 160px;
+  border-radius: 50%;
+  background: conic-gradient(
+    var(--accent) 0% 35%,
+    var(--accent-secondary) 35% 60%,
+    var(--success) 60% 80%,
+    var(--warning) 80% 95%,
+    var(--danger) 95% 100%
+  );
+  position: relative;
+  margin: 0 auto;
+}
+.donut-chart::after {
+  content: '';
+  position: absolute;
+  top: 25%; left: 25%;
+  width: 50%; height: 50%;
+  border-radius: 50%;
+  background: var(--bg-surface);
+}
+.donut-center {
+  position: absolute;
+  top: 50%; left: 50%;
+  transform: translate(-50%, -50%);
+  text-align: center;
+  z-index: 1;
+}
+.donut-center-value {
+  font-size: 24px;
+  font-weight: 700;
+  color: var(--text-primary);
+}
+.donut-center-label {
+  font-size: 11px;
+  color: var(--text-muted);
+}
+.legend {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  margin-left: 20px;
+}
+.legend-item {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 13px;
+  color: var(--text-secondary);
+}
+.legend-dot {
+  width: 10px;
+  height: 10px;
+  border-radius: 3px;
+}
+
+/* Line Chart (SVG) */
+.line-chart-svg {
+  width: 100%;
+  height: 200px;
+}
+
+/* ========== Approval Cards ========== */
+.approval-item {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  padding: 16px;
+  background: var(--bg-elevated);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-md);
+  margin-bottom: 12px;
+  transition: border-color 0.2s;
+}
+.approval-item:hover { border-color: var(--border-hover); }
+.approval-info { flex: 1; }
+.approval-title {
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--text-primary);
+}
+.approval-desc {
+  font-size: 13px;
+  color: var(--text-muted);
+  margin-top: 2px;
+}
+.approval-meta {
+  font-size: 12px;
+  color: var(--text-muted);
+  margin-top: 4px;
+}
+.btn-approve {
+  padding: 8px 16px;
+  background: rgba(34,197,94,0.1);
+  border: 1px solid rgba(34,197,94,0.3);
+  color: var(--success);
+  border-radius: var(--radius-sm);
+  font-size: 13px;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+.btn-approve:hover {
+  background: var(--success);
+  color: white;
+}
+.btn-reject {
+  padding: 8px 16px;
+  background: rgba(239,68,68,0.1);
+  border: 1px solid rgba(239,68,68,0.3);
+  color: var(--danger);
+  border-radius: var(--radius-sm);
+  font-size: 13px;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+.btn-reject:hover {
+  background: var(--danger);
+  color: white;
+}
+
+/* ========== Notification Panel ========== */
+.notification-panel {
+  position: fixed;
+  top: var(--header-height);
+  right: 0;
+  width: 360px;
+  background: var(--bg-surface);
+  border-left: 1px solid var(--border);
+  border-bottom: 1px solid var(--border);
+  border-radius: 0 0 0 var(--radius-lg);
+  box-shadow: -4px 4px 24px rgba(0,0,0,0.2);
+  z-index: 50;
+  display: none;
+  max-height: 400px;
+  overflow-y: auto;
+}
+.notification-panel.show { display: block; animation: slideIn 0.2s ease; }
+@keyframes slideIn {
+  from { transform: translateX(100%); }
+  to { transform: translateX(0); }
+}
+.notification-header {
+  padding: 16px;
+  border-bottom: 1px solid var(--border);
+  font-size: 15px;
+  font-weight: 600;
+}
+.notification-item {
+  padding: 12px 16px;
+  border-bottom: 1px solid var(--border);
+  cursor: pointer;
+  transition: background 0.2s;
+}
+.notification-item:hover { background: var(--bg-hover); }
+.notification-item:last-child { border-bottom: none; }
+.notification-title {
+  font-size: 13px;
+  font-weight: 500;
+  color: var(--text-primary);
+}
+.notification-desc {
+  font-size: 12px;
+  color: var(--text-muted);
+  margin-top: 2px;
+}
+.notification-time {
+  font-size: 11px;
+  color: var(--text-muted);
+  margin-top: 4px;
+}
+
+/* ========== Mobile Bottom Tab Bar ========== */
+.mobile-tabbar {
+  display: none;
+  position: fixed;
+  bottom: 0; left: 0; right: 0;
+  background: var(--bg-surface);
+  border-top: 1px solid var(--border);
+  padding: 4px 0;
+  z-index: 20;
+}
+.mobile-tab {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 2px;
+  padding: 8px;
+  cursor: pointer;
+  color: var(--text-muted);
+  font-size: 10px;
+  transition: color 0.2s;
+}
+.mobile-tab.active { color: var(--accent); }
+.mobile-tab-icon { font-size: 20px; }
+
+/* ========== Responsive ========== */
+@media (max-width: 768px) {
+  .sidebar { display: none; }
+  .mobile-tabbar { display: flex; }
+  .content-area { padding: 16px; padding-bottom: 70px; }
+  .grid-2, .grid-3 { grid-template-columns: 1fr; }
+  .stats-grid { grid-template-columns: 1fr 1fr; }
+  .header-search { max-width: 200px; }
+  .kanban-board { flex-direction: column; }
+}
+</style>
+</head>
+<body>
+
+<!-- ===== Login Page ===== -->
+<div id="loginPage">
+  <button class="login-theme-toggle" onclick="toggleTheme()">🌙</button>
+  <div class="login-card">
+    <div class="login-logo">
+      <h1>TOPEMS</h1>
+      <p>Total Operations & Enterprise Management System</p>
+    </div>
+    <div class="login-field">
+      <label>用户名</label>
+      <input type="text" id="username" value="admin" placeholder="请输入用户名">
+    </div>
+    <div class="login-field">
+      <label>密码</label>
+      <input type="password" id="password" value="admin123" placeholder="请输入密码">
+    </div>
+    <button class="login-btn" onclick="doLogin()">登 录</button>
+    <div class="login-hint">演示账号: admin / admin123</div>
+  </div>
+</div>
+
+<!-- ===== App Layout ===== -->
+<div id="appLayout">
+  <!-- Sidebar -->
+  <div class="sidebar" id="sidebar">
+    <div class="sidebar-header">
+      <span class="sidebar-logo">TOPEMS</span>
+      <button class="sidebar-collapse-btn" onclick="toggleSidebar()">◀</button>
+    </div>
+    <div class="sidebar-nav">
+      <div class="nav-section">
+        <div class="nav-section-title">核心功能</div>
+        <div class="nav-item active" onclick="navigateTo('dashboard', this)">
+          <span class="nav-item-icon">📊</span>
+          <span class="nav-item-label">仪表盘</span>
+        </div>
+        <div class="nav-item" onclick="navigateTo('hrm', this)">
+          <span class="nav-item-icon">👥</span>
+          <span class="nav-item-label">人力资源</span>
+        </div>
+        <div class="nav-item" onclick="navigateTo('workflow', this)">
+          <span class="nav-item-icon">🔄</span>
+          <span class="nav-item-label">工作流审批</span>
+        </div>
+        <div class="nav-item" onclick="navigateTo('mes', this)">
+          <span class="nav-item-icon">🏭</span>
+          <span class="nav-item-label">生产管理</span>
+        </div>
+        <div class="nav-item" onclick="navigateTo('qms', this)">
+          <span class="nav-item-icon">✅</span>
+          <span class="nav-item-label">质量管理</span>
+        </div>
+      </div>
+      <div class="nav-section">
+        <div class="nav-section-title">数据分析</div>
+        <div class="nav-item" onclick="navigateTo('bi', this)">
+          <span class="nav-item-icon">📈</span>
+          <span class="nav-item-label">商业智能</span>
+        </div>
+        <div class="nav-item" onclick="navigateTo('ai', this)">
+          <span class="nav-item-icon">🤖</span>
+          <span class="nav-item-label">AI 智能助手</span>
+        </div>
+      </div>
+    </div>
+    <div class="sidebar-footer">
+      <div class="sidebar-user">
+        <div class="sidebar-user-avatar">A</div>
+        <div class="sidebar-user-info">
+          <div class="sidebar-user-name">管理员</div>
+          <div class="sidebar-user-role">系统管理员</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Main Content -->
+  <div class="main-content">
+    <div class="app-header">
+      <div class="header-search">
+        <input type="text" placeholder="搜索功能、数据、审批...">
+      </div>
+      <div class="header-actions">
+        <button class="header-btn" onclick="toggleTheme()" title="切换主题">🌙</button>
+        <button class="header-btn" onclick="toggleNotifications()" title="通知">
+          🔔
+          <span class="badge">5</span>
+        </button>
+        <button class="header-btn" onclick="doLogout()" title="退出">🚪</button>
+      </div>
+    </div>
+
+    <div class="content-area">
+
+      <!-- ===== Dashboard Page ===== -->
+      <div class="page active" id="page-dashboard">
+        <div class="page-header">
+          <div class="page-title">仪表盘</div>
+          <div class="page-subtitle">企业运营概览 · 2026年7月</div>
+        </div>
+        <div class="stats-grid">
+          <div class="stat-card">
+            <div class="stat-card-header">
+              <span class="stat-card-label">总营收</span>
+              <div class="stat-card-icon">💰</div>
+            </div>
+            <div class="stat-card-value">¥8,452万</div>
+            <div class="stat-card-trend up">↑ 12.5% vs 上月</div>
+          </div>
+          <div class="stat-card">
+            <div class="stat-card-header">
+              <span class="stat-card-label">员工总数</span>
+              <div class="stat-card-icon">👥</div>
+            </div>
+            <div class="stat-card-value">1,248</div>
+            <div class="stat-card-trend up">↑ 23 新入职</div>
+          </div>
+          <div class="stat-card">
+            <div class="stat-card-header">
+              <span class="stat-card-label">生产订单</span>
+              <div class="stat-card-icon">📋</div>
+            </div>
+            <div class="stat-card-value">186</div>
+            <div class="stat-card-trend up">↑ 8 今日新增</div>
+          </div>
+          <div class="stat-card">
+            <div class="stat-card-header">
+              <span class="stat-card-label">质量合格率</span>
+              <div class="stat-card-icon">✅</div>
+            </div>
+            <div class="stat-card-value">99.2%</div>
+            <div class="stat-card-trend up">↑ 0.3% vs 上周</div>
+          </div>
+        </div>
+        <div class="grid-2">
+          <div class="card">
+            <div class="card-title">
+              <span>月度营收趋势</span>
+              <span class="badge-tag badge-info">近6月</span>
+            </div>
+            <div class="chart-bar-container" id="revenueChart"></div>
+          </div>
+          <div class="card">
+            <div class="card-title">
+              <span>业务模块分布</span>
+            </div>
+            <div style="display:flex;align-items:center;justify-content:center;padding:20px 0">
+              <div class="donut-chart">
+                <div class="donut-center">
+                  <div class="donut-center-value">30</div>
+                  <div class="donut-center-label">模块</div>
+                </div>
+              </div>
+              <div class="legend">
+                <div class="legend-item"><div class="legend-dot" style="background:var(--accent)"></div>核心模块 35%</div>
+                <div class="legend-item"><div class="legend-dot" style="background:var(--accent-secondary)"></div>业务模块 25%</div>
+                <div class="legend-item"><div class="legend-dot" style="background:var(--success)"></div>数据分析 20%</div>
+                <div class="legend-item"><div class="legend-dot" style="background:var(--warning)"></div>移动端 15%</div>
+                <div class="legend-item"><div class="legend-dot" style="background:var(--danger)"></div>AI模块 5%</div>
+              </div>
+            </div>
+          </div>
+        </div>
+        <div class="card">
+          <div class="card-title">
+            <span>待办事项</span>
+            <span class="badge-tag badge-warning">5 项待处理</span>
+          </div>
+          <div class="approval-item">
+            <div class="approval-info">
+              <div class="approval-title">采购申请 - 原材料批次 #PR-2026-0714</div>
+              <div class="approval-desc">申请采购钢板 500吨，预算 ¥120万</div>
+              <div class="approval-meta">申请人: 张伟 · 采购部 · 2小时前</div>
+            </div>
+            <button class="btn-approve" onclick="this.closest('.approval-item').style.opacity='0.5';this.textContent='已通过'">通过</button>
+            <button class="btn-reject" onclick="this.closest('.approval-item').style.opacity='0.5';this.textContent='已拒绝'">拒绝</button>
+          </div>
+          <div class="approval-item">
+            <div class="approval-info">
+              <div class="approval-title">请假申请 - 李梅年休</div>
+              <div class="approval-desc">7月20日-7月22日 年假3天</div>
+              <div class="approval-meta">申请人: 李梅 · 人事部 · 3小时前</div>
+            </div>
+            <button class="btn-approve" onclick="this.closest('.approval-item').style.opacity='0.5';this.textContent='已通过'">通过</button>
+            <button class="btn-reject" onclick="this.closest('.approval-item').style.opacity='0.5';this.textContent='已拒绝'">拒绝</button>
+          </div>
+        </div>
+      </div>
+
+      <!-- ===== HRM Page ===== -->
+      <div class="page" id="page-hrm">
+        <div class="page-header">
+          <div class="page-title">人力资源管理</div>
+          <div class="page-subtitle">员工档案 · 部门管理 · 考勤统计</div>
+        </div>
+        <div class="stats-grid">
+          <div class="stat-card">
+            <div class="stat-card-header"><span class="stat-card-label">在职员工</span><div class="stat-card-icon">👤</div></div>
+            <div class="stat-card-value">1,248</div>
+            <div class="stat-card-trend up">↑ 23 本月入职</div>
+          </div>
+          <div class="stat-card">
+            <div class="stat-card-header"><span class="stat-card-label">部门数量</span><div class="stat-card-icon">🏢</div></div>
+            <div class="stat-card-value">18</div>
+            <div class="stat-card-trend up">稳定</div>
+          </div>
+          <div class="stat-card">
+            <div class="stat-card-header"><span class="stat-card-label">本月出勤率</span><div class="stat-card-icon">📅</div></div>
+            <div class="stat-card-value">97.8%</div>
+            <div class="stat-card-trend up">↑ 1.2%</div>
+          </div>
+          <div class="stat-card">
+            <div class="stat-card-header"><span class="stat-card-label">招聘中岗位</span><div class="stat-card-icon">📋</div></div>
+            <div class="stat-card-value">12</div>
+            <div class="stat-card-trend up">活跃招聘</div>
+          </div>
+        </div>
+        <div class="card">
+          <div class="card-title">
+            <span>员工列表</span>
+            <span class="badge-tag badge-info">共 1,248 人</span>
+          </div>
+          <table class="data-table">
+            <thead>
+              <tr><th>工号</th><th>姓名</th><th>部门</th><th>职位</th><th>状态</th><th>入职日期</th></tr>
+            </thead>
+            <tbody>
+              <tr><td>EMP-0001</td><td>张伟</td><td>采购部</td><td>采购经理</td><td><span class="badge-tag badge-success">在职</span></td><td>2023-03-15</td></tr>
+              <tr><td>EMP-0002</td><td>李梅</td><td>人事部</td><td>HR专员</td><td><span class="badge-tag badge-success">在职</span></td><td>2023-06-20</td></tr>
+              <tr><td>EMP-0003</td><td>王强</td><td>生产部</td><td>车间主任</td><td><span class="badge-tag badge-success">在职</span></td><td>2022-01-10</td></tr>
+              <tr><td>EMP-0004</td><td>赵敏</td><td>质量部</td><td>QA工程师</td><td><span class="badge-tag badge-success">在职</span></td><td>2023-09-05</td></tr>
+              <tr><td>EMP-0005</td><td>陈刚</td><td>技术部</td><td>高级开发</td><td><span class="badge-tag badge-warning">休假</span></td><td>2024-02-18</td></tr>
+              <tr><td>EMP-0006</td><td>刘洋</td><td>财务部</td><td>财务主管</td><td><span class="badge-tag badge-success">在职</span></td><td>2022-11-30</td></tr>
+              <tr><td>EMP-0007</td><td>孙丽</td><td>销售部</td><td>销售代表</td><td><span class="badge-tag badge-success">在职</span></td><td>2024-04-12</td></tr>
+              <tr><td>EMP-0008</td><td>周杰</td><td>仓储部</td><td>仓库管理员</td><td><span class="badge-tag badge-danger">离职</span></td><td>2023-07-01</td></tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+      <!-- ===== Workflow Page ===== -->
+      <div class="page" id="page-workflow">
+        <div class="page-header">
+          <div class="page-title">工作流审批</div>
+          <div class="page-subtitle">待审批事项 · 流程跟踪</div>
+        </div>
+        <div class="stats-grid">
+          <div class="stat-card">
+            <div class="stat-card-header"><span class="stat-card-label">待审批</span><div class="stat-card-icon">⏳</div></div>
+            <div class="stat-card-value">5</div>
+            <div class="stat-card-trend down">↓ 2 已处理</div>
+          </div>
+          <div class="stat-card">
+            <div class="stat-card-header"><span class="stat-card-label">本月已审批</span><div class="stat-card-icon">✓</div></div>
+            <div class="stat-card-value">142</div>
+            <div class="stat-card-trend up">↑ 18% vs 上月</div>
+          </div>
+          <div class="stat-card">
+            <div class="stat-card-header"><span class="stat-card-label">平均处理时间</span><div class="stat-card-icon">⏱️</div></div>
+            <div class="stat-card-value">2.3h</div>
+            <div class="stat-card-trend up">↓ 0.5h 提速</div>
+          </div>
+          <div class="stat-card">
+            <div class="stat-card-header"><span class="stat-card-label">流程总数</span><div class="stat-card-icon">📋</div></div>
+            <div class="stat-card-value">36</div>
+            <div class="stat-card-trend up">覆盖全业务</div>
+          </div>
+        </div>
+        <div class="card">
+          <div class="card-title">
+            <span>待审批列表</span>
+          </div>
+          <div class="approval-item">
+            <div class="approval-info">
+              <div class="approval-title">采购申请 - 钢板原材料 #PR-2026-0714</div>
+              <div class="approval-desc">采购钢板 500吨，单价 ¥2,400/吨，总预算 ¥120万，供应商: 宝钢集团</div>
+              <div class="approval-meta">申请人: 张伟 · 采购部 · 当前节点: 部门审批 → 财务审核</div>
+            </div>
+            <button class="btn-approve" onclick="this.closest('.approval-item').style.opacity='0.5';this.textContent='已通过'">通过</button>
+            <button class="btn-reject" onclick="this.closest('.approval-item').style.opacity='0.5';this.textContent='已拒绝'">拒绝</button>
+          </div>
+          <div class="approval-item">
+            <div class="approval-info">
+              <div class="approval-title">请假申请 - 年假</div>
+              <div class="approval-desc">李梅申请7月20日-7月22日年假3天，剩余年假: 8天</div>
+              <div class="approval-meta">申请人: 李梅 · 人事部 · 当前节点: 直属主管审批</div>
+            </div>
+            <button class="btn-approve" onclick="this.closest('.approval-item').style.opacity='0.5';this.textContent='已通过'">通过</button>
+            <button class="btn-reject" onclick="this.closest('.approval-item').style.opacity='0.5';this.textContent='已拒绝'">拒绝</button>
+          </div>
+          <div class="approval-item">
+            <div class="approval-info">
+              <div class="approval-title">报销申请 - 差旅费</div>
+              <div class="approval-desc">上海客户拜访差旅报销，交通+住宿+餐饮 共 ¥4,850</div>
+              <div class="approval-meta">申请人: 孙丽 · 销售部 · 当前节点: 部门审批</div>
+            </div>
+            <button class="btn-approve" onclick="this.closest('.approval-item').style.opacity='0.5';this.textContent='已通过'">通过</button>
+            <button class="btn-reject" onclick="this.closest('.approval-item').style.opacity='0.5';this.textContent='已拒绝'">拒绝</button>
+          </div>
+          <div class="approval-item">
+            <div class="approval-info">
+              <div class="approval-title">合同审批 - 供应商框架协议</div>
+              <div class="approval-desc">与华为技术签订年度IT设备采购框架协议，预估金额 ¥350万</div>
+              <div class="approval-meta">申请人: 刘洋 · 财务部 · 当前节点: 总经理审批</div>
+            </div>
+            <button class="btn-approve" onclick="this.closest('.approval-item').style.opacity='0.5';this.textContent='已通过'">通过</button>
+            <button class="btn-reject" onclick="this.closest('.approval-item').style.opacity='0.5';this.textContent='已拒绝'">拒绝</button>
+          </div>
+          <div class="approval-item">
+            <div class="approval-info">
+              <div class="approval-title">加班申请 - 产线赶工</div>
+              <div class="approval-desc">B产线周末加班2天，共38人，用于完成紧急出口订单</div>
+              <div class="approval-meta">申请人: 王强 · 生产部 · 当前节点: 部门审批</div>
+            </div>
+            <button class="btn-approve" onclick="this.closest('.approval-item').style.opacity='0.5';this.textContent='已通过'">通过</button>
+            <button class="btn-reject" onclick="this.closest('.approval-item').style.opacity='0.5';this.textContent='已拒绝'">拒绝</button>
+          </div>
+        </div>
+      </div>
+
+      <!-- ===== MES Page ===== -->
+      <div class="page" id="page-mes">
+        <div class="page-header">
+          <div class="page-title">生产管理</div>
+          <div class="page-subtitle">生产看板 · 实时监控 · 工单管理</div>
+        </div>
+        <div class="stats-grid">
+          <div class="stat-card">
+            <div class="stat-card-header"><span class="stat-card-label">今日工单</span><div class="stat-card-icon">📋</div></div>
+            <div class="stat-card-value">186</div>
+            <div class="stat-card-trend up">↑ 8 新增</div>
+          </div>
+          <div class="stat-card">
+            <div class="stat-card-header"><span class="stat-card-label">设备运行率</span><div class="stat-card-icon">⚙️</div></div>
+            <div class="stat-card-value">94.5%</div>
+            <div class="stat-card-trend up">正常</div>
+          </div>
+          <div class="stat-card">
+            <div class="stat-card-header"><span class="stat-card-label">今日产量</span><div class="stat-card-icon">📦</div></div>
+            <div class="stat-card-value">12,480</div>
+            <div class="stat-card-trend up">↑ 8.2%</div>
+          </div>
+          <div class="stat-card">
+            <div class="stat-card-header"><span class="stat-card-label">异常工单</span><div class="stat-card-icon">⚠️</div></div>
+            <div class="stat-card-value">3</div>
+            <div class="stat-card-trend down">需关注</div>
+          </div>
+        </div>
+        <div class="card">
+          <div class="card-title"><span>生产看板</span></div>
+          <div class="kanban-board">
+            <div class="kanban-column">
+              <div class="kanban-column-header">
+                <div class="kanban-column-title">🔵 待排产</div>
+                <span class="kanban-column-count">12</span>
+              </div>
+              <div class="kanban-card">
+                <div class="kanban-card-title">工单 #WO-2026-0801</div>
+                <div class="kanban-card-meta">产品: 精密轴承 A型 · 数量: 5000件</div>
+                <div class="kanban-card-meta">交期: 7月25日 · 优先级: 高</div>
+              </div>
+              <div class="kanban-card">
+                <div class="kanban-card-title">工单 #WO-2026-0802</div>
+                <div class="kanban-card-meta">产品: 不锈钢法兰 · 数量: 800件</div>
+                <div class="kanban-card-meta">交期: 7月28日 · 优先级: 中</div>
+              </div>
+            </div>
+            <div class="kanban-column">
+              <div class="kanban-column-header">
+                <div class="kanban-column-title">🟡 生产中</div>
+                <span class="kanban-column-count">8</span>
+              </div>
+              <div class="kanban-card">
+                <div class="kanban-card-title">工单 #WO-2026-0785</div>
+                <div class="kanban-card-meta">产品: 铝合金外壳 · 数量: 3000件</div>
+                <div style="margin-top:8px">
+                  <div style="font-size:12px;color:var(--text-muted);margin-bottom:4px">进度: 68%</div>
+                  <div class="progress-bar"><div class="progress-bar-fill" style="width:68%;background:var(--accent)"></div></div>
+                </div>
+              </div>
+              <div class="kanban-card">
+                <div class="kanban-card-title">工单 #WO-2026-0788</div>
+                <div class="kanban-card-meta">产品: 碳钢管道 · 数量: 12000米</div>
+                <div style="margin-top:8px">
+                  <div style="font-size:12px;color:var(--text-muted);margin-bottom:4px">进度: 45%</div>
+                  <div class="progress-bar"><div class="progress-bar-fill" style="width:45%;background:var(--warning)"></div></div>
+                </div>
+              </div>
+            </div>
+            <div class="kanban-column">
+              <div class="kanban-column-header">
+                <div class="kanban-column-title">🟢 质检中</div>
+                <span class="kanban-column-count">5</span>
+              </div>
+              <div class="kanban-card">
+                <div class="kanban-card-title">工单 #WO-2026-0780</div>
+                <div class="kanban-card-meta">产品: 精密齿轮 B型 · 数量: 2000件</div>
+                <div class="kanban-card-meta">质检进度: 抽检 60%</div>
+              </div>
+              <div class="kanban-card">
+                <div class="kanban-card-title">工单 #WO-2026-0782</div>
+                <div class="kanban-card-meta">产品: 不锈钢螺栓 · 数量: 50000件</div>
+                <div class="kanban-card-meta">质检进度: 全检 85%</div>
+              </div>
+            </div>
+            <div class="kanban-column">
+              <div class="kanban-column-header">
+                <div class="kanban-column-title">✅ 已完成</div>
+                <span class="kanban-column-count">24</span>
+              </div>
+              <div class="kanban-card">
+                <div class="kanban-card-title">工单 #WO-2026-0775</div>
+                <div class="kanban-card-meta">产品: 铜接头 · 数量: 8000件</div>
+                <div class="kanban-card-meta">完成时间: 今日 14:30 · 合格率: 99.5%</div>
+              </div>
+              <div class="kanban-card">
+                <div class="kanban-card-title">工单 #WO-2026-0778</div>
+                <div class="kanban-card-meta">产品: 钢板切割件 · 数量: 1500件</div>
+                <div class="kanban-card-meta">完成时间: 今日 11:20 · 合格率: 99.8%</div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- ===== QMS Page ===== -->
+      <div class="page" id="page-qms">
+        <div class="page-header">
+          <div class="page-title">质量管理</div>
+          <div class="page-subtitle">质量看板 · 缺陷统计 · 合格率分析</div>
+        </div>
+        <div class="stats-grid">
+          <div class="stat-card">
+            <div class="stat-card-header"><span class="stat-card-label">总体合格率</span><div class="stat-card-icon">✅</div></div>
+            <div class="stat-card-value">99.2%</div>
+            <div class="stat-card-trend up">↑ 0.3% vs 上周</div>
+          </div>
+          <div class="stat-card">
+            <div class="stat-card-header"><span class="stat-card-label">今日检验</span><div class="stat-card-icon">🔍</div></div>
+            <div class="stat-card-value">3,856</div>
+            <div class="stat-card-trend up">件</div>
+          </div>
+          <div class="stat-card">
+            <div class="stat-card-header"><span class="stat-card-label">缺陷数量</span><div class="stat-card-icon">⚠️</div></div>
+            <div class="stat-card-value">31</div>
+            <div class="stat-card-trend down">↓ 5 vs 昨日</div>
+          </div>
+          <div class="stat-card">
+            <div class="stat-card-header"><span class="stat-card-label">返工率</span><div class="stat-card-icon">🔄</div></div>
+            <div class="stat-card-value">0.8%</div>
+            <div class="stat-card-trend up">↓ 0.2% 改善</div>
+          </div>
+        </div>
+        <div class="grid-2">
+          <div class="card">
+            <div class="card-title"><span>缺陷类型分布</span></div>
+            <div style="display:flex;align-items:center;justify-content:center;padding:20px 0">
+              <div class="donut-chart" style="background:conic-gradient(var(--danger) 0% 35%,var(--warning) 35% 60%,var(--accent) 60% 80%,var(--accent-secondary) 80% 100%)">
+                <div class="donut-center">
+                  <div class="donut-center-value">31</div>
+                  <div class="donut-center-label">缺陷</div>
+                </div>
+              </div>
+              <div class="legend">
+                <div class="legend-item"><div class="legend-dot" style="background:var(--danger)"></div>尺寸偏差 35%</div>
+                <div class="legend-item"><div class="legend-dot" style="background:var(--warning)"></div>表面瑕疵 25%</div>
+                <div class="legend-item"><div class="legend-dot" style="background:var(--accent)"></div>材质不符 20%</div>
+                <div class="legend-item"><div class="legend-dot" style="background:var(--accent-secondary)"></div>其他 20%</div>
+              </div>
+            </div>
+          </div>
+          <div class="card">
+            <div class="card-title"><span>各产线合格率</span></div>
+            <div style="display:flex;flex-direction:column;gap:16px;padding:8px 0">
+              <div>
+                <div style="display:flex;justify-content:space-between;margin-bottom:4px"><span style="font-size:13px;color:var(--text-secondary)">A产线</span><span style="font-size:13px;font-weight:600;color:var(--success)">99.8%</span></div>
+                <div class="progress-bar"><div class="progress-bar-fill" style="width:99.8%;background:var(--success)"></div></div>
+              </div>
+              <div>
+                <div style="display:flex;justify-content:space-between;margin-bottom:4px"><span style="font-size:13px;color:var(--text-secondary)">B产线</span><span style="font-size:13px;font-weight:600;color:var(--success)">99.5%</span></div>
+                <div class="progress-bar"><div class="progress-bar-fill" style="width:99.5%;background:var(--success)"></div></div>
+              </div>
+              <div>
+                <div style="display:flex;justify-content:space-between;margin-bottom:4px"><span style="font-size:13px;color:var(--text-secondary)">C产线</span><span style="font-size:13px;font-weight:600;color:var(--warning)">98.7%</span></div>
+                <div class="progress-bar"><div class="progress-bar-fill" style="width:98.7%;background:var(--warning)"></div></div>
+              </div>
+              <div>
+                <div style="display:flex;justify-content:space-between;margin-bottom:4px"><span style="font-size:13px;color:var(--text-secondary)">D产线</span><span style="font-size:13px;font-weight:600;color:var(--success)">99.3%</span></div>
+                <div class="progress-bar"><div class="progress-bar-fill" style="width:99.3%;background:var(--success)"></div></div>
+              </div>
+              <div>
+                <div style="display:flex;justify-content:space-between;margin-bottom:4px"><span style="font-size:13px;color:var(--text-secondary)">E产线</span><span style="font-size:13px;font-weight:600;color:var(--success)">99.6%</span></div>
+                <div class="progress-bar"><div class="progress-bar-fill" style="width:99.6%;background:var(--success)"></div></div>
+              </div>
+            </div>
+          </div>
+        </div>
+        <div class="card">
+          <div class="card-title"><span>近期质量事件</span></div>
+          <table class="data-table">
+            <thead><tr><th>事件编号</th><th>产线</th><th>产品</th><th>缺陷类型</th><th>严重级别</th><th>状态</th><th>时间</th></tr></thead>
+            <tbody>
+              <tr><td>QE-0714-01</td><td>C产线</td><td>精密轴承A型</td><td>尺寸偏差</td><td><span class="badge-tag badge-warning">中等</span></td><td><span class="badge-tag badge-warning">处理中</span></td><td>14:25</td></tr>
+              <tr><td>QE-0714-02</td><td>B产线</td><td>不锈钢法兰</td><td>表面瑕疵</td><td><span class="badge-tag badge-info">轻微</span></td><td><span class="badge-tag badge-success">已解决</span></td><td>11:50</td></tr>
+              <tr><td>QE-0713-03</td><td>A产线</td><td>铝合金外壳</td><td>材质不符</td><td><span class="badge-tag badge-danger">严重</span></td><td><span class="badge-tag badge-success">已解决</span></td><td>昨日</td></tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+      <!-- ===== BI Page ===== -->
+      <div class="page" id="page-bi">
+        <div class="page-header">
+          <div class="page-title">商业智能</div>
+          <div class="page-subtitle">数据分析 · 趋势预测 · 经营洞察</div>
+        </div>
+        <div class="stats-grid">
+          <div class="stat-card">
+            <div class="stat-card-header"><span class="stat-card-label">年度营收</span><div class="stat-card-icon">💰</div></div>
+            <div class="stat-card-value">¥5.2亿</div>
+            <div class="stat-card-trend up">↑ 18.5% YoY</div>
+          </div>
+          <div class="stat-card">
+            <div class="stat-card-header"><span class="stat-card-label">利润率</span><div class="stat-card-icon">📊</div></div>
+            <div class="stat-card-value">22.8%</div>
+            <div class="stat-card-trend up">↑ 2.1pp</div>
+          </div>
+          <div class="stat-card">
+            <div class="stat-card-header"><span class="stat-card-label">客户满意度</span><div class="stat-card-icon">😊</div></div>
+            <div class="stat-card-value">94.5</div>
+            <div class="stat-card-trend up">↑ 1.2分</div>
+          </div>
+          <div class="stat-card">
+            <div class="stat-card-header"><span class="stat-card-label">订单交付率</span><div class="stat-card-icon">🚚</div></div>
+            <div class="stat-card-value">98.2%</div>
+            <div class="stat-card-trend up">↑ 0.8%</div>
+          </div>
+        </div>
+        <div class="grid-2">
+          <div class="card">
+            <div class="card-title"><span>季度营收对比</span></div>
+            <div class="chart-bar-container" id="quarterlyChart"></div>
+          </div>
+          <div class="card">
+            <div class="card-title"><span>营收构成分析</span></div>
+            <div style="display:flex;align-items:center;justify-content:center;padding:20px 0">
+              <div class="donut-chart" style="background:conic-gradient(var(--accent) 0% 40%,var(--accent-secondary) 40% 65%,var(--success) 65% 85%,var(--warning) 85% 100%)">
+                <div class="donut-center">
+                  <div class="donut-center-value">¥5.2亿</div>
+                  <div class="donut-center-label">年度</div>
+                </div>
+              </div>
+              <div class="legend">
+                <div class="legend-item"><div class="legend-dot" style="background:var(--accent)"></div>制造业务 40%</div>
+                <div class="legend-item"><div class="legend-dot" style="background:var(--accent-secondary)"></div>供应链 25%</div>
+                <div class="legend-item"><div class="legend-dot" style="background:var(--success)"></div>技术服务 20%</div>
+                <div class="legend-item"><div class="legend-dot" style="background:var(--warning)"></div>其他 15%</div>
+              </div>
+            </div>
+          </div>
+        </div>
+        <div class="card">
+          <div class="card-title"><span>年度营收趋势</span></div>
+          <svg class="line-chart-svg" viewBox="0 0 600 200" preserveAspectRatio="none">
+            <defs>
+              <linearGradient id="lineGrad" x1="0" y1="0" x2="0" y2="1">
+                <stop offset="0%" stop-color="var(--accent)" stop-opacity="0.3"/>
+                <stop offset="100%" stop-color="var(--accent)" stop-opacity="0"/>
+              </linearGradient>
+            </defs>
+            <polyline points="0,160 50,140 100,120 150,90 200,100 250,70 300,60 350,40 400,50 450,30 500,35 550,20 600,15"
+              fill="none" stroke="var(--accent)" stroke-width="2"/>
+            <polygon points="0,160 50,140 100,120 150,90 200,100 250,70 300,60 350,40 400,50 450,30 500,35 550,20 600,15 600,200 0,200"
+              fill="url(#lineGrad)"/>
+          </svg>
+          <div style="display:flex;justify-content:space-between;margin-top:8px;font-size:11px;color:var(--text-muted)">
+            <span>1月</span><span>2月</span><span>3月</span><span>4月</span><span>5月</span><span>6月</span><span>7月</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- ===== AI Chat Page ===== -->
+      <div class="page" id="page-ai">
+        <div class="page-header">
+          <div class="page-title">AI 智能助手</div>
+          <div class="page-subtitle">TOPEMS AI · 基于 Ollama + Qwen2.5 本地大模型</div>
+        </div>
+        <div class="chat-container">
+          <div class="chat-messages" id="chatMessages">
+            <div class="chat-message">
+              <div class="chat-avatar ai">🤖</div>
+              <div class="chat-bubble ai">
+                你好！我是 TOPEMS AI 智能助手。我可以帮你查询企业数据、分析趋势、生成报告。试试问我：<br><br>
+                • "本月营收情况如何？"<br>
+                • "分析一下生产效率"<br>
+                • "哪些员工在休假？"<br>
+                • "生成季度质量报告"
+              </div>
+            </div>
+          </div>
+          <div class="chat-input-area">
+            <input type="text" class="chat-input" id="chatInput" placeholder="输入你的问题..." onkeypress="if(event.key==='Enter')sendChatMessage()">
+            <button class="chat-send-btn" onclick="sendChatMessage()">发送</button>
+          </div>
+        </div>
+      </div>
+
+    </div>
+  </div>
+</div>
+
+<!-- Notification Panel -->
+<div class="notification-panel" id="notifPanel">
+  <div class="notification-header">通知</div>
+  <div class="notification-item">
+    <div class="notification-title">📋 新采购申请待审批</div>
+    <div class="notification-desc">张伟提交了钢板采购申请 #PR-2026-0714</div>
+    <div class="notification-time">2小时前</div>
+  </div>
+  <div class="notification-item">
+    <div class="notification-title">⚠️ C产线质量预警</div>
+    <div class="notification-desc">精密轴承A型尺寸偏差率超出阈值</div>
+    <div class="notification-time">3小时前</div>
+  </div>
+  <div class="notification-item">
+    <div class="notification-title">✅ 工单 #WO-2026-0775 已完成</div>
+    <div class="notification-desc">铜接头 8000件 全部合格入库</div>
+    <div class="notification-time">5小时前</div>
+  </div>
+  <div class="notification-item">
+    <div class="notification-title">📅 年假审批待处理</div>
+    <div class="notification-desc">李梅申请7月20-22日年假</div>
+    <div class="notification-time">6小时前</div>
+  </div>
+  <div class="notification-item">
+    <div class="notification-title">📦 库存预警</div>
+    <div class="notification-desc">原材料钢板库存低于安全线，建议补货</div>
+    <div class="notification-time">8小时前</div>
+  </div>
+</div>
+
+<!-- Mobile Tab Bar -->
+<div class="mobile-tabbar" id="mobileTabbar">
+  <div class="mobile-tab active" onclick="navigateTo('dashboard', this)">
+    <span class="mobile-tab-icon">📊</span>
+    <span>仪表盘</span>
+  </div>
+  <div class="mobile-tab" onclick="navigateTo('hrm', this)">
+    <span class="mobile-tab-icon">👥</span>
+    <span>人力</span>
+  </div>
+  <div class="mobile-tab" onclick="navigateTo('workflow', this)">
+    <span class="mobile-tab-icon">🔄</span>
+    <span>审批</span>
+  </div>
+  <div class="mobile-tab" onclick="navigateTo('bi', this)">
+    <span class="mobile-tab-icon">📈</span>
+    <span>报表</span>
+  </div>
+  <div class="mobile-tab" onclick="navigateTo('ai', this)">
+    <span class="mobile-tab-icon">🤖</span>
+    <span>AI</span>
+  </div>
+</div>
+
+<script>
+// ===== Theme Toggle =====
+function toggleTheme() {
+  var html = document.documentElement;
+  var current = html.getAttribute('data-theme');
+  var next = current === 'dark' ? 'light' : 'dark';
+  html.setAttribute('data-theme', next);
+  var btns = document.querySelectorAll('.login-theme-toggle, .header-btn');
+  btns.forEach(function(btn) {
+    if (btn.textContent.trim() === '🌙' || btn.textContent.trim() === '☀️') {
+      btn.textContent = next === 'dark' ? '🌙' : '☀️';
+    }
+  });
+}
+
+// ===== Login =====
+function doLogin() {
+  document.getElementById('loginPage').style.display = 'none';
+  document.getElementById('appLayout').classList.add('active');
+  renderCharts();
+}
+
+function doLogout() {
+  document.getElementById('appLayout').classList.remove('active');
+  document.getElementById('loginPage').style.display = 'flex';
+}
+
+// ===== Sidebar Toggle =====
+function toggleSidebar() {
+  document.getElementById('sidebar').classList.toggle('collapsed');
+}
+
+// ===== Navigation =====
+function navigateTo(pageName, element) {
+  document.querySelectorAll('.page').forEach(function(p) { p.classList.remove('active'); });
+  var target = document.getElementById('page-' + pageName);
+  if (target) { target.classList.add('active'); }
+  document.querySelectorAll('.nav-item').forEach(function(n) { n.classList.remove('active'); });
+  document.querySelectorAll('.mobile-tab').forEach(function(t) { t.classList.remove('active'); });
+  if (element) {
+    if (element.classList.contains('mobile-tab')) {
+      element.classList.add('active');
+    } else {
+      element.classList.add('active');
+    }
+  } else {
+    var navItem = document.querySelector('.nav-item[onclick*="' + pageName + '"]');
+    if (navItem) { navItem.classList.add('active'); }
+  }
+  if (pageName === 'bi') { renderBIChart(); }
+}
+
+// ===== Notifications =====
+function toggleNotifications() {
+  document.getElementById('notifPanel').classList.toggle('show');
+}
+
+// ===== Charts =====
+function renderCharts() {
+  var revenueData = [
+    {label: '2月', value: 620, height: 52},
+    {label: '3月', value: 680, height: 57},
+    {label: '4月', value: 750, height: 63},
+    {label: '5月', value: 720, height: 60},
+    {label: '6月', value: 810, height: 68},
+    {label: '7月', value: 845, height: 70}
+  ];
+  var container = document.getElementById('revenueChart');
+  if (container) {
+    container.innerHTML = revenueData.map(function(d) {
+      return '<div class="chart-bar"><div class="chart-bar-value">¥' + d.value + '万</div><div class="chart-bar-fill" style="height:' + d.height + '%"></div><div class="chart-bar-label">' + d.label + '</div></div>';
+    }).join('');
+  }
+}
+
+function renderBIChart() {
+  var quarterlyData = [
+    {label: 'Q1', value: 1.05, height: 50},
+    {label: 'Q2', value: 1.28, height: 61},
+    {label: 'Q3', value: 1.35, height: 64},
+    {label: 'Q4', value: 1.52, height: 72},
+    {label: 'Q1\'26', value: 1.18, height: 56},
+    {label: 'Q2\'26', value: 1.42, height: 68}
+  ];
+  var container = document.getElementById('quarterlyChart');
+  if (container) {
+    container.innerHTML = quarterlyData.map(function(d) {
+      return '<div class="chart-bar"><div class="chart-bar-value">¥' + d.value + '亿</div><div class="chart-bar-fill" style="height:' + d.height + '%"></div><div class="chart-bar-label">' + d.label + '</div></div>';
+    }).join('');
+  }
+}
+
+// ===== AI Chat =====
+function sendChatMessage() {
+  var input = document.getElementById('chatInput');
+  var text = input.value.trim();
+  if (!text) return;
+  var messages = document.getElementById('chatMessages');
+  messages.innerHTML += '<div class="chat-message"><div class="chat-avatar user">👤</div><div class="chat-bubble user">' + text + '</div></div>';
+  input.value = '';
+  messages.scrollTop = messages.scrollHeight;
+  setTimeout(function() {
+    var response = getAIResponse(text);
+    messages.innerHTML += '<div class="chat-message"><div class="chat-avatar ai">🤖</div><div class="chat-bubble ai">' + response + '</div></div>';
+    messages.scrollTop = messages.scrollHeight;
+  }, 800);
+}
+
+function getAIResponse(text) {
+  if (text.indexOf('营收') >= 0 || text.indexOf('收入') >= 0) {
+    return '根据数据分析：<br><br>📊 <b>本月营收: ¥8,452万</b><br>• 环比增长 12.5%（上月 ¥7,510万）<br>• 年度累计营收 ¥5.2亿，同比增长 18.5%<br>• 制造业务占比 40%，供应链 25%<br><br>💡 预测: 按当前趋势，Q3 营收预计达 ¥1.35亿。';
+  }
+  if (text.indexOf('生产') >= 0 || text.indexOf('效率') >= 0) {
+    return '📈 <b>生产效率分析</b><br><br>• 设备运行率: 94.5%（正常）<br>• 今日产量: 12,480件<br>• 8个工单生产中，12个待排产<br>• B产线碳钢管道进度落后（45%），建议调整排产优先级<br><br>💡 建议: 优化B产线排产计划，预计可提升产能 8%。';
+  }
+  if (text.indexOf('休假') >= 0 || text.indexOf('请假') >= 0) {
+    return '👥 <b>当前休假人员</b><br><br>• 陈刚（EMP-0005）- 技术部高级开发 - 休假中<br>• 李梅（EMP-0002）- 已申请7月20-22日年假（待审批）<br><br>当前出勤率: 97.8%（正常范围）';
+  }
+  if (text.indexOf('质量') >= 0 || text.indexOf('报告') >= 0) {
+    return '✅ <b>质量报告摘要</b><br><br>• 总体合格率: 99.2%（↑0.3%）<br>• 今日检验: 3,856件<br>• 缺陷: 31件（↓5 vs 昨日）<br>• 主要缺陷: 尺寸偏差 35%<br>• C产线合格率最低: 98.7%<br><br>💡 建议: 重点排查C产线精密轴承尺寸偏差问题。';
+  }
+  return '我已收到你的问题：「' + text + '」<br><br>作为 TOPEMS AI 助手，我可以帮你查询企业数据、分析趋势、生成报告。请尝试以下关键词：<br>• 营收 / 收入<br>• 生产 / 效率<br>• 休假 / 请假<br>• 质量 / 报告';
+}
+
+// Close notification panel when clicking outside
+document.addEventListener('click', function(e) {
+  var panel = document.getElementById('notifPanel');
+  if (panel.classList.contains('show') && !e.target.closest('#notifPanel') && !e.target.closest('.header-btn')) {
+    panel.classList.remove('show');
+  }
+});
+</script>
+</body>
+</html>

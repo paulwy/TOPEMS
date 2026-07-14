@@ -53,7 +53,7 @@ import {
   User,
   AlertTriangle,
 } from 'lucide-react';
-import { useAppStore } from '@/store';
+import { useNotificationStore } from '@/store';
 import * as z from 'zod';
 import { ListPageTemplate, type ColumnDef, type RowAction } from '@/components/templates';
 import { PageContainer } from '@/components/common';
@@ -84,7 +84,7 @@ const QmsEightDPage: React.FC = () => {
   const [submitting, setSubmitting] = useState(false);
   const [activeStep, setActiveStep] = useState(0);
   const [stepContent, setStepContent] = useState('');
-  const addNotification = useAppStore((state) => state.addNotification);
+  const addNotification = useNotificationStore((state) => state.addNotification);
   const queryClient = useQueryClient();
 
   const [formData, setFormData] = useState({

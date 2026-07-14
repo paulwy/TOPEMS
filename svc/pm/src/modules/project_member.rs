@@ -25,7 +25,7 @@ pub fn create_routes(pool: PgPool) -> Router {
 
 #[utoipa::path(
     get,
-    path = "/api/pm/projects/:project_id/members",
+    path = "/api/pm/projects/{project_id}/members",
     tag = "project_members",
     responses(
         (status = 200, description = "获取项目成员列表成功", body = ApiResponse<Vec<ProjectMember>>),
@@ -54,7 +54,7 @@ async fn list_members(
 
 #[utoipa::path(
     post,
-    path = "/api/pm/projects/:project_id/members",
+    path = "/api/pm/projects/{project_id}/members",
     tag = "project_members",
     request_body = CreateMemberRequest,
     responses(
@@ -106,7 +106,7 @@ async fn create_member(
 
 #[utoipa::path(
     get,
-    path = "/api/pm/projects/:project_id/members/:id",
+    path = "/api/pm/projects/{project_id}/members/{id}",
     tag = "project_members",
     responses(
         (status = 200, description = "获取项目成员成功", body = ApiResponse<ProjectMember>),
@@ -138,7 +138,7 @@ async fn get_member(
 
 #[utoipa::path(
     put,
-    path = "/api/pm/projects/:project_id/members/:id",
+    path = "/api/pm/projects/{project_id}/members/{id}",
     tag = "project_members",
     request_body = UpdateMemberRequest,
     responses(
@@ -188,7 +188,7 @@ async fn update_member(
 
 #[utoipa::path(
     delete,
-    path = "/api/pm/projects/:project_id/members/:id",
+    path = "/api/pm/projects/{project_id}/members/{id}",
     tag = "project_members",
     responses(
         (status = 200, description = "删除项目成员成功", body = ApiResponse<bool>),

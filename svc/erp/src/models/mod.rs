@@ -6,6 +6,7 @@ pub mod dict;
 pub mod finance;
 pub mod material;
 pub mod meeting_room;
+pub mod migration;
 pub mod office_supplies;
 pub mod production_order;
 pub mod uuid_helpers;
@@ -15,12 +16,16 @@ pub use announcement::{Announcement, CreateAnnouncementRequest, UpdateAnnounceme
 pub use asset::{Asset, CreateAssetRequest, UpdateAssetRequest};
 pub use audit_log::AuditLog;
 pub use dict::{
-    AddColumnRequest, ColumnInfo, CreateDictItemRequest, CreateDictTypeRequest, DbChange, DictItem,
-    DictType, ModifyColumnRequest, TableInfo, UpdateDictItemRequest, UpdateDictTypeRequest,
+    CreateDictItemRequest, CreateDictTypeRequest, DictItem, DictType, UpdateDictItemRequest,
+    UpdateDictTypeRequest,
 };
 pub use meeting_room::{
     CreateMeetingBookingRequest, CreateMeetingRoomRequest, MeetingBooking, MeetingRoom,
     UpdateMeetingBookingRequest, UpdateMeetingRoomRequest,
+};
+pub use migration::{
+    AddColumnRequest, ColumnInfo, DbChange, DbColumnDefinition, DropColumnRequest,
+    ModifyColumnRequest, TableInfo,
 };
 pub use office_supplies::{CreateOfficeSupplyRequest, OfficeSupply, UpdateOfficeSupplyRequest};
 pub use vehicle::{

@@ -14,11 +14,11 @@ use topems_shared::{api_error, ApiResponse};
 pub fn create_routes() -> Router<ApiState> {
     Router::new()
         .route(
-            "/api/hrm/departments",
+            "/api/core/hrm/v1/departments",
             get(list_departments).post(create_department),
         )
         .route(
-            "/api/hrm/departments/{id}",
+            "/api/core/hrm/v1/departments/{id}",
             get(get_department)
                 .put(update_department)
                 .delete(delete_department),

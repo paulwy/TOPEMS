@@ -172,6 +172,22 @@ export type Notification = {
   updatedAt: string;
 };
 
+export type Document = {
+  id: string;
+  title: string;
+  description?: string;
+  category: string;
+  fileName: string;
+  fileSize: number;
+  fileType: string;
+  url: string;
+  status: 'draft' | 'published' | 'archived';
+  authorId: string;
+  authorName?: string;
+  createdAt: string;
+  updatedAt: string;
+};
+
 export type OfflineSyncRecord = {
   id: string;
   module: string;

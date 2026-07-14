@@ -14,7 +14,7 @@ vi.mock('@/api/crm', () => ({
     customers: {
       list: vi
         .fn()
-        .mockResolvedValue({ code: 200, data: { items: [], total: 0, page: 1, pageSize: 10 } }),
+        .mockResolvedValue({ success: true, data: { items: [], total: 0, page: 1, pageSize: 10 } }),
       get: vi.fn(),
       create: vi.fn(),
       update: vi.fn(),
@@ -25,36 +25,114 @@ vi.mock('@/api/crm', () => ({
       export: vi.fn(),
     },
     contacts: {
-      list: vi.fn().mockResolvedValue({ code: 200, data: [] }),
+      list: vi.fn().mockResolvedValue({ success: true, data: [] }),
     },
     tags: {
-      list: vi.fn().mockResolvedValue({ code: 200, data: { items: [], total: 0 } }),
+      list: vi.fn().mockResolvedValue({ success: true, data: { items: [], total: 0 } }),
     },
   },
 }));
 
-vi.mock('@/store', () => ({
-  useNotificationStore: vi.fn((selector?: any) =>
-    selector
-      ? selector({
-          addNotification: vi.fn(),
-          notifications: [],
-        })
-      : {
-          addNotification: vi.fn(),
-          notifications: [],
-        }
-  ),
-  useAuthStore: vi.fn((selector?: any) =>
-    selector
-      ? selector({
-          user: null,
-        })
-      : {
-          user: null,
-        }
-  ),
-}));
+vi.mock('@/store', () => {
+  const notificationState = {
+    notifications: [],
+    addNotification: vi.fn(),
+    removeNotification: vi.fn(),
+    clearNotifications: vi.fn(),
+  };
+  
+  const authState = {
+    user: { id: '1', username: 'testuser', email: 'test@example.com', isActive: true },
+    token: 'test-token',
+    permissions: [],
+    roles: [],
+    setUser: vi.fn(),
+    setToken: vi.fn(),
+    setPermissions: vi.fn(),
+    setRoles: vi.fn(),
+    clearAuth: vi.fn(),
+    updateUser: vi.fn(),
+    isAuthenticated: vi.fn(() => true),
+    hasPermission: vi.fn(() => true),
+    hasAnyPermission: vi.fn(() => true),
+    hasAllPermissions: vi.fn(() => true),
+    hasRole: vi.fn(() => true),
+    hasAnyRole: vi.fn(() => true),
+    isSuperuser: vi.fn(() => true),
+    getDisplayName: vi.fn(() => 'Test User'),
+    getAvatarUrl: vi.fn(() => ''),
+  };
+  
+  return {
+    useNotificationStore: vi.fn((selector?: any) => 
+      selector ? selector(notificationState) : notificationState
+    ),
+    useAuthStore: vi.fn((selector?: any) => 
+      selector ? selector(authState) : authState
+    ),
+    useThemeStore: vi.fn(() => ({
+      theme: 'light',
+      setTheme: vi.fn(),
+    })),
+    useUIStore: vi.fn(() => ({
+      sidebarOpen: true,
+      sidebarCollapsed: false,
+      toggleSidebar: vi.fn(),
+      setSidebarOpen: vi.fn(),
+      toggleSidebarCollapsed: vi.fn(),
+      setSidebarCollapsed: vi.fn(),
+    })),
+    useWorkflowStore: vi.fn(() => ({
+      currentTaskId: null,
+      taskStatus: 'pending',
+      setCurrentTaskId: vi.fn(),
+      setTaskStatus: vi.fn(),
+      completeTask: vi.fn(),
+    })),
+    useModuleLoadingStore: vi.fn(() => ({
+      modules: {},
+      loading: false,
+      progress: 0,
+      loadModule: vi.fn(),
+      setModuleState: vi.fn(),
+      reset: vi.fn(),
+    })),
+    useShortcutsStore: vi.fn(() => ({
+      shortcuts: [],
+      addShortcut: vi.fn(),
+      removeShortcut: vi.fn(),
+      updateShortcut: vi.fn(),
+    })),
+    useNotificationSettingsStore: vi.fn(() => ({
+      settings: {},
+      updateSettings: vi.fn(),
+    })),
+    useBIStore: vi.fn(() => ({
+      summary: null,
+      development: null,
+      quality: null,
+      production: null,
+      laboratory: null,
+      loading: false,
+      error: null,
+      fetchData: vi.fn(),
+      clearData: vi.fn(),
+    })),
+    useAuth: vi.fn(() => ({
+      user: { id: '1', username: 'testuser', email: 'test@example.com', isActive: true },
+      token: 'test-token',
+      permissions: [],
+      roles: [],
+    })),
+    useTheme: vi.fn(() => ({ theme: 'light' })),
+    useSidebarOpen: vi.fn(() => true),
+    useSidebarCollapsed: vi.fn(() => false),
+    useToggleSidebar: vi.fn(),
+    useSetSidebarOpen: vi.fn(),
+    useToggleSidebarCollapsed: vi.fn(),
+    useSetSidebarCollapsed: vi.fn(),
+  };
+});
 
 describe('CustomerManagementPage', () => {
   beforeEach(() => {
@@ -91,7 +169,7 @@ describe('CustomerManagementPage', () => {
     expect(crmApi.customers.export).toBeDefined();
   });
 
-  it('should have correct query key for customers', async () => {
+  it('should render without errors', async () => {
     render(
       <QueryClientProvider client={queryClient}>
         <BrowserRouter>
@@ -99,10 +177,9 @@ describe('CustomerManagementPage', () => {
         </BrowserRouter>
       </QueryClientProvider>
     );
-    const queryKeys = queryClient
-      .getQueryCache()
-      .getAll()
-      .map((q) => q.queryKey);
-    expect(queryKeys.some((key) => key[0] === 'crm-customers')).toBe(true);
+    await waitFor(() => {
+      expect(screen.getByText('客户管理')).toBeInTheDocument();
+    });
+    expect(crmApi.customers.list).toHaveBeenCalled();
   });
 });

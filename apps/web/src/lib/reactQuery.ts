@@ -1,39 +1,70 @@
 import { QueryClient, QueryCache, MutationCache, type DefaultOptions } from '@tanstack/react-query';
-import { useNotificationStore } from '../store';
 
-const queryCache = new QueryCache({
-  onError: (error) => {
-    const addNotification = useNotificationStore.getState().addNotification;
-    addNotification({
-      title: '数据加载失败',
-      message: error.message,
-      type: 'error',
-    });
-  },
-});
+let queryCache: QueryCache;
+let mutationCache: MutationCache;
 
-const mutationCache = new MutationCache({
-  onError: (error) => {
-    const addNotification = useNotificationStore.getState().addNotification;
-    addNotification({
-      title: '操作失败',
-      message: error.message,
-      type: 'error',
-    });
-  },
-});
+try {
+  const { useNotificationStore } = require('../store');
+  
+  queryCache = new QueryCache({
+    onError: (error) => {
+      try {
+        const addNotification = useNotificationStore.getState().addNotification;
+        addNotification({
+          title: '数据加载失败',
+          message: error.message,
+          type: 'error',
+        });
+      } catch {
+        console.error('Query error:', error);
+      }
+    },
+  });
+
+  mutationCache = new MutationCache({
+    onError: (error) => {
+      try {
+        const addNotification = useNotificationStore.getState().addNotification;
+        addNotification({
+          title: '操作失败',
+          message: error.message,
+          type: 'error',
+        });
+      } catch {
+        console.error('Mutation error:', error);
+      }
+    },
+  });
+} catch {
+  queryCache = new QueryCache();
+  mutationCache = new MutationCache();
+}
 
 const defaultQueryOptions: DefaultOptions['queries'] = {
   retry: 2,
   retryDelay: (attemptIndex) => Math.min(1000 * Math.pow(2, attemptIndex), 10000),
   staleTime: 5 * 60 * 1000,
+  cacheTime: 10 * 60 * 1000,
   refetchOnWindowFocus: false,
   refetchOnMount: false,
   refetchOnReconnect: false,
+  networkMode: 'online',
 };
 
 const defaultMutationOptions: DefaultOptions['mutations'] = {
   retry: 1,
+  onSuccess: () => {
+    try {
+      const addNotification = require('../store').useNotificationStore.getState().addNotification;
+      addNotification({
+        title: '操作成功',
+        message: '数据已更新',
+        type: 'success',
+      });
+    } catch {
+      // ignore
+    }
+  },
 };
 
 export const queryClient = new QueryClient({
@@ -42,6 +73,11 @@ export const queryClient = new QueryClient({
   defaultOptions: {
     queries: defaultQueryOptions,
     mutations: defaultMutationOptions,
+  },
+  logger: {
+    log: console.log,
+    warn: console.warn,
+    error: console.error,
   },
 });
 
@@ -154,6 +190,99 @@ export const QUERY_KEYS = {
     PERMISSIONS: ['system', 'permissions'],
     PLUGINS: ['system', 'plugins'],
     AUDIT: ['system', 'audit'],
+    DICT_TYPES: ['system', 'dict-types'],
+    DICT_ITEMS: (typeId: string) => ['system', 'dict-items', typeId],
+  },
+  MES: {
+    WORK_ORDERS: ['mes', 'work-orders'],
+    WORK_ORDER: (id: string) => ['mes', 'work-order', id],
+    PRODUCTION_ORDERS: ['mes', 'production-orders'],
+    PRODUCTION_ORDER: (id: string) => ['mes', 'production-order', id],
+    EQUIPMENT: ['mes', 'equipment'],
+    EQUIPMENT_DETAIL: (id: string) => ['mes', 'equipment', id],
+    WORK_STATIONS: ['mes', 'work-stations'],
+    WORK_STATION: (id: string) => ['mes', 'work-station', id],
+    TEAMS: ['mes', 'teams'],
+    TEAM: (id: string) => ['mes', 'team', id],
+    MATERIALS: ['mes', 'materials'],
+    MATERIAL: (id: string) => ['mes', 'material', id],
+    PROCESS_ROUTES: ['mes', 'process-routes'],
+    PROCESS_ROUTE: (id: string) => ['mes', 'process-route', id],
+    WIP: ['mes', 'wip'],
+    QUALITY_INSPECTION: ['mes', 'quality-inspection'],
+    PRODUCTION_RECORDS: ['mes', 'production-records'],
+  },
+  WMS: {
+    INVENTORY: ['wms', 'inventory'],
+    INVENTORY_ITEM: (id: string) => ['wms', 'inventory', id],
+    WAREHOUSES: ['wms', 'warehouses'],
+    WAREHOUSE: (id: string) => ['wms', 'warehouse', id],
+    LOCATIONS: ['wms', 'locations'],
+    LOCATION: (id: string) => ['wms', 'location', id],
+    INBOUND_ORDERS: ['wms', 'inbound-orders'],
+    INBOUND_ORDER: (id: string) => ['wms', 'inbound-order', id],
+    OUTBOUND_ORDERS: ['wms', 'outbound-orders'],
+    OUTBOUND_ORDER: (id: string) => ['wms', 'outbound-order', id],
+    TRANSFER_ORDERS: ['wms', 'transfer-orders'],
+    TRANSFER_ORDER: (id: string) => ['wms', 'transfer-order', id],
+    STOCK_TAKES: ['wms', 'stock-takes'],
+    STOCK_TAKE: (id: string) => ['wms', 'stock-take', id],
+    SUPPLIERS: ['wms', 'suppliers'],
+    SUPPLIER: (id: string) => ['wms', 'supplier', id],
+    SERIAL_NUMBERS: ['wms', 'serial-numbers'],
+    BATCHES: ['wms', 'batches'],
+  },
+  QMS: {
+    INSPECTIONS: ['qms', 'inspections'],
+    INSPECTION: (id: string) => ['qms', 'inspection', id],
+    NONCONFORMANCES: ['qms', 'nonconformances'],
+    NONCONFORMANCE: (id: string) => ['qms', 'nonconformance', id],
+    STANDARDS: ['qms', 'standards'],
+    STANDARD: (id: string) => ['qms', 'standard', id],
+    AUDITS: ['qms', 'audits'],
+    AUDIT: (id: string) => ['qms', 'audit', id],
+    SPC: ['qms', 'spc'],
+    FMEA: ['qms', 'fmea'],
+    EIGHT_D: ['qms', 'eight-d'],
+    APQP: ['qms', 'apqp'],
+    QUALITY_COST: ['qms', 'quality-cost'],
+  },
+  RD: {
+    STATISTICS: ['rd', 'statistics'],
+    PROJECTS: ['rd', 'projects'],
+    PROJECT: (id: string) => ['rd', 'project', id],
+    EXPERIMENTS: ['rd', 'experiments'],
+    EXPERIMENT: (id: string) => ['rd', 'experiment', id],
+    FORMULAS: ['rd', 'formulas'],
+    FORMULA: (id: string) => ['rd', 'formula', id],
+    TEST_CASES: ['rd', 'test-cases'],
+    BUILDS: ['rd', 'builds'],
+    RELEASES: ['rd', 'releases'],
+    DOCS: ['rd', 'docs'],
+    REVIEWS: ['rd', 'reviews'],
+  },
+  SCM: {
+    OVERVIEW: ['scm', 'overview'],
+    FULL_LINK_STATS: ['scm', 'full-link-stats'],
+    MRP_PLANS: ['scm', 'mrp-plans'],
+    INCOMING_INSPECTIONS: ['scm', 'incoming-inspections'],
+    INVENTORY_TURNOVER: ['scm', 'inventory-turnover'],
+    PRICE_COMPARISONS: ['scm', 'price-comparisons'],
+    PURCHASE_ORDERS: ['scm', 'purchase-orders'],
+    SUPPLIERS: ['scm', 'suppliers'],
+    CONTRACTS: ['scm', 'contracts'],
+  },
+  SRM: {
+    STATISTICS: ['srm', 'statistics'],
+    SUPPLIERS: ['srm', 'suppliers'],
+    SUPPLIER: (id: string) => ['srm', 'supplier', id],
+    ORDERS: ['srm', 'orders'],
+    ORDER: (id: string) => ['srm', 'order', id],
+    CONTRACTS: ['srm', 'contracts'],
+    CONTRACT: (id: string) => ['srm', 'contract', id],
+    EVALUATIONS: ['srm', 'evaluations'],
+    BIDDING: ['srm', 'bidding'],
+    QUOTATIONS: ['srm', 'quotations'],
   },
 };
 

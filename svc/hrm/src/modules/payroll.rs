@@ -98,26 +98,29 @@ pub struct QueryParams {
 pub fn create_routes() -> Router<ApiState> {
     Router::new()
         .route(
-            "/api/hrm/payroll-runs",
+            "/api/core/hrm/v1/payroll-runs",
             get(list_payroll_runs).post(create_payroll_run),
         )
         .route(
-            "/api/hrm/payroll-runs/{id}",
+            "/api/core/hrm/v1/payroll-runs/{id}",
             get(get_payroll_run).delete(delete_payroll_run),
         )
         .route(
-            "/api/hrm/payroll-runs/{id}/calculate",
+            "/api/core/hrm/v1/payroll-runs/{id}/calculate",
             put(calculate_payroll_run),
         )
-        .route("/api/hrm/payroll-runs/{id}/pay", put(pay_payroll_run))
         .route(
-            "/api/hrm/payroll-runs/{id}/generate-voucher",
+            "/api/core/hrm/v1/payroll-runs/{id}/pay",
+            put(pay_payroll_run),
+        )
+        .route(
+            "/api/core/hrm/v1/payroll-runs/{id}/generate-voucher",
             post(generate_payroll_voucher),
         )
-        .route("/api/hrm/payroll-items", get(list_payroll_items))
-        .route("/api/hrm/payroll-items/{id}", get(get_payroll_item))
+        .route("/api/core/hrm/v1/payroll-items", get(list_payroll_items))
+        .route("/api/core/hrm/v1/payroll-items/{id}", get(get_payroll_item))
         .route(
-            "/api/hrm/payroll-details",
+            "/api/core/hrm/v1/payroll-details",
             get(list_payroll_details).post(create_payroll_detail),
         )
 }

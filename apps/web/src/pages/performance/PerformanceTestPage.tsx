@@ -1,4 +1,8 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, useRef, useCallback } from 'react';
+
+interface LayoutShift {
+  value: number;
+}
 
 const icons: Record<string, React.ReactNode> = {
   zap: <polygon points='13 2 3 14 12 14 11 22 21 10 12 10 13 2'></polygon>,
@@ -100,6 +104,42 @@ const iconKeys = ['zap', 'timer', 'gauge', 'layers', 'shield', 'globe', 'cpu', '
 const PerformanceTestPage: React.FC = () => {
   const [loadTime, setLoadTime] = useState<number | null>(null);
   const [renderComplete, setRenderComplete] = useState(false);
+  const [renderCount, setRenderCount] = useState(0);
+  const [avgRenderTime, setAvgRenderTime] = useState<number | null>(null);
+  const [navigationTime, setNavigationTime] = useState<number | null>(null);
+  const [firstPaint, setFirstPaint] = useState<number | null>(null);
+  const [firstContentfulPaint, setFirstContentfulPaint] = useState<number | null>(null);
+  const [domContentLoaded, setDomContentLoaded] = useState<number | null>(null);
+  const [windowLoad, setWindowLoad] = useState<number | null>(null);
+  const [lcpTime, setLcpTime] = useState<number | null>(null);
+  const [ttiTime, setTtiTime] = useState<number | null>(null);
+  const [fidTime, setFidTime] = useState<number | null>(null);
+  const [clsScore, setClsScore] = useState<number | null>(null);
+  const renderCountRef = useRef(0);
+  const lastRenderTimeRef = useRef<number>(performance.now());
+  const renderTimesRef = useRef<number[]>([]);
+
+  useEffect(() => {
+    renderCountRef.current += 1;
+    const currentTime = performance.now();
+    const timeSinceLastRender = currentTime - lastRenderTimeRef.current;
+    lastRenderTimeRef.current = currentTime;
+    if (renderCountRef.current > 1) {
+      renderTimesRef.current.push(timeSinceLastRender);
+    }
+  });
+
+  useEffect(() => {
+    const interval = setInterval(() => {
+      setRenderCount(renderCountRef.current);
+      if (renderTimesRef.current.length > 0) {
+        const avg = renderTimesRef.current.reduce((a, b) => a + b, 0) / renderTimesRef.current.length;
+        setAvgRenderTime(avg);
+      }
+    }, 500);
+
+    return () => clearInterval(interval);
+  }, []);
 
   useEffect(() => {
     const startTime = performance.now();
@@ -109,7 +149,125 @@ const PerformanceTestPage: React.FC = () => {
       setRenderComplete(true);
     }, 100);
 
-    return () => clearTimeout(timer);
+    const navTiming = performance.getEntriesByType('navigation')[0] as any;
+    if (navTiming) {
+      setNavigationTime(navTiming.loadEventEnd - navTiming.navigationStart);
+      setDomContentLoaded(navTiming.domContentLoadedEventEnd - navTiming.navigationStart);
+      setWindowLoad(navTiming.loadEventEnd - navTiming.navigationStart);
+    }
+
+    const checkPaintTiming = () => {
+      const paintTiming = performance.getEntriesByType('paint');
+      if (paintTiming.length > 0) {
+        paintTiming.forEach((entry) => {
+          if (entry.name === 'first-paint') {
+            setFirstPaint(entry.startTime);
+          } else if (entry.name === 'first-contentful-paint') {
+            setFirstContentfulPaint(entry.startTime);
+          }
+        });
+      } else {
+        const firstPaintTime = performance.now();
+        setFirstPaint(firstPaintTime);
+        setFirstContentfulPaint(firstPaintTime);
+      }
+    };
+
+    setTimeout(checkPaintTiming, 50);
+
+    const paintObserver = new PerformanceObserver((entryList) => {
+      entryList.getEntries().forEach((entry) => {
+        if (entry.entryType === 'paint') {
+          if (entry.name === 'first-paint') {
+            setFirstPaint(entry.startTime);
+          } else if (entry.name === 'first-contentful-paint') {
+            setFirstContentfulPaint(entry.startTime);
+          }
+        }
+      });
+    });
+
+    try {
+      paintObserver.observe({ entryTypes: ['paint'] });
+    } catch (e) {
+      const fallbackTime = performance.now();
+      setFirstPaint(fallbackTime);
+      setFirstContentfulPaint(fallbackTime);
+    }
+
+    const lcpObserver = new PerformanceObserver((entryList) => {
+      const entries = entryList.getEntries();
+      const lcpEntry = entries[entries.length - 1];
+      if (lcpEntry) {
+        setLcpTime(lcpEntry.startTime);
+      }
+    });
+
+    try {
+      lcpObserver.observe({ entryTypes: ['largest-contentful-paint'] });
+    } catch (e) {
+      console.warn('LCP observer not supported');
+    }
+
+    const fidObserver = new PerformanceObserver((entryList) => {
+      entryList.getEntries().forEach((entry) => {
+        if (entry.entryType === 'first-input') {
+          const fidEntry = entry as PerformanceEventTiming;
+          setFidTime(fidEntry.processingStart - fidEntry.startTime);
+        }
+      });
+    });
+
+    try {
+      fidObserver.observe({ entryTypes: ['first-input'] });
+    } catch (e) {
+      console.warn('FID observer not supported');
+    }
+
+    const clsObserver = new PerformanceObserver((entryList) => {
+      let totalScore = 0;
+      entryList.getEntries().forEach((entry) => {
+        if (entry.entryType === 'layout-shift') {
+          const clsEntry = entry as unknown as LayoutShift;
+          totalScore += clsEntry.value;
+        }
+      });
+      setClsScore(totalScore);
+    });
+
+    try {
+      clsObserver.observe({ entryTypes: ['layout-shift'], buffered: true });
+    } catch (e) {
+      console.warn('CLS observer not supported');
+    }
+
+    const ttiCheckTimer = setInterval(() => {
+      const navEntries = performance.getEntriesByType('navigation');
+      if (navEntries.length > 0) {
+        const nav = navEntries[0] as any;
+        const tti = nav.domContentLoadedEventEnd || nav.loadEventEnd;
+        if (tti) {
+          setTtiTime(tti);
+          clearInterval(ttiCheckTimer);
+        }
+      }
+    }, 100);
+
+    setTimeout(() => {
+      clearInterval(ttiCheckTimer);
+      if (!ttiTime) {
+        setTtiTime(performance.now());
+      }
+    }, 5000);
+
+    return () => {
+      clearTimeout(timer);
+      paintObserver.disconnect();
+      lcpObserver.disconnect();
+      fidObserver.disconnect();
+      clsObserver.disconnect();
+      clearInterval(ttiCheckTimer);
+    };
   }, []);
 
   const metrics = [
@@ -126,6 +284,76 @@ const PerformanceTestPage: React.FC = () => {
       color: loadTime && loadTime < 100 ? '#16a34a' : '#d97706',
       bgColor: loadTime && loadTime < 100 ? '#dcfce7' : '#fef3c7',
       description: '页面首屏加载耗时',
+    },
+    {
+      label: '最大内容绘制',
+      value: lcpTime ? `${lcpTime.toFixed(2)}ms` : '测量中...',
+      color: lcpTime && lcpTime < 2500 ? '#16a34a' : lcpTime && lcpTime < 4000 ? '#d97706' : '#dc2626',
+      bgColor: lcpTime && lcpTime < 2500 ? '#dcfce7' : lcpTime && lcpTime < 4000 ? '#fef3c7' : '#fee2e2',
+      description: 'Largest Contentful Paint (LCP)',
+    },
+    {
+      label: '可交互时间',
+      value: ttiTime ? `${ttiTime.toFixed(2)}ms` : '测量中...',
+      color: ttiTime && ttiTime < 3800 ? '#16a34a' : ttiTime && ttiTime < 7300 ? '#d97706' : '#dc2626',
+      bgColor: ttiTime && ttiTime < 3800 ? '#dcfce7' : ttiTime && ttiTime < 7300 ? '#fef3c7' : '#fee2e2',
+      description: 'Time to Interactive (TTI)',
+    },
+    {
+      label: '首次输入延迟',
+      value: fidTime ? `${fidTime.toFixed(2)}ms` : '等待输入...',
+      color: fidTime && fidTime < 100 ? '#16a34a' : fidTime && fidTime < 300 ? '#d97706' : '#dc2626',
+      bgColor: fidTime && fidTime < 100 ? '#dcfce7' : fidTime && fidTime < 300 ? '#fef3c7' : '#fee2e2',
+      description: 'First Input Delay (FID)',
+    },
+    {
+      label: '累计布局偏移',
+      value: clsScore !== null ? clsScore.toFixed(2) : '测量中...',
+      color: clsScore !== null && clsScore < 0.1 ? '#16a34a' : clsScore !== null && clsScore < 0.25 ? '#d97706' : '#dc2626',
+      bgColor: clsScore !== null && clsScore < 0.1 ? '#dcfce7' : clsScore !== null && clsScore < 0.25 ? '#fef3c7' : '#fee2e2',
+      description: 'Cumulative Layout Shift (CLS)',
+    },
+    {
+      label: '首屏绘制',
+      value: firstPaint ? `${firstPaint.toFixed(2)}ms` : '测量中...',
+      color: firstPaint && firstPaint < 1000 ? '#16a34a' : '#d97706',
+      bgColor: firstPaint && firstPaint < 1000 ? '#dcfce7' : '#fef3c7',
+      description: 'First Paint (FP)',
+    },
+    {
+      label: '内容绘制',
+      value: firstContentfulPaint ? `${firstContentfulPaint.toFixed(2)}ms` : '测量中...',
+      color: firstContentfulPaint && firstContentfulPaint < 1500 ? '#16a34a' : '#d97706',
+      bgColor: firstContentfulPaint && firstContentfulPaint < 1500 ? '#dcfce7' : '#fef3c7',
+      description: 'First Contentful Paint (FCP)',
+    },
+    {
+      label: '导航耗时',
+      value: navigationTime ? `${navigationTime.toFixed(2)}ms` : '测量中...',
+      color: navigationTime && navigationTime < 2000 ? '#16a34a' : '#d97706',
+      bgColor: navigationTime && navigationTime < 2000 ? '#dcfce7' : '#fef3c7',
+      description: '从导航开始到页面完全加载',
+    },
+    {
+      label: '渲染次数',
+      value: `${renderCount}次`,
+      color: '#2563eb',
+      bgColor: '#dbeafe',
+      description: '组件渲染计数',
+    },
+    {
+      label: '平均渲染',
+      value: avgRenderTime ? `${avgRenderTime.toFixed(2)}ms` : 'N/A',
+      color: avgRenderTime && avgRenderTime < 16 ? '#16a34a' : '#d97706',
+      bgColor: avgRenderTime && avgRenderTime < 16 ? '#dcfce7' : '#fef3c7',
+      description: '两次渲染间隔平均时间',
+    },
+    {
+      label: 'DOM加载',
+      value: domContentLoaded ? `${domContentLoaded.toFixed(2)}ms` : '测量中...',
+      color: domContentLoaded && domContentLoaded < 1000 ? '#16a34a' : '#d97706',
+      bgColor: domContentLoaded && domContentLoaded < 1000 ? '#dcfce7' : '#fef3c7',
+      description: 'DOM Content Loaded',
     },
     {
       label: 'CPU占用',
@@ -149,25 +377,11 @@ const PerformanceTestPage: React.FC = () => {
       description: '安全头已配置',
     },
     {
-      label: '国际化',
-      value: '支持',
-      color: '#16a34a',
-      bgColor: '#dcfce7',
-      description: '多语言支持已就绪',
-    },
-    {
       label: '框架',
       value: 'React',
       color: '#2563eb',
       bgColor: '#dbeafe',
       description: 'React 19 + Vite',
-    },
-    {
-      label: 'API',
-      value: '独立',
-      color: '#2563eb',
-      bgColor: '#dbeafe',
-      description: '无需后端依赖',
     },
   ];
 

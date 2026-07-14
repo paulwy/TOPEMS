@@ -1,5 +1,5 @@
 import { Card, CardContent, CardHeader, Typography, Box, LinearProgress } from '@mui/material';
-import React, { useState, useEffect, useMemo } from 'react';
+import React, { useState, useMemo } from 'react';
 import type {
   Opportunity,
   CreateOpportunityRequest,
@@ -31,10 +31,12 @@ import {
 } from 'lucide-react';
 import { ListPageTemplate } from '@/components/templates';
 import type { ColumnDef, RowAction, FilterConfig } from '@/components/templates';
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 
 const OpportunityManagementPage: React.FC = () => {
-  const [opportunities, setOpportunities] = useState<Opportunity[]>([]);
-  const [loading, setLoading] = useState(true);
+  const { addNotification } = useNotificationStore();
+  const queryClient = useQueryClient();
+
   const [searchTerm, setSearchTerm] = useState('');
   const [stageFilter, setStageFilter] = useState<string>('');
   const [showDialog, setShowDialog] = useState(false);
@@ -52,120 +54,124 @@ const OpportunityManagementPage: React.FC = () => {
     pageSize: 20,
     total: 0,
   });
-  const [funnelData, setFunnelData] = useState<FunnelStage[]>([]);
-  const [stats, setStats] = useState<OpportunityStats | null>(null);
 
-  const { addNotification } = useNotificationStore();
-
-  useEffect(() => {
-    loadOpportunities();
-    loadFunnelData();
-    loadStats();
-  }, [searchTerm, stageFilter, pagination.page, pagination.pageSize]);
-
-  const loadOpportunities = async () => {
-    try {
-      setLoading(true);
+  const opportunitiesQuery = useQuery({
+    queryKey: ['crm-opportunities', searchTerm, stageFilter, pagination.page, pagination.pageSize],
+    queryFn: async () => {
       const params: Record<string, unknown> = {
         page: pagination.page + 1,
         pagesize: pagination.pageSize,
       };
       if (searchTerm) params.search = searchTerm;
       if (stageFilter) params.stage = stageFilter;
-
       const response = await crmApi.opportunities.list(params);
       if (response.success && response.data) {
-        setOpportunities(response.data.items || []);
-        setPagination((prev) => ({
-          ...prev,
-          total: response.data?.total || 0,
-        }));
+        return {
+          items: response.data.items || [],
+          total: response.data.total || 0,
+        };
       }
-    } catch (error: unknown) {
-      logger.error('加载商机列表失败:', error);
-      addNotification({
-        type: 'error',
-        title: '加载失败',
-        message: '无法加载商机列表',
-      });
-    } finally {
-      setLoading(false);
-    }
-  };
+      return { items: [], total: 0 };
+    },
+    staleTime: 5 * 60 * 1000,
+  });
+  const opportunities = opportunitiesQuery.data?.items || [];
+  const loading = opportunitiesQuery.isLoading;
 
-  const loadFunnelData = async () => {
-    try {
+  const funnelQuery = useQuery({
+    queryKey: ['crm-opportunities-funnel'],
+    queryFn: async () => {
       const response = await crmApi.opportunities.getFunnel();
       if (response.success && response.data) {
-        setFunnelData(response.data);
+        return response.data;
       }
-    } catch (error: unknown) {
-      logger.error('加载销售漏斗数据失败:', error);
-    }
-  };
+      return [];
+    },
+    staleTime: 30 * 60 * 1000,
+  });
+  const funnelData = funnelQuery.data || [];
 
-  const loadStats = async () => {
-    try {
+  const statsQuery = useQuery({
+    queryKey: ['crm-opportunities-stats'],
+    queryFn: async () => {
       const response = await crmApi.opportunities.getStats();
       if (response.success && response.data) {
-        setStats(response.data);
+        return response.data;
       }
-    } catch (error: unknown) {
-      logger.error('加载商机统计数据失败:', error);
-    }
-  };
+      return null;
+    },
+    staleTime: 5 * 60 * 1000,
+  });
+  const stats = statsQuery.data;
+
+  const createOpportunityMutation = useMutation({
+    mutationFn: (data: CreateOpportunityRequest & { customer_id?: string }) =>
+      crmApi.opportunities.create(data),
+    onSuccess: () => {
+      addNotification({ type: 'success', title: '创建成功', message: '新商机已创建' });
+      queryClient.invalidateQueries({ queryKey: ['crm-opportunities'] });
+      queryClient.invalidateQueries({ queryKey: ['crm-opportunities-funnel'] });
+      queryClient.invalidateQueries({ queryKey: ['crm-opportunities-stats'] });
+    },
+    onError: (error: unknown) => {
+      logger.error('创建失败:', error);
+      addNotification({ type: 'error', title: '操作失败', message: '创建商机失败' });
+    },
+  });
+
+  const updateOpportunityMutation = useMutation({
+    mutationFn: ({ id, data }: { id: string; data: UpdateOpportunityRequest }) =>
+      crmApi.opportunities.update(id, data),
+    onSuccess: () => {
+      addNotification({ type: 'success', title: '更新成功', message: '商机信息已更新' });
+      queryClient.invalidateQueries({ queryKey: ['crm-opportunities'] });
+      queryClient.invalidateQueries({ queryKey: ['crm-opportunities-funnel'] });
+      queryClient.invalidateQueries({ queryKey: ['crm-opportunities-stats'] });
+    },
+    onError: (error: unknown) => {
+      logger.error('更新失败:', error);
+      addNotification({ type: 'error', title: '操作失败', message: '更新商机失败' });
+    },
+  });
+
+  const deleteOpportunityMutation = useMutation({
+    mutationFn: (id: string) => crmApi.opportunities.delete(id),
+    onSuccess: () => {
+      addNotification({ type: 'success', title: '删除成功', message: '商机已删除' });
+      queryClient.invalidateQueries({ queryKey: ['crm-opportunities'] });
+      queryClient.invalidateQueries({ queryKey: ['crm-opportunities-funnel'] });
+      queryClient.invalidateQueries({ queryKey: ['crm-opportunities-stats'] });
+    },
+    onError: (error: unknown) => {
+      logger.error('删除失败:', error);
+      addNotification({ type: 'error', title: '删除失败', message: '无法删除商机' });
+    },
+  });
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     try {
       if (selectedOpportunity) {
-        await crmApi.opportunities.update(
-          selectedOpportunity.id,
-          formData as UpdateOpportunityRequest
-        );
-        addNotification({
-          type: 'success',
-          title: '更新成功',
-          message: '商机信息已更新',
+        await updateOpportunityMutation.mutateAsync({
+          id: selectedOpportunity.id,
+          data: formData as UpdateOpportunityRequest,
         });
       } else {
-        await crmApi.opportunities.create(formData);
-        addNotification({
-          type: 'success',
-          title: '创建成功',
-          message: '新商机已创建',
-        });
+        await createOpportunityMutation.mutateAsync(formData);
       }
       setShowDialog(false);
       resetForm();
-      loadOpportunities();
     } catch (error: unknown) {
       logger.error('操作失败:', error);
-      addNotification({
-        type: 'error',
-        title: '操作失败',
-        message: selectedOpportunity ? '更新商机失败' : '创建商机失败',
-      });
     }
   };
 
   const handleDelete = async (id: string) => {
     if (!window.confirm('确定要删除这个商机吗?')) return;
     try {
-      await crmApi.opportunities.delete(id);
-      addNotification({
-        type: 'success',
-        title: '删除成功',
-        message: '商机已删除',
-      });
-      loadOpportunities();
+      await deleteOpportunityMutation.mutateAsync(id);
     } catch (error: unknown) {
       logger.error('删除失败:', error);
-      addNotification({
-        type: 'error',
-        title: '删除失败',
-        message: '无法删除商机',
-      });
     }
   };
 

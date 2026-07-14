@@ -16,7 +16,7 @@ import type {
   UpdateOutboundOrderRequest,
 } from '@/api/wms';
 import { wmsApi } from '@/api/wms';
-import { useAppStore } from '@/store';
+import { useNotificationStore } from '@/store';
 import {
   ListPageTemplate,
   type ColumnDef,
@@ -41,7 +41,7 @@ const statusConfig: Record<
 };
 
 const OutboundOrderPage: React.FC = () => {
-  const { addNotification } = useAppStore();
+  const { addNotification } = useNotificationStore();
   const queryClient = useQueryClient();
 
   const [currentPage, setCurrentPage] = useState(1);

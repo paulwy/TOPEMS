@@ -216,7 +216,7 @@ async fn create_project(
 
 #[utoipa::path(
     get,
-    path = "/api/pm/projects/:id",
+    path = "/api/pm/projects/{id}",
     tag = "projects",
     responses(
         (status = 200, description = "获取项目成功", body = ApiResponse<Project>),
@@ -245,7 +245,7 @@ async fn get_project(
 
 #[utoipa::path(
     put,
-    path = "/api/pm/projects/:id",
+    path = "/api/pm/projects/{id}",
     tag = "projects",
     request_body = UpdateProjectRequest,
     responses(
@@ -314,7 +314,7 @@ async fn update_project(
 
 #[utoipa::path(
     delete,
-    path = "/api/pm/projects/:id",
+    path = "/api/pm/projects/{id}",
     tag = "projects",
     responses(
         (status = 200, description = "删除项目成功", body = ApiResponse<bool>),
@@ -345,7 +345,7 @@ async fn delete_project(
 
 #[utoipa::path(
     get,
-    path = "/api/pm/projects/:id/dashboard",
+    path = "/api/pm/projects/{id}/dashboard",
     tag = "projects",
     responses(
         (status = 200, description = "获取项目仪表盘成功", body = ApiResponse<ProjectDashboardResponse>),
@@ -460,7 +460,7 @@ async fn get_project_dashboard(
 
 #[utoipa::path(
     get,
-    path = "/api/pm/projects/:id/gantt",
+    path = "/api/pm/projects/{id}/gantt",
     tag = "projects",
     responses(
         (status = 200, description = "获取甘特图数据成功", body = ApiResponse<ProjectGanttResponse>),

@@ -52,45 +52,7 @@ import { designTokens } from '@/theme/tokens';
 
 const ct = designTokens.colors;
 
-/**
- * TODO: Phase 7-4 -- 虚拟滚动优化
- *
- * 当列表数据超过 100 条时，建议使用虚拟滚动提升渲染性能:
- *
- * 方案 1: @tanstack/react-virtual
- *   import { useVirtualizer } from '@tanstack/react-virtual';
- *   const virtualizer = useVirtualizer({ count: data.length, getScrollElement: () => parentRef.current });
- *
- * 方案 2: react-virtuoso (MUI 友好)
- *   import { TableVirtuoso } from 'react-virtuoso';
- *   <TableVirtuoso data={data} components={{ TableBody, TableRow, TableCell }} />
- *
- * 当前预估数据量: 生产工单 (按批次累积)
- */
 
-/**
- * TODO: Phase 7-2 — React Query 迁移
- *
- * 模块: 生产工单 (ProductionOrderManagementPage)
- *
- * 1. 将 useState(loading) + useState(data) + useEffect(fetch) 替换为 useQuery:
- *    const { data: response, isLoading, error, refetch } = useQuery({
- *      queryKey: ['mes-production-orders', page, rowsPerPage, searchText],
- *      queryFn: () => mesApi.getList({ page: page + 1, pageSize: rowsPerPage, keyword: searchText }),
- *      placeholderData: (prev) => prev,
- *    });
- *    const data = response?.data?.items || [];
- *    const total = response?.data?.total || 0;
- *
- * 2. 将 create/update/delete handler 中的 setState + API 调用替换为 useMutation:
- *    const queryClient = useQueryClient();
- *    const deleteMutation = useMutation({
- *      mutationFn: (id: string) => mesApi.delete(id),
- *      onSuccess: () => queryClient.invalidateQueries({ queryKey: ['mes-production-orders'] }),
- *    });
- *
- * 3. 保留 UI 状态（page, rowsPerPage, searchText, dialogOpen 等）的 useState
- */
 const ProductionOrderManagementPage: React.FC = () => {
   const { addNotification } = useNotificationStore();
   const queryClient = useQueryClient();

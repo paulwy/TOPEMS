@@ -1,5 +1,5 @@
 import type { ReactNode } from 'react';
-import React, { createContext, useContext, useState, useEffect, useCallback } from 'react';
+import React, { createContext, useContext, useState, useEffect, useCallback, useRef } from 'react';
 import type { Plugin, TenantInstalledPlugin } from '@/api/plugin';
 import { PLUGIN_REGISTRY, checkAllPluginsHealth, pluginApi } from '@/api/plugin';
 import { useAuth } from '@/hooks/useAuth';
@@ -51,22 +51,25 @@ export const PluginProvider: React.FC<PluginProviderProps> = ({ children }) => {
     Record<string, { healthy: boolean; status?: string; latency?: number }>
   >({});
   const [availablePlugins, setAvailablePlugins] = useState<Plugin[]>([]);
-  const [isLoading, setIsLoading] = useState(true);
+  const [isLoading, setIsLoading] = useState(false);
+  const initializedRef = useRef(false);
 
   const fetchPlugins = useCallback(async () => {
+    if (!isAuthenticated) {
+      setIsLoading(false);
+      return;
+    }
+
     setIsLoading(true);
     try {
       const promises: Promise<any>[] = [checkAllPluginsHealth()];
-
-      if (isAuthenticated) {
-        promises.push(pluginApi.listInstalled());
-      }
+      promises.push(pluginApi.listInstalled());
 
       const [healthRes, installedRes] = await Promise.all(promises);
 
       setPluginHealth(healthRes);
 
-      if (isAuthenticated && installedRes?.success && installedRes?.data) {
+      if (installedRes?.success && installedRes?.data) {
         setInstalledPlugins(installedRes.data);
       }
     } catch (error: unknown) {
@@ -82,10 +85,34 @@ export const PluginProvider: React.FC<PluginProviderProps> = ({ children }) => {
   }, [isAuthenticated]);
 
   useEffect(() => {
-    fetchPlugins();
+    if (!isAuthenticated || initializedRef.current) {
+      return;
+    }
+
+    const scheduleFetch = () => {
+      if (typeof window !== 'undefined' && 'requestIdleCallback' in window) {
+        (window as any).requestIdleCallback(() => {
+          fetchPlugins();
+        }, { timeout: 5000 });
+      } else {
+        setTimeout(() => {
+          fetchPlugins();
+        }, 2000);
+      }
+    };
+
+    if (document.readyState === 'complete') {
+      scheduleFetch();
+    } else {
+      window.addEventListener('load', scheduleFetch, { once: true });
+      return () => window.removeEventListener('load', scheduleFetch);
+    }
+
     const interval = setInterval(fetchPlugins, 30000);
+    initializedRef.current = true;
+
     return () => clearInterval(interval);
-  }, [fetchPlugins]);
+  }, [isAuthenticated, fetchPlugins]);
 
   const installPlugin = useCallback(
     async (code: string) => {

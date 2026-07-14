@@ -29,7 +29,7 @@ pub fn create_routes(pool: PgPool) -> Router {
 
 #[utoipa::path(
     get,
-    path = "/api/pm/projects/:project_id/resources",
+    path = "/api/pm/projects/{project_id}/resources",
     tag = "project_resources",
     responses(
         (status = 200, description = "获取项目资源列表成功", body = ApiResponse<Vec<ProjectResource>>),
@@ -58,7 +58,7 @@ async fn list_resources(
 
 #[utoipa::path(
     post,
-    path = "/api/pm/projects/:project_id/resources",
+    path = "/api/pm/projects/{project_id}/resources",
     tag = "project_resources",
     request_body = CreateResourceRequest,
     responses(
@@ -114,7 +114,7 @@ async fn add_resource(
 
 #[utoipa::path(
     get,
-    path = "/api/pm/projects/:project_id/resources/:id",
+    path = "/api/pm/projects/{project_id}/resources/{id}",
     tag = "project_resources",
     responses(
         (status = 200, description = "获取项目资源成功", body = ApiResponse<ProjectResource>),
@@ -146,7 +146,7 @@ async fn get_resource(
 
 #[utoipa::path(
     put,
-    path = "/api/pm/projects/:project_id/resources/:id",
+    path = "/api/pm/projects/{project_id}/resources/{id}",
     tag = "project_resources",
     request_body = UpdateResourceRequest,
     responses(
@@ -202,7 +202,7 @@ async fn update_resource(
 
 #[utoipa::path(
     delete,
-    path = "/api/pm/projects/:project_id/resources/:id",
+    path = "/api/pm/projects/{project_id}/resources/{id}",
     tag = "project_resources",
     responses(
         (status = 200, description = "删除项目资源成功", body = ApiResponse<bool>),

@@ -1,4 +1,4 @@
-import React, { useEffect, useState, useMemo, useCallback } from 'react';
+import React, { useMemo, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
 import {
   Users,
@@ -31,9 +31,9 @@ import type {
   InventoryTurnoverStat,
   PriceComparison,
 } from '@/api/scm';
-import { useNotificationStore } from '@/store';
-import { apiLogger } from '@/utils/logger';
 import { SCM_PATHS } from '@/modules/scm/config';
+import { useQuery } from '@tanstack/react-query';
+import { QUERY_KEYS } from '@/lib/reactQuery';
 
 const barData = [
   { name: '供应商A', value: 35 },
@@ -57,122 +57,80 @@ const lineData = [
 
 export const DashboardPage: React.FC = () => {
   const navigate = useNavigate();
-  const { addNotification } = useNotificationStore();
 
-  const [loading, setLoading] = useState(true);
-  const [overviewLoading, setOverviewLoading] = useState(true);
-  const [mrpLoading, setMrpLoading] = useState(true);
-  const [inspectionLoading, setInspectionLoading] = useState(true);
-  const [inventoryLoading, setInventoryLoading] = useState(true);
-  const [priceLoading, setPriceLoading] = useState(true);
-
-  const [overview, setOverview] = useState<SupplyChainOverview | null>(null);
-  const [fullLinkStats, setFullLinkStats] = useState<SupplyChainFullLinkStat | null>(null);
-  const [mrpPlans, setMrpPlans] = useState<MrpPlan[]>([]);
-  const [incomingInspections, setIncomingInspections] = useState<IncomingInspection[]>([]);
-  const [inventoryTurnover, setInventoryTurnover] = useState<InventoryTurnoverStat[]>([]);
-  const [priceComparisons, setPriceComparisons] = useState<PriceComparison[]>([]);
-
-  const loadOverview = useCallback(async () => {
-    try {
-      setOverviewLoading(true);
-      const [overviewRes, fullLinkRes] = await Promise.all([
-        scmApi.supplyChainDashboard.overview(),
-        scmApi.supplyChainDashboard.fullLinkStats(),
-      ]);
-      if (overviewRes.success && overviewRes.data) {
-        setOverview(overviewRes.data);
+  const { data: overview, isLoading: overviewLoading } = useQuery({
+    queryKey: QUERY_KEYS.SCM.OVERVIEW,
+    queryFn: async () => {
+      const response = await scmApi.supplyChainDashboard.overview();
+      if (response.success && response.data) {
+        return response.data as SupplyChainOverview;
       }
-      if (fullLinkRes.success && fullLinkRes.data) {
-        setFullLinkStats(fullLinkRes.data);
-      }
-    } catch (error: unknown) {
-      apiLogger.error('加载供应链看板失败:', error);
-      addNotification({
-        type: 'error',
-        title: '加载失败',
-        message: '无法加载供应链看板数据',
-      });
-    } finally {
-      setOverviewLoading(false);
-    }
-  }, [addNotification]);
+      return null;
+    },
+    staleTime: 5 * 60 * 1000,
+  });
 
-  const loadMrpPlans = useCallback(async () => {
-    try {
-      setMrpLoading(true);
+  const { data: fullLinkStats } = useQuery({
+    queryKey: QUERY_KEYS.SCM.FULL_LINK_STATS,
+    queryFn: async () => {
+      const response = await scmApi.supplyChainDashboard.fullLinkStats();
+      if (response.success && response.data) {
+        return response.data as SupplyChainFullLinkStat;
+      }
+      return null;
+    },
+    staleTime: 5 * 60 * 1000,
+  });
+
+  const { data: mrpPlans, isLoading: mrpLoading } = useQuery({
+    queryKey: QUERY_KEYS.SCM.MRP_PLANS,
+    queryFn: async () => {
       const response = await scmApi.mrpPlans.list({ page: 1, pageSize: 5 });
       if (response.success && response.data) {
-        setMrpPlans(response.data.items || []);
+        return response.data.items as MrpPlan[];
       }
-    } catch (error: unknown) {
-      apiLogger.error('加载MRP计划失败:', error);
-    } finally {
-      setMrpLoading(false);
-    }
-  }, []);
+      return [];
+    },
+    staleTime: 5 * 60 * 1000,
+  });
 
-  const loadIncomingInspections = useCallback(async () => {
-    try {
-      setInspectionLoading(true);
+  const { data: incomingInspections, isLoading: inspectionLoading } = useQuery({
+    queryKey: QUERY_KEYS.SCM.INCOMING_INSPECTIONS,
+    queryFn: async () => {
       const response = await scmApi.incomingInspections.list({ page: 1, pageSize: 5 });
       if (response.success && response.data) {
-        setIncomingInspections(response.data.items || []);
+        return response.data.items as IncomingInspection[];
       }
-    } catch (error: unknown) {
-      apiLogger.error('加载到货检验失败:', error);
-    } finally {
-      setInspectionLoading(false);
-    }
-  }, []);
+      return [];
+    },
+    staleTime: 5 * 60 * 1000,
+  });
 
-  const loadInventoryTurnover = useCallback(async () => {
-    try {
-      setInventoryLoading(true);
+  const { data: inventoryTurnover, isLoading: inventoryLoading } = useQuery({
+    queryKey: QUERY_KEYS.SCM.INVENTORY_TURNOVER,
+    queryFn: async () => {
       const response = await scmApi.inventoryTurnover.list({ page: 1, pageSize: 5 });
       if (response.success && response.data) {
-        setInventoryTurnover(response.data.items || []);
+        return response.data.items as InventoryTurnoverStat[];
       }
-    } catch (error: unknown) {
-      apiLogger.error('加载库存周转失败:', error);
-    } finally {
-      setInventoryLoading(false);
-    }
-  }, []);
+      return [];
+    },
+    staleTime: 5 * 60 * 1000,
+  });
 
-  const loadPriceComparisons = useCallback(async () => {
-    try {
-      setPriceLoading(true);
+  const { data: priceComparisons, isLoading: priceLoading } = useQuery({
+    queryKey: QUERY_KEYS.SCM.PRICE_COMPARISONS,
+    queryFn: async () => {
       const response = await scmApi.priceComparisons.list({ page: 1, pageSize: 5 });
       if (response.success && response.data) {
-        setPriceComparisons(response.data.items || []);
+        return response.data.items as PriceComparison[];
       }
-    } catch (error: unknown) {
-      apiLogger.error('加载价格比价失败:', error);
-    } finally {
-      setPriceLoading(false);
-    }
-  }, []);
+      return [];
+    },
+    staleTime: 5 * 60 * 1000,
+  });
 
-  useEffect(() => {
-    const loadAllData = async () => {
-      await Promise.all([
-        loadOverview(),
-        loadMrpPlans(),
-        loadIncomingInspections(),
-        loadInventoryTurnover(),
-        loadPriceComparisons(),
-      ]);
-      setLoading(false);
-    };
-    loadAllData();
-  }, [
-    loadOverview,
-    loadMrpPlans,
-    loadIncomingInspections,
-    loadInventoryTurnover,
-    loadPriceComparisons,
-  ]);
+  const loading = overviewLoading || mrpLoading || inspectionLoading || inventoryLoading || priceLoading;
 
   const getGreeting = (): string => {
     const hour = new Date().getHours();

@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useCallback, useMemo } from 'react';
+import React, { useState, useCallback, useMemo } from 'react';
 import {
   Card,
   CardContent,
@@ -41,6 +41,7 @@ import { EmptyState } from '@/components';
 import { AIHelperButton, AICodeGenerator } from '@/components/ai';
 import { ConfirmDialog } from '@topems/shared-components';
 import { PageContainer } from '@/components/common';
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 
 interface NodeData {
   type: 'company' | 'department';
@@ -49,11 +50,8 @@ interface NodeData {
 
 const HrmOrganizationPage: React.FC = () => {
   const addNotification = useNotificationStore((state) => state.addNotification);
+  const queryClient = useQueryClient();
 
-  const [loading, setLoading] = useState(false);
-  const [companies, setCompanies] = useState<Company[]>([]);
-  const [departments, setDepartments] = useState<Department[]>([]);
-  const [employees, setEmployees] = useState<Employee[]>([]);
   const [statusFilter, setStatusFilter] = useState('all');
 
   const [showCompanyModal, setShowCompanyModal] = useState(false);
@@ -88,34 +86,137 @@ const HrmOrganizationPage: React.FC = () => {
     setDeptFormData((prev) => ({ ...prev, code }));
   };
 
-  const fetchData = useCallback(async () => {
-    setLoading(true);
-    try {
-      const [companyRes, deptRes, empRes] = await Promise.all([
-        companyApi.list(),
-        departmentApi.list(),
-        employeeApi.list({ pagesize: 500 }),
-      ]);
+  const companiesQuery = useQuery({
+    queryKey: ['hrm-companies-org'],
+    queryFn: async () => {
+      const res = await companyApi.list({ pagesize: 100 });
+      if (res.code === 200 && res.data) {
+        return (res.data as any).items || [];
+      }
+      return [];
+    },
+    staleTime: 30 * 60 * 1000,
+  });
+  const companies = companiesQuery.data || [];
 
-      if (companyRes.code === 200 && companyRes.data) {
-        setCompanies((companyRes.data as any).items || []);
+  const departmentsQuery = useQuery({
+    queryKey: ['hrm-departments-org'],
+    queryFn: async () => {
+      const res = await departmentApi.list({ pagesize: 500 });
+      if (res.code === 200 && res.data) {
+        return (res.data as any).items || [];
       }
-      if (deptRes.code === 200 && deptRes.data) {
-        setDepartments((deptRes.data as any).items || []);
+      return [];
+    },
+    staleTime: 30 * 60 * 1000,
+  });
+  const departments = departmentsQuery.data || [];
+
+  const employeesQuery = useQuery({
+    queryKey: ['hrm-employees-org'],
+    queryFn: async () => {
+      const res = await employeeApi.list({ pagesize: 500 });
+      if (res.code === 200 && res.data) {
+        return (res.data as any).items || [];
       }
-      if (empRes.code === 200 && empRes.data) {
-        setEmployees((empRes.data as any).items || []);
-      }
-    } catch (error: unknown) {
+      return [];
+    },
+    staleTime: 30 * 60 * 1000,
+  });
+  const employees = employeesQuery.data || [];
+
+  const loading = companiesQuery.isLoading || departmentsQuery.isLoading || employeesQuery.isLoading;
+
+  const createCompanyMutation = useMutation({
+    mutationFn: (data: Partial<Company>) => companyApi.create(data),
+    onSuccess: () => {
+      addNotification({ title: '成功', message: '创建成功', type: 'success' });
+      queryClient.invalidateQueries({ queryKey: ['hrm-companies-org'] });
+    },
+    onError: (error: unknown) => {
       addNotification({
-        title: '加载失败',
-        message: (error as { message?: string }).message || '获取数据失败',
+        title: '失败',
+        message: (error as { message?: string }).message || '创建失败',
         type: 'error',
       });
-    } finally {
-      setLoading(false);
-    }
-  }, [addNotification]);
+    },
+  });
+
+  const updateCompanyMutation = useMutation({
+    mutationFn: ({ id, data }: { id: string; data: Partial<Company> }) => companyApi.update(id, data),
+    onSuccess: () => {
+      addNotification({ title: '成功', message: '更新成功', type: 'success' });
+      queryClient.invalidateQueries({ queryKey: ['hrm-companies-org'] });
+    },
+    onError: (error: unknown) => {
+      addNotification({
+        title: '失败',
+        message: (error as { message?: string }).message || '更新失败',
+        type: 'error',
+      });
+    },
+  });
+
+  const deleteCompanyMutation = useMutation({
+    mutationFn: (id: string) => companyApi.delete(id),
+    onSuccess: () => {
+      addNotification({ title: '成功', message: '删除成功', type: 'success' });
+      queryClient.invalidateQueries({ queryKey: ['hrm-companies-org'] });
+      queryClient.invalidateQueries({ queryKey: ['hrm-departments-org'] });
+    },
+    onError: (error: unknown) => {
+      addNotification({
+        title: '失败',
+        message: (error as { message?: string }).message || '删除失败',
+        type: 'error',
+      });
+    },
+  });
+
+  const createDepartmentMutation = useMutation({
+    mutationFn: (data: Partial<Department>) => departmentApi.create(data),
+    onSuccess: () => {
+      addNotification({ title: '成功', message: '创建成功', type: 'success' });
+      queryClient.invalidateQueries({ queryKey: ['hrm-departments-org'] });
+    },
+    onError: (error: unknown) => {
+      addNotification({
+        title: '失败',
+        message: (error as { message?: string }).message || '创建失败',
+        type: 'error',
+      });
+    },
+  });
+
+  const updateDepartmentMutation = useMutation({
+    mutationFn: ({ id, data }: { id: string; data: Partial<Department> }) => departmentApi.update(id, data),
+    onSuccess: () => {
+      addNotification({ title: '成功', message: '更新成功', type: 'success' });
+      queryClient.invalidateQueries({ queryKey: ['hrm-departments-org'] });
+    },
+    onError: (error: unknown) => {
+      addNotification({
+        title: '失败',
+        message: (error as { message?: string }).message || '更新失败',
+        type: 'error',
+      });
+    },
+  });
+
+  const deleteDepartmentMutation = useMutation({
+    mutationFn: (id: string) => departmentApi.delete(id),
+    onSuccess: () => {
+      addNotification({ title: '成功', message: '删除成功', type: 'success' });
+      queryClient.invalidateQueries({ queryKey: ['hrm-departments-org'] });
+    },
+    onError: (error: unknown) => {
+      addNotification({
+        title: '失败',
+        message: (error as { message?: string }).message || '删除失败',
+        type: 'error',
+      });
+    },
+  });
 
   const buildTree = useCallback((): TreeNode[] => {
     const result: TreeNode[] = [];
@@ -247,127 +348,68 @@ const HrmOrganizationPage: React.FC = () => {
       color: 'primary',
     },
     {
-      label: '删除',
-      icon: <Trash2 style={{ width: 16, height: 16 }} />,
-      onClick: (node) => {
-        const nodeData = node.data as NodeData;
-        if (nodeData.type === 'company') {
-          openConfirmDialog({
-            title: '确认删除',
-            message: '确定要删除这个公司吗？',
-            onConfirm: async () => {
-              try {
-                const response = await companyApi.delete((nodeData.data as Company).id);
-                if (response.code === 200) {
-                  addNotification({ title: '成功', message: '删除成功', type: 'success' });
-                  fetchData();
+        label: '删除',
+        icon: <Trash2 style={{ width: 16, height: 16 }} />,
+        onClick: (node) => {
+          const nodeData = node.data as NodeData;
+          if (nodeData.type === 'company') {
+            openConfirmDialog({
+              title: '确认删除',
+              message: '确定要删除这个公司吗？',
+              onConfirm: async () => {
+                try {
+                  await deleteCompanyMutation.mutateAsync((nodeData.data as Company).id);
                   if (selectedId === node.id) {
                     setSelectedId(undefined);
                     setSelectedNode(null);
                   }
-                } else {
-                  addNotification({ title: '失败', message: '删除失败', type: 'error' });
+                } catch (error: unknown) {
+                  addNotification({
+                    title: '失败',
+                    message: (error as { message?: string }).message || '删除失败',
+                    type: 'error',
+                  });
                 }
-              } catch (error: unknown) {
-                addNotification({
-                  title: '失败',
-                  message: (error as { message?: string }).message || '删除失败',
-                  type: 'error',
-                });
-              }
-            },
-            danger: true,
-          });
-        } else {
-          openConfirmDialog({
-            title: '确认删除',
-            message: '确定要删除这个部门吗？',
-            onConfirm: async () => {
-              try {
-                const deptId = (nodeData.data as Department).id;
-                const response = await departmentApi.delete(deptId);
-                if (response.code === 200) {
-                  addNotification({ title: '成功', message: '删除成功', type: 'success' });
-                  fetchData();
+              },
+              danger: true,
+            });
+          } else {
+            openConfirmDialog({
+              title: '确认删除',
+              message: '确定要删除这个部门吗？',
+              onConfirm: async () => {
+                try {
+                  await deleteDepartmentMutation.mutateAsync((nodeData.data as Department).id);
                   if (selectedId === node.id) {
                     setSelectedId(undefined);
                     setSelectedNode(null);
                   }
-                } else {
-                  addNotification({ title: '失败', message: '删除失败', type: 'error' });
+                } catch (error: unknown) {
+                  addNotification({
+                    title: '失败',
+                    message: (error as { message?: string }).message || '删除失败',
+                    type: 'error',
+                  });
                 }
-              } catch (error: unknown) {
-                addNotification({
-                  title: '失败',
-                  message: (error as { message?: string }).message || '删除失败',
-                  type: 'error',
-                });
-              }
-            },
-            danger: true,
-          });
-        }
+              },
+              danger: true,
+            });
+          }
+        },
+        color: 'error',
+        divider: true,
       },
-      color: 'error',
-      divider: true,
-    },
   ];
 
   const handleSelectNode = useCallback((node: TreeNode | null) => {
     if (node) {
       setSelectedNode(node);
       setSelectedId(node.id);
-      const nodeData = node.data as NodeData;
-      if (nodeData.type === 'department') {
-        const deptId = (nodeData.data as Department).id;
-        fetchDeptEmployees(deptId);
-      } else {
-        const companyId = (nodeData.data as Company).id;
-        fetchCompanyEmployees(companyId);
-      }
     } else {
       setSelectedNode(null);
       setSelectedId(undefined);
     }
   }, []);
-
-  const fetchCompanyEmployees = async (companyId: string) => {
-    try {
-      const companyDepts = departments.filter((d) => d.company_id === companyId);
-      const deptIds = companyDepts.map((d) => d.id).join(',');
-      const response = await employeeApi.list({ pagesize: 200 });
-      if (response.code === 200 && response.data) {
-        const allEmps = (response.data as any).items || [];
-        const filtered = allEmps.filter((e: Employee) => deptIds.includes(e.department_id || ''));
-        setEmployees(filtered);
-      }
-    } catch (error: unknown) {
-      addNotification({
-        title: '加载失败',
-        message: (error as { message?: string }).message || '获取员工列表失败',
-        type: 'error',
-      });
-    }
-  };
-
-  const fetchDeptEmployees = async (deptId: string) => {
-    try {
-      const response = await employeeApi.list({ department_id: deptId, pagesize: 100 });
-      if (response.code === 200 && response.data) {
-        setEmployees((response.data as any).items || []);
-      }
-    } catch (error: unknown) {
-      addNotification({
-        title: '加载失败',
-        message: (error as { message?: string }).message || '获取员工列表失败',
-        type: 'error',
-      });
-    }
-  };
-
-  useEffect(() => {
-    fetchData();
-  }, [fetchData]);
 
   const handleCreateCompany = useCallback(() => {
     setModalMode('create');
@@ -378,19 +420,11 @@ const HrmOrganizationPage: React.FC = () => {
   const handleSaveCompany = useCallback(async () => {
     try {
       if (modalMode === 'create') {
-        const response = await companyApi.create(companyFormData as Company);
-        if (response.code === 200) {
-          addNotification({ title: '成功', message: '创建成功', type: 'success' });
-          setShowCompanyModal(false);
-          fetchData();
-        }
+        await createCompanyMutation.mutateAsync(companyFormData as Company);
+        setShowCompanyModal(false);
       } else if (modalMode === 'edit' && companyFormData.id) {
-        const response = await companyApi.update(companyFormData.id, companyFormData as Company);
-        if (response.code === 200) {
-          addNotification({ title: '成功', message: '更新成功', type: 'success' });
-          setShowCompanyModal(false);
-          fetchData();
-        }
+        await updateCompanyMutation.mutateAsync({ id: companyFormData.id, data: companyFormData as Company });
+        setShowCompanyModal(false);
       }
     } catch (error: unknown) {
       addNotification({
@@ -399,7 +433,7 @@ const HrmOrganizationPage: React.FC = () => {
         type: 'error',
       });
     }
-  }, [modalMode, companyFormData, addNotification, fetchData]);
+  }, [modalMode, companyFormData, addNotification, createCompanyMutation, updateCompanyMutation]);
 
   const handleCreateDepartment = useCallback(() => {
     if (!selectedNode) return;
@@ -416,19 +450,11 @@ const HrmOrganizationPage: React.FC = () => {
   const handleSaveDepartment = useCallback(async () => {
     try {
       if (modalMode === 'create') {
-        const response = await departmentApi.create(deptFormData as Department);
-        if (response.code === 200) {
-          addNotification({ title: '成功', message: '创建成功', type: 'success' });
-          setShowDeptModal(false);
-          fetchData();
-        }
+        await createDepartmentMutation.mutateAsync(deptFormData as Department);
+        setShowDeptModal(false);
       } else if (modalMode === 'edit' && deptFormData.id) {
-        const response = await departmentApi.update(deptFormData.id, deptFormData as Department);
-        if (response.code === 200) {
-          addNotification({ title: '成功', message: '更新成功', type: 'success' });
-          setShowDeptModal(false);
-          fetchData();
-        }
+        await updateDepartmentMutation.mutateAsync({ id: deptFormData.id, data: deptFormData as Department });
+        setShowDeptModal(false);
       }
     } catch (error: unknown) {
       addNotification({
@@ -437,7 +463,7 @@ const HrmOrganizationPage: React.FC = () => {
         type: 'error',
       });
     }
-  }, [modalMode, deptFormData, addNotification, fetchData]);
+  }, [modalMode, deptFormData, addNotification, createDepartmentMutation, updateDepartmentMutation]);
 
   const availableParentDepts = useMemo(() => {
     if (!selectedNode) return [];

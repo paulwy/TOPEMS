@@ -250,91 +250,136 @@ async fn main() {
         .with_state(app_state.clone());
 
     let protected_routes = Router::new()
-        .route("/api/integration/stats", get(get_sync_stats))
-        .route("/api/integration/events", get(list_events))
-        .route("/api/integration/events", post(create_event))
-        .route("/api/integration/lims-qms", get(list_lims_qms_sync))
-        .route("/api/integration/lims-qms", post(create_lims_qms_sync))
-        .route("/api/integration/lims-qms/{id}", get(get_lims_qms_sync))
-        .route("/api/integration/lims-qms/{id}/sync", post(sync_lims_qms))
-        .route("/api/integration/mes-erp", get(list_mes_erp_sync))
-        .route("/api/integration/mes-erp", post(create_mes_erp_sync))
-        .route("/api/integration/mes-erp/{id}", get(get_mes_erp_sync))
-        .route("/api/integration/mes-erp/{id}/sync", post(sync_mes_erp))
+        .route("/api/core/integration/v1/stats", get(get_sync_stats))
+        .route("/api/core/integration/v1/events", get(list_events))
+        .route("/api/core/integration/v1/events", post(create_event))
+        .route("/api/core/integration/v1/lims-qms", get(list_lims_qms_sync))
         .route(
-            "/api/integration/mes-erp/sync/erp-to-mes",
+            "/api/core/integration/v1/lims-qms",
+            post(create_lims_qms_sync),
+        )
+        .route(
+            "/api/core/integration/v1/lims-qms/{id}",
+            get(get_lims_qms_sync),
+        )
+        .route(
+            "/api/core/integration/v1/lims-qms/{id}/sync",
+            post(sync_lims_qms),
+        )
+        .route("/api/core/integration/v1/mes-erp", get(list_mes_erp_sync))
+        .route(
+            "/api/core/integration/v1/mes-erp",
+            post(create_mes_erp_sync),
+        )
+        .route(
+            "/api/core/integration/v1/mes-erp/{id}",
+            get(get_mes_erp_sync),
+        )
+        .route(
+            "/api/core/integration/v1/mes-erp/{id}/sync",
+            post(sync_mes_erp),
+        )
+        .route(
+            "/api/core/integration/v1/mes-erp/sync/erp-to-mes",
             post(sync_erp_order_to_mes),
         )
         .route(
-            "/api/integration/mes-erp/sync/mes-to-erp",
+            "/api/core/integration/v1/mes-erp/sync/mes-to-erp",
             post(sync_mes_progress_to_erp),
         )
         .route(
-            "/api/integration/mes-erp/{id}/retry",
+            "/api/core/integration/v1/mes-erp/{id}/retry",
             post(retry_mes_erp_sync),
         )
         .route(
-            "/api/integration/mes-erp/{id}/logs",
+            "/api/core/integration/v1/mes-erp/{id}/logs",
             get(get_mes_erp_sync_logs),
         )
         .route(
-            "/api/integration/mes-erp/records",
+            "/api/core/integration/v1/mes-erp/records",
             get(list_mes_erp_sync_records),
         )
-        .route("/api/integration/wms-scm", get(list_wms_scm_sync))
-        .route("/api/integration/wms-scm", post(create_wms_scm_sync))
-        .route("/api/integration/wms-scm/{id}", get(get_wms_scm_sync))
-        .route("/api/integration/wms-scm/{id}/sync", post(sync_wms_scm))
-        // MES↔QMS 质检数据集成 API
-        .route("/api/integration/mes-qms", get(list_mes_qms_sync_api))
-        .route("/api/integration/mes-qms/{id}", get(get_mes_qms_sync_api))
-        .route("/api/integration/mes-qms/stats", get(get_mes_qms_stats_api))
+        .route("/api/core/integration/v1/wms-scm", get(list_wms_scm_sync))
         .route(
-            "/api/integration/mes-qms/trigger-inspection",
+            "/api/core/integration/v1/wms-scm",
+            post(create_wms_scm_sync),
+        )
+        .route(
+            "/api/core/integration/v1/wms-scm/{id}",
+            get(get_wms_scm_sync),
+        )
+        .route(
+            "/api/core/integration/v1/wms-scm/{id}/sync",
+            post(sync_wms_scm),
+        )
+        // MES↔QMS 质检数据集成 API
+        .route(
+            "/api/core/integration/v1/mes-qms",
+            get(list_mes_qms_sync_api),
+        )
+        .route(
+            "/api/core/integration/v1/mes-qms/{id}",
+            get(get_mes_qms_sync_api),
+        )
+        .route(
+            "/api/core/integration/v1/mes-qms/stats",
+            get(get_mes_qms_stats_api),
+        )
+        .route(
+            "/api/core/integration/v1/mes-qms/trigger-inspection",
             post(trigger_qms_inspection_api),
         )
         .route(
-            "/api/integration/mes-qms/sync-result",
+            "/api/core/integration/v1/mes-qms/sync-result",
             post(sync_quality_result_api),
         )
         .route(
-            "/api/integration/mes-qms/sync-trace",
+            "/api/core/integration/v1/mes-qms/sync-trace",
             post(sync_trace_chain_api),
         )
         .route(
-            "/api/integration/mes-qms/defect-handling",
+            "/api/core/integration/v1/mes-qms/defect-handling",
             post(defect_handling_api),
         )
         .route(
-            "/api/integration/mes-qms/{id}/retry",
+            "/api/core/integration/v1/mes-qms/{id}/retry",
             post(retry_mes_qms_sync_api),
         )
         // 转换规则 API
-        .route("/api/integration/rules", get(list_conversion_rules_api))
-        .route("/api/integration/rules", post(create_conversion_rule_api))
-        .route("/api/integration/rules/{id}", get(get_conversion_rule_api))
         .route(
-            "/api/integration/rules/{id}",
+            "/api/core/integration/v1/rules",
+            get(list_conversion_rules_api),
+        )
+        .route(
+            "/api/core/integration/v1/rules",
+            post(create_conversion_rule_api),
+        )
+        .route(
+            "/api/core/integration/v1/rules/{id}",
+            get(get_conversion_rule_api),
+        )
+        .route(
+            "/api/core/integration/v1/rules/{id}",
             put(update_conversion_rule_api),
         )
         .route(
-            "/api/integration/rules/{id}",
+            "/api/core/integration/v1/rules/{id}",
             delete(delete_conversion_rule_api),
         )
         .route(
-            "/api/integration/rules/{id}/executions",
+            "/api/core/integration/v1/rules/{id}/executions",
             get(get_rule_executions_api),
         )
         .route(
-            "/api/integration/rules/{id}/execute",
+            "/api/core/integration/v1/rules/{id}/execute",
             post(execute_conversion_rule_api),
         )
         .route(
-            "/api/integration/rules/{id}/enable",
+            "/api/core/integration/v1/rules/{id}/enable",
             post(enable_conversion_rule_api),
         )
         .route(
-            "/api/integration/rules/{id}/disable",
+            "/api/core/integration/v1/rules/{id}/disable",
             post(disable_conversion_rule_api),
         )
         .layer(axum::middleware::from_fn_with_state(

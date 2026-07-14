@@ -10,67 +10,67 @@ deployment:
   base_path: /api/hrm
 
 permissions:
-  - code: hrm:employee:read
+  - code: hrm:read
     name: 查看员工
     resource_type: employee
     action: read
-  - code: hrm:employee:write
+  - code: hrm:write
     name: 管理员工
     resource_type: employee
     action: write
-  - code: hrm:department:read
+  - code: hrm:read
     name: 查看部门
     resource_type: department
     action: read
-  - code: hrm:department:write
+  - code: hrm:write
     name: 管理部门
     resource_type: department
     action: write
-  - code: hrm:attendance:read
+  - code: hrm:read
     name: 查看考勤
     resource_type: attendance
     action: read
-  - code: hrm:attendance:write
+  - code: hrm:write
     name: 管理考勤
     resource_type: attendance
     action: write
-  - code: hrm:leave:read
+  - code: hrm:read
     name: 查看请假
     resource_type: leave
     action: read
-  - code: hrm:leave:write
+  - code: hrm:write
     name: 管理请假
     resource_type: leave
     action: write
-  - code: hrm:payroll:read
+  - code: hrm:read
     name: 查看薪酬
     resource_type: payroll
     action: read
-  - code: hrm:payroll:write
+  - code: hrm:write
     name: 管理薪酬
     resource_type: payroll
     action: write
-  - code: hrm:recruitment:read
+  - code: hrm:read
     name: 查看招聘
     resource_type: recruitment
     action: read
-  - code: hrm:recruitment:write
+  - code: hrm:write
     name: 管理招聘
     resource_type: recruitment
     action: write
-  - code: hrm:training:read
+  - code: hrm:read
     name: 查看培训
     resource_type: training
     action: read
-  - code: hrm:training:write
+  - code: hrm:write
     name: 管理培训
     resource_type: training
     action: write
-  - code: hrm:performance:read
+  - code: hrm:read
     name: 查看绩效
     resource_type: performance
     action: read
-  - code: hrm:performance:write
+  - code: hrm:write
     name: 管理绩效
     resource_type: performance
     action: write

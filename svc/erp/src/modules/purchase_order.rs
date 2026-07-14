@@ -30,17 +30,17 @@ pub fn create_routes() -> Router<ApiState> {
             get(list_purchase_orders).post(create_purchase_order),
         )
         .route(
-            "/api/erp/purchase-orders/:id",
+            "/api/erp/purchase-orders/{id}",
             get(get_purchase_order)
                 .put(update_purchase_order)
                 .delete(delete_purchase_order),
         )
         .route(
-            "/api/erp/purchase-orders/:id/approve",
+            "/api/erp/purchase-orders/{id}/approve",
             put(approve_purchase_order),
         )
         .route(
-            "/api/erp/purchase-orders/:id/cancel",
+            "/api/erp/purchase-orders/{id}/cancel",
             put(cancel_purchase_order),
         )
 }

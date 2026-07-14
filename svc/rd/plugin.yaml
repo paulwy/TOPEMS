@@ -1,0 +1,15 @@
+code: "rd"
+name: "研发管理"
+version: "1.0.0"
+description: "RD 研发管理系统 - 项目管理、实验记录、配方管理"
+category: "R&D"
+plugin_type: "business"
+deployment:
+  port: 8053
+  base_path: /api/rd
+permissions:
+  - project
+  - experiment
+  - formula
+  - material
+  - patent

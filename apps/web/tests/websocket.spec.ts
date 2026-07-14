@@ -72,7 +72,7 @@ test.describe('WebSocket代理验证', () => {
     }
   });
 
-  test('WebSocket /ws/notifications 连接验证', async ({ page }) => {
+  test('WebSocket /ws/core/notifications 连接验证', async ({ page }) => {
     const wsMessages: string[] = [];
 
     page.on('websocket', ws => {
@@ -94,7 +94,7 @@ test.describe('WebSocket代理验证', () => {
       .map(msg => msg.replace('opened:', ''));
 
     const hasNotificationWs = wsUrls.some(url =>
-      url.includes('/ws/notifications') || url.includes('notifications')
+      url.includes('/ws/core/notifications') || url.includes('notifications')
     );
 
     if (hasNotificationWs) {
@@ -104,7 +104,7 @@ test.describe('WebSocket代理验证', () => {
     }
   });
 
-  test('WebSocket /ws/im 连接验证', async ({ page }) => {
+  test('WebSocket /ws/core/im 连接验证', async ({ page }) => {
     const wsMessages: string[] = [];
 
     page.on('websocket', ws => {
@@ -120,7 +120,7 @@ test.describe('WebSocket代理验证', () => {
       .map(msg => msg.replace('opened:', ''));
 
     const hasImWs = wsUrls.some(url =>
-      url.includes('/ws/im') || url.includes('im')
+      url.includes('/ws/core/im') || url.includes('im')
     );
 
     if (hasImWs) {

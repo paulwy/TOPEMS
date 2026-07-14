@@ -24,30 +24,30 @@ permissions:
   - code: ai:generate
     name: AI 生成
     description: 使用内容生成功能
-  - code: ai:document:read
+  - code: ai:read
     name: 查看文档
     description: 查看已上传的文档
-  - code: ai:document:upload
+  - code: ai:write
     name: 上传文档
     description: 上传文档进行智能分析
-  - code: ai:document:delete
+  - code: ai:delete
     name: 删除文档
     description: 删除已上传的文档
-  - code: ai:vector:read
+  - code: ai:read
     name: 查看向量
     description: 查看向量存储
-  - code: ai:vector:write
+  - code: ai:write
     name: 管理向量
     description: 存储和管理向量
-  - code: ai:qa:ask
+  - code: ai:write
     name: QA 问答
     description: 使用问答功能
-  - code: ai:analysis:sentiment
+  - code: ai:write
     name: 情感分析
     description: 使用情感分析功能
-  - code: ai:analysis:classify
+  - code: ai:write
     name: 文本分类
     description: 使用文本分类功能
-  - code: ai:connector:manage
+  - code: ai:write
     name: 管理连接器
     description: 管理数据连接器

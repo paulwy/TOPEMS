@@ -270,7 +270,7 @@ pub fn create_faq_routes() -> axum::Router<AppState> {
         .route("/faqs", axum::routing::get(list_faqs).post(create_faq))
         .route("/faqs/categories", axum::routing::get(get_faq_categories))
         .route(
-            "/faqs/:id",
+            "/faqs/{id}",
             axum::routing::get(get_faq)
                 .put(update_faq)
                 .delete(delete_faq),

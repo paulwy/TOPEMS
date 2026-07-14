@@ -28,7 +28,7 @@ pub fn create_routes() -> Router<ApiState> {
             get(list_sales_orders).post(create_sales_order),
         )
         .route(
-            "/api/erp/sales-orders/:id",
+            "/api/erp/sales-orders/{id}",
             get(get_sales_order)
                 .put(update_sales_order)
                 .delete(delete_sales_order),

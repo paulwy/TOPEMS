@@ -24,19 +24,19 @@ pub struct SalaryAdjustmentPaginationParams {
 pub fn create_routes() -> Router<ApiState> {
     Router::new()
         .route(
-            "/api/hrm/salary-adjustments",
+            "/api/core/hrm/v1/salary-adjustments",
             get(list_salary_adjustments).post(create_salary_adjustment),
         )
         .route(
-            "/api/hrm/salary-adjustments/{id}",
+            "/api/core/hrm/v1/salary-adjustments/{id}",
             get(get_salary_adjustment).put(update_salary_adjustment),
         )
         .route(
-            "/api/hrm/salary-adjustments/{id}/approve",
+            "/api/core/hrm/v1/salary-adjustments/{id}/approve",
             put(approve_salary_adjustment),
         )
         .route(
-            "/api/hrm/salary-adjustments/{id}/reject",
+            "/api/core/hrm/v1/salary-adjustments/{id}/reject",
             put(reject_salary_adjustment),
         )
 }

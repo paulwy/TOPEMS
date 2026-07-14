@@ -2,7 +2,7 @@ code: erp
 name: 企业资源计划
 version: 1.0.0
 description: ERP 企业资源计划系统，包含资产管理、财务管理、凭证管理、字典管理等模块
-plugin_type: business
+plugin_type: system
 
 deployment:
   type: standalone
@@ -11,119 +11,119 @@ deployment:
 
 permissions:
   # 资产管理
-  - code: erp:asset:read
+  - code: erp:read
     name: 查看资产
     resource_type: asset
     action: read
-  - code: erp:asset:write
+  - code: erp:write
     name: 管理资产
     resource_type: asset
     action: write
-  - code: erp:asset:delete
+  - code: erp:delete
     name: 删除资产
     resource_type: asset
     action: delete
 
   # 固定资产
-  - code: erp:fixed_asset:read
+  - code: erp:read
     name: 查看固定资产
     resource_type: fixed_asset
     action: read
-  - code: erp:fixed_asset:write
+  - code: erp:write
     name: 管理固定资产
     resource_type: fixed_asset
     action: write
 
   # 财务账户
-  - code: erp:finance:read
+  - code: erp:read
     name: 查看财务
     resource_type: finance
     action: read
-  - code: erp:finance:write
+  - code: erp:write
     name: 管理财务
     resource_type: finance
     action: write
 
   # 凭证管理
-  - code: erp:voucher:read
+  - code: erp:read
     name: 查看凭证
     resource_type: voucher
     action: read
-  - code: erp:voucher:write
+  - code: erp:write
     name: 管理凭证
     resource_type: voucher
     action: write
-  - code: erp:voucher:approve
+  - code: erp:approve
     name: 审批凭证
     resource_type: voucher
     action: approve
 
   # 银行管理
-  - code: erp:bank:read
+  - code: erp:read
     name: 查看银行账户
     resource_type: bank
     action: read
-  - code: erp:bank:write
+  - code: erp:write
     name: 管理银行账户
     resource_type: bank
     action: write
 
   # 字典管理
-  - code: erp:dict:read
+  - code: erp:read
     name: 查看字典
     resource_type: dict
     action: read
-  - code: erp:dict:write
+  - code: erp:write
     name: 管理字典
     resource_type: dict
     action: write
 
   # 车辆管理
-  - code: erp:vehicle:read
+  - code: erp:read
     name: 查看车辆
     resource_type: vehicle
     action: read
-  - code: erp:vehicle:write
+  - code: erp:write
     name: 管理车辆
     resource_type: vehicle
     action: write
 
   # 会议室管理
-  - code: erp:meeting_room:read
+  - code: erp:read
     name: 查看会议室
     resource_type: meeting_room
     action: read
-  - code: erp:meeting_room:write
+  - code: erp:write
     name: 管理会议室
     resource_type: meeting_room
     action: write
 
   # 办公用品
-  - code: erp:office_supplies:read
+  - code: erp:read
     name: 查看办公用品
     resource_type: office_supplies
     action: read
-  - code: erp:office_supplies:write
+  - code: erp:write
     name: 管理办公用品
     resource_type: office_supplies
     action: write
 
   # 项目合同
-  - code: erp:project_contract:read
+  - code: erp:read
     name: 查看项目合同
     resource_type: project_contract
     action: read
-  - code: erp:project_contract:write
+  - code: erp:write
     name: 管理项目合同
     resource_type: project_contract
     action: write
 
   # 项目预算
-  - code: erp:project_budget:read
+  - code: erp:read
     name: 查看项目预算
     resource_type: project_budget
     action: read
-  - code: erp:project_budget:write
+  - code: erp:write
     name: 管理项目预算
     resource_type: project_budget
     action: write

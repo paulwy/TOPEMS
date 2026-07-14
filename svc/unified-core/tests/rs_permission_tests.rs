@@ -78,7 +78,7 @@ async fn test_rs_001_list_resources() {
     tracing::info!("测试 RS-001: 查看资源列表");
     let token = login("admin", "admin123").await.expect("管理员登录失败");
     let client = create_client();
-    match auth_request(&client, &token, "GET", "/api/rs/resources", None).await {
+    match auth_request(&client, &token, "GET", "/api/core/rs/v1/resources", None).await {
         Ok((status, body)) => {
             assert_eq!(status, 200, "状态码应为 200");
             assert!(body["success"].as_bool().unwrap_or(false), "请求应成功");
@@ -100,7 +100,7 @@ async fn test_rs_002_create_resource() {
         &client,
         &token,
         "POST",
-        "/api/rs/resources",
+        "/api/core/rs/v1/resources",
         Some(json!({
             "name": "测试资源",
             "type": "server",
@@ -125,7 +125,7 @@ async fn test_rs_003_allocate_resource() {
     tracing::info!("测试 RS-003: 分配资源");
     let token = login("admin", "admin123").await.expect("管理员登录失败");
     let client = create_client();
-    match auth_request(&client, &token, "GET", "/api/rs/resources", None).await {
+    match auth_request(&client, &token, "GET", "/api/core/rs/v1/resources", None).await {
         Ok((_, body)) => {
             let resources = body["data"]["resources"]
                 .as_array()
@@ -137,7 +137,7 @@ async fn test_rs_003_allocate_resource() {
                             &client,
                             &token,
                             "POST",
-                            &format!("/api/rs/resources/{}/allocate", id),
+                            &format!("/api/core/rs/v1/resources/{}/allocate", id),
                             Some(json!({ "user_id": null })),
                         )
                         .await
@@ -166,7 +166,7 @@ async fn test_rs_004_release_resource() {
     tracing::info!("测试 RS-004: 释放资源");
     let token = login("admin", "admin123").await.expect("管理员登录失败");
     let client = create_client();
-    match auth_request(&client, &token, "GET", "/api/rs/resources", None).await {
+    match auth_request(&client, &token, "GET", "/api/core/rs/v1/resources", None).await {
         Ok((_, body)) => {
             let resources = body["data"]["resources"]
                 .as_array()
@@ -181,7 +181,7 @@ async fn test_rs_004_release_resource() {
                             &client,
                             &token,
                             "POST",
-                            &format!("/api/rs/resources/{}/release", id),
+                            &format!("/api/core/rs/v1/resources/{}/release", id),
                             None,
                         )
                         .await
@@ -210,7 +210,7 @@ async fn test_rs_005_resource_stats() {
     tracing::info!("测试 RS-005: 资源使用统计");
     let token = login("admin", "admin123").await.expect("管理员登录失败");
     let client = create_client();
-    match auth_request(&client, &token, "GET", "/api/rs/stats", None).await {
+    match auth_request(&client, &token, "GET", "/api/core/rs/v1/stats", None).await {
         Ok((status, body)) => {
             assert_eq!(status, 200, "状态码应为 200");
             assert!(body["success"].as_bool().unwrap_or(false), "请求应成功");

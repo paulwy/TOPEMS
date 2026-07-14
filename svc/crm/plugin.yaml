@@ -10,43 +10,43 @@ deployment:
   base_path: /api/crm
 
 permissions:
-  - code: crm:customer:read
+  - code: crm:read
     name: 查看客户
     resource_type: customer
     action: read
-  - code: crm:customer:write
+  - code: crm:write
     name: 管理客户
     resource_type: customer
     action: write
-  - code: crm:contact:read
+  - code: crm:read
     name: 查看联系人
     resource_type: contact
     action: read
-  - code: crm:contact:write
+  - code: crm:write
     name: 管理联系人
     resource_type: contact
     action: write
-  - code: crm:opportunity:read
+  - code: crm:read
     name: 查看销售机会
     resource_type: opportunity
     action: read
-  - code: crm:opportunity:write
+  - code: crm:write
     name: 管理销售机会
     resource_type: opportunity
     action: write
-  - code: crm:sales_forecast:read
+  - code: crm:read
     name: 查看销售预测
     resource_type: sales_forecast
     action: read
-  - code: crm:sales_forecast:write
+  - code: crm:write
     name: 管理销售预测
     resource_type: sales_forecast
     action: write
-  - code: crm:billing:read
+  - code: crm:read
     name: 查看计费
     resource_type: billing
     action: read
-  - code: crm:billing:write
+  - code: crm:write
     name: 管理计费
     resource_type: billing
     action: write

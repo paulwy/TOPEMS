@@ -6,14 +6,14 @@ export default defineConfig({
   plugins: [react()],
   resolve: {
     alias: [
-      { find: "@", replacement: path.resolve(__dirname, "./src") },
-      { find: "react-transition-group", replacement: path.resolve(__dirname, "../../node_modules/react-transition-group") },
-      { find: "react-transition-group/cjs", replacement: path.resolve(__dirname, "../../node_modules/react-transition-group/cjs") },
-      { find: "react-transition-group/TransitionGroupContext", replacement: path.resolve(__dirname, "../../node_modules/react-transition-group/cjs/TransitionGroupContext.js") },
+      { find: "@", replacement: path.resolve(__dirname, "../web/src") },
+      { find: "@topems/shared-types", replacement: path.resolve(__dirname, "../../packages/shared-types/src") },
+      { find: "@topems/shared-utils", replacement: path.resolve(__dirname, "../../packages/shared-utils/src") },
+      { find: "@topems/shared-components", replacement: path.resolve(__dirname, "../../packages/shared-components/src") },
+      { find: "@topems/shared-hooks", replacement: path.resolve(__dirname, "../../packages/shared-hooks/src") },
+      { find: "@topems/shared-constants", replacement: path.resolve(__dirname, "../../packages/shared-constants/src") },
+      { find: "@topems/tokens", replacement: path.resolve(__dirname, "../../packages/tokens/src") },
     ],
     dedupe: ["react", "react-dom", "scheduler"],
-  },
-  ssr: {
-    noExternal: ["react-transition-group"],
   },
 });

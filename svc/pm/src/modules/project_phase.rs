@@ -25,7 +25,7 @@ pub fn create_routes(pool: PgPool) -> Router {
 
 #[utoipa::path(
     get,
-    path = "/api/pm/projects/:project_id/phases",
+    path = "/api/pm/projects/{project_id}/phases",
     tag = "project_phases",
     responses(
         (status = 200, description = "获取项目阶段列表成功", body = ApiResponse<Vec<ProjectPhase>>),
@@ -54,7 +54,7 @@ async fn list_phases(
 
 #[utoipa::path(
     post,
-    path = "/api/pm/projects/:project_id/phases",
+    path = "/api/pm/projects/{project_id}/phases",
     tag = "project_phases",
     request_body = CreatePhaseRequest,
     responses(
@@ -119,7 +119,7 @@ async fn create_phase(
 
 #[utoipa::path(
     get,
-    path = "/api/pm/projects/:project_id/phases/:id",
+    path = "/api/pm/projects/{project_id}/phases/{id}",
     tag = "project_phases",
     responses(
         (status = 200, description = "获取项目阶段成功", body = ApiResponse<ProjectPhase>),
@@ -151,7 +151,7 @@ async fn get_phase(
 
 #[utoipa::path(
     put,
-    path = "/api/pm/projects/:project_id/phases/:id",
+    path = "/api/pm/projects/{project_id}/phases/{id}",
     tag = "project_phases",
     request_body = UpdatePhaseRequest,
     responses(
@@ -209,7 +209,7 @@ async fn update_phase(
 
 #[utoipa::path(
     delete,
-    path = "/api/pm/projects/:project_id/phases/:id",
+    path = "/api/pm/projects/{project_id}/phases/{id}",
     tag = "project_phases",
     responses(
         (status = 200, description = "删除项目阶段成功", body = ApiResponse<bool>),

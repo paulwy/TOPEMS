@@ -11,6 +11,8 @@ import {
   Divider,
   IconButton,
   Typography,
+  useMediaQuery,
+  useTheme,
 } from '@mui/material';
 import {
   Home,
@@ -21,6 +23,7 @@ import {
   Menu,
   Lightbulb,
   HelpCircle,
+  Search,
 } from 'lucide-react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { usePermission } from '../../hooks/usePermission';
@@ -61,9 +64,12 @@ export const MobileNav: React.FC<MobileNavProps> = ({ open, onClose, onOpen }) =
   const navigate = useNavigate();
   const location = useLocation();
   const { checkPermission } = usePermission();
+  const theme = useTheme();
+  const isTablet = useMediaQuery(theme.breakpoints.up('md'));
 
   const [expandedItems, setExpandedItems] = useState<Set<string>>(new Set());
   const [navItems, setNavItems] = useState<NavItem[]>([]);
+  const [searchQuery, setSearchQuery] = useState('');
 
   useEffect(() => {
     const topNavItems = navigationRegistryV2.getTopNavItems(checkPermission);
@@ -213,10 +219,16 @@ export const MobileNav: React.FC<MobileNavProps> = ({ open, onClose, onOpen }) =
         anchor='left'
         open={open}
         onClose={onClose}
+        variant={isTablet ? 'persistent' : 'temporary'}
         sx={{
           '& .MuiDrawer-paper': {
-            width: 300,
-            maxWidth: '85vw',
+            width: isTablet ? 280 : 320,
+            maxWidth: '90vw',
+            height: '100vh',
+            top: 56,
+            paddingTop: 0,
+            borderRadius: isTablet ? 0 : 0,
+            boxShadow: '0 8px 32px rgba(0, 0, 0, 0.15)',
           },
         }}
       >
@@ -259,6 +271,45 @@ export const MobileNav: React.FC<MobileNavProps> = ({ open, onClose, onOpen }) =
           >
             <X style={{ width: 20, height: 20 }} />
           </IconButton>
+        </Box>
+
+        <Box sx={{ p: 2, borderBottom: 1, borderColor: 'divider' }}>
+          <Box
+            sx={{
+              display: 'flex',
+              alignItems: 'center',
+              backgroundColor: 'grey.100',
+              borderRadius: 1,
+              px: 2,
+              py: 1.25,
+              gap: 1,
+            }}
+          >
+            <Search style={{ width: 16, height: 16, color: 'text.secondary' }} />
+            <input
+              type='text'
+              placeholder='搜索菜单...'
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              style={{
+                flex: 1,
+                border: 'none',
+                background: 'transparent',
+                fontSize: '0.875rem',
+                outline: 'none',
+                color: 'inherit',
+              }}
+            />
+            {searchQuery && (
+              <IconButton
+                size='small'
+                onClick={() => setSearchQuery('')}
+                sx={{ p: 0, color: 'text.secondary' }}
+              >
+                <X style={{ width: 14, height: 14 }} />
+              </IconButton>
+            )}
+          </Box>
         </Box>
 
         <Box sx={{ flex: 1, overflowY: 'auto', overflowX: 'hidden' }}>

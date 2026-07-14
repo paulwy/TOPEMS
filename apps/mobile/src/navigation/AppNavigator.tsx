@@ -7,6 +7,9 @@ import DashboardPage from '@/pages/DashboardPage';
 import TaskPage from '@/pages/TaskPage';
 import ApprovalPage from '@/pages/ApprovalPage';
 import AttendancePage from '@/pages/AttendancePage';
+import NotificationPage from '@/pages/NotificationPage';
+import DocumentPage from '@/pages/DocumentPage';
+import InventoryPage from '@/pages/InventoryPage';
 import { useAuthStore } from '@/store/authStore';
 import {
   Home,
@@ -14,6 +17,9 @@ import {
   ClipboardCheck,
   Calendar,
   User,
+  Bell,
+  FileText,
+  Package,
 } from 'lucide-react-native';
 
 export type RootStackParamList = {
@@ -26,6 +32,9 @@ export type MainTabParamList = {
   Task: undefined;
   Approval: undefined;
   Attendance: undefined;
+  Notification: undefined;
+  Document: undefined;
+  Inventory: undefined;
   Profile: undefined;
 };
 
@@ -46,6 +55,12 @@ const MainTabs: React.FC = () => {
               return <ClipboardCheck size={size} color={color} />;
             case 'Attendance':
               return <Calendar size={size} color={color} />;
+            case 'Notification':
+              return <Bell size={size} color={color} />;
+            case 'Document':
+              return <FileText size={size} color={color} />;
+            case 'Inventory':
+              return <Package size={size} color={color} />;
             case 'Profile':
               return <User size={size} color={color} />;
             default:
@@ -89,6 +104,21 @@ const MainTabs: React.FC = () => {
         name="Attendance"
         component={AttendancePage}
         options={{ title: '考勤' }}
+      />
+      <Tab.Screen
+        name="Notification"
+        component={NotificationPage}
+        options={{ title: '通知' }}
+      />
+      <Tab.Screen
+        name="Document"
+        component={DocumentPage}
+        options={{ title: '文档' }}
+      />
+      <Tab.Screen
+        name="Inventory"
+        component={InventoryPage}
+        options={{ title: '库存' }}
       />
       <Tab.Screen
         name="Profile"

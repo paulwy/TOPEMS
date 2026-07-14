@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState, useCallback } from 'react';
 import { apiLogger, logger } from '@/utils/logger';
 import {
   Card,
@@ -47,17 +47,14 @@ import {
 } from '@/components/templates';
 import { EmptyState } from '@/components';
 import { ImageUpload, PageContainer } from '@/components/common';
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 
 const HrmDepartmentPage: React.FC = () => {
   const theme = useTheme();
   const isMobile = useMediaQuery(theme.breakpoints.down('md'));
   const addNotification = useNotificationStore((state) => state.addNotification);
+  const queryClient = useQueryClient();
 
-  const [loading, setLoading] = useState(false);
-  const [departments, setDepartments] = useState<Department[]>([]);
-  const [totalDepartments, setTotalDepartments] = useState<number>(0);
-  const [employees, setEmployees] = useState<Employee[]>([]);
-  const [companies, setCompanies] = useState<Company[]>([]);
   const [searchText, setSearchText] = useState('');
   const [statusFilter, setStatusFilter] = useState('all');
 
@@ -73,85 +70,6 @@ const HrmDepartmentPage: React.FC = () => {
   const [formData, setFormData] = useState<Partial<Department>>({});
   const [selectedDeptId, setSelectedDeptId] = useState<string | undefined>();
   const [expandedIds, setExpandedIds] = useState<Set<string>>(new Set());
-  const [confirmDialogOpen, setConfirmDialogOpen] = useState(false);
-  const [confirmDialogConfig, setConfirmDialogConfig] = useState<{
-    title: string;
-    message: string;
-    onConfirm: () => void;
-    danger?: boolean;
-  } | null>(null);
-
-  const openConfirmDialog = (config: {
-    title: string;
-    message: string;
-    onConfirm: () => void;
-    danger?: boolean;
-  }) => {
-    setConfirmDialogConfig(config);
-    setConfirmDialogOpen(true);
-  };
-
-  // ============ 数据获取 ============
-  const fetchDepartments = useCallback(
-    async (params?: ListParams) => {
-      setLoading(true);
-      try {
-        const response = await departmentApi.list(params);
-        if (response.code === 200 && response.data) {
-          const data = response.data as PaginatedResult<Department>;
-          const depts = data.items || [];
-          setDepartments(depts);
-          setTotalDepartments(data.total || depts.length);
-
-          const rootDepts = depts.filter((d) => !d.parent_id);
-          rootDepts.forEach((d) => expandAllChildren(d, depts));
-        } else {
-          setDepartments([]);
-          setTotalDepartments(0);
-        }
-      } catch (error: unknown) {
-        addNotification({
-          title: '加载失败',
-          message: (error as { message?: string }).message || '获取部门列表失败',
-          type: 'error',
-        });
-        setDepartments([]);
-        setTotalDepartments(0);
-      } finally {
-        setLoading(false);
-      }
-    },
-
-    [addNotification]
-  );
-
-  const expandAllChildren = useCallback((dept: Department, allDepts: Department[]) => {
-    setExpandedIds((prev) => {
-      const newExpanded = new Set(prev);
-      newExpanded.add(dept.id);
-      const children = allDepts.filter((d) => d.parent_id === dept.id);
-      children.forEach((child) => expandAllChildren(child, allDepts));
-      return newExpanded;
-    });
-  }, []);
-
-  const fetchDepartmentEmployees = useCallback(async (deptId: string) => {
-    try {
-      const response = await employeeApi.list({
-        department_id: deptId,
-        pagesize: 100,
-      });
-      if (response.code === 200 && response.data) {
-        const data = response.data as PaginatedResult<Employee>;
-        setEmployees(data.items || []);
-      } else {
-        setEmployees([]);
-      }
-    } catch (error: unknown) {
-      apiLogger.error('Failed to fetch employees:', error);
-      setEmployees([]);
-    }
-  }, []);
 
   const toggleExpand = useCallback((id: string) => {
     setExpandedIds((prev) => {
@@ -164,6 +82,140 @@ const HrmDepartmentPage: React.FC = () => {
       return newExpanded;
     });
   }, []);
+
+  // ============ React Query - 部门列表 ============
+  const departmentsQuery = useQuery({
+    queryKey: ['hrm-departments', searchText, statusFilter],
+    queryFn: async () => {
+      const params: ListParams = { pagesize: 1000 };
+      if (searchText) params.search = searchText;
+      if (statusFilter !== 'all') params.status = statusFilter;
+      const response = await departmentApi.list(params);
+      if (response.code === 200 && response.data) {
+        const data = response.data as PaginatedResult<Department>;
+        const depts = data.items || [];
+        const rootDepts = depts.filter((d) => !d.parent_id);
+        rootDepts.forEach((d) => {
+          const expandAllChildren = (dept: Department, allDepts: Department[]) => {
+            setExpandedIds((prev) => {
+              const newExpanded = new Set(prev);
+              newExpanded.add(dept.id);
+              const children = allDepts.filter((child) => child.parent_id === dept.id);
+              children.forEach((child) => expandAllChildren(child, allDepts));
+              return newExpanded;
+            });
+          };
+          expandAllChildren(d, depts);
+        });
+        return depts;
+      }
+      return [];
+    },
+    staleTime: 5 * 60 * 1000,
+  });
+
+  const departments = departmentsQuery.data || [];
+  const loading = departmentsQuery.isLoading;
+  const totalDepartments = departments.length;
+
+  // ============ React Query - 公司列表 ============
+  const companiesQuery = useQuery({
+    queryKey: ['hrm-companies'],
+    queryFn: async () => {
+      const response = await companyApi.list({ pagesize: 100 });
+      if (response.code === 200 && response.data) {
+        const data = response.data as PaginatedResult<Company>;
+        return data.items || [];
+      }
+      return [];
+    },
+    staleTime: 30 * 60 * 1000,
+  });
+
+  const companies = companiesQuery.data || [];
+
+  // ============ React Query - 部门员工列表 ============
+  const employeesQuery = useQuery({
+    queryKey: ['hrm-department-employees', selectedDeptId],
+    queryFn: async () => {
+      if (!selectedDeptId) return [];
+      const response = await employeeApi.list({
+        department_id: selectedDeptId,
+        pagesize: 100,
+      });
+      if (response.code === 200 && response.data) {
+        const data = response.data as PaginatedResult<Employee>;
+        return data.items || [];
+      }
+      return [];
+    },
+    enabled: !!selectedDeptId,
+    staleTime: 5 * 60 * 1000,
+  });
+
+  const employees = employeesQuery.data || [];
+
+  // ============ React Query - Mutations ============
+  const createMutation = useMutation({
+    mutationFn: (data: Partial<Department>) => departmentApi.create(data),
+    onSuccess: () => {
+      addNotification({
+        title: '成功',
+        message: '部门创建成功',
+        type: 'success',
+      });
+      queryClient.invalidateQueries({ queryKey: ['hrm-departments'] });
+    },
+    onError: (error: unknown) => {
+      addNotification({
+        title: '失败',
+        message: (error as { message?: string }).message || '创建部门失败',
+        type: 'error',
+      });
+    },
+  });
+
+  const updateMutation = useMutation({
+    mutationFn: ({ id, data }: { id: string; data: Partial<Department> }) =>
+      departmentApi.update(id, data),
+    onSuccess: () => {
+      addNotification({
+        title: '成功',
+        message: '部门更新成功',
+        type: 'success',
+      });
+      queryClient.invalidateQueries({ queryKey: ['hrm-departments'] });
+    },
+    onError: (error: unknown) => {
+      addNotification({
+        title: '失败',
+        message: (error as { message?: string }).message || '更新部门失败',
+        type: 'error',
+      });
+    },
+  });
+
+  const deleteMutation = useMutation({
+    mutationFn: (id: string) => departmentApi.delete(id),
+    onSuccess: () => {
+      addNotification({
+        title: '成功',
+        message: '部门删除成功',
+        type: 'success',
+      });
+      queryClient.invalidateQueries({ queryKey: ['hrm-departments'] });
+      if (selectedDeptId) {
+        setSelectedDeptId(undefined);
+      }
+    },
+    onError: (error: unknown) => {
+      addNotification({
+        title: '失败',
+        message: (error as { message?: string }).message || '删除部门失败',
+        type: 'error',
+      });
+    },
+  });
 
   // ============ 树形数据构建 ============
   const buildTree = useCallback((): TreeNode[] => {
@@ -251,34 +303,19 @@ const HrmDepartmentPage: React.FC = () => {
       icon: <Trash2 style={{ width: 16, height: 16 }} />,
       onClick: (node) => {
         const dept = node.data as Department;
-        openConfirmDialog({
+        const confirmDelete = async () => {
+          try {
+            await deleteMutation.mutateAsync(dept.id);
+          } catch (error: unknown) {
+            apiLogger.error('删除失败:', error);
+          }
+        };
+        setShowViewModal(false);
+        setConfirmDialogOpen(true);
+        setConfirmDialogConfig({
           title: '确认删除',
           message: '确定要删除这个部门吗？',
-          onConfirm: async () => {
-            try {
-              const response = await departmentApi.delete(dept.id);
-              if (response.code === 200) {
-                addNotification({
-                  title: '成功',
-                  message: '部门删除成功',
-                  type: 'success',
-                });
-                fetchDepartments();
-              } else {
-                addNotification({
-                  title: '失败',
-                  message: '删除部门失败',
-                  type: 'error',
-                });
-              }
-            } catch (error: unknown) {
-              addNotification({
-                title: '失败',
-                message: (error as { message?: string }).message || '删除部门失败',
-                type: 'error',
-              });
-            }
-          },
+          onConfirm: confirmDelete,
           danger: true,
         });
       },
@@ -299,7 +336,6 @@ const HrmDepartmentPage: React.FC = () => {
 
   const detailPanel = selectedDept ? (
     <Box>
-      {/* 部门信息卡片 */}
       <Card sx={{ mb: 3 }}>
         <CardHeader
           sx={{
@@ -339,7 +375,6 @@ const HrmDepartmentPage: React.FC = () => {
           }
         />
         <CardContent>
-          {/* 统计卡片 */}
           <Box
             sx={{
               display: 'grid',
@@ -415,7 +450,6 @@ const HrmDepartmentPage: React.FC = () => {
             </Box>
           </Box>
 
-          {/* 描述 */}
           {selectedDept.description && (
             <Box sx={{ mb: 3 }}>
               <Typography
@@ -431,7 +465,6 @@ const HrmDepartmentPage: React.FC = () => {
 
           <Divider sx={{ my: 2 }} />
 
-          {/* 部门成员 */}
           <Box>
             <Box
               sx={{
@@ -556,45 +589,26 @@ const HrmDepartmentPage: React.FC = () => {
     </Box>
   ) : null;
 
+  // ============ 确认对话框状态 ============
+  const [confirmDialogOpen, setConfirmDialogOpen] = useState(false);
+  const [confirmDialogConfig, setConfirmDialogConfig] = useState<{
+    title: string;
+    message: string;
+    onConfirm: () => void;
+    danger?: boolean;
+  } | null>(null);
+
   // ============ 事件处理 ============
-  const fetchCompanies = useCallback(async () => {
-    try {
-      const response = await companyApi.list({ pagesize: 100 });
-      if (response.code === 200 && response.data) {
-        const data = response.data as PaginatedResult<Company>;
-        setCompanies(data.items || []);
-      }
-    } catch (error: unknown) {
-      apiLogger.error('Failed to fetch companies:', error);
-    }
-  }, []);
-
-  useEffect(() => {
-    fetchDepartments({ pagesize: 1000 });
-    fetchCompanies();
-  }, [fetchDepartments, fetchCompanies]);
-
-  useEffect(() => {
-    if (selectedDeptId) {
-      fetchDepartmentEmployees(selectedDeptId);
-    } else {
-      setEmployees([]);
-    }
-  }, [selectedDeptId, fetchDepartmentEmployees]);
-
   const handleSearch = useCallback(() => {
-    fetchDepartments({
-      search: searchText || undefined,
-      status: statusFilter === 'all' ? undefined : statusFilter,
-    });
-  }, [searchText, statusFilter, fetchDepartments]);
+    queryClient.invalidateQueries({ queryKey: ['hrm-departments'] });
+  }, [queryClient]);
 
   const handleReset = useCallback(() => {
     setSearchText('');
     setStatusFilter('all');
     setSelectedDeptId(undefined);
-    fetchDepartments();
-  }, [fetchDepartments]);
+    queryClient.invalidateQueries({ queryKey: ['hrm-departments'] });
+  }, [queryClient]);
 
   const handleAdd = useCallback(() => {
     setSelectedDepartment(null);
@@ -615,66 +629,39 @@ const HrmDepartmentPage: React.FC = () => {
 
   const handleDelete = useCallback(
     (id: string) => {
-      openConfirmDialog({
+      const confirmDelete = async () => {
+        try {
+          await deleteMutation.mutateAsync(id);
+          if (selectedDeptId === id) {
+            setSelectedDeptId(undefined);
+          }
+        } catch (error: unknown) {
+          apiLogger.error('删除失败:', error);
+        }
+      };
+      setConfirmDialogConfig({
         title: '确认删除',
         message: '确定要删除这个部门吗？',
-        onConfirm: async () => {
-          try {
-            const response = await departmentApi.delete(id);
-            if (response.code === 200) {
-              addNotification({
-                title: '成功',
-                message: '部门删除成功',
-                type: 'success',
-              });
-              fetchDepartments();
-              if (selectedDeptId === id) {
-                setSelectedDeptId(undefined);
-                setEmployees([]);
-              }
-            } else {
-              addNotification({
-                title: '失败',
-                message: '删除部门失败',
-                type: 'error',
-              });
-            }
-          } catch (error: unknown) {
-            addNotification({
-              title: '失败',
-              message: (error as { message?: string }).message || '删除部门失败',
-              type: 'error',
-            });
-          }
-        },
+        onConfirm: confirmDelete,
         danger: true,
       });
+      setConfirmDialogOpen(true);
     },
-    [addNotification, fetchDepartments, selectedDeptId]
+    [deleteMutation, selectedDeptId]
   );
 
   const handleCreate = useCallback(
     async (e: React.FormEvent) => {
       e.preventDefault();
       try {
-        await departmentApi.create(formData);
-        addNotification({
-          title: '成功',
-          message: '部门创建成功',
-          type: 'success',
-        });
+        await createMutation.mutateAsync(formData);
         setShowCreateModal(false);
         setFormData({});
-        fetchDepartments();
       } catch (error: unknown) {
-        addNotification({
-          title: '失败',
-          message: (error as { message?: string }).message || '创建部门失败',
-          type: 'error',
-        });
+        apiLogger.error('创建失败:', error);
       }
     },
-    [formData, addNotification, fetchDepartments]
+    [createMutation, formData]
   );
 
   const handleUpdate = useCallback(
@@ -682,24 +669,14 @@ const HrmDepartmentPage: React.FC = () => {
       e.preventDefault();
       if (!selectedDepartment) return;
       try {
-        await departmentApi.update(selectedDepartment.id, formData);
-        addNotification({
-          title: '成功',
-          message: '部门更新成功',
-          type: 'success',
-        });
+        await updateMutation.mutateAsync({ id: selectedDepartment.id, data: formData });
         setShowEditModal(false);
         setSelectedDepartment(null);
-        fetchDepartments();
       } catch (error: unknown) {
-        addNotification({
-          title: '失败',
-          message: (error as { message?: string }).message || '更新部门失败',
-          type: 'error',
-        });
+        apiLogger.error('更新失败:', error);
       }
     },
-    [selectedDepartment, formData, addNotification, fetchDepartments]
+    [updateMutation, selectedDepartment, formData]
   );
 
   const handleInputChange = useCallback((field: string, value: unknown) => {
@@ -743,7 +720,6 @@ const HrmDepartmentPage: React.FC = () => {
   }, []);
 
   const handleFixIssue = useCallback((issue: ValidationIssue) => {
-    // 简单实现
   }, []);
 
   const availableParentDepts = departments.filter(
@@ -773,7 +749,7 @@ const HrmDepartmentPage: React.FC = () => {
         selectedId={selectedDeptId}
         detailPanel={detailPanel}
         detailPanelTitle='部门详情'
-        onRefresh={() => fetchDepartments()}
+        onRefresh={() => queryClient.invalidateQueries({ queryKey: ['hrm-departments'] })}
         treeWidth={360}
         emptyState={{
           emoji: '🏢',
@@ -782,7 +758,7 @@ const HrmDepartmentPage: React.FC = () => {
           onAction: handleAdd,
         }}
       />
-      // 新增/编辑模态框
+
       <DepartmentFormDialog
         open={showCreateModal || showEditModal}
         onClose={() => {
@@ -800,7 +776,7 @@ const HrmDepartmentPage: React.FC = () => {
         onOpenAITextOptimizer={handleOpenAITextOptimizer}
         onOpenAIFormValidator={handleOpenAIFormValidator}
       />
-      // 查看详情模态框
+
       <Dialog
         open={showViewModal}
         onClose={() => setShowViewModal(false)}
@@ -894,7 +870,7 @@ const HrmDepartmentPage: React.FC = () => {
           <Button onClick={() => setShowViewModal(false)}>关闭</Button>
         </DialogActions>
       </Dialog>
-      // AI 组件
+
       <AICodeGenerator
         isOpen={showAICodeGenerator}
         onClose={() => setShowAICodeGenerator(false)}
@@ -936,8 +912,6 @@ const HrmDepartmentPage: React.FC = () => {
     </PageContainer>
   );
 };
-
-// ============ 部门表单模态框 ============
 
 interface DepartmentFormDialogProps {
   open: boolean;

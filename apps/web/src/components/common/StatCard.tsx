@@ -41,6 +41,7 @@ import {
   Award,
   type LucideIcon,
 } from 'lucide-react';
+import { useTouchFeedback } from '@/hooks/useTouchFeedback';
 
 // ============ 类型定义 ============
 
@@ -389,6 +390,25 @@ export const StatCardBase: React.FC<StatCardBaseProps> = ({
   const [isVisible, setIsVisible] = useState(false);
   const cardRef = useRef<HTMLDivElement>(null);
 
+  const colorInfo = COLOR_MAP[color] || COLOR_MAP.blue;
+  const iconGradient = gradient
+    ? `linear-gradient(135deg, ${gradient[0]}, ${gradient[1]})`
+    : colorInfo.gradient;
+
+  const {
+    isPressed,
+    ripples,
+    rippleStyle,
+    getTouchStyles,
+    handleTouchStart,
+    handleTouchEnd,
+    handleTouchCancel,
+  } = useTouchFeedback({
+    rippleColor: iconGradient,
+    minTouchTarget: 48,
+    enableHapticFeedback: true,
+  });
+
   useEffect(() => {
     const observer = new IntersectionObserver(
       ([entry]) => {
@@ -458,15 +478,13 @@ export const StatCardBase: React.FC<StatCardBaseProps> = ({
     return computedTrend === 'up' ? 'success.lightest' : 'error.lightest';
   };
 
-  const colorInfo = COLOR_MAP[color] || COLOR_MAP.blue;
-  const iconGradient = gradient
-    ? `linear-gradient(135deg, ${gradient[0]}, ${gradient[1]})`
-    : colorInfo.gradient;
-
   return (
     <Box
       ref={cardRef}
       onClick={onClick}
+      onTouchStart={handleTouchStart}
+      onTouchEnd={handleTouchEnd}
+      onTouchCancel={handleTouchCancel}
       sx={{
         position: 'relative',
         backgroundColor: 'background.paper',
@@ -477,10 +495,15 @@ export const StatCardBase: React.FC<StatCardBaseProps> = ({
         overflow: 'hidden',
         transition: 'all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275)',
         cursor: onClick ? 'pointer' : 'default',
+        touchAction: 'manipulation',
+        WebkitTapHighlightColor: 'transparent',
+        userSelect: 'none',
+        WebkitUserSelect: 'none',
+        transform: isPressed ? 'scale(0.98)' : 'scale(1)',
         '&:hover': onClick
           ? {
               boxShadow: 4,
-              transform: 'translateY(-2px)',
+              transform: isPressed ? 'scale(0.98)' : 'translateY(-2px)',
             }
           : {},
         ...sx,
@@ -653,6 +676,34 @@ export const StatCardBase: React.FC<StatCardBaseProps> = ({
           </Box>
         )}
       </Box>
+
+      {ripples.map((ripple) => (
+        <span
+          key={ripple.id}
+          style={{
+            ...rippleStyle,
+            left: ripple.x,
+            top: ripple.y,
+            width: '100%',
+            height: '100%',
+            marginLeft: '-50%',
+            marginTop: '-50%',
+            animation: 'ripple-effect 0.6s ease-out forwards',
+          }}
+        />
+      ))}
+      <style>{`
+        @keyframes ripple-effect {
+          0% {
+            transform: scale(0);
+            opacity: 0.5;
+          }
+          100% {
+            transform: scale(4);
+            opacity: 0;
+          }
+        }
+      `}</style>
     </Box>
   );
 };

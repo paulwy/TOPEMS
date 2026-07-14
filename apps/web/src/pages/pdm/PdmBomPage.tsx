@@ -17,7 +17,7 @@ import { Plus, Edit, Delete, Layers, ArrowDownRight, Database } from 'lucide-rea
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { pdmApi } from '@/api/pdm';
 import type { BomItem, Product } from '@/api/pdm';
-import { useAppStore } from '@/store';
+import { useNotificationStore } from '@/store';
 import { apiLogger } from '@/utils/logger';
 import {
   ListPageTemplate,
@@ -42,7 +42,7 @@ interface BomItemFormData {
 
 export const PdmBomPage: React.FC = () => {
   const queryClient = useQueryClient();
-  const addNotification = useAppStore((state) => state.addNotification);
+  const addNotification = useNotificationStore((state) => state.addNotification);
 
   const [selectedProduct, setSelectedProduct] = useState('');
   const [searchTerm, setSearchTerm] = useState('');

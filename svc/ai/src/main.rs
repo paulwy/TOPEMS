@@ -705,7 +705,7 @@ async fn vector_search(query: &str, top_k: usize) -> Vec<(VectorEmbedding, f64)>
 }
 
 async fn home() -> &'static str {
-    "TOPEMS-AI 智能知识库服务 API\n\nPublic Endpoints:\n  GET  /              - API documentation\n  GET  /health        - Health check\n  GET  /api/plugins/info     - Plugin info\n  GET  /api/plugins/health   - Plugin health\n  GET  /api/ai/health/detailed - Detailed health\n  GET  /api/ai/metrics       - Metrics\n  POST /api/ai/search        - AI search\n  GET  /api/info            - API info\n\nProtected Endpoints (require JWT token):\n\nChat & Generation:\n  POST /api/ai/chat          - Chat with AI\n  POST /api/ai/generate      - Generate content\n  POST /api/ai/validate     - Data validation\n  POST /api/ai/complete     - Data completion\n  POST /api/ai/summarize    - Text summarization\n  GET  /api/ai/templates    - List AI templates\n\nDocuments:\n  GET  /api/ai/documents              - List documents\n  POST /api/ai/documents/upload        - Upload document\n  GET  /api/ai/documents/{id}         - Get document\n  DELETE /api/ai/documents/{id}       - Delete document\n  POST /api/ai/documents/{id}/process - Process document\n  POST /api/ai/documents/{id}/extract - Extract from document\n  POST /api/ai/documents/{id}/summarize - Summarize document\n  POST /api/ai/documents/{id}/key-points - Extract key points\n  POST /api/ai/documents/qa           - Document Q&A\n\nVectors:\n  GET  /api/ai/vectors/stats         - Vector stats\n  POST /api/ai/vectors/search        - Vector search\n  POST /api/ai/vectors/store         - Store vector\n  POST /api/ai/vectors/batch-store  - Batch store vectors\n  GET  /api/ai/vectors/{id}         - Get vector\n  DELETE /api/ai/vectors/{id}       - Delete vector\n  POST /api/ai/vectors/clear        - Clear all vectors\n  POST /api/ai/vectors/hybrid-search - Hybrid search\n  POST /api/ai/embedding/generate   - Generate embeddings\n\nQA (Question Answering):\n  POST /api/ai/qa/ask              - Ask question\n  POST /api/ai/qa/ask-with-context - Ask with context\n  POST /api/ai/qa/ask-structured   - Structured response\n  POST /api/ai/qa/ask-conversation - Conversational Q&A\n  POST /api/ai/qa/classify         - Classify question\n  GET  /api/ai/qa/history          - Q&A history\n  DELETE /api/ai/qa/history/{id}   - Delete history item\n  POST /api/ai/qa/feedback         - Submit feedback\n\nAnalysis:\n  POST /api/ai/analysis/sentiment   - Sentiment analysis\n  POST /api/ai/analysis/classify    - Text classification\n  POST /api/ai/analysis/entities    - Extract entities\n  POST /api/ai/analysis/keywords    - Extract keywords\n  GET  /api/ai/analysis/history     - Analysis history\n\nConnectors:\n  GET  /api/ai/connectors          - List connectors\n  GET  /api/ai/connectors/get      - Get connector\n  POST /api/ai/connectors/create   - Create connector\n  POST /api/ai/connectors/update   - Update connector\n  POST /api/ai/connectors/delete   - Delete connector\n  GET  /api/ai/connectors/test     - Test connector\n  POST /api/ai/connectors/query    - Query data\n\nRecommendation:\n  POST /api/ai/recommend           - General recommendations\n  POST /api/ai/recommend/documents - Document recommendations\n  POST /api/ai/recommend/opportunities - Opportunity recommendations\n  POST /api/ai/recommend/knowledge - Knowledge recommendations\n  POST /api/ai/profile/get         - Get user profile\n  POST /api/ai/profile/update      - Update user profile\n\nMultimodal:\n  POST /api/ai/multimodal/image/analyze   - Analyze image\n  POST /api/ai/multimodal/image/caption   - Generate caption\n  POST /api/ai/multimodal/image/objects   - Detect objects\n  POST /api/ai/multimodal/image/text      - Extract text from image\n  POST /api/ai/multimodal/image/describe  - Describe image\n  POST /api/ai/multimodal/video/analyze   - Analyze video\n  POST /api/ai/multimodal/video/summary   - Summarize video\n\nAgent:\n  POST /api/ai/agent/execute       - Execute agent task\n  GET  /api/ai/agent/status/{id}  - Get task status\n"
+    "TOPEMS-AI 智能知识库服务 API\n\nPublic Endpoints:\n  GET  /              - API documentation\n  GET  /health        - Health check\n  GET  /api/plugins/info     - Plugin info\n  GET  /api/plugins/health   - Plugin health\n  GET  /api/core/ai/v1/health/detailed - Detailed health\n  GET  /api/core/ai/v1/metrics       - Metrics\n  POST /api/core/ai/v1/search        - AI search\n  GET  /api/info            - API info\n\nProtected Endpoints (require JWT token):\n\nChat & Generation:\n  POST /api/core/ai/v1/chat          - Chat with AI\n  POST /api/core/ai/v1/generate      - Generate content\n  POST /api/core/ai/v1/validate     - Data validation\n  POST /api/core/ai/v1/complete     - Data completion\n  POST /api/core/ai/v1/summarize    - Text summarization\n  GET  /api/core/ai/v1/templates    - List AI templates\n\nDocuments:\n  GET  /api/core/ai/v1/documents              - List documents\n  POST /api/core/ai/v1/documents/upload        - Upload document\n  GET  /api/core/ai/v1/documents/{id}         - Get document\n  DELETE /api/core/ai/v1/documents/{id}       - Delete document\n  POST /api/core/ai/v1/documents/{id}/process - Process document\n  POST /api/core/ai/v1/documents/{id}/extract - Extract from document\n  POST /api/core/ai/v1/documents/{id}/summarize - Summarize document\n  POST /api/core/ai/v1/documents/{id}/key-points - Extract key points\n  POST /api/core/ai/v1/documents/qa           - Document Q&A\n\nVectors:\n  GET  /api/core/ai/v1/vectors/stats         - Vector stats\n  POST /api/core/ai/v1/vectors/search        - Vector search\n  POST /api/core/ai/v1/vectors/store         - Store vector\n  POST /api/core/ai/v1/vectors/batch-store  - Batch store vectors\n  GET  /api/core/ai/v1/vectors/{id}         - Get vector\n  DELETE /api/core/ai/v1/vectors/{id}       - Delete vector\n  POST /api/core/ai/v1/vectors/clear        - Clear all vectors\n  POST /api/core/ai/v1/vectors/hybrid-search - Hybrid search\n  POST /api/core/ai/v1/embedding/generate   - Generate embeddings\n\nQA (Question Answering):\n  POST /api/core/ai/v1/qa/ask              - Ask question\n  POST /api/core/ai/v1/qa/ask-with-context - Ask with context\n  POST /api/core/ai/v1/qa/ask-structured   - Structured response\n  POST /api/core/ai/v1/qa/ask-conversation - Conversational Q&A\n  POST /api/core/ai/v1/qa/classify         - Classify question\n  GET  /api/core/ai/v1/qa/history          - Q&A history\n  DELETE /api/core/ai/v1/qa/history/{id}   - Delete history item\n  POST /api/core/ai/v1/qa/feedback         - Submit feedback\n\nAnalysis:\n  POST /api/core/ai/v1/analysis/sentiment   - Sentiment analysis\n  POST /api/core/ai/v1/analysis/classify    - Text classification\n  POST /api/core/ai/v1/analysis/entities    - Extract entities\n  POST /api/core/ai/v1/analysis/keywords    - Extract keywords\n  GET  /api/core/ai/v1/analysis/history     - Analysis history\n\nConnectors:\n  GET  /api/core/ai/v1/connectors          - List connectors\n  GET  /api/core/ai/v1/connectors/get      - Get connector\n  POST /api/core/ai/v1/connectors/create   - Create connector\n  POST /api/core/ai/v1/connectors/update   - Update connector\n  POST /api/core/ai/v1/connectors/delete   - Delete connector\n  GET  /api/core/ai/v1/connectors/test     - Test connector\n  POST /api/core/ai/v1/connectors/query    - Query data\n\nRecommendation:\n  POST /api/core/ai/v1/recommend           - General recommendations\n  POST /api/core/ai/v1/recommend/documents - Document recommendations\n  POST /api/core/ai/v1/recommend/opportunities - Opportunity recommendations\n  POST /api/core/ai/v1/recommend/knowledge - Knowledge recommendations\n  POST /api/core/ai/v1/profile/get         - Get user profile\n  POST /api/core/ai/v1/profile/update      - Update user profile\n\nMultimodal:\n  POST /api/core/ai/v1/multimodal/image/analyze   - Analyze image\n  POST /api/core/ai/v1/multimodal/image/caption   - Generate caption\n  POST /api/core/ai/v1/multimodal/image/objects   - Detect objects\n  POST /api/core/ai/v1/multimodal/image/text      - Extract text from image\n  POST /api/core/ai/v1/multimodal/image/describe  - Describe image\n  POST /api/core/ai/v1/multimodal/video/analyze   - Analyze video\n  POST /api/core/ai/v1/multimodal/video/summary   - Summarize video\n\nAgent:\n  POST /api/core/ai/v1/agent/execute       - Execute agent task\n  GET  /api/core/ai/v1/agent/status/{id}  - Get task status\n"
 }
 
 async fn health() -> Json<ApiResponse<String>> {
@@ -1924,9 +1924,12 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
             "/api/plugins/health",
             get(modules::ai_plugin::plugin_health_check),
         )
-        .route("/api/ai/health/detailed", get(health_check_detailed))
-        .route("/api/ai/metrics", get(VectorApi::stats))
-        .route("/api/ai/search", post(ai_search))
+        .route(
+            "/api/core/ai/v1/health/detailed",
+            get(health_check_detailed),
+        )
+        .route("/api/core/ai/v1/metrics", get(VectorApi::stats))
+        .route("/api/core/ai/v1/search", post(ai_search))
         .route(
             "/metrics",
             get(move || async move { metric_handle.render() }),
@@ -1934,66 +1937,99 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
         .with_state(app_state.clone());
 
     let protected_routes = Router::new()
-        .route("/api/ai/chat", post(chat))
-        .route("/api/ai/generate", post(generate))
-        .route("/api/ai/validate", post(validate))
-        .route("/api/ai/complete", post(complete))
-        .route("/api/ai/summarize", post(summarize))
-        .route("/api/ai/templates", get(list_templates))
+        .route("/api/core/ai/v1/chat", post(chat))
+        .route("/api/core/ai/v1/generate", post(generate))
+        .route("/api/core/ai/v1/validate", post(validate))
+        .route("/api/core/ai/v1/complete", post(complete))
+        .route("/api/core/ai/v1/summarize", post(summarize))
+        .route("/api/core/ai/v1/templates", get(list_templates))
         // 文档处理 API - 使用 DocumentApi 模块
-        .route("/api/ai/documents", get(DocumentApi::list))
-        .route("/api/ai/documents/upload", post(DocumentApi::upload))
+        .route("/api/core/ai/v1/documents", get(DocumentApi::list))
         .route(
-            "/api/ai/documents/vectorize-from-file",
+            "/api/core/ai/v1/documents/upload",
+            post(DocumentApi::upload),
+        )
+        .route(
+            "/api/core/ai/v1/documents/vectorize-from-file",
             post(DocumentApi::vectorize_from_file),
         )
-        .route("/api/ai/documents/{id}", get(DocumentApi::get))
-        .route("/api/ai/documents/{id}", delete(DocumentApi::delete))
-        .route("/api/ai/documents/{id}/process", post(DocumentApi::process))
-        .route("/api/ai/documents/{id}/extract", post(DocumentApi::extract))
+        .route("/api/core/ai/v1/documents/{id}", get(DocumentApi::get))
         .route(
-            "/api/ai/documents/{id}/summarize",
+            "/api/core/ai/v1/documents/{id}",
+            delete(DocumentApi::delete),
+        )
+        .route(
+            "/api/core/ai/v1/documents/{id}/process",
+            post(DocumentApi::process),
+        )
+        .route(
+            "/api/core/ai/v1/documents/{id}/extract",
+            post(DocumentApi::extract),
+        )
+        .route(
+            "/api/core/ai/v1/documents/{id}/summarize",
             post(DocumentApi::summarize),
         )
         .route(
-            "/api/ai/documents/{id}/key-points",
+            "/api/core/ai/v1/documents/{id}/key-points",
             post(DocumentApi::extract_key_points),
         )
-        .route("/api/ai/documents/qa", post(DocumentApi::document_qa))
-        // 向量检索 API - 使用 VectorApi 模块
-        .route("/api/ai/vectors/stats", get(VectorApi::stats))
-        .route("/api/ai/vectors/search", post(VectorApi::search))
-        .route("/api/ai/vectors/store", post(VectorApi::store))
-        .route("/api/ai/vectors/{id}", get(VectorApi::get))
-        .route("/api/ai/vectors/{id}", delete(VectorApi::delete))
-        .route("/api/ai/vectors/batch-store", post(VectorApi::batch_store))
-        .route("/api/ai/embedding/generate", post(EmbeddingApi::generate))
         .route(
-            "/api/ai/vectors/hybrid-search",
+            "/api/core/ai/v1/documents/qa",
+            post(DocumentApi::document_qa),
+        )
+        // 向量检索 API - 使用 VectorApi 模块
+        .route("/api/core/ai/v1/vectors/stats", get(VectorApi::stats))
+        .route("/api/core/ai/v1/vectors/search", post(VectorApi::search))
+        .route("/api/core/ai/v1/vectors/store", post(VectorApi::store))
+        .route("/api/core/ai/v1/vectors/{id}", get(VectorApi::get))
+        .route("/api/core/ai/v1/vectors/{id}", delete(VectorApi::delete))
+        .route(
+            "/api/core/ai/v1/vectors/batch-store",
+            post(VectorApi::batch_store),
+        )
+        .route(
+            "/api/core/ai/v1/embedding/generate",
+            post(EmbeddingApi::generate),
+        )
+        .route(
+            "/api/core/ai/v1/vectors/hybrid-search",
             post(VectorApi::hybrid_search),
         )
-        .route("/api/ai/vectors/clear", post(VectorApi::clear_all))
+        .route("/api/core/ai/v1/vectors/clear", post(VectorApi::clear_all))
         // 问答 API - 使用 QaApi 模块
-        .route("/api/ai/qa/ask", post(QaApi::ask))
-        .route("/api/ai/qa/ask-with-context", post(QaApi::ask_with_context))
-        .route("/api/ai/qa/ask-structured", post(QaApi::ask_structured))
-        .route("/api/ai/qa/ask-conversation", post(QaApi::ask_conversation))
-        .route("/api/ai/qa/classify", post(QaApi::classify))
-        .route("/api/ai/qa/history", get(QaApi::history))
-        .route("/api/ai/qa/history/{id}", delete(QaApi::delete_history))
+        .route("/api/core/ai/v1/qa/ask", post(QaApi::ask))
         .route(
-            "/api/ai/qa/history/batch-delete",
+            "/api/core/ai/v1/qa/ask-with-context",
+            post(QaApi::ask_with_context),
+        )
+        .route(
+            "/api/core/ai/v1/qa/ask-structured",
+            post(QaApi::ask_structured),
+        )
+        .route(
+            "/api/core/ai/v1/qa/ask-conversation",
+            post(QaApi::ask_conversation),
+        )
+        .route("/api/core/ai/v1/qa/classify", post(QaApi::classify))
+        .route("/api/core/ai/v1/qa/history", get(QaApi::history))
+        .route(
+            "/api/core/ai/v1/qa/history/{id}",
+            delete(QaApi::delete_history),
+        )
+        .route(
+            "/api/core/ai/v1/qa/history/batch-delete",
             post(QaApi::batch_delete_history),
         )
-        .route("/api/ai/qa/feedback", post(QaApi::feedback))
+        .route("/api/core/ai/v1/qa/feedback", post(QaApi::feedback))
         // 数据连接器 API
-        .route("/api/ai/connectors", get(list_connectors))
-        .route("/api/ai/connectors/get", get(get_connector))
-        .route("/api/ai/connectors/create", post(create_connector))
-        .route("/api/ai/connectors/update", post(update_connector))
-        .route("/api/ai/connectors/delete", post(delete_connector))
-        .route("/api/ai/connectors/test", get(test_connector))
-        .route("/api/ai/connectors/query", post(query_data))
+        .route("/api/core/ai/v1/connectors", get(list_connectors))
+        .route("/api/core/ai/v1/connectors/get", get(get_connector))
+        .route("/api/core/ai/v1/connectors/create", post(create_connector))
+        .route("/api/core/ai/v1/connectors/update", post(update_connector))
+        .route("/api/core/ai/v1/connectors/delete", post(delete_connector))
+        .route("/api/core/ai/v1/connectors/test", get(test_connector))
+        .route("/api/core/ai/v1/connectors/query", post(query_data))
         .layer(axum::middleware::from_fn_with_state(
             app_state.auth_state.clone(),
             auth_middleware,
@@ -2005,17 +2041,26 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
 
     // 分析 API - 使用 AnalysisApi 模块
     let analysis_router = Router::new()
-        .route("/api/ai/analysis/sentiment", post(AnalysisApi::sentiment))
-        .route("/api/ai/analysis/classify", post(AnalysisApi::classify))
         .route(
-            "/api/ai/analysis/entities",
+            "/api/core/ai/v1/analysis/sentiment",
+            post(AnalysisApi::sentiment),
+        )
+        .route(
+            "/api/core/ai/v1/analysis/classify",
+            post(AnalysisApi::classify),
+        )
+        .route(
+            "/api/core/ai/v1/analysis/entities",
             post(AnalysisApi::extract_entities),
         )
         .route(
-            "/api/ai/analysis/keywords",
+            "/api/core/ai/v1/analysis/keywords",
             post(AnalysisApi::extract_keywords),
         )
-        .route("/api/ai/analysis/history", post(AnalysisApi::history))
+        .route(
+            "/api/core/ai/v1/analysis/history",
+            post(AnalysisApi::history),
+        )
         .layer(axum::middleware::from_fn_with_state(
             app_state.auth_state.clone(),
             auth_middleware,
@@ -2037,25 +2082,28 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
         .with_state(app_state.clone());
 
     let recommendation_router = Router::new()
-        .route("/api/ai/recommend", post(RecommendationApi::recommend))
         .route(
-            "/api/ai/recommend/documents",
+            "/api/core/ai/v1/recommend",
+            post(RecommendationApi::recommend),
+        )
+        .route(
+            "/api/core/ai/v1/recommend/documents",
             post(RecommendationApi::recommend_documents),
         )
         .route(
-            "/api/ai/recommend/opportunities",
+            "/api/core/ai/v1/recommend/opportunities",
             post(RecommendationApi::recommend_opportunities),
         )
         .route(
-            "/api/ai/recommend/knowledge",
+            "/api/core/ai/v1/recommend/knowledge",
             post(RecommendationApi::recommend_knowledge),
         )
         .route(
-            "/api/ai/profile/get",
+            "/api/core/ai/v1/profile/get",
             post(RecommendationApi::get_user_profile),
         )
         .route(
-            "/api/ai/profile/update",
+            "/api/core/ai/v1/profile/update",
             post(RecommendationApi::update_user_profile),
         )
         .layer(axum::middleware::from_fn_with_state(
@@ -2069,31 +2117,31 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
 
     let multimodal_router = Router::new()
         .route(
-            "/api/ai/multimodal/image/analyze",
+            "/api/core/ai/v1/multimodal/image/analyze",
             post(MultimodalApi::analyze_image),
         )
         .route(
-            "/api/ai/multimodal/image/caption",
+            "/api/core/ai/v1/multimodal/image/caption",
             post(MultimodalApi::generate_caption),
         )
         .route(
-            "/api/ai/multimodal/image/objects",
+            "/api/core/ai/v1/multimodal/image/objects",
             post(MultimodalApi::detect_objects),
         )
         .route(
-            "/api/ai/multimodal/image/text",
+            "/api/core/ai/v1/multimodal/image/text",
             post(MultimodalApi::extract_text),
         )
         .route(
-            "/api/ai/multimodal/image/describe",
+            "/api/core/ai/v1/multimodal/image/describe",
             post(MultimodalApi::describe_image),
         )
         .route(
-            "/api/ai/multimodal/video/analyze",
+            "/api/core/ai/v1/multimodal/video/analyze",
             post(MultimodalApi::analyze_video),
         )
         .route(
-            "/api/ai/multimodal/video/summary",
+            "/api/core/ai/v1/multimodal/video/summary",
             post(MultimodalApi::summarize_video),
         )
         .layer(axum::middleware::from_fn_with_state(

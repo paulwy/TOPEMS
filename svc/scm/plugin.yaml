@@ -11,49 +11,49 @@ deployment:
 
 permissions:
   # 供应商管理
-  - code: scm:supplier:read
+  - code: scm:read
     name: 查看供应商
     resource_type: supplier
     action: read
-  - code: scm:supplier:write
+  - code: scm:write
     name: 管理供应商
     resource_type: supplier
     action: write
-  - code: scm:supplier:delete
+  - code: scm:delete
     name: 删除供应商
     resource_type: supplier
     action: delete
 
   # 采购订单
-  - code: scm:purchase_order:read
+  - code: scm:read
     name: 查看采购订单
     resource_type: purchase_order
     action: read
-  - code: scm:purchase_order:write
+  - code: scm:write
     name: 管理采购订单
     resource_type: purchase_order
     action: write
-  - code: scm:purchase_order:approve
+  - code: scm:approve
     name: 审批采购订单
     resource_type: purchase_order
     action: approve
 
   # 采购明细
-  - code: scm:purchase_item:read
+  - code: scm:read
     name: 查看采购明细
     resource_type: purchase_item
     action: read
-  - code: scm:purchase_item:write
+  - code: scm:write
     name: 管理采购明细
     resource_type: purchase_item
     action: write
 
   # 供应商评价
-  - code: scm:supplier_evaluation:read
+  - code: scm:read
     name: 查看供应商评价
     resource_type: supplier_evaluation
     action: read
-  - code: scm:supplier_evaluation:write
+  - code: scm:write
     name: 管理供应商评价
     resource_type: supplier_evaluation
     action: write

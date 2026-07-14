@@ -387,15 +387,28 @@ pub async fn init_database(pool: &PgPool) -> Result<(), sqlx::Error> {
     .await?;
 
     // Assign specific permissions to admin role
+    // 权限码格式为 module:action，与 lib/src/permission.rs 中 ModuleCode 和 PermissionAction 一致
     let admin_permissions = vec![
-        "iam:users_read",
-        "iam:users_create",
-        "iam:users_update",
-        "iam:roles_read",
-        "iam:roles_create",
-        "iam:roles_update",
-        "iam:system_settings",
-        "iam:system_logs",
+        "iam:admin",
+        "hrm:admin",
+        "erp:admin",
+        "pm:admin",
+        "rs:admin",
+        "scm:admin",
+        "crm:admin",
+        "ai:admin",
+        "gis:admin",
+        "qms:admin",
+        "ehs:admin",
+        "mes:admin",
+        "wms:admin",
+        "doc:admin",
+        "file:admin",
+        "notification:admin",
+        "im:admin",
+        "integration:admin",
+        "system:admin",
+        "workflow:approve",
     ];
 
     for perm_code in admin_permissions {
@@ -412,9 +425,20 @@ pub async fn init_database(pool: &PgPool) -> Result<(), sqlx::Error> {
         .await?;
     }
 
-    // Insert default admin user (password: admin123)
-    // Password hash for 'admin123' using bcrypt
-    let admin_password_hash = "$argon2id$v=19$m=19456,t=2,p=1$YWJjZGVmZ2hpamtsbW5vcA$k5Q5z7K0xM7J0YxF5z4z7K0xM7J0YxF5z4z7K0xM7J0YxF5z4z7K0xM7J0";
+    // Insert default admin user
+    // 从环境变量读取初始密码，未设置时回退到默认值 admin123
+    let admin_password =
+        std::env::var("ADMIN_INITIAL_PASSWORD").unwrap_or_else(|_| "admin123".to_string());
+    tracing::warn!("⚠️ 使用默认管理员密码，请在首次登录后立即修改！");
+    let admin_password_hash = match bcrypt::hash(&admin_password, bcrypt::DEFAULT_COST) {
+        Ok(h) => h,
+        Err(e) => {
+            tracing::error!("管理员密码哈希失败: {}", e);
+            return Err(sqlx::Error::Configuration(
+                format!("管理员密码哈希失败: {e}").into(),
+            ));
+        }
+    };
     sqlx::query(
         r#"
         INSERT INTO core_users (username, email, password_hash, full_name, is_superuser)

@@ -218,132 +218,141 @@ async fn main() -> Result<()> {
             "/api/plugins/health",
             get(modules::gis_plugin::plugin_health_check),
         )
-        .route("/api/gis/health/detailed", get(health_check_detailed))
+        .route(
+            "/api/core/gis/v1/health/detailed",
+            get(health_check_detailed),
+        )
         .route("/api-docs/openapi.json", get(serve_openapi_json))
         .route(
             "/metrics",
             get(move || async move { metric_handle.render() }),
         )
-        .route("/api/gis/statistics", get(modules::stats::get_statistics))
         .route(
-            "/api/gis/search",
+            "/api/core/gis/v1/statistics",
+            get(modules::stats::get_statistics),
+        )
+        .route(
+            "/api/core/gis/v1/search",
             axum::routing::get(modules::search::search_locations),
         )
         .route(
-            "/api/gis/geojson/export",
+            "/api/core/gis/v1/geojson/export",
             axum::routing::get(modules::import_export::export_geojson),
         )
         .route(
-            "/api/gis/factory-maps",
+            "/api/core/gis/v1/factory-maps",
             axum::routing::get(modules::factory_map::list_factory_maps),
         )
         .route(
-            "/api/gis/factory-maps/{id}",
+            "/api/core/gis/v1/factory-maps/{id}",
             axum::routing::get(modules::factory_map::get_factory_map),
         )
         .route(
-            "/api/gis/device-locations",
+            "/api/core/gis/v1/device-locations",
             axum::routing::get(modules::device::list_devices),
         )
         .route(
-            "/api/gis/device-locations/{id}",
+            "/api/core/gis/v1/device-locations/{id}",
             axum::routing::get(modules::device::get_device),
         )
         .route(
-            "/api/gis/device-locations/map/{map_id}",
+            "/api/core/gis/v1/device-locations/map/{map_id}",
             axum::routing::get(list_device_locations_by_map),
         )
         .route(
-            "/api/gis/pipelines",
+            "/api/core/gis/v1/pipelines",
             axum::routing::get(modules::pipeline::list_pipelines),
         )
         .route(
-            "/api/gis/pipelines/{id}",
+            "/api/core/gis/v1/pipelines/{id}",
             axum::routing::get(modules::pipeline::get_pipeline),
         )
         .route(
-            "/api/gis/pipelines/map/{map_id}",
+            "/api/core/gis/v1/pipelines/map/{map_id}",
             axum::routing::get(modules::pipeline::list_pipelines_by_map),
         )
         .route(
-            "/api/gis/warehouse-locations",
+            "/api/core/gis/v1/warehouse-locations",
             axum::routing::get(modules::warehouse::list_warehouse_locations),
         )
         .route(
-            "/api/gis/warehouse-locations/{id}",
+            "/api/core/gis/v1/warehouse-locations/{id}",
             axum::routing::get(modules::warehouse::get_warehouse_location),
         )
         .route(
-            "/api/gis/warehouse-locations/map/{map_id}",
+            "/api/core/gis/v1/warehouse-locations/map/{map_id}",
             axum::routing::get(modules::warehouse::list_warehouse_locations_by_map),
         )
         .route(
-            "/api/gis/location-photos",
+            "/api/core/gis/v1/location-photos",
             axum::routing::get(modules::photo::list_location_photos),
         )
         .route(
-            "/api/gis/location-photos/{id}",
+            "/api/core/gis/v1/location-photos/{id}",
             axum::routing::get(modules::photo::get_location_photo),
         )
         .route(
-            "/api/gis/location-photos/map/{map_id}",
+            "/api/core/gis/v1/location-photos/map/{map_id}",
             axum::routing::get(modules::photo::list_location_photos_by_map),
         )
         .route(
-            "/api/gis/business-locations",
+            "/api/core/gis/v1/business-locations",
             axum::routing::get(modules::business::list_business_locations),
         )
         .route(
-            "/api/gis/business-locations/{id}",
+            "/api/core/gis/v1/business-locations/{id}",
             axum::routing::get(modules::business::get_business_location),
         )
         .route(
-            "/api/gis/business-locations/type/{business_type}",
+            "/api/core/gis/v1/business-locations/type/{business_type}",
             axum::routing::get(modules::business::list_business_locations_by_type),
         )
         .route(
-            "/api/gis/map-markers",
+            "/api/core/gis/v1/map-markers",
             axum::routing::get(modules::marker::list_map_markers),
         )
-        .route("/api/gis/maps", axum::routing::get(modules::map::list_maps))
         .route(
-            "/api/gis/maps/{id}",
+            "/api/core/gis/v1/maps",
+            axum::routing::get(modules::map::list_maps),
+        )
+        .route(
+            "/api/core/gis/v1/maps/{id}",
             axum::routing::get(modules::map::get_map),
         )
         .route(
-            "/api/gis/maps/{id}/layers",
+            "/api/core/gis/v1/maps/{id}/layers",
             axum::routing::get(modules::map::list_map_layers),
         )
         .route(
-            "/api/gis/geodata",
+            "/api/core/gis/v1/geodata",
             axum::routing::get(modules::geodata::list_geodata),
         )
         .route(
-            "/api/gis/geodata/{id}",
+            "/api/core/gis/v1/geodata/{id}",
             axum::routing::get(modules::geodata::get_geodata),
         )
         .route(
-            "/api/gis/geodata/{id}/features",
+            "/api/core/gis/v1/geodata/{id}/features",
             axum::routing::get(modules::geodata::list_geofeatures),
         )
         .route(
-            "/api/gis/locations",
+            "/api/core/gis/v1/locations",
             axum::routing::get(modules::location::list_locations),
         )
         .route(
-            "/api/gis/locations/{id}",
+            "/api/core/gis/v1/locations/{id}",
             axum::routing::get(modules::location::get_location),
         )
         .route(
-            "/api/gis/devices",
+            "/api/core/gis/v1/devices",
             axum::routing::get(modules::device::list_devices),
         )
         .route(
-            "/api/gis/devices/{id}",
+            "/api/core/gis/v1/devices/{id}",
             axum::routing::get(modules::device::get_device),
         )
         .route(
-            "/api/gis/devices/{device_code}/report",
+            "/api/core/gis/v1/devices/{device_code}/report",
             axum::routing::post(modules::device::report_device_location),
         )
         .route("/ws/gis", get(modules::websocket::websocket_handler))
@@ -354,203 +363,203 @@ async fn main() -> Result<()> {
 
     let protected_api = Router::new()
         .route(
-            "/api/gis/factory-maps",
+            "/api/core/gis/v1/factory-maps",
             axum::routing::post(modules::factory_map::create_factory_map),
         )
         .route(
-            "/api/gis/factory-maps/{id}",
+            "/api/core/gis/v1/factory-maps/{id}",
             axum::routing::put(modules::factory_map::update_factory_map),
         )
         .route(
-            "/api/gis/factory-maps/{id}",
+            "/api/core/gis/v1/factory-maps/{id}",
             axum::routing::delete(modules::factory_map::delete_factory_map),
         )
         .route(
-            "/api/gis/device-locations",
+            "/api/core/gis/v1/device-locations",
             axum::routing::post(create_device_location),
         )
         .route(
-            "/api/gis/device-locations/{id}",
+            "/api/core/gis/v1/device-locations/{id}",
             axum::routing::put(update_device_location),
         )
         .route(
-            "/api/gis/device-locations/{id}",
+            "/api/core/gis/v1/device-locations/{id}",
             axum::routing::delete(delete_device_location),
         )
         .route(
-            "/api/gis/pipelines",
+            "/api/core/gis/v1/pipelines",
             axum::routing::post(modules::pipeline::create_pipeline),
         )
         .route(
-            "/api/gis/pipelines/{id}",
+            "/api/core/gis/v1/pipelines/{id}",
             axum::routing::put(modules::pipeline::update_pipeline),
         )
         .route(
-            "/api/gis/pipelines/{id}",
+            "/api/core/gis/v1/pipelines/{id}",
             axum::routing::delete(modules::pipeline::delete_pipeline),
         )
         .route(
-            "/api/gis/warehouse-locations",
+            "/api/core/gis/v1/warehouse-locations",
             axum::routing::post(modules::warehouse::create_warehouse_location),
         )
         .route(
-            "/api/gis/warehouse-locations/{id}",
+            "/api/core/gis/v1/warehouse-locations/{id}",
             axum::routing::put(modules::warehouse::update_warehouse_location),
         )
         .route(
-            "/api/gis/warehouse-locations/{id}",
+            "/api/core/gis/v1/warehouse-locations/{id}",
             axum::routing::delete(modules::warehouse::delete_warehouse_location),
         )
         .route(
-            "/api/gis/location-photos",
+            "/api/core/gis/v1/location-photos",
             axum::routing::post(modules::photo::create_location_photo),
         )
         .route(
-            "/api/gis/location-photos/{id}",
+            "/api/core/gis/v1/location-photos/{id}",
             axum::routing::delete(modules::photo::delete_location_photo),
         )
         .route(
-            "/api/gis/business-locations",
+            "/api/core/gis/v1/business-locations",
             axum::routing::post(modules::business::create_business_location),
         )
         .route(
-            "/api/gis/business-locations/{id}",
+            "/api/core/gis/v1/business-locations/{id}",
             axum::routing::put(modules::business::update_business_location),
         )
         .route(
-            "/api/gis/business-locations/{id}",
+            "/api/core/gis/v1/business-locations/{id}",
             axum::routing::delete(modules::business::delete_business_location),
         )
         .route(
-            "/api/gis/map-markers",
+            "/api/core/gis/v1/map-markers",
             axum::routing::post(modules::marker::create_map_marker),
         )
         .route(
-            "/api/gis/map-markers/{id}",
+            "/api/core/gis/v1/map-markers/{id}",
             axum::routing::put(modules::marker::update_map_marker),
         )
         .route(
-            "/api/gis/map-markers/{id}",
+            "/api/core/gis/v1/map-markers/{id}",
             axum::routing::delete(modules::marker::delete_map_marker),
         )
         .route(
-            "/api/gis/import",
+            "/api/core/gis/v1/import",
             axum::routing::post(modules::import_export::import_data),
         )
         .route(
-            "/api/gis/maps/create",
+            "/api/core/gis/v1/maps/create",
             axum::routing::post(modules::map::create_map),
         )
         .route(
-            "/api/gis/maps/{id}",
+            "/api/core/gis/v1/maps/{id}",
             axum::routing::put(modules::map::update_map),
         )
         .route(
-            "/api/gis/maps/{id}",
+            "/api/core/gis/v1/maps/{id}",
             axum::routing::delete(modules::map::delete_map),
         )
         .route(
-            "/api/gis/maps/{id}/layers",
+            "/api/core/gis/v1/maps/{id}/layers",
             axum::routing::post(modules::map::add_map_layer),
         )
         .route(
-            "/api/gis/maps/{id}/layers/{layer_id}",
+            "/api/core/gis/v1/maps/{id}/layers/{layer_id}",
             axum::routing::delete(modules::map::delete_map_layer),
         )
         .route(
-            "/api/gis/geodata/upload",
+            "/api/core/gis/v1/geodata/upload",
             axum::routing::post(modules::geodata::upload_geodata),
         )
         .route(
-            "/api/gis/geodata/{id}",
+            "/api/core/gis/v1/geodata/{id}",
             axum::routing::put(modules::geodata::update_geodata),
         )
         .route(
-            "/api/gis/geodata/{id}",
+            "/api/core/gis/v1/geodata/{id}",
             axum::routing::delete(modules::geodata::delete_geodata),
         )
         .route(
-            "/api/gis/geodata/{id}/convert",
+            "/api/core/gis/v1/geodata/{id}/convert",
             axum::routing::post(modules::geodata::convert_geodata),
         )
         .route(
-            "/api/gis/spatial/buffer",
+            "/api/core/gis/v1/spatial/buffer",
             axum::routing::post(modules::spatial::buffer_analysis),
         )
         .route(
-            "/api/gis/spatial/intersect",
+            "/api/core/gis/v1/spatial/intersect",
             axum::routing::post(modules::spatial::intersect_analysis),
         )
         .route(
-            "/api/gis/spatial/union",
+            "/api/core/gis/v1/spatial/union",
             axum::routing::post(modules::spatial::union_analysis),
         )
         .route(
-            "/api/gis/spatial/difference",
+            "/api/core/gis/v1/spatial/difference",
             axum::routing::post(modules::spatial::difference_analysis),
         )
         .route(
-            "/api/gis/spatial/within",
+            "/api/core/gis/v1/spatial/within",
             axum::routing::post(modules::spatial::within_analysis),
         )
         .route(
-            "/api/gis/spatial/distance",
+            "/api/core/gis/v1/spatial/distance",
             axum::routing::post(modules::spatial::distance_calculation),
         )
         .route(
-            "/api/gis/spatial/nearest",
+            "/api/core/gis/v1/spatial/nearest",
             axum::routing::post(modules::spatial::nearest_query),
         )
         .route(
-            "/api/gis/spatial/cluster",
+            "/api/core/gis/v1/spatial/cluster",
             axum::routing::post(modules::spatial::cluster_analysis),
         )
         .route(
-            "/api/gis/locations/create",
+            "/api/core/gis/v1/locations/create",
             axum::routing::post(modules::location::create_location),
         )
         .route(
-            "/api/gis/locations/{id}",
+            "/api/core/gis/v1/locations/{id}",
             axum::routing::put(modules::location::update_location),
         )
         .route(
-            "/api/gis/locations/{id}",
+            "/api/core/gis/v1/locations/{id}",
             axum::routing::delete(modules::location::delete_location),
         )
         .route(
-            "/api/gis/locations/search",
+            "/api/core/gis/v1/locations/search",
             axum::routing::post(modules::location::search_locations),
         )
         .route(
-            "/api/gis/locations/nearby",
+            "/api/core/gis/v1/locations/nearby",
             axum::routing::post(modules::location::nearby_locations),
         )
         .route(
-            "/api/gis/locations/route",
+            "/api/core/gis/v1/locations/route",
             axum::routing::post(modules::location::plan_route),
         )
         .route(
-            "/api/gis/devices/register",
+            "/api/core/gis/v1/devices/register",
             axum::routing::post(modules::device::register_device),
         )
         .route(
-            "/api/gis/devices/{id}",
+            "/api/core/gis/v1/devices/{id}",
             axum::routing::put(modules::device::update_device),
         )
         .route(
-            "/api/gis/devices/{id}",
+            "/api/core/gis/v1/devices/{id}",
             axum::routing::delete(modules::device::delete_device),
         )
         .route(
-            "/api/gis/devices/{id}/location",
+            "/api/core/gis/v1/devices/{id}/location",
             axum::routing::post(modules::device::update_device_location),
         )
         .route(
-            "/api/gis/devices/{id}/tracking",
+            "/api/core/gis/v1/devices/{id}/tracking",
             axum::routing::get(modules::device::get_device_tracking),
         )
         .route(
-            "/api/gis/devices/{id}/history",
+            "/api/core/gis/v1/devices/{id}/history",
             axum::routing::get(modules::device::get_device_history),
         )
         .layer(axum::middleware::from_fn_with_state(

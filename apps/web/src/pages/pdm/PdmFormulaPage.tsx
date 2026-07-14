@@ -19,7 +19,7 @@ import { ListPageTemplate } from '@/components/templates';
 import type { RowAction, FilterConfig, ColumnDef } from '@/components/templates';
 import { pdmApi } from '@/api/pdm';
 import type { ProductionFormula } from '@/api/pdm';
-import { useAppStore } from '@/store';
+import { useNotificationStore } from '@/store';
 import { designTokens } from '@/theme/tokens';
 import { QUERY_KEYS } from '@/lib/reactQuery';
 
@@ -42,7 +42,7 @@ const adaptFormula = (item: { [key: string]: unknown }) => ({
 
 const PdmFormulaPage: React.FC = () => {
   const queryClient = useQueryClient();
-  const addNotification = useAppStore((state) => state.addNotification);
+  const addNotification = useNotificationStore((state) => state.addNotification);
 
   const [searchTerm, setSearchTerm] = useState('');
   const [statusFilter, setStatusFilter] = useState<string>('');

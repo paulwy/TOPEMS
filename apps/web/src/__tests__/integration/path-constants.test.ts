@@ -5,7 +5,6 @@ import { ADMIN_PATHS } from '@/modules/admin/config';
 import { IAM_PATHS } from '@/modules/iam/config';
 import { WORKFLOW_PATHS } from '@/modules/workflow/config';
 import { NOTIFICATION_PATHS } from '@/modules/notification/config';
-import { LOWCODE_PATHS } from '@/modules/lowcode/config';
 import { SRM_PATHS } from '@/modules/srm/config';
 import { BI_PATHS } from '@/modules/bi/config';
 import { DOC_PATHS } from '@/modules/doc/config';
@@ -22,7 +21,6 @@ describe('Path Constants Validation', () => {
       expect(IAM_PATHS.root).toBe('/iam');
       expect(WORKFLOW_PATHS.root).toBe('/workflow');
       expect(NOTIFICATION_PATHS.root).toBe('/notification');
-      expect(LOWCODE_PATHS.root).toBe('/lowcode');
       expect(SRM_PATHS.root).toBe('/srm');
       expect(BI_PATHS.root).toBe('/bi');
       expect(DOC_PATHS.root).toBe('/doc');
@@ -44,19 +42,13 @@ describe('Path Constants Validation', () => {
       expect(SRM_PATHS.contractDetail.replace(':id', contractId)).toBe('/srm/contract/contract-abc');
     });
 
-    it('should correctly replace :appId parameter in lowcode paths', () => {
-      const appId = 'app-001';
-      expect(LOWCODE_PATHS.appDetail.replace(':appId', appId)).toBe('/lowcode/app-detail/app-001');
-    });
-
     it('should correctly replace :moduleId parameter in BI paths', () => {
       const moduleId = 'development';
       expect(BI_PATHS.module.replace(':moduleId', moduleId)).toBe('/bi/module/development');
     });
 
     it('should correctly generate new record paths using replace', () => {
-      expect(LOWCODE_PATHS.pageDesigner.replace(':id', 'new')).toBe('/lowcode/page-designer/new');
-      expect(LOWCODE_PATHS.formDesigner.replace(':id', 'new')).toBe('/lowcode/form-designer/new');
+      expect(BI_PATHS.module.replace(':moduleId', 'new')).toBe('/bi/module/new');
     });
   });
 
@@ -95,7 +87,7 @@ describe('Path Constants Validation', () => {
     });
 
     it('should not have trailing slashes', () => {
-      Object.values(LOWCODE_PATHS).forEach(path => {
+      Object.values(BI_PATHS).forEach(path => {
         expect(!path.endsWith('/') || path === '/').toBe(true, `Path "${path}" has trailing slash`);
       });
     });
@@ -131,7 +123,7 @@ describe('Path Constants Validation', () => {
       const allPaths = new Set<string>();
       const duplicates: string[] = [];
 
-      [ADMIN_PATHS, IAM_PATHS, WORKFLOW_PATHS, NOTIFICATION_PATHS, LOWCODE_PATHS, SRM_PATHS, BI_PATHS, DOC_PATHS, EHS_PATHS, MOBILE_PATHS].forEach(modulePaths => {
+      [ADMIN_PATHS, IAM_PATHS, WORKFLOW_PATHS, NOTIFICATION_PATHS, SRM_PATHS, BI_PATHS, DOC_PATHS, EHS_PATHS, MOBILE_PATHS].forEach(modulePaths => {
         Object.values(modulePaths).forEach(path => {
           if (allPaths.has(path)) {
             duplicates.push(path);

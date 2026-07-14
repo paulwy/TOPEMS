@@ -179,7 +179,10 @@ pub async fn upload_photo(
         }
     };
 
-    let thumbnail_url = Some(format!("/api/mobile/photos/{}/thumbnail", upload.id));
+    let thumbnail_url = Some(format!(
+        "/api/core/mobile/v1/photos/{}/thumbnail",
+        upload.id
+    ));
 
     if let Err(e) =
         db_update_photo_upload_status(&pool, upload.id, "completed", 100, thumbnail_url.as_deref())
@@ -249,7 +252,10 @@ pub async fn batch_upload_photos(
         let tenant_id = Uuid::new_v4();
         match db_create_photo_upload(&pool, tenant_id, user_id, create_data).await {
             Ok(upload) => {
-                let thumbnail_url = Some(format!("/api/mobile/photos/{}/thumbnail", upload.id));
+                let thumbnail_url = Some(format!(
+                    "/api/core/mobile/v1/photos/{}/thumbnail",
+                    upload.id
+                ));
                 let _ = db_update_photo_upload_status(
                     &pool,
                     upload.id,

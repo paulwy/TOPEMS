@@ -7,10 +7,10 @@
     <meta name="theme-color" content="#1976d2" />
     <meta name="apple-mobile-web-app-capable" content="yes" />
     <meta name="apple-mobile-web-app-status-bar-style" content="default" />
-    <link rel="icon" type="image/svg+xml" href="/logo.svg" />
+    <link rel="apple-touch-startup-image" href="/icons/icon-512x512.png" />
+    <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>T</text></svg>" />
     <link rel="icon" type="image/x-icon" href="/favicon.ico" />
     
-    <link rel="dns-prefetch" href="//localhost" />
     <link rel="dns-prefetch" href="//fonts.googleapis.com" />
     <link rel="dns-prefetch" href="//fonts.gstatic.com" />
     
@@ -18,13 +18,16 @@
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
     
     <link rel="preload" href="/src/main.tsx" as="script" />
+    <link rel="preload" href="/src/index.css" as="style" />
+    
+    <link rel="preload" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" as="style" crossorigin />
+    
+    <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" media="print" onload="this.media='all'" />
+    <noscript>
+      <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" />
+    </noscript>
     
     <style>
-      @font-face {
-        font-family: 'Inter';
-        src: local('Inter'), local('Helvetica Neue'), local('Arial'), sans-serif;
-        font-display: swap;
-      }
       html, body, #root {
         margin: 0;
         padding: 0;
@@ -41,22 +44,51 @@
         max-width: 100%;
         height: auto;
       }
-      @keyframes fadeInUp {
-        from {
-          opacity: 0;
-          transform: translateY(20px);
-        }
-        to {
-          opacity: 1;
-          transform: translateY(0);
-        }
+      .topems-skeleton {
+        background: linear-gradient(90deg, #f1f5f9 25%, #e2e8f0 50%, #f1f5f9 75%);
+        background-size: 200% 100%;
+        animation: skeleton-loading 1.5s ease-in-out infinite;
+      }
+      @keyframes skeleton-loading {
+        0% { background-position: 200% 0; }
+        100% { background-position: -200% 0; }
       }
     </style>
     
     <title>TOPEMS - 企业数字化平台</title>
   </head>
   <body>
-    <div id="root"></div>
+    <div id="root">
+      <div style="display: flex; flex-direction: column; min-height: 100vh;">
+        <header style="height: 64px; background: #1e3a8a; display: flex; align-items: center; padding: 0 20px;">
+          <div class="topems-skeleton" style="width: 40px; height: 40px; border-radius: 8px;"></div>
+          <div class="topems-skeleton" style="width: 120px; height: 24px; margin-left: 16px; border-radius: 4px;"></div>
+        </header>
+        <main style="flex: 1; padding: 24px;">
+          <div class="topems-skeleton" style="width: 100%; height: 48px; border-radius: 8px; margin-bottom: 24px;"></div>
+          <div style="display: grid; grid-template-columns: repeat(4, 1fr); gap: 16px;">
+            <div class="topems-skeleton" style="height: 120px; border-radius: 8px;"></div>
+            <div class="topems-skeleton" style="height: 120px; border-radius: 8px;"></div>
+            <div class="topems-skeleton" style="height: 120px; border-radius: 8px;"></div>
+            <div class="topems-skeleton" style="height: 120px; border-radius: 8px;"></div>
+          </div>
+          <div class="topems-skeleton" style="width: 100%; height: 400px; margin-top: 24px; border-radius: 8px;"></div>
+        </main>
+      </div>
+    </div>
     <script type="module" src="/src/main.tsx"></script>
+    <script>
+      if ('serviceWorker' in navigator && import.meta.env.PROD) {
+        window.addEventListener('load', () => {
+          navigator.serviceWorker.register('/service-worker.js')
+            .then((registration) => {
+              console.log('Service Worker registered:', registration.scope);
+            })
+            .catch((error) => {
+              console.log('Service Worker registration failed:', error);
+            });
+        });
+      }
+    </script>
   </body>
 </html>
