@@ -119,7 +119,6 @@ async fn build_routes() -> Result<Router> {
     let (prometheus_layer, _metric_handle) = PrometheusMetricLayer::pair();
 
     let health_router = Router::new()
-        .route("/health", get(simple_health_check))
         .route("/api/v1/health/detailed", get(health_check_detailed))
         .route("/api/v1/metrics", get(get_metrics))
         .route(

@@ -28,7 +28,7 @@ pub fn create_routes() -> Router<ApiState> {
             get(list_customers).post(create_customer),
         )
         .route(
-            "/api/erp/customers/:id",
+            "/api/erp/customers/{id}",
             get(get_customer)
                 .put(update_customer)
                 .delete(delete_customer),

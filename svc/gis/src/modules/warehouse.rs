@@ -208,19 +208,19 @@ pub fn create_routes() -> Router<PgPool> {
             axum::routing::post(create_warehouse_location),
         )
         .route(
-            "/warehouse-locations/:id",
+            "/warehouse-locations/{id}",
             axum::routing::get(get_warehouse_location),
         )
         .route(
-            "/warehouse-locations/:id",
+            "/warehouse-locations/{id}",
             axum::routing::put(update_warehouse_location),
         )
         .route(
-            "/warehouse-locations/:id",
+            "/warehouse-locations/{id}",
             axum::routing::delete(delete_warehouse_location),
         )
         .route(
-            "/warehouse-locations/map/:map_id",
+            "/warehouse-locations/map/{map_id}",
             axum::routing::get(list_warehouse_locations_by_map),
         )
 }

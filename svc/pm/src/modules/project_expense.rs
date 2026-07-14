@@ -25,7 +25,7 @@ pub fn create_routes(pool: PgPool) -> Router {
 
 #[utoipa::path(
     get,
-    path = "/api/pm/projects/:project_id/expenses",
+    path = "/api/pm/projects/{project_id}/expenses",
     tag = "project_expenses",
     responses(
         (status = 200, description = "获取项目费用列表成功", body = ApiResponse<Vec<ProjectExpense>>),
@@ -54,7 +54,7 @@ async fn list_expenses(
 
 #[utoipa::path(
     post,
-    path = "/api/pm/projects/:project_id/expenses",
+    path = "/api/pm/projects/{project_id}/expenses",
     tag = "project_expenses",
     request_body = CreateExpenseRequest,
     responses(
@@ -118,7 +118,7 @@ async fn add_expense(
 
 #[utoipa::path(
     get,
-    path = "/api/pm/projects/:project_id/expenses/:id",
+    path = "/api/pm/projects/{project_id}/expenses/{id}",
     tag = "project_expenses",
     responses(
         (status = 200, description = "获取项目费用成功", body = ApiResponse<ProjectExpense>),
@@ -150,7 +150,7 @@ async fn get_expense(
 
 #[utoipa::path(
     put,
-    path = "/api/pm/projects/:project_id/expenses/:id",
+    path = "/api/pm/projects/{project_id}/expenses/{id}",
     tag = "project_expenses",
     request_body = UpdateExpenseRequest,
     responses(
@@ -208,7 +208,7 @@ async fn update_expense(
 
 #[utoipa::path(
     delete,
-    path = "/api/pm/projects/:project_id/expenses/:id",
+    path = "/api/pm/projects/{project_id}/expenses/{id}",
     tag = "project_expenses",
     responses(
         (status = 200, description = "删除项目费用成功", body = ApiResponse<bool>),

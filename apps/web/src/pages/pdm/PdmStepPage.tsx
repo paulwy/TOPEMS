@@ -21,7 +21,7 @@ import { ListPageTemplate, type ColumnDef } from '@/components/templates';
 import { PageContainer } from '@/components/common';
 import { pdmApi } from '@/api/pdm';
 import type { ProductionStep } from '@/api/pdm';
-import { useAppStore } from '@/store';
+import { useNotificationStore } from '@/store';
 import { designTokens } from '@/theme/tokens';
 import { QUERY_KEYS } from '@/lib/reactQuery';
 
@@ -42,7 +42,7 @@ const adaptStep = (item: { [key: string]: unknown }) => ({
 const PdmStepPage: React.FC = () => {
   const queryClient = useQueryClient();
   const theme = useTheme();
-  const addNotification = useAppStore((state) => state.addNotification);
+  const addNotification = useNotificationStore((state) => state.addNotification);
 
   const [searchTerm, setSearchTerm] = useState('');
   const [showCreateModal, setShowCreateModal] = useState(false);

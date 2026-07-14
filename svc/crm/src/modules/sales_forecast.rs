@@ -20,23 +20,29 @@ use topems_shared::{api_error, ApiResponse};
 pub fn create_routes() -> Router<ApiState> {
     Router::new()
         .route(
-            "/api/crm/sales-forecast",
+            "/api/core/crm/v1/sales-forecast",
             get(list_sales_forecasts).post(create_sales_forecast),
         )
-        .route("/api/crm/sales-forecast/generate", post(generate_forecast))
         .route(
-            "/api/crm/sales-forecast/{id}",
+            "/api/core/crm/v1/sales-forecast/generate",
+            post(generate_forecast),
+        )
+        .route(
+            "/api/core/crm/v1/sales-forecast/{id}",
             get(get_sales_forecast)
                 .put(update_sales_forecast)
                 .delete(delete_sales_forecast),
         )
-        .route("/api/crm/sales-forecast/trend", get(get_sales_trend))
         .route(
-            "/api/crm/sales-forecast/compare",
+            "/api/core/crm/v1/sales-forecast/trend",
+            get(get_sales_trend),
+        )
+        .route(
+            "/api/core/crm/v1/sales-forecast/compare",
             get(compare_sales_forecasts),
         )
         .route(
-            "/api/crm/sales-forecast/accuracy-report",
+            "/api/core/crm/v1/sales-forecast/accuracy-report",
             get(get_accuracy_report),
         )
 }

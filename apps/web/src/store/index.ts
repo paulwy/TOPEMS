@@ -57,6 +57,16 @@ export {
   useSelectedPlugins,
   useSearchQuery,
   useActiveCategory,
+  useIsPluginInstalled,
+  useIsPluginActive,
+  usePluginHealth,
+  useInstalledPlugin,
+  useMarketplacePlugin,
+  useFilteredPlugins,
+  useFilteredInstalledPlugins,
+  useHealthSummary,
+  useInstalledCount,
+  useActiveCount,
 } from './pluginStore';
 
 export {

@@ -56,6 +56,7 @@ import {
   type PaginationState,
   type VisibilityState,
 } from '@tanstack/react-table';
+import { FixedSizeList } from 'react-window';
 import { useNotificationStore } from '@/store';
 import { useExportData } from '@/hooks/useDataTable';
 import { useResponsive } from '@/hooks/useResponsive';
@@ -908,125 +909,232 @@ export function DataTable<TData, TValue>({
                     </TableCell>
                   </TableRow>
                 ) : table.getRowModel().rows.length ? (
-                  table.getRowModel().rows.map((row, rowIndex) => {
-                    const rowKey = getRowKey(row.original);
-                    const isExpanded = expandedRows.has(rowKey);
-
-                    return (
-                      <>
-                        <TableRow
-                          key={row.id}
-                          onClick={() => onRowClick?.(row.original)}
-                          sx={{
-                            cursor: onRowClick ? 'pointer' : 'default',
-                            '&:hover': {
-                              backgroundColor: onRowClick ? 'action.hover' : 'inherit',
-                            },
-                            '&:last-child td': { borderBottom: 0 },
-                            bgcolor: striped && row.index % 2 === 0 ? 'action.hover' : 'inherit',
-                            ...(compact && { fontSize: '0.875rem' }),
-                          }}
+                  enableVirtualization ? (
+                    <TableRow>
+                      <TableCell
+                        colSpan={
+                          columns.length +
+                          (showSelection ? 1 : 0) +
+                          (showRowNumber ? 1 : 0) +
+                          (enableRowExpansion ? 1 : 0)
+                        }
+                        sx={{ p: 0 }}
+                      >
+                        <FixedSizeList
+                          height={400}
+                          itemCount={table.getRowModel().rows.length}
+                          itemSize={rowHeight}
+                          width='100%'
                         >
-                          {/* 选择列 */}
-                          {showSelection && (
-                            <TableCell
-                              padding='checkbox'
-                              sx={{
-                                position: 'sticky',
-                                left: 0,
-                                zIndex: 1,
-                                bgcolor: 'inherit',
-                                width: 40,
-                              }}
-                            >
-                              <Checkbox
-                                checked={isSelected.includes(rowKey)}
-                                onChange={() => handleSelectRow(row.original)}
-                                onClick={(e) => e.stopPropagation()}
-                              />
-                            </TableCell>
-                          )}
-                          {/* 行号列 */}
-                          {showRowNumber && (
-                            <TableCell
-                              sx={{
-                                whiteSpace: 'nowrap',
-                                fontSize: 14,
-                                fontWeight: 500,
-                                position: showSelection ? 'sticky' : 'relative',
-                                left: showSelection ? 56 : 0,
-                                zIndex: 1,
-                                bgcolor: 'inherit',
-                              }}
-                            >
-                              {renderRowNumber(rowIndex)}
-                            </TableCell>
-                          )}
-                          {/* 展开列 */}
-                          {enableRowExpansion && (
-                            <TableCell
-                              sx={{
-                                whiteSpace: 'nowrap',
-                                fontSize: 14,
-                                position: showSelection || showRowNumber ? 'sticky' : 'relative',
-                                left: (showSelection ? 56 : 0) + (showRowNumber ? 64 : 0),
-                                zIndex: 1,
-                                bgcolor: 'inherit',
-                              }}
-                            >
-                              <IconButton
-                                size='small'
-                                onClick={(e) => {
-                                  e.stopPropagation();
-                                  handleRowExpand(row.original);
+                          {({ index, style }) => {
+                            const row = table.getRowModel().rows[index];
+                            const rowKey = getRowKey(row.original);
+
+                            return (
+                              <div style={style}>
+                                <TableRow
+                                  key={row.id}
+                                  onClick={() => onRowClick?.(row.original)}
+                                  sx={{
+                                    cursor: onRowClick ? 'pointer' : 'default',
+                                    '&:hover': {
+                                      backgroundColor: onRowClick ? 'action.hover' : 'inherit',
+                                    },
+                                    '&:last-child td': { borderBottom: 0 },
+                                    bgcolor: striped && row.index % 2 === 0 ? 'action.hover' : 'inherit',
+                                    ...(compact && { fontSize: '0.875rem' }),
+                                  }}
+                                >
+                                  {showSelection && (
+                                    <TableCell
+                                      padding='checkbox'
+                                      sx={{
+                                        position: 'sticky',
+                                        left: 0,
+                                        zIndex: 1,
+                                        bgcolor: 'inherit',
+                                        width: 40,
+                                      }}
+                                    >
+                                      <Checkbox
+                                        checked={isSelected.includes(rowKey)}
+                                        onChange={() => handleSelectRow(row.original)}
+                                        onClick={(e) => e.stopPropagation()}
+                                      />
+                                    </TableCell>
+                                  )}
+                                  {showRowNumber && (
+                                    <TableCell
+                                      sx={{
+                                        whiteSpace: 'nowrap',
+                                        fontSize: 14,
+                                        fontWeight: 500,
+                                        position: showSelection ? 'sticky' : 'relative',
+                                        left: showSelection ? 56 : 0,
+                                        zIndex: 1,
+                                        bgcolor: 'inherit',
+                                      }}
+                                    >
+                                      {renderRowNumber(index)}
+                                    </TableCell>
+                                  )}
+                                  {enableRowExpansion && (
+                                    <TableCell
+                                      sx={{
+                                        whiteSpace: 'nowrap',
+                                        fontSize: 14,
+                                        position: showSelection || showRowNumber ? 'sticky' : 'relative',
+                                        left: (showSelection ? 56 : 0) + (showRowNumber ? 64 : 0),
+                                        zIndex: 1,
+                                        bgcolor: 'inherit',
+                                      }}
+                                    >
+                                      <IconButton
+                                        size='small'
+                                        onClick={(e) => {
+                                          e.stopPropagation();
+                                          handleRowExpand(row.original);
+                                        }}
+                                      >
+                                        <ChevronDown sx={{ width: 18, height: 18 }} />
+                                      </IconButton>
+                                    </TableCell>
+                                  )}
+                                  {row.getVisibleCells().map((cell) => (
+                                    <TableCell
+                                      key={cell.id}
+                                      sx={{
+                                        whiteSpace: 'nowrap',
+                                        fontSize: 14,
+                                        ...(compact && { py: 1 }),
+                                      }}
+                                    >
+                                      {flexRender(cell.column.columnDef.cell, cell.getContext())}
+                                    </TableCell>
+                                  ))}
+                                </TableRow>
+                              </div>
+                            );
+                          }}
+                        </FixedSizeList>
+                      </TableCell>
+                    </TableRow>
+                  ) : (
+                    table.getRowModel().rows.map((row, rowIndex) => {
+                      const rowKey = getRowKey(row.original);
+                      const isExpanded = expandedRows.has(rowKey);
+
+                      return (
+                        <>
+                          <TableRow
+                            key={row.id}
+                            onClick={() => onRowClick?.(row.original)}
+                            sx={{
+                              cursor: onRowClick ? 'pointer' : 'default',
+                              '&:hover': {
+                                backgroundColor: onRowClick ? 'action.hover' : 'inherit',
+                              },
+                              '&:last-child td': { borderBottom: 0 },
+                              bgcolor: striped && row.index % 2 === 0 ? 'action.hover' : 'inherit',
+                              ...(compact && { fontSize: '0.875rem' }),
+                            }}
+                          >
+                            {showSelection && (
+                              <TableCell
+                                padding='checkbox'
+                                sx={{
+                                  position: 'sticky',
+                                  left: 0,
+                                  zIndex: 1,
+                                  bgcolor: 'inherit',
+                                  width: 40,
                                 }}
                               >
-                                {isExpanded ? (
-                                  <ChevronUp sx={{ width: 18, height: 18 }} />
-                                ) : (
-                                  <ChevronDown sx={{ width: 18, height: 18 }} />
-                                )}
-                              </IconButton>
-                            </TableCell>
-                          )}
-                          {/* 数据列 */}
-                          {row.getVisibleCells().map((cell) => (
-                            <TableCell
-                              key={cell.id}
-                              sx={{
-                                whiteSpace: 'nowrap',
-                                fontSize: 14,
-                                ...(compact && { py: 1 }),
-                              }}
-                            >
-                              {flexRender(cell.column.columnDef.cell, cell.getContext())}
-                            </TableCell>
-                          ))}
-                        </TableRow>
-                        {/* 展开行 */}
-                        {enableRowExpansion && isExpanded && expandedRowRender && (
-                          <TableRow key={`${row.id}-expanded`}>
-                            <TableCell
-                              colSpan={
-                                columns.length +
-                                (showSelection ? 1 : 0) +
-                                (showRowNumber ? 1 : 0) +
-                                (enableRowExpansion ? 1 : 0)
-                              }
-                              sx={{
-                                padding: 2,
-                                bgcolor: 'grey.50',
-                                borderTop: '1px solid',
-                                borderTopColor: 'divider',
-                              }}
-                            >
-                              {expandedRowRender(row.original)}
-                            </TableCell>
+                                <Checkbox
+                                  checked={isSelected.includes(rowKey)}
+                                  onChange={() => handleSelectRow(row.original)}
+                                  onClick={(e) => e.stopPropagation()}
+                                />
+                              </TableCell>
+                            )}
+                            {showRowNumber && (
+                              <TableCell
+                                sx={{
+                                  whiteSpace: 'nowrap',
+                                  fontSize: 14,
+                                  fontWeight: 500,
+                                  position: showSelection ? 'sticky' : 'relative',
+                                  left: showSelection ? 56 : 0,
+                                  zIndex: 1,
+                                  bgcolor: 'inherit',
+                                }}
+                              >
+                                {renderRowNumber(rowIndex)}
+                              </TableCell>
+                            )}
+                            {enableRowExpansion && (
+                              <TableCell
+                                sx={{
+                                  whiteSpace: 'nowrap',
+                                  fontSize: 14,
+                                  position: showSelection || showRowNumber ? 'sticky' : 'relative',
+                                  left: (showSelection ? 56 : 0) + (showRowNumber ? 64 : 0),
+                                  zIndex: 1,
+                                  bgcolor: 'inherit',
+                                }}
+                              >
+                                <IconButton
+                                  size='small'
+                                  onClick={(e) => {
+                                    e.stopPropagation();
+                                    handleRowExpand(row.original);
+                                  }}
+                                >
+                                  {isExpanded ? (
+                                    <ChevronUp sx={{ width: 18, height: 18 }} />
+                                  ) : (
+                                    <ChevronDown sx={{ width: 18, height: 18 }} />
+                                  )}
+                                </IconButton>
+                              </TableCell>
+                            )}
+                            {row.getVisibleCells().map((cell) => (
+                              <TableCell
+                                key={cell.id}
+                                sx={{
+                                  whiteSpace: 'nowrap',
+                                  fontSize: 14,
+                                  ...(compact && { py: 1 }),
+                                }}
+                              >
+                                {flexRender(cell.column.columnDef.cell, cell.getContext())}
+                              </TableCell>
+                            ))}
                           </TableRow>
-                        )}
-                      </>
-                    );
-                  })
+                          {enableRowExpansion && isExpanded && expandedRowRender && (
+                            <TableRow key={`${row.id}-expanded`}>
+                              <TableCell
+                                colSpan={
+                                  columns.length +
+                                  (showSelection ? 1 : 0) +
+                                  (showRowNumber ? 1 : 0) +
+                                  (enableRowExpansion ? 1 : 0)
+                                }
+                                sx={{
+                                  padding: 2,
+                                  bgcolor: 'grey.50',
+                                  borderTop: '1px solid',
+                                  borderTopColor: 'divider',
+                                }}
+                              >
+                                {expandedRowRender(row.original)}
+                              </TableCell>
+                            </TableRow>
+                          )}
+                        </>
+                      );
+                    })
+                  )
                 ) : (
                   <TableRow>
                     <TableCell

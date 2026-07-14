@@ -26,11 +26,11 @@ pub struct PaginationParams {
 pub fn create_routes() -> Router<ApiState> {
     Router::new()
         .route(
-            "/api/hrm/companies",
+            "/api/core/hrm/v1/companies",
             get(list_companies).post(create_company),
         )
         .route(
-            "/api/hrm/companies/{id}",
+            "/api/core/hrm/v1/companies/{id}",
             get(get_company).put(update_company).delete(delete_company),
         )
 }

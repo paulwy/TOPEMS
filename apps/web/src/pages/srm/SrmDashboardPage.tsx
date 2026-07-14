@@ -1,39 +1,26 @@
-import React, { useState, useEffect, useMemo } from 'react';
+import React, { useMemo } from 'react';
 import { Box } from '@mui/material';
 import { Users, Award, ClipboardList, DollarSign, ScrollText, Building2 } from 'lucide-react';
 import { StatsChart } from '@/components/bi/StatsChart';
 import { srmApi } from '@/api/srm';
 import type { SrmDetailedStatistics } from '@/api/srm';
-import { apiLogger } from '@/utils/logger';
 import { DashboardTemplate, type StatCard, type ChartCard } from '@/components/templates';
 import { PageContainer } from '@/components/common';
-import { useNotificationStore } from '@/store';
+import { useQuery } from '@tanstack/react-query';
+import { QUERY_KEYS } from '@/lib/reactQuery';
 
 const SrmDashboardPage: React.FC = () => {
-  const [statistics, setStatistics] = useState<SrmDetailedStatistics | null>(null);
-  const [loading, setLoading] = useState(true);
-  const addNotification = useNotificationStore((state) => state.addNotification);
-
-  useEffect(() => {
-    loadStatistics();
-  }, []);
-
-  const loadStatistics = async () => {
-    try {
-      setLoading(true);
+  const { data: statistics, isLoading: loading } = useQuery({
+    queryKey: QUERY_KEYS.SRM.STATISTICS,
+    queryFn: async () => {
       const response = await srmApi.getDetailedStatistics();
       if (response.success && response.data) {
-        setStatistics(response.data);
-      } else {
-        addNotification({ title: '错误', message: '获取统计数据失败', type: 'error' });
+        return response.data as SrmDetailedStatistics;
       }
-    } catch (err: unknown) {
-      apiLogger.error('加载统计数据失败:', err);
-      addNotification({ title: '错误', message: '加载统计数据失败', type: 'error' });
-    } finally {
-      setLoading(false);
-    }
-  };
+      return null;
+    },
+    staleTime: 5 * 60 * 1000,
+  });
 
   const mapStatusToChinese = (status: string) => {
     const statusMap: Record<string, string> = {
@@ -221,7 +208,6 @@ const SrmDashboardPage: React.FC = () => {
         stats={stats}
         charts={charts}
         loading={loading}
-        onRefresh={loadStatistics}
       />
     </PageContainer>
   );

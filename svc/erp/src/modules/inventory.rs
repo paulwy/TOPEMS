@@ -27,7 +27,7 @@ pub fn create_routes() -> Router<ApiState> {
             get(list_inventory).post(create_inventory),
         )
         .route(
-            "/api/erp/inventory/:id",
+            "/api/erp/inventory/{id}",
             get(get_inventory)
                 .put(update_inventory)
                 .delete(delete_inventory),

@@ -18,7 +18,6 @@ import {
   Truck,
   Handshake,
   FolderKanban,
-  CalendarCheck,
   FlaskConical,
   ClipboardCheck,
   Settings,
@@ -28,7 +27,6 @@ import {
   Activity,
   Bell,
   Database,
-  Layers,
   Zap,
   Globe,
   Puzzle,
@@ -129,13 +127,6 @@ export const moduleThemes: Record<string, ModuleTheme> = {
     icon: FolderKanban,
     gradient: `linear-gradient(135deg, ${ct.warning.main} 0%, ${ct.warning.dark} 100%)`,
     color: ct.warning.main,
-  },
-  oa: {
-    code: 'oa',
-    name: '办公自动化',
-    icon: CalendarCheck,
-    gradient: `linear-gradient(135deg, ${ct.info[400]} 0%, ${ct.info.dark} 100%)`,
-    color: ct.info[400],
   },
   ehs: {
     code: 'ehs',
@@ -241,13 +232,6 @@ export const moduleThemes: Record<string, ModuleTheme> = {
     icon: Settings,
     gradient: `linear-gradient(135deg, ${ct.grey[500]} 0%, ${ct.grey[600]} 100%)`,
     color: ct.grey[500],
-  },
-  asset: {
-    code: 'asset',
-    name: '资产管理',
-    icon: Layers,
-    gradient: `linear-gradient(135deg, ${ct.success[400]} 0%, ${ct.success.dark} 100%)`,
-    color: ct.success[400],
   },
   im: {
     code: 'im',

@@ -24,7 +24,7 @@ import { pmNavConfig } from '@/modules/pm/config';
 import { pluginNavConfig } from '@/modules/plugin/config';
 import { qmsNavConfig } from '@/modules/qms/config';
 import { reportNavConfig } from '@/modules/report/config';
-import { rsNavConfig } from '@/modules/rs/config';
+import { rdNavConfig } from '@/modules/rd/config';
 import { scmNavConfig } from '@/modules/scm/config';
 import { srmNavConfig } from '@/modules/srm/config';
 import { wmsNavConfig } from '@/modules/wms/config';
@@ -36,6 +36,9 @@ export const coreModuleNavConfigs: ModuleNavConfig[] = [
   iamNavConfig,
   workflowNavConfig,
   notificationNavConfig,
+  assetNavConfig,
+  lowcodeNavConfig,
+  oaNavConfig,
   docNavConfig,
   monitorNavConfig,
   integrationNavConfig,
@@ -52,10 +55,7 @@ export const coreModuleNavConfigs: ModuleNavConfig[] = [
   pmNavConfig,
   pdmNavConfig,
   srmNavConfig,
-  oaNavConfig,
-  lowcodeNavConfig,
-  rsNavConfig,
-  assetNavConfig,
+  rdNavConfig,
   pluginNavConfig,
   imNavConfig,
   biNavConfig,
@@ -68,7 +68,6 @@ export const coreModuleNavConfigs: ModuleNavConfig[] = [
 export {
   aiNavConfig,
   adminNavConfig,
-  assetNavConfig,
   biNavConfig,
   crmNavConfig,
   docNavConfig,
@@ -80,18 +79,16 @@ export {
   imNavConfig,
   integrationNavConfig,
   limsNavConfig,
-  lowcodeNavConfig,
   mesNavConfig,
   mobileNavConfig,
   monitorNavConfig,
   notificationNavConfig,
-  oaNavConfig,
   pdmNavConfig,
   pmNavConfig,
   pluginNavConfig,
   qmsNavConfig,
   reportNavConfig,
-  rsNavConfig,
+  rdNavConfig,
   scmNavConfig,
   srmNavConfig,
   wmsNavConfig,

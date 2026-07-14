@@ -12,21 +12,21 @@ runtime:
   base_path: /api/mfg
 
 permissions:
-  - code: mes:production_order:read
+  - code: mes:read
     name: 查看生产工单
     description: 查看生产工单
-  - code: mes:production_order:write
+  - code: mes:write
     name: 管理生产工单
     description: 创建和更新生产工单
-  - code: mes:production_order:start
+  - code: mes:write
     name: 启动生产工单
     description: 启动生产工单执行
-  - code: mes:production_order:complete
+  - code: mes:write
     name: 完成生产工单
     description: 完成生产工单
-  - code: mes:production_order:cancel
+  - code: mes:write
     name: 取消生产工单
     description: 取消生产工单
-  - code: mes:process:read
+  - code: mes:read
     name: 查看生产工艺
     description: 查看生产工艺

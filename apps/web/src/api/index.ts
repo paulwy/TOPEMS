@@ -27,8 +27,6 @@ export type { PermissionError } from './permissionInterceptor';
 // Domain modules - Business APIs
 export { authApi, iamApi } from './iam';
 export { adminApi } from './admin';
-export { assetApi } from './asset';
-export { oaApi } from './oa';
 export { crmApi } from './crm';
 export { hrmApi } from './hrm';
 export { scmApi } from './scm';
@@ -41,7 +39,7 @@ export { pdmApi } from './pdm';
 export { pmApi } from './pm';
 export { biApi } from './bi';
 export { erpApi } from './erp';
-export { rsApi } from './rs';
+export { rdApi } from './rd';
 export { gisApi } from './gis';
 export { srmApi } from './srm';
 
@@ -64,6 +62,3 @@ export { helpApi } from './help';
 
 // Plugin system
 export * as pluginApi from './plugin';
-
-// Low-code platform
-export * as lowcodeApi from './lowcode';

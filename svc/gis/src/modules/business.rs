@@ -215,19 +215,19 @@ pub fn create_routes() -> Router<PgPool> {
             axum::routing::post(create_business_location),
         )
         .route(
-            "/business-locations/:id",
+            "/business-locations/{id}",
             axum::routing::get(get_business_location),
         )
         .route(
-            "/business-locations/:id",
+            "/business-locations/{id}",
             axum::routing::put(update_business_location),
         )
         .route(
-            "/business-locations/:id",
+            "/business-locations/{id}",
             axum::routing::delete(delete_business_location),
         )
         .route(
-            "/business-locations/type/:business_type",
+            "/business-locations/type/{business_type}",
             axum::routing::get(list_business_locations_by_type),
         )
 }

@@ -17,7 +17,7 @@ import {
 import { Plus, Edit, Delete, Package } from 'lucide-react';
 import { pdmApi } from '@/api/pdm';
 import type { Product, CreateProductRequest } from '@/api/pdm';
-import { useAppStore } from '@/store';
+import { useNotificationStore } from '@/store';
 import { apiLogger } from '@/utils/logger';
 import {
   ListPageTemplate,
@@ -66,7 +66,7 @@ export const ProductPage: React.FC = () => {
     category: '',
     unit: '',
   });
-  const addNotification = useAppStore((state) => state.addNotification);
+  const addNotification = useNotificationStore((state) => state.addNotification);
 
   const loadProducts = useCallback(() => {
     queryClient.invalidateQueries({ queryKey: QUERY_KEYS.PDM.PRODUCTS });

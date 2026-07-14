@@ -101,45 +101,7 @@ interface ValidationSuggestion {
   message?: string;
 }
 
-/**
- * TODO: Phase 7-4 -- 虚拟滚动优化
- *
- * 当列表数据超过 100 条时，建议使用虚拟滚动提升渲染性能:
- *
- * 方案 1: @tanstack/react-virtual
- *   import { useVirtualizer } from '@tanstack/react-virtual';
- *   const virtualizer = useVirtualizer({ count: data.length, getScrollElement: () => parentRef.current });
- *
- * 方案 2: react-virtuoso (MUI 友好)
- *   import { TableVirtuoso } from 'react-virtuoso';
- *   <TableVirtuoso data={data} components={{ TableBody, TableRow, TableCell }} />
- *
- * 当前预估数据量: 员工列表 (全员数据)
- */
 
-/**
- * TODO: Phase 7-2 — React Query 迁移
- *
- * 模块: 员工管理 (HrmEmployeePage)
- *
- * 1. 将 useState(loading) + useState(data) + useEffect(fetch) 替换为 useQuery:
- *    const { data: response, isLoading, error, refetch } = useQuery({
- *      queryKey: ['hrm-employees', page, rowsPerPage, searchText],
- *      queryFn: () => hrmApi.getList({ page: page + 1, pageSize: rowsPerPage, keyword: searchText }),
- *      placeholderData: (prev) => prev,
- *    });
- *    const data = response?.data?.items || [];
- *    const total = response?.data?.total || 0;
- *
- * 2. 将 create/update/delete handler 中的 setState + API 调用替换为 useMutation:
- *    const queryClient = useQueryClient();
- *    const deleteMutation = useMutation({
- *      mutationFn: (id: string) => hrmApi.delete(id),
- *      onSuccess: () => queryClient.invalidateQueries({ queryKey: ['hrm-employees'] }),
- *    });
- *
- * 3. 保留 UI 状态（page, rowsPerPage, searchText, dialogOpen 等）的 useState
- */
 type ViewMode = 'list' | 'tree';
 
 const HrmEmployeePage: React.FC = () => {

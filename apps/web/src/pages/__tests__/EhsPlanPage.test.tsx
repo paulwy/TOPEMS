@@ -1,74 +1,152 @@
 import React from 'react';
 import { describe, it, expect, vi, beforeEach } from 'vitest';
-import { render, screen, waitFor, fireEvent } from '@testing-library/react';
-import { BrowserRouter } from 'react-router-dom';
+import { renderWithProviders, screen, waitFor, fireEvent } from '@/__tests__/test-utils';
 import EhsPlanPage from '../ehs/EhsPlanPage';
 import { ehsApi } from '@/api/ehs';
-import { useNotificationStore, useAuthStore } from '@/store';
+import { useNotificationStore } from '@/store';
 
-vi.mock('@/api/ehs');
-vi.mock('@/store', () => ({
-  useNotificationStore: vi.fn((selector?: any) =>
-    selector
-      ? selector({
-          addNotification: vi.fn(),
-          notifications: [],
-        })
-      : {
-          addNotification: vi.fn(),
-          notifications: [],
-        }
-  ),
-  useAuthStore: vi.fn((selector?: any) =>
-    selector
-      ? selector({
-          user: null,
-        })
-      : {
-          user: null,
-        }
-  ),
+vi.mock('@/api/ehs', () => ({
+  ehsApi: {
+    listPlans: vi.fn(),
+    getPlan: vi.fn(),
+    createPlan: vi.fn(),
+    updatePlan: vi.fn(),
+    deletePlan: vi.fn(),
+    listDrills: vi.fn(),
+    emergency: {
+      listPlans: vi.fn(),
+      getPlan: vi.fn(),
+      createPlan: vi.fn(),
+      updatePlan: vi.fn(),
+      deletePlan: vi.fn(),
+      listDrills: vi.fn(),
+    },
+  },
 }));
 
-const mockAddNotification = vi.fn();
-
-const renderWithProviders = (ui: React.ReactElement) => {
-  return render(<BrowserRouter>{ui}</BrowserRouter>);
-};
+vi.mock('@/store', () => {
+  const notificationState = {
+    notifications: [],
+    addNotification: vi.fn(),
+    removeNotification: vi.fn(),
+    clearNotifications: vi.fn(),
+  };
+  
+  const authState = {
+    user: { id: '1', username: 'testuser', email: 'test@example.com', isActive: true },
+    token: 'test-token',
+    permissions: [],
+    roles: [],
+    setUser: vi.fn(),
+    setToken: vi.fn(),
+    setPermissions: vi.fn(),
+    setRoles: vi.fn(),
+    clearAuth: vi.fn(),
+    updateUser: vi.fn(),
+    isAuthenticated: vi.fn(() => true),
+    hasPermission: vi.fn(() => true),
+    hasAnyPermission: vi.fn(() => true),
+    hasAllPermissions: vi.fn(() => true),
+    hasRole: vi.fn(() => true),
+    hasAnyRole: vi.fn(() => true),
+    isSuperuser: vi.fn(() => true),
+    getDisplayName: vi.fn(() => 'Test User'),
+    getAvatarUrl: vi.fn(() => ''),
+  };
+  
+  return {
+    useNotificationStore: vi.fn((selector?: any) => 
+      selector ? selector(notificationState) : notificationState
+    ),
+    useAuthStore: vi.fn((selector?: any) => 
+      selector ? selector(authState) : authState
+    ),
+    useThemeStore: vi.fn(() => ({
+      theme: 'light',
+      setTheme: vi.fn(),
+    })),
+    useUIStore: vi.fn(() => ({
+      sidebarOpen: true,
+      sidebarCollapsed: false,
+      toggleSidebar: vi.fn(),
+      setSidebarOpen: vi.fn(),
+      toggleSidebarCollapsed: vi.fn(),
+      setSidebarCollapsed: vi.fn(),
+    })),
+    useWorkflowStore: vi.fn(() => ({
+      currentTaskId: null,
+      taskStatus: 'pending',
+      setCurrentTaskId: vi.fn(),
+      setTaskStatus: vi.fn(),
+      completeTask: vi.fn(),
+    })),
+    useModuleLoadingStore: vi.fn(() => ({
+      modules: {},
+      loading: false,
+      progress: 0,
+      loadModule: vi.fn(),
+      setModuleState: vi.fn(),
+      reset: vi.fn(),
+    })),
+    useShortcutsStore: vi.fn(() => ({
+      shortcuts: [],
+      addShortcut: vi.fn(),
+      removeShortcut: vi.fn(),
+      updateShortcut: vi.fn(),
+    })),
+    useNotificationSettingsStore: vi.fn(() => ({
+      settings: {},
+      updateSettings: vi.fn(),
+    })),
+    useBIStore: vi.fn(() => ({
+      summary: null,
+      development: null,
+      quality: null,
+      production: null,
+      laboratory: null,
+      loading: false,
+      error: null,
+      fetchData: vi.fn(),
+      clearData: vi.fn(),
+    })),
+    useAuth: vi.fn(() => ({
+      user: { id: '1', username: 'testuser', email: 'test@example.com', isActive: true },
+      token: 'test-token',
+      permissions: [],
+      roles: [],
+    })),
+    useTheme: vi.fn(() => ({ theme: 'light' })),
+    useSidebarOpen: vi.fn(() => true),
+    useSidebarCollapsed: vi.fn(() => false),
+    useToggleSidebar: vi.fn(),
+    useSetSidebarOpen: vi.fn(),
+    useToggleSidebarCollapsed: vi.fn(),
+    useSetSidebarCollapsed: vi.fn(),
+  };
+});
 
 const mockPlans = [
-  {
-    id: 'PL001',
-    plan_no: 'PL-2024-001',
-    name: '年度安全培训计划',
-    plan_type: 'training',
-    status: 'active',
-    start_date: '2024-01-01',
-    end_date: '2024-12-31',
-  },
+  { id: '1', plan_no: 'PL-2024-001', name: '年度安全培训计划', status: 'active' },
+  { id: '2', plan_no: 'PL-2024-002', name: '应急预案演练计划', status: 'draft' },
 ];
 
 describe('EhsPlanPage', () => {
+  const mockAddNotification = vi.fn();
+
   beforeEach(() => {
     vi.clearAllMocks();
-    (useNotificationStore as vi.Mock).mockImplementation((selector?: any) =>
-      selector
-        ? selector({
-            addNotification: mockAddNotification,
-            notifications: [],
-            user: null,
-            theme: 'light',
-          })
-        : {
-            addNotification: mockAddNotification,
-            notifications: [],
-            user: null,
-            theme: 'light',
-          }
-    );
+    (useNotificationStore as vi.Mock).mockImplementation((selector?: any) => {
+      const state = {
+        addNotification: mockAddNotification,
+        notifications: [],
+        removeNotification: vi.fn(),
+        clearNotifications: vi.fn(),
+      };
+      return selector ? selector(state) : state;
+    });
     (ehsApi.listPlans as vi.Mock).mockResolvedValue({
       success: true,
-      data: mockPlans,
+      data: { data: mockPlans },
     });
   });
 

@@ -32,6 +32,13 @@ export const smartReplenishmentApi = {
     return apiClient.wms.post('/smart-replenishment/suggestions/generate', data);
   },
 
+  getStatistics: async (params?: {
+    warehouse_id?: string;
+    period?: string;
+  }): Promise<ApiResponse<ReplenishmentStatistics>> => {
+    return apiClient.wms.get('/smart-replenishment/statistics', { params });
+  },
+
   listOrders: async (
     params?: PaginationParams
   ): Promise<ApiResponse<PaginatedResponse<ReplenishmentOrder>>> => {

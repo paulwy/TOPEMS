@@ -15,8 +15,8 @@ import {
   Button,
 } from '@mui/material';
 import { PageContainer } from '@/components/common';
-import React, { useState, useEffect, useMemo, useCallback } from 'react';
-import { useQueryClient } from '@tanstack/react-query';
+import React, { useState, useMemo, useCallback } from 'react';
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import type {
   PurchaseOrder,
   CreatePurchaseOrderRequest,
@@ -38,13 +38,10 @@ import { designTokens } from '@/theme/tokens';
 const ct = designTokens.colors;
 
 const PurchaseOrderPage: React.FC = () => {
-  const [orders, setOrders] = useState<PurchaseOrder[]>([]);
-  const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState('');
   const [statusFilter, setStatusFilter] = useState<string>('all');
   const [currentPage, setCurrentPage] = useState(1);
   const [pageSize] = useState(10);
-  const [total, setTotal] = useState(0);
   const [showDialog, setShowDialog] = useState(false);
   const [showDetailDialog, setShowDetailDialog] = useState(false);
   const [selectedOrder, setSelectedOrder] = useState<PurchaseOrder | null>(null);
@@ -62,9 +59,9 @@ const PurchaseOrderPage: React.FC = () => {
   const { addNotification } = useNotificationStore();
   const queryClient = useQueryClient();
 
-  const loadOrders = useCallback(async () => {
-    try {
-      setLoading(true);
+  const ordersQuery = useQuery({
+    queryKey: ['erp-purchase-orders', searchTerm, statusFilter, currentPage, pageSize],
+    queryFn: async () => {
       const params: Record<string, unknown> = {
         page: currentPage - 1,
         pagesize: pageSize,
@@ -74,56 +71,135 @@ const PurchaseOrderPage: React.FC = () => {
 
       const response = await erpApi.purchaseOrders.list(params);
       if (response.success && response.data) {
-        setOrders(response.data.orders || []);
-        setTotal(response.data.total || 0);
+        return { orders: response.data.orders || [], total: response.data.total || 0 };
       }
-    } catch (error: unknown) {
+      return { orders: [], total: 0 };
+    },
+    staleTime: 5 * 60 * 1000,
+    onError: (error: unknown) => {
       apiLogger.error('加载采购订单列表失败:', error);
       addNotification({
         type: 'error',
         title: '加载失败',
         message: '无法加载采购订单列表',
       });
-    } finally {
-      setLoading(false);
-    }
-  }, [currentPage, pageSize, searchTerm, statusFilter, addNotification]);
+    },
+  });
+  const orders = ordersQuery.data?.orders || [];
+  const total = ordersQuery.data?.total || 0;
+  const loading = ordersQuery.isLoading;
 
-  useEffect(() => {
-    loadOrders();
-  }, [loadOrders]);
+  const createOrderMutation = useMutation({
+    mutationFn: (data: CreatePurchaseOrderRequest) => erpApi.purchaseOrders.create(data),
+    onSuccess: () => {
+      addNotification({
+        type: 'success',
+        title: '创建成功',
+        message: '新采购订单已创建',
+      });
+      queryClient.invalidateQueries({ queryKey: ['erp-purchase-orders'] });
+    },
+    onError: (error: unknown) => {
+      apiLogger.error('创建失败:', error);
+      addNotification({
+        type: 'error',
+        title: '操作失败',
+        message: '创建采购订单失败',
+      });
+    },
+  });
 
-  const handleStatusChange = async (id: string, action: string) => {
-    try {
-      setLoading(true);
-      let response;
-      switch (action) {
-        case 'approve':
-          response = await erpApi.purchaseOrders.approve(id);
-          break;
-        case 'cancel':
-          response = await erpApi.purchaseOrders.cancel(id);
-          break;
-        default:
-          return;
-      }
-      if (response.success && response.data) {
-        addNotification({
-          type: 'success',
-          title: '状态更新成功',
-          message: `订单状态已更新为"${getStatusText(response.data.status)}"`,
-        });
-      }
-      loadOrders();
-    } catch (error: unknown) {
-      apiLogger.error('状态更新失败:', error);
+  const updateOrderMutation = useMutation({
+    mutationFn: ({ id, data }: { id: string; data: UpdatePurchaseOrderRequest }) =>
+      erpApi.purchaseOrders.update(id, data),
+    onSuccess: () => {
+      addNotification({
+        type: 'success',
+        title: '更新成功',
+        message: '采购订单信息已更新',
+      });
+      queryClient.invalidateQueries({ queryKey: ['erp-purchase-orders'] });
+    },
+    onError: (error: unknown) => {
+      apiLogger.error('更新失败:', error);
+      addNotification({
+        type: 'error',
+        title: '操作失败',
+        message: '更新采购订单失败',
+      });
+    },
+  });
+
+  const deleteOrderMutation = useMutation({
+    mutationFn: (id: string) => erpApi.purchaseOrders.delete(id),
+    onSuccess: () => {
+      addNotification({
+        type: 'success',
+        title: '删除成功',
+        message: '采购订单已删除',
+      });
+      queryClient.invalidateQueries({ queryKey: ['erp-purchase-orders'] });
+    },
+    onError: (error: unknown) => {
+      apiLogger.error('删除失败:', error);
+      addNotification({
+        type: 'error',
+        title: '删除失败',
+        message: '无法删除采购订单',
+      });
+    },
+  });
+
+  const approveOrderMutation = useMutation({
+    mutationFn: (id: string) => erpApi.purchaseOrders.approve(id),
+    onSuccess: (response) => {
+      addNotification({
+        type: 'success',
+        title: '状态更新成功',
+        message: `订单状态已更新为"${getStatusText(response.data?.status)}"`,
+      });
+      queryClient.invalidateQueries({ queryKey: ['erp-purchase-orders'] });
+    },
+    onError: (error: unknown) => {
+      apiLogger.error('审批失败:', error);
       addNotification({
         type: 'error',
         title: '状态更新失败',
         message: '无法更新订单状态',
       });
-    } finally {
-      setLoading(false);
+    },
+  });
+
+  const cancelOrderMutation = useMutation({
+    mutationFn: (id: string) => erpApi.purchaseOrders.cancel(id),
+    onSuccess: (response) => {
+      addNotification({
+        type: 'success',
+        title: '状态更新成功',
+        message: `订单状态已更新为"${getStatusText(response.data?.status)}"`,
+      });
+      queryClient.invalidateQueries({ queryKey: ['erp-purchase-orders'] });
+    },
+    onError: (error: unknown) => {
+      apiLogger.error('取消失败:', error);
+      addNotification({
+        type: 'error',
+        title: '状态更新失败',
+        message: '无法更新订单状态',
+      });
+    },
+  });
+
+  const handleStatusChange = async (id: string, action: string) => {
+    switch (action) {
+      case 'approve':
+        await approveOrderMutation.mutateAsync(id);
+        break;
+      case 'cancel':
+        await cancelOrderMutation.mutateAsync(id);
+        break;
+      default:
+        return;
     }
   };
 
@@ -139,38 +215,12 @@ const PurchaseOrderPage: React.FC = () => {
     }
 
     try {
-      setLoading(true);
-
-      queryClient.setQueryData<PurchaseOrder[]>(['erp-purchase-orders'], (existing) => {
-        if (!existing) return existing;
-        return existing.map((order) =>
-          pendingOrders.some((o) => o.id === order.id)
-            ? { ...order, status: 'approved' as const }
-            : order
-        );
-      });
-
       const results = await Promise.allSettled(
         pendingOrders.map((order) => erpApi.purchaseOrders.approve(order.id))
       );
 
       const successCount = results.filter((r) => r.status === 'fulfilled' && r.value.success).length;
       const failureCount = results.length - successCount;
-
-      if (failureCount > 0) {
-        queryClient.setQueryData<PurchaseOrder[]>(['erp-purchase-orders'], (existing) => {
-          if (!existing) return existing;
-          const failedIds = pendingOrders.filter((_, index) => {
-            const result = results[index];
-            return result.status !== 'fulfilled' || !result.value.success;
-          }).map((o) => o.id);
-          return existing.map((order) =>
-            failedIds.includes(order.id)
-              ? { ...order, status: 'pending' as const }
-              : order
-          );
-        });
-      }
 
       if (successCount > 0) {
         addNotification({
@@ -186,26 +236,16 @@ const PurchaseOrderPage: React.FC = () => {
           message: `有 ${failureCount} 个订单审批失败`,
         });
       }
-      loadOrders();
+      queryClient.invalidateQueries({ queryKey: ['erp-purchase-orders'] });
     } catch (error: unknown) {
       apiLogger.error('批量审批失败:', error);
-      queryClient.setQueryData<PurchaseOrder[]>(['erp-purchase-orders'], (existing) => {
-        if (!existing) return existing;
-        return existing.map((order) =>
-          pendingOrders.some((o) => o.id === order.id)
-            ? { ...order, status: 'pending' as const }
-            : order
-        );
-      });
       addNotification({
         type: 'error',
         title: '批量审批失败',
         message: '批量审批过程中发生错误',
       });
-    } finally {
-      setLoading(false);
     }
-  }, [addNotification, loadOrders, queryClient]);
+  }, [addNotification, queryClient]);
 
   const getStatusText = (status: string) => {
     const statusMap: Record<string, string> = {
@@ -255,57 +295,26 @@ const PurchaseOrderPage: React.FC = () => {
     e.preventDefault();
     try {
       if (selectedOrder) {
-        await erpApi.purchaseOrders.update(
-          selectedOrder.id,
-          formData as UpdatePurchaseOrderRequest
-        );
-        addNotification({
-          type: 'success',
-          title: '更新成功',
-          message: '采购订单信息已更新',
+        await updateOrderMutation.mutateAsync({
+          id: selectedOrder.id,
+          data: formData as UpdatePurchaseOrderRequest,
         });
       } else {
-        await erpApi.purchaseOrders.create(formData);
-        addNotification({
-          type: 'success',
-          title: '创建成功',
-          message: '新采购订单已创建',
-        });
+        await createOrderMutation.mutateAsync(formData);
       }
       setShowDialog(false);
       resetForm();
-      loadOrders();
     } catch (error: unknown) {
       apiLogger.error('操作失败:', error);
-      addNotification({
-        type: 'error',
-        title: '操作失败',
-        message: selectedOrder ? '更新采购订单失败' : '创建采购订单失败',
-      });
     }
   };
 
   const handleDelete = useCallback(
     async (id: string) => {
       if (!window.confirm('确定要删除这个采购订单吗?')) return;
-      try {
-        await erpApi.purchaseOrders.delete(id);
-        addNotification({
-          type: 'success',
-          title: '删除成功',
-          message: '采购订单已删除',
-        });
-        loadOrders();
-      } catch (error: unknown) {
-        apiLogger.error('删除失败:', error);
-        addNotification({
-          type: 'error',
-          title: '删除失败',
-          message: '无法删除采购订单',
-        });
-      }
+      await deleteOrderMutation.mutateAsync(id);
     },
-    [loadOrders, addNotification]
+    [deleteOrderMutation]
   );
 
   const handleEdit = useCallback((order: PurchaseOrder) => {

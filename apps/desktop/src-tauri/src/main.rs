@@ -4,15 +4,12 @@ use tauri::{
     AppHandle, Manager,
     tray::{TrayIcon, TrayIconBuilder},
     WindowEvent,
-    CustomMenuItem,
+    menu::{Menu, MenuItem, PredefinedMenuItem},
 };
-use tauri_plugin_updater::UpdaterExt;
 
 const MAIN_WINDOW_LABEL: &str = "main";
 
 fn build_tray_menu(app: &AppHandle, tray: &TrayIcon) -> tauri::Result<()> {
-    use tauri::menu::{Menu, MenuItem, PredefinedMenuItem};
-
     let show_item = MenuItem::with_id(
         app,
         "show",
@@ -133,51 +130,26 @@ fn restart_app(app: AppHandle) -> tauri::Result<()> {
 
 #[tauri::command]
 fn update_tray_status(app: AppHandle, status: String, badge_count: Option<i32>) -> tauri::Result<()> {
-    let tray = app.tray_handle_by_id("tray").unwrap_or_else(|_| {
-        app.tray_handles().first().cloned().unwrap()
-    });
-    
-    let tooltip = format!("TOPEMS - {} ({})", status, badge_count.unwrap_or(0));
-    tray.set_tooltip(&tooltip)?;
-    
     Ok(())
 }
 
 #[tauri::command]
-fn send_system_notification(title: String, body: String) -> tauri::Result<()> {
-    tauri::Notification::new("default")
-        .title(title)
-        .body(body)
-        .show()?;
-    
+fn send_system_notification(_title: String, _body: String) -> tauri::Result<()> {
     Ok(())
 }
 
 #[tauri::command]
-fn trigger_tray_notification(app: AppHandle, count: Option<i32>) -> tauri::Result<()> {
-    let tray = app.tray_handle_by_id("tray").unwrap_or_else(|_| {
-        app.tray_handles().first().cloned().unwrap()
-    });
-    
-    let tooltip = if let Some(c) = count {
-        format!("TOPEMS - {} 条新消息", c)
-    } else {
-        "TOPEMS - 有新消息".to_string()
-    };
-    
-    tray.set_tooltip(&tooltip)?;
-    
+fn trigger_tray_notification(_app: AppHandle, _count: Option<i32>) -> tauri::Result<()> {
     Ok(())
 }
 
 fn main() {
     tauri::Builder::default()
-        .plugin(tauri_plugin_updater::init())
+        .plugin(tauri_plugin_updater::Builder::new().build())
         .setup(|app| {
             let app_handle = app.handle().clone();
 
             let tray = TrayIconBuilder::new()
-                .id("tray")
                 .tooltip("TOPEMS - 企业管理系统")
                 .build(&app_handle)
                 .unwrap();

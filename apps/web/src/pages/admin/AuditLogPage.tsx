@@ -37,8 +37,8 @@ import {
 import { BackButton, PageContainer } from '@/components/common';
 import type { AuditLog as LimsAuditLog } from '@/api/lims';
 import { auditLimsApi } from '@/api/lims';
-import type { AuditLog as RsAuditLog } from '@/api/rs';
-import { auditRsApi } from '@/api/rs';
+import type { AuditLog as RdAuditLog } from '@/api/rd';
+import { auditRdApi } from '@/api/rd';
 import { useNotificationStore } from '@/store';
 import { apiLogger } from '@/utils/logger';
 import { ListPageTemplate, type ColumnDef, type FilterConfig } from '@/components/templates';
@@ -63,8 +63,8 @@ interface AuditLogPageProps {
   onNavigate?: (page: string) => void;
 }
 
-type AuditLogSource = 'lims' | 'rs';
-type AuditLog = LimsAuditLog | RsAuditLog;
+type AuditLogSource = 'lims' | 'rd';
+type AuditLog = LimsAuditLog | RdAuditLog;
 
 const AuditLogPage: React.FC<AuditLogPageProps> = ({ onNavigate }) => {
   const addNotification = useNotificationStore((state) => state.addNotification);
@@ -88,7 +88,7 @@ const AuditLogPage: React.FC<AuditLogPageProps> = ({ onNavigate }) => {
     if (loading) return;
     setLoading(true);
     try {
-      const api = source === 'lims' ? auditLimsApi : auditRsApi;
+      const api = source === 'lims' ? auditLimsApi : auditRdApi;
       const params: Record<string, unknown> = {
         page: Math.max(1, currentPage),
         pagesize: Math.min(100, Math.max(1, pageSize)),
@@ -152,7 +152,7 @@ const AuditLogPage: React.FC<AuditLogPageProps> = ({ onNavigate }) => {
     if (exporting) return;
     setExporting(true);
     try {
-      const api = source === 'lims' ? auditLimsApi : auditRsApi;
+      const api = source === 'lims' ? auditLimsApi : auditRdApi;
       const params: Record<string, unknown> = {};
       if (filterStatus !== 'all') {
         params.status = filterStatus;
@@ -477,14 +477,14 @@ const AuditLogPage: React.FC<AuditLogPageProps> = ({ onNavigate }) => {
         </Button>
         <Button
           size='small'
-          variant={source === 'rs' ? 'contained' : 'text'}
+          variant={source === 'rd' ? 'contained' : 'text'}
           onClick={() => {
-            setSource('rs');
+            setSource('rd');
             setCurrentPage(1);
           }}
           startIcon={<FlaskConical size={16} />}
         >
-          RS
+          RD
         </Button>
       </Box>
     </Box>

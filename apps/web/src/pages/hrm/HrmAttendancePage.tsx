@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useCallback, useMemo } from 'react';
+import React, { useState, useCallback, useMemo } from 'react';
 import {
   Clock,
   Calendar,
@@ -21,7 +21,7 @@ import {
   StatsPageTemplate,
   type StatsStatCard,
 } from '@/components/templates';
-import { StatusBadge } from '@topems/shared-components';
+import { StatusBadge, ConfirmDialog } from '@topems/shared-components';
 import { PageContainer } from '@/components/common/PageContainerV2';
 import {
   Button,
@@ -38,44 +38,90 @@ import {
   Select,
   MenuItem,
 } from '@mui/material';
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 
 const HrmAttendancePage: React.FC = () => {
   const addNotification = useNotificationStore((state) => state.addNotification);
+  const queryClient = useQueryClient();
 
   const [activeTab, setActiveTab] = useState<'records' | 'leaves' | 'statistics'>('records');
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedDate, setSelectedDate] = useState('2026-05-27');
-  const [records, setRecords] = useState<AttendanceRecord[]>([]);
-  const [leaves, setLeaves] = useState<LeaveRequest[]>([]);
-  const [loading, setLoading] = useState(false);
   const [showLeaveModal, setShowLeaveModal] = useState(false);
   const [leaveFormData, setLeaveFormData] = useState<Partial<LeaveRequest>>({});
 
-  const loadData = useCallback(async () => {
-    setLoading(true);
-    try {
-      if (activeTab === 'records') {
-        const res = await attendanceApi.list({ date: selectedDate, pagesize: 100 });
-        if (res.code === 200) {
-          setRecords(res.data?.items || []);
-        }
-      } else if (activeTab === 'leaves') {
-        const res = await leaveApi.list({ pagesize: 100 });
-        if (res.code === 200) {
-          setLeaves(res.data?.items || []);
-        }
-      }
-    } catch (err: unknown) {
-      apiLogger.error('Failed to load data:', err);
-      addNotification({ title: '加载失败', message: '加载数据失败', type: 'error' });
-    } finally {
-      setLoading(false);
-    }
-  }, [activeTab, selectedDate, addNotification]);
+  const [confirmDialogOpen, setConfirmDialogOpen] = useState(false);
+  const [confirmDialogConfig, setConfirmDialogConfig] = useState<{
+    title: string;
+    message: string;
+    onConfirm: () => void;
+    danger?: boolean;
+  } | null>(null);
 
-  useEffect(() => {
-    loadData();
-  }, [activeTab, selectedDate]);
+  // React Query - 考勤记录
+  const recordsQuery = useQuery({
+    queryKey: ['hrm-attendance-records', selectedDate],
+    queryFn: async () => {
+      const res = await attendanceApi.list({ date: selectedDate, pagesize: 100 });
+      if (res.code === 200) {
+        return res.data?.items || [];
+      }
+      return [];
+    },
+    staleTime: 5 * 60 * 1000,
+  });
+
+  const records = recordsQuery.data || [];
+  const loadingRecords = recordsQuery.isLoading;
+
+  // React Query - 请假申请
+  const leavesQuery = useQuery({
+    queryKey: ['hrm-leave-requests'],
+    queryFn: async () => {
+      const res = await leaveApi.list({ pagesize: 100 });
+      if (res.code === 200) {
+        return res.data?.items || [];
+      }
+      return [];
+    },
+    staleTime: 5 * 60 * 1000,
+    enabled: activeTab === 'leaves' || activeTab === 'statistics',
+  });
+
+  const leaves = leavesQuery.data || [];
+  const loadingLeaves = leavesQuery.isLoading;
+
+  const loading = loadingRecords || loadingLeaves;
+
+  // React Query - Mutations
+  const approveLeaveMutation = useMutation({
+    mutationFn: ({ id, action }: { id: string; action: 'approve' | 'reject' }) =>
+      leaveApi.approve(id, action),
+    onSuccess: () => {
+      addNotification({
+        title: '成功',
+        message: action === 'approve' ? '已批准' : '已拒绝',
+        type: 'success',
+      });
+      queryClient.invalidateQueries({ queryKey: ['hrm-leave-requests'] });
+    },
+    onError: () => {
+      addNotification({ title: '失败', message: '操作失败', type: 'error' });
+    },
+  });
+
+  const createLeaveMutation = useMutation({
+    mutationFn: (data: Partial<LeaveRequest>) => leaveApi.create(data),
+    onSuccess: () => {
+      addNotification({ title: '成功', message: '申请已提交', type: 'success' });
+      setShowLeaveModal(false);
+      setLeaveFormData({});
+      queryClient.invalidateQueries({ queryKey: ['hrm-leave-requests'] });
+    },
+    onError: () => {
+      addNotification({ title: '失败', message: '提交失败', type: 'error' });
+    },
+  });
 
   const getLeaveTypeName = (type: string) => {
     const types: Record<string, string> = {
@@ -90,39 +136,32 @@ const HrmAttendancePage: React.FC = () => {
   };
 
   const handleLeaveAction = useCallback(
-    async (id: string, action: 'approve' | 'reject') => {
-      try {
-        const response = await leaveApi.approve(id, action);
-        if (response.code === 200) {
-          addNotification({
-            title: '成功',
-            message: action === 'approve' ? '已批准' : '已拒绝',
-            type: 'success',
-          });
-          loadData();
+    (id: string, action: 'approve' | 'reject') => {
+      const confirmAction = async () => {
+        try {
+          await approveLeaveMutation.mutateAsync({ id, action });
+        } catch (err: unknown) {
+          apiLogger.error('Failed to process leave:', err);
         }
-      } catch (err: unknown) {
-        apiLogger.error('Failed to process leave:', err);
-        addNotification({ title: '失败', message: '操作失败', type: 'error' });
-      }
+      };
+      setConfirmDialogConfig({
+        title: '确认操作',
+        message: action === 'approve' ? '确定要批准这个请假申请吗？' : '确定要拒绝这个请假申请吗？',
+        onConfirm: confirmAction,
+        danger: action === 'reject',
+      });
+      setConfirmDialogOpen(true);
     },
-    [addNotification, loadData]
+    [approveLeaveMutation]
   );
 
   const handleCreateLeave = useCallback(async () => {
     try {
-      const response = await leaveApi.create(leaveFormData);
-      if (response.code === 200) {
-        addNotification({ title: '成功', message: '申请已提交', type: 'success' });
-        setShowLeaveModal(false);
-        setLeaveFormData({});
-        loadData();
-      }
+      await createLeaveMutation.mutateAsync(leaveFormData);
     } catch (err: unknown) {
       apiLogger.error('Failed to create leave:', err);
-      addNotification({ title: '失败', message: '提交失败', type: 'error' });
     }
-  }, [leaveFormData, addNotification, loadData]);
+  }, [leaveFormData, createLeaveMutation]);
 
   const filteredRecords = records.filter((r) =>
     r.employee_name?.toLowerCase().includes(searchQuery.toLowerCase())
@@ -357,8 +396,6 @@ const HrmAttendancePage: React.FC = () => {
       onClick: (row) => handleLeaveAction(row.id, 'approve'),
       color: 'success',
       show: (row) => row.status === 'pending',
-      confirm: true,
-      confirmMessage: '确定要批准这个请假申请吗？',
     },
     {
       label: '拒绝',
@@ -366,8 +403,7 @@ const HrmAttendancePage: React.FC = () => {
       onClick: (row) => handleLeaveAction(row.id, 'reject'),
       color: 'error',
       show: (row) => row.status === 'pending',
-      confirm: true,
-      confirmMessage: '确定要拒绝这个请假申请吗？',
+      divider: true,
     },
     {
       label: '详情',
@@ -459,7 +495,7 @@ const HrmAttendancePage: React.FC = () => {
               searchPlaceholder='搜索员工姓名...'
               searchValue={searchQuery}
               onSearch={setSearchQuery}
-              onRefresh={loadData}
+              onRefresh={() => queryClient.invalidateQueries({ queryKey: ['hrm-attendance-records'] })}
               exportable
               exportFileName='考勤记录'
               persistFilters
@@ -487,7 +523,7 @@ const HrmAttendancePage: React.FC = () => {
                   variant: 'contained',
                 },
               ]}
-              onRefresh={loadData}
+              onRefresh={() => queryClient.invalidateQueries({ queryKey: ['hrm-leave-requests'] })}
               exportable
               exportFileName='请假申请列表'
               persistFilters
@@ -611,6 +647,18 @@ const HrmAttendancePage: React.FC = () => {
           </DialogActions>
         </Dialog>
       )}
+
+      <ConfirmDialog
+        isOpen={confirmDialogOpen}
+        onClose={() => setConfirmDialogOpen(false)}
+        onConfirm={() => {
+          confirmDialogConfig?.onConfirm();
+          setConfirmDialogOpen(false);
+        }}
+        title={confirmDialogConfig?.title || ''}
+        message={confirmDialogConfig?.message || ''}
+        danger={confirmDialogConfig?.danger}
+      />
     </PageContainer>
   );
 };

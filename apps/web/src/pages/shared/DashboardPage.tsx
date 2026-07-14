@@ -77,7 +77,7 @@ import { qmsApi } from '@/api/qms';
 import { ehsApi } from '@/api/ehs';
 import { srmApi } from '@/api/srm';
 import { limsApi } from '@/api/lims';
-import { rsApi } from '@/api/rs';
+import { rdApi } from '@/api/rd';
 import { biApi } from '@/api/bi';
 import { scmApi } from '@/api/scm';
 import { useInstalledPlugins } from '../../context/PluginContext';
@@ -262,7 +262,7 @@ const DashboardPage: React.FC<DashboardPageProps> = ({ onLogout }) => {
         qmsApi.getStatistics(),
         srmApi.getStatistics(),
         limsApi.getStatistics(),
-        rsApi.getStatistics(),
+        rdApi.getStatistics(),
         ehsApi.listHazards({ page: 1, pagesize: 1000 }),
       ]);
 

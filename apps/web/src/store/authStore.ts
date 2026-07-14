@@ -127,22 +127,63 @@ export const useAuthStore = create<AuthState>()(
   )
 );
 
-export const useAuth = () => {
-  const {
-    user,
-    token,
-    permissions,
-    roles,
-    isAuthenticated: _isAuthenticated,
-    isSuperuser: _isSuperuser,
-    ...actions
-  } = useAuthStore();
+export const useAuthUser = () => useAuthStore((state) => state.user);
+export const useAuthToken = () => useAuthStore((state) => state.token);
+export const useAuthPermissions = () => useAuthStore((state) => state.permissions);
+export const useAuthRoles = () => useAuthStore((state) => state.roles);
 
-  const displayName = user?.realName || user?.full_name || user?.fullName || user?.username || '';
-  const avatarUrl = user?.avatar_url || user?.avatar || '';
-  const isAuthenticated = !!user && !!token;
-  const isSuperuser = !!(user?.is_superuser || user?.isSuperuser);
-  const userRole = user?.role || (roles && roles.length > 0 ? roles[0] : '');
+export const useAuthDisplayName = () => {
+  const user = useAuthStore((state) => state.user);
+  return user?.realName || user?.full_name || user?.fullName || user?.username || '';
+};
+
+export const useAuthAvatarUrl = () => {
+  const user = useAuthStore((state) => state.user);
+  return user?.avatar_url || user?.avatar || '';
+};
+
+export const useIsAuthenticated = () => {
+  const user = useAuthStore((state) => state.user);
+  const token = useAuthStore((state) => state.token);
+  return !!user && !!token;
+};
+
+export const useIsSuperuser = () => {
+  const user = useAuthStore((state) => state.user);
+  return !!(user?.is_superuser || user?.isSuperuser);
+};
+
+export const useAuthUserRole = () => {
+  const user = useAuthStore((state) => state.user);
+  const roles = useAuthStore((state) => state.roles);
+  return user?.role || (roles && roles.length > 0 ? roles[0] : '');
+};
+
+export const useAuthActions = () => useAuthStore((state) => ({
+  setUser: state.setUser,
+  setToken: state.setToken,
+  setPermissions: state.setPermissions,
+  setRoles: state.setRoles,
+  clearAuth: state.clearAuth,
+  updateUser: state.updateUser,
+  hasPermission: state.hasPermission,
+  hasAnyPermission: state.hasAnyPermission,
+  hasAllPermissions: state.hasAllPermissions,
+  hasRole: state.hasRole,
+  hasAnyRole: state.hasAnyRole,
+}));
+
+export const useAuth = () => {
+  const user = useAuthUser();
+  const token = useAuthToken();
+  const permissions = useAuthPermissions();
+  const roles = useAuthRoles();
+  const displayName = useAuthDisplayName();
+  const avatarUrl = useAuthAvatarUrl();
+  const isAuthenticated = useIsAuthenticated();
+  const isSuperuser = useIsSuperuser();
+  const userRole = useAuthUserRole();
+  const actions = useAuthActions();
 
   return {
     user,
@@ -156,6 +197,21 @@ export const useAuth = () => {
     userRole,
     ...actions,
   };
+};
+
+export const useHasPermission = (permission: string) => {
+  const hasPermission = useAuthStore((state) => state.hasPermission);
+  return (perm: string) => hasPermission(perm);
+};
+
+export const useHasAnyPermission = (permissions: string[]) => {
+  const hasAnyPermission = useAuthStore((state) => state.hasAnyPermission);
+  return (perms: string[]) => hasAnyPermission(perms);
+};
+
+export const useHasRole = (role: string) => {
+  const hasRole = useAuthStore((state) => state.hasRole);
+  return (r: string) => hasRole(r);
 };
 
 export default useAuthStore;

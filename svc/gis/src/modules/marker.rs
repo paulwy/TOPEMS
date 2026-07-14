@@ -162,7 +162,10 @@ pub fn create_routes() -> Router<PgPool> {
     Router::new()
         .route("/map-markers", axum::routing::get(list_map_markers))
         .route("/map-markers", axum::routing::post(create_map_marker))
-        .route("/map-markers/:id", axum::routing::get(get_map_marker))
-        .route("/map-markers/:id", axum::routing::put(update_map_marker))
-        .route("/map-markers/:id", axum::routing::delete(delete_map_marker))
+        .route("/map-markers/{id}", axum::routing::get(get_map_marker))
+        .route("/map-markers/{id}", axum::routing::put(update_map_marker))
+        .route(
+            "/map-markers/{id}",
+            axum::routing::delete(delete_map_marker),
+        )
 }

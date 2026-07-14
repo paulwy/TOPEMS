@@ -39,7 +39,7 @@ import { ListPageTemplate, type ColumnDef } from '@/components/templates';
 import { PageContainer } from '@/components/common';
 import { qmsApi } from '@/api/qms';
 import type { QualityCost, CostStatistics, CostTrendItem } from '@/api/qms';
-import { useAppStore } from '@/store';
+import { useNotificationStore } from '@/store';
 import { designTokens } from '@/theme/tokens';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 
@@ -69,7 +69,7 @@ const QmsQualityCostPage: React.FC = () => {
     startDate: '',
     endDate: '',
   });
-  const addNotification = useAppStore((state) => state.addNotification);
+  const addNotification = useNotificationStore((state) => state.addNotification);
   const queryClient = useQueryClient();
 
   const { data: costs = [], isLoading: loading } = useQuery({

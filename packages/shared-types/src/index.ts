@@ -231,7 +231,7 @@ export type {
 export type {
   Notification as WorkflowNotification,
   NotificationType,
-  NotificationStatus,
+  NotificationStatus as NotificationStatusType,
 } from './notification';
 
 export type {
@@ -244,3 +244,27 @@ export type {
   DictItem,
   DictType,
 } from './dict';
+
+export {
+  BusinessStatusCode,
+  WorkflowStatus,
+  OrderStatus,
+  FinanceStatus,
+  ProjectStatus,
+  QualityStatus,
+  DocumentStatus,
+  NotificationStatus,
+  TaskStatus,
+  TicketStatus,
+  CommonStatus,
+  ProductionStatus,
+  InventoryStatus,
+  getStatusLabel,
+  getStatusColor,
+  getStatusConfig,
+  getAllStatusOptions,
+} from './business-status';
+
+export type {
+  StatusConfig,
+} from './business-status';

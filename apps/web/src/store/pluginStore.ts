@@ -475,3 +475,98 @@ export const useSearchQuery = () =>
   usePluginStore((state) => state.searchQuery);
 export const useActiveCategory = () =>
   usePluginStore((state) => state.activeCategory);
+
+export const useIsPluginInstalled = (code: string) => {
+  const installedPlugins = useInstalledPlugins();
+  return installedPlugins.some((p) => p.plugin_id === code);
+};
+
+export const useIsPluginActive = (code: string) => {
+  const installedPlugins = useInstalledPlugins();
+  const plugin = installedPlugins.find((p) => p.plugin_id === code);
+  return plugin?.isactive === true;
+};
+
+export const usePluginHealth = (code: string) => {
+  const healthStatus = usePluginHealthStatus();
+  return healthStatus[code] || { healthy: false };
+};
+
+export const useInstalledPlugin = (code: string) => {
+  const installedPlugins = useInstalledPlugins();
+  return installedPlugins.find((p) => p.plugin_id === code);
+};
+
+export const useMarketplacePlugin = (code: string) => {
+  const marketplacePlugins = useMarketplacePlugins();
+  return marketplacePlugins.find((p) => p.code === code);
+};
+
+export const useFilteredPlugins = () => {
+  const marketplacePlugins = useMarketplacePlugins();
+  const searchQuery = useSearchQuery();
+  const activeCategory = useActiveCategory();
+  
+  let result = [...marketplacePlugins];
+
+  if (searchQuery) {
+    const query = searchQuery.toLowerCase();
+    result = result.filter(
+      (p) =>
+        p.name.toLowerCase().includes(query) ||
+        p.description?.toLowerCase().includes(query) ||
+        p.tags?.some((t) => t.toLowerCase().includes(query))
+    );
+  }
+
+  if (activeCategory !== 'all') {
+    const isModuleCategory = REMOTE_MODULES.some((m) => m.code === activeCategory);
+    if (isModuleCategory) {
+      result = result.filter((p) => p.code === activeCategory);
+    } else {
+      result = result.filter((p) => {
+        const module = REMOTE_MODULES.find((m) => m.code === p.code);
+        return module?.category === activeCategory;
+      });
+    }
+  }
+
+  return result;
+};
+
+export const useFilteredInstalledPlugins = () => {
+  const installedPlugins = useInstalledPlugins();
+  const searchQuery = useSearchQuery();
+  
+  if (!searchQuery) {
+    return installedPlugins;
+  }
+
+  const query = searchQuery.toLowerCase();
+  return installedPlugins.filter(
+    (p) =>
+      (p.plugin_name || '').toLowerCase().includes(query) ||
+      (p.plugin_id || '').toLowerCase().includes(query)
+  );
+};
+
+export const useHealthSummary = () => {
+  const healthStatus = usePluginHealthStatus();
+  const statusList = Object.values(healthStatus);
+  const healthy = statusList.filter((s) => s.healthy).length;
+  return {
+    total: statusList.length,
+    healthy,
+    unhealthy: statusList.length - healthy,
+  };
+};
+
+export const useInstalledCount = () => {
+  const installedPlugins = useInstalledPlugins();
+  return installedPlugins.length;
+};
+
+export const useActiveCount = () => {
+  const installedPlugins = useInstalledPlugins();
+  return installedPlugins.filter((p) => p.isactive).length;
+};

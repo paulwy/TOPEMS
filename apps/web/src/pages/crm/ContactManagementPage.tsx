@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useMemo } from 'react';
+import React, { useState, useMemo } from 'react';
 import { Box, Typography } from '@mui/material';
 import type { Contact, CreateContactRequest, UpdateContactRequest } from '@/api/crm';
 import { crmApi } from '@/api/crm';
@@ -15,10 +15,12 @@ import {
 import { Plus, Edit, Trash2, Eye } from 'lucide-react';
 import { ListPageTemplate } from '@/components/templates';
 import type { ColumnDef, RowAction, FilterConfig } from '@/components/templates';
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 
 const ContactManagementPage: React.FC = () => {
-  const [contacts, setContacts] = useState<Contact[]>([]);
-  const [loading, setLoading] = useState(true);
+  const { addNotification } = useNotificationStore();
+  const queryClient = useQueryClient();
+
   const [searchTerm, setSearchTerm] = useState('');
   const [statusFilter, setStatusFilter] = useState<string>('');
   const [showDialog, setShowDialog] = useState(false);
@@ -38,90 +40,91 @@ const ContactManagementPage: React.FC = () => {
     total: 0,
   });
 
-  const { addNotification } = useNotificationStore();
-
-  useEffect(() => {
-    loadContacts();
-  }, [searchTerm, statusFilter, pagination.page, pagination.pageSize]);
-
-  const loadContacts = async () => {
-    try {
-      setLoading(true);
+  const contactsQuery = useQuery({
+    queryKey: ['crm-contacts', searchTerm, statusFilter, pagination.page, pagination.pageSize],
+    queryFn: async () => {
       const params: Record<string, unknown> = {
         page: pagination.page + 1,
         pagesize: pagination.pageSize,
       };
       if (searchTerm) params.search = searchTerm;
       if (statusFilter) params.status = statusFilter;
-
       const response = await crmApi.contacts.list(params);
       if (response.success && response.data) {
-        setContacts(response.data.items || []);
-        setPagination((prev) => ({
-          ...prev,
-          total: response.data?.total || 0,
-        }));
+        return {
+          items: response.data.items || [],
+          total: response.data.total || 0,
+        };
       }
-    } catch (error: unknown) {
-      logger.error('加载联系人列表失败:', error);
-      addNotification({
-        type: 'error',
-        title: '加载失败',
-        message: '无法加载联系人列表',
-      });
-    } finally {
-      setLoading(false);
-    }
-  };
+      return { items: [], total: 0 };
+    },
+    staleTime: 5 * 60 * 1000,
+  });
+  const contacts = contactsQuery.data?.items || [];
+  const loading = contactsQuery.isLoading;
+
+  const createContactMutation = useMutation({
+    mutationFn: (data: CreateContactRequest & { customer_id?: string }) =>
+      crmApi.contacts.create(data),
+    onSuccess: () => {
+      addNotification({ type: 'success', title: '创建成功', message: '新联系人已创建' });
+      queryClient.invalidateQueries({ queryKey: ['crm-contacts'] });
+    },
+    onError: (error: unknown) => {
+      logger.error('创建失败:', error);
+      addNotification({ type: 'error', title: '操作失败', message: '创建联系人失败' });
+    },
+  });
+
+  const updateContactMutation = useMutation({
+    mutationFn: ({ id, data }: { id: string; data: UpdateContactRequest }) =>
+      crmApi.contacts.update(id, data),
+    onSuccess: () => {
+      addNotification({ type: 'success', title: '更新成功', message: '联系人信息已更新' });
+      queryClient.invalidateQueries({ queryKey: ['crm-contacts'] });
+    },
+    onError: (error: unknown) => {
+      logger.error('更新失败:', error);
+      addNotification({ type: 'error', title: '操作失败', message: '更新联系人失败' });
+    },
+  });
+
+  const deleteContactMutation = useMutation({
+    mutationFn: (id: string) => crmApi.contacts.delete(id),
+    onSuccess: () => {
+      addNotification({ type: 'success', title: '删除成功', message: '联系人已删除' });
+      queryClient.invalidateQueries({ queryKey: ['crm-contacts'] });
+    },
+    onError: (error: unknown) => {
+      logger.error('删除失败:', error);
+      addNotification({ type: 'error', title: '删除失败', message: '无法删除联系人' });
+    },
+  });
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     try {
       if (selectedContact) {
-        await crmApi.contacts.update(selectedContact.id, formData as UpdateContactRequest);
-        addNotification({
-          type: 'success',
-          title: '更新成功',
-          message: '联系人信息已更新',
+        await updateContactMutation.mutateAsync({
+          id: selectedContact.id,
+          data: formData as UpdateContactRequest,
         });
       } else {
-        await crmApi.contacts.create(formData);
-        addNotification({
-          type: 'success',
-          title: '创建成功',
-          message: '新联系人已创建',
-        });
+        await createContactMutation.mutateAsync(formData);
       }
       setShowDialog(false);
       resetForm();
-      loadContacts();
     } catch (error: unknown) {
       logger.error('操作失败:', error);
-      addNotification({
-        type: 'error',
-        title: '操作失败',
-        message: selectedContact ? '更新联系人失败' : '创建联系人失败',
-      });
     }
   };
 
   const handleDelete = async (id: string) => {
     if (!window.confirm('确定要删除这个联系人吗?')) return;
     try {
-      await crmApi.contacts.delete(id);
-      addNotification({
-        type: 'success',
-        title: '删除成功',
-        message: '联系人已删除',
-      });
-      loadContacts();
+      await deleteContactMutation.mutateAsync(id);
     } catch (error: unknown) {
       logger.error('删除失败:', error);
-      addNotification({
-        type: 'error',
-        title: '删除失败',
-        message: '无法删除联系人',
-      });
     }
   };
 

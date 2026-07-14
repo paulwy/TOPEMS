@@ -92,8 +92,10 @@ export function initTelemetry(config: Partial<TelemetryConfig> = {}) {
 
   const provider = new WebTracerProvider({ spanProcessors });
 
+  const isDevelopment = process.env.NODE_ENV === 'development';
+
   provider.register({
-    contextManager: new ZoneContextManager(),
+    contextManager: isDevelopment ? undefined : new ZoneContextManager(),
     propagator: new B3Propagator(),
   });
 

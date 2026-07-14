@@ -28,7 +28,7 @@ pub fn create_routes() -> Router<ApiState> {
             get(list_materials).post(create_material),
         )
         .route(
-            "/api/erp/materials/:id",
+            "/api/erp/materials/{id}",
             get(get_material)
                 .put(update_material)
                 .delete(delete_material),

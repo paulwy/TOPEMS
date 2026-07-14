@@ -1,8 +1,261 @@
 import { vi } from 'vitest';
 import React from 'react';
 
+// ─── Mock @/store to prevent errors during module initialization ──────────
+vi.mock('@/store', () => {
+  const notificationState = {
+    notifications: [],
+    addNotification: vi.fn(),
+    removeNotification: vi.fn(),
+    clearNotifications: vi.fn(),
+  };
+
+  const authState = {
+    user: { id: '1', username: 'testuser', email: 'test@example.com', isActive: true },
+    token: 'test-token',
+    permissions: [],
+    roles: [],
+    setUser: vi.fn(),
+    setToken: vi.fn(),
+    setPermissions: vi.fn(),
+    setRoles: vi.fn(),
+    clearAuth: vi.fn(),
+    updateUser: vi.fn(),
+    isAuthenticated: vi.fn(() => true),
+    hasPermission: vi.fn(() => true),
+    hasAnyPermission: vi.fn(() => true),
+    hasAllPermissions: vi.fn(() => true),
+    hasRole: vi.fn(() => true),
+    hasAnyRole: vi.fn(() => true),
+    isSuperuser: vi.fn(() => true),
+    getDisplayName: vi.fn(() => 'Test User'),
+    getAvatarUrl: vi.fn(() => ''),
+  };
+
+  const themeState = {
+    theme: 'light',
+    setTheme: vi.fn(),
+  };
+
+  const uiState = {
+    sidebarOpen: true,
+    sidebarCollapsed: false,
+    toggleSidebar: vi.fn(),
+    setSidebarOpen: vi.fn(),
+    toggleSidebarCollapsed: vi.fn(),
+    setSidebarCollapsed: vi.fn(),
+  };
+
+  const workflowState = {
+    currentTaskId: null,
+    taskStatus: 'pending',
+    setCurrentTaskId: vi.fn(),
+    setTaskStatus: vi.fn(),
+    completeTask: vi.fn(),
+  };
+
+  const moduleLoadingState = {
+    modules: {},
+    loading: false,
+    progress: 0,
+    loadModule: vi.fn(),
+    setModuleState: vi.fn(),
+    reset: vi.fn(),
+  };
+
+  const shortcutState = {
+    shortcuts: [],
+    addShortcut: vi.fn(),
+    removeShortcut: vi.fn(),
+    updateShortcut: vi.fn(),
+  };
+
+  const notificationSettingsState = {
+    settings: {},
+    updateSettings: vi.fn(),
+  };
+
+  const biState = {
+    summary: null,
+    development: null,
+    quality: null,
+    production: null,
+    laboratory: null,
+    loading: false,
+    error: null,
+    fetchData: vi.fn(),
+    clearData: vi.fn(),
+  };
+
+  const createStore = (state: any) => {
+    const store = (selector?: (s: any) => any) => {
+      if (selector) {
+        return selector(state);
+      }
+      return state;
+    };
+    store.getState = vi.fn(() => state);
+    store.subscribe = vi.fn();
+    store.setState = vi.fn();
+    return store;
+  };
+
+  return {
+    useNotificationStore: createStore(notificationState),
+    useAuthStore: createStore(authState),
+    useThemeStore: createStore(themeState),
+    useUIStore: createStore(uiState),
+    useWorkflowStore: createStore(workflowState),
+    useModuleLoadingStore: createStore(moduleLoadingState),
+    useShortcutsStore: createStore(shortcutState),
+    useNotificationSettingsStore: createStore(notificationSettingsState),
+    useBIStore: createStore(biState),
+    useAuth: vi.fn(() => authState),
+    useTheme: vi.fn(() => themeState),
+    useSidebarOpen: vi.fn(() => true),
+    useSidebarCollapsed: vi.fn(() => false),
+    useToggleSidebar: vi.fn(),
+    useSetSidebarOpen: vi.fn(),
+    useToggleSidebarCollapsed: vi.fn(),
+    useSetSidebarCollapsed: vi.fn(),
+    useModuleState: vi.fn(),
+    useTotalProgress: vi.fn(() => 100),
+    useIsModuleLoaded: vi.fn(() => true),
+    useIsModuleLoading: vi.fn(() => false),
+    useHasModuleError: vi.fn(() => false),
+    useBISummary: vi.fn(),
+    useBIDevelopment: vi.fn(),
+    useBIQuality: vi.fn(),
+    useBIProduction: vi.fn(),
+    useBILaboratory: vi.fn(),
+    useBILoading: vi.fn(() => false),
+    useBIError: vi.fn(() => null),
+  };
+});
+
+// ─── Mock opentelemetry modules ────────────────────────────────────────────
+vi.mock('@opentelemetry/sdk-trace-web', () => ({
+  ConsoleSpanExporter: vi.fn(),
+  BatchSpanProcessor: vi.fn(),
+  WebTracerProvider: vi.fn().mockReturnValue({
+    register: vi.fn(),
+  }),
+}));
+
+vi.mock('@opentelemetry/exporter-trace-otlp-http', () => ({
+  OTLPTraceExporter: vi.fn(),
+}));
+
+vi.mock('@opentelemetry/context-zone', () => ({
+  ZoneContextManager: vi.fn(),
+}));
+
+vi.mock('@opentelemetry/instrumentation', () => ({
+  Instrumentation: vi.fn(),
+  registerInstrumentations: vi.fn(),
+}));
+
+vi.mock('@opentelemetry/instrumentation-xml-http-request', () => ({
+  XMLHttpRequestInstrumentation: vi.fn(),
+}));
+
+vi.mock('@opentelemetry/instrumentation-fetch', () => ({
+  FetchInstrumentation: vi.fn(),
+}));
+
+vi.mock('@opentelemetry/semantic-conventions', () => ({
+  SemanticResourceAttributes: {},
+}));
+
+vi.mock('@opentelemetry/propagator-b3', () => ({
+  B3Propagator: vi.fn().mockReturnValue({
+    inject: vi.fn(),
+    extract: vi.fn(),
+  }),
+}));
+
+vi.mock('@opentelemetry/api', () => ({
+  trace: {
+    getTracer: vi.fn().mockReturnValue({
+      startSpan: vi.fn().mockReturnValue({
+        setAttribute: vi.fn(),
+        recordException: vi.fn(),
+        setStatus: vi.fn(),
+        end: vi.fn(),
+      }),
+    }),
+    setSpan: vi.fn(),
+  },
+  context: {
+    active: vi.fn(),
+    with: vi.fn(),
+  },
+  propagation: {
+    setGlobalPropagator: vi.fn(),
+    inject: vi.fn(),
+  },
+  SpanStatusCode: {
+    ERROR: 'ERROR',
+  },
+}));
+
+vi.mock('@opentelemetry/resources', () => ({}));
+
+// ─── Mock direct store imports ────────────────────────────────────────────
+vi.mock('@/store/notificationStore', () => ({
+  useNotificationStore: vi.fn(() => ({
+    notifications: [],
+    addNotification: vi.fn(),
+    removeNotification: vi.fn(),
+    clearNotifications: vi.fn(),
+  })),
+  useNotifications: vi.fn(() => []),
+  useAddNotification: vi.fn(),
+  useRemoveNotification: vi.fn(),
+  useClearNotifications: vi.fn(),
+}));
+
+vi.mock('@/store/pluginStore', () => ({
+  usePluginStore: vi.fn(() => ({
+    plugins: [],
+    installedPlugins: [],
+    loading: false,
+    error: null,
+    installPlugin: vi.fn(),
+    uninstallPlugin: vi.fn(),
+    activatePlugin: vi.fn(),
+    deactivatePlugin: vi.fn(),
+    fetchPlugins: vi.fn(),
+  })),
+  useInstalledPlugins: vi.fn(() => []),
+  useMarketplacePlugins: vi.fn(() => []),
+  usePluginHealthStatus: vi.fn(),
+  usePluginLoading: vi.fn(() => false),
+  usePluginError: vi.fn(() => null),
+  useSelectedPluginCode: vi.fn(() => ''),
+  useSelectedPlugins: vi.fn(() => []),
+  useSearchQuery: vi.fn(() => ''),
+  useActiveCategory: vi.fn(() => ''),
+  useIsPluginInstalled: vi.fn(() => false),
+  useIsPluginActive: vi.fn(() => false),
+  usePluginHealth: vi.fn(),
+  useInstalledPlugin: vi.fn(),
+  useMarketplacePlugin: vi.fn(),
+  useFilteredPlugins: vi.fn(() => []),
+  useFilteredInstalledPlugins: vi.fn(() => []),
+  useHealthSummary: vi.fn(),
+  useInstalledCount: vi.fn(() => 0),
+  useActiveCount: vi.fn(() => 0),
+}));
+
 // ─── Mock @tanstack/react-query ────────────────────────────────────────────
 vi.mock('@tanstack/react-query', () => {
+  const mockQueryCache = {
+    getAll: vi.fn(() => []),
+    subscribe: vi.fn(),
+    unsubscribe: vi.fn(),
+  };
+
   const mockQueryClient = {
     invalidateQueries: vi.fn(),
     setQueryData: vi.fn(),
@@ -18,6 +271,9 @@ vi.mock('@tanstack/react-query', () => {
     isFetching: vi.fn(() => 0),
     isMutating: vi.fn(() => 0),
     defaultOptions: {},
+    getQueryCache: vi.fn(() => mockQueryCache),
+    mount: vi.fn(),
+    unmount: vi.fn(),
   };
 
   const useQueryClient = () => mockQueryClient;
@@ -277,6 +533,8 @@ vi.mock('@tanstack/react-query', () => {
     useInfiniteQuery,
     QueryClientProvider,
     QueryClient: vi.fn(function QueryClient() { return mockQueryClient; }),
+    QueryCache: vi.fn(),
+    MutationCache: vi.fn(),
     useQueries: vi.fn(() => []),
     useIsFetching: vi.fn(() => 0),
     useIsMutating: vi.fn(() => 0),

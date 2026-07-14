@@ -13,7 +13,7 @@ export interface ServicesConfig {
   doc: string;
   ai: string;
   workflow: string;
-  rs: string;
+  rd: string;
   srm: string;
   erp: string;
   gis: string;
@@ -33,21 +33,22 @@ export interface ServicesConfig {
   manufacturing: string;
   qualityAssurance: string;
   analytics: string;
-  // [向后兼容] 旧服务路径
-  notification: string;
-  report: string;
-  bi: string;
-  im: string;
-  mail: string;
-  ehs: string;
-  lims: string;
+  // 独立服务路径
+  mes: string;
   pdm: string;
   qms: string;
-  mes: string;
-  master: string;
+  lims: string;
+  ehs: string;
+  bi: string;
+  report: string;
   // 统一核心服务
   core: string;
   finance: string;
+  // 通信与通知服务
+  im: string;
+  notification: string;
+  mail: string;
+  master: string;
 }
 
 export interface FeaturesConfig {

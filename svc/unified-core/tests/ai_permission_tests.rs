@@ -82,7 +82,7 @@ async fn test_ai_001_chat() {
         &client,
         &token,
         "POST",
-        "/api/ai/chat",
+        "/api/core/ai/v1/chat",
         Some(json!({
             "message": "你好，这是一个测试消息"
         })),
@@ -109,7 +109,7 @@ async fn test_ai_002_summarize() {
         &client,
         &token,
         "POST",
-        "/api/ai/summarize",
+        "/api/core/ai/v1/summarize",
         Some(json!({
             "content": "这是一段需要摘要的文本内容，用于测试AI摘要功能。"
         })),
@@ -136,7 +136,7 @@ async fn test_ai_003_generate_report() {
         &client,
         &token,
         "POST",
-        "/api/ai/generate-report",
+        "/api/core/ai/v1/generate-report",
         Some(json!({
             "type": "summary",
             "parameters": {}
@@ -160,7 +160,7 @@ async fn test_ai_004_model_management() {
     tracing::info!("测试 AI-004: AI 模型管理");
     let token = login("admin", "admin123").await.expect("管理员登录失败");
     let client = create_client();
-    match auth_request(&client, &token, "GET", "/api/ai/models", None).await {
+    match auth_request(&client, &token, "GET", "/api/core/ai/v1/models", None).await {
         Ok((status, body)) => {
             assert_eq!(status, 200, "状态码应为 200");
             assert!(body["success"].as_bool().unwrap_or(false), "请求应成功");
@@ -178,7 +178,7 @@ async fn test_ai_005_settings() {
     tracing::info!("测试 AI-005: AI 配置");
     let token = login("admin", "admin123").await.expect("管理员登录失败");
     let client = create_client();
-    match auth_request(&client, &token, "GET", "/api/ai/settings", None).await {
+    match auth_request(&client, &token, "GET", "/api/core/ai/v1/settings", None).await {
         Ok((status, body)) => {
             assert_eq!(status, 200, "状态码应为 200");
             assert!(body["success"].as_bool().unwrap_or(false), "请求应成功");

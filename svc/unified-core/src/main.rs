@@ -178,6 +178,9 @@ async fn main() {
     modules::dict::init_database(&pool)
         .await
         .expect("Failed to init dict database");
+    modules::menu::init_database(&pool)
+        .await
+        .expect("Failed to init menu database");
     modules::erp::init_database(&pool)
         .await
         .expect("Failed to init erp database");
@@ -201,6 +204,12 @@ async fn main() {
     modules::sync::init_database(&pool)
         .await
         .expect("Failed to init sync database");
+    modules::login_log::init_database(&pool)
+        .await
+        .expect("Failed to init login_log database");
+    modules::search::init_database(&pool)
+        .await
+        .expect("Failed to init search database");
 
     // 初始化系统基础字典数据
     modules::dict::seed::seed_dict_data(&pool)
@@ -327,16 +336,6 @@ async fn main() {
             "/ws/core/im",
             get(modules::communication::ws::websocket_handler),
         )
-        // Legacy paths for backward compatibility
-        .route(
-            "/api/core/comm/ws/connect",
-            get(modules::communication::ws::websocket_handler),
-        )
-        .route(
-            "/ws/notifications",
-            get(modules::communication::ws::websocket_handler),
-        )
-        .route("/ws/im", get(modules::communication::ws::websocket_handler))
         // Plugin proxy route (no auth required - plugins handle their own auth)
         .route("/api/plugins/{plugin_code}/{*path}", get(plugin_proxy))
         // Plugin registration routes (no auth required - for service startup auto-registration)
@@ -2124,6 +2123,61 @@ async fn main() {
             require_permission("system:write"),
         ));
 
+    // ----- Menu Routes (system:read / system:write permission) -----
+    let menu_read_routes = Router::new()
+        .route(
+            "/api/core/menu/v1/groups",
+            get(modules::menu::handlers::list_groups),
+        )
+        .route(
+            "/api/core/menu/v1/groups/{id}",
+            get(modules::menu::handlers::get_group),
+        )
+        .route(
+            "/api/core/menu/v1/menus",
+            get(modules::menu::handlers::list_menus),
+        )
+        .route(
+            "/api/core/menu/v1/menus/{id}",
+            get(modules::menu::handlers::get_menu),
+        )
+        .layer(axum::middleware::from_fn_with_state(
+            state.clone(),
+            require_permission("system:read"),
+        ));
+
+    let menu_write_routes = Router::new()
+        .route(
+            "/api/core/menu/v1/groups",
+            post(modules::menu::handlers::create_group),
+        )
+        .route(
+            "/api/core/menu/v1/groups/{id}",
+            put(modules::menu::handlers::update_group),
+        )
+        .route(
+            "/api/core/menu/v1/groups/{id}",
+            delete(modules::menu::handlers::delete_group),
+        )
+        .route(
+            "/api/core/menu/v1/menus",
+            post(modules::menu::handlers::create_menu),
+        )
+        .route(
+            "/api/core/menu/v1/menus/{id}",
+            put(modules::menu::handlers::update_menu),
+        )
+        .route(
+            "/api/core/menu/v1/menus/{id}",
+            delete(modules::menu::handlers::delete_menu),
+        )
+        .layer(axum::middleware::from_fn_with_state(
+            state.clone(),
+            require_permission("system:write"),
+        ));
+
+    // [V6.0] 业务模块路由已迁移到独立服务，此处注释掉以消除双重实现
+    /*
     // ----- Finance Routes (finance:read / finance:write permission) -----
     let finance_read_routes = Router::new()
         .route(
@@ -2168,7 +2222,10 @@ async fn main() {
             state.clone(),
             require_permission("finance:write"),
         ));
+    */
 
+    // [V6.0] 业务模块路由已迁移到独立服务，此处注释掉以消除双重实现
+    /*
     // ----- ERP Routes (erp:read / erp:write permission) -----
     let erp_read_routes = Router::new()
         .route(
@@ -2301,7 +2358,10 @@ async fn main() {
             state.clone(),
             require_permission("erp:write"),
         ));
+    */
 
+    // [V6.0] 业务模块路由已迁移到独立服务，此处注释掉以消除双重实现
+    /*
     // ----- HRM Routes (hrm:read / hrm:write permission) -----
     let hrm_read_routes = Router::new()
         .route(
@@ -2390,7 +2450,10 @@ async fn main() {
             state.clone(),
             require_permission("hrm:write"),
         ));
+    */
 
+    // [V6.0] 业务模块路由已迁移到独立服务，此处注释掉以消除双重实现
+    /*
     // ----- CRM Routes (crm:read / crm:write permission) -----
     let crm_read_routes = Router::new()
         .route(
@@ -2467,7 +2530,10 @@ async fn main() {
             state.clone(),
             require_permission("crm:write"),
         ));
+    */
 
+    // [V6.0] 业务模块路由已迁移到独立服务，此处注释掉以消除双重实现
+    /*
     // ----- WMS Routes (wms:read / wms:write permission) -----
     let wms_read_routes = Router::new()
         .route(
@@ -2560,6 +2626,7 @@ async fn main() {
             state.clone(),
             require_permission("wms:write"),
         ));
+    */
 
     // ===== Merge all protected routes with their respective permission middleware =====
     let protected_routes = auth_operations_routes
@@ -2588,18 +2655,22 @@ async fn main() {
         .merge(help_admin_routes)
         .merge(dict_read_routes)
         .merge(dict_write_routes)
-        .merge(finance_read_routes)
-        .merge(finance_write_routes)
-        .merge(erp_read_routes)
-        .merge(erp_write_routes)
-        .merge(hrm_read_routes)
-        .merge(hrm_write_routes)
-        .merge(crm_read_routes)
-        .merge(crm_write_routes)
-        .merge(wms_read_routes)
-        .merge(wms_write_routes)
+        .merge(menu_read_routes)
+        .merge(menu_write_routes)
+        .merge(modules::login_log::create_routes(state.clone()))
+        //.merge(finance_read_routes)
+        //.merge(finance_write_routes)
+        //.merge(erp_read_routes)
+        //.merge(erp_write_routes)
+        //.merge(hrm_read_routes)
+        //.merge(hrm_write_routes)
+        //.merge(crm_read_routes)
+        //.merge(crm_write_routes)
+        //.merge(wms_read_routes)
+        //.merge(wms_write_routes)
         .merge(migration_routes)
         .merge(health_routes)
+        .merge(modules::search::create_routes(state.clone()))
         .layer(axum::middleware::from_fn_with_state(
             state.auth_state.clone(),
             auth_middleware,

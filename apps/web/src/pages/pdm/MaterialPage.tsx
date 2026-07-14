@@ -17,7 +17,7 @@ import {
 import { Plus, Edit, Delete, Layers } from 'lucide-react';
 import { pdmApi } from '@/api/pdm';
 import type { Material, CreateMaterialRequest } from '@/api/pdm';
-import { useAppStore } from '@/store';
+import { useNotificationStore } from '@/store';
 import { apiLogger } from '@/utils/logger';
 import {
   ListPageTemplate,
@@ -81,7 +81,7 @@ export const MaterialPage: React.FC = () => {
     inventory_quantity: 0,
     safety_stock: 0,
   });
-  const addNotification = useAppStore((state) => state.addNotification);
+  const addNotification = useNotificationStore((state) => state.addNotification);
 
   const loadMaterials = useCallback(() => {
     queryClient.invalidateQueries({ queryKey: QUERY_KEYS.PDM.MATERIALS });

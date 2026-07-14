@@ -25,7 +25,7 @@ import {
 } from '@/components/templates';
 import type { TransferOrder, CreateTransferOrderRequest, Warehouse } from '@/api/wms';
 import { wmsApi } from '@/api/wms';
-import { useAppStore } from '@/store';
+import { useNotificationStore } from '@/store';
 import { Plus, Edit, Trash2, Eye, ArrowRightLeft, Check, Truck, Package } from 'lucide-react';
 import { apiLogger } from '@/utils/logger';
 import { ConfirmDialog, PageContainer } from '@/components/common';
@@ -62,7 +62,7 @@ const priorityConfig: Record<
 };
 
 const TransferPage: React.FC = () => {
-  const { addNotification } = useAppStore();
+  const { addNotification } = useNotificationStore();
   const queryClient = useQueryClient();
 
   const [searchTerm, setSearchTerm] = useState('');

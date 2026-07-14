@@ -70,13 +70,16 @@ pub struct QueryParams {
 
 pub fn create_routes() -> Router<ApiState> {
     Router::new()
-        .route("/api/hrm/leaves", get(list_leaves).post(create_leave))
         .route(
-            "/api/hrm/leaves/{id}",
+            "/api/core/hrm/v1/leaves",
+            get(list_leaves).post(create_leave),
+        )
+        .route(
+            "/api/core/hrm/v1/leaves/{id}",
             get(get_leave).put(update_leave).delete(delete_leave),
         )
-        .route("/api/hrm/leaves/{id}/approve", put(approve_leave))
-        .route("/api/hrm/leaves/{id}/reject", put(reject_leave))
+        .route("/api/core/hrm/v1/leaves/{id}/approve", put(approve_leave))
+        .route("/api/core/hrm/v1/leaves/{id}/reject", put(reject_leave))
 }
 
 async fn list_leaves(

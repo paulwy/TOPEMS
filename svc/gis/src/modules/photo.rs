@@ -139,15 +139,15 @@ pub fn create_routes() -> Router<PgPool> {
             axum::routing::post(create_location_photo),
         )
         .route(
-            "/location-photos/:id",
+            "/location-photos/{id}",
             axum::routing::get(get_location_photo),
         )
         .route(
-            "/location-photos/:id",
+            "/location-photos/{id}",
             axum::routing::delete(delete_location_photo),
         )
         .route(
-            "/location-photos/map/:map_id",
+            "/location-photos/map/{map_id}",
             axum::routing::get(list_location_photos_by_map),
         )
 }

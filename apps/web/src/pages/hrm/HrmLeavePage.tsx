@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useMemo } from 'react';
+import React, { useState, useMemo, useCallback } from 'react';
 import { PageContainer } from '@/components/common';
 import { designTokens } from '@/theme/tokens';
 import {
@@ -21,7 +21,7 @@ import {
   type ColumnDef,
   type RowAction,
 } from '@/components';
-import { StatusBadge, ActionButton, FormField, FormSelect } from '@topems/shared-components';
+import { StatusBadge, ActionButton, FormField, FormSelect, ConfirmDialog } from '@topems/shared-components';
 import { Dialog } from '@/components/common/Dialog';
 import { useNotificationStore } from '@/store';
 import { logger } from '@/utils/logger';
@@ -32,22 +32,17 @@ import {
   type PaginatedResult,
   type ListParams,
 } from '@/api/hrm';
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 
 const ct = designTokens.colors;
 
 const LeaveManagementPage: React.FC = () => {
-  const [loading, setLoading] = useState(false);
   const addNotification = useNotificationStore((state) => state.addNotification);
-  const [data, setData] = useState<PaginatedResult<LeaveRequest>>({
-    items: [],
-    total: 0,
-    page: 1,
-    pagesize: 10,
-  });
+  const queryClient = useQueryClient();
+
   const [searchText, setSearchText] = useState('');
   const [statusFilter, setStatusFilter] = useState('');
   const [typeFilter, setTypeFilter] = useState('');
-  const [employees, setEmployees] = useState<{ id: string; name: string }[]>([]);
   const [employeeFilter, setEmployeeFilter] = useState('');
 
   const [isModalVisible, setIsModalVisible] = useState(false);
@@ -55,130 +50,205 @@ const LeaveManagementPage: React.FC = () => {
   const [editingLeave, setEditingLeave] = useState<LeaveRequest | null>(null);
   const [formData, setFormData] = useState<Partial<LeaveRequest>>({});
 
-  const fetchLeaveRequests = async (params?: ListParams) => {
-    setLoading(true);
-    try {
+  const [confirmDialogOpen, setConfirmDialogOpen] = useState(false);
+  const [confirmDialogConfig, setConfirmDialogConfig] = useState<{
+    title: string;
+    message: string;
+    onConfirm: () => void;
+    danger?: boolean;
+  } | null>(null);
+
+  // React Query - 请假申请列表
+  const leaveRequestsQuery = useQuery({
+    queryKey: ['hrm-leave-requests-list', searchText, statusFilter, typeFilter, employeeFilter],
+    queryFn: async () => {
+      const params: ListParams = {};
+      if (searchText) params.search = searchText;
+      if (statusFilter) params.status = statusFilter;
+      if (employeeFilter) params.employee_id = employeeFilter;
       const response = await leaveApi.list(params);
       if (response.code === 200) {
-        setData(response.data!);
+        return response.data!;
       }
-    } catch (error: unknown) {
-      logger.error('Failed to fetch leave requests:', error);
-    } finally {
-      setLoading(false);
-    }
-  };
+      return { items: [], total: 0, page: 1, pagesize: 10 };
+    },
+    staleTime: 5 * 60 * 1000,
+  });
 
-  const fetchEmployees = async () => {
-    try {
+  const data = leaveRequestsQuery.data || { items: [], total: 0, page: 1, pagesize: 10 };
+  const loading = leaveRequestsQuery.isLoading;
+
+  // React Query - 员工列表
+  const employeesQuery = useQuery({
+    queryKey: ['hrm-leave-employees'],
+    queryFn: async () => {
       const response = await employeeApi.list();
       if (response.code === 200) {
         const items = response.data?.items || response.data || [];
         if (Array.isArray(items)) {
-          setEmployees(
-            items.map((e: { id?: string; name?: string }) => ({
-              id: e.id || '',
-              name: e.name || '',
-            })) || []
-          );
-        } else {
-          setEmployees([]);
+          return items.map((e: { id?: string; name?: string }) => ({
+            id: e.id || '',
+            name: e.name || '',
+          })) || [];
         }
       }
-    } catch (error: unknown) {
-      logger.error('Failed to fetch employees:', error);
-    }
-  };
+      return [];
+    },
+    staleTime: 30 * 60 * 1000,
+  });
 
-  useEffect(() => {
-    fetchLeaveRequests();
-    fetchEmployees();
-  }, []);
+  const employees = employeesQuery.data || [];
+
+  // React Query - Mutations
+  const createLeaveMutation = useMutation({
+    mutationFn: (data: Partial<LeaveRequest>) => leaveApi.create(data),
+    onSuccess: () => {
+      addNotification({ title: '成功', message: '创建成功', type: 'success' });
+      queryClient.invalidateQueries({ queryKey: ['hrm-leave-requests-list'] });
+    },
+    onError: () => {
+      addNotification({ title: '失败', message: '创建失败', type: 'error' });
+    },
+  });
+
+  const updateLeaveMutation = useMutation({
+    mutationFn: ({ id, data }: { id: string; data: Partial<LeaveRequest> }) => leaveApi.update(id, data),
+    onSuccess: () => {
+      addNotification({ title: '成功', message: '更新成功', type: 'success' });
+      queryClient.invalidateQueries({ queryKey: ['hrm-leave-requests-list'] });
+    },
+    onError: () => {
+      addNotification({ title: '失败', message: '更新失败', type: 'error' });
+    },
+  });
+
+  const deleteLeaveMutation = useMutation({
+    mutationFn: (id: string) => leaveApi.delete(id),
+    onSuccess: () => {
+      addNotification({ title: '成功', message: '删除成功', type: 'success' });
+      queryClient.invalidateQueries({ queryKey: ['hrm-leave-requests-list'] });
+    },
+    onError: () => {
+      addNotification({ title: '失败', message: '删除失败', type: 'error' });
+    },
+  });
+
+  const approveLeaveMutation = useMutation({
+    mutationFn: (id: string) => leaveApi.approve(id, 'admin'),
+    onSuccess: () => {
+      addNotification({ title: '成功', message: '已批准', type: 'success' });
+      queryClient.invalidateQueries({ queryKey: ['hrm-leave-requests-list'] });
+    },
+    onError: () => {
+      addNotification({ title: '失败', message: '操作失败', type: 'error' });
+    },
+  });
+
+  const rejectLeaveMutation = useMutation({
+    mutationFn: ({ id, reason }: { id: string; reason: string }) => leaveApi.reject(id, 'admin', reason),
+    onSuccess: () => {
+      addNotification({ title: '成功', message: '已拒绝', type: 'success' });
+      queryClient.invalidateQueries({ queryKey: ['hrm-leave-requests-list'] });
+    },
+    onError: () => {
+      addNotification({ title: '失败', message: '操作失败', type: 'error' });
+    },
+  });
 
   const handleSearch = () => {
-    fetchLeaveRequests({
-      page: 1,
-      search: searchText || undefined,
-      status: statusFilter || undefined,
-      employee_id: employeeFilter || undefined,
-    });
+    queryClient.invalidateQueries({ queryKey: ['hrm-leave-requests-list'] });
   };
 
-  const handleReset = () => {
+  const handleReset = useCallback(() => {
     setSearchText('');
     setStatusFilter('');
     setTypeFilter('');
     setEmployeeFilter('');
-    fetchLeaveRequests({ page: 1 });
-  };
+  }, []);
 
-  const handleAdd = () => {
+  const handleAdd = useCallback(() => {
     setEditingLeave(null);
     setFormData({});
     setIsModalVisible(true);
-  };
+  }, []);
 
-  const handleEdit = (record: LeaveRequest) => {
+  const handleEdit = useCallback((record: LeaveRequest) => {
     setEditingLeave(record);
     setFormData(record);
     setIsModalVisible(true);
-  };
+  }, []);
 
-  const handleView = (record: LeaveRequest) => {
+  const handleView = useCallback((record: LeaveRequest) => {
     setEditingLeave(record);
     setIsViewModalVisible(true);
-  };
+  }, []);
 
-  const handleDelete = async (id: string) => {
-    try {
-      const response = await leaveApi.delete(id);
-      if (response.code === 200) {
-        fetchLeaveRequests();
+  const handleDelete = useCallback((id: string) => {
+    const confirmDelete = async () => {
+      try {
+        await deleteLeaveMutation.mutateAsync(id);
+      } catch (error: unknown) {
+        logger.error('Failed to delete leave request:', error);
       }
-    } catch (error: unknown) {
-      logger.error('Failed to delete leave request:', error);
-    }
-  };
+    };
+    setConfirmDialogConfig({
+      title: '确认删除',
+      message: '确定要删除这个请假申请吗？',
+      onConfirm: confirmDelete,
+      danger: true,
+    });
+    setConfirmDialogOpen(true);
+  }, [deleteLeaveMutation]);
 
-  const handleApprove = async (id: string) => {
-    try {
-      const response = await leaveApi.approve(id, 'admin');
-      if (response.code === 200) {
-        fetchLeaveRequests();
+  const handleApprove = useCallback((id: string) => {
+    const confirmApprove = async () => {
+      try {
+        await approveLeaveMutation.mutateAsync(id);
+      } catch (error: unknown) {
+        logger.error('Failed to approve leave request:', error);
       }
-    } catch (error: unknown) {
-      logger.error('Failed to approve leave request:', error);
-    }
-  };
+    };
+    setConfirmDialogConfig({
+      title: '确认批准',
+      message: '确定要批准这个请假申请吗？',
+      onConfirm: confirmApprove,
+    });
+    setConfirmDialogOpen(true);
+  }, [approveLeaveMutation]);
 
-  const handleReject = async (id: string) => {
-    try {
-      const response = await leaveApi.reject(id, 'admin', '已拒绝');
-      if (response.code === 200) {
-        fetchLeaveRequests();
+  const handleReject = useCallback((id: string) => {
+    const confirmReject = async () => {
+      try {
+        await rejectLeaveMutation.mutateAsync({ id, reason: '已拒绝' });
+      } catch (error: unknown) {
+        logger.error('Failed to reject leave request:', error);
       }
-    } catch (error: unknown) {
-      logger.error('Failed to reject leave request:', error);
-    }
-  };
+    };
+    setConfirmDialogConfig({
+      title: '确认拒绝',
+      message: '确定要拒绝这个请假申请吗？',
+      onConfirm: confirmReject,
+      danger: true,
+    });
+    setConfirmDialogOpen(true);
+  }, [rejectLeaveMutation]);
 
-  const handleModalOk = async () => {
+  const handleModalOk = useCallback(async () => {
     try {
       if (editingLeave) {
-        await leaveApi.update(editingLeave.id, formData);
+        await updateLeaveMutation.mutateAsync({ id: editingLeave.id, data: formData });
       } else {
-        await leaveApi.create(formData);
+        await createLeaveMutation.mutateAsync(formData);
       }
       setIsModalVisible(false);
-      fetchLeaveRequests();
     } catch (error: unknown) {
       logger.error('Failed to save leave request:', error);
     }
-  };
+  }, [editingLeave, formData, createLeaveMutation, updateLeaveMutation]);
 
-  const handleInputChange = (field: string, value: string | number) => {
+  const handleInputChange = useCallback((field: string, value: string | number) => {
     setFormData((prev) => ({ ...prev, [field]: value }));
-  };
+  }, []);
 
   const getLeaveStatusBadge = (status: string) => (
     <StatusBadge
@@ -208,7 +278,6 @@ const LeaveManagementPage: React.FC = () => {
     { value: 'other', label: '其他' },
   ];
 
-  // 统计卡片数据
   const leaveStats = useMemo(() => {
     const items = data.items;
     return {
@@ -253,7 +322,6 @@ const LeaveManagementPage: React.FC = () => {
     [leaveStats]
   );
 
-  // 表格列定义
   const columns = useMemo<ColumnDef<LeaveRequest>[]>(
     () => [
       {
@@ -296,7 +364,6 @@ const LeaveManagementPage: React.FC = () => {
     [employees]
   );
 
-  // 行操作
   const rowActions = useMemo<RowAction<LeaveRequest>[]>(
     () => [
       {
@@ -332,8 +399,7 @@ const LeaveManagementPage: React.FC = () => {
         color: 'error',
       },
     ],
-
-    []
+    [handleView, handleEdit, handleApprove, handleReject, handleDelete]
   );
 
   return (
@@ -348,7 +414,6 @@ const LeaveManagementPage: React.FC = () => {
       maxWidth={false}
     >
       <Box sx={{ p: 3 }}>
-        {/* 统计卡片 */}
         <Card sx={{ mb: 3, borderRadius: 3 }}>
           <CardContent sx={{ p: 2 }}>
             <StatCardGroup
@@ -366,8 +431,15 @@ const LeaveManagementPage: React.FC = () => {
             page: data.page - 1,
             pageSize: data.pagesize,
             total: data.total,
-            onPageChange: (page) => fetchLeaveRequests({ page: page + 1 }),
-            onPageSizeChange: (pageSize) => fetchLeaveRequests({ pagesize: pageSize }),
+            onPageChange: (page) => queryClient.setQueryData(['hrm-leave-requests-list'], (prev: PaginatedResult<LeaveRequest> | undefined) => ({
+              ...(prev || { items: [], total: 0, page: 1, pagesize: 10 }),
+              page: page + 1,
+            })),
+            onPageSizeChange: (pageSize) => queryClient.setQueryData(['hrm-leave-requests-list'], (prev: PaginatedResult<LeaveRequest> | undefined) => ({
+              ...(prev || { items: [], total: 0, page: 1, pagesize: 10 }),
+              pagesize: pageSize,
+              page: 1,
+            })),
           }}
           rowActions={rowActions}
           onRowClick={handleView}
@@ -440,7 +512,6 @@ const LeaveManagementPage: React.FC = () => {
           }}
         />
 
-        {/* 新增/编辑 Dialog */}
         <Dialog
           open={isModalVisible}
           onClose={() => setIsModalVisible(false)}
@@ -518,7 +589,6 @@ const LeaveManagementPage: React.FC = () => {
           </Box>
         </Dialog>
 
-        {/* 查看详情 Dialog */}
         <Dialog
           open={isViewModalVisible}
           onClose={() => setIsViewModalVisible(false)}
@@ -654,6 +724,18 @@ const LeaveManagementPage: React.FC = () => {
             </Box>
           )}
         </Dialog>
+
+        <ConfirmDialog
+          isOpen={confirmDialogOpen}
+          onClose={() => setConfirmDialogOpen(false)}
+          onConfirm={() => {
+            confirmDialogConfig?.onConfirm();
+            setConfirmDialogOpen(false);
+          }}
+          title={confirmDialogConfig?.title || ''}
+          message={confirmDialogConfig?.message || ''}
+          danger={confirmDialogConfig?.danger}
+        />
       </Box>
     </PageContainer>
   );

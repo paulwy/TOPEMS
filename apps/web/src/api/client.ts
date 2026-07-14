@@ -66,6 +66,13 @@ interface TimeoutError {
   };
 }
 
+const API_RETRY_CONFIG = {
+  MAX_RETRIES: 2,
+  BASE_DELAY: 500,
+  MAX_DELAY: 3000,
+  MAX_TOTAL_WAIT: 10000,
+} as const;
+
 const isTimeoutError = (error: TimeoutError): boolean => {
   return (
     error.code === 'ECONNABORTED' ||
@@ -78,8 +85,24 @@ const isNetworkError = (error: TimeoutError): boolean => {
   return !error.response || error.code === 'ERR_NETWORK';
 };
 
-const shouldRetry = (error: TimeoutError, retries: number): boolean => {
-  if (retries >= 3) return false;
+const isServiceUnavailable = (error: TimeoutError): boolean => {
+  return error.response?.status === 503;
+};
+
+const calculateRetryDelay = (retries: number): number => {
+  const delay = API_RETRY_CONFIG.BASE_DELAY * Math.pow(2, retries);
+  const jitter = Math.random() * 200 - 100;
+  return Math.min(delay + jitter, API_RETRY_CONFIG.MAX_DELAY);
+};
+
+const shouldRetry = (error: TimeoutError, retries: number, startTime: number): boolean => {
+  if (retries >= API_RETRY_CONFIG.MAX_RETRIES) return false;
+  
+  const elapsed = Date.now() - startTime;
+  if (elapsed >= API_RETRY_CONFIG.MAX_TOTAL_WAIT) return false;
+  
+  if (isServiceUnavailable(error)) return false;
+  
   return isTimeoutError(error) || isNetworkError(error) || 
     (error.response?.status !== undefined && error.response.status >= 500);
 };
@@ -90,6 +113,10 @@ const handleTimeoutError = (url: string): void => {
 
 const handleNetworkError = (url: string): void => {
   logger.error(`Network error: ${url}`);
+};
+
+const handleServiceUnavailable = (url: string): void => {
+  logger.warn(`Service unavailable: ${url}, skipping retries`);
 };
 
 const handleAuthError = (): void => {
@@ -154,22 +181,28 @@ export const createAxiosClient = ({
       const requestBaseURL = requestConfig.baseURL || '';
       const fullUrl = `${requestBaseURL}${url}`;
 
-      apiLogger.debug(`[API Request] ${requestConfig.method?.toUpperCase()} ${fullUrl}`, {
-        url: fullUrl,
-        method: requestConfig.method?.toUpperCase(),
-        baseURL: requestBaseURL,
-        tokenExists: !!token,
-        isPublicPath: isPublicPath(url),
-        params: requestConfig.params,
-        data: requestConfig.data
-          ? JSON.stringify(requestConfig.data).length > 1000
-            ? 'Truncated (over 1000 chars)'
-            : requestConfig.data
-          : undefined,
-      });
+      if (isDevelopment()) {
+        apiLogger.debug(`[API Request] ${requestConfig.method?.toUpperCase()} ${fullUrl}`, {
+          url: fullUrl,
+          method: requestConfig.method?.toUpperCase(),
+          baseURL: requestBaseURL,
+          tokenExists: !!token,
+          isPublicPath: isPublicPath(url),
+          params: requestConfig.params,
+          data: requestConfig.data
+            ? JSON.stringify(requestConfig.data).length > 1000
+              ? 'Truncated (over 1000 chars)'
+              : requestConfig.data
+            : undefined,
+        });
+      }
 
       if (token && !requestConfig.headers['Authorization'] && !isPublicPath(url)) {
         requestConfig.headers['Authorization'] = `Bearer ${token}`;
+      }
+
+      if (!requestConfig.headers['X-Request-Start']) {
+        requestConfig.headers['X-Request-Start'] = Date.now().toString();
       }
 
       const traceHeaders = injectTraceContext();
@@ -200,21 +233,23 @@ export const createAxiosClient = ({
       const baseURL = response.config?.baseURL || '';
       const fullUrl = `${baseURL}${url}`;
 
-      apiLogger.debug(`[API Response] ${response.status} ${fullUrl}`, {
-        url: fullUrl,
-        status: response.status,
-        statusText: response.statusText,
-        responseTime: response.headers?.['x-response-time'] || 'N/A',
-        data: response.data
-          ? JSON.stringify(response.data).length > 2000
-            ? 'Truncated (over 2000 chars)'
-            : response.data
-          : undefined,
-        headers: {
-          'Content-Type': response.headers?.['content-type'],
-          'x-response-time': response.headers?.['x-response-time'],
-        },
-      });
+      if (isDevelopment()) {
+        apiLogger.debug(`[API Response] ${response.status} ${fullUrl}`, {
+          url: fullUrl,
+          status: response.status,
+          statusText: response.statusText,
+          responseTime: response.headers?.['x-response-time'] || 'N/A',
+          data: response.data
+            ? JSON.stringify(response.data).length > 2000
+              ? 'Truncated (over 2000 chars)'
+              : response.data
+            : undefined,
+          headers: {
+            'Content-Type': response.headers?.['content-type'],
+            'x-response-time': response.headers?.['x-response-time'],
+          },
+        });
+      }
 
       if (withCsrf) {
         csrfResponseInterceptor(response);
@@ -270,6 +305,10 @@ export const createAxiosClient = ({
         handleNetworkError(url);
       }
 
+      if (isServiceUnavailable(error)) {
+        handleServiceUnavailable(url);
+      }
+
       if (error.response?.status === 401) {
         const currentPath = window.location.pathname;
         if (currentPath !== '/login' && currentPath !== '/register') {
@@ -278,14 +317,20 @@ export const createAxiosClient = ({
         return Promise.reject(error);
       }
 
-      if (shouldRetry(error, retries)) {
-        const delay = Math.pow(2, retries) * 1000;
-        logger.info(`Retrying request (${retries + 1}/3): ${fullUrl}, delay: ${delay}ms`);
+      const startTime = Number(error.config?.headers?.['X-Request-Start']) || Date.now();
+      
+      if (shouldRetry(error, retries, startTime)) {
+        const delay = calculateRetryDelay(retries);
+        logger.info(`Retrying request (${retries + 1}/${API_RETRY_CONFIG.MAX_RETRIES}): ${fullUrl}, delay: ${Math.round(delay)}ms`);
         
         await new Promise((resolve) => setTimeout(resolve, delay));
         
         const newConfig = { ...error.config };
-        newConfig.headers = { ...newConfig.headers, 'X-Retry-Count': retries + 1 };
+        newConfig.headers = { 
+          ...newConfig.headers, 
+          'X-Retry-Count': retries + 1,
+          'X-Request-Start': startTime,
+        };
         
         return client(newConfig);
       }
@@ -328,21 +373,25 @@ export const downloadBlob = async (
   const responseData = response as unknown as AxiosResponse<Blob>;
   const responseUrl = `${serviceClient.defaults.baseURL}${url}`;
 
-  apiLogger.debug(`[downloadBlob Response] ${responseData.status} ${responseUrl}`, {
-    url: responseUrl,
-    status: responseData.status,
-    statusText: responseData.statusText,
-    headers: {
-      'Content-Type': responseData.headers?.['content-type'],
-      'Content-Length': responseData.headers?.['content-length'],
-    },
-  });
+  if (isDevelopment()) {
+    apiLogger.debug(`[downloadBlob Response] ${responseData.status} ${responseUrl}`, {
+      url: responseUrl,
+      status: responseData.status,
+      statusText: responseData.statusText,
+      headers: {
+        'Content-Type': responseData.headers?.['content-type'],
+        'Content-Length': responseData.headers?.['content-length'],
+      },
+    });
+  }
 
   if (responseData.status !== 200) {
     let errorMessage = `请求失败: ${responseData.status}`;
     if (responseData.data && typeof responseData.data.text === 'function') {
       const text = await responseData.data.text();
-      apiLogger.debug('downloadBlob - error response text:', text);
+      if (isDevelopment()) {
+        apiLogger.debug('downloadBlob - error response text:', text);
+      }
       try {
         const json = JSON.parse(text);
         errorMessage = json.message || errorMessage;
@@ -387,8 +436,8 @@ class ApiClient {
   get workflow() {
     return this.clients.workflow;
   }
-  get rs() {
-    return this.clients.rs;
+  get rd() {
+    return this.clients.rd;
   }
   get lims() {
     return this.clients.lims;
@@ -423,9 +472,6 @@ class ApiClient {
   get erp() {
     return this.clients.erp;
   }
-  get notification() {
-    return this.clients.notification;
-  }
   get integration() {
     return this.clients.integration;
   }
@@ -444,14 +490,8 @@ class ApiClient {
   get pm() {
     return this.clients.pm;
   }
-  get master() {
-    return this.clients.master;
-  }
   get core() {
     return this.clients.core;
-  }
-  get mail() {
-    return this.clients.mail;
   }
   get file() {
     return this.clients.file;
@@ -459,15 +499,24 @@ class ApiClient {
   get scm() {
     return this.clients.scm;
   }
-  get migration() {
-    return this.clients.migration;
-  }
   get finance() {
     return this.clients.finance;
   }
+  get notification() {
+    return this.clients.notification;
+  }
+  get mail() {
+    return this.clients.mail;
+  }
+  get migration() {
+    return this.clients.migration;
+  }
+  get master() {
+    return this.clients.master;
+  }
 
   async get<T = unknown>(url: string, config?: AxiosRequestConfig): Promise<ApiResponse<T>> {
-    return this.clients.master.get<T>(url, config);
+    return this.clients.core.get<T>(url, config);
   }
 
   async post<T = unknown>(
@@ -475,7 +524,7 @@ class ApiClient {
     data?: unknown,
     config?: AxiosRequestConfig
   ): Promise<ApiResponse<T>> {
-    return this.clients.master.post<T>(url, data, config);
+    return this.clients.core.post<T>(url, data, config);
   }
 
   async put<T = unknown>(
@@ -483,7 +532,7 @@ class ApiClient {
     data?: unknown,
     config?: AxiosRequestConfig
   ): Promise<ApiResponse<T>> {
-    return this.clients.master.put<T>(url, data, config);
+    return this.clients.core.put<T>(url, data, config);
   }
 
   async patch<T = unknown>(
@@ -491,11 +540,11 @@ class ApiClient {
     data?: unknown,
     config?: AxiosRequestConfig
   ): Promise<ApiResponse<T>> {
-    return this.clients.master.patch<T>(url, data, config);
+    return this.clients.core.patch<T>(url, data, config);
   }
 
   async delete<T = unknown>(url: string, config?: AxiosRequestConfig): Promise<ApiResponse<T>> {
-    return this.clients.master.delete<T>(url, config);
+    return this.clients.core.delete<T>(url, config);
   }
 
   setAuthToken(token: string) {

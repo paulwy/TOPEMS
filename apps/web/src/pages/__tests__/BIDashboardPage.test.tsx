@@ -13,7 +13,16 @@ import {
   createDashboardFromTemplate,
 } from '@/api/bi';
 
-vi.mock('@/api/bi');
+vi.mock('@/api/bi', () => ({
+  fetchDashboards: vi.fn(),
+  createDashboard: vi.fn(),
+  deleteDashboard: vi.fn(),
+  cloneDashboard: vi.fn(),
+  updateDashboard: vi.fn(),
+  fetchDashboardTemplates: vi.fn(),
+  createDashboardFromTemplate: vi.fn(),
+  fetchWidgets: vi.fn(),
+}));
 
 const renderWithProviders = (ui: React.ReactElement) => {
   return render(<BrowserRouter>{ui}</BrowserRouter>);

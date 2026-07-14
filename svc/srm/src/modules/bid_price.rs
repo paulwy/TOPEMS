@@ -60,21 +60,21 @@ pub async fn create_routes(db: PgPool) -> Result<Router> {
             get(list_bid_requests).post(create_bid_request),
         )
         .route(
-            "/api/srm/bid-requests/:id",
+            "/api/srm/bid-requests/{id}",
             get(get_bid_request)
                 .put(update_bid_request)
                 .delete(delete_bid_request),
         )
         .route(
-            "/api/srm/bid-requests/:id/bids",
+            "/api/srm/bid-requests/{id}/bids",
             get(get_bid_request_bids).post(create_bid),
         )
         .route(
-            "/api/srm/bids/:id",
+            "/api/srm/bids/{id}",
             get(get_bid).put(update_bid).delete(delete_bid),
         )
         .route(
-            "/api/srm/bid-comparisons/:request_id",
+            "/api/srm/bid-comparisons/{request_id}",
             get(get_bid_comparison),
         )
         .with_state(state);

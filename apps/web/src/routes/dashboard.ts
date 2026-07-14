@@ -26,7 +26,6 @@ const DashboardPage = safeLazy(() => import('../pages/shared/DashboardPage'));
 const HybridHomePage = safeLazy(() => import('../pages/shared/HybridHomePage'));
 const ModulesOverviewPage = safeLazy(() => import('../pages/shared/ModulesOverviewPage'));
 const ProfilePage = safeLazy(() => import('../pages/shared/ProfilePage'));
-const AddressbookPage = safeLazy(() => import('../pages/oa/AddressbookPage'));
 const HelpCenterPage = safeLazy(() => import('../pages/help/HelpCenterPage'));
 const FaqPage = safeLazy(() => import('../pages/help/FaqPage'));
 const GuidePage = safeLazy(() => import('../pages/help/GuidePage'));
@@ -47,13 +46,6 @@ export const dashboardRoutes: RouteConfig[] = [
   {
     path: DASHBOARD_PATHS.profile,
     element: ProfilePage,
-  },
-  {
-    path: DASHBOARD_PATHS.addressbook,
-    element: AddressbookPage,
-    requiredPermissions: ['hrm:read'],
-    module: 'hrm',
-    action: 'read',
   },
   {
     path: DASHBOARD_PATHS.helpCenter,

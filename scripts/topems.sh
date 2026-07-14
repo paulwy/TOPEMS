@@ -25,6 +25,10 @@ warning() { echo -e "${YELLOW}[WARNING]${NC} $1"; }
 error() { echo -e "${RED}[ERROR]${NC} $1"; }
 detail() { echo -e "${CYAN}[DETAIL]${NC} $1"; }
 
+MAX_RETRIES=${MAX_RETRIES:-3}
+RETRY_DELAY=${RETRY_DELAY:-3}
+BACKOFF_FACTOR=${BACKOFF_FACTOR:-2}
+
 # 服务配置
 load_services_config() {
     local config_file="$SCRIPT_DIR/services.conf"
@@ -50,7 +54,7 @@ srm         svc/srm                topems-srm                  8042
 qms         svc/qms                topems-qms                  8050
 lims        svc/lims               topems-lims                 8051
 ehs         svc/ehs                topems-ehs                  8052
-rs          svc/rs                 topems-rs                   8053
+rd          svc/rd                 topems-rd                   8053
 bi          svc/analytics          analytics-service           8060
 monitor     svc/monitor            topems-monitor              8062
 portal      svc/portal             topems-portal               8063
@@ -113,7 +117,29 @@ build_service() {
     info "编译 $service_name 服务..."
     local executable_name=$(get_executable_name "$service_name")
     cd "$PROJECT_ROOT"
-    SQLX_OFFLINE=true cargo build --release --bin "$executable_name" 2>&1 && success "$service_name 编译成功" || { error "$service_name 编译失败"; return 1; }
+
+    set +e
+    SQLX_OFFLINE=true cargo build --release --bin "$executable_name" 2>&1
+    local offline_result=$?
+    set -e
+
+    if [ $offline_result -eq 0 ]; then
+        success "$service_name 编译成功"
+        return 0
+    else
+        warning "$service_name 离线编译失败，尝试在线编译..."
+        set +e
+        cargo build --release --bin "$executable_name" 2>&1
+        local online_result=$?
+        set -e
+        if [ $online_result -eq 0 ]; then
+            success "$service_name 在线编译成功"
+            return 0
+        else
+            error "$service_name 编译失败"
+            return 1
+        fi
+    fi
 }
 
 # 全量编译所有后端服务
@@ -250,7 +276,33 @@ test_all() {
     fi
 }
 
-# 启动服务
+_start_service_internal() {
+    local service_name=$1
+    local port=$2
+    local executable_path=$3
+
+    cd "$PROJECT_ROOT"
+    
+    case "$service_name" in
+        iam) CORE_PORT=$port nohup "$executable_path" > "/tmp/topems-${service_name}.log" 2>&1 & ;;
+        pm) PM_PORT=$port nohup "$executable_path" > "/tmp/topems-${service_name}.log" 2>&1 & ;;
+        erp) ERP_PORT=$port nohup "$executable_path" > "/tmp/topems-${service_name}.log" 2>&1 & ;;
+        finance) FINANCE_PORT=$port nohup "$executable_path" > "/tmp/topems-${service_name}.log" 2>&1 & ;;
+        doc) DOC_PORT=$port nohup "$executable_path" > "/tmp/topems-${service_name}.log" 2>&1 & ;;
+        ai) AI_PORT=$port nohup "$executable_path" > "/tmp/topems-${service_name}.log" 2>&1 & ;;
+        mes) MES_PORT=$port nohup "$executable_path" > "/tmp/topems-${service_name}.log" 2>&1 & ;;
+        pdm) PDM_PORT=$port nohup "$executable_path" > "/tmp/topems-${service_name}.log" 2>&1 & ;;
+        qms) QMS_PORT=$port nohup "$executable_path" > "/tmp/topems-${service_name}.log" 2>&1 & ;;
+        lims) LIMS_PORT=$port nohup "$executable_path" > "/tmp/topems-${service_name}.log" 2>&1 & ;;
+        ehs) EHS_PORT=$port nohup "$executable_path" > "/tmp/topems-${service_name}.log" 2>&1 & ;;
+        bi) BI_PORT=$port nohup "$executable_path" > "/tmp/topems-${service_name}.log" 2>&1 & ;;
+        report) REPORT_PORT=$port nohup "$executable_path" > "/tmp/topems-${service_name}.log" 2>&1 & ;;
+        *) SERVER_PORT=$port nohup "$executable_path" > "/tmp/topems-${service_name}.log" 2>&1 & ;;
+    esac
+    
+    echo "$!"
+}
+
 start_service() {
     local service_name=$1
     local force=${2:-false}
@@ -297,42 +349,41 @@ start_service() {
         fi
     fi
 
-    # 设置环境变量并启动服务（从项目根目录启动，确保 dotenv 能找到正确的 .env 文件）
-    cd "$PROJECT_ROOT"
-    
-    case "$service_name" in
-        iam) CORE_PORT=$port nohup "$executable_path" > "/tmp/topems-${service_name}.log" 2>&1 & ;;
-        pm) PM_PORT=$port nohup "$executable_path" > "/tmp/topems-${service_name}.log" 2>&1 & ;;
-        erp) ERP_PORT=$port nohup "$executable_path" > "/tmp/topems-${service_name}.log" 2>&1 & ;;
-        finance) FINANCE_PORT=$port nohup "$executable_path" > "/tmp/topems-${service_name}.log" 2>&1 & ;;
-        doc) DOC_PORT=$port nohup "$executable_path" > "/tmp/topems-${service_name}.log" 2>&1 & ;;
-        ai) AI_PORT=$port nohup "$executable_path" > "/tmp/topems-${service_name}.log" 2>&1 & ;;
-        mes) MES_PORT=$port nohup "$executable_path" > "/tmp/topems-${service_name}.log" 2>&1 & ;;
-        pdm) PDM_PORT=$port nohup "$executable_path" > "/tmp/topems-${service_name}.log" 2>&1 & ;;
-        qms) QMS_PORT=$port nohup "$executable_path" > "/tmp/topems-${service_name}.log" 2>&1 & ;;
-        lims) LIMS_PORT=$port nohup "$executable_path" > "/tmp/topems-${service_name}.log" 2>&1 & ;;
-        ehs) EHS_PORT=$port nohup "$executable_path" > "/tmp/topems-${service_name}.log" 2>&1 & ;;
-        bi) BI_PORT=$port nohup "$executable_path" > "/tmp/topems-${service_name}.log" 2>&1 & ;;
-        report) REPORT_PORT=$port nohup "$executable_path" > "/tmp/topems-${service_name}.log" 2>&1 & ;;
-        *) SERVER_PORT=$port nohup "$executable_path" > "/tmp/topems-${service_name}.log" 2>&1 & ;;
-    esac
-    local pid=$!
-    sleep 3
+    local retries=0
+    local delay=$RETRY_DELAY
+    local pid=""
 
-    if check_port $port; then
-        success "$service_name 服务启动成功 (PID: $pid, 端口: $port)"
-        
-        # 自动注册到 unified-core（跳过 iam 自身）
-        if [ "$service_name" != "iam" ]; then
-            register_plugin "$service_name"
+    while [ $retries -lt $MAX_RETRIES ]; do
+        if [ $retries -gt 0 ]; then
+            warning "$service_name 服务启动失败，第 $retries/$MAX_RETRIES 次重试，等待 ${delay}s..."
+            sleep $delay
+            delay=$((delay * BACKOFF_FACTOR))
         fi
-        
-        return 0
-    else
-        error "$service_name 服务启动失败，请查看日志: /tmp/topems-${service_name}.log"
-        tail -10 "/tmp/topems-${service_name}.log" 2>/dev/null
-        return 1
-    fi
+
+        pid=$(_start_service_internal "$service_name" "$port" "$executable_path")
+        sleep 3
+
+        if check_port $port; then
+            success "$service_name 服务启动成功 (PID: $pid, 端口: $port)"
+            
+            if [ "$service_name" != "iam" ]; then
+                register_plugin "$service_name"
+            fi
+            
+            return 0
+        else
+            local failed_pid=$(get_service_pid "$service_name" "$port")
+            if [ -n "$failed_pid" ]; then
+                kill -9 $failed_pid 2>/dev/null
+                sleep 1
+            fi
+            retries=$((retries + 1))
+        fi
+    done
+
+    error "$service_name 服务启动失败，已重试 $MAX_RETRIES 次，请查看日志: /tmp/topems-${service_name}.log"
+    tail -20 "/tmp/topems-${service_name}.log" 2>/dev/null
+    return 1
 }
 
 # 停止服务
@@ -444,7 +495,7 @@ get_service_display_name() {
         qms) echo "质量管理" ;;
         lims) echo "实验室管理" ;;
         ehs) echo "环境健康安全" ;;
-        rs) echo "研发服务" ;;
+        rd) echo "研发服务" ;;
         bi) echo "商业智能" ;;
         report) echo "报表服务" ;;
         monitor) echo "监控服务" ;;
@@ -475,7 +526,7 @@ get_service_description() {
         qms) echo "质量管理系统" ;;
         lims) echo "实验室信息管理系统" ;;
         ehs) echo "环境健康安全管理" ;;
-        rs) echo "研发服务管理" ;;
+        rd) echo "研发服务管理" ;;
         bi) echo "商业智能分析服务" ;;
         report) echo "报表生成服务" ;;
         monitor) echo "系统监控与告警服务" ;;
@@ -733,7 +784,7 @@ ws_check() {
         "通知服务:/ws/core/notifications:8000"
         "IM服务:/ws/core/im:8000"
         "MES仪表盘:/mes/ws/dashboard:8030"
-        "GIS服务:/gis/ws:8071"
+        "GIS服务:/ws/gis:8071"
     )
     
     local frontend_running=false
@@ -1105,6 +1156,11 @@ WebSocket:
 
 用户管理:
   reset-password [用户] [密码]  重置用户密码（默认 admin/admin123）
+
+环境变量:
+  MAX_RETRIES             最大重试次数（默认: 3）
+  RETRY_DELAY             初始重试间隔（默认: 3秒）
+  BACKOFF_FACTOR          退避系数（默认: 2，指数退避）
 
 示例:
   topems status               查看所有服务状态

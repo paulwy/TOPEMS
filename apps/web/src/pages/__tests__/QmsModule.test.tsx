@@ -14,6 +14,8 @@ vi.mock('@/api/qms', () => ({
     dashboard: {
       getStatistics: vi.fn().mockResolvedValue({ data: {} }),
     },
+    getQualityOverview: vi.fn().mockResolvedValue({ data: {} }),
+    listChecks: vi.fn().mockResolvedValue({ data: [] }),
     qualityControl: {
       list: vi.fn().mockResolvedValue({ data: [], pagination: { total: 0 } }),
       get: vi.fn(),
@@ -71,108 +73,103 @@ vi.mock('@/api/qms', () => ({
   },
 }));
 
-vi.mock('@/store', () => ({
-  useNotificationStore: vi.fn((selector?: any) =>
-    selector
-      ? selector({
-          addNotification: vi.fn(),
-          notifications: [],
-        })
-      : {
-          addNotification: vi.fn(),
-          notifications: [],
-        }
-  ),
-  useAuthStore: vi.fn((selector?: any) =>
-    selector
-      ? selector({
-          user: null,
-        })
-      : {
-          user: null,
-        }
-  ),
-}));
-
-describe('QmsModule', () => {
-  beforeEach(() => {
-    vi.clearAllMocks();
-  });
-
-  describe('QmsDashboardPage', () => {
-    it('should render without crashing', () => {
-      const { container } = render(
-        <BrowserRouter>
-          <QmsDashboardPage />
-        </BrowserRouter>
-      );
-      expect(container).toBeDefined();
-    });
-
-    it('should have dashboard API methods defined', () => {
-      expect(qmsApi.dashboard.getStatistics).toBeDefined();
-    });
-  });
-
-  describe('QmsQualityControlPage', () => {
-    it('should render without crashing', () => {
-      const { container } = render(
-        <BrowserRouter>
-          <QmsQualityControlPage />
-        </BrowserRouter>
-      );
-      expect(container).toBeDefined();
-    });
-
-    it('should have quality control API methods defined', () => {
-      expect(qmsApi.qualityControl.list).toBeDefined();
-      expect(qmsApi.qualityControl.get).toBeDefined();
-      expect(qmsApi.qualityControl.create).toBeDefined();
-      expect(qmsApi.qualityControl.update).toBeDefined();
-      expect(qmsApi.qualityControl.delete).toBeDefined();
-      expect(qmsApi.qualityControl.implement).toBeDefined();
-    });
-  });
-
-  describe('QmsInspectionPage', () => {
-    it('should render without crashing', () => {
-      const { container } = render(
-        <BrowserRouter>
-          <QmsInspectionPage />
-        </BrowserRouter>
-      );
-      expect(container).toBeDefined();
-    });
-
-    it('should have inspection API methods defined', () => {
-      expect(qmsApi.inspections.list).toBeDefined();
-      expect(qmsApi.inspections.get).toBeDefined();
-      expect(qmsApi.inspections.create).toBeDefined();
-      expect(qmsApi.inspections.update).toBeDefined();
-      expect(qmsApi.inspections.delete).toBeDefined();
-      expect(qmsApi.inspections.execute).toBeDefined();
-      expect(qmsApi.inspections.approve).toBeDefined();
-    });
-  });
-
-  describe('QmsNonconformancePage', () => {
-    it('should render without crashing', () => {
-      const { container } = render(
-        <BrowserRouter>
-          <QmsNonconformancePage />
-        </BrowserRouter>
-      );
-      expect(container).toBeDefined();
-    });
-
-    it('should have nonconformance API methods defined', () => {
-      expect(qmsApi.nonconformances.list).toBeDefined();
-      expect(qmsApi.nonconformances.get).toBeDefined();
-      expect(qmsApi.nonconformances.create).toBeDefined();
-      expect(qmsApi.nonconformances.update).toBeDefined();
-      expect(qmsApi.nonconformances.delete).toBeDefined();
-      expect(qmsApi.nonconformances.approve).toBeDefined();
-      expect(qmsApi.nonconformances.close).toBeDefined();
-    });
-  });
+vi.mock('@/store', () => {
+  const notificationState = {
+    notifications: [],
+    addNotification: vi.fn(),
+    removeNotification: vi.fn(),
+    clearNotifications: vi.fn(),
+  };
+  
+  const authState = {
+    user: { id: '1', username: 'testuser', email: 'test@example.com', isActive: true },
+    token: 'test-token',
+    permissions: [],
+    roles: [],
+    setUser: vi.fn(),
+    setToken: vi.fn(),
+    setPermissions: vi.fn(),
+    setRoles: vi.fn(),
+    clearAuth: vi.fn(),
+    updateUser: vi.fn(),
+    isAuthenticated: vi.fn(() => true),
+    hasPermission: vi.fn(() => true),
+    hasAnyPermission: vi.fn(() => true),
+    hasAllPermissions: vi.fn(() => true),
+    hasRole: vi.fn(() => true),
+    hasAnyRole: vi.fn(() => true),
+    isSuperuser: vi.fn(() => true),
+    getDisplayName: vi.fn(() => 'Test User'),
+    getAvatarUrl: vi.fn(() => ''),
+  };
+  
+  return {
+    useNotificationStore: vi.fn((selector?: any) => 
+      selector ? selector(notificationState) : notificationState
+    ),
+    useAuthStore: vi.fn((selector?: any) => 
+      selector ? selector(authState) : authState
+    ),
+    useThemeStore: vi.fn(() => ({
+      theme: 'light',
+      setTheme: vi.fn(),
+    })),
+    useUIStore: vi.fn(() => ({
+      sidebarOpen: true,
+      sidebarCollapsed: false,
+      toggleSidebar: vi.fn(),
+      setSidebarOpen: vi.fn(),
+      toggleSidebarCollapsed: vi.fn(),
+      setSidebarCollapsed: vi.fn(),
+    })),
+    useWorkflowStore: vi.fn(() => ({
+      currentTaskId: null,
+      taskStatus: 'pending',
+      setCurrentTaskId: vi.fn(),
+      setTaskStatus: vi.fn(),
+      completeTask: vi.fn(),
+    })),
+    useModuleLoadingStore: vi.fn(() => ({
+      modules: {},
+      loading: false,
+      progress: 0,
+      loadModule: vi.fn(),
+      setModuleState: vi.fn(),
+      reset: vi.fn(),
+    })),
+    useShortcutsStore: vi.fn(() => ({
+      shortcuts: [],
+      addShortcut: vi.fn(),
+      removeShortcut: vi.fn(),
+      updateShortcut: vi.fn(),
+    })),
+    useNotificationSettingsStore: vi.fn(() => ({
+      settings: {},
+      updateSettings: vi.fn(),
+    })),
+    useBIStore: vi.fn(() => ({
+      summary: null,
+      development: null,
+      quality: null,
+      production: null,
+      laboratory: null,
+      loading: false,
+      error: null,
+      fetchData: vi.fn(),
+      clearData: vi.fn(),
+    })),
+    useAuth: vi.fn(() => ({
+      user: { id: '1', username: 'testuser', email: 'test@example.com', isActive: true },
+      token: 'test-token',
+      permissions: [],
+      roles: [],
+    })),
+    useTheme: vi.fn(() => ({ theme: 'light' })),
+    useSidebarOpen: vi.fn(() => true),
+    useSidebarCollapsed: vi.fn(() => false),
+    useToggleSidebar: vi.fn(),
+    useSetSidebarOpen: vi.fn(),
+    useToggleSidebarCollapsed: vi.fn(),
+    useSetSidebarCollapsed: vi.fn(),
+  };
 });

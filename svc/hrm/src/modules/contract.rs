@@ -19,32 +19,38 @@ use topems_shared::{api_error, ApiResponse};
 pub fn create_routes() -> Router<ApiState> {
     Router::new()
         .route(
-            "/api/hrm/contracts",
+            "/api/core/hrm/v1/contracts",
             get(list_contracts).post(create_contract),
         )
         .route(
-            "/api/hrm/contracts/{id}",
+            "/api/core/hrm/v1/contracts/{id}",
             get(get_contract)
                 .put(update_contract)
                 .delete(delete_contract),
         )
-        .route("/api/hrm/contracts/expiring", get(list_expiring_contracts))
-        .route("/api/hrm/contracts/{id}/renew", post(create_renewal))
-        .route("/api/hrm/contract-renewals", get(list_renewals))
         .route(
-            "/api/hrm/contract-renewals/{id}",
+            "/api/core/hrm/v1/contracts/expiring",
+            get(list_expiring_contracts),
+        )
+        .route(
+            "/api/core/hrm/v1/contracts/{id}/renew",
+            post(create_renewal),
+        )
+        .route("/api/core/hrm/v1/contract-renewals", get(list_renewals))
+        .route(
+            "/api/core/hrm/v1/contract-renewals/{id}",
             get(get_renewal).put(update_renewal).delete(delete_renewal),
         )
         .route(
-            "/api/hrm/contract-renewals/{id}/approve",
+            "/api/core/hrm/v1/contract-renewals/{id}/approve",
             put(approve_renewal),
         )
         .route(
-            "/api/hrm/contract-renewals/{id}/reject",
+            "/api/core/hrm/v1/contract-renewals/{id}/reject",
             put(reject_renewal),
         )
         .route(
-            "/api/hrm/contract-renewals/{id}/execute",
+            "/api/core/hrm/v1/contract-renewals/{id}/execute",
             put(execute_renewal),
         )
 }

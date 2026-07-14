@@ -9,7 +9,7 @@ import {
   Box,
   Button,
 } from '@mui/material';
-import React, { useState, useEffect, useMemo } from 'react';
+import React, { useState, useMemo } from 'react';
 import type { Interaction, CreateInteractionRequest, UpdateInteractionRequest } from '@/api/crm';
 import { crmApi } from '@/api/crm';
 import { useNotificationStore } from '@/store';
@@ -18,10 +18,12 @@ import { Plus, Edit, Trash2, Eye } from 'lucide-react';
 import { ListPageTemplate, type ColumnDef } from '@/components/templates';
 import { PageContainer, StatusBadge, FormField } from '@/components/common';
 import type { RowAction, FilterConfig } from '@/components';
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 
 const InteractionManagementPage: React.FC = () => {
-  const [interactions, setInteractions] = useState<Interaction[]>([]);
-  const [loading, setLoading] = useState(true);
+  const { addNotification } = useNotificationStore();
+  const queryClient = useQueryClient();
+
   const [searchTerm, setSearchTerm] = useState('');
   const [statusFilter, setStatusFilter] = useState<string>('');
   const [typeFilter, setTypeFilter] = useState<string>('');
@@ -36,87 +38,85 @@ const InteractionManagementPage: React.FC = () => {
     notes: '',
   });
 
-  const { addNotification } = useNotificationStore();
-
-  useEffect(() => {
-    loadInteractions();
-  }, [searchTerm, statusFilter, typeFilter]);
-
-  const loadInteractions = async () => {
-    try {
-      setLoading(true);
+  const interactionsQuery = useQuery({
+    queryKey: ['crm-interactions', searchTerm, statusFilter, typeFilter],
+    queryFn: async () => {
       const params: Record<string, unknown> = {};
       if (searchTerm) params.search = searchTerm;
       if (statusFilter) params.status = statusFilter;
       if (typeFilter) params.type = typeFilter;
-
       const response = await crmApi.interactions.list(params);
       if (response.success && response.data) {
-        setInteractions(response.data.items || []);
+        return response.data.items || [];
       }
-    } catch (error: unknown) {
-      logger.error('加载交互记录列表失败:', error);
-      addNotification({
-        type: 'error',
-        title: '加载失败',
-        message: '无法加载交互记录列表',
-      });
-    } finally {
-      setLoading(false);
-    }
-  };
+      return [];
+    },
+    staleTime: 5 * 60 * 1000,
+  });
+  const interactions = interactionsQuery.data || [];
+  const loading = interactionsQuery.isLoading;
+
+  const createInteractionMutation = useMutation({
+    mutationFn: (data: CreateInteractionRequest) => crmApi.interactions.create(data),
+    onSuccess: () => {
+      addNotification({ type: 'success', title: '创建成功', message: '新交互记录已创建' });
+      queryClient.invalidateQueries({ queryKey: ['crm-interactions'] });
+    },
+    onError: (error: unknown) => {
+      logger.error('创建失败:', error);
+      addNotification({ type: 'error', title: '操作失败', message: '创建交互记录失败' });
+    },
+  });
+
+  const updateInteractionMutation = useMutation({
+    mutationFn: ({ id, data }: { id: string; data: UpdateInteractionRequest }) =>
+      crmApi.interactions.update(id, data),
+    onSuccess: () => {
+      addNotification({ type: 'success', title: '更新成功', message: '交互记录已更新' });
+      queryClient.invalidateQueries({ queryKey: ['crm-interactions'] });
+    },
+    onError: (error: unknown) => {
+      logger.error('更新失败:', error);
+      addNotification({ type: 'error', title: '操作失败', message: '更新交互记录失败' });
+    },
+  });
+
+  const deleteInteractionMutation = useMutation({
+    mutationFn: (id: string) => crmApi.interactions.delete(id),
+    onSuccess: () => {
+      addNotification({ type: 'success', title: '删除成功', message: '交互记录已删除' });
+      queryClient.invalidateQueries({ queryKey: ['crm-interactions'] });
+    },
+    onError: (error: unknown) => {
+      logger.error('删除失败:', error);
+      addNotification({ type: 'error', title: '删除失败', message: '无法删除交互记录' });
+    },
+  });
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     try {
       if (selectedInteraction) {
-        await crmApi.interactions.update(
-          selectedInteraction.id,
-          formData as UpdateInteractionRequest
-        );
-        addNotification({
-          type: 'success',
-          title: '更新成功',
-          message: '交互记录已更新',
+        await updateInteractionMutation.mutateAsync({
+          id: selectedInteraction.id,
+          data: formData as UpdateInteractionRequest,
         });
       } else {
-        await crmApi.interactions.create(formData);
-        addNotification({
-          type: 'success',
-          title: '创建成功',
-          message: '新交互记录已创建',
-        });
+        await createInteractionMutation.mutateAsync(formData);
       }
       setShowDialog(false);
       resetForm();
-      loadInteractions();
     } catch (error: unknown) {
       logger.error('操作失败:', error);
-      addNotification({
-        type: 'error',
-        title: '操作失败',
-        message: selectedInteraction ? '更新交互记录失败' : '创建交互记录失败',
-      });
     }
   };
 
   const handleDelete = async (id: string) => {
     if (!window.confirm('确定要删除这条交互记录吗?')) return;
     try {
-      await crmApi.interactions.delete(id);
-      addNotification({
-        type: 'success',
-        title: '删除成功',
-        message: '交互记录已删除',
-      });
-      loadInteractions();
+      await deleteInteractionMutation.mutateAsync(id);
     } catch (error: unknown) {
       logger.error('删除失败:', error);
-      addNotification({
-        type: 'error',
-        title: '删除失败',
-        message: '无法删除交互记录',
-      });
     }
   };
 

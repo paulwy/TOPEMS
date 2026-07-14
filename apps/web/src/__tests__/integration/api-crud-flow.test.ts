@@ -5,6 +5,26 @@
  */
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 
+vi.mock('@/store', () => ({
+  useNotificationStore: {
+    getState: vi.fn(() => ({
+      addNotification: vi.fn(),
+      notifications: [],
+      removeNotification: vi.fn(),
+      clearNotifications: vi.fn(),
+    })),
+    subscribe: vi.fn(),
+  },
+  useAuthStore: {
+    getState: vi.fn(() => ({
+      user: { id: '1', name: 'Test User', role: 'admin' },
+      token: 'test-token',
+      permissions: [],
+    })),
+    subscribe: vi.fn(),
+  },
+}));
+
 // Mock apiClient
 vi.mock('@/api/client', () => {
   const mockClient = {

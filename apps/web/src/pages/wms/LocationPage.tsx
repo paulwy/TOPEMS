@@ -29,7 +29,7 @@ import type {
   LocationStatusSummary,
 } from '@/api/wms';
 import { wmsApi } from '@/api/wms';
-import { useAppStore } from '@/store';
+import { useNotificationStore } from '@/store';
 import { Plus, Edit, Trash2, Eye, MapPin } from 'lucide-react';
 import { apiLogger } from '@/utils/logger';
 import { ConfirmDialog, PageContainer } from '@/components/common';
@@ -58,7 +58,7 @@ const locationTypeConfig: Record<string, string> = {
 };
 
 const LocationPage: React.FC = () => {
-  const { addNotification } = useAppStore();
+  const { addNotification } = useNotificationStore();
   const queryClient = useQueryClient();
 
   const [searchTerm, setSearchTerm] = useState('');

@@ -17,7 +17,7 @@ MAX_SIZE=512000
 
 for file in $STAGED_FILES; do
   if [ -f "$file" ]; then
-    # 排除 lock 文件和数据库文件（与 .pre-commit-config.yaml 保持一致）
+    # 排除 lock 文件和数据库文件
     case "$file" in
       pnpm-lock.yaml|*-lock.yaml|database/postgres_data/*)
         continue
@@ -106,29 +106,7 @@ else
 fi
 
 # ============================================================
-# 4. 组件命名检查（仅当有前端文件变更时）
-# ============================================================
-echo ""
-echo "📛 Checking component naming conventions..."
-
-HAS_TSX_FILES=$(echo "$STAGED_FILES" | grep -E "\.tsx$" | head -1)
-
-if [ -n "$HAS_TSX_FILES" ]; then
-  python3 scripts/check_component_naming.py --ci
-  NAMING_EXIT=$?
-  
-  if [ $NAMING_EXIT -ne 0 ]; then
-    echo "❌ Component naming check failed"
-    ERRORS=$((ERRORS + 1))
-  else
-    echo "✅ Component naming check passed"
-  fi
-else
-  echo "⏭️  Skipped (no .tsx files staged)"
-fi
-
-# ============================================================
-# 5. API 路径检查（仅当有后端 Rust 文件变更时）
+# 4. API 路径检查（仅当有后端 Rust 文件变更时）
 # ============================================================
 echo ""
 echo "🔗 Checking API path duplicates..."

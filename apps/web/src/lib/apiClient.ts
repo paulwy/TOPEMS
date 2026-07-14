@@ -7,9 +7,8 @@
  * 架构说明：
  *   api/client.ts          -> 底层 axios 多服务客户端 (ApiClient class)
  *   api/request.ts         -> 请求/响应处理工具 (handleResponse, paginatedRequest)
- *   hooks/useApiHooks.ts   -> React Hooks (useApi, useMutation, usePaginatedApi)
- *   lib/apiClient.ts       -> [本文件] 统一导出层，整合上述模块
  *   lib/react-query.ts     -> @tanstack/react-query 配置 (queryClient, QUERY_KEYS)
+ *   lib/apiClient.ts       -> [本文件] 统一导出层，整合上述模块
  */
 
 import { apiClient as axiosApiClient } from '@/api/client';
@@ -31,19 +30,8 @@ export { downloadBlob, createBaseAxiosClient } from '@/api/client';
 // Re-export react-query integration
 export { queryClient, QUERY_KEYS, CACHE_DURATIONS } from '@/lib/reactQuery';
 
-// Re-export hooks
-export {
-  useApi,
-  usePaginatedApi,
-  useMutation,
-  useInfiniteQuery,
-  useDebouncedQuery,
-} from '@/hooks/useApiHooks';
-export type {
-  ApiResponse as UseApiState,
-  PaginationParams as UsePaginationParams,
-  PaginatedResponse as UsePaginatedResponse,
-} from '@/hooks/useApiHooks';
+// React Query hooks should be imported directly from @tanstack/react-query
+// export { useQuery, useMutation, useInfiniteQuery } from '@tanstack/react-query';
 
 /**
  * Service name type derived from the ApiClient properties.

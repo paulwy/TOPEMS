@@ -25,10 +25,16 @@ pub struct ForecastParams {
 
 pub fn create_routes() -> Router<ApiState> {
     Router::new()
-        .route("/api/crm/dashboard/stats", get(get_dashboard_stats))
-        .route("/api/crm/dashboard/funnel", get(get_sales_funnel))
-        .route("/api/crm/dashboard/forecast", get(get_sales_forecast))
-        .route("/api/crm/customers/{id}/details", get(get_customer_details))
+        .route("/api/core/crm/v1/dashboard/stats", get(get_dashboard_stats))
+        .route("/api/core/crm/v1/dashboard/funnel", get(get_sales_funnel))
+        .route(
+            "/api/core/crm/v1/dashboard/forecast",
+            get(get_sales_forecast),
+        )
+        .route(
+            "/api/core/crm/v1/customers/{id}/details",
+            get(get_customer_details),
+        )
 }
 
 async fn get_dashboard_stats(

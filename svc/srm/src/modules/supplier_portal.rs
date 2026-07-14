@@ -22,19 +22,19 @@ pub async fn create_routes(db: PgPool) -> Result<Router> {
 
     let app = Router::new()
         .route(
-            "/api/srm/supplier-portal/:supplier_id/stats",
+            "/api/srm/supplier-portal/{supplier_id}/stats",
             get(get_supplier_portal_stats),
         )
         .route(
-            "/api/srm/supplier-portal/:supplier_id/orders",
+            "/api/srm/supplier-portal/{supplier_id}/orders",
             get(get_supplier_portal_orders),
         )
         .route(
-            "/api/srm/supplier-portal/:supplier_id/invoices",
+            "/api/srm/supplier-portal/{supplier_id}/invoices",
             get(get_supplier_portal_invoices),
         )
         .route(
-            "/api/srm/supplier-portal/:supplier_id/deliveries",
+            "/api/srm/supplier-portal/{supplier_id}/deliveries",
             get(get_supplier_portal_deliveries),
         )
         .route(

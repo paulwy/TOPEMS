@@ -37,7 +37,9 @@ pub struct DatabaseConfig {
 impl Default for DatabaseConfig {
     fn default() -> Self {
         Self {
-            url: env::var("DATABASE_URL").expect("DATABASE_URL environment variable is required"),
+            url: env::var("DATABASE_URL").unwrap_or_else(|_| {
+                "postgres://topems:topems_secret@localhost:5432/topems".to_string()
+            }),
             max_connections: 20,
             min_connections: Some(5),
             connect_timeout: Some(30),

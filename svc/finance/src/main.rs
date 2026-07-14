@@ -82,7 +82,7 @@ async fn main() {
         );
 
     let protected_routes = Router::new()
-        .nest("/api/finance", modules::create_routes())
+        .nest("/api/core/finance/v1", modules::create_routes())
         .layer(axum::middleware::from_fn_with_state(
             auth_state.clone(),
             auth_middleware,

@@ -1,7 +1,3 @@
-/**
- * 统一 FormSelect 组件
- * 封装 MUI Select，提供统一的样式和交互体验
- */
 import React from 'react';
 import type { FormControlProps } from '@mui/material';
 import {
@@ -11,6 +7,8 @@ import {
   MenuItem,
   FormHelperText,
   Box,
+  useMediaQuery,
+  useTheme,
 } from '@mui/material';
 
 export interface FormSelectOption {
@@ -20,31 +18,18 @@ export interface FormSelectOption {
 }
 
 export interface FormSelectProps {
-  /** 字段名称 */
   name: string;
-  /** 标签 */
   label: string;
-  /** 值 */
   value?: string | number | string[];
-  /** 选项列表 */
   options: FormSelectOption[];
-  /** 值变化回调 */
   onChange?: (value: string | number | string[]) => void;
-  /** 是否多选 */
   multiple?: boolean;
-  /** 是否必填 */
   required?: boolean;
-  /** 是否禁用 */
   disabled?: boolean;
-  /** 错误信息 */
   error?: string;
-  /** 占位提示 */
   placeholder?: string;
-  /** 是否使用紧凑尺寸 */
   compact?: boolean;
-  /** 是否允许清空 */
   allowClear?: boolean;
-  /** 自定义样式 */
   sx?: FormControlProps['sx'];
 }
 
@@ -63,6 +48,9 @@ export const FormSelect: React.FC<FormSelectProps> = ({
   allowClear = false,
   sx,
 }) => {
+  const theme = useTheme();
+  const isMobile = useMediaQuery(theme.breakpoints.down('sm'));
+
   const handleChange = (event: any) => {
     const value = event.target.value;
     onChange?.(value);
@@ -71,13 +59,20 @@ export const FormSelect: React.FC<FormSelectProps> = ({
   return (
     <FormControl
       fullWidth
-      size={compact ? 'small' : 'medium'}
+      size={isMobile ? 'medium' : (compact ? 'small' : 'medium')}
       required={required}
       disabled={disabled}
       error={!!error}
       sx={{
         '& .MuiFormHelperText-root': {
           marginTop: 0.5,
+          fontSize: isMobile ? '0.75rem' : undefined,
+        },
+        '& .MuiInputLabel-root': {
+          fontSize: isMobile ? '0.875rem' : undefined,
+        },
+        '& .MuiSelect-select': {
+          fontSize: isMobile ? '0.9375rem' : undefined,
         },
         ...sx,
       }}
@@ -93,7 +88,7 @@ export const FormSelect: React.FC<FormSelectProps> = ({
         displayEmpty={!!placeholder}
         renderValue={(selected) => {
           if (!selected || (Array.isArray(selected) && selected.length === 0)) {
-            return <Box sx={{ color: 'text.secondary' }}>{placeholder}</Box>;
+            return <Box sx={{ color: 'text.secondary', fontSize: isMobile ? '0.9375rem' : undefined }}>{placeholder}</Box>;
           }
           if (multiple && Array.isArray(selected)) {
             return selected
@@ -107,7 +102,7 @@ export const FormSelect: React.FC<FormSelectProps> = ({
         {allowClear && !multiple && (
           <MenuItem
             value=''
-            sx={{ color: 'text.secondary', fontStyle: 'italic' }}
+            sx={{ color: 'text.secondary', fontStyle: 'italic', fontSize: isMobile ? '0.875rem' : undefined }}
           >
             {placeholder || '请选择'}
           </MenuItem>
@@ -117,6 +112,7 @@ export const FormSelect: React.FC<FormSelectProps> = ({
             key={option.value}
             value={option.value}
             disabled={option.disabled}
+            sx={{ fontSize: isMobile ? '0.875rem' : undefined }}
           >
             {option.label}
           </MenuItem>

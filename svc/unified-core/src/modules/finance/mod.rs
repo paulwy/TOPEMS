@@ -225,20 +225,20 @@ pub fn routes() -> Router<AppState> {
     Router::new()
         .route("/payments", axum::routing::get(list_payments))
         .route("/payments", axum::routing::post(create_payment))
-        .route("/payments/:id", axum::routing::get(get_payment))
-        .route("/payments/:id", axum::routing::put(update_payment))
-        .route("/payments/:id", axum::routing::delete(delete_payment))
-        .route("/payments/:id/submit", axum::routing::post(submit_payment))
+        .route("/payments/{id}", axum::routing::get(get_payment))
+        .route("/payments/{id}", axum::routing::put(update_payment))
+        .route("/payments/{id}", axum::routing::delete(delete_payment))
+        .route("/payments/{id}/submit", axum::routing::post(submit_payment))
         .route(
-            "/payments/:id/approve",
+            "/payments/{id}/approve",
             axum::routing::post(approve_payment),
         )
-        .route("/payments/:id/reject", axum::routing::post(reject_payment))
+        .route("/payments/{id}/reject", axum::routing::post(reject_payment))
         .route("/accounts", axum::routing::get(list_accounts))
         .route("/accounts", axum::routing::post(create_account))
-        .route("/accounts/:id", axum::routing::get(get_account))
-        .route("/accounts/:id", axum::routing::put(update_account))
-        .route("/accounts/:id", axum::routing::delete(delete_account))
+        .route("/accounts/{id}", axum::routing::get(get_account))
+        .route("/accounts/{id}", axum::routing::put(update_account))
+        .route("/accounts/{id}", axum::routing::delete(delete_account))
         .route("/accounts/tree", axum::routing::get(get_account_tree))
         .route(
             "/accounts/balances",
@@ -249,7 +249,7 @@ pub fn routes() -> Router<AppState> {
             axum::routing::get(get_opening_balances),
         )
         .route(
-            "/accounts/:account_id/opening-balance",
+            "/accounts/{account_id}/opening-balance",
             axum::routing::post(set_opening_balance),
         )
         .route(
@@ -258,19 +258,19 @@ pub fn routes() -> Router<AppState> {
         )
         .route("/vouchers", axum::routing::get(list_vouchers))
         .route("/vouchers", axum::routing::post(create_voucher))
-        .route("/vouchers/:id", axum::routing::get(get_voucher))
-        .route("/vouchers/:id", axum::routing::put(update_voucher))
-        .route("/vouchers/:id", axum::routing::delete(delete_voucher))
+        .route("/vouchers/{id}", axum::routing::get(get_voucher))
+        .route("/vouchers/{id}", axum::routing::put(update_voucher))
+        .route("/vouchers/{id}", axum::routing::delete(delete_voucher))
         .route(
-            "/vouchers/:id/entries",
+            "/vouchers/{id}/entries",
             axum::routing::get(get_voucher_entries),
         )
-        .route("/vouchers/:id/submit", axum::routing::post(submit_voucher))
+        .route("/vouchers/{id}/submit", axum::routing::post(submit_voucher))
         .route(
-            "/vouchers/:id/approve",
+            "/vouchers/{id}/approve",
             axum::routing::post(approve_voucher),
         )
-        .route("/vouchers/:id/post", axum::routing::post(post_voucher))
+        .route("/vouchers/{id}/post", axum::routing::post(post_voucher))
         .route(
             "/vouchers/batch-approve",
             axum::routing::post(batch_approve_vouchers),
@@ -293,23 +293,23 @@ pub fn routes() -> Router<AppState> {
             axum::routing::post(create_voucher_template),
         )
         .route(
-            "/voucher-templates/:id",
+            "/voucher-templates/{id}",
             axum::routing::get(get_voucher_template),
         )
         .route(
-            "/voucher-templates/:id",
+            "/voucher-templates/{id}",
             axum::routing::put(update_voucher_template),
         )
         .route(
-            "/voucher-templates/:id",
+            "/voucher-templates/{id}",
             axum::routing::delete(delete_voucher_template),
         )
         .route(
-            "/voucher-templates/:id/copy",
+            "/voucher-templates/{id}/copy",
             axum::routing::post(copy_voucher_template),
         )
         .route(
-            "/voucher-templates/:id/set-default",
+            "/voucher-templates/{id}/set-default",
             axum::routing::post(set_default_voucher_template),
         )
         .route("/period/current", axum::routing::get(get_current_period))

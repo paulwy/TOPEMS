@@ -1,4 +1,4 @@
-import React, { Suspense, lazy, useState, useEffect } from 'react';
+import React, { Suspense, useState, useEffect, useRef } from 'react';
 import { BrowserRouter, Routes, Route, Navigate, useLocation } from 'react-router-dom';
 import { Box, Typography } from '@mui/material';
 import { AuthProvider, useAuth } from './hooks/useAuth';
@@ -12,6 +12,7 @@ import { LoadingSpinner } from '@topems/shared-components';
 import { GlobalLayout } from './components/layout';
 import { logger } from '@/utils/logger';
 import { PluginProvider } from './context/PluginContext';
+import { createSafeLazy, lazyWithPreload } from './utils/createSafeLazy';
 
 import {
   authRoutes,
@@ -27,11 +28,13 @@ import { CRM_PATHS } from './modules/crm/config';
 import { ADMIN_PATHS } from './modules/admin/config';
 import { eventBus, ModuleEvents } from './lib/plugin-loader/EventBus';
 
-const TemplateDemoPage = lazy(() =>
+const TemplateDemoPage = createSafeLazy(() =>
   import('./components/templates/index').then((m) => ({ default: m.TemplateDemoPage }))
 );
-const DynamicRouter = lazy(() => import('./lib/plugin-loader/DynamicRouter'));
-const PerformanceTestPage = lazy(() => import('./pages/performance/PerformanceTestPage'));
+const DynamicRouter = createSafeLazy(() => import('./lib/plugin-loader/DynamicRouter'));
+const { lazy: PerformanceTestPage, preload: preloadPerformanceTest } = lazyWithPreload(() => 
+  import('./pages/performance/PerformanceTestPage')
+);
 
 const IS_STATIC_MODE = import.meta.env.VITE_DEPLOYMENT_MODE !== 'module-federation';
 
@@ -86,23 +89,41 @@ const DynamicRoutes: React.FC = () => {
   const [routes, setRoutes] = useState<RouteConfig[]>([]);
   const [loading, setLoading] = useState(true);
   const location = useLocation();
+  const routeCacheRef = useRef<Map<string, RouteConfig[]>>(new Map());
+  const prevModuleRef = useRef<string | null>(null);
+
+  const detectModuleFromPath = (path: string): string | null => {
+    const pathParts = path.split('/').filter((p) => p);
+    if (pathParts.length === 0) return null;
+    const firstPart = pathParts[0];
+    if (coreModuleCodes.includes(firstPart as (typeof coreModuleCodes)[number])) {
+      return firstPart;
+    }
+    return null;
+  };
 
   useEffect(() => {
-    const detectModuleFromPath = (path: string): string | null => {
-      const pathParts = path.split('/').filter((p) => p);
-      if (pathParts.length === 0) return null;
-      const firstPart = pathParts[0];
-      if (coreModuleCodes.includes(firstPart as (typeof coreModuleCodes)[number])) {
-        return firstPart;
-      }
-      return null;
-    };
+    const moduleCode = detectModuleFromPath(location.pathname);
+
+    if (prevModuleRef.current === moduleCode && routeCacheRef.current.has(moduleCode || '')) {
+      setRoutes(routeCacheRef.current.get(moduleCode || '') || []);
+      setLoading(false);
+      return;
+    }
 
     const loadRoutes = async () => {
       setLoading(true);
       try {
-        const moduleCode = detectModuleFromPath(location.pathname);
         if (moduleCode) {
+          const cachedRoutes = routeCacheRef.current.get(moduleCode);
+          if (cachedRoutes) {
+            logger.info(`[Dynamic Routes] Using cached routes for: ${moduleCode}`);
+            setRoutes(cachedRoutes);
+            prevModuleRef.current = moduleCode;
+            setLoading(false);
+            return;
+          }
+
           logger.info(`[Dynamic Routes] Loading module: ${moduleCode}`);
           const moduleConfig = await loadModuleConfig(moduleCode);
           const flatRoutes = moduleConfig.routes.flatMap((route) => {
@@ -119,7 +140,9 @@ const DynamicRoutes: React.FC = () => {
             module: route.module,
             action: route.action,
           }));
+          routeCacheRef.current.set(moduleCode, mappedRoutes);
           setRoutes(mappedRoutes);
+          prevModuleRef.current = moduleCode;
         }
       } catch (error) {
         logger.error('[Dynamic Routes] Failed to load routes', error);
@@ -202,6 +225,15 @@ const AppContent: React.FC = () => {
   return (
     <BrowserRouter>
       <Routes>
+        <Route
+          path='/performance'
+          element={
+            <Suspense fallback={<PageLoader />}>
+              <PerformanceTestPage />
+            </Suspense>
+          }
+        />
+
         {authRoutes.map((route) => {
           const Element = route.element as React.ComponentType;
           return (
@@ -218,15 +250,6 @@ const AppContent: React.FC = () => {
             />
           );
         })}
-
-        <Route
-          path='/performance'
-          element={
-            <Suspense fallback={<PageLoader />}>
-              <PerformanceTestPage />
-            </Suspense>
-          }
-        />
 
         {renderRoutes(dashboardRoutes)}
         {renderRoutes(commonRoutes)}
