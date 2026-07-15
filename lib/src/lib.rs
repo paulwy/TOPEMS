@@ -35,6 +35,7 @@ pub mod security;
 pub mod service_bootstrap;
 pub mod service_client;
 pub mod service_discovery;
+pub mod service_port;
 pub mod storage;
 pub mod telemetry;
 pub mod tenant;
@@ -46,7 +47,10 @@ pub mod ai_client;
 
 pub use api_version::{
     api_prefix, create_api_info, create_api_info_router, default_versioned_router,
-    get_api_info_handler, versioned_router, ApiInfo, ApiVersionInfo,
+    deprecation_middleware, get_api_info_handler, group1_route_compat_middleware,
+    group2_route_compat_middleware, register_routes_with_legacy_alias, versioned_router,
+    wrap_group1_router, wrap_group2_router, ApiInfo, ApiVersionInfo, Group1CompatConfig,
+    RouteCompatConfig,
 };
 pub use audit::{AuditLog, AuditLogQuery, CreateAuditLogRequest};
 pub use auth::{

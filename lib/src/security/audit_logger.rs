@@ -27,9 +27,16 @@ impl Default for AuditLoggerConfig {
             max_request_body_size: 1024 * 1024,
             max_response_body_size: 1024 * 1024,
             skip_paths: vec![
+                // 根与健康检查
                 "/health".to_string(),
+                // 新路径（K8s Ingress 契约 V9）
+                "/api/core/iam/auth/login".to_string(),
+                "/api/core/iam/auth/refresh".to_string(),
+                "/api/core/iam/auth/register".to_string(),
+                // 旧路径兼容
                 "/api/v1/auth/login".to_string(),
                 "/api/v1/auth/refresh".to_string(),
+                "/api/v1/auth/register".to_string(),
             ],
             skip_methods: vec!["OPTIONS".to_string()],
         }
@@ -112,27 +119,86 @@ async fn read_body_bytes(body: Body, max_size: usize) -> (Body, Vec<u8>) {
 fn extract_entity_info(path: &str, method: &str) -> (String, String) {
     let path_parts: Vec<&str> = path.split('/').filter(|p| !p.is_empty()).collect();
 
-    let entity_type = path_parts
-        .get(2)
-        .map(|p| match *p {
-            "users" => "user".to_string(),
-            "roles" => "role".to_string(),
-            "permissions" => "permission".to_string(),
-            "dictionaries" | "dict-types" | "dict-items" => "dictionary".to_string(),
-            "workflows" => "workflow".to_string(),
-            "projects" => "project".to_string(),
-            "documents" => "document".to_string(),
-            "audit-logs" => "audit_log".to_string(),
-            "plugins" => "plugin".to_string(),
-            "settings" => "setting".to_string(),
-            "orders" => "order".to_string(),
-            "tasks" => "task".to_string(),
-            "departments" => "department".to_string(),
-            "employees" => "employee".to_string(),
-            "instances" => "workflow_instance".to_string(),
-            _ => p.to_string(),
-        })
-        .unwrap_or_else(|| "unknown".to_string());
+    // 已知的非实体前缀（按顺序用于跳过）
+    let known_non_entity_prefixes: &[&str] = &[
+        "api",
+        "core",
+        "v1",
+        // Group1 模块名
+        "iam",
+        "flow",
+        "file",
+        "mail",
+        "im",
+        "notification",
+        "master",
+        "migration",
+        "comm",
+        "plugin",
+        "dict",
+        "tenant",
+        "billing",
+        "sync",
+        "help",
+        "menu",
+        "login_log",
+        "search",
+        // Group2 服务名
+        "erp",
+        "finance",
+        "doc",
+        "ai",
+        "hrm",
+        "pm",
+        "crm",
+        "mes",
+        "pdm",
+        "scm",
+        "wms",
+        "srm",
+        "qms",
+        "lims",
+        "ehs",
+        "rd",
+        "rs",
+        "bi",
+        "analytics",
+        "report",
+        "monitor",
+        "portal",
+        "mobile",
+        "gis",
+        "integration",
+        "manufacturing",
+        "qualityAssurance",
+    ];
+
+    // 定位第一个"实体段"：跳过所有 known 前缀 + v1 + api/core
+    let entity_idx = path_parts
+        .iter()
+        .position(|p| !known_non_entity_prefixes.contains(p))
+        .unwrap_or(path_parts.len().saturating_sub(1));
+
+    let entity_raw = path_parts.get(entity_idx).copied().unwrap_or("unknown");
+
+    let entity_type = match entity_raw {
+        "users" => "user".to_string(),
+        "roles" => "role".to_string(),
+        "permissions" => "permission".to_string(),
+        "dictionaries" | "dict-types" | "dict-items" => "dictionary".to_string(),
+        "workflows" => "workflow".to_string(),
+        "projects" => "project".to_string(),
+        "documents" => "document".to_string(),
+        "audit-logs" => "audit_log".to_string(),
+        "plugins" => "plugin".to_string(),
+        "settings" => "setting".to_string(),
+        "orders" => "order".to_string(),
+        "tasks" => "task".to_string(),
+        "departments" => "department".to_string(),
+        "employees" => "employee".to_string(),
+        "instances" => "workflow_instance".to_string(),
+        other => other.to_string(),
+    };
 
     let action = match method {
         "POST" => "create".to_string(),

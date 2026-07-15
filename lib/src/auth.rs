@@ -454,18 +454,34 @@ pub fn get_permission_by_id(permission_id: &str) -> Option<Permission> {
 }
 
 fn is_public_path(path: &str) -> bool {
+    // 先精确匹配完整路径
     let public_paths = [
         "/",
         "/health",
+        // 新路径（K8s Ingress 契约，V9 起首选）
+        "/api/core/iam/auth/login",
+        "/api/core/iam/auth/refresh",
+        "/api/core/iam/auth/register",
+        "/api/core/iam/auth/forgot-password",
+        "/api/core/iam/auth/reset-password",
+        "/api/integration/webhooks",
+        // 兼容旧路径（向后兼容，至少一个大版本）
         "/api/v1/auth/login",
         "/api/v1/auth/refresh",
+        "/api/v1/auth/register",
         "/api/integration/v1/webhooks",
     ];
-    public_paths.contains(&path)
+    if public_paths.contains(&path) {
+        return true;
+    }
+    // Group1 / Group2 新路径下的公开前缀检查（webhook、auth 相关）
+    path.starts_with("/api/core/iam/auth/")
+        || path.starts_with("/api/integration/webhooks")
+        || path.starts_with("/api/integration/v1/webhooks")
 }
 
 fn is_websocket_path(path: &str) -> bool {
-    path.starts_with("/ws/") || path.starts_with("/mes/ws/") || path.starts_with("/gis/ws/")
+    path.starts_with("/ws/")
 }
 
 fn is_plugin_public_path(path: &str, method: &str) -> bool {
@@ -682,9 +698,10 @@ mod tests {
 
     #[test]
     fn test_is_websocket_path() {
-        assert!(is_websocket_path("/ws/mes"));
-        assert!(is_websocket_path("/mes/ws/orders"));
-        assert!(is_websocket_path("/gis/ws/location"));
+        assert!(is_websocket_path("/ws/mes/dashboard"));
+        assert!(is_websocket_path("/ws/bi/dashboard"));
+        assert!(is_websocket_path("/ws/gis/device/code"));
+        assert!(is_websocket_path("/ws/core/notifications"));
         assert!(!is_websocket_path("/api/v1/orders"));
     }
 
