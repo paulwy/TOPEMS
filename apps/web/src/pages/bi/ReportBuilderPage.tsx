@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react';
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import {
   Plus,
   Edit2,
@@ -117,9 +118,8 @@ const mockReports: Report[] = [
 ];
 
 const ReportBuilderPage = () => {
+  const queryClient = useQueryClient();
   const [viewMode, setViewMode] = useState<ViewMode>('list');
-  const [reports, setReports] = useState<Report[]>(mockReports);
-  const [loading, setLoading] = useState(false);
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedReport, setSelectedReport] = useState<Report | null>(null);
   const [builderTab, setBuilderTab] = useState(0);
@@ -133,24 +133,31 @@ const ReportBuilderPage = () => {
     format: 'excel',
   });
 
-  const loadReports = async () => {
-    setLoading(true);
-    try {
-      const res = await fetchReports();
-      if (res.success && res.data) {
-        setReports(res.data.items || mockReports);
+  const reportsQuery = useQuery<Report[]>({
+    queryKey: ['bi-reports'],
+    queryFn: async () => {
+      try {
+        const res = await fetchReports();
+        if (res.success && res.data) {
+          return res.data.items || mockReports;
+        }
+        return mockReports;
+      } catch (error: unknown) {
+        logger.error('Failed to load reports:', error);
+        return mockReports;
       }
-    } catch (error: unknown) {
-      logger.error('Failed to load reports:', error);
-      setReports(mockReports);
-    } finally {
-      setLoading(false);
-    }
-  };
+    },
+    staleTime: 5 * 60 * 1000,
+  });
+
+  const reports = reportsQuery.data ?? mockReports;
+  const loading = reportsQuery.isLoading;
 
   useEffect(() => {
-    loadReports();
-  }, []);
+    if (reportsQuery.isError) {
+      logger.error('Failed to load reports:', reportsQuery.error);
+    }
+  }, [reportsQuery.isError, reportsQuery.error]);
 
   const filteredReports = reports.filter(
     (r) =>
@@ -180,40 +187,65 @@ const ReportBuilderPage = () => {
     setBuilderTab(0);
   };
 
-  const handleDelete = async (id: string) => {
-    if (!confirm('确定要删除这个报表吗？')) return;
-    try {
-      await deleteReport(id);
-      setReports(reports.filter((r) => r.id !== id));
-    } catch (error: unknown) {
+  const deleteMutation = useMutation({
+    mutationFn: (id: string) => deleteReport(id),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['bi-reports'] });
+    },
+    onError: (error: unknown) => {
       logger.error('Failed to delete report:', error);
-      setReports(reports.filter((r) => r.id !== id));
-    }
-  };
+    },
+  });
 
-  const handleSave = async () => {
-    try {
+  const saveMutation = useMutation({
+    mutationFn: async ({
+      selectedReport,
+      formData,
+    }: {
+      selectedReport: Report | null;
+      formData: Partial<Report>;
+    }) => {
       if (selectedReport) {
-        await updateReport(selectedReport.id, formData);
-      } else {
-        await createReport(formData);
+        return await updateReport(selectedReport.id, formData);
       }
+      return await createReport(formData);
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['bi-reports'] });
       setViewMode('list');
-      loadReports();
-    } catch (error: unknown) {
+    },
+    onError: (error: unknown) => {
       logger.error('Failed to save report:', error);
       setViewMode('list');
-    }
-  };
+    },
+  });
 
-  const handleExport = async (id: string, format: 'pdf' | 'excel' | 'csv' | 'word') => {
-    try {
-      await exportReport(id, format);
+  const exportMutation = useMutation({
+    mutationFn: ({ id, format }: { id: string; format: 'pdf' | 'excel' | 'csv' | 'word' }) =>
+      exportReport(id, format),
+    onSuccess: () => {
       alert('报表导出成功！');
-    } catch (error: unknown) {
+    },
+    onError: (error: unknown) => {
       logger.error('Failed to export report:', error);
       alert('报表导出成功！（模拟）');
-    }
+    },
+  });
+
+  const actionLoading =
+    saveMutation.isPending || deleteMutation.isPending || exportMutation.isPending;
+
+  const handleDelete = (id: string) => {
+    if (!confirm('确定要删除这个报表吗？')) return;
+    deleteMutation.mutate(id);
+  };
+
+  const handleSave = () => {
+    saveMutation.mutate({ selectedReport, formData });
+  };
+
+  const handleExport = (id: string, format: 'pdf' | 'excel' | 'csv' | 'word') => {
+    exportMutation.mutate({ id, format });
   };
 
   const getStatusChip = (status: string) => {
@@ -282,7 +314,7 @@ const ReportBuilderPage = () => {
           variant='outlined'
           size='small'
           startIcon={<RefreshCw size={16} />}
-          onClick={loadReports}
+          onClick={() => reportsQuery.refetch()}
         >
           刷新
         </Button>

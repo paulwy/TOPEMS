@@ -22,6 +22,7 @@ import { PageContainer } from '@/components/common';
 import { useNotificationStore } from '@/store';
 import { designTokens } from '@/theme/tokens';
 import { logger } from '@/utils/logger';
+import { useQuery, useQueryClient } from '@tanstack/react-query';
 
 const ct = designTokens.colors;
 
@@ -141,9 +142,18 @@ const defaultFormData: DimensionFormData = {
 };
 
 const SrmScoringDimensionPage: React.FC = () => {
-  const [dimensions, setDimensions] = useState<ScoringDimension[]>([]);
+  const queryClient = useQueryClient();
+  const dimensionsQuery = useQuery<ScoringDimension[]>({
+    queryKey: ['srm-scoring-dimensions'],
+    queryFn: async () => {
+      return mockDimensions;
+    },
+    staleTime: 5 * 60 * 1000,
+  });
+
+  const dimensions = dimensionsQuery.data ?? [];
   const theme = useTheme();
-  const [loading, setLoading] = useState(true);
+  const loading = dimensionsQuery.isLoading;
   const [searchTerm, setSearchTerm] = useState('');
   const [showCreateModal, setShowCreateModal] = useState(false);
   const [showEditModal, setShowEditModal] = useState(false);
@@ -154,20 +164,11 @@ const SrmScoringDimensionPage: React.FC = () => {
   const addNotification = useNotificationStore((state) => state.addNotification);
 
   useEffect(() => {
-    loadData();
-  }, []);
-
-  const loadData = async () => {
-    setLoading(true);
-    try {
-      setDimensions(mockDimensions);
-    } catch (error: unknown) {
-      logger.error('加载评分维度失败:', error);
+    if (dimensionsQuery.isError) {
+      logger.error('加载评分维度失败:', dimensionsQuery.error);
       addNotification({ title: '加载失败', message: '加载评分维度失败', type: 'error' });
-    } finally {
-      setLoading(false);
     }
-  };
+  }, [dimensionsQuery.isError, dimensionsQuery.error, addNotification]);
 
   const getStatusBadge = (status: string) => {
     const config = STATUS_MAP[status] || {
@@ -270,7 +271,9 @@ const SrmScoringDimensionPage: React.FC = () => {
       icon: <Trash2 style={{ width: 16, height: 16 }} />,
       color: 'error',
       onClick: (row) => {
-        setDimensions((prev) => prev.filter((d) => d.id !== row.id));
+        queryClient.setQueryData<ScoringDimension[]>(['srm-scoring-dimensions'], (old) =>
+          (old || []).filter((d) => d.id !== row.id)
+        );
         addNotification({ title: '成功', message: '评分维度删除成功', type: 'success' });
       },
     },
@@ -298,13 +301,16 @@ const SrmScoringDimensionPage: React.FC = () => {
       created_at: new Date().toISOString().split('T')[0],
       updated_at: new Date().toISOString().split('T')[0],
     };
-    setDimensions((prev) => [newDimension, ...prev]);
+    queryClient.setQueryData<ScoringDimension[]>(['srm-scoring-dimensions'], (old) => [
+      newDimension,
+      ...(old || []),
+    ]);
     setShowCreateModal(false);
     addNotification({ title: '成功', message: '评分维度创建成功', type: 'success' });
   };
   const handleSaveEdit = () => {
-    setDimensions((prev) =>
-      prev.map((d) =>
+    queryClient.setQueryData<ScoringDimension[]>(['srm-scoring-dimensions'], (old) =>
+      (old || []).map((d) =>
         d.id === editingId
           ? { ...d, ...formData, updated_at: new Date().toISOString().split('T')[0] }
           : d

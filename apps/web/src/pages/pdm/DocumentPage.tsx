@@ -223,7 +223,9 @@ export const DocumentPage: React.FC = () => {
       documentApi.upload(documentId, file),
     onSuccess: (_data, variables) => {
       addNotification({ title: '成功', message: '文件上传成功', type: 'success' });
-      queryClient.invalidateQueries({ queryKey: QUERY_KEYS.PDM.DOCUMENT_VERSIONS(variables.documentId) });
+      queryClient.invalidateQueries({
+        queryKey: QUERY_KEYS.PDM.DOCUMENT_VERSIONS(variables.documentId),
+      });
     },
     onError: () => {
       addNotification({ title: '错误', message: '上传失败', type: 'error' });
@@ -235,7 +237,9 @@ export const DocumentPage: React.FC = () => {
       documentApi.publishVersion(documentId, versionId),
     onSuccess: (_data, variables) => {
       addNotification({ title: '成功', message: '版本发布成功', type: 'success' });
-      queryClient.invalidateQueries({ queryKey: QUERY_KEYS.PDM.DOCUMENT_VERSIONS(variables.documentId) });
+      queryClient.invalidateQueries({
+        queryKey: QUERY_KEYS.PDM.DOCUMENT_VERSIONS(variables.documentId),
+      });
     },
     onError: () => {
       addNotification({ title: '错误', message: '发布失败', type: 'error' });

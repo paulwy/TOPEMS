@@ -1,10 +1,6 @@
 import { describe, it, expect, vi, beforeEach, afterEach, Mock } from 'vitest';
 import { getServiceClient } from '@/lib/apiClient';
-import {
-  getOfflineRecords,
-  updateOfflineRecord,
-  deleteOfflineRecord,
-} from '../offlineStorage';
+import { getOfflineRecords, updateOfflineRecord, deleteOfflineRecord } from '../offlineStorage';
 import { syncPendingRecords } from '../offlineSync';
 
 vi.mock('@/lib/apiClient');

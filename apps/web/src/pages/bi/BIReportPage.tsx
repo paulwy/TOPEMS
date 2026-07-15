@@ -10,10 +10,7 @@ import {
 } from '@/components/templates';
 import { PageContainer } from '@/components/common';
 import { useCrudOperations } from '@/hooks/useCrudQueries';
-import {
-  reportCrudApi,
-  type Report as ApiReport,
-} from '@/api/bi';
+import { reportCrudApi, type Report as ApiReport } from '@/api/bi';
 
 interface Report {
   id: string;

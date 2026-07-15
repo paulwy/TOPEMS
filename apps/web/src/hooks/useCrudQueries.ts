@@ -561,8 +561,13 @@ export interface CrudOperations<T, TCreate = Partial<T>, TUpdate = Partial<T>> {
   }>;
   get: (id: string) => Promise<{ success: boolean; code: number; message: string; data?: T }>;
   create: (data: TCreate) => Promise<{ success: boolean; code: number; message: string; data?: T }>;
-  update: (id: string, data: TUpdate) => Promise<{ success: boolean; code: number; message: string; data?: T }>;
-  delete: (id: string) => Promise<{ success: boolean; code: number; message: string; data?: string }>;
+  update: (
+    id: string,
+    data: TUpdate
+  ) => Promise<{ success: boolean; code: number; message: string; data?: T }>;
+  delete: (
+    id: string
+  ) => Promise<{ success: boolean; code: number; message: string; data?: string }>;
 }
 
 export interface UseCrudOperationsOptions<T, TCreate = Partial<T>, TUpdate = Partial<T>> {
@@ -589,7 +594,11 @@ export interface UseCrudOperationsOptions<T, TCreate = Partial<T>, TUpdate = Par
  * });
  * ```
  */
-export function useCrudOperations<T extends { id?: string }, TCreate = Partial<T>, TUpdate = Partial<T>>(
+export function useCrudOperations<
+  T extends { id?: string },
+  TCreate = Partial<T>,
+  TUpdate = Partial<T>,
+>(
   options: UseCrudOperationsOptions<T, TCreate, TUpdate>
 ): UseCrudQueriesResult<T, TCreate, TUpdate> {
   const {

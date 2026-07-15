@@ -5,7 +5,7 @@
  * @path /workflow/statistics
  */
 
-import React, { useState, useMemo, useCallback } from 'react';
+import React, { useState, useMemo, useEffect } from 'react';
 import {
   BarChart3,
   CheckCircle,
@@ -45,6 +45,10 @@ import { useNotificationStore } from '../../store';
 import { handleApiError, getErrorMessage } from '@/utils/errors';
 import { designTokens } from '@/theme/tokens';
 import { WORKFLOW_PATHS } from '@/modules/workflow/config';
+import { useQuery } from '@tanstack/react-query';
+import type { StatisticsResponse } from '@/api/workflow';
+import { workflowApi } from '@/api/workflow';
+import { apiLogger } from '@/utils/logger';
 
 const ct = designTokens.colors;
 
@@ -121,9 +125,29 @@ const topWorkflows = [
 export const WorkflowStatisticsPage: React.FC = () => {
   const navigate = useNavigate();
   const addNotification = useNotificationStore((state) => state.addNotification);
-  const [loading, setLoading] = useState(false);
   const [timeRange, setTimeRange] = useState<TimeRange>('month');
   const [anchorEl, setAnchorEl] = useState<null | HTMLElement>(null);
+
+  const statisticsQuery = useQuery<StatisticsResponse | null>({
+    queryKey: ['workflow-statistics', timeRange],
+    queryFn: async () => {
+      const res = await workflowApi.getStatistics();
+      if (res.success && res.data) {
+        return res.data;
+      }
+      return null;
+    },
+    staleTime: 5 * 60 * 1000,
+  });
+
+  const loading = statisticsQuery.isLoading;
+
+  useEffect(() => {
+    if (statisticsQuery.isError) {
+      apiLogger.error('Failed to load workflow statistics:', statisticsQuery.error);
+      addNotification({ title: '错误', message: '加载统计数据失败', type: 'error' });
+    }
+  }, [statisticsQuery.isError, statisticsQuery.error, addNotification]);
 
   const handleTimeRangeClick = (event: React.MouseEvent<HTMLElement>) => {
     setAnchorEl(event.currentTarget);
@@ -136,23 +160,19 @@ export const WorkflowStatisticsPage: React.FC = () => {
   const handleTimeRangeSelect = (range: TimeRange) => {
     setTimeRange(range);
     handleTimeRangeClose();
-    handleRefresh();
   };
 
   const currentTimeRangeLabel =
     timeRangeOptions.find((o) => o.value === timeRange)?.label || '本月';
 
-  const handleRefresh = useCallback(() => {
-    setLoading(true);
-    setTimeout(() => {
-      setLoading(false);
-      addNotification({
-        message: '统计数据已刷新',
-        type: 'success',
-        duration: 3000,
-      });
-    }, 500);
-  }, [addNotification]);
+  const handleRefresh = () => {
+    statisticsQuery.refetch();
+    addNotification({
+      message: '统计数据已刷新',
+      type: 'success',
+      duration: 3000,
+    });
+  };
 
   const trendData = useMemo(() => generateTrendData(timeRange), [timeRange]);
 

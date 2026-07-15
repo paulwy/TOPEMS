@@ -7,15 +7,15 @@ import {
   CardContent,
   type ChipProps,
 } from '@mui/material';
-import React, { useState, useEffect, useMemo } from 'react';
+import React, { useMemo } from 'react';
 import { useParams } from 'react-router-dom';
+import { useQuery } from '@tanstack/react-query';
+import { QUERY_KEYS } from '@/lib/reactQuery';
 import { Package, CheckCircle, AlertCircle, TrendingUp } from 'lucide-react';
 import { PageContainer } from '@/components/common/PageContainerV2';
 import { DetailPageTemplate, type TabConfig } from '@/components/templates';
 import { mesApi } from '@/api/mes';
 import type { ProductionOrder, ProductionRecord, QualityRecord } from '@/api/mes';
-import { apiLogger } from '@/utils/logger';
-import { useNotificationStore } from '@/store';
 import { designTokens } from '@/theme/tokens';
 import { MES_PATHS } from '@/modules/mes/config';
 
@@ -23,57 +23,54 @@ const ct = designTokens.colors;
 
 const ProductionOrderDetailPage: React.FC = () => {
   const { id } = useParams<{ id: string }>();
-  const { addNotification } = useNotificationStore();
 
-  const [order, setOrder] = useState<ProductionOrder | null>(null);
-  const [records, setRecords] = useState<ProductionRecord[]>([]);
-  const [qualityRecords, setQualityRecords] = useState<QualityRecord[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [errorMessage, setErrorMessage] = useState<string | undefined>(undefined);
-
-  useEffect(() => {
-    if (id) {
-      loadOrderDetail(id);
-    }
-  }, [id]);
-
-  const loadOrderDetail = async (orderId: string) => {
-    setLoading(true);
-    setErrorMessage(undefined);
-    try {
-      const [orderRes, recordsRes, qualityRes] = await Promise.all([
-        mesApi.orders.get(orderId),
-        mesApi.records.list({}),
-        mesApi.traceability.listQualityRecords({}),
-      ]);
-
-      if (orderRes.success && orderRes.data) {
-        setOrder(orderRes.data);
-      } else {
-        throw new Error(orderRes.message || '加载工单信息失败');
+  const {
+    data: order,
+    isLoading: orderLoading,
+    error: orderError,
+  } = useQuery<ProductionOrder | null>({
+    queryKey: id ? QUERY_KEYS.MES.PRODUCTION_ORDER(id) : ['mes', 'production-order', 'null'],
+    queryFn: async () => {
+      if (!id) return null;
+      const res = await mesApi.orders.get(id);
+      if (res.success && res.data) {
+        return res.data;
       }
+      throw new Error(res.message || '加载工单信息失败');
+    },
+    enabled: !!id,
+  });
 
-      if (recordsRes.success && recordsRes.data) {
-        // 过滤出属于当前工单的记录
-        const orderRecords = (recordsRes.data.records || []).filter((r) => r.order_id === orderId);
-        setRecords(orderRecords);
+  const { data: recordsData } = useQuery({
+    queryKey: [...QUERY_KEYS.MES.PRODUCTION_RECORDS, { order_id: id }],
+    queryFn: async () => {
+      const res = await mesApi.records.list({});
+      if (res.success && res.data) {
+        return (res.data.records || []).filter((r) => r.order_id === id);
       }
+      return [];
+    },
+    enabled: !!id,
+  });
 
-      if (qualityRes.success && qualityRes.data) {
-        setQualityRecords(qualityRes.data.records || []);
+  const { data: qualityRecordsData } = useQuery<QualityRecord[]>({
+    queryKey: id
+      ? QUERY_KEYS.MES.TRACEABILITY_QUALITY_RECORDS(id)
+      : ['mes', 'traceability', 'quality-records', 'null'],
+    queryFn: async () => {
+      const res = await mesApi.traceability.listQualityRecords({});
+      if (res.success && res.data) {
+        return res.data.records || [];
       }
-    } catch (err: unknown) {
-      apiLogger.error('Failed to load order detail:', err);
-      setErrorMessage('加载工单详情失败');
-      addNotification({
-        type: 'error',
-        title: '加载失败',
-        message: '无法加载工单详情',
-      });
-    } finally {
-      setLoading(false);
-    }
-  };
+      return [];
+    },
+    enabled: !!id,
+  });
+
+  const records = recordsData || [];
+  const qualityRecords = qualityRecordsData || [];
+  const loading = orderLoading;
+  const errorMessage = orderError ? (orderError as Error).message || '加载工单详情失败' : undefined;
 
   const getStatusColor = (status: string): ChipProps['color'] => {
     switch (status) {

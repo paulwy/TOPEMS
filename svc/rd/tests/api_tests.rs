@@ -3,6 +3,19 @@
 mod tests {
     use serde_json::json;
 
+    /// 检查 API 服务是否可用
+    async fn ensure_api_available() -> bool {
+        reqwest::Client::builder()
+            .timeout(std::time::Duration::from_secs(2))
+            .build()
+            .unwrap()
+            .get("http://localhost:8000/api/core/iam/auth/login")
+            .send()
+            .await
+            .map(|resp| !resp.status().is_server_error())
+            .unwrap_or(false)
+    }
+
     async fn test_project_crud() {
         let base_url = "http://localhost:8058";
         let client = reqwest::Client::new();
@@ -10,7 +23,7 @@ mod tests {
         println!("Testing RS Project CRUD...");
 
         let login_response = client
-            .post("http://localhost:8000/api/v1/auth/login")
+            .post("http://localhost:8000/api/core/iam/auth/login")
             .json(&json!({
                 "username": "admin",
                 "password": "admin123"
@@ -28,7 +41,7 @@ mod tests {
 
         println!("1. Testing create project...");
         let create_response = client
-            .post(&format!("{}/api/v1/projects", base_url))
+            .post(&format!("{}/api/projects", base_url))
             .bearer_auth(&token)
             .json(&json!({
                 "name": "Integration Test Project",
@@ -58,7 +71,7 @@ mod tests {
 
         println!("\n2. Testing list projects...");
         let list_response = client
-            .get(&format!("{}/api/v1/projects", base_url))
+            .get(&format!("{}/api/projects", base_url))
             .bearer_auth(&token)
             .send()
             .await
@@ -68,7 +81,7 @@ mod tests {
 
         println!("\n3. Testing get project...");
         let get_response = client
-            .get(&format!("{}/api/v1/projects/{}", base_url, project_id))
+            .get(&format!("{}/api/projects/{}", base_url, project_id))
             .bearer_auth(&token)
             .send()
             .await
@@ -78,7 +91,7 @@ mod tests {
 
         println!("\n4. Testing update project...");
         let update_response = client
-            .put(&format!("{}/api/v1/projects/{}", base_url, project_id))
+            .put(&format!("{}/api/projects/{}", base_url, project_id))
             .bearer_auth(&token)
             .json(&json!({
                 "name": "Updated Integration Test Project",
@@ -93,7 +106,7 @@ mod tests {
 
         println!("\n5. Testing delete project...");
         let delete_response = client
-            .delete(&format!("{}/api/v1/projects/{}", base_url, project_id))
+            .delete(&format!("{}/api/projects/{}", base_url, project_id))
             .bearer_auth(&token)
             .send()
             .await
@@ -111,7 +124,7 @@ mod tests {
         println!("\nTesting RS Project Batch Operations...");
 
         let login_response = client
-            .post("http://localhost:8000/api/v1/auth/login")
+            .post("http://localhost:8000/api/core/iam/auth/login")
             .json(&json!({
                 "username": "admin",
                 "password": "admin123"
@@ -129,7 +142,7 @@ mod tests {
 
         println!("\n1. Testing batch create projects...");
         let batch_create_response = client
-            .post(&format!("{}/api/v1/projects/batch", base_url))
+            .post(&format!("{}/api/projects/batch", base_url))
             .bearer_auth(&token)
             .json(&json!({
                 "projects": [
@@ -174,7 +187,7 @@ mod tests {
         // 获取刚创建的项目的 ID
         println!("\n2. Fetching created projects to get IDs...");
         let list_after_create = client
-            .get(&format!("{}/api/v1/projects", base_url))
+            .get(&format!("{}/api/projects", base_url))
             .bearer_auth(&token)
             .send()
             .await
@@ -196,7 +209,7 @@ mod tests {
 
         println!("\n3. Testing batch delete projects...");
         let batch_delete_response = client
-            .delete(&format!("{}/api/v1/projects/batch", base_url))
+            .delete(&format!("{}/api/projects/batch", base_url))
             .bearer_auth(&token)
             .json(&json!({
                 "ids": project_ids
@@ -225,7 +238,7 @@ mod tests {
         println!("\nTesting RS Project Export/Import...");
 
         let login_response = client
-            .post("http://localhost:8000/api/v1/auth/login")
+            .post("http://localhost:8000/api/core/iam/auth/login")
             .json(&json!({
                 "username": "admin",
                 "password": "admin123"
@@ -245,7 +258,7 @@ mod tests {
         println!("\n1. Creating test projects for export...");
         for i in 1..=2 {
             client
-                .post(&format!("{}/api/v1/projects", base_url))
+                .post(&format!("{}/api/projects", base_url))
                 .bearer_auth(&token)
                 .json(&json!({
                     "name": format!("Export Test Project {}", i),
@@ -266,7 +279,7 @@ mod tests {
         // 测试导出
         println!("\n2. Testing export projects...");
         let export_response = client
-            .get(&format!("{}/api/v1/projects/export", base_url))
+            .get(&format!("{}/api/projects/export", base_url))
             .bearer_auth(&token)
             .send()
             .await
@@ -284,7 +297,7 @@ mod tests {
         // 先删除刚创建的项目，然后测试导入
         println!("\n3. Deleting test projects to prepare for import...");
         let list_before_delete = client
-            .get(&format!("{}/api/v1/projects", base_url))
+            .get(&format!("{}/api/projects", base_url))
             .bearer_auth(&token)
             .send()
             .await
@@ -308,7 +321,7 @@ mod tests {
             .collect();
 
         client
-            .delete(&format!("{}/api/v1/projects/batch", base_url))
+            .delete(&format!("{}/api/projects/batch", base_url))
             .bearer_auth(&token)
             .json(&json!({ "ids": project_ids_to_delete }))
             .send()
@@ -325,7 +338,7 @@ id,name,code,description,project_type,status,leader,team_members,start_date,end_
 ";
 
         let import_response = client
-            .post(&format!("{}/api/v1/projects/import", base_url))
+            .post(&format!("{}/api/projects/import", base_url))
             .bearer_auth(&token)
             .header("Content-Type", "text/csv")
             .body(import_csv_content)
@@ -343,7 +356,7 @@ id,name,code,description,project_type,status,leader,team_members,start_date,end_
         // 清理导入的项目
         println!("\n5. Cleaning up imported projects...");
         let list_after_import = client
-            .get(&format!("{}/api/v1/projects", base_url))
+            .get(&format!("{}/api/projects", base_url))
             .bearer_auth(&token)
             .send()
             .await
@@ -364,7 +377,7 @@ id,name,code,description,project_type,status,leader,team_members,start_date,end_
             .collect();
 
         client
-            .delete(&format!("{}/api/v1/projects/batch", base_url))
+            .delete(&format!("{}/api/projects/batch", base_url))
             .bearer_auth(&token)
             .json(&json!({ "ids": imported_project_ids }))
             .send()
@@ -381,7 +394,7 @@ id,name,code,description,project_type,status,leader,team_members,start_date,end_
         println!("\nTesting RS Audit Logs...");
 
         let login_response = client
-            .post("http://localhost:8000/api/v1/auth/login")
+            .post("http://localhost:8000/api/core/iam/auth/login")
             .json(&json!({
                 "username": "admin",
                 "password": "admin123"
@@ -402,7 +415,7 @@ id,name,code,description,project_type,status,leader,team_members,start_date,end_
 
         // 创建一个项目
         let create_response = client
-            .post(&format!("{}/api/v1/projects", base_url))
+            .post(&format!("{}/api/projects", base_url))
             .bearer_auth(&token)
             .json(&json!({
                 "name": "Audit Test Project",
@@ -424,10 +437,7 @@ id,name,code,description,project_type,status,leader,team_members,start_date,end_
 
         // 删除这个项目
         client
-            .delete(&format!(
-                "{}/api/v1/projects/{}",
-                base_url, audit_project_id
-            ))
+            .delete(&format!("{}/api/projects/{}", base_url, audit_project_id))
             .bearer_auth(&token)
             .send()
             .await
@@ -436,7 +446,7 @@ id,name,code,description,project_type,status,leader,team_members,start_date,end_
         // 测试获取审计日志列表
         println!("\n2. Testing list audit logs...");
         let list_logs_response = client
-            .get(&format!("{}/api/v1/audit-logs", base_url))
+            .get(&format!("{}/api/audit-logs", base_url))
             .bearer_auth(&token)
             .send()
             .await
@@ -462,7 +472,7 @@ id,name,code,description,project_type,status,leader,team_members,start_date,end_
                 if let Some(log_id) = first_log["id"].as_str() {
                     println!("\n3. Testing get single audit log...");
                     let get_log_response = client
-                        .get(&format!("{}/api/v1/audit-logs/{}", base_url, log_id))
+                        .get(&format!("{}/api/audit-logs/{}", base_url, log_id))
                         .bearer_auth(&token)
                         .send()
                         .await
@@ -478,9 +488,11 @@ id,name,code,description,project_type,status,leader,team_members,start_date,end_
     }
 
     #[tokio::test]
-    #[ignore]
-    #[ignore = "集成测试需要运行 rs:8020 和 iam:8000 服务"]
     async fn test_rs_integration() {
+        if !ensure_api_available().await {
+            eprintln!("⏭ 跳过: API服务未运行 (localhost:8000)");
+            return;
+        }
         test_project_crud().await;
         test_project_batch_operations().await;
         test_project_export_import().await;

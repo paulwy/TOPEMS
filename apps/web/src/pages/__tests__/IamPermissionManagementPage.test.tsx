@@ -107,6 +107,7 @@ vi.mock('@/store', () => ({
   useSetSidebarCollapsed: vi.fn(),
 }));
 
+describe('PermissionManagementPage', () => {
   it('should render without crashing', () => {
     const { container } = render(
       <BrowserRouter>

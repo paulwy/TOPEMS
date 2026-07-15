@@ -21,19 +21,23 @@ const performDeferredInit = () => {
     }),
   ]).catch(logger.error);
 
-  const loadPriority2 = loadPriority1.then(() => {
-    return Promise.all([
-      import('./utils/telemetry').then(({ initTelemetry }) => {
-        initTelemetry();
-      }),
-    ]);
-  }).catch(logger.error);
+  const loadPriority2 = loadPriority1
+    .then(() => {
+      return Promise.all([
+        import('./utils/telemetry').then(({ initTelemetry }) => {
+          initTelemetry();
+        }),
+      ]);
+    })
+    .catch(logger.error);
 
-  loadPriority2.then(() => {
-    import('./pages/shared/DashboardPage').catch(() => {});
-    import('./components/ai/FloatingAIHelper').catch(() => {});
-    import('./components/ui/CommandPalette').catch(() => {});
-  }).catch(() => {});
+  loadPriority2
+    .then(() => {
+      import('./pages/shared/DashboardPage').catch(() => {});
+      import('./components/ai/FloatingAIHelper').catch(() => {});
+      import('./components/ui/CommandPalette').catch(() => {});
+    })
+    .catch(() => {});
 
   if (typeof window !== 'undefined') {
     window.addEventListener('permission-denied', (event: Event) => {
@@ -69,21 +73,23 @@ if ('requestIdleCallback' in window) {
 const root = ReactDOM.createRoot(document.getElementById('root')!);
 
 if (typeof window !== 'undefined' && window.location.pathname === '/performance') {
-  import('./pages/performance/PerformanceTestPage').then(({ default: PerformanceTestPage }) => {
-    root.render(
-      <React.StrictMode>
-        <PerformanceTestPage />
-      </React.StrictMode>
-    );
-  }).catch(() => {
-    root.render(
-      <React.StrictMode>
-        <QueryClientProvider client={queryClient}>
-          <App />
-        </QueryClientProvider>
-      </React.StrictMode>
-    );
-  });
+  import('./pages/performance/PerformanceTestPage')
+    .then(({ default: PerformanceTestPage }) => {
+      root.render(
+        <React.StrictMode>
+          <PerformanceTestPage />
+        </React.StrictMode>
+      );
+    })
+    .catch(() => {
+      root.render(
+        <React.StrictMode>
+          <QueryClientProvider client={queryClient}>
+            <App />
+          </QueryClientProvider>
+        </React.StrictMode>
+      );
+    });
 } else {
   root.render(
     <React.StrictMode>

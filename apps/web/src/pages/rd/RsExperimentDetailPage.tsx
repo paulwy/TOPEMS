@@ -1,5 +1,5 @@
 import { Grid } from '@/components';
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
 import { Link, useParams, useNavigate } from 'react-router-dom';
 import { RD_PATHS } from '@/modules/rd/config';
 import {
@@ -18,7 +18,6 @@ import {
   TableHead,
   TableRow,
   Stack,
-  CircularProgress,
   Dialog,
   DialogTitle,
   DialogContent,
@@ -32,6 +31,7 @@ import {
   Tabs,
   Tab,
 } from '@mui/material';
+import { LoadingSpinner } from '@topems/shared-components';
 import { PageContainer } from '@/components/common';
 import { DetailPageTemplate, type TabConfig } from '@/components/templates';
 import {
@@ -50,6 +50,7 @@ import {
   TrendingUp as TrendingUpIcon,
   Plus as PlusIcon,
 } from 'lucide-react';
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import {
   rdApi,
   type Experiment,
@@ -57,9 +58,8 @@ import {
   type CreateExperimentRecordRequest,
 } from '@/api/rd';
 import { useNotificationStore } from '@/store';
+import { QUERY_KEYS } from '@/lib/reactQuery';
 import { apiLogger } from '@/utils/logger';
-
-// TODO(v2-phase2): Replace CircularProgress with LoadingSpinner from '@topems/shared-components'. Complex usage found - manual review needed.
 
 interface ExperimentWithProject extends Experiment {
   project_name?: string;
@@ -68,11 +68,9 @@ interface ExperimentWithProject extends Experiment {
 const RsExperimentDetailPage: React.FC = () => {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
+  const queryClient = useQueryClient();
   const addNotification = useNotificationStore((state) => state.addNotification);
 
-  const [experiment, setExperiment] = useState<ExperimentWithProject | null>(null);
-  const [records, setRecords] = useState<ExperimentRecord[]>([]);
-  const [loading, setLoading] = useState(false);
   const [activeTab, setActiveTab] = useState(0);
   const [showAddRecordDialog, setShowAddRecordDialog] = useState(false);
   const [recordForm, setRecordForm] = useState<CreateExperimentRecordRequest>({
@@ -80,107 +78,99 @@ const RsExperimentDetailPage: React.FC = () => {
     content: '',
     recorded_by: '',
   });
-  const [addRecordLoading, setAddRecordLoading] = useState(false);
-  const [advancePhaseLoading, setAdvancePhaseLoading] = useState(false);
 
   const recordTypes = ['实验记录', '数据记录', '观察记录', '问题记录', '其他'];
 
-  const loadExperiment = async () => {
-    if (!id) return;
-    setLoading(true);
-    try {
-      const [expResponse, recordsResponse] = await Promise.all([
-        rdApi.getExperiment(id),
-        rdApi.getExperimentRecords(id),
-      ]);
-
-      if (expResponse.success && expResponse.data) {
-        setExperiment(expResponse.data);
-      } else {
-        addNotification({
-          type: 'error',
-          message: expResponse.message || '加载试验详情失败',
-        });
+  const experimentQuery = useQuery({
+    queryKey: QUERY_KEYS.RD.EXPERIMENT(id || ''),
+    queryFn: async () => {
+      const response = await rdApi.getExperiment(id || '');
+      if (!response.success || !response.data) {
+        throw new Error(response.message || '加载试验详情失败');
       }
+      return response.data as ExperimentWithProject;
+    },
+    enabled: !!id,
+  });
 
-      if (recordsResponse.success && recordsResponse.data) {
-        setRecords(recordsResponse.data);
+  const recordsQuery = useQuery({
+    queryKey: QUERY_KEYS.RD.EXPERIMENT_RECORDS(id || ''),
+    queryFn: async () => {
+      const response = await rdApi.getExperimentRecords(id || '');
+      if (!response.success || !response.data) {
+        throw new Error(response.message || '加载实验记录失败');
       }
-    } catch (err: unknown) {
-      apiLogger.error('加载试验详情失败:', err);
+      return response.data;
+    },
+    enabled: !!id,
+  });
+
+  const advancePhaseMutation = useMutation({
+    mutationFn: async () => {
+      const response = await rdApi.advancePhase(id || '');
+      if (!response.success || !response.data) {
+        throw new Error(response.message || '阶段推进失败');
+      }
+      return response.data;
+    },
+    onSuccess: (data) => {
+      queryClient.setQueryData(QUERY_KEYS.RD.EXPERIMENT(id || ''), data);
+      addNotification({
+        type: 'success',
+        message: '阶段推进成功',
+      });
+    },
+    onError: (error: unknown) => {
+      apiLogger.error('阶段推进失败:', error);
       addNotification({
         type: 'error',
-        message: '加载试验详情失败',
+        message: error instanceof Error ? error.message : '阶段推进失败',
       });
-    } finally {
-      setLoading(false);
-    }
+    },
+  });
+
+  const createRecordMutation = useMutation({
+    mutationFn: async (data: CreateExperimentRecordRequest) => {
+      const response = await rdApi.createExperimentRecord(id || '', data);
+      if (!response.success) {
+        throw new Error(response.message || '添加记录失败');
+      }
+      return response;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: QUERY_KEYS.RD.EXPERIMENT_RECORDS(id || '') });
+      addNotification({
+        type: 'success',
+        message: '添加记录成功',
+      });
+      setShowAddRecordDialog(false);
+      setRecordForm({
+        record_type: '实验记录',
+        content: '',
+        recorded_by: '',
+      });
+    },
+    onError: (error: unknown) => {
+      apiLogger.error('添加记录失败:', error);
+      addNotification({
+        type: 'error',
+        message: error instanceof Error ? error.message : '添加记录失败',
+      });
+    },
+  });
+
+  const experiment = experimentQuery.data || null;
+  const records = recordsQuery.data || [];
+  const loading = experimentQuery.isLoading || recordsQuery.isLoading;
+  const advancePhaseLoading = advancePhaseMutation.isPending;
+  const addRecordLoading = createRecordMutation.isPending;
+
+  const handleAdvancePhase = () => {
+    advancePhaseMutation.mutate();
   };
 
-  useEffect(() => {
-    loadExperiment();
-  }, [id]);
-
-  const handleAdvancePhase = async () => {
-    if (!id) return;
-    setAdvancePhaseLoading(true);
-    try {
-      const response = await rdApi.advancePhase(id);
-      if (response.success && response.data) {
-        setExperiment(response.data);
-        addNotification({
-          type: 'success',
-          message: '阶段推进成功',
-        });
-      } else {
-        addNotification({
-          type: 'error',
-          message: response.message || '阶段推进失败',
-        });
-      }
-    } catch (err: unknown) {
-      apiLogger.error('阶段推进失败:', err);
-      addNotification({
-        type: 'error',
-        message: '阶段推进失败',
-      });
-    } finally {
-      setAdvancePhaseLoading(false);
-    }
-  };
-
-  const handleAddRecord = async () => {
-    if (!id) return;
-    setAddRecordLoading(true);
-    try {
-      const response = await rdApi.createExperimentRecord(id, recordForm);
-      if (response.success) {
-        addNotification({
-          type: 'success',
-          message: '添加记录成功',
-        });
-        setShowAddRecordDialog(false);
-        setRecordForm({
-          record_type: '实验记录',
-          content: '',
-          recorded_by: '',
-        });
-        await loadExperiment();
-      } else {
-        addNotification({
-          type: 'error',
-          message: response.message || '添加记录失败',
-        });
-      }
-    } catch (err: unknown) {
-      apiLogger.error('添加记录失败:', err);
-      addNotification({
-        type: 'error',
-        message: '添加记录失败',
-      });
-    } finally {
-      setAddRecordLoading(false);
-    }
+  const handleAddRecord = () => {
+    createRecordMutation.mutate(recordForm);
   };
 
   const getPhaseColor = (phase: string): 'info' | 'warning' | 'error' | 'default' => {
@@ -225,7 +215,7 @@ const RsExperimentDetailPage: React.FC = () => {
             height: '50vh',
           }}
         >
-          <CircularProgress />
+          <LoadingSpinner size='lg' />
         </div>
       </Container>
     );
@@ -303,7 +293,7 @@ const RsExperimentDetailPage: React.FC = () => {
               onClick={handleAdvancePhase}
               disabled={advancePhaseLoading}
             >
-              {advancePhaseLoading ? <CircularProgress size={20} /> : '推进阶段'}
+              {advancePhaseLoading ? <LoadingSpinner size='sm' /> : '推进阶段'}
             </Button>
           </Stack>
         </Stack>
@@ -590,7 +580,7 @@ const RsExperimentDetailPage: React.FC = () => {
             onClick={handleAddRecord}
             disabled={addRecordLoading}
           >
-            {addRecordLoading ? <CircularProgress size={20} /> : '添加'}
+            {addRecordLoading ? <LoadingSpinner size='sm' /> : '添加'}
           </Button>
         </DialogActions>
       </Dialog>

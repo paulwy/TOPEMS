@@ -1,4 +1,6 @@
-import React, { useState, useEffect, useRef, useCallback } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import { QUERY_KEYS } from '@/lib/reactQuery';
 import { apiLogger } from '@/utils/logger';
 import {
   User,
@@ -22,7 +24,12 @@ import {
 import { useNavigate } from 'react-router-dom';
 import { useForm } from 'react-hook-form';
 import { authApi, type User as UserType, type AccessLog } from '@/api/iam';
-import { useNotificationStore, useAuthStore, useShortcutsStore, useNotificationSettingsStore } from '@/store';
+import {
+  useNotificationStore,
+  useAuthStore,
+  useShortcutsStore,
+  useNotificationSettingsStore,
+} from '@/store';
 import { useAuth } from '../../hooks/useAuth';
 import { PageContainer } from '@/components/common';
 
@@ -87,25 +94,21 @@ interface PasswordFormData {
 const ProfilePage: React.FC = () => {
   const theme = useTheme();
   const navigate = useNavigate();
-  const initialized = useRef(false);
+  const queryClient = useQueryClient();
   const addNotification = useNotificationStore((state) => state.addNotification);
   const setUser = useAuthStore((state) => state.setUser);
   const shortcuts = useShortcutsStore((state) => state.shortcuts);
   const setShortcuts = useShortcutsStore((state) => state.setShortcuts);
   const notificationSettings = useNotificationSettingsStore((state) => state.notificationSettings);
-  const setNotificationSettings = useNotificationSettingsStore((state) => state.setNotificationSettings);
+  const setNotificationSettings = useNotificationSettingsStore(
+    (state) => state.setNotificationSettings
+  );
   const { logout } = useAuth();
 
-  const [user, setUserState] = useState<UserType | null>(null);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
   const [activeTab, setActiveTab] = useState(0);
   const [showPasswordDialog, setShowPasswordDialog] = useState(false);
   const [avatarUrl, setAvatarUrl] = useState<string | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
-
-  const [activities, setActivities] = useState<ActivityItem[]>([]);
-  const [loadingActivities, setLoadingActivities] = useState(false);
 
   const profileForm = useForm<ProfileFormData>({
     defaultValues: {
@@ -122,306 +125,319 @@ const ProfilePage: React.FC = () => {
     },
   });
 
-  const loadUserProfile = useCallback(async () => {
-    setLoading(true);
-    setError(null);
-    try {
+  const userProfileQuery = useQuery<UserType | null>({
+    queryKey: QUERY_KEYS.AUTH.USER,
+    queryFn: async () => {
       const res = await authApi.getCurrentUser();
       if (res.success && res.data) {
-        setUserState(res.data);
-        profileForm.reset({
-          full_name: res.data.full_name || '',
-          email: res.data.email,
-        });
-        if (setUser) {
-          setUser({
-            id: res.data.id,
-            username: res.data.username,
-            email: res.data.email,
-            fullName: res.data.full_name,
-            role: res.data.role,
-            roles: res.data.roles,
-            permissions: res.data.permissions,
-            isActive: res.data.isactive,
-            isSuperuser: res.data.is_superuser,
-          });
-        }
-      } else {
-        setError(res.message || '获取用户信息失败');
+        return res.data;
       }
-    } catch (err: unknown) {
-      const error = err as { response?: { data?: { message?: string } }; message?: string };
-      const errorMsg = error.response?.data?.message || error.message || '获取用户信息失败';
-      setError(errorMsg);
-      addNotification({ title: '加载失败', message: errorMsg, type: 'error' });
-    } finally {
-      setLoading(false);
-    }
-  }, [setUser, addNotification, profileForm]);
+      throw new Error(res.message || '获取用户信息失败');
+    },
+    staleTime: 5 * 60 * 1000,
+  });
 
-  const loadActivities = useCallback(async () => {
-    if (!user?.id) {
-      return;
-    }
-    setLoadingActivities(true);
-    try {
+  const user = userProfileQuery.data ?? null;
+  const loading = userProfileQuery.isLoading;
+  const error = userProfileQuery.isError
+    ? userProfileQuery.error instanceof Error
+      ? userProfileQuery.error.message
+      : '获取用户信息失败'
+    : null;
+
+  const activitiesQuery = useQuery<ActivityItem[]>({
+    queryKey: QUERY_KEYS.AUTH.USER_ACCESS_LOGS(user?.id || 'none'),
+    queryFn: async () => {
+      if (!user?.id) return [];
       const res = await authApi.getUserAccessLogs(user.id, 10, 0);
-      if (res.success && res.data) {
-        setActivities(res.data);
-      }
-    } catch (err: unknown) {
-      apiLogger.error('加载活动记录失败', err);
-    } finally {
-      setLoadingActivities(false);
-    }
-  }, [user?.id]);
+      return res.success && res.data ? res.data : [];
+    },
+    enabled: !!user?.id,
+    staleTime: 5 * 60 * 1000,
+  });
+
+  const activities = activitiesQuery.data ?? [];
+  const loadingActivities = activitiesQuery.isLoading;
+
+  const preferencesQuery = useQuery({
+    queryKey: QUERY_KEYS.AUTH.USER_PREFERENCES,
+    queryFn: async () => {
+      const res = await authApi.getPreferences();
+      return res.success && res.data ? res.data : null;
+    },
+    staleTime: 5 * 60 * 1000,
+  });
 
   useEffect(() => {
-    if (initialized.current) {
+    if (userProfileQuery.data) {
+      const userData = userProfileQuery.data;
+      profileForm.reset({
+        full_name: userData.full_name || '',
+        email: userData.email,
+      });
+      if (setUser) {
+        setUser({
+          id: userData.id,
+          username: userData.username,
+          email: userData.email,
+          fullName: userData.full_name,
+          role: userData.role,
+          roles: userData.roles,
+          permissions: userData.permissions,
+          isActive: userData.isactive,
+          isSuperuser: userData.is_superuser,
+        });
+      }
+    }
+  }, [userProfileQuery.data, profileForm, setUser]);
+
+  useEffect(() => {
+    if (userProfileQuery.isError) {
+      const errorMsg =
+        userProfileQuery.error instanceof Error
+          ? userProfileQuery.error.message
+          : '获取用户信息失败';
+      addNotification({ title: '加载失败', message: errorMsg, type: 'error' });
+    }
+  }, [userProfileQuery.isError, userProfileQuery.error, addNotification]);
+
+  useEffect(() => {
+    if (preferencesQuery.data) {
+      const data = preferencesQuery.data;
+      if (data.shortcuts && setShortcuts) {
+        setShortcuts(
+          data.shortcuts.map((s) => ({
+            id: s.id,
+            title: s.title,
+            path: s.path,
+            icon: (s as any).icon || 'Circle',
+          }))
+        );
+      }
+      if (data.notification_settings && setNotificationSettings) {
+        setNotificationSettings(data.notification_settings);
+      }
+    }
+  }, [preferencesQuery.data, setShortcuts, setNotificationSettings]);
+
+  const updateProfileMutation = useMutation({
+    mutationFn: async (data: ProfileFormData) => {
+      const res = await authApi.updateCurrentUser({
+        full_name: data.full_name || undefined,
+        email: data.email,
+      });
+      if (!res.success || !res.data) {
+        throw new Error(res.message || '更新失败');
+      }
+      return res.data;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: QUERY_KEYS.AUTH.USER });
+      addNotification({
+        title: '成功',
+        message: '个人信息更新成功',
+        type: 'success',
+      });
+    },
+    onError: (err: unknown) => {
+      const error = err as { response?: { data?: { message?: string } }; message?: string };
+      const errorMsg = error.response?.data?.message || error.message || '更新失败';
+      addNotification({ title: '失败', message: errorMsg, type: 'error' });
+    },
+  });
+
+  const changePasswordMutation = useMutation({
+    mutationFn: async (data: { current_password: string; new_password: string }) => {
+      const res = await authApi.changePassword(data);
+      if (!res.success) {
+        throw new Error(res.message || '修改密码失败');
+      }
+      return res;
+    },
+    onSuccess: () => {
+      addNotification({
+        title: '成功',
+        message: '密码修改成功，请重新登录',
+        type: 'success',
+      });
+      setShowPasswordDialog(false);
+      passwordForm.reset();
+      setTimeout(() => {
+        logout();
+        navigate(AUTH_PATHS.login);
+      }, 2000);
+    },
+    onError: (err: unknown) => {
+      const error = err as { response?: { data?: { message?: string } }; message?: string };
+      const errorMsg = error.response?.data?.message || error.message || '修改密码失败';
+      addNotification({ title: '失败', message: errorMsg, type: 'error' });
+    },
+  });
+
+  const updateAvatarMutation = useMutation({
+    mutationFn: async (params: { avatar_url: string }) => {
+      const res = await authApi.updateAvatar(params);
+      if (!res.success || !res.data) {
+        throw new Error('头像更新失败');
+      }
+      return res.data;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: QUERY_KEYS.AUTH.USER });
+      addNotification({
+        title: '成功',
+        message: '头像已更新',
+        type: 'success',
+      });
+    },
+    onError: () => {
+      addNotification({
+        title: '错误',
+        message: '头像更新失败',
+        type: 'error',
+      });
+    },
+  });
+
+  const updatePreferencesMutation = useMutation({
+    mutationFn: async (params: Record<string, unknown>) => {
+      await authApi.updatePreferences(params);
+    },
+    onError: (err: unknown) => {
+      apiLogger.error('保存偏好设置失败', err);
+    },
+  });
+
+  const handleAvatarUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    if (!file.type.startsWith('image/')) {
+      addNotification({
+        title: '错误',
+        message: '请选择图片文件',
+        type: 'error',
+      });
       return;
     }
-    initialized.current = true;
-    loadUserProfile();
-    loadActivities();
 
-    authApi
-      .getPreferences()
-      .then((res) => {
-        if (res.success && res.data) {
-          if (res.data.shortcuts && setShortcuts) {
-            setShortcuts(
-              res.data.shortcuts.map((s) => ({
-                id: s.id,
-                title: s.title,
-                path: s.path,
-                icon: (s as any).icon || 'Circle',
-              }))
-            );
-          }
-          if (res.data.notification_settings && setNotificationSettings) {
-            setNotificationSettings(res.data.notification_settings);
-          }
-        }
-      })
-      .catch((err) => {
-        apiLogger.error('加载用户偏好设置失败', err);
+    if (file.size > 2 * 1024 * 1024) {
+      addNotification({
+        title: '错误',
+        message: '图片大小不能超过2MB',
+        type: 'error',
       });
-  }, [loadUserProfile, loadActivities, setShortcuts, setNotificationSettings]);
+      return;
+    }
 
-  const handleAvatarUpload = useCallback(
-    async (e: React.ChangeEvent<HTMLInputElement>) => {
-      const file = e.target.files?.[0];
-      if (!file) return;
+    const reader = new FileReader();
+    reader.onloadend = () => {
+      const result = reader.result as string;
+      setAvatarUrl(result);
+      updateAvatarMutation.mutate({ avatar_url: result });
+    };
+    reader.readAsDataURL(file);
+  };
 
-      if (!file.type.startsWith('image/')) {
-        addNotification({
-          title: '错误',
-          message: '请选择图片文件',
-          type: 'error',
-        });
-        return;
-      }
+  const handleProfileUpdate = (data: ProfileFormData) => {
+    if (!user) return;
+    updateProfileMutation.mutate(data);
+  };
 
-      if (file.size > 2 * 1024 * 1024) {
-        addNotification({
-          title: '错误',
-          message: '图片大小不能超过2MB',
-          type: 'error',
-        });
-        return;
-      }
+  const handlePasswordChange = (data: PasswordFormData) => {
+    if (data.new_password !== data.confirm_password) {
+      addNotification({
+        title: '错误',
+        message: '两次输入的密码不一致',
+        type: 'error',
+      });
+      passwordForm.setError('confirm_password', {
+        message: '两次输入的密码不一致',
+      });
+      return;
+    }
 
-      const reader = new FileReader();
-      reader.onloadend = () => {
-        const result = reader.result as string;
-        setAvatarUrl(result);
-        authApi
-          .updateAvatar({ avatar_url: result })
-          .then((res) => {
-            if (res.success && res.data) {
-              setUserState(res.data);
-              addNotification({
-                title: '成功',
-                message: '头像已更新',
-                type: 'success',
-              });
-            }
-          })
-          .catch(() => {
-            addNotification({
-              title: '错误',
-              message: '头像更新失败',
-              type: 'error',
-            });
-          });
-      };
-      reader.readAsDataURL(file);
-    },
-    [addNotification]
-  );
+    if (data.new_password.length < 6) {
+      addNotification({
+        title: '错误',
+        message: '密码长度至少为6位',
+        type: 'error',
+      });
+      passwordForm.setError('new_password', { message: '密码长度至少为6位' });
+      return;
+    }
 
-  const handleProfileUpdate = useCallback(
-    async (data: ProfileFormData) => {
-      if (!user) return;
+    changePasswordMutation.mutate({
+      current_password: data.current_password,
+      new_password: data.new_password,
+    });
+  };
 
-      try {
-        const res = await authApi.updateCurrentUser({
-          full_name: data.full_name || undefined,
-          email: data.email,
-        });
-
-        if (res.success && res.data) {
-          setUserState(res.data);
-          if (setUser) {
-            setUser({
-              id: res.data.id,
-              username: res.data.username,
-              email: res.data.email,
-              fullName: res.data.full_name,
-              role: res.data.role,
-              roles: res.data.roles,
-              permissions: res.data.permissions,
-              isActive: res.data.isactive,
-              isSuperuser: res.data.is_superuser,
-            });
-          }
+  const handleNotificationSettingChange = (key: keyof NotificationSettings) => {
+    const newSettings = {
+      ...notificationSettings,
+      [key]: !notificationSettings[key],
+    };
+    setNotificationSettings(newSettings);
+    updatePreferencesMutation.mutate(
+      { notification_settings: newSettings },
+      {
+        onSuccess: () => {
           addNotification({
             title: '成功',
-            message: '个人信息更新成功',
+            message: `${key}通知设置已更新`,
             type: 'success',
           });
-        } else {
+        },
+        onError: () => {
           addNotification({
-            title: '失败',
-            message: res.message || '更新失败',
+            title: '错误',
+            message: '保存通知设置失败',
             type: 'error',
           });
-        }
-      } catch (err: unknown) {
-        const error = err as { response?: { data?: { message?: string } }; message?: string };
-        const errorMsg = error.response?.data?.message || error.message || '更新失败';
-        addNotification({ title: '失败', message: errorMsg, type: 'error' });
+        },
       }
-    },
-    [user, setUser, addNotification]
-  );
+    );
+  };
 
-  const handlePasswordChange = useCallback(
-    async (data: PasswordFormData) => {
-      if (data.new_password !== data.confirm_password) {
-        addNotification({
-          title: '错误',
-          message: '两次输入的密码不一致',
-          type: 'error',
-        });
-        passwordForm.setError('confirm_password', {
-          message: '两次输入的密码不一致',
-        });
-        return;
-      }
-
-      if (data.new_password.length < 6) {
-        addNotification({
-          title: '错误',
-          message: '密码长度至少为6位',
-          type: 'error',
-        });
-        passwordForm.setError('new_password', { message: '密码长度至少为6位' });
-        return;
-      }
-
-      try {
-        const res = await authApi.changePassword({
-          current_password: data.current_password,
-          new_password: data.new_password,
-        });
-
-        if (res.success) {
-          addNotification({
-            title: '成功',
-            message: '密码修改成功，请重新登录',
-            type: 'success',
-          });
-          setShowPasswordDialog(false);
-          passwordForm.reset();
-          setTimeout(() => {
-          logout();
-          navigate(AUTH_PATHS.login);
-        }, 2000);
-        } else {
-          addNotification({
-            title: '失败',
-            message: res.message || '修改密码失败',
-            type: 'error',
-          });
-        }
-      } catch (err: unknown) {
-        const error = err as { response?: { data?: { message?: string } }; message?: string };
-        const errorMsg = error.response?.data?.message || error.message || '修改密码失败';
-        addNotification({ title: '失败', message: errorMsg, type: 'error' });
-      }
-    },
-    [addNotification, navigate, passwordForm, logout]
-  );
-
-  const handleNotificationSettingChange = useCallback(
-    async (key: keyof NotificationSettings) => {
-      const newSettings = {
-        ...notificationSettings,
-        [key]: !notificationSettings[key],
-      };
-      setNotificationSettings(newSettings);
-      try {
-        await authApi.updatePreferences({ notification_settings: newSettings });
-        addNotification({
-          title: '成功',
-          message: `${key}通知设置已更新`,
-          type: 'success',
-        });
-      } catch (err: unknown) {
-        apiLogger.error('保存通知设置失败', err);
-        addNotification({
-          title: '错误',
-          message: '保存通知设置失败',
-          type: 'error',
-        });
-      }
-    },
-
-    [notificationSettings, addNotification]
-  );
-
-  const handleShortcutToggle = useCallback(
-    (shortcut: { id: string; title: string; path: string; icon: string }) => {
-      let newShortcuts: {
-        id: string;
-        title: string;
-        path: string;
-        icon: string;
-      }[];
-      if (shortcuts.some((s) => s.id === shortcut.id)) {
-        newShortcuts = shortcuts.filter((s) => s.id !== shortcut.id);
-        addNotification({
-          title: '提示',
-          message: `${shortcut.title}已从快捷方式移除`,
-          type: 'info',
-        });
-      } else {
-        newShortcuts = [...shortcuts, shortcut];
-        addNotification({
-          title: '提示',
-          message: `${shortcut.title}已添加到快捷方式`,
-          type: 'success',
-        });
-      }
-      setShortcuts(newShortcuts);
-
-      authApi.updatePreferences({ shortcuts: newShortcuts }).catch((err) => {
-        apiLogger.error('保存快捷方式失败', err);
+  const handleShortcutToggle = (shortcut: {
+    id: string;
+    title: string;
+    path: string;
+    icon: string;
+  }) => {
+    let newShortcuts: {
+      id: string;
+      title: string;
+      path: string;
+      icon: string;
+    }[];
+    if (shortcuts.some((s) => s.id === shortcut.id)) {
+      newShortcuts = shortcuts.filter((s) => s.id !== shortcut.id);
+      addNotification({
+        title: '提示',
+        message: `${shortcut.title}已从快捷方式移除`,
+        type: 'info',
       });
-    },
-    [shortcuts, setShortcuts, addNotification]
-  );
+    } else {
+      newShortcuts = [...shortcuts, shortcut];
+      addNotification({
+        title: '提示',
+        message: `${shortcut.title}已添加到快捷方式`,
+        type: 'success',
+      });
+    }
+    setShortcuts(newShortcuts);
+    updatePreferencesMutation.mutate({ shortcuts: newShortcuts });
+  };
+
+  const handleRetryProfile = () => {
+    userProfileQuery.refetch();
+  };
+
+  const handleRefreshActivities = () => {
+    activitiesQuery.refetch();
+  };
 
   if (loading) {
     return (
@@ -459,7 +475,7 @@ const ProfilePage: React.FC = () => {
           <Button
             sx={{ mt: 2 }}
             variant='contained'
-            onClick={loadUserProfile}
+            onClick={handleRetryProfile}
           >
             重试
           </Button>
@@ -837,7 +853,7 @@ const ProfilePage: React.FC = () => {
                       variant='text'
                       size='small'
                       startIcon={<RefreshCw size={16} />}
-                      onClick={loadActivities}
+                      onClick={handleRefreshActivities}
                     >
                       刷新
                     </Button>

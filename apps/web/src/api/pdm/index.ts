@@ -9,7 +9,7 @@ export * from './bom';
 export * from './project';
 export * from './document';
 
-export type Document = import("./document").PdmDocument;
+export type Document = import('./document').PdmDocument;
 
 export interface ProductionProcess {
   id: string;

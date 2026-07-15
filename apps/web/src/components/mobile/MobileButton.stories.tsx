@@ -54,16 +54,28 @@ export const Default: Story = {
 export const Variants: Story = {
   render: () => (
     <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2, maxWidth: 375, margin: '0 auto' }}>
-      <MobileButton variant='contained' color='primary'>
+      <MobileButton
+        variant='contained'
+        color='primary'
+      >
         主要按钮
       </MobileButton>
-      <MobileButton variant='contained' color='secondary'>
+      <MobileButton
+        variant='contained'
+        color='secondary'
+      >
         次要按钮
       </MobileButton>
-      <MobileButton variant='outlined' color='primary'>
+      <MobileButton
+        variant='outlined'
+        color='primary'
+      >
         描边按钮
       </MobileButton>
-      <MobileButton variant='text' color='primary'>
+      <MobileButton
+        variant='text'
+        color='primary'
+      >
         文字按钮
       </MobileButton>
     </Box>
@@ -72,14 +84,32 @@ export const Variants: Story = {
 
 export const Sizes: Story = {
   render: () => (
-    <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2, maxWidth: 375, margin: '0 auto', alignItems: 'flex-start' }}>
-      <MobileButton size='small' variant='contained'>
+    <Box
+      sx={{
+        display: 'flex',
+        flexDirection: 'column',
+        gap: 2,
+        maxWidth: 375,
+        margin: '0 auto',
+        alignItems: 'flex-start',
+      }}
+    >
+      <MobileButton
+        size='small'
+        variant='contained'
+      >
         小号按钮
       </MobileButton>
-      <MobileButton size='medium' variant='contained'>
+      <MobileButton
+        size='medium'
+        variant='contained'
+      >
         中号按钮
       </MobileButton>
-      <MobileButton size='large' variant='contained'>
+      <MobileButton
+        size='large'
+        variant='contained'
+      >
         大号按钮
       </MobileButton>
     </Box>
@@ -89,19 +119,34 @@ export const Sizes: Story = {
 export const Colors: Story = {
   render: () => (
     <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 2, maxWidth: 375, margin: '0 auto' }}>
-      <MobileButton variant='contained' color='primary'>
+      <MobileButton
+        variant='contained'
+        color='primary'
+      >
         主要
       </MobileButton>
-      <MobileButton variant='contained' color='success'>
+      <MobileButton
+        variant='contained'
+        color='success'
+      >
         成功
       </MobileButton>
-      <MobileButton variant='contained' color='warning'>
+      <MobileButton
+        variant='contained'
+        color='warning'
+      >
         警告
       </MobileButton>
-      <MobileButton variant='contained' color='error'>
+      <MobileButton
+        variant='contained'
+        color='error'
+      >
         危险
       </MobileButton>
-      <MobileButton variant='contained' color='info'>
+      <MobileButton
+        variant='contained'
+        color='info'
+      >
         信息
       </MobileButton>
     </Box>
@@ -111,10 +156,16 @@ export const Colors: Story = {
 export const FullWidth: Story = {
   render: () => (
     <Box sx={{ maxWidth: 375, margin: '0 auto', display: 'flex', flexDirection: 'column', gap: 2 }}>
-      <MobileButton variant='contained' fullWidth>
+      <MobileButton
+        variant='contained'
+        fullWidth
+      >
         提交申请
       </MobileButton>
-      <MobileButton variant='outlined' fullWidth>
+      <MobileButton
+        variant='outlined'
+        fullWidth
+      >
         取消
       </MobileButton>
     </Box>

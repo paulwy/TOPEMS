@@ -16,16 +16,29 @@ mod tests {
         PgPool::connect(TEST_DATABASE_URL).await
     }
 
+    /// 检查数据库是否可用
+    async fn ensure_db_available() -> bool {
+        tokio::net::TcpStream::connect("localhost:5432")
+            .await
+            .is_ok()
+    }
+
     #[tokio::test]
-    #[ignore]
     async fn test_database_connection() {
+        if !ensure_db_available().await {
+            eprintln!("⏭ 跳过: 数据库未运行 (localhost:5432)");
+            return;
+        }
         let pool = setup_test_pool().await;
         assert!(pool.is_ok(), "数据库连接应该成功");
     }
 
     #[tokio::test]
-    #[ignore]
     async fn test_patrol_records_table_exists() {
+        if !ensure_db_available().await {
+            eprintln!("⏭ 跳过: 数据库未运行 (localhost:5432)");
+            return;
+        }
         let pool = setup_test_pool().await.unwrap();
 
         let result = sqlx::query("SELECT EXISTS (SELECT FROM information_schema.tables WHERE table_schema = 'mobile' AND table_name = 'patrol_records')")
@@ -44,8 +57,11 @@ mod tests {
     }
 
     #[tokio::test]
-    #[ignore]
     async fn test_mobile_tasks_table_exists() {
+        if !ensure_db_available().await {
+            eprintln!("⏭ 跳过: 数据库未运行 (localhost:5432)");
+            return;
+        }
         let pool = setup_test_pool().await.unwrap();
 
         let result = sqlx::query("SELECT EXISTS (SELECT FROM information_schema.tables WHERE table_schema = 'mobile' AND table_name = 'mobile_tasks')")
@@ -65,8 +81,11 @@ mod tests {
 
     // 需要实际的数据库连接和表结构
     #[tokio::test]
-    #[ignore]
     async fn test_create_patrol_record() {
+        if !ensure_db_available().await {
+            eprintln!("⏭ 跳过: 数据库未运行 (localhost:5432)");
+            return;
+        }
         let pool = setup_test_pool().await.unwrap();
 
         let record_id = Uuid::new_v4();
@@ -96,8 +115,11 @@ mod tests {
 
     // 需要实际的数据库连接和表结构
     #[tokio::test]
-    #[ignore]
     async fn test_list_patrol_records() {
+        if !ensure_db_available().await {
+            eprintln!("⏭ 跳过: 数据库未运行 (localhost:5432)");
+            return;
+        }
         let pool = setup_test_pool().await.unwrap();
 
         let result = sqlx::query(

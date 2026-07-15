@@ -37,41 +37,45 @@ import { apiLogger } from '@/utils/logger';
 import { DashboardTemplate } from '@/components/templates';
 import { PageContainer } from '@/components/common/PageContainerV2';
 import { designTokens } from '@/theme/tokens';
+import { useQuery } from '@tanstack/react-query';
+import { QUERY_KEYS } from '@/lib/reactQuery';
 
 const ct = designTokens.colors;
 
+interface PortalData {
+  supplier: Supplier | null;
+  stats: SupplierPortalStats | null;
+  orders: any[];
+  announcements: any[];
+}
+
 const SupplierPortalPage: React.FC = () => {
-  const [loading, setLoading] = useState(true);
-  const [stats, setStats] = useState<SupplierPortalStats | null>(null);
   const [activeTab, setActiveTab] = useState(0);
-  const [supplier, setSupplier] = useState<Supplier | null>(null);
-  const [orders, setOrders] = useState<any[]>([]);
-  const [announcements, setAnnouncements] = useState<any[]>([]);
   const { addNotification } = useNotificationStore();
 
-  useEffect(() => {
-    loadData();
-  }, []);
-
-  const loadData = async () => {
-    try {
-      setLoading(true);
+  const portalQuery = useQuery<PortalData>({
+    queryKey: QUERY_KEYS.SRM.SUPPLIER_PORTAL('default'),
+    queryFn: async () => {
       const [suppliersRes, announcementsRes] = await Promise.all([
         srmApi.listSuppliers(),
         srmApi.getSupplierPortalAnnouncements(),
       ]);
 
+      let supplier: Supplier | null = null;
+      let stats: SupplierPortalStats | null = null;
+      let orders: any[] = [];
+
       if (suppliersRes.success && suppliersRes.data && suppliersRes.data.length > 0) {
         const firstSupplier = suppliersRes.data[0];
-        setSupplier(firstSupplier);
+        supplier = firstSupplier;
 
         try {
           const statsRes = await srmApi.getSupplierPortalStats(firstSupplier.id);
           if (statsRes.success && statsRes.data) {
-            setStats(statsRes.data);
+            stats = statsRes.data;
           }
         } catch (e) {
-          setStats({
+          stats = {
             total_orders: 128,
             pending_orders: 12,
             completed_orders: 108,
@@ -81,16 +85,16 @@ const SupplierPortalPage: React.FC = () => {
             pending_deliveries: 3,
             on_time_delivery_rate: 95.6,
             quality_score: 92.3,
-          });
+          };
         }
 
         try {
           const ordersRes = await srmApi.getSupplierPortalOrders(firstSupplier.id);
           if (ordersRes.success) {
-            setOrders(ordersRes.data || []);
+            orders = ordersRes.data || [];
           }
         } catch (e) {
-          setOrders([
+          orders = [
             {
               id: '1',
               po_no: 'PO-2024-001',
@@ -119,30 +123,42 @@ const SupplierPortalPage: React.FC = () => {
               total_amount: 45000,
               status: 'completed',
             },
-          ]);
+          ];
         }
       }
 
+      let announcements: any[] = [];
       if (announcementsRes.success) {
-        setAnnouncements(announcementsRes.data || []);
+        announcements = announcementsRes.data || [];
       } else {
-        setAnnouncements([
+        announcements = [
           { id: '1', title: '关于春节期间发货安排的通知', date: '2024-01-15', type: 'important' },
           { id: '2', title: '新增供应商门户功能上线公告', date: '2024-01-10', type: 'normal' },
           { id: '3', title: '2024年第一季度质量考核结果', date: '2024-01-05', type: 'normal' },
-        ]);
+        ];
       }
-    } catch (error: unknown) {
-      apiLogger.error('加载供应商门户数据失败:', error);
+
+      return { supplier, stats, orders, announcements };
+    },
+    staleTime: 5 * 60 * 1000,
+  });
+
+  const loading = portalQuery.isLoading;
+  const supplier = portalQuery.data?.supplier ?? null;
+  const stats = portalQuery.data?.stats ?? null;
+  const orders = portalQuery.data?.orders ?? [];
+  const announcements = portalQuery.data?.announcements ?? [];
+
+  useEffect(() => {
+    if (portalQuery.isError) {
+      apiLogger.error('加载供应商门户数据失败:', portalQuery.error);
       addNotification({
         type: 'error',
         title: '加载失败',
         message: '无法加载供应商门户数据',
       });
-    } finally {
-      setLoading(false);
     }
-  };
+  }, [portalQuery.isError, portalQuery.error, addNotification]);
 
   const statusConfig: Record<
     string,

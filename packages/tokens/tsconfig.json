@@ -7,8 +7,7 @@
     "declarationMap": true,
     "sourceMap": true,
     "noEmit": false,
-    "allowImportingTsExtensions": false,
-    "ignoreDeprecations": "6.0"
+    "allowImportingTsExtensions": false
   },
   "include": ["src"]
 }

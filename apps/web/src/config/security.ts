@@ -19,7 +19,9 @@ export interface CspConfig {
   workerSrc: string[];
 }
 
-const isDev = import.meta.env.DEV;
+import { isDevelopment } from './runtime';
+
+const isDev = isDevelopment();
 
 export const securityConfig: SecurityConfig = {
   xFrameOptions: 'DENY',

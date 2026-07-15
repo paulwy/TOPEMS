@@ -1,4 +1,5 @@
-import React, { useState, useEffect, useCallback, useRef } from 'react';
+import React, { useState, useEffect } from 'react';
+import { useQuery } from '@tanstack/react-query';
 import {
   Box,
   Typography,
@@ -20,6 +21,7 @@ import { useTranslation } from 'react-i18next';
 import { DASHBOARD_PATHS } from '@/routes/dashboard';
 import { helpApi } from '@/api';
 import type { Faq } from '@/api/help';
+import { QUERY_KEYS } from '@/lib/reactQuery';
 
 interface FAQ_CATEGORIES {
   id: string;
@@ -36,70 +38,48 @@ const FAQ_CATEGORIES: FAQ_CATEGORIES[] = [
   { id: 'system', name: '系统设置', icon: '⚙️' },
 ];
 
-const debounce = <T extends (...args: unknown[]) => void>(func: T, delay: number): T => {
-  let timer: ReturnType<typeof setTimeout> | null = null;
-  return ((...args: unknown[]) => {
-    if (timer) clearTimeout(timer);
-    timer = setTimeout(() => func(...args), delay);
-  }) as T;
-};
-
 export const FaqPage: React.FC = () => {
   const { t } = useTranslation();
   const theme = useTheme();
   const navigate = useNavigate();
   const [searchQuery, setSearchQuery] = useState('');
+  const [debouncedSearch, setDebouncedSearch] = useState('');
   const [selectedCategory, setSelectedCategory] = useState('all');
-  const [faqs, setFaqs] = useState<Faq[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [categories, setCategories] = useState<string[]>([]);
-  const debouncedFetchRef = useRef<typeof fetchFaqs | undefined>(undefined);
 
-  const fetchFaqs = useCallback(async () => {
-    setLoading(true);
-    try {
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      setDebouncedSearch(searchQuery);
+    }, 300);
+    return () => clearTimeout(timer);
+  }, [searchQuery]);
+
+  const { data: faqs = [], isLoading: loading } = useQuery<Faq[]>({
+    queryKey: [...QUERY_KEYS.HELP.FAQS, selectedCategory, debouncedSearch],
+    queryFn: async () => {
       const params = {
         category: selectedCategory === 'all' ? undefined : selectedCategory,
-        keyword: searchQuery || undefined,
+        keyword: debouncedSearch || undefined,
         page: 1,
         page_size: 50,
       };
       const response = await helpApi.listFaqs(params);
       if (response.success && response.data) {
-        setFaqs(response.data.items);
+        return response.data.items;
       }
-    } catch (error) {
-      console.error('Failed to fetch FAQs:', error);
-    } finally {
-      setLoading(false);
-    }
-  }, [selectedCategory, searchQuery]);
+      return [];
+    },
+  });
 
-  const fetchCategories = useCallback(async () => {
-    try {
+  const { data: categories = [] } = useQuery<string[]>({
+    queryKey: QUERY_KEYS.HELP.FAQ_CATEGORIES,
+    queryFn: async () => {
       const response = await helpApi.getFaqCategories();
       if (response.success && response.data) {
-        setCategories(response.data);
+        return response.data;
       }
-    } catch (error) {
-      console.error('Failed to fetch categories:', error);
-    }
-  }, []);
-
-  useEffect(() => {
-    debouncedFetchRef.current = debounce(fetchFaqs, 300);
-    return () => {
-      if (debouncedFetchRef.current) {
-        const timer = (debouncedFetchRef.current as unknown as { timer?: ReturnType<typeof setTimeout> }).timer;
-        if (timer) clearTimeout(timer);
-      }
-    };
-  }, [fetchFaqs]);
-
-  useEffect(() => {
-    debouncedFetchRef.current?.();
-    fetchCategories();
-  }, [selectedCategory, searchQuery, fetchCategories]);
+      return [];
+    },
+  });
 
   const handleSearch = (e: React.ChangeEvent<HTMLInputElement>) => {
     setSearchQuery(e.target.value);
@@ -121,14 +101,25 @@ export const FaqPage: React.FC = () => {
           sx={{ textTransform: 'none' }}
           onClick={() => navigate(DASHBOARD_PATHS.helpCenter)}
         >
-          <ArrowLeft size={16} sx={{ mr: 1 }} />
+          <ArrowLeft
+            size={16}
+            sx={{ mr: 1 }}
+          />
           返回帮助中心
         </Button>
       </Box>
 
       <Box sx={{ mb: 6 }}>
         <Box sx={{ maxWidth: 600, mx: 'auto', position: 'relative' }}>
-          <Search sx={{ position: 'absolute', left: 16, top: '50%', transform: 'translateY(-50%)', color: theme.palette.text.disabled }} />
+          <Search
+            sx={{
+              position: 'absolute',
+              left: 16,
+              top: '50%',
+              transform: 'translateY(-50%)',
+              color: theme.palette.text.disabled,
+            }}
+          />
           <TextField
             fullWidth
             placeholder={t('help_center.search_placeholder')}
@@ -140,10 +131,18 @@ export const FaqPage: React.FC = () => {
       </Box>
 
       <Box sx={{ mb: 6 }}>
-        <Typography variant='body2' color='text.secondary' sx={{ mb: 2 }}>
+        <Typography
+          variant='body2'
+          color='text.secondary'
+          sx={{ mb: 2 }}
+        >
           {t('help_center.filter_category')}
         </Typography>
-        <Stack direction='row' spacing={2} sx={{ flexWrap: 'wrap' }}>
+        <Stack
+          direction='row'
+          spacing={2}
+          sx={{ flexWrap: 'wrap' }}
+        >
           <Chip
             key='all'
             label={`📋 全部`}
@@ -154,7 +153,7 @@ export const FaqPage: React.FC = () => {
           {[...new Set(categories)].map((category) => (
             <Chip
               key={category}
-              label={`${FAQ_CATEGORIES.find(c => c.id === category)?.icon || '📄'} ${getCategoryName(category)}`}
+              label={`${FAQ_CATEGORIES.find((c) => c.id === category)?.icon || '📄'} ${getCategoryName(category)}`}
               onClick={() => setSelectedCategory(category)}
               color={selectedCategory === category ? 'primary' : 'default'}
               sx={{ cursor: 'pointer', fontWeight: selectedCategory === category ? 600 : 400 }}
@@ -169,11 +168,18 @@ export const FaqPage: React.FC = () => {
         </Box>
       ) : (
         <>
-          <Typography variant='body2' color='text.secondary' sx={{ mb: 4 }}>
+          <Typography
+            variant='body2'
+            color='text.secondary'
+            sx={{ mb: 4 }}
+          >
             {t('help_center.found')} {faqs.length} {t('help_center.results')}
           </Typography>
 
-          <Grid container spacing={3}>
+          <Grid
+            container
+            spacing={3}
+          >
             <Grid size={{ xs: 12 }}>
               <Stack spacing={2}>
                 {faqs.map((faq) => (
@@ -186,8 +192,14 @@ export const FaqPage: React.FC = () => {
                       sx={{ '&:hover': { bgcolor: theme.palette.action.hover } }}
                     >
                       <Box sx={{ display: 'flex', alignItems: 'center', gap: 2, flex: 1 }}>
-                        <Tag size={16} sx={{ color: theme.palette.primary.main }} />
-                        <Typography variant='body1' sx={{ fontWeight: 500 }}>
+                        <Tag
+                          size={16}
+                          sx={{ color: theme.palette.primary.main }}
+                        />
+                        <Typography
+                          variant='body1'
+                          sx={{ fontWeight: 500 }}
+                        >
                           {faq.question}
                         </Typography>
                       </Box>
@@ -197,13 +209,19 @@ export const FaqPage: React.FC = () => {
                           label={getCategoryName(faq.category)}
                           sx={{ fontWeight: 400 }}
                         />
-                        <Typography variant='body2' color='text.secondary'>
+                        <Typography
+                          variant='body2'
+                          color='text.secondary'
+                        >
                           查看 {faq.views.toLocaleString()}
                         </Typography>
                       </Box>
                     </AccordionSummary>
                     <AccordionDetails>
-                      <Typography variant='body2' color='text.secondary'>
+                      <Typography
+                        variant='body2'
+                        color='text.secondary'
+                      >
                         {faq.answer}
                       </Typography>
                     </AccordionDetails>
@@ -215,11 +233,20 @@ export const FaqPage: React.FC = () => {
 
           {faqs.length === 0 && (
             <Box sx={{ textAlign: 'center', py: 12 }}>
-              <Search size={48} sx={{ color: theme.palette.text.disabled, mx: 'auto', mb: 3 }} />
-              <Typography variant='h6' sx={{ mb: 2 }}>
+              <Search
+                size={48}
+                sx={{ color: theme.palette.text.disabled, mx: 'auto', mb: 3 }}
+              />
+              <Typography
+                variant='h6'
+                sx={{ mb: 2 }}
+              >
                 {t('help_center.no_results')}
               </Typography>
-              <Typography variant='body2' color='text.secondary'>
+              <Typography
+                variant='body2'
+                color='text.secondary'
+              >
                 {t('help_center.try_different')}
               </Typography>
             </Box>

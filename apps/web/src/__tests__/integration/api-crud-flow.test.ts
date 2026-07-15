@@ -72,7 +72,10 @@ describe('API CRUD Flow Integration', () => {
       // 4. Update
       vi.clearAllMocks();
       const updateData = { name: '张三丰' };
-      apiClient.hrm.put.mockResolvedValue({ success: true, data: { id: 'emp-001', name: '张三丰' } });
+      apiClient.hrm.put.mockResolvedValue({
+        success: true,
+        data: { id: 'emp-001', name: '张三丰' },
+      });
       await employeeApi.update('emp-001', updateData);
       expect(apiClient.hrm.put).toHaveBeenCalledWith('/employees/emp-001', updateData);
 
@@ -190,14 +193,54 @@ describe('API CRUD Flow Integration', () => {
 
       // Get
       vi.clearAllMocks();
-      clientDefault.qms.get.mockResolvedValue({ success: true, data: { id: 'std-001', standard_code: 'QS-001', name: '标准A', version: '1.0', status: 'active', category: 'general', description: '', created_at: '', updated_at: '', revision: 1, effective_date: '', expiry_date: '' } });
+      clientDefault.qms.get.mockResolvedValue({
+        success: true,
+        data: {
+          id: 'std-001',
+          standard_code: 'QS-001',
+          name: '标准A',
+          version: '1.0',
+          status: 'active',
+          category: 'general',
+          description: '',
+          created_at: '',
+          updated_at: '',
+          revision: 1,
+          effective_date: '',
+          expiry_date: '',
+        },
+      });
       await standardApi.getStandard('std-001');
       expect(clientDefault.qms.get).toHaveBeenCalled();
 
       // Create
       vi.clearAllMocks();
-      const data = { name: '质量标准A', standard_code: 'QS-001', category: 'general', description: '', version: '1.0', effective_date: '', expiry_date: '' };
-      clientDefault.qms.post.mockResolvedValue({ success: true, data: { id: 'std-001', standard_code: 'QS-001', name: '质量标准A', version: '1.0', status: 'active', category: 'general', description: '', created_at: '', updated_at: '', revision: 1, effective_date: '', expiry_date: '' } });
+      const data = {
+        name: '质量标准A',
+        standard_code: 'QS-001',
+        category: 'general',
+        description: '',
+        version: '1.0',
+        effective_date: '',
+        expiry_date: '',
+      };
+      clientDefault.qms.post.mockResolvedValue({
+        success: true,
+        data: {
+          id: 'std-001',
+          standard_code: 'QS-001',
+          name: '质量标准A',
+          version: '1.0',
+          status: 'active',
+          category: 'general',
+          description: '',
+          created_at: '',
+          updated_at: '',
+          revision: 1,
+          effective_date: '',
+          expiry_date: '',
+        },
+      });
       await standardApi.createStandard(data);
       expect(clientDefault.qms.post).toHaveBeenCalled();
 
@@ -215,7 +258,13 @@ describe('API CRUD Flow Integration', () => {
       const { apiClient } = await import('@/api/client');
 
       const mockOrders = [
-        { id: 'SO-001', order_no: 'SO-001', customer_name: '客户A', status: 'pending', total_amount: 1000 },
+        {
+          id: 'SO-001',
+          order_no: 'SO-001',
+          customer_name: '客户A',
+          status: 'pending',
+          total_amount: 1000,
+        },
       ];
 
       apiClient.erp.get.mockResolvedValue({

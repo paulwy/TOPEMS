@@ -37,11 +37,12 @@ export async function refreshDataSource(id: string) {
 }
 
 export const dataSourceCrudApi: CrudOperations<DataSource> = {
-  list: (params?) => listDataSources({
-    page: params?.page,
-    pageSize: params?.pagesize,
-    ...(params as any),
-  }),
+  list: (params?) =>
+    listDataSources({
+      page: params?.page,
+      pageSize: params?.pagesize,
+      ...(params as any),
+    }),
   get: getDataSource,
   create: createDataSource,
   update: updateDataSource,

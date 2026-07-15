@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useMemo } from 'react';
+import { useQuery } from '@tanstack/react-query';
 import {
   Users,
   Briefcase,
@@ -75,23 +76,17 @@ interface PayrollSummary {
 const HrmReportsPage: React.FC = () => {
   const { error } = useNotification();
 
-  const [employeeSummary, setEmployeeSummary] = useState<EmployeeSummary | null>(null);
-  const [departmentSummary, setDepartmentSummary] = useState<DepartmentSummary[]>([]);
-  const [contractSummary, setContractSummary] = useState<ContractSummary | null>(null);
-  const [trainingSummary, setTrainingSummary] = useState<TrainingSummary | null>(null);
-  const [attendanceSummary, setAttendanceSummary] = useState<AttendanceSummary | null>(null);
-  const [payrollSummary, setPayrollSummary] = useState<PayrollSummary | null>(null);
-  const [loading, setLoading] = useState(true);
   const [timeRange, setTimeRange] = useState('month');
   const [activeTab, setActiveTab] = useState<string>('overview');
 
-  useEffect(() => {
-    loadReports();
-  }, [timeRange]);
-
-  const loadReports = async () => {
-    setLoading(true);
-    try {
+  const {
+    data: reportsData,
+    isLoading: loading,
+    error: queryError,
+    refetch: refetchReports,
+  } = useQuery({
+    queryKey: ['hrm', 'reports', timeRange],
+    queryFn: async () => {
       const promises = [
         apiClient.hrm.get(`/api/hrm/reports/employee-summary?time_range=${timeRange}`),
         apiClient.hrm.get(`/api/hrm/reports/department-summary?time_range=${timeRange}`),
@@ -103,19 +98,31 @@ const HrmReportsPage: React.FC = () => {
 
       const results = await Promise.all(promises);
 
-      if (results[0].code === 200) setEmployeeSummary(results[0].data);
-      if (results[1].code === 200) setDepartmentSummary(results[1].data.departments);
-      if (results[2].code === 200) setContractSummary(results[2].data);
-      if (results[3].code === 200) setTrainingSummary(results[3].data);
-      if (results[4].code === 200) setAttendanceSummary(results[4].data);
-      if (results[5].code === 200) setPayrollSummary(results[5].data);
-    } catch (err: unknown) {
-      apiLogger.error('Failed to load reports:', err);
+      return {
+        employeeSummary: results[0].code === 200 ? results[0].data : null,
+        departmentSummary: results[1].code === 200 ? results[1].data.departments : [],
+        contractSummary: results[2].code === 200 ? results[2].data : null,
+        trainingSummary: results[3].code === 200 ? results[3].data : null,
+        attendanceSummary: results[4].code === 200 ? results[4].data : null,
+        payrollSummary: results[5].code === 200 ? results[5].data : null,
+      };
+    },
+    staleTime: 5 * 60 * 1000,
+  });
+
+  useEffect(() => {
+    if (queryError) {
+      apiLogger.error('Failed to load reports:', queryError);
       error('加载报表数据失败');
-    } finally {
-      setLoading(false);
     }
-  };
+  }, [queryError, error]);
+
+  const employeeSummary = reportsData?.employeeSummary ?? null;
+  const departmentSummary: DepartmentSummary[] = reportsData?.departmentSummary ?? [];
+  const contractSummary = reportsData?.contractSummary ?? null;
+  const trainingSummary = reportsData?.trainingSummary ?? null;
+  const attendanceSummary = reportsData?.attendanceSummary ?? null;
+  const payrollSummary = reportsData?.payrollSummary ?? null;
 
   const formatNumber = (num: number) => {
     return num.toLocaleString('zh-CN');
@@ -623,7 +630,7 @@ const HrmReportsPage: React.FC = () => {
         showSearch={false}
         showExport={true}
         showRefresh={true}
-        onRefresh={loadReports}
+        onRefresh={() => refetchReports()}
         exportText='导出报表'
         showStatCards={true}
         showCharts={true}

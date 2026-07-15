@@ -48,7 +48,10 @@ export const mobileModuleConfig: RouteModuleConfig = {
     },
     {
       path: MOBILE_PATHS.workbench,
-      element: lazyWithRetry(() => import('@/pages/mobile/MobileWorkbenchPage'), 'MobileWorkbenchPage'),
+      element: lazyWithRetry(
+        () => import('@/pages/mobile/MobileWorkbenchPage'),
+        'MobileWorkbenchPage'
+      ),
       module: 'mobile',
       code: 'mobile-workbench',
       title: '工作台',
@@ -59,7 +62,10 @@ export const mobileModuleConfig: RouteModuleConfig = {
     },
     {
       path: MOBILE_PATHS.attendance,
-      element: lazyWithRetry(() => import('@/pages/mobile/MobileAttendancePage'), 'MobileAttendancePage'),
+      element: lazyWithRetry(
+        () => import('@/pages/mobile/MobileAttendancePage'),
+        'MobileAttendancePage'
+      ),
       module: 'mobile',
       code: 'mobile-attendance',
       title: '考勤打卡',
@@ -70,7 +76,10 @@ export const mobileModuleConfig: RouteModuleConfig = {
     },
     {
       path: MOBILE_PATHS.tasks,
-      element: lazyWithRetry(() => import('@/pages/mobile/MobileTaskListPage'), 'MobileTaskListPage'),
+      element: lazyWithRetry(
+        () => import('@/pages/mobile/MobileTaskListPage'),
+        'MobileTaskListPage'
+      ),
       module: 'mobile',
       code: 'mobile-tasks',
       title: '我的任务',
@@ -81,7 +90,10 @@ export const mobileModuleConfig: RouteModuleConfig = {
     },
     {
       path: MOBILE_PATHS.approvals,
-      element: lazyWithRetry(() => import('@/pages/mobile/MobileApprovalPage'), 'MobileApprovalPage'),
+      element: lazyWithRetry(
+        () => import('@/pages/mobile/MobileApprovalPage'),
+        'MobileApprovalPage'
+      ),
       module: 'mobile',
       code: 'mobile-approvals',
       title: '审批中心',
@@ -92,7 +104,10 @@ export const mobileModuleConfig: RouteModuleConfig = {
     },
     {
       path: MOBILE_PATHS.inventory,
-      element: lazyWithRetry(() => import('@/pages/mobile/MobileInventoryPage'), 'MobileInventoryPage'),
+      element: lazyWithRetry(
+        () => import('@/pages/mobile/MobileInventoryPage'),
+        'MobileInventoryPage'
+      ),
       module: 'mobile',
       code: 'mobile-inventory',
       title: '库存查询',
@@ -114,7 +129,10 @@ export const mobileModuleConfig: RouteModuleConfig = {
     },
     {
       path: MOBILE_PATHS.production,
-      element: lazyWithRetry(() => import('@/pages/mobile/MobileProductionPage'), 'MobileProductionPage'),
+      element: lazyWithRetry(
+        () => import('@/pages/mobile/MobileProductionPage'),
+        'MobileProductionPage'
+      ),
       module: 'mobile',
       code: 'mobile-production',
       title: '生产报工',
@@ -136,7 +154,10 @@ export const mobileModuleConfig: RouteModuleConfig = {
     },
     {
       path: MOBILE_PATHS.notifications,
-      element: lazyWithRetry(() => import('@/pages/mobile/MobileNotificationPage'), 'MobileNotificationPage'),
+      element: lazyWithRetry(
+        () => import('@/pages/mobile/MobileNotificationPage'),
+        'MobileNotificationPage'
+      ),
       module: 'mobile',
       code: 'mobile-notifications',
       title: '消息通知',
@@ -158,7 +179,10 @@ export const mobileModuleConfig: RouteModuleConfig = {
     },
     {
       path: MOBILE_PATHS.settings,
-      element: lazyWithRetry(() => import('@/pages/mobile/MobileSettingsPage'), 'MobileSettingsPage'),
+      element: lazyWithRetry(
+        () => import('@/pages/mobile/MobileSettingsPage'),
+        'MobileSettingsPage'
+      ),
       module: 'mobile',
       code: 'mobile-settings',
       title: '应用设置',

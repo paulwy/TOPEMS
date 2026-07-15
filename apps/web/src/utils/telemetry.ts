@@ -1,3 +1,4 @@
+import { logger } from './logger';
 import {
   ConsoleSpanExporter,
   BatchSpanProcessor,
@@ -5,15 +6,14 @@ import {
 } from '@opentelemetry/sdk-trace-web';
 import { OTLPTraceExporter } from '@opentelemetry/exporter-trace-otlp-http';
 import { ZoneContextManager } from '@opentelemetry/context-zone';
-import {
-  Instrumentation,
-  registerInstrumentations,
-} from '@opentelemetry/instrumentation';
+import type { Instrumentation } from '@opentelemetry/instrumentation';
+import { registerInstrumentations } from '@opentelemetry/instrumentation';
 import { XMLHttpRequestInstrumentation } from '@opentelemetry/instrumentation-xml-http-request';
 import { FetchInstrumentation } from '@opentelemetry/instrumentation-fetch';
 import { SemanticResourceAttributes } from '@opentelemetry/semantic-conventions';
 import { B3Propagator } from '@opentelemetry/propagator-b3';
-import { trace, context, propagation, Tracer, Span, SpanStatusCode } from '@opentelemetry/api';
+import type { Tracer, Span } from '@opentelemetry/api';
+import { trace, context, propagation, SpanStatusCode } from '@opentelemetry/api';
 
 interface TelemetryConfig {
   serviceName: string;
@@ -66,7 +66,7 @@ export function initTelemetry(config: Partial<TelemetryConfig> = {}) {
   const finalConfig: TelemetryConfig = { ...defaultConfig, ...config };
 
   if (!finalConfig.otelEnabled) {
-    console.log('[Telemetry] OpenTelemetry is disabled');
+    logger.info('[Telemetry] OpenTelemetry is disabled');
     return;
   }
 
@@ -86,7 +86,7 @@ export function initTelemetry(config: Partial<TelemetryConfig> = {}) {
         )
       );
     } catch (e) {
-      console.error('[Telemetry] Failed to create OTLP exporter:', e);
+      logger.error('[Telemetry] Failed to create OTLP exporter:', e);
     }
   }
 
@@ -116,7 +116,7 @@ export function initTelemetry(config: Partial<TelemetryConfig> = {}) {
 
   tracer = trace.getTracer(finalConfig.serviceName);
 
-  console.log(
+  logger.info(
     `[Telemetry] OpenTelemetry initialized (exporter: ${finalConfig.exporterType}, endpoint: ${finalConfig.otlpEndpoint})`
   );
 
@@ -203,7 +203,8 @@ function initErrorCapture() {
 
     window.addEventListener('unhandledrejection', (event: PromiseRejectionEvent) => {
       const span = startSpan('error:unhandled_rejection', {
-        reason: typeof event.reason === 'string' ? event.reason : event.reason?.message || 'Unknown',
+        reason:
+          typeof event.reason === 'string' ? event.reason : event.reason?.message || 'Unknown',
       });
 
       if (event.reason instanceof Error) {
@@ -264,11 +265,7 @@ export async function traceAsync<T>(
   }
 }
 
-export function traceSync<T>(
-  name: string,
-  fn: () => T,
-  attributes?: Record<string, unknown>
-): T {
+export function traceSync<T>(name: string, fn: () => T, attributes?: Record<string, unknown>): T {
   const span = startSpan(name, attributes);
 
   try {
@@ -310,7 +307,8 @@ export function getPerformanceMetrics(): PerformanceMetrics | null {
     domInteractive: navEntry.domInteractive,
     domContentLoaded: navEntry.domContentLoadedEventEnd,
     loadTime: navEntry.loadEventEnd,
-    firstContentfulPaint: (navEntry as unknown as { firstContentfulPaint?: number }).firstContentfulPaint || 0,
+    firstContentfulPaint:
+      (navEntry as unknown as { firstContentfulPaint?: number }).firstContentfulPaint || 0,
   };
 }
 
@@ -319,28 +317,25 @@ export function measurePerformance<T>(name: string, fn: () => T): T {
   try {
     const result = fn();
     const duration = performance.now() - start;
-    console.log(`[Performance] ${name}: ${duration.toFixed(2)}ms`);
+    logger.info(`[Performance] ${name}: ${duration.toFixed(2)}ms`);
     return result;
   } catch (error) {
     const duration = performance.now() - start;
-    console.error(`[Performance] ${name} failed after ${duration.toFixed(2)}ms`, error);
+    logger.error(`[Performance] ${name} failed after ${duration.toFixed(2)}ms`, error);
     throw error;
   }
 }
 
-export async function measurePerformanceAsync<T>(
-  name: string,
-  fn: () => Promise<T>
-): Promise<T> {
+export async function measurePerformanceAsync<T>(name: string, fn: () => Promise<T>): Promise<T> {
   const start = performance.now();
   try {
     const result = await fn();
     const duration = performance.now() - start;
-    console.log(`[Performance] ${name}: ${duration.toFixed(2)}ms`);
+    logger.info(`[Performance] ${name}: ${duration.toFixed(2)}ms`);
     return result;
   } catch (error) {
     const duration = performance.now() - start;
-    console.error(`[Performance] ${name} failed after ${duration.toFixed(2)}ms`, error);
+    logger.error(`[Performance] ${name} failed after ${duration.toFixed(2)}ms`, error);
     throw error;
   }
 }

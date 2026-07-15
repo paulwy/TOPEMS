@@ -11,7 +11,15 @@ import {
   alpha,
   LinearProgress,
 } from '@mui/material';
-import { SearchCode, FileText, Users, ShoppingCart, Package, Settings, ChevronRight } from 'lucide-react';
+import {
+  SearchCode,
+  FileText,
+  Users,
+  ShoppingCart,
+  Package,
+  Settings,
+  ChevronRight,
+} from 'lucide-react';
 import type { SearchResultListProps } from './types';
 import { groupResultsByModule, getModuleColor, getSearchSuggestions } from './utils';
 import { SearchShortcuts } from './SearchShortcuts';
@@ -34,11 +42,28 @@ const getModuleIcon = (module: string) => {
 
 const EmptyResults: React.FC<{ query: string }> = ({ query }) => (
   <Box sx={{ p: 4, textAlign: 'center' }}>
-    <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{ opacity: 0.3, margin: '0 auto 8px', display: 'block' }}>
-      <circle cx="11" cy="11" r="8" />
-      <path d="m21 21-4.3-4.3" />
+    <svg
+      width='32'
+      height='32'
+      viewBox='0 0 24 24'
+      fill='none'
+      stroke='currentColor'
+      strokeWidth='2'
+      strokeLinecap='round'
+      strokeLinejoin='round'
+      style={{ opacity: 0.3, margin: '0 auto 8px', display: 'block' }}
+    >
+      <circle
+        cx='11'
+        cy='11'
+        r='8'
+      />
+      <path d='m21 21-4.3-4.3' />
     </svg>
-    <Typography variant="body2" color="text.secondary">
+    <Typography
+      variant='body2'
+      color='text.secondary'
+    >
       未找到与 "{query}" 相关的结果
     </Typography>
   </Box>
@@ -67,7 +92,7 @@ const HighlightText: React.FC<HighlightTextProps> = ({ text, highlight, theme })
         return isHighlighted ? (
           <Box
             key={index}
-            component="span"
+            component='span'
             sx={{
               color: isDark ? theme.palette.primary.light : theme.palette.primary.main,
               fontWeight: 600,
@@ -154,7 +179,10 @@ export const SearchResultList: React.FC<SearchResultListProps> = ({
   }
 
   return (
-    <Box ref={containerRef} sx={{ maxHeight, overflowY: 'auto' }}>
+    <Box
+      ref={containerRef}
+      sx={{ maxHeight, overflowY: 'auto' }}
+    >
       {loading && (
         <Box sx={{ position: 'sticky', top: 0, zIndex: 1 }}>
           <LinearProgress sx={{ height: 2 }} />
@@ -163,16 +191,26 @@ export const SearchResultList: React.FC<SearchResultListProps> = ({
       {suggestions.length > 0 && (
         <>
           <Box sx={{ px: 2, py: 1 }}>
-            <Typography variant="caption" color="text.secondary" sx={{ mb: 1, display: 'block' }}>
+            <Typography
+              variant='caption'
+              color='text.secondary'
+              sx={{ mb: 1, display: 'block' }}
+            >
               💡 搜索建议
             </Typography>
             <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 1 }}>
               {suggestions.map((s: string) => (
                 <Chip
                   key={s}
-                  label={<HighlightText text={s} highlight={query} theme={theme} />}
-                  size="small"
-                  variant="outlined"
+                  label={
+                    <HighlightText
+                      text={s}
+                      highlight={query}
+                      theme={theme}
+                    />
+                  }
+                  size='small'
+                  variant='outlined'
                   onClick={() => onShortcutSelect(s)}
                   sx={{ cursor: 'pointer' }}
                 />
@@ -195,20 +233,47 @@ export const SearchResultList: React.FC<SearchResultListProps> = ({
               borderBottom: `1px solid ${alpha(theme.palette.divider, 0.3)}`,
             }}
           >
-            <Typography variant="caption" color="text.secondary">
-              找到 <Box component="span" sx={{ fontWeight: 700, color: 'text.primary' }}>{totalResults}</Box> 条结果
+            <Typography
+              variant='caption'
+              color='text.secondary'
+            >
+              找到{' '}
+              <Box
+                component='span'
+                sx={{ fontWeight: 700, color: 'text.primary' }}
+              >
+                {totalResults}
+              </Box>{' '}
+              条结果
               {totalGroups > 1 && (
-                <> · 分为 <Box component="span" sx={{ fontWeight: 600 }}>{totalGroups}</Box> 个分类</>
+                <>
+                  {' '}
+                  · 分为{' '}
+                  <Box
+                    component='span'
+                    sx={{ fontWeight: 600 }}
+                  >
+                    {totalGroups}
+                  </Box>{' '}
+                  个分类
+                </>
               )}
             </Typography>
-            <Typography variant="caption" color="text.disabled" sx={{ fontSize: 10 }}>
+            <Typography
+              variant='caption'
+              color='text.disabled'
+              sx={{ fontSize: 10 }}
+            >
               ↑↓ 导航 · Enter 选择
             </Typography>
           </Box>
         </>
       )}
       {totalResults > 0 && (
-        <Box role="listbox" aria-label="搜索结果">
+        <Box
+          role='listbox'
+          aria-label='搜索结果'
+        >
           {groupedResults.map((group, groupIndex) => (
             <React.Fragment key={group.module}>
               {groupIndex > 0 && <Divider />}
@@ -226,7 +291,7 @@ export const SearchResultList: React.FC<SearchResultListProps> = ({
                   {getModuleIcon(group.module)}
                 </Box>
                 <Typography
-                  variant="caption"
+                  variant='caption'
                   sx={{
                     fontWeight: 600,
                     color: getModuleColor(group.module, theme),
@@ -236,7 +301,10 @@ export const SearchResultList: React.FC<SearchResultListProps> = ({
                 >
                   {group.label}
                 </Typography>
-                <Typography variant="caption" color="text.disabled">
+                <Typography
+                  variant='caption'
+                  color='text.disabled'
+                >
                   {group.results.length} 条结果
                 </Typography>
               </Box>
@@ -247,7 +315,7 @@ export const SearchResultList: React.FC<SearchResultListProps> = ({
                 return (
                   <ListItem
                     key={result.id}
-                    component="div"
+                    component='div'
                     onClick={() => onResultClick(result)}
                     data-index={currentIndex}
                     sx={{
@@ -255,7 +323,9 @@ export const SearchResultList: React.FC<SearchResultListProps> = ({
                       py: 1.5,
                       pl: 2,
                       pr: 1.5,
-                      borderLeft: isSelected ? `3px solid ${theme.palette.primary.main}` : '3px solid transparent',
+                      borderLeft: isSelected
+                        ? `3px solid ${theme.palette.primary.main}`
+                        : '3px solid transparent',
                       backgroundColor: isSelected
                         ? alpha(theme.palette.primary.main, isDark ? 0.18 : 0.12)
                         : 'transparent',
@@ -267,20 +337,40 @@ export const SearchResultList: React.FC<SearchResultListProps> = ({
                       },
                       transition: 'background-color 0.15s ease, border-color 0.15s ease',
                     }}
-                    role="option"
+                    role='option'
                     aria-selected={isSelected}
                   >
                     <ListItemIcon sx={{ minWidth: 36, color: moduleColor }}>
                       {getModuleIcon(result.module)}
                     </ListItemIcon>
                     <ListItemText
-                      primary={<HighlightText text={result.title} highlight={query} theme={theme} />}
-                      secondary={result.description ? <HighlightText text={result.description} highlight={query} theme={theme} /> : ''}
+                      primary={
+                        <HighlightText
+                          text={result.title}
+                          highlight={query}
+                          theme={theme}
+                        />
+                      }
+                      secondary={
+                        result.description ? (
+                          <HighlightText
+                            text={result.description}
+                            highlight={query}
+                            theme={theme}
+                          />
+                        ) : (
+                          ''
+                        )
+                      }
                       sx={{
                         '& .MuiListItemText-primary': {
                           fontSize: 13,
                           fontWeight: isSelected ? 600 : 500,
-                          color: isSelected ? (isDark ? theme.palette.primary.light : theme.palette.primary.main) : undefined,
+                          color: isSelected
+                            ? isDark
+                              ? theme.palette.primary.light
+                              : theme.palette.primary.main
+                            : undefined,
                         },
                         '& .MuiListItemText-secondary': {
                           fontSize: 12,
@@ -293,7 +383,7 @@ export const SearchResultList: React.FC<SearchResultListProps> = ({
                     <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
                       <Chip
                         label={result.type_name || result.module}
-                        size="small"
+                        size='small'
                         sx={{
                           height: 20,
                           fontSize: 10,
@@ -302,7 +392,10 @@ export const SearchResultList: React.FC<SearchResultListProps> = ({
                           '& .MuiChip-label': { px: 1 },
                         }}
                       />
-                      <ChevronRight size={14} style={{ opacity: isSelected ? (isDark ? 0.7 : 0.6) : 0.3 }} />
+                      <ChevronRight
+                        size={14}
+                        style={{ opacity: isSelected ? (isDark ? 0.7 : 0.6) : 0.3 }}
+                      />
                     </Box>
                   </ListItem>
                 );

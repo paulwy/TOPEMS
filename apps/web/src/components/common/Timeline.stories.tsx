@@ -12,8 +12,7 @@ const meta = {
     layout: 'centered',
     docs: {
       description: {
-        component:
-          '时间线组件，支持垂直/水平方向、填充/轮廓/柔和变体、多种状态以及加载骨架屏。',
+        component: '时间线组件，支持垂直/水平方向、填充/轮廓/柔和变体、多种状态以及加载骨架屏。',
       },
     },
   },
@@ -121,7 +120,13 @@ export const OutlinedVariant: Story = {
 export const WithStatuses: Story = {
   args: {
     items: [
-      { id: '1', title: '成功步骤', status: 'completed', description: '此步骤已完成', time: '10:00' },
+      {
+        id: '1',
+        title: '成功步骤',
+        status: 'completed',
+        description: '此步骤已完成',
+        time: '10:00',
+      },
       { id: '2', title: '当前步骤', status: 'active', description: '正在进行中', time: '11:00' },
       { id: '3', title: '等待中', status: 'pending', description: '等待执行', time: '12:00' },
       { id: '4', title: '错误', status: 'error', description: '执行出错', time: '13:00' },
@@ -155,7 +160,10 @@ export const WithContent: Story = {
         time: '2024-03-15 10:00',
         status: 'completed',
         content: (
-          <Paper sx={{ p: 2, mt: 1 }} variant="outlined">
+          <Paper
+            sx={{ p: 2, mt: 1 }}
+            variant='outlined'
+          >
             <Box sx={{ fontFamily: 'monospace', fontSize: '0.75rem' }}>
               feat: add user authentication module
             </Box>

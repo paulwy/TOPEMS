@@ -9,7 +9,6 @@ import {
   ErrorEmptyState,
 } from './EmptyState';
 
-
 const meta = {
   title: 'Common/EmptyState',
   component: EmptyState,
@@ -103,7 +102,12 @@ export const Compact: Story = {
 };
 
 export const SearchEmpty: Story = {
-  render: () => <SearchEmptyState keyword="React" onClear={fn()} />,
+  render: () => (
+    <SearchEmptyState
+      keyword='React'
+      onClear={fn()}
+    />
+  ),
 };
 
 export const ListEmpty: Story = {
@@ -123,7 +127,10 @@ export const PermissionEmpty: Story = {
 
 export const ErrorEmpty: Story = {
   render: () => (
-    <ErrorEmptyState error='网络连接超时，请检查网络后重试' onRetry={fn()} />
+    <ErrorEmptyState
+      error='网络连接超时，请检查网络后重试'
+      onRetry={fn()}
+    />
   ),
 };
 

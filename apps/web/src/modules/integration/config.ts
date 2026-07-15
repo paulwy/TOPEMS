@@ -32,7 +32,10 @@ export const integrationModuleConfig: RouteModuleConfig = {
   routes: [
     {
       path: INTEGRATION_PATHS.dashboard,
-      element: lazyWithRetry(() => import('@/pages/integration/IntegrationDashboardPage'), 'IntegrationDashboardPage'),
+      element: lazyWithRetry(
+        () => import('@/pages/integration/IntegrationDashboardPage'),
+        'IntegrationDashboardPage'
+      ),
       module: 'integration',
       code: 'integration-dashboard',
       title: '集成概览',
@@ -43,7 +46,10 @@ export const integrationModuleConfig: RouteModuleConfig = {
     },
     {
       path: INTEGRATION_PATHS.connections,
-      element: lazyWithRetry(() => import('@/pages/integration/IntegrationConnectionsPage'), 'IntegrationConnectionsPage'),
+      element: lazyWithRetry(
+        () => import('@/pages/integration/IntegrationConnectionsPage'),
+        'IntegrationConnectionsPage'
+      ),
       module: 'integration',
       code: 'integration-connections',
       title: '连接管理',
@@ -54,7 +60,10 @@ export const integrationModuleConfig: RouteModuleConfig = {
     },
     {
       path: INTEGRATION_PATHS.mappings,
-      element: lazyWithRetry(() => import('@/pages/integration/IntegrationMappingsPage'), 'IntegrationMappingsPage'),
+      element: lazyWithRetry(
+        () => import('@/pages/integration/IntegrationMappingsPage'),
+        'IntegrationMappingsPage'
+      ),
       module: 'integration',
       code: 'integration-mappings',
       title: '数据映射',
@@ -65,7 +74,10 @@ export const integrationModuleConfig: RouteModuleConfig = {
     },
     {
       path: INTEGRATION_PATHS.events,
-      element: lazyWithRetry(() => import('@/pages/integration/IntegrationEventsPage'), 'IntegrationEventsPage'),
+      element: lazyWithRetry(
+        () => import('@/pages/integration/IntegrationEventsPage'),
+        'IntegrationEventsPage'
+      ),
       module: 'integration',
       code: 'integration-events',
       title: '事件日志',
@@ -76,7 +88,10 @@ export const integrationModuleConfig: RouteModuleConfig = {
     },
     {
       path: INTEGRATION_PATHS.erpOverview,
-      element: lazyWithRetry(() => import('@/pages/integration/IntegrationErpOverviewPage'), 'IntegrationErpOverviewPage'),
+      element: lazyWithRetry(
+        () => import('@/pages/integration/IntegrationErpOverviewPage'),
+        'IntegrationErpOverviewPage'
+      ),
       module: 'integration',
       code: 'integration-erp',
       title: 'ERP集成',
@@ -87,7 +102,10 @@ export const integrationModuleConfig: RouteModuleConfig = {
     },
     {
       path: INTEGRATION_PATHS.limsQms,
-      element: lazyWithRetry(() => import('@/pages/integration/IntegrationLimsQmsPage'), 'IntegrationLimsQmsPage'),
+      element: lazyWithRetry(
+        () => import('@/pages/integration/IntegrationLimsQmsPage'),
+        'IntegrationLimsQmsPage'
+      ),
       module: 'integration',
       code: 'integration-lims-qms',
       title: 'LIMS-QMS集成',
@@ -98,7 +116,10 @@ export const integrationModuleConfig: RouteModuleConfig = {
     },
     {
       path: INTEGRATION_PATHS.mesErp,
-      element: lazyWithRetry(() => import('@/pages/integration/IntegrationMesErpPage'), 'IntegrationMesErpPage'),
+      element: lazyWithRetry(
+        () => import('@/pages/integration/IntegrationMesErpPage'),
+        'IntegrationMesErpPage'
+      ),
       module: 'integration',
       code: 'integration-mes-erp',
       title: 'MES-ERP集成',
@@ -109,7 +130,10 @@ export const integrationModuleConfig: RouteModuleConfig = {
     },
     {
       path: INTEGRATION_PATHS.wmsScm,
-      element: lazyWithRetry(() => import('@/pages/integration/IntegrationWmsScmPage'), 'IntegrationWmsScmPage'),
+      element: lazyWithRetry(
+        () => import('@/pages/integration/IntegrationWmsScmPage'),
+        'IntegrationWmsScmPage'
+      ),
       module: 'integration',
       code: 'integration-wms-scm',
       title: 'WMS-SCM集成',
@@ -120,7 +144,10 @@ export const integrationModuleConfig: RouteModuleConfig = {
     },
     {
       path: INTEGRATION_PATHS.settings,
-      element: lazyWithRetry(() => import('@/pages/integration/IntegrationSettingsPage'), 'IntegrationSettingsPage'),
+      element: lazyWithRetry(
+        () => import('@/pages/integration/IntegrationSettingsPage'),
+        'IntegrationSettingsPage'
+      ),
       module: 'integration',
       code: 'integration-settings',
       title: '集成设置',

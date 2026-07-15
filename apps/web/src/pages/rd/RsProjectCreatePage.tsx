@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import {
   FormPageTemplate,
   type FormSection,
@@ -8,8 +9,10 @@ import {
 import { PageContainer } from '@/components/common';
 import { rdApi } from '@/api/rd';
 import { useNotificationStore } from '@/store';
-import type { Project, TeamMember } from '@/api/rd';
+import type { Project, TeamMember, CreateProjectRequest, UpdateProjectRequest } from '@/api/rd';
 import { RD_PATHS } from '@/modules/rd/config';
+import { QUERY_KEYS } from '@/lib/reactQuery';
+import { logger } from '@/utils/logger';
 
 const projectTypes = ['新产品研发', '工艺改进', '配方优化', '技术攻关', '设备改造', '其他'];
 const riskLevels = ['低', '中', '高', '极高'];
@@ -24,11 +27,8 @@ const RsProjectCreatePage: React.FC = () => {
   const navigate = useNavigate();
   const { id } = useParams<{ id: string }>();
   const isEdit = Boolean(id);
+  const queryClient = useQueryClient();
   const { addNotification } = useNotificationStore();
-
-  const [loading, setLoading] = useState(false);
-  const [submitting, setSubmitting] = useState(false);
-  const [error, setError] = useState<string | undefined>(undefined);
 
   const [teamMembers, setTeamMembers] = useState<TeamMember[]>([]);
   const [tags, setTags] = useState<string[]>([]);
@@ -44,6 +44,73 @@ const RsProjectCreatePage: React.FC = () => {
     { id: '8', name: '郑十' },
   ];
   const availableTags = ['催化剂', '聚合物', '纳米材料', '环保', '新能源', '生物医药', '电子材料'];
+
+  const projectQuery = useQuery({
+    queryKey: QUERY_KEYS.RD.PROJECT(id || ''),
+    queryFn: async () => {
+      const response = await rdApi.getProject(id || '');
+      if (!response.success || !response.data) {
+        throw new Error(response.message || '加载项目数据失败');
+      }
+      return response.data;
+    },
+    enabled: isEdit && !!id,
+  });
+
+  useEffect(() => {
+    if (projectQuery.data) {
+      setTeamMembers(projectQuery.data.team_members || []);
+      setTags(projectQuery.data.tags || []);
+    }
+  }, [projectQuery.data]);
+
+  const submitMutation = useMutation({
+    mutationFn: async (params: {
+      isEdit: boolean;
+      id?: string;
+      requestData: Record<string, unknown>;
+    }) => {
+      if (params.isEdit && params.id) {
+        const response = await rdApi.updateProject(
+          params.id,
+          params.requestData as unknown as UpdateProjectRequest
+        );
+        if (!response.success) {
+          throw new Error(response.message || '更新项目失败');
+        }
+        return response;
+      } else {
+        const response = await rdApi.createProject(
+          params.requestData as unknown as CreateProjectRequest
+        );
+        if (!response.success) {
+          throw new Error(response.message || '创建项目失败');
+        }
+        return response;
+      }
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: QUERY_KEYS.RD.PROJECTS });
+      addNotification({
+        type: 'success',
+        title: isEdit ? '更新成功' : '创建成功',
+        message: isEdit ? '项目信息已更新' : '项目已创建',
+      });
+      navigate(RD_PATHS.project);
+    },
+    onError: (error: unknown) => {
+      logger.error('提交项目数据失败:', error);
+      addNotification({
+        type: 'error',
+        title: '提交失败',
+        message: error instanceof Error ? error.message : '无法提交项目数据',
+      });
+    },
+  });
+
+  const loading = projectQuery.isLoading;
+  const submitting = submitMutation.isPending;
+  const error = projectQuery.error ? '加载项目数据失败' : undefined;
 
   const defaultValues = {
     name: '',
@@ -155,86 +222,25 @@ const RsProjectCreatePage: React.FC = () => {
     },
   ];
 
-  useEffect(() => {
-    if (isEdit && id) {
-      loadProjectData(id);
-    }
-  }, [isEdit, id]);
-
-  const loadProjectData = async (projectId: string) => {
-    try {
-      setLoading(true);
-      setError(undefined);
-      const response = await rdApi.getProject(projectId);
-      if (response.success && response.data) {
-        const project = response.data;
-        setTeamMembers(project.team_members || []);
-        setTags(project.tags || []);
-      } else {
-        setError('无法获取项目数据');
-        addNotification({
-          type: 'error',
-          title: '加载失败',
-          message: '无法加载项目数据',
-        });
-      }
-    } catch (err: unknown) {
-      setError('加载项目数据失败');
-      addNotification({
-        type: 'error',
-        title: '加载失败',
-        message: '无法加载项目数据',
-      });
-    } finally {
-      setLoading(false);
-    }
-  };
-
   const handleSubmit = async (data: unknown) => {
-    setSubmitting(true);
-    try {
-      const formData = data as Record<string, unknown>;
+    const formData = data as Record<string, unknown>;
 
-      const requestData = {
-        name: formData.name as string,
-        code: formData.code as string,
-        description: (formData.description as string) || undefined,
-        project_type: formData.project_type as string,
-        leader: formData.leader as string,
-        team_members: teamMembers.length > 0 ? teamMembers : undefined,
-        start_date: formData.start_date as string,
-        end_date: (formData.end_date as string) || undefined,
-        budget: formData.budget ? Number(formData.budget) : undefined,
-        risklevel: formData.risklevel as string,
-        priority: formData.priority as number,
-        tags: tags.length > 0 ? tags : undefined,
-      };
+    const requestData = {
+      name: formData.name as string,
+      code: formData.code as string,
+      description: (formData.description as string) || undefined,
+      project_type: formData.project_type as string,
+      leader: formData.leader as string,
+      team_members: teamMembers.length > 0 ? teamMembers : undefined,
+      start_date: formData.start_date as string,
+      end_date: (formData.end_date as string) || undefined,
+      budget: formData.budget ? Number(formData.budget) : undefined,
+      risklevel: formData.risklevel as string,
+      priority: formData.priority as number,
+      tags: tags.length > 0 ? tags : undefined,
+    };
 
-      if (isEdit && id) {
-        await rdApi.updateProject(id, requestData);
-        addNotification({
-          type: 'success',
-          title: '更新成功',
-          message: '项目信息已更新',
-        });
-      } else {
-        await rdApi.createProject(requestData);
-        addNotification({
-          type: 'success',
-          title: '创建成功',
-          message: '项目已创建',
-        });
-      }
-      navigate(RD_PATHS.project);
-    } catch (err: unknown) {
-      addNotification({
-        type: 'error',
-        title: '提交失败',
-        message: '无法提交项目数据',
-      });
-    } finally {
-      setSubmitting(false);
-    }
+    await submitMutation.mutateAsync({ isEdit, id, requestData });
   };
 
   const handleCancel = () => {

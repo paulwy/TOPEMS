@@ -48,7 +48,10 @@ export const scmModuleConfig: RouteModuleConfig = {
     },
     {
       path: SCM_PATHS.purchaseOrders,
-      element: lazyWithRetry(() => import('@/pages/scm/ScmPurchaseOrderPage'), 'ScmPurchaseOrderPage'),
+      element: lazyWithRetry(
+        () => import('@/pages/scm/ScmPurchaseOrderPage'),
+        'ScmPurchaseOrderPage'
+      ),
       module: 'scm',
       code: 'scm-purchase-orders',
       title: '采购订单',
@@ -59,7 +62,10 @@ export const scmModuleConfig: RouteModuleConfig = {
     },
     {
       path: SCM_PATHS.purchaseRequisition,
-      element: lazyWithRetry(() => import('@/pages/scm/PurchaseRequisitionPage'), 'PurchaseRequisitionPage'),
+      element: lazyWithRetry(
+        () => import('@/pages/scm/PurchaseRequisitionPage'),
+        'PurchaseRequisitionPage'
+      ),
       module: 'scm',
       code: 'scm-purchase-requisition',
       title: '采购申请',
@@ -70,7 +76,10 @@ export const scmModuleConfig: RouteModuleConfig = {
     },
     {
       path: SCM_PATHS.purchaseItems,
-      element: lazyWithRetry(() => import('@/pages/scm/ScmPurchaseItemPage'), 'ScmPurchaseItemPage'),
+      element: lazyWithRetry(
+        () => import('@/pages/scm/ScmPurchaseItemPage'),
+        'ScmPurchaseItemPage'
+      ),
       module: 'scm',
       code: 'scm-purchase-items',
       title: '采购明细',
@@ -92,7 +101,10 @@ export const scmModuleConfig: RouteModuleConfig = {
     },
     {
       path: SCM_PATHS.supplierAdmission,
-      element: lazyWithRetry(() => import('@/pages/scm/SupplierAdmissionPage'), 'SupplierAdmissionPage'),
+      element: lazyWithRetry(
+        () => import('@/pages/scm/SupplierAdmissionPage'),
+        'SupplierAdmissionPage'
+      ),
       module: 'scm',
       code: 'scm-supplier-admission',
       title: '供应商准入',
@@ -114,7 +126,10 @@ export const scmModuleConfig: RouteModuleConfig = {
     },
     {
       path: SCM_PATHS.contracts,
-      element: lazyWithRetry(() => import('@/pages/scm/PurchaseContractPage'), 'PurchaseContractPage'),
+      element: lazyWithRetry(
+        () => import('@/pages/scm/PurchaseContractPage'),
+        'PurchaseContractPage'
+      ),
       module: 'scm',
       code: 'scm-contracts',
       title: '合同管理',
@@ -125,7 +140,10 @@ export const scmModuleConfig: RouteModuleConfig = {
     },
     {
       path: SCM_PATHS.deliveryAppointment,
-      element: lazyWithRetry(() => import('@/pages/scm/ScmDeliveryAppointmentPage'), 'ScmDeliveryAppointmentPage'),
+      element: lazyWithRetry(
+        () => import('@/pages/scm/ScmDeliveryAppointmentPage'),
+        'ScmDeliveryAppointmentPage'
+      ),
       module: 'scm',
       code: 'scm-delivery-appointment',
       title: '交期预约',
@@ -169,7 +187,10 @@ export const scmModuleConfig: RouteModuleConfig = {
     },
     {
       path: SCM_PATHS.inventoryTurnover,
-      element: lazyWithRetry(() => import('@/pages/scm/ScmInventoryTurnoverPage'), 'ScmInventoryTurnoverPage'),
+      element: lazyWithRetry(
+        () => import('@/pages/scm/ScmInventoryTurnoverPage'),
+        'ScmInventoryTurnoverPage'
+      ),
       module: 'scm',
       code: 'scm-inventory-turnover',
       title: '库存周转',
@@ -180,7 +201,10 @@ export const scmModuleConfig: RouteModuleConfig = {
     },
     {
       path: SCM_PATHS.priceComparison,
-      element: lazyWithRetry(() => import('@/pages/scm/ScmPriceComparisonPage'), 'ScmPriceComparisonPage'),
+      element: lazyWithRetry(
+        () => import('@/pages/scm/ScmPriceComparisonPage'),
+        'ScmPriceComparisonPage'
+      ),
       module: 'scm',
       code: 'scm-price-comparison',
       title: '价格对比',

@@ -1,5 +1,7 @@
-import React, { useState, useEffect, useCallback } from 'react';
+import React from 'react';
 import { useNavigate } from 'react-router-dom';
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import { QUERY_KEYS } from '@/lib/reactQuery';
 import { z } from 'zod';
 import { User, Mail, Phone, Calendar, MapPin, Briefcase, Building2 } from 'lucide-react';
 import FormPageTemplate from '@/components/templates/FormPageTemplate';
@@ -31,66 +33,66 @@ type EmployeeFormData = z.infer<typeof employeeSchema>;
 const HrmEmployeeCreatePage: React.FC = () => {
   const navigate = useNavigate();
   const { success, error } = useNotification();
+  const queryClient = useQueryClient();
 
-  const [departments, setDepartments] = useState<Department[]>([]);
-  const [positions, setPositions] = useState<Position[]>([]);
-  const [loading, setLoading] = useState(false);
-  const [submitting, setSubmitting] = useState(false);
-
-  useEffect(() => {
-    loadDepartments();
-    loadPositions();
-  }, []);
-
-  const loadDepartments = async () => {
-    try {
+  const departmentsQuery = useQuery<Department[]>({
+    queryKey: QUERY_KEYS.HRM.DEPARTMENTS,
+    queryFn: async () => {
       const res = await departmentApi.list({ pagesize: 100 });
       if (res.code === 200 && res.data) {
-        setDepartments(res.data.items || []);
+        return res.data.items || [];
       }
-    } catch (err: unknown) {
-      logger.error('Failed to load departments:', err);
-    }
-  };
+      return [];
+    },
+  });
 
-  const loadPositions = async () => {
-    try {
+  const positionsQuery = useQuery<Position[]>({
+    queryKey: QUERY_KEYS.HRM.POSITION,
+    queryFn: async () => {
       const res = await positionApi.list({ pagesize: 100 });
       if (res.code === 200 && res.data) {
-        setPositions(res.data.items || []);
+        return res.data.items || [];
       }
-    } catch (err: unknown) {
-      logger.error('Failed to load positions:', err);
+      return [];
+    },
+  });
+
+  const departments = departmentsQuery.data || [];
+  const positions = positionsQuery.data || [];
+  const loading = departmentsQuery.isLoading || positionsQuery.isLoading;
+
+  const createMutation = useMutation({
+    mutationFn: async (data: EmployeeFormData) => {
+      if (!data.name || !data.employee_no) {
+        throw new Error('请填写必填字段');
+      }
+      const res = await employeeApi.create(data);
+      if (res.code !== 200 && res.code !== 201) {
+        throw new Error(res.message || '创建失败');
+      }
+      return res;
+    },
+    onSuccess: () => {
+      success('员工创建成功');
+      queryClient.invalidateQueries({ queryKey: QUERY_KEYS.HRM.EMPLOYEES });
+      navigate(HRM_PATHS.employees);
+    },
+    onError: (err: Error) => {
+      logger.error('Failed to create employee:', err);
+      error(err.message || '创建员工失败');
+    },
+  });
+
+  const handleSubmit = (data: unknown) => {
+    const formData = data as EmployeeFormData;
+    if (!formData.name || !formData.employee_no) {
+      error('请填写必填字段');
+      return;
     }
+    createMutation.mutate(formData);
   };
 
-  const handleSubmit = useCallback(
-    async (data: unknown) => {
-      const formData = data as EmployeeFormData;
-
-      if (!formData.name || !formData.employee_no) {
-        error('请填写必填字段');
-        return;
-      }
-
-      setSubmitting(true);
-      try {
-        const res = await employeeApi.create(formData);
-        if (res.code === 200 || res.code === 201) {
-          success('员工创建成功');
-          navigate(HRM_PATHS.employees);
-        } else {
-          error(res.message || '创建失败');
-        }
-      } catch (err: unknown) {
-        logger.error('Failed to create employee:', err);
-        error('创建员工失败');
-      } finally {
-        setSubmitting(false);
-      }
-    },
-    [error, success, navigate]
-  );
+  const submitting = createMutation.isPending;
 
   const handleCancel = () => {
     navigate(HRM_PATHS.employees);

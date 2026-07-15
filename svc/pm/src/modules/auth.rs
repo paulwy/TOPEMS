@@ -67,7 +67,7 @@ async fn refresh(Json(req): Json<RefreshRequest>) -> Json<ApiResponse<AuthTokens
 
 pub fn create_routes() -> Router {
     Router::new()
-        .route("/api/v1/auth/login", post(login))
-        .route("/api/v1/auth/register", post(register))
-        .route("/api/v1/auth/refresh", post(refresh))
+        .route("/api/auth/login", post(login))
+        .route("/api/auth/register", post(register))
+        .route("/api/auth/refresh", post(refresh))
 }

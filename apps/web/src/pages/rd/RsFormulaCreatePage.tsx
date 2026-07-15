@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useMemo } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import {
   FormPageTemplate,
   type FormSection,
@@ -15,6 +16,8 @@ import type {
 } from '@/api/rd';
 import { useNotificationStore } from '@/store';
 import { RD_PATHS } from '@/modules/rd/config';
+import { QUERY_KEYS } from '@/lib/reactQuery';
+import { logger } from '@/utils/logger';
 import {
   Paper,
   Table,
@@ -41,16 +44,91 @@ const RsFormulaCreatePage: React.FC = () => {
   const navigate = useNavigate();
   const { id } = useParams<{ id: string }>();
   const { addNotification } = useNotificationStore();
+  const queryClient = useQueryClient();
   const isEdit = Boolean(id);
 
-  const [loading, setLoading] = useState(false);
-  const [submitting, setSubmitting] = useState(false);
-  const [error, setError] = useState<string | undefined>(undefined);
-
-  const [projects, setProjects] = useState<{ id: string; name: string }[]>([]);
   const [ingredients, setIngredients] = useState<FormulaIngredient[]>([
     { name: '', quantity: 0, unit: '%', purity: '', supplier: '', notes: '' },
   ]);
+
+  const projectsQuery = useQuery({
+    queryKey: QUERY_KEYS.RD.PROJECTS,
+    queryFn: async () => {
+      const response = await rdApi.listProjects();
+      if (!response.success || !response.data) {
+        throw new Error(response.message || '加载项目列表失败');
+      }
+      return response.data.projects?.map((p) => ({ id: p.id, name: p.name })) || [];
+    },
+  });
+
+  const formulaQuery = useQuery({
+    queryKey: QUERY_KEYS.RD.FORMULA(id || ''),
+    queryFn: async () => {
+      const response = await formulaApi.getFormula(id || '');
+      if (!response.success || !response.data) {
+        throw new Error(response.message || '加载配方数据失败');
+      }
+      return response.data;
+    },
+    enabled: isEdit && !!id,
+  });
+
+  useEffect(() => {
+    if (formulaQuery.data) {
+      setIngredients(
+        formulaQuery.data.ingredients || [
+          { name: '', quantity: 0, unit: '%', purity: '', supplier: '', notes: '' },
+        ]
+      );
+    }
+  }, [formulaQuery.data]);
+
+  const submitMutation = useMutation({
+    mutationFn: async (params: {
+      isEdit: boolean;
+      id?: string;
+      createData?: CreateFormulaRequest;
+      updateData?: UpdateFormulaRequest;
+    }) => {
+      if (params.isEdit && params.id && params.updateData) {
+        const response = await formulaApi.updateFormula(params.id, params.updateData);
+        if (!response.success) {
+          throw new Error(response.message || '更新配方失败');
+        }
+        return response;
+      } else if (params.createData) {
+        const response = await formulaApi.createFormula(params.createData);
+        if (!response.success) {
+          throw new Error(response.message || '创建配方失败');
+        }
+        return response;
+      }
+      throw new Error('无效的提交参数');
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: QUERY_KEYS.RD.FORMULAS });
+      addNotification({
+        type: 'success',
+        title: isEdit ? '更新成功' : '创建成功',
+        message: isEdit ? '配方已更新' : '配方已创建',
+      });
+      navigate(RD_PATHS.formula);
+    },
+    onError: (error: unknown) => {
+      logger.error('提交配方失败:', error);
+      addNotification({
+        type: 'error',
+        title: '提交失败',
+        message: error instanceof Error ? error.message : '无法提交配方',
+      });
+    },
+  });
+
+  const projects = projectsQuery.data || [];
+  const loading = formulaQuery.isLoading;
+  const submitting = submitMutation.isPending;
+  const error = formulaQuery.error ? '加载配方数据失败' : undefined;
 
   const defaultValues = {
     name: '',
@@ -135,60 +213,6 @@ const RsFormulaCreatePage: React.FC = () => {
     [projects]
   );
 
-  useEffect(() => {
-    loadProjects();
-    if (isEdit && id) {
-      loadFormula(id);
-    }
-  }, [isEdit, id]);
-
-  const loadProjects = async () => {
-    try {
-      const response = await rdApi.listProjects();
-      if (response.success && response.data) {
-        setProjects(response.data.projects?.map((p) => ({ id: p.id, name: p.name })) || []);
-      }
-    } catch (err: unknown) {
-      addNotification({
-        type: 'error',
-        title: '加载失败',
-        message: '无法加载项目列表',
-      });
-    }
-  };
-
-  const loadFormula = async (formulaId: string) => {
-    try {
-      setLoading(true);
-      setError(undefined);
-      const response = await formulaApi.getFormula(formulaId);
-      if (response.success && response.data) {
-        const formula = response.data;
-        setIngredients(
-          formula.ingredients || [
-            { name: '', quantity: 0, unit: '%', purity: '', supplier: '', notes: '' },
-          ]
-        );
-      } else {
-        setError('无法获取配方数据');
-        addNotification({
-          type: 'error',
-          title: '加载失败',
-          message: '无法加载配方数据',
-        });
-      }
-    } catch (err: unknown) {
-      setError('加载配方数据失败');
-      addNotification({
-        type: 'error',
-        title: '加载失败',
-        message: '无法加载配方数据',
-      });
-    } finally {
-      setLoading(false);
-    }
-  };
-
   const handleAddIngredient = () => {
     setIngredients([
       ...ingredients,
@@ -212,87 +236,48 @@ const RsFormulaCreatePage: React.FC = () => {
   };
 
   const handleSubmit = async (data: unknown) => {
-    setSubmitting(true);
-    try {
-      const formData = data as Record<string, unknown>;
+    const formData = data as Record<string, unknown>;
 
-      if (!formData.name || !formData.code || !formData.project_id) {
-        addNotification({
-          type: 'error',
-          title: '验证失败',
-          message: '请填写必填字段',
-        });
-        return;
-      }
-
-      const validIngredients = ingredients.filter((i) => i.name.trim());
-
-      if (isEdit && id) {
-        const updateData: UpdateFormulaRequest = {
-          name: formData.name as string,
-          code: formData.code as string,
-          version: formData.version as string,
-          category: (formData.category as string) || undefined,
-          description: (formData.description as string) || undefined,
-          ingredients: validIngredients.length > 0 ? validIngredients : undefined,
-          status: formData.status as string,
-          effective_date: (formData.effective_date as string) || undefined,
-          expiration_date: (formData.expiration_date as string) || undefined,
-        };
-
-        const response = await formulaApi.updateFormula(id, updateData);
-        if (response.success) {
-          addNotification({
-            type: 'success',
-            title: '更新成功',
-            message: '配方已更新',
-          });
-          navigate(RD_PATHS.formula);
-        } else {
-          addNotification({
-            type: 'error',
-            title: '更新失败',
-            message: '无法更新配方',
-          });
-        }
-      } else {
-        const createData: CreateFormulaRequest = {
-          name: formData.name as string,
-          code: formData.code as string,
-          project_id: formData.project_id as string,
-          version: formData.version as string,
-          category: (formData.category as string) || undefined,
-          description: (formData.description as string) || undefined,
-          ingredients: validIngredients.length > 0 ? validIngredients : undefined,
-          status: formData.status as string,
-          effective_date: (formData.effective_date as string) || undefined,
-          expiration_date: (formData.expiration_date as string) || undefined,
-        };
-
-        const response = await formulaApi.createFormula(createData);
-        if (response.success) {
-          addNotification({
-            type: 'success',
-            title: '创建成功',
-            message: '配方已创建',
-          });
-          navigate(RD_PATHS.formula);
-        } else {
-          addNotification({
-            type: 'error',
-            title: '创建失败',
-            message: '无法创建配方',
-          });
-        }
-      }
-    } catch (err: unknown) {
+    if (!formData.name || !formData.code || !formData.project_id) {
       addNotification({
         type: 'error',
-        title: '提交失败',
-        message: (err as { message?: string }).message || '无法提交配方',
+        title: '验证失败',
+        message: '请填写必填字段',
       });
-    } finally {
-      setSubmitting(false);
+      return;
+    }
+
+    const validIngredients = ingredients.filter((i) => i.name.trim());
+
+    if (isEdit && id) {
+      const updateData: UpdateFormulaRequest = {
+        name: formData.name as string,
+        code: formData.code as string,
+        version: formData.version as string,
+        category: (formData.category as string) || undefined,
+        description: (formData.description as string) || undefined,
+        ingredients: validIngredients.length > 0 ? validIngredients : undefined,
+        status: formData.status as string,
+        effective_date: (formData.effective_date as string) || undefined,
+        expiration_date: (formData.expiration_date as string) || undefined,
+      };
+
+      await submitMutation.mutateAsync({ isEdit, id, updateData });
+    } else {
+      const createData: CreateFormulaRequest = {
+        name: formData.name as string,
+        code: formData.code as string,
+        project_id: formData.project_id as string,
+        version: formData.version as string,
+        category: (formData.category as string) || undefined,
+        description: (formData.description as string) || undefined,
+        ingredients: validIngredients.length > 0 ? validIngredients : undefined,
+        status: formData.status as string,
+        effective_date: (formData.effective_date as string) || undefined,
+        expiration_date: (formData.expiration_date as string) || undefined,
+      };
+
+      await submitMutation.mutateAsync({ isEdit, createData });
     }
   };
 

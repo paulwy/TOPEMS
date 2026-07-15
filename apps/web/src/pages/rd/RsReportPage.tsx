@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { useQuery } from '@tanstack/react-query';
 import { apiLogger } from '@/utils/logger';
 import {
   BarChart3 as AnalyticsIcon,
@@ -33,55 +34,55 @@ interface RsReportData {
   monthlyProgress: Array<{ month: string; projects: number; experiments: number }>;
 }
 
+const defaultReportData: RsReportData = {
+  projects: {
+    total: 24,
+    active: 12,
+    completed: 8,
+    cancelled: 4,
+  },
+  experiments: {
+    total: 156,
+    lab: 80,
+    pilot: 50,
+    scaleup: 26,
+    successRate: 87.5,
+  },
+  formulas: {
+    total: 45,
+    published: 30,
+    testing: 10,
+    draft: 5,
+  },
+  monthlyProgress: [
+    { month: '2024-01', projects: 2, experiments: 15 },
+    { month: '2024-02', projects: 3, experiments: 20 },
+    { month: '2024-03', projects: 4, experiments: 25 },
+    { month: '2024-04', projects: 5, experiments: 30 },
+    { month: '2024-05', projects: 4, experiments: 28 },
+    { month: '2024-06', projects: 6, experiments: 38 },
+  ],
+};
+
 const RsReportPage: React.FC = () => {
-  const [loading, setLoading] = useState(true);
-  const [reportData, setReportData] = useState<RsReportData>({
-    projects: {
-      total: 24,
-      active: 12,
-      completed: 8,
-      cancelled: 4,
+  const reportQuery = useQuery<RsReportData>({
+    queryKey: ['rd-report-summary'],
+    queryFn: async () => {
+      const response = await apiClient.rd.get<RsReportData>('/reports/summary');
+      if (response.success && response.data) return response.data;
+      return defaultReportData;
     },
-    experiments: {
-      total: 156,
-      lab: 80,
-      pilot: 50,
-      scaleup: 26,
-      successRate: 87.5,
-    },
-    formulas: {
-      total: 45,
-      published: 30,
-      testing: 10,
-      draft: 5,
-    },
-    monthlyProgress: [
-      { month: '2024-01', projects: 2, experiments: 15 },
-      { month: '2024-02', projects: 3, experiments: 20 },
-      { month: '2024-03', projects: 4, experiments: 25 },
-      { month: '2024-04', projects: 5, experiments: 30 },
-      { month: '2024-05', projects: 4, experiments: 28 },
-      { month: '2024-06', projects: 6, experiments: 38 },
-    ],
+    staleTime: 5 * 60 * 1000,
   });
 
-  useEffect(() => {
-    loadData();
-  }, []);
+  const reportData = reportQuery.data ?? defaultReportData;
+  const loading = reportQuery.isLoading;
 
-  const loadData = async () => {
-    setLoading(true);
-    try {
-      const response = await apiClient.rd.get('/reports/summary');
-      if (response.success && response.data) {
-        setReportData(response.data);
-      }
-    } catch (err: unknown) {
-      apiLogger.error('加载研发报表数据失败:', err);
-    } finally {
-      setLoading(false);
+  useEffect(() => {
+    if (reportQuery.isError) {
+      apiLogger.error('加载研发报表数据失败:', reportQuery.error);
     }
-  };
+  }, [reportQuery.isError, reportQuery.error]);
 
   const statCards = [
     {
@@ -216,7 +217,7 @@ const RsReportPage: React.FC = () => {
         timeRangeOptions={timeRangeOptions}
         timeRange={timeRange}
         onTimeRangeChange={setTimeRange}
-        onRefresh={loadData}
+        onRefresh={() => reportQuery.refetch()}
         showTimeRange={true}
         showRefresh={true}
         showExport={true}

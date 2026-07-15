@@ -1,4 +1,5 @@
 import { useState, useEffect, useCallback } from 'react';
+import { useQuery } from '@tanstack/react-query';
 import { useParams } from 'react-router-dom';
 import {
   RefreshCw,
@@ -28,6 +29,8 @@ import {
   Chip,
   Alert,
   Button,
+  useTheme,
+  useMediaQuery,
 } from '@mui/material';
 import { Grid } from '@/components';
 import { useNotificationStore } from '@/store';
@@ -290,10 +293,10 @@ const summaryLabels: Record<string, string> = {
 
 const BIModuleDetailPage = () => {
   const { moduleId } = useParams<{ moduleId: string }>();
-  const [moduleData, setModuleData] = useState<ModuleData | null>(null);
-  const [loading, setLoading] = useState(true);
-  const [isRefreshing, setIsRefreshing] = useState(false);
   const [error, setError] = useState<string | null>(null);
+
+  const theme = useTheme();
+  const isMobile = useMediaQuery(theme.breakpoints.down('md'));
 
   const config = moduleConfig[moduleId || 'rs'] || {
     name: '未知模块',
@@ -301,140 +304,134 @@ const BIModuleDetailPage = () => {
     color: 'grey.500',
   };
 
-  const loadModuleData = useCallback(
-    async (showRefreshing = false) => {
-      if (showRefreshing) setIsRefreshing(true);
-      else setLoading(true);
-      setError(null);
-
+  const moduleDataQuery = useQuery<ModuleData>({
+    queryKey: ['bi-module-detail', moduleId || 'rs'],
+    queryFn: async () => {
       const modId = moduleId || 'rs';
       const fallback = getFallbackData(modId);
 
+      const apiConfig = moduleApiMap[modId];
+      if (!apiConfig) {
+        return fallback;
+      }
+
+      let summaryData: Record<string, number | string> | null = null;
+      let timelineData: Array<{ month: string; count: number }> = fallback.timeline;
+      let distributionData: Array<{ name: string; value: number }> = fallback.distribution;
+
       try {
-        const apiConfig = moduleApiMap[modId];
-        if (!apiConfig) {
-          setModuleData(fallback);
-          return;
+        const summaryRes = await apiConfig.summary();
+        if (summaryRes.success && summaryRes.data) {
+          summaryData = summaryRes.data;
         }
+      } catch (e) {
+        logger.error(`Failed to load ${modId} summary:`, e);
+      }
 
-        let summaryData: Record<string, number | string> | null = null;
-        let timelineData: Array<{ month: string; count: number }> = fallback.timeline;
-        let distributionData: Array<{ name: string; value: number }> = fallback.distribution;
-
+      if (apiConfig.timeline) {
         try {
-          const summaryRes = await apiConfig.summary();
-          if (summaryRes.success && summaryRes.data) {
-            summaryData = summaryRes.data;
+          const timelineRes = await apiConfig.timeline();
+          if (timelineRes.success && timelineRes.data) {
+            const timelineItems = timelineRes.data.items || timelineRes.data || [];
+            if (Array.isArray(timelineItems) && timelineItems.length > 0) {
+              timelineData = timelineItems.map(
+                (
+                  item: { month?: string; date?: string; count?: number; value?: number },
+                  index: number
+                ) => ({
+                  month: item.month || item.date || `${index + 1}月`,
+                  count: item.count || item.value || 0,
+                })
+              );
+            }
           }
         } catch (e) {
-          logger.error(`Failed to load ${modId} summary:`, e);
+          logger.error(`Failed to load ${modId} timeline:`, e);
         }
+      }
 
-        if (apiConfig.timeline) {
-          try {
-            const timelineRes = await apiConfig.timeline();
-            if (timelineRes.success && timelineRes.data) {
-              const timelineItems = timelineRes.data.items || timelineRes.data || [];
-              if (Array.isArray(timelineItems) && timelineItems.length > 0) {
-                timelineData = timelineItems.map(
-                  (
-                    item: { month?: string; date?: string; count?: number; value?: number },
-                    index: number
-                  ) => ({
-                    month: item.month || item.date || `${index + 1}月`,
-                    count: item.count || item.value || 0,
-                  })
-                );
-              }
-            }
-          } catch (e) {
-            logger.error(`Failed to load ${modId} timeline:`, e);
-          }
-        }
+      const summary = summaryData || fallback.summary;
 
-        const summary = summaryData || fallback.summary;
-
-        if (modId === 'rs' && summaryData?.project_type_distribution) {
-          distributionData = Object.entries(summaryData.project_type_distribution).map(
-            ([key, value]) => ({
-              name:
-                key === 'research'
-                  ? '研发'
-                  : key === 'development'
-                    ? '开发'
-                    : key === 'improvement'
-                      ? '改进'
-                      : key,
-              value: value as number,
-            })
-          );
-        } else if (modId === 'lims' && summaryData?.test_type_distribution) {
-          distributionData = Object.entries(summaryData.test_type_distribution).map(
-            ([key, value]) => ({
-              name:
-                key === 'chemical'
-                  ? '化学检验'
-                  : key === 'physical'
-                    ? '物理检验'
-                    : key === 'microbiological'
-                      ? '微生物检验'
-                      : '其他',
-              value: value as number,
-            })
-          );
-        } else if (modId === 'qms' && summaryData?.defect_types) {
-          distributionData = Object.entries(summaryData.defect_types).map(([key, value]) => ({
+      if (modId === 'rs' && summaryData?.project_type_distribution) {
+        distributionData = Object.entries(summaryData.project_type_distribution).map(
+          ([key, value]) => ({
             name:
-              key === 'material'
-                ? '材料'
-                : key === 'process'
-                  ? '工艺'
-                  : key === 'equipment'
-                    ? '设备'
+              key === 'research'
+                ? '研发'
+                : key === 'development'
+                  ? '开发'
+                  : key === 'improvement'
+                    ? '改进'
+                    : key,
+            value: value as number,
+          })
+        );
+      } else if (modId === 'lims' && summaryData?.test_type_distribution) {
+        distributionData = Object.entries(summaryData.test_type_distribution).map(
+          ([key, value]) => ({
+            name:
+              key === 'chemical'
+                ? '化学检验'
+                : key === 'physical'
+                  ? '物理检验'
+                  : key === 'microbiological'
+                    ? '微生物检验'
                     : '其他',
             value: value as number,
-          }));
-        } else if (modId === 'ehs' && summaryData?.risk_distribution) {
-          distributionData = Object.entries(summaryData.risk_distribution).map(([key, value]) => ({
-            name: key === 'high' ? '高风险' : key === 'medium' ? '中风险' : '低风险',
-            value: value as number,
-          }));
-        } else if (modId === 'pdm' && summaryData?.product_line_usage) {
-          distributionData = Object.entries(summaryData.product_line_usage).map(([key, value]) => ({
-            name: key,
-            value: value as number,
-          }));
-        }
-
-        setModuleData({
-          summary,
-          timeline: timelineData,
-          distribution: distributionData,
-          detailTable: [],
-        });
-      } catch (error: unknown) {
-        logger.error('Failed to load module data:', error);
-        setError('加载模块数据失败，请稍后重试');
-        setModuleData(fallback);
-      } finally {
-        setLoading(false);
-        setIsRefreshing(false);
+          })
+        );
+      } else if (modId === 'qms' && summaryData?.defect_types) {
+        distributionData = Object.entries(summaryData.defect_types).map(([key, value]) => ({
+          name:
+            key === 'material'
+              ? '材料'
+              : key === 'process'
+                ? '工艺'
+                : key === 'equipment'
+                  ? '设备'
+                  : '其他',
+          value: value as number,
+        }));
+      } else if (modId === 'ehs' && summaryData?.risk_distribution) {
+        distributionData = Object.entries(summaryData.risk_distribution).map(([key, value]) => ({
+          name: key === 'high' ? '高风险' : key === 'medium' ? '中风险' : '低风险',
+          value: value as number,
+        }));
+      } else if (modId === 'pdm' && summaryData?.product_line_usage) {
+        distributionData = Object.entries(summaryData.product_line_usage).map(([key, value]) => ({
+          name: key,
+          value: value as number,
+        }));
       }
+
+      return {
+        summary,
+        timeline: timelineData,
+        distribution: distributionData,
+        detailTable: [],
+      };
     },
-    [moduleId]
-  );
+    staleTime: 5 * 60 * 1000,
+  });
+
+  const moduleData = moduleDataQuery.data ?? null;
+  const loading = moduleDataQuery.isLoading;
 
   useEffect(() => {
-    loadModuleData();
-  }, [loadModuleData]);
+    if (moduleDataQuery.isError) {
+      logger.error('Failed to load module data:', moduleDataQuery.error);
+      setError('加载模块数据失败，请稍后重试');
+    } else {
+      setError(null);
+    }
+  }, [moduleDataQuery.isError, moduleDataQuery.error]);
 
   const handleRefresh = useCallback(() => {
-    loadModuleData(true);
-  }, [loadModuleData]);
+    moduleDataQuery.refetch();
+  }, [moduleDataQuery]);
 
   const exportData = moduleData?.detailTable || [];
 
-  // 构建统计数据卡片
   const statsCards: StatCard[] = moduleData?.summary
     ? Object.entries(moduleData.summary)
         .slice(0, 4)
@@ -459,11 +456,9 @@ const BIModuleDetailPage = () => {
         }))
     : [];
 
-  // 构建图表数据
   const timelineChartData = moduleData?.timeline || [];
   const distributionChartData = moduleData?.distribution || [];
 
-  // 构建图表卡片
   const chartCards: ChartCardType[] = [
     {
       id: 'timeline-chart',
@@ -483,22 +478,22 @@ const BIModuleDetailPage = () => {
             />
             <XAxis
               dataKey='month'
-              tick={{ fill: ct.text.secondary, fontSize: 12 }}
+              tick={{ fill: ct.text.secondary, fontSize: isMobile ? 10 : 12 }}
             />
-            <YAxis tick={{ fill: ct.text.secondary, fontSize: 12 }} />
+            <YAxis tick={{ fill: ct.text.secondary, fontSize: isMobile ? 10 : 12 }} />
             <Tooltip />
             <Line
               type='monotone'
               dataKey='count'
               stroke={config.color}
               strokeWidth={2}
-              dot={{ fill: config.color, r: 4 }}
-              activeDot={{ r: 6 }}
+              dot={{ fill: config.color, r: isMobile ? 3 : 4 }}
+              activeDot={{ r: isMobile ? 5 : 6 }}
             />
           </RechartsLineChart>
         </ResponsiveContainer>
       ),
-      height: 300,
+      height: isMobile ? 250 : 300,
       type: 'line',
       onRefresh: handleRefresh,
     },
@@ -518,10 +513,15 @@ const BIModuleDetailPage = () => {
               data={distributionChartData}
               cx='50%'
               cy='50%'
-              labelLine={false}
-              label={({ name, percent }) => `${name} ${((percent || 0) * 100).toFixed(0)}%`}
-              outerRadius={80}
-              innerRadius={50}
+              labelLine={!isMobile}
+              label={
+                !isMobile
+                  ? ({ name, percent }: { name: string; percent?: number }) =>
+                      `${name} ${((percent || 0) * 100).toFixed(0)}%`
+                  : undefined
+              }
+              outerRadius={isMobile ? 60 : 80}
+              innerRadius={isMobile ? 35 : 50}
               dataKey='value'
             >
               {distributionChartData.map(
@@ -537,7 +537,7 @@ const BIModuleDetailPage = () => {
           </RechartsPieChart>
         </ResponsiveContainer>
       ),
-      height: 300,
+      height: isMobile ? 250 : 300,
       type: 'pie',
       onRefresh: handleRefresh,
     },
@@ -585,7 +585,7 @@ const BIModuleDetailPage = () => {
         loading={loading}
         onRefresh={handleRefresh}
         headerContent={
-          <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
+          <Box sx={{ display: 'flex', alignItems: 'center', gap: 2, flexWrap: 'wrap' }}>
             <Typography
               variant='body2'
               color='text.secondary'
@@ -621,7 +621,6 @@ const BIModuleDetailPage = () => {
           </Alert>
         )}
 
-        {/* 数据明细表 */}
         <Card>
           <CardHeader
             title='数据明细表'
@@ -630,7 +629,7 @@ const BIModuleDetailPage = () => {
           />
           <CardContent>
             <Box sx={{ overflow: 'auto' }}>
-              <Table size='small'>
+              <Table size={isMobile ? 'small' : 'medium'}>
                 <TableHead>
                   <TableRow>
                     {moduleId === 'rs' && (
@@ -695,7 +694,10 @@ const BIModuleDetailPage = () => {
                       hover
                     >
                       {Object.values(row).map((cell, cellIndex) => (
-                        <TableCell key={cellIndex}>
+                        <TableCell
+                          key={cellIndex}
+                          sx={{ fontSize: isMobile ? 12 : 14 }}
+                        >
                           {typeof cell === 'number' ? cell.toLocaleString() : cell}
                         </TableCell>
                       ))}

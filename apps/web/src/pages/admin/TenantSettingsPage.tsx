@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { useQuery, useQueryClient } from '@tanstack/react-query';
 import {
   Box,
   Typography,
@@ -45,6 +46,7 @@ import { PageContainer, Grid } from '@/components/common';
 import { tenantApi } from '@/api/tenant';
 import { logger } from '@/utils/logger';
 import type { Tenant, TenantUser, TenantRole } from '@/api/tenant/types';
+import { QUERY_KEYS } from '@/lib/reactQuery';
 
 const roleLabels: Record<TenantRole, string> = {
   owner: '所有者',
@@ -54,13 +56,40 @@ const roleLabels: Record<TenantRole, string> = {
 };
 
 const TenantSettingsPage: React.FC = () => {
-  const [tenant, setTenant] = useState<Tenant | null>(null);
-  const [loading, setLoading] = useState(true);
+  const queryClient = useQueryClient();
+
+  const { data: tenant, isLoading: loading } = useQuery<Tenant | null>({
+    queryKey: QUERY_KEYS.TENANT.CURRENT,
+    queryFn: async () => {
+      const contextRes = await tenantApi.getCurrentTenantContext();
+      if (!contextRes.success || !contextRes.data) {
+        throw new Error(contextRes.message || '获取租户上下文失败');
+      }
+      const tenantRes = await tenantApi.getTenant(contextRes.data.tenant_id);
+      if (!tenantRes.success || !tenantRes.data) {
+        throw new Error(tenantRes.message || '加载租户信息失败');
+      }
+      return tenantRes.data;
+    },
+  });
+
+  const { data: members = [] } = useQuery<TenantUser[]>({
+    queryKey: QUERY_KEYS.TENANT.USERS,
+    queryFn: async () => {
+      if (!tenant) return [];
+      const res = await tenantApi.getTenantUsers(tenant.id, { pageSize: 50 });
+      if (!res.success || !res.data) {
+        throw new Error(res.message || '加载成员失败');
+      }
+      return res.data.items;
+    },
+    enabled: !!tenant,
+  });
+
   const [activeSection, setActiveSection] = useState('general');
   const [saving, setSaving] = useState(false);
   const [showInviteDialog, setShowInviteDialog] = useState(false);
   const [inviteForm, setInviteForm] = useState({ email: '', role: 'member' as TenantRole });
-  const [members, setMembers] = useState<TenantUser[]>([]);
   const [formData, setFormData] = useState({
     name: '',
     primary_color: 'primary.main',
@@ -74,48 +103,20 @@ const TenantSettingsPage: React.FC = () => {
   });
 
   useEffect(() => {
-    loadCurrentTenant();
-  }, []);
-
-  const loadCurrentTenant = async () => {
-    setLoading(true);
-    try {
-      const contextRes = await tenantApi.getCurrentTenantContext();
-      if (contextRes.success && contextRes.data) {
-        const tenantRes = await tenantApi.getTenant(contextRes.data.tenant_id);
-        if (tenantRes.success && tenantRes.data) {
-          setTenant(tenantRes.data);
-          setFormData({
-            name: tenantRes.data.name,
-            primary_color: tenantRes.data.settings.branding.primary_color,
-            secondary_color: tenantRes.data.settings.branding.secondary_color,
-            custom_domain: tenantRes.data.settings.branding.custom_domain || '',
-            sso_enabled: tenantRes.data.settings.security.sso_enabled,
-            two_factor_required: tenantRes.data.settings.security.two_factor_required,
-            ip_whitelist_enabled: tenantRes.data.settings.security.ip_whitelist_enabled,
-            session_timeout_minutes: tenantRes.data.settings.security.session_timeout_minutes,
-            allowed_ip_ranges: tenantRes.data.settings.security.allowed_ip_ranges,
-          });
-          loadMembers(tenantRes.data.id);
-        }
-      }
-    } catch (error) {
-      logger.error('Failed to load tenant settings:', error);
-    } finally {
-      setLoading(false);
+    if (tenant) {
+      setFormData({
+        name: tenant.name,
+        primary_color: tenant.settings.branding.primary_color,
+        secondary_color: tenant.settings.branding.secondary_color,
+        custom_domain: tenant.settings.branding.custom_domain || '',
+        sso_enabled: tenant.settings.security.sso_enabled,
+        two_factor_required: tenant.settings.security.two_factor_required,
+        ip_whitelist_enabled: tenant.settings.security.ip_whitelist_enabled,
+        session_timeout_minutes: tenant.settings.security.session_timeout_minutes,
+        allowed_ip_ranges: tenant.settings.security.allowed_ip_ranges,
+      });
     }
-  };
-
-  const loadMembers = async (tenantId: string) => {
-    try {
-      const res = await tenantApi.getTenantUsers(tenantId, { pageSize: 50 });
-      if (res.success && res.data) {
-        setMembers(res.data.items);
-      }
-    } catch (error) {
-      logger.error('Failed to load members:', error);
-    }
-  };
+  }, [tenant]);
 
   const handleSaveGeneral = async () => {
     if (!tenant) return;
@@ -133,7 +134,7 @@ const TenantSettingsPage: React.FC = () => {
           },
         },
       });
-      loadCurrentTenant();
+      queryClient.invalidateQueries({ queryKey: QUERY_KEYS.TENANT.CURRENT });
     } catch (error) {
       logger.error('Failed to save settings:', error);
     } finally {
@@ -157,7 +158,7 @@ const TenantSettingsPage: React.FC = () => {
           },
         },
       });
-      loadCurrentTenant();
+      queryClient.invalidateQueries({ queryKey: QUERY_KEYS.TENANT.CURRENT });
     } catch (error) {
       logger.error('Failed to save security settings:', error);
     } finally {
@@ -172,7 +173,7 @@ const TenantSettingsPage: React.FC = () => {
       if (res.success) {
         setShowInviteDialog(false);
         setInviteForm({ email: '', role: 'member' });
-        loadMembers(tenant.id);
+        queryClient.invalidateQueries({ queryKey: QUERY_KEYS.TENANT.USERS });
       }
     } catch (error) {
       logger.error('Failed to invite member:', error);
@@ -183,7 +184,7 @@ const TenantSettingsPage: React.FC = () => {
     if (!tenant) return;
     try {
       await tenantApi.removeMember(tenant.id, userId);
-      loadMembers(tenant.id);
+      queryClient.invalidateQueries({ queryKey: QUERY_KEYS.TENANT.USERS });
     } catch (error) {
       logger.error('Failed to remove member:', error);
     }
@@ -296,12 +297,14 @@ const TenantSettingsPage: React.FC = () => {
                       fullWidth
                       label='当前套餐'
                       value={
-                        {
-                          free: '免费版',
-                          basic: '基础版',
-                          professional: '专业版',
-                          enterprise: '企业版',
-                        }[tenant.plan]
+                        (
+                          {
+                            free: '免费版',
+                            basic: '基础版',
+                            professional: '专业版',
+                            enterprise: '企业版',
+                          } as Record<string, string>
+                        )[tenant.plan as string]
                       }
                       disabled
                     />
@@ -630,7 +633,7 @@ const TenantSettingsPage: React.FC = () => {
                 </Alert>
 
                 <List disablePadding>
-                  {members.map((member) => (
+                  {members.map((member: TenantUser) => (
                     <React.Fragment key={member.id}>
                       <ListItem sx={{ px: 0 }}>
                         <ListItemAvatar>

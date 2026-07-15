@@ -1,4 +1,6 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
+import { useQuery } from '@tanstack/react-query';
+import { QUERY_KEYS } from '@/lib/reactQuery';
 import {
   Users,
   Briefcase,
@@ -82,7 +84,7 @@ interface InterviewRecord {
 
 const HrmRecruitmentPage: React.FC = () => {
   const navigate = useNavigate();
-  const { success, error, notifications, hideNotification } = useNotification();
+  const { error, notifications, hideNotification } = useNotification();
 
   const [activeTab, setActiveTab] = useState<'positions' | 'candidates' | 'interviews'>(
     'positions'
@@ -90,21 +92,10 @@ const HrmRecruitmentPage: React.FC = () => {
   const [showCreatePositionModal, setShowCreatePositionModal] = useState(false);
   const [showCreateCandidateModal, setShowCreateCandidateModal] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
-  const [loading, setLoading] = useState(false);
 
-  const [positions, setPositions] = useState<JobPosition[]>([]);
-  const [candidates, setCandidates] = useState<Candidate[]>([]);
-  const [interviews, setInterviews] = useState<InterviewRecord[]>([]);
-  const [departments, setDepartments] = useState<Record<string, Department>>({});
-
-  useEffect(() => {
-    loadData();
-  }, []);
-
-  const loadData = async () => {
-    setLoading(true);
-    try {
-      // 并行加载所有数据，但添加错误处理
+  const recruitmentQuery = useQuery({
+    queryKey: [...QUERY_KEYS.HRM.RECRUITMENT, 'dashboard'],
+    queryFn: async () => {
       const results = await Promise.allSettled([
         jobOpeningApi.list({ pagesize: 100 }),
         candidateApi.list({ pagesize: 100 }),
@@ -113,7 +104,6 @@ const HrmRecruitmentPage: React.FC = () => {
         positionApi.list({ pagesize: 100 }),
       ]);
 
-      // 处理每个结果
       const [
         openingsResult,
         candidatesResult,
@@ -122,16 +112,13 @@ const HrmRecruitmentPage: React.FC = () => {
         positionsResult,
       ] = results;
 
-      // 创建部门映射
       const deptMap: Record<string, Department> = {};
       if (departmentsResult.status === 'fulfilled' && departmentsResult.value.data?.items) {
         departmentsResult.value.data.items.forEach((dept) => {
           deptMap[dept.id] = dept;
         });
       }
-      setDepartments(deptMap);
 
-      // 创建职位映射
       const positionMap: Record<string, any> = {};
       if (positionsResult.status === 'fulfilled' && positionsResult.value.data?.items) {
         positionsResult.value.data.items.forEach((pos) => {
@@ -139,12 +126,10 @@ const HrmRecruitmentPage: React.FC = () => {
         });
       }
 
-      // 转换职位数据
       const openings =
         openingsResult.status === 'fulfilled' ? openingsResult.value.data?.items || [] : [];
-      const transformedPositions: JobPosition[] = openings.map((opening) => {
+      const transformedPositions: JobPosition[] = openings.map((opening: JobOpening) => {
         const dept = deptMap[opening.department_id || ''];
-        const pos = positionMap[opening.position_id || ''];
         return {
           id: opening.id,
           title: opening.title,
@@ -162,9 +147,7 @@ const HrmRecruitmentPage: React.FC = () => {
           published_at: opening.publish_date || opening.created_at,
         };
       });
-      setPositions(transformedPositions);
 
-      // 转换候选人数据
       const candidates =
         candidatesResult.status === 'fulfilled' ? candidatesResult.value.data?.items || [] : [];
       const transformedCandidates: Candidate[] = candidates.map((candidate: ApiCandidate) => {
@@ -187,12 +170,10 @@ const HrmRecruitmentPage: React.FC = () => {
           applied_at: candidate.created_at,
         };
       });
-      setCandidates(transformedCandidates);
 
-      // 转换面试数据
       const interviews =
         interviewsResult.status === 'fulfilled' ? interviewsResult.value.data?.items || [] : [];
-      const transformedInterviews: InterviewRecord[] = interviews.map((interview) => {
+      const transformedInterviews: InterviewRecord[] = interviews.map((interview: ApiInterview) => {
         const candidate = transformedCandidates.find((c) => c.id === interview.candidate_id);
         return {
           id: interview.id,
@@ -205,13 +186,22 @@ const HrmRecruitmentPage: React.FC = () => {
           feedback: interview.notes,
         };
       });
-      setInterviews(transformedInterviews);
-    } catch (err: unknown) {
-      error('加载数据失败');
-      apiLogger.error('Failed to load recruitment data:', err);
-    } finally {
-      setLoading(false);
-    }
+
+      return {
+        positions: transformedPositions,
+        candidates: transformedCandidates,
+        interviews: transformedInterviews,
+      };
+    },
+  });
+
+  const loading = recruitmentQuery.isLoading;
+  const positions = recruitmentQuery.data?.positions || [];
+  const candidates = recruitmentQuery.data?.candidates || [];
+  const interviews = recruitmentQuery.data?.interviews || [];
+
+  const loadData = () => {
+    recruitmentQuery.refetch();
   };
 
   const mapPositionStatus = (status: string): JobPosition['status'] => {

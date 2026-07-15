@@ -9,8 +9,9 @@ import {
   Button,
   useTheme,
 } from '@mui/material';
-import React, { useState, useEffect } from 'react';
-import { monitorApi } from '@/api/monitor';
+import React, { useEffect } from 'react';
+import { useQuery } from '@tanstack/react-query';
+import { monitorApi, type SystemMetrics, type ServiceHealth, type Alert } from '@/api/monitor';
 import { apiLogger } from '@/utils/logger';
 import { useNotificationStore } from '@/store';
 import { LoadingSpinner } from '@topems/shared-components';
@@ -28,69 +29,76 @@ import { PageContainer } from '@/components';
 
 const MonitorPage: React.FC = () => {
   const theme = useTheme();
-  const [loading, setLoading] = useState(true);
-  const [systemMetrics, setSystemMetrics] = useState<{
-    cpu_usage: number;
-    memory_usage: number;
-    disk_usage: number;
-    network_in: number;
-    network_out: number;
-    uptime: number;
-    timestamp: string;
-  } | null>(null);
-  const [serviceHealth, setServiceHealth] = useState<
-    {
-      service_name: string;
-      status: 'healthy' | 'degraded' | 'unhealthy';
-      latency?: number;
-      error_rate?: number;
-      last_checked?: string;
-      uptime_percentage?: number;
-    }[]
-  >([]);
-  const [alerts, setAlerts] = useState<
-    {
-      id: string;
-      alert_type: string;
-      severity: 'critical' | 'warning' | 'info';
-      title: string;
-      message: string;
-      service_name: string;
-      status: 'active' | 'resolved' | 'acknowledged';
-      created_at: string;
-    }[]
-  >([]);
-
   const { addNotification } = useNotificationStore();
 
-  useEffect(() => {
-    loadData();
-    const interval = setInterval(loadData, 30000);
-    return () => clearInterval(interval);
-  }, []);
+  const systemMetricsQuery = useQuery<SystemMetrics | null>({
+    queryKey: ['admin-monitor-system-metrics'],
+    queryFn: async () => {
+      const res = await monitorApi.getSystemMetrics();
+      return res.success && res.data ? res.data : null;
+    },
+    refetchInterval: 30000,
+    staleTime: 5 * 60 * 1000,
+  });
 
-  const loadData = async () => {
-    try {
-      setLoading(true);
-      const [metricsRes, healthRes, alertsRes] = await Promise.all([
-        monitorApi.getSystemMetrics(),
-        monitorApi.getServiceHealth(),
-        monitorApi.listAlerts({ pagesize: 20 }),
-      ]);
-      setSystemMetrics(metricsRes.data || null);
-      setServiceHealth(healthRes.data || []);
-      setAlerts(alertsRes.data?.items || []);
-    } catch (error: unknown) {
-      apiLogger.error('加载监控数据失败:', error);
+  const serviceHealthQuery = useQuery<ServiceHealth[]>({
+    queryKey: ['admin-monitor-service-health'],
+    queryFn: async () => {
+      const res = await monitorApi.getServiceHealth();
+      return res.success && res.data ? res.data : [];
+    },
+    refetchInterval: 30000,
+    staleTime: 5 * 60 * 1000,
+  });
+
+  const alertsQuery = useQuery<Alert[]>({
+    queryKey: ['admin-monitor-alerts'],
+    queryFn: async () => {
+      const res = await monitorApi.listAlerts({ pagesize: 20 });
+      return res.success && res.data ? res.data.items : [];
+    },
+    refetchInterval: 30000,
+    staleTime: 5 * 60 * 1000,
+  });
+
+  const loading =
+    systemMetricsQuery.isLoading || serviceHealthQuery.isLoading || alertsQuery.isLoading;
+  const systemMetrics = systemMetricsQuery.data ?? null;
+  const serviceHealth = serviceHealthQuery.data ?? [];
+  const alerts = alertsQuery.data ?? [];
+
+  useEffect(() => {
+    if (systemMetricsQuery.isError) {
+      apiLogger.error('加载系统指标失败:', systemMetricsQuery.error);
       addNotification({
         type: 'error',
         title: '加载失败',
-        message: '无法加载监控数据',
+        message: '无法加载系统指标',
       });
-    } finally {
-      setLoading(false);
     }
-  };
+  }, [systemMetricsQuery.isError, systemMetricsQuery.error, addNotification]);
+
+  useEffect(() => {
+    if (serviceHealthQuery.isError) {
+      apiLogger.error('加载服务健康失败:', serviceHealthQuery.error);
+      addNotification({
+        type: 'error',
+        title: '加载失败',
+        message: '无法加载服务健康数据',
+      });
+    }
+  }, [serviceHealthQuery.isError, serviceHealthQuery.error, addNotification]);
+
+  useEffect(() => {
+    if (alertsQuery.isError) {
+      apiLogger.error('加载告警列表失败:', alertsQuery.error);
+      addNotification({
+        type: 'error',
+        title: '加载失败',
+        message: '无法加载告警列表',
+      });
+    }
+  }, [alertsQuery.isError, alertsQuery.error, addNotification]);
 
   const getStatusColor = (status: string) => {
     switch (status) {
@@ -140,7 +148,11 @@ const MonitorPage: React.FC = () => {
       headerProps={{
         pageIcon: <Activity sx={{ width: 24, height: 24 }} />,
         pageColor: 'success.main',
-        onRefresh: loadData,
+        onRefresh: () => {
+          systemMetricsQuery.refetch();
+          serviceHealthQuery.refetch();
+          alertsQuery.refetch();
+        },
       }}
       maxWidth='xl'
     >

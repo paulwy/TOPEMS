@@ -157,7 +157,7 @@ vi.mock('@/store', () => ({
 }));
 
 describe('WorkflowModule', () => {
-describe('WorkflowDashboardPage', () => {
+  describe('WorkflowDashboardPage', () => {
     it('should render without crashing', () => {
       const { container } = render(
         <BrowserRouter>
@@ -174,7 +174,7 @@ describe('WorkflowDashboardPage', () => {
     });
   });
 
-describe('WorkflowDefinitionsPage', () => {
+  describe('WorkflowDefinitionsPage', () => {
     it('should render without crashing', () => {
       const { container } = render(
         <BrowserRouter>
@@ -194,7 +194,7 @@ describe('WorkflowDefinitionsPage', () => {
     });
   });
 
-describe('WorkflowInstancesPage', () => {
+  describe('WorkflowInstancesPage', () => {
     it('should render without crashing', () => {
       const { container } = render(
         <BrowserRouter>
@@ -212,7 +212,7 @@ describe('WorkflowInstancesPage', () => {
     });
   });
 
-describe('WorkflowApprovalsPage', () => {
+  describe('WorkflowApprovalsPage', () => {
     it('should render without crashing', () => {
       const { container } = render(
         <BrowserRouter>

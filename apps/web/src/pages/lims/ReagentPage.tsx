@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useMemo } from 'react';
 import { PageContainer } from '@/components/common';
 import { useNavigate } from 'react-router-dom';
 import {
@@ -11,6 +11,7 @@ import {
   Filter,
   Trash2,
   AlertTriangle,
+  Package,
 } from 'lucide-react';
 import {
   Box,
@@ -33,72 +34,148 @@ import {
   type RowAction,
 } from '@/components/templates';
 import { limsApi } from '@/api/lims';
-import type { Reagent, CreateReagentRequest, UpdateReagentRequest } from '@/api/lims';
+import type { Reagent, CreateReagentRequest } from '@/api/lims';
 import { useNotificationStore } from '@/store';
 import { apiLogger } from '@/utils/logger';
 import { designTokens } from '@/theme/tokens';
+import { LIMS_PATHS } from '@/modules/lims/config';
 import { DASHBOARD_PATHS } from '@/routes/dashboard';
-import { useCrudOperations } from '@/hooks/useCrudQueries';
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import { QUERY_KEYS } from '@/lib/reactQuery';
 
 const ct = designTokens.colors;
 
 const ReagentPage: React.FC = () => {
   const navigate = useNavigate();
+  const queryClient = useQueryClient();
+  const addNotification = useNotificationStore((state) => state.addNotification);
+
   const [searchTerm, setSearchTerm] = useState('');
   const [statusFilter, setStatusFilter] = useState('all');
+  const [categoryFilter, setCategoryFilter] = useState('all');
+  const [currentPage, setCurrentPage] = useState(0);
+  const [pageSize] = useState(10);
   const [showCreateModal, setShowCreateModal] = useState(false);
   const [showDetailModal, setShowDetailModal] = useState(false);
   const [selectedReagent, setSelectedReagent] = useState<Reagent | null>(null);
+  const [isEditing, setIsEditing] = useState(false);
   const [formData, setFormData] = useState<CreateReagentRequest>({
     name: '',
     code: '',
     category: '',
-    specification: '',
-    batch_no: '',
-    manufacturer: '',
     supplier: '',
-    cas_no: '',
-    molecular_formula: '',
-    purity: '',
-    quantity: 0,
+    specification: '',
     unit: '',
-    min_stock: undefined,
-    storage_condition: '',
-    hazardlevel: '',
+    quantity: 0,
+    min_stock: 10,
+    batch_no: '',
     received_date: '',
     expiry_date: '',
-    status: '正常',
-    responsible_person: '',
+    storage_condition: '',
     location: '',
-    description: '',
+    status: '正常',
   });
-  const [page, setPage] = useState(0);
-  const [pageSize, setPageSize] = useState(10);
-  const [isEditing, setIsEditing] = useState(false);
-  const addNotification = useNotificationStore((state) => state.addNotification);
 
-  const {
-    data: reagents,
-    loading,
-    refresh,
-    create: createReagent,
-    update: updateReagent,
-    delete: deleteReagent,
-  } = useCrudOperations<Reagent, CreateReagentRequest, UpdateReagentRequest>({
-    api: limsApi.reagents,
-    queryKey: 'lims-reagents',
-    defaultPageSize: 100,
+  const queryKey = [
+    QUERY_KEYS.LIMS.REAGENTS,
+    currentPage,
+    pageSize,
+    searchTerm,
+    statusFilter,
+    categoryFilter,
+  ];
+
+  const { data: reagentsResponse, isLoading } = useQuery({
+    queryKey,
+    queryFn: async () => {
+      const params: {
+        page: number;
+        pagesize: number;
+        search?: string;
+        status?: string;
+        category?: string;
+      } = {
+        page: currentPage,
+        pagesize: pageSize,
+      };
+      if (searchTerm) params.search = searchTerm;
+      if (statusFilter !== 'all') params.status = statusFilter;
+      if (categoryFilter !== 'all') params.category = categoryFilter;
+
+      const response = await limsApi.listReagents(params);
+      if (!response.success) {
+        throw new Error('Failed to fetch reagents');
+      }
+      return response.data;
+    },
+    staleTime: 5 * 60 * 1000,
+    gcTime: 10 * 60 * 1000,
+  });
+
+  const reagents = reagentsResponse?.items || [];
+  const total = reagentsResponse?.total || reagents.length;
+
+  const createMutation = useMutation({
+    mutationFn: async (data: CreateReagentRequest) => {
+      const response = await limsApi.createReagent(data);
+      if (!response.success) {
+        throw new Error('Failed to create reagent');
+      }
+      return response;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: QUERY_KEYS.LIMS.REAGENTS });
+      setShowCreateModal(false);
+      resetForm();
+    },
+    onError: (error) => {
+      apiLogger.error('创建失败:', error);
+    },
+  });
+
+  const updateMutation = useMutation({
+    mutationFn: async ({ id, data }: { id: string; data: Partial<CreateReagentRequest> }) => {
+      const response = await limsApi.updateReagent(id, data);
+      if (!response.success) {
+        throw new Error('Failed to update reagent');
+      }
+      return response;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: QUERY_KEYS.LIMS.REAGENTS });
+      setShowCreateModal(false);
+      resetForm();
+    },
+    onError: (error) => {
+      apiLogger.error('更新失败:', error);
+    },
+  });
+
+  const deleteMutation = useMutation({
+    mutationFn: async (id: string) => {
+      const response = await limsApi.deleteReagent(id);
+      if (!response.success) {
+        throw new Error('Failed to delete reagent');
+      }
+      return response;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: QUERY_KEYS.LIMS.REAGENTS });
+    },
+    onError: (error) => {
+      apiLogger.error('删除失败:', error);
+    },
   });
 
   const getStatusBadge = (status: string) => {
     const statusMap: Record<string, { bg: string; color: string }> = {
       正常: { bg: 'success.lighter', color: 'success.dark' },
-      库存不足: { bg: 'error.lighter', color: 'error.dark' },
-      已过期: { bg: 'warning.lighter', color: 'warning.dark' },
+      低库存: { bg: 'warning.lighter', color: 'warning.dark' },
+      过期: { bg: 'error.lighter', color: 'error.dark' },
       停用: { bg: 'grey.100', color: 'text.secondary' },
       normal: { bg: 'success.lighter', color: 'success.dark' },
-      low_stock: { bg: 'error.lighter', color: 'error.dark' },
-      expired: { bg: 'warning.lighter', color: 'warning.dark' },
+      low_stock: { bg: 'warning.lighter', color: 'warning.dark' },
+      expired: { bg: 'error.lighter', color: 'error.dark' },
       disabled: { bg: 'grey.100', color: 'text.secondary' },
     };
     const colors = statusMap[status] || { bg: 'grey.100', color: 'text.secondary' };
@@ -116,7 +193,7 @@ const ReagentPage: React.FC = () => {
   };
 
   const isLowStock = (reagent: Reagent): boolean => {
-    return reagent.min_stock !== undefined && reagent.quantity < reagent.min_stock;
+    return Number(reagent.quantity) <= Number(reagent.min_stock || 10);
   };
 
   const isExpired = (reagent: Reagent): boolean => {
@@ -124,90 +201,121 @@ const ReagentPage: React.FC = () => {
     return new Date(reagent.expiry_date) < new Date();
   };
 
-  const columns: ColumnDef<Reagent>[] = [
-    { id: 'code', label: '试剂编号' },
-    { id: 'name', label: '试剂名称' },
-    { id: 'category', label: '分类' },
-    {
-      id: 'quantity',
-      label: '库存',
-      render: (row) => `${row.quantity} ${row.unit || ''}`,
-    },
-    {
-      id: 'expiry_date',
-      label: '有效期',
-      render: (row) =>
-        row.expiry_date ? new Date(row.expiry_date).toLocaleDateString('zh-CN') : '-',
-    },
-    {
-      id: 'status',
-      label: '状态',
-      render: (row) => {
-        if (isExpired(row)) return getStatusBadge('已过期');
-        if (isLowStock(row)) return getStatusBadge('库存不足');
-        return getStatusBadge(row.status || '正常');
+  const getReagentStatus = (reagent: Reagent): string => {
+    if (isExpired(reagent)) return '过期';
+    if (isLowStock(reagent)) return '低库存';
+    return reagent.status || '正常';
+  };
+
+  const columns: ColumnDef<Reagent>[] = useMemo(
+    () => [
+      { id: 'code', label: '试剂编号' },
+      { id: 'name', label: '试剂名称' },
+      { id: 'category', label: '类别', render: (row) => row.category || '-' },
+      { id: 'supplier', label: '供应商', render: (row) => row.supplier || '-' },
+      {
+        id: 'quantity',
+        label: '库存数量',
+        render: (row) => {
+          const lowStock = isLowStock(row);
+          return (
+            <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5 }}>
+              {lowStock && (
+                <AlertTriangle style={{ width: 14, height: 14, color: ct.yellow[600] }} />
+              )}
+              <span style={{ color: lowStock ? ct.yellow[600] : 'inherit' }}>
+                {row.quantity} {row.unit}
+              </span>
+            </Box>
+          );
+        },
       },
-    },
-    {
-      id: 'warning',
-      label: '',
-      render: (row) => {
-        if (isExpired(row) || isLowStock(row)) {
-          return <AlertTriangle style={{ width: 16, height: 16, color: ct.yellow[600] }} />;
-        }
-        return null;
+      {
+        id: 'expiry_date',
+        label: '有效期至',
+        render: (row) => {
+          if (!row.expiry_date) return '-';
+          const expired = isExpired(row);
+          return (
+            <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5 }}>
+              {expired && <AlertTriangle style={{ width: 14, height: 14, color: ct.error[600] }} />}
+              <span style={{ color: expired ? ct.error[600] : 'inherit' }}>
+                {new Date(row.expiry_date).toLocaleDateString('zh-CN')}
+              </span>
+            </Box>
+          );
+        },
       },
-    },
-  ];
+      {
+        id: 'status',
+        label: '状态',
+        render: (row) => getStatusBadge(getReagentStatus(row)),
+      },
+      { id: 'location', label: '存放位置', render: (row) => row.location || '-' },
+    ],
+    []
+  );
 
-  const rowActions: RowAction<Reagent>[] = [
-    {
-      label: '查看',
-      icon: <Eye style={{ width: 16, height: 16 }} />,
-      onClick: (row) => handleView(row),
-    },
-    {
-      label: '编辑',
-      icon: <Edit style={{ width: 16, height: 16 }} />,
-      onClick: (row) => handleEdit(row),
-    },
-  ];
+  const rowActions: RowAction<Reagent>[] = useMemo(
+    () => [
+      {
+        label: '查看',
+        icon: <Eye style={{ width: 16, height: 16 }} />,
+        onClick: (row) => handleView(row),
+      },
+      {
+        label: '编辑',
+        icon: <Edit style={{ width: 16, height: 16 }} />,
+        onClick: (row) => handleEdit(row),
+      },
+      {
+        label: '出入库记录',
+        icon: <Package style={{ width: 16, height: 16 }} />,
+        onClick: (row) => navigate(`${LIMS_PATHS.reagent}?id=${row.id}`),
+      },
+    ],
+    []
+  );
 
-  const filters: FilterConfig[] = [
-    {
-      id: 'status',
-      label: '状态',
-      type: 'select',
-      options: [
-        { label: '全部', value: 'all' },
-        { label: '正常', value: '正常' },
-        { label: '库存不足', value: '库存不足' },
-        { label: '已过期', value: '已过期' },
-        { label: '停用', value: '停用' },
-      ],
-      value: statusFilter,
-      onChange: (value: unknown) => setStatusFilter(value as string),
-    },
-  ];
-
-  const filteredReagents = reagents.filter((reagent) => {
-    const matchesSearch =
-      reagent.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      (reagent.code || '').toLowerCase().includes(searchTerm.toLowerCase());
-    let matchesStatus = statusFilter === 'all';
-    if (statusFilter === '库存不足') matchesStatus = isLowStock(reagent);
-    else if (statusFilter === '已过期') matchesStatus = isExpired(reagent);
-    else if (statusFilter === '正常')
-      matchesStatus =
-        !isLowStock(reagent) &&
-        !isExpired(reagent) &&
-        (reagent.status === '正常' || reagent.status === 'normal');
-    else if (statusFilter === '停用')
-      matchesStatus = reagent.status === '停用' || reagent.status === 'disabled';
-    return matchesSearch && matchesStatus;
-  });
-
-  const paginatedData = filteredReagents.slice(page * pageSize, page * pageSize + pageSize);
+  const filters: FilterConfig[] = useMemo(
+    () => [
+      {
+        id: 'status',
+        label: '状态',
+        type: 'select',
+        options: [
+          { label: '全部', value: 'all' },
+          { label: '正常', value: '正常' },
+          { label: '低库存', value: '低库存' },
+          { label: '过期', value: '过期' },
+          { label: '停用', value: '停用' },
+        ],
+        value: statusFilter,
+        onChange: (value: unknown) => {
+          setStatusFilter(value as string);
+          setCurrentPage(0);
+        },
+      },
+      {
+        id: 'category',
+        label: '类别',
+        type: 'select',
+        options: [
+          { label: '全部', value: 'all' },
+          { label: '标准品', value: '标准品' },
+          { label: '试剂', value: '试剂' },
+          { label: '耗材', value: '耗材' },
+          { label: '其他', value: '其他' },
+        ],
+        value: categoryFilter,
+        onChange: (value: unknown) => {
+          setCategoryFilter(value as string);
+          setCurrentPage(0);
+        },
+      },
+    ],
+    [statusFilter, categoryFilter]
+  );
 
   const handleView = (reagent: Reagent) => {
     setSelectedReagent(reagent);
@@ -221,24 +329,17 @@ const ReagentPage: React.FC = () => {
       name: reagent.name,
       code: reagent.code,
       category: reagent.category || '',
-      specification: reagent.specification || '',
-      batch_no: reagent.batch_no || '',
-      manufacturer: reagent.manufacturer || '',
       supplier: reagent.supplier || '',
-      cas_no: reagent.cas_no || '',
-      molecular_formula: reagent.molecular_formula || '',
-      purity: reagent.purity || '',
-      quantity: reagent.quantity,
+      specification: reagent.specification || '',
       unit: reagent.unit || '',
-      min_stock: reagent.min_stock,
-      storage_condition: reagent.storage_condition || '',
-      hazardlevel: reagent.hazardlevel || '',
+      quantity: Number(reagent.quantity) || 0,
+      min_stock: Number(reagent.min_stock) || 10,
+      batch_no: reagent.batch_no || '',
       received_date: reagent.received_date || '',
       expiry_date: reagent.expiry_date || '',
-      status: reagent.status,
-      responsible_person: reagent.responsible_person || '',
+      storage_condition: reagent.storage_condition || '',
       location: reagent.location || '',
-      description: reagent.description || '',
+      status: reagent.status,
     });
     setShowCreateModal(true);
   };
@@ -250,26 +351,42 @@ const ReagentPage: React.FC = () => {
       name: '',
       code: '',
       category: '',
-      specification: '',
-      batch_no: '',
-      manufacturer: '',
       supplier: '',
-      cas_no: '',
-      molecular_formula: '',
-      purity: '',
-      quantity: 0,
+      specification: '',
       unit: '',
-      min_stock: undefined,
-      storage_condition: '',
-      hazardlevel: '',
+      quantity: 0,
+      min_stock: 10,
+      batch_no: '',
       received_date: '',
       expiry_date: '',
-      status: '正常',
-      responsible_person: '',
+      storage_condition: '',
       location: '',
+      status: '正常',
       description: '',
     });
     setShowCreateModal(true);
+  };
+
+  const resetForm = () => {
+    setSelectedReagent(null);
+    setIsEditing(false);
+    setFormData({
+      name: '',
+      code: '',
+      category: '',
+      supplier: '',
+      specification: '',
+      unit: '',
+      quantity: 0,
+      min_stock: 10,
+      batch_no: '',
+      received_date: '',
+      expiry_date: '',
+      storage_condition: '',
+      location: '',
+      status: '正常',
+      description: '',
+    });
   };
 
   const handleSave = async () => {
@@ -290,211 +407,217 @@ const ReagentPage: React.FC = () => {
       return;
     }
 
-    try {
-      if (isEditing && selectedReagent) {
-        await updateReagent(selectedReagent.id, formData as UpdateReagentRequest);
-      } else {
-        await createReagent(formData);
-      }
-      setShowCreateModal(false);
-    } catch (err: unknown) {
-      apiLogger.error('保存试剂失败:', err);
+    if (isEditing && selectedReagent) {
+      await updateMutation.mutateAsync({ id: selectedReagent.id, data: formData });
+    } else {
+      await createMutation.mutateAsync(formData);
     }
   };
 
   const handleDelete = async (reagent: Reagent) => {
-    if (!confirm(`确定要删除试剂 "${reagent.name}" 吗？`)) return;
-    try {
-      await deleteReagent(reagent.id);
-      setShowDetailModal(false);
-    } catch (err: unknown) {
-      apiLogger.error('删除试剂失败:', err);
-    }
+    if (!window.confirm(`确定要删除试剂 "${reagent.name}" 吗？`)) return;
+    await deleteMutation.mutateAsync(reagent.id);
+    setShowDetailModal(false);
   };
 
-  const stats = {
-    total: reagents.length,
-    normal: reagents.filter(
-      (r) => !isLowStock(r) && !isExpired(r) && (r.status === '正常' || r.status === 'normal')
-    ).length,
-    lowStock: reagents.filter((r) => isLowStock(r)).length,
-    expired: reagents.filter((r) => isExpired(r)).length,
-  };
-
-  const statsCards = (
-    <Box
-      sx={{
-        display: 'grid',
-        gridTemplateColumns: { xs: 'repeat(1, 1fr)', md: 'repeat(4, 1fr)' },
-        gap: 2,
-        mb: 3,
-      }}
-    >
-      <Card sx={{ bgcolor: 'teal.light' }}>
-        <CardContent sx={{ p: 2 }}>
-          <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5 }}>
-            <Box
-              sx={{
-                width: 40,
-                height: 40,
-                bgcolor: 'success.lighter',
-                borderRadius: 3,
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'center',
-              }}
-            >
-              <FlaskConical sx={{ width: 20, height: 20, color: 'info.main' }} />
-            </Box>
-            <Box>
-              <Typography
-                variant='body2'
-                sx={{ color: 'slate.600', fontSize: '0.875rem' }}
-              >
-                试剂总数
-              </Typography>
-              <Typography
-                variant='h5'
-                sx={{ fontWeight: 700, color: 'slate.900' }}
-              >
-                {stats.total}
-              </Typography>
-            </Box>
-          </Box>
-        </CardContent>
-      </Card>
-      <Card>
-        <CardContent sx={{ p: 2 }}>
-          <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5 }}>
-            <Box
-              sx={{
-                width: 40,
-                height: 40,
-                bgcolor: 'success.lighter',
-                borderRadius: 3,
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'center',
-              }}
-            >
-              <FlaskConical sx={{ width: 20, height: 20, color: 'success.main' }} />
-            </Box>
-            <Box>
-              <Typography
-                variant='body2'
-                sx={{ color: 'slate.600', fontSize: '0.875rem' }}
-              >
-                正常库存
-              </Typography>
-              <Typography
-                variant='h5'
-                sx={{ fontWeight: 700, color: 'slate.900' }}
-              >
-                {stats.normal}
-              </Typography>
-            </Box>
-          </Box>
-        </CardContent>
-      </Card>
-      <Card>
-        <CardContent sx={{ p: 2 }}>
-          <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5 }}>
-            <Box
-              sx={{
-                width: 40,
-                height: 40,
-                bgcolor: 'error.lighter',
-                borderRadius: 3,
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'center',
-              }}
-            >
-              <AlertTriangle sx={{ width: 20, height: 20, color: 'error.main' }} />
-            </Box>
-            <Box>
-              <Typography
-                variant='body2'
-                sx={{ color: 'slate.600', fontSize: '0.875rem' }}
-              >
-                库存不足
-              </Typography>
-              <Typography
-                variant='h5'
-                sx={{ fontWeight: 700, color: 'slate.900' }}
-              >
-                {stats.lowStock}
-              </Typography>
-            </Box>
-          </Box>
-        </CardContent>
-      </Card>
-      <Card>
-        <CardContent sx={{ p: 2 }}>
-          <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5 }}>
-            <Box
-              sx={{
-                width: 40,
-                height: 40,
-                bgcolor: 'warning.light',
-                borderRadius: 3,
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'center',
-              }}
-            >
-              <Filter sx={{ width: 20, height: 20, color: ct.yellow[600] }} />
-            </Box>
-            <Box>
-              <Typography
-                variant='body2'
-                sx={{ color: 'slate.600', fontSize: '0.875rem' }}
-              >
-                已过期
-              </Typography>
-              <Typography
-                variant='h5'
-                sx={{ fontWeight: 700, color: 'slate.900' }}
-              >
-                {stats.expired}
-              </Typography>
-            </Box>
-          </Box>
-        </CardContent>
-      </Card>
-    </Box>
+  const stats = useMemo(
+    () => ({
+      total,
+      normal: reagents.filter((r) => {
+        const status = getReagentStatus(r);
+        return status === '正常' || status === 'normal';
+      }).length,
+      lowStock: reagents.filter((r) => isLowStock(r)).length,
+      expired: reagents.filter((r) => isExpired(r)).length,
+      totalQuantity: reagents.reduce((sum, r) => sum + Number(r.quantity || 0), 0),
+    }),
+    [reagents, total]
   );
 
-  if (loading) {
-    return (
+  const statsCards = useMemo(
+    () => (
       <Box
         sx={{
-          minHeight: '100vh',
-          display: 'flex',
-          alignItems: 'center',
-          justifyContent: 'center',
-          background: `linear-gradient(135deg, ${ct.teal[50]} 0%, ${ct.background.default} 100%)`,
+          display: 'grid',
+          gridTemplateColumns: { xs: 'repeat(1, 1fr)', md: 'repeat(5, 1fr)' },
+          gap: 2,
+          mb: 3,
         }}
       >
-        <Box sx={{ textAlign: 'center' }}>
-          <Box
-            sx={{
-              width: 48,
-              height: 48,
-              border: 4,
-              borderColor: 'info.main',
-              borderTopColor: 'cyan.dark',
-              borderRadius: '50%',
-              animation: 'spin 1s linear infinite',
-              mx: 'auto',
-              mb: 2,
-            }}
-          />
-          <Typography sx={{ color: 'slate.600' }}>加载中...</Typography>
-        </Box>
+        <Card sx={{ bgcolor: 'indigo.light' }}>
+          <CardContent sx={{ p: 2 }}>
+            <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5 }}>
+              <Box
+                sx={{
+                  width: 40,
+                  height: 40,
+                  bgcolor: 'primary.lighter',
+                  borderRadius: 3,
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                }}
+              >
+                <FlaskConical sx={{ width: 20, height: 20, color: 'primary.main' }} />
+              </Box>
+              <Box>
+                <Typography
+                  variant='body2'
+                  sx={{ color: 'slate.600', fontSize: '0.875rem' }}
+                >
+                  试剂总数
+                </Typography>
+                <Typography
+                  variant='h5'
+                  sx={{ fontWeight: 700, color: 'slate.900' }}
+                >
+                  {stats.total}
+                </Typography>
+              </Box>
+            </Box>
+          </CardContent>
+        </Card>
+        <Card>
+          <CardContent sx={{ p: 2 }}>
+            <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5 }}>
+              <Box
+                sx={{
+                  width: 40,
+                  height: 40,
+                  bgcolor: 'success.lighter',
+                  borderRadius: 3,
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                }}
+              >
+                <FlaskConical sx={{ width: 20, height: 20, color: 'success.main' }} />
+              </Box>
+              <Box>
+                <Typography
+                  variant='body2'
+                  sx={{ color: 'slate.600', fontSize: '0.875rem' }}
+                >
+                  正常库存
+                </Typography>
+                <Typography
+                  variant='h5'
+                  sx={{ fontWeight: 700, color: 'slate.900' }}
+                >
+                  {stats.normal}
+                </Typography>
+              </Box>
+            </Box>
+          </CardContent>
+        </Card>
+        <Card>
+          <CardContent sx={{ p: 2 }}>
+            <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5 }}>
+              <Box
+                sx={{
+                  width: 40,
+                  height: 40,
+                  bgcolor: 'warning.light',
+                  borderRadius: 3,
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                }}
+              >
+                <AlertTriangle sx={{ width: 20, height: 20, color: ct.yellow[600] }} />
+              </Box>
+              <Box>
+                <Typography
+                  variant='body2'
+                  sx={{ color: 'slate.600', fontSize: '0.875rem' }}
+                >
+                  低库存
+                </Typography>
+                <Typography
+                  variant='h5'
+                  sx={{ fontWeight: 700, color: 'slate.900' }}
+                >
+                  {stats.lowStock}
+                </Typography>
+              </Box>
+            </Box>
+          </CardContent>
+        </Card>
+        <Card>
+          <CardContent sx={{ p: 2 }}>
+            <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5 }}>
+              <Box
+                sx={{
+                  width: 40,
+                  height: 40,
+                  bgcolor: 'error.lighter',
+                  borderRadius: 3,
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                }}
+              >
+                <AlertTriangle sx={{ width: 20, height: 20, color: 'error.main' }} />
+              </Box>
+              <Box>
+                <Typography
+                  variant='body2'
+                  sx={{ color: 'slate.600', fontSize: '0.875rem' }}
+                >
+                  已过期
+                </Typography>
+                <Typography
+                  variant='h5'
+                  sx={{ fontWeight: 700, color: 'slate.900' }}
+                >
+                  {stats.expired}
+                </Typography>
+              </Box>
+            </Box>
+          </CardContent>
+        </Card>
+        <Card>
+          <CardContent sx={{ p: 2 }}>
+            <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5 }}>
+              <Box
+                sx={{
+                  width: 40,
+                  height: 40,
+                  bgcolor: 'purple.light',
+                  borderRadius: 3,
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                }}
+              >
+                <Package sx={{ width: 20, height: 20, color: 'purple.main' }} />
+              </Box>
+              <Box>
+                <Typography
+                  variant='body2'
+                  sx={{ color: 'slate.600', fontSize: '0.875rem' }}
+                >
+                  库存总量
+                </Typography>
+                <Typography
+                  variant='h5'
+                  sx={{ fontWeight: 700, color: 'slate.900' }}
+                >
+                  {stats.totalQuantity}
+                </Typography>
+              </Box>
+            </Box>
+          </CardContent>
+        </Card>
       </Box>
-    );
-  }
+    ),
+    [stats]
+  );
+
+  const handleSearch = (value: string) => {
+    setSearchTerm(value);
+    setCurrentPage(0);
+  };
 
   return (
     <PageContainer
@@ -502,7 +625,7 @@ const ReagentPage: React.FC = () => {
       subtitle='Reagent Management'
       headerProps={{
         pageIcon: <FlaskConical style={{ width: 20, height: 20 }} />,
-        pageGradient: `linear-gradient(135deg, ${ct.teal[400]} 0%, ${ct.teal[600]} 100%)`,
+        pageGradient: `linear-gradient(135deg, ${ct.primary[400]} 0%, ${ct.primary[600]} 100%)`,
       }}
     >
       <ListPageTemplate
@@ -515,20 +638,20 @@ const ReagentPage: React.FC = () => {
         ]}
         backButton={{ onClick: () => navigate(DASHBOARD_PATHS.dashboard) }}
         columns={columns}
-        data={paginatedData}
-        loading={loading}
+        data={reagents}
+        loading={isLoading}
         getRowId={(row) => row.id}
         filters={filters}
         searchable
-        searchPlaceholder='搜索试剂编号或名称...'
+        searchPlaceholder='搜索试剂编号、名称或供应商...'
         searchValue={searchTerm}
-        onSearch={setSearchTerm}
+        onSearch={handleSearch}
         pagination={{
-          page,
+          page: currentPage,
           pageSize,
-          total: filteredReagents.length,
-          onPageChange: setPage,
-          onPageSizeChange: setPageSize,
+          total,
+          onPageChange: setCurrentPage,
+          onPageSizeChange: () => {},
         }}
         actions={[
           {
@@ -580,43 +703,17 @@ const ReagentPage: React.FC = () => {
             <Box sx={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 2 }}>
               <TextField
                 fullWidth
-                label='分类'
+                select
+                label='类别'
                 value={formData.category}
                 onChange={(e) => setFormData({ ...formData, category: e.target.value })}
-                placeholder='请输入分类'
-              />
-              <TextField
-                fullWidth
-                label='规格'
-                value={formData.specification}
-                onChange={(e) => setFormData({ ...formData, specification: e.target.value })}
-                placeholder='请输入规格'
-              />
-            </Box>
-            <Box sx={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 2 }}>
-              <TextField
-                fullWidth
-                label='批号'
-                value={formData.batch_no}
-                onChange={(e) => setFormData({ ...formData, batch_no: e.target.value })}
-                placeholder='请输入批号'
-              />
-              <TextField
-                fullWidth
-                label='CAS号'
-                value={formData.cas_no}
-                onChange={(e) => setFormData({ ...formData, cas_no: e.target.value })}
-                placeholder='请输入CAS号'
-              />
-            </Box>
-            <Box sx={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 2 }}>
-              <TextField
-                fullWidth
-                label='生产厂家'
-                value={formData.manufacturer}
-                onChange={(e) => setFormData({ ...formData, manufacturer: e.target.value })}
-                placeholder='请输入生产厂家'
-              />
+              >
+                <MenuItem value=''>请选择类别</MenuItem>
+                <MenuItem value='标准品'>标准品</MenuItem>
+                <MenuItem value='试剂'>试剂</MenuItem>
+                <MenuItem value='耗材'>耗材</MenuItem>
+                <MenuItem value='其他'>其他</MenuItem>
+              </TextField>
               <TextField
                 fullWidth
                 label='供应商'
@@ -628,32 +725,10 @@ const ReagentPage: React.FC = () => {
             <Box sx={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 2 }}>
               <TextField
                 fullWidth
-                label='分子式'
-                value={formData.molecular_formula}
-                onChange={(e) => setFormData({ ...formData, molecular_formula: e.target.value })}
-                placeholder='请输入分子式'
-              />
-              <TextField
-                fullWidth
-                label='纯度'
-                value={formData.purity}
-                onChange={(e) => setFormData({ ...formData, purity: e.target.value })}
-                placeholder='请输入纯度'
-              />
-            </Box>
-            <Box sx={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 2 }}>
-              <TextField
-                fullWidth
-                label='库存数量 *'
-                type='number'
-                value={formData.quantity ?? ''}
-                onChange={(e) =>
-                  setFormData({
-                    ...formData,
-                    quantity: e.target.value ? Number(e.target.value) : 0,
-                  })
-                }
-                placeholder='请输入库存数量'
+                label='规格'
+                value={formData.specification}
+                onChange={(e) => setFormData({ ...formData, specification: e.target.value })}
+                placeholder='请输入规格'
               />
               <TextField
                 fullWidth
@@ -666,16 +741,28 @@ const ReagentPage: React.FC = () => {
             <Box sx={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 2 }}>
               <TextField
                 fullWidth
+                label='库存数量'
+                type='number'
+                value={formData.quantity}
+                onChange={(e) => setFormData({ ...formData, quantity: Number(e.target.value) })}
+                placeholder='请输入库存数量'
+              />
+              <TextField
+                fullWidth
                 label='最低库存'
                 type='number'
-                value={formData.min_stock ?? ''}
-                onChange={(e) =>
-                  setFormData({
-                    ...formData,
-                    min_stock: e.target.value ? Number(e.target.value) : undefined,
-                  })
-                }
+                value={formData.min_stock}
+                onChange={(e) => setFormData({ ...formData, min_stock: Number(e.target.value) })}
                 placeholder='请输入最低库存'
+              />
+            </Box>
+            <Box sx={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 2 }}>
+              <TextField
+                fullWidth
+                label='批号'
+                value={formData.batch_no}
+                onChange={(e) => setFormData({ ...formData, batch_no: e.target.value })}
+                placeholder='请输入批号'
               />
               <TextField
                 fullWidth
@@ -688,7 +775,7 @@ const ReagentPage: React.FC = () => {
             <Box sx={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 2 }}>
               <TextField
                 fullWidth
-                label='接收日期'
+                label='生产日期'
                 type='date'
                 value={formData.received_date}
                 onChange={(e) => setFormData({ ...formData, received_date: e.target.value })}
@@ -703,41 +790,13 @@ const ReagentPage: React.FC = () => {
                 slotProps={{ inputLabel: { shrink: true } } as any}
               />
             </Box>
-            <Box sx={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 2 }}>
-              <TextField
-                fullWidth
-                label='储存条件'
-                value={formData.storage_condition}
-                onChange={(e) => setFormData({ ...formData, storage_condition: e.target.value })}
-                placeholder='请输入储存条件'
-              />
-              <TextField
-                fullWidth
-                label='危害等级'
-                value={formData.hazardlevel}
-                onChange={(e) => setFormData({ ...formData, hazardlevel: e.target.value })}
-                placeholder='请输入危害等级'
-              />
-            </Box>
-            <Box sx={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 2 }}>
-              <TextField
-                fullWidth
-                label='负责人'
-                value={formData.responsible_person}
-                onChange={(e) => setFormData({ ...formData, responsible_person: e.target.value })}
-                placeholder='请输入负责人'
-              />
-              <TextField
-                fullWidth
-                select
-                label='状态'
-                value={formData.status}
-                onChange={(e) => setFormData({ ...formData, status: e.target.value })}
-              >
-                <MenuItem value='正常'>正常</MenuItem>
-                <MenuItem value='停用'>停用</MenuItem>
-              </TextField>
-            </Box>
+            <TextField
+              fullWidth
+              label='储存条件'
+              value={formData.storage_condition}
+              onChange={(e) => setFormData({ ...formData, storage_condition: e.target.value })}
+              placeholder='请输入储存条件'
+            />
             <TextField
               fullWidth
               label='备注'
@@ -759,9 +818,10 @@ const ReagentPage: React.FC = () => {
           <Button
             variant='contained'
             onClick={handleSave}
-            sx={{ bgcolor: 'info.main' }}
+            disabled={createMutation.isPending || updateMutation.isPending}
+            sx={{ bgcolor: 'primary.main' }}
           >
-            保存
+            {createMutation.isPending || updateMutation.isPending ? '保存中...' : '保存'}
           </Button>
         </DialogActions>
       </Dialog>
@@ -806,45 +866,9 @@ const ReagentPage: React.FC = () => {
                   component='span'
                   sx={{ color: 'text.secondary', fontSize: '0.875rem' }}
                 >
-                  分类
+                  类别
                 </Box>
                 <Box>{selectedReagent.category || '-'}</Box>
-              </Box>
-              <Box>
-                <Box
-                  component='span'
-                  sx={{ color: 'text.secondary', fontSize: '0.875rem' }}
-                >
-                  规格
-                </Box>
-                <Box>{selectedReagent.specification || '-'}</Box>
-              </Box>
-              <Box>
-                <Box
-                  component='span'
-                  sx={{ color: 'text.secondary', fontSize: '0.875rem' }}
-                >
-                  批号
-                </Box>
-                <Box>{selectedReagent.batch_no || '-'}</Box>
-              </Box>
-              <Box>
-                <Box
-                  component='span'
-                  sx={{ color: 'text.secondary', fontSize: '0.875rem' }}
-                >
-                  CAS号
-                </Box>
-                <Box>{selectedReagent.cas_no || '-'}</Box>
-              </Box>
-              <Box>
-                <Box
-                  component='span'
-                  sx={{ color: 'text.secondary', fontSize: '0.875rem' }}
-                >
-                  生产厂家
-                </Box>
-                <Box>{selectedReagent.manufacturer || '-'}</Box>
               </Box>
               <Box>
                 <Box
@@ -860,10 +884,39 @@ const ReagentPage: React.FC = () => {
                   component='span'
                   sx={{ color: 'text.secondary', fontSize: '0.875rem' }}
                 >
+                  规格
+                </Box>
+                <Box>{selectedReagent.specification || '-'}</Box>
+              </Box>
+              <Box>
+                <Box
+                  component='span'
+                  sx={{ color: 'text.secondary', fontSize: '0.875rem' }}
+                >
+                  单位
+                </Box>
+                <Box>{selectedReagent.unit || '-'}</Box>
+              </Box>
+              <Box>
+                <Box
+                  component='span'
+                  sx={{ color: 'text.secondary', fontSize: '0.875rem' }}
+                >
                   库存数量
                 </Box>
-                <Box sx={{ fontWeight: 500 }}>
-                  {selectedReagent.quantity} {selectedReagent.unit || ''}
+                <Box>
+                  <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5 }}>
+                    {isLowStock(selectedReagent) && (
+                      <AlertTriangle style={{ width: 14, height: 14, color: ct.yellow[600] }} />
+                    )}
+                    <span
+                      style={{
+                        color: isLowStock(selectedReagent) ? ct.yellow[600] : 'inherit',
+                      }}
+                    >
+                      {selectedReagent.quantity} {selectedReagent.unit}
+                    </span>
+                  </Box>
                 </Box>
               </Box>
               <Box>
@@ -873,9 +926,16 @@ const ReagentPage: React.FC = () => {
                 >
                   最低库存
                 </Box>
-                <Box>
-                  {selectedReagent.min_stock !== undefined ? selectedReagent.min_stock : '-'}
+                <Box>{selectedReagent.min_stock || 10}</Box>
+              </Box>
+              <Box>
+                <Box
+                  component='span'
+                  sx={{ color: 'text.secondary', fontSize: '0.875rem' }}
+                >
+                  批号
                 </Box>
+                <Box>{selectedReagent.batch_no || '-'}</Box>
               </Box>
               <Box>
                 <Box
@@ -891,12 +951,38 @@ const ReagentPage: React.FC = () => {
                   component='span'
                   sx={{ color: 'text.secondary', fontSize: '0.875rem' }}
                 >
+                  生产日期
+                </Box>
+                <Box>
+                  {selectedReagent.received_date
+                    ? new Date(selectedReagent.received_date).toLocaleDateString('zh-CN')
+                    : '-'}
+                </Box>
+              </Box>
+              <Box>
+                <Box
+                  component='span'
+                  sx={{ color: 'text.secondary', fontSize: '0.875rem' }}
+                >
                   有效期至
                 </Box>
                 <Box>
-                  {selectedReagent.expiry_date
-                    ? new Date(selectedReagent.expiry_date).toLocaleDateString('zh-CN')
-                    : '-'}
+                  {selectedReagent.expiry_date ? (
+                    <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5 }}>
+                      {isExpired(selectedReagent) && (
+                        <AlertTriangle style={{ width: 14, height: 14, color: ct.error[600] }} />
+                      )}
+                      <span
+                        style={{
+                          color: isExpired(selectedReagent) ? ct.error[600] : 'inherit',
+                        }}
+                      >
+                        {new Date(selectedReagent.expiry_date).toLocaleDateString('zh-CN')}
+                      </span>
+                    </Box>
+                  ) : (
+                    '-'
+                  )}
                 </Box>
               </Box>
               <Box>
@@ -913,35 +999,9 @@ const ReagentPage: React.FC = () => {
                   component='span'
                   sx={{ color: 'text.secondary', fontSize: '0.875rem' }}
                 >
-                  危害等级
-                </Box>
-                <Box>{selectedReagent.hazardlevel || '-'}</Box>
-              </Box>
-              <Box>
-                <Box
-                  component='span'
-                  sx={{ color: 'text.secondary', fontSize: '0.875rem' }}
-                >
-                  负责人
-                </Box>
-                <Box>{selectedReagent.responsible_person || '-'}</Box>
-              </Box>
-              <Box>
-                <Box
-                  component='span'
-                  sx={{ color: 'text.secondary', fontSize: '0.875rem' }}
-                >
                   状态
                 </Box>
-                <Box sx={{ mt: 0.5 }}>
-                  {getStatusBadge(
-                    isExpired(selectedReagent)
-                      ? '已过期'
-                      : isLowStock(selectedReagent)
-                        ? '库存不足'
-                        : selectedReagent.status || '正常'
-                  )}
-                </Box>
+                <Box sx={{ mt: 0.5 }}>{getStatusBadge(getReagentStatus(selectedReagent))}</Box>
               </Box>
               <Box>
                 <Box
@@ -964,6 +1024,7 @@ const ReagentPage: React.FC = () => {
           >
             删除
           </Button>
+          <Box sx={{ flex: 1 }} />
           <Button onClick={() => setShowDetailModal(false)}>关闭</Button>
           <Button
             variant='contained'
@@ -973,7 +1034,7 @@ const ReagentPage: React.FC = () => {
                 handleEdit(selectedReagent);
               }
             }}
-            sx={{ bgcolor: 'info.main' }}
+            sx={{ bgcolor: 'primary.main' }}
           >
             编辑
           </Button>

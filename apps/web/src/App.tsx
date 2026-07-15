@@ -10,6 +10,7 @@ import { LoadingProvider } from './components/LoadingProvider';
 import { ThemeProvider } from './components/ThemeProvider';
 import { LoadingSpinner } from '@topems/shared-components';
 import { GlobalLayout } from './components/layout';
+import { SmartLayout } from './layouts/SmartLayout';
 import { logger } from '@/utils/logger';
 import { PluginProvider } from './context/PluginContext';
 import { createSafeLazy, lazyWithPreload } from './utils/createSafeLazy';
@@ -32,11 +33,13 @@ const TemplateDemoPage = createSafeLazy(() =>
   import('./components/templates/index').then((m) => ({ default: m.TemplateDemoPage }))
 );
 const DynamicRouter = createSafeLazy(() => import('./lib/plugin-loader/DynamicRouter'));
-const { lazy: PerformanceTestPage, preload: preloadPerformanceTest } = lazyWithPreload(() => 
-  import('./pages/performance/PerformanceTestPage')
+const { lazy: PerformanceTestPage, preload: preloadPerformanceTest } = lazyWithPreload(
+  () => import('./pages/performance/PerformanceTestPage')
 );
 
-const IS_STATIC_MODE = import.meta.env.VITE_DEPLOYMENT_MODE !== 'module-federation';
+const IS_STATIC_MODE =
+  (typeof import.meta !== 'undefined' && import.meta.env?.VITE_DEPLOYMENT_MODE) !==
+  'module-federation';
 
 const PageLoader: React.FC = () => (
   <Box
@@ -68,10 +71,10 @@ const ProtectedRouteWrapper: React.FC<{
         module={route.module!}
         action={route.action!}
       >
-        {withLayout ? <GlobalLayout>{children}</GlobalLayout> : children}
+        {withLayout ? <SmartLayout>{children}</SmartLayout> : children}
       </ModuleGate>
     ) : withLayout ? (
-      <GlobalLayout>{children}</GlobalLayout>
+      <SmartLayout>{children}</SmartLayout>
     ) : (
       children
     );

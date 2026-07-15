@@ -156,7 +156,11 @@ const RsMaterialListPage: React.FC = () => {
 
   const materials = materialListQuery.data?.materials || [];
   const total = materialListQuery.data?.total || 0;
-  const loading = materialListQuery.isLoading || deleteMaterialMutation.isPending || batchDeleteMaterialMutation.isPending || importMaterialMutation.isPending;
+  const loading =
+    materialListQuery.isLoading ||
+    deleteMaterialMutation.isPending ||
+    batchDeleteMaterialMutation.isPending ||
+    importMaterialMutation.isPending;
   const error = materialListQuery.error?.message || '';
 
   const handleDeleteClick = useCallback((id: string) => {

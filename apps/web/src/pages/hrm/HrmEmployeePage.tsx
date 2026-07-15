@@ -101,7 +101,6 @@ interface ValidationSuggestion {
   message?: string;
 }
 
-
 type ViewMode = 'list' | 'tree';
 
 const HrmEmployeePage: React.FC = () => {

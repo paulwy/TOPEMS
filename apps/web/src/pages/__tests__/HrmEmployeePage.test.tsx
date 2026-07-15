@@ -143,6 +143,7 @@ vi.mock('@/store', () => ({
   useSetSidebarCollapsed: vi.fn(),
 }));
 
+describe('HrmEmployeePage', () => {
   it('should render without crashing', () => {
     const { container } = render(
       <QueryClientProvider client={queryClient}>
@@ -179,10 +180,12 @@ vi.mock('@/store', () => ({
         </BrowserRouter>
       </QueryClientProvider>
     );
-    const queryKeys = queryClient
-      .getQueryCache()
-      .getAll()
-      .map((q) => q.queryKey);
-    expect(queryKeys.some((key) => key[0] === 'hrm-employees')).toBe(true);
+    await waitFor(() => {
+      const queryKeys = queryClient
+        .getQueryCache()
+        .getAll()
+        .map((q) => q.queryKey);
+      expect(queryKeys.some((key) => key[0] === 'hrm-employees')).toBe(true);
+    });
   });
 });

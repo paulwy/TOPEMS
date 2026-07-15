@@ -12,6 +12,19 @@ use serde_json::{json, Value};
 
 const API_URL: &str = "http://localhost:8000";
 
+/// 检查 API 服务是否可用
+async fn ensure_api_available() -> bool {
+    reqwest::Client::builder()
+        .timeout(std::time::Duration::from_secs(2))
+        .build()
+        .unwrap()
+        .get(format!("{}/api/core/iam/auth/login", API_URL))
+        .send()
+        .await
+        .map(|resp| !resp.status().is_server_error())
+        .unwrap_or(false)
+}
+
 fn create_client() -> Client {
     Client::new()
 }
@@ -19,7 +32,7 @@ fn create_client() -> Client {
 async fn login(username: &str, password: &str) -> Result<String, String> {
     let client = create_client();
     let response = client
-        .post(format!("{}/api/v1/auth/login", API_URL))
+        .post(format!("{}/api/core/iam/auth/login", API_URL))
         .json(&json!({ "username": username, "password": password }))
         .send()
         .await
@@ -73,8 +86,11 @@ async fn auth_request(
 // ==================== SCM-001: 查看供应商列表 ====================
 
 #[tokio::test]
-#[ignore]
 async fn test_scm_001_list_suppliers() {
+    if !ensure_api_available().await {
+        eprintln!("⏭ 跳过: API服务未运行 ({})", API_URL);
+        return;
+    }
     tracing::info!("测试 SCM-001: 查看供应商列表");
     let token = login("admin", "admin123").await.expect("管理员登录失败");
     let client = create_client();
@@ -91,8 +107,11 @@ async fn test_scm_001_list_suppliers() {
 // ==================== SCM-002: 创建供应商 ====================
 
 #[tokio::test]
-#[ignore]
 async fn test_scm_002_create_supplier() {
+    if !ensure_api_available().await {
+        eprintln!("⏭ 跳过: API服务未运行 ({})", API_URL);
+        return;
+    }
     tracing::info!("测试 SCM-002: 创建供应商");
     let token = login("admin", "admin123").await.expect("管理员登录失败");
     let client = create_client();
@@ -124,8 +143,11 @@ async fn test_scm_002_create_supplier() {
 // ==================== SCM-003: 查看采购计划 ====================
 
 #[tokio::test]
-#[ignore]
 async fn test_scm_003_list_purchase_plans() {
+    if !ensure_api_available().await {
+        eprintln!("⏭ 跳过: API服务未运行 ({})", API_URL);
+        return;
+    }
     tracing::info!("测试 SCM-003: 查看采购计划");
     let token = login("admin", "admin123").await.expect("管理员登录失败");
     let client = create_client();
@@ -142,8 +164,11 @@ async fn test_scm_003_list_purchase_plans() {
 // ==================== SCM-004: 创建采购计划 ====================
 
 #[tokio::test]
-#[ignore]
 async fn test_scm_004_create_purchase_plan() {
+    if !ensure_api_available().await {
+        eprintln!("⏭ 跳过: API服务未运行 ({})", API_URL);
+        return;
+    }
     tracing::info!("测试 SCM-004: 创建采购计划");
     let token = login("admin", "admin123").await.expect("管理员登录失败");
     let client = create_client();
@@ -171,8 +196,11 @@ async fn test_scm_004_create_purchase_plan() {
 // ==================== SCM-005: 审批采购计划 ====================
 
 #[tokio::test]
-#[ignore]
 async fn test_scm_005_approve_purchase_plan() {
+    if !ensure_api_available().await {
+        eprintln!("⏭ 跳过: API服务未运行 ({})", API_URL);
+        return;
+    }
     tracing::info!("测试 SCM-005: 审批采购计划");
     let token = login("admin", "admin123").await.expect("管理员登录失败");
     let client = create_client();
@@ -211,8 +239,11 @@ async fn test_scm_005_approve_purchase_plan() {
 // ==================== SCM-006: 查看物流跟踪 ====================
 
 #[tokio::test]
-#[ignore]
 async fn test_scm_006_track_shipments() {
+    if !ensure_api_available().await {
+        eprintln!("⏭ 跳过: API服务未运行 ({})", API_URL);
+        return;
+    }
     tracing::info!("测试 SCM-006: 查看物流跟踪");
     let token = login("admin", "admin123").await.expect("管理员登录失败");
     let client = create_client();
@@ -229,8 +260,11 @@ async fn test_scm_006_track_shipments() {
 // ==================== SCM-007: 查看仓库 ====================
 
 #[tokio::test]
-#[ignore]
 async fn test_scm_007_list_warehouses() {
+    if !ensure_api_available().await {
+        eprintln!("⏭ 跳过: API服务未运行 ({})", API_URL);
+        return;
+    }
     tracing::info!("测试 SCM-007: 查看仓库");
     let token = login("admin", "admin123").await.expect("管理员登录失败");
     let client = create_client();
@@ -247,8 +281,11 @@ async fn test_scm_007_list_warehouses() {
 // ==================== SCM-008: 仓库调拨 ====================
 
 #[tokio::test]
-#[ignore]
 async fn test_scm_008_transfer_inventory() {
+    if !ensure_api_available().await {
+        eprintln!("⏭ 跳过: API服务未运行 ({})", API_URL);
+        return;
+    }
     tracing::info!("测试 SCM-008: 仓库调拨");
     let token = login("admin", "admin123").await.expect("管理员登录失败");
     let client = create_client();
@@ -276,8 +313,11 @@ async fn test_scm_008_transfer_inventory() {
 // ==================== 测试总结 ====================
 
 #[tokio::test]
-#[ignore]
 async fn run_all_scm_tests_summary() {
+    if !ensure_api_available().await {
+        eprintln!("⏭ 跳过: API服务未运行 ({})", API_URL);
+        return;
+    }
     tracing::info!("========================================");
     tracing::info!("  SCM 权限测试套件 (8个用例)");
     tracing::info!("========================================");

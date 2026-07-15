@@ -279,17 +279,20 @@ export const monitorApi = {
 export default monitorApi;
 
 export const alertCrudApi: CrudOperations<Alert, AlertQueryParams> = {
-  list: (params?) => monitorApi.listAlerts({
-    page: params?.page,
-    pagesize: params?.pagesize,
-    ...(params as any),
-  }) as Promise<{
-    success: boolean;
-    code: number;
-    message: string;
-    data?: { items: Alert[]; total: number; page?: number; pagesize?: number };
-  }>,
-  get: monitorApi.getAlert as (id: string) => Promise<{ success: boolean; code: number; message: string; data?: Alert }>,
+  list: (params?) =>
+    monitorApi.listAlerts({
+      page: params?.page,
+      pagesize: params?.pagesize,
+      ...(params as any),
+    }) as Promise<{
+      success: boolean;
+      code: number;
+      message: string;
+      data?: { items: Alert[]; total: number; page?: number; pagesize?: number };
+    }>,
+  get: monitorApi.getAlert as (
+    id: string
+  ) => Promise<{ success: boolean; code: number; message: string; data?: Alert }>,
   create: (() => {
     throw new Error('Not implemented');
   }) as any,

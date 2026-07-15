@@ -133,10 +133,7 @@ export const wmsModuleConfig: RouteModuleConfig = {
     },
     {
       path: WMS_PATHS.outboundOrder,
-      element: lazyWithRetry(
-        () => import('@/pages/wms/OutboundOrderPage'),
-        'OutboundOrderPage'
-      ),
+      element: lazyWithRetry(() => import('@/pages/wms/OutboundOrderPage'), 'OutboundOrderPage'),
       module: 'wms',
       code: 'wms-outbound-order',
       title: '出库单',
@@ -169,10 +166,7 @@ export const wmsModuleConfig: RouteModuleConfig = {
     },
     {
       path: WMS_PATHS.replenishment,
-      element: lazyWithRetry(
-        () => import('@/pages/wms/ReplenishmentPage'),
-        'ReplenishmentPage'
-      ),
+      element: lazyWithRetry(() => import('@/pages/wms/ReplenishmentPage'), 'ReplenishmentPage'),
       module: 'wms',
       code: 'wms-replenishment',
       title: '补货管理',
@@ -222,10 +216,7 @@ export const wmsModuleConfig: RouteModuleConfig = {
     },
     {
       path: WMS_PATHS.supplierDetail,
-      element: lazyWithRetry(
-        () => import('@/pages/wms/SupplierDetailPage'),
-        'SupplierDetailPage'
-      ),
+      element: lazyWithRetry(() => import('@/pages/wms/SupplierDetailPage'), 'SupplierDetailPage'),
       module: 'wms',
       code: 'wms-supplier-detail',
       title: '供应商详情',

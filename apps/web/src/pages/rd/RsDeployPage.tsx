@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useMemo } from 'react';
+import React, { useState, useMemo } from 'react';
 import {
   Box,
   Chip,
@@ -16,6 +16,7 @@ import {
   Button,
 } from '@mui/material';
 import { Rocket, FileText, RotateCcw, Globe, CheckCircle, XCircle, Clock } from 'lucide-react';
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { ListPageTemplate } from '@/components/templates';
 
 import type { RowAction, FilterConfig, ColumnDef } from '@/components/templates';
@@ -24,14 +25,13 @@ import { rdApi } from '@/api/rd';
 import { useNotificationStore } from '@/store';
 import type { Deploy, CreateDeployRequest } from '@/api/rd';
 import { logger } from '@/utils/logger';
+import { QUERY_KEYS } from '@/lib/reactQuery';
 
 const RsDeployPage: React.FC = () => {
+  const queryClient = useQueryClient();
   const { addNotification } = useNotificationStore();
-  const [deploys, setDeploys] = useState<Deploy[]>([]);
-  const [loading, setLoading] = useState(false);
   const [page, setPage] = useState(0);
   const [rowsPerPage, setRowsPerPage] = useState(10);
-  const [total, setTotal] = useState(0);
   const [searchTerm, setSearchTerm] = useState('');
   const [statusFilter, setStatusFilter] = useState<string>('');
   const [envFilter, setEnvFilter] = useState<string>('');
@@ -45,13 +45,12 @@ const RsDeployPage: React.FC = () => {
     deploy_type: 'full',
   });
 
-  useEffect(() => {
-    loadDeploys();
-  }, [searchTerm, statusFilter, envFilter, page, rowsPerPage]);
-
-  const loadDeploys = async () => {
-    try {
-      setLoading(true);
+  const deployListQuery = useQuery({
+    queryKey: [
+      ...QUERY_KEYS.RD.DEPLOYS,
+      { page, rowsPerPage, searchTerm, statusFilter, envFilter },
+    ],
+    queryFn: async () => {
       const params: Record<string, unknown> = {
         page: page + 1,
         pagesize: rowsPerPage,
@@ -61,21 +60,45 @@ const RsDeployPage: React.FC = () => {
       if (envFilter) params.env = envFilter;
 
       const response = await rdApi.listDeploys(params);
-      if (response.success && response.data) {
-        setDeploys(response.data.deploys || []);
-        setTotal(response.data.total || 0);
+      if (!response.success || !response.data) {
+        throw new Error(response.message || '加载部署记录失败');
       }
-    } catch (error: unknown) {
-      logger.error('加载部署记录失败:', error);
+      return {
+        deploys: response.data.deploys || [],
+        total: response.data.total || 0,
+      };
+    },
+  });
+
+  const createDeployMutation = useMutation({
+    mutationFn: async (data: CreateDeployRequest) => {
+      const response = await rdApi.createDeploy(data);
+      if (!response.success) {
+        throw new Error(response.message || '创建部署任务失败');
+      }
+      return response;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: QUERY_KEYS.RD.DEPLOYS });
+      addNotification({
+        type: 'success',
+        title: '操作成功',
+        message: '部署任务已提交',
+      });
+    },
+    onError: (error: unknown) => {
+      logger.error('创建部署失败:', error);
       addNotification({
         type: 'error',
-        title: '加载失败',
-        message: '无法加载部署记录',
+        title: '操作失败',
+        message: error instanceof Error ? error.message : '无法创建部署任务',
       });
-    } finally {
-      setLoading(false);
-    }
-  };
+    },
+  });
+
+  const deploys = deployListQuery.data?.deploys || [];
+  const total = deployListQuery.data?.total || 0;
+  const loading = deployListQuery.isLoading || createDeployMutation.isPending;
 
   const uniqueEnvs = useMemo(() => [...new Set(deploys.map((d) => d.env))], [deploys]);
 
@@ -170,20 +193,9 @@ const RsDeployPage: React.FC = () => {
         app_name: deploy.app_name,
         version: deploy.version,
       };
-      await rdApi.createDeploy(createData);
-      addNotification({
-        type: 'success',
-        title: '操作成功',
-        message: '部署任务已提交',
-      });
-      loadDeploys();
-    } catch (error: unknown) {
-      logger.error('重新部署失败:', error);
-      addNotification({
-        type: 'error',
-        title: '操作失败',
-        message: '重新部署失败',
-      });
+      await createDeployMutation.mutateAsync(createData);
+    } catch {
+      // 错误已在 mutation onError 中处理
     }
   };
 
@@ -198,12 +210,7 @@ const RsDeployPage: React.FC = () => {
         app_name: '',
         version: '',
       };
-      await rdApi.createDeploy(createData);
-      addNotification({
-        type: 'success',
-        title: '创建成功',
-        message: '部署任务已创建',
-      });
+      await createDeployMutation.mutateAsync(createData);
       setNewDeployDialogOpen(false);
       setNewDeployForm({
         project_id: '',
@@ -211,14 +218,8 @@ const RsDeployPage: React.FC = () => {
         env: 'prod',
         deploy_type: 'full',
       });
-      loadDeploys();
-    } catch (error: unknown) {
-      logger.error('创建部署失败:', error);
-      addNotification({
-        type: 'error',
-        title: '创建失败',
-        message: '无法创建部署任务',
-      });
+    } catch {
+      // 错误已在 mutation onError 中处理
     }
   };
 

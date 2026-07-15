@@ -24,7 +24,7 @@ import {
   ToggleButton,
   ToggleButtonGroup,
 } from '@mui/material';
-import React, { useState, useEffect, useMemo, useCallback } from 'react';
+import React, { useState, useMemo, useCallback } from 'react';
 import {
   FileText,
   Eye,
@@ -44,6 +44,7 @@ import {
   List,
   Radio,
 } from 'lucide-react';
+import { useQuery, useQueryClient } from '@tanstack/react-query';
 
 import { useNotificationStore } from '../../store';
 import { ListPageTemplate, type ColumnDef } from '@/components/templates';
@@ -51,6 +52,7 @@ import { extractErrorMessage } from '@/utils/errors';
 import { designTokens } from '@/theme/tokens';
 import { PageContainer, ConfirmDialog } from '@/components/common';
 import { MONITOR_PATHS } from '@/modules/monitor/config';
+import { QUERY_KEYS } from '@/lib/reactQuery';
 
 const ct = designTokens.colors;
 
@@ -102,153 +104,6 @@ const LEVEL_COLORS: Record<LogLevel, { bg: string; color: string; border: string
   debug: { bg: 'grey.100', color: 'grey.500', border: ct.grey[300] },
 };
 
-const generateMockLogs = (): SystemLog[] => {
-  const now = Date.now();
-  const logs: SystemLog[] = [
-    {
-      id: 'log-001',
-      timestamp: new Date(now - 2 * 60 * 1000).toISOString(),
-      level: 'error',
-      service: '订单服务',
-      message: '创建订单失败：库存不足，商品ID=SKU-2024001，请求库存=10，实际库存=3',
-      trace_id: 'trace-abc123def456',
-      duration_ms: 1250,
-      type: 'error',
-    },
-    {
-      id: 'log-002',
-      timestamp: new Date(now - 5 * 60 * 1000).toISOString(),
-      level: 'warn',
-      service: '用户服务',
-      message: '用户登录失败次数过多，用户ID=user_10086，失败次数=5，IP=192.168.1.100',
-      trace_id: 'trace-bcd234efg567',
-      duration_ms: 45,
-      type: 'application',
-    },
-    {
-      id: 'log-003',
-      timestamp: new Date(now - 8 * 60 * 1000).toISOString(),
-      level: 'info',
-      service: '网关服务',
-      message: 'GET /api/v1/users/profile 200 45ms',
-      trace_id: 'trace-cde345fgh678',
-      duration_ms: 45,
-      type: 'access',
-    },
-    {
-      id: 'log-004',
-      timestamp: new Date(now - 12 * 60 * 1000).toISOString(),
-      level: 'error',
-      service: '支付服务',
-      message: '支付回调验证失败：签名不匹配，订单号=ORD20240601001',
-      trace_id: 'trace-def456ghi789',
-      duration_ms: 89,
-      type: 'error',
-    },
-    {
-      id: 'log-005',
-      timestamp: new Date(now - 15 * 60 * 1000).toISOString(),
-      level: 'info',
-      service: '认证服务',
-      message: '用户登录成功，用户ID=user_10001，IP=10.0.0.25',
-      trace_id: 'trace-efg567hij890',
-      duration_ms: 120,
-      type: 'access',
-    },
-    {
-      id: 'log-006',
-      timestamp: new Date(now - 20 * 60 * 1000).toISOString(),
-      level: 'warn',
-      service: '数据库服务',
-      message: '慢查询检测：SELECT * FROM orders WHERE created_at > ? 执行时间=2500ms',
-      trace_id: 'trace-fgh678ijk901',
-      duration_ms: 2500,
-      type: 'slow_query',
-    },
-    {
-      id: 'log-007',
-      timestamp: new Date(now - 25 * 60 * 1000).toISOString(),
-      level: 'debug',
-      service: '消息服务',
-      message: '消息队列消费者处理消息，topic=order-notify，offset=12345',
-      trace_id: 'trace-ghi789jkl012',
-      duration_ms: 15,
-      type: 'application',
-    },
-    {
-      id: 'log-008',
-      timestamp: new Date(now - 30 * 60 * 1000).toISOString(),
-      level: 'info',
-      service: '文件服务',
-      message: '文件上传成功，文件ID=file_abc123，大小=2.5MB，类型=image/png',
-      trace_id: 'trace-hij890klm123',
-      duration_ms: 350,
-      type: 'application',
-    },
-    {
-      id: 'log-009',
-      timestamp: new Date(now - 35 * 60 * 1000).toISOString(),
-      level: 'error',
-      service: '库存服务',
-      message: '库存扣减事务超时，事务ID=txn_xyz789，等待锁时间=30s',
-      trace_id: 'trace-ijk901lmn234',
-      duration_ms: 30000,
-      type: 'slow_query',
-    },
-    {
-      id: 'log-010',
-      timestamp: new Date(now - 40 * 60 * 1000).toISOString(),
-      level: 'info',
-      service: '订单服务',
-      message: 'POST /api/v1/orders 201 560ms',
-      trace_id: 'trace-jkl012mno345',
-      duration_ms: 560,
-      type: 'access',
-    },
-    {
-      id: 'log-011',
-      timestamp: new Date(now - 45 * 60 * 1000).toISOString(),
-      level: 'warn',
-      service: '网关服务',
-      message: '请求频率接近限流阈值，IP=10.0.0.100，当前QPS=95，阈值=100',
-      trace_id: 'trace-klm123nop456',
-      duration_ms: 12,
-      type: 'application',
-    },
-    {
-      id: 'log-012',
-      timestamp: new Date(now - 50 * 60 * 1000).toISOString(),
-      level: 'debug',
-      service: '用户服务',
-      message: '缓存命中：user_profile:user_10001，TTL=295s',
-      trace_id: 'trace-lmn234opq567',
-      duration_ms: 2,
-      type: 'application',
-    },
-    {
-      id: 'log-013',
-      timestamp: new Date(now - 55 * 60 * 1000).toISOString(),
-      level: 'error',
-      service: '消息服务',
-      message: '消息发送失败：连接超时，topic=payment-callback，重试次数=3',
-      trace_id: 'trace-mno345pqr678',
-      duration_ms: 5000,
-      type: 'error',
-    },
-    {
-      id: 'log-014',
-      timestamp: new Date(now - 58 * 60 * 1000).toISOString(),
-      level: 'info',
-      service: '支付服务',
-      message: '支付成功，订单号=ORD20240601002，金额=299.00，支付方式=支付宝',
-      trace_id: 'trace-nop456qrs789',
-      duration_ms: 450,
-      type: 'application',
-    },
-  ];
-  return logs;
-};
-
 const formatTimeWithMs = (isoString: string): string => {
   const date = new Date(isoString);
   const pad = (n: number, len = 2) => String(n).padStart(len, '0');
@@ -280,10 +135,8 @@ const truncateText = (text: string, maxLength: number): string => {
 
 export const MonitorLogsPage: React.FC = () => {
   const addNotification = useNotificationStore((state) => state.addNotification);
+  const queryClient = useQueryClient();
 
-  const [logs, setLogs] = useState<SystemLog[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
   const [searchQuery, setSearchQuery] = useState('');
   const [activeTab, setActiveTab] = useState<LogTab>('all');
   const [levelFilter, setLevelFilter] = useState<string>('all');
@@ -291,7 +144,6 @@ export const MonitorLogsPage: React.FC = () => {
   const [typeFilter, setTypeFilter] = useState<string>('all');
   const [timeRange, setTimeRange] = useState<string>('1h');
   const [page, setPage] = useState(1);
-  const [total, setTotal] = useState(0);
   const [selectedLog, setSelectedLog] = useState<SystemLog | null>(null);
   const [detailOpen, setDetailOpen] = useState(false);
   const [viewMode, setViewMode] = useState<'table' | 'stream'>('table');
@@ -299,30 +151,18 @@ export const MonitorLogsPage: React.FC = () => {
   const [selectedIds, setSelectedIds] = useState<string[]>([]);
   const pageSize = 20;
 
-  const loadData = useCallback(async () => {
-    setLoading(true);
-    setError(null);
-    try {
-      await new Promise((resolve) => setTimeout(resolve, 500));
-      const mockData = generateMockLogs();
-      setLogs(mockData);
-      setTotal(mockData.length);
-    } catch (_err: unknown) {
-      const errorMsg = extractErrorMessage(_err, '加载日志失败');
-      setError(errorMsg);
-      addNotification({
-        title: '加载失败',
-        message: errorMsg,
-        type: 'error',
-      });
-    } finally {
-      setLoading(false);
-    }
-  }, [addNotification]);
+  const logsQuery = useQuery({
+    queryKey: [...QUERY_KEYS.MONITOR.LOGS, timeRange],
+    queryFn: async () => [] as SystemLog[],
+  });
 
-  useEffect(() => {
-    loadData();
-  }, [loadData]);
+  const logs = logsQuery.data ?? [];
+  const loading = logsQuery.isLoading;
+  const error = logsQuery.error ? extractErrorMessage(logsQuery.error, '加载日志失败') : null;
+
+  const loadData = useCallback(() => {
+    logsQuery.refetch();
+  }, [logsQuery]);
 
   const filteredLogs = useMemo(() => {
     let result = logs;
@@ -509,8 +349,9 @@ export const MonitorLogsPage: React.FC = () => {
   }, []);
 
   const confirmBatchDelete = useCallback(() => {
-    setLogs((prev) => prev.filter((log) => !selectedIds.includes(log.id)));
-    setTotal((prev) => prev - selectedIds.length);
+    queryClient.setQueryData<SystemLog[]>([...QUERY_KEYS.MONITOR.LOGS, timeRange], (prev) =>
+      (prev ?? []).filter((log) => !selectedIds.includes(log.id))
+    );
     setSelectedIds([]);
     setConfirmOpen(false);
     addNotification({
@@ -518,7 +359,7 @@ export const MonitorLogsPage: React.FC = () => {
       message: `已删除 ${selectedIds.length} 条日志`,
       type: 'success',
     });
-  }, [selectedIds, addNotification]);
+  }, [queryClient, timeRange, selectedIds, addNotification]);
 
   const columns: ColumnDef<SystemLog>[] = useMemo(
     () => [

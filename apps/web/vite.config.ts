@@ -27,13 +27,13 @@ interface ServiceConfig {
 }
 
 const services: ServiceConfig[] = [
-  { name: 'core', port: 8000, hasWs: true, wsPath: '/ws/core' },
+  { name: 'core', port: 8000, hasWs: true, wsPath: '/ws/core', apiRewrite: (path) => path.replace(/^\/core\/api/, '/api/core') },
   { name: 'comm', port: 8000, useCoreService: true, apiRewrite: (path) => path.replace(/^\/comm\/api/, '/api/core/comm') },
-  { name: 'iam', port: 8000, useCoreService: true, apiRewrite: (path) => path.replace(/^\/iam\/api\/iam/, '/api/core/iam') },
+  { name: 'iam', port: 8000, useCoreService: true, apiRewrite: (path) => path.replace(/^\/iam\/api/, '/api/core/iam') },
   { name: 'doc', port: 8012, pageRewrite: (path) => path.replace(/^\/doc(\/.*)$/, '/api/doc$1') },
   { name: 'file', port: 8000, useCoreService: true, pageRewrite: (path) => path.replace(/^\/file(\/.*)$/, '/api/core/file$1') },
   { name: 'mail', port: 8000, useCoreService: true, pageRewrite: (path) => path.replace(/^\/mail(\/.*)$/, '/api/core/comm/mail$1') },
-  { name: 'notification', port: 8000, useCoreService: true, pageRewrite: (path) => path.replace(/^\/notification(\/.*)$/, '/api$1'), apiRewrite: (path) => path.replace(/^\/notification\/api\/v1/, '/api/v1') },
+  { name: 'notification', port: 8000, useCoreService: true, pageRewrite: (path) => path.replace(/^\/notification(\/.*)$/, '/api/core/comm/notify$1'), apiRewrite: (path) => path.replace(/^\/notification\/api/, '/api/core/comm/notify') },
   { name: 'im', port: 8000, useCoreService: true, pageRewrite: (path) => path.replace(/^\/im(\/.*)$/, '/api/core/comm/im$1') },
   { name: 'erp', port: 8010, apiRewrite: (path) => path.replace(/^\/erp\/system/, '/api/erp') },
   { name: 'finance', port: 8011 },
@@ -48,10 +48,10 @@ const services: ServiceConfig[] = [
   { name: 'qms', port: 8050 },
   { name: 'lims', port: 8051 },
   { name: 'ehs', port: 8052 },
-  { name: 'rs', port: 8053 },
+  { name: 'rd', port: 8053 },
   { name: 'bi', port: 8060 },
   { name: 'report', port: 8060, skipPluginHealth: true },
-  { name: 'monitor', port: 8062, apiRewrite: (path) => path.replace(/^\/monitor\/api/, '/api/v1/monitor') },
+  { name: 'monitor', port: 8062, apiRewrite: (path) => path.replace(/^\/monitor\/api/, '/api/monitor') },
   { name: 'portal', port: 8063 },
   { name: 'mobile', port: 8070 },
   { name: 'gis', port: 8071, hasWs: true, wsPath: '/gis/ws', wsRewrite: (path) => path.replace(/^\/gis\/ws/, '/ws/gis') },
@@ -59,7 +59,7 @@ const services: ServiceConfig[] = [
   { name: 'master', port: 8000, useCoreService: true, apiRewrite: (path) => path.replace(/^\/master\/api/, '/api') },
   { name: 'migration', port: 8000, useCoreService: true, apiRewrite: (path) => path.replace(/^\/migration\/api/, '/api') },
   { name: 'ai', port: 8013, skipPluginHealth: true },
-  { name: 'flow', port: 8000, useCoreService: true, pageRewrite: (path) => path.replace(/^\/flow/, '/api/core/flow') },
+  { name: 'flow', port: 8000, useCoreService: true, apiRewrite: (path) => path.replace(/^\/flow\/api/, '/api/core/flow'), pageRewrite: (path) => path.replace(/^\/flow/, '/api/core/flow') },
   { name: 'manufacturing', port: 8030, skipPluginHealth: true },
 ];
 
@@ -69,8 +69,7 @@ const isPageRequest = (req: IncomingMessage): boolean => {
   if (url.includes('.') && !url.includes('?')) return false;
   if (url.startsWith('/api/') || url.startsWith('/ws/')) return false;
   if (url.startsWith('/src/')) return false;
-  if (url.startsWith('/notification/v1/')) return false;
-  if (url.startsWith('/notification/api/v1/')) return false;
+  if (url.startsWith('/notification/')) return false;
   if (url.endsWith('/health')) return false;
   if (url.includes('/api/')) return false;
   if (accept.includes('text/html') && req.method === 'GET') return true;
@@ -782,10 +781,10 @@ export default defineConfig({
         rewrite: (path: string) => path.replace(/^\/unified-core/, ''),
         configure: createProxyLogger('unified-core', 'http://localhost:8000'),
       },
-      '/iam/api/iam/auth/': {
+      '/iam/api/auth/': {
         target: 'http://localhost:8000',
         changeOrigin: true,
-        rewrite: (path: string) => path.replace(/^\/iam\/api\/iam\/auth\//, '/api/core/iam/auth/'),
+        rewrite: (path: string) => path.replace(/^\/iam\/api\/auth\//, '/api/core/iam/auth/'),
         configure: createProxyLogger('iam-auth', 'http://localhost:8000'),
       },
       '/iam/auth/': {

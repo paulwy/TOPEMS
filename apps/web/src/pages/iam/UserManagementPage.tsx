@@ -13,15 +13,18 @@ import {
   Button,
 } from '@mui/material';
 import React, { useState, useEffect, useMemo } from 'react';
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { Plus, Edit, Trash2, Shield, UserPlus, UserMinus } from 'lucide-react';
 import { authApi, type User, type Role } from '@/api/iam';
 import { useNotificationStore } from '../../store';
 import { RoleBadge } from '@/components/PermissionGate';
 import { ListPageTemplate, type ColumnDef } from '@/components/templates';
 import { extractErrorMessage } from '@/utils/errors';
+import { apiLogger } from '@/utils/logger';
 import { PageContainer } from '@/components/common';
 import { ConfirmDialog } from '@topems/shared-components';
 import { designTokens } from '@/theme/tokens';
+import { QUERY_KEYS } from '@/lib/reactQuery';
 import { IAM_PATHS } from '@/modules/iam/config';
 
 const ct = designTokens.colors;
@@ -32,11 +35,8 @@ interface UserManagementPageProps {
 
 const UserManagementPage: React.FC<UserManagementPageProps> = ({ onNavigate: _onNavigate }) => {
   const addNotification = useNotificationStore((state) => state.addNotification);
+  const queryClient = useQueryClient();
 
-  const [users, setUsers] = useState<User[]>([]);
-  const [roles, setRoles] = useState<Role[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
   const [searchQuery, setSearchQuery] = useState('');
   const [debouncedSearch, setDebouncedSearch] = useState('');
   const [showCreateModal, setShowCreateModal] = useState(false);
@@ -58,7 +58,6 @@ const UserManagementPage: React.FC<UserManagementPageProps> = ({ onNavigate: _on
   // 分页状态
   const [currentPage, setCurrentPage] = useState(1);
   const [pageSize] = useState(10);
-  const [totalUsers, setTotalUsers] = useState(0);
 
   // 防抖搜索
   useEffect(() => {
@@ -70,41 +69,86 @@ const UserManagementPage: React.FC<UserManagementPageProps> = ({ onNavigate: _on
     return () => clearTimeout(timer);
   }, [searchQuery]);
 
+  const { data: usersData, isLoading: loading } = useQuery({
+    queryKey: [...QUERY_KEYS.IAM.USERS, { page: currentPage, search: debouncedSearch }],
+    queryFn: async () => {
+      const res = await authApi.listUsers({
+        page: currentPage,
+        pagesize: pageSize,
+        search: debouncedSearch || undefined,
+      });
+      if (!res.success) {
+        throw new Error(res.message || '加载用户失败');
+      }
+      return res.data;
+    },
+  });
+
+  const users = usersData?.users ?? [];
+  const totalUsers = usersData?.total ?? 0;
+
+  const { data: roles = [] } = useQuery<Role[]>({
+    queryKey: QUERY_KEYS.IAM.ROLES,
+    queryFn: async () => {
+      const res = await authApi.listRoles();
+      if (!res.success) {
+        throw new Error(res.message || '加载角色失败');
+      }
+      return res.data ?? [];
+    },
+  });
+
+  const { data: fetchedUserRoles } = useQuery<Role[]>({
+    queryKey: QUERY_KEYS.IAM.USER_ROLES(selectedUser?.id || ''),
+    queryFn: async () => {
+      if (!selectedUser) return [];
+      const res = await authApi.getUserRoles(selectedUser.id);
+      if (!res.success) {
+        throw new Error(res.message || '加载用户角色失败');
+      }
+      return res.data ?? [];
+    },
+    enabled: !!selectedUser && showRolesModal,
+  });
+
   useEffect(() => {
-    loadData();
-  }, [currentPage, debouncedSearch]);
-
-  const loadData = async () => {
-    setLoading(true);
-    setError(null);
-    try {
-      const [usersRes, rolesRes] = await Promise.all([
-        authApi.listUsers({
-          page: currentPage,
-          pagesize: pageSize,
-          search: debouncedSearch || undefined,
-        }),
-        authApi.listRoles(),
-      ]);
-
-      if (usersRes.success && usersRes.data) {
-        setUsers(usersRes.data.users || []);
-        setTotalUsers(usersRes.data.total || 0);
-      }
-      if (rolesRes.success && rolesRes.data) {
-        setRoles(rolesRes.data);
-      }
-    } catch (_err: unknown) {
-      const errorMsg = extractErrorMessage(_err, '加载数据失败');
-      setError(errorMsg);
-      addNotification({ title: '加载失败', message: errorMsg, type: 'error' });
-    } finally {
-      setLoading(false);
+    if (fetchedUserRoles) {
+      setUserRoles(fetchedUserRoles);
     }
-  };
+  }, [fetchedUserRoles]);
 
   // 批量启用/禁用用户
-  const handleBatchUpdateStatus = async (isActive: boolean) => {
+  const batchUpdateStatusMutation = useMutation({
+    mutationFn: async (isActive: boolean) => {
+      const res = await authApi.batchUpdateUsers({
+        user_ids: selectedUserIds.map(String),
+        isactive: isActive,
+      });
+      if (!res.success) {
+        throw new Error(res.message || '操作失败');
+      }
+      return res.data;
+    },
+    onSuccess: (_data, isActive) => {
+      addNotification({
+        title: '成功',
+        message: `已${isActive ? '启用' : '禁用'} ${selectedUserIds.length} 个用户`,
+        type: 'success',
+      });
+      setSelectedUserIds([]);
+      queryClient.invalidateQueries({ queryKey: QUERY_KEYS.IAM.USERS });
+    },
+    onError: (err: unknown) => {
+      apiLogger.error('批量更新用户状态失败:', err);
+      addNotification({
+        title: '失败',
+        message: extractErrorMessage(err, '操作失败'),
+        type: 'error',
+      });
+    },
+  });
+
+  const handleBatchUpdateStatus = (isActive: boolean) => {
     if (selectedUserIds.length === 0) {
       addNotification({
         title: '提示',
@@ -113,34 +157,7 @@ const UserManagementPage: React.FC<UserManagementPageProps> = ({ onNavigate: _on
       });
       return;
     }
-
-    try {
-      const res = await authApi.batchUpdateUsers({
-        user_ids: selectedUserIds.map(String),
-        isactive: isActive,
-      });
-      if (res.success) {
-        addNotification({
-          title: '成功',
-          message: `已${isActive ? '启用' : '禁用'} ${selectedUserIds.length} 个用户`,
-          type: 'success',
-        });
-        setSelectedUserIds([]);
-        loadData();
-      } else {
-        addNotification({
-          title: '失败',
-          message: res.message || '操作失败',
-          type: 'error',
-        });
-      }
-    } catch (_err: unknown) {
-      addNotification({
-        title: '失败',
-        message: extractErrorMessage(_err, '操作失败'),
-        type: 'error',
-      });
-    }
+    batchUpdateStatusMutation.mutate(isActive);
   };
 
   const openConfirmDialog = (config: {
@@ -152,6 +169,35 @@ const UserManagementPage: React.FC<UserManagementPageProps> = ({ onNavigate: _on
     setConfirmDialogConfig(config);
     setConfirmDialogOpen(true);
   };
+
+  const batchDeleteMutation = useMutation({
+    mutationFn: async () => {
+      const res = await authApi.batchDeleteUsers({
+        user_ids: selectedUserIds.map(String),
+      });
+      if (!res.success) {
+        throw new Error(res.message || '删除失败');
+      }
+      return res.data;
+    },
+    onSuccess: () => {
+      addNotification({
+        title: '成功',
+        message: `已删除 ${selectedUserIds.length} 个用户`,
+        type: 'success',
+      });
+      setSelectedUserIds([]);
+      queryClient.invalidateQueries({ queryKey: QUERY_KEYS.IAM.USERS });
+    },
+    onError: (err: unknown) => {
+      apiLogger.error('批量删除用户失败:', err);
+      addNotification({
+        title: '失败',
+        message: extractErrorMessage(err, '删除失败'),
+        type: 'error',
+      });
+    },
+  });
 
   const handleBatchDelete = () => {
     if (selectedUserIds.length === 0) {
@@ -166,142 +212,113 @@ const UserManagementPage: React.FC<UserManagementPageProps> = ({ onNavigate: _on
     openConfirmDialog({
       title: '确认批量删除',
       message: `确定要删除选中的 ${selectedUserIds.length} 个用户吗？此操作不可恢复。`,
-      onConfirm: async () => {
-        try {
-          const res = await authApi.batchDeleteUsers({
-            user_ids: selectedUserIds.map(String),
-          });
-          if (res.success) {
-            addNotification({
-              title: '成功',
-              message: `已删除 ${selectedUserIds.length} 个用户`,
-              type: 'success',
-            });
-            setSelectedUserIds([]);
-            loadData();
-          } else {
-            addNotification({
-              title: '失败',
-              message: res.message || '删除失败',
-              type: 'error',
-            });
-          }
-        } catch (_err: unknown) {
-          addNotification({
-            title: '失败',
-            message: extractErrorMessage(_err, '删除失败'),
-            type: 'error',
-          });
-        }
+      onConfirm: () => {
+        batchDeleteMutation.mutate();
       },
       danger: true,
     });
   };
+
+  const deleteUserMutation = useMutation({
+    mutationFn: async (userId: string) => {
+      const res = await authApi.deleteUser(userId);
+      if (!res.success) {
+        throw new Error(res.message || '删除用户失败');
+      }
+      return res.data;
+    },
+    onSuccess: () => {
+      addNotification({
+        title: '成功',
+        message: '用户删除成功',
+        type: 'success',
+      });
+      queryClient.invalidateQueries({ queryKey: QUERY_KEYS.IAM.USERS });
+    },
+    onError: (err: unknown) => {
+      apiLogger.error('删除用户失败:', err);
+      addNotification({
+        title: '失败',
+        message: extractErrorMessage(err, '删除用户失败'),
+        type: 'error',
+      });
+    },
+  });
 
   const handleDeleteUser = (userId: string) => {
     openConfirmDialog({
       title: '确认删除',
       message: '确定要删除这个用户吗？',
-      onConfirm: async () => {
-        try {
-          const res = await authApi.deleteUser(userId);
-          if (res.success) {
-            addNotification({
-              title: '成功',
-              message: '用户删除成功',
-              type: 'success',
-            });
-            loadData();
-          } else {
-            addNotification({
-              title: '失败',
-              message: res.message || '删除用户失败',
-              type: 'error',
-            });
-          }
-        } catch (_err: unknown) {
-          addNotification({
-            title: '失败',
-            message: extractErrorMessage(_err, '删除用户失败'),
-            type: 'error',
-          });
-        }
+      onConfirm: () => {
+        deleteUserMutation.mutate(userId);
       },
       danger: true,
     });
   };
 
-  const openRolesModal = async (user: User) => {
+  const openRolesModal = (user: User) => {
     setSelectedUser(user);
-    await loadUserRoles(user.id);
     setShowRolesModal(true);
   };
 
-  const loadUserRoles = async (userId: string) => {
-    try {
-      const res = await authApi.getUserRoles(userId);
-      if (res.success && res.data) {
-        setUserRoles(res.data);
-      }
-    } catch (_err: unknown) {
-      addNotification({
-        title: '加载失败',
-        message: '加载用户角色失败',
-        type: 'error',
-      });
-    }
-  };
-
-  const handleAddRoleToUser = async (userId: string, roleId: string) => {
-    try {
+  const addUserRoleMutation = useMutation({
+    mutationFn: async ({ userId, roleId }: { userId: string; roleId: string }) => {
       const res = await authApi.addUserRole(userId, roleId);
-      if (res.success) {
-        addNotification({
-          title: '成功',
-          message: '角色添加成功',
-          type: 'success',
-        });
-        await loadUserRoles(userId);
-      } else {
-        addNotification({
-          title: '失败',
-          message: res.message || '添加角色失败',
-          type: 'error',
-        });
+      if (!res.success) {
+        throw new Error(res.message || '添加角色失败');
       }
-    } catch (_err: unknown) {
+      return res.data;
+    },
+    onSuccess: (_data, { userId }) => {
+      addNotification({
+        title: '成功',
+        message: '角色添加成功',
+        type: 'success',
+      });
+      queryClient.invalidateQueries({ queryKey: QUERY_KEYS.IAM.USER_ROLES(userId) });
+    },
+    onError: (err: unknown) => {
+      apiLogger.error('添加用户角色失败:', err);
       addNotification({
         title: '失败',
-        message: extractErrorMessage(_err, '添加角色失败'),
+        message: extractErrorMessage(err, '添加角色失败'),
         type: 'error',
       });
-    }
+    },
+  });
+
+  const handleAddRoleToUser = (userId: string, roleId: string) => {
+    addUserRoleMutation.mutate({ userId, roleId });
   };
 
-  const handleRemoveRoleFromUser = async (userId: string, roleId: string) => {
-    try {
+  const removeUserRoleMutation = useMutation({
+    mutationFn: async ({ userId, roleId }: { userId: string; roleId: string }) => {
       const res = await authApi.removeUserRole(userId, roleId);
-      if (res.success) {
-        addNotification({
-          title: '成功',
-          message: '角色移除成功',
-          type: 'success',
-        });
-        await loadUserRoles(userId);
-      } else {
-        addNotification({
-          title: '失败',
-          message: res.message || '移除角色失败',
-          type: 'error',
-        });
+      if (!res.success) {
+        throw new Error(res.message || '移除角色失败');
       }
-    } catch (_err: unknown) {
+      return res.data;
+    },
+    onSuccess: (_data, { userId }) => {
+      addNotification({
+        title: '成功',
+        message: '角色移除成功',
+        type: 'success',
+      });
+      queryClient.invalidateQueries({ queryKey: QUERY_KEYS.IAM.USER_ROLES(userId) });
+    },
+    onError: (err: unknown) => {
+      apiLogger.error('移除用户角色失败:', err);
       addNotification({
         title: '失败',
-        message: extractErrorMessage(_err, '移除角色失败'),
+        message: extractErrorMessage(err, '移除角色失败'),
         type: 'error',
       });
-    }
+    },
+  });
+
+  const handleRemoveRoleFromUser = (userId: string, roleId: string) => {
+    removeUserRoleMutation.mutate({ userId, roleId });
   };
 
   const columns: ColumnDef<User>[] = useMemo(
@@ -456,76 +473,102 @@ const UserManagementPage: React.FC<UserManagementPageProps> = ({ onNavigate: _on
     role: '普通用户',
   });
 
-  const handleCreateUser = async (e: React.FormEvent) => {
-    e.preventDefault();
-    try {
-      const res = await authApi.createUser({
-        username: newUser.username,
-        email: newUser.email,
-        password: newUser.password,
-        full_name: newUser.full_name,
-      });
-      if (res.success) {
-        addNotification({
-          title: '成功',
-          message: '用户创建成功',
-          type: 'success',
-        });
-        setShowCreateModal(false);
-        setNewUser({
-          username: '',
-          email: '',
-          password: '',
-          full_name: '',
-          role: '普通用户',
-        });
-        // 重置分页到第一页，确保新数据显示在列表中
-        setCurrentPage(1);
-      } else {
-        addNotification({
-          title: '失败',
-          message: res.message || '创建用户失败',
-          type: 'error',
-        });
+  const createUserMutation = useMutation({
+    mutationFn: async (data: {
+      username: string;
+      email: string;
+      password: string;
+      full_name: string;
+    }) => {
+      const res = await authApi.createUser(data);
+      if (!res.success) {
+        throw new Error(res.message || '创建用户失败');
       }
-    } catch (_err: unknown) {
-      const errorMsg = extractErrorMessage(_err, '创建用户失败');
-      addNotification({ title: '失败', message: errorMsg, type: 'error' });
-    }
+      return res.data;
+    },
+    onSuccess: () => {
+      addNotification({
+        title: '成功',
+        message: '用户创建成功',
+        type: 'success',
+      });
+      setShowCreateModal(false);
+      setNewUser({
+        username: '',
+        email: '',
+        password: '',
+        full_name: '',
+        role: '普通用户',
+      });
+      // 重置分页到第一页，确保新数据显示在列表中
+      setCurrentPage(1);
+      queryClient.invalidateQueries({ queryKey: QUERY_KEYS.IAM.USERS });
+    },
+    onError: (err: unknown) => {
+      apiLogger.error('创建用户失败:', err);
+      addNotification({
+        title: '失败',
+        message: extractErrorMessage(err, '创建用户失败'),
+        type: 'error',
+      });
+    },
+  });
+
+  const handleCreateUser = (e: React.FormEvent) => {
+    e.preventDefault();
+    createUserMutation.mutate({
+      username: newUser.username,
+      email: newUser.email,
+      password: newUser.password,
+      full_name: newUser.full_name,
+    });
   };
 
-  const handleEditUser = async (e: React.FormEvent) => {
+  const updateUserMutation = useMutation({
+    mutationFn: async ({
+      userId,
+      data,
+    }: {
+      userId: string;
+      data: { full_name?: string; email: string; isactive: boolean };
+    }) => {
+      const res = await authApi.updateUser(userId, data);
+      if (!res.success) {
+        throw new Error(res.message || '更新用户失败');
+      }
+      return res.data;
+    },
+    onSuccess: () => {
+      addNotification({
+        title: '成功',
+        message: '用户更新成功',
+        type: 'success',
+      });
+      setShowEditModal(false);
+      setSelectedUser(null);
+      queryClient.invalidateQueries({ queryKey: QUERY_KEYS.IAM.USERS });
+    },
+    onError: (err: unknown) => {
+      apiLogger.error('更新用户失败:', err);
+      addNotification({
+        title: '失败',
+        message: extractErrorMessage(err, '更新用户失败'),
+        type: 'error',
+      });
+    },
+  });
+
+  const handleEditUser = (e: React.FormEvent) => {
     e.preventDefault();
     if (!selectedUser) return;
-    try {
-      const res = await authApi.updateUser(selectedUser.id, {
+    updateUserMutation.mutate({
+      userId: selectedUser.id,
+      data: {
         full_name: selectedUser.full_name || undefined,
         email: selectedUser.email,
         isactive: selectedUser.isactive,
-      });
-      if (res.success) {
-        addNotification({
-          title: '成功',
-          message: '用户更新成功',
-          type: 'success',
-        });
-        setShowEditModal(false);
-        setSelectedUser(null);
-        loadData();
-      } else {
-        addNotification({
-          title: '失败',
-          message: res.message || '更新用户失败',
-          type: 'error',
-        });
-      }
-    } catch (_err: unknown) {
-      addNotification({
-        title: '失败',
-        message: extractErrorMessage(_err, '更新用户失败'),
-        type: 'error',
-      });
-    }
+      },
+    });
   };
 
   return (
@@ -539,7 +582,6 @@ const UserManagementPage: React.FC<UserManagementPageProps> = ({ onNavigate: _on
         columns={columns}
         data={users}
         loading={loading}
-        error={error || undefined}
         rowActions={rowActions}
         selectable
         selection={{
@@ -581,7 +623,7 @@ const UserManagementPage: React.FC<UserManagementPageProps> = ({ onNavigate: _on
             onClick: () => setShowCreateModal(true),
           },
         ]}
-        onRefresh={loadData}
+        onRefresh={() => queryClient.invalidateQueries({ queryKey: QUERY_KEYS.IAM.USERS })}
         backButton={{
           href: IAM_PATHS.dashboard,
         }}

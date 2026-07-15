@@ -1,5 +1,6 @@
 import React from 'react';
 import * as ReactDOM from 'react-dom/client';
+import { logger } from './logger';
 
 export interface PerformanceMetrics {
   lcp: number;
@@ -25,7 +26,7 @@ export interface PerformanceReport {
   connectionType: string;
 }
 
-let performanceMetrics: PerformanceMetrics = {
+const performanceMetrics: PerformanceMetrics = {
   lcp: 0,
   fid: 0,
   tti: 0,
@@ -113,12 +114,15 @@ export function initPerformanceMonitoring(): Promise<PerformanceMetrics> {
       const navEntries = performance.getEntriesByType('navigation');
       if (navEntries.length === 0) return;
 
-      const navEntry = navEntries[0] as unknown as { domInteractive: number; domContentLoadedEventEnd: number };
+      const navEntry = navEntries[0] as unknown as {
+        domInteractive: number;
+        domContentLoadedEventEnd: number;
+      };
       const domInteractive = navEntry.domInteractive || 0;
-      
+
       const longTasks = performance.getEntriesByType('longtask');
       let lastLongTaskEnd = domInteractive;
-      
+
       longTasks.forEach((task) => {
         const taskEntry = task as unknown as { startTime: number; duration: number };
         const taskEnd = taskEntry.startTime + taskEntry.duration;
@@ -136,7 +140,7 @@ export function initPerformanceMonitoring(): Promise<PerformanceMetrics> {
       });
 
       const candidateTime = Math.max(fcpTime, lastLongTaskEnd);
-      
+
       performanceMetrics.tti = candidateTime;
       performanceMetrics.timeToInteractive = candidateTime;
     };
@@ -251,17 +255,19 @@ export function lazyLoadComponents(): void {
         const el = entry.target as HTMLElement;
         const componentName = el.dataset.lazyComponent;
         if (componentName) {
-          import(`@/components/${componentName}`).then((module) => {
-            const Component = module.default;
-            if (Component) {
-              const container = document.createElement('div');
-              const root = ReactDOM.createRoot(container);
-              root.render(<Component />);
-              el.replaceWith(container.firstChild || container);
-            }
-          }).catch((error) => {
-            console.error(`Failed to load component ${componentName}:`, error);
-          });
+          import(`@/components/${componentName}`)
+            .then((module) => {
+              const Component = module.default;
+              if (Component) {
+                const container = document.createElement('div');
+                const root = ReactDOM.createRoot(container);
+                root.render(<Component />);
+                el.replaceWith(container.firstChild || container);
+              }
+            })
+            .catch((error) => {
+              logger.error(`Failed to load component ${componentName}:`, error);
+            });
         }
         observer.unobserve(el);
       }
@@ -282,10 +288,5 @@ export function getPerformanceScore(metrics: PerformanceMetrics): number {
 }
 
 export function isPerformanceGood(metrics: PerformanceMetrics): boolean {
-  return (
-    metrics.lcp <= 2500 &&
-    metrics.fid <= 100 &&
-    metrics.cls <= 0.1 &&
-    metrics.tti <= 5000
-  );
+  return metrics.lcp <= 2500 && metrics.fid <= 100 && metrics.cls <= 0.1 && metrics.tti <= 5000;
 }

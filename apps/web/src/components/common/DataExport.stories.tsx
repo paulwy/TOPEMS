@@ -5,11 +5,41 @@ import DataExport from './DataExport';
 import type { ExportField } from './DataExport';
 
 const sampleData: Record<string, unknown>[] = [
-  { name: '张三', department: '研发部', position: '前端工程师', hireDate: '2024-01-15', salary: 15000 },
-  { name: '李四', department: '市场部', position: '市场经理', hireDate: '2023-06-20', salary: 18000 },
-  { name: '王五', department: '人力资源部', position: 'HR专员', hireDate: '2024-03-10', salary: 12000 },
-  { name: '赵六', department: '财务部', position: '财务主管', hireDate: '2022-11-05', salary: 22000 },
-  { name: '孙七', department: '研发部', position: '后端工程师', hireDate: '2024-05-01', salary: 16000 },
+  {
+    name: '张三',
+    department: '研发部',
+    position: '前端工程师',
+    hireDate: '2024-01-15',
+    salary: 15000,
+  },
+  {
+    name: '李四',
+    department: '市场部',
+    position: '市场经理',
+    hireDate: '2023-06-20',
+    salary: 18000,
+  },
+  {
+    name: '王五',
+    department: '人力资源部',
+    position: 'HR专员',
+    hireDate: '2024-03-10',
+    salary: 12000,
+  },
+  {
+    name: '赵六',
+    department: '财务部',
+    position: '财务主管',
+    hireDate: '2022-11-05',
+    salary: 22000,
+  },
+  {
+    name: '孙七',
+    department: '研发部',
+    position: '后端工程师',
+    hireDate: '2024-05-01',
+    salary: 16000,
+  },
 ];
 
 const sampleFields: ExportField[] = [

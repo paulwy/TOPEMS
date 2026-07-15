@@ -1,6 +1,7 @@
 import { Grid } from '@/components';
-import { useNotificationStore } from '@/store';
-import React, { useEffect, useState, useMemo, useCallback } from 'react';
+import React, { useEffect, useState, useMemo } from 'react';
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import { QUERY_KEYS } from '@/lib/reactQuery';
 import { designTokens } from '@/theme/tokens';
 import {
   ClipboardList,
@@ -52,32 +53,37 @@ import type {
 import { limsApi } from '@/api/lims';
 import { PageContainer } from '@/components/common';
 import { CardListTemplate } from '@/components/templates/CardListTemplate';
-import { apiLogger } from '@/utils/logger';
+import { logger } from '@/utils/logger';
 import { DASHBOARD_PATHS } from '@/routes/dashboard';
 
 const ct = designTokens.colors;
 
+interface LimsListResponse<T> {
+  items?: T[];
+  instruments?: T[];
+}
+
+const defaultStats: LimsStatistics = {
+  total_samples: 0,
+  pending_samples: 0,
+  testing_samples: 0,
+  completed_samples: 0,
+  cancelled_samples: 0,
+  total_tasks: 0,
+  pending_tasks: 0,
+  in_progress_tasks: 0,
+  completed_tasks: 0,
+  total_processes: 0,
+  total_instruments: 0,
+  normal_instruments: 0,
+  calibration_instruments: 0,
+  maintenance_instruments: 0,
+  disabled_instruments: 0,
+};
+
 const LimsInstrumentPage: React.FC = () => {
   const navigate = useNavigate();
-  const [instruments, setInstruments] = useState<Instrument[]>([]);
-  const [stats, setStats] = useState<LimsStatistics>({
-    total_samples: 0,
-    pending_samples: 0,
-    testing_samples: 0,
-    completed_samples: 0,
-    cancelled_samples: 0,
-    total_tasks: 0,
-    pending_tasks: 0,
-    in_progress_tasks: 0,
-    completed_tasks: 0,
-    total_processes: 0,
-    total_instruments: 0,
-    normal_instruments: 0,
-    calibration_instruments: 0,
-    maintenance_instruments: 0,
-    disabled_instruments: 0,
-  });
-  const [loading, setLoading] = useState(true);
+  const queryClient = useQueryClient();
   const [serviceStatuses, setServiceStatuses] = useState<{
     [key: string]: boolean;
   }>({
@@ -115,9 +121,6 @@ const LimsInstrumentPage: React.FC = () => {
   const [showInstrumentDetailModal, setShowInstrumentDetailModal] = useState(false);
   const [showMaintenanceModal, setShowMaintenanceModal] = useState(false);
   const [selectedInstrument, setSelectedInstrument] = useState<Instrument | null>(null);
-  const [instrumentMaintenanceRecords, setInstrumentMaintenanceRecords] = useState<
-    MaintenanceRecord[]
-  >([]);
   const [instrumentFormData, setInstrumentFormData] = useState<CreateInstrumentRequest>({
     name: '',
     code: '',
@@ -144,7 +147,6 @@ const LimsInstrumentPage: React.FC = () => {
     notes: '',
   });
   const [isEditingInstrument, setIsEditingInstrument] = useState(false);
-  const [creating, setCreating] = useState(false);
   const [notification, setNotification] = useState<{
     type: 'success' | 'error';
     message: string;
@@ -155,63 +157,135 @@ const LimsInstrumentPage: React.FC = () => {
   const [filterValues, setFilterValues] = useState<Record<string, unknown>>({});
   const [statusFilter, setStatusFilter] = useState('');
 
-  const loadStatistics = useCallback(async () => {
-    try {
-      const response = await limsApi.getStatistics();
-      if (response.success && response.data) {
-        setStats(response.data);
-      }
-    } catch (err: unknown) {
-      apiLogger.error('加载统计数据失败:', err);
-    }
-  }, []);
-
-  interface LimsListResponse<T> {
-    items?: T[];
-    instruments?: T[];
-  }
-
-  const loadInstruments = useCallback(async () => {
-    try {
+  const { data: instrumentsData, isLoading: loading } = useQuery({
+    queryKey: QUERY_KEYS.LIMS.INSTRUMENTS,
+    queryFn: async () => {
       const response = await limsApi.listInstruments();
       if (response.success && response.data) {
         const instrumentData = response.data as LimsListResponse<Instrument> | Instrument[];
-        let rawInstruments: Instrument[] = [];
-
-        if (Array.isArray(instrumentData)) {
-          rawInstruments = instrumentData;
-        } else if (instrumentData.items && Array.isArray(instrumentData.items)) {
-          rawInstruments = instrumentData.items;
-        } else if (instrumentData.instruments && Array.isArray(instrumentData.instruments)) {
-          rawInstruments = instrumentData.instruments;
-        }
-
-        setInstruments(rawInstruments);
-      } else {
-        setInstruments([]);
+        if (Array.isArray(instrumentData)) return instrumentData;
+        if (instrumentData.items && Array.isArray(instrumentData.items))
+          return instrumentData.items;
+        if (instrumentData.instruments && Array.isArray(instrumentData.instruments))
+          return instrumentData.instruments;
       }
-    } catch (err: unknown) {
-      apiLogger.error('加载仪器失败:', err);
-      setInstruments([]);
-    }
-  }, []);
+      return [];
+    },
+    enabled: serviceStatuses.lims,
+  });
 
-  const loadAllData = useCallback(async () => {
-    try {
-      setLoading(true);
-      await Promise.all([loadInstruments(), loadStatistics()]);
-    } finally {
-      setLoading(false);
-    }
-  }, [loadInstruments, loadStatistics]);
+  const { data: statsData } = useQuery({
+    queryKey: QUERY_KEYS.LIMS.STATISTICS,
+    queryFn: async () => {
+      const response = await limsApi.getStatistics();
+      if (response.success && response.data) {
+        return response.data;
+      }
+      return defaultStats;
+    },
+    enabled: serviceStatuses.lims,
+  });
 
-  useEffect(() => {
-    if (serviceStatuses.lims) {
-      loadAllData();
-    } else {
-      setLoading(false);
-    }
-  }, [serviceStatuses.lims, loadAllData]);
+  const { data: maintenanceRecordsData } = useQuery({
+    queryKey: QUERY_KEYS.LIMS.MAINTENANCE_BY_INSTRUMENT(selectedInstrument?.id || ''),
+    queryFn: async () => {
+      if (!selectedInstrument) return [];
+      const response = await limsApi.listMaintenanceByInstrument(selectedInstrument.id);
+      if (response.success && response.data) {
+        const data = response.data as LimsListResponse<MaintenanceRecord> | MaintenanceRecord[];
+        return Array.isArray(data) ? data : data.items || [];
+      }
+      return [];
+    },
+    enabled: !!selectedInstrument && showInstrumentDetailModal,
+  });
+
+  const instruments = instrumentsData || [];
+  const stats = statsData || defaultStats;
+  const instrumentMaintenanceRecords = maintenanceRecordsData || [];
+
+  const invalidateInstruments = () => {
+    queryClient.invalidateQueries({ queryKey: QUERY_KEYS.LIMS.INSTRUMENTS });
+    queryClient.invalidateQueries({ queryKey: QUERY_KEYS.LIMS.STATISTICS });
+  };
+
+  const createInstrumentMutation = useMutation({
+    mutationFn: async (data: CreateInstrumentRequest) => {
+      const response = await limsApi.createInstrument(data);
+      if (!response.success) {
+        throw new Error(response.message || '创建失败，请稍后重试');
+      }
+      return response;
+    },
+    onSuccess: () => {
+      invalidateInstruments();
+      setShowInstrumentModal(false);
+    },
+    onError: (error: unknown) => {
+      logger.error('创建仪器失败:', error);
+    },
+  });
+
+  const updateInstrumentMutation = useMutation({
+    mutationFn: async ({ id, data }: { id: string; data: CreateInstrumentRequest }) => {
+      const response = await limsApi.updateInstrument(id, data);
+      if (!response.success) {
+        throw new Error(response.message || '更新失败，请稍后重试');
+      }
+      return response;
+    },
+    onSuccess: () => {
+      invalidateInstruments();
+      setShowInstrumentModal(false);
+    },
+    onError: (error: unknown) => {
+      logger.error('更新仪器失败:', error);
+    },
+  });
+
+  const deleteInstrumentMutation = useMutation({
+    mutationFn: async (id: string) => {
+      const response = await limsApi.deleteInstrument(id);
+      if (!response.success) {
+        throw new Error(response.message || '删除失败，请稍后重试');
+      }
+      return response;
+    },
+    onSuccess: () => {
+      invalidateInstruments();
+    },
+    onError: (error: unknown) => {
+      logger.error('删除仪器失败:', error);
+    },
+  });
+
+  const createMaintenanceMutation = useMutation({
+    mutationFn: async (data: CreateMaintenanceRecordRequest) => {
+      const response = await limsApi.createMaintenance(data);
+      if (!response.success) {
+        throw new Error(response.message || '创建失败，请稍后重试');
+      }
+      return response;
+    },
+    onSuccess: () => {
+      if (selectedInstrument) {
+        queryClient.invalidateQueries({
+          queryKey: QUERY_KEYS.LIMS.MAINTENANCE_BY_INSTRUMENT(selectedInstrument.id),
+        });
+      }
+      queryClient.invalidateQueries({ queryKey: QUERY_KEYS.LIMS.MAINTENANCE });
+      setShowMaintenanceModal(false);
+    },
+    onError: (error: unknown) => {
+      logger.error('创建维护记录失败:', error);
+    },
+  });
+
+  const creating =
+    createInstrumentMutation.isPending ||
+    updateInstrumentMutation.isPending ||
+    deleteInstrumentMutation.isPending ||
+    createMaintenanceMutation.isPending;
 
   const getInstrumentTypeIcon = (type: string) => {
     const iconMap: Record<string, React.ComponentType<{ size?: number }>> = {
@@ -243,34 +317,11 @@ const LimsInstrumentPage: React.FC = () => {
     return colorMap[status] || colorMap['normal'];
   };
 
-  const loadMaintenanceRecords = useCallback(async (instrumentId: string) => {
-    try {
-      const response = await limsApi.listMaintenanceByInstrument(instrumentId);
-      if (response.success && response.data) {
-        const data = response.data as LimsListResponse<MaintenanceRecord> | MaintenanceRecord[];
-        setInstrumentMaintenanceRecords(Array.isArray(data) ? data : data.items || []);
-      }
-    } catch (err: unknown) {
-      apiLogger.error('加载维护记录失败:', err);
-      setInstrumentMaintenanceRecords([]);
-    }
-  }, []);
-
-  useEffect(() => {
-    if (showInstrumentDetailModal && selectedInstrument) {
-      loadMaintenanceRecords(selectedInstrument.id);
-    }
-  }, [showInstrumentDetailModal, selectedInstrument, loadMaintenanceRecords]);
-
-  const showNotification = (type: 'success' | 'error', message: string) => {
-    setNotification({ type, message });
-  };
-
   const handleCloseNotification = () => {
     setNotification(null);
   };
 
-  const openInstrumentModal = useCallback((instrument?: Instrument) => {
+  const openInstrumentModal = (instrument?: Instrument) => {
     if (instrument) {
       setIsEditingInstrument(true);
       setSelectedInstrument(instrument);
@@ -308,14 +359,14 @@ const LimsInstrumentPage: React.FC = () => {
       });
     }
     setShowInstrumentModal(true);
-  }, []);
+  };
 
-  const openInstrumentDetailModal = useCallback((instrument: Instrument) => {
+  const openInstrumentDetailModal = (instrument: Instrument) => {
     setSelectedInstrument(instrument);
     setShowInstrumentDetailModal(true);
-  }, []);
+  };
 
-  const openMaintenanceModal = useCallback((instrument: Instrument) => {
+  const openMaintenanceModal = (instrument: Instrument) => {
     setSelectedInstrument(instrument);
     setMaintenanceFormData({
       instrument_id: instrument.id,
@@ -328,81 +379,27 @@ const LimsInstrumentPage: React.FC = () => {
       notes: '',
     });
     setShowMaintenanceModal(true);
-  }, []);
+  };
 
   const handleCreateInstrument = async () => {
-    try {
-      setCreating(true);
-      const response = await limsApi.createInstrument(instrumentFormData);
-      if (response.success) {
-        showNotification('success', '仪器创建成功');
-        setShowInstrumentModal(false);
-        loadInstruments();
-      } else {
-        showNotification('error', response.message || '创建失败');
-      }
-    } catch (err: unknown) {
-      showNotification('error', '创建仪器失败');
-    } finally {
-      setCreating(false);
-    }
+    await createInstrumentMutation.mutateAsync(instrumentFormData);
   };
 
   const handleUpdateInstrument = async () => {
     if (!selectedInstrument) return;
-    try {
-      setCreating(true);
-      const response = await limsApi.updateInstrument(selectedInstrument.id, instrumentFormData);
-      if (response.success) {
-        showNotification('success', '仪器更新成功');
-        setShowInstrumentModal(false);
-        loadInstruments();
-      } else {
-        showNotification('error', response.message || '更新失败');
-      }
-    } catch (err: unknown) {
-      showNotification('error', '更新仪器失败');
-    } finally {
-      setCreating(false);
-    }
+    await updateInstrumentMutation.mutateAsync({
+      id: selectedInstrument.id,
+      data: instrumentFormData,
+    });
   };
 
-  const handleDeleteInstrument = useCallback(
-    async (id: string) => {
-      if (!confirm('确定要删除这个仪器吗？')) return;
-      try {
-        const response = await limsApi.deleteInstrument(id);
-        if (response.success) {
-          showNotification('success', '仪器删除成功');
-          loadInstruments();
-        } else {
-          showNotification('error', response.message || '删除失败');
-        }
-      } catch (err: unknown) {
-        showNotification('error', '删除仪器失败');
-      }
-    },
-    [loadInstruments]
-  );
+  const handleDeleteInstrument = async (id: string) => {
+    if (!confirm('确定要删除这个仪器吗？')) return;
+    await deleteInstrumentMutation.mutateAsync(id);
+  };
 
   const handleCreateMaintenance = async () => {
-    try {
-      setCreating(true);
-      const response = await limsApi.createMaintenance(maintenanceFormData);
-      if (response.success) {
-        showNotification('success', '维护记录创建成功');
-        setShowMaintenanceModal(false);
-        if (selectedInstrument) {
-          loadMaintenanceRecords(selectedInstrument.id);
-        }
-      } else {
-        showNotification('error', response.message || '创建失败');
-      }
-    } catch (err: unknown) {
-      showNotification('error', '创建维护记录失败');
-    } finally {
-      setCreating(false);
-    }
+    await createMaintenanceMutation.mutateAsync(maintenanceFormData);
   };
 
   // 过滤后的仪器数据
@@ -544,7 +541,8 @@ const LimsInstrumentPage: React.FC = () => {
         color: 'error' as const,
       },
     ],
-    [openInstrumentDetailModal, openMaintenanceModal, openInstrumentModal, handleDeleteInstrument]
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    []
   );
 
   // 筛选配置
@@ -568,22 +566,22 @@ const LimsInstrumentPage: React.FC = () => {
   );
 
   // 搜索和筛选处理
-  const handleSearch = useCallback(() => {
+  const handleSearch = () => {
     // 搜索和筛选已经在 filteredInstruments 中自动处理
-  }, []);
+  };
 
-  const handleFilterChange = useCallback((newFilters: Record<string, unknown>) => {
+  const handleFilterChange = (newFilters: Record<string, unknown>) => {
     setFilterValues(newFilters);
     if (newFilters.status !== undefined) {
       setStatusFilter(String(newFilters.status || ''));
     }
-  }, []);
+  };
 
-  const handleFilterReset = useCallback(() => {
+  const handleFilterReset = () => {
     setFilterValues({});
     setStatusFilter('');
     setSearchValue('');
-  }, []);
+  };
 
   if (loading) {
     return (
@@ -735,7 +733,10 @@ const LimsInstrumentPage: React.FC = () => {
             icon: <Plus style={{ width: 18, height: 18 }} />,
             onClick: () => openInstrumentModal(),
           }}
-          onRefresh={loadAllData}
+          onRefresh={() => {
+            queryClient.invalidateQueries({ queryKey: QUERY_KEYS.LIMS.INSTRUMENTS });
+            queryClient.invalidateQueries({ queryKey: QUERY_KEYS.LIMS.STATISTICS });
+          }}
           cardActions={cardActions}
           onCardClick={(item) => openInstrumentDetailModal(item as Instrument)}
           showStatsOverview={true}

@@ -1,4 +1,5 @@
 import React, { useEffect, useState } from 'react';
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import {
   FileText,
   Plus,
@@ -51,15 +52,13 @@ import ExportModal from '@/components/export/ExportModal';
 import { apiLogger } from '@/utils/logger';
 import { designTokens } from '@/theme/tokens';
 import { DASHBOARD_PATHS } from '@/routes/dashboard';
+import { QUERY_KEYS } from '@/lib/reactQuery';
 
 const ct = designTokens.colors;
 
 const ReportPage: React.FC = () => {
+  const queryClient = useQueryClient();
   const navigate = useNavigate();
-  const [reports, setReports] = useState<ReportData[]>([]);
-  const [templates, setTemplates] = useState<ReportTemplate[]>([]);
-  const [reportTypes, setReportTypes] = useState<ReportTypeInfo[]>([]);
-  const [loading, setLoading] = useState(true);
   const [serviceStatuses, setServiceStatuses] = useState<{
     [key: string]: boolean;
   }>({
@@ -263,48 +262,65 @@ const ReportPage: React.FC = () => {
     },
   ];
 
-  const loadReports = () => {
-    setReports(mockReports);
-    setReportTypes(mockReportTypes);
-    setLoading(false);
-  };
+  const reportsQuery = useQuery<ReportData[]>({
+    queryKey: QUERY_KEYS.REPORT.REPORTS,
+    queryFn: async () => {
+      return mockReports;
+    },
+    staleTime: 5 * 60 * 1000,
+  });
 
-  const loadTemplates = async () => {
-    try {
-      const response = await reportApi.listTemplates();
-      if (response.success && response.data) {
-        setTemplates(response.data);
+  const templatesQuery = useQuery<ReportTemplate[]>({
+    queryKey: QUERY_KEYS.REPORT.TEMPLATES,
+    queryFn: async () => {
+      try {
+        const response = await reportApi.listTemplates();
+        if (response.success && response.data) {
+          return response.data;
+        }
+      } catch (err: unknown) {
+        apiLogger.error('加载模板失败:', err);
       }
-    } catch (err: unknown) {
-      apiLogger.error('加载模板失败:', err);
-    }
-  };
+      return [];
+    },
+    staleTime: 5 * 60 * 1000,
+  });
+
+  const reports = reportsQuery.data ?? [];
+  const templates = templatesQuery.data ?? [];
+  const reportTypes = mockReportTypes;
+  const loading = reportsQuery.isLoading || templatesQuery.isLoading;
 
   useEffect(() => {
-    loadReports();
-    loadTemplates();
-  }, []);
+    if (templatesQuery.isError) {
+      apiLogger.error('加载模板失败:', templatesQuery.error);
+    }
+  }, [templatesQuery.isError, templatesQuery.error]);
 
   const showNotification = (type: 'success' | 'error', message: string) => {
     setNotification({ type, message });
     setTimeout(() => setNotification(null), 3000);
   };
 
-  const handleDeleteReport = async (id: string) => {
-    if (!confirm('确定要删除这个报表吗？')) return;
-
-    try {
-      const response = await reportApi.deleteReport(id);
+  const deleteReportMutation = useMutation({
+    mutationFn: (id: string) => reportApi.deleteReport(id),
+    onSuccess: (response) => {
       if (response.success) {
         showNotification('success', '报表删除成功');
-        loadReports();
+        queryClient.invalidateQueries({ queryKey: QUERY_KEYS.REPORT.REPORTS });
       } else {
         showNotification('error', response.message || '删除失败');
       }
-    } catch (err: unknown) {
+    },
+    onError: (err: unknown) => {
       showNotification('error', '删除报表失败');
       apiLogger.error('删除报表失败:', err);
-    }
+    },
+  });
+
+  const handleDeleteReport = (id: string) => {
+    if (!confirm('确定要删除这个报表吗？')) return;
+    deleteReportMutation.mutate(id);
   };
 
   const handleExport = (report: ReportData) => {
@@ -317,73 +333,102 @@ const ReportPage: React.FC = () => {
     setShowViewer(true);
   };
 
-  const handleCreateTemplate = async () => {
-    try {
-      const response = await reportApi.createTemplate(templateFormData);
+  const createTemplateMutation = useMutation({
+    mutationFn: (data: CreateTemplateRequest) => reportApi.createTemplate(data),
+    onSuccess: (response) => {
       if (response.success) {
         showNotification('success', '模板创建成功');
         setShowCreateTemplateModal(false);
-        loadTemplates();
+        queryClient.invalidateQueries({ queryKey: QUERY_KEYS.REPORT.TEMPLATES });
         resetTemplateForm();
       } else {
         showNotification('error', response.message || '创建失败');
       }
-    } catch (err: unknown) {
+    },
+    onError: (err: unknown) => {
       showNotification('error', (err as { message?: string }).message || '创建失败');
-    }
-  };
+    },
+  });
 
-  const handleEditTemplate = async () => {
-    if (!selectedTemplate) return;
-    try {
-      const response = await reportApi.updateTemplate(selectedTemplate.id, templateFormData);
+  const updateTemplateMutation = useMutation({
+    mutationFn: ({ id, data }: { id: string; data: CreateTemplateRequest }) =>
+      reportApi.updateTemplate(id, data),
+    onSuccess: (response) => {
       if (response.success) {
         showNotification('success', '模板更新成功');
         setShowEditTemplateModal(false);
         setSelectedTemplate(null);
-        loadTemplates();
+        queryClient.invalidateQueries({ queryKey: QUERY_KEYS.REPORT.TEMPLATES });
         resetTemplateForm();
       } else {
         showNotification('error', response.message || '更新失败');
       }
-    } catch (err: unknown) {
+    },
+    onError: (err: unknown) => {
       showNotification('error', (err as { message?: string }).message || '更新失败');
-    }
-  };
+    },
+  });
 
-  const handleDeleteTemplate = async (id: string) => {
-    if (!confirm('确定要删除这个模板吗？')) return;
-
-    try {
-      const response = await reportApi.deleteTemplate(id);
+  const deleteTemplateMutation = useMutation({
+    mutationFn: (id: string) => reportApi.deleteTemplate(id),
+    onSuccess: (response) => {
       if (response.success) {
         showNotification('success', '模板删除成功');
-        loadTemplates();
+        queryClient.invalidateQueries({ queryKey: QUERY_KEYS.REPORT.TEMPLATES });
       } else {
         showNotification('error', response.message || '删除失败');
       }
-    } catch (err: unknown) {
+    },
+    onError: (err: unknown) => {
       showNotification('error', (err as { message?: string }).message || '删除失败');
-    }
-  };
+    },
+  });
 
-  const handleCreateReportFromTemplate = async (templateId: string) => {
-    try {
+  const createReportFromTemplateMutation = useMutation({
+    mutationFn: (templateId: string) => {
       const request: CreateReportFromTemplateRequest = {
         template_id: templateId,
         created_by: 'current-user',
       };
-      const response = await reportApi.createReportFromTemplate(request);
+      return reportApi.createReportFromTemplate(request);
+    },
+    onSuccess: (response) => {
       if (response.success) {
         showNotification('success', '报表创建成功');
         setShowCreateReportFromTemplateModal(false);
-        loadReports();
+        queryClient.invalidateQueries({ queryKey: QUERY_KEYS.REPORT.REPORTS });
       } else {
         showNotification('error', response.message || '创建失败');
       }
-    } catch (err: unknown) {
+    },
+    onError: (err: unknown) => {
       showNotification('error', (err as { message?: string }).message || '创建失败');
-    }
+    },
+  });
+
+  const actionLoading =
+    deleteReportMutation.isPending ||
+    createTemplateMutation.isPending ||
+    updateTemplateMutation.isPending ||
+    deleteTemplateMutation.isPending ||
+    createReportFromTemplateMutation.isPending;
+
+  const handleCreateTemplate = () => {
+    createTemplateMutation.mutate(templateFormData);
+  };
+
+  const handleEditTemplate = () => {
+    if (!selectedTemplate) return;
+    updateTemplateMutation.mutate({ id: selectedTemplate.id, data: templateFormData });
+  };
+
+  const handleDeleteTemplate = (id: string) => {
+    if (!confirm('确定要删除这个模板吗？')) return;
+    deleteTemplateMutation.mutate(id);
+  };
+
+  const handleCreateReportFromTemplate = (templateId: string) => {
+    createReportFromTemplateMutation.mutate(templateId);
   };
 
   const handleEditTemplateClick = (template: ReportTemplate) => {
@@ -760,7 +805,7 @@ const ReportPage: React.FC = () => {
               variant={activeTab === 'templates' ? 'contained' : 'text'}
               onClick={() => {
                 setActiveTab('templates');
-                loadTemplates();
+                queryClient.invalidateQueries({ queryKey: QUERY_KEYS.REPORT.TEMPLATES });
               }}
               sx={{ borderRadius: 1.5, textTransform: 'none' }}
             >
@@ -1321,7 +1366,7 @@ const ReportPage: React.FC = () => {
           onClose={() => setShowBuilder(false)}
           reportTypes={reportTypes}
           onSuccess={() => {
-            loadReports();
+            queryClient.invalidateQueries({ queryKey: QUERY_KEYS.REPORT.REPORTS });
             setShowBuilder(false);
             showNotification('success', '报表生成成功');
           }}

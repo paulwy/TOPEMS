@@ -23,12 +23,7 @@ import {
 } from '@/components/templates';
 import { PageContainer } from '@/components/common';
 import { useCrudOperations } from '@/hooks/useCrudQueries';
-import {
-  dataSourceCrudApi,
-  testDataSource,
-  refreshDataSource,
-  type DataSource,
-} from '@/api/bi';
+import { dataSourceCrudApi, testDataSource, refreshDataSource, type DataSource } from '@/api/bi';
 
 const getStatusConfig = (status: string) => {
   switch (status) {
@@ -117,46 +112,76 @@ const BIDataSourcePage = () => {
     },
   });
 
-  const handleSearch = useCallback((value: string) => {
-    setSearchTerm(value);
-    fetch({ search: value || undefined, type: filterType || undefined, status: filterStatus || undefined });
-  }, [fetch, filterType, filterStatus]);
+  const handleSearch = useCallback(
+    (value: string) => {
+      setSearchTerm(value);
+      fetch({
+        search: value || undefined,
+        type: filterType || undefined,
+        status: filterStatus || undefined,
+      });
+    },
+    [fetch, filterType, filterStatus]
+  );
 
-  const handleFilterTypeChange = useCallback((value: string) => {
-    setFilterType(value);
-    pagination.setPage(1);
-    fetch({ search: searchTerm || undefined, type: value || undefined, status: filterStatus || undefined });
-  }, [fetch, searchTerm, filterStatus, pagination]);
+  const handleFilterTypeChange = useCallback(
+    (value: string) => {
+      setFilterType(value);
+      pagination.setPage(1);
+      fetch({
+        search: searchTerm || undefined,
+        type: value || undefined,
+        status: filterStatus || undefined,
+      });
+    },
+    [fetch, searchTerm, filterStatus, pagination]
+  );
 
-  const handleFilterStatusChange = useCallback((value: string) => {
-    setFilterStatus(value);
-    pagination.setPage(1);
-    fetch({ search: searchTerm || undefined, type: filterType || undefined, status: value || undefined });
-  }, [fetch, searchTerm, filterType, pagination]);
+  const handleFilterStatusChange = useCallback(
+    (value: string) => {
+      setFilterStatus(value);
+      pagination.setPage(1);
+      fetch({
+        search: searchTerm || undefined,
+        type: filterType || undefined,
+        status: value || undefined,
+      });
+    },
+    [fetch, searchTerm, filterType, pagination]
+  );
 
-  const handleSync = useCallback(async (ds: DataSource) => {
-    try {
-      await refreshMutation.mutateAsync(ds.id);
-    } catch (e: unknown) {
-      logger.error('Failed to sync datasource:', e);
-    }
-  }, [refreshMutation]);
+  const handleSync = useCallback(
+    async (ds: DataSource) => {
+      try {
+        await refreshMutation.mutateAsync(ds.id);
+      } catch (e: unknown) {
+        logger.error('Failed to sync datasource:', e);
+      }
+    },
+    [refreshMutation]
+  );
 
-  const handleTestConnection = useCallback(async (ds: DataSource) => {
-    try {
-      await testConnectionMutation.mutateAsync(ds.id);
-    } catch (e: unknown) {
-      logger.error('Connection test failed:', e);
-    }
-  }, [testConnectionMutation]);
+  const handleTestConnection = useCallback(
+    async (ds: DataSource) => {
+      try {
+        await testConnectionMutation.mutateAsync(ds.id);
+      } catch (e: unknown) {
+        logger.error('Connection test failed:', e);
+      }
+    },
+    [testConnectionMutation]
+  );
 
-  const handleDelete = useCallback(async (ds: DataSource) => {
-    try {
-      await deleteItem(ds.id);
-    } catch (e: unknown) {
-      logger.error('Failed to delete datasource:', e);
-    }
-  }, [deleteItem]);
+  const handleDelete = useCallback(
+    async (ds: DataSource) => {
+      try {
+        await deleteItem(ds.id);
+      } catch (e: unknown) {
+        logger.error('Failed to delete datasource:', e);
+      }
+    },
+    [deleteItem]
+  );
 
   const columns = useMemo<ColumnDef<DataSource>[]>(
     () => [

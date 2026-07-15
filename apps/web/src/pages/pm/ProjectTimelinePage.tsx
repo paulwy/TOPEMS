@@ -4,6 +4,7 @@ import {
   type TimelineNode,
   type TimelineGroup,
 } from '../../components/templates/TimelinePageTemplate';
+import { PageContainer } from '@/components/common';
 import { Plus, Rocket, Target, Calendar, CheckCircle } from 'lucide-react';
 
 const today = new Date();
@@ -174,39 +175,45 @@ const groups: TimelineGroup[] = [
 
 export const ProjectTimelinePage: React.FC = () => {
   return (
-    <TimelinePageTemplate
-      title='项目时间线'
-      subtitle='跟踪项目里程碑、任务和会议安排'
-      nodes={[]}
-      groups={groups}
-      showSearch
-      showFilter
-      showTimeRange
-      timeRanges={[
-        { id: 'today', label: '今天', start: today, end: today },
-        {
-          id: 'week',
-          label: '本周',
-          start: new Date(today.getTime() - 7 * 24 * 60 * 60 * 1000),
-          end: today,
-        },
-        {
-          id: 'month',
-          label: '本月',
-          start: new Date(today.getTime() - 30 * 24 * 60 * 60 * 1000),
-          end: new Date(today.getTime() + 30 * 24 * 60 * 60 * 1000),
-        },
-        { id: 'all', label: '全部', start: new Date(0), end: new Date() },
-      ]}
-      selectedTimeRange='month'
-      actions={[
-        {
-          label: '添加事件',
-          icon: <Plus style={{ width: 16, height: 16 }} />,
-          onClick: () => {},
-        },
-      ]}
-    />
+    <PageContainer
+      autoTitle={false}
+      autoBreadcrumbs={false}
+      padding={false}
+    >
+      <TimelinePageTemplate
+        title='项目时间线'
+        subtitle='跟踪项目里程碑、任务和会议安排'
+        nodes={[]}
+        groups={groups}
+        showSearch
+        showFilter
+        showTimeRange
+        timeRanges={[
+          { id: 'today', label: '今天', start: today, end: today },
+          {
+            id: 'week',
+            label: '本周',
+            start: new Date(today.getTime() - 7 * 24 * 60 * 60 * 1000),
+            end: today,
+          },
+          {
+            id: 'month',
+            label: '本月',
+            start: new Date(today.getTime() - 30 * 24 * 60 * 60 * 1000),
+            end: new Date(today.getTime() + 30 * 24 * 60 * 60 * 1000),
+          },
+          { id: 'all', label: '全部', start: new Date(0), end: new Date() },
+        ]}
+        selectedTimeRange='month'
+        actions={[
+          {
+            label: '添加事件',
+            icon: <Plus style={{ width: 16, height: 16 }} />,
+            onClick: () => {},
+          },
+        ]}
+      />
+    </PageContainer>
   );
 };
 

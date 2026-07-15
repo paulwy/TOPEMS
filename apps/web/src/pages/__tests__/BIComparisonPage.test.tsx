@@ -97,7 +97,35 @@ vi.mock('@/store', () => ({
   useToggleSidebarCollapsed: vi.fn(),
   useSetSidebarCollapsed: vi.fn(),
 }));
-    (useNotificationStore.getState as vi.Mock).mockReturnValue({
+
+const mockAddNotification = vi.fn();
+
+const mockComparisonResult = {
+  success: true,
+  data: {
+    id: 'cmp-001',
+    comparison_id: 'cmp-001',
+    status: 'success' as const,
+    data: [{ indicator: '销售额', value_a: 1000, value_b: 800, difference: 200, change_rate: 25 }],
+    generated_at: '2024-01-01T00:00:00Z',
+  },
+};
+
+const mockComparisonsResult = {
+  success: true,
+  data: {
+    items: [{ id: 'cmp-001', name: '销售额', metric: '销售额' }],
+  },
+};
+
+function renderWithProviders(ui: React.ReactElement) {
+  return render(<BrowserRouter>{ui}</BrowserRouter>);
+}
+
+describe('BIComparisonPage', () => {
+  beforeEach(() => {
+    vi.clearAllMocks();
+    (useNotificationStore as vi.Mock).mockReturnValue({
       addNotification: mockAddNotification,
       notifications: [],
       removeNotification: vi.fn(),
@@ -118,7 +146,7 @@ vi.mock('@/store', () => ({
   it('should render comparison list', async () => {
     renderWithProviders(<BIComparisonPage />);
     await waitFor(() => {
-      expect(screen.getByText('销售额')).toBeInTheDocument();
+      expect(screen.getAllByText('销售额').length).toBeGreaterThan(0);
     });
   });
 

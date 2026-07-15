@@ -16,6 +16,7 @@ import {
 } from '@mui/material';
 import { PageContainer } from '@/components/common';
 import React, { useState, useEffect, useMemo, useCallback } from 'react';
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import type { SalesOrder, CreateSalesOrderRequest, UpdateSalesOrderRequest } from '@/api/erp';
 import { erpApi } from '@/api/erp';
 import { useNotificationStore } from '@/store';
@@ -29,17 +30,15 @@ import {
 import { Plus, Edit, Trash2, Eye, CheckCircle, XCircle, Truck, ShoppingBag } from 'lucide-react';
 import { apiLogger } from '@/utils/logger';
 import { designTokens } from '@/theme/tokens';
+import { QUERY_KEYS } from '@/lib/reactQuery';
 
 const ct = designTokens.colors;
 
 const SalesOrderPage: React.FC = () => {
-  const [orders, setOrders] = useState<SalesOrder[]>([]);
-  const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState('');
   const [statusFilter, setStatusFilter] = useState<string>('all');
   const [currentPage, setCurrentPage] = useState(1);
   const [pageSize] = useState(10);
-  const [total, setTotal] = useState(0);
   const [showDialog, setShowDialog] = useState(false);
   const [showDetailDialog, setShowDetailDialog] = useState(false);
   const [selectedOrder, setSelectedOrder] = useState<SalesOrder | null>(null);
@@ -56,9 +55,11 @@ const SalesOrderPage: React.FC = () => {
 
   const { addNotification } = useNotificationStore();
 
-  const loadOrders = useCallback(async () => {
-    try {
-      setLoading(true);
+  const queryClient = useQueryClient();
+
+  const ordersQuery = useQuery<{ items: SalesOrder[]; total: number }>({
+    queryKey: [...QUERY_KEYS.ERP.SALES_ORDERS, currentPage, pageSize, searchTerm, statusFilter],
+    queryFn: async () => {
       const params: Record<string, unknown> = {
         page: currentPage - 1,
         pagesize: pageSize,
@@ -68,64 +69,68 @@ const SalesOrderPage: React.FC = () => {
 
       const response = await erpApi.salesOrders.list(params);
       if (response.success && response.data) {
-        setOrders(response.data.orders || []);
-        setTotal(response.data.total || 0);
+        return { items: response.data.orders || [], total: response.data.total || 0 };
       }
-    } catch (error: unknown) {
-      apiLogger.error('加载销售订单列表失败:', error);
+      return { items: [], total: 0 };
+    },
+    staleTime: 5 * 60 * 1000,
+  });
+  const orders = ordersQuery.data?.items ?? [];
+  const total = ordersQuery.data?.total ?? 0;
+  const loading = ordersQuery.isLoading;
+
+  useEffect(() => {
+    if (ordersQuery.isError) {
+      apiLogger.error('加载销售订单列表失败:', ordersQuery.error);
       addNotification({
         type: 'error',
         title: '加载失败',
         message: '无法加载销售订单列表',
       });
-    } finally {
-      setLoading(false);
     }
-  }, [currentPage, pageSize, searchTerm, statusFilter, addNotification]);
+  }, [ordersQuery.isError, ordersQuery.error, addNotification]);
 
-  useEffect(() => {
-    loadOrders();
-  }, [loadOrders]);
+  const invalidateOrders = () =>
+    queryClient.invalidateQueries({ queryKey: QUERY_KEYS.ERP.SALES_ORDERS });
 
-  const handleStatusChange = async (id: string, action: string) => {
-    try {
-      setLoading(true);
-      let response;
-      switch (action) {
-        case 'approve':
-          response = await erpApi.salesOrders.approve(id);
-          break;
-        case 'ship':
-          response = await erpApi.salesOrders.ship(id);
-          break;
-        case 'complete':
-          response = await erpApi.salesOrders.complete(id);
-          break;
-        case 'cancel':
-          response = await erpApi.salesOrders.cancel(id);
-          break;
-        default:
-          return;
-      }
-      if (response.success && response.data) {
-        addNotification({
-          type: 'success',
-          title: '状态更新成功',
-          message: `订单状态已更新为"${getStatusText(response.data.status)}"`,
-        });
-      }
-      loadOrders();
-    } catch (error: unknown) {
-      apiLogger.error('状态更新失败:', error);
-      addNotification({
-        type: 'error',
-        title: '状态更新失败',
-        message: '无法更新订单状态',
-      });
-    } finally {
-      setLoading(false);
-    }
-  };
+  const createMutation = useMutation({
+    mutationFn: (data: CreateSalesOrderRequest) => erpApi.salesOrders.create(data),
+    onSuccess: () => {
+      invalidateOrders();
+      addNotification({ type: 'success', title: '创建成功', message: '新销售订单已创建' });
+      setShowDialog(false);
+    },
+    onError: (err: unknown) => {
+      apiLogger.error('操作失败:', err);
+      addNotification({ type: 'error', title: '操作失败', message: '创建销售订单失败' });
+    },
+  });
+
+  const updateMutation = useMutation({
+    mutationFn: (params: { id: string; data: UpdateSalesOrderRequest }) =>
+      erpApi.salesOrders.update(params.id, params.data),
+    onSuccess: () => {
+      invalidateOrders();
+      addNotification({ type: 'success', title: '更新成功', message: '销售订单信息已更新' });
+      setShowDialog(false);
+    },
+    onError: (err: unknown) => {
+      apiLogger.error('操作失败:', err);
+      addNotification({ type: 'error', title: '操作失败', message: '更新销售订单失败' });
+    },
+  });
+
+  const deleteMutation = useMutation({
+    mutationFn: (id: string) => erpApi.salesOrders.delete(id),
+    onSuccess: () => {
+      invalidateOrders();
+      addNotification({ type: 'success', title: '删除成功', message: '销售订单已删除' });
+    },
+    onError: (err: unknown) => {
+      apiLogger.error('删除失败:', err);
+      addNotification({ type: 'error', title: '删除失败', message: '无法删除销售订单' });
+    },
+  });
 
   const getStatusText = (status: string) => {
     const statusMap: Record<string, string> = {
@@ -188,59 +193,119 @@ const SalesOrderPage: React.FC = () => {
     }
   };
 
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    try {
-      if (selectedOrder) {
-        await erpApi.salesOrders.update(selectedOrder.id, formData as UpdateSalesOrderRequest);
+  const approveMutation = useMutation({
+    mutationFn: (id: string) => erpApi.salesOrders.approve(id),
+    onSuccess: (response) => {
+      if (response.success && response.data) {
+        invalidateOrders();
         addNotification({
           type: 'success',
-          title: '更新成功',
-          message: '销售订单信息已更新',
-        });
-      } else {
-        await erpApi.salesOrders.create(formData);
-        addNotification({
-          type: 'success',
-          title: '创建成功',
-          message: '新销售订单已创建',
-        });
-      }
-      setShowDialog(false);
-      resetForm();
-      loadOrders();
-    } catch (error: unknown) {
-      apiLogger.error('操作失败:', error);
-      addNotification({
-        type: 'error',
-        title: '操作失败',
-        message: selectedOrder ? '更新销售订单失败' : '创建销售订单失败',
-      });
-    }
-  };
-
-  const handleDelete = useCallback(
-    async (id: string) => {
-      if (!window.confirm('确定要删除这个销售订单吗?')) return;
-      try {
-        await erpApi.salesOrders.delete(id);
-        addNotification({
-          type: 'success',
-          title: '删除成功',
-          message: '销售订单已删除',
-        });
-        loadOrders();
-      } catch (error: unknown) {
-        apiLogger.error('删除失败:', error);
-        addNotification({
-          type: 'error',
-          title: '删除失败',
-          message: '无法删除销售订单',
+          title: '状态更新成功',
+          message: `订单状态已更新为"${getStatusText(response.data.status)}"`,
         });
       }
     },
-    [loadOrders, addNotification]
-  );
+    onError: (err: unknown) => {
+      apiLogger.error('状态更新失败:', err);
+      addNotification({ type: 'error', title: '状态更新失败', message: '无法更新订单状态' });
+    },
+  });
+
+  const shipMutation = useMutation({
+    mutationFn: (id: string) => erpApi.salesOrders.ship(id),
+    onSuccess: (response) => {
+      if (response.success && response.data) {
+        invalidateOrders();
+        addNotification({
+          type: 'success',
+          title: '状态更新成功',
+          message: `订单状态已更新为"${getStatusText(response.data.status)}"`,
+        });
+      }
+    },
+    onError: (err: unknown) => {
+      apiLogger.error('状态更新失败:', err);
+      addNotification({ type: 'error', title: '状态更新失败', message: '无法更新订单状态' });
+    },
+  });
+
+  const completeMutation = useMutation({
+    mutationFn: (id: string) => erpApi.salesOrders.complete(id),
+    onSuccess: (response) => {
+      if (response.success && response.data) {
+        invalidateOrders();
+        addNotification({
+          type: 'success',
+          title: '状态更新成功',
+          message: `订单状态已更新为"${getStatusText(response.data.status)}"`,
+        });
+      }
+    },
+    onError: (err: unknown) => {
+      apiLogger.error('状态更新失败:', err);
+      addNotification({ type: 'error', title: '状态更新失败', message: '无法更新订单状态' });
+    },
+  });
+
+  const cancelMutation = useMutation({
+    mutationFn: (id: string) => erpApi.salesOrders.cancel(id),
+    onSuccess: (response) => {
+      if (response.success && response.data) {
+        invalidateOrders();
+        addNotification({
+          type: 'success',
+          title: '状态更新成功',
+          message: `订单状态已更新为"${getStatusText(response.data.status)}"`,
+        });
+      }
+    },
+    onError: (err: unknown) => {
+      apiLogger.error('状态更新失败:', err);
+      addNotification({ type: 'error', title: '状态更新失败', message: '无法更新订单状态' });
+    },
+  });
+
+  const actionLoading =
+    createMutation.isPending ||
+    updateMutation.isPending ||
+    deleteMutation.isPending ||
+    approveMutation.isPending ||
+    shipMutation.isPending ||
+    completeMutation.isPending ||
+    cancelMutation.isPending;
+
+  const handleSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (selectedOrder) {
+      updateMutation.mutate({ id: selectedOrder.id, data: formData as UpdateSalesOrderRequest });
+    } else {
+      createMutation.mutate(formData);
+    }
+  };
+
+  const handleStatusChange = (id: string, action: string) => {
+    switch (action) {
+      case 'approve':
+        approveMutation.mutate(id);
+        break;
+      case 'ship':
+        shipMutation.mutate(id);
+        break;
+      case 'complete':
+        completeMutation.mutate(id);
+        break;
+      case 'cancel':
+        cancelMutation.mutate(id);
+        break;
+      default:
+        return;
+    }
+  };
+
+  const handleDelete = (id: string) => {
+    if (!window.confirm('确定要删除这个销售订单吗?')) return;
+    deleteMutation.mutate(id);
+  };
 
   const handleEdit = useCallback((order: SalesOrder) => {
     setSelectedOrder(order);
@@ -657,6 +722,7 @@ const SalesOrderPage: React.FC = () => {
               <Button
                 type='submit'
                 variant='contained'
+                disabled={actionLoading}
               >
                 保存
               </Button>

@@ -64,6 +64,57 @@ export const windowApi = {
       console.error('Failed to toggle maximize:', error);
     }
   },
+
+  async create(title: string, path: string): Promise<string> {
+    try {
+      return await invoke('create_window', { title, path });
+    } catch (error) {
+      console.error('Failed to create window:', error);
+      throw error;
+    }
+  },
+
+  async getWindows(): Promise<Array<{ label: string; title: string }>> {
+    try {
+      const result = await invoke<Array<[string, string]>>('get_windows');
+      return result.map(([label, title]) => ({ label, title }));
+    } catch (error) {
+      console.error('Failed to get windows:', error);
+      return [];
+    }
+  },
+
+  async switch(label: string): Promise<void> {
+    try {
+      await invoke('switch_window', { label });
+    } catch (error) {
+      console.error('Failed to switch window:', error);
+    }
+  },
+
+  async closeByLabel(label: string): Promise<void> {
+    try {
+      await invoke('close_window', { label });
+    } catch (error) {
+      console.error('Failed to close window:', error);
+    }
+  },
+
+  async closeCurrent(): Promise<void> {
+    try {
+      await invoke('close_current_window');
+    } catch (error) {
+      console.error('Failed to close current window:', error);
+    }
+  },
+
+  async next(): Promise<void> {
+    try {
+      await invoke('next_window');
+    } catch (error) {
+      console.error('Failed to switch to next window:', error);
+    }
+  },
 };
 
 export const appApi = {

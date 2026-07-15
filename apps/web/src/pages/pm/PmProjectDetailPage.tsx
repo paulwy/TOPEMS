@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useMemo } from 'react';
+import React, { useMemo } from 'react';
 import { logger } from '@/utils/logger';
 import {
   Edit,
@@ -34,6 +34,8 @@ import { DetailPageTemplate, type TabConfig, type SectionConfig } from '@/compon
 import { ActionButton, StatusBadge, PageContainer } from '@/components/common';
 import { designTokens } from '@/theme/tokens';
 import { PM_PATHS } from '@/modules/pm/config';
+import { useQuery, useQueryClient } from '@tanstack/react-query';
+import { QUERY_KEYS } from '@/lib/reactQuery';
 
 const ct = designTokens.colors;
 
@@ -69,45 +71,45 @@ const RISK_COLORS: Record<string, { bgcolor: string; color: string }> = {
 
 const PmProjectDetailPage: React.FC = () => {
   const navigate = useNavigate();
+  const queryClient = useQueryClient();
   const { id } = useParams<{ id: string }>();
-  const [project, setProject] = useState<Project | null>(null);
-  const [phases, setPhases] = useState<ProjectPhase[]>([]);
-  const [milestones, setMilestones] = useState<ProjectMilestone[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string>('');
 
-  useEffect(() => {
-    if (id) {
-      loadProjectData(id);
-    }
-  }, [id]);
+  const projectQuery = useQuery({
+    queryKey: QUERY_KEYS.PM.PROJECT(id || ''),
+    queryFn: () => pmApi.projects.get(id || ''),
+    enabled: !!id,
+    staleTime: 5 * 60 * 1000,
+    gcTime: 10 * 60 * 1000,
+  });
 
-  const loadProjectData = async (projectId: string) => {
-    setLoading(true);
-    setError('');
-    try {
-      const [projectResponse, phasesResponse, milestonesResponse] = await Promise.all([
-        pmApi.projects.get(projectId),
-        pmApi.phases.list(projectId),
-        pmApi.milestones.list(projectId),
-      ]);
+  const phasesQuery = useQuery({
+    queryKey: [...QUERY_KEYS.PM.PROJECT(id || ''), 'phases'],
+    queryFn: () => pmApi.phases.list(id || ''),
+    enabled: !!id,
+    staleTime: 5 * 60 * 1000,
+    gcTime: 10 * 60 * 1000,
+  });
 
-      if (projectResponse.success && projectResponse.data) {
-        setProject(projectResponse.data);
-      }
-      if (phasesResponse.success && phasesResponse.data) {
-        setPhases(phasesResponse.data.phases || phasesResponse.data || []);
-      }
-      if (milestonesResponse.success && milestonesResponse.data) {
-        setMilestones(milestonesResponse.data.milestones || milestonesResponse.data || []);
-      }
-    } catch (error: unknown) {
-      logger.error('Failed to load project data:', error);
-      setError('加载项目数据失败');
-    } finally {
-      setLoading(false);
-    }
-  };
+  const milestonesQuery = useQuery({
+    queryKey: [...QUERY_KEYS.PM.PROJECT(id || ''), 'milestones'],
+    queryFn: () => pmApi.milestones.list(id || ''),
+    enabled: !!id,
+    staleTime: 5 * 60 * 1000,
+    gcTime: 10 * 60 * 1000,
+  });
+
+  const project =
+    projectQuery.data?.success && projectQuery.data.data ? projectQuery.data.data : null;
+  const phases =
+    phasesQuery.data?.success && phasesQuery.data.data
+      ? phasesQuery.data.data.phases || phasesQuery.data.data || []
+      : [];
+  const milestones =
+    milestonesQuery.data?.success && milestonesQuery.data.data
+      ? milestonesQuery.data.data.milestones || milestonesQuery.data.data || []
+      : [];
+  const loading = projectQuery.isLoading || phasesQuery.isLoading || milestonesQuery.isLoading;
+  const error = projectQuery.error || phasesQuery.error || milestonesQuery.error;
 
   const formatDate = (dateStr?: string) => {
     if (!dateStr) return '-';
@@ -123,7 +125,7 @@ const PmProjectDetailPage: React.FC = () => {
     }).format(amount);
   };
 
-  const ganttPhases: GanttPhase[] = phases.map((p) => ({
+  const ganttPhases: GanttPhase[] = phases.map((p: ProjectPhase) => ({
     id: p.id,
     name: p.name,
     project_id: p.project_id,
@@ -134,7 +136,7 @@ const PmProjectDetailPage: React.FC = () => {
     predecessor_ids: p.predecessor_ids || [],
   }));
 
-  const ganttMilestones: GanttMilestone[] = milestones.map((m) => ({
+  const ganttMilestones: GanttMilestone[] = milestones.map((m: ProjectMilestone) => ({
     id: m.id,
     name: m.name,
     project_id: m.project_id,
@@ -142,8 +144,10 @@ const PmProjectDetailPage: React.FC = () => {
     status: m.status,
   }));
 
-  const completedPhases = phases.filter((p) => p.status === 'completed').length;
-  const completedMilestones = milestones.filter((m) => m.status === 'completed').length;
+  const completedPhases = phases.filter((p: { status: string }) => p.status === 'completed').length;
+  const completedMilestones = milestones.filter(
+    (m: { status: string }) => m.status === 'completed'
+  ).length;
 
   const overviewSections: SectionConfig[] = useMemo(() => {
     if (!project) return [];
@@ -397,7 +401,7 @@ const PmProjectDetailPage: React.FC = () => {
                     </TableCell>
                   </TableRow>
                 ) : (
-                  phases.map((phase) => (
+                  phases.map((phase: ProjectPhase) => (
                     <TableRow
                       key={phase.id}
                       sx={{ '&:hover': { bgcolor: 'grey.50' } }}
@@ -535,7 +539,7 @@ const PmProjectDetailPage: React.FC = () => {
                     </TableCell>
                   </TableRow>
                 ) : (
-                  milestones.map((milestone) => (
+                  milestones.map((milestone: ProjectMilestone) => (
                     <TableRow
                       key={milestone.id}
                       sx={{ '&:hover': { bgcolor: 'grey.50' } }}
@@ -584,7 +588,8 @@ const PmProjectDetailPage: React.FC = () => {
                       </TableCell>
                       <TableCell sx={{ fontSize: '0.875rem', color: 'grey.600' }}>
                         {milestone.phase_id
-                          ? phases.find((p) => p.id === milestone.phase_id)?.name || '-'
+                          ? phases.find((p: ProjectPhase) => p.id === milestone.phase_id)?.name ||
+                            '-'
                           : '-'}
                       </TableCell>
                       <TableCell>
@@ -1132,6 +1137,12 @@ const PmProjectDetailPage: React.FC = () => {
     };
   }, [project, phases, milestones, completedPhases, completedMilestones]);
 
+  const handleRefresh = () => {
+    queryClient.invalidateQueries({ queryKey: QUERY_KEYS.PM.PROJECT(id || '') });
+    queryClient.invalidateQueries({ queryKey: [...QUERY_KEYS.PM.PROJECT(id || ''), 'phases'] });
+    queryClient.invalidateQueries({ queryKey: [...QUERY_KEYS.PM.PROJECT(id || ''), 'milestones'] });
+  };
+
   return (
     <PageContainer
       title={project?.name || '项目详情'}
@@ -1146,13 +1157,13 @@ const PmProjectDetailPage: React.FC = () => {
           { label: '项目详情' },
         ]}
         loading={loading}
-        error={error}
+        error={error ? (error as Error).message : ''}
         backHref={PM_PATHS.projects}
         onEdit={() => id && navigate(`${PM_PATHS.projects}/${id}/edit`)}
         tabs={tabs}
         defaultTab='overview'
         infoCard={infoCard}
-        onRefresh={() => id && loadProjectData(id)}
+        onRefresh={handleRefresh}
       />
     </PageContainer>
   );

@@ -8,6 +8,7 @@ import CRM from './pages/CRM';
 import ERP from './pages/ERP';
 import Reports from './pages/Reports';
 import Settings from './pages/Settings';
+import useKeyboardShortcuts from './hooks/useKeyboardShortcuts';
 
 const ProtectedRoute = ({ children }: { children: React.ReactNode }) => {
   const { isAuthenticated } = useAuthStore();
@@ -18,6 +19,8 @@ const ProtectedRoute = ({ children }: { children: React.ReactNode }) => {
 };
 
 function App() {
+  useKeyboardShortcuts();
+
   return (
     <BrowserRouter>
       <Routes>

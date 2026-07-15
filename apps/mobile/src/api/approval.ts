@@ -28,7 +28,10 @@ export const approvalApi = {
     return apiClient.get(`/approval/tasks/${id}`);
   },
 
-  approveApproval: async (id: string, data?: { comment?: string }): Promise<ApiResponse<ApprovalTask>> => {
+  approveApproval: async (
+    id: string,
+    data?: { comment?: string },
+  ): Promise<ApiResponse<ApprovalTask>> => {
     return apiClient.post(`/approval/tasks/${id}/approve`, data);
   },
 
@@ -36,7 +39,10 @@ export const approvalApi = {
     return apiClient.post(`/approval/tasks/${id}/approve`, data);
   },
 
-  rejectApproval: async (id: string, data?: { comment?: string }): Promise<ApiResponse<ApprovalTask>> => {
+  rejectApproval: async (
+    id: string,
+    data?: { comment?: string },
+  ): Promise<ApiResponse<ApprovalTask>> => {
     return apiClient.post(`/approval/tasks/${id}/reject`, data);
   },
 

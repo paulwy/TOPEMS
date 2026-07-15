@@ -33,7 +33,6 @@ import { designTokens } from '@/theme/tokens';
 
 const ct = designTokens.colors;
 
-
 const customerColumns = [
   { key: 'name', title: '客户名称' },
   { key: 'code', title: '客户代码' },
@@ -730,7 +729,9 @@ const CustomerManagementPage: React.FC = () => {
                     name='name'
                     label='客户名称'
                     value={formData.name}
-                    onChange={(e) => setFormData((prev) => ({ ...prev, name: e.target.value }))}
+                    onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
+                      setFormData((prev) => ({ ...prev, name: e.target.value }))
+                    }
                     fullWidth
                     required
                   />
@@ -740,7 +741,9 @@ const CustomerManagementPage: React.FC = () => {
                     name='code'
                     label='客户代码'
                     value={formData.code}
-                    onChange={(e) => setFormData((prev) => ({ ...prev, code: e.target.value }))}
+                    onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
+                      setFormData((prev) => ({ ...prev, code: e.target.value }))
+                    }
                     fullWidth
                   />
                 </Grid>
@@ -781,7 +784,7 @@ const CustomerManagementPage: React.FC = () => {
                     name='industry'
                     label='行业'
                     value={formData.industry}
-                    onChange={(e) =>
+                    onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
                       setFormData((prev) => ({
                         ...prev,
                         industry: e.target.value,
@@ -811,7 +814,9 @@ const CustomerManagementPage: React.FC = () => {
                     name='source'
                     label='客户来源'
                     value={formData.source}
-                    onChange={(e) => setFormData((prev) => ({ ...prev, source: e.target.value }))}
+                    onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
+                      setFormData((prev) => ({ ...prev, source: e.target.value }))
+                    }
                     fullWidth
                   />
                 </Grid>
@@ -821,7 +826,7 @@ const CustomerManagementPage: React.FC = () => {
                     label='员工数量'
                     type='number'
                     value={formData.employee_count || ''}
-                    onChange={(e) =>
+                    onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
                       setFormData((prev) => ({
                         ...prev,
                         employee_count: e.target.value ? parseInt(e.target.value, 10) : undefined,
@@ -837,7 +842,7 @@ const CustomerManagementPage: React.FC = () => {
                     label='年营收(元)'
                     type='number'
                     value={formData.revenue || ''}
-                    onChange={(e) =>
+                    onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
                       setFormData((prev) => ({
                         ...prev,
                         revenue: e.target.value ? parseFloat(e.target.value) : undefined,
@@ -851,7 +856,7 @@ const CustomerManagementPage: React.FC = () => {
                     name='website'
                     label='网站'
                     value={formData.website}
-                    onChange={(e) =>
+                    onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
                       setFormData((prev) => ({
                         ...prev,
                         website: e.target.value,
@@ -867,7 +872,9 @@ const CustomerManagementPage: React.FC = () => {
                     label='邮箱'
                     type='email'
                     value={formData.email}
-                    onChange={(e) => setFormData((prev) => ({ ...prev, email: e.target.value }))}
+                    onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
+                      setFormData((prev) => ({ ...prev, email: e.target.value }))
+                    }
                     fullWidth
                   />
                 </Grid>
@@ -876,7 +883,9 @@ const CustomerManagementPage: React.FC = () => {
                     name='phone'
                     label='电话'
                     value={formData.phone}
-                    onChange={(e) => setFormData((prev) => ({ ...prev, phone: e.target.value }))}
+                    onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
+                      setFormData((prev) => ({ ...prev, phone: e.target.value }))
+                    }
                     fullWidth
                   />
                 </Grid>
@@ -886,7 +895,9 @@ const CustomerManagementPage: React.FC = () => {
                     name='fax'
                     label='传真'
                     value={formData.fax}
-                    onChange={(e) => setFormData((prev) => ({ ...prev, fax: e.target.value }))}
+                    onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
+                      setFormData((prev) => ({ ...prev, fax: e.target.value }))
+                    }
                     fullWidth
                   />
                 </Grid>
@@ -895,7 +906,7 @@ const CustomerManagementPage: React.FC = () => {
                     name='postal_code'
                     label='邮编'
                     value={formData.postal_code}
-                    onChange={(e) =>
+                    onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
                       setFormData((prev) => ({
                         ...prev,
                         postal_code: e.target.value,
@@ -910,7 +921,7 @@ const CustomerManagementPage: React.FC = () => {
                     name='country'
                     label='国家'
                     value={formData.country}
-                    onChange={(e) =>
+                    onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
                       setFormData((prev) => ({
                         ...prev,
                         country: e.target.value,
@@ -924,7 +935,7 @@ const CustomerManagementPage: React.FC = () => {
                     name='province'
                     label='省份'
                     value={formData.province}
-                    onChange={(e) =>
+                    onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
                       setFormData((prev) => ({
                         ...prev,
                         province: e.target.value,
@@ -938,7 +949,9 @@ const CustomerManagementPage: React.FC = () => {
                     name='city'
                     label='城市'
                     value={formData.city}
-                    onChange={(e) => setFormData((prev) => ({ ...prev, city: e.target.value }))}
+                    onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
+                      setFormData((prev) => ({ ...prev, city: e.target.value }))
+                    }
                     fullWidth
                   />
                 </Grid>
@@ -948,7 +961,7 @@ const CustomerManagementPage: React.FC = () => {
                     name='address'
                     label='详细地址'
                     value={formData.address}
-                    onChange={(e) =>
+                    onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
                       setFormData((prev) => ({
                         ...prev,
                         address: e.target.value,
@@ -963,7 +976,9 @@ const CustomerManagementPage: React.FC = () => {
                     name='notes'
                     label='备注'
                     value={formData.notes}
-                    onChange={(e) => setFormData((prev) => ({ ...prev, notes: e.target.value }))}
+                    onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
+                      setFormData((prev) => ({ ...prev, notes: e.target.value }))
+                    }
                     fullWidth
                     multiline
                     rows={3}

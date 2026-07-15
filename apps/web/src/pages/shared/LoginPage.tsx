@@ -1,4 +1,5 @@
 import React, { useState, useMemo } from 'react';
+import { useMutation } from '@tanstack/react-query';
 import { apiLogger } from '@/utils/logger';
 import { useAuth } from '@/hooks/useAuth';
 import { useNavigate } from 'react-router-dom';
@@ -48,7 +49,6 @@ const LoginPage: React.FC<LoginPageProps> = ({ onLogin }) => {
 
   const [isRegister, setIsRegister] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
-  const [loading, setLoading] = useState(false);
 
   const form = useForm<LoginFormValues>({
     resolver: zodResolver(loginFormSchema),
@@ -59,26 +59,15 @@ const LoginPage: React.FC<LoginPageProps> = ({ onLogin }) => {
     },
   });
 
-  const handleSubmit = async (values: LoginFormValues) => {
-    setLoading(true);
-
-    try {
-      if (isRegister) {
-        addNotification({
-          title: '提示',
-          message: '注册功能已关闭,请联系管理员获取账号',
-          type: 'info',
-        });
-        return;
-      }
-
-      const response = await login({
+  const loginMutation = useMutation({
+    mutationFn: async (values: LoginFormValues) => {
+      return await login({
         username: values.username,
         password: values.password,
       });
-
+    },
+    onSuccess: (response) => {
       apiLogger.info('登录响应:', response);
-
       if (response.success) {
         addNotification({
           title: '登录成功',
@@ -96,16 +85,29 @@ const LoginPage: React.FC<LoginPageProps> = ({ onLogin }) => {
           type: 'error',
         });
       }
-    } catch (err: unknown) {
+    },
+    onError: (err: unknown) => {
       apiLogger.error('登录错误:', err);
       addNotification({
         title: '错误',
         message: (err as { message?: string }).message || '请求失败',
         type: 'error',
       });
-    } finally {
-      setLoading(false);
+    },
+  });
+
+  const loading = loginMutation.isPending;
+
+  const handleSubmit = (values: LoginFormValues) => {
+    if (isRegister) {
+      addNotification({
+        title: '提示',
+        message: '注册功能已关闭,请联系管理员获取账号',
+        type: 'info',
+      });
+      return;
     }
+    loginMutation.mutate(values);
   };
 
   return (

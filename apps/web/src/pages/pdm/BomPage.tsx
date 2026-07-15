@@ -89,9 +89,12 @@ export const BomPage: React.FC = () => {
     queryClient.invalidateQueries({ queryKey: QUERY_KEYS.PDM.BOM_VERSIONS });
   }, [queryClient]);
 
-  const loadBomItems = useCallback((versionId: string) => {
-    queryClient.invalidateQueries({ queryKey: QUERY_KEYS.PDM.BOM_ITEMS });
-  }, [queryClient]);
+  const loadBomItems = useCallback(
+    (versionId: string) => {
+      queryClient.invalidateQueries({ queryKey: QUERY_KEYS.PDM.BOM_ITEMS });
+    },
+    [queryClient]
+  );
 
   const { data: versions = [], isLoading: loading } = useQuery({
     queryKey: QUERY_KEYS.PDM.BOM_VERSIONS,

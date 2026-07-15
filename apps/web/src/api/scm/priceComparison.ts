@@ -22,22 +22,22 @@ export const priceComparisonApi = {
   },
 
   get: async (id: string): Promise<ApiResponse<PriceComparison>> => {
-    return apiClient.scm.get(`/v1/comparisons/${id}`);
+    return apiClient.scm.get(`/comparisons/${id}`);
   },
 
   update: async (
     id: string,
     data: UpdatePriceComparisonRequest
   ): Promise<ApiResponse<PriceComparison>> => {
-    return apiClient.scm.put(`/v1/comparisons/${id}`, data);
+    return apiClient.scm.put(`/comparisons/${id}`, data);
   },
 
   delete: async (id: string): Promise<ApiResponse<string>> => {
-    return apiClient.scm.delete(`/v1/comparisons/${id}`);
+    return apiClient.scm.delete(`/comparisons/${id}`);
   },
 
   result: async (id: string): Promise<ApiResponse<PriceComparisonResult>> => {
-    return apiClient.scm.get(`/v1/comparisons/${id}`);
+    return apiClient.scm.get(`/comparisons/${id}`);
   },
 
   quotes: async (comparisonId: string): Promise<ApiResponse<SupplierQuote[]>> => {

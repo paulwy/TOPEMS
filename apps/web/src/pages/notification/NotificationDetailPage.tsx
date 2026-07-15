@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useMemo } from 'react';
+import React, { useMemo } from 'react';
 import {
   Box,
   Typography,
@@ -20,6 +20,7 @@ import {
   FileText,
 } from 'lucide-react';
 import { useNavigate, useParams } from 'react-router-dom';
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { notificationApi, type Notification } from '@/api/notification';
 import { useNotification } from '@/hooks/useNotification';
 import { apiLogger } from '@/utils/logger';
@@ -27,6 +28,7 @@ import { DetailPageTemplate, type TabConfig, type SectionConfig } from '@/compon
 import { PageContainer } from '@/components/common';
 import { designTokens } from '@/theme/tokens';
 import { NOTIFICATION_PATHS } from '@/modules/notification/config';
+import { QUERY_KEYS } from '@/lib/reactQuery';
 
 const ct = designTokens.colors;
 
@@ -34,19 +36,11 @@ const NotificationDetailPage: React.FC = () => {
   const navigate = useNavigate();
   const { id } = useParams<{ id: string }>();
   const { success, error } = useNotification();
+  const queryClient = useQueryClient();
 
-  const [notification, setNotification] = useState<Notification | null>(null);
-  const [loading, setLoading] = useState(true);
-  const [errorMessage, setErrorMessage] = useState<string | undefined>(undefined);
-
-  useEffect(() => {
-    loadNotificationDetail();
-  }, [id]);
-
-  const loadNotificationDetail = async () => {
-    setLoading(true);
-    setErrorMessage(undefined);
-    try {
+  const detailQuery = useQuery({
+    queryKey: QUERY_KEYS.NOTIFICATION.NOTIFICATION(id ?? ''),
+    queryFn: async () => {
       if (!id) {
         throw new Error('通知ID为空');
       }
@@ -57,30 +51,41 @@ const NotificationDetailPage: React.FC = () => {
         throw new Error('获取通知详情失败');
       }
 
-      setNotification(res.data);
-
       if (!res.data.is_read) {
         await notificationApi.markRead(id);
+        queryClient.invalidateQueries({ queryKey: QUERY_KEYS.NOTIFICATION.NOTIFICATIONS });
       }
-    } catch (err: unknown) {
-      apiLogger.error('加载通知详情失败:', err);
-      setErrorMessage('加载通知详情失败');
-      error('加载通知详情失败');
-    } finally {
-      setLoading(false);
-    }
-  };
 
-  const handleMarkUnread = async () => {
-    if (!id) return;
-    try {
-      await notificationApi.markUnread(id);
-      setNotification((prev) => (prev ? { ...prev, is_read: false } : null));
+      return res.data;
+    },
+    enabled: !!id,
+  });
+
+  const notification = detailQuery.data ?? null;
+  const loading = detailQuery.isLoading;
+  const errorMessage = detailQuery.isError ? '加载通知详情失败' : undefined;
+
+  const markUnreadMutation = useMutation({
+    mutationFn: async () => {
+      if (!id) return;
+      return notificationApi.markUnread(id);
+    },
+    onSuccess: () => {
+      if (id) {
+        queryClient.invalidateQueries({ queryKey: QUERY_KEYS.NOTIFICATION.NOTIFICATION(id) });
+        queryClient.invalidateQueries({ queryKey: QUERY_KEYS.NOTIFICATION.NOTIFICATIONS });
+      }
       success('已标记为未读');
-    } catch (err: unknown) {
+    },
+    onError: (err: unknown) => {
       apiLogger.error('标记未读失败:', err);
       error('标记未读失败');
-    }
+    },
+  });
+
+  const handleMarkUnread = () => {
+    if (!id) return;
+    markUnreadMutation.mutate();
   };
 
   const getStatusConfig = (status: string) => {

@@ -79,7 +79,7 @@ async fn main() -> anyhow::Result<()> {
 
     let public_routes = Router::new()
         .route("/health", get(health_check))
-        .route("/api/v1/health/detailed", get(health_check_detailed))
+        .route("/api/health/detailed", get(health_check_detailed))
         .route("/api/plugins/info", get(get_plugin_info))
         .route("/api/plugins/health", get(plugin_health_check))
         .route(
@@ -90,153 +90,150 @@ async fn main() -> anyhow::Result<()> {
 
     let protected_routes = Router::new()
         .route(
-            "/api/core/portal/v1/services",
+            "/api/core/portal/services",
             get(modules::services::list_services),
         )
-        .route("/api/core/portal/v1/todos", get(modules::todos::get_todos))
-        .route("/api/core/portal/v1/todos", post(modules::todos::add_todo))
+        .route("/api/core/portal/todos", get(modules::todos::get_todos))
+        .route("/api/core/portal/todos", post(modules::todos::add_todo))
         .route(
-            "/api/core/portal/v1/todos/{id}",
+            "/api/core/portal/todos/{id}",
             post(modules::todos::complete_todo),
         )
         .route(
-            "/api/core/portal/v1/todos/{id}",
+            "/api/core/portal/todos/{id}",
             delete(modules::todos::delete_todo),
         )
+        .route("/api/core/portal/user", get(modules::user::get_user_info))
         .route(
-            "/api/core/portal/v1/user",
-            get(modules::user::get_user_info),
-        )
-        .route(
-            "/api/core/portal/v1/monitoring/services",
+            "/api/core/portal/monitoring/services",
             get(modules::monitoring::get_monitoring_services),
         )
         .route(
-            "/api/core/portal/v1/monitoring/metrics",
+            "/api/core/portal/monitoring/metrics",
             get(modules::monitoring::get_monitoring_metrics),
         )
         .route(
-            "/api/core/portal/v1/monitoring/alerts",
+            "/api/core/portal/monitoring/alerts",
             get(modules::monitoring::get_monitoring_alerts),
         )
         .route(
-            "/api/core/portal/v1/monitoring/alerts/{id}",
+            "/api/core/portal/monitoring/alerts/{id}",
             post(modules::monitoring::acknowledge_alert),
         )
         .route(
-            "/api/core/portal/v1/monitoring/logs",
+            "/api/core/portal/monitoring/logs",
             get(modules::monitoring::get_monitoring_logs),
         )
         .route(
-            "/api/core/portal/v1/notifications",
+            "/api/core/portal/notifications",
             get(modules::notifications::get_notifications),
         )
         .route(
-            "/api/core/portal/v1/notifications/{id}",
+            "/api/core/portal/notifications/{id}",
             post(modules::notifications::mark_notification_read),
         )
         .route(
-            "/api/core/portal/v1/notifications/mark-all-read",
+            "/api/core/portal/notifications/mark-all-read",
             post(modules::notifications::mark_all_notifications_read),
         )
         .route(
-            "/api/core/portal/v1/dashboard/stats",
+            "/api/core/portal/dashboard/stats",
             get(modules::dashboard::get_dashboard_stats),
         )
         .route(
-            "/api/core/portal/v1/dashboard/quick-access",
+            "/api/core/portal/dashboard/quick-access",
             get(modules::dashboard::get_quick_access),
         )
         .route(
-            "/api/core/portal/v1/dashboard/quick-access",
+            "/api/core/portal/dashboard/quick-access",
             post(modules::dashboard::add_quick_access),
         )
         .route(
-            "/api/core/portal/v1/dashboard/quick-access/{id}",
+            "/api/core/portal/dashboard/quick-access/{id}",
             delete(modules::dashboard::remove_quick_access),
         )
         .route(
-            "/api/core/portal/v1/announcements",
+            "/api/core/portal/announcements",
             get(modules::announcements::get_announcements),
         )
         .route(
-            "/api/core/portal/v1/announcements/{id}",
+            "/api/core/portal/announcements/{id}",
             get(modules::announcements::get_announcement),
         )
         .route(
-            "/api/core/portal/v1/announcements",
+            "/api/core/portal/announcements",
             post(modules::announcements::create_announcement),
         )
         .route(
-            "/api/core/portal/v1/announcements/{id}",
+            "/api/core/portal/announcements/{id}",
             put(modules::announcements::update_announcement),
         )
         .route(
-            "/api/core/portal/v1/announcements/{id}",
+            "/api/core/portal/announcements/{id}",
             delete(modules::announcements::delete_announcement),
         )
         .route(
-            "/api/core/portal/v1/announcements/{id}/pin",
+            "/api/core/portal/announcements/{id}/pin",
             post(modules::announcements::toggle_announcement_pin),
         )
         .route(
-            "/api/core/portal/v1/announcements/pinned",
+            "/api/core/portal/announcements/pinned",
             get(modules::announcements::get_pinned_announcements),
         )
         .route(
-            "/api/core/portal/v1/settings",
+            "/api/core/portal/settings",
             get(modules::settings::get_user_settings),
         )
         .route(
-            "/api/core/portal/v1/settings",
+            "/api/core/portal/settings",
             put(modules::settings::update_user_settings),
         )
         .route(
-            "/api/core/portal/v1/settings/reset",
+            "/api/core/portal/settings/reset",
             post(modules::settings::reset_user_settings),
         )
         .route(
-            "/api/core/portal/v1/settings/themes",
+            "/api/core/portal/settings/themes",
             get(modules::settings::get_available_themes),
         )
         .route(
-            "/api/core/portal/v1/settings/languages",
+            "/api/core/portal/settings/languages",
             get(modules::settings::get_available_languages),
         )
         .route(
-            "/api/core/portal/v1/quick-actions",
+            "/api/core/portal/quick-actions",
             get(modules::quick_actions::get_quick_actions),
         )
         .route(
-            "/api/core/portal/v1/quick-actions/favorites",
+            "/api/core/portal/quick-actions/favorites",
             get(modules::quick_actions::get_favorite_actions),
         )
         .route(
-            "/api/core/portal/v1/quick-actions/{id}/favorite",
+            "/api/core/portal/quick-actions/{id}/favorite",
             post(modules::quick_actions::toggle_favorite_action),
         )
         .route(
-            "/api/core/portal/v1/quick-actions/{id}/execute",
+            "/api/core/portal/quick-actions/{id}/execute",
             post(modules::quick_actions::execute_quick_action),
         )
         .route(
-            "/api/core/portal/v1/navigation/menu",
+            "/api/core/portal/navigation/menu",
             get(modules::navigation::get_navigation_menu),
         )
         .route(
-            "/api/core/portal/v1/navigation/pinned",
+            "/api/core/portal/navigation/pinned",
             get(modules::navigation::get_pinned_apps),
         )
         .route(
-            "/api/core/portal/v1/navigation/pinned",
+            "/api/core/portal/navigation/pinned",
             post(modules::navigation::add_pinned_app),
         )
         .route(
-            "/api/core/portal/v1/navigation/pinned/{id}",
+            "/api/core/portal/navigation/pinned/{id}",
             delete(modules::navigation::remove_pinned_app),
         )
         .route(
-            "/api/core/portal/v1/navigation/pinned/reorder",
+            "/api/core/portal/navigation/pinned/reorder",
             put(modules::navigation::reorder_pinned_apps),
         )
         .layer(axum::middleware::from_fn_with_state(
@@ -304,7 +301,7 @@ async fn home() -> Json<ApiResponse<&'static str>> {
 Public Endpoints:
   GET  /              - API documentation
   GET  /health        - Health check
-  GET  /api/v1/health/detailed - Detailed health check
+  GET  /api/health/detailed - Detailed health check
   GET  /api/info      - API information
   GET  /api/plugins/info     - Plugin info
   GET  /api/plugins/health   - Plugin health
@@ -313,63 +310,63 @@ Public Endpoints:
 Protected Endpoints (require JWT token):
 
   Services:
-    GET  /api/core/portal/v1/services        - List all services
+    GET  /api/core/portal/services        - List all services
 
   Todos:
-    GET  /api/core/portal/v1/todos           - Get todos
-    POST /api/core/portal/v1/todos           - Add todo
-    POST /api/core/portal/v1/todos/{id}      - Complete todo
-    DELETE /api/core/portal/v1/todos/{id}    - Delete todo
+    GET  /api/core/portal/todos           - Get todos
+    POST /api/core/portal/todos           - Add todo
+    POST /api/core/portal/todos/{id}      - Complete todo
+    DELETE /api/core/portal/todos/{id}    - Delete todo
 
   User:
-    GET  /api/core/portal/v1/user            - Get user info
+    GET  /api/core/portal/user            - Get user info
 
   Monitoring:
-    GET  /api/core/portal/v1/monitoring/services - Monitoring services
-    GET  /api/core/portal/v1/monitoring/metrics   - Monitoring metrics
-    GET  /api/core/portal/v1/monitoring/alerts    - Monitoring alerts
-    POST /api/core/portal/v1/monitoring/alerts/{id} - Acknowledge alert
-    GET  /api/core/portal/v1/monitoring/logs      - Monitoring logs
+    GET  /api/core/portal/monitoring/services - Monitoring services
+    GET  /api/core/portal/monitoring/metrics   - Monitoring metrics
+    GET  /api/core/portal/monitoring/alerts    - Monitoring alerts
+    POST /api/core/portal/monitoring/alerts/{id} - Acknowledge alert
+    GET  /api/core/portal/monitoring/logs      - Monitoring logs
 
   Notifications:
-    GET  /api/core/portal/v1/notifications        - Notifications
-    POST /api/core/portal/v1/notifications/{id}   - Mark notification read
-    POST /api/core/portal/v1/notifications/mark-all-read - Mark all read
+    GET  /api/core/portal/notifications        - Notifications
+    POST /api/core/portal/notifications/{id}   - Mark notification read
+    POST /api/core/portal/notifications/mark-all-read - Mark all read
 
   Dashboard:
-    GET  /api/core/portal/v1/dashboard/stats      - Dashboard statistics
-    GET  /api/core/portal/v1/dashboard/quick-access - Quick access list
-    POST /api/core/portal/v1/dashboard/quick-access - Add quick access
-    DELETE /api/core/portal/v1/dashboard/quick-access/{id} - Remove quick access
+    GET  /api/core/portal/dashboard/stats      - Dashboard statistics
+    GET  /api/core/portal/dashboard/quick-access - Quick access list
+    POST /api/core/portal/dashboard/quick-access - Add quick access
+    DELETE /api/core/portal/dashboard/quick-access/{id} - Remove quick access
 
   Announcements:
-    GET  /api/core/portal/v1/announcements        - List announcements
-    GET  /api/core/portal/v1/announcements/{id}   - Get announcement detail
-    POST /api/core/portal/v1/announcements        - Create announcement
-    PUT  /api/core/portal/v1/announcements/{id}   - Update announcement
-    DELETE /api/core/portal/v1/announcements/{id} - Delete announcement
-    POST /api/core/portal/v1/announcements/{id}/pin - Toggle pin
-    GET  /api/core/portal/v1/announcements/pinned - Pinned announcements
+    GET  /api/core/portal/announcements        - List announcements
+    GET  /api/core/portal/announcements/{id}   - Get announcement detail
+    POST /api/core/portal/announcements        - Create announcement
+    PUT  /api/core/portal/announcements/{id}   - Update announcement
+    DELETE /api/core/portal/announcements/{id} - Delete announcement
+    POST /api/core/portal/announcements/{id}/pin - Toggle pin
+    GET  /api/core/portal/announcements/pinned - Pinned announcements
 
   Settings:
-    GET  /api/core/portal/v1/settings             - Get user settings
-    PUT  /api/core/portal/v1/settings             - Update user settings
-    POST /api/core/portal/v1/settings/reset       - Reset user settings
-    GET  /api/core/portal/v1/settings/themes      - Available themes
-    GET  /api/core/portal/v1/settings/languages   - Available languages
+    GET  /api/core/portal/settings             - Get user settings
+    PUT  /api/core/portal/settings             - Update user settings
+    POST /api/core/portal/settings/reset       - Reset user settings
+    GET  /api/core/portal/settings/themes      - Available themes
+    GET  /api/core/portal/settings/languages   - Available languages
 
   Quick Actions:
-    GET  /api/core/portal/v1/quick-actions        - Quick actions list
-    GET  /api/core/portal/v1/quick-actions/favorites - Favorite actions
-    POST /api/core/portal/v1/quick-actions/{id}/favorite - Toggle favorite
-    POST /api/core/portal/v1/quick-actions/{id}/execute - Execute action
+    GET  /api/core/portal/quick-actions        - Quick actions list
+    GET  /api/core/portal/quick-actions/favorites - Favorite actions
+    POST /api/core/portal/quick-actions/{id}/favorite - Toggle favorite
+    POST /api/core/portal/quick-actions/{id}/execute - Execute action
 
   Navigation:
-    GET  /api/core/portal/v1/navigation/menu      - Navigation menu
-    GET  /api/core/portal/v1/navigation/pinned    - Pinned apps
-    POST /api/core/portal/v1/navigation/pinned    - Add pinned app
-    DELETE /api/core/portal/v1/navigation/pinned/{id} - Remove pinned app
-    PUT  /api/core/portal/v1/navigation/pinned/reorder - Reorder pinned apps
+    GET  /api/core/portal/navigation/menu      - Navigation menu
+    GET  /api/core/portal/navigation/pinned    - Pinned apps
+    POST /api/core/portal/navigation/pinned    - Add pinned app
+    DELETE /api/core/portal/navigation/pinned/{id} - Remove pinned app
+    PUT  /api/core/portal/navigation/pinned/reorder - Reorder pinned apps
 ",
         "首页",
     ))

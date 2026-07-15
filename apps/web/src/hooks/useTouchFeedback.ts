@@ -34,35 +34,41 @@ export function useTouchFeedback(options: TouchFeedbackOptions = {}) {
   const longPressTimer = useRef<number | null>(null);
   const rippleId = useRef(0);
 
-  const triggerHapticFeedback = useCallback((type: 'light' | 'medium' | 'heavy' = 'light') => {
-    if (enableHapticFeedback && 'vibrate' in navigator) {
-      const patterns: Record<string, number | number[]> = {
-        light: 10,
-        medium: 20,
-        heavy: [30, 50, 30],
+  const triggerHapticFeedback = useCallback(
+    (type: 'light' | 'medium' | 'heavy' = 'light') => {
+      if (enableHapticFeedback && 'vibrate' in navigator) {
+        const patterns: Record<string, number | number[]> = {
+          light: 10,
+          medium: 20,
+          heavy: [30, 50, 30],
+        };
+        navigator.vibrate(patterns[type]);
+      }
+    },
+    [enableHapticFeedback]
+  );
+
+  const createRipple = useCallback(
+    (clientX: number, clientY: number, element: HTMLElement) => {
+      const rect = element.getBoundingClientRect();
+      const x = clientX - rect.left;
+      const y = clientY - rect.top;
+
+      const newRipple: TouchRipple = {
+        id: rippleId.current++,
+        x,
+        y,
       };
-      navigator.vibrate(patterns[type]);
-    }
-  }, [enableHapticFeedback]);
 
-  const createRipple = useCallback((clientX: number, clientY: number, element: HTMLElement) => {
-    const rect = element.getBoundingClientRect();
-    const x = clientX - rect.left;
-    const y = clientY - rect.top;
+      setRipples((prev) => [...prev, newRipple]);
+      triggerHapticFeedback('light');
 
-    const newRipple: TouchRipple = {
-      id: rippleId.current++,
-      x,
-      y,
-    };
-
-    setRipples((prev) => [...prev, newRipple]);
-    triggerHapticFeedback('light');
-
-    setTimeout(() => {
-      setRipples((prev) => prev.filter((r) => r.id !== newRipple.id));
-    }, 600);
-  }, [triggerHapticFeedback]);
+      setTimeout(() => {
+        setRipples((prev) => prev.filter((r) => r.id !== newRipple.id));
+      }, 600);
+    },
+    [triggerHapticFeedback]
+  );
 
   const handleTouchStart = useCallback(
     (e: React.TouchEvent | React.MouseEvent) => {
@@ -162,11 +168,11 @@ export function useSwipeGesture(options?: {
   onSwipeEnd?: () => void;
   enableHapticFeedback?: boolean;
 }) {
-  const { 
-    onSwipeLeft, 
-    onSwipeRight, 
-    onSwipeUp, 
-    onSwipeDown, 
+  const {
+    onSwipeLeft,
+    onSwipeRight,
+    onSwipeUp,
+    onSwipeDown,
     threshold = 50,
     onSwipeStart,
     onSwipeEnd,
@@ -189,23 +195,26 @@ export function useSwipeGesture(options?: {
     isSwiping.current = false;
   }, []);
 
-  const handleTouchMove = useCallback((e: React.TouchEvent) => {
-    if (e.touches.length !== 1) return;
-    const currentX = e.touches[0].clientX;
-    const currentY = e.touches[0].clientY;
-    const deltaX = currentX - touchStartX.current;
-    const deltaY = currentY - touchStartY.current;
+  const handleTouchMove = useCallback(
+    (e: React.TouchEvent) => {
+      if (e.touches.length !== 1) return;
+      const currentX = e.touches[0].clientX;
+      const currentY = e.touches[0].clientY;
+      const deltaX = currentX - touchStartX.current;
+      const deltaY = currentY - touchStartY.current;
 
-    if (!isSwiping.current && Math.max(Math.abs(deltaX), Math.abs(deltaY)) >= threshold) {
-      isSwiping.current = true;
-      onSwipeStart?.();
-    }
-  }, [threshold, onSwipeStart]);
+      if (!isSwiping.current && Math.max(Math.abs(deltaX), Math.abs(deltaY)) >= threshold) {
+        isSwiping.current = true;
+        onSwipeStart?.();
+      }
+    },
+    [threshold, onSwipeStart]
+  );
 
   const handleTouchEnd = useCallback(
     (e: React.TouchEvent) => {
       if (e.changedTouches.length !== 1) return;
-      
+
       const touchEndX = e.changedTouches[0].clientX;
       const touchEndY = e.changedTouches[0].clientY;
 
@@ -287,11 +296,14 @@ export function usePinchGesture(options?: {
   const currentScale = useRef(1);
   const isPinching = useRef(false);
 
-  const triggerHaptic = useCallback((type: 'start' | 'end') => {
-    if (enableHapticFeedback && 'vibrate' in navigator) {
-      navigator.vibrate(type === 'start' ? 15 : [10, 5, 10]);
-    }
-  }, [enableHapticFeedback]);
+  const triggerHaptic = useCallback(
+    (type: 'start' | 'end') => {
+      if (enableHapticFeedback && 'vibrate' in navigator) {
+        navigator.vibrate(type === 'start' ? 15 : [10, 5, 10]);
+      }
+    },
+    [enableHapticFeedback]
+  );
 
   const getDistance = (touch1: React.Touch, touch2: React.Touch) => {
     const dx = touch2.clientX - touch1.clientX;
@@ -299,37 +311,46 @@ export function usePinchGesture(options?: {
     return Math.sqrt(dx * dx + dy * dy);
   };
 
-  const handleTouchStart = useCallback((e: React.TouchEvent) => {
-    if (e.touches.length !== 2) return;
+  const handleTouchStart = useCallback(
+    (e: React.TouchEvent) => {
+      if (e.touches.length !== 2) return;
 
-    initialDistance.current = getDistance(e.touches[0], e.touches[1]);
-    initialScale.current = currentScale.current;
-    isPinching.current = true;
+      initialDistance.current = getDistance(e.touches[0], e.touches[1]);
+      initialScale.current = currentScale.current;
+      isPinching.current = true;
 
-    triggerHaptic('start');
-    onPinchStart?.();
-  }, [onPinchStart, triggerHaptic]);
+      triggerHaptic('start');
+      onPinchStart?.();
+    },
+    [onPinchStart, triggerHaptic]
+  );
 
-  const handleTouchMove = useCallback((e: React.TouchEvent) => {
-    if (e.touches.length !== 2 || !isPinching.current) return;
+  const handleTouchMove = useCallback(
+    (e: React.TouchEvent) => {
+      if (e.touches.length !== 2 || !isPinching.current) return;
 
-    const currentDistance = getDistance(e.touches[0], e.touches[1]);
-    const scaleDelta = currentDistance / initialDistance.current;
-    let newScale = initialScale.current * scaleDelta;
+      const currentDistance = getDistance(e.touches[0], e.touches[1]);
+      const scaleDelta = currentDistance / initialDistance.current;
+      let newScale = initialScale.current * scaleDelta;
 
-    newScale = Math.max(minScale, Math.min(maxScale, newScale));
-    currentScale.current = newScale;
+      newScale = Math.max(minScale, Math.min(maxScale, newScale));
+      currentScale.current = newScale;
 
-    onPinch?.(newScale);
-  }, [minScale, maxScale, onPinch]);
+      onPinch?.(newScale);
+    },
+    [minScale, maxScale, onPinch]
+  );
 
-  const handleTouchEnd = useCallback((e: React.TouchEvent) => {
-    if (e.touches.length < 2 && isPinching.current) {
-      isPinching.current = false;
-      triggerHaptic('end');
-      onPinchEnd?.();
-    }
-  }, [onPinchEnd, triggerHaptic]);
+  const handleTouchEnd = useCallback(
+    (e: React.TouchEvent) => {
+      if (e.touches.length < 2 && isPinching.current) {
+        isPinching.current = false;
+        triggerHaptic('end');
+        onPinchEnd?.();
+      }
+    },
+    [onPinchEnd, triggerHaptic]
+  );
 
   return {
     handleTouchStart,
@@ -352,26 +373,32 @@ export function useTouchScale(options?: {
   const startDistance = useRef(0);
   const startScale = useRef(1);
 
-  const handleTouchStart = useCallback((e: React.TouchEvent) => {
-    if (e.touches.length === 2) {
-      const dx = e.touches[1].clientX - e.touches[0].clientX;
-      const dy = e.touches[1].clientY - e.touches[0].clientY;
-      startDistance.current = Math.sqrt(dx * dx + dy * dy);
-      startScale.current = scale;
-    }
-  }, [scale]);
+  const handleTouchStart = useCallback(
+    (e: React.TouchEvent) => {
+      if (e.touches.length === 2) {
+        const dx = e.touches[1].clientX - e.touches[0].clientX;
+        const dy = e.touches[1].clientY - e.touches[0].clientY;
+        startDistance.current = Math.sqrt(dx * dx + dy * dy);
+        startScale.current = scale;
+      }
+    },
+    [scale]
+  );
 
-  const handleTouchMove = useCallback((e: React.TouchEvent) => {
-    if (e.touches.length === 2) {
-      const dx = e.touches[1].clientX - e.touches[0].clientX;
-      const dy = e.touches[1].clientY - e.touches[0].clientY;
-      const distance = Math.sqrt(dx * dx + dy * dy);
-      const newScale = startScale.current * (distance / startDistance.current);
-      const clampedScale = Math.max(minScale, Math.min(maxScale, newScale));
-      setScale(clampedScale);
-      onScaleChange?.(clampedScale);
-    }
-  }, [minScale, maxScale, onScaleChange]);
+  const handleTouchMove = useCallback(
+    (e: React.TouchEvent) => {
+      if (e.touches.length === 2) {
+        const dx = e.touches[1].clientX - e.touches[0].clientX;
+        const dy = e.touches[1].clientY - e.touches[0].clientY;
+        const distance = Math.sqrt(dx * dx + dy * dy);
+        const newScale = startScale.current * (distance / startDistance.current);
+        const clampedScale = Math.max(minScale, Math.min(maxScale, newScale));
+        setScale(clampedScale);
+        onScaleChange?.(clampedScale);
+      }
+    },
+    [minScale, maxScale, onScaleChange]
+  );
 
   const resetScale = useCallback(() => {
     setScale(1);

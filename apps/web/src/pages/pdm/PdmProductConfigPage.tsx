@@ -124,8 +124,13 @@ export const PdmProductConfigPage: React.FC = () => {
   });
 
   const createConfigMutation = useMutation({
-    mutationFn: (data: { name: string; code: string; status: string; attributes: any; options: string[] }) =>
-      pdmApi.createProductConfig(data),
+    mutationFn: (data: {
+      name: string;
+      code: string;
+      status: string;
+      attributes: any;
+      options: string[];
+    }) => pdmApi.createProductConfig(data),
     onSuccess: () => {
       addNotification({ title: '成功', message: '配置创建成功', type: 'success' });
       setOpenDialog(false);
@@ -138,8 +143,13 @@ export const PdmProductConfigPage: React.FC = () => {
   });
 
   const updateConfigMutation = useMutation({
-    mutationFn: ({ id, data }: { id: string; data: { name: string; code: string; status: string; attributes: any; options: string[] } }) =>
-      pdmApi.updateProductConfig(id, data),
+    mutationFn: ({
+      id,
+      data,
+    }: {
+      id: string;
+      data: { name: string; code: string; status: string; attributes: any; options: string[] };
+    }) => pdmApi.updateProductConfig(id, data),
     onSuccess: () => {
       addNotification({ title: '成功', message: '配置更新成功', type: 'success' });
       setOpenDialog(false);

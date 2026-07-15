@@ -76,7 +76,7 @@ pub struct BatchDeleteResponse {
 pub struct QaApi;
 
 impl QaApi {
-    /// POST /api/v1/qa/ask - 提问并获取答案
+    /// POST /api/qa/ask - 提问并获取答案
     pub async fn ask(
         State(state): State<AppState>,
         Extension(claims): Extension<Claims>,
@@ -127,7 +127,7 @@ impl QaApi {
         }
     }
 
-    /// POST /api/v1/qa/ask-with-context - 基于文档上下文提问
+    /// POST /api/qa/ask-with-context - 基于文档上下文提问
     pub async fn ask_with_context(
         State(state): State<AppState>,
         Extension(claims): Extension<Claims>,
@@ -178,7 +178,7 @@ impl QaApi {
         }
     }
 
-    /// POST /api/v1/qa/ask-structured - 获取结构化回答
+    /// POST /api/qa/ask-structured - 获取结构化回答
     pub async fn ask_structured(
         State(state): State<AppState>,
         Extension(claims): Extension<Claims>,
@@ -232,7 +232,7 @@ impl QaApi {
         }
     }
 
-    /// POST /api/v1/qa/ask-conversation - 多轮对话
+    /// POST /api/qa/ask-conversation - 多轮对话
     pub async fn ask_conversation(
         State(state): State<AppState>,
         Extension(claims): Extension<Claims>,
@@ -292,7 +292,7 @@ impl QaApi {
         }
     }
 
-    /// POST /api/v1/qa/classify - 分类问题类型
+    /// POST /api/qa/classify - 分类问题类型
     pub async fn classify(
         State(state): State<AppState>,
         Json(req): Json<ClassifyRequest>,
@@ -308,7 +308,7 @@ impl QaApi {
         }
     }
 
-    /// GET /api/v1/qa/history - 获取问答历史（支持分页和搜索）
+    /// GET /api/qa/history - 获取问答历史（支持分页和搜索）
     pub async fn history(
         State(state): State<AppState>,
         Query(params): Query<QaHistoryQuery>,
@@ -355,7 +355,7 @@ impl QaApi {
         ))
     }
 
-    /// DELETE /api/v1/qa/history/{id} - 删除单条问答历史
+    /// DELETE /api/qa/history/{id} - 删除单条问答历史
     pub async fn delete_history(
         State(state): State<AppState>,
         Path(id): Path<Uuid>,
@@ -369,7 +369,7 @@ impl QaApi {
         }
     }
 
-    /// POST /api/v1/qa/history/batch-delete - 批量删除问答历史
+    /// POST /api/qa/history/batch-delete - 批量删除问答历史
     pub async fn batch_delete_history(
         State(state): State<AppState>,
         Extension(claims): Extension<Claims>,
@@ -392,7 +392,7 @@ impl QaApi {
         }
     }
 
-    /// POST /api/v1/qa/feedback - 提交答案反馈
+    /// POST /api/qa/feedback - 提交答案反馈
     pub async fn feedback(
         State(state): State<AppState>,
         Extension(claims): Extension<Claims>,

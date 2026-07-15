@@ -122,7 +122,9 @@ export const spcApi = {
     );
     return {
       ...response,
-      data: response.data ? adaptControlLimitsToFrontend(response.data) : ({ ucl: 0, lcl: 0, cl: 0, dataPointsCount: 0 } as ControlLimitsResult),
+      data: response.data
+        ? adaptControlLimitsToFrontend(response.data)
+        : ({ ucl: 0, lcl: 0, cl: 0, dataPointsCount: 0 } as ControlLimitsResult),
     };
   },
 };

@@ -1,4 +1,6 @@
-import React, { useState, useEffect, useMemo } from 'react';
+import React, { useState, useMemo } from 'react';
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import { QUERY_KEYS } from '@/lib/reactQuery';
 import { FINANCE_PATHS } from '@/modules/finance/config';
 import {
   Plus,
@@ -43,10 +45,8 @@ import { ConfirmDialog } from '@topems/shared-components';
 
 const FinanceAssetPage: React.FC = () => {
   const addNotification = useNotificationStore((state) => state.addNotification);
+  const queryClient = useQueryClient();
 
-  const [assetData, setAssetData] = useState<Account[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | undefined>(undefined);
   const [filterCategory, setFilterCategory] = useState('');
   const [filterStatus, setFilterStatus] = useState('');
   const [searchQuery, setSearchQuery] = useState('');
@@ -77,34 +77,76 @@ const FinanceAssetPage: React.FC = () => {
     description: '',
   });
 
-  useEffect(() => {
-    loadAssets();
-  }, []);
-
-  const loadAssets = async () => {
-    setLoading(true);
-    setError(undefined);
-    try {
+  const assetsQuery = useQuery<Account[]>({
+    queryKey: [...QUERY_KEYS.FINANCE.ASSET, { searchQuery, filterStatus }],
+    queryFn: async () => {
       const response = await financeApi.account.list({
         category: 'asset',
         keyword: searchQuery || undefined,
         status: filterStatus || undefined,
       });
       if (response.success && response.data) {
-        setAssetData(response.data.items || []);
+        return response.data.items || [];
       }
-    } catch (err: unknown) {
-      apiLogger.error('加载资产数据失败:', err);
-      setError('加载资产数据失败');
-      addNotification({
-        title: '错误',
-        message: '加载资产数据失败',
-        type: 'error',
-      });
-    } finally {
-      setLoading(false);
-    }
+      return [];
+    },
+  });
+
+  const assetData = assetsQuery.data || [];
+  const loading = assetsQuery.isLoading;
+  const error = assetsQuery.error ? '加载资产数据失败' : undefined;
+
+  const invalidateAssets = () => {
+    queryClient.invalidateQueries({ queryKey: QUERY_KEYS.FINANCE.ASSET });
   };
+
+  const createMutation = useMutation({
+    mutationFn: async (data: typeof newAsset) => {
+      const response = await financeApi.account.create(data);
+      if (!response.success) {
+        throw new Error('创建资产科目失败');
+      }
+      return response;
+    },
+    onSuccess: () => {
+      addNotification({ title: '成功', message: '资产科目新增成功', type: 'success' });
+      setShowCreateModal(false);
+      setNewAsset({
+        code: '',
+        name: '',
+        category: 'asset' as const,
+        balance_direction: 'debit' as const,
+        level: 1,
+        status: 'active' as const,
+        description: '',
+      });
+      invalidateAssets();
+    },
+    onError: (err: unknown) => {
+      apiLogger.error('创建资产科目失败:', err);
+      addNotification({ title: '错误', message: '创建资产科目失败', type: 'error' });
+    },
+  });
+
+  const deleteMutation = useMutation({
+    mutationFn: async (id: string) => {
+      const response = await financeApi.account.delete(id);
+      if (!response.success) {
+        throw new Error('删除资产科目失败');
+      }
+      return response;
+    },
+    onSuccess: () => {
+      addNotification({ title: '成功', message: '资产科目删除成功', type: 'success' });
+      setDeleteDialogOpen(false);
+      setDeletingId(null);
+      invalidateAssets();
+    },
+    onError: (err: unknown) => {
+      apiLogger.error('删除资产科目失败:', err);
+      addNotification({ title: '错误', message: '删除资产科目失败', type: 'error' });
+    },
+  });
 
   const filteredData = useMemo(() => {
     return assetData.filter((asset) => {
@@ -186,120 +228,63 @@ const FinanceAssetPage: React.FC = () => {
     return labels[status] || status;
   };
 
-  const handleCreate = async () => {
-    try {
-      const response = await financeApi.account.create(newAsset);
-      if (response.success) {
-        addNotification({
-          title: '成功',
-          message: '资产科目新增成功',
-          type: 'success',
-        });
-        setShowCreateModal(false);
-        setNewAsset({
-          code: '',
-          name: '',
-          category: 'asset' as const,
-          balance_direction: 'debit' as const,
-          level: 1,
-          status: 'active' as const,
-          description: '',
-        });
-        loadAssets();
-      }
-    } catch (err: unknown) {
-      apiLogger.error('创建资产科目失败:', err);
-      addNotification({
-        title: '错误',
-        message: '创建资产科目失败',
-        type: 'error',
-      });
-    }
+  const handleCreate = () => {
+    createMutation.mutate(newAsset);
   };
 
   const handleEdit = (asset: Account) => {
     setEditingAsset({ ...asset });
   };
 
-  const handleUpdate = async () => {
-    if (!editingAsset) return;
-    try {
-      const response = await financeApi.account.update(editingAsset.id, editingAsset);
-      if (response.success) {
-        addNotification({
-          title: '成功',
-          message: '资产科目更新成功',
-          type: 'success',
-        });
-        setEditingAsset(null);
-        loadAssets();
+  const updateMutation = useMutation({
+    mutationFn: async (params: { id: string; data: any }) => {
+      const response = await financeApi.account.update(params.id, params.data);
+      if (!response.success) {
+        throw new Error('更新资产科目失败');
       }
-    } catch (err: unknown) {
+      return response;
+    },
+    onSuccess: () => {
+      addNotification({ title: '成功', message: '资产科目更新成功', type: 'success' });
+      setEditingAsset(null);
+      invalidateAssets();
+    },
+    onError: (err: unknown) => {
       apiLogger.error('更新资产科目失败:', err);
-      addNotification({
-        title: '错误',
-        message: '更新资产科目失败',
-        type: 'error',
+      addNotification({ title: '错误', message: '更新资产科目失败', type: 'error' });
+    },
+  });
+
+  const disableMutation = useMutation({
+    mutationFn: async (asset: Account) => {
+      const response = await financeApi.account.update(asset.id, {
+        ...asset,
+        status: 'disabled',
       });
-    }
-  };
+      if (!response.success) {
+        throw new Error('停用科目失败');
+      }
+      return response;
+    },
+    onSuccess: (data, asset) => {
+      addNotification({ title: '成功', message: `科目 "${asset.name}" 已停用`, type: 'success' });
+      setDisableDialogOpen(false);
+      setDisablingAsset(null);
+      invalidateAssets();
+    },
+    onError: (err: unknown) => {
+      apiLogger.error('停用科目失败:', err);
+      addNotification({ title: '错误', message: '停用科目失败', type: 'error' });
+    },
+  });
 
-  const handleDeleteClick = (id: string) => {
-    setDeletingId(id);
-    setDeleteDialogOpen(true);
-  };
-
-  const handleDelete = async () => {
-    if (!deletingId) return;
-    const response = await financeApi.account.delete(deletingId);
-    if (response.success) {
-      addNotification({
-        title: '成功',
-        message: '资产科目删除成功',
-        type: 'success',
-      });
-      loadAssets();
-    } else {
-      throw new Error('删除资产科目失败');
-    }
-  };
-
-  const handleDisableClick = (asset: Account) => {
-    setDisablingAsset(asset);
-    setDisableDialogOpen(true);
-  };
-
-  const handleDisable = async () => {
-    if (!disablingAsset) return;
-    const response = await financeApi.account.update(disablingAsset.id, {
-      ...disablingAsset,
-      status: 'disabled',
-    });
-    if (response.success) {
-      addNotification({
-        title: '成功',
-        message: `科目 "${disablingAsset.name}" 已停用`,
-        type: 'success',
-      });
-      loadAssets();
-    } else {
-      throw new Error('停用科目失败');
-    }
-  };
-
-  const handleDepreciation = (asset: Account) => {
-    setSelectedAsset(asset);
-    setShowDepreciationModal(true);
-  };
-
-  const confirmDepreciation = async () => {
-    if (!selectedAsset) return;
-    try {
+  const depreciationMutation = useMutation({
+    mutationFn: async (asset: Account) => {
       const currentPeriod = new Date().toISOString().slice(0, 7);
       const response = await financeApi.voucher.create({
         voucher_date: new Date().toISOString().split('T')[0],
         period: currentPeriod,
-        summary: `计提折旧 - ${selectedAsset.name}`,
+        summary: `计提折旧 - ${asset.name}`,
         entries: [
           {
             account_id: '1602',
@@ -309,32 +294,63 @@ const FinanceAssetPage: React.FC = () => {
             summary: `计提折旧`,
           },
           {
-            account_id: selectedAsset.id,
-            subject_code: selectedAsset.code || '',
-            subject_name: selectedAsset.name || '',
+            account_id: asset.id,
+            subject_code: asset.code || '',
+            subject_name: asset.name || '',
             credit_amount: 1000,
             summary: `累计折旧`,
           },
         ],
       });
-      if (response.success) {
-        addNotification({
-          title: '成功',
-          message: '计提折旧凭证创建完成',
-          type: 'success',
-        });
-        loadAssets();
+      if (!response.success) {
+        throw new Error('计提折旧失败');
       }
-    } catch (err: unknown) {
-      apiLogger.error('计提折旧失败:', err);
-      addNotification({
-        title: '错误',
-        message: '计提折旧失败',
-        type: 'error',
-      });
-    } finally {
+      return response;
+    },
+    onSuccess: () => {
+      addNotification({ title: '成功', message: '计提折旧凭证创建完成', type: 'success' });
+      invalidateAssets();
       setShowDepreciationModal(false);
-    }
+    },
+    onError: (err: unknown) => {
+      apiLogger.error('计提折旧失败:', err);
+      addNotification({ title: '错误', message: '计提折旧失败', type: 'error' });
+    },
+  });
+
+  const handleUpdate = () => {
+    if (!editingAsset) return;
+    updateMutation.mutate({ id: editingAsset.id, data: editingAsset });
+  };
+
+  const handleDeleteClick = (id: string) => {
+    setDeletingId(id);
+    setDeleteDialogOpen(true);
+  };
+
+  const handleDelete = () => {
+    if (!deletingId) return;
+    deleteMutation.mutate(deletingId);
+  };
+
+  const handleDisableClick = (asset: Account) => {
+    setDisablingAsset(asset);
+    setDisableDialogOpen(true);
+  };
+
+  const handleDisable = () => {
+    if (!disablingAsset) return;
+    disableMutation.mutate(disablingAsset);
+  };
+
+  const handleDepreciation = (asset: Account) => {
+    setSelectedAsset(asset);
+    setShowDepreciationModal(true);
+  };
+
+  const confirmDepreciation = () => {
+    if (!selectedAsset) return;
+    depreciationMutation.mutate(selectedAsset);
   };
 
   const handleScrap = (asset: Account) => {
@@ -603,7 +619,7 @@ const FinanceAssetPage: React.FC = () => {
             if (filters.status !== undefined) setFilterStatus(filters.status as string);
           }}
           rowActions={rowActions}
-          onRefresh={loadAssets}
+          onRefresh={() => assetsQuery.refetch()}
         />
       </MuiBox>
 

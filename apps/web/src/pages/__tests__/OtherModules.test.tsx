@@ -129,36 +129,35 @@ vi.mock('@/store', () => ({
 }));
 
 describe('GisDashboardPage', () => {
-    it('should render without crashing', () => {
-      const { container } = render(
-        <BrowserRouter>
-          <GisDashboardPage />
-        </BrowserRouter>
-      );
-      expect(container).toBeDefined();
-    });
+  it('should render without crashing', () => {
+    const { container } = render(
+      <BrowserRouter>
+        <GisDashboardPage />
+      </BrowserRouter>
+    );
+    expect(container).toBeDefined();
   });
+});
 
 describe('GisFencePage', () => {
-    it('should render without crashing', () => {
-      const { container } = render(
-        <BrowserRouter>
-          <GisFencePage />
-        </BrowserRouter>
-      );
-      expect(container).toBeDefined();
-    });
+  it('should render without crashing', () => {
+    const { container } = render(
+      <BrowserRouter>
+        <GisFencePage />
+      </BrowserRouter>
+    );
+    expect(container).toBeDefined();
   });
+});
 
 describe('GisTrackingPage', () => {
-    it('should render without crashing', () => {
-      const { container } = render(
-        <BrowserRouter>
-          <GisTrackingPage />
-        </BrowserRouter>
-      );
-      expect(container).toBeDefined();
-    });
+  it('should render without crashing', () => {
+    const { container } = render(
+      <BrowserRouter>
+        <GisTrackingPage />
+      </BrowserRouter>
+    );
+    expect(container).toBeDefined();
   });
 });
 
@@ -167,7 +166,7 @@ describe('Integration Module', () => {
     vi.clearAllMocks();
   });
 
-describe('IntegrationDashboardPage', () => {
+  describe('IntegrationDashboardPage', () => {
     it('should render without crashing', () => {
       const { container } = render(
         <BrowserRouter>
@@ -178,7 +177,7 @@ describe('IntegrationDashboardPage', () => {
     });
   });
 
-describe('IntegrationConnectionsPage', () => {
+  describe('IntegrationConnectionsPage', () => {
     it('should render without crashing', () => {
       const { container } = render(
         <BrowserRouter>
@@ -189,7 +188,7 @@ describe('IntegrationConnectionsPage', () => {
     });
   });
 
-describe('IntegrationEventsPage', () => {
+  describe('IntegrationEventsPage', () => {
     it('should render without crashing', () => {
       const { container } = render(
         <BrowserRouter>
@@ -200,7 +199,7 @@ describe('IntegrationEventsPage', () => {
     });
   });
 
-describe('IntegrationMappingsPage', () => {
+  describe('IntegrationMappingsPage', () => {
     it('should render without crashing', () => {
       const { container } = render(
         <BrowserRouter>
@@ -211,7 +210,7 @@ describe('IntegrationMappingsPage', () => {
     });
   });
 
-describe('IntegrationSettingsPage', () => {
+  describe('IntegrationSettingsPage', () => {
     it('should render without crashing', () => {
       const { container } = render(
         <BrowserRouter>
@@ -228,7 +227,7 @@ describe('LowCode Module', () => {
     vi.clearAllMocks();
   });
 
-describe('LowCodeHomePage', () => {
+  describe('LowCodeHomePage', () => {
     it('should render without crashing', () => {
       const { container } = render(
         <BrowserRouter>
@@ -239,7 +238,7 @@ describe('LowCodeHomePage', () => {
     });
   });
 
-describe('AppManagementPage', () => {
+  describe('AppManagementPage', () => {
     it('should render without crashing', () => {
       const { container } = render(
         <BrowserRouter>
@@ -250,7 +249,7 @@ describe('AppManagementPage', () => {
     });
   });
 
-describe('DataModelListPage', () => {
+  describe('DataModelListPage', () => {
     it('should render without crashing', () => {
       const { container } = render(
         <BrowserRouter>
@@ -261,7 +260,7 @@ describe('DataModelListPage', () => {
     });
   });
 
-describe('FormListPage', () => {
+  describe('FormListPage', () => {
     it('should render without crashing', () => {
       const { container } = render(
         <BrowserRouter>
@@ -272,7 +271,7 @@ describe('FormListPage', () => {
     });
   });
 
-describe('PageListPage', () => {
+  describe('PageListPage', () => {
     it('should render without crashing', () => {
       const { container } = render(
         <BrowserRouter>
@@ -283,7 +282,7 @@ describe('PageListPage', () => {
     });
   });
 
-describe('DataSourcePage', () => {
+  describe('DataSourcePage', () => {
     it('should render without crashing', () => {
       const { container } = render(
         <BrowserRouter>
@@ -300,7 +299,7 @@ describe('Mobile Module', () => {
     vi.clearAllMocks();
   });
 
-describe('MobileHomePage', () => {
+  describe('MobileHomePage', () => {
     it('should render without crashing', () => {
       const { container } = render(
         <BrowserRouter>
@@ -311,7 +310,7 @@ describe('MobileHomePage', () => {
     });
   });
 
-describe('MobileApprovalPage', () => {
+  describe('MobileApprovalPage', () => {
     it('should render without crashing', () => {
       const { container } = render(
         <BrowserRouter>
@@ -322,7 +321,7 @@ describe('MobileApprovalPage', () => {
     });
   });
 
-describe('MobileAttendancePage', () => {
+  describe('MobileAttendancePage', () => {
     it('should render without crashing', () => {
       const { container } = render(
         <BrowserRouter>
@@ -333,7 +332,7 @@ describe('MobileAttendancePage', () => {
     });
   });
 
-describe('MobileInventoryPage', () => {
+  describe('MobileInventoryPage', () => {
     it('should render without crashing', () => {
       const { container } = render(
         <BrowserRouter>
@@ -344,7 +343,7 @@ describe('MobileInventoryPage', () => {
     });
   });
 
-describe('MobileTaskListPage', () => {
+  describe('MobileTaskListPage', () => {
     it('should render without crashing', () => {
       const { container } = render(
         <BrowserRouter>
@@ -355,7 +354,7 @@ describe('MobileTaskListPage', () => {
     });
   });
 
-describe('MobileWorkbenchPage', () => {
+  describe('MobileWorkbenchPage', () => {
     it('should render without crashing', () => {
       const { container } = render(
         <BrowserRouter>
@@ -372,7 +371,7 @@ describe('Monitor Module', () => {
     vi.clearAllMocks();
   });
 
-describe('MonitorDashboardPage', () => {
+  describe('MonitorDashboardPage', () => {
     it('should render without crashing', () => {
       const { container } = render(
         <BrowserRouter>
@@ -383,7 +382,7 @@ describe('MonitorDashboardPage', () => {
     });
   });
 
-describe('MonitorAlertsPage', () => {
+  describe('MonitorAlertsPage', () => {
     it('should render without crashing', () => {
       const { container } = render(
         <BrowserRouter>
@@ -394,7 +393,7 @@ describe('MonitorAlertsPage', () => {
     });
   });
 
-describe('MonitorMetricsPage', () => {
+  describe('MonitorMetricsPage', () => {
     it('should render without crashing', () => {
       const { container } = render(
         <BrowserRouter>
@@ -405,7 +404,7 @@ describe('MonitorMetricsPage', () => {
     });
   });
 
-describe('MonitorLogsPage', () => {
+  describe('MonitorLogsPage', () => {
     it('should render without crashing', () => {
       const { container } = render(
         <BrowserRouter>
@@ -416,7 +415,7 @@ describe('MonitorLogsPage', () => {
     });
   });
 
-describe('MonitorSettingsPage', () => {
+  describe('MonitorSettingsPage', () => {
     it('should render without crashing', () => {
       const { container } = render(
         <BrowserRouter>
@@ -433,7 +432,7 @@ describe('Notification Module', () => {
     vi.clearAllMocks();
   });
 
-describe('NotificationCenter', () => {
+  describe('NotificationCenter', () => {
     it('should render without crashing', () => {
       const { container } = render(
         <BrowserRouter>
@@ -444,7 +443,7 @@ describe('NotificationCenter', () => {
     });
   });
 
-describe('NotificationDashboardPage', () => {
+  describe('NotificationDashboardPage', () => {
     it('should render without crashing', () => {
       const { container } = render(
         <BrowserRouter>
@@ -455,7 +454,7 @@ describe('NotificationDashboardPage', () => {
     });
   });
 
-describe('NotificationListPage', () => {
+  describe('NotificationListPage', () => {
     it('should render without crashing', () => {
       const { container } = render(
         <BrowserRouter>
@@ -466,7 +465,7 @@ describe('NotificationListPage', () => {
     });
   });
 
-describe('NotificationSettingsPage', () => {
+  describe('NotificationSettingsPage', () => {
     it('should render without crashing', () => {
       const { container } = render(
         <BrowserRouter>
@@ -477,7 +476,7 @@ describe('NotificationSettingsPage', () => {
     });
   });
 
-describe('NotificationTemplatesPage', () => {
+  describe('NotificationTemplatesPage', () => {
     it('should render without crashing', () => {
       const { container } = render(
         <BrowserRouter>
@@ -494,7 +493,7 @@ describe('Doc Module', () => {
     vi.clearAllMocks();
   });
 
-describe('DocDashboardPage', () => {
+  describe('DocDashboardPage', () => {
     it('should render without crashing', () => {
       const { container } = render(
         <BrowserRouter>
@@ -505,7 +504,7 @@ describe('DocDashboardPage', () => {
     });
   });
 
-describe('DocumentCenterPage', () => {
+  describe('DocumentCenterPage', () => {
     it('should render without crashing', () => {
       const { container } = render(
         <BrowserRouter>
@@ -516,7 +515,7 @@ describe('DocumentCenterPage', () => {
     });
   });
 
-describe('KnowledgeBasePage', () => {
+  describe('KnowledgeBasePage', () => {
     it('should render without crashing', () => {
       const { container } = render(
         <BrowserRouter>

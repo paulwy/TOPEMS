@@ -20,7 +20,7 @@ fn get_tenant_id(claims: &Claims) -> Uuid {
 pub struct DocumentApi;
 
 impl DocumentApi {
-    /// POST /api/v1/documents/upload - 上传文档并处理
+    /// POST /api/documents/upload - 上传文档并处理
     pub async fn upload(
         State(state): State<AppState>,
         Extension(claims): Extension<Claims>,
@@ -114,7 +114,7 @@ impl DocumentApi {
         }
     }
 
-    /// POST /api/v1/documents/process - 处理文档（提取文本、分块）
+    /// POST /api/documents/process - 处理文档（提取文本、分块）
     pub async fn process(
         State(state): State<AppState>,
         Extension(claims): Extension<Claims>,
@@ -148,7 +148,7 @@ impl DocumentApi {
         }
     }
 
-    /// GET /api/v1/documents/:id - 获取文档信息
+    /// GET /api/documents/:id - 获取文档信息
     pub async fn get(
         State(state): State<AppState>,
         Path(id): Path<Uuid>,
@@ -167,7 +167,7 @@ impl DocumentApi {
         }
     }
 
-    /// DELETE /api/v1/documents/:id - 删除文档
+    /// DELETE /api/documents/:id - 删除文档
     pub async fn delete(
         State(state): State<AppState>,
         Path(id): Path<Uuid>,
@@ -181,7 +181,7 @@ impl DocumentApi {
         }
     }
 
-    /// GET /api/v1/documents - 获取文档列表
+    /// GET /api/documents - 获取文档列表
     pub async fn list(
         State(state): State<AppState>,
         Extension(claims): Extension<Claims>,
@@ -193,7 +193,7 @@ impl DocumentApi {
         }
     }
 
-    /// POST /api/v1/documents/:id/extract - 提取文档关键信息（增强版）
+    /// POST /api/documents/:id/extract - 提取文档关键信息（增强版）
     pub async fn extract(
         State(state): State<AppState>,
         Path(id): Path<Uuid>,
@@ -366,7 +366,7 @@ impl DocumentApi {
         }
     }
 
-    /// POST /api/v1/documents/vectorize-from-file - 从 File 服务向量化文档
+    /// POST /api/documents/vectorize-from-file - 从 File 服务向量化文档
     pub async fn vectorize_from_file(
         State(state): State<AppState>,
         Extension(claims): Extension<topems_shared::auth::Claims>,
@@ -394,7 +394,7 @@ impl DocumentApi {
         }
     }
 
-    /// POST /api/v1/documents/:id/summarize - 生成文档摘要
+    /// POST /api/documents/:id/summarize - 生成文档摘要
     pub async fn summarize(
         State(state): State<AppState>,
         Path(id): Path<Uuid>,
@@ -418,7 +418,7 @@ impl DocumentApi {
         }
     }
 
-    /// POST /api/v1/documents/:id/key-points - 提取文档关键点
+    /// POST /api/documents/:id/key-points - 提取文档关键点
     pub async fn extract_key_points(
         State(state): State<AppState>,
         Path(id): Path<Uuid>,
@@ -442,7 +442,7 @@ impl DocumentApi {
         }
     }
 
-    /// POST /api/v1/documents/qa - 文档问答
+    /// POST /api/documents/qa - 文档问答
     pub async fn document_qa(
         State(state): State<AppState>,
         Extension(claims): Extension<topems_shared::auth::Claims>,

@@ -20,13 +20,13 @@ import { Plus, Edit, Trash2 } from 'lucide-react';
 import { apiLogger } from '@/utils/logger';
 import { ListPageTemplate, type ColumnDef } from '@/components/templates';
 import { PageContainer } from '@/components/common';
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import { QUERY_KEYS } from '@/lib/reactQuery';
 
 const ScmEvaluationPage: React.FC = () => {
-  const [evaluations, setEvaluations] = useState<SupplierEvaluation[]>([]);
-  const [loading, setLoading] = useState(true);
+  const queryClient = useQueryClient();
   const [currentPage, setCurrentPage] = useState(1);
   const [pageSize, setPageSize] = useState(10);
-  const [total, setTotal] = useState(0);
   const [showDialog, setShowDialog] = useState(false);
   const [isEditing, setIsEditing] = useState(false);
   const [selectedEvaluation, setSelectedEvaluation] = useState<SupplierEvaluation | null>(null);
@@ -44,70 +44,119 @@ const ScmEvaluationPage: React.FC = () => {
 
   const { addNotification } = useNotificationStore();
 
-  useEffect(() => {
-    loadEvaluations();
-  }, [currentPage, pageSize]);
-
-  const loadEvaluations = async () => {
-    try {
-      setLoading(true);
+  const evaluationsQuery = useQuery<{ items: SupplierEvaluation[]; total: number }>({
+    queryKey: [...QUERY_KEYS.SCM.EVALUATIONS, currentPage, pageSize],
+    queryFn: async () => {
       const response = await scmApi.evaluations.list({
         page: currentPage,
         pageSize,
       });
       if (response.success && response.data) {
-        setEvaluations(response.data.items || []);
-        setTotal(response.data.total || 0);
+        return { items: response.data.items || [], total: response.data.total || 0 };
       }
-    } catch (error: unknown) {
-      apiLogger.error('加载评估列表失败:', error);
+      return { items: [], total: 0 };
+    },
+    staleTime: 5 * 60 * 1000,
+  });
+
+  const evaluations = evaluationsQuery.data?.items ?? [];
+  const total = evaluationsQuery.data?.total ?? 0;
+  const loading = evaluationsQuery.isLoading;
+
+  useEffect(() => {
+    if (evaluationsQuery.isError) {
+      apiLogger.error('加载评估列表失败:', evaluationsQuery.error);
       addNotification({
         type: 'error',
         title: '加载失败',
         message: '无法加载供应商评估',
       });
-    } finally {
-      setLoading(false);
     }
-  };
+  }, [evaluationsQuery.isError, evaluationsQuery.error, addNotification]);
 
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    try {
-      if (isEditing && selectedEvaluation) {
-        const updateData: UpdateSupplierEvaluationRequest = {
-          quality_score: formData.quality_score,
-          delivery_score: formData.delivery_score,
-          service_score: formData.service_score,
-          price_score: formData.price_score,
-          overall_score: formData.overall_score,
-          comments: formData.comments,
-          evaluator: formData.evaluator,
-        };
-        await scmApi.evaluations.update(selectedEvaluation.id, updateData);
-        addNotification({
-          type: 'success',
-          title: '更新成功',
-          message: '评估记录已更新',
-        });
-      } else {
-        await scmApi.evaluations.create(formData);
-        addNotification({
-          type: 'success',
-          title: '创建成功',
-          message: '新评估记录已创建',
-        });
-      }
+  const invalidateEvaluations = () =>
+    queryClient.invalidateQueries({ queryKey: QUERY_KEYS.SCM.EVALUATIONS });
+
+  const createMutation = useMutation({
+    mutationFn: (data: CreateSupplierEvaluationRequest) => scmApi.evaluations.create(data),
+    onSuccess: () => {
+      invalidateEvaluations();
+      addNotification({
+        type: 'success',
+        title: '创建成功',
+        message: '新评估记录已创建',
+      });
       setShowDialog(false);
       resetForm();
-      loadEvaluations();
-    } catch (error: unknown) {
-      apiLogger.error('操作失败:', error);
+    },
+    onError: (err: unknown) => {
+      apiLogger.error('操作失败:', err);
       addNotification({
         type: 'error',
         title: '操作失败',
-        message: isEditing ? '更新评估记录失败' : '创建评估记录失败',
+        message: '创建评估记录失败',
       });
+    },
+  });
+
+  const updateMutation = useMutation({
+    mutationFn: (params: { id: string; data: UpdateSupplierEvaluationRequest }) =>
+      scmApi.evaluations.update(params.id, params.data),
+    onSuccess: () => {
+      invalidateEvaluations();
+      addNotification({
+        type: 'success',
+        title: '更新成功',
+        message: '评估记录已更新',
+      });
+      setShowDialog(false);
+      resetForm();
+    },
+    onError: (err: unknown) => {
+      apiLogger.error('操作失败:', err);
+      addNotification({
+        type: 'error',
+        title: '操作失败',
+        message: '更新评估记录失败',
+      });
+    },
+  });
+
+  const deleteMutation = useMutation({
+    mutationFn: (id: string) => scmApi.evaluations.update(id, { comments: '[已删除]' } as any),
+    onSuccess: () => {
+      invalidateEvaluations();
+      addNotification({
+        type: 'success',
+        title: '删除成功',
+        message: '评估记录已删除',
+      });
+    },
+    onError: (err: unknown) => {
+      apiLogger.error('删除失败:', err);
+      addNotification({
+        type: 'error',
+        title: '删除失败',
+        message: '删除评估记录失败',
+      });
+    },
+  });
+
+  const handleSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (isEditing && selectedEvaluation) {
+      const updateData: UpdateSupplierEvaluationRequest = {
+        quality_score: formData.quality_score,
+        delivery_score: formData.delivery_score,
+        service_score: formData.service_score,
+        price_score: formData.price_score,
+        overall_score: formData.overall_score,
+        comments: formData.comments,
+        evaluator: formData.evaluator,
+      };
+      updateMutation.mutate({ id: selectedEvaluation.id, data: updateData });
+    } else {
+      createMutation.mutate(formData);
     }
   };
 
@@ -128,26 +177,11 @@ const ScmEvaluationPage: React.FC = () => {
     setShowDialog(true);
   };
 
-  const handleDelete = async (evaluation: SupplierEvaluation) => {
+  const handleDelete = (evaluation: SupplierEvaluation) => {
     if (!window.confirm(`确定要删除这条评估记录吗？`)) {
       return;
     }
-    try {
-      await scmApi.evaluations.update(evaluation.id, { comments: '[已删除]' } as any);
-      addNotification({
-        type: 'success',
-        title: '删除成功',
-        message: '评估记录已删除',
-      });
-      loadEvaluations();
-    } catch (error: unknown) {
-      apiLogger.error('删除失败:', error);
-      addNotification({
-        type: 'error',
-        title: '删除失败',
-        message: '删除评估记录失败',
-      });
-    }
+    deleteMutation.mutate(evaluation.id);
   };
 
   const resetForm = () => {
@@ -292,7 +326,7 @@ const ScmEvaluationPage: React.FC = () => {
           },
         ]}
         rowActions={rowActions}
-        onRefresh={loadEvaluations}
+        onRefresh={() => evaluationsQuery.refetch()}
         emptyMessage='暂无评估数据'
       />
 

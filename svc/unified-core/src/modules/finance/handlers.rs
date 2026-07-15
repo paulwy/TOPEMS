@@ -2,7 +2,7 @@ use axum::{
     extract::{Path, Query, State},
     Json,
 };
-use chrono::{DateTime, Datelike, Local, NaiveDate, Utc};
+use chrono::{DateTime, Datelike, NaiveDate, Utc};
 use sqlx::Row;
 use uuid::Uuid;
 
@@ -10,8 +10,8 @@ use crate::AppState;
 use topems_shared::{api_error, api_success, ApiResponse};
 
 use super::models::{
-    CreatePaymentItemRequest, CreatePaymentRequest, Payment, PaymentDetailResponse, PaymentItem,
-    PaymentListResponse, PaymentQuery, UpdatePaymentRequest,
+    CreatePaymentRequest, Payment, PaymentDetailResponse, PaymentItem, PaymentListResponse,
+    PaymentQuery, UpdatePaymentRequest,
 };
 
 fn default_tenant_id() -> Uuid {
@@ -1332,7 +1332,7 @@ pub async fn batch_delete_vouchers(
 }
 
 pub async fn get_next_voucher_no(
-    State(state): State<AppState>,
+    State(_state): State<AppState>,
 ) -> Json<ApiResponse<serde_json::Value>> {
     Json(api_success(
         serde_json::json!({ "voucher_no": generate_voucher_no() }),
@@ -1626,7 +1626,7 @@ pub async fn set_default_voucher_template(
 }
 
 pub async fn get_current_period(
-    State(state): State<AppState>,
+    State(_state): State<AppState>,
 ) -> Json<ApiResponse<serde_json::Value>> {
     let now = chrono::Local::now();
     let period = format!("{}{:02}", now.year(), now.month());

@@ -115,7 +115,7 @@ const PmContractListPage: React.FC = () => {
   });
 
   const allContracts = contractListQuery.data || [];
-  
+
   const filteredContracts = useMemo(() => {
     let filtered = allContracts;
     if (selectedType) {
@@ -144,8 +144,7 @@ const PmContractListPage: React.FC = () => {
       if (!window.confirm('确定要删除这个合同吗？')) return;
       try {
         await deleteContractMutation.mutateAsync(id);
-      } catch {
-      }
+      } catch {}
     },
     [deleteContractMutation]
   );

@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Box, Typography, Card, CardContent, CardHeader, Grid, useTheme } from '@mui/material';
 import {
@@ -26,6 +26,8 @@ import { crmApi } from '@/api/crm';
 import { logger } from '@/utils/logger';
 import type { FunnelStage, OpportunityStats } from '@/api/crm';
 import { CRM_PATHS } from '@/modules/crm/config';
+import { useQuery } from '@tanstack/react-query';
+import { QUERY_KEYS } from '@/lib/reactQuery';
 
 const iconMap: Record<string, React.ComponentType<{ size?: number; className?: string }>> = {
   TrendingUp,
@@ -38,43 +40,56 @@ const iconMap: Record<string, React.ComponentType<{ size?: number; className?: s
 export const DashboardPage: React.FC = () => {
   const theme = useTheme();
   const navigate = useNavigate();
-  const [loading, setLoading] = useState(true);
-  const [stats, setStats] = useState<OpportunityStats | null>(null);
-  const [funnelData, setFunnelData] = useState<FunnelStage[]>([]);
 
-  useEffect(() => {
-    loadData();
-  }, []);
-
-  const loadData = async () => {
-    try {
-      setLoading(true);
-      const [statsResponse, funnelResponse] = await Promise.all([
-        crmApi.opportunities.getStats(),
-        crmApi.opportunities.getFunnel(),
-      ]);
-
-      if (statsResponse.success && statsResponse.data) {
-        setStats(statsResponse.data);
+  const statsQuery = useQuery({
+    queryKey: QUERY_KEYS.CRM.OPPORTUNITY_STATS,
+    queryFn: async (): Promise<OpportunityStats | null> => {
+      try {
+        const response = await crmApi.opportunities.getStats();
+        if (response.success && response.data) {
+          return response.data;
+        }
+        return null;
+      } catch (error: unknown) {
+        const status = (error as { response?: { status?: number } }).response?.status;
+        if (status === 401) {
+          logger.warn('CRM 服务需要认证，请先登录');
+        } else if (status === 503) {
+          logger.warn('CRM 服务暂不可用，显示示例数据');
+        } else {
+          logger.error('加载仪表盘数据失败:', error);
+        }
+        return null;
       }
+    },
+  });
 
-      if (funnelResponse.success && funnelResponse.data) {
-        setFunnelData(funnelResponse.data);
+  const funnelQuery = useQuery({
+    queryKey: QUERY_KEYS.CRM.OPPORTUNITY_FUNNEL,
+    queryFn: async (): Promise<FunnelStage[]> => {
+      try {
+        const response = await crmApi.opportunities.getFunnel();
+        if (response.success && response.data) {
+          return response.data;
+        }
+        return [];
+      } catch (error: unknown) {
+        const status = (error as { response?: { status?: number } }).response?.status;
+        if (status === 401) {
+          logger.warn('CRM 服务需要认证，请先登录');
+        } else if (status === 503) {
+          logger.warn('CRM 服务暂不可用，显示示例数据');
+        } else {
+          logger.error('加载仪表盘数据失败:', error);
+        }
+        return [];
       }
-    } catch (error: unknown) {
-      // 后端服务未运行（503）或未认证（401）时，优雅降级为 warn
-      const status = (error as { response?: { status?: number } }).response?.status;
-      if (status === 401) {
-        logger.warn('CRM 服务需要认证，请先登录');
-      } else if (status === 503) {
-        logger.warn('CRM 服务暂不可用，显示示例数据');
-      } else {
-        logger.error('加载仪表盘数据失败:', error);
-      }
-    } finally {
-      setTimeout(() => setLoading(false), 500);
-    }
-  };
+    },
+  });
+
+  const stats = statsQuery.data ?? null;
+  const funnelData = funnelQuery.data ?? [];
+  const loading = statsQuery.isLoading || funnelQuery.isLoading;
 
   const getGreeting = (): string => {
     const hour = new Date().getHours();

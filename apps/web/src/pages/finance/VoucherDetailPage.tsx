@@ -19,8 +19,9 @@ import {
   Button,
 } from '@mui/material';
 import { designTokens } from '@/theme/tokens';
-import React, { useState, useEffect } from 'react';
+import React, { useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import {
   FileText,
   Edit,
@@ -57,131 +58,100 @@ const VoucherDetailPage: React.FC = () => {
   const navigate = useNavigate();
   const addNotification = useNotificationStore((state) => state.addNotification);
 
-  const [voucher, setVoucher] = useState<Voucher | null>(null);
-  const [voucherItems, setVoucherItems] = useState<VoucherEntry[]>([]);
-  const [loading, setLoading] = useState(true);
+  const queryClient = useQueryClient();
+
+  const voucherQuery = useQuery<Voucher | null>({
+    queryKey: ['finance-voucher', id],
+    queryFn: async () => {
+      if (!id) return null;
+      const result = await voucherApi.get(id);
+      return result.success && result.data ? result.data : null;
+    },
+    enabled: !!id,
+    staleTime: 5 * 60 * 1000,
+  });
+
+  const voucher = voucherQuery.data ?? null;
+
+  const voucherItemsQuery = useQuery<VoucherEntry[]>({
+    queryKey: ['finance-voucher-items', id],
+    queryFn: async () => {
+      if (!id) return [];
+      const result = await voucherApi.getItems(id);
+      return result.success && result.data ? result.data : [];
+    },
+    enabled: !!id && !(voucher?.entries && voucher.entries.length > 0),
+    staleTime: 5 * 60 * 1000,
+  });
+
+  const voucherItems =
+    voucher?.entries && voucher.entries.length > 0
+      ? voucher.entries
+      : (voucherItemsQuery.data ?? []);
+
+  const loading = voucherQuery.isLoading;
 
   useEffect(() => {
-    if (id) {
-      loadVoucherDetail(id);
+    if (voucherQuery.isError) {
+      apiLogger.error('加载凭证详情失败:', voucherQuery.error);
+      addNotification({ title: '错误', message: '加载凭证详情失败', type: 'error' });
     }
-  }, [id]);
-
-  const loadVoucherDetail = async (voucherId: string) => {
-    setLoading(true);
-    try {
-      const result = await voucherApi.get(voucherId);
-      if (result.success && result.data) {
-        setVoucher(result.data);
-        if (result.data.entries && result.data.entries.length > 0) {
-          setVoucherItems(result.data.entries);
-        }
-      }
-
-      if (!voucherItems.length) {
-        const itemsResult = await voucherApi.getItems(voucherId);
-        if (itemsResult.success && itemsResult.data) {
-          setVoucherItems(itemsResult.data);
-        }
-      }
-    } catch (err: unknown) {
-      apiLogger.error('加载凭证详情失败:', err);
-      addNotification({
-        title: '错误',
-        message: '加载凭证详情失败',
-        type: 'error',
-      });
-    } finally {
-      setLoading(false);
-    }
-  };
+  }, [voucherQuery.isError, voucherQuery.error, addNotification]);
 
   const handleEdit = () => {
     navigate(FINANCE_PATHS.voucherDetail.replace(':id', id!));
   };
 
-  const handleDelete = async () => {
+  const deleteMutation = useMutation({
+    mutationFn: (voucherId: string) => voucherApi.delete(voucherId),
+    onSuccess: () => {
+      addNotification({ title: '成功', message: '删除成功', type: 'success' });
+      queryClient.invalidateQueries({ queryKey: ['finance-vouchers'] });
+      navigate(FINANCE_PATHS.vouchers);
+    },
+    onError: (err: unknown) => {
+      apiLogger.error('删除凭证失败:', err);
+      addNotification({ title: '错误', message: '删除失败', type: 'error' });
+    },
+  });
+
+  const handleDelete = () => {
     if (!confirm('确定要删除该凭证吗？')) return;
-
-    try {
-      const result = await voucherApi.delete(id!);
-      if (result.success) {
-        addNotification({
-          title: '成功',
-          message: '删除成功',
-          type: 'success',
-        });
-        navigate(FINANCE_PATHS.vouchers);
-      } else {
-        addNotification({
-          title: '失败',
-          message: result.message || '删除失败',
-          type: 'error',
-        });
-      }
-    } catch (err: unknown) {
-      addNotification({
-        title: '错误',
-        message: '删除失败',
-        type: 'error',
-      });
-    }
+    if (id) deleteMutation.mutate(id);
   };
 
-  const handleAudit = async () => {
+  const auditMutation = useMutation({
+    mutationFn: (voucherId: string) => voucherApi.approve(voucherId),
+    onSuccess: () => {
+      addNotification({ title: '成功', message: '审核成功', type: 'success' });
+      queryClient.invalidateQueries({ queryKey: ['finance-voucher', id] });
+    },
+    onError: (err: unknown) => {
+      apiLogger.error('审核凭证失败:', err);
+      addNotification({ title: '失败', message: '审核失败', type: 'error' });
+    },
+  });
+
+  const handleAudit = () => {
     if (!confirm('确定要审核该凭证吗？')) return;
-
-    try {
-      const result = await voucherApi.approve(id!);
-      if (result.success) {
-        addNotification({
-          title: '成功',
-          message: '审核成功',
-          type: 'success',
-        });
-        loadVoucherDetail(id!);
-      } else {
-        addNotification({
-          title: '失败',
-          message: '审核失败',
-          type: 'error',
-        });
-      }
-    } catch (err: unknown) {
-      addNotification({
-        title: '错误',
-        message: '审核失败',
-        type: 'error',
-      });
-    }
+    if (id) auditMutation.mutate(id);
   };
 
-  const handlePost = async () => {
-    if (!confirm('确定要记账该凭证吗？')) return;
+  const postMutation = useMutation({
+    mutationFn: (voucherId: string) => voucherApi.post(voucherId),
+    onSuccess: () => {
+      addNotification({ title: '成功', message: '记账成功', type: 'success' });
+      queryClient.invalidateQueries({ queryKey: ['finance-voucher', id] });
+    },
+    onError: (err: unknown) => {
+      apiLogger.error('记账失败:', err);
+      addNotification({ title: '失败', message: '记账失败', type: 'error' });
+    },
+  });
 
-    try {
-      const result = await voucherApi.post(id!);
-      if (result.success) {
-        addNotification({
-          title: '成功',
-          message: '记账成功',
-          type: 'success',
-        });
-        loadVoucherDetail(id!);
-      } else {
-        addNotification({
-          title: '失败',
-          message: '记账失败',
-          type: 'error',
-        });
-      }
-    } catch (err: unknown) {
-      addNotification({
-        title: '错误',
-        message: '记账失败',
-        type: 'error',
-      });
-    }
+  const handlePost = () => {
+    if (!confirm('确定要记账该凭证吗？')) return;
+    if (id) postMutation.mutate(id);
   };
 
   const formatCurrency = (amount: number) => {

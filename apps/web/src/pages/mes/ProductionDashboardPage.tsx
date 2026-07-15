@@ -1,4 +1,6 @@
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { useQuery } from '@tanstack/react-query';
+import { QUERY_KEYS } from '@/lib/reactQuery';
 import { useAuth } from '@/hooks/useAuth';
 import { MES_PATHS } from '@/modules/mes/config';
 import {
@@ -1018,16 +1020,7 @@ const ProductionGantt: React.FC<{
 // ============== 主页 ==============
 export const ProductionDashboardPage: React.FC = () => {
   const { token } = useAuth();
-  const [loading, setLoading] = useState(true);
-  const [refreshStatus, setRefreshStatus] = useState<RefreshStatus>('idle');
   const [autoRefresh, setAutoRefresh] = useState(true);
-  const [lastUpdated, setLastUpdated] = useState<Date | null>(null);
-
-  const [orders, setOrders] = useState<ProductionOrder[]>([]);
-  const [records, setRecords] = useState<ProductionRecord[]>([]);
-  const [workStations, setWorkStations] = useState<WorkStation[]>([]);
-  const [equipment, setEquipment] = useState<Equipment[]>([]);
-  const [schedules, setSchedules] = useState<ProductionSchedule[]>([]);
   const [alarms, setAlarms] = useState<RealtimeAlarm[]>([]);
 
   const [wsConnected, setWsConnected] = useState(false);
@@ -1037,7 +1030,6 @@ export const ProductionDashboardPage: React.FC = () => {
     'disconnected' | 'connecting' | 'connected' | 'reconnecting'
   >('disconnected');
 
-  const refreshTimerRef = useRef<ReturnType<typeof setInterval> | null>(null);
   const wsRef = useRef<WebSocket | null>(null);
   const wsReconnectRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const wsConnectTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
@@ -1050,9 +1042,16 @@ export const ProductionDashboardPage: React.FC = () => {
   const CONNECTION_TIMEOUT = 15000;
 
   // ============== 数据加载 ==============
-  const loadAll = useCallback(async () => {
-    setRefreshStatus('loading');
-    try {
+  const {
+    data: dashboardData,
+    isLoading: loading,
+    isFetching: isRefreshing,
+    error: queryError,
+    dataUpdatedAt,
+    refetch,
+  } = useQuery({
+    queryKey: QUERY_KEYS.MES.PRODUCTION_DASHBOARD,
+    queryFn: async () => {
       const [orderRes, recordRes, workStationRes, equipmentStatsRes, scheduleRes] =
         await Promise.allSettled([
           productionOrderApi.list({ page: 1, pagesize: 200 }),
@@ -1066,13 +1065,11 @@ export const ProductionDashboardPage: React.FC = () => {
         orderRes.status === 'fulfilled' && orderRes.value.success && orderRes.value.data
           ? (orderRes.value.data as { orders?: ProductionOrder[] }).orders || []
           : [];
-      setOrders(orderData);
 
       const recordData =
         recordRes.status === 'fulfilled' && recordRes.value.success && recordRes.value.data
           ? (recordRes.value.data as { records?: ProductionRecord[] }).records || []
           : [];
-      setRecords(recordData);
 
       const workStationData =
         workStationRes.status === 'fulfilled' &&
@@ -1080,7 +1077,6 @@ export const ProductionDashboardPage: React.FC = () => {
         workStationRes.value.data
           ? (workStationRes.value.data as { workstations?: WorkStation[] }).workstations || []
           : [];
-      setWorkStations(workStationData);
 
       // 加载设备列表以获取状态分布
       const equipmentListData: Equipment[] = [];
@@ -1093,76 +1089,94 @@ export const ProductionDashboardPage: React.FC = () => {
       } catch (err) {
         apiLogger.warn('加载设备列表失败，使用统计数据', err);
       }
-      setEquipment(equipmentListData);
 
       const scheduleData =
         scheduleRes.status === 'fulfilled' && scheduleRes.value.success && scheduleRes.value.data
           ? (scheduleRes.value.data as { schedules?: ProductionSchedule[] }).schedules || []
           : [];
-      setSchedules(scheduleData);
 
-      // 依据设备统计生成报警
       const stats =
         equipmentStatsRes.status === 'fulfilled' &&
         equipmentStatsRes.value.success &&
         equipmentStatsRes.value.data
           ? equipmentStatsRes.value.data
           : null;
-      const generatedAlarms: RealtimeAlarm[] = [];
-      if (stats) {
-        if (safeNumber(stats.maintenance) > 0) {
-          generatedAlarms.push({
-            id: 'eq-maint',
-            level: 'warning',
-            source: '设备管理',
-            message: `${stats.maintenance} 台设备处于维护状态，请关注维护进度。`,
-            timestamp: new Date().toISOString(),
-          });
-        }
-        if (safeNumber(stats.pending_repairs) > 0) {
-          generatedAlarms.push({
-            id: 'eq-repair',
-            level: 'critical',
-            source: '设备管理',
-            message: `${stats.pending_repairs} 台设备待维修，存在生产风险。`,
-            timestamp: new Date().toISOString(),
-          });
-        }
-      }
-      // 异常工单
-      const abnormalOrders = orderData.filter(
-        (o) => o.status === 'abnormal' || o.status === 'error' || o.status === 'delayed'
-      );
-      if (abnormalOrders.length > 0) {
-        generatedAlarms.push({
-          id: 'order-abnormal',
-          level: 'critical',
-          source: '生产工单',
-          message: `检测到 ${abnormalOrders.length} 个异常工单，需要立即处理。`,
-          timestamp: new Date().toISOString(),
-        });
-      }
-      // 模拟心跳报警
-      if (generatedAlarms.length === 0) {
-        generatedAlarms.push({
-          id: 'heartbeat',
-          level: 'info',
-          source: '系统',
-          message: 'MES 服务运行正常，采集频率 10s。',
-          timestamp: new Date().toISOString(),
-        });
-      }
-      setAlarms(generatedAlarms);
 
-      setLastUpdated(new Date());
-      setRefreshStatus('success');
-    } catch (err) {
-      apiLogger.error('加载生产看板数据失败:', err);
-      setRefreshStatus('error');
-    } finally {
-      setLoading(false);
+      return {
+        orders: orderData,
+        records: recordData,
+        workStations: workStationData,
+        equipment: equipmentListData,
+        schedules: scheduleData,
+        stats,
+      };
+    },
+    refetchInterval: autoRefresh ? REFRESH_INTERVAL_MS : false,
+  });
+
+  const orders = dashboardData?.orders || [];
+  const records = dashboardData?.records || [];
+  const workStations = dashboardData?.workStations || [];
+  const equipment = dashboardData?.equipment || [];
+  const schedules = dashboardData?.schedules || [];
+  const stats = dashboardData?.stats || null;
+
+  const refreshStatus: RefreshStatus = queryError
+    ? 'error'
+    : isRefreshing
+      ? 'loading'
+      : dashboardData
+        ? 'success'
+        : 'idle';
+  const lastUpdated = dataUpdatedAt ? new Date(dataUpdatedAt) : null;
+
+  // 根据查询数据生成报警
+  useEffect(() => {
+    if (!dashboardData) return;
+    const generatedAlarms: RealtimeAlarm[] = [];
+    if (stats) {
+      if (safeNumber(stats.maintenance) > 0) {
+        generatedAlarms.push({
+          id: 'eq-maint',
+          level: 'warning',
+          source: '设备管理',
+          message: `${stats.maintenance} 台设备处于维护状态，请关注维护进度。`,
+          timestamp: new Date().toISOString(),
+        });
+      }
+      if (safeNumber(stats.pending_repairs) > 0) {
+        generatedAlarms.push({
+          id: 'eq-repair',
+          level: 'critical',
+          source: '设备管理',
+          message: `${stats.pending_repairs} 台设备待维修，存在生产风险。`,
+          timestamp: new Date().toISOString(),
+        });
+      }
     }
-  }, []);
+    const abnormalOrders = orders.filter(
+      (o) => o.status === 'abnormal' || o.status === 'error' || o.status === 'delayed'
+    );
+    if (abnormalOrders.length > 0) {
+      generatedAlarms.push({
+        id: 'order-abnormal',
+        level: 'critical',
+        source: '生产工单',
+        message: `检测到 ${abnormalOrders.length} 个异常工单，需要立即处理。`,
+        timestamp: new Date().toISOString(),
+      });
+    }
+    if (generatedAlarms.length === 0) {
+      generatedAlarms.push({
+        id: 'heartbeat',
+        level: 'info',
+        source: '系统',
+        message: 'MES 服务运行正常，采集频率 10s。',
+        timestamp: new Date().toISOString(),
+      });
+    }
+    setAlarms(generatedAlarms);
+  }, [dashboardData, stats, orders]);
 
   // ============== 派生数据 ==============
   const todayKey = useMemo(() => new Date().toISOString().slice(0, 10), []);
@@ -1435,29 +1449,6 @@ export const ProductionDashboardPage: React.FC = () => {
 
   // ============== 副作用 ==============
   useEffect(() => {
-    void loadAll();
-  }, [loadAll]);
-
-  useEffect(() => {
-    if (!autoRefresh) {
-      if (refreshTimerRef.current) {
-        clearInterval(refreshTimerRef.current);
-        refreshTimerRef.current = null;
-      }
-      return;
-    }
-    refreshTimerRef.current = setInterval(() => {
-      void loadAll();
-    }, REFRESH_INTERVAL_MS);
-    return () => {
-      if (refreshTimerRef.current) {
-        clearInterval(refreshTimerRef.current);
-        refreshTimerRef.current = null;
-      }
-    };
-  }, [autoRefresh, loadAll]);
-
-  useEffect(() => {
     if (autoRefresh && wsSupported && token) {
       setupWebSocket();
     }
@@ -1559,10 +1550,7 @@ export const ProductionDashboardPage: React.FC = () => {
               size='small'
               variant='outlined'
               startIcon={<RefreshCw size={14} />}
-              onClick={() => {
-                setLoading(true);
-                void loadAll();
-              }}
+              onClick={() => refetch()}
               disabled={refreshStatus === 'loading'}
             >
               立即刷新

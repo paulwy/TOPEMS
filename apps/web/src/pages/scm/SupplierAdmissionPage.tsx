@@ -28,6 +28,8 @@ import { ListPageTemplate, type ColumnDef } from '@/components/templates';
 import { PageContainer } from '@/components/common';
 import { ConfirmDialog } from '@topems/shared-components';
 import { designTokens } from '@/theme/tokens';
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import { QUERY_KEYS } from '@/lib/reactQuery';
 
 const ct = designTokens.colors;
 
@@ -63,11 +65,9 @@ const categoryConfig: Record<string, string> = {
 };
 
 const SupplierAdmissionPage: React.FC = () => {
-  const [admissions, setAdmissions] = useState<SupplierAdmission[]>([]);
-  const [loading, setLoading] = useState(true);
+  const queryClient = useQueryClient();
   const [currentPage, setCurrentPage] = useState(1);
   const [pageSize, setPageSize] = useState(10);
-  const [total, setTotal] = useState(0);
   const [showDialog, setShowDialog] = useState(false);
   const [isEditing, setIsEditing] = useState(false);
   const [selectedAdmission, setSelectedAdmission] = useState<SupplierAdmission | null>(null);
@@ -101,78 +101,207 @@ const SupplierAdmissionPage: React.FC = () => {
 
   const { addNotification } = useNotificationStore();
 
-  useEffect(() => {
-    loadAdmissions();
-  }, [currentPage, pageSize]);
-
-  const loadAdmissions = async () => {
-    try {
-      setLoading(true);
+  const admissionsQuery = useQuery<{ items: SupplierAdmission[]; total: number }>({
+    queryKey: [...QUERY_KEYS.SCM.SUPPLIER_ADMISSIONS, currentPage, pageSize],
+    queryFn: async () => {
       const response = await scmApi.supplierAdmissions.list({
         page: currentPage,
         pageSize,
       });
       if (response.success && response.data) {
-        setAdmissions(response.data.items || []);
-        setTotal(response.data.total || 0);
+        return { items: response.data.items || [], total: response.data.total || 0 };
       }
-    } catch (error: unknown) {
-      apiLogger.error('加载供应商准入失败:', error);
+      return { items: [], total: 0 };
+    },
+    staleTime: 5 * 60 * 1000,
+  });
+
+  const admissions = admissionsQuery.data?.items ?? [];
+  const total = admissionsQuery.data?.total ?? 0;
+  const loading = admissionsQuery.isLoading;
+
+  useEffect(() => {
+    if (admissionsQuery.isError) {
+      apiLogger.error('加载供应商准入失败:', admissionsQuery.error);
       addNotification({
         type: 'error',
         title: '加载失败',
         message: '无法加载供应商准入',
       });
-    } finally {
-      setLoading(false);
     }
-  };
+  }, [admissionsQuery.isError, admissionsQuery.error, addNotification]);
 
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    try {
-      if (isEditing && selectedAdmission) {
-        const updateData: UpdateSupplierAdmissionRequest = {
-          supplier_name: formData.supplier_name,
-          short_name: formData.short_name,
-          contact_person: formData.contact_person,
-          contact_phone: formData.contact_phone,
-          contact_email: formData.contact_email,
-          address: formData.address,
-          business_license: formData.business_license,
-          tax_registration: formData.tax_registration,
-          organization_code: formData.organization_code,
-          legal_representative: formData.legal_representative,
-          registered_capital: formData.registered_capital,
-          established_date: formData.established_date,
-          business_scope: formData.business_scope,
-          supplier_category: formData.supplier_category,
-          remarks: formData.remarks,
-        };
-        await scmApi.supplierAdmissions.update(selectedAdmission.id, updateData);
-        addNotification({
-          type: 'success',
-          title: '更新成功',
-          message: '供应商准入已更新',
-        });
-      } else {
-        await scmApi.supplierAdmissions.create(formData);
-        addNotification({
-          type: 'success',
-          title: '创建成功',
-          message: '新供应商准入已创建',
-        });
-      }
+  const invalidateAdmissions = () =>
+    queryClient.invalidateQueries({ queryKey: QUERY_KEYS.SCM.SUPPLIER_ADMISSIONS });
+
+  const createMutation = useMutation({
+    mutationFn: (data: CreateSupplierAdmissionRequest) => scmApi.supplierAdmissions.create(data),
+    onSuccess: () => {
+      invalidateAdmissions();
+      addNotification({
+        type: 'success',
+        title: '创建成功',
+        message: '新供应商准入已创建',
+      });
       setShowDialog(false);
       resetForm();
-      loadAdmissions();
-    } catch (error: unknown) {
-      apiLogger.error('操作失败:', error);
+    },
+    onError: (err: unknown) => {
+      apiLogger.error('操作失败:', err);
       addNotification({
         type: 'error',
         title: '操作失败',
-        message: isEditing ? '更新供应商准入失败' : '创建供应商准入失败',
+        message: '创建供应商准入失败',
       });
+    },
+  });
+
+  const updateMutation = useMutation({
+    mutationFn: (params: { id: string; data: UpdateSupplierAdmissionRequest }) =>
+      scmApi.supplierAdmissions.update(params.id, params.data),
+    onSuccess: () => {
+      invalidateAdmissions();
+      addNotification({
+        type: 'success',
+        title: '更新成功',
+        message: '供应商准入已更新',
+      });
+      setShowDialog(false);
+      resetForm();
+    },
+    onError: (err: unknown) => {
+      apiLogger.error('操作失败:', err);
+      addNotification({
+        type: 'error',
+        title: '操作失败',
+        message: '更新供应商准入失败',
+      });
+    },
+  });
+
+  const deleteMutation = useMutation({
+    mutationFn: (id: string) => scmApi.supplierAdmissions.delete(id),
+    onSuccess: () => {
+      invalidateAdmissions();
+      addNotification({
+        type: 'success',
+        title: '删除成功',
+        message: '供应商准入已删除',
+      });
+    },
+    onError: (err: unknown) => {
+      apiLogger.error('删除失败:', err);
+      addNotification({
+        type: 'error',
+        title: '删除失败',
+        message: '删除供应商准入失败',
+      });
+    },
+  });
+
+  const submitMutation = useMutation({
+    mutationFn: (id: string) => scmApi.supplierAdmissions.submit(id),
+    onSuccess: () => {
+      invalidateAdmissions();
+      addNotification({
+        type: 'success',
+        title: '提交成功',
+        message: '供应商准入已提交审核',
+      });
+    },
+    onError: (err: unknown) => {
+      apiLogger.error('提交失败:', err);
+      addNotification({
+        type: 'error',
+        title: '提交失败',
+        message: '提交供应商准入失败',
+      });
+    },
+  });
+
+  const approveMutation = useMutation({
+    mutationFn: (id: string) => scmApi.supplierAdmissions.approve(id),
+    onSuccess: () => {
+      invalidateAdmissions();
+      addNotification({
+        type: 'success',
+        title: '已通过',
+        message: '供应商准入已通过',
+      });
+    },
+    onError: (err: unknown) => {
+      apiLogger.error('操作失败:', err);
+      addNotification({
+        type: 'error',
+        title: '操作失败',
+        message: '通过供应商准入失败',
+      });
+    },
+  });
+
+  const rejectMutation = useMutation({
+    mutationFn: (id: string) => scmApi.supplierAdmissions.reject(id),
+    onSuccess: () => {
+      invalidateAdmissions();
+      addNotification({
+        type: 'success',
+        title: '已拒绝',
+        message: '供应商准入已拒绝',
+      });
+    },
+    onError: (err: unknown) => {
+      apiLogger.error('操作失败:', err);
+      addNotification({
+        type: 'error',
+        title: '操作失败',
+        message: '拒绝供应商准入失败',
+      });
+    },
+  });
+
+  const activateMutation = useMutation({
+    mutationFn: (id: string) => scmApi.supplierAdmissions.activateSupplier(id),
+    onSuccess: () => {
+      invalidateAdmissions();
+      addNotification({
+        type: 'success',
+        title: '准入成功',
+        message: '供应商已正式准入',
+      });
+    },
+    onError: (err: unknown) => {
+      apiLogger.error('准入失败:', err);
+      addNotification({
+        type: 'error',
+        title: '准入失败',
+        message: '供应商准入失败',
+      });
+    },
+  });
+
+  const handleSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (isEditing && selectedAdmission) {
+      const updateData: UpdateSupplierAdmissionRequest = {
+        supplier_name: formData.supplier_name,
+        short_name: formData.short_name,
+        contact_person: formData.contact_person,
+        contact_phone: formData.contact_phone,
+        contact_email: formData.contact_email,
+        address: formData.address,
+        business_license: formData.business_license,
+        tax_registration: formData.tax_registration,
+        organization_code: formData.organization_code,
+        legal_representative: formData.legal_representative,
+        registered_capital: formData.registered_capital,
+        established_date: formData.established_date,
+        business_scope: formData.business_scope,
+        supplier_category: formData.supplier_category,
+        remarks: formData.remarks,
+      };
+      updateMutation.mutate({ id: selectedAdmission.id, data: updateData });
+    } else {
+      createMutation.mutate(formData);
     }
   };
 
@@ -201,27 +330,12 @@ const SupplierAdmissionPage: React.FC = () => {
     setShowDialog(true);
   };
 
-  const handleDelete = async (admission: SupplierAdmission) => {
+  const handleDelete = (admission: SupplierAdmission) => {
     openConfirmDialog({
       title: '确认删除',
       message: `确定要删除供应商准入 "${admission.admission_no}" 吗？`,
-      onConfirm: async () => {
-        try {
-          await scmApi.supplierAdmissions.delete(admission.id);
-          addNotification({
-            type: 'success',
-            title: '删除成功',
-            message: '供应商准入已删除',
-          });
-          loadAdmissions();
-        } catch (error: unknown) {
-          apiLogger.error('删除失败:', error);
-          addNotification({
-            type: 'error',
-            title: '删除失败',
-            message: '删除供应商准入失败',
-          });
-        }
+      onConfirm: () => {
+        deleteMutation.mutate(admission.id);
       },
       danger: true,
     });
@@ -232,26 +346,12 @@ const SupplierAdmissionPage: React.FC = () => {
       openConfirmDialog({
         title: '确认提交',
         message: `确定要提交供应商准入 "${admission.admission_no}" 审核吗？`,
-        onConfirm: async () => {
-          try {
-            await scmApi.supplierAdmissions.submit(admission.id);
-            addNotification({
-              type: 'success',
-              title: '提交成功',
-              message: '供应商准入已提交审核',
-            });
-            loadAdmissions();
-          } catch (error: unknown) {
-            apiLogger.error('提交失败:', error);
-            addNotification({
-              type: 'error',
-              title: '提交失败',
-              message: '提交供应商准入失败',
-            });
-          }
+        onConfirm: () => {
+          submitMutation.mutate(admission.id);
         },
       });
     },
+    // eslint-disable-next-line react-hooks/exhaustive-deps
     [addNotification]
   );
 
@@ -260,26 +360,12 @@ const SupplierAdmissionPage: React.FC = () => {
       openConfirmDialog({
         title: '确认通过',
         message: `确定要通过供应商准入 "${admission.admission_no}" 吗？`,
-        onConfirm: async () => {
-          try {
-            await scmApi.supplierAdmissions.approve(admission.id);
-            addNotification({
-              type: 'success',
-              title: '已通过',
-              message: '供应商准入已通过',
-            });
-            loadAdmissions();
-          } catch (error: unknown) {
-            apiLogger.error('操作失败:', error);
-            addNotification({
-              type: 'error',
-              title: '操作失败',
-              message: '通过供应商准入失败',
-            });
-          }
+        onConfirm: () => {
+          approveMutation.mutate(admission.id);
         },
       });
     },
+    // eslint-disable-next-line react-hooks/exhaustive-deps
     [addNotification]
   );
 
@@ -288,27 +374,13 @@ const SupplierAdmissionPage: React.FC = () => {
       openConfirmDialog({
         title: '确认拒绝',
         message: `确定要拒绝供应商准入 "${admission.admission_no}" 吗？`,
-        onConfirm: async () => {
-          try {
-            await scmApi.supplierAdmissions.reject(admission.id);
-            addNotification({
-              type: 'success',
-              title: '已拒绝',
-              message: '供应商准入已拒绝',
-            });
-            loadAdmissions();
-          } catch (error: unknown) {
-            apiLogger.error('操作失败:', error);
-            addNotification({
-              type: 'error',
-              title: '操作失败',
-              message: '拒绝供应商准入失败',
-            });
-          }
+        onConfirm: () => {
+          rejectMutation.mutate(admission.id);
         },
         danger: true,
       });
     },
+    // eslint-disable-next-line react-hooks/exhaustive-deps
     [addNotification]
   );
 
@@ -317,26 +389,12 @@ const SupplierAdmissionPage: React.FC = () => {
       openConfirmDialog({
         title: '确认准入',
         message: `确定要将供应商 "${admission.supplier_name}" 正式准入吗？`,
-        onConfirm: async () => {
-          try {
-            await scmApi.supplierAdmissions.activateSupplier(admission.id);
-            addNotification({
-              type: 'success',
-              title: '准入成功',
-              message: '供应商已正式准入',
-            });
-            loadAdmissions();
-          } catch (error: unknown) {
-            apiLogger.error('准入失败:', error);
-            addNotification({
-              type: 'error',
-              title: '准入失败',
-              message: '供应商准入失败',
-            });
-          }
+        onConfirm: () => {
+          activateMutation.mutate(admission.id);
         },
       });
     },
+    // eslint-disable-next-line react-hooks/exhaustive-deps
     [addNotification]
   );
 
@@ -547,7 +605,7 @@ const SupplierAdmissionPage: React.FC = () => {
           },
         ]}
         rowActions={rowActions}
-        onRefresh={loadAdmissions}
+        onRefresh={() => admissionsQuery.refetch()}
         emptyMessage='暂无供应商准入数据'
       />
 

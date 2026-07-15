@@ -122,6 +122,9 @@ vi.mock('@/store', () => ({
   useToggleSidebarCollapsed: vi.fn(),
   useSetSidebarCollapsed: vi.fn(),
 }));
+
+describe('LimsTaskPage', () => {
+  beforeEach(() => {
     global.fetch = vi.fn().mockResolvedValue({ ok: true }) as any;
   });
 

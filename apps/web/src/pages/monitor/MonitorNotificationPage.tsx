@@ -13,12 +13,12 @@ import {
   InputLabel,
   Select,
   MenuItem,
-  CircularProgress,
   Alert,
   InputAdornment,
   Grid,
   Divider,
 } from '@mui/material';
+import { LoadingSpinner } from '@topems/shared-components';
 import {
   Plus,
   Edit3,
@@ -44,8 +44,6 @@ import { apiLogger } from '@/utils/logger';
 import { designTokens } from '@/theme/tokens';
 
 const ct = designTokens.colors;
-
-// TODO(v2-phase2): Replace CircularProgress with LoadingSpinner from '@topems/shared-components'. Complex usage found - manual review needed.
 
 // ============ 类型定义 ============
 
@@ -793,7 +791,7 @@ const MonitorNotificationPage: React.FC = () => {
                 size='small'
                 onClick={() => handleTest(row)}
               >
-                {testLoading === row.id ? <CircularProgress size={16} /> : <TestTube size={16} />}
+                {testLoading === row.id ? <LoadingSpinner size='sm' /> : <TestTube size={16} />}
               </IconButton>
             </Tooltip>
             <Tooltip title='删除'>

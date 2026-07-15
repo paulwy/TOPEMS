@@ -1,7 +1,8 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
 import { Box, Chip, Tabs, Tab, Paper, useTheme, useMediaQuery } from '@mui/material';
 import { Plus, Eye, Edit, Trash2, FlaskConical as Flask } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { ListPageTemplate, type ColumnDef, type RowAction } from '@/components/templates';
 import { PageContainer } from '@/components/common';
 import { rdApi, type Experiment } from '@/api/rd';
@@ -9,6 +10,7 @@ import { useNotificationStore } from '@/store';
 import { apiLogger } from '@/utils/logger';
 import { ConfirmDialog } from '@topems/shared-components';
 import { RD_PATHS } from '@/modules/rd/config';
+import { QUERY_KEYS } from '@/lib/reactQuery';
 
 interface ExperimentWithProject extends Experiment {
   project_name?: string;
@@ -18,26 +20,22 @@ const RsExperimentListPage: React.FC = () => {
   const navigate = useNavigate();
   const theme = useTheme();
   const isMobile = useMediaQuery(theme.breakpoints.down('md'));
+  const queryClient = useQueryClient();
   const addNotification = useNotificationStore((state) => state.addNotification);
-  const [experiments, setExperiments] = useState<ExperimentWithProject[]>([]);
-  const [loading, setLoading] = useState(false);
   const [page, setPage] = useState(0);
   const [rowsPerPage, setRowsPerPage] = useState(10);
-  const [total, setTotal] = useState(0);
   const [searchTerm, setSearchTerm] = useState('');
   const [statusFilter, setStatusFilter] = useState<string | null>(null);
   const [activeTab, setActiveTab] = useState(0);
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
   const [selectedExperiment, setSelectedExperiment] = useState<ExperimentWithProject | null>(null);
 
-  useEffect(() => {
-    loadExperiments();
-  }, [activeTab, page, rowsPerPage, searchTerm, statusFilter]);
-
-  const loadExperiments = async () => {
-    setLoading(true);
-    try {
-      let response;
+  const experimentListQuery = useQuery({
+    queryKey: [
+      ...QUERY_KEYS.RD.EXPERIMENTS,
+      { activeTab, page, rowsPerPage, searchTerm, statusFilter },
+    ],
+    queryFn: async () => {
       const params = {
         page: page + 1,
         pagesize: rowsPerPage,
@@ -45,6 +43,7 @@ const RsExperimentListPage: React.FC = () => {
         status: statusFilter || undefined,
       };
 
+      let response;
       switch (activeTab) {
         case 1:
           response = await rdApi.listLabExperiments(params);
@@ -59,27 +58,45 @@ const RsExperimentListPage: React.FC = () => {
           response = await rdApi.listExperiments(params);
       }
 
-      if (response.success && response.data) {
-        setExperiments(response.data.experiments || []);
-        setTotal(response.data.total || 0);
-      } else {
-        addNotification({
-          type: 'error',
-          title: '加载失败',
-          message: response.message || '加载试验数据失败',
-        });
+      if (!response.success || !response.data) {
+        throw new Error(response.message || '加载试验数据失败');
       }
-    } catch (err: unknown) {
-      apiLogger.error('加载试验数据失败:', err);
+      return {
+        experiments: response.data.experiments || [],
+        total: response.data.total || 0,
+      };
+    },
+  });
+
+  const deleteExperimentMutation = useMutation({
+    mutationFn: async (id: string) => {
+      const response = await rdApi.deleteExperiment(id);
+      if (!response.success) {
+        throw new Error(response.message || '删除试验失败');
+      }
+      return response;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: QUERY_KEYS.RD.EXPERIMENTS });
+      addNotification({
+        type: 'success',
+        title: '删除成功',
+        message: '删除试验成功',
+      });
+    },
+    onError: (error: unknown) => {
+      apiLogger.error('删除试验失败:', error);
       addNotification({
         type: 'error',
-        title: '加载失败',
-        message: '加载试验数据失败',
+        title: '删除失败',
+        message: error instanceof Error ? error.message : '删除试验失败',
       });
-    } finally {
-      setLoading(false);
-    }
-  };
+    },
+  });
+
+  const experiments = experimentListQuery.data?.experiments || [];
+  const total = experimentListQuery.data?.total || 0;
+  const loading = experimentListQuery.isLoading || deleteExperimentMutation.isPending;
 
   const getStatusColor = (
     status: string
@@ -118,17 +135,12 @@ const RsExperimentListPage: React.FC = () => {
 
   const handleDeleteConfirm = async () => {
     if (!selectedExperiment) return;
-    const response = await rdApi.deleteExperiment(selectedExperiment.id);
-    if (response.success) {
-      addNotification({
-        type: 'success',
-        title: '删除成功',
-        message: '删除试验成功',
-      });
-      setExperiments(experiments.filter((e) => e.id !== selectedExperiment.id));
-      setTotal((prev) => Math.max(0, prev - 1));
-    } else {
-      throw new Error(response.message || '删除试验失败');
+    try {
+      await deleteExperimentMutation.mutateAsync(selectedExperiment.id);
+      setDeleteDialogOpen(false);
+      setSelectedExperiment(null);
+    } catch {
+      // 错误已在 mutation onError 中处理
     }
   };
 
@@ -287,7 +299,7 @@ const RsExperimentListPage: React.FC = () => {
         rowActions={rowActions}
         headerContent={headerContent}
         getRowId={(row) => row.id}
-        onRefresh={loadExperiments}
+        onRefresh={() => experimentListQuery.refetch()}
         emptyMessage='暂无试验数据'
       />
 

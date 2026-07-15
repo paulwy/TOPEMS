@@ -1,6 +1,8 @@
 import { Typography, Box, InputLabel, Chip, type ChipProps } from '@mui/material';
-import React, { useState, useEffect, useMemo } from 'react';
+import React, { useState, useMemo } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
+import { useQuery, useMutation } from '@tanstack/react-query';
+import { QUERY_KEYS } from '@/lib/reactQuery';
 import { Wrench, MapPin, Calendar, User, FileText } from 'lucide-react';
 import { assetApi, type Asset } from '@/api/erp';
 import { useNotification } from '@/hooks/useNotification';
@@ -18,52 +20,49 @@ const EquipmentDetailPage: React.FC = () => {
   const navigate = useNavigate();
   const { success, error } = useNotification();
 
-  const [equipment, setEquipment] = useState<Asset | null>(null);
-  const [loading, setLoading] = useState(true);
-  const [errorMessage, setErrorMessage] = useState<string | undefined>(undefined);
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
 
-  useEffect(() => {
-    if (id) {
-      loadEquipment(id);
-    }
-  }, [id]);
-
-  const loadEquipment = async (equipmentId: string) => {
-    setLoading(true);
-    setErrorMessage(undefined);
-    try {
-      const res = await assetApi.get(equipmentId);
+  const {
+    data: equipment,
+    isLoading: loading,
+    error: queryError,
+  } = useQuery<Asset | null>({
+    queryKey: id ? QUERY_KEYS.MES.EQUIPMENT_DETAIL(id) : ['mes', 'equipment', 'null'],
+    queryFn: async () => {
+      if (!id) return null;
+      const res = await assetApi.get(id);
       if (res.code === 200 && res.data) {
-        setEquipment(res.data);
-      } else {
-        throw new Error(res.message || '加载设备信息失败');
+        return res.data;
       }
-    } catch (err: unknown) {
-      apiLogger.error('Failed to load equipment:', err);
-      setErrorMessage('加载设备信息失败');
-      error('加载设备信息失败');
-    } finally {
-      setLoading(false);
-    }
-  };
+      throw new Error(res.message || '加载设备信息失败');
+    },
+    enabled: !!id,
+  });
 
-  const handleDelete = async () => {
-    if (!id) return;
-    try {
-      const res = await assetApi.delete(id);
+  const errorMessage = queryError ? '加载设备信息失败' : undefined;
+
+  const deleteMutation = useMutation({
+    mutationFn: (equipmentId: string) => assetApi.delete(equipmentId),
+    onSuccess: (res) => {
       if (res.code === 200) {
         success('设备删除成功');
         navigate(MES_PATHS.equipment);
       } else {
         error(res.message || '删除失败');
       }
-    } catch (err: unknown) {
+    },
+    onError: (err: unknown) => {
       apiLogger.error('Failed to delete equipment:', err);
       error('删除设备失败');
-    } finally {
+    },
+    onSettled: () => {
       setDeleteDialogOpen(false);
-    }
+    },
+  });
+
+  const handleDelete = () => {
+    if (!id) return;
+    deleteMutation.mutate(id);
   };
 
   const getStatusColor = (status: string): ChipProps['color'] => {

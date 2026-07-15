@@ -10,6 +10,7 @@ import {
 } from '@mui/material';
 import React, { useState, useMemo, useCallback } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import { QUERY_KEYS } from '@/lib/reactQuery';
 import type {
   PurchaseOrder,
   CreatePurchaseOrderRequest,
@@ -49,7 +50,7 @@ const ScmPurchaseOrderPage: React.FC = () => {
   const { addNotification } = useNotificationStore();
 
   const ordersQuery = useQuery({
-    queryKey: ['scm-purchase-orders', currentPage, pageSize],
+    queryKey: [...QUERY_KEYS.SCM.PURCHASE_ORDERS, currentPage, pageSize],
     queryFn: async () => {
       const response = await scmApi.purchaseOrders.list({
         page: currentPage,
@@ -80,7 +81,7 @@ const ScmPurchaseOrderPage: React.FC = () => {
       return response.data;
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['scm-purchase-orders'] });
+      queryClient.invalidateQueries({ queryKey: QUERY_KEYS.SCM.PURCHASE_ORDERS });
       addNotification({
         type: 'success',
         title: '创建成功',
@@ -106,7 +107,7 @@ const ScmPurchaseOrderPage: React.FC = () => {
       return response.data;
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['scm-purchase-orders'] });
+      queryClient.invalidateQueries({ queryKey: QUERY_KEYS.SCM.PURCHASE_ORDERS });
       addNotification({
         type: 'success',
         title: '更新成功',
@@ -132,7 +133,7 @@ const ScmPurchaseOrderPage: React.FC = () => {
       return response.data;
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['scm-purchase-orders'] });
+      queryClient.invalidateQueries({ queryKey: QUERY_KEYS.SCM.PURCHASE_ORDERS });
       addNotification({
         type: 'success',
         title: '审批成功',
@@ -158,7 +159,7 @@ const ScmPurchaseOrderPage: React.FC = () => {
       return response.data;
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['scm-purchase-orders'] });
+      queryClient.invalidateQueries({ queryKey: QUERY_KEYS.SCM.PURCHASE_ORDERS });
       addNotification({
         type: 'success',
         title: '确认成功',
@@ -184,7 +185,7 @@ const ScmPurchaseOrderPage: React.FC = () => {
       return response.data;
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['scm-purchase-orders'] });
+      queryClient.invalidateQueries({ queryKey: QUERY_KEYS.SCM.PURCHASE_ORDERS });
       addNotification({
         type: 'success',
         title: '取消成功',
@@ -210,7 +211,7 @@ const ScmPurchaseOrderPage: React.FC = () => {
       return response.data;
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['scm-purchase-orders'] });
+      queryClient.invalidateQueries({ queryKey: QUERY_KEYS.SCM.PURCHASE_ORDERS });
       addNotification({
         type: 'success',
         title: '关闭成功',
@@ -244,8 +245,7 @@ const ScmPurchaseOrderPage: React.FC = () => {
       }
       setShowDialog(false);
       resetForm();
-    } catch {
-    }
+    } catch {}
   };
 
   const handleEdit = (order: PurchaseOrder) => {
@@ -277,8 +277,7 @@ const ScmPurchaseOrderPage: React.FC = () => {
             title: '删除成功',
             message: '采购订单已删除',
           });
-        } catch {
-        }
+        } catch {}
       },
       danger: true,
     });
@@ -292,8 +291,7 @@ const ScmPurchaseOrderPage: React.FC = () => {
         onConfirm: async () => {
           try {
             await approveMutation.mutateAsync(order.id);
-          } catch {
-          }
+          } catch {}
         },
       });
     },
@@ -308,8 +306,7 @@ const ScmPurchaseOrderPage: React.FC = () => {
         onConfirm: async () => {
           try {
             await confirmMutation.mutateAsync(order.id);
-          } catch {
-          }
+          } catch {}
         },
       });
     },
@@ -324,8 +321,7 @@ const ScmPurchaseOrderPage: React.FC = () => {
         onConfirm: async () => {
           try {
             await cancelMutation.mutateAsync(order.id);
-          } catch {
-          }
+          } catch {}
         },
         danger: true,
       });
@@ -341,8 +337,7 @@ const ScmPurchaseOrderPage: React.FC = () => {
         onConfirm: async () => {
           try {
             await closeMutation.mutateAsync(order.id);
-          } catch {
-          }
+          } catch {}
         },
       });
     },
@@ -496,7 +491,16 @@ const ScmPurchaseOrderPage: React.FC = () => {
         ),
       },
     ],
-    [handleApprove, handleConfirm, handleCancel, handleClose, approveMutation.isPending, confirmMutation.isPending, cancelMutation.isPending, closeMutation.isPending]
+    [
+      handleApprove,
+      handleConfirm,
+      handleCancel,
+      handleClose,
+      approveMutation.isPending,
+      confirmMutation.isPending,
+      cancelMutation.isPending,
+      closeMutation.isPending,
+    ]
   );
 
   const rowActions = [
@@ -543,7 +547,9 @@ const ScmPurchaseOrderPage: React.FC = () => {
           },
         ]}
         rowActions={rowActions}
-        onRefresh={() => queryClient.invalidateQueries({ queryKey: ['scm-purchase-orders'] })}
+        onRefresh={() =>
+          queryClient.invalidateQueries({ queryKey: QUERY_KEYS.SCM.PURCHASE_ORDERS })
+        }
         emptyMessage='暂无采购订单数据'
       />
 

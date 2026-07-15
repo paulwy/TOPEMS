@@ -1,5 +1,7 @@
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
+import { useQuery } from '@tanstack/react-query';
+import { QUERY_KEYS } from '@/lib/reactQuery';
 import {
   Settings,
   Wrench,
@@ -39,7 +41,7 @@ import {
 import { limsApi } from '@/api/lims';
 import type { Instrument, CalibrationRecord, MaintenanceRecord, InspectionTask } from '@/api/lims';
 import { useNotificationStore } from '@/store';
-import { apiLogger } from '@/utils/logger';
+import { logger } from '@/utils/logger';
 import dayjs from 'dayjs';
 import { designTokens } from '@/theme/tokens';
 import { LIMS_PATHS } from '@/modules/lims/config';
@@ -65,71 +67,70 @@ interface UsageLog {
 const LimsInstrumentDetailPage: React.FC = () => {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
-  const [instrument, setInstrument] = useState<Instrument | null>(null);
-  const [calibrationRecords, setCalibrationRecords] = useState<CalibrationRecord[]>([]);
-  const [maintenanceRecords, setMaintenanceRecords] = useState<MaintenanceRecord[]>([]);
-  const [usageLogs, setUsageLogs] = useState<UsageLog[]>([]);
-  const [relatedTasks, setRelatedTasks] = useState<InspectionTask[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
   const addNotification = useNotificationStore((state) => state.addNotification);
 
-  const loadInstrumentData = useCallback(async () => {
-    if (!id) return;
-    try {
-      setLoading(true);
-      setError(null);
-
-      const [instrumentRes, calibrationRes, maintenanceRes] = await Promise.all([
+  const {
+    data: detailData,
+    isLoading: loading,
+    error: queryError,
+    refetch,
+  } = useQuery({
+    queryKey: QUERY_KEYS.LIMS.INSTRUMENT(id || ''),
+    queryFn: async () => {
+      if (!id) return null;
+      const [instrumentRes, calibrationRes, maintenanceRes, tasksRes] = await Promise.all([
         limsApi.getInstrument(id),
         limsApi.listCalibrationRecords(id),
         limsApi.listMaintenanceByInstrument(id),
+        limsApi.listTasks().catch(() => null),
       ]);
 
+      let instrument: Instrument | null = null;
+      let error: string | null = null;
       if (instrumentRes.success && instrumentRes.data) {
-        setInstrument(instrumentRes.data as Instrument);
+        instrument = instrumentRes.data as Instrument;
       } else {
-        setError('仪器不存在或已被删除');
-        return;
+        error = '仪器不存在或已被删除';
       }
 
+      let calibrationRecords: CalibrationRecord[] = [];
       if (calibrationRes.success && calibrationRes.data) {
         const data = calibrationRes.data as
           LimsListResponse<CalibrationRecord> | CalibrationRecord[];
-        setCalibrationRecords(Array.isArray(data) ? data : data.items || data.records || []);
+        calibrationRecords = Array.isArray(data) ? data : data.items || data.records || [];
       }
 
+      let maintenanceRecords: MaintenanceRecord[] = [];
       if (maintenanceRes.success && maintenanceRes.data) {
         const data = maintenanceRes.data as
           LimsListResponse<MaintenanceRecord> | MaintenanceRecord[];
-        setMaintenanceRecords(Array.isArray(data) ? data : data.items || []);
+        maintenanceRecords = Array.isArray(data) ? data : data.items || [];
       }
 
-      // Load usage logs and related tasks (mock for now)
-      try {
-        const tasksRes = await limsApi.listTasks();
-        if (tasksRes.success && tasksRes.data) {
-          const tasksData = tasksRes.data as LimsListResponse<InspectionTask> | InspectionTask[];
-          const allTasks = Array.isArray(tasksData)
-            ? tasksData
-            : tasksData.items || tasksData.tasks || [];
-          // Filter tasks that might be related to this instrument
-          setRelatedTasks(allTasks.slice(0, 5));
-        }
-      } catch {
-        // Usage logs not critical
+      let relatedTasks: InspectionTask[] = [];
+      if (tasksRes?.success && tasksRes.data) {
+        const tasksData = tasksRes.data as LimsListResponse<InspectionTask> | InspectionTask[];
+        const allTasks = Array.isArray(tasksData)
+          ? tasksData
+          : tasksData.items || tasksData.tasks || [];
+        relatedTasks = allTasks.slice(0, 5);
       }
-    } catch (err: unknown) {
-      apiLogger.error('加载仪器详情失败:', err);
-      setError('加载仪器详情失败');
-    } finally {
-      setLoading(false);
-    }
-  }, [id]);
 
-  useEffect(() => {
-    loadInstrumentData();
-  }, [loadInstrumentData]);
+      return { instrument, calibrationRecords, maintenanceRecords, relatedTasks, error };
+    },
+    enabled: !!id,
+  });
+
+  const instrument = detailData?.instrument || null;
+  const calibrationRecords = detailData?.calibrationRecords || [];
+  const maintenanceRecords = detailData?.maintenanceRecords || [];
+  const relatedTasks = detailData?.relatedTasks || [];
+  const usageLogs: UsageLog[] = [];
+  const error = queryError ? '加载仪器详情失败' : detailData?.error || null;
+
+  const loadInstrumentData = () => {
+    refetch();
+  };
 
   const getStatusBadge = (status: string) => {
     const statusMap: Record<string, { bg: string; color: string }> = {

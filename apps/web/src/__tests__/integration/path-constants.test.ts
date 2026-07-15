@@ -36,10 +36,14 @@ describe('Path Constants Validation', () => {
       expect(HRM_PATHS.employeeEdit.replace(':id', employeeId)).toBe('/hrm/employees/emp-123/edit');
 
       const supplierId = 'supplier-789';
-      expect(SRM_PATHS.supplierDetail.replace(':id', supplierId)).toBe('/srm/supplier/supplier-789');
+      expect(SRM_PATHS.supplierDetail.replace(':id', supplierId)).toBe(
+        '/srm/supplier/supplier-789'
+      );
 
       const contractId = 'contract-abc';
-      expect(SRM_PATHS.contractDetail.replace(':id', contractId)).toBe('/srm/contract/contract-abc');
+      expect(SRM_PATHS.contractDetail.replace(':id', contractId)).toBe(
+        '/srm/contract/contract-abc'
+      );
     });
 
     it('should correctly replace :moduleId parameter in BI paths', () => {
@@ -75,19 +79,19 @@ describe('Path Constants Validation', () => {
 
   describe('Path Format Validation', () => {
     it('should have paths starting with /', () => {
-      Object.values(ADMIN_PATHS).forEach(path => {
+      Object.values(ADMIN_PATHS).forEach((path) => {
         expect(path.startsWith('/')).toBe(true, `Path "${path}" does not start with /`);
       });
-      Object.values(IAM_PATHS).forEach(path => {
+      Object.values(IAM_PATHS).forEach((path) => {
         expect(path.startsWith('/')).toBe(true, `Path "${path}" does not start with /`);
       });
-      Object.values(WORKFLOW_PATHS).forEach(path => {
+      Object.values(WORKFLOW_PATHS).forEach((path) => {
         expect(path.startsWith('/')).toBe(true, `Path "${path}" does not start with /`);
       });
     });
 
     it('should not have trailing slashes', () => {
-      Object.values(BI_PATHS).forEach(path => {
+      Object.values(BI_PATHS).forEach((path) => {
         expect(!path.endsWith('/') || path === '/').toBe(true, `Path "${path}" has trailing slash`);
       });
     });
@@ -96,7 +100,7 @@ describe('Path Constants Validation', () => {
   describe('Module Route Validation', () => {
     it('should have routes defined for all CRM paths', () => {
       const crmRoutes = crmModuleConfig.routes;
-      const crmRoutePaths = new Set(crmRoutes.map(r => r.path));
+      const crmRoutePaths = new Set(crmRoutes.map((r) => r.path));
 
       expect(crmRoutePaths.has('/crm/dashboard')).toBe(true);
       expect(crmRoutePaths.has('/crm/customers')).toBe(true);
@@ -111,7 +115,7 @@ describe('Path Constants Validation', () => {
         { code: 'iam-permission', path: IAM_PATHS.permission },
       ];
 
-      iamNavItems.forEach(item => {
+      iamNavItems.forEach((item) => {
         expect(item.path).toBeDefined();
         expect(item.path.startsWith('/iam')).toBe(true);
       });
@@ -123,8 +127,18 @@ describe('Path Constants Validation', () => {
       const allPaths = new Set<string>();
       const duplicates: string[] = [];
 
-      [ADMIN_PATHS, IAM_PATHS, WORKFLOW_PATHS, NOTIFICATION_PATHS, SRM_PATHS, BI_PATHS, DOC_PATHS, EHS_PATHS, MOBILE_PATHS].forEach(modulePaths => {
-        Object.values(modulePaths).forEach(path => {
+      [
+        ADMIN_PATHS,
+        IAM_PATHS,
+        WORKFLOW_PATHS,
+        NOTIFICATION_PATHS,
+        SRM_PATHS,
+        BI_PATHS,
+        DOC_PATHS,
+        EHS_PATHS,
+        MOBILE_PATHS,
+      ].forEach((modulePaths) => {
+        Object.values(modulePaths).forEach((path) => {
           if (allPaths.has(path)) {
             duplicates.push(path);
           }

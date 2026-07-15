@@ -59,11 +59,11 @@ const Settings = () => {
             </Box>
             <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
               <FormControlLabel
-                control={<Switch checked={notifications} onChange={(e) => setNotifications(e.target.checked)} />}
+                control={<Switch checked={notifications} onChange={(e: React.ChangeEvent<HTMLInputElement>) => setNotifications(e.target.checked)} />}
                 label="启用系统通知"
               />
               <FormControlLabel
-                control={<Switch checked={emailNotifications} onChange={(e) => setEmailNotifications(e.target.checked)} />}
+                control={<Switch checked={emailNotifications} onChange={(e: React.ChangeEvent<HTMLInputElement>) => setEmailNotifications(e.target.checked)} />}
                 label="启用邮件通知"
               />
             </Box>
@@ -111,7 +111,7 @@ const Settings = () => {
                 </Select>
               </FormControl>
               <FormControlLabel
-                control={<Switch checked={autoUpdate} onChange={(e) => setAutoUpdate(e.target.checked)} />}
+                control={<Switch checked={autoUpdate} onChange={(e: React.ChangeEvent<HTMLInputElement>) => setAutoUpdate(e.target.checked)} />}
                 label="自动检查更新"
               />
             </Box>

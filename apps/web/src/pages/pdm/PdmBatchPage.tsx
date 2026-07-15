@@ -67,7 +67,12 @@ const PdmBatchPage: React.FC = () => {
   });
 
   const createBatchMutation = useMutation({
-    mutationFn: (data: { batch_no: string; product_name: string; quantity: string; unit: string }) =>
+    mutationFn: (data: {
+      batch_no: string;
+      product_name: string;
+      quantity: string;
+      unit: string;
+    }) =>
       pdmApi.createBatch({
         batch_no: data.batch_no,
         product_name: data.product_name,

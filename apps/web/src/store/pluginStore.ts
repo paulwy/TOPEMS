@@ -457,24 +457,15 @@ export const usePluginStore = create<PluginState>()(
   )
 );
 
-export const useInstalledPlugins = () =>
-  usePluginStore((state) => state.installedPlugins);
-export const useMarketplacePlugins = () =>
-  usePluginStore((state) => state.marketplacePlugins);
-export const usePluginHealthStatus = () =>
-  usePluginStore((state) => state.healthStatus);
-export const usePluginLoading = () =>
-  usePluginStore((state) => state.loading);
-export const usePluginError = () =>
-  usePluginStore((state) => state.error);
-export const useSelectedPluginCode = () =>
-  usePluginStore((state) => state.selectedPluginCode);
-export const useSelectedPlugins = () =>
-  usePluginStore((state) => state.selectedPlugins);
-export const useSearchQuery = () =>
-  usePluginStore((state) => state.searchQuery);
-export const useActiveCategory = () =>
-  usePluginStore((state) => state.activeCategory);
+export const useInstalledPlugins = () => usePluginStore((state) => state.installedPlugins);
+export const useMarketplacePlugins = () => usePluginStore((state) => state.marketplacePlugins);
+export const usePluginHealthStatus = () => usePluginStore((state) => state.healthStatus);
+export const usePluginLoading = () => usePluginStore((state) => state.loading);
+export const usePluginError = () => usePluginStore((state) => state.error);
+export const useSelectedPluginCode = () => usePluginStore((state) => state.selectedPluginCode);
+export const useSelectedPlugins = () => usePluginStore((state) => state.selectedPlugins);
+export const useSearchQuery = () => usePluginStore((state) => state.searchQuery);
+export const useActiveCategory = () => usePluginStore((state) => state.activeCategory);
 
 export const useIsPluginInstalled = (code: string) => {
   const installedPlugins = useInstalledPlugins();
@@ -506,7 +497,7 @@ export const useFilteredPlugins = () => {
   const marketplacePlugins = useMarketplacePlugins();
   const searchQuery = useSearchQuery();
   const activeCategory = useActiveCategory();
-  
+
   let result = [...marketplacePlugins];
 
   if (searchQuery) {
@@ -537,7 +528,7 @@ export const useFilteredPlugins = () => {
 export const useFilteredInstalledPlugins = () => {
   const installedPlugins = useInstalledPlugins();
   const searchQuery = useSearchQuery();
-  
+
   if (!searchQuery) {
     return installedPlugins;
   }

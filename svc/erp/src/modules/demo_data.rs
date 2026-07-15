@@ -8,7 +8,8 @@ use serde_json::{json, Value};
 
 /// 应收账款账龄分析演示数据
 ///
-/// TODO: 当 `get_receivable_aging` 实现真实数据库查询后删除此数据。
+/// 此数据仅用于 API 契约验证和前端联调，不应在生产环境中依赖。
+/// 当对应功能实现真实数据库查询后，应删除此函数。
 pub fn receivable_aging_demo() -> Value {
     json!({
         "items": [
@@ -49,7 +50,8 @@ pub fn receivable_aging_demo() -> Value {
 
 /// 应付账款账龄分析演示数据
 ///
-/// TODO: 当 `get_payable_aging` 实现真实数据库查询后删除此数据。
+/// 此数据仅用于 API 契约验证和前端联调，不应在生产环境中依赖。
+/// 当对应功能实现真实数据库查询后，应删除此函数。
 pub fn payable_aging_demo() -> Value {
     json!({
         "items": [

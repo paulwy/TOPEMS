@@ -4,39 +4,63 @@ import { pluginManager } from '../../lib/plugin-loader/PluginManager';
 import { apiLogger } from '../../utils/logger';
 
 const moduleImports: Record<string, () => Promise<{ [key: string]: RouteModuleConfig }>> = {
-  iam: () => import('@/modules/iam/config').then(m => ({ iamModuleConfig: m.iamModuleConfig })),
-  admin: () => import('@/modules/admin/config').then(m => ({ adminModuleConfig: m.adminModuleConfig })),
-  workflow: () => import('@/modules/workflow/config').then(m => ({ workflowModuleConfig: m.workflowModuleConfig })),
-  notification: () => import('@/modules/notification/config').then(m => ({ notificationModuleConfig: m.notificationModuleConfig })),
-  doc: () => import('@/modules/doc/config').then(m => ({ docModuleConfig: m.docModuleConfig })),
+  iam: () => import('@/modules/iam/config').then((m) => ({ iamModuleConfig: m.iamModuleConfig })),
+  admin: () =>
+    import('@/modules/admin/config').then((m) => ({ adminModuleConfig: m.adminModuleConfig })),
+  workflow: () =>
+    import('@/modules/workflow/config').then((m) => ({
+      workflowModuleConfig: m.workflowModuleConfig,
+    })),
+  notification: () =>
+    import('@/modules/notification/config').then((m) => ({
+      notificationModuleConfig: m.notificationModuleConfig,
+    })),
+  doc: () => import('@/modules/doc/config').then((m) => ({ docModuleConfig: m.docModuleConfig })),
   // report 与 bi 为不同功能页面，但后端均调用 analytics 服务（端口 8060）
-  report: () => import('@/modules/report/config').then(m => ({ reportModuleConfig: m.reportModuleConfig })),
-  monitor: () => import('@/modules/monitor/config').then(m => ({ monitorModuleConfig: m.monitorModuleConfig })),
-  integration: () => import('@/modules/integration/config').then(m => ({ integrationModuleConfig: m.integrationModuleConfig })),
-  ai: () => import('@/modules/ai/config').then(m => ({ aiModuleConfig: m.aiModuleConfig })),
-  mobile: () => import('@/modules/mobile/config').then(m => ({ mobileModuleConfig: m.mobileModuleConfig })),
-  hrm: () => import('@/modules/hrm/config').then(m => ({ hrmModuleConfig: m.hrmModuleConfig })),
-  finance: () => import('@/modules/finance/config').then(m => ({ financeModuleConfig: m.financeModuleConfig })),
-  crm: () => import('@/modules/crm/config').then(m => ({ crmModuleConfig: m.crmModuleConfig })),
-  mes: () => import('@/modules/mes/config').then(m => ({ mesModuleConfig: m.mesModuleConfig })),
-  qms: () => import('@/modules/qms/config').then(m => ({ qmsModuleConfig: m.qmsModuleConfig })),
-  lims: () => import('@/modules/lims/config').then(m => ({ limsModuleConfig: m.limsModuleConfig })),
-  ehs: () => import('@/modules/ehs/config').then(m => ({ ehsModuleConfig: m.ehsModuleConfig })),
-  scm: () => import('@/modules/scm/config').then(m => ({ scmModuleConfig: m.scmModuleConfig })),
-  erp: () => import('@/modules/erp/config').then(m => ({ erpModuleConfig: m.erpModuleConfig })),
-  wms: () => import('@/modules/wms/config').then(m => ({ wmsModuleConfig: m.wmsModuleConfig })),
-  pm: () => import('@/modules/pm/config').then(m => ({ pmModuleConfig: m.pmModuleConfig })),
-  pdm: () => import('@/modules/pdm/config').then(m => ({ pdmModuleConfig: m.pdmModuleConfig })),
-  srm: () => import('@/modules/srm/config').then(m => ({ srmModuleConfig: m.srmModuleConfig })),
-  rd: () => import('@/modules/rd/config').then(m => ({ rdModuleConfig: m.rdModuleConfig })),
-  plugin: () => import('@/modules/plugin/config').then(m => ({ pluginModuleConfig: m.pluginModuleConfig })),
-  im: () => import('@/modules/im/config').then(m => ({ imModuleConfig: m.imModuleConfig })),
+  report: () =>
+    import('@/modules/report/config').then((m) => ({ reportModuleConfig: m.reportModuleConfig })),
+  monitor: () =>
+    import('@/modules/monitor/config').then((m) => ({
+      monitorModuleConfig: m.monitorModuleConfig,
+    })),
+  integration: () =>
+    import('@/modules/integration/config').then((m) => ({
+      integrationModuleConfig: m.integrationModuleConfig,
+    })),
+  ai: () => import('@/modules/ai/config').then((m) => ({ aiModuleConfig: m.aiModuleConfig })),
+  mobile: () =>
+    import('@/modules/mobile/config').then((m) => ({ mobileModuleConfig: m.mobileModuleConfig })),
+  hrm: () => import('@/modules/hrm/config').then((m) => ({ hrmModuleConfig: m.hrmModuleConfig })),
+  finance: () =>
+    import('@/modules/finance/config').then((m) => ({
+      financeModuleConfig: m.financeModuleConfig,
+    })),
+  crm: () => import('@/modules/crm/config').then((m) => ({ crmModuleConfig: m.crmModuleConfig })),
+  mes: () => import('@/modules/mes/config').then((m) => ({ mesModuleConfig: m.mesModuleConfig })),
+  qms: () => import('@/modules/qms/config').then((m) => ({ qmsModuleConfig: m.qmsModuleConfig })),
+  lims: () =>
+    import('@/modules/lims/config').then((m) => ({ limsModuleConfig: m.limsModuleConfig })),
+  ehs: () => import('@/modules/ehs/config').then((m) => ({ ehsModuleConfig: m.ehsModuleConfig })),
+  scm: () => import('@/modules/scm/config').then((m) => ({ scmModuleConfig: m.scmModuleConfig })),
+  erp: () => import('@/modules/erp/config').then((m) => ({ erpModuleConfig: m.erpModuleConfig })),
+  wms: () => import('@/modules/wms/config').then((m) => ({ wmsModuleConfig: m.wmsModuleConfig })),
+  pm: () => import('@/modules/pm/config').then((m) => ({ pmModuleConfig: m.pmModuleConfig })),
+  pdm: () => import('@/modules/pdm/config').then((m) => ({ pdmModuleConfig: m.pdmModuleConfig })),
+  srm: () => import('@/modules/srm/config').then((m) => ({ srmModuleConfig: m.srmModuleConfig })),
+  rd: () => import('@/modules/rd/config').then((m) => ({ rdModuleConfig: m.rdModuleConfig })),
+  plugin: () =>
+    import('@/modules/plugin/config').then((m) => ({ pluginModuleConfig: m.pluginModuleConfig })),
+  im: () => import('@/modules/im/config').then((m) => ({ imModuleConfig: m.imModuleConfig })),
   // bi 与 report 为不同功能页面，但后端均调用 analytics 服务（端口 8060）
-  bi: () => import('@/modules/bi/config').then(m => ({ biModuleConfig: m.biModuleConfig })),
-  gis: () => import('@/modules/gis/config').then(m => ({ gisModuleConfig: m.gisModuleConfig })),
-  asset: () => import('@/modules/asset/config').then(m => ({ assetModuleConfig: m.assetModuleConfig })),
-  lowcode: () => import('@/modules/lowcode/config').then(m => ({ lowcodeModuleConfig: m.lowcodeModuleConfig })),
-  oa: () => import('@/modules/oa/config').then(m => ({ oaModuleConfig: m.oaModuleConfig })),
+  bi: () => import('@/modules/bi/config').then((m) => ({ biModuleConfig: m.biModuleConfig })),
+  gis: () => import('@/modules/gis/config').then((m) => ({ gisModuleConfig: m.gisModuleConfig })),
+  asset: () =>
+    import('@/modules/asset/config').then((m) => ({ assetModuleConfig: m.assetModuleConfig })),
+  lowcode: () =>
+    import('@/modules/lowcode/config').then((m) => ({
+      lowcodeModuleConfig: m.lowcodeModuleConfig,
+    })),
+  oa: () => import('@/modules/oa/config').then((m) => ({ oaModuleConfig: m.oaModuleConfig })),
 };
 
 const loadedModules = new Map<string, RouteModuleConfig>();

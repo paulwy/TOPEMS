@@ -47,7 +47,7 @@ export const documentApi = {
     data?: SummarizeDocumentRequest
   ): Promise<ApiResponse<SummarizeDocumentResponse>> => {
     return apiClient.ai.post<SummarizeDocumentResponse>(
-      `/v1/documents/${id}/summarize`,
+      `/documents/${id}/summarize`,
       data || {}
     );
   },
@@ -57,7 +57,7 @@ export const documentApi = {
     data?: ExtractKeyPointsRequest
   ): Promise<ApiResponse<ExtractKeyPointsResponse>> => {
     return apiClient.ai.post<ExtractKeyPointsResponse>(
-      `/v1/documents/${id}/key-points`,
+      `/documents/${id}/key-points`,
       data || {}
     );
   },
@@ -66,7 +66,7 @@ export const documentApi = {
     id: string,
     data: ExtractDocumentRequest
   ): Promise<ApiResponse<ExtractDocumentResponse>> => {
-    return apiClient.ai.post<ExtractDocumentResponse>(`/v1/documents/${id}/extract`, data);
+    return apiClient.ai.post<ExtractDocumentResponse>(`/documents/${id}/extract`, data);
   },
 
   translateDocument: async (

@@ -91,9 +91,12 @@ export const PluginProvider: React.FC<PluginProviderProps> = ({ children }) => {
 
     const scheduleFetch = () => {
       if (typeof window !== 'undefined' && 'requestIdleCallback' in window) {
-        (window as any).requestIdleCallback(() => {
-          fetchPlugins();
-        }, { timeout: 5000 });
+        (window as any).requestIdleCallback(
+          () => {
+            fetchPlugins();
+          },
+          { timeout: 5000 }
+        );
       } else {
         setTimeout(() => {
           fetchPlugins();

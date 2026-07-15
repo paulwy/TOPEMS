@@ -97,14 +97,17 @@ const calculateRetryDelay = (retries: number): number => {
 
 const shouldRetry = (error: TimeoutError, retries: number, startTime: number): boolean => {
   if (retries >= API_RETRY_CONFIG.MAX_RETRIES) return false;
-  
+
   const elapsed = Date.now() - startTime;
   if (elapsed >= API_RETRY_CONFIG.MAX_TOTAL_WAIT) return false;
-  
+
   if (isServiceUnavailable(error)) return false;
-  
-  return isTimeoutError(error) || isNetworkError(error) || 
-    (error.response?.status !== undefined && error.response.status >= 500);
+
+  return (
+    isTimeoutError(error) ||
+    isNetworkError(error) ||
+    (error.response?.status !== undefined && error.response.status >= 500)
+  );
 };
 
 const handleTimeoutError = (url: string): void => {
@@ -305,7 +308,7 @@ export const createAxiosClient = ({
         handleNetworkError(url);
       }
 
-      if (isServiceUnavailable(error)) {
+      if (error.response?.status === 503) {
         handleServiceUnavailable(url);
       }
 
@@ -318,20 +321,22 @@ export const createAxiosClient = ({
       }
 
       const startTime = Number(error.config?.headers?.['X-Request-Start']) || Date.now();
-      
+
       if (shouldRetry(error, retries, startTime)) {
         const delay = calculateRetryDelay(retries);
-        logger.info(`Retrying request (${retries + 1}/${API_RETRY_CONFIG.MAX_RETRIES}): ${fullUrl}, delay: ${Math.round(delay)}ms`);
-        
+        logger.info(
+          `Retrying request (${retries + 1}/${API_RETRY_CONFIG.MAX_RETRIES}): ${fullUrl}, delay: ${Math.round(delay)}ms`
+        );
+
         await new Promise((resolve) => setTimeout(resolve, delay));
-        
+
         const newConfig = { ...error.config };
-        newConfig.headers = { 
-          ...newConfig.headers, 
+        newConfig.headers = {
+          ...newConfig.headers,
           'X-Retry-Count': retries + 1,
           'X-Request-Start': startTime,
         };
-        
+
         return client(newConfig);
       }
 
@@ -436,6 +441,9 @@ class ApiClient {
   get workflow() {
     return this.clients.workflow;
   }
+  get flow() {
+    return this.clients.workflow;
+  }
   get rd() {
     return this.clients.rd;
   }
@@ -462,6 +470,9 @@ class ApiClient {
   }
   get bi() {
     return this.clients.bi;
+  }
+  get analytics() {
+    return this.clients.analytics;
   }
   get mobile() {
     return this.clients.mobile;

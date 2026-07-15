@@ -128,11 +128,13 @@ export const voucherApi = {
     file_name: string;
     file_content: string;
     import_mode: string;
-  }): Promise<ApiResponse<{
-    success_count: number;
-    failed_count: number;
-    errors: string[];
-  }>> => {
+  }): Promise<
+    ApiResponse<{
+      success_count: number;
+      failed_count: number;
+      errors: string[];
+    }>
+  > => {
     return apiClient.finance.post('/vouchers/import/u8', data);
   },
 

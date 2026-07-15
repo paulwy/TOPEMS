@@ -1,4 +1,6 @@
-import React, { useState, useEffect, useCallback, useMemo } from 'react';
+import React, { useState, useCallback, useMemo } from 'react';
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import { QUERY_KEYS } from '@/lib/reactQuery';
 import {
   Plus,
   Search,
@@ -108,26 +110,70 @@ interface RenewFormState {
 export default function ContractManagementPage() {
   const theme = useTheme();
   const ct = designTokens.colors;
-  const [loading, setLoading] = useState(false);
-  const [data, setData] = useState<PaginatedResult<Contract>>({
-    items: [],
-    total: 0,
-    page: 1,
-    pagesize: 20,
-  });
-  const [employees, setEmployees] = useState<Employee[]>([]);
+  const queryClient = useQueryClient();
+
   const [searchText, setSearchText] = useState('');
   const [statusFilter, setStatusFilter] = useState('');
   const [showExpiringOnly, setShowExpiringOnly] = useState(false);
   const [currentPage, setCurrentPage] = useState(1);
 
-  // 统计卡片数据
-  const [stats, setStats] = useState({
-    total: 0,
-    active: 0,
-    expiring: 0,
-    expired: 0,
+  const contractsQuery = useQuery<PaginatedResult<Contract>>({
+    queryKey: [...QUERY_KEYS.HRM.CONTRACT, { currentPage, statusFilter, showExpiringOnly }],
+    queryFn: async () => {
+      if (showExpiringOnly) {
+        const result = await contractApi.getExpiring({
+          days: 30,
+          page: currentPage,
+          pagesize: 20,
+        });
+        if (result.code === 0 && result.data) {
+          return result.data;
+        }
+        throw new Error(result.message || '获取即将到期合同失败');
+      } else {
+        const params: Record<string, any> = { page: currentPage, pagesize: 20 };
+        if (statusFilter) {
+          params.status = statusFilter;
+        }
+        const result = await contractApi.list(params);
+        if (result.code === 0 && result.data) {
+          return result.data;
+        }
+        throw new Error(result.message || '获取合同列表失败');
+      }
+    },
   });
+
+  const employeesQuery = useQuery<Employee[]>({
+    queryKey: QUERY_KEYS.HRM.EMPLOYEES,
+    queryFn: async () => {
+      const result = await employeeApi.list({ page: 1, pagesize: 100 });
+      if (result.code === 0 && result.data) {
+        return result.data.items;
+      }
+      return [];
+    },
+  });
+
+  const loading = contractsQuery.isLoading;
+  const data: PaginatedResult<Contract> = contractsQuery.data || {
+    items: [],
+    total: 0,
+    page: 1,
+    pagesize: 20,
+  };
+  const employees = employeesQuery.data || [];
+
+  // 统计卡片数据
+  const stats = useMemo(() => {
+    const items = data.items;
+    return {
+      total: data.total,
+      active: items.filter((c) => c.status === 'active').length,
+      expired: items.filter((c) => c.status === 'expired').length,
+      expiring: items.filter((c) => hasExpiringSoon(c.end_date)).length,
+    };
+  }, [data]);
 
   const [modalVisible, setModalVisible] = useState(false);
   const [modalType, setModalType] = useState<'create' | 'edit' | 'view'>('create');
@@ -180,74 +226,13 @@ export default function ContractManagementPage() {
     setConfirmDialog({ title, onConfirm });
   }, []);
 
-  useEffect(() => {
-    loadData();
-    loadEmployees();
-  }, [currentPage, statusFilter, showExpiringOnly]);
-
-  const loadData = async () => {
-    setLoading(true);
-    try {
-      const params: Record<string, any> = {
-        page: currentPage,
-        pagesize: 20,
-      };
-      if (statusFilter) {
-        params.status = statusFilter;
-      }
-      if (showExpiringOnly) {
-        const result = await contractApi.getExpiring({
-          days: 30,
-          page: currentPage,
-          pagesize: 20,
-        });
-        if (result.code === 0 && result.data) {
-          setData(result.data);
-          // 计算即将到期统计
-          const expiringCount = result.data.items.filter((c) => hasExpiringSoon(c.end_date)).length;
-          setStats((prev) => ({ ...prev, expiring: expiringCount }));
-        } else {
-          showNotification('error', result.message || '获取即将到期合同失败');
-        }
-      } else {
-        const result = await contractApi.list(params);
-        if (result.code === 0 && result.data) {
-          setData(result.data);
-          // 计算各项统计
-          const activeCount = result.data.items.filter((c) => c.status === 'active').length;
-          const expiredCount = result.data.items.filter((c) => c.status === 'expired').length;
-          const expiringCount = result.data.items.filter((c) => hasExpiringSoon(c.end_date)).length;
-          setStats({
-            total: result.data.total,
-            active: activeCount,
-            expired: expiredCount,
-            expiring: expiringCount,
-          });
-        } else {
-          showNotification('error', result.message || '获取合同列表失败');
-        }
-      }
-    } catch (error: unknown) {
-      showNotification('error', '获取合同列表失败');
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  const loadEmployees = async () => {
-    try {
-      const result = await employeeApi.list({ page: 1, pagesize: 100 });
-      if (result.code === 0 && result.data) {
-        setEmployees(result.data.items);
-      }
-    } catch (error: unknown) {
-      showNotification('error', '获取员工列表失败');
-    }
-  };
+  const loadData = useCallback(() => {
+    contractsQuery.refetch();
+  }, [contractsQuery]);
 
   const handleSearch = () => {
     setCurrentPage(1);
-    loadData();
+    contractsQuery.refetch();
   };
 
   const handleCreate = () => {
@@ -307,21 +292,62 @@ export default function ContractManagementPage() {
     setModalVisible(true);
   };
 
-  const handleDelete = async (id: string) => {
-    try {
-      const result = await contractApi.delete(id);
+  const handleRenew = (contract: Contract) => {
+    setRenewContractId(contract.id);
+    setRenewFormState({
+      renewal_type: 'regular',
+      new_start_date: contract.end_date || new Date().toISOString().split('T')[0],
+      new_end_date: '',
+      new_salary: '',
+      renewal_reason: '',
+    });
+    setRenewModalVisible(true);
+  };
+
+  const deleteMutation = useMutation({
+    mutationFn: async (id: string) => contractApi.delete(id),
+    onSuccess: (result) => {
       if (result.code === 0) {
         showNotification('success', '删除成功');
-        loadData();
+        queryClient.invalidateQueries({ queryKey: QUERY_KEYS.HRM.CONTRACT });
       } else {
         showNotification('error', result.message || '删除失败');
       }
-    } catch (error: unknown) {
+    },
+    onError: () => {
       showNotification('error', '删除失败');
-    }
+    },
+  });
+
+  const handleDelete = (id: string) => {
+    deleteMutation.mutate(id);
   };
 
-  const handleSave = async () => {
+  const saveMutation = useMutation({
+    mutationFn: async (args: { type: 'create' | 'edit'; id?: string; values: any }) => {
+      if (args.type === 'create') {
+        return contractApi.create(args.values);
+      }
+      return contractApi.update(args.id!, args.values);
+    },
+    onSuccess: (result, variables) => {
+      if (result.code === 0) {
+        showNotification('success', variables.type === 'create' ? '创建成功' : '更新成功');
+        setModalVisible(false);
+        queryClient.invalidateQueries({ queryKey: QUERY_KEYS.HRM.CONTRACT });
+      } else {
+        showNotification(
+          'error',
+          result.message || (variables.type === 'create' ? '创建失败' : '更新失败')
+        );
+      }
+    },
+    onError: () => {
+      showNotification('error', '保存失败');
+    },
+  });
+
+  const handleSave = () => {
     if (!formState.employee_id) {
       showNotification('error', '请选择员工');
       return;
@@ -344,44 +370,31 @@ export default function ContractManagementPage() {
       reminder_days: formState.reminder_days ? parseInt(formState.reminder_days) : undefined,
     };
 
-    try {
-      if (modalType === 'create') {
-        const result = await contractApi.create(values);
-        if (result.code === 0) {
-          showNotification('success', '创建成功');
-          setModalVisible(false);
-          loadData();
-        } else {
-          showNotification('error', result.message || '创建失败');
-        }
-      } else if (currentContract) {
-        const result = await contractApi.update(currentContract.id, values);
-        if (result.code === 0) {
-          showNotification('success', '更新成功');
-          setModalVisible(false);
-          loadData();
-        } else {
-          showNotification('error', result.message || '更新失败');
-        }
-      }
-    } catch (error: unknown) {
-      showNotification('error', '保存失败');
+    if (modalType === 'create') {
+      saveMutation.mutate({ type: 'create', values });
+    } else if (currentContract) {
+      saveMutation.mutate({ type: 'edit', id: currentContract.id, values });
     }
   };
 
-  const handleRenew = (contract: Contract) => {
-    setRenewContractId(contract.id);
-    setRenewFormState({
-      renewal_type: 'regular',
-      new_start_date: contract.end_date || new Date().toISOString().split('T')[0],
-      new_end_date: '',
-      new_salary: '',
-      renewal_reason: '',
-    });
-    setRenewModalVisible(true);
-  };
+  const renewMutation = useMutation({
+    mutationFn: async (args: { contractId: string; values: any }) =>
+      contractApi.renew(args.contractId, args.values),
+    onSuccess: (result) => {
+      if (result.code === 0) {
+        showNotification('success', '续签申请提交成功');
+        setRenewModalVisible(false);
+        queryClient.invalidateQueries({ queryKey: QUERY_KEYS.HRM.CONTRACT });
+      } else {
+        showNotification('error', result.message || '提交失败');
+      }
+    },
+    onError: () => {
+      showNotification('error', '提交失败');
+    },
+  });
 
-  const handleSubmitRenew = async () => {
+  const handleSubmitRenew = () => {
     if (!renewFormState.new_start_date) {
       showNotification('error', '请选择新合同开始日期');
       return;
@@ -392,61 +405,67 @@ export default function ContractManagementPage() {
       new_salary: renewFormState.new_salary ? parseInt(renewFormState.new_salary) : undefined,
     };
 
-    try {
-      const result = await contractApi.renew(renewContractId, values);
-      if (result.code === 0) {
-        showNotification('success', '续签申请提交成功');
-        setRenewModalVisible(false);
-      } else {
-        showNotification('error', result.message || '提交失败');
-      }
-    } catch (error: unknown) {
-      showNotification('error', '提交失败');
-    }
+    renewMutation.mutate({ contractId: renewContractId, values });
   };
 
-  const handleApproveRenewal = async (id: string) => {
-    try {
-      const result = await contractRenewalApi.approve(id);
+  const approveRenewalMutation = useMutation({
+    mutationFn: async (id: string) => contractRenewalApi.approve(id),
+    onSuccess: (result) => {
       if (result.code === 0) {
         showNotification('success', '续签申请已批准');
-        loadData();
+        queryClient.invalidateQueries({ queryKey: QUERY_KEYS.HRM.CONTRACT });
       } else {
         showNotification('error', result.message || '操作失败');
       }
-    } catch (error: unknown) {
+    },
+    onError: () => {
       showNotification('error', '操作失败');
-    }
+    },
+  });
+
+  const handleApproveRenewal = (id: string) => {
+    approveRenewalMutation.mutate(id);
   };
 
-  const handleRejectRenewal = async (id: string) => {
-    const reason = prompt('请输入拒绝理由：');
-    if (!reason) return;
-    try {
-      const result = await contractRenewalApi.reject(id, reason);
+  const rejectRenewalMutation = useMutation({
+    mutationFn: async (args: { id: string; reason: string }) =>
+      contractRenewalApi.reject(args.id, args.reason),
+    onSuccess: (result) => {
       if (result.code === 0) {
         showNotification('success', '续签申请已拒绝');
-        loadData();
+        queryClient.invalidateQueries({ queryKey: QUERY_KEYS.HRM.CONTRACT });
       } else {
         showNotification('error', result.message || '操作失败');
       }
-    } catch (error: unknown) {
+    },
+    onError: () => {
       showNotification('error', '操作失败');
-    }
+    },
+  });
+
+  const handleRejectRenewal = (id: string) => {
+    const reason = prompt('请输入拒绝理由：');
+    if (!reason) return;
+    rejectRenewalMutation.mutate({ id, reason });
   };
 
-  const handleExecuteRenewal = async (id: string) => {
-    try {
-      const result = await contractRenewalApi.execute(id);
+  const executeRenewalMutation = useMutation({
+    mutationFn: async (id: string) => contractRenewalApi.execute(id),
+    onSuccess: (result) => {
       if (result.code === 0) {
         showNotification('success', '合同续签已执行');
-        loadData();
+        queryClient.invalidateQueries({ queryKey: QUERY_KEYS.HRM.CONTRACT });
       } else {
         showNotification('error', result.message || '操作失败');
       }
-    } catch (error: unknown) {
+    },
+    onError: () => {
       showNotification('error', '操作失败');
-    }
+    },
+  });
+
+  const handleExecuteRenewal = (id: string) => {
+    executeRenewalMutation.mutate(id);
   };
 
   const getEmployeeName = (id?: string) => {

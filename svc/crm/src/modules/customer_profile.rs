@@ -100,19 +100,19 @@ pub struct AddProfileTagRequest {
 pub fn create_routes() -> Router<ApiState> {
     Router::new()
         .route(
-            "/api/core/crm/v1/customers/{id}/profile",
+            "/api/core/crm/customers/{id}/profile",
             get(get_customer_profile),
         )
         .route(
-            "/api/core/crm/v1/customers/{id}/profile/tags",
+            "/api/core/crm/customers/{id}/profile/tags",
             post(add_profile_tags),
         )
         .route(
-            "/api/core/crm/v1/customers/{id}/profile/tags",
+            "/api/core/crm/customers/{id}/profile/tags",
             delete(remove_profile_tags),
         )
         .route(
-            "/api/core/crm/v1/customer-profiles",
+            "/api/core/crm/customer-profiles",
             get(list_customer_profiles),
         )
 }

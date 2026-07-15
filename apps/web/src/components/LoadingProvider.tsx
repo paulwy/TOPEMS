@@ -10,9 +10,7 @@ import React, {
   memo,
 } from 'react';
 import {
-  // TODO(v2-phase2): Replace CircularProgress with LoadingSpinner from '@/components/common/LoadingSpinner'. Complex usage found - manual review needed.
   Box,
-  CircularProgress,
   LinearProgress,
   Typography,
   Paper,
@@ -26,6 +24,7 @@ import {
   TableHead,
   TableRow,
 } from '@mui/material';
+import { LoadingSpinner as SharedLoadingSpinner } from '@topems/shared-components';
 
 // ============================================================================
 // Types
@@ -233,13 +232,33 @@ LinearProgressBar.displayName = 'LinearProgressBar';
 
 const CircularProgressBar: React.FC<{ progress: number }> = memo(({ progress }) => (
   <Box sx={{ position: 'relative', display: 'inline-flex' }}>
-    <CircularProgress
-      variant='determinate'
-      value={progress}
-      size={80}
-      thickness={4}
-      sx={{ color: 'primary.main' }}
-    />
+    <svg
+      width={80}
+      height={80}
+      style={{ transform: 'rotate(-90deg)' }}
+    >
+      <circle
+        cx={40}
+        cy={40}
+        r={36}
+        fill='none'
+        stroke='currentColor'
+        strokeWidth={4}
+        style={{ opacity: 0.2 }}
+      />
+      <circle
+        cx={40}
+        cy={40}
+        r={36}
+        fill='none'
+        stroke='primary.main'
+        strokeWidth={4}
+        strokeLinecap='round'
+        strokeDasharray={`${2 * Math.PI * 36}`}
+        strokeDashoffset={2 * Math.PI * 36 * (1 - progress / 100)}
+        style={{ transition: 'stroke-dashoffset 0.3s ease' }}
+      />
+    </svg>
     <Box
       sx={{
         top: 0,
@@ -272,20 +291,11 @@ const LoadingSpinner: React.FC<{ size?: number; customIcon?: ReactNode }> = memo
     if (customIcon) {
       return <Box sx={{ fontSize: size }}>{customIcon}</Box>;
     }
-    return (
-      <CircularProgress
-        size={size}
-        thickness={4}
-        sx={{
-          color: 'primary.main',
-          animation: 'spin 1s linear infinite',
-          '@keyframes spin': {
-            '0%': { transform: 'rotate(0deg)' },
-            '100%': { transform: 'rotate(360deg)' },
-          },
-        }}
-      />
-    );
+    let spinnerSize: 'sm' | 'md' | 'lg';
+    if (size <= 24) spinnerSize = 'sm';
+    else if (size <= 32) spinnerSize = 'md';
+    else spinnerSize = 'lg';
+    return <SharedLoadingSpinner size={spinnerSize} />;
   }
 );
 LoadingSpinner.displayName = 'LoadingSpinner';

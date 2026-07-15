@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useCallback, useMemo } from 'react';
+import React, { useState, useMemo } from 'react';
 import {
   Box,
   Dialog,
@@ -19,6 +19,8 @@ import {
   Tab,
 } from '@mui/material';
 import { Plus, GraduationCap, FileText, Award, Search } from 'lucide-react';
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import { QUERY_KEYS } from '@/lib/reactQuery';
 import { ListPageTemplate, type ColumnDef } from '@/components/templates';
 import { ehsApi } from '@/api/ehs';
 import { PageContainer } from '@/components/common/PageContainerV2';
@@ -30,11 +32,8 @@ import { designTokens } from '@/theme/tokens';
 const ct = designTokens.colors;
 
 const TrainingPage: React.FC = () => {
+  const queryClient = useQueryClient();
   const [activeTab, setActiveTab] = useState(0);
-  const [plans, setPlans] = useState<TrainingPlan[]>([]);
-  const [records, setRecords] = useState<TrainingRecord[]>([]);
-  const [certificates, setCertificates] = useState<TrainingCertificate[]>([]);
-  const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState('');
   const [statusFilter, setStatusFilter] = useState('all');
   const [showCreateModal, setShowCreateModal] = useState(false);
@@ -53,37 +52,55 @@ const TrainingPage: React.FC = () => {
     end_date: '',
   });
 
-  const loadData = useCallback(async () => {
-    try {
-      setLoading(true);
-      const [plansRes, recordsRes, certsRes] = await Promise.all([
-        ehsApi.listTrainingPlans({ pagesize: 100, search: searchTerm || undefined }),
-        ehsApi.listTrainingRecords({ pagesize: 100, search: searchTerm || undefined }),
-        ehsApi.listTrainingCertificates({ pagesize: 100, search: searchTerm || undefined }),
-      ]);
+  const { data: plansData, isLoading: plansLoading } = useQuery({
+    queryKey: [...QUERY_KEYS.EHS.TRAINING_PLANS, searchTerm],
+    queryFn: async () => {
+      const response = await ehsApi.listTrainingPlans({
+        pagesize: 100,
+        search: searchTerm || undefined,
+      });
+      if (response.success && response.data) {
+        const data = response.data as any;
+        return Array.isArray(data) ? data : data.data || [];
+      }
+      return [];
+    },
+  });
+  const plans = (plansData as TrainingPlan[]) || [];
 
-      if (plansRes.success && plansRes.data) {
-        const data = plansRes.data as any;
-        setPlans(Array.isArray(data) ? data : data.data || []);
+  const { data: recordsData, isLoading: recordsLoading } = useQuery({
+    queryKey: [...QUERY_KEYS.EHS.TRAINING_RECORDS, searchTerm],
+    queryFn: async () => {
+      const response = await ehsApi.listTrainingRecords({
+        pagesize: 100,
+        search: searchTerm || undefined,
+      });
+      if (response.success && response.data) {
+        const data = response.data as any;
+        return Array.isArray(data) ? data : data.data || [];
       }
-      if (recordsRes.success && recordsRes.data) {
-        const data = recordsRes.data as any;
-        setRecords(Array.isArray(data) ? data : data.data || []);
-      }
-      if (certsRes.success && certsRes.data) {
-        const data = certsRes.data as any;
-        setCertificates(Array.isArray(data) ? data : data.data || []);
-      }
-    } catch (err: unknown) {
-      apiLogger.error('加载培训数据失败:', err);
-    } finally {
-      setLoading(false);
-    }
-  }, [searchTerm]);
+      return [];
+    },
+  });
+  const records = (recordsData as TrainingRecord[]) || [];
 
-  useEffect(() => {
-    loadData();
-  }, [loadData]);
+  const { data: certificatesData, isLoading: certificatesLoading } = useQuery({
+    queryKey: [...QUERY_KEYS.EHS.TRAINING_CERTIFICATES, searchTerm],
+    queryFn: async () => {
+      const response = await ehsApi.listTrainingCertificates({
+        pagesize: 100,
+        search: searchTerm || undefined,
+      });
+      if (response.success && response.data) {
+        const data = response.data as any;
+        return Array.isArray(data) ? data : data.data || [];
+      }
+      return [];
+    },
+  });
+  const certificates = (certificatesData as TrainingCertificate[]) || [];
+
+  const loading = plansLoading || recordsLoading || certificatesLoading;
 
   const getStatusBadge = (status: string) => {
     const statusMap: Record<string, { bg: string; color: string; label: string }> = {
@@ -230,29 +247,35 @@ const TrainingPage: React.FC = () => {
     setShowCreateModal(true);
   };
 
-  const handleSavePlan = async () => {
-    try {
-      await ehsApi.createTrainingPlan({
-        title: planFormData.title,
-        training_type: planFormData.training_type,
-        category: planFormData.category,
-        description: planFormData.description || null,
-        trainer: planFormData.trainer || null,
-        location: planFormData.location || null,
-        duration_hours: planFormData.duration_hours ? Number(planFormData.duration_hours) : null,
-        max_participants: planFormData.max_participants
-          ? Number(planFormData.max_participants)
-          : null,
-        start_date: planFormData.start_date || null,
-        end_date: planFormData.end_date || null,
-      });
+  const createPlanMutation = useMutation({
+    mutationFn: (data: Parameters<typeof ehsApi.createTrainingPlan>[0]) =>
+      ehsApi.createTrainingPlan(data),
+    onSuccess: () => {
       addNotification({ title: '成功', message: '培训计划创建成功', type: 'success' });
+      queryClient.invalidateQueries({ queryKey: QUERY_KEYS.EHS.TRAINING_PLANS });
       setShowCreateModal(false);
-      loadData();
-    } catch (err: unknown) {
+    },
+    onError: (error: unknown) => {
       addNotification({ title: '错误', message: '创建失败', type: 'error' });
-      apiLogger.error('创建培训计划失败:', err);
-    }
+      apiLogger.error('创建培训计划失败:', error);
+    },
+  });
+
+  const handleSavePlan = () => {
+    createPlanMutation.mutate({
+      title: planFormData.title,
+      training_type: planFormData.training_type,
+      category: planFormData.category,
+      description: planFormData.description || null,
+      trainer: planFormData.trainer || null,
+      location: planFormData.location || null,
+      duration_hours: planFormData.duration_hours ? Number(planFormData.duration_hours) : null,
+      max_participants: planFormData.max_participants
+        ? Number(planFormData.max_participants)
+        : null,
+      start_date: planFormData.start_date || null,
+      end_date: planFormData.end_date || null,
+    });
   };
 
   const headerActions = [
@@ -438,7 +461,11 @@ const TrainingPage: React.FC = () => {
         searchPlaceholder='搜索...'
         searchValue={searchTerm}
         onSearch={(value) => setSearchTerm(value)}
-        onRefresh={loadData}
+        onRefresh={() => {
+          queryClient.invalidateQueries({ queryKey: QUERY_KEYS.EHS.TRAINING_PLANS });
+          queryClient.invalidateQueries({ queryKey: QUERY_KEYS.EHS.TRAINING_RECORDS });
+          queryClient.invalidateQueries({ queryKey: QUERY_KEYS.EHS.TRAINING_CERTIFICATES });
+        }}
       />
 
       <Dialog

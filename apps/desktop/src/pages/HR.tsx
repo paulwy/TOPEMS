@@ -157,14 +157,14 @@ const HR = () => {
         <DialogTitle>{editingEmployee ? '编辑员工' : '添加员工'}</DialogTitle>
         <DialogContent>
           <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2, mt: 2 }}>
-            <TextField label="姓名" fullWidth value={formData.name} onChange={(e) => setFormData({ ...formData, name: e.target.value })} />
+            <TextField label="姓名" fullWidth value={formData.name} onChange={(e: React.ChangeEvent<HTMLInputElement>) => setFormData({ ...formData, name: e.target.value })} />
             <Box sx={{ display: 'flex', gap: 2 }}>
-              <TextField label="部门" fullWidth value={formData.department} onChange={(e) => setFormData({ ...formData, department: e.target.value })} />
-              <TextField label="职位" fullWidth value={formData.position} onChange={(e) => setFormData({ ...formData, position: e.target.value })} />
+              <TextField label="部门" fullWidth value={formData.department} onChange={(e: React.ChangeEvent<HTMLInputElement>) => setFormData({ ...formData, department: e.target.value })} />
+              <TextField label="职位" fullWidth value={formData.position} onChange={(e: React.ChangeEvent<HTMLInputElement>) => setFormData({ ...formData, position: e.target.value })} />
             </Box>
-            <TextField label="邮箱" fullWidth value={formData.email} onChange={(e) => setFormData({ ...formData, email: e.target.value })} />
-            <TextField label="电话" fullWidth value={formData.phone} onChange={(e) => setFormData({ ...formData, phone: e.target.value })} />
-            <TextField label="入职日期" type="date" fullWidth value={formData.hireDate} onChange={(e) => setFormData({ ...formData, hireDate: e.target.value })} />
+            <TextField label="邮箱" fullWidth value={formData.email} onChange={(e: React.ChangeEvent<HTMLInputElement>) => setFormData({ ...formData, email: e.target.value })} />
+            <TextField label="电话" fullWidth value={formData.phone} onChange={(e: React.ChangeEvent<HTMLInputElement>) => setFormData({ ...formData, phone: e.target.value })} />
+            <TextField label="入职日期" type="date" fullWidth value={formData.hireDate} onChange={(e: React.ChangeEvent<HTMLInputElement>) => setFormData({ ...formData, hireDate: e.target.value })} />
           </Box>
         </DialogContent>
         <DialogActions>

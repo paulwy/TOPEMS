@@ -110,12 +110,6 @@ export const smartReplenishmentApi = {
   }): Promise<ApiResponse<{ updated_count: number }>> => {
     return apiClient.wms.post('/smart-replenishment/safety-stock/calculate', data);
   },
-
-  getStatistics: async (params?: {
-    warehouse_id?: string;
-  }): Promise<ApiResponse<ReplenishmentStatistics>> => {
-    return apiClient.wms.get('/smart-replenishment/statistics', { params });
-  },
 };
 
 export async function listReplenishmentSuggestions(

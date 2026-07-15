@@ -130,7 +130,8 @@ export const DashboardPage: React.FC = () => {
     staleTime: 5 * 60 * 1000,
   });
 
-  const loading = overviewLoading || mrpLoading || inspectionLoading || inventoryLoading || priceLoading;
+  const loading =
+    overviewLoading || mrpLoading || inspectionLoading || inventoryLoading || priceLoading;
 
   const getGreeting = (): string => {
     const hour = new Date().getHours();

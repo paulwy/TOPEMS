@@ -71,12 +71,33 @@ export const Default: Story = {
 export const AllVariants: Story = {
   render: () => (
     <div style={{ display: 'flex', flexWrap: 'wrap', gap: 16, alignItems: 'center' }}>
-      <ActionButton label='主要操作' variant='primary' icon={<Plus size={18} />} />
-      <ActionButton label='次要操作' variant='secondary' />
-      <ActionButton label='成功' variant='success' icon={<Save size={18} />} />
-      <ActionButton label='警告' variant='warning' />
-      <ActionButton label='删除' variant='danger' icon={<Delete size={18} />} />
-      <ActionButton label='文本按钮' variant='text' />
+      <ActionButton
+        label='主要操作'
+        variant='primary'
+        icon={<Plus size={18} />}
+      />
+      <ActionButton
+        label='次要操作'
+        variant='secondary'
+      />
+      <ActionButton
+        label='成功'
+        variant='success'
+        icon={<Save size={18} />}
+      />
+      <ActionButton
+        label='警告'
+        variant='warning'
+      />
+      <ActionButton
+        label='删除'
+        variant='danger'
+        icon={<Delete size={18} />}
+      />
+      <ActionButton
+        label='文本按钮'
+        variant='text'
+      />
     </div>
   ),
 };
@@ -114,9 +135,18 @@ export const Disabled: Story = {
 export const Sizes: Story = {
   render: () => (
     <div style={{ display: 'flex', alignItems: 'center', gap: 16 }}>
-      <ActionButton label='小按钮' size='small' />
-      <ActionButton label='中按钮' size='medium' />
-      <ActionButton label='大按钮' size='large' />
+      <ActionButton
+        label='小按钮'
+        size='small'
+      />
+      <ActionButton
+        label='中按钮'
+        size='medium'
+      />
+      <ActionButton
+        label='大按钮'
+        size='large'
+      />
     </div>
   ),
 };
@@ -125,6 +155,6 @@ export const WithTooltip: Story = {
   args: {
     label: '帮助',
     tooltip: '点击获取帮助信息',
-    variant='text',
+    variant = 'text',
   },
 };

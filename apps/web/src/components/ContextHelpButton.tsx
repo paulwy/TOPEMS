@@ -134,25 +134,41 @@ export const ContextHelpButton: React.FC<ContextHelpButtonProps> = ({
                 justifyContent: 'center',
               }}
             >
-              <HelpCircle size={20} sx={{ color: 'primary.main' }} />
+              <HelpCircle
+                size={20}
+                sx={{ color: 'primary.main' }}
+              />
             </Box>
             <Box>
-              <Typography variant='h6' sx={{ fontWeight: 600 }}>
+              <Typography
+                variant='h6'
+                sx={{ fontWeight: 600 }}
+              >
                 {helpInfo?.title || t('help.help_center', '帮助中心')}
               </Typography>
               {helpInfo?.description && (
-                <Typography variant='body2' color='text.secondary'>
+                <Typography
+                  variant='body2'
+                  color='text.secondary'
+                >
                   {helpInfo.description}
                 </Typography>
               )}
             </Box>
           </Box>
-          <Button size='small' onClick={handleClose} sx={{ minWidth: 'auto', p: 1 }}>
+          <Button
+            size='small'
+            onClick={handleClose}
+            sx={{ minWidth: 'auto', p: 1 }}
+          >
             <X size={20} />
           </Button>
         </DialogTitle>
 
-        <DialogContent dividers sx={{ p: 0 }}>
+        <DialogContent
+          dividers
+          sx={{ p: 0 }}
+        >
           <List sx={{ py: 0 }}>
             <ListItem
               onClick={handleViewGuide}
@@ -163,17 +179,26 @@ export const ContextHelpButton: React.FC<ContextHelpButtonProps> = ({
               }}
             >
               <ListItemIcon>
-                <BookOpen size={20} sx={{ color: 'primary.main' }} />
+                <BookOpen
+                  size={20}
+                  sx={{ color: 'primary.main' }}
+                />
               </ListItemIcon>
               <ListItemText
                 primary={
-                  <Typography variant='body1' sx={{ fontWeight: 500 }}>
+                  <Typography
+                    variant='body1'
+                    sx={{ fontWeight: 500 }}
+                  >
                     {t('help.view_guide', '查看操作指南')}
                   </Typography>
                 }
                 secondary={t('help.view_guide_desc', '完整的用户手册和操作教程')}
               />
-              <ChevronRight size={18} sx={{ color: 'text.disabled' }} />
+              <ChevronRight
+                size={18}
+                sx={{ color: 'text.disabled' }}
+              />
             </ListItem>
 
             <Divider />
@@ -187,17 +212,26 @@ export const ContextHelpButton: React.FC<ContextHelpButtonProps> = ({
               }}
             >
               <ListItemIcon>
-                <FileQuestion size={20} sx={{ color: 'success.main' }} />
+                <FileQuestion
+                  size={20}
+                  sx={{ color: 'success.main' }}
+                />
               </ListItemIcon>
               <ListItemText
                 primary={
-                  <Typography variant='body1' sx={{ fontWeight: 500 }}>
+                  <Typography
+                    variant='body1'
+                    sx={{ fontWeight: 500 }}
+                  >
                     {t('help.view_faq', '浏览常见问题')}
                   </Typography>
                 }
                 secondary={t('help.view_faq_desc', '高频问题解答，快速找到答案')}
               />
-              <ChevronRight size={18} sx={{ color: 'text.disabled' }} />
+              <ChevronRight
+                size={18}
+                sx={{ color: 'text.disabled' }}
+              />
             </ListItem>
 
             <Divider />
@@ -211,23 +245,38 @@ export const ContextHelpButton: React.FC<ContextHelpButtonProps> = ({
               }}
             >
               <ListItemIcon>
-                <MessageCircle size={20} sx={{ color: 'info.main' }} />
+                <MessageCircle
+                  size={20}
+                  sx={{ color: 'info.main' }}
+                />
               </ListItemIcon>
               <ListItemText
                 primary={
-                  <Typography variant='body1' sx={{ fontWeight: 500 }}>
+                  <Typography
+                    variant='body1'
+                    sx={{ fontWeight: 500 }}
+                  >
                     {t('help.contact_support', '联系技术支持')}
                   </Typography>
                 }
                 secondary={t('help.contact_support_desc', '工作时间 9:00-18:00，工作日')}
               />
-              <ChevronRight size={18} sx={{ color: 'text.disabled' }} />
+              <ChevronRight
+                size={18}
+                sx={{ color: 'text.disabled' }}
+              />
             </ListItem>
           </List>
         </DialogContent>
 
-        <DialogActions sx={{ p: 2, bgcolor: 'grey.50', borderBottomLeftRadius: 12, borderBottomRightRadius: 12 }}>
-          <Stack direction='row' spacing={1} sx={{ width: '100%', justifyContent: 'center' }}>
+        <DialogActions
+          sx={{ p: 2, bgcolor: 'grey.50', borderBottomLeftRadius: 12, borderBottomRightRadius: 12 }}
+        >
+          <Stack
+            direction='row'
+            spacing={1}
+            sx={{ width: '100%', justifyContent: 'center' }}
+          >
             <Chip
               label={t('help.shortcut', '快捷键: ?')}
               size='small'

@@ -1,4 +1,5 @@
-import React, { useEffect, useState, useMemo } from 'react';
+import React, { useState, useMemo } from 'react';
+import { useQuery } from '@tanstack/react-query';
 import { useNavigate } from 'react-router-dom';
 import { Box, Button } from '@mui/material';
 import { QuickSearch, PageContainer } from '@/components/common';
@@ -45,12 +46,13 @@ const iconMap: Record<string, React.ComponentType<{ className?: string; size?: n
 
 export const DashboardPage: React.FC = () => {
   const navigate = useNavigate();
-  const [loading, setLoading] = useState(true);
 
-  useEffect(() => {
-    const timer = setTimeout(() => setLoading(false), 500);
-    return () => clearTimeout(timer);
-  }, []);
+  const loadingQuery = useQuery<boolean>({
+    queryKey: ['wms-dashboard'],
+    queryFn: async () => true,
+    staleTime: Infinity,
+  });
+  const loading = loadingQuery.isLoading;
 
   const getGreeting = (): string => {
     const hour = new Date().getHours();

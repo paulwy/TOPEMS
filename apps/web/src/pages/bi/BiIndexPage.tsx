@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react';
+import { useQuery } from '@tanstack/react-query';
 import {
   BarChart3,
   LayoutDashboard,
@@ -134,40 +135,40 @@ const recentActivities = [
 ];
 
 const BiIndexPage = () => {
-  const [dashboards, setDashboards] = useState<Dashboard[]>([]);
-  const [reports, setReports] = useState<Report[]>([]);
-  const [datasets, setDatasets] = useState<Dataset[]>([]);
-  const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState('');
 
-  const loadData = async () => {
-    setLoading(true);
-    try {
+  const biDataQuery = useQuery<{
+    dashboards: Dashboard[];
+    reports: Report[];
+    datasets: Dataset[];
+  }>({
+    queryKey: ['bi-index-data'],
+    queryFn: async () => {
       const [dashRes, reportRes, dsRes] = await Promise.all([
         fetchDashboards(),
         fetchReports(),
         listDatasets(),
       ]);
 
-      if (dashRes.success && dashRes.data) {
-        setDashboards(dashRes.data.items?.slice(0, 4) || []);
-      }
-      if (reportRes.success && reportRes.data) {
-        setReports(reportRes.data.items?.slice(0, 4) || []);
-      }
-      if (dsRes.success && dsRes.data) {
-        setDatasets(dsRes.data.items?.slice(0, 4) || []);
-      }
-    } catch (error: unknown) {
-      logger.error('Failed to load BI data:', error);
-    } finally {
-      setLoading(false);
-    }
-  };
+      return {
+        dashboards: dashRes.success && dashRes.data ? dashRes.data.items?.slice(0, 4) || [] : [],
+        reports: reportRes.success && reportRes.data ? reportRes.data.items?.slice(0, 4) || [] : [],
+        datasets: dsRes.success && dsRes.data ? dsRes.data.items?.slice(0, 4) || [] : [],
+      };
+    },
+    staleTime: 5 * 60 * 1000,
+  });
+
+  const dashboards = biDataQuery.data?.dashboards ?? [];
+  const reports = biDataQuery.data?.reports ?? [];
+  const datasets = biDataQuery.data?.datasets ?? [];
+  const loading = biDataQuery.isLoading;
 
   useEffect(() => {
-    loadData();
-  }, []);
+    if (biDataQuery.isError) {
+      logger.error('Failed to load BI data:', biDataQuery.error);
+    }
+  }, [biDataQuery.isError, biDataQuery.error]);
 
   const keyMetrics = [
     {

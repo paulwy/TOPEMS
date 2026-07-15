@@ -66,11 +66,12 @@ export const meetingBookingApi = {
 };
 
 export const meetingRoomCrudApi: CrudOperations<MeetingRoom> = {
-  list: (params?) => meetingRoomApi.list({
-    page: params?.page,
-    pagesize: params?.pagesize,
-    ...(params as any),
-  }),
+  list: (params?) =>
+    meetingRoomApi.list({
+      page: params?.page,
+      pagesize: params?.pagesize,
+      ...(params as any),
+    }),
   get: meetingRoomApi.get,
   create: meetingRoomApi.create,
   update: meetingRoomApi.update,
@@ -78,11 +79,12 @@ export const meetingRoomCrudApi: CrudOperations<MeetingRoom> = {
 };
 
 export const meetingBookingCrudApi: CrudOperations<MeetingBooking> = {
-  list: (params?) => meetingBookingApi.list({
-    page: params?.page,
-    pagesize: params?.pagesize,
-    ...(params as any),
-  }),
+  list: (params?) =>
+    meetingBookingApi.list({
+      page: params?.page,
+      pagesize: params?.pagesize,
+      ...(params as any),
+    }),
   get: meetingBookingApi.get,
   create: meetingBookingApi.create,
   update: meetingBookingApi.update,

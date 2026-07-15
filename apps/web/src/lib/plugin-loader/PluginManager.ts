@@ -1,8 +1,8 @@
 import type { TenantInstalledPlugin, Plugin } from '../../api/plugin/types';
 import { pluginApi, pluginApiAggregated } from '../../api/plugin';
 import { apiLogger } from '../../utils/logger';
-import { navigationRegistryV2 } from '../../lib/navigation/NavigationRegistryV2';
-import type { ModuleNavConfig, NavItemConfig, ModuleSuite } from '../../lib/navigation/types';
+import { navigationRegistryV2 } from '../navigation/NavigationRegistryV2';
+import type { ModuleNavConfig, NavItemConfig, ModuleSuite } from '../navigation/types';
 
 type PluginStatus = 'installing' | 'installed' | 'running' | 'disabled' | 'error' | 'uninstalled';
 

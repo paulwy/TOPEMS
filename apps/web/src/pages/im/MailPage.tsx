@@ -19,7 +19,8 @@ import {
   Button,
   useTheme,
 } from '@mui/material';
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import {
   Mail,
   Send,
@@ -63,6 +64,7 @@ import {
 } from '@/api/mail';
 import { designTokens } from '@/theme/tokens';
 import { DASHBOARD_PATHS } from '@/routes/dashboard';
+import { QUERY_KEYS } from '@/lib/reactQuery';
 
 const ct = designTokens.colors;
 
@@ -99,9 +101,6 @@ const MailPage: React.FC = () => {
   const addNotification = useNotificationStore((state) => state.addNotification);
 
   const [activeTab, setActiveTab] = useState('emails');
-  const [emails, setEmails] = useState<Email[]>([]);
-  const [templates, setTemplates] = useState<EmailTemplate[]>([]);
-  const [loading, setLoading] = useState(true);
   const [searchQuery, setSearchQuery] = useState('');
   const [statusFilter, setStatusFilter] = useState('');
   const [priorityFilter, setPriorityFilter] = useState('');
@@ -140,8 +139,6 @@ const MailPage: React.FC = () => {
 
   const [currentPage, setCurrentPage] = useState(1);
   const [pageSize] = useState(10);
-  const [totalEmails, setTotalEmails] = useState(0);
-  const [totalTemplates, setTotalTemplates] = useState(0);
 
   const [formErrors, setFormErrors] = useState<Record<string, string>>({});
   const [selectedEmails, setSelectedEmails] = useState<string[]>([]);
@@ -151,8 +148,6 @@ const MailPage: React.FC = () => {
   } | null>(null);
   const [showEyeModal, setShowEyeModal] = useState(false);
   const [copiedId, setCopiedId] = useState<string | null>(null);
-  const [stats, setStats] = useState<EmailStats | null>(null);
-  const [statsLoading, setStatsLoading] = useState(false);
 
   const [deleteEmailDialogOpen, setDeleteEmailDialogOpen] = useState(false);
   const [deletingEmailId, setDeletingEmailId] = useState<string | null>(null);
@@ -163,91 +158,196 @@ const MailPage: React.FC = () => {
   const [deleteTemplateDialogOpen, setDeleteTemplateDialogOpen] = useState(false);
   const [deletingTemplateId, setDeletingTemplateId] = useState<string | null>(null);
 
-  useEffect(() => {
-    if (activeTab === 'emails') {
-      loadEmails();
-      loadStats();
-    } else {
-      loadTemplates();
-    }
-  }, [activeTab]);
+  const queryClient = useQueryClient();
 
-  useEffect(() => {
-    if (activeTab === 'emails') {
-      loadEmails();
-    } else {
-      loadTemplates();
-    }
-  }, [currentPage, searchQuery, statusFilter, priorityFilter, categoryFilter]);
-
-  const loadStats = async () => {
-    setStatsLoading(true);
-    try {
-      const res = await emailApi.getStats();
-      if (res.success && res.data) {
-        setStats(res.data);
+  const statsQuery = useQuery<EmailStats | null>({
+    queryKey: [...QUERY_KEYS.MAIL.STATS, activeTab],
+    queryFn: async () => {
+      if (activeTab !== 'emails') return null;
+      try {
+        const res = await emailApi.getStats();
+        if (res.success && res.data) {
+          return res.data;
+        }
+      } catch (err: unknown) {
+        addNotification({
+          title: '加载失败',
+          message: (err as { message?: string }).message || '加载统计数据失败',
+          type: 'error',
+        });
       }
-    } catch (err: unknown) {
-      addNotification({
-        title: '加载失败',
-        message: (err as { message?: string }).message || '加载统计数据失败',
-        type: 'error',
-      });
-    } finally {
-      setStatsLoading(false);
-    }
+      return null;
+    },
+    enabled: activeTab === 'emails',
+  });
+
+  const emailsQuery = useQuery<{ items: Email[]; total: number }>({
+    queryKey: [
+      ...QUERY_KEYS.MAIL.EMAILS,
+      currentPage,
+      pageSize,
+      searchQuery,
+      statusFilter,
+      priorityFilter,
+    ],
+    queryFn: async () => {
+      if (activeTab !== 'emails') return { items: [], total: 0 };
+      try {
+        const res = await emailApi.list({
+          page: currentPage,
+          pagesize: pageSize,
+          search: searchQuery || undefined,
+          status: statusFilter || undefined,
+          priority: priorityFilter || undefined,
+        });
+        if (res.success && res.data) {
+          return { items: res.data.items || [], total: res.data.total || 0 };
+        }
+      } catch (err: unknown) {
+        addNotification({
+          title: '加载失败',
+          message: (err as { message?: string }).message || '加载邮件列表失败',
+          type: 'error',
+        });
+      }
+      return { items: [], total: 0 };
+    },
+    enabled: activeTab === 'emails',
+  });
+
+  const templatesQuery = useQuery<{ items: EmailTemplate[]; total: number }>({
+    queryKey: [
+      ...QUERY_KEYS.MAIL.TEMPLATES_LIST,
+      currentPage,
+      pageSize,
+      searchQuery,
+      categoryFilter,
+    ],
+    queryFn: async () => {
+      if (activeTab !== 'templates') return { items: [], total: 0 };
+      try {
+        const res = await templateApi.list({
+          page: currentPage,
+          pagesize: pageSize,
+          search: searchQuery || undefined,
+          category: categoryFilter || undefined,
+        });
+        if (res.success && res.data) {
+          return { items: res.data.items || [], total: res.data.total || 0 };
+        }
+      } catch (err: unknown) {
+        addNotification({
+          title: '加载失败',
+          message: (err as { message?: string }).message || '加载模板列表失败',
+          type: 'error',
+        });
+      }
+      return { items: [], total: 0 };
+    },
+    enabled: activeTab === 'templates',
+  });
+
+  const emails = emailsQuery.data?.items ?? [];
+  const templates = templatesQuery.data?.items ?? [];
+  const totalEmails = emailsQuery.data?.total ?? 0;
+  const totalTemplates = templatesQuery.data?.total ?? 0;
+  const loading = activeTab === 'emails' ? emailsQuery.isLoading : templatesQuery.isLoading;
+  const stats = statsQuery.data ?? null;
+  const statsLoading = statsQuery.isLoading;
+
+  const resetSendForm = () => {
+    setSendForm({
+      subject: '',
+      to_addresses: '',
+      cc_addresses: '',
+      bcc_addresses: '',
+      body: '',
+      priority: 'normal',
+      template_code: '',
+      useTemplate: false,
+      templateData: '',
+    });
+    setSelectedTemplateForSend(null);
   };
 
-  const loadEmails = async () => {
-    setLoading(true);
-    try {
-      const res = await emailApi.list({
-        page: currentPage,
-        pagesize: pageSize,
-        search: searchQuery || undefined,
-        status: statusFilter || undefined,
-        priority: priorityFilter || undefined,
-      });
-      if (res.success && res.data) {
-        setEmails(res.data.items || []);
-        setTotalEmails(res.data.total || 0);
-      }
-    } catch (err: unknown) {
-      addNotification({
-        title: '加载失败',
-        message: (err as { message?: string }).message || '加载邮件列表失败',
-        type: 'error',
-      });
-    } finally {
-      setLoading(false);
-    }
+  const resetTemplateForm = () => {
+    setTemplateForm({
+      code: '',
+      name: '',
+      description: '',
+      subject_template: '',
+      body_template: '',
+      body_html_template: '',
+      category: 'general',
+      tags: '',
+    });
   };
 
-  const loadTemplates = async () => {
-    setLoading(true);
-    try {
-      const res = await templateApi.list({
-        page: currentPage,
-        pagesize: pageSize,
-        search: searchQuery || undefined,
-        category: categoryFilter || undefined,
-      });
-      if (res.success && res.data) {
-        setTemplates(res.data.items || []);
-        setTotalTemplates(res.data.total || 0);
+  const sendEmailMutation = useMutation({
+    mutationFn: async (params: {
+      useTemplate: boolean;
+      template_code: string;
+      templateData: string;
+      subject: string;
+      to_addresses: string[];
+      cc_addresses?: string[];
+      bcc_addresses?: string[];
+      body: string;
+      priority: string;
+    }) => {
+      if (params.useTemplate && params.template_code) {
+        let templateData: Record<string, any> = {};
+        try {
+          templateData = JSON.parse(params.templateData || '{}');
+        } catch {
+          templateData = {};
+        }
+        return emailApi.sendWithTemplate({
+          template_code: params.template_code,
+          to_addresses: params.to_addresses,
+          cc_addresses: params.cc_addresses,
+          bcc_addresses: params.bcc_addresses,
+          template_data: templateData,
+          priority: params.priority,
+        });
       }
-    } catch (err: unknown) {
+      return emailApi.send({
+        subject: params.subject,
+        to_addresses: params.to_addresses,
+        cc_addresses: params.cc_addresses,
+        bcc_addresses: params.bcc_addresses,
+        body: params.body,
+        priority: params.priority,
+      });
+    },
+    onSuccess: (res) => {
+      if (res.success) {
+        addNotification({
+          title: '成功',
+          message: '邮件发送成功',
+          type: 'success',
+        });
+        setShowSendModal(false);
+        resetSendForm();
+        queryClient.invalidateQueries({ queryKey: QUERY_KEYS.MAIL.EMAILS });
+      } else {
+        addNotification({
+          title: '失败',
+          message: res.message || '发送邮件失败',
+          type: 'error',
+        });
+      }
+    },
+    onError: (err: unknown) => {
       addNotification({
-        title: '加载失败',
-        message: (err as { message?: string }).message || '加载模板列表失败',
+        title: '失败',
+        message: (err as { message?: string }).message || '发送邮件失败',
         type: 'error',
       });
-    } finally {
-      setLoading(false);
-    }
-  };
+    },
+  });
 
-  const handleSendEmail = async (e: React.FormEvent) => {
+  const handleSendEmail = (e: React.FormEvent) => {
     e.preventDefault();
 
     const errors: Record<string, string> = {};
@@ -294,124 +394,48 @@ const MailPage: React.FC = () => {
     }
 
     setFormErrors({});
-    setLoading(true);
 
-    try {
-      const toAddresses = sendForm.to_addresses
-        .split(',')
-        .map((s) => s.trim())
-        .filter(Boolean);
-      const ccAddresses = sendForm.cc_addresses
-        ? sendForm.cc_addresses
-            .split(',')
-            .map((s) => s.trim())
-            .filter(Boolean)
-        : undefined;
-      const bccAddresses = sendForm.bcc_addresses
-        ? sendForm.bcc_addresses
-            .split(',')
-            .map((s) => s.trim())
-            .filter(Boolean)
-        : undefined;
+    const toAddresses = sendForm.to_addresses
+      .split(',')
+      .map((s) => s.trim())
+      .filter(Boolean);
+    const ccAddresses = sendForm.cc_addresses
+      ? sendForm.cc_addresses
+          .split(',')
+          .map((s) => s.trim())
+          .filter(Boolean)
+      : undefined;
+    const bccAddresses = sendForm.bcc_addresses
+      ? sendForm.bcc_addresses
+          .split(',')
+          .map((s) => s.trim())
+          .filter(Boolean)
+      : undefined;
 
-      if (sendForm.useTemplate && sendForm.template_code) {
-        let templateData: Record<string, any> = {};
-        try {
-          templateData = JSON.parse(sendForm.templateData || '{}');
-        } catch {
-          templateData = {};
-        }
-
-        const res = await emailApi.sendWithTemplate({
-          template_code: sendForm.template_code,
-          to_addresses: toAddresses,
-          cc_addresses: ccAddresses,
-          bcc_addresses: bccAddresses,
-          template_data: templateData,
-          priority: sendForm.priority,
-        });
-
-        if (res.success) {
-          addNotification({
-            title: '成功',
-            message: '邮件发送成功',
-            type: 'success',
-          });
-          setShowSendModal(false);
-          resetSendForm();
-          loadEmails();
-        } else {
-          addNotification({
-            title: '失败',
-            message: res.message || '发送邮件失败',
-            type: 'error',
-          });
-        }
-      } else {
-        const res = await emailApi.send({
-          subject: sendForm.subject,
-          to_addresses: toAddresses,
-          cc_addresses: ccAddresses,
-          bcc_addresses: bccAddresses,
-          body: sendForm.body,
-          priority: sendForm.priority,
-        });
-
-        if (res.success) {
-          addNotification({
-            title: '成功',
-            message: '邮件发送成功',
-            type: 'success',
-          });
-          setShowSendModal(false);
-          resetSendForm();
-          loadEmails();
-        } else {
-          addNotification({
-            title: '失败',
-            message: res.message || '发送邮件失败',
-            type: 'error',
-          });
-        }
-      }
-    } catch (err: unknown) {
-      addNotification({
-        title: '失败',
-        message: (err as { message?: string }).message || '发送邮件失败',
-        type: 'error',
-      });
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  const resetSendForm = () => {
-    setSendForm({
-      subject: '',
-      to_addresses: '',
-      cc_addresses: '',
-      bcc_addresses: '',
-      body: '',
-      priority: 'normal',
-      template_code: '',
-      useTemplate: false,
-      templateData: '',
+    sendEmailMutation.mutate({
+      useTemplate: sendForm.useTemplate,
+      template_code: sendForm.template_code,
+      templateData: sendForm.templateData,
+      subject: sendForm.subject,
+      to_addresses: toAddresses,
+      cc_addresses: ccAddresses,
+      bcc_addresses: bccAddresses,
+      body: sendForm.body,
+      priority: sendForm.priority,
     });
-    setSelectedTemplateForSend(null);
   };
 
-  const handleDeleteEmail = async () => {
-    if (!deletingEmailId) return;
-    try {
-      const res = await emailApi.delete(deletingEmailId);
+  const deleteEmailMutation = useMutation({
+    mutationFn: (id: string) => emailApi.delete(id),
+    onSuccess: (res, id) => {
       if (res.success) {
         addNotification({
           title: '成功',
           message: '邮件记录删除成功',
           type: 'success',
         });
-        setSelectedEmails((prev) => prev.filter((id) => id !== deletingEmailId));
-        loadEmails();
+        setSelectedEmails((prev) => prev.filter((emailId) => emailId !== id));
+        queryClient.invalidateQueries({ queryKey: QUERY_KEYS.MAIL.EMAILS });
       } else {
         addNotification({
           title: '失败',
@@ -419,13 +443,19 @@ const MailPage: React.FC = () => {
           type: 'error',
         });
       }
-    } catch (err: unknown) {
+    },
+    onError: (err: unknown) => {
       addNotification({
         title: '失败',
         message: (err as { message?: string }).message || '删除失败',
         type: 'error',
       });
-    }
+    },
+  });
+
+  const handleDeleteEmail = () => {
+    if (!deletingEmailId) return;
+    deleteEmailMutation.mutate(deletingEmailId);
   };
 
   const openDeleteEmailDialog = (emailId: string) => {
@@ -433,10 +463,9 @@ const MailPage: React.FC = () => {
     setDeleteEmailDialogOpen(true);
   };
 
-  const handleResendEmail = async () => {
-    if (!resendingEmailId) return;
-    try {
-      const res = await emailApi.get(resendingEmailId);
+  const resendEmailMutation = useMutation({
+    mutationFn: async (emailId: string) => {
+      const res = await emailApi.get(emailId);
       if (res.success && res.data) {
         const email = res.data;
         const toAddresses = Array.isArray(email.to_addresses)
@@ -453,7 +482,7 @@ const MailPage: React.FC = () => {
             : [email.bcc_addresses]
           : undefined;
 
-        const sendRes = await emailApi.send({
+        return emailApi.send({
           subject: email.subject,
           to_addresses: toAddresses,
           cc_addresses: ccAddresses,
@@ -461,29 +490,37 @@ const MailPage: React.FC = () => {
           body: email.body,
           priority: email.priority,
         });
-
-        if (sendRes.success) {
-          addNotification({
-            title: '成功',
-            message: '邮件重新发送成功',
-            type: 'success',
-          });
-          loadEmails();
-        } else {
-          addNotification({
-            title: '失败',
-            message: sendRes.message || '重发邮件失败',
-            type: 'error',
-          });
-        }
       }
-    } catch (err: unknown) {
+      throw new Error('无法获取邮件详情');
+    },
+    onSuccess: (sendRes) => {
+      if (sendRes.success) {
+        addNotification({
+          title: '成功',
+          message: '邮件重新发送成功',
+          type: 'success',
+        });
+        queryClient.invalidateQueries({ queryKey: QUERY_KEYS.MAIL.EMAILS });
+      } else {
+        addNotification({
+          title: '失败',
+          message: sendRes.message || '重发邮件失败',
+          type: 'error',
+        });
+      }
+    },
+    onError: (err: unknown) => {
       addNotification({
         title: '失败',
         message: (err as { message?: string }).message || '重发邮件失败',
         type: 'error',
       });
-    }
+    },
+  });
+
+  const handleResendEmail = () => {
+    if (!resendingEmailId) return;
+    resendEmailMutation.mutate(resendingEmailId);
   };
 
   const openResendEmailDialog = (emailId: string) => {
@@ -491,31 +528,38 @@ const MailPage: React.FC = () => {
     setResendEmailDialogOpen(true);
   };
 
-  const handleBatchDeleteEmails = async () => {
-    if (selectedEmails.length === 0) return;
-    let successCount = 0;
-    for (const emailId of selectedEmails) {
-      try {
-        const res = await emailApi.delete(emailId);
-        if (res.success) successCount++;
-      } catch {
-        // ignore individual failures
+  const batchDeleteMutation = useMutation({
+    mutationFn: async (emailIds: string[]) => {
+      let successCount = 0;
+      for (const emailId of emailIds) {
+        try {
+          const res = await emailApi.delete(emailId);
+          if (res.success) successCount++;
+        } catch {
+          // ignore individual failures
+        }
       }
-    }
+      return { successCount, total: emailIds.length };
+    },
+    onSuccess: (result) => {
+      addNotification({
+        title: '完成',
+        message: `成功删除 ${result.successCount}/${result.total} 条记录`,
+        type: result.successCount === result.total ? 'success' : 'warning',
+      });
+      setSelectedEmails([]);
+      queryClient.invalidateQueries({ queryKey: QUERY_KEYS.MAIL.EMAILS });
+    },
+  });
 
-    addNotification({
-      title: '完成',
-      message: `成功删除 ${successCount}/${selectedEmails.length} 条记录`,
-      type: successCount === selectedEmails.length ? 'success' : 'warning',
-    });
-    setSelectedEmails([]);
-    loadEmails();
+  const handleBatchDeleteEmails = () => {
+    if (selectedEmails.length === 0) return;
+    batchDeleteMutation.mutate(selectedEmails);
   };
 
-  const handleBatchResendEmails = async () => {
-    if (selectedEmails.length === 0) return;
-    try {
-      const res = await emailApi.resend(selectedEmails);
+  const batchResendMutation = useMutation({
+    mutationFn: (emailIds: string[]) => emailApi.resend(emailIds),
+    onSuccess: (res) => {
       if (res.success && res.data) {
         const result = res.data;
         addNotification({
@@ -530,29 +574,36 @@ const MailPage: React.FC = () => {
           type: 'error',
         });
       }
-    } catch (err: unknown) {
+      setSelectedEmails([]);
+      queryClient.invalidateQueries({ queryKey: QUERY_KEYS.MAIL.EMAILS });
+      queryClient.invalidateQueries({ queryKey: QUERY_KEYS.MAIL.STATS });
+    },
+    onError: (err: unknown) => {
       addNotification({
         title: '失败',
         message: (err as { message?: string }).message || '批量重发失败',
         type: 'error',
       });
-    }
-    setSelectedEmails([]);
-    loadEmails();
-    loadStats();
+      setSelectedEmails([]);
+    },
+  });
+
+  const handleBatchResendEmails = () => {
+    if (selectedEmails.length === 0) return;
+    batchResendMutation.mutate(selectedEmails);
   };
 
-  const handleToggleTemplateStatus = async (template: EmailTemplate) => {
-    const newStatus = template.status === 'active' ? 'inactive' : 'active';
-    try {
-      const res = await templateApi.updateStatus(template.id, newStatus);
+  const toggleTemplateStatusMutation = useMutation({
+    mutationFn: ({ template, newStatus }: { template: EmailTemplate; newStatus: string }) =>
+      templateApi.updateStatus(template.id, newStatus),
+    onSuccess: (res, variables) => {
       if (res.success) {
         addNotification({
           title: '成功',
-          message: `模板已${newStatus === 'active' ? '启用' : '禁用'}`,
+          message: `模板已${variables.newStatus === 'active' ? '启用' : '禁用'}`,
           type: 'success',
         });
-        loadTemplates();
+        queryClient.invalidateQueries({ queryKey: QUERY_KEYS.MAIL.TEMPLATES_LIST });
       } else {
         addNotification({
           title: '失败',
@@ -560,41 +611,25 @@ const MailPage: React.FC = () => {
           type: 'error',
         });
       }
-    } catch (err: unknown) {
+    },
+    onError: (err: unknown) => {
       addNotification({
         title: '失败',
         message: (err as { message?: string }).message || '更新状态失败',
         type: 'error',
       });
-    }
+    },
+  });
+
+  const handleToggleTemplateStatus = (template: EmailTemplate) => {
+    const newStatus = template.status === 'active' ? 'inactive' : 'active';
+    toggleTemplateStatusMutation.mutate({ template, newStatus });
   };
 
-  const handleEyeTemplate = async (template: EmailTemplate) => {
-    try {
-      const sampleData: Record<string, string> = {
-        user_name: '张三',
-        username: 'zhangsan',
-        process_name: '报销申请',
-        approval_status: '已通过',
-        approver_name: '李四',
-        approval_time: '2024-01-15 10:30',
-        approval_comment: '同意报销',
-        alert_type: '系统告警',
-        alertlevel: '紧急',
-        alert_time: '2024-01-15 10:30',
-        alert_message: '磁盘空间不足',
-        contract_name: '服务合同',
-        contract_no: 'CT-2024-001',
-        contract_action: '已签署',
-        action_time: '2024-01-15 10:30',
-        register_time: '2024-01-15 10:30',
-        reset_link: 'https://example.com/reset-password',
-        expire_time: '24小时',
-        title: '测试标题',
-        content: '测试内容',
-      };
-
-      const res = await templateApi.render(template.code, sampleData);
+  const previewTemplateMutation = useMutation({
+    mutationFn: ({ code, sampleData }: { code: string; sampleData: Record<string, string> }) =>
+      templateApi.render(code, sampleData),
+    onSuccess: (res) => {
       if (res.success && res.data) {
         setPreviewContent({
           subject: res.data.subject,
@@ -602,13 +637,40 @@ const MailPage: React.FC = () => {
         });
         setShowEyeModal(true);
       }
-    } catch (err: unknown) {
+    },
+    onError: (err: unknown) => {
       addNotification({
         title: '失败',
         message: (err as { message?: string }).message || '预览模板失败',
         type: 'error',
       });
-    }
+    },
+  });
+
+  const handleEyeTemplate = (template: EmailTemplate) => {
+    const sampleData: Record<string, string> = {
+      user_name: '张三',
+      username: 'zhangsan',
+      process_name: '报销申请',
+      approval_status: '已通过',
+      approver_name: '李四',
+      approval_time: '2024-01-15 10:30',
+      approval_comment: '同意报销',
+      alert_type: '系统告警',
+      alertlevel: '紧急',
+      alert_time: '2024-01-15 10:30',
+      alert_message: '磁盘空间不足',
+      contract_name: '服务合同',
+      contract_no: 'CT-2024-001',
+      contract_action: '已签署',
+      action_time: '2024-01-15 10:30',
+      register_time: '2024-01-15 10:30',
+      reset_link: 'https://example.com/reset-password',
+      expire_time: '24小时',
+      title: '测试标题',
+      content: '测试内容',
+    };
+    previewTemplateMutation.mutate({ code: template.code, sampleData });
   };
 
   const copyToClipboard = (text: string, id: string) => {
@@ -617,27 +679,9 @@ const MailPage: React.FC = () => {
     setTimeout(() => setCopiedId(null), 2000);
   };
 
-  const handleCreateTemplate = async (e: React.FormEvent) => {
-    e.preventDefault();
-    try {
-      const tags = templateForm.tags
-        ? templateForm.tags
-            .split(',')
-            .map((s) => s.trim())
-            .filter(Boolean)
-        : undefined;
-
-      const res = await templateApi.create({
-        code: templateForm.code,
-        name: templateForm.name,
-        description: templateForm.description || undefined,
-        subject_template: templateForm.subject_template,
-        body_template: templateForm.body_template,
-        body_html_template: templateForm.body_html_template || undefined,
-        category: templateForm.category,
-        tags,
-      });
-
+  const createTemplateMutation = useMutation({
+    mutationFn: (data: Parameters<typeof templateApi.create>[0]) => templateApi.create(data),
+    onSuccess: (res) => {
       if (res.success) {
         addNotification({
           title: '成功',
@@ -646,7 +690,7 @@ const MailPage: React.FC = () => {
         });
         setShowTemplateModal(false);
         resetTemplateForm();
-        loadTemplates();
+        queryClient.invalidateQueries({ queryKey: QUERY_KEYS.MAIL.TEMPLATES_LIST });
       } else {
         addNotification({
           title: '失败',
@@ -654,49 +698,41 @@ const MailPage: React.FC = () => {
           type: 'error',
         });
       }
-    } catch (err: unknown) {
+    },
+    onError: (err: unknown) => {
       addNotification({
         title: '失败',
         message: (err as { message?: string }).message || '创建模板失败',
         type: 'error',
       });
-    }
-  };
+    },
+  });
 
-  const resetTemplateForm = () => {
-    setTemplateForm({
-      code: '',
-      name: '',
-      description: '',
-      subject_template: '',
-      body_template: '',
-      body_html_template: '',
-      category: 'general',
-      tags: '',
+  const handleCreateTemplate = (e: React.FormEvent) => {
+    e.preventDefault();
+    const tags = templateForm.tags
+      ? templateForm.tags
+          .split(',')
+          .map((s) => s.trim())
+          .filter(Boolean)
+      : undefined;
+
+    createTemplateMutation.mutate({
+      code: templateForm.code,
+      name: templateForm.name,
+      description: templateForm.description || undefined,
+      subject_template: templateForm.subject_template,
+      body_template: templateForm.body_template,
+      body_html_template: templateForm.body_html_template || undefined,
+      category: templateForm.category,
+      tags,
     });
   };
 
-  const handleUpdateTemplate = async (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!selectedTemplate) return;
-    try {
-      const tags = templateForm.tags
-        ? templateForm.tags
-            .split(',')
-            .map((s) => s.trim())
-            .filter(Boolean)
-        : undefined;
-
-      const res = await templateApi.update(selectedTemplate.id, {
-        name: templateForm.name || undefined,
-        description: templateForm.description || undefined,
-        subject_template: templateForm.subject_template || undefined,
-        body_template: templateForm.body_template || undefined,
-        body_html_template: templateForm.body_html_template || undefined,
-        category: templateForm.category || undefined,
-        tags,
-      });
-
+  const updateTemplateMutation = useMutation({
+    mutationFn: ({ id, data }: { id: string; data: Parameters<typeof templateApi.update>[1] }) =>
+      templateApi.update(id, data),
+    onSuccess: (res) => {
       if (res.success) {
         addNotification({
           title: '成功',
@@ -706,7 +742,7 @@ const MailPage: React.FC = () => {
         setShowEditTemplateModal(false);
         setSelectedTemplate(null);
         resetTemplateForm();
-        loadTemplates();
+        queryClient.invalidateQueries({ queryKey: QUERY_KEYS.MAIL.TEMPLATES_LIST });
       } else {
         addNotification({
           title: '失败',
@@ -714,26 +750,50 @@ const MailPage: React.FC = () => {
           type: 'error',
         });
       }
-    } catch (err: unknown) {
+    },
+    onError: (err: unknown) => {
       addNotification({
         title: '失败',
         message: (err as { message?: string }).message || '更新模板失败',
         type: 'error',
       });
-    }
+    },
+  });
+
+  const handleUpdateTemplate = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!selectedTemplate) return;
+    const tags = templateForm.tags
+      ? templateForm.tags
+          .split(',')
+          .map((s) => s.trim())
+          .filter(Boolean)
+      : undefined;
+
+    updateTemplateMutation.mutate({
+      id: selectedTemplate.id,
+      data: {
+        name: templateForm.name || undefined,
+        description: templateForm.description || undefined,
+        subject_template: templateForm.subject_template || undefined,
+        body_template: templateForm.body_template || undefined,
+        body_html_template: templateForm.body_html_template || undefined,
+        category: templateForm.category || undefined,
+        tags,
+      },
+    });
   };
 
-  const handleDeleteTemplate = async () => {
-    if (!deletingTemplateId) return;
-    try {
-      const res = await templateApi.delete(deletingTemplateId);
+  const deleteTemplateMutation = useMutation({
+    mutationFn: (id: string) => templateApi.delete(id),
+    onSuccess: (res) => {
       if (res.success) {
         addNotification({
           title: '成功',
           message: '模板删除成功',
           type: 'success',
         });
-        loadTemplates();
+        queryClient.invalidateQueries({ queryKey: QUERY_KEYS.MAIL.TEMPLATES_LIST });
       } else {
         addNotification({
           title: '失败',
@@ -741,13 +801,19 @@ const MailPage: React.FC = () => {
           type: 'error',
         });
       }
-    } catch (err: unknown) {
+    },
+    onError: (err: unknown) => {
       addNotification({
         title: '失败',
         message: (err as { message?: string }).message || '删除失败',
         type: 'error',
       });
-    }
+    },
+  });
+
+  const handleDeleteTemplate = () => {
+    if (!deletingTemplateId) return;
+    deleteTemplateMutation.mutate(deletingTemplateId);
   };
 
   const openDeleteTemplateDialog = (templateId: string) => {

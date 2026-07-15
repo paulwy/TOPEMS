@@ -1,60 +1,54 @@
 import { Chip, Typography, Box, InputLabel } from '@mui/material';
-import React, { useState, useEffect, useMemo } from 'react';
+import React, { useMemo, useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { User, Phone, Mail, MapPin, Building2 } from 'lucide-react';
 import { crmApi } from '@/api/crm';
 import type { Contact } from '@/api/crm';
-import { useNotification } from '@/hooks/useNotification';
 import { apiLogger } from '@/utils/logger';
 import { DetailPageTemplate, type TabConfig, type SectionConfig } from '@/components/templates';
 import { ConfirmDialog } from '@topems/shared-components';
 import { CRM_PATHS } from '@/modules/crm/config';
 import { PageContainer } from '@/components/common';
 import { designTokens } from '@/theme/tokens';
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import { QUERY_KEYS } from '@/lib/reactQuery';
 
 const ct = designTokens.colors;
 
 const ContactDetailPage: React.FC = () => {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
-  const { success, error } = useNotification();
-
-  const [contact, setContact] = useState<Contact | null>(null);
-  const [loading, setLoading] = useState(true);
-  const [errorMessage, setErrorMessage] = useState<string | undefined>(undefined);
+  const queryClient = useQueryClient();
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
-  const [customerName, setCustomerName] = useState<string>('');
 
-  useEffect(() => {
-    if (id) {
-      loadContact(id);
-    }
-  }, [id]);
+  const contactQuery = useQuery({
+    queryKey: QUERY_KEYS.CRM.CONTACT(id || ''),
+    queryFn: () => crmApi.contacts.get(id!),
+    enabled: !!id,
+    staleTime: 5 * 60 * 1000,
+  });
 
-  const loadContact = async (contactId: string) => {
-    setLoading(true);
-    setErrorMessage(undefined);
-    try {
-      const res = await crmApi.contacts.get(contactId);
-      if (res.success && res.data) {
-        setContact(res.data);
-        if (res.data.customer_id) {
-          const customerRes = await crmApi.customers.get(res.data.customer_id);
-          if (customerRes.success && customerRes.data) {
-            setCustomerName(customerRes.data.name);
-          }
-        }
-      } else {
-        throw new Error(res.message || '加载联系人信息失败');
-      }
-    } catch (err: unknown) {
-      apiLogger.error('Failed to load contact:', err);
-      setErrorMessage('加载联系人信息失败');
-      error('加载联系人信息失败');
-    } finally {
-      setLoading(false);
-    }
-  };
+  const customerQuery = useQuery({
+    queryKey: QUERY_KEYS.CRM.CUSTOMER(contactQuery.data?.data?.customer_id || ''),
+    queryFn: () => crmApi.customers.get(contactQuery.data!.data!.customer_id!),
+    enabled: !!contactQuery.data?.data?.customer_id,
+    staleTime: 5 * 60 * 1000,
+  });
+
+  const deleteMutation = useMutation({
+    mutationFn: (contactId: string) => crmApi.contacts.delete(contactId),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: QUERY_KEYS.CRM.CONTACTS });
+      navigate(CRM_PATHS.contacts);
+    },
+  });
+
+  const contact =
+    contactQuery.data?.success && contactQuery.data.data ? contactQuery.data.data : null;
+  const customerName =
+    customerQuery.data?.success && customerQuery.data.data ? customerQuery.data.data.name : '';
+  const loading = contactQuery.isLoading;
+  const errorMessage = contactQuery.isError ? '加载联系人信息失败' : undefined;
 
   const formatDate = (dateStr?: string) => {
     if (!dateStr) return '-';
@@ -281,14 +275,9 @@ const ContactDetailPage: React.FC = () => {
   const handleDelete = async () => {
     if (!id) return;
     try {
-      const res = await crmApi.contacts.delete(id);
-      if (res.success) {
-        success('联系人删除成功');
-        navigate(CRM_PATHS.contacts);
-      }
+      await deleteMutation.mutateAsync(id);
     } catch (err: unknown) {
       apiLogger.error('Failed to delete contact:', err);
-      error('删除联系人失败');
     }
     setDeleteDialogOpen(false);
   };

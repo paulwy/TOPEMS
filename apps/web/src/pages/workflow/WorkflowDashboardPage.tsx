@@ -5,7 +5,7 @@
  * @path /workflow/dashboard
  */
 
-import React, { useState, useMemo } from 'react';
+import React, { useMemo, useEffect } from 'react';
 import {
   PlaySquare,
   CheckSquare,
@@ -30,10 +30,33 @@ import {
   type QuickAction,
   type RecentItem,
 } from '@/components/templates';
+import { useQuery } from '@tanstack/react-query';
+import type { StatisticsResponse } from '@/api/workflow';
+import { workflowApi } from '@/api/workflow';
+import { apiLogger } from '@/utils/logger';
 
 export const WorkflowDashboardPage: React.FC = () => {
   const navigate = useNavigate();
-  const [loading, setLoading] = useState(false);
+
+  const dashboardQuery = useQuery<StatisticsResponse | null>({
+    queryKey: ['workflow-dashboard'],
+    queryFn: async () => {
+      const res = await workflowApi.getStatistics();
+      if (res.success && res.data) {
+        return res.data;
+      }
+      return null;
+    },
+    staleTime: 5 * 60 * 1000,
+  });
+
+  const loading = dashboardQuery.isLoading;
+
+  useEffect(() => {
+    if (dashboardQuery.isError) {
+      apiLogger.error('Failed to load workflow dashboard:', dashboardQuery.error);
+    }
+  }, [dashboardQuery.isError, dashboardQuery.error]);
 
   const stats: StatCard[] = useMemo(
     () => [
@@ -193,8 +216,7 @@ export const WorkflowDashboardPage: React.FC = () => {
         recentItems={recentItems}
         recentTitle='最近流程'
         onRefresh={() => {
-          setLoading(true);
-          setTimeout(() => setLoading(false), 500);
+          dashboardQuery.refetch();
         }}
       />
     </PageContainer>

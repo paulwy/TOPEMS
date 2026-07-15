@@ -86,8 +86,8 @@ async fn main() -> Result<()> {
 
     let health_router = Router::new()
         .route("/health", get(health_check))
-        .route("/api/v1/health/detailed", get(health_check_detailed))
-        .route("/api/v1/metrics", get(get_metrics))
+        .route("/api/health/detailed", get(health_check_detailed))
+        .route("/api/metrics", get(get_metrics))
         .route(
             "/metrics",
             get(move || async move { metric_handle.render() }),

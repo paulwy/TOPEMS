@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useMemo } from 'react';
+import React, { useState, useMemo } from 'react';
 import {
   Box,
   Typography,
@@ -15,6 +15,7 @@ import {
   Button,
 } from '@mui/material';
 import { Plus, Eye, Check, X, GitPullRequest, Clock, User } from 'lucide-react';
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import {
   ListPageTemplate,
   type ColumnDef,
@@ -26,6 +27,7 @@ import { rdApi } from '@/api/rd';
 import { useNotificationStore } from '@/store';
 import type { Build, CreateBuildRequest } from '@/api/rd';
 import { logger } from '@/utils/logger';
+import { QUERY_KEYS } from '@/lib/reactQuery';
 
 interface Review {
   id: string;
@@ -38,12 +40,10 @@ interface Review {
 }
 
 const RsReviewPage: React.FC = () => {
+  const queryClient = useQueryClient();
   const { addNotification } = useNotificationStore();
-  const [reviews, setReviews] = useState<Review[]>([]);
-  const [loading, setLoading] = useState(false);
   const [page, setPage] = useState(0);
   const [rowsPerPage, setRowsPerPage] = useState(10);
-  const [total, setTotal] = useState(0);
   const [searchTerm, setSearchTerm] = useState('');
   const [statusFilter, setStatusFilter] = useState<string>('');
   const [reviewerFilter, setReviewerFilter] = useState<string>('');
@@ -60,13 +60,9 @@ const RsReviewPage: React.FC = () => {
     author: '',
   });
 
-  useEffect(() => {
-    loadReviews();
-  }, [searchTerm, statusFilter, reviewerFilter, page, rowsPerPage]);
-
-  const loadReviews = async () => {
-    try {
-      setLoading(true);
+  const reviewListQuery = useQuery({
+    queryKey: [...QUERY_KEYS.RD.REVIEWS, { page, rowsPerPage, searchTerm, statusFilter }],
+    queryFn: async () => {
       const params: Record<string, unknown> = {
         page: page + 1,
         pagesize: rowsPerPage,
@@ -75,38 +71,63 @@ const RsReviewPage: React.FC = () => {
       if (statusFilter) params.status = statusFilter;
 
       const response = await rdApi.listBuilds(params);
-      if (response.success && response.data) {
-        const builds = response.data.builds || [];
-        const transformed = builds.map((b: Build) => ({
-          id: b.id,
-          title: `${b.build_no} - ${b.project_name}`,
-          reviewer: '系统自动',
-          author: b.project_name,
-          status:
-            b.status === 'success'
-              ? 'approved'
-              : b.status === 'failed'
-                ? 'rejected'
-                : b.status === 'running'
-                  ? 'in_progress'
-                  : 'pending',
-          create_time: b.created_at || '',
-          comment_count: 0,
-        }));
-        setReviews(transformed);
-        setTotal(response.data.total || 0);
+      if (!response.success || !response.data) {
+        throw new Error(response.message || '加载评审数据失败');
       }
-    } catch (error: unknown) {
-      logger.error('加载评审数据失败:', error);
+      const builds = response.data.builds || [];
+      const transformed = builds.map((b: Build) => ({
+        id: b.id,
+        title: `${b.build_no} - ${b.project_name}`,
+        reviewer: '系统自动',
+        author: b.project_name,
+        status:
+          b.status === 'success'
+            ? 'approved'
+            : b.status === 'failed'
+              ? 'rejected'
+              : b.status === 'running'
+                ? 'in_progress'
+                : 'pending',
+        create_time: b.created_at || '',
+        comment_count: 0,
+      }));
+      return {
+        reviews: transformed,
+        total: response.data.total || 0,
+      };
+    },
+  });
+
+  const createBuildMutation = useMutation({
+    mutationFn: async (data: CreateBuildRequest) => {
+      const response = await rdApi.createBuild(data);
+      if (!response.success) {
+        throw new Error(response.message || '创建评审失败');
+      }
+      return response;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: QUERY_KEYS.RD.REVIEWS });
+      queryClient.invalidateQueries({ queryKey: QUERY_KEYS.RD.BUILDS });
+      addNotification({
+        type: 'success',
+        title: '创建成功',
+        message: '新评审已创建',
+      });
+    },
+    onError: (error: unknown) => {
+      logger.error('创建评审失败:', error);
       addNotification({
         type: 'error',
-        title: '加载失败',
-        message: '无法加载评审数据',
+        title: '操作失败',
+        message: error instanceof Error ? error.message : '无法创建评审',
       });
-    } finally {
-      setLoading(false);
-    }
-  };
+    },
+  });
+
+  const reviews = reviewListQuery.data?.reviews || [];
+  const total = reviewListQuery.data?.total || 0;
+  const loading = reviewListQuery.isLoading || createBuildMutation.isPending;
 
   const getStatusColor = (
     status: string
@@ -164,7 +185,18 @@ const RsReviewPage: React.FC = () => {
 
   const handleApprove = async (review: Review) => {
     try {
-      setReviews(reviews.map((r) => (r.id === review.id ? { ...r, status: 'approved' } : r)));
+      queryClient.setQueryData(
+        [...QUERY_KEYS.RD.REVIEWS, { page, rowsPerPage, searchTerm, statusFilter }],
+        (oldData: { reviews: Review[]; total: number } | undefined) => {
+          if (!oldData) return oldData;
+          return {
+            ...oldData,
+            reviews: oldData.reviews.map((r) =>
+              r.id === review.id ? { ...r, status: 'approved' } : r
+            ),
+          };
+        }
+      );
       addNotification({
         type: 'success',
         title: '操作成功',
@@ -177,7 +209,18 @@ const RsReviewPage: React.FC = () => {
 
   const handleReject = async (review: Review) => {
     try {
-      setReviews(reviews.map((r) => (r.id === review.id ? { ...r, status: 'rejected' } : r)));
+      queryClient.setQueryData(
+        [...QUERY_KEYS.RD.REVIEWS, { page, rowsPerPage, searchTerm, statusFilter }],
+        (oldData: { reviews: Review[]; total: number } | undefined) => {
+          if (!oldData) return oldData;
+          return {
+            ...oldData,
+            reviews: oldData.reviews.map((r) =>
+              r.id === review.id ? { ...r, status: 'rejected' } : r
+            ),
+          };
+        }
+      );
       addNotification({
         type: 'success',
         title: '操作成功',
@@ -196,22 +239,11 @@ const RsReviewPage: React.FC = () => {
         commit_hash: 'HEAD',
         build_type: 'manual',
       };
-      await rdApi.createBuild(createData);
-      addNotification({
-        type: 'success',
-        title: '创建成功',
-        message: '新评审已创建',
-      });
+      await createBuildMutation.mutateAsync(createData);
       setNewReviewDialogOpen(false);
       setNewReviewForm({ title: '', description: '', author: '' });
-      loadReviews();
-    } catch (error: unknown) {
-      logger.error('创建评审失败:', error);
-      addNotification({
-        type: 'error',
-        title: '创建失败',
-        message: '无法创建评审',
-      });
+    } catch {
+      // 错误已在 mutation onError 中处理
     }
   };
 

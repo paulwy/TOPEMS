@@ -1,4 +1,6 @@
-import React, { useState, useEffect, useMemo, useCallback } from 'react';
+import React, { useState, useMemo } from 'react';
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import { QUERY_KEYS } from '@/lib/reactQuery';
 import {
   Box,
   Chip,
@@ -71,8 +73,7 @@ const statusOptions = [
 ];
 
 const EhsOccupationalDiseasePage: React.FC = () => {
-  const [cases, setCases] = useState<OccupationalDiseaseCase[]>([]);
-  const [loading, setLoading] = useState(true);
+  const queryClient = useQueryClient();
   const [searchQuery, setSearchQuery] = useState('');
   const [hazardTypeFilter, setHazardTypeFilter] = useState('');
   const [severityFilter, setSeverityFilter] = useState('');
@@ -99,31 +100,20 @@ const EhsOccupationalDiseasePage: React.FC = () => {
 
   const addNotification = useNotificationStore((state) => state.addNotification);
 
-  useEffect(() => {
-    loadCases();
-  }, []);
-
-  const loadCases = useCallback(async () => {
-    try {
-      setLoading(true);
+  const { data: casesData, isLoading: loading } = useQuery({
+    queryKey: QUERY_KEYS.EHS.OCCUPATIONAL_DISEASES,
+    queryFn: async () => {
       const response = await ehsApi.occupationalDiseases.listOccupationalDiseaseCases({
         pagesize: 100,
       });
       if (response.success && response.data) {
         const data = response.data as any;
-        const casesData = Array.isArray(data) ? data : data.data || [];
-        setCases(casesData as OccupationalDiseaseCase[]);
-      } else {
-        setCases([]);
+        return Array.isArray(data) ? data : data.data || [];
       }
-    } catch (err: unknown) {
-      apiLogger.error('加载职业病案例失败:', err);
-      addNotification({ title: '错误', message: '加载职业病案例失败', type: 'error' });
-      setCases([]);
-    } finally {
-      setLoading(false);
-    }
-  }, [addNotification]);
+      return [];
+    },
+  });
+  const cases = (casesData as OccupationalDiseaseCase[]) || [];
 
   const getSeverityChip = (severity: string) => {
     const severityMap: Record<string, { bg: string; color: string }> = {
@@ -409,7 +399,36 @@ const EhsOccupationalDiseasePage: React.FC = () => {
     setShowCreateModal(true);
   };
 
-  const handleSave = async () => {
+  const saveMutation = useMutation({
+    mutationFn: async (variables: { id?: string; data: CreateOccupationalDiseaseCaseRequest }) => {
+      if (variables.id) {
+        return ehsApi.occupationalDiseases.updateOccupationalDiseaseCase(
+          variables.id,
+          variables.data
+        );
+      }
+      return ehsApi.occupationalDiseases.createOccupationalDiseaseCase(variables.data);
+    },
+    onSuccess: (_data, variables) => {
+      addNotification({
+        title: '成功',
+        message: variables.id ? '案例更新成功' : '案例创建成功',
+        type: 'success',
+      });
+      queryClient.invalidateQueries({ queryKey: QUERY_KEYS.EHS.OCCUPATIONAL_DISEASES });
+      setShowCreateModal(false);
+    },
+    onError: (error: unknown) => {
+      addNotification({
+        title: '错误',
+        message: editingCase ? '更新失败' : '创建失败',
+        type: 'error',
+      });
+      apiLogger.error('保存职业病案例失败:', error);
+    },
+  });
+
+  const handleSave = () => {
     if (!formData.employee_name.trim()) {
       addNotification({ title: '错误', message: '请输入员工姓名', type: 'error' });
       return;
@@ -422,35 +441,18 @@ const EhsOccupationalDiseasePage: React.FC = () => {
       addNotification({ title: '错误', message: '请输入职业病名称', type: 'error' });
       return;
     }
-    try {
-      const payload: CreateOccupationalDiseaseCaseRequest = {
-        employee_id: formData.employee_id,
-        employee_name: formData.employee_name,
-        department: formData.department || null,
-        hazard_factor: formData.hazard_type || null,
-        diagnosis_date: formData.diagnosis_date || null,
-        disease_type: formData.disease_type,
-        disease_name: formData.disease_name,
-        severity: (formData.severity as any) || undefined,
-        status: (formData.status as any) || undefined,
-      };
-      if (editingCase) {
-        await ehsApi.occupationalDiseases.updateOccupationalDiseaseCase(editingCase.id, payload);
-        addNotification({ title: '成功', message: '案例更新成功', type: 'success' });
-      } else {
-        await ehsApi.occupationalDiseases.createOccupationalDiseaseCase(payload);
-        addNotification({ title: '成功', message: '案例创建成功', type: 'success' });
-      }
-      setShowCreateModal(false);
-      loadCases();
-    } catch (err: unknown) {
-      addNotification({
-        title: '错误',
-        message: editingCase ? '更新失败' : '创建失败',
-        type: 'error',
-      });
-      apiLogger.error('保存职业病案例失败:', err);
-    }
+    const payload: CreateOccupationalDiseaseCaseRequest = {
+      employee_id: formData.employee_id,
+      employee_name: formData.employee_name,
+      department: formData.department || null,
+      hazard_factor: formData.hazard_type || null,
+      diagnosis_date: formData.diagnosis_date || null,
+      disease_type: formData.disease_type,
+      disease_name: formData.disease_name,
+      severity: (formData.severity as any) || undefined,
+      status: (formData.status as any) || undefined,
+    };
+    saveMutation.mutate({ id: editingCase?.id, data: payload });
   };
 
   const headerActions = [
@@ -526,7 +528,9 @@ const EhsOccupationalDiseasePage: React.FC = () => {
           },
         ]}
         rowActions={rowActions}
-        onRefresh={loadCases}
+        onRefresh={() =>
+          queryClient.invalidateQueries({ queryKey: QUERY_KEYS.EHS.OCCUPATIONAL_DISEASES })
+        }
         showRowNumber
         headerContent={headerContent}
       />

@@ -684,7 +684,9 @@ export function GisMapTemplate({
               icon={getMarkerIcon(marker.type)}
               eventHandlers={{ click: () => onMarkerClick?.(marker) }}
             >
-              {marker.popupContent && (typeof marker.popupContent !== 'bigint') && <Popup>{marker.popupContent as React.ReactNode}</Popup>}
+              {marker.popupContent && typeof marker.popupContent !== 'bigint' && (
+                <Popup>{marker.popupContent as React.ReactNode}</Popup>
+              )}
             </Marker>
           ))}
 

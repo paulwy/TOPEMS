@@ -1,4 +1,4 @@
-import React, { useState, useMemo } from 'react';
+import React, { useState, useMemo, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import {
   Box,
@@ -106,6 +106,12 @@ const EhsAccidentPage: React.FC = () => {
 
   const accidents = accidentsQuery.data || [];
   const loading = accidentsQuery.isLoading;
+
+  useEffect(() => {
+    if (accidentsQuery.isError) {
+      addNotification({ title: '错误', message: '加载事故列表失败', type: 'error' });
+    }
+  }, [accidentsQuery.isError, addNotification]);
 
   const accidentDetailQuery = useQuery({
     queryKey: ['ehs-accident-detail', selectedAccident?.id],
@@ -805,9 +811,7 @@ const EhsAccidentPage: React.FC = () => {
                           <Typography sx={{ color: 'text.secondary', fontSize: '0.875rem' }}>
                             根本原因
                           </Typography>
-                          <Typography>
-                            {accidentDetail.investigation.root_cause || '-'}
-                          </Typography>
+                          <Typography>{accidentDetail.investigation.root_cause || '-'}</Typography>
                         </Box>
                       </Box>
                     </CardContent>
@@ -905,9 +909,7 @@ const EhsAccidentPage: React.FC = () => {
                           </Typography>
                           <Typography>
                             {accidentDetail.review.reviewed_at
-                              ? new Date(accidentDetail.review.reviewed_at).toLocaleString(
-                                  'zh-CN'
-                                )
+                              ? new Date(accidentDetail.review.reviewed_at).toLocaleString('zh-CN')
                               : '-'}
                           </Typography>
                         </Box>

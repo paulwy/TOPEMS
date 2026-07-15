@@ -1,5 +1,6 @@
-import React, { useState, useEffect } from 'react';
+import React from 'react';
 import { Box, Typography, Skeleton } from '@mui/material';
+import { useQuery } from '@tanstack/react-query';
 import {
   ClipboardCheck,
   CheckCircle,
@@ -25,36 +26,30 @@ import { PageContainer } from '@/components/common';
 import { qmsApi } from '@/api/qms';
 import type { QualityOverview } from '@/api/qms';
 import { designTokens } from '@/theme/tokens';
-import { logger } from '@/utils/logger';
+import { QUERY_KEYS } from '@/lib/reactQuery';
 import { QMS_PATHS } from '@/modules/qms/config';
 
 const ct = designTokens.colors;
 
 const QmsDashboardPage: React.FC = () => {
   const navigate = useNavigate();
-  const [overview, setOverview] = useState<QualityOverview | null>(null);
-  const [loading, setLoading] = useState(true);
-
-  useEffect(() => {
-    loadDashboardData();
-  }, []);
-
-  const loadDashboardData = async () => {
-    try {
-      setLoading(true);
+  const {
+    data: overview,
+    isLoading: loading,
+    refetch: loadDashboardData,
+  } = useQuery<QualityOverview | null>({
+    queryKey: QUERY_KEYS.QMS.DASHBOARD,
+    queryFn: async () => {
       const [overviewRes] = await Promise.all([
         qmsApi.getQualityOverview(),
         qmsApi.getStatistics(),
       ]);
-      if (overviewRes.success && overviewRes.data) {
-        setOverview(overviewRes.data);
+      if (!overviewRes.success) {
+        throw new Error(overviewRes.message || '加载质量概览失败');
       }
-    } catch (error: unknown) {
-      logger.error('Failed to load QMS dashboard data:', error);
-    } finally {
-      setLoading(false);
-    }
-  };
+      return overviewRes.data ?? null;
+    },
+  });
 
   const stats: StatCard[] = [
     {

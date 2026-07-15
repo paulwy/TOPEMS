@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { apiLogger } from '@/utils/logger';
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { useParams, useNavigate } from 'react-router-dom';
 import { FileText, Calendar, User, FileCheck, Edit3, Plus, Download, Upload } from 'lucide-react';
 import {
@@ -17,9 +17,10 @@ import {
 import { DetailPageTemplate, ListPageTemplate, type ColumnDef } from '@/components/templates';
 import { PageContainer } from '@/components/common';
 import { qmsApi } from '@/api/qms';
-import type { QualityStandard, StandardRevision } from '@/api/qms';
+import type { QualityStandard, StandardRevision, CreateQualityStandardRequest } from '@/api/qms';
 import { useNotificationStore } from '@/store';
 import { designTokens } from '@/theme/tokens';
+import { QUERY_KEYS } from '@/lib/reactQuery';
 import { QMS_PATHS } from '@/modules/qms/config';
 
 const ct = designTokens.colors;
@@ -27,12 +28,38 @@ const ct = designTokens.colors;
 const QmsStandardDetailPage: React.FC = () => {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
-  const [standard, setStandard] = useState<QualityStandard | null>(null);
-  const [revisions, setRevisions] = useState<StandardRevision[]>([]);
-  const [loading, setLoading] = useState(true);
+  const queryClient = useQueryClient();
+  const addNotification = useNotificationStore((state) => state.addNotification);
+
+  const { data: standard, isLoading: loading } = useQuery<QualityStandard | null>({
+    queryKey: QUERY_KEYS.QMS.STANDARD(id || ''),
+    queryFn: async () => {
+      if (!id) return null;
+      const res = await qmsApi.getStandard(id);
+      if (!res.success) {
+        throw new Error(res.message || '加载质量标准详情失败');
+      }
+      return (res.data as QualityStandard) ?? null;
+    },
+    enabled: !!id,
+  });
+
+  const { data: revisions = [] } = useQuery<StandardRevision[]>({
+    queryKey: QUERY_KEYS.QMS.STANDARD_REVISIONS(id || ''),
+    queryFn: async () => {
+      if (!id) return [];
+      const res = await qmsApi.listRevisions(id);
+      if (!res.success) {
+        throw new Error(res.message || '加载版本历史失败');
+      }
+      const revisionsData = res.data as any;
+      return Array.isArray(revisionsData) ? revisionsData : revisionsData.revisions || [];
+    },
+    enabled: !!id,
+  });
+
   const [showEditModal, setShowEditModal] = useState(false);
   const [showRevisionModal, setShowRevisionModal] = useState(false);
-  const [submitting, setSubmitting] = useState(false);
   const [formData, setFormData] = useState({
     title: '',
     code: '',
@@ -42,62 +69,22 @@ const QmsStandardDetailPage: React.FC = () => {
     category: '',
     effective_date: '',
   });
-  const addNotification = useNotificationStore((state) => state.addNotification);
 
   useEffect(() => {
-    if (id) {
-      loadStandardDetail(id);
-    }
-  }, [id]);
-
-  const loadStandardDetail = async (standardId: string) => {
-    try {
-      setLoading(true);
-      const [standardRes, revisionsRes] = await Promise.all([
-        qmsApi.getStandard(standardId),
-        qmsApi.listRevisions(standardId),
-      ]);
-
-      if (standardRes.success && standardRes.data) {
-        setStandard(standardRes.data as QualityStandard);
-        const data = standardRes.data as QualityStandard;
-        setFormData({
-          title: data.title || '',
-          code: data.code || '',
-          description: data.description || '',
-          version: data.version || '',
-          status: data.status || 'active',
-          category: data.category || '',
-          effective_date: data.effective_date
-            ? new Date(data.effective_date).toISOString().split('T')[0]
-            : '',
-        });
-      } else if (!standardRes.success) {
-        addNotification({
-          title: '加载失败',
-          message: standardRes.message || '加载质量标准详情失败',
-          type: 'error',
-        });
-      }
-
-      if (revisionsRes.success && revisionsRes.data) {
-        const revisionsData = revisionsRes.data as any;
-        const revisionsArray = Array.isArray(revisionsData)
-          ? revisionsData
-          : revisionsData.revisions || [];
-        setRevisions(revisionsArray);
-      }
-    } catch (error: unknown) {
-      apiLogger.error('加载质量标准详情失败:', error);
-      addNotification({
-        title: '加载失败',
-        message: '加载质量标准详情失败',
-        type: 'error',
+    if (standard) {
+      setFormData({
+        title: standard.title || '',
+        code: standard.code || '',
+        description: standard.description || '',
+        version: standard.version || '',
+        status: standard.status || 'active',
+        category: standard.category || '',
+        effective_date: standard.effective_date
+          ? new Date(standard.effective_date).toISOString().split('T')[0]
+          : '',
       });
-    } finally {
-      setLoading(false);
     }
-  };
+  }, [standard]);
 
   const getStatusBadge = (status: string) => {
     const statusMap: Record<string, { color: string; label: string }> = {
@@ -138,11 +125,62 @@ const QmsStandardDetailPage: React.FC = () => {
     );
   };
 
-  const handleUpdateStandard = async () => {
+  const updateMutation = useMutation({
+    mutationFn: async (params: { id: string; data: CreateQualityStandardRequest }) => {
+      const response = await qmsApi.updateStandard(params.id, params.data);
+      if (!response.success) {
+        throw new Error(response.message || '更新质量标准失败');
+      }
+      return response;
+    },
+    onSuccess: () => {
+      addNotification({ title: '成功', message: '质量标准更新成功', type: 'success' });
+      setShowEditModal(false);
+      if (standard) {
+        queryClient.invalidateQueries({ queryKey: QUERY_KEYS.QMS.STANDARD(standard.id) });
+      }
+    },
+    onError: (err: unknown) => {
+      addNotification({
+        title: '错误',
+        message: err instanceof Error ? err.message : '更新质量标准时发生错误',
+        type: 'error',
+      });
+    },
+  });
+
+  const createRevisionMutation = useMutation({
+    mutationFn: async (data: CreateQualityStandardRequest) => {
+      const response = await qmsApi.createStandard(data);
+      if (!response.success) {
+        throw new Error(response.message || '创建版本失败');
+      }
+      return response;
+    },
+    onSuccess: () => {
+      addNotification({ title: '成功', message: '新版本创建成功', type: 'success' });
+      setShowRevisionModal(false);
+      if (standard) {
+        queryClient.invalidateQueries({ queryKey: QUERY_KEYS.QMS.STANDARD_REVISIONS(standard.id) });
+      }
+      navigate(QMS_PATHS.standards);
+    },
+    onError: (err: unknown) => {
+      addNotification({
+        title: '错误',
+        message: err instanceof Error ? err.message : '创建版本时发生错误',
+        type: 'error',
+      });
+    },
+  });
+
+  const submitting = updateMutation.isPending || createRevisionMutation.isPending;
+
+  const handleUpdateStandard = () => {
     if (!standard) return;
-    try {
-      setSubmitting(true);
-      const response = await qmsApi.updateStandard(standard.id, {
+    updateMutation.mutate({
+      id: standard.id,
+      data: {
         name: formData.title,
         code: formData.code,
         description: formData.description,
@@ -151,77 +189,26 @@ const QmsStandardDetailPage: React.FC = () => {
         category: formData.category,
         content: standard.content || '',
         effective_date: formData.effective_date,
-      });
-      if (response.success) {
-        addNotification({
-          title: '成功',
-          message: '质量标准更新成功',
-          type: 'success',
-        });
-        setShowEditModal(false);
-        loadStandardDetail(standard.id);
-      } else {
-        addNotification({
-          title: '失败',
-          message: response.message || '更新质量标准失败',
-          type: 'error',
-        });
-      }
-    } catch (error: unknown) {
-      apiLogger.error('更新质量标准失败:', error);
-      addNotification({
-        title: '错误',
-        message: '更新质量标准时发生错误',
-        type: 'error',
-      });
-    } finally {
-      setSubmitting(false);
-    }
+      },
+    });
   };
 
-  const handleCreateRevision = async () => {
+  const handleCreateRevision = () => {
     if (!standard) return;
-    try {
-      setSubmitting(true);
-      const newVersion = formData.version || standard.version || '1.0';
-      const [major, minor] = newVersion.split('.').map(Number);
-      const nextVersion = `${major}.${minor + 1}`;
+    const newVersion = formData.version || standard.version || '1.0';
+    const [major, minor] = newVersion.split('.').map(Number);
+    const nextVersion = `${major}.${minor + 1}`;
 
-      const response = await qmsApi.createStandard({
-        name: standard.name,
-        code: `${standard.code}-v${nextVersion}`,
-        version: nextVersion,
-        description: `升级至版本 ${nextVersion}`,
-        category: standard.category,
-        content: standard.content,
-        status: 'draft',
-        effective_date: new Date().toISOString().split('T')[0],
-      });
-      if (response.success) {
-        addNotification({
-          title: '成功',
-          message: '新版本创建成功',
-          type: 'success',
-        });
-        setShowRevisionModal(false);
-        navigate(QMS_PATHS.standards);
-      } else {
-        addNotification({
-          title: '失败',
-          message: response.message || '创建版本失败',
-          type: 'error',
-        });
-      }
-    } catch (error: unknown) {
-      apiLogger.error('创建版本失败:', error);
-      addNotification({
-        title: '错误',
-        message: '创建版本时发生错误',
-        type: 'error',
-      });
-    } finally {
-      setSubmitting(false);
-    }
+    createRevisionMutation.mutate({
+      name: standard.name,
+      code: `${standard.code}-v${nextVersion}`,
+      version: nextVersion,
+      description: `升级至版本 ${nextVersion}`,
+      category: standard.category,
+      content: standard.content,
+      status: 'draft',
+      effective_date: new Date().toISOString().split('T')[0],
+    });
   };
 
   const revisionColumns: ColumnDef<StandardRevision>[] = [

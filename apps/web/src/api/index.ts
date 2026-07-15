@@ -59,6 +59,7 @@ export * as reportApi from './report';
 export * as migrationApi from './migration';
 export * as financeApi from './finance';
 export { helpApi } from './help';
+export { feedbackApi } from './feedback';
 
 // Plugin system
 export * as pluginApi from './plugin';

@@ -1,4 +1,6 @@
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState, useCallback } from 'react';
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import { QUERY_KEYS } from '@/lib/reactQuery';
 import {
   TextField,
   Dialog,
@@ -65,11 +67,9 @@ const categoryConfig: Record<string, string> = {
 };
 
 const BiddingPage: React.FC = () => {
-  const [biddings, setBiddings] = useState<Bidding[]>([]);
-  const [loading, setLoading] = useState(true);
+  const queryClient = useQueryClient();
   const [currentPage, setCurrentPage] = useState(1);
   const [pageSize, setPageSize] = useState(10);
-  const [total, setTotal] = useState(0);
   const [showDialog, setShowDialog] = useState(false);
   const [isEditing, setIsEditing] = useState(false);
   const [selectedBidding, setSelectedBidding] = useState<Bidding | null>(null);
@@ -83,7 +83,6 @@ const BiddingPage: React.FC = () => {
   const [activeTab, setActiveTab] = useState(0);
   const [showSupplierDialog, setShowSupplierDialog] = useState(false);
   const [viewingBidding, setViewingBidding] = useState<Bidding | null>(null);
-  const [biddingSuppliers, setBiddingSuppliers] = useState<any[]>([]);
   const [formData, setFormData] = useState<CreateBiddingRequest>({
     bidding_no: '',
     title: '',
@@ -100,111 +99,135 @@ const BiddingPage: React.FC = () => {
 
   const { addNotification } = useNotificationStore();
 
-  useEffect(() => {
-    loadBiddings();
-  }, [currentPage, pageSize]);
-
-  const loadBiddings = async () => {
-    try {
-      setLoading(true);
+  const biddingsQuery = useQuery<{ items: Bidding[]; total: number }>({
+    queryKey: [...QUERY_KEYS.SRM.BIDDING, { currentPage, pageSize }],
+    queryFn: async () => {
       const response = await srmApi.listBiddings({
         page: currentPage,
         pageSize,
       });
       if (response.success && response.data) {
-        setBiddings(response.data.items || []);
-        setTotal(response.data.total || 0);
+        return {
+          items: response.data.items || [],
+          total: response.data.total || 0,
+        };
       }
-    } catch (error: unknown) {
-      apiLogger.error('加载招投标失败:', error);
-      setBiddings([
-        {
-          id: '1',
-          bidding_no: 'BID-2024-001',
-          title: '生产线设备采购招标',
-          category: 'equipment',
-          bidding_type: 'open',
-          status: 'bidding',
-          budget_amount: 5000000,
-          currency: 'CNY',
-          publish_date: '2024-01-10',
-          bid_deadline: '2024-02-10',
-          open_date: '2024-02-15',
-          supplier_count: 8,
-          creator: '王经理',
-          department: '采购部',
-          created_at: '2024-01-10T09:00:00Z',
-          updated_at: '2024-01-10T09:00:00Z',
-        },
-        {
-          id: '2',
-          bidding_no: 'BID-2024-002',
-          title: '仓储服务外包招标',
-          category: 'service',
-          bidding_type: 'invite',
-          status: 'published',
-          budget_amount: 1200000,
-          currency: 'CNY',
-          publish_date: '2024-01-12',
-          bid_deadline: '2024-02-05',
-          supplier_count: 0,
-          creator: '李经理',
-          department: '物流部',
-          created_at: '2024-01-12T10:00:00Z',
-          updated_at: '2024-01-12T10:00:00Z',
-        },
-        {
-          id: '3',
-          bidding_no: 'BID-2024-003',
-          title: '办公楼装修工程招标',
-          category: 'engineering',
-          bidding_type: 'open',
-          status: 'awarded',
-          budget_amount: 3500000,
-          currency: 'CNY',
-          winner_supplier_name: 'XX建筑工程有限公司',
-          winner_amount: 3280000,
-          supplier_count: 12,
-          creator: '赵经理',
-          department: '行政部',
-          created_at: '2023-12-01T09:00:00Z',
-          updated_at: '2024-01-05T09:00:00Z',
-        },
-      ]);
-      setTotal(3);
-    } finally {
-      setLoading(false);
-    }
+      return { items: [], total: 0 };
+    },
+  });
+
+  const biddings = biddingsQuery.data?.items || [];
+  const total = biddingsQuery.data?.total || 0;
+  const loading = biddingsQuery.isLoading;
+
+  const suppliersQuery = useQuery<any[]>({
+    queryKey: [...QUERY_KEYS.SRM.BIDDING, 'suppliers', viewingBidding?.id],
+    enabled: !!viewingBidding && showSupplierDialog,
+    queryFn: async () => {
+      if (!viewingBidding) return [];
+      const response = await srmApi.listBiddingSuppliers(viewingBidding.id);
+      if (response.success) {
+        return response.data || [];
+      }
+      return [];
+    },
+  });
+
+  const biddingSuppliers = suppliersQuery.data || [];
+
+  const invalidateBiddings = () => {
+    queryClient.invalidateQueries({ queryKey: QUERY_KEYS.SRM.BIDDING });
   };
 
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    try {
-      if (isEditing && selectedBidding) {
-        await srmApi.updateBidding(selectedBidding.id, formData);
-        addNotification({
-          type: 'success',
-          title: '更新成功',
-          message: '招标项目已更新',
-        });
-      } else {
-        await srmApi.createBidding(formData);
-        addNotification({
-          type: 'success',
-          title: '创建成功',
-          message: '新招标项目已创建',
-        });
-      }
+  const createMutation = useMutation({
+    mutationFn: async (data: CreateBiddingRequest) => srmApi.createBidding(data),
+    onSuccess: () => {
+      addNotification({ type: 'success', title: '创建成功', message: '新招标项目已创建' });
       setShowDialog(false);
       resetForm();
-      loadBiddings();
-    } catch (error: unknown) {
-      apiLogger.error('操作失败:', error);
-      addNotification({
-        type: 'error',
-        title: '操作失败',
-        message: isEditing ? '更新招标项目失败' : '创建招标项目失败',
-      });
+      invalidateBiddings();
+    },
+    onError: (err: unknown) => {
+      apiLogger.error('创建招标项目失败:', err);
+      addNotification({ type: 'error', title: '操作失败', message: '创建招标项目失败' });
+    },
+  });
+
+  const updateMutation = useMutation({
+    mutationFn: async (params: { id: string; data: CreateBiddingRequest }) =>
+      srmApi.updateBidding(params.id, params.data),
+    onSuccess: () => {
+      addNotification({ type: 'success', title: '更新成功', message: '招标项目已更新' });
+      setShowDialog(false);
+      resetForm();
+      invalidateBiddings();
+    },
+    onError: (err: unknown) => {
+      apiLogger.error('更新招标项目失败:', err);
+      addNotification({ type: 'error', title: '操作失败', message: '更新招标项目失败' });
+    },
+  });
+
+  const deleteMutation = useMutation({
+    mutationFn: async (id: string) => srmApi.deleteBidding(id),
+    onSuccess: () => {
+      addNotification({ type: 'success', title: '删除成功', message: '招标项目已删除' });
+      invalidateBiddings();
+    },
+    onError: (err: unknown) => {
+      apiLogger.error('删除失败:', err);
+      addNotification({ type: 'error', title: '删除失败', message: '删除招标项目失败' });
+    },
+  });
+
+  const publishMutation = useMutation({
+    mutationFn: async (id: string) => srmApi.publishBidding(id),
+    onSuccess: () => {
+      addNotification({ type: 'success', title: '发布成功', message: '招标项目已发布' });
+      invalidateBiddings();
+    },
+    onError: (err: unknown) => {
+      apiLogger.error('发布失败:', err);
+      addNotification({ type: 'error', title: '发布失败', message: '发布招标项目失败' });
+    },
+  });
+
+  const openBiddingMutation = useMutation({
+    mutationFn: async (id: string) => srmApi.openBidding(id),
+    onSuccess: () => {
+      addNotification({ type: 'success', title: '开标成功', message: '招标项目已开标' });
+      invalidateBiddings();
+    },
+    onError: (err: unknown) => {
+      apiLogger.error('开标失败:', err);
+      addNotification({ type: 'error', title: '开标失败', message: '开标操作失败' });
+    },
+  });
+
+  const awardMutation = useMutation({
+    mutationFn: async (params: { biddingId: string; supplierId: string }) =>
+      srmApi.awardBidding(params.biddingId, params.supplierId),
+    onSuccess: () => {
+      addNotification({ type: 'success', title: '定标成功', message: '已完成定标' });
+      invalidateBiddings();
+      if (viewingBidding) {
+        queryClient.invalidateQueries({
+          queryKey: [...QUERY_KEYS.SRM.BIDDING, 'suppliers', viewingBidding.id],
+        });
+      }
+    },
+    onError: (err: unknown) => {
+      apiLogger.error('定标失败:', err);
+      addNotification({ type: 'error', title: '定标失败', message: '定标操作失败' });
+    },
+  });
+
+  const handleSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (isEditing && selectedBidding) {
+      updateMutation.mutate({ id: selectedBidding.id, data: formData });
+    } else {
+      createMutation.mutate(formData);
     }
   };
 
@@ -227,27 +250,12 @@ const BiddingPage: React.FC = () => {
     setShowDialog(true);
   };
 
-  const handleDelete = async (bidding: Bidding) => {
+  const handleDelete = (bidding: Bidding) => {
     openConfirmDialog({
       title: '确认删除',
       message: `确定要删除招标项目 "${bidding.bidding_no}" 吗？`,
-      onConfirm: async () => {
-        try {
-          await srmApi.deleteBidding(bidding.id);
-          addNotification({
-            type: 'success',
-            title: '删除成功',
-            message: '招标项目已删除',
-          });
-          loadBiddings();
-        } catch (error: unknown) {
-          apiLogger.error('删除失败:', error);
-          addNotification({
-            type: 'error',
-            title: '删除失败',
-            message: '删除招标项目失败',
-          });
-        }
+      onConfirm: () => {
+        deleteMutation.mutate(bidding.id);
       },
       danger: true,
     });
@@ -258,99 +266,30 @@ const BiddingPage: React.FC = () => {
       openConfirmDialog({
         title: '确认发布',
         message: `确定要发布招标项目 "${bidding.bidding_no}" 吗？`,
-        onConfirm: async () => {
-          try {
-            await srmApi.publishBidding(bidding.id);
-            addNotification({
-              type: 'success',
-              title: '发布成功',
-              message: '招标项目已发布',
-            });
-            loadBiddings();
-          } catch (error: unknown) {
-            apiLogger.error('发布失败:', error);
-            addNotification({
-              type: 'error',
-              title: '发布失败',
-              message: '发布招标项目失败',
-            });
-          }
+        onConfirm: () => {
+          publishMutation.mutate(bidding.id);
         },
       });
     },
-    [addNotification]
+    [publishMutation]
   );
 
-  const handleViewSuppliers = useCallback(
-    async (bidding: Bidding) => {
-      setViewingBidding(bidding);
-      try {
-        const response = await srmApi.listBiddingSuppliers(bidding.id);
-        if (response.success) {
-          setBiddingSuppliers(response.data || []);
-        }
-      } catch (error: unknown) {
-        setBiddingSuppliers([
-          {
-            id: 's1',
-            supplier_name: '供应商A有限公司',
-            bid_amount: 4850000,
-            delivery_time: '60天',
-            status: 'submitted',
-            contact_person: '张总',
-            phone: '13800138001',
-          },
-          {
-            id: 's2',
-            supplier_name: '供应商B科技有限公司',
-            bid_amount: 4680000,
-            delivery_time: '75天',
-            status: 'submitted',
-            contact_person: '李总',
-            phone: '13900139002',
-          },
-          {
-            id: 's3',
-            supplier_name: '供应商C集团',
-            bid_amount: 5100000,
-            delivery_time: '50天',
-            status: 'submitted',
-            contact_person: '王总',
-            phone: '13700137003',
-          },
-        ]);
-      }
-      setShowSupplierDialog(true);
-    },
-    [addNotification]
-  );
+  const handleViewSuppliers = useCallback((bidding: Bidding) => {
+    setViewingBidding(bidding);
+    setShowSupplierDialog(true);
+  }, []);
 
   const handleOpenBidding = useCallback(
     (bidding: Bidding) => {
       openConfirmDialog({
         title: '确认开标',
         message: `确定要对招标项目 "${bidding.bidding_no}" 进行开标吗？`,
-        onConfirm: async () => {
-          try {
-            await srmApi.openBidding(bidding.id);
-            addNotification({
-              type: 'success',
-              title: '开标成功',
-              message: '招标项目已开标',
-            });
-            loadBiddings();
-          } catch (error: unknown) {
-            apiLogger.error('开标失败:', error);
-            addNotification({
-              type: 'error',
-              title: '开标失败',
-              message: '开标操作失败',
-            });
-          }
+        onConfirm: () => {
+          openBiddingMutation.mutate(bidding.id);
         },
       });
     },
-    [addNotification]
+    [openBiddingMutation]
   );
 
   const handleAward = useCallback(
@@ -358,27 +297,12 @@ const BiddingPage: React.FC = () => {
       openConfirmDialog({
         title: '确认定标',
         message: `确定将招标项目 "${bidding.bidding_no}" 授予 ${supplierName} 吗？`,
-        onConfirm: async () => {
-          try {
-            await srmApi.awardBidding(bidding.id, supplierId);
-            addNotification({
-              type: 'success',
-              title: '定标成功',
-              message: `已授予 ${supplierName}`,
-            });
-            loadBiddings();
-          } catch (error: unknown) {
-            apiLogger.error('定标失败:', error);
-            addNotification({
-              type: 'error',
-              title: '定标失败',
-              message: '定标操作失败',
-            });
-          }
+        onConfirm: () => {
+          awardMutation.mutate({ biddingId: bidding.id, supplierId });
         },
       });
     },
-    [addNotification]
+    [awardMutation]
   );
 
   const resetForm = () => {
@@ -572,7 +496,7 @@ const BiddingPage: React.FC = () => {
           },
         ]}
         rowActions={rowActions}
-        onRefresh={loadBiddings}
+        onRefresh={() => biddingsQuery.refetch()}
         emptyMessage='暂无招标项目数据'
       />
 

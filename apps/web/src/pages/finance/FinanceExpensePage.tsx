@@ -678,7 +678,7 @@ const FinanceExpensePage: React.FC = () => {
           loading={loading}
           selectable
           selectedIds={selectedIds}
-          onSelectionChange={(ids) => setSelectedIds(ids as string[])}
+          onSelectionChange={(ids: (string | number)[]) => setSelectedIds(ids as string[])}
           getRowId={(row) => row.id}
           searchable
           searchPlaceholder='搜索科目编码、科目名称...'
@@ -735,7 +735,7 @@ const FinanceExpensePage: React.FC = () => {
                   required
                   fullWidth
                   value={newExpense.code}
-                  onChange={(e) =>
+                  onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
                     setNewExpense({
                       ...newExpense,
                       code: e.target.value,
@@ -749,7 +749,7 @@ const FinanceExpensePage: React.FC = () => {
                   required
                   fullWidth
                   value={newExpense.name}
-                  onChange={(e) =>
+                  onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
                     setNewExpense({
                       ...newExpense,
                       name: e.target.value,
@@ -771,7 +771,7 @@ const FinanceExpensePage: React.FC = () => {
                     { value: 'debit', label: '借方' },
                     { value: 'credit', label: '贷方' },
                   ]}
-                  onChange={(value) =>
+                  onChange={(value: string | number | string[]) =>
                     setNewExpense({
                       ...newExpense,
                       balance_direction: value as 'debit' | 'credit',
@@ -789,7 +789,7 @@ const FinanceExpensePage: React.FC = () => {
                     { value: 3, label: '3级' },
                     { value: 4, label: '4级' },
                   ]}
-                  onChange={(value) =>
+                  onChange={(value: string | number | string[]) =>
                     setNewExpense({
                       ...newExpense,
                       level: Number(value) || 1,
@@ -806,7 +806,9 @@ const FinanceExpensePage: React.FC = () => {
                 multiline
                 rows={3}
                 value={newExpense.description || ''}
-                onChange={(e) => setNewExpense({ ...newExpense, description: e.target.value })}
+                onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
+                  setNewExpense({ ...newExpense, description: e.target.value })
+                }
                 placeholder='请输入科目描述...'
               />
             </Stack>
@@ -855,7 +857,7 @@ const FinanceExpensePage: React.FC = () => {
                     label='科目名称'
                     fullWidth
                     value={editingExpense.name}
-                    onChange={(e) =>
+                    onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
                       setEditingExpense({
                         ...editingExpense,
                         name: e.target.value,
@@ -876,7 +878,7 @@ const FinanceExpensePage: React.FC = () => {
                       { value: 'debit', label: '借方' },
                       { value: 'credit', label: '贷方' },
                     ]}
-                    onChange={(value) =>
+                    onChange={(value: string | number | string[]) =>
                       setEditingExpense({
                         ...editingExpense,
                         balance_direction: value as 'debit' | 'credit',
@@ -892,7 +894,7 @@ const FinanceExpensePage: React.FC = () => {
                       { value: 'active', label: '启用' },
                       { value: 'disabled', label: '停用' },
                     ]}
-                    onChange={(value) =>
+                    onChange={(value: string | number | string[]) =>
                       setEditingExpense({
                         ...editingExpense,
                         status: value as 'active' | 'disabled',
@@ -909,7 +911,7 @@ const FinanceExpensePage: React.FC = () => {
                   multiline
                   rows={3}
                   value={editingExpense.description || ''}
-                  onChange={(e) =>
+                  onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
                     setEditingExpense({
                       ...editingExpense,
                       description: e.target.value,

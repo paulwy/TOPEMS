@@ -4,6 +4,7 @@ import { Box, Typography, useTheme, useMediaQuery, Drawer } from '@mui/material'
 import { useTranslation } from 'react-i18next';
 import { useLocation, useNavigate } from 'react-router-dom';
 import { usePermission } from '../../hooks/usePermission';
+import { useResponsive } from '../../hooks/useResponsive';
 import { navigationRegistryV2 } from '@/lib/navigation';
 import type { NavItem } from '@/lib/navigation/types';
 import { useUIStore } from '@/store';
@@ -42,6 +43,9 @@ export const GlobalLayout: React.FC<GlobalLayoutProps> = ({ children }) => {
   const sidebarCollapsed = useUIStore((state) => state.sidebarCollapsed);
   const toggleSidebarCollapsed = useUIStore((state) => state.toggleSidebarCollapsed);
 
+  const { isMobile, isTablet, isTabletNarrow, isTabletWide } = useResponsive();
+  const isDesktop = useMediaQuery('(min-width:1025px)');
+
   // 动态获取未读通知数（移动端审批 Tab 徽章）
   const [unreadCount, setUnreadCount] = useState<number>(0);
 
@@ -65,11 +69,8 @@ export const GlobalLayout: React.FC<GlobalLayoutProps> = ({ children }) => {
     };
   }, []);
 
-  // 响应式断点：优化计划要求 < 900px 折叠，< 768px 隐藏为 overlay
-  // md = 900px，自定义 tablet = 768px
-  const isMobile = useMediaQuery('(max-width:767px)'); // < 768px
-  const isTabletCollapsed = useMediaQuery('(min-width:768px) and (max-width:899px)'); // 768px - 900px 自动折叠
-  const shouldShowSidebar = useMediaQuery('(min-width:768px)'); // ≥ 768px 显示 Sidebar
+  const shouldShowSidebar = isTablet || isDesktop;
+  const isTabletAutoCollapsed = isTabletNarrow;
 
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [_topNavItems, setTopNavItems] = useState<NavItem[]>(() => {
@@ -178,10 +179,13 @@ export const GlobalLayout: React.FC<GlobalLayoutProps> = ({ children }) => {
   const activeMobileTab = (() => {
     const path = location.pathname;
     if (path === DASHBOARD_PATHS.dashboard || path === DASHBOARD_PATHS.root) return 'home';
-    if (path.startsWith(MOBILE_TAB_PATHS.tasks) || path.startsWith(MOBILE_PATHS.tasks)) return 'tasks';
+    if (path.startsWith(MOBILE_TAB_PATHS.tasks) || path.startsWith(MOBILE_PATHS.tasks))
+      return 'tasks';
     if (path.startsWith(MOBILE_TAB_PATHS.scan) || path.startsWith(MOBILE_PATHS.scan)) return 'scan';
-    if (path.startsWith(MOBILE_TAB_PATHS.approval) || path.startsWith(MOBILE_TAB_PATHS.approvals)) return 'approval';
-    if (path.startsWith(DASHBOARD_PATHS.profile) || path.startsWith(MOBILE_PATHS.profile)) return 'profile';
+    if (path.startsWith(MOBILE_TAB_PATHS.approval) || path.startsWith(MOBILE_TAB_PATHS.approvals))
+      return 'approval';
+    if (path.startsWith(DASHBOARD_PATHS.profile) || path.startsWith(MOBILE_PATHS.profile))
+      return 'profile';
     return '';
   })();
 
@@ -238,11 +242,12 @@ export const GlobalLayout: React.FC<GlobalLayoutProps> = ({ children }) => {
       />
 
       <Box sx={{ display: 'flex', flexDirection: 'row', flex: 1 }}>
-        {/* Sidebar：≥ 768px 显示，768-900px 自动折叠为图标栏 */}
+        {/* Sidebar：Tablet 端（768px-1024px）持久化显示，窄平板（768px-899px）自动折叠为图标栏 */}
         {shouldShowSidebar && (
           <AppSidebar
-            collapsed={isTabletCollapsed || sidebarCollapsed}
+            collapsed={isTabletAutoCollapsed || sidebarCollapsed}
             onToggleCollapse={toggleSidebarCollapsed}
+            forceVisible={isTablet}
           />
         )}
 

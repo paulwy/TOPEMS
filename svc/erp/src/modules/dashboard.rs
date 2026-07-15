@@ -1,0 +1,122 @@
+use axum::{
+    extract::{Extension, State},
+    Json, Router,
+};
+use serde::{Deserialize, Serialize};
+use topems_shared::{auth::Claims, ApiResponse};
+
+use super::ApiState;
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct ErpDashboardStats {
+    pub total_assets: i64,
+    pub active_assets: i64,
+    pub total_orders: i64,
+    pub pending_orders: i64,
+    pub total_inventory: i64,
+    pub low_stock_items: i64,
+    pub total_suppliers: i64,
+    pub active_suppliers: i64,
+    pub total_customers: i64,
+    pub active_customers: i64,
+    pub total_vouchers: i64,
+    pub pending_vouchers: i64,
+}
+
+async fn count_table(pool: &sqlx::PgPool, table: &str) -> i64 {
+    match sqlx::query_scalar(&format!(
+        "SELECT COUNT(*) FROM {} WHERE deleted_at IS NULL",
+        table
+    ))
+    .fetch_one(pool)
+    .await
+    {
+        Ok(v) => v,
+        Err(_) => {
+            match sqlx::query_scalar(&format!("SELECT COUNT(*) FROM {}", table))
+                .fetch_one(pool)
+                .await
+            {
+                Ok(v) => v,
+                Err(_) => 0,
+            }
+        }
+    }
+}
+
+async fn count_table_with_status(pool: &sqlx::PgPool, table: &str, status: &str) -> i64 {
+    match sqlx::query_scalar(&format!(
+        "SELECT COUNT(*) FROM {} WHERE status = $1 AND deleted_at IS NULL",
+        table
+    ))
+    .bind(status)
+    .fetch_one(pool)
+    .await
+    {
+        Ok(v) => v,
+        Err(_) => {
+            match sqlx::query_scalar(&format!("SELECT COUNT(*) FROM {} WHERE status = $1", table))
+                .bind(status)
+                .fetch_one(pool)
+                .await
+            {
+                Ok(v) => v,
+                Err(_) => 0,
+            }
+        }
+    }
+}
+
+async fn get_dashboard(
+    State(state): State<ApiState>,
+    Extension(_claims): Extension<Claims>,
+) -> Json<ApiResponse<ErpDashboardStats>> {
+    let total_assets = count_table(&state.db, "assets").await;
+    let active_assets = count_table_with_status(&state.db, "assets", "active").await;
+
+    let total_orders = count_table(&state.db, "production_orders").await;
+    let pending_orders = count_table_with_status(&state.db, "production_orders", "pending").await;
+
+    let total_inventory =
+        sqlx::query_scalar("SELECT COALESCE(SUM(quantity), 0) FROM inventory_items")
+            .fetch_one(&state.db)
+            .await
+            .unwrap_or(0);
+
+    let low_stock_items = sqlx::query_scalar(
+        "SELECT COUNT(*) FROM inventory_items WHERE quantity < COALESCE(reorder_point, 10)",
+    )
+    .fetch_one(&state.db)
+    .await
+    .unwrap_or(0);
+
+    let total_suppliers = count_table(&state.db, "suppliers").await;
+    let active_suppliers = count_table_with_status(&state.db, "suppliers", "active").await;
+
+    let total_customers = count_table(&state.db, "customers").await;
+    let active_customers = count_table_with_status(&state.db, "customers", "active").await;
+
+    let total_vouchers = count_table(&state.db, "vouchers").await;
+    let pending_vouchers = count_table_with_status(&state.db, "vouchers", "draft").await;
+
+    let stats = ErpDashboardStats {
+        total_assets,
+        active_assets,
+        total_orders,
+        pending_orders,
+        total_inventory,
+        low_stock_items,
+        total_suppliers,
+        active_suppliers,
+        total_customers,
+        active_customers,
+        total_vouchers,
+        pending_vouchers,
+    };
+
+    Json(ApiResponse::success(stats, "查询成功"))
+}
+
+pub fn create_routes() -> Router<ApiState> {
+    Router::new().route("/api/core/erp/dashboard", axum::routing::get(get_dashboard))
+}

@@ -3,6 +3,7 @@ import { useNotificationStore } from '@/store';
 import { apiLogger } from '@/utils/logger';
 import { extractErrorMessage } from '@/utils/errors';
 import React, { useState, useEffect } from 'react';
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { PageContainer } from '@/components/common';
 import { useNavigate } from 'react-router-dom';
 import {
@@ -65,11 +66,8 @@ import { DASHBOARD_PATHS } from '@/routes/dashboard';
 
 const DatabaseStructurePage: React.FC = () => {
   const navigate = useNavigate();
-  const [tables, setTables] = useState<TableInfo[]>([]);
+  const queryClient = useQueryClient();
   const [selectedTable, setSelectedTable] = useState<TableDetail | null>(null);
-  const [dbChanges, setDbChanges] = useState<DbChange[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [detailLoading, setDetailLoading] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
   const [activeTab, setActiveTab] = useState<'structure' | 'changes'>('structure');
   const [notification, setNotification] = useState<{
@@ -90,55 +88,63 @@ const DatabaseStructurePage: React.FC = () => {
     max_length: 255,
   });
 
-  useEffect(() => {
-    loadTables();
-    loadDbChanges();
-  }, []);
-
-  useEffect(() => {
-    if (selectedTable && activeTab === 'structure') {
-      loadTableDetail(selectedTable.table_name);
-    }
-  }, [selectedTable?.table_name, activeTab]);
-
-  const loadTables = async () => {
-    setLoading(true);
-    try {
+  const tablesQuery = useQuery<TableInfo[]>({
+    queryKey: ['admin-db-tables'],
+    queryFn: async () => {
       const res = await dbStructureApi.listTables({ schema: 'public' });
-      if (res.success && res.data) {
-        setTables(res.data);
-      }
-    } catch (err: unknown) {
-      showNotification('error', extractErrorMessage(err, '加载表列表失败'));
-    } finally {
-      setLoading(false);
-    }
-  };
+      return res.success && res.data ? res.data : [];
+    },
+    staleTime: 5 * 60 * 1000,
+  });
 
-  const loadTableDetail = async (tableName: string) => {
-    setDetailLoading(true);
-    try {
-      const res = await dbStructureApi.getTableDetail(tableName);
-      if (res.success && res.data) {
-        setSelectedTable(res.data);
-      }
-    } catch (err: unknown) {
-      showNotification('error', extractErrorMessage(err, '加载表结构失败'));
-    } finally {
-      setDetailLoading(false);
-    }
-  };
-
-  const loadDbChanges = async () => {
-    try {
+  const dbChangesQuery = useQuery<DbChange[]>({
+    queryKey: ['admin-db-changes'],
+    queryFn: async () => {
       const res = await dbStructureApi.listChanges({ pagesize: 50 });
-      if (res.success && res.data) {
-        setDbChanges(res.data.items || []);
-      }
-    } catch (err: unknown) {
-      apiLogger.error('加载变更历史失败:', err);
+      return res.success && res.data ? res.data.items || [] : [];
+    },
+    staleTime: 5 * 60 * 1000,
+  });
+
+  const tableDetailQuery = useQuery<TableDetail>({
+    queryKey: ['admin-db-table-detail', selectedTable?.table_name],
+    queryFn: async () => {
+      const res = await dbStructureApi.getTableDetail(selectedTable!.table_name);
+      if (res.success && res.data) return res.data;
+      throw new Error(res.message || '加载表结构失败');
+    },
+    enabled: !!selectedTable?.table_name && activeTab === 'structure',
+    staleTime: 5 * 60 * 1000,
+  });
+
+  const loading = tablesQuery.isLoading;
+  const detailLoading = tableDetailQuery.isLoading;
+  const tables = tablesQuery.data ?? [];
+  const dbChanges = dbChangesQuery.data ?? [];
+
+  useEffect(() => {
+    if (tableDetailQuery.data) {
+      setSelectedTable(tableDetailQuery.data);
     }
-  };
+  }, [tableDetailQuery.data]);
+
+  useEffect(() => {
+    if (tablesQuery.isError) {
+      showNotification('error', extractErrorMessage(tablesQuery.error, '加载表列表失败'));
+    }
+  }, [tablesQuery.isError, tablesQuery.error]);
+
+  useEffect(() => {
+    if (dbChangesQuery.isError) {
+      apiLogger.error('加载变更历史失败:', dbChangesQuery.error);
+    }
+  }, [dbChangesQuery.isError, dbChangesQuery.error]);
+
+  useEffect(() => {
+    if (tableDetailQuery.isError) {
+      showNotification('error', extractErrorMessage(tableDetailQuery.error, '加载表结构失败'));
+    }
+  }, [tableDetailQuery.isError, tableDetailQuery.error]);
 
   const showNotification = (type: 'success' | 'error', message: string) => {
     setNotification({ type, message });
@@ -148,72 +154,89 @@ const DatabaseStructurePage: React.FC = () => {
     setNotification(null);
   };
 
+  const previewAddColumnMutation = useMutation({
+    mutationFn: async (params: { table_name: string; column: DbColumnDefinition }) => {
+      const res = await dbStructureApi.previewAddColumn(params);
+      if (res.success && res.data) return res.data;
+      throw new Error(res.message || '生成SQL预览失败');
+    },
+    onSuccess: (data) => {
+      setSqlPreview(data);
+      setPendingColumn(newColumn);
+      setShowPreviewModal(true);
+    },
+    onError: (err: unknown) => {
+      showNotification('error', extractErrorMessage(err, '生成SQL预览失败'));
+    },
+  });
+
+  const executeAddColumnMutation = useMutation({
+    mutationFn: async (params: { table_name: string; column: DbColumnDefinition }) => {
+      const res = await dbStructureApi.addColumn(params);
+      if (res.success) return true;
+      throw new Error(res.message || '添加字段失败');
+    },
+    onSuccess: async () => {
+      showNotification('success', '字段添加成功');
+      setShowPreviewModal(false);
+      setShowAddColumnModal(false);
+      setNewColumn({
+        column_name: '',
+        data_type: 'VARCHAR',
+        is_nullable: true,
+        default_value: '',
+        max_length: 255,
+      });
+      await queryClient.invalidateQueries({ queryKey: ['admin-db-table-detail'] });
+      await queryClient.invalidateQueries({ queryKey: ['admin-db-changes'] });
+    },
+    onError: (err: unknown) => {
+      showNotification('error', extractErrorMessage(err, '添加字段失败'));
+    },
+  });
+
+  const dropColumnMutation = useMutation({
+    mutationFn: async (params: { tableName: string; columnName: string }) => {
+      const res = await dbStructureApi.dropColumn(params.tableName, params.columnName);
+      if (res.success) return true;
+      throw new Error(res.message || '删除字段失败');
+    },
+    onSuccess: async () => {
+      showNotification('success', '字段删除成功');
+      await queryClient.invalidateQueries({ queryKey: ['admin-db-table-detail'] });
+      await queryClient.invalidateQueries({ queryKey: ['admin-db-changes'] });
+    },
+    onError: (err: unknown) => {
+      showNotification('error', extractErrorMessage(err, '删除字段失败'));
+    },
+  });
+
   const handlePreviewAddColumn = async () => {
     if (!selectedTable || !newColumn.column_name) {
       showNotification('error', '请填写字段名');
       return;
     }
-
-    try {
-      const res = await dbStructureApi.previewAddColumn({
-        table_name: selectedTable.table_name,
-        column: newColumn,
-      });
-      if (res.success && res.data) {
-        setSqlPreview(res.data);
-        setPendingColumn(newColumn);
-        setShowPreviewModal(true);
-      }
-    } catch (err: unknown) {
-      showNotification('error', extractErrorMessage(err, '生成SQL预览失败'));
-    }
+    previewAddColumnMutation.mutate({
+      table_name: selectedTable.table_name,
+      column: newColumn,
+    });
   };
 
   const handleExecuteAddColumn = async () => {
     if (!selectedTable || !pendingColumn) return;
-
-    try {
-      const res = await dbStructureApi.addColumn({
-        table_name: selectedTable.table_name,
-        column: pendingColumn,
-      });
-      if (res.success) {
-        showNotification('success', '字段添加成功');
-        setShowPreviewModal(false);
-        setShowAddColumnModal(false);
-        setNewColumn({
-          column_name: '',
-          data_type: 'VARCHAR',
-          is_nullable: true,
-          default_value: '',
-          max_length: 255,
-        });
-        loadTableDetail(selectedTable.table_name);
-        loadDbChanges();
-      } else {
-        showNotification('error', res.message || '添加字段失败');
-      }
-    } catch (err: unknown) {
-      showNotification('error', extractErrorMessage(err, '添加字段失败'));
-    }
+    executeAddColumnMutation.mutate({
+      table_name: selectedTable.table_name,
+      column: pendingColumn,
+    });
   };
 
   const handleDropColumn = async (columnName: string) => {
     if (!selectedTable) return;
     if (!confirm(`确定要删除字段 "${columnName}" 吗？此操作不可恢复！`)) return;
-
-    try {
-      const res = await dbStructureApi.dropColumn(selectedTable.table_name, columnName);
-      if (res.success) {
-        showNotification('success', '字段删除成功');
-        loadTableDetail(selectedTable.table_name);
-        loadDbChanges();
-      } else {
-        showNotification('error', res.message || '删除字段失败');
-      }
-    } catch (err: unknown) {
-      showNotification('error', extractErrorMessage(err, '删除字段失败'));
-    }
+    dropColumnMutation.mutate({
+      tableName: selectedTable.table_name,
+      columnName,
+    });
   };
 
   const filteredTables = tables.filter((table) =>

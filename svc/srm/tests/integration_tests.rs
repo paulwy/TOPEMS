@@ -5,10 +5,20 @@ mod tests {
     use sqlx::postgres::PgPoolOptions;
     use uuid::Uuid;
 
+    /// 检查数据库是否可用
+    async fn ensure_db_available() -> bool {
+        tokio::net::TcpStream::connect("localhost:5432")
+            .await
+            .is_ok()
+    }
+
     // 测试数据库连接
     #[tokio::test]
-    #[ignore]
     async fn test_database_connection() {
+        if !ensure_db_available().await {
+            eprintln!("⏭ 跳过: 数据库未运行 (localhost:5432)");
+            return;
+        }
         let database_url = std::env::var("DATABASE_URL").unwrap_or_else(|_| {
             "postgres://topems:topems_secret@localhost:5432/topems".to_string()
         });
@@ -24,8 +34,11 @@ mod tests {
     // 测试供应商创建
     // 需要实际的数据库连接和表结构
     #[tokio::test]
-    #[ignore]
     async fn test_create_supplier() {
+        if !ensure_db_available().await {
+            eprintln!("⏭ 跳过: 数据库未运行 (localhost:5432)");
+            return;
+        }
         let database_url = std::env::var("DATABASE_URL").unwrap_or_else(|_| {
             "postgres://topems:topems_secret@localhost:5432/topems".to_string()
         });
@@ -63,8 +76,11 @@ mod tests {
     // 测试供应商列表查询
     // 需要实际的数据库连接和表结构
     #[tokio::test]
-    #[ignore]
     async fn test_list_suppliers() {
+        if !ensure_db_available().await {
+            eprintln!("⏭ 跳过: 数据库未运行 (localhost:5432)");
+            return;
+        }
         let database_url = std::env::var("DATABASE_URL").unwrap_or_else(|_| {
             "postgres://topems:topems_secret@localhost:5432/topems".to_string()
         });
@@ -87,8 +103,11 @@ mod tests {
     // 测试审计日志记录
     // 需要实际的数据库连接和表结构
     #[tokio::test]
-    #[ignore]
     async fn test_audit_log() {
+        if !ensure_db_available().await {
+            eprintln!("⏭ 跳过: 数据库未运行 (localhost:5432)");
+            return;
+        }
         let database_url = std::env::var("DATABASE_URL").unwrap_or_else(|_| {
             "postgres://topems:topems_secret@localhost:5432/topems".to_string()
         });
@@ -119,8 +138,11 @@ mod tests {
     // 测试供应商分类统计
     // 需要实际的数据库连接和表结构
     #[tokio::test]
-    #[ignore]
     async fn test_supplier_category_stats() {
+        if !ensure_db_available().await {
+            eprintln!("⏭ 跳过: 数据库未运行 (localhost:5432)");
+            return;
+        }
         let database_url = std::env::var("DATABASE_URL").unwrap_or_else(|_| {
             "postgres://topems:topems_secret@localhost:5432/topems".to_string()
         });

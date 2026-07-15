@@ -71,7 +71,7 @@ export const RadarChart: React.FC<RadarChartProps> = ({
               wrapperStyle={{ paddingTop: '10px' }}
               iconType='circle'
               iconSize={8}
-              formatter={(value) => (
+              formatter={(value: string) => (
                 <Typography sx={{ fontSize: '0.875rem', color: chartTheme.textColor }}>
                   {value}
                 </Typography>

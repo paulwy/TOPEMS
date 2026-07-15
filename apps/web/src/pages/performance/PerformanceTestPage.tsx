@@ -133,7 +133,8 @@ const PerformanceTestPage: React.FC = () => {
     const interval = setInterval(() => {
       setRenderCount(renderCountRef.current);
       if (renderTimesRef.current.length > 0) {
-        const avg = renderTimesRef.current.reduce((a, b) => a + b, 0) / renderTimesRef.current.length;
+        const avg =
+          renderTimesRef.current.reduce((a, b) => a + b, 0) / renderTimesRef.current.length;
         setAvgRenderTime(avg);
       }
     }, 500);
@@ -288,29 +289,45 @@ const PerformanceTestPage: React.FC = () => {
     {
       label: '最大内容绘制',
       value: lcpTime ? `${lcpTime.toFixed(2)}ms` : '测量中...',
-      color: lcpTime && lcpTime < 2500 ? '#16a34a' : lcpTime && lcpTime < 4000 ? '#d97706' : '#dc2626',
-      bgColor: lcpTime && lcpTime < 2500 ? '#dcfce7' : lcpTime && lcpTime < 4000 ? '#fef3c7' : '#fee2e2',
+      color:
+        lcpTime && lcpTime < 2500 ? '#16a34a' : lcpTime && lcpTime < 4000 ? '#d97706' : '#dc2626',
+      bgColor:
+        lcpTime && lcpTime < 2500 ? '#dcfce7' : lcpTime && lcpTime < 4000 ? '#fef3c7' : '#fee2e2',
       description: 'Largest Contentful Paint (LCP)',
     },
     {
       label: '可交互时间',
       value: ttiTime ? `${ttiTime.toFixed(2)}ms` : '测量中...',
-      color: ttiTime && ttiTime < 3800 ? '#16a34a' : ttiTime && ttiTime < 7300 ? '#d97706' : '#dc2626',
-      bgColor: ttiTime && ttiTime < 3800 ? '#dcfce7' : ttiTime && ttiTime < 7300 ? '#fef3c7' : '#fee2e2',
+      color:
+        ttiTime && ttiTime < 3800 ? '#16a34a' : ttiTime && ttiTime < 7300 ? '#d97706' : '#dc2626',
+      bgColor:
+        ttiTime && ttiTime < 3800 ? '#dcfce7' : ttiTime && ttiTime < 7300 ? '#fef3c7' : '#fee2e2',
       description: 'Time to Interactive (TTI)',
     },
     {
       label: '首次输入延迟',
       value: fidTime ? `${fidTime.toFixed(2)}ms` : '等待输入...',
-      color: fidTime && fidTime < 100 ? '#16a34a' : fidTime && fidTime < 300 ? '#d97706' : '#dc2626',
-      bgColor: fidTime && fidTime < 100 ? '#dcfce7' : fidTime && fidTime < 300 ? '#fef3c7' : '#fee2e2',
+      color:
+        fidTime && fidTime < 100 ? '#16a34a' : fidTime && fidTime < 300 ? '#d97706' : '#dc2626',
+      bgColor:
+        fidTime && fidTime < 100 ? '#dcfce7' : fidTime && fidTime < 300 ? '#fef3c7' : '#fee2e2',
       description: 'First Input Delay (FID)',
     },
     {
       label: '累计布局偏移',
       value: clsScore !== null ? clsScore.toFixed(2) : '测量中...',
-      color: clsScore !== null && clsScore < 0.1 ? '#16a34a' : clsScore !== null && clsScore < 0.25 ? '#d97706' : '#dc2626',
-      bgColor: clsScore !== null && clsScore < 0.1 ? '#dcfce7' : clsScore !== null && clsScore < 0.25 ? '#fef3c7' : '#fee2e2',
+      color:
+        clsScore !== null && clsScore < 0.1
+          ? '#16a34a'
+          : clsScore !== null && clsScore < 0.25
+            ? '#d97706'
+            : '#dc2626',
+      bgColor:
+        clsScore !== null && clsScore < 0.1
+          ? '#dcfce7'
+          : clsScore !== null && clsScore < 0.25
+            ? '#fef3c7'
+            : '#fee2e2',
       description: 'Cumulative Layout Shift (CLS)',
     },
     {

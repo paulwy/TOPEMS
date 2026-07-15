@@ -206,8 +206,7 @@ export const useModuleLoadingStore = create<ModuleLoadingStore>((set, get) => ({
 
 export const useModuleState = (moduleId: string) =>
   useModuleLoadingStore((state) => state.modules[moduleId]);
-export const useTotalProgress = () =>
-  useModuleLoadingStore((state) => state.totalProgress);
+export const useTotalProgress = () => useModuleLoadingStore((state) => state.totalProgress);
 export const useIsModuleLoaded = (moduleId: string) =>
   useModuleLoadingStore((state) => state.modules[moduleId]?.status === 'loaded');
 export const useIsModuleLoading = (moduleId: string) =>

@@ -56,7 +56,10 @@ export const lowcodeModuleConfig: RouteModuleConfig = {
     },
     {
       path: LOWCODE_PATHS.workflows,
-      element: lazyWithRetry(() => import('@/pages/lowcode/WorkflowConfigPage'), 'WorkflowConfigPage'),
+      element: lazyWithRetry(
+        () => import('@/pages/lowcode/WorkflowConfigPage'),
+        'WorkflowConfigPage'
+      ),
       module: 'lowcode',
       code: 'lowcode-workflows',
       title: '流程配置',
@@ -79,6 +82,11 @@ export const lowcodeNavConfig: ModuleNavConfig = {
     { code: 'lowcode-apps', label: '应用管理', path: LOWCODE_PATHS.apps, showInSidebar: true },
     { code: 'lowcode-forms', label: '表单设计', path: LOWCODE_PATHS.forms, showInSidebar: true },
     { code: 'lowcode-pages', label: '页面设计', path: LOWCODE_PATHS.pages, showInSidebar: true },
-    { code: 'lowcode-workflows', label: '流程配置', path: LOWCODE_PATHS.workflows, showInSidebar: true },
+    {
+      code: 'lowcode-workflows',
+      label: '流程配置',
+      path: LOWCODE_PATHS.workflows,
+      showInSidebar: true,
+    },
   ],
 };

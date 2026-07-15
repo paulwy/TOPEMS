@@ -1,4 +1,5 @@
-import React, { useState, useMemo } from 'react';
+import React, { useMemo } from 'react';
+import { useQuery } from '@tanstack/react-query';
 import {
   Bell,
   Inbox,
@@ -29,7 +30,6 @@ import {
   type RecentItem,
 } from '@/components/templates';
 import { useNotificationStore } from '@/store';
-import { logError } from '@/utils/errors';
 import { designTokens } from '@/theme/tokens';
 
 const ct = designTokens.colors;
@@ -37,7 +37,12 @@ const ct = designTokens.colors;
 export const NotificationDashboardPage: React.FC = () => {
   const navigate = useNavigate();
   const addNotification = useNotificationStore((state) => state.addNotification);
-  const [loading, setLoading] = useState(false);
+  const dashboardQuery = useQuery<boolean>({
+    queryKey: ['notification-dashboard'],
+    queryFn: async () => true,
+    staleTime: 5 * 60 * 1000,
+  });
+  const loading = dashboardQuery.isFetching;
 
   const stats: StatCard[] = useMemo(
     () => [
@@ -271,18 +276,12 @@ export const NotificationDashboardPage: React.FC = () => {
   );
 
   const handleRefresh = () => {
-    setLoading(true);
-    try {
-      addNotification({
-        message: '仪表盘数据已刷新',
-        type: 'success',
-        duration: 2000,
-      });
-    } catch (error) {
-      logError('NotificationDashboard', error);
-    } finally {
-      setTimeout(() => setLoading(false), 500);
-    }
+    dashboardQuery.refetch();
+    addNotification({
+      message: '仪表盘数据已刷新',
+      type: 'success',
+      duration: 2000,
+    });
   };
 
   return (

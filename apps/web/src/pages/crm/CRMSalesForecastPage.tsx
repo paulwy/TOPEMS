@@ -1,7 +1,6 @@
-import React, { useState, useEffect, useMemo } from 'react';
+import React, { useState, useMemo } from 'react';
 import { Box, Button } from '@mui/material';
 import { Plus, TrendingUp, Target, Calendar, Calculator, BarChart3 } from 'lucide-react';
-import type { SalesForecast, ForecastFactor } from '@/api/crm';
 import { crmApi } from '@/api/crm';
 import { useNotificationStore } from '@/store';
 import { apiLogger } from '@/utils/logger';
@@ -14,41 +13,31 @@ import type {
 } from '@/components/templates/StatsPageTemplate';
 import { PageContainer } from '@/components/common';
 import { designTokens } from '@/theme/tokens';
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import { QUERY_KEYS } from '@/lib/reactQuery';
 
 const ct = designTokens.colors;
 
 const CRMSalesForecastPage: React.FC = () => {
-  const [loading, setLoading] = useState(true);
-  const [forecasts, setForecasts] = useState<SalesForecast[]>([]);
   const [timeRange, setTimeRange] = useState('monthly');
 
   const { addNotification } = useNotificationStore();
+  const queryClient = useQueryClient();
 
-  useEffect(() => {
-    loadForecasts();
-  }, [timeRange]);
-
-  const loadForecasts = async () => {
-    try {
-      setLoading(true);
+  const forecastsQuery = useQuery({
+    queryKey: [...QUERY_KEYS.CRM.SALES_FORECAST, timeRange],
+    queryFn: async () => {
       const response = await crmApi.salesForecast.list({
         period_type: timeRange as 'monthly' | 'quarterly' | 'yearly',
       });
-      setForecasts(response.data?.items || []);
-    } catch (error: unknown) {
-      apiLogger.error('加载销售预测数据失败:', error);
-      addNotification({
-        type: 'error',
-        title: '加载失败',
-        message: '无法加载销售预测数据',
-      });
-    } finally {
-      setLoading(false);
-    }
-  };
+      return response.data?.items || [];
+    },
+  });
 
-  const handleGenerateForecast = async () => {
-    try {
+  const forecasts = forecastsQuery.data || [];
+
+  const generateMutation = useMutation({
+    mutationFn: async () => {
       const now = new Date();
       const period =
         timeRange === 'monthly'
@@ -56,29 +45,35 @@ const CRMSalesForecastPage: React.FC = () => {
           : timeRange === 'quarterly'
             ? `${now.getFullYear()}-Q${Math.ceil((now.getMonth() + 1) / 3)}`
             : `${now.getFullYear()}`;
-
-      setLoading(true);
-      await crmApi.salesForecast.generate({
+      return crmApi.salesForecast.generate({
         period_type: timeRange as 'monthly' | 'quarterly' | 'yearly',
         period,
       });
+    },
+    onSuccess: () => {
       addNotification({
         type: 'success',
         title: '成功',
         message: '销售预测生成成功',
       });
-      loadForecasts();
-    } catch (error: unknown) {
+      queryClient.invalidateQueries({ queryKey: QUERY_KEYS.CRM.SALES_FORECAST });
+    },
+    onError: (error: unknown) => {
       apiLogger.error('生成销售预测失败:', error);
       addNotification({
         type: 'error',
         title: '生成失败',
         message: '销售预测生成失败',
       });
-    } finally {
-      setLoading(false);
-    }
+    },
+  });
+
+  const handleGenerateForecast = () => {
+    generateMutation.mutate();
   };
+
+  const loading =
+    forecastsQuery.isLoading || forecastsQuery.isFetching || generateMutation.isPending;
 
   const summary = useMemo(
     () => ({
@@ -232,7 +227,7 @@ const CRMSalesForecastPage: React.FC = () => {
         timeRangeOptions={timeRangeOptions}
         timeRange={timeRange}
         onTimeRangeChange={setTimeRange}
-        onRefresh={loadForecasts}
+        onRefresh={() => forecastsQuery.refetch()}
         showExport={false}
         showRefresh={true}
         showTimeRange={true}

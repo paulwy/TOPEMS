@@ -163,134 +163,133 @@ vi.mock('@/store', () => ({
 }));
 
 describe('BomPage', () => {
-    it('should render without crashing', () => {
-      const { container } = render(
-        <BrowserRouter>
-          <BomPage />
-        </BrowserRouter>
-      );
-      expect(container).toBeDefined();
-    });
-
-    it('should have BOM API methods defined', () => {
-      expect(pdmApi.listBomItems).toBeDefined();
-      expect(pdmApi.getBomItem).toBeDefined();
-      expect(pdmApi.createBomItem).toBeDefined();
-      expect(pdmApi.updateBomItem).toBeDefined();
-      expect(pdmApi.deleteBomItem).toBeDefined();
-    });
+  it('should render without crashing', () => {
+    const { container } = render(
+      <BrowserRouter>
+        <BomPage />
+      </BrowserRouter>
+    );
+    expect(container).toBeDefined();
   });
+
+  it('should have BOM API methods defined', () => {
+    expect(pdmApi.listBomItems).toBeDefined();
+    expect(pdmApi.getBomItem).toBeDefined();
+    expect(pdmApi.createBomItem).toBeDefined();
+    expect(pdmApi.updateBomItem).toBeDefined();
+    expect(pdmApi.deleteBomItem).toBeDefined();
+  });
+});
 
 describe('ChangePage', () => {
-    it('should render without crashing', () => {
-      const { container } = render(
-        <BrowserRouter>
-          <ChangePage />
-        </BrowserRouter>
-      );
-      expect(container).toBeDefined();
-    });
-
-    it('should have change order API methods defined', () => {
-      expect(pdmApi.listChangeOrders).toBeDefined();
-      expect(pdmApi.getChangeOrder).toBeDefined();
-      expect(pdmApi.createChangeOrder).toBeDefined();
-      expect(pdmApi.updateChangeOrder).toBeDefined();
-      expect(pdmApi.deleteChangeOrder).toBeDefined();
-    });
+  it('should render without crashing', () => {
+    const { container } = render(
+      <BrowserRouter>
+        <ChangePage />
+      </BrowserRouter>
+    );
+    expect(container).toBeDefined();
   });
+
+  it('should have change order API methods defined', () => {
+    expect(pdmApi.listChangeOrders).toBeDefined();
+    expect(pdmApi.getChangeOrder).toBeDefined();
+    expect(pdmApi.createChangeOrder).toBeDefined();
+    expect(pdmApi.updateChangeOrder).toBeDefined();
+    expect(pdmApi.deleteChangeOrder).toBeDefined();
+  });
+});
 
 describe('DocumentPage', () => {
-    it('should render without crashing', () => {
-      const { container } = render(
-        <BrowserRouter>
-          <DocumentPage />
-        </BrowserRouter>
-      );
-      expect(container).toBeDefined();
-    });
-
-    it('should have document API methods defined', () => {
-      expect(pdmApi.listDocuments).toBeDefined();
-      expect(pdmApi.getDocument).toBeDefined();
-      expect(pdmApi.listVersions).toBeDefined();
-      expect(pdmApi.createVersion).toBeDefined();
-    });
+  it('should render without crashing', () => {
+    const { container } = render(
+      <BrowserRouter>
+        <DocumentPage />
+      </BrowserRouter>
+    );
+    expect(container).toBeDefined();
   });
+
+  it('should have document API methods defined', () => {
+    expect(pdmApi.listDocuments).toBeDefined();
+    expect(pdmApi.getDocument).toBeDefined();
+    expect(pdmApi.listVersions).toBeDefined();
+    expect(pdmApi.createVersion).toBeDefined();
+  });
+});
 
 describe('MaterialPage', () => {
-    it('should render without crashing', () => {
-      const { container } = render(
-        <BrowserRouter>
-          <MaterialPage />
-        </BrowserRouter>
-      );
-      expect(container).toBeDefined();
-    });
-
-    it('should have material API methods defined', () => {
-      expect(pdmApi.listMaterials).toBeDefined();
-      expect(pdmApi.getMaterial).toBeDefined();
-      expect(pdmApi.createMaterial).toBeDefined();
-      expect(pdmApi.updateMaterial).toBeDefined();
-      expect(pdmApi.deleteMaterial).toBeDefined();
-    });
+  it('should render without crashing', () => {
+    const { container } = render(
+      <BrowserRouter>
+        <MaterialPage />
+      </BrowserRouter>
+    );
+    expect(container).toBeDefined();
   });
+
+  it('should have material API methods defined', () => {
+    expect(pdmApi.listMaterials).toBeDefined();
+    expect(pdmApi.getMaterial).toBeDefined();
+    expect(pdmApi.createMaterial).toBeDefined();
+    expect(pdmApi.updateMaterial).toBeDefined();
+    expect(pdmApi.deleteMaterial).toBeDefined();
+  });
+});
 
 describe('ProductPage', () => {
-    it('should render without crashing', () => {
-      const { container } = render(
-        <BrowserRouter>
-          <ProductPage />
-        </BrowserRouter>
-      );
-      expect(container).toBeDefined();
-    });
-
-    it('should have product API methods defined', () => {
-      expect(pdmApi.listProducts).toBeDefined();
-      expect(pdmApi.getProduct).toBeDefined();
-      expect(pdmApi.createProduct).toBeDefined();
-      expect(pdmApi.updateProduct).toBeDefined();
-      expect(pdmApi.deleteProduct).toBeDefined();
-    });
+  it('should render without crashing', () => {
+    const { container } = render(
+      <BrowserRouter>
+        <ProductPage />
+      </BrowserRouter>
+    );
+    expect(container).toBeDefined();
   });
+
+  it('should have product API methods defined', () => {
+    expect(pdmApi.listProducts).toBeDefined();
+    expect(pdmApi.getProduct).toBeDefined();
+    expect(pdmApi.createProduct).toBeDefined();
+    expect(pdmApi.updateProduct).toBeDefined();
+    expect(pdmApi.deleteProduct).toBeDefined();
+  });
+});
 
 describe('PdmProcessPage', () => {
-    it('should render without crashing', () => {
-      const { container } = render(
-        <BrowserRouter>
-          <PdmProcessPage />
-        </BrowserRouter>
-      );
-      expect(container).toBeDefined();
-    });
-
-    it('should have process API methods defined', () => {
-      expect(pdmApi.listProcesses).toBeDefined();
-      expect(pdmApi.getProcess).toBeDefined();
-      expect(pdmApi.createProcess).toBeDefined();
-      expect(pdmApi.updateProcess).toBeDefined();
-      expect(pdmApi.deleteProcess).toBeDefined();
-    });
+  it('should render without crashing', () => {
+    const { container } = render(
+      <BrowserRouter>
+        <PdmProcessPage />
+      </BrowserRouter>
+    );
+    expect(container).toBeDefined();
   });
 
-describe('PdmVersionPage', () => {
-    it('should render without crashing', () => {
-      const { container } = render(
-        <BrowserRouter>
-          <PdmVersionPage />
-        </BrowserRouter>
-      );
-      expect(container).toBeDefined();
-    });
+  it('should have process API methods defined', () => {
+    expect(pdmApi.listProcesses).toBeDefined();
+    expect(pdmApi.getProcess).toBeDefined();
+    expect(pdmApi.createProcess).toBeDefined();
+    expect(pdmApi.updateProcess).toBeDefined();
+    expect(pdmApi.deleteProcess).toBeDefined();
+  });
+});
 
-    it('should have version API methods defined', () => {
-      expect(pdmApi.listVersions).toBeDefined();
-      expect(pdmApi.getVersion).toBeDefined();
-      expect(pdmApi.createVersion).toBeDefined();
-      expect(pdmApi.updateVersion).toBeDefined();
-      expect(pdmApi.deleteVersion).toBeDefined();
-    });
+describe('PdmVersionPage', () => {
+  it('should render without crashing', () => {
+    const { container } = render(
+      <BrowserRouter>
+        <PdmVersionPage />
+      </BrowserRouter>
+    );
+    expect(container).toBeDefined();
+  });
+
+  it('should have version API methods defined', () => {
+    expect(pdmApi.listVersions).toBeDefined();
+    expect(pdmApi.getVersion).toBeDefined();
+    expect(pdmApi.createVersion).toBeDefined();
+    expect(pdmApi.updateVersion).toBeDefined();
+    expect(pdmApi.deleteVersion).toBeDefined();
   });
 });

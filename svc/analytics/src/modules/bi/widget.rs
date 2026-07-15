@@ -109,11 +109,7 @@ impl WidgetCache {
         let to_remove: Vec<Uuid> = self
             .cache
             .iter()
-            .filter(|_entry| {
-                // Note: dashboard_id is not stored in CachedWidgetData for simplicity;
-                // in production, include dashboard_id in cache key or data
-                false
-            })
+            .filter(|_entry| false)
             .map(|entry| *entry.key())
             .collect();
         for id in to_remove {
@@ -697,9 +693,6 @@ pub async fn invalidate_all_widget_cache() -> Json<serde_json::Value> {
     }))
 }
 
-/// 生成 widget 演示数据（仅用于图表生成失败时的降级回退）
-///
-/// TODO: 此演示数据应迁移至测试 fixtures，生产环境应返回空数据或错误。
 fn generate_mock_data_for_type(widget_type: &str) -> serde_json::Value {
     match widget_type {
         "chart-bar" | "chart-line" | "chart-area" => serde_json::json!([

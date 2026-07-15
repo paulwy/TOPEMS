@@ -1,6 +1,7 @@
 import React from 'react';
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { render, screen, waitFor, fireEvent, act } from '@testing-library/react';
+import { renderWithProviders } from '@/__tests__/test-utils';
 import { BrowserRouter } from 'react-router-dom';
 import { MobileHomePage } from '../mobile/MobileHomePage';
 import { useNotificationStore, useAuthStore } from '@/store';
@@ -96,6 +97,7 @@ vi.mock('@/store', () => ({
   useSetSidebarCollapsed: vi.fn(),
 }));
 
+describe('MobileHomePage', () => {
   it('should render page title', async () => {
     renderWithProviders(<MobileHomePage />);
     expect(

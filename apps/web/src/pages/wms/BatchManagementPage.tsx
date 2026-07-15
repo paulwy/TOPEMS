@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState } from 'react';
 import {
   TextField,
   Dialog,
@@ -13,6 +13,7 @@ import {
   Select,
   MenuItem,
 } from '@mui/material';
+import type { SelectChangeEvent } from '@mui/material';
 import type { Batch, CreateBatchRequest, UpdateBatchRequest } from '@/api/wms';
 import { wmsApi } from '@/api/wms';
 import { useNotificationStore } from '@/store';
@@ -22,6 +23,8 @@ import { ListPageTemplate, type ColumnDef } from '@/components/templates';
 import { designTokens } from '@/theme/tokens';
 import { PageContainer } from '@/components/common';
 import { ConfirmDialog, FormField } from '@topems/shared-components';
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import { QUERY_KEYS } from '@/lib/reactQuery';
 
 const ct = designTokens.colors;
 
@@ -47,11 +50,8 @@ const qualityStatusConfig: Record<
 };
 
 const BatchManagementPage: React.FC = () => {
-  const [batches, setBatches] = useState<Batch[]>([]);
-  const [loading, setLoading] = useState(true);
   const [currentPage, setCurrentPage] = useState(1);
   const [pageSize, setPageSize] = useState(10);
-  const [total, setTotal] = useState(0);
   const [showDialog, setShowDialog] = useState(false);
   const [isEditing, setIsEditing] = useState(false);
   const [selectedBatch, setSelectedBatch] = useState<Batch | null>(null);
@@ -82,69 +82,94 @@ const BatchManagementPage: React.FC = () => {
   });
 
   const { addNotification } = useNotificationStore();
+  const queryClient = useQueryClient();
 
-  useEffect(() => {
-    loadBatches();
-  }, [currentPage, pageSize]);
-
-  const loadBatches = async () => {
-    try {
-      setLoading(true);
+  const {
+    data: batchesResponse,
+    isLoading: loading,
+    refetch,
+  } = useQuery({
+    queryKey: [QUERY_KEYS.WMS.BATCHES, currentPage, pageSize],
+    queryFn: async () => {
       const response = await wmsApi.batches.list({
         page: currentPage,
         pagesize: pageSize,
       });
-      if (response.success && response.data) {
-        setBatches(response.data.items || []);
-        setTotal(response.data.total || 0);
+      if (!response.success) {
+        throw new Error('Failed to fetch batches');
       }
-    } catch (error: unknown) {
-      apiLogger.error('加载批次失败:', error);
-      addNotification({
-        type: 'error',
-        title: '加载失败',
-        message: '无法加载批次数据',
-      });
-    } finally {
-      setLoading(false);
-    }
-  };
+      return response.data;
+    },
+  });
+
+  const batches = batchesResponse?.items || [];
+  const total = batchesResponse?.total || 0;
+
+  const createMutation = useMutation({
+    mutationFn: async (data: CreateBatchRequest) => {
+      const response = await wmsApi.batches.create(data);
+      if (!response.success) {
+        throw new Error('Failed to create batch');
+      }
+      return response;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: [QUERY_KEYS.WMS.BATCHES] });
+      setShowDialog(false);
+      resetForm();
+    },
+    onError: (error) => {
+      apiLogger.error('创建批次失败:', error);
+    },
+  });
+
+  const updateMutation = useMutation({
+    mutationFn: async ({ id, data }: { id: string; data: UpdateBatchRequest }) => {
+      const response = await wmsApi.batches.update(id, data);
+      if (!response.success) {
+        throw new Error('Failed to update batch');
+      }
+      return response;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: [QUERY_KEYS.WMS.BATCHES] });
+      setShowDialog(false);
+      resetForm();
+    },
+    onError: (error) => {
+      apiLogger.error('更新批次失败:', error);
+    },
+  });
+
+  const deleteMutation = useMutation({
+    mutationFn: async (id: string) => {
+      const response = await wmsApi.batches.delete(id);
+      if (!response.success) {
+        throw new Error('Failed to delete batch');
+      }
+      return response;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: [QUERY_KEYS.WMS.BATCHES] });
+    },
+    onError: (error) => {
+      apiLogger.error('删除批次失败:', error);
+    },
+  });
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    try {
-      if (isEditing && selectedBatch) {
-        const updateData: UpdateBatchRequest = {
-          quantity: formData.quantity,
-          location_id: formData.location_id,
-          quality_status: formData.quality_status,
-          expiry_date: formData.expiry_date,
-          remark: formData.remark,
-        };
-        await wmsApi.batches.update(selectedBatch.id, updateData);
-        addNotification({
-          type: 'success',
-          title: '更新成功',
-          message: '批次已更新',
-        });
-      } else {
-        await wmsApi.batches.create(formData);
-        addNotification({
-          type: 'success',
-          title: '创建成功',
-          message: '新批次已创建',
-        });
-      }
-      setShowDialog(false);
-      resetForm();
-      loadBatches();
-    } catch (error: unknown) {
-      apiLogger.error('操作失败:', error);
-      addNotification({
-        type: 'error',
-        title: '操作失败',
-        message: isEditing ? '更新批次失败' : '创建批次失败',
-      });
+    if (isEditing && selectedBatch) {
+      const updateData: UpdateBatchRequest = {
+        quantity: formData.quantity,
+        location_id: formData.location_id,
+        quality_status: formData.quality_status,
+        expiry_date: formData.expiry_date,
+        remark: formData.remark,
+      };
+      await updateMutation.mutateAsync({ id: selectedBatch.id, data: updateData });
+    } else {
+      await createMutation.mutateAsync(formData);
     }
   };
 
@@ -177,22 +202,7 @@ const BatchManagementPage: React.FC = () => {
       title: '确认删除',
       message: `确定要删除批次 "${batch.batch_no}" 吗？`,
       onConfirm: async () => {
-        try {
-          await wmsApi.batches.delete(batch.id);
-          addNotification({
-            type: 'success',
-            title: '删除成功',
-            message: '批次已删除',
-          });
-          loadBatches();
-        } catch (error: unknown) {
-          apiLogger.error('删除失败:', error);
-          addNotification({
-            type: 'error',
-            title: '删除失败',
-            message: '删除批次失败',
-          });
-        }
+        await deleteMutation.mutateAsync(batch.id);
       },
       danger: true,
     });
@@ -448,7 +458,7 @@ const BatchManagementPage: React.FC = () => {
           },
         ]}
         rowActions={rowActions}
-        onRefresh={loadBatches}
+        onRefresh={refetch}
         emptyMessage='暂无批次数据'
       />
 
@@ -470,88 +480,124 @@ const BatchManagementPage: React.FC = () => {
               }}
             >
               <FormField
-                name='batch_no' label='批次号 *'
+                name='batch_no'
+                label='批次号 *'
                 value={formData.batch_no}
-                onChange={(e) => setFormData({ ...formData, batch_no: e.target.value })}
+                onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
+                  setFormData({ ...formData, batch_no: e.target.value })
+                }
                 size='small'
                 required
                 disabled={isEditing}
               />
               <FormField
-                name='sku' label='SKU编码 *'
+                name='sku'
+                label='SKU编码 *'
                 value={formData.sku}
-                onChange={(e) => setFormData({ ...formData, sku: e.target.value })}
+                onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
+                  setFormData({ ...formData, sku: e.target.value })
+                }
                 size='small'
                 required
                 disabled={isEditing}
               />
               <FormField
-                name='material_name' label='物料名称 *'
+                name='material_name'
+                label='物料名称 *'
                 value={formData.material_name}
-                onChange={(e) => setFormData({ ...formData, material_name: e.target.value })}
+                onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
+                  setFormData({ ...formData, material_name: e.target.value })
+                }
                 size='small'
                 required
                 disabled={isEditing}
               />
               <FormField
-                name='specification' label='规格型号'
+                name='specification'
+                label='规格型号'
                 value={formData.specification}
-                onChange={(e) => setFormData({ ...formData, specification: e.target.value })}
+                onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
+                  setFormData({ ...formData, specification: e.target.value })
+                }
                 size='small'
               />
               <FormField
-                name='unit' label='单位'
+                name='unit'
+                label='单位'
                 value={formData.unit}
-                onChange={(e) => setFormData({ ...formData, unit: e.target.value })}
+                onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
+                  setFormData({ ...formData, unit: e.target.value })
+                }
                 size='small'
               />
               <FormField
-                name='quantity' label='数量 *'
+                name='quantity'
+                label='数量 *'
                 type='number'
                 value={formData.quantity}
-                onChange={(e) => setFormData({ ...formData, quantity: Number(e.target.value) })}
+                onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
+                  setFormData({ ...formData, quantity: Number(e.target.value) })
+                }
                 size='small'
                 required
               />
               <FormField
-                name='warehouse_id' label='仓库ID'
+                name='warehouse_id'
+                label='仓库ID'
                 value={formData.warehouse_id}
-                onChange={(e) => setFormData({ ...formData, warehouse_id: e.target.value })}
+                onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
+                  setFormData({ ...formData, warehouse_id: e.target.value })
+                }
                 size='small'
               />
               <FormField
-                name='location_id' label='库位ID'
+                name='location_id'
+                label='库位ID'
                 value={formData.location_id}
-                onChange={(e) => setFormData({ ...formData, location_id: e.target.value })}
+                onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
+                  setFormData({ ...formData, location_id: e.target.value })
+                }
                 size='small'
               />
               <FormField
-                name='supplier_id' label='供应商ID'
+                name='supplier_id'
+                label='供应商ID'
                 value={formData.supplier_id}
-                onChange={(e) => setFormData({ ...formData, supplier_id: e.target.value })}
+                onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
+                  setFormData({ ...formData, supplier_id: e.target.value })
+                }
                 size='small'
               />
               <FormField
-                name='production_date' label='生产日期'
+                name='production_date'
+                label='生产日期'
                 type='date'
                 value={formData.production_date}
-                onChange={(e) => setFormData({ ...formData, production_date: e.target.value })}
+                onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
+                  setFormData({ ...formData, production_date: e.target.value })
+                }
                 size='small'
                 slotProps={{ inputLabel: { shrink: true } } as any}
               />
               <FormField
-                name='expiry_date' label='有效期至'
+                name='expiry_date'
+                label='有效期至'
                 type='date'
                 value={formData.expiry_date}
-                onChange={(e) => setFormData({ ...formData, expiry_date: e.target.value })}
+                onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
+                  setFormData({ ...formData, expiry_date: e.target.value })
+                }
                 size='small'
                 slotProps={{ inputLabel: { shrink: true } } as any}
               />
               <FormField
-                name='receipt_date' label='入库日期'
+                name='receipt_date'
+                label='入库日期'
                 type='date'
                 value={formData.receipt_date}
-                onChange={(e) => setFormData({ ...formData, receipt_date: e.target.value })}
+                onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
+                  setFormData({ ...formData, receipt_date: e.target.value })
+                }
                 size='small'
                 slotProps={{ inputLabel: { shrink: true } } as any}
               />
@@ -560,7 +606,9 @@ const BatchManagementPage: React.FC = () => {
                 <Select
                   value={formData.quality_status}
                   label='质检状态'
-                  onChange={(e) => setFormData({ ...formData, quality_status: e.target.value })}
+                  onChange={(e: SelectChangeEvent) =>
+                    setFormData({ ...formData, quality_status: e.target.value })
+                  }
                 >
                   <MenuItem value='pending'>待检</MenuItem>
                   <MenuItem value='inspecting'>检验中</MenuItem>
@@ -569,28 +617,35 @@ const BatchManagementPage: React.FC = () => {
                 </Select>
               </FormControl>
               <FormField
-                name='shelf_life_days' label='保质期(天)'
+                name='shelf_life_days'
+                label='保质期(天)'
                 type='number'
                 value={formData.shelf_life_days}
-                onChange={(e) =>
+                onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
                   setFormData({ ...formData, shelf_life_days: Number(e.target.value) })
                 }
                 size='small'
               />
               <FormField
-                name='unit_price' label='单价'
+                name='unit_price'
+                label='单价'
                 type='number'
                 value={formData.unit_price}
-                onChange={(e) => setFormData({ ...formData, unit_price: Number(e.target.value) })}
+                onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
+                  setFormData({ ...formData, unit_price: Number(e.target.value) })
+                }
                 size='small'
               />
             </Box>
             <FormField
-              name='remark' label='备注'
+              name='remark'
+              label='备注'
               multiline
               rows={2}
               value={formData.remark}
-              onChange={(e) => setFormData({ ...formData, remark: e.target.value })}
+              onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
+                setFormData({ ...formData, remark: e.target.value })
+              }
               fullWidth
               size='small'
               sx={{ mt: 2 }}

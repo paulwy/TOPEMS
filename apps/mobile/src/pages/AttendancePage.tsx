@@ -300,8 +300,8 @@ const AttendancePage: React.FC = () => {
                 {todayRecord.status === 'late'
                   ? '今日迟到，请合理安排时间'
                   : todayRecord.status === 'early_leave'
-                  ? '今日早退，请确认工作完成'
-                  : ''}
+                    ? '今日早退，请确认工作完成'
+                    : ''}
               </Text>
             </View>
           )}
@@ -331,7 +331,9 @@ const AttendancePage: React.FC = () => {
               <Text style={styles.statLabel}>早退</Text>
             </View>
             <View style={styles.statItem}>
-              <Text style={[styles.statNumber, { color: '#dc2626' }]}>{stats?.absentCount || 0}</Text>
+              <Text style={[styles.statNumber, { color: '#dc2626' }]}>
+                {stats?.absentCount || 0}
+              </Text>
               <Text style={styles.statLabel}>缺勤</Text>
             </View>
           </View>

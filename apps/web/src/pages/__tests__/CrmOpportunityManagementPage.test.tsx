@@ -116,6 +116,7 @@ vi.mock('@/store', () => ({
   useSetSidebarCollapsed: vi.fn(),
 }));
 
+describe('CrmOpportunityManagementPage', () => {
   it('should render without crashing', () => {
     const { container } = render(
       <BrowserRouter>
@@ -124,7 +125,8 @@ vi.mock('@/store', () => ({
     );
     expect(container).toBeDefined();
   });
-
+});
+describe('CrmOpportunityManagementPage', () => {
   it('should have opportunity API methods defined', async () => {
     render(
       <BrowserRouter>

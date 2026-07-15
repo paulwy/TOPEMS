@@ -1,11 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import {
-  View,
-  StyleSheet,
-  FlatList,
-  RefreshControl,
-  TouchableOpacity,
-} from 'react-native';
+import { View, StyleSheet, FlatList, RefreshControl, TouchableOpacity } from 'react-native';
 import {
   Card,
   Title,
@@ -17,12 +11,7 @@ import {
 } from 'react-native-paper';
 import { taskApi } from '@/api/task';
 import type { Task } from '@/types';
-import {
-  Square,
-  CheckCircle,
-  Clock,
-  AlertCircle,
-} from 'lucide-react-native';
+import { Square, CheckCircle, Clock, AlertCircle } from 'lucide-react-native';
 
 const TaskPage: React.FC = () => {
   const [tasks, setTasks] = useState<Task[]>([]);
@@ -150,9 +139,7 @@ const TaskPage: React.FC = () => {
         <View style={styles.cardFooter}>
           <View style={styles.metaItem}>
             <Clock size={14} color="#9ca3af" />
-            <Text style={styles.metaText}>
-              {item.dueDate || '无截止日期'}
-            </Text>
+            <Text style={styles.metaText}>{item.dueDate || '无截止日期'}</Text>
           </View>
           <View style={styles.metaItem}>
             <AlertCircle size={14} color={getPriorityColor(item.priority)} />
@@ -200,9 +187,7 @@ const TaskPage: React.FC = () => {
         renderItem={renderItem}
         keyExtractor={(item) => item.id}
         contentContainerStyle={styles.listContainer}
-        refreshControl={
-          <RefreshControl refreshing={refreshing} onRefresh={handleRefresh} />
-        }
+        refreshControl={<RefreshControl refreshing={refreshing} onRefresh={handleRefresh} />}
         ListEmptyComponent={
           <View style={styles.emptyContainer}>
             <CheckCircle size={48} color="#d1d5db" />
@@ -227,17 +212,11 @@ const ScrollableFilter: React.FC<{
     keyExtractor={(item) => item.key}
     renderItem={({ item }) => (
       <TouchableOpacity
-        style={[
-          styles.filterButton,
-          active === item.key && styles.filterButtonActive,
-        ]}
+        style={[styles.filterButton, active === item.key && styles.filterButtonActive]}
         onPress={() => onPress(item.key)}
       >
         <Text
-          style={[
-            styles.filterButtonText,
-            active === item.key && styles.filterButtonTextActive,
-          ]}
+          style={[styles.filterButtonText, active === item.key && styles.filterButtonTextActive]}
         >
           {item.label}
         </Text>

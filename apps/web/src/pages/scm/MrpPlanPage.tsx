@@ -11,7 +11,12 @@ import {
   CircularProgress,
 } from '@mui/material';
 import React, { useState, useEffect, useCallback } from 'react';
-import type { MrpPlan, CreateMrpPlanRequest, MrpCalculationResult } from '@/api/scm';
+import type {
+  MrpPlan,
+  CreateMrpPlanRequest,
+  UpdateMrpPlanRequest,
+  MrpCalculationResult,
+} from '@/api/scm';
 import { scmApi } from '@/api/scm';
 import { useNotificationStore } from '@/store';
 import {
@@ -31,15 +36,15 @@ import { PageContainer } from '@/components/common';
 import { ConfirmDialog } from '@topems/shared-components';
 import { designTokens } from '@/theme/tokens';
 import { SCM_PATHS } from '@/modules/scm/config';
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import { QUERY_KEYS } from '@/lib/reactQuery';
 
 const ct = designTokens.colors;
 
 const MrpPlanPage: React.FC = () => {
-  const [plans, setPlans] = useState<MrpPlan[]>([]);
-  const [loading, setLoading] = useState(true);
+  const queryClient = useQueryClient();
   const [currentPage, setCurrentPage] = useState(1);
   const [pageSize, setPageSize] = useState(10);
-  const [total, setTotal] = useState(0);
   const [showDialog, setShowDialog] = useState(false);
   const [isEditing, setIsEditing] = useState(false);
   const [selectedPlan, setSelectedPlan] = useState<MrpPlan | null>(null);
@@ -50,7 +55,6 @@ const MrpPlanPage: React.FC = () => {
     onConfirm: () => void;
     danger?: boolean;
   } | null>(null);
-  const [calculatingPlanId, setCalculatingPlanId] = useState<string | null>(null);
   const [calculationResult, setCalculationResult] = useState<MrpCalculationResult | null>(null);
   const [showResultDialog, setShowResultDialog] = useState(false);
   const [formData, setFormData] = useState<CreateMrpPlanRequest>({
@@ -63,67 +67,147 @@ const MrpPlanPage: React.FC = () => {
 
   const { addNotification } = useNotificationStore();
 
-  useEffect(() => {
-    loadPlans();
-  }, [currentPage, pageSize]);
-
-  const loadPlans = async () => {
-    try {
-      setLoading(true);
+  const plansQuery = useQuery<{ items: MrpPlan[]; total: number }>({
+    queryKey: [...QUERY_KEYS.SCM.MRP_PLANS, currentPage, pageSize],
+    queryFn: async () => {
       const response = await scmApi.mrpPlans.list({
         page: currentPage,
         pageSize,
       });
       if (response.success && response.data) {
-        setPlans(response.data.items || []);
-        setTotal(response.data.total || 0);
+        return { items: response.data.items || [], total: response.data.total || 0 };
       }
-    } catch (error: unknown) {
-      apiLogger.error('加载MRP计划失败:', error);
+      return { items: [], total: 0 };
+    },
+    staleTime: 5 * 60 * 1000,
+  });
+
+  const plans = plansQuery.data?.items ?? [];
+  const total = plansQuery.data?.total ?? 0;
+  const loading = plansQuery.isLoading;
+
+  useEffect(() => {
+    if (plansQuery.isError) {
+      apiLogger.error('加载MRP计划失败:', plansQuery.error);
       addNotification({
         type: 'error',
         title: '加载失败',
         message: '无法加载MRP计划',
       });
-    } finally {
-      setLoading(false);
     }
-  };
+  }, [plansQuery.isError, plansQuery.error, addNotification]);
 
-  const handleSubmit = async (e: React.FormEvent) => {
+  const invalidatePlans = () =>
+    queryClient.invalidateQueries({ queryKey: QUERY_KEYS.SCM.MRP_PLANS });
+
+  const createMutation = useMutation({
+    mutationFn: (data: CreateMrpPlanRequest) => scmApi.mrpPlans.create(data),
+    onSuccess: () => {
+      invalidatePlans();
+      addNotification({
+        type: 'success',
+        title: '创建成功',
+        message: 'MRP计划已创建',
+      });
+      setShowDialog(false);
+      resetForm();
+    },
+    onError: (err: unknown) => {
+      apiLogger.error('操作失败:', err);
+      addNotification({
+        type: 'error',
+        title: '操作失败',
+        message: '创建MRP计划失败',
+      });
+    },
+  });
+
+  const updateMutation = useMutation({
+    mutationFn: (params: { id: string; data: UpdateMrpPlanRequest }) =>
+      scmApi.mrpPlans.update(params.id, params.data),
+    onSuccess: () => {
+      invalidatePlans();
+      addNotification({
+        type: 'success',
+        title: '更新成功',
+        message: 'MRP计划已更新',
+      });
+      setShowDialog(false);
+      resetForm();
+    },
+    onError: (err: unknown) => {
+      apiLogger.error('操作失败:', err);
+      addNotification({
+        type: 'error',
+        title: '操作失败',
+        message: '更新MRP计划失败',
+      });
+    },
+  });
+
+  const deleteMutation = useMutation({
+    mutationFn: (id: string) => scmApi.mrpPlans.delete(id),
+    onSuccess: () => {
+      invalidatePlans();
+      addNotification({
+        type: 'success',
+        title: '删除成功',
+        message: 'MRP计划已删除',
+      });
+    },
+    onError: (err: unknown) => {
+      apiLogger.error('删除失败:', err);
+      addNotification({
+        type: 'error',
+        title: '删除失败',
+        message: '删除MRP计划失败',
+      });
+    },
+  });
+
+  const calculateMutation = useMutation({
+    mutationFn: (id: string) => scmApi.mrpPlans.calculate(id),
+    onSuccess: (data) => {
+      invalidatePlans();
+      if (data.success && data.data) {
+        setCalculationResult(data.data);
+        setShowResultDialog(true);
+        addNotification({
+          type: 'success',
+          title: '运算完成',
+          message: data.data.message || 'MRP运算已完成',
+        });
+      }
+    },
+    onError: (err: unknown) => {
+      apiLogger.error('MRP运算失败:', err);
+      addNotification({
+        type: 'error',
+        title: '运算失败',
+        message: 'MRP运算执行失败',
+      });
+    },
+  });
+
+  const calculatingPlanId = calculateMutation.isPending
+    ? (calculateMutation.variables ?? null)
+    : null;
+
+  const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    try {
-      if (isEditing && selectedPlan) {
-        await scmApi.mrpPlans.update(selectedPlan.id, {
+    if (isEditing && selectedPlan) {
+      updateMutation.mutate({
+        id: selectedPlan.id,
+        data: {
           plan_name: formData.plan_name,
           plan_code: formData.plan_code,
           start_date: formData.start_date,
           end_date: formData.end_date,
           description: formData.description,
-        });
-        addNotification({
-          type: 'success',
-          title: '更新成功',
-          message: 'MRP计划已更新',
-        });
-      } else {
-        await scmApi.mrpPlans.create(formData);
-        addNotification({
-          type: 'success',
-          title: '创建成功',
-          message: 'MRP计划已创建',
-        });
-      }
-      setShowDialog(false);
-      resetForm();
-      loadPlans();
-    } catch (error: unknown) {
-      apiLogger.error('操作失败:', error);
-      addNotification({
-        type: 'error',
-        title: '操作失败',
-        message: isEditing ? '更新MRP计划失败' : '创建MRP计划失败',
+        },
       });
+    } else {
+      createMutation.mutate(formData);
     }
   };
 
@@ -140,27 +224,12 @@ const MrpPlanPage: React.FC = () => {
     setShowDialog(true);
   };
 
-  const handleDelete = async (plan: MrpPlan) => {
+  const handleDelete = (plan: MrpPlan) => {
     openConfirmDialog({
       title: '确认删除',
       message: `确定要删除MRP计划 "${plan.plan_name}" 吗？`,
-      onConfirm: async () => {
-        try {
-          await scmApi.mrpPlans.delete(plan.id);
-          addNotification({
-            type: 'success',
-            title: '删除成功',
-            message: 'MRP计划已删除',
-          });
-          loadPlans();
-        } catch (error: unknown) {
-          apiLogger.error('删除失败:', error);
-          addNotification({
-            type: 'error',
-            title: '删除失败',
-            message: '删除MRP计划失败',
-          });
-        }
+      onConfirm: () => {
+        deleteMutation.mutate(plan.id);
       },
       danger: true,
     });
@@ -171,30 +240,8 @@ const MrpPlanPage: React.FC = () => {
       openConfirmDialog({
         title: '确认运算',
         message: `确定要对MRP计划 "${plan.plan_name}" 进行MRP运算吗？`,
-        onConfirm: async () => {
-          try {
-            setCalculatingPlanId(plan.id);
-            const response = await scmApi.mrpPlans.calculate(plan.id);
-            if (response.success && response.data) {
-              setCalculationResult(response.data);
-              setShowResultDialog(true);
-              addNotification({
-                type: 'success',
-                title: '运算完成',
-                message: response.data.message || 'MRP运算已完成',
-              });
-            }
-            loadPlans();
-          } catch (error: unknown) {
-            apiLogger.error('MRP运算失败:', error);
-            addNotification({
-              type: 'error',
-              title: '运算失败',
-              message: 'MRP运算执行失败',
-            });
-          } finally {
-            setCalculatingPlanId(null);
-          }
+        onConfirm: () => {
+          calculateMutation.mutate(plan.id);
         },
       });
     },
@@ -400,7 +447,7 @@ const MrpPlanPage: React.FC = () => {
           },
         ]}
         rowActions={rowActions}
-        onRefresh={loadPlans}
+        onRefresh={() => plansQuery.refetch()}
         emptyMessage='暂无MRP计划数据'
       />
 

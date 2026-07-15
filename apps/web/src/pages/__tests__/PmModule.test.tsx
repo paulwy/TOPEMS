@@ -106,112 +106,111 @@ vi.mock('@/store', () => ({
 }));
 
 describe('DashboardPage', () => {
-    it('should render without crashing', () => {
-      const { container } = render(
-        <BrowserRouter>
-          <DashboardPage />
-        </BrowserRouter>
-      );
-      expect(container).toBeDefined();
-    });
+  it('should render without crashing', () => {
+    const { container } = render(
+      <BrowserRouter>
+        <DashboardPage />
+      </BrowserRouter>
+    );
+    expect(container).toBeDefined();
   });
+});
 
 describe('PmContractCreatePage', () => {
-    it('should render without crashing', () => {
-      const { container } = render(
-        <BrowserRouter>
-          <PmContractCreatePage />
-        </BrowserRouter>
-      );
-      expect(container).toBeDefined();
-    });
+  it('should render without crashing', () => {
+    const { container } = render(
+      <BrowserRouter>
+        <PmContractCreatePage />
+      </BrowserRouter>
+    );
+    expect(container).toBeDefined();
   });
+});
 
 describe('PmContractDetailPage', () => {
-    it('should render without crashing', () => {
-      const { container } = render(
-        <BrowserRouter>
-          <PmContractDetailPage />
-        </BrowserRouter>
-      );
-      expect(container).toBeDefined();
-    });
+  it('should render without crashing', () => {
+    const { container } = render(
+      <BrowserRouter>
+        <PmContractDetailPage />
+      </BrowserRouter>
+    );
+    expect(container).toBeDefined();
   });
+});
 
 describe('PmContractListPage', () => {
-    it('should render without crashing', () => {
-      const { container } = render(
-        <BrowserRouter>
-          <PmContractListPage />
-        </BrowserRouter>
-      );
-      expect(container).toBeDefined();
-    });
+  it('should render without crashing', () => {
+    const { container } = render(
+      <BrowserRouter>
+        <PmContractListPage />
+      </BrowserRouter>
+    );
+    expect(container).toBeDefined();
   });
+});
 
 describe('PmProjectCreatePage', () => {
-    it('should render without crashing', () => {
-      const { container } = render(
-        <BrowserRouter>
-          <PmProjectCreatePage />
-        </BrowserRouter>
-      );
-      expect(container).toBeDefined();
-    });
+  it('should render without crashing', () => {
+    const { container } = render(
+      <BrowserRouter>
+        <PmProjectCreatePage />
+      </BrowserRouter>
+    );
+    expect(container).toBeDefined();
   });
+});
 
 describe('PmProjectDetailPage', () => {
-    it('should render without crashing', () => {
-      const { container } = render(
-        <BrowserRouter>
-          <PmProjectDetailPage />
-        </BrowserRouter>
-      );
-      expect(container).toBeDefined();
-    });
+  it('should render without crashing', () => {
+    const { container } = render(
+      <BrowserRouter>
+        <PmProjectDetailPage />
+      </BrowserRouter>
+    );
+    expect(container).toBeDefined();
   });
+});
 
 describe('PmProjectListPage', () => {
-    it('should render without crashing', () => {
-      const { container } = render(
-        <BrowserRouter>
-          <PmProjectListPage />
-        </BrowserRouter>
-      );
-      expect(container).toBeDefined();
-    });
+  it('should render without crashing', () => {
+    const { container } = render(
+      <BrowserRouter>
+        <PmProjectListPage />
+      </BrowserRouter>
+    );
+    expect(container).toBeDefined();
   });
+});
 
 describe('PmReportPage', () => {
-    it('should render without crashing', () => {
-      const { container } = render(
-        <BrowserRouter>
-          <PmReportPage />
-        </BrowserRouter>
-      );
-      expect(container).toBeDefined();
-    });
+  it('should render without crashing', () => {
+    const { container } = render(
+      <BrowserRouter>
+        <PmReportPage />
+      </BrowserRouter>
+    );
+    expect(container).toBeDefined();
   });
+});
 
 describe('PmResourcePage', () => {
-    it('should render without crashing', () => {
-      const { container } = render(
-        <BrowserRouter>
-          <PmResourcePage />
-        </BrowserRouter>
-      );
-      expect(container).toBeDefined();
-    });
+  it('should render without crashing', () => {
+    const { container } = render(
+      <BrowserRouter>
+        <PmResourcePage />
+      </BrowserRouter>
+    );
+    expect(container).toBeDefined();
   });
+});
 
 describe('PmTemplatePage', () => {
-    it('should render without crashing', () => {
-      const { container } = render(
-        <BrowserRouter>
-          <PmTemplatePage />
-        </BrowserRouter>
-      );
-      expect(container).toBeDefined();
-    });
+  it('should render without crashing', () => {
+    const { container } = render(
+      <BrowserRouter>
+        <PmTemplatePage />
+      </BrowserRouter>
+    );
+    expect(container).toBeDefined();
   });
 });

@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useMemo } from 'react';
+import React, { useState, useMemo } from 'react';
 import {
   Box,
   Chip,
@@ -16,6 +16,7 @@ import {
   Button,
 } from '@mui/material';
 import { Play, FileText, RotateCcw, GitBranch, CheckCircle, XCircle, Clock } from 'lucide-react';
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { ListPageTemplate } from '@/components/templates';
 
 import type { RowAction, FilterConfig, ColumnDef } from '@/components/templates';
@@ -24,14 +25,13 @@ import { rdApi } from '@/api/rd';
 import { useNotificationStore } from '@/store';
 import type { Build, CreateBuildRequest } from '@/api/rd';
 import { logger } from '@/utils/logger';
+import { QUERY_KEYS } from '@/lib/reactQuery';
 
 const RsBuildPage: React.FC = () => {
+  const queryClient = useQueryClient();
   const { addNotification } = useNotificationStore();
-  const [builds, setBuilds] = useState<Build[]>([]);
-  const [loading, setLoading] = useState(false);
   const [page, setPage] = useState(0);
   const [rowsPerPage, setRowsPerPage] = useState(10);
-  const [total, setTotal] = useState(0);
   const [searchTerm, setSearchTerm] = useState('');
   const [statusFilter, setStatusFilter] = useState<string>('');
   const [projectFilter, setProjectFilter] = useState<string>('');
@@ -45,13 +45,12 @@ const RsBuildPage: React.FC = () => {
     build_type: 'manual',
   });
 
-  useEffect(() => {
-    loadBuilds();
-  }, [searchTerm, statusFilter, projectFilter, page, rowsPerPage]);
-
-  const loadBuilds = async () => {
-    try {
-      setLoading(true);
+  const buildListQuery = useQuery({
+    queryKey: [
+      ...QUERY_KEYS.RD.BUILDS,
+      { page, rowsPerPage, searchTerm, statusFilter, projectFilter },
+    ],
+    queryFn: async () => {
       const params: Record<string, unknown> = {
         page: page + 1,
         pagesize: rowsPerPage,
@@ -61,21 +60,45 @@ const RsBuildPage: React.FC = () => {
       if (projectFilter) params.project_id = projectFilter;
 
       const response = await rdApi.listBuilds(params);
-      if (response.success && response.data) {
-        setBuilds(response.data.builds || []);
-        setTotal(response.data.total || 0);
+      if (!response.success || !response.data) {
+        throw new Error(response.message || '加载构建记录失败');
       }
-    } catch (error: unknown) {
-      logger.error('加载构建记录失败:', error);
+      return {
+        builds: response.data.builds || [],
+        total: response.data.total || 0,
+      };
+    },
+  });
+
+  const createBuildMutation = useMutation({
+    mutationFn: async (data: CreateBuildRequest) => {
+      const response = await rdApi.createBuild(data);
+      if (!response.success) {
+        throw new Error(response.message || '创建构建任务失败');
+      }
+      return response;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: QUERY_KEYS.RD.BUILDS });
+      addNotification({
+        type: 'success',
+        title: '操作成功',
+        message: '构建任务已提交',
+      });
+    },
+    onError: (error: unknown) => {
+      logger.error('创建构建失败:', error);
       addNotification({
         type: 'error',
-        title: '加载失败',
-        message: '无法加载构建记录',
+        title: '操作失败',
+        message: error instanceof Error ? error.message : '无法创建构建任务',
       });
-    } finally {
-      setLoading(false);
-    }
-  };
+    },
+  });
+
+  const builds = buildListQuery.data?.builds || [];
+  const total = buildListQuery.data?.total || 0;
+  const loading = buildListQuery.isLoading || createBuildMutation.isPending;
 
   const uniqueProjects = useMemo(() => [...new Set(builds.map((b) => b.project_name))], [builds]);
 
@@ -135,20 +158,9 @@ const RsBuildPage: React.FC = () => {
         commit_hash: build.commit_hash,
         build_type: 'manual',
       };
-      await rdApi.createBuild(createData);
-      addNotification({
-        type: 'success',
-        title: '操作成功',
-        message: '构建任务已提交',
-      });
-      loadBuilds();
-    } catch (error: unknown) {
-      logger.error('重新构建失败:', error);
-      addNotification({
-        type: 'error',
-        title: '操作失败',
-        message: '重新构建失败',
-      });
+      await createBuildMutation.mutateAsync(createData);
+    } catch {
+      // 错误已在 mutation onError 中处理
     }
   };
 
@@ -160,12 +172,7 @@ const RsBuildPage: React.FC = () => {
         commit_hash: newBuildForm.commit_hash,
         build_type: newBuildForm.build_type,
       };
-      await rdApi.createBuild(createData);
-      addNotification({
-        type: 'success',
-        title: '创建成功',
-        message: '构建任务已创建',
-      });
+      await createBuildMutation.mutateAsync(createData);
       setNewBuildDialogOpen(false);
       setNewBuildForm({
         project_id: '',
@@ -173,14 +180,8 @@ const RsBuildPage: React.FC = () => {
         commit_hash: '',
         build_type: 'manual',
       });
-      loadBuilds();
-    } catch (error: unknown) {
-      logger.error('创建构建失败:', error);
-      addNotification({
-        type: 'error',
-        title: '创建失败',
-        message: '无法创建构建任务',
-      });
+    } catch {
+      // 错误已在 mutation onError 中处理
     }
   };
 

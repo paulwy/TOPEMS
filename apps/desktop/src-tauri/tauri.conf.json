@@ -61,6 +61,7 @@
     "dialog": {},
     "opener": {},
     "log": {},
+    "global-shortcut": {},
     "updater": {
       "active": true,
       "endpoints": [

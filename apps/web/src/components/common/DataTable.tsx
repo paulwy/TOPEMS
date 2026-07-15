@@ -56,7 +56,7 @@ import {
   type PaginationState,
   type VisibilityState,
 } from '@tanstack/react-table';
-import { FixedSizeList } from 'react-window';
+import { List } from 'react-window';
 import { useNotificationStore } from '@/store';
 import { useExportData } from '@/hooks/useDataTable';
 import { useResponsive } from '@/hooks/useResponsive';
@@ -355,9 +355,10 @@ export function DataTable<TData, TValue>({
     pageSize,
   });
   const theme = useTheme();
-  const { isMobile } = useResponsive();
+  const { isMobile, isTablet } = useResponsive();
   const shouldUseMobileCard =
     isMobile && (Boolean(mobileCardRender) || Boolean(mobileCardTitleKey));
+  const isTabletMode = isTablet;
   const [localSearch, setLocalSearch] = useState('');
   const [showAdvancedFilterDialog, setShowAdvancedFilterDialog] = useState(false);
   const [exportAnchorEl, setExportAnchorEl] = useState<null | HTMLElement>(null);
@@ -732,7 +733,7 @@ export function DataTable<TData, TValue>({
         </MenuItem>
       </Menu>
 
-      {/* 数据区域：移动端使用卡片视图，桌面端使用表格视图 */}
+      {/* 数据区域：移动端使用卡片视图，Tablet 端可选择紧凑模式或卡片视图，桌面端使用表格视图 */}
       {shouldUseMobileCard ? (
         <Box
           sx={{
@@ -773,12 +774,18 @@ export function DataTable<TData, TValue>({
             border: '1px solid',
             borderColor: 'divider',
             bgcolor: 'background.paper',
+            ...(isTabletMode && {
+              boxShadow: '0 2px 8px rgba(0, 0, 0, 0.06)',
+            }),
           }}
         >
           <Box sx={{ overflowX: responsive ? 'auto' : 'hidden' }}>
             <Table
               sx={{
-                minWidth: 640,
+                minWidth: isTabletMode ? 768 : 640,
+                ...(isTabletMode && {
+                  fontSize: '0.875rem',
+                }),
                 ...(enableStickyHeader && {
                   thead: {
                     position: 'sticky',
@@ -859,10 +866,12 @@ export function DataTable<TData, TValue>({
                         sx={{
                           whiteSpace: 'nowrap',
                           fontWeight: 600,
-                          fontSize: 12,
+                          fontSize: isTabletMode ? 11 : 12,
                           textTransform: 'uppercase',
                           letterSpacing: 0.5,
                           color: 'text.secondary',
+                          px: isTabletMode ? 1.5 : 2,
+                          py: isTabletMode ? 1 : 1.5,
                         }}
                       >
                         {header.isPlaceholder
@@ -920,13 +929,12 @@ export function DataTable<TData, TValue>({
                         }
                         sx={{ p: 0 }}
                       >
-                        <FixedSizeList
-                          height={400}
-                          itemCount={table.getRowModel().rows.length}
-                          itemSize={rowHeight}
-                          width='100%'
-                        >
-                          {({ index, style }) => {
+                        <List
+                          defaultHeight={400}
+                          rowCount={table.getRowModel().rows.length}
+                          rowHeight={rowHeight}
+                          rowProps={{}}
+                          rowComponent={({ index, style }) => {
                             const row = table.getRowModel().rows[index];
                             const rowKey = getRowKey(row.original);
 
@@ -941,7 +949,8 @@ export function DataTable<TData, TValue>({
                                       backgroundColor: onRowClick ? 'action.hover' : 'inherit',
                                     },
                                     '&:last-child td': { borderBottom: 0 },
-                                    bgcolor: striped && row.index % 2 === 0 ? 'action.hover' : 'inherit',
+                                    bgcolor:
+                                      striped && row.index % 2 === 0 ? 'action.hover' : 'inherit',
                                     ...(compact && { fontSize: '0.875rem' }),
                                   }}
                                 >
@@ -983,7 +992,8 @@ export function DataTable<TData, TValue>({
                                       sx={{
                                         whiteSpace: 'nowrap',
                                         fontSize: 14,
-                                        position: showSelection || showRowNumber ? 'sticky' : 'relative',
+                                        position:
+                                          showSelection || showRowNumber ? 'sticky' : 'relative',
                                         left: (showSelection ? 56 : 0) + (showRowNumber ? 64 : 0),
                                         zIndex: 1,
                                         bgcolor: 'inherit',
@@ -1005,7 +1015,9 @@ export function DataTable<TData, TValue>({
                                       key={cell.id}
                                       sx={{
                                         whiteSpace: 'nowrap',
-                                        fontSize: 14,
+                                        fontSize: isTabletMode ? 13 : 14,
+                                        px: isTabletMode ? 1.5 : 2,
+                                        py: isTabletMode ? 1 : 1.5,
                                         ...(compact && { py: 1 }),
                                       }}
                                     >
@@ -1016,7 +1028,7 @@ export function DataTable<TData, TValue>({
                               </div>
                             );
                           }}
-                        </FixedSizeList>
+                        />
                       </TableCell>
                     </TableRow>
                   ) : (
@@ -1103,7 +1115,9 @@ export function DataTable<TData, TValue>({
                                 key={cell.id}
                                 sx={{
                                   whiteSpace: 'nowrap',
-                                  fontSize: 14,
+                                  fontSize: isTabletMode ? 13 : 14,
+                                  px: isTabletMode ? 1.5 : 2,
+                                  py: isTabletMode ? 1 : 1.5,
                                   ...(compact && { py: 1 }),
                                 }}
                               >

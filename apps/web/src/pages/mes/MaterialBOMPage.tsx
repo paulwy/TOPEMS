@@ -24,7 +24,9 @@ import {
   Button,
 } from '@mui/material';
 import { PageContainer } from '@/components/common/PageContainerV2';
-import React, { useState, useEffect, useMemo, useCallback } from 'react';
+import React, { useState, useMemo } from 'react';
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import { QUERY_KEYS } from '@/lib/reactQuery';
 import type {
   MaterialBom,
   CreateMaterialBomRequest,
@@ -58,13 +60,11 @@ import { designTokens } from '@/theme/tokens';
 const ct = designTokens.colors;
 
 const MaterialBOMPage: React.FC = () => {
-  const [boms, setBoms] = useState<MaterialBom[]>([]);
-  const [loading, setLoading] = useState(true);
+  const queryClient = useQueryClient();
   const [searchTerm, setSearchTerm] = useState('');
   const [statusFilter, setStatusFilter] = useState<string>('all');
   const [currentPage, setCurrentPage] = useState(1);
   const [pageSize] = useState(10);
-  const [total, setTotal] = useState(0);
   const [showDialog, setShowDialog] = useState(false);
   const [showDetailDialog, setShowDetailDialog] = useState(false);
   const [selectedBom, setSelectedBom] = useState<MaterialBom | null>(null);
@@ -80,36 +80,74 @@ const MaterialBOMPage: React.FC = () => {
 
   const { addNotification } = useNotificationStore();
 
-  const loadBoms = useCallback(async () => {
-    try {
-      setLoading(true);
-      const params: ListParams = {
-        page: currentPage - 1,
-        pagesize: pageSize,
-      };
-      if (searchTerm) params.search = searchTerm;
-      if (statusFilter !== 'all') params.status = statusFilter;
+  const params: ListParams = {
+    page: currentPage - 1,
+    pagesize: pageSize,
+  };
+  if (searchTerm) params.search = searchTerm;
+  if (statusFilter !== 'all') params.status = statusFilter;
 
+  const { data: bomsData, isLoading: loading } = useQuery({
+    queryKey: [...QUERY_KEYS.MES.BOMS, params],
+    queryFn: async () => {
       const response = await mesApi.boms.list(params);
       if (response.success && response.data) {
-        setBoms(response.data.boms || []);
-        setTotal(response.data.total || 0);
+        return {
+          boms: response.data.boms || [],
+          total: response.data.total || 0,
+        };
       }
-    } catch (error: unknown) {
-      apiLogger.error('加载BOM列表失败:', error);
-      addNotification({
-        type: 'error',
-        title: '加载失败',
-        message: '无法加载BOM列表',
-      });
-    } finally {
-      setLoading(false);
-    }
-  }, [currentPage, pageSize, searchTerm, statusFilter, addNotification]);
+      return { boms: [], total: 0 };
+    },
+  });
 
-  useEffect(() => {
-    loadBoms();
-  }, [loadBoms]);
+  const boms = bomsData?.boms || [];
+  const total = bomsData?.total || 0;
+
+  const invalidateBoms = () => {
+    queryClient.invalidateQueries({ queryKey: QUERY_KEYS.MES.BOMS });
+  };
+
+  const createMutation = useMutation({
+    mutationFn: (data: CreateMaterialBomRequest) => mesApi.boms.create(data),
+    onSuccess: () => {
+      addNotification({ type: 'success', title: '创建成功', message: '新BOM已创建' });
+      invalidateBoms();
+      setShowDialog(false);
+      resetForm();
+    },
+    onError: (error: unknown) => {
+      apiLogger.error('操作失败:', error);
+      addNotification({ type: 'error', title: '操作失败', message: '创建BOM失败' });
+    },
+  });
+
+  const updateMutation = useMutation({
+    mutationFn: ({ id, data }: { id: string; data: UpdateMaterialBomRequest }) =>
+      mesApi.boms.update(id, data),
+    onSuccess: () => {
+      addNotification({ type: 'success', title: '更新成功', message: 'BOM信息已更新' });
+      invalidateBoms();
+      setShowDialog(false);
+      resetForm();
+    },
+    onError: (error: unknown) => {
+      apiLogger.error('操作失败:', error);
+      addNotification({ type: 'error', title: '操作失败', message: '更新BOM失败' });
+    },
+  });
+
+  const deleteMutation = useMutation({
+    mutationFn: (id: string) => mesApi.boms.delete(id),
+    onSuccess: () => {
+      addNotification({ type: 'success', title: '删除成功', message: 'BOM已删除' });
+      invalidateBoms();
+    },
+    onError: (error: unknown) => {
+      apiLogger.error('删除失败:', error);
+      addNotification({ type: 'error', title: '删除失败', message: '无法删除BOM' });
+    },
+  });
 
   const getStatusText = (status: string) => {
     const statusMap: Record<string, string> = {
@@ -123,59 +161,19 @@ const MaterialBOMPage: React.FC = () => {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    try {
-      if (selectedBom) {
-        await mesApi.boms.update(selectedBom.id, formData as UpdateMaterialBomRequest);
-        addNotification({
-          type: 'success',
-          title: '更新成功',
-          message: 'BOM信息已更新',
-        });
-      } else {
-        await mesApi.boms.create(formData);
-        addNotification({
-          type: 'success',
-          title: '创建成功',
-          message: '新BOM已创建',
-        });
-      }
-      setShowDialog(false);
-      resetForm();
-      loadBoms();
-    } catch (error: unknown) {
-      apiLogger.error('操作失败:', error);
-      addNotification({
-        type: 'error',
-        title: '操作失败',
-        message: selectedBom ? '更新BOM失败' : '创建BOM失败',
-      });
+    if (selectedBom) {
+      updateMutation.mutate({ id: selectedBom.id, data: formData as UpdateMaterialBomRequest });
+    } else {
+      createMutation.mutate(formData);
     }
   };
 
-  const handleDelete = useCallback(
-    async (id: string) => {
-      if (!window.confirm('确定要删除这个BOM吗?')) return;
-      try {
-        await mesApi.boms.delete(id);
-        addNotification({
-          type: 'success',
-          title: '删除成功',
-          message: 'BOM已删除',
-        });
-        loadBoms();
-      } catch (error: unknown) {
-        apiLogger.error('删除失败:', error);
-        addNotification({
-          type: 'error',
-          title: '删除失败',
-          message: '无法删除BOM',
-        });
-      }
-    },
-    [loadBoms, addNotification]
-  );
+  const handleDelete = (id: string) => {
+    if (!window.confirm('确定要删除这个BOM吗?')) return;
+    deleteMutation.mutate(id);
+  };
 
-  const handleEdit = useCallback(async (bom: MaterialBom) => {
+  const handleEdit = async (bom: MaterialBom) => {
     try {
       const response = await mesApi.boms.get(bom.id);
       if (response.success && response.data) {
@@ -202,9 +200,9 @@ const MaterialBOMPage: React.FC = () => {
     } catch (error: unknown) {
       apiLogger.error('获取BOM详情失败:', error);
     }
-  }, []);
+  };
 
-  const handleViewDetail = useCallback(async (bom: MaterialBom) => {
+  const handleViewDetail = async (bom: MaterialBom) => {
     try {
       const response = await mesApi.boms.get(bom.id);
       if (response.success && response.data) {
@@ -214,7 +212,7 @@ const MaterialBOMPage: React.FC = () => {
     } catch (error: unknown) {
       apiLogger.error('获取BOM详情失败:', error);
     }
-  }, []);
+  };
 
   const resetForm = () => {
     setSelectedBom(null);

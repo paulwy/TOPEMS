@@ -365,6 +365,24 @@ export interface PushNotification {
   data?: Record<string, unknown>;
 }
 
+export interface PushConfig {
+  enabled: boolean;
+  sound_enabled: boolean;
+  vibration_enabled: boolean;
+  quiet_hours_start: string;
+  quiet_hours_end: string;
+}
+
+export interface PushTemplate {
+  id: string;
+  name: string;
+  type: 'system' | 'approval' | 'task' | 'reminder';
+  title: string;
+  body: string;
+  enabled: boolean;
+  status: 'active' | 'draft' | 'disabled';
+}
+
 export interface OfflineSyncStatus {
   last_sync_time?: string;
   pending_records: number;
@@ -656,6 +674,25 @@ export const mobileApi = {
   },
   getUnreadCount: async (): Promise<ApiResponse<{ count: number }>> => {
     return apiClient.mobile.get<{ count: number }>('/mobile/notifications/unread-count');
+  },
+
+  getPushConfig: async (): Promise<ApiResponse<PushConfig>> => {
+    return apiClient.mobile.get<PushConfig>('/mobile/push/config');
+  },
+
+  updatePushConfig: async (data: Partial<PushConfig>): Promise<ApiResponse<PushConfig>> => {
+    return apiClient.mobile.put<PushConfig>('/mobile/push/config', data);
+  },
+
+  listPushTemplates: async (): Promise<ApiResponse<ListResponse<PushTemplate>>> => {
+    return apiClient.mobile.get<ListResponse<PushTemplate>>('/mobile/push/templates');
+  },
+
+  updatePushTemplate: async (
+    id: string,
+    data: Partial<PushTemplate>
+  ): Promise<ApiResponse<PushTemplate>> => {
+    return apiClient.mobile.put<PushTemplate>(`/mobile/push/templates/${id}`, data);
   },
 
   getOfflineSyncStatus: async (): Promise<ApiResponse<OfflineSyncStatus>> => {

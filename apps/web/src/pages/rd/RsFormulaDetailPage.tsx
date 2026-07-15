@@ -1,5 +1,6 @@
-import React, { useState, useEffect } from 'react';
+import React from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { RD_PATHS } from '@/modules/rd/config';
 import {
   Box,
@@ -24,86 +25,81 @@ import { formulaApi } from '@/api/rd';
 import { PageContainer } from '@/components/common';
 import type { Formula, FormulaVersion } from '@/api/rd';
 import { useNotificationStore } from '@/store';
+import { QUERY_KEYS } from '@/lib/reactQuery';
 import { logger } from '@/utils/logger';
 
 const RsFormulaDetailPage: React.FC = () => {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
+  const queryClient = useQueryClient();
   const { addNotification } = useNotificationStore();
-  const [formula, setFormula] = useState<Formula | null>(null);
-  const [versions, setVersions] = useState<FormulaVersion[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
-  const [approving, setApproving] = useState(false);
 
-  useEffect(() => {
-    if (id) {
-      loadFormula(id);
-    }
-  }, [id]);
-
-  const loadFormula = async (formulaId: string) => {
-    try {
-      setLoading(true);
-      setError(null);
-
-      const [formulaResponse, versionsResponse] = await Promise.all([
-        formulaApi.getFormula(formulaId),
-        formulaApi.listVersions(formulaId),
-      ]);
-
-      if (formulaResponse.success && formulaResponse.data) {
-        setFormula(formulaResponse.data);
-      } else {
-        setError('无法获取配方详情');
+  const formulaQuery = useQuery({
+    queryKey: QUERY_KEYS.RD.FORMULA(id || ''),
+    queryFn: async () => {
+      const response = await formulaApi.getFormula(id || '');
+      if (!response.success || !response.data) {
+        throw new Error(response.message || '无法获取配方详情');
       }
+      return response.data;
+    },
+    enabled: !!id,
+  });
 
-      if (versionsResponse.success && versionsResponse.data) {
-        setVersions(versionsResponse.data);
+  const versionsQuery = useQuery({
+    queryKey: QUERY_KEYS.RD.FORMULA_VERSIONS(id || ''),
+    queryFn: async () => {
+      const response = await formulaApi.listVersions(id || '');
+      if (!response.success || !response.data) {
+        throw new Error(response.message || '无法获取版本历史');
       }
-    } catch (error: unknown) {
-      logger.error('加载配方详情失败:', error);
-      setError('加载配方详情失败');
+      return response.data;
+    },
+    enabled: !!id,
+  });
+
+  const approveMutation = useMutation({
+    mutationFn: async (formulaId: string) => {
+      const response = await formulaApi.approveFormula(formulaId);
+      if (!response.success || !response.data) {
+        throw new Error(response.message || '无法审批配方');
+      }
+      return response.data;
+    },
+    onSuccess: (data) => {
+      queryClient.setQueryData(QUERY_KEYS.RD.FORMULA(id || ''), data);
+      queryClient.invalidateQueries({ queryKey: QUERY_KEYS.RD.FORMULA_VERSIONS(id || '') });
       addNotification({
-        type: 'error',
-        title: '加载失败',
-        message: '无法加载配方详情',
+        type: 'success',
+        title: '审批成功',
+        message: '配方已通过审批',
       });
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  const handleApprove = async () => {
-    if (!formula || approving) return;
-    try {
-      setApproving(true);
-      const response = await formulaApi.approveFormula(formula.id);
-      if (response.success && response.data) {
-        setFormula(response.data);
-        addNotification({
-          type: 'success',
-          title: '审批成功',
-          message: '配方已通过审批',
-        });
-        loadFormula(formula.id);
-      } else {
-        addNotification({
-          type: 'error',
-          title: '审批失败',
-          message: '无法审批配方',
-        });
-      }
-    } catch (error: unknown) {
+    },
+    onError: (error: unknown) => {
       logger.error('审批配方失败:', error);
       addNotification({
         type: 'error',
         title: '审批失败',
-        message: '无法审批配方',
+        message: error instanceof Error ? error.message : '无法审批配方',
       });
-    } finally {
-      setApproving(false);
+    },
+  });
+
+  const formula = formulaQuery.data || null;
+  const versions = versionsQuery.data || [];
+  const loading = formulaQuery.isLoading || versionsQuery.isLoading;
+  const error = formulaQuery.error ? '加载配方详情失败' : null;
+  const approving = approveMutation.isPending;
+
+  React.useEffect(() => {
+    if (formulaQuery.error) {
+      logger.error('加载配方详情失败:', formulaQuery.error);
     }
+  }, [formulaQuery.error]);
+
+  const handleApprove = () => {
+    if (!formula || approving) return;
+    approveMutation.mutate(formula.id);
   };
 
   const handleEdit = () => {

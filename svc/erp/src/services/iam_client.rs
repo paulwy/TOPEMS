@@ -77,7 +77,7 @@ impl IamClient {
     }
 
     async fn get_admin_token(&self) -> Result<String> {
-        let url = format!("{}/api/v1/auth/login", self.base_url);
+        let url = format!("{}/api/core/iam/auth/login", self.base_url);
         let login_req = LoginRequest {
             username: self.admin_username.clone(),
             password: self.admin_password.clone(),
@@ -119,7 +119,7 @@ impl IamClient {
 
     pub async fn create_user(&self, req: CreateUserRequest) -> Result<IamUser> {
         let token = self.get_admin_token().await?;
-        let url = format!("{}/api/v1/users", self.base_url);
+        let url = format!("{}/api/users", self.base_url);
 
         let response = self
             .client
@@ -158,7 +158,7 @@ impl IamClient {
     #[allow(dead_code)]
     pub async fn get_user(&self, user_id: Uuid) -> Result<Option<IamUser>> {
         let token = self.get_admin_token().await?;
-        let url = format!("{}/api/v1/users/{}", self.base_url, user_id);
+        let url = format!("{}/api/users/{}", self.base_url, user_id);
 
         let response = self
             .client
@@ -192,7 +192,7 @@ impl IamClient {
 
     pub async fn delete_user(&self, user_id: Uuid) -> Result<()> {
         let token = self.get_admin_token().await?;
-        let url = format!("{}/api/v1/users/{}", self.base_url, user_id);
+        let url = format!("{}/api/users/{}", self.base_url, user_id);
 
         let response = self
             .client

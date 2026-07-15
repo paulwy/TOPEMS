@@ -12,6 +12,19 @@ use serde_json::{json, Value};
 
 const API_URL: &str = "http://localhost:8000";
 
+/// 检查 API 服务是否可用
+async fn ensure_api_available() -> bool {
+    reqwest::Client::builder()
+        .timeout(std::time::Duration::from_secs(2))
+        .build()
+        .unwrap()
+        .get(format!("{}/api/core/iam/auth/login", API_URL))
+        .send()
+        .await
+        .map(|resp| !resp.status().is_server_error())
+        .unwrap_or(false)
+}
+
 fn create_client() -> Client {
     Client::new()
 }
@@ -19,7 +32,7 @@ fn create_client() -> Client {
 async fn login(username: &str, password: &str) -> Result<String, String> {
     let client = create_client();
     let response = client
-        .post(format!("{}/api/v1/auth/login", API_URL))
+        .post(format!("{}/api/core/iam/auth/login", API_URL))
         .json(&json!({ "username": username, "password": password }))
         .send()
         .await
@@ -73,8 +86,11 @@ async fn auth_request(
 // ==================== QMS-001: 查看质量检查列表 ====================
 
 #[tokio::test]
-#[ignore]
 async fn test_qms_001_list_inspections() {
+    if !ensure_api_available().await {
+        eprintln!("⏭ 跳过: API服务未运行 ({})", API_URL);
+        return;
+    }
     tracing::info!("测试 QMS-001: 查看质量检查列表");
     let token = login("admin", "admin123").await.expect("管理员登录失败");
     let client = create_client();
@@ -91,8 +107,11 @@ async fn test_qms_001_list_inspections() {
 // ==================== QMS-002: 创建质量检查 ====================
 
 #[tokio::test]
-#[ignore]
 async fn test_qms_002_create_inspection() {
+    if !ensure_api_available().await {
+        eprintln!("⏭ 跳过: API服务未运行 ({})", API_URL);
+        return;
+    }
     tracing::info!("测试 QMS-002: 创建质量检查");
     let token = login("admin", "admin123").await.expect("管理员登录失败");
     let client = create_client();
@@ -124,8 +143,11 @@ async fn test_qms_002_create_inspection() {
 // ==================== QMS-003: 查看不合格记录 ====================
 
 #[tokio::test]
-#[ignore]
 async fn test_qms_003_list_nonconformities() {
+    if !ensure_api_available().await {
+        eprintln!("⏭ 跳过: API服务未运行 ({})", API_URL);
+        return;
+    }
     tracing::info!("测试 QMS-003: 查看不合格记录");
     let token = login("admin", "admin123").await.expect("管理员登录失败");
     let client = create_client();
@@ -142,8 +164,11 @@ async fn test_qms_003_list_nonconformities() {
 // ==================== QMS-004: 创建不合格记录 ====================
 
 #[tokio::test]
-#[ignore]
 async fn test_qms_004_create_nonconformity() {
+    if !ensure_api_available().await {
+        eprintln!("⏭ 跳过: API服务未运行 ({})", API_URL);
+        return;
+    }
     tracing::info!("测试 QMS-004: 创建不合格记录");
     let token = login("admin", "admin123").await.expect("管理员登录失败");
     let client = create_client();
@@ -171,8 +196,11 @@ async fn test_qms_004_create_nonconformity() {
 // ==================== QMS-005: 查看质量报告 ====================
 
 #[tokio::test]
-#[ignore]
 async fn test_qms_005_view_reports() {
+    if !ensure_api_available().await {
+        eprintln!("⏭ 跳过: API服务未运行 ({})", API_URL);
+        return;
+    }
     tracing::info!("测试 QMS-005: 查看质量报告");
     let token = login("admin", "admin123").await.expect("管理员登录失败");
     let client = create_client();
@@ -189,8 +217,11 @@ async fn test_qms_005_view_reports() {
 // ==================== QMS-006: 查看审核计划 ====================
 
 #[tokio::test]
-#[ignore]
 async fn test_qms_006_view_audit_plan() {
+    if !ensure_api_available().await {
+        eprintln!("⏭ 跳过: API服务未运行 ({})", API_URL);
+        return;
+    }
     tracing::info!("测试 QMS-006: 查看审核计划");
     let token = login("admin", "admin123").await.expect("管理员登录失败");
     let client = create_client();
@@ -207,8 +238,11 @@ async fn test_qms_006_view_audit_plan() {
 // ==================== 测试总结 ====================
 
 #[tokio::test]
-#[ignore]
 async fn run_all_qms_tests_summary() {
+    if !ensure_api_available().await {
+        eprintln!("⏭ 跳过: API服务未运行 ({})", API_URL);
+        return;
+    }
     tracing::info!("========================================");
     tracing::info!("  QMS 权限测试套件 (6个用例)");
     tracing::info!("========================================");

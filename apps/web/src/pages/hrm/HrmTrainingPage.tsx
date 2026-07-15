@@ -1,4 +1,6 @@
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState, useCallback, useMemo } from 'react';
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import { QUERY_KEYS } from '@/lib/reactQuery';
 import {
   Calendar,
   BookOpen,
@@ -53,13 +55,10 @@ import {
 const HrmTrainingPage: React.FC = () => {
   const navigate = useNavigate();
   const addNotification = useNotificationStore((state) => state.addNotification);
+  const queryClient = useQueryClient();
 
   const [activeTab, setActiveTab] = useState<'plans' | 'courses' | 'records'>('plans');
-  const [plans, setPlans] = useState<TrainingPlan[]>([]);
-  const [courses, setCourses] = useState<TrainingCourse[]>([]);
-  const [records, setRecords] = useState<TrainingRecord[]>([]);
-  const [employees, setEmployees] = useState<Employee[]>([]);
-  const [loading, setLoading] = useState(false);
+  const [loading] = useState(false);
   const [showModal, setShowModal] = useState(false);
   const [showRecordModal, setShowRecordModal] = useState(false);
   const [showEnrollModal, setShowEnrollModal] = useState(false);
@@ -69,55 +68,67 @@ const HrmTrainingPage: React.FC = () => {
   const [formData, setFormData] = useState<Partial<TrainingPlan | TrainingCourse>>({});
   const [searchTerm, setSearchTerm] = useState('');
 
-  const loadData = useCallback(async () => {
-    setLoading(true);
-    try {
-      switch (activeTab) {
-        case 'plans': {
-          const planRes = await trainingPlanApi.list({ pagesize: 100 });
-          if (planRes.code === 200) {
-            setPlans(planRes.data?.items || []);
-          }
-          break;
-        }
-        case 'courses': {
-          const courseRes = await trainingCourseApi.list({ pagesize: 100 });
-          if (courseRes.code === 200) {
-            setCourses(courseRes.data?.items || []);
-          }
-          break;
-        }
-        case 'records': {
-          const recordRes = await trainingRecordApi.list({ pagesize: 100 });
-          if (recordRes.code === 200) {
-            setRecords(recordRes.data?.items || []);
-          }
-          break;
-        }
+  const plansQuery = useQuery<TrainingPlan[]>({
+    queryKey: [...QUERY_KEYS.HRM.TRAINING, 'plans'],
+    queryFn: async () => {
+      const planRes = await trainingPlanApi.list({ pagesize: 100 });
+      if (planRes.code === 200) {
+        return planRes.data?.items || [];
       }
-    } catch (err: unknown) {
-      apiLogger.error('Failed to load data:', err);
-      addNotification({ title: '加载失败', message: '加载数据失败', type: 'error' });
-    } finally {
-      setLoading(false);
-    }
-  }, [activeTab, addNotification]);
+      return [];
+    },
+    enabled: activeTab === 'plans',
+  });
 
-  const loadEmployees = useCallback(async () => {
-    try {
+  const coursesQuery = useQuery<TrainingCourse[]>({
+    queryKey: [...QUERY_KEYS.HRM.TRAINING, 'courses'],
+    queryFn: async () => {
+      const courseRes = await trainingCourseApi.list({ pagesize: 100 });
+      if (courseRes.code === 200) {
+        return courseRes.data?.items || [];
+      }
+      return [];
+    },
+    enabled: activeTab === 'courses',
+  });
+
+  const recordsQuery = useQuery<TrainingRecord[]>({
+    queryKey: QUERY_KEYS.HRM.TRAINING_RECORDS,
+    queryFn: async () => {
+      const recordRes = await trainingRecordApi.list({ pagesize: 100 });
+      if (recordRes.code === 200) {
+        return recordRes.data?.items || [];
+      }
+      return [];
+    },
+    enabled: activeTab === 'records',
+  });
+
+  const employeesQuery = useQuery<Employee[]>({
+    queryKey: QUERY_KEYS.HRM.EMPLOYEES,
+    queryFn: async () => {
       const res = await employeeApi.list({ pagesize: 200 });
       if (res.code === 200) {
-        setEmployees(res.data?.items || []);
+        return res.data?.items || [];
       }
-    } catch (err: unknown) {
-      apiLogger.error('Failed to load employees:', err);
-    }
-  }, []);
+      return [];
+    },
+  });
 
-  useEffect(() => {
-    loadData();
-    loadEmployees();
-  }, [activeTab]);
+  const plans = plansQuery.data || [];
+  const courses = coursesQuery.data || [];
+  const records = recordsQuery.data || [];
+  const employees = employeesQuery.data || [];
+
+  const loadData = useCallback(() => {
+    if (activeTab === 'plans') {
+      plansQuery.refetch();
+    } else if (activeTab === 'courses') {
+      coursesQuery.refetch();
+    } else {
+      recordsQuery.refetch();
+    }
+  }, [activeTab, plansQuery, coursesQuery, recordsQuery]);
 
   const getEmployeeName = (id?: string) => {
     if (!id) return '-';
@@ -145,102 +156,139 @@ const HrmTrainingPage: React.FC = () => {
     setShowEnrollModal(true);
   }, []);
 
-  const handleSave = useCallback(async () => {
-    try {
-      let response;
+  const saveMutation = useMutation({
+    mutationFn: async (args: {
+      editItem: TrainingPlan | TrainingCourse | null;
+      activeTab: 'plans' | 'courses' | 'records';
+      formData: Partial<TrainingPlan | TrainingCourse>;
+    }) => {
+      const { editItem, activeTab, formData } = args;
       if (editItem) {
         if (activeTab === 'plans') {
-          response = await trainingPlanApi.update(editItem.id, formData);
+          return trainingPlanApi.update(editItem.id, formData);
         } else {
-          response = await trainingCourseApi.update(editItem.id, formData);
+          return trainingCourseApi.update(editItem.id, formData);
         }
       } else {
         if (activeTab === 'plans') {
-          response = await trainingPlanApi.create(formData);
+          return trainingPlanApi.create(formData);
         } else {
-          response = await trainingCourseApi.create(formData);
+          return trainingCourseApi.create(formData);
         }
       }
-
+    },
+    onSuccess: (response, variables) => {
       if (response.code === 200) {
         addNotification({
           title: '成功',
-          message: editItem ? '更新成功' : '创建成功',
+          message: variables.editItem ? '更新成功' : '创建成功',
           type: 'success',
         });
         setShowModal(false);
-        loadData();
+        if (variables.activeTab === 'plans') {
+          queryClient.invalidateQueries({ queryKey: [...QUERY_KEYS.HRM.TRAINING, 'plans'] });
+        } else {
+          queryClient.invalidateQueries({ queryKey: [...QUERY_KEYS.HRM.TRAINING, 'courses'] });
+        }
       }
-    } catch (err: unknown) {
+    },
+    onError: (err: unknown) => {
       apiLogger.error('Failed to save:', err);
       addNotification({ title: '失败', message: '保存失败', type: 'error' });
-    }
-  }, [editItem, formData, activeTab, addNotification, loadData]);
+    },
+  });
+
+  const handleSave = useCallback(() => {
+    saveMutation.mutate({ editItem, activeTab, formData });
+  }, [editItem, formData, activeTab, saveMutation]);
+
+  const deleteMutation = useMutation({
+    mutationFn: async (args: { id: string; activeTab: 'plans' | 'courses' | 'records' }) => {
+      const { id, activeTab } = args;
+      if (activeTab === 'plans') {
+        return trainingPlanApi.delete(id);
+      } else if (activeTab === 'courses') {
+        return trainingCourseApi.delete(id);
+      } else {
+        return trainingRecordApi.delete(id);
+      }
+    },
+    onSuccess: (response, variables) => {
+      if (response.code === 200) {
+        addNotification({ title: '成功', message: '删除成功', type: 'success' });
+        if (variables.activeTab === 'plans') {
+          queryClient.invalidateQueries({ queryKey: [...QUERY_KEYS.HRM.TRAINING, 'plans'] });
+        } else if (variables.activeTab === 'courses') {
+          queryClient.invalidateQueries({ queryKey: [...QUERY_KEYS.HRM.TRAINING, 'courses'] });
+        } else {
+          queryClient.invalidateQueries({ queryKey: QUERY_KEYS.HRM.TRAINING_RECORDS });
+        }
+      }
+    },
+    onError: (err: unknown) => {
+      apiLogger.error('Failed to delete:', err);
+      addNotification({ title: '失败', message: '删除失败', type: 'error' });
+    },
+  });
 
   const handleDelete = useCallback(
-    async (id: string) => {
-      try {
-        let response;
-        if (activeTab === 'plans') {
-          response = await trainingPlanApi.delete(id);
-        } else if (activeTab === 'courses') {
-          response = await trainingCourseApi.delete(id);
-        } else {
-          response = await trainingRecordApi.delete(id);
-        }
+    (id: string) => {
+      deleteMutation.mutate({ id, activeTab });
+    },
+    [activeTab, deleteMutation]
+  );
 
-        if (response.code === 200) {
-          addNotification({ title: '成功', message: '删除成功', type: 'success' });
-          loadData();
-        }
-      } catch (err: unknown) {
-        apiLogger.error('Failed to delete:', err);
-        addNotification({ title: '失败', message: '删除失败', type: 'error' });
+  const statusChangeMutation = useMutation({
+    mutationFn: async (args: { id: string; activate: boolean }) => {
+      const { id, activate } = args;
+      return activate ? trainingPlanApi.activate(id) : trainingPlanApi.deactivate(id);
+    },
+    onSuccess: (response, variables) => {
+      if (response.code === 200) {
+        addNotification({
+          title: '成功',
+          message: variables.activate ? '已启用' : '已停用',
+          type: 'success',
+        });
+        queryClient.invalidateQueries({ queryKey: [...QUERY_KEYS.HRM.TRAINING, 'plans'] });
       }
     },
-    [activeTab, addNotification, loadData]
-  );
+    onError: (err: unknown) => {
+      apiLogger.error('Failed to update status:', err);
+      addNotification({ title: '失败', message: '操作失败', type: 'error' });
+    },
+  });
 
   const handleStatusChange = useCallback(
-    async (id: string, activate: boolean) => {
-      try {
-        const response = await (activate
-          ? trainingPlanApi.activate(id)
-          : trainingPlanApi.deactivate(id));
-        if (response.code === 200) {
-          addNotification({
-            title: '成功',
-            message: activate ? '已启用' : '已停用',
-            type: 'success',
-          });
-          loadData();
-        }
-      } catch (err: unknown) {
-        apiLogger.error('Failed to update status:', err);
-        addNotification({ title: '失败', message: '操作失败', type: 'error' });
-      }
+    (id: string, activate: boolean) => {
+      statusChangeMutation.mutate({ id, activate });
     },
-    [addNotification, loadData]
+    [statusChangeMutation]
   );
 
-  const handleEnroll = useCallback(
-    async (employeeId: string) => {
-      if (!selectedCourse) return;
-
-      try {
-        const response = await trainingRecordApi.enroll(selectedCourse.id, employeeId);
-        if (response.code === 200) {
-          addNotification({ title: '成功', message: '报名成功', type: 'success' });
-          setShowEnrollModal(false);
-          setSelectedCourse(null);
-          loadData();
-        }
-      } catch (err: unknown) {
-        apiLogger.error('Failed to enroll:', err);
-        addNotification({ title: '失败', message: '报名失败', type: 'error' });
+  const enrollMutation = useMutation({
+    mutationFn: async (args: { courseId: string; employeeId: string }) =>
+      trainingRecordApi.enroll(args.courseId, args.employeeId),
+    onSuccess: (response) => {
+      if (response.code === 200) {
+        addNotification({ title: '成功', message: '报名成功', type: 'success' });
+        setShowEnrollModal(false);
+        setSelectedCourse(null);
+        queryClient.invalidateQueries({ queryKey: QUERY_KEYS.HRM.TRAINING_RECORDS });
       }
     },
-    [selectedCourse, addNotification, loadData]
+    onError: (err: unknown) => {
+      apiLogger.error('Failed to enroll:', err);
+      addNotification({ title: '失败', message: '报名失败', type: 'error' });
+    },
+  });
+
+  const handleEnroll = useCallback(
+    (employeeId: string) => {
+      if (!selectedCourse) return;
+      enrollMutation.mutate({ courseId: selectedCourse.id, employeeId });
+    },
+    [selectedCourse, enrollMutation]
   );
 
   const filteredPlans = plans.filter(

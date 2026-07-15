@@ -65,32 +65,29 @@ pub struct BatchOperationResult {
 pub fn create_routes() -> Router<super::ApiState> {
     Router::<super::ApiState>::new()
         .route(
-            "/api/core/rs/v1/projects",
+            "/api/core/rd/projects",
             get(list_projects).post(create_project),
         )
         .route(
-            "/api/core/rs/v1/projects/batch",
+            "/api/core/rd/projects/batch",
             post(batch_create_projects).delete(batch_delete_projects),
         )
-        .route("/api/core/rs/v1/projects/export", get(export_projects))
-        .route("/api/core/rs/v1/projects/import", post(import_projects))
+        .route("/api/core/rd/projects/export", get(export_projects))
+        .route("/api/core/rd/projects/import", post(import_projects))
         .route(
-            "/api/core/rs/v1/projects/{id}",
+            "/api/core/rd/projects/{id}",
             get(get_project).put(update_project).delete(delete_project),
         )
         .route(
-            "/api/core/rs/v1/projects/{id}/dashboard",
+            "/api/core/rd/projects/{id}/dashboard",
             get(get_project_dashboard),
         )
-        .route(
-            "/api/core/rs/v1/projects/{id}/gantt",
-            get(get_project_gantt),
-        )
+        .route("/api/core/rd/projects/{id}/gantt", get(get_project_gantt))
 }
 
 #[utoipa::path(
     get,
-    path = "/api/core/rs/v1/projects",
+    path = "/api/core/rd/projects",
     tag = "projects",
     params(
         ("page" = Option<i64>, Query, description = "Page number, starting from 1", nullable = true),
@@ -176,7 +173,7 @@ async fn list_projects(
 
 #[utoipa::path(
     post,
-    path = "/api/core/rs/v1/projects",
+    path = "/api/core/rd/projects",
     tag = "projects",
     request_body = CreateProjectRequest,
     responses(
@@ -288,7 +285,7 @@ async fn create_project(
 
 #[utoipa::path(
     get,
-    path = "/api/core/rs/v1/projects/{id}",
+    path = "/api/core/rd/projects/{id}",
     tag = "projects",
     params(
         ("id" = Uuid, Path, description = "Project ID")
@@ -349,7 +346,7 @@ async fn get_project(
 
 #[utoipa::path(
     put,
-    path = "/api/core/rs/v1/projects/{id}",
+    path = "/api/core/rd/projects/{id}",
     tag = "projects",
     params(
         ("id" = Uuid, Path, description = "Project ID")
@@ -473,7 +470,7 @@ async fn update_project(
 
 #[utoipa::path(
     delete,
-    path = "/api/core/rs/v1/projects/{id}",
+    path = "/api/core/rd/projects/{id}",
     tag = "projects",
     params(
         ("id" = Uuid, Path, description = "Project ID")
@@ -555,7 +552,7 @@ async fn delete_project(
 
 #[utoipa::path(
     post,
-    path = "/api/core/rs/v1/projects/batch",
+    path = "/api/core/rd/projects/batch",
     tag = "projects",
     request_body = BatchCreateRequest,
     responses(
@@ -676,7 +673,7 @@ async fn batch_create_projects(
 
 #[utoipa::path(
     delete,
-    path = "/api/core/rs/v1/projects/batch",
+    path = "/api/core/rd/projects/batch",
     tag = "projects",
     request_body = BatchDeleteRequest,
     responses(
@@ -774,7 +771,7 @@ async fn batch_delete_projects(
 
 #[utoipa::path(
     get,
-    path = "/api/core/rs/v1/projects/export",
+    path = "/api/core/rd/projects/export",
     tag = "projects",
     responses(
         (status = 200, description = "Projects exported successfully"),
@@ -989,7 +986,7 @@ async fn export_projects(
 
 #[utoipa::path(
     post,
-    path = "/api/core/rs/v1/projects/import",
+    path = "/api/core/rd/projects/import",
     tag = "projects",
     request_body(content = String, description = "CSV file content", content_type = "text/csv"),
     responses(
@@ -1195,7 +1192,7 @@ pub struct ProjectDashboardResponse {
 
 #[utoipa::path(
     get,
-    path = "/api/core/rs/v1/projects/{id}/dashboard",
+    path = "/api/core/rd/projects/{id}/dashboard",
     tag = "projects",
     params(
         ("id" = Uuid, Path, description = "Project ID")
@@ -1386,7 +1383,7 @@ pub struct ProjectGanttResponse {
 
 #[utoipa::path(
     get,
-    path = "/api/core/rs/v1/projects/{id}/gantt",
+    path = "/api/core/rd/projects/{id}/gantt",
     tag = "projects",
     params(
         ("id" = Uuid, Path, description = "Project ID")

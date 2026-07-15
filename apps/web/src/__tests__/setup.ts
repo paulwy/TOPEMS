@@ -285,7 +285,7 @@ vi.mock('@tanstack/react-query', () => {
     const [isError, setIsError] = React.useState<boolean>(false);
     const [error, setError] = React.useState<any>(null);
     const [status, setStatus] = React.useState<string>(
-      initialData ? 'success' : (enabled ? 'pending' : 'pending')
+      initialData ? 'success' : enabled ? 'pending' : 'pending'
     );
 
     const fetchData = React.useCallback(() => {
@@ -369,46 +369,52 @@ vi.mock('@tanstack/react-query', () => {
     const [status, setStatus] = React.useState<string>('idle');
     const [variables, setVariables] = React.useState<any>(undefined);
 
-    const mutate = React.useCallback(async (vars: any) => {
-      setIsPending(true);
-      setIsError(false);
-      setError(null);
-      setIsSuccess(false);
-      setStatus('pending');
-      setVariables(vars);
+    const mutate = React.useCallback(
+      async (vars: any) => {
+        setIsPending(true);
+        setIsError(false);
+        setError(null);
+        setIsSuccess(false);
+        setStatus('pending');
+        setVariables(vars);
 
-      let context: any;
-      if (onMutate) {
-        try {
-          context = onMutate(vars);
-        } catch (e) {
-          // ignore
+        let context: any;
+        if (onMutate) {
+          try {
+            context = onMutate(vars);
+          } catch (e) {
+            // ignore
+          }
         }
-      }
 
-      try {
-        const result = mutationFn ? await mutationFn(vars) : undefined;
-        setData(result);
-        setIsSuccess(true);
-        setStatus('success');
-        if (onSuccess) onSuccess(result, vars, context);
-        if (onSettled) onSettled(result, null, vars, context);
-        return result;
-      } catch (err: any) {
-        setIsError(true);
-        setError(err);
-        setStatus('error');
-        if (onError) onError(err, vars, context);
-        if (onSettled) onSettled(undefined, err, vars, context);
-        throw err;
-      } finally {
-        setIsPending(false);
-      }
-    }, [mutationFn ? mutationFn.toString() : '']);
+        try {
+          const result = mutationFn ? await mutationFn(vars) : undefined;
+          setData(result);
+          setIsSuccess(true);
+          setStatus('success');
+          if (onSuccess) onSuccess(result, vars, context);
+          if (onSettled) onSettled(result, null, vars, context);
+          return result;
+        } catch (err: any) {
+          setIsError(true);
+          setError(err);
+          setStatus('error');
+          if (onError) onError(err, vars, context);
+          if (onSettled) onSettled(undefined, err, vars, context);
+          throw err;
+        } finally {
+          setIsPending(false);
+        }
+      },
+      [mutationFn ? mutationFn.toString() : '']
+    );
 
-    const mutateAsync = React.useCallback(async (vars: any) => {
-      return mutate(vars);
-    }, [mutate]);
+    const mutateAsync = React.useCallback(
+      async (vars: any) => {
+        return mutate(vars);
+      },
+      [mutate]
+    );
 
     const reset = React.useCallback(() => {
       setIsPending(false);
@@ -435,7 +441,13 @@ vi.mock('@tanstack/react-query', () => {
     };
   };
 
-  const useInfiniteQuery = ({ queryKey, queryFn, initialData, enabled = true, getNextPageParam }: any) => {
+  const useInfiniteQuery = ({
+    queryKey,
+    queryFn,
+    initialData,
+    enabled = true,
+    getNextPageParam,
+  }: any) => {
     const [data, setData] = React.useState<any>(initialData ?? { pages: [], pageParams: [] });
     const [isLoading, setIsLoading] = React.useState<boolean>(!initialData && enabled);
     const [isFetching, setIsFetching] = React.useState<boolean>(!initialData && enabled);
@@ -477,7 +489,9 @@ vi.mock('@tanstack/react-query', () => {
           setIsFetching(false);
         });
 
-      return () => { cancelled = true; };
+      return () => {
+        cancelled = true;
+      };
     }, [queryKey ? JSON.stringify(queryKey) : 'default', enabled]);
 
     const fetchNextPage = React.useCallback(async () => {
@@ -520,7 +534,7 @@ vi.mock('@tanstack/react-query', () => {
       error,
       refetch,
       isSuccess: !isLoading && !isError,
-      status: isLoading ? 'pending' : (isError ? 'error' : 'success'),
+      status: isLoading ? 'pending' : isError ? 'error' : 'success',
     };
   };
 
@@ -532,7 +546,9 @@ vi.mock('@tanstack/react-query', () => {
     useQueryClient,
     useInfiniteQuery,
     QueryClientProvider,
-    QueryClient: vi.fn(function QueryClient() { return mockQueryClient; }),
+    QueryClient: vi.fn(function QueryClient() {
+      return mockQueryClient;
+    }),
     QueryCache: vi.fn(),
     MutationCache: vi.fn(),
     useQueries: vi.fn(() => []),

@@ -71,8 +71,12 @@ const FinanceLedgerPage: React.FC = () => {
 
   const ledgerData = accountsQuery.data || [];
   const accountBalances = balancesQuery.data || [];
-  const loading = accountsQuery.isLoading || currentPeriodQuery.isLoading || balancesQuery.isLoading;
-  const error = accountsQuery.error?.message || currentPeriodQuery.error?.message || balancesQuery.error?.message;
+  const loading =
+    accountsQuery.isLoading || currentPeriodQuery.isLoading || balancesQuery.isLoading;
+  const error =
+    accountsQuery.error?.message ||
+    currentPeriodQuery.error?.message ||
+    balancesQuery.error?.message;
 
   const filteredData = useMemo(() => {
     return ledgerData.filter((entry) => {

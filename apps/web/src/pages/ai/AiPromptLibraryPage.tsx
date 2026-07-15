@@ -211,11 +211,7 @@ export const AiPromptLibraryPage: React.FC = () => {
       await queryClient.cancelQueries({ queryKey: ['ai-prompts'] });
       const previousPrompts = queryClient.getQueryData<PromptTemplate[]>(['ai-prompts']);
       queryClient.setQueryData<PromptTemplate[]>(['ai-prompts'], (old) =>
-        old
-          ? old.map((p) =>
-              p.id === promptId ? { ...p, is_favorite: !p.is_favorite } : p
-            )
-          : []
+        old ? old.map((p) => (p.id === promptId ? { ...p, is_favorite: !p.is_favorite } : p)) : []
       );
       return { previousPrompts };
     },

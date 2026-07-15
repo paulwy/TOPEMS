@@ -121,9 +121,7 @@ vi.mock('@/store', () => ({
 function renderWithProviders(children: React.ReactNode) {
   return render(
     <QueryClientProvider client={queryClient}>
-      <BrowserRouter>
-        {children}
-      </BrowserRouter>
+      <BrowserRouter>{children}</BrowserRouter>
     </QueryClientProvider>
   );
 }
@@ -131,6 +129,12 @@ function renderWithProviders(children: React.ReactNode) {
 describe('WorkStationPage', () => {
   beforeEach(() => {
     vi.clearAllMocks();
+    (useNotificationStore as any).getState = vi.fn().mockReturnValue({
+      addNotification: mockAddNotification,
+      notifications: [],
+      removeNotification: vi.fn(),
+      clearNotifications: vi.fn(),
+    });
     (mesApi.workstations.list as vi.Mock).mockResolvedValue({
       success: true,
       data: {

@@ -1,6 +1,8 @@
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState } from 'react';
 import { PageContainer } from '@/components/common';
 import { useNavigate } from 'react-router-dom';
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import { QUERY_KEYS } from '@/lib/reactQuery';
 import { Award, Plus, Eye, Edit, Search } from 'lucide-react';
 import {
   Box,
@@ -29,7 +31,7 @@ import {
 import { limsApi } from '@/api/lims';
 import type { PtPlan, CreatePtPlanRequest, UpdatePtPlanRequest } from '@/api/lims';
 import { useNotificationStore } from '@/store';
-import { apiLogger } from '@/utils/logger';
+import { logger } from '@/utils/logger';
 import { designTokens } from '@/theme/tokens';
 import { DASHBOARD_PATHS } from '@/routes/dashboard';
 
@@ -46,8 +48,7 @@ interface PtPlanWithCount extends PtPlan {
 
 const LimsProficiencyTestingPage: React.FC = () => {
   const navigate = useNavigate();
-  const [plans, setPlans] = useState<PtPlanWithCount[]>([]);
-  const [loading, setLoading] = useState(true);
+  const queryClient = useQueryClient();
   const [searchTerm, setSearchTerm] = useState('');
   const [statusFilter, setStatusFilter] = useState('all');
   const [cycleFilter, setCycleFilter] = useState('all');
@@ -55,7 +56,6 @@ const LimsProficiencyTestingPage: React.FC = () => {
   const [showDetailModal, setShowDetailModal] = useState(false);
   const [selectedPlan, setSelectedPlan] = useState<PtPlan | null>(null);
   const [isEditing, setIsEditing] = useState(false);
-  const [saving, setSaving] = useState(false);
   const [page, setPage] = useState(0);
   const [pageSize, setPageSize] = useState(10);
   const addNotification = useNotificationStore((state) => state.addNotification);
@@ -67,40 +67,55 @@ const LimsProficiencyTestingPage: React.FC = () => {
 
   const [formData, setFormData] = useState<CreatePtPlanRequest>(initialFormData);
 
-  const loadPlans = useCallback(async () => {
-    try {
-      setLoading(true);
+  const { data: plansData, isLoading: loading } = useQuery({
+    queryKey: QUERY_KEYS.LIMS.PT_PLANS,
+    queryFn: async () => {
       const response = await limsApi.listPtPlans();
       if (response.success && response.data) {
         const data = response.data as LimsListResponse<PtPlanWithCount> | PtPlanWithCount[];
-        let rawPlans: PtPlanWithCount[] = [];
-        if (Array.isArray(data)) {
-          rawPlans = data;
-        } else if (data.items && Array.isArray(data.items)) {
-          rawPlans = data.items;
-        } else if (data.plans && Array.isArray(data.plans)) {
-          rawPlans = data.plans;
-        }
-        setPlans(rawPlans);
-      } else {
-        setPlans([]);
+        if (Array.isArray(data)) return data;
+        if (data.items && Array.isArray(data.items)) return data.items;
+        if (data.plans && Array.isArray(data.plans)) return data.plans;
       }
-    } catch (err: unknown) {
-      apiLogger.error('加载能力验证计划列表失败:', err);
-      setPlans([]);
-      addNotification({
-        title: '错误',
-        message: '加载能力验证计划列表失败，请稍后重试',
-        type: 'error',
-      });
-    } finally {
-      setLoading(false);
-    }
-  }, [addNotification]);
+      return [];
+    },
+  });
 
-  useEffect(() => {
-    loadPlans();
-  }, [loadPlans]);
+  const plans = plansData || [];
+
+  const createMutation = useMutation({
+    mutationFn: async (data: CreatePtPlanRequest) => {
+      const response = await limsApi.createPtPlan(data);
+      if (!response.success) {
+        throw new Error(response.message || '创建失败，请稍后重试');
+      }
+      return response;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: QUERY_KEYS.LIMS.PT_PLANS });
+      setShowCreateModal(false);
+    },
+    onError: (error: unknown) => {
+      logger.error('创建能力验证计划失败:', error);
+    },
+  });
+
+  const updateMutation = useMutation({
+    mutationFn: async ({ id, data }: { id: string; data: UpdatePtPlanRequest }) => {
+      const response = await limsApi.updatePtPlan(id, data);
+      if (!response.success) {
+        throw new Error(response.message || '更新失败，请稍后重试');
+      }
+      return response;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: QUERY_KEYS.LIMS.PT_PLANS });
+      setShowCreateModal(false);
+    },
+    onError: (error: unknown) => {
+      logger.error('更新能力验证计划失败:', error);
+    },
+  });
 
   const getStatusBadge = (status: string) => {
     const statusMap: Record<string, { bg: string; color: string }> = {
@@ -254,70 +269,28 @@ const LimsProficiencyTestingPage: React.FC = () => {
       return;
     }
 
-    try {
-      setSaving(true);
-      if (isEditing && selectedPlan) {
-        const updateData: UpdatePtPlanRequest = {
-          plan_name: formData.plan_name,
-          provider: formData.provider,
-          testitem: formData.testitem,
-          test_method: formData.test_method,
-          plan_year: formData.plan_year,
-          sample_type: formData.sample_type,
-          registration_date: formData.registration_date,
-          test_deadline: formData.test_deadline,
-          report_deadline: formData.report_deadline,
-          contact_person: formData.contact_person,
-          contact_phone: formData.contact_phone,
-          notes: formData.notes,
-        };
-        const response = await limsApi.updatePtPlan(selectedPlan.id, updateData);
-        if (response.success) {
-          addNotification({
-            title: '成功',
-            message: '能力验证计划更新成功',
-            type: 'success',
-          });
-          setShowCreateModal(false);
-          loadPlans();
-        } else {
-          addNotification({
-            title: '错误',
-            message: response.message || '更新失败，请稍后重试',
-            type: 'error',
-          });
-        }
-      } else {
-        const response = await limsApi.createPtPlan(formData);
-        if (response.success) {
-          addNotification({
-            title: '成功',
-            message: '能力验证计划创建成功',
-            type: 'success',
-          });
-          setShowCreateModal(false);
-          loadPlans();
-        } else {
-          addNotification({
-            title: '错误',
-            message: response.message || '创建失败，请稍后重试',
-            type: 'error',
-          });
-        }
-      }
-    } catch (err: unknown) {
-      apiLogger.error('保存能力验证计划失败:', err);
-      addNotification({
-        title: '错误',
-        message: isEditing
-          ? '更新能力验证计划失败，请稍后重试'
-          : '创建能力验证计划失败，请稍后重试',
-        type: 'error',
-      });
-    } finally {
-      setSaving(false);
+    if (isEditing && selectedPlan) {
+      const updateData: UpdatePtPlanRequest = {
+        plan_name: formData.plan_name,
+        provider: formData.provider,
+        testitem: formData.testitem,
+        test_method: formData.test_method,
+        plan_year: formData.plan_year,
+        sample_type: formData.sample_type,
+        registration_date: formData.registration_date,
+        test_deadline: formData.test_deadline,
+        report_deadline: formData.report_deadline,
+        contact_person: formData.contact_person,
+        contact_phone: formData.contact_phone,
+        notes: formData.notes,
+      };
+      await updateMutation.mutateAsync({ id: selectedPlan.id, data: updateData });
+    } else {
+      await createMutation.mutateAsync(formData);
     }
   };
+
+  const saving = createMutation.isPending || updateMutation.isPending;
 
   const stats = {
     total: plans.length,

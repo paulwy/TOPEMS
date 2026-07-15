@@ -22,6 +22,8 @@ import { ListPageTemplate, type ColumnDef } from '@/components/templates';
 import { PageContainer } from '@/components/common/PageContainerV2';
 import { MetricCard } from '@/components/bi/MetricCard';
 import { designTokens } from '@/theme/tokens';
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import { QUERY_KEYS } from '@/lib/reactQuery';
 
 const ct = designTokens.colors;
 
@@ -36,41 +38,22 @@ interface FinanceRecord {
   description: string;
 }
 
+interface FinanceFormData {
+  record_no: string;
+  supplier_id: string;
+  supplier_name: string;
+  type: 'order' | 'contract';
+  amount: string;
+  status: string;
+  date: string;
+  description: string;
+}
+
 const SrmFinancePage: React.FC = () => {
-  const [records, setRecords] = useState<FinanceRecord[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [currentPage, setCurrentPage] = useState(1);
-  const [pageSize, setPageSize] = useState(10);
-  const [total, setTotal] = useState(0);
-  const [showCreateModal, setShowCreateModal] = useState(false);
-  const [formData, setFormData] = useState<{
-    record_no: string;
-    supplier_id: string;
-    supplier_name: string;
-    type: 'order' | 'contract';
-    amount: string;
-    status: string;
-    date: string;
-    description: string;
-  }>({
-    record_no: '',
-    supplier_id: '',
-    supplier_name: '',
-    type: 'order',
-    amount: '',
-    status: 'pending',
-    date: '',
-    description: '',
-  });
-  const addNotification = useNotificationStore((state) => state.addNotification);
-
-  useEffect(() => {
-    loadRecords();
-  }, [currentPage, pageSize]);
-
-  const loadRecords = async () => {
-    try {
-      setLoading(true);
+  const queryClient = useQueryClient();
+  const recordsQuery = useQuery<FinanceRecord[]>({
+    queryKey: QUERY_KEYS.SRM.FINANCE,
+    queryFn: async () => {
       const [contractsRes, ordersRes] = await Promise.all([
         srmApi.listContracts(),
         srmApi.listPurchaseOrders(),
@@ -133,17 +116,76 @@ const SrmFinancePage: React.FC = () => {
         );
       }
 
-      const allRecords = [...paymentRecords, ...invoiceRecords];
-      setRecords(allRecords);
-      setTotal(allRecords.length);
-    } catch (err: unknown) {
-      apiLogger.error('加载财务数据失败:', err);
+      return [...paymentRecords, ...invoiceRecords];
+    },
+    staleTime: 5 * 60 * 1000,
+  });
+
+  const records = recordsQuery.data ?? [];
+  const loading = recordsQuery.isLoading;
+  const total = records.length;
+
+  const [currentPage, setCurrentPage] = useState(1);
+  const [pageSize, setPageSize] = useState(10);
+  const [showCreateModal, setShowCreateModal] = useState(false);
+  const [formData, setFormData] = useState<FinanceFormData>({
+    record_no: '',
+    supplier_id: '',
+    supplier_name: '',
+    type: 'order',
+    amount: '',
+    status: 'pending',
+    date: '',
+    description: '',
+  });
+  const addNotification = useNotificationStore((state) => state.addNotification);
+
+  useEffect(() => {
+    if (recordsQuery.isError) {
+      apiLogger.error('加载财务数据失败:', recordsQuery.error);
       addNotification({ title: '错误', message: '加载财务数据失败', type: 'error' });
-      setRecords([]);
-    } finally {
-      setLoading(false);
     }
-  };
+  }, [recordsQuery.isError, recordsQuery.error, addNotification]);
+
+  const createMutation = useMutation({
+    mutationFn: async (data: FinanceFormData) => {
+      if (data.type === 'order') {
+        return srmApi.createPurchaseOrder({
+          po_no: data.record_no,
+          supplier_id: data.supplier_id,
+          total_amount: parseFloat(data.amount),
+          status: data.status,
+          currency: 'CNY',
+          remarks: data.description,
+        });
+      } else {
+        return srmApi.createContract({
+          contract_no: data.record_no,
+          supplier_id: data.supplier_id,
+          supplier_name: data.supplier_name,
+          title: data.record_no,
+          contract_type: 'purchase',
+          total_amount: parseFloat(data.amount),
+          currency: 'CNY',
+          status: data.status,
+          remarks: data.description,
+        });
+      }
+    },
+    onSuccess: (_data, vars) => {
+      queryClient.invalidateQueries({ queryKey: QUERY_KEYS.SRM.FINANCE });
+      addNotification({
+        title: '成功',
+        message: `${vars.type === 'order' ? '订单' : '合同'}创建成功`,
+        type: 'success',
+      });
+      setShowCreateModal(false);
+    },
+    onError: (err: unknown) => {
+      addNotification({ title: '错误', message: '创建失败', type: 'error' });
+      apiLogger.error('创建财务记录失败:', err);
+    },
+  });
 
   const getTypeBadge = (type: string) => {
     const typeMap: Record<string, { bg: string; color: string; label: string }> = {
@@ -200,41 +242,8 @@ const SrmFinancePage: React.FC = () => {
     setShowCreateModal(true);
   };
 
-  const handleSave = async () => {
-    try {
-      if (formData.type === 'order') {
-        await srmApi.createPurchaseOrder({
-          po_no: formData.record_no,
-          supplier_id: formData.supplier_id,
-          total_amount: parseFloat(formData.amount),
-          status: formData.status,
-          currency: 'CNY',
-          remarks: formData.description,
-        });
-      } else {
-        await srmApi.createContract({
-          contract_no: formData.record_no,
-          supplier_id: formData.supplier_id,
-          supplier_name: formData.supplier_name,
-          title: formData.record_no,
-          contract_type: 'purchase',
-          total_amount: parseFloat(formData.amount),
-          currency: 'CNY',
-          status: formData.status,
-          remarks: formData.description,
-        });
-      }
-      addNotification({
-        title: '成功',
-        message: `${formData.type === 'order' ? '订单' : '合同'}创建成功`,
-        type: 'success',
-      });
-      setShowCreateModal(false);
-      loadRecords();
-    } catch (err: unknown) {
-      addNotification({ title: '错误', message: '创建失败', type: 'error' });
-      apiLogger.error('创建财务记录失败:', err);
-    }
+  const handleSave = () => {
+    createMutation.mutate(formData);
   };
 
   const stats = {

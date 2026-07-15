@@ -80,7 +80,7 @@ vi.mock('@/store', () => {
     removeNotification: vi.fn(),
     clearNotifications: vi.fn(),
   };
-  
+
   const authState = {
     user: { id: '1', username: 'testuser', email: 'test@example.com', isActive: true },
     token: 'test-token',
@@ -102,14 +102,12 @@ vi.mock('@/store', () => {
     getDisplayName: vi.fn(() => 'Test User'),
     getAvatarUrl: vi.fn(() => ''),
   };
-  
+
   return {
-    useNotificationStore: vi.fn((selector?: any) => 
+    useNotificationStore: vi.fn((selector?: any) =>
       selector ? selector(notificationState) : notificationState
     ),
-    useAuthStore: vi.fn((selector?: any) => 
-      selector ? selector(authState) : authState
-    ),
+    useAuthStore: vi.fn((selector?: any) => (selector ? selector(authState) : authState)),
     useThemeStore: vi.fn(() => ({
       theme: 'light',
       setTheme: vi.fn(),
@@ -172,4 +170,48 @@ vi.mock('@/store', () => {
     useToggleSidebarCollapsed: vi.fn(),
     useSetSidebarCollapsed: vi.fn(),
   };
+});
+
+describe('QmsDashboardPage', () => {
+  it('should render without crashing', () => {
+    const { container } = render(
+      <BrowserRouter>
+        <QmsDashboardPage />
+      </BrowserRouter>
+    );
+    expect(container).toBeDefined();
+  });
+});
+
+describe('QmsQualityControlPage', () => {
+  it('should render without crashing', () => {
+    const { container } = render(
+      <BrowserRouter>
+        <QmsQualityControlPage />
+      </BrowserRouter>
+    );
+    expect(container).toBeDefined();
+  });
+});
+
+describe('QmsInspectionPage', () => {
+  it('should render without crashing', () => {
+    const { container } = render(
+      <BrowserRouter>
+        <QmsInspectionPage />
+      </BrowserRouter>
+    );
+    expect(container).toBeDefined();
+  });
+});
+
+describe('QmsNonconformancePage', () => {
+  it('should render without crashing', () => {
+    const { container } = render(
+      <BrowserRouter>
+        <QmsNonconformancePage />
+      </BrowserRouter>
+    );
+    expect(container).toBeDefined();
+  });
 });

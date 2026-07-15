@@ -18,21 +18,18 @@ use topems_shared::{api_error, ApiResponse};
 pub fn create_routes() -> Router<ApiState> {
     Router::new()
         .route(
-            "/api/core/crm/v1/billing",
+            "/api/core/crm/billing",
             get(list_billing_records).post(create_billing_record),
         )
         .route(
-            "/api/core/crm/v1/billing/{id}",
+            "/api/core/crm/billing/{id}",
             get(get_billing_record)
                 .put(update_billing_record)
                 .delete(delete_billing_record),
         )
+        .route("/api/core/crm/billing/{id}/paid", post(mark_billing_paid))
         .route(
-            "/api/core/crm/v1/billing/{id}/paid",
-            post(mark_billing_paid),
-        )
-        .route(
-            "/api/core/crm/v1/billing/{id}/notify",
+            "/api/core/crm/billing/{id}/notify",
             post(send_billing_notification),
         )
 }

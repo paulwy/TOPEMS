@@ -3,7 +3,13 @@ import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { render, screen, waitFor, fireEvent } from '@testing-library/react';
 import { BrowserRouter } from 'react-router-dom';
 import BIDataSourcePage from '../bi/BIDataSourcePage';
-import { listDataSources, deleteDataSource, testDataSource, refreshDataSource } from '@/api/bi';
+import {
+  listDataSources,
+  deleteDataSource,
+  testDataSource,
+  refreshDataSource,
+  dataSourceCrudApi,
+} from '@/api/bi';
 import { useNotificationStore, useAuthStore } from '@/store';
 
 vi.mock('@/api/bi', () => ({
@@ -12,7 +18,12 @@ vi.mock('@/api/bi', () => ({
   testDataSource: vi.fn(),
   refreshDataSource: vi.fn(),
   dataSourceCrudApi: {
-    list: vi.fn().mockResolvedValue({ data: [], pagination: { total: 0 } }),
+    list: vi.fn().mockResolvedValue({
+      success: true,
+      code: 200,
+      message: 'OK',
+      data: { items: [], total: 0 },
+    }),
     get: vi.fn(),
     create: vi.fn(),
     update: vi.fn(),
@@ -109,6 +120,21 @@ vi.mock('@/store', () => ({
   useToggleSidebarCollapsed: vi.fn(),
   useSetSidebarCollapsed: vi.fn(),
 }));
+
+const mockAddNotification = vi.fn();
+
+const mockDataSources = [
+  { id: 'ds-001', name: 'MySQL数据库', type: 'mysql', status: 'active' },
+  { id: 'ds-002', name: 'PostgreSQL数据库', type: 'postgresql', status: 'active' },
+];
+
+function renderWithProviders(ui: React.ReactElement) {
+  return render(<BrowserRouter>{ui}</BrowserRouter>);
+}
+
+describe('BIDataSourcePage', () => {
+  beforeEach(() => {
+    vi.clearAllMocks();
     (useNotificationStore as vi.Mock).mockImplementation((selector?: any) =>
       selector
         ? selector({
@@ -126,6 +152,15 @@ vi.mock('@/store', () => ({
     );
     (listDataSources as vi.Mock).mockResolvedValue({
       success: true,
+      data: {
+        items: mockDataSources,
+        total: mockDataSources.length,
+      },
+    });
+    (dataSourceCrudApi.list as vi.Mock).mockResolvedValue({
+      success: true,
+      code: 200,
+      message: 'OK',
       data: {
         items: mockDataSources,
         total: mockDataSources.length,

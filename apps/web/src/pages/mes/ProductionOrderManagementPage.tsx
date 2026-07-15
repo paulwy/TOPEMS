@@ -52,7 +52,6 @@ import { designTokens } from '@/theme/tokens';
 
 const ct = designTokens.colors;
 
-
 const ProductionOrderManagementPage: React.FC = () => {
   const { addNotification } = useNotificationStore();
   const queryClient = useQueryClient();
@@ -195,157 +194,167 @@ const ProductionOrderManagementPage: React.FC = () => {
     }
   };
 
-  const handleBatchRelease = useCallback(async (orders: ProductionOrder[]) => {
-    const pendingOrders = orders.filter((o) => o.status === 'pending');
-    if (pendingOrders.length === 0) {
-      addNotification({
-        type: 'warning',
-        title: '没有可下达的订单',
-        message: '请选择待下达状态的订单',
-      });
-      return;
-    }
+  const handleBatchRelease = useCallback(
+    async (orders: ProductionOrder[]) => {
+      const pendingOrders = orders.filter((o) => o.status === 'pending');
+      if (pendingOrders.length === 0) {
+        addNotification({
+          type: 'warning',
+          title: '没有可下达的订单',
+          message: '请选择待下达状态的订单',
+        });
+        return;
+      }
 
-    try {
-      queryClient.setQueryData<ProductionOrder[]>(['mes-production-orders'], (existing) => {
-        if (!existing) return existing;
-        return existing.map((order) =>
-          pendingOrders.some((o) => o.id === order.id)
-            ? { ...order, status: 'released' as const }
-            : order
-        );
-      });
-
-      const results = await Promise.allSettled(
-        pendingOrders.map((order) => mesApi.orders.release(order.id))
-      );
-
-      const successCount = results.filter((r) => r.status === 'fulfilled' && r.value.success).length;
-      const failureCount = results.length - successCount;
-
-      if (failureCount > 0) {
+      try {
         queryClient.setQueryData<ProductionOrder[]>(['mes-production-orders'], (existing) => {
           if (!existing) return existing;
-          const failedIds = pendingOrders.filter((_, index) => {
-            const result = results[index];
-            return result.status !== 'fulfilled' || !result.value.success;
-          }).map((o) => o.id);
           return existing.map((order) =>
-            failedIds.includes(order.id)
+            pendingOrders.some((o) => o.id === order.id)
+              ? { ...order, status: 'released' as const }
+              : order
+          );
+        });
+
+        const results = await Promise.allSettled(
+          pendingOrders.map((order) => mesApi.orders.release(order.id))
+        );
+
+        const successCount = results.filter(
+          (r) => r.status === 'fulfilled' && r.value.success
+        ).length;
+        const failureCount = results.length - successCount;
+
+        if (failureCount > 0) {
+          queryClient.setQueryData<ProductionOrder[]>(['mes-production-orders'], (existing) => {
+            if (!existing) return existing;
+            const failedIds = pendingOrders
+              .filter((_, index) => {
+                const result = results[index];
+                return result.status !== 'fulfilled' || !result.value.success;
+              })
+              .map((o) => o.id);
+            return existing.map((order) =>
+              failedIds.includes(order.id) ? { ...order, status: 'pending' as const } : order
+            );
+          });
+        }
+
+        if (successCount > 0) {
+          addNotification({
+            type: 'success',
+            title: '批量下达完成',
+            message: `成功下达 ${successCount} 个订单${failureCount > 0 ? `，失败 ${failureCount} 个` : ''}`,
+          });
+        }
+        if (failureCount > 0) {
+          addNotification({
+            type: 'error',
+            title: '部分下达失败',
+            message: `有 ${failureCount} 个订单下达失败`,
+          });
+        }
+        queryClient.invalidateQueries({ queryKey: ['mes-production-orders'] });
+      } catch (error: unknown) {
+        apiLogger.error('批量下达失败:', error);
+        queryClient.setQueryData<ProductionOrder[]>(['mes-production-orders'], (existing) => {
+          if (!existing) return existing;
+          return existing.map((order) =>
+            pendingOrders.some((o) => o.id === order.id)
               ? { ...order, status: 'pending' as const }
               : order
           );
         });
-      }
-
-      if (successCount > 0) {
-        addNotification({
-          type: 'success',
-          title: '批量下达完成',
-          message: `成功下达 ${successCount} 个订单${failureCount > 0 ? `，失败 ${failureCount} 个` : ''}`,
-        });
-      }
-      if (failureCount > 0) {
         addNotification({
           type: 'error',
-          title: '部分下达失败',
-          message: `有 ${failureCount} 个订单下达失败`,
+          title: '批量下达失败',
+          message: '批量下达过程中发生错误',
         });
       }
-      queryClient.invalidateQueries({ queryKey: ['mes-production-orders'] });
-    } catch (error: unknown) {
-      apiLogger.error('批量下达失败:', error);
-      queryClient.setQueryData<ProductionOrder[]>(['mes-production-orders'], (existing) => {
-        if (!existing) return existing;
-        return existing.map((order) =>
-          pendingOrders.some((o) => o.id === order.id)
-            ? { ...order, status: 'pending' as const }
-            : order
-        );
-      });
-      addNotification({
-        type: 'error',
-        title: '批量下达失败',
-        message: '批量下达过程中发生错误',
-      });
-    }
-  }, [addNotification, queryClient]);
+    },
+    [addNotification, queryClient]
+  );
 
-  const handleBatchComplete = useCallback(async (orders: ProductionOrder[]) => {
-    const inProgressOrders = orders.filter((o) => o.status === 'in_progress');
-    if (inProgressOrders.length === 0) {
-      addNotification({
-        type: 'warning',
-        title: '没有可完成的订单',
-        message: '请选择生产中状态的订单',
-      });
-      return;
-    }
+  const handleBatchComplete = useCallback(
+    async (orders: ProductionOrder[]) => {
+      const inProgressOrders = orders.filter((o) => o.status === 'in_progress');
+      if (inProgressOrders.length === 0) {
+        addNotification({
+          type: 'warning',
+          title: '没有可完成的订单',
+          message: '请选择生产中状态的订单',
+        });
+        return;
+      }
 
-    try {
-      queryClient.setQueryData<ProductionOrder[]>(['mes-production-orders'], (existing) => {
-        if (!existing) return existing;
-        return existing.map((order) =>
-          inProgressOrders.some((o) => o.id === order.id)
-            ? { ...order, status: 'completed' as const }
-            : order
-        );
-      });
-
-      const results = await Promise.allSettled(
-        inProgressOrders.map((order) => mesApi.orders.complete(order.id))
-      );
-
-      const successCount = results.filter((r) => r.status === 'fulfilled' && r.value.success).length;
-      const failureCount = results.length - successCount;
-
-      if (failureCount > 0) {
+      try {
         queryClient.setQueryData<ProductionOrder[]>(['mes-production-orders'], (existing) => {
           if (!existing) return existing;
-          const failedIds = inProgressOrders.filter((_, index) => {
-            const result = results[index];
-            return result.status !== 'fulfilled' || !result.value.success;
-          }).map((o) => o.id);
           return existing.map((order) =>
-            failedIds.includes(order.id)
+            inProgressOrders.some((o) => o.id === order.id)
+              ? { ...order, status: 'completed' as const }
+              : order
+          );
+        });
+
+        const results = await Promise.allSettled(
+          inProgressOrders.map((order) => mesApi.orders.complete(order.id))
+        );
+
+        const successCount = results.filter(
+          (r) => r.status === 'fulfilled' && r.value.success
+        ).length;
+        const failureCount = results.length - successCount;
+
+        if (failureCount > 0) {
+          queryClient.setQueryData<ProductionOrder[]>(['mes-production-orders'], (existing) => {
+            if (!existing) return existing;
+            const failedIds = inProgressOrders
+              .filter((_, index) => {
+                const result = results[index];
+                return result.status !== 'fulfilled' || !result.value.success;
+              })
+              .map((o) => o.id);
+            return existing.map((order) =>
+              failedIds.includes(order.id) ? { ...order, status: 'in_progress' as const } : order
+            );
+          });
+        }
+
+        if (successCount > 0) {
+          addNotification({
+            type: 'success',
+            title: '批量完成完成',
+            message: `成功完成 ${successCount} 个订单${failureCount > 0 ? `，失败 ${failureCount} 个` : ''}`,
+          });
+        }
+        if (failureCount > 0) {
+          addNotification({
+            type: 'error',
+            title: '部分完成失败',
+            message: `有 ${failureCount} 个订单完成失败`,
+          });
+        }
+        queryClient.invalidateQueries({ queryKey: ['mes-production-orders'] });
+      } catch (error: unknown) {
+        apiLogger.error('批量完成失败:', error);
+        queryClient.setQueryData<ProductionOrder[]>(['mes-production-orders'], (existing) => {
+          if (!existing) return existing;
+          return existing.map((order) =>
+            inProgressOrders.some((o) => o.id === order.id)
               ? { ...order, status: 'in_progress' as const }
               : order
           );
         });
-      }
-
-      if (successCount > 0) {
-        addNotification({
-          type: 'success',
-          title: '批量完成完成',
-          message: `成功完成 ${successCount} 个订单${failureCount > 0 ? `，失败 ${failureCount} 个` : ''}`,
-        });
-      }
-      if (failureCount > 0) {
         addNotification({
           type: 'error',
-          title: '部分完成失败',
-          message: `有 ${failureCount} 个订单完成失败`,
+          title: '批量完成失败',
+          message: '部分订单完成失败',
         });
       }
-      queryClient.invalidateQueries({ queryKey: ['mes-production-orders'] });
-    } catch (error: unknown) {
-      apiLogger.error('批量完成失败:', error);
-      queryClient.setQueryData<ProductionOrder[]>(['mes-production-orders'], (existing) => {
-        if (!existing) return existing;
-        return existing.map((order) =>
-          inProgressOrders.some((o) => o.id === order.id)
-            ? { ...order, status: 'in_progress' as const }
-            : order
-        );
-      });
-      addNotification({
-        type: 'error',
-        title: '批量完成失败',
-        message: '部分订单完成失败',
-      });
-    }
-  }, [addNotification, queryClient]);
+    },
+    [addNotification, queryClient]
+  );
 
   const getStatusText = (status: string) => {
     const statusMap: Record<string, string> = {

@@ -1,5 +1,6 @@
 import { Box, Typography, Chip, Stack, useTheme } from '@mui/material';
 import React, { useState, useMemo, useCallback } from 'react';
+import { useQuery } from '@tanstack/react-query';
 import { BookOpen, FolderOpen, FileText, Eye, User, Calendar, BarChart3 } from 'lucide-react';
 
 import { useNotificationStore } from '@/store';
@@ -197,7 +198,13 @@ export const DocumentKnowledgeBasePage: React.FC = () => {
   const theme = useTheme();
   const addNotification = useNotificationStore((state) => state.addNotification);
 
-  const [loading, setLoading] = useState(false);
+  const loadingQuery = useQuery<boolean>({
+    queryKey: ['doc-knowledgebase'],
+    queryFn: async () => true,
+    staleTime: Infinity,
+  });
+  const loading = loadingQuery.isLoading;
+
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedNode, setSelectedNode] = useState<TreeNode | null>(null);
   const [selectedCategory, setSelectedCategory] = useState<KnowledgeCategory | null>(null);
@@ -546,15 +553,12 @@ export const DocumentKnowledgeBasePage: React.FC = () => {
         detailPanel={detailPanel}
         detailPanelTitle={selectedCategory ? '文档列表' : undefined}
         onRefresh={() => {
-          setLoading(true);
-          setTimeout(() => {
-            setLoading(false);
-            addNotification({
-              title: '成功',
-              message: '刷新成功',
-              type: 'success',
-            });
-          }, 500);
+          loadingQuery.refetch();
+          addNotification({
+            title: '成功',
+            message: '刷新成功',
+            type: 'success',
+          });
         }}
         showRefresh={true}
         emptyState={{

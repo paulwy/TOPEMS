@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useMemo, useCallback } from 'react';
+import React, { useState, useMemo, useCallback, useEffect } from 'react';
 import {
   Chip,
   Dialog,
@@ -33,6 +33,8 @@ import { useNotificationStore } from '@/store';
 import { Plus, Edit, Trash2, Play, CheckCircle2, Eye, Package } from 'lucide-react';
 import { apiLogger } from '@/utils/logger';
 import { PageContainer, StatusBadge } from '@/components/common';
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import { QUERY_KEYS } from '@/lib/reactQuery';
 
 const statusConfig: Record<
   string,
@@ -54,15 +56,12 @@ const discrepancyTypeConfig: Record<
 
 const StockTakePage: React.FC = () => {
   const { addNotification } = useNotificationStore();
+  const queryClient = useQueryClient();
 
-  const [stockTakes, setStockTakes] = useState<StockTake[]>([]);
-  const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState('');
   const [statusFilter, setStatusFilter] = useState<string>('');
-  const [warehouses, setWarehouses] = useState<Warehouse[]>([]);
   const [currentPage, setCurrentPage] = useState(1);
   const [pageSize] = useState(10);
-  const [total, setTotal] = useState(0);
 
   // Dialog states
   const [showCreateDialog, setShowCreateDialog] = useState(false);
@@ -79,9 +78,9 @@ const StockTakePage: React.FC = () => {
     remarks: '',
   });
 
-  const fetchStockTakes = useCallback(async () => {
-    try {
-      setLoading(true);
+  const { data: stockTakesResponse, isLoading: loading } = useQuery({
+    queryKey: [QUERY_KEYS.WMS.STOCK_TAKES, currentPage, pageSize, searchTerm, statusFilter],
+    queryFn: async () => {
       const params: Record<string, unknown> = {
         page: currentPage,
         pagesize: pageSize,
@@ -90,37 +89,111 @@ const StockTakePage: React.FC = () => {
       if (statusFilter) params.status = statusFilter;
 
       const response = await wmsApi.stockTakes.list(params);
-      if (response.success && response.data) {
-        setStockTakes(response.data.items || []);
-        setTotal(response.data.total || 0);
+      if (!response.success) {
+        throw new Error('Failed to fetch stock takes');
       }
-    } catch (error: unknown) {
-      apiLogger.error('获取盘点单失败:', error);
-      addNotification({
-        type: 'error',
-        title: '加载失败',
-        message: '无法加载盘点单',
-      });
-    } finally {
-      setLoading(false);
-    }
-  }, [currentPage, pageSize, searchTerm, statusFilter, addNotification]);
+      return response.data;
+    },
+  });
 
-  useEffect(() => {
-    fetchStockTakes();
-    fetchWarehouses();
-  }, [fetchStockTakes]);
-
-  const fetchWarehouses = async () => {
-    try {
+  const { data: warehousesResponse } = useQuery({
+    queryKey: [QUERY_KEYS.WMS.WAREHOUSES, 'stock-take'],
+    queryFn: async () => {
       const response = await wmsApi.warehouses.list({ page: 1, pagesize: 100 });
-      if (response.success && response.data) {
-        setWarehouses(response.data.items || []);
+      if (!response.success) {
+        throw new Error('Failed to fetch warehouses');
       }
-    } catch (error: unknown) {
-      apiLogger.error('获取仓库列表失败:', error);
-    }
-  };
+      return response.data;
+    },
+  });
+
+  const stockTakes = stockTakesResponse?.items || [];
+  const total = stockTakesResponse?.total || 0;
+  const warehouses: Warehouse[] = warehousesResponse?.items || [];
+
+  const createMutation = useMutation({
+    mutationFn: async (data: CreateStockTakeRequest) => {
+      const response = await wmsApi.stockTakes.create(data);
+      if (!response.success) {
+        throw new Error('Failed to create stock take');
+      }
+      return response;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: [QUERY_KEYS.WMS.STOCK_TAKES] });
+      setShowCreateDialog(false);
+      setNewStockTake({ stock_take_number: '', warehouse_id: '', remarks: '' });
+    },
+    onError: (error) => {
+      apiLogger.error('创建盘点单失败:', error);
+    },
+  });
+
+  const deleteMutation = useMutation({
+    mutationFn: async (id: string) => {
+      const response = await wmsApi.stockTakes.delete(id);
+      if (!response.success) {
+        throw new Error('Failed to delete stock take');
+      }
+      return response;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: [QUERY_KEYS.WMS.STOCK_TAKES] });
+    },
+    onError: (error) => {
+      apiLogger.error('删除盘点单失败:', error);
+    },
+  });
+
+  const startMutation = useMutation({
+    mutationFn: async (id: string) => {
+      const response = await wmsApi.stockTakes.start(id);
+      if (!response.success) {
+        throw new Error('Failed to start stock take');
+      }
+      return response;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: [QUERY_KEYS.WMS.STOCK_TAKES] });
+    },
+    onError: (error) => {
+      apiLogger.error('开始盘点失败:', error);
+    },
+  });
+
+  const completeMutation = useMutation({
+    mutationFn: async (id: string) => {
+      const response = await wmsApi.stockTakes.complete(id);
+      if (!response.success) {
+        throw new Error('Failed to complete stock take');
+      }
+      return response;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: [QUERY_KEYS.WMS.STOCK_TAKES] });
+      setShowDetailDialog(false);
+    },
+    onError: (error) => {
+      apiLogger.error('完成盘点失败:', error);
+    },
+  });
+
+  const adjustMutation = useMutation({
+    mutationFn: async (id: string) => {
+      const response = await wmsApi.stockTakes.adjust(id);
+      if (!response.success) {
+        throw new Error('Failed to adjust stock take');
+      }
+      return response;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: [QUERY_KEYS.WMS.STOCK_TAKES] });
+      setShowDetailDialog(false);
+    },
+    onError: (error) => {
+      apiLogger.error('调整库存失败:', error);
+    },
+  });
 
   const handleCreateStockTake = async () => {
     if (!newStockTake.stock_take_number || !newStockTake.warehouse_id) {
@@ -131,27 +204,7 @@ const StockTakePage: React.FC = () => {
       });
       return;
     }
-
-    try {
-      const response = await wmsApi.stockTakes.create(newStockTake);
-      if (response.success) {
-        addNotification({
-          type: 'success',
-          title: '创建成功',
-          message: '盘点单创建成功',
-        });
-        setShowCreateDialog(false);
-        setNewStockTake({ stock_take_number: '', warehouse_id: '', remarks: '' });
-        fetchStockTakes();
-      }
-    } catch (error: unknown) {
-      apiLogger.error('创建盘点单失败:', error);
-      addNotification({
-        type: 'error',
-        title: '创建失败',
-        message: '创建盘点单失败',
-      });
-    }
+    await createMutation.mutateAsync(newStockTake);
   };
 
   const handleDeleteStockTake = useCallback(
@@ -159,120 +212,39 @@ const StockTakePage: React.FC = () => {
       if (!window.confirm('确定要删除这个盘点单吗？')) {
         return;
       }
-
-      try {
-        const response = await wmsApi.stockTakes.delete(id);
-        if (response.success) {
-          addNotification({
-            type: 'success',
-            title: '删除成功',
-            message: '盘点单删除成功',
-          });
-          fetchStockTakes();
-        }
-      } catch (error: unknown) {
-        apiLogger.error('删除盘点单失败:', error);
-        addNotification({
-          type: 'error',
-          title: '删除失败',
-          message: '删除盘点单失败',
-        });
-      }
+      await deleteMutation.mutateAsync(id);
     },
-    [addNotification, fetchStockTakes]
+    [deleteMutation]
   );
 
   const handleStartStockTake = useCallback(
     async (id: string) => {
-      try {
-        const response = await wmsApi.stockTakes.start(id);
-        if (response.success) {
-          addNotification({
-            type: 'success',
-            title: '操作成功',
-            message: '盘点单已开始',
-          });
-          fetchStockTakes();
-        }
-      } catch (error: unknown) {
-        apiLogger.error('开始盘点失败:', error);
-        addNotification({
-          type: 'error',
-          title: '操作失败',
-          message: '开始盘点失败',
-        });
-      }
+      await startMutation.mutateAsync(id);
     },
-    [addNotification, fetchStockTakes]
+    [startMutation]
   );
 
-  const handleViewDetail = useCallback(
-    async (stockTake: StockTake) => {
-      setSelectedStockTake(stockTake);
-      try {
-        const response = await wmsApi.stockTakes.listItems(stockTake.id);
-        if (response.success && response.data) {
-          setStockTakeItems(response.data.items || []);
-        }
-      } catch (error: unknown) {
-        apiLogger.error('获取盘点明细失败:', error);
-        addNotification({
-          type: 'error',
-          title: '加载失败',
-          message: '获取盘点明细失败',
-        });
+  const handleViewDetail = useCallback(async (stockTake: StockTake) => {
+    setSelectedStockTake(stockTake);
+    try {
+      const response = await wmsApi.stockTakes.listItems(stockTake.id);
+      if (response.success && response.data) {
+        setStockTakeItems(response.data.items || []);
       }
-      setShowDetailDialog(true);
-    },
-    [addNotification]
-  );
+    } catch (error: unknown) {
+      apiLogger.error('获取盘点明细失败:', error);
+    }
+    setShowDetailDialog(true);
+  }, []);
 
   const handleCompleteStockTake = async () => {
     if (!selectedStockTake) return;
-
-    try {
-      const response = await wmsApi.stockTakes.complete(selectedStockTake.id);
-      if (response.success) {
-        addNotification({
-          type: 'success',
-          title: '操作成功',
-          message: '盘点单已完成',
-        });
-        setShowDetailDialog(false);
-        fetchStockTakes();
-      }
-    } catch (error: unknown) {
-      apiLogger.error('完成盘点失败:', error);
-      addNotification({
-        type: 'error',
-        title: '操作失败',
-        message: '完成盘点失败',
-      });
-    }
+    await completeMutation.mutateAsync(selectedStockTake.id);
   };
 
   const handleAdjustStockTake = async () => {
     if (!selectedStockTake) return;
-
-    try {
-      const response = await wmsApi.stockTakes.adjust(selectedStockTake.id);
-      if (response.success) {
-        addNotification({
-          type: 'success',
-          title: '操作成功',
-          message: '库存已调整',
-        });
-        setShowDetailDialog(false);
-        fetchStockTakes();
-      }
-    } catch (error: unknown) {
-      apiLogger.error('调整库存失败:', error);
-      addNotification({
-        type: 'error',
-        title: '操作失败',
-        message: '调整库存失败',
-      });
-    }
+    await adjustMutation.mutateAsync(selectedStockTake.id);
   };
 
   const handleCountItems = async () => {
@@ -298,6 +270,7 @@ const StockTakePage: React.FC = () => {
         if (detailResponse.success && detailResponse.data) {
           setStockTakeItems(detailResponse.data.items || []);
         }
+        queryClient.invalidateQueries({ queryKey: [QUERY_KEYS.WMS.STOCK_TAKES] });
       }
     } catch (error: unknown) {
       apiLogger.error('更新盘点数量失败:', error);

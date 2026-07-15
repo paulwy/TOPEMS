@@ -47,7 +47,10 @@ export const mesModuleConfig: RouteModuleConfig = {
   routes: [
     {
       path: MES_PATHS.dashboard,
-      element: lazyWithRetry(() => import('@/pages/mes/ProductionDashboardPage'), 'ProductionDashboardPage'),
+      element: lazyWithRetry(
+        () => import('@/pages/mes/ProductionDashboardPage'),
+        'ProductionDashboardPage'
+      ),
       module: 'mes',
       code: 'mes-dashboard',
       title: '仪表盘',
@@ -58,7 +61,10 @@ export const mesModuleConfig: RouteModuleConfig = {
     },
     {
       path: MES_PATHS.productionOrders,
-      element: lazyWithRetry(() => import('@/pages/mes/ProductionOrderManagementPage'), 'ProductionOrderManagementPage'),
+      element: lazyWithRetry(
+        () => import('@/pages/mes/ProductionOrderManagementPage'),
+        'ProductionOrderManagementPage'
+      ),
       module: 'mes',
       code: 'mes-production-orders',
       title: '生产订单',
@@ -69,7 +75,10 @@ export const mesModuleConfig: RouteModuleConfig = {
     },
     {
       path: MES_PATHS.productionOrderDetail,
-      element: lazyWithRetry(() => import('@/pages/mes/ProductionOrderDetailPage'), 'ProductionOrderDetailPage'),
+      element: lazyWithRetry(
+        () => import('@/pages/mes/ProductionOrderDetailPage'),
+        'ProductionOrderDetailPage'
+      ),
       module: 'mes',
       code: 'mes-production-order-detail',
       title: '生产订单详情',
@@ -91,7 +100,10 @@ export const mesModuleConfig: RouteModuleConfig = {
     },
     {
       path: MES_PATHS.equipment,
-      element: lazyWithRetry(() => import('@/pages/mes/EquipmentManagementPage'), 'EquipmentManagementPage'),
+      element: lazyWithRetry(
+        () => import('@/pages/mes/EquipmentManagementPage'),
+        'EquipmentManagementPage'
+      ),
       module: 'mes',
       code: 'mes-equipment',
       title: '设备管理',
@@ -102,7 +114,10 @@ export const mesModuleConfig: RouteModuleConfig = {
     },
     {
       path: MES_PATHS.equipmentDetail,
-      element: lazyWithRetry(() => import('@/pages/mes/EquipmentDetailPage'), 'EquipmentDetailPage'),
+      element: lazyWithRetry(
+        () => import('@/pages/mes/EquipmentDetailPage'),
+        'EquipmentDetailPage'
+      ),
       module: 'mes',
       code: 'mes-equipment-detail',
       title: '设备详情',
@@ -135,7 +150,10 @@ export const mesModuleConfig: RouteModuleConfig = {
     },
     {
       path: MES_PATHS.materialRequirement,
-      element: lazyWithRetry(() => import('@/pages/mes/MaterialRequirementPage'), 'MaterialRequirementPage'),
+      element: lazyWithRetry(
+        () => import('@/pages/mes/MaterialRequirementPage'),
+        'MaterialRequirementPage'
+      ),
       module: 'mes',
       code: 'mes-material-requirement',
       title: '物料需求',
@@ -168,7 +186,10 @@ export const mesModuleConfig: RouteModuleConfig = {
     },
     {
       path: MES_PATHS.productionProcess,
-      element: lazyWithRetry(() => import('@/pages/mes/ProductionProcessPage'), 'ProductionProcessPage'),
+      element: lazyWithRetry(
+        () => import('@/pages/mes/ProductionProcessPage'),
+        'ProductionProcessPage'
+      ),
       module: 'mes',
       code: 'mes-production-process',
       title: '生产过程',
@@ -179,7 +200,10 @@ export const mesModuleConfig: RouteModuleConfig = {
     },
     {
       path: MES_PATHS.productionSchedule,
-      element: lazyWithRetry(() => import('@/pages/mes/ProductionSchedulePage'), 'ProductionSchedulePage'),
+      element: lazyWithRetry(
+        () => import('@/pages/mes/ProductionSchedulePage'),
+        'ProductionSchedulePage'
+      ),
       module: 'mes',
       code: 'mes-production-schedule',
       title: '生产计划',
@@ -201,7 +225,10 @@ export const mesModuleConfig: RouteModuleConfig = {
     },
     {
       path: MES_PATHS.qualityInspection,
-      element: lazyWithRetry(() => import('@/pages/mes/QualityInspectionPage'), 'QualityInspectionPage'),
+      element: lazyWithRetry(
+        () => import('@/pages/mes/QualityInspectionPage'),
+        'QualityInspectionPage'
+      ),
       module: 'mes',
       code: 'mes-quality-inspection',
       title: '过程质检',
@@ -212,7 +239,10 @@ export const mesModuleConfig: RouteModuleConfig = {
     },
     {
       path: MES_PATHS.traceability,
-      element: lazyWithRetry(() => import('@/pages/mes/QualityTraceabilityPage'), 'QualityTraceabilityPage'),
+      element: lazyWithRetry(
+        () => import('@/pages/mes/QualityTraceabilityPage'),
+        'QualityTraceabilityPage'
+      ),
       module: 'mes',
       code: 'mes-traceability',
       title: '质量追溯',
@@ -223,7 +253,10 @@ export const mesModuleConfig: RouteModuleConfig = {
     },
     {
       path: MES_PATHS.productionKanban,
-      element: lazyWithRetry(() => import('@/pages/mes/ProductionKanbanPage'), 'ProductionKanbanPage'),
+      element: lazyWithRetry(
+        () => import('@/pages/mes/ProductionKanbanPage'),
+        'ProductionKanbanPage'
+      ),
       module: 'mes',
       code: 'mes-production-kanban',
       title: '生产看板',
@@ -234,7 +267,10 @@ export const mesModuleConfig: RouteModuleConfig = {
     },
     {
       path: MES_PATHS.productionRecord,
-      element: lazyWithRetry(() => import('@/pages/mes/ProductionRecordPage'), 'ProductionRecordPage'),
+      element: lazyWithRetry(
+        () => import('@/pages/mes/ProductionRecordPage'),
+        'ProductionRecordPage'
+      ),
       module: 'mes',
       code: 'mes-production-record',
       title: '生产记录',
@@ -300,7 +336,10 @@ export const mesModuleConfig: RouteModuleConfig = {
     },
     {
       path: MES_PATHS.productionDashboard,
-      element: lazyWithRetry(() => import('@/pages/mes/ProductionDashboardPage'), 'ProductionDashboardPage'),
+      element: lazyWithRetry(
+        () => import('@/pages/mes/ProductionDashboardPage'),
+        'ProductionDashboardPage'
+      ),
       module: 'mes',
       code: 'mes-production-dashboard',
       title: '生产总览',

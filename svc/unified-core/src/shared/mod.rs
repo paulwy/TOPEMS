@@ -4,18 +4,30 @@
 use axum::extract::FromRef;
 use serde::{Deserialize, Serialize};
 use sqlx::PgPool;
+use std::sync::Arc;
 use topems_shared::{AuthState, SimpleHealthConfig};
+
+use crate::middleware::rate_limit::RateLimitMiddleware;
+use crate::middleware::versioning::VersionMiddleware;
 
 #[derive(Clone)]
 pub struct AppState {
     pub auth_state: AuthState,
     pub pool: PgPool,
     pub health_config: SimpleHealthConfig,
+    pub rate_limit_middleware: Arc<RateLimitMiddleware>,
+    pub versioning_middleware: Arc<VersionMiddleware>,
 }
 
 impl FromRef<AppState> for AuthState {
     fn from_ref(state: &AppState) -> Self {
         state.auth_state.clone()
+    }
+}
+
+impl FromRef<AppState> for Arc<RateLimitMiddleware> {
+    fn from_ref(state: &AppState) -> Self {
+        state.rate_limit_middleware.clone()
     }
 }
 

@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react';
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import {
   Plus,
   Edit2,
@@ -80,11 +81,9 @@ interface DashboardSaveConfig {
 }
 
 const BIDashboardPage = () => {
+  const queryClient = useQueryClient();
   const [viewMode, setViewMode] = useState<ViewMode>('list');
   const [activeTab, setActiveTab] = useState<TabType>('dashboards');
-  const [dashboards, setDashboards] = useState<Dashboard[]>([]);
-  const [templates, setTemplates] = useState<DashboardTemplate[]>([]);
-  const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedDashboard, setSelectedDashboard] = useState<Dashboard | null>(null);
   const [createDialog, setCreateDialog] = useState<CreateDialogState>({
@@ -97,101 +96,172 @@ const BIDashboardPage = () => {
   const [anchorEl, setAnchorEl] = useState<null | HTMLElement>(null);
   const [contextDashboard, setContextDashboard] = useState<Dashboard | null>(null);
 
-  const loadDashboards = async () => {
-    setLoading(true);
-    try {
+  const dashboardsQuery = useQuery<Dashboard[]>({
+    queryKey: ['bi-dashboards'],
+    queryFn: async () => {
       const res = await fetchDashboards();
       if (res.success && res.data) {
-        setDashboards(res.data.items || []);
+        return res.data.items || [];
       }
-    } catch (error: unknown) {
-      logger.error('Failed to load dashboards:', error);
-    } finally {
-      setLoading(false);
-    }
-  };
+      return [];
+    },
+    staleTime: 5 * 60 * 1000,
+  });
 
-  const loadTemplates = async () => {
-    try {
+  const templatesQuery = useQuery<DashboardTemplate[]>({
+    queryKey: ['bi-dashboard-templates'],
+    queryFn: async () => {
       const res = await fetchDashboardTemplates();
       if (res.success && res.data) {
-        setTemplates(res.data.items || []);
+        return res.data.items || [];
       }
-    } catch (error: unknown) {
-      logger.error('Failed to load templates:', error);
-    }
-  };
+      return [];
+    },
+    staleTime: 5 * 60 * 1000,
+  });
+
+  const dashboards = dashboardsQuery.data ?? [];
+  const templates = templatesQuery.data ?? [];
+  const loading = dashboardsQuery.isLoading;
 
   useEffect(() => {
-    loadDashboards();
-    loadTemplates();
-  }, []);
+    if (dashboardsQuery.isError) {
+      logger.error('Failed to load dashboards:', dashboardsQuery.error);
+    }
+    if (templatesQuery.isError) {
+      logger.error('Failed to load templates:', templatesQuery.error);
+    }
+  }, [
+    dashboardsQuery.isError,
+    dashboardsQuery.error,
+    templatesQuery.isError,
+    templatesQuery.error,
+  ]);
 
-  const handleCreateDashboard = async () => {
-    try {
+  const createMutation = useMutation({
+    mutationFn: async ({
+      data,
+      useTemplate,
+      templateId,
+    }: {
+      data: Partial<Dashboard>;
+      useTemplate: boolean;
+      templateId: string | null;
+    }) => {
+      if (useTemplate && templateId) {
+        return await createDashboardFromTemplate(templateId, data);
+      }
+      return await createDashboard(data);
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['bi-dashboards'] });
+      setCreateDialog({
+        open: false,
+        useTemplate: false,
+        selectedTemplateId: null,
+        name: '',
+        description: '',
+      });
+    },
+    onError: (error: unknown) => {
+      logger.error('Failed to create dashboard:', error);
+    },
+  });
+
+  const deleteMutation = useMutation({
+    mutationFn: (id: string) => deleteDashboard(id),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['bi-dashboards'] });
+    },
+    onError: (error: unknown) => {
+      logger.error('Failed to delete dashboard:', error);
+    },
+  });
+
+  const cloneMutation = useMutation({
+    mutationFn: (id: string) => cloneDashboard(id),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['bi-dashboards'] });
+    },
+    onError: (error: unknown) => {
+      logger.error('Failed to clone dashboard:', error);
+    },
+  });
+
+  const togglePublicMutation = useMutation({
+    mutationFn: (dashboard: Dashboard) =>
+      updateDashboard(dashboard.id, { is_public: !dashboard.is_public }),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['bi-dashboards'] });
+    },
+    onError: (error: unknown) => {
+      logger.error('Failed to update dashboard:', error);
+    },
+  });
+
+  const saveMutation = useMutation({
+    mutationFn: async ({
+      config,
+      selectedDashboard,
+    }: {
+      config: DashboardConfig;
+      selectedDashboard: Dashboard | null;
+    }) => {
       const data: Partial<Dashboard> = {
-        name: createDialog.name || '未命名仪表盘',
-        description: createDialog.description,
+        name: config.name,
+        description: config.description || '',
+        layout: { widgets: config.widgets },
+      };
+      if (selectedDashboard) {
+        return await updateDashboard(selectedDashboard.id, data);
+      }
+      return await createDashboard({
+        ...data,
         owner_id: 'current-user',
         is_public: false,
-      };
-
-      let result;
-      if (createDialog.useTemplate && createDialog.selectedTemplateId) {
-        result = await createDashboardFromTemplate(createDialog.selectedTemplateId, data);
-      } else {
-        result = await createDashboard(data);
-      }
-
-      if (result.success) {
-        loadDashboards();
-        setCreateDialog({
-          open: false,
-          useTemplate: false,
-          selectedTemplateId: null,
-          name: '',
-          description: '',
-        });
-      }
-    } catch (error: unknown) {
-      logger.error('Failed to create dashboard:', error);
-    }
-  };
-
-  const handleDeleteDashboard = async (id: string) => {
-    if (!confirm('确定要删除这个仪表盘吗？')) return;
-    try {
-      const res = await deleteDashboard(id);
-      if (res.success) {
-        loadDashboards();
-      }
-    } catch (error: unknown) {
-      logger.error('Failed to delete dashboard:', error);
-    }
-  };
-
-  const handleCloneDashboard = async (id: string) => {
-    try {
-      const res = await cloneDashboard(id);
-      if (res.success) {
-        loadDashboards();
-      }
-    } catch (error: unknown) {
-      logger.error('Failed to clone dashboard:', error);
-    }
-  };
-
-  const handleTogglePublic = async (dashboard: Dashboard) => {
-    try {
-      const res = await updateDashboard(dashboard.id, {
-        is_public: !dashboard.is_public,
       });
-      if (res.success) {
-        loadDashboards();
-      }
-    } catch (error: unknown) {
-      logger.error('Failed to update dashboard:', error);
-    }
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['bi-dashboards'] });
+      setViewMode('list');
+    },
+    onError: (error: unknown) => {
+      logger.error('Failed to save dashboard:', error);
+    },
+  });
+
+  const actionLoading =
+    createMutation.isPending ||
+    deleteMutation.isPending ||
+    cloneMutation.isPending ||
+    togglePublicMutation.isPending ||
+    saveMutation.isPending;
+
+  const handleCreateDashboard = () => {
+    const data: Partial<Dashboard> = {
+      name: createDialog.name || '未命名仪表盘',
+      description: createDialog.description,
+      owner_id: 'current-user',
+      is_public: false,
+    };
+    createMutation.mutate({
+      data,
+      useTemplate: createDialog.useTemplate,
+      templateId: createDialog.selectedTemplateId,
+    });
+  };
+
+  const handleDeleteDashboard = (id: string) => {
+    if (!confirm('确定要删除这个仪表盘吗？')) return;
+    deleteMutation.mutate(id);
+  };
+
+  const handleCloneDashboard = (id: string) => {
+    cloneMutation.mutate(id);
+  };
+
+  const handleTogglePublic = (dashboard: Dashboard) => {
+    togglePublicMutation.mutate(dashboard);
   };
 
   const handleOpenEditor = (dashboard?: Dashboard) => {
@@ -199,28 +269,8 @@ const BIDashboardPage = () => {
     setViewMode('editor');
   };
 
-  const handleSaveDashboard = async (config: DashboardConfig) => {
-    try {
-      const data: Partial<Dashboard> = {
-        name: config.name,
-        description: config.description || '',
-        layout: { widgets: config.widgets },
-      };
-
-      if (selectedDashboard) {
-        await updateDashboard(selectedDashboard.id, data);
-      } else {
-        await createDashboard({
-          ...data,
-          owner_id: 'current-user',
-          is_public: false,
-        });
-      }
-      setViewMode('list');
-      loadDashboards();
-    } catch (error: unknown) {
-      logger.error('Failed to save dashboard:', error);
-    }
+  const handleSaveDashboard = (config: DashboardConfig) => {
+    saveMutation.mutate({ config, selectedDashboard });
   };
 
   const filteredDashboards = dashboards.filter(
@@ -326,7 +376,7 @@ const BIDashboardPage = () => {
             <DashboardTemplateManager
               onDashboardCreated={() => {
                 setActiveTab('dashboards');
-                loadDashboards();
+                queryClient.invalidateQueries({ queryKey: ['bi-dashboards'] });
               }}
             />
           ) : (

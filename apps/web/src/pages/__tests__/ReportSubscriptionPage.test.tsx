@@ -112,6 +112,7 @@ vi.mock('@/store', () => ({
   useSetSidebarCollapsed: vi.fn(),
 }));
 
+describe('ReportSubscriptionPage', () => {
   it('should render without crashing', () => {
     const { container } = render(
       <BrowserRouter>
@@ -120,7 +121,8 @@ vi.mock('@/store', () => ({
     );
     expect(container).toBeDefined();
   });
-
+});
+describe('ReportSubscriptionPage', () => {
   it('should have subscription API methods defined', () => {
     render(
       <BrowserRouter>

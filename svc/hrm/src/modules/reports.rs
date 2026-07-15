@@ -13,27 +13,27 @@ use topems_shared::{api_error, ApiResponse};
 pub fn create_routes() -> Router<ApiState> {
     Router::new()
         .route(
-            "/api/core/hrm/v1/reports/employee-summary",
+            "/api/core/hrm/reports/employee-summary",
             get(employee_summary),
         )
         .route(
-            "/api/core/hrm/v1/reports/department-summary",
+            "/api/core/hrm/reports/department-summary",
             get(department_summary),
         )
         .route(
-            "/api/core/hrm/v1/reports/contract-summary",
+            "/api/core/hrm/reports/contract-summary",
             get(contract_summary),
         )
         .route(
-            "/api/core/hrm/v1/reports/training-summary",
+            "/api/core/hrm/reports/training-summary",
             get(training_summary),
         )
         .route(
-            "/api/core/hrm/v1/reports/attendance-summary",
+            "/api/core/hrm/reports/attendance-summary",
             get(attendance_summary),
         )
         .route(
-            "/api/core/hrm/v1/reports/payroll-summary",
+            "/api/core/hrm/reports/payroll-summary",
             get(payroll_summary),
         )
 }

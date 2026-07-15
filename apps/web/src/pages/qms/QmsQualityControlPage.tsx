@@ -387,10 +387,12 @@ const QmsQualityControlPage: React.FC = () => {
       (n) => n.status === 'closed' || n.status === 'resolved' || n.status === '已关闭'
     ).length,
     totalAudits: auditPlans.length,
-    completedAudits: auditPlans.filter((a: any) => a.status === 'completed' || a.status === '已完成')
-      .length,
-    inProgressAudits: auditPlans.filter((a: any) => a.status === 'in_progress' || a.status === '进行中')
-      .length,
+    completedAudits: auditPlans.filter(
+      (a: any) => a.status === 'completed' || a.status === '已完成'
+    ).length,
+    inProgressAudits: auditPlans.filter(
+      (a: any) => a.status === 'in_progress' || a.status === '进行中'
+    ).length,
   };
 
   const statsCards = (

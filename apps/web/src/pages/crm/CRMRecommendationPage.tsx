@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState } from 'react';
 import {
   Box,
   Typography,
@@ -36,73 +36,55 @@ import { ListPageTemplate, type ColumnDef, type RowAction } from '@/components/t
 import { PageContainer } from '@/components/common';
 import { crmApi } from '@/api/crm';
 import type { RecommendationResult, RecommendationItem, RecommendationRequest } from '@/api/crm';
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import { QUERY_KEYS } from '@/lib/reactQuery';
 
 const CRMRecommendationPage: React.FC = () => {
   const addNotification = useNotificationStore((state) => state.addNotification);
-  const [recommendations, setRecommendations] = useState<RecommendationResult[]>([]);
-  const [loading, setLoading] = useState(true);
+  const queryClient = useQueryClient();
   const [selectedRecommendation, setSelectedRecommendation] = useState<RecommendationResult | null>(
     null
   );
   const [showDetailDialog, setShowDetailDialog] = useState(false);
   const [showCreateDialog, setShowCreateDialog] = useState(false);
-  const [customers, setCustomers] = useState<any[]>([]);
   const [formData, setFormData] = useState<RecommendationRequest>({
     customer_id: '',
     recommendation_type: 'product',
     top_k: 10,
   });
 
-  const loadRecommendations = useCallback(async () => {
-    try {
-      setLoading(true);
+  const recommendationsQuery = useQuery({
+    queryKey: QUERY_KEYS.CRM.RECOMMENDATIONS,
+    queryFn: async () => {
       const res = await crmApi.customerRecommendation.list({
         page: 1,
         pageSize: 50,
       });
       if (res.success && res.data) {
-        setRecommendations(res.data.items || []);
+        return res.data.items || [];
       }
-    } catch (err) {
-      addNotification({
-        type: 'error',
-        title: '加载失败',
-        message: '无法加载客户推荐数据',
-      });
-    } finally {
-      setLoading(false);
-    }
-  }, [addNotification]);
+      return [];
+    },
+  });
 
-  const loadCustomers = useCallback(async () => {
-    try {
+  const recommendations = recommendationsQuery.data || [];
+
+  const customersQuery = useQuery({
+    queryKey: QUERY_KEYS.CRM.CUSTOMERS,
+    queryFn: async () => {
       const res = await crmApi.customers.list({ page: 1, pageSize: 100 });
       if (res.success && res.data) {
-        setCustomers(res.data.items || []);
+        return res.data.items || [];
       }
-    } catch (err) {
-      // 静默失败
-    }
-  }, []);
+      return [];
+    },
+  });
 
-  useEffect(() => {
-    loadRecommendations();
-    loadCustomers();
-  }, [loadRecommendations, loadCustomers]);
+  const customers = customersQuery.data || [];
 
-  const handleCreateRecommendation = async () => {
-    if (!formData.customer_id) {
-      addNotification({
-        type: 'warning',
-        title: '提示',
-        message: '请选择客户',
-      });
-      return;
-    }
-
-    try {
-      setLoading(true);
-      const res = await crmApi.customerRecommendation.create(formData);
+  const createMutation = useMutation({
+    mutationFn: (data: RecommendationRequest) => crmApi.customerRecommendation.create(data),
+    onSuccess: (res) => {
       if (res.success) {
         addNotification({
           type: 'success',
@@ -115,17 +97,31 @@ const CRMRecommendationPage: React.FC = () => {
           recommendation_type: 'product',
           top_k: 10,
         });
-        loadRecommendations();
+        queryClient.invalidateQueries({ queryKey: QUERY_KEYS.CRM.RECOMMENDATIONS });
       }
-    } catch (err) {
+    },
+    onError: () => {
       addNotification({
         type: 'error',
         title: '失败',
         message: '推荐生成失败',
       });
-    } finally {
-      setLoading(false);
+    },
+  });
+
+  const loading =
+    recommendationsQuery.isLoading || recommendationsQuery.isFetching || createMutation.isPending;
+
+  const handleCreateRecommendation = () => {
+    if (!formData.customer_id) {
+      addNotification({
+        type: 'warning',
+        title: '提示',
+        message: '请选择客户',
+      });
+      return;
     }
+    createMutation.mutate(formData);
   };
 
   const getRecommendationTypeIcon = (type: string): React.ReactElement => {

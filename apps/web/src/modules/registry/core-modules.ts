@@ -1,12 +1,12 @@
 import type { ModuleConfig } from './index';
 
-const DEPLOYMENT_MODE = import.meta.env.VITE_DEPLOYMENT_MODE || 'static';
+const DEPLOYMENT_MODE = (typeof import.meta !== 'undefined' && import.meta.env?.VITE_DEPLOYMENT_MODE) || 'static';
 const isMFMode = DEPLOYMENT_MODE !== 'static';
 
 const getRemoteEntryUrl = (name: string, port: number): string | undefined => {
   if (!isMFMode) return undefined;
   const envKey = `VITE_${name.toUpperCase()}_REMOTE_ENTRY`;
-  const envUrl = import.meta.env[envKey];
+  const envUrl = typeof import.meta !== 'undefined' ? import.meta.env?.[envKey] : undefined;
   return envUrl || `http://localhost:${port}/remoteEntry.js`;
 };
 

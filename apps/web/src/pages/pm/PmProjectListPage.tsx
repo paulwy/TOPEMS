@@ -128,8 +128,7 @@ const PmProjectListPage: React.FC = () => {
       if (!window.confirm('确定要删除这个项目吗？')) return;
       try {
         await deleteProjectMutation.mutateAsync(id);
-      } catch {
-      }
+      } catch {}
     },
     [deleteProjectMutation]
   );

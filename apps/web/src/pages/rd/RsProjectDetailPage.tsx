@@ -1,6 +1,7 @@
 import { Grid } from '@/components';
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
 import { useParams, useNavigate, Link } from 'react-router-dom';
+import { useQuery } from '@tanstack/react-query';
 import { logger } from '@/utils/logger';
 import { RD_PATHS } from '@/modules/rd/config';
 import {
@@ -49,55 +50,61 @@ import {
 import { DetailPageTemplate, type TabConfig } from '@/components/templates';
 import { rdApi } from '@/api/rd';
 import { PageContainer } from '@/components/common';
-import { useNotificationStore } from '@/store';
 import type { Project, GanttPhase, GanttMilestone, Experiment } from '@/api/rd';
+import { QUERY_KEYS } from '@/lib/reactQuery';
 
 const RsProjectDetailPage: React.FC = () => {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
-  const { addNotification } = useNotificationStore();
   const [activeTab, setActiveTab] = useState(0);
-  const [loading, setLoading] = useState(false);
-  const [project, setProject] = useState<Project | null>(null);
-  const [phases, setPhases] = useState<GanttPhase[]>([]);
-  const [milestones, setMilestones] = useState<GanttMilestone[]>([]);
-  const [experiments, setExperiments] = useState<Experiment[]>([]);
 
-  useEffect(() => {
-    if (!id) return;
-    loadProjectData(id);
-  }, [id]);
+  const projectQuery = useQuery({
+    queryKey: QUERY_KEYS.RD.PROJECT(id || ''),
+    queryFn: async () => {
+      const response = await rdApi.getProject(id || '');
+      if (!response.success || !response.data) {
+        throw new Error(response.message || '加载项目详情失败');
+      }
+      return response.data;
+    },
+    enabled: !!id,
+  });
 
-  const loadProjectData = async (projectId: string) => {
-    try {
-      setLoading(true);
-      const [projectRes, ganttRes, experimentsRes] = await Promise.all([
-        rdApi.getProject(projectId),
-        rdApi.getProjectGantt(projectId),
-        rdApi.listExperiments({ project_id: projectId, pagesize: 100 }),
-      ]);
+  const ganttQuery = useQuery({
+    queryKey: QUERY_KEYS.RD.PROJECT_GANTT(id || ''),
+    queryFn: async () => {
+      const response = await rdApi.getProjectGantt(id || '');
+      if (!response.success || !response.data) {
+        throw new Error(response.message || '加载甘特图失败');
+      }
+      return response.data;
+    },
+    enabled: !!id,
+  });
 
-      if (projectRes.success && projectRes.data) {
-        setProject(projectRes.data);
+  const experimentsQuery = useQuery({
+    queryKey: [...QUERY_KEYS.RD.EXPERIMENTS, { projectId: id, pagesize: 100 }],
+    queryFn: async () => {
+      const response = await rdApi.listExperiments({ project_id: id, pagesize: 100 });
+      if (!response.success || !response.data) {
+        throw new Error(response.message || '加载试验记录失败');
       }
-      if (ganttRes.success && ganttRes.data) {
-        setPhases(ganttRes.data.phases || []);
-        setMilestones(ganttRes.data.milestones || []);
-      }
-      if (experimentsRes.success && experimentsRes.data) {
-        setExperiments(experimentsRes.data.experiments || []);
-      }
-    } catch (error: unknown) {
-      logger.error('加载项目详情失败:', error);
-      addNotification({
-        type: 'error',
-        title: '加载失败',
-        message: '无法加载项目详情',
-      });
-    } finally {
-      setLoading(false);
+      return response.data.experiments || [];
+    },
+    enabled: !!id,
+  });
+
+  const project = projectQuery.data || null;
+  const phases = ganttQuery.data?.phases || [];
+  const milestones = ganttQuery.data?.milestones || [];
+  const experiments = experimentsQuery.data || [];
+  const loading = projectQuery.isLoading || ganttQuery.isLoading || experimentsQuery.isLoading;
+
+  React.useEffect(() => {
+    if (projectQuery.error) {
+      logger.error('加载项目详情失败:', projectQuery.error);
     }
-  };
+  }, [projectQuery.error]);
 
   const getStatusColor = (
     status: string

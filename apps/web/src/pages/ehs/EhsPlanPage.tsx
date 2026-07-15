@@ -1,5 +1,7 @@
-import React, { useState, useEffect, useMemo } from 'react';
+import React, { useState, useMemo, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import { QUERY_KEYS } from '@/lib/reactQuery';
 import {
   Box,
   Dialog,
@@ -27,15 +29,13 @@ const ct = designTokens.colors;
 
 const EhsPlanPage: React.FC = () => {
   const navigate = useNavigate();
-  const [plans, setPlans] = useState<EmergencyPlan[]>([]);
-  const [loading, setLoading] = useState(true);
+  const queryClient = useQueryClient();
   const [searchTerm, setSearchTerm] = useState('');
   const [typeFilter, setTypeFilter] = useState('');
   const [statusFilter, setStatusFilter] = useState('');
   const [showCreateModal, setShowCreateModal] = useState(false);
   const [showDetailModal, setShowDetailModal] = useState(false);
   const [selectedPlan, setSelectedPlan] = useState<EmergencyPlan | null>(null);
-  const [detailLoading, setDetailLoading] = useState(false);
   const [formData, setFormData] = useState({
     plan_no: '',
     name: '',
@@ -48,42 +48,42 @@ const EhsPlanPage: React.FC = () => {
   });
   const addNotification = useNotificationStore((state) => state.addNotification);
 
-  useEffect(() => {
-    loadPlans();
-  }, [searchTerm, typeFilter, statusFilter]);
-
-  const loadPlans = async () => {
-    try {
-      setLoading(true);
+  const {
+    data: plansData,
+    isLoading: loading,
+    isError,
+  } = useQuery({
+    queryKey: QUERY_KEYS.EHS.PLANS,
+    queryFn: async () => {
       const response = await ehsApi.listPlans();
       if (response.success && response.data) {
         const data = response.data as any;
         const plansData = Array.isArray(data) ? data : data.data || [];
-        const adapted = plansData.map((item: { [key: string]: unknown }) => ({
+        return plansData.map((item: { [key: string]: unknown }) => ({
           ...item,
           status:
             item.status === 'active' ? '有效' : item.status === 'inactive' ? '无效' : item.status,
         }));
-        setPlans(adapted);
-      } else {
-        setPlans([]);
       }
-    } catch (err: unknown) {
-      apiLogger.error('加载应急预案数据失败:', err);
-      addNotification({ title: '错误', message: '加载应急预案失败', type: 'error' });
-      setPlans([]);
-    } finally {
-      setLoading(false);
-    }
-  };
+      return [];
+    },
+  });
+  const plans = (plansData as EmergencyPlan[]) || [];
 
-  const loadPlanDetail = async (planId: string) => {
-    try {
-      setDetailLoading(true);
-      const response = await ehsApi.getPlan(planId);
+  useEffect(() => {
+    if (isError) {
+      addNotification({ title: '错误', message: '加载应急预案列表失败', type: 'error' });
+    }
+  }, [isError, addNotification]);
+
+  const planDetailQuery = useQuery<EmergencyPlan | null>({
+    queryKey: QUERY_KEYS.EHS.PLAN(selectedPlan?.id || ''),
+    queryFn: async () => {
+      if (!selectedPlan?.id) return null;
+      const response = await ehsApi.getPlan(selectedPlan.id);
       if (response.success && response.data) {
         const planData = response.data as any;
-        const adapted = {
+        return {
           ...planData,
           status:
             planData.status === 'active'
@@ -92,15 +92,27 @@ const EhsPlanPage: React.FC = () => {
                 ? '无效'
                 : planData.status,
         };
-        setSelectedPlan(adapted);
       }
-    } catch (err: unknown) {
-      apiLogger.error('加载应急预案详情失败:', err);
-      addNotification({ title: '错误', message: '加载详情失败', type: 'error' });
-    } finally {
-      setDetailLoading(false);
+      return null;
+    },
+    enabled: !!selectedPlan?.id && showDetailModal,
+    staleTime: 5 * 60 * 1000,
+  });
+
+  const detailLoading = planDetailQuery.isFetching;
+
+  useEffect(() => {
+    if (planDetailQuery.data) {
+      setSelectedPlan(planDetailQuery.data);
     }
-  };
+  }, [planDetailQuery.data]);
+
+  useEffect(() => {
+    if (planDetailQuery.isError) {
+      apiLogger.error('加载应急预案详情失败:', planDetailQuery.error);
+      addNotification({ title: '错误', message: '加载详情失败', type: 'error' });
+    }
+  }, [planDetailQuery.isError, planDetailQuery.error, addNotification]);
 
   const getStatusBadge = (status: string) => {
     const statusMap: Record<string, { bg: string; color: string }> = {
@@ -179,10 +191,9 @@ const EhsPlanPage: React.FC = () => {
     []
   );
 
-  const handleViewDetail = async (plan: EmergencyPlan) => {
+  const handleViewDetail = (plan: EmergencyPlan) => {
     setSelectedPlan(plan);
     setShowDetailModal(true);
-    await loadPlanDetail(plan.id);
   };
 
   const rowActions = useMemo<RowAction<EmergencyPlan>[]>(
@@ -253,29 +264,34 @@ const EhsPlanPage: React.FC = () => {
     setShowCreateModal(true);
   };
 
-  const handleSave = async () => {
-    try {
-      await ehsApi.createPlan({
-        plan_no: formData.plan_no,
-        name: formData.name,
-        plan_type: formData.plan_type,
-        scope: formData.scope || null,
-        trigger_conditions: formData.trigger_conditions || null,
-        response_procedures: formData.response_procedures || null,
-        responsible_persons: formData.responsible_persons
-          .split(',')
-          .map((s) => s.trim())
-          .filter((s) => s),
-        contact_info: formData.contact_info || null,
-        status: 'active',
-      });
+  const createMutation = useMutation({
+    mutationFn: (data: Parameters<typeof ehsApi.createPlan>[0]) => ehsApi.createPlan(data),
+    onSuccess: () => {
       addNotification({ title: '成功', message: '应急预案创建成功', type: 'success' });
+      queryClient.invalidateQueries({ queryKey: QUERY_KEYS.EHS.PLANS });
       setShowCreateModal(false);
-      loadPlans();
-    } catch (err: unknown) {
+    },
+    onError: (error: unknown) => {
+      apiLogger.error('创建应急预案失败:', error);
       addNotification({ title: '错误', message: '创建失败', type: 'error' });
-      apiLogger.error('创建应急预案失败:', err);
-    }
+    },
+  });
+
+  const handleSave = () => {
+    createMutation.mutate({
+      plan_no: formData.plan_no,
+      name: formData.name,
+      plan_type: formData.plan_type,
+      scope: formData.scope || null,
+      trigger_conditions: formData.trigger_conditions || null,
+      response_procedures: formData.response_procedures || null,
+      responsible_persons: formData.responsible_persons
+        .split(',')
+        .map((s) => s.trim())
+        .filter((s) => s),
+      contact_info: formData.contact_info || null,
+      status: 'active',
+    });
   };
 
   const stats = useMemo(
@@ -426,7 +442,7 @@ const EhsPlanPage: React.FC = () => {
         onSearch={(value) => setSearchTerm(value)}
         filters={filters}
         rowActions={rowActions}
-        onRefresh={loadPlans}
+        onRefresh={() => queryClient.invalidateQueries({ queryKey: QUERY_KEYS.EHS.PLANS })}
       />
 
       <Dialog

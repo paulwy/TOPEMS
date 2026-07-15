@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import {
   ClipboardList,
   Plus,
@@ -23,8 +23,6 @@ import {
   DialogActions,
   Card,
   CardContent,
-  Snackbar,
-  Alert,
   MenuItem,
   Select,
   FormControl,
@@ -52,6 +50,8 @@ import { CardListTemplate } from '@/components/templates/CardListTemplate';
 import { apiLogger } from '@/utils/logger';
 import { designTokens } from '@/theme/tokens';
 import { DASHBOARD_PATHS } from '@/routes/dashboard';
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import { QUERY_KEYS } from '@/lib/reactQuery';
 
 interface RawSample extends Partial<Sample> {
   received_date?: string;
@@ -63,39 +63,32 @@ interface RawTask extends Partial<InspectionTask> {
   process_name?: string;
 }
 
-interface LimsListResponse<T> {
-  items?: T[];
-  samples?: T[];
-  processes?: T[];
-  tasks?: T[];
-  records?: T[];
-}
-
 const ct = designTokens.colors;
 
 const LimsTaskPage: React.FC = () => {
   const navigate = useNavigate();
-  const [samples, setSamples] = useState<Sample[]>([]);
-  const [processes, setProcesses] = useState<InspectionProcess[]>([]);
-  const [tasks, setTasks] = useState<InspectionTask[]>([]);
-  const [stats, setStats] = useState<LimsStatistics>({
-    total_samples: 0,
-    pending_samples: 0,
-    testing_samples: 0,
-    completed_samples: 0,
-    cancelled_samples: 0,
-    total_tasks: 0,
-    pending_tasks: 0,
-    in_progress_tasks: 0,
-    completed_tasks: 0,
-    total_processes: 0,
-    total_instruments: 0,
-    normal_instruments: 0,
-    calibration_instruments: 0,
-    maintenance_instruments: 0,
-    disabled_instruments: 0,
+  const queryClient = useQueryClient();
+  const addNotification = useNotificationStore((state) => state.addNotification);
+
+  const [searchTerm, setSearchTerm] = useState('');
+  const [showTaskModal, setShowTaskModal] = useState(false);
+  const [showDetailModal, setShowDetailModal] = useState(false);
+  const [showRecordModal, setShowRecordModal] = useState(false);
+  const [selectedTask, setSelectedTask] = useState<InspectionTask | null>(null);
+  const [taskFormData, setTaskFormData] = useState<CreateInspectionTaskRequest>({
+    sample_id: '',
+    process_id: '',
+    inspector: '',
   });
-  const [loading, setLoading] = useState(true);
+  const [recordFormData, setRecordFormData] = useState<CreateInspectionRecordRequest>({
+    task_id: '',
+    step_id: '',
+    step_name: '',
+    result: '',
+    conclusion: '',
+    inspector: '',
+  });
+
   const [serviceStatuses, setServiceStatuses] = useState<{
     [key: string]: boolean;
   }>({
@@ -133,57 +126,74 @@ const LimsTaskPage: React.FC = () => {
     return () => clearInterval(intervalId);
   }, []);
 
-  const [searchTerm, setSearchTerm] = useState('');
-  const [showTaskModal, setShowTaskModal] = useState(false);
-  const [showDetailModal, setShowDetailModal] = useState(false);
-  const [showRecordModal, setShowRecordModal] = useState(false);
-  const [selectedTask, setSelectedTask] = useState<InspectionTask | null>(null);
-  const [selectedTaskRecords, setSelectedTaskRecords] = useState<InspectionRecord[]>([]);
-  const [taskFormData, setTaskFormData] = useState<CreateInspectionTaskRequest>({
-    sample_id: '',
-    process_id: '',
-    inspector: '',
+  const { data: samplesResponse, isLoading: samplesLoading } = useQuery({
+    queryKey: QUERY_KEYS.LIMS.SAMPLES,
+    queryFn: async () => {
+      const response = await limsApi.listSamples();
+      if (!response.success) throw new Error('Failed to fetch samples');
+      return response.data;
+    },
+    staleTime: 5 * 60 * 1000,
+    gcTime: 10 * 60 * 1000,
+    enabled: isServiceUp('lims'),
   });
-  const [recordFormData, setRecordFormData] = useState<CreateInspectionRecordRequest>({
-    task_id: '',
-    step_id: '',
-    step_name: '',
-    result: '',
-    conclusion: '',
-    inspector: '',
+
+  const { data: processesResponse, isLoading: processesLoading } = useQuery({
+    queryKey: QUERY_KEYS.LIMS.PROCESSES,
+    queryFn: async () => {
+      const response = await limsApi.listProcesses();
+      if (!response.success) throw new Error('Failed to fetch processes');
+      return response.data;
+    },
+    staleTime: 5 * 60 * 1000,
+    gcTime: 10 * 60 * 1000,
+    enabled: isServiceUp('lims'),
   });
-  const [creating, setCreating] = useState(false);
-  const [notification, setNotification] = useState<{
-    type: 'success' | 'error';
-    message: string;
-  } | null>(null);
 
-  useEffect(() => {
-    if (isServiceUp('lims')) {
-      loadAllData();
-    } else {
-      setLoading(false);
-    }
-  }, [serviceStatuses.lims]);
+  const { data: tasksResponse, isLoading: tasksLoading } = useQuery({
+    queryKey: QUERY_KEYS.LIMS.TASKS,
+    queryFn: async () => {
+      const response = await limsApi.listTasks();
+      if (!response.success) throw new Error('Failed to fetch tasks');
+      return response.data;
+    },
+    staleTime: 5 * 60 * 1000,
+    gcTime: 10 * 60 * 1000,
+    enabled: isServiceUp('lims'),
+  });
 
-  const loadStatistics = async () => {
-    try {
+  const { data: statsResponse, isLoading: statsLoading } = useQuery({
+    queryKey: QUERY_KEYS.LIMS.STATISTICS,
+    queryFn: async () => {
       const response = await limsApi.getStatistics();
-      if (response.success && response.data) {
-        setStats(response.data);
-      }
-    } catch (err: unknown) {
-      apiLogger.error('加载统计数据失败:', err);
-    }
-  };
+      if (!response.success) throw new Error('Failed to fetch statistics');
+      return response.data;
+    },
+    staleTime: 30 * 1000,
+    gcTime: 60 * 1000,
+    enabled: isServiceUp('lims'),
+  });
 
-  const loadAllData = async () => {
-    try {
-      setLoading(true);
-      await Promise.all([loadSamples(), loadProcesses(), loadTasks(), loadStatistics()]);
-    } finally {
-      setLoading(false);
-    }
+  const { data: taskRecordsResponse, isLoading: recordsLoading } = useQuery({
+    queryKey: selectedTask ? [QUERY_KEYS.LIMS.TASK(selectedTask.id), 'records'] : [],
+    queryFn: async () => {
+      if (!selectedTask) return [];
+      const response = await limsApi.listRecordsByTask(selectedTask.id);
+      if (!response.success) throw new Error('Failed to fetch task records');
+      return response.data;
+    },
+    enabled: !!selectedTask && isServiceUp('lims'),
+  });
+
+  const mapStatusToChinese = (status: string): string => {
+    const statusMap: Record<string, string> = {
+      pending: '待测试',
+      in_progress: '进行中',
+      completed: '已完成',
+      cancelled: '已终止',
+      received: '待测试',
+    };
+    return statusMap[status] || status;
   };
 
   const adaptSample = (s: RawSample): Sample => {
@@ -197,69 +207,6 @@ const LimsTaskPage: React.FC = () => {
       created_at: s.created_at || '',
       updated_at: s.updated_at || '',
     };
-  };
-
-  const loadSamples = async () => {
-    try {
-      const response = await limsApi.listSamples();
-      if (response.success && response.data) {
-        const sampleData = response.data as LimsListResponse<RawSample> | RawSample[];
-        let rawSamples: RawSample[] = [];
-
-        if (Array.isArray(sampleData)) {
-          rawSamples = sampleData;
-        } else if (sampleData.samples && Array.isArray(sampleData.samples)) {
-          rawSamples = sampleData.samples;
-        } else if (sampleData.items && Array.isArray(sampleData.items)) {
-          rawSamples = sampleData.items;
-        }
-
-        const adaptedSamples = rawSamples.map((s) => adaptSample(s));
-        setSamples(adaptedSamples);
-      } else {
-        setSamples([]);
-      }
-    } catch (err: unknown) {
-      apiLogger.error('加载样品失败:', err);
-      setSamples([]);
-    }
-  };
-
-  const loadProcesses = async () => {
-    try {
-      const response = await limsApi.listProcesses();
-      if (response.success && response.data) {
-        const processData = response.data as
-          LimsListResponse<InspectionProcess> | InspectionProcess[];
-        let rawProcesses: InspectionProcess[] = [];
-
-        if (Array.isArray(processData)) {
-          rawProcesses = processData;
-        } else if (processData.processes && Array.isArray(processData.processes)) {
-          rawProcesses = processData.processes;
-        } else if (processData.items && Array.isArray(processData.items)) {
-          rawProcesses = processData.items;
-        }
-
-        setProcesses(rawProcesses);
-      } else {
-        setProcesses([]);
-      }
-    } catch (err: unknown) {
-      apiLogger.error('加载检验流程失败:', err);
-      setProcesses([]);
-    }
-  };
-
-  const mapStatusToChinese = (status: string): string => {
-    const statusMap: Record<string, string> = {
-      pending: '待测试',
-      in_progress: '进行中',
-      completed: '已完成',
-      cancelled: '已终止',
-      received: '待测试',
-    };
-    return statusMap[status] || status;
   };
 
   const adaptTask = (t: RawTask): InspectionTask => {
@@ -278,125 +225,128 @@ const LimsTaskPage: React.FC = () => {
     };
   };
 
-  const loadTasks = async () => {
-    try {
-      const response = await limsApi.listTasks();
-      if (response.success && response.data) {
-        const taskData = response.data as LimsListResponse<RawTask> | RawTask[];
-        let rawTasks: RawTask[] = [];
+  const samplesData =
+    (samplesResponse as any)?.items || (samplesResponse as any)?.samples || samplesResponse;
+  const safeSamples = Array.isArray(samplesData)
+    ? samplesData.map((s: RawSample) => adaptSample(s))
+    : [];
 
-        if (Array.isArray(taskData)) {
-          rawTasks = taskData;
-        } else if (taskData.tasks && Array.isArray(taskData.tasks)) {
-          rawTasks = taskData.tasks;
-        } else if (taskData.items && Array.isArray(taskData.items)) {
-          rawTasks = taskData.items;
-        }
+  const processesData =
+    (processesResponse as any)?.items || (processesResponse as any)?.processes || processesResponse;
+  const safeProcesses = Array.isArray(processesData) ? processesData : [];
 
-        const adaptedTasks = rawTasks.map((t) => adaptTask(t));
-        setTasks(adaptedTasks);
-      } else {
-        setTasks([]);
+  const tasksData = (tasksResponse as any)?.items || (tasksResponse as any)?.tasks || tasksResponse;
+  const rawTasks: RawTask[] = Array.isArray(tasksData) ? tasksData : [];
+  const safeTasks = rawTasks.map((t) => adaptTask(t));
+
+  const stats: LimsStatistics = statsResponse || {
+    total_samples: 0,
+    pending_samples: 0,
+    testing_samples: 0,
+    completed_samples: 0,
+    cancelled_samples: 0,
+    total_tasks: 0,
+    pending_tasks: 0,
+    in_progress_tasks: 0,
+    completed_tasks: 0,
+    total_processes: 0,
+    total_instruments: 0,
+    normal_instruments: 0,
+    calibration_instruments: 0,
+    maintenance_instruments: 0,
+    disabled_instruments: 0,
+  };
+
+  const recordsData =
+    (taskRecordsResponse as any)?.items ||
+    (taskRecordsResponse as any)?.records ||
+    taskRecordsResponse;
+  const selectedTaskRecords: InspectionRecord[] = Array.isArray(recordsData) ? recordsData : [];
+
+  const createTaskMutation = useMutation({
+    mutationFn: async (data: CreateInspectionTaskRequest) => {
+      const response = await limsApi.createTask(data);
+      if (!response.success) {
+        throw new Error(response.message || 'Failed to create task');
       }
-    } catch (err: unknown) {
-      apiLogger.error('加载检验任务失败:', err);
-      setTasks([]);
-    }
-  };
+      return response;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: QUERY_KEYS.LIMS.TASKS });
+      setShowTaskModal(false);
+      setTaskFormData({ sample_id: '', process_id: '', inspector: '' });
+    },
+    onError: (error) => {
+      apiLogger.error('创建任务失败:', error);
+    },
+  });
 
-  const loadTaskRecords = async (taskId: string) => {
-    try {
-      const response = await limsApi.listRecordsByTask(taskId);
-      if (response.success && response.data) {
-        const recordData = response.data as LimsListResponse<InspectionRecord> | InspectionRecord[];
-        let rawRecords: InspectionRecord[] = [];
-
-        if (Array.isArray(recordData)) {
-          rawRecords = recordData;
-        } else if (recordData.records && Array.isArray(recordData.records)) {
-          rawRecords = recordData.records;
-        } else if (recordData.items && Array.isArray(recordData.items)) {
-          rawRecords = recordData.items;
-        }
-
-        setSelectedTaskRecords(rawRecords);
-      } else {
-        setSelectedTaskRecords([]);
+  const completeStepMutation = useMutation({
+    mutationFn: async ({
+      taskId,
+      recordData,
+    }: {
+      taskId: string;
+      recordData: CreateInspectionRecordRequest;
+    }) => {
+      const response = await limsApi.completeStep(taskId, recordData);
+      if (!response.success) {
+        throw new Error(response.message || 'Failed to complete step');
       }
-    } catch (err: unknown) {
-      apiLogger.error('加载检验记录失败:', err);
-      setSelectedTaskRecords([]);
-    }
-  };
-
-  const showNotification = (type: 'success' | 'error', message: string) => {
-    setNotification({ type, message });
-  };
-
-  const handleCloseNotification = () => {
-    setNotification(null);
-  };
+      return response;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: QUERY_KEYS.LIMS.TASKS });
+      if (selectedTask) {
+        queryClient.invalidateQueries({
+          queryKey: [QUERY_KEYS.LIMS.TASK(selectedTask.id), 'records'],
+        });
+      }
+      setShowRecordModal(false);
+    },
+    onError: (error) => {
+      apiLogger.error('完成步骤失败:', error);
+    },
+  });
 
   const handleCreateTask = async () => {
     if (!taskFormData.sample_id || !taskFormData.process_id || !taskFormData.inspector.trim()) {
-      showNotification('error', '请填写完整信息');
+      addNotification({
+        title: '错误',
+        message: '请填写完整信息',
+        type: 'error',
+      });
       return;
     }
 
-    try {
-      setCreating(true);
-      const response = await limsApi.createTask(taskFormData);
-      if (response.success) {
-        showNotification('success', '检验任务创建成功');
-        setShowTaskModal(false);
-        loadTasks();
-      } else {
-        showNotification('error', response.message || '创建失败');
-      }
-    } catch (err: unknown) {
-      showNotification('error', '创建检验任务失败');
-      apiLogger.error('创建检验任务失败:', err);
-    } finally {
-      setCreating(false);
-    }
+    await createTaskMutation.mutateAsync(taskFormData);
   };
 
   const handleCompleteStep = async () => {
     if (!recordFormData.result.trim()) {
-      showNotification('error', '请输入检验结果');
+      addNotification({
+        title: '错误',
+        message: '请输入检验结果',
+        type: 'error',
+      });
       return;
     }
 
-    try {
-      setCreating(true);
-      const response = await limsApi.completeStep(selectedTask!.id, recordFormData);
-      if (response.success) {
-        showNotification('success', '检验步骤完成');
-        setShowRecordModal(false);
-        loadTasks();
-        if (selectedTask) {
-          loadTaskRecords(selectedTask.id);
-        }
-      } else {
-        showNotification('error', response.message || '操作失败');
-      }
-    } catch (err: unknown) {
-      showNotification('error', '完成检验步骤失败');
-      apiLogger.error('完成检验步骤失败:', err);
-    } finally {
-      setCreating(false);
-    }
+    if (!selectedTask) return;
+
+    await completeStepMutation.mutateAsync({ taskId: selectedTask.id, recordData: recordFormData });
   };
 
-  const openTaskDetailModal = async (task: InspectionTask) => {
+  const openTaskDetailModal = (task: InspectionTask) => {
     setSelectedTask(task);
-    await loadTaskRecords(task.id);
     setShowDetailModal(true);
   };
 
   const openRecordModal = (task: InspectionTask) => {
-    const process = processes.find((p) => p.id === task.process_id);
-    const currentStepObj = process?.steps.find((_, idx) => idx + 1 === task.current_step);
+    const process = safeProcesses.find((p) => p.id === task.process_id);
+    const currentStepObj = process?.steps.find(
+      (_: unknown, idx: number) => idx + 1 === task.current_step
+    );
 
     setRecordFormData({
       task_id: task.id,
@@ -408,10 +358,6 @@ const LimsTaskPage: React.FC = () => {
     });
     setShowRecordModal(true);
   };
-
-  const safeSamples = Array.isArray(samples) ? samples : [];
-  const safeProcesses = Array.isArray(processes) ? processes : [];
-  const safeTasks = Array.isArray(tasks) ? tasks : [];
 
   const getSampleName = (sampleId: string) => {
     const sample = safeSamples.find((s) => s.id === sampleId);
@@ -454,7 +400,8 @@ const LimsTaskPage: React.FC = () => {
       getProcessName(t.process_id).toLowerCase().includes(searchTerm.toLowerCase())
   );
 
-  // 统计概览配置
+  const loading = samplesLoading || processesLoading || tasksLoading || statsLoading;
+
   const metricStats = [
     {
       id: 'total',
@@ -486,7 +433,6 @@ const LimsTaskPage: React.FC = () => {
     },
   ];
 
-  // 卡片配置
   const cardConfig = {
     title: (item: unknown) => getSampleName((item as InspectionTask).sample_id),
     description: (item: unknown) =>
@@ -525,7 +471,6 @@ const LimsTaskPage: React.FC = () => {
     iconBgColor: 'secondary.light',
   };
 
-  // 卡片操作
   const cardActions = [
     {
       label: '查看详情',
@@ -543,28 +488,6 @@ const LimsTaskPage: React.FC = () => {
       disabled: (item: unknown) => (item as InspectionTask).status !== '进行中',
     },
   ];
-
-  if (loading) {
-    return (
-      <Box
-        sx={{
-          minHeight: '100vh',
-          display: 'flex',
-          alignItems: 'center',
-          justifyContent: 'center',
-          background: GRADIENTS.accent,
-        }}
-      >
-        <Box sx={{ textAlign: 'center' }}>
-          <LinearProgress
-            sx={{ width: 240, mb: 3, borderRadius: 1 }}
-            color='secondary'
-          />
-          <Typography color='text.secondary'>加载中...</Typography>
-        </Box>
-      </Box>
-    );
-  }
 
   if (!isServiceUp('lims')) {
     return (
@@ -626,6 +549,28 @@ const LimsTaskPage: React.FC = () => {
     );
   }
 
+  if (loading) {
+    return (
+      <Box
+        sx={{
+          minHeight: '100vh',
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center',
+          background: GRADIENTS.accent,
+        }}
+      >
+        <Box sx={{ textAlign: 'center' }}>
+          <LinearProgress
+            sx={{ width: 240, mb: 3, borderRadius: 1 }}
+            color='secondary'
+          />
+          <Typography color='text.secondary'>加载中...</Typography>
+        </Box>
+      </Box>
+    );
+  }
+
   return (
     <PageContainer
       title='检验任务'
@@ -639,22 +584,6 @@ const LimsTaskPage: React.FC = () => {
         pageGradient: `linear-gradient(135deg, ${ct.teal[400]} 0%, ${ct.teal[600]} 100%)`,
       }}
     >
-      <Snackbar
-        open={Boolean(notification)}
-        autoHideDuration={3000}
-        onClose={handleCloseNotification}
-        anchorOrigin={{ vertical: 'top', horizontal: 'right' }}
-      >
-        <Alert
-          onClose={handleCloseNotification}
-          severity={notification?.type || 'success'}
-          variant='filled'
-          sx={{ borderRadius: 3 }}
-        >
-          {notification?.message}
-        </Alert>
-      </Snackbar>
-
       <CardListTemplate
         title=''
         subtitle=''
@@ -674,7 +603,12 @@ const LimsTaskPage: React.FC = () => {
           icon: <Play style={{ width: 18, height: 18 }} />,
           onClick: () => setShowTaskModal(true),
         }}
-        onRefresh={loadAllData}
+        onRefresh={() => {
+          queryClient.invalidateQueries({ queryKey: QUERY_KEYS.LIMS.SAMPLES });
+          queryClient.invalidateQueries({ queryKey: QUERY_KEYS.LIMS.PROCESSES });
+          queryClient.invalidateQueries({ queryKey: QUERY_KEYS.LIMS.TASKS });
+          queryClient.invalidateQueries({ queryKey: QUERY_KEYS.LIMS.STATISTICS });
+        }}
         onCardClick={(item) => openTaskDetailModal(item as InspectionTask)}
         emptyState={{
           emoji: '📋',
@@ -784,11 +718,11 @@ const LimsTaskPage: React.FC = () => {
           </Button>
           <Button
             onClick={handleCreateTask}
-            disabled={creating}
+            disabled={createTaskMutation.isPending}
             variant='contained'
             color='secondary'
           >
-            {creating ? '创建中...' : '创建任务'}
+            {createTaskMutation.isPending ? '创建中...' : '创建任务'}
           </Button>
         </DialogActions>
       </Dialog>
@@ -885,18 +819,21 @@ const LimsTaskPage: React.FC = () => {
           </Button>
           <Button
             onClick={handleCompleteStep}
-            disabled={creating}
+            disabled={completeStepMutation.isPending}
             variant='contained'
             color='success'
           >
-            {creating ? '处理中...' : '完成步骤'}
+            {completeStepMutation.isPending ? '处理中...' : '完成步骤'}
           </Button>
         </DialogActions>
       </Dialog>
 
       <Dialog
         open={showDetailModal}
-        onClose={() => setShowDetailModal(false)}
+        onClose={() => {
+          setShowDetailModal(false);
+          setSelectedTask(null);
+        }}
         maxWidth='md'
         fullWidth
         slotProps={{ paper: { sx: { borderRadius: 3 } } }}
@@ -919,7 +856,10 @@ const LimsTaskPage: React.FC = () => {
                   检验任务详情
                 </Typography>
                 <IconButton
-                  onClick={() => setShowDetailModal(false)}
+                  onClick={() => {
+                    setShowDetailModal(false);
+                    setSelectedTask(null);
+                  }}
                   aria-label='关闭检验任务详情对话框'
                 >
                   <X size={24} />
@@ -1095,7 +1035,10 @@ const LimsTaskPage: React.FC = () => {
                 <Divider />
                 <Box sx={{ display: 'flex', justifyContent: 'flex-end' }}>
                   <Button
-                    onClick={() => setShowDetailModal(false)}
+                    onClick={() => {
+                      setShowDetailModal(false);
+                      setSelectedTask(null);
+                    }}
                     variant='contained'
                     color='inherit'
                     sx={{

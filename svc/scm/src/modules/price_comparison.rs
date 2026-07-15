@@ -111,19 +111,19 @@ pub fn create_routes() -> Router<ApiState> {
             get(list_inquiries).post(create_inquiry),
         )
         .route(
-            "/api/v1/inquiries/{id}",
+            "/api/inquiries/{id}",
             get(get_inquiry).delete(delete_inquiry),
         )
-        .route("/api/v1/inquiries/{id}/publish", post(publish_inquiry))
+        .route("/api/inquiries/{id}/publish", post(publish_inquiry))
         .route("/api/scm/quotes", get(list_quotes).post(create_quote))
-        .route("/api/v1/quotes/{id}", get(get_quote).put(update_quote))
-        .route("/api/v1/quotes/{id}/submit", post(submit_quote))
+        .route("/api/quotes/{id}", get(get_quote).put(update_quote))
+        .route("/api/quotes/{id}/submit", post(submit_quote))
         .route(
             "/api/scm/comparisons",
             get(list_comparisons).post(create_comparison),
         )
-        .route("/api/v1/comparisons/{id}", get(get_comparison))
-        .route("/api/v1/comparisons/{id}/approve", post(approve_comparison))
+        .route("/api/comparisons/{id}", get(get_comparison))
+        .route("/api/comparisons/{id}/approve", post(approve_comparison))
 }
 
 async fn list_inquiries(

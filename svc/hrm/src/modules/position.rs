@@ -72,11 +72,11 @@ pub struct QueryParams {
 pub fn create_routes() -> Router<ApiState> {
     Router::new()
         .route(
-            "/api/core/hrm/v1/positions",
+            "/api/core/hrm/positions",
             get(list_positions).post(create_position),
         )
         .route(
-            "/api/core/hrm/v1/positions/{id}",
+            "/api/core/hrm/positions/{id}",
             get(get_position)
                 .put(update_position)
                 .delete(delete_position),

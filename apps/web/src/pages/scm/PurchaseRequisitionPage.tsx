@@ -26,6 +26,8 @@ import { ListPageTemplate, type ColumnDef } from '@/components/templates';
 import { PageContainer } from '@/components/common';
 import { ConfirmDialog } from '@topems/shared-components';
 import { designTokens } from '@/theme/tokens';
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import { QUERY_KEYS } from '@/lib/reactQuery';
 
 const ct = designTokens.colors;
 
@@ -52,11 +54,9 @@ const priorityConfig: Record<
 };
 
 const PurchaseRequisitionPage: React.FC = () => {
-  const [requisitions, setRequisitions] = useState<PurchaseRequisition[]>([]);
-  const [loading, setLoading] = useState(true);
+  const queryClient = useQueryClient();
   const [currentPage, setCurrentPage] = useState(1);
   const [pageSize, setPageSize] = useState(10);
-  const [total, setTotal] = useState(0);
   const [showDialog, setShowDialog] = useState(false);
   const [isEditing, setIsEditing] = useState(false);
   const [selectedRequisition, setSelectedRequisition] = useState<PurchaseRequisition | null>(null);
@@ -79,68 +79,198 @@ const PurchaseRequisitionPage: React.FC = () => {
 
   const { addNotification } = useNotificationStore();
 
-  useEffect(() => {
-    loadRequisitions();
-  }, [currentPage, pageSize]);
-
-  const loadRequisitions = async () => {
-    try {
-      setLoading(true);
+  const requisitionsQuery = useQuery<{ items: PurchaseRequisition[]; total: number }>({
+    queryKey: [...QUERY_KEYS.SCM.PURCHASE_REQUISITIONS, currentPage, pageSize],
+    queryFn: async () => {
       const response = await scmApi.purchaseRequisitions.list({
         page: currentPage,
         pageSize,
       });
       if (response.success && response.data) {
-        setRequisitions(response.data.items || []);
-        setTotal(response.data.total || 0);
+        return { items: response.data.items || [], total: response.data.total || 0 };
       }
-    } catch (error: unknown) {
-      apiLogger.error('加载采购申请失败:', error);
+      return { items: [], total: 0 };
+    },
+    staleTime: 5 * 60 * 1000,
+  });
+
+  const requisitions = requisitionsQuery.data?.items ?? [];
+  const total = requisitionsQuery.data?.total ?? 0;
+  const loading = requisitionsQuery.isLoading;
+
+  useEffect(() => {
+    if (requisitionsQuery.isError) {
+      apiLogger.error('加载采购申请失败:', requisitionsQuery.error);
       addNotification({
         type: 'error',
         title: '加载失败',
         message: '无法加载采购申请',
       });
-    } finally {
-      setLoading(false);
     }
-  };
+  }, [requisitionsQuery.isError, requisitionsQuery.error, addNotification]);
 
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    try {
-      if (isEditing && selectedRequisition) {
-        const updateData: UpdatePurchaseRequisitionRequest = {
-          title: formData.title,
-          required_date: formData.required_date,
-          priority: formData.priority,
-          supplier_id: formData.supplier_id,
-          remarks: formData.remarks,
-        };
-        await scmApi.purchaseRequisitions.update(selectedRequisition.id, updateData);
-        addNotification({
-          type: 'success',
-          title: '更新成功',
-          message: '采购申请已更新',
-        });
-      } else {
-        await scmApi.purchaseRequisitions.create(formData);
-        addNotification({
-          type: 'success',
-          title: '创建成功',
-          message: '新采购申请已创建',
-        });
-      }
+  const invalidateRequisitions = () =>
+    queryClient.invalidateQueries({ queryKey: QUERY_KEYS.SCM.PURCHASE_REQUISITIONS });
+
+  const createMutation = useMutation({
+    mutationFn: (data: CreatePurchaseRequisitionRequest) =>
+      scmApi.purchaseRequisitions.create(data),
+    onSuccess: () => {
+      invalidateRequisitions();
+      addNotification({
+        type: 'success',
+        title: '创建成功',
+        message: '新采购申请已创建',
+      });
       setShowDialog(false);
       resetForm();
-      loadRequisitions();
-    } catch (error: unknown) {
-      apiLogger.error('操作失败:', error);
+    },
+    onError: (err: unknown) => {
+      apiLogger.error('操作失败:', err);
       addNotification({
         type: 'error',
         title: '操作失败',
-        message: isEditing ? '更新采购申请失败' : '创建采购申请失败',
+        message: '创建采购申请失败',
       });
+    },
+  });
+
+  const updateMutation = useMutation({
+    mutationFn: (params: { id: string; data: UpdatePurchaseRequisitionRequest }) =>
+      scmApi.purchaseRequisitions.update(params.id, params.data),
+    onSuccess: () => {
+      invalidateRequisitions();
+      addNotification({
+        type: 'success',
+        title: '更新成功',
+        message: '采购申请已更新',
+      });
+      setShowDialog(false);
+      resetForm();
+    },
+    onError: (err: unknown) => {
+      apiLogger.error('操作失败:', err);
+      addNotification({
+        type: 'error',
+        title: '操作失败',
+        message: '更新采购申请失败',
+      });
+    },
+  });
+
+  const deleteMutation = useMutation({
+    mutationFn: (id: string) => scmApi.purchaseRequisitions.delete(id),
+    onSuccess: () => {
+      invalidateRequisitions();
+      addNotification({
+        type: 'success',
+        title: '删除成功',
+        message: '采购申请已删除',
+      });
+    },
+    onError: (err: unknown) => {
+      apiLogger.error('删除失败:', err);
+      addNotification({
+        type: 'error',
+        title: '删除失败',
+        message: '删除采购申请失败',
+      });
+    },
+  });
+
+  const submitMutation = useMutation({
+    mutationFn: (id: string) => scmApi.purchaseRequisitions.submit(id),
+    onSuccess: () => {
+      invalidateRequisitions();
+      addNotification({
+        type: 'success',
+        title: '提交成功',
+        message: '采购申请已提交审批',
+      });
+    },
+    onError: (err: unknown) => {
+      apiLogger.error('提交失败:', err);
+      addNotification({
+        type: 'error',
+        title: '提交失败',
+        message: '提交采购申请失败',
+      });
+    },
+  });
+
+  const approveMutation = useMutation({
+    mutationFn: (id: string) => scmApi.purchaseRequisitions.approve(id),
+    onSuccess: () => {
+      invalidateRequisitions();
+      addNotification({
+        type: 'success',
+        title: '审批成功',
+        message: '采购申请已审批通过',
+      });
+    },
+    onError: (err: unknown) => {
+      apiLogger.error('审批失败:', err);
+      addNotification({
+        type: 'error',
+        title: '审批失败',
+        message: '审批采购申请失败',
+      });
+    },
+  });
+
+  const rejectMutation = useMutation({
+    mutationFn: (id: string) => scmApi.purchaseRequisitions.reject(id),
+    onSuccess: () => {
+      invalidateRequisitions();
+      addNotification({
+        type: 'success',
+        title: '已拒绝',
+        message: '采购申请已拒绝',
+      });
+    },
+    onError: (err: unknown) => {
+      apiLogger.error('操作失败:', err);
+      addNotification({
+        type: 'error',
+        title: '操作失败',
+        message: '拒绝采购申请失败',
+      });
+    },
+  });
+
+  const convertMutation = useMutation({
+    mutationFn: (id: string) => scmApi.purchaseRequisitions.convertToOrder(id),
+    onSuccess: () => {
+      invalidateRequisitions();
+      addNotification({
+        type: 'success',
+        title: '转单成功',
+        message: '采购申请已转为采购订单',
+      });
+    },
+    onError: (err: unknown) => {
+      apiLogger.error('转单失败:', err);
+      addNotification({
+        type: 'error',
+        title: '转单失败',
+        message: '采购申请转单失败',
+      });
+    },
+  });
+
+  const handleSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (isEditing && selectedRequisition) {
+      const updateData: UpdatePurchaseRequisitionRequest = {
+        title: formData.title,
+        required_date: formData.required_date,
+        priority: formData.priority,
+        supplier_id: formData.supplier_id,
+        remarks: formData.remarks,
+      };
+      updateMutation.mutate({ id: selectedRequisition.id, data: updateData });
+    } else {
+      createMutation.mutate(formData);
     }
   };
 
@@ -159,27 +289,12 @@ const PurchaseRequisitionPage: React.FC = () => {
     setShowDialog(true);
   };
 
-  const handleDelete = async (requisition: PurchaseRequisition) => {
+  const handleDelete = (requisition: PurchaseRequisition) => {
     openConfirmDialog({
       title: '确认删除',
       message: `确定要删除采购申请 "${requisition.requisition_no}" 吗？`,
-      onConfirm: async () => {
-        try {
-          await scmApi.purchaseRequisitions.delete(requisition.id);
-          addNotification({
-            type: 'success',
-            title: '删除成功',
-            message: '采购申请已删除',
-          });
-          loadRequisitions();
-        } catch (error: unknown) {
-          apiLogger.error('删除失败:', error);
-          addNotification({
-            type: 'error',
-            title: '删除失败',
-            message: '删除采购申请失败',
-          });
-        }
+      onConfirm: () => {
+        deleteMutation.mutate(requisition.id);
       },
       danger: true,
     });
@@ -190,26 +305,12 @@ const PurchaseRequisitionPage: React.FC = () => {
       openConfirmDialog({
         title: '确认提交',
         message: `确定要提交采购申请 "${requisition.requisition_no}" 审批吗？`,
-        onConfirm: async () => {
-          try {
-            await scmApi.purchaseRequisitions.submit(requisition.id);
-            addNotification({
-              type: 'success',
-              title: '提交成功',
-              message: '采购申请已提交审批',
-            });
-            loadRequisitions();
-          } catch (error: unknown) {
-            apiLogger.error('提交失败:', error);
-            addNotification({
-              type: 'error',
-              title: '提交失败',
-              message: '提交采购申请失败',
-            });
-          }
+        onConfirm: () => {
+          submitMutation.mutate(requisition.id);
         },
       });
     },
+    // eslint-disable-next-line react-hooks/exhaustive-deps
     [addNotification]
   );
 
@@ -218,26 +319,12 @@ const PurchaseRequisitionPage: React.FC = () => {
       openConfirmDialog({
         title: '确认审批',
         message: `确定要审批通过采购申请 "${requisition.requisition_no}" 吗？`,
-        onConfirm: async () => {
-          try {
-            await scmApi.purchaseRequisitions.approve(requisition.id);
-            addNotification({
-              type: 'success',
-              title: '审批成功',
-              message: '采购申请已审批通过',
-            });
-            loadRequisitions();
-          } catch (error: unknown) {
-            apiLogger.error('审批失败:', error);
-            addNotification({
-              type: 'error',
-              title: '审批失败',
-              message: '审批采购申请失败',
-            });
-          }
+        onConfirm: () => {
+          approveMutation.mutate(requisition.id);
         },
       });
     },
+    // eslint-disable-next-line react-hooks/exhaustive-deps
     [addNotification]
   );
 
@@ -246,27 +333,13 @@ const PurchaseRequisitionPage: React.FC = () => {
       openConfirmDialog({
         title: '确认拒绝',
         message: `确定要拒绝采购申请 "${requisition.requisition_no}" 吗？`,
-        onConfirm: async () => {
-          try {
-            await scmApi.purchaseRequisitions.reject(requisition.id);
-            addNotification({
-              type: 'success',
-              title: '已拒绝',
-              message: '采购申请已拒绝',
-            });
-            loadRequisitions();
-          } catch (error: unknown) {
-            apiLogger.error('操作失败:', error);
-            addNotification({
-              type: 'error',
-              title: '操作失败',
-              message: '拒绝采购申请失败',
-            });
-          }
+        onConfirm: () => {
+          rejectMutation.mutate(requisition.id);
         },
         danger: true,
       });
     },
+    // eslint-disable-next-line react-hooks/exhaustive-deps
     [addNotification]
   );
 
@@ -275,26 +348,12 @@ const PurchaseRequisitionPage: React.FC = () => {
       openConfirmDialog({
         title: '确认转单',
         message: `确定要将采购申请 "${requisition.requisition_no}" 转为采购订单吗？`,
-        onConfirm: async () => {
-          try {
-            await scmApi.purchaseRequisitions.convertToOrder(requisition.id);
-            addNotification({
-              type: 'success',
-              title: '转单成功',
-              message: '采购申请已转为采购订单',
-            });
-            loadRequisitions();
-          } catch (error: unknown) {
-            apiLogger.error('转单失败:', error);
-            addNotification({
-              type: 'error',
-              title: '转单失败',
-              message: '采购申请转单失败',
-            });
-          }
+        onConfirm: () => {
+          convertMutation.mutate(requisition.id);
         },
       });
     },
+    // eslint-disable-next-line react-hooks/exhaustive-deps
     [addNotification]
   );
 
@@ -499,7 +558,7 @@ const PurchaseRequisitionPage: React.FC = () => {
           },
         ]}
         rowActions={rowActions}
-        onRefresh={loadRequisitions}
+        onRefresh={() => requisitionsQuery.refetch()}
         emptyMessage='暂无采购申请数据'
       />
 

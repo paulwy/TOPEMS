@@ -18,7 +18,9 @@ import {
   Button,
 } from '@mui/material';
 import { PageContainer } from '@/components/common/PageContainerV2';
-import React, { useState, useEffect, useMemo, useCallback } from 'react';
+import React, { useState, useMemo } from 'react';
+import { useQuery } from '@tanstack/react-query';
+import { QUERY_KEYS } from '@/lib/reactQuery';
 import type { OeeRecord, OeeStatistics, ListParams } from '@/api/mes';
 import { mesApi } from '@/api/mes';
 import { useNotificationStore } from '@/store';
@@ -46,71 +48,59 @@ import { designTokens } from '@/theme/tokens';
 const ct = designTokens.colors;
 
 const EquipmentOEEPage: React.FC = () => {
-  const [records, setRecords] = useState<OeeRecord[]>([]);
-  const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState('');
   const [equipmentFilter, setEquipmentFilter] = useState<string>('all');
   const [currentPage, setCurrentPage] = useState(1);
   const [pageSize] = useState(10);
-  const [total, setTotal] = useState(0);
   const [showDetailDialog, setShowDetailDialog] = useState(false);
   const [selectedRecord, setSelectedRecord] = useState<OeeRecord | null>(null);
   const [selectedIds, setSelectedIds] = useState<string[]>([]);
-  const [statistics, setStatistics] = useState<OeeStatistics | null>(null);
   const [startDate, setStartDate] = useState('');
   const [endDate, setEndDate] = useState('');
 
   const { addNotification } = useNotificationStore();
 
-  const loadRecords = useCallback(async () => {
-    try {
-      setLoading(true);
-      const params: ListParams = {
-        page: currentPage - 1,
-        pagesize: pageSize,
-      };
-      if (searchTerm) params.search = searchTerm;
-      if (equipmentFilter !== 'all') params.equipment_id = equipmentFilter;
-      if (startDate) params.start_date = startDate;
-      if (endDate) params.end_date = endDate;
+  const listParams: ListParams = {
+    page: currentPage - 1,
+    pagesize: pageSize,
+  };
+  if (searchTerm) listParams.search = searchTerm;
+  if (equipmentFilter !== 'all') listParams.equipment_id = equipmentFilter;
+  if (startDate) listParams.start_date = startDate;
+  if (endDate) listParams.end_date = endDate;
 
-      const response = await mesApi.equipmentOee.list(params);
+  const { data: recordsData, isLoading: loading } = useQuery({
+    queryKey: [...QUERY_KEYS.MES.EQUIPMENT_OEE, listParams],
+    queryFn: async () => {
+      const response = await mesApi.equipmentOee.list(listParams);
       if (response.success && response.data) {
-        setRecords(response.data.records || []);
-        setTotal(response.data.total || 0);
+        return {
+          records: response.data.records || [],
+          total: response.data.total || 0,
+        };
       }
-    } catch (error: unknown) {
-      apiLogger.error('加载OEE记录失败:', error);
-      addNotification({
-        type: 'error',
-        title: '加载失败',
-        message: '无法加载OEE记录',
-      });
-    } finally {
-      setLoading(false);
-    }
-  }, [currentPage, pageSize, searchTerm, equipmentFilter, startDate, endDate, addNotification]);
+      return { records: [], total: 0 };
+    },
+  });
 
-  const loadStatistics = useCallback(async () => {
-    try {
-      const params: ListParams = {};
-      if (equipmentFilter !== 'all') params.equipment_id = equipmentFilter;
-      if (startDate) params.start_date = startDate;
-      if (endDate) params.end_date = endDate;
+  const records = recordsData?.records || [];
+  const total = recordsData?.total || 0;
 
-      const response = await mesApi.equipmentOee.getStatistics(params);
+  const statsParams: ListParams = {};
+  if (equipmentFilter !== 'all') statsParams.equipment_id = equipmentFilter;
+  if (startDate) statsParams.start_date = startDate;
+  if (endDate) statsParams.end_date = endDate;
+
+  const { data: statistics } = useQuery({
+    queryKey: [...QUERY_KEYS.MES.EQUIPMENT_OEE_STATISTICS, statsParams],
+    queryFn: async () => {
+      const response = await mesApi.equipmentOee.getStatistics(statsParams);
       if (response.success && response.data) {
-        setStatistics(response.data);
+        return response.data;
       }
-    } catch (error: unknown) {
-      apiLogger.error('加载OEE统计失败:', error);
-    }
-  }, [equipmentFilter, startDate, endDate]);
-
-  useEffect(() => {
-    loadRecords();
-    loadStatistics();
-  }, [loadRecords, loadStatistics]);
+      return null;
+    },
+  });
 
   const getOEEColor = (value: number | undefined | null) => {
     if (value == null || isNaN(value)) return 'primary';
@@ -133,10 +123,10 @@ const EquipmentOEEPage: React.FC = () => {
     return 'error.lighter';
   };
 
-  const handleViewDetail = useCallback((record: OeeRecord) => {
+  const handleViewDetail = (record: OeeRecord) => {
     setSelectedRecord(record);
     setShowDetailDialog(true);
-  }, []);
+  };
 
   const handleSearch = (value: string) => {
     setSearchTerm(value);

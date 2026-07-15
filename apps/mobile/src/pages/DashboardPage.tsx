@@ -12,6 +12,7 @@ import {
 } from 'react-native-paper';
 import { useDashboardStore } from '@/store/dashboardStore';
 import { useAuthStore } from '@/store/authStore';
+import OfflineIndicator from '@/components/OfflineIndicator';
 import {
   Square,
   CheckCircle,
@@ -83,6 +84,8 @@ const DashboardPage: React.FC = () => {
           退出
         </Button>
       </View>
+
+      <OfflineIndicator />
 
       <View style={styles.statsContainer}>
         <Card style={styles.statCard}>

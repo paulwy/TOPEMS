@@ -132,7 +132,8 @@ const HrmCompanyPage: React.FC = () => {
   });
   const employees = employeesQuery.data || [];
 
-  const loading = companiesQuery.isLoading || departmentsQuery.isLoading || employeesQuery.isLoading;
+  const loading =
+    companiesQuery.isLoading || departmentsQuery.isLoading || employeesQuery.isLoading;
 
   const createCompanyMutation = useMutation({
     mutationFn: (data: Partial<Company>) => companyApi.create(data),
@@ -150,7 +151,8 @@ const HrmCompanyPage: React.FC = () => {
   });
 
   const updateCompanyMutation = useMutation({
-    mutationFn: ({ id, data }: { id: string; data: Partial<Company> }) => companyApi.update(id, data),
+    mutationFn: ({ id, data }: { id: string; data: Partial<Company> }) =>
+      companyApi.update(id, data),
     onSuccess: () => {
       addNotification({ title: '成功', message: '更新成功', type: 'success' });
       queryClient.invalidateQueries({ queryKey: ['hrm-companies'] });
@@ -638,7 +640,7 @@ const HrmCompanyPage: React.FC = () => {
         selectedId={selectedId}
         detailPanel={detailPanel}
         detailPanelTitle='公司详情'
-        onRefresh={() => fetchCompanies()}
+        onRefresh={() => queryClient.invalidateQueries({ queryKey: ['hrm-companies'] })}
         treeWidth={360}
         emptyState={{
           emoji: '🏢',

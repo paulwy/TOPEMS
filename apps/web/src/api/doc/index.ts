@@ -64,6 +64,18 @@ export interface UploadFileResponse {
   url: string;
 }
 
+export interface DocDashboardStats {
+  total_documents: number;
+  published_documents: number;
+  draft_documents: number;
+  archived_documents: number;
+  total_folders: number;
+  total_templates: number;
+  active_templates: number;
+  this_month_created: number;
+  this_month_updated: number;
+}
+
 export const docApi = {
   list: async (folderId?: string): Promise<ApiResponse<FileListResponse>> => {
     const params = folderId ? { folder_id: folderId } : {};
@@ -130,6 +142,10 @@ export const docApi = {
 
   health: async (): Promise<ApiResponse<string>> => {
     return apiClient.doc.get<string>('/health');
+  },
+
+  getDashboard: async (): Promise<ApiResponse<DocDashboardStats>> => {
+    return apiClient.doc.get<DocDashboardStats>('/dashboard');
   },
 };
 

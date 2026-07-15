@@ -1,6 +1,7 @@
-import React, { useState, useEffect, useMemo } from 'react';
+import React, { useState, useMemo, useCallback } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import { Calendar, CheckCircle, AlertTriangle, DollarSign, TrendingUp } from 'lucide-react';
+import { useQuery } from '@tanstack/react-query';
 import {
   Box,
   Typography,
@@ -38,64 +39,70 @@ import { StatsPageTemplate } from '@/components/templates/StatsPageTemplate';
 import type { StatCard, ChartConfig } from '@/components/templates/StatsPageTemplate';
 import { PageContainer } from '@/components/common';
 import { PM_PATHS } from '@/modules/pm/config';
+import { QUERY_KEYS } from '@/lib/reactQuery';
+
+const DEFAULT_STATS: PmStatistics = {
+  total_projects: 0,
+  draft_projects: 0,
+  pending_projects: 0,
+  active_projects: 0,
+  completed_projects: 0,
+  cancelled_projects: 0,
+  total_contracts: 0,
+  pending_contracts: 0,
+  active_contracts: 0,
+  completed_contracts: 0,
+  total_budget: 0,
+  spent_budget: 0,
+  budget_usage_rate: 0,
+  on_time_projects: 0,
+  delayed_projects: 0,
+  average_progress: 0,
+  high_risk_projects: 0,
+  medium_risk_projects: 0,
+  low_risk_projects: 0,
+};
 
 const PmReportPage: React.FC = () => {
   const navigate = useNavigate();
   const params = useParams<{ projectId?: string }>();
-  const [stats, setStats] = useState<PmStatistics>({
-    total_projects: 0,
-    draft_projects: 0,
-    pending_projects: 0,
-    active_projects: 0,
-    completed_projects: 0,
-    cancelled_projects: 0,
-    total_contracts: 0,
-    pending_contracts: 0,
-    active_contracts: 0,
-    completed_contracts: 0,
-    total_budget: 0,
-    spent_budget: 0,
-    budget_usage_rate: 0,
-    on_time_projects: 0,
-    delayed_projects: 0,
-    average_progress: 0,
-    high_risk_projects: 0,
-    medium_risk_projects: 0,
-    low_risk_projects: 0,
-  });
-  const [benefits, setBenefits] = useState<ProjectBenefit[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string>('');
   const [selectedPeriod, setSelectedPeriod] = useState('all');
 
-  useEffect(() => {
-    loadReportData();
-  }, [params.projectId, selectedPeriod]);
-
-  const loadReportData = async () => {
-    setLoading(true);
-    setError('');
-    try {
-      const [statsResponse, benefitsResponse] = await Promise.all([
-        pmApi.getStatistics(),
-        params.projectId
-          ? pmApi.benefits.list(params.projectId)
-          : Promise.resolve({ success: true, data: { benefits: [] } }),
-      ]);
-
-      if (statsResponse.success && statsResponse.data) {
-        setStats(statsResponse.data);
+  const statsQuery = useQuery({
+    queryKey: [...QUERY_KEYS.PM.STATISTICS, selectedPeriod, params.projectId ?? ''],
+    queryFn: async () => {
+      const response = await pmApi.getStatistics();
+      if (response.success && response.data) {
+        return response.data as PmStatistics;
       }
+      return DEFAULT_STATS;
+    },
+  });
 
-      if (benefitsResponse.success && benefitsResponse.data) {
-        setBenefits(benefitsResponse.data.benefits || []);
+  const benefitsQuery = useQuery({
+    queryKey: [
+      ...(params.projectId ? QUERY_KEYS.PM.BENEFITS(params.projectId) : QUERY_KEYS.PM.REPORTS),
+      selectedPeriod,
+    ],
+    queryFn: async () => {
+      if (!params.projectId) return [] as ProjectBenefit[];
+      const response = await pmApi.benefits.list(params.projectId);
+      if (response.success && response.data) {
+        return (response.data as { benefits?: ProjectBenefit[] }).benefits || [];
       }
-    } catch (error: unknown) {
-      setError('加载报表数据失败');
-    } finally {
-      setLoading(false);
-    }
-  };
+      return [] as ProjectBenefit[];
+    },
+  });
+
+  const stats = statsQuery.data ?? DEFAULT_STATS;
+  const benefits = benefitsQuery.data ?? [];
+  const loading = statsQuery.isLoading || benefitsQuery.isLoading;
+  const error = statsQuery.isError || benefitsQuery.isError ? '加载报表数据失败' : '';
+
+  const loadReportData = useCallback(() => {
+    statsQuery.refetch();
+    benefitsQuery.refetch();
+  }, [statsQuery, benefitsQuery]);
 
   const handleExport = () => {
     const reportData = {
@@ -215,7 +222,9 @@ const PmReportPage: React.FC = () => {
                     cx='50%'
                     cy='50%'
                     labelLine={false}
-                    label={({ name, percent }) => `${name}: ${((percent ?? 0) * 100).toFixed(0)}%`}
+                    label={({ name, percent }: { name: string; percent?: number }) =>
+                      `${name}: ${((percent ?? 0) * 100).toFixed(0)}%`
+                    }
                     outerRadius={80}
                     dataKey='value'
                   >
@@ -250,7 +259,9 @@ const PmReportPage: React.FC = () => {
                     cx='50%'
                     cy='50%'
                     labelLine={false}
-                    label={({ name, percent }) => `${name}: ${((percent ?? 0) * 100).toFixed(0)}%`}
+                    label={({ name, percent }: { name: string; percent?: number }) =>
+                      `${name}: ${((percent ?? 0) * 100).toFixed(0)}%`
+                    }
                     outerRadius={60}
                     dataKey='value'
                   >
@@ -567,7 +578,7 @@ const PmReportPage: React.FC = () => {
                       cx='50%'
                       cy='50%'
                       labelLine={false}
-                      label={({ name, percent }) =>
+                      label={({ name, percent }: { name: string; percent?: number }) =>
                         `${name}: ${((percent ?? 0) * 100).toFixed(0)}%`
                       }
                       outerRadius={80}
@@ -604,7 +615,7 @@ const PmReportPage: React.FC = () => {
                       cx='50%'
                       cy='50%'
                       labelLine={false}
-                      label={({ name, percent }) =>
+                      label={({ name, percent }: { name: string; percent?: number }) =>
                         `${name}: ${((percent ?? 0) * 100).toFixed(0)}%`
                       }
                       outerRadius={60}

@@ -5,7 +5,8 @@
  * @path /integration/settings
  */
 
-import React, { useState, useCallback } from 'react';
+import React, { useState } from 'react';
+import { useMutation } from '@tanstack/react-query';
 import {
   Box,
   Typography,
@@ -84,10 +85,8 @@ export const IntegrationSettingsPage: React.FC = () => {
   const addNotification = useNotificationStore((state) => state.addNotification);
 
   const [configs, setConfigs] = useState<IntegrationConfig[]>(MOCK_CONFIGS);
-  const [loading, setLoading] = useState(false);
   const [testDialogOpen, setTestDialogOpen] = useState(false);
   const [selectedConfig, setSelectedConfig] = useState<IntegrationConfig | null>(null);
-  const [testLoading, setTestLoading] = useState(false);
 
   const [globalSettings, setGlobalSettings] = useState({
     autoSync: true,
@@ -102,68 +101,71 @@ export const IntegrationSettingsPage: React.FC = () => {
     notifyOnSuccess: false,
   });
 
-  const handleTestConnection = useCallback(
-    async (config: IntegrationConfig) => {
-      setSelectedConfig(config);
-      setTestDialogOpen(true);
-      setTestLoading(true);
-
-      try {
-        // Simulate test
-        await new Promise((resolve) => setTimeout(resolve, 2000));
-
-        addNotification({
-          title: '连接测试成功',
-          message: `成功连接到「${config.name}」系统`,
-          type: 'success',
-        });
-      } catch (_err: unknown) {
-        addNotification({
-          title: '连接测试失败',
-          message: extractErrorMessage(_err, '无法连接到目标系统'),
-          type: 'error',
-        });
-      } finally {
-        setTestLoading(false);
-        setTestDialogOpen(false);
-      }
+  const testConnectionMutation = useMutation({
+    mutationFn: async (config: IntegrationConfig) => {
+      await new Promise((resolve) => setTimeout(resolve, 2000));
+      return config;
     },
-    [addNotification]
-  );
-
-  const handleToggleConfig = useCallback(
-    (config: IntegrationConfig) => {
-      setConfigs((prev) =>
-        prev.map((c) => (c.id === config.id ? { ...c, enabled: !c.enabled } : c))
-      );
+    onSuccess: (config) => {
       addNotification({
-        title: '配置更新',
-        message: `「${config.name}」已${config.enabled ? '停用' : '启用'}`,
+        title: '连接测试成功',
+        message: `成功连接到「${config.name}」系统`,
         type: 'success',
       });
     },
-    [addNotification]
-  );
+    onError: (_err: unknown) => {
+      addNotification({
+        title: '连接测试失败',
+        message: extractErrorMessage(_err, '无法连接到目标系统'),
+        type: 'error',
+      });
+    },
+    onSettled: () => {
+      setTestDialogOpen(false);
+    },
+  });
 
-  const handleSaveGlobalSettings = useCallback(async () => {
-    setLoading(true);
-    try {
+  const saveSettingsMutation = useMutation({
+    mutationFn: async () => {
       await new Promise((resolve) => setTimeout(resolve, 1000));
+    },
+    onSuccess: () => {
       addNotification({
         title: '保存成功',
         message: '全局设置已保存',
         type: 'success',
       });
-    } catch (_err: unknown) {
+    },
+    onError: (_err: unknown) => {
       addNotification({
         title: '保存失败',
         message: extractErrorMessage(_err, '保存设置失败'),
         type: 'error',
       });
-    } finally {
-      setLoading(false);
-    }
-  }, [addNotification]);
+    },
+  });
+
+  const loading = saveSettingsMutation.isPending;
+  const testLoading = testConnectionMutation.isPending;
+
+  const handleTestConnection = (config: IntegrationConfig) => {
+    setSelectedConfig(config);
+    setTestDialogOpen(true);
+    testConnectionMutation.mutate(config);
+  };
+
+  const handleToggleConfig = (config: IntegrationConfig) => {
+    setConfigs((prev) => prev.map((c) => (c.id === config.id ? { ...c, enabled: !c.enabled } : c)));
+    addNotification({
+      title: '配置更新',
+      message: `「${config.name}」已${config.enabled ? '停用' : '启用'}`,
+      type: 'success',
+    });
+  };
+
+  const handleSaveGlobalSettings = () => {
+    saveSettingsMutation.mutate();
+  };
 
   const generalSection = {
     title: '全局同步设置',

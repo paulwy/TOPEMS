@@ -29,6 +29,20 @@ export { usePerformanceMonitor } from './usePerformanceMonitor';
 export { useResponsive } from './useResponsive';
 export type { Breakpoint } from './useResponsive';
 
+export {
+  useKeyboardShortcuts,
+  useShortcutsHelp,
+  matchShortcut,
+  getShortcutKeyLabel,
+  getShortcutsByCategory,
+  GLOBAL_SHORTCUTS,
+  SEARCH_SHORTCUTS,
+} from './shortcuts';
+export type { ShortcutConfig, ShortcutBinding, ShortcutHandler } from './shortcuts';
+
+export { useWindowManager } from './useWindowManager';
+export type { WindowConfig, WindowState } from './useWindowManager';
+
 export { useDebounce, useDebouncedValue, useDebouncedCallback } from '@topems/shared-hooks';
 export { useThrottle, useThrottledValue, useThrottledCallback } from './useThrottle';
 export { useIntersectionObserver, useInView } from './useIntersectionObserver';

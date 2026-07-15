@@ -257,7 +257,11 @@ const FinanceVoucherPage: React.FC = () => {
     },
     onSuccess: (data) => {
       queryClient.invalidateQueries({ queryKey: ['finance-vouchers'] });
-      const { success_count: successCount, failed_count: failedCount, errors } = data || {} as any;
+      const {
+        success_count: successCount,
+        failed_count: failedCount,
+        errors,
+      } = data || ({} as any);
       if (failedCount === 0) {
         addNotification({
           title: '成功',
@@ -693,7 +697,7 @@ const FinanceVoucherPage: React.FC = () => {
       <Box sx={{ maxWidth: 1200, mx: 'auto', px: 2, py: 3 }}>
         <Tabs
           value={activeTab}
-          onChange={(_, newValue) => setActiveTab(newValue)}
+          onChange={(_: React.SyntheticEvent, newValue: string) => setActiveTab(newValue)}
           sx={{ mb: 2 }}
         >
           <Tab
@@ -790,7 +794,7 @@ const FinanceVoucherPage: React.FC = () => {
             ]}
             selectable
             selectedIds={selectedIds}
-            onSelectionChange={(ids) => setSelectedIds(ids as string[])}
+            onSelectionChange={(ids: (string | number)[]) => setSelectedIds(ids as string[])}
             rowActions={voucherRowActions}
             emptyMessage='暂无凭证数据'
           />
@@ -954,7 +958,7 @@ const FinanceVoucherPage: React.FC = () => {
               name='voucher_number'
               label='凭证编号 *'
               value={newVoucher.voucher_number}
-              onChange={(e) =>
+              onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
                 setNewVoucher((prev) => ({
                   ...prev,
                   voucher_number: e.target.value,
@@ -967,7 +971,7 @@ const FinanceVoucherPage: React.FC = () => {
               label='凭证日期 *'
               type='date'
               value={newVoucher.voucher_date}
-              onChange={(e) =>
+              onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
                 setNewVoucher((prev) => ({
                   ...prev,
                   voucher_date: e.target.value,
@@ -978,7 +982,7 @@ const FinanceVoucherPage: React.FC = () => {
               name='period'
               label='期间 *'
               value={newVoucher.period}
-              onChange={(e) =>
+              onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
                 setNewVoucher((prev) => ({
                   ...prev,
                   period: e.target.value,
@@ -999,7 +1003,7 @@ const FinanceVoucherPage: React.FC = () => {
               label='附件数量'
               type='number'
               value={newVoucher.attachment_count}
-              onChange={(e) =>
+              onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
                 setNewVoucher((prev) => ({
                   ...prev,
                   attachment_count: parseInt(e.target.value) || 0,
@@ -1010,7 +1014,7 @@ const FinanceVoucherPage: React.FC = () => {
               name='maker_name'
               label='制单人'
               value={newVoucher.maker_name}
-              onChange={(e) =>
+              onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
                 setNewVoucher((prev) => ({
                   ...prev,
                   maker_name: e.target.value,
@@ -1025,7 +1029,7 @@ const FinanceVoucherPage: React.FC = () => {
             multiline
             rows={2}
             value={newVoucher.summary}
-            onChange={(e) =>
+            onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
               setNewVoucher((prev) => ({
                 ...prev,
                 summary: e.target.value,
@@ -1092,7 +1096,7 @@ const FinanceVoucherPage: React.FC = () => {
                     name={`subject_code_${index}`}
                     label='选择科目'
                     value={item.subject_code}
-                    onChange={(value) =>
+                    onChange={(value: string | number | string[]) =>
                       updateVoucherItem(index, 'subject_code', value as string | number)
                     }
                     options={subjects.map((s) => ({
@@ -1113,7 +1117,7 @@ const FinanceVoucherPage: React.FC = () => {
                     label=''
                     sx={{ width: 150 }}
                     value={item.debit_amount || 0}
-                    onChange={(val) => updateVoucherItem(index, 'debit_amount', val)}
+                    onChange={(val: number) => updateVoucherItem(index, 'debit_amount', val)}
                     placeholder='借方'
                   />
                   <CurrencyField
@@ -1121,7 +1125,7 @@ const FinanceVoucherPage: React.FC = () => {
                     label=''
                     sx={{ width: 150 }}
                     value={item.credit_amount || 0}
-                    onChange={(val) => updateVoucherItem(index, 'credit_amount', val)}
+                    onChange={(val: number) => updateVoucherItem(index, 'credit_amount', val)}
                     placeholder='贷方'
                   />
                   <ActionButton

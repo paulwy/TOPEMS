@@ -164,12 +164,12 @@ export const WorkflowMonitorPage: React.FC = () => {
     },
     onMutate: async (exceptionId) => {
       await queryClient.cancelQueries({ queryKey: ['workflow-monitor-exceptions'] });
-      const previousData = queryClient.getQueryData<WorkflowException[]>(['workflow-monitor-exceptions']);
+      const previousData = queryClient.getQueryData<WorkflowException[]>([
+        'workflow-monitor-exceptions',
+      ]);
       queryClient.setQueryData<WorkflowException[]>(['workflow-monitor-exceptions'], (old) =>
         old
-          ? old.map((e) =>
-              e.id === exceptionId ? { ...e, status: 'processing' as const } : e
-            )
+          ? old.map((e) => (e.id === exceptionId ? { ...e, status: 'processing' as const } : e))
           : []
       );
       return { previousData };
@@ -187,12 +187,12 @@ export const WorkflowMonitorPage: React.FC = () => {
     },
     onMutate: async (exceptionId) => {
       await queryClient.cancelQueries({ queryKey: ['workflow-monitor-exceptions'] });
-      const previousData = queryClient.getQueryData<WorkflowException[]>(['workflow-monitor-exceptions']);
+      const previousData = queryClient.getQueryData<WorkflowException[]>([
+        'workflow-monitor-exceptions',
+      ]);
       queryClient.setQueryData<WorkflowException[]>(['workflow-monitor-exceptions'], (old) =>
         old
-          ? old.map((e) =>
-              e.id === exceptionId ? { ...e, status: 'resolved' as const } : e
-            )
+          ? old.map((e) => (e.id === exceptionId ? { ...e, status: 'resolved' as const } : e))
           : []
       );
       return { previousData };

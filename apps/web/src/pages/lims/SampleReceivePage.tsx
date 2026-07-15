@@ -1,6 +1,8 @@
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState } from 'react';
 import { PageContainer } from '@/components/common';
 import { useNavigate } from 'react-router-dom';
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import { QUERY_KEYS } from '@/lib/reactQuery';
 import {
   TestTube,
   Plus,
@@ -41,17 +43,20 @@ import {
 import { limsApi } from '@/api/lims';
 import type { Sample, CreateSampleRequest, UpdateSampleRequest, LifecycleEvent } from '@/api/lims';
 import { useNotificationStore } from '@/store';
-import { apiLogger } from '@/utils/logger';
+import { logger } from '@/utils/logger';
 import { designTokens } from '@/theme/tokens';
 import { DASHBOARD_PATHS } from '@/routes/dashboard';
 
 const ct = designTokens.colors;
 
+interface LimsListResponse<T> {
+  items?: T[];
+  samples?: T[];
+}
+
 const SampleReceivePage: React.FC = () => {
   const navigate = useNavigate();
-  const [samples, setSamples] = useState<Sample[]>([]);
-  const [lifecycleEvents, setLifecycleEvents] = useState<Record<string, LifecycleEvent[]>>({});
-  const [loading, setLoading] = useState(true);
+  const queryClient = useQueryClient();
   const [searchTerm, setSearchTerm] = useState('');
   const [statusFilter, setStatusFilter] = useState('all');
   const [showCreateModal, setShowCreateModal] = useState(false);
@@ -73,57 +78,112 @@ const SampleReceivePage: React.FC = () => {
   const [page, setPage] = useState(0);
   const [pageSize, setPageSize] = useState(10);
   const [isEditing, setIsEditing] = useState(false);
-  const [saving, setSaving] = useState(false);
   const addNotification = useNotificationStore((state) => state.addNotification);
 
-  const loadSamples = useCallback(async () => {
-    try {
-      setLoading(true);
+  const { data: samplesData, isLoading: loading } = useQuery({
+    queryKey: QUERY_KEYS.LIMS.SAMPLES,
+    queryFn: async () => {
       const response = await limsApi.listSamples();
       if (response.success && response.data) {
-        const data = response.data as any;
-        let rawSamples: Sample[] = [];
-        if (Array.isArray(data)) {
-          rawSamples = data;
-        } else if (data.items && Array.isArray(data.items)) {
-          rawSamples = data.items;
-        } else if (data.samples && Array.isArray(data.samples)) {
-          rawSamples = data.samples;
-        }
-        setSamples(rawSamples);
-      } else {
-        setSamples([]);
+        const data = response.data as LimsListResponse<Sample> | Sample[];
+        if (Array.isArray(data)) return data;
+        if (data.items && Array.isArray(data.items)) return data.items;
+        if (data.samples && Array.isArray(data.samples)) return data.samples;
       }
-    } catch (err: unknown) {
-      apiLogger.error('加载样品列表失败:', err);
-      setSamples([]);
-      addNotification({
-        title: '错误',
-        message: '加载样品列表失败，请稍后重试',
-        type: 'error',
-      });
-    } finally {
-      setLoading(false);
-    }
-  }, [addNotification]);
+      return [];
+    },
+  });
 
-  const loadLifecycleEvents = async (sampleId: string) => {
-    try {
-      const response = await limsApi.getSampleLifecycle(sampleId);
+  const samples = samplesData || [];
+
+  const { data: lifecycleData } = useQuery({
+    queryKey: QUERY_KEYS.LIMS.SAMPLE_LIFECYCLE(selectedSample?.id || ''),
+    queryFn: async () => {
+      if (!selectedSample) return [];
+      const response = await limsApi.getSampleLifecycle(selectedSample.id);
       if (response.success && response.data) {
-        setLifecycleEvents((prev) => ({
-          ...prev,
-          [sampleId]: response.data as LifecycleEvent[],
-        }));
+        return response.data as LifecycleEvent[];
       }
-    } catch (err: unknown) {
-      apiLogger.error('加载样品生命周期失败:', err);
-    }
-  };
+      return [];
+    },
+    enabled: !!selectedSample && showDetailModal,
+  });
 
-  useEffect(() => {
-    loadSamples();
-  }, [loadSamples]);
+  const lifecycleEvents: Record<string, LifecycleEvent[]> =
+    selectedSample && lifecycleData ? { [selectedSample.id]: lifecycleData } : {};
+
+  const createMutation = useMutation({
+    mutationFn: async (data: CreateSampleRequest) => {
+      const response = await limsApi.createSample(data);
+      if (!response.success) {
+        throw new Error(response.message || '登记失败，请稍后重试');
+      }
+      return response;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: QUERY_KEYS.LIMS.SAMPLES });
+      setShowCreateModal(false);
+    },
+    onError: (error: unknown) => {
+      logger.error('登记样品失败:', error);
+    },
+  });
+
+  const updateMutation = useMutation({
+    mutationFn: async ({ id, data }: { id: string; data: UpdateSampleRequest }) => {
+      const response = await limsApi.updateSample(id, data);
+      if (!response.success) {
+        throw new Error(response.message || '更新失败，请稍后重试');
+      }
+      return response;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: QUERY_KEYS.LIMS.SAMPLES });
+      setShowCreateModal(false);
+    },
+    onError: (error: unknown) => {
+      logger.error('更新样品失败:', error);
+    },
+  });
+
+  const deleteMutation = useMutation({
+    mutationFn: async (id: string) => {
+      const response = await limsApi.deleteSample(id);
+      if (!response.success) {
+        throw new Error(response.message || '删除失败，请稍后重试');
+      }
+      return response;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: QUERY_KEYS.LIMS.SAMPLES });
+      setShowDetailModal(false);
+    },
+    onError: (error: unknown) => {
+      logger.error('删除样品失败:', error);
+    },
+  });
+
+  const transitionMutation = useMutation({
+    mutationFn: async ({
+      id,
+      data,
+    }: {
+      id: string;
+      data: { sample_id: string; target_stage: string; operator: string; remarks: string };
+    }) => {
+      const response = await limsApi.transitionSampleStage(id, data);
+      if (!response.success) {
+        throw new Error(response.message || '状态变更失败');
+      }
+      return response;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: QUERY_KEYS.LIMS.SAMPLES });
+    },
+    onError: (error: unknown) => {
+      logger.error('样品状态变更失败:', error);
+    },
+  });
 
   const getStatusBadge = (status: string) => {
     const statusMap: Record<string, { bg: string; color: string }> = {
@@ -174,67 +234,27 @@ const SampleReceivePage: React.FC = () => {
   };
 
   const handleReceive = async (sample: Sample) => {
-    try {
-      const response = await limsApi.transitionSampleStage(sample.id, {
+    await transitionMutation.mutateAsync({
+      id: sample.id,
+      data: {
         sample_id: sample.id,
         target_stage: '已接收',
         operator: formData.responsible_person || '系统用户',
         remarks: '样本已接收',
-      });
-      if (response.success) {
-        addNotification({
-          title: '成功',
-          message: '样本接收成功',
-          type: 'success',
-        });
-        loadSamples();
-      } else {
-        addNotification({
-          title: '错误',
-          message: response.message || '接收失败',
-          type: 'error',
-        });
-      }
-    } catch (err: unknown) {
-      apiLogger.error('样本接收失败:', err);
-      addNotification({
-        title: '错误',
-        message: '样本接收失败',
-        type: 'error',
-      });
-    }
+      },
+    });
   };
 
   const handleConfirm = async (sample: Sample) => {
-    try {
-      const response = await limsApi.transitionSampleStage(sample.id, {
+    await transitionMutation.mutateAsync({
+      id: sample.id,
+      data: {
         sample_id: sample.id,
         target_stage: '已确认',
         operator: formData.responsible_person || '系统用户',
         remarks: '样本已确认',
-      });
-      if (response.success) {
-        addNotification({
-          title: '成功',
-          message: '样本确认成功',
-          type: 'success',
-        });
-        loadSamples();
-      } else {
-        addNotification({
-          title: '错误',
-          message: response.message || '确认失败',
-          type: 'error',
-        });
-      }
-    } catch (err: unknown) {
-      apiLogger.error('样本确认失败:', err);
-      addNotification({
-        title: '错误',
-        message: '样本确认失败',
-        type: 'error',
-      });
-    }
+      },
+    });
   };
 
   const columns: ColumnDef<Sample>[] = [
@@ -269,7 +289,6 @@ const SampleReceivePage: React.FC = () => {
       icon: <Eye style={{ width: 16, height: 16 }} />,
       onClick: (row) => {
         setSelectedSample(row);
-        loadLifecycleEvents(row.id);
         setShowDetailModal(true);
       },
     },
@@ -325,7 +344,6 @@ const SampleReceivePage: React.FC = () => {
 
   const handleView = (sample: Sample) => {
     setSelectedSample(sample);
-    loadLifecycleEvents(sample.id);
     setShowDetailModal(true);
   };
 
@@ -379,85 +397,22 @@ const SampleReceivePage: React.FC = () => {
       return;
     }
 
-    try {
-      setSaving(true);
-      if (isEditing && selectedSample) {
-        const response = await limsApi.updateSample(
-          selectedSample.id,
-          formData as UpdateSampleRequest
-        );
-        if (response.success) {
-          addNotification({
-            title: '成功',
-            message: '样品更新成功',
-            type: 'success',
-          });
-          setShowCreateModal(false);
-          loadSamples();
-        } else {
-          addNotification({
-            title: '错误',
-            message: response.message || '更新失败，请稍后重试',
-            type: 'error',
-          });
-        }
-      } else {
-        const response = await limsApi.createSample(formData);
-        if (response.success) {
-          addNotification({
-            title: '成功',
-            message: '样品登记成功',
-            type: 'success',
-          });
-          setShowCreateModal(false);
-          loadSamples();
-        } else {
-          addNotification({
-            title: '错误',
-            message: response.message || '登记失败，请稍后重试',
-            type: 'error',
-          });
-        }
-      }
-    } catch (err: unknown) {
-      apiLogger.error('保存样品失败:', err);
-      addNotification({
-        title: '错误',
-        message: isEditing ? '更新样品失败，请稍后重试' : '登记样品失败，请稍后重试',
-        type: 'error',
+    if (isEditing && selectedSample) {
+      await updateMutation.mutateAsync({
+        id: selectedSample.id,
+        data: formData as UpdateSampleRequest,
       });
-    } finally {
-      setSaving(false);
+    } else {
+      await createMutation.mutateAsync(formData);
     }
   };
 
+  const saving =
+    createMutation.isPending || updateMutation.isPending || transitionMutation.isPending;
+
   const handleDelete = async (sample: Sample) => {
     if (!confirm(`确定要删除样品 "${sample.name}" 吗？`)) return;
-    try {
-      const response = await limsApi.deleteSample(sample.id);
-      if (response.success) {
-        addNotification({
-          title: '成功',
-          message: '样品删除成功',
-          type: 'success',
-        });
-        setShowDetailModal(false);
-        loadSamples();
-      } else {
-        addNotification({
-          title: '错误',
-          message: response.message || '删除失败，请稍后重试',
-          type: 'error',
-        });
-      }
-    } catch (err: unknown) {
-      apiLogger.error('删除样品失败:', err);
-      addNotification({
-        title: '错误',
-        message: '删除样品失败，请稍后重试',
-        type: 'error',
-      });
-    }
+    await deleteMutation.mutateAsync(sample.id);
   };
 
   const stats = {

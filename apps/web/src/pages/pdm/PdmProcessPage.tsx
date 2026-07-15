@@ -27,8 +27,7 @@ const ct = designTokens.colors;
 
 const adaptProcess = (item: { [key: string]: unknown }) => ({
   ...item,
-  status:
-    item.status === 'active' ? '启用' : item.status === 'inactive' ? '禁用' : item.status,
+  status: item.status === 'active' ? '启用' : item.status === 'inactive' ? '禁用' : item.status,
 });
 
 const PdmProcessPage: React.FC = () => {

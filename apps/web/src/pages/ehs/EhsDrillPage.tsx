@@ -549,7 +549,9 @@ const EhsDrillPage: React.FC = () => {
                   <Typography sx={{ color: 'text.secondary', fontSize: '0.875rem' }}>
                     演练地点
                   </Typography>
-                  <Typography>{(drillDetailQuery.data || selectedDrill)?.location || '-'}</Typography>
+                  <Typography>
+                    {(drillDetailQuery.data || selectedDrill)?.location || '-'}
+                  </Typography>
                 </Box>
                 <Box>
                   <Typography sx={{ color: 'text.secondary', fontSize: '0.875rem' }}>
@@ -564,13 +566,17 @@ const EhsDrillPage: React.FC = () => {
                   <Typography sx={{ color: 'text.secondary', fontSize: '0.875rem' }}>
                     演练评估
                   </Typography>
-                  <Typography>{(drillDetailQuery.data || selectedDrill)?.summary || '-'}</Typography>
+                  <Typography>
+                    {(drillDetailQuery.data || selectedDrill)?.summary || '-'}
+                  </Typography>
                 </Box>
                 <Box sx={{ gridColumn: '1 / -1' }}>
                   <Typography sx={{ color: 'text.secondary', fontSize: '0.875rem' }}>
                     发现问题
                   </Typography>
-                  <Typography>{(drillDetailQuery.data || selectedDrill)?.issues_found || '-'}</Typography>
+                  <Typography>
+                    {(drillDetailQuery.data || selectedDrill)?.issues_found || '-'}
+                  </Typography>
                 </Box>
               </Box>
             )

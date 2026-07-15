@@ -26,6 +26,8 @@ import { ListPageTemplate, type ColumnDef } from '@/components/templates';
 import { PageContainer } from '@/components/common';
 import { ConfirmDialog } from '@topems/shared-components';
 import { designTokens } from '@/theme/tokens';
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import { QUERY_KEYS } from '@/lib/reactQuery';
 
 const ct = designTokens.colors;
 
@@ -52,11 +54,9 @@ const contractTypeConfig: Record<string, string> = {
 };
 
 const PurchaseContractPage: React.FC = () => {
-  const [contracts, setContracts] = useState<PurchaseContract[]>([]);
-  const [loading, setLoading] = useState(true);
+  const queryClient = useQueryClient();
   const [currentPage, setCurrentPage] = useState(1);
   const [pageSize, setPageSize] = useState(10);
-  const [total, setTotal] = useState(0);
   const [showDialog, setShowDialog] = useState(false);
   const [isEditing, setIsEditing] = useState(false);
   const [selectedContract, setSelectedContract] = useState<PurchaseContract | null>(null);
@@ -85,74 +85,223 @@ const PurchaseContractPage: React.FC = () => {
 
   const { addNotification } = useNotificationStore();
 
-  useEffect(() => {
-    loadContracts();
-  }, [currentPage, pageSize]);
-
-  const loadContracts = async () => {
-    try {
-      setLoading(true);
+  const contractsQuery = useQuery<{ items: PurchaseContract[]; total: number }>({
+    queryKey: [...QUERY_KEYS.SCM.PURCHASE_CONTRACTS, currentPage, pageSize],
+    queryFn: async () => {
       const response = await scmApi.purchaseContracts.list({
         page: currentPage,
         pageSize,
       });
       if (response.success && response.data) {
-        setContracts(response.data.items || []);
-        setTotal(response.data.total || 0);
+        return { items: response.data.items || [], total: response.data.total || 0 };
       }
-    } catch (error: unknown) {
-      apiLogger.error('加载采购合同失败:', error);
+      return { items: [], total: 0 };
+    },
+    staleTime: 5 * 60 * 1000,
+  });
+
+  const contracts = contractsQuery.data?.items ?? [];
+  const total = contractsQuery.data?.total ?? 0;
+  const loading = contractsQuery.isLoading;
+
+  useEffect(() => {
+    if (contractsQuery.isError) {
+      apiLogger.error('加载采购合同失败:', contractsQuery.error);
       addNotification({
         type: 'error',
         title: '加载失败',
         message: '无法加载采购合同',
       });
-    } finally {
-      setLoading(false);
     }
-  };
+  }, [contractsQuery.isError, contractsQuery.error, addNotification]);
 
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    try {
-      if (isEditing && selectedContract) {
-        const updateData: UpdatePurchaseContractRequest = {
-          title: formData.title,
-          contract_type: formData.contract_type,
-          supplier_id: formData.supplier_id,
-          sign_date: formData.sign_date,
-          effective_date: formData.effective_date,
-          expiry_date: formData.expiry_date,
-          total_amount: formData.total_amount,
-          currency: formData.currency,
-          payment_terms: formData.payment_terms,
-          delivery_terms: formData.delivery_terms,
-          remarks: formData.remarks,
-        };
-        await scmApi.purchaseContracts.update(selectedContract.id, updateData);
-        addNotification({
-          type: 'success',
-          title: '更新成功',
-          message: '采购合同已更新',
-        });
-      } else {
-        await scmApi.purchaseContracts.create(formData);
-        addNotification({
-          type: 'success',
-          title: '创建成功',
-          message: '新采购合同已创建',
-        });
-      }
+  const invalidateContracts = () =>
+    queryClient.invalidateQueries({ queryKey: QUERY_KEYS.SCM.PURCHASE_CONTRACTS });
+
+  const createMutation = useMutation({
+    mutationFn: (data: CreatePurchaseContractRequest) => scmApi.purchaseContracts.create(data),
+    onSuccess: () => {
+      invalidateContracts();
+      addNotification({
+        type: 'success',
+        title: '创建成功',
+        message: '新采购合同已创建',
+      });
       setShowDialog(false);
       resetForm();
-      loadContracts();
-    } catch (error: unknown) {
-      apiLogger.error('操作失败:', error);
+    },
+    onError: (err: unknown) => {
+      apiLogger.error('操作失败:', err);
       addNotification({
         type: 'error',
         title: '操作失败',
-        message: isEditing ? '更新采购合同失败' : '创建采购合同失败',
+        message: '创建采购合同失败',
       });
+    },
+  });
+
+  const updateMutation = useMutation({
+    mutationFn: (params: { id: string; data: UpdatePurchaseContractRequest }) =>
+      scmApi.purchaseContracts.update(params.id, params.data),
+    onSuccess: () => {
+      invalidateContracts();
+      addNotification({
+        type: 'success',
+        title: '更新成功',
+        message: '采购合同已更新',
+      });
+      setShowDialog(false);
+      resetForm();
+    },
+    onError: (err: unknown) => {
+      apiLogger.error('操作失败:', err);
+      addNotification({
+        type: 'error',
+        title: '操作失败',
+        message: '更新采购合同失败',
+      });
+    },
+  });
+
+  const deleteMutation = useMutation({
+    mutationFn: (id: string) => scmApi.purchaseContracts.delete(id),
+    onSuccess: () => {
+      invalidateContracts();
+      addNotification({
+        type: 'success',
+        title: '删除成功',
+        message: '采购合同已删除',
+      });
+    },
+    onError: (err: unknown) => {
+      apiLogger.error('删除失败:', err);
+      addNotification({
+        type: 'error',
+        title: '删除失败',
+        message: '删除采购合同失败',
+      });
+    },
+  });
+
+  const submitMutation = useMutation({
+    mutationFn: (id: string) => scmApi.purchaseContracts.submit(id),
+    onSuccess: () => {
+      invalidateContracts();
+      addNotification({
+        type: 'success',
+        title: '提交成功',
+        message: '采购合同已提交审批',
+      });
+    },
+    onError: (err: unknown) => {
+      apiLogger.error('提交失败:', err);
+      addNotification({
+        type: 'error',
+        title: '提交失败',
+        message: '提交采购合同失败',
+      });
+    },
+  });
+
+  const approveMutation = useMutation({
+    mutationFn: (id: string) => scmApi.purchaseContracts.approve(id),
+    onSuccess: () => {
+      invalidateContracts();
+      addNotification({
+        type: 'success',
+        title: '审批成功',
+        message: '采购合同已审批通过',
+      });
+    },
+    onError: (err: unknown) => {
+      apiLogger.error('审批失败:', err);
+      addNotification({
+        type: 'error',
+        title: '审批失败',
+        message: '审批采购合同失败',
+      });
+    },
+  });
+
+  const rejectMutation = useMutation({
+    mutationFn: (id: string) => scmApi.purchaseContracts.reject(id),
+    onSuccess: () => {
+      invalidateContracts();
+      addNotification({
+        type: 'success',
+        title: '已拒绝',
+        message: '采购合同已拒绝',
+      });
+    },
+    onError: (err: unknown) => {
+      apiLogger.error('操作失败:', err);
+      addNotification({
+        type: 'error',
+        title: '操作失败',
+        message: '拒绝采购合同失败',
+      });
+    },
+  });
+
+  const terminateMutation = useMutation({
+    mutationFn: (id: string) => scmApi.purchaseContracts.terminate(id),
+    onSuccess: () => {
+      invalidateContracts();
+      addNotification({
+        type: 'success',
+        title: '已终止',
+        message: '采购合同已终止',
+      });
+    },
+    onError: (err: unknown) => {
+      apiLogger.error('操作失败:', err);
+      addNotification({
+        type: 'error',
+        title: '操作失败',
+        message: '终止采购合同失败',
+      });
+    },
+  });
+
+  const renewMutation = useMutation({
+    mutationFn: (id: string) => scmApi.purchaseContracts.renew(id),
+    onSuccess: () => {
+      invalidateContracts();
+      addNotification({
+        type: 'success',
+        title: '续签成功',
+        message: '采购合同已续签',
+      });
+    },
+    onError: (err: unknown) => {
+      apiLogger.error('续签失败:', err);
+      addNotification({
+        type: 'error',
+        title: '续签失败',
+        message: '续签采购合同失败',
+      });
+    },
+  });
+
+  const handleSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (isEditing && selectedContract) {
+      const updateData: UpdatePurchaseContractRequest = {
+        title: formData.title,
+        contract_type: formData.contract_type,
+        supplier_id: formData.supplier_id,
+        sign_date: formData.sign_date,
+        effective_date: formData.effective_date,
+        expiry_date: formData.expiry_date,
+        total_amount: formData.total_amount,
+        currency: formData.currency,
+        payment_terms: formData.payment_terms,
+        delivery_terms: formData.delivery_terms,
+        remarks: formData.remarks,
+      };
+      updateMutation.mutate({ id: selectedContract.id, data: updateData });
+    } else {
+      createMutation.mutate(formData);
     }
   };
 
@@ -177,27 +326,12 @@ const PurchaseContractPage: React.FC = () => {
     setShowDialog(true);
   };
 
-  const handleDelete = async (contract: PurchaseContract) => {
+  const handleDelete = (contract: PurchaseContract) => {
     openConfirmDialog({
       title: '确认删除',
       message: `确定要删除采购合同 "${contract.contract_no}" 吗？`,
-      onConfirm: async () => {
-        try {
-          await scmApi.purchaseContracts.delete(contract.id);
-          addNotification({
-            type: 'success',
-            title: '删除成功',
-            message: '采购合同已删除',
-          });
-          loadContracts();
-        } catch (error: unknown) {
-          apiLogger.error('删除失败:', error);
-          addNotification({
-            type: 'error',
-            title: '删除失败',
-            message: '删除采购合同失败',
-          });
-        }
+      onConfirm: () => {
+        deleteMutation.mutate(contract.id);
       },
       danger: true,
     });
@@ -208,23 +342,8 @@ const PurchaseContractPage: React.FC = () => {
       openConfirmDialog({
         title: '确认提交',
         message: `确定要提交采购合同 "${contract.contract_no}" 审批吗？`,
-        onConfirm: async () => {
-          try {
-            await scmApi.purchaseContracts.submit(contract.id);
-            addNotification({
-              type: 'success',
-              title: '提交成功',
-              message: '采购合同已提交审批',
-            });
-            loadContracts();
-          } catch (error: unknown) {
-            apiLogger.error('提交失败:', error);
-            addNotification({
-              type: 'error',
-              title: '提交失败',
-              message: '提交采购合同失败',
-            });
-          }
+        onConfirm: () => {
+          submitMutation.mutate(contract.id);
         },
       });
     },
@@ -236,23 +355,8 @@ const PurchaseContractPage: React.FC = () => {
       openConfirmDialog({
         title: '确认审批',
         message: `确定要审批通过采购合同 "${contract.contract_no}" 吗？`,
-        onConfirm: async () => {
-          try {
-            await scmApi.purchaseContracts.approve(contract.id);
-            addNotification({
-              type: 'success',
-              title: '审批成功',
-              message: '采购合同已审批通过',
-            });
-            loadContracts();
-          } catch (error: unknown) {
-            apiLogger.error('审批失败:', error);
-            addNotification({
-              type: 'error',
-              title: '审批失败',
-              message: '审批采购合同失败',
-            });
-          }
+        onConfirm: () => {
+          approveMutation.mutate(contract.id);
         },
       });
     },
@@ -264,23 +368,8 @@ const PurchaseContractPage: React.FC = () => {
       openConfirmDialog({
         title: '确认拒绝',
         message: `确定要拒绝采购合同 "${contract.contract_no}" 吗？`,
-        onConfirm: async () => {
-          try {
-            await scmApi.purchaseContracts.reject(contract.id);
-            addNotification({
-              type: 'success',
-              title: '已拒绝',
-              message: '采购合同已拒绝',
-            });
-            loadContracts();
-          } catch (error: unknown) {
-            apiLogger.error('操作失败:', error);
-            addNotification({
-              type: 'error',
-              title: '操作失败',
-              message: '拒绝采购合同失败',
-            });
-          }
+        onConfirm: () => {
+          rejectMutation.mutate(contract.id);
         },
         danger: true,
       });
@@ -293,23 +382,8 @@ const PurchaseContractPage: React.FC = () => {
       openConfirmDialog({
         title: '确认终止',
         message: `确定要终止采购合同 "${contract.contract_no}" 吗？`,
-        onConfirm: async () => {
-          try {
-            await scmApi.purchaseContracts.terminate(contract.id);
-            addNotification({
-              type: 'success',
-              title: '已终止',
-              message: '采购合同已终止',
-            });
-            loadContracts();
-          } catch (error: unknown) {
-            apiLogger.error('操作失败:', error);
-            addNotification({
-              type: 'error',
-              title: '操作失败',
-              message: '终止采购合同失败',
-            });
-          }
+        onConfirm: () => {
+          terminateMutation.mutate(contract.id);
         },
         danger: true,
       });
@@ -322,23 +396,8 @@ const PurchaseContractPage: React.FC = () => {
       openConfirmDialog({
         title: '确认续签',
         message: `确定要续签采购合同 "${contract.contract_no}" 吗？`,
-        onConfirm: async () => {
-          try {
-            await scmApi.purchaseContracts.renew(contract.id);
-            addNotification({
-              type: 'success',
-              title: '续签成功',
-              message: '采购合同已续签',
-            });
-            loadContracts();
-          } catch (error: unknown) {
-            apiLogger.error('续签失败:', error);
-            addNotification({
-              type: 'error',
-              title: '续签失败',
-              message: '续签采购合同失败',
-            });
-          }
+        onConfirm: () => {
+          renewMutation.mutate(contract.id);
         },
       });
     },
@@ -556,7 +615,7 @@ const PurchaseContractPage: React.FC = () => {
           },
         ]}
         rowActions={rowActions}
-        onRefresh={loadContracts}
+        onRefresh={() => contractsQuery.refetch()}
         emptyMessage='暂无采购合同数据'
       />
 

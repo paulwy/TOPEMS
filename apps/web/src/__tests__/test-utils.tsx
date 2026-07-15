@@ -17,10 +17,7 @@ const createTestQueryClient = () => {
 
 const testTheme = createTheme();
 
-export const renderWithProviders = (
-  ui: React.ReactElement,
-  options?: RenderOptions
-) => {
+export const renderWithProviders = (ui: React.ReactElement, options?: RenderOptions) => {
   const queryClient = createTestQueryClient();
 
   return render(

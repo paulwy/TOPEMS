@@ -15,7 +15,9 @@ import {
   Button,
 } from '@mui/material';
 import { PageContainer } from '@/components/common/PageContainerV2';
-import React, { useState, useEffect, useMemo, useCallback } from 'react';
+import React, { useState, useMemo } from 'react';
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import { QUERY_KEYS } from '@/lib/reactQuery';
 import type {
   MaterialRequirement,
   CreateMaterialRequirementRequest,
@@ -38,13 +40,11 @@ import { designTokens } from '@/theme/tokens';
 const ct = designTokens.colors;
 
 const MaterialRequirementPage: React.FC = () => {
-  const [requirements, setRequirements] = useState<MaterialRequirement[]>([]);
-  const [loading, setLoading] = useState(true);
+  const queryClient = useQueryClient();
   const [searchTerm, setSearchTerm] = useState('');
   const [statusFilter, setStatusFilter] = useState<string>('all');
   const [currentPage, setCurrentPage] = useState(1);
   const [pageSize] = useState(10);
-  const [total, setTotal] = useState(0);
   const [showDialog, setShowDialog] = useState(false);
   const [showDetailDialog, setShowDetailDialog] = useState(false);
   const [selectedRequirement, setSelectedRequirement] = useState<MaterialRequirement | null>(null);
@@ -61,36 +61,117 @@ const MaterialRequirementPage: React.FC = () => {
 
   const { addNotification } = useNotificationStore();
 
-  const loadRequirements = useCallback(async () => {
-    try {
-      setLoading(true);
-      const params: ListParams = {
-        page: currentPage - 1,
-        pagesize: pageSize,
-      };
-      if (searchTerm) params.search = searchTerm;
-      if (statusFilter !== 'all') params.status = statusFilter;
+  const params: ListParams = {
+    page: currentPage - 1,
+    pagesize: pageSize,
+  };
+  if (searchTerm) params.search = searchTerm;
+  if (statusFilter !== 'all') params.status = statusFilter;
 
+  const { data: requirementsData, isLoading: loading } = useQuery({
+    queryKey: [...QUERY_KEYS.MES.MATERIAL_REQUIREMENTS, params],
+    queryFn: async () => {
       const response = await mesApi.materialRequirements.list(params);
       if (response.success && response.data) {
-        setRequirements(response.data.requirements || []);
-        setTotal(response.data.total || 0);
+        return {
+          requirements: response.data.requirements || [],
+          total: response.data.total || 0,
+        };
       }
-    } catch (error: unknown) {
-      apiLogger.error('加载物料需求列表失败:', error);
-      addNotification({
-        type: 'error',
-        title: '加载失败',
-        message: '无法加载物料需求列表',
-      });
-    } finally {
-      setLoading(false);
-    }
-  }, [currentPage, pageSize, searchTerm, statusFilter, addNotification]);
+      return { requirements: [], total: 0 };
+    },
+  });
 
-  useEffect(() => {
-    loadRequirements();
-  }, [loadRequirements]);
+  const requirements = requirementsData?.requirements || [];
+  const total = requirementsData?.total || 0;
+
+  const invalidateRequirements = () => {
+    queryClient.invalidateQueries({ queryKey: QUERY_KEYS.MES.MATERIAL_REQUIREMENTS });
+  };
+
+  const createMutation = useMutation({
+    mutationFn: (data: CreateMaterialRequirementRequest) =>
+      mesApi.materialRequirements.create(data),
+    onSuccess: () => {
+      addNotification({ type: 'success', title: '创建成功', message: '新物料需求已创建' });
+      invalidateRequirements();
+      setShowDialog(false);
+      resetForm();
+    },
+    onError: (error: unknown) => {
+      apiLogger.error('操作失败:', error);
+      addNotification({ type: 'error', title: '操作失败', message: '创建物料需求失败' });
+    },
+  });
+
+  const updateMutation = useMutation({
+    mutationFn: ({ id, data }: { id: string; data: UpdateMaterialRequirementRequest }) =>
+      mesApi.materialRequirements.update(id, data),
+    onSuccess: () => {
+      addNotification({ type: 'success', title: '更新成功', message: '物料需求信息已更新' });
+      invalidateRequirements();
+      setShowDialog(false);
+      resetForm();
+    },
+    onError: (error: unknown) => {
+      apiLogger.error('操作失败:', error);
+      addNotification({ type: 'error', title: '操作失败', message: '更新物料需求失败' });
+    },
+  });
+
+  const deleteMutation = useMutation({
+    mutationFn: (id: string) => mesApi.materialRequirements.delete(id),
+    onSuccess: () => {
+      addNotification({ type: 'success', title: '删除成功', message: '物料需求已删除' });
+      invalidateRequirements();
+    },
+    onError: (error: unknown) => {
+      apiLogger.error('删除失败:', error);
+      addNotification({ type: 'error', title: '删除失败', message: '无法删除物料需求' });
+    },
+  });
+
+  const confirmMutation = useMutation({
+    mutationFn: (id: string) => mesApi.materialRequirements.confirm(id),
+    onSuccess: () => {
+      addNotification({ type: 'success', title: '确认成功', message: '物料需求已确认' });
+      invalidateRequirements();
+    },
+    onError: (error: unknown) => {
+      apiLogger.error('确认失败:', error);
+      addNotification({ type: 'error', title: '确认失败', message: '无法确认物料需求' });
+    },
+  });
+
+  const releaseMutation = useMutation({
+    mutationFn: (id: string) => mesApi.materialRequirements.release(id),
+    onSuccess: () => {
+      addNotification({ type: 'success', title: '下达成功', message: '物料需求已下达' });
+      invalidateRequirements();
+    },
+    onError: (error: unknown) => {
+      apiLogger.error('下达失败:', error);
+      addNotification({ type: 'error', title: '下达失败', message: '无法下达物料需求' });
+    },
+  });
+
+  const calculateMutation = useMutation({
+    mutationFn: (orderId: string) => mesApi.materialRequirements.calculate(orderId),
+    onSuccess: (response) => {
+      if (response.success && response.data) {
+        addNotification({
+          type: 'success',
+          title: '计算成功',
+          message: `已生成 ${response.data.length} 条物料需求`,
+        });
+        invalidateRequirements();
+      }
+    },
+    onError: (error: unknown) => {
+      apiLogger.error('计算失败:', error);
+      addNotification({ type: 'error', title: '计算失败', message: '无法计算物料需求' });
+    },
+  });
 
   const getStatusText = (status: string) => {
     const statusMap: Record<string, string> = {
@@ -115,132 +196,36 @@ const MaterialRequirementPage: React.FC = () => {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    try {
-      if (selectedRequirement) {
-        await mesApi.materialRequirements.update(
-          selectedRequirement.id,
-          formData as UpdateMaterialRequirementRequest
-        );
-        addNotification({
-          type: 'success',
-          title: '更新成功',
-          message: '物料需求信息已更新',
-        });
-      } else {
-        await mesApi.materialRequirements.create(formData);
-        addNotification({
-          type: 'success',
-          title: '创建成功',
-          message: '新物料需求已创建',
-        });
-      }
-      setShowDialog(false);
-      resetForm();
-      loadRequirements();
-    } catch (error: unknown) {
-      apiLogger.error('操作失败:', error);
-      addNotification({
-        type: 'error',
-        title: '操作失败',
-        message: selectedRequirement ? '更新物料需求失败' : '创建物料需求失败',
+    if (selectedRequirement) {
+      updateMutation.mutate({
+        id: selectedRequirement.id,
+        data: formData as UpdateMaterialRequirementRequest,
       });
+    } else {
+      createMutation.mutate(formData);
     }
   };
 
-  const handleDelete = useCallback(
-    async (id: string) => {
-      if (!window.confirm('确定要删除这条物料需求吗?')) return;
-      try {
-        await mesApi.materialRequirements.delete(id);
-        addNotification({
-          type: 'success',
-          title: '删除成功',
-          message: '物料需求已删除',
-        });
-        loadRequirements();
-      } catch (error: unknown) {
-        apiLogger.error('删除失败:', error);
-        addNotification({
-          type: 'error',
-          title: '删除失败',
-          message: '无法删除物料需求',
-        });
-      }
-    },
-    [loadRequirements, addNotification]
-  );
+  const handleDelete = (id: string) => {
+    if (!window.confirm('确定要删除这条物料需求吗?')) return;
+    deleteMutation.mutate(id);
+  };
 
-  const handleConfirm = useCallback(
-    async (id: string) => {
-      try {
-        await mesApi.materialRequirements.confirm(id);
-        addNotification({
-          type: 'success',
-          title: '确认成功',
-          message: '物料需求已确认',
-        });
-        loadRequirements();
-      } catch (error: unknown) {
-        apiLogger.error('确认失败:', error);
-        addNotification({
-          type: 'error',
-          title: '确认失败',
-          message: '无法确认物料需求',
-        });
-      }
-    },
-    [loadRequirements, addNotification]
-  );
+  const handleConfirm = (id: string) => {
+    confirmMutation.mutate(id);
+  };
 
-  const handleRelease = useCallback(
-    async (id: string) => {
-      try {
-        await mesApi.materialRequirements.release(id);
-        addNotification({
-          type: 'success',
-          title: '下达成功',
-          message: '物料需求已下达',
-        });
-        loadRequirements();
-      } catch (error: unknown) {
-        apiLogger.error('下达失败:', error);
-        addNotification({
-          type: 'error',
-          title: '下达失败',
-          message: '无法下达物料需求',
-        });
-      }
-    },
-    [loadRequirements, addNotification]
-  );
+  const handleRelease = (id: string) => {
+    releaseMutation.mutate(id);
+  };
 
-  const handleCalculate = useCallback(async () => {
+  const handleCalculate = () => {
     const orderId = window.prompt('请输入生产订单ID:');
     if (!orderId) return;
-    try {
-      setLoading(true);
-      const response = await mesApi.materialRequirements.calculate(orderId);
-      if (response.success && response.data) {
-        addNotification({
-          type: 'success',
-          title: '计算成功',
-          message: `已生成 ${response.data.length} 条物料需求`,
-        });
-        loadRequirements();
-      }
-    } catch (error: unknown) {
-      apiLogger.error('计算失败:', error);
-      addNotification({
-        type: 'error',
-        title: '计算失败',
-        message: '无法计算物料需求',
-      });
-    } finally {
-      setLoading(false);
-    }
-  }, [loadRequirements, addNotification]);
+    calculateMutation.mutate(orderId);
+  };
 
-  const handleEdit = useCallback((req: MaterialRequirement) => {
+  const handleEdit = (req: MaterialRequirement) => {
     setSelectedRequirement(req);
     setFormData({
       order_id: req.order_id,
@@ -257,12 +242,12 @@ const MaterialRequirementPage: React.FC = () => {
       remark: req.remark,
     });
     setShowDialog(true);
-  }, []);
+  };
 
-  const handleViewDetail = useCallback((req: MaterialRequirement) => {
+  const handleViewDetail = (req: MaterialRequirement) => {
     setSelectedRequirement(req);
     setShowDetailDialog(true);
-  }, []);
+  };
 
   const resetForm = () => {
     setSelectedRequirement(null);

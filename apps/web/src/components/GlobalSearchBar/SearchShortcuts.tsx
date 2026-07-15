@@ -15,7 +15,11 @@ export const SearchShortcuts: React.FC<SearchShortcutsProps> = ({ onSelect }) =>
 
   return (
     <Box sx={{ p: 2, pb: 1 }}>
-      <Typography variant="caption" color="text.secondary" sx={{ mb: 1, display: 'block' }}>
+      <Typography
+        variant='caption'
+        color='text.secondary'
+        sx={{ mb: 1, display: 'block' }}
+      >
         快捷搜索
       </Typography>
       <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 1 }}>
@@ -23,8 +27,8 @@ export const SearchShortcuts: React.FC<SearchShortcutsProps> = ({ onSelect }) =>
           <Chip
             key={s.text}
             label={s.text}
-            size="small"
-            variant="outlined"
+            size='small'
+            variant='outlined'
             onClick={() => onSelect(s.text)}
             sx={{ cursor: 'pointer' }}
           />

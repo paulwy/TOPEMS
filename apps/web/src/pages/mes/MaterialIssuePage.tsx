@@ -24,7 +24,9 @@ import {
   Button,
 } from '@mui/material';
 import { PageContainer } from '@/components/common/PageContainerV2';
-import React, { useState, useEffect, useMemo, useCallback } from 'react';
+import React, { useState, useMemo, useEffect, useCallback } from 'react';
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import { QUERY_KEYS } from '@/lib/reactQuery';
 import type {
   MaterialIssue,
   CreateMaterialIssueRequest,
@@ -56,14 +58,12 @@ import { designTokens } from '@/theme/tokens';
 const ct = designTokens.colors;
 
 const MaterialIssuePage: React.FC = () => {
-  const [issues, setIssues] = useState<MaterialIssue[]>([]);
-  const [loading, setLoading] = useState(true);
+  const queryClient = useQueryClient();
   const [searchTerm, setSearchTerm] = useState('');
   const [statusFilter, setStatusFilter] = useState<string>('all');
   const [orderFilter, setOrderFilter] = useState<string>('');
   const [currentPage, setCurrentPage] = useState(1);
   const [pageSize] = useState(10);
-  const [total, setTotal] = useState(0);
   const [showDialog, setShowDialog] = useState(false);
   const [showDetailDialog, setShowDetailDialog] = useState(false);
   const [selectedIssue, setSelectedIssue] = useState<MaterialIssue | null>(null);
@@ -77,36 +77,51 @@ const MaterialIssuePage: React.FC = () => {
 
   const { addNotification } = useNotificationStore();
 
-  const loadIssues = useCallback(async () => {
-    try {
-      setLoading(true);
-      const params: ListParams = {
-        page: currentPage - 1,
-        pagesize: pageSize,
-      };
-      if (searchTerm) params.search = searchTerm;
-      if (statusFilter !== 'all') params.status = statusFilter;
+  const params: ListParams = {
+    page: currentPage - 1,
+    pagesize: pageSize,
+  };
+  if (searchTerm) params.search = searchTerm;
+  if (statusFilter !== 'all') params.status = statusFilter;
 
+  const { data: issuesData, isLoading: loading } = useQuery({
+    queryKey: [...QUERY_KEYS.MES.MATERIAL_ISSUES, params],
+    queryFn: async () => {
       const response = await mesApi.materialIssues.list(params);
       if (response.success && response.data) {
-        setIssues(response.data.issues || []);
-        setTotal(response.data.total || 0);
+        return {
+          issues: response.data.issues || [],
+          total: response.data.total || 0,
+        };
       }
-    } catch (error: unknown) {
-      apiLogger.error('加载物料领用记录失败:', error);
+      return { issues: [], total: 0 };
+    },
+  });
+
+  const issues = issuesData?.issues || [];
+  const total = issuesData?.total || 0;
+
+  const createMutation = useMutation({
+    mutationFn: (data: CreateMaterialIssueRequest) => mesApi.materialIssues.create(data),
+    onSuccess: () => {
+      addNotification({
+        type: 'success',
+        title: '创建成功',
+        message: '物料领用单已创建',
+      });
+      queryClient.invalidateQueries({ queryKey: QUERY_KEYS.MES.MATERIAL_ISSUES });
+      setShowDialog(false);
+      resetForm();
+    },
+    onError: (error: unknown) => {
+      apiLogger.error('创建物料领用单失败:', error);
       addNotification({
         type: 'error',
-        title: '加载失败',
-        message: '无法加载物料领用记录',
+        title: '操作失败',
+        message: '创建物料领用单失败',
       });
-    } finally {
-      setLoading(false);
-    }
-  }, [currentPage, pageSize, searchTerm, statusFilter, addNotification]);
-
-  useEffect(() => {
-    loadIssues();
-  }, [loadIssues]);
+    },
+  });
 
   const getStatusText = (status: string) => {
     const statusMap: Record<string, string> = {
@@ -120,30 +135,13 @@ const MaterialIssuePage: React.FC = () => {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    try {
-      await mesApi.materialIssues.create(formData);
-      addNotification({
-        type: 'success',
-        title: '创建成功',
-        message: '物料领用单已创建',
-      });
-      setShowDialog(false);
-      resetForm();
-      loadIssues();
-    } catch (error: unknown) {
-      apiLogger.error('创建物料领用单失败:', error);
-      addNotification({
-        type: 'error',
-        title: '操作失败',
-        message: '创建物料领用单失败',
-      });
-    }
+    createMutation.mutate(formData);
   };
 
-  const handleViewDetail = useCallback((issue: MaterialIssue) => {
+  const handleViewDetail = (issue: MaterialIssue) => {
     setSelectedIssue(issue);
     setShowDetailDialog(true);
-  }, []);
+  };
 
   const resetForm = () => {
     setSelectedIssue(null);

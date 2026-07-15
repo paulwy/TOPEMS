@@ -24,7 +24,11 @@ export const HotSearches: React.FC<HotSearchesProps> = ({ onSelect }) => {
 
   return (
     <Box sx={{ px: 2, py: 1 }}>
-      <Typography variant="caption" color="text.secondary" sx={{ mb: 1, display: 'block' }}>
+      <Typography
+        variant='caption'
+        color='text.secondary'
+        sx={{ mb: 1, display: 'block' }}
+      >
         🔥 热门搜索
       </Typography>
       <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 1, rowGap: 0.5 }}>
@@ -32,9 +36,12 @@ export const HotSearches: React.FC<HotSearchesProps> = ({ onSelect }) => {
           <Chip
             key={item.text}
             label={
-              <Box component="span" sx={{ display: 'flex', alignItems: 'center', gap: 0.5 }}>
+              <Box
+                component='span'
+                sx={{ display: 'flex', alignItems: 'center', gap: 0.5 }}
+              >
                 <Box
-                  component="span"
+                  component='span'
                   sx={{
                     fontWeight: 700,
                     fontSize: 10,
@@ -48,7 +55,7 @@ export const HotSearches: React.FC<HotSearchesProps> = ({ onSelect }) => {
                 <span>{item.text}</span>
                 {item.hot && (
                   <Box
-                    component="span"
+                    component='span'
                     sx={{
                       fontSize: 9,
                       color: 'error.main',
@@ -60,8 +67,8 @@ export const HotSearches: React.FC<HotSearchesProps> = ({ onSelect }) => {
                 )}
               </Box>
             }
-            size="small"
-            variant="outlined"
+            size='small'
+            variant='outlined'
             onClick={() => onSelect(item.text)}
             sx={{ cursor: 'pointer', height: 26 }}
           />

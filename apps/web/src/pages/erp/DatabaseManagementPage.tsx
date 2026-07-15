@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useMemo, useCallback } from 'react';
+import { useQuery } from '@tanstack/react-query';
 import {
   Database,
   Table,
@@ -58,7 +59,7 @@ import { useNotificationStore } from '@/store';
 import { apiLogger } from '@/utils/logger';
 import { useNavigate } from 'react-router-dom';
 import { ERP_PATHS } from '@/modules/erp/config';
-import { databaseApi, type TableInfo, type ColumnInfo } from '@/api/erp/database';
+import { databaseApi, type TableInfo, type ColumnInfo, type TableDetail } from '@/api/erp/database';
 import { extractErrorMessage } from '@/utils/errors';
 
 export interface BackupRecord {
@@ -133,18 +134,13 @@ const DatabaseManagementPage: React.FC = () => {
   const [searchQuery, setSearchQuery] = useState('');
   const [tableFilter, setTableFilter] = useState('');
 
-  const [tables, setTables] = useState<TableInfo[]>([]);
   const [backups, setBackups] = useState<BackupRecord[]>(mockBackups);
 
-  const [loading, setLoading] = useState(true);
   const [page, setPage] = useState(0);
   const [rowsPerPage, setRowsPerPage] = useState(10);
-  const [totalCount, setTotalCount] = useState(0);
 
   const [showStructureModal, setShowStructureModal] = useState(false);
   const [currentTable, setCurrentTable] = useState<TableInfo | null>(null);
-  const [tableColumns, setTableColumns] = useState<ColumnInfo[]>([]);
-  const [tableRowCount, setTableRowCount] = useState<number | null>(null);
 
   const [showBackupModal, setShowBackupModal] = useState(false);
   const [showRestoreModal, setShowRestoreModal] = useState(false);
@@ -156,61 +152,66 @@ const DatabaseManagementPage: React.FC = () => {
 
   const [restoreBackupId, setRestoreBackupId] = useState<string | null>(null);
 
-  const loadTables = useCallback(async () => {
-    setLoading(true);
-    try {
+  const tablesQuery = useQuery<TableInfo[]>({
+    queryKey: ['erp-database-tables', searchQuery],
+    queryFn: async () => {
       const res = await databaseApi.listTables({ search: searchQuery || undefined });
-      if (res.success && res.data) {
-        setTables(res.data);
-        setTotalCount(res.data.length);
-      }
-    } catch (err: unknown) {
-      apiLogger.error('加载数据表失败:', err);
-      addNotification({
-        title: '错误',
-        message: extractErrorMessage(err, '加载数据表失败'),
-        type: 'error',
-      });
-    } finally {
-      setLoading(false);
-    }
-  }, [searchQuery, addNotification]);
+      if (res.success && res.data) return res.data;
+      return [];
+    },
+    enabled: activeTab === 'tables',
+    staleTime: 5 * 60 * 1000,
+  });
+  const tables = tablesQuery.data ?? [];
+  const loading = tablesQuery.isLoading;
+
+  const tableDetailQuery = useQuery<TableDetail | null>({
+    queryKey: ['erp-database-table-detail', currentTable?.table_name],
+    queryFn: async () => {
+      if (!currentTable?.table_name) return null;
+      const res = await databaseApi.getTableDetail(currentTable.table_name);
+      return res.success && res.data ? res.data : null;
+    },
+    enabled: !!currentTable?.table_name && showStructureModal,
+    staleTime: 5 * 60 * 1000,
+  });
+  const tableColumns = tableDetailQuery.data?.columns ?? [];
+  const tableRowCount = tableDetailQuery.data?.row_count ?? null;
 
   useEffect(() => {
-    if (activeTab === 'tables') {
-      loadTables();
-    } else {
-      setLoading(false);
+    if (tablesQuery.isError) {
+      apiLogger.error('加载数据表失败:', tablesQuery.error);
+      addNotification({
+        title: '错误',
+        message: extractErrorMessage(tablesQuery.error, '加载数据表失败'),
+        type: 'error',
+      });
     }
-  }, [activeTab, loadTables]);
+  }, [tablesQuery.isError, tablesQuery.error, addNotification]);
+
+  useEffect(() => {
+    if (tableDetailQuery.isError) {
+      apiLogger.error('获取表结构失败:', tableDetailQuery.error);
+      addNotification({
+        title: '错误',
+        message: extractErrorMessage(tableDetailQuery.error, '获取表结构失败'),
+        type: 'error',
+      });
+    }
+  }, [tableDetailQuery.isError, tableDetailQuery.error, addNotification]);
 
   const filteredTables = useMemo(() => {
     return tables.filter((table) => {
       const matchesSearch =
-        !searchQuery ||
-        table.table_name.toLowerCase().includes(searchQuery.toLowerCase());
+        !searchQuery || table.table_name.toLowerCase().includes(searchQuery.toLowerCase());
       return matchesSearch;
     });
   }, [tables, searchQuery]);
 
-  const handleViewStructure = useCallback(async (table: TableInfo) => {
+  const handleViewStructure = useCallback((table: TableInfo) => {
     setCurrentTable(table);
-    try {
-      const res = await databaseApi.getTableDetail(table.table_name);
-      if (res.success && res.data) {
-        setTableColumns(res.data.columns);
-        setTableRowCount(res.data.row_count);
-      }
-    } catch (err: unknown) {
-      apiLogger.error('获取表结构失败:', err);
-      addNotification({
-        title: '错误',
-        message: extractErrorMessage(err, '获取表结构失败'),
-        type: 'error',
-      });
-    }
     setShowStructureModal(true);
-  }, [addNotification]);
+  }, []);
 
   const handleBackup = () => {
     setShowBackupModal(true);
@@ -325,7 +326,7 @@ const DatabaseManagementPage: React.FC = () => {
           {
             label: '刷新',
             icon: <RefreshCw size={16} />,
-            onClick: loadTables,
+            onClick: () => tablesQuery.refetch(),
             variant: 'outlined',
           },
           {
@@ -591,7 +592,7 @@ const DatabaseManagementPage: React.FC = () => {
                 </TableContainer>
                 <TablePagination
                   component='div'
-                  count={totalCount}
+                  count={tables.length}
                   page={page}
                   onPageChange={(_, newPage) => setPage(newPage)}
                   rowsPerPage={rowsPerPage}

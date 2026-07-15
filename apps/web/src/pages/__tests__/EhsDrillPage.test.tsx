@@ -109,6 +109,7 @@ vi.mock('@/store', () => ({
   useSetSidebarCollapsed: vi.fn(),
 }));
 
+describe('EhsDrillPage', () => {
   it('should render without crashing', () => {
     const { container } = render(
       <BrowserRouter>
@@ -117,7 +118,8 @@ vi.mock('@/store', () => ({
     );
     expect(container).toBeDefined();
   });
-
+});
+describe('EhsDrillPage', () => {
   it('should have drill API methods defined', () => {
     render(
       <BrowserRouter>

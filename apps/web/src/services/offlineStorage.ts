@@ -61,7 +61,9 @@ async function getDB(): Promise<IDBDatabase> {
   });
 }
 
-export async function saveOfflineRecord(record: Omit<OfflineRecord, 'id' | 'status' | 'retryCount'>): Promise<string> {
+export async function saveOfflineRecord(
+  record: Omit<OfflineRecord, 'id' | 'status' | 'retryCount'>
+): Promise<string> {
   const db = await getDB();
   const id = `${record.service}_${record.endpoint}_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
 
@@ -83,7 +85,9 @@ export async function saveOfflineRecord(record: Omit<OfflineRecord, 'id' | 'stat
   });
 }
 
-export async function getOfflineRecords(status?: OfflineRecord['status']): Promise<OfflineRecord[]> {
+export async function getOfflineRecords(
+  status?: OfflineRecord['status']
+): Promise<OfflineRecord[]> {
   const db = await getDB();
 
   return new Promise((resolve, reject) => {
@@ -104,7 +108,10 @@ export async function getOfflineRecords(status?: OfflineRecord['status']): Promi
   });
 }
 
-export async function updateOfflineRecord(id: string, updates: Partial<OfflineRecord>): Promise<void> {
+export async function updateOfflineRecord(
+  id: string,
+  updates: Partial<OfflineRecord>
+): Promise<void> {
   const db = await getDB();
 
   return new Promise((resolve, reject) => {
@@ -180,7 +187,10 @@ export async function saveCacheEntry(entry: Omit<CacheEntry, 'id' | 'timestamp'>
   });
 }
 
-export async function getCacheEntry(service: ServiceName, endpoint: string): Promise<CacheEntry | null> {
+export async function getCacheEntry(
+  service: ServiceName,
+  endpoint: string
+): Promise<CacheEntry | null> {
   const db = await getDB();
   const id = `${service}_${endpoint}`;
 

@@ -77,11 +77,8 @@ async fn main() -> topems_shared::Result<()> {
 
     let public_routes: Router<modules::ApiState> = Router::new()
         .route("/health", get(health_check))
-        .route(
-            "/api/core/rd/v1/health/detailed",
-            get(health_check_detailed),
-        )
-        .route("/api/core/rd/v1/metrics", get(get_metrics))
+        .route("/api/core/rd/health/detailed", get(health_check_detailed))
+        .route("/api/core/rd/metrics", get(get_metrics))
         .route("/api-docs/openapi.json", get(serve_openapi_json))
         .route(
             "/metrics",

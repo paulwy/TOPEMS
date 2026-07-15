@@ -75,16 +75,16 @@ pub struct SegmentQueryParams {
 pub fn create_routes() -> Router<ApiState> {
     Router::new()
         .route(
-            "/api/core/crm/v1/segments",
+            "/api/core/crm/segments",
             get(list_segments).post(create_segment),
         )
-        .route("/api/core/crm/v1/segments/{id}", get(get_segment))
+        .route("/api/core/crm/segments/{id}", get(get_segment))
         .route(
-            "/api/core/crm/v1/segments/{id}/customers",
+            "/api/core/crm/segments/{id}/customers",
             get(get_segment_customers),
         )
-        .route("/api/core/crm/v1/segments/{id}", delete(delete_segment))
-        .route("/api/core/crm/v1/segments/auto", get(auto_segment))
+        .route("/api/core/crm/segments/{id}", delete(delete_segment))
+        .route("/api/core/crm/segments/auto", get(auto_segment))
 }
 
 async fn list_segments(

@@ -12,7 +12,9 @@ import {
   IconButton,
   Button,
 } from '@mui/material';
-import React, { useState, useEffect, useMemo, useCallback } from 'react';
+import React, { useState, useMemo, useCallback } from 'react';
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import { QUERY_KEYS } from '@/lib/reactQuery';
 import { Key, Plus, Trash2, ChevronLeft, Shield, AlertCircle, RefreshCw, Edit } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { authApi, type Permission } from '@/api/iam';
@@ -52,9 +54,7 @@ const PermissionManagementPage: React.FC<PermissionManagementPageProps> = ({
 }) => {
   const navigate = useNavigate();
   const addNotification = useNotificationStore((state) => state.addNotification);
-  const [permissions, setPermissions] = useState<Permission[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
+  const queryClient = useQueryClient();
   const [searchQuery, setSearchQuery] = useState('');
   const [showCreateModal, setShowCreateModal] = useState(false);
   const [editingPermission, setEditingPermission] = useState<Permission | null>(null);
@@ -70,125 +70,143 @@ const PermissionManagementPage: React.FC<PermissionManagementPageProps> = ({
   const [page, setPage] = useState(1);
   const [pageSize] = useState(10);
 
-  const loadPermissions = useCallback(async () => {
-    setLoading(true);
-    setError(null);
-    try {
+  const permissionsQuery = useQuery({
+    queryKey: QUERY_KEYS.IAM.PERMISSIONS,
+    queryFn: async () => {
       const res = await authApi.listPermissions();
       if (res.success && res.data) {
-        setPermissions(res.data);
+        return res.data;
       }
-    } catch (err: unknown) {
-      setError(extractErrorMessage(err, '加载权限失败'));
+      throw new Error(res.message || '加载权限失败');
+    },
+  });
+
+  const permissions = permissionsQuery.data || [];
+  const loading = permissionsQuery.isLoading;
+  const error = permissionsQuery.error
+    ? extractErrorMessage(permissionsQuery.error, '加载权限失败')
+    : null;
+
+  const loadPermissions = () => {
+    queryClient.invalidateQueries({ queryKey: QUERY_KEYS.IAM.PERMISSIONS });
+  };
+
+  const createPermissionMutation = useMutation({
+    mutationFn: async (data: {
+      name: string;
+      code: string;
+      category: string;
+      module: string;
+      description?: string;
+    }) => {
+      const res = await authApi.createPermission(data);
+      if (!res.success) {
+        throw new Error(res.message || '创建权限失败');
+      }
+      return res.data;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: QUERY_KEYS.IAM.PERMISSIONS });
       addNotification({
-        title: '失败',
-        message: '加载权限失败',
-        type: 'error',
+        title: '成功',
+        message: '权限创建成功',
+        type: 'success',
       });
-    } finally {
-      setLoading(false);
-    }
-  }, [addNotification]);
-
-  useEffect(() => {
-    loadPermissions();
-  }, [loadPermissions]);
-
-  const handleCreatePermission = async (e: React.FormEvent) => {
-    e.preventDefault();
-    try {
-      const res = await authApi.createPermission({
-        name: newPermission.name,
-        code: newPermission.code,
-        category: newPermission.category,
-        module: newPermission.category,
-        description: newPermission.description || undefined,
-      });
-
-      if (res.success) {
-        addNotification({
-          title: '成功',
-          message: '权限创建成功',
-          type: 'success',
-        });
-        setShowCreateModal(false);
-        setNewPermission({ name: '', code: '', category: '', description: '' });
-        loadPermissions();
-      } else {
-        addNotification({
-          title: '失败',
-          message: res.message || '创建权限失败',
-          type: 'error',
-        });
-      }
-    } catch (err: unknown) {
+      setShowCreateModal(false);
+      setNewPermission({ name: '', code: '', category: '', description: '' });
+    },
+    onError: (err: unknown) => {
       addNotification({
         title: '失败',
         message: extractErrorMessage(err, '创建权限失败'),
         type: 'error',
       });
-    }
-  };
+    },
+  });
 
-  const handleUpdatePermission = async (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!editingPermission) return;
-    try {
-      const res = await authApi.updatePermission(editingPermission.id, {
-        name: editingPermission.name,
-        description: editingPermission.description,
-      });
-
-      if (res.success) {
-        addNotification({
-          title: '成功',
-          message: '权限更新成功',
-          type: 'success',
-        });
-        setEditingPermission(null);
-        loadPermissions();
-      } else {
-        addNotification({
-          title: '失败',
-          message: res.message || '更新权限失败',
-          type: 'error',
-        });
+  const updatePermissionMutation = useMutation({
+    mutationFn: async ({
+      id,
+      data,
+    }: {
+      id: string;
+      data: { name: string; description?: string };
+    }) => {
+      const res = await authApi.updatePermission(id, data);
+      if (!res.success) {
+        throw new Error(res.message || '更新权限失败');
       }
-    } catch (err: unknown) {
+      return res.data;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: QUERY_KEYS.IAM.PERMISSIONS });
+      addNotification({
+        title: '成功',
+        message: '权限更新成功',
+        type: 'success',
+      });
+      setEditingPermission(null);
+    },
+    onError: (err: unknown) => {
       addNotification({
         title: '失败',
         message: extractErrorMessage(err, '更新权限失败'),
         type: 'error',
       });
-    }
-  };
+    },
+  });
 
-  const handleDeletePermission = async (permissionId: string) => {
-    if (!confirm('确定要删除这个权限吗？删除后相关角色的权限也会被移除。')) return;
-
-    try {
+  const deletePermissionMutation = useMutation({
+    mutationFn: async (permissionId: string) => {
       const res = await authApi.deletePermission(permissionId);
-      if (res.success) {
-        addNotification({
-          title: '成功',
-          message: '权限删除成功',
-          type: 'success',
-        });
-        loadPermissions();
-      } else {
-        addNotification({
-          title: '失败',
-          message: res.message || '删除权限失败',
-          type: 'error',
-        });
+      if (!res.success) {
+        throw new Error(res.message || '删除权限失败');
       }
-    } catch (err: unknown) {
+      return res.data;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: QUERY_KEYS.IAM.PERMISSIONS });
+      addNotification({
+        title: '成功',
+        message: '权限删除成功',
+        type: 'success',
+      });
+    },
+    onError: (err: unknown) => {
       addNotification({
         title: '失败',
         message: extractErrorMessage(err, '删除权限失败'),
         type: 'error',
       });
-    }
+    },
+  });
+
+  const handleCreatePermission = (e: React.FormEvent) => {
+    e.preventDefault();
+    createPermissionMutation.mutate({
+      name: newPermission.name,
+      code: newPermission.code,
+      category: newPermission.category,
+      module: newPermission.category,
+      description: newPermission.description || undefined,
+    });
+  };
+
+  const handleUpdatePermission = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!editingPermission) return;
+    updatePermissionMutation.mutate({
+      id: editingPermission.id,
+      data: {
+        name: editingPermission.name,
+        description: editingPermission.description,
+      },
+    });
+  };
+
+  const handleDeletePermission = (permissionId: string) => {
+    if (!confirm('确定要删除这个权限吗？删除后相关角色的权限也会被移除。')) return;
+    deletePermissionMutation.mutate(permissionId);
   };
 
   // 过滤后的数据
@@ -447,7 +465,11 @@ const PermissionManagementPage: React.FC<PermissionManagementPageProps> = ({
       <ListPageTemplate
         title=''
         subtitle=''
-        breadcrumbs={[{ label: '首页', href: DASHBOARD_PATHS.dashboard }, { label: '系统管理' }, { label: '权限管理' }]}
+        breadcrumbs={[
+          { label: '首页', href: DASHBOARD_PATHS.dashboard },
+          { label: '系统管理' },
+          { label: '权限管理' },
+        ]}
         backButton={{
           href: DASHBOARD_PATHS.dashboard,
           onClick: () => navigate(DASHBOARD_PATHS.dashboard),

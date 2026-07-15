@@ -1,6 +1,6 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { renderHook, waitFor } from '@testing-library/react';
-import { useCrud, UseCrudOptions } from '../useCrud';
+import { useCrud } from '../useCrud';
 import type { AxiosInstance } from 'axios';
 
 const createMockApi = () => {

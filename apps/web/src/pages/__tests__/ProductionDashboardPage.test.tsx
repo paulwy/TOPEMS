@@ -2,6 +2,7 @@ import React from 'react';
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { render, screen, waitFor } from '@testing-library/react';
 import { BrowserRouter } from 'react-router-dom';
+import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import ProductionDashboardPage from '../mes/ProductionDashboardPage';
 import {
   productionOrderApi,
@@ -113,6 +114,29 @@ vi.mock('@/store', () => ({
   useToggleSidebarCollapsed: vi.fn(),
   useSetSidebarCollapsed: vi.fn(),
 }));
+
+const createTestQueryClient = () =>
+  new QueryClient({
+    defaultOptions: {
+      queries: {
+        retry: false,
+      },
+    },
+  });
+
+const renderWithProviders = (ui: React.ReactElement) => {
+  const queryClient = createTestQueryClient();
+  return render(
+    <QueryClientProvider client={queryClient}>
+      <AuthProvider>
+        <BrowserRouter>{ui}</BrowserRouter>
+      </AuthProvider>
+    </QueryClientProvider>
+  );
+};
+
+describe('ProductionDashboardPage', () => {
+  beforeEach(() => {
     (productionOrderApi.list as vi.Mock).mockResolvedValue({
       success: true,
       data: { orders: [], total: 0, page: 1, pagesize: 200 },

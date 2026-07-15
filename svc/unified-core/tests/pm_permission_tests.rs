@@ -12,6 +12,19 @@ use serde_json::{json, Value};
 
 const API_URL: &str = "http://localhost:8000";
 
+/// 检查 API 服务是否可用
+async fn ensure_api_available() -> bool {
+    reqwest::Client::builder()
+        .timeout(std::time::Duration::from_secs(2))
+        .build()
+        .unwrap()
+        .get(format!("{}/api/core/iam/auth/login", API_URL))
+        .send()
+        .await
+        .map(|resp| !resp.status().is_server_error())
+        .unwrap_or(false)
+}
+
 fn create_client() -> Client {
     Client::new()
 }
@@ -20,7 +33,7 @@ async fn login(username: &str, password: &str) -> Result<String, String> {
     let client = create_client();
 
     let response = client
-        .post(format!("{}/api/v1/auth/login", API_URL))
+        .post(format!("{}/api/core/iam/auth/login", API_URL))
         .json(&json!({ "username": username, "password": password }))
         .send()
         .await
@@ -85,8 +98,11 @@ async fn auth_request(
 // ==================== PM-001: 查看项目列表 ====================
 
 #[tokio::test]
-#[ignore]
 async fn test_pm_001_list_projects() {
+    if !ensure_api_available().await {
+        eprintln!("⏭ 跳过: API服务未运行 ({})", API_URL);
+        return;
+    }
     tracing::info!("测试 PM-001: 查看项目列表");
 
     let token = login("admin", "admin123").await.expect("管理员登录失败");
@@ -109,8 +125,11 @@ async fn test_pm_001_list_projects() {
 // ==================== PM-002: 创建项目 ====================
 
 #[tokio::test]
-#[ignore]
 async fn test_pm_002_create_project() {
+    if !ensure_api_available().await {
+        eprintln!("⏭ 跳过: API服务未运行 ({})", API_URL);
+        return;
+    }
     tracing::info!("测试 PM-002: 创建项目");
 
     let token = login("admin", "admin123").await.expect("管理员登录失败");
@@ -151,8 +170,11 @@ async fn test_pm_002_create_project() {
 // ==================== PM-003: 更新项目 ====================
 
 #[tokio::test]
-#[ignore]
 async fn test_pm_003_update_project() {
+    if !ensure_api_available().await {
+        eprintln!("⏭ 跳过: API服务未运行 ({})", API_URL);
+        return;
+    }
     tracing::info!("测试 PM-003: 更新项目");
 
     let token = login("admin", "admin123").await.expect("管理员登录失败");
@@ -199,8 +221,11 @@ async fn test_pm_003_update_project() {
 // ==================== PM-004: 删除项目 ====================
 
 #[tokio::test]
-#[ignore]
 async fn test_pm_004_delete_project() {
+    if !ensure_api_available().await {
+        eprintln!("⏭ 跳过: API服务未运行 ({})", API_URL);
+        return;
+    }
     tracing::info!("测试 PM-004: 删除项目");
 
     let token = login("admin", "admin123").await.expect("管理员登录失败");
@@ -259,8 +284,11 @@ async fn test_pm_004_delete_project() {
 // ==================== PM-005: 查看项目详情 ====================
 
 #[tokio::test]
-#[ignore]
 async fn test_pm_005_view_project_detail() {
+    if !ensure_api_available().await {
+        eprintln!("⏭ 跳过: API服务未运行 ({})", API_URL);
+        return;
+    }
     tracing::info!("测试 PM-005: 查看项目详情");
 
     let token = login("admin", "admin123").await.expect("管理员登录失败");
@@ -307,8 +335,11 @@ async fn test_pm_005_view_project_detail() {
 // ==================== PM-006: 非成员访问项目 ====================
 
 #[tokio::test]
-#[ignore]
 async fn test_pm_006_non_member_access() {
+    if !ensure_api_available().await {
+        eprintln!("⏭ 跳过: API服务未运行 ({})", API_URL);
+        return;
+    }
     tracing::info!("测试 PM-006: 非成员访问项目");
 
     match login("test_employee", "admin123").await {
@@ -345,8 +376,11 @@ async fn test_pm_006_non_member_access() {
 // ==================== PM-007: 添加项目成员 ====================
 
 #[tokio::test]
-#[ignore]
 async fn test_pm_007_add_member() {
+    if !ensure_api_available().await {
+        eprintln!("⏭ 跳过: API服务未运行 ({})", API_URL);
+        return;
+    }
     tracing::info!("测试 PM-007: 添加项目成员");
 
     let token = login("admin", "admin123").await.expect("管理员登录失败");
@@ -406,8 +440,11 @@ async fn test_pm_007_add_member() {
 // ==================== PM-008: 移除项目成员 ====================
 
 #[tokio::test]
-#[ignore]
 async fn test_pm_008_remove_member() {
+    if !ensure_api_available().await {
+        eprintln!("⏭ 跳过: API服务未运行 ({})", API_URL);
+        return;
+    }
     tracing::info!("测试 PM-008: 移除项目成员");
 
     let token = login("admin", "admin123").await.expect("管理员登录失败");
@@ -489,8 +526,11 @@ async fn test_pm_008_remove_member() {
 // ==================== PM-009: 创建任务 ====================
 
 #[tokio::test]
-#[ignore]
 async fn test_pm_009_create_task() {
+    if !ensure_api_available().await {
+        eprintln!("⏭ 跳过: API服务未运行 ({})", API_URL);
+        return;
+    }
     tracing::info!("测试 PM-009: 创建任务");
 
     let token = login("admin", "admin123").await.expect("管理员登录失败");
@@ -549,8 +589,11 @@ async fn test_pm_009_create_task() {
 // ==================== PM-010: 分配任务 ====================
 
 #[tokio::test]
-#[ignore]
 async fn test_pm_010_assign_task() {
+    if !ensure_api_available().await {
+        eprintln!("⏭ 跳过: API服务未运行 ({})", API_URL);
+        return;
+    }
     tracing::info!("测试 PM-010: 分配任务");
 
     let token = login("admin", "admin123").await.expect("管理员登录失败");
@@ -622,8 +665,11 @@ async fn test_pm_010_assign_task() {
 // ==================== PM-011: 更新任务状态 ====================
 
 #[tokio::test]
-#[ignore]
 async fn test_pm_011_update_task_status() {
+    if !ensure_api_available().await {
+        eprintln!("⏭ 跳过: API服务未运行 ({})", API_URL);
+        return;
+    }
     tracing::info!("测试 PM-011: 更新任务状态");
 
     let token = login("admin", "admin123").await.expect("管理员登录失败");
@@ -670,8 +716,11 @@ async fn test_pm_011_update_task_status() {
 // ==================== PM-012: 删除任务 ====================
 
 #[tokio::test]
-#[ignore]
 async fn test_pm_012_delete_task() {
+    if !ensure_api_available().await {
+        eprintln!("⏭ 跳过: API服务未运行 ({})", API_URL);
+        return;
+    }
     tracing::info!("测试 PM-012: 删除任务");
 
     let token = login("admin", "admin123").await.expect("管理员登录失败");
@@ -730,8 +779,11 @@ async fn test_pm_012_delete_task() {
 // ==================== 测试总结 ====================
 
 #[tokio::test]
-#[ignore]
 async fn run_all_pm_tests_summary() {
+    if !ensure_api_available().await {
+        eprintln!("⏭ 跳过: API服务未运行 ({})", API_URL);
+        return;
+    }
     tracing::info!("========================================");
     tracing::info!("  PM 权限测试套件");
     tracing::info!("========================================");

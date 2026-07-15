@@ -12,6 +12,19 @@ use serde_json::{json, Value};
 
 const API_URL: &str = "http://localhost:8000";
 
+/// 检查 API 服务是否可用
+async fn ensure_api_available() -> bool {
+    reqwest::Client::builder()
+        .timeout(std::time::Duration::from_secs(2))
+        .build()
+        .unwrap()
+        .get(format!("{}/api/core/iam/auth/login", API_URL))
+        .send()
+        .await
+        .map(|resp| !resp.status().is_server_error())
+        .unwrap_or(false)
+}
+
 fn create_client() -> Client {
     Client::new()
 }
@@ -19,7 +32,7 @@ fn create_client() -> Client {
 async fn login(username: &str, password: &str) -> Result<String, String> {
     let client = create_client();
     let response = client
-        .post(format!("{}/api/v1/auth/login", API_URL))
+        .post(format!("{}/api/core/iam/auth/login", API_URL))
         .json(&json!({ "username": username, "password": password }))
         .send()
         .await
@@ -73,8 +86,11 @@ async fn auth_request(
 // ==================== ERP-001: 查看采购订单列表 ====================
 
 #[tokio::test]
-#[ignore]
 async fn test_erp_001_list_purchase_orders() {
+    if !ensure_api_available().await {
+        eprintln!("⏭ 跳过: API服务未运行 ({})", API_URL);
+        return;
+    }
     tracing::info!("测试 ERP-001: 查看采购订单列表");
     let token = login("admin", "admin123").await.expect("管理员登录失败");
     let client = create_client();
@@ -91,8 +107,11 @@ async fn test_erp_001_list_purchase_orders() {
 // ==================== ERP-002: 创建采购订单 ====================
 
 #[tokio::test]
-#[ignore]
 async fn test_erp_002_create_purchase_order() {
+    if !ensure_api_available().await {
+        eprintln!("⏭ 跳过: API服务未运行 ({})", API_URL);
+        return;
+    }
     tracing::info!("测试 ERP-002: 创建采购订单");
     let token = login("admin", "admin123").await.expect("管理员登录失败");
     let client = create_client();
@@ -125,8 +144,11 @@ async fn test_erp_002_create_purchase_order() {
 // ==================== ERP-003: 查看销售订单列表 ====================
 
 #[tokio::test]
-#[ignore]
 async fn test_erp_003_list_sales_orders() {
+    if !ensure_api_available().await {
+        eprintln!("⏭ 跳过: API服务未运行 ({})", API_URL);
+        return;
+    }
     tracing::info!("测试 ERP-003: 查看销售订单列表");
     let token = login("admin", "admin123").await.expect("管理员登录失败");
     let client = create_client();
@@ -143,8 +165,11 @@ async fn test_erp_003_list_sales_orders() {
 // ==================== ERP-004: 创建销售订单 ====================
 
 #[tokio::test]
-#[ignore]
 async fn test_erp_004_create_sales_order() {
+    if !ensure_api_available().await {
+        eprintln!("⏭ 跳过: API服务未运行 ({})", API_URL);
+        return;
+    }
     tracing::info!("测试 ERP-004: 创建销售订单");
     let token = login("admin", "admin123").await.expect("管理员登录失败");
     let client = create_client();
@@ -172,8 +197,11 @@ async fn test_erp_004_create_sales_order() {
 // ==================== ERP-005: 查看库存 ====================
 
 #[tokio::test]
-#[ignore]
 async fn test_erp_005_view_inventory() {
+    if !ensure_api_available().await {
+        eprintln!("⏭ 跳过: API服务未运行 ({})", API_URL);
+        return;
+    }
     tracing::info!("测试 ERP-005: 查看库存");
     let token = login("admin", "admin123").await.expect("管理员登录失败");
     let client = create_client();
@@ -190,8 +218,11 @@ async fn test_erp_005_view_inventory() {
 // ==================== ERP-006: 库存盘点 ====================
 
 #[tokio::test]
-#[ignore]
 async fn test_erp_006_stocktaking() {
+    if !ensure_api_available().await {
+        eprintln!("⏭ 跳过: API服务未运行 ({})", API_URL);
+        return;
+    }
     tracing::info!("测试 ERP-006: 库存盘点");
     let token = login("admin", "admin123").await.expect("管理员登录失败");
     let client = create_client();
@@ -217,8 +248,11 @@ async fn test_erp_006_stocktaking() {
 // ==================== ERP-007: 查看财务数据 ====================
 
 #[tokio::test]
-#[ignore]
 async fn test_erp_007_view_finance() {
+    if !ensure_api_available().await {
+        eprintln!("⏭ 跳过: API服务未运行 ({})", API_URL);
+        return;
+    }
     tracing::info!("测试 ERP-007: 查看财务数据");
     let token = login("admin", "admin123").await.expect("管理员登录失败");
     let client = create_client();
@@ -235,8 +269,11 @@ async fn test_erp_007_view_finance() {
 // ==================== ERP-008: 普通用户查看财务 ====================
 
 #[tokio::test]
-#[ignore]
 async fn test_erp_008_employee_view_finance() {
+    if !ensure_api_available().await {
+        eprintln!("⏭ 跳过: API服务未运行 ({})", API_URL);
+        return;
+    }
     tracing::info!("测试 ERP-008: 普通用户查看财务");
     match login("test_employee", "admin123").await {
         Ok(token) => {
@@ -256,8 +293,11 @@ async fn test_erp_008_employee_view_finance() {
 // ==================== 测试总结 ====================
 
 #[tokio::test]
-#[ignore]
 async fn run_all_erp_tests_summary() {
+    if !ensure_api_available().await {
+        eprintln!("⏭ 跳过: API服务未运行 ({})", API_URL);
+        return;
+    }
     tracing::info!("========================================");
     tracing::info!("  ERP 权限测试套件 (8个用例)");
     tracing::info!("========================================");

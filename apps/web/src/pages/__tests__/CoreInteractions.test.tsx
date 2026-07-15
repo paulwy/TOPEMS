@@ -2,11 +2,17 @@ import React from 'react';
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { render, screen, waitFor, fireEvent } from '@testing-library/react';
 import { BrowserRouter } from 'react-router-dom';
+import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import WorkStationPage from '../mes/WorkStationPage';
 import { mesApi } from '@/api/mes';
 import { useNotificationStore, useAuthStore } from '@/store';
 
 const mockAddNotification = vi.fn();
+
+const mockWorkStations = [
+  { id: '1', name: '焊接工作站', code: 'WS-WELD-001', status: 'active' },
+  { id: '2', name: '装配工作站', code: 'WS-ASSY-001', status: 'active' },
+];
 
 vi.mock('@/api/mes', () => ({
   mesApi: {
@@ -109,7 +115,21 @@ vi.mock('@/store', () => ({
   useToggleSidebarCollapsed: vi.fn(),
   useSetSidebarCollapsed: vi.fn(),
 }));
-    useNotificationStore.getState.mockReturnValue({
+
+const queryClient = new QueryClient();
+
+function renderWithProviders(ui: React.ReactElement) {
+  return render(
+    <QueryClientProvider client={queryClient}>
+      <BrowserRouter>{ui}</BrowserRouter>
+    </QueryClientProvider>
+  );
+}
+
+describe('CoreInteractions', () => {
+  beforeEach(() => {
+    vi.clearAllMocks();
+    (useNotificationStore as vi.Mock).mockReturnValue({
       addNotification: mockAddNotification,
       notifications: [],
       removeNotification: vi.fn(),
@@ -161,6 +181,7 @@ vi.mock('@/store', () => ({
     renderWithProviders(<WorkStationPage />);
     await waitFor(() => {
       expect(mockAddNotification).toHaveBeenCalledWith(expect.objectContaining({ type: 'error' }));
+    });
   });
 
   it('should open create dialog when clicking add button', async () => {

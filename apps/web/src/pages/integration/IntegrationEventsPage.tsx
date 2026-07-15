@@ -53,90 +53,14 @@ interface IntegrationEvent {
   status: string;
 }
 
-const mockEvents: IntegrationEvent[] = [
-  {
-    id: '1',
-    time: '2024-01-15 10:30:25',
-    event_type: 'sync',
-    connection_name: '金蝶云星空 ERP',
-    description: '采购订单同步完成',
-    records_count: 156,
-    status: 'success',
-  },
-  {
-    id: '2',
-    time: '2024-01-15 10:29:10',
-    event_type: 'error',
-    connection_name: 'Salesforce CRM',
-    description: '连接超时，API限流',
-    records_count: 0,
-    status: 'failed',
-  },
-  {
-    id: '3',
-    time: '2024-01-15 10:28:45',
-    event_type: 'warning',
-    connection_name: '用友 U8 WMS',
-    description: '部分数据校验失败',
-    records_count: 3,
-    status: 'success',
-  },
-  {
-    id: '4',
-    time: '2024-01-15 10:25:00',
-    event_type: 'sync',
-    connection_name: '鼎捷 MES',
-    description: '工单数据同步完成',
-    records_count: 89,
-    status: 'success',
-  },
-  {
-    id: '5',
-    time: '2024-01-15 10:20:30',
-    event_type: 'sync',
-    connection_name: 'SAP S/4 HANA',
-    description: '财务主数据同步完成',
-    records_count: 234,
-    status: 'success',
-  },
-  {
-    id: '6',
-    time: '2024-01-15 10:15:00',
-    event_type: 'error',
-    connection_name: 'SCM 供应链',
-    description: '网络异常，连接断开',
-    records_count: 0,
-    status: 'failed',
-  },
-  {
-    id: '7',
-    time: '2024-01-15 10:10:00',
-    event_type: 'warning',
-    connection_name: 'CRM 客户关系',
-    description: '字段映射缺失，请检查配置',
-    records_count: 12,
-    status: 'success',
-  },
-  {
-    id: '8',
-    time: '2024-01-15 10:00:00',
-    event_type: 'sync',
-    connection_name: '金蝶云星空 ERP',
-    description: '库存数据同步完成',
-    records_count: 567,
-    status: 'success',
-  },
-];
-
 export const IntegrationEventsPage: React.FC = () => {
   const addNotification = useNotificationStore((state) => state.addNotification);
   const queryClient = useQueryClient();
 
-  const { data: events = [], isLoading: loading } = useQuery({
+  const { data: events = [], isLoading: loading } = useQuery<IntegrationEvent[]>({
     queryKey: ['integration-events'],
     queryFn: async () => {
-      await new Promise((resolve) => setTimeout(resolve, 300));
-      return mockEvents;
+      return [];
     },
     staleTime: 5 * 60 * 1000,
   });
@@ -406,7 +330,12 @@ export const IntegrationEventsPage: React.FC = () => {
         }}
         pagination={{ page, pageSize, total: filteredEvents.length, onPageChange: setPage }}
         actions={[
-          { label: '刷新', icon: <RefreshCw size={16} />, onClick: handleRefresh, variant: 'outlined' },
+          {
+            label: '刷新',
+            icon: <RefreshCw size={16} />,
+            onClick: handleRefresh,
+            variant: 'outlined',
+          },
         ]}
         onRefresh={handleRefresh}
         emptyMessage='暂无事件记录'

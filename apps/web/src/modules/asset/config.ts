@@ -34,7 +34,10 @@ export const assetModuleConfig: RouteModuleConfig = {
     },
     {
       path: ASSET_PATHS.categories,
-      element: lazyWithRetry(() => import('@/pages/asset/CategoryManagementPage'), 'CategoryManagementPage'),
+      element: lazyWithRetry(
+        () => import('@/pages/asset/CategoryManagementPage'),
+        'CategoryManagementPage'
+      ),
       module: 'asset',
       code: 'asset-categories',
       title: '资产分类',
@@ -77,8 +80,23 @@ export const assetNavConfig: ModuleNavConfig = {
   order: 91,
   navItems: [
     { code: 'asset-list', label: '资产列表', path: ASSET_PATHS.list, showInSidebar: true },
-    { code: 'asset-categories', label: '资产分类', path: ASSET_PATHS.categories, showInSidebar: true },
-    { code: 'asset-depreciation', label: '折旧管理', path: ASSET_PATHS.depreciation, showInSidebar: true },
-    { code: 'asset-transfers', label: '资产调拨', path: ASSET_PATHS.transfers, showInSidebar: true },
+    {
+      code: 'asset-categories',
+      label: '资产分类',
+      path: ASSET_PATHS.categories,
+      showInSidebar: true,
+    },
+    {
+      code: 'asset-depreciation',
+      label: '折旧管理',
+      path: ASSET_PATHS.depreciation,
+      showInSidebar: true,
+    },
+    {
+      code: 'asset-transfers',
+      label: '资产调拨',
+      path: ASSET_PATHS.transfers,
+      showInSidebar: true,
+    },
   ],
 };

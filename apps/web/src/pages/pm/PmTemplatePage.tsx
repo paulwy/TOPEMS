@@ -1,6 +1,7 @@
 import React, { useState, useMemo } from 'react';
 import { logger } from '@/utils/logger';
 import { useNotificationStore } from '@/store';
+import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { Plus, Search } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import {
@@ -23,10 +24,26 @@ import { PM_PATHS } from '@/modules/pm/config';
 
 const PmTemplatePage: React.FC = () => {
   const navigate = useNavigate();
+  const addNotification = useNotificationStore((state) => state.addNotification);
+  const queryClient = useQueryClient();
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedTemplate, setSelectedTemplate] = useState<ProjectTemplate | null>(null);
   const [isModalOpen, setIsModalOpen] = useState(false);
-  const [loading, setLoading] = useState(false);
+
+  const createProjectMutation = useMutation({
+    mutationFn: (data: CreateProjectRequest) => pmApi.projects.create(data),
+    onSuccess: (response) => {
+      if (response.success) {
+        navigate(PM_PATHS.projects);
+      }
+    },
+    onError: (err: unknown) => {
+      logger.error('Failed to create project:', err);
+      addNotification({ title: '错误', message: '创建项目失败', type: 'error' });
+    },
+  });
+
+  const loading = createProjectMutation.isPending;
 
   const templates: ProjectTemplate[] = [
     {
@@ -111,18 +128,8 @@ const PmTemplatePage: React.FC = () => {
     setIsModalOpen(true);
   };
 
-  const handleCreateProject = async (data: CreateProjectRequest) => {
-    setLoading(true);
-    try {
-      const response = await pmApi.projects.create(data);
-      if (response.success) {
-        navigate(PM_PATHS.projects);
-      }
-    } catch (error: unknown) {
-      logger.error('Failed to create project:', error);
-    } finally {
-      setLoading(false);
-    }
+  const handleCreateProject = (data: CreateProjectRequest) => {
+    createProjectMutation.mutate(data);
   };
 
   return (

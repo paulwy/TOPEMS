@@ -66,42 +66,36 @@ async fn main() -> anyhow::Result<()> {
         .route("/", get(home));
 
     let protected_routes = Router::new()
-        .route("/api/users/v1/users", get(modules::user::list_users))
-        .route("/api/users/v1/users", post(modules::user::create_user))
-        .route("/api/users/v1/users/{id}", get(modules::user::get_user))
-        .route("/api/users/v1/users/{id}", put(modules::user::update_user))
+        .route("/api/users/users", get(modules::user::list_users))
+        .route("/api/users/users", post(modules::user::create_user))
+        .route("/api/users/users/{id}", get(modules::user::get_user))
+        .route("/api/users/users/{id}", put(modules::user::update_user))
+        .route("/api/users/users/{id}", delete(modules::user::delete_user))
         .route(
-            "/api/users/v1/users/{id}",
-            delete(modules::user::delete_user),
-        )
-        .route(
-            "/api/users/v1/users/{id}/profile",
+            "/api/users/users/{id}/profile",
             get(modules::user::get_user_profile),
         )
         .route(
-            "/api/users/v1/users/{id}/profile",
+            "/api/users/users/{id}/profile",
             put(modules::user::update_user_profile),
         )
         .route(
-            "/api/users/v1/users/{id}/roles",
+            "/api/users/users/{id}/roles",
             get(modules::user::get_user_roles),
         )
         .route(
-            "/api/users/v1/users/{id}/roles",
+            "/api/users/users/{id}/roles",
             post(modules::user::assign_roles),
         )
         .route(
-            "/api/users/v1/users/{id}/roles/{role_id}",
+            "/api/users/users/{id}/roles/{role_id}",
             delete(modules::user::remove_role),
         )
-        .route("/api/users/v1/roles", get(modules::role::list_roles))
-        .route("/api/users/v1/roles", post(modules::role::create_role))
-        .route("/api/users/v1/roles/{id}", get(modules::role::get_role))
-        .route("/api/users/v1/roles/{id}", put(modules::role::update_role))
-        .route(
-            "/api/users/v1/roles/{id}",
-            delete(modules::role::delete_role),
-        )
+        .route("/api/users/roles", get(modules::role::list_roles))
+        .route("/api/users/roles", post(modules::role::create_role))
+        .route("/api/users/roles/{id}", get(modules::role::get_role))
+        .route("/api/users/roles/{id}", put(modules::role::update_role))
+        .route("/api/users/roles/{id}", delete(modules::role::delete_role))
         .layer(axum::Extension(pool));
 
     let app = Router::new()
@@ -144,23 +138,23 @@ Public Endpoints:
 Protected Endpoints:
 
   Users:
-    GET    /api/users/v1/users                 - List all users
-    POST   /api/users/v1/users                 - Create user
-    GET    /api/users/v1/users/{id}            - Get user by ID
-    PUT    /api/users/v1/users/{id}            - Update user
-    DELETE /api/users/v1/users/{id}            - Delete user
-    GET    /api/users/v1/users/{id}/profile    - Get user profile
-    PUT    /api/users/v1/users/{id}/profile    - Update user profile
-    GET    /api/users/v1/users/{id}/roles      - Get user roles
-    POST   /api/users/v1/users/{id}/roles      - Assign roles
-    DELETE /api/users/v1/users/{id}/roles/{role_id} - Remove role
+    GET    /api/users/users                 - List all users
+    POST   /api/users/users                 - Create user
+    GET    /api/users/users/{id}            - Get user by ID
+    PUT    /api/users/users/{id}            - Update user
+    DELETE /api/users/users/{id}            - Delete user
+    GET    /api/users/users/{id}/profile    - Get user profile
+    PUT    /api/users/users/{id}/profile    - Update user profile
+    GET    /api/users/users/{id}/roles      - Get user roles
+    POST   /api/users/users/{id}/roles      - Assign roles
+    DELETE /api/users/users/{id}/roles/{role_id} - Remove role
 
   Roles:
-    GET    /api/users/v1/roles                 - List all roles
-    POST   /api/users/v1/roles                 - Create role
-    GET    /api/users/v1/roles/{id}            - Get role by ID
-    PUT    /api/users/v1/roles/{id}            - Update role
-    DELETE /api/users/v1/roles/{id}            - Delete role
+    GET    /api/users/roles                 - List all roles
+    POST   /api/users/roles                 - Create role
+    GET    /api/users/roles/{id}            - Get role by ID
+    PUT    /api/users/roles/{id}            - Update role
+    DELETE /api/users/roles/{id}            - Delete role
 ",
         "首页",
     ))

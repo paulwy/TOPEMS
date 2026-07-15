@@ -15,7 +15,9 @@ import {
   Button,
 } from '@mui/material';
 import { PageContainer } from '@/components/common/PageContainerV2';
-import React, { useState, useEffect, useMemo, useCallback } from 'react';
+import React, { useState, useMemo, useCallback, useEffect } from 'react';
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import { QUERY_KEYS } from '@/lib/reactQuery';
 import type {
   WorkReport,
   CreateWorkReportRequest,
@@ -38,13 +40,11 @@ import { designTokens } from '@/theme/tokens';
 const ct = designTokens.colors;
 
 const WorkReportPage: React.FC = () => {
-  const [reports, setReports] = useState<WorkReport[]>([]);
-  const [loading, setLoading] = useState(true);
+  const queryClient = useQueryClient();
   const [searchTerm, setSearchTerm] = useState('');
   const [statusFilter, setStatusFilter] = useState<string>('all');
   const [currentPage, setCurrentPage] = useState(1);
   const [pageSize] = useState(10);
-  const [total, setTotal] = useState(0);
   const [showDialog, setShowDialog] = useState(false);
   const [showDetailDialog, setShowDetailDialog] = useState(false);
   const [selectedReport, setSelectedReport] = useState<WorkReport | null>(null);
@@ -60,36 +60,33 @@ const WorkReportPage: React.FC = () => {
 
   const { addNotification } = useNotificationStore();
 
-  const loadReports = useCallback(async () => {
-    try {
-      setLoading(true);
-      const params: ListParams = {
-        page: currentPage - 1,
-        pagesize: pageSize,
-      };
-      if (searchTerm) params.search = searchTerm;
-      if (statusFilter !== 'all') params.status = statusFilter;
+  const params: ListParams = {
+    page: currentPage - 1,
+    pagesize: pageSize,
+  };
+  if (searchTerm) params.search = searchTerm;
+  if (statusFilter !== 'all') params.status = statusFilter;
 
+  const { data: reportsData, isLoading: loading } = useQuery({
+    queryKey: [...QUERY_KEYS.MES.WORK_REPORTS, params],
+    queryFn: async () => {
       const response = await mesApi.workReports.list(params);
       if (response.success && response.data) {
-        setReports(response.data.reports || []);
-        setTotal(response.data.total || 0);
+        return {
+          reports: response.data.reports || [],
+          total: response.data.total || 0,
+        };
       }
-    } catch (error: unknown) {
-      apiLogger.error('加载报工列表失败:', error);
-      addNotification({
-        type: 'error',
-        title: '加载失败',
-        message: '无法加载报工列表',
-      });
-    } finally {
-      setLoading(false);
-    }
-  }, [currentPage, pageSize, searchTerm, statusFilter, addNotification]);
+      return { reports: [], total: 0 };
+    },
+  });
 
-  useEffect(() => {
-    loadReports();
-  }, [loadReports]);
+  const reports = reportsData?.reports || [];
+  const total = reportsData?.total || 0;
+
+  const invalidateReports = () => {
+    queryClient.invalidateQueries({ queryKey: QUERY_KEYS.MES.WORK_REPORTS });
+  };
 
   const getStatusText = (status: string) => {
     const statusMap: Record<string, string> = {
@@ -102,105 +99,94 @@ const WorkReportPage: React.FC = () => {
     return statusMap[status] || status;
   };
 
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    try {
-      if (selectedReport) {
-        await mesApi.workReports.update(selectedReport.id, formData as UpdateWorkReportRequest);
-        addNotification({
-          type: 'success',
-          title: '更新成功',
-          message: '报工信息已更新',
-        });
-      } else {
-        await mesApi.workReports.create(formData);
-        addNotification({
-          type: 'success',
-          title: '创建成功',
-          message: '新报工已创建',
-        });
-      }
+  const createMutation = useMutation({
+    mutationFn: (data: CreateWorkReportRequest) => mesApi.workReports.create(data),
+    onSuccess: () => {
+      addNotification({ type: 'success', title: '创建成功', message: '新报工已创建' });
+      invalidateReports();
       setShowDialog(false);
       resetForm();
-      loadReports();
-    } catch (error: unknown) {
+    },
+    onError: (error: unknown) => {
       apiLogger.error('操作失败:', error);
-      addNotification({
-        type: 'error',
-        title: '操作失败',
-        message: selectedReport ? '更新报工失败' : '创建报工失败',
-      });
+      addNotification({ type: 'error', title: '操作失败', message: '创建报工失败' });
+    },
+  });
+
+  const updateMutation = useMutation({
+    mutationFn: ({ id, data }: { id: string; data: UpdateWorkReportRequest }) =>
+      mesApi.workReports.update(id, data),
+    onSuccess: () => {
+      addNotification({ type: 'success', title: '更新成功', message: '报工信息已更新' });
+      invalidateReports();
+      setShowDialog(false);
+      resetForm();
+    },
+    onError: (error: unknown) => {
+      apiLogger.error('操作失败:', error);
+      addNotification({ type: 'error', title: '操作失败', message: '更新报工失败' });
+    },
+  });
+
+  const deleteMutation = useMutation({
+    mutationFn: (id: string) => mesApi.workReports.delete(id),
+    onSuccess: () => {
+      addNotification({ type: 'success', title: '删除成功', message: '报工记录已删除' });
+      invalidateReports();
+    },
+    onError: (error: unknown) => {
+      apiLogger.error('删除失败:', error);
+      addNotification({ type: 'error', title: '删除失败', message: '无法删除报工记录' });
+    },
+  });
+
+  const approveMutation = useMutation({
+    mutationFn: (id: string) => mesApi.workReports.approve(id),
+    onSuccess: () => {
+      addNotification({ type: 'success', title: '审核成功', message: '报工已审核通过' });
+      invalidateReports();
+    },
+    onError: (error: unknown) => {
+      apiLogger.error('审核失败:', error);
+      addNotification({ type: 'error', title: '审核失败', message: '无法审核报工' });
+    },
+  });
+
+  const rejectMutation = useMutation({
+    mutationFn: (id: string) => mesApi.workReports.reject(id),
+    onSuccess: () => {
+      addNotification({ type: 'success', title: '驳回成功', message: '报工已驳回' });
+      invalidateReports();
+    },
+    onError: (error: unknown) => {
+      apiLogger.error('驳回失败:', error);
+      addNotification({ type: 'error', title: '驳回失败', message: '无法驳回报工' });
+    },
+  });
+
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (selectedReport) {
+      updateMutation.mutate({ id: selectedReport.id, data: formData as UpdateWorkReportRequest });
+    } else {
+      createMutation.mutate(formData);
     }
   };
 
-  const handleDelete = useCallback(
-    async (id: string) => {
-      if (!window.confirm('确定要删除这条报工记录吗?')) return;
-      try {
-        await mesApi.workReports.delete(id);
-        addNotification({
-          type: 'success',
-          title: '删除成功',
-          message: '报工记录已删除',
-        });
-        loadReports();
-      } catch (error: unknown) {
-        apiLogger.error('删除失败:', error);
-        addNotification({
-          type: 'error',
-          title: '删除失败',
-          message: '无法删除报工记录',
-        });
-      }
-    },
-    [loadReports, addNotification]
-  );
+  const handleDelete = (id: string) => {
+    if (!window.confirm('确定要删除这条报工记录吗?')) return;
+    deleteMutation.mutate(id);
+  };
 
-  const handleApprove = useCallback(
-    async (id: string) => {
-      try {
-        await mesApi.workReports.approve(id);
-        addNotification({
-          type: 'success',
-          title: '审核成功',
-          message: '报工已审核通过',
-        });
-        loadReports();
-      } catch (error: unknown) {
-        apiLogger.error('审核失败:', error);
-        addNotification({
-          type: 'error',
-          title: '审核失败',
-          message: '无法审核报工',
-        });
-      }
-    },
-    [loadReports, addNotification]
-  );
+  const handleApprove = (id: string) => {
+    approveMutation.mutate(id);
+  };
 
-  const handleReject = useCallback(
-    async (id: string) => {
-      try {
-        await mesApi.workReports.reject(id);
-        addNotification({
-          type: 'success',
-          title: '驳回成功',
-          message: '报工已驳回',
-        });
-        loadReports();
-      } catch (error: unknown) {
-        apiLogger.error('驳回失败:', error);
-        addNotification({
-          type: 'error',
-          title: '驳回失败',
-          message: '无法驳回报工',
-        });
-      }
-    },
-    [loadReports, addNotification]
-  );
+  const handleReject = (id: string) => {
+    rejectMutation.mutate(id);
+  };
 
-  const handleEdit = useCallback((report: WorkReport) => {
+  const handleEdit = (report: WorkReport) => {
     setSelectedReport(report);
     setFormData({
       order_id: report.order_id,
@@ -211,12 +197,12 @@ const WorkReportPage: React.FC = () => {
       end_time: report.end_time,
     });
     setShowDialog(true);
-  }, []);
+  };
 
-  const handleViewDetail = useCallback((report: WorkReport) => {
+  const handleViewDetail = (report: WorkReport) => {
     setSelectedReport(report);
     setShowDetailDialog(true);
-  }, []);
+  };
 
   const resetForm = () => {
     setSelectedReport(null);

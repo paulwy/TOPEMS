@@ -21,7 +21,7 @@ pub struct EmbeddingResponse {
 pub struct EmbeddingApi;
 
 impl EmbeddingApi {
-    /// POST /api/v1/embedding/generate - 生成文本向量
+    /// POST /api/embedding/generate - 生成文本向量
     pub async fn generate(
         State(_state): State<AppState>,
         Json(req): Json<EmbeddingRequest>,

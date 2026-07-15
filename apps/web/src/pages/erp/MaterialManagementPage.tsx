@@ -14,11 +14,10 @@ import {
   Button,
 } from '@mui/material';
 import { PageContainer } from '@/components/common';
-import React, { useState, useEffect, useMemo, useCallback } from 'react';
+import React, { useState, useMemo, useCallback } from 'react';
 import type { Material, CreateMaterialRequest, UpdateMaterialRequest } from '@/api/erp';
 import { erpApi } from '@/api/erp';
 import { useNotificationStore } from '@/store';
-import { LoadingSpinner } from '@topems/shared-components';
 import {
   ListPageTemplate,
   type ColumnDef,
@@ -27,16 +26,15 @@ import {
 } from '@/components/templates';
 import { Plus, Edit, Trash2, Eye, Package as PackageIcon } from 'lucide-react';
 import { apiLogger } from '@/utils/logger';
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import { QUERY_KEYS } from '@/lib/reactQuery';
 
 const MaterialManagementPage: React.FC = () => {
-  const [materials, setMaterials] = useState<Material[]>([]);
-  const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState('');
   const [statusFilter, setStatusFilter] = useState<string>('all');
   const [categoryFilter, setCategoryFilter] = useState<string>('all');
   const [currentPage, setCurrentPage] = useState(1);
   const [pageSize] = useState(10);
-  const [total, setTotal] = useState(0);
   const [showDialog, setShowDialog] = useState(false);
   const [showDetailDialog, setShowDetailDialog] = useState(false);
   const [selectedMaterial, setSelectedMaterial] = useState<Material | null>(null);
@@ -58,10 +56,25 @@ const MaterialManagementPage: React.FC = () => {
   });
 
   const { addNotification } = useNotificationStore();
+  const queryClient = useQueryClient();
 
-  const loadMaterials = useCallback(async () => {
-    try {
-      setLoading(true);
+  const queryKey = [
+    QUERY_KEYS.ERP.MATERIALS,
+    searchTerm,
+    statusFilter,
+    categoryFilter,
+    currentPage,
+    pageSize,
+  ];
+
+  const { data: materialsResponse, isLoading } = useQuery<{
+    materials: Material[];
+    total: number;
+    page: number;
+    pagesize: number;
+  }>({
+    queryKey,
+    queryFn: async () => {
       const params: Record<string, unknown> = {
         page: currentPage - 1,
         pagesize: pageSize,
@@ -71,78 +84,118 @@ const MaterialManagementPage: React.FC = () => {
       if (categoryFilter !== 'all') params.category = categoryFilter;
 
       const response = await erpApi.materials.list(params);
-      if (response.success && response.data) {
-        setMaterials(response.data.materials || []);
-        setTotal(response.data.total || 0);
+      if (!response.success) {
+        throw new Error('Failed to fetch materials');
       }
-    } catch (error: unknown) {
-      apiLogger.error('加载物料列表失败:', error);
+      return response.data;
+    },
+    staleTime: 5 * 60 * 1000,
+    gcTime: 10 * 60 * 1000,
+  });
+
+  const materials = materialsResponse?.materials || [];
+  const total = materialsResponse?.total || 0;
+
+  const createMutation = useMutation({
+    mutationFn: async (data: CreateMaterialRequest) => {
+      const response = await erpApi.materials.create(data);
+      if (!response.success) {
+        throw new Error('Failed to create material');
+      }
+      return response;
+    },
+    onSuccess: () => {
+      addNotification({
+        type: 'success',
+        title: '创建成功',
+        message: '新物料已创建',
+      });
+      queryClient.invalidateQueries({ queryKey: [QUERY_KEYS.ERP.MATERIALS] });
+      setShowDialog(false);
+      resetForm();
+    },
+    onError: (error) => {
+      apiLogger.error('创建失败:', error);
       addNotification({
         type: 'error',
-        title: '加载失败',
-        message: '无法加载物料列表',
+        title: '创建失败',
+        message: '无法创建物料',
       });
-    } finally {
-      setLoading(false);
-    }
-  }, [currentPage, pageSize, searchTerm, statusFilter, categoryFilter, addNotification]);
+    },
+  });
 
-  useEffect(() => {
-    loadMaterials();
-  }, [loadMaterials]);
+  const updateMutation = useMutation({
+    mutationFn: async ({ id, data }: { id: string; data: UpdateMaterialRequest }) => {
+      const response = await erpApi.materials.update(id, data);
+      if (!response.success) {
+        throw new Error('Failed to update material');
+      }
+      return response;
+    },
+    onSuccess: () => {
+      addNotification({
+        type: 'success',
+        title: '更新成功',
+        message: '物料信息已更新',
+      });
+      queryClient.invalidateQueries({ queryKey: [QUERY_KEYS.ERP.MATERIALS] });
+      setShowDialog(false);
+      resetForm();
+    },
+    onError: (error) => {
+      apiLogger.error('更新失败:', error);
+      addNotification({
+        type: 'error',
+        title: '更新失败',
+        message: '无法更新物料',
+      });
+    },
+  });
+
+  const deleteMutation = useMutation({
+    mutationFn: async (id: string) => {
+      const response = await erpApi.materials.delete(id);
+      if (!response.success) {
+        throw new Error('Failed to delete material');
+      }
+      return response;
+    },
+    onSuccess: () => {
+      addNotification({
+        type: 'success',
+        title: '删除成功',
+        message: '物料已删除',
+      });
+      queryClient.invalidateQueries({ queryKey: [QUERY_KEYS.ERP.MATERIALS] });
+    },
+    onError: (error) => {
+      apiLogger.error('删除失败:', error);
+      addNotification({
+        type: 'error',
+        title: '删除失败',
+        message: '无法删除物料',
+      });
+    },
+  });
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    try {
-      if (selectedMaterial) {
-        await erpApi.materials.update(selectedMaterial.id, formData as UpdateMaterialRequest);
-        addNotification({
-          type: 'success',
-          title: '更新成功',
-          message: '物料信息已更新',
-        });
-      } else {
-        await erpApi.materials.create(formData);
-        addNotification({
-          type: 'success',
-          title: '创建成功',
-          message: '新物料已创建',
-        });
-      }
-      setShowDialog(false);
-      resetForm();
-      loadMaterials();
-    } catch (error: unknown) {
-      apiLogger.error('操作失败:', error);
-      addNotification({
-        type: 'error',
-        title: '操作失败',
-        message: selectedMaterial ? '更新物料失败' : '创建物料失败',
+    if (selectedMaterial) {
+      await updateMutation.mutateAsync({
+        id: selectedMaterial.id,
+        data: formData as UpdateMaterialRequest,
       });
+    } else {
+      await createMutation.mutateAsync(formData);
     }
   };
 
   const handleDelete = useCallback(
     async (id: string) => {
       if (!window.confirm('确定要删除这个物料吗?')) return;
-      try {
-        await erpApi.materials.delete(id);
-        addNotification({
-          type: 'success',
-          title: '删除成功',
-          message: '物料已删除',
-        });
-        loadMaterials();
-      } catch (error: unknown) {
-        apiLogger.error('删除失败:', error);
-        addNotification({
-          type: 'error',
-          title: '删除失败',
-          message: '无法删除物料',
-        });
-      }
+      await deleteMutation.mutateAsync(id);
     },
-    [loadMaterials, addNotification]
+    [deleteMutation]
   );
 
   const handleEdit = useCallback((material: Material) => {
@@ -314,13 +367,11 @@ const MaterialManagementPage: React.FC = () => {
   const stats = useMemo(() => {
     return {
       total: materials.length,
-      active: materials.filter((m) => m.status === 'active').length,
-      inactive: materials.filter((m) => m.status === 'inactive').length,
-      obsolete: materials.filter((m) => m.status === 'obsolete').length,
+      active: materials.filter((m: Material) => m.status === 'active').length,
+      inactive: materials.filter((m: Material) => m.status === 'inactive').length,
+      obsolete: materials.filter((m: Material) => m.status === 'obsolete').length,
     };
   }, [materials]);
-
-  if (loading) return <LoadingSpinner />;
 
   const statsContent = (
     <Box
@@ -400,7 +451,7 @@ const MaterialManagementPage: React.FC = () => {
         subtitle=''
         columns={columns}
         data={materials}
-        loading={loading}
+        loading={isLoading}
         filters={filters}
         searchable
         searchPlaceholder='搜索物料编码、名称或条码...'
@@ -609,8 +660,9 @@ const MaterialManagementPage: React.FC = () => {
               <Button
                 type='submit'
                 variant='contained'
+                disabled={createMutation.isPending || updateMutation.isPending}
               >
-                保存
+                {createMutation.isPending || updateMutation.isPending ? '保存中...' : '保存'}
               </Button>
             </DialogActions>
           </form>

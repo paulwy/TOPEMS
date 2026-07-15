@@ -1,4 +1,6 @@
-import React, { useState, useEffect, useMemo } from 'react';
+import React, { useState, useMemo } from 'react';
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import { QUERY_KEYS } from '@/lib/reactQuery';
 import { PageContainer } from '@/components/common/PageContainerV2';
 import {
   DollarSign,
@@ -46,116 +48,121 @@ interface PayrollSummary {
 const HrmPayrollPage: React.FC = () => {
   const navigate = useNavigate();
   const { success, error, notifications, hideNotification } = useNotification();
+  const queryClient = useQueryClient();
 
   const [activeTab, setActiveTab] = useState<'payroll' | 'adjustments' | 'calculator'>('payroll');
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedPeriod, setSelectedPeriod] = useState('2026-05');
-  const [loading, setLoading] = useState(true);
-  const [payrollRuns, setPayrollRuns] = useState<PayrollRun[]>([]);
-  const [payrollItems, setPayrollItems] = useState<PayrollItem[]>([]);
-  const [employees, setEmployees] = useState<Employee[]>([]);
-  const [adjustments, setAdjustments] = useState<SalaryAdjustment[]>([]);
   const [selectedRunId, setSelectedRunId] = useState<string | null>(null);
-  const [calculating, setCalculating] = useState(false);
-  const [paying, setPaying] = useState(false);
 
-  // 加载数据
-  useEffect(() => {
-    loadData();
-  }, []);
-
-  const loadData = async () => {
-    try {
-      setLoading(true);
-      const [payrollRes, employeeRes, adjustmentRes] = await Promise.all([
-        payrollApi.list(),
-        employeeApi.list(),
-        salaryAdjustmentApi.list(),
-      ]);
-
-      let empList: Employee[] = [];
-
-      if (payrollRes.success && payrollRes.data) {
-        setPayrollRuns(payrollRes.data.items);
+  // 加载工资发放批次
+  const payrollRunsQuery = useQuery<PayrollRun[]>({
+    queryKey: QUERY_KEYS.HRM.PAYROLL,
+    queryFn: async () => {
+      const res = await payrollApi.list();
+      if (res.success && res.data) {
+        return res.data.items;
       }
+      return [];
+    },
+  });
 
-      if (employeeRes.success && employeeRes.data) {
-        empList = employeeRes.data.items;
-        setEmployees(empList);
+  // 加载员工
+  const employeesQuery = useQuery<Employee[]>({
+    queryKey: QUERY_KEYS.HRM.EMPLOYEES,
+    queryFn: async () => {
+      const res = await employeeApi.list();
+      if (res.success && res.data) {
+        return res.data.items;
       }
+      return [];
+    },
+  });
 
-      if (adjustmentRes.success && adjustmentRes.data) {
-        setAdjustments(adjustmentRes.data.items);
+  // 加载调薪记录
+  const adjustmentsQuery = useQuery<SalaryAdjustment[]>({
+    queryKey: QUERY_KEYS.HRM.SALARY_ADJUSTMENT,
+    queryFn: async () => {
+      const res = await salaryAdjustmentApi.list();
+      if (res.success && res.data) {
+        return res.data.items;
       }
-    } catch (err: unknown) {
-      error('加载数据失败');
-      apiLogger.error(err);
-    } finally {
-      setLoading(false);
-    }
-  };
+      return [];
+    },
+  });
 
   // 加载工资条明细
-  const loadPayrollItems = async (runId: string) => {
-    try {
-      setLoading(true);
-      const res = await payrollItemApi.list({ payroll_run_id: runId });
+  const payrollItemsQuery = useQuery<PayrollItem[]>({
+    queryKey: QUERY_KEYS.HRM.PAYROLL_ITEMS(selectedRunId || ''),
+    queryFn: async () => {
+      if (!selectedRunId) return [];
+      const res = await payrollItemApi.list({ payroll_run_id: selectedRunId });
       if (res.success && res.data) {
-        setPayrollItems(res.data.items);
+        return res.data.items;
       }
-    } catch (err: unknown) {
-      error('加载工资条明细失败');
-    } finally {
-      setLoading(false);
-    }
-  };
+      return [];
+    },
+    enabled: !!selectedRunId,
+  });
+
+  const loading = payrollRunsQuery.isLoading || employeesQuery.isLoading;
+  const payrollRuns = payrollRunsQuery.data || [];
+  const employees = employeesQuery.data || [];
+  const adjustments = adjustmentsQuery.data || [];
+  const payrollItems = payrollItemsQuery.data || [];
 
   // 创建工资发放批次
-  const handleCreatePayroll = async () => {
-    try {
-      setLoading(true);
-      const res = await payrollApi.create({ pay_period: selectedPeriod });
-      if (res.success && res.data) {
-        success('工资发放批次创建成功');
-        await loadData();
-      }
-    } catch (err: unknown) {
+  const createPayrollMutation = useMutation({
+    mutationFn: async (period: string) => payrollApi.create({ pay_period: period }),
+    onSuccess: () => {
+      success('工资发放批次创建成功');
+      queryClient.invalidateQueries({ queryKey: QUERY_KEYS.HRM.PAYROLL });
+    },
+    onError: (err: unknown) => {
       error('创建工资发放批次失败');
-    } finally {
-      setLoading(false);
-    }
-  };
+      apiLogger.error(err);
+    },
+  });
 
   // 计算薪资
-  const handleCalculate = async (runId: string) => {
-    try {
-      setCalculating(true);
-      const res = await payrollApi.calculate(runId);
-      if (res.success) {
-        success('薪资计算完成');
-        await loadData();
-      }
-    } catch (err: unknown) {
+  const calculateMutation = useMutation({
+    mutationFn: async (runId: string) => payrollApi.calculate(runId),
+    onSuccess: () => {
+      success('薪资计算完成');
+      queryClient.invalidateQueries({ queryKey: QUERY_KEYS.HRM.PAYROLL });
+    },
+    onError: (err: unknown) => {
       error('薪资计算失败');
-    } finally {
-      setCalculating(false);
-    }
-  };
+      apiLogger.error(err);
+    },
+  });
 
   // 执行发放
-  const handlePay = async (runId: string) => {
-    try {
-      setPaying(true);
-      const res = await payrollApi.pay(runId);
-      if (res.success) {
-        success('薪资发放完成');
-        await loadData();
-      }
-    } catch (err: unknown) {
+  const payMutation = useMutation({
+    mutationFn: async (runId: string) => payrollApi.pay(runId),
+    onSuccess: () => {
+      success('薪资发放完成');
+      queryClient.invalidateQueries({ queryKey: QUERY_KEYS.HRM.PAYROLL });
+    },
+    onError: (err: unknown) => {
       error('薪资发放失败');
-    } finally {
-      setPaying(false);
-    }
+      apiLogger.error(err);
+    },
+  });
+
+  const calculating = calculateMutation.isPending;
+  const paying = payMutation.isPending;
+
+  const handleCreatePayroll = () => {
+    createPayrollMutation.mutate(selectedPeriod);
+  };
+
+  const handleCalculate = (runId: string) => {
+    calculateMutation.mutate(runId);
+  };
+
+  const handlePay = (runId: string) => {
+    payMutation.mutate(runId);
   };
 
   const getEmployeeName = (employeeId: string) => {
@@ -362,7 +369,7 @@ const HrmPayrollPage: React.FC = () => {
       {
         label: '查看明细',
         icon: <FileText size={16} />,
-        onClick: (row) => loadPayrollItems(row.id),
+        onClick: (row) => setSelectedRunId(row.id),
       },
       {
         label: '计算薪资',

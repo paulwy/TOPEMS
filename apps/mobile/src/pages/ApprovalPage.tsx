@@ -1,11 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import {
-  View,
-  StyleSheet,
-  FlatList,
-  RefreshControl,
-  TouchableOpacity,
-} from 'react-native';
+import { View, StyleSheet, FlatList, RefreshControl, TouchableOpacity } from 'react-native';
 import {
   Card,
   Title,
@@ -21,14 +15,7 @@ import {
 } from 'react-native-paper';
 import { approvalApi } from '@/api/approval';
 import type { Approval } from '@/types';
-import {
-  ClipboardCheck,
-  User,
-  Clock,
-  CheckCircle,
-  XCircle,
-  FileText,
-} from 'lucide-react-native';
+import { ClipboardCheck, User, Clock, CheckCircle, XCircle, FileText } from 'lucide-react-native';
 
 const ApprovalPage: React.FC = () => {
   const [approvals, setApprovals] = useState<Approval[]>([]);
@@ -224,10 +211,7 @@ const ApprovalPage: React.FC = () => {
           keyExtractor={(item) => item.key}
           renderItem={({ item }) => (
             <TouchableOpacity
-              style={[
-                styles.filterButton,
-                statusFilter === item.key && styles.filterButtonActive,
-              ]}
+              style={[styles.filterButton, statusFilter === item.key && styles.filterButtonActive]}
               onPress={() => setStatusFilter(item.key)}
             >
               <Text
@@ -248,9 +232,7 @@ const ApprovalPage: React.FC = () => {
         renderItem={renderItem}
         keyExtractor={(item) => item.id}
         contentContainerStyle={styles.listContainer}
-        refreshControl={
-          <RefreshControl refreshing={refreshing} onRefresh={handleRefresh} />
-        }
+        refreshControl={<RefreshControl refreshing={refreshing} onRefresh={handleRefresh} />}
         ListEmptyComponent={
           <View style={styles.emptyContainer}>
             <ClipboardCheck size={48} color="#d1d5db" />
@@ -269,9 +251,7 @@ const ApprovalPage: React.FC = () => {
             <Text style={styles.dialogLabel}>申请人</Text>
             <Text style={styles.dialogValue}>{selectedApproval?.applicantName || '-'}</Text>
             <Text style={styles.dialogLabel}>审批说明</Text>
-            <Text style={styles.dialogValue}>
-              {selectedApproval?.description || '暂无描述'}
-            </Text>
+            <Text style={styles.dialogValue}>{selectedApproval?.description || '暂无描述'}</Text>
             <Text style={styles.dialogLabel}>审批意见（可选）</Text>
             <TextInput
               mode="outlined"

@@ -8,6 +8,8 @@ import type { PriceComparison } from '@/api/scm';
 import { useNotificationStore } from '@/store';
 import { designTokens } from '@/theme/tokens';
 import { logger } from '@/utils/logger';
+import { useQuery } from '@tanstack/react-query';
+import { QUERY_KEYS } from '@/lib/reactQuery';
 
 const ct = designTokens.colors;
 
@@ -20,35 +22,35 @@ const STATUS_MAP: Record<string, { label: string; bg: string; color: string }> =
 };
 
 const ScmPriceComparisonPage: React.FC = () => {
-  const [comparisons, setComparisons] = useState<PriceComparison[]>([]);
-  const [loading, setLoading] = useState(true);
   const [statusFilter, setStatusFilter] = useState('all');
   const [page, setPage] = useState(0);
   const [pageSize, setPageSize] = useState(10);
-  const [total, setTotal] = useState(0);
   const addNotification = useNotificationStore((state) => state.addNotification);
 
-  useEffect(() => {
-    loadComparisons();
-  }, [page, pageSize, statusFilter]);
-
-  const loadComparisons = async () => {
-    setLoading(true);
-    try {
+  const comparisonsQuery = useQuery<{ items: PriceComparison[]; total: number }>({
+    queryKey: [...QUERY_KEYS.SCM.PRICE_COMPARISONS, page, pageSize, statusFilter],
+    queryFn: async () => {
       const params: Record<string, unknown> = { page: page + 1, pageSize };
       if (statusFilter !== 'all') params.status = statusFilter;
       const response = await scmApi.priceComparisons.list(params as any);
       if (response.success && response.data) {
-        setComparisons(response.data.items || []);
-        setTotal(response.data.total || 0);
+        return { items: response.data.items || [], total: response.data.total || 0 };
       }
-    } catch (error: unknown) {
-      logger.error('加载询价比价数据失败:', error);
+      return { items: [], total: 0 };
+    },
+    staleTime: 5 * 60 * 1000,
+  });
+
+  const comparisons = comparisonsQuery.data?.items ?? [];
+  const total = comparisonsQuery.data?.total ?? 0;
+  const loading = comparisonsQuery.isLoading;
+
+  useEffect(() => {
+    if (comparisonsQuery.isError) {
+      logger.error('加载询价比价数据失败:', comparisonsQuery.error);
       addNotification({ title: '加载失败', message: '加载询价比价数据失败', type: 'error' });
-    } finally {
-      setLoading(false);
     }
-  };
+  }, [comparisonsQuery.isError, comparisonsQuery.error, addNotification]);
 
   const getStatusBadge = (status: string) => {
     const config = STATUS_MAP[status] || {
@@ -180,7 +182,7 @@ const ScmPriceComparisonPage: React.FC = () => {
         filtersValue={undefined}
         onFilterChange={undefined}
         pagination={{ page, pageSize, total, onPageChange: setPage, onPageSizeChange: setPageSize }}
-        onRefresh={loadComparisons}
+        onRefresh={() => comparisonsQuery.refetch()}
         actions={[
           {
             label: '导出',

@@ -12,7 +12,7 @@ import {
   Paper,
   Button,
 } from '@mui/material';
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import {
   Truck,
@@ -32,36 +32,27 @@ import { apiLogger } from '@/utils/logger';
 import { DetailPageTemplate, type TabConfig, type SectionConfig } from '@/components/templates';
 import { PageContainer } from '@/components/common';
 import { SCM_PATHS } from '@/modules/scm/config';
+import { useQuery } from '@tanstack/react-query';
+import { QUERY_KEYS } from '@/lib/reactQuery';
 
 const SupplierDetailPage: React.FC = () => {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
   const { error } = useNotification();
 
-  const [supplier, setSupplier] = useState<Supplier | null>(null);
-  const [loading, setLoading] = useState(true);
   const [isEditing, setIsEditing] = useState(false);
 
-  useEffect(() => {
-    if (id) {
-      loadSupplier(id);
-    }
-  }, [id]);
-
-  const loadSupplier = async (supplierId: string) => {
-    setLoading(true);
-    try {
-      const res = await scmApi.suppliers.get(supplierId);
-      if (res.success && res.data) {
-        setSupplier(res.data);
+  const { data: supplier, isLoading: loading } = useQuery({
+    queryKey: QUERY_KEYS.SCM.SUPPLIER(id || ''),
+    queryFn: async () => {
+      const res = await scmApi.suppliers.get(id as string);
+      if (!res.success || !res.data) {
+        throw new Error('Failed to fetch supplier');
       }
-    } catch (err: unknown) {
-      apiLogger.error('Failed to load supplier:', err);
-      error('加载供应商信息失败');
-    } finally {
-      setLoading(false);
-    }
-  };
+      return res.data;
+    },
+    enabled: !!id,
+  });
 
   const formatCurrency = (amount?: number) => {
     if (!amount) return '¥0';

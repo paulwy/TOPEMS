@@ -126,7 +126,11 @@ const QmsSpcPage: React.FC = () => {
     staleTime: 5 * 60 * 1000,
   });
 
-  const { data: dataPoints = [], isLoading: loadingDataPoints, refetch: refetchDataPoints } = useQuery({
+  const {
+    data: dataPoints = [],
+    isLoading: loadingDataPoints,
+    refetch: refetchDataPoints,
+  } = useQuery({
     queryKey: ['qms-spc-data-points', selectedChart?.id],
     queryFn: async () => {
       if (!selectedChart?.id) return [];

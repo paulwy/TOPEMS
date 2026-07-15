@@ -15,16 +15,29 @@ mod tests {
         PgPool::connect(TEST_DATABASE_URL).await
     }
 
+    /// 检查数据库是否可用
+    async fn ensure_db_available() -> bool {
+        tokio::net::TcpStream::connect("localhost:5432")
+            .await
+            .is_ok()
+    }
+
     #[tokio::test]
-    #[ignore]
     async fn test_database_connection() {
+        if !ensure_db_available().await {
+            eprintln!("⏭ 跳过: 数据库未运行 (localhost:5432)");
+            return;
+        }
         let pool = setup_test_pool().await;
         assert!(pool.is_ok(), "数据库连接应该成功");
     }
 
     #[tokio::test]
-    #[ignore]
     async fn test_production_orders_table_exists() {
+        if !ensure_db_available().await {
+            eprintln!("⏭ 跳过: 数据库未运行 (localhost:5432)");
+            return;
+        }
         let pool = setup_test_pool().await.unwrap();
 
         let result = sqlx::query(
@@ -45,8 +58,11 @@ mod tests {
     }
 
     #[tokio::test]
-    #[ignore]
     async fn test_equipment_table_exists() {
+        if !ensure_db_available().await {
+            eprintln!("⏭ 跳过: 数据库未运行 (localhost:5432)");
+            return;
+        }
         let pool = setup_test_pool().await.unwrap();
 
         let result = sqlx::query(
@@ -67,8 +83,11 @@ mod tests {
     }
 
     #[tokio::test]
-    #[ignore]
     async fn test_work_stations_table_exists() {
+        if !ensure_db_available().await {
+            eprintln!("⏭ 跳过: 数据库未运行 (localhost:5432)");
+            return;
+        }
         let pool = setup_test_pool().await.unwrap();
 
         let result = sqlx::query(
@@ -89,8 +108,11 @@ mod tests {
     }
 
     #[tokio::test]
-    #[ignore]
     async fn test_production_processes_table_exists() {
+        if !ensure_db_available().await {
+            eprintln!("⏭ 跳过: 数据库未运行 (localhost:5432)");
+            return;
+        }
         let pool = setup_test_pool().await.unwrap();
 
         let result = sqlx::query(
@@ -111,8 +133,11 @@ mod tests {
     }
 
     #[tokio::test]
-    #[ignore]
     async fn test_create_production_order_crud() {
+        if !ensure_db_available().await {
+            eprintln!("⏭ 跳过: 数据库未运行 (localhost:5432)");
+            return;
+        }
         let pool = setup_test_pool().await.unwrap();
 
         let order_id = Uuid::new_v4();
@@ -214,8 +239,11 @@ mod tests {
     }
 
     #[tokio::test]
-    #[ignore]
     async fn test_create_equipment_crud() {
+        if !ensure_db_available().await {
+            eprintln!("⏭ 跳过: 数据库未运行 (localhost:5432)");
+            return;
+        }
         let pool = setup_test_pool().await.unwrap();
 
         let equipment_id = Uuid::new_v4();
@@ -294,8 +322,11 @@ mod tests {
     }
 
     #[tokio::test]
-    #[ignore]
     async fn test_create_work_station_crud() {
+        if !ensure_db_available().await {
+            eprintln!("⏭ 跳过: 数据库未运行 (localhost:5432)");
+            return;
+        }
         let pool = setup_test_pool().await.unwrap();
 
         let station_id = Uuid::new_v4();
@@ -370,8 +401,11 @@ mod tests {
     }
 
     #[tokio::test]
-    #[ignore]
     async fn test_transaction_rollback_on_failure() {
+        if !ensure_db_available().await {
+            eprintln!("⏭ 跳过: 数据库未运行 (localhost:5432)");
+            return;
+        }
         let pool = setup_test_pool().await.unwrap();
 
         let order_id = Uuid::new_v4();
@@ -413,8 +447,11 @@ mod tests {
     }
 
     #[tokio::test]
-    #[ignore]
     async fn test_transaction_commit_on_success() {
+        if !ensure_db_available().await {
+            eprintln!("⏭ 跳过: 数据库未运行 (localhost:5432)");
+            return;
+        }
         let pool = setup_test_pool().await.unwrap();
 
         let order_id = Uuid::new_v4();
@@ -464,8 +501,11 @@ mod tests {
     }
 
     #[tokio::test]
-    #[ignore]
     async fn test_tenant_isolation_rls() {
+        if !ensure_db_available().await {
+            eprintln!("⏭ 跳过: 数据库未运行 (localhost:5432)");
+            return;
+        }
         let pool = setup_test_pool().await.unwrap();
 
         let org_id_1 = Uuid::new_v4();
@@ -556,8 +596,11 @@ mod tests {
     }
 
     #[tokio::test]
-    #[ignore]
     async fn test_production_order_status_transitions() {
+        if !ensure_db_available().await {
+            eprintln!("⏭ 跳过: 数据库未运行 (localhost:5432)");
+            return;
+        }
         let pool = setup_test_pool().await.unwrap();
 
         let order_id = Uuid::new_v4();
@@ -619,8 +662,11 @@ mod tests {
     }
 
     #[tokio::test]
-    #[ignore]
     async fn test_production_record_crud() {
+        if !ensure_db_available().await {
+            eprintln!("⏭ 跳过: 数据库未运行 (localhost:5432)");
+            return;
+        }
         let pool = setup_test_pool().await.unwrap();
 
         let order_id = Uuid::new_v4();

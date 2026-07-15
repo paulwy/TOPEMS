@@ -111,6 +111,7 @@ vi.mock('@/store', () => ({
   useSetSidebarCollapsed: vi.fn(),
 }));
 
+describe('IamCompanyStructurePage', () => {
   it('should render without crashing', () => {
     const { container } = render(
       <BrowserRouter>
@@ -119,7 +120,8 @@ vi.mock('@/store', () => ({
     );
     expect(container).toBeDefined();
   });
-
+});
+describe('IamCompanyStructurePage', () => {
   it('should have consolidation hooks defined', async () => {
     render(
       <BrowserRouter>

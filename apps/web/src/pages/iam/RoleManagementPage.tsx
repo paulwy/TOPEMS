@@ -10,13 +10,16 @@ import {
   Chip,
   Button,
 } from '@mui/material';
-import React, { useState, useEffect, useMemo } from 'react';
+import React, { useState, useMemo } from 'react';
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { Shield, Plus, Trash2, Edit, Key, CheckCircle } from 'lucide-react';
 import { authApi, type Role, type Permission } from '@/api/iam';
 import { useNotificationStore } from '../../store';
 import { ListPageTemplate, type ColumnDef } from '@/components/templates';
 import { extractErrorMessage } from '@/utils/errors';
+import { apiLogger } from '@/utils/logger';
 import { PageContainer } from '@/components/common';
+import { QUERY_KEYS } from '@/lib/reactQuery';
 import { IAM_PATHS } from '@/modules/iam/config';
 
 interface RoleManagementPageProps {
@@ -25,9 +28,30 @@ interface RoleManagementPageProps {
 
 const RoleManagementPage: React.FC<RoleManagementPageProps> = ({ onNavigate: _onNavigate }) => {
   const addNotification = useNotificationStore((state) => state.addNotification);
+  const queryClient = useQueryClient();
 
-  const [roles, setRoles] = useState<Role[]>([]);
-  const [loading, setLoading] = useState(true);
+  const { data: roles = [], isLoading: loading } = useQuery<Role[]>({
+    queryKey: QUERY_KEYS.IAM.ROLES,
+    queryFn: async () => {
+      const res = await authApi.listRoles();
+      if (!res.success) {
+        throw new Error(res.message || '加载角色失败');
+      }
+      return res.data ?? [];
+    },
+  });
+
+  const { data: allPermissions = [] } = useQuery<Permission[]>({
+    queryKey: QUERY_KEYS.IAM.PERMISSIONS,
+    queryFn: async () => {
+      const res = await authApi.listPermissions();
+      if (!res.success) {
+        throw new Error(res.message || '加载权限失败');
+      }
+      return res.data ?? [];
+    },
+  });
+
   const [error, setError] = useState<string | null>(null);
   const [searchQuery, setSearchQuery] = useState('');
   const [showCreateModal, setShowCreateModal] = useState(false);
@@ -35,204 +59,203 @@ const RoleManagementPage: React.FC<RoleManagementPageProps> = ({ onNavigate: _on
   const [showPermissionsModal, setShowPermissionsModal] = useState(false);
   const [selectedRole, setSelectedRole] = useState<Role | null>(null);
   const [rolePermissions, setRolePermissions] = useState<Permission[]>([]);
-  const [allPermissions, setAllPermissions] = useState<Permission[]>([]);
+
+  const { data: fetchedRolePermissions } = useQuery<Permission[]>({
+    queryKey: QUERY_KEYS.IAM.ROLE_PERMISSIONS(selectedRole?.id || ''),
+    queryFn: async () => {
+      if (!selectedRole) return [];
+      const res = await authApi.getRolePermissions(selectedRole.id);
+      if (!res.success) {
+        throw new Error(res.message || '加载角色权限失败');
+      }
+      return res.data ?? [];
+    },
+    enabled: !!selectedRole && showPermissionsModal,
+  });
+
+  React.useEffect(() => {
+    if (fetchedRolePermissions) {
+      setRolePermissions(fetchedRolePermissions);
+    }
+  }, [fetchedRolePermissions]);
 
   const [newRole, setNewRole] = useState({
     name: '',
     description: '',
   });
 
-  useEffect(() => {
-    loadData();
-  }, []);
-
-  const loadData = async () => {
-    setLoading(true);
-    setError(null);
-    try {
-      const [rolesRes, permsRes] = await Promise.all([
-        authApi.listRoles(),
-        authApi.listPermissions(),
-      ]);
-
-      if (rolesRes.success && rolesRes.data) {
-        setRoles(rolesRes.data);
+  const createRoleMutation = useMutation({
+    mutationFn: async (data: { name: string; description: string }) => {
+      const res = await authApi.createRole(data);
+      if (!res.success) {
+        throw new Error(res.message || '创建角色失败');
       }
-      if (permsRes.success && permsRes.data) {
-        setAllPermissions(permsRes.data);
-      }
-    } catch (_err: unknown) {
-      setError(extractErrorMessage(_err, '加载数据失败'));
+      return res.data;
+    },
+    onSuccess: () => {
       addNotification({
-        title: '加载失败',
-        message: '加载数据失败',
-        type: 'error',
+        title: '成功',
+        message: '角色创建成功',
+        type: 'success',
       });
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  const loadRolePermissions = async (roleId: string) => {
-    try {
-      const res = await authApi.getRolePermissions(roleId);
-      if (res.success && res.data) {
-        setRolePermissions(res.data);
-      }
-    } catch (_err: unknown) {
-      addNotification({
-        title: '加载失败',
-        message: '加载角色权限失败',
-        type: 'error',
-      });
-    }
-  };
-
-  const handleCreateRole = async (e: React.FormEvent) => {
-    e.preventDefault();
-    try {
-      const res = await authApi.createRole(newRole);
-      if (res.success) {
-        addNotification({
-          title: '成功',
-          message: '角色创建成功',
-          type: 'success',
-        });
-        setShowCreateModal(false);
-        setNewRole({ name: '', description: '' });
-        loadData();
-      } else {
-        addNotification({
-          title: '失败',
-          message: res.message || '创建角色失败',
-          type: 'error',
-        });
-      }
-    } catch (_err: unknown) {
+      setShowCreateModal(false);
+      setNewRole({ name: '', description: '' });
+      queryClient.invalidateQueries({ queryKey: QUERY_KEYS.IAM.ROLES });
+    },
+    onError: (err: unknown) => {
+      apiLogger.error('创建角色失败:', err);
       addNotification({
         title: '失败',
-        message: extractErrorMessage(_err, '创建角色失败'),
+        message: extractErrorMessage(err, '创建角色失败'),
         type: 'error',
       });
-    }
+    },
+  });
+
+  const handleCreateRole = (e: React.FormEvent) => {
+    e.preventDefault();
+    createRoleMutation.mutate(newRole);
   };
 
-  const handleEditRole = async (e: React.FormEvent) => {
+  const updateRoleMutation = useMutation({
+    mutationFn: async ({
+      roleId,
+      data,
+    }: {
+      roleId: string;
+      data: { name: string; description?: string };
+    }) => {
+      const res = await authApi.updateRole(roleId, data);
+      if (!res.success) {
+        throw new Error(res.message || '更新角色失败');
+      }
+      return res.data;
+    },
+    onSuccess: () => {
+      addNotification({
+        title: '成功',
+        message: '角色更新成功',
+        type: 'success',
+      });
+      setShowEditModal(false);
+      setSelectedRole(null);
+      queryClient.invalidateQueries({ queryKey: QUERY_KEYS.IAM.ROLES });
+    },
+    onError: (err: unknown) => {
+      apiLogger.error('更新角色失败:', err);
+      addNotification({
+        title: '失败',
+        message: extractErrorMessage(err, '更新角色失败'),
+        type: 'error',
+      });
+    },
+  });
+
+  const handleEditRole = (e: React.FormEvent) => {
     e.preventDefault();
     if (!selectedRole) return;
-    try {
-      const res = await authApi.updateRole(selectedRole.id, {
+    updateRoleMutation.mutate({
+      roleId: selectedRole.id,
+      data: {
         name: selectedRole.name,
         description: selectedRole.description,
-      });
-      if (res.success) {
-        addNotification({
-          title: '成功',
-          message: '角色更新成功',
-          type: 'success',
-        });
-        setShowEditModal(false);
-        setSelectedRole(null);
-        loadData();
-      } else {
-        addNotification({
-          title: '失败',
-          message: res.message || '更新角色失败',
-          type: 'error',
-        });
-      }
-    } catch (_err: unknown) {
-      addNotification({
-        title: '失败',
-        message: extractErrorMessage(_err, '更新角色失败'),
-        type: 'error',
-      });
-    }
+      },
+    });
   };
 
-  const handleDeleteRole = async (roleId: string) => {
-    if (!confirm('确定要删除这个角色吗？删除后无法恢复。')) return;
-
-    try {
+  const deleteRoleMutation = useMutation({
+    mutationFn: async (roleId: string) => {
       const res = await authApi.deleteRole(roleId);
-      if (res.success) {
-        addNotification({
-          title: '成功',
-          message: '角色删除成功',
-          type: 'success',
-        });
-        loadData();
-      } else {
-        addNotification({
-          title: '失败',
-          message: res.message || '删除角色失败',
-          type: 'error',
-        });
+      if (!res.success) {
+        throw new Error(res.message || '删除角色失败');
       }
-    } catch (_err: unknown) {
+      return res.data;
+    },
+    onSuccess: () => {
+      addNotification({
+        title: '成功',
+        message: '角色删除成功',
+        type: 'success',
+      });
+      queryClient.invalidateQueries({ queryKey: QUERY_KEYS.IAM.ROLES });
+    },
+    onError: (err: unknown) => {
+      apiLogger.error('删除角色失败:', err);
       addNotification({
         title: '失败',
-        message: extractErrorMessage(_err, '删除角色失败'),
+        message: extractErrorMessage(err, '删除角色失败'),
         type: 'error',
       });
-    }
+    },
+  });
+
+  const handleDeleteRole = (roleId: string) => {
+    if (!confirm('确定要删除这个角色吗？删除后无法恢复。')) return;
+    deleteRoleMutation.mutate(roleId);
   };
 
-  const handleAddPermission = async (roleId: string, permissionId: string) => {
-    try {
+  const addPermissionMutation = useMutation({
+    mutationFn: async ({ roleId, permissionId }: { roleId: string; permissionId: string }) => {
       const res = await authApi.addRolePermission(roleId, permissionId);
-      if (res.success) {
-        addNotification({
-          title: '成功',
-          message: '权限添加成功',
-          type: 'success',
-        });
-        loadRolePermissions(roleId);
-      } else {
-        addNotification({
-          title: '失败',
-          message: res.message || '添加权限失败',
-          type: 'error',
-        });
+      if (!res.success) {
+        throw new Error(res.message || '添加权限失败');
       }
-    } catch (_err: unknown) {
+      return res.data;
+    },
+    onSuccess: (_data, { roleId }) => {
+      addNotification({
+        title: '成功',
+        message: '权限添加成功',
+        type: 'success',
+      });
+      queryClient.invalidateQueries({ queryKey: QUERY_KEYS.IAM.ROLE_PERMISSIONS(roleId) });
+    },
+    onError: (err: unknown) => {
+      apiLogger.error('添加权限失败:', err);
       addNotification({
         title: '失败',
-        message: extractErrorMessage(_err, '添加权限失败'),
+        message: extractErrorMessage(err, '添加权限失败'),
         type: 'error',
       });
-    }
+    },
+  });
+
+  const handleAddPermission = (roleId: string, permissionId: string) => {
+    addPermissionMutation.mutate({ roleId, permissionId });
   };
 
-  const handleRemovePermission = async (roleId: string, permissionId: string) => {
-    try {
+  const removePermissionMutation = useMutation({
+    mutationFn: async ({ roleId, permissionId }: { roleId: string; permissionId: string }) => {
       const res = await authApi.removeRolePermission(roleId, permissionId);
-      if (res.success) {
-        addNotification({
-          title: '成功',
-          message: '权限移除成功',
-          type: 'success',
-        });
-        loadRolePermissions(roleId);
-      } else {
-        addNotification({
-          title: '失败',
-          message: res.message || '移除权限失败',
-          type: 'error',
-        });
+      if (!res.success) {
+        throw new Error(res.message || '移除权限失败');
       }
-    } catch (_err: unknown) {
+      return res.data;
+    },
+    onSuccess: (_data, { roleId }) => {
+      addNotification({
+        title: '成功',
+        message: '权限移除成功',
+        type: 'success',
+      });
+      queryClient.invalidateQueries({ queryKey: QUERY_KEYS.IAM.ROLE_PERMISSIONS(roleId) });
+    },
+    onError: (err: unknown) => {
+      apiLogger.error('移除权限失败:', err);
       addNotification({
         title: '失败',
-        message: extractErrorMessage(_err, '移除权限失败'),
+        message: extractErrorMessage(err, '移除权限失败'),
         type: 'error',
       });
-    }
+    },
+  });
+
+  const handleRemovePermission = (roleId: string, permissionId: string) => {
+    removePermissionMutation.mutate({ roleId, permissionId });
   };
 
-  const openPermissionsModal = async (role: Role) => {
+  const openPermissionsModal = (role: Role) => {
     setSelectedRole(role);
-    await loadRolePermissions(role.id);
     setShowPermissionsModal(true);
   };
 
@@ -357,7 +380,7 @@ const RoleManagementPage: React.FC<RoleManagementPageProps> = ({ onNavigate: _on
             onClick: () => setShowCreateModal(true),
           },
         ]}
-        onRefresh={loadData}
+        onRefresh={() => queryClient.invalidateQueries({ queryKey: QUERY_KEYS.IAM.ROLES })}
         backButton={{
           href: IAM_PATHS.dashboard,
         }}

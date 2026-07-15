@@ -37,9 +37,7 @@ export interface AuditLogListResponse {
 }
 
 export const auditApi = {
-  async list(
-    params?: AuditLogListParams
-  ): Promise<ApiResponse<AuditLogListResponse>> {
+  async list(params?: AuditLogListParams): Promise<ApiResponse<AuditLogListResponse>> {
     return apiClient.erp.get<AuditLogListResponse>('/audit-logs', { params });
   },
 

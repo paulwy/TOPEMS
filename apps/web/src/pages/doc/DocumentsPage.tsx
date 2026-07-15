@@ -433,12 +433,15 @@ const DocumentsPage: React.FC = () => {
     });
   };
 
-  const toggleStar = useCallback((id: string) => {
-    queryClient.setQueryData(['doc-files', selectedFolderId], (old: any) => {
-      if (!old) return old;
-      return old.map((f: any) => (f.id === id ? { ...f, starred: !f.starred } : f));
-    });
-  }, [queryClient, selectedFolderId]);
+  const toggleStar = useCallback(
+    (id: string) => {
+      queryClient.setQueryData(['doc-files', selectedFolderId], (old: any) => {
+        if (!old) return old;
+        return old.map((f: any) => (f.id === id ? { ...f, starred: !f.starred } : f));
+      });
+    },
+    [queryClient, selectedFolderId]
+  );
 
   const handleFolderSelect = useCallback((folderId: string | null) => {
     setSelectedFolderId(folderId);
@@ -1409,7 +1412,9 @@ const DocumentsPage: React.FC = () => {
                           ) : (
                             <tr
                               key={item.id}
-                              onClick={() => navigate(DOC_PATHS.documentDetail.replace(':id', item.id))}
+                              onClick={() =>
+                                navigate(DOC_PATHS.documentDetail.replace(':id', item.id))
+                              }
                               style={{ cursor: 'pointer' }}
                             >
                               <td

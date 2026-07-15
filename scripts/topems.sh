@@ -157,8 +157,19 @@ build_all_backend() {
         success "所有后端服务编译完成 ($total 成功)"
         return 0
     else
-        error "后端编译失败"
-        return 1
+        warning "离线编译失败，尝试在线编译..."
+        set +e
+        cargo build --release --workspace 2>&1
+        local online_result=$?
+        set -e
+        if [ $online_result -eq 0 ]; then
+            local total=$(get_all_services | wc -l | tr -d ' ')
+            success "所有后端服务编译完成 ($total 成功)"
+            return 0
+        else
+            error "后端编译失败"
+            return 1
+        fi
     fi
 }
 
@@ -940,21 +951,52 @@ redis_stop() {
 db_migrate() {
     info "运行数据库迁移..."
 
-    # 检查是否使用 sqlx-cli
+    load_env
+    local db_name=${DATABASE_NAME:-topems}
+    local db_user=${DATABASE_USER:-postgres}
+
     if command -v sqlx &> /dev/null; then
         cd "$PROJECT_ROOT"
-        sqlx migrate run --source migrations 2>&1 && success "数据库迁移完成" || { error "数据库迁移失败"; return 1; }
-    else
-        warning "sqlx-cli 未安装，使用各服务的 migrate 命令"
+        
+        info "迁移根目录 migrations..."
+        if [ -d "migrations" ]; then
+            sqlx migrate run --source migrations 2>&1 || warning "根目录迁移失败（可能已应用）"
+        fi
+
         for service in $(get_all_services); do
             local service_path=$(get_service_path "$service")
-            [ -d "$PROJECT_ROOT/$service_path/migrations" ] || continue
+            local migrate_dir="$PROJECT_ROOT/$service_path/migrations"
+            [ -d "$migrate_dir" ] || continue
 
             info "迁移 $service 服务..."
-            cd "$PROJECT_ROOT/$service_path"
-            if [ -f "Cargo.toml" ]; then
-                cargo run --release --bin migrate 2>&1 | tail -5 || warning "$service 迁移失败"
-            fi
+            sqlx migrate run --source "$migrate_dir" 2>&1 || warning "$service 迁移失败"
+        done
+
+        success "数据库迁移完成"
+    else
+        warning "sqlx-cli 未安装，使用 psql 执行迁移文件"
+        
+        for migrate_dir in "migrations" $(find svc -name migrations -type d); do
+            [ -d "$migrate_dir" ] || continue
+            
+            info "迁移目录: $migrate_dir..."
+            for file in $(ls "$migrate_dir"/*.sql 2>/dev/null | sort); do
+                [ -f "$file" ] || continue
+                local base=$(basename "$file" .sql)
+                local version=$(echo "$base" | grep -oE '[0-9]+' | head -1)
+                
+                if psql -h localhost -U "$db_user" -d "$db_name" -c "SELECT version FROM _sqlx_migrations WHERE version = '$version';" 2>/dev/null | grep -q "$version"; then
+                    detail "迁移 $base 已应用，跳过"
+                    continue
+                fi
+                
+                info "执行迁移: $file..."
+                if psql -h localhost -U "$db_user" -d "$db_name" -f "$file" 2>&1; then
+                    psql -h localhost -U "$db_user" -d "$db_name" -c "INSERT INTO _sqlx_migrations (version, description, installed_on, success, checksum, execution_time) VALUES ('$version', '$base', NOW(), true, 'manual', 0);" 2>/dev/null || true
+                else
+                    warning "迁移 $file 失败"
+                fi
+            done
         done
     fi
 }

@@ -62,20 +62,20 @@ struct ListQueryParams {
 pub fn create_routes() -> axum::Router<super::ApiState> {
     axum::Router::<super::ApiState>::new()
         .route(
-            "/api/core/rs/v1/ai/analyses",
+            "/api/core/rd/ai/analyses",
             axum::routing::get(list_analyses),
         )
         .route(
-            "/api/core/rs/v1/ai/analyses",
+            "/api/core/rd/ai/analyses",
             axum::routing::post(create_analysis),
         )
         .route(
-            "/api/core/rs/v1/ai/analyses/{id}",
+            "/api/core/rd/ai/analyses/{id}",
             axum::routing::get(get_analysis),
         )
-        .route("/api/core/rs/v1/ai/chat", axum::routing::post(ai_chat))
+        .route("/api/core/rd/ai/chat", axum::routing::post(ai_chat))
         .route(
-            "/api/core/rs/v1/entities/{entity_type}/{entity_id}/analyses",
+            "/api/core/rd/entities/{entity_type}/{entity_id}/analyses",
             axum::routing::get(get_entity_analyses),
         )
 }
@@ -259,7 +259,7 @@ async fn call_ai_service(prompt: &str, ai_service_url: &Option<String>) -> Resul
     });
 
     match client
-        .post(format!("{}/api/core/rs/v1/ai/chat", url))
+        .post(format!("{}/api/core/rd/ai/chat", url))
         .json(&request_body)
         .timeout(std::time::Duration::from_secs(60))
         .send()

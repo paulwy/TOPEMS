@@ -41,6 +41,7 @@ import { MobileLayout, MobileCard, MobileButton } from '@/components/mobile';
 import { useNotificationStore } from '@/store';
 import { designTokens } from '@/theme/tokens';
 import { MOBILE_PATHS } from '@/modules/mobile/config';
+import { PageContainer } from '@/components/common';
 
 const ct = designTokens.colors;
 
@@ -295,529 +296,536 @@ const MobileScanPage: React.FC = () => {
         </IconButton>
       }
     >
-      <Tabs
-        value={activeTab}
-        onChange={handleTabChange}
-        variant='fullWidth'
-        sx={{
-          '& .MuiTab-root': {
-            minHeight: 44,
-            fontSize: '0.875rem',
-          },
-        }}
+      <PageContainer
+        autoTitle={false}
+        autoBreadcrumbs={false}
+        padding={false}
+        maxWidth={false}
       >
-        {tabs.map((tab, index) => (
-          <Tab
-            key={index}
-            label={tab}
-          />
-        ))}
-      </Tabs>
+        <Tabs
+          value={activeTab}
+          onChange={handleTabChange}
+          variant='fullWidth'
+          sx={{
+            '& .MuiTab-root': {
+              minHeight: 44,
+              fontSize: '0.875rem',
+            },
+          }}
+        >
+          {tabs.map((tab, index) => (
+            <Tab
+              key={index}
+              label={tab}
+            />
+          ))}
+        </Tabs>
 
-      {activeTab === 0 && (
-        <Box sx={{ p: 2 }}>
-          <Paper
-            elevation={0}
-            sx={{
-              position: 'relative',
-              width: '100%',
-              aspectRatio: '4/3',
-              borderRadius: 2,
-              overflow: 'hidden',
-              mb: 3,
-              backgroundColor: ct.grey[900],
-            }}
-          >
-            <Box
+        {activeTab === 0 && (
+          <Box sx={{ p: 2 }}>
+            <Paper
+              elevation={0}
               sx={{
-                position: 'absolute',
-                inset: 0,
-                background: `linear-gradient(135deg, ${ct.grey[900]} 0%, ${ct.blue[900]} 100%)`,
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'center',
+                position: 'relative',
+                width: '100%',
+                aspectRatio: '4/3',
+                borderRadius: 2,
+                overflow: 'hidden',
+                mb: 3,
+                backgroundColor: ct.grey[900],
               }}
             >
               <Box
                 sx={{
-                  position: 'relative',
-                  width: '70%',
-                  aspectRatio: 1,
+                  position: 'absolute',
+                  inset: 0,
+                  background: `linear-gradient(135deg, ${ct.grey[900]} 0%, ${ct.blue[900]} 100%)`,
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
                 }}
               >
                 <Box
                   sx={{
-                    position: 'absolute',
-                    top: 0,
-                    left: 0,
-                    width: 30,
-                    height: 30,
-                    borderTop: '3px solid',
-                    borderLeft: '3px solid',
-                    borderColor: 'primary.main',
-                    borderRadius: '4px 0 0 0',
+                    position: 'relative',
+                    width: '70%',
+                    aspectRatio: 1,
                   }}
-                />
-                <Box
-                  sx={{
-                    position: 'absolute',
-                    top: 0,
-                    right: 0,
-                    width: 30,
-                    height: 30,
-                    borderTop: '3px solid',
-                    borderRight: '3px solid',
-                    borderColor: 'primary.main',
-                    borderRadius: '0 4px 0 0',
-                  }}
-                />
-                <Box
-                  sx={{
-                    position: 'absolute',
-                    bottom: 0,
-                    left: 0,
-                    width: 30,
-                    height: 30,
-                    borderBottom: '3px solid',
-                    borderLeft: '3px solid',
-                    borderColor: 'primary.main',
-                    borderRadius: '0 0 0 4px',
-                  }}
-                />
-                <Box
-                  sx={{
-                    position: 'absolute',
-                    bottom: 0,
-                    right: 0,
-                    width: 30,
-                    height: 30,
-                    borderBottom: '3px solid',
-                    borderRight: '3px solid',
-                    borderColor: 'primary.main',
-                    borderRadius: '0 0 4px 0',
-                  }}
-                />
-
-                {scanning && (
+                >
                   <Box
                     sx={{
                       position: 'absolute',
+                      top: 0,
                       left: 0,
-                      right: 0,
-                      height: 2,
-                      bgcolor: 'primary.main',
-                      boxShadow: '0 0 10px rgba(0, 229, 255, 0.8)',
-                      animation: 'scanLine 2s ease-in-out infinite',
-                    }}
-                    style={{
-                      animation: 'scanLine 2s ease-in-out infinite',
+                      width: 30,
+                      height: 30,
+                      borderTop: '3px solid',
+                      borderLeft: '3px solid',
+                      borderColor: 'primary.main',
+                      borderRadius: '4px 0 0 0',
                     }}
                   />
-                )}
-              </Box>
+                  <Box
+                    sx={{
+                      position: 'absolute',
+                      top: 0,
+                      right: 0,
+                      width: 30,
+                      height: 30,
+                      borderTop: '3px solid',
+                      borderRight: '3px solid',
+                      borderColor: 'primary.main',
+                      borderRadius: '0 4px 0 0',
+                    }}
+                  />
+                  <Box
+                    sx={{
+                      position: 'absolute',
+                      bottom: 0,
+                      left: 0,
+                      width: 30,
+                      height: 30,
+                      borderBottom: '3px solid',
+                      borderLeft: '3px solid',
+                      borderColor: 'primary.main',
+                      borderRadius: '0 0 0 4px',
+                    }}
+                  />
+                  <Box
+                    sx={{
+                      position: 'absolute',
+                      bottom: 0,
+                      right: 0,
+                      width: 30,
+                      height: 30,
+                      borderBottom: '3px solid',
+                      borderRight: '3px solid',
+                      borderColor: 'primary.main',
+                      borderRadius: '0 0 4px 0',
+                    }}
+                  />
 
-              <style>{`
+                  {scanning && (
+                    <Box
+                      sx={{
+                        position: 'absolute',
+                        left: 0,
+                        right: 0,
+                        height: 2,
+                        bgcolor: 'primary.main',
+                        boxShadow: '0 0 10px rgba(0, 229, 255, 0.8)',
+                        animation: 'scanLine 2s ease-in-out infinite',
+                      }}
+                      style={{
+                        animation: 'scanLine 2s ease-in-out infinite',
+                      }}
+                    />
+                  )}
+                </Box>
+
+                <style>{`
                 @keyframes scanLine {
                   0%, 100% { top: 15%; }
                   50% { top: 85%; }
                 }
               `}</style>
+              </Box>
+
+              {scanResult && (
+                <Box
+                  sx={{
+                    position: 'absolute',
+                    inset: 0,
+                    bgcolor: 'rgba(0, 0, 0, 0.85)',
+                    display: 'flex',
+                    flexDirection: 'column',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    p: 3,
+                  }}
+                >
+                  <Box
+                    sx={{
+                      width: 60,
+                      height: 60,
+                      borderRadius: '50%',
+                      bgcolor: 'success.main',
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                      mb: 2,
+                    }}
+                  >
+                    <CheckSquare style={{ width: 32, height: 32, color: 'white' }} />
+                  </Box>
+                  <Typography
+                    variant='h6'
+                    sx={{ color: 'white', mb: 1, fontWeight: 600 }}
+                  >
+                    扫描成功
+                  </Typography>
+                  <Typography
+                    variant='body2'
+                    sx={{
+                      color: 'rgba(255,255,255,0.9)',
+                      mb: 2,
+                      textAlign: 'center',
+                      wordBreak: 'break-all',
+                      px: 2,
+                    }}
+                  >
+                    {scanResult}
+                  </Typography>
+                  <Box sx={{ display: 'flex', gap: 2 }}>
+                    <MobileButton
+                      variant='outlined'
+                      size='small'
+                      onClick={handleRescan}
+                      sx={{ color: 'white', borderColor: 'rgba(255,255,255,0.5)' }}
+                    >
+                      重新扫描
+                    </MobileButton>
+                    <MobileButton
+                      variant='contained'
+                      size='small'
+                      onClick={handleCopyResult}
+                    >
+                      复制结果
+                    </MobileButton>
+                  </Box>
+                </Box>
+              )}
+            </Paper>
+
+            <Box sx={{ display: 'flex', justifyContent: 'center', gap: 4, mb: 3 }}>
+              <Box sx={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 1 }}>
+                <IconButton
+                  sx={{
+                    width: 52,
+                    height: 52,
+                    bgcolor: flashOn ? 'warning.main' : 'grey.100',
+                    color: flashOn ? 'white' : 'text.primary',
+                    '&:hover': {
+                      bgcolor: flashOn ? 'warning.dark' : 'grey.200',
+                    },
+                  }}
+                  onClick={() => setFlashOn(!flashOn)}
+                >
+                  <Flashlight style={{ width: 24, height: 24 }} />
+                </IconButton>
+                <Typography
+                  variant='caption'
+                  color='text.secondary'
+                >
+                  闪光灯
+                </Typography>
+              </Box>
+
+              <Box sx={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 1 }}>
+                <IconButton
+                  sx={{
+                    width: 52,
+                    height: 52,
+                    bgcolor: 'grey.100',
+                    color: 'text.primary',
+                    '&:hover': {
+                      bgcolor: 'grey.200',
+                    },
+                  }}
+                >
+                  <Image style={{ width: 24, height: 24 }} />
+                </IconButton>
+                <Typography
+                  variant='caption'
+                  color='text.secondary'
+                >
+                  相册
+                </Typography>
+              </Box>
+
+              <Box sx={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 1 }}>
+                <IconButton
+                  sx={{
+                    width: 52,
+                    height: 52,
+                    bgcolor: 'grey.100',
+                    color: 'text.primary',
+                    '&:hover': {
+                      bgcolor: 'grey.200',
+                    },
+                  }}
+                  onClick={() => setActiveTab(2)}
+                >
+                  <Barcode style={{ width: 24, height: 24 }} />
+                </IconButton>
+                <Typography
+                  variant='caption'
+                  color='text.secondary'
+                >
+                  手动输入
+                </Typography>
+              </Box>
             </Box>
 
             {scanResult && (
+              <Paper
+                elevation={0}
+                sx={{
+                  p: 2,
+                  borderRadius: 2,
+                  border: 1,
+                  borderColor: 'divider',
+                }}
+              >
+                <Typography
+                  variant='subtitle2'
+                  sx={{ fontWeight: 600, mb: 2 }}
+                >
+                  关联信息
+                </Typography>
+                <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
+                  <Box
+                    sx={{
+                      width: 48,
+                      height: 48,
+                      borderRadius: 1.5,
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                      bgcolor: 'primary.lighter',
+                      color: 'primary.main',
+                    }}
+                  >
+                    <Package style={{ width: 24, height: 24 }} />
+                  </Box>
+                  <Box sx={{ flex: 1 }}>
+                    <Typography
+                      variant='body2'
+                      sx={{ fontWeight: 500 }}
+                    >
+                      电阻 10kΩ
+                    </Typography>
+                    <Typography
+                      variant='caption'
+                      color='text.secondary'
+                    >
+                      物料编码: {scanResult}
+                    </Typography>
+                  </Box>
+                  <Button endIcon={<ArrowRight style={{ width: 16, height: 16 }} />}>查看</Button>
+                </Box>
+              </Paper>
+            )}
+          </Box>
+        )}
+
+        {activeTab === 1 && (
+          <Box>
+            <Box sx={{ p: 2 }}>
+              <TextField
+                fullWidth
+                size='small'
+                placeholder='搜索历史记录'
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                sx={{
+                  mb: 2,
+                  '& .MuiOutlinedInput-root': {
+                    borderRadius: 2,
+                    minHeight: 44,
+                  },
+                }}
+                slotProps={{
+                  input: {
+                    startAdornment: (
+                      <InputAdornment position='start'>
+                        <Search style={{ width: 20, height: 20 }} />
+                      </InputAdornment>
+                    ),
+                    endAdornment:
+                      scanHistory.length > 0 ? (
+                        <InputAdornment position='end'>
+                          <IconButton
+                            size='small'
+                            onClick={handleClearHistory}
+                          >
+                            <Trash2 style={{ width: 18, height: 18 }} />
+                          </IconButton>
+                        </InputAdornment>
+                      ) : undefined,
+                  },
+                }}
+              />
+            </Box>
+
+            {filteredHistory.length === 0 ? (
               <Box
                 sx={{
-                  position: 'absolute',
-                  inset: 0,
-                  bgcolor: 'rgba(0, 0, 0, 0.85)',
                   display: 'flex',
                   flexDirection: 'column',
                   alignItems: 'center',
                   justifyContent: 'center',
-                  p: 3,
+                  py: 10,
                 }}
               >
                 <Box
                   sx={{
-                    width: 60,
-                    height: 60,
+                    width: 64,
+                    height: 64,
                     borderRadius: '50%',
-                    bgcolor: 'success.main',
+                    bgcolor: 'grey.100',
                     display: 'flex',
                     alignItems: 'center',
                     justifyContent: 'center',
                     mb: 2,
                   }}
                 >
-                  <CheckSquare style={{ width: 32, height: 32, color: 'white' }} />
+                  <History style={{ width: 32, height: 32, color: theme.palette.text.secondary }} />
                 </Box>
                 <Typography
-                  variant='h6'
-                  sx={{ color: 'white', mb: 1, fontWeight: 600 }}
+                  variant='subtitle1'
+                  sx={{ mb: 1, fontWeight: 500 }}
                 >
-                  扫描成功
+                  暂无历史记录
                 </Typography>
                 <Typography
                   variant='body2'
-                  sx={{
-                    color: 'rgba(255,255,255,0.9)',
-                    mb: 2,
-                    textAlign: 'center',
-                    wordBreak: 'break-all',
-                    px: 2,
-                  }}
+                  color='text.secondary'
                 >
-                  {scanResult}
+                  扫描的条码将自动保存在这里
                 </Typography>
-                <Box sx={{ display: 'flex', gap: 2 }}>
-                  <MobileButton
-                    variant='outlined'
-                    size='small'
-                    onClick={handleRescan}
-                    sx={{ color: 'white', borderColor: 'rgba(255,255,255,0.5)' }}
-                  >
-                    重新扫描
-                  </MobileButton>
-                  <MobileButton
-                    variant='contained'
-                    size='small'
-                    onClick={handleCopyResult}
-                  >
-                    复制结果
-                  </MobileButton>
-                </Box>
               </Box>
+            ) : (
+              <List disablePadding>
+                {filteredHistory.map((item, index) => (
+                  <React.Fragment key={item.id}>
+                    <MobileCard
+                      leftIcon={
+                        item.type === 'qrcode' ? (
+                          <QrCode style={{ width: 20, height: 20 }} />
+                        ) : (
+                          <Barcode style={{ width: 20, height: 20 }} />
+                        )
+                      }
+                      title={item.content}
+                      subtitle={
+                        item.relatedData
+                          ? `${item.relatedData.type}: ${item.relatedData.name}`
+                          : item.format
+                      }
+                      showArrow
+                      divider
+                      rightContent={
+                        <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                          <Chip
+                            label={item.format}
+                            size='small'
+                            variant='outlined'
+                            sx={{ height: 20, fontSize: '0.7rem' }}
+                          />
+                        </Box>
+                      }
+                      badge={
+                        <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5 }}>
+                          <Clock
+                            style={{ width: 12, height: 12, color: theme.palette.text.secondary }}
+                          />
+                          <Typography
+                            variant='caption'
+                            color='text.secondary'
+                          >
+                            {item.time}
+                          </Typography>
+                        </Box>
+                      }
+                      onClick={() => {
+                        setScanResult(item.content);
+                        setActiveTab(0);
+                      }}
+                    />
+                  </React.Fragment>
+                ))}
+              </List>
             )}
-          </Paper>
-
-          <Box sx={{ display: 'flex', justifyContent: 'center', gap: 4, mb: 3 }}>
-            <Box sx={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 1 }}>
-              <IconButton
-                sx={{
-                  width: 52,
-                  height: 52,
-                  bgcolor: flashOn ? 'warning.main' : 'grey.100',
-                  color: flashOn ? 'white' : 'text.primary',
-                  '&:hover': {
-                    bgcolor: flashOn ? 'warning.dark' : 'grey.200',
-                  },
-                }}
-                onClick={() => setFlashOn(!flashOn)}
-              >
-                <Flashlight style={{ width: 24, height: 24 }} />
-              </IconButton>
-              <Typography
-                variant='caption'
-                color='text.secondary'
-              >
-                闪光灯
-              </Typography>
-            </Box>
-
-            <Box sx={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 1 }}>
-              <IconButton
-                sx={{
-                  width: 52,
-                  height: 52,
-                  bgcolor: 'grey.100',
-                  color: 'text.primary',
-                  '&:hover': {
-                    bgcolor: 'grey.200',
-                  },
-                }}
-              >
-                <Image style={{ width: 24, height: 24 }} />
-              </IconButton>
-              <Typography
-                variant='caption'
-                color='text.secondary'
-              >
-                相册
-              </Typography>
-            </Box>
-
-            <Box sx={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 1 }}>
-              <IconButton
-                sx={{
-                  width: 52,
-                  height: 52,
-                  bgcolor: 'grey.100',
-                  color: 'text.primary',
-                  '&:hover': {
-                    bgcolor: 'grey.200',
-                  },
-                }}
-                onClick={() => setActiveTab(2)}
-              >
-                <Barcode style={{ width: 24, height: 24 }} />
-              </IconButton>
-              <Typography
-                variant='caption'
-                color='text.secondary'
-              >
-                手动输入
-              </Typography>
-            </Box>
           </Box>
+        )}
 
-          {scanResult && (
+        {activeTab === 2 && (
+          <Box sx={{ p: 2 }}>
             <Paper
               elevation={0}
               sx={{
-                p: 2,
+                p: 3,
                 borderRadius: 2,
                 border: 1,
                 borderColor: 'divider',
               }}
             >
               <Typography
-                variant='subtitle2'
+                variant='subtitle1'
                 sx={{ fontWeight: 600, mb: 2 }}
               >
-                关联信息
-              </Typography>
-              <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
-                <Box
-                  sx={{
-                    width: 48,
-                    height: 48,
-                    borderRadius: 1.5,
-                    display: 'flex',
-                    alignItems: 'center',
-                    justifyContent: 'center',
-                    bgcolor: 'primary.lighter',
-                    color: 'primary.main',
-                  }}
-                >
-                  <Package style={{ width: 24, height: 24 }} />
-                </Box>
-                <Box sx={{ flex: 1 }}>
-                  <Typography
-                    variant='body2'
-                    sx={{ fontWeight: 500 }}
-                  >
-                    电阻 10kΩ
-                  </Typography>
-                  <Typography
-                    variant='caption'
-                    color='text.secondary'
-                  >
-                    物料编码: {scanResult}
-                  </Typography>
-                </Box>
-                <Button endIcon={<ArrowRight style={{ width: 16, height: 16 }} />}>查看</Button>
-              </Box>
-            </Paper>
-          )}
-        </Box>
-      )}
-
-      {activeTab === 1 && (
-        <Box>
-          <Box sx={{ p: 2 }}>
-            <TextField
-              fullWidth
-              size='small'
-              placeholder='搜索历史记录'
-              value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
-              sx={{
-                mb: 2,
-                '& .MuiOutlinedInput-root': {
-                  borderRadius: 2,
-                  minHeight: 44,
-                },
-              }}
-              slotProps={{
-                input: {
-                  startAdornment: (
-                    <InputAdornment position='start'>
-                      <Search style={{ width: 20, height: 20 }} />
-                    </InputAdornment>
-                  ),
-                  endAdornment:
-                    scanHistory.length > 0 ? (
-                      <InputAdornment position='end'>
-                        <IconButton
-                          size='small'
-                          onClick={handleClearHistory}
-                        >
-                          <Trash2 style={{ width: 18, height: 18 }} />
-                        </IconButton>
-                      </InputAdornment>
-                    ) : undefined,
-                },
-              }}
-            />
-          </Box>
-
-          {filteredHistory.length === 0 ? (
-            <Box
-              sx={{
-                display: 'flex',
-                flexDirection: 'column',
-                alignItems: 'center',
-                justifyContent: 'center',
-                py: 10,
-              }}
-            >
-              <Box
-                sx={{
-                  width: 64,
-                  height: 64,
-                  borderRadius: '50%',
-                  bgcolor: 'grey.100',
-                  display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'center',
-                  mb: 2,
-                }}
-              >
-                <History style={{ width: 32, height: 32, color: theme.palette.text.secondary }} />
-              </Box>
-              <Typography
-                variant='subtitle1'
-                sx={{ mb: 1, fontWeight: 500 }}
-              >
-                暂无历史记录
+                手动输入条码
               </Typography>
               <Typography
                 variant='body2'
                 color='text.secondary'
+                sx={{ mb: 3 }}
               >
-                扫描的条码将自动保存在这里
+                如果无法扫描，可以手动输入条码或二维码内容
               </Typography>
-            </Box>
-          ) : (
-            <List disablePadding>
-              {filteredHistory.map((item, index) => (
-                <React.Fragment key={item.id}>
-                  <MobileCard
-                    leftIcon={
-                      item.type === 'qrcode' ? (
-                        <QrCode style={{ width: 20, height: 20 }} />
-                      ) : (
-                        <Barcode style={{ width: 20, height: 20 }} />
-                      )
-                    }
-                    title={item.content}
-                    subtitle={
-                      item.relatedData
-                        ? `${item.relatedData.type}: ${item.relatedData.name}`
-                        : item.format
-                    }
-                    showArrow
-                    divider
-                    rightContent={
-                      <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-                        <Chip
-                          label={item.format}
-                          size='small'
-                          variant='outlined'
-                          sx={{ height: 20, fontSize: '0.7rem' }}
-                        />
-                      </Box>
-                    }
-                    badge={
-                      <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5 }}>
-                        <Clock
-                          style={{ width: 12, height: 12, color: theme.palette.text.secondary }}
-                        />
-                        <Typography
-                          variant='caption'
-                          color='text.secondary'
-                        >
-                          {item.time}
-                        </Typography>
-                      </Box>
-                    }
-                    onClick={() => {
-                      setScanResult(item.content);
-                      setActiveTab(0);
-                    }}
+
+              <TextField
+                fullWidth
+                placeholder='请输入条码内容'
+                value={manualInput}
+                onChange={(e) => setManualInput(e.target.value)}
+                sx={{
+                  mb: 2,
+                  '& .MuiOutlinedInput-root': {
+                    minHeight: 48,
+                  },
+                }}
+                onKeyDown={(e) => {
+                  if (e.key === 'Enter') {
+                    handleManualSubmit();
+                  }
+                }}
+              />
+
+              <MobileButton
+                fullWidth
+                variant='contained'
+                onClick={handleManualSubmit}
+                disabled={!manualInput.trim()}
+                startIcon={<Barcode style={{ width: 20, height: 20 }} />}
+              >
+                确认
+              </MobileButton>
+            </Paper>
+
+            <Box sx={{ mt: 3 }}>
+              <Typography
+                variant='subtitle2'
+                sx={{ fontWeight: 600, mb: 2 }}
+              >
+                支持的格式
+              </Typography>
+              <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 1 }}>
+                {['Code 128', 'EAN-13', 'UPC-A', 'QR Code', 'Code 39', 'ITF'].map((format) => (
+                  <Chip
+                    key={format}
+                    label={format}
+                    variant='outlined'
+                    size='small'
+                    sx={{ height: 28 }}
                   />
-                </React.Fragment>
-              ))}
-            </List>
-          )}
-        </Box>
-      )}
-
-      {activeTab === 2 && (
-        <Box sx={{ p: 2 }}>
-          <Paper
-            elevation={0}
-            sx={{
-              p: 3,
-              borderRadius: 2,
-              border: 1,
-              borderColor: 'divider',
-            }}
-          >
-            <Typography
-              variant='subtitle1'
-              sx={{ fontWeight: 600, mb: 2 }}
-            >
-              手动输入条码
-            </Typography>
-            <Typography
-              variant='body2'
-              color='text.secondary'
-              sx={{ mb: 3 }}
-            >
-              如果无法扫描，可以手动输入条码或二维码内容
-            </Typography>
-
-            <TextField
-              fullWidth
-              placeholder='请输入条码内容'
-              value={manualInput}
-              onChange={(e) => setManualInput(e.target.value)}
-              sx={{
-                mb: 2,
-                '& .MuiOutlinedInput-root': {
-                  minHeight: 48,
-                },
-              }}
-              onKeyDown={(e) => {
-                if (e.key === 'Enter') {
-                  handleManualSubmit();
-                }
-              }}
-            />
-
-            <MobileButton
-              fullWidth
-              variant='contained'
-              onClick={handleManualSubmit}
-              disabled={!manualInput.trim()}
-              startIcon={<Barcode style={{ width: 20, height: 20 }} />}
-            >
-              确认
-            </MobileButton>
-          </Paper>
-
-          <Box sx={{ mt: 3 }}>
-            <Typography
-              variant='subtitle2'
-              sx={{ fontWeight: 600, mb: 2 }}
-            >
-              支持的格式
-            </Typography>
-            <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 1 }}>
-              {['Code 128', 'EAN-13', 'UPC-A', 'QR Code', 'Code 39', 'ITF'].map((format) => (
-                <Chip
-                  key={format}
-                  label={format}
-                  variant='outlined'
-                  size='small'
-                  sx={{ height: 28 }}
-                />
-              ))}
+                ))}
+              </Box>
             </Box>
           </Box>
-        </Box>
-      )}
+        )}
+      </PageContainer>
     </MobileLayout>
   );
 };

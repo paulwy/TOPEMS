@@ -24,6 +24,7 @@ import { apiLogger } from '@/utils/logger';
 import { Save } from 'lucide-react';
 import { PageContainer } from '@/components/common';
 import { WORKFLOW_PATHS } from '@/modules/workflow/config';
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 
 const WorkflowDesignerPage: React.FC = () => {
   const navigate = useNavigate();
@@ -31,8 +32,7 @@ const WorkflowDesignerPage: React.FC = () => {
   const workflowId = searchParams.get('id');
 
   const { addNotification } = useNotificationStore();
-  const [loading, setLoading] = useState(false);
-  const [saving, setSaving] = useState(false);
+  const queryClient = useQueryClient();
   const [showSaveDialog, setShowSaveDialog] = useState(false);
   const [workflow, setWorkflow] = useState<Workflow | null>(null);
   const [formData, setFormData] = useState({
@@ -42,64 +42,65 @@ const WorkflowDesignerPage: React.FC = () => {
   const [nodes, setNodes] = useState<NodeData[]>([]);
   const [edges, setEdges] = useState<EdgeData[]>([]);
 
-  useEffect(() => {
-    if (workflowId) {
-      loadWorkflow(workflowId);
-    }
-  }, [workflowId]);
-
-  const loadWorkflow = async (id: string) => {
-    try {
-      setLoading(true);
-      const response = await workflowApi.getWorkflow(id);
+  const workflowQuery = useQuery<Workflow | null>({
+    queryKey: ['workflow-designer', workflowId],
+    queryFn: async () => {
+      if (!workflowId) return null;
+      const response = await workflowApi.getWorkflow(workflowId);
       if (response.success && response.data) {
-        const wf = response.data;
-        setWorkflow(wf);
-        setFormData({
-          name: wf.name,
-          description: wf.description || '',
-        });
-        // Convert workflow definition to nodes and edges
-        if (wf.definition && wf.definition.nodes) {
-          const approvalNodes = wf.definition.nodes as any[];
-          const startNode = approvalNodes.find((n) => n.node_id === wf.definition.startnode);
-          const convertedNodes = approvalNodes.map((node, index) => ({
-            id: node.node_id,
-            type: index === 0 ? 'start' : node.approvers?.length > 1 ? 'approval' : 'task',
-            x: 100 + (index % 3) * 250,
-            y: 100 + Math.floor(index / 3) * 150,
-            label: node.name || node.node_id,
-            description: node.name,
-            approvers: node.approvers || [],
-          }));
-          const convertedEdges = approvalNodes.flatMap((node) =>
-            (node.nextnodes || []).map((targetId: string) => ({
-              id: `edge-${node.node_id}-${targetId}`,
-              source: node.node_id,
-              target: targetId,
-            }))
-          );
-          setNodes(convertedNodes);
-          setEdges(convertedEdges);
-        }
-      } else {
-        addNotification({
-          title: '加载失败',
-          message: response.message || '无法加载工作流',
-          type: 'error',
-        });
+        return response.data;
       }
-    } catch (error: unknown) {
-      apiLogger.error('加载工作流失败:', error);
+      return null;
+    },
+    enabled: !!workflowId,
+    staleTime: 5 * 60 * 1000,
+  });
+
+  const loading = workflowQuery.isLoading;
+
+  useEffect(() => {
+    if (workflowQuery.isError) {
+      apiLogger.error('加载工作流失败:', workflowQuery.error);
       addNotification({
         title: '加载失败',
         message: '加载工作流失败',
         type: 'error',
       });
-    } finally {
-      setLoading(false);
     }
-  };
+  }, [workflowQuery.isError, workflowQuery.error, addNotification]);
+
+  useEffect(() => {
+    if (workflowQuery.data) {
+      const wf = workflowQuery.data;
+      setWorkflow(wf);
+      setFormData({
+        name: wf.name,
+        description: wf.description || '',
+      });
+      // Convert workflow definition to nodes and edges
+      if (wf.definition && wf.definition.nodes) {
+        const approvalNodes = wf.definition.nodes as any[];
+        const convertedNodes = approvalNodes.map((node, index) => ({
+          id: node.node_id,
+          type: index === 0 ? 'start' : node.approvers?.length > 1 ? 'approval' : 'task',
+          x: 100 + (index % 3) * 250,
+          y: 100 + Math.floor(index / 3) * 150,
+          label: node.name || node.node_id,
+          description: node.name,
+          approvers: node.approvers || [],
+        }));
+        const convertedEdges = approvalNodes.flatMap((node) =>
+          (node.nextnodes || []).map((targetId: string) => ({
+            id: `edge-${node.node_id}-${targetId}`,
+            source: node.node_id,
+            target: targetId,
+          }))
+        );
+        setNodes(convertedNodes);
+        setEdges(convertedEdges);
+      }
+    }
+  }, [workflowQuery.data]);
 
   const handleSave = (newNodes: NodeData[], newEdges: EdgeData[]) => {
     setNodes(newNodes);
@@ -136,7 +137,54 @@ const WorkflowDesignerPage: React.FC = () => {
     };
   };
 
-  const handleSaveWorkflow = async () => {
+  const updateWorkflowMutation = useMutation({
+    mutationFn: (params: { id: string; data: UpdateWorkflowRequest }) =>
+      workflowApi.updateWorkflow(params.id, params.data),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['workflow-designer', workflowId] });
+      addNotification({
+        title: '保存成功',
+        message: '工作流已更新',
+        type: 'success',
+      });
+      setShowSaveDialog(false);
+    },
+    onError: (err: unknown) => {
+      apiLogger.error('保存工作流失败:', err);
+      addNotification({
+        title: '保存失败',
+        message: '保存工作流失败',
+        type: 'error',
+      });
+    },
+  });
+
+  const createWorkflowMutation = useMutation({
+    mutationFn: (data: CreateWorkflowRequest) => workflowApi.createWorkflow(data),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['workflow-designer'] });
+      addNotification({
+        title: '保存成功',
+        message: '工作流已创建',
+        type: 'success',
+      });
+      setShowSaveDialog(false);
+      // Navigate to edit mode
+      navigate(WORKFLOW_PATHS.definitions);
+    },
+    onError: (err: unknown) => {
+      apiLogger.error('保存工作流失败:', err);
+      addNotification({
+        title: '保存失败',
+        message: '保存工作流失败',
+        type: 'error',
+      });
+    },
+  });
+
+  const saving = updateWorkflowMutation.isPending || createWorkflowMutation.isPending;
+
+  const handleSaveWorkflow = () => {
     if (!formData.name.trim()) {
       addNotification({
         title: '提示',
@@ -146,67 +194,25 @@ const WorkflowDesignerPage: React.FC = () => {
       return;
     }
 
-    try {
-      setSaving(true);
-      const definition = convertToWorkflowDefinition();
+    const definition = convertToWorkflowDefinition();
 
-      if (workflow) {
-        // Update existing workflow
-        const updateData: UpdateWorkflowRequest = {
-          name: formData.name,
-          description: formData.description,
-          definition,
-        };
-        const response = await workflowApi.updateWorkflow(workflow.id, updateData);
-        if (response.success) {
-          addNotification({
-            title: '保存成功',
-            message: '工作流已更新',
-            type: 'success',
-          });
-          setShowSaveDialog(false);
-        } else {
-          addNotification({
-            title: '保存失败',
-            message: response.message || '更新工作流失败',
-            type: 'error',
-          });
-        }
-      } else {
-        // Create new workflow
-        const createData: CreateWorkflowRequest = {
-          name: formData.name,
-          description: formData.description,
-          definition,
-          isactive: true,
-        };
-        const response = await workflowApi.createWorkflow(createData);
-        if (response.success && response.data) {
-          addNotification({
-            title: '保存成功',
-            message: '工作流已创建',
-            type: 'success',
-          });
-          setShowSaveDialog(false);
-          // Navigate to edit mode
-          navigate(WORKFLOW_PATHS.definitions);
-        } else {
-          addNotification({
-            title: '保存失败',
-            message: response.message || '创建工作流失败',
-            type: 'error',
-          });
-        }
-      }
-    } catch (error: unknown) {
-      apiLogger.error('保存工作流失败:', error);
-      addNotification({
-        title: '保存失败',
-        message: '保存工作流失败',
-        type: 'error',
-      });
-    } finally {
-      setSaving(false);
+    if (workflow) {
+      // Update existing workflow
+      const updateData: UpdateWorkflowRequest = {
+        name: formData.name,
+        description: formData.description,
+        definition,
+      };
+      updateWorkflowMutation.mutate({ id: workflow.id, data: updateData });
+    } else {
+      // Create new workflow
+      const createData: CreateWorkflowRequest = {
+        name: formData.name,
+        description: formData.description,
+        definition,
+        isactive: true,
+      };
+      createWorkflowMutation.mutate(createData);
     }
   };
 

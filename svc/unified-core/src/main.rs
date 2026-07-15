@@ -41,11 +41,12 @@ use topems_shared::{
     audit_logger_middleware, auth_middleware, body_limit_middleware, create_cors_layer,
     get_api_info_handler, security_headers_middleware, simple_health_check, ApiResponse,
     AuditLoggerConfig, AuditLoggerMiddleware, AuthState, BodyLimitConfig, BodyLimitMiddleware,
-    CompressionConfig, CompressionMiddleware, RateLimitConfig, RateLimitMiddleware,
-    SecurityHeadersConfig, SecurityHeadersLayer, ServiceHealth, SimpleHealthConfig, TelemetryExt,
+    CompressionConfig, CompressionMiddleware, SecurityHeadersConfig, SecurityHeadersLayer,
+    ServiceHealth, SimpleHealthConfig, TelemetryExt,
 };
 
 use crate::middleware::permission::require_permission;
+use crate::middleware::rate_limit::{rate_limit_middleware, RateLimitConfig, RateLimitMiddleware};
 use crate::middleware::tenant_rls::tenant_rls_middleware;
 
 pub use shared::*;
@@ -64,6 +65,7 @@ pub struct AppState {
     pub compression_middleware: std::sync::Arc<CompressionMiddleware>,
     pub body_limit_middleware: std::sync::Arc<BodyLimitMiddleware>,
     pub audit_logger_middleware: std::sync::Arc<AuditLoggerMiddleware>,
+    pub versioning_middleware: std::sync::Arc<middleware::versioning::VersionMiddleware>,
     pub input_validation_config: middleware::input_validation::InputValidationConfig,
 }
 
@@ -175,6 +177,9 @@ async fn main() {
     modules::migration::init_database(&pool)
         .await
         .expect("Failed to init migration database");
+    modules::backup::init_database(&pool)
+        .await
+        .expect("Failed to init backup database");
     modules::dict::init_database(&pool)
         .await
         .expect("Failed to init dict database");
@@ -201,6 +206,9 @@ async fn main() {
     modules::help::init_database(&pool)
         .await
         .expect("Failed to init help database");
+    modules::feedback::init_database(&pool)
+        .await
+        .expect("Failed to init feedback database");
     modules::sync::init_database(&pool)
         .await
         .expect("Failed to init sync database");
@@ -210,6 +218,14 @@ async fn main() {
     modules::search::init_database(&pool)
         .await
         .expect("Failed to init search database");
+
+    middleware::audit_log::init_audit_logs_table(&pool)
+        .await
+        .expect("Failed to init audit logs table");
+
+    middleware::versioning::init_version_config_table(&pool)
+        .await
+        .expect("Failed to init version config table");
 
     // 初始化系统基础字典数据
     modules::dict::seed::seed_dict_data(&pool)
@@ -221,11 +237,11 @@ async fn main() {
     let ws_state = std::sync::Arc::new(modules::communication::ws::WsState::new());
     let http_client = Client::new();
 
-    let rate_limit_config = RateLimitConfig {
-        enabled: true,
-        requests: 500,
-        window_secs: 60,
-    };
+    let rate_limit_config = RateLimitConfig::default()
+        .with_default_rule(500, 60)
+        .add_path_rule("/api/core/iam/auth", 100, 60)
+        .add_path_rule("/api/core/flow", 300, 60)
+        .add_path_rule("/api/core/file/upload", 50, 60);
     let rate_limit_middleware = std::sync::Arc::new(RateLimitMiddleware::new(rate_limit_config));
 
     let security_headers_config = SecurityHeadersConfig::default();
@@ -250,8 +266,14 @@ async fn main() {
     let input_validation_config = middleware::input_validation::InputValidationConfig::default()
         .add_skip_path("/health")
         .add_skip_path("/api")
-        .add_skip_path("/api/info")
-        .add_skip_path("/api/core/health");
+        .add_skip_path("/api/core/info")
+        .add_skip_path("/api/core/health")
+        .add_skip_path("/api/core/plugin/health");
+
+    let versioning_middleware =
+        std::sync::Arc::new(middleware::versioning::VersionMiddleware::new(
+            middleware::versioning::VersionConfig::default(),
+        ));
 
     let state = AppState {
         auth_state,
@@ -264,6 +286,7 @@ async fn main() {
         compression_middleware,
         body_limit_middleware: body_limit_mw,
         audit_logger_middleware: audit_logger_mw,
+        versioning_middleware,
         input_validation_config,
     };
 
@@ -292,16 +315,16 @@ async fn main() {
         .route("/health", get(health))
         .route("/api", get(|| get_api_info_handler("unified-core-service")))
         .route(
-            "/api/info",
+            "/api/core/info",
             get(|| get_api_info_handler("unified-core-service")),
         )
         .route(
             "/api/plugins/info",
             get(modules::plugin::handlers::list_plugins_with_status),
         )
-        .route("/api/plugins/health", get(plugin_health_check))
+        .route("/api/core/plugin/health", get(plugin_health_check))
         .route(
-            "/api/core/comm/notify/v1/notifications/health/detailed",
+            "/api/core/comm/notify/notifications/health/detailed",
             get(modules::communication::notification::get_notification_health_detailed),
         )
         .route(
@@ -373,6 +396,33 @@ async fn main() {
         .layer(axum::middleware::from_fn_with_state(
             state.clone(),
             require_permission("system:migration"),
+        ));
+
+    // ----- Backup Routes (requires system:backup permission) -----
+    let backup_routes = Router::new()
+        .route(
+            "/api/core/backup",
+            post(modules::backup::handlers::create_backup),
+        )
+        .route(
+            "/api/core/backup/list",
+            get(modules::backup::handlers::list_backups),
+        )
+        .route(
+            "/api/core/backup/{id}",
+            get(modules::backup::handlers::get_backup),
+        )
+        .route(
+            "/api/core/backup/{id}",
+            delete(modules::backup::handlers::delete_backup),
+        )
+        .route(
+            "/api/core/backup/restore",
+            post(modules::backup::handlers::restore_backup),
+        )
+        .layer(axum::middleware::from_fn_with_state(
+            state.clone(),
+            require_permission("system:backup"),
         ));
 
     // ===== Protected routes (auth required) =====
@@ -529,111 +579,111 @@ async fn main() {
             get(modules::flow::task::get_task),
         )
         .route(
-            "/api/core/flow/v1/workflows",
+            "/api/core/flow/workflows",
             get(modules::flow::workflow::list_workflows),
         )
         .route(
-            "/api/core/flow/v1/workflows/{id}",
+            "/api/core/flow/workflows/{id}",
             get(modules::flow::workflow::get_workflow),
         )
         .route(
-            "/api/core/flow/v1/workflows/{workflow_id}/versions",
+            "/api/core/flow/workflows/{workflow_id}/versions",
             get(modules::flow::version::list_versions),
         )
         .route(
-            "/api/core/flow/v1/workflows/{workflow_id}/versions/{version_id}",
+            "/api/core/flow/workflows/{workflow_id}/versions/{version_id}",
             get(modules::flow::version::get_version),
         )
         .route(
-            "/api/core/flow/v1/workflows/{workflow_id}/compare/{version1}/{version2}",
+            "/api/core/flow/workflows/{workflow_id}/compare/{version1}/{version2}",
             get(modules::flow::version::compare_versions),
         )
         .route(
-            "/api/core/flow/v1/instances",
+            "/api/core/flow/instances",
             get(modules::flow::instance::list_instances),
         )
         .route(
-            "/api/core/flow/v1/instances/{id}",
+            "/api/core/flow/instances/{id}",
             get(modules::flow::instance::get_instance),
         )
         .route(
-            "/api/core/flow/v1/instances/{id}/details",
+            "/api/core/flow/instances/{id}/details",
             get(modules::flow::instance::get_instance_details),
         )
         .route(
-            "/api/core/flow/v1/approvals/pending",
+            "/api/core/flow/approvals/pending",
             get(modules::flow::approval::list_pending_approvals),
         )
         .route(
-            "/api/core/flow/v1/approvals",
+            "/api/core/flow/approvals",
             get(modules::flow::approval::list_approvals),
         )
         .route(
-            "/api/core/flow/v1/approvals/{id}",
+            "/api/core/flow/approvals/{id}",
             get(modules::flow::approval::get_approval),
         )
         .route(
-            "/api/core/flow/v1/approval-tasks",
+            "/api/core/flow/approval-tasks",
             get(modules::flow::approval::list_approval_tasks),
         )
         .route(
-            "/api/core/flow/v1/approval-tasks/{id}",
+            "/api/core/flow/approval-tasks/{id}",
             get(modules::flow::approval::get_approval_task),
         )
         .route(
-            "/api/core/flow/v1/templates",
+            "/api/core/flow/templates",
             get(modules::flow::template::list_templates),
         )
         .route(
-            "/api/core/flow/v1/templates/{id}",
+            "/api/core/flow/templates/{id}",
             get(modules::flow::template::get_template),
         )
         .route(
-            "/api/core/flow/v1/templates/{id}/export",
+            "/api/core/flow/templates/{id}/export",
             get(modules::flow::template::export_template),
         )
         .route(
-            "/api/core/flow/v1/history",
+            "/api/core/flow/history",
             get(modules::flow::history::list_history),
         )
         .route(
-            "/api/core/flow/v1/history/{id}",
+            "/api/core/flow/history/{id}",
             get(modules::flow::history::get_history),
         )
         .route(
-            "/api/core/flow/v1/history/instance/{instance_id}",
+            "/api/core/flow/history/instance/{instance_id}",
             get(modules::flow::history::get_instance_history),
         )
         .route(
-            "/api/core/flow/v1/history/workflow/{workflow_id}",
+            "/api/core/flow/history/workflow/{workflow_id}",
             get(modules::flow::history::get_workflow_history),
         )
         .route(
-            "/api/core/flow/v1/records",
+            "/api/core/flow/records",
             get(modules::flow::record::list_records),
         )
         .route(
-            "/api/core/flow/v1/records/{approval_id}",
+            "/api/core/flow/records/{approval_id}",
             get(modules::flow::record::get_record),
         )
         .route(
-            "/api/core/flow/v1/settings",
+            "/api/core/flow/settings",
             get(modules::flow::setting::list_settings),
         )
         .route(
-            "/api/core/flow/v1/settings/{id}",
+            "/api/core/flow/settings/{id}",
             get(modules::flow::setting::get_setting),
         )
         .route(
-            "/api/core/flow/v1/settings/key/{key}",
+            "/api/core/flow/settings/key/{key}",
             get(modules::flow::setting::get_setting_by_key),
         )
         .route(
-            "/api/core/flow/v1/statistics",
+            "/api/core/flow/statistics",
             get(modules::flow::statistics::get_statistics),
         )
         .route(
-            "/api/core/flow/v1/performance",
+            "/api/core/flow/performance",
             get(modules::flow::performance::get_performance),
         )
         // Frontend aligned routes (Workflow)
@@ -888,143 +938,143 @@ async fn main() {
             post(modules::flow::task::batch_delegate),
         )
         .route(
-            "/api/core/flow/v1/workflows",
+            "/api/core/flow/workflows",
             post(modules::flow::workflow::create_workflow),
         )
         .route(
-            "/api/core/flow/v1/workflows/{id}",
+            "/api/core/flow/workflows/{id}",
             put(modules::flow::workflow::update_workflow),
         )
         .route(
-            "/api/core/flow/v1/workflows/{id}/publish",
+            "/api/core/flow/workflows/{id}/publish",
             post(modules::flow::workflow::publish_workflow),
         )
         .route(
-            "/api/core/flow/v1/workflows/{id}/unpublish",
+            "/api/core/flow/workflows/{id}/unpublish",
             post(modules::flow::workflow::unpublish_workflow),
         )
         .route(
-            "/api/core/flow/v1/workflows/{id}/activate",
+            "/api/core/flow/workflows/{id}/activate",
             post(modules::flow::workflow::activate_workflow),
         )
         .route(
-            "/api/core/flow/v1/workflows/{id}/deactivate",
+            "/api/core/flow/workflows/{id}/deactivate",
             post(modules::flow::workflow::deactivate_workflow),
         )
         .route(
-            "/api/core/flow/v1/workflows/{id}/deploy",
+            "/api/core/flow/workflows/{id}/deploy",
             post(modules::flow::workflow::deploy_workflow),
         )
         .route(
-            "/api/core/flow/v1/workflows/{workflow_id}/rollback",
+            "/api/core/flow/workflows/{workflow_id}/rollback",
             post(modules::flow::workflow::rollback_workflow),
         )
         .route(
-            "/api/core/flow/v1/workflows/{workflow_id}/versions",
+            "/api/core/flow/workflows/{workflow_id}/versions",
             post(modules::flow::version::create_version),
         )
         .route(
-            "/api/core/flow/v1/workflows/{workflow_id}/versions/{version_id}/activate",
+            "/api/core/flow/workflows/{workflow_id}/versions/{version_id}/activate",
             post(modules::flow::version::activate_version),
         )
         .route(
-            "/api/core/flow/v1/instances",
+            "/api/core/flow/instances",
             post(modules::flow::instance::create_instance),
         )
         .route(
-            "/api/core/flow/v1/instances/{id}/start",
+            "/api/core/flow/instances/{id}/start",
             post(modules::flow::instance::start_instance),
         )
         .route(
-            "/api/core/flow/v1/instances/{id}/approve",
+            "/api/core/flow/instances/{id}/approve",
             post(modules::flow::instance::approve_instance),
         )
         .route(
-            "/api/core/flow/v1/instances/{id}/reject",
+            "/api/core/flow/instances/{id}/reject",
             post(modules::flow::instance::reject_instance),
         )
         .route(
-            "/api/core/flow/v1/instances/{id}/cancel",
+            "/api/core/flow/instances/{id}/cancel",
             post(modules::flow::instance::cancel_instance),
         )
         .route(
-            "/api/core/flow/v1/instances/{id}/resume",
+            "/api/core/flow/instances/{id}/resume",
             post(modules::flow::instance::resume_instance),
         )
         .route(
-            "/api/core/flow/v1/instances/{id}/suspend",
+            "/api/core/flow/instances/{id}/suspend",
             post(modules::flow::instance::suspend_instance),
         )
         .route(
-            "/api/core/flow/v1/approvals/{id}/approve",
+            "/api/core/flow/approvals/{id}/approve",
             post(modules::flow::approval::approve_task),
         )
         .route(
-            "/api/core/flow/v1/approvals/{id}/reject",
+            "/api/core/flow/approvals/{id}/reject",
             post(modules::flow::approval::reject_task),
         )
         .route(
-            "/api/core/flow/v1/approvals",
+            "/api/core/flow/approvals",
             post(modules::flow::approval::create_approval),
         )
         .route(
-            "/api/core/flow/v1/approvals/{id}/process",
+            "/api/core/flow/approvals/{id}/process",
             post(modules::flow::approval::process_approval),
         )
         .route(
-            "/api/core/flow/v1/approval-tasks/{id}/approve",
+            "/api/core/flow/approval-tasks/{id}/approve",
             post(modules::flow::approval::approve_task),
         )
         .route(
-            "/api/core/flow/v1/approval-tasks/{id}/reject",
+            "/api/core/flow/approval-tasks/{id}/reject",
             post(modules::flow::approval::reject_task),
         )
         .route(
-            "/api/core/flow/v1/approval-tasks/{id}/claim",
+            "/api/core/flow/approval-tasks/{id}/claim",
             post(modules::flow::approval::claim_task),
         )
         .route(
-            "/api/core/flow/v1/approval-tasks/{id}/unclaim",
+            "/api/core/flow/approval-tasks/{id}/unclaim",
             post(modules::flow::approval::unclaim_task),
         )
         .route(
-            "/api/core/flow/v1/approval-tasks/{id}/delegate",
+            "/api/core/flow/approval-tasks/{id}/delegate",
             post(modules::flow::approval::delegate_task),
         )
         .route(
-            "/api/core/flow/v1/approval-tasks/{id}/reassign",
+            "/api/core/flow/approval-tasks/{id}/reassign",
             post(modules::flow::approval::reassign_task),
         )
         .route(
-            "/api/core/flow/v1/templates",
+            "/api/core/flow/templates",
             post(modules::flow::template::create_template),
         )
         .route(
-            "/api/core/flow/v1/templates/{id}",
+            "/api/core/flow/templates/{id}",
             put(modules::flow::template::update_template),
         )
         .route(
-            "/api/core/flow/v1/templates/{id}/copy",
+            "/api/core/flow/templates/{id}/copy",
             post(modules::flow::template::copy_template),
         )
         .route(
-            "/api/core/flow/v1/templates/import",
+            "/api/core/flow/templates/import",
             post(modules::flow::template::import_template),
         )
         .route(
-            "/api/core/flow/v1/settings/{id}",
+            "/api/core/flow/settings/{id}",
             put(modules::flow::setting::update_setting),
         )
         .route(
-            "/api/core/flow/v1/settings/{id}/reset",
+            "/api/core/flow/settings/{id}/reset",
             post(modules::flow::setting::reset_setting),
         )
         .route(
-            "/api/core/flow/v1/settings/batch",
+            "/api/core/flow/settings/batch",
             post(modules::flow::setting::batch_update_settings),
         )
         .route(
-            "/api/core/flow/v1/performance/reset",
+            "/api/core/flow/performance/reset",
             post(modules::flow::performance::reset_performance),
         )
         // Frontend aligned routes (Workflow)
@@ -1377,39 +1427,39 @@ async fn main() {
             get(modules::communication::notification::list_notifications),
         )
         .route(
-            "/api/core/comm/notify/v1/notifications",
+            "/api/core/comm/notify/notifications",
             get(modules::communication::notification::get_notifications),
         )
         .route(
-            "/api/core/comm/notify/v1/notifications/unread-count",
+            "/api/core/comm/notify/notifications/unread-count",
             get(modules::communication::notification::get_unread_count),
         )
         .route(
-            "/api/core/comm/notify/v1/notifications/unread",
+            "/api/core/comm/notify/notifications/unread",
             get(modules::communication::notification::get_unread_notifications),
         )
         .route(
-            "/api/core/comm/notify/v1/notifications/{id}",
+            "/api/core/comm/notify/notifications/{id}",
             get(modules::communication::notification::get_notification),
         )
         .route(
-            "/api/core/comm/notify/v1/notifications/stats/me",
+            "/api/core/comm/notify/notifications/stats/me",
             get(modules::communication::notification::get_notification_stats),
         )
         .route(
-            "/api/core/comm/notify/v1/notifications/archived",
+            "/api/core/comm/notify/notifications/archived",
             get(modules::communication::notification::list_archived_notifications),
         )
         .route(
-            "/api/core/comm/notify/v1/notifications/archive/config",
+            "/api/core/comm/notify/notifications/archive/config",
             get(modules::communication::notification::get_archive_config),
         )
         .route(
-            "/api/core/comm/notify/v1/notification-templates",
+            "/api/core/comm/notify/notification-templates",
             get(modules::communication::notification::list_templates),
         )
         .route(
-            "/api/core/comm/notify/v1/notification-templates/{id}",
+            "/api/core/comm/notify/notification-templates/{id}",
             get(modules::communication::notification::get_template),
         )
         .route(
@@ -1499,59 +1549,59 @@ async fn main() {
             post(modules::communication::notification::mark_all_as_read),
         )
         .route(
-            "/api/core/comm/notify/v1/notifications/{id}",
+            "/api/core/comm/notify/notifications/{id}",
             put(modules::communication::notification::mark_as_read),
         )
         .route(
-            "/api/core/comm/notify/v1/notifications/read-all",
+            "/api/core/comm/notify/notifications/read-all",
             put(modules::communication::notification::mark_all_as_read),
         )
         .route(
-            "/api/core/comm/notify/v1/notifications/{id}/unread",
+            "/api/core/comm/notify/notifications/{id}/unread",
             put(modules::communication::notification::mark_as_unread),
         )
         .route(
-            "/api/core/comm/notify/v1/notifications/bulk-read",
+            "/api/core/comm/notify/notifications/bulk-read",
             post(modules::communication::notification::bulk_mark_read),
         )
         .route(
-            "/api/core/comm/notify/v1/notifications/bulk-delete",
+            "/api/core/comm/notify/notifications/bulk-delete",
             delete(modules::communication::notification::bulk_delete),
         )
         .route(
-            "/api/core/comm/notify/v1/notifications/{id}/archive",
+            "/api/core/comm/notify/notifications/{id}/archive",
             post(modules::communication::notification::archive_notification),
         )
         .route(
-            "/api/core/comm/notify/v1/notifications/{id}/unarchive",
+            "/api/core/comm/notify/notifications/{id}/unarchive",
             post(modules::communication::notification::unarchive_notification),
         )
         .route(
-            "/api/core/comm/notify/v1/notifications/{id}",
+            "/api/core/comm/notify/notifications/{id}",
             delete(modules::communication::notification::delete_notification),
         )
         .route(
-            "/api/core/comm/notify/v1/notifications",
+            "/api/core/comm/notify/notifications",
             delete(modules::communication::notification::delete_all_notifications),
         )
         .route(
-            "/api/core/comm/notify/v1/notifications/archive/config",
+            "/api/core/comm/notify/notifications/archive/config",
             put(modules::communication::notification::update_archive_config),
         )
         .route(
-            "/api/core/comm/notify/v1/notifications/archive/run",
+            "/api/core/comm/notify/notifications/archive/run",
             post(modules::communication::notification::run_auto_archive),
         )
         .route(
-            "/api/core/comm/notify/v1/notification-templates",
+            "/api/core/comm/notify/notification-templates",
             post(modules::communication::notification::create_template),
         )
         .route(
-            "/api/core/comm/notify/v1/notification-templates/{id}",
+            "/api/core/comm/notify/notification-templates/{id}",
             put(modules::communication::notification::update_template),
         )
         .route(
-            "/api/core/comm/notify/v1/notification-templates/{id}",
+            "/api/core/comm/notify/notification-templates/{id}",
             delete(modules::communication::notification::delete_template),
         )
         .route(
@@ -2005,26 +2055,50 @@ async fn main() {
 
     // ----- Help Center Routes (public access) -----
     let help_routes = Router::new()
-        .route("/api/core/help/v1/faqs", get(modules::help::faq::list_faqs))
+        .route("/api/core/help/faqs", get(modules::help::faq::list_faqs))
         .route(
-            "/api/core/help/v1/faqs/categories",
+            "/api/core/help/faqs/categories",
             get(modules::help::faq::get_faq_categories),
         )
+        .route("/api/core/help/faqs/{id}", get(modules::help::faq::get_faq))
         .route(
-            "/api/core/help/v1/faqs/{id}",
-            get(modules::help::faq::get_faq),
-        )
-        .route(
-            "/api/core/help/v1/guides",
+            "/api/core/help/guides",
             get(modules::help::guide::list_guides),
         )
         .route(
-            "/api/core/help/v1/guides/categories",
+            "/api/core/help/guides/categories",
             get(modules::help::guide::get_guide_categories),
         )
         .route(
-            "/api/core/help/v1/guides/{id}",
+            "/api/core/help/guides/{id}",
             get(modules::help::guide::get_guide),
+        )
+        .layer(axum::middleware::from_fn_with_state(
+            state.auth_state.clone(),
+            auth_middleware,
+        ));
+
+    // ----- Feedback Routes (requires auth) -----
+    let feedback_routes = Router::new()
+        .route(
+            "/feedbacks",
+            post(modules::feedback::feedback::create_feedback),
+        )
+        .route(
+            "/feedbacks",
+            get(modules::feedback::feedback::list_feedbacks),
+        )
+        .route(
+            "/feedbacks/{id}",
+            get(modules::feedback::feedback::get_feedback),
+        )
+        .route(
+            "/feedbacks/{id}/response",
+            post(modules::feedback::feedback::response_feedback),
+        )
+        .route(
+            "/feedbacks/{id}",
+            delete(modules::feedback::feedback::delete_feedback),
         )
         .layer(axum::middleware::from_fn_with_state(
             state.auth_state.clone(),
@@ -2033,20 +2107,17 @@ async fn main() {
 
     // ----- Help Center Admin Routes (requires help:write permission) -----
     let help_admin_routes = Router::new()
+        .route("/api/core/help/faqs", post(modules::help::faq::create_faq))
         .route(
-            "/api/core/help/v1/faqs",
-            post(modules::help::faq::create_faq),
-        )
-        .route(
-            "/api/core/help/v1/faqs/{id}",
+            "/api/core/help/faqs/{id}",
             put(modules::help::faq::update_faq).delete(modules::help::faq::delete_faq),
         )
         .route(
-            "/api/core/help/v1/guides",
+            "/api/core/help/guides",
             post(modules::help::guide::create_guide),
         )
         .route(
-            "/api/core/help/v1/guides/{guide_id}/lessons",
+            "/api/core/help/guides/{guide_id}/lessons",
             post(modules::help::guide::add_lesson),
         )
         .layer(axum::middleware::from_fn_with_state(
@@ -2056,7 +2127,7 @@ async fn main() {
 
     // ----- Health & Metrics (with auth) -----
     let health_routes = Router::new()
-        .route("/api/core/health/v1/detailed", get(detailed_health))
+        .route("/api/core/health/detailed", get(detailed_health))
         .layer(axum::middleware::from_fn_with_state(
             state.auth_state.clone(),
             auth_middleware,
@@ -2065,23 +2136,23 @@ async fn main() {
     // ----- Dict Routes (system:read permission) -----
     let dict_read_routes = Router::new()
         .route(
-            "/api/core/dict/v1/dict-types",
+            "/api/core/dict/dict-types",
             get(modules::dict::handlers::list_dict_types),
         )
         .route(
-            "/api/core/dict/v1/dict-types/{id}",
+            "/api/core/dict/dict-types/{id}",
             get(modules::dict::handlers::get_dict_type),
         )
         .route(
-            "/api/core/dict/v1/dict-types/{dict_type_id}/items",
+            "/api/core/dict/dict-types/{dict_type_id}/items",
             get(modules::dict::handlers::list_dict_items),
         )
         .route(
-            "/api/core/dict/v1/dict-types/{dict_type_id}/items/export",
+            "/api/core/dict/dict-types/{dict_type_id}/items/export",
             get(modules::dict::handlers::export_dict_items),
         )
         .route(
-            "/api/core/dict/v1/dict-items/{id}",
+            "/api/core/dict/dict-items/{id}",
             get(modules::dict::handlers::get_dict_item),
         )
         .layer(axum::middleware::from_fn_with_state(
@@ -2091,31 +2162,31 @@ async fn main() {
 
     let dict_write_routes = Router::new()
         .route(
-            "/api/core/dict/v1/dict-types",
+            "/api/core/dict/dict-types",
             post(modules::dict::handlers::create_dict_type),
         )
         .route(
-            "/api/core/dict/v1/dict-types/{id}",
+            "/api/core/dict/dict-types/{id}",
             put(modules::dict::handlers::update_dict_type),
         )
         .route(
-            "/api/core/dict/v1/dict-types/{id}",
+            "/api/core/dict/dict-types/{id}",
             delete(modules::dict::handlers::delete_dict_type),
         )
         .route(
-            "/api/core/dict/v1/dict-items",
+            "/api/core/dict/dict-items",
             post(modules::dict::handlers::create_dict_item),
         )
         .route(
-            "/api/core/dict/v1/dict-items/batch",
+            "/api/core/dict/dict-items/batch",
             post(modules::dict::handlers::batch_create_dict_items),
         )
         .route(
-            "/api/core/dict/v1/dict-items/{id}",
+            "/api/core/dict/dict-items/{id}",
             put(modules::dict::handlers::update_dict_item),
         )
         .route(
-            "/api/core/dict/v1/dict-items/{id}",
+            "/api/core/dict/dict-items/{id}",
             delete(modules::dict::handlers::delete_dict_item),
         )
         .layer(axum::middleware::from_fn_with_state(
@@ -2126,19 +2197,19 @@ async fn main() {
     // ----- Menu Routes (system:read / system:write permission) -----
     let menu_read_routes = Router::new()
         .route(
-            "/api/core/menu/v1/groups",
+            "/api/core/menu/groups",
             get(modules::menu::handlers::list_groups),
         )
         .route(
-            "/api/core/menu/v1/groups/{id}",
+            "/api/core/menu/groups/{id}",
             get(modules::menu::handlers::get_group),
         )
         .route(
-            "/api/core/menu/v1/menus",
+            "/api/core/menu/menus",
             get(modules::menu::handlers::list_menus),
         )
         .route(
-            "/api/core/menu/v1/menus/{id}",
+            "/api/core/menu/menus/{id}",
             get(modules::menu::handlers::get_menu),
         )
         .layer(axum::middleware::from_fn_with_state(
@@ -2148,28 +2219,65 @@ async fn main() {
 
     let menu_write_routes = Router::new()
         .route(
-            "/api/core/menu/v1/groups",
+            "/api/core/menu/groups",
             post(modules::menu::handlers::create_group),
         )
         .route(
-            "/api/core/menu/v1/groups/{id}",
+            "/api/core/menu/groups/{id}",
             put(modules::menu::handlers::update_group),
         )
         .route(
-            "/api/core/menu/v1/groups/{id}",
+            "/api/core/menu/groups/{id}",
             delete(modules::menu::handlers::delete_group),
         )
         .route(
-            "/api/core/menu/v1/menus",
+            "/api/core/menu/menus",
             post(modules::menu::handlers::create_menu),
         )
         .route(
-            "/api/core/menu/v1/menus/{id}",
+            "/api/core/menu/menus/{id}",
             put(modules::menu::handlers::update_menu),
         )
         .route(
-            "/api/core/menu/v1/menus/{id}",
+            "/api/core/menu/menus/{id}",
             delete(modules::menu::handlers::delete_menu),
+        )
+        .layer(axum::middleware::from_fn_with_state(
+            state.clone(),
+            require_permission("system:write"),
+        ));
+
+    // ----- Versioning Routes (system:read / system:write permission) -----
+    let versioning_read_routes = Router::new()
+        .route(
+            "/api/core/versioning/versions",
+            get(middleware::versioning::list_versions),
+        )
+        .route(
+            "/api/core/versioning/versions/{version}",
+            get(middleware::versioning::get_version),
+        )
+        .route(
+            "/api/core/versioning/statistics",
+            get(middleware::versioning::get_version_statistics),
+        )
+        .layer(axum::middleware::from_fn_with_state(
+            state.clone(),
+            require_permission("system:read"),
+        ));
+
+    let versioning_write_routes = Router::new()
+        .route(
+            "/api/core/versioning/versions",
+            post(middleware::versioning::create_version),
+        )
+        .route(
+            "/api/core/versioning/versions/{version}/status",
+            put(middleware::versioning::update_version_status),
+        )
+        .route(
+            "/api/core/versioning/versions/{version}",
+            delete(middleware::versioning::delete_version),
         )
         .layer(axum::middleware::from_fn_with_state(
             state.clone(),
@@ -2181,11 +2289,11 @@ async fn main() {
     // ----- Finance Routes (finance:read / finance:write permission) -----
     let finance_read_routes = Router::new()
         .route(
-            "/api/core/finance/v1/payments",
+            "/api/core/finance/payments",
             get(modules::finance::handlers::list_payments),
         )
         .route(
-            "/api/core/finance/v1/payments/{id}",
+            "/api/core/finance/payments/{id}",
             get(modules::finance::handlers::get_payment),
         )
         .layer(axum::middleware::from_fn_with_state(
@@ -2195,27 +2303,27 @@ async fn main() {
 
     let finance_write_routes = Router::new()
         .route(
-            "/api/core/finance/v1/payments",
+            "/api/core/finance/payments",
             post(modules::finance::handlers::create_payment),
         )
         .route(
-            "/api/core/finance/v1/payments/{id}",
+            "/api/core/finance/payments/{id}",
             put(modules::finance::handlers::update_payment),
         )
         .route(
-            "/api/core/finance/v1/payments/{id}",
+            "/api/core/finance/payments/{id}",
             delete(modules::finance::handlers::delete_payment),
         )
         .route(
-            "/api/core/finance/v1/payments/{id}/submit",
+            "/api/core/finance/payments/{id}/submit",
             post(modules::finance::handlers::submit_payment),
         )
         .route(
-            "/api/core/finance/v1/payments/{id}/approve",
+            "/api/core/finance/payments/{id}/approve",
             post(modules::finance::handlers::approve_payment),
         )
         .route(
-            "/api/core/finance/v1/payments/{id}/reject",
+            "/api/core/finance/payments/{id}/reject",
             post(modules::finance::handlers::reject_payment),
         )
         .layer(axum::middleware::from_fn_with_state(
@@ -2229,51 +2337,51 @@ async fn main() {
     // ----- ERP Routes (erp:read / erp:write permission) -----
     let erp_read_routes = Router::new()
         .route(
-            "/api/core/erp/v1/purchase-orders",
+            "/api/core/erp/purchase-orders",
             get(modules::erp::purchase::handlers::list_purchase_orders),
         )
         .route(
-            "/api/core/erp/v1/purchase-orders/{id}",
+            "/api/core/erp/purchase-orders/{id}",
             get(modules::erp::purchase::handlers::get_purchase_order),
         )
         .route(
-            "/api/core/erp/v1/sales-orders",
+            "/api/core/erp/sales-orders",
             get(modules::erp::sales::handlers::list_sales_orders),
         )
         .route(
-            "/api/core/erp/v1/sales-orders/{id}",
+            "/api/core/erp/sales-orders/{id}",
             get(modules::erp::sales::handlers::get_sales_order),
         )
         .route(
-            "/api/core/erp/v1/inventory",
+            "/api/core/erp/inventory",
             get(modules::erp::inventory::handlers::list_inventory),
         )
         .route(
-            "/api/core/erp/v1/inventory/{id}",
+            "/api/core/erp/inventory/{id}",
             get(modules::erp::inventory::handlers::get_inventory),
         )
         .route(
-            "/api/core/erp/v1/materials",
+            "/api/core/erp/materials",
             get(modules::erp::material::handlers::list_materials),
         )
         .route(
-            "/api/core/erp/v1/materials/{id}",
+            "/api/core/erp/materials/{id}",
             get(modules::erp::material::handlers::get_material),
         )
         .route(
-            "/api/core/erp/v1/suppliers",
+            "/api/core/erp/suppliers",
             get(modules::erp::supplier::handlers::list_suppliers),
         )
         .route(
-            "/api/core/erp/v1/suppliers/{id}",
+            "/api/core/erp/suppliers/{id}",
             get(modules::erp::supplier::handlers::get_supplier),
         )
         .route(
-            "/api/core/erp/v1/customers",
+            "/api/core/erp/customers",
             get(modules::erp::customer::handlers::list_customers),
         )
         .route(
-            "/api/core/erp/v1/customers/{id}",
+            "/api/core/erp/customers/{id}",
             get(modules::erp::customer::handlers::get_customer),
         )
         .layer(axum::middleware::from_fn_with_state(
@@ -2283,75 +2391,75 @@ async fn main() {
 
     let erp_write_routes = Router::new()
         .route(
-            "/api/core/erp/v1/purchase-orders",
+            "/api/core/erp/purchase-orders",
             post(modules::erp::purchase::handlers::create_purchase_order),
         )
         .route(
-            "/api/core/erp/v1/purchase-orders/{id}",
+            "/api/core/erp/purchase-orders/{id}",
             put(modules::erp::purchase::handlers::update_purchase_order),
         )
         .route(
-            "/api/core/erp/v1/purchase-orders/{id}",
+            "/api/core/erp/purchase-orders/{id}",
             delete(modules::erp::purchase::handlers::delete_purchase_order),
         )
         .route(
-            "/api/core/erp/v1/purchase-orders/{id}/approve",
+            "/api/core/erp/purchase-orders/{id}/approve",
             post(modules::erp::purchase::handlers::approve_purchase_order),
         )
         .route(
-            "/api/core/erp/v1/sales-orders",
+            "/api/core/erp/sales-orders",
             post(modules::erp::sales::handlers::create_sales_order),
         )
         .route(
-            "/api/core/erp/v1/sales-orders/{id}",
+            "/api/core/erp/sales-orders/{id}",
             put(modules::erp::sales::handlers::update_sales_order),
         )
         .route(
-            "/api/core/erp/v1/sales-orders/{id}",
+            "/api/core/erp/sales-orders/{id}",
             delete(modules::erp::sales::handlers::delete_sales_order),
         )
         .route(
-            "/api/core/erp/v1/sales-orders/{id}/approve",
+            "/api/core/erp/sales-orders/{id}/approve",
             post(modules::erp::sales::handlers::approve_sales_order),
         )
         .route(
-            "/api/core/erp/v1/inventory/{id}/adjust",
+            "/api/core/erp/inventory/{id}/adjust",
             post(modules::erp::inventory::handlers::update_inventory_quantity),
         )
         .route(
-            "/api/core/erp/v1/materials",
+            "/api/core/erp/materials",
             post(modules::erp::material::handlers::create_material),
         )
         .route(
-            "/api/core/erp/v1/materials/{id}",
+            "/api/core/erp/materials/{id}",
             put(modules::erp::material::handlers::update_material),
         )
         .route(
-            "/api/core/erp/v1/materials/{id}",
+            "/api/core/erp/materials/{id}",
             delete(modules::erp::material::handlers::delete_material),
         )
         .route(
-            "/api/core/erp/v1/suppliers",
+            "/api/core/erp/suppliers",
             post(modules::erp::supplier::handlers::create_supplier),
         )
         .route(
-            "/api/core/erp/v1/suppliers/{id}",
+            "/api/core/erp/suppliers/{id}",
             put(modules::erp::supplier::handlers::update_supplier),
         )
         .route(
-            "/api/core/erp/v1/suppliers/{id}",
+            "/api/core/erp/suppliers/{id}",
             delete(modules::erp::supplier::handlers::delete_supplier),
         )
         .route(
-            "/api/core/erp/v1/customers",
+            "/api/core/erp/customers",
             post(modules::erp::customer::handlers::create_customer),
         )
         .route(
-            "/api/core/erp/v1/customers/{id}",
+            "/api/core/erp/customers/{id}",
             put(modules::erp::customer::handlers::update_customer),
         )
         .route(
-            "/api/core/erp/v1/customers/{id}",
+            "/api/core/erp/customers/{id}",
             delete(modules::erp::customer::handlers::delete_customer),
         )
         .layer(axum::middleware::from_fn_with_state(
@@ -2365,35 +2473,35 @@ async fn main() {
     // ----- HRM Routes (hrm:read / hrm:write permission) -----
     let hrm_read_routes = Router::new()
         .route(
-            "/api/core/hrm/v1/employees",
+            "/api/core/hrm/employees",
             get(modules::hrm::employee::handlers::list_employees),
         )
         .route(
-            "/api/core/hrm/v1/employees/{id}",
+            "/api/core/hrm/employees/{id}",
             get(modules::hrm::employee::handlers::get_employee),
         )
         .route(
-            "/api/core/hrm/v1/departments",
+            "/api/core/hrm/departments",
             get(modules::hrm::department::handlers::list_departments),
         )
         .route(
-            "/api/core/hrm/v1/departments/{id}",
+            "/api/core/hrm/departments/{id}",
             get(modules::hrm::department::handlers::get_department),
         )
         .route(
-            "/api/core/hrm/v1/attendance",
+            "/api/core/hrm/attendance",
             get(modules::hrm::attendance::handlers::list_attendance),
         )
         .route(
-            "/api/core/hrm/v1/attendance/{id}",
+            "/api/core/hrm/attendance/{id}",
             get(modules::hrm::attendance::handlers::get_attendance),
         )
         .route(
-            "/api/core/hrm/v1/leaves",
+            "/api/core/hrm/leaves",
             get(modules::hrm::leave::handlers::list_leaves),
         )
         .route(
-            "/api/core/hrm/v1/leaves/{id}",
+            "/api/core/hrm/leaves/{id}",
             get(modules::hrm::leave::handlers::get_leave),
         )
         .layer(axum::middleware::from_fn_with_state(
@@ -2403,47 +2511,47 @@ async fn main() {
 
     let hrm_write_routes = Router::new()
         .route(
-            "/api/core/hrm/v1/employees",
+            "/api/core/hrm/employees",
             post(modules::hrm::employee::handlers::create_employee),
         )
         .route(
-            "/api/core/hrm/v1/employees/{id}",
+            "/api/core/hrm/employees/{id}",
             put(modules::hrm::employee::handlers::update_employee),
         )
         .route(
-            "/api/core/hrm/v1/employees/{id}",
+            "/api/core/hrm/employees/{id}",
             delete(modules::hrm::employee::handlers::delete_employee),
         )
         .route(
-            "/api/core/hrm/v1/departments",
+            "/api/core/hrm/departments",
             post(modules::hrm::department::handlers::create_department),
         )
         .route(
-            "/api/core/hrm/v1/departments/{id}",
+            "/api/core/hrm/departments/{id}",
             put(modules::hrm::department::handlers::update_department),
         )
         .route(
-            "/api/core/hrm/v1/departments/{id}",
+            "/api/core/hrm/departments/{id}",
             delete(modules::hrm::department::handlers::delete_department),
         )
         .route(
-            "/api/core/hrm/v1/attendance",
+            "/api/core/hrm/attendance",
             post(modules::hrm::attendance::handlers::create_attendance),
         )
         .route(
-            "/api/core/hrm/v1/leaves",
+            "/api/core/hrm/leaves",
             post(modules::hrm::leave::handlers::create_leave),
         )
         .route(
-            "/api/core/hrm/v1/leaves/{id}",
+            "/api/core/hrm/leaves/{id}",
             put(modules::hrm::leave::handlers::update_leave),
         )
         .route(
-            "/api/core/hrm/v1/leaves/{id}",
+            "/api/core/hrm/leaves/{id}",
             delete(modules::hrm::leave::handlers::delete_leave),
         )
         .route(
-            "/api/core/hrm/v1/leaves/{id}/approve",
+            "/api/core/hrm/leaves/{id}/approve",
             post(modules::hrm::leave::handlers::approve_leave),
         )
         .layer(axum::middleware::from_fn_with_state(
@@ -2457,27 +2565,27 @@ async fn main() {
     // ----- CRM Routes (crm:read / crm:write permission) -----
     let crm_read_routes = Router::new()
         .route(
-            "/api/core/crm/v1/customers",
+            "/api/core/crm/customers",
             get(modules::crm::customer::handlers::list_customers),
         )
         .route(
-            "/api/core/crm/v1/customers/{id}",
+            "/api/core/crm/customers/{id}",
             get(modules::crm::customer::handlers::get_customer),
         )
         .route(
-            "/api/core/crm/v1/contacts",
+            "/api/core/crm/contacts",
             get(modules::crm::contact::handlers::list_contacts),
         )
         .route(
-            "/api/core/crm/v1/contacts/{id}",
+            "/api/core/crm/contacts/{id}",
             get(modules::crm::contact::handlers::get_contact),
         )
         .route(
-            "/api/core/crm/v1/opportunities",
+            "/api/core/crm/opportunities",
             get(modules::crm::opportunity::handlers::list_opportunities),
         )
         .route(
-            "/api/core/crm/v1/opportunities/{id}",
+            "/api/core/crm/opportunities/{id}",
             get(modules::crm::opportunity::handlers::get_opportunity),
         )
         .layer(axum::middleware::from_fn_with_state(
@@ -2487,43 +2595,43 @@ async fn main() {
 
     let crm_write_routes = Router::new()
         .route(
-            "/api/core/crm/v1/customers",
+            "/api/core/crm/customers",
             post(modules::crm::customer::handlers::create_customer),
         )
         .route(
-            "/api/core/crm/v1/customers/{id}",
+            "/api/core/crm/customers/{id}",
             put(modules::crm::customer::handlers::update_customer),
         )
         .route(
-            "/api/core/crm/v1/customers/{id}",
+            "/api/core/crm/customers/{id}",
             delete(modules::crm::customer::handlers::delete_customer),
         )
         .route(
-            "/api/core/crm/v1/contacts",
+            "/api/core/crm/contacts",
             post(modules::crm::contact::handlers::create_contact),
         )
         .route(
-            "/api/core/crm/v1/contacts/{id}",
+            "/api/core/crm/contacts/{id}",
             put(modules::crm::contact::handlers::update_contact),
         )
         .route(
-            "/api/core/crm/v1/contacts/{id}",
+            "/api/core/crm/contacts/{id}",
             delete(modules::crm::contact::handlers::delete_contact),
         )
         .route(
-            "/api/core/crm/v1/opportunities",
+            "/api/core/crm/opportunities",
             post(modules::crm::opportunity::handlers::create_opportunity),
         )
         .route(
-            "/api/core/crm/v1/opportunities/{id}",
+            "/api/core/crm/opportunities/{id}",
             put(modules::crm::opportunity::handlers::update_opportunity),
         )
         .route(
-            "/api/core/crm/v1/opportunities/{id}",
+            "/api/core/crm/opportunities/{id}",
             delete(modules::crm::opportunity::handlers::delete_opportunity),
         )
         .route(
-            "/api/core/crm/v1/opportunities/{id}/stage",
+            "/api/core/crm/opportunities/{id}/stage",
             post(modules::crm::opportunity::handlers::update_opportunity_stage),
         )
         .layer(axum::middleware::from_fn_with_state(
@@ -2537,35 +2645,35 @@ async fn main() {
     // ----- WMS Routes (wms:read / wms:write permission) -----
     let wms_read_routes = Router::new()
         .route(
-            "/api/core/wms/v1/warehouses",
+            "/api/core/wms/warehouses",
             get(modules::wms::warehouse::handlers::list_warehouses),
         )
         .route(
-            "/api/core/wms/v1/warehouses/{id}",
+            "/api/core/wms/warehouses/{id}",
             get(modules::wms::warehouse::handlers::get_warehouse),
         )
         .route(
-            "/api/core/wms/v1/inventory",
+            "/api/core/wms/inventory",
             get(modules::wms::inventory::handlers::list_inventory),
         )
         .route(
-            "/api/core/wms/v1/inventory/{id}",
+            "/api/core/wms/inventory/{id}",
             get(modules::wms::inventory::handlers::get_inventory),
         )
         .route(
-            "/api/core/wms/v1/inbound-orders",
+            "/api/core/wms/inbound-orders",
             get(modules::wms::inbound::handlers::list_inbound_orders),
         )
         .route(
-            "/api/core/wms/v1/inbound-orders/{id}",
+            "/api/core/wms/inbound-orders/{id}",
             get(modules::wms::inbound::handlers::get_inbound_order),
         )
         .route(
-            "/api/core/wms/v1/outbound-orders",
+            "/api/core/wms/outbound-orders",
             get(modules::wms::outbound::handlers::list_outbound_orders),
         )
         .route(
-            "/api/core/wms/v1/outbound-orders/{id}",
+            "/api/core/wms/outbound-orders/{id}",
             get(modules::wms::outbound::handlers::get_outbound_order),
         )
         .layer(axum::middleware::from_fn_with_state(
@@ -2575,51 +2683,51 @@ async fn main() {
 
     let wms_write_routes = Router::new()
         .route(
-            "/api/core/wms/v1/warehouses",
+            "/api/core/wms/warehouses",
             post(modules::wms::warehouse::handlers::create_warehouse),
         )
         .route(
-            "/api/core/wms/v1/warehouses/{id}",
+            "/api/core/wms/warehouses/{id}",
             put(modules::wms::warehouse::handlers::update_warehouse),
         )
         .route(
-            "/api/core/wms/v1/warehouses/{id}",
+            "/api/core/wms/warehouses/{id}",
             delete(modules::wms::warehouse::handlers::delete_warehouse),
         )
         .route(
-            "/api/core/wms/v1/inventory/{id}/adjust",
+            "/api/core/wms/inventory/{id}/adjust",
             post(modules::wms::inventory::handlers::adjust_inventory),
         )
         .route(
-            "/api/core/wms/v1/inbound-orders",
+            "/api/core/wms/inbound-orders",
             post(modules::wms::inbound::handlers::create_inbound_order),
         )
         .route(
-            "/api/core/wms/v1/inbound-orders/{id}",
+            "/api/core/wms/inbound-orders/{id}",
             put(modules::wms::inbound::handlers::update_inbound_order),
         )
         .route(
-            "/api/core/wms/v1/inbound-orders/{id}",
+            "/api/core/wms/inbound-orders/{id}",
             delete(modules::wms::inbound::handlers::delete_inbound_order),
         )
         .route(
-            "/api/core/wms/v1/inbound-orders/{id}/confirm",
+            "/api/core/wms/inbound-orders/{id}/confirm",
             post(modules::wms::inbound::handlers::confirm_inbound_order),
         )
         .route(
-            "/api/core/wms/v1/outbound-orders",
+            "/api/core/wms/outbound-orders",
             post(modules::wms::outbound::handlers::create_outbound_order),
         )
         .route(
-            "/api/core/wms/v1/outbound-orders/{id}",
+            "/api/core/wms/outbound-orders/{id}",
             put(modules::wms::outbound::handlers::update_outbound_order),
         )
         .route(
-            "/api/core/wms/v1/outbound-orders/{id}",
+            "/api/core/wms/outbound-orders/{id}",
             delete(modules::wms::outbound::handlers::delete_outbound_order),
         )
         .route(
-            "/api/core/wms/v1/outbound-orders/{id}/confirm",
+            "/api/core/wms/outbound-orders/{id}/confirm",
             post(modules::wms::outbound::handlers::confirm_outbound_order),
         )
         .layer(axum::middleware::from_fn_with_state(
@@ -2653,10 +2761,13 @@ async fn main() {
         .merge(mobile_api_routes)
         .merge(help_routes)
         .merge(help_admin_routes)
+        .merge(feedback_routes)
         .merge(dict_read_routes)
         .merge(dict_write_routes)
         .merge(menu_read_routes)
         .merge(menu_write_routes)
+        .merge(versioning_read_routes)
+        .merge(versioning_write_routes)
         .merge(modules::login_log::create_routes(state.clone()))
         //.merge(finance_read_routes)
         //.merge(finance_write_routes)
@@ -2669,6 +2780,7 @@ async fn main() {
         //.merge(wms_read_routes)
         //.merge(wms_write_routes)
         .merge(migration_routes)
+        .merge(backup_routes)
         .merge(health_routes)
         .merge(modules::search::create_routes(state.clone()))
         .layer(axum::middleware::from_fn_with_state(
@@ -2686,6 +2798,14 @@ async fn main() {
         .layer(axum::middleware::from_fn_with_state(
             state.clone(),
             audit_logger_middleware_fn,
+        ))
+        .layer(axum::middleware::from_fn_with_state(
+            state.clone(),
+            middleware::audit_log::audit_log_middleware,
+        ))
+        .layer(axum::middleware::from_fn_with_state(
+            state.clone(),
+            middleware::versioning::versioning_middleware,
         ))
         .layer(axum::middleware::from_fn_with_state(
             state.clone(),
@@ -2877,11 +2997,7 @@ async fn rate_limit_middleware_fn(
     req: Request<Body>,
     next: axum::middleware::Next,
 ) -> Response {
-    state
-        .rate_limit_middleware
-        .clone()
-        .middleware(req, next)
-        .await
+    rate_limit_middleware(State(state), req, next).await
 }
 
 async fn security_headers_middleware_fn(

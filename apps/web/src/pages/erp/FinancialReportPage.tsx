@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useMemo } from 'react';
+import { useQuery, useQueryClient } from '@tanstack/react-query';
 import {
   FileText,
   TrendingUp,
@@ -46,52 +47,85 @@ import type {
 } from '@/api/erp/types';
 import { apiLogger } from '@/utils/logger';
 import { useNotificationStore } from '@/store';
+import { QUERY_KEYS } from '@/lib/reactQuery';
 
 const FinancialReportPage: React.FC = () => {
   const addNotification = useNotificationStore((state) => state.addNotification);
+  const queryClient = useQueryClient();
 
   const [activeTab, setActiveTab] = useState('balance-sheet');
   const [periodType, setPeriodType] = useState('year');
   const [period, setPeriod] = useState('2024');
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
 
-  const [balanceSheet, setBalanceSheet] = useState<BalanceSheet | null>(null);
-  const [incomeStatement, setIncomeStatement] = useState<IncomeStatement | null>(null);
-  const [cashFlowStatement, setCashFlowStatement] = useState<CashFlowStatement | null>(null);
+  const balanceSheetQuery = useQuery<BalanceSheet | null>({
+    queryKey: QUERY_KEYS.ERP.FINANCIAL_REPORTS.BALANCE_SHEET(period),
+    queryFn: async () => {
+      const res = await financeReportApi.balanceSheet({ period });
+      return res.success && res.data ? res.data : null;
+    },
+    enabled: activeTab === 'balance-sheet',
+    staleTime: 5 * 60 * 1000,
+  });
+
+  const incomeStatementQuery = useQuery<IncomeStatement | null>({
+    queryKey: QUERY_KEYS.ERP.FINANCIAL_REPORTS.INCOME_STATEMENT(period),
+    queryFn: async () => {
+      const res = await financeReportApi.incomeStatement({ period });
+      return res.success && res.data ? res.data : null;
+    },
+    enabled: activeTab === 'income-statement',
+    staleTime: 5 * 60 * 1000,
+  });
+
+  const cashFlowQuery = useQuery<CashFlowStatement | null>({
+    queryKey: QUERY_KEYS.ERP.FINANCIAL_REPORTS.CASH_FLOW(period),
+    queryFn: async () => {
+      const res = await financeReportApi.cashFlowStatement({ period });
+      return res.success && res.data ? res.data : null;
+    },
+    enabled: activeTab === 'cash-flow',
+    staleTime: 5 * 60 * 1000,
+  });
+
+  const balanceSheet = balanceSheetQuery.data ?? null;
+  const incomeStatement = incomeStatementQuery.data ?? null;
+  const cashFlowStatement = cashFlowQuery.data ?? null;
+
+  const loading =
+    (activeTab === 'balance-sheet' && balanceSheetQuery.isLoading) ||
+    (activeTab === 'income-statement' && incomeStatementQuery.isLoading) ||
+    (activeTab === 'cash-flow' && cashFlowQuery.isLoading);
+
+  const error =
+    (activeTab === 'balance-sheet' && balanceSheetQuery.isError) ||
+    (activeTab === 'income-statement' && incomeStatementQuery.isError) ||
+    (activeTab === 'cash-flow' && cashFlowQuery.isError)
+      ? '加载报表数据失败，请稍后重试'
+      : null;
 
   useEffect(() => {
-    loadReportData();
-  }, [activeTab, period]);
-
-  const loadReportData = async () => {
-    setLoading(true);
-    setError(null);
-
-    try {
-      if (activeTab === 'balance-sheet') {
-        const result = await financeReportApi.balanceSheet({ period });
-        if (result.success && result.data) {
-          setBalanceSheet(result.data);
-        }
-      } else if (activeTab === 'income-statement') {
-        const result = await financeReportApi.incomeStatement({ period });
-        if (result.success && result.data) {
-          setIncomeStatement(result.data);
-        }
-      } else if (activeTab === 'cash-flow') {
-        const result = await financeReportApi.cashFlowStatement({ period });
-        if (result.success && result.data) {
-          setCashFlowStatement(result.data);
-        }
-      }
-    } catch (err: unknown) {
-      apiLogger.error('加载报表失败:', err);
-      setError('加载报表数据失败，请稍后重试');
+    if (balanceSheetQuery.isError) {
+      apiLogger.error('加载资产负债表失败:', balanceSheetQuery.error);
       addNotification({ title: '错误', message: '加载报表数据失败', type: 'error' });
-    } finally {
-      setLoading(false);
     }
+  }, [balanceSheetQuery.isError, balanceSheetQuery.error, addNotification]);
+
+  useEffect(() => {
+    if (incomeStatementQuery.isError) {
+      apiLogger.error('加载利润表失败:', incomeStatementQuery.error);
+      addNotification({ title: '错误', message: '加载报表数据失败', type: 'error' });
+    }
+  }, [incomeStatementQuery.isError, incomeStatementQuery.error, addNotification]);
+
+  useEffect(() => {
+    if (cashFlowQuery.isError) {
+      apiLogger.error('加载现金流量表失败:', cashFlowQuery.error);
+      addNotification({ title: '错误', message: '加载报表数据失败', type: 'error' });
+    }
+  }, [cashFlowQuery.isError, cashFlowQuery.error, addNotification]);
+
+  const handleRefresh = () => {
+    queryClient.invalidateQueries({ queryKey: ['erp', 'financial-reports'] });
   };
 
   const formatCurrency = (amount: number) =>
@@ -808,7 +842,7 @@ const FinancialReportPage: React.FC = () => {
           {
             label: '刷新',
             icon: <RefreshCw size={16} />,
-            onClick: loadReportData,
+            onClick: handleRefresh,
             variant: 'outlined',
           },
           {

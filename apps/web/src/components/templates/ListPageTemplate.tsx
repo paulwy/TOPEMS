@@ -33,11 +33,20 @@ import {
   DialogActions,
   LinearProgress,
 } from '@mui/material';
-import { AlertTriangle as WarningIcon } from 'lucide-react';
+import {
+  AlertTriangle as WarningIcon,
+  MoreHorizontal,
+  ChevronRight,
+  Columns3,
+  RefreshCw,
+  Download,
+  FileText,
+  FileSpreadsheet,
+} from 'lucide-react';
 import { EmptyState, ErrorEmptyState, BackButton } from '@topems/shared-components';
-import { MoreHorizontal, ChevronRight, Columns3, RefreshCw, Download, FileText, FileSpreadsheet } from 'lucide-react';
 import { Link as RouterLink } from 'react-router-dom';
 import { useAutoBreadcrumbs } from '@/hooks';
+import { logger } from '@/utils/logger';
 
 // 从子组件导入类型和组件
 import type { ListPageTemplateProps, ColumnConfig, RowAction } from './list';
@@ -248,7 +257,10 @@ export function ListPageTemplate<T>({
 
   // 批量操作确认对话框
   const [confirmDialogOpen, setConfirmDialogOpen] = useState(false);
-  const [pendingAction, setPendingAction] = useState<{ onClick: (selectedRows: T[]) => void; label: string } | null>(null);
+  const [pendingAction, setPendingAction] = useState<{
+    onClick: (selectedRows: T[]) => void;
+    label: string;
+  } | null>(null);
 
   // 行展开状态
   const [expandedIds, setExpandedIds] = useState<(string | number)[]>(defaultExpandedIds);
@@ -330,30 +342,33 @@ export function ListPageTemplate<T>({
   const hasBatchActions = batchActions && batchActions.length > 0;
   const isBatchSelectionEnabled = enableBatchSelection || hasBatchActions;
 
-  const handleBatchSelect = useCallback((row: T, event?: React.MouseEvent) => {
-    const rowId = getRowId(row);
-    if (event?.ctrlKey || event?.metaKey) {
-      setSelectedIds((prev) => {
-        const next = new Set(prev);
-        if (next.has(rowId)) {
-          next.delete(rowId);
-        } else {
-          next.add(rowId);
-        }
-        return next;
-      });
-    } else {
-      setSelectedIds((prev) => {
-        const next = new Set(prev);
-        if (next.has(rowId)) {
-          next.delete(rowId);
-        } else {
-          next.add(rowId);
-        }
-        return next;
-      });
-    }
-  }, [getRowId]);
+  const handleBatchSelect = useCallback(
+    (row: T, event?: React.MouseEvent) => {
+      const rowId = getRowId(row);
+      if (event?.ctrlKey || event?.metaKey) {
+        setSelectedIds((prev) => {
+          const next = new Set(prev);
+          if (next.has(rowId)) {
+            next.delete(rowId);
+          } else {
+            next.add(rowId);
+          }
+          return next;
+        });
+      } else {
+        setSelectedIds((prev) => {
+          const next = new Set(prev);
+          if (next.has(rowId)) {
+            next.delete(rowId);
+          } else {
+            next.add(rowId);
+          }
+          return next;
+        });
+      }
+    },
+    [getRowId]
+  );
 
   const handleBatchSelectAll = useCallback(() => {
     if (selectedIds.size === data.length) {
@@ -386,7 +401,12 @@ export function ListPageTemplate<T>({
   }, [data, selectedIds, getRowId]);
 
   const handleBatchAction = useCallback(
-    (action: { onClick: (selectedRows: T[]) => void; label: string; confirm?: boolean; confirmMessage?: string }) => {
+    (action: {
+      onClick: (selectedRows: T[]) => void;
+      label: string;
+      confirm?: boolean;
+      confirmMessage?: string;
+    }) => {
       const rows = getSelectedRows();
       if (action.confirm !== false) {
         setPendingAction({ onClick: action.onClick, label: action.label });
@@ -594,55 +614,65 @@ export function ListPageTemplate<T>({
   }, [columns, onColumnConfigChange]);
 
   // 导出功能
-  const handleExport = useCallback(async (format?: string) => {
-    if (!exportable || data.length === 0 || exporting) return;
+  const handleExport = useCallback(
+    async (format?: string) => {
+      if (!exportable || data.length === 0 || exporting) return;
 
-    try {
-      setExporting(true);
-      setExportAnchorEl(null);
+      try {
+        setExporting(true);
+        setExportAnchorEl(null);
 
-      const finalFormat = format || exportFormat;
-      const headers = visibleColumns.map((col) => col.label || col.header || col.id);
-      const exportData = data.map((row) => {
-        const transformed = exportTransform ? exportTransform(row) : (row as Record<string, unknown>);
-        return headers.map((header) => {
-          const col = visibleColumns.find((c) => c.label === header || c.header === header || c.id === header);
-          const colId = col?.id || header;
-          const value = transformed[colId] ?? '';
-          if (typeof value === 'string') {
-            return `"${value.replace(/"/g, '""')}"`;
-          }
-          return String(value ?? '');
-        }).join(',');
-      });
+        const finalFormat = format || exportFormat;
+        const headers = visibleColumns.map((col) => col.label || col.header || col.id);
+        const exportData = data.map((row) => {
+          const transformed = exportTransform
+            ? exportTransform(row)
+            : (row as Record<string, unknown>);
+          return headers
+            .map((header) => {
+              const col = visibleColumns.find(
+                (c) => c.label === header || c.header === header || c.id === header
+              );
+              const colId = col?.id || header;
+              const value = transformed[colId] ?? '';
+              if (typeof value === 'string') {
+                return `"${value.replace(/"/g, '""')}"`;
+              }
+              return String(value ?? '');
+            })
+            .join(',');
+        });
 
-      const csvContent = [headers.join(','), ...exportData].join('\n');
-      const blob = new Blob([`\uFEFF${csvContent}`], {
-        type: finalFormat === 'excel'
-          ? 'application/vnd.ms-excel;charset=utf-8;'
-          : 'text/csv;charset=utf-8;',
-      });
-      const url = URL.createObjectURL(blob);
-      const link = document.createElement('a');
-      link.href = url;
-      const timestamp = new Date().toISOString().split('T')[0];
-      const ext = finalFormat === 'excel' ? 'xls' : 'csv';
-      link.setAttribute('download', `${exportFileName || 'export'}-${timestamp}.${ext}`);
-      document.body.appendChild(link);
-      link.click();
-      document.body.removeChild(link);
-      URL.revokeObjectURL(url);
+        const csvContent = [headers.join(','), ...exportData].join('\n');
+        const blob = new Blob([`\uFEFF${csvContent}`], {
+          type:
+            finalFormat === 'excel'
+              ? 'application/vnd.ms-excel;charset=utf-8;'
+              : 'text/csv;charset=utf-8;',
+        });
+        const url = URL.createObjectURL(blob);
+        const link = document.createElement('a');
+        link.href = url;
+        const timestamp = new Date().toISOString().split('T')[0];
+        const ext = finalFormat === 'excel' ? 'xls' : 'csv';
+        link.setAttribute('download', `${exportFileName || 'export'}-${timestamp}.${ext}`);
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+        URL.revokeObjectURL(url);
 
-      setExportComplete(true);
-      setTimeout(() => {
-        setExportComplete(false);
-      }, 2000);
-    } catch (error) {
-      console.error('导出失败:', error);
-    } finally {
-      setExporting(false);
-    }
-  }, [exportable, data, visibleColumns, exportTransform, exportFormat, exportFileName, exporting]);
+        setExportComplete(true);
+        setTimeout(() => {
+          setExportComplete(false);
+        }, 2000);
+      } catch (error) {
+        logger.error('导出失败:', error);
+      } finally {
+        setExporting(false);
+      }
+    },
+    [exportable, data, visibleColumns, exportTransform, exportFormat, exportFileName, exporting]
+  );
 
   // 渲染表格头部
   const renderTableHead = () => (
@@ -861,7 +891,11 @@ export function ListPageTemplate<T>({
               icon={emptyIcon}
               title={emptyMessage}
               description='暂无数据，点击添加按钮创建新记录'
-              action={emptyActionButton ? { label: emptyActionButton.label, onClick: emptyActionButton.onClick } : undefined}
+              action={
+                emptyActionButton
+                  ? { label: emptyActionButton.label, onClick: emptyActionButton.onClick }
+                  : undefined
+              }
             />
           </TableCell>
         </TableRow>
@@ -1396,7 +1430,9 @@ export function ListPageTemplate<T>({
                 {/* 导出按钮 */}
                 {exportable && (
                   <div>
-                    <Tooltip title={exporting ? '导出中...' : exportComplete ? '导出成功' : '导出数据'}>
+                    <Tooltip
+                      title={exporting ? '导出中...' : exportComplete ? '导出成功' : '导出数据'}
+                    >
                       <IconButton
                         onClick={(e) => setExportAnchorEl(e.currentTarget)}
                         size='small'
@@ -1574,7 +1610,7 @@ export function ListPageTemplate<T>({
         <DialogContent sx={{ mt: 2 }}>
           <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
             <WarningIcon sx={{ color: 'warning.main', fontSize: 28 }} />
-            <Typography variant="body1">
+            <Typography variant='body1'>
               确定要对 <strong>{selectedIds.size}</strong> 条选中的数据执行
               <strong>{pendingAction?.label}</strong> 操作吗？
             </Typography>
@@ -1582,7 +1618,11 @@ export function ListPageTemplate<T>({
         </DialogContent>
         <DialogActions sx={{ gap: 2 }}>
           <Button onClick={handleCancelConfirm}>取消</Button>
-          <Button onClick={handleConfirmBatchAction} color="primary" variant="contained">
+          <Button
+            onClick={handleConfirmBatchAction}
+            color='primary'
+            variant='contained'
+          >
             确认{pendingAction?.label}
           </Button>
         </DialogActions>
@@ -1594,27 +1634,38 @@ export function ListPageTemplate<T>({
         sx={{ '& .MuiDialog-paper': { borderRadius: 2, minWidth: 400 } }}
       >
         <DialogTitle sx={{ fontWeight: 600 }}>
-          {batchOperationState.isCancelled ? `${batchOperationState.actionLabel}已取消` : `${batchOperationState.actionLabel}中...`}
+          {batchOperationState.isCancelled
+            ? `${batchOperationState.actionLabel}已取消`
+            : `${batchOperationState.actionLabel}中...`}
         </DialogTitle>
         <DialogContent sx={{ mt: 2 }}>
           <Box sx={{ mb: 3 }}>
-            <Typography variant="body1">
+            <Typography variant='body1'>
               {batchOperationState.isCancelled ? (
                 <span>操作已取消，正在回滚...</span>
               ) : (
-                <span>正在处理 <strong>{batchOperationState.processed}/{batchOperationState.total}</strong> 条数据</span>
+                <span>
+                  正在处理{' '}
+                  <strong>
+                    {batchOperationState.processed}/{batchOperationState.total}
+                  </strong>{' '}
+                  条数据
+                </span>
               )}
             </Typography>
           </Box>
           <LinearProgress
-            variant="determinate"
+            variant='determinate'
             value={(batchOperationState.processed / batchOperationState.total) * 100}
             sx={{ height: 8, borderRadius: 4 }}
           />
         </DialogContent>
         <DialogActions sx={{ gap: 2 }}>
           {!batchOperationState.isCancelled && (
-            <Button onClick={handleCancelBatchOperation} color="error">
+            <Button
+              onClick={handleCancelBatchOperation}
+              color='error'
+            >
               取消操作
             </Button>
           )}

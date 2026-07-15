@@ -35,6 +35,7 @@ import { useAuthStore } from '@/store';
 import { useResponsive } from '@/hooks';
 import { MOBILE_PATHS } from '@/modules/mobile/config';
 import { AUTH_PATHS } from '@/routes/auth';
+import { PageContainer } from '@/components/common';
 
 interface SettingGroup {
   title: string;
@@ -234,125 +235,132 @@ const MobileSettingsPage: React.FC = () => {
       activeTab='profile'
       onTabChange={handleBottomTabChange}
     >
-      <Box sx={{ p: 2, pb: 3 }}>
-        <Box
-          sx={{
-            display: 'flex',
-            alignItems: 'center',
-            gap: 3,
-            p: 2.5,
-            mb: 3,
-            borderRadius: 2,
-            bgcolor: theme.palette.background.paper,
-            border: 1,
-            borderColor: 'divider',
-          }}
-        >
-          <Avatar
+      <PageContainer
+        autoTitle={false}
+        autoBreadcrumbs={false}
+        padding={false}
+        maxWidth={false}
+      >
+        <Box sx={{ p: 2, pb: 3 }}>
+          <Box
             sx={{
-              width: 64,
-              height: 64,
-              fontSize: '1.5rem',
-              bgcolor: 'primary.main',
+              display: 'flex',
+              alignItems: 'center',
+              gap: 3,
+              p: 2.5,
+              mb: 3,
+              borderRadius: 2,
+              bgcolor: theme.palette.background.paper,
+              border: 1,
+              borderColor: 'divider',
             }}
           >
-            {user?.fullName?.charAt(0) || user?.username?.charAt(0) || 'U'}
-          </Avatar>
-          <Box sx={{ flex: 1, minWidth: 0 }}>
-            <Typography
-              variant='h6'
-              sx={{ fontWeight: 600, mb: 0.5 }}
+            <Avatar
+              sx={{
+                width: 64,
+                height: 64,
+                fontSize: '1.5rem',
+                bgcolor: 'primary.main',
+              }}
             >
-              {user?.fullName || user?.username || '用户'}
-            </Typography>
-            <Typography
-              variant='body2'
-              color='text.secondary'
-              sx={{ mb: 0.5 }}
-            >
-              {user?.email || 'user@example.com'}
-            </Typography>
-            <Chip
-              label={user?.role || '管理员'}
-              size='small'
-              color='primary'
-              variant='outlined'
-              sx={{ height: 22, fontSize: '0.75rem' }}
-            />
+              {user?.fullName?.charAt(0) || user?.username?.charAt(0) || 'U'}
+            </Avatar>
+            <Box sx={{ flex: 1, minWidth: 0 }}>
+              <Typography
+                variant='h6'
+                sx={{ fontWeight: 600, mb: 0.5 }}
+              >
+                {user?.fullName || user?.username || '用户'}
+              </Typography>
+              <Typography
+                variant='body2'
+                color='text.secondary'
+                sx={{ mb: 0.5 }}
+              >
+                {user?.email || 'user@example.com'}
+              </Typography>
+              <Chip
+                label={user?.role || '管理员'}
+                size='small'
+                color='primary'
+                variant='outlined'
+                sx={{ height: 22, fontSize: '0.75rem' }}
+              />
+            </Box>
+            <ChevronRight style={{ width: 20, height: 20, color: theme.palette.text.secondary }} />
           </Box>
-          <ChevronRight style={{ width: 20, height: 20, color: theme.palette.text.secondary }} />
-        </Box>
 
-        {settingGroups.map((group, groupIndex) => (
+          {settingGroups.map((group, groupIndex) => (
+            <Box
+              key={group.title}
+              sx={{ mb: 3 }}
+            >
+              <Typography
+                variant='caption'
+                color='text.secondary'
+                sx={{
+                  display: 'block',
+                  mb: 1,
+                  px: 1,
+                  fontWeight: 500,
+                }}
+              >
+                {group.title}
+              </Typography>
+              <Paper
+                elevation={0}
+                sx={{
+                  borderRadius: 2,
+                  border: 1,
+                  borderColor: 'divider',
+                  overflow: 'hidden',
+                }}
+              >
+                {group.items.map((item, index) => (
+                  <React.Fragment key={item.id}>
+                    <MobileCard
+                      leftIcon={item.icon}
+                      title={item.label}
+                      subtitle={item.subtitle}
+                      showArrow={item.type === 'navigate'}
+                      divider={index < group.items.length - 1}
+                      rightContent={
+                        item.type === 'switch' ? (
+                          <Switch
+                            checked={item.value || false}
+                            onChange={(e) => item.onToggle?.(e.target.checked)}
+                          />
+                        ) : item.badge ? (
+                          item.badge
+                        ) : undefined
+                      }
+                      onClick={() => item.type === 'navigate' && handleNavigate(item.path)}
+                      sx={{ minHeight: 52 }}
+                    />
+                  </React.Fragment>
+                ))}
+              </Paper>
+            </Box>
+          ))}
+
           <Box
-            key={group.title}
-            sx={{ mb: 3 }}
+            sx={{
+              display: 'flex',
+              flexDirection: 'column',
+              alignItems: 'center',
+              gap: 2,
+              pt: 2,
+            }}
           >
             <Typography
               variant='caption'
               color='text.secondary'
-              sx={{
-                display: 'block',
-                mb: 1,
-                px: 1,
-                fontWeight: 500,
-              }}
             >
-              {group.title}
+              TOPEMS v2.1.0
             </Typography>
-            <Paper
-              elevation={0}
-              sx={{
-                borderRadius: 2,
-                border: 1,
-                borderColor: 'divider',
-                overflow: 'hidden',
-              }}
-            >
-              {group.items.map((item, index) => (
-                <React.Fragment key={item.id}>
-                  <MobileCard
-                    leftIcon={item.icon}
-                    title={item.label}
-                    subtitle={item.subtitle}
-                    showArrow={item.type === 'navigate'}
-                    divider={index < group.items.length - 1}
-                    rightContent={
-                      item.type === 'switch' ? (
-                        <Switch
-                          checked={item.value || false}
-                          onChange={(e) => item.onToggle?.(e.target.checked)}
-                        />
-                      ) : item.badge ? (
-                        item.badge
-                      ) : undefined
-                    }
-                    onClick={() => item.type === 'navigate' && handleNavigate(item.path)}
-                    sx={{ minHeight: 52 }}
-                  />
-                </React.Fragment>
-              ))}
-            </Paper>
           </Box>
-        ))}
-
-        <Box
-          sx={{
-            display: 'flex',
-            flexDirection: 'column',
-            alignItems: 'center',
-            gap: 2,
-            pt: 2,
-          }}
-        >
-          <Typography
-            variant='caption'
-            color='text.secondary'
-          >
-            TOPEMS v2.1.0
-          </Typography>
         </Box>
-      </Box>
+      </PageContainer>
     </MobileLayout>
   );
 };

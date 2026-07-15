@@ -101,25 +101,16 @@ pub struct CompleteInitRequest {
 
 pub fn create_routes() -> Router<ApiState> {
     Router::new()
+        .route("/api/core/hrm/hrm/setup/progress", get(get_init_progress))
+        .route("/api/core/hrm/hrm/setup/company", post(setup_company_info))
         .route(
-            "/api/core/hrm/v1/hrm/setup/progress",
-            get(get_init_progress),
-        )
-        .route(
-            "/api/core/hrm/v1/hrm/setup/company",
-            post(setup_company_info),
-        )
-        .route(
-            "/api/core/hrm/v1/hrm/setup/departments",
+            "/api/core/hrm/hrm/setup/departments",
             post(setup_departments),
         )
+        .route("/api/core/hrm/hrm/setup/positions", post(setup_positions))
+        .route("/api/core/hrm/hrm/setup/admin", post(setup_admin_user))
         .route(
-            "/api/core/hrm/v1/hrm/setup/positions",
-            post(setup_positions),
-        )
-        .route("/api/core/hrm/v1/hrm/setup/admin", post(setup_admin_user))
-        .route(
-            "/api/core/hrm/v1/hrm/setup/complete",
+            "/api/core/hrm/hrm/setup/complete",
             post(complete_initialization),
         )
 }

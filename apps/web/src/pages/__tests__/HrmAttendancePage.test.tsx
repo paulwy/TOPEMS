@@ -112,6 +112,7 @@ vi.mock('@/store', () => ({
   useSetSidebarCollapsed: vi.fn(),
 }));
 
+describe('HrmAttendancePage', () => {
   it('should render without crashing', () => {
     const { container } = render(
       <BrowserRouter>
@@ -120,7 +121,8 @@ vi.mock('@/store', () => ({
     );
     expect(container).toBeDefined();
   });
-
+});
+describe('HrmAttendancePage', () => {
   it('should have valid attendance API methods', () => {
     expect(hrmApi.attendance.list).toBeDefined();
     expect(hrmApi.attendance.get).toBeDefined();

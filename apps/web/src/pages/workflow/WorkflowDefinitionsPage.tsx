@@ -172,7 +172,9 @@ export const WorkflowDefinitionsPage: React.FC = () => {
     },
     onMutate: async (definitionId) => {
       await queryClient.cancelQueries({ queryKey: ['workflow-definitions'] });
-      const previousDefinitions = queryClient.getQueryData<WorkflowDefinition[]>(['workflow-definitions']);
+      const previousDefinitions = queryClient.getQueryData<WorkflowDefinition[]>([
+        'workflow-definitions',
+      ]);
       queryClient.setQueryData<WorkflowDefinition[]>(['workflow-definitions'], (old) =>
         old ? old.filter((d) => d.id !== definitionId) : []
       );

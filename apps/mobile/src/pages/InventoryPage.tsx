@@ -1,6 +1,14 @@
 import React, { useState, useEffect } from 'react';
-import { View, StyleSheet, FlatList, TouchableOpacity, RefreshControl, TextInput, Alert } from 'react-native';
-import { Text, Card, IconButton, Divider, Badge, FAB } from 'react-native-paper';
+import {
+  View,
+  StyleSheet,
+  FlatList,
+  TouchableOpacity,
+  RefreshControl,
+  TextInput,
+  Alert,
+} from 'react-native';
+import { Text, Card, Divider, Badge, FAB } from 'react-native-paper';
 import { inventoryApi } from '@/api/inventory';
 import type { InventoryItem } from '@/types';
 import { Package, Search, AlertTriangle, Plus, Minus } from 'lucide-react-native';
@@ -54,9 +62,7 @@ const InventoryPage: React.FC = () => {
 
     try {
       await inventoryApi.updateItem(id, { quantity: newQuantity });
-      setItems((prev) =>
-        prev.map((i) => (i.id === id ? { ...i, quantity: newQuantity } : i)),
-      );
+      setItems((prev) => prev.map((i) => (i.id === id ? { ...i, quantity: newQuantity } : i)));
       if (delta < 0 && lowStockItems.find((i) => i.id === id)) {
         fetchItems();
       }
@@ -79,10 +85,7 @@ const InventoryPage: React.FC = () => {
     const lowStock = isLowStock(item);
 
     return (
-      <Card
-        style={[styles.itemCard, lowStock && styles.lowStockCard]}
-        mode="elevated"
-      >
+      <Card style={[styles.itemCard, lowStock && styles.lowStockCard]} mode="elevated">
         <Card.Content style={styles.itemContent}>
           <View style={styles.itemIcon}>
             <Package size={28} color={lowStock ? '#ef4444' : '#3b82f6'} />
@@ -160,9 +163,7 @@ const InventoryPage: React.FC = () => {
           keyExtractor={(item) => item.id}
           renderItem={renderItem}
           contentContainerStyle={styles.listContainer}
-          refreshControl={
-            <RefreshControl refreshing={refreshing} onRefresh={fetchItems} />
-          }
+          refreshControl={<RefreshControl refreshing={refreshing} onRefresh={fetchItems} />}
           ListEmptyComponent={
             <View style={styles.emptyContainer}>
               <Package size={48} color="#9ca3af" />

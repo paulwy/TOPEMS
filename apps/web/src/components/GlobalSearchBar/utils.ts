@@ -1,5 +1,5 @@
 import type { SearchResult } from '@/api/search';
-import type { GroupedResults } from './types';
+import type { GroupedResults, SearchFilter, SearchFilterOption } from './types';
 
 export const SEARCH_HISTORY_KEY = 'topems_search_history';
 export const MAX_HISTORY_ITEMS = 10;
@@ -11,6 +11,25 @@ export const moduleLabels: Record<string, string> = {
   product: '产品管理',
   document: '文档中心',
   admin: '系统管理',
+};
+
+export const typeLabels: Record<string, string> = {
+  user: '用户',
+  role: '角色',
+  permission: '权限',
+  customer: '客户',
+  contract: '合同',
+  order: '订单',
+  purchase: '采购',
+  product: '产品',
+  category: '分类',
+  inventory: '库存',
+  document: '文档',
+  report: '报表',
+  setting: '设置',
+  log: '日志',
+  task: '任务',
+  notification: '通知',
 };
 
 export const searchSuggestions = [
@@ -106,8 +125,64 @@ export const saveSearchHistory = (history: string[]) => {
 export const getSearchSuggestions = (query: string, limit = 6): string[] => {
   if (!query.trim()) return [];
   const lowerQuery = query.toLowerCase();
-  return searchSuggestions
-    .filter((s) => s.toLowerCase().includes(lowerQuery))
-    .slice(0, limit);
+  return searchSuggestions.filter((s) => s.toLowerCase().includes(lowerQuery)).slice(0, limit);
 };
 
+export const fuzzyMatch = (text: string, query: string): boolean => {
+  if (!query.trim()) return true;
+  const lowerText = text.toLowerCase();
+  const lowerQuery = query.toLowerCase();
+
+  const queryChars = lowerQuery.split('');
+  let currentIndex = 0;
+
+  for (const char of lowerText) {
+    if (currentIndex < queryChars.length && char === queryChars[currentIndex]) {
+      currentIndex++;
+    }
+  }
+
+  return currentIndex === queryChars.length;
+};
+
+export const fuzzySearch = (results: SearchResult[], query: string): SearchResult[] => {
+  if (!query.trim()) return results;
+
+  return results.filter((result) => {
+    const searchText = `${result.title} ${result.description || ''} ${result.type_name || ''}`;
+    return fuzzyMatch(searchText, query);
+  });
+};
+
+export const filterResults = (results: SearchResult[], filter: SearchFilter): SearchResult[] => {
+  return results.filter((result) => {
+    if (filter.module && result.module !== filter.module) return false;
+    if (filter.type && result.type_name !== filter.type) return false;
+    return true;
+  });
+};
+
+export const getAvailableModules = (results: SearchResult[]): SearchFilterOption[] => {
+  const moduleCounts = new Map<string, number>();
+  results.forEach((result) => {
+    moduleCounts.set(result.module, (moduleCounts.get(result.module) || 0) + 1);
+  });
+  return Array.from(moduleCounts.entries()).map(([value, count]) => ({
+    value,
+    label: getModuleLabel(value),
+    count,
+  }));
+};
+
+export const getAvailableTypes = (results: SearchResult[]): SearchFilterOption[] => {
+  const typeCounts = new Map<string, number>();
+  results.forEach((result) => {
+    const type = result.type_name || result.module;
+    typeCounts.set(type, (typeCounts.get(type) || 0) + 1);
+  });
+  return Array.from(typeCounts.entries()).map(([value, count]) => ({
+    value,
+    label: typeLabels[value] || value,
+    count,
+  }));
+};

@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useMemo, useCallback } from 'react';
+import { useQuery } from '@tanstack/react-query';
 import {
   FileText,
   Search,
@@ -63,18 +64,24 @@ const AuditLogPage: React.FC = () => {
   const [statusFilter, setStatusFilter] = useState('');
   const [dateRange, setDateRange] = useState({ start: '', end: '' });
 
-  const [logs, setLogs] = useState<AuditLog[]>([]);
-  const [loading, setLoading] = useState(true);
   const [page, setPage] = useState(0);
   const [rowsPerPage, setRowsPerPage] = useState(10);
-  const [totalCount, setTotalCount] = useState(0);
 
   const [showDetailModal, setShowDetailModal] = useState(false);
   const [currentLog, setCurrentLog] = useState<AuditLog | null>(null);
 
-  const loadLogs = useCallback(async () => {
-    setLoading(true);
-    try {
+  const logsQuery = useQuery<{ items: AuditLog[]; total: number }>({
+    queryKey: [
+      'erp-audit-logs',
+      page,
+      rowsPerPage,
+      typeFilter,
+      moduleFilter,
+      operatorFilter,
+      statusFilter,
+      dateRange,
+    ],
+    queryFn: async () => {
       const params = {
         page: page + 1,
         page_size: rowsPerPage,
@@ -87,33 +94,39 @@ const AuditLogPage: React.FC = () => {
       };
       const res = await auditApi.list(params);
       if (res.success && res.data) {
-        setLogs(res.data.audit_logs || []);
-        setTotalCount(res.data.total || 0);
+        return { items: res.data.audit_logs || [], total: res.data.total || 0 };
       }
-    } catch (err: unknown) {
-      apiLogger.error('加载审计日志失败:', err);
-      addNotification({
-        title: '错误',
-        message: extractErrorMessage(err, '加载审计日志失败'),
-        type: 'error',
-      });
-    } finally {
-      setLoading(false);
-    }
-  }, [page, rowsPerPage, typeFilter, moduleFilter, operatorFilter, statusFilter, dateRange, addNotification]);
+      return { items: [], total: 0 };
+    },
+    staleTime: 5 * 60 * 1000,
+  });
+  const logs = logsQuery.data?.items ?? [];
+  const total = logsQuery.data?.total ?? 0;
+  const loading = logsQuery.isLoading;
 
   useEffect(() => {
-    loadLogs();
-  }, [loadLogs]);
+    if (logsQuery.isError) {
+      apiLogger.error('加载审计日志失败:', logsQuery.error);
+      addNotification({
+        title: '错误',
+        message: extractErrorMessage(logsQuery.error, '加载审计日志失败'),
+        type: 'error',
+      });
+    }
+  }, [logsQuery.isError, logsQuery.error, addNotification]);
 
   const filteredLogs = useMemo(() => {
     return logs.filter((log) => {
       const matchesSearch =
         !searchQuery ||
-        (log.user_name?.toLowerCase().includes(searchQuery.toLowerCase()) || false) ||
-        (log.action?.toLowerCase().includes(searchQuery.toLowerCase()) || false) ||
-        (log.entity_type?.toLowerCase().includes(searchQuery.toLowerCase()) || false) ||
-        (log.ip_address?.includes(searchQuery) || false);
+        log.user_name?.toLowerCase().includes(searchQuery.toLowerCase()) ||
+        false ||
+        log.action?.toLowerCase().includes(searchQuery.toLowerCase()) ||
+        false ||
+        log.entity_type?.toLowerCase().includes(searchQuery.toLowerCase()) ||
+        false ||
+        log.ip_address?.includes(searchQuery) ||
+        false;
       const matchesOperator = !operatorFilter || log.user_name === operatorFilter;
       const matchesModule = !moduleFilter || log.entity_type === moduleFilter;
       const matchesType = !typeFilter || log.action === typeFilter;
@@ -220,7 +233,7 @@ const AuditLogPage: React.FC = () => {
           {
             label: '刷新',
             icon: <RefreshCw size={16} />,
-            onClick: loadLogs,
+            onClick: () => logsQuery.refetch(),
             variant: 'outlined',
           },
         ],
@@ -575,7 +588,7 @@ const AuditLogPage: React.FC = () => {
             </TableContainer>
             <TablePagination
               component='div'
-              count={totalCount}
+              count={total}
               page={page}
               onPageChange={(_, newPage) => setPage(newPage)}
               rowsPerPage={rowsPerPage}
@@ -664,7 +677,9 @@ const AuditLogPage: React.FC = () => {
                 >
                   操作内容
                 </Typography>
-                <Typography>{currentLog.action} {currentLog.entity_type}</Typography>
+                <Typography>
+                  {currentLog.action} {currentLog.entity_type}
+                </Typography>
               </Box>
               <Box
                 sx={{
@@ -680,7 +695,9 @@ const AuditLogPage: React.FC = () => {
                   >
                     IP地址
                   </Typography>
-                  <Typography sx={{ fontFamily: 'monospace' }}>{currentLog.ip_address || '-'}</Typography>
+                  <Typography sx={{ fontFamily: 'monospace' }}>
+                    {currentLog.ip_address || '-'}
+                  </Typography>
                 </Box>
                 <Box sx={{ p: 2, bgcolor: 'grey.50', borderRadius: 1 }}>
                   <Typography

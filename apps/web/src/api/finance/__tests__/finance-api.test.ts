@@ -107,20 +107,17 @@ describe('Finance Module API Tests', () => {
       const data = { debit: 10000 };
       await accountApi.setOpeningBalance('acc-001', data);
       const instance = mockInstance;
-      expect(instance.post).toHaveBeenCalledWith(
-        '/accounts/acc-001/opening-balance',
-        data
-      );
+      expect(instance.post).toHaveBeenCalledWith('/accounts/acc-001/opening-balance', data);
     });
 
     it('carryForwardOpeningBalance should call POST /accounts/opening-balances/carry-forward with params', async () => {
       const { accountApi } = await import('../account');
       await accountApi.carryForwardOpeningBalance({ from_period: '2023-12', to_period: '2024-01' });
       const instance = mockInstance;
-      expect(instance.post).toHaveBeenCalledWith(
-        '/accounts/opening-balances/carry-forward',
-        { from_period: '2023-12', to_period: '2024-01' }
-      );
+      expect(instance.post).toHaveBeenCalledWith('/accounts/opening-balances/carry-forward', {
+        from_period: '2023-12',
+        to_period: '2024-01',
+      });
     });
   });
 
@@ -137,10 +134,7 @@ describe('Finance Module API Tests', () => {
       const data = { credit_limit: 100000 };
       await counterpartyFinanceApi.updateCustomerFinance('cust-001', data);
       const instance = mockInstance;
-      expect(instance.put).toHaveBeenCalledWith(
-        '/counterparty/customers/cust-001',
-        data
-      );
+      expect(instance.put).toHaveBeenCalledWith('/counterparty/customers/cust-001', data);
     });
 
     it('getSupplierFinance should call GET /counterparty/suppliers/:id', async () => {
@@ -155,10 +149,7 @@ describe('Finance Module API Tests', () => {
       const data = { payment_terms: 'net-30' };
       await counterpartyFinanceApi.updateSupplierFinance('supp-001', data);
       const instance = mockInstance;
-      expect(instance.put).toHaveBeenCalledWith(
-        '/counterparty/suppliers/supp-001',
-        data
-      );
+      expect(instance.put).toHaveBeenCalledWith('/counterparty/suppliers/supp-001', data);
     });
 
     it('listCustomersWithFinance should call GET /counterparty/customers with params', async () => {
@@ -379,22 +370,16 @@ describe('Finance Module API Tests', () => {
       const sourceData = { amount: 1000 };
       await voucherTemplateApi.preview('temp-001', sourceData);
       const instance = mockInstance;
-      expect(instance.post).toHaveBeenCalledWith(
-        '/voucher-templates/temp-001/preview',
-        {
-          source_data: sourceData,
-        }
-      );
+      expect(instance.post).toHaveBeenCalledWith('/voucher-templates/temp-001/preview', {
+        source_data: sourceData,
+      });
     });
 
     it('setDefault should call POST /voucher-templates/:id/set-default', async () => {
       const { voucherTemplateApi } = await import('../voucherTemplate');
       await voucherTemplateApi.setDefault('temp-001');
       const instance = mockInstance;
-      expect(instance.post).toHaveBeenCalledWith(
-        '/voucher-templates/temp-001/set-default',
-        {}
-      );
+      expect(instance.post).toHaveBeenCalledWith('/voucher-templates/temp-001/set-default', {});
     });
   });
 

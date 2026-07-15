@@ -42,8 +42,14 @@ import type { TabConfig, SectionConfig } from '@/components/templates/DetailPage
 import { PageContainer } from '@/components/common';
 import { designTokens } from '@/theme/tokens';
 import { WORKFLOW_PATHS } from '@/modules/workflow/config';
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 
 const ct = designTokens.colors;
+
+interface ApprovalDetails {
+  approval: Approval;
+  records: ApprovalRecord[];
+}
 
 const FlowApprovalDetailPage: React.FC = () => {
   const { id } = useParams<{ id: string }>();
@@ -51,61 +57,122 @@ const FlowApprovalDetailPage: React.FC = () => {
   const addNotification = useNotificationStore((state) => state.addNotification);
   const user = useAuthStore((state) => state.user);
   const theme = useTheme();
+  const queryClient = useQueryClient();
 
-  const [approval, setApproval] = useState<Approval | null>(null);
-  const [records, setRecords] = useState<ApprovalRecord[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | undefined>();
   const [showApprovalModal, setShowApprovalModal] = useState(false);
   const [approvalAction, setApprovalAction] = useState<'approve' | 'reject'>('approve');
   const [comment, setComment] = useState('');
-  const [processing, setProcessing] = useState(false);
   const [showDelegateModal, setShowDelegateModal] = useState(false);
   const [delegateTarget, setDelegateTarget] = useState('');
   const [delegateReason, setDelegateReason] = useState('');
-  const [delegateLoading, setDelegateLoading] = useState(false);
 
-  useEffect(() => {
-    if (id) {
-      loadApprovalDetails();
-    }
-  }, [id]);
-
-  const loadApprovalDetails = async () => {
-    if (!id) return;
-
-    try {
-      setLoading(true);
-      setError(undefined);
+  const detailsQuery = useQuery<ApprovalDetails | null>({
+    queryKey: ['workflow-approval-details', id],
+    queryFn: async () => {
+      if (!id) return null;
 
       const approvalResponse = await workflowApi.getApproval(id);
       if (approvalResponse.success && approvalResponse.data) {
         const data = approvalResponse.data as any;
-        setApproval(data);
 
+        let recordsList: ApprovalRecord[] = [];
         const recordsResponse = await workflowApi.getRecordsByApproval(id);
         if (recordsResponse.success && recordsResponse.data) {
           const recordsData = recordsResponse.data as any;
-          const recordsList = Array.isArray(recordsData) ? recordsData : recordsData.items || [];
-          setRecords(recordsList);
+          recordsList = Array.isArray(recordsData) ? recordsData : recordsData.items || [];
         }
-      } else {
-        setError('加载审批详情失败');
+
+        return { approval: data, records: recordsList };
       }
-    } catch (err: unknown) {
-      apiLogger.error('加载审批详情失败:', err);
-      setError('加载审批详情失败');
+      return null;
+    },
+    enabled: !!id,
+    staleTime: 5 * 60 * 1000,
+  });
+
+  const approval = detailsQuery.data?.approval ?? null;
+  const records = detailsQuery.data?.records ?? [];
+  const loading = detailsQuery.isLoading;
+  const error = detailsQuery.isError ? '加载审批详情失败' : undefined;
+
+  useEffect(() => {
+    if (detailsQuery.isError) {
+      apiLogger.error('加载审批详情失败:', detailsQuery.error);
       addNotification({
         title: '错误',
         message: '加载审批详情失败',
         type: 'error',
       });
-    } finally {
-      setLoading(false);
     }
+  }, [detailsQuery.isError, detailsQuery.error, addNotification]);
+
+  const invalidateApprovalQueries = () => {
+    queryClient.invalidateQueries({ queryKey: ['workflow-approval-details', id] });
   };
 
-  const handleProcessApproval = async () => {
+  const processApprovalMutation = useMutation({
+    mutationFn: (params: { approvalId: string; action: 'approve' | 'reject'; comment?: string }) =>
+      workflowApi.processApproval(params.approvalId, {
+        action: params.action,
+        comment: params.comment,
+        actor_id: user?.id || 'system-user-id',
+        actor_name: user?.fullName || user?.username || 'Current User',
+      }),
+    onSuccess: (_data, variables) => {
+      invalidateApprovalQueries();
+      addNotification({
+        title: '成功',
+        message: `审批${variables.action === 'approve' ? '通过' : '拒绝'}成功`,
+        type: 'success',
+      });
+      setShowApprovalModal(false);
+      setComment('');
+    },
+    onError: (err: unknown) => {
+      apiLogger.error('处理审批失败:', err);
+      addNotification({
+        title: '错误',
+        message: '处理审批失败',
+        type: 'error',
+      });
+    },
+  });
+
+  const delegateMutation = useMutation({
+    mutationFn: (params: { approvalId: string; comment?: string; delegateTo: string }) =>
+      workflowApi.processApproval(params.approvalId, {
+        action: 'delegate',
+        comment: params.comment,
+        actor_id: user?.id || 'system-user-id',
+        actor_name: user?.fullName || user?.username || 'Current User',
+        delegate_to: params.delegateTo,
+        delegate_to_name: params.delegateTo,
+      }),
+    onSuccess: (_data, variables) => {
+      invalidateApprovalQueries();
+      addNotification({
+        title: '成功',
+        message: `已转办给 ${variables.delegateTo}`,
+        type: 'success',
+      });
+      setShowDelegateModal(false);
+      setDelegateTarget('');
+      setDelegateReason('');
+    },
+    onError: (err: unknown) => {
+      apiLogger.error('转办失败:', err);
+      addNotification({
+        title: '错误',
+        message: '转办操作失败',
+        type: 'error',
+      });
+    },
+  });
+
+  const processing = processApprovalMutation.isPending;
+  const delegateLoading = delegateMutation.isPending;
+
+  const handleProcessApproval = () => {
     if (!approval) return;
     if (!comment.trim() && approvalAction === 'reject') {
       addNotification({
@@ -116,44 +183,14 @@ const FlowApprovalDetailPage: React.FC = () => {
       return;
     }
 
-    try {
-      setProcessing(true);
-      const response = await workflowApi.processApproval(approval.id, {
-        action: approvalAction,
-        comment: comment || undefined,
-        actor_id: user?.id || 'system-user-id',
-        actor_name: user?.fullName || user?.username || 'Current User',
-      });
-
-      if (response.success) {
-        addNotification({
-          title: '成功',
-          message: `审批${approvalAction === 'approve' ? '通过' : '拒绝'}成功`,
-          type: 'success',
-        });
-        setShowApprovalModal(false);
-        setComment('');
-        loadApprovalDetails();
-      } else {
-        addNotification({
-          title: '失败',
-          message: response.message || '操作失败',
-          type: 'error',
-        });
-      }
-    } catch (err: unknown) {
-      addNotification({
-        title: '错误',
-        message: '处理审批失败',
-        type: 'error',
-      });
-      apiLogger.error('处理审批失败:', err);
-    } finally {
-      setProcessing(false);
-    }
+    processApprovalMutation.mutate({
+      approvalId: approval.id,
+      action: approvalAction,
+      comment: comment || undefined,
+    });
   };
 
-  const handleDelegate = async () => {
+  const handleDelegate = () => {
     if (!approval || !delegateTarget.trim()) {
       addNotification({
         title: '提示',
@@ -163,44 +200,11 @@ const FlowApprovalDetailPage: React.FC = () => {
       return;
     }
 
-    try {
-      setDelegateLoading(true);
-      const response = await workflowApi.processApproval(approval.id, {
-        action: 'delegate',
-        comment: delegateReason || undefined,
-        actor_id: user?.id || 'system-user-id',
-        actor_name: user?.fullName || user?.username || 'Current User',
-        delegate_to: delegateTarget,
-        delegate_to_name: delegateTarget,
-      });
-
-      if (response.success) {
-        addNotification({
-          title: '成功',
-          message: `已转办给 ${delegateTarget}`,
-          type: 'success',
-        });
-        setShowDelegateModal(false);
-        setDelegateTarget('');
-        setDelegateReason('');
-        loadApprovalDetails();
-      } else {
-        addNotification({
-          title: '失败',
-          message: response.message || '转办失败',
-          type: 'error',
-        });
-      }
-    } catch (err: unknown) {
-      addNotification({
-        title: '错误',
-        message: '转办操作失败',
-        type: 'error',
-      });
-      apiLogger.error('转办失败:', err);
-    } finally {
-      setDelegateLoading(false);
-    }
+    delegateMutation.mutate({
+      approvalId: approval.id,
+      comment: delegateReason || undefined,
+      delegateTo: delegateTarget,
+    });
   };
 
   const getStatusIcon = (status: string) => {

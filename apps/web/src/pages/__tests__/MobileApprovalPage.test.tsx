@@ -96,6 +96,9 @@ vi.mock('@/store', () => ({
   useSetSidebarCollapsed: vi.fn(),
 }));
 
+const renderWithProviders = (ui: React.ReactElement) => render(<BrowserRouter>{ui}</BrowserRouter>);
+
+describe('MobileApprovalPage', () => {
   it('should render page title', async () => {
     renderWithProviders(<MobileApprovalPage />);
     await waitFor(() => {

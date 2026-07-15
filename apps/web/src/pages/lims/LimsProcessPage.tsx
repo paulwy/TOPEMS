@@ -14,15 +14,7 @@ import {
   Button,
 } from '@mui/material';
 import { PageContainer } from '@/components/common';
-import {
-  ClipboardList,
-  ChevronRight,
-  FileText,
-  Play,
-  Clock,
-  CheckCircle,
-  X,
-} from 'lucide-react';
+import { ClipboardList, ChevronRight, FileText, Play, Clock, CheckCircle, X } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { limsApi, type InspectionProcess, type LimsStatistics, type ListParams } from '@/api/lims';
 import { useNotificationStore } from '@/store';

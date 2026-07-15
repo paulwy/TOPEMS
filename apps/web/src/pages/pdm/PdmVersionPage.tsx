@@ -1,4 +1,5 @@
-import React, { useState, useEffect, useMemo, useCallback } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import {
   Box,
   Card,
@@ -27,8 +28,8 @@ import {
   type FilterConfig,
 } from '@/components/templates';
 import { PageContainer } from '@/components/common/PageContainerV2';
-import { apiLogger } from '@/utils/logger';
 import { designTokens } from '@/theme/tokens';
+import { QUERY_KEYS } from '@/lib/reactQuery';
 
 const ct = designTokens.colors;
 
@@ -74,16 +75,11 @@ const VERSION_TYPE_OPTIONS = [
 export const PdmVersionPage: React.FC = () => {
   const [selectedDocument, setSelectedDocument] = useState('');
   const [openDialog, setOpenDialog] = useState(false);
-  const [documents, setDocuments] = useState<Document[]>([]);
-  const [versions, setVersions] = useState<DocumentVersion[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
   const [searchQuery, setSearchQuery] = useState('');
   const [debouncedSearch, setDebouncedSearch] = useState('');
   const [filterType, setFilterType] = useState<string>('');
   const [currentPage, setCurrentPage] = useState(0);
   const [pageSize, setPageSize] = useState(20);
-  const [totalVersions, setTotalVersions] = useState(0);
 
   const [formData, setFormData] = useState<FormData>({
     document_id: '',
@@ -94,6 +90,7 @@ export const PdmVersionPage: React.FC = () => {
   });
 
   const addNotification = useNotificationStore((state) => state.addNotification);
+  const queryClient = useQueryClient();
 
   useEffect(() => {
     const timer = setTimeout(() => {
@@ -103,81 +100,105 @@ export const PdmVersionPage: React.FC = () => {
     return () => clearTimeout(timer);
   }, [searchQuery]);
 
-  useEffect(() => {
-    loadDocuments();
-    loadVersions();
-  }, [currentPage, pageSize, debouncedSearch, filterType, selectedDocument]);
-
-  const loadDocuments = async () => {
-    try {
+  const { data: documents = [] } = useQuery<Document[]>({
+    queryKey: QUERY_KEYS.PDM.DOCUMENTS,
+    queryFn: async () => {
       const response = await pdmApi.listDocuments();
       if (response.success && response.data) {
         const data = response.data as any;
-        const items = Array.isArray(data) ? data : data.documents || [];
-        setDocuments(items);
-        if (items.length > 0 && !selectedDocument) {
-          setSelectedDocument(items[0].id);
-          setFormData({ ...formData, document_id: items[0].id });
-        }
+        return Array.isArray(data) ? data : data.documents || [];
       }
-    } catch (err: unknown) {
-      apiLogger.error('加载文档列表失败:', err);
-      setDocuments([]);
-    }
-  };
+      return [];
+    },
+  });
 
-  const loadVersions = useCallback(async () => {
-    try {
-      setLoading(true);
-      setError(null);
-      const response = await pdmApi.listVersions(selectedDocument || '');
+  // Auto-select first document when documents load
+  useEffect(() => {
+    if (documents.length > 0 && !selectedDocument) {
+      setSelectedDocument(documents[0].id);
+      setFormData((prev) => ({ ...prev, document_id: documents[0].id }));
+    }
+  }, [documents, selectedDocument]);
+
+  const {
+    data: allVersions = [],
+    isLoading: loading,
+    error: queryError,
+  } = useQuery<DocumentVersion[]>({
+    queryKey: QUERY_KEYS.PDM.DOCUMENT_VERSIONS(selectedDocument || 'none'),
+    queryFn: async () => {
+      if (!selectedDocument) return [];
+      const response = await pdmApi.listVersions(selectedDocument);
       if (response.success && response.data) {
         const data = response.data as any;
-        const items = Array.isArray(data) ? data : data.versions || [];
-
-        let filtered = items;
-
-        if (selectedDocument) {
-          filtered = filtered.filter((v: DocumentVersion) => v.document_id === selectedDocument);
-        }
-
-        if (filterType) {
-          filtered = filtered.filter((v: DocumentVersion) => v.type === filterType);
-        }
-
-        if (debouncedSearch) {
-          const searchLower = debouncedSearch.toLowerCase();
-          filtered = filtered.filter((v: DocumentVersion) => {
-            const matchTitle = v.title?.toLowerCase().includes(searchLower);
-            const matchVersion = v.version_number?.toLowerCase().includes(searchLower);
-            const matchDesc = v.description?.toLowerCase().includes(searchLower);
-            return matchTitle || matchVersion || matchDesc;
-          });
-        }
-
-        const adapted = filtered.map((item: DocumentVersion) => ({
-          ...item,
-          versionNumber: (item as any).version_number || (item as any).versionNumber || '',
-        }));
-
-        setTotalVersions(adapted.length);
-        const start = currentPage * pageSize;
-        const end = start + pageSize;
-        setVersions(adapted.slice(start, end) as DocumentVersion[]);
-      } else {
-        setVersions([]);
-        setTotalVersions(0);
+        return Array.isArray(data) ? data : data.versions || [];
       }
-    } catch (err: unknown) {
-      const message = (err as { message?: string }).message || '加载数据失败';
-      setError(message);
-      apiLogger.error('加载版本列表失败:', err);
-      setVersions([]);
-      setTotalVersions(0);
-    } finally {
-      setLoading(false);
+      return [];
+    },
+    enabled: !!selectedDocument,
+  });
+
+  const error = queryError
+    ? queryError instanceof Error
+      ? queryError.message
+      : '加载数据失败'
+    : null;
+
+  const { versions, totalVersions } = useMemo(() => {
+    let filtered = allVersions;
+
+    if (selectedDocument) {
+      filtered = filtered.filter((v) => v.document_id === selectedDocument);
     }
-  }, [currentPage, pageSize, debouncedSearch, filterType, selectedDocument]);
+
+    if (filterType) {
+      filtered = filtered.filter((v) => v.type === filterType);
+    }
+
+    if (debouncedSearch) {
+      const searchLower = debouncedSearch.toLowerCase();
+      filtered = filtered.filter((v) => {
+        const matchTitle = v.title?.toLowerCase().includes(searchLower);
+        const matchVersion = v.version_number?.toLowerCase().includes(searchLower);
+        const matchDesc = v.description?.toLowerCase().includes(searchLower);
+        return matchTitle || matchVersion || matchDesc;
+      });
+    }
+
+    const adapted = filtered.map((item) => ({
+      ...item,
+      versionNumber: (item as any).version_number || (item as any).versionNumber || '',
+    }));
+
+    const total = adapted.length;
+    const start = currentPage * pageSize;
+    const end = start + pageSize;
+    return { versions: adapted.slice(start, end) as DocumentVersion[], totalVersions: total };
+  }, [allVersions, selectedDocument, filterType, debouncedSearch, currentPage, pageSize]);
+
+  const createVersionMutation = useMutation({
+    mutationFn: async (data: {
+      document_id: string;
+      version_number: string;
+      title: string;
+      description: string;
+      changes: string[];
+    }) => {
+      await pdmApi.createVersion(data);
+    },
+    onSuccess: () => {
+      addNotification({ title: '成功', message: '版本创建成功', type: 'success' });
+      setOpenDialog(false);
+      if (selectedDocument) {
+        queryClient.invalidateQueries({
+          queryKey: QUERY_KEYS.PDM.DOCUMENT_VERSIONS(selectedDocument),
+        });
+      }
+    },
+    onError: () => {
+      addNotification({ title: '错误', message: '创建失败', type: 'error' });
+    },
+  });
 
   const handleCreate = () => {
     setFormData({
@@ -190,24 +211,15 @@ export const PdmVersionPage: React.FC = () => {
     setOpenDialog(true);
   };
 
-  const handleSave = async () => {
-    try {
-      const requestData = {
-        document_id: formData.document_id,
-        version_number: `V${Date.now()}`,
-        title: formData.title,
-        description: formData.description,
-        changes: formData.changes.split('\n').filter(Boolean),
-      };
-
-      await pdmApi.createVersion(requestData);
-      addNotification({ title: '成功', message: '版本创建成功', type: 'success' });
-      setOpenDialog(false);
-      loadVersions();
-    } catch (err: unknown) {
-      apiLogger.error('创建版本失败:', err);
-      addNotification({ title: '错误', message: '创建失败', type: 'error' });
-    }
+  const handleSave = () => {
+    const requestData = {
+      document_id: formData.document_id,
+      version_number: `V${Date.now()}`,
+      title: formData.title,
+      description: formData.description,
+      changes: formData.changes.split('\n').filter(Boolean),
+    };
+    createVersionMutation.mutate(requestData);
   };
 
   const handleDocumentChange = (value: string) => {
@@ -232,6 +244,14 @@ export const PdmVersionPage: React.FC = () => {
     if (filters.type !== undefined) {
       setFilterType(filters.type);
       setCurrentPage(0);
+    }
+  };
+
+  const handleRefresh = () => {
+    if (selectedDocument) {
+      queryClient.invalidateQueries({
+        queryKey: QUERY_KEYS.PDM.DOCUMENT_VERSIONS(selectedDocument),
+      });
     }
   };
 
@@ -482,7 +502,7 @@ export const PdmVersionPage: React.FC = () => {
           onPageSizeChange: handlePageSizeChange,
         }}
         rowActions={rowActions}
-        onRefresh={loadVersions}
+        onRefresh={handleRefresh}
         headerContent={headerContent}
         actions={[
           {
@@ -569,6 +589,7 @@ export const PdmVersionPage: React.FC = () => {
           <Button
             variant='contained'
             onClick={handleSave}
+            disabled={createVersionMutation.isPending}
           >
             创建版本
           </Button>

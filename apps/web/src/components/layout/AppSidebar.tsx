@@ -18,6 +18,7 @@ import {
   Avatar,
   Badge as MuiBadge,
   useTheme,
+  useMediaQuery,
 } from '@mui/material';
 import type { Theme } from '@mui/material/styles';
 import { useNavigate, useLocation } from 'react-router-dom';
@@ -91,6 +92,8 @@ export const AppSidebar: React.FC<AppSidebarProps> = ({
   const navigate = useNavigate();
   const location = useLocation();
   const { checkPermission } = usePermission();
+
+  const isTablet = useMediaQuery('(min-width:768px) and (max-width:1024px)');
 
   // ---- 增强功能：搜索、收藏、最近访问 ----
   const [searchQuery, setSearchQuery] = useState('');
@@ -307,13 +310,16 @@ export const AppSidebar: React.FC<AppSidebarProps> = ({
         position: forceVisible ? 'static' : 'sticky',
         top: forceVisible ? 'auto' : 56,
         flexShrink: 0,
-        display: forceVisible ? 'flex' : { xs: 'none', lg: 'flex' },
+        display: forceVisible || isTablet ? 'flex' : { xs: 'none', lg: 'flex' },
         flexDirection: 'column',
         bgcolor: 'background.paper',
         borderRight: '1px solid',
         borderColor: 'divider',
         boxShadow: 'none',
         overflow: 'hidden',
+        ...(isTablet && {
+          zIndex: 100,
+        }),
       }}
     >
       {/* ---- 增强功能：搜索、收藏、最近访问按钮 ---- */}

@@ -699,7 +699,7 @@ pub async fn approve_work_report(
         UPDATE work_reports
         SET
             status = 'approved',
-            approved_by = $1,
+            approved_by = $1::uuid,
             approved_at = NOW(),
             updated_at = NOW()
         WHERE id = $2
@@ -779,7 +779,7 @@ pub async fn reject_work_report(
         UPDATE work_reports
         SET
             status = 'rejected',
-            approved_by = $1,
+            approved_by = $1::uuid,
             approval_remark = $2,
             updated_at = NOW()
         WHERE id = $3

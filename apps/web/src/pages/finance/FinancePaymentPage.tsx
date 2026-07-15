@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import {
   Box,
   Typography,
@@ -29,7 +30,7 @@ import {
   Divider,
   InputAdornment,
 } from '@mui/material';
-import { Grid } from '@/components/common';
+import { Grid, PageContainer } from '@/components/common';
 import {
   Plus,
   Search,
@@ -51,7 +52,13 @@ import {
 import { createLogger } from '@/utils/logger';
 import { useNotificationStore } from '@/store';
 import { financeApi } from '@/api/finance';
-import type { Payment, PaymentItem, CreatePaymentRequest } from '@/api/finance/payment';
+import type {
+  Payment,
+  PaymentItem,
+  CreatePaymentRequest,
+  ExecutePaymentRequest,
+  WriteOffRequest,
+} from '@/api/finance/payment';
 import { PaymentPrintTemplate } from './PaymentPrintTemplate';
 
 const logger = createLogger('FinancePaymentPage');
@@ -91,12 +98,10 @@ const getStatusConfig = (status: string) => {
 
 const FinancePaymentPage: React.FC = () => {
   const addNotification = useNotificationStore((state) => state.addNotification);
+  const queryClient = useQueryClient();
 
-  const [payments, setPayments] = useState<Payment[]>([]);
-  const [loading, setLoading] = useState(false);
   const [page, setPage] = useState(0);
   const [pageSize, setPageSize] = useState(10);
-  const [total, setTotal] = useState(0);
   const [searchText, setSearchText] = useState('');
   const [statusFilter, setStatusFilter] = useState('');
 
@@ -108,7 +113,6 @@ const FinancePaymentPage: React.FC = () => {
   const [selectedPayment, setSelectedPayment] = useState<Payment | null>(null);
   const [selectedItem, setSelectedItem] = useState<PaymentItem | null>(null);
   const [editMode, setEditMode] = useState(false);
-  const [actionLoading, setActionLoading] = useState(false);
 
   const [executeFormData, setExecuteFormData] = useState({
     bankTransactionNo: '',
@@ -129,29 +133,166 @@ const FinancePaymentPage: React.FC = () => {
     items: [{ payableAmount: 0, paymentAmount: 0, invoiceNo: '' }],
   });
 
-  const loadPayments = async () => {
-    setLoading(true);
-    try {
+  const paymentsQuery = useQuery<{ items: Payment[]; total: number }>({
+    queryKey: ['finance-payments', page, pageSize, statusFilter],
+    queryFn: async () => {
       const res = await financeApi.payment.list({
         page: page + 1,
         pageSize,
         status: statusFilter || undefined,
       });
-      if (res.success) {
-        setPayments(res.data.items);
-        setTotal(res.data.total);
+      if (res.success && res.data) {
+        return { items: res.data.items, total: res.data.total };
       }
-    } catch (error) {
-      logger.error('Failed to load payments:', error);
-      addNotification({
-        title: '错误',
-        message: '加载付款单列表失败',
-        type: 'error',
-      });
-    } finally {
-      setLoading(false);
+      return { items: [], total: 0 };
+    },
+    staleTime: 5 * 60 * 1000,
+  });
+
+  const payments = paymentsQuery.data?.items ?? [];
+  const total = paymentsQuery.data?.total ?? 0;
+  const loading = paymentsQuery.isLoading;
+
+  const paymentDetailQuery = useQuery<Payment | null>({
+    queryKey: ['finance-payment-detail', selectedPayment?.id],
+    queryFn: async () => {
+      if (!selectedPayment?.id) return null;
+      const res = await financeApi.payment.get(selectedPayment.id);
+      return res.success && res.data ? res.data : null;
+    },
+    enabled: !!selectedPayment?.id && showDetailDialog,
+    staleTime: 5 * 60 * 1000,
+  });
+
+  useEffect(() => {
+    if (paymentDetailQuery.data) {
+      setSelectedPayment(paymentDetailQuery.data);
     }
-  };
+  }, [paymentDetailQuery.data]);
+
+  useEffect(() => {
+    if (paymentsQuery.isError) {
+      logger.error('Failed to load payments:', paymentsQuery.error);
+      addNotification({ title: '错误', message: '加载付款单列表失败', type: 'error' });
+    }
+  }, [paymentsQuery.isError, paymentsQuery.error, addNotification]);
+
+  const invalidatePayments = () =>
+    queryClient.invalidateQueries({ queryKey: ['finance-payments'] });
+
+  const createMutation = useMutation({
+    mutationFn: (data: CreatePaymentRequest) => financeApi.payment.create(data),
+    onSuccess: () => {
+      invalidatePayments();
+      addNotification({ title: '成功', message: '付款单创建成功', type: 'success' });
+      setShowCreateDialog(false);
+    },
+    onError: (err: unknown) => {
+      logger.error('Failed to submit payment:', err);
+      addNotification({ title: '错误', message: '创建付款单失败', type: 'error' });
+    },
+  });
+
+  const updateMutation = useMutation({
+    mutationFn: (params: { id: string; data: CreatePaymentRequest }) =>
+      financeApi.payment.update(params.id, params.data),
+    onSuccess: () => {
+      invalidatePayments();
+      addNotification({ title: '成功', message: '付款单更新成功', type: 'success' });
+      setShowCreateDialog(false);
+    },
+    onError: (err: unknown) => {
+      logger.error('Failed to submit payment:', err);
+      addNotification({ title: '错误', message: '更新付款单失败', type: 'error' });
+    },
+  });
+
+  const deleteMutation = useMutation({
+    mutationFn: (id: string) => financeApi.payment.remove(id),
+    onSuccess: () => {
+      invalidatePayments();
+      addNotification({ title: '成功', message: '付款单删除成功', type: 'success' });
+    },
+    onError: (err: unknown) => {
+      logger.error('Failed to delete payment:', err);
+      addNotification({ title: '错误', message: '删除付款单失败', type: 'error' });
+    },
+  });
+
+  const submitMutation = useMutation({
+    mutationFn: (id: string) => financeApi.payment.submit(id),
+    onSuccess: () => {
+      invalidatePayments();
+      addNotification({ title: '成功', message: '提交审批成功', type: 'success' });
+    },
+    onError: (err: unknown) => {
+      logger.error('Failed to submit payment:', err);
+      addNotification({ title: '错误', message: '提交审批失败', type: 'error' });
+    },
+  });
+
+  const approveMutation = useMutation({
+    mutationFn: (id: string) => financeApi.payment.approve(id),
+    onSuccess: () => {
+      invalidatePayments();
+      addNotification({ title: '成功', message: '审批通过', type: 'success' });
+      setShowDetailDialog(false);
+    },
+    onError: (err: unknown) => {
+      logger.error('Failed to approve payment:', err);
+      addNotification({ title: '错误', message: '审批失败', type: 'error' });
+    },
+  });
+
+  const rejectMutation = useMutation({
+    mutationFn: (id: string) => financeApi.payment.reject(id),
+    onSuccess: () => {
+      invalidatePayments();
+      addNotification({ title: '成功', message: '已拒绝', type: 'success' });
+      setShowDetailDialog(false);
+    },
+    onError: (err: unknown) => {
+      logger.error('Failed to reject payment:', err);
+      addNotification({ title: '错误', message: '操作失败', type: 'error' });
+    },
+  });
+
+  const executeMutation = useMutation({
+    mutationFn: (params: { id: string; data: ExecutePaymentRequest }) =>
+      financeApi.payment.execute(params.id, params.data),
+    onSuccess: () => {
+      invalidatePayments();
+      addNotification({ title: '成功', message: '付款执行成功', type: 'success' });
+      setShowExecuteDialog(false);
+    },
+    onError: (err: unknown) => {
+      logger.error('Failed to execute payment:', err);
+      addNotification({ title: '错误', message: '操作失败', type: 'error' });
+    },
+  });
+
+  const writeOffMutation = useMutation({
+    mutationFn: (data: WriteOffRequest) => financeApi.payment.writeOff(data),
+    onSuccess: () => {
+      invalidatePayments();
+      addNotification({ title: '成功', message: '核销成功', type: 'success' });
+      setShowWriteOffDialog(false);
+    },
+    onError: (err: unknown) => {
+      logger.error('Failed to write off payment:', err);
+      addNotification({ title: '错误', message: '核销失败', type: 'error' });
+    },
+  });
+
+  const actionLoading =
+    createMutation.isPending ||
+    updateMutation.isPending ||
+    deleteMutation.isPending ||
+    submitMutation.isPending ||
+    approveMutation.isPending ||
+    rejectMutation.isPending ||
+    executeMutation.isPending ||
+    writeOffMutation.isPending;
 
   const handleExport = async () => {
     try {
@@ -201,16 +342,12 @@ const FinancePaymentPage: React.FC = () => {
     ]);
 
     const csvContent = [headers.join(','), ...rows.map((row) => row.join(','))].join('\n');
-    const blob = new Blob(['\uFEFF' + csvContent], { type: 'text/csv;charset=utf-8;' });
+    const blob = new Blob([`\uFEFF${csvContent}`], { type: 'text/csv;charset=utf-8;' });
     const link = document.createElement('a');
     link.href = URL.createObjectURL(blob);
     link.download = `付款单_${new Date().toISOString().split('T')[0]}.csv`;
     link.click();
   };
-
-  useEffect(() => {
-    loadPayments();
-  }, [page, pageSize, statusFilter]);
 
   const handleCreate = () => {
     setFormData({
@@ -249,187 +386,48 @@ const FinancePaymentPage: React.FC = () => {
     setShowCreateDialog(true);
   };
 
-  const handleView = async (payment: Payment) => {
-    setActionLoading(true);
-    try {
-      const res = await financeApi.payment.get(payment.id);
-      if (res.success) {
-        setSelectedPayment(res.data);
-        setShowDetailDialog(true);
-      }
-    } catch (error) {
-      logger.error('Failed to get payment detail:', error);
-      addNotification({
-        title: '错误',
-        message: '获取付款单详情失败',
-        type: 'error',
-      });
-    } finally {
-      setActionLoading(false);
-    }
+  const handleView = (payment: Payment) => {
+    setSelectedPayment(payment);
+    setShowDetailDialog(true);
   };
 
-  const handleSubmit = async () => {
+  const handleSubmit = () => {
     if (!formData.supplierName || formData.totalAmount <= 0) {
-      addNotification({
-        title: '提示',
-        message: '请填写供应商名称和付款金额',
-        type: 'warning',
-      });
+      addNotification({ title: '提示', message: '请填写供应商名称和付款金额', type: 'warning' });
       return;
     }
 
     const totalItemAmount = formData.items.reduce((sum, item) => sum + item.paymentAmount, 0);
     if (Math.abs(totalItemAmount - formData.totalAmount) > 0.01) {
-      addNotification({
-        title: '提示',
-        message: '明细付款金额合计应等于总金额',
-        type: 'warning',
-      });
+      addNotification({ title: '提示', message: '明细付款金额合计应等于总金额', type: 'warning' });
       return;
     }
 
-    setActionLoading(true);
-    try {
-      if (editMode && selectedPayment) {
-        const res = await financeApi.payment.update(selectedPayment.id, formData);
-        if (res.success) {
-          addNotification({
-            title: '成功',
-            message: '付款单更新成功',
-            type: 'success',
-          });
-          setShowCreateDialog(false);
-          loadPayments();
-        }
-      } else {
-        const res = await financeApi.payment.create(formData);
-        if (res.success) {
-          addNotification({
-            title: '成功',
-            message: '付款单创建成功',
-            type: 'success',
-          });
-          setShowCreateDialog(false);
-          loadPayments();
-        }
-      }
-    } catch (error) {
-      logger.error('Failed to submit payment:', error);
-      addNotification({
-        title: '错误',
-        message: editMode ? '更新付款单失败' : '创建付款单失败',
-        type: 'error',
-      });
-    } finally {
-      setActionLoading(false);
+    if (editMode && selectedPayment) {
+      updateMutation.mutate({ id: selectedPayment.id, data: formData });
+    } else {
+      createMutation.mutate(formData);
     }
   };
 
-  const handleDelete = async (payment: Payment) => {
+  const handleDelete = (payment: Payment) => {
     if (!window.confirm('确定要删除该付款单吗？')) return;
-
-    setActionLoading(true);
-    try {
-      const res = await financeApi.payment.remove(payment.id);
-      if (res.success) {
-        addNotification({
-          title: '成功',
-          message: '付款单删除成功',
-          type: 'success',
-        });
-        loadPayments();
-      }
-    } catch (error) {
-      logger.error('Failed to delete payment:', error);
-      addNotification({
-        title: '错误',
-        message: '删除付款单失败',
-        type: 'error',
-      });
-    } finally {
-      setActionLoading(false);
-    }
+    deleteMutation.mutate(payment.id);
   };
 
-  const handleSubmitForApproval = async (payment: Payment) => {
+  const handleSubmitForApproval = (payment: Payment) => {
     if (!window.confirm('确定要提交审批吗？')) return;
-
-    setActionLoading(true);
-    try {
-      const res = await financeApi.payment.submit(payment.id);
-      if (res.success) {
-        addNotification({
-          title: '成功',
-          message: '提交审批成功',
-          type: 'success',
-        });
-        loadPayments();
-      }
-    } catch (error) {
-      logger.error('Failed to submit payment:', error);
-      addNotification({
-        title: '错误',
-        message: '提交审批失败',
-        type: 'error',
-      });
-    } finally {
-      setActionLoading(false);
-    }
+    submitMutation.mutate(payment.id);
   };
 
-  const handleApprove = async (payment: Payment) => {
+  const handleApprove = (payment: Payment) => {
     if (!window.confirm('确定要审批通过吗？')) return;
-
-    setActionLoading(true);
-    try {
-      const res = await financeApi.payment.approve(payment.id);
-      if (res.success) {
-        addNotification({
-          title: '成功',
-          message: '审批通过',
-          type: 'success',
-        });
-        setShowDetailDialog(false);
-        loadPayments();
-      }
-    } catch (error) {
-      logger.error('Failed to approve payment:', error);
-      addNotification({
-        title: '错误',
-        message: '审批失败',
-        type: 'error',
-      });
-    } finally {
-      setActionLoading(false);
-    }
+    approveMutation.mutate(payment.id);
   };
 
-  const handleReject = async (payment: Payment) => {
+  const handleReject = (payment: Payment) => {
     if (!window.confirm('确定要拒绝该付款单吗？')) return;
-
-    setActionLoading(true);
-    try {
-      const res = await financeApi.payment.reject(payment.id);
-      if (res.success) {
-        addNotification({
-          title: '成功',
-          message: '已拒绝',
-          type: 'success',
-        });
-        setShowDetailDialog(false);
-        loadPayments();
-      }
-    } catch (error) {
-      logger.error('Failed to reject payment:', error);
-      addNotification({
-        title: '错误',
-        message: '操作失败',
-        type: 'error',
-      });
-    } finally {
-      setActionLoading(false);
-    }
+    rejectMutation.mutate(payment.id);
   };
 
   const handleExecute = (payment: Payment) => {
@@ -441,8 +439,12 @@ const FinancePaymentPage: React.FC = () => {
     setShowExecuteDialog(true);
   };
 
-  const handleExecutePayment = async () => {
-    if (!selectedPayment || !executeFormData.bankTransactionNo || !executeFormData.actualPaymentDate) {
+  const handleExecutePayment = () => {
+    if (
+      !selectedPayment ||
+      !executeFormData.bankTransactionNo ||
+      !executeFormData.actualPaymentDate
+    ) {
       addNotification({
         title: '提示',
         message: '请填写完整的执行信息',
@@ -451,31 +453,13 @@ const FinancePaymentPage: React.FC = () => {
       return;
     }
 
-    setActionLoading(true);
-    try {
-      const res = await financeApi.payment.execute(selectedPayment.id, {
+    executeMutation.mutate({
+      id: selectedPayment.id,
+      data: {
         bankTransactionNo: executeFormData.bankTransactionNo,
         actualPaymentDate: executeFormData.actualPaymentDate,
-      });
-      if (res.success) {
-        addNotification({
-          title: '成功',
-          message: '付款执行成功',
-          type: 'success',
-        });
-        setShowExecuteDialog(false);
-        loadPayments();
-      }
-    } catch (error) {
-      logger.error('Failed to execute payment:', error);
-      addNotification({
-        title: '错误',
-        message: '操作失败',
-        type: 'error',
-      });
-    } finally {
-      setActionLoading(false);
-    }
+      },
+    });
   };
 
   const handleWriteOff = (item: PaymentItem) => {
@@ -486,7 +470,7 @@ const FinancePaymentPage: React.FC = () => {
     setShowWriteOffDialog(true);
   };
 
-  const handleWriteOffPayment = async () => {
+  const handleWriteOffPayment = () => {
     if (!selectedItem || !writeOffFormData.writeOffAmount) {
       addNotification({
         title: '提示',
@@ -506,31 +490,10 @@ const FinancePaymentPage: React.FC = () => {
       return;
     }
 
-    setActionLoading(true);
-    try {
-      const res = await financeApi.payment.writeOff({
-        itemId: selectedItem.id!,
-        writeOffAmount: amount,
-      });
-      if (res.success) {
-        addNotification({
-          title: '成功',
-          message: '核销成功',
-          type: 'success',
-        });
-        setShowWriteOffDialog(false);
-        loadPayments();
-      }
-    } catch (error) {
-      logger.error('Failed to write off payment:', error);
-      addNotification({
-        title: '错误',
-        message: '操作失败',
-        type: 'error',
-      });
-    } finally {
-      setActionLoading(false);
-    }
+    writeOffMutation.mutate({
+      itemId: selectedItem.id!,
+      writeOffAmount: amount,
+    });
   };
 
   const handlePrint = (payment: Payment) => {
@@ -568,19 +531,25 @@ const FinancePaymentPage: React.FC = () => {
   const canExecute = (status: string) => status === 'approved';
 
   return (
-    <Box sx={{ p: 3 }}>
-      <Stack direction='row' sx={{ justifyContent: 'space-between', alignItems: 'center', mb: 3 }}>
-        <Typography variant='h5' sx={{ fontWeight: 600 }}>
-          付款单管理
-        </Typography>
-        <Button variant='contained' startIcon={<Plus size={18} />} onClick={handleCreate}>
+    <PageContainer
+      title='付款单管理'
+      headerActions={
+        <Button
+          variant='contained'
+          startIcon={<Plus size={18} />}
+          onClick={handleCreate}
+        >
           新建付款单
         </Button>
-      </Stack>
-
+      }
+    >
       <Card sx={{ mb: 3 }}>
         <CardContent>
-          <Stack direction='row' spacing={2} sx={{ flexWrap: 'wrap', gap: 2 }}>
+          <Stack
+            direction='row'
+            spacing={2}
+            sx={{ flexWrap: 'wrap', gap: 2 }}
+          >
             <TextField
               size='small'
               placeholder='搜索供应商名称...'
@@ -588,7 +557,10 @@ const FinancePaymentPage: React.FC = () => {
               onChange={(e) => setSearchText(e.target.value)}
               sx={{ width: 280 }}
             />
-            <FormControl size='small' sx={{ minWidth: 150 }}>
+            <FormControl
+              size='small'
+              sx={{ minWidth: 150 }}
+            >
               <InputLabel>状态</InputLabel>
               <Select
                 value={statusFilter}
@@ -596,7 +568,10 @@ const FinancePaymentPage: React.FC = () => {
                 onChange={(e) => setStatusFilter(e.target.value)}
               >
                 {statusOptions.map((opt) => (
-                  <MenuItem key={opt.value} value={opt.value}>
+                  <MenuItem
+                    key={opt.value}
+                    value={opt.value}
+                  >
                     {opt.label}
                   </MenuItem>
                 ))}
@@ -606,7 +581,7 @@ const FinancePaymentPage: React.FC = () => {
               variant='outlined'
               size='small'
               startIcon={<RefreshCw size={16} />}
-              onClick={loadPayments}
+              onClick={() => paymentsQuery.refetch()}
             >
               刷新
             </Button>
@@ -640,15 +615,33 @@ const FinancePaymentPage: React.FC = () => {
             <TableBody>
               {loading ? (
                 <TableRow>
-                  <TableCell colSpan={7} align='center' sx={{ py: 4 }}>
+                  <TableCell
+                    colSpan={7}
+                    align='center'
+                    sx={{ py: 4 }}
+                  >
                     <Typography color='text.secondary'>加载中...</Typography>
                   </TableCell>
                 </TableRow>
               ) : payments.length === 0 ? (
                 <TableRow>
-                  <TableCell colSpan={7} align='center' sx={{ py: 4 }}>
-                    <Box sx={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 1 }}>
-                      <FileText size={40} style={{ opacity: 0.3 }} />
+                  <TableCell
+                    colSpan={7}
+                    align='center'
+                    sx={{ py: 4 }}
+                  >
+                    <Box
+                      sx={{
+                        display: 'flex',
+                        flexDirection: 'column',
+                        alignItems: 'center',
+                        gap: 1,
+                      }}
+                    >
+                      <FileText
+                        size={40}
+                        style={{ opacity: 0.3 }}
+                      />
                       <Typography color='text.secondary'>暂无付款单数据</Typography>
                     </Box>
                   </TableCell>
@@ -657,14 +650,20 @@ const FinancePaymentPage: React.FC = () => {
                 payments.map((payment) => {
                   const statusConfig = getStatusConfig(payment.status);
                   return (
-                    <TableRow key={payment.id} hover>
+                    <TableRow
+                      key={payment.id}
+                      hover
+                    >
                       <TableCell sx={{ fontFamily: 'monospace' }}>{payment.paymentNo}</TableCell>
                       <TableCell>{payment.supplierName || '-'}</TableCell>
                       <TableCell>
-                        {paymentMethodOptions.find((m) => m.value === payment.paymentMethod)?.label ||
-                          payment.paymentMethod}
+                        {paymentMethodOptions.find((m) => m.value === payment.paymentMethod)
+                          ?.label || payment.paymentMethod}
                       </TableCell>
-                      <TableCell align='right' sx={{ fontWeight: 600 }}>
+                      <TableCell
+                        align='right'
+                        sx={{ fontWeight: 600 }}
+                      >
                         ¥{payment.totalAmount.toLocaleString('zh-CN', { minimumFractionDigits: 2 })}
                       </TableCell>
                       <TableCell>
@@ -677,29 +676,47 @@ const FinancePaymentPage: React.FC = () => {
                       </TableCell>
                       <TableCell>{payment.paymentDate || '-'}</TableCell>
                       <TableCell align='center'>
-                        <Stack direction='row' spacing={0.5} sx={{ justifyContent: 'center' }}>
+                        <Stack
+                          direction='row'
+                          spacing={0.5}
+                          sx={{ justifyContent: 'center' }}
+                        >
                           <Tooltip title='查看详情'>
-                            <IconButton size='small' onClick={() => handleView(payment)}>
+                            <IconButton
+                              size='small'
+                              onClick={() => handleView(payment)}
+                            >
                               <Eye size={16} />
                             </IconButton>
                           </Tooltip>
                           {canEdit(payment.status) && (
                             <Tooltip title='编辑'>
-                              <IconButton size='small' onClick={() => handleEdit(payment)}>
+                              <IconButton
+                                size='small'
+                                onClick={() => handleEdit(payment)}
+                              >
                                 <Edit size={16} />
                               </IconButton>
                             </Tooltip>
                           )}
                           {canSubmit(payment.status) && (
                             <Tooltip title='提交审批'>
-                              <IconButton size='small' color='primary' onClick={() => handleSubmitForApproval(payment)}>
+                              <IconButton
+                                size='small'
+                                color='primary'
+                                onClick={() => handleSubmitForApproval(payment)}
+                              >
                                 <ArrowUpCircle size={16} />
                               </IconButton>
                             </Tooltip>
                           )}
                           {canDelete(payment.status) && (
                             <Tooltip title='删除'>
-                              <IconButton size='small' color='error' onClick={() => handleDelete(payment)}>
+                              <IconButton
+                                size='small'
+                                color='error'
+                                onClick={() => handleDelete(payment)}
+                              >
                                 <Trash2 size={16} />
                               </IconButton>
                             </Tooltip>
@@ -724,9 +741,7 @@ const FinancePaymentPage: React.FC = () => {
             setPage(0);
           }}
           labelRowsPerPage='每页行数'
-          labelDisplayedRows={({ from, to, count }) =>
-            `第 ${from}-${to} 条，共 ${count} 条`
-          }
+          labelDisplayedRows={({ from, to, count }) => `第 ${from}-${to} 条，共 ${count} 条`}
         />
       </Card>
 
@@ -738,8 +753,16 @@ const FinancePaymentPage: React.FC = () => {
       >
         <DialogTitle>{editMode ? '编辑付款单' : '新建付款单'}</DialogTitle>
         <DialogContent dividers>
-          <Grid container spacing={2.5} sx={{ mt: 0.5 }}>
-            <Grid item xs={12} sm={6}>
+          <Grid
+            container
+            spacing={2.5}
+            sx={{ mt: 0.5 }}
+          >
+            <Grid
+              item
+              xs={12}
+              sm={6}
+            >
               <TextField
                 fullWidth
                 label='供应商名称'
@@ -748,25 +771,37 @@ const FinancePaymentPage: React.FC = () => {
                 required
               />
             </Grid>
-            <Grid item xs={12} sm={6}>
-              <FormControl fullWidth required>
+            <Grid
+              item
+              xs={12}
+              sm={6}
+            >
+              <FormControl
+                fullWidth
+                required
+              >
                 <InputLabel>付款方式</InputLabel>
                 <Select
                   value={formData.paymentMethod}
                   label='付款方式'
-                  onChange={(e) =>
-                    setFormData({ ...formData, paymentMethod: e.target.value })
-                  }
+                  onChange={(e) => setFormData({ ...formData, paymentMethod: e.target.value })}
                 >
                   {paymentMethodOptions.map((opt) => (
-                    <MenuItem key={opt.value} value={opt.value}>
+                    <MenuItem
+                      key={opt.value}
+                      value={opt.value}
+                    >
                       {opt.label}
                     </MenuItem>
                   ))}
                 </Select>
               </FormControl>
             </Grid>
-            <Grid item xs={12} sm={6}>
+            <Grid
+              item
+              xs={12}
+              sm={6}
+            >
               <TextField
                 fullWidth
                 label='开户银行'
@@ -774,7 +809,11 @@ const FinancePaymentPage: React.FC = () => {
                 onChange={(e) => setFormData({ ...formData, bankName: e.target.value })}
               />
             </Grid>
-            <Grid item xs={12} sm={6}>
+            <Grid
+              item
+              xs={12}
+              sm={6}
+            >
               <TextField
                 fullWidth
                 label='银行账号'
@@ -782,7 +821,11 @@ const FinancePaymentPage: React.FC = () => {
                 onChange={(e) => setFormData({ ...formData, bankAccountNo: e.target.value })}
               />
             </Grid>
-            <Grid item xs={12} sm={6}>
+            <Grid
+              item
+              xs={12}
+              sm={6}
+            >
               <TextField
                 fullWidth
                 label='付款总金额'
@@ -794,7 +837,10 @@ const FinancePaymentPage: React.FC = () => {
                 required
               />
             </Grid>
-            <Grid item xs={12}>
+            <Grid
+              item
+              xs={12}
+            >
               <TextField
                 fullWidth
                 label='备注'
@@ -808,16 +854,30 @@ const FinancePaymentPage: React.FC = () => {
 
           <Divider sx={{ my: 2.5 }} />
 
-          <Stack direction='row' sx={{ justifyContent: 'space-between', alignItems: 'center', mb: 2 }}>
-            <Typography variant='subtitle2' sx={{ fontWeight: 600 }}>
+          <Stack
+            direction='row'
+            sx={{ justifyContent: 'space-between', alignItems: 'center', mb: 2 }}
+          >
+            <Typography
+              variant='subtitle2'
+              sx={{ fontWeight: 600 }}
+            >
               付款明细
             </Typography>
-            <Button size='small' onClick={addItem} startIcon={<Plus size={14} />}>
+            <Button
+              size='small'
+              onClick={addItem}
+              startIcon={<Plus size={14} />}
+            >
               添加明细
             </Button>
           </Stack>
 
-          <TableContainer component={Paper} variant='outlined' sx={{ mb: 1 }}>
+          <TableContainer
+            component={Paper}
+            variant='outlined'
+            sx={{ mb: 1 }}
+          >
             <Table size='small'>
               <TableHead>
                 <TableRow sx={{ bgcolor: 'grey.50' }}>
@@ -842,7 +902,10 @@ const FinancePaymentPage: React.FC = () => {
                         placeholder='输入发票号'
                       />
                     </TableCell>
-                    <TableCell align='right' sx={{ width: 150 }}>
+                    <TableCell
+                      align='right'
+                      sx={{ width: 150 }}
+                    >
                       <TextField
                         size='small'
                         type='number'
@@ -853,7 +916,10 @@ const FinancePaymentPage: React.FC = () => {
                         sx={{ '& input': { textAlign: 'right' } }}
                       />
                     </TableCell>
-                    <TableCell align='right' sx={{ width: 150 }}>
+                    <TableCell
+                      align='right'
+                      sx={{ width: 150 }}
+                    >
                       <TextField
                         size='small'
                         type='number'
@@ -889,10 +955,19 @@ const FinancePaymentPage: React.FC = () => {
             </Table>
           </TableContainer>
 
-          <Stack direction='row' sx={{ justifyContent: 'flex-end' }}>
-            <Typography variant='body2' color='text.secondary'>
+          <Stack
+            direction='row'
+            sx={{ justifyContent: 'flex-end' }}
+          >
+            <Typography
+              variant='body2'
+              color='text.secondary'
+            >
               明细合计：
-              <Box component='span' sx={{ ml: 1, color: 'primary.main', fontWeight: 600 }}>
+              <Box
+                component='span'
+                sx={{ ml: 1, color: 'primary.main', fontWeight: 600 }}
+              >
                 ¥
                 {formData.items
                   .reduce((sum, item) => sum + (item.paymentAmount || 0), 0)
@@ -902,10 +977,17 @@ const FinancePaymentPage: React.FC = () => {
           </Stack>
         </DialogContent>
         <DialogActions sx={{ px: 3, py: 2 }}>
-          <Button onClick={() => setShowCreateDialog(false)} disabled={actionLoading}>
+          <Button
+            onClick={() => setShowCreateDialog(false)}
+            disabled={actionLoading}
+          >
             取消
           </Button>
-          <Button variant='contained' onClick={handleSubmit} disabled={actionLoading}>
+          <Button
+            variant='contained'
+            onClick={handleSubmit}
+            disabled={actionLoading}
+          >
             {editMode ? '保存修改' : '创建'}
           </Button>
         </DialogActions>
@@ -918,7 +1000,10 @@ const FinancePaymentPage: React.FC = () => {
         fullWidth
       >
         <DialogTitle>
-          <Stack direction='row' sx={{ justifyContent: 'space-between', alignItems: 'center' }}>
+          <Stack
+            direction='row'
+            sx={{ justifyContent: 'space-between', alignItems: 'center' }}
+          >
             <span>付款单详情</span>
             {selectedPayment && (
               <Chip
@@ -932,25 +1017,50 @@ const FinancePaymentPage: React.FC = () => {
         <DialogContent dividers>
           {selectedPayment && (
             <>
-              <Grid container spacing={2.5} sx={{ mb: 2 }}>
-                <Grid item xs={12} sm={6}>
-                  <Typography variant='body2' color='text.secondary'>
+              <Grid
+                container
+                spacing={2.5}
+                sx={{ mb: 2 }}
+              >
+                <Grid
+                  item
+                  xs={12}
+                  sm={6}
+                >
+                  <Typography
+                    variant='body2'
+                    color='text.secondary'
+                  >
                     付款单号
                   </Typography>
                   <Typography sx={{ fontWeight: 600, fontFamily: 'monospace' }}>
                     {selectedPayment.paymentNo}
                   </Typography>
                 </Grid>
-                <Grid item xs={12} sm={6}>
-                  <Typography variant='body2' color='text.secondary'>
+                <Grid
+                  item
+                  xs={12}
+                  sm={6}
+                >
+                  <Typography
+                    variant='body2'
+                    color='text.secondary'
+                  >
                     供应商
                   </Typography>
                   <Typography sx={{ fontWeight: 600 }}>
                     {selectedPayment.supplierName || '-'}
                   </Typography>
                 </Grid>
-                <Grid item xs={12} sm={6}>
-                  <Typography variant='body2' color='text.secondary'>
+                <Grid
+                  item
+                  xs={12}
+                  sm={6}
+                >
+                  <Typography
+                    variant='body2'
+                    color='text.secondary'
+                  >
                     付款方式
                   </Typography>
                   <Typography>
@@ -958,8 +1068,15 @@ const FinancePaymentPage: React.FC = () => {
                       ?.label || selectedPayment.paymentMethod}
                   </Typography>
                 </Grid>
-                <Grid item xs={12} sm={6}>
-                  <Typography variant='body2' color='text.secondary'>
+                <Grid
+                  item
+                  xs={12}
+                  sm={6}
+                >
+                  <Typography
+                    variant='body2'
+                    color='text.secondary'
+                  >
                     付款金额
                   </Typography>
                   <Typography sx={{ fontWeight: 600, color: 'primary.main' }}>
@@ -969,20 +1086,40 @@ const FinancePaymentPage: React.FC = () => {
                     })}
                   </Typography>
                 </Grid>
-                <Grid item xs={12} sm={6}>
-                  <Typography variant='body2' color='text.secondary'>
+                <Grid
+                  item
+                  xs={12}
+                  sm={6}
+                >
+                  <Typography
+                    variant='body2'
+                    color='text.secondary'
+                  >
                     开户银行
                   </Typography>
                   <Typography>{selectedPayment.bankName || '-'}</Typography>
                 </Grid>
-                <Grid item xs={12} sm={6}>
-                  <Typography variant='body2' color='text.secondary'>
+                <Grid
+                  item
+                  xs={12}
+                  sm={6}
+                >
+                  <Typography
+                    variant='body2'
+                    color='text.secondary'
+                  >
                     银行账号
                   </Typography>
                   <Typography>{selectedPayment.bankAccountNo || '-'}</Typography>
                 </Grid>
-                <Grid item xs={12}>
-                  <Typography variant='body2' color='text.secondary'>
+                <Grid
+                  item
+                  xs={12}
+                >
+                  <Typography
+                    variant='body2'
+                    color='text.secondary'
+                  >
                     备注
                   </Typography>
                   <Typography>{selectedPayment.remark || '-'}</Typography>
@@ -992,10 +1129,16 @@ const FinancePaymentPage: React.FC = () => {
               {selectedPayment.items && selectedPayment.items.length > 0 && (
                 <>
                   <Divider sx={{ my: 2.5 }} />
-                  <Typography variant='subtitle2' sx={{ mb: 2, fontWeight: 600 }}>
+                  <Typography
+                    variant='subtitle2'
+                    sx={{ mb: 2, fontWeight: 600 }}
+                  >
                     付款明细
                   </Typography>
-                  <TableContainer component={Paper} variant='outlined'>
+                  <TableContainer
+                    component={Paper}
+                    variant='outlined'
+                  >
                     <Table size='small'>
                       <TableHead>
                         <TableRow sx={{ bgcolor: 'grey.50' }}>
@@ -1035,15 +1178,15 @@ const FinancePaymentPage: React.FC = () => {
                                   item.writeOffStatus === 'completed'
                                     ? '已核销'
                                     : item.writeOffStatus === 'partial'
-                                    ? '部分核销'
-                                    : '待核销'
+                                      ? '部分核销'
+                                      : '待核销'
                                 }
                                 color={
                                   item.writeOffStatus === 'completed'
                                     ? 'success'
                                     : item.writeOffStatus === 'partial'
-                                    ? 'warning'
-                                    : 'default'
+                                      ? 'warning'
+                                      : 'default'
                                 }
                               />
                             </TableCell>
@@ -1116,11 +1259,23 @@ const FinancePaymentPage: React.FC = () => {
         </DialogActions>
       </Dialog>
 
-      <Dialog open={showExecuteDialog} onClose={() => setShowExecuteDialog(false)} maxWidth='sm' fullWidth>
+      <Dialog
+        open={showExecuteDialog}
+        onClose={() => setShowExecuteDialog(false)}
+        maxWidth='sm'
+        fullWidth
+      >
         <DialogTitle>执行付款</DialogTitle>
         <DialogContent dividers>
-          <Grid container spacing={2.5} sx={{ mt: 0.5 }}>
-            <Grid item xs={12}>
+          <Grid
+            container
+            spacing={2.5}
+            sx={{ mt: 0.5 }}
+          >
+            <Grid
+              item
+              xs={12}
+            >
               <TextField
                 fullWidth
                 label='银行流水号'
@@ -1131,7 +1286,10 @@ const FinancePaymentPage: React.FC = () => {
                 required
               />
             </Grid>
-            <Grid item xs={12}>
+            <Grid
+              item
+              xs={12}
+            >
               <TextField
                 fullWidth
                 label='实际付款日期'
@@ -1157,11 +1315,23 @@ const FinancePaymentPage: React.FC = () => {
         </DialogActions>
       </Dialog>
 
-      <Dialog open={showWriteOffDialog} onClose={() => setShowWriteOffDialog(false)} maxWidth='sm' fullWidth>
+      <Dialog
+        open={showWriteOffDialog}
+        onClose={() => setShowWriteOffDialog(false)}
+        maxWidth='sm'
+        fullWidth
+      >
         <DialogTitle>核销付款</DialogTitle>
         <DialogContent dividers>
-          <Grid container spacing={2.5} sx={{ mt: 0.5 }}>
-            <Grid item xs={12}>
+          <Grid
+            container
+            spacing={2.5}
+            sx={{ mt: 0.5 }}
+          >
+            <Grid
+              item
+              xs={12}
+            >
               <TextField
                 fullWidth
                 label='发票号'
@@ -1169,7 +1339,10 @@ const FinancePaymentPage: React.FC = () => {
                 disabled
               />
             </Grid>
-            <Grid item xs={12}>
+            <Grid
+              item
+              xs={12}
+            >
               <TextField
                 fullWidth
                 label='应付金额'
@@ -1177,7 +1350,10 @@ const FinancePaymentPage: React.FC = () => {
                 disabled
               />
             </Grid>
-            <Grid item xs={12}>
+            <Grid
+              item
+              xs={12}
+            >
               <TextField
                 fullWidth
                 label='本次付款'
@@ -1185,7 +1361,10 @@ const FinancePaymentPage: React.FC = () => {
                 disabled
               />
             </Grid>
-            <Grid item xs={12}>
+            <Grid
+              item
+              xs={12}
+            >
               <TextField
                 fullWidth
                 label='核销金额'
@@ -1220,7 +1399,10 @@ const FinancePaymentPage: React.FC = () => {
         slotProps={{ paper: { sx: { maxHeight: '90vh', overflow: 'auto' } } }}
       >
         <DialogTitle>
-          <Stack direction='row' sx={{ justifyContent: 'space-between', alignItems: 'center' }}>
+          <Stack
+            direction='row'
+            sx={{ justifyContent: 'space-between', alignItems: 'center' }}
+          >
             <span>付款单打印预览</span>
           </Stack>
         </DialogTitle>
@@ -1238,7 +1420,7 @@ const FinancePaymentPage: React.FC = () => {
           </Button>
         </DialogActions>
       </Dialog>
-    </Box>
+    </PageContainer>
   );
 };
 

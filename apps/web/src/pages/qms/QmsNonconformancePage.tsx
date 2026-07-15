@@ -149,7 +149,8 @@ const QmsNonconformancePage: React.FC = () => {
     },
   });
 
-  const submitting = createMutation.isPending || updateMutation.isPending || deleteMutation.isPending;
+  const submitting =
+    createMutation.isPending || updateMutation.isPending || deleteMutation.isPending;
 
   const nonconformanceSchema = z.object({
     title: z.string().min(2, '标题至少需要2个字符').max(100, '标题不能超过100个字符'),

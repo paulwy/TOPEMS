@@ -320,7 +320,9 @@ export const NotificationTemplatesPage: React.FC = () => {
         label: '状态',
         render: (row) => (
           <Chip
-            label={row.status === 'active' ? '启用' : row.status === 'inactive' ? '禁用' : row.status}
+            label={
+              row.status === 'active' ? '启用' : row.status === 'inactive' ? '禁用' : row.status
+            }
             size='small'
             color={row.status === 'active' ? 'success' : 'default'}
             variant={row.status === 'active' ? 'filled' : 'outlined'}

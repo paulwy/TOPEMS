@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState, useCallback, useMemo } from 'react';
 import {
   Box,
   Card,
@@ -36,12 +36,14 @@ import {
   AlertCircle,
   Map,
 } from 'lucide-react';
+import { useQuery } from '@tanstack/react-query';
 import { GisMapTemplate, type MapMarker, type TrackPoint } from '@/components/templates';
 import { useNotificationStore } from '@/store';
 import { PageContainer } from '@/components/common';
 import { gisApi } from '@/api/gis';
 import type { DevicePoint, DeviceLocationRecord } from '@/api/gis';
 import { designTokens } from '@/theme/tokens';
+import { QUERY_KEYS } from '@/lib/reactQuery';
 
 const ct = designTokens.colors;
 
@@ -51,61 +53,47 @@ export const GisTrackingPage: React.FC = () => {
   const [selectedDevice, setSelectedDevice] = useState('');
   const [playbackSpeed, setPlaybackSpeed] = useState(1);
   const [isPlaying, setIsPlaying] = useState(false);
-  const [loading, setLoading] = useState(false);
-  const [trackLoading, setTrackLoading] = useState(false);
-  const [error, setError] = useState<string>('');
 
-  const [devices, setDevices] = useState<DevicePoint[]>([]);
-  const [trackHistory, setTrackHistory] = useState<DeviceLocationRecord[]>([]);
-
-  const loadDevices = useCallback(async () => {
-    try {
-      setLoading(true);
-      setError('');
+  const {
+    data: devices = [],
+    isLoading: loading,
+    error: devicesError,
+  } = useQuery<DevicePoint[]>({
+    queryKey: QUERY_KEYS.GIS.DEVICE_POINTS,
+    queryFn: async () => {
       const res = await gisApi.listDevicePoints({ pagesize: 100 });
       if (res.success && res.data) {
-        setDevices(res.data.items || []);
-        if (res.data.items && res.data.items.length > 0 && !selectedDevice) {
-          setSelectedDevice(res.data.items[0].id);
-        }
+        return res.data.items || [];
       }
-    } catch (err: unknown) {
-      const msg = err instanceof Error ? err.message : '加载设备列表失败';
-      setError(msg);
-      addNotification({ title: '加载失败', message: msg, type: 'error' });
-    } finally {
-      setLoading(false);
-    }
-  }, [addNotification, selectedDevice]);
-
-  const loadTrack = useCallback(
-    async (deviceId: string) => {
-      if (!deviceId) return;
-      try {
-        setTrackLoading(true);
-        const res = await gisApi.getDeviceTrack({ device_id: deviceId, pagesize: 100 });
-        if (res.success && res.data) {
-          setTrackHistory(res.data.items || []);
-        }
-      } catch (err: unknown) {
-        const msg = err instanceof Error ? err.message : '加载轨迹数据失败';
-        addNotification({ title: '加载失败', message: msg, type: 'error' });
-      } finally {
-        setTrackLoading(false);
-      }
+      throw new Error('加载设备列表失败');
     },
-    [addNotification]
-  );
+  });
 
-  useEffect(() => {
-    loadDevices();
-  }, [loadDevices]);
+  const { data: trackHistory = [], isLoading: trackLoading } = useQuery<DeviceLocationRecord[]>({
+    queryKey: QUERY_KEYS.GIS.DEVICE_TRACK(selectedDevice || 'none'),
+    queryFn: async () => {
+      if (!selectedDevice) return [];
+      const res = await gisApi.getDeviceTrack({ device_id: selectedDevice, pagesize: 100 });
+      if (res.success && res.data) {
+        return res.data.items || [];
+      }
+      throw new Error('加载轨迹数据失败');
+    },
+    enabled: !!selectedDevice,
+  });
 
-  useEffect(() => {
-    if (selectedDevice) {
-      loadTrack(selectedDevice);
+  const error = devicesError
+    ? devicesError instanceof Error
+      ? devicesError.message
+      : '加载设备列表失败'
+    : '';
+
+  // Auto-select first device when devices load
+  React.useEffect(() => {
+    if (devices.length > 0 && !selectedDevice) {
+      setSelectedDevice(devices[0].id);
     }
-  }, [selectedDevice, loadTrack]);
+  }, [devices, selectedDevice]);
 
   const getTypeIcon = (type: string) => {
     switch (type) {

@@ -27,108 +27,92 @@ import { MobileLayout, MobileSkeleton, MobileCard } from '@/components/mobile';
 import { useNavigate } from 'react-router-dom';
 import { useNotificationStore } from '@/store';
 import { logger } from '@/utils/logger';
+import { mobileApi, type PushConfig, type PushTemplate, type ListResponse } from '@/api/mobile';
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import { PageContainer } from '@/components/common';
 
-interface PushTemplate {
-  id: string;
-  name: string;
-  type: 'system' | 'approval' | 'task' | 'reminder';
-  title: string;
-  body: string;
-  enabled: boolean;
-  status: 'active' | 'draft' | 'disabled';
-}
-
-interface PushConfig {
-  enabled: boolean;
-  soundEnabled: boolean;
-  vibrationEnabled: boolean;
-  quietHoursStart: string;
-  quietHoursEnd: string;
-}
+const defaultPushConfig: PushConfig = {
+  enabled: true,
+  sound_enabled: true,
+  vibration_enabled: true,
+  quiet_hours_start: '22:00',
+  quiet_hours_end: '08:00',
+};
 
 const PushNotificationPage: React.FC = () => {
   const theme = useTheme();
   const navigate = useNavigate();
   const { addNotification } = useNotificationStore();
-  const [loading, setLoading] = useState(true);
-  const [config, setConfig] = useState<PushConfig>({
-    enabled: true,
-    soundEnabled: true,
-    vibrationEnabled: true,
-    quietHoursStart: '22:00',
-    quietHoursEnd: '08:00',
-  });
-  const [templates, setTemplates] = useState<PushTemplate[]>([]);
+  const queryClient = useQueryClient();
 
-  const loadData = useCallback(async () => {
-    setLoading(true);
-    try {
-      // [Phase 6-C] TODO: API 对接 — 替换 mock 数据，使用 useCrudQueries hook
-      // 示例:
-      // const { data: configData } = useCrudQueries<PushConfig>({ basePath: '/api/mobile/push-config' });
-      // const { data: templateData } = useCrudQueries<PushTemplate>({ basePath: '/api/mobile/push-templates' });
-      setConfig({
-        enabled: true,
-        soundEnabled: true,
-        vibrationEnabled: true,
-        quietHoursStart: '22:00',
-        quietHoursEnd: '08:00',
-      });
-      setTemplates([
-        {
-          id: 'tpl-1',
-          name: '审批通知',
-          type: 'approval',
-          title: '新审批任务',
-          body: '您有一个新的审批任务待处理',
-          enabled: true,
-          status: 'active',
-        },
-        {
-          id: 'tpl-2',
-          name: '任务提醒',
-          type: 'task',
-          title: '任务截止提醒',
-          body: '您的任务即将到期，请及时处理',
-          enabled: true,
-          status: 'active',
-        },
-        {
-          id: 'tpl-3',
-          name: '系统公告',
-          type: 'system',
-          title: '系统公告',
-          body: '系统将于今晚进行维护升级',
-          enabled: true,
-          status: 'active',
-        },
-        {
-          id: 'tpl-4',
-          name: '库存预警',
-          type: 'reminder',
-          title: '库存预警通知',
-          body: '物料库存低于安全线',
-          enabled: false,
-          status: 'disabled',
-        },
-      ]);
-    } catch (err) {
-      logger.error('加载推送配置失败:', err);
-    } finally {
-      setLoading(false);
-    }
-  }, []);
+  const configQuery = useQuery<PushConfig>({
+    queryKey: ['mobile-push-config'],
+    queryFn: async () => {
+      const res = await mobileApi.getPushConfig();
+      if (res.success && res.data) return res.data;
+      return defaultPushConfig;
+    },
+    staleTime: 5 * 60 * 1000,
+  });
+  const config = configQuery.data ?? defaultPushConfig;
+
+  const templatesQuery = useQuery<PushTemplate[]>({
+    queryKey: ['mobile-push-templates'],
+    queryFn: async () => {
+      const res = await mobileApi.listPushTemplates();
+      if (res.success && res.data) return res.data.items || [];
+      return [];
+    },
+    staleTime: 5 * 60 * 1000,
+  });
+  const templates = templatesQuery.data ?? [];
+  const loading = configQuery.isLoading || templatesQuery.isLoading;
 
   useEffect(() => {
-    loadData();
-  }, [loadData]);
+    if (configQuery.isError) {
+      logger.error('加载推送配置失败:', configQuery.error);
+      addNotification({ type: 'error', title: '错误', message: '加载推送配置失败' });
+    }
+  }, [configQuery.isError, configQuery.error, addNotification]);
+
+  useEffect(() => {
+    if (templatesQuery.isError) {
+      logger.error('加载推送模板失败:', templatesQuery.error);
+      addNotification({ type: 'error', title: '错误', message: '加载推送模板失败' });
+    }
+  }, [templatesQuery.isError, templatesQuery.error, addNotification]);
+
+  const updateConfigMutation = useMutation({
+    mutationFn: (data: Partial<PushConfig>) => mobileApi.updatePushConfig(data),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['mobile-push-config'] });
+    },
+    onError: (err: unknown) => {
+      logger.error('更新推送配置失败:', err);
+      addNotification({ type: 'error', title: '错误', message: '更新推送配置失败' });
+    },
+  });
 
   const handleToggleConfig = (key: keyof PushConfig) => {
-    setConfig((prev) => ({ ...prev, [key]: !prev[key] }));
+    updateConfigMutation.mutate({ [key]: !config[key] } as Partial<PushConfig>);
   };
 
+  const updateTemplateMutation = useMutation({
+    mutationFn: (params: { id: string; data: Partial<PushTemplate> }) =>
+      mobileApi.updatePushTemplate(params.id, params.data),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['mobile-push-templates'] });
+    },
+    onError: (err: unknown) => {
+      logger.error('更新推送模板失败:', err);
+      addNotification({ type: 'error', title: '错误', message: '更新推送模板失败' });
+    },
+  });
+
   const handleToggleTemplate = (id: string) => {
-    setTemplates((prev) => prev.map((t) => (t.id === id ? { ...t, enabled: !t.enabled } : t)));
+    const template = templates.find((t) => t.id === id);
+    if (!template) return;
+    updateTemplateMutation.mutate({ id, data: { enabled: !template.enabled } });
   };
 
   const getTypeColor = (type: string) => {
@@ -166,12 +150,19 @@ const PushNotificationPage: React.FC = () => {
         showBack
         onBackClick={() => navigate(-1)}
       >
-        <Box sx={{ p: 2 }}>
-          <MobileSkeleton
-            type='list'
-            count={4}
-          />
-        </Box>
+        <PageContainer
+          autoTitle={false}
+          autoBreadcrumbs={false}
+          padding={false}
+          maxWidth={false}
+        >
+          <Box sx={{ p: 2 }}>
+            <MobileSkeleton
+              type='list'
+              count={4}
+            />
+          </Box>
+        </PageContainer>
       </MobileLayout>
     );
   }
@@ -182,131 +173,138 @@ const PushNotificationPage: React.FC = () => {
       showBack
       onBackClick={() => navigate(-1)}
     >
-      <Box sx={{ p: 2, pb: 3 }}>
-        {/* 推送开关 */}
-        <Paper
-          elevation={0}
-          sx={{ p: 2, borderRadius: 3, mb: 3, border: 1, borderColor: 'divider' }}
-        >
-          <Box
-            sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', mb: 2 }}
+      <PageContainer
+        autoTitle={false}
+        autoBreadcrumbs={false}
+        padding={false}
+        maxWidth={false}
+      >
+        <Box sx={{ p: 2, pb: 3 }}>
+          {/* 推送开关 */}
+          <Paper
+            elevation={0}
+            sx={{ p: 2, borderRadius: 3, mb: 3, border: 1, borderColor: 'divider' }}
           >
-            <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5 }}>
-              <Bell style={{ width: 20, height: 20, color: theme.palette.primary.main }} />
+            <Box
+              sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', mb: 2 }}
+            >
+              <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5 }}>
+                <Bell style={{ width: 20, height: 20, color: theme.palette.primary.main }} />
+                <Typography
+                  variant='subtitle2'
+                  sx={{ fontWeight: 600 }}
+                >
+                  推送通知总开关
+                </Typography>
+              </Box>
+              <Switch
+                checked={config.enabled}
+                onChange={() => handleToggleConfig('enabled')}
+              />
+            </Box>
+            <Divider sx={{ mb: 1.5 }} />
+            <Box sx={{ display: 'flex', flexDirection: 'column', gap: 1.5 }}>
+              <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+                <Typography variant='body2'>通知声音</Typography>
+                <Switch
+                  checked={config.sound_enabled}
+                  onChange={() => handleToggleConfig('sound_enabled')}
+                  size='small'
+                />
+              </Box>
+              <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+                <Typography variant='body2'>振动提醒</Typography>
+                <Switch
+                  checked={config.vibration_enabled}
+                  onChange={() => handleToggleConfig('vibration_enabled')}
+                  size='small'
+                />
+              </Box>
+              <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+                <Typography variant='body2'>
+                  免打扰 {config.quiet_hours_start} - {config.quiet_hours_end}
+                </Typography>
+              </Box>
+            </Box>
+          </Paper>
+
+          {/* 推送模板列表 */}
+          <Paper
+            elevation={0}
+            sx={{ borderRadius: 3, border: 1, borderColor: 'divider', overflow: 'hidden' }}
+          >
+            <Box
+              sx={{
+                p: 2,
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'space-between',
+                borderBottom: 1,
+                borderColor: 'divider',
+              }}
+            >
               <Typography
                 variant='subtitle2'
                 sx={{ fontWeight: 600 }}
               >
-                推送通知总开关
+                推送模板
               </Typography>
-            </Box>
-            <Switch
-              checked={config.enabled}
-              onChange={() => handleToggleConfig('enabled')}
-            />
-          </Box>
-          <Divider sx={{ mb: 1.5 }} />
-          <Box sx={{ display: 'flex', flexDirection: 'column', gap: 1.5 }}>
-            <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-              <Typography variant='body2'>通知声音</Typography>
-              <Switch
-                checked={config.soundEnabled}
-                onChange={() => handleToggleConfig('soundEnabled')}
+              <Chip
+                label={`${templates.filter((t) => t.enabled).length}/${templates.length}`}
                 size='small'
               />
             </Box>
-            <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-              <Typography variant='body2'>振动提醒</Typography>
-              <Switch
-                checked={config.vibrationEnabled}
-                onChange={() => handleToggleConfig('vibrationEnabled')}
-                size='small'
-              />
-            </Box>
-            <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-              <Typography variant='body2'>
-                免打扰 {config.quietHoursStart} - {config.quietHoursEnd}
-              </Typography>
-            </Box>
-          </Box>
-        </Paper>
-
-        {/* 推送模板列表 */}
-        <Paper
-          elevation={0}
-          sx={{ borderRadius: 3, border: 1, borderColor: 'divider', overflow: 'hidden' }}
-        >
-          <Box
-            sx={{
-              p: 2,
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'space-between',
-              borderBottom: 1,
-              borderColor: 'divider',
-            }}
-          >
-            <Typography
-              variant='subtitle2'
-              sx={{ fontWeight: 600 }}
-            >
-              推送模板
-            </Typography>
-            <Chip
-              label={`${templates.filter((t) => t.enabled).length}/${templates.length}`}
-              size='small'
-            />
-          </Box>
-          {templates.map((template, index) => (
-            <Box key={template.id}>
-              {index > 0 && <Divider />}
-              <Box sx={{ px: 2, py: 2 }}>
-                <Box
-                  sx={{
-                    display: 'flex',
-                    alignItems: 'center',
-                    justifyContent: 'space-between',
-                    mb: 1,
-                  }}
-                >
-                  <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-                    <Typography
-                      variant='body2'
-                      sx={{ fontWeight: 500 }}
-                    >
-                      {template.name}
-                    </Typography>
-                    <Chip
-                      label={getStatusLabel(template.status)}
+            {templates.map((template, index) => (
+              <Box key={template.id}>
+                {index > 0 && <Divider />}
+                <Box sx={{ px: 2, py: 2 }}>
+                  <Box
+                    sx={{
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'space-between',
+                      mb: 1,
+                    }}
+                  >
+                    <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                      <Typography
+                        variant='body2'
+                        sx={{ fontWeight: 500 }}
+                      >
+                        {template.name}
+                      </Typography>
+                      <Chip
+                        label={getStatusLabel(template.status)}
+                        size='small'
+                        color={template.status === 'active' ? 'success' : 'default'}
+                        sx={{ height: 18, fontSize: '0.65rem' }}
+                      />
+                    </Box>
+                    <Switch
+                      checked={template.enabled}
+                      onChange={() => handleToggleTemplate(template.id)}
                       size='small'
-                      color={template.status === 'active' ? 'success' : 'default'}
-                      sx={{ height: 18, fontSize: '0.65rem' }}
                     />
                   </Box>
-                  <Switch
-                    checked={template.enabled}
-                    onChange={() => handleToggleTemplate(template.id)}
-                    size='small'
-                  />
+                  <Typography
+                    variant='caption'
+                    color='text.secondary'
+                  >
+                    标题: {template.title}
+                  </Typography>
+                  <br />
+                  <Typography
+                    variant='caption'
+                    color='text.secondary'
+                  >
+                    内容: {template.body}
+                  </Typography>
                 </Box>
-                <Typography
-                  variant='caption'
-                  color='text.secondary'
-                >
-                  标题: {template.title}
-                </Typography>
-                <br />
-                <Typography
-                  variant='caption'
-                  color='text.secondary'
-                >
-                  内容: {template.body}
-                </Typography>
               </Box>
-            </Box>
-          ))}
-        </Paper>
-      </Box>
+            ))}
+          </Paper>
+        </Box>
+      </PageContainer>
     </MobileLayout>
   );
 };

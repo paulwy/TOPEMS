@@ -1,4 +1,6 @@
-import React, { useState, useEffect, useMemo } from 'react';
+import React, { useState, useMemo } from 'react';
+import { useQuery } from '@tanstack/react-query';
+import { QUERY_KEYS } from '@/lib/reactQuery';
 import {
   Box,
   Typography,
@@ -38,40 +40,28 @@ const ct = designTokens.colors;
 const HrmEmployeeDetailPage: React.FC = () => {
   const navigate = useNavigate();
   const { id } = useParams<{ id: string }>();
-  const { success, error } = useNotification();
+  const { error } = useNotification();
 
-  const [employee, setEmployee] = useState<Employee | null>(null);
-  const [loading, setLoading] = useState(true);
-  const [errorMessage, setErrorMessage] = useState<string | undefined>(undefined);
   const [showTransferDialog, setShowTransferDialog] = useState(false);
 
-  useEffect(() => {
-    loadEmployeeDetail();
-  }, [id]);
-
-  const loadEmployeeDetail = async () => {
-    setLoading(true);
-    setErrorMessage(undefined);
-    try {
+  const employeeQuery = useQuery<Employee | null>({
+    queryKey: QUERY_KEYS.HRM.EMPLOYEE(id || ''),
+    enabled: !!id,
+    queryFn: async () => {
       if (!id) {
         throw new Error('员工ID为空');
       }
-
       const res = await hrmApi.employees.get(id);
-
       if (!res.success || !res.data) {
         throw new Error('获取员工详情失败');
       }
+      return res.data;
+    },
+  });
 
-      setEmployee(res.data);
-    } catch (err: unknown) {
-      apiLogger.error('加载员工详情失败:', err);
-      setErrorMessage('加载员工详情失败');
-      error('加载员工详情失败');
-    } finally {
-      setLoading(false);
-    }
-  };
+  const employee = employeeQuery.data ?? null;
+  const loading = employeeQuery.isLoading;
+  const errorMessage = employeeQuery.error ? '加载员工详情失败' : undefined;
 
   const handleTransfer = () => {
     navigate(HRM_PATHS.employeeDetail.replace(':id', id!));

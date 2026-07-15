@@ -270,7 +270,8 @@ export const PdmBomPage: React.FC = () => {
         label: '总价',
         minWidth: 100,
         align: 'right',
-        render: (row) => `¥ ${(row.total_price || row.quantity * (row.unit_price || 0)).toFixed(2)}`,
+        render: (row) =>
+          `¥ ${(row.total_price || row.quantity * (row.unit_price || 0)).toFixed(2)}`,
       },
     ],
     []

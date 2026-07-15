@@ -10,6 +10,7 @@ import {
 } from '@mui/material';
 import React, { useState, useMemo } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import { QUERY_KEYS } from '@/lib/reactQuery';
 import type { PurchaseItem, CreatePurchaseItemRequest } from '@/api/scm';
 import { scmApi } from '@/api/scm';
 import { useNotificationStore } from '@/store';
@@ -39,7 +40,7 @@ const ScmPurchaseItemPage: React.FC = () => {
   const { addNotification } = useNotificationStore();
 
   const itemsQuery = useQuery({
-    queryKey: ['scm-purchase-items', currentPage, pageSize],
+    queryKey: [...QUERY_KEYS.SCM.PURCHASE_ITEMS, currentPage, pageSize],
     queryFn: async () => {
       const response = await scmApi.purchaseItems.list({
         page: currentPage,
@@ -70,7 +71,7 @@ const ScmPurchaseItemPage: React.FC = () => {
       return response.data;
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['scm-purchase-items'] });
+      queryClient.invalidateQueries({ queryKey: QUERY_KEYS.SCM.PURCHASE_ITEMS });
       addNotification({
         type: 'success',
         title: '创建成功',
@@ -96,7 +97,7 @@ const ScmPurchaseItemPage: React.FC = () => {
       return response.data;
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['scm-purchase-items'] });
+      queryClient.invalidateQueries({ queryKey: QUERY_KEYS.SCM.PURCHASE_ITEMS });
       addNotification({
         type: 'success',
         title: '更新成功',
@@ -122,7 +123,7 @@ const ScmPurchaseItemPage: React.FC = () => {
       return response.data;
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['scm-purchase-items'] });
+      queryClient.invalidateQueries({ queryKey: QUERY_KEYS.SCM.PURCHASE_ITEMS });
       addNotification({
         type: 'success',
         title: '删除成功',
@@ -149,8 +150,7 @@ const ScmPurchaseItemPage: React.FC = () => {
       }
       setShowDialog(false);
       resetForm();
-    } catch {
-    }
+    } catch {}
   };
 
   const handleEdit = (item: PurchaseItem) => {
@@ -175,8 +175,7 @@ const ScmPurchaseItemPage: React.FC = () => {
     }
     try {
       await deleteMutation.mutateAsync(item.id);
-    } catch {
-    }
+    } catch {}
   };
 
   const resetForm = () => {
@@ -195,9 +194,7 @@ const ScmPurchaseItemPage: React.FC = () => {
   };
 
   const isMutationPending =
-    createMutation.isPending ||
-    updateMutation.isPending ||
-    deleteMutation.isPending;
+    createMutation.isPending || updateMutation.isPending || deleteMutation.isPending;
 
   const columns: ColumnDef<PurchaseItem>[] = useMemo(
     () => [
@@ -298,7 +295,7 @@ const ScmPurchaseItemPage: React.FC = () => {
           },
         ]}
         rowActions={rowActions}
-        onRefresh={() => queryClient.invalidateQueries({ queryKey: ['scm-purchase-items'] })}
+        onRefresh={() => queryClient.invalidateQueries({ queryKey: QUERY_KEYS.SCM.PURCHASE_ITEMS })}
         emptyMessage='暂无采购明细数据'
       />
 

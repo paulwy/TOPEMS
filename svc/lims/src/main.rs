@@ -242,13 +242,13 @@ async fn main() {
             post(modules::data_sync::sync_reagent_to_ehs),
         )
         // Health & Metrics
-        .route("/api/v1/health/detailed", get(detailed_health))
+        .route("/api/health/detailed", get(detailed_health))
+        .layer(axum::middleware::from_fn(
+            middleware::tenant::tenant_middleware,
+        ))
         .layer(axum::middleware::from_fn_with_state(
             state.auth_state.clone(),
             auth_middleware,
-        ))
-        .layer(axum::middleware::from_fn(
-            middleware::tenant::tenant_middleware,
         ))
         .layer(axum::middleware::from_fn_with_state(
             state.pool.clone(),

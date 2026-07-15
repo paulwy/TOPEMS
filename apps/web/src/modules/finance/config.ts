@@ -43,7 +43,10 @@ export const financeModuleConfig: RouteModuleConfig = {
   routes: [
     {
       path: FINANCE_PATHS.dashboard,
-      element: lazyWithRetry(() => import('@/pages/finance/FinanceDashboardPage'), 'FinanceDashboardPage'),
+      element: lazyWithRetry(
+        () => import('@/pages/finance/FinanceDashboardPage'),
+        'FinanceDashboardPage'
+      ),
       module: 'finance',
       code: 'finance-dashboard',
       title: '仪表盘',
@@ -54,7 +57,10 @@ export const financeModuleConfig: RouteModuleConfig = {
     },
     {
       path: FINANCE_PATHS.ledger,
-      element: lazyWithRetry(() => import('@/pages/finance/FinanceLedgerPage'), 'FinanceLedgerPage'),
+      element: lazyWithRetry(
+        () => import('@/pages/finance/FinanceLedgerPage'),
+        'FinanceLedgerPage'
+      ),
       module: 'finance',
       code: 'finance-ledger',
       title: '总账管理',
@@ -65,7 +71,10 @@ export const financeModuleConfig: RouteModuleConfig = {
     },
     {
       path: FINANCE_PATHS.vouchers,
-      element: lazyWithRetry(() => import('@/pages/finance/FinanceVoucherPage'), 'FinanceVoucherPage'),
+      element: lazyWithRetry(
+        () => import('@/pages/finance/FinanceVoucherPage'),
+        'FinanceVoucherPage'
+      ),
       module: 'finance',
       code: 'finance-vouchers',
       title: '凭证管理',
@@ -76,7 +85,10 @@ export const financeModuleConfig: RouteModuleConfig = {
     },
     {
       path: FINANCE_PATHS.voucherCreate,
-      element: lazyWithRetry(() => import('@/pages/finance/VoucherCreatePage'), 'VoucherCreatePage'),
+      element: lazyWithRetry(
+        () => import('@/pages/finance/VoucherCreatePage'),
+        'VoucherCreatePage'
+      ),
       module: 'finance',
       code: 'finance-voucher-create',
       title: '创建凭证',
@@ -87,7 +99,10 @@ export const financeModuleConfig: RouteModuleConfig = {
     },
     {
       path: FINANCE_PATHS.voucherDetail,
-      element: lazyWithRetry(() => import('@/pages/finance/VoucherDetailPage'), 'VoucherDetailPage'),
+      element: lazyWithRetry(
+        () => import('@/pages/finance/VoucherDetailPage'),
+        'VoucherDetailPage'
+      ),
       module: 'finance',
       code: 'finance-voucher-detail',
       title: '凭证详情',
@@ -112,7 +127,10 @@ export const financeModuleConfig: RouteModuleConfig = {
     },
     {
       path: FINANCE_PATHS.receipts,
-      element: lazyWithRetry(() => import('@/pages/finance/FinanceReceiptPage'), 'FinanceReceiptPage'),
+      element: lazyWithRetry(
+        () => import('@/pages/finance/FinanceReceiptPage'),
+        'FinanceReceiptPage'
+      ),
       module: 'finance',
       code: 'finance-receipts',
       title: '收款管理',
@@ -123,7 +141,10 @@ export const financeModuleConfig: RouteModuleConfig = {
     },
     {
       path: FINANCE_PATHS.payments,
-      element: lazyWithRetry(() => import('@/pages/finance/FinancePaymentPage'), 'FinancePaymentPage'),
+      element: lazyWithRetry(
+        () => import('@/pages/finance/FinancePaymentPage'),
+        'FinancePaymentPage'
+      ),
       module: 'finance',
       code: 'finance-payments',
       title: '付款管理',
@@ -134,7 +155,10 @@ export const financeModuleConfig: RouteModuleConfig = {
     },
     {
       path: FINANCE_PATHS.approvalConfig,
-      element: lazyWithRetry(() => import('@/pages/finance/FinanceApprovalConfigPage'), 'FinanceApprovalConfigPage'),
+      element: lazyWithRetry(
+        () => import('@/pages/finance/FinanceApprovalConfigPage'),
+        'FinanceApprovalConfigPage'
+      ),
       module: 'finance',
       code: 'finance-approval-config',
       title: '审批配置',
@@ -145,7 +169,10 @@ export const financeModuleConfig: RouteModuleConfig = {
     },
     {
       path: FINANCE_PATHS.invoices,
-      element: lazyWithRetry(() => import('@/pages/finance/FinanceInvoicePage'), 'FinanceInvoicePage'),
+      element: lazyWithRetry(
+        () => import('@/pages/finance/FinanceInvoicePage'),
+        'FinanceInvoicePage'
+      ),
       module: 'finance',
       code: 'finance-invoices',
       title: '发票管理',
@@ -167,7 +194,10 @@ export const financeModuleConfig: RouteModuleConfig = {
     },
     {
       path: FINANCE_PATHS.expense,
-      element: lazyWithRetry(() => import('@/pages/finance/FinanceExpensePage'), 'FinanceExpensePage'),
+      element: lazyWithRetry(
+        () => import('@/pages/finance/FinanceExpensePage'),
+        'FinanceExpensePage'
+      ),
       module: 'finance',
       code: 'finance-expense',
       title: '费用管理',
@@ -200,7 +230,10 @@ export const financeModuleConfig: RouteModuleConfig = {
     },
     {
       path: FINANCE_PATHS.budget,
-      element: lazyWithRetry(() => import('@/pages/finance/BudgetManagementPage'), 'BudgetManagementPage'),
+      element: lazyWithRetry(
+        () => import('@/pages/finance/BudgetManagementPage'),
+        'BudgetManagementPage'
+      ),
       module: 'finance',
       code: 'finance-budget',
       title: '预算管理',
@@ -211,7 +244,10 @@ export const financeModuleConfig: RouteModuleConfig = {
     },
     {
       path: FINANCE_PATHS.budgetDetail,
-      element: lazyWithRetry(() => import('@/pages/finance/FinanceBudgetDetailPage'), 'FinanceBudgetDetailPage'),
+      element: lazyWithRetry(
+        () => import('@/pages/finance/FinanceBudgetDetailPage'),
+        'FinanceBudgetDetailPage'
+      ),
       module: 'finance',
       code: 'finance-budget-detail',
       title: '预算详情',
@@ -222,7 +258,10 @@ export const financeModuleConfig: RouteModuleConfig = {
     },
     {
       path: FINANCE_PATHS.openingBalance,
-      element: lazyWithRetry(() => import('@/pages/finance/OpeningBalancePage'), 'OpeningBalancePage'),
+      element: lazyWithRetry(
+        () => import('@/pages/finance/OpeningBalancePage'),
+        'OpeningBalancePage'
+      ),
       module: 'finance',
       code: 'finance-opening-balance',
       title: '期初余额',
@@ -233,7 +272,10 @@ export const financeModuleConfig: RouteModuleConfig = {
     },
     {
       path: FINANCE_PATHS.consolidation,
-      element: lazyWithRetry(() => import('@/pages/finance/ConsolidationScopePage'), 'ConsolidationScopePage'),
+      element: lazyWithRetry(
+        () => import('@/pages/finance/ConsolidationScopePage'),
+        'ConsolidationScopePage'
+      ),
       module: 'finance',
       code: 'finance-consolidation',
       title: '合并报表',
@@ -258,7 +300,10 @@ export const financeModuleConfig: RouteModuleConfig = {
     },
     {
       path: FINANCE_PATHS.reports,
-      element: lazyWithRetry(() => import('@/pages/finance/FinanceReportsPage'), 'FinanceReportsPage'),
+      element: lazyWithRetry(
+        () => import('@/pages/finance/FinanceReportsPage'),
+        'FinanceReportsPage'
+      ),
       module: 'finance',
       code: 'finance-reports',
       title: '财务报表',

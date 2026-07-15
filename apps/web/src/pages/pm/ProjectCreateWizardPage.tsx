@@ -10,6 +10,9 @@ import {
   Typography,
 } from '@mui/material';
 import { CheckCircle2, User, Settings, Calendar, FolderKanban } from 'lucide-react';
+import { pmApi, type CreateProjectRequest } from '@/api/pm';
+import { useNotificationStore } from '@/store';
+import { useNavigate } from 'react-router-dom';
 
 const PaperInfo: React.FC<{ title: string; value: string }> = ({ title, value }) => (
   <Box sx={{ p: 2, bgcolor: 'background.default', borderRadius: 1 }}>
@@ -29,6 +32,8 @@ const PaperInfo: React.FC<{ title: string; value: string }> = ({ title, value })
 );
 
 export const ProjectCreateWizardPage: React.FC = () => {
+  const { addNotification } = useNotificationStore();
+  const navigate = useNavigate();
   const [formData, setFormData] = useState<{
     name: string;
     description: string;
@@ -219,12 +224,39 @@ export const ProjectCreateWizardPage: React.FC = () => {
     },
   ];
 
-  const handleComplete = () => {
-    console.log('Project created:', formData);
+  const handleComplete = async () => {
+    try {
+      const priorityMap: Record<string, number> = { low: 1, medium: 2, high: 3, urgent: 4 };
+      const requestData: CreateProjectRequest = {
+        name: formData.name,
+        code: `PRJ-${Date.now()}`,
+        description: formData.description || undefined,
+        project_type: 'standard',
+        leader: formData.manager || undefined,
+        start_date: formData.startDate || undefined,
+        end_date: formData.endDate || undefined,
+        budget: formData.budget ? Number(formData.budget) : undefined,
+        priority: priorityMap[formData.priority] || 2,
+      };
+
+      const response = await pmApi.projects.create(requestData);
+      if (response.success) {
+        addNotification({ type: 'success', title: '成功', message: '项目创建成功' });
+        navigate('/pm/projects');
+      } else {
+        addNotification({
+          type: 'error',
+          title: '失败',
+          message: response.message || '项目创建失败',
+        });
+      }
+    } catch (error) {
+      addNotification({ type: 'error', title: '失败', message: '项目创建失败' });
+    }
   };
 
   const handleCancel = () => {
-    console.log('Wizard cancelled');
+    navigate('/pm/projects');
   };
 
   return (

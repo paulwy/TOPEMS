@@ -1,4 +1,6 @@
-import React, { useState, useEffect, useMemo } from 'react';
+import React, { useState, useMemo } from 'react';
+import { useQuery } from '@tanstack/react-query';
+import { QUERY_KEYS } from '@/lib/reactQuery';
 import { FINANCE_PATHS } from '@/modules/finance/config';
 import {
   TrendingUp,
@@ -31,52 +33,44 @@ import {
 const FinanceCostPage: React.FC = () => {
   const addNotification = useNotificationStore((state) => state.addNotification);
 
-  const [costData, setCostData] = useState<Account[]>([]);
-  const [balanceData, setBalanceData] = useState<AccountBalance[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | undefined>(undefined);
   const [filterCenter, setFilterCenter] = useState('');
   const [searchQuery, setSearchQuery] = useState('');
   const [showAnalysisModal, setShowAnalysisModal] = useState(false);
   const [selectedCost, setSelectedCost] = useState<Account | null>(null);
 
-  useEffect(() => {
-    loadCosts();
-  }, []);
+  const currentPeriod = new Date().toISOString().slice(0, 7);
 
-  const loadCosts = async () => {
-    setLoading(true);
-    setError(undefined);
-    try {
-      const currentPeriod = new Date().toISOString().slice(0, 7);
-      const [accountsRes, balancesRes] = await Promise.all([
-        financeApi.account.list({
-          category: 'cost',
-          keyword: searchQuery || undefined,
-        }),
-        financeApi.account.getBalances({
-          period: currentPeriod,
-        }),
-      ]);
-
-      if (accountsRes.success && accountsRes.data) {
-        setCostData(accountsRes.data.items || []);
-      }
-      if (balancesRes.success && balancesRes.data) {
-        setBalanceData(balancesRes.data || []);
-      }
-    } catch (err: unknown) {
-      apiLogger.error('加载成本数据失败:', err);
-      setError('加载成本数据失败');
-      addNotification({
-        title: '错误',
-        message: '加载成本数据失败',
-        type: 'error',
+  const accountsQuery = useQuery<Account[]>({
+    queryKey: [...QUERY_KEYS.FINANCE.COST, { searchQuery, type: 'accounts' }],
+    queryFn: async () => {
+      const accountsRes = await financeApi.account.list({
+        category: 'cost',
+        keyword: searchQuery || undefined,
       });
-    } finally {
-      setLoading(false);
-    }
-  };
+      if (accountsRes.success && accountsRes.data) {
+        return accountsRes.data.items || [];
+      }
+      return [];
+    },
+  });
+
+  const balancesQuery = useQuery<AccountBalance[]>({
+    queryKey: [...QUERY_KEYS.FINANCE.COST, { period: currentPeriod, type: 'balances' }],
+    queryFn: async () => {
+      const balancesRes = await financeApi.account.getBalances({
+        period: currentPeriod,
+      });
+      if (balancesRes.success && balancesRes.data) {
+        return balancesRes.data || [];
+      }
+      return [];
+    },
+  });
+
+  const costData = accountsQuery.data || [];
+  const balanceData = balancesQuery.data || [];
+  const loading = accountsQuery.isLoading || balancesQuery.isLoading;
+  const error = accountsQuery.error || balancesQuery.error ? '加载成本数据失败' : undefined;
 
   const getAccountBalance = (accountId: string): AccountBalance | undefined => {
     return balanceData.find((b) => b.account_id === accountId);
@@ -373,7 +367,10 @@ const FinanceCostPage: React.FC = () => {
               setFilterCenter(filters.department_id as string);
           }}
           rowActions={rowActions}
-          onRefresh={loadCosts}
+          onRefresh={() => {
+            accountsQuery.refetch();
+            balancesQuery.refetch();
+          }}
         />
       </MuiBox>
 

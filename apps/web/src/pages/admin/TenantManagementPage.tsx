@@ -1,4 +1,6 @@
 import React, { useState, useEffect, useMemo, useCallback } from 'react';
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import { QUERY_KEYS } from '@/lib/reactQuery';
 import {
   Box,
   Typography,
@@ -73,16 +75,13 @@ const planColors: Record<TenantPlan, 'default' | 'primary' | 'secondary' | 'succ
 const TenantManagementPage: React.FC = () => {
   const theme = useTheme();
   const navigate = useNavigate();
-  const [tenants, setTenants] = useState<Tenant[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
+  const queryClient = useQueryClient();
   const [searchQuery, setSearchQuery] = useState('');
   const [debouncedSearch, setDebouncedSearch] = useState('');
   const [statusFilter, setStatusFilter] = useState<string>('all');
   const [planFilter, setPlanFilter] = useState<string>('all');
   const [currentPage, setCurrentPage] = useState(1);
   const [pageSize, setPageSize] = useState(10);
-  const [total, setTotal] = useState(0);
   const [showCreateDialog, setShowCreateDialog] = useState(false);
   const [showEditDialog, setShowEditDialog] = useState(false);
   const [selectedTenant, setSelectedTenant] = useState<Tenant | null>(null);
@@ -107,14 +106,16 @@ const TenantManagementPage: React.FC = () => {
     return () => clearTimeout(timer);
   }, [searchQuery]);
 
-  useEffect(() => {
-    loadTenants();
-  }, [currentPage, debouncedSearch, statusFilter, planFilter]);
-
-  const loadTenants = useCallback(async () => {
-    setLoading(true);
-    setError(null);
-    try {
+  const tenantsQuery = useQuery({
+    queryKey: [
+      ...QUERY_KEYS.TENANT.TENANTS,
+      currentPage,
+      pageSize,
+      debouncedSearch,
+      statusFilter,
+      planFilter,
+    ],
+    queryFn: async () => {
       const res = await tenantApi.listTenants({
         page: currentPage,
         pageSize,
@@ -123,42 +124,120 @@ const TenantManagementPage: React.FC = () => {
         plan: planFilter !== 'all' ? planFilter : undefined,
       });
       if (res.success && res.data) {
-        setTenants(res.data.items);
-        setTotal(res.data.total);
+        return { items: res.data.items, total: res.data.total };
       }
-    } catch (err) {
-      setError('加载租户列表失败');
-      logger.error('Failed to load tenants:', err);
-    } finally {
-      setLoading(false);
-    }
-  }, [currentPage, pageSize, debouncedSearch, statusFilter, planFilter]);
+      throw new Error(res.message || '加载租户列表失败');
+    },
+  });
 
-  const handleCreateTenant = async () => {
-    try {
-      const res = await tenantApi.createTenant(formData);
-      if (res.success) {
-        setShowCreateDialog(false);
-        setFormData({ name: '', slug: '', plan: 'professional' });
-        loadTenants();
-      }
-    } catch (error) {
-      logger.error('Failed to create tenant:', error);
-    }
+  const tenants = tenantsQuery.data?.items || [];
+  const total = tenantsQuery.data?.total || 0;
+  const loading = tenantsQuery.isLoading;
+  const error = tenantsQuery.error ? '加载租户列表失败' : null;
+
+  const loadTenants = () => {
+    queryClient.invalidateQueries({ queryKey: QUERY_KEYS.TENANT.TENANTS });
   };
 
-  const handleUpdateTenant = async () => {
-    if (!selectedTenant) return;
-    try {
-      const res = await tenantApi.updateTenant(selectedTenant.id, formData);
-      if (res.success) {
-        setShowEditDialog(false);
-        setSelectedTenant(null);
-        loadTenants();
+  const createTenantMutation = useMutation({
+    mutationFn: async (data: { name: string; slug: string; plan: TenantPlan }) => {
+      const res = await tenantApi.createTenant(data);
+      if (!res.success) {
+        throw new Error(res.message || '创建租户失败');
       }
-    } catch (error) {
-      logger.error('Failed to update tenant:', error);
-    }
+      return res.data;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: QUERY_KEYS.TENANT.TENANTS });
+      setShowCreateDialog(false);
+      setFormData({ name: '', slug: '', plan: 'professional' });
+    },
+    onError: (err: unknown) => {
+      logger.error('Failed to create tenant:', err);
+    },
+  });
+
+  const updateTenantMutation = useMutation({
+    mutationFn: async ({
+      id,
+      data,
+    }: {
+      id: string;
+      data: { name: string; slug: string; plan: TenantPlan };
+    }) => {
+      const res = await tenantApi.updateTenant(id, data);
+      if (!res.success) {
+        throw new Error(res.message || '更新租户失败');
+      }
+      return res.data;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: QUERY_KEYS.TENANT.TENANTS });
+      setShowEditDialog(false);
+      setSelectedTenant(null);
+    },
+    onError: (err: unknown) => {
+      logger.error('Failed to update tenant:', err);
+    },
+  });
+
+  const deleteTenantMutation = useMutation({
+    mutationFn: async (id: string) => {
+      const res = await tenantApi.deleteTenant(id);
+      if (!res.success) {
+        throw new Error(res.message || '删除租户失败');
+      }
+      return res.data;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: QUERY_KEYS.TENANT.TENANTS });
+      setConfirmDialogOpen(false);
+    },
+    onError: (err: unknown) => {
+      logger.error('Failed to delete tenant:', err);
+    },
+  });
+
+  const suspendTenantMutation = useMutation({
+    mutationFn: async (id: string) => {
+      const res = await tenantApi.suspendTenant(id);
+      if (!res.success) {
+        throw new Error(res.message || '停用租户失败');
+      }
+      return res.data;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: QUERY_KEYS.TENANT.TENANTS });
+      setConfirmDialogOpen(false);
+    },
+    onError: (err: unknown) => {
+      logger.error('Failed to suspend tenant:', err);
+    },
+  });
+
+  const activateTenantMutation = useMutation({
+    mutationFn: async (id: string) => {
+      const res = await tenantApi.activateTenant(id);
+      if (!res.success) {
+        throw new Error(res.message || '激活租户失败');
+      }
+      return res.data;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: QUERY_KEYS.TENANT.TENANTS });
+    },
+    onError: (err: unknown) => {
+      logger.error('Failed to activate tenant:', err);
+    },
+  });
+
+  const handleCreateTenant = () => {
+    createTenantMutation.mutate(formData);
+  };
+
+  const handleUpdateTenant = () => {
+    if (!selectedTenant) return;
+    updateTenantMutation.mutate({ id: selectedTenant.id, data: formData });
   };
 
   const handleDeleteTenant = useCallback(
@@ -167,19 +246,11 @@ const TenantManagementPage: React.FC = () => {
         title: '确认删除租户',
         message: `确定要删除租户"${tenant.name}"吗？此操作不可恢复。`,
         danger: true,
-        onConfirm: async () => {
-          try {
-            await tenantApi.deleteTenant(tenant.id);
-            setConfirmDialogOpen(false);
-            loadTenants();
-          } catch (error) {
-            logger.error('Failed to delete tenant:', error);
-          }
-        },
+        onConfirm: () => deleteTenantMutation.mutate(tenant.id),
       });
       setConfirmDialogOpen(true);
     },
-    [loadTenants]
+    [deleteTenantMutation]
   );
 
   const handleSuspendTenant = useCallback(
@@ -188,31 +259,18 @@ const TenantManagementPage: React.FC = () => {
         title: '确认停用租户',
         message: `确定要停用租户"${tenant.name}"吗？停用后该租户的所有用户将无法登录。`,
         danger: true,
-        onConfirm: async () => {
-          try {
-            await tenantApi.suspendTenant(tenant.id);
-            setConfirmDialogOpen(false);
-            loadTenants();
-          } catch (error) {
-            logger.error('Failed to suspend tenant:', error);
-          }
-        },
+        onConfirm: () => suspendTenantMutation.mutate(tenant.id),
       });
       setConfirmDialogOpen(true);
     },
-    [loadTenants]
+    [suspendTenantMutation]
   );
 
   const handleActivateTenant = useCallback(
-    async (tenant: Tenant) => {
-      try {
-        await tenantApi.activateTenant(tenant.id);
-        loadTenants();
-      } catch (error) {
-        logger.error('Failed to activate tenant:', error);
-      }
+    (tenant: Tenant) => {
+      activateTenantMutation.mutate(tenant.id);
     },
-    [loadTenants]
+    [activateTenantMutation]
   );
 
   const openEditDialog = (tenant: Tenant) => {

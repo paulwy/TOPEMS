@@ -111,10 +111,22 @@ export const StatusAway: Story = {
 export const AllStatuses: Story = {
   render: () => (
     <Box sx={{ display: 'flex', gap: 3, alignItems: 'center' }}>
-      <Avatar name="在线" status="online" />
-      <Avatar name="离线" status="offline" />
-      <Avatar name="忙碌" status="busy" />
-      <Avatar name="离开" status="away" />
+      <Avatar
+        name='在线'
+        status='online'
+      />
+      <Avatar
+        name='离线'
+        status='offline'
+      />
+      <Avatar
+        name='忙碌'
+        status='busy'
+      />
+      <Avatar
+        name='离开'
+        status='away'
+      />
     </Box>
   ),
 };
@@ -122,11 +134,26 @@ export const AllStatuses: Story = {
 export const AllSizes: Story = {
   render: () => (
     <Box sx={{ display: 'flex', gap: 2, alignItems: 'center' }}>
-      <Avatar name="超小" size="xs" />
-      <Avatar name="小号" size="sm" />
-      <Avatar name="中号" size="md" />
-      <Avatar name="大号" size="lg" />
-      <Avatar name="超大" size="xl" />
+      <Avatar
+        name='超小'
+        size='xs'
+      />
+      <Avatar
+        name='小号'
+        size='sm'
+      />
+      <Avatar
+        name='中号'
+        size='md'
+      />
+      <Avatar
+        name='大号'
+        size='lg'
+      />
+      <Avatar
+        name='超大'
+        size='xl'
+      />
     </Box>
   ),
 };
@@ -151,13 +178,8 @@ export const AvatarGroupDefault: Story = {
 export const AvatarGroupSmall: Story = {
   render: () => (
     <AvatarGroup
-      avatars={[
-        { name: '张三' },
-        { name: '李四' },
-        { name: '王五' },
-        { name: '赵六' },
-      ]}
-      size="sm"
+      avatars={[{ name: '张三' }, { name: '李四' }, { name: '王五' }, { name: '赵六' }]}
+      size='sm'
       max={3}
     />
   ),
@@ -189,8 +211,17 @@ export const WithBadgeError: Story = {
 export const WithStatusAndBadge: Story = {
   render: () => (
     <Box sx={{ display: 'flex', gap: 3, alignItems: 'center' }}>
-      <Avatar name="张三" status="online" badge={3} />
-      <Avatar name="李四" status="busy" badge={12} badgeColor="warning" />
+      <Avatar
+        name='张三'
+        status='online'
+        badge={3}
+      />
+      <Avatar
+        name='李四'
+        status='busy'
+        badge={12}
+        badgeColor='warning'
+      />
     </Box>
   ),
 };
@@ -198,9 +229,18 @@ export const WithStatusAndBadge: Story = {
 export const SquareVariant: Story = {
   render: () => (
     <Box sx={{ display: 'flex', gap: 2, alignItems: 'center' }}>
-      <Avatar name="方形" variant="square" />
-      <Avatar name="圆角" variant="rounded" />
-      <Avatar name="圆形" variant="circular" />
+      <Avatar
+        name='方形'
+        variant='square'
+      />
+      <Avatar
+        name='圆角'
+        variant='rounded'
+      />
+      <Avatar
+        name='圆形'
+        variant='circular'
+      />
     </Box>
   ),
 };
@@ -208,10 +248,22 @@ export const SquareVariant: Story = {
 export const CustomColor: Story = {
   render: () => (
     <Box sx={{ display: 'flex', gap: 2, alignItems: 'center' }}>
-      <Avatar name="红" color="error" />
-      <Avatar name="绿" color="success" />
-      <Avatar name="蓝" color="info" />
-      <Avatar name="橙" color="warning" />
+      <Avatar
+        name='红'
+        color='error'
+      />
+      <Avatar
+        name='绿'
+        color='success'
+      />
+      <Avatar
+        name='蓝'
+        color='info'
+      />
+      <Avatar
+        name='橙'
+        color='warning'
+      />
     </Box>
   ),
 };

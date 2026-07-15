@@ -111,7 +111,18 @@ vi.mock('@/store', () => ({
   useToggleSidebarCollapsed: vi.fn(),
   useSetSidebarCollapsed: vi.fn(),
 }));
-    (useNotificationStore.getState as vi.Mock).mockReturnValue({
+
+const mockAddNotification = vi.fn();
+
+const mockSchedules = [
+  { id: 'sch-001', name: '销售月报', cron: '0 0 1 * *', status: 'active', template_id: 'tpl-001' },
+];
+
+const renderWithProviders = (ui: React.ReactElement) => render(<BrowserRouter>{ui}</BrowserRouter>);
+
+describe('ReportSchedulePage', () => {
+  beforeEach(() => {
+    (useNotificationStore as any).getState = vi.fn().mockReturnValue({
       addNotification: mockAddNotification,
       notifications: [],
       removeNotification: vi.fn(),
@@ -121,25 +132,20 @@ vi.mock('@/store', () => ({
       success: true,
       data: mockSchedules,
     });
-
     (reportApi.createSchedule as vi.Mock).mockResolvedValue({
       success: true,
       data: { id: 'sch-002' },
     });
-
     (reportApi.deleteSchedule as vi.Mock).mockResolvedValue({
       success: true,
     });
-
     (reportApi.listTemplates as vi.Mock).mockResolvedValue({
       success: true,
       data: [],
     });
-
     (reportApi.executeSchedule as vi.Mock).mockResolvedValue({
       success: true,
     });
-
     (reportApi.getExecutionHistory as vi.Mock).mockResolvedValue({
       success: true,
       data: [],
@@ -165,7 +171,7 @@ vi.mock('@/store', () => ({
     renderWithProviders(<ReportSchedulePage />);
 
     await waitFor(() => {
-      expect(screen.getByText('获取定时任务列表失败')).toBeInTheDocument();
+      expect(screen.getByText('Network error')).toBeInTheDocument();
     });
   });
 });

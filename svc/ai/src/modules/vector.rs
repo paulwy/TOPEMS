@@ -12,7 +12,7 @@ use crate::shared::AppState;
 pub struct VectorApi;
 
 impl VectorApi {
-    /// POST /api/v1/vectors/store - 存储文档向量
+    /// POST /api/vectors/store - 存储文档向量
     pub async fn store(
         State(state): State<AppState>,
         Extension(claims): Extension<Claims>,
@@ -46,7 +46,7 @@ impl VectorApi {
         }
     }
 
-    /// POST /api/v1/vectors/search - 向量相似度搜索
+    /// POST /api/vectors/search - 向量相似度搜索
     pub async fn search(
         State(state): State<AppState>,
         Extension(claims): Extension<Claims>,
@@ -84,7 +84,7 @@ impl VectorApi {
         }
     }
 
-    /// GET /api/v1/vectors/:id - 获取向量信息
+    /// GET /api/vectors/:id - 获取向量信息
     pub async fn get(
         State(state): State<AppState>,
         Path(id): Path<Uuid>,
@@ -102,7 +102,7 @@ impl VectorApi {
         }
     }
 
-    /// DELETE /api/v1/vectors/:id - 删除向量
+    /// DELETE /api/vectors/:id - 删除向量
     pub async fn delete(
         State(state): State<AppState>,
         Path(id): Path<Uuid>,
@@ -116,7 +116,7 @@ impl VectorApi {
         }
     }
 
-    /// POST /api/v1/vectors/batch-store - 批量存储向量
+    /// POST /api/vectors/batch-store - 批量存储向量
     pub async fn batch_store(
         State(state): State<AppState>,
         Extension(claims): Extension<Claims>,
@@ -150,7 +150,7 @@ impl VectorApi {
         }
     }
 
-    /// POST /api/v1/vectors/hybrid-search - 混合检索（向量+关键词）
+    /// POST /api/vectors/hybrid-search - 混合检索（向量+关键词）
     pub async fn hybrid_search(
         State(state): State<AppState>,
         Extension(claims): Extension<Claims>,
@@ -196,7 +196,7 @@ impl VectorApi {
         }
     }
 
-    /// GET /api/v1/vectors/stats - 获取向量统计信息
+    /// GET /api/vectors/stats - 获取向量统计信息
     pub async fn stats(State(state): State<AppState>) -> Json<ApiResponse<VectorStats>> {
         match state.vector_service.get_stats().await {
             Ok(stats) => Json(ApiResponse::success(
@@ -212,7 +212,7 @@ impl VectorApi {
         }
     }
 
-    /// POST /api/v1/vectors/clear - 清空所有向量数据
+    /// POST /api/vectors/clear - 清空所有向量数据
     pub async fn clear_all(State(state): State<AppState>) -> Json<ApiResponse<String>> {
         match state.vector_service.clear_all().await {
             Ok(_) => Json(ApiResponse::success(
