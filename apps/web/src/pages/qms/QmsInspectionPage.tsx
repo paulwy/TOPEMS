@@ -1,5 +1,6 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import {
   Box,
   Dialog,
@@ -40,10 +41,17 @@ import {
   type RowAction,
 } from '@/components/templates';
 import { PageContainer } from '@/components/common';
-import { qmsApi, type QualityCheck, type CreateQualityCheckRequest } from '@/api/qms';
+import {
+  qmsApi,
+  type QualityCheck,
+  type CreateQualityCheckRequest,
+  type AssignInspectionRequestBackend,
+  type SubmitInspectionResultRequestBackend,
+  type AuditInspectionRequestBackend,
+} from '@/api/qms';
 import { useNotificationStore } from '@/store';
 import { designTokens } from '@/theme/tokens';
-import { logger } from '@/utils/logger';
+import { QUERY_KEYS } from '@/lib/reactQuery';
 
 const ct = designTokens.colors;
 
@@ -72,9 +80,20 @@ interface InspectionResultItem {
 
 const QmsInspectionPage: React.FC = () => {
   const navigate = useNavigate();
-  const [inspections, setInspections] = useState<QualityCheck[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [submitting, setSubmitting] = useState(false);
+  const queryClient = useQueryClient();
+  const addNotification = useNotificationStore((state) => state.addNotification);
+
+  const { data: inspections = [], isLoading: loading } = useQuery<QualityCheck[]>({
+    queryKey: QUERY_KEYS.QMS.INSPECTIONS,
+    queryFn: async () => {
+      const response = await qmsApi.listChecks();
+      if (!response.success) {
+        throw new Error(response.message || '加载检验数据失败');
+      }
+      return response.data ?? [];
+    },
+  });
+
   const [searchTerm, setSearchTerm] = useState('');
   const [typeFilter, setTypeFilter] = useState('all');
   const [statusFilter, setStatusFilter] = useState('all');
@@ -104,35 +123,6 @@ const QmsInspectionPage: React.FC = () => {
   });
   const [page, setPage] = useState(0);
   const [pageSize, setPageSize] = useState(10);
-  const addNotification = useNotificationStore((state) => state.addNotification);
-
-  useEffect(() => {
-    loadInspections();
-  }, []);
-
-  const loadInspections = async () => {
-    setLoading(true);
-    try {
-      const response = await qmsApi.listChecks();
-      if (response.success && response.data) {
-        setInspections(response.data);
-      } else if (!response.success) {
-        addNotification({
-          title: '加载失败',
-          message: response.message || '加载检验数据失败',
-          type: 'error',
-        });
-      }
-    } catch (error: unknown) {
-      logger.error('Failed to load inspections:', error);
-      addNotification({
-        title: '加载失败',
-        message: '加载检验数据失败',
-        type: 'error',
-      });
-    }
-    setLoading(false);
-  };
 
   const getStatusBadge = (status: string) => {
     const config = STATUS_MAP[status] || {
@@ -328,162 +318,156 @@ const QmsInspectionPage: React.FC = () => {
     setShowAuditModal(true);
   };
 
-  const handleSave = async () => {
-    try {
-      setSubmitting(true);
-      const response = await qmsApi.createCheck(formData);
-      if (response.success) {
-        addNotification({
-          title: '成功',
-          message: '质检单创建成功',
-          type: 'success',
-        });
-        loadInspections();
-        setShowCreateModal(false);
-      } else {
-        addNotification({
-          title: '失败',
-          message: response.message || '创建质检单失败',
-          type: 'error',
-        });
+  const createMutation = useMutation({
+    mutationFn: async (data: CreateQualityCheckRequest) => {
+      const response = await qmsApi.createCheck(data);
+      if (!response.success) {
+        throw new Error(response.message || '创建质检单失败');
       }
-    } catch (error: unknown) {
-      logger.error('Failed to create inspection:', error);
+      return response;
+    },
+    onSuccess: () => {
+      addNotification({ title: '成功', message: '质检单创建成功', type: 'success' });
+      queryClient.invalidateQueries({ queryKey: QUERY_KEYS.QMS.INSPECTIONS });
+      setShowCreateModal(false);
+    },
+    onError: (err: unknown) => {
       addNotification({
         title: '错误',
-        message: '创建质检单时发生错误',
+        message: err instanceof Error ? err.message : '创建质检单时发生错误',
         type: 'error',
       });
-    } finally {
-      setSubmitting(false);
-    }
+    },
+  });
+
+  const assignMutation = useMutation({
+    mutationFn: async (params: { id: string; data: AssignInspectionRequestBackend }) => {
+      const response = await qmsApi.assignCheck(params.id, params.data);
+      if (!response.success) {
+        throw new Error(response.message || '分配失败');
+      }
+      return response;
+    },
+    onSuccess: () => {
+      addNotification({ title: '成功', message: '检验分配成功', type: 'success' });
+      queryClient.invalidateQueries({ queryKey: QUERY_KEYS.QMS.INSPECTIONS });
+      setShowAssignModal(false);
+    },
+    onError: (err: unknown) => {
+      addNotification({
+        title: '错误',
+        message: err instanceof Error ? err.message : '分配时发生错误',
+        type: 'error',
+      });
+    },
+  });
+
+  const submitResultMutation = useMutation({
+    mutationFn: async (params: { id: string; data: SubmitInspectionResultRequestBackend }) => {
+      const response = await qmsApi.submitCheckResult(params.id, params.data);
+      if (!response.success) {
+        throw new Error(response.message || '提交失败');
+      }
+      return response;
+    },
+    onSuccess: () => {
+      addNotification({ title: '成功', message: '检验结果提交成功', type: 'success' });
+      queryClient.invalidateQueries({ queryKey: QUERY_KEYS.QMS.INSPECTIONS });
+      setShowSubmitModal(false);
+    },
+    onError: (err: unknown) => {
+      addNotification({
+        title: '错误',
+        message: err instanceof Error ? err.message : '提交结果时发生错误',
+        type: 'error',
+      });
+    },
+  });
+
+  const auditMutation = useMutation({
+    mutationFn: async (params: {
+      id: string;
+      data: AuditInspectionRequestBackend;
+      action: string;
+    }) => {
+      const response =
+        params.action === 'rework'
+          ? await qmsApi.reworkCheck(params.id, params.data)
+          : await qmsApi.auditCheck(params.id, params.data);
+      if (!response.success) {
+        throw new Error(response.message || '操作失败');
+      }
+      return response;
+    },
+    onSuccess: () => {
+      const actionText =
+        auditData.action === 'approve'
+          ? '审核通过'
+          : auditData.action === 'reject'
+            ? '审核驳回'
+            : '返工';
+      addNotification({ title: '成功', message: `${actionText}成功`, type: 'success' });
+      queryClient.invalidateQueries({ queryKey: QUERY_KEYS.QMS.INSPECTIONS });
+      setShowAuditModal(false);
+    },
+    onError: (err: unknown) => {
+      addNotification({
+        title: '错误',
+        message: err instanceof Error ? err.message : '操作时发生错误',
+        type: 'error',
+      });
+    },
+  });
+
+  const submitting =
+    createMutation.isPending ||
+    assignMutation.isPending ||
+    submitResultMutation.isPending ||
+    auditMutation.isPending;
+
+  const handleSave = () => {
+    createMutation.mutate(formData);
   };
 
-  const handleAssignSubmit = async () => {
+  const handleAssignSubmit = () => {
     if (!selectedInspection) return;
-    try {
-      setSubmitting(true);
-      const response = await qmsApi.assignCheck(selectedInspection.id, {
+    assignMutation.mutate({
+      id: selectedInspection.id,
+      data: {
         assignee: assignData.assignee,
         operator: assignData.operator,
-      });
-      if (response.success) {
-        addNotification({
-          title: '成功',
-          message: '检验分配成功',
-          type: 'success',
-        });
-        loadInspections();
-        setShowAssignModal(false);
-      } else {
-        addNotification({
-          title: '失败',
-          message: response.message || '分配失败',
-          type: 'error',
-        });
-      }
-    } catch (error: unknown) {
-      logger.error('Failed to assign inspection:', error);
-      addNotification({
-        title: '错误',
-        message: '分配时发生错误',
-        type: 'error',
-      });
-    } finally {
-      setSubmitting(false);
-    }
+      },
+    });
   };
 
-  const handleSubmitResult = async () => {
+  const handleSubmitResult = () => {
     if (!selectedInspection) return;
-    try {
-      setSubmitting(true);
-      const total = submitData.qualified_quantity + submitData.unqualified_quantity;
-      const rate = total > 0 ? (submitData.qualified_quantity / total) * 100 : 0;
-      const response = await qmsApi.submitCheckResult(selectedInspection.id, {
+    const total = submitData.qualified_quantity + submitData.unqualified_quantity;
+    const rate = total > 0 ? (submitData.qualified_quantity / total) * 100 : 0;
+    submitResultMutation.mutate({
+      id: selectedInspection.id,
+      data: {
         qualified_quantity: submitData.qualified_quantity,
         unqualified_quantity: submitData.unqualified_quantity,
         qualification_rate: rate,
         inspector: submitData.inspector,
         memo: submitData.memo,
         results: submitData.results.length > 0 ? submitData.results : undefined,
-      });
-      if (response.success) {
-        addNotification({
-          title: '成功',
-          message: '检验结果提交成功',
-          type: 'success',
-        });
-        loadInspections();
-        setShowSubmitModal(false);
-      } else {
-        addNotification({
-          title: '失败',
-          message: response.message || '提交失败',
-          type: 'error',
-        });
-      }
-    } catch (error: unknown) {
-      logger.error('Failed to submit inspection result:', error);
-      addNotification({
-        title: '错误',
-        message: '提交结果时发生错误',
-        type: 'error',
-      });
-    } finally {
-      setSubmitting(false);
-    }
+      },
+    });
   };
 
-  const handleAuditSubmit = async () => {
+  const handleAuditSubmit = () => {
     if (!selectedInspection) return;
-    try {
-      setSubmitting(true);
-      let response;
-      if (auditData.action === 'rework') {
-        response = await qmsApi.reworkCheck(selectedInspection.id, {
-          action: 'rework',
-          operator: auditData.operator,
-          comment: auditData.comment,
-        });
-      } else {
-        response = await qmsApi.auditCheck(selectedInspection.id, {
-          action: auditData.action,
-          operator: auditData.operator,
-          comment: auditData.comment,
-        });
-      }
-      if (response.success) {
-        const actionText =
-          auditData.action === 'approve'
-            ? '审核通过'
-            : auditData.action === 'reject'
-              ? '审核驳回'
-              : '返工';
-        addNotification({
-          title: '成功',
-          message: `${actionText}成功`,
-          type: 'success',
-        });
-        loadInspections();
-        setShowAuditModal(false);
-      } else {
-        addNotification({
-          title: '失败',
-          message: response.message || '操作失败',
-          type: 'error',
-        });
-      }
-    } catch (error: unknown) {
-      logger.error('Failed to audit inspection:', error);
-      addNotification({
-        title: '错误',
-        message: '操作时发生错误',
-        type: 'error',
-      });
-    } finally {
-      setSubmitting(false);
-    }
+    auditMutation.mutate({
+      id: selectedInspection.id,
+      action: auditData.action,
+      data: {
+        action: auditData.action,
+        operator: auditData.operator,
+        comment: auditData.comment,
+      },
+    });
   };
 
   const addResultItem = () => {

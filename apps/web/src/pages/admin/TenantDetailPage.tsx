@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useMemo, useCallback } from 'react';
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import {
   Box,
   Typography,
@@ -105,12 +106,8 @@ const userStatusColors: Record<UserStatus, 'success' | 'warning' | 'error' | 'de
 const TenantDetailPage: React.FC = () => {
   const { tenantId } = useParams<{ tenantId: string }>();
   const navigate = useNavigate();
-  const [tenant, setTenant] = useState<Tenant | null>(null);
-  const [stats, setStats] = useState<TenantStats | null>(null);
-  const [users, setUsers] = useState<TenantUser[]>([]);
-  const [invoices, setInvoices] = useState<TenantInvoice[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [usersLoading, setUsersLoading] = useState(false);
+  const queryClient = useQueryClient();
+
   const [showInviteDialog, setShowInviteDialog] = useState(false);
   const [inviteForm, setInviteForm] = useState({ email: '', role: 'member' as TenantRole });
   const [confirmDialogOpen, setConfirmDialogOpen] = useState(false);
@@ -121,72 +118,125 @@ const TenantDetailPage: React.FC = () => {
     danger?: boolean;
   } | null>(null);
 
-  useEffect(() => {
-    if (tenantId) {
-      loadTenantData();
-    }
-  }, [tenantId]);
+  const tenantQuery = useQuery<Tenant | null>({
+    queryKey: ['admin-tenant', tenantId],
+    queryFn: async () => {
+      if (!tenantId) return null;
+      const res = await tenantApi.getTenant(tenantId);
+      return res.success && res.data ? res.data : null;
+    },
+    enabled: !!tenantId,
+    staleTime: 5 * 60 * 1000,
+  });
 
-  const loadTenantData = async () => {
-    if (!tenantId) return;
-    setLoading(true);
-    try {
-      const [tenantRes, statsRes] = await Promise.all([
-        tenantApi.getTenant(tenantId),
-        tenantApi.getTenantStats(tenantId),
-      ]);
-      if (tenantRes.success && tenantRes.data) {
-        setTenant(tenantRes.data);
-      }
-      if (statsRes.success && statsRes.data) {
-        setStats(statsRes.data);
-      }
-    } catch (error) {
-      logger.error('Failed to load tenant:', error);
-    } finally {
-      setLoading(false);
-    }
-  };
+  const statsQuery = useQuery<TenantStats | null>({
+    queryKey: ['admin-tenant-stats', tenantId],
+    queryFn: async () => {
+      if (!tenantId) return null;
+      const res = await tenantApi.getTenantStats(tenantId);
+      return res.success && res.data ? res.data : null;
+    },
+    enabled: !!tenantId,
+    staleTime: 5 * 60 * 1000,
+  });
 
-  const loadUsers = useCallback(async () => {
-    if (!tenantId) return;
-    setUsersLoading(true);
-    try {
+  const usersQuery = useQuery<{ items: TenantUser[] }>({
+    queryKey: ['admin-tenant-users', tenantId],
+    queryFn: async () => {
+      if (!tenantId) return { items: [] };
       const res = await tenantApi.getTenantUsers(tenantId, { pageSize: 100 });
       if (res.success && res.data) {
-        setUsers(res.data.items);
+        return { items: res.data.items };
       }
-    } catch (error) {
-      logger.error('Failed to load users:', error);
-    } finally {
-      setUsersLoading(false);
-    }
-  }, [tenantId]);
+      return { items: [] };
+    },
+    enabled: !!tenantId,
+    staleTime: 5 * 60 * 1000,
+  });
 
-  const loadInvoices = useCallback(async () => {
-    if (!tenantId) return;
-    try {
+  const invoicesQuery = useQuery<TenantInvoice[]>({
+    queryKey: ['admin-tenant-invoices', tenantId],
+    queryFn: async () => {
+      if (!tenantId) return [];
       const res = await tenantApi.getInvoices(tenantId);
-      if (res.success && res.data) {
-        setInvoices(res.data);
-      }
-    } catch (error) {
-      logger.error('Failed to load invoices:', error);
-    }
-  }, [tenantId]);
+      return res.success && res.data ? res.data : [];
+    },
+    enabled: !!tenantId,
+    staleTime: 5 * 60 * 1000,
+  });
 
-  const handleInviteMember = async () => {
-    if (!tenantId) return;
-    try {
-      const res = await tenantApi.inviteMember(tenantId, inviteForm);
-      if (res.success) {
-        setShowInviteDialog(false);
-        setInviteForm({ email: '', role: 'member' });
-        loadUsers();
-      }
-    } catch (error) {
-      logger.error('Failed to invite member:', error);
+  const tenant = tenantQuery.data ?? null;
+  const stats = statsQuery.data ?? null;
+  const users = usersQuery.data?.items ?? [];
+  const invoices = invoicesQuery.data ?? [];
+  const loading = tenantQuery.isLoading;
+  const usersLoading = usersQuery.isLoading;
+
+  useEffect(() => {
+    if (tenantQuery.isError) {
+      logger.error('Failed to load tenant:', tenantQuery.error);
     }
+  }, [tenantQuery.isError, tenantQuery.error]);
+
+  useEffect(() => {
+    if (statsQuery.isError) {
+      logger.error('Failed to load tenant stats:', statsQuery.error);
+    }
+  }, [statsQuery.isError, statsQuery.error]);
+
+  useEffect(() => {
+    if (usersQuery.isError) {
+      logger.error('Failed to load users:', usersQuery.error);
+    }
+  }, [usersQuery.isError, usersQuery.error]);
+
+  useEffect(() => {
+    if (invoicesQuery.isError) {
+      logger.error('Failed to load invoices:', invoicesQuery.error);
+    }
+  }, [invoicesQuery.isError, invoicesQuery.error]);
+
+  const invalidateUsers = () => queryClient.invalidateQueries({ queryKey: ['admin-tenant-users'] });
+
+  const inviteMemberMutation = useMutation({
+    mutationFn: (params: { tenantId: string; data: { email: string; role: TenantRole } }) =>
+      tenantApi.inviteMember(params.tenantId, params.data),
+    onSuccess: () => {
+      invalidateUsers();
+      setShowInviteDialog(false);
+      setInviteForm({ email: '', role: 'member' });
+    },
+    onError: (error: unknown) => {
+      logger.error('Failed to invite member:', error);
+    },
+  });
+
+  const removeMemberMutation = useMutation({
+    mutationFn: (params: { tenantId: string; userId: string }) =>
+      tenantApi.removeMember(params.tenantId, params.userId),
+    onSuccess: () => {
+      invalidateUsers();
+      setConfirmDialogOpen(false);
+    },
+    onError: (error: unknown) => {
+      logger.error('Failed to remove member:', error);
+    },
+  });
+
+  const updateMemberRoleMutation = useMutation({
+    mutationFn: (params: { tenantId: string; userId: string; role: TenantRole }) =>
+      tenantApi.updateMemberRole(params.tenantId, params.userId, { role: params.role }),
+    onSuccess: () => {
+      invalidateUsers();
+    },
+    onError: (error: unknown) => {
+      logger.error('Failed to update member role:', error);
+    },
+  });
+
+  const handleInviteMember = () => {
+    if (!tenantId) return;
+    inviteMemberMutation.mutate({ tenantId, data: inviteForm });
   };
 
   const handleRemoveMember = useCallback(
@@ -195,30 +245,19 @@ const TenantDetailPage: React.FC = () => {
         title: '确认移除成员',
         message: `确定要移除成员"${user.email}"吗？`,
         danger: true,
-        onConfirm: async () => {
+        onConfirm: () => {
           if (!tenantId) return;
-          try {
-            await tenantApi.removeMember(tenantId, user.id);
-            setConfirmDialogOpen(false);
-            loadUsers();
-          } catch (error) {
-            logger.error('Failed to remove member:', error);
-          }
+          removeMemberMutation.mutate({ tenantId, userId: user.id });
         },
       });
       setConfirmDialogOpen(true);
     },
-    [tenantId, loadUsers]
+    [tenantId, removeMemberMutation]
   );
 
-  const handleUpdateMemberRole = async (userId: string, role: TenantRole) => {
+  const handleUpdateMemberRole = (userId: string, role: TenantRole) => {
     if (!tenantId) return;
-    try {
-      await tenantApi.updateMemberRole(tenantId, userId, { role });
-      loadUsers();
-    } catch (error) {
-      logger.error('Failed to update member role:', error);
-    }
+    updateMemberRoleMutation.mutate({ tenantId, userId, role });
   };
 
   const userColumns: ColumnDef<TenantUser>[] = useMemo(
@@ -411,18 +450,6 @@ const TenantDetailPage: React.FC = () => {
     []
   );
 
-  const handleTabChange = useCallback(
-    (tabId: string) => {
-      if (tabId === 'members' && users.length === 0) {
-        loadUsers();
-      }
-      if (tabId === 'billing' && invoices.length === 0) {
-        loadInvoices();
-      }
-    },
-    [users.length, invoices.length, loadUsers, loadInvoices]
-  );
-
   const overviewContent = useMemo(() => {
     if (!stats || !tenant) return null;
 
@@ -573,10 +600,10 @@ const TenantDetailPage: React.FC = () => {
             onClick: () => setShowInviteDialog(true),
           },
         ]}
-        onRefresh={loadUsers}
+        onRefresh={() => usersQuery.refetch()}
       />
     ),
-    [userColumns, users, usersLoading, userRowActions, loadUsers]
+    [userColumns, users, usersLoading, userRowActions]
   );
 
   const settingsContent = useMemo(() => {
@@ -886,7 +913,10 @@ const TenantDetailPage: React.FC = () => {
         infoCard={infoCard}
         tabs={tabs}
         defaultTab='overview'
-        onRefresh={loadTenantData}
+        onRefresh={() => {
+          tenantQuery.refetch();
+          statsQuery.refetch();
+        }}
       />
 
       <Dialog

@@ -283,9 +283,9 @@ async fn main() -> anyhow::Result<()> {
 
     let public_routes = Router::new()
         .route("/health", axum::routing::get(health_check))
-        .route("/api/core/mobile/v1/auth/login", axum::routing::post(login))
+        .route("/api/core/mobile/auth/login", axum::routing::post(login))
         .route(
-            "/api/core/mobile/v1/auth/verify-code",
+            "/api/core/mobile/auth/verify-code",
             axum::routing::post(verify_code),
         )
         .merge(create_routes());
@@ -293,364 +293,361 @@ async fn main() -> anyhow::Result<()> {
     let protected_routes = Router::new()
         // Workbench Routes
         .route(
-            "/api/core/mobile/v1/workbench",
+            "/api/core/mobile/workbench",
             axum::routing::get(get_workbench_data),
         )
         // Stats Routes
         .route(
-            "/api/core/mobile/v1/stats/dashboard",
+            "/api/core/mobile/stats/dashboard",
             axum::routing::get(get_dashboard_stats),
         )
         .route(
-            "/api/core/mobile/v1/stats/patrol",
+            "/api/core/mobile/stats/patrol",
             axum::routing::get(get_patrol_stats),
         )
         .route(
-            "/api/core/mobile/v1/stats/task",
+            "/api/core/mobile/stats/task",
             axum::routing::get(get_task_stats),
         )
         // Auth Routes
+        .route("/api/core/mobile/auth/logout", axum::routing::post(logout))
         .route(
-            "/api/core/mobile/v1/auth/logout",
-            axum::routing::post(logout),
-        )
-        .route(
-            "/api/core/mobile/v1/auth/refresh",
+            "/api/core/mobile/auth/refresh",
             axum::routing::post(refresh_token),
         )
         // User Routes
         .route(
-            "/api/core/mobile/v1/user/profile",
+            "/api/core/mobile/user/profile",
             axum::routing::get(get_profile).put(update_profile),
         )
         .route(
-            "/api/core/mobile/v1/user/avatar",
+            "/api/core/mobile/user/avatar",
             axum::routing::post(upload_avatar),
         )
         // Notification Routes
         .route(
-            "/api/core/mobile/v1/notifications",
+            "/api/core/mobile/notifications",
             axum::routing::get(get_notifications),
         )
         .route(
-            "/api/core/mobile/v1/notifications/unread-count",
+            "/api/core/mobile/notifications/unread-count",
             axum::routing::get(get_unread_count),
         )
         .route(
-            "/api/core/mobile/v1/notifications/read-all",
+            "/api/core/mobile/notifications/read-all",
             axum::routing::put(mark_all_read),
         )
         .route(
-            "/api/core/mobile/v1/notifications/{id}/read",
+            "/api/core/mobile/notifications/{id}/read",
             axum::routing::put(mark_read),
         )
         // Scan Routes
         .route(
-            "/api/core/mobile/v1/scan/barcode",
+            "/api/core/mobile/scan/barcode",
             axum::routing::post(scan_barcode),
         )
         .route(
-            "/api/core/mobile/v1/scan/qrcode",
+            "/api/core/mobile/scan/qrcode",
             axum::routing::post(scan_qrcode),
         )
         .route(
-            "/api/core/mobile/v1/scan/image-ocr",
+            "/api/core/mobile/scan/image-ocr",
             axum::routing::post(image_ocr),
         )
         // Offline Routes
         .route(
-            "/api/core/mobile/v1/offline/sync",
+            "/api/core/mobile/offline/sync",
             axum::routing::post(sync_offline_data),
         )
         .route(
-            "/api/core/mobile/v1/offline/status",
+            "/api/core/mobile/offline/status",
             axum::routing::get(get_offline_status),
         )
         // Device Routes
         .route(
-            "/api/core/mobile/v1/devices/register",
+            "/api/core/mobile/devices/register",
             axum::routing::post(register_device),
         )
         .route(
-            "/api/core/mobile/v1/devices/token",
+            "/api/core/mobile/devices/token",
             axum::routing::put(update_push_token),
         )
         // Shortcut Routes
         .route(
-            "/api/core/mobile/v1/shortcuts",
+            "/api/core/mobile/shortcuts",
             axum::routing::get(get_shortcuts).post(create_shortcut),
         )
         // Patrol Routes
         .route(
-            "/api/core/mobile/v1/patrol-records",
+            "/api/core/mobile/patrol-records",
             axum::routing::get(get_all_patrol_records).post(create_patrol_record),
         )
         .route(
-            "/api/core/mobile/v1/patrol-records/{id}",
+            "/api/core/mobile/patrol-records/{id}",
             axum::routing::get(get_patrol_record)
                 .put(update_patrol_record)
                 .delete(delete_patrol_record),
         )
         // Task Routes
         .route(
-            "/api/core/mobile/v1/mobile-tasks",
+            "/api/core/mobile/mobile-tasks",
             axum::routing::get(get_all_tasks).post(create_task),
         )
         .route(
-            "/api/core/mobile/v1/mobile-tasks/{id}",
+            "/api/core/mobile/mobile-tasks/{id}",
             axum::routing::get(get_task)
                 .put(update_task)
                 .delete(delete_task),
         )
         .route(
-            "/api/core/mobile/v1/mobile-tasks/{id}/status",
+            "/api/core/mobile/mobile-tasks/{id}/status",
             axum::routing::post(update_task_status),
         )
         // Attendance Routes
         .route(
-            "/api/core/mobile/v1/attendance",
+            "/api/core/mobile/attendance",
             axum::routing::get(get_attendance_overview),
         )
         .route(
-            "/api/core/mobile/v1/attendance/stats",
+            "/api/core/mobile/attendance/stats",
             axum::routing::get(get_attendance_stats),
         )
         .route(
-            "/api/core/mobile/v1/attendance/records",
+            "/api/core/mobile/attendance/records",
             axum::routing::get(list_attendance_records),
         )
         .route(
-            "/api/core/mobile/v1/attendance/check-in",
+            "/api/core/mobile/attendance/check-in",
             axum::routing::post(check_in),
         )
         .route(
-            "/api/core/mobile/v1/attendance/check-out",
+            "/api/core/mobile/attendance/check-out",
             axum::routing::post(check_out),
         )
         .route(
-            "/api/core/mobile/v1/attendance/leaves",
+            "/api/core/mobile/attendance/leaves",
             axum::routing::get(list_leave_applications).post(apply_leave),
         )
         // Media Routes
         .route(
-            "/api/core/mobile/v1/media/photos",
+            "/api/core/mobile/media/photos",
             axum::routing::get(get_photos),
         )
         .route(
-            "/api/core/mobile/v1/media/audio",
+            "/api/core/mobile/media/audio",
             axum::routing::get(get_audio),
         )
         .route(
-            "/api/core/mobile/v1/media/video",
+            "/api/core/mobile/media/video",
             axum::routing::get(get_video),
         )
         .route(
-            "/api/core/mobile/v1/media/upload/{file_type}",
+            "/api/core/mobile/media/upload/{file_type}",
             axum::routing::post(upload_media),
         )
         .route(
-            "/api/core/mobile/v1/media/{file_type}/{id}",
+            "/api/core/mobile/media/{file_type}/{id}",
             axum::routing::delete(delete_media),
         )
         // Legacy Routes
         .route(
-            "/api/core/mobile/v1/dashboard/stats",
+            "/api/core/mobile/dashboard/stats",
             axum::routing::get(get_dashboard_stats),
         )
         .route(
-            "/api/core/mobile/v1/scan-records",
+            "/api/core/mobile/scan-records",
             axum::routing::get(list_scan_records).post(create_scan_record),
         )
         .route(
-            "/api/core/mobile/v1/photo-evidences",
+            "/api/core/mobile/photo-evidences",
             axum::routing::get(list_photo_evidences).post(create_photo_evidence),
         )
         .route(
-            "/api/core/mobile/v1/audio-recordings",
+            "/api/core/mobile/audio-recordings",
             axum::routing::get(list_audio_recordings).post(create_audio_recording),
         )
         .route(
-            "/api/core/mobile/v1/video-recordings",
+            "/api/core/mobile/video-recordings",
             axum::routing::get(list_video_recordings).post(create_video_recording),
         )
         // Enhanced Offline Sync Routes
         .route(
-            "/api/core/mobile/v1/offline/sync-data",
+            "/api/core/mobile/offline/sync-data",
             axum::routing::post(sync_data),
         )
         .route(
-            "/api/core/mobile/v1/offline/sync-status",
+            "/api/core/mobile/offline/sync-status",
             axum::routing::get(get_offline_sync_status),
         )
         .route(
-            "/api/core/mobile/v1/offline/sync-history",
+            "/api/core/mobile/offline/sync-history",
             axum::routing::get(get_sync_history),
         )
         .route(
-            "/api/core/mobile/v1/offline/sync-policy",
+            "/api/core/mobile/offline/sync-policy",
             axum::routing::get(get_sync_policy).put(update_sync_policy),
         )
         .route(
-            "/api/core/mobile/v1/offline/retry-failed",
+            "/api/core/mobile/offline/retry-failed",
             axum::routing::post(retry_failed_sync),
         )
         // Push Notification Routes
         .route(
-            "/api/core/mobile/v1/push/devices",
+            "/api/core/mobile/push/devices",
             axum::routing::get(get_devices),
         )
         .route(
-            "/api/core/mobile/v1/push/devices/register",
+            "/api/core/mobile/push/devices/register",
             axum::routing::post(register_push_device),
         )
         .route(
-            "/api/core/mobile/v1/push/notifications",
+            "/api/core/mobile/push/notifications",
             axum::routing::post(send_notification).get(get_notification_list),
         )
         .route(
-            "/api/core/mobile/v1/push/notifications/broadcast",
+            "/api/core/mobile/push/notifications/broadcast",
             axum::routing::post(send_broadcast),
         )
         .route(
-            "/api/core/mobile/v1/push/notifications/stats",
+            "/api/core/mobile/push/notifications/stats",
             axum::routing::get(get_notification_stats),
         )
         .route(
-            "/api/core/mobile/v1/push/notifications/{id}",
+            "/api/core/mobile/push/notifications/{id}",
             axum::routing::get(get_notification_by_id),
         )
         .route(
-            "/api/core/mobile/v1/push/templates",
+            "/api/core/mobile/push/templates",
             axum::routing::get(get_templates).post(create_template),
         )
         // Barcode Scanner Routes
         .route(
-            "/api/core/mobile/v1/barcode/scan",
+            "/api/core/mobile/barcode/scan",
             axum::routing::post(scan_barcode),
         )
         .route(
-            "/api/core/mobile/v1/barcode/history",
+            "/api/core/mobile/barcode/history",
             axum::routing::get(get_scan_history),
         )
         .route(
-            "/api/core/mobile/v1/barcode/history/{id}",
+            "/api/core/mobile/barcode/history/{id}",
             axum::routing::get(get_scan_by_id).delete(delete_scan_record),
         )
         .route(
-            "/api/core/mobile/v1/barcode/types",
+            "/api/core/mobile/barcode/types",
             axum::routing::get(get_supported_barcode_types),
         )
         // Photo Upload Routes
         .route(
-            "/api/core/mobile/v1/photos/upload",
+            "/api/core/mobile/photos/upload",
             axum::routing::post(upload_photo),
         )
         .route(
-            "/api/core/mobile/v1/photos/batch-upload",
+            "/api/core/mobile/photos/batch-upload",
             axum::routing::post(batch_upload_photos),
         )
         .route(
-            "/api/core/mobile/v1/photos",
+            "/api/core/mobile/photos",
             axum::routing::get(get_photo_list),
         )
         .route(
-            "/api/core/mobile/v1/photos/{id}",
+            "/api/core/mobile/photos/{id}",
             axum::routing::get(get_photo_by_id).delete(delete_photo),
         )
         .route(
-            "/api/core/mobile/v1/photos/{id}/progress",
+            "/api/core/mobile/photos/{id}/progress",
             axum::routing::get(get_upload_progress),
         )
         // Mobile Approval Routes
         .route(
-            "/api/core/mobile/v1/approvals/pending",
+            "/api/core/mobile/approvals/pending",
             axum::routing::get(get_pending_approvals),
         )
         .route(
-            "/api/core/mobile/v1/approvals/approved",
+            "/api/core/mobile/approvals/approved",
             axum::routing::get(get_approved_approvals),
         )
         .route(
-            "/api/core/mobile/v1/approvals/rejected",
+            "/api/core/mobile/approvals/rejected",
             axum::routing::get(get_rejected_approvals),
         )
         .route(
-            "/api/core/mobile/v1/approvals/stats",
+            "/api/core/mobile/approvals/stats",
             axum::routing::get(get_approval_stats),
         )
         .route(
-            "/api/core/mobile/v1/approvals/{id}",
+            "/api/core/mobile/approvals/{id}",
             axum::routing::get(get_approval_by_id),
         )
         .route(
-            "/api/core/mobile/v1/approvals/{id}/approve",
+            "/api/core/mobile/approvals/{id}/approve",
             axum::routing::post(approve_task),
         )
         .route(
-            "/api/core/mobile/v1/approvals/{id}/reject",
+            "/api/core/mobile/approvals/{id}/reject",
             axum::routing::post(reject_task),
         )
         .route(
-            "/api/core/mobile/v1/approvals/{id}/transfer",
+            "/api/core/mobile/approvals/{id}/transfer",
             axum::routing::post(transfer_task),
         )
         // Inventory Routes
         .route(
-            "/api/core/mobile/v1/inventory/items",
+            "/api/core/mobile/inventory/items",
             axum::routing::get(list_inventory_items),
         )
         .route(
-            "/api/core/mobile/v1/inventory/items/{id}",
+            "/api/core/mobile/inventory/items/{id}",
             axum::routing::get(get_inventory_item),
         )
         .route(
-            "/api/core/mobile/v1/inventory/stocktake",
+            "/api/core/mobile/inventory/stocktake",
             axum::routing::get(list_stocktake_tasks),
         )
         .route(
-            "/api/core/mobile/v1/inventory/stocktake/{task_id}/records",
+            "/api/core/mobile/inventory/stocktake/{task_id}/records",
             axum::routing::post(create_stocktake_record),
         )
         .route(
-            "/api/core/mobile/v1/inventory/inbound",
+            "/api/core/mobile/inventory/inbound",
             axum::routing::get(list_inbound_orders),
         )
         .route(
-            "/api/core/mobile/v1/inventory/outbound",
+            "/api/core/mobile/inventory/outbound",
             axum::routing::get(list_outbound_orders),
         )
         // Quality Routes
         .route(
-            "/api/core/mobile/v1/quality/tasks",
+            "/api/core/mobile/quality/tasks",
             axum::routing::get(list_quality_tasks),
         )
         .route(
-            "/api/core/mobile/v1/quality/tasks/{id}",
+            "/api/core/mobile/quality/tasks/{id}",
             axum::routing::get(get_quality_task),
         )
         .route(
-            "/api/core/mobile/v1/quality/tasks/{id}/status",
+            "/api/core/mobile/quality/tasks/{id}/status",
             axum::routing::put(update_quality_task_status),
         )
         .route(
-            "/api/core/mobile/v1/quality/defects",
+            "/api/core/mobile/quality/defects",
             axum::routing::get(list_defect_records).post(report_defect),
         )
         // Production Routes
         .route(
-            "/api/core/mobile/v1/production/orders",
+            "/api/core/mobile/production/orders",
             axum::routing::get(list_production_orders),
         )
         .route(
-            "/api/core/mobile/v1/production/orders/{id}",
+            "/api/core/mobile/production/orders/{id}",
             axum::routing::get(get_production_order),
         )
         .route(
-            "/api/core/mobile/v1/production/work-reports",
+            "/api/core/mobile/production/work-reports",
             axum::routing::get(list_work_reports).post(submit_work_report),
         )
         .route(
-            "/api/core/mobile/v1/production/equipment",
+            "/api/core/mobile/production/equipment",
             axum::routing::get(list_equipment),
         )
         .layer(axum::middleware::from_fn_with_state(

@@ -29,7 +29,10 @@ export const monitorModuleConfig: RouteModuleConfig = {
   routes: [
     {
       path: MONITOR_PATHS.dashboard,
-      element: lazyWithRetry(() => import('@/pages/monitor/MonitorDashboardPage'), 'MonitorDashboardPage'),
+      element: lazyWithRetry(
+        () => import('@/pages/monitor/MonitorDashboardPage'),
+        'MonitorDashboardPage'
+      ),
       module: 'monitor',
       code: 'monitor-dashboard',
       title: '监控仪表盘',
@@ -40,7 +43,10 @@ export const monitorModuleConfig: RouteModuleConfig = {
     },
     {
       path: MONITOR_PATHS.alerts,
-      element: lazyWithRetry(() => import('@/pages/monitor/MonitorAlertsPage'), 'MonitorAlertsPage'),
+      element: lazyWithRetry(
+        () => import('@/pages/monitor/MonitorAlertsPage'),
+        'MonitorAlertsPage'
+      ),
       module: 'monitor',
       code: 'monitor-alerts',
       title: '告警中心',
@@ -51,7 +57,10 @@ export const monitorModuleConfig: RouteModuleConfig = {
     },
     {
       path: MONITOR_PATHS.alertHistory,
-      element: lazyWithRetry(() => import('@/pages/monitor/MonitorAlertHistoryPage'), 'MonitorAlertHistoryPage'),
+      element: lazyWithRetry(
+        () => import('@/pages/monitor/MonitorAlertHistoryPage'),
+        'MonitorAlertHistoryPage'
+      ),
       module: 'monitor',
       code: 'monitor-alert-history',
       title: '告警历史',
@@ -62,7 +71,10 @@ export const monitorModuleConfig: RouteModuleConfig = {
     },
     {
       path: MONITOR_PATHS.rules,
-      element: lazyWithRetry(() => import('@/pages/monitor/MonitorAlertRulesPage'), 'MonitorAlertRulesPage'),
+      element: lazyWithRetry(
+        () => import('@/pages/monitor/MonitorAlertRulesPage'),
+        'MonitorAlertRulesPage'
+      ),
       module: 'monitor',
       code: 'monitor-rules',
       title: '告警规则',
@@ -73,7 +85,10 @@ export const monitorModuleConfig: RouteModuleConfig = {
     },
     {
       path: MONITOR_PATHS.metrics,
-      element: lazyWithRetry(() => import('@/pages/monitor/MonitorMetricsPage'), 'MonitorMetricsPage'),
+      element: lazyWithRetry(
+        () => import('@/pages/monitor/MonitorMetricsPage'),
+        'MonitorMetricsPage'
+      ),
       module: 'monitor',
       code: 'monitor-metrics',
       title: '指标监控',
@@ -95,7 +110,10 @@ export const monitorModuleConfig: RouteModuleConfig = {
     },
     {
       path: MONITOR_PATHS.settings,
-      element: lazyWithRetry(() => import('@/pages/monitor/MonitorSettingsPage'), 'MonitorSettingsPage'),
+      element: lazyWithRetry(
+        () => import('@/pages/monitor/MonitorSettingsPage'),
+        'MonitorSettingsPage'
+      ),
       module: 'monitor',
       code: 'monitor-settings',
       title: '监控设置',

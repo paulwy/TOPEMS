@@ -1,4 +1,5 @@
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect } from 'react';
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { useNavigate } from 'react-router-dom';
 import { Download, Filter, TrendingUp, TrendingDown, Minus, RefreshCw, Plus } from 'lucide-react';
 import {
@@ -61,103 +62,98 @@ interface ComparisonRow {
 }
 
 const BIComparisonPage = () => {
+  const queryClient = useQueryClient();
   const navigate = useNavigate();
-  const [loading, setLoading] = useState(true);
-  const [isRefreshing, setIsRefreshing] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const [data, setData] = useState<ComparisonRow[]>([]);
   const [filteredData, setFilteredData] = useState<ComparisonRow[]>([]);
   const [timeRange, setTimeRange] = useState<string>('2024H1');
   const [comparisonDimension, setComparisonDimension] = useState<string>('halfYear');
   const [page, setPage] = useState(0);
   const [rowsPerPage, setRowsPerPage] = useState(10);
   const [currentComparisonId, setCurrentComparisonId] = useState<string | null>(null);
-  const [comparisons, setComparisons] = useState<ComparisonAnalysis[]>([]);
 
-  const loadComparisons = useCallback(async () => {
-    try {
+  const comparisonsQuery = useQuery<ComparisonAnalysis[]>({
+    queryKey: ['bi-comparisons'],
+    queryFn: async () => {
       const res = await listComparisons();
       if (res.success && res.data) {
-        setComparisons(res.data.items || []);
-        if (res.data.items && res.data.items.length > 0 && !currentComparisonId) {
-          setCurrentComparisonId(res.data.items[0].id);
-        }
+        return res.data.items || [];
       }
-    } catch (e: unknown) {
-      logger.error('Failed to load comparisons:', e);
-    }
-  }, [currentComparisonId]);
-
-  const loadComparisonResult = useCallback(
-    async (showRefreshing = false) => {
-      if (!currentComparisonId) {
-        setLoading(false);
-        return;
-      }
-
-      if (showRefreshing) setIsRefreshing(true);
-      else setLoading(true);
-      setError(null);
-      try {
-        const res = await getComparisonResult(currentComparisonId);
-        if (res.success && res.data) {
-          const result: ComparisonResult = res.data;
-          const rows: ComparisonRow[] = result.data.map((item, index) => ({
-            id: `${index + 1}`,
-            comparisonItem: item.indicator,
-            indicatorA: item.value_a,
-            indicatorB: item.value_b,
-            difference: item.difference,
-            changeRate: item.change_rate,
-          }));
-          setData(rows);
-          setFilteredData(rows);
-        } else {
-          setData([]);
-          setFilteredData([]);
-        }
-      } catch (e: unknown) {
-        logger.error('Failed to load comparison data:', e);
-        setData([]);
-        setFilteredData([]);
-      } finally {
-        setLoading(false);
-        setIsRefreshing(false);
-      }
+      return [];
     },
-    [currentComparisonId]
-  );
+    staleTime: 5 * 60 * 1000,
+  });
+
+  const comparisons = comparisonsQuery.data ?? [];
 
   useEffect(() => {
-    loadComparisons();
-  }, [loadComparisons]);
-
-  useEffect(() => {
-    loadComparisonResult();
-  }, [loadComparisonResult]);
-
-  const handleRefresh = async () => {
-    if (!currentComparisonId) {
-      setError('请先创建或选择一个对比分析');
-      return;
+    if (comparisons.length > 0 && !currentComparisonId) {
+      setCurrentComparisonId(comparisons[0].id);
     }
+  }, [comparisons, currentComparisonId]);
 
-    setError(null);
-    try {
-      const res = await runComparison(currentComparisonId);
-      if (res.success) {
-        loadComparisonResult(true);
+  const comparisonResultQuery = useQuery<ComparisonRow[]>({
+    queryKey: ['bi-comparison-result', currentComparisonId],
+    queryFn: async () => {
+      if (!currentComparisonId) return [];
+      const res = await getComparisonResult(currentComparisonId);
+      if (res.success && res.data) {
+        const result: ComparisonResult = res.data;
+        return result.data.map((item, index) => ({
+          id: `${index + 1}`,
+          comparisonItem: item.indicator,
+          indicatorA: item.value_a,
+          indicatorB: item.value_b,
+          difference: item.difference,
+          changeRate: item.change_rate,
+        }));
       }
-    } catch (e: unknown) {
-      logger.error('Failed to run comparison:', e);
-      setError('执行对比分析失败');
+      return [];
+    },
+    enabled: !!currentComparisonId,
+    staleTime: 5 * 60 * 1000,
+  });
+
+  const data = comparisonResultQuery.data ?? [];
+  const loading = comparisonResultQuery.isLoading;
+
+  useEffect(() => {
+    if (comparisonResultQuery.isError) {
+      logger.error('Failed to load comparison data:', comparisonResultQuery.error);
+      setError('加载对比数据失败，请稍后重试');
+    } else {
+      setError(null);
     }
-  };
+  }, [comparisonResultQuery.isError, comparisonResultQuery.error]);
 
   useEffect(() => {
     setFilteredData(data);
     setPage(0);
   }, [timeRange, comparisonDimension, data]);
+
+  const runMutation = useMutation({
+    mutationFn: (id: string) => runComparison(id),
+    onSuccess: (res) => {
+      if (res.success) {
+        queryClient.invalidateQueries({ queryKey: ['bi-comparison-result', currentComparisonId] });
+      }
+    },
+    onError: (e: unknown) => {
+      logger.error('Failed to run comparison:', e);
+      setError('执行对比分析失败');
+    },
+  });
+
+  const actionLoading = runMutation.isPending;
+
+  const handleRefresh = () => {
+    if (!currentComparisonId) {
+      setError('请先创建或选择一个对比分析');
+      return;
+    }
+    setError(null);
+    runMutation.mutate(currentComparisonId);
+  };
 
   const handleChangePage = (_: unknown, newPage: number) => {
     setPage(newPage);

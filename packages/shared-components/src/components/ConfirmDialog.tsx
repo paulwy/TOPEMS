@@ -279,7 +279,7 @@ export default function ConfirmDialog({
       open={isOpen}
       onClose={closable && !isLoading ? onClose : undefined}
       maxWidth={MAX_WIDTH_MAP[size]}
-      PaperComponent={({ children: dialogChildren, ref: _paperComponentRef, ...paperProps }) => (
+      PaperComponent={({ children: dialogChildren, ref: _paperComponentRef, ...paperProps }: any) => (
         <div
           ref={paperRef as React.RefObject<HTMLDivElement>}
           onMouseDown={handleMouseDown}
@@ -292,12 +292,14 @@ export default function ConfirmDialog({
           {dialogChildren}
         </div>
       )}
-      sx={{
-        '& .MuiDialog-container': {
-          alignItems: centered ? 'center' : 'flex-start',
+      sx={[
+        {
+          '& .MuiDialog-container': {
+            alignItems: centered ? 'center' : 'flex-start',
+          },
         },
-        ...sx,
-      }}
+        ...(Array.isArray(sx) ? sx : sx ? [sx] : []),
+      ]}
     >
       {/* Large centered icon */}
       {showSuccessIcon && (

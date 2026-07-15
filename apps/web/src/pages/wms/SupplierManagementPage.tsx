@@ -14,24 +14,23 @@ import {
   MenuItem,
   Button,
 } from '@mui/material';
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState, useCallback } from 'react';
 import type { Supplier, CreateSupplierRequest, UpdateSupplierRequest } from '@/api/scm';
 import { scmApi } from '@/api/scm';
 import { useNotificationStore } from '@/store';
-import { LoadingSpinner, FormField } from '@topems/shared-components';
+import { FormField } from '@topems/shared-components';
 import { ListPageTemplate, type ColumnDef, type FilterConfig } from '@/components/templates';
 import { Search, Plus, Edit, Trash2, Eye } from 'lucide-react';
 import { ImageUpload, PageContainer } from '@/components/common';
 import { apiLogger } from '@/utils/logger';
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import { QUERY_KEYS } from '@/lib/reactQuery';
 
 const SupplierManagementPage: React.FC = () => {
-  const [suppliers, setSuppliers] = useState<Supplier[]>([]);
-  const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState('');
   const [statusFilter, setStatusFilter] = useState<string>('');
   const [currentPage, setCurrentPage] = useState(1);
   const [pageSize] = useState(10);
-  const [total, setTotal] = useState(0);
   const [showDialog, setShowDialog] = useState(false);
   const [showDetailDialog, setShowDetailDialog] = useState(false);
   const [selectedSupplier, setSelectedSupplier] = useState<Supplier | null>(null);
@@ -48,14 +47,11 @@ const SupplierManagementPage: React.FC = () => {
   } as any);
 
   const { addNotification } = useNotificationStore();
+  const queryClient = useQueryClient();
 
-  useEffect(() => {
-    loadSuppliers();
-  }, [currentPage, pageSize, searchTerm, statusFilter]);
-
-  const loadSuppliers = async () => {
-    try {
-      setLoading(true);
+  const { data: suppliersResponse, isLoading: loading } = useQuery({
+    queryKey: [QUERY_KEYS.SCM.SUPPLIERS, currentPage, pageSize, searchTerm, statusFilter],
+    queryFn: async () => {
       const params: Record<string, unknown> = {
         page: currentPage,
         pagesize: pageSize,
@@ -64,71 +60,83 @@ const SupplierManagementPage: React.FC = () => {
       if (statusFilter) params.status = statusFilter;
 
       const response = await scmApi.suppliers.list(params);
-      if (response.success && response.data) {
-        setSuppliers(response.data.items || []);
-        setTotal(response.data.total || 0);
+      if (!response.success) {
+        throw new Error('Failed to fetch suppliers');
       }
-    } catch (error: unknown) {
-      apiLogger.error('加载供应商列表失败:', error);
-      addNotification({
-        type: 'error',
-        title: '加载失败',
-        message: '无法加载供应商列表',
-      });
-    } finally {
-      setLoading(false);
-    }
-  };
+      return response.data;
+    },
+  });
+
+  const suppliers = suppliersResponse?.items || [];
+  const total = suppliersResponse?.total || 0;
+
+  const createMutation = useMutation({
+    mutationFn: async (data: CreateSupplierRequest) => {
+      const response = await scmApi.suppliers.create(data);
+      if (!response.success) {
+        throw new Error('Failed to create supplier');
+      }
+      return response;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: [QUERY_KEYS.SCM.SUPPLIERS] });
+      setShowDialog(false);
+      resetForm();
+    },
+    onError: (error) => {
+      apiLogger.error('创建供应商失败:', error);
+    },
+  });
+
+  const updateMutation = useMutation({
+    mutationFn: async ({ id, data }: { id: string; data: UpdateSupplierRequest }) => {
+      const response = await scmApi.suppliers.update(id, data);
+      if (!response.success) {
+        throw new Error('Failed to update supplier');
+      }
+      return response;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: [QUERY_KEYS.SCM.SUPPLIERS] });
+      setShowDialog(false);
+      resetForm();
+    },
+    onError: (error) => {
+      apiLogger.error('更新供应商失败:', error);
+    },
+  });
+
+  const deleteMutation = useMutation({
+    mutationFn: async (id: string) => {
+      const response = await scmApi.suppliers.delete(id);
+      if (!response.success) {
+        throw new Error('Failed to delete supplier');
+      }
+      return response;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: [QUERY_KEYS.SCM.SUPPLIERS] });
+    },
+    onError: (error) => {
+      apiLogger.error('删除供应商失败:', error);
+    },
+  });
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    try {
-      if (selectedSupplier) {
-        await scmApi.suppliers.update(selectedSupplier.id, formData as UpdateSupplierRequest);
-        addNotification({
-          type: 'success',
-          title: '更新成功',
-          message: '供应商信息已更新',
-        });
-      } else {
-        await scmApi.suppliers.create(formData);
-        addNotification({
-          type: 'success',
-          title: '创建成功',
-          message: '新供应商已创建',
-        });
-      }
-      setShowDialog(false);
-      resetForm();
-      loadSuppliers();
-    } catch (error: unknown) {
-      apiLogger.error('操作失败:', error);
-      addNotification({
-        type: 'error',
-        title: '操作失败',
-        message: selectedSupplier ? '更新供应商失败' : '创建供应商失败',
+    if (selectedSupplier) {
+      await updateMutation.mutateAsync({
+        id: selectedSupplier.id,
+        data: formData as UpdateSupplierRequest,
       });
+    } else {
+      await createMutation.mutateAsync(formData);
     }
   };
 
   const handleDelete = async (id: string) => {
     if (!window.confirm('确定要删除这个供应商吗?')) return;
-    try {
-      await scmApi.suppliers.delete(id);
-      addNotification({
-        type: 'success',
-        title: '删除成功',
-        message: '供应商已删除',
-      });
-      loadSuppliers();
-    } catch (error: unknown) {
-      apiLogger.error('删除失败:', error);
-      addNotification({
-        type: 'error',
-        title: '删除失败',
-        message: '无法删除供应商',
-      });
-    }
+    await deleteMutation.mutateAsync(id);
   };
 
   const handleEdit = (supplier: Supplier) => {
@@ -256,8 +264,6 @@ const SupplierManagementPage: React.FC = () => {
     setCurrentPage(1);
   }, []);
 
-  if (loading) return <LoadingSpinner />;
-
   return (
     <PageContainer
       title='供应商管理'
@@ -317,64 +323,88 @@ const SupplierManagementPage: React.FC = () => {
             <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2, pt: 1 }}>
               <Box sx={{ display: 'flex', gap: 2 }}>
                 <FormField
-                  name='name' label='供应商名称 *'
+                  name='name'
+                  label='供应商名称 *'
                   value={formData.name}
-                  onChange={(e) => setFormData({ ...formData, name: e.target.value })}
+                  onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
+                    setFormData({ ...formData, name: e.target.value })
+                  }
                   size='small'
                   fullWidth
                 />
                 <FormField
-                  name='short_name' label='简称'
+                  name='short_name'
+                  label='简称'
                   value={formData.short_name}
-                  onChange={(e) => setFormData({ ...formData, short_name: e.target.value })}
+                  onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
+                    setFormData({ ...formData, short_name: e.target.value })
+                  }
                   size='small'
                   fullWidth
                 />
               </Box>
               <Box sx={{ display: 'flex', gap: 2 }}>
                 <FormField
-                  name='contact_name' label='联系人'
+                  name='contact_name'
+                  label='联系人'
                   value={formData.contact_name}
-                  onChange={(e) => setFormData({ ...formData, contact_name: e.target.value })}
+                  onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
+                    setFormData({ ...formData, contact_name: e.target.value })
+                  }
                   size='small'
                   fullWidth
                 />
                 <FormField
-                  name='contact_phone' label='联系电话'
+                  name='contact_phone'
+                  label='联系电话'
                   value={formData.contact_phone}
-                  onChange={(e) => setFormData({ ...formData, contact_phone: e.target.value })}
+                  onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
+                    setFormData({ ...formData, contact_phone: e.target.value })
+                  }
                   size='small'
                   fullWidth
                 />
               </Box>
               <Box sx={{ display: 'flex', gap: 2 }}>
                 <FormField
-                  name='email' label='邮箱'
+                  name='email'
+                  label='邮箱'
                   type='email'
                   value={formData.email}
-                  onChange={(e) => setFormData({ ...formData, email: e.target.value })}
+                  onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
+                    setFormData({ ...formData, email: e.target.value })
+                  }
                   size='small'
                   fullWidth
                 />
                 <FormField
-                  name='bank_account' label='银行账户'
+                  name='bank_account'
+                  label='银行账户'
                   value={formData.bank_account}
-                  onChange={(e) => setFormData({ ...formData, bank_account: e.target.value })}
+                  onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
+                    setFormData({ ...formData, bank_account: e.target.value })
+                  }
                   size='small'
                   fullWidth
                 />
               </Box>
               <FormField
-                name='address' label='地址'
+                name='address'
+                label='地址'
                 value={formData.address}
-                onChange={(e) => setFormData({ ...formData, address: e.target.value })}
+                onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
+                  setFormData({ ...formData, address: e.target.value })
+                }
                 size='small'
                 fullWidth
               />
               <FormField
-                name='tax_number' label='税号'
+                name='tax_number'
+                label='税号'
                 value={formData.tax_number}
-                onChange={(e) => setFormData({ ...formData, tax_number: e.target.value })}
+                onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
+                  setFormData({ ...formData, tax_number: e.target.value })
+                }
                 size='small'
                 fullWidth
               />

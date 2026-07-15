@@ -97,10 +97,10 @@ const HrmAttendancePage: React.FC = () => {
   const approveLeaveMutation = useMutation({
     mutationFn: ({ id, action }: { id: string; action: 'approve' | 'reject' }) =>
       leaveApi.approve(id, action),
-    onSuccess: () => {
+    onSuccess: (_data, variables) => {
       addNotification({
         title: '成功',
-        message: action === 'approve' ? '已批准' : '已拒绝',
+        message: variables.action === 'approve' ? '已批准' : '已拒绝',
         type: 'success',
       });
       queryClient.invalidateQueries({ queryKey: ['hrm-leave-requests'] });
@@ -167,7 +167,7 @@ const HrmAttendancePage: React.FC = () => {
     r.employee_name?.toLowerCase().includes(searchQuery.toLowerCase())
   );
 
-  const filteredLeaves = leaves.filter((l) =>
+  const filteredLeaves = leaves.filter((l: LeaveRequest) =>
     l.employee_name?.toLowerCase().includes(searchQuery.toLowerCase())
   );
 
@@ -191,7 +191,7 @@ const HrmAttendancePage: React.FC = () => {
       totalAbsent,
       presentRate,
       avgWorkHours,
-      pendingLeaves: leaves.filter((l) => l.status === 'pending').length,
+      pendingLeaves: leaves.filter((l: LeaveRequest) => l.status === 'pending').length,
     };
   }, [records, leaves]);
 
@@ -495,7 +495,9 @@ const HrmAttendancePage: React.FC = () => {
               searchPlaceholder='搜索员工姓名...'
               searchValue={searchQuery}
               onSearch={setSearchQuery}
-              onRefresh={() => queryClient.invalidateQueries({ queryKey: ['hrm-attendance-records'] })}
+              onRefresh={() =>
+                queryClient.invalidateQueries({ queryKey: ['hrm-attendance-records'] })
+              }
               exportable
               exportFileName='考勤记录'
               persistFilters

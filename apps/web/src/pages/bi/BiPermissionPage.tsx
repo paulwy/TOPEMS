@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react';
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import {
   Shield,
   Plus,
@@ -68,92 +69,9 @@ import { designTokens } from '@/theme/tokens';
 
 const ct = designTokens.colors;
 
-const mockRowPermissions: RowLevelPermission[] = [
-  {
-    id: 'rlp-001',
-    name: '华东地区销售数据权限',
-    description: '限制华东地区销售经理只能查看本地区数据',
-    data_source_id: 'ds-001',
-    table_name: 'sales_orders',
-    condition: "region = 'east'",
-    roles: ['sales_manager_east'],
-    users: ['user001', 'user002'],
-    is_enabled: true,
-    priority: 1,
-    created_at: '2026-01-15T10:30:00Z',
-    updated_at: '2026-06-20T14:20:00Z',
-  },
-  {
-    id: 'rlp-002',
-    name: '华南地区销售数据权限',
-    description: '限制华南地区销售经理只能查看本地区数据',
-    data_source_id: 'ds-001',
-    table_name: 'sales_orders',
-    condition: "region = 'south'",
-    roles: ['sales_manager_south'],
-    users: ['user003', 'user004'],
-    is_enabled: true,
-    priority: 2,
-    created_at: '2026-01-15T11:00:00Z',
-    updated_at: '2026-06-20T14:20:00Z',
-  },
-  {
-    id: 'rlp-003',
-    name: '部门级HR数据权限',
-    description: '部门经理只能查看本部门员工数据',
-    data_source_id: 'ds-004',
-    table_name: 'employees',
-    condition: 'department = CURRENT_USER_DEPARTMENT',
-    roles: ['department_manager'],
-    users: [],
-    is_enabled: false,
-    priority: 5,
-    created_at: '2026-03-10T09:00:00Z',
-    updated_at: '2026-05-15T16:30:00Z',
-  },
-];
-
-const mockDataPermissions: DataPermissionRule[] = [
-  {
-    id: 'dp-001',
-    name: '销售仪表盘查看权限',
-    resource_type: 'dashboard',
-    resource_id: 'dash-001',
-    permission_type: 'view',
-    role_ids: ['sales_team', 'management'],
-    user_ids: ['admin'],
-    created_at: '2026-01-20T10:00:00Z',
-    updated_at: '2026-06-25T10:00:00Z',
-  },
-  {
-    id: 'dp-002',
-    name: '财务数据集编辑权限',
-    resource_type: 'dataset',
-    resource_id: 'ds-finance',
-    permission_type: 'edit',
-    role_ids: ['finance_team'],
-    user_ids: ['finance_manager'],
-    created_at: '2026-02-15T14:00:00Z',
-    updated_at: '2026-06-10T08:00:00Z',
-  },
-  {
-    id: 'dp-003',
-    name: 'HR报表导出权限',
-    resource_type: 'report',
-    resource_id: 'rpt-hr-001',
-    permission_type: 'export',
-    role_ids: ['hr_team'],
-    user_ids: [],
-    created_at: '2026-03-05T11:00:00Z',
-    updated_at: '2026-04-20T09:30:00Z',
-  },
-];
-
 const BiPermissionPage = () => {
+  const queryClient = useQueryClient();
   const [activeTab, setActiveTab] = useState<'row-level' | 'data'>('row-level');
-  const [rowPermissions, setRowPermissions] = useState<RowLevelPermission[]>(mockRowPermissions);
-  const [dataPermissions, setDataPermissions] = useState<DataPermissionRule[]>(mockDataPermissions);
-  const [loading, setLoading] = useState(false);
   const [searchTerm, setSearchTerm] = useState('');
   const [dialogOpen, setDialogOpen] = useState(false);
   const [editingItem, setEditingItem] = useState<RowLevelPermission | null>(null);
@@ -170,35 +88,89 @@ const BiPermissionPage = () => {
   });
   const [testResult, setTestResult] = useState<{ success: boolean; message: string } | null>(null);
 
-  const loadRowPermissions = async () => {
-    setLoading(true);
-    try {
+  const rowPermissionsQuery = useQuery<RowLevelPermission[]>({
+    queryKey: ['bi-row-permissions'],
+    queryFn: async () => {
       const res = await listRowLevelPermissions();
       if (res.success && res.data) {
-        setRowPermissions(res.data.items || []);
+        return res.data.items || [];
       }
-    } catch (error: unknown) {
-      logger.error('Failed to load row level permissions:', error);
-    } finally {
-      setLoading(false);
-    }
-  };
+      return [];
+    },
+    staleTime: 5 * 60 * 1000,
+  });
 
-  const loadDataPermissions = async () => {
-    try {
+  const dataPermissionsQuery = useQuery<DataPermissionRule[]>({
+    queryKey: ['bi-data-permissions'],
+    queryFn: async () => {
       const res = await listDataPermissions();
       if (res.success && res.data) {
-        setDataPermissions(res.data || []);
+        return res.data || [];
       }
-    } catch (error: unknown) {
-      logger.error('Failed to load data permissions:', error);
-    }
-  };
+      return [];
+    },
+    staleTime: 5 * 60 * 1000,
+  });
+
+  const rowPermissions = rowPermissionsQuery.data ?? [];
+  const dataPermissions = dataPermissionsQuery.data ?? [];
+  const loading = rowPermissionsQuery.isLoading;
 
   useEffect(() => {
-    loadRowPermissions();
-    loadDataPermissions();
-  }, []);
+    if (rowPermissionsQuery.isError) {
+      logger.error('Failed to load row level permissions:', rowPermissionsQuery.error);
+    }
+    if (dataPermissionsQuery.isError) {
+      logger.error('Failed to load data permissions:', dataPermissionsQuery.error);
+    }
+  }, [
+    rowPermissionsQuery.isError,
+    rowPermissionsQuery.error,
+    dataPermissionsQuery.isError,
+    dataPermissionsQuery.error,
+  ]);
+
+  const saveMutation = useMutation({
+    mutationFn: async () => {
+      if (editingItem) {
+        return await updateRowLevelPermission(editingItem.id, formData);
+      } else {
+        return await createRowLevelPermission(formData as RowLevelPermission);
+      }
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['bi-row-permissions'] });
+      setDialogOpen(false);
+    },
+    onError: (error: unknown) => {
+      logger.error('Failed to save permission:', error);
+      setDialogOpen(false);
+    },
+  });
+
+  const deleteMutation = useMutation({
+    mutationFn: (id: string) => deleteRowLevelPermission(id),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['bi-row-permissions'] });
+    },
+    onError: (error: unknown) => {
+      logger.error('Failed to delete permission:', error);
+    },
+  });
+
+  const toggleMutation = useMutation({
+    mutationFn: (item: RowLevelPermission) =>
+      updateRowLevelPermission(item.id, { is_enabled: !item.is_enabled }),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['bi-row-permissions'] });
+    },
+    onError: (error: unknown) => {
+      logger.error('Failed to toggle permission:', error);
+    },
+  });
+
+  const actionLoading =
+    saveMutation.isPending || deleteMutation.isPending || toggleMutation.isPending;
 
   const handleOpenDialog = (item?: RowLevelPermission) => {
     if (item) {
@@ -222,45 +194,17 @@ const BiPermissionPage = () => {
     setDialogOpen(true);
   };
 
-  const handleSave = async () => {
-    try {
-      if (editingItem) {
-        await updateRowLevelPermission(editingItem.id, formData);
-      } else {
-        await createRowLevelPermission(formData as RowLevelPermission);
-      }
-      loadRowPermissions();
-      setDialogOpen(false);
-    } catch (error: unknown) {
-      logger.error('Failed to save permission:', error);
-      loadRowPermissions();
-      setDialogOpen(false);
-    }
+  const handleSave = () => {
+    saveMutation.mutate();
   };
 
-  const handleDelete = async (id: string) => {
+  const handleDelete = (id: string) => {
     if (!confirm('确定要删除这条权限规则吗？')) return;
-    try {
-      await deleteRowLevelPermission(id);
-      loadRowPermissions();
-    } catch (error: unknown) {
-      logger.error('Failed to delete permission:', error);
-      setRowPermissions(rowPermissions.filter((p) => p.id !== id));
-    }
+    deleteMutation.mutate(id);
   };
 
-  const handleToggle = async (item: RowLevelPermission) => {
-    try {
-      await updateRowLevelPermission(item.id, { is_enabled: !item.is_enabled });
-      setRowPermissions(
-        rowPermissions.map((p) => (p.id === item.id ? { ...p, is_enabled: !p.is_enabled } : p))
-      );
-    } catch (error: unknown) {
-      logger.error('Failed to toggle permission:', error);
-      setRowPermissions(
-        rowPermissions.map((p) => (p.id === item.id ? { ...p, is_enabled: !p.is_enabled } : p))
-      );
-    }
+  const handleToggle = (item: RowLevelPermission) => {
+    toggleMutation.mutate(item);
   };
 
   const handleTest = async (item: RowLevelPermission) => {

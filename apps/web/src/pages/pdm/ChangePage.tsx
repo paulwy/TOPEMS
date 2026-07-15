@@ -352,7 +352,9 @@ export const ChangePage: React.FC = () => {
 
   const pendingCount = filteredChanges.filter((c: ChangeOrder) => c.status === 'pending').length;
   const approvedCount = filteredChanges.filter((c: ChangeOrder) => c.status === 'approved').length;
-  const implementedCount = filteredChanges.filter((c: ChangeOrder) => c.status === 'implemented').length;
+  const implementedCount = filteredChanges.filter(
+    (c: ChangeOrder) => c.status === 'implemented'
+  ).length;
 
   const statsCards = (
     <Grid

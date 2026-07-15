@@ -28,19 +28,65 @@ import { apiLogger } from '@/utils/logger';
 import { PageContainer } from '@/components/common';
 import { SRM_PATHS } from '@/modules/srm/config';
 import { designTokens } from '@/theme/tokens';
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import { QUERY_KEYS } from '@/lib/reactQuery';
 
 const ct = designTokens.colors;
 
 const SrmSupplierPage: React.FC = () => {
   const navigate = useNavigate();
-  const [suppliers, setSuppliers] = useState<Supplier[]>([]);
-  const [loading, setLoading] = useState(true);
+  const queryClient = useQueryClient();
+  const suppliersQuery = useQuery<Supplier[]>({
+    queryKey: QUERY_KEYS.SRM.SUPPLIERS,
+    queryFn: async () => {
+      const response = await srmApi.listSuppliers();
+      if (response.success && response.data) {
+        const data = response.data as any;
+        const items = Array.isArray(data) ? data : data.suppliers || [];
+        return items.map((item: { [key: string]: unknown }) => ({
+          ...item,
+          supplier_no: item.supplier_no || item.supplierNo || '',
+          contact_phone: item.phone || item.contactPhone || item.contact_phone || '',
+          status:
+            item.status === 'active' ? '启用' : item.status === 'inactive' ? '禁用' : item.status,
+        }));
+      }
+      return [];
+    },
+    staleTime: 5 * 60 * 1000,
+  });
+
+  const suppliers = suppliersQuery.data ?? [];
+  const loading = suppliersQuery.isLoading;
+
+  const performanceSummaryQuery = useQuery<PerformanceSummary | null>({
+    queryKey: [...QUERY_KEYS.SRM.PERFORMANCE, 'summary'],
+    queryFn: async () => {
+      const response = await srmApi.getPerformanceSummary();
+      if (response.success && response.data) return response.data;
+      return null;
+    },
+    staleTime: 5 * 60 * 1000,
+  });
+
+  const performanceSummary = performanceSummaryQuery.data ?? null;
+
+  const scoreDistributionQuery = useQuery<ScoreLevelDistribution[]>({
+    queryKey: QUERY_KEYS.SRM.SCORING_DIMENSIONS,
+    queryFn: async () => {
+      const response = await srmApi.getScoreLevelDistribution();
+      if (response.success && response.data) return response.data.distribution;
+      return [];
+    },
+    staleTime: 5 * 60 * 1000,
+  });
+
+  const scoreDistribution = scoreDistributionQuery.data ?? [];
+
   const [searchTerm, setSearchTerm] = useState('');
   const [showCreateModal, setShowCreateModal] = useState(false);
   const [showEditModal, setShowEditModal] = useState(false);
   const [editingId, setEditingId] = useState<string | null>(null);
-  const [performanceSummary, setPerformanceSummary] = useState<PerformanceSummary | null>(null);
-  const [scoreDistribution, setScoreDistribution] = useState<ScoreLevelDistribution[]>([]);
   const [formData, setFormData] = useState<Partial<CreateSupplierRequest>>({
     supplier_no: '',
     name: '',
@@ -55,58 +101,67 @@ const SrmSupplierPage: React.FC = () => {
   const addNotification = useNotificationStore((state) => state.addNotification);
 
   useEffect(() => {
-    loadSuppliers();
-    loadPerformanceSummary();
-    loadScoreDistribution();
-  }, []);
-
-  const loadSuppliers = async () => {
-    try {
-      setLoading(true);
-      const response = await srmApi.listSuppliers();
-      if (response.success && response.data) {
-        const data = response.data as any;
-        const items = Array.isArray(data) ? data : data.suppliers || [];
-        const adapted = items.map((item: { [key: string]: unknown }) => ({
-          ...item,
-          supplier_no: item.supplier_no || item.supplierNo || '',
-          contact_phone: item.phone || item.contactPhone || item.contact_phone || '',
-          status:
-            item.status === 'active' ? '启用' : item.status === 'inactive' ? '禁用' : item.status,
-        }));
-        setSuppliers(adapted);
-      } else {
-        setSuppliers([]);
-      }
-    } catch (err: unknown) {
-      apiLogger.error('加载供应商数据失败:', err);
-      setSuppliers([]);
-    } finally {
-      setLoading(false);
+    if (suppliersQuery.isError) {
+      apiLogger.error('加载供应商数据失败:', suppliersQuery.error);
     }
+  }, [suppliersQuery.isError, suppliersQuery.error]);
+
+  useEffect(() => {
+    if (performanceSummaryQuery.isError) {
+      apiLogger.error('加载绩效汇总失败:', performanceSummaryQuery.error);
+    }
+  }, [performanceSummaryQuery.isError, performanceSummaryQuery.error]);
+
+  useEffect(() => {
+    if (scoreDistributionQuery.isError) {
+      apiLogger.error('加载评分分布失败:', scoreDistributionQuery.error);
+    }
+  }, [scoreDistributionQuery.isError, scoreDistributionQuery.error]);
+
+  const invalidateSupplierQueries = () => {
+    queryClient.invalidateQueries({ queryKey: QUERY_KEYS.SRM.SUPPLIERS });
+    queryClient.invalidateQueries({ queryKey: [...QUERY_KEYS.SRM.PERFORMANCE, 'summary'] });
   };
 
-  const loadPerformanceSummary = async () => {
-    try {
-      const response = await srmApi.getPerformanceSummary();
-      if (response.success && response.data) {
-        setPerformanceSummary(response.data);
-      }
-    } catch (err: unknown) {
-      apiLogger.error('加载绩效汇总失败:', err);
-    }
-  };
+  const createMutation = useMutation({
+    mutationFn: (data: CreateSupplierRequest) => srmApi.createSupplier(data),
+    onSuccess: () => {
+      invalidateSupplierQueries();
+      addNotification({ title: '成功', message: '供应商创建成功', type: 'success' });
+      setShowCreateModal(false);
+    },
+    onError: (err: unknown) => {
+      addNotification({ title: '错误', message: '创建失败', type: 'error' });
+      apiLogger.error('创建供应商失败:', err);
+    },
+  });
 
-  const loadScoreDistribution = async () => {
-    try {
-      const response = await srmApi.getScoreLevelDistribution();
-      if (response.success && response.data) {
-        setScoreDistribution(response.data.distribution);
-      }
-    } catch (err: unknown) {
-      apiLogger.error('加载评分分布失败:', err);
-    }
-  };
+  const updateMutation = useMutation({
+    mutationFn: (params: { id: string; data: CreateSupplierRequest }) =>
+      srmApi.updateSupplier(params.id, params.data),
+    onSuccess: () => {
+      invalidateSupplierQueries();
+      addNotification({ title: '成功', message: '供应商更新成功', type: 'success' });
+      setShowEditModal(false);
+      setEditingId(null);
+    },
+    onError: (err: unknown) => {
+      addNotification({ title: '错误', message: '更新失败', type: 'error' });
+      apiLogger.error('更新供应商失败:', err);
+    },
+  });
+
+  const deleteMutation = useMutation({
+    mutationFn: (id: string) => srmApi.deleteSupplier(id),
+    onSuccess: () => {
+      invalidateSupplierQueries();
+      addNotification({ title: '成功', message: '供应商删除成功', type: 'success' });
+    },
+    onError: (err: unknown) => {
+      addNotification({ title: '错误', message: '删除失败', type: 'error' });
+      apiLogger.error('删除供应商失败:', err);
+    },
+  });
 
   const getRiskStyle = (level: string) => {
     if (level === 'low') return { bgcolor: 'success.lighter', color: 'success.700', label: '低' };
@@ -179,20 +234,8 @@ const SrmSupplierPage: React.FC = () => {
     setShowEditModal(true);
   };
 
-  const handleDelete = async (row: Supplier) => {
-    try {
-      const response = await srmApi.deleteSupplier(row.id);
-      if (response.success) {
-        addNotification({ title: '成功', message: '供应商删除成功', type: 'success' });
-        loadSuppliers();
-        loadPerformanceSummary();
-      } else {
-        addNotification({ title: '错误', message: '删除失败', type: 'error' });
-      }
-    } catch (err: unknown) {
-      addNotification({ title: '错误', message: '删除失败', type: 'error' });
-      apiLogger.error('删除供应商失败:', err);
-    }
+  const handleDelete = (row: Supplier) => {
+    deleteMutation.mutate(row.id);
   };
 
   const rowActions: RowAction<Supplier>[] = useMemo(
@@ -247,34 +290,26 @@ const SrmSupplierPage: React.FC = () => {
     setShowCreateModal(true);
   };
 
-  const handleSave = async () => {
-    try {
-      await srmApi.createSupplier({
-        supplier_no: formData.supplier_no || '',
-        name: formData.name || '',
-        contact_person: formData.contact_person,
-        phone: formData.phone,
-        email: formData.email,
-        address: formData.address,
-        category: formData.category || '',
-        risklevel: formData.risklevel || 'medium',
-        status: formData.status || 'active',
-        legal_name: formData.name,
-      });
-      addNotification({ title: '成功', message: '供应商创建成功', type: 'success' });
-      setShowCreateModal(false);
-      loadSuppliers();
-      loadPerformanceSummary();
-    } catch (err: unknown) {
-      addNotification({ title: '错误', message: '创建失败', type: 'error' });
-      apiLogger.error('创建供应商失败:', err);
-    }
+  const handleSave = () => {
+    createMutation.mutate({
+      supplier_no: formData.supplier_no || '',
+      name: formData.name || '',
+      contact_person: formData.contact_person,
+      phone: formData.phone,
+      email: formData.email,
+      address: formData.address,
+      category: formData.category || '',
+      risklevel: formData.risklevel || 'medium',
+      status: formData.status || 'active',
+      legal_name: formData.name,
+    });
   };
 
-  const handleUpdate = async () => {
+  const handleUpdate = () => {
     if (!editingId) return;
-    try {
-      await srmApi.updateSupplier(editingId, {
+    updateMutation.mutate({
+      id: editingId,
+      data: {
         supplier_no: formData.supplier_no || '',
         name: formData.name || '',
         contact_person: formData.contact_person,
@@ -285,16 +320,8 @@ const SrmSupplierPage: React.FC = () => {
         risklevel: formData.risklevel || 'medium',
         status: formData.status || 'active',
         legal_name: formData.name,
-      });
-      addNotification({ title: '成功', message: '供应商更新成功', type: 'success' });
-      setShowEditModal(false);
-      setEditingId(null);
-      loadSuppliers();
-      loadPerformanceSummary();
-    } catch (err: unknown) {
-      addNotification({ title: '错误', message: '更新失败', type: 'error' });
-      apiLogger.error('更新供应商失败:', err);
-    }
+      },
+    });
   };
 
   const stats = useMemo(() => {

@@ -12,7 +12,9 @@ import {
   Stack,
 } from '@mui/material';
 import { PageContainer } from '@/components/common/PageContainerV2';
-import React, { useState, useEffect, useMemo, useCallback } from 'react';
+import React, { useState, useMemo } from 'react';
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import { QUERY_KEYS } from '@/lib/reactQuery';
 import type {
   ProcessFlow,
   CreateProcessFlowRequest,
@@ -37,13 +39,11 @@ import { designTokens } from '@/theme/tokens';
 const ct = designTokens.colors;
 
 const ProcessFlowPage: React.FC = () => {
-  const [flows, setFlows] = useState<ProcessFlow[]>([]);
-  const [loading, setLoading] = useState(true);
+  const queryClient = useQueryClient();
   const [searchTerm, setSearchTerm] = useState('');
   const [statusFilter, setStatusFilter] = useState<string>('all');
   const [currentPage, setCurrentPage] = useState(1);
   const [pageSize] = useState(10);
-  const [total, setTotal] = useState(0);
   const [showDialog, setShowDialog] = useState(false);
   const [showDetailDialog, setShowDetailDialog] = useState(false);
   const [selectedFlow, setSelectedFlow] = useState<ProcessFlow | null>(null);
@@ -63,34 +63,35 @@ const ProcessFlowPage: React.FC = () => {
 
   const { addNotification } = useNotificationStore();
 
-  const loadFlows = useCallback(async () => {
-    try {
-      setLoading(true);
-      const params: ListParams = {
-        page: currentPage - 1,
-        pagesize: pageSize,
-      };
-      if (searchTerm) params.search = searchTerm;
-      if (statusFilter !== 'all') params.status = statusFilter;
+  const params: ListParams = {
+    page: currentPage - 1,
+    pagesize: pageSize,
+  };
+  if (searchTerm) params.search = searchTerm;
+  if (statusFilter !== 'all') params.status = statusFilter;
 
+  const { data: flowsData, isLoading: loading } = useQuery({
+    queryKey: [...QUERY_KEYS.MES.PROCESS_FLOWS, params],
+    queryFn: async () => {
       const response = await processFlowApi.list(params);
       if (response.success && response.data) {
-        setFlows(response.data.flows || []);
-        setTotal(response.data.total || 0);
+        return {
+          flows: response.data.flows || [],
+          total: response.data.total || 0,
+        };
       }
-    } catch (error: unknown) {
-      apiLogger.error('加载工艺流程列表失败:', error);
-      addNotification({
-        type: 'error',
-        title: '加载失败',
-        message: '无法加载工艺流程列表',
-      });
-    } finally {
-      setLoading(false);
-    }
-  }, [currentPage, pageSize, searchTerm, statusFilter, addNotification]);
+      return { flows: [], total: 0 };
+    },
+  });
 
-  const loadFlowDetails = useCallback(async (flowId: string) => {
+  const flows = flowsData?.flows || [];
+  const total = flowsData?.total || 0;
+
+  const invalidateFlows = () => {
+    queryClient.invalidateQueries({ queryKey: QUERY_KEYS.MES.PROCESS_FLOWS });
+  };
+
+  const loadFlowDetails = async (flowId: string) => {
     try {
       const [stepsResponse, capacityResponse] = await Promise.all([
         processFlowApi.getSteps(flowId),
@@ -106,67 +107,64 @@ const ProcessFlowPage: React.FC = () => {
     } catch (error: unknown) {
       apiLogger.error('加载工艺流程详情失败:', error);
     }
-  }, []);
+  };
 
-  useEffect(() => {
-    loadFlows();
-  }, [loadFlows]);
+  const createMutation = useMutation({
+    mutationFn: (data: CreateProcessFlowRequest) => processFlowApi.create(data),
+    onSuccess: () => {
+      addNotification({ type: 'success', title: '创建成功', message: '新工艺流程已创建' });
+      invalidateFlows();
+      setShowDialog(false);
+      resetForm();
+    },
+    onError: (error: unknown) => {
+      apiLogger.error('操作失败:', error);
+      addNotification({ type: 'error', title: '操作失败', message: '创建工艺流程失败' });
+    },
+  });
+
+  const updateMutation = useMutation({
+    mutationFn: ({ id, data }: { id: string; data: UpdateProcessFlowRequest }) =>
+      processFlowApi.update(id, data),
+    onSuccess: () => {
+      addNotification({ type: 'success', title: '更新成功', message: '工艺流程信息已更新' });
+      invalidateFlows();
+      setShowDialog(false);
+      resetForm();
+    },
+    onError: (error: unknown) => {
+      apiLogger.error('操作失败:', error);
+      addNotification({ type: 'error', title: '操作失败', message: '更新工艺流程失败' });
+    },
+  });
+
+  const deleteMutation = useMutation({
+    mutationFn: (id: string) => processFlowApi.delete(id),
+    onSuccess: () => {
+      addNotification({ type: 'success', title: '删除成功', message: '工艺流程已删除' });
+      invalidateFlows();
+    },
+    onError: (error: unknown) => {
+      apiLogger.error('删除失败:', error);
+      addNotification({ type: 'error', title: '删除失败', message: '无法删除工艺流程' });
+    },
+  });
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    try {
-      if (selectedFlow) {
-        await processFlowApi.update(selectedFlow.id, formData as UpdateProcessFlowRequest);
-        addNotification({
-          type: 'success',
-          title: '更新成功',
-          message: '工艺流程信息已更新',
-        });
-      } else {
-        await processFlowApi.create(formData);
-        addNotification({
-          type: 'success',
-          title: '创建成功',
-          message: '新工艺流程已创建',
-        });
-      }
-      setShowDialog(false);
-      resetForm();
-      loadFlows();
-    } catch (error: unknown) {
-      apiLogger.error('操作失败:', error);
-      addNotification({
-        type: 'error',
-        title: '操作失败',
-        message: selectedFlow ? '更新工艺流程失败' : '创建工艺流程失败',
-      });
+    if (selectedFlow) {
+      updateMutation.mutate({ id: selectedFlow.id, data: formData as UpdateProcessFlowRequest });
+    } else {
+      createMutation.mutate(formData);
     }
   };
 
-  const handleDelete = useCallback(
-    async (id: string) => {
-      if (!window.confirm('确定要删除这个工艺流程吗?')) return;
-      try {
-        await processFlowApi.delete(id);
-        addNotification({
-          type: 'success',
-          title: '删除成功',
-          message: '工艺流程已删除',
-        });
-        loadFlows();
-      } catch (error: unknown) {
-        apiLogger.error('删除失败:', error);
-        addNotification({
-          type: 'error',
-          title: '删除失败',
-          message: '无法删除工艺流程',
-        });
-      }
-    },
-    [loadFlows, addNotification]
-  );
+  const handleDelete = (id: string) => {
+    if (!window.confirm('确定要删除这个工艺流程吗?')) return;
+    deleteMutation.mutate(id);
+  };
 
-  const handleEdit = useCallback((flow: ProcessFlow) => {
+  const handleEdit = (flow: ProcessFlow) => {
     setSelectedFlow(flow);
     setFormData({
       code: flow.code,
@@ -179,16 +177,13 @@ const ProcessFlowPage: React.FC = () => {
       unit: flow.unit || '件/小时',
     });
     setShowDialog(true);
-  }, []);
+  };
 
-  const handleViewDetail = useCallback(
-    async (flow: ProcessFlow) => {
-      setSelectedFlow(flow);
-      await loadFlowDetails(flow.id);
-      setShowDetailDialog(true);
-    },
-    [loadFlowDetails]
-  );
+  const handleViewDetail = async (flow: ProcessFlow) => {
+    setSelectedFlow(flow);
+    await loadFlowDetails(flow.id);
+    setShowDetailDialog(true);
+  };
 
   const resetForm = () => {
     setSelectedFlow(null);

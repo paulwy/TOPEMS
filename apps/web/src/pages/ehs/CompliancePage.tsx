@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useCallback, useMemo } from 'react';
+import React, { useState, useMemo } from 'react';
 import {
   Box,
   Dialog,
@@ -19,6 +19,8 @@ import {
   Tab,
 } from '@mui/material';
 import { Plus, FileCheck, ClipboardCheck, AlertTriangle, Shield } from 'lucide-react';
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import { QUERY_KEYS } from '@/lib/reactQuery';
 import { ListPageTemplate, type ColumnDef } from '@/components/templates';
 import { ehsApi } from '@/api/ehs';
 import { PageContainer } from '@/components/common/PageContainerV2';
@@ -30,11 +32,8 @@ import { designTokens } from '@/theme/tokens';
 const ct = designTokens.colors;
 
 const CompliancePage: React.FC = () => {
+  const queryClient = useQueryClient();
   const [activeTab, setActiveTab] = useState(0);
-  const [regulations, setRegulations] = useState<EnvironmentalRegulation[]>([]);
-  const [assessments, setAssessments] = useState<ComplianceAssessment[]>([]);
-  const [permits, setPermits] = useState<DischargePermit[]>([]);
-  const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState('');
   const [statusFilter, setStatusFilter] = useState('all');
   const [showCreateModal, setShowCreateModal] = useState(false);
@@ -50,37 +49,55 @@ const CompliancePage: React.FC = () => {
     content: '',
   });
 
-  const loadData = useCallback(async () => {
-    try {
-      setLoading(true);
-      const [regsRes, assessRes, permitsRes] = await Promise.all([
-        ehsApi.listEnvironmentalRegulations({ pagesize: 100, search: searchTerm || undefined }),
-        ehsApi.listComplianceAssessments({ pagesize: 100, search: searchTerm || undefined }),
-        ehsApi.listDischargePermits({ pagesize: 100, search: searchTerm || undefined }),
-      ]);
+  const { data: regulationsData, isLoading: regulationsLoading } = useQuery({
+    queryKey: [...QUERY_KEYS.EHS.COMPLIANCE_REGULATIONS, searchTerm],
+    queryFn: async () => {
+      const response = await ehsApi.listEnvironmentalRegulations({
+        pagesize: 100,
+        search: searchTerm || undefined,
+      });
+      if (response.success && response.data) {
+        const data = response.data as any;
+        return Array.isArray(data) ? data : data.data || [];
+      }
+      return [];
+    },
+  });
+  const regulations = (regulationsData as EnvironmentalRegulation[]) || [];
 
-      if (regsRes.success && regsRes.data) {
-        const data = regsRes.data as any;
-        setRegulations(Array.isArray(data) ? data : data.data || []);
+  const { data: assessmentsData, isLoading: assessmentsLoading } = useQuery({
+    queryKey: [...QUERY_KEYS.EHS.COMPLIANCE_ASSESSMENTS, searchTerm],
+    queryFn: async () => {
+      const response = await ehsApi.listComplianceAssessments({
+        pagesize: 100,
+        search: searchTerm || undefined,
+      });
+      if (response.success && response.data) {
+        const data = response.data as any;
+        return Array.isArray(data) ? data : data.data || [];
       }
-      if (assessRes.success && assessRes.data) {
-        const data = assessRes.data as any;
-        setAssessments(Array.isArray(data) ? data : data.data || []);
-      }
-      if (permitsRes.success && permitsRes.data) {
-        const data = permitsRes.data as any;
-        setPermits(Array.isArray(data) ? data : data.data || []);
-      }
-    } catch (err: unknown) {
-      apiLogger.error('加载合规数据失败:', err);
-    } finally {
-      setLoading(false);
-    }
-  }, [searchTerm]);
+      return [];
+    },
+  });
+  const assessments = (assessmentsData as ComplianceAssessment[]) || [];
 
-  useEffect(() => {
-    loadData();
-  }, [loadData]);
+  const { data: permitsData, isLoading: permitsLoading } = useQuery({
+    queryKey: [...QUERY_KEYS.EHS.COMPLIANCE_PERMITS, searchTerm],
+    queryFn: async () => {
+      const response = await ehsApi.listDischargePermits({
+        pagesize: 100,
+        search: searchTerm || undefined,
+      });
+      if (response.success && response.data) {
+        const data = response.data as any;
+        return Array.isArray(data) ? data : data.data || [];
+      }
+      return [];
+    },
+  });
+  const permits = (permitsData as DischargePermit[]) || [];
+
+  const loading = regulationsLoading || assessmentsLoading || permitsLoading;
 
   const getStatusBadge = (status: string) => {
     const statusMap: Record<string, { bg: string; color: string; label: string }> = {
@@ -210,25 +227,31 @@ const CompliancePage: React.FC = () => {
     setShowCreateModal(true);
   };
 
-  const handleSaveRegulation = async () => {
-    try {
-      await ehsApi.createEnvironmentalRegulation({
-        title: regulationFormData.title,
-        category: regulationFormData.category,
-        regulation_type: regulationFormData.regulation_type as
-          'law' | 'regulation' | 'standard' | 'policy' | 'notice',
-        issuing_authority: regulationFormData.issuing_authority || null,
-        issue_date: regulationFormData.issue_date || null,
-        effective_date: regulationFormData.effective_date || null,
-        content: regulationFormData.content || null,
-      });
+  const createRegulationMutation = useMutation({
+    mutationFn: (data: Parameters<typeof ehsApi.createEnvironmentalRegulation>[0]) =>
+      ehsApi.createEnvironmentalRegulation(data),
+    onSuccess: () => {
       addNotification({ title: '成功', message: '法规创建成功', type: 'success' });
+      queryClient.invalidateQueries({ queryKey: QUERY_KEYS.EHS.COMPLIANCE_REGULATIONS });
       setShowCreateModal(false);
-      loadData();
-    } catch (err: unknown) {
+    },
+    onError: (error: unknown) => {
       addNotification({ title: '错误', message: '创建失败', type: 'error' });
-      apiLogger.error('创建法规失败:', err);
-    }
+      apiLogger.error('创建法规失败:', error);
+    },
+  });
+
+  const handleSaveRegulation = () => {
+    createRegulationMutation.mutate({
+      title: regulationFormData.title,
+      category: regulationFormData.category,
+      regulation_type: regulationFormData.regulation_type as
+        'law' | 'regulation' | 'standard' | 'policy' | 'notice',
+      issuing_authority: regulationFormData.issuing_authority || null,
+      issue_date: regulationFormData.issue_date || null,
+      effective_date: regulationFormData.effective_date || null,
+      content: regulationFormData.content || null,
+    });
   };
 
   const headerActions = [
@@ -414,7 +437,11 @@ const CompliancePage: React.FC = () => {
         searchPlaceholder='搜索...'
         searchValue={searchTerm}
         onSearch={(value) => setSearchTerm(value)}
-        onRefresh={loadData}
+        onRefresh={() => {
+          queryClient.invalidateQueries({ queryKey: QUERY_KEYS.EHS.COMPLIANCE_REGULATIONS });
+          queryClient.invalidateQueries({ queryKey: QUERY_KEYS.EHS.COMPLIANCE_ASSESSMENTS });
+          queryClient.invalidateQueries({ queryKey: QUERY_KEYS.EHS.COMPLIANCE_PERMITS });
+        }}
       />
 
       <Dialog

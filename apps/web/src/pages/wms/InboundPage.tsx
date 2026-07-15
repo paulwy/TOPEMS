@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useMemo, useCallback } from 'react';
+import React, { useState, useMemo, useCallback, useEffect } from 'react';
 import {
   Chip,
   Dialog,
@@ -37,6 +37,8 @@ import { Plus, Edit, Trash2, Eye, Download, Check, Package, ClipboardCheck } fro
 import { apiLogger } from '@/utils/logger';
 import { ConfirmDialog, PageContainer, StatusBadge } from '@/components/common';
 import { designTokens } from '@/theme/tokens';
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import { QUERY_KEYS } from '@/lib/reactQuery';
 
 const ct = designTokens.colors;
 
@@ -63,15 +65,11 @@ const orderTypeConfig: Record<string, string> = {
 const InboundPage: React.FC = () => {
   const { addNotification } = useNotificationStore();
 
-  const [orders, setOrders] = useState<InboundOrder[]>([]);
-  const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState('');
   const [statusFilter, setStatusFilter] = useState<string>('');
   const [warehouseFilter, setWarehouseFilter] = useState<string>('');
-  const [warehouses, setWarehouses] = useState<Warehouse[]>([]);
   const [currentPage, setCurrentPage] = useState(1);
   const [pageSize] = useState(10);
-  const [total, setTotal] = useState(0);
 
   // Dialog states
   const [showCreateDialog, setShowCreateDialog] = useState(false);
@@ -96,9 +94,20 @@ const InboundPage: React.FC = () => {
   // Receive dialog state
   const [receiveItems, setReceiveItems] = useState<ReceiveItemRequest[]>([]);
 
-  const fetchOrders = useCallback(async () => {
-    try {
-      setLoading(true);
+  const queryClient = useQueryClient();
+
+  const ordersQueryKey = [
+    QUERY_KEYS.WMS.INBOUND_ORDERS,
+    currentPage,
+    pageSize,
+    searchTerm,
+    statusFilter,
+    warehouseFilter,
+  ];
+
+  const { data: ordersResponse, isLoading: loading } = useQuery({
+    queryKey: ordersQueryKey,
+    queryFn: async () => {
       const params: Record<string, unknown> = {
         page: currentPage,
         pagesize: pageSize,
@@ -108,32 +117,28 @@ const InboundPage: React.FC = () => {
       if (warehouseFilter) params.warehouse_id = warehouseFilter;
 
       const response = await wmsApi.inboundOrders.list(params as any);
-      if (response.success && response.data) {
-        setOrders(response.data.items || []);
-        setTotal(response.data.total || 0);
+      if (!response.success) {
+        throw new Error('Failed to fetch inbound orders');
       }
-    } catch (error: unknown) {
-      apiLogger.error('获取入库单列表失败:', error);
-      addNotification({
-        type: 'error',
-        title: '加载失败',
-        message: '无法加载入库单列表',
-      });
-    } finally {
-      setLoading(false);
-    }
-  }, [currentPage, pageSize, searchTerm, statusFilter, warehouseFilter, addNotification]);
+      return response.data;
+    },
+  });
 
-  const fetchWarehouses = async () => {
-    try {
+  const orders = ordersResponse?.items || [];
+  const total = ordersResponse?.total || 0;
+
+  const { data: warehousesData } = useQuery({
+    queryKey: [QUERY_KEYS.WMS.WAREHOUSES],
+    queryFn: async () => {
       const response = await wmsApi.warehouses.list({ page: 1, pagesize: 100 });
-      if (response.success && response.data) {
-        setWarehouses(response.data.items || []);
+      if (!response.success) {
+        throw new Error('Failed to fetch warehouses');
       }
-    } catch (error: unknown) {
-      apiLogger.error('获取仓库列表失败:', error);
-    }
-  };
+      return response.data;
+    },
+  });
+
+  const warehouses = warehousesData?.items || [];
 
   const fetchOrderItems = async (orderId: string) => {
     try {
@@ -152,10 +157,92 @@ const InboundPage: React.FC = () => {
     }
   };
 
-  useEffect(() => {
-    fetchOrders();
-    fetchWarehouses();
-  }, [fetchOrders]);
+  const invalidateOrders = () => {
+    queryClient.invalidateQueries({ queryKey: [QUERY_KEYS.WMS.INBOUND_ORDERS] });
+  };
+
+  const createMutation = useMutation({
+    mutationFn: async (data: CreateInboundOrderRequest) => {
+      const response = await wmsApi.inboundOrders.create(data);
+      if (!response.success) {
+        throw new Error('Failed to create inbound order');
+      }
+      return response;
+    },
+    onSuccess: () => {
+      invalidateOrders();
+      setShowCreateDialog(false);
+      resetNewItem();
+    },
+    onError: (error) => {
+      apiLogger.error('创建入库单失败:', error);
+    },
+  });
+
+  const confirmMutation = useMutation({
+    mutationFn: async (id: string) => {
+      const response = await wmsApi.inboundOrders.confirm(id);
+      if (!response.success) {
+        throw new Error('Failed to confirm inbound order');
+      }
+      return response;
+    },
+    onSuccess: () => {
+      invalidateOrders();
+    },
+    onError: (error) => {
+      apiLogger.error('确认入库单失败:', error);
+    },
+  });
+
+  const receiveMutation = useMutation({
+    mutationFn: async ({ id, items }: { id: string; items: ReceiveItemRequest[] }) => {
+      const response = await wmsApi.inboundOrders.receive(id, items);
+      if (!response.success) {
+        throw new Error('Failed to receive inbound order');
+      }
+      return response;
+    },
+    onSuccess: () => {
+      invalidateOrders();
+      setShowReceiveDialog(false);
+    },
+    onError: (error) => {
+      apiLogger.error('收货失败:', error);
+    },
+  });
+
+  const completeMutation = useMutation({
+    mutationFn: async (id: string) => {
+      const response = await wmsApi.inboundOrders.complete(id);
+      if (!response.success) {
+        throw new Error('Failed to complete inbound order');
+      }
+      return response;
+    },
+    onSuccess: () => {
+      invalidateOrders();
+    },
+    onError: (error) => {
+      apiLogger.error('完成入库单失败:', error);
+    },
+  });
+
+  const deleteMutation = useMutation({
+    mutationFn: async (id: string) => {
+      const response = await wmsApi.inboundOrders.delete(id);
+      if (!response.success) {
+        throw new Error('Failed to delete inbound order');
+      }
+      return response;
+    },
+    onSuccess: () => {
+      invalidateOrders();
+    },
+    onError: (error) => {
+      apiLogger.error('删除入库单失败:', error);
+    },
+  });
 
   const handleCreate = async () => {
     if (!newItem.order_number || !newItem.warehouse_id) {
@@ -167,47 +254,11 @@ const InboundPage: React.FC = () => {
       return;
     }
 
-    try {
-      const response = await wmsApi.inboundOrders.create(newItem);
-      if (response.success) {
-        addNotification({
-          type: 'success',
-          title: '创建成功',
-          message: '入库单已创建',
-        });
-        setShowCreateDialog(false);
-        resetNewItem();
-        fetchOrders();
-      }
-    } catch (error: unknown) {
-      apiLogger.error('创建入库单失败:', error);
-      addNotification({
-        type: 'error',
-        title: '创建失败',
-        message: '创建入库单失败',
-      });
-    }
+    await createMutation.mutateAsync(newItem);
   };
 
   const handleConfirm = async (id: string) => {
-    try {
-      const response = await wmsApi.inboundOrders.confirm(id);
-      if (response.success) {
-        addNotification({
-          type: 'success',
-          title: '确认成功',
-          message: '入库单已确认',
-        });
-        fetchOrders();
-      }
-    } catch (error: unknown) {
-      apiLogger.error('确认入库单失败:', error);
-      addNotification({
-        type: 'error',
-        title: '确认失败',
-        message: '确认入库单失败',
-      });
-    }
+    await confirmMutation.mutateAsync(id);
   };
 
   const handleReceiveClick = async (order: InboundOrder) => {
@@ -218,47 +269,11 @@ const InboundPage: React.FC = () => {
 
   const handleReceive = async () => {
     if (!selectedOrder) return;
-
-    try {
-      const response = await wmsApi.inboundOrders.receive(selectedOrder.id, receiveItems);
-      if (response.success) {
-        addNotification({
-          type: 'success',
-          title: '收货成功',
-          message: '入库单已收货',
-        });
-        setShowReceiveDialog(false);
-        fetchOrders();
-      }
-    } catch (error: unknown) {
-      apiLogger.error('收货失败:', error);
-      addNotification({
-        type: 'error',
-        title: '收货失败',
-        message: '收货失败',
-      });
-    }
+    await receiveMutation.mutateAsync({ id: selectedOrder.id, items: receiveItems });
   };
 
   const handleComplete = async (id: string) => {
-    try {
-      const response = await wmsApi.inboundOrders.complete(id);
-      if (response.success) {
-        addNotification({
-          type: 'success',
-          title: '完成成功',
-          message: '入库单已完成',
-        });
-        fetchOrders();
-      }
-    } catch (error: unknown) {
-      apiLogger.error('完成入库单失败:', error);
-      addNotification({
-        type: 'error',
-        title: '完成失败',
-        message: '完成入库单失败',
-      });
-    }
+    await completeMutation.mutateAsync(id);
   };
 
   const handleDeleteClick = (id: string) => {
@@ -268,26 +283,8 @@ const InboundPage: React.FC = () => {
 
   const handleDelete = useCallback(async () => {
     if (!deleteOrderId) return;
-
-    try {
-      const response = await wmsApi.inboundOrders.delete(deleteOrderId);
-      if (response.success) {
-        addNotification({
-          type: 'success',
-          title: '删除成功',
-          message: '入库单已删除',
-        });
-        fetchOrders();
-      }
-    } catch (error: unknown) {
-      apiLogger.error('删除入库单失败:', error);
-      addNotification({
-        type: 'error',
-        title: '删除失败',
-        message: '删除入库单失败',
-      });
-    }
-  }, [addNotification, fetchOrders, deleteOrderId]);
+    await deleteMutation.mutateAsync(deleteOrderId);
+  }, [deleteMutation, deleteOrderId]);
 
   const handleViewDetail = async (order: InboundOrder) => {
     setSelectedOrder(order);

@@ -4,6 +4,8 @@
  * 提供系统部署模式的配置管理，支持 SaaS 和 On-Premise 两种部署模式。
  */
 
+import { getEnv } from './runtime';
+
 export type DeploymentMode = 'saas' | 'on-premise';
 
 export interface FeatureFlags {
@@ -36,16 +38,16 @@ export interface DeploymentConfig {
  * 从环境变量获取部署配置
  */
 export const deploymentConfig: DeploymentConfig = {
-  mode: (import.meta.env.VITE_DEPLOYMENT_MODE as DeploymentMode) || 'on-premise',
-  multiTenantEnabled: import.meta.env.VITE_MULTI_TENANT_ENABLED === 'true',
-  defaultTenantId: import.meta.env.VITE_DEFAULT_TENANT_ID || '00000000-0000-0000-0000-000000000001',
+  mode: (getEnv('VITE_DEPLOYMENT_MODE') as DeploymentMode) || 'on-premise',
+  multiTenantEnabled: getEnv('VITE_MULTI_TENANT_ENABLED') === 'true',
+  defaultTenantId: getEnv('VITE_DEFAULT_TENANT_ID') || '00000000-0000-0000-0000-000000000001',
   features: {
-    quotaEnabled: import.meta.env.VITE_QUOTA_ENABLED === 'true',
-    billingEnabled: import.meta.env.VITE_BILLING_ENABLED === 'true',
-    tenantManagement: import.meta.env.VITE_TENANT_MANAGEMENT === 'true',
-    ssoEnabled: import.meta.env.VITE_SSO_ENABLED === 'true',
-    twoFactorRequired: import.meta.env.VITE_TWO_FACTOR_REQUIRED === 'true',
-    ipWhitelistEnabled: import.meta.env.VITE_IP_WHITELIST_ENABLED === 'true',
+    quotaEnabled: getEnv('VITE_QUOTA_ENABLED') === 'true',
+    billingEnabled: getEnv('VITE_BILLING_ENABLED') === 'true',
+    tenantManagement: getEnv('VITE_TENANT_MANAGEMENT') === 'true',
+    ssoEnabled: getEnv('VITE_SSO_ENABLED') === 'true',
+    twoFactorRequired: getEnv('VITE_TWO_FACTOR_REQUIRED') === 'true',
+    ipWhitelistEnabled: getEnv('VITE_IP_WHITELIST_ENABLED') === 'true',
   },
 };
 

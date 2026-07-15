@@ -1,5 +1,10 @@
 import apiClient from '../client';
 import type { ApiResponse } from '../client';
+import { systemParamsApi } from './params';
+import { systemAuditApi } from './audit';
+
+export type { SystemConfig, CacheConfig, LogConfig, SystemParams } from './types';
+export type { AuditLog, AuditLogQueryParams, PaginatedAuditLogs } from './types';
 
 export interface DictType {
   id: string;
@@ -103,23 +108,23 @@ export const dictTypeApi = {
     if (params?.status) searchParams.set('status', params.status);
 
     const queryString = searchParams.toString();
-    return apiClient.core.get(`/dict/v1/dict-types${queryString ? `?${queryString}` : ''}`);
+    return apiClient.core.get(`/dict/dict-types${queryString ? `?${queryString}` : ''}`);
   },
 
   async get(id: string): Promise<ApiResponse<DictType>> {
-    return apiClient.core.get(`/dict/v1/dict-types/${id}`);
+    return apiClient.core.get(`/dict/dict-types/${id}`);
   },
 
   async create(data: Partial<DictType>): Promise<ApiResponse<DictType>> {
-    return apiClient.core.post('/dict/v1/dict-types', data);
+    return apiClient.core.post('/dict/dict-types', data);
   },
 
   async update(id: string, data: Partial<DictType>): Promise<ApiResponse<DictType>> {
-    return apiClient.core.put(`/dict/v1/dict-types/${id}`, data);
+    return apiClient.core.put(`/dict/dict-types/${id}`, data);
   },
 
   async delete(id: string): Promise<ApiResponse<string>> {
-    return apiClient.core.delete(`/dict/v1/dict-types/${id}`);
+    return apiClient.core.delete(`/dict/dict-types/${id}`);
   },
 };
 
@@ -148,32 +153,32 @@ export const dictItemApi = {
 
     const queryString = searchParams.toString();
     return apiClient.core.get(
-      `/dict/v1/dict-types/${dictTypeId}/items${queryString ? `?${queryString}` : ''}`
+      `/dict/dict-types/${dictTypeId}/items${queryString ? `?${queryString}` : ''}`
     );
   },
 
   async get(id: string): Promise<ApiResponse<DictItem>> {
-    return apiClient.core.get(`/dict/v1/dict-items/${id}`);
+    return apiClient.core.get(`/dict/dict-items/${id}`);
   },
 
   async create(data: Partial<DictItem>): Promise<ApiResponse<DictItem>> {
-    return apiClient.core.post('/dict/v1/dict-items', data);
+    return apiClient.core.post('/dict/dict-items', data);
   },
 
   async update(id: string, data: Partial<DictItem>): Promise<ApiResponse<DictItem>> {
-    return apiClient.core.put(`/dict/v1/dict-items/${id}`, data);
+    return apiClient.core.put(`/dict/dict-items/${id}`, data);
   },
 
   async delete(id: string): Promise<ApiResponse<string>> {
-    return apiClient.core.delete(`/dict/v1/dict-items/${id}`);
+    return apiClient.core.delete(`/dict/dict-items/${id}`);
   },
 
   async batchCreate(data: BatchCreateDictItemRequest): Promise<ApiResponse<DictItem[]>> {
-    return apiClient.core.post('/dict/v1/dict-items/batch', data);
+    return apiClient.core.post('/dict/dict-items/batch', data);
   },
 
   async export(dictTypeId: string): Promise<string> {
-    const response = await apiClient.core.get(`/dict/v1/dict-types/${dictTypeId}/items/export`, {
+    const response = await apiClient.core.get(`/dict/dict-types/${dictTypeId}/items/export`, {
       responseType: 'text',
     });
     return response.data;
@@ -240,4 +245,6 @@ export const dbStructureApi = {
   },
 };
 
-export default { dictTypeApi, dictItemApi, dbStructureApi };
+export { systemParamsApi, systemAuditApi };
+
+export default { dictTypeApi, dictItemApi, dbStructureApi, systemParamsApi, systemAuditApi };

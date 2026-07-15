@@ -1,155 +1,23 @@
-import axios, { AxiosInstance, AxiosRequestConfig, CancelTokenSource, InternalAxiosRequestConfig } from 'axios';
-import { shouldUseMock } from '@/mock';
-import * as mockScan from '@/mock/scan';
-import * as mockApproval from '@/mock/approval';
-import * as mockAttendance from '@/mock/attendance';
-import * as mockTask from '@/mock/task';
-import * as mockDashboard from '@/mock/dashboard';
+import axios, {
+  AxiosInstance,
+  AxiosRequestConfig,
+  CancelTokenSource,
+  InternalAxiosRequestConfig,
+} from 'axios';
 import { storage } from '@/utils/storage';
 import { getMobileApiUrl } from '@/utils/api-url';
+import { NetworkService } from '@/services/networkService';
+import { OfflineService } from '@/services/offlineService';
 
 declare global {
   namespace NodeJS {
     interface ProcessEnv {
       EXPO_PUBLIC_API_URL?: string;
-      EXPO_PUBLIC_USE_MOCK?: string;
     }
   }
 }
 
 const BASE_URL = getMobileApiUrl();
-
-const getMockResponse = (config: AxiosRequestConfig): unknown | null => {
-  if (!shouldUseMock()) return null;
-  
-  const url = config.url || '';
-  const method = config.method?.toUpperCase() || 'GET';
-  const data = config.data as Record<string, unknown> || {};
-  const params = config.params as Record<string, unknown> || {};
-  
-  if (url === '/scan/barcode' && method === 'POST') {
-    return mockScan.mockScanBarcode(data as any);
-  }
-  
-  if (url === '/scan/qrcode' && method === 'POST') {
-    return mockScan.mockScanQrcode(data as any);
-  }
-  
-  if (url === '/barcode/history' && method === 'GET') {
-    return mockScan.mockGetScanHistory(params as any);
-  }
-  
-  if (url.startsWith('/barcode/history/') && method === 'GET') {
-    const id = url.split('/').pop() || '';
-    return mockScan.mockGetScanById(id);
-  }
-  
-  if (url.startsWith('/barcode/history/') && method === 'DELETE') {
-    const id = url.split('/').pop() || '';
-    return mockScan.mockDeleteScanRecord(id);
-  }
-  
-  if (url === '/barcode/types' && method === 'GET') {
-    return mockScan.mockGetSupportedBarcodeTypes();
-  }
-  
-  if (url === '/approval/tasks' && method === 'GET') {
-    return mockApproval.mockGetApprovals(params as any);
-  }
-  
-  if (url === '/approval/tasks/pending' && method === 'GET') {
-    return mockApproval.mockGetPendingTasks();
-  }
-  
-  if (url.startsWith('/approval/tasks/') && url.endsWith('/approve') && method === 'POST') {
-    const id = url.split('/')[3];
-    return mockApproval.mockApproveApproval(id, data as any);
-  }
-  
-  if (url.startsWith('/approval/tasks/') && url.endsWith('/reject') && method === 'POST') {
-    const id = url.split('/')[3];
-    return mockApproval.mockRejectApproval(id, data as any);
-  }
-  
-  if (url.startsWith('/approval/tasks/') && url.endsWith('/delegate') && method === 'POST') {
-    const id = url.split('/')[3];
-    return mockApproval.mockDelegate(id, data as any);
-  }
-  
-  if (url.startsWith('/approval/tasks/') && method === 'GET') {
-    const id = url.split('/')[3];
-    return mockApproval.mockGetTaskById(id);
-  }
-  
-  if (url === '/approval/history' && method === 'GET') {
-    return mockApproval.mockGetHistory(params as any);
-  }
-  
-  if (url === '/attendance/stats' && method === 'GET') {
-    return mockAttendance.mockGetAttendanceStats();
-  }
-  
-  if (url === '/attendance/records' && method === 'GET') {
-    return mockAttendance.mockGetAttendanceRecords(params as any);
-  }
-  
-  if (url === '/attendance/today' && method === 'GET') {
-    return mockAttendance.mockGetTodayRecord();
-  }
-  
-  if (url === '/attendance/checkin' && method === 'POST') {
-    return mockAttendance.mockCheckIn(data as any);
-  }
-  
-  if (url === '/attendance/checkout' && method === 'POST') {
-    return mockAttendance.mockCheckOut(data as any);
-  }
-  
-  if (url === '/task/list' && method === 'GET') {
-    return mockTask.mockGetTasks(params as any);
-  }
-  
-  if (url === '/task/pending' && method === 'GET') {
-    return mockTask.mockGetPendingTasks();
-  }
-  
-  if (url.startsWith('/task/') && method === 'GET') {
-    const id = url.split('/')[2];
-    return mockTask.mockGetTaskById(id);
-  }
-  
-  if (url === '/task/create' && method === 'POST') {
-    return mockTask.mockCreateTask(data as any);
-  }
-  
-  if (url.startsWith('/task/') && method === 'PUT') {
-    const id = url.split('/')[2];
-    return mockTask.mockUpdateTask(id, data as any);
-  }
-  
-  if (url.startsWith('/task/') && method === 'DELETE') {
-    const id = url.split('/')[2];
-    return mockTask.mockDeleteTask(id);
-  }
-  
-  if (url === '/dashboard/stats' && method === 'GET') {
-    return mockDashboard.mockGetStats();
-  }
-  
-  if (url === '/dashboard/quick-actions' && method === 'GET') {
-    return mockDashboard.mockGetQuickActions();
-  }
-  
-  if (url === '/dashboard/events' && method === 'GET') {
-    return mockDashboard.mockGetRecentEvents();
-  }
-  
-  if (url === '/dashboard/tasks' && method === 'GET') {
-    return mockDashboard.mockGetRecentTasks();
-  }
-  
-  return null;
-};
 
 const MAX_CACHE_SIZE = 100;
 const DEFAULT_TTL = 5 * 60 * 1000;
@@ -265,22 +133,57 @@ const createApiClient = (): AxiosInstance => {
         config.headers.Authorization = `Bearer ${token}`;
       }
 
-      const mockData = getMockResponse(config);
-      if (mockData !== null) {
-        return {
-          ...config,
-          adapter: () =>
-            Promise.resolve({
-              data: mockData,
-              status: 200,
-              statusText: 'OK',
-              headers: {},
-              config,
-            }),
-        };
+      const isOffline = NetworkService.isOffline();
+      const method = config.method?.toUpperCase() || 'GET';
+
+      if (isOffline) {
+        if (method === 'GET') {
+          const cachedData = await OfflineService.getCache('api', getCacheKey(config));
+          if (cachedData) {
+            return {
+              ...config,
+              adapter: () =>
+                Promise.resolve({
+                  data: cachedData,
+                  status: 200,
+                  statusText: 'OK (Offline Cache)',
+                  headers: { 'X-Offline-Cache': 'true' },
+                  config,
+                }),
+            };
+          }
+        } else {
+          const module = (config as any)?.offlineModule || 'api';
+          const action = method.toLowerCase();
+          const data = (config.data as Record<string, unknown>) || {};
+          const url = config.url || '';
+
+          const offlineId = await OfflineService.saveOfflineAction(module, action, {
+            url,
+            method,
+            data,
+          });
+
+          return {
+            ...config,
+            adapter: () =>
+              Promise.resolve({
+                data: {
+                  success: true,
+                  message: '操作已保存，网络恢复后将自动同步',
+                  offlineId,
+                  isOffline: true,
+                },
+                status: 200,
+                statusText: 'OK (Offline)',
+                headers: { 'X-Offline-Queued': 'true' },
+                config,
+              }),
+          };
+        }
       }
 
-      const cacheEnabled = config.method?.toUpperCase() === 'GET' && !(config as any)?.noCache;
+      const cacheEnabled = method === 'GET' && !(config as any)?.noCache;
       if (cacheEnabled) {
         const cachedData = getFromCache(config);
         if (cachedData !== null) {
@@ -315,11 +218,16 @@ const createApiClient = (): AxiosInstance => {
   client.interceptors.response.use(
     (response) => {
       const config = response.config as AxiosRequestConfig;
-      const cacheEnabled = config.method?.toUpperCase() === 'GET' && !(config as any)?.noCache;
+      const method = config.method?.toUpperCase() || 'GET';
+      const cacheEnabled = method === 'GET' && !(config as any)?.noCache;
       const cacheTtl = (config as any)?.cacheTtl || DEFAULT_TTL;
 
       if (cacheEnabled && response.status === 200) {
         saveToCache(config, response.data, cacheTtl);
+
+        OfflineService.setCache('api', getCacheKey(config), response.data, cacheTtl / 1000).catch(
+          (e) => console.warn('Failed to save to offline cache:', e),
+        );
       }
 
       const key = getCacheKey(config);
@@ -341,6 +249,39 @@ const createApiClient = (): AxiosInstance => {
         await storage.removeToken();
         await storage.removeUser();
         return Promise.reject(error);
+      }
+
+      const isNetworkError = !error.response || error.code === 'ERR_NETWORK';
+      const method = config.method?.toUpperCase() || 'GET';
+
+      if (isNetworkError && method !== 'GET') {
+        const module = (config as any)?.offlineModule || 'api';
+        const action = method.toLowerCase();
+        const data = (config.data as Record<string, unknown>) || {};
+        const url = config.url || '';
+
+        try {
+          const offlineId = await OfflineService.saveOfflineAction(module, action, {
+            url,
+            method,
+            data,
+          });
+
+          return Promise.resolve({
+            data: {
+              success: true,
+              message: '网络异常，操作已保存，网络恢复后将自动同步',
+              offlineId,
+              isOffline: true,
+            },
+            status: 200,
+            statusText: 'OK (Offline Fallback)',
+            headers: { 'X-Offline-Queued': 'true' },
+            config,
+          });
+        } catch (e) {
+          console.warn('Failed to save offline action:', e);
+        }
       }
 
       const retryCount = (config as any)?.retryCount || 0;

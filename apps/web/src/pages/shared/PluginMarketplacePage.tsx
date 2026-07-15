@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { useQuery, useQueryClient } from '@tanstack/react-query';
 import {
   Package,
   Star,
@@ -46,14 +47,9 @@ type ViewMode = 'grid' | 'list';
 
 const PluginMarketplacePage: React.FC = () => {
   const navigate = useNavigate();
+  const queryClient = useQueryClient();
   const { healthStatus, fetchHealthStatus } = usePluginStore();
   const addNotification = useNotificationStore((state) => state.addNotification);
-
-  const [plugins, setPlugins] = useState<Plugin[]>([]);
-  const [categories, setCategories] = useState<PluginCategory[]>([]);
-  const [featuredPlugins, setFeaturedPlugins] = useState<Plugin[]>([]);
-  const [newPlugins, setNewPlugins] = useState<Plugin[]>([]);
-  const [topRatedPlugins, setTopRatedPlugins] = useState<Plugin[]>([]);
 
   const [searchQuery, setSearchQuery] = useState('');
   const [activeCategory, setActiveCategory] = useState('all');
@@ -61,104 +57,86 @@ const PluginMarketplacePage: React.FC = () => {
   const [viewMode, setViewMode] = useState<ViewMode>('grid');
   const [activeTab, setActiveTab] = useState(0);
 
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
-  const [isRefreshing, setIsRefreshing] = useState(false);
+  const summaryQuery = useQuery({
+    queryKey: ['plugin-marketplace-summary'],
+    queryFn: async () => {
+      const res = await getMarketplaceSummary();
+      return res.success && res.data ? res.data : null;
+    },
+    staleTime: 5 * 60 * 1000,
+  });
+
+  const categoriesQuery = useQuery<PluginCategory[]>({
+    queryKey: ['plugin-categories'],
+    queryFn: async () => {
+      const res = await getPluginCategories();
+      return res.success && res.data ? res.data : [];
+    },
+    staleTime: 5 * 60 * 1000,
+  });
+
+  const hasFilters = activeTab !== 0 || activeCategory !== 'all' || !!searchQuery;
+
+  const pluginsQuery = useQuery<Plugin[]>({
+    queryKey: ['plugin-marketplace-plugins', searchQuery, activeCategory, sortBy, activeTab],
+    queryFn: async () => {
+      const params: Record<string, unknown> = {
+        sort_by: sortBy,
+      };
+      if (searchQuery) params.search = searchQuery;
+      if (activeCategory !== 'all') params.category = activeCategory;
+      const res = await listPlugins(params);
+      return res.success && res.data ? res.data.plugins : [];
+    },
+    enabled: hasFilters,
+    staleTime: 5 * 60 * 1000,
+  });
+
+  const summary = summaryQuery.data ?? null;
+  const categories = categoriesQuery.data ?? [];
+  const featuredPlugins = summary?.featured_plugins ?? [];
+  const newPlugins = summary?.new_plugins ?? [];
+  const topRatedPlugins = summary?.top_rated ?? [];
+  const plugins = pluginsQuery.data ?? [];
+
+  const loading = summaryQuery.isLoading || categoriesQuery.isLoading;
+  const error = summaryQuery.isError || categoriesQuery.isError ? '加载失败，请稍后重试' : null;
+  const isRefreshing = pluginsQuery.isFetching || summaryQuery.isFetching;
 
   useEffect(() => {
-    const fetchData = async () => {
-      setLoading(true);
-      setError(null);
-      try {
-        const [summaryRes, categoriesRes] = await Promise.all([
-          getMarketplaceSummary(),
-          getPluginCategories(),
-        ]);
+    if (summaryQuery.isError) {
+      logger.error('Failed to load marketplace:', summaryQuery.error);
+    }
+  }, [summaryQuery.isError, summaryQuery.error]);
 
-        if (summaryRes.success && summaryRes.data) {
-          setFeaturedPlugins(summaryRes.data.featured_plugins);
-          setNewPlugins(summaryRes.data.new_plugins);
-          setTopRatedPlugins(summaryRes.data.top_rated);
-          setPlugins(summaryRes.data.featured_plugins);
-        }
+  useEffect(() => {
+    if (categoriesQuery.isError) {
+      logger.error('Failed to load categories:', categoriesQuery.error);
+    }
+  }, [categoriesQuery.isError, categoriesQuery.error]);
 
-        if (categoriesRes.success && categoriesRes.data) {
-          setCategories(categoriesRes.data);
-        }
+  useEffect(() => {
+    if (pluginsQuery.isError) {
+      logger.error('Failed to load plugins:', pluginsQuery.error);
+    }
+  }, [pluginsQuery.isError, pluginsQuery.error]);
 
-        fetchHealthStatus();
-      } catch (err: unknown) {
-        setError('加载失败，请稍后重试');
-        logger.error('Failed to load marketplace:', err);
-      } finally {
-        setLoading(false);
-      }
-    };
-
-    fetchData();
+  useEffect(() => {
+    fetchHealthStatus();
   }, [fetchHealthStatus]);
 
-  useEffect(() => {
-    if (activeTab !== 0 || activeCategory !== 'all' || searchQuery) {
-      const fetchPlugins = async () => {
-        setIsRefreshing(true);
-        try {
-          const params: Record<string, unknown> = {
-            sort_by: sortBy,
-          };
-
-          if (searchQuery) params.search = searchQuery;
-          if (activeCategory !== 'all') params.category = activeCategory;
-
-          const res = await listPlugins(params);
-          if (res.success && res.data) {
-            setPlugins(res.data.plugins);
-          }
-        } catch (err: unknown) {
-          logger.error('Failed to load plugins:', err);
-        } finally {
-          setIsRefreshing(false);
-        }
-      };
-
-      fetchPlugins();
-    }
-  }, [activeCategory, sortBy, searchQuery, activeTab]);
-
   const handleRefresh = async () => {
-    setIsRefreshing(true);
-    try {
-      const [summaryRes, categoriesRes] = await Promise.all([
-        getMarketplaceSummary(),
-        getPluginCategories(),
-      ]);
-
-      if (summaryRes.success && summaryRes.data) {
-        setFeaturedPlugins(summaryRes.data.featured_plugins);
-        setNewPlugins(summaryRes.data.new_plugins);
-        setTopRatedPlugins(summaryRes.data.top_rated);
-      }
-
-      if (categoriesRes.success && categoriesRes.data) {
-        setCategories(categoriesRes.data);
-      }
-
-      fetchHealthStatus(true);
-
-      addNotification({
-        title: '刷新成功',
-        message: '插件列表已更新',
-        type: 'success',
-      });
-    } catch (err: unknown) {
-      addNotification({
-        title: '刷新失败',
-        message: '请稍后重试',
-        type: 'error',
-      });
-    } finally {
-      setIsRefreshing(false);
-    }
+    await Promise.all([
+      queryClient.invalidateQueries({ queryKey: ['plugin-marketplace-summary'] }),
+      queryClient.invalidateQueries({ queryKey: ['plugin-categories'] }),
+      queryClient.invalidateQueries({ queryKey: ['plugin-marketplace-plugins'] }),
+    ]);
+    fetchHealthStatus(true);
+    addNotification({
+      title: '刷新成功',
+      message: '插件列表已更新',
+      type: 'success',
+    });
   };
 
   const displayPlugins = useMemo(() => {

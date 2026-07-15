@@ -1,7 +1,8 @@
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { z } from 'zod';
 import { FolderOpen, Calendar, Users, DollarSign, Tag, FileText } from 'lucide-react';
+import { useMutation, useQueryClient } from '@tanstack/react-query';
 import FormPageTemplate from '@/components/templates/FormPageTemplate';
 import type { FormSection, FormField } from '@/components/templates/FormPageTemplate';
 import { PageContainer } from '@/components/common';
@@ -9,6 +10,7 @@ import { pmApi } from '@/api/pm';
 import { useNotification } from '@/hooks/useNotification';
 import { logger } from '@/utils/logger';
 import { PM_PATHS } from '@/modules/pm/config';
+import { QUERY_KEYS } from '@/lib/reactQuery';
 
 const projectSchema = z.object({
   name: z.string().min(1, '项目名称不能为空'),
@@ -35,41 +37,42 @@ const PROJECT_TYPES = [
 const PmProjectCreatePage: React.FC = () => {
   const navigate = useNavigate();
   const { success, error } = useNotification();
+  const queryClient = useQueryClient();
 
-  const [submitting, setSubmitting] = useState(false);
-
-  const handleSubmit = useCallback(
-    async (data: unknown) => {
-      const formData = data as ProjectFormData;
-
-      setSubmitting(true);
-      try {
-        const response = await pmApi.projects.create({
-          name: formData.name.trim(),
-          code: formData.code.trim(),
-          project_type: formData.project_type,
-          description: formData.description?.trim() || undefined,
-          budget: formData.budget ? parseFloat(formData.budget) : undefined,
-          leader: formData.leader?.trim() || undefined,
-          start_date: formData.start_date,
-          end_date: formData.end_date,
-          tags: formData.tags?.trim() ? formData.tags.split(',').map((t) => t.trim()) : undefined,
-        });
-
-        if (response.code === 200 || response.code === 201) {
-          success('项目创建成功');
-          navigate(`${PM_PATHS.projects}/${response.data?.id}`);
-        } else {
-          error(response.message || '创建失败');
-        }
-      } catch (err: unknown) {
-        logger.error('Failed to create project:', err);
-        error('创建项目失败');
-      } finally {
-        setSubmitting(false);
+  const createMutation = useMutation({
+    mutationFn: async (data: ProjectFormData) => {
+      return pmApi.projects.create({
+        name: data.name.trim(),
+        code: data.code.trim(),
+        project_type: data.project_type,
+        description: data.description?.trim() || undefined,
+        budget: data.budget ? parseFloat(data.budget) : undefined,
+        leader: data.leader?.trim() || undefined,
+        start_date: data.start_date,
+        end_date: data.end_date,
+        tags: data.tags?.trim() ? data.tags.split(',').map((t) => t.trim()) : undefined,
+      });
+    },
+    onSuccess: (response) => {
+      queryClient.invalidateQueries({ queryKey: QUERY_KEYS.PM.PROJECTS });
+      if (response.code === 200 || response.code === 201) {
+        success('项目创建成功');
+        navigate(`${PM_PATHS.projects}/${response.data?.id}`);
+      } else {
+        error(response.message || '创建失败');
       }
     },
-    [error, success, navigate]
+    onError: (err: unknown) => {
+      logger.error('Failed to create project:', err);
+      error('创建项目失败');
+    },
+  });
+
+  const handleSubmit = useCallback(
+    (data: unknown) => {
+      createMutation.mutate(data as ProjectFormData);
+    },
+    [createMutation]
   );
 
   const handleCancel = () => {
@@ -205,7 +208,7 @@ const PmProjectCreatePage: React.FC = () => {
         ]}
         sections={sections}
         schema={projectSchema}
-        submitting={submitting}
+        submitting={createMutation.isPending}
         onSubmit={handleSubmit}
         onCancel={handleCancel}
         submitText='保存项目'

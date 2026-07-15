@@ -33,15 +33,14 @@ import { workflowApi } from '@/api/workflow';
 import { useNotificationStore } from '../../store';
 import { apiLogger } from '@/utils/logger';
 import { WORKFLOW_PATHS } from '@/modules/workflow/config';
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 
 const FlowVersionHistoryPage: React.FC = () => {
   const theme = useTheme();
   const navigate = useNavigate();
   const { id } = useParams<{ id: string }>();
   const addNotification = useNotificationStore((state) => state.addNotification);
-  const [workflow, setWorkflow] = useState<Workflow | null>(null);
-  const [versions, setVersions] = useState<WorkflowVersion[]>([]);
-  const [loading, setLoading] = useState(true);
+  const queryClient = useQueryClient();
   const [selectedVersions, setSelectedVersions] = useState<string[]>([]);
   const [showCreateModal, setShowCreateModal] = useState(false);
   const [showRollbackModal, setShowRollbackModal] = useState(false);
@@ -53,167 +52,197 @@ const FlowVersionHistoryPage: React.FC = () => {
   const [rollbackForm, setRollbackForm] = useState({
     reason: '',
   });
-  const [actionLoading, setActionLoading] = useState(false);
 
-  useEffect(() => {
-    loadData();
-  }, [id]);
-
-  const loadData = async () => {
-    if (!id) return;
-
-    try {
-      setLoading(true);
-
+  const workflowQuery = useQuery<Workflow | null>({
+    queryKey: ['workflow-version-workflow', id],
+    queryFn: async () => {
+      if (!id) return null;
       const workflowResponse = await workflowApi.getWorkflow(id);
       if (workflowResponse.success && workflowResponse.data) {
-        setWorkflow(workflowResponse.data as any);
+        return workflowResponse.data as any;
       }
+      return null;
+    },
+    enabled: !!id,
+    staleTime: 5 * 60 * 1000,
+  });
 
+  const workflow = workflowQuery.data ?? null;
+
+  const versionsQuery = useQuery<WorkflowVersion[]>({
+    queryKey: ['workflow-versions', id],
+    queryFn: async () => {
+      if (!id) return [];
       const versionsResponse = await workflowApi.getVersions(id);
       if (versionsResponse.success && versionsResponse.data) {
         const data = versionsResponse.data as any;
         const versionList = Array.isArray(data) ? data : data.items || [];
-        setVersions(versionList);
+        return versionList;
       }
-    } catch (err: unknown) {
-      apiLogger.error('加载数据失败:', err);
+      return [];
+    },
+    enabled: !!id,
+    staleTime: 5 * 60 * 1000,
+  });
+
+  const versions = versionsQuery.data ?? [];
+  const loading = workflowQuery.isLoading || versionsQuery.isLoading;
+
+  useEffect(() => {
+    if (workflowQuery.isError || versionsQuery.isError) {
+      apiLogger.error('加载数据失败:', {
+        workflowError: workflowQuery.error,
+        versionsError: versionsQuery.error,
+      });
       addNotification({
         title: '错误',
         message: '加载数据失败',
         type: 'error',
       });
-    } finally {
-      setLoading(false);
     }
+  }, [
+    workflowQuery.isError,
+    versionsQuery.isError,
+    workflowQuery.error,
+    versionsQuery.error,
+    addNotification,
+  ]);
+
+  const invalidateVersionQueries = () => {
+    queryClient.invalidateQueries({ queryKey: ['workflow-versions', id] });
+    queryClient.invalidateQueries({ queryKey: ['workflow-version-workflow', id] });
   };
 
-  const handleCreateVersion = async () => {
-    if (!id || !createForm.version.trim()) {
-      addNotification({ title: '提示', message: '请输入版本号', type: 'info' });
-      return;
-    }
-
-    try {
-      setActionLoading(true);
-
-      const workflow = await workflowApi.getWorkflow(id);
-      if (!workflow.success || !workflow.data) {
-        addNotification({
-          title: '错误',
-          message: '获取工作流失败',
-          type: 'error',
-        });
-        return;
+  const createVersionMutation = useMutation({
+    mutationFn: async (data: { version: string; change_description: string }) => {
+      const wfResponse = await workflowApi.getWorkflow(id!);
+      if (!wfResponse.success || !wfResponse.data) {
+        throw new Error('获取工作流失败');
       }
-
-      const workflowData = workflow.data as any;
-      const response = await workflowApi.createVersion(id, {
-        version: createForm.version,
+      const workflowData = wfResponse.data as any;
+      return workflowApi.createVersion(id!, {
+        version: data.version,
         definition: workflowData.definition || {},
-        change_description: createForm.change_description,
+        change_description: data.change_description,
         created_by: 'current-user',
       });
-
-      if (response.success) {
-        addNotification({
-          title: '成功',
-          message: '版本创建成功',
-          type: 'success',
-        });
-        setShowCreateModal(false);
-        setCreateForm({ version: '', change_description: '' });
-        loadData();
-      } else {
-        addNotification({
-          title: '失败',
-          message: response.message || '创建失败',
-          type: 'error',
-        });
-      }
-    } catch (err: unknown) {
+    },
+    onSuccess: () => {
+      invalidateVersionQueries();
+      addNotification({
+        title: '成功',
+        message: '版本创建成功',
+        type: 'success',
+      });
+      setShowCreateModal(false);
+      setCreateForm({ version: '', change_description: '' });
+    },
+    onError: (err: unknown) => {
       apiLogger.error('创建版本失败:', err);
       addNotification({
         title: '错误',
         message: '创建版本失败',
         type: 'error',
       });
-    } finally {
-      setActionLoading(false);
-    }
-  };
+    },
+  });
 
-  const handleActivateVersion = async (version: WorkflowVersion) => {
-    if (!id) return;
-
-    try {
-      setActionLoading(true);
-
-      const response = await workflowApi.activateVersion(id, version.id);
-      if (response.success) {
-        addNotification({
-          title: '成功',
-          message: '版本激活成功',
-          type: 'success',
-        });
-        loadData();
-      } else {
-        addNotification({
-          title: '失败',
-          message: response.message || '激活失败',
-          type: 'error',
-        });
-      }
-    } catch (err: unknown) {
+  const activateVersionMutation = useMutation({
+    mutationFn: (versionId: string) => workflowApi.activateVersion(id!, versionId),
+    onSuccess: () => {
+      invalidateVersionQueries();
+      addNotification({
+        title: '成功',
+        message: '版本激活成功',
+        type: 'success',
+      });
+    },
+    onError: (err: unknown) => {
       apiLogger.error('激活版本失败:', err);
       addNotification({
         title: '错误',
         message: '激活版本失败',
         type: 'error',
       });
-    } finally {
-      setActionLoading(false);
-    }
-  };
+    },
+  });
 
-  const handleRollback = async () => {
-    if (!id || !selectedVersion) return;
-
-    try {
-      setActionLoading(true);
-
-      const response = await workflowApi.rollbackVersion(id, {
-        to_version: selectedVersion.version,
-        reason: rollbackForm.reason,
+  const rollbackMutation = useMutation({
+    mutationFn: (data: { to_version: string; reason: string }) =>
+      workflowApi.rollbackVersion(id!, {
+        to_version: data.to_version,
+        reason: data.reason,
         rolled_back_by: 'current-user',
+      }),
+    onSuccess: () => {
+      invalidateVersionQueries();
+      addNotification({
+        title: '成功',
+        message: '回滚成功',
+        type: 'success',
       });
-
-      if (response.success) {
-        addNotification({
-          title: '成功',
-          message: '回滚成功',
-          type: 'success',
-        });
-        setShowRollbackModal(false);
-        setSelectedVersion(null);
-        setRollbackForm({ reason: '' });
-        loadData();
-      } else {
-        addNotification({
-          title: '失败',
-          message: response.message || '回滚失败',
-          type: 'error',
-        });
-      }
-    } catch (err: unknown) {
+      setShowRollbackModal(false);
+      setSelectedVersion(null);
+      setRollbackForm({ reason: '' });
+    },
+    onError: (err: unknown) => {
       apiLogger.error('回滚失败:', err);
       addNotification({ title: '错误', message: '回滚失败', type: 'error' });
-    } finally {
-      setActionLoading(false);
+    },
+  });
+
+  const deleteVersionMutation = useMutation({
+    mutationFn: (versionId: string) => workflowApi.deleteVersion(id!, versionId),
+    onSuccess: () => {
+      invalidateVersionQueries();
+      addNotification({
+        title: '成功',
+        message: '版本删除成功',
+        type: 'success',
+      });
+    },
+    onError: (err: unknown) => {
+      apiLogger.error('删除版本失败:', err);
+      addNotification({
+        title: '错误',
+        message: '删除版本失败',
+        type: 'error',
+      });
+    },
+  });
+
+  const actionLoading =
+    createVersionMutation.isPending ||
+    activateVersionMutation.isPending ||
+    rollbackMutation.isPending ||
+    deleteVersionMutation.isPending;
+
+  const handleCreateVersion = () => {
+    if (!id || !createForm.version.trim()) {
+      addNotification({ title: '提示', message: '请输入版本号', type: 'info' });
+      return;
     }
+
+    createVersionMutation.mutate({
+      version: createForm.version,
+      change_description: createForm.change_description,
+    });
   };
 
-  const handleDeleteVersion = async (version: WorkflowVersion) => {
+  const handleActivateVersion = (version: WorkflowVersion) => {
+    if (!id) return;
+    activateVersionMutation.mutate(version.id);
+  };
+
+  const handleRollback = () => {
+    if (!id || !selectedVersion) return;
+    rollbackMutation.mutate({
+      to_version: selectedVersion.version,
+      reason: rollbackForm.reason,
+    });
+  };
+
+  const handleDeleteVersion = (version: WorkflowVersion) => {
     if (!id || version.isactive) {
       addNotification({
         title: '提示',
@@ -225,34 +254,7 @@ const FlowVersionHistoryPage: React.FC = () => {
 
     if (!confirm('确定要删除这个版本吗？')) return;
 
-    try {
-      setActionLoading(true);
-
-      const response = await workflowApi.deleteVersion(id, version.id);
-      if (response.success) {
-        addNotification({
-          title: '成功',
-          message: '版本删除成功',
-          type: 'success',
-        });
-        loadData();
-      } else {
-        addNotification({
-          title: '失败',
-          message: response.message || '删除失败',
-          type: 'error',
-        });
-      }
-    } catch (err: unknown) {
-      apiLogger.error('删除版本失败:', err);
-      addNotification({
-        title: '错误',
-        message: '删除版本失败',
-        type: 'error',
-      });
-    } finally {
-      setActionLoading(false);
-    }
+    deleteVersionMutation.mutate(version.id);
   };
 
   const handleCompare = (version1: string, version2: string) => {

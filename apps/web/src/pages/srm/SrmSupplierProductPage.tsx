@@ -20,6 +20,7 @@ import { PageContainer } from '@/components/common';
 import { useNotificationStore } from '@/store';
 import { designTokens } from '@/theme/tokens';
 import { logger } from '@/utils/logger';
+import { useQuery, useQueryClient } from '@tanstack/react-query';
 
 const ct = designTokens.colors;
 
@@ -162,8 +163,18 @@ const defaultFormData: ProductFormData = {
 };
 
 const SrmSupplierProductPage: React.FC = () => {
-  const [products, setProducts] = useState<SupplierProduct[]>([]);
-  const [loading, setLoading] = useState(true);
+  const queryClient = useQueryClient();
+  const productsQuery = useQuery<SupplierProduct[]>({
+    queryKey: ['srm-supplier-products'],
+    queryFn: async () => {
+      return mockProducts;
+    },
+    staleTime: 5 * 60 * 1000,
+  });
+
+  const products = productsQuery.data ?? [];
+  const loading = productsQuery.isLoading;
+
   const [searchTerm, setSearchTerm] = useState('');
   const [showCreateModal, setShowCreateModal] = useState(false);
   const [showEditModal, setShowEditModal] = useState(false);
@@ -174,20 +185,11 @@ const SrmSupplierProductPage: React.FC = () => {
   const addNotification = useNotificationStore((state) => state.addNotification);
 
   useEffect(() => {
-    loadData();
-  }, []);
-
-  const loadData = async () => {
-    setLoading(true);
-    try {
-      setProducts(mockProducts);
-    } catch (error: unknown) {
-      logger.error('加载供应商产品失败:', error);
+    if (productsQuery.isError) {
+      logger.error('加载供应商产品失败:', productsQuery.error);
       addNotification({ title: '加载失败', message: '加载供应商产品失败', type: 'error' });
-    } finally {
-      setLoading(false);
     }
-  };
+  }, [productsQuery.isError, productsQuery.error, addNotification]);
 
   const getStatusBadge = (status: string) => {
     const config = STATUS_MAP[status] || {
@@ -270,7 +272,9 @@ const SrmSupplierProductPage: React.FC = () => {
       icon: <Trash2 style={{ width: 16, height: 16 }} />,
       color: 'error',
       onClick: (row) => {
-        setProducts((prev) => prev.filter((p) => p.id !== row.id));
+        queryClient.setQueryData<SupplierProduct[]>(['srm-supplier-products'], (old) =>
+          (old || []).filter((p) => p.id !== row.id)
+        );
         addNotification({ title: '成功', message: '产品删除成功', type: 'success' });
       },
     },
@@ -300,13 +304,16 @@ const SrmSupplierProductPage: React.FC = () => {
       created_at: new Date().toISOString().split('T')[0],
       updated_at: new Date().toISOString().split('T')[0],
     };
-    setProducts((prev) => [newProduct, ...prev]);
+    queryClient.setQueryData<SupplierProduct[]>(['srm-supplier-products'], (old) => [
+      newProduct,
+      ...(old || []),
+    ]);
     setShowCreateModal(false);
     addNotification({ title: '成功', message: '供应商产品创建成功', type: 'success' });
   };
   const handleSaveEdit = () => {
-    setProducts((prev) =>
-      prev.map((p) =>
+    queryClient.setQueryData<SupplierProduct[]>(['srm-supplier-products'], (old) =>
+      (old || []).map((p) =>
         p.id === editingId
           ? { ...p, ...formData, updated_at: new Date().toISOString().split('T')[0] }
           : p

@@ -1,5 +1,6 @@
-import React, { useState, useEffect, useMemo } from 'react';
+import React, { useMemo } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import {
   FormPageTemplate,
   type FormSection,
@@ -8,8 +9,10 @@ import {
 import { PageContainer } from '@/components/common';
 import { rdApi, formulaApi } from '@/api/rd';
 import { useNotificationStore } from '@/store';
-import type { Project, Formula } from '@/api/rd';
+import type { Project, Formula, CreateExperimentRequest, UpdateExperimentRequest } from '@/api/rd';
 import { RD_PATHS } from '@/modules/rd/config';
+import { QUERY_KEYS } from '@/lib/reactQuery';
+import { logger } from '@/utils/logger';
 
 const experimentTypes = ['活性测试', '稳定性测试', '配方优化', '工艺验证', '性能评估', '其他'];
 const phases = ['小试', '中试', '放大', '生产验证'];
@@ -19,16 +22,94 @@ const RsExperimentCreatePage: React.FC = () => {
   const navigate = useNavigate();
   const { id } = useParams<{ id: string }>();
   const isEdit = Boolean(id);
+  const queryClient = useQueryClient();
   const { addNotification } = useNotificationStore();
 
-  const [loading, setLoading] = useState(false);
-  const [submitting, setSubmitting] = useState(false);
-  const [error, setError] = useState<string | undefined>(undefined);
+  const projectsQuery = useQuery({
+    queryKey: QUERY_KEYS.RD.PROJECTS,
+    queryFn: async () => {
+      const response = await rdApi.listProjects();
+      if (!response.success || !response.data) {
+        throw new Error(response.message || '加载项目列表失败');
+      }
+      return response.data.projects || [];
+    },
+  });
 
-  const [projects, setProjects] = useState<Project[]>([]);
-  const [formulas, setFormulas] = useState<Formula[]>([]);
-  const [projectsLoading, setProjectsLoading] = useState(false);
-  const [formulasLoading, setFormulasLoading] = useState(false);
+  const formulasQuery = useQuery({
+    queryKey: QUERY_KEYS.RD.FORMULAS,
+    queryFn: async () => {
+      const response = await formulaApi.listFormulas();
+      if (!response.success || !response.data) {
+        throw new Error(response.message || '加载配方列表失败');
+      }
+      return response.data || [];
+    },
+  });
+
+  const experimentQuery = useQuery({
+    queryKey: QUERY_KEYS.RD.EXPERIMENT(id || ''),
+    queryFn: async () => {
+      const response = await rdApi.getExperiment(id || '');
+      if (!response.success || !response.data) {
+        throw new Error(response.message || '加载试验数据失败');
+      }
+      return response.data;
+    },
+    enabled: isEdit && !!id,
+  });
+
+  const submitMutation = useMutation({
+    mutationFn: async (params: {
+      isEdit: boolean;
+      id?: string;
+      requestData: Record<string, unknown>;
+    }) => {
+      if (params.isEdit && params.id) {
+        const response = await rdApi.updateExperiment(
+          params.id,
+          params.requestData as unknown as UpdateExperimentRequest
+        );
+        if (!response.success) {
+          throw new Error(response.message || '更新试验失败');
+        }
+        return response;
+      } else {
+        const response = await rdApi.createExperiment(
+          params.requestData as unknown as CreateExperimentRequest
+        );
+        if (!response.success) {
+          throw new Error(response.message || '创建试验失败');
+        }
+        return response;
+      }
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: QUERY_KEYS.RD.EXPERIMENTS });
+      addNotification({
+        type: 'success',
+        title: isEdit ? '更新成功' : '创建成功',
+        message: isEdit ? '试验信息已更新' : '试验已创建',
+      });
+      navigate(RD_PATHS.experiment);
+    },
+    onError: (error: unknown) => {
+      logger.error('提交试验数据失败:', error);
+      addNotification({
+        type: 'error',
+        title: '提交失败',
+        message: error instanceof Error ? error.message : '无法提交试验数据',
+      });
+    },
+  });
+
+  const projects = projectsQuery.data || [];
+  const formulas = formulasQuery.data || [];
+  const projectsLoading = projectsQuery.isLoading;
+  const formulasLoading = formulasQuery.isLoading;
+  const loading = experimentQuery.isLoading;
+  const submitting = submitMutation.isPending;
+  const error = experimentQuery.error ? '加载试验数据失败' : undefined;
 
   const defaultValues = {
     name: '',
@@ -170,122 +251,25 @@ const RsExperimentCreatePage: React.FC = () => {
     [projects, formulas, projectsLoading, formulasLoading, isEdit]
   );
 
-  useEffect(() => {
-    loadProjects();
-    loadFormulas();
-    if (isEdit && id) {
-      loadExperiment(id);
-    }
-  }, [isEdit, id]);
-
-  const loadProjects = async () => {
-    setProjectsLoading(true);
-    try {
-      const response = await rdApi.listProjects();
-      if (response.success && response.data) {
-        setProjects(response.data.projects || []);
-      }
-    } catch (err: unknown) {
-      addNotification({
-        type: 'error',
-        title: '加载失败',
-        message: '无法加载项目列表',
-      });
-    } finally {
-      setProjectsLoading(false);
-    }
-  };
-
-  const loadFormulas = async () => {
-    setFormulasLoading(true);
-    try {
-      const response = await formulaApi.listFormulas();
-      if (response.success && response.data) {
-        setFormulas(response.data || []);
-      }
-    } catch (err: unknown) {
-      addNotification({
-        type: 'error',
-        title: '加载失败',
-        message: '无法加载配方列表',
-      });
-    } finally {
-      setFormulasLoading(false);
-    }
-  };
-
-  const loadExperiment = async (experimentId: string) => {
-    try {
-      setLoading(true);
-      setError(undefined);
-      const response = await rdApi.getExperiment(experimentId);
-      if (response.success && response.data) {
-        const exp = response.data;
-      } else {
-        setError('无法获取试验数据');
-        addNotification({
-          type: 'error',
-          title: '加载失败',
-          message: response.message || '无法加载试验数据',
-        });
-      }
-    } catch (err: unknown) {
-      setError('加载试验数据失败');
-      addNotification({
-        type: 'error',
-        title: '加载失败',
-        message: '无法加载试验数据',
-      });
-    } finally {
-      setLoading(false);
-    }
-  };
-
   const handleSubmit = async (data: unknown) => {
-    setSubmitting(true);
-    try {
-      const formData = data as Record<string, unknown>;
+    const formData = data as Record<string, unknown>;
 
-      const requestData = {
-        name: formData.name as string,
-        code: formData.code as string,
-        project_id: formData.project_id as string,
-        formula_id: (formData.formula_id as string) || undefined,
-        experiment_type: formData.experiment_type as string,
-        phase: formData.phase as string,
-        objective: formData.objective as string,
-        method: formData.method as string,
-        experimenter: formData.experimenter as string,
-        batch_number: (formData.batch_number as string) || undefined,
-        scale: formData.scale ? Number(formData.scale) : undefined,
-        scale_unit: formData.scale_unit as string,
-      };
+    const requestData = {
+      name: formData.name as string,
+      code: formData.code as string,
+      project_id: formData.project_id as string,
+      formula_id: (formData.formula_id as string) || undefined,
+      experiment_type: formData.experiment_type as string,
+      phase: formData.phase as string,
+      objective: formData.objective as string,
+      method: formData.method as string,
+      experimenter: formData.experimenter as string,
+      batch_number: (formData.batch_number as string) || undefined,
+      scale: formData.scale ? Number(formData.scale) : undefined,
+      scale_unit: formData.scale_unit as string,
+    };
 
-      if (isEdit && id) {
-        await rdApi.updateExperiment(id, requestData);
-        addNotification({
-          type: 'success',
-          title: '更新成功',
-          message: '试验信息已更新',
-        });
-      } else {
-        await rdApi.createExperiment(requestData);
-        addNotification({
-          type: 'success',
-          title: '创建成功',
-          message: '试验已创建',
-        });
-      }
-      navigate(RD_PATHS.experiment);
-    } catch (err: unknown) {
-      addNotification({
-        type: 'error',
-        title: '提交失败',
-        message: '无法提交试验数据',
-      });
-    } finally {
-      setSubmitting(false);
-    }
+    await submitMutation.mutateAsync({ isEdit, id, requestData });
   };
 
   const handleCancel = () => {

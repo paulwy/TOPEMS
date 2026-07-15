@@ -60,7 +60,10 @@ export const srmModuleConfig: RouteModuleConfig = {
     },
     {
       path: SRM_PATHS.supplierDetail,
-      element: lazyWithRetry(() => import('@/pages/srm/SrmSupplierDetailPage'), 'SrmSupplierDetailPage'),
+      element: lazyWithRetry(
+        () => import('@/pages/srm/SrmSupplierDetailPage'),
+        'SrmSupplierDetailPage'
+      ),
       module: 'srm',
       title: '供应商详情',
       code: 'srm-supplier-detail',
@@ -107,7 +110,10 @@ export const srmModuleConfig: RouteModuleConfig = {
     },
     {
       path: SRM_PATHS.contractDetail,
-      element: lazyWithRetry(() => import('@/pages/srm/SrmContractDetailPage'), 'SrmContractDetailPage'),
+      element: lazyWithRetry(
+        () => import('@/pages/srm/SrmContractDetailPage'),
+        'SrmContractDetailPage'
+      ),
       module: 'srm',
       title: '合同详情',
       code: 'srm-contract-detail',
@@ -129,10 +135,7 @@ export const srmModuleConfig: RouteModuleConfig = {
     },
     {
       path: SRM_PATHS.evaluation,
-      element: lazyWithRetry(
-        () => import('@/pages/srm/SrmEvaluationPage'),
-        'SrmEvaluationPage'
-      ),
+      element: lazyWithRetry(() => import('@/pages/srm/SrmEvaluationPage'), 'SrmEvaluationPage'),
       module: 'srm',
       title: '供应商评估',
       code: 'srm-evaluation',
@@ -143,10 +146,7 @@ export const srmModuleConfig: RouteModuleConfig = {
     },
     {
       path: SRM_PATHS.performance,
-      element: lazyWithRetry(
-        () => import('@/pages/srm/SrmPerformancePage'),
-        'SrmPerformancePage'
-      ),
+      element: lazyWithRetry(() => import('@/pages/srm/SrmPerformancePage'), 'SrmPerformancePage'),
       module: 'srm',
       title: '绩效分析',
       code: 'srm-performance',
@@ -207,10 +207,7 @@ export const srmModuleConfig: RouteModuleConfig = {
     },
     {
       path: SRM_PATHS.portal,
-      element: lazyWithRetry(
-        () => import('@/pages/srm/SupplierPortalPage'),
-        'SupplierPortalPage'
-      ),
+      element: lazyWithRetry(() => import('@/pages/srm/SupplierPortalPage'), 'SupplierPortalPage'),
       module: 'srm',
       title: '供应商门户',
       code: 'srm-portal',

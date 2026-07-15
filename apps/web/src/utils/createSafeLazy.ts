@@ -1,4 +1,6 @@
-import React, { lazy, type ComponentType, type LazyExoticComponent } from 'react';
+import type React from 'react';
+import { lazy, type ComponentType, type LazyExoticComponent } from 'react';
+import { logger } from './logger';
 
 interface LazyOptions {
   fallback?: React.ReactNode;
@@ -9,20 +11,18 @@ export function createSafeLazy<T extends ComponentType<any>>(
   options: LazyOptions = {}
 ): LazyExoticComponent<T> {
   const { fallback = null } = options;
-  
-  const LazyComponent = lazy(
-    async () => {
-      try {
-        const module = await importFn();
-        return module as { default: T };
-      } catch (error) {
-        console.error('[createSafeLazy] Failed to load component:', error);
-        return {
-          default: () => fallback,
-        } as unknown as { default: T };
-      }
+
+  const LazyComponent = lazy(async () => {
+    try {
+      const module = await importFn();
+      return module as { default: T };
+    } catch (error) {
+      logger.error('[createSafeLazy] Failed to load component:', error);
+      return {
+        default: () => fallback,
+      } as unknown as { default: T };
     }
-  );
+  });
 
   return LazyComponent;
 }
@@ -35,7 +35,7 @@ export function lazyWithPreload<T extends ComponentType<any>>(
   preload: () => Promise<{ default: T }>;
 } {
   const LazyComponent = createSafeLazy(importFn, options);
-  
+
   return {
     lazy: LazyComponent,
     preload: importFn,

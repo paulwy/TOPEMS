@@ -397,7 +397,7 @@ export function MobileCardView<TData>({
                 <Checkbox
                   size='small'
                   checked={isSelected}
-                  onClick={(e) => e.stopPropagation()}
+                  onClick={(e: React.MouseEvent) => e.stopPropagation()}
                   onChange={(e) => onSelectionChange?.(row, e.target.checked)}
                   sx={{ p: 0.5 }}
                 />
@@ -807,7 +807,7 @@ export function DataTable<TData, TValue>({
               <Checkbox
                 checked={effectiveSelectedIds.includes(String(getRowKey(row.original as TData)))}
                 onChange={() => handleSelectRow(row.original)}
-                onClick={(e) => e.stopPropagation()}
+                onClick={(e: React.MouseEvent) => e.stopPropagation()}
               />
             </TableCell>
           )}
@@ -840,7 +840,7 @@ export function DataTable<TData, TValue>({
               <IconButton
                 size='small'
                 aria-label={isExpanded ? '收起行' : '展开行'}
-                onClick={(e) => {
+                onClick={(e: React.MouseEvent) => {
                   e.stopPropagation();
                   handleRowExpand(row.original);
                 }}
@@ -869,18 +869,19 @@ export function DataTable<TData, TValue>({
         {enableRowExpansion && isExpanded && expandedRowRender && (
           <TableRow key={`${row.id}-expanded`}>
             <TableCell
-              colSpan={
-                columns.length +
-                (showSelection ? 1 : 0) +
-                (showRowNumber ? 1 : 0) +
-                (enableRowExpansion ? 1 : 0)
-              }
-              sx={{
-                padding: 2,
-                bgcolor: 'grey.50',
-                borderTop: '1px solid',
-                borderTopColor: 'divider',
-              }}
+              {...({
+                colSpan:
+                  columns.length +
+                  (showSelection ? 1 : 0) +
+                  (showRowNumber ? 1 : 0) +
+                  (enableRowExpansion ? 1 : 0),
+                sx: {
+                  padding: 2,
+                  bgcolor: 'grey.50',
+                  borderTop: '1px solid',
+                  borderTopColor: 'divider',
+                },
+              } as any)}
             >
               {expandedRowRender(row.original)}
             </TableCell>
@@ -916,7 +917,7 @@ export function DataTable<TData, TValue>({
                 size='small'
                 placeholder={searchPlaceholder}
                 value={localSearch}
-                onChange={(event) => handleSearch(event.target.value)}
+                onChange={(event: React.ChangeEvent<HTMLInputElement>) => handleSearch(event.target.value)}
                 aria-label={searchPlaceholder || '搜索'}
                 sx={{ width: '100%', maxWidth: 320 }}
                 slotProps={{
@@ -966,7 +967,7 @@ export function DataTable<TData, TValue>({
                 <Button
                   variant='outlined'
                   size='small'
-                  onClick={(e) => setExportAnchorEl(e.currentTarget)}
+                  onClick={(e: React.MouseEvent<HTMLButtonElement>) => setExportAnchorEl(e.currentTarget)}
                   endIcon={<ChevronDown style={{ width: 16, height: 16 }} />}
                   startIcon={<Download style={{ width: 16, height: 16 }} />}
                 >
@@ -1246,13 +1247,14 @@ export function DataTable<TData, TValue>({
                 {loading ? (
                   <TableRow>
                     <TableCell
-                      colSpan={
-                        columns.length +
-                        (showSelection ? 1 : 0) +
-                        (showRowNumber ? 1 : 0) +
-                        (enableRowExpansion ? 1 : 0)
-                      }
-                      sx={{ height: 96, textAlign: 'center' }}
+                      {...({
+                        colSpan:
+                          columns.length +
+                          (showSelection ? 1 : 0) +
+                          (showRowNumber ? 1 : 0) +
+                          (enableRowExpansion ? 1 : 0),
+                        sx: { height: 96, textAlign: 'center' },
+                      } as any)}
                     >
                       <Box
                         sx={{
@@ -1285,13 +1287,14 @@ export function DataTable<TData, TValue>({
                 ) : (
                   <TableRow>
                     <TableCell
-                      colSpan={
-                        columns.length +
-                        (showSelection ? 1 : 0) +
-                        (showRowNumber ? 1 : 0) +
-                        (enableRowExpansion ? 1 : 0)
-                      }
-                      sx={{ height: 120, textAlign: 'center' }}
+                      {...({
+                        colSpan:
+                          columns.length +
+                          (showSelection ? 1 : 0) +
+                          (showRowNumber ? 1 : 0) +
+                          (enableRowExpansion ? 1 : 0),
+                        sx: { height: 120, textAlign: 'center' },
+                      } as any)}
                     >
                       <Typography
                         variant='body2'
@@ -1450,7 +1453,7 @@ export function DataTable<TData, TValue>({
                     <Box
                       component='select'
                       value={filter.value || ''}
-                      onChange={(e) => filter.onChange?.(e.target.value)}
+                      onChange={(e: React.ChangeEvent<HTMLSelectElement>) => filter.onChange?.(e.target.value)}
                       sx={{
                         width: '100%',
                         border: '1px solid',
@@ -1478,7 +1481,7 @@ export function DataTable<TData, TValue>({
                       type={filter.type}
                       size='small'
                       value={filter.value || ''}
-                      onChange={(e) => filter.onChange?.(e.target.value)}
+                      onChange={(e: React.ChangeEvent<HTMLInputElement>) => filter.onChange?.(e.target.value)}
                       sx={{ width: '100%' }}
                     />
                   )}

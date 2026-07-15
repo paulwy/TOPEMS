@@ -16,6 +16,12 @@ import {
 import { DatePicker } from '@mui/x-date-pickers/DatePicker';
 import { LocalizationProvider } from '@mui/x-date-pickers/LocalizationProvider';
 import { AdapterDayjs } from '@mui/x-date-pickers/AdapterDayjs';
+import { useResponsive } from '../../hooks/useResponsive';
+
+function useTabletSize() {
+  const { isTablet } = useResponsive();
+  return isTablet;
+}
 
 interface FormTextFieldProps<T extends FieldValues> {
   name: Path<T>;
@@ -42,6 +48,7 @@ export function FormTextField<T extends FieldValues>({
   disabled,
   size = 'small',
 }: FormTextFieldProps<T>) {
+  const isTablet = useTabletSize();
   return (
     <Controller
       name={name}
@@ -60,6 +67,14 @@ export function FormTextField<T extends FieldValues>({
           fullWidth
           error={!!error}
           helperText={error?.message}
+          sx={{
+            '& .MuiInputLabel-root': {
+              fontSize: isTablet ? '0.8125rem' : undefined,
+            },
+            '& .MuiInputBase-input': {
+              fontSize: isTablet ? '0.875rem' : undefined,
+            },
+          }}
         />
       )}
     />
@@ -85,6 +100,7 @@ export function FormSelectField<T extends FieldValues>({
   disabled,
   size = 'small',
 }: FormSelectFieldProps<T>) {
+  const isTablet = useTabletSize();
   return (
     <Controller
       name={name}
@@ -96,6 +112,14 @@ export function FormSelectField<T extends FieldValues>({
           required={required}
           disabled={disabled}
           error={!!error}
+          sx={{
+            '& .MuiInputLabel-root': {
+              fontSize: isTablet ? '0.8125rem' : undefined,
+            },
+            '& .MuiSelect-select': {
+              fontSize: isTablet ? '0.875rem' : undefined,
+            },
+          }}
         >
           <InputLabel>{label}</InputLabel>
           <Select
@@ -170,6 +194,7 @@ export function FormDateField<T extends FieldValues>({
   format = 'YYYY-MM-DD',
   size = 'small',
 }: FormDateFieldProps<T>) {
+  const isTablet = useTabletSize();
   return (
     <LocalizationProvider dateAdapter={AdapterDayjs}>
       <Controller
@@ -188,6 +213,14 @@ export function FormDateField<T extends FieldValues>({
                 disabled,
                 error: !!error,
                 helperText: error?.message,
+                sx: {
+                  '& .MuiInputLabel-root': {
+                    fontSize: isTablet ? '0.8125rem' : undefined,
+                  },
+                  '& .MuiInputBase-input': {
+                    fontSize: isTablet ? '0.875rem' : undefined,
+                  },
+                },
               },
             }}
           />
@@ -214,6 +247,7 @@ export function FormRadioGroup<T extends FieldValues>({
   row = true,
   disabled,
 }: FormRadioGroupProps<T>) {
+  const isTablet = useTabletSize();
   return (
     <FormControl
       component='fieldset'
@@ -226,7 +260,7 @@ export function FormRadioGroup<T extends FieldValues>({
         render={({ field }) => (
           <RadioGroup
             {...field}
-            row={row}
+            row={isTablet ? false : row}
           >
             {options.map((opt) => (
               <FormControlLabel
@@ -234,6 +268,11 @@ export function FormRadioGroup<T extends FieldValues>({
                 value={opt.value}
                 control={<Radio />}
                 label={opt.label}
+                sx={{
+                  '& .MuiTypography-root': {
+                    fontSize: isTablet ? '0.875rem' : undefined,
+                  },
+                }}
               />
             ))}
           </RadioGroup>

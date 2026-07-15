@@ -11,7 +11,8 @@ const meta = {
     layout: 'centered',
     docs: {
       description: {
-        component: '数字输入字段集合，包含 NumberField、CurrencyField 和 PercentField，从 @topems/shared-components 重新导出。',
+        component:
+          '数字输入字段集合，包含 NumberField、CurrencyField 和 PercentField，从 @topems/shared-components 重新导出。',
       },
     },
   },
@@ -64,16 +65,43 @@ export const AllFields: Story = {
   render: () => (
     <div style={{ display: 'flex', flexDirection: 'column', gap: 24, width: 350 }}>
       <Box>
-        <Typography variant='subtitle2' gutterBottom>数量</Typography>
-        <NumberField label='库存数量' value={1200} onChange={fn()} />
+        <Typography
+          variant='subtitle2'
+          gutterBottom
+        >
+          数量
+        </Typography>
+        <NumberField
+          label='库存数量'
+          value={1200}
+          onChange={fn()}
+        />
       </Box>
       <Box>
-        <Typography variant='subtitle2' gutterBottom>金额</Typography>
-        <CurrencyField label='单价' value={158.50} onChange={fn()} />
+        <Typography
+          variant='subtitle2'
+          gutterBottom
+        >
+          金额
+        </Typography>
+        <CurrencyField
+          label='单价'
+          value={158.5}
+          onChange={fn()}
+        />
       </Box>
       <Box>
-        <Typography variant='subtitle2' gutterBottom>百分比</Typography>
-        <PercentField label='折扣' value={15} onChange={fn()} />
+        <Typography
+          variant='subtitle2'
+          gutterBottom
+        >
+          百分比
+        </Typography>
+        <PercentField
+          label='折扣'
+          value={15}
+          onChange={fn()}
+        />
       </Box>
     </div>
   ),

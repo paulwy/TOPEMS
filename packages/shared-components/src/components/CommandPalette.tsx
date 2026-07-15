@@ -211,7 +211,7 @@ export const CommandPalette: React.FC<CommandPaletteProps> = ({
         <InputBase
           inputRef={inputRef}
           value={query}
-          onChange={(e) => setQuery(e.target.value)}
+          onChange={(e: React.ChangeEvent<HTMLInputElement>) => setQuery(e.target.value)}
           onKeyDown={handleKeyDown}
           placeholder={placeholder}
           sx={{ flex: 1, fontSize: '1rem' }}

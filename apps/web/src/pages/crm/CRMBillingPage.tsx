@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useMemo, useCallback } from 'react';
+import React, { useState, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Box, Chip, Typography, Tabs, Tab, LinearProgress, Button } from '@mui/material';
 import type { BillingRecord } from '@/api/crm';
@@ -9,78 +9,79 @@ import { ListPageTemplate, type ColumnDef, type RowAction } from '@/components/t
 import { PageContainer } from '@/components/common';
 import { apiLogger } from '@/utils/logger';
 import { CRM_PATHS } from '@/modules/crm/config';
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import { QUERY_KEYS } from '@/lib/reactQuery';
 
 type TabType = 'invoices' | 'collections' | 'aging';
 
 const CRMBillingPage: React.FC = () => {
   const navigate = useNavigate();
   const [activeTab, setActiveTab] = useState<TabType>('invoices');
-  const [loading, setLoading] = useState(true);
-  const [bills, setBills] = useState<BillingRecord[]>([]);
   const [searchQuery, setSearchQuery] = useState('');
   const [currentPage, setCurrentPage] = useState(0);
   const pageSize = 10;
 
   const { addNotification } = useNotificationStore();
+  const queryClient = useQueryClient();
 
-  const loadBills = useCallback(async () => {
-    try {
-      setLoading(true);
+  const billsQuery = useQuery({
+    queryKey: [...QUERY_KEYS.CRM.BILLING, activeTab],
+    queryFn: async () => {
       const status =
         activeTab === 'collections' ? 'paid' : activeTab === 'invoices' ? 'pending' : undefined;
       const response = await crmApi.billing.list(status ? { status } : undefined);
-      setBills(response.data?.items || []);
-    } catch (error: unknown) {
-      apiLogger.error('加载账单数据失败:', error);
-      addNotification({
-        type: 'error',
-        title: '加载失败',
-        message: '无法加载账单数据',
-      });
-    } finally {
-      setLoading(false);
-    }
-  }, [activeTab, addNotification]);
+      return response.data?.items || [];
+    },
+  });
 
-  useEffect(() => {
-    loadBills();
-  }, [loadBills]);
+  const bills = billsQuery.data || [];
+  const loading = billsQuery.isLoading || billsQuery.isFetching;
 
-  const handleMarkPaid = async (id: string) => {
-    try {
-      await crmApi.billing.markPaid(id);
+  const markPaidMutation = useMutation({
+    mutationFn: (id: string) => crmApi.billing.markPaid(id),
+    onSuccess: () => {
       addNotification({
         type: 'success',
         title: '成功',
         message: '账单已标记为已支付',
       });
-      loadBills();
-    } catch (error: unknown) {
+      queryClient.invalidateQueries({ queryKey: QUERY_KEYS.CRM.BILLING });
+    },
+    onError: (error: unknown) => {
       apiLogger.error('标记支付失败:', error);
       addNotification({
         type: 'error',
         title: '操作失败',
         message: '标记账单支付失败',
       });
-    }
-  };
+    },
+  });
 
-  const handleSendNotification = async (id: string) => {
-    try {
-      await crmApi.billing.sendNotification(id);
+  const sendNotificationMutation = useMutation({
+    mutationFn: (id: string) => crmApi.billing.sendNotification(id),
+    onSuccess: () => {
       addNotification({
         type: 'success',
         title: '成功',
         message: '账单通知已发送',
       });
-    } catch (error: unknown) {
+    },
+    onError: (error: unknown) => {
       apiLogger.error('发送通知失败:', error);
       addNotification({
         type: 'error',
         title: '发送失败',
         message: '发送账单通知失败',
       });
-    }
+    },
+  });
+
+  const handleMarkPaid = (id: string) => {
+    markPaidMutation.mutate(id);
+  };
+
+  const handleSendNotification = (id: string) => {
+    sendNotificationMutation.mutate(id);
   };
 
   const getStatusChip = (status: string) => {
@@ -391,7 +392,7 @@ const CRMBillingPage: React.FC = () => {
               ]
         }
         rowActions={getRowActions()}
-        onRefresh={loadBills}
+        onRefresh={() => billsQuery.refetch()}
         showRowNumber
         columnConfigurable
         persistColumnConfig

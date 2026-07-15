@@ -1,8 +1,8 @@
-import React, { useState, useEffect, useMemo } from 'react';
-import { logger } from '@/utils/logger';
-import { Link, useNavigate } from 'react-router-dom';
-import { Box, Chip, LinearProgress, Typography, Stack, Button } from '@mui/material';
+import React, { useState, useMemo } from 'react';
+import { useNavigate } from 'react-router-dom';
+import { Box, Chip, LinearProgress, Typography, Stack } from '@mui/material';
 import { Plus, Download, Eye, Edit, Trash2, Code2 } from 'lucide-react';
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { ListPageTemplate, type ColumnDef, type FilterConfig } from '@/components/templates';
 import { PageContainer } from '@/components/common';
 import { rdApi } from '@/api/rd';
@@ -11,29 +11,25 @@ import type { Project } from '@/api/rd';
 import { ConfirmDialog } from '@topems/shared-components';
 import { designTokens } from '@/theme/tokens';
 import { RD_PATHS } from '@/modules/rd/config';
+import { QUERY_KEYS } from '@/lib/reactQuery';
+import { logger } from '@/utils/logger';
 
 const ct = designTokens.colors;
 
 const RsProjectListPage: React.FC = () => {
   const navigate = useNavigate();
+  const queryClient = useQueryClient();
   const { addNotification } = useNotificationStore();
-  const [projects, setProjects] = useState<Project[]>([]);
-  const [loading, setLoading] = useState(false);
   const [page, setPage] = useState(0);
   const [rowsPerPage, setRowsPerPage] = useState(10);
-  const [total, setTotal] = useState(0);
   const [searchTerm, setSearchTerm] = useState('');
   const [statusFilter, setStatusFilter] = useState<string | null>(null);
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
   const [selectedProject, setSelectedProject] = useState<Project | null>(null);
 
-  useEffect(() => {
-    loadProjects();
-  }, [searchTerm, statusFilter, page, rowsPerPage]);
-
-  const loadProjects = async () => {
-    try {
-      setLoading(true);
+  const projectListQuery = useQuery({
+    queryKey: [...QUERY_KEYS.RD.PROJECTS, { page, rowsPerPage, searchTerm, statusFilter }],
+    queryFn: async () => {
       const params: Record<string, unknown> = {
         page: page + 1,
         pagesize: rowsPerPage,
@@ -42,21 +38,45 @@ const RsProjectListPage: React.FC = () => {
       if (statusFilter) params.status = statusFilter;
 
       const response = await rdApi.listProjects(params);
-      if (response.success && response.data) {
-        setProjects(response.data.projects || []);
-        setTotal(response.data.total || 0);
+      if (!response.success || !response.data) {
+        throw new Error(response.message || '加载项目列表失败');
       }
-    } catch (error: unknown) {
-      logger.error('加载项目列表失败:', error);
+      return {
+        projects: response.data.projects || [],
+        total: response.data.total || 0,
+      };
+    },
+  });
+
+  const deleteProjectMutation = useMutation({
+    mutationFn: async (id: string) => {
+      const response = await rdApi.deleteProject(id);
+      if (!response.success) {
+        throw new Error(response.message || '删除项目失败');
+      }
+      return response;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: QUERY_KEYS.RD.PROJECTS });
+      addNotification({
+        type: 'success',
+        title: '删除成功',
+        message: '项目已删除',
+      });
+    },
+    onError: (error: unknown) => {
+      logger.error('删除项目失败:', error);
       addNotification({
         type: 'error',
-        title: '加载失败',
-        message: '无法加载项目列表',
+        title: '删除失败',
+        message: error instanceof Error ? error.message : '无法删除项目',
       });
-    } finally {
-      setLoading(false);
-    }
-  };
+    },
+  });
+
+  const projects = projectListQuery.data?.projects || [];
+  const total = projectListQuery.data?.total || 0;
+  const loading = projectListQuery.isLoading || deleteProjectMutation.isPending;
 
   const getStatusColor = (
     status: string
@@ -103,13 +123,13 @@ const RsProjectListPage: React.FC = () => {
 
   const handleDeleteConfirm = async () => {
     if (!selectedProject) return;
-    await rdApi.deleteProject(selectedProject.id);
-    addNotification({
-      type: 'success',
-      title: '删除成功',
-      message: '项目已删除',
-    });
-    loadProjects();
+    try {
+      await deleteProjectMutation.mutateAsync(selectedProject.id);
+      setDeleteDialogOpen(false);
+      setSelectedProject(null);
+    } catch {
+      // 错误已在 mutation onError 中处理
+    }
   };
 
   const handleExport = () => {

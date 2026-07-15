@@ -169,7 +169,7 @@ vi.mock('@/store', () => ({
 }));
 
 describe('BiModule', () => {
-describe('BIDashboardPage', () => {
+  describe('BIDashboardPage', () => {
     it('should render without crashing', () => {
       const { container } = render(
         <BrowserRouter>
@@ -188,7 +188,7 @@ describe('BIDashboardPage', () => {
     });
   });
 
-describe('BIVisualizationPage', () => {
+  describe('BIVisualizationPage', () => {
     it('should render without crashing', () => {
       const { container } = render(
         <BrowserRouter>
@@ -207,7 +207,7 @@ describe('BIVisualizationPage', () => {
     });
   });
 
-describe('BIReportPage', () => {
+  describe('BIReportPage', () => {
     it('should render without crashing', () => {
       const { container } = render(
         <BrowserRouter>
@@ -227,7 +227,7 @@ describe('BIReportPage', () => {
     });
   });
 
-describe('BIDataSourcePage', () => {
+  describe('BIDataSourcePage', () => {
     it('should render without crashing', () => {
       const { container } = render(
         <BrowserRouter>

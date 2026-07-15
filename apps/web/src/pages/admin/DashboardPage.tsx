@@ -1,5 +1,6 @@
-import React, { useEffect, useState } from 'react';
+import React from 'react';
 import { useNavigate } from 'react-router-dom';
+import { useQuery } from '@tanstack/react-query';
 import { Users, Shield, Activity, AlertTriangle, ArrowRight } from 'lucide-react';
 import { DashboardTemplate } from '@/components/templates';
 import type { StatCard, ChartCard, QuickAction, RecentItem } from '@/components/templates';
@@ -34,12 +35,14 @@ const getGreeting = (): string => {
 
 export const DashboardPage: React.FC = () => {
   const navigate = useNavigate();
-  const [loading, setLoading] = useState(true);
 
-  useEffect(() => {
-    const timer = setTimeout(() => setLoading(false), 500);
-    return () => clearTimeout(timer);
-  }, []);
+  const dashboardQuery = useQuery<boolean>({
+    queryKey: ['admin-dashboard'],
+    queryFn: async () => true,
+    staleTime: 5 * 60 * 1000,
+  });
+
+  const loading = dashboardQuery.isLoading;
 
   const stats: StatCard[] = [
     {

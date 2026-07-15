@@ -76,10 +76,7 @@ export const rdModuleConfig: RouteModuleConfig = {
     },
     {
       path: RD_PATHS.projectCreate,
-      element: lazyWithRetry(
-        () => import('@/pages/rd/RsProjectCreatePage'),
-        'RsProjectCreatePage'
-      ),
+      element: lazyWithRetry(() => import('@/pages/rd/RsProjectCreatePage'), 'RsProjectCreatePage'),
       module: 'rd',
       title: '创建项目',
       code: 'rd-project-create',
@@ -90,10 +87,7 @@ export const rdModuleConfig: RouteModuleConfig = {
     },
     {
       path: `${RD_PATHS.project}/:id`,
-      element: lazyWithRetry(
-        () => import('@/pages/rd/RsProjectDetailPage'),
-        'RsProjectDetailPage'
-      ),
+      element: lazyWithRetry(() => import('@/pages/rd/RsProjectDetailPage'), 'RsProjectDetailPage'),
       module: 'rd',
       title: '项目详情',
       code: 'rd-project-detail',
@@ -157,10 +151,7 @@ export const rdModuleConfig: RouteModuleConfig = {
     },
     {
       path: RD_PATHS.formulaCreate,
-      element: lazyWithRetry(
-        () => import('@/pages/rd/RsFormulaCreatePage'),
-        'RsFormulaCreatePage'
-      ),
+      element: lazyWithRetry(() => import('@/pages/rd/RsFormulaCreatePage'), 'RsFormulaCreatePage'),
       module: 'rd',
       title: '创建配方',
       code: 'rd-formula-create',
@@ -171,10 +162,7 @@ export const rdModuleConfig: RouteModuleConfig = {
     },
     {
       path: `${RD_PATHS.formula}/:id`,
-      element: lazyWithRetry(
-        () => import('@/pages/rd/RsFormulaDetailPage'),
-        'RsFormulaDetailPage'
-      ),
+      element: lazyWithRetry(() => import('@/pages/rd/RsFormulaDetailPage'), 'RsFormulaDetailPage'),
       module: 'rd',
       title: '配方详情',
       code: 'rd-formula-detail',
@@ -185,10 +173,7 @@ export const rdModuleConfig: RouteModuleConfig = {
     },
     {
       path: RD_PATHS.material,
-      element: lazyWithRetry(
-        () => import('@/pages/rd/RsMaterialListPage'),
-        'RsMaterialListPage'
-      ),
+      element: lazyWithRetry(() => import('@/pages/rd/RsMaterialListPage'), 'RsMaterialListPage'),
       module: 'rd',
       title: '物料管理',
       code: 'rd-material',

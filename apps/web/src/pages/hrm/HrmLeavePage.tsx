@@ -21,7 +21,13 @@ import {
   type ColumnDef,
   type RowAction,
 } from '@/components';
-import { StatusBadge, ActionButton, FormField, FormSelect, ConfirmDialog } from '@topems/shared-components';
+import {
+  StatusBadge,
+  ActionButton,
+  FormField,
+  FormSelect,
+  ConfirmDialog,
+} from '@topems/shared-components';
 import { Dialog } from '@/components/common/Dialog';
 import { useNotificationStore } from '@/store';
 import { logger } from '@/utils/logger';
@@ -86,10 +92,12 @@ const LeaveManagementPage: React.FC = () => {
       if (response.code === 200) {
         const items = response.data?.items || response.data || [];
         if (Array.isArray(items)) {
-          return items.map((e: { id?: string; name?: string }) => ({
-            id: e.id || '',
-            name: e.name || '',
-          })) || [];
+          return (
+            items.map((e: { id?: string; name?: string }) => ({
+              id: e.id || '',
+              name: e.name || '',
+            })) || []
+          );
         }
       }
       return [];
@@ -112,7 +120,8 @@ const LeaveManagementPage: React.FC = () => {
   });
 
   const updateLeaveMutation = useMutation({
-    mutationFn: ({ id, data }: { id: string; data: Partial<LeaveRequest> }) => leaveApi.update(id, data),
+    mutationFn: ({ id, data }: { id: string; data: Partial<LeaveRequest> }) =>
+      leaveApi.update(id, data),
     onSuccess: () => {
       addNotification({ title: '成功', message: '更新成功', type: 'success' });
       queryClient.invalidateQueries({ queryKey: ['hrm-leave-requests-list'] });
@@ -145,7 +154,8 @@ const LeaveManagementPage: React.FC = () => {
   });
 
   const rejectLeaveMutation = useMutation({
-    mutationFn: ({ id, reason }: { id: string; reason: string }) => leaveApi.reject(id, 'admin', reason),
+    mutationFn: ({ id, reason }: { id: string; reason: string }) =>
+      leaveApi.reject(id, 'admin', reason),
     onSuccess: () => {
       addNotification({ title: '成功', message: '已拒绝', type: 'success' });
       queryClient.invalidateQueries({ queryKey: ['hrm-leave-requests-list'] });
@@ -183,55 +193,64 @@ const LeaveManagementPage: React.FC = () => {
     setIsViewModalVisible(true);
   }, []);
 
-  const handleDelete = useCallback((id: string) => {
-    const confirmDelete = async () => {
-      try {
-        await deleteLeaveMutation.mutateAsync(id);
-      } catch (error: unknown) {
-        logger.error('Failed to delete leave request:', error);
-      }
-    };
-    setConfirmDialogConfig({
-      title: '确认删除',
-      message: '确定要删除这个请假申请吗？',
-      onConfirm: confirmDelete,
-      danger: true,
-    });
-    setConfirmDialogOpen(true);
-  }, [deleteLeaveMutation]);
+  const handleDelete = useCallback(
+    (id: string) => {
+      const confirmDelete = async () => {
+        try {
+          await deleteLeaveMutation.mutateAsync(id);
+        } catch (error: unknown) {
+          logger.error('Failed to delete leave request:', error);
+        }
+      };
+      setConfirmDialogConfig({
+        title: '确认删除',
+        message: '确定要删除这个请假申请吗？',
+        onConfirm: confirmDelete,
+        danger: true,
+      });
+      setConfirmDialogOpen(true);
+    },
+    [deleteLeaveMutation]
+  );
 
-  const handleApprove = useCallback((id: string) => {
-    const confirmApprove = async () => {
-      try {
-        await approveLeaveMutation.mutateAsync(id);
-      } catch (error: unknown) {
-        logger.error('Failed to approve leave request:', error);
-      }
-    };
-    setConfirmDialogConfig({
-      title: '确认批准',
-      message: '确定要批准这个请假申请吗？',
-      onConfirm: confirmApprove,
-    });
-    setConfirmDialogOpen(true);
-  }, [approveLeaveMutation]);
+  const handleApprove = useCallback(
+    (id: string) => {
+      const confirmApprove = async () => {
+        try {
+          await approveLeaveMutation.mutateAsync(id);
+        } catch (error: unknown) {
+          logger.error('Failed to approve leave request:', error);
+        }
+      };
+      setConfirmDialogConfig({
+        title: '确认批准',
+        message: '确定要批准这个请假申请吗？',
+        onConfirm: confirmApprove,
+      });
+      setConfirmDialogOpen(true);
+    },
+    [approveLeaveMutation]
+  );
 
-  const handleReject = useCallback((id: string) => {
-    const confirmReject = async () => {
-      try {
-        await rejectLeaveMutation.mutateAsync({ id, reason: '已拒绝' });
-      } catch (error: unknown) {
-        logger.error('Failed to reject leave request:', error);
-      }
-    };
-    setConfirmDialogConfig({
-      title: '确认拒绝',
-      message: '确定要拒绝这个请假申请吗？',
-      onConfirm: confirmReject,
-      danger: true,
-    });
-    setConfirmDialogOpen(true);
-  }, [rejectLeaveMutation]);
+  const handleReject = useCallback(
+    (id: string) => {
+      const confirmReject = async () => {
+        try {
+          await rejectLeaveMutation.mutateAsync({ id, reason: '已拒绝' });
+        } catch (error: unknown) {
+          logger.error('Failed to reject leave request:', error);
+        }
+      };
+      setConfirmDialogConfig({
+        title: '确认拒绝',
+        message: '确定要拒绝这个请假申请吗？',
+        onConfirm: confirmReject,
+        danger: true,
+      });
+      setConfirmDialogOpen(true);
+    },
+    [rejectLeaveMutation]
+  );
 
   const handleModalOk = useCallback(async () => {
     try {
@@ -279,7 +298,7 @@ const LeaveManagementPage: React.FC = () => {
   ];
 
   const leaveStats = useMemo(() => {
-    const items = data.items;
+    const items = data.items as LeaveRequest[];
     return {
       total: data.total,
       pending: items.filter((i) => i.status === 'pending').length,
@@ -431,15 +450,23 @@ const LeaveManagementPage: React.FC = () => {
             page: data.page - 1,
             pageSize: data.pagesize,
             total: data.total,
-            onPageChange: (page) => queryClient.setQueryData(['hrm-leave-requests-list'], (prev: PaginatedResult<LeaveRequest> | undefined) => ({
-              ...(prev || { items: [], total: 0, page: 1, pagesize: 10 }),
-              page: page + 1,
-            })),
-            onPageSizeChange: (pageSize) => queryClient.setQueryData(['hrm-leave-requests-list'], (prev: PaginatedResult<LeaveRequest> | undefined) => ({
-              ...(prev || { items: [], total: 0, page: 1, pagesize: 10 }),
-              pagesize: pageSize,
-              page: 1,
-            })),
+            onPageChange: (page) =>
+              queryClient.setQueryData(
+                ['hrm-leave-requests-list'],
+                (prev: PaginatedResult<LeaveRequest> | undefined) => ({
+                  ...(prev || { items: [], total: 0, page: 1, pagesize: 10 }),
+                  page: page + 1,
+                })
+              ),
+            onPageSizeChange: (pageSize) =>
+              queryClient.setQueryData(
+                ['hrm-leave-requests-list'],
+                (prev: PaginatedResult<LeaveRequest> | undefined) => ({
+                  ...(prev || { items: [], total: 0, page: 1, pagesize: 10 }),
+                  pagesize: pageSize,
+                  page: 1,
+                })
+              ),
           }}
           rowActions={rowActions}
           onRowClick={handleView}

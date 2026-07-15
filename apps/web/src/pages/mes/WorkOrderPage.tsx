@@ -17,7 +17,7 @@ import {
   Button,
 } from '@mui/material';
 import { PageContainer } from '@/components/common';
-import React, { useState, useMemo, useCallback } from 'react';
+import React, { useState, useMemo, useCallback, useEffect } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import type {
   WorkOrder,
@@ -88,18 +88,21 @@ const WorkOrderPage: React.FC = () => {
       return { workOrders: [], total: 0 };
     },
     staleTime: 5 * 60 * 1000,
-    onError: (error: unknown) => {
-      apiLogger.error('加载工单列表失败:', error);
+  });
+  const workOrders = workOrdersQuery.data?.workOrders || [];
+  const total = workOrdersQuery.data?.total || 0;
+  const loading = workOrdersQuery.isLoading;
+
+  useEffect(() => {
+    if (workOrdersQuery.isError) {
+      apiLogger.error('加载工单列表失败:', workOrdersQuery.error);
       addNotification({
         type: 'error',
         title: '加载失败',
         message: '无法加载工单列表',
       });
-    },
-  });
-  const workOrders = workOrdersQuery.data?.workOrders || [];
-  const total = workOrdersQuery.data?.total || 0;
-  const loading = workOrdersQuery.isLoading;
+    }
+  }, [workOrdersQuery.isError, workOrdersQuery.error]);
 
   const createWorkOrderMutation = useMutation({
     mutationFn: (data: CreateWorkOrderRequest) => mesApi.workOrders.create(data),

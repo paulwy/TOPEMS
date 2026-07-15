@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useMemo } from 'react';
+import React, { useState, useMemo } from 'react';
 import {
   Box,
   Chip,
@@ -27,6 +27,7 @@ import {
   XCircle,
   Clock,
 } from 'lucide-react';
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { ListPageTemplate } from '@/components/templates';
 
 import type { RowAction, FilterConfig, ColumnDef } from '@/components/templates';
@@ -34,14 +35,13 @@ import { rdApi } from '@/api/rd';
 import { useNotificationStore } from '@/store';
 import type { TestCase, CreateTestCaseRequest, UpdateTestCaseRequest } from '@/api/rd';
 import { logger } from '@/utils/logger';
+import { QUERY_KEYS } from '@/lib/reactQuery';
 
 const RsTestPage: React.FC = () => {
+  const queryClient = useQueryClient();
   const { addNotification } = useNotificationStore();
-  const [testCases, setTestCases] = useState<TestCase[]>([]);
-  const [loading, setLoading] = useState(false);
   const [page, setPage] = useState(0);
   const [rowsPerPage, setRowsPerPage] = useState(10);
-  const [total, setTotal] = useState(0);
   const [searchTerm, setSearchTerm] = useState('');
   const [caseTypeFilter, setCaseTypeFilter] = useState<string>('');
   const [priorityFilter, setPriorityFilter] = useState<string>('');
@@ -57,13 +57,12 @@ const RsTestPage: React.FC = () => {
   });
   const [testReportAttachments, setTestReportAttachments] = useState<string[]>([]);
 
-  useEffect(() => {
-    loadTestCases();
-  }, [searchTerm, caseTypeFilter, priorityFilter, statusFilter, page, rowsPerPage]);
-
-  const loadTestCases = async () => {
-    try {
-      setLoading(true);
+  const testListQuery = useQuery({
+    queryKey: [
+      ...QUERY_KEYS.RD.TEST_CASES,
+      { page, rowsPerPage, searchTerm, caseTypeFilter, priorityFilter, statusFilter },
+    ],
+    queryFn: async () => {
       const params: Record<string, unknown> = {
         page: page + 1,
         pagesize: rowsPerPage,
@@ -74,21 +73,72 @@ const RsTestPage: React.FC = () => {
       if (statusFilter) params.status = statusFilter;
 
       const response = await rdApi.listTests(params);
-      if (response.success && response.data) {
-        setTestCases(response.data.test_cases || []);
-        setTotal(response.data.total || 0);
+      if (!response.success || !response.data) {
+        throw new Error(response.message || '加载测试用例失败');
       }
-    } catch (error: unknown) {
-      logger.error('加载测试用例失败:', error);
+      return {
+        test_cases: response.data.test_cases || [],
+        total: response.data.total || 0,
+      };
+    },
+  });
+
+  const updateTestMutation = useMutation({
+    mutationFn: async ({ id, data }: { id: string; data: UpdateTestCaseRequest }) => {
+      const response = await rdApi.updateTest(id, data);
+      if (!response.success) {
+        throw new Error(response.message || '更新测试用例失败');
+      }
+      return response;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: QUERY_KEYS.RD.TEST_CASES });
+      addNotification({
+        type: 'success',
+        title: '操作成功',
+        message: '测试用例已执行',
+      });
+    },
+    onError: (error: unknown) => {
+      logger.error('执行测试失败:', error);
       addNotification({
         type: 'error',
-        title: '加载失败',
-        message: '无法加载测试用例',
+        title: '操作失败',
+        message: error instanceof Error ? error.message : '执行测试失败',
       });
-    } finally {
-      setLoading(false);
-    }
-  };
+    },
+  });
+
+  const createTestMutation = useMutation({
+    mutationFn: async (data: CreateTestCaseRequest) => {
+      const response = await rdApi.createTest(data);
+      if (!response.success) {
+        throw new Error(response.message || '创建测试用例失败');
+      }
+      return response;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: QUERY_KEYS.RD.TEST_CASES });
+      addNotification({
+        type: 'success',
+        title: '创建成功',
+        message: '新测试用例已创建',
+      });
+    },
+    onError: (error: unknown) => {
+      logger.error('创建测试用例失败:', error);
+      addNotification({
+        type: 'error',
+        title: '创建失败',
+        message: error instanceof Error ? error.message : '无法创建测试用例',
+      });
+    },
+  });
+
+  const testCases = testListQuery.data?.test_cases || [];
+  const total = testListQuery.data?.total || 0;
+  const loading =
+    testListQuery.isLoading || updateTestMutation.isPending || createTestMutation.isPending;
 
   const uniqueCaseTypes = useMemo(
     () => [...new Set(testCases.map((tc) => tc.case_type))],
@@ -166,20 +216,9 @@ const RsTestPage: React.FC = () => {
   const handleExecuteTest = async (tc: TestCase) => {
     try {
       const updateData: UpdateTestCaseRequest = { status: 'passed' };
-      await rdApi.updateTest(tc.id, updateData);
-      addNotification({
-        type: 'success',
-        title: '操作成功',
-        message: '测试用例已执行',
-      });
-      loadTestCases();
-    } catch (error: unknown) {
-      logger.error('执行测试失败:', error);
-      addNotification({
-        type: 'error',
-        title: '操作失败',
-        message: '执行测试失败',
-      });
+      await updateTestMutation.mutateAsync({ id: tc.id, data: updateData });
+    } catch {
+      // 错误已在 mutation onError 中处理
     }
   };
 
@@ -191,12 +230,7 @@ const RsTestPage: React.FC = () => {
         priority: newCaseForm.priority,
         related_requirement: newCaseForm.related_requirement,
       };
-      await rdApi.createTest(createData);
-      addNotification({
-        type: 'success',
-        title: '创建成功',
-        message: '新测试用例已创建',
-      });
+      await createTestMutation.mutateAsync(createData);
       setNewCaseDialogOpen(false);
       setNewCaseForm({
         case_name: '',
@@ -205,14 +239,8 @@ const RsTestPage: React.FC = () => {
         related_requirement: '',
       });
       setTestReportAttachments([]);
-      loadTestCases();
-    } catch (error: unknown) {
-      logger.error('创建测试用例失败:', error);
-      addNotification({
-        type: 'error',
-        title: '创建失败',
-        message: '无法创建测试用例',
-      });
+    } catch {
+      // 错误已在 mutation onError 中处理
     }
   };
 

@@ -9,6 +9,10 @@ use serde::{Deserialize, Serialize};
 use uuid::Uuid;
 
 use super::ApiState;
+
+fn escape_sql_identifier(identifier: &str) -> String {
+    format!("\"{}\"", identifier.replace('"', "\"\""))
+}
 use crate::models::{ColumnInfo, DbChange, TableInfo};
 use crate::modules::audit::{log_audit_event, AuditEventParams};
 use topems_shared::{api_error, ApiResponse, PaginatedResponse};
@@ -119,10 +123,13 @@ pub async fn get_table_detail(
         return Json(api_error(404, "表不存在"));
     }
 
-    let row_count = sqlx::query_scalar(&format!("SELECT COUNT(*) FROM \"{}\"", table_name))
-        .fetch_one(&state.db)
-        .await
-        .ok();
+    let row_count = sqlx::query_scalar(
+        r#"SELECT COUNT(*) FROM information_schema.tables WHERE table_schema = 'public' AND table_name = $1"#,
+    )
+    .bind(&table_name)
+    .fetch_one(&state.db)
+    .await
+    .ok();
 
     let detail = TableDetail {
         table_name: table_name.clone(),
@@ -159,8 +166,12 @@ pub async fn preview_add_column(
     };
 
     let sql = format!(
-        "ALTER TABLE \"{}\" ADD COLUMN \"{}\" {} {} {}",
-        req.table_name, column.column_name, data_type, null_clause, default_clause
+        "ALTER TABLE {} ADD COLUMN {} {} {} {}",
+        escape_sql_identifier(&req.table_name),
+        escape_sql_identifier(&column.column_name),
+        data_type,
+        null_clause,
+        default_clause
     );
 
     let warning = if !column.is_nullable && column.default_value.is_none() {
@@ -225,8 +236,12 @@ pub async fn execute_add_column(
     };
 
     let sql = format!(
-        "ALTER TABLE \"{}\" ADD COLUMN \"{}\" {} {} {}",
-        req.table_name, column.column_name, data_type, null_clause, default_clause
+        "ALTER TABLE {} ADD COLUMN {} {} {} {}",
+        escape_sql_identifier(&req.table_name),
+        escape_sql_identifier(&column.column_name),
+        data_type,
+        null_clause,
+        default_clause
     );
 
     let id = Uuid::new_v4();
@@ -316,13 +331,17 @@ pub async fn execute_modify_column(
     };
 
     let sql = format!(
-        "ALTER TABLE \"{}\" ALTER COLUMN \"{}\" TYPE {}, ALTER COLUMN \"{}\" SET {}, ALTER COLUMN \"{}\" {}",
-        table_name,
-        column_name,
+        "ALTER TABLE {} ALTER COLUMN {} TYPE {}, ALTER COLUMN {} SET {}, ALTER COLUMN {} {}",
+        escape_sql_identifier(&table_name),
+        escape_sql_identifier(&column_name),
         data_type,
-        column_name,
-        if default_clause.is_empty() { "DEFAULT NULL".to_string() } else { default_clause },
-        column_name,
+        escape_sql_identifier(&column_name),
+        if default_clause.is_empty() {
+            "DEFAULT NULL".to_string()
+        } else {
+            default_clause
+        },
+        escape_sql_identifier(&column_name),
         null_clause
     );
 

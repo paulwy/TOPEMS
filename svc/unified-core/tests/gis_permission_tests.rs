@@ -12,6 +12,19 @@ use serde_json::{json, Value};
 
 const API_URL: &str = "http://localhost:8000";
 
+/// 检查 API 服务是否可用
+async fn ensure_api_available() -> bool {
+    reqwest::Client::builder()
+        .timeout(std::time::Duration::from_secs(2))
+        .build()
+        .unwrap()
+        .get(format!("{}/api/core/iam/auth/login", API_URL))
+        .send()
+        .await
+        .map(|resp| !resp.status().is_server_error())
+        .unwrap_or(false)
+}
+
 fn create_client() -> Client {
     Client::new()
 }
@@ -19,7 +32,7 @@ fn create_client() -> Client {
 async fn login(username: &str, password: &str) -> Result<String, String> {
     let client = create_client();
     let response = client
-        .post(format!("{}/api/v1/auth/login", API_URL))
+        .post(format!("{}/api/core/iam/auth/login", API_URL))
         .json(&json!({ "username": username, "password": password }))
         .send()
         .await
@@ -73,12 +86,15 @@ async fn auth_request(
 // ==================== GIS-001: 查看地图数据 ====================
 
 #[tokio::test]
-#[ignore]
 async fn test_gis_001_view_map() {
+    if !ensure_api_available().await {
+        eprintln!("⏭ 跳过: API服务未运行 ({})", API_URL);
+        return;
+    }
     tracing::info!("测试 GIS-001: 查看地图数据");
     let token = login("admin", "admin123").await.expect("管理员登录失败");
     let client = create_client();
-    match auth_request(&client, &token, "GET", "/api/core/gis/v1/map", None).await {
+    match auth_request(&client, &token, "GET", "/api/core/gis/map", None).await {
         Ok((status, body)) => {
             assert_eq!(status, 200, "状态码应为 200");
             assert!(body["success"].as_bool().unwrap_or(false), "请求应成功");
@@ -91,8 +107,11 @@ async fn test_gis_001_view_map() {
 // ==================== GIS-002: 位置查询 ====================
 
 #[tokio::test]
-#[ignore]
 async fn test_gis_002_search_location() {
+    if !ensure_api_available().await {
+        eprintln!("⏭ 跳过: API服务未运行 ({})", API_URL);
+        return;
+    }
     tracing::info!("测试 GIS-002: 位置查询");
     let token = login("admin", "admin123").await.expect("管理员登录失败");
     let client = create_client();
@@ -100,7 +119,7 @@ async fn test_gis_002_search_location() {
         &client,
         &token,
         "GET",
-        "/api/core/gis/v1/search?q=测试位置",
+        "/api/core/gis/search?q=测试位置",
         None,
     )
     .await
@@ -117,8 +136,11 @@ async fn test_gis_002_search_location() {
 // ==================== GIS-003: 添加地标 ====================
 
 #[tokio::test]
-#[ignore]
 async fn test_gis_003_add_marker() {
+    if !ensure_api_available().await {
+        eprintln!("⏭ 跳过: API服务未运行 ({})", API_URL);
+        return;
+    }
     tracing::info!("测试 GIS-003: 添加地标");
     let token = login("admin", "admin123").await.expect("管理员登录失败");
     let client = create_client();
@@ -126,7 +148,7 @@ async fn test_gis_003_add_marker() {
         &client,
         &token,
         "POST",
-        "/api/core/gis/v1/markers",
+        "/api/core/gis/markers",
         Some(json!({
             "name": "测试地标",
             "latitude": 31.2304,
@@ -147,12 +169,15 @@ async fn test_gis_003_add_marker() {
 // ==================== GIS-004: 查看地标列表 ====================
 
 #[tokio::test]
-#[ignore]
 async fn test_gis_004_list_markers() {
+    if !ensure_api_available().await {
+        eprintln!("⏭ 跳过: API服务未运行 ({})", API_URL);
+        return;
+    }
     tracing::info!("测试 GIS-004: 查看地标列表");
     let token = login("admin", "admin123").await.expect("管理员登录失败");
     let client = create_client();
-    match auth_request(&client, &token, "GET", "/api/core/gis/v1/markers", None).await {
+    match auth_request(&client, &token, "GET", "/api/core/gis/markers", None).await {
         Ok((status, body)) => {
             assert_eq!(status, 200, "状态码应为 200");
             assert!(body["success"].as_bool().unwrap_or(false), "请求应成功");
@@ -165,8 +190,11 @@ async fn test_gis_004_list_markers() {
 // ==================== GIS-005: 路径规划 ====================
 
 #[tokio::test]
-#[ignore]
 async fn test_gis_005_route_planning() {
+    if !ensure_api_available().await {
+        eprintln!("⏭ 跳过: API服务未运行 ({})", API_URL);
+        return;
+    }
     tracing::info!("测试 GIS-005: 路径规划");
     let token = login("admin", "admin123").await.expect("管理员登录失败");
     let client = create_client();
@@ -174,7 +202,7 @@ async fn test_gis_005_route_planning() {
         &client,
         &token,
         "POST",
-        "/api/core/gis/v1/route",
+        "/api/core/gis/route",
         Some(json!({
             "start": { "lat": 31.2304, "lng": 121.4737 },
             "end": { "lat": 31.2305, "lng": 121.4738 }
@@ -193,8 +221,11 @@ async fn test_gis_005_route_planning() {
 // ==================== 测试总结 ====================
 
 #[tokio::test]
-#[ignore]
 async fn run_all_gis_tests_summary() {
+    if !ensure_api_available().await {
+        eprintln!("⏭ 跳过: API服务未运行 ({})", API_URL);
+        return;
+    }
     tracing::info!("========================================");
     tracing::info!("  GIS 权限测试套件 (5个用例)");
     tracing::info!("========================================");

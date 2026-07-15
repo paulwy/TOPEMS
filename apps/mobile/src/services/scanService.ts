@@ -36,6 +36,7 @@ export class ScanService {
     const barcodes = [
       BarcodeScanner.Constants.BarCodeType.code128,
       BarcodeScanner.Constants.BarCodeType.code39,
+      BarcodeScanner.Constants.BarCodeType.code93,
       BarcodeScanner.Constants.BarCodeType.ean13,
       BarcodeScanner.Constants.BarCodeType.ean8,
       BarcodeScanner.Constants.BarCodeType.upc_a,
@@ -44,6 +45,8 @@ export class ScanService {
       BarcodeScanner.Constants.BarCodeType.pdf417,
       BarcodeScanner.Constants.BarCodeType.aztec,
       BarcodeScanner.Constants.BarCodeType.datamatrix,
+      BarcodeScanner.Constants.BarCodeType.interleaved2of5,
+      BarcodeScanner.Constants.BarCodeType.codabar,
     ];
     return barcodes.includes(type);
   }
@@ -53,6 +56,7 @@ export class ScanService {
       [BarcodeScanner.Constants.BarCodeType.qr]: '二维码',
       [BarcodeScanner.Constants.BarCodeType.code128]: 'Code 128',
       [BarcodeScanner.Constants.BarCodeType.code39]: 'Code 39',
+      [BarcodeScanner.Constants.BarCodeType.code93]: 'Code 93',
       [BarcodeScanner.Constants.BarCodeType.ean13]: 'EAN-13',
       [BarcodeScanner.Constants.BarCodeType.ean8]: 'EAN-8',
       [BarcodeScanner.Constants.BarCodeType.upc_a]: 'UPC-A',
@@ -61,7 +65,28 @@ export class ScanService {
       [BarcodeScanner.Constants.BarCodeType.pdf417]: 'PDF417',
       [BarcodeScanner.Constants.BarCodeType.aztec]: 'Aztec',
       [BarcodeScanner.Constants.BarCodeType.datamatrix]: 'Data Matrix',
+      [BarcodeScanner.Constants.BarCodeType.interleaved2of5]: '交叉25码',
+      [BarcodeScanner.Constants.BarCodeType.codabar]: 'Codabar',
     };
     return typeMap[type] || '未知';
+  }
+
+  static getSupportedTypes(): string[] {
+    return [
+      BarcodeScanner.Constants.BarCodeType.qr,
+      BarcodeScanner.Constants.BarCodeType.code128,
+      BarcodeScanner.Constants.BarCodeType.code39,
+      BarcodeScanner.Constants.BarCodeType.code93,
+      BarcodeScanner.Constants.BarCodeType.ean13,
+      BarcodeScanner.Constants.BarCodeType.ean8,
+      BarcodeScanner.Constants.BarCodeType.upc_a,
+      BarcodeScanner.Constants.BarCodeType.upc_e,
+      BarcodeScanner.Constants.BarCodeType.itf14,
+      BarcodeScanner.Constants.BarCodeType.pdf417,
+      BarcodeScanner.Constants.BarCodeType.aztec,
+      BarcodeScanner.Constants.BarCodeType.datamatrix,
+      BarcodeScanner.Constants.BarCodeType.interleaved2of5,
+      BarcodeScanner.Constants.BarCodeType.codabar,
+    ];
   }
 }

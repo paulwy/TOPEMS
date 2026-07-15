@@ -17,7 +17,9 @@ import {
   Tab,
 } from '@mui/material';
 import { PageContainer } from '@/components/common/PageContainerV2';
-import React, { useState, useEffect, useMemo, useCallback } from 'react';
+import React, { useState, useMemo } from 'react';
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import { QUERY_KEYS } from '@/lib/reactQuery';
 import type {
   QualityInspection,
   CreateQualityInspectionRequest,
@@ -73,18 +75,13 @@ function TabPanel(props: TabPanelProps) {
 }
 
 const MesQualityPage: React.FC = () => {
+  const queryClient = useQueryClient();
   const [tabValue, setTabValue] = useState(0);
 
-  const [inspections, setInspections] = useState<QualityInspection[]>([]);
-  const [patrols, setPatrols] = useState<PatrolInspection[]>([]);
-  const [standards, setStandards] = useState<QualityStandard[]>([]);
-
-  const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState('');
   const [statusFilter, setStatusFilter] = useState<string>('all');
   const [currentPage, setCurrentPage] = useState(1);
   const [pageSize] = useState(10);
-  const [total, setTotal] = useState(0);
 
   type QualityItem = QualityInspection | PatrolInspection;
 
@@ -111,50 +108,75 @@ const MesQualityPage: React.FC = () => {
 
   const { addNotification } = useNotificationStore();
 
-  const loadData = useCallback(async () => {
-    try {
-      setLoading(true);
-      const params: ListParams = {
-        page: currentPage - 1,
-        pagesize: pageSize,
-      };
-      if (searchTerm) params.search = searchTerm;
-      if (statusFilter !== 'all') params.status = statusFilter;
+  const params: ListParams = {
+    page: currentPage - 1,
+    pagesize: pageSize,
+  };
+  if (searchTerm) params.search = searchTerm;
+  if (statusFilter !== 'all') params.status = statusFilter;
 
-      if (tabValue === 0) {
-        const response = await qualityApi.listInspections(params);
-        if (response.success && response.data) {
-          setInspections(response.data.inspections || []);
-          setTotal(response.data.total || 0);
-        }
-      } else if (tabValue === 1) {
-        const response = await qualityApi.listPatrolInspections(params);
-        if (response.success && response.data) {
-          setPatrols(response.data.patrols || []);
-          setTotal(response.data.total || 0);
-        }
-      } else {
-        const response = await qualityApi.listStandards(params);
-        if (response.success && response.data) {
-          setStandards(response.data.standards || []);
-          setTotal(response.data.total || 0);
-        }
+  const { data: inspectionsData, isLoading: inspectionsLoading } = useQuery({
+    queryKey: [...QUERY_KEYS.MES.QUALITY_INSPECTIONS, params],
+    queryFn: async () => {
+      const response = await qualityApi.listInspections(params);
+      if (response.success && response.data) {
+        return {
+          inspections: response.data.inspections || [],
+          total: response.data.total || 0,
+        };
       }
-    } catch (error: unknown) {
-      apiLogger.error('加载质检数据失败:', error);
-      addNotification({
-        type: 'error',
-        title: '加载失败',
-        message: '无法加载质检数据',
-      });
-    } finally {
-      setLoading(false);
-    }
-  }, [currentPage, pageSize, searchTerm, statusFilter, tabValue, addNotification]);
+      return { inspections: [], total: 0 };
+    },
+    enabled: tabValue === 0,
+  });
 
-  useEffect(() => {
-    loadData();
-  }, [loadData]);
+  const { data: patrolsData, isLoading: patrolsLoading } = useQuery({
+    queryKey: [...QUERY_KEYS.MES.QUALITY_PATROLS, params],
+    queryFn: async () => {
+      const response = await qualityApi.listPatrolInspections(params);
+      if (response.success && response.data) {
+        return {
+          patrols: response.data.patrols || [],
+          total: response.data.total || 0,
+        };
+      }
+      return { patrols: [], total: 0 };
+    },
+    enabled: tabValue === 1,
+  });
+
+  const { data: standardsData, isLoading: standardsLoading } = useQuery({
+    queryKey: [...QUERY_KEYS.MES.QUALITY_STANDARDS, params],
+    queryFn: async () => {
+      const response = await qualityApi.listStandards(params);
+      if (response.success && response.data) {
+        return {
+          standards: response.data.standards || [],
+          total: response.data.total || 0,
+        };
+      }
+      return { standards: [], total: 0 };
+    },
+    enabled: tabValue === 2,
+  });
+
+  const inspections = inspectionsData?.inspections || [];
+  const patrols = patrolsData?.patrols || [];
+  const standards = standardsData?.standards || [];
+  const loading =
+    tabValue === 0 ? inspectionsLoading : tabValue === 1 ? patrolsLoading : standardsLoading;
+  const total =
+    tabValue === 0
+      ? inspectionsData?.total || 0
+      : tabValue === 1
+        ? patrolsData?.total || 0
+        : standardsData?.total || 0;
+
+  const invalidateQuality = () => {
+    queryClient.invalidateQueries({ queryKey: QUERY_KEYS.MES.QUALITY_INSPECTIONS });
+    queryClient.invalidateQueries({ queryKey: QUERY_KEYS.MES.QUALITY_PATROLS });
+    queryClient.invalidateQueries({ queryKey: QUERY_KEYS.MES.QUALITY_STANDARDS });
+  };
 
   const getStatusBadge = (status: string, type?: string) => {
     const s =
@@ -181,118 +203,120 @@ const MesQualityPage: React.FC = () => {
     );
   };
 
-  const handleSubmitInspection = async (e: React.FormEvent) => {
-    e.preventDefault();
-    try {
-      if (selectedItem) {
-        await qualityApi.updateInspection(
-          selectedItem.id,
-          inspectionFormData as UpdateQualityInspectionRequest
-        );
-        addNotification({
-          type: 'success',
-          title: '更新成功',
-          message: '质检记录已更新',
-        });
-      } else {
-        await qualityApi.createInspection(inspectionFormData);
-        addNotification({
-          type: 'success',
-          title: '创建成功',
-          message: '新质检记录已创建',
-        });
-      }
+  const createInspectionMutation = useMutation({
+    mutationFn: (data: CreateQualityInspectionRequest) => qualityApi.createInspection(data),
+    onSuccess: () => {
+      addNotification({ type: 'success', title: '创建成功', message: '新质检记录已创建' });
+      invalidateQuality();
       setShowDialog(false);
       resetInspectionForm();
-      loadData();
-    } catch (error: unknown) {
+    },
+    onError: (error: unknown) => {
       apiLogger.error('操作失败:', error);
-      addNotification({
-        type: 'error',
-        title: '操作失败',
-        message: selectedItem ? '更新质检记录失败' : '创建质检记录失败',
+      addNotification({ type: 'error', title: '操作失败', message: '创建质检记录失败' });
+    },
+  });
+
+  const updateInspectionMutation = useMutation({
+    mutationFn: ({ id, data }: { id: string; data: UpdateQualityInspectionRequest }) =>
+      qualityApi.updateInspection(id, data),
+    onSuccess: () => {
+      addNotification({ type: 'success', title: '更新成功', message: '质检记录已更新' });
+      invalidateQuality();
+      setShowDialog(false);
+      resetInspectionForm();
+    },
+    onError: (error: unknown) => {
+      apiLogger.error('操作失败:', error);
+      addNotification({ type: 'error', title: '操作失败', message: '更新质检记录失败' });
+    },
+  });
+
+  const deleteInspectionMutation = useMutation({
+    mutationFn: (id: string) => qualityApi.deleteInspection(id),
+    onSuccess: () => {
+      addNotification({ type: 'success', title: '删除成功', message: '质检记录已删除' });
+      invalidateQuality();
+    },
+    onError: (error: unknown) => {
+      apiLogger.error('删除失败:', error);
+      addNotification({ type: 'error', title: '删除失败', message: '无法删除质检记录' });
+    },
+  });
+
+  const createPatrolMutation = useMutation({
+    mutationFn: (data: CreatePatrolInspectionRequest) => qualityApi.createPatrolInspection(data),
+    onSuccess: () => {
+      addNotification({ type: 'success', title: '创建成功', message: '新巡检记录已创建' });
+      invalidateQuality();
+      setShowDialog(false);
+      resetPatrolForm();
+    },
+    onError: (error: unknown) => {
+      apiLogger.error('操作失败:', error);
+      addNotification({ type: 'error', title: '操作失败', message: '创建巡检记录失败' });
+    },
+  });
+
+  const updatePatrolMutation = useMutation({
+    mutationFn: ({ id, data }: { id: string; data: CreatePatrolInspectionRequest }) =>
+      qualityApi.updatePatrolInspection(id, data),
+    onSuccess: () => {
+      addNotification({ type: 'success', title: '更新成功', message: '巡检记录已更新' });
+      invalidateQuality();
+      setShowDialog(false);
+      resetPatrolForm();
+    },
+    onError: (error: unknown) => {
+      apiLogger.error('操作失败:', error);
+      addNotification({ type: 'error', title: '操作失败', message: '更新巡检记录失败' });
+    },
+  });
+
+  const deletePatrolMutation = useMutation({
+    mutationFn: (id: string) => qualityApi.deletePatrolInspection(id),
+    onSuccess: () => {
+      addNotification({ type: 'success', title: '删除成功', message: '巡检记录已删除' });
+      invalidateQuality();
+    },
+    onError: (error: unknown) => {
+      apiLogger.error('删除失败:', error);
+      addNotification({ type: 'error', title: '删除失败', message: '无法删除巡检记录' });
+    },
+  });
+
+  const handleSubmitInspection = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (selectedItem) {
+      updateInspectionMutation.mutate({
+        id: selectedItem.id,
+        data: inspectionFormData as UpdateQualityInspectionRequest,
       });
+    } else {
+      createInspectionMutation.mutate(inspectionFormData);
     }
   };
 
   const handleSubmitPatrol = async (e: React.FormEvent) => {
     e.preventDefault();
-    try {
-      if (selectedItem) {
-        await qualityApi.updatePatrolInspection(selectedItem.id, patrolFormData);
-        addNotification({
-          type: 'success',
-          title: '更新成功',
-          message: '巡检记录已更新',
-        });
-      } else {
-        await qualityApi.createPatrolInspection(patrolFormData);
-        addNotification({
-          type: 'success',
-          title: '创建成功',
-          message: '新巡检记录已创建',
-        });
-      }
-      setShowDialog(false);
-      resetPatrolForm();
-      loadData();
-    } catch (error: unknown) {
-      apiLogger.error('操作失败:', error);
-      addNotification({
-        type: 'error',
-        title: '操作失败',
-        message: selectedItem ? '更新巡检记录失败' : '创建巡检记录失败',
-      });
+    if (selectedItem) {
+      updatePatrolMutation.mutate({ id: selectedItem.id, data: patrolFormData });
+    } else {
+      createPatrolMutation.mutate(patrolFormData);
     }
   };
 
-  const handleDeleteInspection = useCallback(
-    async (id: string) => {
-      if (!window.confirm('确定要删除这条质检记录吗?')) return;
-      try {
-        await qualityApi.deleteInspection(id);
-        addNotification({
-          type: 'success',
-          title: '删除成功',
-          message: '质检记录已删除',
-        });
-        loadData();
-      } catch (error: unknown) {
-        apiLogger.error('删除失败:', error);
-        addNotification({
-          type: 'error',
-          title: '删除失败',
-          message: '无法删除质检记录',
-        });
-      }
-    },
-    [loadData, addNotification]
-  );
+  const handleDeleteInspection = (id: string) => {
+    if (!window.confirm('确定要删除这条质检记录吗?')) return;
+    deleteInspectionMutation.mutate(id);
+  };
 
-  const handleDeletePatrol = useCallback(
-    async (id: string) => {
-      if (!window.confirm('确定要删除这条巡检记录吗?')) return;
-      try {
-        await qualityApi.deletePatrolInspection(id);
-        addNotification({
-          type: 'success',
-          title: '删除成功',
-          message: '巡检记录已删除',
-        });
-        loadData();
-      } catch (error: unknown) {
-        apiLogger.error('删除失败:', error);
-        addNotification({
-          type: 'error',
-          title: '删除失败',
-          message: '无法删除巡检记录',
-        });
-      }
-    },
-    [loadData, addNotification]
-  );
+  const handleDeletePatrol = (id: string) => {
+    if (!window.confirm('确定要删除这条巡检记录吗?')) return;
+    deletePatrolMutation.mutate(id);
+  };
 
-  const handleEditInspection = useCallback((inspection: QualityInspection) => {
+  const handleEditInspection = (inspection: QualityInspection) => {
     setSelectedItem(inspection);
     setInspectionFormData({
       product_code: inspection.product_code,
@@ -303,9 +327,9 @@ const MesQualityPage: React.FC = () => {
       memo: inspection.memo || '',
     });
     setShowDialog(true);
-  }, []);
+  };
 
-  const handleEditPatrol = useCallback((patrol: PatrolInspection) => {
+  const handleEditPatrol = (patrol: PatrolInspection) => {
     setSelectedItem(patrol);
     setPatrolFormData({
       production_line: patrol.production_line || '',
@@ -315,12 +339,12 @@ const MesQualityPage: React.FC = () => {
       memo: patrol.memo || '',
     });
     setShowDialog(true);
-  }, []);
+  };
 
-  const handleViewDetail = useCallback((item: QualityItem) => {
+  const handleViewDetail = (item: QualityItem) => {
     setSelectedItem(item);
     setShowDetailDialog(true);
-  }, []);
+  };
 
   const resetInspectionForm = () => {
     setSelectedItem(null);

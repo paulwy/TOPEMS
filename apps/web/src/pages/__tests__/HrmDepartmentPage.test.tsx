@@ -125,6 +125,7 @@ vi.mock('@/store', () => ({
   useSetSidebarCollapsed: vi.fn(),
 }));
 
+describe('HrmDepartmentPage', () => {
   it('should render without crashing', () => {
     const { container } = render(
       <BrowserRouter>
@@ -133,7 +134,8 @@ vi.mock('@/store', () => ({
     );
     expect(container).toBeDefined();
   });
-
+});
+describe('HrmDepartmentPage', () => {
   it('should have department API methods defined', async () => {
     render(
       <BrowserRouter>

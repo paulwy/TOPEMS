@@ -68,7 +68,6 @@ import { designTokens } from '@/theme/tokens';
 
 const ct = designTokens.colors;
 
-
 const VoucherManagementPage: React.FC = () => {
   const navigate = useNavigate();
   const addNotification = useNotificationStore((state) => state.addNotification);

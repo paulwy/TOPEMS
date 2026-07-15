@@ -40,6 +40,8 @@ import { ListPageTemplate, type ColumnDef } from '@/components/templates';
 import { PageContainer } from '@/components/common';
 import { ConfirmDialog } from '@topems/shared-components';
 import { designTokens } from '@/theme/tokens';
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import { QUERY_KEYS } from '@/lib/reactQuery';
 
 const ct = designTokens.colors;
 
@@ -90,18 +92,15 @@ const statusLabel = (status: DeliveryAppointmentStatus): string => {
 };
 
 const ScmDeliveryAppointmentPage: React.FC = () => {
-  const [appointments, setAppointments] = useState<SupplierDeliveryAppointment[]>([]);
-  const [loading, setLoading] = useState(true);
+  const queryClient = useQueryClient();
   const [currentPage, setCurrentPage] = useState(1);
   const [pageSize, setPageSize] = useState(10);
-  const [total, setTotal] = useState(0);
   const [statusFilter, setStatusFilter] = useState<DeliveryAppointmentStatus | ''>('');
   const [keyword, setKeyword] = useState('');
   const [showDialog, setShowDialog] = useState(false);
   const [isEditing, setIsEditing] = useState(false);
   const [selectedAppointment, setSelectedAppointment] =
     useState<SupplierDeliveryAppointment | null>(null);
-  const [stats, setStats] = useState<DeliveryAppointmentStats | null>(null);
   const [confirmDialogOpen, setConfirmDialogOpen] = useState(false);
   const [confirmDialogConfig, setConfirmDialogConfig] = useState<{
     title: string;
@@ -131,9 +130,15 @@ const ScmDeliveryAppointmentPage: React.FC = () => {
 
   const { addNotification } = useNotificationStore();
 
-  const loadAppointments = useCallback(async () => {
-    try {
-      setLoading(true);
+  const appointmentsQuery = useQuery<{ items: SupplierDeliveryAppointment[]; total: number }>({
+    queryKey: [
+      ...QUERY_KEYS.SCM.DELIVERY_APPOINTMENTS,
+      currentPage,
+      pageSize,
+      statusFilter,
+      keyword,
+    ],
+    queryFn: async () => {
       const response = await scmApi.deliveryAppointments.list({
         page: currentPage,
         pageSize,
@@ -141,41 +146,222 @@ const ScmDeliveryAppointmentPage: React.FC = () => {
         search: keyword || undefined,
       });
       if (response.success && response.data) {
-        setAppointments(response.data.items || []);
-        setTotal(response.data.total || 0);
+        return { items: response.data.items || [], total: response.data.total || 0 };
       }
-    } catch (error: unknown) {
-      apiLogger.error('加载供应商送货预约失败:', error);
+      return { items: [], total: 0 };
+    },
+    staleTime: 5 * 60 * 1000,
+  });
+
+  const appointments = appointmentsQuery.data?.items ?? [];
+  const total = appointmentsQuery.data?.total ?? 0;
+  const loading = appointmentsQuery.isLoading;
+
+  const statsQuery = useQuery<DeliveryAppointmentStats | null>({
+    queryKey: [...QUERY_KEYS.SCM.DELIVERY_APPOINTMENTS, 'stats'],
+    queryFn: async () => {
+      const response = await scmApi.deliveryAppointments.stats();
+      if (response.success && response.data) {
+        return response.data;
+      }
+      return null;
+    },
+    staleTime: 5 * 60 * 1000,
+  });
+
+  const stats = statsQuery.data ?? null;
+
+  useEffect(() => {
+    if (appointmentsQuery.isError) {
+      apiLogger.error('加载供应商送货预约失败:', appointmentsQuery.error);
       addNotification({
         type: 'error',
         title: '加载失败',
         message: '无法加载供应商送货预约',
       });
-    } finally {
-      setLoading(false);
     }
-  }, [currentPage, pageSize, statusFilter, keyword, addNotification]);
-
-  const loadStats = useCallback(async () => {
-    try {
-      const response = await scmApi.deliveryAppointments.stats();
-      if (response.success && response.data) {
-        setStats(response.data);
-      }
-    } catch (error: unknown) {
-      apiLogger.warn('加载送货预约统计失败:', error);
-    }
-  }, []);
+  }, [appointmentsQuery.isError, appointmentsQuery.error, addNotification]);
 
   useEffect(() => {
-    loadAppointments();
-  }, [loadAppointments]);
+    if (statsQuery.isError) {
+      apiLogger.warn('加载送货预约统计失败:', statsQuery.error);
+    }
+  }, [statsQuery.isError, statsQuery.error]);
 
-  useEffect(() => {
-    loadStats();
-  }, [loadStats]);
+  const invalidateAppointments = () => {
+    queryClient.invalidateQueries({ queryKey: QUERY_KEYS.SCM.DELIVERY_APPOINTMENTS });
+    queryClient.invalidateQueries({ queryKey: [...QUERY_KEYS.SCM.DELIVERY_APPOINTMENTS, 'stats'] });
+  };
 
-  const handleSubmit = async (e: React.FormEvent) => {
+  const createMutation = useMutation({
+    mutationFn: (data: CreateSupplierDeliveryAppointmentRequest) =>
+      scmApi.deliveryAppointments.create(data),
+    onSuccess: () => {
+      invalidateAppointments();
+      addNotification({
+        type: 'success',
+        title: '创建成功',
+        message: '新送货预约已创建',
+      });
+      setShowDialog(false);
+      resetForm();
+    },
+    onError: (err: unknown) => {
+      apiLogger.error('操作失败:', err);
+      addNotification({
+        type: 'error',
+        title: '操作失败',
+        message: '创建送货预约失败',
+      });
+    },
+  });
+
+  const updateMutation = useMutation({
+    mutationFn: (params: { id: string; data: UpdateSupplierDeliveryAppointmentRequest }) =>
+      scmApi.deliveryAppointments.update(params.id, params.data),
+    onSuccess: () => {
+      invalidateAppointments();
+      addNotification({
+        type: 'success',
+        title: '更新成功',
+        message: '送货预约已更新',
+      });
+      setShowDialog(false);
+      resetForm();
+    },
+    onError: (err: unknown) => {
+      apiLogger.error('操作失败:', err);
+      addNotification({
+        type: 'error',
+        title: '操作失败',
+        message: '更新送货预约失败',
+      });
+    },
+  });
+
+  const deleteMutation = useMutation({
+    mutationFn: (id: string) => scmApi.deliveryAppointments.delete(id),
+    onSuccess: () => {
+      invalidateAppointments();
+      addNotification({
+        type: 'success',
+        title: '删除成功',
+        message: '送货预约已删除',
+      });
+    },
+    onError: (err: unknown) => {
+      apiLogger.error('删除失败:', err);
+      addNotification({
+        type: 'error',
+        title: '删除失败',
+        message: '删除送货预约失败',
+      });
+    },
+  });
+
+  const approveMutation = useMutation({
+    mutationFn: (id: string) => scmApi.deliveryAppointments.approve(id, { remarks: '审批通过' }),
+    onSuccess: () => {
+      invalidateAppointments();
+      addNotification({
+        type: 'success',
+        title: '审批成功',
+        message: '预约已审批通过',
+      });
+    },
+    onError: (err: unknown) => {
+      apiLogger.error('审批失败:', err);
+      addNotification({
+        type: 'error',
+        title: '审批失败',
+        message: '审批送货预约失败',
+      });
+    },
+  });
+
+  const rejectMutation = useMutation({
+    mutationFn: (id: string) =>
+      scmApi.deliveryAppointments.reject(id, { remarks: '不符合送货要求' }),
+    onSuccess: () => {
+      invalidateAppointments();
+      addNotification({
+        type: 'success',
+        title: '驳回成功',
+        message: '预约已驳回',
+      });
+    },
+    onError: (err: unknown) => {
+      apiLogger.error('驳回失败:', err);
+      addNotification({
+        type: 'error',
+        title: '驳回失败',
+        message: '驳回送货预约失败',
+      });
+    },
+  });
+
+  const confirmArrivalMutation = useMutation({
+    mutationFn: (id: string) =>
+      scmApi.deliveryAppointments.confirmArrival(id, { remarks: '已到货' }),
+    onSuccess: () => {
+      invalidateAppointments();
+      addNotification({
+        type: 'success',
+        title: '到货确认成功',
+        message: '已确认到货',
+      });
+    },
+    onError: (err: unknown) => {
+      apiLogger.error('到货确认失败:', err);
+      addNotification({
+        type: 'error',
+        title: '操作失败',
+        message: '到货确认失败',
+      });
+    },
+  });
+
+  const completeMutation = useMutation({
+    mutationFn: (id: string) => scmApi.deliveryAppointments.complete(id, { remarks: '入库完成' }),
+    onSuccess: () => {
+      invalidateAppointments();
+      addNotification({
+        type: 'success',
+        title: '操作成功',
+        message: '预约已完成',
+      });
+    },
+    onError: (err: unknown) => {
+      apiLogger.error('完成操作失败:', err);
+      addNotification({
+        type: 'error',
+        title: '操作失败',
+        message: '完成操作失败',
+      });
+    },
+  });
+
+  const cancelMutation = useMutation({
+    mutationFn: (id: string) => scmApi.deliveryAppointments.cancel(id, { reason: '业务调整' }),
+    onSuccess: () => {
+      invalidateAppointments();
+      addNotification({
+        type: 'success',
+        title: '取消成功',
+        message: '预约已取消',
+      });
+    },
+    onError: (err: unknown) => {
+      apiLogger.error('取消失败:', err);
+      addNotification({
+        type: 'error',
+        title: '取消失败',
+        message: '取消送货预约失败',
+      });
+    },
+  });
+
+  const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     if (!formData.supplier_id || !formData.delivery_date || !formData.delivery_method) {
       addNotification({
@@ -185,64 +371,41 @@ const ScmDeliveryAppointmentPage: React.FC = () => {
       });
       return;
     }
-    try {
-      if (isEditing && selectedAppointment) {
-        const updateData: UpdateSupplierDeliveryAppointmentRequest = {
-          purchase_order_id: formData.purchase_order_id || undefined,
-          purchase_order_no: formData.purchase_order_no || undefined,
-          delivery_date: formData.delivery_date,
-          delivery_time: formData.delivery_time || undefined,
-          delivery_method: formData.delivery_method,
-          vehicle_no: formData.vehicle_no || undefined,
-          driver_name: formData.driver_name || undefined,
-          driver_phone: formData.driver_phone || undefined,
-          cargo_description: formData.cargo_description || undefined,
-          total_quantity: formData.total_quantity,
-          total_weight: formData.total_weight,
-          destination_warehouse: formData.destination_warehouse || undefined,
-          expected_arrival_time: formData.expected_arrival_time || undefined,
-          remarks: formData.remarks || undefined,
-        };
-        await scmApi.deliveryAppointments.update(selectedAppointment.id, updateData);
-        addNotification({
-          type: 'success',
-          title: '更新成功',
-          message: '送货预约已更新',
-        });
-      } else {
-        const createData: CreateSupplierDeliveryAppointmentRequest = {
-          ...formData,
-          purchase_order_id: formData.purchase_order_id || undefined,
-          purchase_order_no: formData.purchase_order_no || undefined,
-          supplier_name: formData.supplier_name || undefined,
-          delivery_time: formData.delivery_time || undefined,
-          vehicle_no: formData.vehicle_no || undefined,
-          driver_name: formData.driver_name || undefined,
-          driver_phone: formData.driver_phone || undefined,
-          cargo_description: formData.cargo_description || undefined,
-          destination_warehouse: formData.destination_warehouse || undefined,
-          expected_arrival_time: formData.expected_arrival_time || undefined,
-          applicant: formData.applicant || undefined,
-          remarks: formData.remarks || undefined,
-        };
-        await scmApi.deliveryAppointments.create(createData);
-        addNotification({
-          type: 'success',
-          title: '创建成功',
-          message: '新送货预约已创建',
-        });
-      }
-      setShowDialog(false);
-      resetForm();
-      loadAppointments();
-      loadStats();
-    } catch (error: unknown) {
-      apiLogger.error('操作失败:', error);
-      addNotification({
-        type: 'error',
-        title: '操作失败',
-        message: isEditing ? '更新送货预约失败' : '创建送货预约失败',
-      });
+    if (isEditing && selectedAppointment) {
+      const updateData: UpdateSupplierDeliveryAppointmentRequest = {
+        purchase_order_id: formData.purchase_order_id || undefined,
+        purchase_order_no: formData.purchase_order_no || undefined,
+        delivery_date: formData.delivery_date,
+        delivery_time: formData.delivery_time || undefined,
+        delivery_method: formData.delivery_method,
+        vehicle_no: formData.vehicle_no || undefined,
+        driver_name: formData.driver_name || undefined,
+        driver_phone: formData.driver_phone || undefined,
+        cargo_description: formData.cargo_description || undefined,
+        total_quantity: formData.total_quantity,
+        total_weight: formData.total_weight,
+        destination_warehouse: formData.destination_warehouse || undefined,
+        expected_arrival_time: formData.expected_arrival_time || undefined,
+        remarks: formData.remarks || undefined,
+      };
+      updateMutation.mutate({ id: selectedAppointment.id, data: updateData });
+    } else {
+      const createData: CreateSupplierDeliveryAppointmentRequest = {
+        ...formData,
+        purchase_order_id: formData.purchase_order_id || undefined,
+        purchase_order_no: formData.purchase_order_no || undefined,
+        supplier_name: formData.supplier_name || undefined,
+        delivery_time: formData.delivery_time || undefined,
+        vehicle_no: formData.vehicle_no || undefined,
+        driver_name: formData.driver_name || undefined,
+        driver_phone: formData.driver_phone || undefined,
+        cargo_description: formData.cargo_description || undefined,
+        destination_warehouse: formData.destination_warehouse || undefined,
+        expected_arrival_time: formData.expected_arrival_time || undefined,
+        applicant: formData.applicant || undefined,
+        remarks: formData.remarks || undefined,
+      };
+      createMutation.mutate(createData);
     }
   };
 
@@ -275,24 +438,8 @@ const ScmDeliveryAppointmentPage: React.FC = () => {
     openConfirmDialog({
       title: '确认删除',
       message: `确定要删除预约 "${apt.appointment_no}" 吗？`,
-      onConfirm: async () => {
-        try {
-          await scmApi.deliveryAppointments.delete(apt.id);
-          addNotification({
-            type: 'success',
-            title: '删除成功',
-            message: '送货预约已删除',
-          });
-          loadAppointments();
-          loadStats();
-        } catch (error: unknown) {
-          apiLogger.error('删除失败:', error);
-          addNotification({
-            type: 'error',
-            title: '删除失败',
-            message: '删除送货预约失败',
-          });
-        }
+      onConfirm: () => {
+        deleteMutation.mutate(apt.id);
       },
       danger: true,
     });
@@ -303,28 +450,13 @@ const ScmDeliveryAppointmentPage: React.FC = () => {
       openConfirmDialog({
         title: '审批通过',
         message: `确定要审批通过预约 "${apt.appointment_no}" 吗？`,
-        onConfirm: async () => {
-          try {
-            await scmApi.deliveryAppointments.approve(apt.id, { remarks: '审批通过' });
-            addNotification({
-              type: 'success',
-              title: '审批成功',
-              message: '预约已审批通过',
-            });
-            loadAppointments();
-            loadStats();
-          } catch (error: unknown) {
-            apiLogger.error('审批失败:', error);
-            addNotification({
-              type: 'error',
-              title: '审批失败',
-              message: '审批送货预约失败',
-            });
-          }
+        onConfirm: () => {
+          approveMutation.mutate(apt.id);
         },
       });
     },
-    [addNotification, loadAppointments, loadStats]
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    [addNotification]
   );
 
   const handleReject = useCallback(
@@ -332,31 +464,14 @@ const ScmDeliveryAppointmentPage: React.FC = () => {
       openConfirmDialog({
         title: '审批驳回',
         message: `确定要驳回预约 "${apt.appointment_no}" 吗？`,
-        onConfirm: async () => {
-          try {
-            await scmApi.deliveryAppointments.reject(apt.id, {
-              remarks: '不符合送货要求',
-            });
-            addNotification({
-              type: 'success',
-              title: '驳回成功',
-              message: '预约已驳回',
-            });
-            loadAppointments();
-            loadStats();
-          } catch (error: unknown) {
-            apiLogger.error('驳回失败:', error);
-            addNotification({
-              type: 'error',
-              title: '驳回失败',
-              message: '驳回送货预约失败',
-            });
-          }
+        onConfirm: () => {
+          rejectMutation.mutate(apt.id);
         },
         danger: true,
       });
     },
-    [addNotification, loadAppointments, loadStats]
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    [addNotification]
   );
 
   const handleConfirmArrival = useCallback(
@@ -364,30 +479,13 @@ const ScmDeliveryAppointmentPage: React.FC = () => {
       openConfirmDialog({
         title: '确认到货',
         message: `确定要确认预约 "${apt.appointment_no}" 已到货吗？`,
-        onConfirm: async () => {
-          try {
-            await scmApi.deliveryAppointments.confirmArrival(apt.id, {
-              remarks: '已到货',
-            });
-            addNotification({
-              type: 'success',
-              title: '到货确认成功',
-              message: '已确认到货',
-            });
-            loadAppointments();
-            loadStats();
-          } catch (error: unknown) {
-            apiLogger.error('到货确认失败:', error);
-            addNotification({
-              type: 'error',
-              title: '操作失败',
-              message: '到货确认失败',
-            });
-          }
+        onConfirm: () => {
+          confirmArrivalMutation.mutate(apt.id);
         },
       });
     },
-    [addNotification, loadAppointments, loadStats]
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    [addNotification]
   );
 
   const handleComplete = useCallback(
@@ -395,28 +493,13 @@ const ScmDeliveryAppointmentPage: React.FC = () => {
       openConfirmDialog({
         title: '完成预约',
         message: `确定要将预约 "${apt.appointment_no}" 标记为已完成吗？`,
-        onConfirm: async () => {
-          try {
-            await scmApi.deliveryAppointments.complete(apt.id, { remarks: '入库完成' });
-            addNotification({
-              type: 'success',
-              title: '操作成功',
-              message: '预约已完成',
-            });
-            loadAppointments();
-            loadStats();
-          } catch (error: unknown) {
-            apiLogger.error('完成操作失败:', error);
-            addNotification({
-              type: 'error',
-              title: '操作失败',
-              message: '完成操作失败',
-            });
-          }
+        onConfirm: () => {
+          completeMutation.mutate(apt.id);
         },
       });
     },
-    [addNotification, loadAppointments, loadStats]
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    [addNotification]
   );
 
   const handleCancel = useCallback(
@@ -424,31 +507,14 @@ const ScmDeliveryAppointmentPage: React.FC = () => {
       openConfirmDialog({
         title: '取消预约',
         message: `确定要取消预约 "${apt.appointment_no}" 吗？`,
-        onConfirm: async () => {
-          try {
-            await scmApi.deliveryAppointments.cancel(apt.id, {
-              reason: '业务调整',
-            });
-            addNotification({
-              type: 'success',
-              title: '取消成功',
-              message: '预约已取消',
-            });
-            loadAppointments();
-            loadStats();
-          } catch (error: unknown) {
-            apiLogger.error('取消失败:', error);
-            addNotification({
-              type: 'error',
-              title: '取消失败',
-              message: '取消送货预约失败',
-            });
-          }
+        onConfirm: () => {
+          cancelMutation.mutate(apt.id);
         },
         danger: true,
       });
     },
-    [addNotification, loadAppointments, loadStats]
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    [addNotification]
   );
 
   const resetForm = () => {
@@ -560,7 +626,7 @@ const ScmDeliveryAppointmentPage: React.FC = () => {
       </FormControl>
       <Button
         variant='outlined'
-        onClick={() => loadAppointments()}
+        onClick={() => appointmentsQuery.refetch()}
       >
         查询
       </Button>
@@ -748,8 +814,8 @@ const ScmDeliveryAppointmentPage: React.FC = () => {
         ]}
         rowActions={rowActions}
         onRefresh={() => {
-          loadAppointments();
-          loadStats();
+          appointmentsQuery.refetch();
+          statsQuery.refetch();
         }}
         emptyMessage='暂无送货预约数据'
       />

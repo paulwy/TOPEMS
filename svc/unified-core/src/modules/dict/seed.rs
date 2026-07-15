@@ -518,5 +518,440 @@ fn get_system_dict_definitions() -> Vec<DictTypeDef> {
                 ("other", "其他", Some("other")),
             ],
         ),
+        // 质检类型
+        (
+            "qc_type",
+            "质检类型",
+            &[
+                ("incoming", "来料检验", Some("incoming")),
+                ("process", "过程检验", Some("process")),
+                ("final", "成品检验", Some("final")),
+                ("outgoing", "出货检验", Some("outgoing")),
+                ("return", "退货检验", Some("return")),
+            ],
+        ),
+        // 设备类型
+        (
+            "equipment_type",
+            "设备类型",
+            &[
+                ("production", "生产设备", Some("production")),
+                ("testing", "检测设备", Some("testing")),
+                ("transport", "运输设备", Some("transport")),
+                ("storage", "存储设备", Some("storage")),
+                ("office", "办公设备", Some("office")),
+            ],
+        ),
+        // 物料类别
+        (
+            "material_category",
+            "物料类别",
+            &[
+                ("raw_material", "原材料", Some("raw_material")),
+                ("semi_finished", "半成品", Some("semi_finished")),
+                ("finished_goods", "成品", Some("finished_goods")),
+                ("packaging", "包装材料", Some("packaging")),
+                ("auxiliary", "辅料", Some("auxiliary")),
+            ],
+        ),
+        // 工序类型
+        (
+            "process_type",
+            "工序类型",
+            &[
+                ("machining", "机加工", Some("machining")),
+                ("assembly", "装配", Some("assembly")),
+                ("welding", "焊接", Some("welding")),
+                ("painting", "喷涂", Some("painting")),
+                ("inspection", "检验", Some("inspection")),
+            ],
+        ),
+        // 订单状态
+        (
+            "order_status",
+            "订单状态",
+            &[
+                ("draft", "草稿", Some("0")),
+                ("pending", "待审批", Some("1")),
+                ("approved", "已审批", Some("2")),
+                ("processing", "执行中", Some("3")),
+                ("completed", "已完成", Some("4")),
+                ("closed", "已关闭", Some("5")),
+                ("cancelled", "已取消", Some("6")),
+            ],
+        ),
+        // 采购类型
+        (
+            "purchase_type",
+            "采购类型",
+            &[
+                ("regular", "常规采购", Some("regular")),
+                ("urgent", "紧急采购", Some("urgent")),
+                ("centralized", "集中采购", Some("centralized")),
+                ("decentralized", "零散采购", Some("decentralized")),
+            ],
+        ),
+        // 销售渠道
+        (
+            "sales_channel",
+            "销售渠道",
+            &[
+                ("direct", "直销", Some("direct")),
+                ("distributor", "经销商", Some("distributor")),
+                ("ecommerce", "电商平台", Some("ecommerce")),
+                ("key_account", "大客户", Some("key_account")),
+            ],
+        ),
+        // 供应商等级
+        (
+            "supplier_level",
+            "供应商等级",
+            &[
+                ("strategic", "战略供应商", Some("1")),
+                ("core", "核心供应商", Some("2")),
+                ("qualified", "合格供应商", Some("3")),
+                ("backup", "备选供应商", Some("4")),
+            ],
+        ),
+        // 产品类别
+        (
+            "product_category",
+            "产品类别",
+            &[
+                ("electronic", "电子产品", Some("electronic")),
+                ("mechanical", "机械设备", Some("mechanical")),
+                ("raw", "原材料", Some("raw")),
+                ("accessory", "配件", Some("accessory")),
+            ],
+        ),
+        // 仓库类型
+        (
+            "warehouse_type",
+            "仓库类型",
+            &[
+                ("raw_material", "原材料仓", Some("raw_material")),
+                ("finished_goods", "成品仓", Some("finished_goods")),
+                ("semi_finished", "半成品仓", Some("semi_finished")),
+                ("spare_parts", "备件仓", Some("spare_parts")),
+            ],
+        ),
+        // 货位类型
+        (
+            "location_type",
+            "货位类型",
+            &[
+                ("regular", "普通货架", Some("regular")),
+                ("high", "高位货架", Some("high")),
+                ("automated", "立体库位", Some("automated")),
+                ("special", "特殊库位", Some("special")),
+            ],
+        ),
+        // 计量单位
+        (
+            "unit",
+            "计量单位",
+            &[
+                ("pc", "个", Some("PC")),
+                ("kg", "千克", Some("KG")),
+                ("ton", "吨", Some("TON")),
+                ("m", "米", Some("M")),
+                ("box", "箱", Some("BOX")),
+                ("roll", "卷", Some("ROLL")),
+            ],
+        ),
+        // 税率
+        (
+            "tax_rate",
+            "税率",
+            &[
+                ("rate_13", "13%", Some("0.13")),
+                ("rate_9", "9%", Some("0.09")),
+                ("rate_6", "6%", Some("0.06")),
+                ("rate_0", "0%", Some("0.00")),
+            ],
+        ),
+        // 行业类型
+        (
+            "industry_type",
+            "行业类型",
+            &[
+                ("manufacturing", "制造业", Some("manufacturing")),
+                ("retail", "零售业", Some("retail")),
+                ("services", "服务业", Some("services")),
+                ("technology", "科技行业", Some("technology")),
+                ("finance", "金融行业", Some("finance")),
+                ("healthcare", "医疗健康", Some("healthcare")),
+                ("education", "教育行业", Some("education")),
+                ("logistics", "物流行业", Some("logistics")),
+            ],
+        ),
+        // 企业规模
+        (
+            "company_size",
+            "企业规模",
+            &[
+                ("micro", "微型企业", Some("micro")),
+                ("small", "小型企业", Some("small")),
+                ("medium", "中型企业", Some("medium")),
+                ("large", "大型企业", Some("large")),
+            ],
+        ),
+        // 客户来源
+        (
+            "customer_source",
+            "客户来源",
+            &[
+                ("direct", "直接开发", Some("direct")),
+                ("referral", "转介绍", Some("referral")),
+                ("advertising", "广告投放", Some("advertising")),
+                ("exhibition", "展会", Some("exhibition")),
+                ("online", "线上渠道", Some("online")),
+                ("other", "其他", Some("other")),
+            ],
+        ),
+        // 付款条件
+        (
+            "payment_terms",
+            "付款条件",
+            &[
+                ("cod", "货到付款", Some("cod")),
+                ("prepaid", "预付款", Some("prepaid")),
+                ("net_30", "月结30天", Some("net_30")),
+                ("net_60", "月结60天", Some("net_60")),
+                ("net_90", "月结90天", Some("net_90")),
+                ("installment", "分期付款", Some("installment")),
+            ],
+        ),
+        // 运输方式
+        (
+            "shipping_method",
+            "运输方式",
+            &[
+                ("road", "公路运输", Some("road")),
+                ("rail", "铁路运输", Some("rail")),
+                ("air", "航空运输", Some("air")),
+                ("sea", "海运", Some("sea")),
+                ("express", "快递", Some("express")),
+                ("self_pickup", "自提", Some("self_pickup")),
+            ],
+        ),
+        // 包装方式
+        (
+            "packaging_type",
+            "包装方式",
+            &[
+                ("carton", "纸箱", Some("carton")),
+                ("wooden", "木箱", Some("wooden")),
+                ("pallet", "托盘", Some("pallet")),
+                ("bubble", "气泡膜", Some("bubble")),
+                ("vacuum", "真空包装", Some("vacuum")),
+                ("custom", "定制包装", Some("custom")),
+            ],
+        ),
+        // 质检结果
+        (
+            "qc_result",
+            "质检结果",
+            &[
+                ("pass", "合格", Some("pass")),
+                ("fail", "不合格", Some("fail")),
+                ("rework", "返工", Some("rework")),
+                ("scrap", "报废", Some("scrap")),
+                ("hold", "待判定", Some("hold")),
+            ],
+        ),
+        // 设备状态
+        (
+            "equipment_status",
+            "设备状态",
+            &[
+                ("running", "运行中", Some("running")),
+                ("idle", "待机", Some("idle")),
+                ("maintenance", "维护中", Some("maintenance")),
+                ("repair", "维修中", Some("repair")),
+                ("stopped", "已停用", Some("stopped")),
+                ("scrapped", "已报废", Some("scrapped")),
+            ],
+        ),
+        // 工作班次
+        (
+            "work_shift",
+            "工作班次",
+            &[
+                ("day", "白班", Some("day")),
+                ("night", "夜班", Some("night")),
+                ("overtime", "加班", Some("overtime")),
+                ("holiday", "节假日", Some("holiday")),
+            ],
+        ),
+        // 考勤类型
+        (
+            "attendance_type",
+            "考勤类型",
+            &[
+                ("normal", "正常出勤", Some("normal")),
+                ("late", "迟到", Some("late")),
+                ("early_leave", "早退", Some("early_leave")),
+                ("absent", "缺勤", Some("absent")),
+                ("leave", "请假", Some("leave")),
+                ("overtime", "加班", Some("overtime")),
+                ("business_trip", "出差", Some("business_trip")),
+            ],
+        ),
+        // 请假类型
+        (
+            "leave_type",
+            "请假类型",
+            &[
+                ("annual", "年假", Some("annual")),
+                ("sick", "病假", Some("sick")),
+                ("personal", "事假", Some("personal")),
+                ("maternity", "产假", Some("maternity")),
+                ("paternity", "陪产假", Some("paternity")),
+                ("funeral", "丧假", Some("funeral")),
+                ("marriage", "婚假", Some("marriage")),
+                ("study", "学习假", Some("study")),
+            ],
+        ),
+        // 培训类型
+        (
+            "training_type",
+            "培训类型",
+            &[
+                ("onboarding", "入职培训", Some("onboarding")),
+                ("skill", "技能培训", Some("skill")),
+                ("management", "管理培训", Some("management")),
+                ("safety", "安全培训", Some("safety")),
+                ("compliance", "合规培训", Some("compliance")),
+                ("product", "产品培训", Some("product")),
+            ],
+        ),
+        // 绩效等级
+        (
+            "performance_level",
+            "绩效等级",
+            &[
+                ("excellent", "优秀", Some("excellent")),
+                ("good", "良好", Some("good")),
+                ("qualified", "合格", Some("qualified")),
+                ("needs_improvement", "待改进", Some("needs_improvement")),
+                ("poor", "不合格", Some("poor")),
+            ],
+        ),
+        // 报销类型
+        (
+            "expense_type",
+            "报销类型",
+            &[
+                ("travel", "差旅费", Some("travel")),
+                ("meal", "餐饮费", Some("meal")),
+                ("transport", "交通费", Some("transport")),
+                ("communication", "通讯费", Some("communication")),
+                ("office", "办公费", Some("office")),
+                ("training", "培训费", Some("training")),
+                ("entertainment", "招待费", Some("entertainment")),
+                ("other", "其他", Some("other")),
+            ],
+        ),
+        // 预算类型
+        (
+            "budget_type",
+            "预算类型",
+            &[
+                ("annual", "年度预算", Some("annual")),
+                ("quarterly", "季度预算", Some("quarterly")),
+                ("project", "项目预算", Some("project")),
+                ("department", "部门预算", Some("department")),
+                ("rolling", "滚动预算", Some("rolling")),
+            ],
+        ),
+        // 审批流程类型
+        (
+            "approval_flow_type",
+            "审批流程类型",
+            &[
+                ("serial", "串行审批", Some("serial")),
+                ("parallel", "并行审批", Some("parallel")),
+                ("conditional", "条件审批", Some("conditional")),
+                ("countersign", "会签", Some("countersign")),
+                ("self_approval", "自审批", Some("self_approval")),
+            ],
+        ),
+        // 消息渠道
+        (
+            "message_channel",
+            "消息渠道",
+            &[
+                ("system", "系统消息", Some("system")),
+                ("email", "邮件", Some("email")),
+                ("sms", "短信", Some("sms")),
+                ("wechat", "微信", Some("wechat")),
+                ("dingtalk", "钉钉", Some("dingtalk")),
+                ("feishu", "飞书", Some("feishu")),
+            ],
+        ),
+        // 数据同步状态
+        (
+            "sync_status",
+            "数据同步状态",
+            &[
+                ("pending", "待同步", Some("pending")),
+                ("syncing", "同步中", Some("syncing")),
+                ("completed", "已完成", Some("completed")),
+                ("failed", "失败", Some("failed")),
+                ("skipped", "已跳过", Some("skipped")),
+            ],
+        ),
+        // 存储类型
+        (
+            "storage_type",
+            "存储类型",
+            &[
+                ("local", "本地存储", Some("local")),
+                ("cloud", "云存储", Some("cloud")),
+                ("database", "数据库", Some("database")),
+                ("cache", "缓存", Some("cache")),
+                ("cdn", "CDN", Some("cdn")),
+            ],
+        ),
+        // 接口类型
+        (
+            "api_type",
+            "接口类型",
+            &[
+                ("rest", "RESTful", Some("rest")),
+                ("graphql", "GraphQL", Some("graphql")),
+                ("websocket", "WebSocket", Some("websocket")),
+                ("grpc", "gRPC", Some("grpc")),
+                ("webhook", "Webhook", Some("webhook")),
+            ],
+        ),
+        // 认证方式
+        (
+            "auth_method",
+            "认证方式",
+            &[
+                ("password", "密码认证", Some("password")),
+                ("sms", "短信认证", Some("sms")),
+                ("email", "邮件认证", Some("email")),
+                ("oauth", "OAuth2", Some("oauth")),
+                ("ldap", "LDAP", Some("ldap")),
+                ("saml", "SAML", Some("saml")),
+                ("biometric", "生物识别", Some("biometric")),
+            ],
+        ),
+        // 加密算法
+        (
+            "encryption_algorithm",
+            "加密算法",
+            &[
+                ("aes_256", "AES-256", Some("aes_256")),
+                ("rsa_2048", "RSA-2048", Some("rsa_2048")),
+                ("rsa_4096", "RSA-4096", Some("rsa_4096")),
+                ("sha_256", "SHA-256", Some("sha_256")),
+                ("sha_512", "SHA-512", Some("sha_512")),
+                ("hmac_sha256", "HMAC-SHA256", Some("hmac_sha256")),
+            ],
+        ),
     ]
 }

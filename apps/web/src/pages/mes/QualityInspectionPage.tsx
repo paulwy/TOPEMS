@@ -15,8 +15,14 @@ import {
   Button,
 } from '@mui/material';
 import { PageContainer } from '@/components/common/PageContainerV2';
-import React, { useState, useEffect, useMemo, useCallback } from 'react';
-import type { QualityInspection } from '@/api/mes/quality';
+import React, { useState, useMemo } from 'react';
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import { QUERY_KEYS } from '@/lib/reactQuery';
+import type {
+  QualityInspection,
+  CreateQualityInspectionRequest,
+  UpdateQualityInspectionRequest,
+} from '@/api/mes/quality';
 import type { ListParams } from '@/api/mes';
 import { qualityApi } from '@/api/mes/quality';
 import { useNotificationStore } from '@/store';
@@ -35,14 +41,12 @@ import * as XLSX from 'xlsx';
 const ct = designTokens.colors;
 
 const QualityInspectionPage: React.FC = () => {
-  const [inspections, setInspections] = useState<QualityInspection[]>([]);
-  const [loading, setLoading] = useState(true);
+  const queryClient = useQueryClient();
   const [searchTerm, setSearchTerm] = useState('');
   const [statusFilter, setStatusFilter] = useState<string>('all');
   const [typeFilter, setTypeFilter] = useState<string>('all');
   const [currentPage, setCurrentPage] = useState(1);
   const [pageSize] = useState(10);
-  const [total, setTotal] = useState(0);
   const [showDialog, setShowDialog] = useState(false);
   const [showDetailDialog, setShowDetailDialog] = useState(false);
   const [selectedInspection, setSelectedInspection] = useState<QualityInspection | null>(null);
@@ -64,36 +68,33 @@ const QualityInspectionPage: React.FC = () => {
 
   const { addNotification } = useNotificationStore();
 
-  const loadInspections = useCallback(async () => {
-    try {
-      setLoading(true);
-      const params: ListParams = {
-        page: currentPage - 1,
-        pagesize: pageSize,
-      };
-      if (searchTerm) params.search = searchTerm;
-      if (statusFilter !== 'all') params.status = statusFilter;
+  const params: ListParams = {
+    page: currentPage - 1,
+    pagesize: pageSize,
+  };
+  if (searchTerm) params.search = searchTerm;
+  if (statusFilter !== 'all') params.status = statusFilter;
 
+  const { data: inspectionsData, isLoading: loading } = useQuery({
+    queryKey: [...QUERY_KEYS.MES.QUALITY_INSPECTIONS, params],
+    queryFn: async () => {
       const response = await qualityApi.listInspections(params);
       if (response.success && response.data) {
-        setInspections(response.data.inspections || []);
-        setTotal(response.data.total || 0);
+        return {
+          inspections: response.data.inspections || [],
+          total: response.data.total || 0,
+        };
       }
-    } catch (error: unknown) {
-      apiLogger.error('加载质检记录失败:', error);
-      addNotification({
-        type: 'error',
-        title: '加载失败',
-        message: '无法加载质检记录',
-      });
-    } finally {
-      setLoading(false);
-    }
-  }, [currentPage, pageSize, searchTerm, statusFilter, addNotification]);
+      return { inspections: [], total: 0 };
+    },
+  });
 
-  useEffect(() => {
-    loadInspections();
-  }, [loadInspections]);
+  const inspections = inspectionsData?.inspections || [];
+  const total = inspectionsData?.total || 0;
+
+  const invalidateInspections = () => {
+    queryClient.invalidateQueries({ queryKey: QUERY_KEYS.MES.QUALITY_INSPECTIONS });
+  };
 
   const getStatusText = (status: string) => {
     const statusMap: Record<string, string> = {
@@ -118,67 +119,83 @@ const QualityInspectionPage: React.FC = () => {
     return typeMap[type] || type;
   };
 
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    try {
-      const requestData = {
-        ...formData,
-        qualification_rate:
-          formData.quantity > 0 ? (formData.qualified_quantity / formData.quantity) * 100 : 0,
-      };
-
-      if (selectedInspection) {
-        await qualityApi.updateInspection(selectedInspection.id, requestData);
-        addNotification({
-          type: 'success',
-          title: '更新成功',
-          message: '质检记录已更新',
-        });
-      } else {
-        await qualityApi.createInspection(requestData);
-        addNotification({
-          type: 'success',
-          title: '创建成功',
-          message: '新质检记录已创建',
-        });
-      }
+  const createMutation = useMutation({
+    mutationFn: (data: CreateQualityInspectionRequest) => qualityApi.createInspection(data),
+    onSuccess: () => {
+      addNotification({ type: 'success', title: '创建成功', message: '新质检记录已创建' });
+      invalidateInspections();
       setShowDialog(false);
       resetForm();
-      loadInspections();
-    } catch (error: unknown) {
+    },
+    onError: (error: unknown) => {
       apiLogger.error('操作失败:', error);
-      addNotification({
-        type: 'error',
-        title: '操作失败',
-        message: selectedInspection ? '更新质检记录失败' : '创建质检记录失败',
-      });
+      addNotification({ type: 'error', title: '操作失败', message: '创建质检记录失败' });
+    },
+  });
+
+  const updateMutation = useMutation({
+    mutationFn: ({ id, data }: { id: string; data: UpdateQualityInspectionRequest }) =>
+      qualityApi.updateInspection(id, data),
+    onSuccess: () => {
+      addNotification({ type: 'success', title: '更新成功', message: '质检记录已更新' });
+      invalidateInspections();
+      setShowDialog(false);
+      resetForm();
+    },
+    onError: (error: unknown) => {
+      apiLogger.error('操作失败:', error);
+      addNotification({ type: 'error', title: '操作失败', message: '更新质检记录失败' });
+    },
+  });
+
+  const deleteMutation = useMutation({
+    mutationFn: (id: string) => qualityApi.deleteInspection(id),
+    onSuccess: () => {
+      addNotification({ type: 'success', title: '删除成功', message: '质检记录已删除' });
+      invalidateInspections();
+    },
+    onError: (error: unknown) => {
+      apiLogger.error('删除失败:', error);
+      addNotification({ type: 'error', title: '删除失败', message: '无法删除质检记录' });
+    },
+  });
+
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+
+    if (selectedInspection) {
+      const updateData: UpdateQualityInspectionRequest = {
+        qualified_quantity: formData.qualified_quantity,
+        unqualified_quantity: formData.unqualified_quantity,
+        inspector: formData.inspector,
+        inspection_time: formData.inspection_time,
+        result: formData.result,
+        memo: formData.memo,
+      };
+      updateMutation.mutate({ id: selectedInspection.id, data: updateData });
+    } else {
+      const createData: CreateQualityInspectionRequest = {
+        order_id: formData.order_id,
+        product_code: formData.product_code,
+        product_name: formData.product_name,
+        process_id: formData.process_id,
+        inspection_type: formData.inspection_type,
+        quantity: formData.quantity,
+        inspector: formData.inspector,
+        inspection_time: formData.inspection_time,
+        result: formData.result,
+        memo: formData.memo,
+      };
+      createMutation.mutate(createData);
     }
   };
 
-  const handleDelete = useCallback(
-    async (id: string) => {
-      if (!window.confirm('确定要删除这条质检记录吗?')) return;
-      try {
-        await qualityApi.deleteInspection(id);
-        addNotification({
-          type: 'success',
-          title: '删除成功',
-          message: '质检记录已删除',
-        });
-        loadInspections();
-      } catch (error: unknown) {
-        apiLogger.error('删除失败:', error);
-        addNotification({
-          type: 'error',
-          title: '删除失败',
-          message: '无法删除质检记录',
-        });
-      }
-    },
-    [loadInspections, addNotification]
-  );
+  const handleDelete = (id: string) => {
+    if (!window.confirm('确定要删除这条质检记录吗?')) return;
+    deleteMutation.mutate(id);
+  };
 
-  const handleBatchExport = useCallback((inspections: QualityInspection[]) => {
+  const handleBatchExport = (inspections: QualityInspection[]) => {
     if (inspections.length === 0) {
       addNotification({
         type: 'warning',
@@ -190,18 +207,18 @@ const QualityInspectionPage: React.FC = () => {
 
     try {
       const exportData = inspections.map((item) => ({
-        '检验单号': item.inspection_no,
-        '产品编码': item.product_code,
-        '产品名称': item.product_name,
-        '检验类型': getInspectionTypeText(item.inspection_type),
-        '检验数量': item.quantity,
-        '合格数': item.qualified_quantity,
-        '不合格数': item.unqualified_quantity,
-        '合格率': item.qualification_rate,
-        '检验员': item.inspector,
-        '检验时间': item.inspection_time,
-        '检验结果': item.result,
-        '状态': getStatusText(item.status),
+        检验单号: item.inspection_no,
+        产品编码: item.product_code,
+        产品名称: item.product_name,
+        检验类型: getInspectionTypeText(item.inspection_type),
+        检验数量: item.quantity,
+        合格数: item.qualified_quantity,
+        不合格数: item.unqualified_quantity,
+        合格率: item.qualification_rate,
+        检验员: item.inspector,
+        检验时间: item.inspection_time,
+        检验结果: item.result,
+        状态: getStatusText(item.status),
       }));
 
       const worksheet = XLSX.utils.json_to_sheet(exportData);
@@ -222,9 +239,9 @@ const QualityInspectionPage: React.FC = () => {
         message: '无法导出质检记录',
       });
     }
-  }, [addNotification]);
+  };
 
-  const handleEdit = useCallback((inspection: QualityInspection) => {
+  const handleEdit = (inspection: QualityInspection) => {
     setSelectedInspection(inspection);
     setFormData({
       order_id: inspection.order_id || '',
@@ -241,12 +258,12 @@ const QualityInspectionPage: React.FC = () => {
       memo: inspection.memo || '',
     });
     setShowDialog(true);
-  }, []);
+  };
 
-  const handleViewDetail = useCallback((inspection: QualityInspection) => {
+  const handleViewDetail = (inspection: QualityInspection) => {
     setSelectedInspection(inspection);
     setShowDetailDialog(true);
-  }, []);
+  };
 
   const resetForm = () => {
     setSelectedInspection(null);

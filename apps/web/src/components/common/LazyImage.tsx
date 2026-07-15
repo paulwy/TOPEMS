@@ -28,10 +28,34 @@ export const LazyImage: React.FC<LazyImageProps> = ({
         borderRadius: '4px',
       }}
     >
-      <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="#cbd5e1" strokeWidth="1.5">
-        <rect x="3" y="3" width="18" height="18" rx="2" strokeLinecap="round" strokeLinejoin="round" />
-        <circle cx="8.5" cy="8.5" r="1.5" fill="#cbd5e1" />
-        <polyline points="21 15 16 10 5 21" strokeLinecap="round" strokeLinejoin="round" />
+      <svg
+        width='40'
+        height='40'
+        viewBox='0 0 24 24'
+        fill='none'
+        stroke='#cbd5e1'
+        strokeWidth='1.5'
+      >
+        <rect
+          x='3'
+          y='3'
+          width='18'
+          height='18'
+          rx='2'
+          strokeLinecap='round'
+          strokeLinejoin='round'
+        />
+        <circle
+          cx='8.5'
+          cy='8.5'
+          r='1.5'
+          fill='#cbd5e1'
+        />
+        <polyline
+          points='21 15 16 10 5 21'
+          strokeLinecap='round'
+          strokeLinejoin='round'
+        />
       </svg>
     </div>
   ),

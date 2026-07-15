@@ -4,7 +4,7 @@ use axum::{
 };
 use chrono::{DateTime, Utc};
 use rust_decimal::Decimal;
-use serde::Deserialize;
+use serde::{Deserialize, Serialize};
 use uuid::Uuid;
 
 use crate::models::*;
@@ -49,6 +49,65 @@ fn get_tenant_id(claims: &Claims) -> Uuid {
         .as_ref()
         .and_then(|t| Uuid::parse_str(t).ok())
         .unwrap_or_default()
+}
+
+async fn count_table_with_tenant(pool: &sqlx::PgPool, table: &str, tenant_id: Uuid) -> i64 {
+    match sqlx::query_scalar(&format!(
+        "SELECT COUNT(*) FROM {} WHERE tenant_id = $1",
+        table
+    ))
+    .bind(tenant_id)
+    .fetch_one(pool)
+    .await
+    {
+        Ok(v) => v,
+        Err(_) => 0,
+    }
+}
+
+async fn count_table_with_tenant_and_status(
+    pool: &sqlx::PgPool,
+    table: &str,
+    tenant_id: Uuid,
+    status: &str,
+) -> i64 {
+    match sqlx::query_scalar(&format!(
+        "SELECT COUNT(*) FROM {} WHERE tenant_id = $1 AND status = $2",
+        table
+    ))
+    .bind(tenant_id)
+    .bind(status)
+    .fetch_one(pool)
+    .await
+    {
+        Ok(v) => v,
+        Err(_) => 0,
+    }
+}
+
+async fn sum_table_with_tenant(pool: &sqlx::PgPool, table: &str, tenant_id: Uuid) -> i64 {
+    match sqlx::query_scalar(&format!(
+        "SELECT COALESCE(SUM(amount), 0) FROM {} WHERE tenant_id = $1",
+        table
+    ))
+    .bind(tenant_id)
+    .fetch_one(pool)
+    .await
+    {
+        Ok(v) => v,
+        Err(_) => 0,
+    }
+}
+
+async fn sum_overdue_with_tenant(pool: &sqlx::PgPool, table: &str, tenant_id: Uuid) -> i64 {
+    match sqlx::query_scalar(&format!("SELECT COALESCE(SUM(amount), 0) FROM {} WHERE tenant_id = $1 AND due_date < NOW() AND status = 'unpaid'", table))
+        .bind(tenant_id)
+        .fetch_one(pool)
+        .await
+    {
+        Ok(v) => v,
+        Err(_) => 0,
+    }
 }
 
 async fn create_account(
@@ -934,8 +993,73 @@ async fn delete_approval_config_handler(
     }
 }
 
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct FinanceDashboardStats {
+    pub total_vouchers: i64,
+    pub draft_vouchers: i64,
+    pub submitted_vouchers: i64,
+    pub approved_vouchers: i64,
+    pub posted_vouchers: i64,
+    pub total_payments: i64,
+    pub pending_payments: i64,
+    pub total_receivables: i64,
+    pub overdue_receivables: i64,
+    pub total_payables: i64,
+    pub overdue_payables: i64,
+    pub pending_approvals: i64,
+}
+
+async fn get_dashboard_handler(
+    State(state): State<AppState>,
+    Extension(claims): Extension<Claims>,
+) -> Json<ApiResponse<FinanceDashboardStats>> {
+    let tenant_id = get_tenant_id(&claims);
+
+    let total_vouchers = count_table_with_tenant(&state.pool, "vouchers", tenant_id).await;
+    let draft_vouchers =
+        count_table_with_tenant_and_status(&state.pool, "vouchers", tenant_id, "draft").await;
+    let submitted_vouchers =
+        count_table_with_tenant_and_status(&state.pool, "vouchers", tenant_id, "submitted").await;
+    let approved_vouchers =
+        count_table_with_tenant_and_status(&state.pool, "vouchers", tenant_id, "approved").await;
+    let posted_vouchers =
+        count_table_with_tenant_and_status(&state.pool, "vouchers", tenant_id, "posted").await;
+
+    let total_payments = count_table_with_tenant(&state.pool, "payments", tenant_id).await;
+    let pending_payments =
+        count_table_with_tenant_and_status(&state.pool, "payments", tenant_id, "pending").await;
+
+    let total_receivables = sum_table_with_tenant(&state.pool, "receivables", tenant_id).await;
+    let overdue_receivables = sum_overdue_with_tenant(&state.pool, "receivables", tenant_id).await;
+
+    let total_payables = sum_table_with_tenant(&state.pool, "payables", tenant_id).await;
+    let overdue_payables = sum_overdue_with_tenant(&state.pool, "payables", tenant_id).await;
+
+    let pending_approvals =
+        count_table_with_tenant_and_status(&state.pool, "approval_workflows", tenant_id, "pending")
+            .await;
+
+    let stats = FinanceDashboardStats {
+        total_vouchers,
+        draft_vouchers,
+        submitted_vouchers,
+        approved_vouchers,
+        posted_vouchers,
+        total_payments,
+        pending_payments,
+        total_receivables,
+        overdue_receivables,
+        total_payables,
+        overdue_payables,
+        pending_approvals,
+    };
+
+    Json(ApiResponse::success(stats, "查询成功"))
+}
+
 pub fn create_routes() -> Router<AppState> {
     Router::new()
+        .route("/dashboard", axum::routing::get(get_dashboard_handler))
         .route("/accounts", axum::routing::post(create_account))
         .route("/accounts", axum::routing::get(list_accounts))
         .route("/accounts/{account_id}", axum::routing::get(get_account))

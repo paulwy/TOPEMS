@@ -1,7 +1,8 @@
-import React, { useState, useEffect, useCallback, useMemo } from 'react';
+import React, { useCallback, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { z } from 'zod';
 import { FileText, Calendar, Users } from 'lucide-react';
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import FormPageTemplate from '@/components/templates/FormPageTemplate';
 import type { FormSection, FormField } from '@/components/templates/FormPageTemplate';
 import { PageContainer } from '@/components/common';
@@ -9,6 +10,7 @@ import { pmApi, type Project } from '@/api/pm';
 import { useNotification } from '@/hooks/useNotification';
 import { logger } from '@/utils/logger';
 import { PM_PATHS } from '@/modules/pm/config';
+import { QUERY_KEYS } from '@/lib/reactQuery';
 
 const contractSchema = z.object({
   project_id: z.string().optional(),
@@ -53,74 +55,64 @@ const CURRENCIES = [
 const PmContractCreatePage: React.FC = () => {
   const navigate = useNavigate();
   const { success, error } = useNotification();
+  const queryClient = useQueryClient();
 
-  const [projects, setProjects] = useState<Project[]>([]);
-  const [loading, setLoading] = useState(false);
-  const [submitting, setSubmitting] = useState(false);
-
-  useEffect(() => {
-    loadProjects();
-  }, []);
-
-  const loadProjects = async () => {
-    setLoading(true);
-    try {
+  const { data: projectsData, isLoading: loading } = useQuery({
+    queryKey: QUERY_KEYS.PM.PROJECTS,
+    queryFn: async (): Promise<Project[]> => {
       const response = await pmApi.projects.list();
-      if (response.code === 200 && response.data) {
-        setProjects(response.data.items || []);
-      }
-    } catch (err: unknown) {
-      logger.error('Failed to load projects:', err);
-    } finally {
-      setLoading(false);
-    }
-  };
+      return (response.data?.items ?? []) as Project[];
+    },
+  });
 
-  const handleSubmit = useCallback(
-    async (data: unknown) => {
-      const formData = data as ContractFormData;
-
-      setSubmitting(true);
-      try {
-        const response = await pmApi.contracts.create({
-          project_id: formData.project_id || undefined,
-          contract_code: formData.contract_code.trim(),
-          contract_name: formData.contract_name.trim(),
-          contract_type: formData.contract_type,
-          contract_category: formData.contract_category,
-          party_a_name: formData.party_a_name?.trim() || undefined,
-          party_b_name: formData.party_b_name?.trim() || undefined,
-          amount: parseFloat(formData.amount),
-          currency: formData.currency,
-          tax_rate: parseFloat(formData.tax_rate),
-          signing_date: formData.signing_date || undefined,
-          effective_date: formData.effective_date || undefined,
-          end_date: formData.end_date || undefined,
-          description: formData.description?.trim() || undefined,
-        });
-
-        if (response.code === 200 || response.code === 201) {
-          success('合同创建成功');
-          navigate(PM_PATHS.contracts);
-        } else {
-          error(response.message || '创建失败');
-        }
-      } catch (err: unknown) {
-        logger.error('Failed to create contract:', err);
-        error('创建合同失败');
-      } finally {
-        setSubmitting(false);
+  const createMutation = useMutation({
+    mutationFn: async (formData: ContractFormData) => {
+      return pmApi.contracts.create({
+        project_id: formData.project_id || undefined,
+        contract_code: formData.contract_code.trim(),
+        contract_name: formData.contract_name.trim(),
+        contract_type: formData.contract_type,
+        contract_category: formData.contract_category,
+        party_a_name: formData.party_a_name?.trim() || undefined,
+        party_b_name: formData.party_b_name?.trim() || undefined,
+        amount: parseFloat(formData.amount),
+        currency: formData.currency,
+        tax_rate: parseFloat(formData.tax_rate),
+        signing_date: formData.signing_date || undefined,
+        effective_date: formData.effective_date || undefined,
+        end_date: formData.end_date || undefined,
+        description: formData.description?.trim() || undefined,
+      });
+    },
+    onSuccess: (response) => {
+      queryClient.invalidateQueries({ queryKey: QUERY_KEYS.PM.CONTRACTS });
+      if (response.code === 200 || response.code === 201) {
+        success('合同创建成功');
+        navigate(PM_PATHS.contracts);
+      } else {
+        error(response.message || '创建失败');
       }
     },
-    [error, success, navigate]
+    onError: (err: unknown) => {
+      logger.error('Failed to create contract:', err);
+      error('创建合同失败');
+    },
+  });
+
+  const handleSubmit = useCallback(
+    (data: unknown) => {
+      createMutation.mutate(data as ContractFormData);
+    },
+    [createMutation]
   );
 
   const handleCancel = () => {
     navigate(PM_PATHS.contracts);
   };
 
+  const projects = projectsData ?? [];
   const projectOptions = useMemo(() => {
-    return projects.map((project) => ({
+    return projects.map((project: Project) => ({
       label: project.name,
       value: project.id,
     }));
@@ -292,7 +284,7 @@ const PmContractCreatePage: React.FC = () => {
         sections={sections}
         schema={contractSchema}
         loading={loading}
-        submitting={submitting}
+        submitting={createMutation.isPending}
         onSubmit={handleSubmit}
         onCancel={handleCancel}
         submitText='创建合同'

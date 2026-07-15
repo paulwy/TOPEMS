@@ -1,7 +1,8 @@
 import { Typography, Box, InputLabel, Chip } from '@mui/material';
-import React, { useState, useEffect, useMemo } from 'react';
+import React, { useState, useMemo } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { FileText, Download } from 'lucide-react';
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { docApi, type FileMetadata } from '@/api/doc';
 import { useNotification } from '@/hooks/useNotification';
 import { apiLogger } from '@/utils/logger';
@@ -10,6 +11,7 @@ import { ConfirmDialog } from '@topems/shared-components';
 import { PageContainer } from '@/components/common';
 import { designTokens } from '@/theme/tokens';
 import { DOC_PATHS } from '@/modules/doc/config';
+import { QUERY_KEYS } from '@/lib/reactQuery';
 
 const ct = designTokens.colors;
 
@@ -17,52 +19,56 @@ const DocsFileDetailPage: React.FC = () => {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
   const { success, error } = useNotification();
-
-  const [file, setFile] = useState<FileMetadata | null>(null);
-  const [loading, setLoading] = useState(true);
-  const [errorMessage, setErrorMessage] = useState<string | undefined>(undefined);
+  const queryClient = useQueryClient();
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
 
-  useEffect(() => {
-    if (id) {
-      loadFile(id);
-    }
-  }, [id]);
-
-  const loadFile = async (fileId: string) => {
-    setLoading(true);
-    setErrorMessage(undefined);
-    try {
-      const res = await docApi.get(fileId);
+  const {
+    data: file,
+    isLoading: loading,
+    error: queryError,
+  } = useQuery<FileMetadata>({
+    queryKey: id ? QUERY_KEYS.DOC.DOCUMENT(id) : ['doc', 'document', 'none'],
+    queryFn: async () => {
+      if (!id) throw new Error('缺少文件 ID');
+      const res = await docApi.get(id);
       if (res.code === 200 && res.data) {
-        setFile(res.data);
-      } else {
-        throw new Error(res.message || '加载文件信息失败');
+        return res.data;
       }
-    } catch (err: unknown) {
-      apiLogger.error('Failed to load file:', err);
-      setErrorMessage('加载文件信息失败');
-      error('加载文件信息失败');
-    } finally {
-      setLoading(false);
-    }
-  };
+      throw new Error(res.message || '加载文件信息失败');
+    },
+    enabled: !!id,
+  });
 
-  const handleDelete = async () => {
-    if (!id) return;
+  const errorMessage = queryError
+    ? queryError instanceof Error
+      ? queryError.message
+      : '加载文件信息失败'
+    : undefined;
 
-    try {
-      const res = await docApi.delete(id);
-      if (res.code === 200) {
-        success('文件删除成功');
-        navigate(DOC_PATHS.documents);
-      } else {
-        error(res.message || '删除失败');
+  const deleteMutation = useMutation({
+    mutationFn: async (fileId: string) => {
+      const res = await docApi.delete(fileId);
+      if (res.code !== 200) {
+        throw new Error(res.message || '删除失败');
       }
-    } catch (err: unknown) {
+      return res;
+    },
+    onSuccess: () => {
+      success('文件删除成功');
+      if (id) {
+        queryClient.invalidateQueries({ queryKey: QUERY_KEYS.DOC.DOCUMENTS });
+      }
+      navigate(DOC_PATHS.documents);
+    },
+    onError: (err: unknown) => {
       apiLogger.error('Failed to delete file:', err);
-      error('删除文件失败');
-    }
+      error(err instanceof Error ? err.message : '删除文件失败');
+    },
+  });
+
+  const handleDelete = () => {
+    if (!id) return;
+    deleteMutation.mutate(id);
   };
 
   const formatDate = (date: string | undefined) => {

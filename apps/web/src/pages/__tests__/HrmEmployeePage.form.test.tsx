@@ -113,6 +113,7 @@ vi.mock('@/store', () => ({
   useSetSidebarCollapsed: vi.fn(),
 }));
 
+describe('HrmEmployeePage.form', () => {
   it('should render without crashing', async () => {
     const { container } = renderWithProviders(<HrmEmployeePage />);
     expect(container).toBeDefined();

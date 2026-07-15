@@ -19,7 +19,9 @@ import {
   Button,
 } from '@mui/material';
 import { PageContainer } from '@/components/common/PageContainerV2';
-import React, { useState, useEffect, useMemo, useCallback } from 'react';
+import React, { useState, useMemo } from 'react';
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import { QUERY_KEYS } from '@/lib/reactQuery';
 import type {
   ProductionSchedule,
   CreateProductionScheduleRequest,
@@ -56,20 +58,17 @@ import { designTokens } from '@/theme/tokens';
 const ct = designTokens.colors;
 
 const ProductionSchedulePage: React.FC = () => {
-  const [schedules, setSchedules] = useState<ProductionSchedule[]>([]);
-  const [loading, setLoading] = useState(true);
+  const queryClient = useQueryClient();
   const [searchTerm, setSearchTerm] = useState('');
   const [statusFilter, setStatusFilter] = useState<string>('all');
   const [currentPage, setCurrentPage] = useState(1);
   const [pageSize] = useState(10);
-  const [total, setTotal] = useState(0);
   const [showDialog, setShowDialog] = useState(false);
   const [showDetailDialog, setShowDetailDialog] = useState(false);
   const [showAdjustDialog, setShowAdjustDialog] = useState(false);
   const [selectedSchedule, setSelectedSchedule] = useState<ProductionSchedule | null>(null);
   const [selectedIds, setSelectedIds] = useState<string[]>([]);
   const [activeTab, setActiveTab] = useState(0);
-  const [ganttData, setGanttData] = useState<GanttData | null>(null);
   const [formData, setFormData] = useState<CreateProductionScheduleRequest>({
     order_id: '',
     planned_start_time: '',
@@ -84,54 +83,48 @@ const ProductionSchedulePage: React.FC = () => {
 
   const { addNotification } = useNotificationStore();
 
-  const loadSchedules = useCallback(async () => {
-    try {
-      setLoading(true);
-      const params: ListParams = {
-        page: currentPage - 1,
-        pagesize: pageSize,
-      };
-      if (searchTerm) params.search = searchTerm;
-      if (statusFilter !== 'all') params.status = statusFilter;
+  const listParams: ListParams = {
+    page: currentPage - 1,
+    pagesize: pageSize,
+  };
+  if (searchTerm) listParams.search = searchTerm;
+  if (statusFilter !== 'all') listParams.status = statusFilter;
 
-      const response = await mesApi.schedules.list(params);
+  const { data: schedulesData, isLoading: listLoading } = useQuery({
+    queryKey: [...QUERY_KEYS.MES.PRODUCTION_SCHEDULES, listParams],
+    queryFn: async () => {
+      const response = await mesApi.schedules.list(listParams);
       if (response.success && response.data) {
-        setSchedules(response.data.schedules || []);
-        setTotal(response.data.total || 0);
+        return {
+          schedules: response.data.schedules || [],
+          total: response.data.total || 0,
+        };
       }
-    } catch (error: unknown) {
-      apiLogger.error('加载生产排程列表失败:', error);
-      addNotification({
-        type: 'error',
-        title: '加载失败',
-        message: '无法加载生产排程列表',
-      });
-    } finally {
-      setLoading(false);
-    }
-  }, [currentPage, pageSize, searchTerm, statusFilter, addNotification]);
+      return { schedules: [], total: 0 };
+    },
+    enabled: activeTab === 0,
+  });
 
-  const loadGanttData = useCallback(async () => {
-    try {
-      setLoading(true);
+  const { data: ganttData, isLoading: ganttLoading } = useQuery<GanttData | null>({
+    queryKey: QUERY_KEYS.MES.PRODUCTION_SCHEDULE_GANTT,
+    queryFn: async () => {
       const response = await mesApi.schedules.getGanttData();
       if (response.success && response.data) {
-        setGanttData(response.data);
+        return response.data;
       }
-    } catch (error: unknown) {
-      apiLogger.error('加载甘特图数据失败:', error);
-    } finally {
-      setLoading(false);
-    }
-  }, []);
+      return null;
+    },
+    enabled: activeTab === 1,
+  });
 
-  useEffect(() => {
-    if (activeTab === 0) {
-      loadSchedules();
-    } else {
-      loadGanttData();
-    }
-  }, [activeTab, loadSchedules, loadGanttData]);
+  const loading = activeTab === 0 ? listLoading : ganttLoading;
+  const schedules = schedulesData?.schedules || [];
+  const total = schedulesData?.total || 0;
+
+  const invalidateSchedules = () => {
+    queryClient.invalidateQueries({ queryKey: QUERY_KEYS.MES.PRODUCTION_SCHEDULES });
+    queryClient.invalidateQueries({ queryKey: QUERY_KEYS.MES.PRODUCTION_SCHEDULE_GANTT });
+  };
 
   const getStatusText = (status: string) => {
     const statusMap: Record<string, string> = {
@@ -143,72 +136,82 @@ const ProductionSchedulePage: React.FC = () => {
     return statusMap[status] || status;
   };
 
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    try {
-      if (selectedSchedule && !showAdjustDialog) {
-        await mesApi.schedules.update(
-          selectedSchedule.id,
-          formData as UpdateProductionScheduleRequest
-        );
-        addNotification({
-          type: 'success',
-          title: '更新成功',
-          message: '生产排程信息已更新',
-        });
-      } else if (showAdjustDialog && selectedSchedule) {
-        await mesApi.schedules.adjust(selectedSchedule.id, adjustData);
-        addNotification({
-          type: 'success',
-          title: '调整成功',
-          message: '生产排程已调整',
-        });
-      } else {
-        await mesApi.schedules.create(formData);
-        addNotification({
-          type: 'success',
-          title: '创建成功',
-          message: '新生产排程已创建',
-        });
-      }
+  const createMutation = useMutation({
+    mutationFn: (data: CreateProductionScheduleRequest) => mesApi.schedules.create(data),
+    onSuccess: () => {
+      addNotification({ type: 'success', title: '创建成功', message: '新生产排程已创建' });
+      invalidateSchedules();
       setShowDialog(false);
+      resetForm();
+    },
+    onError: (error: unknown) => {
+      apiLogger.error('操作失败:', error);
+      addNotification({ type: 'error', title: '操作失败', message: '创建生产排程失败' });
+    },
+  });
+
+  const updateMutation = useMutation({
+    mutationFn: ({ id, data }: { id: string; data: UpdateProductionScheduleRequest }) =>
+      mesApi.schedules.update(id, data),
+    onSuccess: () => {
+      addNotification({ type: 'success', title: '更新成功', message: '生产排程信息已更新' });
+      invalidateSchedules();
+      setShowDialog(false);
+      resetForm();
+    },
+    onError: (error: unknown) => {
+      apiLogger.error('操作失败:', error);
+      addNotification({ type: 'error', title: '操作失败', message: '更新生产排程失败' });
+    },
+  });
+
+  const adjustMutation = useMutation({
+    mutationFn: ({ id, data }: { id: string; data: AdjustScheduleRequest }) =>
+      mesApi.schedules.adjust(id, data),
+    onSuccess: () => {
+      addNotification({ type: 'success', title: '调整成功', message: '生产排程已调整' });
+      invalidateSchedules();
       setShowAdjustDialog(false);
       resetForm();
-      loadSchedules();
-    } catch (error: unknown) {
+    },
+    onError: (error: unknown) => {
       apiLogger.error('操作失败:', error);
-      addNotification({
-        type: 'error',
-        title: '操作失败',
-        message: selectedSchedule ? '更新生产排程失败' : '创建生产排程失败',
+      addNotification({ type: 'error', title: '操作失败', message: '调整生产排程失败' });
+    },
+  });
+
+  const deleteMutation = useMutation({
+    mutationFn: (id: string) => mesApi.schedules.delete(id),
+    onSuccess: () => {
+      addNotification({ type: 'success', title: '删除成功', message: '生产排程已删除' });
+      invalidateSchedules();
+    },
+    onError: (error: unknown) => {
+      apiLogger.error('删除失败:', error);
+      addNotification({ type: 'error', title: '删除失败', message: '无法删除生产排程' });
+    },
+  });
+
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (selectedSchedule && !showAdjustDialog) {
+      updateMutation.mutate({
+        id: selectedSchedule.id,
+        data: formData as UpdateProductionScheduleRequest,
       });
+    } else if (showAdjustDialog && selectedSchedule) {
+      adjustMutation.mutate({ id: selectedSchedule.id, data: adjustData });
+    } else {
+      createMutation.mutate(formData);
     }
   };
 
-  const handleDelete = useCallback(
-    async (id: string) => {
-      if (!window.confirm('确定要删除这个生产排程吗?')) return;
-      try {
-        await mesApi.schedules.delete(id);
-        addNotification({
-          type: 'success',
-          title: '删除成功',
-          message: '生产排程已删除',
-        });
-        loadSchedules();
-      } catch (error: unknown) {
-        apiLogger.error('删除失败:', error);
-        addNotification({
-          type: 'error',
-          title: '删除失败',
-          message: '无法删除生产排程',
-        });
-      }
-    },
-    [loadSchedules, addNotification]
-  );
+  const handleDelete = (id: string) => {
+    if (!window.confirm('确定要删除这个生产排程吗?')) return;
+    deleteMutation.mutate(id);
+  };
 
-  const handleEdit = useCallback((schedule: ProductionSchedule) => {
+  const handleEdit = (schedule: ProductionSchedule) => {
     setSelectedSchedule(schedule);
     setFormData({
       order_id: schedule.order_id,
@@ -221,9 +224,9 @@ const ProductionSchedulePage: React.FC = () => {
       notes: schedule.notes,
     });
     setShowDialog(true);
-  }, []);
+  };
 
-  const handleAdjust = useCallback((schedule: ProductionSchedule) => {
+  const handleAdjust = (schedule: ProductionSchedule) => {
     setSelectedSchedule(schedule);
     setAdjustData({
       planned_start_time: schedule.planned_start_time,
@@ -232,12 +235,12 @@ const ProductionSchedulePage: React.FC = () => {
       reason: '',
     });
     setShowAdjustDialog(true);
-  }, []);
+  };
 
-  const handleViewDetail = useCallback((schedule: ProductionSchedule) => {
+  const handleViewDetail = (schedule: ProductionSchedule) => {
     setSelectedSchedule(schedule);
     setShowDetailDialog(true);
-  }, []);
+  };
 
   const resetForm = () => {
     setSelectedSchedule(null);
@@ -630,7 +633,11 @@ const ProductionSchedulePage: React.FC = () => {
             <Typography variant='h6'>甘特图视图</Typography>
             <Button
               startIcon={<RefreshCw size={16} />}
-              onClick={loadGanttData}
+              onClick={() =>
+                queryClient.invalidateQueries({
+                  queryKey: QUERY_KEYS.MES.PRODUCTION_SCHEDULE_GANTT,
+                })
+              }
               size='small'
             >
               刷新

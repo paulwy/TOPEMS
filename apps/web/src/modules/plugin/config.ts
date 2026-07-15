@@ -40,10 +40,7 @@ export const pluginModuleConfig: RouteModuleConfig = {
     },
     {
       path: PLUGIN_PATHS.upload,
-      element: lazyWithRetry(
-        () => import('@/pages/plugin/PluginUploadPage'),
-        'PluginUploadPage'
-      ),
+      element: lazyWithRetry(() => import('@/pages/plugin/PluginUploadPage'), 'PluginUploadPage'),
       module: 'plugin',
       title: '上传插件',
       code: 'plugin-upload',
@@ -54,10 +51,7 @@ export const pluginModuleConfig: RouteModuleConfig = {
     },
     {
       path: PLUGIN_PATHS.detail,
-      element: lazyWithRetry(
-        () => import('@/pages/plugin/PluginDetailPage'),
-        'PluginDetailPage'
-      ),
+      element: lazyWithRetry(() => import('@/pages/plugin/PluginDetailPage'), 'PluginDetailPage'),
       module: 'plugin',
       title: '插件详情',
       code: 'plugin-detail',

@@ -49,7 +49,16 @@ const RsBugPage: React.FC = () => {
   });
 
   const bugListQuery = useQuery({
-    queryKey: ['rs-bugs', page, rowsPerPage, searchTerm, severityFilter, priorityFilter, statusFilter, assigneeFilter],
+    queryKey: [
+      'rs-bugs',
+      page,
+      rowsPerPage,
+      searchTerm,
+      severityFilter,
+      priorityFilter,
+      statusFilter,
+      assigneeFilter,
+    ],
     queryFn: async () => {
       const params: Record<string, unknown> = {
         page: page + 1,
@@ -122,7 +131,8 @@ const RsBugPage: React.FC = () => {
 
   const bugs = bugListQuery.data?.bugs || [];
   const total = bugListQuery.data?.total || 0;
-  const loading = bugListQuery.isLoading || createBugMutation.isPending || updateBugMutation.isPending;
+  const loading =
+    bugListQuery.isLoading || createBugMutation.isPending || updateBugMutation.isPending;
 
   const uniqueAssignees = useMemo(() => [...new Set(bugs.map((b) => b.assignee))], [bugs]);
 
@@ -213,8 +223,7 @@ const RsBugPage: React.FC = () => {
         title: '操作成功',
         message: '缺陷已关闭',
       });
-    } catch {
-    }
+    } catch {}
   };
 
   const handleCreateBug = async () => {
@@ -233,8 +242,7 @@ const RsBugPage: React.FC = () => {
         priority: 'medium',
         description: '',
       });
-    } catch {
-    }
+    } catch {}
   };
 
   const columns = useMemo<ColumnDef<Bug>[]>(

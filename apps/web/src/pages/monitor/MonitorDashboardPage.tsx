@@ -6,6 +6,7 @@
  */
 
 import React, { useState, useMemo } from 'react';
+import { useQuery } from '@tanstack/react-query';
 import {
   Activity,
   AlertTriangle,
@@ -51,6 +52,8 @@ import {
 } from '@/components/templates';
 import { useNotificationStore } from '../../store';
 import { designTokens } from '@/theme/tokens';
+import { QUERY_KEYS } from '@/lib/reactQuery';
+import { monitorApi } from '@/api/monitor';
 
 const ct = designTokens.colors;
 
@@ -117,8 +120,22 @@ const generateTimeLabels = (range: TimeRange): string[] => {
   return labels;
 };
 
-const generateRandomData = (length: number, min: number, max: number): number[] => {
-  return Array.from({ length }, () => Math.floor(Math.random() * (max - min + 1)) + min);
+const createFlatTrend = (length: number, value: number): number[] => {
+  return Array.from({ length }, () => value);
+};
+
+const formatRelativeTime = (dateString: string): string => {
+  const date = new Date(dateString);
+  const now = new Date();
+  const diffMs = now.getTime() - date.getTime();
+  if (Number.isNaN(diffMs) || diffMs < 0) return '刚刚';
+  const diffMin = Math.floor(diffMs / 60000);
+  if (diffMin < 1) return '刚刚';
+  if (diffMin < 60) return `${diffMin}分钟前`;
+  const diffHour = Math.floor(diffMin / 60);
+  if (diffHour < 24) return `${diffHour}小时前`;
+  const diffDay = Math.floor(diffHour / 24);
+  return `${diffDay}天前`;
 };
 
 const MiniLineChart: React.FC<{
@@ -127,6 +144,10 @@ const MiniLineChart: React.FC<{
   color?: string;
   height?: number;
 }> = ({ data, labels, color = ct.primary.dark, height = 180 }) => {
+  if (!data || data.length === 0) {
+    return <Box sx={{ width: '100%', height }} />;
+  }
+
   const max = Math.max(...data);
   const min = Math.min(...data);
   const range = max - min || 1;
@@ -134,10 +155,11 @@ const MiniLineChart: React.FC<{
   const width = 100;
   const chartHeight = 100;
   const padding = { top: 10, right: 10, bottom: 20, left: 30 };
+  const denom = data.length - 1 || 1;
 
   const points = data
     .map((value, index) => {
-      const x = padding.left + (index / (data.length - 1)) * (width - padding.left - padding.right);
+      const x = padding.left + (index / denom) * (width - padding.left - padding.right);
       const y =
         padding.top +
         chartHeight -
@@ -186,7 +208,11 @@ const MiniBarChart: React.FC<{
   color?: string;
   height?: number;
 }> = ({ data, labels, color = ct.primary.dark, height = 180 }) => {
-  const max = Math.max(...data);
+  if (!data || data.length === 0) {
+    return <Box sx={{ width: '100%', height }} />;
+  }
+
+  const max = Math.max(...data) || 1;
   const barWidth = (100 - 40) / data.length - 2;
 
   return (
@@ -222,7 +248,7 @@ const MiniPieChart: React.FC<{
   data: { label: string; value: number; color: string }[];
   size?: number;
 }> = ({ data, size = 160 }) => {
-  const total = data.reduce((sum, item) => sum + item.value, 0);
+  const total = data.reduce((sum, item) => sum + item.value, 0) || 1;
   const radius = 40;
   const centerX = 50;
   const centerY = 50;
@@ -311,146 +337,248 @@ const MiniPieChart: React.FC<{
 export const MonitorDashboardPage: React.FC = () => {
   const theme = useTheme();
   const addNotification = useNotificationStore((state) => state.addNotification);
-  const [loading, setLoading] = useState(false);
   const [timeRange, setTimeRange] = useState<TimeRange>('24h');
   const [timeRangeAnchorEl, setTimeRangeAnchorEl] = useState<null | HTMLElement>(null);
 
   const timeLabels = useMemo(() => generateTimeLabels(timeRange), [timeRange]);
 
-  const stats: StatCard[] = useMemo(
-    () => [
+  const systemMetricsQuery = useQuery({
+    queryKey: [...QUERY_KEYS.MONITOR.METRICS, timeRange],
+    queryFn: async () => {
+      const res = await monitorApi.getSystemMetrics();
+      return res.data;
+    },
+  });
+
+  const serviceHealthQuery = useQuery({
+    queryKey: [...QUERY_KEYS.MONITOR.HEALTH, timeRange],
+    queryFn: async () => {
+      const res = await monitorApi.getServiceHealth();
+      return res.data ?? [];
+    },
+  });
+
+  const alertsQuery = useQuery({
+    queryKey: [...QUERY_KEYS.MONITOR.ALERTS, timeRange],
+    queryFn: async () => {
+      const res = await monitorApi.listAlerts({ pagesize: 10, status: 'active' });
+      return res.data?.items ?? [];
+    },
+  });
+
+  const apiPerformanceQuery = useQuery({
+    queryKey: [...QUERY_KEYS.MONITOR.PERFORMANCE, timeRange],
+    queryFn: async () => {
+      const res = await monitorApi.getApiPerformance();
+      return res.data ?? [];
+    },
+  });
+
+  const dbMetricsQuery = useQuery({
+    queryKey: [...QUERY_KEYS.MONITOR.DATABASE, timeRange],
+    queryFn: async () => {
+      const res = await monitorApi.getDatabaseMetrics();
+      return res.data;
+    },
+  });
+
+  const loading =
+    systemMetricsQuery.isFetching ||
+    serviceHealthQuery.isFetching ||
+    alertsQuery.isFetching ||
+    apiPerformanceQuery.isFetching ||
+    dbMetricsQuery.isFetching;
+
+  const systemMetrics = systemMetricsQuery.data;
+  const apiServices = serviceHealthQuery.data ?? [];
+  const apiAlerts = alertsQuery.data ?? [];
+  const apiPerf = apiPerformanceQuery.data ?? [];
+  const dbMetrics = dbMetricsQuery.data;
+
+  const services: ServiceHealth[] = useMemo(
+    () =>
+      apiServices.map((s) => ({
+        id: s.id || s.service_name,
+        name: s.service_name,
+        status: s.status === 'healthy' ? 'healthy' : s.status === 'degraded' ? 'warning' : 'error',
+        cpu: 0,
+        memory: 0,
+        uptime: s.uptime || '-',
+        lastCheck: s.last_check || s.last_checked || '-',
+      })),
+    [apiServices]
+  );
+
+  const recentAlerts: AlertItem[] = useMemo(
+    () =>
+      apiAlerts.map((a) => ({
+        id: a.id,
+        title: a.title,
+        severity: a.severity,
+        service: a.service_name,
+        time: formatRelativeTime(a.created_at),
+        message: a.message,
+      })),
+    [apiAlerts]
+  );
+
+  const stats: StatCard[] = useMemo(() => {
+    const cpuUsage = Math.round(systemMetrics?.cpu_usage ?? 0);
+    const memUsage = Math.round(systemMetrics?.memory_usage ?? 0);
+    const diskUsage = Math.round(systemMetrics?.disk_usage ?? 0);
+    const networkThroughput = systemMetrics
+      ? Math.round(systemMetrics.network_in + systemMetrics.network_out)
+      : 0;
+    const dbConnections = dbMetrics?.connections ?? 0;
+    const onlineServices = apiServices.filter((s) => s.status === 'healthy').length;
+    const alertCount = apiAlerts.length;
+    const apiResponseTime =
+      apiPerf.length > 0
+        ? Math.round(apiPerf.reduce((sum, p) => sum + p.avg_response_time, 0) / apiPerf.length)
+        : 0;
+
+    return [
       {
         id: 'online-services',
         title: '在线服务数',
-        value: '12',
+        value: onlineServices,
         unit: '个',
         icon: <Server size={20} />,
-        change: 1,
-        changeLabel: '较昨日',
         color: 'success',
-        trend: generateRandomData(12, 8, 12),
+        trend: createFlatTrend(12, onlineServices),
       },
       {
         id: 'alerts',
         title: '告警数',
-        value: '5',
+        value: alertCount,
         unit: '条',
         icon: <AlertTriangle size={20} />,
-        change: -2,
-        changeLabel: '较昨日',
         color: 'error',
-        trend: generateRandomData(12, 3, 10),
+        trend: createFlatTrend(12, alertCount),
       },
       {
         id: 'cpu-usage',
         title: 'CPU使用率',
-        value: '68',
+        value: cpuUsage,
         unit: '%',
         icon: <Cpu size={20} />,
-        change: 5,
-        changeLabel: '较昨日',
         color: 'warning',
-        progress: 68,
+        progress: cpuUsage,
         progressLabel: '使用率',
-        trend: generateRandomData(12, 50, 85),
+        trend: createFlatTrend(12, cpuUsage),
       },
       {
         id: 'memory-usage',
         title: '内存使用率',
-        value: '72',
+        value: memUsage,
         unit: '%',
         icon: <Zap size={20} />,
-        change: 3,
-        changeLabel: '较昨日',
         color: 'warning',
-        progress: 72,
+        progress: memUsage,
         progressLabel: '使用率',
-        trend: generateRandomData(12, 60, 80),
+        trend: createFlatTrend(12, memUsage),
       },
       {
         id: 'disk-usage',
         title: '磁盘使用率',
-        value: '54',
+        value: diskUsage,
         unit: '%',
         icon: <HardDrive size={20} />,
-        change: 1,
-        changeLabel: '较昨日',
         color: 'info',
-        progress: 54,
+        progress: diskUsage,
         progressLabel: '使用率',
-        trend: generateRandomData(12, 45, 60),
+        trend: createFlatTrend(12, diskUsage),
       },
       {
         id: 'network-throughput',
         title: '网络吞吐',
-        value: '128',
+        value: networkThroughput,
         unit: 'MB/s',
         icon: <Activity size={20} />,
-        change: 12,
-        changeLabel: '较昨日',
         color: 'primary',
-        trend: generateRandomData(12, 80, 150),
+        trend: createFlatTrend(12, networkThroughput),
       },
       {
         id: 'db-connections',
         title: '数据库连接',
-        value: '86',
+        value: dbConnections,
         unit: '个',
         icon: <Database size={20} />,
-        change: 8,
-        changeLabel: '较昨日',
         color: 'secondary',
-        trend: generateRandomData(12, 60, 100),
+        trend: createFlatTrend(12, dbConnections),
       },
       {
         id: 'api-response-time',
         title: 'API响应时间',
-        value: '120',
+        value: apiResponseTime,
         unit: 'ms',
         icon: <Clock size={20} />,
-        change: -15,
-        changeLabel: '较昨日',
         color: 'success',
-        trend: generateRandomData(12, 80, 200),
+        trend: createFlatTrend(12, apiResponseTime),
       },
-    ],
-    []
-  );
+    ];
+  }, [systemMetrics, dbMetrics, apiServices, apiAlerts, apiPerf]);
 
   const systemResourceData = useMemo(
     () => ({
-      cpu: generateRandomData(timeLabels.length, 40, 85),
-      memory: generateRandomData(timeLabels.length, 50, 80),
-      disk: generateRandomData(timeLabels.length, 45, 65),
+      cpu: createFlatTrend(timeLabels.length, Math.round(systemMetrics?.cpu_usage ?? 0)),
+      memory: createFlatTrend(timeLabels.length, Math.round(systemMetrics?.memory_usage ?? 0)),
+      disk: createFlatTrend(timeLabels.length, Math.round(systemMetrics?.disk_usage ?? 0)),
     }),
-    [timeLabels]
+    [timeLabels, systemMetrics]
   );
 
   const serviceHealthData = useMemo(
     () => [
-      { label: '正常', value: 8, color: theme.palette.success.main },
-      { label: '警告', value: 3, color: theme.palette.warning.main },
-      { label: '异常', value: 1, color: theme.palette.error.main },
+      {
+        label: '正常',
+        value: apiServices.filter((s) => s.status === 'healthy').length,
+        color: theme.palette.success.main,
+      },
+      {
+        label: '警告',
+        value: apiServices.filter((s) => s.status === 'degraded').length,
+        color: theme.palette.warning.main,
+      },
+      {
+        label: '异常',
+        value: apiServices.filter((s) => s.status === 'unhealthy').length,
+        color: theme.palette.error.main,
+      },
     ],
-    [theme]
+    [apiServices, theme]
   );
 
-  const alertDistributionData = useMemo(
-    () => ({
-      services: ['用户服务', '订单服务', '支付服务', '库存服务', '消息服务', '文件服务'],
-      alerts: generateRandomData(6, 0, 8),
-    }),
-    []
-  );
+  const alertDistributionData = useMemo(() => {
+    const serviceSet = new Set<string>();
+    apiServices.forEach((s) => serviceSet.add(s.service_name));
+    apiAlerts.forEach((a) => serviceSet.add(a.service_name));
+    const serviceNames = Array.from(serviceSet);
+    const alerts = serviceNames.map(
+      (name) => apiAlerts.filter((a) => a.service_name === name).length
+    );
+    return { services: serviceNames, alerts };
+  }, [apiServices, apiAlerts]);
 
-  const apiResponseTimeData = useMemo(
-    () => ({
-      avg: generateRandomData(timeLabels.length, 80, 200),
-      p95: generateRandomData(timeLabels.length, 150, 350),
-      p99: generateRandomData(timeLabels.length, 200, 500),
-    }),
-    [timeLabels]
-  );
+  const apiResponseTimeData = useMemo(() => {
+    const avg =
+      apiPerf.length > 0
+        ? Math.round(apiPerf.reduce((sum, p) => sum + p.avg_response_time, 0) / apiPerf.length)
+        : 0;
+    const p95 =
+      apiPerf.length > 0
+        ? Math.round(apiPerf.reduce((sum, p) => sum + p.p95_response_time, 0) / apiPerf.length)
+        : 0;
+    const p99 =
+      apiPerf.length > 0
+        ? Math.round(apiPerf.reduce((sum, p) => sum + p.p99_response_time, 0) / apiPerf.length)
+        : 0;
+    return {
+      avg: createFlatTrend(timeLabels.length, avg),
+      p95: createFlatTrend(timeLabels.length, p95),
+      p99: createFlatTrend(timeLabels.length, p99),
+    };
+  }, [timeLabels, apiPerf]);
 
   const charts: ChartCard[] = useMemo(
     () => [
@@ -652,60 +780,6 @@ export const MonitorDashboardPage: React.FC = () => {
     [addNotification]
   );
 
-  const recentAlerts: AlertItem[] = useMemo(
-    () => [
-      {
-        id: '1',
-        title: 'CPU使用率过高',
-        severity: 'critical',
-        service: '订单服务',
-        time: '10分钟前',
-        message: '订单服务CPU使用率达到92%，超过阈值85%',
-      },
-      {
-        id: '2',
-        title: '内存使用率告警',
-        severity: 'warning',
-        service: '用户服务',
-        time: '25分钟前',
-        message: '用户服务内存使用率达到78%，超过阈值75%',
-      },
-      {
-        id: '3',
-        title: '数据库连接数告警',
-        severity: 'warning',
-        service: '支付服务',
-        time: '1小时前',
-        message: '支付服务数据库连接数达到95，接近上限100',
-      },
-      {
-        id: '4',
-        title: 'API响应时间过长',
-        severity: 'warning',
-        service: '库存服务',
-        time: '2小时前',
-        message: '库存服务API平均响应时间超过300ms',
-      },
-      {
-        id: '5',
-        title: '磁盘空间不足',
-        severity: 'critical',
-        service: '文件服务',
-        time: '3小时前',
-        message: '文件服务磁盘使用率达到90%，请及时清理',
-      },
-      {
-        id: '6',
-        title: '服务重启',
-        severity: 'info',
-        service: '消息服务',
-        time: '5小时前',
-        message: '消息服务已自动重启恢复正常',
-      },
-    ],
-    []
-  );
-
   const recentItems: RecentItem[] = useMemo(
     () =>
       recentAlerts.map((alert) => ({
@@ -731,102 +805,6 @@ export const MonitorDashboardPage: React.FC = () => {
     [recentAlerts]
   );
 
-  const services: ServiceHealth[] = useMemo(
-    () => [
-      {
-        id: '1',
-        name: '用户服务',
-        status: 'healthy',
-        cpu: 45,
-        memory: 62,
-        uptime: '30天12小时',
-        lastCheck: '1分钟前',
-      },
-      {
-        id: '2',
-        name: '订单服务',
-        status: 'warning',
-        cpu: 78,
-        memory: 71,
-        uptime: '15天8小时',
-        lastCheck: '1分钟前',
-      },
-      {
-        id: '3',
-        name: '支付服务',
-        status: 'healthy',
-        cpu: 35,
-        memory: 55,
-        uptime: '45天3小时',
-        lastCheck: '1分钟前',
-      },
-      {
-        id: '4',
-        name: '库存服务',
-        status: 'healthy',
-        cpu: 52,
-        memory: 68,
-        uptime: '20天6小时',
-        lastCheck: '1分钟前',
-      },
-      {
-        id: '5',
-        name: '消息服务',
-        status: 'healthy',
-        cpu: 28,
-        memory: 42,
-        uptime: '60天10小时',
-        lastCheck: '1分钟前',
-      },
-      {
-        id: '6',
-        name: '文件服务',
-        status: 'error',
-        cpu: 91,
-        memory: 85,
-        uptime: '5天2小时',
-        lastCheck: '1分钟前',
-      },
-      {
-        id: '7',
-        name: '网关服务',
-        status: 'healthy',
-        cpu: 38,
-        memory: 50,
-        uptime: '90天4小时',
-        lastCheck: '1分钟前',
-      },
-      {
-        id: '8',
-        name: '认证服务',
-        status: 'warning',
-        cpu: 65,
-        memory: 72,
-        uptime: '25天9小时',
-        lastCheck: '1分钟前',
-      },
-      {
-        id: '9',
-        name: '日志服务',
-        status: 'healthy',
-        cpu: 42,
-        memory: 58,
-        uptime: '35天7小时',
-        lastCheck: '1分钟前',
-      },
-      {
-        id: '10',
-        name: '监控服务',
-        status: 'healthy',
-        cpu: 30,
-        memory: 45,
-        uptime: '100天1小时',
-        lastCheck: '1分钟前',
-      },
-    ],
-    []
-  );
-
   const handleTimeRangeClick = (event: React.MouseEvent<HTMLElement>) => {
     setTimeRangeAnchorEl(event.currentTarget);
   };
@@ -838,19 +816,20 @@ export const MonitorDashboardPage: React.FC = () => {
   const handleTimeRangeSelect = (range: TimeRange) => {
     setTimeRange(range);
     setTimeRangeAnchorEl(null);
-    setLoading(true);
-    setTimeout(() => setLoading(false), 500);
   };
 
-  const handleRefresh = () => {
-    setLoading(true);
-    setTimeout(() => {
-      setLoading(false);
-      addNotification({
-        type: 'success',
-        message: '监控数据已刷新',
-      });
-    }, 800);
+  const handleRefresh = async () => {
+    await Promise.allSettled([
+      systemMetricsQuery.refetch(),
+      serviceHealthQuery.refetch(),
+      alertsQuery.refetch(),
+      apiPerformanceQuery.refetch(),
+      dbMetricsQuery.refetch(),
+    ]);
+    addNotification({
+      type: 'success',
+      message: '监控数据已刷新',
+    });
   };
 
   const getStatusChip = (status: ServiceHealth['status']) => {

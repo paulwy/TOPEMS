@@ -6,6 +6,17 @@ export interface GroupedResults {
   results: SearchResult[];
 }
 
+export interface SearchFilter {
+  module?: string;
+  type?: string;
+}
+
+export interface SearchFilterOption {
+  value: string;
+  label: string;
+  count?: number;
+}
+
 export interface SearchResultListProps {
   results: SearchResult[];
   loading: boolean;
@@ -28,6 +39,10 @@ export interface SearchInputProps {
   inputRef: React.RefObject<HTMLInputElement | null>;
   showShortcut?: boolean;
   autoFocus?: boolean;
+  filter?: SearchFilter;
+  onFilterChange?: (filter: SearchFilter) => void;
+  availableModules?: SearchFilterOption[];
+  availableTypes?: SearchFilterOption[];
 }
 
 export interface SearchHistoryProps {

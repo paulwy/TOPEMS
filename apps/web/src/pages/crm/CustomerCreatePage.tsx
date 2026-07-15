@@ -1,14 +1,15 @@
-import React, { useCallback, useState } from 'react';
+import React, { useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { z } from 'zod';
 import { Building2, Mail, Phone, MapPin, Globe } from 'lucide-react';
 import FormPageTemplate from '@/components/templates/FormPageTemplate';
 import type { FormSection, FormField } from '@/components/templates/FormPageTemplate';
 import { PageContainer } from '@/components/common';
-import { customerApi } from '@/api/crm';
-import { useNotification } from '@/hooks/useNotification';
+import { crmApi } from '@/api/crm';
 import { logger } from '@/utils/logger';
 import { CRM_PATHS } from '@/modules/crm/config';
+import { useMutation, useQueryClient } from '@tanstack/react-query';
+import { QUERY_KEYS } from '@/lib/reactQuery';
 
 const customerSchema = z.object({
   name: z.string().min(1, '客户名称不能为空'),
@@ -49,43 +50,38 @@ const SOURCES = [
 
 const CustomerCreatePage: React.FC = () => {
   const navigate = useNavigate();
-  const { success, error } = useNotification();
+  const queryClient = useQueryClient();
 
-  const [submitting, setSubmitting] = useState(false);
+  const createMutation = useMutation({
+    mutationFn: (data: CustomerFormData) =>
+      crmApi.customers.create({
+        name: data.name.trim(),
+        code: data.code?.trim() || undefined,
+        customer_type: data.type,
+        industry: data.industry || undefined,
+        source: data.source || undefined,
+        website: data.website?.trim() || undefined,
+        phone: data.phone?.trim() || undefined,
+        email: data.email?.trim() || undefined,
+        address: data.address?.trim() || undefined,
+        notes: data.description?.trim() || undefined,
+      }),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: QUERY_KEYS.CRM.CUSTOMERS });
+      navigate(CRM_PATHS.customers);
+    },
+  });
 
   const handleSubmit = useCallback(
     async (data: unknown) => {
       const formData = data as CustomerFormData;
-
-      setSubmitting(true);
       try {
-        const response = await customerApi.create({
-          name: formData.name.trim(),
-          code: formData.code?.trim() || undefined,
-          customer_type: formData.type,
-          industry: formData.industry || undefined,
-          source: formData.source || undefined,
-          website: formData.website?.trim() || undefined,
-          phone: formData.phone?.trim() || undefined,
-          email: formData.email?.trim() || undefined,
-          address: formData.address?.trim() || undefined,
-          notes: formData.description?.trim() || undefined,
-        });
-
-        if (response.code === 200 || response.code === 201) {
-          success('客户创建成功');
-          navigate(CRM_PATHS.customers);
-        } else {
-          error(response.message || '创建失败');
-        }
+        await createMutation.mutateAsync(formData);
       } catch (err: unknown) {
         logger.error('Failed to create customer:', err);
-        error('创建客户失败');
-      } finally {
-        setSubmitting(false);
       }
     },
-    [error, success, navigate]
+    [createMutation]
   );
 
   const handleCancel = () => {
@@ -214,7 +210,7 @@ const CustomerCreatePage: React.FC = () => {
         ]}
         sections={sections}
         schema={customerSchema}
-        submitting={submitting}
+        submitting={createMutation.isPending}
         onSubmit={handleSubmit}
         onCancel={handleCancel}
         submitText='创建客户'

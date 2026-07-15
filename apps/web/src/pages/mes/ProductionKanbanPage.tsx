@@ -16,10 +16,11 @@ import {
   Divider,
 } from '@mui/material';
 import { PageContainer } from '@/components/common/PageContainerV2';
-import React, { useState, useEffect, useCallback } from 'react';
+import React from 'react';
+import { useQuery } from '@tanstack/react-query';
+import { QUERY_KEYS } from '@/lib/reactQuery';
 import { mesApi } from '@/api/mes';
 import type { ProductionKanbanData } from '@/api/mes';
-import { useNotificationStore } from '@/store';
 import { LoadingSpinner } from '@topems/shared-components';
 import {
   Factory,
@@ -31,43 +32,22 @@ import {
   Monitor,
   Wrench,
 } from 'lucide-react';
-import { apiLogger } from '@/utils/logger';
 import { designTokens } from '@/theme/tokens';
 
 const ct = designTokens.colors;
 
 const ProductionKanbanPage: React.FC = () => {
-  const [kanbanData, setKanbanData] = useState<ProductionKanbanData | null>(null);
-  const [loading, setLoading] = useState(true);
-
-  const { addNotification } = useNotificationStore();
-
-  const loadKanbanData = useCallback(async () => {
-    try {
-      setLoading(true);
+  const { data: kanbanData, isLoading: loading } = useQuery<ProductionKanbanData | null>({
+    queryKey: QUERY_KEYS.MES.KANBAN_DASHBOARD,
+    queryFn: async () => {
       const response = await mesApi.kanban.getDashboard();
       if (response.success && response.data) {
-        setKanbanData(response.data);
+        return response.data;
       }
-    } catch (error: unknown) {
-      apiLogger.error('加载生产看板数据失败:', error);
-      addNotification({
-        type: 'error',
-        title: '加载失败',
-        message: '无法加载生产看板数据',
-      });
-    } finally {
-      setLoading(false);
-    }
-  }, [addNotification]);
-
-  useEffect(() => {
-    loadKanbanData();
-    const interval = setInterval(() => {
-      loadKanbanData();
-    }, 60000);
-    return () => clearInterval(interval);
-  }, [loadKanbanData]);
+      return null;
+    },
+    refetchInterval: 60000,
+  });
 
   const getStatusColor = (status: string) => {
     const colorMap: Record<string, string> = {

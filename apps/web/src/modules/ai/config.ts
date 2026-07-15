@@ -76,10 +76,7 @@ export const aiModuleConfig: RouteModuleConfig = {
     },
     {
       path: AI_PATHS.knowledge,
-      element: lazyWithRetry(
-        () => import('@/pages/ai/AiKnowledgeBasePage'),
-        'AiKnowledgeBasePage'
-      ),
+      element: lazyWithRetry(() => import('@/pages/ai/AiKnowledgeBasePage'), 'AiKnowledgeBasePage'),
       module: 'ai',
       code: 'ai-knowledge',
       title: '知识库',

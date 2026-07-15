@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useMemo } from 'react';
+import React, { useState, useMemo } from 'react';
 import {
   Box,
   Chip,
@@ -16,14 +16,16 @@ import {
   Button,
 } from '@mui/material';
 import { Plus, FileText, GitBranch, GitCommit, Users, ExternalLink } from 'lucide-react';
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { ListPageTemplate } from '@/components/templates';
 
 import type { RowAction, FilterConfig, ColumnDef } from '@/components/templates';
 import { PageContainer } from '@/components/common';
 import { rdApi } from '@/api/rd';
 import { useNotificationStore } from '@/store';
-import type { Project } from '@/api/rd';
+import type { Project, UpdateProjectRequest } from '@/api/rd';
 import { logger } from '@/utils/logger';
+import { QUERY_KEYS } from '@/lib/reactQuery';
 
 interface CodeRepo {
   id: string;
@@ -37,16 +39,13 @@ interface CodeRepo {
 }
 
 const RsCodePage: React.FC = () => {
+  const queryClient = useQueryClient();
   const { addNotification } = useNotificationStore();
-  const [repos, setRepos] = useState<CodeRepo[]>([]);
-  const [loading, setLoading] = useState(false);
   const [page, setPage] = useState(0);
   const [rowsPerPage, setRowsPerPage] = useState(10);
-  const [total, setTotal] = useState(0);
   const [searchTerm, setSearchTerm] = useState('');
   const [languageFilter, setLanguageFilter] = useState<string>('');
   const [newRepoDialogOpen, setNewRepoDialogOpen] = useState(false);
-  const [projects, setProjects] = useState<Project[]>([]);
   const [newRepoForm, setNewRepoForm] = useState({
     project_id: '',
     repo_name: '',
@@ -54,25 +53,24 @@ const RsCodePage: React.FC = () => {
     language: 'JavaScript',
   });
 
-  useEffect(() => {
-    loadProjects();
-    loadRepos();
-  }, [searchTerm, languageFilter, page, rowsPerPage]);
-
-  const loadProjects = async () => {
-    try {
+  const projectsQuery = useQuery({
+    queryKey: [...QUERY_KEYS.RD.PROJECTS, 'code-page'],
+    queryFn: async () => {
       const response = await rdApi.listProjects();
-      if (response.success && response.data) {
-        setProjects(response.data.projects || []);
+      if (!response.success || !response.data) {
+        throw new Error(response.message || '加载项目列表失败');
       }
-    } catch (error: unknown) {
-      logger.error('加载项目列表失败:', error);
-    }
-  };
+      return response.data.projects || [];
+    },
+  });
 
-  const loadRepos = async () => {
-    try {
-      setLoading(true);
+  const repoListQuery = useQuery({
+    queryKey: [
+      ...QUERY_KEYS.RD.PROJECTS,
+      'repos',
+      { page, rowsPerPage, searchTerm, languageFilter },
+    ],
+    queryFn: async () => {
       const params: Record<string, unknown> = {
         page: page + 1,
         pagesize: rowsPerPage,
@@ -81,32 +79,57 @@ const RsCodePage: React.FC = () => {
       if (languageFilter) params.language = languageFilter;
 
       const response = await rdApi.listProjects(params);
-      if (response.success && response.data) {
-        const projectList = response.data.projects || [];
-        const transformedRepos: CodeRepo[] = projectList.map((p: Project) => ({
-          id: p.id,
-          repo_name: p.project_name,
-          project_name: p.project_name,
-          repo_url: p.repo_url || '',
-          branch_count: Math.floor(Math.random() * 10) + 1,
-          commit_count: Math.floor(Math.random() * 100) + 10,
-          last_commit: p.created_at || '',
-          language: p.tech_stack || 'JavaScript',
-        }));
-        setRepos(transformedRepos);
-        setTotal(response.data.total || 0);
+      if (!response.success || !response.data) {
+        throw new Error(response.message || '加载代码仓库失败');
       }
-    } catch (error: unknown) {
-      logger.error('加载代码仓库失败:', error);
+      const projectList = response.data.projects || [];
+      const transformedRepos: CodeRepo[] = projectList.map((p: Project) => ({
+        id: p.id,
+        repo_name: p.project_name,
+        project_name: p.project_name,
+        repo_url: p.repo_url || '',
+        branch_count: Math.floor(Math.random() * 10) + 1,
+        commit_count: Math.floor(Math.random() * 100) + 10,
+        last_commit: p.created_at || '',
+        language: p.tech_stack || 'JavaScript',
+      }));
+      return {
+        repos: transformedRepos,
+        total: response.data.total || 0,
+      };
+    },
+  });
+
+  const updateProjectMutation = useMutation({
+    mutationFn: async ({ id, data }: { id: string; data: UpdateProjectRequest }) => {
+      const response = await rdApi.updateProject(id, data);
+      if (!response.success) {
+        throw new Error(response.message || '配置代码仓库失败');
+      }
+      return response;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: [...QUERY_KEYS.RD.PROJECTS, 'repos'] });
+      addNotification({
+        type: 'success',
+        title: '创建成功',
+        message: '代码仓库已配置',
+      });
+    },
+    onError: (error: unknown) => {
+      logger.error('创建代码仓库失败:', error);
       addNotification({
         type: 'error',
-        title: '加载失败',
-        message: '无法加载代码仓库',
+        title: '操作失败',
+        message: error instanceof Error ? error.message : '无法配置代码仓库',
       });
-    } finally {
-      setLoading(false);
-    }
-  };
+    },
+  });
+
+  const repos = repoListQuery.data?.repos || [];
+  const total = repoListQuery.data?.total || 0;
+  const projects = projectsQuery.data || [];
+  const loading = repoListQuery.isLoading || updateProjectMutation.isPending;
 
   const uniqueLanguages = useMemo(() => [...new Set(repos.map((r) => r.language))], [repos]);
 
@@ -130,16 +153,14 @@ const RsCodePage: React.FC = () => {
         return;
       }
 
-      await rdApi.updateProject(newRepoForm.project_id, {
-        repo_url: newRepoForm.repo_url,
-        tech_stack: newRepoForm.language,
+      await updateProjectMutation.mutateAsync({
+        id: newRepoForm.project_id,
+        data: {
+          repo_url: newRepoForm.repo_url,
+          tech_stack: newRepoForm.language,
+        },
       });
 
-      addNotification({
-        type: 'success',
-        title: '创建成功',
-        message: '代码仓库已配置',
-      });
       setNewRepoDialogOpen(false);
       setNewRepoForm({
         project_id: '',
@@ -147,14 +168,8 @@ const RsCodePage: React.FC = () => {
         repo_url: '',
         language: 'JavaScript',
       });
-      loadRepos();
-    } catch (error: unknown) {
-      logger.error('创建代码仓库失败:', error);
-      addNotification({
-        type: 'error',
-        title: '创建失败',
-        message: '无法配置代码仓库',
-      });
+    } catch {
+      // 错误已在 mutation onError 中处理
     }
   };
 

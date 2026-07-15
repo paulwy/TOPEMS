@@ -28,9 +28,19 @@ async fn create_test_tenant(pool: &PgPool) -> Uuid {
     tenant_id
 }
 
+/// 检查数据库是否可用
+async fn ensure_db_available() -> bool {
+    tokio::net::TcpStream::connect("localhost:5432")
+        .await
+        .is_ok()
+}
+
 #[tokio::test]
-#[ignore]
 async fn test_create_product() {
+    if !ensure_db_available().await {
+        eprintln!("⏭ 跳过: 数据库未运行 (localhost:5432)");
+        return;
+    }
     let pool = create_test_pool().await;
     let tenant_id = create_test_tenant(&pool).await;
 
@@ -60,8 +70,11 @@ async fn test_create_product() {
 }
 
 #[tokio::test]
-#[ignore]
 async fn test_get_product() {
+    if !ensure_db_available().await {
+        eprintln!("⏭ 跳过: 数据库未运行 (localhost:5432)");
+        return;
+    }
     let pool = create_test_pool().await;
     let tenant_id = create_test_tenant(&pool).await;
 
@@ -94,8 +107,11 @@ async fn test_get_product() {
 }
 
 #[tokio::test]
-#[ignore]
 async fn test_update_product() {
+    if !ensure_db_available().await {
+        eprintln!("⏭ 跳过: 数据库未运行 (localhost:5432)");
+        return;
+    }
     let pool = create_test_pool().await;
     let tenant_id = create_test_tenant(&pool).await;
 
@@ -136,8 +152,11 @@ async fn test_update_product() {
 }
 
 #[tokio::test]
-#[ignore]
 async fn test_delete_product() {
+    if !ensure_db_available().await {
+        eprintln!("⏭ 跳过: 数据库未运行 (localhost:5432)");
+        return;
+    }
     let pool = create_test_pool().await;
     let tenant_id = create_test_tenant(&pool).await;
 
@@ -179,8 +198,11 @@ async fn test_delete_product() {
 }
 
 #[tokio::test]
-#[ignore]
 async fn test_tenant_isolation() {
+    if !ensure_db_available().await {
+        eprintln!("⏭ 跳过: 数据库未运行 (localhost:5432)");
+        return;
+    }
     let pool = create_test_pool().await;
     let tenant1 = create_test_tenant(&pool).await;
     let tenant2 = create_test_tenant(&pool).await;
@@ -210,8 +232,11 @@ async fn test_tenant_isolation() {
 }
 
 #[tokio::test]
-#[ignore]
 async fn test_list_products_with_pagination() {
+    if !ensure_db_available().await {
+        eprintln!("⏭ 跳过: 数据库未运行 (localhost:5432)");
+        return;
+    }
     let pool = create_test_pool().await;
     let tenant_id = create_test_tenant(&pool).await;
 
@@ -239,8 +264,11 @@ async fn test_list_products_with_pagination() {
 }
 
 #[tokio::test]
-#[ignore]
 async fn test_create_material() {
+    if !ensure_db_available().await {
+        eprintln!("⏭ 跳过: 数据库未运行 (localhost:5432)");
+        return;
+    }
     let pool = create_test_pool().await;
     let tenant_id = create_test_tenant(&pool).await;
 
@@ -264,8 +292,11 @@ async fn test_create_material() {
 }
 
 #[tokio::test]
-#[ignore]
 async fn test_create_change_notice() {
+    if !ensure_db_available().await {
+        eprintln!("⏭ 跳过: 数据库未运行 (localhost:5432)");
+        return;
+    }
     let pool = create_test_pool().await;
     let tenant_id = create_test_tenant(&pool).await;
 

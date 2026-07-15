@@ -82,15 +82,15 @@ pub struct UpdatePatentRequest {
 pub fn create_routes() -> Router<crate::modules::ApiState> {
     Router::<crate::modules::ApiState>::new()
         .route(
-            "/api/core/rs/v1/patents",
+            "/api/core/rd/patents",
             get(list_patents).post(create_patent),
         )
         .route(
-            "/api/core/rs/v1/patents/{id}",
+            "/api/core/rd/patents/{id}",
             get(get_patent).put(update_patent).delete(delete_patent),
         )
         .route(
-            "/api/core/rs/v1/patents/project/{project_id}",
+            "/api/core/rd/patents/project/{project_id}",
             get(list_patents_by_project),
         )
 }

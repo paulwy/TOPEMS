@@ -63,8 +63,14 @@ const executeWithRetry = async <T = any>(
   operation: (item: T, index: number, signal?: AbortSignal) => Promise<boolean | void>,
   maxRetries: number,
   retryDelay: number,
-  retryableErrors: ((error: unknown) => boolean)
-): Promise<{ success: boolean; cancelled: boolean; item: T; retried: boolean; error?: unknown }> => {
+  retryableErrors: (error: unknown) => boolean
+): Promise<{
+  success: boolean;
+  cancelled: boolean;
+  item: T;
+  retried: boolean;
+  error?: unknown;
+}> => {
   let attempts = 0;
   let lastError: unknown;
 
@@ -88,12 +94,15 @@ const executeWithRetry = async <T = any>(
       }
 
       attempts++;
-      apiLogger.warn(`[Batch Operation] Retrying item ${index + 1}, attempt ${attempts} of ${maxRetries + 1}`, {
-        itemIndex: index,
-        attempts,
-        maxRetries,
-        error: error instanceof Error ? error.message : String(error),
-      });
+      apiLogger.warn(
+        `[Batch Operation] Retrying item ${index + 1}, attempt ${attempts} of ${maxRetries + 1}`,
+        {
+          itemIndex: index,
+          attempts,
+          maxRetries,
+          error: error instanceof Error ? error.message : String(error),
+        }
+      );
 
       await new Promise((resolve) => setTimeout(resolve, retryDelay * Math.pow(2, attempts - 1)));
     }
@@ -220,10 +229,13 @@ export async function batchOperation<T = any>(
               if (consistencyCheck && originalItems[globalIndex]) {
                 const isConsistent = consistencyCheck(item, originalItems[globalIndex]);
                 if (!isConsistent) {
-                  apiLogger.warn(`[Batch Operation] Consistency check failed for item ${globalIndex + 1}`, {
-                    operationName,
-                    itemIndex: globalIndex,
-                  });
+                  apiLogger.warn(
+                    `[Batch Operation] Consistency check failed for item ${globalIndex + 1}`,
+                    {
+                      operationName,
+                      itemIndex: globalIndex,
+                    }
+                  );
                 }
               }
               onItemSuccess?.(item, globalIndex);
@@ -250,7 +262,10 @@ export async function batchOperation<T = any>(
               apiLogger.error(`[Batch Operation] Item ${processed} failed`, {
                 operationName,
                 itemIndex: processed,
-                error: result.value.error instanceof Error ? result.value.error.message : String(result.value.error),
+                error:
+                  result.value.error instanceof Error
+                    ? result.value.error.message
+                    : String(result.value.error),
               });
             }
           } else {

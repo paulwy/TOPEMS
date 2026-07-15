@@ -8,39 +8,41 @@ import type { InventoryTurnoverStat } from '@/api/scm';
 import { useNotificationStore } from '@/store';
 import { designTokens } from '@/theme/tokens';
 import { logger } from '@/utils/logger';
+import { useQuery } from '@tanstack/react-query';
+import { QUERY_KEYS } from '@/lib/reactQuery';
 
 const ct = designTokens.colors;
 
 const ScmInventoryTurnoverPage: React.FC = () => {
-  const [data, setData] = useState<InventoryTurnoverStat[]>([]);
-  const [loading, setLoading] = useState(true);
   const [categoryFilter, setCategoryFilter] = useState('all');
   const [page, setPage] = useState(0);
   const [pageSize, setPageSize] = useState(10);
-  const [total, setTotal] = useState(0);
   const addNotification = useNotificationStore((state) => state.addNotification);
 
-  useEffect(() => {
-    loadData();
-  }, [page, pageSize, categoryFilter]);
-
-  const loadData = async () => {
-    setLoading(true);
-    try {
+  const dataQuery = useQuery<{ items: InventoryTurnoverStat[]; total: number }>({
+    queryKey: [...QUERY_KEYS.SCM.INVENTORY_TURNOVER, page, pageSize, categoryFilter],
+    queryFn: async () => {
       const params: Record<string, unknown> = { page: page + 1, pageSize };
       if (categoryFilter !== 'all') params.category = categoryFilter;
       const response = await scmApi.inventoryTurnover.list(params as any);
       if (response.success && response.data) {
-        setData(response.data.items || []);
-        setTotal(response.data.total || 0);
+        return { items: response.data.items || [], total: response.data.total || 0 };
       }
-    } catch (error: unknown) {
-      logger.error('加载库存周转数据失败:', error);
+      return { items: [], total: 0 };
+    },
+    staleTime: 5 * 60 * 1000,
+  });
+
+  const data = dataQuery.data?.items ?? [];
+  const total = dataQuery.data?.total ?? 0;
+  const loading = dataQuery.isLoading;
+
+  useEffect(() => {
+    if (dataQuery.isError) {
+      logger.error('加载库存周转数据失败:', dataQuery.error);
       addNotification({ title: '加载失败', message: '加载库存周转数据失败', type: 'error' });
-    } finally {
-      setLoading(false);
     }
-  };
+  }, [dataQuery.isError, dataQuery.error, addNotification]);
 
   const getAbcColor = (abc?: string) => {
     const map: Record<string, { bg: string; color: string }> = {
@@ -163,7 +165,7 @@ const ScmInventoryTurnoverPage: React.FC = () => {
         filtersValue={undefined}
         onFilterChange={undefined}
         pagination={{ page, pageSize, total, onPageChange: setPage, onPageSizeChange: setPageSize }}
-        onRefresh={loadData}
+        onRefresh={() => dataQuery.refetch()}
         actions={[
           {
             label: '导出报表',

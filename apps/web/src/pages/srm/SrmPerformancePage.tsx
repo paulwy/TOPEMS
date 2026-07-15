@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import { Box, Card, CardContent, Typography, Chip, Rating, Divider } from '@mui/material';
 import { TrendingUp, TrendingDown, Award, Target, BarChart3, RefreshCw } from 'lucide-react';
 import { ListPageTemplate, type ColumnDef } from '@/components/templates';
@@ -7,61 +7,70 @@ import { useNotificationStore } from '@/store';
 import { apiLogger } from '@/utils/logger';
 import { PageContainer } from '@/components/common';
 import { designTokens } from '@/theme/tokens';
+import { useQuery } from '@tanstack/react-query';
+import { QUERY_KEYS } from '@/lib/reactQuery';
 
 const ct = designTokens.colors;
 
 const SrmPerformancePage: React.FC = () => {
   const addNotification = useNotificationStore((state) => state.addNotification);
-  const [performances, setPerformances] = useState<SupplierPerformance[]>([]);
-  const [summary, setSummary] = useState<PerformanceSummary | null>(null);
-  const [loading, setLoading] = useState(false);
   const [page, setPage] = useState(0);
   const [rowsPerPage, setRowsPerPage] = useState(10);
-  const [total, setTotal] = useState(0);
   const [searchTerm, setSearchTerm] = useState('');
 
+  const performancesQuery = useQuery<{ performances: SupplierPerformance[] }>({
+    queryKey: QUERY_KEYS.SRM.PERFORMANCE,
+    queryFn: async () => {
+      const response = await srmApi.getPerformanceReports();
+      if (!response.success || !response.data) {
+        throw new Error(response.message || '加载绩效数据失败');
+      }
+      return { performances: response.data.performances };
+    },
+    staleTime: 5 * 60 * 1000,
+  });
+
+  const summaryQuery = useQuery<PerformanceSummary | null>({
+    queryKey: [...QUERY_KEYS.SRM.PERFORMANCE, 'summary'],
+    queryFn: async () => {
+      const response = await srmApi.getPerformanceSummary();
+      if (response.success && response.data) return response.data;
+      return null;
+    },
+    staleTime: 5 * 60 * 1000,
+  });
+
+  const allPerformances = performancesQuery.data?.performances ?? [];
+  const summary = summaryQuery.data ?? null;
+  const loading = performancesQuery.isLoading || summaryQuery.isLoading;
+
+  const filteredPerformances = useMemo(() => {
+    if (!searchTerm) return allPerformances;
+    return allPerformances.filter((p) =>
+      p.supplier_name.toLowerCase().includes(searchTerm.toLowerCase())
+    );
+  }, [allPerformances, searchTerm]);
+
+  const total = filteredPerformances.length;
+  const performances = filteredPerformances.slice(page * rowsPerPage, (page + 1) * rowsPerPage);
+
   useEffect(() => {
-    loadData();
-  }, [page, rowsPerPage, searchTerm]);
-
-  const loadData = async () => {
-    setLoading(true);
-    try {
-      const [perfResponse, summaryResponse] = await Promise.all([
-        srmApi.getPerformanceReports(),
-        srmApi.getPerformanceSummary(),
-      ]);
-
-      if (summaryResponse.success && summaryResponse.data) {
-        setSummary(summaryResponse.data);
-      }
-
-      if (perfResponse.success && perfResponse.data) {
-        let filtered = perfResponse.data.performances;
-        if (searchTerm) {
-          filtered = filtered.filter((p) =>
-            p.supplier_name.toLowerCase().includes(searchTerm.toLowerCase())
-          );
-        }
-        setTotal(filtered.length);
-        setPerformances(filtered.slice(page * rowsPerPage, (page + 1) * rowsPerPage));
-      } else {
-        addNotification({
-          type: 'error',
-          title: '加载失败',
-          message: perfResponse.message || '加载绩效数据失败',
-        });
-      }
-    } catch (err: unknown) {
-      apiLogger.error('加载绩效数据失败:', err);
+    if (performancesQuery.isError) {
+      apiLogger.error('加载绩效数据失败:', performancesQuery.error);
       addNotification({
         type: 'error',
         title: '加载失败',
-        message: '加载绩效数据失败',
+        message:
+          performancesQuery.error instanceof Error
+            ? performancesQuery.error.message
+            : '加载绩效数据失败',
       });
-    } finally {
-      setLoading(false);
     }
+  }, [performancesQuery.isError, performancesQuery.error, addNotification]);
+
+  const handleRefresh = () => {
+    performancesQuery.refetch();
+    summaryQuery.refetch();
   };
 
   const getScoreColor = (score?: number): 'success' | 'warning' | 'error' | 'default' => {
@@ -449,13 +458,13 @@ const SrmPerformancePage: React.FC = () => {
           {
             label: '刷新数据',
             icon: <RefreshCw size={18} />,
-            onClick: loadData,
+            onClick: handleRefresh,
             variant: 'outlined',
           },
         ]}
         headerContent={headerContent}
         getRowId={(row) => row.supplier_id}
-        onRefresh={loadData}
+        onRefresh={handleRefresh}
         emptyMessage='暂无绩效数据'
       />
     </PageContainer>

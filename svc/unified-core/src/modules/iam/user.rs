@@ -436,7 +436,7 @@ pub async fn create_user(
 
 pub async fn get_user(
     State(state): State<AppState>,
-    Extension(claims): Extension<Claims>,
+    Extension(_claims): Extension<Claims>,
     Path(id): Path<String>,
 ) -> (StatusCode, Json<serde_json::Value>) {
     tracing::info!("IAM user get_user called with id: {}", id);

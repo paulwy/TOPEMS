@@ -1,4 +1,6 @@
-import React, { useEffect, useState, useCallback, useMemo } from 'react';
+import React, { useState, useMemo } from 'react';
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import { QUERY_KEYS } from '@/lib/reactQuery';
 import {
   Box,
   Chip,
@@ -106,8 +108,6 @@ const PluginManagementPage: React.FC = () => {
   const {
     installedPlugins,
     healthStatus,
-    loading,
-    error,
     fetchInstalledPlugins,
     fetchHealthStatus,
     enablePlugin,
@@ -118,8 +118,8 @@ const PluginManagementPage: React.FC = () => {
   } = usePluginStore();
 
   const addNotification = useNotificationStore((state) => state.addNotification);
+  const queryClient = useQueryClient();
 
-  const [plugins, setPlugins] = useState<Plugin[]>([]);
   const [searchQuery, setSearchQuery] = useState('');
   const [typeFilter, setTypeFilter] = useState('all');
   const [marketplaceOpen, setMarketplaceOpen] = useState(false);
@@ -141,70 +141,103 @@ const PluginManagementPage: React.FC = () => {
     action: () => {},
   });
 
-  const loadPlugins = useCallback(async () => {
-    try {
+  const pluginsQuery = useQuery({
+    queryKey: QUERY_KEYS.SYSTEM.PLUGINS,
+    queryFn: async () => {
       await Promise.all([fetchInstalledPlugins(), fetchHealthStatus()]);
 
       const pluginInfoList = await fetchAllPluginInfo();
 
-      if (pluginInfoList.length > 0) {
-        const runtimePlugins: Plugin[] = pluginInfoList.map((info, index) => ({
-          id: String(index + 1),
-          code: info.code,
-          name: PLUGIN_DISPLAY_NAMES[info.code] || info.name,
-          description: info.description,
-          version: info.version,
-          plugin_type: info.plugin_type,
-          is_published: true,
-          category: info.category,
-          runtime_status: 'running',
-          runtime_url: PLUGIN_REGISTRY[info.code]?.url || '',
-          base_path: `/api/${info.code}`,
-        }));
-        setPlugins(runtimePlugins);
-      }
-    } catch (err: unknown) {
-      logger.error('Failed to load plugins:', err);
-    }
-  }, [fetchInstalledPlugins, fetchHealthStatus]);
+      const runtimePlugins: Plugin[] = pluginInfoList.map((info, index) => ({
+        id: String(index + 1),
+        code: info.code,
+        name: PLUGIN_DISPLAY_NAMES[info.code] || info.name,
+        description: info.description,
+        version: info.version,
+        plugin_type: info.plugin_type,
+        is_published: true,
+        category: info.category,
+        runtime_status: 'running',
+        runtime_url: PLUGIN_REGISTRY[info.code]?.url || '',
+        base_path: `/api/${info.code}`,
+      }));
+      return runtimePlugins;
+    },
+  });
 
-  useEffect(() => {
-    loadPlugins();
-  }, [loadPlugins]);
+  const plugins = pluginsQuery.data || [];
+  const loading = pluginsQuery.isLoading;
+  const error = pluginsQuery.error ? (pluginsQuery.error as Error).message : null;
 
-  const handleEnable = async (pluginCode: string) => {
-    const success = await enablePlugin(pluginCode);
-    if (success) {
+  const loadPlugins = () => {
+    queryClient.invalidateQueries({ queryKey: QUERY_KEYS.SYSTEM.PLUGINS });
+  };
+
+  const enableMutation = useMutation({
+    mutationFn: async (pluginCode: string) => {
+      const success = await enablePlugin(pluginCode);
+      if (!success) throw new Error('启用失败');
+      return pluginCode;
+    },
+    onSuccess: (pluginCode) => {
       addNotification({
         title: '启用成功',
         message: `${pluginCode} 插件已启用`,
         type: 'success',
       });
       loadPlugins();
-    }
+    },
+    onError: (err: unknown) => {
+      addNotification({
+        title: '失败',
+        message: (err as Error).message || '启用失败',
+        type: 'error',
+      });
+    },
+  });
+
+  const disableMutation = useMutation({
+    mutationFn: async (pluginCode: string) => {
+      const success = await disablePlugin(pluginCode);
+      if (!success) throw new Error('禁用失败');
+      return pluginCode;
+    },
+    onSuccess: (pluginCode) => {
+      addNotification({
+        title: '禁用成功',
+        message: `${pluginCode} 插件已禁用`,
+        type: 'success',
+      });
+      loadPlugins();
+    },
+    onError: (err: unknown) => {
+      addNotification({
+        title: '失败',
+        message: (err as Error).message || '禁用失败',
+        type: 'error',
+      });
+    },
+    onSettled: () => {
+      setConfirmDialog((prev) => ({ ...prev, open: false }));
+    },
+  });
+
+  const handleEnable = (pluginCode: string) => {
+    enableMutation.mutate(pluginCode);
   };
 
-  const handleDisable = async (pluginCode: string) => {
+  const handleDisable = (pluginCode: string) => {
     setConfirmDialog({
       open: true,
       title: '禁用插件',
       message: `确定要禁用 "${pluginCode}" 插件吗？`,
-      action: async () => {
-        const success = await disablePlugin(pluginCode);
-        if (success) {
-          addNotification({
-            title: '禁用成功',
-            message: `${pluginCode} 插件已禁用`,
-            type: 'success',
-          });
-          loadPlugins();
-        }
-        setConfirmDialog((prev) => ({ ...prev, open: false }));
-      },
+      action: () => disableMutation.mutate(pluginCode),
     });
   };
 
-  const [uninstallTier, setUninstallTier] = useState<'disable' | 'uninstall' | 'delete'>('uninstall');
+  const [uninstallTier, setUninstallTier] = useState<'disable' | 'uninstall' | 'delete'>(
+    'uninstall'
+  );
 
   const getUninstallMessage = (pluginCode: string, tier: 'disable' | 'uninstall' | 'delete') => {
     switch (tier) {
@@ -219,28 +252,50 @@ const PluginManagementPage: React.FC = () => {
     }
   };
 
-  const handleUninstall = async (pluginCode: string) => {
+  const uninstallMutation = useMutation({
+    mutationFn: async ({
+      pluginCode,
+      tier,
+    }: {
+      pluginCode: string;
+      tier: 'disable' | 'uninstall' | 'delete';
+    }) => {
+      const success = await uninstallPlugin(pluginCode, tier);
+      if (!success) throw new Error('卸载失败');
+      return { pluginCode, tier };
+    },
+    onSuccess: ({ pluginCode, tier }) => {
+      addNotification({
+        title: '操作成功',
+        message:
+          tier === 'delete'
+            ? `${pluginCode} 插件已彻底删除`
+            : tier === 'disable'
+              ? `${pluginCode} 插件已禁用`
+              : `${pluginCode} 插件已卸载`,
+        type: 'success',
+      });
+      loadPlugins();
+    },
+    onError: (err: unknown) => {
+      addNotification({
+        title: '失败',
+        message: (err as Error).message || '卸载失败',
+        type: 'error',
+      });
+    },
+    onSettled: () => {
+      setConfirmDialog((prev) => ({ ...prev, open: false }));
+    },
+  });
+
+  const handleUninstall = (pluginCode: string) => {
     setUninstallTier('uninstall');
     setConfirmDialog({
       open: true,
       title: '卸载插件',
       message: getUninstallMessage(pluginCode, 'uninstall'),
-      action: async () => {
-        const success = await uninstallPlugin(pluginCode, uninstallTier);
-        if (success) {
-          addNotification({
-            title: '操作成功',
-            message: uninstallTier === 'delete' 
-              ? `${pluginCode} 插件已彻底删除` 
-              : uninstallTier === 'disable'
-                ? `${pluginCode} 插件已禁用`
-                : `${pluginCode} 插件已卸载`,
-            type: 'success',
-          });
-          loadPlugins();
-        }
-        setConfirmDialog((prev) => ({ ...prev, open: false }));
-      },
+      action: () => uninstallMutation.mutate({ pluginCode, tier: uninstallTier }),
     });
   };
 
@@ -263,6 +318,14 @@ const PluginManagementPage: React.FC = () => {
     setInstallError(null);
   };
 
+  const installMutation = useMutation({
+    mutationFn: async (pluginCode: string) => {
+      const success = await installPlugin(pluginCode);
+      if (!success) throw new Error('安装失败');
+      return pluginCode;
+    },
+  });
+
   const handleInstallNext = async () => {
     if (installStep === 0) {
       setInstallStep(1);
@@ -270,13 +333,9 @@ const PluginManagementPage: React.FC = () => {
       setInstallLoading(true);
       setInstallError(null);
       try {
-        const success = await installPlugin(installingPlugin!.code);
-        if (success) {
-          setInstallStep(2);
-          loadPlugins();
-        } else {
-          setInstallError('安装失败');
-        }
+        await installMutation.mutateAsync(installingPlugin!.code);
+        setInstallStep(2);
+        loadPlugins();
       } catch (err: unknown) {
         setInstallError(extractErrorMessage(err, '安装失败'));
       } finally {
@@ -484,23 +543,38 @@ const PluginManagementPage: React.FC = () => {
     []
   );
 
-  const handleUpgrade = async (pluginCode: string) => {
+  const upgradeMutation = useMutation({
+    mutationFn: async (pluginCode: string) => {
+      const success = await upgradePlugin(pluginCode);
+      if (!success) throw new Error('升级失败');
+      return pluginCode;
+    },
+    onSuccess: (pluginCode) => {
+      addNotification({
+        title: '升级成功',
+        message: `${pluginCode} 插件已升级`,
+        type: 'success',
+      });
+      loadPlugins();
+    },
+    onError: (err: unknown) => {
+      addNotification({
+        title: '失败',
+        message: (err as Error).message || '升级失败',
+        type: 'error',
+      });
+    },
+    onSettled: () => {
+      setConfirmDialog((prev) => ({ ...prev, open: false }));
+    },
+  });
+
+  const handleUpgrade = (pluginCode: string) => {
     setConfirmDialog({
       open: true,
       title: '升级插件',
       message: `确定要升级 "${pluginCode}" 插件吗？`,
-      action: async () => {
-        const success = await upgradePlugin(pluginCode);
-        if (success) {
-          addNotification({
-            title: '升级成功',
-            message: `${pluginCode} 插件已升级`,
-            type: 'success',
-          });
-          loadPlugins();
-        }
-        setConfirmDialog((prev) => ({ ...prev, open: false }));
-      },
+      action: () => upgradeMutation.mutate(pluginCode),
     });
   };
 
@@ -615,10 +689,16 @@ const PluginManagementPage: React.FC = () => {
         <DialogContent>
           <Typography sx={{ mb: 3 }}>{confirmDialog.message}</Typography>
           <Box sx={{ mb: 2 }}>
-            <Typography variant='body2' sx={{ fontWeight: 500, mb: 1 }}>
+            <Typography
+              variant='body2'
+              sx={{ fontWeight: 500, mb: 1 }}
+            >
               卸载级别：
             </Typography>
-            <Stack direction='row' spacing={2}>
+            <Stack
+              direction='row'
+              spacing={2}
+            >
               <Button
                 variant={uninstallTier === 'disable' ? 'contained' : 'outlined'}
                 size='small'
@@ -626,7 +706,10 @@ const PluginManagementPage: React.FC = () => {
                   setUninstallTier('disable');
                   setConfirmDialog((prev) => ({
                     ...prev,
-                    message: getUninstallMessage(prev.message.match(/"([^"]+)"/)?.[1] || '', 'disable'),
+                    message: getUninstallMessage(
+                      prev.message.match(/"([^"]+)"/)?.[1] || '',
+                      'disable'
+                    ),
                   }));
                 }}
               >
@@ -639,7 +722,10 @@ const PluginManagementPage: React.FC = () => {
                   setUninstallTier('uninstall');
                   setConfirmDialog((prev) => ({
                     ...prev,
-                    message: getUninstallMessage(prev.message.match(/"([^"]+)"/)?.[1] || '', 'uninstall'),
+                    message: getUninstallMessage(
+                      prev.message.match(/"([^"]+)"/)?.[1] || '',
+                      'uninstall'
+                    ),
                   }));
                 }}
               >
@@ -653,7 +739,10 @@ const PluginManagementPage: React.FC = () => {
                   setUninstallTier('delete');
                   setConfirmDialog((prev) => ({
                     ...prev,
-                    message: getUninstallMessage(prev.message.match(/"([^"]+)"/)?.[1] || '', 'delete'),
+                    message: getUninstallMessage(
+                      prev.message.match(/"([^"]+)"/)?.[1] || '',
+                      'delete'
+                    ),
                   }));
                 }}
               >
@@ -661,7 +750,10 @@ const PluginManagementPage: React.FC = () => {
               </Button>
             </Stack>
           </Box>
-          <Typography variant='caption' color='textSecondary'>
+          <Typography
+            variant='caption'
+            color='textSecondary'
+          >
             {uninstallTier === 'disable' && '禁用：仅停止插件运行，数据完整保留'}
             {uninstallTier === 'uninstall' && '卸载：移除插件安装记录，数据保留90天'}
             {uninstallTier === 'delete' && '彻底删除：删除所有数据，不可恢复'}

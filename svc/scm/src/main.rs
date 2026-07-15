@@ -294,7 +294,7 @@ async fn main() -> Result<()> {
             get(modules::supply_chain_dashboard::supplier_performance),
         )
         // API v1 routes
-        .route("/api/v1/health/detailed", get(health_check_detailed))
+        .route("/api/health/detailed", get(health_check_detailed))
         .layer(axum::middleware::from_fn_with_state(
             api_state.auth_state.clone(),
             auth_middleware,

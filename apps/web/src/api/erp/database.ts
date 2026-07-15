@@ -64,9 +64,7 @@ export const databaseApi = {
     return apiClient.erp.get<TableDetail>(`/db/tables/${tableName}`);
   },
 
-  async listDbChanges(
-    params?: DbChangeListParams
-  ): Promise<ApiResponse<PaginatedDbChanges>> {
+  async listDbChanges(params?: DbChangeListParams): Promise<ApiResponse<PaginatedDbChanges>> {
     return apiClient.erp.get<PaginatedDbChanges>('/db/changes', { params });
   },
 };

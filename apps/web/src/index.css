@@ -246,7 +246,13 @@ button:disabled {
   }
 }
 
-@media (min-width: 768px) {
+@media (min-width: 768px) and (max-width: 1024px) {
+  .tablet-only {
+    display: block;
+  }
+}
+
+@media (min-width: 1025px) {
   .tablet-only {
     display: none;
   }
@@ -255,6 +261,50 @@ button:disabled {
 @media (max-width: 1024px) {
   .large-desktop-only {
     display: none;
+  }
+}
+
+@media (min-width: 768px) and (max-width: 1024px) {
+  .desktop-and-mobile-only {
+    display: none;
+  }
+}
+
+@media (max-width: 767px), (min-width: 1025px) {
+  .desktop-and-mobile-only {
+    display: block;
+  }
+}
+
+@media (min-width: 768px) and (max-width: 1024px) {
+  html {
+    font-size: 15px;
+  }
+}
+
+@media (min-width: 768px) and (max-width: 899px) {
+  html {
+    font-size: 14.5px;
+  }
+}
+
+@media (min-width: 768px) and (max-width: 1024px) {
+  .tablet-collapse-paddings {
+    padding-left: 0.75rem !important;
+    padding-right: 0.75rem !important;
+  }
+
+  .tablet-compact-spacing {
+    gap: 0.5rem !important;
+  }
+
+  .tablet-full-width {
+    width: 100% !important;
+  }
+
+  .tablet-scroll-x {
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
   }
 }
 

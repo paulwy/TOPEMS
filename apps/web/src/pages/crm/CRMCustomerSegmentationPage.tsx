@@ -1,7 +1,8 @@
-import React, { useState, useEffect, useCallback } from 'react';
+import React from 'react';
 import { Box, Typography, Card, CardContent, Chip, Button, Grid } from '@mui/material';
 import { Plus, Users, Tag, TrendingUp } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
+import { useQuery } from '@tanstack/react-query';
 import { ListPageTemplate, type ColumnDef, type RowAction } from '@/components/templates';
 import { PageContainer } from '@/components/common';
 import apiClient from '@/api/client';
@@ -30,29 +31,24 @@ interface CustomerSegment {
 
 const CRMCustomerSegmentationPage: React.FC = () => {
   const navigate = useNavigate();
-  const [segments, setSegments] = useState<CustomerSegment[]>([]);
-  const [loading, setLoading] = useState(true);
 
-  const loadSegments = useCallback(async () => {
-    try {
-      setLoading(true);
+  const segmentsQuery = useQuery<CustomerSegment[]>({
+    queryKey: ['crm-customer-segments'],
+    queryFn: async () => {
       const res = await apiClient.crm.get('/segments', {
         params: { page: 1, pagesize: 50 },
       });
       if (res.success && res.data) {
         const data = res.data as { items?: CustomerSegment[] };
-        setSegments(data.items || (res.data as CustomerSegment[]) || []);
+        return data.items || (res.data as CustomerSegment[]) || [];
       }
-    } catch (error: unknown) {
-      setSegments([]);
-    } finally {
-      setLoading(false);
-    }
-  }, []);
+      return [];
+    },
+    staleTime: 5 * 60 * 1000,
+  });
 
-  useEffect(() => {
-    loadSegments();
-  }, [loadSegments]);
+  const segments = segmentsQuery.data ?? [];
+  const loading = segmentsQuery.isLoading;
 
   const columns: ColumnDef<CustomerSegment>[] = [
     {
@@ -291,7 +287,7 @@ const CRMCustomerSegmentationPage: React.FC = () => {
           data={segments}
           loading={loading}
           rowActions={actions}
-          onRefresh={loadSegments}
+          onRefresh={() => segmentsQuery.refetch()}
           searchable={true}
           emptyMessage='暂无客户分群'
         />

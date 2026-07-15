@@ -61,64 +61,6 @@ interface IntegrationConnection {
   description?: string;
 }
 
-const mockConnections: IntegrationConnection[] = [
-  {
-    id: '1',
-    name: '金蝶云星空 ERP',
-    type: 'erp',
-    status: 'active',
-    sync_frequency: '每30分钟',
-    last_sync_at: '2024-01-15 10:30:00',
-    success_count: 1256,
-    error_count: 3,
-    description: '财务、采购、库存数据同步',
-  },
-  {
-    id: '2',
-    name: 'Salesforce CRM',
-    type: 'crm',
-    status: 'active',
-    sync_frequency: '每小时',
-    last_sync_at: '2024-01-15 10:00:00',
-    success_count: 890,
-    error_count: 12,
-    description: '客户、商机数据同步',
-  },
-  {
-    id: '3',
-    name: '用友 U8 WMS',
-    type: 'wms',
-    status: 'active',
-    sync_frequency: '实时',
-    last_sync_at: '2024-01-15 10:29:00',
-    success_count: 2340,
-    error_count: 5,
-    description: '库存、出入库数据同步',
-  },
-  {
-    id: '4',
-    name: '鼎捷 MES',
-    type: 'mes',
-    status: 'inactive',
-    sync_frequency: '每2小时',
-    last_sync_at: '2024-01-14 20:00:00',
-    success_count: 456,
-    error_count: 23,
-    description: '工单、报工数据同步',
-  },
-  {
-    id: '5',
-    name: 'SAP S/4 HANA',
-    type: 'erp',
-    status: 'active',
-    sync_frequency: '每6小时',
-    last_sync_at: '2024-01-15 06:00:00',
-    success_count: 234,
-    error_count: 1,
-    description: '财务主数据同步',
-  },
-];
-
 export const IntegrationConnectionsPage: React.FC = () => {
   const addNotification = useNotificationStore((state) => state.addNotification);
   const queryClient = useQueryClient();
@@ -143,11 +85,10 @@ export const IntegrationConnectionsPage: React.FC = () => {
     []
   );
 
-  const { data: connections = [], isLoading: loading } = useQuery({
+  const { data: connections = [], isLoading: loading } = useQuery<IntegrationConnection[]>({
     queryKey: ['integration-connections'],
     queryFn: async () => {
-      await new Promise((resolve) => setTimeout(resolve, 300));
-      return mockConnections;
+      return [];
     },
     staleTime: 5 * 60 * 1000,
   });
@@ -158,7 +99,9 @@ export const IntegrationConnectionsPage: React.FC = () => {
     },
     onMutate: async (connectionId) => {
       await queryClient.cancelQueries({ queryKey: ['integration-connections'] });
-      const previousConnections = queryClient.getQueryData<IntegrationConnection[]>(['integration-connections']);
+      const previousConnections = queryClient.getQueryData<IntegrationConnection[]>([
+        'integration-connections',
+      ]);
       queryClient.setQueryData<IntegrationConnection[]>(['integration-connections'], (old) =>
         old ? old.filter((c) => c.id !== connectionId) : []
       );
@@ -427,7 +370,10 @@ export const IntegrationConnectionsPage: React.FC = () => {
 
   return (
     <PageContainer
-      headerProps={{ pageIcon: <Plug size={20} />, backButton: { href: INTEGRATION_PATHS.dashboard } }}
+      headerProps={{
+        pageIcon: <Plug size={20} />,
+        backButton: { href: INTEGRATION_PATHS.dashboard },
+      }}
     >
       <ListPageTemplate
         title=''
@@ -448,7 +394,12 @@ export const IntegrationConnectionsPage: React.FC = () => {
         }}
         pagination={{ page, pageSize, total: filteredConnections.length, onPageChange: setPage }}
         actions={[
-          { label: '刷新', icon: <RefreshCw size={16} />, onClick: handleRefresh, variant: 'outlined' },
+          {
+            label: '刷新',
+            icon: <RefreshCw size={16} />,
+            onClick: handleRefresh,
+            variant: 'outlined',
+          },
           { label: '新建连接', icon: <Plus size={16} />, onClick: () => {}, variant: 'contained' },
         ]}
         onRefresh={handleRefresh}

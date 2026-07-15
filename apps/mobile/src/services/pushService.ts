@@ -131,7 +131,7 @@ export class PushService {
 
   static async scheduleNotification(
     data: PushNotificationData,
-    trigger: Notifications.NotificationTriggerInput
+    trigger: Notifications.NotificationTriggerInput,
   ): Promise<void> {
     try {
       await Notifications.scheduleNotificationAsync({

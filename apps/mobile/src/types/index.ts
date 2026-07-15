@@ -1,5 +1,3 @@
-
-
 export type ApiResponse<T> = {
   success: boolean;
   message?: string;
@@ -206,6 +204,23 @@ export type ProductionOrder = {
   status: 'pending' | 'in_progress' | 'completed' | 'cancelled';
   startDate?: string;
   endDate?: string;
+  createdAt: string;
+  updatedAt: string;
+};
+
+export type Customer = {
+  id: string;
+  name: string;
+  code?: string;
+  contactName?: string;
+  contactPhone?: string;
+  contactEmail?: string;
+  address?: string;
+  city?: string;
+  province?: string;
+  postalCode?: string;
+  industry?: string;
+  status: 'active' | 'inactive';
   createdAt: string;
   updatedAt: string;
 };

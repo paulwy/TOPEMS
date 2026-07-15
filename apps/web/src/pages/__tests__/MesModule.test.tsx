@@ -2,6 +2,7 @@ import React from 'react';
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { render, screen } from '@testing-library/react';
 import { BrowserRouter } from 'react-router-dom';
+import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import ProductionDashboardPage from '../mes/ProductionDashboardPage';
 import {
   mesApi,
@@ -205,42 +206,43 @@ vi.mock('@/store', () => ({
   useSetSidebarCollapsed: vi.fn(),
 }));
 
+const createTestQueryClient = () =>
+  new QueryClient({
+    defaultOptions: {
+      queries: {
+        retry: false,
+      },
+    },
+  });
+
+const renderWithProviders = (ui: React.ReactElement) => {
+  const queryClient = createTestQueryClient();
+  return render(
+    <QueryClientProvider client={queryClient}>
+      <AuthProvider>
+        <BrowserRouter>{ui}</BrowserRouter>
+      </AuthProvider>
+    </QueryClientProvider>
+  );
+};
+
 describe('ProductionDashboardPage', () => {
-    it('should render without crashing', () => {
-      const { container } = render(
-        <BrowserRouter>
-          <AuthProvider>
-            <ProductionDashboardPage />
-          </AuthProvider>
-        </BrowserRouter>
-      );
-      expect(container).toBeDefined();
-    });
+  it('should render without crashing', () => {
+    const { container } = renderWithProviders(<ProductionDashboardPage />);
+    expect(container).toBeDefined();
+  });
 
-    it('should have MES API methods defined', async () => {
-      render(
-        <BrowserRouter>
-          <AuthProvider>
-            <ProductionDashboardPage />
-          </AuthProvider>
-        </BrowserRouter>
-      );
-      expect(productionOrderApi.list).toBeDefined();
-      expect(workStationApi.list).toBeDefined();
-      expect(qualityApi.list).toBeDefined();
-      expect(equipmentApi.list).toBeDefined();
-      expect(mesEquipmentApi.list).toBeDefined();
-    });
+  it('should have MES API methods defined', async () => {
+    renderWithProviders(<ProductionDashboardPage />);
+    expect(productionOrderApi.list).toBeDefined();
+    expect(workStationApi.list).toBeDefined();
+    expect(qualityApi.list).toBeDefined();
+    expect(equipmentApi.list).toBeDefined();
+    expect(mesEquipmentApi.list).toBeDefined();
+  });
 
-    it('should call production orders list API on mount', async () => {
-      render(
-        <BrowserRouter>
-          <AuthProvider>
-            <ProductionDashboardPage />
-          </AuthProvider>
-        </BrowserRouter>
-      );
-      expect(productionOrderApi.list).toHaveBeenCalled();
-    });
+  it('should call production orders list API on mount', async () => {
+    renderWithProviders(<ProductionDashboardPage />);
+    expect(productionOrderApi.list).toHaveBeenCalled();
   });
 });

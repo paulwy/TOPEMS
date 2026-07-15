@@ -12,6 +12,19 @@ use serde_json::{json, Value};
 
 const API_URL: &str = "http://localhost:8000";
 
+/// 检查 API 服务是否可用
+async fn ensure_api_available() -> bool {
+    reqwest::Client::builder()
+        .timeout(std::time::Duration::from_secs(2))
+        .build()
+        .unwrap()
+        .get(format!("{}/api/core/iam/auth/login", API_URL))
+        .send()
+        .await
+        .map(|resp| !resp.status().is_server_error())
+        .unwrap_or(false)
+}
+
 fn create_client() -> Client {
     Client::new()
 }
@@ -19,7 +32,7 @@ fn create_client() -> Client {
 async fn login(username: &str, password: &str) -> Result<String, String> {
     let client = create_client();
     let response = client
-        .post(format!("{}/api/v1/auth/login", API_URL))
+        .post(format!("{}/api/core/iam/auth/login", API_URL))
         .json(&json!({ "username": username, "password": password }))
         .send()
         .await
@@ -73,8 +86,11 @@ async fn auth_request(
 // ==================== AI-001: AI 对话 ====================
 
 #[tokio::test]
-#[ignore]
 async fn test_ai_001_chat() {
+    if !ensure_api_available().await {
+        eprintln!("⏭ 跳过: API服务未运行 ({})", API_URL);
+        return;
+    }
     tracing::info!("测试 AI-001: AI 对话");
     let token = login("admin", "admin123").await.expect("管理员登录失败");
     let client = create_client();
@@ -82,7 +98,7 @@ async fn test_ai_001_chat() {
         &client,
         &token,
         "POST",
-        "/api/core/ai/v1/chat",
+        "/api/core/ai/chat",
         Some(json!({
             "message": "你好，这是一个测试消息"
         })),
@@ -100,8 +116,11 @@ async fn test_ai_001_chat() {
 // ==================== AI-002: 文档摘要 ====================
 
 #[tokio::test]
-#[ignore]
 async fn test_ai_002_summarize() {
+    if !ensure_api_available().await {
+        eprintln!("⏭ 跳过: API服务未运行 ({})", API_URL);
+        return;
+    }
     tracing::info!("测试 AI-002: 文档摘要");
     let token = login("admin", "admin123").await.expect("管理员登录失败");
     let client = create_client();
@@ -109,7 +128,7 @@ async fn test_ai_002_summarize() {
         &client,
         &token,
         "POST",
-        "/api/core/ai/v1/summarize",
+        "/api/core/ai/summarize",
         Some(json!({
             "content": "这是一段需要摘要的文本内容，用于测试AI摘要功能。"
         })),
@@ -127,8 +146,11 @@ async fn test_ai_002_summarize() {
 // ==================== AI-003: 生成报告 ====================
 
 #[tokio::test]
-#[ignore]
 async fn test_ai_003_generate_report() {
+    if !ensure_api_available().await {
+        eprintln!("⏭ 跳过: API服务未运行 ({})", API_URL);
+        return;
+    }
     tracing::info!("测试 AI-003: 生成报告");
     let token = login("admin", "admin123").await.expect("管理员登录失败");
     let client = create_client();
@@ -136,7 +158,7 @@ async fn test_ai_003_generate_report() {
         &client,
         &token,
         "POST",
-        "/api/core/ai/v1/generate-report",
+        "/api/core/ai/generate-report",
         Some(json!({
             "type": "summary",
             "parameters": {}
@@ -155,12 +177,15 @@ async fn test_ai_003_generate_report() {
 // ==================== AI-004: AI 模型管理 ====================
 
 #[tokio::test]
-#[ignore]
 async fn test_ai_004_model_management() {
+    if !ensure_api_available().await {
+        eprintln!("⏭ 跳过: API服务未运行 ({})", API_URL);
+        return;
+    }
     tracing::info!("测试 AI-004: AI 模型管理");
     let token = login("admin", "admin123").await.expect("管理员登录失败");
     let client = create_client();
-    match auth_request(&client, &token, "GET", "/api/core/ai/v1/models", None).await {
+    match auth_request(&client, &token, "GET", "/api/core/ai/models", None).await {
         Ok((status, body)) => {
             assert_eq!(status, 200, "状态码应为 200");
             assert!(body["success"].as_bool().unwrap_or(false), "请求应成功");
@@ -173,12 +198,15 @@ async fn test_ai_004_model_management() {
 // ==================== AI-005: AI 配置 ====================
 
 #[tokio::test]
-#[ignore]
 async fn test_ai_005_settings() {
+    if !ensure_api_available().await {
+        eprintln!("⏭ 跳过: API服务未运行 ({})", API_URL);
+        return;
+    }
     tracing::info!("测试 AI-005: AI 配置");
     let token = login("admin", "admin123").await.expect("管理员登录失败");
     let client = create_client();
-    match auth_request(&client, &token, "GET", "/api/core/ai/v1/settings", None).await {
+    match auth_request(&client, &token, "GET", "/api/core/ai/settings", None).await {
         Ok((status, body)) => {
             assert_eq!(status, 200, "状态码应为 200");
             assert!(body["success"].as_bool().unwrap_or(false), "请求应成功");
@@ -191,8 +219,11 @@ async fn test_ai_005_settings() {
 // ==================== 测试总结 ====================
 
 #[tokio::test]
-#[ignore]
 async fn run_all_ai_tests_summary() {
+    if !ensure_api_available().await {
+        eprintln!("⏭ 跳过: API服务未运行 ({})", API_URL);
+        return;
+    }
     tracing::info!("========================================");
     tracing::info!("  AI 权限测试套件 (5个用例)");
     tracing::info!("========================================");

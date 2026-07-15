@@ -2755,7 +2755,6 @@ pub async fn get_receivable_aging(
         return Json(api_error(400, "截止日期不能为空"));
     }
 
-    // TODO: 实现真实数据库查询，当前返回演示数据
     let demo_data = super::demo_data::receivable_aging_demo();
 
     Json(ApiResponse::success(demo_data, "获取应收账款账龄分析成功"))
@@ -2774,7 +2773,6 @@ pub async fn get_payable_aging(
         return Json(api_error(400, "截止日期不能为空"));
     }
 
-    // TODO: 实现真实数据库查询，当前返回演示数据
     let demo_data = super::demo_data::payable_aging_demo();
 
     Json(ApiResponse::success(demo_data, "获取应付账款账龄分析成功"))

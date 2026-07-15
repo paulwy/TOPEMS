@@ -32,9 +32,7 @@ const NotificationPage: React.FC = () => {
   const handleMarkAsRead = async (id: string) => {
     try {
       await notificationApi.markAsRead(id);
-      setNotifications((prev) =>
-        prev.map((n) => (n.id === id ? { ...n, isRead: true } : n)),
-      );
+      setNotifications((prev) => prev.map((n) => (n.id === id ? { ...n, isRead: true } : n)));
     } catch (error) {
       console.error('Failed to mark as read:', error);
     }
@@ -77,16 +75,11 @@ const NotificationPage: React.FC = () => {
 
   const renderItem = ({ item }: { item: Notification }) => (
     <Card
-      style={[
-        styles.notificationCard,
-        !item.isRead && styles.unreadNotification,
-      ]}
+      style={[styles.notificationCard, !item.isRead && styles.unreadNotification]}
       mode="elevated"
     >
       <Card.Content style={styles.notificationContent}>
-        <View style={styles.notificationIcon}>
-          {getNotificationIcon(item.type)}
-        </View>
+        <View style={styles.notificationIcon}>{getNotificationIcon(item.type)}</View>
         <View style={styles.notificationBody}>
           <View style={styles.notificationHeader}>
             <Text style={[styles.notificationTitle, !item.isRead && styles.unreadText]}>
@@ -97,16 +90,11 @@ const NotificationPage: React.FC = () => {
           <Text style={styles.notificationMessage} numberOfLines={2}>
             {item.message}
           </Text>
-          {item.module && (
-            <Badge style={styles.moduleBadge}>{item.module}</Badge>
-          )}
+          {item.module && <Badge style={styles.moduleBadge}>{item.module}</Badge>}
         </View>
         {!item.isRead && (
-          <TouchableOpacity
-            onPress={() => handleMarkAsRead(item.id)}
-            style={styles.markReadButton}
-          >
-            <IconButton icon="check" size={18} color="#3b82f6" />
+          <TouchableOpacity onPress={() => handleMarkAsRead(item.id)} style={styles.markReadButton}>
+            <IconButton icon="check" size={18} iconColor="#3b82f6" />
           </TouchableOpacity>
         )}
       </Card.Content>
@@ -139,9 +127,7 @@ const NotificationPage: React.FC = () => {
           keyExtractor={(item) => item.id}
           renderItem={renderItem}
           contentContainerStyle={styles.listContainer}
-          refreshControl={
-            <RefreshControl refreshing={refreshing} onRefresh={fetchNotifications} />
-          }
+          refreshControl={<RefreshControl refreshing={refreshing} onRefresh={fetchNotifications} />}
           ListEmptyComponent={
             <View style={styles.emptyContainer}>
               <Bell size={48} color="#9ca3af" />

@@ -17,13 +17,19 @@ import { useNavigate } from 'react-router-dom';
 import { ListPageTemplate, type ColumnDef } from '@/components/templates';
 import { PageContainer } from '@/components/common';
 import { scmApi } from '@/api/scm';
-import type { Supplier, SupplierPerformance, CreateSupplierRequest, UpdateSupplierRequest } from '@/api/scm';
+import type {
+  Supplier,
+  SupplierPerformance,
+  CreateSupplierRequest,
+  UpdateSupplierRequest,
+} from '@/api/scm';
 import { useNotificationStore } from '@/store';
 import { apiLogger } from '@/utils/logger';
 import { designTokens } from '@/theme/tokens';
 import { SCM_PATHS } from '@/modules/scm/config';
 import { useCrudOperations } from '@/hooks/useCrudQueries';
 import { useQuery } from '@tanstack/react-query';
+import { QUERY_KEYS } from '@/lib/reactQuery';
 
 const ct = designTokens.colors;
 
@@ -69,7 +75,7 @@ const ScmSupplierPage: React.FC = () => {
   };
 
   const performanceQuery = useQuery({
-    queryKey: ['scm-supplier-performance'],
+    queryKey: QUERY_KEYS.SCM.SUPPLIER_PERFORMANCE,
     queryFn: async () => {
       const response = await scmApi.supplyChainDashboard.supplierPerformance({
         page: 1,

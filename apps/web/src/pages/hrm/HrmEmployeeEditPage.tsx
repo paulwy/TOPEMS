@@ -1,5 +1,7 @@
-import React, { useState, useEffect, useCallback, useMemo } from 'react';
+import React, { useMemo } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import { QUERY_KEYS } from '@/lib/reactQuery';
 import { z } from 'zod';
 import { User, Mail, Phone, Calendar, MapPin, Briefcase } from 'lucide-react';
 import FormPageTemplate from '@/components/templates/FormPageTemplate';
@@ -39,60 +41,89 @@ const HrmEmployeeEditPage: React.FC = () => {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
   const { success, error } = useNotification();
+  const queryClient = useQueryClient();
 
-  const [employee, setEmployee] = useState<Employee | null>(null);
-  const [departments, setDepartments] = useState<Department[]>([]);
-  const [positions, setPositions] = useState<Position[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [submitting, setSubmitting] = useState(false);
-
-  const loadEmployee = useCallback(
-    async (employeeId: string) => {
-      setLoading(true);
-      try {
-        const res = await employeeApi.get(employeeId);
-        if (res.code === 200 && res.data) {
-          setEmployee(res.data);
-        }
-      } catch (err: unknown) {
-        logger.error('Failed to load employee:', err);
-        error('加载员工信息失败');
-      } finally {
-        setLoading(false);
+  const employeeQuery = useQuery<Employee | null>({
+    queryKey: QUERY_KEYS.HRM.EMPLOYEE(id || ''),
+    enabled: !!id,
+    queryFn: async () => {
+      if (!id) {
+        throw new Error('员工ID无效');
       }
+      const res = await employeeApi.get(id);
+      if (res.code !== 200 || !res.data) {
+        throw new Error('加载员工信息失败');
+      }
+      return res.data;
     },
-    [error]
-  );
+  });
 
-  useEffect(() => {
-    if (id) {
-      loadEmployee(id);
-    }
-    loadDepartments();
-    loadPositions();
-  }, [id, loadEmployee]);
-
-  const loadDepartments = async () => {
-    try {
+  const departmentsQuery = useQuery<Department[]>({
+    queryKey: QUERY_KEYS.HRM.DEPARTMENTS,
+    queryFn: async () => {
       const res = await departmentApi.list({ pagesize: 100 });
       if (res.code === 200 && res.data) {
-        setDepartments(res.data.items || []);
+        return res.data.items || [];
       }
-    } catch (err: unknown) {
-      logger.error('Failed to load departments:', err);
-    }
-  };
+      return [];
+    },
+  });
 
-  const loadPositions = async () => {
-    try {
+  const positionsQuery = useQuery<Position[]>({
+    queryKey: QUERY_KEYS.HRM.POSITION,
+    queryFn: async () => {
       const res = await positionApi.list({ pagesize: 100 });
       if (res.code === 200 && res.data) {
-        setPositions(res.data.items || []);
+        return res.data.items || [];
       }
-    } catch (err: unknown) {
-      logger.error('Failed to load positions:', err);
+      return [];
+    },
+  });
+
+  const employee = employeeQuery.data ?? null;
+  const departments = departmentsQuery.data || [];
+  const positions = positionsQuery.data || [];
+  const loading = employeeQuery.isLoading || departmentsQuery.isLoading || positionsQuery.isLoading;
+
+  const updateMutation = useMutation({
+    mutationFn: async (args: { id: string; data: EmployeeFormData }) => {
+      if (!args.data.name || !args.data.employee_no) {
+        throw new Error('请填写必填字段');
+      }
+      const res = await employeeApi.update(args.id, args.data);
+      if (res.code !== 200) {
+        throw new Error(res.message || '更新失败');
+      }
+      return res;
+    },
+    onSuccess: () => {
+      success('员工信息更新成功');
+      queryClient.invalidateQueries({ queryKey: QUERY_KEYS.HRM.EMPLOYEES });
+      if (id) {
+        queryClient.invalidateQueries({ queryKey: QUERY_KEYS.HRM.EMPLOYEE(id) });
+        navigate(HRM_PATHS.employeeDetail.replace(':id', id));
+      }
+    },
+    onError: (err: Error) => {
+      logger.error('Failed to update employee:', err);
+      error(err.message || '更新员工信息失败');
+    },
+  });
+
+  const handleSubmit = (data: unknown) => {
+    if (!id) {
+      error('员工ID无效');
+      return;
     }
+    const formData = data as EmployeeFormData;
+    if (!formData.name || !formData.employee_no) {
+      error('请填写必填字段');
+      return;
+    }
+    updateMutation.mutate({ id, data: formData });
   };
+
+  const submitting = updateMutation.isPending;
 
   const defaultValues = useMemo(() => {
     if (!employee) return {};
@@ -112,39 +143,6 @@ const HrmEmployeeEditPage: React.FC = () => {
       emergency_contact_phone: employee.emergency_phone || '',
     };
   }, [employee]);
-
-  const handleSubmit = useCallback(
-    async (data: unknown) => {
-      if (!id) {
-        error('员工ID无效');
-        return;
-      }
-
-      const formData = data as EmployeeFormData;
-
-      if (!formData.name || !formData.employee_no) {
-        error('请填写必填字段');
-        return;
-      }
-
-      setSubmitting(true);
-      try {
-        const res = await employeeApi.update(id, formData);
-        if (res.code === 200) {
-          success('员工信息更新成功');
-          navigate(HRM_PATHS.employeeDetail.replace(':id', id));
-        } else {
-          error(res.message || '更新失败');
-        }
-      } catch (err: unknown) {
-        logger.error('Failed to update employee:', err);
-        error('更新员工信息失败');
-      } finally {
-        setSubmitting(false);
-      }
-    },
-    [id, error, success, navigate]
-  );
 
   const handleCancel = () => {
     if (id) {

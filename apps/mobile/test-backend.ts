@@ -44,7 +44,9 @@ async function testBackendConnection() {
   try {
     console.log('');
     console.log('3. 测试审批 API...');
-    const approvalResponse = await axios.get(`${BASE_URL}/approval/tasks`, { headers: authHeaders });
+    const approvalResponse = await axios.get(`${BASE_URL}/approval/tasks`, {
+      headers: authHeaders,
+    });
     console.log('   ✅ 审批 API 响应:', approvalResponse.data.success);
     console.log('   数据:', JSON.stringify(approvalResponse.data.data));
   } catch (error: any) {
@@ -54,7 +56,9 @@ async function testBackendConnection() {
   try {
     console.log('');
     console.log('4. 测试考勤 API...');
-    const attendanceResponse = await axios.get(`${BASE_URL}/attendance/stats`, { headers: authHeaders });
+    const attendanceResponse = await axios.get(`${BASE_URL}/attendance/stats`, {
+      headers: authHeaders,
+    });
     console.log('   ✅ 考勤 API 响应:', attendanceResponse.data.success);
     console.log('   数据:', JSON.stringify(attendanceResponse.data.data));
   } catch (error: any) {
@@ -74,7 +78,9 @@ async function testBackendConnection() {
   try {
     console.log('');
     console.log('6. 测试仪表盘 API...');
-    const dashboardResponse = await axios.get(`${BASE_URL}/dashboard/stats`, { headers: authHeaders });
+    const dashboardResponse = await axios.get(`${BASE_URL}/dashboard/stats`, {
+      headers: authHeaders,
+    });
     console.log('   ✅ 仪表盘 API 响应:', dashboardResponse.data.success);
     console.log('   数据:', JSON.stringify(dashboardResponse.data.data));
   } catch (error: any) {

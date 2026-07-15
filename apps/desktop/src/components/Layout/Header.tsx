@@ -1,10 +1,11 @@
 import { Toolbar, IconButton, Typography, Box, Menu as MenuMUI, MenuItem } from '@mui/material';
-import { Menu, Search, HelpCircle, Bell, User, ChevronDown, X, Minus, Square } from 'lucide-react';
+import { Menu, Search, HelpCircle, Bell, User, ChevronDown, X, Minus, Square, Monitor } from 'lucide-react';
 import { useState } from 'react';
 import { useAuthStore } from '../../store/authStore';
 import { useNotificationStore } from '../../store/notificationStore';
-import { hideWindow, quitApp } from '../../utils/tray';
+import { hideWindow, quitApp, restartApp, showLogs } from '../../utils/tray';
 import { windowApi } from '../../utils/tauri';
+import WindowList from '../WindowList';
 
 interface HeaderProps {
   onMenuClick: () => void;
@@ -13,6 +14,7 @@ interface HeaderProps {
 const Header = ({ onMenuClick }: HeaderProps) => {
   const [searchValue, setSearchValue] = useState('');
   const [userMenuAnchor, setUserMenuAnchor] = useState<null | HTMLElement>(null);
+  const [windowListAnchor, setWindowListAnchor] = useState<null | HTMLElement>(null);
   const { user, logout } = useAuthStore();
   const { unreadCount } = useNotificationStore();
 
@@ -22,6 +24,14 @@ const Header = ({ onMenuClick }: HeaderProps) => {
 
   const handleUserMenuClose = () => {
     setUserMenuAnchor(null);
+  };
+
+  const handleWindowListOpen = (event: React.MouseEvent<HTMLElement>) => {
+    setWindowListAnchor(event.currentTarget);
+  };
+
+  const handleWindowListClose = () => {
+    setWindowListAnchor(null);
   };
 
   return (
@@ -51,6 +61,10 @@ const Header = ({ onMenuClick }: HeaderProps) => {
             }}
           />
         </Box>
+        <IconButton onClick={handleWindowListOpen} title="窗口列表">
+          <Monitor size={20} />
+        </IconButton>
+        <WindowList anchorEl={windowListAnchor} onClose={handleWindowListClose} />
         <IconButton>
           <HelpCircle size={20} />
         </IconButton>
@@ -87,6 +101,14 @@ const Header = ({ onMenuClick }: HeaderProps) => {
           <MenuItem onClick={() => { hideWindow(); handleUserMenuClose(); }}>
             <X size={16} style={{ marginRight: 8 }} />
             最小化到托盘
+          </MenuItem>
+          <MenuItem onClick={() => { restartApp(); handleUserMenuClose(); }}>
+            <Monitor size={16} style={{ marginRight: 8 }} />
+            重启应用
+          </MenuItem>
+          <MenuItem onClick={() => { showLogs(); handleUserMenuClose(); }}>
+            <HelpCircle size={16} style={{ marginRight: 8 }} />
+            查看日志
           </MenuItem>
           <MenuItem onClick={() => { quitApp(); handleUserMenuClose(); }}>
             <X size={16} style={{ marginRight: 8 }} />

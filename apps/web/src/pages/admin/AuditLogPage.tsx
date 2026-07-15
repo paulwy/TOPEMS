@@ -19,6 +19,7 @@ import {
   Button,
 } from '@mui/material';
 import React, { useState, useEffect, useMemo } from 'react';
+import { useQuery, useMutation } from '@tanstack/react-query';
 import {
   Clock,
   Search,
@@ -69,25 +70,29 @@ type AuditLog = LimsAuditLog | RdAuditLog;
 const AuditLogPage: React.FC<AuditLogPageProps> = ({ onNavigate }) => {
   const addNotification = useNotificationStore((state) => state.addNotification);
 
-  const [logs, setLogs] = useState<AuditLog[]>([]);
-  const [loading, setLoading] = useState(true);
   const [searchQuery, setSearchQuery] = useState('');
   const [filterStatus, setFilterStatus] = useState<string>('all');
   const [filterAction, setFilterAction] = useState<string>('all');
   const [filterEntityType, setFilterEntityType] = useState<string>('all');
   const [source, setSource] = useState<AuditLogSource>('lims');
   const [currentPage, setCurrentPage] = useState(1);
-  const [total, setTotal] = useState(0);
   const [startDate, setStartDate] = useState<string>('');
   const [endDate, setEndDate] = useState<string>('');
   const [selectedLog, setSelectedLog] = useState<AuditLog | null>(null);
-  const [exporting, setExporting] = useState(false);
   const pageSize = 20;
 
-  const loadLogs = async () => {
-    if (loading) return;
-    setLoading(true);
-    try {
+  const logsQuery = useQuery<{ items: AuditLog[]; total: number }>({
+    queryKey: [
+      'admin-audit-logs',
+      source,
+      currentPage,
+      filterStatus,
+      filterAction,
+      filterEntityType,
+      startDate,
+      endDate,
+    ],
+    queryFn: async () => {
       const api = source === 'lims' ? auditLimsApi : auditRdApi;
       const params: Record<string, unknown> = {
         page: Math.max(1, currentPage),
@@ -112,24 +117,31 @@ const AuditLogPage: React.FC<AuditLogPageProps> = ({ onNavigate }) => {
       const response = await api.listAuditLogs(params);
       apiLogger.debug('审计日志响应:', response);
       if (response.success && response.data) {
-        setLogs(response.data.audit_logs || []);
-        setTotal(response.data.total || 0);
-      } else {
-        setLogs([]);
-        setTotal(0);
-        if (response.message) {
-          addNotification({
-            title: '提示',
-            message: response.message,
-            type: 'info',
-          });
-        }
+        return {
+          items: response.data.audit_logs || [],
+          total: response.data.total || 0,
+        };
       }
-    } catch (error: unknown) {
-      apiLogger.error('加载审计日志失败:', error);
-      setLogs([]);
-      setTotal(0);
-      const errorMsg = extractErrorMessage(error, '加载审计日志失败');
+      if (response.message) {
+        addNotification({
+          title: '提示',
+          message: response.message,
+          type: 'info',
+        });
+      }
+      return { items: [], total: 0 };
+    },
+    staleTime: 5 * 60 * 1000,
+  });
+
+  const logs = logsQuery.data?.items ?? [];
+  const total = logsQuery.data?.total ?? 0;
+  const loading = logsQuery.isLoading;
+
+  useEffect(() => {
+    if (logsQuery.isError) {
+      apiLogger.error('加载审计日志失败:', logsQuery.error);
+      const errorMsg = extractErrorMessage(logsQuery.error, '加载审计日志失败');
       if (errorMsg.includes('401') || errorMsg.includes('未授权')) {
         addNotification({
           title: '登录失效',
@@ -143,15 +155,11 @@ const AuditLogPage: React.FC<AuditLogPageProps> = ({ onNavigate }) => {
           type: 'error',
         });
       }
-    } finally {
-      setLoading(false);
     }
-  };
+  }, [logsQuery.isError, logsQuery.error, addNotification]);
 
-  const handleExport = async () => {
-    if (exporting) return;
-    setExporting(true);
-    try {
+  const exportMutation = useMutation({
+    mutationFn: async () => {
       const api = source === 'lims' ? auditLimsApi : auditRdApi;
       const params: Record<string, unknown> = {};
       if (filterStatus !== 'all') {
@@ -170,7 +178,9 @@ const AuditLogPage: React.FC<AuditLogPageProps> = ({ onNavigate }) => {
         params.end_date = formatDateTimeForApi(endDate);
       }
       apiLogger.debug('导出审计日志参数:', { source, params });
-      const blob = await api.exportAuditLogs(params);
+      return api.exportAuditLogs(params);
+    },
+    onSuccess: (blob) => {
       apiLogger.debug('导出审计日志成功，blob size:', blob.size);
       const url = window.URL.createObjectURL(blob);
       const a = document.createElement('a');
@@ -185,7 +195,8 @@ const AuditLogPage: React.FC<AuditLogPageProps> = ({ onNavigate }) => {
         message: '审计日志已导出',
         type: 'success',
       });
-    } catch (error: unknown) {
+    },
+    onError: (error: unknown) => {
       apiLogger.error('导出审计日志失败:', error);
       const errorMsg = extractErrorMessage(error, '导出审计日志失败');
       if (errorMsg.includes('401') || errorMsg.includes('未授权')) {
@@ -201,9 +212,13 @@ const AuditLogPage: React.FC<AuditLogPageProps> = ({ onNavigate }) => {
           type: 'error',
         });
       }
-    } finally {
-      setExporting(false);
-    }
+    },
+  });
+
+  const exporting = exportMutation.isPending;
+
+  const handleExport = () => {
+    exportMutation.mutate();
   };
 
   const handleViewDetail = (log: AuditLog) => {
@@ -215,10 +230,6 @@ const AuditLogPage: React.FC<AuditLogPageProps> = ({ onNavigate }) => {
     setEndDate('');
     setCurrentPage(1);
   };
-
-  useEffect(() => {
-    loadLogs();
-  }, [source, currentPage, filterStatus, filterAction, filterEntityType, startDate, endDate]);
 
   const getStatusBadge = (status: string) => {
     const badges: Record<
@@ -501,7 +512,7 @@ const AuditLogPage: React.FC<AuditLogPageProps> = ({ onNavigate }) => {
     {
       label: '刷新',
       icon: <RefreshCw size={16} />,
-      onClick: loadLogs,
+      onClick: () => logsQuery.refetch(),
       variant: 'contained' as const,
     },
   ];

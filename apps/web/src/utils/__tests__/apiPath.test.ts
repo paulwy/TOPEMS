@@ -1,10 +1,8 @@
 import { describe, it, expect } from 'vitest';
 import {
   buildApiPath,
-  buildLegacyApiPath,
   buildV1Path,
   createServiceApi,
-  normalizeApiPath,
   API_VERSION,
   SERVICE_CODES,
   API_PATHS,
@@ -30,18 +28,6 @@ describe('apiPath utils', () => {
     it('should handle complex paths', () => {
       const result = buildApiPath({ service: 'crm', path: '/customers/123/orders' });
       expect(result).toBe('/api/crm/v1/customers/123/orders');
-    });
-  });
-
-  describe('buildLegacyApiPath', () => {
-    it('should build legacy path without version', () => {
-      const result = buildLegacyApiPath('hrm', '/employees');
-      expect(result).toBe('/api/hrm/employees');
-    });
-
-    it('should add leading slash if missing', () => {
-      const result = buildLegacyApiPath('wms', 'inventory');
-      expect(result).toBe('/api/wms/inventory');
     });
   });
 
@@ -73,37 +59,15 @@ describe('apiPath utils', () => {
     });
   });
 
-  describe('normalizeApiPath', () => {
-    it('should keep versioned paths as-is', () => {
-      const path = '/api/hrm/v1/employees';
-      expect(normalizeApiPath(path)).toBe(path);
-    });
-
-    it('should add version to legacy paths', () => {
-      const result = normalizeApiPath('/api/hrm/employees');
-      expect(result).toBe('/api/hrm/v1/employees');
-    });
-
-    it('should not modify unknown service paths', () => {
-      const result = normalizeApiPath('/api/unknown/employees');
-      expect(result).toBe('/api/unknown/employees');
-    });
-
-    it('should not modify non-API paths', () => {
-      const path = '/some/other/path';
-      expect(normalizeApiPath(path)).toBe(path);
-    });
-  });
-
   describe('API_PATHS', () => {
     it('should have auth paths', () => {
-      expect(API_PATHS.auth.login).toBe('/api/v1/auth/login');
-      expect(API_PATHS.auth.logout).toBe('/api/v1/auth/logout');
+      expect(API_PATHS.auth.login).toBe('/api/core/v1/auth/login');
+      expect(API_PATHS.auth.logout).toBe('/api/core/v1/auth/logout');
     });
 
     it('should have hrm paths with functions', () => {
-      expect(API_PATHS.hrm.employees).toBe('/api/hrm/employees');
-      expect(API_PATHS.hrm.employee('123')).toBe('/api/hrm/employees/123');
+      expect(API_PATHS.hrm.employees).toBe('/api/hrm/v1/employees');
+      expect(API_PATHS.hrm.employee('123')).toBe('/api/hrm/v1/employees/123');
     });
 
     it('should have notification paths with query params', () => {

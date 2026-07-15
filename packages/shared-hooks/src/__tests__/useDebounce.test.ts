@@ -115,13 +115,13 @@ describe('useDebouncedCallback', () => {
     );
 
     act(() => {
-      result.current.debouncedFn('arg1');
+      result.current('arg1');
     });
 
     rerender({ callback: callback2, delay: 500 });
 
     act(() => {
-      result.current.debouncedFn('arg2');
+      result.current('arg2');
     });
 
     await vi.advanceTimersByTimeAsync(500);

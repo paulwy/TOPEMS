@@ -1,4 +1,6 @@
-import React, { useEffect, useState, useCallback, useMemo, useRef } from 'react';
+import React, { useEffect, useState, useCallback, useMemo } from 'react';
+import { useQuery, useQueryClient } from '@tanstack/react-query';
+import { QUERY_KEYS } from '@/lib/reactQuery';
 import { apiLogger } from '@/utils/logger';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { GIS_PATHS } from '@/modules/gis/config';
@@ -102,6 +104,7 @@ import {
   ServiceMonitorSection,
   RecentActivitySection,
 } from '@/components/dashboard';
+import { PageContainer } from '@/components/common';
 
 interface DashboardPageProps {
   onLogout?: () => void;
@@ -146,76 +149,13 @@ const DashboardPage: React.FC<DashboardPageProps> = ({ onLogout }) => {
   const { serviceStatuses, refresh: refreshServiceStatuses } = useServiceStatus();
   const { installedPlugins, isPluginInstalled } = useInstalledPlugins();
   const shortcuts = useShortcutsStore((state) => state.shortcuts);
-  const [loading, setLoading] = useState(true);
-  const [statsLoading, setStatsLoading] = useState(false);
-  const [moduleStatsLoading, setModuleStatsLoading] = useState(false);
-  const [chartDataLoading, setChartDataLoading] = useState(false);
-  const [todosLoading, setTodosLoading] = useState(false);
-  const [activitiesLoading, setActivitiesLoading] = useState(false);
-  const [statsError, setStatsError] = useState<string | null>(null);
-  const [moduleStatsError, setModuleStatsError] = useState<string | null>(null);
-  const [chartDataError, setChartDataError] = useState<string | null>(null);
-  const [todosError, setTodosError] = useState<string | null>(null);
-  const [activitiesError, setActivitiesError] = useState<string | null>(null);
-  const [stats, setStats] = useState({
-    fileCount: 0,
-    workflowCount: 0,
-    docCount: 0,
-    notificationCount: 0,
-  });
-  const [moduleStats, setModuleStats] = useState({
-    qms: { total: 0, active: 0 },
-    ehs: { total: 0, active: 0 },
-    srm: { total: 0, active: 0 },
-    lims: { total: 0, active: 0 },
-    rs: { total: 0, active: 0 },
-  });
-  const [chartData, setChartData] = useState({
-    moduleDistribution: [] as { name: string; value: number; color: string }[],
-    monthlyTrend: [] as { name: string; value: number }[],
-  });
-  const [recentActivities, setRecentActivities] = useState<ActivityItem[]>([]);
+  const queryClient = useQueryClient();
+
   const [todoTab, setTodoTab] = useState(0);
-  const [todos, setTodos] = useState<
-    Array<{ id: number; title: string; type: string; done: boolean }>
-  >([]);
 
-  const moduleToService: Record<string, string> = {
-    rs: 'rs',
-    lims: 'lims',
-    doc: 'doc',
-    ai: 'ai',
-    workflow: 'flow',
-    iam: 'iam',
-    qms: 'qms',
-    ehs: 'ehs',
-    srm: 'srm',
-    pdm: 'pdm',
-    crm: 'crm',
-    mes: 'mes',
-    mail: 'mail',
-    mobile: 'mobile',
-    hrm: 'hrm',
-    erp: 'erp',
-    gis: 'gis',
-    pm: 'pm',
-    bi: 'bi',
-    integration: 'integration',
-    notification: 'notification',
-    portal: 'portal',
-    scm: 'scm',
-    wms: 'wms',
-    im: 'im',
-    report: 'report',
-    contract: 'hrm',
-  };
-
-  const initialized = useRef(false);
-
-  const loadStats = useCallback(async () => {
-    setStatsLoading(true);
-    setStatsError(null);
-    try {
+  const statsQuery = useQuery({
+    queryKey: [...QUERY_KEYS.DASHBOARD.STATS, user?.id],
+    queryFn: async () => {
       const [docRes, flowStatsRes, notificationRes] = await Promise.allSettled([
         docApi.list(),
         workflowApi.getStatistics(),
@@ -235,7 +175,7 @@ const DashboardPage: React.FC<DashboardPageProps> = ({ onLogout }) => {
           ? notificationRes.value.data
           : null;
 
-      const newStats = {
+      return {
         fileCount: docData?.files?.length || 0,
         docCount: docData?.total || 0,
         workflowCount: flowData?.total_workflows || 0,
@@ -244,20 +184,13 @@ const DashboardPage: React.FC<DashboardPageProps> = ({ onLogout }) => {
           (notificationData as { count?: number; total?: number })?.total ??
           0,
       };
+    },
+    staleTime: 5 * 60 * 1000,
+  });
 
-      setStats(newStats);
-    } catch (err: unknown) {
-      apiLogger.error('加载统计失败:', err);
-      setStatsError(err instanceof Error ? err.message : '加载统计失败');
-    } finally {
-      setStatsLoading(false);
-    }
-  }, [user?.id]);
-
-  const loadModuleStats = useCallback(async () => {
-    setModuleStatsLoading(true);
-    setModuleStatsError(null);
-    try {
+  const moduleStatsQuery = useQuery({
+    queryKey: QUERY_KEYS.DASHBOARD.MODULE_STATS,
+    queryFn: async () => {
       const [qmsRes, srmRes, limsRes, rsRes, ehsRes] = await Promise.allSettled([
         qmsApi.getStatistics(),
         srmApi.getStatistics(),
@@ -266,7 +199,7 @@ const DashboardPage: React.FC<DashboardPageProps> = ({ onLogout }) => {
         ehsApi.listHazards({ page: 1, pagesize: 1000 }),
       ]);
 
-      const newModuleStats = {
+      return {
         qms: {
           total:
             (qmsRes.status === 'fulfilled' &&
@@ -326,20 +259,13 @@ const DashboardPage: React.FC<DashboardPageProps> = ({ onLogout }) => {
             0,
         },
       };
+    },
+    staleTime: 5 * 60 * 1000,
+  });
 
-      setModuleStats(newModuleStats);
-    } catch (err: unknown) {
-      apiLogger.error('加载模块统计失败:', err);
-      setModuleStatsError(err instanceof Error ? err.message : '加载模块统计失败');
-    } finally {
-      setModuleStatsLoading(false);
-    }
-  }, []);
-
-  const loadChartData = useCallback(async () => {
-    setChartDataLoading(true);
-    setChartDataError(null);
-    try {
+  const chartDataQuery = useQuery({
+    queryKey: QUERY_KEYS.DASHBOARD.CHART_DATA,
+    queryFn: async () => {
       const [summaryRes, flowStatsRes] = await Promise.allSettled([
         biApi.fetchSummaryDashboard(),
         workflowApi.getStatistics(),
@@ -354,7 +280,7 @@ const DashboardPage: React.FC<DashboardPageProps> = ({ onLogout }) => {
           ? flowStatsRes.value.data
           : null;
 
-      setChartData({
+      return {
         moduleDistribution:
           summary?.key_metrics?.map((metric: BiMetric) => ({
             name: metric.title,
@@ -366,51 +292,41 @@ const DashboardPage: React.FC<DashboardPageProps> = ({ onLogout }) => {
             name: item.month,
             value: item.instances_started || item.approvals_processed || 0,
           })) || [],
-      });
-    } catch (err: unknown) {
-      apiLogger.error('加载图表数据失败:', err);
-      setChartDataError(err instanceof Error ? err.message : '加载图表数据失败');
-    } finally {
-      setChartDataLoading(false);
-    }
-  }, []);
+      };
+    },
+    staleTime: 5 * 60 * 1000,
+  });
 
-  const loadTodos = useCallback(async () => {
-    setTodosLoading(true);
-    setTodosError(null);
-    try {
+  const todosQuery = useQuery<Array<{ id: number; title: string; type: string; done: boolean }>>({
+    queryKey: QUERY_KEYS.DASHBOARD.TODOS,
+    queryFn: async () => {
       const [tasksRes] = await Promise.allSettled([
         workflowApi.listApprovalTasks({ status: 'pending', page: 1, pagesize: 10 }),
       ]);
 
       if (tasksRes.status === 'fulfilled' && tasksRes.value.success && tasksRes.value.data?.items) {
-        const tasks = tasksRes.value.data.items.map((task: WorkflowTask, index: number) => ({
+        return tasksRes.value.data.items.map((task: WorkflowTask, index: number) => ({
           id: task.id ? parseInt(String(task.id), 10) || index + 1 : index + 1,
           title: task.task_name || task.name || '待办任务',
           type: task.workflow_name || 'workflow',
           done: task.status === 'completed' || task.status === 'approved',
         }));
-        setTodos(tasks);
       }
-    } catch (err: unknown) {
-      apiLogger.error('加载待办任务失败:', err);
-      setTodosError(err instanceof Error ? err.message : '加载待办任务失败');
-    } finally {
-      setTodosLoading(false);
-    }
-  }, []);
+      return [];
+    },
+    staleTime: 5 * 60 * 1000,
+  });
 
-  const loadRecentActivities = useCallback(async () => {
-    setActivitiesLoading(true);
-    setActivitiesError(null);
-    try {
+  const activitiesQuery = useQuery<ActivityItem[]>({
+    queryKey: QUERY_KEYS.DASHBOARD.ACTIVITIES,
+    queryFn: async () => {
       const [logsRes] = await Promise.allSettled([
         scmApi.auditLogs.list({ page: 1, pageSize: 10 }),
       ]);
 
       if (logsRes.status === 'fulfilled' && logsRes.value.success && logsRes.value.data?.items) {
         const logs = logsRes.value.data.items;
-        const activities: ActivityItem[] = logs.map((log: AuditLog) => {
+        return logs.map((log: AuditLog) => {
           let icon = <User size={16} />;
           let type = '系统';
 
@@ -451,16 +367,98 @@ const DashboardPage: React.FC<DashboardPageProps> = ({ onLogout }) => {
             icon,
           };
         });
-
-        setRecentActivities(activities);
       }
-    } catch (err: unknown) {
-      apiLogger.error('加载最近活动失败:', err);
-      setActivitiesError(err instanceof Error ? err.message : '加载最近活动失败');
-    } finally {
-      setActivitiesLoading(false);
+      return [];
+    },
+    staleTime: 5 * 60 * 1000,
+  });
+
+  const stats = statsQuery.data ?? {
+    fileCount: 0,
+    workflowCount: 0,
+    docCount: 0,
+    notificationCount: 0,
+  };
+  const moduleStats = moduleStatsQuery.data ?? {
+    qms: { total: 0, active: 0 },
+    ehs: { total: 0, active: 0 },
+    srm: { total: 0, active: 0 },
+    lims: { total: 0, active: 0 },
+    rs: { total: 0, active: 0 },
+  };
+  const chartData = chartDataQuery.data ?? {
+    moduleDistribution: [] as { name: string; value: number; color: string }[],
+    monthlyTrend: [] as { name: string; value: number }[],
+  };
+  const recentActivities = activitiesQuery.data ?? [];
+  const todos = todosQuery.data ?? [];
+
+  const loading =
+    statsQuery.isLoading ||
+    moduleStatsQuery.isLoading ||
+    chartDataQuery.isLoading ||
+    todosQuery.isLoading ||
+    activitiesQuery.isLoading;
+
+  useEffect(() => {
+    if (statsQuery.isError) {
+      apiLogger.error('加载统计失败:', statsQuery.error);
     }
-  }, []);
+  }, [statsQuery.isError, statsQuery.error]);
+
+  useEffect(() => {
+    if (moduleStatsQuery.isError) {
+      apiLogger.error('加载模块统计失败:', moduleStatsQuery.error);
+    }
+  }, [moduleStatsQuery.isError, moduleStatsQuery.error]);
+
+  useEffect(() => {
+    if (chartDataQuery.isError) {
+      apiLogger.error('加载图表数据失败:', chartDataQuery.error);
+    }
+  }, [chartDataQuery.isError, chartDataQuery.error]);
+
+  useEffect(() => {
+    if (todosQuery.isError) {
+      apiLogger.error('加载待办任务失败:', todosQuery.error);
+    }
+  }, [todosQuery.isError, todosQuery.error]);
+
+  useEffect(() => {
+    if (activitiesQuery.isError) {
+      apiLogger.error('加载最近活动失败:', activitiesQuery.error);
+    }
+  }, [activitiesQuery.isError, activitiesQuery.error]);
+
+  const moduleToService: Record<string, string> = {
+    rs: 'rs',
+    lims: 'lims',
+    doc: 'doc',
+    ai: 'ai',
+    workflow: 'flow',
+    iam: 'iam',
+    qms: 'qms',
+    ehs: 'ehs',
+    srm: 'srm',
+    pdm: 'pdm',
+    crm: 'crm',
+    mes: 'mes',
+    mail: 'mail',
+    mobile: 'mobile',
+    hrm: 'hrm',
+    erp: 'erp',
+    gis: 'gis',
+    pm: 'pm',
+    bi: 'bi',
+    integration: 'integration',
+    notification: 'notification',
+    portal: 'portal',
+    scm: 'scm',
+    wms: 'wms',
+    im: 'im',
+    report: 'report',
+    contract: 'hrm',
+  };
 
   const shouldShowModule = useCallback(
     (module: { permission?: string | null; module?: string | null }): boolean => {
@@ -488,53 +486,14 @@ const DashboardPage: React.FC<DashboardPageProps> = ({ onLogout }) => {
       return;
     }
 
-    if (initialized.current) {
-      return;
-    }
-    initialized.current = true;
-
-    const init = async () => {
-      try {
-        await refreshServiceStatuses();
-        await loadStats().catch((err) => {
-          apiLogger.warn('加载统计数据失败:', err);
-        });
-        await loadModuleStats().catch((err) => {
-          apiLogger.warn('加载模块统计失败:', err);
-        });
-        await loadChartData().catch((err) => {
-          apiLogger.warn('加载图表数据失败:', err);
-        });
-        await loadTodos().catch((err) => {
-          apiLogger.warn('加载待办任务失败:', err);
-        });
-        await loadRecentActivities().catch((err) => {
-          apiLogger.warn('加载最近活动失败:', err);
-        });
-      } catch (err: unknown) {
-        apiLogger.error('初始化失败:', err);
-      } finally {
-        setLoading(false);
-      }
-    };
-
-    init();
+    refreshServiceStatuses();
 
     const intervalId = setInterval(() => {
       refreshServiceStatuses();
     }, 30000);
 
     return () => clearInterval(intervalId);
-  }, [
-    navigate,
-    isAuthenticated,
-    refreshServiceStatuses,
-    loadStats,
-    loadModuleStats,
-    loadChartData,
-    loadTodos,
-    loadRecentActivities,
-  ]);
+  }, [navigate, isAuthenticated, refreshServiceStatuses]);
 
   const handleLogout = useCallback(() => {
     authLogout();
@@ -920,7 +879,10 @@ const DashboardPage: React.FC<DashboardPageProps> = ({ onLogout }) => {
   const completedTodos = todos.filter((t) => t.done);
 
   const handleTodoToggle = (id: number) => {
-    setTodos(todos.map((t) => (t.id === id ? { ...t, done: !t.done } : t)));
+    queryClient.setQueryData<Array<{ id: number; title: string; type: string; done: boolean }>>(
+      QUERY_KEYS.DASHBOARD.TODOS,
+      (oldTodos) => (oldTodos ?? []).map((t) => (t.id === id ? { ...t, done: !t.done } : t))
+    );
   };
 
   const getTodoIcon = (type: string) => {
@@ -941,235 +903,214 @@ const DashboardPage: React.FC<DashboardPageProps> = ({ onLogout }) => {
   };
 
   return (
-    <Box>
-      <Box
-        component='div'
-        sx={{
-          width: '100%',
-        }}
-      >
-        {/* 欢迎标题 */}
-        <Box sx={{ mb: 4 }}>
-          <Typography
-            sx={{
-              fontSize: '1.875rem',
-              fontWeight: 700,
-              color: 'text.primary',
-              mb: 1,
-            }}
-          >
-            👋 欢迎回来，{user?.full_name || user?.username || '用户'}！
-          </Typography>
-          <Typography sx={{ color: 'grey.600' }}>
-            {getGreeting()}，今天有 {pendingTodos.length} 个待处理事项
-          </Typography>
-        </Box>
-
-        {/* 今日概览分区 */}
-        <DashboardSection
-          title='今日概览'
-          sx={{ mb: 4 }}
+    <PageContainer
+      autoTitle={false}
+      autoBreadcrumbs={false}
+    >
+      <Box>
+        <Box
+          component='div'
+          sx={{
+            width: '100%',
+          }}
         >
-          <Box
-            sx={{
-              display: 'grid',
-              gridTemplateColumns: { xs: '1fr', md: 'repeat(4, 1fr)' },
-              gap: 3,
-            }}
-          >
-            <MetricCard
-              title='在线服务'
-              value={String(onlineServices)}
-              icon={<Activity size={24} />}
-              color='green'
-              change={onlineServices > 5 ? 10 : -5}
-            />
-            <MetricCard
-              title='文件数量'
-              value={String(stats.fileCount)}
-              icon={<FileText size={24} />}
-              color='purple'
-              change={8}
-            />
-            <MetricCard
-              title='工作流'
-              value={String(stats.workflowCount)}
-              icon={<GitBranch size={24} />}
-              color='orange'
-              change={-3}
-            />
-            <MetricCard
-              title='待处理'
-              value={String(pendingTodos.length)}
-              icon={<Clock size={24} />}
-              color='blue'
-            />
-          </Box>
-        </DashboardSection>
-
-        {/* 快捷入口分区 */}
-        <QuickAccessSection defaultExpanded={true}>
-          <DashboardQuickActions
-            quickActions={defaultQuickActions}
-            serviceStatuses={serviceStatuses}
-            onQuickAccess={handleQuickAccess}
-          />
-        </QuickAccessSection>
-
-        {/* 待办事项分区 */}
-        <TodoListSection>
-          <Box sx={{ mb: 2 }}>
-            <Tabs
-              value={todoTab}
-              onChange={(_, v) => setTodoTab(v)}
+          {/* 欢迎标题 */}
+          <Box sx={{ mb: 4 }}>
+            <Typography
               sx={{
-                minHeight: 36,
-                '& .MuiTabs-indicator': {
-                  bgcolor: 'primary.main',
-                },
+                fontSize: '1.875rem',
+                fontWeight: 700,
+                color: 'text.primary',
+                mb: 1,
               }}
             >
-              <Tab
-                label={
-                  <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-                    <ListTodo size={16} />
-                    <Typography sx={{ fontSize: '0.875rem' }}>待处理</Typography>
-                    <Badge
-                      badgeContent={pendingTodos.length}
-                      color='primary'
-                      sx={{ ml: 1 }}
-                    />
-                  </Box>
-                }
-                sx={{ minHeight: 36, py: 1 }}
-              />
-              <Tab
-                label={
-                  <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-                    <CheckCircle size={16} />
-                    <Typography sx={{ fontSize: '0.875rem' }}>已完成</Typography>
-                    <Badge
-                      badgeContent={completedTodos.length}
-                      color='success'
-                      sx={{ ml: 1 }}
-                    />
-                  </Box>
-                }
-                sx={{ minHeight: 36, py: 1 }}
-              />
-            </Tabs>
+              👋 欢迎回来，{user?.full_name || user?.username || '用户'}！
+            </Typography>
+            <Typography sx={{ color: 'grey.600' }}>
+              {getGreeting()}，今天有 {pendingTodos.length} 个待处理事项
+            </Typography>
           </Box>
-          <List sx={{ py: 0 }}>
-            {(todoTab === 0 ? pendingTodos : completedTodos).map((todo) => (
-              <ListItem
-                key={todo.id}
+
+          {/* 今日概览分区 */}
+          <DashboardSection
+            title='今日概览'
+            sx={{ mb: 4 }}
+          >
+            <Box
+              sx={{
+                display: 'grid',
+                gridTemplateColumns: { xs: '1fr', md: 'repeat(4, 1fr)' },
+                gap: 3,
+              }}
+            >
+              <MetricCard
+                title='在线服务'
+                value={String(onlineServices)}
+                icon={<Activity size={24} />}
+                color='green'
+                change={onlineServices > 5 ? 10 : -5}
+              />
+              <MetricCard
+                title='文件数量'
+                value={String(stats.fileCount)}
+                icon={<FileText size={24} />}
+                color='purple'
+                change={8}
+              />
+              <MetricCard
+                title='工作流'
+                value={String(stats.workflowCount)}
+                icon={<GitBranch size={24} />}
+                color='orange'
+                change={-3}
+              />
+              <MetricCard
+                title='待处理'
+                value={String(pendingTodos.length)}
+                icon={<Clock size={24} />}
+                color='blue'
+              />
+            </Box>
+          </DashboardSection>
+
+          {/* 快捷入口分区 */}
+          <QuickAccessSection defaultExpanded={true}>
+            <DashboardQuickActions
+              quickActions={defaultQuickActions}
+              serviceStatuses={serviceStatuses}
+              onQuickAccess={handleQuickAccess}
+            />
+          </QuickAccessSection>
+
+          {/* 待办事项分区 */}
+          <TodoListSection>
+            <Box sx={{ mb: 2 }}>
+              <Tabs
+                value={todoTab}
+                onChange={(_, v) => setTodoTab(v)}
                 sx={{
-                  px: 0,
-                  borderBottom: '1px solid',
-                  borderColor: 'grey.100',
-                  '&:last-child': { borderBottom: 'none' },
+                  minHeight: 36,
+                  '& .MuiTabs-indicator': {
+                    bgcolor: 'primary.main',
+                  },
                 }}
               >
-                <ListItemButton
+                <Tab
+                  label={
+                    <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                      <ListTodo size={16} />
+                      <Typography sx={{ fontSize: '0.875rem' }}>待处理</Typography>
+                      <Badge
+                        badgeContent={pendingTodos.length}
+                        color='primary'
+                        sx={{ ml: 1 }}
+                      />
+                    </Box>
+                  }
+                  sx={{ minHeight: 36, py: 1 }}
+                />
+                <Tab
+                  label={
+                    <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                      <CheckCircle size={16} />
+                      <Typography sx={{ fontSize: '0.875rem' }}>已完成</Typography>
+                      <Badge
+                        badgeContent={completedTodos.length}
+                        color='success'
+                        sx={{ ml: 1 }}
+                      />
+                    </Box>
+                  }
+                  sx={{ minHeight: 36, py: 1 }}
+                />
+              </Tabs>
+            </Box>
+            <List sx={{ py: 0 }}>
+              {(todoTab === 0 ? pendingTodos : completedTodos).map((todo) => (
+                <ListItem
+                  key={todo.id}
                   sx={{
-                    borderRadius: 1,
-                    '&:hover': { bgcolor: 'grey.50' },
+                    px: 0,
+                    borderBottom: '1px solid',
+                    borderColor: 'grey.100',
+                    '&:last-child': { borderBottom: 'none' },
                   }}
                 >
-                  <ListItemIcon sx={{ minWidth: 36 }}>
-                    <Checkbox
-                      checked={todo.done}
-                      onChange={() => handleTodoToggle(todo.id)}
-                      size='small'
+                  <ListItemButton
+                    sx={{
+                      borderRadius: 1,
+                      '&:hover': { bgcolor: 'grey.50' },
+                    }}
+                  >
+                    <ListItemIcon sx={{ minWidth: 36 }}>
+                      <Checkbox
+                        checked={todo.done}
+                        onChange={() => handleTodoToggle(todo.id)}
+                        size='small'
+                        sx={{
+                          color: 'grey.400',
+                          '&.Mui-checked': { color: 'success.main' },
+                        }}
+                      />
+                    </ListItemIcon>
+                    <ListItemIcon sx={{ minWidth: 36 }}>
+                      <Box
+                        sx={{
+                          width: 28,
+                          height: 28,
+                          borderRadius: 1,
+                          display: 'flex',
+                          alignItems: 'center',
+                          justifyContent: 'center',
+                          bgcolor: todo.done ? 'grey.100' : 'primary.50',
+                          color: todo.done ? 'grey.500' : 'primary.main',
+                        }}
+                      >
+                        {getTodoIcon(todo.type)}
+                      </Box>
+                    </ListItemIcon>
+                    <ListItemText
+                      primary={todo.title}
                       sx={{
-                        color: 'grey.400',
-                        '&.Mui-checked': { color: 'success.main' },
+                        '& .MuiListItemText-primary': {
+                          fontSize: '0.875rem',
+                          color: todo.done ? 'grey.500' : 'grey.900',
+                          textDecoration: todo.done ? 'line-through' : 'none',
+                        },
                       }}
                     />
-                  </ListItemIcon>
-                  <ListItemIcon sx={{ minWidth: 36 }}>
-                    <Box
-                      sx={{
-                        width: 28,
-                        height: 28,
-                        borderRadius: 1,
-                        display: 'flex',
-                        alignItems: 'center',
-                        justifyContent: 'center',
-                        bgcolor: todo.done ? 'grey.100' : 'primary.50',
-                        color: todo.done ? 'grey.500' : 'primary.main',
-                      }}
-                    >
-                      {getTodoIcon(todo.type)}
-                    </Box>
-                  </ListItemIcon>
-                  <ListItemText
-                    primary={todo.title}
-                    sx={{
-                      '& .MuiListItemText-primary': {
-                        fontSize: '0.875rem',
-                        color: todo.done ? 'grey.500' : 'grey.900',
-                        textDecoration: todo.done ? 'line-through' : 'none',
-                      },
-                    }}
-                  />
-                </ListItemButton>
-              </ListItem>
-            ))}
-          </List>
-        </TodoListSection>
+                  </ListItemButton>
+                </ListItem>
+              ))}
+            </List>
+          </TodoListSection>
 
-        {/* 模块导航分区 - 核心功能 */}
-        <ModuleNavigationSection title='🚀 核心功能'>
-          <Box
-            sx={{
-              display: 'grid',
-              gridTemplateColumns: {
-                xs: '1fr',
-                md: 'repeat(2, 1fr)',
-                lg: 'repeat(3, 1fr)',
-              },
-              gap: 3,
-            }}
-          >
-            {coreModules.map((item) => (
-              <ModuleCard
-                key={item.title}
-                item={item}
-                onClick={() => navigate(item.path)}
-                size='large'
-              />
-            ))}
-          </Box>
-        </ModuleNavigationSection>
+          {/* 模块导航分区 - 核心功能 */}
+          <ModuleNavigationSection title='🚀 核心功能'>
+            <Box
+              sx={{
+                display: 'grid',
+                gridTemplateColumns: {
+                  xs: '1fr',
+                  md: 'repeat(2, 1fr)',
+                  lg: 'repeat(3, 1fr)',
+                },
+                gap: 3,
+              }}
+            >
+              {coreModules.map((item) => (
+                <ModuleCard
+                  key={item.title}
+                  item={item}
+                  onClick={() => navigate(item.path)}
+                  size='large'
+                />
+              ))}
+            </Box>
+          </ModuleNavigationSection>
 
-        {/* 模块导航分区 - 业务模块 */}
-        <ModuleNavigationSection title='📊 业务模块'>
-          <Box
-            sx={{
-              display: 'grid',
-              gridTemplateColumns: {
-                xs: '1fr',
-                md: 'repeat(2, 1fr)',
-                lg: 'repeat(4, 1fr)',
-              },
-              gap: 3,
-            }}
-          >
-            {businessModules.map((item) => (
-              <ModuleCard
-                key={item.title}
-                item={item}
-                onClick={() => navigate(item.path)}
-                size='small'
-              />
-            ))}
-          </Box>
-        </ModuleNavigationSection>
-
-        {/* 模块导航分区 - 系统服务 */}
-        {systemServicesModules.length > 0 && (
-          <ModuleNavigationSection title='⚙️ 系统服务'>
+          {/* 模块导航分区 - 业务模块 */}
+          <ModuleNavigationSection title='📊 业务模块'>
             <Box
               sx={{
                 display: 'grid',
@@ -1181,48 +1122,74 @@ const DashboardPage: React.FC<DashboardPageProps> = ({ onLogout }) => {
                 gap: 3,
               }}
             >
-              {systemServicesModules.map((item) => (
+              {businessModules.map((item) => (
                 <ModuleCard
                   key={item.title}
                   item={item}
                   onClick={() => navigate(item.path)}
-                  size='medium'
+                  size='small'
                 />
               ))}
             </Box>
           </ModuleNavigationSection>
-        )}
 
-        {/* 服务状态监测分区 */}
-        <ServiceMonitorSection
-          collapsible={true}
-          defaultExpanded={false}
-        >
-          <ServiceStatusMonitor
-            serviceStatuses={serviceStatuses}
-            onRefresh={refreshServiceStatuses}
-          />
-        </ServiceMonitorSection>
+          {/* 模块导航分区 - 系统服务 */}
+          {systemServicesModules.length > 0 && (
+            <ModuleNavigationSection title='⚙️ 系统服务'>
+              <Box
+                sx={{
+                  display: 'grid',
+                  gridTemplateColumns: {
+                    xs: '1fr',
+                    md: 'repeat(2, 1fr)',
+                    lg: 'repeat(4, 1fr)',
+                  },
+                  gap: 3,
+                }}
+              >
+                {systemServicesModules.map((item) => (
+                  <ModuleCard
+                    key={item.title}
+                    item={item}
+                    onClick={() => navigate(item.path)}
+                    size='medium'
+                  />
+                ))}
+              </Box>
+            </ModuleNavigationSection>
+          )}
 
-        {/* 最近活动分区 */}
-        <RecentActivitySection
-          headerRight={
-            <Typography
-              sx={{
-                fontSize: '0.875rem',
-                color: 'primary.main',
-                cursor: 'pointer',
-                '&:hover': { color: 'primary.dark' },
-              }}
-            >
-              查看全部
-            </Typography>
-          }
-        >
-          <RecentActivities activities={recentActivities} />
-        </RecentActivitySection>
+          {/* 服务状态监测分区 */}
+          <ServiceMonitorSection
+            collapsible={true}
+            defaultExpanded={false}
+          >
+            <ServiceStatusMonitor
+              serviceStatuses={serviceStatuses}
+              onRefresh={refreshServiceStatuses}
+            />
+          </ServiceMonitorSection>
+
+          {/* 最近活动分区 */}
+          <RecentActivitySection
+            headerRight={
+              <Typography
+                sx={{
+                  fontSize: '0.875rem',
+                  color: 'primary.main',
+                  cursor: 'pointer',
+                  '&:hover': { color: 'primary.dark' },
+                }}
+              >
+                查看全部
+              </Typography>
+            }
+          >
+            <RecentActivities activities={recentActivities} />
+          </RecentActivitySection>
+        </Box>
       </Box>
-    </Box>
+    </PageContainer>
   );
 };
 

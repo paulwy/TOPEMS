@@ -4,7 +4,7 @@ import type { DocumentQAAnswer, DocumentQAQuestionRequest, QAHistoryItem } from 
 
 export const qaApi = {
   documentQA: async (data: DocumentQAQuestionRequest): Promise<ApiResponse<DocumentQAAnswer>> => {
-    return apiClient.ai.post<DocumentQAAnswer>('/v1/documents/qa', data);
+    return apiClient.ai.post<DocumentQAAnswer>('/documents/qa', data);
   },
 
   ask: async (data: {

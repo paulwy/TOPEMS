@@ -1,7 +1,10 @@
-import React, { useState, useEffect, useMemo } from 'react';
+import React, { useMemo } from 'react';
+import { useQuery } from '@tanstack/react-query';
 import { designTokens } from '@/theme/tokens';
 import { useNavigate } from 'react-router-dom';
 import { FINANCE_PATHS } from '@/modules/finance/config';
+import { financeApi } from '@/api/finance';
+import type { FinanceDashboardStats } from '@/api/finance';
 import {
   FileText,
   TrendingUp,
@@ -27,104 +30,103 @@ const ct = designTokens.colors;
 
 const FinanceDashboardPage: React.FC = () => {
   const navigate = useNavigate();
-  const [loading, setLoading] = useState(true);
 
-  useEffect(() => {
-    const timer = setTimeout(() => setLoading(false), 600);
-    return () => clearTimeout(timer);
-  }, []);
+  const { data: statsData, isLoading: loading } = useQuery<FinanceDashboardStats | null>({
+    queryKey: ['finance-dashboard'],
+    queryFn: async () => {
+      const response = await financeApi.getDashboard();
+      if (response.success && response.data) {
+        return response.data;
+      }
+      return null;
+    },
+    staleTime: 5 * 60 * 1000,
+  });
 
-  const stats: StatCard[] = useMemo(
-    () => [
+  const stats: StatCard[] = useMemo(() => {
+    if (!statsData) return [];
+    return [
       {
         id: 'voucher-total',
         title: '凭证总数',
-        value: '3,256',
+        value: statsData.total_vouchers.toLocaleString(),
         icon: <FileText size={24} />,
-        change: 12.5,
+        change: 0,
         changeLabel: '较上月',
         color: 'primary',
       },
       {
-        id: 'voucher-month',
-        title: '本月凭证',
-        value: '186',
+        id: 'voucher-draft',
+        title: '草稿凭证',
+        value: statsData.draft_vouchers.toLocaleString(),
         icon: <FileText size={24} />,
-        change: 8.3,
+        change: 0,
         changeLabel: '较上月',
         color: 'info',
       },
       {
         id: 'receivable',
         title: '应收余额',
-        value: '¥2,345,678',
+        value: `¥${statsData.total_receivables.toLocaleString()}`,
         icon: <TrendingUp size={24} />,
-        change: -5.2,
+        change: 0,
         changeLabel: '较上月',
         color: 'success',
       },
       {
         id: 'payable',
         title: '应付余额',
-        value: '¥1,876,543',
+        value: `¥${statsData.total_payables.toLocaleString()}`,
         icon: <TrendingDown size={24} />,
-        change: 3.8,
+        change: 0,
         changeLabel: '较上月',
         color: 'warning',
       },
       {
-        id: 'total-assets',
-        title: '总资产',
-        value: '¥12,580,000',
+        id: 'pending-approvals',
+        title: '待审批',
+        value: statsData.pending_approvals.toLocaleString(),
         icon: <DollarSign size={24} />,
-        change: 8.5,
+        change: 0,
         changeLabel: '较上月',
         color: 'success',
       },
       {
-        id: 'net-profit',
-        title: '净利润',
-        value: '¥1,358,024',
+        id: 'pending-payments',
+        title: '待支付',
+        value: statsData.pending_payments.toLocaleString(),
         icon: <BarChart3 size={24} />,
-        change: 15.8,
+        change: 0,
         changeLabel: '较上月',
         color: 'primary',
       },
-    ],
-    []
-  );
+    ];
+  }, [statsData]);
 
-  const voucherTrendData = [
-    { name: '1月', value: 120 },
-    { name: '2月', value: 98 },
-    { name: '3月', value: 156 },
-    { name: '4月', value: 132 },
-    { name: '5月', value: 178 },
-    { name: '6月', value: 186 },
-  ];
-
-  const receivablePayableData = [
-    { name: '1月', value: 2100000 },
-    { name: '2月', value: 1950000 },
-    { name: '3月', value: 2400000 },
-    { name: '4月', value: 2250000 },
-    { name: '5月', value: 2500000 },
-    { name: '6月', value: 2345678 },
-  ];
-
-  const expenseCategoryData = [
-    { name: '人力成本', value: 45 },
-    { name: '原材料', value: 25 },
-    { name: '运营费用', value: 15 },
-    { name: '管理费用', value: 10 },
-    { name: '其他', value: 5 },
-  ];
-
-  const charts: ChartCard[] = useMemo(
-    () => [
+  const charts: ChartCard[] = useMemo(() => {
+    if (!statsData) return [];
+    const voucherTrendData = [
+      { name: '草稿', value: statsData.draft_vouchers },
+      { name: '已提交', value: statsData.submitted_vouchers },
+      { name: '已审批', value: statsData.approved_vouchers },
+      { name: '已过账', value: statsData.posted_vouchers },
+    ];
+    const receivablePayableData = [
+      { name: '应收', value: statsData.total_receivables },
+      { name: '逾期应收', value: statsData.overdue_receivables },
+      { name: '应付', value: statsData.total_payables },
+      { name: '逾期应付', value: statsData.overdue_payables },
+    ];
+    const expenseCategoryData = [
+      { name: '待审批', value: statsData.pending_approvals },
+      { name: '待支付', value: statsData.pending_payments },
+      { name: '凭证', value: statsData.total_vouchers },
+      { name: '付款', value: statsData.total_payments },
+    ];
+    return [
       {
         id: 'voucher-trend',
-        title: '月度凭证趋势',
+        title: '凭证状态分布',
         chart: (
           <BarChartComponent
             data={voucherTrendData}
@@ -148,13 +150,12 @@ const FinanceDashboardPage: React.FC = () => {
       },
       {
         id: 'expense-category',
-        title: '费用类别分布',
+        title: '业务概览',
         chart: <PieChartComponent data={expenseCategoryData} />,
         height: 300,
       },
-    ],
-    []
-  );
+    ];
+  }, [statsData]);
 
   const quickActions: QuickAction[] = useMemo(
     () => [
@@ -204,56 +205,7 @@ const FinanceDashboardPage: React.FC = () => {
     [navigate]
   );
 
-  const recentItems: RecentItem[] = useMemo(
-    () => [
-      {
-        id: 'v1',
-        title: '记-2026-0086',
-        description: '支付办公设备采购款',
-        time: '2026-06-29 09:30',
-        icon: <FileText size={18} />,
-        status: 'success',
-        onClick: () => navigate(FINANCE_PATHS.vouchers),
-      },
-      {
-        id: 'v2',
-        title: '记-2026-0085',
-        description: '收到客户A月度结算款',
-        time: '2026-06-29 08:15',
-        icon: <Receipt size={18} />,
-        status: 'success',
-        onClick: () => navigate(FINANCE_PATHS.vouchers),
-      },
-      {
-        id: 'inv1',
-        title: 'INV-2026-0042',
-        description: '销售发票 - 客户B',
-        time: '2026-06-28 16:45',
-        icon: <Receipt size={18} />,
-        status: 'info',
-        onClick: () => navigate(FINANCE_PATHS.invoices),
-      },
-      {
-        id: 'pay1',
-        title: 'PAY-2026-0018',
-        description: '供应商C原材料付款',
-        time: '2026-06-28 14:20',
-        icon: <Wallet size={18} />,
-        status: 'warning',
-        onClick: () => navigate(FINANCE_PATHS.payments),
-      },
-      {
-        id: 'v3',
-        title: '记-2026-0084',
-        description: '员工工资发放',
-        time: '2026-06-28 10:00',
-        icon: <CreditCard size={18} />,
-        status: 'default',
-        onClick: () => navigate(FINANCE_PATHS.vouchers),
-      },
-    ],
-    [navigate]
-  );
+  const recentItems: RecentItem[] = [];
 
   return (
     <PageContainer

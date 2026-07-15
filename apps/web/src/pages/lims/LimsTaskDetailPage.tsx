@@ -1,5 +1,7 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import { QUERY_KEYS } from '@/lib/reactQuery';
 import {
   ClipboardCheck,
   Package,
@@ -31,8 +33,13 @@ import {
 import { DataTable } from '@/components/common/DataTable';
 import type { ColumnDef } from '@tanstack/react-table';
 import { limsApi } from '@/api/lims';
-import type { InspectionTask, InspectionRecord, InspectionProcess } from '@/api/lims';
-import { apiLogger } from '@/utils/logger';
+import type {
+  InspectionTask,
+  InspectionRecord,
+  InspectionProcess,
+  CreateInspectionRecordRequest,
+} from '@/api/lims';
+import { logger } from '@/utils/logger';
 import { useNotificationStore } from '@/store';
 import { DetailPageTemplate, type SectionConfig } from '@/components/templates';
 import { PageContainer } from '@/components/common';
@@ -60,10 +67,7 @@ const LimsTaskDetailPage: React.FC = () => {
   const { id } = useParams<{ id: string }>();
   const theme = useTheme();
   const navigate = useNavigate();
-  const [task, setTask] = useState<InspectionTask | null>(null);
-  const [records, setRecords] = useState<TaskRecord[]>([]);
-  const [process, setProcess] = useState<InspectionProcess | null>(null);
-  const [loading, setLoading] = useState(true);
+  const queryClient = useQueryClient();
   const [showCompleteModal, setShowCompleteModal] = useState(false);
   const [showRecordModal, setShowRecordModal] = useState(false);
   const [recordForm, setRecordForm] = useState({
@@ -74,37 +78,34 @@ const LimsTaskDetailPage: React.FC = () => {
   });
   const addNotification = useNotificationStore((state) => state.addNotification);
 
-  useEffect(() => {
-    if (id) {
-      loadTaskDetail(id);
-    }
-  }, [id]);
-
-  const loadTaskDetail = async (taskId: string) => {
-    try {
-      setLoading(true);
+  const { data: detailData, isLoading: loading } = useQuery({
+    queryKey: QUERY_KEYS.LIMS.TASK(id || ''),
+    queryFn: async () => {
+      if (!id) return null;
       const [taskRes, recordRes, processRes] = await Promise.all([
-        limsApi.getTask(taskId),
-        limsApi.listRecordsByTask(taskId),
+        limsApi.getTask(id),
+        limsApi.listRecordsByTask(id),
         limsApi.listProcesses(),
       ]);
 
+      let task: InspectionTask | null = null;
       if (taskRes.success && taskRes.data) {
-        setTask(taskRes.data as InspectionTask);
+        task = taskRes.data as InspectionTask;
       }
 
+      let records: TaskRecord[] = [];
       if (recordRes.success && recordRes.data) {
         const recordData = recordRes.data as LimsListResponse<RawRecord> | RawRecord[];
         const recordArray = Array.isArray(recordData)
           ? recordData
           : recordData.records || recordData.items || [];
-        const formattedRecords = recordArray.map((r: RawRecord) => ({
+        records = recordArray.map((r: RawRecord) => ({
           ...r,
           step_name: r.step_name || r.step_id || `步骤 ${r.step_index}`,
         })) as TaskRecord[];
-        setRecords(formattedRecords);
       }
 
+      let process: InspectionProcess | null = null;
       if (processRes.success && processRes.data && task) {
         const processData = processRes.data as
           LimsListResponse<InspectionProcess> | InspectionProcess[];
@@ -115,15 +116,39 @@ const LimsTaskDetailPage: React.FC = () => {
           (p: InspectionProcess) => p.id === task.process_id
         );
         if (matchedProcess) {
-          setProcess(matchedProcess);
+          process = matchedProcess;
         }
       }
-    } catch (error: unknown) {
-      apiLogger.error('加载任务详情失败:', error);
-    } finally {
-      setLoading(false);
-    }
-  };
+
+      return { task, records, process };
+    },
+    enabled: !!id,
+  });
+
+  const task = detailData?.task || null;
+  const records = detailData?.records || [];
+  const process = detailData?.process || null;
+
+  const completeStepMutation = useMutation({
+    mutationFn: async ({ id, data }: { id: string; data: CreateInspectionRecordRequest }) => {
+      const response = await limsApi.completeStep(id, data);
+      if (!response.success) {
+        throw new Error(response.message || '操作失败，请稍后重试');
+      }
+      return response;
+    },
+    onSuccess: () => {
+      if (id) {
+        queryClient.invalidateQueries({ queryKey: QUERY_KEYS.LIMS.TASK(id) });
+        queryClient.invalidateQueries({ queryKey: QUERY_KEYS.LIMS.RECORDS_BY_TASK(id) });
+      }
+      queryClient.invalidateQueries({ queryKey: QUERY_KEYS.LIMS.TASKS });
+      setShowRecordModal(false);
+    },
+    onError: (error: unknown) => {
+      logger.error('完成步骤失败:', error);
+    },
+  });
 
   const handleCompleteStep = async () => {
     if (!task) return;
@@ -151,37 +176,17 @@ const LimsTaskDetailPage: React.FC = () => {
       });
       return;
     }
-    try {
-      const response = await limsApi.completeStep(task.id, {
+    await completeStepMutation.mutateAsync({
+      id: task.id,
+      data: {
+        task_id: task.id,
         step_id: '',
         step_name: recordForm.step_name,
         result: recordForm.result,
         conclusion: recordForm.conclusion,
         inspector: recordForm.inspector,
-      });
-      if (response.success) {
-        addNotification({
-          title: '成功',
-          message: '检验步骤完成成功',
-          type: 'success',
-        });
-        setShowRecordModal(false);
-        loadTaskDetail(task.id);
-      } else {
-        addNotification({
-          title: '错误',
-          message: response.message || '操作失败，请稍后重试',
-          type: 'error',
-        });
-      }
-    } catch (error: unknown) {
-      apiLogger.error('完成步骤失败:', error);
-      addNotification({
-        title: '错误',
-        message: '完成检验步骤失败，请稍后重试',
-        type: 'error',
-      });
-    }
+      },
+    });
   };
 
   const recordColumns: ColumnDef<TaskRecord>[] = [

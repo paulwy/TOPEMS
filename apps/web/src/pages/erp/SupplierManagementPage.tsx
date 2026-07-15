@@ -15,11 +15,9 @@ import {
   Grid,
 } from '@mui/material';
 import { PageContainer } from '@/components/common';
-import React, { useState, useEffect, useMemo, useCallback } from 'react';
+import React, { useState, useMemo, useCallback } from 'react';
 import type { Supplier, CreateSupplierRequest, UpdateSupplierRequest } from '@/api/erp';
 import { erpApi } from '@/api/erp';
-import { useNotificationStore } from '@/store';
-import { LoadingSpinner } from '@topems/shared-components';
 import {
   ListPageTemplate,
   type ColumnDef,
@@ -28,16 +26,16 @@ import {
 } from '@/components/templates';
 import { Plus, Edit, Trash2, Eye, Users, CheckCircle, XCircle } from 'lucide-react';
 import { apiLogger } from '@/utils/logger';
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import { QUERY_KEYS } from '@/lib/reactQuery';
+import { useNotificationStore } from '@/store';
 
 const SupplierManagementPage: React.FC = () => {
-  const [suppliers, setSuppliers] = useState<Supplier[]>([]);
-  const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState('');
   const [statusFilter, setStatusFilter] = useState<string>('all');
   const [categoryFilter, setCategoryFilter] = useState<string>('all');
   const [currentPage, setCurrentPage] = useState(1);
   const [pageSize] = useState(10);
-  const [total, setTotal] = useState(0);
   const [showDialog, setShowDialog] = useState(false);
   const [showDetailDialog, setShowDetailDialog] = useState(false);
   const [selectedSupplier, setSelectedSupplier] = useState<Supplier | null>(null);
@@ -63,11 +61,26 @@ const SupplierManagementPage: React.FC = () => {
     remark: '',
   });
 
+  const queryClient = useQueryClient();
   const { addNotification } = useNotificationStore();
 
-  const loadSuppliers = useCallback(async () => {
-    try {
-      setLoading(true);
+  const queryKey = [
+    QUERY_KEYS.ERP.SUPPLIERS,
+    searchTerm,
+    statusFilter,
+    categoryFilter,
+    currentPage,
+    pageSize,
+  ];
+
+  const { data: suppliersResponse, isLoading } = useQuery<{
+    suppliers: Supplier[];
+    total: number;
+    page: number;
+    pagesize: number;
+  }>({
+    queryKey,
+    queryFn: async () => {
       const params: Record<string, unknown> = {
         page: currentPage - 1,
         pagesize: pageSize,
@@ -77,148 +90,95 @@ const SupplierManagementPage: React.FC = () => {
       if (categoryFilter !== 'all') params.category = categoryFilter;
 
       const response = await erpApi.suppliers.list(params);
-      if (response.success && response.data) {
-        setSuppliers(response.data.suppliers || []);
-        setTotal(response.data.total || 0);
+      if (!response.success) {
+        throw new Error('Failed to fetch suppliers');
       }
-    } catch (error: unknown) {
-      apiLogger.error('加载供应商列表失败:', error);
-      addNotification({
-        type: 'error',
-        title: '加载失败',
-        message: '无法加载供应商列表',
-      });
-    } finally {
-      setLoading(false);
-    }
-  }, [currentPage, pageSize, searchTerm, statusFilter, categoryFilter, addNotification]);
+      return response.data;
+    },
+    staleTime: 5 * 60 * 1000,
+    gcTime: 10 * 60 * 1000,
+  });
 
-  useEffect(() => {
-    loadSuppliers();
-  }, [loadSuppliers]);
+  const suppliers = suppliersResponse?.suppliers || [];
+  const total = suppliersResponse?.total || 0;
+
+  const createMutation = useMutation({
+    mutationFn: async (data: CreateSupplierRequest) => {
+      const response = await erpApi.suppliers.create(data);
+      if (!response.success) {
+        throw new Error('Failed to create supplier');
+      }
+      return response;
+    },
+    onSuccess: () => {
+      addNotification({ type: 'success', title: '创建成功', message: '新供应商已创建' });
+      queryClient.invalidateQueries({ queryKey: [QUERY_KEYS.ERP.SUPPLIERS] });
+      setShowDialog(false);
+      resetForm();
+    },
+    onError: (error) => {
+      apiLogger.error('创建失败:', error);
+      addNotification({ type: 'error', title: '创建失败', message: '无法创建供应商' });
+    },
+  });
+
+  const updateMutation = useMutation({
+    mutationFn: async ({ id, data }: { id: string; data: UpdateSupplierRequest }) => {
+      const response = await erpApi.suppliers.update(id, data);
+      if (!response.success) {
+        throw new Error('Failed to update supplier');
+      }
+      return response;
+    },
+    onSuccess: () => {
+      addNotification({ type: 'success', title: '更新成功', message: '供应商信息已更新' });
+      queryClient.invalidateQueries({ queryKey: [QUERY_KEYS.ERP.SUPPLIERS] });
+      setShowDialog(false);
+      resetForm();
+    },
+    onError: (error) => {
+      apiLogger.error('更新失败:', error);
+      addNotification({ type: 'error', title: '更新失败', message: '无法更新供应商' });
+    },
+  });
+
+  const deleteMutation = useMutation({
+    mutationFn: async (id: string) => {
+      const response = await erpApi.suppliers.delete(id);
+      if (!response.success) {
+        throw new Error('Failed to delete supplier');
+      }
+      return response;
+    },
+    onSuccess: () => {
+      addNotification({ type: 'success', title: '删除成功', message: '供应商已删除' });
+      queryClient.invalidateQueries({ queryKey: [QUERY_KEYS.ERP.SUPPLIERS] });
+    },
+    onError: (error) => {
+      apiLogger.error('删除失败:', error);
+      addNotification({ type: 'error', title: '删除失败', message: '无法删除供应商' });
+    },
+  });
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    try {
-      if (selectedSupplier) {
-        await erpApi.suppliers.update(selectedSupplier.id, formData as UpdateSupplierRequest);
-        addNotification({
-          type: 'success',
-          title: '更新成功',
-          message: '供应商信息已更新',
-        });
-      } else {
-        await erpApi.suppliers.create(formData);
-        addNotification({
-          type: 'success',
-          title: '创建成功',
-          message: '新供应商已创建',
-        });
-      }
-      setShowDialog(false);
-      resetForm();
-      loadSuppliers();
-    } catch (error: unknown) {
-      apiLogger.error('操作失败:', error);
-      addNotification({
-        type: 'error',
-        title: '操作失败',
-        message: selectedSupplier ? '更新供应商失败' : '创建供应商失败',
+    if (selectedSupplier) {
+      await updateMutation.mutateAsync({
+        id: selectedSupplier.id,
+        data: formData as UpdateSupplierRequest,
       });
+    } else {
+      await createMutation.mutateAsync(formData);
     }
   };
 
   const handleDelete = useCallback(
     async (id: string) => {
       if (!window.confirm('确定要删除这个供应商吗?')) return;
-      try {
-        await erpApi.suppliers.delete(id);
-        addNotification({
-          type: 'success',
-          title: '删除成功',
-          message: '供应商已删除',
-        });
-        loadSuppliers();
-      } catch (error: unknown) {
-        apiLogger.error('删除失败:', error);
-        addNotification({
-          type: 'error',
-          title: '删除失败',
-          message: '无法删除供应商',
-        });
-      }
+      await deleteMutation.mutateAsync(id);
     },
-    [loadSuppliers, addNotification]
+    [deleteMutation]
   );
-
-  const handleBatchDelete = useCallback(async () => {
-    if (selectedIds.length === 0) return;
-    try {
-      for (const id of selectedIds) {
-        await erpApi.suppliers.delete(id);
-      }
-      addNotification({
-        type: 'success',
-        title: '批量删除成功',
-        message: `已删除 ${selectedIds.length} 个供应商`,
-      });
-      setSelectedIds([]);
-      loadSuppliers();
-    } catch (error: unknown) {
-      apiLogger.error('批量删除失败:', error);
-      addNotification({
-        type: 'error',
-        title: '批量删除失败',
-        message: '部分供应商删除失败',
-      });
-    }
-  }, [selectedIds, loadSuppliers, addNotification]);
-
-  const handleBatchEnable = useCallback(async () => {
-    if (selectedIds.length === 0) return;
-    try {
-      for (const id of selectedIds) {
-        await erpApi.suppliers.update(id, { status: 'active' });
-      }
-      addNotification({
-        type: 'success',
-        title: '批量启用成功',
-        message: `已启用 ${selectedIds.length} 个供应商`,
-      });
-      setSelectedIds([]);
-      loadSuppliers();
-    } catch (error: unknown) {
-      apiLogger.error('批量启用失败:', error);
-      addNotification({
-        type: 'error',
-        title: '批量启用失败',
-        message: '部分供应商启用失败',
-      });
-    }
-  }, [selectedIds, loadSuppliers, addNotification]);
-
-  const handleBatchDisable = useCallback(async () => {
-    if (selectedIds.length === 0) return;
-    try {
-      for (const id of selectedIds) {
-        await erpApi.suppliers.update(id, { status: 'inactive' });
-      }
-      addNotification({
-        type: 'success',
-        title: '批量停用成功',
-        message: `已停用 ${selectedIds.length} 个供应商`,
-      });
-      setSelectedIds([]);
-      loadSuppliers();
-    } catch (error: unknown) {
-      apiLogger.error('批量停用失败:', error);
-      addNotification({
-        type: 'error',
-        title: '批量停用失败',
-        message: '部分供应商停用失败',
-      });
-    }
-  }, [selectedIds, loadSuppliers, addNotification]);
 
   const handleEdit = useCallback((supplier: Supplier) => {
     setSelectedSupplier(supplier);
@@ -303,7 +263,7 @@ const SupplierManagementPage: React.FC = () => {
       { id: 'supplier_name', label: '供应商名称', sortable: true },
       { id: 'contact_person', label: '联系人' },
       { id: 'contact_phone', label: '联系电话' },
-      { id: 'category', label: '分类' },
+      { id: 'category', label: '供应商分类' },
       { id: 'credit_rating', label: '信用等级' },
       {
         id: 'status',
@@ -339,9 +299,9 @@ const SupplierManagementPage: React.FC = () => {
         options: [
           { label: '全部分类', value: 'all' },
           { label: '原材料供应商', value: '原材料供应商' },
+          { label: '配件供应商', value: '配件供应商' },
           { label: '设备供应商', value: '设备供应商' },
           { label: '服务供应商', value: '服务供应商' },
-          { label: '包装材料供应商', value: '包装材料供应商' },
         ],
         value: categoryFilter,
         onChange: (value: unknown) => {
@@ -390,19 +350,16 @@ const SupplierManagementPage: React.FC = () => {
   const stats = useMemo(() => {
     return {
       total: suppliers.length,
-      active: suppliers.filter((s) => s.status === 'active').length,
-      inactive: suppliers.filter((s) => s.status === 'inactive').length,
-      blacklisted: suppliers.filter((s) => s.status === 'blacklisted').length,
+      active: suppliers.filter((s: Supplier) => s.status === 'active').length,
+      inactive: suppliers.filter((s: Supplier) => s.status === 'inactive').length,
     };
   }, [suppliers]);
-
-  if (loading) return <LoadingSpinner />;
 
   const statsContent = (
     <Box
       sx={{
         display: 'grid',
-        gridTemplateColumns: { xs: 'repeat(2, 1fr)', md: 'repeat(4, 1fr)' },
+        gridTemplateColumns: { xs: 'repeat(2, 1fr)', md: 'repeat(3, 1fr)' },
         gap: 2,
         mb: 3,
       }}
@@ -449,20 +406,6 @@ const SupplierManagementPage: React.FC = () => {
           {stats.inactive}
         </Typography>
       </Box>
-      <Box sx={{ p: 2, bgcolor: 'error.lighter', borderRadius: 3 }}>
-        <Typography
-          variant='body2'
-          sx={{ color: 'text.secondary' }}
-        >
-          黑名单
-        </Typography>
-        <Typography
-          variant='h5'
-          sx={{ fontWeight: 700, color: 'error.dark' }}
-        >
-          {stats.blacklisted}
-        </Typography>
-      </Box>
     </Box>
   );
 
@@ -476,7 +419,7 @@ const SupplierManagementPage: React.FC = () => {
         subtitle=''
         columns={columns}
         data={suppliers}
-        loading={loading}
+        loading={isLoading}
         filters={filters}
         searchable
         searchPlaceholder='搜索供应商编码、名称或联系人...'
@@ -491,28 +434,6 @@ const SupplierManagementPage: React.FC = () => {
         selectable
         selectedIds={selectedIds}
         onSelectionChange={(ids) => setSelectedIds(ids.map(String))}
-        batchActions={[
-          {
-            label: '批量启用',
-            icon: <CheckCircle size={16} />,
-            color: 'primary',
-            onClick: handleBatchEnable,
-          },
-          {
-            label: '批量停用',
-            icon: <XCircle size={16} />,
-            color: 'secondary',
-            onClick: handleBatchDisable,
-          },
-          {
-            label: '批量删除',
-            icon: <Trash2 size={16} />,
-            color: 'error',
-            confirm: true,
-            confirmMessage: '确定要删除选中的供应商吗？',
-            onClick: handleBatchDelete,
-          },
-        ]}
         actions={[
           {
             label: '新增供应商',
@@ -524,15 +445,6 @@ const SupplierManagementPage: React.FC = () => {
         headerContent={statsContent}
         emptyMessage='暂无供应商数据'
         getRowId={(row) => row.id}
-        exportable
-        exportFileName='供应商列表'
-        persistFilters
-        persistSearch
-        emptyActionButton={{
-          label: '新增供应商',
-          icon: <Plus size={16} />,
-          onClick: handleOpenCreate,
-        }}
       />
 
       <Dialog
@@ -598,7 +510,7 @@ const SupplierManagementPage: React.FC = () => {
                 />
               </Grid>
               <Grid size={{ xs: 12, sm: 6, md: 4 }}>
-                <InputLabel htmlFor='category'>分类</InputLabel>
+                <InputLabel htmlFor='category'>供应商分类</InputLabel>
                 <FormControl
                   size='small'
                   fullWidth
@@ -609,9 +521,26 @@ const SupplierManagementPage: React.FC = () => {
                     onChange={(e) => setFormData({ ...formData, category: e.target.value })}
                   >
                     <MenuItem value='原材料供应商'>原材料供应商</MenuItem>
+                    <MenuItem value='配件供应商'>配件供应商</MenuItem>
                     <MenuItem value='设备供应商'>设备供应商</MenuItem>
                     <MenuItem value='服务供应商'>服务供应商</MenuItem>
-                    <MenuItem value='包装材料供应商'>包装材料供应商</MenuItem>
+                  </Select>
+                </FormControl>
+              </Grid>
+              <Grid size={{ xs: 12, sm: 6, md: 4 }}>
+                <InputLabel htmlFor='status'>状态</InputLabel>
+                <FormControl
+                  size='small'
+                  fullWidth
+                >
+                  <Select
+                    id='status'
+                    value={formData.status}
+                    onChange={(e) => setFormData({ ...formData, status: e.target.value })}
+                  >
+                    <MenuItem value='active'>正常合作</MenuItem>
+                    <MenuItem value='inactive'>暂停合作</MenuItem>
+                    <MenuItem value='blacklisted'>黑名单</MenuItem>
                   </Select>
                 </FormControl>
               </Grid>
@@ -631,23 +560,6 @@ const SupplierManagementPage: React.FC = () => {
                     <MenuItem value='A'>A (良好)</MenuItem>
                     <MenuItem value='BBB'>BBB (一般)</MenuItem>
                     <MenuItem value='BB'>BB (较差)</MenuItem>
-                  </Select>
-                </FormControl>
-              </Grid>
-              <Grid size={{ xs: 12, sm: 6, md: 4 }}>
-                <InputLabel htmlFor='status'>状态</InputLabel>
-                <FormControl
-                  size='small'
-                  fullWidth
-                >
-                  <Select
-                    id='status'
-                    value={formData.status}
-                    onChange={(e) => setFormData({ ...formData, status: e.target.value })}
-                  >
-                    <MenuItem value='active'>正常合作</MenuItem>
-                    <MenuItem value='inactive'>暂停合作</MenuItem>
-                    <MenuItem value='blacklisted'>黑名单</MenuItem>
                   </Select>
                 </FormControl>
               </Grid>
@@ -813,8 +725,9 @@ const SupplierManagementPage: React.FC = () => {
               <Button
                 type='submit'
                 variant='contained'
+                disabled={createMutation.isPending || updateMutation.isPending}
               >
-                保存
+                {createMutation.isPending || updateMutation.isPending ? '保存中...' : '保存'}
               </Button>
             </DialogActions>
           </form>
@@ -858,7 +771,7 @@ const SupplierManagementPage: React.FC = () => {
                   <Box>{getStatusBadge(selectedSupplier.status)}</Box>
                 </Grid>
                 <Grid size={{ xs: 12, sm: 6, md: 4 }}>
-                  <InputLabel sx={{ color: 'text.secondary', fontSize: 12 }}>分类</InputLabel>
+                  <InputLabel sx={{ color: 'text.secondary', fontSize: 12 }}>供应商分类</InputLabel>
                   <Box component='span'>{selectedSupplier.category || '-'}</Box>
                 </Grid>
                 <Grid size={{ xs: 12, sm: 6, md: 4 }}>
@@ -913,7 +826,7 @@ const SupplierManagementPage: React.FC = () => {
                   <InputLabel sx={{ color: 'text.secondary', fontSize: 12 }}>开户银行</InputLabel>
                   <Box component='span'>{selectedSupplier.bank_name || '-'}</Box>
                 </Grid>
-                <Grid size={{ xs: 12, sm: 6 }}>
+                <Grid size={{ xs: 12 }}>
                   <InputLabel sx={{ color: 'text.secondary', fontSize: 12 }}>银行账号</InputLabel>
                   <Box component='span'>{selectedSupplier.bank_account || '-'}</Box>
                 </Grid>

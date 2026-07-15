@@ -31,6 +31,10 @@ export const GlobalSearchBar: React.FC<GlobalSearchBarProps> = ({ variant = 'ful
     handleFocus,
     removeFromHistory,
     clearHistory,
+    filter,
+    setFilter,
+    availableModules,
+    availableTypes,
   } = useGlobalSearch(navigate);
 
   const handleQueryChange = (value: string) => {
@@ -53,13 +57,13 @@ export const GlobalSearchBar: React.FC<GlobalSearchBarProps> = ({ variant = 'ful
   if (variant === 'icon') {
     return (
       <>
-        <Tooltip title="搜索 (Ctrl+K)">
+        <Tooltip title='搜索 (Ctrl+K)'>
           <IconButton
             onClick={() => {
               setOpen(true);
               setTimeout(() => inputRef.current?.focus(), 50);
             }}
-            size="small"
+            size='small'
             ref={iconButtonRef}
           >
             <Search size={18} />
@@ -82,6 +86,10 @@ export const GlobalSearchBar: React.FC<GlobalSearchBarProps> = ({ variant = 'ful
                 onKeyDown={handleKeyDown}
                 inputRef={inputRef}
                 autoFocus
+                filter={filter}
+                onFilterChange={setFilter}
+                availableModules={availableModules}
+                availableTypes={availableTypes}
               />
             </Box>
             <SearchResultList {...resultListProps} />
@@ -92,7 +100,10 @@ export const GlobalSearchBar: React.FC<GlobalSearchBarProps> = ({ variant = 'ful
   }
 
   return (
-    <Box ref={searchRef} sx={{ position: 'relative', width: '100%', maxWidth: 480 }}>
+    <Box
+      ref={searchRef}
+      sx={{ position: 'relative', width: '100%', maxWidth: 480 }}
+    >
       <SearchInput
         query={query}
         onChange={handleQueryChange}
@@ -100,6 +111,10 @@ export const GlobalSearchBar: React.FC<GlobalSearchBarProps> = ({ variant = 'ful
         onKeyDown={handleKeyDown}
         inputRef={inputRef}
         showShortcut
+        filter={filter}
+        onFilterChange={setFilter}
+        availableModules={availableModules}
+        availableTypes={availableTypes}
       />
 
       {open && (
@@ -121,7 +136,10 @@ export const GlobalSearchBar: React.FC<GlobalSearchBarProps> = ({ variant = 'ful
             overflowY: 'auto',
           }}
         >
-          <SearchResultList {...resultListProps} maxHeight={400} />
+          <SearchResultList
+            {...resultListProps}
+            maxHeight={400}
+          />
         </Paper>
       )}
     </Box>

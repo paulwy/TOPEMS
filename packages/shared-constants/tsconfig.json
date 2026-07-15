@@ -5,11 +5,10 @@
     "rootDir": "..",
     "declaration": true,
     "declarationMap": true,
-    "ignoreDeprecations": "6.0",
-    "baseUrl": ".",
     "types": ["node"],
     "paths": {
-      "@topems/tokens": ["../tokens/src"]
+      "@topems/tokens": ["../tokens/src"],
+      "*": ["./*"]
     }
   },
   "include": ["src/**/*", "../tokens/src/**/*"],

@@ -356,32 +356,44 @@ const InteractionManagementPage: React.FC = () => {
                 }}
               >
                 <FormField
-                  name='subject' label='主题'
+                  name='subject'
+                  label='主题'
                   value={formData.subject}
-                  onChange={(e) => setFormData({ ...formData, subject: e.target.value })}
+                  onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
+                    setFormData({ ...formData, subject: e.target.value })
+                  }
                   fullWidth
                 />
                 <FormField
-                  name='content' label='内容'
+                  name='content'
+                  label='内容'
                   multiline
                   rows={3}
                   value={formData.content}
-                  onChange={(e) => setFormData({ ...formData, content: e.target.value })}
+                  onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
+                    setFormData({ ...formData, content: e.target.value })
+                  }
                   fullWidth
                 />
                 <FormField
-                  name='scheduled_at' label='计划时间'
+                  name='scheduled_at'
+                  label='计划时间'
                   type='datetime-local'
                   value={formData.scheduled_at}
-                  onChange={(e) => setFormData({ ...formData, scheduled_at: e.target.value })}
+                  onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
+                    setFormData({ ...formData, scheduled_at: e.target.value })
+                  }
                   fullWidth
                 />
                 <FormField
-                  name='notes' label='备注'
+                  name='notes'
+                  label='备注'
                   multiline
                   rows={2}
                   value={formData.notes}
-                  onChange={(e) => setFormData({ ...formData, notes: e.target.value })}
+                  onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
+                    setFormData({ ...formData, notes: e.target.value })
+                  }
                   fullWidth
                 />
               </Box>

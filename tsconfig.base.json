@@ -15,11 +15,11 @@
     "noUnusedLocals": true,
     "noUnusedParameters": true,
     "noFallthroughCasesInSwitch": true,
-    "baseUrl": ".",
     "paths": {
-      "@topems/tokens": ["packages/tokens/src"],
-      "@topems/shared-types": ["packages/shared-types/src"],
-      "@topems/shared-utils": ["packages/shared-utils/src"]
+      "@topems/tokens": ["./packages/tokens/src"],
+      "@topems/shared-types": ["./packages/shared-types/src"],
+      "@topems/shared-utils": ["./packages/shared-utils/src"],
+      "*": ["./*"]
     }
   },
   "include": [],

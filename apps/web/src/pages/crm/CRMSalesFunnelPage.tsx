@@ -1,6 +1,7 @@
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useEffect } from 'react';
 import { Box, Typography, Card, CardContent, LinearProgress, Chip } from '@mui/material';
 import { TrendingUp, TrendingDown, Users, Target, DollarSign } from 'lucide-react';
+import { useQuery } from '@tanstack/react-query';
 import { useNotificationStore } from '../../store';
 import { StatsPageTemplate, type StatsStatCard, type ChartConfig } from '@/components/templates';
 import apiClient from '@/api/client';
@@ -39,38 +40,41 @@ const stageLabelMap: Record<string, string> = {
 
 const CRMSalesFunnelPage: React.FC = () => {
   const addNotification = useNotificationStore((state) => state.addNotification);
-  const [metrics, setMetrics] = useState<FunnelMetrics | null>(null);
-  const [stages, setStages] = useState<FunnelStage[]>([]);
-  const [loading, setLoading] = useState(true);
 
-  const loadFunnel = useCallback(async () => {
-    try {
-      setLoading(true);
+  const funnelQuery = useQuery<{ metrics: FunnelMetrics | null; stages: FunnelStage[] }>({
+    queryKey: ['crm-sales-funnel'],
+    queryFn: async () => {
       const [metricsRes, stagesRes] = await Promise.allSettled([
         apiClient.crm.get('/sales-funnel/metrics'),
         apiClient.crm.get('/sales-funnel'),
       ]);
+      let metrics: FunnelMetrics | null = null;
+      let stages: FunnelStage[] = [];
       if (metricsRes.status === 'fulfilled' && metricsRes.value.success) {
-        setMetrics(metricsRes.value.data as FunnelMetrics);
+        metrics = metricsRes.value.data as FunnelMetrics;
       }
       if (stagesRes.status === 'fulfilled' && stagesRes.value.success) {
         const data = (stagesRes.value.data as { stages?: FunnelStage[] }) || {};
-        setStages(data.stages || []);
+        stages = data.stages || [];
       }
-    } catch (error: unknown) {
+      return { metrics, stages };
+    },
+    staleTime: 5 * 60 * 1000,
+  });
+
+  const metrics = funnelQuery.data?.metrics ?? null;
+  const stages = funnelQuery.data?.stages ?? [];
+  const loading = funnelQuery.isLoading;
+
+  useEffect(() => {
+    if (funnelQuery.isError) {
       addNotification({
         type: 'error',
         title: '加载失败',
         message: '无法加载销售漏斗数据',
       });
-    } finally {
-      setLoading(false);
     }
-  }, [addNotification]);
-
-  useEffect(() => {
-    loadFunnel();
-  }, [loadFunnel]);
+  }, [funnelQuery.isError, addNotification]);
 
   const stats: StatsStatCard[] = [
     {
@@ -138,7 +142,7 @@ const CRMSalesFunnelPage: React.FC = () => {
         statCards={stats}
         charts={charts}
         loading={loading}
-        onRefresh={loadFunnel}
+        onRefresh={() => funnelQuery.refetch()}
         timeRangeOptions={[
           { value: 'month', label: '本月' },
           { value: 'quarter', label: '本季' },

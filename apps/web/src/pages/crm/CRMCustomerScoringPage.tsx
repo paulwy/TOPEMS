@@ -10,7 +10,7 @@ import {
   Typography,
   Button,
 } from '@mui/material';
-import React, { useState, useEffect, useMemo } from 'react';
+import React, { useState, useMemo } from 'react';
 import type { CustomerScore, ScoreFactor } from '@/api/crm';
 import { crmApi } from '@/api/crm';
 import { useNotificationStore } from '@/store';
@@ -19,10 +19,10 @@ import { CRM_PATHS } from '@/modules/crm/config';
 import { PageContainer } from '@/components/common';
 import { apiLogger } from '@/utils/logger';
 import { Star, TrendingUp, TrendingDown, Minus, Award, Calculator, Eye } from 'lucide-react';
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import { QUERY_KEYS } from '@/lib/reactQuery';
 
 const CRMCustomerScoringPage: React.FC = () => {
-  const [loading, setLoading] = useState(true);
-  const [scores, setScores] = useState<CustomerScore[]>([]);
   const [selectedScore, setSelectedScore] = useState<CustomerScore | null>(null);
   const [showDetailDialog, setShowDetailDialog] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
@@ -30,27 +30,37 @@ const CRMCustomerScoringPage: React.FC = () => {
   const pageSize = 10;
 
   const { addNotification } = useNotificationStore();
+  const queryClient = useQueryClient();
 
-  const loadCustomerScores = async () => {
-    try {
-      setLoading(true);
+  const scoresQuery = useQuery({
+    queryKey: QUERY_KEYS.CRM.CUSTOMER_SCORING,
+    queryFn: async () => {
       const response = await crmApi.customerScoring.list();
-      setScores(response.data?.items || []);
-    } catch (error: unknown) {
-      apiLogger.error('加载客户评分失败:', error);
+      return response.data?.items || [];
+    },
+  });
+
+  const scores = scoresQuery.data || [];
+
+  const calculateBatchMutation = useMutation({
+    mutationFn: (customerIds: string[]) => crmApi.customerScoring.calculateBatch(customerIds),
+    onSuccess: () => {
+      addNotification({
+        type: 'success',
+        title: '成功',
+        message: '已批量计算客户评分',
+      });
+      queryClient.invalidateQueries({ queryKey: QUERY_KEYS.CRM.CUSTOMER_SCORING });
+    },
+    onError: (error: unknown) => {
+      apiLogger.error('批量计算评分失败:', error);
       addNotification({
         type: 'error',
-        title: '加载失败',
-        message: '无法加载客户评分数据',
+        title: '计算失败',
+        message: '批量计算客户评分失败',
       });
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  useEffect(() => {
-    loadCustomerScores();
-  }, []);
+    },
+  });
 
   const handleBatchCalculate = async () => {
     try {
@@ -69,14 +79,7 @@ const CRMCustomerScoringPage: React.FC = () => {
         return;
       }
 
-      setLoading(true);
-      await crmApi.customerScoring.calculateBatch(customerIds);
-      addNotification({
-        type: 'success',
-        title: '成功',
-        message: '已批量计算客户评分',
-      });
-      loadCustomerScores();
+      calculateBatchMutation.mutate(customerIds);
     } catch (error: unknown) {
       apiLogger.error('批量计算评分失败:', error);
       addNotification({
@@ -84,10 +87,11 @@ const CRMCustomerScoringPage: React.FC = () => {
         title: '计算失败',
         message: '批量计算客户评分失败',
       });
-    } finally {
-      setLoading(false);
     }
   };
+
+  const loading =
+    scoresQuery.isLoading || scoresQuery.isFetching || calculateBatchMutation.isPending;
 
   const getGradeBadge = (scoreLevel: string) => {
     const gradeConfig: Record<
@@ -399,7 +403,7 @@ const CRMCustomerScoringPage: React.FC = () => {
             },
           ]}
           rowActions={rowActions}
-          onRefresh={loadCustomerScores}
+          onRefresh={() => scoresQuery.refetch()}
           showRowNumber
           headerContent={headerContent}
         />

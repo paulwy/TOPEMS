@@ -1,4 +1,6 @@
 import React, { useState, useEffect, useMemo, useCallback } from 'react';
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import { QUERY_KEYS } from '@/lib/reactQuery';
 import {
   Book,
   Plus,
@@ -64,13 +66,9 @@ const statusLabels: Record<string, string> = {
 const DictionaryManagementPage: React.FC<DictionaryManagementPageProps> = ({ onNavigate }) => {
   const theme = useTheme();
   const addNotification = useNotificationStore((state) => state.addNotification);
+  const queryClient = useQueryClient();
 
-  const [dictTypes, setDictTypes] = useState<DictType[]>([]);
   const [selectedType, setSelectedType] = useState<DictType | null>(null);
-  const [dictItems, setDictItems] = useState<DictItem[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [itemsLoading, setItemsLoading] = useState(false);
-  const [error, setError] = useState<string | null>(null);
   const [searchQuery, setSearchQuery] = useState('');
 
   const [showTypeModal, setShowTypeModal] = useState(false);
@@ -120,305 +118,383 @@ const DictionaryManagementPage: React.FC<DictionaryManagementPageProps> = ({ onN
     parent_id: undefined,
   });
 
-  const loadDictTypes = useCallback(async () => {
-    setLoading(true);
-    setError(null);
-    try {
+  const dictTypesQuery = useQuery({
+    queryKey: QUERY_KEYS.SYSTEM.DICT_TYPES,
+    queryFn: async () => {
       const res = await dictTypeApi.list();
       if (res.success && res.data) {
-        setDictTypes(res.data.items || []);
-        if (!selectedType && res.data.items && res.data.items.length > 0) {
-          setSelectedType(res.data.items[0]);
-        }
-      } else {
-        setDictTypes([]);
+        return res.data.items || [];
       }
-    } catch (err: unknown) {
-      setError(extractErrorMessage(err, '加载字典类型失败'));
-      addNotification({
-        title: '加载失败',
-        message: extractErrorMessage(err, '加载字典类型失败'),
-        type: 'error',
-      });
-    } finally {
-      setLoading(false);
-    }
-  }, [addNotification, selectedType]);
+      throw new Error(res.message || '加载字典类型失败');
+    },
+  });
 
-  const loadDictItems = useCallback(async (typeId: string) => {
-    setItemsLoading(true);
-    try {
-      const res = await dictItemApi.list(typeId);
+  const dictItemsQuery = useQuery({
+    queryKey: QUERY_KEYS.SYSTEM.DICT_ITEMS(selectedType?.id ?? ''),
+    queryFn: async () => {
+      if (!selectedType) return [];
+      const res = await dictItemApi.list(selectedType.id);
       if (res.success && res.data) {
-        setDictItems(res.data.items || []);
-      } else {
-        setDictItems([]);
+        return res.data.items || [];
       }
-    } catch (err: unknown) {
-      apiLogger.error('加载字典项失败:', err);
-      setDictItems([]);
-    } finally {
-      setItemsLoading(false);
-    }
-  }, []);
+      throw new Error(res.message || '加载字典项失败');
+    },
+    enabled: !!selectedType,
+  });
+
+  const dictTypes = dictTypesQuery.data || [];
+  const dictItems = dictItemsQuery.data || [];
+  const loading = dictTypesQuery.isLoading;
+  const itemsLoading = dictItemsQuery.isLoading;
+  const error = dictTypesQuery.error
+    ? extractErrorMessage(dictTypesQuery.error, '加载字典类型失败')
+    : null;
 
   useEffect(() => {
-    loadDictTypes();
-  }, [loadDictTypes]);
+    if (!selectedType && dictTypes.length > 0) {
+      setSelectedType(dictTypes[0]);
+    }
+  }, [dictTypes, selectedType]);
 
   useEffect(() => {
-    if (selectedType) {
-      loadDictItems(selectedType.id);
-      setSelectedItems([]);
-    }
-  }, [selectedType, loadDictItems]);
+    setSelectedItems([]);
+  }, [selectedType]);
 
-  const handleCreateType = async (e: React.FormEvent) => {
-    e.preventDefault();
-    try {
-      const res = await dictTypeApi.create(newType);
-      if (res.success) {
-        addNotification({
-          title: '成功',
-          message: '字典类型创建成功',
-          type: 'success',
-        });
-        setShowTypeModal(false);
-        setNewType({
-          code: '',
-          name: '',
-          category: 'business',
-          description: '',
-          status: 'active',
-        });
-        loadDictTypes();
-      } else {
-        addNotification({
-          title: '失败',
-          message: res.message || '创建失败',
-          type: 'error',
-        });
-      }
-    } catch (err: unknown) {
+  const loadDictTypes = () => {
+    queryClient.invalidateQueries({ queryKey: QUERY_KEYS.SYSTEM.DICT_TYPES });
+  };
+
+  const loadDictItems = (typeId: string) => {
+    queryClient.invalidateQueries({ queryKey: QUERY_KEYS.SYSTEM.DICT_ITEMS(typeId) });
+  };
+
+  const createTypeMutation = useMutation({
+    mutationFn: async (data: Partial<DictType>) => {
+      const res = await dictTypeApi.create(data);
+      if (!res.success) throw new Error(res.message || '创建失败');
+      return res.data;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: QUERY_KEYS.SYSTEM.DICT_TYPES });
+      addNotification({ title: '成功', message: '字典类型创建成功', type: 'success' });
+      setShowTypeModal(false);
+      setNewType({
+        code: '',
+        name: '',
+        category: 'business',
+        description: '',
+        status: 'active',
+      });
+    },
+    onError: (err: unknown) => {
+      apiLogger.error('创建字典类型失败:', err);
       addNotification({
         title: '失败',
         message: extractErrorMessage(err, '创建失败'),
         type: 'error',
       });
-    }
-  };
+    },
+  });
 
-  const handleUpdateType = async (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!editingType) return;
-    try {
-      const res = await dictTypeApi.update(editingType.id, editingType);
-      if (res.success) {
-        addNotification({
-          title: '成功',
-          message: '字典类型更新成功',
-          type: 'success',
-        });
-        setShowTypeModal(false);
-        setEditingType(null);
-        loadDictTypes();
-      } else {
-        addNotification({
-          title: '失败',
-          message: res.message || '更新失败',
-          type: 'error',
-        });
-      }
-    } catch (err: unknown) {
+  const updateTypeMutation = useMutation({
+    mutationFn: async ({ id, data }: { id: string; data: Partial<DictType> }) => {
+      const res = await dictTypeApi.update(id, data);
+      if (!res.success) throw new Error(res.message || '更新失败');
+      return res.data;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: QUERY_KEYS.SYSTEM.DICT_TYPES });
+      addNotification({ title: '成功', message: '字典类型更新成功', type: 'success' });
+      setShowTypeModal(false);
+      setEditingType(null);
+    },
+    onError: (err: unknown) => {
+      apiLogger.error('更新字典类型失败:', err);
       addNotification({
         title: '失败',
         message: extractErrorMessage(err, '更新失败'),
         type: 'error',
       });
-    }
-  };
+    },
+  });
 
-  const handleDeleteType = async (id: string) => {
-    try {
+  const deleteTypeMutation = useMutation({
+    mutationFn: async (id: string) => {
       const res = await dictTypeApi.delete(id);
-      if (res.success) {
-        addNotification({
-          title: '成功',
-          message: '字典类型删除成功',
-          type: 'success',
-        });
-        if (selectedType?.id === id) {
-          setSelectedType(null);
-        }
-        loadDictTypes();
-      } else {
-        addNotification({
-          title: '失败',
-          message: res.message || '删除失败',
-          type: 'error',
-        });
+      if (!res.success) throw new Error(res.message || '删除失败');
+      return id;
+    },
+    onSuccess: (id) => {
+      queryClient.invalidateQueries({ queryKey: QUERY_KEYS.SYSTEM.DICT_TYPES });
+      addNotification({ title: '成功', message: '字典类型删除成功', type: 'success' });
+      if (selectedType?.id === id) {
+        setSelectedType(null);
       }
-    } catch (err: unknown) {
+    },
+    onError: (err: unknown) => {
+      apiLogger.error('删除字典类型失败:', err);
       addNotification({
         title: '失败',
         message: extractErrorMessage(err, '删除失败'),
         type: 'error',
       });
-    }
-  };
+    },
+  });
 
-  const handleCreateItem = async (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!selectedType) return;
-    try {
-      const res = await dictItemApi.create({
-        ...newItem,
-        dict_type_id: selectedType.id,
-      });
-      if (res.success) {
-        addNotification({
-          title: '成功',
-          message: '字典项创建成功',
-          type: 'success',
-        });
-        setShowItemModal(false);
-        setNewItem({
-          code: '',
-          name: '',
-          value: '',
-          sort_order: dictItems.length,
-          parent_id: undefined,
-        });
-        loadDictItems(selectedType.id);
-      } else {
-        addNotification({
-          title: '失败',
-          message: res.message || '创建失败',
-          type: 'error',
+  const createItemMutation = useMutation({
+    mutationFn: async (data: Partial<DictItem> & { dict_type_id: string }) => {
+      const res = await dictItemApi.create(data);
+      if (!res.success) throw new Error(res.message || '创建失败');
+      return res.data;
+    },
+    onSuccess: () => {
+      if (selectedType) {
+        queryClient.invalidateQueries({
+          queryKey: QUERY_KEYS.SYSTEM.DICT_ITEMS(selectedType.id),
         });
       }
-    } catch (err: unknown) {
+      addNotification({ title: '成功', message: '字典项创建成功', type: 'success' });
+      setShowItemModal(false);
+      setNewItem({
+        code: '',
+        name: '',
+        value: '',
+        sort_order: dictItems.length,
+        parent_id: undefined,
+      });
+    },
+    onError: (err: unknown) => {
+      apiLogger.error('创建字典项失败:', err);
       addNotification({
         title: '失败',
         message: extractErrorMessage(err, '创建失败'),
         type: 'error',
       });
-    }
-  };
+    },
+  });
 
-  const handleUpdateItem = async (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!editingItem) return;
-    try {
-      const res = await dictItemApi.update(editingItem.id, editingItem);
-      if (res.success) {
-        addNotification({
-          title: '成功',
-          message: '字典项更新成功',
-          type: 'success',
-        });
-        setShowItemModal(false);
-        setEditingItem(null);
-        if (selectedType) loadDictItems(selectedType.id);
-      } else {
-        addNotification({
-          title: '失败',
-          message: res.message || '更新失败',
-          type: 'error',
+  const updateItemMutation = useMutation({
+    mutationFn: async ({ id, data }: { id: string; data: Partial<DictItem> }) => {
+      const res = await dictItemApi.update(id, data);
+      if (!res.success) throw new Error(res.message || '更新失败');
+      return res.data;
+    },
+    onSuccess: () => {
+      if (selectedType) {
+        queryClient.invalidateQueries({
+          queryKey: QUERY_KEYS.SYSTEM.DICT_ITEMS(selectedType.id),
         });
       }
-    } catch (err: unknown) {
+      addNotification({ title: '成功', message: '字典项更新成功', type: 'success' });
+      setShowItemModal(false);
+      setEditingItem(null);
+    },
+    onError: (err: unknown) => {
+      apiLogger.error('更新字典项失败:', err);
       addNotification({
         title: '失败',
         message: extractErrorMessage(err, '更新失败'),
         type: 'error',
       });
-    }
-  };
+    },
+  });
 
-  const handleDeleteItem = useCallback(
-    async (id: string) => {
-      try {
-        const res = await dictItemApi.delete(id);
-        if (res.success) {
-          addNotification({
-            title: '成功',
-            message: '字典项删除成功',
-            type: 'success',
-          });
-          setSelectedItems((prev) => prev.filter((itemId) => itemId !== id));
-          if (selectedType) loadDictItems(selectedType.id);
-        } else {
-          addNotification({
-            title: '失败',
-            message: res.message || '删除失败',
-            type: 'error',
-          });
-        }
-      } catch (err: unknown) {
-        addNotification({
-          title: '失败',
-          message: extractErrorMessage(err, '删除失败'),
-          type: 'error',
+  const deleteItemMutation = useMutation({
+    mutationFn: async (id: string) => {
+      const res = await dictItemApi.delete(id);
+      if (!res.success) throw new Error(res.message || '删除失败');
+      return id;
+    },
+    onSuccess: (id) => {
+      if (selectedType) {
+        queryClient.invalidateQueries({
+          queryKey: QUERY_KEYS.SYSTEM.DICT_ITEMS(selectedType.id),
         });
       }
+      addNotification({ title: '成功', message: '字典项删除成功', type: 'success' });
+      setSelectedItems((prev) => prev.filter((itemId) => itemId !== id));
     },
-    [addNotification, selectedType, loadDictItems]
-  );
+    onError: (err: unknown) => {
+      apiLogger.error('删除字典项失败:', err);
+      addNotification({
+        title: '失败',
+        message: extractErrorMessage(err, '删除失败'),
+        type: 'error',
+      });
+    },
+  });
 
-  const handleToggleItemStatus = useCallback(
-    async (item: DictItem) => {
+  const toggleItemStatusMutation = useMutation({
+    mutationFn: async (item: DictItem) => {
       const newStatus = item.status === 'active' ? 'inactive' : 'active';
-      try {
-        const res = await dictItemApi.update(item.id, {
-          ...item,
-          status: newStatus,
-        });
-        if (res.success) {
-          addNotification({
-            title: '成功',
-            message: `字典项已${newStatus === 'active' ? '启用' : '禁用'}`,
-            type: 'success',
-          });
-          if (selectedType) loadDictItems(selectedType.id);
-        } else {
-          addNotification({
-            title: '失败',
-            message: res.message || '状态切换失败',
-            type: 'error',
-          });
-        }
-      } catch (err: unknown) {
-        addNotification({
-          title: '失败',
-          message: extractErrorMessage(err, '状态切换失败'),
-          type: 'error',
-        });
-      }
+      const res = await dictItemApi.update(item.id, { ...item, status: newStatus });
+      if (!res.success) throw new Error(res.message || '状态切换失败');
+      return { item, newStatus };
     },
-    [addNotification, selectedType, loadDictItems]
-  );
-
-  const handleBatchDelete = async () => {
-    if (selectedItems.length === 0) return;
-    try {
-      for (const id of selectedItems) {
-        await dictItemApi.delete(id);
+    onSuccess: ({ newStatus }) => {
+      if (selectedType) {
+        queryClient.invalidateQueries({
+          queryKey: QUERY_KEYS.SYSTEM.DICT_ITEMS(selectedType.id),
+        });
       }
       addNotification({
         title: '成功',
-        message: `成功删除 ${selectedItems.length} 个字典项`,
+        message: `字典项已${newStatus === 'active' ? '启用' : '禁用'}`,
         type: 'success',
       });
+    },
+    onError: (err: unknown) => {
+      apiLogger.error('切换字典项状态失败:', err);
+      addNotification({
+        title: '失败',
+        message: extractErrorMessage(err, '状态切换失败'),
+        type: 'error',
+      });
+    },
+  });
+
+  const batchDeleteMutation = useMutation({
+    mutationFn: async (ids: string[]) => {
+      const results = await Promise.all(ids.map((id) => dictItemApi.delete(id)));
+      const successCount = results.filter((r) => r.success).length;
+      return { successCount, total: ids.length };
+    },
+    onSuccess: ({ successCount, total }) => {
+      if (selectedType) {
+        queryClient.invalidateQueries({
+          queryKey: QUERY_KEYS.SYSTEM.DICT_ITEMS(selectedType.id),
+        });
+      }
+      if (successCount === total) {
+        addNotification({
+          title: '成功',
+          message: `成功删除 ${successCount} 个字典项`,
+          type: 'success',
+        });
+      } else {
+        addNotification({
+          title: '部分成功',
+          message: `成功删除 ${successCount} 条，失败 ${total - successCount} 条`,
+          type: 'warning',
+        });
+      }
       setSelectedItems([]);
-      if (selectedType) loadDictItems(selectedType.id);
-    } catch (err: unknown) {
+    },
+    onError: (err: unknown) => {
+      apiLogger.error('批量删除字典项失败:', err);
       addNotification({
         title: '失败',
         message: extractErrorMessage(err, '批量删除失败'),
         type: 'error',
       });
-    }
+    },
+  });
+
+  const importMutation = useMutation({
+    mutationFn: async ({
+      typeId,
+      items,
+    }: {
+      typeId: string;
+      items: Array<{
+        code: string;
+        name: string;
+        value?: string;
+        sort_order?: number;
+        status?: string;
+      }>;
+    }) => {
+      const results = await Promise.all(
+        items.map((item) =>
+          dictItemApi.create({
+            dict_type_id: typeId,
+            code: item.code,
+            name: item.name,
+            value: item.value,
+            sort_order: item.sort_order || 0,
+            status: (item.status as 'active' | 'inactive') || 'active',
+          })
+        )
+      );
+      const successCount = results.filter((r) => r.success).length;
+      return { successCount, total: items.length };
+    },
+    onSuccess: ({ successCount, total }) => {
+      if (selectedType) {
+        queryClient.invalidateQueries({
+          queryKey: QUERY_KEYS.SYSTEM.DICT_ITEMS(selectedType.id),
+        });
+      }
+      if (successCount === total) {
+        addNotification({
+          title: '成功',
+          message: `成功导入 ${successCount} 个字典项`,
+          type: 'success',
+        });
+      } else {
+        addNotification({
+          title: '部分成功',
+          message: `成功导入 ${successCount} 条，失败 ${total - successCount} 条`,
+          type: 'warning',
+        });
+      }
+      setShowImportModal(false);
+      setImportFile(null);
+    },
+    onError: (err: unknown) => {
+      apiLogger.error('导入字典项失败:', err);
+      addNotification({
+        title: '失败',
+        message: extractErrorMessage(err, '导入失败'),
+        type: 'error',
+      });
+    },
+  });
+
+  const handleCreateType = (e: React.FormEvent) => {
+    e.preventDefault();
+    createTypeMutation.mutate(newType);
+  };
+
+  const handleUpdateType = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!editingType) return;
+    updateTypeMutation.mutate({ id: editingType.id, data: editingType });
+  };
+
+  const handleDeleteType = (id: string) => {
+    deleteTypeMutation.mutate(id);
+  };
+
+  const handleCreateItem = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!selectedType) return;
+    createItemMutation.mutate({ ...newItem, dict_type_id: selectedType.id });
+  };
+
+  const handleUpdateItem = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!editingItem) return;
+    updateItemMutation.mutate({ id: editingItem.id, data: editingItem });
+  };
+
+  const handleDeleteItem = useCallback(
+    (id: string) => {
+      deleteItemMutation.mutate(id);
+    },
+    [deleteItemMutation]
+  );
+
+  const handleToggleItemStatus = useCallback(
+    (item: DictItem) => {
+      toggleItemStatusMutation.mutate(item);
+    },
+    [toggleItemStatusMutation]
+  );
+
+  const handleBatchDelete = () => {
+    if (selectedItems.length === 0) return;
+    batchDeleteMutation.mutate(selectedItems);
   };
 
   const handleExport = () => {
@@ -452,59 +528,32 @@ const DictionaryManagementPage: React.FC<DictionaryManagementPageProps> = ({ onN
     setShowExportModal(false);
   };
 
-  const handleImport = async (e: React.FormEvent) => {
+  const handleImport = (e: React.FormEvent) => {
     e.preventDefault();
     if (!importFile || !selectedType) return;
 
-    try {
-      const reader = new FileReader();
-      reader.onload = async (event) => {
-        try {
-          const items = JSON.parse(event.target?.result as string);
-          if (!Array.isArray(items)) {
-            addNotification({
-              title: '失败',
-              message: '导入文件格式不正确',
-              type: 'error',
-            });
-            return;
-          }
-
-          for (const item of items) {
-            await dictItemApi.create({
-              dict_type_id: selectedType.id,
-              code: item.code,
-              name: item.name,
-              value: item.value,
-              sort_order: item.sort_order || 0,
-              status: item.status || 'active',
-            });
-          }
-
-          addNotification({
-            title: '成功',
-            message: `成功导入 ${items.length} 个字典项`,
-            type: 'success',
-          });
-          setShowImportModal(false);
-          setImportFile(null);
-          if (selectedType) loadDictItems(selectedType.id);
-        } catch (err: unknown) {
+    const reader = new FileReader();
+    reader.onload = (event) => {
+      try {
+        const items = JSON.parse(event.target?.result as string);
+        if (!Array.isArray(items)) {
           addNotification({
             title: '失败',
-            message: extractErrorMessage(err, '导入失败'),
+            message: '导入文件格式不正确',
             type: 'error',
           });
+          return;
         }
-      };
-      reader.readAsText(importFile);
-    } catch (err: unknown) {
-      addNotification({
-        title: '失败',
-        message: extractErrorMessage(err, '导入失败'),
-        type: 'error',
-      });
-    }
+        importMutation.mutate({ typeId: selectedType.id, items });
+      } catch (err: unknown) {
+        addNotification({
+          title: '失败',
+          message: extractErrorMessage(err, '导入失败'),
+          type: 'error',
+        });
+      }
+    };
+    reader.readAsText(importFile);
   };
 
   const filteredTypes = dictTypes.filter(

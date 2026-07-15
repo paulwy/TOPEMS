@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useMemo } from 'react';
+import React, { useState, useMemo, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import {
   Box,
@@ -18,6 +18,8 @@ import {
   MenuItem,
 } from '@mui/material';
 import { Plus, Eye, Activity, FileText, Users, Heart } from 'lucide-react';
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import { QUERY_KEYS } from '@/lib/reactQuery';
 import { ListPageTemplate } from '@/components';
 import type { ColumnDef, RowAction, FilterConfig } from '@/components';
 import { PageContainer } from '@/components/common/PageContainerV2';
@@ -31,14 +33,12 @@ const ct = designTokens.colors;
 
 const HealthManagementPage: React.FC = () => {
   const navigate = useNavigate();
-  const [records, setRecords] = useState<HealthRecord[]>([]);
-  const [loading, setLoading] = useState(true);
+  const queryClient = useQueryClient();
   const [searchTerm, setSearchTerm] = useState('');
   const [statusFilter, setStatusFilter] = useState('');
   const [showCreateModal, setShowCreateModal] = useState(false);
   const [showDetailModal, setShowDetailModal] = useState(false);
   const [selectedRecord, setSelectedRecord] = useState<HealthRecord | null>(null);
-  const [detailLoading, setDetailLoading] = useState(false);
   const [formData, setFormData] = useState({
     employee_id: '',
     employee_name: '',
@@ -55,21 +55,17 @@ const HealthManagementPage: React.FC = () => {
   });
   const addNotification = useNotificationStore((state) => state.addNotification);
 
-  useEffect(() => {
-    loadRecords();
-  }, [searchTerm, statusFilter]);
-
-  const loadRecords = async () => {
-    try {
-      setLoading(true);
+  const { data: recordsData, isLoading: loading } = useQuery({
+    queryKey: [...QUERY_KEYS.EHS.HEALTH_RECORDS, searchTerm, statusFilter],
+    queryFn: async () => {
       const response = await ehsApi.listHealthRecords({
         search: searchTerm || undefined,
         status: statusFilter || undefined,
       });
       if (response.success && response.data) {
         const data = response.data as any;
-        const recordsData = Array.isArray(data) ? data : data.data || [];
-        const adapted = recordsData.map((item: { [key: string]: unknown }) => ({
+        const rawRecords = Array.isArray(data) ? data : data.data || [];
+        return rawRecords.map((item: { [key: string]: unknown }) => ({
           ...item,
           status:
             item.status === 'active'
@@ -80,33 +76,40 @@ const HealthManagementPage: React.FC = () => {
                   ? '暂停'
                   : item.status,
         }));
-        setRecords(adapted);
-      } else {
-        setRecords([]);
       }
-    } catch (err: unknown) {
-      apiLogger.error('加载健康档案数据失败:', err);
-      addNotification({ title: '错误', message: '加载健康档案失败', type: 'error' });
-      setRecords([]);
-    } finally {
-      setLoading(false);
-    }
-  };
+      return [];
+    },
+  });
+  const records = (recordsData as HealthRecord[]) || [];
 
-  const loadRecordDetail = async (recordId: string) => {
-    try {
-      setDetailLoading(true);
-      const response = await ehsApi.getHealthRecord(recordId);
+  const recordDetailQuery = useQuery<HealthRecord | null>({
+    queryKey: QUERY_KEYS.EHS.HEALTH_RECORD(selectedRecord?.id || ''),
+    queryFn: async () => {
+      if (!selectedRecord?.id) return null;
+      const response = await ehsApi.getHealthRecord(selectedRecord.id);
       if (response.success && response.data) {
-        setSelectedRecord(response.data as HealthRecord);
+        return response.data as HealthRecord;
       }
-    } catch (err: unknown) {
-      apiLogger.error('加载健康档案详情失败:', err);
-      addNotification({ title: '错误', message: '加载详情失败', type: 'error' });
-    } finally {
-      setDetailLoading(false);
+      return null;
+    },
+    enabled: !!selectedRecord?.id && showDetailModal,
+    staleTime: 5 * 60 * 1000,
+  });
+
+  const detailLoading = recordDetailQuery.isFetching;
+
+  useEffect(() => {
+    if (recordDetailQuery.data) {
+      setSelectedRecord(recordDetailQuery.data);
     }
-  };
+  }, [recordDetailQuery.data]);
+
+  useEffect(() => {
+    if (recordDetailQuery.isError) {
+      apiLogger.error('加载健康档案详情失败:', recordDetailQuery.error);
+      addNotification({ title: '错误', message: '加载详情失败', type: 'error' });
+    }
+  }, [recordDetailQuery.isError, recordDetailQuery.error, addNotification]);
 
   const getStatusBadge = (status: string) => {
     const statusMap: Record<string, { bg: string; color: string }> = {
@@ -178,10 +181,9 @@ const HealthManagementPage: React.FC = () => {
     []
   );
 
-  const handleViewDetail = async (record: HealthRecord) => {
+  const handleViewDetail = (record: HealthRecord) => {
     setSelectedRecord(record);
     setShowDetailModal(true);
-    await loadRecordDetail(record.id);
   };
 
   const rowActions = useMemo<RowAction<HealthRecord>[]>(
@@ -242,29 +244,35 @@ const HealthManagementPage: React.FC = () => {
     setShowCreateModal(true);
   };
 
-  const handleSave = async () => {
-    try {
-      await ehsApi.createHealthRecord({
-        employee_id: formData.employee_id,
-        employee_name: formData.employee_name,
-        gender: formData.gender,
-        birthday: formData.birthday || null,
-        department: formData.department || null,
-        position: formData.position || null,
-        workplace: formData.workplace || null,
-        blood_type: formData.blood_type || null,
-        allergy_history: formData.allergy_history || null,
-        medical_history: formData.medical_history || null,
-        contact_info: formData.contact_info || null,
-        status: formData.status,
-      });
+  const createRecordMutation = useMutation({
+    mutationFn: (data: Parameters<typeof ehsApi.createHealthRecord>[0]) =>
+      ehsApi.createHealthRecord(data),
+    onSuccess: () => {
       addNotification({ title: '成功', message: '健康档案创建成功', type: 'success' });
+      queryClient.invalidateQueries({ queryKey: QUERY_KEYS.EHS.HEALTH_RECORDS });
       setShowCreateModal(false);
-      loadRecords();
-    } catch (err: unknown) {
+    },
+    onError: (error: unknown) => {
       addNotification({ title: '错误', message: '创建失败', type: 'error' });
-      apiLogger.error('创建健康档案失败:', err);
-    }
+      apiLogger.error('创建健康档案失败:', error);
+    },
+  });
+
+  const handleSave = () => {
+    createRecordMutation.mutate({
+      employee_id: formData.employee_id,
+      employee_name: formData.employee_name,
+      gender: formData.gender,
+      birthday: formData.birthday || null,
+      department: formData.department || null,
+      position: formData.position || null,
+      workplace: formData.workplace || null,
+      blood_type: formData.blood_type || null,
+      allergy_history: formData.allergy_history || null,
+      medical_history: formData.medical_history || null,
+      contact_info: formData.contact_info || null,
+      status: formData.status,
+    });
   };
 
   const stats = useMemo(
@@ -415,7 +423,7 @@ const HealthManagementPage: React.FC = () => {
         onSearch={(value) => setSearchTerm(value)}
         filters={filters}
         rowActions={rowActions}
-        onRefresh={loadRecords}
+        onRefresh={() => queryClient.invalidateQueries({ queryKey: QUERY_KEYS.EHS.HEALTH_RECORDS })}
       />
 
       <Dialog

@@ -24,7 +24,9 @@ import {
   Button,
 } from '@mui/material';
 import { PageContainer } from '@/components/common/PageContainerV2';
-import React, { useState, useEffect, useMemo, useCallback } from 'react';
+import React, { useState, useMemo } from 'react';
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import { QUERY_KEYS } from '@/lib/reactQuery';
 import type {
   MaterialReturn,
   CreateMaterialReturnRequest,
@@ -57,13 +59,11 @@ import { designTokens } from '@/theme/tokens';
 const ct = designTokens.colors;
 
 const MaterialReturnPage: React.FC = () => {
-  const [returns, setReturns] = useState<MaterialReturn[]>([]);
-  const [loading, setLoading] = useState(true);
+  const queryClient = useQueryClient();
   const [searchTerm, setSearchTerm] = useState('');
   const [statusFilter, setStatusFilter] = useState<string>('all');
   const [currentPage, setCurrentPage] = useState(1);
   const [pageSize] = useState(10);
-  const [total, setTotal] = useState(0);
   const [showDialog, setShowDialog] = useState(false);
   const [showDetailDialog, setShowDetailDialog] = useState(false);
   const [selectedReturn, setSelectedReturn] = useState<MaterialReturn | null>(null);
@@ -77,36 +77,51 @@ const MaterialReturnPage: React.FC = () => {
 
   const { addNotification } = useNotificationStore();
 
-  const loadReturns = useCallback(async () => {
-    try {
-      setLoading(true);
-      const params: ListParams = {
-        page: currentPage - 1,
-        pagesize: pageSize,
-      };
-      if (searchTerm) params.search = searchTerm;
-      if (statusFilter !== 'all') params.status = statusFilter;
+  const params: ListParams = {
+    page: currentPage - 1,
+    pagesize: pageSize,
+  };
+  if (searchTerm) params.search = searchTerm;
+  if (statusFilter !== 'all') params.status = statusFilter;
 
+  const { data: returnsData, isLoading: loading } = useQuery({
+    queryKey: [...QUERY_KEYS.MES.MATERIAL_RETURNS, params],
+    queryFn: async () => {
       const response = await mesApi.materialReturns.list(params);
       if (response.success && response.data) {
-        setReturns(response.data.returns || []);
-        setTotal(response.data.total || 0);
+        return {
+          returns: response.data.returns || [],
+          total: response.data.total || 0,
+        };
       }
-    } catch (error: unknown) {
-      apiLogger.error('加载物料退库记录失败:', error);
+      return { returns: [], total: 0 };
+    },
+  });
+
+  const returns = returnsData?.returns || [];
+  const total = returnsData?.total || 0;
+
+  const createMutation = useMutation({
+    mutationFn: (data: CreateMaterialReturnRequest) => mesApi.materialReturns.create(data),
+    onSuccess: () => {
+      addNotification({
+        type: 'success',
+        title: '创建成功',
+        message: '物料退库单已创建',
+      });
+      queryClient.invalidateQueries({ queryKey: QUERY_KEYS.MES.MATERIAL_RETURNS });
+      setShowDialog(false);
+      resetForm();
+    },
+    onError: (error: unknown) => {
+      apiLogger.error('创建物料退库单失败:', error);
       addNotification({
         type: 'error',
-        title: '加载失败',
-        message: '无法加载物料退库记录',
+        title: '操作失败',
+        message: '创建物料退库单失败',
       });
-    } finally {
-      setLoading(false);
-    }
-  }, [currentPage, pageSize, searchTerm, statusFilter, addNotification]);
-
-  useEffect(() => {
-    loadReturns();
-  }, [loadReturns]);
+    },
+  });
 
   const getStatusText = (status: string) => {
     const statusMap: Record<string, string> = {
@@ -120,30 +135,13 @@ const MaterialReturnPage: React.FC = () => {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    try {
-      await mesApi.materialReturns.create(formData);
-      addNotification({
-        type: 'success',
-        title: '创建成功',
-        message: '物料退库单已创建',
-      });
-      setShowDialog(false);
-      resetForm();
-      loadReturns();
-    } catch (error: unknown) {
-      apiLogger.error('创建物料退库单失败:', error);
-      addNotification({
-        type: 'error',
-        title: '操作失败',
-        message: '创建物料退库单失败',
-      });
-    }
+    createMutation.mutate(formData);
   };
 
-  const handleViewDetail = useCallback((ret: MaterialReturn) => {
+  const handleViewDetail = (ret: MaterialReturn) => {
     setSelectedReturn(ret);
     setShowDetailDialog(true);
-  }, []);
+  };
 
   const resetForm = () => {
     setSelectedReturn(null);

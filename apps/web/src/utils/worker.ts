@@ -10,7 +10,10 @@ export type WorkerFn<T = unknown, R = unknown> = (data: T) => R;
 export class TaskWorker {
   private worker: Worker;
   private taskId = 0;
-  private callbacks: Map<string, { resolve: (value: unknown) => void; reject: (error: Error) => void }> = new Map<string, { resolve: (value: unknown) => void; reject: (error: Error) => void }>();
+  private callbacks: Map<
+    string,
+    { resolve: (value: unknown) => void; reject: (error: Error) => void }
+  > = new Map<string, { resolve: (value: unknown) => void; reject: (error: Error) => void }>();
 
   constructor() {
     const workerCode = `
@@ -108,9 +111,9 @@ export function factorial(n: number): number {
 }
 
 export function generateUUID(): string {
-  return 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, function(c) {
-    const r = Math.random() * 16 | 0;
-    const v = c === 'x' ? r : (r & 0x3 | 0x8);
+  return 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, function (c) {
+    const r = (Math.random() * 16) | 0;
+    const v = c === 'x' ? r : (r & 0x3) | 0x8;
     return v.toString(16);
   });
 }
@@ -211,7 +214,7 @@ export function hashString(str: string): number {
   let hash = 0;
   for (let i = 0; i < str.length; i++) {
     const char = str.charCodeAt(i);
-    hash = ((hash << 5) - hash) + char;
+    hash = (hash << 5) - hash + char;
     hash = hash & hash;
   }
   return hash;

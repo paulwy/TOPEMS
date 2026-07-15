@@ -15,12 +15,10 @@ import {
   Grid,
 } from '@mui/material';
 import { PageContainer } from '@/components/common';
-import React, { useState, useEffect, useMemo, useCallback } from 'react';
+import React, { useState, useMemo, useCallback } from 'react';
 import { designTokens } from '@/theme/tokens';
 import type { Customer, CreateCustomerRequest, UpdateCustomerRequest } from '@/api/erp';
 import { erpApi } from '@/api/erp';
-import { useNotificationStore } from '@/store';
-import { LoadingSpinner } from '@topems/shared-components';
 import {
   ListPageTemplate,
   type ColumnDef,
@@ -29,19 +27,18 @@ import {
 } from '@/components/templates';
 import { Plus, Edit, Trash2, Eye, User } from 'lucide-react';
 import { apiLogger } from '@/utils/logger';
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import { QUERY_KEYS } from '@/lib/reactQuery';
 
 const ct = designTokens.colors;
 
 const CustomerManagementPage: React.FC = () => {
-  const [customers, setCustomers] = useState<Customer[]>([]);
-  const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState('');
   const [statusFilter, setStatusFilter] = useState<string>('all');
   const [categoryFilter, setCategoryFilter] = useState<string>('all');
   const [industryFilter, setIndustryFilter] = useState<string>('all');
   const [currentPage, setCurrentPage] = useState(1);
   const [pageSize] = useState(10);
-  const [total, setTotal] = useState(0);
   const [showDialog, setShowDialog] = useState(false);
   const [showDetailDialog, setShowDetailDialog] = useState(false);
   const [selectedCustomer, setSelectedCustomer] = useState<Customer | null>(null);
@@ -69,11 +66,26 @@ const CustomerManagementPage: React.FC = () => {
     remark: '',
   });
 
-  const { addNotification } = useNotificationStore();
+  const queryClient = useQueryClient();
 
-  const loadCustomers = useCallback(async () => {
-    try {
-      setLoading(true);
+  const queryKey = [
+    QUERY_KEYS.ERP.CUSTOMERS,
+    searchTerm,
+    statusFilter,
+    categoryFilter,
+    industryFilter,
+    currentPage,
+    pageSize,
+  ];
+
+  const {
+    data: customersResponse,
+    isLoading,
+    isError,
+    refetch,
+  } = useQuery({
+    queryKey,
+    queryFn: async () => {
       const params: Record<string, unknown> = {
         page: currentPage - 1,
         pagesize: pageSize,
@@ -84,86 +96,88 @@ const CustomerManagementPage: React.FC = () => {
       if (industryFilter !== 'all') params.industry = industryFilter;
 
       const response = await erpApi.customers.list(params);
-      if (response.success && response.data) {
-        setCustomers(response.data.customers || []);
-        setTotal(response.data.total || 0);
+      if (!response.success) {
+        throw new Error('Failed to fetch customers');
       }
-    } catch (error: unknown) {
-      apiLogger.error('加载客户列表失败:', error);
-      addNotification({
-        type: 'error',
-        title: '加载失败',
-        message: '无法加载客户列表',
-      });
-    } finally {
-      setLoading(false);
-    }
-  }, [
-    currentPage,
-    pageSize,
-    searchTerm,
-    statusFilter,
-    categoryFilter,
-    industryFilter,
-    addNotification,
-  ]);
+      return response.data;
+    },
+    staleTime: 5 * 60 * 1000,
+    gcTime: 10 * 60 * 1000,
+  });
 
-  useEffect(() => {
-    loadCustomers();
-  }, [loadCustomers]);
+  const customers = customersResponse?.customers || [];
+  const total = customersResponse?.total || 0;
+
+  const createMutation = useMutation({
+    mutationFn: async (data: CreateCustomerRequest) => {
+      const response = await erpApi.customers.create(data);
+      if (!response.success) {
+        throw new Error('Failed to create customer');
+      }
+      return response;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: [QUERY_KEYS.ERP.CUSTOMERS] });
+      setShowDialog(false);
+      resetForm();
+    },
+    onError: (error) => {
+      apiLogger.error('创建失败:', error);
+    },
+  });
+
+  const updateMutation = useMutation({
+    mutationFn: async ({ id, data }: { id: string; data: UpdateCustomerRequest }) => {
+      const response = await erpApi.customers.update(id, data);
+      if (!response.success) {
+        throw new Error('Failed to update customer');
+      }
+      return response;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: [QUERY_KEYS.ERP.CUSTOMERS] });
+      setShowDialog(false);
+      resetForm();
+    },
+    onError: (error) => {
+      apiLogger.error('更新失败:', error);
+    },
+  });
+
+  const deleteMutation = useMutation({
+    mutationFn: async (id: string) => {
+      const response = await erpApi.customers.delete(id);
+      if (!response.success) {
+        throw new Error('Failed to delete customer');
+      }
+      return response;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: [QUERY_KEYS.ERP.CUSTOMERS] });
+    },
+    onError: (error) => {
+      apiLogger.error('删除失败:', error);
+    },
+  });
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    try {
-      if (selectedCustomer) {
-        await erpApi.customers.update(selectedCustomer.id, formData as UpdateCustomerRequest);
-        addNotification({
-          type: 'success',
-          title: '更新成功',
-          message: '客户信息已更新',
-        });
-      } else {
-        await erpApi.customers.create(formData);
-        addNotification({
-          type: 'success',
-          title: '创建成功',
-          message: '新客户已创建',
-        });
-      }
-      setShowDialog(false);
-      resetForm();
-      loadCustomers();
-    } catch (error: unknown) {
-      apiLogger.error('操作失败:', error);
-      addNotification({
-        type: 'error',
-        title: '操作失败',
-        message: selectedCustomer ? '更新客户失败' : '创建客户失败',
+    if (selectedCustomer) {
+      await updateMutation.mutateAsync({
+        id: selectedCustomer.id,
+        data: formData as UpdateCustomerRequest,
       });
+    } else {
+      await createMutation.mutateAsync(formData);
     }
   };
 
   const handleDelete = useCallback(
     async (id: string) => {
       if (!window.confirm('确定要删除这个客户吗?')) return;
-      try {
-        await erpApi.customers.delete(id);
-        addNotification({
-          type: 'success',
-          title: '删除成功',
-          message: '客户已删除',
-        });
-        loadCustomers();
-      } catch (error: unknown) {
-        apiLogger.error('删除失败:', error);
-        addNotification({
-          type: 'error',
-          title: '删除失败',
-          message: '无法删除客户',
-        });
-      }
+      await deleteMutation.mutateAsync(id);
     },
-    [loadCustomers, addNotification]
+    [deleteMutation]
   );
 
   const handleEdit = useCallback((customer: Customer) => {
@@ -368,8 +382,6 @@ const CustomerManagementPage: React.FC = () => {
     };
   }, [customers]);
 
-  if (loading) return <LoadingSpinner />;
-
   const statsContent = (
     <Box
       sx={{
@@ -448,7 +460,7 @@ const CustomerManagementPage: React.FC = () => {
         subtitle=''
         columns={columns}
         data={customers}
-        loading={loading}
+        loading={isLoading}
         filters={filters}
         searchable
         searchPlaceholder='搜索客户编码、名称或联系人...'
@@ -791,8 +803,9 @@ const CustomerManagementPage: React.FC = () => {
               <Button
                 type='submit'
                 variant='contained'
+                disabled={createMutation.isPending || updateMutation.isPending}
               >
-                保存
+                {createMutation.isPending || updateMutation.isPending ? '保存中...' : '保存'}
               </Button>
             </DialogActions>
           </form>

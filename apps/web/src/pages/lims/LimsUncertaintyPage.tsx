@@ -1,6 +1,8 @@
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState } from 'react';
 import { PageContainer } from '@/components/common';
 import { useNavigate } from 'react-router-dom';
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import { QUERY_KEYS } from '@/lib/reactQuery';
 import { Calculator, Plus, Eye, Edit, Search } from 'lucide-react';
 import {
   Box,
@@ -33,7 +35,7 @@ import type {
   UpdateUncertaintyProjectRequest,
 } from '@/api/lims';
 import { useNotificationStore } from '@/store';
-import { apiLogger } from '@/utils/logger';
+import { logger } from '@/utils/logger';
 import { designTokens } from '@/theme/tokens';
 import { DASHBOARD_PATHS } from '@/routes/dashboard';
 
@@ -55,15 +57,13 @@ interface UncertaintyProjectForm extends CreateUncertaintyProjectRequest {
 
 const LimsUncertaintyPage: React.FC = () => {
   const navigate = useNavigate();
-  const [projects, setProjects] = useState<UncertaintyProjectWithCount[]>([]);
-  const [loading, setLoading] = useState(true);
+  const queryClient = useQueryClient();
   const [searchTerm, setSearchTerm] = useState('');
   const [statusFilter, setStatusFilter] = useState('all');
   const [showCreateModal, setShowCreateModal] = useState(false);
   const [showDetailModal, setShowDetailModal] = useState(false);
   const [selectedProject, setSelectedProject] = useState<UncertaintyProject | null>(null);
   const [isEditing, setIsEditing] = useState(false);
-  const [saving, setSaving] = useState(false);
   const [page, setPage] = useState(0);
   const [pageSize, setPageSize] = useState(10);
   const addNotification = useNotificationStore((state) => state.addNotification);
@@ -76,41 +76,56 @@ const LimsUncertaintyPage: React.FC = () => {
 
   const [formData, setFormData] = useState<UncertaintyProjectForm>(initialFormData);
 
-  const loadProjects = useCallback(async () => {
-    try {
-      setLoading(true);
+  const { data: projectsData, isLoading: loading } = useQuery({
+    queryKey: QUERY_KEYS.LIMS.UNCERTAINTY_PROJECTS,
+    queryFn: async () => {
       const response = await limsApi.listUncertaintyProjects();
       if (response.success && response.data) {
         const data = response.data as
           LimsListResponse<UncertaintyProjectWithCount> | UncertaintyProjectWithCount[];
-        let rawProjects: UncertaintyProjectWithCount[] = [];
-        if (Array.isArray(data)) {
-          rawProjects = data;
-        } else if (data.items && Array.isArray(data.items)) {
-          rawProjects = data.items;
-        } else if (data.projects && Array.isArray(data.projects)) {
-          rawProjects = data.projects;
-        }
-        setProjects(rawProjects);
-      } else {
-        setProjects([]);
+        if (Array.isArray(data)) return data;
+        if (data.items && Array.isArray(data.items)) return data.items;
+        if (data.projects && Array.isArray(data.projects)) return data.projects;
       }
-    } catch (err: unknown) {
-      apiLogger.error('加载不确定度项目列表失败:', err);
-      setProjects([]);
-      addNotification({
-        title: '错误',
-        message: '加载不确定度项目列表失败，请稍后重试',
-        type: 'error',
-      });
-    } finally {
-      setLoading(false);
-    }
-  }, [addNotification]);
+      return [];
+    },
+  });
 
-  useEffect(() => {
-    loadProjects();
-  }, [loadProjects]);
+  const projects = projectsData || [];
+
+  const createMutation = useMutation({
+    mutationFn: async (data: UncertaintyProjectForm) => {
+      const response = await limsApi.createUncertaintyProject(data);
+      if (!response.success) {
+        throw new Error(response.message || '创建失败，请稍后重试');
+      }
+      return response;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: QUERY_KEYS.LIMS.UNCERTAINTY_PROJECTS });
+      setShowCreateModal(false);
+    },
+    onError: (error: unknown) => {
+      logger.error('创建不确定度项目失败:', error);
+    },
+  });
+
+  const updateMutation = useMutation({
+    mutationFn: async ({ id, data }: { id: string; data: UpdateUncertaintyProjectRequest }) => {
+      const response = await limsApi.updateUncertaintyProject(id, data);
+      if (!response.success) {
+        throw new Error(response.message || '更新失败，请稍后重试');
+      }
+      return response;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: QUERY_KEYS.LIMS.UNCERTAINTY_PROJECTS });
+      setShowCreateModal(false);
+    },
+    onError: (error: unknown) => {
+      logger.error('更新不确定度项目失败:', error);
+    },
+  });
 
   const getStatusBadge = (status: string) => {
     const statusMap: Record<string, { bg: string; color: string }> = {
@@ -240,67 +255,25 @@ const LimsUncertaintyPage: React.FC = () => {
       return;
     }
 
-    try {
-      setSaving(true);
-      if (isEditing && selectedProject) {
-        const updateData: UpdateUncertaintyProjectRequest = {
-          project_name: formData.project_name,
-          method_id: formData.method_id,
-          method_name: formData.method_name,
-          testitem: formData.testitem,
-          measurand: formData.measurand,
-          measurement_range: formData.measurement_range,
-          unit: formData.unit,
-          evaluator: formData.evaluator,
-          notes: formData.notes,
-        };
-        const response = await limsApi.updateUncertaintyProject(selectedProject.id, updateData);
-        if (response.success) {
-          addNotification({
-            title: '成功',
-            message: '不确定度项目更新成功',
-            type: 'success',
-          });
-          setShowCreateModal(false);
-          loadProjects();
-        } else {
-          addNotification({
-            title: '错误',
-            message: response.message || '更新失败，请稍后重试',
-            type: 'error',
-          });
-        }
-      } else {
-        const response = await limsApi.createUncertaintyProject(formData);
-        if (response.success) {
-          addNotification({
-            title: '成功',
-            message: '不确定度项目创建成功',
-            type: 'success',
-          });
-          setShowCreateModal(false);
-          loadProjects();
-        } else {
-          addNotification({
-            title: '错误',
-            message: response.message || '创建失败，请稍后重试',
-            type: 'error',
-          });
-        }
-      }
-    } catch (err: unknown) {
-      apiLogger.error('保存不确定度项目失败:', err);
-      addNotification({
-        title: '错误',
-        message: isEditing
-          ? '更新不确定度项目失败，请稍后重试'
-          : '创建不确定度项目失败，请稍后重试',
-        type: 'error',
-      });
-    } finally {
-      setSaving(false);
+    if (isEditing && selectedProject) {
+      const updateData: UpdateUncertaintyProjectRequest = {
+        project_name: formData.project_name,
+        method_id: formData.method_id,
+        method_name: formData.method_name,
+        testitem: formData.testitem,
+        measurand: formData.measurand,
+        measurement_range: formData.measurement_range,
+        unit: formData.unit,
+        evaluator: formData.evaluator,
+        notes: formData.notes,
+      };
+      await updateMutation.mutateAsync({ id: selectedProject.id, data: updateData });
+    } else {
+      await createMutation.mutateAsync(formData);
     }
   };
+
+  const saving = createMutation.isPending || updateMutation.isPending;
 
   const stats = {
     total: projects.length,

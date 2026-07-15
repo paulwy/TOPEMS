@@ -7,6 +7,7 @@ import {
   type SettingValueType,
 } from '@/components/templates';
 import { logger } from '@/utils/logger';
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 
 interface NotificationSetting {
   key: string;
@@ -16,140 +17,118 @@ interface NotificationSetting {
   type: 'switch' | 'text' | 'number';
 }
 
+const defaultNotificationSettings: NotificationSetting[] = [
+  {
+    key: 'enabled',
+    label: '启用推送',
+    value: true,
+    description: '允许向移动设备发送推送通知',
+    type: 'switch',
+  },
+  {
+    key: 'sound',
+    label: '通知声音',
+    value: true,
+    description: '通知到达时播放声音',
+    type: 'switch',
+  },
+  {
+    key: 'vibration',
+    label: '振动提醒',
+    value: true,
+    description: '通知到达时触发振动',
+    type: 'switch',
+  },
+  {
+    key: 'badge',
+    label: '角标显示',
+    value: true,
+    description: '在应用图标上显示未读数量',
+    type: 'switch',
+  },
+  {
+    key: 'delay',
+    label: '延迟推送',
+    value: 0,
+    description: '通知延迟发送时间（分钟）',
+    type: 'number',
+  },
+  {
+    key: 'ttl',
+    label: '存活时间',
+    value: 86400,
+    description: '通知在设备上的存活时间（秒）',
+    type: 'number',
+  },
+];
+
 const NotificationSettingsPage: React.FC = () => {
   const addNotification = useNotificationStore((state) => state.addNotification);
-  const [loading, setLoading] = useState(false);
-  const [saving, setSaving] = useState(false);
-  const [notificationSettings, setNotificationSettings] = useState<NotificationSetting[]>([
-    {
-      key: 'enabled',
-      label: '启用推送',
-      value: true,
-      description: '允许向移动设备发送推送通知',
-      type: 'switch',
-    },
-    {
-      key: 'sound',
-      label: '通知声音',
-      value: true,
-      description: '通知到达时播放声音',
-      type: 'switch',
-    },
-    {
-      key: 'vibration',
-      label: '振动提醒',
-      value: true,
-      description: '通知到达时触发振动',
-      type: 'switch',
-    },
-    {
-      key: 'badge',
-      label: '角标显示',
-      value: true,
-      description: '在应用图标上显示未读数量',
-      type: 'switch',
-    },
-    {
-      key: 'delay',
-      label: '延迟推送',
-      value: 0,
-      description: '通知延迟发送时间（分钟）',
-      type: 'number',
-    },
-    {
-      key: 'ttl',
-      label: '存活时间',
-      value: 86400,
-      description: '通知在设备上的存活时间（秒）',
-      type: 'number',
-    },
-  ]);
+  const queryClient = useQueryClient();
 
-  const loadSettings = useCallback(async () => {
-    try {
-      setLoading(true);
+  const settingsQuery = useQuery<NotificationSetting[]>({
+    queryKey: ['notification-settings'],
+    queryFn: async () => {
       const stored = localStorage.getItem('notification_settings');
       if (stored) {
-        setNotificationSettings(JSON.parse(stored));
+        return JSON.parse(stored) as NotificationSetting[];
       }
-    } catch (err: unknown) {
-      logger.error('Error loading notification settings:', err);
-      addNotification({ title: '加载失败', message: '加载通知设置失败', type: 'error' });
-    } finally {
-      setLoading(false);
-    }
-  }, [addNotification]);
+      return defaultNotificationSettings;
+    },
+    staleTime: 5 * 60 * 1000,
+  });
+  const notificationSettings = settingsQuery.data ?? defaultNotificationSettings;
+  const loading = settingsQuery.isLoading;
 
   useEffect(() => {
-    loadSettings();
-  }, [loadSettings]);
+    if (settingsQuery.isError) {
+      logger.error('Error loading notification settings:', settingsQuery.error);
+      addNotification({ title: '加载失败', message: '加载通知设置失败', type: 'error' });
+    }
+  }, [settingsQuery.isError, settingsQuery.error, addNotification]);
 
-  const handleSave = async (data: Record<string, SettingValueType>) => {
-    try {
-      setSaving(true);
-      const updatedSettings = notificationSettings.map((s) => ({
-        ...s,
-        value: data[s.key] !== undefined ? (data[s.key] as boolean | string | number) : s.value,
-      }));
-      setNotificationSettings(updatedSettings);
-      localStorage.setItem('notification_settings', JSON.stringify(updatedSettings));
+  const saveMutation = useMutation({
+    mutationFn: async (settings: NotificationSetting[]) => {
+      localStorage.setItem('notification_settings', JSON.stringify(settings));
+      return settings;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['notification-settings'] });
       addNotification({ title: '成功', message: '通知设置保存成功', type: 'success' });
-    } catch (err: unknown) {
+    },
+    onError: (err: unknown) => {
       logger.error('Error saving notification settings:', err);
       addNotification({ title: '失败', message: '保存设置失败', type: 'error' });
-      throw err;
-    } finally {
-      setSaving(false);
-    }
+    },
+  });
+  const saving = saveMutation.isPending;
+
+  const handleSave = (data: Record<string, SettingValueType>) => {
+    const updatedSettings = notificationSettings.map((s) => ({
+      ...s,
+      value: data[s.key] !== undefined ? (data[s.key] as boolean | string | number) : s.value,
+    }));
+    saveMutation.mutate(updatedSettings);
   };
 
+  const resetMutation = useMutation({
+    mutationFn: async () => {
+      localStorage.setItem('notification_settings', JSON.stringify(defaultNotificationSettings));
+      return defaultNotificationSettings;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['notification-settings'] });
+      addNotification({ title: '已重置', message: '通知设置已恢复默认值', type: 'info' });
+    },
+    onError: (err: unknown) => {
+      logger.error('Error resetting notification settings:', err);
+      addNotification({ title: '失败', message: '重置设置失败', type: 'error' });
+    },
+  });
+
   const handleReset = useCallback(() => {
-    setNotificationSettings([
-      {
-        key: 'enabled',
-        label: '启用推送',
-        value: true,
-        description: '允许向移动设备发送推送通知',
-        type: 'switch',
-      },
-      {
-        key: 'sound',
-        label: '通知声音',
-        value: true,
-        description: '通知到达时播放声音',
-        type: 'switch',
-      },
-      {
-        key: 'vibration',
-        label: '振动提醒',
-        value: true,
-        description: '通知到达时触发振动',
-        type: 'switch',
-      },
-      {
-        key: 'badge',
-        label: '角标显示',
-        value: true,
-        description: '在应用图标上显示未读数量',
-        type: 'switch',
-      },
-      {
-        key: 'delay',
-        label: '延迟推送',
-        value: 0,
-        description: '通知延迟发送时间（分钟）',
-        type: 'number',
-      },
-      {
-        key: 'ttl',
-        label: '存活时间',
-        value: 86400,
-        description: '通知在设备上的存活时间（秒）',
-        type: 'number',
-      },
-    ]);
-    addNotification({ title: '已重置', message: '通知设置已恢复默认值', type: 'info' });
-  }, [addNotification]);
+    resetMutation.mutate();
+  }, [resetMutation]);
 
   const sections: SettingSection[] = [
     {

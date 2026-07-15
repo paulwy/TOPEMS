@@ -1,38 +1,41 @@
-import React, { useState, useEffect } from 'react';
-import { logger } from '@/utils/logger';
+import React, { useState } from 'react';
+import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { Bell, CheckCircle, Archive, TrendingUp, Calendar } from 'lucide-react';
 import { PageContainer } from '@/components/common';
 import type { NotificationStats } from '@/api/notification';
 import { getMyNotificationStats, notificationServiceApi } from '@/api/notification';
 import { StatsPageTemplate } from '@/components/templates/StatsPageTemplate';
 import { designTokens } from '@/theme/tokens';
+import { QUERY_KEYS } from '@/lib/reactQuery';
 
 const ct = designTokens.colors;
 
+interface ServiceStatus {
+  status: string;
+  uptime: string;
+  dependencies: Array<{ name: string; status: string }>;
+}
+
 const NotificationStatsPage: React.FC = () => {
-  const [stats, setStats] = useState<NotificationStats | null>(null);
-  const [loading, setLoading] = useState(true);
-  const [serviceStatus, setServiceStatus] = useState<{
-    status: string;
-    uptime: string;
-    dependencies: Array<{ name: string; status: string }>;
-  } | null>(null);
+  const queryClient = useQueryClient();
+  const [timeRange, setTimeRange] = useState('week');
 
-  useEffect(() => {
-    loadData();
-  }, []);
-
-  const loadData = async () => {
-    setLoading(true);
-    try {
-      const [statsRes, healthRes] = await Promise.all([
-        getMyNotificationStats(),
-        notificationServiceApi.health(),
-      ]);
-
-      if (statsRes.success && statsRes.data) {
-        setStats(statsRes.data);
+  const { data: stats, isLoading: statsLoading } = useQuery<NotificationStats>({
+    queryKey: QUERY_KEYS.NOTIFICATION.STATS,
+    queryFn: async () => {
+      const res = await getMyNotificationStats();
+      if (res.success && res.data) {
+        return res.data;
       }
+      throw new Error(res.message || '加载通知统计失败');
+    },
+    staleTime: 5 * 60 * 1000,
+  });
+
+  const { data: serviceStatus } = useQuery<ServiceStatus>({
+    queryKey: QUERY_KEYS.NOTIFICATION.SERVICE_HEALTH,
+    queryFn: async () => {
+      const healthRes = await notificationServiceApi.health();
       if (healthRes.success && healthRes.data) {
         const deps = healthRes.data.dependencies;
         const dependencies =
@@ -42,17 +45,23 @@ const NotificationStatsPage: React.FC = () => {
                 { name: 'redis', status: deps.redis },
               ]
             : deps || [];
-        setServiceStatus({
+        return {
           status: healthRes.data.status,
           uptime: healthRes.data.uptime,
           dependencies,
-        });
+        };
       }
-    } catch (err: unknown) {
-      logger.error('Error loading stats:', err);
-    } finally {
-      setLoading(false);
-    }
+      throw new Error('加载服务健康状态失败');
+    },
+    staleTime: 5 * 60 * 1000,
+    retry: 1,
+  });
+
+  const loading = statsLoading;
+
+  const loadData = () => {
+    queryClient.invalidateQueries({ queryKey: QUERY_KEYS.NOTIFICATION.STATS });
+    queryClient.invalidateQueries({ queryKey: QUERY_KEYS.NOTIFICATION.SERVICE_HEALTH });
   };
 
   const getTypeStats = () => {
@@ -202,8 +211,6 @@ const NotificationStatsPage: React.FC = () => {
     { label: '本季度', value: 'quarter' },
     { label: '本年', value: 'year' },
   ];
-
-  const [timeRange, setTimeRange] = useState('week');
 
   return (
     <PageContainer padding={false}>

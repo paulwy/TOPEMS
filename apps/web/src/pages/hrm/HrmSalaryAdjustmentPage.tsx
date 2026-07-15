@@ -1,4 +1,6 @@
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState } from 'react';
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import { QUERY_KEYS } from '@/lib/reactQuery';
 import { Box, Chip, Typography } from '@mui/material';
 import { TrendingUp, Plus, TrendingDown, CheckCircle, XCircle, Clock } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
@@ -11,26 +13,37 @@ import { PageContainer } from '@/components/common';
 const HrmSalaryAdjustmentPage: React.FC = () => {
   const navigate = useNavigate();
   const addNotification = useNotificationStore((state) => state.addNotification);
-  const [adjustments, setAdjustments] = useState<SalaryAdjustment[]>([]);
-  const [loading, setLoading] = useState(true);
+  const queryClient = useQueryClient();
 
-  const loadAdjustments = useCallback(async () => {
-    try {
-      setLoading(true);
+  const adjustmentsQuery = useQuery<SalaryAdjustment[]>({
+    queryKey: QUERY_KEYS.HRM.SALARY_ADJUSTMENT,
+    queryFn: async () => {
       const res = await salaryAdjustmentApi.list({ page: 1, pagesize: 50 });
       if (res.success && res.data) {
-        setAdjustments(res.data.items || []);
+        return res.data.items || [];
       }
-    } catch (err) {
-      setAdjustments([]);
-    } finally {
-      setLoading(false);
-    }
-  }, []);
+      return [];
+    },
+  });
 
-  useEffect(() => {
-    loadAdjustments();
-  }, [loadAdjustments]);
+  const loading = adjustmentsQuery.isLoading;
+  const adjustments = adjustmentsQuery.data || [];
+
+  const loadAdjustments = () => {
+    adjustmentsQuery.refetch();
+  };
+
+  const approveMutation = useMutation({
+    mutationFn: async (args: { id: string; user: string }) =>
+      salaryAdjustmentApi.approve(args.id, args.user),
+    onSuccess: () => {
+      addNotification({ title: '审批成功', type: 'success', message: '已审批通过' });
+      queryClient.invalidateQueries({ queryKey: QUERY_KEYS.HRM.SALARY_ADJUSTMENT });
+    },
+    onError: () => {
+      addNotification({ title: '审批失败', type: 'error', message: '审批失败' });
+    },
+  });
 
   const getTypeChip = (type: string) => {
     const map: Record<
@@ -204,14 +217,8 @@ const HrmSalaryAdjustmentPage: React.FC = () => {
     {
       label: '审批',
       icon: <CheckCircle size={16} />,
-      onClick: async (row) => {
-        try {
-          await salaryAdjustmentApi.approve(row.id, 'current-user');
-          addNotification({ title: '审批成功', type: 'success', message: '已审批通过' });
-          loadAdjustments();
-        } catch (err) {
-          addNotification({ title: '审批失败', type: 'error', message: '审批失败' });
-        }
+      onClick: (row) => {
+        approveMutation.mutate({ id: row.id, user: 'current-user' });
       },
       show: (row) => row.status === 'pending',
     },

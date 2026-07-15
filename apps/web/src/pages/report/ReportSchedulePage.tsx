@@ -332,12 +332,12 @@ const ReportSchedulePage: React.FC = () => {
         ],
       }}
     >
-      {error && (
+      {(error || schedulesQuery.error) && (
         <Alert
           severity='error'
           sx={{ mb: 3 }}
         >
-          {error}
+          {error || (schedulesQuery.error as Error)?.message}
         </Alert>
       )}
 

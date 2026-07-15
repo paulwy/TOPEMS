@@ -14,18 +14,31 @@ mod tests {
         PgPool::connect(TEST_DATABASE_URL).await
     }
 
+    /// 检查数据库是否可用
+    async fn ensure_db_available() -> bool {
+        tokio::net::TcpStream::connect("localhost:5432")
+            .await
+            .is_ok()
+    }
+
     // 需要实际的数据库连接和表结构
     #[tokio::test]
-    #[ignore]
     async fn test_database_connection() {
+        if !ensure_db_available().await {
+            eprintln!("⏭ 跳过: 数据库未运行 (localhost:5432)");
+            return;
+        }
         let pool = setup_test_pool().await;
         assert!(pool.is_ok(), "数据库连接应该成功");
     }
 
     // 需要实际的数据库连接和表结构
     #[tokio::test]
-    #[ignore]
     async fn test_purchase_order_table_exists() {
+        if !ensure_db_available().await {
+            eprintln!("⏭ 跳过: 数据库未运行 (localhost:5432)");
+            return;
+        }
         let pool = setup_test_pool().await.unwrap();
 
         let result = sqlx::query("SELECT EXISTS (SELECT FROM information_schema.tables WHERE table_schema = 'scm' AND table_name = 'purchase_orders')")
@@ -44,8 +57,11 @@ mod tests {
     }
 
     #[tokio::test]
-    #[ignore]
     async fn test_purchase_item_table_exists() {
+        if !ensure_db_available().await {
+            eprintln!("⏭ 跳过: 数据库未运行 (localhost:5432)");
+            return;
+        }
         let pool = setup_test_pool().await.unwrap();
 
         let result = sqlx::query("SELECT EXISTS (SELECT FROM information_schema.tables WHERE table_schema = 'scm' AND table_name = 'purchase_items')")
@@ -65,8 +81,11 @@ mod tests {
 
     // 需要实际的数据库连接和表结构
     #[tokio::test]
-    #[ignore]
     async fn test_supplier_table_exists() {
+        if !ensure_db_available().await {
+            eprintln!("⏭ 跳过: 数据库未运行 (localhost:5432)");
+            return;
+        }
         let pool = setup_test_pool().await.unwrap();
 
         let result = sqlx::query("SELECT EXISTS (SELECT FROM information_schema.tables WHERE table_schema = 'scm' AND table_name = 'suppliers')")
@@ -86,8 +105,11 @@ mod tests {
 
     // 需要实际的数据库连接和表结构
     #[tokio::test]
-    #[ignore]
     async fn test_supplier_evaluation_table_exists() {
+        if !ensure_db_available().await {
+            eprintln!("⏭ 跳过: 数据库未运行 (localhost:5432)");
+            return;
+        }
         let pool = setup_test_pool().await.unwrap();
 
         let result = sqlx::query("SELECT EXISTS (SELECT FROM information_schema.tables WHERE table_schema = 'scm' AND table_name = 'supplier_evaluations')")
@@ -107,8 +129,11 @@ mod tests {
 
     // 需要实际的数据库连接和表结构
     #[tokio::test]
-    #[ignore]
     async fn test_create_purchase_order() {
+        if !ensure_db_available().await {
+            eprintln!("⏭ 跳过: 数据库未运行 (localhost:5432)");
+            return;
+        }
         let pool = setup_test_pool().await.unwrap();
 
         let order_id = Uuid::new_v4();
@@ -153,8 +178,11 @@ mod tests {
 
     // 需要实际的数据库连接和表结构
     #[tokio::test]
-    #[ignore]
     async fn test_list_purchase_orders() {
+        if !ensure_db_available().await {
+            eprintln!("⏭ 跳过: 数据库未运行 (localhost:5432)");
+            return;
+        }
         let pool = setup_test_pool().await.unwrap();
 
         let result = sqlx::query_as::<_, PurchaseOrderRow>(
@@ -180,8 +208,11 @@ mod tests {
 
     // 需要实际的数据库连接和表结构
     #[tokio::test]
-    #[ignore]
     async fn test_purchase_order_status_update() {
+        if !ensure_db_available().await {
+            eprintln!("⏭ 跳过: 数据库未运行 (localhost:5432)");
+            return;
+        }
         let pool = setup_test_pool().await.unwrap();
 
         // 先创建一个供应商
@@ -259,8 +290,11 @@ mod tests {
 
     // 需要实际的数据库连接和表结构
     #[tokio::test]
-    #[ignore]
     async fn test_create_supplier() {
+        if !ensure_db_available().await {
+            eprintln!("⏭ 跳过: 数据库未运行 (localhost:5432)");
+            return;
+        }
         let pool = setup_test_pool().await.unwrap();
 
         let supplier_id = Uuid::new_v4();
@@ -294,8 +328,11 @@ mod tests {
 
     // 需要实际的数据库连接和表结构
     #[tokio::test]
-    #[ignore]
     async fn test_audit_log_table_exists() {
+        if !ensure_db_available().await {
+            eprintln!("⏭ 跳过: 数据库未运行 (localhost:5432)");
+            return;
+        }
         let pool = setup_test_pool().await.unwrap();
 
         let result = sqlx::query("SELECT EXISTS (SELECT FROM information_schema.tables WHERE table_schema = 'scm' AND table_name = 'scm_audit_logs')")

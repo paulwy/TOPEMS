@@ -36,7 +36,11 @@ const ColorSwatch = ({
   hex: string;
   onClick?: (hex: string) => void;
 }) => (
-  <Tooltip title={`${name}: ${hex}（点击复制）`} arrow placement="top">
+  <Tooltip
+    title={`${name}: ${hex}（点击复制）`}
+    arrow
+    placement='top'
+  >
     <Box
       sx={{
         backgroundColor: hex,
@@ -79,7 +83,10 @@ const ColorFamilyGrid = ({
 
   return (
     <Box sx={{ mb: 3 }}>
-      <Typography variant="h6" sx={{ mb: 1, textTransform: 'capitalize' }}>
+      <Typography
+        variant='h6'
+        sx={{ mb: 1, textTransform: 'capitalize' }}
+      >
         {title}
       </Typography>
       <Box sx={{ display: 'grid', gridTemplateColumns: 'repeat(10, 1fr)', gap: 1 }}>
@@ -95,9 +102,20 @@ const ColorFamilyGrid = ({
         )}
       </Box>
       {semanticKeys.length > 0 && (
-        <Box sx={{ mt: 1, display: 'grid', gridTemplateColumns: `repeat(${semanticKeys.length}, 1fr)`, gap: 1 }}>
+        <Box
+          sx={{
+            mt: 1,
+            display: 'grid',
+            gridTemplateColumns: `repeat(${semanticKeys.length}, 1fr)`,
+            gap: 1,
+          }}
+        >
           {semanticKeys.map((key) => (
-            <ColorSwatch key={key} name={`${tokenKey}.${key}`} hex={colorData[key]} />
+            <ColorSwatch
+              key={key}
+              name={`${tokenKey}.${key}`}
+              hex={colorData[key]}
+            />
           ))}
         </Box>
       )}
@@ -110,35 +128,61 @@ const ColorFamilyGrid = ({
 // ============================================================
 const ColorsComponent = () => (
   <Box sx={{ maxWidth: 1200 }}>
-    <Typography variant="h4" sx={{ mb: 1 }}>
+    <Typography
+      variant='h4'
+      sx={{ mb: 1 }}
+    >
       色彩系统
     </Typography>
-    <Typography variant="body2" color="text.secondary" sx={{ mb: 3 }}>
+    <Typography
+      variant='body2'
+      color='text.secondary'
+      sx={{ mb: 3 }}
+    >
       点击色块复制色值。所有颜色源自 <code>@topems/tokens</code>。
     </Typography>
 
-    <ColorFamilyGrid title="Primary 主色" tokenKey="primary" />
-    <ColorFamilyGrid title="Secondary 辅助色" tokenKey="secondary" />
-    <ColorFamilyGrid title="Success 成功色" tokenKey="success" />
-    <ColorFamilyGrid title="Warning 警告色" tokenKey="warning" />
-    <ColorFamilyGrid title="Error 错误色" tokenKey="error" />
-    <ColorFamilyGrid title="Info 信息色" tokenKey="info" />
+    <ColorFamilyGrid
+      title='Primary 主色'
+      tokenKey='primary'
+    />
+    <ColorFamilyGrid
+      title='Secondary 辅助色'
+      tokenKey='secondary'
+    />
+    <ColorFamilyGrid
+      title='Success 成功色'
+      tokenKey='success'
+    />
+    <ColorFamilyGrid
+      title='Warning 警告色'
+      tokenKey='warning'
+    />
+    <ColorFamilyGrid
+      title='Error 错误色'
+      tokenKey='error'
+    />
+    <ColorFamilyGrid
+      title='Info 信息色'
+      tokenKey='info'
+    />
 
     {/* 灰色 — 含 950 */}
     <Box sx={{ mb: 3 }}>
-      <Typography variant="h6" sx={{ mb: 1 }}>Grey 灰色</Typography>
+      <Typography
+        variant='h6'
+        sx={{ mb: 1 }}
+      >
+        Grey 灰色
+      </Typography>
       <Box sx={{ display: 'grid', gridTemplateColumns: 'repeat(11, 1fr)', gap: 1 }}>
-        {['50','100','200','300','400','500','600','700','800','900','950'].map(
+        {['50', '100', '200', '300', '400', '500', '600', '700', '800', '900', '950'].map(
           (shade) =>
             designTokens.colors.grey[shade as keyof typeof designTokens.colors.grey] && (
               <ColorSwatch
                 key={shade}
                 name={`grey.${shade}`}
-                hex={
-                  designTokens.colors.grey[
-                    shade as keyof typeof designTokens.colors.grey
-                  ]
-                }
+                hex={designTokens.colors.grey[shade as keyof typeof designTokens.colors.grey]}
               />
             )
         )}
@@ -148,13 +192,24 @@ const ColorsComponent = () => (
     <Divider sx={{ my: 3 }} />
 
     {/* 功能色 */}
-    <Typography variant="h5" sx={{ mb: 2 }}>功能色</Typography>
+    <Typography
+      variant='h5'
+      sx={{ mb: 2 }}
+    >
+      功能色
+    </Typography>
     {(['text', 'border', 'background', 'action', 'surface'] as const).map((groupKey) => {
       const data = designTokens.colors[groupKey] as Record<string, string>;
       const entries = Object.entries(data).filter(([, v]) => typeof v === 'string');
       return (
-        <Box key={groupKey} sx={{ mb: 3 }}>
-          <Typography variant="subtitle2" sx={{ mb: 1, textTransform: 'capitalize' }}>
+        <Box
+          key={groupKey}
+          sx={{ mb: 3 }}
+        >
+          <Typography
+            variant='subtitle2'
+            sx={{ mb: 1, textTransform: 'capitalize' }}
+          >
             {groupKey}
           </Typography>
           <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 1 }}>
@@ -177,16 +232,18 @@ const ColorsComponent = () => (
                     height: 20,
                     borderRadius: '4px',
                     backgroundColor: hex,
-                    border:
-                      hex === '#ffffff' || hex === '#f8fafc'
-                        ? '1px solid #e2e8f0'
-                        : 'none',
+                    border: hex === '#ffffff' || hex === '#f8fafc' ? '1px solid #e2e8f0' : 'none',
                   }}
                 />
                 <Box>
-                  <Typography variant="caption" fontWeight="bold">{name}</Typography>
                   <Typography
-                    variant="caption"
+                    variant='caption'
+                    fontWeight='bold'
+                  >
+                    {name}
+                  </Typography>
+                  <Typography
+                    variant='caption'
                     sx={{ fontFamily: 'monospace', color: 'text.secondary', display: 'block' }}
                   >
                     {hex}
@@ -210,39 +267,75 @@ const TypographyComponent = () => {
 
   return (
     <Box sx={{ maxWidth: 900 }}>
-      <Typography variant="h4" sx={{ mb: 1 }}>
+      <Typography
+        variant='h4'
+        sx={{ mb: 1 }}
+      >
         排版系统
       </Typography>
-      <Typography variant="body2" color="text.secondary" sx={{ mb: 3 }}>
+      <Typography
+        variant='body2'
+        color='text.secondary'
+        sx={{ mb: 3 }}
+      >
         字体族：<code>{designTokens.typography.fontFamily}</code>
       </Typography>
 
-      <Typography variant="h5" sx={{ mb: 2 }}>标题层级</Typography>
+      <Typography
+        variant='h5'
+        sx={{ mb: 2 }}
+      >
+        标题层级
+      </Typography>
       {headingVariants.map((variant) => {
         const token = designTokens.typography[variant];
         return (
-          <Paper key={variant} sx={{ p: 2, mb: 1.5, display: 'flex', alignItems: 'center', gap: 2, flexWrap: 'wrap' }}>
+          <Paper
+            key={variant}
+            sx={{ p: 2, mb: 1.5, display: 'flex', alignItems: 'center', gap: 2, flexWrap: 'wrap' }}
+          >
             <Box sx={{ flex: '1 1 200px' }}>
               <Typography variant={variant}>
                 {variant === 'h1'
                   ? '页面主标题'
                   : variant === 'h2'
-                  ? '区域标题'
-                  : variant === 'h3'
-                  ? '卡片标题'
-                  : variant === 'h4'
-                  ? '子区块标题'
-                  : variant === 'h5'
-                  ? '小节标题'
-                  : '标签/分类标题'}
+                    ? '区域标题'
+                    : variant === 'h3'
+                      ? '卡片标题'
+                      : variant === 'h4'
+                        ? '子区块标题'
+                        : variant === 'h5'
+                          ? '小节标题'
+                          : '标签/分类标题'}
               </Typography>
             </Box>
-            <Stack direction="row" spacing={0.5} flexWrap="wrap" useFlexGap>
-              <Chip label={`${token.fontSize}`} size="small" variant="outlined" />
-              <Chip label={`weight ${token.fontWeight}`} size="small" variant="outlined" />
-              <Chip label={`lh ${token.lineHeight}`} size="small" variant="outlined" />
+            <Stack
+              direction='row'
+              spacing={0.5}
+              flexWrap='wrap'
+              useFlexGap
+            >
+              <Chip
+                label={`${token.fontSize}`}
+                size='small'
+                variant='outlined'
+              />
+              <Chip
+                label={`weight ${token.fontWeight}`}
+                size='small'
+                variant='outlined'
+              />
+              <Chip
+                label={`lh ${token.lineHeight}`}
+                size='small'
+                variant='outlined'
+              />
               {token.letterSpacing && (
-                <Chip label={`ls ${token.letterSpacing}`} size="small" variant="outlined" />
+                <Chip
+                  label={`ls ${token.letterSpacing}`}
+                  size='small'
+                  variant='outlined'
+                />
               )}
             </Stack>
           </Paper>
@@ -251,7 +344,12 @@ const TypographyComponent = () => {
 
       <Divider sx={{ my: 3 }} />
 
-      <Typography variant="h5" sx={{ mb: 2 }}>正文样式</Typography>
+      <Typography
+        variant='h5'
+        sx={{ mb: 2 }}
+      >
+        正文样式
+      </Typography>
       {bodyVariants.map((variant) => {
         const token = designTokens.typography[variant];
         const samples: Record<string, string> = {
@@ -262,19 +360,54 @@ const TypographyComponent = () => {
           overline: '大号标签 — 用于分类标记。',
         };
         return (
-          <Paper key={variant} sx={{ p: 2, mb: 1.5, display: 'flex', alignItems: 'flex-start', gap: 2, flexWrap: 'wrap' }}>
+          <Paper
+            key={variant}
+            sx={{
+              p: 2,
+              mb: 1.5,
+              display: 'flex',
+              alignItems: 'flex-start',
+              gap: 2,
+              flexWrap: 'wrap',
+            }}
+          >
             <Box sx={{ flex: '1 1 200px' }}>
-              <Typography variant="caption" color="text.secondary" sx={{ display: 'block', mb: 0.5, fontWeight: 600 }}>
+              <Typography
+                variant='caption'
+                color='text.secondary'
+                sx={{ display: 'block', mb: 0.5, fontWeight: 600 }}
+              >
                 {variant}
               </Typography>
               <Typography variant={variant}>{samples[variant]}</Typography>
             </Box>
-            <Stack direction="row" spacing={0.5} flexWrap="wrap" useFlexGap>
-              <Chip label={`${token.fontSize}`} size="small" variant="outlined" />
-              <Chip label={`weight ${token.fontWeight}`} size="small" variant="outlined" />
-              <Chip label={`lh ${token.lineHeight}`} size="small" variant="outlined" />
+            <Stack
+              direction='row'
+              spacing={0.5}
+              flexWrap='wrap'
+              useFlexGap
+            >
+              <Chip
+                label={`${token.fontSize}`}
+                size='small'
+                variant='outlined'
+              />
+              <Chip
+                label={`weight ${token.fontWeight}`}
+                size='small'
+                variant='outlined'
+              />
+              <Chip
+                label={`lh ${token.lineHeight}`}
+                size='small'
+                variant='outlined'
+              />
               {token.letterSpacing && (
-                <Chip label={`ls ${token.letterSpacing}`} size="small" variant="outlined" />
+                <Chip
+                  label={`ls ${token.letterSpacing}`}
+                  size='small'
+                  variant='outlined'
+                />
               )}
             </Stack>
           </Paper>
@@ -283,9 +416,14 @@ const TypographyComponent = () => {
 
       <Divider sx={{ my: 3 }} />
 
-      <Typography variant="h5" sx={{ mb: 2 }}>字号梯度</Typography>
+      <Typography
+        variant='h5'
+        sx={{ mb: 2 }}
+      >
+        字号梯度
+      </Typography>
       <TableContainer>
-        <Table size="small">
+        <Table size='small'>
           <TableHead>
             <TableRow>
               <TableCell>Token</TableCell>
@@ -311,11 +449,23 @@ const TypographyComponent = () => {
 
       <Divider sx={{ my: 3 }} />
 
-      <Typography variant="h5" sx={{ mb: 2 }}>字重梯度</Typography>
+      <Typography
+        variant='h5'
+        sx={{ mb: 2 }}
+      >
+        字重梯度
+      </Typography>
       <Stack spacing={1}>
         {Object.entries(designTokens.typography.fontWeight).map(([key, value]) => (
-          <Box key={key} sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
-            <Chip label={`fontWeight.${key}`} size="small" sx={{ minWidth: 120 }} />
+          <Box
+            key={key}
+            sx={{ display: 'flex', alignItems: 'center', gap: 2 }}
+          >
+            <Chip
+              label={`fontWeight.${key}`}
+              size='small'
+              sx={{ minWidth: 120 }}
+            />
             <Typography sx={{ fontWeight: value, fontSize: '1rem', flex: 1 }}>
               TOPEMS 设计系统 (weight: {value})
             </Typography>
@@ -331,20 +481,35 @@ const TypographyComponent = () => {
 // ============================================================
 const SpacingComponent = () => (
   <Box sx={{ maxWidth: 800 }}>
-    <Typography variant="h4" sx={{ mb: 1 }}>
+    <Typography
+      variant='h4'
+      sx={{ mb: 1 }}
+    >
       间距系统
     </Typography>
-    <Typography variant="body2" color="text.secondary" sx={{ mb: 3 }}>
+    <Typography
+      variant='body2'
+      color='text.secondary'
+      sx={{ mb: 3 }}
+    >
       MUI spacing 系数：1 单位 = 8px
     </Typography>
 
     {Object.entries(designTokens.spacing).map(([key, value]) => (
-      <Box key={key} sx={{ display: 'flex', alignItems: 'center', gap: 2, mb: 1.5 }}>
-        <Chip label={`spacing.${key}`} size="small" color="primary" sx={{ minWidth: 80 }} />
+      <Box
+        key={key}
+        sx={{ display: 'flex', alignItems: 'center', gap: 2, mb: 1.5 }}
+      >
+        <Chip
+          label={`spacing.${key}`}
+          size='small'
+          color='primary'
+          sx={{ minWidth: 80 }}
+        />
         <Box
           sx={{
             height: 32,
-            width: `${Math.max((value as number), 8)}px`,
+            width: `${Math.max(value as number, 8)}px`,
             maxWidth: '100%',
             backgroundColor: 'primary.main',
             borderRadius: '6px',
@@ -359,7 +524,10 @@ const SpacingComponent = () => (
         >
           {value}px
         </Box>
-        <Typography variant="caption" sx={{ fontFamily: 'monospace', color: 'text.secondary' }}>
+        <Typography
+          variant='caption'
+          sx={{ fontFamily: 'monospace', color: 'text.secondary' }}
+        >
           = {(value as number) / 8}u
         </Typography>
       </Box>
@@ -367,9 +535,14 @@ const SpacingComponent = () => (
 
     <Divider sx={{ my: 3 }} />
 
-    <Typography variant="h5" sx={{ mb: 2 }}>语义化间距</Typography>
+    <Typography
+      variant='h5'
+      sx={{ mb: 2 }}
+    >
+      语义化间距
+    </Typography>
     <TableContainer>
-      <Table size="small">
+      <Table size='small'>
         <TableHead>
           <TableRow>
             <TableCell>Token</TableCell>
@@ -400,17 +573,32 @@ const SpacingComponent = () => (
 // ============================================================
 const ShadowsComponent = () => (
   <Box sx={{ maxWidth: 1000 }}>
-    <Typography variant="h4" sx={{ mb: 1 }}>
+    <Typography
+      variant='h4'
+      sx={{ mb: 1 }}
+    >
       阴影系统
     </Typography>
-    <Typography variant="body2" color="text.secondary" sx={{ mb: 3 }}>
+    <Typography
+      variant='body2'
+      color='text.secondary'
+      sx={{ mb: 3 }}
+    >
       亮/暗色模式阴影对比
     </Typography>
 
-    <Typography variant="h6" sx={{ mb: 2 }}>亮色模式</Typography>
+    <Typography
+      variant='h6'
+      sx={{ mb: 2 }}
+    >
+      亮色模式
+    </Typography>
     <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 3, mb: 4 }}>
       {Object.entries(designTokens.shadows).map(([key, value]) => (
-        <Box key={key} sx={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 1 }}>
+        <Box
+          key={key}
+          sx={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 1 }}
+        >
           <Box
             sx={{
               width: 80,
@@ -421,15 +609,28 @@ const ShadowsComponent = () => (
               border: '1px solid #f1f5f9',
             }}
           />
-          <Typography variant="caption" fontWeight="bold">{key}</Typography>
+          <Typography
+            variant='caption'
+            fontWeight='bold'
+          >
+            {key}
+          </Typography>
         </Box>
       ))}
     </Box>
 
-    <Typography variant="h6" sx={{ mb: 2 }}>暗色模式</Typography>
+    <Typography
+      variant='h6'
+      sx={{ mb: 2 }}
+    >
+      暗色模式
+    </Typography>
     <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 3, mb: 4 }}>
       {Object.entries(designTokens.darkShadows).map(([key, value]) => (
-        <Box key={key} sx={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 1 }}>
+        <Box
+          key={key}
+          sx={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 1 }}
+        >
           <Box
             sx={{
               width: 80,
@@ -440,16 +641,26 @@ const ShadowsComponent = () => (
               border: '1px solid #374151',
             }}
           />
-          <Typography variant="caption" fontWeight="bold">{key}</Typography>
+          <Typography
+            variant='caption'
+            fontWeight='bold'
+          >
+            {key}
+          </Typography>
         </Box>
       ))}
     </Box>
 
     <Divider sx={{ my: 3 }} />
 
-    <Typography variant="h6" sx={{ mb: 2 }}>语义化阴影映射</Typography>
+    <Typography
+      variant='h6'
+      sx={{ mb: 2 }}
+    >
+      语义化阴影映射
+    </Typography>
     <TableContainer>
-      <Table size="small">
+      <Table size='small'>
         <TableHead>
           <TableRow>
             <TableCell>组件层级</TableCell>
@@ -476,10 +687,17 @@ const ShadowsComponent = () => (
 // ============================================================
 const BorderRadiusComponent = () => (
   <Box sx={{ maxWidth: 800 }}>
-    <Typography variant="h4" sx={{ mb: 1 }}>
+    <Typography
+      variant='h4'
+      sx={{ mb: 1 }}
+    >
       圆角系统
     </Typography>
-    <Typography variant="body2" color="text.secondary" sx={{ mb: 3 }}>
+    <Typography
+      variant='body2'
+      color='text.secondary'
+      sx={{ mb: 3 }}
+    >
       所有圆角值源自 <code>designTokens.borderRadius</code>
     </Typography>
 
@@ -493,14 +711,21 @@ const BorderRadiusComponent = () => (
             sx={{
               width: 72,
               height: 72,
-              borderRadius:
-                (value as number) === 9999 ? '50%' : `${value}px`,
+              borderRadius: (value as number) === 9999 ? '50%' : `${value}px`,
               border: `2px solid ${designTokens.colors.primary.main}`,
               backgroundColor: designTokens.colors.primary[50],
             }}
           />
-          <Typography variant="caption" fontWeight="bold">{key}</Typography>
-          <Typography variant="caption" sx={{ fontFamily: 'monospace', color: 'text.secondary' }}>
+          <Typography
+            variant='caption'
+            fontWeight='bold'
+          >
+            {key}
+          </Typography>
+          <Typography
+            variant='caption'
+            sx={{ fontFamily: 'monospace', color: 'text.secondary' }}
+          >
             {(value as number) === 9999 ? '9999px' : `${value}px`}
           </Typography>
         </Box>
@@ -509,9 +734,14 @@ const BorderRadiusComponent = () => (
 
     <Divider sx={{ my: 3 }} />
 
-    <Typography variant="h6" sx={{ mb: 2 }}>语义化圆角</Typography>
+    <Typography
+      variant='h6'
+      sx={{ mb: 2 }}
+    >
+      语义化圆角
+    </Typography>
     <TableContainer>
-      <Table size="small">
+      <Table size='small'>
         <TableHead>
           <TableRow>
             <TableCell>用途</TableCell>

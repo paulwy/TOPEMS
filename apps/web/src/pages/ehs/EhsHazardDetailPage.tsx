@@ -1,6 +1,8 @@
 import React, { useState, useEffect, useMemo } from 'react';
 import { apiLogger } from '@/utils/logger';
 import { useParams, useNavigate } from 'react-router-dom';
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import { QUERY_KEYS } from '@/lib/reactQuery';
 import {
   AlertTriangle,
   MapPin,
@@ -52,13 +54,9 @@ interface ControlFormData {
 const EhsHazardDetailPage: React.FC = () => {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
+  const queryClient = useQueryClient();
   const { success, error } = useNotification();
 
-  const [hazard, setHazard] = useState<Hazard | null>(null);
-  const [assessments, setAssessments] = useState<RiskAssessment[]>([]);
-  const [controls, setControls] = useState<ControlMeasure[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [errorMessage, setErrorMessage] = useState<string | undefined>(undefined);
   const [showEditModal, setShowEditModal] = useState(false);
   const [showControlModal, setShowControlModal] = useState(false);
   const [formData, setFormData] = useState({
@@ -80,24 +78,17 @@ const EhsHazardDetailPage: React.FC = () => {
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
   const [deletingMeasureId, setDeletingMeasureId] = useState<string | null>(null);
 
-  useEffect(() => {
-    if (id) {
-      loadHazardDetail(id);
-    }
-  }, [id]);
-
-  const loadHazardDetail = async (hazardId: string) => {
-    setLoading(true);
-    setErrorMessage(undefined);
-    try {
-      const [hazardRes, assessmentsRes, controlsRes] = await Promise.all([
-        ehsApi.getHazard(hazardId),
-        ehsApi.listRiskAssessments(hazardId),
-        ehsApi.listControlMeasures(hazardId),
-      ]);
-
-      if (hazardRes.success && hazardRes.data) {
-        const safetyHazard = hazardRes.data as any;
+  const {
+    data: hazard,
+    isLoading: hazardLoading,
+    error: hazardQueryError,
+  } = useQuery({
+    queryKey: QUERY_KEYS.EHS.HAZARD(id || ''),
+    enabled: !!id,
+    queryFn: async () => {
+      const response = await ehsApi.getHazard(id!);
+      if (response.success && response.data) {
+        const safetyHazard = response.data as any;
         const hazardData: Hazard = {
           id: safetyHazard.id,
           name: safetyHazard.name,
@@ -124,44 +115,57 @@ const EhsHazardDetailPage: React.FC = () => {
           created_at: safetyHazard.created_at,
           updated_at: safetyHazard.updated_at,
         };
-        setHazard(hazardData);
-        setFormData({
-          name: hazardData.name || '',
-          description: hazardData.description || '',
-          category: hazardData.category || '',
-          location: hazardData.location || '',
-          severity: hazardData.severity || 'medium',
-          exposure: hazardData.exposure || 'medium',
-          likelihood: hazardData.likelihood || 'medium',
-          status: hazardData.status || 'active',
-        });
-      } else {
-        throw new Error(hazardRes.message || '加载危险源详情失败');
+        return hazardData;
       }
+      throw new Error(response.message || '加载危险源详情失败');
+    },
+  });
 
-      if (assessmentsRes.success && assessmentsRes.data) {
-        const assessmentsData = assessmentsRes.data as any;
-        const assessmentsArray = Array.isArray(assessmentsData)
-          ? assessmentsData
-          : assessmentsData.data || assessmentsData.assessments || [];
-        setAssessments(assessmentsArray);
+  const { data: assessmentsData } = useQuery({
+    queryKey: QUERY_KEYS.EHS.HAZARD_RISK_ASSESSMENTS(id || ''),
+    enabled: !!id,
+    queryFn: async () => {
+      const response = await ehsApi.listRiskAssessments(id!);
+      if (response.success && response.data) {
+        const data = response.data as any;
+        return Array.isArray(data) ? data : data.data || data.assessments || [];
       }
+      return [];
+    },
+  });
+  const assessments = (assessmentsData as RiskAssessment[]) || [];
 
-      if (controlsRes.success && controlsRes.data) {
-        const controlsData = controlsRes.data as any;
-        const controlsArray = Array.isArray(controlsData)
-          ? controlsData
-          : controlsData.data || controlsData.measures || [];
-        setControls(controlsArray);
+  const { data: controlsData } = useQuery({
+    queryKey: QUERY_KEYS.EHS.HAZARD_CONTROL_MEASURES(id || ''),
+    enabled: !!id,
+    queryFn: async () => {
+      const response = await ehsApi.listControlMeasures(id!);
+      if (response.success && response.data) {
+        const data = response.data as any;
+        return Array.isArray(data) ? data : data.data || data.measures || [];
       }
-    } catch (err: unknown) {
-      apiLogger.error('加载危险源详情失败:', err);
-      setErrorMessage('加载危险源详情失败');
-      error('加载危险源详情失败');
-    } finally {
-      setLoading(false);
+      return [];
+    },
+  });
+  const controls = (controlsData as ControlMeasure[]) || [];
+
+  const loading = hazardLoading;
+  const errorMessage = hazardQueryError ? '加载危险源详情失败' : undefined;
+
+  useEffect(() => {
+    if (hazard) {
+      setFormData({
+        name: hazard.name || '',
+        description: hazard.description || '',
+        category: hazard.category || '',
+        location: hazard.location || '',
+        severity: hazard.severity || 'medium',
+        exposure: hazard.exposure || 'medium',
+        likelihood: hazard.likelihood || 'medium',
+        status: hazard.status || 'active',
+      });
     }
-  };
+  }, [hazard]);
 
   const getStatusBadge = (status: string) => {
     return (
@@ -172,65 +176,77 @@ const EhsHazardDetailPage: React.FC = () => {
     );
   };
 
-  const handleUpdateHazard = async () => {
+  const updateHazardMutation = useMutation({
+    mutationFn: (variables: { id: string; data: Parameters<typeof ehsApi.updateHazard>[1] }) =>
+      ehsApi.updateHazard(variables.id, variables.data),
+    onSuccess: () => {
+      success('危险源更新成功');
+      queryClient.invalidateQueries({ queryKey: QUERY_KEYS.EHS.HAZARD(id || '') });
+      setShowEditModal(false);
+    },
+    onError: (err: unknown) => {
+      apiLogger.error('更新危险源失败:', err);
+      error('更新失败，请稍后重试');
+    },
+  });
+
+  const handleUpdateHazard = () => {
     if (!hazard) return;
     if (!formData.name.trim()) {
       error('请输入危险源名称');
       return;
     }
-    try {
-      const response = await ehsApi.updateHazard(hazard.id, {
+    updateHazardMutation.mutate({
+      id: hazard.id,
+      data: {
         name: formData.name,
         description: formData.description,
         category: formData.category,
         location: formData.location,
         level: formData.severity === 'high' ? '高' : formData.severity === 'medium' ? '中' : '低',
         status: formData.status,
-      });
-      if (response.success) {
-        success('危险源更新成功');
-        setShowEditModal(false);
-        loadHazardDetail(hazard.id);
-      } else {
-        error('更新失败，请稍后重试');
-      }
-    } catch (err: unknown) {
-      apiLogger.error('更新危险源失败:', err);
-      error('更新失败，请稍后重试');
-    }
+      },
+    });
   };
 
-  const handleAddControl = async () => {
+  const createControlMutation = useMutation({
+    mutationFn: (variables: {
+      hazardId: string;
+      data: Parameters<typeof ehsApi.createControlMeasure>[1];
+    }) => ehsApi.createControlMeasure(variables.hazardId, variables.data),
+    onSuccess: () => {
+      success('控制措施添加成功');
+      queryClient.invalidateQueries({ queryKey: QUERY_KEYS.EHS.HAZARD_CONTROL_MEASURES(id || '') });
+      setShowControlModal(false);
+      setControlFormData({
+        measure_type: 'engineering',
+        description: '',
+        responsible: '',
+        deadline: '',
+      });
+    },
+    onError: (err: unknown) => {
+      apiLogger.error('添加控制措施失败:', err);
+      error('添加失败，请稍后重试');
+    },
+  });
+
+  const handleAddControl = () => {
     if (!hazard) return;
     if (!controlFormData.description.trim()) {
       error('请输入措施描述');
       return;
     }
-    try {
-      const response = await ehsApi.createControlMeasure(hazard.id, {
+    createControlMutation.mutate({
+      hazardId: hazard.id,
+      data: {
         measure_type: controlFormData.measure_type,
         description: controlFormData.description,
         responsible: controlFormData.responsible || null,
         deadline: controlFormData.deadline || null,
         status: 'pending',
-      });
-      if (response.success) {
-        success('控制措施添加成功');
-        setShowControlModal(false);
-        setControlFormData({
-          measure_type: 'engineering',
-          description: '',
-          responsible: '',
-          deadline: '',
-        });
-        loadHazardDetail(hazard.id);
-      } else {
-        error('添加失败，请稍后重试');
-      }
-    } catch (err: unknown) {
-      apiLogger.error('添加控制措施失败:', err);
-      error('添加失败，请稍后重试');
-    }
+      },
+    });
   };
 
   const handleDeleteControl = (measureId: string) => {
@@ -238,23 +254,26 @@ const EhsHazardDetailPage: React.FC = () => {
     setDeleteDialogOpen(true);
   };
 
-  const confirmDeleteControl = async () => {
-    if (!hazard || !deletingMeasureId) return;
-    try {
-      const response = await ehsApi.deleteControlMeasure(hazard.id, deletingMeasureId);
-      if (response.success) {
-        success('控制措施删除成功');
-        loadHazardDetail(hazard.id);
-      } else {
-        error('删除失败，请稍后重试');
-      }
-    } catch (err: unknown) {
-      apiLogger.error('删除控制措施失败:', err);
-      error('删除失败，请稍后重试');
-    } finally {
+  const deleteControlMutation = useMutation({
+    mutationFn: (variables: { hazardId: string; measureId: string }) =>
+      ehsApi.deleteControlMeasure(variables.hazardId, variables.measureId),
+    onSuccess: () => {
+      success('控制措施删除成功');
+      queryClient.invalidateQueries({ queryKey: QUERY_KEYS.EHS.HAZARD_CONTROL_MEASURES(id || '') });
       setDeleteDialogOpen(false);
       setDeletingMeasureId(null);
-    }
+    },
+    onError: (err: unknown) => {
+      apiLogger.error('删除控制措施失败:', err);
+      error('删除失败，请稍后重试');
+      setDeleteDialogOpen(false);
+      setDeletingMeasureId(null);
+    },
+  });
+
+  const confirmDeleteControl = () => {
+    if (!hazard || !deletingMeasureId) return;
+    deleteControlMutation.mutate({ hazardId: hazard.id, measureId: deletingMeasureId });
   };
 
   const assessmentColumns: ColumnDef<RiskAssessment>[] = [

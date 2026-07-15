@@ -63,8 +63,8 @@ class RequestPriorityQueue {
 
     this.sortQueue();
 
-    const nextRequest = this.queue.find(req => this.canProcess(req.priority));
-    
+    const nextRequest = this.queue.find((req) => this.canProcess(req.priority));
+
     if (!nextRequest) {
       this.isProcessing = false;
       return;
@@ -96,10 +96,7 @@ class RequestPriorityQueue {
     }
   }
 
-  public enqueue<T>(
-    priority: RequestPriority,
-    fn: () => Promise<T>
-  ): Promise<T> {
+  public enqueue<T>(priority: RequestPriority, fn: () => Promise<T>): Promise<T> {
     return new Promise((resolve, reject) => {
       const queuedRequest: QueuedRequest = {
         priority,
@@ -129,16 +126,13 @@ class RequestPriorityQueue {
   }
 
   public getPendingByPriority(priority: RequestPriority): number {
-    return this.queue.filter(req => req.priority === priority).length;
+    return this.queue.filter((req) => req.priority === priority).length;
   }
 }
 
 export const requestPriorityQueue = new RequestPriorityQueue();
 
-export const withPriority = <T>(
-  priority: RequestPriority,
-  fn: () => Promise<T>
-): Promise<T> => {
+export const withPriority = <T>(priority: RequestPriority, fn: () => Promise<T>): Promise<T> => {
   if (priority === 'critical' || priority === 'high') {
     return fn();
   }

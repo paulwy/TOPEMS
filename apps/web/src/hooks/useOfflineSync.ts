@@ -3,6 +3,7 @@ import { useNetworkStatus } from './useNetworkStatus';
 import { syncPendingRecords } from '@/services/offlineSync';
 import { getOfflineCount, saveOfflineRecord } from '@/services/offlineStorage';
 import type { ServiceName } from '@/lib/apiClient';
+import { logger } from '@/utils/logger';
 
 export interface SyncStatus {
   isSyncing: boolean;
@@ -75,7 +76,7 @@ export function useOfflineSync(): {
         await updatePendingCount();
         return recordId;
       } catch (error) {
-        console.error('[useOfflineSync] Failed to queue request:', error);
+        logger.error('[useOfflineSync] Failed to queue request:', error);
         return null;
       }
     },
@@ -93,7 +94,7 @@ export function useOfflineSync(): {
       }, 1000);
       return () => clearTimeout(timer);
     }
-    return undefined;
+    return;
   }, [networkStatus, triggerSync]);
 
   useEffect(() => {

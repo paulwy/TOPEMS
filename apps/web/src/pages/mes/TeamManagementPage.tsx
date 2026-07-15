@@ -193,8 +193,7 @@ const TeamManagementPage: React.FC = () => {
       }
       setShowDialog(false);
       resetForm();
-    } catch {
-    }
+    } catch {}
   };
 
   const handleDelete = useCallback(
@@ -202,8 +201,7 @@ const TeamManagementPage: React.FC = () => {
       if (!window.confirm('确定要删除这个班组吗?')) return;
       try {
         await deleteMutation.mutateAsync(id);
-      } catch {
-      }
+      } catch {}
     },
     [deleteMutation]
   );
@@ -221,13 +219,10 @@ const TeamManagementPage: React.FC = () => {
     setShowDialog(true);
   }, []);
 
-  const handleViewDetail = useCallback(
-    (team: Team) => {
-      setSelectedTeam(team);
-      setShowDetailDialog(true);
-    },
-    []
-  );
+  const handleViewDetail = useCallback((team: Team) => {
+    setSelectedTeam(team);
+    setShowDetailDialog(true);
+  }, []);
 
   const resetForm = () => {
     setSelectedTeam(null);
@@ -440,7 +435,12 @@ const TeamManagementPage: React.FC = () => {
         subtitle=''
         columns={columns}
         data={teams}
-        loading={loading || createMutation.isPending || updateMutation.isPending || deleteMutation.isPending}
+        loading={
+          loading ||
+          createMutation.isPending ||
+          updateMutation.isPending ||
+          deleteMutation.isPending
+        }
         filters={filters}
         searchable
         searchPlaceholder='搜索班组编码或名称...'

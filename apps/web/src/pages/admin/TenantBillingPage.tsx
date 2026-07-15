@@ -1,4 +1,6 @@
-import React, { useState, useEffect } from 'react';
+import React from 'react';
+import { useQuery } from '@tanstack/react-query';
+import { QUERY_KEYS } from '@/lib/reactQuery';
 import {
   Box,
   Typography,
@@ -31,7 +33,6 @@ import { PageContainer, Grid } from '@/components/common';
 import { ListPageTemplate, type ColumnDef, type RowAction } from '@/components/templates';
 import { tenantApi } from '@/api/tenant';
 import type { TenantInvoice, Tenant, UsageMetrics, TenantBillingInfo } from '@/api/tenant/types';
-import { logger } from '@/utils/logger';
 
 const plans = [
   {
@@ -114,47 +115,76 @@ const plans = [
 ];
 
 const TenantBillingPage: React.FC = () => {
-  const [tenant, setTenant] = useState<Tenant | null>(null);
-  const [billingInfo, setBillingInfo] = useState<TenantBillingInfo | null>(null);
-  const [invoices, setInvoices] = useState<TenantInvoice[]>([]);
-  const [usage, setUsage] = useState<UsageMetrics | null>(null);
-  const [loading, setLoading] = useState(true);
-
-  useEffect(() => {
-    loadBillingData();
-  }, []);
-
-  const loadBillingData = async () => {
-    setLoading(true);
-    try {
-      const contextRes = await tenantApi.getCurrentTenantContext();
-      if (contextRes.success && contextRes.data) {
-        const [tenantRes, billingRes, invoicesRes, usageRes] = await Promise.all([
-          tenantApi.getTenant(contextRes.data.tenant_id),
-          tenantApi.getBillingInfo(contextRes.data.tenant_id),
-          tenantApi.getInvoices(contextRes.data.tenant_id),
-          tenantApi.getUsageMetrics(contextRes.data.tenant_id),
-        ]);
-
-        if (tenantRes.success && tenantRes.data) {
-          setTenant(tenantRes.data);
-        }
-        if (billingRes.success && billingRes.data) {
-          setBillingInfo(billingRes.data);
-        }
-        if (invoicesRes.success && invoicesRes.data) {
-          setInvoices(invoicesRes.data);
-        }
-        if (usageRes.success && usageRes.data) {
-          setUsage(usageRes.data);
-        }
+  const contextQuery = useQuery({
+    queryKey: QUERY_KEYS.TENANT.CURRENT,
+    queryFn: async () => {
+      const res = await tenantApi.getCurrentTenantContext();
+      if (res.success && res.data) {
+        return res.data;
       }
-    } catch (error) {
-      logger.error('Failed to load billing data:', error);
-    } finally {
-      setLoading(false);
-    }
-  };
+      throw new Error('加载租户上下文失败');
+    },
+  });
+
+  const tenantId = contextQuery.data?.tenant_id;
+
+  const tenantQuery = useQuery({
+    queryKey: QUERY_KEYS.TENANT.TENANT(tenantId ?? ''),
+    queryFn: async () => {
+      if (!tenantId) return null;
+      const res = await tenantApi.getTenant(tenantId);
+      if (res.success && res.data) {
+        return res.data;
+      }
+      throw new Error('加载租户信息失败');
+    },
+    enabled: !!tenantId,
+  });
+
+  const billingQuery = useQuery({
+    queryKey: QUERY_KEYS.TENANT.BILLING(tenantId ?? ''),
+    queryFn: async () => {
+      if (!tenantId) return null;
+      const res = await tenantApi.getBillingInfo(tenantId);
+      if (res.success && res.data) {
+        return res.data;
+      }
+      throw new Error('加载计费信息失败');
+    },
+    enabled: !!tenantId,
+  });
+
+  const invoicesQuery = useQuery({
+    queryKey: QUERY_KEYS.TENANT.INVOICES(tenantId ?? ''),
+    queryFn: async () => {
+      if (!tenantId) return [];
+      const res = await tenantApi.getInvoices(tenantId);
+      if (res.success && res.data) {
+        return res.data;
+      }
+      throw new Error('加载账单失败');
+    },
+    enabled: !!tenantId,
+  });
+
+  const usageQuery = useQuery({
+    queryKey: QUERY_KEYS.TENANT.USAGE(tenantId ?? ''),
+    queryFn: async () => {
+      if (!tenantId) return null;
+      const res = await tenantApi.getUsageMetrics(tenantId);
+      if (res.success && res.data) {
+        return res.data;
+      }
+      throw new Error('加载使用情况失败');
+    },
+    enabled: !!tenantId,
+  });
+
+  const tenant = tenantQuery.data ?? null;
+  const billingInfo = billingQuery.data ?? null;
+  const invoices = invoicesQuery.data ?? [];
+  const usage = usageQuery.data ?? null;
+  const loading = contextQuery.isLoading || tenantQuery.isLoading;
 
   const invoiceColumns: ColumnDef<TenantInvoice>[] = [
     {

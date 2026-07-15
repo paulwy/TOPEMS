@@ -28,11 +28,12 @@ export async function deleteReport(id: string) {
 }
 
 export const reportCrudApi: CrudOperations<Report> = {
-  list: (params?) => fetchReports({
-    page: params?.page,
-    pageSize: params?.pagesize,
-    ...(params as any),
-  }),
+  list: (params?) =>
+    fetchReports({
+      page: params?.page,
+      pageSize: params?.pagesize,
+      ...(params as any),
+    }),
   get: fetchReport,
   create: createReport,
   update: updateReport,

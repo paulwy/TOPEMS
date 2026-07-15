@@ -139,42 +139,41 @@ vi.mock('@/store', () => ({
 }));
 
 describe('MailPage', () => {
-    it('should render without crashing', () => {
-      const { container } = render(
-        <BrowserRouter>
-          <MailPage />
-        </BrowserRouter>
-      );
-      expect(container).toBeDefined();
-    });
+  it('should render without crashing', () => {
+    const { container } = render(
+      <BrowserRouter>
+        <MailPage />
+      </BrowserRouter>
+    );
+    expect(container).toBeDefined();
+  });
 
-    it('should have chat room API methods defined', () => {
-      expect(imApi.listChatRooms).toBeDefined();
-      expect(imApi.createChatRoom).toBeDefined();
-      expect(imApi.getChatRoom).toBeDefined();
-      expect(imApi.deleteChatRoom).toBeDefined();
-    });
+  it('should have chat room API methods defined', () => {
+    expect(imApi.listChatRooms).toBeDefined();
+    expect(imApi.createChatRoom).toBeDefined();
+    expect(imApi.getChatRoom).toBeDefined();
+    expect(imApi.deleteChatRoom).toBeDefined();
+  });
 
-    it('should have message API methods defined', () => {
-      expect(imApi.listChatMessages).toBeDefined();
-      expect(imApi.createChatMessage).toBeDefined();
-      expect(imApi.markMessageRead).toBeDefined();
-      expect(imApi.updateChatMessage).toBeDefined();
-      expect(imApi.deleteChatMessage).toBeDefined();
-    });
+  it('should have message API methods defined', () => {
+    expect(imApi.listChatMessages).toBeDefined();
+    expect(imApi.createChatMessage).toBeDefined();
+    expect(imApi.markMessageRead).toBeDefined();
+    expect(imApi.updateChatMessage).toBeDefined();
+    expect(imApi.deleteChatMessage).toBeDefined();
+  });
 
-    it('should have notification API methods defined', () => {
-      expect(imApi.listNotifications).toBeDefined();
-      expect(imApi.createNotification).toBeDefined();
-      expect(imApi.markNotificationRead).toBeDefined();
-      expect(imApi.markAllNotificationsRead).toBeDefined();
-    });
+  it('should have notification API methods defined', () => {
+    expect(imApi.listNotifications).toBeDefined();
+    expect(imApi.createNotification).toBeDefined();
+    expect(imApi.markNotificationRead).toBeDefined();
+    expect(imApi.markAllNotificationsRead).toBeDefined();
+  });
 
-    it('should have friend/contact API methods defined', () => {
-      expect(imApi.listFriends).toBeDefined();
-      expect(imApi.sendFriendRequest).toBeDefined();
-      expect(imApi.acceptFriendRequest).toBeDefined();
-      expect(imApi.removeFriend).toBeDefined();
-    });
+  it('should have friend/contact API methods defined', () => {
+    expect(imApi.listFriends).toBeDefined();
+    expect(imApi.sendFriendRequest).toBeDefined();
+    expect(imApi.acceptFriendRequest).toBeDefined();
+    expect(imApi.removeFriend).toBeDefined();
   });
 });

@@ -1,4 +1,6 @@
-import React, { useState, useEffect, useMemo } from 'react';
+import React, { useState, useMemo } from 'react';
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import { QUERY_KEYS } from '@/lib/reactQuery';
 import { TrendingUp, Plus, Edit, Trash2, DollarSign, Calendar, Settings } from 'lucide-react';
 import { budgetApi, type Budget } from '@/api/erp';
 import { BackButton, PageContainer } from '@/components/common';
@@ -34,11 +36,8 @@ import OrganizationFilter, {
 
 const BudgetManagementPage: React.FC = () => {
   const addNotification = useNotificationStore((state) => state.addNotification);
+  const queryClient = useQueryClient();
 
-  const [budgets, setBudgets] = useState<Budget[]>([]);
-  const [departments, setDepartments] = useState<Department[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | undefined>(undefined);
   const [showCreateModal, setShowCreateModal] = useState(false);
   const [editingBudget, setEditingBudget] = useState<Budget | null>(null);
   const [organizationFilter, setOrganizationFilter] = useState<OrganizationFilterValue>({});
@@ -46,63 +45,105 @@ const BudgetManagementPage: React.FC = () => {
   const [showBatchStatusModal, setShowBatchStatusModal] = useState(false);
   const [batchStatus, setBatchStatus] = useState<string>('');
 
-  const handleBatchUpdateStatus = () => {
-    setShowBatchStatusModal(true);
+  const budgetsQuery = useQuery<Budget[]>({
+    queryKey: QUERY_KEYS.FINANCE.BUDGET,
+    queryFn: async () => {
+      const res = await budgetApi.list();
+      if (res.success && res.data) {
+        return res.data.items || [];
+      }
+      return [];
+    },
+  });
+
+  const departmentsQuery = useQuery<Department[]>({
+    queryKey: QUERY_KEYS.HRM.DEPARTMENTS,
+    queryFn: async () => {
+      const res = await departmentApi.list();
+      if (res.success && res.data) {
+        return res.data.items || [];
+      }
+      return [];
+    },
+  });
+
+  const budgets = budgetsQuery.data || [];
+  const departments = departmentsQuery.data || [];
+  const loading = budgetsQuery.isLoading || departmentsQuery.isLoading;
+  const error = budgetsQuery.error ? '加载数据失败' : undefined;
+
+  const invalidateBudgets = () => {
+    queryClient.invalidateQueries({ queryKey: QUERY_KEYS.FINANCE.BUDGET });
   };
 
-  const confirmBatchUpdateStatus = async () => {
-    if (selectedIds.length === 0 || !batchStatus) return;
-
-    try {
-      const promises = selectedIds.map((id) =>
-        budgetApi.update(id as string, { status: batchStatus })
+  const batchUpdateStatusMutation = useMutation({
+    mutationFn: async (params: { ids: (string | number)[]; status: string }) => {
+      const promises = params.ids.map((id) =>
+        budgetApi.update(id as string, { status: params.status })
       );
       const results = await Promise.all(promises);
       const successCount = results.filter((r) => r.success).length;
-
+      return { successCount, total: params.ids.length };
+    },
+    onSuccess: (data) => {
       addNotification({
         title: '批量更新成功',
-        message: `成功更新 ${successCount} 条预算状态，失败 ${selectedIds.length - successCount} 条`,
+        message: `成功更新 ${data.successCount} 条预算状态，失败 ${data.total - data.successCount} 条`,
         type: 'success',
       });
-
       setSelectedIds([]);
       setShowBatchStatusModal(false);
       setBatchStatus('');
-      loadData();
-    } catch (err: unknown) {
+      invalidateBudgets();
+    },
+    onError: (err: unknown) => {
       addNotification({
         title: '批量更新失败',
         message: (err as { message?: string }).message || '批量更新状态失败',
         type: 'error',
       });
-    }
-  };
+    },
+  });
 
-  const handleBatchDelete = async () => {
-    if (selectedIds.length === 0) return;
-
-    try {
-      const promises = selectedIds.map((id) => budgetApi.delete(id as string));
+  const batchDeleteMutation = useMutation({
+    mutationFn: async (ids: (string | number)[]) => {
+      const promises = ids.map((id) => budgetApi.delete(id as string));
       const results = await Promise.all(promises);
       const successCount = results.filter((r) => r.success).length;
-
+      return { successCount, total: ids.length };
+    },
+    onSuccess: (data) => {
       addNotification({
         title: '批量删除成功',
-        message: `成功删除 ${successCount} 条预算，失败 ${selectedIds.length - successCount} 条`,
+        message: `成功删除 ${data.successCount} 条预算，失败 ${data.total - data.successCount} 条`,
         type: 'success',
       });
-
       setSelectedIds([]);
-      loadData();
-    } catch (err: unknown) {
+      invalidateBudgets();
+    },
+    onError: (err: unknown) => {
       addNotification({
         title: '批量删除失败',
         message: (err as { message?: string }).message || '批量删除失败',
         type: 'error',
       });
-    }
+    },
+  });
+
+  const handleBatchUpdateStatus = () => {
+    setShowBatchStatusModal(true);
   };
+
+  const confirmBatchUpdateStatus = () => {
+    if (selectedIds.length === 0 || !batchStatus) return;
+    batchUpdateStatusMutation.mutate({ ids: selectedIds, status: batchStatus });
+  };
+
+  const handleBatchDelete = () => {
+    if (selectedIds.length === 0) return;
+    batchDeleteMutation.mutate(selectedIds);
+  };
+
   const [newBudget, setNewBudget] = useState({
     department_id: '',
     budget_type: '',
@@ -110,38 +151,38 @@ const BudgetManagementPage: React.FC = () => {
     total_budget: 0,
   });
 
-  useEffect(() => {
-    loadData();
-  }, []);
-
-  const loadData = async () => {
-    setLoading(true);
-    setError(undefined);
-    try {
-      const [budgetRes, deptRes, periodRes] = await Promise.all([
-        budgetApi.list(),
-        departmentApi.list(),
-        financeApi.period.getCurrent(),
-      ]);
-
-      if (budgetRes.success && budgetRes.data) {
-        setBudgets(budgetRes.data.items || []);
+  const createMutation = useMutation({
+    mutationFn: async (data: {
+      department_id?: string;
+      budget_type?: string;
+      fiscal_year: string;
+      total_budget: number;
+    }) => {
+      const res = await budgetApi.create(data);
+      if (!res.success) {
+        throw new Error(res.message || '创建失败');
       }
-      if (deptRes.success && deptRes.data) {
-        setDepartments(deptRes.data.items || []);
-      }
-    } catch (err: unknown) {
-      apiLogger.error('加载预算管理数据失败:', err);
-      setError('加载数据失败');
+      return res;
+    },
+    onSuccess: () => {
+      addNotification({ title: '成功', message: '预算创建成功', type: 'success' });
+      setShowCreateModal(false);
+      setNewBudget({
+        department_id: '',
+        budget_type: '',
+        fiscal_year: new Date().getFullYear().toString(),
+        total_budget: 0,
+      });
+      invalidateBudgets();
+    },
+    onError: (err: unknown) => {
       addNotification({
-        title: '加载失败',
-        message: (err as { message?: string }).message || '加载数据失败',
+        title: '失败',
+        message: (err as { message?: string }).message || '创建失败',
         type: 'error',
       });
-    } finally {
-      setLoading(false);
-    }
-  };
+    },
+  });
 
   const getStatusBadge = (status: string) => {
     const config: Record<
@@ -189,108 +230,76 @@ const BudgetManagementPage: React.FC = () => {
     return 'primary.main';
   };
 
-  const handleCreate = async () => {
-    try {
-      const res = await budgetApi.create({
-        department_id: newBudget.department_id || undefined,
-        budget_type: newBudget.budget_type || undefined,
-        fiscal_year: newBudget.fiscal_year,
-        total_budget: newBudget.total_budget,
-      });
-
-      if (res.success) {
-        addNotification({
-          title: '成功',
-          message: '预算创建成功',
-          type: 'success',
-        });
-        setShowCreateModal(false);
-        setNewBudget({
-          department_id: '',
-          budget_type: '',
-          fiscal_year: new Date().getFullYear().toString(),
-          total_budget: 0,
-        });
-        loadData();
-      } else {
-        addNotification({
-          title: '失败',
-          message: res.message || '创建失败',
-          type: 'error',
-        });
+  const updateMutation = useMutation({
+    mutationFn: async (params: { id: string; data: any }) => {
+      const res = await budgetApi.update(params.id, params.data);
+      if (!res.success) {
+        throw new Error(res.message || '更新失败');
       }
-    } catch (err: unknown) {
+      return res;
+    },
+    onSuccess: () => {
+      addNotification({ title: '成功', message: '预算更新成功', type: 'success' });
+      setEditingBudget(null);
+      invalidateBudgets();
+    },
+    onError: (err: unknown) => {
       addNotification({
         title: '错误',
-        message: (err as { message?: string }).message || '创建失败',
+        message: (err as { message?: string }).message || '更新失败',
         type: 'error',
       });
-    }
+    },
+  });
+
+  const deleteMutation = useMutation({
+    mutationFn: async (id: string) => {
+      const res = await budgetApi.delete(id);
+      if (!res.success) {
+        throw new Error(res.message || '删除失败');
+      }
+      return res;
+    },
+    onSuccess: () => {
+      addNotification({ title: '成功', message: '预算删除成功', type: 'success' });
+      invalidateBudgets();
+    },
+    onError: (err: unknown) => {
+      addNotification({
+        title: '错误',
+        message: (err as { message?: string }).message || '删除失败',
+        type: 'error',
+      });
+    },
+  });
+
+  const handleCreate = () => {
+    createMutation.mutate({
+      department_id: newBudget.department_id || undefined,
+      budget_type: newBudget.budget_type || undefined,
+      fiscal_year: newBudget.fiscal_year,
+      total_budget: newBudget.total_budget,
+    });
   };
 
-  const handleUpdate = async () => {
+  const handleUpdate = () => {
     if (!editingBudget) return;
-
-    try {
-      const res = await budgetApi.update(editingBudget.id, {
+    updateMutation.mutate({
+      id: editingBudget.id,
+      data: {
         department_id: editingBudget.department_id || undefined,
         budget_type: editingBudget.budget_type || undefined,
         fiscal_year: editingBudget.fiscal_year,
         total_budget: editingBudget.total_budget,
         used_amount: editingBudget.used_amount,
         status: editingBudget.status,
-      });
-
-      if (res.success) {
-        addNotification({
-          title: '成功',
-          message: '预算更新成功',
-          type: 'success',
-        });
-        setEditingBudget(null);
-        loadData();
-      } else {
-        addNotification({
-          title: '失败',
-          message: res.message || '更新失败',
-          type: 'error',
-        });
-      }
-    } catch (err: unknown) {
-      addNotification({
-        title: '错误',
-        message: (err as { message?: string }).message || '更新失败',
-        type: 'error',
-      });
-    }
+      },
+    });
   };
 
-  const handleDelete = async (id: string) => {
+  const handleDelete = (id: string) => {
     if (!confirm('确定要删除这条预算记录吗？')) return;
-
-    try {
-      const res = await budgetApi.delete(id);
-      if (res.success) {
-        addNotification({
-          title: '成功',
-          message: '预算删除成功',
-          type: 'success',
-        });
-        loadData();
-      } else {
-        addNotification({
-          title: '失败',
-          message: res.message || '删除失败',
-          type: 'error',
-        });
-      }
-    } catch (err: unknown) {
-      addNotification({
-        title: '错误',
-        message: (err as { message?: string }).message || '删除失败',
-        type: 'error',
-      });
-    }
+    deleteMutation.mutate(id);
   };
 
   // 统计卡片数据
@@ -624,7 +633,10 @@ const BudgetManagementPage: React.FC = () => {
           rowActions={rowActions}
           batchActions={batchActions}
           showBatchActionBar
-          onRefresh={loadData}
+          onRefresh={() => {
+            budgetsQuery.refetch();
+            departmentsQuery.refetch();
+          }}
           emptyMessage='暂无预算数据'
         />
       </Box>

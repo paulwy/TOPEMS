@@ -682,7 +682,9 @@ const FinanceBudgetPage: React.FC = () => {
             name='budget_type'
             label='预算类型'
             value={formData.budget_type}
-            onChange={(value) => setFormData({ ...formData, budget_type: value as string })}
+            onChange={(value: string | number | string[]) =>
+              setFormData({ ...formData, budget_type: value as string })
+            }
             options={[
               { value: 'operating', label: '运营预算' },
               { value: 'capital', label: '资本预算' },
@@ -696,20 +698,26 @@ const FinanceBudgetPage: React.FC = () => {
             label='预算年度'
             type='number'
             value={formData.fiscal_year}
-            onChange={(e) => setFormData({ ...formData, fiscal_year: e.target.value })}
+            onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
+              setFormData({ ...formData, fiscal_year: e.target.value })
+            }
           />
           <FormField
             name='total_budget'
             label='预算金额'
             type='number'
             value={formData.total_budget}
-            onChange={(e) => setFormData({ ...formData, total_budget: e.target.value })}
+            onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
+              setFormData({ ...formData, total_budget: e.target.value })
+            }
           />
           <FormSelect
             name='status'
             label='状态'
             value={formData.status}
-            onChange={(value) => setFormData({ ...formData, status: value as string })}
+            onChange={(value: string | number | string[]) =>
+              setFormData({ ...formData, status: value as string })
+            }
             options={[
               { value: 'active', label: '执行中' },
               { value: 'completed', label: '已完成' },

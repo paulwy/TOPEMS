@@ -92,7 +92,10 @@ export const pmModuleConfig: RouteModuleConfig = {
     },
     {
       path: PM_PATHS.contractCreate,
-      element: lazyWithRetry(() => import('@/pages/pm/PmContractCreatePage'), 'PmContractCreatePage'),
+      element: lazyWithRetry(
+        () => import('@/pages/pm/PmContractCreatePage'),
+        'PmContractCreatePage'
+      ),
       module: 'pm',
       code: 'pm-contract-create',
       title: '创建合同',
@@ -103,7 +106,10 @@ export const pmModuleConfig: RouteModuleConfig = {
     },
     {
       path: PM_PATHS.contractDetail,
-      element: lazyWithRetry(() => import('@/pages/pm/PmContractDetailPage'), 'PmContractDetailPage'),
+      element: lazyWithRetry(
+        () => import('@/pages/pm/PmContractDetailPage'),
+        'PmContractDetailPage'
+      ),
       module: 'pm',
       code: 'pm-contract-detail',
       title: '合同详情',
@@ -147,7 +153,10 @@ export const pmModuleConfig: RouteModuleConfig = {
     },
     {
       path: PM_PATHS.taskKanban,
-      element: lazyWithRetry(() => import('@/pages/pm/ProjectTaskKanbanPage'), 'ProjectTaskKanbanPage'),
+      element: lazyWithRetry(
+        () => import('@/pages/pm/ProjectTaskKanbanPage'),
+        'ProjectTaskKanbanPage'
+      ),
       module: 'pm',
       code: 'pm-task-kanban',
       title: '任务看板',
@@ -158,7 +167,10 @@ export const pmModuleConfig: RouteModuleConfig = {
     },
     {
       path: PM_PATHS.projectWizard,
-      element: lazyWithRetry(() => import('@/pages/pm/ProjectCreateWizardPage'), 'ProjectCreateWizardPage'),
+      element: lazyWithRetry(
+        () => import('@/pages/pm/ProjectCreateWizardPage'),
+        'ProjectCreateWizardPage'
+      ),
       module: 'pm',
       code: 'pm-project-wizard',
       title: '新建项目向导',
@@ -180,7 +192,10 @@ export const pmModuleConfig: RouteModuleConfig = {
     },
     {
       path: PM_PATHS.projectList,
-      element: lazyWithRetry(() => import('@/pages/pm/ProjectMasterDetailPage'), 'ProjectMasterDetailPage'),
+      element: lazyWithRetry(
+        () => import('@/pages/pm/ProjectMasterDetailPage'),
+        'ProjectMasterDetailPage'
+      ),
       module: 'pm',
       code: 'pm-project-list',
       title: '项目列表',

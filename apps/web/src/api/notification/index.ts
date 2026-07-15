@@ -157,7 +157,7 @@ export const getNotifications = async (
     }
 
     const response = await apiClient.notification.get<NotificationListResponse>(
-      '/v1/notifications',
+      '/notifications',
       { params }
     );
 
@@ -186,14 +186,14 @@ export const getNotifications = async (
 };
 
 export const getUnreadNotifications = async (): Promise<ApiResponse<Notification[]>> => {
-  const response = await apiClient.notification.get<Notification[]>('/v1/notifications/unread');
+  const response = await apiClient.notification.get<Notification[]>('/notifications/unread');
 
   return response;
 };
 
 export const getUnreadCount = async (): Promise<ApiResponse<number>> => {
   try {
-    const response = await apiClient.notification.get<number>('/v1/notifications/unread-count');
+    const response = await apiClient.notification.get<number>('/notifications/unread-count');
     return response;
   } catch (error: unknown) {
     const err = error as { code?: string; name?: string; response?: { status?: number } };
@@ -224,21 +224,21 @@ export const getUnreadCount = async (): Promise<ApiResponse<number>> => {
 };
 
 export const markAsRead = async (id: string): Promise<ApiResponse<Notification>> => {
-  return await apiClient.notification.put<Notification>(`/v1/notifications/${id}`);
+  return await apiClient.notification.put<Notification>(`/notifications/${id}`);
 };
 
 export const markAllAsRead = async (): Promise<ApiResponse<number>> => {
-  return await apiClient.notification.put<number>('/v1/notifications/read-all');
+  return await apiClient.notification.put<number>('/notifications/read-all');
 };
 
 export const deleteNotification = async (id: string): Promise<ApiResponse<boolean>> => {
-  return await apiClient.notification.delete<boolean>(`/v1/notifications/${id}`);
+  return await apiClient.notification.delete<boolean>(`/notifications/${id}`);
 };
 
 export const createNotification = async (
   notification: CreateNotificationRequest
 ): Promise<ApiResponse<Notification>> => {
-  return await apiClient.notification.post<Notification>('/v1/notifications', notification);
+  return await apiClient.notification.post<Notification>('/notifications', notification);
 };
 
 export const getArchivedNotifications = async (
@@ -250,7 +250,7 @@ export const getArchivedNotifications = async (
     pagesize: pageSize,
   };
   const response = await apiClient.notification.get<NotificationListResponse<ArchivedNotification>>(
-    '/v1/notifications/archived',
+    '/notifications/archived',
     { params }
   );
   return response;
@@ -258,7 +258,7 @@ export const getArchivedNotifications = async (
 
 export const getArchiveConfig = async (): Promise<ApiResponse<ArchiveConfig>> => {
   const response = await apiClient.notification.get<ArchiveConfig>(
-    '/v1/notifications/archive/config'
+    '/notifications/archive/config'
   );
   return response;
 };
@@ -267,7 +267,7 @@ export const updateArchiveConfig = async (
   config: ArchiveConfig
 ): Promise<ApiResponse<ArchiveConfig>> => {
   const response = await apiClient.notification.put<ArchiveConfig>(
-    '/v1/notifications/archive/config',
+    '/notifications/archive/config',
     config
   );
   return response;
@@ -279,14 +279,14 @@ export interface AutoArchiveResponse {
 
 export const runAutoArchive = async (): Promise<ApiResponse<AutoArchiveResponse>> => {
   const response = await apiClient.notification.post<AutoArchiveResponse>(
-    '/v1/notifications/archive/run'
+    '/notifications/archive/run'
   );
   return response;
 };
 
 export const getMyNotificationStats = async (): Promise<ApiResponse<NotificationStats>> => {
   const response = await apiClient.notification.get<NotificationStats>(
-    '/v1/notifications/stats/me'
+    '/notifications/stats/me'
   );
   return response;
 };
@@ -315,7 +315,7 @@ export const getTemplates = async (
     params.search = search;
   }
   const response = await apiClient.notification.get<NotificationTemplateListResponse>(
-    '/v1/notification-templates',
+    '/notification-templates',
     { params }
   );
   return response;
@@ -323,7 +323,7 @@ export const getTemplates = async (
 
 export const getTemplate = async (id: string): Promise<ApiResponse<NotificationTemplate>> => {
   const response = await apiClient.notification.get<NotificationTemplate>(
-    `/v1/notification-templates/${id}`
+    `/notification-templates/${id}`
   );
   return response;
 };
@@ -332,7 +332,7 @@ export const createTemplate = async (
   template: CreateTemplateRequest
 ): Promise<ApiResponse<NotificationTemplate>> => {
   const response = await apiClient.notification.post<NotificationTemplate>(
-    '/v1/notification-templates',
+    '/notification-templates',
     template
   );
   return response;
@@ -343,14 +343,14 @@ export const updateTemplate = async (
   template: UpdateTemplateRequest
 ): Promise<ApiResponse<NotificationTemplate>> => {
   const response = await apiClient.notification.put<NotificationTemplate>(
-    `/v1/notification-templates/${id}`,
+    `/notification-templates/${id}`,
     template
   );
   return response;
 };
 
 export const deleteTemplate = async (id: string): Promise<ApiResponse<boolean>> => {
-  const response = await apiClient.notification.delete<boolean>(`/v1/notification-templates/${id}`);
+  const response = await apiClient.notification.delete<boolean>(`/notification-templates/${id}`);
   return response;
 };
 
@@ -361,19 +361,19 @@ export const renderTemplate = async (
   const response = await apiClient.notification.post<{
     title: string;
     content: string;
-  }>(`/v1/notification-templates/${id}/render`, data);
+  }>(`/notification-templates/${id}/render`, data);
   return response;
 };
 
 export const bulkMarkAsRead = async (ids: string[]): Promise<ApiResponse<number>> => {
-  const response = await apiClient.notification.put<number>('/v1/notifications/bulk-read', {
+  const response = await apiClient.notification.put<number>('/notifications/bulk-read', {
     ids,
   });
   return response;
 };
 
 export const bulkDeleteNotifications = async (ids: string[]): Promise<ApiResponse<number>> => {
-  const response = await apiClient.notification.delete<number>('/v1/notifications/bulk', {
+  const response = await apiClient.notification.delete<number>('/notifications/bulk', {
     data: { ids },
   });
   return response;
@@ -398,7 +398,7 @@ export const notificationServiceApi = {
   createNotification,
   health: async (): Promise<ApiResponse<HealthResponse>> => {
     const response = await apiClient.notification.get<HealthResponse>(
-      '/v1/notifications/health/detailed'
+      '/notifications/health/detailed'
     );
     return response;
   },
@@ -406,13 +406,13 @@ export const notificationServiceApi = {
 
 export const notificationApi = {
   get: async (id: string): Promise<ApiResponse<Notification>> => {
-    return await apiClient.notification.get<Notification>(`/v1/notifications/${id}`);
+    return await apiClient.notification.get<Notification>(`/notifications/${id}`);
   },
   markRead: async (id: string): Promise<ApiResponse<Notification>> => {
-    return await apiClient.notification.put<Notification>(`/v1/notifications/${id}`);
+    return await apiClient.notification.put<Notification>(`/notifications/${id}`);
   },
   markUnread: async (id: string): Promise<ApiResponse<Notification>> => {
-    return await apiClient.notification.put<Notification>(`/v1/notifications/${id}/unread`);
+    return await apiClient.notification.put<Notification>(`/notifications/${id}/unread`);
   },
 };
 

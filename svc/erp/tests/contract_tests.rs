@@ -2,6 +2,19 @@
 mod tests {
     use serde_json::json;
 
+    /// 检查 API 服务是否可用
+    async fn ensure_api_available() -> bool {
+        reqwest::Client::builder()
+            .timeout(std::time::Duration::from_secs(2))
+            .build()
+            .unwrap()
+            .get("http://localhost:8000/api/core/iam/auth/login")
+            .send()
+            .await
+            .map(|resp| !resp.status().is_server_error())
+            .unwrap_or(false)
+    }
+
     async fn test_project_contract_crud() {
         let rs_base_url = "http://localhost:8058";
         let erp_base_url = "http://localhost:8010";
@@ -10,7 +23,7 @@ mod tests {
         println!("Testing Project Contract CRUD...");
 
         let login_response = client
-            .post("http://localhost:8000/api/v1/auth/login")
+            .post("http://localhost:8000/api/core/iam/auth/login")
             .header(reqwest::header::CONTENT_TYPE, "application/json")
             .json(&json!({
                 "username": "admin",
@@ -37,7 +50,7 @@ mod tests {
             .to_string();
 
         let create_project_response = client
-            .post(format!("{}/api/v1/projects", rs_base_url))
+            .post(format!("{}/api/projects", rs_base_url))
             .bearer_auth(token.clone())
             .json(&json!({
                 "name": "Contract Test Project",
@@ -60,7 +73,7 @@ mod tests {
 
         println!("1. Testing create contract...");
         let create_response = client
-            .post(format!("{}/api/v1/contracts", erp_base_url))
+            .post(format!("{}/api/contracts", erp_base_url))
             .bearer_auth(token.clone())
             .json(&json!({
                 "contract_no": "CT-2024-001",
@@ -88,7 +101,7 @@ mod tests {
 
         println!("\n2. Testing get contract...");
         let get_response = client
-            .get(format!("{}/api/v1/contracts/{}", erp_base_url, contract_id))
+            .get(format!("{}/api/contracts/{}", erp_base_url, contract_id))
             .bearer_auth(token.clone())
             .send()
             .await
@@ -98,7 +111,7 @@ mod tests {
 
         println!("\n3. Testing list contracts...");
         let list_response = client
-            .get(format!("{}/api/v1/contracts", erp_base_url))
+            .get(format!("{}/api/contracts", erp_base_url))
             .bearer_auth(token.clone())
             .query(&[("project_id", project_id)])
             .send()
@@ -109,7 +122,7 @@ mod tests {
 
         println!("\n4. Testing update contract...");
         let update_response = client
-            .put(format!("{}/api/v1/contracts/{}", erp_base_url, contract_id))
+            .put(format!("{}/api/contracts/{}", erp_base_url, contract_id))
             .bearer_auth(token.clone())
             .json(&json!({
                 "contract_amount": 180000.00,
@@ -125,7 +138,7 @@ mod tests {
 
         println!("\n5. Testing delete contract...");
         let delete_response = client
-            .delete(format!("{}/api/v1/contracts/{}", erp_base_url, contract_id))
+            .delete(format!("{}/api/contracts/{}", erp_base_url, contract_id))
             .bearer_auth(token.clone())
             .send()
             .await
@@ -134,7 +147,7 @@ mod tests {
         assert_eq!(delete_response.status(), 204);
 
         client
-            .delete(format!("{}/api/v1/projects/{}", rs_base_url, project_id))
+            .delete(format!("{}/api/projects/{}", rs_base_url, project_id))
             .bearer_auth(token)
             .send()
             .await
@@ -151,7 +164,7 @@ mod tests {
         println!("\nTesting Project Budget CRUD...");
 
         let login_response = client
-            .post("http://localhost:8000/api/v1/auth/login")
+            .post("http://localhost:8000/api/core/iam/auth/login")
             .json(&json!({
                 "username": "admin",
                 "password": "admin123"
@@ -168,7 +181,7 @@ mod tests {
             .to_string();
 
         let create_project_response = client
-            .post(format!("{}/api/v1/projects", rs_base_url))
+            .post(format!("{}/api/projects", rs_base_url))
             .bearer_auth(token.clone())
             .json(&json!({
                 "name": "Budget Test Project",
@@ -191,7 +204,7 @@ mod tests {
 
         println!("1. Testing create budget...");
         let create_response = client
-            .post(format!("{}/api/v1/budgets", erp_base_url))
+            .post(format!("{}/api/budgets", erp_base_url))
             .bearer_auth(token.clone())
             .json(&json!({
                 "project_id": project_id,
@@ -213,10 +226,7 @@ mod tests {
 
         println!("\n2. Testing create budget items...");
         let create_item_response = client
-            .post(format!(
-                "{}/api/v1/budgets/{}/items",
-                erp_base_url, budget_id
-            ))
+            .post(format!("{}/api/budgets/{}/items", erp_base_url, budget_id))
             .bearer_auth(token.clone())
             .json(&json!({
                 "budget_id": budget_id,
@@ -239,7 +249,7 @@ mod tests {
 
         println!("\n3. Testing update budget...");
         let update_response = client
-            .put(format!("{}/api/v1/budgets/{}", erp_base_url, budget_id))
+            .put(format!("{}/api/budgets/{}", erp_base_url, budget_id))
             .bearer_auth(token.clone())
             .json(&json!({
                 "amount": 350000.00,
@@ -253,7 +263,7 @@ mod tests {
 
         println!("\n4. Testing delete budget item...");
         let delete_item_response = client
-            .delete(format!("{}/api/v1/budget-items/{}", erp_base_url, item_id))
+            .delete(format!("{}/api/budget-items/{}", erp_base_url, item_id))
             .bearer_auth(token.clone())
             .send()
             .await
@@ -263,7 +273,7 @@ mod tests {
 
         println!("\n5. Testing delete budget...");
         let delete_response = client
-            .delete(format!("{}/api/v1/budgets/{}", erp_base_url, budget_id))
+            .delete(format!("{}/api/budgets/{}", erp_base_url, budget_id))
             .bearer_auth(token.clone())
             .send()
             .await
@@ -272,7 +282,7 @@ mod tests {
         assert_eq!(delete_response.status(), 204);
 
         client
-            .delete(format!("{}/api/v1/projects/{}", rs_base_url, project_id))
+            .delete(format!("{}/api/projects/{}", rs_base_url, project_id))
             .bearer_auth(token)
             .send()
             .await
@@ -289,7 +299,7 @@ mod tests {
         println!("\nTesting Payment Schedule CRUD...");
 
         let login_response = client
-            .post("http://localhost:8000/api/v1/auth/login")
+            .post("http://localhost:8000/api/core/iam/auth/login")
             .json(&json!({
                 "username": "admin",
                 "password": "admin123"
@@ -306,7 +316,7 @@ mod tests {
             .to_string();
 
         let create_project_response = client
-            .post(format!("{}/api/v1/projects", rs_base_url))
+            .post(format!("{}/api/projects", rs_base_url))
             .bearer_auth(token.clone())
             .json(&json!({
                 "name": "Payment Schedule Test Project",
@@ -328,7 +338,7 @@ mod tests {
         let project_id = project_data["data"]["id"].as_str().unwrap();
 
         let create_contract_response = client
-            .post(format!("{}/api/v1/contracts", erp_base_url))
+            .post(format!("{}/api/contracts", erp_base_url))
             .bearer_auth(token.clone())
             .json(&json!({
                 "contract_no": "CT-PAYMENT-001",
@@ -354,7 +364,7 @@ mod tests {
 
         println!("1. Testing create payment schedule...");
         let create_response = client
-            .post(format!("{}/api/v1/payment-schedules", erp_base_url))
+            .post(format!("{}/api/payment-schedules", erp_base_url))
             .bearer_auth(token.clone())
             .json(&json!({
                 "contract_id": contract_id,
@@ -378,7 +388,7 @@ mod tests {
         println!("\n2. Testing update payment schedule...");
         let update_response = client
             .put(format!(
-                "{}/api/v1/payment-schedules/{}",
+                "{}/api/payment-schedules/{}",
                 erp_base_url, schedule_id
             ))
             .bearer_auth(token.clone())
@@ -396,7 +406,7 @@ mod tests {
         println!("\n3. Testing delete payment schedule...");
         let delete_response = client
             .delete(format!(
-                "{}/api/v1/payment-schedules/{}",
+                "{}/api/payment-schedules/{}",
                 erp_base_url, schedule_id
             ))
             .bearer_auth(token.clone())
@@ -407,14 +417,14 @@ mod tests {
         assert_eq!(delete_response.status(), 204);
 
         client
-            .delete(format!("{}/api/v1/contracts/{}", erp_base_url, contract_id))
+            .delete(format!("{}/api/contracts/{}", erp_base_url, contract_id))
             .bearer_auth(token.clone())
             .send()
             .await
             .expect("Cleanup contract failed");
 
         client
-            .delete(format!("{}/api/v1/projects/{}", rs_base_url, project_id))
+            .delete(format!("{}/api/projects/{}", rs_base_url, project_id))
             .bearer_auth(token)
             .send()
             .await
@@ -424,9 +434,11 @@ mod tests {
     }
 
     #[tokio::test]
-    #[ignore]
-    #[ignore = "集成测试需要运行 iam:8000, rs:8020, erp:8010 服务"]
     async fn test_contract_integration() {
+        if !ensure_api_available().await {
+            eprintln!("⏭ 跳过: API服务未运行 (localhost:8000)");
+            return;
+        }
         test_project_contract_crud().await;
         test_project_budget_crud().await;
         test_payment_schedule_crud().await;

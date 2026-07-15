@@ -65,7 +65,10 @@ export const hrmModuleConfig: RouteModuleConfig = {
     },
     {
       path: HRM_PATHS.employeeCreate,
-      element: lazyWithRetry(() => import('@/pages/hrm/HrmEmployeeCreatePage'), 'HrmEmployeeCreatePage'),
+      element: lazyWithRetry(
+        () => import('@/pages/hrm/HrmEmployeeCreatePage'),
+        'HrmEmployeeCreatePage'
+      ),
       module: 'hrm',
       code: 'hrm-employee-create',
       title: '创建员工',
@@ -76,7 +79,10 @@ export const hrmModuleConfig: RouteModuleConfig = {
     },
     {
       path: HRM_PATHS.employeeDetail,
-      element: lazyWithRetry(() => import('@/pages/hrm/HrmEmployeeDetailPage'), 'HrmEmployeeDetailPage'),
+      element: lazyWithRetry(
+        () => import('@/pages/hrm/HrmEmployeeDetailPage'),
+        'HrmEmployeeDetailPage'
+      ),
       module: 'hrm',
       code: 'hrm-employee-detail',
       title: '员工详情',
@@ -87,7 +93,10 @@ export const hrmModuleConfig: RouteModuleConfig = {
     },
     {
       path: HRM_PATHS.employeeEdit,
-      element: lazyWithRetry(() => import('@/pages/hrm/HrmEmployeeEditPage'), 'HrmEmployeeEditPage'),
+      element: lazyWithRetry(
+        () => import('@/pages/hrm/HrmEmployeeEditPage'),
+        'HrmEmployeeEditPage'
+      ),
       module: 'hrm',
       code: 'hrm-employee-edit',
       title: '编辑员工',
@@ -109,7 +118,10 @@ export const hrmModuleConfig: RouteModuleConfig = {
     },
     {
       path: HRM_PATHS.organization,
-      element: lazyWithRetry(() => import('@/pages/hrm/HrmOrganizationPage'), 'HrmOrganizationPage'),
+      element: lazyWithRetry(
+        () => import('@/pages/hrm/HrmOrganizationPage'),
+        'HrmOrganizationPage'
+      ),
       module: 'hrm',
       code: 'hrm-organization',
       title: '组织架构',
@@ -142,7 +154,10 @@ export const hrmModuleConfig: RouteModuleConfig = {
     },
     {
       path: HRM_PATHS.contractDetail,
-      element: lazyWithRetry(() => import('@/pages/hrm/HrmContractDetailPage'), 'HrmContractDetailPage'),
+      element: lazyWithRetry(
+        () => import('@/pages/hrm/HrmContractDetailPage'),
+        'HrmContractDetailPage'
+      ),
       module: 'hrm',
       code: 'hrm-contract-detail',
       title: '合同详情',
@@ -197,7 +212,10 @@ export const hrmModuleConfig: RouteModuleConfig = {
     },
     {
       path: HRM_PATHS.salaryAdjustment,
-      element: lazyWithRetry(() => import('@/pages/hrm/HrmSalaryAdjustmentPage'), 'HrmSalaryAdjustmentPage'),
+      element: lazyWithRetry(
+        () => import('@/pages/hrm/HrmSalaryAdjustmentPage'),
+        'HrmSalaryAdjustmentPage'
+      ),
       module: 'hrm',
       code: 'hrm-salary-adjustment',
       title: '调薪管理',

@@ -1,6 +1,8 @@
-import React, { Component, ErrorInfo, ReactNode } from 'react';
+import type { ErrorInfo, ReactNode } from 'react';
+import React, { Component } from 'react';
 import { Alert, AlertTitle, Button, Box } from '@mui/material';
 import { RefreshCw, AlertTriangle } from 'lucide-react';
+import { logger } from '@/utils/logger';
 
 interface Props {
   children: ReactNode;
@@ -37,9 +39,9 @@ class ErrorBoundary extends Component<Props, State> {
       error,
       errorInfo,
     });
-    
-    console.error('ErrorBoundary caught error:', error);
-    console.error('Error info:', errorInfo);
+
+    logger.error('ErrorBoundary caught error:', error);
+    logger.error('Error info:', errorInfo);
   }
 
   handleRetry = (): void => {
@@ -59,7 +61,10 @@ class ErrorBoundary extends Component<Props, State> {
 
       return (
         <Box sx={{ p: 4, display: 'flex', justifyContent: 'center' }}>
-          <Alert severity="error" sx={{ maxWidth: 600 }}>
+          <Alert
+            severity='error'
+            sx={{ maxWidth: 600 }}
+          >
             <AlertTitle>
               <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
                 <AlertTriangle sx={{ width: 24, height: 24 }} />
@@ -70,7 +75,7 @@ class ErrorBoundary extends Component<Props, State> {
             <Button
               onClick={this.handleRetry}
               startIcon={<RefreshCw />}
-              color="inherit"
+              color='inherit'
               sx={{ mt: 2 }}
             >
               重试操作

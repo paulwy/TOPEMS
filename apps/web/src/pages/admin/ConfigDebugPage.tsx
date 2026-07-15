@@ -194,10 +194,12 @@ const ConfigDebugPage: React.FC = () => {
                 fontFamily: 'monospace',
               }}
             >
-              {Object.entries(import.meta.env)
-                .filter(([key]) => key.startsWith('VITE_'))
-                .map(([key, value]) => `${key}=${value}`)
-                .join('\n')}
+              {typeof import.meta !== 'undefined' && import.meta.env
+                ? Object.entries(import.meta.env)
+                    .filter(([key]) => key.startsWith('VITE_'))
+                    .map(([key, value]) => `${key}=${value}`)
+                    .join('\n')
+                : 'import.meta.env not available'}
             </pre>
           </CardContent>
         </Paper>

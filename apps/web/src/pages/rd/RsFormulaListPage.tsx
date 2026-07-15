@@ -1,7 +1,8 @@
-import React, { useState, useEffect, useMemo, useCallback } from 'react';
+import React, { useState, useMemo, useCallback } from 'react';
 import { Box, Chip } from '@mui/material';
 import { Plus, Eye, Edit, Trash2 } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { ListPageTemplate, type ColumnDef, type RowAction } from '@/components/templates';
 import { PageContainer } from '@/components/common';
 import { formulaApi } from '@/api/rd';
@@ -10,6 +11,7 @@ import { useNotificationStore } from '@/store';
 import { logger } from '@/utils/logger';
 import { ConfirmDialog } from '@topems/shared-components';
 import { RD_PATHS } from '@/modules/rd/config';
+import { QUERY_KEYS } from '@/lib/reactQuery';
 
 const STATUS_OPTIONS = [
   { label: '全部', value: '' },
@@ -20,46 +22,58 @@ const STATUS_OPTIONS = [
 
 const RsFormulaListPage: React.FC = () => {
   const navigate = useNavigate();
+  const queryClient = useQueryClient();
   const { addNotification } = useNotificationStore();
-  const [formulas, setFormulas] = useState<Formula[]>([]);
   const [page, setPage] = useState(0);
   const [rowsPerPage, setRowsPerPage] = useState(10);
   const [searchTerm, setSearchTerm] = useState('');
-  const [loading, setLoading] = useState(false);
-  const [error, setError] = useState<string>('');
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
   const [selectedFormula, setSelectedFormula] = useState<Formula | null>(null);
   const [statusFilter, setStatusFilter] = useState<string>('');
 
-  const loadFormulas = useCallback(async () => {
-    try {
-      setLoading(true);
-      setError('');
+  const formulaListQuery = useQuery({
+    queryKey: [...QUERY_KEYS.RD.FORMULAS, { statusFilter }],
+    queryFn: async () => {
       const params: Record<string, string> = {};
       if (statusFilter) params.status = statusFilter;
 
       const response = await formulaApi.listFormulas(params);
-      if (response.success && response.data) {
-        setFormulas(response.data || []);
-      } else {
-        setError(response.message || '加载配方列表失败');
+      if (!response.success || !response.data) {
+        throw new Error(response.message || '加载配方列表失败');
       }
-    } catch (err: unknown) {
-      logger.error('加载配方列表失败:', err);
-      setError('加载配方列表失败');
+      return response.data || [];
+    },
+  });
+
+  const deleteFormulaMutation = useMutation({
+    mutationFn: async (id: string) => {
+      const response = await formulaApi.deleteFormula(id);
+      if (!response.success) {
+        throw new Error(response.message || '无法删除配方');
+      }
+      return response;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: QUERY_KEYS.RD.FORMULAS });
+      addNotification({
+        type: 'success',
+        title: '删除成功',
+        message: '配方已删除',
+      });
+    },
+    onError: (error: unknown) => {
+      logger.error('删除配方失败:', error);
       addNotification({
         type: 'error',
-        title: '加载失败',
-        message: '无法加载配方列表',
+        title: '删除失败',
+        message: error instanceof Error ? error.message : '无法删除配方',
       });
-    } finally {
-      setLoading(false);
-    }
-  }, [statusFilter, addNotification]);
+    },
+  });
 
-  useEffect(() => {
-    loadFormulas();
-  }, [loadFormulas]);
+  const formulas = formulaListQuery.data || [];
+  const loading = formulaListQuery.isLoading || deleteFormulaMutation.isPending;
+  const error = formulaListQuery.error ? (formulaListQuery.error as Error).message : '';
 
   const handleDeleteClick = useCallback((formula: Formula) => {
     setSelectedFormula(formula);
@@ -69,29 +83,14 @@ const RsFormulaListPage: React.FC = () => {
   const handleDeleteConfirm = useCallback(async () => {
     if (!selectedFormula) return;
     try {
-      const response = await formulaApi.deleteFormula(selectedFormula.id);
-      if (response.success) {
-        addNotification({
-          type: 'success',
-          title: '删除成功',
-          message: '配方已删除',
-        });
-        setFormulas((prev) => prev.filter((f) => f.id !== selectedFormula.id));
-      } else {
-        throw new Error('无法删除配方');
-      }
-    } catch (err: unknown) {
-      logger.error('删除配方失败:', err);
-      addNotification({
-        type: 'error',
-        title: '删除失败',
-        message: '无法删除配方',
-      });
+      await deleteFormulaMutation.mutateAsync(selectedFormula.id);
+    } catch {
+      // 错误已在 mutation onError 中处理
     } finally {
       setDeleteDialogOpen(false);
       setSelectedFormula(null);
     }
-  }, [selectedFormula, addNotification]);
+  }, [selectedFormula, deleteFormulaMutation]);
 
   const filteredFormulas = useMemo(() => {
     return formulas.filter(
@@ -287,7 +286,7 @@ const RsFormulaListPage: React.FC = () => {
         ]}
         rowActions={rowActions}
         getRowId={(row) => row.id}
-        onRefresh={loadFormulas}
+        onRefresh={() => formulaListQuery.refetch()}
         emptyMessage='暂无配方数据'
         showRowNumber
         columnConfigurable

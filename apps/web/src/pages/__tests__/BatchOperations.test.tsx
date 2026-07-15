@@ -12,6 +12,7 @@ import { mesApi } from '@/api/mes';
 import { financeApi } from '@/api/finance';
 import { qualityApi } from '@/api/mes/quality';
 import { useNotificationStore, useAuthStore } from '@/store';
+import { renderWithProviders } from '@/__tests__/test-utils';
 
 const queryClient = new QueryClient();
 
@@ -28,7 +29,9 @@ vi.mock('@/api/erp', () => ({
 vi.mock('@/api/mes', () => ({
   mesApi: {
     orders: {
-      list: vi.fn().mockResolvedValue({ success: true, data: { data: [], pagination: { total: 0 } } }),
+      list: vi
+        .fn()
+        .mockResolvedValue({ success: true, data: { data: [], pagination: { total: 0 } } }),
       release: vi.fn().mockResolvedValue({ success: true }),
       start: vi.fn().mockResolvedValue({ success: true }),
       complete: vi.fn().mockResolvedValue({ success: true }),
@@ -39,7 +42,9 @@ vi.mock('@/api/mes', () => ({
 
 vi.mock('@/api/mes/quality', () => ({
   qualityApi: {
-    listInspections: vi.fn().mockResolvedValue({ success: true, data: { inspections: [], total: 0 } }),
+    listInspections: vi
+      .fn()
+      .mockResolvedValue({ success: true, data: { inspections: [], total: 0 } }),
   },
 }));
 
@@ -51,122 +56,126 @@ vi.mock('@/api/finance', () => ({
   },
 }));
 
-vi.mock('@/store', () => ({
-  useNotificationStore: vi.fn(() => ({
+vi.mock('@/store', () => {
+  const notificationState = {
     notifications: [],
     addNotification: vi.fn(),
     removeNotification: vi.fn(),
     clearNotifications: vi.fn(),
-  })),
-  useAuthStore: vi.fn(() => ({
-    user: { id: '1', username: 'testuser', email: 'test@example.com', isActive: true },
-    token: 'test-token',
-    permissions: [],
-    roles: [],
-    setUser: vi.fn(),
-    setToken: vi.fn(),
-    setPermissions: vi.fn(),
-    setRoles: vi.fn(),
-    clearAuth: vi.fn(),
-    updateUser: vi.fn(),
-    isAuthenticated: vi.fn(() => true),
-    hasPermission: vi.fn(() => true),
-    hasAnyPermission: vi.fn(() => true),
-    hasAllPermissions: vi.fn(() => true),
-    hasRole: vi.fn(() => true),
-    hasAnyRole: vi.fn(() => true),
-    isSuperuser: vi.fn(() => true),
-    getDisplayName: vi.fn(() => 'Test User'),
-    getAvatarUrl: vi.fn(() => ''),
-  })),
-  useThemeStore: vi.fn(() => ({
-    theme: 'light',
-    setTheme: vi.fn(),
-  })),
-  useUIStore: vi.fn(() => ({
-    sidebarOpen: true,
-    sidebarCollapsed: false,
-    toggleSidebar: vi.fn(),
-    setSidebarOpen: vi.fn(),
-    toggleSidebarCollapsed: vi.fn(),
-    setSidebarCollapsed: vi.fn(),
-  })),
-  useWorkflowStore: vi.fn(() => ({
-    currentTaskId: null,
-    taskStatus: 'pending',
-    setCurrentTaskId: vi.fn(),
-    setTaskStatus: vi.fn(),
-    completeTask: vi.fn(),
-  })),
-  useModuleLoadingStore: vi.fn(() => ({
-    modules: {},
-    loading: false,
-    progress: 0,
-    loadModule: vi.fn(),
-    setModuleState: vi.fn(),
-    reset: vi.fn(),
-  })),
-  useShortcutsStore: vi.fn(() => ({
-    shortcuts: [],
-    addShortcut: vi.fn(),
-    removeShortcut: vi.fn(),
-    updateShortcut: vi.fn(),
-  })),
-  useNotificationSettingsStore: vi.fn(() => ({
-    settings: {},
-    updateSettings: vi.fn(),
-  })),
-  useBIStore: vi.fn(() => ({
-    summary: null,
-    development: null,
-    quality: null,
-    production: null,
-    laboratory: null,
-    loading: false,
-    error: null,
-    fetchData: vi.fn(),
-    clearData: vi.fn(),
-  })),
-  useAuth: vi.fn(() => ({
-    user: { id: '1', username: 'testuser', email: 'test@example.com', isActive: true },
-    token: 'test-token',
-    permissions: [],
-    roles: [],
-  })),
-  useTheme: vi.fn(() => ({ theme: 'light' })),
-  useSidebarOpen: vi.fn(() => true),
-  useSidebarCollapsed: vi.fn(() => false),
-  useToggleSidebar: vi.fn(),
-  useSetSidebarOpen: vi.fn(),
-  useToggleSidebarCollapsed: vi.fn(),
-  useSetSidebarCollapsed: vi.fn(),
-}));
+  };
+  return {
+    useNotificationStore: vi.fn((selector?: (state: typeof notificationState) => unknown) =>
+      selector ? selector(notificationState) : notificationState
+    ),
+    useAuthStore: vi.fn(() => ({
+      user: { id: '1', username: 'testuser', email: 'test@example.com', isActive: true },
+      token: 'test-token',
+      permissions: [],
+      roles: [],
+      setUser: vi.fn(),
+      setToken: vi.fn(),
+      setPermissions: vi.fn(),
+      setRoles: vi.fn(),
+      clearAuth: vi.fn(),
+      updateUser: vi.fn(),
+      isAuthenticated: vi.fn(() => true),
+      hasPermission: vi.fn(() => true),
+      hasAnyPermission: vi.fn(() => true),
+      hasAllPermissions: vi.fn(() => true),
+      hasRole: vi.fn(() => true),
+      hasAnyRole: vi.fn(() => true),
+      isSuperuser: vi.fn(() => true),
+      getDisplayName: vi.fn(() => 'Test User'),
+      getAvatarUrl: vi.fn(() => ''),
+    })),
+    useThemeStore: vi.fn(() => ({
+      theme: 'light',
+      setTheme: vi.fn(),
+    })),
+    useUIStore: vi.fn(() => ({
+      sidebarOpen: true,
+      sidebarCollapsed: false,
+      toggleSidebar: vi.fn(),
+      setSidebarOpen: vi.fn(),
+      toggleSidebarCollapsed: vi.fn(),
+      setSidebarCollapsed: vi.fn(),
+    })),
+    useWorkflowStore: vi.fn(() => ({
+      currentTaskId: null,
+      taskStatus: 'pending',
+      setCurrentTaskId: vi.fn(),
+      setTaskStatus: vi.fn(),
+      completeTask: vi.fn(),
+    })),
+    useModuleLoadingStore: vi.fn(() => ({
+      modules: {},
+      loading: false,
+      progress: 0,
+      loadModule: vi.fn(),
+      setModuleState: vi.fn(),
+      reset: vi.fn(),
+    })),
+    useShortcutsStore: vi.fn(() => ({
+      shortcuts: [],
+      addShortcut: vi.fn(),
+      removeShortcut: vi.fn(),
+      updateShortcut: vi.fn(),
+    })),
+    useNotificationSettingsStore: vi.fn(() => ({
+      settings: {},
+      updateSettings: vi.fn(),
+    })),
+    useBIStore: vi.fn(() => ({
+      summary: null,
+      development: null,
+      quality: null,
+      production: null,
+      laboratory: null,
+      loading: false,
+      error: null,
+      fetchData: vi.fn(),
+      clearData: vi.fn(),
+    })),
+    useAuth: vi.fn(() => ({
+      user: { id: '1', username: 'testuser', email: 'test@example.com', isActive: true },
+      token: 'test-token',
+      permissions: [],
+      roles: [],
+    })),
+    useTheme: vi.fn(() => ({ theme: 'light' })),
+    useSidebarOpen: vi.fn(() => true),
+    useSidebarCollapsed: vi.fn(() => false),
+    useToggleSidebar: vi.fn(),
+    useSetSidebarOpen: vi.fn(),
+    useToggleSidebarCollapsed: vi.fn(),
+    useSetSidebarCollapsed: vi.fn(),
+  };
+});
 
 describe('ERP PurchaseOrderPage', () => {
-    it('should render without crashing', async () => {
-      const { container } = renderWithProviders(<PurchaseOrderPage />);
-      expect(container).toBeTruthy();
-    });
+  it('should render without crashing', async () => {
+    const { container } = renderWithProviders(<PurchaseOrderPage />);
+    expect(container).toBeTruthy();
   });
+});
 
 describe('MES ProductionOrderManagementPage', () => {
-    it('should render without crashing', async () => {
-      const { container } = renderWithProviders(<ProductionOrderManagementPage />);
-      expect(container).toBeTruthy();
-    });
+  it('should render without crashing', async () => {
+    const { container } = renderWithProviders(<ProductionOrderManagementPage />);
+    expect(container).toBeTruthy();
   });
+});
 
 describe('Finance FinancePaymentPage', () => {
-    it('should render without crashing', async () => {
-      const { container } = renderWithProviders(<FinancePaymentPage />);
-      expect(container).toBeTruthy();
-    });
+  it('should render without crashing', async () => {
+    const { container } = renderWithProviders(<FinancePaymentPage />);
+    expect(container).toBeTruthy();
   });
+});
 
 describe('QMS QualityInspectionPage', () => {
-    it('should render without crashing', async () => {
-      const { container } = renderWithProviders(<QualityInspectionPage />);
-      expect(container).toBeTruthy();
-    });
+  it('should render without crashing', async () => {
+    const { container } = renderWithProviders(<QualityInspectionPage />);
+    expect(container).toBeTruthy();
   });
 });

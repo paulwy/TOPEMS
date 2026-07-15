@@ -110,6 +110,7 @@ vi.mock('@/store', () => ({
   useSetSidebarCollapsed: vi.fn(),
 }));
 
+describe('WIPPage', () => {
   it('should render without crashing', () => {
     // WIPPage is a stub component that returns null
     render(

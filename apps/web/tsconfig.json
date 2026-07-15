@@ -22,7 +22,6 @@
     "strictBindCallApply": true,
     "noImplicitReturns": true,
     "alwaysStrict": true,
-    "baseUrl": ".",
     "paths": {
       "@/*": ["./src/*"],
       "@topems/tokens": ["../../packages/tokens/src"],
@@ -30,9 +29,9 @@
       "@topems/shared-utils": ["../../packages/shared-utils/src"],
       "@topems/shared-hooks": ["../../packages/shared-hooks/src"],
       "@topems/shared-constants": ["../../packages/shared-constants/src"],
-      "@topems/shared-components": ["../../packages/shared-components/src"]
+      "@topems/shared-components": ["../../packages/shared-components/src"],
+      "*": ["./*"]
     },
-    "ignoreDeprecations": "6.0",
     "types": ["node", "react", "react-dom", "@react-three/fiber"]
   },
   "include": ["src", "src/types/**/*.d.ts"],

@@ -14,11 +14,10 @@ import {
   Button,
 } from '@mui/material';
 import { PageContainer } from '@/components/common';
-import React, { useState, useEffect, useMemo, useCallback } from 'react';
+import React, { useState, useMemo, useCallback } from 'react';
 import type { Inventory, CreateInventoryRequest, UpdateInventoryRequest } from '@/api/erp';
 import { erpApi } from '@/api/erp';
 import { useNotificationStore } from '@/store';
-import { LoadingSpinner } from '@topems/shared-components';
 import {
   ListPageTemplate,
   type ColumnDef,
@@ -28,17 +27,16 @@ import {
 import { Plus, Edit, Trash2, Eye, Package, AlertTriangle } from 'lucide-react';
 import { apiLogger } from '@/utils/logger';
 import { designTokens } from '@/theme/tokens';
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import { QUERY_KEYS } from '@/lib/reactQuery';
 
 const ct = designTokens.colors;
 
 const InventoryManagementPage: React.FC = () => {
-  const [items, setItems] = useState<Inventory[]>([]);
-  const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState('');
   const [warehouseFilter, setWarehouseFilter] = useState<string>('all');
   const [currentPage, setCurrentPage] = useState(1);
   const [pageSize] = useState(10);
-  const [total, setTotal] = useState(0);
   const [showDialog, setShowDialog] = useState(false);
   const [showDetailDialog, setShowDetailDialog] = useState(false);
   const [selectedItem, setSelectedItem] = useState<Inventory | null>(null);
@@ -61,10 +59,13 @@ const InventoryManagementPage: React.FC = () => {
   });
 
   const { addNotification } = useNotificationStore();
+  const queryClient = useQueryClient();
 
-  const loadItems = useCallback(async () => {
-    try {
-      setLoading(true);
+  const queryKey = [QUERY_KEYS.ERP.INVENTORY, searchTerm, warehouseFilter, currentPage, pageSize];
+
+  const { data: inventoryResponse, isLoading } = useQuery({
+    queryKey,
+    queryFn: async () => {
       const params: Record<string, unknown> = {
         page: currentPage - 1,
         pagesize: pageSize,
@@ -73,78 +74,118 @@ const InventoryManagementPage: React.FC = () => {
       if (warehouseFilter !== 'all') params.warehouse = warehouseFilter;
 
       const response = await erpApi.inventory.list(params);
-      if (response.success && response.data) {
-        setItems(response.data.items || []);
-        setTotal(response.data.total || 0);
+      if (!response.success) {
+        throw new Error('Failed to fetch inventory');
       }
-    } catch (error: unknown) {
-      apiLogger.error('加载库存列表失败:', error);
+      return response.data;
+    },
+    staleTime: 5 * 60 * 1000,
+    gcTime: 10 * 60 * 1000,
+  });
+
+  const items = inventoryResponse?.items || [];
+  const total = inventoryResponse?.total || 0;
+
+  const createMutation = useMutation({
+    mutationFn: async (data: CreateInventoryRequest) => {
+      const response = await erpApi.inventory.create(data);
+      if (!response.success) {
+        throw new Error('Failed to create inventory');
+      }
+      return response;
+    },
+    onSuccess: () => {
+      addNotification({
+        type: 'success',
+        title: '创建成功',
+        message: '新库存记录已创建',
+      });
+      queryClient.invalidateQueries({ queryKey: [QUERY_KEYS.ERP.INVENTORY] });
+      setShowDialog(false);
+      resetForm();
+    },
+    onError: (error) => {
+      apiLogger.error('创建失败:', error);
       addNotification({
         type: 'error',
-        title: '加载失败',
-        message: '无法加载库存列表',
+        title: '创建失败',
+        message: '无法创建库存',
       });
-    } finally {
-      setLoading(false);
-    }
-  }, [currentPage, pageSize, searchTerm, warehouseFilter, addNotification]);
+    },
+  });
 
-  useEffect(() => {
-    loadItems();
-  }, [loadItems]);
+  const updateMutation = useMutation({
+    mutationFn: async ({ id, data }: { id: string; data: UpdateInventoryRequest }) => {
+      const response = await erpApi.inventory.update(id, data);
+      if (!response.success) {
+        throw new Error('Failed to update inventory');
+      }
+      return response;
+    },
+    onSuccess: () => {
+      addNotification({
+        type: 'success',
+        title: '更新成功',
+        message: '库存信息已更新',
+      });
+      queryClient.invalidateQueries({ queryKey: [QUERY_KEYS.ERP.INVENTORY] });
+      setShowDialog(false);
+      resetForm();
+    },
+    onError: (error) => {
+      apiLogger.error('更新失败:', error);
+      addNotification({
+        type: 'error',
+        title: '更新失败',
+        message: '无法更新库存',
+      });
+    },
+  });
+
+  const deleteMutation = useMutation({
+    mutationFn: async (id: string) => {
+      const response = await erpApi.inventory.delete(id);
+      if (!response.success) {
+        throw new Error('Failed to delete inventory');
+      }
+      return response;
+    },
+    onSuccess: () => {
+      addNotification({
+        type: 'success',
+        title: '删除成功',
+        message: '库存记录已删除',
+      });
+      queryClient.invalidateQueries({ queryKey: [QUERY_KEYS.ERP.INVENTORY] });
+    },
+    onError: (error) => {
+      apiLogger.error('删除失败:', error);
+      addNotification({
+        type: 'error',
+        title: '删除失败',
+        message: '无法删除库存记录',
+      });
+    },
+  });
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    try {
-      if (selectedItem) {
-        await erpApi.inventory.update(selectedItem.id, formData as UpdateInventoryRequest);
-        addNotification({
-          type: 'success',
-          title: '更新成功',
-          message: '库存信息已更新',
-        });
-      } else {
-        await erpApi.inventory.create(formData);
-        addNotification({
-          type: 'success',
-          title: '创建成功',
-          message: '新库存记录已创建',
-        });
-      }
-      setShowDialog(false);
-      resetForm();
-      loadItems();
-    } catch (error: unknown) {
-      apiLogger.error('操作失败:', error);
-      addNotification({
-        type: 'error',
-        title: '操作失败',
-        message: selectedItem ? '更新库存失败' : '创建库存失败',
+    if (selectedItem) {
+      await updateMutation.mutateAsync({
+        id: selectedItem.id,
+        data: formData as UpdateInventoryRequest,
       });
+    } else {
+      await createMutation.mutateAsync(formData);
     }
   };
 
   const handleDelete = useCallback(
     async (id: string) => {
       if (!window.confirm('确定要删除这条库存记录吗?')) return;
-      try {
-        await erpApi.inventory.delete(id);
-        addNotification({
-          type: 'success',
-          title: '删除成功',
-          message: '库存记录已删除',
-        });
-        loadItems();
-      } catch (error: unknown) {
-        apiLogger.error('删除失败:', error);
-        addNotification({
-          type: 'error',
-          title: '删除失败',
-          message: '无法删除库存记录',
-        });
-      }
+      await deleteMutation.mutateAsync(id);
     },
-    [loadItems, addNotification]
+    [deleteMutation]
   );
 
   const handleEdit = useCallback((item: Inventory) => {
@@ -302,18 +343,21 @@ const InventoryManagementPage: React.FC = () => {
   };
 
   const stats = useMemo(() => {
-    const totalValue = items.reduce((sum, item) => sum + (item.total_cost || 0), 0);
-    const lowStock = items.filter((i) => i.safety_stock && i.quantity < i.safety_stock).length;
+    const totalValue = items.reduce(
+      (sum: number, item: Inventory) => sum + (item.total_cost || 0),
+      0
+    );
+    const lowStock = items.filter(
+      (i: Inventory) => i.safety_stock && i.quantity < i.safety_stock
+    ).length;
     const totalItems = items.length;
     return {
       totalItems,
       totalValue,
       lowStock,
-      inStock: items.filter((i) => i.quantity > 0).length,
+      inStock: items.filter((i: Inventory) => i.quantity > 0).length,
     };
   }, [items]);
-
-  if (loading) return <LoadingSpinner />;
 
   const statsContent = (
     <Box
@@ -393,7 +437,7 @@ const InventoryManagementPage: React.FC = () => {
         subtitle=''
         columns={columns}
         data={items}
-        loading={loading}
+        loading={isLoading}
         filters={filters}
         searchable
         searchPlaceholder='搜索物料编码、名称或批次号...'
@@ -608,8 +652,9 @@ const InventoryManagementPage: React.FC = () => {
               <Button
                 type='submit'
                 variant='contained'
+                disabled={createMutation.isPending || updateMutation.isPending}
               >
-                保存
+                {createMutation.isPending || updateMutation.isPending ? '保存中...' : '保存'}
               </Button>
             </DialogActions>
           </form>

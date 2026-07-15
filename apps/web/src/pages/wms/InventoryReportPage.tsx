@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useMemo } from 'react';
+import React, { useState, useMemo } from 'react';
 import {
   Box,
   Typography,
@@ -39,6 +39,8 @@ import type {
 } from '@/api/wms';
 import { apiLogger } from '@/utils/logger';
 import { designTokens } from '@/theme/tokens';
+import { useQuery } from '@tanstack/react-query';
+import { QUERY_KEYS } from '@/lib/reactQuery';
 
 const ct = designTokens.colors;
 
@@ -66,77 +68,56 @@ function TabPanel(props: TabPanelProps) {
 const InventoryReportPage: React.FC = () => {
   const [currentTab, setCurrentTab] = useState(0);
   const [warehouseFilter, setWarehouseFilter] = useState<string>('');
-  const [warehouses, setWarehouses] = useState<Warehouse[]>([]);
 
-  // Statistics data
-  const [statistics, setStatistics] = useState<InventoryStatistics | null>(null);
-  const [statisticsLoading, setStatisticsLoading] = useState(true);
-
-  // ABC Analysis data
-  const [abcAnalysis, setAbcAnalysis] = useState<ABCAnalysisItem[]>([]);
-  const [abcTotalSku, setAbcTotalSku] = useState(0);
-  const [abcTotalValue, setAbcTotalValue] = useState(0);
-  const [abcLoading, setAbcLoading] = useState(false);
-
-  // Turnover data
-  const [turnoverData, setTurnoverData] = useState<InventoryTurnoverData[]>([]);
-  const [turnoverLoading, setTurnoverLoading] = useState(false);
-
-  // Value by warehouse data
-  const [valueByWarehouse, setValueByWarehouse] = useState<InventoryValueByWarehouse[]>([]);
-  const [totalWarehouseValue, setTotalWarehouseValue] = useState(0);
-  const [valueByWarehouseLoading, setValueByWarehouseLoading] = useState(false);
-
-  const fetchWarehouses = async () => {
-    try {
+  const { data: warehousesData } = useQuery({
+    queryKey: [QUERY_KEYS.WMS.WAREHOUSES],
+    queryFn: async () => {
       const response = await wmsApi.warehouses.list({ page: 1, pagesize: 100 });
-      if (response.success && response.data) {
-        setWarehouses(response.data.items || []);
+      if (!response.success) {
+        throw new Error('Failed to fetch warehouses');
       }
-    } catch (error: unknown) {
-      apiLogger.error('获取仓库列表失败:', error);
-    }
-  };
+      return response.data;
+    },
+  });
 
-  const fetchStatistics = async () => {
-    try {
-      setStatisticsLoading(true);
+  const warehouses = warehousesData?.items || [];
+
+  const { data: statistics, isLoading: statisticsLoading } = useQuery({
+    queryKey: [QUERY_KEYS.WMS.INVENTORY_STATS, warehouseFilter],
+    queryFn: async () => {
       const params: Record<string, unknown> = {};
       if (warehouseFilter) params.warehouse_id = warehouseFilter;
 
       const response = await wmsApi.inventoryStats.getStatistics(params as any);
-      if (response.success && response.data) {
-        setStatistics(response.data);
+      if (!response.success) {
+        throw new Error('Failed to fetch inventory statistics');
       }
-    } catch (error: unknown) {
-      apiLogger.error('获取库存统计失败:', error);
-    } finally {
-      setStatisticsLoading(false);
-    }
-  };
+      return response.data as InventoryStatistics;
+    },
+  });
 
-  const fetchABCAnalysis = async () => {
-    try {
-      setAbcLoading(true);
+  const { data: abcData, isLoading: abcLoading } = useQuery({
+    queryKey: [QUERY_KEYS.WMS.INVENTORY_ABC, warehouseFilter],
+    queryFn: async () => {
       const params: Record<string, unknown> = {};
       if (warehouseFilter) params.warehouse_id = warehouseFilter;
 
       const response = await wmsApi.inventoryStats.getABCAnalysis(params as any);
-      if (response.success && response.data) {
-        setAbcAnalysis(response.data.items || []);
-        setAbcTotalSku(response.data.total_sku || 0);
-        setAbcTotalValue(response.data.total_value || 0);
+      if (!response.success) {
+        throw new Error('Failed to fetch ABC analysis');
       }
-    } catch (error: unknown) {
-      apiLogger.error('获取ABC分析失败:', error);
-    } finally {
-      setAbcLoading(false);
-    }
-  };
+      return response.data;
+    },
+    enabled: currentTab === 1,
+  });
 
-  const fetchTurnover = async () => {
-    try {
-      setTurnoverLoading(true);
+  const abcAnalysis = abcData?.items || [];
+  const abcTotalSku = abcData?.total_sku || 0;
+  const abcTotalValue = abcData?.total_value || 0;
+
+  const { data: turnoverDataRaw, isLoading: turnoverLoading } = useQuery({
+    queryKey: [QUERY_KEYS.WMS.INVENTORY_TURNOVER, warehouseFilter],
+    queryFn: async () => {
       const params: Record<string, unknown> = {
         period_type: 'month',
         periods: 12,
@@ -144,53 +125,33 @@ const InventoryReportPage: React.FC = () => {
       if (warehouseFilter) params.warehouse_id = warehouseFilter;
 
       const response = await wmsApi.inventoryStats.getTurnover(params as any);
-      if (response.success && response.data) {
-        setTurnoverData(response.data.items || []);
+      if (!response.success) {
+        throw new Error('Failed to fetch inventory turnover');
       }
-    } catch (error: unknown) {
-      apiLogger.error('获取库存周转失败:', error);
-    } finally {
-      setTurnoverLoading(false);
-    }
-  };
+      return response.data;
+    },
+    enabled: currentTab === 2,
+  });
 
-  const fetchValueByWarehouse = async () => {
-    try {
-      setValueByWarehouseLoading(true);
+  const turnoverData = turnoverDataRaw?.items || [];
+
+  const { data: valueByWarehouseData, isLoading: valueByWarehouseLoading } = useQuery({
+    queryKey: [QUERY_KEYS.WMS.INVENTORY_VALUE_BY_WAREHOUSE, warehouseFilter],
+    queryFn: async () => {
       const params: Record<string, unknown> = {};
       if (warehouseFilter) params.category_id = warehouseFilter;
 
       const response = await wmsApi.inventoryStats.getValueByWarehouse(params as any);
-      if (response.success && response.data) {
-        setValueByWarehouse(response.data.items || []);
-        setTotalWarehouseValue(response.data.total_value || 0);
+      if (!response.success) {
+        throw new Error('Failed to fetch inventory value by warehouse');
       }
-    } catch (error: unknown) {
-      apiLogger.error('获取仓库库存价值失败:', error);
-    } finally {
-      setValueByWarehouseLoading(false);
-    }
-  };
+      return response.data;
+    },
+    enabled: currentTab === 3,
+  });
 
-  useEffect(() => {
-    fetchWarehouses();
-  }, []);
-
-  useEffect(() => {
-    fetchStatistics();
-  }, [warehouseFilter]);
-
-  useEffect(() => {
-    if (currentTab === 0) {
-      fetchStatistics();
-    } else if (currentTab === 1) {
-      fetchABCAnalysis();
-    } else if (currentTab === 2) {
-      fetchTurnover();
-    } else if (currentTab === 3) {
-      fetchValueByWarehouse();
-    }
-  }, [currentTab, warehouseFilter]);
+  const valueByWarehouse = valueByWarehouseData?.items || [];
+  const totalWarehouseValue = valueByWarehouseData?.total_value || 0;
 
   const getABCCategoryColor = (category: string) => {
     switch (category) {

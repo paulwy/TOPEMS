@@ -530,23 +530,23 @@ describe('SCM priceComparisonApi', () => {
     expect(mockApiClient.post).toHaveBeenCalledWith('/comparisons', data);
   });
 
-  it('should call GET /v1/comparisons/:id for get', async () => {
+  it('should call GET /comparisons/:id for get', async () => {
     mockApiClient.get.mockResolvedValue({ success: true, data: { id: '1' } });
     await priceComparisonApi.get('1');
-    expect(mockApiClient.get).toHaveBeenCalledWith('/v1/comparisons/1');
+    expect(mockApiClient.get).toHaveBeenCalledWith('/comparisons/1');
   });
 
-  it('should call PUT /v1/comparisons/:id for update', async () => {
+  it('should call PUT /comparisons/:id for update', async () => {
     const data = { name: 'Updated' };
     mockApiClient.put.mockResolvedValue({ success: true, data });
     await priceComparisonApi.update('1', data);
-    expect(mockApiClient.put).toHaveBeenCalledWith('/v1/comparisons/1', data);
+    expect(mockApiClient.put).toHaveBeenCalledWith('/comparisons/1', data);
   });
 
-  it('should call DELETE /v1/comparisons/:id for delete', async () => {
+  it('should call DELETE /comparisons/:id for delete', async () => {
     mockApiClient.delete.mockResolvedValue({ success: true, data: undefined });
     await priceComparisonApi.delete('1');
-    expect(mockApiClient.delete).toHaveBeenCalledWith('/v1/comparisons/1');
+    expect(mockApiClient.delete).toHaveBeenCalledWith('/comparisons/1');
   });
 
   it('should call GET /quotes for quotes', async () => {

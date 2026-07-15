@@ -269,7 +269,12 @@ const LocationPage: React.FC = () => {
   const getStatusBadge = (status: string) => {
     const config = statusConfig[status] || { label: status, color: 'default' as const };
     return (
-      <Chip size='small' color={config.color} label={config.label} variant='outlined' />
+      <Chip
+        size='small'
+        color={config.color}
+        label={config.label}
+        variant='outlined'
+      />
     );
   };
 
@@ -285,7 +290,11 @@ const LocationPage: React.FC = () => {
       { id: 'name', label: '库位名称', sortable: true },
       { id: 'warehouse_id', label: '仓库', render: (row) => getWarehouseName(row.warehouse_id) },
       { id: 'zone_name', label: '库区' },
-      { id: 'location_type', label: '类型', render: (row) => locationTypeConfig[row.location_type] || row.location_type },
+      {
+        id: 'location_type',
+        label: '类型',
+        render: (row) => locationTypeConfig[row.location_type] || row.location_type,
+      },
       { id: 'status', label: '状态', render: (row) => getStatusBadge(row.status) },
       { id: 'capacity', label: '容量' },
       { id: 'occupied_quantity', label: '已占用' },
@@ -307,7 +316,10 @@ const LocationPage: React.FC = () => {
           { label: '停用', value: 'inactive' },
         ],
         value: statusFilter,
-        onChange: (value) => { setStatusFilter(value as string); setCurrentPage(1); },
+        onChange: (value) => {
+          setStatusFilter(value as string);
+          setCurrentPage(1);
+        },
       },
       {
         id: 'warehouse_id',
@@ -318,7 +330,10 @@ const LocationPage: React.FC = () => {
           ...warehouses.map((w) => ({ label: w.name, value: w.id })),
         ],
         value: warehouseFilter,
-        onChange: (value) => { setWarehouseFilter(value as string); setCurrentPage(1); },
+        onChange: (value) => {
+          setWarehouseFilter(value as string);
+          setCurrentPage(1);
+        },
       },
     ],
     [statusFilter, warehouseFilter, warehouses]
@@ -328,7 +343,12 @@ const LocationPage: React.FC = () => {
     () => [
       { label: '查看详情', icon: <Eye size={16} />, onClick: handleViewDetail },
       { label: '编辑', icon: <Edit size={16} />, onClick: handleEdit },
-      { label: '删除', icon: <Trash2 size={16} />, color: 'error', onClick: (row) => handleDeleteClick(row.id) },
+      {
+        label: '删除',
+        icon: <Trash2 size={16} />,
+        color: 'error',
+        onClick: (row) => handleDeleteClick(row.id),
+      },
     ],
     []
   );
@@ -344,22 +364,69 @@ const LocationPage: React.FC = () => {
   };
 
   const statsContent = (
-    <Box sx={{ display: 'grid', gridTemplateColumns: { xs: 'repeat(2, 1fr)', md: 'repeat(4, 1fr)' }, gap: 2, mb: 3 }}>
+    <Box
+      sx={{
+        display: 'grid',
+        gridTemplateColumns: { xs: 'repeat(2, 1fr)', md: 'repeat(4, 1fr)' },
+        gap: 2,
+        mb: 3,
+      }}
+    >
       <Box sx={{ p: 2, bgcolor: 'grey.100', borderRadius: 3 }}>
-        <Typography variant='body2' sx={{ color: 'text.secondary' }}>库位总数</Typography>
-        <Typography variant='h5' sx={{ fontWeight: 700 }}>{locationsData.total}</Typography>
+        <Typography
+          variant='body2'
+          sx={{ color: 'text.secondary' }}
+        >
+          库位总数
+        </Typography>
+        <Typography
+          variant='h5'
+          sx={{ fontWeight: 700 }}
+        >
+          {locationsData.total}
+        </Typography>
       </Box>
       <Box sx={{ p: 2, bgcolor: 'success.light', borderRadius: 3 }}>
-        <Typography variant='body2' sx={{ color: 'text.secondary' }}>空闲库位</Typography>
-        <Typography variant='h5' sx={{ fontWeight: 700, color: 'success.dark' }}>{statusSummary?.empty_locations || 0}</Typography>
+        <Typography
+          variant='body2'
+          sx={{ color: 'text.secondary' }}
+        >
+          空闲库位
+        </Typography>
+        <Typography
+          variant='h5'
+          sx={{ fontWeight: 700, color: 'success.dark' }}
+        >
+          {statusSummary?.empty_locations || 0}
+        </Typography>
       </Box>
       <Box sx={{ p: 2, bgcolor: 'warning.light', borderRadius: 3 }}>
-        <Typography variant='body2' sx={{ color: 'text.secondary' }}>部分占用</Typography>
-        <Typography variant='h5' sx={{ fontWeight: 700, color: 'warning.dark' }}>{statusSummary?.partially_filled || 0}</Typography>
+        <Typography
+          variant='body2'
+          sx={{ color: 'text.secondary' }}
+        >
+          部分占用
+        </Typography>
+        <Typography
+          variant='h5'
+          sx={{ fontWeight: 700, color: 'warning.dark' }}
+        >
+          {statusSummary?.partially_filled || 0}
+        </Typography>
       </Box>
       <Box sx={{ p: 2, bgcolor: 'error.light', borderRadius: 3 }}>
-        <Typography variant='body2' sx={{ color: 'text.secondary' }}>已满库位</Typography>
-        <Typography variant='h5' sx={{ fontWeight: 700, color: 'error.dark' }}>{statusSummary?.full_locations || 0}</Typography>
+        <Typography
+          variant='body2'
+          sx={{ color: 'text.secondary' }}
+        >
+          已满库位
+        </Typography>
+        <Typography
+          variant='h5'
+          sx={{ fontWeight: 700, color: 'error.dark' }}
+        >
+          {statusSummary?.full_locations || 0}
+        </Typography>
       </Box>
     </Box>
   );
@@ -376,7 +443,11 @@ const LocationPage: React.FC = () => {
       <ListPageTemplate
         title=''
         subtitle=''
-        breadcrumbs={[{ label: '首页', href: '/dashboard' }, { label: '仓储', href: '/wms' }, { label: '库位管理' }]}
+        breadcrumbs={[
+          { label: '首页', href: '/dashboard' },
+          { label: '仓储', href: '/wms' },
+          { label: '库位管理' },
+        ]}
         columns={columns}
         data={locationsData.items}
         loading={locationsLoading}
@@ -385,7 +456,12 @@ const LocationPage: React.FC = () => {
         searchPlaceholder='搜索库位编码或名称...'
         onSearch={handleSearch}
         searchValue={searchTerm}
-        pagination={{ page: currentPage, pageSize, total: locationsData.total, onPageChange: setCurrentPage }}
+        pagination={{
+          page: currentPage,
+          pageSize,
+          total: locationsData.total,
+          onPageChange: setCurrentPage,
+        }}
         actions={[{ label: '新增库位', icon: <Plus size={16} />, onClick: handleOpenCreate }]}
         rowActions={rowActions}
         headerContent={statsContent}
@@ -394,135 +470,463 @@ const LocationPage: React.FC = () => {
         mobileCardTitleKey='name'
         mobileCardSubtitleKey='code'
         mobileCardDisplayFields={['warehouse_name', 'zone_name', 'capacity', 'status']}
-        mobileCardFieldLabels={{ warehouse_name: '仓库', zone_name: '库区', capacity: '容量', status: '状态' }}
+        mobileCardFieldLabels={{
+          warehouse_name: '仓库',
+          zone_name: '库区',
+          capacity: '容量',
+          status: '状态',
+        }}
       />
 
-      <Dialog open={showCreateDialog} onClose={() => setShowCreateDialog(false)} maxWidth='md' fullWidth>
+      <Dialog
+        open={showCreateDialog}
+        onClose={() => setShowCreateDialog(false)}
+        maxWidth='md'
+        fullWidth
+      >
         <DialogTitle>新增库位</DialogTitle>
         <DialogContent>
-          <Box sx={{ display: 'grid', gridTemplateColumns: { xs: '1fr', md: 'repeat(2, 1fr)' }, gap: 2, py: 2 }}>
-            <TextField label='库位编码 *' value={newItem.code} onChange={(e) => setNewItem({ ...newItem, code: e.target.value })} fullWidth required size='small' />
-            <TextField label='库位名称 *' value={newItem.name} onChange={(e) => setNewItem({ ...newItem, name: e.target.value })} fullWidth required size='small' />
-            <FormControl fullWidth size='small'>
+          <Box
+            sx={{
+              display: 'grid',
+              gridTemplateColumns: { xs: '1fr', md: 'repeat(2, 1fr)' },
+              gap: 2,
+              py: 2,
+            }}
+          >
+            <TextField
+              label='库位编码 *'
+              value={newItem.code}
+              onChange={(e) => setNewItem({ ...newItem, code: e.target.value })}
+              fullWidth
+              required
+              size='small'
+            />
+            <TextField
+              label='库位名称 *'
+              value={newItem.name}
+              onChange={(e) => setNewItem({ ...newItem, name: e.target.value })}
+              fullWidth
+              required
+              size='small'
+            />
+            <FormControl
+              fullWidth
+              size='small'
+            >
               <InputLabel>仓库 *</InputLabel>
-              <Select value={newItem.warehouse_id} label='仓库 *' onChange={(e) => setNewItem({ ...newItem, warehouse_id: e.target.value })}>
+              <Select
+                value={newItem.warehouse_id}
+                label='仓库 *'
+                onChange={(e) => setNewItem({ ...newItem, warehouse_id: e.target.value })}
+              >
                 {warehouses.map((w) => (
-                  <MenuItem key={w.id} value={w.id}>{w.name}</MenuItem>
+                  <MenuItem
+                    key={w.id}
+                    value={w.id}
+                  >
+                    {w.name}
+                  </MenuItem>
                 ))}
               </Select>
             </FormControl>
-            <FormControl fullWidth size='small'>
+            <FormControl
+              fullWidth
+              size='small'
+            >
               <InputLabel>库位类型</InputLabel>
-              <Select value={newItem.location_type} label='库位类型' onChange={(e) => setNewItem({ ...newItem, location_type: e.target.value })}>
+              <Select
+                value={newItem.location_type}
+                label='库位类型'
+                onChange={(e) => setNewItem({ ...newItem, location_type: e.target.value })}
+              >
                 {Object.entries(locationTypeConfig).map(([key, label]) => (
-                  <MenuItem key={key} value={key}>{label}</MenuItem>
+                  <MenuItem
+                    key={key}
+                    value={key}
+                  >
+                    {label}
+                  </MenuItem>
                 ))}
               </Select>
             </FormControl>
-            <TextField label='库区' value={newItem.zone_id} onChange={(e) => setNewItem({ ...newItem, zone_id: e.target.value })} fullWidth size='small' />
-            <TextField label='通道' value={newItem.aisle} onChange={(e) => setNewItem({ ...newItem, aisle: e.target.value })} fullWidth size='small' />
-            <TextField label='排' value={newItem.row} onChange={(e) => setNewItem({ ...newItem, row: e.target.value })} fullWidth size='small' />
-            <TextField label='列' value={newItem.column} onChange={(e) => setNewItem({ ...newItem, column: e.target.value })} fullWidth size='small' />
-            <TextField label='层' value={newItem.layer} onChange={(e) => setNewItem({ ...newItem, layer: e.target.value })} fullWidth size='small' />
-            <TextField label='容量' type='number' value={newItem.capacity} onChange={(e) => setNewItem({ ...newItem, capacity: parseFloat(e.target.value) || 0 })} fullWidth size='small' />
-            <TextField label='体积' type='number' value={newItem.volume} onChange={(e) => setNewItem({ ...newItem, volume: parseFloat(e.target.value) || 0 })} fullWidth size='small' />
-            <TextField label='重量限制' type='number' value={newItem.weight_limit} onChange={(e) => setNewItem({ ...newItem, weight_limit: parseFloat(e.target.value) || 0 })} fullWidth size='small' />
-            <TextField label='温度区间' value={newItem.temperature_zone} onChange={(e) => setNewItem({ ...newItem, temperature_zone: e.target.value })} fullWidth size='small' placeholder='如：常温、冷藏、冷冻' />
-            <TextField label='条码' value={newItem.barcode} onChange={(e) => setNewItem({ ...newItem, barcode: e.target.value })} fullWidth size='small' />
-            <TextField label='RFID' value={newItem.rfid} onChange={(e) => setNewItem({ ...newItem, rfid: e.target.value })} fullWidth size='small' />
-            <TextField label='备注' value={newItem.remarks} onChange={(e) => setNewItem({ ...newItem, remarks: e.target.value })} fullWidth size='small' multiline rows={2} />
+            <TextField
+              label='库区'
+              value={newItem.zone_id}
+              onChange={(e) => setNewItem({ ...newItem, zone_id: e.target.value })}
+              fullWidth
+              size='small'
+            />
+            <TextField
+              label='通道'
+              value={newItem.aisle}
+              onChange={(e) => setNewItem({ ...newItem, aisle: e.target.value })}
+              fullWidth
+              size='small'
+            />
+            <TextField
+              label='排'
+              value={newItem.row}
+              onChange={(e) => setNewItem({ ...newItem, row: e.target.value })}
+              fullWidth
+              size='small'
+            />
+            <TextField
+              label='列'
+              value={newItem.column}
+              onChange={(e) => setNewItem({ ...newItem, column: e.target.value })}
+              fullWidth
+              size='small'
+            />
+            <TextField
+              label='层'
+              value={newItem.layer}
+              onChange={(e) => setNewItem({ ...newItem, layer: e.target.value })}
+              fullWidth
+              size='small'
+            />
+            <TextField
+              label='容量'
+              type='number'
+              value={newItem.capacity}
+              onChange={(e) =>
+                setNewItem({ ...newItem, capacity: parseFloat(e.target.value) || 0 })
+              }
+              fullWidth
+              size='small'
+            />
+            <TextField
+              label='体积'
+              type='number'
+              value={newItem.volume}
+              onChange={(e) => setNewItem({ ...newItem, volume: parseFloat(e.target.value) || 0 })}
+              fullWidth
+              size='small'
+            />
+            <TextField
+              label='重量限制'
+              type='number'
+              value={newItem.weight_limit}
+              onChange={(e) =>
+                setNewItem({ ...newItem, weight_limit: parseFloat(e.target.value) || 0 })
+              }
+              fullWidth
+              size='small'
+            />
+            <TextField
+              label='温度区间'
+              value={newItem.temperature_zone}
+              onChange={(e) => setNewItem({ ...newItem, temperature_zone: e.target.value })}
+              fullWidth
+              size='small'
+              placeholder='如：常温、冷藏、冷冻'
+            />
+            <TextField
+              label='条码'
+              value={newItem.barcode}
+              onChange={(e) => setNewItem({ ...newItem, barcode: e.target.value })}
+              fullWidth
+              size='small'
+            />
+            <TextField
+              label='RFID'
+              value={newItem.rfid}
+              onChange={(e) => setNewItem({ ...newItem, rfid: e.target.value })}
+              fullWidth
+              size='small'
+            />
+            <TextField
+              label='备注'
+              value={newItem.remarks}
+              onChange={(e) => setNewItem({ ...newItem, remarks: e.target.value })}
+              fullWidth
+              size='small'
+              multiline
+              rows={2}
+            />
           </Box>
         </DialogContent>
         <DialogActions>
-          <Button variant='outlined' onClick={() => setShowCreateDialog(false)}>取消</Button>
-          <Button variant='contained' onClick={handleCreate} disabled={createMutation.isPending}>创建</Button>
+          <Button
+            variant='outlined'
+            onClick={() => setShowCreateDialog(false)}
+          >
+            取消
+          </Button>
+          <Button
+            variant='contained'
+            onClick={handleCreate}
+            disabled={createMutation.isPending}
+          >
+            创建
+          </Button>
         </DialogActions>
       </Dialog>
 
-      <Dialog open={showEditDialog} onClose={() => setShowEditDialog(false)} maxWidth='md' fullWidth>
+      <Dialog
+        open={showEditDialog}
+        onClose={() => setShowEditDialog(false)}
+        maxWidth='md'
+        fullWidth
+      >
         <DialogTitle>编辑库位</DialogTitle>
         <DialogContent>
           {selectedLocation && (
-            <Box sx={{ display: 'grid', gridTemplateColumns: { xs: '1fr', md: 'repeat(2, 1fr)' }, gap: 2, py: 2 }}>
-              <TextField label='库位编码' value={selectedLocation.code} fullWidth size='small' disabled />
-              <TextField label='库位名称' value={editItem.name || ''} onChange={(e) => setEditItem({ ...editItem, name: e.target.value })} fullWidth size='small' />
-              <FormControl fullWidth size='small'>
+            <Box
+              sx={{
+                display: 'grid',
+                gridTemplateColumns: { xs: '1fr', md: 'repeat(2, 1fr)' },
+                gap: 2,
+                py: 2,
+              }}
+            >
+              <TextField
+                label='库位编码'
+                value={selectedLocation.code}
+                fullWidth
+                size='small'
+                disabled
+              />
+              <TextField
+                label='库位名称'
+                value={editItem.name || ''}
+                onChange={(e) => setEditItem({ ...editItem, name: e.target.value })}
+                fullWidth
+                size='small'
+              />
+              <FormControl
+                fullWidth
+                size='small'
+              >
                 <InputLabel>状态</InputLabel>
-                <Select value={editItem.status || ''} label='状态' onChange={(e) => setEditItem({ ...editItem, status: e.target.value })}>
+                <Select
+                  value={editItem.status || ''}
+                  label='状态'
+                  onChange={(e) => setEditItem({ ...editItem, status: e.target.value })}
+                >
                   <MenuItem value='empty'>空闲</MenuItem>
                   <MenuItem value='partially_filled'>部分占用</MenuItem>
                   <MenuItem value='full'>已满</MenuItem>
                   <MenuItem value='inactive'>停用</MenuItem>
                 </Select>
               </FormControl>
-              <TextField label='容量' type='number' value={editItem.capacity ?? ''} onChange={(e) => setEditItem({ ...editItem, capacity: parseFloat(e.target.value) || 0 })} fullWidth size='small' />
-              <TextField label='体积' type='number' value={editItem.volume ?? ''} onChange={(e) => setEditItem({ ...editItem, volume: parseFloat(e.target.value) || 0 })} fullWidth size='small' />
-              <TextField label='重量限制' type='number' value={editItem.weight_limit ?? ''} onChange={(e) => setEditItem({ ...editItem, weight_limit: parseFloat(e.target.value) || 0 })} fullWidth size='small' />
-              <TextField label='温度区间' value={editItem.temperature_zone || ''} onChange={(e) => setEditItem({ ...editItem, temperature_zone: e.target.value })} fullWidth size='small' />
-              <TextField label='条码' value={editItem.barcode || ''} onChange={(e) => setEditItem({ ...editItem, barcode: e.target.value })} fullWidth size='small' />
-              <TextField label='RFID' value={editItem.rfid || ''} onChange={(e) => setEditItem({ ...editItem, rfid: e.target.value })} fullWidth size='small' />
-              <TextField label='备注' value={editItem.remarks || ''} onChange={(e) => setEditItem({ ...editItem, remarks: e.target.value })} fullWidth size='small' multiline rows={2} />
+              <TextField
+                label='容量'
+                type='number'
+                value={editItem.capacity ?? ''}
+                onChange={(e) =>
+                  setEditItem({ ...editItem, capacity: parseFloat(e.target.value) || 0 })
+                }
+                fullWidth
+                size='small'
+              />
+              <TextField
+                label='体积'
+                type='number'
+                value={editItem.volume ?? ''}
+                onChange={(e) =>
+                  setEditItem({ ...editItem, volume: parseFloat(e.target.value) || 0 })
+                }
+                fullWidth
+                size='small'
+              />
+              <TextField
+                label='重量限制'
+                type='number'
+                value={editItem.weight_limit ?? ''}
+                onChange={(e) =>
+                  setEditItem({ ...editItem, weight_limit: parseFloat(e.target.value) || 0 })
+                }
+                fullWidth
+                size='small'
+              />
+              <TextField
+                label='温度区间'
+                value={editItem.temperature_zone || ''}
+                onChange={(e) => setEditItem({ ...editItem, temperature_zone: e.target.value })}
+                fullWidth
+                size='small'
+              />
+              <TextField
+                label='条码'
+                value={editItem.barcode || ''}
+                onChange={(e) => setEditItem({ ...editItem, barcode: e.target.value })}
+                fullWidth
+                size='small'
+              />
+              <TextField
+                label='RFID'
+                value={editItem.rfid || ''}
+                onChange={(e) => setEditItem({ ...editItem, rfid: e.target.value })}
+                fullWidth
+                size='small'
+              />
+              <TextField
+                label='备注'
+                value={editItem.remarks || ''}
+                onChange={(e) => setEditItem({ ...editItem, remarks: e.target.value })}
+                fullWidth
+                size='small'
+                multiline
+                rows={2}
+              />
             </Box>
           )}
         </DialogContent>
         <DialogActions>
-          <Button variant='outlined' onClick={() => setShowEditDialog(false)}>取消</Button>
-          <Button variant='contained' onClick={handleUpdate} disabled={updateMutation.isPending}>保存</Button>
+          <Button
+            variant='outlined'
+            onClick={() => setShowEditDialog(false)}
+          >
+            取消
+          </Button>
+          <Button
+            variant='contained'
+            onClick={handleUpdate}
+            disabled={updateMutation.isPending}
+          >
+            保存
+          </Button>
         </DialogActions>
       </Dialog>
 
-      <Dialog open={showDetailDialog} onClose={() => setShowDetailDialog(false)} maxWidth='md' fullWidth>
+      <Dialog
+        open={showDetailDialog}
+        onClose={() => setShowDetailDialog(false)}
+        maxWidth='md'
+        fullWidth
+      >
         <DialogTitle>库位详情</DialogTitle>
         <DialogContent>
           {selectedLocation && (
             <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
-              <Box sx={{ display: 'grid', gridTemplateColumns: { xs: '1fr', md: 'repeat(2, 1fr)' }, gap: 2 }}>
+              <Box
+                sx={{
+                  display: 'grid',
+                  gridTemplateColumns: { xs: '1fr', md: 'repeat(2, 1fr)' },
+                  gap: 2,
+                }}
+              >
                 <Box>
-                  <Typography variant='caption' color='text.secondary'>库位编码</Typography>
-                  <Typography variant='body1' sx={{ fontWeight: 500 }}>{selectedLocation.code}</Typography>
+                  <Typography
+                    variant='caption'
+                    color='text.secondary'
+                  >
+                    库位编码
+                  </Typography>
+                  <Typography
+                    variant='body1'
+                    sx={{ fontWeight: 500 }}
+                  >
+                    {selectedLocation.code}
+                  </Typography>
                 </Box>
                 <Box>
-                  <Typography variant='caption' color='text.secondary'>库位名称</Typography>
+                  <Typography
+                    variant='caption'
+                    color='text.secondary'
+                  >
+                    库位名称
+                  </Typography>
                   <Typography variant='body1'>{selectedLocation.name}</Typography>
                 </Box>
                 <Box>
-                  <Typography variant='caption' color='text.secondary'>仓库</Typography>
-                  <Typography variant='body1'>{getWarehouseName(selectedLocation.warehouse_id)}</Typography>
+                  <Typography
+                    variant='caption'
+                    color='text.secondary'
+                  >
+                    仓库
+                  </Typography>
+                  <Typography variant='body1'>
+                    {getWarehouseName(selectedLocation.warehouse_id)}
+                  </Typography>
                 </Box>
                 <Box>
-                  <Typography variant='caption' color='text.secondary'>库区</Typography>
+                  <Typography
+                    variant='caption'
+                    color='text.secondary'
+                  >
+                    库区
+                  </Typography>
                   <Typography variant='body1'>{selectedLocation.zone_name || '-'}</Typography>
                 </Box>
                 <Box>
-                  <Typography variant='caption' color='text.secondary'>库位类型</Typography>
-                  <Typography variant='body1'>{locationTypeConfig[selectedLocation.location_type] || selectedLocation.location_type}</Typography>
+                  <Typography
+                    variant='caption'
+                    color='text.secondary'
+                  >
+                    库位类型
+                  </Typography>
+                  <Typography variant='body1'>
+                    {locationTypeConfig[selectedLocation.location_type] ||
+                      selectedLocation.location_type}
+                  </Typography>
                 </Box>
                 <Box>
-                  <Typography variant='caption' color='text.secondary'>状态</Typography>
+                  <Typography
+                    variant='caption'
+                    color='text.secondary'
+                  >
+                    状态
+                  </Typography>
                   <Box sx={{ mt: 0.5 }}>{getStatusBadge(selectedLocation.status)}</Box>
                 </Box>
                 <Box>
-                  <Typography variant='caption' color='text.secondary'>容量</Typography>
+                  <Typography
+                    variant='caption'
+                    color='text.secondary'
+                  >
+                    容量
+                  </Typography>
                   <Typography variant='body1'>{selectedLocation.capacity || 0}</Typography>
                 </Box>
                 <Box>
-                  <Typography variant='caption' color='text.secondary'>已占用</Typography>
+                  <Typography
+                    variant='caption'
+                    color='text.secondary'
+                  >
+                    已占用
+                  </Typography>
                   <Typography variant='body1'>{selectedLocation.occupied_quantity || 0}</Typography>
                 </Box>
                 <Box>
-                  <Typography variant='caption' color='text.secondary'>可用容量</Typography>
-                  <Typography variant='body1'>{selectedLocation.available_capacity || 0}</Typography>
+                  <Typography
+                    variant='caption'
+                    color='text.secondary'
+                  >
+                    可用容量
+                  </Typography>
+                  <Typography variant='body1'>
+                    {selectedLocation.available_capacity || 0}
+                  </Typography>
                 </Box>
                 <Box>
-                  <Typography variant='caption' color='text.secondary'>温度区间</Typography>
-                  <Typography variant='body1'>{selectedLocation.temperature_zone || '-'}</Typography>
+                  <Typography
+                    variant='caption'
+                    color='text.secondary'
+                  >
+                    温度区间
+                  </Typography>
+                  <Typography variant='body1'>
+                    {selectedLocation.temperature_zone || '-'}
+                  </Typography>
                 </Box>
                 <Box>
-                  <Typography variant='caption' color='text.secondary'>条码</Typography>
+                  <Typography
+                    variant='caption'
+                    color='text.secondary'
+                  >
+                    条码
+                  </Typography>
                   <Typography variant='body1'>{selectedLocation.barcode || '-'}</Typography>
                 </Box>
                 <Box>
-                  <Typography variant='caption' color='text.secondary'>RFID</Typography>
+                  <Typography
+                    variant='caption'
+                    color='text.secondary'
+                  >
+                    RFID
+                  </Typography>
                   <Typography variant='body1'>{selectedLocation.rfid || '-'}</Typography>
                 </Box>
               </Box>
@@ -530,11 +934,23 @@ const LocationPage: React.FC = () => {
           )}
         </DialogContent>
         <DialogActions>
-          <Button variant='outlined' onClick={() => setShowDetailDialog(false)}>关闭</Button>
+          <Button
+            variant='outlined'
+            onClick={() => setShowDetailDialog(false)}
+          >
+            关闭
+          </Button>
         </DialogActions>
       </Dialog>
 
-      <ConfirmDialog isOpen={showDeleteConfirm} onClose={() => setShowDeleteConfirm(false)} onConfirm={handleDelete} title='确认删除' message='确定要删除这个库位吗？此操作不可撤销。' danger />
+      <ConfirmDialog
+        isOpen={showDeleteConfirm}
+        onClose={() => setShowDeleteConfirm(false)}
+        onConfirm={handleDelete}
+        title='确认删除'
+        message='确定要删除这个库位吗？此操作不可撤销。'
+        danger
+      />
     </PageContainer>
   );
 };

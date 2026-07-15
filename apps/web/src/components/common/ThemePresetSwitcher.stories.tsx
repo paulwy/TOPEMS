@@ -30,7 +30,7 @@ function PresetShowcase({ preset }: { preset: ThemePreset }) {
   const p = preset.primary;
   return (
     <Paper
-      variant="outlined"
+      variant='outlined'
       sx={{
         p: 2,
         borderRadius: 3,
@@ -41,10 +41,16 @@ function PresetShowcase({ preset }: { preset: ThemePreset }) {
     >
       {/* Preset info */}
       <Box>
-        <Typography variant="subtitle2" fontWeight={600}>
+        <Typography
+          variant='subtitle2'
+          fontWeight={600}
+        >
           {preset.nameZh}
         </Typography>
-        <Typography variant="caption" color="text.secondary">
+        <Typography
+          variant='caption'
+          color='text.secondary'
+        >
           {preset.name} — {preset.description}
         </Typography>
       </Box>
@@ -72,7 +78,7 @@ function PresetShowcase({ preset }: { preset: ThemePreset }) {
           <Chip
             key={shade}
             label={p?.[shade as keyof typeof p]}
-            size="small"
+            size='small'
             sx={{
               fontSize: 10,
               height: 20,
@@ -80,7 +86,7 @@ function PresetShowcase({ preset }: { preset: ThemePreset }) {
               borderColor: p?.[shade as keyof typeof p],
               color: p?.[700 as keyof typeof p],
             }}
-            variant="outlined"
+            variant='outlined'
           />
         ))}
       </Box>
@@ -89,8 +95,8 @@ function PresetShowcase({ preset }: { preset: ThemePreset }) {
       <Divider />
       <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, flexWrap: 'wrap' }}>
         <Button
-          variant="contained"
-          size="small"
+          variant='contained'
+          size='small'
           sx={{
             backgroundColor: p?.main,
             color: p?.contrastText,
@@ -100,8 +106,8 @@ function PresetShowcase({ preset }: { preset: ThemePreset }) {
           主要按钮
         </Button>
         <Button
-          variant="outlined"
-          size="small"
+          variant='outlined'
+          size='small'
           sx={{
             borderColor: p?.main,
             color: p?.main,
@@ -111,14 +117,14 @@ function PresetShowcase({ preset }: { preset: ThemePreset }) {
           边框按钮
         </Button>
         <Chip
-          label="标签"
-          size="small"
+          label='标签'
+          size='small'
           sx={{
             backgroundColor: p?.[50],
             color: p?.[700],
             borderColor: p?.[200],
           }}
-          variant="outlined"
+          variant='outlined'
         />
       </Box>
     </Paper>
@@ -131,7 +137,10 @@ export const Default: Story = {
   args: {},
   render: () => (
     <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
-      <Typography variant="body2" color="text.secondary">
+      <Typography
+        variant='body2'
+        color='text.secondary'
+      >
         点击右侧图标切换主题配色：
       </Typography>
       <ThemePresetSwitcher />
@@ -145,12 +154,20 @@ export const AllPresets: Story = {
   },
   render: () => (
     <Box sx={{ p: 3, maxWidth: 900, mx: 'auto' }}>
-      <Typography variant="h5" fontWeight={600} sx={{ mb: 0.5 }}>
+      <Typography
+        variant='h5'
+        fontWeight={600}
+        sx={{ mb: 0.5 }}
+      >
         多品牌主题预设
       </Typography>
-      <Typography variant="body2" color="text.secondary" sx={{ mb: 3 }}>
-        系统提供 6 种品牌配色预设，每种预设定义了完整的 Primary 色阶（50-900），
-        可通过 ThemePresetSwitcher 组件一键切换。选择会持久化到 localStorage。
+      <Typography
+        variant='body2'
+        color='text.secondary'
+        sx={{ mb: 3 }}
+      >
+        系统提供 6 种品牌配色预设，每种预设定义了完整的 Primary 色阶（50-900）， 可通过
+        ThemePresetSwitcher 组件一键切换。选择会持久化到 localStorage。
       </Typography>
 
       {/* Switcher demo */}
@@ -167,7 +184,10 @@ export const AllPresets: Story = {
           borderColor: 'divider',
         }}
       >
-        <Typography variant="body2" fontWeight={500}>
+        <Typography
+          variant='body2'
+          fontWeight={500}
+        >
           实时切换器：
         </Typography>
         <ThemePresetSwitcher />
@@ -176,7 +196,10 @@ export const AllPresets: Story = {
       {/* All presets showcase */}
       <Stack spacing={2}>
         {themePresets.map((preset) => (
-          <PresetShowcase key={preset.id} preset={preset} />
+          <PresetShowcase
+            key={preset.id}
+            preset={preset}
+          />
         ))}
       </Stack>
     </Box>
@@ -204,7 +227,10 @@ export const SwitcherInContext: Story = {
           mb: 3,
         }}
       >
-        <Typography variant="h6" fontWeight={600}>
+        <Typography
+          variant='h6'
+          fontWeight={600}
+        >
           TOPEMS 管理系统
         </Typography>
         <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
@@ -214,17 +240,27 @@ export const SwitcherInContext: Story = {
 
       {/* Simulated content */}
       <Paper sx={{ p: 3, borderRadius: 3 }}>
-        <Typography variant="h6" sx={{ mb: 1 }}>
+        <Typography
+          variant='h6'
+          sx={{ mb: 1 }}
+        >
           仪表盘
         </Typography>
-        <Typography variant="body2" color="text.secondary" sx={{ mb: 2 }}>
-          切换上方主题配色后，页面中的主色调按钮、标签和强调元素将实时更新。
-          当前使用的是 MUI v9 CSS Variables 方案，预设切换通过修改 :root 上的
-          CSS 自定义属性实现。
+        <Typography
+          variant='body2'
+          color='text.secondary'
+          sx={{ mb: 2 }}
+        >
+          切换上方主题配色后，页面中的主色调按钮、标签和强调元素将实时更新。 当前使用的是 MUI v9 CSS
+          Variables 方案，预设切换通过修改 :root 上的 CSS 自定义属性实现。
         </Typography>
         <Box sx={{ display: 'flex', gap: 2, flexWrap: 'wrap' }}>
           {['新建订单', '导出报表', '系统设置', '审批中心'].map((label) => (
-            <Button key={label} variant="contained" size="small">
+            <Button
+              key={label}
+              variant='contained'
+              size='small'
+            >
               {label}
             </Button>
           ))}
@@ -240,10 +276,18 @@ export const ColorPaletteGrid: Story = {
   },
   render: () => (
     <Box sx={{ p: 3, maxWidth: 1100, mx: 'auto' }}>
-      <Typography variant="h5" fontWeight={600} sx={{ mb: 0.5 }}>
+      <Typography
+        variant='h5'
+        fontWeight={600}
+        sx={{ mb: 0.5 }}
+      >
         配色方案一览
       </Typography>
-      <Typography variant="body2" color="text.secondary" sx={{ mb: 3 }}>
+      <Typography
+        variant='body2'
+        color='text.secondary'
+        sx={{ mb: 3 }}
+      >
         所有预设的主色阶对比。每行展示一个预设的 10 级色阶。
       </Typography>
 
@@ -261,54 +305,48 @@ export const ColorPaletteGrid: Story = {
             }}
           >
             <Typography
-              variant="body2"
+              variant='body2'
               fontWeight={500}
               sx={{ width: 80, flexShrink: 0 }}
             >
               {preset.nameZh}
             </Typography>
             <Box sx={{ display: 'flex', flex: 1, gap: 0.5 }}>
-              {[50, 100, 200, 300, 400, 500, 600, 700, 800, 900].map(
-                (shade) => (
-                  <Box
-                    key={shade}
+              {[50, 100, 200, 300, 400, 500, 600, 700, 800, 900].map((shade) => (
+                <Box
+                  key={shade}
+                  sx={{
+                    flex: 1,
+                    height: 48,
+                    borderRadius: 1,
+                    backgroundColor: preset.primary?.[shade as keyof typeof preset.primary],
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    transition: 'transform 0.15s',
+                    '&:hover': {
+                      transform: 'scaleY(1.15)',
+                      zIndex: 1,
+                    },
+                  }}
+                >
+                  <Typography
+                    variant='caption'
                     sx={{
-                      flex: 1,
-                      height: 48,
-                      borderRadius: 1,
-                      backgroundColor:
-                        preset.primary?.[shade as keyof typeof preset.primary],
-                      display: 'flex',
-                      alignItems: 'center',
-                      justifyContent: 'center',
-                      transition: 'transform 0.15s',
-                      '&:hover': {
-                        transform: 'scaleY(1.15)',
-                        zIndex: 1,
-                      },
+                      fontSize: 9,
+                      fontWeight: 500,
+                      color: shade >= 500 ? 'rgba(255,255,255,0.9)' : 'rgba(0,0,0,0.5)',
+                      userSelect: 'none',
                     }}
                   >
-                    <Typography
-                      variant="caption"
-                      sx={{
-                        fontSize: 9,
-                        fontWeight: 500,
-                        color:
-                          shade >= 500
-                            ? 'rgba(255,255,255,0.9)'
-                            : 'rgba(0,0,0,0.5)',
-                        userSelect: 'none',
-                      }}
-                    >
-                      {shade}
-                    </Typography>
-                  </Box>
-                ),
-              )}
+                    {shade}
+                  </Typography>
+                </Box>
+              ))}
             </Box>
             <Typography
-              variant="caption"
-              color="text.secondary"
+              variant='caption'
+              color='text.secondary'
               sx={{ width: 70, textAlign: 'right', flexShrink: 0 }}
             >
               main: {preset.primary?.main}

@@ -38,20 +38,43 @@ type Story = StoryObj<typeof meta>;
 const SampleContent = () => (
   <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
     <Typography variant='h6'>页面内容区域</Typography>
-    <Typography variant='body2' color='text.secondary'>
+    <Typography
+      variant='body2'
+      color='text.secondary'
+    >
       这是 PageContainer 包裹的内容区域。PageContainer 提供统一的外层布局，
       包括最大宽度控制、水平内边距和底部内边距。
     </Typography>
     <Box sx={{ display: 'flex', gap: 1 }}>
-      <Chip label='标签一' color='primary' size='small' />
-      <Chip label='标签二' color='secondary' size='small' />
-      <Chip label='标签三' color='default' size='small' />
+      <Chip
+        label='标签一'
+        color='primary'
+        size='small'
+      />
+      <Chip
+        label='标签二'
+        color='secondary'
+        size='small'
+      />
+      <Chip
+        label='标签三'
+        color='default'
+        size='small'
+      />
     </Box>
     <Box sx={{ display: 'flex', gap: 1, mt: 1 }}>
-      <Button variant='contained' size='small' onClick={fn()}>
+      <Button
+        variant='contained'
+        size='small'
+        onClick={fn()}
+      >
         主要操作
       </Button>
-      <Button variant='outlined' size='small' onClick={fn()}>
+      <Button
+        variant='outlined'
+        size='small'
+        onClick={fn()}
+      >
         次要操作
       </Button>
     </Box>
@@ -83,14 +106,24 @@ export const WithHeader: Story = {
         }}
       >
         <Box>
-          <Typography variant='h5' fontWeight={600}>
+          <Typography
+            variant='h5'
+            fontWeight={600}
+          >
             订单管理
           </Typography>
-          <Typography variant='body2' color='text.secondary'>
+          <Typography
+            variant='body2'
+            color='text.secondary'
+          >
             管理系统内所有销售订单
           </Typography>
         </Box>
-        <Button variant='contained' size='small' onClick={fn()}>
+        <Button
+          variant='contained'
+          size='small'
+          onClick={fn()}
+        >
           新建订单
         </Button>
       </Box>

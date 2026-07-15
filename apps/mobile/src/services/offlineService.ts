@@ -61,7 +61,7 @@ export class OfflineService {
   static async saveOfflineAction(
     module: string,
     action: string,
-    data: Record<string, unknown>
+    data: Record<string, unknown>,
   ): Promise<string> {
     const id = `${module}-${action}-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
     const record: OfflineRecord = {
@@ -77,9 +77,7 @@ export class OfflineService {
     return id;
   }
 
-  static async getPendingRecords(
-    module?: string
-  ): Promise<OfflineRecord[]> {
+  static async getPendingRecords(module?: string): Promise<OfflineRecord[]> {
     const allRecords = await db.offlineRecords.toArray();
     let filtered = allRecords.filter((r) => !r.synced);
     if (module) {
@@ -92,10 +90,7 @@ export class OfflineService {
     await db.offlineRecords.update(id, { synced: true });
   }
 
-  static async updateSyncAttempt(
-    id: string,
-    error?: string
-  ): Promise<void> {
+  static async updateSyncAttempt(id: string, error?: string): Promise<void> {
     const record = await db.offlineRecords.get(id);
     if (record) {
       await db.offlineRecords.update(id, {
@@ -136,7 +131,7 @@ export class OfflineService {
     module: string,
     key: string,
     data: Record<string, unknown>,
-    ttlSeconds: number = 3600
+    ttlSeconds: number = 3600,
   ): Promise<void> {
     const id = `${module}-${key}`;
     const cacheEntry: CacheEntry = {

@@ -306,8 +306,10 @@ export const Sidebar: React.FC<SidebarProps> = ({ open, onClose, pluginCode }) =
             onClose();
           }}
           sx={{
-            color: location.pathname === DASHBOARD_PATHS.dashboard ? 'primary.main' : 'text.secondary',
-            backgroundColor: location.pathname === DASHBOARD_PATHS.dashboard ? 'primary.50' : 'transparent',
+            color:
+              location.pathname === DASHBOARD_PATHS.dashboard ? 'primary.main' : 'text.secondary',
+            backgroundColor:
+              location.pathname === DASHBOARD_PATHS.dashboard ? 'primary.50' : 'transparent',
             borderRadius: 1,
             marginY: 0.5,
             marginX: 1,

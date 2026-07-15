@@ -9,8 +9,7 @@ const meta = {
     layout: 'centered',
     docs: {
       description: {
-        component:
-          '描述列表组件，支持垂直/网格布局、可复制文本、工具提示、加载骨架屏等功能。',
+        component: '描述列表组件，支持垂直/网格布局、可复制文本、工具提示、加载骨架屏等功能。',
       },
     },
   },

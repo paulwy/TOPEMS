@@ -1,4 +1,6 @@
-import React, { useState, useEffect, useMemo, useCallback } from 'react';
+import React, { useState, useMemo, useCallback, useEffect } from 'react';
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import { QUERY_KEYS } from '@/lib/reactQuery';
 import { Box, Chip, Rating } from '@mui/material';
 import { Plus, Eye, Edit, Trash2 } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
@@ -25,10 +27,7 @@ const STATUS_OPTIONS = [
 const SrmEvaluationPage: React.FC = () => {
   const navigate = useNavigate();
   const addNotification = useNotificationStore((state) => state.addNotification);
-  const [allEvaluations, setAllEvaluations] = useState<EvaluationWithSupplier[]>([]);
-  const [suppliers, setSuppliers] = useState<Supplier[]>([]);
-  const [loading, setLoading] = useState(false);
-  const [error, setError] = useState<string>('');
+  const queryClient = useQueryClient();
   const [page, setPage] = useState(0);
   const [rowsPerPage, setRowsPerPage] = useState(10);
   const [searchTerm, setSearchTerm] = useState('');
@@ -36,82 +35,81 @@ const SrmEvaluationPage: React.FC = () => {
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
   const [selectedEvaluation, setSelectedEvaluation] = useState<EvaluationWithSupplier | null>(null);
 
-  const loadData = useCallback(async () => {
-    setLoading(true);
-    setError('');
-    try {
+  const suppliersQuery = useQuery<Supplier[]>({
+    queryKey: QUERY_KEYS.SRM.SUPPLIERS,
+    queryFn: async () => {
+      const response = await srmApi.listSuppliers();
+      if (response.success && response.data) return response.data;
+      return [];
+    },
+  });
+
+  const evaluationsQuery = useQuery<EvaluationWithSupplier[]>({
+    queryKey: QUERY_KEYS.SRM.EVALUATIONS,
+    queryFn: async () => {
       const [evalResponse, supplierResponse] = await Promise.all([
         srmApi.listEvaluations(),
         srmApi.listSuppliers(),
       ]);
 
-      if (supplierResponse.success && supplierResponse.data) {
-        setSuppliers(supplierResponse.data);
-      }
+      const supplierMap = new Map((supplierResponse.data || []).map((s) => [s.id, s.name]));
 
       if (evalResponse.success && evalResponse.data) {
-        const supplierMap = new Map((supplierResponse.data || []).map((s) => [s.id, s.name]));
-        const evaluationsWithSupplier = evalResponse.data.map((evalItem) => ({
+        return evalResponse.data.map((evalItem) => ({
           ...evalItem,
           supplier_name: supplierMap.get(evalItem.supplier_id),
         }));
-        setAllEvaluations(evaluationsWithSupplier);
-      } else {
-        setError(evalResponse.message || '加载评估数据失败');
-        addNotification({
-          type: 'error',
-          title: '加载失败',
-          message: evalResponse.message || '加载评估数据失败',
-        });
       }
-    } catch (err: unknown) {
-      apiLogger.error('加载评估数据失败:', err);
-      setError('加载评估数据失败');
-      addNotification({
-        type: 'error',
-        title: '加载失败',
-        message: '加载评估数据失败',
-      });
-    } finally {
-      setLoading(false);
-    }
-  }, [addNotification]);
+      return [];
+    },
+  });
 
-  useEffect(() => {
-    loadData();
-  }, [loadData]);
+  const suppliers = suppliersQuery.data || [];
+  const allEvaluations = evaluationsQuery.data || [];
+  const loading = evaluationsQuery.isLoading || suppliersQuery.isLoading;
+  const error = evaluationsQuery.error
+    ? evaluationsQuery.error instanceof Error
+      ? evaluationsQuery.error.message
+      : '加载评估数据失败'
+    : '';
 
-  const handleDeleteClick = useCallback((evaluation: EvaluationWithSupplier) => {
-    setSelectedEvaluation(evaluation);
-    setDeleteDialogOpen(true);
-  }, []);
-
-  const handleDeleteConfirm = useCallback(async () => {
-    if (!selectedEvaluation) return;
-    try {
-      const response = await srmApi.deleteEvaluation(selectedEvaluation.id);
-      if (response.success) {
-        addNotification({
-          type: 'success',
-          title: '删除成功',
-          message: '删除评估成功',
-        });
-        setAllEvaluations((prev) => prev.filter((e) => e.id !== selectedEvaluation.id));
-      } else {
+  const deleteMutation = useMutation({
+    mutationFn: async (evaluationId: string) => {
+      const response = await srmApi.deleteEvaluation(evaluationId);
+      if (!response.success) {
         throw new Error(response.message || '删除评估失败');
       }
-    } catch (err: unknown) {
+      return response;
+    },
+    onSuccess: () => {
+      addNotification({
+        type: 'success',
+        title: '删除成功',
+        message: '删除评估成功',
+      });
+      queryClient.invalidateQueries({ queryKey: QUERY_KEYS.SRM.EVALUATIONS });
+    },
+    onError: (err: unknown) => {
       apiLogger.error('删除评估失败:', err);
       addNotification({
         type: 'error',
         title: '删除失败',
         message: '删除评估失败',
       });
-    } finally {
-      setDeleteDialogOpen(false);
-      setSelectedEvaluation(null);
-    }
-  }, [selectedEvaluation, addNotification]);
+    },
+  });
+
+  const handleDeleteClick = useCallback((evaluation: EvaluationWithSupplier) => {
+    setSelectedEvaluation(evaluation);
+    setDeleteDialogOpen(true);
+  }, []);
+
+  const handleDeleteConfirm = useCallback(() => {
+    if (!selectedEvaluation) return;
+    deleteMutation.mutate(selectedEvaluation.id);
+    setDeleteDialogOpen(false);
+    setSelectedEvaluation(null);
+  }, [selectedEvaluation, deleteMutation]);
 
   const filteredEvaluations = useMemo(() => {
     return allEvaluations.filter((e) => {
@@ -337,7 +335,7 @@ const SrmEvaluationPage: React.FC = () => {
         actions={[]}
         rowActions={rowActions}
         getRowId={(row) => row.id}
-        onRefresh={loadData}
+        onRefresh={() => evaluationsQuery.refetch()}
         emptyMessage='暂无评估数据'
         showRowNumber
         columnConfigurable

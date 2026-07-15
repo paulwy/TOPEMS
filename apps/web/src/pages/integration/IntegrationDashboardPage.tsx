@@ -5,7 +5,8 @@
  * @path /integration/dashboard
  */
 
-import React, { useState, useMemo } from 'react';
+import React, { useMemo } from 'react';
+import { useQuery } from '@tanstack/react-query';
 import {
   Plug,
   Activity,
@@ -29,10 +30,17 @@ import {
 } from '@/components/templates';
 import { INTEGRATION_PATHS } from '@/modules/integration/config';
 import { useNotificationStore } from '@/store';
+
 export const IntegrationDashboardPage: React.FC = () => {
   const navigate = useNavigate();
   const addNotification = useNotificationStore((state) => state.addNotification);
-  const [loading, setLoading] = useState(false);
+
+  const loadingQuery = useQuery<boolean>({
+    queryKey: ['integration-dashboard'],
+    queryFn: async () => true,
+    staleTime: Infinity,
+  });
+  const loading = loadingQuery.isLoading;
 
   const stats: StatCard[] = useMemo(
     () => [
@@ -209,11 +217,8 @@ export const IntegrationDashboardPage: React.FC = () => {
         recentItems={recentItems}
         recentTitle='最近同步记录'
         onRefresh={() => {
-          setLoading(true);
-          setTimeout(() => {
-            setLoading(false);
-            addNotification({ title: '刷新成功', message: '数据已更新', type: 'success' });
-          }, 500);
+          loadingQuery.refetch();
+          addNotification({ title: '刷新成功', message: '数据已更新', type: 'success' });
         }}
       />
     </PageContainer>

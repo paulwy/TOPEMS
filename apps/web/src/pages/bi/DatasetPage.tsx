@@ -60,118 +60,6 @@ const ct = designTokens.colors;
 
 type ViewMode = 'list' | 'editor';
 
-const mockDatasets: Dataset[] = [
-  {
-    id: 'ds-001',
-    name: '销售数据分析集',
-    description: '包含销售订单、客户、产品等维度的销售分析数据',
-    data_source_id: 'ds-mysql-001',
-    data_source_name: '业务主数据库',
-    status: 'published',
-    row_count: 125860,
-    refresh_frequency: 'hourly',
-    last_refresh: '2026-06-28T08:00:00Z',
-    fields: [
-      { id: 'f1', name: 'order_date', label: '订单日期', type: 'date', is_dimension: true },
-      { id: 'f2', name: 'customer_name', label: '客户名称', type: 'string', is_dimension: true },
-      { id: 'f3', name: 'product_name', label: '产品名称', type: 'string', is_dimension: true },
-      { id: 'f4', name: 'category', label: '产品类别', type: 'string', is_dimension: true },
-      {
-        id: 'f5',
-        name: 'quantity',
-        label: '数量',
-        type: 'number',
-        is_measure: true,
-        aggregation: 'sum',
-      },
-      {
-        id: 'f6',
-        name: 'amount',
-        label: '金额',
-        type: 'number',
-        is_measure: true,
-        aggregation: 'sum',
-      },
-    ],
-    created_at: '2026-01-15T10:30:00Z',
-    updated_at: '2026-06-28T08:00:00Z',
-  },
-  {
-    id: 'ds-002',
-    name: '生产质量数据集',
-    description: '生产过程质量检验数据，包含缺陷类型、检验结果等',
-    data_source_id: 'ds-mysql-002',
-    data_source_name: 'MES生产数据库',
-    status: 'published',
-    row_count: 89450,
-    refresh_frequency: 'daily',
-    last_refresh: '2026-06-28T00:00:00Z',
-    fields: [
-      { id: 'f1', name: 'inspection_date', label: '检验日期', type: 'date', is_dimension: true },
-      { id: 'f2', name: 'product_line', label: '生产线', type: 'string', is_dimension: true },
-      { id: 'f3', name: 'defect_type', label: '缺陷类型', type: 'string', is_dimension: true },
-      {
-        id: 'f4',
-        name: 'inspection_result',
-        label: '检验结果',
-        type: 'string',
-        is_dimension: true,
-      },
-      {
-        id: 'f5',
-        name: 'defect_count',
-        label: '缺陷数量',
-        type: 'number',
-        is_measure: true,
-        aggregation: 'sum',
-      },
-    ],
-    created_at: '2026-02-20T14:00:00Z',
-    updated_at: '2026-06-28T00:00:00Z',
-  },
-  {
-    id: 'ds-003',
-    name: '库存周转数据集',
-    description: '仓库库存周转率分析数据，包含出入库、库存余额等',
-    data_source_id: 'ds-mysql-001',
-    data_source_name: '业务主数据库',
-    status: 'draft',
-    row_count: 45200,
-    refresh_frequency: 'weekly',
-    last_refresh: '2026-06-23T00:00:00Z',
-    fields: [
-      { id: 'f1', name: 'warehouse', label: '仓库', type: 'string', is_dimension: true },
-      { id: 'f2', name: 'material', label: '物料', type: 'string', is_dimension: true },
-      {
-        id: 'f3',
-        name: 'stock_in',
-        label: '入库数量',
-        type: 'number',
-        is_measure: true,
-        aggregation: 'sum',
-      },
-      {
-        id: 'f4',
-        name: 'stock_out',
-        label: '出库数量',
-        type: 'number',
-        is_measure: true,
-        aggregation: 'sum',
-      },
-      {
-        id: 'f5',
-        name: 'stock_balance',
-        label: '库存余额',
-        type: 'number',
-        is_measure: true,
-        aggregation: 'sum',
-      },
-    ],
-    created_at: '2026-05-10T09:00:00Z',
-    updated_at: '2026-06-25T16:30:00Z',
-  },
-];
-
 const DatasetPage = () => {
   const queryClient = useQueryClient();
   const [viewMode, setViewMode] = useState<ViewMode>('list');
@@ -226,7 +114,7 @@ const DatasetPage = () => {
       testSqlQuery(dataSourceId, sql),
   });
 
-  const displayDatasets = datasets.length > 0 ? datasets : mockDatasets;
+  const displayDatasets = datasets;
 
   const filteredDatasets = useMemo(() => {
     return displayDatasets.filter(
@@ -373,10 +261,7 @@ const DatasetPage = () => {
   };
 
   const actionLoading =
-    loading ||
-    publishMutation.isPending ||
-    refreshMutation.isPending ||
-    testSqlMutation.isPending;
+    loading || publishMutation.isPending || refreshMutation.isPending || testSqlMutation.isPending;
 
   const renderListView = () => (
     <Box sx={{ p: 3 }}>

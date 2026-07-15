@@ -1,4 +1,5 @@
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect } from 'react';
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { Link } from 'react-router-dom';
 import {
   Plus,
@@ -150,8 +151,7 @@ const canvasComponentToWidgetData = (comp: CanvasComponent): Partial<Widget> => 
 });
 
 const BIVisualizationPage = () => {
-  const [loading, setLoading] = useState(true);
-  const [isRefreshing, setIsRefreshing] = useState(false);
+  const queryClient = useQueryClient();
   const [error, setError] = useState<string | null>(null);
   const [searchTerm, setSearchTerm] = useState('');
   const [filterType, setFilterType] = useState<string>('all');
@@ -160,33 +160,73 @@ const BIVisualizationPage = () => {
   const [selectedComponent, setSelectedComponent] = useState<string | null>(null);
   const [isDragging, setIsDragging] = useState(false);
 
-  const loadData = useCallback(async (showRefreshing = false) => {
-    if (showRefreshing) setIsRefreshing(true);
-    else setLoading(true);
-    setError(null);
-    try {
+  const widgetsQuery = useQuery<CanvasComponent[]>({
+    queryKey: ['bi-widgets'],
+    queryFn: async () => {
       const res = await fetchWidgets();
       if (res.success && res.data) {
         const widgets: Widget[] = res.data.items || res.data || [];
-        const components = widgets.map(widgetToCanvasComponent);
-        setCanvasComponents(components);
+        return widgets.map(widgetToCanvasComponent);
       }
-    } catch (e: unknown) {
-      logger.error('Failed to load widgets:', e);
-      setError('加载组件数据失败，请稍后重试');
-    } finally {
-      setLoading(false);
-      setIsRefreshing(false);
-    }
-  }, []);
+      return [];
+    },
+    staleTime: 5 * 60 * 1000,
+  });
 
   useEffect(() => {
-    loadData();
-  }, [loadData]);
+    if (widgetsQuery.data) {
+      setCanvasComponents(widgetsQuery.data);
+    }
+  }, [widgetsQuery.data]);
+
+  const loading = widgetsQuery.isLoading;
+
+  useEffect(() => {
+    if (widgetsQuery.isError) {
+      logger.error('Failed to load widgets:', widgetsQuery.error);
+      setError('加载组件数据失败，请稍后重试');
+    } else {
+      setError(null);
+    }
+  }, [widgetsQuery.isError, widgetsQuery.error]);
 
   const handleRefresh = () => {
-    loadData(true);
+    widgetsQuery.refetch();
   };
+
+  const createMutation = useMutation({
+    mutationFn: (data: Partial<Widget>) => createWidget(data),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['bi-widgets'] });
+    },
+    onError: (e: unknown) => {
+      logger.error('Failed to create widget:', e);
+    },
+  });
+
+  const deleteMutation = useMutation({
+    mutationFn: (id: string) => deleteWidget(id),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['bi-widgets'] });
+    },
+    onError: (e: unknown) => {
+      logger.error('Failed to delete widget:', e);
+    },
+  });
+
+  const updateMutation = useMutation({
+    mutationFn: ({ id, widgetData }: { id: string; widgetData: Partial<Widget> }) =>
+      updateWidget(id, widgetData),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['bi-widgets'] });
+    },
+    onError: (e: unknown) => {
+      logger.error('Failed to update widget:', e);
+    },
+  });
+
+  const actionLoading =
+    createMutation.isPending || deleteMutation.isPending || updateMutation.isPending;
 
   const filteredComponents = componentList.filter((comp) => {
     const matchesSearch = comp.name.toLowerCase().includes(searchTerm.toLowerCase());
@@ -203,62 +243,39 @@ const BIVisualizationPage = () => {
     setIsDragging(false);
   };
 
-  const handleDrop = async (e: React.DragEvent) => {
+  const handleDrop = (e: React.DragEvent) => {
     e.preventDefault();
     const componentType = e.dataTransfer.getData('componentType');
     if (componentType) {
-      try {
-        const newComponentData: Partial<Widget> = {
-          name: '新组件',
-          widget_type: componentType,
-          config: { title: '新组件' },
-          position: {
-            x: 50,
-            y: 50,
-            w: 200,
-            h: 150,
-          },
-        };
-        const res = await createWidget(newComponentData);
-        if (res.success && res.data) {
-          const newWidget = res.data as Widget;
-          const newComponent = widgetToCanvasComponent(newWidget);
-          setCanvasComponents([...canvasComponents, newComponent]);
-        }
-      } catch (e: unknown) {
-        logger.error('Failed to create widget:', e);
-      }
+      const newComponentData: Partial<Widget> = {
+        name: '新组件',
+        widget_type: componentType,
+        config: { title: '新组件' },
+        position: {
+          x: 50,
+          y: 50,
+          w: 200,
+          h: 150,
+        },
+      };
+      createMutation.mutate(newComponentData);
     }
     setIsDragging(false);
   };
 
-  const handleDeleteComponent = async (id: string) => {
-    try {
-      const res = await deleteWidget(id);
-      if (res.success) {
-        setCanvasComponents(canvasComponents.filter((c) => c.id !== id));
-        if (selectedComponent === id) {
-          setSelectedComponent(null);
-        }
-      }
-    } catch (e: unknown) {
-      logger.error('Failed to delete widget:', e);
+  const handleDeleteComponent = (id: string) => {
+    deleteMutation.mutate(id);
+    if (selectedComponent === id) {
+      setSelectedComponent(null);
     }
   };
 
-  const handleUpdateComponent = async (id: string, updates: Partial<CanvasComponent>) => {
+  const handleUpdateComponent = (id: string, updates: Partial<CanvasComponent>) => {
     const comp = canvasComponents.find((c) => c.id === id);
     if (!comp) return;
-    try {
-      const updatedComp = { ...comp, ...updates };
-      const widgetData = canvasComponentToWidgetData(updatedComp);
-      const res = await updateWidget(id, widgetData);
-      if (res.success) {
-        setCanvasComponents(canvasComponents.map((c) => (c.id === id ? updatedComp : c)));
-      }
-    } catch (e: unknown) {
-      logger.error('Failed to update widget:', e);
-    }
+    const updatedComp = { ...comp, ...updates };
+    const widgetData = canvasComponentToWidgetData(updatedComp);
+    updateMutation.mutate({ id, widgetData });
   };
 
   const getComponentIcon = (type: string) => {

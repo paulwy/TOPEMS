@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useMemo } from 'react';
+import React, { useState, useMemo } from 'react';
 import {
   Box,
   Dialog,
@@ -20,7 +20,7 @@ import { ListPageTemplate, type ColumnDef, type RowAction } from '@/components/t
 import { PageContainer } from '@/components/common';
 import { useNotificationStore } from '@/store';
 import { designTokens } from '@/theme/tokens';
-import { logger } from '@/utils/logger';
+import { useQuery, useQueryClient } from '@tanstack/react-query';
 
 const ct = designTokens.colors;
 
@@ -149,9 +149,8 @@ const defaultFormData: CategoryFormData = {
 };
 
 const SrmCategoryPage: React.FC = () => {
-  const [categories, setCategories] = useState<SupplierCategory[]>([]);
+  const queryClient = useQueryClient();
   const theme = useTheme();
-  const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState('');
   const [showCreateModal, setShowCreateModal] = useState(false);
   const [showEditModal, setShowEditModal] = useState(false);
@@ -161,21 +160,14 @@ const SrmCategoryPage: React.FC = () => {
   const [pageSize, setPageSize] = useState(10);
   const addNotification = useNotificationStore((state) => state.addNotification);
 
-  useEffect(() => {
-    loadData();
-  }, []);
+  const categoriesQuery = useQuery<SupplierCategory[]>({
+    queryKey: ['srm-supplier-categories'],
+    queryFn: async () => mockCategories,
+    staleTime: 5 * 60 * 1000,
+  });
 
-  const loadData = async () => {
-    setLoading(true);
-    try {
-      setCategories(mockCategories);
-    } catch (error: unknown) {
-      logger.error('加载供应商分类失败:', error);
-      addNotification({ title: '加载失败', message: '加载供应商分类失败', type: 'error' });
-    } finally {
-      setLoading(false);
-    }
-  };
+  const categories = categoriesQuery.data ?? [];
+  const loading = categoriesQuery.isLoading;
 
   const getStatusBadge = (status: string) => {
     const config = STATUS_MAP[status] || {
@@ -278,7 +270,9 @@ const SrmCategoryPage: React.FC = () => {
       icon: <Trash2 style={{ width: 16, height: 16 }} />,
       color: 'error',
       onClick: (row) => {
-        setCategories((prev) => prev.filter((c) => c.id !== row.id));
+        queryClient.setQueryData<SupplierCategory[]>(['srm-supplier-categories'], (old) =>
+          (old || []).filter((c) => c.id !== row.id)
+        );
         addNotification({ title: '成功', message: '分类删除成功', type: 'success' });
       },
     },
@@ -307,13 +301,16 @@ const SrmCategoryPage: React.FC = () => {
       created_at: new Date().toISOString().split('T')[0],
       updated_at: new Date().toISOString().split('T')[0],
     };
-    setCategories((prev) => [newCategory, ...prev]);
+    queryClient.setQueryData<SupplierCategory[]>(['srm-supplier-categories'], (old) => [
+      newCategory,
+      ...(old || []),
+    ]);
     setShowCreateModal(false);
     addNotification({ title: '成功', message: '供应商分类创建成功', type: 'success' });
   };
   const handleSaveEdit = () => {
-    setCategories((prev) =>
-      prev.map((c) =>
+    queryClient.setQueryData<SupplierCategory[]>(['srm-supplier-categories'], (old) =>
+      (old || []).map((c) =>
         c.id === editingId
           ? { ...c, ...formData, updated_at: new Date().toISOString().split('T')[0] }
           : c

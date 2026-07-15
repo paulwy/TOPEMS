@@ -1,4 +1,5 @@
 import { useState, useEffect, useCallback } from 'react';
+import { useQuery } from '@tanstack/react-query';
 import { logger } from '@/utils/logger';
 import { useNotificationStore } from '@/store';
 import { useNavigate } from 'react-router-dom';
@@ -267,23 +268,18 @@ const moduleConfigs: Omit<ModuleInfo, 'stats' | 'trend'>[] = [
 ];
 
 const BIAnalyticsPage = () => {
-  const [overview, setOverview] = useState<any>(null);
-  const [modulesData, setModulesData] = useState<Record<string, any>>({});
-  const [loading, setLoading] = useState(true);
-  const [isRefreshing, setIsRefreshing] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [organizationFilter, setOrganizationFilter] = useState<OrganizationFilterValue>({});
   const navigate = useNavigate();
 
-  const loadOverview = useCallback(async (showRefreshing = false) => {
-    if (showRefreshing) setIsRefreshing(true);
-    else setLoading(true);
-    setError(null);
-    try {
+  const overviewQuery = useQuery<{
+    overview: any;
+    modulesData: Record<string, any>;
+  }>({
+    queryKey: ['bi-analytics-overview'],
+    queryFn: async () => {
       const res = await fetchAnalyticsOverview();
-      if (res.success && res.data) {
-        setOverview(res.data);
-      }
+      const overview = res.success && res.data ? res.data : null;
 
       const modulePromises = moduleConfigs.map(async (mod) => {
         try {
@@ -303,23 +299,28 @@ const BIAnalyticsPage = () => {
       results.forEach((r) => {
         dataMap[r.id] = r.data;
       });
-      setModulesData(dataMap);
-    } catch (e: unknown) {
-      logger.error('Failed to load analytics:', e);
-      setError('加载分析数据失败，请稍后重试');
-    } finally {
-      setLoading(false);
-      setIsRefreshing(false);
-    }
-  }, []);
+
+      return { overview, modulesData: dataMap };
+    },
+    staleTime: 5 * 60 * 1000,
+  });
+
+  const overview = overviewQuery.data?.overview ?? null;
+  const modulesData = overviewQuery.data?.modulesData ?? {};
+  const loading = overviewQuery.isLoading;
 
   useEffect(() => {
-    loadOverview();
-  }, [loadOverview]);
+    if (overviewQuery.isError) {
+      logger.error('Failed to load analytics:', overviewQuery.error);
+      setError('加载分析数据失败，请稍后重试');
+    } else {
+      setError(null);
+    }
+  }, [overviewQuery.isError, overviewQuery.error]);
 
   const handleRefresh = useCallback(() => {
-    loadOverview(true);
-  }, [loadOverview]);
+    overviewQuery.refetch();
+  }, [overviewQuery]);
 
   const getModuleStats = (moduleId: string): Record<string, string | number> => {
     const data = modulesData[moduleId];
@@ -570,7 +571,9 @@ const BIAnalyticsPage = () => {
               cx='50%'
               cy='50%'
               labelLine={false}
-              label={({ name, percent }) => `${name} ${((percent || 0) * 100).toFixed(0)}%`}
+              label={({ name, percent }: { name: string; percent?: number }) =>
+                `${name} ${((percent || 0) * 100).toFixed(0)}%`
+              }
               outerRadius={80}
               innerRadius={50}
               dataKey='value'

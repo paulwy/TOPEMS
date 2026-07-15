@@ -1,14 +1,16 @@
-import React, { useState, useEffect, useCallback, useMemo } from 'react';
+import React, { useMemo } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { z } from 'zod';
 import { Building2, Mail, Phone, MapPin, Globe } from 'lucide-react';
 import FormPageTemplate from '@/components/templates/FormPageTemplate';
 import type { FormSection, FormField } from '@/components/templates/FormPageTemplate';
 import { PageContainer } from '@/components/common';
-import { customerApi, type Customer } from '@/api/crm';
+import { customerApi, type UpdateCustomerRequest } from '@/api/crm';
 import { useNotification } from '@/hooks/useNotification';
 import { logger } from '@/utils/logger';
 import { CRM_PATHS } from '@/modules/crm/config';
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import { QUERY_KEYS } from '@/lib/reactQuery';
 
 const customerSchema = z.object({
   name: z.string().min(1, '客户名称不能为空'),
@@ -51,34 +53,42 @@ const CustomerEditPage: React.FC = () => {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
   const { success, error } = useNotification();
+  const queryClient = useQueryClient();
 
-  const [customer, setCustomer] = useState<Customer | null>(null);
-  const [loading, setLoading] = useState(true);
-  const [submitting, setSubmitting] = useState(false);
+  const customerQuery = useQuery({
+    queryKey: QUERY_KEYS.CRM.CUSTOMER(id || ''),
+    queryFn: async () => {
+      const response = await customerApi.get(id!);
+      if (response.code === 200 && response.data) {
+        return response.data;
+      }
+      return null;
+    },
+    enabled: !!id,
+  });
 
-  const loadCustomer = useCallback(
-    async (customerId: string) => {
-      setLoading(true);
-      try {
-        const response = await customerApi.get(customerId);
-        if (response.code === 200 && response.data) {
-          setCustomer(response.data);
-        }
-      } catch (err: unknown) {
-        logger.error('Failed to load customer:', err);
-        error('加载客户信息失败');
-      } finally {
-        setLoading(false);
+  const customer = customerQuery.data ?? null;
+  const loading = customerQuery.isLoading;
+
+  const updateMutation = useMutation({
+    mutationFn: (params: { id: string; data: UpdateCustomerRequest }) =>
+      customerApi.update(params.id, params.data),
+    onSuccess: (response, variables) => {
+      if (response.code === 200) {
+        success('客户信息更新成功');
+        queryClient.invalidateQueries({ queryKey: QUERY_KEYS.CRM.CUSTOMER(variables.id) });
+        navigate(CRM_PATHS.customerDetail.replace(':id', variables.id));
+      } else {
+        error(response.message || '更新失败');
       }
     },
-    [error]
-  );
+    onError: (err: unknown) => {
+      logger.error('Failed to update customer:', err);
+      error('更新客户信息失败');
+    },
+  });
 
-  useEffect(() => {
-    if (id) {
-      loadCustomer(id);
-    }
-  }, [id, loadCustomer]);
+  const submitting = updateMutation.isPending;
 
   const defaultValues = useMemo(() => {
     if (!customer) return {};
@@ -96,18 +106,18 @@ const CustomerEditPage: React.FC = () => {
     };
   }, [customer]);
 
-  const handleSubmit = useCallback(
-    async (data: unknown) => {
-      if (!id) {
-        error('客户ID无效');
-        return;
-      }
+  const handleSubmit = async (data: unknown) => {
+    if (!id) {
+      error('客户ID无效');
+      return;
+    }
 
-      const formData = data as CustomerFormData;
+    const formData = data as CustomerFormData;
 
-      setSubmitting(true);
-      try {
-        const response = await customerApi.update(id, {
+    await updateMutation
+      .mutateAsync({
+        id,
+        data: {
           name: formData.name.trim(),
           code: formData.code?.trim() || undefined,
           customer_type: formData.type,
@@ -118,23 +128,12 @@ const CustomerEditPage: React.FC = () => {
           email: formData.email?.trim() || undefined,
           address: formData.address?.trim() || undefined,
           notes: formData.description?.trim() || undefined,
-        });
-
-        if (response.code === 200) {
-          success('客户信息更新成功');
-          navigate(CRM_PATHS.customerDetail.replace(':id', id));
-        } else {
-          error(response.message || '更新失败');
-        }
-      } catch (err: unknown) {
-        logger.error('Failed to update customer:', err);
-        error('更新客户信息失败');
-      } finally {
-        setSubmitting(false);
-      }
-    },
-    [id, error, success, navigate]
-  );
+        },
+      })
+      .catch(() => {
+        // Error handled by onError
+      });
+  };
 
   const handleCancel = () => {
     if (id) {

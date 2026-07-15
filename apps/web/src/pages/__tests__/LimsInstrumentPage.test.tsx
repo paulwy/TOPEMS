@@ -110,6 +110,7 @@ vi.mock('@/store', () => ({
   useSetSidebarCollapsed: vi.fn(),
 }));
 
+describe('LimsInstrumentPage', () => {
   it('should render without crashing', () => {
     const { container } = render(
       <BrowserRouter>
@@ -118,11 +119,12 @@ vi.mock('@/store', () => ({
     );
     expect(container).toBeDefined();
   });
-
-  it('should have instrument API methods defined', () => {
-    expect(limsApi.listInstruments).toBeDefined();
-    expect(limsApi.createInstrument).toBeDefined();
-    expect(limsApi.getInstrument).toBeDefined();
-    expect(limsApi.updateInstrument).toBeDefined();
+  describe('LimsInstrumentPage', () => {
+    it('should have instrument API methods defined', () => {
+      expect(limsApi.listInstruments).toBeDefined();
+      expect(limsApi.createInstrument).toBeDefined();
+      expect(limsApi.getInstrument).toBeDefined();
+      expect(limsApi.updateInstrument).toBeDefined();
+    });
   });
 });

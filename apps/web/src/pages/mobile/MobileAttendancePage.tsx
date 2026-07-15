@@ -53,6 +53,7 @@ import {
 } from '@/api/mobile';
 import { apiLogger } from '@/utils/logger';
 import { MOBILE_PATHS } from '@/modules/mobile/config';
+import { PageContainer } from '@/components/common';
 
 const MobileAttendancePage: React.FC = () => {
   const theme = useTheme();
@@ -113,7 +114,9 @@ const MobileAttendancePage: React.FC = () => {
     },
     onMutate: async () => {
       await queryClient.cancelQueries({ queryKey: ['mobile-attendance-stats'] });
-      const previousStats = queryClient.getQueryData<AttendanceStats | null>(['mobile-attendance-stats']);
+      const previousStats = queryClient.getQueryData<AttendanceStats | null>([
+        'mobile-attendance-stats',
+      ]);
       if (previousStats) {
         queryClient.setQueryData(['mobile-attendance-stats'], {
           ...previousStats,
@@ -161,7 +164,9 @@ const MobileAttendancePage: React.FC = () => {
     },
     onMutate: async () => {
       await queryClient.cancelQueries({ queryKey: ['mobile-attendance-stats'] });
-      const previousStats = queryClient.getQueryData<AttendanceStats | null>(['mobile-attendance-stats']);
+      const previousStats = queryClient.getQueryData<AttendanceStats | null>([
+        'mobile-attendance-stats',
+      ]);
       if (previousStats) {
         queryClient.setQueryData(['mobile-attendance-stats'], {
           ...previousStats,
@@ -241,11 +246,7 @@ const MobileAttendancePage: React.FC = () => {
   });
 
   const handleRefresh = useCallback(async () => {
-    await Promise.all([
-      statsQuery.refetch(),
-      recordsQuery.refetch(),
-      leavesQuery.refetch(),
-    ]);
+    await Promise.all([statsQuery.refetch(), recordsQuery.refetch(), leavesQuery.refetch()]);
   }, [statsQuery, recordsQuery, leavesQuery]);
 
   const handleTabChange = (_event: React.SyntheticEvent, newValue: number) => {
@@ -389,487 +390,494 @@ const MobileAttendancePage: React.FC = () => {
         </Button>
       }
     >
-      <Tabs
-        value={activeTab}
-        onChange={handleTabChange}
-        variant='fullWidth'
-        sx={{
-          '& .MuiTab-root': {
-            minHeight: 44,
-            fontSize: '0.875rem',
-          },
-        }}
+      <PageContainer
+        autoTitle={false}
+        autoBreadcrumbs={false}
+        padding={false}
+        maxWidth={false}
       >
-        {tabs.map((tab, index) => (
-          <Tab
-            key={index}
-            label={tab}
-          />
-        ))}
-      </Tabs>
+        <Tabs
+          value={activeTab}
+          onChange={handleTabChange}
+          variant='fullWidth'
+          sx={{
+            '& .MuiTab-root': {
+              minHeight: 44,
+              fontSize: '0.875rem',
+            },
+          }}
+        >
+          {tabs.map((tab, index) => (
+            <Tab
+              key={index}
+              label={tab}
+            />
+          ))}
+        </Tabs>
 
-      <PullToRefresh onRefresh={handleRefresh}>
-        {loading ? (
-          <MobileSkeleton
-            type='list'
-            count={6}
-          />
-        ) : (
-          <>
-            {activeTab === 0 && (
-              <Box sx={{ p: 2, pb: 3 }}>
-                <Paper
-                  elevation={0}
-                  sx={{
-                    p: 3,
-                    borderRadius: 3,
-                    mb: 3,
-                    textAlign: 'center',
-                    background: `linear-gradient(135deg, ${theme.palette.primary.main} 0%, ${theme.palette.primary.dark} 100%)`,
-                    color: 'white',
-                  }}
-                >
-                  <Typography
-                    variant='h4'
-                    sx={{ fontWeight: 700, mb: 1 }}
-                  >
-                    {new Date().toLocaleTimeString('zh-CN', {
-                      hour: '2-digit',
-                      minute: '2-digit',
-                      second: '2-digit',
-                    })}
-                  </Typography>
-                  <Typography
-                    variant='body2'
-                    sx={{ opacity: 0.9, mb: 3 }}
-                  >
-                    {new Date().toLocaleDateString('zh-CN', {
-                      year: 'numeric',
-                      month: 'long',
-                      day: 'numeric',
-                      weekday: 'long',
-                    })}
-                  </Typography>
-
-                  <Box
+        <PullToRefresh onRefresh={handleRefresh}>
+          {loading ? (
+            <MobileSkeleton
+              type='list'
+              count={6}
+            />
+          ) : (
+            <>
+              {activeTab === 0 && (
+                <Box sx={{ p: 2, pb: 3 }}>
+                  <Paper
+                    elevation={0}
                     sx={{
-                      width: 120,
-                      height: 120,
-                      margin: '0 auto 20px',
-                      borderRadius: '50%',
-                      display: 'flex',
-                      alignItems: 'center',
-                      justifyContent: 'center',
-                      bgcolor: 'rgba(255,255,255,0.2)',
-                      cursor: checkingIn ? 'not-allowed' : 'pointer',
-                      transition: 'transform 0.2s',
-                      '&:active': {
-                        transform: 'scale(0.95)',
-                      },
-                    }}
-                    onClick={() => {
-                      if (todayStatus === 'not_checked_in') {
-                        handleCheckIn();
-                      } else if (todayStatus === 'checked_in') {
-                        handleCheckOut();
-                      }
+                      p: 3,
+                      borderRadius: 3,
+                      mb: 3,
+                      textAlign: 'center',
+                      background: `linear-gradient(135deg, ${theme.palette.primary.main} 0%, ${theme.palette.primary.dark} 100%)`,
+                      color: 'white',
                     }}
                   >
-                    <Box sx={{ textAlign: 'center' }}>
-                      <CalendarCheck style={{ width: 40, height: 40, margin: '0 auto 4px' }} />
-                      <Typography
-                        variant='h6'
-                        sx={{ fontWeight: 600 }}
-                      >
-                        {todayStatus === 'not_checked_in'
-                          ? '上班打卡'
-                          : todayStatus === 'checked_in'
-                            ? '下班打卡'
-                            : '已打卡'}
-                      </Typography>
-                    </Box>
-                  </Box>
-
-                  <Box sx={{ display: 'flex', justifyContent: 'center', gap: 4 }}>
-                    <Box sx={{ textAlign: 'center' }}>
-                      <Typography
-                        variant='body2'
-                        sx={{ opacity: 0.7, mb: 0.5 }}
-                      >
-                        上班时间
-                      </Typography>
-                      <Typography
-                        variant='h6'
-                        sx={{ fontWeight: 600 }}
-                      >
-                        {attendanceStats?.today_check_in || '--:--'}
-                      </Typography>
-                    </Box>
-                    <Box sx={{ textAlign: 'center' }}>
-                      <Typography
-                        variant='body2'
-                        sx={{ opacity: 0.7, mb: 0.5 }}
-                      >
-                        下班时间
-                      </Typography>
-                      <Typography
-                        variant='h6'
-                        sx={{ fontWeight: 600 }}
-                      >
-                        {attendanceStats?.today_check_out || '--:--'}
-                      </Typography>
-                    </Box>
-                  </Box>
-                </Paper>
-
-                <Paper
-                  elevation={0}
-                  sx={{
-                    p: 2,
-                    borderRadius: 2,
-                    mb: 3,
-                    border: 1,
-                    borderColor: 'divider',
-                    display: 'flex',
-                    alignItems: 'center',
-                    gap: 2,
-                  }}
-                >
-                  <MapPin style={{ width: 20, height: 20, color: theme.palette.primary.main }} />
-                  <Box sx={{ flex: 1 }}>
+                    <Typography
+                      variant='h4'
+                      sx={{ fontWeight: 700, mb: 1 }}
+                    >
+                      {new Date().toLocaleTimeString('zh-CN', {
+                        hour: '2-digit',
+                        minute: '2-digit',
+                        second: '2-digit',
+                      })}
+                    </Typography>
                     <Typography
                       variant='body2'
-                      sx={{ fontWeight: 500 }}
+                      sx={{ opacity: 0.9, mb: 3 }}
                     >
-                      考勤位置
+                      {new Date().toLocaleDateString('zh-CN', {
+                        year: 'numeric',
+                        month: 'long',
+                        day: 'numeric',
+                        weekday: 'long',
+                      })}
                     </Typography>
-                    <Typography
-                      variant='caption'
-                      color='text.secondary'
-                    >
-                      公司总部 · 北京市朝阳区xxx路xxx号
-                    </Typography>
-                  </Box>
-                  <Chip
-                    label='范围内'
-                    size='small'
-                    color='success'
-                    sx={{ height: 20, fontSize: '0.7rem' }}
-                  />
-                </Paper>
 
-                <Paper
-                  elevation={0}
-                  sx={{
-                    borderRadius: 2,
-                    border: 1,
-                    borderColor: 'divider',
-                    overflow: 'hidden',
-                  }}
-                >
-                  <Box
+                    <Box
+                      sx={{
+                        width: 120,
+                        height: 120,
+                        margin: '0 auto 20px',
+                        borderRadius: '50%',
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                        bgcolor: 'rgba(255,255,255,0.2)',
+                        cursor: checkingIn ? 'not-allowed' : 'pointer',
+                        transition: 'transform 0.2s',
+                        '&:active': {
+                          transform: 'scale(0.95)',
+                        },
+                      }}
+                      onClick={() => {
+                        if (todayStatus === 'not_checked_in') {
+                          handleCheckIn();
+                        } else if (todayStatus === 'checked_in') {
+                          handleCheckOut();
+                        }
+                      }}
+                    >
+                      <Box sx={{ textAlign: 'center' }}>
+                        <CalendarCheck style={{ width: 40, height: 40, margin: '0 auto 4px' }} />
+                        <Typography
+                          variant='h6'
+                          sx={{ fontWeight: 600 }}
+                        >
+                          {todayStatus === 'not_checked_in'
+                            ? '上班打卡'
+                            : todayStatus === 'checked_in'
+                              ? '下班打卡'
+                              : '已打卡'}
+                        </Typography>
+                      </Box>
+                    </Box>
+
+                    <Box sx={{ display: 'flex', justifyContent: 'center', gap: 4 }}>
+                      <Box sx={{ textAlign: 'center' }}>
+                        <Typography
+                          variant='body2'
+                          sx={{ opacity: 0.7, mb: 0.5 }}
+                        >
+                          上班时间
+                        </Typography>
+                        <Typography
+                          variant='h6'
+                          sx={{ fontWeight: 600 }}
+                        >
+                          {attendanceStats?.today_check_in || '--:--'}
+                        </Typography>
+                      </Box>
+                      <Box sx={{ textAlign: 'center' }}>
+                        <Typography
+                          variant='body2'
+                          sx={{ opacity: 0.7, mb: 0.5 }}
+                        >
+                          下班时间
+                        </Typography>
+                        <Typography
+                          variant='h6'
+                          sx={{ fontWeight: 600 }}
+                        >
+                          {attendanceStats?.today_check_out || '--:--'}
+                        </Typography>
+                      </Box>
+                    </Box>
+                  </Paper>
+
+                  <Paper
+                    elevation={0}
                     sx={{
                       p: 2,
-                      borderBottom: 1,
+                      borderRadius: 2,
+                      mb: 3,
+                      border: 1,
                       borderColor: 'divider',
                       display: 'flex',
                       alignItems: 'center',
-                      justifyContent: 'space-between',
+                      gap: 2,
                     }}
                   >
-                    <Typography
-                      variant='subtitle2'
-                      sx={{ fontWeight: 600 }}
-                    >
-                      本月统计
-                    </Typography>
-                    <Typography
-                      variant='caption'
-                      color='primary'
-                      sx={{ cursor: 'pointer' }}
-                    >
-                      查看明细
-                    </Typography>
-                  </Box>
-                  <Box sx={{ p: 2 }}>
-                    <Box sx={{ display: 'flex', mb: 2 }}>
-                      <Box sx={{ flex: 1, textAlign: 'center' }}>
-                        <Typography
-                          variant='h6'
-                          sx={{ fontWeight: 700, color: 'primary.main', mb: 0.5 }}
-                        >
-                          {attendanceStats?.work_days_this_month || 0}
-                        </Typography>
-                        <Typography
-                          variant='caption'
-                          color='text.secondary'
-                        >
-                          出勤天数
-                        </Typography>
-                      </Box>
-                      <Box sx={{ flex: 1, textAlign: 'center' }}>
-                        <Typography
-                          variant='h6'
-                          sx={{ fontWeight: 700, color: 'warning.main', mb: 0.5 }}
-                        >
-                          {attendanceStats?.late_days_this_month || 0}
-                        </Typography>
-                        <Typography
-                          variant='caption'
-                          color='text.secondary'
-                        >
-                          迟到次数
-                        </Typography>
-                      </Box>
-                      <Box sx={{ flex: 1, textAlign: 'center' }}>
-                        <Typography
-                          variant='h6'
-                          sx={{ fontWeight: 700, color: 'success.main', mb: 0.5 }}
-                        >
-                          {attendanceStats?.total_work_hours || 0}h
-                        </Typography>
-                        <Typography
-                          variant='caption'
-                          color='text.secondary'
-                        >
-                          总工时
-                        </Typography>
-                      </Box>
+                    <MapPin style={{ width: 20, height: 20, color: theme.palette.primary.main }} />
+                    <Box sx={{ flex: 1 }}>
+                      <Typography
+                        variant='body2'
+                        sx={{ fontWeight: 500 }}
+                      >
+                        考勤位置
+                      </Typography>
+                      <Typography
+                        variant='caption'
+                        color='text.secondary'
+                      >
+                        公司总部 · 北京市朝阳区xxx路xxx号
+                      </Typography>
                     </Box>
-                  </Box>
-                </Paper>
-              </Box>
-            )}
-
-            {activeTab === 1 && (
-              <List disablePadding>
-                {records.map((record, index) => (
-                  <React.Fragment key={record.id}>
-                    <MobileCard
-                      leftIcon={
-                        <Avatar
-                          sx={{
-                            width: 40,
-                            height: 40,
-                            bgcolor: `${getStatusColor(record.status)}.lighter`,
-                            color: `${getStatusColor(record.status)}.main`,
-                          }}
-                        >
-                          <Clock style={{ width: 20, height: 20 }} />
-                        </Avatar>
-                      }
-                      title={record.date}
-                      subtitle={
-                        <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mt: 0.5 }}>
-                          <Chip
-                            label={getStatusLabel(record.status)}
-                            size='small'
-                            color={getStatusColor(record.status) as any}
-                            sx={{ height: 20, fontSize: '0.7rem' }}
-                          />
-                          <Typography
-                            variant='caption'
-                            color='text.secondary'
-                          >
-                            {record.check_in_time || '--:--'} - {record.check_out_time || '--:--'}
-                          </Typography>
-                        </Box>
-                      }
-                      showArrow
-                      divider={index < records.length - 1}
-                      rightContent={
-                        record.work_hours ? (
-                          <Typography
-                            variant='body2'
-                            color='text.secondary'
-                          >
-                            {record.work_hours}h
-                          </Typography>
-                        ) : undefined
-                      }
+                    <Chip
+                      label='范围内'
+                      size='small'
+                      color='success'
+                      sx={{ height: 20, fontSize: '0.7rem' }}
                     />
-                  </React.Fragment>
-                ))}
-              </List>
-            )}
+                  </Paper>
 
-            {activeTab === 2 && (
-              <Box sx={{ p: 2, pb: 3 }}>
-                {leaves.length === 0 ? (
-                  <Box
+                  <Paper
+                    elevation={0}
                     sx={{
-                      display: 'flex',
-                      flexDirection: 'column',
-                      alignItems: 'center',
-                      justifyContent: 'center',
-                      py: 10,
+                      borderRadius: 2,
+                      border: 1,
+                      borderColor: 'divider',
+                      overflow: 'hidden',
                     }}
                   >
                     <Box
                       sx={{
-                        width: 64,
-                        height: 64,
-                        borderRadius: '50%',
-                        bgcolor: 'grey.100',
+                        p: 2,
+                        borderBottom: 1,
+                        borderColor: 'divider',
                         display: 'flex',
                         alignItems: 'center',
-                        justifyContent: 'center',
-                        mb: 2,
+                        justifyContent: 'space-between',
                       }}
                     >
-                      <FileText
-                        style={{ width: 32, height: 32, color: theme.palette.text.secondary }}
-                      />
+                      <Typography
+                        variant='subtitle2'
+                        sx={{ fontWeight: 600 }}
+                      >
+                        本月统计
+                      </Typography>
+                      <Typography
+                        variant='caption'
+                        color='primary'
+                        sx={{ cursor: 'pointer' }}
+                      >
+                        查看明细
+                      </Typography>
                     </Box>
-                    <Typography
-                      variant='subtitle1'
-                      sx={{ mb: 1, fontWeight: 500 }}
-                    >
-                      暂无请假记录
-                    </Typography>
-                    <MobileButton
-                      variant='contained'
-                      startIcon={<Plus style={{ width: 18, height: 18 }} />}
-                      onClick={() => setLeaveDialogOpen(true)}
-                    >
-                      申请请假
-                    </MobileButton>
-                  </Box>
-                ) : (
-                  <List disablePadding>
-                    {leaves.map((leave, index) => (
-                      <React.Fragment key={leave.id}>
-                        <Paper
-                          elevation={0}
-                          sx={{
-                            mx: 2,
-                            mb: 2,
-                            p: 2,
-                            borderRadius: 2,
-                            border: 1,
-                            borderColor: 'divider',
-                          }}
-                        >
-                          <Box
+                    <Box sx={{ p: 2 }}>
+                      <Box sx={{ display: 'flex', mb: 2 }}>
+                        <Box sx={{ flex: 1, textAlign: 'center' }}>
+                          <Typography
+                            variant='h6'
+                            sx={{ fontWeight: 700, color: 'primary.main', mb: 0.5 }}
+                          >
+                            {attendanceStats?.work_days_this_month || 0}
+                          </Typography>
+                          <Typography
+                            variant='caption'
+                            color='text.secondary'
+                          >
+                            出勤天数
+                          </Typography>
+                        </Box>
+                        <Box sx={{ flex: 1, textAlign: 'center' }}>
+                          <Typography
+                            variant='h6'
+                            sx={{ fontWeight: 700, color: 'warning.main', mb: 0.5 }}
+                          >
+                            {attendanceStats?.late_days_this_month || 0}
+                          </Typography>
+                          <Typography
+                            variant='caption'
+                            color='text.secondary'
+                          >
+                            迟到次数
+                          </Typography>
+                        </Box>
+                        <Box sx={{ flex: 1, textAlign: 'center' }}>
+                          <Typography
+                            variant='h6'
+                            sx={{ fontWeight: 700, color: 'success.main', mb: 0.5 }}
+                          >
+                            {attendanceStats?.total_work_hours || 0}h
+                          </Typography>
+                          <Typography
+                            variant='caption'
+                            color='text.secondary'
+                          >
+                            总工时
+                          </Typography>
+                        </Box>
+                      </Box>
+                    </Box>
+                  </Paper>
+                </Box>
+              )}
+
+              {activeTab === 1 && (
+                <List disablePadding>
+                  {records.map((record, index) => (
+                    <React.Fragment key={record.id}>
+                      <MobileCard
+                        leftIcon={
+                          <Avatar
                             sx={{
-                              display: 'flex',
-                              alignItems: 'center',
-                              justifyContent: 'space-between',
-                              mb: 1.5,
+                              width: 40,
+                              height: 40,
+                              bgcolor: `${getStatusColor(record.status)}.lighter`,
+                              color: `${getStatusColor(record.status)}.main`,
                             }}
                           >
-                            <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-                              <Chip
-                                label={getLeaveTypeLabel(leave.leave_type)}
-                                size='small'
-                                color='primary'
-                                sx={{ height: 22, fontSize: '0.75rem' }}
-                              />
-                              <Chip
-                                label={getLeaveStatusLabel(leave.status)}
-                                size='small'
-                                color={getLeaveStatusColor(leave.status) as any}
-                                sx={{ height: 22, fontSize: '0.75rem' }}
-                              />
-                            </Box>
+                            <Clock style={{ width: 20, height: 20 }} />
+                          </Avatar>
+                        }
+                        title={record.date}
+                        subtitle={
+                          <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mt: 0.5 }}>
+                            <Chip
+                              label={getStatusLabel(record.status)}
+                              size='small'
+                              color={getStatusColor(record.status) as any}
+                              sx={{ height: 20, fontSize: '0.7rem' }}
+                            />
                             <Typography
                               variant='caption'
                               color='text.secondary'
                             >
-                              {leave.days}天
+                              {record.check_in_time || '--:--'} - {record.check_out_time || '--:--'}
                             </Typography>
                           </Box>
-                          <Typography
-                            variant='body2'
-                            sx={{ mb: 1, fontWeight: 500 }}
-                          >
-                            {leave.start_date} 至 {leave.end_date}
-                          </Typography>
-                          <Typography
-                            variant='body2'
-                            color='text.secondary'
-                            sx={{ fontSize: '0.85rem' }}
-                          >
-                            {leave.reason}
-                          </Typography>
-                        </Paper>
-                        {index < leaves.length - 1 && <Divider sx={{ mx: 2 }} />}
-                      </React.Fragment>
-                    ))}
-                  </List>
-                )}
-              </Box>
-            )}
-          </>
-        )}
-      </PullToRefresh>
+                        }
+                        showArrow
+                        divider={index < records.length - 1}
+                        rightContent={
+                          record.work_hours ? (
+                            <Typography
+                              variant='body2'
+                              color='text.secondary'
+                            >
+                              {record.work_hours}h
+                            </Typography>
+                          ) : undefined
+                        }
+                      />
+                    </React.Fragment>
+                  ))}
+                </List>
+              )}
 
-      <Dialog
-        open={leaveDialogOpen}
-        onClose={() => setLeaveDialogOpen(false)}
-        fullWidth
-        maxWidth='sm'
-      >
-        <DialogTitle>申请请假</DialogTitle>
-        <DialogContent>
-          <Box sx={{ pt: 1, display: 'flex', flexDirection: 'column', gap: 2 }}>
-            <TextField
-              select
-              fullWidth
-              label='请假类型'
-              value={leaveForm.leave_type}
-              onChange={(e) =>
-                setLeaveForm((prev) => ({
-                  ...prev,
-                  leave_type: e.target.value as LeaveApplication['leave_type'],
-                }))
-              }
+              {activeTab === 2 && (
+                <Box sx={{ p: 2, pb: 3 }}>
+                  {leaves.length === 0 ? (
+                    <Box
+                      sx={{
+                        display: 'flex',
+                        flexDirection: 'column',
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                        py: 10,
+                      }}
+                    >
+                      <Box
+                        sx={{
+                          width: 64,
+                          height: 64,
+                          borderRadius: '50%',
+                          bgcolor: 'grey.100',
+                          display: 'flex',
+                          alignItems: 'center',
+                          justifyContent: 'center',
+                          mb: 2,
+                        }}
+                      >
+                        <FileText
+                          style={{ width: 32, height: 32, color: theme.palette.text.secondary }}
+                        />
+                      </Box>
+                      <Typography
+                        variant='subtitle1'
+                        sx={{ mb: 1, fontWeight: 500 }}
+                      >
+                        暂无请假记录
+                      </Typography>
+                      <MobileButton
+                        variant='contained'
+                        startIcon={<Plus style={{ width: 18, height: 18 }} />}
+                        onClick={() => setLeaveDialogOpen(true)}
+                      >
+                        申请请假
+                      </MobileButton>
+                    </Box>
+                  ) : (
+                    <List disablePadding>
+                      {leaves.map((leave, index) => (
+                        <React.Fragment key={leave.id}>
+                          <Paper
+                            elevation={0}
+                            sx={{
+                              mx: 2,
+                              mb: 2,
+                              p: 2,
+                              borderRadius: 2,
+                              border: 1,
+                              borderColor: 'divider',
+                            }}
+                          >
+                            <Box
+                              sx={{
+                                display: 'flex',
+                                alignItems: 'center',
+                                justifyContent: 'space-between',
+                                mb: 1.5,
+                              }}
+                            >
+                              <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                                <Chip
+                                  label={getLeaveTypeLabel(leave.leave_type)}
+                                  size='small'
+                                  color='primary'
+                                  sx={{ height: 22, fontSize: '0.75rem' }}
+                                />
+                                <Chip
+                                  label={getLeaveStatusLabel(leave.status)}
+                                  size='small'
+                                  color={getLeaveStatusColor(leave.status) as any}
+                                  sx={{ height: 22, fontSize: '0.75rem' }}
+                                />
+                              </Box>
+                              <Typography
+                                variant='caption'
+                                color='text.secondary'
+                              >
+                                {leave.days}天
+                              </Typography>
+                            </Box>
+                            <Typography
+                              variant='body2'
+                              sx={{ mb: 1, fontWeight: 500 }}
+                            >
+                              {leave.start_date} 至 {leave.end_date}
+                            </Typography>
+                            <Typography
+                              variant='body2'
+                              color='text.secondary'
+                              sx={{ fontSize: '0.85rem' }}
+                            >
+                              {leave.reason}
+                            </Typography>
+                          </Paper>
+                          {index < leaves.length - 1 && <Divider sx={{ mx: 2 }} />}
+                        </React.Fragment>
+                      ))}
+                    </List>
+                  )}
+                </Box>
+              )}
+            </>
+          )}
+        </PullToRefresh>
+
+        <Dialog
+          open={leaveDialogOpen}
+          onClose={() => setLeaveDialogOpen(false)}
+          fullWidth
+          maxWidth='sm'
+        >
+          <DialogTitle>申请请假</DialogTitle>
+          <DialogContent>
+            <Box sx={{ pt: 1, display: 'flex', flexDirection: 'column', gap: 2 }}>
+              <TextField
+                select
+                fullWidth
+                label='请假类型'
+                value={leaveForm.leave_type}
+                onChange={(e) =>
+                  setLeaveForm((prev) => ({
+                    ...prev,
+                    leave_type: e.target.value as LeaveApplication['leave_type'],
+                  }))
+                }
+              >
+                <MenuItem value='annual'>年假</MenuItem>
+                <MenuItem value='sick'>病假</MenuItem>
+                <MenuItem value='personal'>事假</MenuItem>
+                <MenuItem value='maternity'>产假</MenuItem>
+                <MenuItem value='paternity'>陪产假</MenuItem>
+                <MenuItem value='other'>其他</MenuItem>
+              </TextField>
+              <TextField
+                fullWidth
+                label='开始日期'
+                type='date'
+                value={leaveForm.start_date}
+                onChange={(e) => setLeaveForm((prev) => ({ ...prev, start_date: e.target.value }))}
+                slotProps={{ inputLabel: { shrink: true } } as any}
+              />
+              <TextField
+                fullWidth
+                label='结束日期'
+                type='date'
+                value={leaveForm.end_date}
+                onChange={(e) => setLeaveForm((prev) => ({ ...prev, end_date: e.target.value }))}
+                slotProps={{ inputLabel: { shrink: true } } as any}
+              />
+              <TextField
+                fullWidth
+                multiline
+                rows={3}
+                label='请假原因'
+                value={leaveForm.reason}
+                onChange={(e) => setLeaveForm((prev) => ({ ...prev, reason: e.target.value }))}
+                placeholder='请输入请假原因'
+              />
+            </Box>
+          </DialogContent>
+          <DialogActions sx={{ px: 3, pb: 2 }}>
+            <Button onClick={() => setLeaveDialogOpen(false)}>取消</Button>
+            <MobileButton
+              variant='contained'
+              onClick={handleSubmitLeave}
+              disabled={applyLeaveMutation.isPending}
             >
-              <MenuItem value='annual'>年假</MenuItem>
-              <MenuItem value='sick'>病假</MenuItem>
-              <MenuItem value='personal'>事假</MenuItem>
-              <MenuItem value='maternity'>产假</MenuItem>
-              <MenuItem value='paternity'>陪产假</MenuItem>
-              <MenuItem value='other'>其他</MenuItem>
-            </TextField>
-            <TextField
-              fullWidth
-              label='开始日期'
-              type='date'
-              value={leaveForm.start_date}
-              onChange={(e) => setLeaveForm((prev) => ({ ...prev, start_date: e.target.value }))}
-              slotProps={{ inputLabel: { shrink: true } } as any}
-            />
-            <TextField
-              fullWidth
-              label='结束日期'
-              type='date'
-              value={leaveForm.end_date}
-              onChange={(e) => setLeaveForm((prev) => ({ ...prev, end_date: e.target.value }))}
-              slotProps={{ inputLabel: { shrink: true } } as any}
-            />
-            <TextField
-              fullWidth
-              multiline
-              rows={3}
-              label='请假原因'
-              value={leaveForm.reason}
-              onChange={(e) => setLeaveForm((prev) => ({ ...prev, reason: e.target.value }))}
-              placeholder='请输入请假原因'
-            />
-          </Box>
-        </DialogContent>
-        <DialogActions sx={{ px: 3, pb: 2 }}>
-          <Button onClick={() => setLeaveDialogOpen(false)}>取消</Button>
-          <MobileButton
-            variant='contained'
-            onClick={handleSubmitLeave}
-            disabled={applyLeaveMutation.isPending}
-          >
-            提交申请
-          </MobileButton>
-        </DialogActions>
-      </Dialog>
+              提交申请
+            </MobileButton>
+          </DialogActions>
+        </Dialog>
+      </PageContainer>
     </MobileLayout>
   );
 };

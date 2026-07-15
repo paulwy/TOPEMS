@@ -426,7 +426,7 @@ mod http_endpoint_tests {
     async fn test_health_endpoint() {
         let app = Router::new()
             .route("/health", get(health_handler))
-            .route("/api/v1/integration/stats", get(stats_handler));
+            .route("/api/integration/stats", get(stats_handler));
 
         let response = app
             .oneshot(
@@ -445,12 +445,12 @@ mod http_endpoint_tests {
     async fn test_stats_endpoint() {
         let app = Router::new()
             .route("/health", get(health_handler))
-            .route("/api/v1/integration/stats", get(stats_handler));
+            .route("/api/integration/stats", get(stats_handler));
 
         let response = app
             .oneshot(
                 Request::builder()
-                    .uri("/api/v1/integration/stats")
+                    .uri("/api/integration/stats")
                     .body(Body::empty())
                     .unwrap(),
             )

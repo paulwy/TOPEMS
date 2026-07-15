@@ -83,49 +83,45 @@ export const DashboardPage: React.FC = () => {
     [stats]
   );
 
-  const barData = [
-    { name: 'API', value: 95 },
-    { name: 'Web', value: 88 },
-    { name: 'Mobile', value: 72 },
-    { name: 'Desktop', value: 80 },
-    { name: 'IoT', value: 65 },
-  ];
-
-  const lineData = [
-    { name: 'Jan', value: 10 },
-    { name: 'Feb', value: 15 },
-    { name: 'Mar', value: 12 },
-    { name: 'Apr', value: 18 },
-    { name: 'May', value: 20 },
-    { name: 'Jun', value: 16 },
-  ];
-
-  const charts: ChartCard[] = [
-    {
-      id: 'project-type-distribution',
-      title: '项目类型分布',
-      chart: (
-        <BarChartComponent
-          data={barData}
-          xKey='name'
-          yKey='value'
-        />
-      ),
-      height: 300,
-    },
-    {
-      id: 'monthly-release-trend',
-      title: '月度发布趋势',
-      chart: (
-        <LineChartComponent
-          data={lineData}
-          xKey='name'
-          yKey='value'
-        />
-      ),
-      height: 300,
-    },
-  ];
+  const charts: ChartCard[] = useMemo(() => {
+    const barData = [
+      { name: '待处理', value: stats?.pending_projects || 0 },
+      { name: '进行中', value: stats?.in_progress_projects || 0 },
+      { name: '已完成', value: stats?.completed_projects || 0 },
+      { name: '已取消', value: stats?.cancelled_projects || 0 },
+    ];
+    const lineData = [
+      { name: '待处理', value: stats?.pending_experiments || 0 },
+      { name: '进行中', value: stats?.in_progress_experiments || 0 },
+      { name: '已完成', value: stats?.completed_experiments || 0 },
+    ];
+    return [
+      {
+        id: 'project-type-distribution',
+        title: '项目状态分布',
+        chart: (
+          <BarChartComponent
+            data={barData}
+            xKey='name'
+            yKey='value'
+          />
+        ),
+        height: 300,
+      },
+      {
+        id: 'monthly-release-trend',
+        title: '实验状态分布',
+        chart: (
+          <LineChartComponent
+            data={lineData}
+            xKey='name'
+            yKey='value'
+          />
+        ),
+        height: 300,
+      },
+    ];
+  }, [stats]);
 
   const quickActions: QuickAction[] = [
     {

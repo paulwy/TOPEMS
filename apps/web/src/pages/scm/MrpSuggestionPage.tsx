@@ -42,16 +42,15 @@ import { apiLogger } from '@/utils/logger';
 import { ListPageTemplate, type ColumnDef } from '@/components/templates';
 import { PageContainer } from '@/components/common';
 import { ConfirmDialog } from '@topems/shared-components';
+import { useQuery, useQueryClient } from '@tanstack/react-query';
+import { QUERY_KEYS } from '@/lib/reactQuery';
 
 const MrpSuggestionPage: React.FC = () => {
+  const queryClient = useQueryClient();
   const [searchParams] = useSearchParams();
   const initialPlanId = searchParams.get('plan_id') || '';
-  const [suggestions, setSuggestions] = useState<MrpSuggestion[]>([]);
-  const [summary, setSummary] = useState<MrpMaterialSummary[]>([]);
-  const [loading, setLoading] = useState(true);
   const [currentPage, setCurrentPage] = useState(1);
   const [pageSize, setPageSize] = useState(10);
-  const [total, setTotal] = useState(0);
   const [confirmDialogOpen, setConfirmDialogOpen] = useState(false);
   const [confirmDialogConfig, setConfirmDialogConfig] = useState<{
     title: string;
@@ -68,19 +67,16 @@ const MrpSuggestionPage: React.FC = () => {
 
   const { addNotification } = useNotificationStore();
 
-  useEffect(() => {
-    loadSuggestions();
-  }, [currentPage, pageSize, selectedPlanId, filterType, filterStatus]);
-
-  useEffect(() => {
-    if (initialPlanId) {
-      setSelectedPlanId(initialPlanId);
-    }
-  }, [initialPlanId]);
-
-  const loadSuggestions = async () => {
-    try {
-      setLoading(true);
+  const suggestionsQuery = useQuery<{ items: MrpSuggestion[]; total: number }>({
+    queryKey: [
+      ...QUERY_KEYS.SCM.MRP_SUGGESTIONS,
+      currentPage,
+      pageSize,
+      selectedPlanId,
+      filterType,
+      filterStatus,
+    ],
+    queryFn: async () => {
       const params: MrpSuggestionQueryParams = {
         page: currentPage,
         pageSize,
@@ -96,35 +92,60 @@ const MrpSuggestionPage: React.FC = () => {
       }
       const response = await scmApi.mrpSuggestions.list(params);
       if (response.success && response.data) {
-        setSuggestions(response.data.items || []);
-        setTotal(response.data.total || 0);
+        return { items: response.data.items || [], total: response.data.total || 0 };
       }
-    } catch (error: unknown) {
-      apiLogger.error('加载MRP建议失败:', error);
-      addNotification({
-        type: 'error',
-        title: '加载失败',
-        message: '无法加载MRP建议',
-      });
-    } finally {
-      setLoading(false);
-    }
-  };
+      return { items: [], total: 0 };
+    },
+    staleTime: 5 * 60 * 1000,
+  });
 
-  const loadSummary = async () => {
-    try {
+  const summaryQuery = useQuery<MrpMaterialSummary[]>({
+    queryKey: [...QUERY_KEYS.SCM.MRP_SUGGESTIONS, 'summary', selectedPlanId],
+    queryFn: async () => {
       const params: MrpMaterialSummaryQueryParams = {};
       if (selectedPlanId) {
         params.plan_id = selectedPlanId;
       }
       const response = await scmApi.mrpSuggestions.summary(params);
       if (response.success && response.data) {
-        setSummary(response.data);
+        return response.data;
       }
-    } catch (error: unknown) {
-      apiLogger.error('加载物料汇总失败:', error);
+      return [];
+    },
+    enabled: activeTab === 1,
+    staleTime: 5 * 60 * 1000,
+  });
+
+  const suggestions = suggestionsQuery.data?.items ?? [];
+  const summary = summaryQuery.data ?? [];
+  const total = suggestionsQuery.data?.total ?? 0;
+  const loading = suggestionsQuery.isLoading;
+
+  useEffect(() => {
+    if (suggestionsQuery.isError) {
+      apiLogger.error('加载MRP建议失败:', suggestionsQuery.error);
+      addNotification({
+        type: 'error',
+        title: '加载失败',
+        message: '无法加载MRP建议',
+      });
     }
-  };
+  }, [suggestionsQuery.isError, suggestionsQuery.error, addNotification]);
+
+  useEffect(() => {
+    if (summaryQuery.isError) {
+      apiLogger.error('加载物料汇总失败:', summaryQuery.error);
+    }
+  }, [summaryQuery.isError, summaryQuery.error]);
+
+  useEffect(() => {
+    if (initialPlanId) {
+      setSelectedPlanId(initialPlanId);
+    }
+  }, [initialPlanId]);
+
+  const invalidateSuggestions = () =>
+    queryClient.invalidateQueries({ queryKey: QUERY_KEYS.SCM.MRP_SUGGESTIONS });
 
   const handleConfirm = useCallback(
     (suggestion: MrpSuggestion) => {
@@ -139,7 +160,7 @@ const MrpSuggestionPage: React.FC = () => {
               title: '确认成功',
               message: '建议已确认',
             });
-            loadSuggestions();
+            invalidateSuggestions();
           } catch (error: unknown) {
             apiLogger.error('确认失败:', error);
             addNotification({
@@ -166,7 +187,7 @@ const MrpSuggestionPage: React.FC = () => {
               title: '已拒绝',
               message: '建议已拒绝',
             });
-            loadSuggestions();
+            invalidateSuggestions();
           } catch (error: unknown) {
             apiLogger.error('拒绝失败:', error);
             addNotification({
@@ -253,7 +274,7 @@ const MrpSuggestionPage: React.FC = () => {
             message: `已确认 ${selectedRows.length} 条建议`,
           });
           setSelectedRows([]);
-          loadSuggestions();
+          invalidateSuggestions();
         } catch (error: unknown) {
           apiLogger.error('批量确认失败:', error);
           addNotification({
@@ -404,9 +425,6 @@ const MrpSuggestionPage: React.FC = () => {
 
   const handleTabChange = (_event: React.SyntheticEvent, newValue: number) => {
     setActiveTab(newValue);
-    if (newValue === 1) {
-      loadSummary();
-    }
   };
 
   const handleSelectAll = (checked: boolean) => {
@@ -724,7 +742,7 @@ const MrpSuggestionPage: React.FC = () => {
                 setCurrentPage(1);
               },
             }}
-            onRefresh={loadSuggestions}
+            onRefresh={() => suggestionsQuery.refetch()}
             emptyMessage='暂无MRP建议数据'
           />
         </>
@@ -737,7 +755,7 @@ const MrpSuggestionPage: React.FC = () => {
           columns={summaryColumns}
           data={summary}
           loading={loading}
-          onRefresh={loadSummary}
+          onRefresh={() => summaryQuery.refetch()}
           emptyMessage='暂无物料汇总数据'
         />
       )}
@@ -799,7 +817,6 @@ const MrpSuggestionPage: React.FC = () => {
             variant='contained'
             onClick={() => {
               setCurrentPage(1);
-              loadSuggestions();
               setShowFilterDialog(false);
             }}
           >

@@ -125,7 +125,11 @@ export const GisFencePage: React.FC = () => {
   const [searchTerm, setSearchTerm] = useState('');
   const [openDialog, setOpenDialog] = useState(false);
 
-  const { data: mapMarkers = [], isLoading: markersLoading, error: markersError } = useQuery({
+  const {
+    data: mapMarkers = [],
+    isLoading: markersLoading,
+    error: markersError,
+  } = useQuery({
     queryKey: ['gis-map-markers'],
     queryFn: async () => {
       const res = await gisApi.listMapMarkers({ pagesize: 50 });

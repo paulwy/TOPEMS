@@ -24,6 +24,7 @@ import type { TabConfig } from '@/components/templates/DetailPageTemplate';
 import { PageContainer } from '@/components/common';
 import { designTokens } from '@/theme/tokens';
 import { WORKFLOW_PATHS } from '@/modules/workflow/config';
+import { useQuery } from '@tanstack/react-query';
 
 const ct = designTokens.colors;
 
@@ -39,47 +40,35 @@ const FlowInstanceDetailPage: React.FC = () => {
   const addNotification = useNotificationStore((state) => state.addNotification);
   const theme = useTheme();
 
-  const [details, setDetails] = useState<InstanceDetails | null>(null);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | undefined>();
-
-  useEffect(() => {
-    if (id) {
-      loadInstanceDetails();
-    }
-  }, [id]);
-
-  const loadInstanceDetails = async () => {
-    if (!id) return;
-
-    try {
-      setLoading(true);
-      setError(undefined);
-
+  const detailsQuery = useQuery<InstanceDetails | null>({
+    queryKey: ['workflow-instance-details', id],
+    queryFn: async () => {
+      if (!id) return null;
       const response = await workflowApi.getInstanceDetails(id);
       if (response.success && response.data) {
         const data = response.data as any;
-        setDetails(data);
-      } else {
-        setError('加载实例详情失败');
-        addNotification({
-          title: '错误',
-          message: '加载实例详情失败',
-          type: 'error',
-        });
+        return data;
       }
-    } catch (err: unknown) {
-      apiLogger.error('加载实例详情失败:', err);
-      setError('加载实例详情失败');
+      return null;
+    },
+    enabled: !!id,
+    staleTime: 5 * 60 * 1000,
+  });
+
+  const details = detailsQuery.data ?? null;
+  const loading = detailsQuery.isLoading;
+  const error = detailsQuery.isError ? '加载实例详情失败' : undefined;
+
+  useEffect(() => {
+    if (detailsQuery.isError) {
+      apiLogger.error('加载实例详情失败:', detailsQuery.error);
       addNotification({
         title: '错误',
         message: '加载实例详情失败',
         type: 'error',
       });
-    } finally {
-      setLoading(false);
     }
-  };
+  }, [detailsQuery.isError, detailsQuery.error, addNotification]);
 
   const getStatusIcon = (status: string) => {
     switch (status) {

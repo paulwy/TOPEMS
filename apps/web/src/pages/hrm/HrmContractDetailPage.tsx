@@ -1,4 +1,6 @@
-import React, { useState, useEffect, useMemo } from 'react';
+import React, { useState, useMemo } from 'react';
+import { useQuery } from '@tanstack/react-query';
+import { QUERY_KEYS } from '@/lib/reactQuery';
 import {
   Box,
   Typography,
@@ -33,35 +35,24 @@ const ct = designTokens.colors;
 const HrmContractDetailPage: React.FC = () => {
   const navigate = useNavigate();
   const { id } = useParams<{ id: string }>();
-  const { success, error } = useNotification();
+  const { error } = useNotification();
 
-  const [contract, setContract] = useState<Contract | null>(null);
-  const [loading, setLoading] = useState(true);
-  const [errorMessage, setErrorMessage] = useState<string | undefined>(undefined);
   const [showRenewDialog, setShowRenewDialog] = useState(false);
 
-  useEffect(() => {
-    loadContractDetail();
-  }, [id]);
-
-  const loadContractDetail = async () => {
-    setLoading(true);
-    setErrorMessage(undefined);
-    try {
+  const contractQuery = useQuery<Contract | null>({
+    queryKey: [...QUERY_KEYS.HRM.CONTRACT, id || ''],
+    enabled: !!id,
+    queryFn: async () => {
       if (!id) {
         throw new Error('合同ID为空');
       }
-
       const res = await hrmApi.contracts.get(id);
-
       if (!res.success || !res.data) {
         throw new Error('获取合同详情失败');
       }
-
       const contractData = res.data;
       const employeeRes = await hrmApi.employees.get(contractData.contract.employee_id);
-
-      setContract({
+      return {
         ...contractData.contract,
         employee_name: employeeRes.data?.name || contractData.contract.employee_name || '',
         employee_no: employeeRes.data?.employee_no || contractData.contract.employee_no || '',
@@ -78,15 +69,13 @@ const HrmContractDetailPage: React.FC = () => {
         work_location: contractData.contract.work_location || '',
         contract_file: contractData.contract.contract_file || '',
         remark: contractData.contract.remark || '',
-      });
-    } catch (err: unknown) {
-      apiLogger.error('加载合同详情失败:', err);
-      setErrorMessage('加载合同详情失败');
-      error('加载合同详情失败');
-    } finally {
-      setLoading(false);
-    }
-  };
+      };
+    },
+  });
+
+  const contract = contractQuery.data ?? null;
+  const loading = contractQuery.isLoading;
+  const errorMessage = contractQuery.error ? '加载合同详情失败' : undefined;
 
   const handleRenew = () => {
     navigate(HRM_PATHS.contractDetail.replace(':id', id!));

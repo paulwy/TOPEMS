@@ -3,7 +3,9 @@
  * 管理 MES 生产订单与 ERP 销售订单的同步
  */
 
-import React, { useState, useCallback } from 'react';
+import React, { useState } from 'react';
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import { QUERY_KEYS } from '@/lib/reactQuery';
 import { PageContainer } from '@/components/common';
 import { Plus, RefreshCw, Eye, Trash2 } from 'lucide-react';
 import {
@@ -25,9 +27,10 @@ import {
 } from '@/components/templates';
 import { integrationApi } from '@/api/integration';
 import { useNotificationStore } from '@/store';
-import type { MesErpSync, CreateMesErpSyncRequest } from '@/api/integration';
 import { logger } from '@/utils/logger';
-import { useNotification } from '@/hooks/useNotification';
+import type { MesErpSync, CreateMesErpSyncRequest } from '@/api/integration';
+import { apiLogger } from '@/utils/logger';
+import { extractErrorMessage } from '@/utils/errors';
 
 // 状态配置
 const STATUS_CONFIG: Record<
@@ -76,36 +79,77 @@ const FORM_SECTIONS: FormSection[] = [
 ];
 
 const IntegrationMesErpPage: React.FC = () => {
+  const addNotification = useNotificationStore((state) => state.addNotification);
+  const queryClient = useQueryClient();
+
   // 数据状态
-  const [syncs, setSyncs] = useState<MesErpSync[]>([]);
-  const [loading, setLoading] = useState(true);
   const [pagination, setPagination] = useState({ page: 0, pageSize: 10 });
   const [searchValue, setSearchValue] = useState('');
 
   // 弹窗状态
   const [showCreateModal, setShowCreateModal] = useState(false);
   const [editingSync, setEditingSync] = useState<MesErpSync | null>(null);
-  const [submitting, setSubmitting] = useState(false);
 
   // 加载数据
-  const loadData = useCallback(async () => {
-    try {
-      setLoading(true);
+  const syncsQuery = useQuery({
+    queryKey: QUERY_KEYS.INTEGRATION.MES_ERP_SYNCS,
+    queryFn: async () => {
       const res = await integrationApi.listMesErpSyncs();
       if (res.success && res.data !== undefined) {
-        setSyncs(res.data);
+        return res.data;
       }
-    } catch (error: unknown) {
-      logger.error('Error loading MES-ERP syncs:', error);
-    } finally {
-      setLoading(false);
-    }
-  }, []);
+      throw new Error(res.message || '加载 MES-ERP 同步数据失败');
+    },
+  });
 
-  // 初始加载
-  React.useEffect(() => {
-    loadData();
-  }, [loadData]);
+  const syncs = syncsQuery.data || [];
+  const loading = syncsQuery.isLoading;
+
+  const loadData = () => {
+    queryClient.invalidateQueries({ queryKey: QUERY_KEYS.INTEGRATION.MES_ERP_SYNCS });
+  };
+
+  const createMutation = useMutation({
+    mutationFn: async (data: CreateMesErpSyncRequest) => {
+      const res = await integrationApi.createMesErpSync(data);
+      if (!res.success) throw new Error(res.message || '创建失败');
+      return res.data;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: QUERY_KEYS.INTEGRATION.MES_ERP_SYNCS });
+      addNotification({ title: '成功', message: '同步记录创建成功', type: 'success' });
+      setShowCreateModal(false);
+      setEditingSync(null);
+    },
+    onError: (err: unknown) => {
+      apiLogger.error('创建 MES-ERP 同步失败:', err);
+      addNotification({
+        title: '失败',
+        message: extractErrorMessage(err, '创建失败'),
+        type: 'error',
+      });
+    },
+  });
+
+  const syncMutation = useMutation({
+    mutationFn: async (id: string) => {
+      const res = await integrationApi.syncMesErp(id);
+      if (!res.success) throw new Error(res.message || '同步失败');
+      return res.data;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: QUERY_KEYS.INTEGRATION.MES_ERP_SYNCS });
+      addNotification({ title: '成功', message: '同步成功', type: 'success' });
+    },
+    onError: (err: unknown) => {
+      apiLogger.error('MES-ERP 同步失败:', err);
+      addNotification({
+        title: '失败',
+        message: extractErrorMessage(err, '同步失败'),
+        type: 'error',
+      });
+    },
+  });
 
   // 筛选数据
   const filteredData = React.useMemo(() => {
@@ -204,50 +248,35 @@ const IntegrationMesErpPage: React.FC = () => {
   ];
 
   // 处理创建提交
-  const handleSubmit = async (data: unknown) => {
-    try {
-      setSubmitting(true);
-      if (editingSync) {
-        logger.warn('Update not implemented');
-      } else {
-        const request: CreateMesErpSyncRequest = {
-          mes_order_id: (data as Record<string, unknown>).mes_order_id as string,
-          order_number: (data as Record<string, unknown>).order_number as string,
-          product_name: ((data as Record<string, unknown>).product_name as string) || undefined,
-          quantity: ((data as Record<string, unknown>).quantity as string)
-            ? parseFloat((data as Record<string, unknown>).quantity as string)
-            : undefined,
-        };
-        await integrationApi.createMesErpSync(request);
-      }
+  const handleSubmit = (data: unknown) => {
+    if (editingSync) {
       handleCloseModal();
-      loadData();
-    } catch (error: unknown) {
-      logger.error('Error saving sync:', error);
-      throw error;
-    } finally {
-      setSubmitting(false);
+      return;
     }
+    const request: CreateMesErpSyncRequest = {
+      mes_order_id: (data as Record<string, unknown>).mes_order_id as string,
+      order_number: (data as Record<string, unknown>).order_number as string,
+      product_name: ((data as Record<string, unknown>).product_name as string) || undefined,
+      quantity: ((data as Record<string, unknown>).quantity as string)
+        ? parseFloat((data as Record<string, unknown>).quantity as string)
+        : undefined,
+    };
+    createMutation.mutate(request);
   };
 
   // 处理同步
-  const handleSync = async (id: string) => {
-    try {
-      await integrationApi.syncMesErp(id);
-      loadData();
-    } catch (error: unknown) {
-      logger.error('Error syncing:', error);
-    }
+  const handleSync = (id: string) => {
+    syncMutation.mutate(id);
   };
 
-  // 处理删除
-  const handleDelete = async (id: string) => {
+  // 处理删除（后端未实现，仅关闭弹窗提示）
+  const handleDelete = (id: string) => {
     if (!confirm('确定要删除此同步记录吗？')) return;
-    try {
-      logger.warn('Delete not implemented');
-    } catch (error: unknown) {
-      logger.error('Error deleting:', error);
-    }
+    addNotification({
+      title: '提示',
+      message: '删除接口尚未实现',
+      type: 'warning',
+    });
   };
 
   // 关闭弹窗
@@ -306,7 +335,7 @@ const IntegrationMesErpPage: React.FC = () => {
             defaultValues={(editingSync as unknown as Record<string, unknown>) || {}}
             onSubmit={handleSubmit}
             onCancel={handleCloseModal}
-            submitting={submitting}
+            submitting={createMutation.isPending}
             columns={1}
             submitText={editingSync ? '关闭' : '创建'}
             mode={editingSync ? 'view' : 'edit'}

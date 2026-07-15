@@ -11,13 +11,9 @@ import {
   Button,
 } from '@mui/material';
 import { PageContainer } from '@/components/common';
-import React, { useState, useMemo, useCallback } from 'react';
+import React, { useState, useMemo, useCallback, useEffect } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import type {
-  WorkStation,
-  CreateWorkStationRequest,
-  UpdateWorkStationRequest,
-} from '@/api/mes';
+import type { WorkStation, CreateWorkStationRequest, UpdateWorkStationRequest } from '@/api/mes';
 import { mesApi } from '@/api/mes';
 import { useNotificationStore } from '@/store';
 import { LoadingSpinner } from '@topems/shared-components';
@@ -78,6 +74,16 @@ const WorkStationPage: React.FC = () => {
   const workstations = workstationsQuery.data?.items ?? [];
   const total = workstationsQuery.data?.total ?? 0;
   const loading = workstationsQuery.isLoading;
+
+  useEffect(() => {
+    if (workstationsQuery.isError) {
+      addNotification({
+        type: 'error',
+        title: '加载失败',
+        message: '加载工作站列表失败',
+      });
+    }
+  }, [workstationsQuery.isError, addNotification]);
 
   const createMutation = useMutation({
     mutationFn: async (data: CreateWorkStationRequest) => {
@@ -144,8 +150,7 @@ const WorkStationPage: React.FC = () => {
       }
       setShowDialog(false);
       resetForm();
-    } catch {
-    }
+    } catch {}
   };
 
   const handleEdit = useCallback((station: WorkStation) => {

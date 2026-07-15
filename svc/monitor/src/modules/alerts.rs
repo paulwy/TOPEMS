@@ -274,69 +274,57 @@ pub struct AlertQueryParams {
 
 pub fn create_routes() -> Router<ApiState> {
     Router::new()
-        .route("/api/v1/monitor/alerts", get(list_alerts))
+        .route("/api/monitor/alerts", get(list_alerts))
         .route(
-            "/api/v1/monitor/alerts/{id}",
+            "/api/monitor/alerts/{id}",
             get(get_alert).post(update_alert),
         )
-        .route(
-            "/api/v1/monitor/alerts/statistics",
-            get(get_alert_statistics),
-        )
-        .route(
-            "/api/v1/monitor/alerts/acknowledge",
-            post(acknowledge_alerts),
-        )
-        .route("/api/v1/monitor/alerts/resolve", post(resolve_alerts))
-        .route(
-            "/api/v1/monitor/alerts/{id}/history",
-            get(get_alert_history),
-        )
-        .route(
-            "/api/v1/monitor/alerts/{id}/timeline",
-            get(get_alert_timeline),
-        )
+        .route("/api/monitor/alerts/statistics", get(get_alert_statistics))
+        .route("/api/monitor/alerts/acknowledge", post(acknowledge_alerts))
+        .route("/api/monitor/alerts/resolve", post(resolve_alerts))
+        .route("/api/monitor/alerts/{id}/history", get(get_alert_history))
+        .route("/api/monitor/alerts/{id}/timeline", get(get_alert_timeline))
         // Alert Rules API
-        .route("/api/v1/monitor/rules", get(list_rules).post(create_rule))
+        .route("/api/monitor/rules", get(list_rules).post(create_rule))
         .route(
-            "/api/v1/monitor/rules/{id}",
+            "/api/monitor/rules/{id}",
             get(get_rule).put(update_rule).delete(delete_rule),
         )
-        .route("/api/v1/monitor/rules/{id}/enable", post(enable_rule))
-        .route("/api/v1/monitor/rules/{id}/disable", post(disable_rule))
+        .route("/api/monitor/rules/{id}/enable", post(enable_rule))
+        .route("/api/monitor/rules/{id}/disable", post(disable_rule))
         .route(
-            "/api/v1/monitor/rules/{id}/advanced",
+            "/api/monitor/rules/{id}/advanced",
             get(get_advanced_rule).put(update_advanced_rule),
         )
         // Advanced Alert Configuration
         .route(
-            "/api/v1/monitor/rules/{id}/scheduled-trigger",
+            "/api/monitor/rules/{id}/scheduled-trigger",
             get(get_scheduled_trigger).put(update_scheduled_trigger),
         )
         .route(
-            "/api/v1/monitor/rules/{id}/escalation",
+            "/api/monitor/rules/{id}/escalation",
             get(get_escalation).put(update_escalation),
         )
         .route(
-            "/api/v1/monitor/rules/{id}/routing",
+            "/api/monitor/rules/{id}/routing",
             get(get_routing).put(update_routing),
         )
         .route(
-            "/api/v1/monitor/templates",
+            "/api/monitor/templates",
             get(list_templates).post(create_template),
         )
         .route(
-            "/api/v1/monitor/templates/{id}",
+            "/api/monitor/templates/{id}",
             get(get_template)
                 .put(update_template)
                 .delete(delete_template),
         )
         .route(
-            "/api/v1/monitor/suppression",
+            "/api/monitor/suppression",
             get(list_suppression_rules).post(create_suppression_rule),
         )
         .route(
-            "/api/v1/monitor/suppression/{id}",
+            "/api/monitor/suppression/{id}",
             get(get_suppression_rule)
                 .put(update_suppression_rule)
                 .delete(delete_suppression_rule),

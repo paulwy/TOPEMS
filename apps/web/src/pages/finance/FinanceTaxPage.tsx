@@ -1,4 +1,6 @@
-import React, { useState, useEffect, useMemo } from 'react';
+import React, { useState, useMemo } from 'react';
+import { useQuery, useQueryClient } from '@tanstack/react-query';
+import { QUERY_KEYS } from '@/lib/reactQuery';
 import {
   Download,
   Receipt,
@@ -47,10 +49,8 @@ interface TaxEntry {
 
 const FinanceTaxPage: React.FC = () => {
   const addNotification = useNotificationStore((state) => state.addNotification);
+  const queryClient = useQueryClient();
 
-  const [taxData, setTaxData] = useState<TaxEntry[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | undefined>(undefined);
   const [filterType, setFilterType] = useState('');
   const [filterStatus, setFilterStatus] = useState('');
   const [searchQuery, setSearchQuery] = useState('');
@@ -59,14 +59,9 @@ const FinanceTaxPage: React.FC = () => {
   const [showAnalysisModal, setShowAnalysisModal] = useState(false);
   const [selectedTax, setSelectedTax] = useState<TaxEntry | null>(null);
 
-  useEffect(() => {
-    loadTaxData();
-  }, []);
-
-  const loadTaxData = async () => {
-    setLoading(true);
-    setError(undefined);
-    try {
+  const taxQuery = useQuery<TaxEntry[]>({
+    queryKey: QUERY_KEYS.FINANCE.TAX,
+    queryFn: async () => {
       const [salesInvoicesRes, purchaseInvoicesRes] = await Promise.all([
         financeApi.receivablePayable.listSalesInvoices(),
         financeApi.receivablePayable.listPurchaseInvoices(),
@@ -115,19 +110,13 @@ const FinanceTaxPage: React.FC = () => {
         related_document: p.invoice_no,
       }));
 
-      setTaxData([...receivableTaxEntries, ...payableTaxEntries]);
-    } catch (err: unknown) {
-      apiLogger.error('加载税务数据失败:', err);
-      setError('加载税务数据失败');
-      addNotification({
-        title: '错误',
-        message: '加载税务数据失败',
-        type: 'error',
-      });
-    } finally {
-      setLoading(false);
-    }
-  };
+      return [...receivableTaxEntries, ...payableTaxEntries];
+    },
+  });
+
+  const taxData = taxQuery.data || [];
+  const loading = taxQuery.isLoading;
+  const error = taxQuery.error ? '加载税务数据失败' : undefined;
 
   const filteredData = useMemo(() => {
     return taxData.filter((tax) => {
@@ -181,7 +170,7 @@ const FinanceTaxPage: React.FC = () => {
       type: 'success',
     });
     setShowDeclareModal(false);
-    loadTaxData();
+    queryClient.invalidateQueries({ queryKey: QUERY_KEYS.FINANCE.TAX });
   };
 
   const handlePay = (tax: TaxEntry) => {
@@ -197,7 +186,7 @@ const FinanceTaxPage: React.FC = () => {
       type: 'success',
     });
     setShowPayModal(false);
-    loadTaxData();
+    queryClient.invalidateQueries({ queryKey: QUERY_KEYS.FINANCE.TAX });
   };
 
   const handleAnalysis = (tax: TaxEntry) => {
@@ -452,7 +441,7 @@ const FinanceTaxPage: React.FC = () => {
               onClick: (row: TaxEntry) => handleAnalysis(row),
             },
           ]}
-          onRefresh={loadTaxData}
+          onRefresh={() => taxQuery.refetch()}
         />
       </MuiBox>
 

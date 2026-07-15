@@ -127,25 +127,24 @@ vi.mock('@/store', () => ({
 }));
 
 describe('FinanceDashboardPage', () => {
-    it('should render without crashing', () => {
-      const { container } = render(
-        <BrowserRouter>
-          <FinanceDashboardPage />
-        </BrowserRouter>
-      );
-      expect(container).toBeDefined();
-    });
+  it('should render without crashing', () => {
+    const { container } = render(
+      <BrowserRouter>
+        <FinanceDashboardPage />
+      </BrowserRouter>
+    );
+    expect(container).toBeDefined();
+  });
 
-    it('should have finance API methods defined', async () => {
-      render(
-        <BrowserRouter>
-          <FinanceDashboardPage />
-        </BrowserRouter>
-      );
-      expect(financeApi.accounts.list).toBeDefined();
-      expect(financeApi.transactions.list).toBeDefined();
-      expect(financeApi.budgets.list).toBeDefined();
-      expect(financeApi.reports.generate).toBeDefined();
-    });
+  it('should have finance API methods defined', async () => {
+    render(
+      <BrowserRouter>
+        <FinanceDashboardPage />
+      </BrowserRouter>
+    );
+    expect(financeApi.accounts.list).toBeDefined();
+    expect(financeApi.transactions.list).toBeDefined();
+    expect(financeApi.budgets.list).toBeDefined();
+    expect(financeApi.reports.generate).toBeDefined();
   });
 });

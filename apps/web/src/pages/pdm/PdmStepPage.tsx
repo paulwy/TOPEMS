@@ -32,11 +32,7 @@ const adaptStep = (item: { [key: string]: unknown }) => ({
   sort_order: item.sort_order || item.order || 0,
   duration: item.duration_hours || item.duration || 0,
   status:
-    item.status === 'active'
-      ? '启用'
-      : item.status === 'inactive'
-        ? '禁用'
-        : item.status || '正常',
+    item.status === 'active' ? '启用' : item.status === 'inactive' ? '禁用' : item.status || '正常',
 });
 
 const PdmStepPage: React.FC = () => {
@@ -213,11 +209,14 @@ const PdmStepPage: React.FC = () => {
     createStepMutation.mutate(formData);
   };
 
-  const stats = useMemo(() => ({
-    total: steps.length,
-    active: steps.filter((s: any) => s.status === '启用' || s.status === '正常').length,
-    inactive: steps.filter((s: any) => s.status === '禁用').length,
-  }), [steps]);
+  const stats = useMemo(
+    () => ({
+      total: steps.length,
+      active: steps.filter((s: any) => s.status === '启用' || s.status === '正常').length,
+      inactive: steps.filter((s: any) => s.status === '禁用').length,
+    }),
+    [steps]
+  );
 
   const headerActions = [
     {

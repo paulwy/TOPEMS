@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useMemo } from 'react';
 import { PageContainer } from '@/components/common';
 import { useNavigate } from 'react-router-dom';
 import {
@@ -40,17 +40,24 @@ import { apiLogger } from '@/utils/logger';
 import { designTokens } from '@/theme/tokens';
 import { LIMS_PATHS } from '@/modules/lims/config';
 import { DASHBOARD_PATHS } from '@/routes/dashboard';
-import { useCrudOperations } from '@/hooks/useCrudQueries';
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import { QUERY_KEYS } from '@/lib/reactQuery';
 
 const ct = designTokens.colors;
 
 const InstrumentPage: React.FC = () => {
   const navigate = useNavigate();
+  const queryClient = useQueryClient();
+  const addNotification = useNotificationStore((state) => state.addNotification);
+
   const [searchTerm, setSearchTerm] = useState('');
   const [statusFilter, setStatusFilter] = useState('all');
+  const [currentPage, setCurrentPage] = useState(0);
+  const [pageSize] = useState(10);
   const [showCreateModal, setShowCreateModal] = useState(false);
   const [showDetailModal, setShowDetailModal] = useState(false);
   const [selectedInstrument, setSelectedInstrument] = useState<Instrument | null>(null);
+  const [isEditing, setIsEditing] = useState(false);
   const [formData, setFormData] = useState<CreateInstrumentRequest>({
     name: '',
     code: '',
@@ -66,22 +73,82 @@ const InstrumentPage: React.FC = () => {
     responsible_person: '',
     description: '',
   });
-  const [page, setPage] = useState(0);
-  const [pageSize, setPageSize] = useState(10);
-  const [isEditing, setIsEditing] = useState(false);
-  const addNotification = useNotificationStore((state) => state.addNotification);
 
-  const {
-    data: instruments,
-    loading,
-    refresh,
-    create: createInstrument,
-    update: updateInstrument,
-    delete: deleteInstrument,
-  } = useCrudOperations<Instrument, CreateInstrumentRequest>({
-    api: limsApi.instruments,
-    queryKey: 'lims-instruments',
-    defaultPageSize: 100,
+  const queryKey = [QUERY_KEYS.LIMS.INSTRUMENTS, currentPage, pageSize, searchTerm, statusFilter];
+
+  const { data: instrumentsResponse, isLoading } = useQuery({
+    queryKey,
+    queryFn: async () => {
+      const params: { page: number; pagesize: number; search?: string; status?: string } = {
+        page: currentPage,
+        pagesize: pageSize,
+      };
+      if (searchTerm) params.search = searchTerm;
+      if (statusFilter !== 'all') params.status = statusFilter;
+
+      const response = await limsApi.listInstruments(params);
+      if (!response.success) {
+        throw new Error('Failed to fetch instruments');
+      }
+      return response.data;
+    },
+    staleTime: 5 * 60 * 1000,
+    gcTime: 10 * 60 * 1000,
+  });
+
+  const instruments = instrumentsResponse?.items || [];
+  const total = instrumentsResponse?.total || instruments.length;
+
+  const createMutation = useMutation({
+    mutationFn: async (data: CreateInstrumentRequest) => {
+      const response = await limsApi.createInstrument(data);
+      if (!response.success) {
+        throw new Error('Failed to create instrument');
+      }
+      return response;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: QUERY_KEYS.LIMS.INSTRUMENTS });
+      setShowCreateModal(false);
+      resetForm();
+    },
+    onError: (error) => {
+      apiLogger.error('创建失败:', error);
+    },
+  });
+
+  const updateMutation = useMutation({
+    mutationFn: async ({ id, data }: { id: string; data: Partial<CreateInstrumentRequest> }) => {
+      const response = await limsApi.updateInstrument(id, data);
+      if (!response.success) {
+        throw new Error('Failed to update instrument');
+      }
+      return response;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: QUERY_KEYS.LIMS.INSTRUMENTS });
+      setShowCreateModal(false);
+      resetForm();
+    },
+    onError: (error) => {
+      apiLogger.error('更新失败:', error);
+    },
+  });
+
+  const deleteMutation = useMutation({
+    mutationFn: async (id: string) => {
+      const response = await limsApi.deleteInstrument(id);
+      if (!response.success) {
+        throw new Error('Failed to delete instrument');
+      }
+      return response;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: QUERY_KEYS.LIMS.INSTRUMENTS });
+    },
+    onError: (error) => {
+      apiLogger.error('删除失败:', error);
+    },
   });
 
   const getStatusBadge = (status: string) => {
@@ -114,84 +181,85 @@ const InstrumentPage: React.FC = () => {
     return new Date(instrument.next_calibration_date) < new Date();
   };
 
-  const columns: ColumnDef<Instrument>[] = [
-    { id: 'code', label: '仪器编号' },
-    { id: 'name', label: '仪器名称' },
-    { id: 'type', label: '类型' },
-    { id: 'manufacturer', label: '生产厂家' },
-    {
-      id: 'location',
-      label: '存放位置',
-      render: (row) => row.location || '-',
-    },
-    {
-      id: 'status',
-      label: '状态',
-      render: (row) => getStatusBadge(row.status || '正常'),
-    },
-    {
-      id: 'next_calibration_date',
-      label: '下次校准',
-      render: (row) => {
-        if (!row.next_calibration_date) return '-';
-        const needs = needsCalibration(row);
-        return (
-          <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5 }}>
-            {needs && <AlertTriangle style={{ width: 14, height: 14, color: ct.yellow[600] }} />}
-            <span style={{ color: needs ? ct.yellow[600] : 'inherit' }}>
-              {new Date(row.next_calibration_date).toLocaleDateString('zh-CN')}
-            </span>
-          </Box>
-        );
+  const columns: ColumnDef<Instrument>[] = useMemo(
+    () => [
+      { id: 'code', label: '仪器编号' },
+      { id: 'name', label: '仪器名称' },
+      { id: 'type', label: '类型' },
+      { id: 'manufacturer', label: '生产厂家' },
+      {
+        id: 'location',
+        label: '存放位置',
+        render: (row) => row.location || '-',
       },
-    },
-  ];
+      {
+        id: 'status',
+        label: '状态',
+        render: (row) => getStatusBadge(row.status || '正常'),
+      },
+      {
+        id: 'next_calibration_date',
+        label: '下次校准',
+        render: (row) => {
+          if (!row.next_calibration_date) return '-';
+          const needs = needsCalibration(row);
+          return (
+            <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5 }}>
+              {needs && <AlertTriangle style={{ width: 14, height: 14, color: ct.yellow[600] }} />}
+              <span style={{ color: needs ? ct.yellow[600] : 'inherit' }}>
+                {new Date(row.next_calibration_date).toLocaleDateString('zh-CN')}
+              </span>
+            </Box>
+          );
+        },
+      },
+    ],
+    []
+  );
 
-  const rowActions: RowAction<Instrument>[] = [
-    {
-      label: '查看',
-      icon: <Eye style={{ width: 16, height: 16 }} />,
-      onClick: (row) => handleView(row),
-    },
-    {
-      label: '编辑',
-      icon: <Edit style={{ width: 16, height: 16 }} />,
-      onClick: (row) => handleEdit(row),
-    },
-    {
-      label: '维护记录',
-      icon: <Settings style={{ width: 16, height: 16 }} />,
-      onClick: (row) => navigate(`${LIMS_PATHS.instrumentDetail}?id=${row.id}`),
-    },
-  ];
+  const rowActions: RowAction<Instrument>[] = useMemo(
+    () => [
+      {
+        label: '查看',
+        icon: <Eye style={{ width: 16, height: 16 }} />,
+        onClick: (row) => handleView(row),
+      },
+      {
+        label: '编辑',
+        icon: <Edit style={{ width: 16, height: 16 }} />,
+        onClick: (row) => handleEdit(row),
+      },
+      {
+        label: '维护记录',
+        icon: <Settings style={{ width: 16, height: 16 }} />,
+        onClick: (row) => navigate(`${LIMS_PATHS.instrumentDetail}?id=${row.id}`),
+      },
+    ],
+    []
+  );
 
-  const filters: FilterConfig[] = [
-    {
-      id: 'status',
-      label: '状态',
-      type: 'select',
-      options: [
-        { label: '全部', value: 'all' },
-        { label: '正常', value: '正常' },
-        { label: '校准中', value: '校准中' },
-        { label: '维修中', value: '维修中' },
-        { label: '停用', value: '停用' },
-      ],
-      value: statusFilter,
-      onChange: (value: unknown) => setStatusFilter(value as string),
-    },
-  ];
-
-  const filteredInstruments = instruments.filter((instrument) => {
-    const matchesSearch =
-      instrument.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      (instrument.code || '').toLowerCase().includes(searchTerm.toLowerCase()) ||
-      (instrument.type || '').toLowerCase().includes(searchTerm.toLowerCase());
-    const matchesStatus = statusFilter === 'all' || instrument.status === statusFilter;
-    return matchesSearch && matchesStatus;
-  });
-
-  const paginatedData = filteredInstruments.slice(page * pageSize, page * pageSize + pageSize);
+  const filters: FilterConfig[] = useMemo(
+    () => [
+      {
+        id: 'status',
+        label: '状态',
+        type: 'select',
+        options: [
+          { label: '全部', value: 'all' },
+          { label: '正常', value: '正常' },
+          { label: '校准中', value: '校准中' },
+          { label: '维修中', value: '维修中' },
+          { label: '停用', value: '停用' },
+        ],
+        value: statusFilter,
+        onChange: (value: unknown) => {
+          setStatusFilter(value as string);
+          setCurrentPage(0);
+        },
+      },
+    ],
+    [statusFilter]
+  );
 
   const handleView = (instrument: Instrument) => {
     setSelectedInstrument(instrument);
@@ -240,6 +308,26 @@ const InstrumentPage: React.FC = () => {
     setShowCreateModal(true);
   };
 
+  const resetForm = () => {
+    setSelectedInstrument(null);
+    setIsEditing(false);
+    setFormData({
+      name: '',
+      code: '',
+      type: '',
+      manufacturer: '',
+      model: '',
+      serial_number: '',
+      location: '',
+      status: '正常',
+      purchase_date: '',
+      calibration_date: '',
+      next_calibration_date: '',
+      responsible_person: '',
+      description: '',
+    });
+  };
+
   const handleSave = async () => {
     if (!formData.name.trim()) {
       addNotification({
@@ -258,245 +346,216 @@ const InstrumentPage: React.FC = () => {
       return;
     }
 
-    try {
-      if (isEditing && selectedInstrument) {
-        await updateInstrument(selectedInstrument.id, formData);
-      } else {
-        await createInstrument(formData);
-      }
-      setShowCreateModal(false);
-    } catch (err: unknown) {
-      apiLogger.error('保存仪器失败:', err);
+    if (isEditing && selectedInstrument) {
+      await updateMutation.mutateAsync({ id: selectedInstrument.id, data: formData });
+    } else {
+      await createMutation.mutateAsync(formData);
     }
   };
 
   const handleDelete = async (instrument: Instrument) => {
-    if (!confirm(`确定要删除仪器 "${instrument.name}" 吗？`)) return;
-    try {
-      await deleteInstrument(instrument.id);
-      setShowDetailModal(false);
-    } catch (err: unknown) {
-      apiLogger.error('删除仪器失败:', err);
-    }
+    if (!window.confirm(`确定要删除仪器 "${instrument.name}" 吗？`)) return;
+    await deleteMutation.mutateAsync(instrument.id);
+    setShowDetailModal(false);
   };
 
-  const stats = {
-    total: instruments.length,
-    normal: instruments.filter((i) => i.status === '正常' || i.status === 'normal').length,
-    calibrating: instruments.filter((i) => i.status === '校准中' || i.status === 'calibrating')
-      .length,
-    maintenance: instruments.filter((i) => i.status === '维修中' || i.status === 'maintenance')
-      .length,
-    needsCalibration: instruments.filter((i) => needsCalibration(i)).length,
-  };
-
-  const statsCards = (
-    <Box
-      sx={{
-        display: 'grid',
-        gridTemplateColumns: { xs: 'repeat(1, 1fr)', md: 'repeat(5, 1fr)' },
-        gap: 2,
-        mb: 3,
-      }}
-    >
-      <Card sx={{ bgcolor: 'teal.light' }}>
-        <CardContent sx={{ p: 2 }}>
-          <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5 }}>
-            <Box
-              sx={{
-                width: 40,
-                height: 40,
-                bgcolor: 'success.lighter',
-                borderRadius: 3,
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'center',
-              }}
-            >
-              <Microscope sx={{ width: 20, height: 20, color: 'info.main' }} />
-            </Box>
-            <Box>
-              <Typography
-                variant='body2'
-                sx={{ color: 'slate.600', fontSize: '0.875rem' }}
-              >
-                仪器总数
-              </Typography>
-              <Typography
-                variant='h5'
-                sx={{ fontWeight: 700, color: 'slate.900' }}
-              >
-                {stats.total}
-              </Typography>
-            </Box>
-          </Box>
-        </CardContent>
-      </Card>
-      <Card>
-        <CardContent sx={{ p: 2 }}>
-          <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5 }}>
-            <Box
-              sx={{
-                width: 40,
-                height: 40,
-                bgcolor: 'success.lighter',
-                borderRadius: 3,
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'center',
-              }}
-            >
-              <Microscope sx={{ width: 20, height: 20, color: 'success.main' }} />
-            </Box>
-            <Box>
-              <Typography
-                variant='body2'
-                sx={{ color: 'slate.600', fontSize: '0.875rem' }}
-              >
-                正常
-              </Typography>
-              <Typography
-                variant='h5'
-                sx={{ fontWeight: 700, color: 'slate.900' }}
-              >
-                {stats.normal}
-              </Typography>
-            </Box>
-          </Box>
-        </CardContent>
-      </Card>
-      <Card>
-        <CardContent sx={{ p: 2 }}>
-          <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5 }}>
-            <Box
-              sx={{
-                width: 40,
-                height: 40,
-                bgcolor: 'info.lighter',
-                borderRadius: 3,
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'center',
-              }}
-            >
-              <Settings sx={{ width: 20, height: 20, color: 'info.main' }} />
-            </Box>
-            <Box>
-              <Typography
-                variant='body2'
-                sx={{ color: 'slate.600', fontSize: '0.875rem' }}
-              >
-                校准中
-              </Typography>
-              <Typography
-                variant='h5'
-                sx={{ fontWeight: 700, color: 'slate.900' }}
-              >
-                {stats.calibrating}
-              </Typography>
-            </Box>
-          </Box>
-        </CardContent>
-      </Card>
-      <Card>
-        <CardContent sx={{ p: 2 }}>
-          <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5 }}>
-            <Box
-              sx={{
-                width: 40,
-                height: 40,
-                bgcolor: 'warning.light',
-                borderRadius: 3,
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'center',
-              }}
-            >
-              <AlertTriangle sx={{ width: 20, height: 20, color: ct.yellow[600] }} />
-            </Box>
-            <Box>
-              <Typography
-                variant='body2'
-                sx={{ color: 'slate.600', fontSize: '0.875rem' }}
-              >
-                维修中
-              </Typography>
-              <Typography
-                variant='h5'
-                sx={{ fontWeight: 700, color: 'slate.900' }}
-              >
-                {stats.maintenance}
-              </Typography>
-            </Box>
-          </Box>
-        </CardContent>
-      </Card>
-      <Card>
-        <CardContent sx={{ p: 2 }}>
-          <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5 }}>
-            <Box
-              sx={{
-                width: 40,
-                height: 40,
-                bgcolor: 'error.lighter',
-                borderRadius: 3,
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'center',
-              }}
-            >
-              <AlertTriangle sx={{ width: 20, height: 20, color: 'error.main' }} />
-            </Box>
-            <Box>
-              <Typography
-                variant='body2'
-                sx={{ color: 'slate.600', fontSize: '0.875rem' }}
-              >
-                待校准
-              </Typography>
-              <Typography
-                variant='h5'
-                sx={{ fontWeight: 700, color: 'slate.900' }}
-              >
-                {stats.needsCalibration}
-              </Typography>
-            </Box>
-          </Box>
-        </CardContent>
-      </Card>
-    </Box>
+  const stats = useMemo(
+    () => ({
+      total,
+      normal: instruments.filter((i) => i.status === '正常' || i.status === 'normal').length,
+      calibrating: instruments.filter((i) => i.status === '校准中' || i.status === 'calibrating')
+        .length,
+      maintenance: instruments.filter((i) => i.status === '维修中' || i.status === 'maintenance')
+        .length,
+      needsCalibration: instruments.filter((i) => needsCalibration(i)).length,
+    }),
+    [instruments, total]
   );
 
-  if (loading) {
-    return (
+  const statsCards = useMemo(
+    () => (
       <Box
         sx={{
-          minHeight: '100vh',
-          display: 'flex',
-          alignItems: 'center',
-          justifyContent: 'center',
-          background: `linear-gradient(135deg, ${ct.teal[50]} 0%, ${ct.background.default} 100%)`,
+          display: 'grid',
+          gridTemplateColumns: { xs: 'repeat(1, 1fr)', md: 'repeat(5, 1fr)' },
+          gap: 2,
+          mb: 3,
         }}
       >
-        <Box sx={{ textAlign: 'center' }}>
-          <Box
-            sx={{
-              width: 48,
-              height: 48,
-              border: 4,
-              borderColor: 'info.main',
-              borderTopColor: 'cyan.dark',
-              borderRadius: '50%',
-              animation: 'spin 1s linear infinite',
-              mx: 'auto',
-              mb: 2,
-            }}
-          />
-          <Typography sx={{ color: 'slate.600' }}>加载中...</Typography>
-        </Box>
+        <Card sx={{ bgcolor: 'teal.light' }}>
+          <CardContent sx={{ p: 2 }}>
+            <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5 }}>
+              <Box
+                sx={{
+                  width: 40,
+                  height: 40,
+                  bgcolor: 'success.lighter',
+                  borderRadius: 3,
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                }}
+              >
+                <Microscope sx={{ width: 20, height: 20, color: 'info.main' }} />
+              </Box>
+              <Box>
+                <Typography
+                  variant='body2'
+                  sx={{ color: 'slate.600', fontSize: '0.875rem' }}
+                >
+                  仪器总数
+                </Typography>
+                <Typography
+                  variant='h5'
+                  sx={{ fontWeight: 700, color: 'slate.900' }}
+                >
+                  {stats.total}
+                </Typography>
+              </Box>
+            </Box>
+          </CardContent>
+        </Card>
+        <Card>
+          <CardContent sx={{ p: 2 }}>
+            <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5 }}>
+              <Box
+                sx={{
+                  width: 40,
+                  height: 40,
+                  bgcolor: 'success.lighter',
+                  borderRadius: 3,
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                }}
+              >
+                <Microscope sx={{ width: 20, height: 20, color: 'success.main' }} />
+              </Box>
+              <Box>
+                <Typography
+                  variant='body2'
+                  sx={{ color: 'slate.600', fontSize: '0.875rem' }}
+                >
+                  正常
+                </Typography>
+                <Typography
+                  variant='h5'
+                  sx={{ fontWeight: 700, color: 'slate.900' }}
+                >
+                  {stats.normal}
+                </Typography>
+              </Box>
+            </Box>
+          </CardContent>
+        </Card>
+        <Card>
+          <CardContent sx={{ p: 2 }}>
+            <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5 }}>
+              <Box
+                sx={{
+                  width: 40,
+                  height: 40,
+                  bgcolor: 'info.lighter',
+                  borderRadius: 3,
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                }}
+              >
+                <Settings sx={{ width: 20, height: 20, color: 'info.main' }} />
+              </Box>
+              <Box>
+                <Typography
+                  variant='body2'
+                  sx={{ color: 'slate.600', fontSize: '0.875rem' }}
+                >
+                  校准中
+                </Typography>
+                <Typography
+                  variant='h5'
+                  sx={{ fontWeight: 700, color: 'slate.900' }}
+                >
+                  {stats.calibrating}
+                </Typography>
+              </Box>
+            </Box>
+          </CardContent>
+        </Card>
+        <Card>
+          <CardContent sx={{ p: 2 }}>
+            <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5 }}>
+              <Box
+                sx={{
+                  width: 40,
+                  height: 40,
+                  bgcolor: 'warning.light',
+                  borderRadius: 3,
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                }}
+              >
+                <AlertTriangle sx={{ width: 20, height: 20, color: ct.yellow[600] }} />
+              </Box>
+              <Box>
+                <Typography
+                  variant='body2'
+                  sx={{ color: 'slate.600', fontSize: '0.875rem' }}
+                >
+                  维修中
+                </Typography>
+                <Typography
+                  variant='h5'
+                  sx={{ fontWeight: 700, color: 'slate.900' }}
+                >
+                  {stats.maintenance}
+                </Typography>
+              </Box>
+            </Box>
+          </CardContent>
+        </Card>
+        <Card>
+          <CardContent sx={{ p: 2 }}>
+            <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5 }}>
+              <Box
+                sx={{
+                  width: 40,
+                  height: 40,
+                  bgcolor: 'error.lighter',
+                  borderRadius: 3,
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                }}
+              >
+                <AlertTriangle sx={{ width: 20, height: 20, color: 'error.main' }} />
+              </Box>
+              <Box>
+                <Typography
+                  variant='body2'
+                  sx={{ color: 'slate.600', fontSize: '0.875rem' }}
+                >
+                  待校准
+                </Typography>
+                <Typography
+                  variant='h5'
+                  sx={{ fontWeight: 700, color: 'slate.900' }}
+                >
+                  {stats.needsCalibration}
+                </Typography>
+              </Box>
+            </Box>
+          </CardContent>
+        </Card>
       </Box>
-    );
-  }
+    ),
+    [stats]
+  );
+
+  const handleSearch = (value: string) => {
+    setSearchTerm(value);
+    setCurrentPage(0);
+  };
 
   return (
     <PageContainer
@@ -517,20 +576,20 @@ const InstrumentPage: React.FC = () => {
         ]}
         backButton={{ onClick: () => navigate(DASHBOARD_PATHS.dashboard) }}
         columns={columns}
-        data={paginatedData}
-        loading={loading}
+        data={instruments}
+        loading={isLoading}
         getRowId={(row) => row.id}
         filters={filters}
         searchable
         searchPlaceholder='搜索仪器编号、名称或类型...'
         searchValue={searchTerm}
-        onSearch={setSearchTerm}
+        onSearch={handleSearch}
         pagination={{
-          page,
+          page: currentPage,
           pageSize,
-          total: filteredInstruments.length,
-          onPageChange: setPage,
-          onPageSizeChange: setPageSize,
+          total,
+          onPageChange: setCurrentPage,
+          onPageSizeChange: () => {},
         }}
         actions={[
           {
@@ -690,9 +749,10 @@ const InstrumentPage: React.FC = () => {
           <Button
             variant='contained'
             onClick={handleSave}
+            disabled={createMutation.isPending || updateMutation.isPending}
             sx={{ bgcolor: 'info.main' }}
           >
-            保存
+            {createMutation.isPending || updateMutation.isPending ? '保存中...' : '保存'}
           </Button>
         </DialogActions>
       </Dialog>

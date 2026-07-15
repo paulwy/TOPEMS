@@ -1,6 +1,8 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
 import { apiLogger } from '@/utils/logger';
 import { useNavigate } from 'react-router-dom';
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import { QUERY_KEYS } from '@/lib/reactQuery';
 import {
   AlertCircle,
   Calendar,
@@ -44,10 +46,9 @@ const ct = designTokens.colors;
 
 const EhsIncidentReportPage: React.FC = () => {
   const navigate = useNavigate();
-  const [incidents, setIncidents] = useState<Incident[]>([]);
+  const queryClient = useQueryClient();
   const [selectedIncident, setSelectedIncident] = useState<Incident | null>(null);
   const [actions, setActions] = useState<IncidentAction[]>([]);
-  const [loading, setLoading] = useState(true);
   const [showAddModal, setShowAddModal] = useState(false);
   const [showDetailModal, setShowDetailModal] = useState(false);
   const [formData, setFormData] = useState({
@@ -63,28 +64,18 @@ const EhsIncidentReportPage: React.FC = () => {
   });
   const addNotification = useNotificationStore((state) => state.addNotification);
 
-  useEffect(() => {
-    loadIncidents();
-  }, []);
-
-  const loadIncidents = async () => {
-    try {
-      setLoading(true);
+  const { data: incidentsData, isLoading: loading } = useQuery({
+    queryKey: QUERY_KEYS.EHS.INCIDENTS,
+    queryFn: async () => {
       const response = await ehsApi.listIncidents();
       if (response.success && response.data) {
-        const incidentsData = response.data as any;
-        const incidentsArray = Array.isArray(incidentsData)
-          ? incidentsData
-          : incidentsData.data || incidentsData.incidents || [];
-        setIncidents(incidentsArray);
+        const data = response.data as any;
+        return Array.isArray(data) ? data : data.data || data.incidents || [];
       }
-    } catch (error: unknown) {
-      apiLogger.error('加载事件报告失败:', error);
-      addNotification({ title: '错误', message: '加载事件报告失败', type: 'error' });
-    } finally {
-      setLoading(false);
-    }
-  };
+      return [];
+    },
+  });
+  const incidents = (incidentsData as Incident[]) || [];
 
   const loadIncidentDetail = async (incidentId: string) => {
     try {
@@ -111,7 +102,21 @@ const EhsIncidentReportPage: React.FC = () => {
     setShowDetailModal(true);
   };
 
-  const handleCreateIncident = async () => {
+  const createIncidentMutation = useMutation({
+    mutationFn: (data: typeof formData) => ehsApi.createIncident(data),
+    onSuccess: () => {
+      addNotification({ title: '成功', message: '事件报告创建成功', type: 'success' });
+      queryClient.invalidateQueries({ queryKey: QUERY_KEYS.EHS.INCIDENTS });
+      setShowAddModal(false);
+      resetForm();
+    },
+    onError: (error: unknown) => {
+      apiLogger.error('创建事件报告失败:', error);
+      addNotification({ title: '错误', message: '创建失败，请稍后重试', type: 'error' });
+    },
+  });
+
+  const handleCreateIncident = () => {
     if (!formData.title.trim()) {
       addNotification({ title: '错误', message: '请输入事件标题', type: 'error' });
       return;
@@ -120,36 +125,24 @@ const EhsIncidentReportPage: React.FC = () => {
       addNotification({ title: '错误', message: '请输入事件描述', type: 'error' });
       return;
     }
-    try {
-      const response = await ehsApi.createIncident(formData);
-      if (response.success) {
-        addNotification({ title: '成功', message: '事件报告创建成功', type: 'success' });
-        setShowAddModal(false);
-        loadIncidents();
-        resetForm();
-      } else {
-        addNotification({ title: '错误', message: '创建失败，请稍后重试', type: 'error' });
-      }
-    } catch (error: unknown) {
-      apiLogger.error('创建事件报告失败:', error);
-      addNotification({ title: '错误', message: '创建失败，请稍后重试', type: 'error' });
-    }
+    createIncidentMutation.mutate(formData);
   };
 
-  const handleDeleteIncident = async (incidentId: string) => {
-    if (!confirm('确定要删除此事件报告吗？')) return;
-    try {
-      const response = await ehsApi.deleteIncident(incidentId);
-      if (response.success) {
-        addNotification({ title: '成功', message: '事件报告删除成功', type: 'success' });
-        loadIncidents();
-      } else {
-        addNotification({ title: '错误', message: '删除失败，请稍后重试', type: 'error' });
-      }
-    } catch (error: unknown) {
+  const deleteIncidentMutation = useMutation({
+    mutationFn: (incidentId: string) => ehsApi.deleteIncident(incidentId),
+    onSuccess: () => {
+      addNotification({ title: '成功', message: '事件报告删除成功', type: 'success' });
+      queryClient.invalidateQueries({ queryKey: QUERY_KEYS.EHS.INCIDENTS });
+    },
+    onError: (error: unknown) => {
       apiLogger.error('删除事件报告失败:', error);
       addNotification({ title: '错误', message: '删除失败，请稍后重试', type: 'error' });
-    }
+    },
+  });
+
+  const handleDeleteIncident = (incidentId: string) => {
+    if (!confirm('确定要删除此事件报告吗？')) return;
+    deleteIncidentMutation.mutate(incidentId);
   };
 
   const resetForm = () => {
@@ -502,7 +495,7 @@ const EhsIncidentReportPage: React.FC = () => {
           </Box>
         }
         emptyMessage='暂无事件报告'
-        onRefresh={loadIncidents}
+        onRefresh={() => queryClient.invalidateQueries({ queryKey: QUERY_KEYS.EHS.INCIDENTS })}
       />
 
       <Dialog

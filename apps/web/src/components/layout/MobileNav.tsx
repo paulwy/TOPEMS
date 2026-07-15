@@ -326,7 +326,9 @@ export const MobileNav: React.FC<MobileNavProps> = ({ open, onClose, onOpen }) =
                   backgroundColor:
                     location.pathname === DASHBOARD_PATHS.dashboard ? 'primary.50' : 'transparent',
                   borderLeft:
-                    location.pathname === DASHBOARD_PATHS.dashboard ? '3px solid' : '3px solid transparent',
+                    location.pathname === DASHBOARD_PATHS.dashboard
+                      ? '3px solid'
+                      : '3px solid transparent',
                   borderColor: 'primary.main',
                   transition: 'all 0.2s ease-in-out',
                   '&:hover': {
@@ -342,12 +344,17 @@ export const MobileNav: React.FC<MobileNavProps> = ({ open, onClose, onOpen }) =
                       height: 32,
                       borderRadius: 1.5,
                       backgroundColor:
-                        location.pathname === DASHBOARD_PATHS.dashboard ? 'primary.main' : 'grey.100',
+                        location.pathname === DASHBOARD_PATHS.dashboard
+                          ? 'primary.main'
+                          : 'grey.100',
                       display: 'flex',
                       alignItems: 'center',
                       justifyContent: 'center',
                       transition: 'all 0.2s ease-in-out',
-                      color: location.pathname === DASHBOARD_PATHS.dashboard ? 'common.white' : 'text.secondary',
+                      color:
+                        location.pathname === DASHBOARD_PATHS.dashboard
+                          ? 'common.white'
+                          : 'text.secondary',
                     }}
                   >
                     <Home style={{ width: 18, height: 18 }} />
@@ -356,7 +363,10 @@ export const MobileNav: React.FC<MobileNavProps> = ({ open, onClose, onOpen }) =
                 <Typography
                   sx={{
                     fontWeight: location.pathname === DASHBOARD_PATHS.dashboard ? 600 : 500,
-                    color: location.pathname === DASHBOARD_PATHS.dashboard ? 'primary.main' : 'text.primary',
+                    color:
+                      location.pathname === DASHBOARD_PATHS.dashboard
+                        ? 'primary.main'
+                        : 'text.primary',
                     fontSize: '0.95rem',
                     flex: 1,
                   }}

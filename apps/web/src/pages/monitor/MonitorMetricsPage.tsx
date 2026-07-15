@@ -5,7 +5,8 @@
  * @path /monitor/metrics
  */
 
-import React, { useState, useMemo, useCallback } from 'react';
+import React, { useState, useMemo, useCallback, useEffect } from 'react';
+import { useQuery } from '@tanstack/react-query';
 import {
   BarChart3,
   Cpu,
@@ -127,7 +128,6 @@ const generateMultiServiceTrendData = (labels: string[], services: string[]) => 
 
 export const MonitorMetricsPage: React.FC = () => {
   const addNotification = useNotificationStore((state) => state.addNotification);
-  const [loading, setLoading] = useState(false);
   const [timeRange, setTimeRange] = useState<TimeRange>('24h');
   const [timeRangeAnchorEl, setTimeRangeAnchorEl] = useState<null | HTMLElement>(null);
   const [serviceAnchorEl, setServiceAnchorEl] = useState<null | HTMLElement>(null);
@@ -135,6 +135,25 @@ export const MonitorMetricsPage: React.FC = () => {
   const [activeCategory, setActiveCategory] = useState<MetricCategory>('host');
 
   const timeLabels = useMemo(() => generateTimeLabels(timeRange), [timeRange]);
+
+  const metricsQuery = useQuery<boolean>({
+    queryKey: ['monitor-metrics', timeRange, selectedService, activeCategory],
+    queryFn: async () => true,
+    staleTime: 5 * 60 * 1000,
+  });
+
+  const loading = metricsQuery.isFetching;
+  const refetchMetrics = metricsQuery.refetch;
+
+  useEffect(() => {
+    if (metricsQuery.isError) {
+      addNotification({
+        message: getErrorMessage(metricsQuery.error) || '加载指标数据失败',
+        type: 'error',
+        duration: 3000,
+      });
+    }
+  }, [metricsQuery.isError, metricsQuery.error, addNotification]);
 
   const handleTimeRangeClick = (event: React.MouseEvent<HTMLElement>) => {
     setTimeRangeAnchorEl(event.currentTarget);
@@ -147,7 +166,7 @@ export const MonitorMetricsPage: React.FC = () => {
   const handleTimeRangeSelect = (range: TimeRange) => {
     setTimeRange(range);
     handleTimeRangeClose();
-    handleRefresh();
+    refetchMetrics();
   };
 
   const handleServiceClick = (event: React.MouseEvent<HTMLElement>) => {
@@ -161,7 +180,7 @@ export const MonitorMetricsPage: React.FC = () => {
   const handleServiceSelect = (service: ServiceType) => {
     setSelectedService(service);
     handleServiceClose();
-    handleRefresh();
+    refetchMetrics();
   };
 
   const currentTimeRangeLabel =
@@ -170,20 +189,17 @@ export const MonitorMetricsPage: React.FC = () => {
     serviceOptions.find((o) => o.value === selectedService)?.label || '全部服务';
 
   const handleRefresh = useCallback(() => {
-    setLoading(true);
-    setTimeout(() => {
-      setLoading(false);
-      addNotification({
-        message: '指标数据已刷新',
-        type: 'success',
-        duration: 3000,
-      });
-    }, 500);
-  }, [addNotification]);
+    refetchMetrics();
+    addNotification({
+      message: '指标数据已刷新',
+      type: 'success',
+      duration: 3000,
+    });
+  }, [refetchMetrics, addNotification]);
 
   const handleCategoryChange = (_event: React.SyntheticEvent, newValue: MetricCategory) => {
     setActiveCategory(newValue);
-    handleRefresh();
+    refetchMetrics();
   };
 
   const stats: StatCard[] = useMemo(

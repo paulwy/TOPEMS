@@ -2,6 +2,8 @@ import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
 import { renderHook, act, waitFor } from '@testing-library/react';
 import { useGlobalSearch } from '@/hooks/useGlobalSearch';
 
+import { loadSearchHistory, saveSearchHistory } from '@/components/GlobalSearchBar/utils';
+
 vi.mock('@/api/search', () => ({
   searchApi: {
     globalSearch: vi.fn().mockResolvedValue({
@@ -9,7 +11,14 @@ vi.mock('@/api/search', () => ({
       code: 200,
       message: 'ok',
       data: [
-        { id: '1', title: 'Test Result', description: 'Test description', module: 'user', path: '/test', type_name: '用户' },
+        {
+          id: '1',
+          title: 'Test Result',
+          description: 'Test description',
+          module: 'user',
+          path: '/test',
+          type_name: '用户',
+        },
       ],
       timestamp: Date.now(),
     }),
@@ -20,9 +29,11 @@ vi.mock('@/components/GlobalSearchBar/utils', () => ({
   loadSearchHistory: vi.fn().mockReturnValue(['previous', 'searches']),
   saveSearchHistory: vi.fn(),
   MAX_HISTORY_ITEMS: 10,
+  fuzzySearch: vi.fn((results) => results),
+  filterResults: vi.fn((results) => results),
+  getAvailableModules: vi.fn().mockReturnValue([]),
+  getAvailableTypes: vi.fn().mockReturnValue([]),
 }));
-
-import { loadSearchHistory, saveSearchHistory } from '@/components/GlobalSearchBar/utils';
 
 describe('useGlobalSearch', () => {
   beforeEach(() => {
@@ -148,7 +159,14 @@ describe('useGlobalSearch', () => {
           code: 200,
           message: 'ok',
           data: [
-            { id: '1', title: 'Test Result', description: 'Test description', module: 'user', path: '/test', type_name: '用户' },
+            {
+              id: '1',
+              title: 'Test Result',
+              description: 'Test description',
+              module: 'user',
+              path: '/test',
+              type_name: '用户',
+            },
           ],
           timestamp: Date.now(),
         };
@@ -307,12 +325,18 @@ describe('useGlobalSearch', () => {
       });
 
       act(() => {
-        result.current.handleKeyDown({ key: 'ArrowDown', preventDefault: vi.fn() } as unknown as React.KeyboardEvent);
+        result.current.handleKeyDown({
+          key: 'ArrowDown',
+          preventDefault: vi.fn(),
+        } as unknown as React.KeyboardEvent);
       });
       expect(result.current.selectedIndex).toBe(0);
 
       act(() => {
-        result.current.handleKeyDown({ key: 'ArrowUp', preventDefault: vi.fn() } as unknown as React.KeyboardEvent);
+        result.current.handleKeyDown({
+          key: 'ArrowUp',
+          preventDefault: vi.fn(),
+        } as unknown as React.KeyboardEvent);
       });
       expect(result.current.selectedIndex).toBe(0);
     });
@@ -344,7 +368,10 @@ describe('useGlobalSearch', () => {
 
       act(() => {
         const currentHandleKeyDown = result.current.handleKeyDown;
-        currentHandleKeyDown({ key: 'Enter', preventDefault: vi.fn() } as unknown as React.KeyboardEvent);
+        currentHandleKeyDown({
+          key: 'Enter',
+          preventDefault: vi.fn(),
+        } as unknown as React.KeyboardEvent);
       });
 
       expect(mockNavigate).toHaveBeenCalledWith('/test');
@@ -370,7 +397,10 @@ describe('useGlobalSearch', () => {
       });
 
       act(() => {
-        result.current.handleKeyDown({ key: 'Enter', preventDefault: vi.fn() } as unknown as React.KeyboardEvent);
+        result.current.handleKeyDown({
+          key: 'Enter',
+          preventDefault: vi.fn(),
+        } as unknown as React.KeyboardEvent);
       });
 
       expect(mockNavigate).not.toHaveBeenCalled();
@@ -436,7 +466,10 @@ describe('useGlobalSearch', () => {
       });
 
       act(() => {
-        result.current.handleKeyDown({ key: 'Home', preventDefault: vi.fn() } as unknown as React.KeyboardEvent);
+        result.current.handleKeyDown({
+          key: 'Home',
+          preventDefault: vi.fn(),
+        } as unknown as React.KeyboardEvent);
       });
 
       expect(result.current.selectedIndex).toBe(0);
@@ -457,7 +490,10 @@ describe('useGlobalSearch', () => {
       });
 
       act(() => {
-        result.current.handleKeyDown({ key: 'End', preventDefault: vi.fn() } as unknown as React.KeyboardEvent);
+        result.current.handleKeyDown({
+          key: 'End',
+          preventDefault: vi.fn(),
+        } as unknown as React.KeyboardEvent);
       });
 
       expect(result.current.selectedIndex).toBe(0);
@@ -492,7 +528,10 @@ describe('useGlobalSearch', () => {
       });
 
       act(() => {
-        result.current.handleKeyDown({ key: 'ArrowDown', preventDefault: vi.fn() } as unknown as React.KeyboardEvent);
+        result.current.handleKeyDown({
+          key: 'ArrowDown',
+          preventDefault: vi.fn(),
+        } as unknown as React.KeyboardEvent);
       });
 
       expect(result.current.selectedIndex).toBe(0);
@@ -516,7 +555,10 @@ describe('useGlobalSearch', () => {
       });
 
       act(() => {
-        result.current.handleKeyDown({ key: 'ArrowUp', preventDefault: vi.fn() } as unknown as React.KeyboardEvent);
+        result.current.handleKeyDown({
+          key: 'ArrowUp',
+          preventDefault: vi.fn(),
+        } as unknown as React.KeyboardEvent);
       });
 
       expect(result.current.selectedIndex).toBe(0);
@@ -528,7 +570,14 @@ describe('useGlobalSearch', () => {
       const mockNavigate = vi.fn();
       const { result } = renderHook(() => useGlobalSearch(mockNavigate));
 
-      const mockResult = { id: '1', title: 'Test', description: '', module: 'user', path: '/test', type_name: '用户' };
+      const mockResult = {
+        id: '1',
+        title: 'Test',
+        description: '',
+        module: 'user',
+        path: '/test',
+        type_name: '用户',
+      };
 
       act(() => {
         result.current.setQuery('test');

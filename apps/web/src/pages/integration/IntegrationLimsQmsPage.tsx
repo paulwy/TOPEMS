@@ -3,20 +3,11 @@
  * 管理 LIMS 样本与 QMS 检验的同步
  */
 
-import React, { useState, useCallback } from 'react';
+import React, { useState } from 'react';
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import { QUERY_KEYS } from '@/lib/reactQuery';
 import { PageContainer } from '@/components/common';
-import { useNavigate } from 'react-router-dom';
-import {
-  Plus,
-  RefreshCw,
-  ArrowRightLeft,
-  CheckCircle,
-  XCircle,
-  Clock,
-  Eye,
-  Edit,
-  Trash2,
-} from 'lucide-react';
+import { Plus, RefreshCw, Eye, Trash2 } from 'lucide-react';
 import {
   Box,
   Chip,
@@ -24,10 +15,6 @@ import {
   DialogTitle,
   DialogContent,
   DialogActions,
-  TextField,
-  MenuItem,
-  IconButton,
-  Tooltip,
   Button,
 } from '@mui/material';
 
@@ -41,8 +28,8 @@ import {
 import { integrationApi } from '@/api/integration';
 import { useNotificationStore } from '@/store';
 import type { LimsQmsSync, CreateLimsQmsSyncRequest } from '@/api/integration';
-import { logger } from '@/utils/logger';
-import { useNotification } from '@/hooks/useNotification';
+import { apiLogger } from '@/utils/logger';
+import { extractErrorMessage } from '@/utils/errors';
 
 // 状态配置
 const STATUS_CONFIG: Record<
@@ -92,40 +79,77 @@ const FORM_SECTIONS: FormSection[] = [
 ];
 
 const IntegrationLimsQmsPage: React.FC = () => {
-  const navigate = useNavigate();
-  const { success, error } = useNotification();
+  const addNotification = useNotificationStore((state) => state.addNotification);
+  const queryClient = useQueryClient();
 
   // 数据状态
-  const [syncs, setSyncs] = useState<LimsQmsSync[]>([]);
-  const [loading, setLoading] = useState(true);
   const [pagination, setPagination] = useState({ page: 0, pageSize: 10 });
   const [searchValue, setSearchValue] = useState('');
 
   // 弹窗状态
   const [showCreateModal, setShowCreateModal] = useState(false);
   const [editingSync, setEditingSync] = useState<LimsQmsSync | null>(null);
-  const [submitting, setSubmitting] = useState(false);
 
   // 加载数据
-  const loadData = useCallback(async () => {
-    try {
-      setLoading(true);
+  const syncsQuery = useQuery({
+    queryKey: QUERY_KEYS.INTEGRATION.LIMS_QMS_SYNCS,
+    queryFn: async () => {
       const res = await integrationApi.listLimsQmsSyncs();
       if (res.success && res.data !== undefined) {
-        setSyncs(res.data);
+        return res.data;
       }
-    } catch (err: unknown) {
-      logger.error('Error loading LIMS-QMS syncs:', err);
-      error('加载 LIMS-QMS 同步数据失败');
-    } finally {
-      setLoading(false);
-    }
-  }, [error]);
+      throw new Error(res.message || '加载 LIMS-QMS 同步数据失败');
+    },
+  });
 
-  // 初始加载
-  React.useEffect(() => {
-    loadData();
-  }, [loadData]);
+  const syncs = syncsQuery.data || [];
+  const loading = syncsQuery.isLoading;
+
+  const loadData = () => {
+    queryClient.invalidateQueries({ queryKey: QUERY_KEYS.INTEGRATION.LIMS_QMS_SYNCS });
+  };
+
+  const createMutation = useMutation({
+    mutationFn: async (data: CreateLimsQmsSyncRequest) => {
+      const res = await integrationApi.createLimsQmsSync(data);
+      if (!res.success) throw new Error(res.message || '创建失败');
+      return res.data;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: QUERY_KEYS.INTEGRATION.LIMS_QMS_SYNCS });
+      addNotification({ title: '成功', message: '同步记录创建成功', type: 'success' });
+      setShowCreateModal(false);
+      setEditingSync(null);
+    },
+    onError: (err: unknown) => {
+      apiLogger.error('创建 LIMS-QMS 同步失败:', err);
+      addNotification({
+        title: '失败',
+        message: extractErrorMessage(err, '保存同步记录失败'),
+        type: 'error',
+      });
+    },
+  });
+
+  const syncMutation = useMutation({
+    mutationFn: async (id: string) => {
+      const res = await integrationApi.syncLimsQms(id);
+      if (!res.success) throw new Error(res.message || '同步失败');
+      return res.data;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: QUERY_KEYS.INTEGRATION.LIMS_QMS_SYNCS });
+      addNotification({ title: '成功', message: '同步成功', type: 'success' });
+    },
+    onError: (err: unknown) => {
+      apiLogger.error('LIMS-QMS 同步失败:', err);
+      addNotification({
+        title: '失败',
+        message: extractErrorMessage(err, '同步失败'),
+        type: 'error',
+      });
+    },
+  });
 
   // 筛选数据
   const filteredData = React.useMemo(() => {
@@ -217,61 +241,34 @@ const IntegrationLimsQmsPage: React.FC = () => {
   ];
 
   // 处理创建/编辑提交
-  const handleSubmit = async (data: unknown) => {
-    try {
-      setSubmitting(true);
-      if (editingSync) {
-        logger.warn('Update not implemented');
-      } else {
-        const request: CreateLimsQmsSyncRequest = {
-          lims_sample_id: (data as Record<string, unknown>).lims_sample_id as string,
-          sample_name: (data as Record<string, unknown>).sample_name as string,
-          inspection_result:
-            ((data as Record<string, unknown>).inspection_result as string) || undefined,
-          inspection_notes:
-            ((data as Record<string, unknown>).inspection_notes as string) || undefined,
-        };
-        await integrationApi.createLimsQmsSync(request);
-        success('同步记录创建成功');
-      }
-      setShowCreateModal(false);
-      setEditingSync(null);
-      loadData();
-    } catch (err: unknown) {
-      logger.error('Error saving sync:', err);
-      error('保存同步记录失败');
-      throw err;
-    } finally {
-      setSubmitting(false);
+  const handleSubmit = (data: unknown) => {
+    if (editingSync) {
+      handleCloseModal();
+      return;
     }
+    const request: CreateLimsQmsSyncRequest = {
+      lims_sample_id: (data as Record<string, unknown>).lims_sample_id as string,
+      sample_name: (data as Record<string, unknown>).sample_name as string,
+      inspection_result:
+        ((data as Record<string, unknown>).inspection_result as string) || undefined,
+      inspection_notes: ((data as Record<string, unknown>).inspection_notes as string) || undefined,
+    };
+    createMutation.mutate(request);
   };
 
   // 处理同步
-  const handleSync = async (id: string) => {
-    try {
-      await integrationApi.syncLimsQms(id);
-      success('同步成功');
-      loadData();
-    } catch (err: unknown) {
-      logger.error('Error syncing:', err);
-      error('同步失败');
-    }
+  const handleSync = (id: string) => {
+    syncMutation.mutate(id);
   };
 
-  // 处理删除
-  const handleDelete = async (id: string) => {
+  // 处理删除（后端未实现，仅提示）
+  const handleDelete = (id: string) => {
     if (!confirm('确定要删除此同步记录吗？')) return;
-    try {
-      // 后端可能未实现删除接口
-      logger.warn('Delete not implemented');
-    } catch (error: unknown) {
-      logger.error('Error deleting:', error);
-    }
-  };
-
-  // 打开编辑弹窗
-  const handleOpenEdit = (sync: LimsQmsSync) => {
-    setEditingSync(sync);
+    addNotification({
+      title: '提示',
+      message: '删除接口尚未实现',
+      type: 'warning',
+    });
   };
 
   // 关闭弹窗
@@ -330,7 +327,7 @@ const IntegrationLimsQmsPage: React.FC = () => {
             defaultValues={(editingSync as unknown as Record<string, unknown>) || {}}
             onSubmit={handleSubmit}
             onCancel={handleCloseModal}
-            submitting={submitting}
+            submitting={createMutation.isPending}
             columns={1}
             submitText={editingSync ? '关闭' : '创建'}
             mode={editingSync ? 'view' : 'edit'}

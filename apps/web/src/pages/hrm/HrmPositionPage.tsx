@@ -1,4 +1,6 @@
-import React, { useState, useEffect, useMemo } from 'react';
+import React, { useState, useMemo } from 'react';
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import { QUERY_KEYS } from '@/lib/reactQuery';
 import { Typography, Box, Button, DialogContent, DialogActions, useTheme } from '@mui/material';
 import { Briefcase, Plus, Edit, Trash2, Eye, Users, CheckCircle, XCircle } from 'lucide-react';
 import {
@@ -26,17 +28,10 @@ interface PositionManagementPageProps {}
 const PositionManagementPage: React.FC<PositionManagementPageProps> = () => {
   const theme = useTheme();
   const addNotification = useNotificationStore((state) => state.addNotification);
+  const queryClient = useQueryClient();
 
-  const [loading, setLoading] = useState(false);
-  const [data, setData] = useState<PaginatedResult<Position>>({
-    items: [],
-    total: 0,
-    page: 1,
-    pagesize: 10,
-  });
   const [searchText, setSearchText] = useState('');
   const [statusFilter, setStatusFilter] = useState('');
-  const [departments, setDepartments] = useState<{ id: string; name: string }[]>([]);
   const [departmentFilter, setDepartmentFilter] = useState('');
 
   const [showCreateModal, setShowCreateModal] = useState(false);
@@ -46,56 +41,51 @@ const PositionManagementPage: React.FC<PositionManagementPageProps> = () => {
 
   const [formData, setFormData] = useState<Partial<Position>>({});
 
-  const fetchPositions = async (params?: ListParams) => {
-    setLoading(true);
-    try {
+  const positionsQuery = useQuery<PaginatedResult<Position>>({
+    queryKey: [...QUERY_KEYS.HRM.POSITION, { searchText, statusFilter, departmentFilter }],
+    queryFn: async () => {
+      const params: ListParams = {};
+      if (statusFilter && statusFilter !== 'all') {
+        params.status = statusFilter;
+      }
       const response = await positionApi.list(params);
       if (response.code === 200 && response.data) {
         const data = response.data as any;
-        setData({
+        return {
           items: data.items || [],
           total: data.total || 0,
           page: data.page || 1,
           pagesize: data.pagesize || 10,
-        });
-      } else {
-        setData({ items: [], total: 0, page: 1, pagesize: 10 });
+        };
       }
-    } catch (error: unknown) {
-      addNotification({
-        title: '加载失败',
-        message: (error as { message?: string }).message || '获取岗位列表失败',
-        type: 'error',
-      });
-      setData({ items: [], total: 0, page: 1, pagesize: 10 });
-    } finally {
-      setLoading(false);
-    }
-  };
+      return { items: [], total: 0, page: 1, pagesize: 10 };
+    },
+  });
 
-  const fetchDepartments = async () => {
-    try {
+  const departmentsQuery = useQuery<{ id: string; name: string }[]>({
+    queryKey: QUERY_KEYS.HRM.DEPARTMENTS,
+    queryFn: async () => {
       const response = await departmentApi.list();
       if (response.code === 200 && response.data) {
         const items = response.data.items || [];
-        setDepartments(items.map((d: Department) => ({ id: d.id, name: d.name })));
-      } else {
-        setDepartments([]);
+        return items.map((d: Department) => ({ id: d.id, name: d.name }));
       }
-    } catch (error: unknown) {
-      addNotification({
-        title: '加载失败',
-        message: (error as { message?: string }).message || '获取部门列表失败',
-        type: 'error',
-      });
-      setDepartments([]);
-    }
-  };
+      return [];
+    },
+  });
 
-  useEffect(() => {
-    fetchPositions();
-    fetchDepartments();
-  }, []);
+  const loading = positionsQuery.isLoading;
+  const data: PaginatedResult<Position> = positionsQuery.data || {
+    items: [],
+    total: 0,
+    page: 1,
+    pagesize: 10,
+  };
+  const departments = departmentsQuery.data || [];
+
+  const fetchPositions = () => {
+    positionsQuery.refetch();
+  };
 
   const handleAdd = () => {
     setSelectedPosition(null);
@@ -114,17 +104,16 @@ const PositionManagementPage: React.FC<PositionManagementPageProps> = () => {
     setShowViewModal(true);
   };
 
-  const handleDelete = async (id: string) => {
-    if (!confirm('确定要删除这个岗位吗？')) return;
-    try {
-      const response = await positionApi.delete(id);
+  const deleteMutation = useMutation({
+    mutationFn: async (id: string) => positionApi.delete(id),
+    onSuccess: (response) => {
       if (response.code === 200) {
         addNotification({
           title: '成功',
           message: '岗位删除成功',
           type: 'success',
         });
-        fetchPositions();
+        queryClient.invalidateQueries({ queryKey: QUERY_KEYS.HRM.POSITION });
       } else {
         addNotification({
           title: '失败',
@@ -132,56 +121,88 @@ const PositionManagementPage: React.FC<PositionManagementPageProps> = () => {
           type: 'error',
         });
       }
-    } catch (error: unknown) {
+    },
+    onError: (error: unknown) => {
       addNotification({
         title: '失败',
         message: (error as { message?: string }).message || '删除岗位失败',
         type: 'error',
       });
-    }
+    },
+  });
+
+  const handleDelete = (id: string) => {
+    deleteMutation.mutate(id);
   };
 
-  const handleCreate = async (e: React.FormEvent) => {
-    e.preventDefault();
-    try {
-      await positionApi.create(formData);
-      addNotification({
-        title: '成功',
-        message: '岗位创建成功',
-        type: 'success',
-      });
-      setShowCreateModal(false);
-      setFormData({});
-      fetchPositions();
-    } catch (error: unknown) {
+  const createMutation = useMutation({
+    mutationFn: async (data: Partial<Position>) => positionApi.create(data),
+    onSuccess: (response) => {
+      if (response.code === 200) {
+        addNotification({
+          title: '成功',
+          message: '岗位创建成功',
+          type: 'success',
+        });
+        setShowCreateModal(false);
+        setFormData({});
+        queryClient.invalidateQueries({ queryKey: QUERY_KEYS.HRM.POSITION });
+      } else {
+        addNotification({
+          title: '失败',
+          message: '创建岗位失败',
+          type: 'error',
+        });
+      }
+    },
+    onError: (error: unknown) => {
       addNotification({
         title: '失败',
         message: (error as { message?: string }).message || '创建岗位失败',
         type: 'error',
       });
-    }
-  };
+    },
+  });
 
-  const handleUpdate = async (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!selectedPosition) return;
-    try {
-      await positionApi.update(selectedPosition.id, formData);
-      addNotification({
-        title: '成功',
-        message: '岗位更新成功',
-        type: 'success',
-      });
-      setShowEditModal(false);
-      setSelectedPosition(null);
-      fetchPositions();
-    } catch (error: unknown) {
+  const updateMutation = useMutation({
+    mutationFn: async (args: { id: string; data: Partial<Position> }) =>
+      positionApi.update(args.id, args.data),
+    onSuccess: (response) => {
+      if (response.code === 200) {
+        addNotification({
+          title: '成功',
+          message: '岗位更新成功',
+          type: 'success',
+        });
+        setShowEditModal(false);
+        setSelectedPosition(null);
+        queryClient.invalidateQueries({ queryKey: QUERY_KEYS.HRM.POSITION });
+      } else {
+        addNotification({
+          title: '失败',
+          message: '更新岗位失败',
+          type: 'error',
+        });
+      }
+    },
+    onError: (error: unknown) => {
       addNotification({
         title: '失败',
         message: (error as { message?: string }).message || '更新岗位失败',
         type: 'error',
       });
-    }
+    },
+  });
+
+  const handleCreate = (e: React.FormEvent) => {
+    e.preventDefault();
+    createMutation.mutate(formData);
+  };
+
+  const handleUpdate = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!selectedPosition) return;
+    updateMutation.mutate({ id: selectedPosition.id, data: formData });
   };
 
   const handleInputChange = (field: string, value: string | number | string[]) => {
@@ -381,7 +402,7 @@ const PositionManagementPage: React.FC<PositionManagementPageProps> = () => {
             page: data.page - 1,
             pageSize: data.pagesize,
             total: data.total,
-            onPageChange: (page: number) => fetchPositions({ page: page + 1 }),
+            onPageChange: (page: number) => fetchPositions(),
           }}
           searchable
           searchPlaceholder='搜索岗位名称或编码'

@@ -1,6 +1,8 @@
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState } from 'react';
 import { apiLogger } from '@/utils/logger';
 import { useNavigate } from 'react-router-dom';
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import { QUERY_KEYS } from '@/lib/reactQuery';
 import {
   Box,
   Dialog,
@@ -46,8 +48,7 @@ const ct = designTokens.colors;
 
 const EhsHazardPage: React.FC = () => {
   const navigate = useNavigate();
-  const [issues, setIssues] = useState<SafetyIssue[]>([]);
-  const [loading, setLoading] = useState(true);
+  const queryClient = useQueryClient();
   const [searchTerm, setSearchTerm] = useState('');
   const [levelFilter, setLevelFilter] = useState('all');
   const [statusFilter, setStatusFilter] = useState('all');
@@ -79,31 +80,37 @@ const EhsHazardPage: React.FC = () => {
     remarks: '',
   });
 
-  const loadIssues = useCallback(async () => {
-    try {
-      setLoading(true);
+  const translateStatus = (status: string) => {
+    const statusMap: Record<string, string> = {
+      reported: '待整改',
+      rectifying: '整改中',
+      pending_verification: '待验收',
+      verified: '已验收',
+      closed: '已闭环',
+      rejected: '已驳回',
+    };
+    return statusMap[status] || status;
+  };
+
+  const { data: issuesData, isLoading: loading } = useQuery({
+    queryKey: QUERY_KEYS.EHS.SAFETY_ISSUES,
+    queryFn: async () => {
       const response = await ehsApi.listSafetyIssues({ pagesize: 100 });
       if (response.success && response.data) {
         const issuesData = Array.isArray(response.data) ? response.data : response.data.items || [];
-        const adapted = issuesData.map((item: SafetyIssue) => ({
+        return issuesData.map((item: SafetyIssue) => ({
           ...item,
           status: translateStatus(item.status),
         }));
-        setIssues(adapted);
-      } else {
-        setIssues([]);
       }
-    } catch (err: unknown) {
-      apiLogger.error('加载隐患列表失败:', err);
-      setIssues([]);
-    } finally {
-      setLoading(false);
-    }
-  }, []);
+      return [];
+    },
+  });
+  const issues = (issuesData as SafetyIssue[]) || [];
 
-  useEffect(() => {
-    loadIssues();
-  }, [loadIssues]);
+  const invalidateIssues = () => {
+    queryClient.invalidateQueries({ queryKey: QUERY_KEYS.EHS.SAFETY_ISSUES });
+  };
 
   const loadIssueDetail = async (issueId: string) => {
     try {
@@ -117,18 +124,6 @@ const EhsHazardPage: React.FC = () => {
     } catch (err: unknown) {
       apiLogger.error('加载隐患详情失败:', err);
     }
-  };
-
-  const translateStatus = (status: string) => {
-    const statusMap: Record<string, string> = {
-      reported: '待整改',
-      rectifying: '整改中',
-      pending_verification: '待验收',
-      verified: '已验收',
-      closed: '已闭环',
-      rejected: '已驳回',
-    };
-    return statusMap[status] || status;
   };
 
   const getLevelLabel = (level: string) => {
@@ -299,24 +294,30 @@ const EhsHazardPage: React.FC = () => {
     setShowCreateModal(true);
   };
 
-  const handleSave = async () => {
-    try {
-      await ehsApi.createSafetyIssue({
-        title: formData.title,
-        description: formData.description || null,
-        category: formData.category,
-        level: formData.level,
-        source: formData.source,
-        location: formData.location || null,
-        reported_by: formData.reported_by || null,
-      });
+  const createMutation = useMutation({
+    mutationFn: (data: Parameters<typeof ehsApi.createSafetyIssue>[0]) =>
+      ehsApi.createSafetyIssue(data),
+    onSuccess: () => {
       addNotification({ title: '成功', message: '隐患上报成功', type: 'success' });
+      invalidateIssues();
       setShowCreateModal(false);
-      loadIssues();
-    } catch (err: unknown) {
+    },
+    onError: (error: unknown) => {
+      apiLogger.error('创建隐患失败:', error);
       addNotification({ title: '错误', message: '上报失败', type: 'error' });
-      apiLogger.error('创建隐患失败:', err);
-    }
+    },
+  });
+
+  const handleSave = () => {
+    createMutation.mutate({
+      title: formData.title,
+      description: formData.description || null,
+      category: formData.category,
+      level: formData.level,
+      source: formData.source,
+      location: formData.location || null,
+      reported_by: formData.reported_by || null,
+    });
   };
 
   const handleStartRectification = () => {
@@ -328,35 +329,54 @@ const EhsHazardPage: React.FC = () => {
     setShowRectificationModal(true);
   };
 
-  const handleSaveRectification = async () => {
+  const startRectificationMutation = useMutation({
+    mutationFn: ({
+      id,
+      data,
+    }: {
+      id: string;
+      data: Parameters<typeof ehsApi.startRectification>[1];
+    }) => ehsApi.startRectification(id, data),
+    onSuccess: () => {
+      addNotification({ title: '成功', message: '整改任务创建成功', type: 'success' });
+      invalidateIssues();
+      setShowRectificationModal(false);
+      if (selectedIssue) void loadIssueDetail(selectedIssue.id);
+    },
+    onError: (error: unknown) => {
+      apiLogger.error('创建整改任务失败:', error);
+      addNotification({ title: '错误', message: '创建失败', type: 'error' });
+    },
+  });
+
+  const handleSaveRectification = () => {
     if (!selectedIssue) return;
-    try {
-      await ehsApi.startRectification(selectedIssue.id, {
+    startRectificationMutation.mutate({
+      id: selectedIssue.id,
+      data: {
         description: rectificationFormData.description,
         responsible: rectificationFormData.responsible || null,
         deadline: rectificationFormData.deadline || null,
-      });
-      addNotification({ title: '成功', message: '整改任务创建成功', type: 'success' });
-      setShowRectificationModal(false);
-      await loadIssueDetail(selectedIssue.id);
-      loadIssues();
-    } catch (err: unknown) {
-      addNotification({ title: '错误', message: '创建失败', type: 'error' });
-      apiLogger.error('创建整改任务失败:', err);
-    }
+      },
+    });
   };
 
-  const handleSubmitRectification = async () => {
-    if (!selectedIssue) return;
-    try {
-      await ehsApi.submitRectification(selectedIssue.id);
+  const submitRectificationMutation = useMutation({
+    mutationFn: (id: string) => ehsApi.submitRectification(id),
+    onSuccess: () => {
       addNotification({ title: '成功', message: '整改完成，等待验收', type: 'success' });
-      await loadIssueDetail(selectedIssue.id);
-      loadIssues();
-    } catch (err: unknown) {
+      invalidateIssues();
+      if (selectedIssue) void loadIssueDetail(selectedIssue.id);
+    },
+    onError: (error: unknown) => {
+      apiLogger.error('提交整改失败:', error);
       addNotification({ title: '错误', message: '提交失败', type: 'error' });
-      apiLogger.error('提交整改失败:', err);
-    }
+    },
+  });
+
+  const handleSubmitRectification = () => {
+    if (!selectedIssue) return;
+    submitRectificationMutation.mutate(selectedIssue.id);
   };
 
   const handleStartVerification = () => {
@@ -368,35 +388,54 @@ const EhsHazardPage: React.FC = () => {
     setShowVerificationModal(true);
   };
 
-  const handleSaveVerification = async () => {
+  const verifyMutation = useMutation({
+    mutationFn: ({
+      id,
+      data,
+    }: {
+      id: string;
+      data: Parameters<typeof ehsApi.verifySafetyIssue>[1];
+    }) => ehsApi.verifySafetyIssue(id, data),
+    onSuccess: () => {
+      addNotification({ title: '成功', message: '验收完成', type: 'success' });
+      invalidateIssues();
+      setShowVerificationModal(false);
+      if (selectedIssue) void loadIssueDetail(selectedIssue.id);
+    },
+    onError: (error: unknown) => {
+      apiLogger.error('验收失败:', error);
+      addNotification({ title: '错误', message: '验收失败', type: 'error' });
+    },
+  });
+
+  const handleSaveVerification = () => {
     if (!selectedIssue) return;
-    try {
-      await ehsApi.verifySafetyIssue(selectedIssue.id, {
+    verifyMutation.mutate({
+      id: selectedIssue.id,
+      data: {
         verifier: verificationFormData.verifier || null,
         result: verificationFormData.result,
         remarks: verificationFormData.remarks || null,
-      });
-      addNotification({ title: '成功', message: '验收完成', type: 'success' });
-      setShowVerificationModal(false);
-      await loadIssueDetail(selectedIssue.id);
-      loadIssues();
-    } catch (err: unknown) {
-      addNotification({ title: '错误', message: '验收失败', type: 'error' });
-      apiLogger.error('验收失败:', err);
-    }
+      },
+    });
   };
 
-  const handleCloseIssue = async () => {
-    if (!selectedIssue) return;
-    try {
-      await ehsApi.closeSafetyIssue(selectedIssue.id);
+  const closeIssueMutation = useMutation({
+    mutationFn: (id: string) => ehsApi.closeSafetyIssue(id),
+    onSuccess: () => {
       addNotification({ title: '成功', message: '隐患已闭环', type: 'success' });
+      invalidateIssues();
       setShowDetailModal(false);
-      loadIssues();
-    } catch (err: unknown) {
+    },
+    onError: (error: unknown) => {
+      apiLogger.error('闭环失败:', error);
       addNotification({ title: '错误', message: '闭环失败', type: 'error' });
-      apiLogger.error('闭环失败:', err);
-    }
+    },
+  });
+
+  const handleCloseIssue = () => {
+    if (!selectedIssue) return;
+    closeIssueMutation.mutate(selectedIssue.id);
   };
 
   const stats = {
@@ -619,7 +658,7 @@ const EhsHazardPage: React.FC = () => {
         searchValue={searchTerm}
         onSearch={(value) => setSearchTerm(value)}
         emptyMessage='暂无隐患记录'
-        onRefresh={loadIssues}
+        onRefresh={() => queryClient.invalidateQueries({ queryKey: QUERY_KEYS.EHS.SAFETY_ISSUES })}
       />
 
       <Dialog

@@ -74,19 +74,19 @@ pub struct PaginationParams {
 pub fn create_routes() -> Router<ApiState> {
     Router::<ApiState>::new()
         .route(
-            "/api/core/rs/v1/research-costs",
+            "/api/core/rd/research-costs",
             get(list_costs).post(create_cost),
         )
         .route(
-            "/api/core/rs/v1/research-costs/{id}",
+            "/api/core/rd/research-costs/{id}",
             get(get_cost).put(update_cost).delete(delete_cost),
         )
         .route(
-            "/api/core/rs/v1/research-costs/project/{project_id}",
+            "/api/core/rd/research-costs/project/{project_id}",
             get(list_costs_by_project),
         )
         .route(
-            "/api/core/rs/v1/research-costs/statistics",
+            "/api/core/rd/research-costs/statistics",
             get(get_cost_statistics),
         )
 }

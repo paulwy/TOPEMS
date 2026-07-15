@@ -26,6 +26,7 @@ import {
   IconButton,
   Button,
 } from '@mui/material';
+import type { SelectChangeEvent } from '@mui/material';
 import { ConfirmDialog } from '@topems/shared-components';
 
 interface Receipt {
@@ -122,7 +123,9 @@ const FinanceReceiptPage: React.FC = () => {
       invoice_ids: string[];
       status: string;
     }) => {
-      const response = await financeApi.receivablePayable.createCollection(data as Partial<CollectionRecord>);
+      const response = await financeApi.receivablePayable.createCollection(
+        data as Partial<CollectionRecord>
+      );
       if (!response.success) {
         throw new Error(response.message || '收款登记失败');
       }
@@ -582,7 +585,9 @@ const FinanceReceiptPage: React.FC = () => {
               label='客户 *'
               fullWidth
               value={newReceipt.customer}
-              onChange={(e) => setNewReceipt({ ...newReceipt, customer: e.target.value })}
+              onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
+                setNewReceipt({ ...newReceipt, customer: e.target.value })
+              }
             />
             <Stack
               direction='row'
@@ -593,7 +598,7 @@ const FinanceReceiptPage: React.FC = () => {
                 <Select
                   value={newReceipt.receipt_method}
                   label='收款方式'
-                  onChange={(e) =>
+                  onChange={(e: SelectChangeEvent) =>
                     setNewReceipt({
                       ...newReceipt,
                       receipt_method: e.target.value,
@@ -610,7 +615,7 @@ const FinanceReceiptPage: React.FC = () => {
                 label='收款金额 *'
                 fullWidth
                 value={newReceipt.amount || 0}
-                onChange={(val) =>
+                onChange={(val: number) =>
                   setNewReceipt({
                     ...newReceipt,
                     amount: val,
@@ -622,7 +627,9 @@ const FinanceReceiptPage: React.FC = () => {
               label='银行账户'
               fullWidth
               value={newReceipt.bank_account}
-              onChange={(e) => setNewReceipt({ ...newReceipt, bank_account: e.target.value })}
+              onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
+                setNewReceipt({ ...newReceipt, bank_account: e.target.value })
+              }
               placeholder='请输入银行账户'
             />
           </Stack>

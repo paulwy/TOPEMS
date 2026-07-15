@@ -1,5 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import { QUERY_KEYS } from '@/lib/reactQuery';
 import {
   Package,
   Calendar,
@@ -81,10 +83,7 @@ interface LimsListResponse<T> {
 const LimsSampleDetailPage: React.FC = () => {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
-  const [sample, setSample] = useState<Sample | null>(null);
-  const [tasks, setTasks] = useState<InspectionTask[]>([]);
-  const [records, setRecords] = useState<SampleTestRecord[]>([]);
-  const [loading, setLoading] = useState(true);
+  const queryClient = useQueryClient();
   const [showEditModal, setShowEditModal] = useState(false);
   const [showRecordModal, setShowRecordModal] = useState(false);
   const [formData, setFormData] = useState({
@@ -94,61 +93,105 @@ const LimsSampleDetailPage: React.FC = () => {
   });
   const addNotification = useNotificationStore((state) => state.addNotification);
 
-  useEffect(() => {
-    if (id) {
-      loadSampleDetail(id);
-    }
-  }, [id]);
-
-  const loadSampleDetail = async (sampleId: string) => {
-    try {
-      setLoading(true);
+  const { data: detailData, isLoading: loading } = useQuery({
+    queryKey: QUERY_KEYS.LIMS.SAMPLE(id || ''),
+    queryFn: async () => {
+      if (!id) return null;
       const [sampleRes, tasksRes] = await Promise.all([
-        limsApi.getSample(sampleId),
-        limsApi.listTasksBySample(sampleId),
+        limsApi.getSample(id),
+        limsApi.listTasksBySample(id),
       ]);
 
+      let sample: Sample | null = null;
       if (sampleRes.success && sampleRes.data) {
-        setSample(sampleRes.data as Sample);
-        setFormData({
-          name: (sampleRes.data as Sample).name,
-          description: (sampleRes.data as Sample).description || '',
-          status: (sampleRes.data as Sample).status,
-        });
+        sample = sampleRes.data as Sample;
       }
 
+      let tasks: InspectionTask[] = [];
       if (tasksRes.success && tasksRes.data) {
         const tasksData = tasksRes.data as LimsListResponse<InspectionTask> | InspectionTask[];
-        const tasksArray = Array.isArray(tasksData)
-          ? tasksData
-          : tasksData.items || tasksData.tasks || [];
-        setTasks(tasksArray);
+        tasks = Array.isArray(tasksData) ? tasksData : tasksData.items || tasksData.tasks || [];
+      }
 
-        for (const task of tasksArray) {
-          const recordRes = await limsApi.listRecordsByTask(task.id);
-          if (recordRes.success && recordRes.data) {
-            const recordData = recordRes.data as LimsListResponse<RawRecord> | RawRecord[];
-            const recordArray = Array.isArray(recordData)
-              ? recordData
-              : recordData.records || recordData.items || [];
-            const formattedRecords = recordArray.map((r: RawRecord) => ({
-              id: r.id || '',
-              step_name: r.step_name || r.step_id || '',
-              inspector: r.inspector || '-',
-              result: r.result || '-',
-              conclusion: r.conclusion || '-',
-              tested_at: r.created_at ? new Date(r.created_at).toLocaleDateString('zh-CN') : '-',
-            }));
-            setRecords((prev) => [...prev, ...formattedRecords]);
-          }
+      let records: SampleTestRecord[] = [];
+      for (const task of tasks) {
+        const recordRes = await limsApi.listRecordsByTask(task.id);
+        if (recordRes.success && recordRes.data) {
+          const recordData = recordRes.data as LimsListResponse<RawRecord> | RawRecord[];
+          const recordArray = Array.isArray(recordData)
+            ? recordData
+            : recordData.records || recordData.items || [];
+          const formattedRecords = recordArray.map((r: RawRecord) => ({
+            id: r.id || '',
+            step_name: r.step_name || r.step_id || '',
+            inspector: r.inspector || '-',
+            result: r.result || '-',
+            conclusion: r.conclusion || '-',
+            tested_at: r.created_at ? new Date(r.created_at).toLocaleDateString('zh-CN') : '-',
+          }));
+          records = [...records, ...formattedRecords];
         }
       }
-    } catch (error: unknown) {
-      logger.error('加载样品详情失败:', error);
-    } finally {
-      setLoading(false);
+
+      return { sample, tasks, records };
+    },
+    enabled: !!id,
+  });
+
+  const sample = detailData?.sample || null;
+  const tasks = detailData?.tasks || [];
+  const records = detailData?.records || [];
+
+  useEffect(() => {
+    if (sample) {
+      setFormData({
+        name: sample.name,
+        description: sample.description || '',
+        status: sample.status,
+      });
     }
-  };
+  }, [sample]);
+
+  const updateMutation = useMutation({
+    mutationFn: async (data: { name: string; description: string; status: string }) => {
+      if (!sample) throw new Error('样品不存在');
+      const response = await limsApi.updateSample(sample.id, data);
+      if (!response.success) {
+        throw new Error('更新失败，请稍后重试');
+      }
+      return response;
+    },
+    onSuccess: () => {
+      if (id) {
+        queryClient.invalidateQueries({ queryKey: QUERY_KEYS.LIMS.SAMPLE(id) });
+      }
+      queryClient.invalidateQueries({ queryKey: QUERY_KEYS.LIMS.SAMPLES });
+      setShowEditModal(false);
+    },
+    onError: (error: unknown) => {
+      logger.error('更新样品失败:', error);
+      addNotification({ title: '错误', message: '更新失败，请稍后重试', type: 'error' });
+    },
+  });
+
+  const deleteMutation = useMutation({
+    mutationFn: async () => {
+      if (!sample) throw new Error('样品不存在');
+      const response = await limsApi.deleteSample(sample.id);
+      if (!response.success) {
+        throw new Error('删除失败，请稍后重试');
+      }
+      return response;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: QUERY_KEYS.LIMS.SAMPLES });
+      navigate(LIMS_PATHS.root);
+    },
+    onError: (error: unknown) => {
+      logger.error('删除样品失败:', error);
+      addNotification({ title: '错误', message: '删除失败，请稍后重试', type: 'error' });
+    },
+  });
 
   const getStatusBadge = (status: string) => {
     const statusMap: Record<string, { bg: string; color: string; label: string }> = {
@@ -181,36 +224,13 @@ const LimsSampleDetailPage: React.FC = () => {
       addNotification({ title: '错误', message: '请输入样品名称', type: 'error' });
       return;
     }
-    try {
-      const response = await limsApi.updateSample(sample.id, formData);
-      if (response.success) {
-        addNotification({ title: '成功', message: '样品信息更新成功', type: 'success' });
-        setShowEditModal(false);
-        loadSampleDetail(sample.id);
-      } else {
-        addNotification({ title: '错误', message: '更新失败，请稍后重试', type: 'error' });
-      }
-    } catch (error: unknown) {
-      logger.error('更新样品失败:', error);
-      addNotification({ title: '错误', message: '更新失败，请稍后重试', type: 'error' });
-    }
+    await updateMutation.mutateAsync(formData);
   };
 
   const handleDelete = async () => {
     if (!sample) return;
     if (!confirm(`确定要删除样品 "${sample.name}" 吗？`)) return;
-    try {
-      const response = await limsApi.deleteSample(sample.id);
-      if (response.success) {
-        addNotification({ title: '成功', message: '样品删除成功', type: 'success' });
-        navigate(LIMS_PATHS.root);
-      } else {
-        addNotification({ title: '错误', message: '删除失败，请稍后重试', type: 'error' });
-      }
-    } catch (error: unknown) {
-      logger.error('删除样品失败:', error);
-      addNotification({ title: '错误', message: '删除失败，请稍后重试', type: 'error' });
-    }
+    await deleteMutation.mutateAsync();
   };
 
   const getTestStatistics = () => {
@@ -651,8 +671,9 @@ const LimsSampleDetailPage: React.FC = () => {
             <Button
               variant='contained'
               onClick={handleEdit}
+              disabled={updateMutation.isPending}
             >
-              保存
+              {updateMutation.isPending ? '保存中...' : '保存'}
             </Button>
           </DialogActions>
         </Dialog>

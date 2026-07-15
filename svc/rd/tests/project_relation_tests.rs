@@ -2,6 +2,19 @@
 mod tests {
     use serde_json::json;
 
+    /// 检查 API 服务是否可用
+    async fn ensure_api_available() -> bool {
+        reqwest::Client::builder()
+            .timeout(std::time::Duration::from_secs(2))
+            .build()
+            .unwrap()
+            .get("http://localhost:8000/api/core/iam/auth/login")
+            .send()
+            .await
+            .map(|resp| !resp.status().is_server_error())
+            .unwrap_or(false)
+    }
+
     async fn test_project_phase_crud() {
         let base_url = "http://localhost:8058";
         let client = reqwest::Client::new();
@@ -9,7 +22,7 @@ mod tests {
         println!("Testing Project Phase CRUD...");
 
         let login_response = client
-            .post("http://localhost:8000/api/v1/auth/login")
+            .post("http://localhost:8000/api/core/iam/auth/login")
             .json(&json!({
                 "username": "admin",
                 "password": "admin123"
@@ -26,7 +39,7 @@ mod tests {
             .to_string();
 
         let create_project_response = client
-            .post(format!("{}/api/v1/projects", base_url))
+            .post(format!("{}/api/projects", base_url))
             .bearer_auth(token.clone())
             .json(&json!({
                 "name": "Phase Test Project",
@@ -49,10 +62,7 @@ mod tests {
 
         println!("1. Testing create phase...");
         let create_response = client
-            .post(format!(
-                "{}/api/v1/projects/{}/phases",
-                base_url, project_id
-            ))
+            .post(format!("{}/api/projects/{}/phases", base_url, project_id))
             .bearer_auth(token.clone())
             .json(&json!({
                 "project_id": project_id,
@@ -74,10 +84,7 @@ mod tests {
 
         println!("\n2. Testing get project phases...");
         let list_response = client
-            .get(format!(
-                "{}/api/v1/projects/{}/phases",
-                base_url, project_id
-            ))
+            .get(format!("{}/api/projects/{}/phases", base_url, project_id))
             .bearer_auth(token.clone())
             .send()
             .await
@@ -87,7 +94,7 @@ mod tests {
 
         println!("\n3. Testing update phase...");
         let update_response = client
-            .put(format!("{}/api/v1/phases/{}", base_url, phase_id))
+            .put(format!("{}/api/phases/{}", base_url, phase_id))
             .bearer_auth(token.clone())
             .json(&json!({
                 "name": "Requirements Gathering Phase",
@@ -102,7 +109,7 @@ mod tests {
 
         println!("\n4. Testing delete phase...");
         let delete_response = client
-            .delete(format!("{}/api/v1/phases/{}", base_url, phase_id))
+            .delete(format!("{}/api/phases/{}", base_url, phase_id))
             .bearer_auth(token.clone())
             .send()
             .await
@@ -111,7 +118,7 @@ mod tests {
         assert_eq!(delete_response.status(), 200);
 
         client
-            .delete(format!("{}/api/v1/projects/{}", base_url, project_id))
+            .delete(format!("{}/api/projects/{}", base_url, project_id))
             .bearer_auth(token)
             .send()
             .await
@@ -128,7 +135,7 @@ mod tests {
         println!("\nTesting Project Milestone CRUD...");
 
         let login_response = client
-            .post("http://localhost:8000/api/v1/auth/login")
+            .post("http://localhost:8000/api/core/iam/auth/login")
             .json(&json!({
                 "username": "admin",
                 "password": "admin123"
@@ -145,7 +152,7 @@ mod tests {
             .to_string();
 
         let create_project_response = client
-            .post(format!("{}/api/v1/projects", base_url))
+            .post(format!("{}/api/projects", base_url))
             .bearer_auth(token.clone())
             .json(&json!({
                 "name": "Milestone Test Project",
@@ -169,7 +176,7 @@ mod tests {
         println!("1. Testing create milestone...");
         let create_response = client
             .post(format!(
-                "{}/api/v1/projects/{}/milestones",
+                "{}/api/projects/{}/milestones",
                 base_url, project_id
             ))
             .bearer_auth(token.clone())
@@ -192,7 +199,7 @@ mod tests {
         println!("\n2. Testing get project milestones...");
         let list_response = client
             .get(format!(
-                "{}/api/v1/projects/{}/milestones",
+                "{}/api/projects/{}/milestones",
                 base_url, project_id
             ))
             .bearer_auth(token.clone())
@@ -204,7 +211,7 @@ mod tests {
 
         println!("\n3. Testing update milestone...");
         let update_response = client
-            .put(format!("{}/api/v1/milestones/{}", base_url, milestone_id))
+            .put(format!("{}/api/milestones/{}", base_url, milestone_id))
             .bearer_auth(token.clone())
             .json(&json!({
                 "status": "ACHIEVED",
@@ -218,7 +225,7 @@ mod tests {
 
         println!("\n4. Testing delete milestone...");
         let delete_response = client
-            .delete(format!("{}/api/v1/milestones/{}", base_url, milestone_id))
+            .delete(format!("{}/api/milestones/{}", base_url, milestone_id))
             .bearer_auth(token.clone())
             .send()
             .await
@@ -227,7 +234,7 @@ mod tests {
         assert_eq!(delete_response.status(), 200);
 
         client
-            .delete(format!("{}/api/v1/projects/{}", base_url, project_id))
+            .delete(format!("{}/api/projects/{}", base_url, project_id))
             .bearer_auth(token)
             .send()
             .await
@@ -244,7 +251,7 @@ mod tests {
         println!("\nTesting Project Member CRUD...");
 
         let login_response = client
-            .post("http://localhost:8000/api/v1/auth/login")
+            .post("http://localhost:8000/api/core/iam/auth/login")
             .json(&json!({
                 "username": "admin",
                 "password": "admin123"
@@ -261,7 +268,7 @@ mod tests {
             .to_string();
 
         let create_project_response = client
-            .post(format!("{}/api/v1/projects", base_url))
+            .post(format!("{}/api/projects", base_url))
             .bearer_auth(token.clone())
             .json(&json!({
                 "name": "Member Test Project",
@@ -284,10 +291,7 @@ mod tests {
 
         println!("1. Testing create member...");
         let create_response = client
-            .post(format!(
-                "{}/api/v1/projects/{}/members",
-                base_url, project_id
-            ))
+            .post(format!("{}/api/projects/{}/members", base_url, project_id))
             .bearer_auth(token.clone())
             .json(&json!({
                 "project_id": project_id,
@@ -309,10 +313,7 @@ mod tests {
 
         println!("\n2. Testing get project members...");
         let list_response = client
-            .get(format!(
-                "{}/api/v1/projects/{}/members",
-                base_url, project_id
-            ))
+            .get(format!("{}/api/projects/{}/members", base_url, project_id))
             .bearer_auth(token.clone())
             .send()
             .await
@@ -322,7 +323,7 @@ mod tests {
 
         println!("\n3. Testing update member...");
         let update_response = client
-            .put(format!("{}/api/v1/project-members/{}", base_url, member_id))
+            .put(format!("{}/api/project-members/{}", base_url, member_id))
             .bearer_auth(token.clone())
             .json(&json!({
                 "role": "TECH_LEAD",
@@ -336,7 +337,7 @@ mod tests {
 
         println!("\n4. Testing delete member...");
         let delete_response = client
-            .delete(format!("{}/api/v1/project-members/{}", base_url, member_id))
+            .delete(format!("{}/api/project-members/{}", base_url, member_id))
             .bearer_auth(token.clone())
             .send()
             .await
@@ -345,7 +346,7 @@ mod tests {
         assert_eq!(delete_response.status(), 200);
 
         client
-            .delete(format!("{}/api/v1/projects/{}", base_url, project_id))
+            .delete(format!("{}/api/projects/{}", base_url, project_id))
             .bearer_auth(token)
             .send()
             .await
@@ -355,9 +356,11 @@ mod tests {
     }
 
     #[tokio::test]
-    #[ignore]
-    #[ignore = "集成测试需要运行 rs:8020 和 iam:8000 服务"]
     async fn test_project_relations_integration() {
+        if !ensure_api_available().await {
+            eprintln!("⏭ 跳过: API服务未运行 (localhost:8000)");
+            return;
+        }
         test_project_phase_crud().await;
         // 里程碑和成员 API 尚未实现，暂时跳过
         // test_project_milestone_crud().await;

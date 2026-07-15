@@ -22,6 +22,8 @@ import {
 } from '@mui/material';
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import { QUERY_KEYS } from '@/lib/reactQuery';
 import { Plus, Trash2, Save, X, Calculator, AlertCircle, FileText, Info } from 'lucide-react';
 import { FormPageTemplate } from '@/components/templates';
 import { PageContainer } from '@/components/common';
@@ -52,9 +54,9 @@ interface FormSection {
 const VoucherCreatePage: React.FC = () => {
   const navigate = useNavigate();
   const addNotification = useNotificationStore((state) => state.addNotification);
+  const queryClient = useQueryClient();
 
-  const [subjects, setSubjects] = useState<AccountingSubject[]>([]);
-  const [loading, setLoading] = useState(false);
+  const [loading] = useState(false);
   const [submitting, setSubmitting] = useState(false);
 
   const [formData, setFormData] = useState({
@@ -67,29 +69,22 @@ const VoucherCreatePage: React.FC = () => {
 
   const [voucherItems, setVoucherItems] = useState<VoucherItemRequest[]>([]);
 
-  useEffect(() => {
-    loadSubjects();
-    initializeForm();
-  }, []);
-
-  const loadSubjects = async () => {
-    try {
-      setLoading(true);
+  const subjectsQuery = useQuery<AccountingSubject[]>({
+    queryKey: QUERY_KEYS.FINANCE.ACCOUNTS,
+    queryFn: async () => {
       const result = await accountingSubjectApi.list();
       if (result.success && result.data) {
-        setSubjects(result.data.items || []);
+        return result.data.items || [];
       }
-    } catch (err: unknown) {
-      apiLogger.error('加载会计科目失败:', err);
-      addNotification({
-        title: '错误',
-        message: '加载会计科目失败',
-        type: 'error',
-      });
-    } finally {
-      setLoading(false);
-    }
-  };
+      return [];
+    },
+  });
+
+  const subjects = subjectsQuery.data || [];
+
+  useEffect(() => {
+    initializeForm();
+  }, []);
 
   const initializeForm = () => {
     const today = new Date();
@@ -204,41 +199,53 @@ const VoucherCreatePage: React.FC = () => {
     return true;
   };
 
-  const handleSubmit = async () => {
-    if (!validateForm()) return;
+  const createMutation = useMutation({
+    mutationFn: async (data: {
+      voucher_number: string;
+      voucher_date: string;
+      period: string;
+      attachment_count: number;
+      summary: string;
+      items: VoucherItemRequest[];
+    }) => {
+      const result = await voucherApi.create(data);
+      if (!result.success) {
+        throw new Error(result.message || '创建失败');
+      }
+      return result;
+    },
+    onSuccess: () => {
+      addNotification({
+        title: '成功',
+        message: '凭证创建成功',
+        type: 'success',
+      });
+      queryClient.invalidateQueries({ queryKey: QUERY_KEYS.FINANCE.VOUCHERS });
+      navigate(FINANCE_PATHS.vouchers);
+    },
+    onError: (err: Error) => {
+      addNotification({
+        title: '错误',
+        message: err.message || '创建失败',
+        type: 'error',
+      });
+    },
+  });
 
+  const handleSubmit = () => {
+    if (!validateForm()) return;
     setSubmitting(true);
-    try {
-      const result = await voucherApi.create({
+    createMutation.mutate(
+      {
         ...formData,
         items: voucherItems.filter(
           (item) => item.subject_code && (item.debit_amount > 0 || item.credit_amount > 0)
         ),
-      });
-
-      if (result.success) {
-        addNotification({
-          title: '成功',
-          message: '凭证创建成功',
-          type: 'success',
-        });
-        navigate(FINANCE_PATHS.vouchers);
-      } else {
-        addNotification({
-          title: '失败',
-          message: result.message || '创建失败',
-          type: 'error',
-        });
+      },
+      {
+        onSettled: () => setSubmitting(false),
       }
-    } catch (err: unknown) {
-      addNotification({
-        title: '错误',
-        message: (err as { message?: string }).message || '创建失败',
-        type: 'error',
-      });
-    } finally {
-      setSubmitting(false);
-    }
+    );
   };
 
   const handleCancel = () => {

@@ -31,6 +31,6 @@ export const useThemeStore = create<ThemeState>()(
 export const useTheme = () => {
   const theme = useThemeStore((state) => state.theme);
   const { setTheme, toggleTheme } = useThemeStore();
-  
+
   return { theme, setTheme, toggleTheme };
 };

@@ -1,7 +1,7 @@
-import React, { useEffect, useState, useMemo, useCallback } from 'react';
+import React, { useMemo, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { FolderKanban, CheckSquare, Trophy, AlertTriangle, Plus } from 'lucide-react';
-import { apiLogger } from '@/utils/logger';
+import { useQuery } from '@tanstack/react-query';
 import { useNotificationStore } from '@/store';
 import BarChartComponent from '../../components/charts/BarChart';
 import LineChartComponent from '../../components/charts/LineChart';
@@ -10,183 +10,125 @@ import { DashboardTemplate, type StatCard, type ChartCard } from '@/components/t
 import { PageContainer } from '@/components/common';
 import { pmApi, type Project } from '@/api/pm';
 import { PM_PATHS } from '@/modules/pm/config';
+import { QUERY_KEYS } from '@/lib/reactQuery';
 
 export const DashboardPage: React.FC = () => {
   const navigate = useNavigate();
-  const [loading, setLoading] = useState(true);
-  const [statsData, setStatsData] = useState({
-    activeProjects: 0,
-    pendingTasks: 0,
-    completedTasks: 0,
-    overdueRisks: 0,
-    totalProjects: 0,
-    completedProjects: 0,
-    totalBudget: 0,
-    spentBudget: 0,
-  });
-  const [chartData, setChartData] = useState({
-    projectProgress: [] as { name: string; value: number }[],
-    taskTrend: [] as { name: string; value: number }[],
-    projectStatus: [] as { name: string; value: number }[],
+
+  const statisticsQuery = useQuery({
+    queryKey: QUERY_KEYS.PM.STATISTICS,
+    queryFn: async () => {
+      const response = await pmApi.getStatistics();
+      return response.data;
+    },
   });
 
-  const loadStats = useCallback(async () => {
-    try {
-      const [statRes, projectRes] = await Promise.allSettled([
-        pmApi.getStatistics(),
-        pmApi.projects.list(),
-      ]);
+  const projectsQuery = useQuery({
+    queryKey: QUERY_KEYS.PM.PROJECTS,
+    queryFn: async () => {
+      const response = await pmApi.projects.list();
+      return (response.data?.items ?? []) as Project[];
+    },
+  });
 
-      let activeProjects = 0;
-      let totalProjects = 0;
-      let completedProjects = 0;
-      let totalBudget = 0;
-      let spentBudget = 0;
-      let overdueRisks = 0;
+  const loading = statisticsQuery.isLoading || projectsQuery.isLoading;
 
-      if (statRes.status === 'fulfilled' && statRes.value.success && statRes.value.data) {
-        const data = statRes.value.data as any;
-        activeProjects = data.active_projects ?? 0;
-        totalProjects = data.total_projects ?? 0;
-        completedProjects = data.completed_projects ?? 0;
-        totalBudget = data.total_budget ?? 0;
-        spentBudget = data.spent_budget ?? 0;
-        overdueRisks = data.high_risk_projects ?? 0;
-      }
+  const statsData = useMemo(() => {
+    const data = statisticsQuery.data as any;
+    const projects = projectsQuery.data ?? [];
 
-      const projects: Project[] =
-        projectRes.status === 'fulfilled' &&
-        projectRes.value.success &&
-        projectRes.value.data?.items
-          ? (projectRes.value.data.items as Project[])
-          : [];
+    const activeProjects = data?.active_projects ?? 0;
+    const totalProjects = data?.total_projects ?? 0;
+    const completedProjects = data?.completed_projects ?? 0;
+    const totalBudget = data?.total_budget ?? 0;
+    const spentBudget = data?.spent_budget ?? 0;
+    const overdueRisks = data?.high_risk_projects ?? 0;
 
-      const pendingTasks = projects.reduce((sum, p) => {
-        const total = (p.progress || 0) / 100;
-        return sum + Math.round(total * 10);
-      }, 0);
+    const pendingTasks = projects.reduce((sum, p) => {
+      const total = (p.progress || 0) / 100;
+      return sum + Math.round(total * 10);
+    }, 0);
 
-      const completedTasks = projects.reduce((sum, p) => {
-        const done = (p.progress || 0) / 100;
-        return sum + Math.round(done * 10);
-      }, 0);
+    const completedTasks = projects.reduce((sum, p) => {
+      const done = (p.progress || 0) / 100;
+      return sum + Math.round(done * 10);
+    }, 0);
 
-      setStatsData({
-        activeProjects,
-        pendingTasks,
-        completedTasks,
-        overdueRisks,
-        totalProjects,
-        completedProjects,
-        totalBudget,
-        spentBudget,
-      });
-    } catch (err: unknown) {
-      apiLogger.error('加载 PM 统计失败:', err);
-    }
-  }, []);
+    return {
+      activeProjects,
+      pendingTasks,
+      completedTasks,
+      overdueRisks,
+      totalProjects,
+      completedProjects,
+      totalBudget,
+      spentBudget,
+    };
+  }, [statisticsQuery.data, projectsQuery.data]);
 
-  const loadChartData = useCallback(async () => {
-    try {
-      const projectRes = await pmApi.projects.list();
-      const projects: Project[] =
-        projectRes.success && projectRes.data?.items ? (projectRes.data.items as Project[]) : [];
+  const chartData = useMemo(() => {
+    const projects = projectsQuery.data ?? [];
 
-      const projectProgress = projects.slice(0, 5).map((p) => ({
-        name: p.name.length > 8 ? `${p.name.slice(0, 8)}...` : p.name,
-        value: p.progress || 0,
-      }));
+    const projectProgress = projects.slice(0, 5).map((p) => ({
+      name: p.name.length > 8 ? `${p.name.slice(0, 8)}...` : p.name,
+      value: p.progress || 0,
+    }));
 
-      const statusCounts: Record<string, number> = {};
-      projects.forEach((p) => {
-        statusCounts[p.status] = (statusCounts[p.status] || 0) + 1;
-      });
+    const statusCounts: Record<string, number> = {};
+    projects.forEach((p) => {
+      statusCounts[p.status] = (statusCounts[p.status] || 0) + 1;
+    });
 
-      const statusMap: Record<string, string> = {
-        draft: '草稿',
-        pending: '待审批',
-        active: '开发中',
-        in_progress: '开发中',
-        testing: '测试中',
-        review: '待评审',
-        completed: '已完成',
-        cancelled: '已取消',
-      };
-
-      const projectStatus = Object.entries(statusCounts).map(([status, count]) => ({
-        name: statusMap[status] || status,
-        value: count,
-      }));
-
-      const weeks = ['W1', 'W2', 'W3', 'W4', 'W5', 'W6'];
-      const taskTrend = weeks.map((name, i) => ({
-        name,
-        value: Math.floor(Math.random() * 6) + 4 + i,
-      }));
-
-      setChartData({
-        projectProgress:
-          projectProgress.length > 0
-            ? projectProgress
-            : [
-                { name: '项目A', value: 85 },
-                { name: '项目B', value: 60 },
-                { name: '项目C', value: 90 },
-                { name: '项目D', value: 45 },
-                { name: '项目E', value: 70 },
-              ],
-        taskTrend,
-        projectStatus:
-          projectStatus.length > 0
-            ? projectStatus
-            : [
-                { name: '开发中', value: 40 },
-                { name: '测试中', value: 25 },
-                { name: '待评审', value: 20 },
-                { name: '已完成', value: 15 },
-              ],
-      });
-    } catch (err: unknown) {
-      apiLogger.error('加载 PM 图表数据失败:', err);
-      setChartData({
-        projectProgress: [
-          { name: '项目A', value: 85 },
-          { name: '项目B', value: 60 },
-          { name: '项目C', value: 90 },
-          { name: '项目D', value: 45 },
-          { name: '项目E', value: 70 },
-        ],
-        taskTrend: [
-          { name: 'W1', value: 5 },
-          { name: 'W2', value: 8 },
-          { name: 'W3', value: 6 },
-          { name: 'W4', value: 10 },
-          { name: 'W5', value: 7 },
-          { name: 'W6', value: 9 },
-        ],
-        projectStatus: [
-          { name: '开发中', value: 40 },
-          { name: '测试中', value: 25 },
-          { name: '待评审', value: 20 },
-          { name: '已完成', value: 15 },
-        ],
-      });
-    }
-  }, []);
-
-  useEffect(() => {
-    const init = async () => {
-      try {
-        await Promise.all([loadStats(), loadChartData()]);
-      } catch (err) {
-        apiLogger.error('PM Dashboard 初始化失败:', err);
-      } finally {
-        setLoading(false);
-      }
+    const statusMap: Record<string, string> = {
+      draft: '草稿',
+      pending: '待审批',
+      active: '开发中',
+      in_progress: '开发中',
+      testing: '测试中',
+      review: '待评审',
+      completed: '已完成',
+      cancelled: '已取消',
     };
 
-    init();
-  }, [loadStats, loadChartData]);
+    const projectStatus = Object.entries(statusCounts).map(([status, count]) => ({
+      name: statusMap[status] || status,
+      value: count,
+    }));
+
+    const weeks = ['W1', 'W2', 'W3', 'W4', 'W5', 'W6'];
+    const taskTrend = weeks.map((name, i) => ({
+      name,
+      value: Math.floor(Math.random() * 6) + 4 + i,
+    }));
+
+    return {
+      projectProgress:
+        projectProgress.length > 0
+          ? projectProgress
+          : [
+              { name: '项目A', value: 85 },
+              { name: '项目B', value: 60 },
+              { name: '项目C', value: 90 },
+              { name: '项目D', value: 45 },
+              { name: '项目E', value: 70 },
+            ],
+      taskTrend,
+      projectStatus:
+        projectStatus.length > 0
+          ? projectStatus
+          : [
+              { name: '开发中', value: 40 },
+              { name: '测试中', value: 25 },
+              { name: '待评审', value: 20 },
+              { name: '已完成', value: 15 },
+            ],
+    };
+  }, [projectsQuery.data]);
+
+  const loadStats = useCallback(() => {
+    statisticsQuery.refetch();
+    projectsQuery.refetch();
+  }, [statisticsQuery, projectsQuery]);
 
   const stats: StatCard[] = useMemo(
     () => [
@@ -303,10 +245,7 @@ export const DashboardPage: React.FC = () => {
         quickActions={quickActions}
         quickActionsTitle='快捷操作'
         loading={loading}
-        onRefresh={() => {
-          setLoading(true);
-          Promise.all([loadStats(), loadChartData()]).finally(() => setLoading(false));
-        }}
+        onRefresh={loadStats}
       />
     </PageContainer>
   );

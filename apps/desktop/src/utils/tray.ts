@@ -13,6 +13,22 @@ export async function quitApp() {
   await emit('tray-action', 'quit');
 }
 
+export async function restartApp() {
+  try {
+    await invoke('restart_app');
+  } catch (error) {
+    console.error('Failed to restart app:', error);
+  }
+}
+
+export async function showLogs() {
+  try {
+    await invoke('show_logs_window');
+  } catch (error) {
+    console.error('Failed to show logs:', error);
+  }
+}
+
 export interface TrayStatusOptions {
   status: string;
   badgeCount?: number;

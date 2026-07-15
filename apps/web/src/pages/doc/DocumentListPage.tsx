@@ -315,7 +315,15 @@ export const DocumentListPage: React.FC = () => {
     },
   ];
 
-  const columns: ColumnDef<{ id: string; name: string; type: string; size: string; folder: string; category: string; updatedAt: string }>[] = useMemo(
+  const columns: ColumnDef<{
+    id: string;
+    name: string;
+    type: string;
+    size: string;
+    folder: string;
+    category: string;
+    updatedAt: string;
+  }>[] = useMemo(
     () => [
       {
         id: 'name',

@@ -107,6 +107,7 @@ vi.mock('@/store', () => ({
   useSetSidebarCollapsed: vi.fn(),
 }));
 
+describe('SrmOrderPage', () => {
   it('should call listPurchaseOrders API on mount', async () => {
     renderWithProviders(<SrmOrderPage />);
     expect(srmApi.listPurchaseOrders).toHaveBeenCalled();

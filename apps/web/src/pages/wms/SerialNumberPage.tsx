@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState, useCallback } from 'react';
 import {
   TextField,
   Dialog,
@@ -15,6 +15,7 @@ import {
   Tabs,
   Tab,
 } from '@mui/material';
+import type { SelectChangeEvent } from '@mui/material';
 import type { SerialNumber, CreateSerialNumberRequest, UpdateSerialNumberRequest } from '@/api/wms';
 import { wmsApi } from '@/api/wms';
 import { useNotificationStore } from '@/store';
@@ -24,6 +25,8 @@ import { ListPageTemplate, type ColumnDef } from '@/components/templates';
 import { designTokens } from '@/theme/tokens';
 import { PageContainer } from '@/components/common';
 import { ConfirmDialog, FormField } from '@topems/shared-components';
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import { QUERY_KEYS } from '@/lib/reactQuery';
 
 const ct = designTokens.colors;
 
@@ -49,11 +52,8 @@ const qualityStatusConfig: Record<
 };
 
 const SerialNumberPage: React.FC = () => {
-  const [serials, setSerials] = useState<SerialNumber[]>([]);
-  const [loading, setLoading] = useState(true);
   const [currentPage, setCurrentPage] = useState(1);
   const [pageSize, setPageSize] = useState(10);
-  const [total, setTotal] = useState(0);
   const [showDialog, setShowDialog] = useState(false);
   const [isEditing, setIsEditing] = useState(false);
   const [selectedSerial, setSelectedSerial] = useState<SerialNumber | null>(null);
@@ -86,75 +86,99 @@ const SerialNumberPage: React.FC = () => {
   });
 
   const { addNotification } = useNotificationStore();
+  const queryClient = useQueryClient();
 
-  useEffect(() => {
-    loadSerials();
-  }, [currentPage, pageSize]);
-
-  const loadSerials = async () => {
-    try {
-      setLoading(true);
+  const {
+    data: serialsResponse,
+    isLoading: loading,
+    refetch,
+  } = useQuery({
+    queryKey: [QUERY_KEYS.WMS.SERIAL_NUMBERS, currentPage, pageSize, searchValue],
+    queryFn: async () => {
       const response = await wmsApi.serialNumbers.list({
         page: currentPage,
         pagesize: pageSize,
         serial_no: searchValue || undefined,
       });
-      if (response.success && response.data) {
-        setSerials(response.data.items || []);
-        setTotal(response.data.total || 0);
+      if (!response.success) {
+        throw new Error('Failed to fetch serial numbers');
       }
-    } catch (error: unknown) {
-      apiLogger.error('加载序列号失败:', error);
-      addNotification({
-        type: 'error',
-        title: '加载失败',
-        message: '无法加载序列号数据',
-      });
-    } finally {
-      setLoading(false);
-    }
-  };
+      return response.data;
+    },
+  });
+
+  const serials = serialsResponse?.items || [];
+  const total = serialsResponse?.total || 0;
+
+  const createMutation = useMutation({
+    mutationFn: async (data: CreateSerialNumberRequest) => {
+      const response = await wmsApi.serialNumbers.create(data);
+      if (!response.success) {
+        throw new Error('Failed to create serial number');
+      }
+      return response;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: [QUERY_KEYS.WMS.SERIAL_NUMBERS] });
+      setShowDialog(false);
+      resetForm();
+    },
+    onError: (error) => {
+      apiLogger.error('创建序列号失败:', error);
+    },
+  });
+
+  const updateMutation = useMutation({
+    mutationFn: async ({ id, data }: { id: string; data: UpdateSerialNumberRequest }) => {
+      const response = await wmsApi.serialNumbers.update(id, data);
+      if (!response.success) {
+        throw new Error('Failed to update serial number');
+      }
+      return response;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: [QUERY_KEYS.WMS.SERIAL_NUMBERS] });
+      setShowDialog(false);
+      resetForm();
+    },
+    onError: (error) => {
+      apiLogger.error('更新序列号失败:', error);
+    },
+  });
+
+  const deleteMutation = useMutation({
+    mutationFn: async (id: string) => {
+      const response = await wmsApi.serialNumbers.delete(id);
+      if (!response.success) {
+        throw new Error('Failed to delete serial number');
+      }
+      return response;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: [QUERY_KEYS.WMS.SERIAL_NUMBERS] });
+    },
+    onError: (error) => {
+      apiLogger.error('删除序列号失败:', error);
+    },
+  });
 
   const handleSearch = useCallback(() => {
     setCurrentPage(1);
-    loadSerials();
-  }, [searchValue]);
+  }, []);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    try {
-      if (isEditing && selectedSerial) {
-        const updateData: UpdateSerialNumberRequest = {
-          location_id: formData.location_id,
-          quality_status: formData.quality_status,
-          warranty_start_date: formData.warranty_start_date,
-          warranty_end_date: formData.warranty_end_date,
-          remark: formData.remark,
-        };
-        await wmsApi.serialNumbers.update(selectedSerial.id, updateData);
-        addNotification({
-          type: 'success',
-          title: '更新成功',
-          message: '序列号已更新',
-        });
-      } else {
-        await wmsApi.serialNumbers.create(formData);
-        addNotification({
-          type: 'success',
-          title: '创建成功',
-          message: '新序列号已创建',
-        });
-      }
-      setShowDialog(false);
-      resetForm();
-      loadSerials();
-    } catch (error: unknown) {
-      apiLogger.error('操作失败:', error);
-      addNotification({
-        type: 'error',
-        title: '操作失败',
-        message: isEditing ? '更新序列号失败' : '创建序列号失败',
-      });
+    if (isEditing && selectedSerial) {
+      const updateData: UpdateSerialNumberRequest = {
+        location_id: formData.location_id,
+        quality_status: formData.quality_status,
+        warranty_start_date: formData.warranty_start_date,
+        warranty_end_date: formData.warranty_end_date,
+        remark: formData.remark,
+      };
+      await updateMutation.mutateAsync({ id: selectedSerial.id, data: updateData });
+    } else {
+      await createMutation.mutateAsync(formData);
     }
   };
 
@@ -187,22 +211,7 @@ const SerialNumberPage: React.FC = () => {
       title: '确认删除',
       message: `确定要删除序列号 "${serial.serial_no}" 吗？`,
       onConfirm: async () => {
-        try {
-          await wmsApi.serialNumbers.delete(serial.id);
-          addNotification({
-            type: 'success',
-            title: '删除成功',
-            message: '序列号已删除',
-          });
-          loadSerials();
-        } catch (error: unknown) {
-          apiLogger.error('删除失败:', error);
-          addNotification({
-            type: 'error',
-            title: '删除失败',
-            message: '删除序列号失败',
-          });
-        }
+        await deleteMutation.mutateAsync(serial.id);
       },
       danger: true,
     });
@@ -428,16 +437,19 @@ const SerialNumberPage: React.FC = () => {
           },
         ]}
         rowActions={rowActions}
-        onRefresh={loadSerials}
+        onRefresh={refetch}
         emptyMessage='暂无序列号数据'
         headerContent={
           <Box sx={{ display: 'flex', gap: 1, alignItems: 'center' }}>
-            <FormField name='searchValue'
+            <FormField
+              name='searchValue'
               size='small'
               placeholder='搜索序列号...'
               value={searchValue}
-              onChange={(e) => setSearchValue(e.target.value)}
-              onKeyDown={(e) => e.key === 'Enter' && handleSearch()}
+              onChange={(e: React.ChangeEvent<HTMLInputElement>) => setSearchValue(e.target.value)}
+              onKeyDown={(e: React.KeyboardEvent<HTMLInputElement>) =>
+                e.key === 'Enter' && handleSearch()
+              }
               sx={{ minWidth: 200 }}
             />
             <Button
@@ -487,78 +499,111 @@ const SerialNumberPage: React.FC = () => {
                 }}
               >
                 <FormField
-                  name='serial_no' label='序列号 *'
+                  name='serial_no'
+                  label='序列号 *'
                   value={formData.serial_no}
-                  onChange={(e) => setFormData({ ...formData, serial_no: e.target.value })}
+                  onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
+                    setFormData({ ...formData, serial_no: e.target.value })
+                  }
                   size='small'
                   required
                   disabled={isEditing}
                 />
                 <FormField
-                  name='sku' label='SKU编码 *'
+                  name='sku'
+                  label='SKU编码 *'
                   value={formData.sku}
-                  onChange={(e) => setFormData({ ...formData, sku: e.target.value })}
+                  onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
+                    setFormData({ ...formData, sku: e.target.value })
+                  }
                   size='small'
                   required
                   disabled={isEditing}
                 />
                 <FormField
-                  name='material_name' label='物料名称 *'
+                  name='material_name'
+                  label='物料名称 *'
                   value={formData.material_name}
-                  onChange={(e) => setFormData({ ...formData, material_name: e.target.value })}
+                  onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
+                    setFormData({ ...formData, material_name: e.target.value })
+                  }
                   size='small'
                   required
                   disabled={isEditing}
                 />
                 <FormField
-                  name='specification' label='规格型号'
+                  name='specification'
+                  label='规格型号'
                   value={formData.specification}
-                  onChange={(e) => setFormData({ ...formData, specification: e.target.value })}
+                  onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
+                    setFormData({ ...formData, specification: e.target.value })
+                  }
                   size='small'
                 />
                 <FormField
-                  name='unit' label='单位'
+                  name='unit'
+                  label='单位'
                   value={formData.unit}
-                  onChange={(e) => setFormData({ ...formData, unit: e.target.value })}
+                  onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
+                    setFormData({ ...formData, unit: e.target.value })
+                  }
                   size='small'
                 />
                 <FormField
-                  name='batch_no' label='批次号'
+                  name='batch_no'
+                  label='批次号'
                   value={formData.batch_no}
-                  onChange={(e) => setFormData({ ...formData, batch_no: e.target.value })}
+                  onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
+                    setFormData({ ...formData, batch_no: e.target.value })
+                  }
                   size='small'
                 />
                 <FormField
-                  name='warehouse_id' label='仓库ID'
+                  name='warehouse_id'
+                  label='仓库ID'
                   value={formData.warehouse_id}
-                  onChange={(e) => setFormData({ ...formData, warehouse_id: e.target.value })}
+                  onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
+                    setFormData({ ...formData, warehouse_id: e.target.value })
+                  }
                   size='small'
                 />
                 <FormField
-                  name='location_id' label='库位ID'
+                  name='location_id'
+                  label='库位ID'
                   value={formData.location_id}
-                  onChange={(e) => setFormData({ ...formData, location_id: e.target.value })}
+                  onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
+                    setFormData({ ...formData, location_id: e.target.value })
+                  }
                   size='small'
                 />
                 <FormField
-                  name='supplier_id' label='供应商ID'
+                  name='supplier_id'
+                  label='供应商ID'
                   value={formData.supplier_id}
-                  onChange={(e) => setFormData({ ...formData, supplier_id: e.target.value })}
+                  onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
+                    setFormData({ ...formData, supplier_id: e.target.value })
+                  }
                   size='small'
                 />
                 <FormField
-                  name='production_date' label='生产日期'
+                  name='production_date'
+                  label='生产日期'
                   type='date'
                   value={formData.production_date}
-                  onChange={(e) => setFormData({ ...formData, production_date: e.target.value })}
+                  onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
+                    setFormData({ ...formData, production_date: e.target.value })
+                  }
                   size='small'
                   slotProps={{ inputLabel: { shrink: true } } as any}
                 />
                 <FormField
-                  name='expiry_date' label='有效期至'
+                  name='expiry_date'
+                  label='有效期至'
                   type='date'
                   value={formData.expiry_date}
-                  onChange={(e) => setFormData({ ...formData, expiry_date: e.target.value })}
+                  onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
+                    setFormData({ ...formData, expiry_date: e.target.value })
+                  }
                   size='small'
                   slotProps={{ inputLabel: { shrink: true } } as any}
                 />
@@ -567,7 +612,9 @@ const SerialNumberPage: React.FC = () => {
                   <Select
                     value={formData.quality_status}
                     label='质检状态'
-                    onChange={(e) => setFormData({ ...formData, quality_status: e.target.value })}
+                    onChange={(e: SelectChangeEvent) =>
+                      setFormData({ ...formData, quality_status: e.target.value })
+                    }
                   >
                     <MenuItem value='pending'>待检</MenuItem>
                     <MenuItem value='inspecting'>检验中</MenuItem>
@@ -587,38 +634,48 @@ const SerialNumberPage: React.FC = () => {
                 }}
               >
                 <FormField
-                  name='warranty_start_date' label='保修开始日期'
+                  name='warranty_start_date'
+                  label='保修开始日期'
                   type='date'
                   value={formData.warranty_start_date}
-                  onChange={(e) =>
+                  onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
                     setFormData({ ...formData, warranty_start_date: e.target.value })
                   }
                   size='small'
                   slotProps={{ inputLabel: { shrink: true } } as any}
                 />
                 <FormField
-                  name='warranty_end_date' label='保修结束日期'
+                  name='warranty_end_date'
+                  label='保修结束日期'
                   type='date'
                   value={formData.warranty_end_date}
-                  onChange={(e) => setFormData({ ...formData, warranty_end_date: e.target.value })}
+                  onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
+                    setFormData({ ...formData, warranty_end_date: e.target.value })
+                  }
                   size='small'
                   slotProps={{ inputLabel: { shrink: true } } as any}
                 />
                 <FormField
-                  name='unit_price' label='单价'
+                  name='unit_price'
+                  label='单价'
                   type='number'
                   value={formData.unit_price}
-                  onChange={(e) => setFormData({ ...formData, unit_price: Number(e.target.value) })}
+                  onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
+                    setFormData({ ...formData, unit_price: Number(e.target.value) })
+                  }
                   size='small'
                 />
               </Box>
             )}
             <FormField
-              name='remark' label='备注'
+              name='remark'
+              label='备注'
               multiline
               rows={2}
               value={formData.remark}
-              onChange={(e) => setFormData({ ...formData, remark: e.target.value })}
+              onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
+                setFormData({ ...formData, remark: e.target.value })
+              }
               fullWidth
               size='small'
               sx={{ mt: 2 }}

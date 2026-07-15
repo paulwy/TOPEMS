@@ -178,7 +178,7 @@ vi.mock('@/store', () => ({
 }));
 
 describe('AI Module Pages', () => {
-describe('AiChatPage', () => {
+  describe('AiChatPage', () => {
     it('should render without crashing', () => {
       Element.prototype.scrollIntoView = vi.fn();
       const { container } = render(
@@ -198,7 +198,7 @@ describe('AiChatPage', () => {
     });
   });
 
-describe('AiCodeAssistantPage', () => {
+  describe('AiCodeAssistantPage', () => {
     it('should render without crashing', () => {
       const { container } = render(
         <BrowserRouter>
@@ -217,7 +217,7 @@ describe('AiCodeAssistantPage', () => {
     });
   });
 
-describe('AiDashboardPage', () => {
+  describe('AiDashboardPage', () => {
     it('should render without crashing', () => {
       const { container } = render(
         <BrowserRouter>
@@ -234,7 +234,7 @@ describe('AiDashboardPage', () => {
     });
   });
 
-describe('AiDocumentAnalysisPage', () => {
+  describe('AiDocumentAnalysisPage', () => {
     it('should render without crashing', () => {
       const { container } = render(
         <BrowserRouter>
@@ -253,7 +253,7 @@ describe('AiDocumentAnalysisPage', () => {
     });
   });
 
-describe('AiKnowledgeBasePage', () => {
+  describe('AiKnowledgeBasePage', () => {
     it('should render without crashing', () => {
       const { container } = render(
         <BrowserRouter>
@@ -272,7 +272,7 @@ describe('AiKnowledgeBasePage', () => {
     });
   });
 
-describe('AiModelSettingsPage', () => {
+  describe('AiModelSettingsPage', () => {
     it('should render without crashing', () => {
       const { container } = render(
         <BrowserRouter>
@@ -290,7 +290,7 @@ describe('AiModelSettingsPage', () => {
     });
   });
 
-describe('AiPromptLibraryPage', () => {
+  describe('AiPromptLibraryPage', () => {
     it('should render without crashing', () => {
       const { container } = render(
         <BrowserRouter>

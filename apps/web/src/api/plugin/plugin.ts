@@ -31,8 +31,14 @@ export const pluginApi = {
     return response.data;
   },
 
-  uninstall: async (pluginCode: string, tier?: 'disable' | 'uninstall' | 'delete'): Promise<ApiResponse<boolean>> => {
-    const response = await pluginAxios.post(`${API_BASE}/tenant/my/plugins/${pluginCode}/uninstall`, { uninstall_tier: tier || 'uninstall' });
+  uninstall: async (
+    pluginCode: string,
+    tier?: 'disable' | 'uninstall' | 'delete'
+  ): Promise<ApiResponse<boolean>> => {
+    const response = await pluginAxios.post(
+      `${API_BASE}/tenant/my/plugins/${pluginCode}/uninstall`,
+      { uninstall_tier: tier || 'uninstall' }
+    );
     return response.data;
   },
 
@@ -42,12 +48,16 @@ export const pluginApi = {
   },
 
   disable: async (pluginCode: string): Promise<ApiResponse<TenantPlugin>> => {
-    const response = await pluginAxios.post(`${API_BASE}/tenant/my/plugins/${pluginCode}/deactivate`);
+    const response = await pluginAxios.post(
+      `${API_BASE}/tenant/my/plugins/${pluginCode}/deactivate`
+    );
     return response.data;
   },
 
   upgrade: async (pluginCode: string, version?: string): Promise<ApiResponse<TenantPlugin>> => {
-    const response = await pluginAxios.post(`${API_BASE}/tenant/my/plugins/${pluginCode}/install`, { version });
+    const response = await pluginAxios.post(`${API_BASE}/tenant/my/plugins/${pluginCode}/install`, {
+      version,
+    });
     return response.data;
   },
 

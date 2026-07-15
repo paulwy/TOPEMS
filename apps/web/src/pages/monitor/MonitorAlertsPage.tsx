@@ -67,9 +67,7 @@ const STATUS_COLORS: Record<AlertStatus, 'error' | 'warning' | 'success'> = {
   resolved: 'success',
 };
 
-const SERVICE_OPTIONS = [
-  { label: '全部服务', value: 'all' },
-];
+const SERVICE_OPTIONS = [{ label: '全部服务', value: 'all' }];
 
 const getSeverityIcon = (severity: AlertSeverity) => {
   switch (severity) {
@@ -272,9 +270,7 @@ export const MonitorAlertsPage: React.FC = () => {
 
   const handleBatchAcknowledge = async () => {
     try {
-      await Promise.all(
-        selectedIds.map((id) => monitorApi.acknowledgeAlert(String(id)))
-      );
+      await Promise.all(selectedIds.map((id) => monitorApi.acknowledgeAlert(String(id))));
       queryClient.invalidateQueries({ queryKey: ['monitor-alerts'] });
       addNotification({
         title: '批量确认成功',
@@ -291,9 +287,7 @@ export const MonitorAlertsPage: React.FC = () => {
 
   const handleBatchResolve = async () => {
     try {
-      await Promise.all(
-        selectedIds.map((id) => monitorApi.resolveAlert(String(id)))
-      );
+      await Promise.all(selectedIds.map((id) => monitorApi.resolveAlert(String(id))));
       queryClient.invalidateQueries({ queryKey: ['monitor-alerts'] });
       addNotification({
         title: '批量解决成功',

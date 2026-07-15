@@ -217,8 +217,12 @@ export const WorkflowInstancesPage: React.FC = () => {
 
   const stats = useMemo(() => {
     const instancesArray = instances as WorkflowInstance[];
-    const runningCount = instancesArray.filter((i: WorkflowInstance) => i.status === 'running').length;
-    const completedCount = instancesArray.filter((i: WorkflowInstance) => i.status === 'completed').length;
+    const runningCount = instancesArray.filter(
+      (i: WorkflowInstance) => i.status === 'running'
+    ).length;
+    const completedCount = instancesArray.filter(
+      (i: WorkflowInstance) => i.status === 'completed'
+    ).length;
     const todayCount = instancesArray.filter((i: WorkflowInstance) => {
       const today = new Date().toDateString();
       const date = i.started_at || i.created_at;
@@ -241,7 +245,8 @@ export const WorkflowInstancesPage: React.FC = () => {
         completedWithDuration++;
       }
     });
-    const avgDuration = completedWithDuration > 0 ? Math.round(totalDuration / completedWithDuration) : 0;
+    const avgDuration =
+      completedWithDuration > 0 ? Math.round(totalDuration / completedWithDuration) : 0;
 
     return [
       {

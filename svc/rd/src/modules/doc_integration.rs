@@ -56,24 +56,21 @@ struct ListQueryParams {
 
 pub fn create_routes() -> axum::Router<super::ApiState> {
     axum::Router::<super::ApiState>::new()
+        .route("/api/core/rd/documents", axum::routing::get(list_documents))
         .route(
-            "/api/core/rs/v1/documents",
-            axum::routing::get(list_documents),
-        )
-        .route(
-            "/api/core/rs/v1/documents",
+            "/api/core/rd/documents",
             axum::routing::post(create_document_relation),
         )
         .route(
-            "/api/core/rs/v1/documents/{id}",
+            "/api/core/rd/documents/{id}",
             axum::routing::get(get_document_relation),
         )
         .route(
-            "/api/core/rs/v1/documents/{id}",
+            "/api/core/rd/documents/{id}",
             axum::routing::delete(delete_document_relation),
         )
         .route(
-            "/api/core/rs/v1/entities/{entity_type}/{entity_id}/documents",
+            "/api/core/rd/entities/{entity_type}/{entity_id}/documents",
             axum::routing::get(get_entity_documents),
         )
 }

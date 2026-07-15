@@ -69,7 +69,9 @@ export interface SendNotificationResponse {
 }
 
 export const pushApi = {
-  registerDevice: async (data: RegisterDeviceRequest): Promise<ApiResponse<RegisterDeviceResponse>> => {
+  registerDevice: async (
+    data: RegisterDeviceRequest,
+  ): Promise<ApiResponse<RegisterDeviceResponse>> => {
     return apiClient.post('/push/devices/register', data);
   },
 
@@ -77,11 +79,15 @@ export const pushApi = {
     return apiClient.get('/push/devices');
   },
 
-  sendNotification: async (data: SendNotificationRequest): Promise<ApiResponse<SendNotificationResponse>> => {
+  sendNotification: async (
+    data: SendNotificationRequest,
+  ): Promise<ApiResponse<SendNotificationResponse>> => {
     return apiClient.post('/push/notifications', data);
   },
 
-  sendBroadcast: async (data: SendNotificationRequest): Promise<ApiResponse<SendNotificationResponse>> => {
+  sendBroadcast: async (
+    data: SendNotificationRequest,
+  ): Promise<ApiResponse<SendNotificationResponse>> => {
     return apiClient.post('/push/notifications/broadcast', data);
   },
 

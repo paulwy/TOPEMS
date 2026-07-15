@@ -6,7 +6,7 @@ mod tests {
     async fn get_auth_token() -> String {
         let client = reqwest::Client::new();
         let login_response = client
-            .post("http://localhost:8000/api/v1/auth/login")
+            .post("http://localhost:8000/api/core/iam/auth/login")
             .json(&json!({
                 "username": "admin",
                 "password": "admin123"
@@ -22,9 +22,34 @@ mod tests {
             .to_string()
     }
 
+    /// 检查 LIMS 和 IAM 服务是否可用
+    async fn ensure_api_available() -> bool {
+        let client = reqwest::Client::builder()
+            .timeout(std::time::Duration::from_secs(2))
+            .build()
+            .unwrap();
+        // 检查 IAM 服务 (认证依赖) 和 LIMS 服务 (测试目标)
+        let iam_ok = client
+            .get("http://localhost:8000/health")
+            .send()
+            .await
+            .map(|resp| resp.status().is_success())
+            .unwrap_or(false);
+        let lims_ok = client
+            .get("http://localhost:8051/health")
+            .send()
+            .await
+            .map(|resp| resp.status().is_success())
+            .unwrap_or(false);
+        iam_ok && lims_ok
+    }
+
     #[tokio::test]
-    #[ignore]
     async fn test_list_audit_logs_success() {
+        if !ensure_api_available().await {
+            eprintln!("⏭ 跳过: LIMS/IAM服务未运行 (localhost:8051/8000)");
+            return;
+        }
         let base_url = "http://localhost:8051";
         let client = reqwest::Client::new();
         let token = get_auth_token().await;
@@ -58,8 +83,11 @@ mod tests {
     }
 
     #[tokio::test]
-    #[ignore]
     async fn test_list_audit_logs_invalid_start_date() {
+        if !ensure_api_available().await {
+            eprintln!("⏭ 跳过: LIMS/IAM服务未运行 (localhost:8051/8000)");
+            return;
+        }
         let base_url = "http://localhost:8051";
         let client = reqwest::Client::new();
         let token = get_auth_token().await;
@@ -90,8 +118,11 @@ mod tests {
     }
 
     #[tokio::test]
-    #[ignore]
     async fn test_list_audit_logs_invalid_end_date() {
+        if !ensure_api_available().await {
+            eprintln!("⏭ 跳过: LIMS/IAM服务未运行 (localhost:8051/8000)");
+            return;
+        }
         let base_url = "http://localhost:8051";
         let client = reqwest::Client::new();
         let token = get_auth_token().await;
@@ -122,8 +153,11 @@ mod tests {
     }
 
     #[tokio::test]
-    #[ignore]
     async fn test_list_audit_logs_with_valid_date_range() {
+        if !ensure_api_available().await {
+            eprintln!("⏭ 跳过: LIMS/IAM服务未运行 (localhost:8051/8000)");
+            return;
+        }
         let base_url = "http://localhost:8051";
         let client = reqwest::Client::new();
         let token = get_auth_token().await;
@@ -147,8 +181,11 @@ mod tests {
     }
 
     #[tokio::test]
-    #[ignore]
     async fn test_get_audit_log_not_found() {
+        if !ensure_api_available().await {
+            eprintln!("⏭ 跳过: LIMS/IAM服务未运行 (localhost:8051/8000)");
+            return;
+        }
         let base_url = "http://localhost:8051";
         let client = reqwest::Client::new();
         let token = get_auth_token().await;
@@ -180,8 +217,11 @@ mod tests {
     }
 
     #[tokio::test]
-    #[ignore]
     async fn test_export_audit_logs_success() {
+        if !ensure_api_available().await {
+            eprintln!("⏭ 跳过: LIMS/IAM服务未运行 (localhost:8051/8000)");
+            return;
+        }
         let base_url = "http://localhost:8051";
         let client = reqwest::Client::new();
         let token = get_auth_token().await;
@@ -211,8 +251,11 @@ mod tests {
     }
 
     #[tokio::test]
-    #[ignore]
     async fn test_export_audit_logs_invalid_date() {
+        if !ensure_api_available().await {
+            eprintln!("⏭ 跳过: LIMS/IAM服务未运行 (localhost:8051/8000)");
+            return;
+        }
         let base_url = "http://localhost:8051";
         let client = reqwest::Client::new();
         let token = get_auth_token().await;
@@ -243,8 +286,11 @@ mod tests {
     }
 
     #[tokio::test]
-    #[ignore]
     async fn test_list_audit_logs_unauthorized() {
+        if !ensure_api_available().await {
+            eprintln!("⏭ 跳过: LIMS/IAM服务未运行 (localhost:8051/8000)");
+            return;
+        }
         let base_url = "http://localhost:8051";
         let client = reqwest::Client::new();
 

@@ -318,7 +318,7 @@ describe('Error Handling & Boundary Conditions Integration', () => {
       ]);
 
       expect(results.length).toBe(3);
-      expect(results.every(r => r.success)).toBe(true);
+      expect(results.every((r) => r.success)).toBe(true);
     });
 
     it('should handle mixed success/failure concurrent requests', async () => {

@@ -1,4 +1,6 @@
-import React, { useState, useEffect, useMemo } from 'react';
+import React, { useState, useMemo } from 'react';
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import { QUERY_KEYS } from '@/lib/reactQuery';
 import { designTokens } from '@/theme/tokens';
 import { PageContainer } from '@/components/common';
 import {
@@ -38,11 +40,9 @@ const ct = designTokens.colors;
 
 const FinanceReceivablePayablePage: React.FC = () => {
   const addNotification = useNotificationStore((state) => state.addNotification);
+  const queryClient = useQueryClient();
 
   const [activeTab, setActiveTab] = useState<string>('receivable');
-  const [receivables, setReceivables] = useState<SalesInvoice[]>([]);
-  const [payables, setPayables] = useState<PurchaseInvoice[]>([]);
-  const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState('');
   const [filterStatus, setFilterStatus] = useState('');
   const [showCreateDialog, setShowCreateDialog] = useState(false);
@@ -62,216 +62,159 @@ const FinanceReceivablePayablePage: React.FC = () => {
     status: 'draft' as InvoiceStatus,
   });
 
-  useEffect(() => {
-    loadData();
-  }, []);
+  const receivablesQuery = useQuery<SalesInvoice[]>({
+    queryKey: QUERY_KEYS.FINANCE.RECEIVABLES,
+    queryFn: async () => {
+      const res = await financeApi.receivablePayable.listSalesInvoices();
+      if (res.success && res.data) {
+        return res.data.items || [];
+      }
+      return [];
+    },
+  });
 
-  const loadData = async () => {
-    setLoading(true);
-    try {
-      const [receivableRes, payableRes] = await Promise.all([
-        financeApi.receivablePayable.listSalesInvoices(),
-        financeApi.receivablePayable.listPurchaseInvoices(),
-      ]);
-      if (receivableRes.success && receivableRes.data) {
-        setReceivables(receivableRes.data.items || []);
+  const payablesQuery = useQuery<PurchaseInvoice[]>({
+    queryKey: QUERY_KEYS.FINANCE.PAYABLES,
+    queryFn: async () => {
+      const res = await financeApi.receivablePayable.listPurchaseInvoices();
+      if (res.success && res.data) {
+        return res.data.items || [];
       }
-      if (payableRes.success && payableRes.data) {
-        setPayables(payableRes.data.items || []);
-      }
-    } catch (err: unknown) {
-      apiLogger.error('加载数据失败:', err);
-      addNotification({
-        title: '错误',
-        message: '加载数据失败',
-        type: 'error',
-      });
-    } finally {
-      setLoading(false);
-    }
+      return [];
+    },
+  });
+
+  const receivables = receivablesQuery.data || [];
+  const payables = payablesQuery.data || [];
+  const loading = receivablesQuery.isLoading || payablesQuery.isLoading;
+
+  const invalidateInvoices = () => {
+    queryClient.invalidateQueries({ queryKey: QUERY_KEYS.FINANCE.RECEIVABLES });
+    queryClient.invalidateQueries({ queryKey: QUERY_KEYS.FINANCE.PAYABLES });
   };
 
-  const handleCreateReceivable = async () => {
-    try {
-      const data = {
-        invoice_no: formData.invoice_no,
-        customer_name: formData.customer_name,
-        amount: parseFloat(formData.amount) || 0,
-        tax_amount: parseFloat(formData.tax_amount) || 0,
-        invoice_date: formData.invoice_date,
-        due_date: formData.due_date,
-        invoice_type: formData.invoice_type,
-        status: formData.status,
-      };
-      const response = await financeApi.receivablePayable.createSalesInvoice(data);
-      if (response.success) {
-        addNotification({
-          title: '成功',
-          message: '销售发票创建成功',
-          type: 'success',
-        });
-        setShowCreateDialog(false);
-        resetForm();
-        loadData();
-      }
-    } catch (err: unknown) {
+  const createReceivableMutation = useMutation({
+    mutationFn: (data: any) => financeApi.receivablePayable.createSalesInvoice(data),
+    onSuccess: () => {
+      addNotification({ title: '成功', message: '销售发票创建成功', type: 'success' });
+      setShowCreateDialog(false);
+      resetForm();
+      invalidateInvoices();
+    },
+    onError: (err: unknown) => {
       apiLogger.error('创建销售发票失败:', err);
-      addNotification({
-        title: '错误',
-        message: '创建销售发票失败',
-        type: 'error',
-      });
-    }
-  };
+      addNotification({ title: '错误', message: '创建销售发票失败', type: 'error' });
+    },
+  });
 
-  const handleCreatePayable = async () => {
-    try {
-      const data = {
-        invoice_no: formData.invoice_no,
-        supplier_name: formData.supplier_name,
-        amount: parseFloat(formData.amount) || 0,
-        tax_amount: parseFloat(formData.tax_amount) || 0,
-        invoice_date: formData.invoice_date,
-        due_date: formData.due_date,
-        invoice_type: formData.invoice_type,
-        status: formData.status,
-      };
-      const response = await financeApi.receivablePayable.createPurchaseInvoice(data);
-      if (response.success) {
-        addNotification({
-          title: '成功',
-          message: '采购发票创建成功',
-          type: 'success',
-        });
-        setShowCreateDialog(false);
-        resetForm();
-        loadData();
-      }
-    } catch (err: unknown) {
+  const createPayableMutation = useMutation({
+    mutationFn: (data: any) => financeApi.receivablePayable.createPurchaseInvoice(data),
+    onSuccess: () => {
+      addNotification({ title: '成功', message: '采购发票创建成功', type: 'success' });
+      setShowCreateDialog(false);
+      resetForm();
+      invalidateInvoices();
+    },
+    onError: (err: unknown) => {
       apiLogger.error('创建采购发票失败:', err);
-      addNotification({
-        title: '错误',
-        message: '创建采购发票失败',
-        type: 'error',
-      });
-    }
-  };
+      addNotification({ title: '错误', message: '创建采购发票失败', type: 'error' });
+    },
+  });
 
-  const handleUpdateReceivable = async () => {
-    if (!editingItem) return;
-    try {
-      const data = {
-        invoice_no: formData.invoice_no,
-        customer_name: formData.customer_name,
-        amount: parseFloat(formData.amount) || 0,
-        tax_amount: parseFloat(formData.tax_amount) || 0,
-        invoice_date: formData.invoice_date,
-        due_date: formData.due_date,
-        invoice_type: formData.invoice_type,
-        status: formData.status,
-      };
-      const response = await financeApi.receivablePayable.updateSalesInvoice(editingItem.id, data);
-      if (response.success) {
-        addNotification({
-          title: '成功',
-          message: '销售发票更新成功',
-          type: 'success',
-        });
-        setEditingItem(null);
-        setShowCreateDialog(false);
-        resetForm();
-        loadData();
-      }
-    } catch (err: unknown) {
+  const updateReceivableMutation = useMutation({
+    mutationFn: (params: { id: string; data: any }) =>
+      financeApi.receivablePayable.updateSalesInvoice(params.id, params.data),
+    onSuccess: () => {
+      addNotification({ title: '成功', message: '销售发票更新成功', type: 'success' });
+      setEditingItem(null);
+      setShowCreateDialog(false);
+      resetForm();
+      invalidateInvoices();
+    },
+    onError: (err: unknown) => {
       apiLogger.error('更新销售发票失败:', err);
-      addNotification({
-        title: '错误',
-        message: '更新销售发票失败',
-        type: 'error',
-      });
-    }
-  };
+      addNotification({ title: '错误', message: '更新销售发票失败', type: 'error' });
+    },
+  });
 
-  const handleUpdatePayable = async () => {
-    if (!editingItem) return;
-    try {
-      const data = {
-        invoice_no: formData.invoice_no,
-        supplier_name: formData.supplier_name,
-        amount: parseFloat(formData.amount) || 0,
-        tax_amount: parseFloat(formData.tax_amount) || 0,
-        invoice_date: formData.invoice_date,
-        due_date: formData.due_date,
-        invoice_type: formData.invoice_type,
-        status: formData.status,
-      };
-      const response = await financeApi.receivablePayable.updatePurchaseInvoice(
-        editingItem.id,
-        data
-      );
-      if (response.success) {
-        addNotification({
-          title: '成功',
-          message: '采购发票更新成功',
-          type: 'success',
-        });
-        setEditingItem(null);
-        setShowCreateDialog(false);
-        resetForm();
-        loadData();
-      }
-    } catch (err: unknown) {
+  const updatePayableMutation = useMutation({
+    mutationFn: (params: { id: string; data: any }) =>
+      financeApi.receivablePayable.updatePurchaseInvoice(params.id, params.data),
+    onSuccess: () => {
+      addNotification({ title: '成功', message: '采购发票更新成功', type: 'success' });
+      setEditingItem(null);
+      setShowCreateDialog(false);
+      resetForm();
+      invalidateInvoices();
+    },
+    onError: (err: unknown) => {
       apiLogger.error('更新采购发票失败:', err);
-      addNotification({
-        title: '错误',
-        message: '更新采购发票失败',
-        type: 'error',
-      });
-    }
-  };
+      addNotification({ title: '错误', message: '更新采购发票失败', type: 'error' });
+    },
+  });
 
-  const handleDeleteReceivable = async (id: string) => {
-    if (!window.confirm('确定要删除此销售发票吗？')) return;
-    try {
-      const response = await financeApi.receivablePayable.deleteSalesInvoice(id);
-      if (response.success) {
-        addNotification({
-          title: '成功',
-          message: '销售发票删除成功',
-          type: 'success',
-        });
-        loadData();
-      }
-    } catch (err: unknown) {
+  const deleteReceivableMutation = useMutation({
+    mutationFn: (id: string) => financeApi.receivablePayable.deleteSalesInvoice(id),
+    onSuccess: () => {
+      addNotification({ title: '成功', message: '销售发票删除成功', type: 'success' });
+      invalidateInvoices();
+    },
+    onError: (err: unknown) => {
       apiLogger.error('删除销售发票失败:', err);
-      addNotification({
-        title: '错误',
-        message: '删除销售发票失败',
-        type: 'error',
-      });
-    }
+      addNotification({ title: '错误', message: '删除销售发票失败', type: 'error' });
+    },
+  });
+
+  const deletePayableMutation = useMutation({
+    mutationFn: (id: string) => financeApi.receivablePayable.deletePurchaseInvoice(id),
+    onSuccess: () => {
+      addNotification({ title: '成功', message: '采购发票删除成功', type: 'success' });
+      invalidateInvoices();
+    },
+    onError: (err: unknown) => {
+      apiLogger.error('删除采购发票失败:', err);
+      addNotification({ title: '错误', message: '删除采购发票失败', type: 'error' });
+    },
+  });
+
+  const buildInvoiceData = () => ({
+    invoice_no: formData.invoice_no,
+    customer_name: formData.customer_name,
+    supplier_name: formData.supplier_name,
+    amount: parseFloat(formData.amount) || 0,
+    tax_amount: parseFloat(formData.tax_amount) || 0,
+    invoice_date: formData.invoice_date,
+    due_date: formData.due_date,
+    invoice_type: formData.invoice_type,
+    status: formData.status,
+  });
+
+  const handleCreateReceivable = () => {
+    createReceivableMutation.mutate(buildInvoiceData());
   };
 
-  const handleDeletePayable = async (id: string) => {
+  const handleCreatePayable = () => {
+    createPayableMutation.mutate(buildInvoiceData());
+  };
+
+  const handleUpdateReceivable = () => {
+    if (!editingItem) return;
+    updateReceivableMutation.mutate({ id: editingItem.id, data: buildInvoiceData() });
+  };
+
+  const handleUpdatePayable = () => {
+    if (!editingItem) return;
+    updatePayableMutation.mutate({ id: editingItem.id, data: buildInvoiceData() });
+  };
+
+  const handleDeleteReceivable = (id: string) => {
+    if (!window.confirm('确定要删除此销售发票吗？')) return;
+    deleteReceivableMutation.mutate(id);
+  };
+
+  const handleDeletePayable = (id: string) => {
     if (!window.confirm('确定要删除此采购发票吗？')) return;
-    try {
-      const response = await financeApi.receivablePayable.deletePurchaseInvoice(id);
-      if (response.success) {
-        addNotification({
-          title: '成功',
-          message: '采购发票删除成功',
-          type: 'success',
-        });
-        loadData();
-      }
-    } catch (err: unknown) {
-      apiLogger.error('删除采购发票失败:', err);
-      addNotification({
-        title: '错误',
-        message: '删除采购发票失败',
-        type: 'error',
-      });
-    }
+    deletePayableMutation.mutate(id);
   };
 
   const openEditDialog = (item: SalesInvoice | PurchaseInvoice) => {
@@ -755,7 +698,10 @@ const FinanceReceivablePayablePage: React.FC = () => {
             if (filters.status !== undefined) setFilterStatus(filters.status as string);
           }}
           rowActions={receivableRowActions}
-          onRefresh={loadData}
+          onRefresh={() => {
+            receivablesQuery.refetch();
+            payablesQuery.refetch();
+          }}
           actions={[
             { label: '搜索', variant: 'outlined', onClick: handleSearch },
             { label: '重置', variant: 'outlined', onClick: handleReset },
@@ -780,7 +726,10 @@ const FinanceReceivablePayablePage: React.FC = () => {
             if (filters.status !== undefined) setFilterStatus(filters.status as string);
           }}
           rowActions={payableRowActions}
-          onRefresh={loadData}
+          onRefresh={() => {
+            receivablesQuery.refetch();
+            payablesQuery.refetch();
+          }}
           actions={[
             { label: '搜索', variant: 'outlined', onClick: handleSearch },
             { label: '重置', variant: 'outlined', onClick: handleReset },

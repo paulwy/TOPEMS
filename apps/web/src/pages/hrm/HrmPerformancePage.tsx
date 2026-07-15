@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useMemo } from 'react';
+import React, { useState, useMemo } from 'react';
 import { apiLogger } from '@/utils/logger';
 import { Award, Target, BarChart3, CheckCircle, Clock, TrendingUp } from 'lucide-react';
 import { useNotification } from '@/hooks/useNotification';
@@ -11,6 +11,7 @@ import {
   departmentApi,
   type Employee,
 } from '@/api/hrm';
+import { useQuery, useQueryClient } from '@tanstack/react-query';
 
 interface PerformanceReview {
   id: string;
@@ -55,96 +56,113 @@ interface EmployeeScore {
 
 const HrmPerformancePage: React.FC = () => {
   const { error } = useNotification();
+  const queryClient = useQueryClient();
 
   const [activeTab, setActiveTab] = useState<'reviews' | 'goals' | 'rankings'>('reviews');
   const [searchQuery, setSearchQuery] = useState('');
-  const [loading, setLoading] = useState(false);
 
-  const [reviews, setReviews] = useState<PerformanceReview[]>([]);
-  const [goals, setGoals] = useState<PerformanceGoal[]>([]);
-  const [rankings, setRankings] = useState<EmployeeScore[]>([]);
-  const [employees, setEmployees] = useState<Record<string, Employee>>({});
+  const { data: reviews, isLoading: reviewsLoading } = useQuery({
+    queryKey: ['hrm-performance-reviews'],
+    queryFn: async () => {
+      try {
+        const [reviewsRes, employeesRes] = await Promise.all([
+          performanceReviewApi.list({ pagesize: 100 }),
+          employeeApi.list({ pagesize: 100 }),
+        ]);
 
-  useEffect(() => {
-    loadData();
-  }, []);
+        const employeeMap: Record<string, Employee> = {};
+        employeesRes.data?.items?.forEach((emp) => {
+          employeeMap[emp.id] = emp;
+        });
 
-  const loadData = async () => {
-    setLoading(true);
-    try {
-      const [reviewsRes, goalsRes, employeesRes] = await Promise.all([
-        performanceReviewApi.list({ pagesize: 100 }),
-        performanceGoalApi.list({ pagesize: 100 }),
-        employeeApi.list({ pagesize: 100 }),
-      ]);
+        const transformedReviews: PerformanceReview[] = (reviewsRes.data?.items || []).map(
+          (review) => {
+            const employee = employeeMap[review.employee_id];
+            return {
+              id: review.id,
+              employee_name: employee?.name || '未知员工',
+              employee_no: employee?.employee_no || '',
+              department: '',
+              position: employee?.position || '',
+              review_period: review.review_period,
+              review_type: 'quarterly',
+              status: mapReviewStatus(review.status),
+              self_score: review.self_rating,
+              manager_score: review.manager_rating,
+              final_score: review.final_rating,
+              created_at: review.created_at,
+            };
+          }
+        );
+        return transformedReviews;
+      } catch (err: unknown) {
+        error('加载数据失败');
+        apiLogger.error('Failed to load performance reviews:', err);
+        return [];
+      }
+    },
+    staleTime: 5 * 60 * 1000,
+  });
 
-      const employeeMap: Record<string, Employee> = {};
-      employeesRes.data?.items?.forEach((emp) => {
-        employeeMap[emp.id] = emp;
-      });
-      setEmployees(employeeMap);
+  const { data: goals, isLoading: goalsLoading } = useQuery({
+    queryKey: ['hrm-performance-goals'],
+    queryFn: async () => {
+      try {
+        const [goalsRes, employeesRes] = await Promise.all([
+          performanceGoalApi.list({ pagesize: 100 }),
+          employeeApi.list({ pagesize: 100 }),
+        ]);
 
-      const transformedReviews: PerformanceReview[] = (reviewsRes.data?.items || []).map(
-        (review) => {
-          const employee = employeeMap[review.employee_id];
+        const employeeMap: Record<string, Employee> = {};
+        employeesRes.data?.items?.forEach((emp) => {
+          employeeMap[emp.id] = emp;
+        });
+
+        const transformedGoals: PerformanceGoal[] = (goalsRes.data?.items || []).map((goal) => {
+          const employee = employeeMap[goal.employee_id];
           return {
-            id: review.id,
+            id: goal.id,
             employee_name: employee?.name || '未知员工',
-            employee_no: employee?.employee_no || '',
-            department: '',
-            position: employee?.position || '',
-            review_period: review.review_period,
-            review_type: 'quarterly',
-            status: mapReviewStatus(review.status),
-            self_score: review.self_rating,
-            manager_score: review.manager_rating,
-            final_score: review.final_rating,
-            created_at: review.created_at,
+            goal_title: goal.title,
+            goal_description: goal.description || '',
+            weight: goal.weight,
+            target_value: goal.target || '',
+            current_value: goal.achieved?.toString(),
+            progress: Math.min(goal.achieved || 0, 100),
+            status: mapGoalStatus(goal.status),
+            due_date: goal.due_date || '',
           };
-        }
-      );
-      setReviews(transformedReviews);
+        });
+        return transformedGoals;
+      } catch (err: unknown) {
+        error('加载数据失败');
+        apiLogger.error('Failed to load performance goals:', err);
+        return [];
+      }
+    },
+    staleTime: 5 * 60 * 1000,
+  });
 
-      const transformedGoals: PerformanceGoal[] = (goalsRes.data?.items || []).map((goal) => {
-        const employee = employeeMap[goal.employee_id];
-        return {
-          id: goal.id,
-          employee_name: employee?.name || '未知员工',
-          goal_title: goal.title,
-          goal_description: goal.description || '',
-          weight: goal.weight,
-          target_value: goal.target || '',
-          current_value: goal.achieved?.toString(),
-          progress: Math.min(goal.achieved || 0, 100),
-          status: mapGoalStatus(goal.status),
-          due_date: goal.due_date || '',
-        };
-      });
-      setGoals(transformedGoals);
+  const isLoading = reviewsLoading || goalsLoading;
 
-      const rankingsData: EmployeeScore[] = transformedReviews
-        .filter((r) => r.final_score !== undefined)
-        .sort((a, b) => (b.final_score || 0) - (a.final_score || 0))
-        .map((review, index) => ({
-          id: review.id,
-          employee_name: review.employee_name,
-          department: review.department,
-          position: review.position,
-          kpi_score: review.self_score || 0,
-          capability_score: Math.max(0, (review.manager_score || 0) - 5),
-          attitude_score: Math.min(100, (review.manager_score || 0) + 2),
-          final_score: review.final_score || 0,
-          rank: index + 1,
-          review_period: review.review_period,
-        }));
-      setRankings(rankingsData);
-    } catch (err: unknown) {
-      error('加载数据失败');
-      apiLogger.error('Failed to load performance data:', err);
-    } finally {
-      setLoading(false);
-    }
-  };
+  const rankings = useMemo(() => {
+    const reviewList = reviews || [];
+    return reviewList
+      .filter((r) => r.final_score !== undefined)
+      .sort((a, b) => (b.final_score || 0) - (a.final_score || 0))
+      .map((review, index) => ({
+        id: review.id,
+        employee_name: review.employee_name,
+        department: review.department,
+        position: review.position,
+        kpi_score: review.self_score || 0,
+        capability_score: Math.max(0, (review.manager_score || 0) - 5),
+        attitude_score: Math.min(100, (review.manager_score || 0) + 2),
+        final_score: review.final_score || 0,
+        rank: index + 1,
+        review_period: review.review_period,
+      }));
+  }, [reviews]);
 
   const mapReviewStatus = (status: string): PerformanceReview['status'] => {
     const statusMap: Record<string, PerformanceReview['status']> = {
@@ -186,23 +204,26 @@ const HrmPerformancePage: React.FC = () => {
     return 'error.main';
   };
 
+  const reviewList = reviews || [];
+  const goalList = goals || [];
+
   const performanceStats = useMemo(() => {
-    const totalReviews = reviews.length;
-    const completedReviews = reviews.filter((r) => r.status === 'completed').length;
-    const pendingReviews = reviews.filter((r) => r.status !== 'completed').length;
+    const totalReviews = reviewList.length;
+    const completedReviews = reviewList.filter((r) => r.status === 'completed').length;
+    const pendingReviews = reviewList.filter((r) => r.status !== 'completed').length;
     const avgScore =
-      reviews.length > 0
-        ? reviews
+      reviewList.length > 0
+        ? reviewList
             .filter((r) => r.final_score !== undefined)
             .reduce((sum, r) => sum + (r.final_score || 0), 0) /
-          reviews.filter((r) => r.final_score !== undefined).length
+          reviewList.filter((r) => r.final_score !== undefined).length
         : 0;
 
-    const totalGoals = goals.length;
-    const completedGoals = goals.filter((g) => g.status === 'completed').length;
-    const inProgressGoals = goals.filter((g) => g.status === 'in_progress').length;
+    const totalGoals = goalList.length;
+    const completedGoals = goalList.filter((g) => g.status === 'completed').length;
+    const inProgressGoals = goalList.filter((g) => g.status === 'in_progress').length;
     const avgGoalProgress =
-      goals.length > 0 ? goals.reduce((sum, g) => sum + g.progress, 0) / goals.length : 0;
+      goalList.length > 0 ? goalList.reduce((sum, g) => sum + g.progress, 0) / goalList.length : 0;
 
     return {
       totalReviews,
@@ -213,28 +234,27 @@ const HrmPerformancePage: React.FC = () => {
       completedGoals,
       inProgressGoals,
       avgGoalProgress: Math.round(avgGoalProgress),
-      totalEmployees: Object.keys(employees).length,
     };
-  }, [reviews, goals, employees]);
+  }, [reviewList, goalList]);
 
   const reviewStatusData = useMemo(
     () => [
-      { name: '已完成', value: reviews.filter((r) => r.status === 'completed').length },
-      { name: '待开始', value: reviews.filter((r) => r.status === 'pending').length },
-      { name: '自评中', value: reviews.filter((r) => r.status === 'self_review').length },
-      { name: '待上级评价', value: reviews.filter((r) => r.status === 'manager_review').length },
+      { name: '已完成', value: reviewList.filter((r) => r.status === 'completed').length },
+      { name: '待开始', value: reviewList.filter((r) => r.status === 'pending').length },
+      { name: '自评中', value: reviewList.filter((r) => r.status === 'self_review').length },
+      { name: '待上级评价', value: reviewList.filter((r) => r.status === 'manager_review').length },
     ],
-    [reviews]
+    [reviewList]
   );
 
   const goalStatusData = useMemo(
     () => [
-      { name: '已完成', value: goals.filter((g) => g.status === 'completed').length },
-      { name: '进行中', value: goals.filter((g) => g.status === 'in_progress').length },
-      { name: '未开始', value: goals.filter((g) => g.status === 'not_started').length },
-      { name: '已取消', value: goals.filter((g) => g.status === 'cancelled').length },
+      { name: '已完成', value: goalList.filter((g) => g.status === 'completed').length },
+      { name: '进行中', value: goalList.filter((g) => g.status === 'in_progress').length },
+      { name: '未开始', value: goalList.filter((g) => g.status === 'not_started').length },
+      { name: '已取消', value: goalList.filter((g) => g.status === 'cancelled').length },
     ],
-    [goals]
+    [goalList]
   );
 
   const departmentScoreData = [
@@ -245,7 +265,7 @@ const HrmPerformancePage: React.FC = () => {
     { name: '人事部', value: 86 },
   ];
 
-  const filteredReviews = reviews.filter(
+  const filteredReviews = reviewList.filter(
     (r) =>
       r.employee_name.toLowerCase().includes(searchQuery.toLowerCase()) ||
       r.department.toLowerCase().includes(searchQuery.toLowerCase())
@@ -386,7 +406,7 @@ const HrmPerformancePage: React.FC = () => {
                 render: (value: unknown) => getStatusLabel(value as string),
               },
             ],
-            data: goals.map((g) => ({
+            data: goalList.map((g) => ({
               ...g,
               current_value: g.current_value ?? '-',
             })),
@@ -431,7 +451,7 @@ const HrmPerformancePage: React.FC = () => {
         charts={charts}
         chartColumns={{ xs: 1, md: 2, lg: 3 }}
         tables={tables}
-        loading={loading}
+        loading={isLoading}
         timeRangeOptions={[
           { label: '本周', value: 'week' },
           { label: '本月', value: 'month' },
@@ -447,7 +467,10 @@ const HrmPerformancePage: React.FC = () => {
         showSearch={true}
         showExport={true}
         showRefresh={true}
-        onRefresh={loadData}
+        onRefresh={() => {
+          queryClient.invalidateQueries({ queryKey: ['hrm-performance-reviews'] });
+          queryClient.invalidateQueries({ queryKey: ['hrm-performance-goals'] });
+        }}
         showStatCards={activeTab === 'rankings'}
         showCharts={activeTab === 'rankings'}
         showTables={true}

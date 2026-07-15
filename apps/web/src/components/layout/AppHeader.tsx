@@ -346,7 +346,7 @@ export const AppHeader: React.FC<AppHeaderProps> = ({
           }}
         >
           <Box sx={{ display: { xs: 'flex', lg: 'none' } }}>
-            <GlobalSearchBar variant="icon" />
+            <GlobalSearchBar variant='icon' />
           </Box>
           {rightActions || (
             <>
@@ -598,9 +598,9 @@ export const AppHeader: React.FC<AppHeaderProps> = ({
               >
                 <MenuItem
                   onClick={() => {
-                  navigate(DASHBOARD_PATHS.profile);
-                  handleUserMenuClose();
-                }}
+                    navigate(DASHBOARD_PATHS.profile);
+                    handleUserMenuClose();
+                  }}
                 >
                   <User style={{ width: 18, height: 18, marginRight: 12 }} />
                   个人中心

@@ -471,18 +471,18 @@ pub fn create_routes() -> Router<ApiState> {
     use axum::routing::{delete, get, post, put};
     Router::new()
         .route(
-            "/api/v1/monitor/thresholds",
+            "/api/monitor/thresholds",
             get(list_thresholds).post(create_threshold),
         )
         .route(
-            "/api/v1/monitor/thresholds/{id}",
+            "/api/monitor/thresholds/{id}",
             get(get_threshold)
                 .put(update_threshold)
                 .delete(delete_threshold),
         )
         .route(
-            "/api/v1/monitor/thresholds/evaluate",
+            "/api/monitor/thresholds/evaluate",
             post(evaluate_thresholds),
         )
-        .route("/api/v1/monitor/metrics/snapshot", get(get_metric_snapshot))
+        .route("/api/monitor/metrics/snapshot", get(get_metric_snapshot))
 }

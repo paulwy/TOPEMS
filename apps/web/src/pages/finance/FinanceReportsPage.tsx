@@ -1,4 +1,6 @@
-import React, { useState, useEffect, useMemo } from 'react';
+import React, { useState, useMemo } from 'react';
+import { useQuery } from '@tanstack/react-query';
+import { QUERY_KEYS } from '@/lib/reactQuery';
 import { designTokens } from '@/theme/tokens';
 import {
   TrendingUp,
@@ -53,23 +55,9 @@ const FinanceReportsPage: React.FC = () => {
   const [period, setPeriod] = useState<string>('');
   const [activeTab, setActiveTab] = useState('overview');
 
-  const [businessOverview, setBusinessOverview] = useState<BusinessOverview | null>(null);
-  const [projectSummaries, setProjectSummaries] = useState<ProjectFinancialSummary[]>([]);
-  const [monthlyTrends, setMonthlyTrends] = useState<MonthlyTrend[]>([]);
-  const [departmentSummaries, setDepartmentSummaries] = useState<DepartmentFinancialSummary[]>([]);
-
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
-
-  useEffect(() => {
-    loadReports();
-  }, [period]);
-
-  const loadReports = async () => {
-    setLoading(true);
-    setError(null);
-
-    try {
+  const reportsQuery = useQuery({
+    queryKey: [...QUERY_KEYS.FINANCE.FINANCIAL_REPORT, { period }],
+    queryFn: async () => {
       const [overview, projects, trends, departments] = await Promise.all([
         financeReportApi.businessOverview(period ? { period } : undefined),
         financeReportApi.projectSummary(),
@@ -77,18 +65,21 @@ const FinanceReportsPage: React.FC = () => {
         financeReportApi.departmentSummary(),
       ]);
 
-      if (overview.success && overview.data) setBusinessOverview(overview.data);
-      if (projects.success && projects.data) setProjectSummaries(projects.data);
-      if (trends.success && trends.data) setMonthlyTrends(trends.data);
-      if (departments.success && departments.data) setDepartmentSummaries(departments.data);
-    } catch (err: unknown) {
-      apiLogger.error('加载报表失败:', err);
-      setError('加载报表数据失败，请稍后重试');
-      addNotification({ title: '错误', message: '加载报表数据失败', type: 'error' });
-    } finally {
-      setLoading(false);
-    }
-  };
+      return {
+        businessOverview: overview.success && overview.data ? overview.data : null,
+        projectSummaries: projects.success && projects.data ? projects.data : [],
+        monthlyTrends: trends.success && trends.data ? trends.data : [],
+        departmentSummaries: departments.success && departments.data ? departments.data : [],
+      };
+    },
+  });
+
+  const businessOverview = reportsQuery.data?.businessOverview ?? null;
+  const projectSummaries = reportsQuery.data?.projectSummaries ?? [];
+  const monthlyTrends = reportsQuery.data?.monthlyTrends ?? [];
+  const departmentSummaries = reportsQuery.data?.departmentSummaries ?? [];
+  const loading = reportsQuery.isLoading;
+  const error = reportsQuery.error ? '加载报表数据失败，请稍后重试' : null;
 
   const formatCurrency = (amount: number) =>
     `¥${amount.toLocaleString('zh-CN', { minimumFractionDigits: 2 })}`;
@@ -276,7 +267,7 @@ const FinanceReportsPage: React.FC = () => {
         chartColumns={{ xs: 1, lg: 2 }}
         tables={tables}
         loading={loading}
-        onRefresh={loadReports}
+        onRefresh={() => reportsQuery.refetch()}
         showExport={false}
         showRefresh={true}
         showTimeRange={false}

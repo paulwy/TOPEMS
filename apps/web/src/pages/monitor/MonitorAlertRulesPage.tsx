@@ -6,6 +6,7 @@
  */
 
 import React, { useState, useMemo, useCallback } from 'react';
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import {
   Settings,
   Plus,
@@ -232,10 +233,9 @@ const mockRules: AlertRule[] = [
 ];
 
 export const MonitorAlertRulesPage: React.FC = () => {
+  const queryClient = useQueryClient();
   const addNotification = useNotificationStore((state) => state.addNotification);
 
-  const [rules, setRules] = useState<AlertRule[]>(mockRules);
-  const [loading, setLoading] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
   const [statusFilter, setStatusFilter] = useState<string>('all');
   const [severityFilter, setSeverityFilter] = useState<string>('all');
@@ -259,21 +259,78 @@ export const MonitorAlertRulesPage: React.FC = () => {
     []
   );
 
-  const loadData = useCallback(async () => {
-    setLoading(true);
-    try {
-      await new Promise((resolve) => setTimeout(resolve, 300));
-      setRules(mockRules);
-    } catch (_err: unknown) {
+  const rulesQuery = useQuery<AlertRule[]>({
+    queryKey: ['monitor-alert-rules'],
+    queryFn: async () => {
+      return mockRules;
+    },
+    staleTime: 5 * 60 * 1000,
+  });
+
+  const rules = rulesQuery.data ?? [];
+  const loading = rulesQuery.isLoading;
+
+  const toggleMutation = useMutation({
+    mutationFn: async (params: { ruleId: string; action: string }) => params,
+    onSuccess: ({ ruleId }) => {
+      queryClient.setQueryData<AlertRule[]>(['monitor-alert-rules'], (prev) =>
+        (prev ?? []).map((r) =>
+          r.id === ruleId
+            ? { ...r, enabled: !r.enabled, updated_at: new Date().toISOString().split('T')[0] }
+            : r
+        )
+      );
+    },
+    onError: (err: unknown, { action }) => {
       addNotification({
-        title: '加载失败',
-        message: extractErrorMessage(_err, '加载告警规则失败'),
+        title: '失败',
+        message: extractErrorMessage(err, `${action}告警规则失败`),
         type: 'error',
       });
-    } finally {
-      setLoading(false);
-    }
-  }, [addNotification]);
+    },
+  });
+
+  const deleteMutation = useMutation({
+    mutationFn: async (ruleId: string) => ruleId,
+    onSuccess: (ruleId) => {
+      queryClient.setQueryData<AlertRule[]>(['monitor-alert-rules'], (prev) =>
+        (prev ?? []).filter((r) => r.id !== ruleId)
+      );
+    },
+    onError: (err: unknown) => {
+      addNotification({
+        title: '失败',
+        message: extractErrorMessage(err, '删除告警规则失败'),
+        type: 'error',
+      });
+    },
+  });
+
+  const copyMutation = useMutation({
+    mutationFn: async (ruleId: string) => ruleId,
+    onSuccess: (ruleId) => {
+      const currentRules = queryClient.getQueryData<AlertRule[]>(['monitor-alert-rules']) ?? [];
+      const rule = currentRules.find((r) => r.id === ruleId);
+      if (rule) {
+        const newRule: AlertRule = {
+          ...rule,
+          id: String(Date.now()),
+          name: `${rule.name} - 副本`,
+          enabled: false,
+          created_at: new Date().toISOString().split('T')[0],
+          updated_at: new Date().toISOString().split('T')[0],
+        };
+        queryClient.setQueryData<AlertRule[]>(['monitor-alert-rules'], [...currentRules, newRule]);
+      }
+    },
+    onError: (err: unknown) => {
+      addNotification({
+        title: '失败',
+        message: extractErrorMessage(err, '复制告警规则失败'),
+        type: 'error',
+      });
+    },
+  });
 
   const handleToggleStatus = useCallback(
     (ruleId: string) => {
@@ -284,36 +341,24 @@ export const MonitorAlertRulesPage: React.FC = () => {
       openConfirmDialog({
         title: `确认${action}`,
         message: `确定要${action}告警规则"${rule.name}"吗？`,
-        danger: !rule.enabled ? false : true,
+        danger: rule.enabled,
         onConfirm: () => {
-          try {
-            setRules((prev) =>
-              prev.map((r) =>
-                r.id === ruleId
-                  ? {
-                      ...r,
-                      enabled: !r.enabled,
-                      updated_at: new Date().toISOString().split('T')[0],
-                    }
-                  : r
-              )
-            );
-            addNotification({
-              title: '成功',
-              message: `告警规则${action}成功`,
-              type: 'success',
-            });
-          } catch (_err: unknown) {
-            addNotification({
-              title: '失败',
-              message: extractErrorMessage(_err, `${action}告警规则失败`),
-              type: 'error',
-            });
-          }
+          toggleMutation.mutate(
+            { ruleId, action },
+            {
+              onSuccess: () => {
+                addNotification({
+                  title: '成功',
+                  message: `告警规则${action}成功`,
+                  type: 'success',
+                });
+              },
+            }
+          );
         },
       });
     },
-    [rules, addNotification, openConfirmDialog]
+    [rules, toggleMutation, addNotification, openConfirmDialog]
   );
 
   const handleDelete = useCallback(
@@ -324,55 +369,34 @@ export const MonitorAlertRulesPage: React.FC = () => {
         message: `确定要删除告警规则"${rule?.name || ''}"吗？此操作不可恢复。`,
         danger: true,
         onConfirm: () => {
-          try {
-            setRules((prev) => prev.filter((r) => r.id !== ruleId));
-            addNotification({
-              title: '成功',
-              message: '告警规则删除成功',
-              type: 'success',
-            });
-          } catch (_err: unknown) {
-            addNotification({
-              title: '失败',
-              message: extractErrorMessage(_err, '删除告警规则失败'),
-              type: 'error',
-            });
-          }
+          deleteMutation.mutate(ruleId, {
+            onSuccess: () => {
+              addNotification({
+                title: '成功',
+                message: '告警规则删除成功',
+                type: 'success',
+              });
+            },
+          });
         },
       });
     },
-    [rules, addNotification, openConfirmDialog]
+    [rules, deleteMutation, addNotification, openConfirmDialog]
   );
 
   const handleCopy = useCallback(
     (ruleId: string) => {
-      try {
-        const rule = rules.find((r) => r.id === ruleId);
-        if (!rule) return;
-
-        const newRule: AlertRule = {
-          ...rule,
-          id: String(Date.now()),
-          name: `${rule.name} - 副本`,
-          enabled: false,
-          created_at: new Date().toISOString().split('T')[0],
-          updated_at: new Date().toISOString().split('T')[0],
-        };
-        setRules((prev) => [...prev, newRule]);
-        addNotification({
-          title: '成功',
-          message: '告警规则复制成功',
-          type: 'success',
-        });
-      } catch (_err: unknown) {
-        addNotification({
-          title: '失败',
-          message: extractErrorMessage(_err, '复制告警规则失败'),
-          type: 'error',
-        });
-      }
+      copyMutation.mutate(ruleId, {
+        onSuccess: () => {
+          addNotification({
+            title: '成功',
+            message: '告警规则复制成功',
+            type: 'success',
+          });
+        },
+      });
     },
-    [rules, addNotification]
+    [copyMutation, addNotification]
   );
 
   const filteredRules = useMemo(() => {
@@ -744,7 +768,7 @@ export const MonitorAlertRulesPage: React.FC = () => {
           {
             label: '刷新',
             icon: <RefreshCw size={16} />,
-            onClick: loadData,
+            onClick: () => rulesQuery.refetch(),
             variant: 'outlined',
           },
           {
@@ -778,7 +802,7 @@ export const MonitorAlertRulesPage: React.FC = () => {
             variant: 'contained',
           },
         ]}
-        onRefresh={loadData}
+        onRefresh={() => rulesQuery.refetch()}
         emptyMessage='暂无告警规则'
       />
 

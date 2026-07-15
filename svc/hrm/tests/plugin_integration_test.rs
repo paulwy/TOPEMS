@@ -35,12 +35,28 @@ mod plugin_tests {
     }
 
     // ============ 插件接口测试 ============
-    // 注意: 这些测试需要 HRM 服务运行在 localhost:8011
-    // 使用 `cargo test -- --ignored` 运行这些集成测试
+    // 注意: 这些测试需要 HRM 服务运行在 localhost:8020
+    // 当 HRM 服务未运行时，测试将自动跳过而非失败
+
+    /// 检查 HRM API 服务是否可用
+    async fn ensure_api_available() -> bool {
+        reqwest::Client::builder()
+            .timeout(std::time::Duration::from_secs(2))
+            .build()
+            .unwrap()
+            .get(format!("{}/health", HRM_BASE_URL))
+            .send()
+            .await
+            .map(|resp| resp.status().is_success())
+            .unwrap_or(false)
+    }
 
     #[tokio::test]
-    #[ignore]
     async fn test_plugin_info_endpoint() {
+        if !ensure_api_available().await {
+            eprintln!("⏭ 跳过: HRM服务未运行 ({})", HRM_BASE_URL);
+            return;
+        }
         let client = Client::new();
         let response = client
             .get(format!("{}/api/plugins/info", HRM_BASE_URL))
@@ -54,8 +70,11 @@ mod plugin_tests {
     }
 
     #[tokio::test]
-    #[ignore]
     async fn test_plugin_info_structure() {
+        if !ensure_api_available().await {
+            eprintln!("⏭ 跳过: HRM服务未运行 ({})", HRM_BASE_URL);
+            return;
+        }
         let client = Client::new();
         let response = client
             .get(format!("{}/api/plugins/info", HRM_BASE_URL))
@@ -77,8 +96,11 @@ mod plugin_tests {
     // ============ 认证测试 ============
 
     #[tokio::test]
-    #[ignore]
     async fn test_auth_with_x_user_id_header() {
+        if !ensure_api_available().await {
+            eprintln!("⏭ 跳过: HRM服务未运行 ({})", HRM_BASE_URL);
+            return;
+        }
         let client = Client::new();
         let response = client
             .get(format!("{}/api/hrm/employees", HRM_BASE_URL))
@@ -94,8 +116,11 @@ mod plugin_tests {
     }
 
     #[tokio::test]
-    #[ignore]
     async fn test_auth_with_authorization_header() {
+        if !ensure_api_available().await {
+            eprintln!("⏭ 跳过: HRM服务未运行 ({})", HRM_BASE_URL);
+            return;
+        }
         let client = Client::new();
         let response = client
             .get(format!("{}/api/hrm/employees", HRM_BASE_URL))
@@ -107,8 +132,11 @@ mod plugin_tests {
     }
 
     #[tokio::test]
-    #[ignore]
     async fn test_unauthorized_request_returns_401() {
+        if !ensure_api_available().await {
+            eprintln!("⏭ 跳过: HRM服务未运行 ({})", HRM_BASE_URL);
+            return;
+        }
         let client = Client::new();
         let response = client
             .get(format!("{}/api/hrm/employees", HRM_BASE_URL))
@@ -123,8 +151,11 @@ mod plugin_tests {
     // ============ API 路由测试 ============
 
     #[tokio::test]
-    #[ignore]
     async fn test_employees_list_endpoint() {
+        if !ensure_api_available().await {
+            eprintln!("⏭ 跳过: HRM服务未运行 ({})", HRM_BASE_URL);
+            return;
+        }
         let client = Client::new();
         let response = client
             .get(format!("{}/api/hrm/employees", HRM_BASE_URL))
@@ -136,8 +167,11 @@ mod plugin_tests {
     }
 
     #[tokio::test]
-    #[ignore]
     async fn test_departments_list_endpoint() {
+        if !ensure_api_available().await {
+            eprintln!("⏭ 跳过: HRM服务未运行 ({})", HRM_BASE_URL);
+            return;
+        }
         let client = Client::new();
         let response = client
             .get(format!("{}/api/hrm/departments", HRM_BASE_URL))
@@ -149,8 +183,11 @@ mod plugin_tests {
     }
 
     #[tokio::test]
-    #[ignore]
     async fn test_attendance_list_endpoint() {
+        if !ensure_api_available().await {
+            eprintln!("⏭ 跳过: HRM服务未运行 ({})", HRM_BASE_URL);
+            return;
+        }
         let client = Client::new();
         let response = client
             .get(format!("{}/api/hrm/attendance", HRM_BASE_URL))
@@ -164,8 +201,11 @@ mod plugin_tests {
     // ============ 健康检查测试 ============
 
     #[tokio::test]
-    #[ignore]
     async fn test_health_endpoint() {
+        if !ensure_api_available().await {
+            eprintln!("⏭ 跳过: HRM服务未运行 ({})", HRM_BASE_URL);
+            return;
+        }
         let client = Client::new();
         let response = client.get(format!("{}/health", HRM_BASE_URL)).send().await;
 

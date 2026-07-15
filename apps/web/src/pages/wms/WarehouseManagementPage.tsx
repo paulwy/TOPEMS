@@ -8,11 +8,11 @@ import {
   Box,
   Button,
 } from '@mui/material';
-import React, { useState, useEffect, useMemo, useCallback } from 'react';
+import React, { useState, useMemo, useCallback } from 'react';
 import type { Warehouse, CreateWarehouseRequest, UpdateWarehouseRequest } from '@/api/wms';
 import { wmsApi } from '@/api/wms';
 import { useNotificationStore } from '@/store';
-import { LoadingSpinner, StatusBadge, FormField } from '@topems/shared-components';
+import { StatusBadge, FormField } from '@topems/shared-components';
 import { EmptyState } from '@/components';
 import { Search, Plus, Edit, Trash2, Eye } from 'lucide-react';
 import { apiLogger } from '@/utils/logger';
@@ -23,15 +23,14 @@ import {
   type FilterConfig,
 } from '@/components/templates';
 import { ConfirmDialog, PageContainer } from '@/components/common';
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import { QUERY_KEYS } from '@/lib/reactQuery';
 
 const WarehouseManagementPage: React.FC = () => {
-  const [warehouses, setWarehouses] = useState<Warehouse[]>([]);
-  const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState('');
   const [statusFilter, setStatusFilter] = useState<string>('all');
   const [currentPage, setCurrentPage] = useState(1);
   const [pageSize] = useState(10);
-  const [total, setTotal] = useState(0);
   const [showDialog, setShowDialog] = useState(false);
   const [showDetailDialog, setShowDetailDialog] = useState(false);
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
@@ -46,10 +45,11 @@ const WarehouseManagementPage: React.FC = () => {
   });
 
   const { addNotification } = useNotificationStore();
+  const queryClient = useQueryClient();
 
-  const loadWarehouses = useCallback(async () => {
-    try {
-      setLoading(true);
+  const { data: warehousesResponse, isLoading: loading } = useQuery({
+    queryKey: [QUERY_KEYS.WMS.WAREHOUSES, currentPage, pageSize, searchTerm, statusFilter],
+    queryFn: async () => {
       const params: Record<string, unknown> = {
         page: currentPage,
         pagesize: pageSize,
@@ -58,54 +58,79 @@ const WarehouseManagementPage: React.FC = () => {
       if (statusFilter !== 'all') params.status = statusFilter;
 
       const response = await wmsApi.warehouses.list(params);
-      if (response.success && response.data) {
-        setWarehouses(response.data.items || []);
-        setTotal(response.data.total || 0);
+      if (!response.success) {
+        throw new Error('Failed to fetch warehouses');
       }
-    } catch (error: unknown) {
-      apiLogger.error('加载仓库列表失败:', error);
-      addNotification({
-        type: 'error',
-        title: '加载失败',
-        message: '无法加载仓库列表',
-      });
-    } finally {
-      setLoading(false);
-    }
-  }, [currentPage, pageSize, searchTerm, statusFilter, addNotification]);
+      return response.data;
+    },
+  });
 
-  useEffect(() => {
-    loadWarehouses();
-  }, [loadWarehouses]);
+  const warehouses = warehousesResponse?.items || [];
+  const total = warehousesResponse?.total || 0;
+
+  const createMutation = useMutation({
+    mutationFn: async (data: CreateWarehouseRequest) => {
+      const response = await wmsApi.warehouses.create(data);
+      if (!response.success) {
+        throw new Error('Failed to create warehouse');
+      }
+      return response;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: [QUERY_KEYS.WMS.WAREHOUSES] });
+      setShowDialog(false);
+      resetForm();
+    },
+    onError: (error) => {
+      apiLogger.error('创建仓库失败:', error);
+    },
+  });
+
+  const updateMutation = useMutation({
+    mutationFn: async ({ id, data }: { id: string; data: UpdateWarehouseRequest }) => {
+      const response = await wmsApi.warehouses.update(id, data);
+      if (!response.success) {
+        throw new Error('Failed to update warehouse');
+      }
+      return response;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: [QUERY_KEYS.WMS.WAREHOUSES] });
+      setShowDialog(false);
+      resetForm();
+    },
+    onError: (error) => {
+      apiLogger.error('更新仓库失败:', error);
+    },
+  });
+
+  const deleteMutation = useMutation({
+    mutationFn: async (id: string) => {
+      const response = await wmsApi.warehouses.delete(id);
+      if (!response.success) {
+        throw new Error('Failed to delete warehouse');
+      }
+      return response;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: [QUERY_KEYS.WMS.WAREHOUSES] });
+      setShowDeleteConfirm(false);
+      setDeleteWarehouseId(null);
+    },
+    onError: (error) => {
+      apiLogger.error('删除仓库失败:', error);
+    },
+  });
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    try {
-      if (selectedWarehouse) {
-        await wmsApi.warehouses.update(selectedWarehouse.id, formData as UpdateWarehouseRequest);
-        addNotification({
-          type: 'success',
-          title: '更新成功',
-          message: '仓库信息已更新',
-        });
-      } else {
-        await wmsApi.warehouses.create(formData);
-        addNotification({
-          type: 'success',
-          title: '创建成功',
-          message: '新仓库已创建',
-        });
-      }
-      setShowDialog(false);
-      resetForm();
-      loadWarehouses();
-    } catch (error: unknown) {
-      apiLogger.error('操作失败:', error);
-      addNotification({
-        type: 'error',
-        title: '操作失败',
-        message: selectedWarehouse ? '更新仓库失败' : '创建仓库失败',
+    if (selectedWarehouse) {
+      await updateMutation.mutateAsync({
+        id: selectedWarehouse.id,
+        data: formData as UpdateWarehouseRequest,
       });
+    } else {
+      await createMutation.mutateAsync(formData);
     }
   };
 
@@ -116,23 +141,8 @@ const WarehouseManagementPage: React.FC = () => {
 
   const handleDelete = useCallback(async () => {
     if (!deleteWarehouseId) return;
-    try {
-      await wmsApi.warehouses.delete(deleteWarehouseId);
-      addNotification({
-        type: 'success',
-        title: '删除成功',
-        message: '仓库已删除',
-      });
-      loadWarehouses();
-    } catch (error: unknown) {
-      apiLogger.error('删除失败:', error);
-      addNotification({
-        type: 'error',
-        title: '删除失败',
-        message: '无法删除仓库',
-      });
-    }
-  }, [addNotification, loadWarehouses, deleteWarehouseId]);
+    await deleteMutation.mutateAsync(deleteWarehouseId);
+  }, [deleteWarehouseId, deleteMutation]);
 
   const handleEdit = (warehouse: Warehouse) => {
     setSelectedWarehouse(warehouse);
@@ -254,8 +264,6 @@ const WarehouseManagementPage: React.FC = () => {
     setCurrentPage(1);
   };
 
-  if (loading) return <LoadingSpinner />;
-
   return (
     <PageContainer
       title='仓库管理'
@@ -312,34 +320,49 @@ const WarehouseManagementPage: React.FC = () => {
               }}
             >
               <FormField
-                name='name' label='仓库名称 *'
+                name='name'
+                label='仓库名称 *'
                 value={formData.name}
-                onChange={(e) => setFormData({ ...formData, name: e.target.value })}
+                onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
+                  setFormData({ ...formData, name: e.target.value })
+                }
                 fullWidth
                 required
               />
               <FormField
-                name='code' label='仓库编码'
+                name='code'
+                label='仓库编码'
                 value={formData.code}
-                onChange={(e) => setFormData({ ...formData, code: e.target.value })}
+                onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
+                  setFormData({ ...formData, code: e.target.value })
+                }
                 fullWidth
               />
               <FormField
-                name='address' label='地址'
+                name='address'
+                label='地址'
                 value={formData.address}
-                onChange={(e) => setFormData({ ...formData, address: e.target.value })}
+                onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
+                  setFormData({ ...formData, address: e.target.value })
+                }
                 fullWidth
               />
               <FormField
-                name='manager' label='负责人'
+                name='manager'
+                label='负责人'
                 value={formData.manager}
-                onChange={(e) => setFormData({ ...formData, manager: e.target.value })}
+                onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
+                  setFormData({ ...formData, manager: e.target.value })
+                }
                 fullWidth
               />
               <FormField
-                name='phone' label='联系电话'
+                name='phone'
+                label='联系电话'
                 value={formData.phone}
-                onChange={(e) => setFormData({ ...formData, phone: e.target.value })}
+                onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
+                  setFormData({ ...formData, phone: e.target.value })
+                }
                 fullWidth
               />
             </Box>

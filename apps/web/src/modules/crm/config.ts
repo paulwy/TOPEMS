@@ -50,7 +50,10 @@ export const crmModuleConfig: RouteModuleConfig = {
     },
     {
       path: CRM_PATHS.customers,
-      element: lazyWithRetry(() => import('@/pages/crm/CustomerManagementPage'), 'CustomerManagementPage'),
+      element: lazyWithRetry(
+        () => import('@/pages/crm/CustomerManagementPage'),
+        'CustomerManagementPage'
+      ),
       module: 'crm',
       code: 'crm-customers',
       title: '客户管理',
@@ -94,7 +97,10 @@ export const crmModuleConfig: RouteModuleConfig = {
     },
     {
       path: CRM_PATHS.contacts,
-      element: lazyWithRetry(() => import('@/pages/crm/ContactManagementPage'), 'ContactManagementPage'),
+      element: lazyWithRetry(
+        () => import('@/pages/crm/ContactManagementPage'),
+        'ContactManagementPage'
+      ),
       module: 'crm',
       code: 'crm-contacts',
       title: '联系人管理',
@@ -116,7 +122,10 @@ export const crmModuleConfig: RouteModuleConfig = {
     },
     {
       path: CRM_PATHS.opportunities,
-      element: lazyWithRetry(() => import('@/pages/crm/OpportunityManagementPage'), 'OpportunityManagementPage'),
+      element: lazyWithRetry(
+        () => import('@/pages/crm/OpportunityManagementPage'),
+        'OpportunityManagementPage'
+      ),
       module: 'crm',
       code: 'crm-opportunities',
       title: '商机管理',
@@ -127,7 +136,10 @@ export const crmModuleConfig: RouteModuleConfig = {
     },
     {
       path: CRM_PATHS.opportunityDetail,
-      element: lazyWithRetry(() => import('@/pages/crm/OpportunityDetailPage'), 'OpportunityDetailPage'),
+      element: lazyWithRetry(
+        () => import('@/pages/crm/OpportunityDetailPage'),
+        'OpportunityDetailPage'
+      ),
       module: 'crm',
       code: 'crm-opportunity-detail',
       title: '商机详情',
@@ -138,7 +150,10 @@ export const crmModuleConfig: RouteModuleConfig = {
     },
     {
       path: CRM_PATHS.interactions,
-      element: lazyWithRetry(() => import('@/pages/crm/InteractionManagementPage'), 'InteractionManagementPage'),
+      element: lazyWithRetry(
+        () => import('@/pages/crm/InteractionManagementPage'),
+        'InteractionManagementPage'
+      ),
       module: 'crm',
       code: 'crm-interactions',
       title: '互动管理',
@@ -170,7 +185,10 @@ export const crmModuleConfig: RouteModuleConfig = {
     },
     {
       path: CRM_PATHS.customerScoring,
-      element: lazyWithRetry(() => import('@/pages/crm/CRMCustomerScoringPage'), 'CRMCustomerScoringPage'),
+      element: lazyWithRetry(
+        () => import('@/pages/crm/CRMCustomerScoringPage'),
+        'CRMCustomerScoringPage'
+      ),
       module: 'crm',
       code: 'crm-customer-scoring',
       title: '客户评分',
@@ -181,7 +199,10 @@ export const crmModuleConfig: RouteModuleConfig = {
     },
     {
       path: CRM_PATHS.salesForecast,
-      element: lazyWithRetry(() => import('@/pages/crm/CRMSalesForecastPage'), 'CRMSalesForecastPage'),
+      element: lazyWithRetry(
+        () => import('@/pages/crm/CRMSalesForecastPage'),
+        'CRMSalesForecastPage'
+      ),
       module: 'crm',
       code: 'crm-sales-forecast',
       title: '销售预测',
@@ -192,7 +213,10 @@ export const crmModuleConfig: RouteModuleConfig = {
     },
     {
       path: CRM_PATHS.customerSegmentation,
-      element: lazyWithRetry(() => import('@/pages/crm/CRMCustomerSegmentationPage'), 'CRMCustomerSegmentationPage'),
+      element: lazyWithRetry(
+        () => import('@/pages/crm/CRMCustomerSegmentationPage'),
+        'CRMCustomerSegmentationPage'
+      ),
       module: 'crm',
       code: 'crm-customer-segmentation',
       title: '客户细分',
@@ -203,7 +227,10 @@ export const crmModuleConfig: RouteModuleConfig = {
     },
     {
       path: CRM_PATHS.recommendation,
-      element: lazyWithRetry(() => import('@/pages/crm/CRMRecommendationPage'), 'CRMRecommendationPage'),
+      element: lazyWithRetry(
+        () => import('@/pages/crm/CRMRecommendationPage'),
+        'CRMRecommendationPage'
+      ),
       module: 'crm',
       code: 'crm-recommendation',
       title: '智能推荐',

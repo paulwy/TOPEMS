@@ -1,6 +1,8 @@
 import React, { useState, useEffect } from 'react';
 import { apiLogger } from '@/utils/logger';
 import { useNavigate } from 'react-router-dom';
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import { QUERY_KEYS } from '@/lib/reactQuery';
 import {
   Box,
   Dialog,
@@ -43,10 +45,8 @@ const ct = designTokens.colors;
 
 const EhsCheckPage: React.FC = () => {
   const navigate = useNavigate();
+  const queryClient = useQueryClient();
   const [activeTab, setActiveTab] = useState<'plans' | 'records'>('plans');
-  const [plans, setPlans] = useState<InspectionPlan[]>([]);
-  const [records, setRecords] = useState<InspectionRecord[]>([]);
-  const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState('');
   const [statusFilter, setStatusFilter] = useState('all');
   const [showCreatePlanModal, setShowCreatePlanModal] = useState(false);
@@ -86,46 +86,32 @@ const EhsCheckPage: React.FC = () => {
   >([]);
   const [expandedRecords, setExpandedRecords] = useState<Set<string>>(new Set());
 
-  useEffect(() => {
-    if (activeTab === 'plans') {
-      loadPlans();
-    } else {
-      loadRecords();
-    }
-  }, [activeTab]);
-
-  const loadPlans = async () => {
-    try {
-      setLoading(true);
+  const { data: plansData, isLoading: plansLoading } = useQuery({
+    queryKey: QUERY_KEYS.EHS.INSPECTION_PLANS,
+    enabled: activeTab === 'plans',
+    queryFn: async () => {
       const response = await ehsApi.listInspectionPlans({ pagesize: 100 });
       if (response.success && response.data) {
-        const plansData = Array.isArray(response.data) ? response.data : response.data.items || [];
-        const adapted = plansData.map((item: InspectionPlan) => ({
+        const data = Array.isArray(response.data) ? response.data : response.data.items || [];
+        return data.map((item: InspectionPlan) => ({
           ...item,
           status:
             item.status === 'active' ? '启用' : item.status === 'inactive' ? '停用' : item.status,
         }));
-        setPlans(adapted);
-      } else {
-        setPlans([]);
       }
-    } catch (err: unknown) {
-      apiLogger.error('加载检查计划失败:', err);
-      setPlans([]);
-    } finally {
-      setLoading(false);
-    }
-  };
+      return [];
+    },
+  });
+  const plans = (plansData as InspectionPlan[]) || [];
 
-  const loadRecords = async () => {
-    try {
-      setLoading(true);
+  const { data: recordsData, isLoading: recordsLoading } = useQuery({
+    queryKey: QUERY_KEYS.EHS.INSPECTION_RECORDS,
+    enabled: activeTab === 'records',
+    queryFn: async () => {
       const response = await ehsApi.listInspectionRecords({ pagesize: 100 });
       if (response.success && response.data) {
-        const recordsData = Array.isArray(response.data)
-          ? response.data
-          : response.data.items || [];
-        const adapted = recordsData.map((item: InspectionRecord) => ({
+        const data = Array.isArray(response.data) ? response.data : response.data.items || [];
+        return data.map((item: InspectionRecord) => ({
           ...item,
           status:
             item.status === 'completed'
@@ -136,45 +122,70 @@ const EhsCheckPage: React.FC = () => {
                   ? '待处理'
                   : item.status,
         }));
-        setRecords(adapted);
-      } else {
-        setRecords([]);
       }
-    } catch (err: unknown) {
-      apiLogger.error('加载检查记录失败:', err);
-      setRecords([]);
-    } finally {
-      setLoading(false);
-    }
-  };
+      return [];
+    },
+  });
+  const records = (recordsData as InspectionRecord[]) || [];
 
-  const loadPlanItems = async (planId: string) => {
-    try {
-      const response = await ehsApi.listInspectionItems(planId);
-      if (response.success && response.data) {
-        const itemsData = Array.isArray(response.data) ? response.data : response.data.items || [];
-        setPlanItems(itemsData);
-      } else {
-        setPlanItems([]);
-      }
-    } catch (err: unknown) {
-      apiLogger.error('加载检查项失败:', err);
-      setPlanItems([]);
-    }
-  };
+  const loading = activeTab === 'plans' ? plansLoading : recordsLoading;
 
-  const loadRecordDetail = async (recordId: string) => {
-    try {
-      const response = await ehsApi.getInspectionRecord(recordId);
+  const planItemsQuery = useQuery<InspectionItem[]>({
+    queryKey: QUERY_KEYS.EHS.INSPECTION_ITEMS(selectedPlan?.id || ''),
+    queryFn: async () => {
+      if (!selectedPlan?.id) return [];
+      const response = await ehsApi.listInspectionItems(selectedPlan.id);
       if (response.success && response.data) {
         const data = response.data as any;
-        setSelectedRecord(data.record);
-        setRecordItems(data.items || []);
+        return Array.isArray(data) ? data : data.items || [];
       }
-    } catch (err: unknown) {
-      apiLogger.error('加载检查记录详情失败:', err);
+      return [];
+    },
+    enabled: !!selectedPlan?.id && showItemsModal,
+    staleTime: 5 * 60 * 1000,
+  });
+
+  useEffect(() => {
+    setPlanItems(planItemsQuery.data ?? []);
+  }, [planItemsQuery.data]);
+
+  useEffect(() => {
+    if (planItemsQuery.isError) {
+      apiLogger.error('加载检查项失败:', planItemsQuery.error);
+      setPlanItems([]);
     }
-  };
+  }, [planItemsQuery.isError, planItemsQuery.error]);
+
+  const recordDetailQuery = useQuery<{ record: InspectionRecord; items: RecordItem[] } | null>({
+    queryKey: QUERY_KEYS.EHS.INSPECTION_RECORD(selectedRecord?.id || ''),
+    queryFn: async () => {
+      if (!selectedRecord?.id) return null;
+      const response = await ehsApi.getInspectionRecord(selectedRecord.id);
+      if (response.success && response.data) {
+        const data = response.data as any;
+        return {
+          record: data.record,
+          items: data.items || [],
+        };
+      }
+      return null;
+    },
+    enabled: !!selectedRecord?.id && showDetailModal,
+    staleTime: 5 * 60 * 1000,
+  });
+
+  useEffect(() => {
+    if (recordDetailQuery.data) {
+      setSelectedRecord(recordDetailQuery.data.record);
+      setRecordItems(recordDetailQuery.data.items);
+    }
+  }, [recordDetailQuery.data]);
+
+  useEffect(() => {
+    if (recordDetailQuery.isError) {
+      apiLogger.error('加载检查记录详情失败:', recordDetailQuery.error);
+    }
+  }, [recordDetailQuery.isError, recordDetailQuery.error]);
 
   const getStatusBadge = (status: string) => {
     const statusMap: Record<string, { bg: string; color: string }> = {
@@ -348,14 +359,13 @@ const EhsCheckPage: React.FC = () => {
     setShowDetailModal(true);
   };
 
-  const handleViewItems = async (plan: InspectionPlan) => {
+  const handleViewItems = (plan: InspectionPlan) => {
     setSelectedPlan(plan);
-    await loadPlanItems(plan.id);
     setShowItemsModal(true);
   };
 
-  const handleViewRecord = async (record: InspectionRecord) => {
-    await loadRecordDetail(record.id);
+  const handleViewRecord = (record: InspectionRecord) => {
+    setSelectedRecord(record);
     setShowDetailModal(true);
   };
 
@@ -397,50 +407,62 @@ const EhsCheckPage: React.FC = () => {
     setShowCreateRecordModal(true);
   };
 
-  const handleSavePlan = async () => {
-    try {
-      await ehsApi.createInspectionPlan({
-        title: formData.title,
-        description: formData.description || null,
-        inspection_type: formData.inspection_type,
-        frequency: formData.frequency,
-        start_date: formData.start_date || null,
-        end_date: formData.end_date || null,
-        inspector: formData.inspector || null,
-      });
+  const createPlanMutation = useMutation({
+    mutationFn: (data: Parameters<typeof ehsApi.createInspectionPlan>[0]) =>
+      ehsApi.createInspectionPlan(data),
+    onSuccess: () => {
       addNotification({ title: '成功', message: '检查计划创建成功', type: 'success' });
+      queryClient.invalidateQueries({ queryKey: QUERY_KEYS.EHS.INSPECTION_PLANS });
       setShowCreatePlanModal(false);
-      loadPlans();
-    } catch (err: unknown) {
+    },
+    onError: (error: unknown) => {
       addNotification({ title: '错误', message: '创建失败', type: 'error' });
-      apiLogger.error('创建检查计划失败:', err);
-    }
+      apiLogger.error('创建检查计划失败:', error);
+    },
+  });
+
+  const handleSavePlan = () => {
+    createPlanMutation.mutate({
+      title: formData.title,
+      description: formData.description || null,
+      inspection_type: formData.inspection_type,
+      frequency: formData.frequency,
+      start_date: formData.start_date || null,
+      end_date: formData.end_date || null,
+      inspector: formData.inspector || null,
+    });
   };
 
-  const handleSaveRecord = async () => {
-    try {
-      await ehsApi.createInspectionRecord({
-        plan_id: recordFormData.plan_id || null,
-        title: recordFormData.title,
-        inspection_type: recordFormData.inspection_type,
-        location: recordFormData.location || null,
-        inspector: recordFormData.inspector || null,
-        inspected_at: recordFormData.inspected_at || null,
-        items: recordItemsForm.map((item) => ({
-          item_id: item.item_id || null,
-          item_title: item.item_title,
-          item_category: item.item_category,
-          result: item.result,
-          remarks: item.remarks || null,
-        })),
-      });
+  const createRecordMutation = useMutation({
+    mutationFn: (data: Parameters<typeof ehsApi.createInspectionRecord>[0]) =>
+      ehsApi.createInspectionRecord(data),
+    onSuccess: () => {
       addNotification({ title: '成功', message: '检查记录创建成功', type: 'success' });
+      queryClient.invalidateQueries({ queryKey: QUERY_KEYS.EHS.INSPECTION_RECORDS });
       setShowCreateRecordModal(false);
-      loadRecords();
-    } catch (err: unknown) {
+    },
+    onError: (error: unknown) => {
       addNotification({ title: '错误', message: '创建失败', type: 'error' });
-      apiLogger.error('创建检查记录失败:', err);
-    }
+      apiLogger.error('创建检查记录失败:', error);
+    },
+  });
+
+  const handleSaveRecord = () => {
+    createRecordMutation.mutate({
+      plan_id: recordFormData.plan_id || null,
+      title: recordFormData.title,
+      inspection_type: recordFormData.inspection_type,
+      location: recordFormData.location || null,
+      inspector: recordFormData.inspector || null,
+      inspected_at: recordFormData.inspected_at || null,
+      items: recordItemsForm.map((item) => ({
+        item_id: item.item_id || null,
+        item_title: item.item_title,
+        item_category: item.item_category,
+        result: item.result,
+        remarks: item.remarks || null,
+      })),
+    });
   };
 
   const addRecordItem = () => {
@@ -731,7 +753,13 @@ const EhsCheckPage: React.FC = () => {
           },
         ]}
         emptyMessage={`暂无${activeTab === 'plans' ? '检查计划' : '检查记录'}`}
-        onRefresh={activeTab === 'plans' ? loadPlans : loadRecords}
+        onRefresh={() => {
+          if (activeTab === 'plans') {
+            queryClient.invalidateQueries({ queryKey: QUERY_KEYS.EHS.INSPECTION_PLANS });
+          } else {
+            queryClient.invalidateQueries({ queryKey: QUERY_KEYS.EHS.INSPECTION_RECORDS });
+          }
+        }}
       >
         {activeTab === 'records' &&
           filteredRecords.map((record) =>

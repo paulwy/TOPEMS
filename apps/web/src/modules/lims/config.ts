@@ -87,10 +87,7 @@ export const limsModuleConfig: RouteModuleConfig = {
     },
     {
       path: LIMS_PATHS.taskDetail,
-      element: lazyWithRetry(
-        () => import('@/pages/lims/LimsTaskDetailPage'),
-        'LimsTaskDetailPage'
-      ),
+      element: lazyWithRetry(() => import('@/pages/lims/LimsTaskDetailPage'), 'LimsTaskDetailPage'),
       module: 'lims',
       title: '任务详情',
       code: 'lims-task-detail',
@@ -101,10 +98,7 @@ export const limsModuleConfig: RouteModuleConfig = {
     },
     {
       path: LIMS_PATHS.inspectionTask,
-      element: lazyWithRetry(
-        () => import('@/pages/lims/InspectionTaskPage'),
-        'InspectionTaskPage'
-      ),
+      element: lazyWithRetry(() => import('@/pages/lims/InspectionTaskPage'), 'InspectionTaskPage'),
       module: 'lims',
       title: '检验任务列表',
       code: 'lims-inspection-task',
@@ -126,10 +120,7 @@ export const limsModuleConfig: RouteModuleConfig = {
     },
     {
       path: LIMS_PATHS.instrument,
-      element: lazyWithRetry(
-        () => import('@/pages/lims/LimsInstrumentPage'),
-        'LimsInstrumentPage'
-      ),
+      element: lazyWithRetry(() => import('@/pages/lims/LimsInstrumentPage'), 'LimsInstrumentPage'),
       module: 'lims',
       title: '仪器设备',
       code: 'lims-instrument',
@@ -193,10 +184,7 @@ export const limsModuleConfig: RouteModuleConfig = {
     },
     {
       path: LIMS_PATHS.testMethod,
-      element: lazyWithRetry(
-        () => import('@/pages/lims/LimsTestMethodPage'),
-        'LimsTestMethodPage'
-      ),
+      element: lazyWithRetry(() => import('@/pages/lims/LimsTestMethodPage'), 'LimsTestMethodPage'),
       module: 'lims',
       title: '测试方法',
       code: 'lims-test-method',

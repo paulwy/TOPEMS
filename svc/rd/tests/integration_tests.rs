@@ -13,17 +13,30 @@ mod tests {
         PgPool::connect(TEST_DATABASE_URL).await
     }
 
+    /// 检查数据库是否可用
+    async fn ensure_db_available() -> bool {
+        tokio::net::TcpStream::connect("localhost:5432")
+            .await
+            .is_ok()
+    }
+
     // 需要实际的数据库连接和表结构
     #[tokio::test]
-    #[ignore]
     async fn test_database_connection() {
+        if !ensure_db_available().await {
+            eprintln!("⏭ 跳过: 数据库未运行 (localhost:5432)");
+            return;
+        }
         let pool = setup_test_pool().await;
         assert!(pool.is_ok(), "数据库连接应该成功");
     }
 
     #[tokio::test]
-    #[ignore]
     async fn test_projects_table_exists() {
+        if !ensure_db_available().await {
+            eprintln!("⏭ 跳过: 数据库未运行 (localhost:5432)");
+            return;
+        }
         let pool = setup_test_pool().await.unwrap();
 
         let result = sqlx::query("SELECT EXISTS (SELECT FROM information_schema.tables WHERE table_schema = 'rs' AND table_name = 'projects')")
@@ -43,8 +56,11 @@ mod tests {
 
     // 需要实际的数据库连接和表结构
     #[tokio::test]
-    #[ignore]
     async fn test_experiments_table_exists() {
+        if !ensure_db_available().await {
+            eprintln!("⏭ 跳过: 数据库未运行 (localhost:5432)");
+            return;
+        }
         let pool = setup_test_pool().await.unwrap();
 
         let result = sqlx::query("SELECT EXISTS (SELECT FROM information_schema.tables WHERE table_schema = 'rs' AND table_name = 'experiments')")
@@ -63,8 +79,11 @@ mod tests {
     }
 
     #[tokio::test]
-    #[ignore]
     async fn test_formulas_table_exists() {
+        if !ensure_db_available().await {
+            eprintln!("⏭ 跳过: 数据库未运行 (localhost:5432)");
+            return;
+        }
         let pool = setup_test_pool().await.unwrap();
 
         let result = sqlx::query("SELECT EXISTS (SELECT FROM information_schema.tables WHERE table_schema = 'rs' AND table_name = 'formulas')")
@@ -84,8 +103,11 @@ mod tests {
 
     // 需要实际的数据库连接和表结构
     #[tokio::test]
-    #[ignore]
     async fn test_project_phases_table_exists() {
+        if !ensure_db_available().await {
+            eprintln!("⏭ 跳过: 数据库未运行 (localhost:5432)");
+            return;
+        }
         let pool = setup_test_pool().await.unwrap();
 
         let result = sqlx::query("SELECT EXISTS (SELECT FROM information_schema.tables WHERE table_schema = 'rs' AND table_name = 'project_phases')")
@@ -104,8 +126,11 @@ mod tests {
     }
 
     #[tokio::test]
-    #[ignore]
     async fn test_project_milestones_table_exists() {
+        if !ensure_db_available().await {
+            eprintln!("⏭ 跳过: 数据库未运行 (localhost:5432)");
+            return;
+        }
         let pool = setup_test_pool().await.unwrap();
 
         let result = sqlx::query("SELECT EXISTS (SELECT FROM information_schema.tables WHERE table_schema = 'rs' AND table_name = 'project_milestones')")
@@ -125,8 +150,11 @@ mod tests {
 
     // 需要实际的数据库连接和表结构
     #[tokio::test]
-    #[ignore]
     async fn test_audit_logs_table_exists() {
+        if !ensure_db_available().await {
+            eprintln!("⏭ 跳过: 数据库未运行 (localhost:5432)");
+            return;
+        }
         let pool = setup_test_pool().await.unwrap();
 
         let result = sqlx::query("SELECT EXISTS (SELECT FROM information_schema.tables WHERE table_schema = 'rs' AND table_name = 'audit_logs')")
@@ -146,8 +174,11 @@ mod tests {
 
     // 需要实际的数据库连接和表结构
     #[tokio::test]
-    #[ignore]
     async fn test_create_experiment() {
+        if !ensure_db_available().await {
+            eprintln!("⏭ 跳过: 数据库未运行 (localhost:5432)");
+            return;
+        }
         let pool = setup_test_pool().await.unwrap();
 
         let project_id = Uuid::new_v4();
@@ -193,8 +224,11 @@ mod tests {
 
     // 需要实际的数据库连接和表结构
     #[tokio::test]
-    #[ignore]
     async fn test_create_formula() {
+        if !ensure_db_available().await {
+            eprintln!("⏭ 跳过: 数据库未运行 (localhost:5432)");
+            return;
+        }
         let pool = setup_test_pool().await.unwrap();
 
         let formula_id = Uuid::new_v4();
@@ -235,8 +269,11 @@ mod tests {
 
     // 需要实际的数据库连接和表结构
     #[tokio::test]
-    #[ignore]
     async fn test_create_project_phase() {
+        if !ensure_db_available().await {
+            eprintln!("⏭ 跳过: 数据库未运行 (localhost:5432)");
+            return;
+        }
         let pool = setup_test_pool().await.unwrap();
 
         // 先创建一个项目
@@ -300,8 +337,11 @@ mod tests {
     }
 
     #[tokio::test]
-    #[ignore]
     async fn test_audit_log_creation() {
+        if !ensure_db_available().await {
+            eprintln!("⏭ 跳过: 数据库未运行 (localhost:5432)");
+            return;
+        }
         let pool = setup_test_pool().await.unwrap();
 
         let audit_id = Uuid::new_v4();
@@ -332,8 +372,11 @@ mod tests {
 
     // 需要实际的数据库连接和表结构
     #[tokio::test]
-    #[ignore]
     async fn test_experiment_phase_advancement() {
+        if !ensure_db_available().await {
+            eprintln!("⏭ 跳过: 数据库未运行 (localhost:5432)");
+            return;
+        }
         let pool = setup_test_pool().await.unwrap();
 
         // 先创建一个项目

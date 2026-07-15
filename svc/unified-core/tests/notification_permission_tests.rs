@@ -12,6 +12,19 @@ use serde_json::{json, Value};
 
 const API_URL: &str = "http://localhost:8000";
 
+/// 检查 API 服务是否可用
+async fn ensure_api_available() -> bool {
+    reqwest::Client::builder()
+        .timeout(std::time::Duration::from_secs(2))
+        .build()
+        .unwrap()
+        .get(format!("{}/api/core/iam/auth/login", API_URL))
+        .send()
+        .await
+        .map(|resp| !resp.status().is_server_error())
+        .unwrap_or(false)
+}
+
 fn create_client() -> Client {
     Client::new()
 }
@@ -20,7 +33,7 @@ async fn login(username: &str, password: &str) -> Result<String, String> {
     let client = create_client();
 
     let response = client
-        .post(format!("{}/api/v1/auth/login", API_URL))
+        .post(format!("{}/api/core/iam/auth/login", API_URL))
         .json(&json!({ "username": username, "password": password }))
         .send()
         .await
@@ -85,14 +98,24 @@ async fn auth_request(
 // ==================== NOTIF-001: 查看通知列表 ====================
 
 #[tokio::test]
-#[ignore]
 async fn test_notif_001_list_notifications() {
+    if !ensure_api_available().await {
+        eprintln!("⏭ 跳过: API服务未运行 ({})", API_URL);
+        return;
+    }
     tracing::info!("测试 NOTIF-001: 查看通知列表");
 
     let token = login("admin", "admin123").await.expect("管理员登录失败");
     let client = create_client();
 
-    let result = auth_request(&client, &token, "GET", "/api/v1/notifications", None).await;
+    let result = auth_request(
+        &client,
+        &token,
+        "GET",
+        "/api/core/comm/notify/notifications",
+        None,
+    )
+    .await;
 
     match result {
         Ok((status, body)) => {
@@ -109,14 +132,24 @@ async fn test_notif_001_list_notifications() {
 // ==================== NOTIF-002: 查看未读通知 ====================
 
 #[tokio::test]
-#[ignore]
 async fn test_notif_002_list_unread() {
+    if !ensure_api_available().await {
+        eprintln!("⏭ 跳过: API服务未运行 ({})", API_URL);
+        return;
+    }
     tracing::info!("测试 NOTIF-002: 查看未读通知");
 
     let token = login("admin", "admin123").await.expect("管理员登录失败");
     let client = create_client();
 
-    let result = auth_request(&client, &token, "GET", "/api/v1/notifications/unread", None).await;
+    let result = auth_request(
+        &client,
+        &token,
+        "GET",
+        "/api/core/comm/notify/notifications/unread",
+        None,
+    )
+    .await;
 
     match result {
         Ok((status, body)) => {
@@ -133,15 +166,25 @@ async fn test_notif_002_list_unread() {
 // ==================== NOTIF-003: 标记通知已读 ====================
 
 #[tokio::test]
-#[ignore]
 async fn test_notif_003_mark_read() {
+    if !ensure_api_available().await {
+        eprintln!("⏭ 跳过: API服务未运行 ({})", API_URL);
+        return;
+    }
     tracing::info!("测试 NOTIF-003: 标记通知已读");
 
     let token = login("admin", "admin123").await.expect("管理员登录失败");
     let client = create_client();
 
     // 先获取通知列表
-    let list_result = auth_request(&client, &token, "GET", "/api/v1/notifications", None).await;
+    let list_result = auth_request(
+        &client,
+        &token,
+        "GET",
+        "/api/core/comm/notify/notifications",
+        None,
+    )
+    .await;
 
     match list_result {
         Ok((_, body)) => {
@@ -159,7 +202,7 @@ async fn test_notif_003_mark_read() {
                             &client,
                             &token,
                             "PUT",
-                            &format!("/api/v1/notifications/{}", note_id),
+                            &format!("/api/core/comm/notify/notifications/{}", note_id),
                             Some(json!({ "is_read": true })),
                         )
                         .await;
@@ -185,8 +228,11 @@ async fn test_notif_003_mark_read() {
 // ==================== NOTIF-004: 全部标记已读 ====================
 
 #[tokio::test]
-#[ignore]
 async fn test_notif_004_mark_all_read() {
+    if !ensure_api_available().await {
+        eprintln!("⏭ 跳过: API服务未运行 ({})", API_URL);
+        return;
+    }
     tracing::info!("测试 NOTIF-004: 全部标记已读");
 
     let token = login("admin", "admin123").await.expect("管理员登录失败");
@@ -196,7 +242,7 @@ async fn test_notif_004_mark_all_read() {
         &client,
         &token,
         "PUT",
-        "/api/v1/notifications/read-all",
+        "/api/core/comm/notify/notifications/read-all",
         None,
     )
     .await;
@@ -215,8 +261,11 @@ async fn test_notif_004_mark_all_read() {
 // ==================== NOTIF-005: 发送通知 ====================
 
 #[tokio::test]
-#[ignore]
 async fn test_notif_005_send_notification() {
+    if !ensure_api_available().await {
+        eprintln!("⏭ 跳过: API服务未运行 ({})", API_URL);
+        return;
+    }
     tracing::info!("测试 NOTIF-005: 发送通知");
 
     let token = login("admin", "admin123").await.expect("管理员登录失败");
@@ -255,8 +304,11 @@ async fn test_notif_005_send_notification() {
 // ==================== NOTIF-006: 广播通知 ====================
 
 #[tokio::test]
-#[ignore]
 async fn test_notif_006_broadcast_notification() {
+    if !ensure_api_available().await {
+        eprintln!("⏭ 跳过: API服务未运行 ({})", API_URL);
+        return;
+    }
     tracing::info!("测试 NOTIF-006: 广播通知");
 
     let token = login("admin", "admin123").await.expect("管理员登录失败");
@@ -294,8 +346,11 @@ async fn test_notif_006_broadcast_notification() {
 // ==================== NOTIF-007: 访问他人通知 ====================
 
 #[tokio::test]
-#[ignore]
 async fn test_notif_007_access_others_notification() {
+    if !ensure_api_available().await {
+        eprintln!("⏭ 跳过: API服务未运行 ({})", API_URL);
+        return;
+    }
     tracing::info!("测试 NOTIF-007: 访问他人通知");
 
     // 使用普通员工账号
@@ -310,7 +365,7 @@ async fn test_notif_007_access_others_notification() {
                 &client,
                 &token,
                 "GET",
-                &format!("/api/v1/notifications/{}", fake_notif_id),
+                &format!("/api/core/comm/notify/notifications/{}", fake_notif_id),
                 None,
             )
             .await;
@@ -334,8 +389,11 @@ async fn test_notif_007_access_others_notification() {
 // ==================== 测试总结 ====================
 
 #[tokio::test]
-#[ignore]
 async fn run_all_notification_tests_summary() {
+    if !ensure_api_available().await {
+        eprintln!("⏭ 跳过: API服务未运行 ({})", API_URL);
+        return;
+    }
     tracing::info!("========================================");
     tracing::info!("  Notification 权限测试套件");
     tracing::info!("========================================");

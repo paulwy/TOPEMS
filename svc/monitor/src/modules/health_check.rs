@@ -21,7 +21,7 @@ pub struct ServiceHealth {
 }
 
 pub fn create_routes() -> Router<ApiState> {
-    Router::new().route("/api/v1/monitor/health", get(get_service_health))
+    Router::new().route("/api/monitor/health", get(get_service_health))
 }
 
 async fn get_service_health(

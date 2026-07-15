@@ -37,6 +37,7 @@ import {
   useConsolidationScopes,
   useApproveConsolidationReport,
   usePublishConsolidationReport,
+  useGenerateConsolidationReport,
 } from '@/hooks/useConsolidation';
 import { useNotification } from '@/hooks/useNotification';
 import { StatsPageTemplate } from '@/components/templates/StatsPageTemplate';
@@ -80,7 +81,7 @@ const APPROVAL_STATUS_CONFIG: Record<string, { label: string; color: string }> =
 };
 
 export default function ConsolidationReportsPage() {
-  const { error: notifyError } = useNotification();
+  const { error: notifyError, success: notifySuccess } = useNotification();
 
   const [searchKeyword, setSearchKeyword] = useState('');
   const [selectedScope, setSelectedScope] = useState<string>('');
@@ -88,6 +89,13 @@ export default function ConsolidationReportsPage() {
   const [period, setPeriod] = useState(new Date().toISOString().slice(0, 7));
   const [selectedReport, setSelectedReport] = useState<ConsolidationReport | null>(null);
   const [showDetail, setShowDetail] = useState(false);
+  const [showGenerateModal, setShowGenerateModal] = useState(false);
+
+  const [generateFormData, setGenerateFormData] = useState({
+    scope_id: '',
+    report_type: '' as ConsolidationReportType | '',
+    period: new Date().toISOString().slice(0, 7),
+  });
 
   const { data: scopesData, error: scopesError } = useConsolidationScopes();
 
@@ -107,6 +115,7 @@ export default function ConsolidationReportsPage() {
 
   const approveReport = useApproveConsolidationReport();
   const publishReport = usePublishConsolidationReport();
+  const generateReport = useGenerateConsolidationReport();
 
   useEffect(() => {
     if (scopesError) notifyError('获取合并范围列表失败');
@@ -115,6 +124,34 @@ export default function ConsolidationReportsPage() {
   useEffect(() => {
     if (reportsError) notifyError('获取报表列表失败');
   }, [reportsError, notifyError]);
+
+  const handleOpenGenerateModal = () => {
+    setGenerateFormData({
+      scope_id: selectedScope || '',
+      report_type: reportType || '',
+      period,
+    });
+    setShowGenerateModal(true);
+  };
+
+  const handleGenerateReport = async () => {
+    if (!generateFormData.scope_id || !generateFormData.report_type || !generateFormData.period) {
+      notifyError('请填写完整的生成条件');
+      return;
+    }
+
+    await generateReport.mutateAsync({
+      scope_id: generateFormData.scope_id,
+      report_type: generateFormData.report_type,
+      period: generateFormData.period,
+      include_prior_period: false,
+      auto_eliminate: true,
+    });
+
+    notifySuccess('合并报表生成任务已提交');
+    setShowGenerateModal(false);
+    refetch();
+  };
 
   const handleViewReport = (report: ConsolidationReport) => {
     setSelectedReport(report);
@@ -283,7 +320,7 @@ export default function ConsolidationReportsPage() {
 
       <Button
         variant='contained'
-        onClick={() => { /* TODO: 打开生成合并报表弹窗 */ }}
+        onClick={handleOpenGenerateModal}
       >
         <Plus sx={{ width: 16, height: 16, marginRight: 8 }} />
         生成合并报表
@@ -565,6 +602,92 @@ export default function ConsolidationReportsPage() {
           </DialogActions>
         </Dialog>
       )}
+
+      {/* 生成合并报表弹窗 */}
+      <Dialog
+        open={showGenerateModal}
+        onClose={() => setShowGenerateModal(false)}
+        maxWidth='sm'
+        fullWidth
+      >
+        <DialogTitle>生成合并报表</DialogTitle>
+        <DialogContent>
+          <Box sx={{ pt: 1, display: 'flex', flexDirection: 'column', gap: 2 }}>
+            <FormControl fullWidth>
+              <InputLabel>合并范围 *</InputLabel>
+              <Select
+                value={generateFormData.scope_id}
+                label='合并范围'
+                onChange={(e) =>
+                  setGenerateFormData({ ...generateFormData, scope_id: e.target.value })
+                }
+              >
+                <MenuItem value=''>请选择合并范围</MenuItem>
+                {scopesData?.items?.map((scope) => (
+                  <MenuItem
+                    key={scope.id}
+                    value={scope.id}
+                  >
+                    {scope.name}
+                  </MenuItem>
+                ))}
+              </Select>
+            </FormControl>
+            <FormControl fullWidth>
+              <InputLabel>报表类型 *</InputLabel>
+              <Select
+                value={generateFormData.report_type}
+                label='报表类型'
+                onChange={(e) =>
+                  setGenerateFormData({
+                    ...generateFormData,
+                    report_type: e.target.value as ConsolidationReportType,
+                  })
+                }
+              >
+                <MenuItem value=''>请选择报表类型</MenuItem>
+                {Object.entries(REPORT_TYPE_CONFIG).map(([key, config]) => (
+                  <MenuItem
+                    key={key}
+                    value={key}
+                  >
+                    {config.name}
+                  </MenuItem>
+                ))}
+              </Select>
+            </FormControl>
+            <TextField
+              fullWidth
+              type='month'
+              label='会计期间 *'
+              value={generateFormData.period}
+              onChange={(e) => setGenerateFormData({ ...generateFormData, period: e.target.value })}
+            />
+            <Typography
+              variant='body2'
+              color='text.secondary'
+              sx={{ mt: 2 }}
+            >
+              生成报表可能需要几分钟时间，系统将在后台处理。
+            </Typography>
+          </Box>
+        </DialogContent>
+        <DialogActions>
+          <Button
+            variant='outlined'
+            onClick={() => setShowGenerateModal(false)}
+          >
+            取消
+          </Button>
+          <Button
+            variant='contained'
+            onClick={handleGenerateReport}
+            disabled={generateReport.isPending}
+          >
+            {generateReport.isPending ? '生成中...' : '生成报表'}
+          </Button>
+        </DialogActions>
+      </Dialog>
     </PageContainer>
   );
 }

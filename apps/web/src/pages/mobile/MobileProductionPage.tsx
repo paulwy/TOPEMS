@@ -50,7 +50,9 @@ import {
 import { useNotificationStore, useAuthStore } from '@/store';
 import { mobileApi, type ProductionOrder, type WorkReport, type Equipment } from '@/api/mobile';
 import { apiLogger } from '@/utils/logger';
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { MOBILE_PATHS } from '@/modules/mobile/config';
+import { PageContainer } from '@/components/common';
 
 const MobileProductionPage: React.FC = () => {
   const theme = useTheme();
@@ -58,11 +60,7 @@ const MobileProductionPage: React.FC = () => {
   const { user } = useAuthStore();
   const { addNotification } = useNotificationStore();
   const [activeTab, setActiveTab] = useState(0);
-  const [loading, setLoading] = useState(true);
   const [searchQuery, setSearchQuery] = useState('');
-  const [productionOrders, setProductionOrders] = useState<ProductionOrder[]>([]);
-  const [workReports, setWorkReports] = useState<WorkReport[]>([]);
-  const [equipmentList, setEquipmentList] = useState<Equipment[]>([]);
   const [reportDialogOpen, setReportDialogOpen] = useState(false);
   const [selectedOrder, setSelectedOrder] = useState<ProductionOrder | null>(null);
   const [reportForm, setReportForm] = useState({
@@ -73,9 +71,11 @@ const MobileProductionPage: React.FC = () => {
 
   const tabs = ['生产工单', '报工记录', '设备状态'];
 
-  const loadData = useCallback(async () => {
-    setLoading(true);
-    try {
+  const queryClient = useQueryClient();
+
+  const ordersQuery = useQuery<ProductionOrder[]>({
+    queryKey: ['mobile-production-orders', user?.fullName],
+    queryFn: async () => {
       const mockOrders: ProductionOrder[] = [
         {
           id: '1',
@@ -137,7 +137,15 @@ const MobileProductionPage: React.FC = () => {
           created_at: '2024-06-28T08:30:00Z',
         },
       ];
+      return mockOrders;
+    },
+    staleTime: 5 * 60 * 1000,
+  });
+  const productionOrders = ordersQuery.data ?? [];
 
+  const reportsQuery = useQuery<WorkReport[]>({
+    queryKey: ['mobile-production-reports', user?.fullName],
+    queryFn: async () => {
       const mockReports: WorkReport[] = [
         {
           id: '1',
@@ -182,7 +190,15 @@ const MobileProductionPage: React.FC = () => {
           created_at: '2024-06-25T17:00:00Z',
         },
       ];
+      return mockReports;
+    },
+    staleTime: 5 * 60 * 1000,
+  });
+  const workReports = reportsQuery.data ?? [];
 
+  const equipmentQuery = useQuery<Equipment[]>({
+    queryKey: ['mobile-production-equipment'],
+    queryFn: async () => {
       const mockEquipment: Equipment[] = [
         {
           id: '1',
@@ -240,24 +256,35 @@ const MobileProductionPage: React.FC = () => {
           running_hours: 6780,
         },
       ];
-
-      setProductionOrders(mockOrders);
-      setWorkReports(mockReports);
-      setEquipmentList(mockEquipment);
-    } catch (err) {
-      apiLogger.error('加载生产数据失败:', err);
-    } finally {
-      setLoading(false);
-    }
-  }, [user?.fullName]);
+      return mockEquipment;
+    },
+    staleTime: 5 * 60 * 1000,
+  });
+  const equipmentList = equipmentQuery.data ?? [];
+  const loading = ordersQuery.isLoading || reportsQuery.isLoading || equipmentQuery.isLoading;
 
   useEffect(() => {
-    loadData();
-  }, [loadData]);
+    if (ordersQuery.isError) {
+      apiLogger.error('加载生产工单失败:', ordersQuery.error);
+    }
+    if (reportsQuery.isError) {
+      apiLogger.error('加载报工记录失败:', reportsQuery.error);
+    }
+    if (equipmentQuery.isError) {
+      apiLogger.error('加载设备数据失败:', equipmentQuery.error);
+    }
+  }, [
+    ordersQuery.isError,
+    ordersQuery.error,
+    reportsQuery.isError,
+    reportsQuery.error,
+    equipmentQuery.isError,
+    equipmentQuery.error,
+  ]);
 
   const handleRefresh = useCallback(async () => {
-    await loadData();
-  }, [loadData]);
+    await Promise.all([ordersQuery.refetch(), reportsQuery.refetch(), equipmentQuery.refetch()]);
+  }, [ordersQuery, reportsQuery, equipmentQuery]);
 
   const handleTabChange = (_event: React.SyntheticEvent, newValue: number) => {
     setActiveTab(newValue);
@@ -327,25 +354,8 @@ const MobileProductionPage: React.FC = () => {
     setReportDialogOpen(true);
   };
 
-  const handleSubmitReport = async () => {
-    if (reportForm.quantity <= 0) {
-      addNotification({
-        title: '请输入数量',
-        message: '请输入报工数量',
-        type: 'warning',
-      });
-      return;
-    }
-    if (reportForm.good_quantity + reportForm.bad_quantity !== reportForm.quantity) {
-      addNotification({
-        title: '数量不匹配',
-        message: '合格数+不合格数应等于总数量',
-        type: 'warning',
-      });
-      return;
-    }
-
-    try {
+  const submitReportMutation = useMutation({
+    mutationFn: async () => {
       await new Promise((resolve) => setTimeout(resolve, 1000));
       const now = new Date();
       const newReport: WorkReport = {
@@ -362,60 +372,101 @@ const MobileProductionPage: React.FC = () => {
         duration: 120,
         created_at: now.toISOString(),
       };
-      setWorkReports((prev) => [newReport, ...prev]);
-
+      return newReport;
+    },
+    onSuccess: (newReport) => {
+      queryClient.setQueryData<WorkReport[]>(
+        ['mobile-production-reports', user?.fullName],
+        (prev) => [newReport, ...(prev ?? [])]
+      );
       if (selectedOrder) {
-        setProductionOrders((prev) =>
-          prev.map((o) => {
-            if (o.id === selectedOrder.id) {
-              const newCompleted = o.completed_quantity + reportForm.quantity;
-              return {
-                ...o,
-                completed_quantity: newCompleted,
-                status: newCompleted >= o.quantity ? 'completed' : 'in_progress',
-              };
-            }
-            return o;
-          })
+        queryClient.setQueryData<ProductionOrder[]>(
+          ['mobile-production-orders', user?.fullName],
+          (prev) =>
+            (prev ?? []).map((o) => {
+              if (o.id === selectedOrder.id) {
+                const newCompleted = o.completed_quantity + reportForm.quantity;
+                return {
+                  ...o,
+                  completed_quantity: newCompleted,
+                  status: newCompleted >= o.quantity ? 'completed' : 'in_progress',
+                };
+              }
+              return o;
+            })
         );
       }
-
       setReportDialogOpen(false);
       addNotification({
         title: '报工成功',
         message: `已报工 ${reportForm.quantity} 件`,
         type: 'success',
       });
-    } catch (err) {
+    },
+    onError: (err: unknown) => {
       apiLogger.error('报工失败:', err);
       addNotification({
         title: '报工失败',
         message: '报工失败，请重试',
         type: 'error',
       });
+    },
+  });
+
+  const handleSubmitReport = () => {
+    if (reportForm.quantity <= 0) {
+      addNotification({
+        title: '请输入数量',
+        message: '请输入报工数量',
+        type: 'warning',
+      });
+      return;
     }
+    if (reportForm.good_quantity + reportForm.bad_quantity !== reportForm.quantity) {
+      addNotification({
+        title: '数量不匹配',
+        message: '合格数+不合格数应等于总数量',
+        type: 'warning',
+      });
+      return;
+    }
+    submitReportMutation.mutate();
   };
 
+  const updateOrderStatusMutation = useMutation({
+    mutationFn: async (params: {
+      order: ProductionOrder;
+      action: 'start' | 'pause' | 'resume';
+    }) => {
+      return params;
+    },
+    onSuccess: ({ order, action }) => {
+      queryClient.setQueryData<ProductionOrder[]>(
+        ['mobile-production-orders', user?.fullName],
+        (prev) =>
+          (prev ?? []).map((o) => {
+            if (o.id === order.id) {
+              if (action === 'start') {
+                return { ...o, status: 'in_progress', start_time: new Date().toISOString() };
+              } else if (action === 'pause') {
+                return { ...o, status: 'paused' };
+              } else {
+                return { ...o, status: 'in_progress' };
+              }
+            }
+            return o;
+          })
+      );
+      addNotification({
+        title: '操作成功',
+        message: '工单状态已更新',
+        type: 'success',
+      });
+    },
+  });
+
   const handleOrderAction = (order: ProductionOrder, action: 'start' | 'pause' | 'resume') => {
-    setProductionOrders((prev) =>
-      prev.map((o) => {
-        if (o.id === order.id) {
-          if (action === 'start') {
-            return { ...o, status: 'in_progress', start_time: new Date().toISOString() };
-          } else if (action === 'pause') {
-            return { ...o, status: 'paused' };
-          } else {
-            return { ...o, status: 'in_progress' };
-          }
-        }
-        return o;
-      })
-    );
-    addNotification({
-      title: '操作成功',
-      message: '工单状态已更新',
-      type: 'success',
-    });
+    updateOrderStatusMutation.mutate({ order, action });
   };
 
   const handleBottomTabChange = (tabId: string) => {
@@ -472,502 +523,509 @@ const MobileProductionPage: React.FC = () => {
         </IconButton>
       }
     >
-      <Tabs
-        value={activeTab}
-        onChange={handleTabChange}
-        variant='fullWidth'
-        sx={{
-          '& .MuiTab-root': {
-            minHeight: 44,
-            fontSize: '0.875rem',
-          },
-        }}
+      <PageContainer
+        autoTitle={false}
+        autoBreadcrumbs={false}
+        padding={false}
+        maxWidth={false}
       >
-        {tabs.map((tab, index) => (
-          <Tab
-            key={index}
-            label={tab}
-          />
-        ))}
-      </Tabs>
+        <Tabs
+          value={activeTab}
+          onChange={handleTabChange}
+          variant='fullWidth'
+          sx={{
+            '& .MuiTab-root': {
+              minHeight: 44,
+              fontSize: '0.875rem',
+            },
+          }}
+        >
+          {tabs.map((tab, index) => (
+            <Tab
+              key={index}
+              label={tab}
+            />
+          ))}
+        </Tabs>
 
-      {activeTab === 0 && (
-        <Box sx={{ px: 2, pt: 2 }}>
-          <TextField
-            fullWidth
-            size='small'
-            placeholder='搜索产品名称、工单编号'
-            value={searchQuery}
-            onChange={(e) => setSearchQuery(e.target.value)}
-            sx={{
-              mb: 2,
-              '& .MuiOutlinedInput-root': {
-                borderRadius: 2,
-                minHeight: 44,
-              },
-            }}
-            slotProps={{
-              input: {
-                startAdornment: (
-                  <InputAdornment position='start'>
-                    <Search style={{ width: 20, height: 20 }} />
-                  </InputAdornment>
-                ),
-              },
-            }}
-          />
-        </Box>
-      )}
+        {activeTab === 0 && (
+          <Box sx={{ px: 2, pt: 2 }}>
+            <TextField
+              fullWidth
+              size='small'
+              placeholder='搜索产品名称、工单编号'
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              sx={{
+                mb: 2,
+                '& .MuiOutlinedInput-root': {
+                  borderRadius: 2,
+                  minHeight: 44,
+                },
+              }}
+              slotProps={{
+                input: {
+                  startAdornment: (
+                    <InputAdornment position='start'>
+                      <Search style={{ width: 20, height: 20 }} />
+                    </InputAdornment>
+                  ),
+                },
+              }}
+            />
+          </Box>
+        )}
 
-      <PullToRefresh onRefresh={handleRefresh}>
-        {loading ? (
-          <MobileSkeleton
-            type='list'
-            count={6}
-          />
-        ) : (
-          <>
-            {activeTab === 0 && (
-              <List disablePadding>
-                {filteredOrders.map((order, index) => {
-                  const progress = (order.completed_quantity / order.quantity) * 100;
-                  return (
-                    <React.Fragment key={order.id}>
-                      <Paper
-                        elevation={0}
-                        sx={{
-                          mx: 2,
-                          my: 1,
-                          p: 2,
-                          borderRadius: 2,
-                          border: 1,
-                          borderColor: 'divider',
-                        }}
-                      >
-                        <Box
+        <PullToRefresh onRefresh={handleRefresh}>
+          {loading ? (
+            <MobileSkeleton
+              type='list'
+              count={6}
+            />
+          ) : (
+            <>
+              {activeTab === 0 && (
+                <List disablePadding>
+                  {filteredOrders.map((order, index) => {
+                    const progress = (order.completed_quantity / order.quantity) * 100;
+                    return (
+                      <React.Fragment key={order.id}>
+                        <Paper
+                          elevation={0}
                           sx={{
-                            display: 'flex',
-                            alignItems: 'center',
-                            justifyContent: 'space-between',
-                            mb: 1.5,
-                          }}
-                        >
-                          <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-                            <Chip
-                              label={getStatusLabel(order.status)}
-                              size='small'
-                              color={getStatusColor(order.status) as any}
-                              sx={{ height: 20, fontSize: '0.7rem' }}
-                            />
-                            <Typography
-                              variant='caption'
-                              color='text.secondary'
-                            >
-                              {order.order_no}
-                            </Typography>
-                          </Box>
-                        </Box>
-                        <Typography
-                          variant='subtitle2'
-                          sx={{ fontWeight: 600, mb: 1 }}
-                        >
-                          {order.product_name}
-                        </Typography>
-                        <Box sx={{ display: 'flex', gap: 2, mb: 1.5 }}>
-                          <Box>
-                            <Typography
-                              variant='caption'
-                              color='text.secondary'
-                              sx={{ display: 'block', mb: 0.5 }}
-                            >
-                              计划数量
-                            </Typography>
-                            <Typography variant='body2'>{order.quantity}</Typography>
-                          </Box>
-                          <Box>
-                            <Typography
-                              variant='caption'
-                              color='text.secondary'
-                              sx={{ display: 'block', mb: 0.5 }}
-                            >
-                              已完成
-                            </Typography>
-                            <Typography variant='body2'>{order.completed_quantity}</Typography>
-                          </Box>
-                          <Box>
-                            <Typography
-                              variant='caption'
-                              color='text.secondary'
-                              sx={{ display: 'block', mb: 0.5 }}
-                            >
-                              工位
-                            </Typography>
-                            <Typography variant='body2'>{order.workstation}</Typography>
-                          </Box>
-                        </Box>
-                        <Box sx={{ mb: 1.5 }}>
-                          <Box
-                            sx={{
-                              display: 'flex',
-                              justifyContent: 'space-between',
-                              mb: 0.5,
-                            }}
-                          >
-                            <Typography
-                              variant='caption'
-                              color='text.secondary'
-                            >
-                              生产进度
-                            </Typography>
-                            <Typography variant='caption'>{progress.toFixed(1)}%</Typography>
-                          </Box>
-                          <Box
-                            sx={{
-                              width: '100%',
-                              height: 6,
-                              bgcolor: 'grey.200',
-                              borderRadius: 3,
-                              overflow: 'hidden',
-                            }}
-                          >
-                            <Box
-                              sx={{
-                                width: `${progress}%`,
-                                height: '100%',
-                                bgcolor:
-                                  order.status === 'completed' ? 'success.main' : 'primary.main',
-                                borderRadius: 3,
-                                transition: 'width 0.3s',
-                              }}
-                            />
-                          </Box>
-                        </Box>
-                        <Box
-                          sx={{
-                            display: 'flex',
-                            alignItems: 'center',
-                            justifyContent: 'space-between',
-                            pt: 1.5,
-                            borderTop: 1,
+                            mx: 2,
+                            my: 1,
+                            p: 2,
+                            borderRadius: 2,
+                            border: 1,
                             borderColor: 'divider',
                           }}
                         >
-                          <Typography
-                            variant='caption'
-                            color='text.secondary'
+                          <Box
+                            sx={{
+                              display: 'flex',
+                              alignItems: 'center',
+                              justifyContent: 'space-between',
+                              mb: 1.5,
+                            }}
                           >
-                            截止: {order.due_date}
-                          </Typography>
-                          <Box sx={{ display: 'flex', gap: 1 }}>
-                            {order.status === 'pending' && (
-                              <MobileButton
+                            <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                              <Chip
+                                label={getStatusLabel(order.status)}
                                 size='small'
-                                variant='contained'
-                                startIcon={<Play style={{ width: 16, height: 16 }} />}
-                                onClick={() => handleOrderAction(order, 'start')}
+                                color={getStatusColor(order.status) as any}
+                                sx={{ height: 20, fontSize: '0.7rem' }}
+                              />
+                              <Typography
+                                variant='caption'
+                                color='text.secondary'
                               >
-                                开始
-                              </MobileButton>
-                            )}
-                            {order.status === 'in_progress' && (
-                              <>
-                                <MobileButton
-                                  size='small'
-                                  variant='outlined'
-                                  startIcon={<Pause style={{ width: 16, height: 16 }} />}
-                                  onClick={() => handleOrderAction(order, 'pause')}
-                                >
-                                  暂停
-                                </MobileButton>
+                                {order.order_no}
+                              </Typography>
+                            </Box>
+                          </Box>
+                          <Typography
+                            variant='subtitle2'
+                            sx={{ fontWeight: 600, mb: 1 }}
+                          >
+                            {order.product_name}
+                          </Typography>
+                          <Box sx={{ display: 'flex', gap: 2, mb: 1.5 }}>
+                            <Box>
+                              <Typography
+                                variant='caption'
+                                color='text.secondary'
+                                sx={{ display: 'block', mb: 0.5 }}
+                              >
+                                计划数量
+                              </Typography>
+                              <Typography variant='body2'>{order.quantity}</Typography>
+                            </Box>
+                            <Box>
+                              <Typography
+                                variant='caption'
+                                color='text.secondary'
+                                sx={{ display: 'block', mb: 0.5 }}
+                              >
+                                已完成
+                              </Typography>
+                              <Typography variant='body2'>{order.completed_quantity}</Typography>
+                            </Box>
+                            <Box>
+                              <Typography
+                                variant='caption'
+                                color='text.secondary'
+                                sx={{ display: 'block', mb: 0.5 }}
+                              >
+                                工位
+                              </Typography>
+                              <Typography variant='body2'>{order.workstation}</Typography>
+                            </Box>
+                          </Box>
+                          <Box sx={{ mb: 1.5 }}>
+                            <Box
+                              sx={{
+                                display: 'flex',
+                                justifyContent: 'space-between',
+                                mb: 0.5,
+                              }}
+                            >
+                              <Typography
+                                variant='caption'
+                                color='text.secondary'
+                              >
+                                生产进度
+                              </Typography>
+                              <Typography variant='caption'>{progress.toFixed(1)}%</Typography>
+                            </Box>
+                            <Box
+                              sx={{
+                                width: '100%',
+                                height: 6,
+                                bgcolor: 'grey.200',
+                                borderRadius: 3,
+                                overflow: 'hidden',
+                              }}
+                            >
+                              <Box
+                                sx={{
+                                  width: `${progress}%`,
+                                  height: '100%',
+                                  bgcolor:
+                                    order.status === 'completed' ? 'success.main' : 'primary.main',
+                                  borderRadius: 3,
+                                  transition: 'width 0.3s',
+                                }}
+                              />
+                            </Box>
+                          </Box>
+                          <Box
+                            sx={{
+                              display: 'flex',
+                              alignItems: 'center',
+                              justifyContent: 'space-between',
+                              pt: 1.5,
+                              borderTop: 1,
+                              borderColor: 'divider',
+                            }}
+                          >
+                            <Typography
+                              variant='caption'
+                              color='text.secondary'
+                            >
+                              截止: {order.due_date}
+                            </Typography>
+                            <Box sx={{ display: 'flex', gap: 1 }}>
+                              {order.status === 'pending' && (
                                 <MobileButton
                                   size='small'
                                   variant='contained'
-                                  startIcon={<Plus style={{ width: 16, height: 16 }} />}
-                                  onClick={() => handleStartReport(order)}
+                                  startIcon={<Play style={{ width: 16, height: 16 }} />}
+                                  onClick={() => handleOrderAction(order, 'start')}
                                 >
-                                  报工
+                                  开始
                                 </MobileButton>
-                              </>
-                            )}
-                            {order.status === 'paused' && (
-                              <MobileButton
-                                size='small'
-                                variant='contained'
-                                startIcon={<Play style={{ width: 16, height: 16 }} />}
-                                onClick={() => handleOrderAction(order, 'resume')}
-                              >
-                                继续
-                              </MobileButton>
-                            )}
-                            {order.status === 'completed' && (
-                              <MobileButton
-                                size='small'
-                                variant='outlined'
-                                onClick={() =>
-                                  addNotification({
-                                    title: '查看详情',
-                                    message: '查看工单详情',
-                                    type: 'info',
-                                  })
-                                }
-                              >
-                                详情
-                              </MobileButton>
-                            )}
+                              )}
+                              {order.status === 'in_progress' && (
+                                <>
+                                  <MobileButton
+                                    size='small'
+                                    variant='outlined'
+                                    startIcon={<Pause style={{ width: 16, height: 16 }} />}
+                                    onClick={() => handleOrderAction(order, 'pause')}
+                                  >
+                                    暂停
+                                  </MobileButton>
+                                  <MobileButton
+                                    size='small'
+                                    variant='contained'
+                                    startIcon={<Plus style={{ width: 16, height: 16 }} />}
+                                    onClick={() => handleStartReport(order)}
+                                  >
+                                    报工
+                                  </MobileButton>
+                                </>
+                              )}
+                              {order.status === 'paused' && (
+                                <MobileButton
+                                  size='small'
+                                  variant='contained'
+                                  startIcon={<Play style={{ width: 16, height: 16 }} />}
+                                  onClick={() => handleOrderAction(order, 'resume')}
+                                >
+                                  继续
+                                </MobileButton>
+                              )}
+                              {order.status === 'completed' && (
+                                <MobileButton
+                                  size='small'
+                                  variant='outlined'
+                                  onClick={() =>
+                                    addNotification({
+                                      title: '查看详情',
+                                      message: '查看工单详情',
+                                      type: 'info',
+                                    })
+                                  }
+                                >
+                                  详情
+                                </MobileButton>
+                              )}
+                            </Box>
                           </Box>
-                        </Box>
-                      </Paper>
-                      {index < filteredOrders.length - 1 && <Divider sx={{ mx: 2 }} />}
+                        </Paper>
+                        {index < filteredOrders.length - 1 && <Divider sx={{ mx: 2 }} />}
+                      </React.Fragment>
+                    );
+                  })}
+                </List>
+              )}
+
+              {activeTab === 1 && (
+                <List disablePadding>
+                  {workReports.map((report, index) => (
+                    <React.Fragment key={report.id}>
+                      <MobileCard
+                        leftIcon={
+                          <Avatar
+                            sx={{
+                              width: 40,
+                              height: 40,
+                              bgcolor: 'primary.lighter',
+                              color: 'primary.main',
+                            }}
+                          >
+                            <ClipboardList style={{ width: 20, height: 20 }} />
+                          </Avatar>
+                        }
+                        title={report.order_no}
+                        subtitle={
+                          <Box sx={{ mt: 0.5 }}>
+                            <Typography
+                              variant='body2'
+                              sx={{ mb: 0.5 }}
+                            >
+                              {report.workstation}
+                            </Typography>
+                            <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                              <Chip
+                                label={`合格 ${report.good_quantity}`}
+                                size='small'
+                                color='success'
+                                sx={{ height: 18, fontSize: '0.65rem' }}
+                              />
+                              <Chip
+                                label={`不良 ${report.bad_quantity}`}
+                                size='small'
+                                color='error'
+                                sx={{ height: 18, fontSize: '0.65rem' }}
+                              />
+                            </Box>
+                          </Box>
+                        }
+                        showArrow
+                        divider={index < workReports.length - 1}
+                        rightContent={
+                          <Box sx={{ textAlign: 'right' }}>
+                            <Typography
+                              variant='subtitle2'
+                              sx={{ fontWeight: 600 }}
+                            >
+                              {report.quantity}件
+                            </Typography>
+                            <Typography
+                              variant='caption'
+                              color='text.secondary'
+                            >
+                              {Math.floor(report.duration / 60)}h{report.duration % 60}m
+                            </Typography>
+                          </Box>
+                        }
+                        badge={
+                          <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5 }}>
+                            <Clock
+                              style={{ width: 12, height: 12, color: theme.palette.text.secondary }}
+                            />
+                            <Typography
+                              variant='caption'
+                              color='text.secondary'
+                            >
+                              {new Date(report.created_at).toLocaleDateString('zh-CN')}
+                            </Typography>
+                          </Box>
+                        }
+                        onClick={() =>
+                          addNotification({
+                            title: '报工详情',
+                            message: `查看 ${report.order_no} 报工详情`,
+                            type: 'info',
+                          })
+                        }
+                      />
                     </React.Fragment>
-                  );
-                })}
-              </List>
-            )}
+                  ))}
+                </List>
+              )}
 
-            {activeTab === 1 && (
-              <List disablePadding>
-                {workReports.map((report, index) => (
-                  <React.Fragment key={report.id}>
-                    <MobileCard
-                      leftIcon={
-                        <Avatar
-                          sx={{
-                            width: 40,
-                            height: 40,
-                            bgcolor: 'primary.lighter',
-                            color: 'primary.main',
-                          }}
-                        >
-                          <ClipboardList style={{ width: 20, height: 20 }} />
-                        </Avatar>
-                      }
-                      title={report.order_no}
-                      subtitle={
-                        <Box sx={{ mt: 0.5 }}>
-                          <Typography
-                            variant='body2'
-                            sx={{ mb: 0.5 }}
+              {activeTab === 2 && (
+                <List disablePadding>
+                  {equipmentList.map((equipment, index) => (
+                    <React.Fragment key={equipment.id}>
+                      <MobileCard
+                        leftIcon={
+                          <Avatar
+                            sx={{
+                              width: 40,
+                              height: 40,
+                              bgcolor: `${getStatusColor(equipment.status)}.lighter`,
+                              color: `${getStatusColor(equipment.status)}.main`,
+                            }}
                           >
-                            {report.workstation}
-                          </Typography>
-                          <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                            <Monitor style={{ width: 20, height: 20 }} />
+                          </Avatar>
+                        }
+                        title={equipment.name}
+                        subtitle={
+                          <Box sx={{ mt: 0.5 }}>
+                            <Typography
+                              variant='caption'
+                              color='text.secondary'
+                              sx={{ display: 'block', mb: 0.5 }}
+                            >
+                              {equipment.equipment_no} · {equipment.location}
+                            </Typography>
                             <Chip
-                              label={`合格 ${report.good_quantity}`}
+                              label={getStatusLabel(equipment.status)}
                               size='small'
-                              color='success'
-                              sx={{ height: 18, fontSize: '0.65rem' }}
-                            />
-                            <Chip
-                              label={`不良 ${report.bad_quantity}`}
-                              size='small'
-                              color='error'
+                              color={getStatusColor(equipment.status) as any}
                               sx={{ height: 18, fontSize: '0.65rem' }}
                             />
                           </Box>
-                        </Box>
-                      }
-                      showArrow
-                      divider={index < workReports.length - 1}
-                      rightContent={
-                        <Box sx={{ textAlign: 'right' }}>
-                          <Typography
-                            variant='subtitle2'
-                            sx={{ fontWeight: 600 }}
-                          >
-                            {report.quantity}件
-                          </Typography>
-                          <Typography
-                            variant='caption'
-                            color='text.secondary'
-                          >
-                            {Math.floor(report.duration / 60)}h{report.duration % 60}m
-                          </Typography>
-                        </Box>
-                      }
-                      badge={
-                        <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5 }}>
-                          <Clock
-                            style={{ width: 12, height: 12, color: theme.palette.text.secondary }}
-                          />
-                          <Typography
-                            variant='caption'
-                            color='text.secondary'
-                          >
-                            {new Date(report.created_at).toLocaleDateString('zh-CN')}
-                          </Typography>
-                        </Box>
-                      }
-                      onClick={() =>
-                        addNotification({
-                          title: '报工详情',
-                          message: `查看 ${report.order_no} 报工详情`,
-                          type: 'info',
-                        })
-                      }
-                    />
-                  </React.Fragment>
-                ))}
-              </List>
-            )}
+                        }
+                        showArrow
+                        divider={index < equipmentList.length - 1}
+                        rightContent={
+                          <Box sx={{ textAlign: 'right' }}>
+                            <Typography
+                              variant='caption'
+                              color='text.secondary'
+                              sx={{ display: 'block', mb: 0.5 }}
+                            >
+                              运行时长
+                            </Typography>
+                            <Typography variant='body2'>
+                              {equipment.running_hours.toLocaleString()}h
+                            </Typography>
+                          </Box>
+                        }
+                        onClick={() =>
+                          addNotification({
+                            title: '设备详情',
+                            message: `查看 ${equipment.name} 详情`,
+                            type: 'info',
+                          })
+                        }
+                      />
+                    </React.Fragment>
+                  ))}
+                </List>
+              )}
+            </>
+          )}
+        </PullToRefresh>
 
-            {activeTab === 2 && (
-              <List disablePadding>
-                {equipmentList.map((equipment, index) => (
-                  <React.Fragment key={equipment.id}>
-                    <MobileCard
-                      leftIcon={
-                        <Avatar
-                          sx={{
-                            width: 40,
-                            height: 40,
-                            bgcolor: `${getStatusColor(equipment.status)}.lighter`,
-                            color: `${getStatusColor(equipment.status)}.main`,
-                          }}
-                        >
-                          <Monitor style={{ width: 20, height: 20 }} />
-                        </Avatar>
-                      }
-                      title={equipment.name}
-                      subtitle={
-                        <Box sx={{ mt: 0.5 }}>
-                          <Typography
-                            variant='caption'
-                            color='text.secondary'
-                            sx={{ display: 'block', mb: 0.5 }}
-                          >
-                            {equipment.equipment_no} · {equipment.location}
-                          </Typography>
-                          <Chip
-                            label={getStatusLabel(equipment.status)}
-                            size='small'
-                            color={getStatusColor(equipment.status) as any}
-                            sx={{ height: 18, fontSize: '0.65rem' }}
-                          />
-                        </Box>
-                      }
-                      showArrow
-                      divider={index < equipmentList.length - 1}
-                      rightContent={
-                        <Box sx={{ textAlign: 'right' }}>
-                          <Typography
-                            variant='caption'
-                            color='text.secondary'
-                            sx={{ display: 'block', mb: 0.5 }}
-                          >
-                            运行时长
-                          </Typography>
-                          <Typography variant='body2'>
-                            {equipment.running_hours.toLocaleString()}h
-                          </Typography>
-                        </Box>
-                      }
-                      onClick={() =>
-                        addNotification({
-                          title: '设备详情',
-                          message: `查看 ${equipment.name} 详情`,
-                          type: 'info',
-                        })
-                      }
-                    />
-                  </React.Fragment>
-                ))}
-              </List>
-            )}
-          </>
-        )}
-      </PullToRefresh>
-
-      <Dialog
-        open={reportDialogOpen}
-        onClose={() => setReportDialogOpen(false)}
-        fullWidth
-        maxWidth='sm'
-      >
-        <DialogTitle>生产报工</DialogTitle>
-        <DialogContent>
-          <Box sx={{ pt: 1, display: 'flex', flexDirection: 'column', gap: 2 }}>
-            {selectedOrder && (
-              <Paper
-                elevation={0}
-                sx={{
-                  p: 1.5,
-                  borderRadius: 1.5,
-                  bgcolor: 'grey.50',
-                }}
-              >
-                <Typography
-                  variant='caption'
-                  color='text.secondary'
-                  sx={{ display: 'block', mb: 0.5 }}
+        <Dialog
+          open={reportDialogOpen}
+          onClose={() => setReportDialogOpen(false)}
+          fullWidth
+          maxWidth='sm'
+        >
+          <DialogTitle>生产报工</DialogTitle>
+          <DialogContent>
+            <Box sx={{ pt: 1, display: 'flex', flexDirection: 'column', gap: 2 }}>
+              {selectedOrder && (
+                <Paper
+                  elevation={0}
+                  sx={{
+                    p: 1.5,
+                    borderRadius: 1.5,
+                    bgcolor: 'grey.50',
+                  }}
                 >
-                  当前工单
-                </Typography>
-                <Typography
-                  variant='body2'
-                  sx={{ fontWeight: 500 }}
-                >
-                  {selectedOrder.product_name}
-                </Typography>
-                <Typography
-                  variant='caption'
-                  color='text.secondary'
-                >
-                  {selectedOrder.order_no} · {selectedOrder.workstation}
-                </Typography>
-              </Paper>
-            )}
-            <TextField
-              fullWidth
-              type='number'
-              label='报工数量'
-              value={reportForm.quantity}
-              onChange={(e) =>
-                setReportForm((prev) => ({
-                  ...prev,
-                  quantity: parseInt(e.target.value) || 0,
-                }))
-              }
-              slotProps={{ input: { min: 0 } } as any}
-            />
-            <TextField
-              fullWidth
-              type='number'
-              label='合格数量'
-              value={reportForm.good_quantity}
-              onChange={(e) =>
-                setReportForm((prev) => ({
-                  ...prev,
-                  good_quantity: parseInt(e.target.value) || 0,
-                }))
-              }
-              slotProps={{ input: { min: 0 } } as any}
-            />
-            <TextField
-              fullWidth
-              type='number'
-              label='不良数量'
-              value={reportForm.bad_quantity}
-              onChange={(e) =>
-                setReportForm((prev) => ({
-                  ...prev,
-                  bad_quantity: parseInt(e.target.value) || 0,
-                }))
-              }
-              slotProps={{ input: { min: 0 } } as any}
-            />
-          </Box>
-        </DialogContent>
-        <DialogActions sx={{ px: 3, pb: 2 }}>
-          <Button onClick={() => setReportDialogOpen(false)}>取消</Button>
-          <MobileButton
-            variant='contained'
-            onClick={handleSubmitReport}
-            startIcon={<CheckSquare style={{ width: 18, height: 18 }} />}
-          >
-            提交报工
-          </MobileButton>
-        </DialogActions>
-      </Dialog>
+                  <Typography
+                    variant='caption'
+                    color='text.secondary'
+                    sx={{ display: 'block', mb: 0.5 }}
+                  >
+                    当前工单
+                  </Typography>
+                  <Typography
+                    variant='body2'
+                    sx={{ fontWeight: 500 }}
+                  >
+                    {selectedOrder.product_name}
+                  </Typography>
+                  <Typography
+                    variant='caption'
+                    color='text.secondary'
+                  >
+                    {selectedOrder.order_no} · {selectedOrder.workstation}
+                  </Typography>
+                </Paper>
+              )}
+              <TextField
+                fullWidth
+                type='number'
+                label='报工数量'
+                value={reportForm.quantity}
+                onChange={(e) =>
+                  setReportForm((prev) => ({
+                    ...prev,
+                    quantity: parseInt(e.target.value) || 0,
+                  }))
+                }
+                slotProps={{ input: { min: 0 } } as any}
+              />
+              <TextField
+                fullWidth
+                type='number'
+                label='合格数量'
+                value={reportForm.good_quantity}
+                onChange={(e) =>
+                  setReportForm((prev) => ({
+                    ...prev,
+                    good_quantity: parseInt(e.target.value) || 0,
+                  }))
+                }
+                slotProps={{ input: { min: 0 } } as any}
+              />
+              <TextField
+                fullWidth
+                type='number'
+                label='不良数量'
+                value={reportForm.bad_quantity}
+                onChange={(e) =>
+                  setReportForm((prev) => ({
+                    ...prev,
+                    bad_quantity: parseInt(e.target.value) || 0,
+                  }))
+                }
+                slotProps={{ input: { min: 0 } } as any}
+              />
+            </Box>
+          </DialogContent>
+          <DialogActions sx={{ px: 3, pb: 2 }}>
+            <Button onClick={() => setReportDialogOpen(false)}>取消</Button>
+            <MobileButton
+              variant='contained'
+              onClick={handleSubmitReport}
+              startIcon={<CheckSquare style={{ width: 18, height: 18 }} />}
+            >
+              提交报工
+            </MobileButton>
+          </DialogActions>
+        </Dialog>
+      </PageContainer>
     </MobileLayout>
   );
 };

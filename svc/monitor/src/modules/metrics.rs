@@ -115,30 +115,24 @@ pub struct PerformanceQueryParams {
 
 pub fn create_routes() -> Router<ApiState> {
     Router::new()
-        .route("/api/v1/monitor/metrics/system", get(get_system_metrics))
+        .route("/api/monitor/metrics/system", get(get_system_metrics))
+        .route("/api/monitor/metrics/database", get(get_database_metrics))
+        .route("/api/monitor/performance/api", get(get_api_performance))
+        .route("/api/monitor/performance/trend", get(get_performance_trend))
         .route(
-            "/api/v1/monitor/metrics/database",
-            get(get_database_metrics),
-        )
-        .route("/api/v1/monitor/performance/api", get(get_api_performance))
-        .route(
-            "/api/v1/monitor/performance/trend",
-            get(get_performance_trend),
-        )
-        .route(
-            "/api/v1/monitor/performance/services",
+            "/api/monitor/performance/services",
             get(get_service_performance),
         )
         .route(
-            "/api/v1/monitor/performance/summary",
+            "/api/monitor/performance/summary",
             get(get_performance_summary),
         )
         .route(
-            "/api/v1/monitor/performance/slow-queries",
+            "/api/monitor/performance/slow-queries",
             get(get_slow_queries),
         )
         .route(
-            "/api/v1/monitor/performance/export",
+            "/api/monitor/performance/export",
             post(export_performance_data),
         )
 }
@@ -202,7 +196,7 @@ async fn get_api_performance(
         ApiPerformance {
             id: Uuid::new_v4(),
             tenant_id: tenant_id,
-            endpoint: "/api/v1/customers".to_string(),
+            endpoint: "/api/customers".to_string(),
             method: "GET".to_string(),
             avg_response_time: 125.5,
             max_response_time: 500.2,
@@ -217,7 +211,7 @@ async fn get_api_performance(
         ApiPerformance {
             id: Uuid::new_v4(),
             tenant_id: tenant_id,
-            endpoint: "/api/v1/employees".to_string(),
+            endpoint: "/api/employees".to_string(),
             method: "GET".to_string(),
             avg_response_time: 98.2,
             max_response_time: 350.8,
@@ -232,7 +226,7 @@ async fn get_api_performance(
         ApiPerformance {
             id: Uuid::new_v4(),
             tenant_id: tenant_id,
-            endpoint: "/api/v1/projects".to_string(),
+            endpoint: "/api/projects".to_string(),
             method: "POST".to_string(),
             avg_response_time: 256.8,
             max_response_time: 800.5,

@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useMemo } from 'react';
+import React, { useState, useMemo } from 'react';
 import {
   Box,
   Typography,
@@ -13,12 +13,14 @@ import {
   Button,
 } from '@mui/material';
 import { Plus, Flag, Calendar, Link2, Eye, Edit } from 'lucide-react';
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { ListPageTemplate, type ColumnDef, type FilterConfig } from '@/components/templates';
 import { PageContainer } from '@/components/common';
 import { rdApi } from '@/api/rd';
 import { useNotificationStore } from '@/store';
 import type { Build, CreateBuildRequest } from '@/api/rd';
 import { logger } from '@/utils/logger';
+import { QUERY_KEYS } from '@/lib/reactQuery';
 
 interface Milestone {
   id: string;
@@ -31,12 +33,10 @@ interface Milestone {
 }
 
 const RsMilestonePage: React.FC = () => {
+  const queryClient = useQueryClient();
   const { addNotification } = useNotificationStore();
-  const [milestones, setMilestones] = useState<Milestone[]>([]);
-  const [loading, setLoading] = useState(false);
   const [page, setPage] = useState(0);
   const [rowsPerPage, setRowsPerPage] = useState(10);
-  const [total, setTotal] = useState(0);
   const [searchTerm, setSearchTerm] = useState('');
   const [statusFilter, setStatusFilter] = useState<string>('');
   const [dateRange, setDateRange] = useState<{ start: string; end: string }>({
@@ -53,13 +53,13 @@ const RsMilestonePage: React.FC = () => {
     related_project: '',
   });
 
-  useEffect(() => {
-    loadMilestones();
-  }, [searchTerm, statusFilter, page, rowsPerPage]);
-
-  const loadMilestones = async () => {
-    try {
-      setLoading(true);
+  const milestoneListQuery = useQuery({
+    queryKey: [
+      ...QUERY_KEYS.RD.BUILDS,
+      'milestones',
+      { page, rowsPerPage, searchTerm, statusFilter },
+    ],
+    queryFn: async () => {
       const params: Record<string, unknown> = {
         page: page + 1,
         pagesize: rowsPerPage,
@@ -68,39 +68,63 @@ const RsMilestonePage: React.FC = () => {
       if (statusFilter) params.status = statusFilter;
 
       const response = await rdApi.listBuilds(params);
-      if (response.success && response.data) {
-        const builds = response.data.builds || [];
-        const transformed = builds.map((b: Build) => ({
-          id: b.id,
-          name: `${b.build_no} - ${b.project_name}`,
-          start_date: b.created_at?.split('T')[0] || '',
-          end_date: b.created_at?.split('T')[0] || '',
-          progress:
-            b.status === 'success'
-              ? 100
-              : b.status === 'failed'
-                ? 0
-                : b.status === 'running'
-                  ? 50
-                  : 0,
-          related_project: b.project_name,
-          status:
-            b.status === 'success' ? 'completed' : b.status === 'running' ? 'active' : 'planning',
-        }));
-        setMilestones(transformed);
-        setTotal(response.data.total || 0);
+      if (!response.success || !response.data) {
+        throw new Error(response.message || '加载里程碑数据失败');
       }
-    } catch (error: unknown) {
-      logger.error('加载里程碑数据失败:', error);
+      const builds = response.data.builds || [];
+      const transformed = builds.map((b: Build) => ({
+        id: b.id,
+        name: `${b.build_no} - ${b.project_name}`,
+        start_date: b.created_at?.split('T')[0] || '',
+        end_date: b.created_at?.split('T')[0] || '',
+        progress:
+          b.status === 'success'
+            ? 100
+            : b.status === 'failed'
+              ? 0
+              : b.status === 'running'
+                ? 50
+                : 0,
+        related_project: b.project_name,
+        status:
+          b.status === 'success' ? 'completed' : b.status === 'running' ? 'active' : 'planning',
+      }));
+      return {
+        milestones: transformed,
+        total: response.data.total || 0,
+      };
+    },
+  });
+
+  const createBuildMutation = useMutation({
+    mutationFn: async (data: CreateBuildRequest) => {
+      const response = await rdApi.createBuild(data);
+      if (!response.success) {
+        throw new Error(response.message || '创建里程碑失败');
+      }
+      return response;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: [...QUERY_KEYS.RD.BUILDS, 'milestones'] });
+      addNotification({
+        type: 'success',
+        title: '创建成功',
+        message: '新里程碑已创建',
+      });
+    },
+    onError: (error: unknown) => {
+      logger.error('创建里程碑失败:', error);
       addNotification({
         type: 'error',
-        title: '加载失败',
-        message: '无法加载里程碑数据',
+        title: '操作失败',
+        message: error instanceof Error ? error.message : '无法创建里程碑',
       });
-    } finally {
-      setLoading(false);
-    }
-  };
+    },
+  });
+
+  const milestones = milestoneListQuery.data?.milestones || [];
+  const total = milestoneListQuery.data?.total || 0;
+  const loading = milestoneListQuery.isLoading || createBuildMutation.isPending;
 
   const getStatusColor = (status: string): 'success' | 'primary' | 'warning' | 'default' => {
     switch (status) {
@@ -154,12 +178,7 @@ const RsMilestonePage: React.FC = () => {
         commit_hash: 'HEAD',
         build_type: 'manual',
       };
-      await rdApi.createBuild(createData);
-      addNotification({
-        type: 'success',
-        title: '创建成功',
-        message: '新里程碑已创建',
-      });
+      await createBuildMutation.mutateAsync(createData);
       setNewMilestoneDialogOpen(false);
       setNewMilestoneForm({
         name: '',
@@ -167,14 +186,8 @@ const RsMilestonePage: React.FC = () => {
         end_date: '',
         related_project: '',
       });
-      loadMilestones();
-    } catch (error: unknown) {
-      logger.error('创建里程碑失败:', error);
-      addNotification({
-        type: 'error',
-        title: '创建失败',
-        message: '无法创建里程碑',
-      });
+    } catch {
+      // 错误已在 mutation onError 中处理
     }
   };
 

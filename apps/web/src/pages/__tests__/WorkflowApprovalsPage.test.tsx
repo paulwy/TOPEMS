@@ -9,8 +9,26 @@ vi.mock('@/api/workflow/approval', () => ({
       success: true,
       data: {
         items: [
-          { id: '1', task_name: '2024年度采购计划审批', workflow_name: '采购审批流程', initiator_id: '张三', status: 'pending', priority: 'medium', created_at: '2024-01-01', node_name: '审批节点' },
-          { id: '2', task_name: '2024年Q1市场预算审批', workflow_name: '预算审批流程', initiator_id: '李四', status: 'pending', priority: 'high', created_at: '2024-01-02', node_name: '审批节点' },
+          {
+            id: '1',
+            task_name: '2024年度采购计划审批',
+            workflow_name: '采购审批流程',
+            initiator_id: '张三',
+            status: 'pending',
+            priority: 'medium',
+            created_at: '2024-01-01',
+            node_name: '审批节点',
+          },
+          {
+            id: '2',
+            task_name: '2024年Q1市场预算审批',
+            workflow_name: '预算审批流程',
+            initiator_id: '李四',
+            status: 'pending',
+            priority: 'high',
+            created_at: '2024-01-02',
+            node_name: '审批节点',
+          },
         ],
         total: 2,
       },
@@ -32,7 +50,7 @@ vi.mock('@/store', () => {
     removeNotification: vi.fn(),
     clearNotifications: vi.fn(),
   };
-  
+
   const authState = {
     user: { id: '1', username: 'testuser', email: 'test@example.com', isActive: true },
     token: 'test-token',
@@ -54,14 +72,12 @@ vi.mock('@/store', () => {
     getDisplayName: vi.fn(() => 'Test User'),
     getAvatarUrl: vi.fn(() => ''),
   };
-  
+
   return {
-    useNotificationStore: vi.fn((selector?: any) => 
+    useNotificationStore: vi.fn((selector?: any) =>
       selector ? selector(notificationState) : notificationState
     ),
-    useAuthStore: vi.fn((selector?: any) => 
-      selector ? selector(authState) : authState
-    ),
+    useAuthStore: vi.fn((selector?: any) => (selector ? selector(authState) : authState)),
     useThemeStore: vi.fn(() => ({
       theme: 'light',
       setTheme: vi.fn(),

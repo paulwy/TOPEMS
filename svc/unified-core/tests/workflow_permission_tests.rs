@@ -14,6 +14,19 @@ use serde_json::{json, Value};
 
 const API_URL: &str = "http://localhost:8000";
 
+/// 检查 API 服务是否可用
+async fn ensure_api_available() -> bool {
+    reqwest::Client::builder()
+        .timeout(std::time::Duration::from_secs(2))
+        .build()
+        .unwrap()
+        .get(format!("{}/api/core/iam/auth/login", API_URL))
+        .send()
+        .await
+        .map(|resp| !resp.status().is_server_error())
+        .unwrap_or(false)
+}
+
 // ==================== 测试辅助函数 ====================
 
 fn create_client() -> Client {
@@ -24,7 +37,7 @@ async fn login(username: &str, password: &str) -> Result<String, String> {
     let client = create_client();
 
     let response = client
-        .post(format!("{}/api/v1/auth/login", API_URL))
+        .post(format!("{}/api/core/iam/auth/login", API_URL))
         .json(&json!({
             "username": username,
             "password": password
@@ -92,8 +105,11 @@ async fn auth_request(
 // ==================== WF-001: 查看工作流列表 ====================
 
 #[tokio::test]
-#[ignore]
 async fn test_wf_001_list_workflows() {
+    if !ensure_api_available().await {
+        eprintln!("⏭ 跳过: API服务未运行 ({})", API_URL);
+        return;
+    }
     tracing::info!("测试 WF-001: 查看工作流列表");
 
     let token = login("admin", "admin123").await.expect("管理员登录失败");
@@ -112,8 +128,11 @@ async fn test_wf_001_list_workflows() {
 // ==================== WF-002: 创建工作流 ====================
 
 #[tokio::test]
-#[ignore]
 async fn test_wf_002_create_workflow() {
+    if !ensure_api_available().await {
+        eprintln!("⏭ 跳过: API服务未运行 ({})", API_URL);
+        return;
+    }
     tracing::info!("测试 WF-002: 创建工作流");
 
     let token = login("admin", "admin123").await.expect("管理员登录失败");
@@ -152,8 +171,11 @@ async fn test_wf_002_create_workflow() {
 // ==================== WF-003: 删除工作流 ====================
 
 #[tokio::test]
-#[ignore]
 async fn test_wf_003_delete_workflow() {
+    if !ensure_api_available().await {
+        eprintln!("⏭ 跳过: API服务未运行 ({})", API_URL);
+        return;
+    }
     tracing::info!("测试 WF-003: 删除工作流");
 
     let token = login("admin", "admin123").await.expect("管理员登录失败");
@@ -195,8 +217,11 @@ async fn test_wf_003_delete_workflow() {
 // ==================== WF-004: 发布工作流 ====================
 
 #[tokio::test]
-#[ignore]
 async fn test_wf_004_publish_workflow() {
+    if !ensure_api_available().await {
+        eprintln!("⏭ 跳过: API服务未运行 ({})", API_URL);
+        return;
+    }
     tracing::info!("测试 WF-004: 发布工作流");
 
     let token = login("admin", "admin123").await.expect("管理员登录失败");
@@ -244,8 +269,11 @@ async fn test_wf_004_publish_workflow() {
 // ==================== WF-005: 发起审批流程 ====================
 
 #[tokio::test]
-#[ignore]
 async fn test_wf_005_start_approval() {
+    if !ensure_api_available().await {
+        eprintln!("⏭ 跳过: API服务未运行 ({})", API_URL);
+        return;
+    }
     tracing::info!("测试 WF-005: 发起审批流程");
 
     let token = login("admin", "admin123").await.expect("管理员登录失败");
@@ -288,8 +316,11 @@ async fn test_wf_005_start_approval() {
 // ==================== WF-006: 审批人批准流程 ====================
 
 #[tokio::test]
-#[ignore]
 async fn test_wf_006_approve_workflow() {
+    if !ensure_api_available().await {
+        eprintln!("⏭ 跳过: API服务未运行 ({})", API_URL);
+        return;
+    }
     tracing::info!("测试 WF-006: 审批人批准流程");
 
     let token = login("admin", "admin123").await.expect("管理员登录失败");
@@ -341,8 +372,11 @@ async fn test_wf_006_approve_workflow() {
 // ==================== WF-007: 非审批人批准流程 ====================
 
 #[tokio::test]
-#[ignore]
 async fn test_wf_007_unauthorized_approve() {
+    if !ensure_api_available().await {
+        eprintln!("⏭ 跳过: API服务未运行 ({})", API_URL);
+        return;
+    }
     tracing::info!("测试 WF-007: 非审批人批准流程");
 
     // 使用普通员工账号
@@ -384,8 +418,11 @@ async fn test_wf_007_unauthorized_approve() {
 // ==================== WF-008: 查看待审批列表 ====================
 
 #[tokio::test]
-#[ignore]
 async fn test_wf_008_list_pending_approvals() {
+    if !ensure_api_available().await {
+        eprintln!("⏭ 跳过: API服务未运行 ({})", API_URL);
+        return;
+    }
     tracing::info!("测试 WF-008: 查看待审批列表");
 
     let token = login("admin", "admin123").await.expect("管理员登录失败");
@@ -408,8 +445,11 @@ async fn test_wf_008_list_pending_approvals() {
 // ==================== 测试总结 ====================
 
 #[tokio::test]
-#[ignore]
 async fn run_all_workflow_tests_summary() {
+    if !ensure_api_available().await {
+        eprintln!("⏭ 跳过: API服务未运行 ({})", API_URL);
+        return;
+    }
     tracing::info!("========================================");
     tracing::info!("  Workflow 权限测试套件");
     tracing::info!("========================================");

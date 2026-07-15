@@ -113,6 +113,7 @@ vi.mock('@/store', () => ({
   useSetSidebarCollapsed: vi.fn(),
 }));
 
+describe('EhsHazardPage', () => {
   it('should render without crashing', () => {
     const { container } = render(
       <BrowserRouter>
@@ -121,7 +122,8 @@ vi.mock('@/store', () => ({
     );
     expect(container).toBeDefined();
   });
-
+});
+describe('EhsHazardPage', () => {
   it('should have safety issue API methods defined', () => {
     render(
       <BrowserRouter>

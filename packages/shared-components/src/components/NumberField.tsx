@@ -6,9 +6,9 @@ import React, { useCallback, useRef, useState } from 'react';
 import type { TextFieldProps } from '@mui/material';
 import { TextField, InputAdornment } from '@mui/material';
 
-export interface NumberFieldProps extends Omit<TextFieldProps, 'type' | 'onChange'> {
+export interface NumberFieldProps extends Omit<TextFieldProps, 'type' | 'onChange' | 'value'> {
   /** 数值 */
-  value: number | string;
+  value?: number | string;
   /** 变更回调，返回数值 */
   onChange?: (value: number) => void;
   /** 最小值 */

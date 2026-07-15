@@ -28,25 +28,24 @@ import { useNotificationStore } from '@/store';
 import { apiLogger } from '@/utils/logger';
 import { designTokens } from '@/theme/tokens';
 import { DASHBOARD_PATHS } from '@/routes/dashboard';
-import { useCrudOperations } from '@/hooks/useCrudQueries';
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import { QUERY_KEYS } from '@/lib/reactQuery';
 
 const ct = designTokens.colors;
 
-const sampleCrudApi = {
-  list: (params?: Record<string, unknown>) => limsApi.listSamples(params as any),
-  get: (id: string) => limsApi.getSample(id),
-  create: (data: CreateSampleRequest) => limsApi.createSample(data),
-  update: (id: string, data: UpdateSampleRequest) => limsApi.updateSample(id, data),
-  delete: (id: string) => limsApi.deleteSample(id),
-} as any;
-
 const LimsSamplePage: React.FC = () => {
   const navigate = useNavigate();
+  const queryClient = useQueryClient();
+  const addNotification = useNotificationStore((state) => state.addNotification);
+
   const [searchTerm, setSearchTerm] = useState('');
   const [statusFilter, setStatusFilter] = useState('all');
+  const [currentPage, setCurrentPage] = useState(0);
+  const [pageSize] = useState(10);
   const [showCreateModal, setShowCreateModal] = useState(false);
   const [showDetailModal, setShowDetailModal] = useState(false);
   const [selectedSample, setSelectedSample] = useState<Sample | null>(null);
+  const [isEditing, setIsEditing] = useState(false);
   const [formData, setFormData] = useState<CreateSampleRequest>({
     name: '',
     description: '',
@@ -60,22 +59,82 @@ const LimsSamplePage: React.FC = () => {
     responsible_person: '',
     received_date: new Date().toISOString().split('T')[0],
   });
-  const [page, setPage] = useState(0);
-  const [pageSize, setPageSize] = useState(10);
-  const [isEditing, setIsEditing] = useState(false);
-  const addNotification = useNotificationStore((state) => state.addNotification);
 
-  const {
-    data: samples,
-    loading,
-    refresh,
-    create: createSample,
-    update: updateSample,
-    delete: deleteSample,
-  } = useCrudOperations<Sample, CreateSampleRequest, UpdateSampleRequest>({
-    api: sampleCrudApi,
-    queryKey: 'lims-samples',
-    defaultPageSize: 100,
+  const queryKey = [QUERY_KEYS.LIMS.SAMPLES, currentPage, pageSize, searchTerm, statusFilter];
+
+  const { data: samplesResponse, isLoading } = useQuery({
+    queryKey,
+    queryFn: async () => {
+      const params: { page: number; pagesize: number; search?: string; status?: string } = {
+        page: currentPage,
+        pagesize: pageSize,
+      };
+      if (searchTerm) params.search = searchTerm;
+      if (statusFilter !== 'all') params.status = statusFilter;
+
+      const response = await limsApi.listSamples(params);
+      if (!response.success) {
+        throw new Error('Failed to fetch samples');
+      }
+      return response.data;
+    },
+    staleTime: 5 * 60 * 1000,
+    gcTime: 10 * 60 * 1000,
+  });
+
+  const samples = samplesResponse?.items || [];
+  const total = samplesResponse?.total || samples.length;
+
+  const createMutation = useMutation({
+    mutationFn: async (data: CreateSampleRequest) => {
+      const response = await limsApi.createSample(data);
+      if (!response.success) {
+        throw new Error('Failed to create sample');
+      }
+      return response;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: QUERY_KEYS.LIMS.SAMPLES });
+      setShowCreateModal(false);
+      resetForm();
+    },
+    onError: (error) => {
+      apiLogger.error('创建失败:', error);
+    },
+  });
+
+  const updateMutation = useMutation({
+    mutationFn: async ({ id, data }: { id: string; data: UpdateSampleRequest }) => {
+      const response = await limsApi.updateSample(id, data);
+      if (!response.success) {
+        throw new Error('Failed to update sample');
+      }
+      return response;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: QUERY_KEYS.LIMS.SAMPLES });
+      setShowCreateModal(false);
+      resetForm();
+    },
+    onError: (error) => {
+      apiLogger.error('更新失败:', error);
+    },
+  });
+
+  const deleteMutation = useMutation({
+    mutationFn: async (id: string) => {
+      const response = await limsApi.deleteSample(id);
+      if (!response.success) {
+        throw new Error('Failed to delete sample');
+      }
+      return response;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: QUERY_KEYS.LIMS.SAMPLES });
+    },
+    onError: (error) => {
+      apiLogger.error('删除失败:', error);
+    },
   });
 
   const getStatusBadge = (status: string) => {
@@ -114,31 +173,34 @@ const LimsSamplePage: React.FC = () => {
     return '-';
   };
 
-  const columns: ColumnDef<Sample>[] = [
-    { id: 'sample_no', label: '样品编号' },
-    { id: 'name', label: '样品名称' },
-    {
-      id: 'description',
-      label: '检测项目',
-      render: (row) => getTestItems(row),
-    },
-    {
-      id: 'status',
-      label: '状态',
-      render: (row) => getStatusBadge(row.status),
-    },
-    {
-      id: 'received_date',
-      label: '接收日期',
-      render: (row) =>
-        row.received_date ? new Date(row.received_date).toLocaleDateString('zh-CN') : '-',
-    },
-    {
-      id: 'test_result',
-      label: '检测结果',
-      render: (row) => getTestResult(row),
-    },
-  ];
+  const columns: ColumnDef<Sample>[] = useMemo(
+    () => [
+      { id: 'sample_no', label: '样品编号' },
+      { id: 'name', label: '样品名称' },
+      {
+        id: 'description',
+        label: '检测项目',
+        render: (row) => getTestItems(row),
+      },
+      {
+        id: 'status',
+        label: '状态',
+        render: (row) => getStatusBadge(row.status),
+      },
+      {
+        id: 'received_date',
+        label: '接收日期',
+        render: (row) =>
+          row.received_date ? new Date(row.received_date).toLocaleDateString('zh-CN') : '-',
+      },
+      {
+        id: 'test_result',
+        label: '检测结果',
+        render: (row) => getTestResult(row),
+      },
+    ],
+    []
+  );
 
   const handleView = (sample: Sample) => {
     setSelectedSample(sample);
@@ -185,6 +247,24 @@ const LimsSamplePage: React.FC = () => {
     setShowCreateModal(true);
   };
 
+  const resetForm = () => {
+    setSelectedSample(null);
+    setIsEditing(false);
+    setFormData({
+      name: '',
+      description: '',
+      status: '待接收',
+      sample_type: '',
+      source: '',
+      quantity: undefined,
+      unit: '',
+      storage_condition: '',
+      location: '',
+      responsible_person: '',
+      received_date: new Date().toISOString().split('T')[0],
+    });
+  };
+
   const handleSave = async () => {
     if (!formData.name.trim()) {
       addNotification({
@@ -196,212 +276,223 @@ const LimsSamplePage: React.FC = () => {
     }
 
     if (isEditing && selectedSample) {
-      await updateSample(selectedSample.id, formData as UpdateSampleRequest);
-      setShowCreateModal(false);
+      await updateMutation.mutateAsync({
+        id: selectedSample.id,
+        data: formData as UpdateSampleRequest,
+      });
     } else {
-      await createSample(formData);
-      setShowCreateModal(false);
+      await createMutation.mutateAsync(formData);
     }
   };
 
   const handleDelete = async (sample: Sample) => {
-    if (!confirm(`确定要删除样品 "${sample.name}" 吗？`)) return;
-    await deleteSample(sample.id);
+    if (!window.confirm(`确定要删除样品 "${sample.name}" 吗？`)) return;
+    await deleteMutation.mutateAsync(sample.id);
     setShowDetailModal(false);
   };
 
-  const rowActions: RowAction<Sample>[] = [
-    {
-      label: '查看',
-      icon: <Eye style={{ width: 16, height: 16 }} />,
-      onClick: (row) => handleView(row),
-    },
-    {
-      label: '编辑',
-      icon: <Edit style={{ width: 16, height: 16 }} />,
-      onClick: (row) => handleEdit(row),
-    },
-  ];
-
-  const filters: FilterConfig[] = [
-    {
-      id: 'status',
-      label: '状态',
-      type: 'select',
-      options: [
-        { label: '全部', value: 'all' },
-        { label: '待接收', value: '待接收' },
-        { label: '待检测', value: '待检测' },
-        { label: '检测中', value: '检测中' },
-        { label: '已完成', value: '已完成' },
-      ],
-      value: statusFilter,
-      onChange: (value: unknown) => setStatusFilter(value as string),
-    },
-  ];
-
-  const filteredSamples = samples.filter((sample) => {
-    const matchesSearch =
-      sample.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      (sample.sample_no || '').toLowerCase().includes(searchTerm.toLowerCase());
-    const matchesStatus = statusFilter === 'all' || sample.status === statusFilter;
-    return matchesSearch && matchesStatus;
-  });
-
-  const paginatedData = filteredSamples.slice(page * pageSize, page * pageSize + pageSize);
-
-  const stats = {
-    total: samples.length,
-    pending: samples.filter(
-      (s) => s.status === '待接收' || s.status === '待检测' || s.status === 'pending'
-    ).length,
-    inProgress: samples.filter((s) => s.status === '检测中' || s.status === 'in_progress').length,
-    completed: samples.filter((s) => s.status === '已完成' || s.status === 'completed').length,
-  };
-
-  const statsCards = (
-    <Box
-      sx={{
-        display: 'grid',
-        gridTemplateColumns: { xs: 'repeat(1, 1fr)', md: 'repeat(4, 1fr)' },
-        gap: 2,
-        mb: 3,
-      }}
-    >
-      <Card sx={{ bgcolor: 'teal.light' }}>
-        <CardContent sx={{ p: 2 }}>
-          <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5 }}>
-            <Box
-              sx={{
-                width: 40,
-                height: 40,
-                bgcolor: 'success.lighter',
-                borderRadius: 3,
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'center',
-              }}
-            >
-              <FlaskConical sx={{ width: 20, height: 20, color: 'info.main' }} />
-            </Box>
-            <Box>
-              <Typography
-                variant='body2'
-                sx={{ color: 'slate.600', fontSize: '0.875rem' }}
-              >
-                样品总数
-              </Typography>
-              <Typography
-                variant='h5'
-                sx={{ fontWeight: 700, color: 'slate.900' }}
-              >
-                {stats.total}
-              </Typography>
-            </Box>
-          </Box>
-        </CardContent>
-      </Card>
-      <Card>
-        <CardContent sx={{ p: 2 }}>
-          <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5 }}>
-            <Box
-              sx={{
-                width: 40,
-                height: 40,
-                bgcolor: 'warning.light',
-                borderRadius: 3,
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'center',
-              }}
-            >
-              <Filter sx={{ width: 20, height: 20, color: ct.yellow[600] }} />
-            </Box>
-            <Box>
-              <Typography
-                variant='body2'
-                sx={{ color: 'slate.600', fontSize: '0.875rem' }}
-              >
-                待处理
-              </Typography>
-              <Typography
-                variant='h5'
-                sx={{ fontWeight: 700, color: 'slate.900' }}
-              >
-                {stats.pending}
-              </Typography>
-            </Box>
-          </Box>
-        </CardContent>
-      </Card>
-      <Card>
-        <CardContent sx={{ p: 2 }}>
-          <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5 }}>
-            <Box
-              sx={{
-                width: 40,
-                height: 40,
-                bgcolor: 'primary.100',
-                borderRadius: 3,
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'center',
-              }}
-            >
-              <FlaskConical sx={{ width: 20, height: 20, color: 'primary.dark' }} />
-            </Box>
-            <Box>
-              <Typography
-                variant='body2'
-                sx={{ color: 'slate.600', fontSize: '0.875rem' }}
-              >
-                检测中
-              </Typography>
-              <Typography
-                variant='h5'
-                sx={{ fontWeight: 700, color: 'slate.900' }}
-              >
-                {stats.inProgress}
-              </Typography>
-            </Box>
-          </Box>
-        </CardContent>
-      </Card>
-      <Card>
-        <CardContent sx={{ p: 2 }}>
-          <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5 }}>
-            <Box
-              sx={{
-                width: 40,
-                height: 40,
-                bgcolor: 'success.lighter',
-                borderRadius: 3,
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'center',
-              }}
-            >
-              <FlaskConical sx={{ width: 20, height: 20, color: 'success.dark' }} />
-            </Box>
-            <Box>
-              <Typography
-                variant='body2'
-                sx={{ color: 'slate.600', fontSize: '0.875rem' }}
-              >
-                已完成
-              </Typography>
-              <Typography
-                variant='h5'
-                sx={{ fontWeight: 700, color: 'slate.900' }}
-              >
-                {stats.completed}
-              </Typography>
-            </Box>
-          </Box>
-        </CardContent>
-      </Card>
-    </Box>
+  const rowActions: RowAction<Sample>[] = useMemo(
+    () => [
+      {
+        label: '查看',
+        icon: <Eye style={{ width: 16, height: 16 }} />,
+        onClick: (row) => handleView(row),
+      },
+      {
+        label: '编辑',
+        icon: <Edit style={{ width: 16, height: 16 }} />,
+        onClick: (row) => handleEdit(row),
+      },
+    ],
+    []
   );
+
+  const filters: FilterConfig[] = useMemo(
+    () => [
+      {
+        id: 'status',
+        label: '状态',
+        type: 'select',
+        options: [
+          { label: '全部', value: 'all' },
+          { label: '待接收', value: '待接收' },
+          { label: '待检测', value: '待检测' },
+          { label: '检测中', value: '检测中' },
+          { label: '已完成', value: '已完成' },
+        ],
+        value: statusFilter,
+        onChange: (value: unknown) => {
+          setStatusFilter(value as string);
+          setCurrentPage(0);
+        },
+      },
+    ],
+    [statusFilter]
+  );
+
+  const stats = useMemo(
+    () => ({
+      total,
+      pending: samples.filter(
+        (s) => s.status === '待接收' || s.status === '待检测' || s.status === 'pending'
+      ).length,
+      inProgress: samples.filter((s) => s.status === '检测中' || s.status === 'in_progress').length,
+      completed: samples.filter((s) => s.status === '已完成' || s.status === 'completed').length,
+    }),
+    [samples, total]
+  );
+
+  const statsCards = useMemo(
+    () => (
+      <Box
+        sx={{
+          display: 'grid',
+          gridTemplateColumns: { xs: 'repeat(1, 1fr)', md: 'repeat(4, 1fr)' },
+          gap: 2,
+          mb: 3,
+        }}
+      >
+        <Card sx={{ bgcolor: 'teal.light' }}>
+          <CardContent sx={{ p: 2 }}>
+            <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5 }}>
+              <Box
+                sx={{
+                  width: 40,
+                  height: 40,
+                  bgcolor: 'success.lighter',
+                  borderRadius: 3,
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                }}
+              >
+                <FlaskConical sx={{ width: 20, height: 20, color: 'info.main' }} />
+              </Box>
+              <Box>
+                <Typography
+                  variant='body2'
+                  sx={{ color: 'slate.600', fontSize: '0.875rem' }}
+                >
+                  样品总数
+                </Typography>
+                <Typography
+                  variant='h5'
+                  sx={{ fontWeight: 700, color: 'slate.900' }}
+                >
+                  {stats.total}
+                </Typography>
+              </Box>
+            </Box>
+          </CardContent>
+        </Card>
+        <Card>
+          <CardContent sx={{ p: 2 }}>
+            <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5 }}>
+              <Box
+                sx={{
+                  width: 40,
+                  height: 40,
+                  bgcolor: 'warning.light',
+                  borderRadius: 3,
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                }}
+              >
+                <Filter sx={{ width: 20, height: 20, color: ct.yellow[600] }} />
+              </Box>
+              <Box>
+                <Typography
+                  variant='body2'
+                  sx={{ color: 'slate.600', fontSize: '0.875rem' }}
+                >
+                  待处理
+                </Typography>
+                <Typography
+                  variant='h5'
+                  sx={{ fontWeight: 700, color: 'slate.900' }}
+                >
+                  {stats.pending}
+                </Typography>
+              </Box>
+            </Box>
+          </CardContent>
+        </Card>
+        <Card>
+          <CardContent sx={{ p: 2 }}>
+            <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5 }}>
+              <Box
+                sx={{
+                  width: 40,
+                  height: 40,
+                  bgcolor: 'primary.100',
+                  borderRadius: 3,
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                }}
+              >
+                <FlaskConical sx={{ width: 20, height: 20, color: 'primary.dark' }} />
+              </Box>
+              <Box>
+                <Typography
+                  variant='body2'
+                  sx={{ color: 'slate.600', fontSize: '0.875rem' }}
+                >
+                  检测中
+                </Typography>
+                <Typography
+                  variant='h5'
+                  sx={{ fontWeight: 700, color: 'slate.900' }}
+                >
+                  {stats.inProgress}
+                </Typography>
+              </Box>
+            </Box>
+          </CardContent>
+        </Card>
+        <Card>
+          <CardContent sx={{ p: 2 }}>
+            <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5 }}>
+              <Box
+                sx={{
+                  width: 40,
+                  height: 40,
+                  bgcolor: 'success.lighter',
+                  borderRadius: 3,
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                }}
+              >
+                <FlaskConical sx={{ width: 20, height: 20, color: 'success.dark' }} />
+              </Box>
+              <Box>
+                <Typography
+                  variant='body2'
+                  sx={{ color: 'slate.600', fontSize: '0.875rem' }}
+                >
+                  已完成
+                </Typography>
+                <Typography
+                  variant='h5'
+                  sx={{ fontWeight: 700, color: 'slate.900' }}
+                >
+                  {stats.completed}
+                </Typography>
+              </Box>
+            </Box>
+          </CardContent>
+        </Card>
+      </Box>
+    ),
+    [stats]
+  );
+
+  const handleSearch = (value: string) => {
+    setSearchTerm(value);
+    setCurrentPage(0);
+  };
 
   return (
     <PageContainer
@@ -422,20 +513,20 @@ const LimsSamplePage: React.FC = () => {
         ]}
         backButton={{ onClick: () => navigate(DASHBOARD_PATHS.dashboard) }}
         columns={columns}
-        data={paginatedData}
-        loading={loading}
+        data={samples}
+        loading={isLoading}
         getRowId={(row) => row.id}
         filters={filters}
         searchable
         searchPlaceholder='搜索样品编号或名称...'
         searchValue={searchTerm}
-        onSearch={setSearchTerm}
+        onSearch={handleSearch}
         pagination={{
-          page,
+          page: currentPage,
           pageSize,
-          total: filteredSamples.length,
-          onPageChange: setPage,
-          onPageSizeChange: setPageSize,
+          total,
+          onPageChange: setCurrentPage,
+          onPageSizeChange: () => {},
         }}
         actions={[
           {
@@ -579,10 +670,10 @@ const LimsSamplePage: React.FC = () => {
           <Button
             variant='contained'
             onClick={handleSave}
-            disabled={loading}
+            disabled={createMutation.isPending || updateMutation.isPending}
             sx={{ bgcolor: 'info.main' }}
           >
-            {loading ? '保存中...' : '保存'}
+            {createMutation.isPending || updateMutation.isPending ? '保存中...' : '保存'}
           </Button>
         </DialogActions>
       </Dialog>

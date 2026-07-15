@@ -1,4 +1,6 @@
-import React, { useState, useEffect, useMemo, useCallback } from 'react';
+import React, { useState, useMemo } from 'react';
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import { QUERY_KEYS } from '@/lib/reactQuery';
 import {
   Box,
   Chip,
@@ -76,8 +78,7 @@ const unitOptions = [
 ];
 
 const EhsHazardousMaterialPage: React.FC = () => {
-  const [materials, setMaterials] = useState<HazardousMaterial[]>([]);
-  const [loading, setLoading] = useState(true);
+  const queryClient = useQueryClient();
   const [searchQuery, setSearchQuery] = useState('');
   const [categoryFilter, setCategoryFilter] = useState('');
   const [dangerLevelFilter, setDangerLevelFilter] = useState('');
@@ -107,29 +108,18 @@ const EhsHazardousMaterialPage: React.FC = () => {
 
   const addNotification = useNotificationStore((state) => state.addNotification);
 
-  useEffect(() => {
-    loadMaterials();
-  }, []);
-
-  const loadMaterials = useCallback(async () => {
-    try {
-      setLoading(true);
+  const { data: materialsData, isLoading: loading } = useQuery({
+    queryKey: QUERY_KEYS.EHS.HAZARDOUS_MATERIALS,
+    queryFn: async () => {
       const response = await ehsApi.hazardousMaterials.listHazardousMaterials({ pagesize: 100 });
       if (response.success && response.data) {
         const data = response.data as any;
-        const materialsData = Array.isArray(data) ? data : data.data || [];
-        setMaterials(materialsData as HazardousMaterial[]);
-      } else {
-        setMaterials([]);
+        return Array.isArray(data) ? data : data.data || [];
       }
-    } catch (err: unknown) {
-      apiLogger.error('加载危化品列表失败:', err);
-      addNotification({ title: '错误', message: '加载危化品列表失败', type: 'error' });
-      setMaterials([]);
-    } finally {
-      setLoading(false);
-    }
-  }, [addNotification]);
+      return [];
+    },
+  });
+  const materials = (materialsData as HazardousMaterial[]) || [];
 
   const getDangerLevelChip = (level: string) => {
     const levelMap: Record<string, { bg: string; color: string }> = {
@@ -484,7 +474,36 @@ const EhsHazardousMaterialPage: React.FC = () => {
     setShowCreateModal(true);
   };
 
-  const handleSave = async () => {
+  const saveMutation = useMutation({
+    mutationFn: async (variables: {
+      id?: string;
+      data: Parameters<typeof ehsApi.hazardousMaterials.createHazardousMaterial>[0];
+    }) => {
+      if (variables.id) {
+        return ehsApi.hazardousMaterials.updateHazardousMaterial(variables.id, variables.data);
+      }
+      return ehsApi.hazardousMaterials.createHazardousMaterial(variables.data);
+    },
+    onSuccess: (_data, variables) => {
+      addNotification({
+        title: '成功',
+        message: variables.id ? '危化品信息更新成功' : '危化品入库成功',
+        type: 'success',
+      });
+      queryClient.invalidateQueries({ queryKey: QUERY_KEYS.EHS.HAZARDOUS_MATERIALS });
+      setShowCreateModal(false);
+    },
+    onError: (error: unknown) => {
+      addNotification({
+        title: '错误',
+        message: editingMaterial ? '更新失败' : '入库失败',
+        type: 'error',
+      });
+      apiLogger.error('保存危化品失败:', error);
+    },
+  });
+
+  const handleSave = () => {
     if (!formData.material_code.trim()) {
       addNotification({ title: '错误', message: '请输入编码', type: 'error' });
       return;
@@ -497,37 +516,20 @@ const EhsHazardousMaterialPage: React.FC = () => {
       addNotification({ title: '错误', message: '请输入存放位置', type: 'error' });
       return;
     }
-    try {
-      const payload = {
-        material_code: formData.material_code,
-        name: formData.name,
-        category: formData.category,
-        hazard_class: formData.hazard_class,
-        cas_no: formData.cas_no || null,
-        quantity: formData.quantity ? Number(formData.quantity) : null,
-        unit: formData.unit || null,
-        storage_location: formData.storage_location,
-        danger_level: formData.danger_level || null,
-        expiry_date: formData.expiry_date || null,
-        description: formData.description || null,
-      };
-      if (editingMaterial) {
-        await ehsApi.hazardousMaterials.updateHazardousMaterial(editingMaterial.id, payload);
-        addNotification({ title: '成功', message: '危化品信息更新成功', type: 'success' });
-      } else {
-        await ehsApi.hazardousMaterials.createHazardousMaterial(payload);
-        addNotification({ title: '成功', message: '危化品入库成功', type: 'success' });
-      }
-      setShowCreateModal(false);
-      loadMaterials();
-    } catch (err: unknown) {
-      addNotification({
-        title: '错误',
-        message: editingMaterial ? '更新失败' : '入库失败',
-        type: 'error',
-      });
-      apiLogger.error('保存危化品失败:', err);
-    }
+    const payload = {
+      material_code: formData.material_code,
+      name: formData.name,
+      category: formData.category,
+      hazard_class: formData.hazard_class,
+      cas_no: formData.cas_no || null,
+      quantity: formData.quantity ? Number(formData.quantity) : null,
+      unit: formData.unit || null,
+      storage_location: formData.storage_location,
+      danger_level: formData.danger_level || null,
+      expiry_date: formData.expiry_date || null,
+      description: formData.description || null,
+    };
+    saveMutation.mutate({ id: editingMaterial?.id, data: payload });
   };
 
   const headerActions = [
@@ -592,7 +594,9 @@ const EhsHazardousMaterialPage: React.FC = () => {
           },
         ]}
         rowActions={rowActions}
-        onRefresh={loadMaterials}
+        onRefresh={() =>
+          queryClient.invalidateQueries({ queryKey: QUERY_KEYS.EHS.HAZARDOUS_MATERIALS })
+        }
         showRowNumber
         headerContent={headerContent}
       />

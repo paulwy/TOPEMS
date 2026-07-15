@@ -23,7 +23,10 @@ export const oaModuleConfig: RouteModuleConfig = {
   routes: [
     {
       path: OA_PATHS.documents,
-      element: lazyWithRetry(() => import('@/pages/oa/DocumentManagementPage'), 'DocumentManagementPage'),
+      element: lazyWithRetry(
+        () => import('@/pages/oa/DocumentManagementPage'),
+        'DocumentManagementPage'
+      ),
       module: 'oa',
       code: 'oa-documents',
       title: '公文管理',
@@ -45,7 +48,10 @@ export const oaModuleConfig: RouteModuleConfig = {
     },
     {
       path: OA_PATHS.meetings,
-      element: lazyWithRetry(() => import('@/pages/oa/MeetingManagementPage'), 'MeetingManagementPage'),
+      element: lazyWithRetry(
+        () => import('@/pages/oa/MeetingManagementPage'),
+        'MeetingManagementPage'
+      ),
       module: 'oa',
       code: 'oa-meetings',
       title: '会议管理',
@@ -56,7 +62,10 @@ export const oaModuleConfig: RouteModuleConfig = {
     },
     {
       path: OA_PATHS.vehicles,
-      element: lazyWithRetry(() => import('@/pages/oa/VehicleManagementPage'), 'VehicleManagementPage'),
+      element: lazyWithRetry(
+        () => import('@/pages/oa/VehicleManagementPage'),
+        'VehicleManagementPage'
+      ),
       module: 'oa',
       code: 'oa-vehicles',
       title: '车辆管理',
@@ -77,7 +86,12 @@ export const oaNavConfig: ModuleNavConfig = {
   order: 92,
   navItems: [
     { code: 'oa-documents', label: '公文管理', path: OA_PATHS.documents, showInSidebar: true },
-    { code: 'oa-announcements', label: '公告通知', path: OA_PATHS.announcements, showInSidebar: true },
+    {
+      code: 'oa-announcements',
+      label: '公告通知',
+      path: OA_PATHS.announcements,
+      showInSidebar: true,
+    },
     { code: 'oa-meetings', label: '会议管理', path: OA_PATHS.meetings, showInSidebar: true },
     { code: 'oa-vehicles', label: '车辆管理', path: OA_PATHS.vehicles, showInSidebar: true },
   ],

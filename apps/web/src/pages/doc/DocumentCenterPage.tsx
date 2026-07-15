@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useCallback } from 'react';
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { PageContainer } from '@/components/common';
 import { CardListTemplate, type CardRenderConfig, type CardAction } from '@/components/templates';
 import { docApi } from '@/api/doc';
@@ -37,6 +38,7 @@ import {
   useTheme,
 } from '@mui/material';
 import { designTokens } from '@/theme/tokens';
+import { QUERY_KEYS } from '@/lib/reactQuery';
 
 const ct = designTokens.colors;
 
@@ -51,24 +53,19 @@ const DocumentCenterPage: React.FC = () => {
   const addNotification = useNotificationStore((state) => state.addNotification);
   const theme = useTheme();
 
-  const [documents, setDocuments] = useState<DocumentWithFavorite[]>([]);
-  const [folders, setFolders] = useState<FolderType[]>([]);
-  const [loading, setLoading] = useState(false);
+  const queryClient = useQueryClient();
+
   const [searchQuery, setSearchQuery] = useState('');
   const [filterValues, setFilterValues] = useState<Record<string, any>>({
     category: '',
   });
   const [currentPage, setCurrentPage] = useState(1);
-  const [total, setTotal] = useState(0);
   const [viewMode, setViewMode] = useState<'grid' | 'list'>('grid');
   const [currentPath, setCurrentPath] = useState<string[]>([]);
   const [showUploadModal, setShowUploadModal] = useState(false);
   const [uploadFiles, setUploadFiles] = useState<File[]>([]);
-  const [uploading, setUploading] = useState(false);
   const [showVersionHistory, setShowVersionHistory] = useState(false);
   const [versionDoc, setVersionDoc] = useState<DocumentWithFavorite | null>(null);
-  const [versions, setVersions] = useState<FileVersion[]>([]);
-  const [versionsLoading, setVersionsLoading] = useState(false);
 
   const formatFileSize = (bytes: number): string => {
     if (bytes < 1024) return `${bytes} B`;
@@ -110,16 +107,12 @@ const DocumentCenterPage: React.FC = () => {
     );
   };
 
-  const loadData = useCallback(async () => {
-    setLoading(true);
-    try {
-      const [filesResponse, foldersResponse] = await Promise.all([
-        docApi.list(),
-        docApi.listFolders(),
-      ]);
-
-      if (filesResponse.success && filesResponse.data) {
-        const data = filesResponse.data;
+  const documentsQuery = useQuery<{ documents: DocumentWithFavorite[]; total: number }>({
+    queryKey: QUERY_KEYS.DOC.DOCUMENTS,
+    queryFn: async () => {
+      const res = await docApi.list();
+      if (res.success && res.data) {
+        const data = res.data;
         const files = data.files ?? data.items ?? [];
         const docs: DocumentWithFavorite[] = files.map((file) => ({
           ...file,
@@ -127,30 +120,106 @@ const DocumentCenterPage: React.FC = () => {
           tags: [],
           category: file.folder_id ? '分类文档' : '未分类',
         }));
-        setDocuments(docs);
-        setTotal(data.total ?? 0);
+        return { documents: docs, total: data.total ?? 0 };
       }
+      return { documents: [], total: 0 };
+    },
+    staleTime: 5 * 60 * 1000,
+  });
 
-      if (foldersResponse.success && foldersResponse.data) {
-        const foldersData = foldersResponse.data;
-        const folders = foldersData.folders ?? foldersData.items ?? [];
-        setFolders(folders);
+  const foldersQuery = useQuery<FolderType[]>({
+    queryKey: QUERY_KEYS.DOC.FOLDERS,
+    queryFn: async () => {
+      const res = await docApi.listFolders();
+      if (res.success && res.data) {
+        return res.data.folders ?? res.data.items ?? [];
       }
-    } catch (err: unknown) {
-      logger.error('加载文档数据失败:', err);
+      return [];
+    },
+    staleTime: 5 * 60 * 1000,
+  });
+
+  const versionsQuery = useQuery<FileVersion[]>({
+    queryKey: QUERY_KEYS.DOC.VERSIONS(versionDoc?.id || 'none'),
+    queryFn: async () => {
+      if (!versionDoc) return [];
+      const res = await docApi.getVersions(versionDoc.id);
+      return res.success && res.data ? res.data : [];
+    },
+    enabled: !!versionDoc && showVersionHistory,
+    staleTime: 5 * 60 * 1000,
+  });
+
+  const documents = documentsQuery.data?.documents ?? [];
+  const folders = foldersQuery.data ?? [];
+  const total = documentsQuery.data?.total ?? 0;
+  const loading = documentsQuery.isLoading;
+  const versions = versionsQuery.data ?? [];
+  const versionsLoading = versionsQuery.isLoading;
+
+  const deleteMutation = useMutation({
+    mutationFn: async (docId: string) => {
+      const res = await docApi.delete(docId);
+      if (!res.success) throw new Error(res.message || '删除失败');
+      return res;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: QUERY_KEYS.DOC.DOCUMENTS });
+      addNotification({ title: '删除成功', message: '文件已删除', type: 'success' });
+    },
+    onError: (err: unknown) => {
+      logger.error('删除失败:', err);
+      addNotification({ title: '删除失败', message: '文件删除失败', type: 'error' });
+    },
+  });
+
+  const uploadMutation = useMutation({
+    mutationFn: async (files: File[]) => {
+      for (const file of files) {
+        await docApi.upload(file);
+      }
+    },
+    onSuccess: (_data, files) => {
+      queryClient.invalidateQueries({ queryKey: QUERY_KEYS.DOC.DOCUMENTS });
       addNotification({
-        title: '加载失败',
-        message: '加载文档数据失败',
-        type: 'error',
+        title: '上传成功',
+        message: `成功上传 ${files.length} 个文件`,
+        type: 'success',
       });
-    } finally {
-      setLoading(false);
-    }
-  }, [addNotification]);
+      setShowUploadModal(false);
+      setUploadFiles([]);
+    },
+    onError: (err: unknown) => {
+      logger.error('上传失败:', err);
+      addNotification({ title: '上传失败', message: '文件上传失败', type: 'error' });
+    },
+  });
+
+  const restoreVersionMutation = useMutation({
+    mutationFn: async ({ fileId, version }: { fileId: string; version: number }) => {
+      const res = await docApi.restoreVersion(fileId, version);
+      if (!res.success) throw new Error(res.message || '恢复版本失败');
+      return res;
+    },
+    onSuccess: (_data, variables) => {
+      queryClient.invalidateQueries({ queryKey: QUERY_KEYS.DOC.DOCUMENTS });
+      queryClient.invalidateQueries({ queryKey: QUERY_KEYS.DOC.VERSIONS(variables.fileId) });
+      addNotification({ title: '恢复成功', message: '已恢复到版本', type: 'success' });
+    },
+    onError: (err: unknown) => {
+      logger.error('恢复版本失败:', err);
+      addNotification({ title: '恢复失败', message: '恢复版本失败', type: 'error' });
+    },
+  });
+
+  const uploading = uploadMutation.isPending;
 
   useEffect(() => {
-    loadData();
-  }, [loadData]);
+    if (documentsQuery.isError) {
+      logger.error('加载文档数据失败:', documentsQuery.error);
+      addNotification({ title: '加载失败', message: '加载文档数据失败', type: 'error' });
+    }
+  }, [documentsQuery.isError, documentsQuery.error, addNotification]);
 
   const filteredDocuments = documents.filter((doc) => {
     const matchesSearch =
@@ -179,12 +248,22 @@ const DocumentCenterPage: React.FC = () => {
   };
 
   const handleRefresh = () => {
-    loadData();
+    queryClient.invalidateQueries({ queryKey: QUERY_KEYS.DOC.DOCUMENTS });
+    queryClient.invalidateQueries({ queryKey: QUERY_KEYS.DOC.FOLDERS });
   };
 
   const handleToggleFavorite = (docId: string) => {
-    setDocuments((prev) =>
-      prev.map((doc) => (doc.id === docId ? { ...doc, is_favorite: !doc.is_favorite } : doc))
+    queryClient.setQueryData<{ documents: DocumentWithFavorite[]; total: number }>(
+      QUERY_KEYS.DOC.DOCUMENTS,
+      (prev) => {
+        if (!prev) return prev;
+        return {
+          ...prev,
+          documents: prev.documents.map((doc) =>
+            doc.id === docId ? { ...doc, is_favorite: !doc.is_favorite } : doc
+          ),
+        };
+      }
     );
     addNotification({
       title: '操作成功',
@@ -227,27 +306,9 @@ const DocumentCenterPage: React.FC = () => {
     }
   };
 
-  const handleDelete = async (docId: string) => {
+  const handleDelete = (docId: string) => {
     if (!confirm('确定要删除这个文件吗？')) return;
-
-    try {
-      const response = await docApi.delete(docId);
-      if (response.success) {
-        setDocuments((prev) => prev.filter((doc) => doc.id !== docId));
-        addNotification({
-          title: '删除成功',
-          message: '文件已删除',
-          type: 'success',
-        });
-      }
-    } catch (err: unknown) {
-      logger.error('删除失败:', err);
-      addNotification({
-        title: '删除失败',
-        message: '文件删除失败',
-        type: 'error',
-      });
-    }
+    deleteMutation.mutate(docId);
   };
 
   const handleFileSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -257,7 +318,7 @@ const DocumentCenterPage: React.FC = () => {
     }
   };
 
-  const handleUpload = async () => {
+  const handleUpload = () => {
     if (uploadFiles.length === 0) {
       addNotification({
         title: '提示',
@@ -266,78 +327,16 @@ const DocumentCenterPage: React.FC = () => {
       });
       return;
     }
-
-    setUploading(true);
-    try {
-      for (const file of uploadFiles) {
-        await docApi.upload(file);
-      }
-
-      addNotification({
-        title: '上传成功',
-        message: `成功上传 ${uploadFiles.length} 个文件`,
-        type: 'success',
-      });
-      setShowUploadModal(false);
-      setUploadFiles([]);
-      loadData();
-    } catch (err: unknown) {
-      logger.error('上传失败:', err);
-      addNotification({
-        title: '上传失败',
-        message: '文件上传失败',
-        type: 'error',
-      });
-    } finally {
-      setUploading(false);
-    }
+    uploadMutation.mutate(uploadFiles);
   };
 
-  const handleOpenVersionHistory = async (doc: DocumentWithFavorite) => {
+  const handleOpenVersionHistory = (doc: DocumentWithFavorite) => {
     setVersionDoc(doc);
     setShowVersionHistory(true);
-    setVersionsLoading(true);
-    try {
-      const response = await docApi.getVersions(doc.id);
-      if (response.success && response.data) {
-        setVersions(response.data);
-      } else {
-        setVersions([]);
-      }
-    } catch (err: unknown) {
-      logger.error('加载版本历史失败:', err);
-      setVersions([]);
-    } finally {
-      setVersionsLoading(false);
-    }
   };
 
-  const handleRestoreVersion = async (doc: DocumentWithFavorite, version: FileVersion) => {
-    try {
-      const response = await docApi.restoreVersion(doc.id, version.version);
-      if (response.success) {
-        addNotification({
-          title: '恢复成功',
-          message: `已恢复到版本 v${version.version}`,
-          type: 'success',
-        });
-        loadData();
-        handleOpenVersionHistory(doc);
-      } else {
-        addNotification({
-          title: '恢复失败',
-          message: response.message || '恢复版本失败',
-          type: 'error',
-        });
-      }
-    } catch (err: unknown) {
-      logger.error('恢复版本失败:', err);
-      addNotification({
-        title: '恢复失败',
-        message: '恢复版本失败',
-        type: 'error',
-      });
-    }
+  const handleRestoreVersion = (doc: DocumentWithFavorite, version: FileVersion) => {
+    restoreVersionMutation.mutate({ fileId: doc.id, version: version.version });
   };
 
   const filters = [

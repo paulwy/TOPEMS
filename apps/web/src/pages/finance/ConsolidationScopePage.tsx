@@ -12,6 +12,14 @@ import {
   Tab,
   Button,
   useTheme,
+  Dialog,
+  DialogTitle,
+  DialogContent,
+  DialogActions,
+  FormControl,
+  InputLabel,
+  Select,
+  MenuItem,
 } from '@mui/material';
 import type { ColumnDef } from '@tanstack/react-table';
 import {
@@ -39,11 +47,17 @@ import {
   useScopeCompanies,
   useAddCompanyToScope,
   useRemoveCompanyFromScope,
+  useCreateConsolidationScope,
+  useUpdateConsolidationScope,
 } from '@/hooks/useConsolidation';
 import { useNotification } from '@/hooks/useNotification';
 import { DataTable } from '@/components/common/DataTable';
 import { StatCardGroup } from '@/components';
-import type { ConsolidationScope, ConsolidationCompany } from '@/types/consolidation';
+import type {
+  ConsolidationScope,
+  ConsolidationCompany,
+  ConsolidationScopeStatus,
+} from '@/types/consolidation';
 import { PageContainer } from '@/components/common';
 
 const ct = designTokens.colors;
@@ -118,12 +132,34 @@ const CONTROL_TYPE_CONFIG = {
 
 export default function ConsolidationScopePage() {
   const theme = useTheme();
-  const { error: notifyError } = useNotification();
+  const { error: notifyError, success: notifySuccess } = useNotification();
 
   // 状态
   const [searchKeyword, setSearchKeyword] = useState('');
   const [selectedScope, setSelectedScope] = useState<ConsolidationScope | null>(null);
   const [activeTab, setActiveTab] = useState('companies');
+
+  // 弹窗状态
+  const [showCreateScopeModal, setShowCreateScopeModal] = useState(false);
+  const [showEditScopeModal, setShowEditScopeModal] = useState(false);
+  const [showAddCompanyModal, setShowAddCompanyModal] = useState(false);
+  const [showRuleConfigModal, setShowRuleConfigModal] = useState(false);
+
+  // 表单数据
+  const [scopeFormData, setScopeFormData] = useState<Partial<ConsolidationScope>>({
+    code: '',
+    name: '',
+    consolidation_method: 'full',
+    description: '',
+    status: 'active' as ConsolidationScopeStatus,
+  });
+
+  const [companyFormData, setCompanyFormData] = useState({
+    company_id: '',
+    control_type: 'full_control' as 'full_control' | 'joint_venture' | 'associate',
+    ownership_percentage: 100,
+    consolidation_percentage: 100,
+  });
 
   // 查询合并范围列表
   const {
@@ -136,6 +172,12 @@ export default function ConsolidationScopePage() {
 
   // 删除合并范围
   const deleteScope = useDeleteConsolidationScope();
+
+  // 创建合并范围
+  const createScope = useCreateConsolidationScope();
+
+  // 更新合并范围
+  const updateScope = useUpdateConsolidationScope();
 
   // 查询选中合并范围的公司列表
   const {
@@ -161,6 +203,89 @@ export default function ConsolidationScopePage() {
       notifyError('获取公司列表失败');
     }
   }, [companiesError, notifyError]);
+
+  // 打开新建合并范围弹窗
+  const handleOpenCreateScopeModal = () => {
+    setScopeFormData({
+      code: '',
+      name: '',
+      consolidation_method: 'full',
+      description: '',
+      status: 'active' as ConsolidationScopeStatus,
+    });
+    setShowCreateScopeModal(true);
+  };
+
+  // 打开编辑合并范围弹窗
+  const handleOpenEditScopeModal = () => {
+    if (selectedScope) {
+      setScopeFormData({
+        code: selectedScope.code,
+        name: selectedScope.name,
+        consolidation_method: selectedScope.consolidation_method,
+        description: selectedScope.description || '',
+        status: selectedScope.status,
+      });
+      setShowEditScopeModal(true);
+    }
+  };
+
+  // 保存合并范围
+  const handleSaveScope = async () => {
+    if (
+      !scopeFormData.code ||
+      !scopeFormData.name ||
+      !scopeFormData.code.trim() ||
+      !scopeFormData.name.trim()
+    ) {
+      notifyError('请输入合并范围编码和名称');
+      return;
+    }
+
+    if (showEditScopeModal && selectedScope) {
+      await updateScope.mutateAsync({
+        scopeId: selectedScope.id,
+        data: scopeFormData,
+      });
+      notifySuccess('合并范围更新成功');
+      setShowEditScopeModal(false);
+    } else {
+      await createScope.mutateAsync(scopeFormData);
+      notifySuccess('合并范围创建成功');
+      setShowCreateScopeModal(false);
+    }
+  };
+
+  // 打开添加公司弹窗
+  const handleOpenAddCompanyModal = () => {
+    setCompanyFormData({
+      company_id: '',
+      control_type: 'full_control',
+      ownership_percentage: 100,
+      consolidation_percentage: 100,
+    });
+    setShowAddCompanyModal(true);
+  };
+
+  // 添加公司
+  const handleAddCompany = async () => {
+    if (!companyFormData.company_id) {
+      notifyError('请选择公司');
+      return;
+    }
+
+    if (!selectedScope) return;
+
+    await addCompany.mutateAsync({
+      scope_id: selectedScope.id,
+      company_id: companyFormData.company_id,
+      control_type: companyFormData.control_type,
+      ownership_percentage: companyFormData.ownership_percentage,
+      consolidation_percentage: companyFormData.consolidation_percentage,
+    });
+    notifySuccess('公司添加成功');
+    setShowAddCompanyModal(false);
+  };
 
   // 统计数据
   const stats = useMemo(() => {
@@ -294,7 +419,7 @@ export default function ConsolidationScopePage() {
           <Button
             variant='text'
             size='small'
-            onClick={() => { /* TODO: 打开规则配置弹窗 */ }}
+            onClick={() => setShowRuleConfigModal(true)}
             startIcon={<Settings sx={{ width: 16, height: 16 }} />}
           >
             规则
@@ -418,7 +543,7 @@ export default function ConsolidationScopePage() {
           {
             label: '新建合并范围',
             icon: <Plus sx={{ width: 16, height: 16 }} />,
-            onClick: () => { /* TODO: 打开新建合并范围弹窗 */ },
+            onClick: handleOpenCreateScopeModal,
             variant: 'contained',
           },
         ],
@@ -533,7 +658,7 @@ export default function ConsolidationScopePage() {
                   <Button
                     variant='outlined'
                     size='small'
-                    onClick={() => { /* TODO: 打开编辑弹窗 */ }}
+                    onClick={handleOpenEditScopeModal}
                     startIcon={<Edit2 sx={{ width: 16, height: 16 }} />}
                   >
                     编辑
@@ -578,7 +703,7 @@ export default function ConsolidationScopePage() {
                       <Button
                         size='small'
                         variant='contained'
-                        onClick={() => { /* TODO: 打开添加公司弹窗 */ }}
+                        onClick={handleOpenAddCompanyModal}
                         startIcon={<Plus sx={{ width: 16, height: 16 }} />}
                       >
                         添加公司
@@ -626,7 +751,7 @@ export default function ConsolidationScopePage() {
                       <Button
                         size='small'
                         variant='contained'
-                        onClick={() => { /* TODO: 打开新建规则弹窗 */ }}
+                        onClick={() => setShowRuleConfigModal(true)}
                         startIcon={<Plus sx={{ width: 16, height: 16 }} />}
                       >
                         新建规则
@@ -676,6 +801,265 @@ export default function ConsolidationScopePage() {
           )}
         </Box>
       </Box>
+
+      {/* 新建/编辑合并范围弹窗 */}
+      <Dialog
+        open={showCreateScopeModal || showEditScopeModal}
+        onClose={() => {
+          setShowCreateScopeModal(false);
+          setShowEditScopeModal(false);
+        }}
+        maxWidth='sm'
+        fullWidth
+      >
+        <DialogTitle>{showEditScopeModal ? '编辑合并范围' : '新建合并范围'}</DialogTitle>
+        <DialogContent>
+          <Box sx={{ pt: 1, display: 'flex', flexDirection: 'column', gap: 2 }}>
+            <TextField
+              fullWidth
+              label='合并范围编码 *'
+              value={scopeFormData.code}
+              onChange={(e) => setScopeFormData({ ...scopeFormData, code: e.target.value })}
+              placeholder='请输入合并范围编码'
+              disabled={showEditScopeModal}
+            />
+            <TextField
+              fullWidth
+              label='合并范围名称 *'
+              value={scopeFormData.name}
+              onChange={(e) => setScopeFormData({ ...scopeFormData, name: e.target.value })}
+              placeholder='请输入合并范围名称'
+            />
+            <FormControl fullWidth>
+              <InputLabel>合并方法</InputLabel>
+              <Select
+                value={scopeFormData.consolidation_method}
+                label='合并方法'
+                onChange={(e) =>
+                  setScopeFormData({ ...scopeFormData, consolidation_method: e.target.value })
+                }
+              >
+                <MenuItem value='full'>完全合并</MenuItem>
+                <MenuItem value='equity'>权益法</MenuItem>
+                <MenuItem value='proportional'>比例合并</MenuItem>
+              </Select>
+            </FormControl>
+            <FormControl fullWidth>
+              <InputLabel>状态</InputLabel>
+              <Select
+                value={scopeFormData.status}
+                label='状态'
+                onChange={(e) => setScopeFormData({ ...scopeFormData, status: e.target.value })}
+              >
+                <MenuItem value='active'>启用</MenuItem>
+                <MenuItem value='inactive'>停用</MenuItem>
+                <MenuItem value='draft'>草稿</MenuItem>
+              </Select>
+            </FormControl>
+            <TextField
+              fullWidth
+              label='说明'
+              value={scopeFormData.description}
+              onChange={(e) => setScopeFormData({ ...scopeFormData, description: e.target.value })}
+              placeholder='请输入说明'
+              multiline
+              rows={3}
+            />
+          </Box>
+        </DialogContent>
+        <DialogActions>
+          <Button
+            variant='outlined'
+            onClick={() => {
+              setShowCreateScopeModal(false);
+              setShowEditScopeModal(false);
+            }}
+          >
+            取消
+          </Button>
+          <Button
+            variant='contained'
+            onClick={handleSaveScope}
+            disabled={createScope.isPending || updateScope.isPending}
+          >
+            {createScope.isPending || updateScope.isPending ? '保存中...' : '保存'}
+          </Button>
+        </DialogActions>
+      </Dialog>
+
+      {/* 添加公司弹窗 */}
+      <Dialog
+        open={showAddCompanyModal}
+        onClose={() => setShowAddCompanyModal(false)}
+        maxWidth='sm'
+        fullWidth
+      >
+        <DialogTitle>添加公司到合并范围</DialogTitle>
+        <DialogContent>
+          <Box sx={{ pt: 1, display: 'flex', flexDirection: 'column', gap: 2 }}>
+            <FormControl fullWidth>
+              <InputLabel>选择公司 *</InputLabel>
+              <Select
+                value={companyFormData.company_id}
+                label='选择公司'
+                onChange={(e) =>
+                  setCompanyFormData({ ...companyFormData, company_id: e.target.value })
+                }
+              >
+                <MenuItem value=''>请选择公司</MenuItem>
+                <MenuItem value='company-1'>集团母公司</MenuItem>
+                <MenuItem value='company-2'>子公司A</MenuItem>
+                <MenuItem value='company-3'>子公司B</MenuItem>
+                <MenuItem value='company-4'>合资公司C</MenuItem>
+              </Select>
+            </FormControl>
+            <FormControl fullWidth>
+              <InputLabel>控制类型</InputLabel>
+              <Select
+                value={companyFormData.control_type}
+                label='控制类型'
+                onChange={(e) =>
+                  setCompanyFormData({
+                    ...companyFormData,
+                    control_type: e.target.value as 'full_control' | 'joint_venture' | 'associate',
+                  })
+                }
+              >
+                <MenuItem value='full_control'>全资子公司</MenuItem>
+                <MenuItem value='joint_venture'>合资公司</MenuItem>
+                <MenuItem value='associate'>联营公司</MenuItem>
+              </Select>
+            </FormControl>
+            <TextField
+              fullWidth
+              label='持股比例 (%)'
+              type='number'
+              value={companyFormData.ownership_percentage}
+              onChange={(e) =>
+                setCompanyFormData({
+                  ...companyFormData,
+                  ownership_percentage: Number(e.target.value),
+                })
+              }
+              placeholder='请输入持股比例'
+            />
+            <TextField
+              fullWidth
+              label='合并比例 (%)'
+              type='number'
+              value={companyFormData.consolidation_percentage}
+              onChange={(e) =>
+                setCompanyFormData({
+                  ...companyFormData,
+                  consolidation_percentage: Number(e.target.value),
+                })
+              }
+              placeholder='请输入合并比例'
+            />
+          </Box>
+        </DialogContent>
+        <DialogActions>
+          <Button
+            variant='outlined'
+            onClick={() => setShowAddCompanyModal(false)}
+          >
+            取消
+          </Button>
+          <Button
+            variant='contained'
+            onClick={handleAddCompany}
+            disabled={addCompany.isPending}
+          >
+            {addCompany.isPending ? '添加中...' : '添加'}
+          </Button>
+        </DialogActions>
+      </Dialog>
+
+      {/* 规则配置弹窗 */}
+      <Dialog
+        open={showRuleConfigModal}
+        onClose={() => setShowRuleConfigModal(false)}
+        maxWidth='md'
+        fullWidth
+      >
+        <DialogTitle>抵消规则配置</DialogTitle>
+        <DialogContent>
+          <Box sx={{ pt: 1 }}>
+            <Typography
+              variant='body2'
+              color='text.secondary'
+              sx={{ mb: 2 }}
+            >
+              抵消规则用于定义合并报表中的内部交易抵消逻辑。
+            </Typography>
+            <Box sx={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 2 }}>
+              <TextField
+                fullWidth
+                label='规则名称 *'
+                placeholder='请输入规则名称'
+              />
+              <FormControl fullWidth>
+                <InputLabel>规则类型</InputLabel>
+                <Select
+                  value=''
+                  label='规则类型'
+                >
+                  <MenuItem value=''>请选择类型</MenuItem>
+                  <MenuItem value='intercompany'>内部交易抵消</MenuItem>
+                  <MenuItem value='inventory'>存货抵消</MenuItem>
+                  <MenuItem value='fixed_asset'>固定资产抵消</MenuItem>
+                  <MenuItem value='equity'>权益抵消</MenuItem>
+                </Select>
+              </FormControl>
+              <TextField
+                fullWidth
+                label='借方科目'
+                placeholder='请输入借方科目编码'
+              />
+              <TextField
+                fullWidth
+                label='贷方科目'
+                placeholder='请输入贷方科目编码'
+              />
+              <FormControl fullWidth>
+                <InputLabel>计算方式</InputLabel>
+                <Select
+                  value=''
+                  label='计算方式'
+                >
+                  <MenuItem value=''>请选择计算方式</MenuItem>
+                  <MenuItem value='full'>全额抵消</MenuItem>
+                  <MenuItem value='percentage'>比例抵消</MenuItem>
+                  <MenuItem value='manual'>手动录入</MenuItem>
+                </Select>
+              </FormControl>
+              <TextField
+                fullWidth
+                label='优先级'
+                type='number'
+                placeholder='数字越小优先级越高'
+              />
+            </Box>
+            <TextField
+              fullWidth
+              label='规则说明'
+              placeholder='请输入规则说明'
+              multiline
+              rows={3}
+              sx={{ mt: 2 }}
+            />
+          </Box>
+        </DialogContent>
+        <DialogActions>
+          <Button
+            variant='outlined'
+            onClick={() => setShowRuleConfigModal(false)}
+          >
+            取消
+          </Button>
+          <Button variant='contained'>保存规则</Button>
+        </DialogActions>
+      </Dialog>
     </PageContainer>
   );
 }

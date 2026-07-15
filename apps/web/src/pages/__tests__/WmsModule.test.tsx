@@ -323,210 +323,209 @@ vi.mock('@/store', () => ({
 }));
 
 describe('DashboardPage', () => {
-    it('should render without crashing', () => {
-      const { container } = render(
-        <QueryClientProvider client={queryClient}>
-          <BrowserRouter>
-            <DashboardPage />
-          </BrowserRouter>
-        </QueryClientProvider>
-      );
-      expect(container).toBeDefined();
-    });
+  it('should render without crashing', () => {
+    const { container } = render(
+      <QueryClientProvider client={queryClient}>
+        <BrowserRouter>
+          <DashboardPage />
+        </BrowserRouter>
+      </QueryClientProvider>
+    );
+    expect(container).toBeDefined();
   });
+});
 
 describe('WarehouseManagementPage', () => {
-    it('should render without crashing', () => {
-      const { container } = render(
-        <QueryClientProvider client={queryClient}>
-          <BrowserRouter>
-            <WarehouseManagementPage />
-          </BrowserRouter>
-        </QueryClientProvider>
-      );
-      expect(container).toBeDefined();
-    });
+  it('should render without crashing', () => {
+    const { container } = render(
+      <QueryClientProvider client={queryClient}>
+        <BrowserRouter>
+          <WarehouseManagementPage />
+        </BrowserRouter>
+      </QueryClientProvider>
+    );
+    expect(container).toBeDefined();
   });
+});
 
 describe('LocationPage', () => {
-    it('should render without crashing', () => {
-      const { container } = render(
-        <QueryClientProvider client={queryClient}>
-          <BrowserRouter>
-            <LocationPage />
-          </BrowserRouter>
-        </QueryClientProvider>
-      );
-      expect(container).toBeDefined();
-    });
+  it('should render without crashing', () => {
+    const { container } = render(
+      <QueryClientProvider client={queryClient}>
+        <BrowserRouter>
+          <LocationPage />
+        </BrowserRouter>
+      </QueryClientProvider>
+    );
+    expect(container).toBeDefined();
   });
+});
 
 describe('InventoryPage', () => {
-    it('should render without crashing', () => {
-      const { container } = render(
-        <QueryClientProvider client={queryClient}>
-          <BrowserRouter>
-            <InventoryPage />
-          </BrowserRouter>
-        </QueryClientProvider>
-      );
-      expect(container).toBeDefined();
-    });
+  it('should render without crashing', () => {
+    const { container } = render(
+      <QueryClientProvider client={queryClient}>
+        <BrowserRouter>
+          <InventoryPage />
+        </BrowserRouter>
+      </QueryClientProvider>
+    );
+    expect(container).toBeDefined();
   });
+});
 
 describe('InventoryReportPage', () => {
-    it('should render without crashing', () => {
-      const { container } = render(
-        <QueryClientProvider client={queryClient}>
-          <BrowserRouter>
-            <InventoryReportPage />
-          </BrowserRouter>
-        </QueryClientProvider>
-      );
-      expect(container).toBeDefined();
-    });
+  it('should render without crashing', () => {
+    const { container } = render(
+      <QueryClientProvider client={queryClient}>
+        <BrowserRouter>
+          <InventoryReportPage />
+        </BrowserRouter>
+      </QueryClientProvider>
+    );
+    expect(container).toBeDefined();
   });
-
-describe('InboundPage', () => {
-    it('should render without crashing', () => {
-      const { container } = render(
-        <QueryClientProvider client={queryClient}>
-          <BrowserRouter>
-            <InboundPage />
-          </BrowserRouter>
-        </QueryClientProvider>
-      );
-      expect(container).toBeDefined();
-    });
-  });
+});
 
 describe('InboundOrderPage', () => {
-    it('should render without crashing', () => {
-      const { container } = render(
-        <QueryClientProvider client={queryClient}>
-          <BrowserRouter>
-            <InboundOrderPage />
-          </BrowserRouter>
-        </QueryClientProvider>
-      );
-      expect(container).toBeDefined();
-    });
+  it('should render without crashing', () => {
+    const { container } = render(
+      <QueryClientProvider client={queryClient}>
+        <BrowserRouter>
+          <InboundPage />
+        </BrowserRouter>
+      </QueryClientProvider>
+    );
+    expect(container).toBeDefined();
   });
+});
 
-describe('OutboundPage', () => {
-    it('should render without crashing', () => {
-      const { container } = render(
-        <QueryClientProvider client={queryClient}>
-          <BrowserRouter>
-            <OutboundPage />
-          </BrowserRouter>
-        </QueryClientProvider>
-      );
-      expect(container).toBeDefined();
-    });
+describe('InboundOrderPage', () => {
+  it('should render without crashing', () => {
+    const { container } = render(
+      <QueryClientProvider client={queryClient}>
+        <BrowserRouter>
+          <InboundOrderPage />
+        </BrowserRouter>
+      </QueryClientProvider>
+    );
+    expect(container).toBeDefined();
   });
+});
+
+describe('InboundPage', () => {
+  it('should render without crashing', () => {
+    const { container } = render(
+      <QueryClientProvider client={queryClient}>
+        <BrowserRouter>
+          <OutboundPage />
+        </BrowserRouter>
+      </QueryClientProvider>
+    );
+    expect(container).toBeDefined();
+  });
+});
 
 describe('OutboundOrderPage', () => {
-    it('should render without crashing', () => {
-      const { container } = render(
-        <QueryClientProvider client={queryClient}>
-          <BrowserRouter>
-            <OutboundOrderPage />
-          </BrowserRouter>
-        </QueryClientProvider>
-      );
-      expect(container).toBeDefined();
-    });
+  it('should render without crashing', () => {
+    const { container } = render(
+      <QueryClientProvider client={queryClient}>
+        <BrowserRouter>
+          <OutboundOrderPage />
+        </BrowserRouter>
+      </QueryClientProvider>
+    );
+    expect(container).toBeDefined();
   });
+});
 
-describe('TransferPage', () => {
-    it('should render without crashing', () => {
-      const { container } = render(
-        <QueryClientProvider client={queryClient}>
-          <BrowserRouter>
-            <TransferPage />
-          </BrowserRouter>
-        </QueryClientProvider>
-      );
-      expect(container).toBeDefined();
-    });
+describe('OutboundPage', () => {
+  it('should render without crashing', () => {
+    const { container } = render(
+      <QueryClientProvider client={queryClient}>
+        <BrowserRouter>
+          <TransferPage />
+        </BrowserRouter>
+      </QueryClientProvider>
+    );
+    expect(container).toBeDefined();
   });
+});
 
 describe('StockTakePage', () => {
-    it('should render without crashing', () => {
-      const { container } = render(
-        <QueryClientProvider client={queryClient}>
-          <BrowserRouter>
-            <StockTakePage />
-          </BrowserRouter>
-        </QueryClientProvider>
-      );
-      expect(container).toBeDefined();
-    });
+  it('should render without crashing', () => {
+    const { container } = render(
+      <QueryClientProvider client={queryClient}>
+        <BrowserRouter>
+          <StockTakePage />
+        </BrowserRouter>
+      </QueryClientProvider>
+    );
+    expect(container).toBeDefined();
   });
+});
 
 describe('ReplenishmentPage', () => {
-    it('should render without crashing', () => {
-      const { container } = render(
-        <QueryClientProvider client={queryClient}>
-          <BrowserRouter>
-            <ReplenishmentPage />
-          </BrowserRouter>
-        </QueryClientProvider>
-      );
-      expect(container).toBeDefined();
-    });
+  it('should render without crashing', () => {
+    const { container } = render(
+      <QueryClientProvider client={queryClient}>
+        <BrowserRouter>
+          <ReplenishmentPage />
+        </BrowserRouter>
+      </QueryClientProvider>
+    );
+    expect(container).toBeDefined();
   });
+});
 
 describe('BatchManagementPage', () => {
-    it('should render without crashing', () => {
-      const { container } = render(
-        <QueryClientProvider client={queryClient}>
-          <BrowserRouter>
-            <BatchManagementPage />
-          </BrowserRouter>
-        </QueryClientProvider>
-      );
-      expect(container).toBeDefined();
-    });
+  it('should render without crashing', () => {
+    const { container } = render(
+      <QueryClientProvider client={queryClient}>
+        <BrowserRouter>
+          <BatchManagementPage />
+        </BrowserRouter>
+      </QueryClientProvider>
+    );
+    expect(container).toBeDefined();
   });
+});
 
 describe('SerialNumberPage', () => {
-    it('should render without crashing', () => {
-      const { container } = render(
-        <QueryClientProvider client={queryClient}>
-          <BrowserRouter>
-            <SerialNumberPage />
-          </BrowserRouter>
-        </QueryClientProvider>
-      );
-      expect(container).toBeDefined();
-    });
+  it('should render without crashing', () => {
+    const { container } = render(
+      <QueryClientProvider client={queryClient}>
+        <BrowserRouter>
+          <SerialNumberPage />
+        </BrowserRouter>
+      </QueryClientProvider>
+    );
+    expect(container).toBeDefined();
   });
+});
 
 describe('SupplierManagementPage', () => {
-    it('should render without crashing', () => {
-      const { container } = render(
-        <QueryClientProvider client={queryClient}>
-          <BrowserRouter>
-            <SupplierManagementPage />
-          </BrowserRouter>
-        </QueryClientProvider>
-      );
-      expect(container).toBeDefined();
-    });
+  it('should render without crashing', () => {
+    const { container } = render(
+      <QueryClientProvider client={queryClient}>
+        <BrowserRouter>
+          <SupplierManagementPage />
+        </BrowserRouter>
+      </QueryClientProvider>
+    );
+    expect(container).toBeDefined();
   });
+});
 
 describe('SupplierDetailPage', () => {
-    it('should render without crashing', () => {
-      const { container } = render(
-        <QueryClientProvider client={queryClient}>
-          <BrowserRouter>
-            <SupplierDetailPage />
-          </BrowserRouter>
-        </QueryClientProvider>
-      );
-      expect(container).toBeDefined();
-    });
+  it('should render without crashing', () => {
+    const { container } = render(
+      <QueryClientProvider client={queryClient}>
+        <BrowserRouter>
+          <SupplierDetailPage />
+        </BrowserRouter>
+      </QueryClientProvider>
+    );
+    expect(container).toBeDefined();
   });
 });

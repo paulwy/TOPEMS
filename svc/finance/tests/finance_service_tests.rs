@@ -33,9 +33,19 @@ async fn create_test_tenant(pool: &PgPool) -> Uuid {
     tenant_id
 }
 
+/// 检查数据库是否可用
+async fn ensure_db_available() -> bool {
+    tokio::net::TcpStream::connect("localhost:5432")
+        .await
+        .is_ok()
+}
+
 #[tokio::test]
-#[ignore]
 async fn test_create_account() {
+    if !ensure_db_available().await {
+        eprintln!("⏭ 跳过: 数据库未运行 (localhost:5432)");
+        return;
+    }
     let pool = create_test_pool().await;
     let tenant_id = create_test_tenant(&pool).await;
     let service = FinanceService::new(pool.clone(), WorkflowClient::new("http://localhost:8080"));
@@ -60,8 +70,11 @@ async fn test_create_account() {
 }
 
 #[tokio::test]
-#[ignore]
 async fn test_get_account() {
+    if !ensure_db_available().await {
+        eprintln!("⏭ 跳过: 数据库未运行 (localhost:5432)");
+        return;
+    }
     let pool = create_test_pool().await;
     let tenant_id = create_test_tenant(&pool).await;
     let service = FinanceService::new(pool.clone(), WorkflowClient::new("http://localhost:8080"));
@@ -89,8 +102,11 @@ async fn test_get_account() {
 }
 
 #[tokio::test]
-#[ignore]
 async fn test_voucher_lifecycle() {
+    if !ensure_db_available().await {
+        eprintln!("⏭ 跳过: 数据库未运行 (localhost:5432)");
+        return;
+    }
     let pool = create_test_pool().await;
     let tenant_id = create_test_tenant(&pool).await;
     let service = FinanceService::new(pool.clone(), WorkflowClient::new("http://localhost:8080"));
@@ -174,8 +190,11 @@ async fn test_voucher_lifecycle() {
 }
 
 #[tokio::test]
-#[ignore]
 async fn test_period_management() {
+    if !ensure_db_available().await {
+        eprintln!("⏭ 跳过: 数据库未运行 (localhost:5432)");
+        return;
+    }
     let pool = create_test_pool().await;
     let tenant_id = create_test_tenant(&pool).await;
     let service = FinanceService::new(pool.clone(), WorkflowClient::new("http://localhost:8080"));
@@ -197,8 +216,11 @@ async fn test_period_management() {
 }
 
 #[tokio::test]
-#[ignore]
 async fn test_auxiliary_account() {
+    if !ensure_db_available().await {
+        eprintln!("⏭ 跳过: 数据库未运行 (localhost:5432)");
+        return;
+    }
     let pool = create_test_pool().await;
     let tenant_id = create_test_tenant(&pool).await;
     let service = FinanceService::new(pool.clone(), WorkflowClient::new("http://localhost:8080"));

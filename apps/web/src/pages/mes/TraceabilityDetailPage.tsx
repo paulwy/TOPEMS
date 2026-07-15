@@ -8,65 +8,62 @@ import {
   Paper,
   type ChipProps,
 } from '@mui/material';
-import React, { useState, useEffect, useMemo } from 'react';
+import React, { useMemo } from 'react';
 import { useParams } from 'react-router-dom';
+import { useQuery } from '@tanstack/react-query';
+import { QUERY_KEYS } from '@/lib/reactQuery';
 import { Package, MapPin, CheckCircle, Factory, Truck, Boxes } from 'lucide-react';
 import { PageContainer } from '@/components/common/PageContainerV2';
 import { DetailPageTemplate, type TabConfig } from '@/components/templates';
 import { traceabilityApi } from '@/api/mes';
 import type { TraceChain, QualityRecord } from '@/api/mes';
-import { apiLogger } from '@/utils/logger';
 import { designTokens } from '@/theme/tokens';
-import { useNotificationStore } from '@/store';
 import { MES_PATHS } from '@/modules/mes/config';
 
 const ct = designTokens.colors;
 
 const TraceabilityDetailPage: React.FC = () => {
   const { batchNo } = useParams<{ batchNo: string }>();
-  const { addNotification } = useNotificationStore();
 
-  const [traceChain, setTraceChain] = useState<TraceChain | null>(null);
-  const [qualityRecords, setQualityRecords] = useState<QualityRecord[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [errorMessage, setErrorMessage] = useState<string | undefined>(undefined);
-
-  useEffect(() => {
-    if (batchNo) {
-      loadTraceability(batchNo);
-    }
-  }, [batchNo]);
-
-  const loadTraceability = async (batch: string) => {
-    setLoading(true);
-    setErrorMessage(undefined);
-    try {
-      const [chainRes, qualityRes] = await Promise.all([
-        traceabilityApi.getTraceChain({ type: 'backward', identifier: batch }),
-        traceabilityApi.listQualityRecords({ search: batch }),
-      ]);
-
-      if (chainRes.success && chainRes.data) {
-        setTraceChain(chainRes.data);
-      } else {
-        throw new Error(chainRes.message || '加载追溯信息失败');
+  const {
+    data: traceChain,
+    isLoading: chainLoading,
+    error: chainError,
+  } = useQuery<TraceChain | null>({
+    queryKey: batchNo
+      ? QUERY_KEYS.MES.TRACEABILITY_CHAIN(batchNo)
+      : ['mes', 'traceability', 'chain', 'null'],
+    queryFn: async () => {
+      if (!batchNo) return null;
+      const res = await traceabilityApi.getTraceChain({ type: 'backward', identifier: batchNo });
+      if (res.success && res.data) {
+        return res.data;
       }
+      throw new Error(res.message || '加载追溯信息失败');
+    },
+    enabled: !!batchNo,
+  });
 
-      if (qualityRes.success && qualityRes.data) {
-        setQualityRecords(qualityRes.data.records || []);
+  const { data: qualityRecordsData } = useQuery<QualityRecord[]>({
+    queryKey: batchNo
+      ? QUERY_KEYS.MES.TRACEABILITY_QUALITY_RECORDS(batchNo)
+      : ['mes', 'traceability', 'quality-records', 'null'],
+    queryFn: async () => {
+      if (!batchNo) return [];
+      const res = await traceabilityApi.listQualityRecords({ search: batchNo });
+      if (res.success && res.data) {
+        return res.data.records || [];
       }
-    } catch (err: unknown) {
-      apiLogger.error('Failed to load traceability:', err);
-      setErrorMessage('加载物料追溯详情失败');
-      addNotification({
-        type: 'error',
-        title: '加载失败',
-        message: '无法加载物料追溯详情',
-      });
-    } finally {
-      setLoading(false);
-    }
-  };
+      return [];
+    },
+    enabled: !!batchNo,
+  });
+
+  const qualityRecords = qualityRecordsData || [];
+  const loading = chainLoading;
+  const errorMessage = chainError
+    ? (chainError as Error).message || '加载物料追溯详情失败'
+    : undefined;
 
   const getNodeIcon = (type: string) => {
     switch (type) {

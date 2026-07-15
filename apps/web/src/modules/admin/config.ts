@@ -23,6 +23,8 @@ export const ADMIN_PATHS = {
   auditLog: '/admin/audit-log',
   monitor: '/admin/monitor',
   performance: '/admin/performance',
+  permissionAudit: '/admin/permission-audit',
+  monitoringAlert: '/admin/monitoring-alert',
 } as const;
 
 // ---- 第二部分：路由配置（供路由系统使用） ----
@@ -93,10 +95,7 @@ export const adminModuleConfig: RouteModuleConfig = {
     },
     {
       path: ADMIN_PATHS.tenantBilling,
-      element: lazyWithRetry(
-        () => import('@/pages/admin/TenantBillingPage'),
-        'TenantBillingPage'
-      ),
+      element: lazyWithRetry(() => import('@/pages/admin/TenantBillingPage'), 'TenantBillingPage'),
       module: 'admin',
       title: '租户计费',
       code: 'admin-tenant-billing',
@@ -267,6 +266,34 @@ export const adminModuleConfig: RouteModuleConfig = {
       module: 'admin',
       title: '性能监控',
       code: 'admin-performance',
+      requiredPermissions: ['admin:monitor:read', 'admin:read'],
+      action: 'read',
+      template: 'stats',
+      group: 'analytics',
+    },
+    {
+      path: ADMIN_PATHS.permissionAudit,
+      element: lazyWithRetry(
+        () => import('@/pages/admin/PermissionAuditPage'),
+        'PermissionAuditPage'
+      ),
+      module: 'admin',
+      title: '权限审计',
+      code: 'admin-permission-audit',
+      requiredPermissions: ['admin:audit:read', 'admin:read'],
+      action: 'read',
+      template: 'list',
+      group: 'analytics',
+    },
+    {
+      path: ADMIN_PATHS.monitoringAlert,
+      element: lazyWithRetry(
+        () => import('@/pages/admin/MonitoringAlertPage'),
+        'MonitoringAlertPage'
+      ),
+      module: 'admin',
+      title: '监控告警',
+      code: 'admin-monitoring-alert',
       requiredPermissions: ['admin:monitor:read', 'admin:read'],
       action: 'read',
       template: 'stats',
@@ -444,6 +471,26 @@ export const adminNavConfig: ModuleNavConfig = {
       order: 32,
       group: 'analytics',
       description: '性能指标监控',
+    },
+    {
+      code: 'admin-permission-audit',
+      label: '权限审计',
+      icon: 'Shield',
+      path: ADMIN_PATHS.permissionAudit,
+      permission: 'admin:audit:read',
+      order: 33,
+      group: 'analytics',
+      description: '权限变更和访问控制审计',
+    },
+    {
+      code: 'admin-monitoring-alert',
+      label: '监控告警',
+      icon: 'AlertTriangle',
+      path: ADMIN_PATHS.monitoringAlert,
+      permission: 'admin:monitor:read',
+      order: 34,
+      group: 'analytics',
+      description: '系统告警管理和监控规则',
     },
   ],
 };

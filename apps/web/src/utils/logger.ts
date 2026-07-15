@@ -165,17 +165,17 @@ export default createLogger;
 
 // 导出预设的日志记录器
 export const logger = createLogger('App', {
-  level: import.meta.env.PROD ? 'error' : 'debug',
+  level: typeof import.meta !== 'undefined' && import.meta.env?.PROD ? 'error' : 'debug',
   enableTimestamp: true,
 });
 
 export const apiLogger = createLogger('API', {
-  level: import.meta.env.PROD ? 'warn' : 'debug',
+  level: typeof import.meta !== 'undefined' && import.meta.env?.PROD ? 'warn' : 'debug',
   prefix: 'API',
 });
 
 export const authLogger = createLogger('Auth', {
-  level: import.meta.env.PROD ? 'error' : 'info',
+  level: typeof import.meta !== 'undefined' && import.meta.env?.PROD ? 'error' : 'info',
   prefix: 'AUTH',
 });
 

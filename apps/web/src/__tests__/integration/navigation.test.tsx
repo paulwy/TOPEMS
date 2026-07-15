@@ -19,10 +19,16 @@ describe('Navigation Integration', () => {
     mockUseAuthStore.mockReturnValue({
       user: {
         roles: ['admin'],
-        permissions: ['iam:read', 'workflow:read', 'hrm:read', 'document:read', 'notification:read'],
+        permissions: [
+          'iam:read',
+          'workflow:read',
+          'hrm:read',
+          'document:read',
+          'notification:read',
+        ],
       },
     });
-    coreModuleNavConfigs.forEach(config => {
+    coreModuleNavConfigs.forEach((config) => {
       navigationRegistryV2.registerModule(config);
     });
   });
@@ -34,26 +40,29 @@ describe('Navigation Integration', () => {
   it('should register all core modules', () => {
     const modules = navigationRegistryV2.getAllModules();
     expect(modules.length).toBeGreaterThan(0);
-    expect(modules.some(m => m.code === 'iam')).toBe(true);
-    expect(modules.some(m => m.code === 'workflow')).toBe(true);
-    expect(modules.some(m => m.code === 'notification')).toBe(true);
-    expect(modules.some(m => m.code === 'doc')).toBe(true);
-    expect(modules.some(m => m.code === 'hrm')).toBe(true);
-    expect(modules.some(m => m.code === 'finance')).toBe(true);
-    expect(modules.some(m => m.code === 'crm')).toBe(true);
-    expect(modules.some(m => m.code === 'mes')).toBe(true);
-    expect(modules.some(m => m.code === 'qms')).toBe(true);
-    expect(modules.some(m => m.code === 'scm')).toBe(true);
-    expect(modules.some(m => m.code === 'erp')).toBe(true);
-    expect(modules.some(m => m.code === 'wms')).toBe(true);
-    expect(modules.some(m => m.code === 'pm')).toBe(true);
+    expect(modules.some((m) => m.code === 'iam')).toBe(true);
+    expect(modules.some((m) => m.code === 'workflow')).toBe(true);
+    expect(modules.some((m) => m.code === 'notification')).toBe(true);
+    expect(modules.some((m) => m.code === 'doc')).toBe(true);
+    expect(modules.some((m) => m.code === 'hrm')).toBe(true);
+    expect(modules.some((m) => m.code === 'finance')).toBe(true);
+    expect(modules.some((m) => m.code === 'crm')).toBe(true);
+    expect(modules.some((m) => m.code === 'mes')).toBe(true);
+    expect(modules.some((m) => m.code === 'qms')).toBe(true);
+    expect(modules.some((m) => m.code === 'scm')).toBe(true);
+    expect(modules.some((m) => m.code === 'erp')).toBe(true);
+    expect(modules.some((m) => m.code === 'wms')).toBe(true);
+    expect(modules.some((m) => m.code === 'pm')).toBe(true);
   });
 
   it('should render navigation for ERP module', () => {
     render(
       <MemoryRouter initialEntries={[ERP_PATHS.dashboard]}>
         <Routes>
-          <Route path={ERP_PATHS.dashboard} element={<div>ERP Dashboard</div>} />
+          <Route
+            path={ERP_PATHS.dashboard}
+            element={<div>ERP Dashboard</div>}
+          />
         </Routes>
       </MemoryRouter>
     );

@@ -22,11 +22,15 @@ import type {
 } from '../migration';
 import { systemSettingApi } from './systemSetting';
 import { auditLogApi } from './auditLog';
+import { permissionAuditApi } from './permissionAudit';
+import { monitoringApi } from './monitoring';
 import type { SystemSetting, SystemConfig, AuditLog, AuditLogQueryParams } from './types';
 
 export * from './types';
 export { systemSettingApi } from './systemSetting';
 export { auditLogApi } from './auditLog';
+export { permissionAuditApi } from './permissionAudit';
+export { monitoringApi } from './monitoring';
 
 export const adminApi = {
   users: userApi,
@@ -41,6 +45,8 @@ export const adminApi = {
   migration: migrationApi,
   systemSettings: systemSettingApi,
   auditLogs: auditLogApi,
+  permissionAudit: permissionAuditApi,
+  monitoring: monitoringApi,
 
   listUsers: userApi.listUsers,
   getUser: userApi.getUser,
@@ -143,6 +149,32 @@ export const adminApi = {
   listAccessLogs: userApi.listAccessLogs,
   getUserAccessLogs: userApi.getUserAccessLogs,
   createAccessLog: userApi.createAccessLog,
+
+  listPermissionChanges: permissionAuditApi.listPermissionChanges,
+  getPermissionChange: permissionAuditApi.getPermissionChange,
+  getPermissionChangeStats: permissionAuditApi.getPermissionChangeStats,
+  exportPermissionChanges: permissionAuditApi.exportPermissionChanges,
+  listAccessControlLogs: permissionAuditApi.listAccessLogs,
+  getAccessControlLog: permissionAuditApi.getAccessLog,
+  getAccessControlStats: permissionAuditApi.getAccessControlStats,
+  exportAccessControlLogs: permissionAuditApi.exportAccessLogs,
+
+  listMonitoringAlerts: monitoringApi.listAlerts,
+  getMonitoringAlert: monitoringApi.getAlert,
+  acknowledgeMonitoringAlert: monitoringApi.acknowledgeAlert,
+  resolveMonitoringAlert: monitoringApi.resolveAlert,
+  escalateMonitoringAlert: monitoringApi.escalateAlert,
+  dismissMonitoringAlert: monitoringApi.dismissAlert,
+  getAlertStats: monitoringApi.getAlertStats,
+  exportMonitoringAlerts: monitoringApi.exportAlerts,
+  listAlertRules: monitoringApi.listAlertRules,
+  getAlertRule: monitoringApi.getAlertRule,
+  createAlertRule: monitoringApi.createAlertRule,
+  updateAlertRule: monitoringApi.updateAlertRule,
+  deleteAlertRule: monitoringApi.deleteAlertRule,
+  enableAlertRule: monitoringApi.enableAlertRule,
+  disableAlertRule: monitoringApi.disableAlertRule,
+  getSystemHealth: monitoringApi.getSystemHealth,
 };
 
 export default adminApi;

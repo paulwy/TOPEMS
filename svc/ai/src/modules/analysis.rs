@@ -17,7 +17,7 @@ fn get_tenant_id(claims: &Claims) -> Uuid {
 pub struct AnalysisApi;
 
 impl AnalysisApi {
-    /// POST /api/v1/analysis/sentiment - 情感分析
+    /// POST /api/analysis/sentiment - 情感分析
     pub async fn sentiment(
         State(state): State<AppState>,
         Extension(claims): Extension<Claims>,
@@ -34,7 +34,7 @@ impl AnalysisApi {
         }
     }
 
-    /// POST /api/v1/analysis/classify - 文本分类
+    /// POST /api/analysis/classify - 文本分类
     pub async fn classify(
         State(state): State<AppState>,
         Extension(claims): Extension<Claims>,
@@ -51,7 +51,7 @@ impl AnalysisApi {
         }
     }
 
-    /// POST /api/v1/analysis/entities - 实体提取
+    /// POST /api/analysis/entities - 实体提取
     pub async fn extract_entities(
         State(state): State<AppState>,
         Extension(claims): Extension<Claims>,
@@ -68,7 +68,7 @@ impl AnalysisApi {
         }
     }
 
-    /// POST /api/v1/analysis/extract-keywords - 关键词提取
+    /// POST /api/analysis/extract-keywords - 关键词提取
     pub async fn extract_keywords(
         State(state): State<AppState>,
         Extension(claims): Extension<Claims>,
@@ -85,7 +85,7 @@ impl AnalysisApi {
         }
     }
 
-    /// GET /api/v1/analysis/history - 获取分析历史
+    /// GET /api/analysis/history - 获取分析历史
     pub async fn history(
         State(state): State<AppState>,
         Extension(claims): Extension<Claims>,

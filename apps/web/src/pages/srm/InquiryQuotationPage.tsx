@@ -1,4 +1,6 @@
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState, useCallback } from 'react';
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import { QUERY_KEYS } from '@/lib/reactQuery';
 import {
   TextField,
   Dialog,
@@ -65,11 +67,9 @@ const categoryConfig: Record<string, string> = {
 };
 
 const InquiryQuotationPage: React.FC = () => {
-  const [inquiries, setInquiries] = useState<Inquiry[]>([]);
-  const [loading, setLoading] = useState(true);
+  const queryClient = useQueryClient();
   const [currentPage, setCurrentPage] = useState(1);
   const [pageSize, setPageSize] = useState(10);
-  const [total, setTotal] = useState(0);
   const [showDialog, setShowDialog] = useState(false);
   const [isEditing, setIsEditing] = useState(false);
   const [selectedInquiry, setSelectedInquiry] = useState<Inquiry | null>(null);
@@ -81,7 +81,6 @@ const InquiryQuotationPage: React.FC = () => {
     danger?: boolean;
   } | null>(null);
   const [activeTab, setActiveTab] = useState(0);
-  const [quotations, setQuotations] = useState<Quotation[]>([]);
   const [showQuotationDialog, setShowQuotationDialog] = useState(false);
   const [viewingInquiry, setViewingInquiry] = useState<Inquiry | null>(null);
   const [formData, setFormData] = useState<CreateInquiryRequest>({
@@ -97,87 +96,137 @@ const InquiryQuotationPage: React.FC = () => {
 
   const { addNotification } = useNotificationStore();
 
-  useEffect(() => {
-    loadInquiries();
-  }, [currentPage, pageSize]);
-
-  const loadInquiries = async () => {
-    try {
-      setLoading(true);
+  const inquiriesQuery = useQuery<{ items: Inquiry[]; total: number }>({
+    queryKey: [...QUERY_KEYS.SRM.INQUIRIES, { currentPage, pageSize }],
+    queryFn: async () => {
       const response = await srmApi.listInquiries({
         page: currentPage,
         pageSize,
       });
       if (response.success && response.data) {
-        setInquiries(response.data.items || []);
-        setTotal(response.data.total || 0);
+        return {
+          items: response.data.items || [],
+          total: response.data.total || 0,
+        };
       }
-    } catch (error: unknown) {
-      apiLogger.error('加载询价单失败:', error);
-      setInquiries([
-        {
-          id: '1',
-          inquiry_no: 'INQ-2024-001',
-          title: '原材料采购询价',
-          category: 'raw_material',
-          urgency: 'high',
-          status: 'in_progress',
-          deadline: '2024-02-01',
-          creator: '张三',
-          department: '采购部',
-          quotation_count: 3,
-          created_at: '2024-01-15T10:00:00Z',
-          updated_at: '2024-01-15T10:00:00Z',
-        },
-        {
-          id: '2',
-          inquiry_no: 'INQ-2024-002',
-          title: '设备采购询价',
-          category: 'equipment',
-          urgency: 'normal',
-          status: 'published',
-          deadline: '2024-02-10',
-          creator: '李四',
-          department: '采购部',
-          quotation_count: 0,
-          created_at: '2024-01-14T09:00:00Z',
-          updated_at: '2024-01-14T09:00:00Z',
-        },
-      ]);
-      setTotal(2);
-    } finally {
-      setLoading(false);
-    }
+      return { items: [], total: 0 };
+    },
+  });
+
+  const inquiries = inquiriesQuery.data?.items || [];
+  const total = inquiriesQuery.data?.total || 0;
+  const loading = inquiriesQuery.isLoading;
+
+  const quotationsQuery = useQuery<Quotation[]>({
+    queryKey: [...QUERY_KEYS.SRM.QUOTATIONS, viewingInquiry?.id],
+    enabled: !!viewingInquiry && showQuotationDialog,
+    queryFn: async () => {
+      if (!viewingInquiry) return [];
+      const response = await srmApi.listQuotations(viewingInquiry.id);
+      if (response.success) {
+        return response.data || [];
+      }
+      return [];
+    },
+  });
+
+  const quotations = quotationsQuery.data || [];
+
+  const invalidateInquiries = () => {
+    queryClient.invalidateQueries({ queryKey: QUERY_KEYS.SRM.INQUIRIES });
   };
+
+  const createMutation = useMutation({
+    mutationFn: async (data: CreateInquiryRequest) => srmApi.createInquiry(data),
+    onSuccess: () => {
+      addNotification({ type: 'success', title: '创建成功', message: '新询价单已创建' });
+      setShowDialog(false);
+      resetForm();
+      invalidateInquiries();
+    },
+    onError: (err: unknown) => {
+      apiLogger.error('创建询价单失败:', err);
+      addNotification({ type: 'error', title: '操作失败', message: '创建询价单失败' });
+    },
+  });
+
+  const updateMutation = useMutation({
+    mutationFn: async (params: { id: string; data: CreateInquiryRequest }) =>
+      srmApi.updateInquiry(params.id, params.data),
+    onSuccess: () => {
+      addNotification({ type: 'success', title: '更新成功', message: '询价单已更新' });
+      setShowDialog(false);
+      resetForm();
+      invalidateInquiries();
+    },
+    onError: (err: unknown) => {
+      apiLogger.error('更新询价单失败:', err);
+      addNotification({ type: 'error', title: '操作失败', message: '更新询价单失败' });
+    },
+  });
+
+  const deleteMutation = useMutation({
+    mutationFn: async (id: string) => srmApi.deleteInquiry(id),
+    onSuccess: () => {
+      addNotification({ type: 'success', title: '删除成功', message: '询价单已删除' });
+      invalidateInquiries();
+    },
+    onError: (err: unknown) => {
+      apiLogger.error('删除失败:', err);
+      addNotification({ type: 'error', title: '删除失败', message: '删除询价单失败' });
+    },
+  });
+
+  const publishMutation = useMutation({
+    mutationFn: async (id: string) => srmApi.publishInquiry(id),
+    onSuccess: () => {
+      addNotification({ type: 'success', title: '发布成功', message: '询价单已发布' });
+      invalidateInquiries();
+    },
+    onError: (err: unknown) => {
+      apiLogger.error('发布失败:', err);
+      addNotification({ type: 'error', title: '发布失败', message: '发布询价单失败' });
+    },
+  });
+
+  const awardMutation = useMutation({
+    mutationFn: async (id: string) => srmApi.awardQuotation(id),
+    onSuccess: () => {
+      addNotification({ type: 'success', title: '授标成功', message: '已完成授标' });
+      invalidateInquiries();
+      if (viewingInquiry) {
+        queryClient.invalidateQueries({
+          queryKey: [...QUERY_KEYS.SRM.QUOTATIONS, viewingInquiry.id],
+        });
+      }
+    },
+    onError: (err: unknown) => {
+      apiLogger.error('授标失败:', err);
+      addNotification({ type: 'error', title: '授标失败', message: '授标操作失败' });
+    },
+  });
+
+  const rejectMutation = useMutation({
+    mutationFn: async (id: string) => srmApi.rejectQuotation(id),
+    onSuccess: () => {
+      addNotification({ type: 'success', title: '已拒绝', message: '报价单已拒绝' });
+      if (viewingInquiry) {
+        queryClient.invalidateQueries({
+          queryKey: [...QUERY_KEYS.SRM.QUOTATIONS, viewingInquiry.id],
+        });
+      }
+    },
+    onError: () => {
+      addNotification({ type: 'error', title: '操作失败', message: '拒绝报价失败' });
+    },
+  });
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    try {
-      if (isEditing && selectedInquiry) {
-        await srmApi.updateInquiry(selectedInquiry.id, formData);
-        addNotification({
-          type: 'success',
-          title: '更新成功',
-          message: '询价单已更新',
-        });
-      } else {
-        await srmApi.createInquiry(formData);
-        addNotification({
-          type: 'success',
-          title: '创建成功',
-          message: '新询价单已创建',
-        });
-      }
-      setShowDialog(false);
-      resetForm();
-      loadInquiries();
-    } catch (error: unknown) {
-      apiLogger.error('操作失败:', error);
-      addNotification({
-        type: 'error',
-        title: '操作失败',
-        message: isEditing ? '更新询价单失败' : '创建询价单失败',
-      });
+    if (isEditing && selectedInquiry) {
+      updateMutation.mutate({ id: selectedInquiry.id, data: formData });
+    } else {
+      createMutation.mutate(formData);
     }
   };
 
@@ -197,27 +246,12 @@ const InquiryQuotationPage: React.FC = () => {
     setShowDialog(true);
   };
 
-  const handleDelete = async (inquiry: Inquiry) => {
+  const handleDelete = (inquiry: Inquiry) => {
     openConfirmDialog({
       title: '确认删除',
       message: `确定要删除询价单 "${inquiry.inquiry_no}" 吗？`,
-      onConfirm: async () => {
-        try {
-          await srmApi.deleteInquiry(inquiry.id);
-          addNotification({
-            type: 'success',
-            title: '删除成功',
-            message: '询价单已删除',
-          });
-          loadInquiries();
-        } catch (error: unknown) {
-          apiLogger.error('删除失败:', error);
-          addNotification({
-            type: 'error',
-            title: '删除失败',
-            message: '删除询价单失败',
-          });
-        }
+      onConfirm: () => {
+        deleteMutation.mutate(inquiry.id);
       },
       danger: true,
     });
@@ -228,102 +262,37 @@ const InquiryQuotationPage: React.FC = () => {
       openConfirmDialog({
         title: '确认发布',
         message: `确定要发布询价单 "${inquiry.inquiry_no}" 吗？`,
-        onConfirm: async () => {
-          try {
-            await srmApi.publishInquiry(inquiry.id);
-            addNotification({
-              type: 'success',
-              title: '发布成功',
-              message: '询价单已发布',
-            });
-            loadInquiries();
-          } catch (error: unknown) {
-            apiLogger.error('发布失败:', error);
-            addNotification({
-              type: 'error',
-              title: '发布失败',
-              message: '发布询价单失败',
-            });
-          }
+        onConfirm: () => {
+          publishMutation.mutate(inquiry.id);
         },
       });
     },
-    [addNotification]
+    [publishMutation]
   );
 
-  const handleViewQuotations = useCallback(
-    async (inquiry: Inquiry) => {
-      setViewingInquiry(inquiry);
-      try {
-        const response = await srmApi.listQuotations(inquiry.id);
-        if (response.success) {
-          setQuotations(response.data || []);
-        }
-      } catch (error: unknown) {
-        setQuotations([
-          {
-            id: 'q1',
-            quotation_no: 'QUO-2024-001',
-            inquiry_id: inquiry.id,
-            supplier_id: 's1',
-            supplier_name: '供应商A',
-            title: '原材料报价',
-            total_amount: 125000,
-            currency: 'CNY',
-            valid_until: '2024-02-15',
-            delivery_time: '7天',
-            status: 'submitted',
-            created_at: '2024-01-16T10:00:00Z',
-            updated_at: '2024-01-16T10:00:00Z',
-          },
-          {
-            id: 'q2',
-            quotation_no: 'QUO-2024-002',
-            inquiry_id: inquiry.id,
-            supplier_id: 's2',
-            supplier_name: '供应商B',
-            title: '原材料报价',
-            total_amount: 118000,
-            currency: 'CNY',
-            valid_until: '2024-02-20',
-            delivery_time: '10天',
-            status: 'submitted',
-            created_at: '2024-01-17T09:00:00Z',
-            updated_at: '2024-01-17T09:00:00Z',
-          },
-        ]);
-      }
-      setShowQuotationDialog(true);
-    },
-    [addNotification]
-  );
+  const handleViewQuotations = useCallback((inquiry: Inquiry) => {
+    setViewingInquiry(inquiry);
+    setShowQuotationDialog(true);
+  }, []);
 
   const handleAwardQuotation = useCallback(
-    async (quotation: Quotation) => {
+    (quotation: Quotation) => {
       openConfirmDialog({
         title: '确认授标',
         message: `确定要将报价单 "${quotation.quotation_no}" 授标给 ${quotation.supplier_name} 吗？`,
-        onConfirm: async () => {
-          try {
-            await srmApi.awardQuotation(quotation.id);
-            addNotification({
-              type: 'success',
-              title: '授标成功',
-              message: '已完成授标',
-            });
-            loadInquiries();
-          } catch (error: unknown) {
-            apiLogger.error('授标失败:', error);
-            addNotification({
-              type: 'error',
-              title: '授标失败',
-              message: '授标操作失败',
-            });
-          }
+        onConfirm: () => {
+          awardMutation.mutate(quotation.id);
         },
       });
     },
-    [addNotification]
+    [awardMutation]
+  );
+
+  const handleRejectQuotation = useCallback(
+    (quotation: Quotation) => {
+      rejectMutation.mutate(quotation.id);
+    },
+    [rejectMutation]
   );
 
   const resetForm = () => {
@@ -509,7 +478,7 @@ const InquiryQuotationPage: React.FC = () => {
           },
         ]}
         rowActions={rowActions}
-        onRefresh={loadInquiries}
+        onRefresh={() => inquiriesQuery.refetch()}
         emptyMessage='暂无询价单数据'
       />
 
@@ -763,22 +732,7 @@ const InquiryQuotationPage: React.FC = () => {
                             <IconButton
                               size='small'
                               color='error'
-                              onClick={async () => {
-                                try {
-                                  await srmApi.rejectQuotation(quotation.id);
-                                  addNotification({
-                                    type: 'success',
-                                    title: '已拒绝',
-                                    message: '报价单已拒绝',
-                                  });
-                                } catch (e) {
-                                  addNotification({
-                                    type: 'error',
-                                    title: '操作失败',
-                                    message: '拒绝报价失败',
-                                  });
-                                }
-                              }}
+                              onClick={() => handleRejectQuotation(quotation)}
                               title='拒绝'
                             >
                               <XCircle size={16} />

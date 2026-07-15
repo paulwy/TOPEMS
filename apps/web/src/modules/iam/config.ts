@@ -61,7 +61,10 @@ export const iamModuleConfig: RouteModuleConfig = {
     },
     {
       path: IAM_PATHS.permission,
-      element: lazyWithRetry(() => import('@/pages/iam/PermissionManagementPage'), 'PermissionManagementPage'),
+      element: lazyWithRetry(
+        () => import('@/pages/iam/PermissionManagementPage'),
+        'PermissionManagementPage'
+      ),
       module: 'iam',
       title: '权限管理',
       code: 'iam-permission',
@@ -72,7 +75,10 @@ export const iamModuleConfig: RouteModuleConfig = {
     },
     {
       path: IAM_PATHS.companyStructure,
-      element: lazyWithRetry(() => import('@/pages/iam/CompanyStructurePage'), 'CompanyStructurePage'),
+      element: lazyWithRetry(
+        () => import('@/pages/iam/CompanyStructurePage'),
+        'CompanyStructurePage'
+      ),
       module: 'iam',
       title: '组织架构',
       code: 'iam-company-structure',

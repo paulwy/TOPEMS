@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useMemo } from 'react';
+import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { apiLogger, logger } from '@/utils/logger';
 import {
   Box,
@@ -30,6 +31,7 @@ import { ListPageTemplate, type ColumnDef, type FilterConfig } from '@/component
 import { rdApi } from '@/api/rd';
 import { useNotificationStore } from '@/store';
 import type { RsStatistics } from '@/api/rd';
+import { QUERY_KEYS } from '@/lib/reactQuery';
 
 interface Document {
   id: string;
@@ -42,9 +44,9 @@ interface Document {
 }
 
 const RsDocPage: React.FC = () => {
+  const queryClient = useQueryClient();
   const { addNotification } = useNotificationStore();
   const [docs, setDocs] = useState<Document[]>([]);
-  const [loading, setLoading] = useState(false);
   const [page, setPage] = useState(0);
   const [rowsPerPage, setRowsPerPage] = useState(10);
   const [total, setTotal] = useState(0);
@@ -61,65 +63,53 @@ const RsDocPage: React.FC = () => {
     doc_type: '设计文档',
     description: '',
   });
-  const [statistics, setStatistics] = useState<RsStatistics | null>(null);
+
+  const statisticsQuery = useQuery({
+    queryKey: QUERY_KEYS.RD.STATISTICS,
+    queryFn: async () => {
+      const response = await rdApi.getStatistics();
+      if (!response.success || !response.data) {
+        throw new Error(response.message || '加载统计数据失败');
+      }
+      return response.data;
+    },
+  });
+
+  const statistics = statisticsQuery.data || null;
+  const loading = statisticsQuery.isLoading;
 
   useEffect(() => {
-    loadDocs();
-    loadStatistics();
-  }, [searchTerm, docTypeFilter, statusFilter, page, rowsPerPage]);
+    if (statisticsQuery.data) {
+      const stats = statisticsQuery.data;
+      const docTypes = [
+        { type: '设计文档', count: stats.total_projects || 0 },
+        { type: '接口文档', count: stats.total_experiments || 0 },
+        { type: '用户文档', count: stats.total_formulas || 0 },
+        { type: '测试文档', count: stats.total_tasks || 0 },
+      ];
 
-  const loadDocs = async () => {
-    try {
-      setLoading(true);
-      const response = await rdApi.getStatistics();
-      if (response.success && response.data) {
-        const stats = response.data;
-        setStatistics(stats);
-
-        const docTypes = [
-          { type: '设计文档', count: stats.total_projects || 0 },
-          { type: '接口文档', count: stats.total_experiments || 0 },
-          { type: '用户文档', count: stats.total_formulas || 0 },
-          { type: '测试文档', count: stats.total_tasks || 0 },
-        ];
-
-        const newDocs: Document[] = docTypes.flatMap((dt, index) => {
-          return Array.from({ length: Math.min(dt.count, 3) }, (_, i) => ({
-            id: `${index}-${i}`,
-            doc_name: `${dt.type} - 文档 ${i + 1}`,
-            doc_type: dt.type,
-            version: `v${index + 1}.${i}.0`,
-            author: '系统自动',
-            update_time: new Date().toISOString(),
-            status: i % 2 === 0 ? 'published' : 'draft',
-          }));
-        });
-
-        setDocs(newDocs);
-        setTotal(newDocs.length);
-      }
-    } catch (error: unknown) {
-      logger.error('加载文档数据失败:', error);
-      addNotification({
-        type: 'error',
-        title: '加载失败',
-        message: '无法加载文档数据',
+      const newDocs: Document[] = docTypes.flatMap((dt, index) => {
+        return Array.from({ length: Math.min(dt.count, 3) }, (_, i) => ({
+          id: `${index}-${i}`,
+          doc_name: `${dt.type} - 文档 ${i + 1}`,
+          doc_type: dt.type,
+          version: `v${index + 1}.${i}.0`,
+          author: '系统自动',
+          update_time: new Date().toISOString(),
+          status: i % 2 === 0 ? 'published' : 'draft',
+        }));
       });
-    } finally {
-      setLoading(false);
-    }
-  };
 
-  const loadStatistics = async () => {
-    try {
-      const response = await rdApi.getStatistics();
-      if (response.success && response.data) {
-        setStatistics(response.data);
-      }
-    } catch (error: unknown) {
-      logger.error('加载统计数据失败:', error);
+      setDocs(newDocs);
+      setTotal(newDocs.length);
     }
-  };
+  }, [statisticsQuery.data]);
+
+  React.useEffect(() => {
+    if (statisticsQuery.error) {
+      logger.error('加载文档数据失败:', statisticsQuery.error);
+    }
+  }, [statisticsQuery.error]);
 
   const getDocTypeIcon = (type: string) => {
     switch (type) {
@@ -192,23 +182,14 @@ const RsDocPage: React.FC = () => {
   const uniqueDocTypes = [...new Set(docs.map((d) => d.doc_type))];
 
   const handleCreateDoc = async () => {
-    try {
-      addNotification({
-        type: 'success',
-        title: '创建成功',
-        message: '新文档已创建',
-      });
-      setNewDocDialogOpen(false);
-      setNewDocForm({ doc_name: '', doc_type: '设计文档', description: '' });
-      loadDocs();
-    } catch (error: unknown) {
-      logger.error('创建文档失败:', error);
-      addNotification({
-        type: 'error',
-        title: '创建失败',
-        message: '无法创建文档',
-      });
-    }
+    addNotification({
+      type: 'success',
+      title: '创建成功',
+      message: '新文档已创建',
+    });
+    setNewDocDialogOpen(false);
+    setNewDocForm({ doc_name: '', doc_type: '设计文档', description: '' });
+    queryClient.invalidateQueries({ queryKey: QUERY_KEYS.RD.STATISTICS });
   };
 
   const handleViewVersion = (doc: Document) => {

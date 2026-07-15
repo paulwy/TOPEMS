@@ -39,6 +39,7 @@ import {
   IconButton,
   Button,
 } from '@mui/material';
+import type { SelectChangeEvent } from '@mui/material';
 
 interface InvoiceListItem extends SalesInvoice {
   tax_rate: number;
@@ -152,7 +153,11 @@ const FinanceInvoicePage: React.FC = () => {
 
   const invoiceData = invoiceListQuery.data?.items || [];
   const total = invoiceListQuery.data?.total || 0;
-  const loading = invoiceListQuery.isLoading || createInvoiceMutation.isPending || updateInvoiceMutation.isPending || deleteInvoiceMutation.isPending;
+  const loading =
+    invoiceListQuery.isLoading ||
+    createInvoiceMutation.isPending ||
+    updateInvoiceMutation.isPending ||
+    deleteInvoiceMutation.isPending;
 
   // 统计卡片数据
   const statCards = useMemo(() => {
@@ -263,8 +268,7 @@ const FinanceInvoicePage: React.FC = () => {
         tax_rate: 13,
         invoice_type: 'normal',
       });
-    } catch {
-    }
+    } catch {}
   };
 
   const handleVerify = async (invoice: InvoiceListItem) => {
@@ -274,8 +278,7 @@ const FinanceInvoicePage: React.FC = () => {
         data: { status: 'invoiced' },
       });
       success('发票认证成功');
-    } catch {
-    }
+    } catch {}
   };
 
   const handleViewDetail = (invoice: InvoiceListItem) => {
@@ -287,8 +290,7 @@ const FinanceInvoicePage: React.FC = () => {
     if (!confirm('确定要删除该发票吗？')) return;
     try {
       await deleteInvoiceMutation.mutateAsync(id);
-    } catch {
-    }
+    } catch {}
   };
 
   const handlePageChange = (newPage: number) => {
@@ -609,7 +611,9 @@ const FinanceInvoicePage: React.FC = () => {
               label='客户ID *'
               fullWidth
               value={newInvoice.customer_id}
-              onChange={(e) => setNewInvoice({ ...newInvoice, customer_id: e.target.value })}
+              onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
+                setNewInvoice({ ...newInvoice, customer_id: e.target.value })
+              }
               placeholder='请输入客户ID'
             />
             <Stack
@@ -620,7 +624,7 @@ const FinanceInvoicePage: React.FC = () => {
                 label='金额 *'
                 fullWidth
                 value={newInvoice.amount || 0}
-                onChange={(val) =>
+                onChange={(val: number) =>
                   setNewInvoice({
                     ...newInvoice,
                     amount: val,
@@ -630,12 +634,12 @@ const FinanceInvoicePage: React.FC = () => {
               <FormControl fullWidth>
                 <InputLabel>税率</InputLabel>
                 <Select
-                  value={newInvoice.tax_rate}
+                  value={newInvoice.tax_rate.toString()}
                   label='税率'
-                  onChange={(e) =>
+                  onChange={(e: SelectChangeEvent) =>
                     setNewInvoice({
                       ...newInvoice,
-                      tax_rate: e.target.value as number,
+                      tax_rate: Number(e.target.value) || 0,
                     })
                   }
                 >
@@ -651,7 +655,7 @@ const FinanceInvoicePage: React.FC = () => {
               <Select
                 value={newInvoice.invoice_type}
                 label='发票类型'
-                onChange={(e) =>
+                onChange={(e: SelectChangeEvent) =>
                   setNewInvoice({
                     ...newInvoice,
                     invoice_type: e.target.value as 'normal' | 'special',

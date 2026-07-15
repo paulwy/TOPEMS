@@ -1,4 +1,6 @@
-import React, { useEffect, useState, useCallback } from 'react';
+import React, { useState, useCallback, useEffect } from 'react';
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import { QUERY_KEYS } from '@/lib/reactQuery';
 import type { LucideIcon } from 'lucide-react';
 import {
   Database,
@@ -54,7 +56,7 @@ import {
 } from '@mui/material';
 import { Grid } from '@/components';
 import { PageContainer } from '@/components/common';
-import { apiLogger } from '@/utils/logger';
+import { logger } from '@/utils/logger';
 import type {
   InstrumentData,
   CollectionTask,
@@ -75,28 +77,13 @@ import { designTokens } from '@/theme/tokens';
 const ct = designTokens.colors;
 
 const LimsInstrumentDataPage: React.FC = () => {
+  const queryClient = useQueryClient();
   const [activeTab, setActiveTab] = useState(0);
-  const [loading, setLoading] = useState(true);
   const [notification, setNotification] = useState<{
     open: boolean;
     message: string;
     severity: 'success' | 'error' | 'info' | 'warning';
   }>({ open: false, message: '', severity: 'info' });
-
-  const [statistics, setStatistics] = useState<InstrumentDataStatistics>({
-    total_data_count: 0,
-    today_count: 0,
-    success_count: 0,
-    failed_count: 0,
-    pending_count: 0,
-    total_tasks: 0,
-    running_tasks: 0,
-    total_rules: 0,
-  });
-
-  const [instrumentDataList, setInstrumentDataList] = useState<InstrumentData[]>([]);
-  const [collectionTasks, setCollectionTasks] = useState<CollectionTask[]>([]);
-  const [parseRules, setParseRules] = useState<ParseRule[]>([]);
 
   const [dataPage, setDataPage] = useState(0);
   const [dataRowsPerPage, setDataRowsPerPage] = useState(10);
@@ -150,29 +137,51 @@ const LimsInstrumentDataPage: React.FC = () => {
   });
   const [parseTestResult, setParseTestResult] = useState<ParseResult | null>(null);
 
-  const [submitting, setSubmitting] = useState(false);
+  const showNotification = (
+    message: string,
+    severity: 'success' | 'error' | 'info' | 'warning'
+  ) => {
+    setNotification({ open: true, message, severity });
+  };
 
-  const showNotification = useCallback(
-    (message: string, severity: 'success' | 'error' | 'info' | 'warning') => {
-      setNotification({ open: true, message, severity });
-    },
-    []
-  );
+  const invalidateAll = () => {
+    queryClient.invalidateQueries({ queryKey: QUERY_KEYS.LIMS.INSTRUMENT_DATA });
+    queryClient.invalidateQueries({ queryKey: QUERY_KEYS.LIMS.COLLECTION_TASKS });
+    queryClient.invalidateQueries({ queryKey: QUERY_KEYS.LIMS.PARSE_RULES });
+    queryClient.invalidateQueries({ queryKey: QUERY_KEYS.LIMS.STATISTICS });
+  };
 
-  const loadStatistics = useCallback(async () => {
-    try {
+  const { data: statisticsData } = useQuery({
+    queryKey: QUERY_KEYS.LIMS.STATISTICS,
+    queryFn: async () => {
       const response = await instrumentDataApi.getStatistics();
       if (response.success && response.data) {
-        setStatistics(response.data);
+        return response.data;
       }
-    } catch (error) {
-      apiLogger.error('加载统计数据失败', error);
-    }
-  }, []);
+      return null;
+    },
+  });
 
-  const loadInstrumentData = useCallback(async () => {
-    try {
-      setLoading(true);
+  const statistics: InstrumentDataStatistics = statisticsData || {
+    total_data_count: 0,
+    today_count: 0,
+    success_count: 0,
+    failed_count: 0,
+    pending_count: 0,
+    total_tasks: 0,
+    running_tasks: 0,
+    total_rules: 0,
+  };
+
+  const instrumentDataQuery = useQuery({
+    queryKey: [
+      ...QUERY_KEYS.LIMS.INSTRUMENT_DATA,
+      dataPage,
+      dataRowsPerPage,
+      searchKeyword,
+      statusFilter,
+    ],
+    queryFn: async () => {
       const response = await instrumentDataApi.listInstrumentData({
         page: dataPage + 1,
         pagesize: dataRowsPerPage,
@@ -180,19 +189,22 @@ const LimsInstrumentDataPage: React.FC = () => {
         status: statusFilter,
       });
       if (response.success && response.data) {
-        setInstrumentDataList(response.data);
+        return response.data;
       }
-    } catch (error) {
-      apiLogger.error('加载仪器数据失败', error);
-      showNotification('加载仪器数据失败', 'error');
-    } finally {
-      setLoading(false);
-    }
-  }, [dataPage, dataRowsPerPage, searchKeyword, statusFilter, showNotification]);
+      return [];
+    },
+    enabled: activeTab === 0,
+  });
 
-  const loadCollectionTasks = useCallback(async () => {
-    try {
-      setLoading(true);
+  const collectionTasksQuery = useQuery({
+    queryKey: [
+      ...QUERY_KEYS.LIMS.COLLECTION_TASKS,
+      taskPage,
+      taskRowsPerPage,
+      searchKeyword,
+      statusFilter,
+    ],
+    queryFn: async () => {
       const response = await collectionTaskApi.listCollectionTasks({
         page: taskPage + 1,
         pagesize: taskRowsPerPage,
@@ -200,19 +212,22 @@ const LimsInstrumentDataPage: React.FC = () => {
         status: statusFilter,
       });
       if (response.success && response.data) {
-        setCollectionTasks(response.data);
+        return response.data;
       }
-    } catch (error) {
-      apiLogger.error('加载采集任务失败', error);
-      showNotification('加载采集任务失败', 'error');
-    } finally {
-      setLoading(false);
-    }
-  }, [taskPage, taskRowsPerPage, searchKeyword, statusFilter, showNotification]);
+      return [];
+    },
+    enabled: activeTab === 1,
+  });
 
-  const loadParseRules = useCallback(async () => {
-    try {
-      setLoading(true);
+  const parseRulesQuery = useQuery({
+    queryKey: [
+      ...QUERY_KEYS.LIMS.PARSE_RULES,
+      rulePage,
+      ruleRowsPerPage,
+      searchKeyword,
+      statusFilter,
+    ],
+    queryFn: async () => {
       const response = await parseRuleApi.listParseRules({
         page: rulePage + 1,
         pagesize: ruleRowsPerPage,
@@ -220,29 +235,237 @@ const LimsInstrumentDataPage: React.FC = () => {
         status: statusFilter,
       });
       if (response.success && response.data) {
-        setParseRules(response.data);
+        return response.data;
       }
-    } catch (error) {
-      apiLogger.error('加载解析规则失败', error);
-      showNotification('加载解析规则失败', 'error');
-    } finally {
-      setLoading(false);
-    }
-  }, [rulePage, ruleRowsPerPage, searchKeyword, statusFilter, showNotification]);
+      return [];
+    },
+    enabled: activeTab === 2,
+  });
 
-  useEffect(() => {
-    loadStatistics();
-  }, [loadStatistics]);
+  const instrumentDataList: InstrumentData[] = instrumentDataQuery.data || [];
+  const collectionTasks: CollectionTask[] = collectionTasksQuery.data || [];
+  const parseRules: ParseRule[] = parseRulesQuery.data || [];
 
-  useEffect(() => {
-    if (activeTab === 0) {
-      loadInstrumentData();
-    } else if (activeTab === 1) {
-      loadCollectionTasks();
-    } else if (activeTab === 2) {
-      loadParseRules();
-    }
-  }, [activeTab, loadInstrumentData, loadCollectionTasks, loadParseRules]);
+  const loading =
+    activeTab === 0
+      ? instrumentDataQuery.isLoading
+      : activeTab === 1
+        ? collectionTasksQuery.isLoading
+        : parseRulesQuery.isLoading;
+
+  const parseDataMutation = useMutation({
+    mutationFn: async (id: string) => {
+      const response = await instrumentDataApi.parseInstrumentData(id);
+      if (!response.success) {
+        throw new Error('解析数据失败');
+      }
+      return response;
+    },
+    onSuccess: () => {
+      invalidateAll();
+    },
+    onError: (error: unknown) => {
+      logger.error('解析数据失败', error);
+    },
+  });
+
+  const createDataMutation = useMutation({
+    mutationFn: async (data: CreateInstrumentDataRequest) => {
+      const response = await instrumentDataApi.createInstrumentData(data);
+      if (!response.success) {
+        throw new Error('保存数据失败');
+      }
+      return response;
+    },
+    onSuccess: () => {
+      invalidateAll();
+      setShowDataForm(false);
+    },
+    onError: (error: unknown) => {
+      logger.error('保存数据失败', error);
+    },
+  });
+
+  const updateDataMutation = useMutation({
+    mutationFn: async ({ id, data }: { id: string; data: UpdateInstrumentDataRequest }) => {
+      const response = await instrumentDataApi.updateInstrumentData(id, data);
+      if (!response.success) {
+        throw new Error('更新失败');
+      }
+      return response;
+    },
+    onSuccess: () => {
+      invalidateAll();
+      setShowDataForm(false);
+    },
+    onError: (error: unknown) => {
+      logger.error('更新数据失败', error);
+    },
+  });
+
+  const deleteDataMutation = useMutation({
+    mutationFn: async (id: string) => {
+      const response = await instrumentDataApi.deleteInstrumentData(id);
+      if (!response.success) {
+        throw new Error('删除数据失败');
+      }
+      return response;
+    },
+    onSuccess: () => {
+      invalidateAll();
+    },
+    onError: (error: unknown) => {
+      logger.error('删除数据失败', error);
+    },
+  });
+
+  const createTaskMutation = useMutation({
+    mutationFn: async (data: CreateCollectionTaskRequest) => {
+      const response = await collectionTaskApi.createCollectionTask(data);
+      if (!response.success) {
+        throw new Error('保存任务失败');
+      }
+      return response;
+    },
+    onSuccess: () => {
+      invalidateAll();
+      setShowTaskForm(false);
+    },
+    onError: (error: unknown) => {
+      logger.error('保存任务失败', error);
+    },
+  });
+
+  const updateTaskMutation = useMutation({
+    mutationFn: async ({ id, data }: { id: string; data: UpdateCollectionTaskRequest }) => {
+      const response = await collectionTaskApi.updateCollectionTask(id, data);
+      if (!response.success) {
+        throw new Error('更新失败');
+      }
+      return response;
+    },
+    onSuccess: () => {
+      invalidateAll();
+      setShowTaskForm(false);
+    },
+    onError: (error: unknown) => {
+      logger.error('更新任务失败', error);
+    },
+  });
+
+  const triggerTaskMutation = useMutation({
+    mutationFn: async (id: string) => {
+      const response = await collectionTaskApi.triggerCollection(id);
+      if (!response.success) {
+        throw new Error('触发采集失败');
+      }
+      return response;
+    },
+    onSuccess: () => {
+      invalidateAll();
+    },
+    onError: (error: unknown) => {
+      logger.error('触发采集失败', error);
+    },
+  });
+
+  const deleteTaskMutation = useMutation({
+    mutationFn: async (id: string) => {
+      const response = await collectionTaskApi.deleteCollectionTask(id);
+      if (!response.success) {
+        throw new Error('删除任务失败');
+      }
+      return response;
+    },
+    onSuccess: () => {
+      invalidateAll();
+    },
+    onError: (error: unknown) => {
+      logger.error('删除任务失败', error);
+    },
+  });
+
+  const createRuleMutation = useMutation({
+    mutationFn: async (data: CreateParseRuleRequest) => {
+      const response = await parseRuleApi.createParseRule(data);
+      if (!response.success) {
+        throw new Error('保存规则失败');
+      }
+      return response;
+    },
+    onSuccess: () => {
+      invalidateAll();
+      setShowRuleForm(false);
+    },
+    onError: (error: unknown) => {
+      logger.error('保存规则失败', error);
+    },
+  });
+
+  const updateRuleMutation = useMutation({
+    mutationFn: async ({ id, data }: { id: string; data: UpdateParseRuleRequest }) => {
+      const response = await parseRuleApi.updateParseRule(id, data);
+      if (!response.success) {
+        throw new Error('更新失败');
+      }
+      return response;
+    },
+    onSuccess: () => {
+      invalidateAll();
+      setShowRuleForm(false);
+    },
+    onError: (error: unknown) => {
+      logger.error('更新规则失败', error);
+    },
+  });
+
+  const deleteRuleMutation = useMutation({
+    mutationFn: async (id: string) => {
+      const response = await parseRuleApi.deleteParseRule(id);
+      if (!response.success) {
+        throw new Error('删除规则失败');
+      }
+      return response;
+    },
+    onSuccess: () => {
+      invalidateAll();
+    },
+    onError: (error: unknown) => {
+      logger.error('删除规则失败', error);
+    },
+  });
+
+  const testParseMutation = useMutation({
+    mutationFn: async (data: ParseDataRequest) => {
+      const response = await instrumentDataApi.testParseData(data);
+      if (!response.success) {
+        throw new Error('解析测试失败');
+      }
+      return response;
+    },
+    onSuccess: (response) => {
+      if (response.data) {
+        setParseTestResult(response.data);
+      }
+    },
+    onError: (error: unknown) => {
+      logger.error('解析测试失败', error);
+    },
+  });
+
+  const submitting =
+    parseDataMutation.isPending ||
+    createDataMutation.isPending ||
+    updateDataMutation.isPending ||
+    deleteDataMutation.isPending ||
+    createTaskMutation.isPending ||
+    updateTaskMutation.isPending ||
+    triggerTaskMutation.isPending ||
+    deleteTaskMutation.isPending ||
+    createRuleMutation.isPending ||
+    updateRuleMutation.isPending ||
+    deleteRuleMutation.isPending ||
+    testParseMutation.isPending;
 
   const handleTabChange = (_event: React.SyntheticEvent, newValue: number) => {
     setActiveTab(newValue);
@@ -256,20 +479,7 @@ const LimsInstrumentDataPage: React.FC = () => {
   };
 
   const handleParseData = async (id: string) => {
-    try {
-      setSubmitting(true);
-      const response = await instrumentDataApi.parseInstrumentData(id);
-      if (response.success) {
-        showNotification('数据解析成功', 'success');
-        loadInstrumentData();
-        loadStatistics();
-      }
-    } catch (error) {
-      apiLogger.error('解析数据失败', error);
-      showNotification('解析数据失败', 'error');
-    } finally {
-      setSubmitting(false);
-    }
+    await parseDataMutation.mutateAsync(id);
   };
 
   const handleCreateData = () => {
@@ -296,44 +506,17 @@ const LimsInstrumentDataPage: React.FC = () => {
   };
 
   const handleSaveData = async () => {
-    try {
-      setSubmitting(true);
-      if (isEditingData && selectedData) {
-        const updateData: UpdateInstrumentDataRequest = {};
-        const response = await instrumentDataApi.updateInstrumentData(selectedData.id, updateData);
-        if (response.success) {
-          showNotification('更新成功', 'success');
-        }
-      } else {
-        const response = await instrumentDataApi.createInstrumentData(dataFormData);
-        if (response.success) {
-          showNotification('创建成功', 'success');
-        }
-      }
-      setShowDataForm(false);
-      loadInstrumentData();
-      loadStatistics();
-    } catch (error) {
-      apiLogger.error('保存数据失败', error);
-      showNotification('保存数据失败', 'error');
-    } finally {
-      setSubmitting(false);
+    if (isEditingData && selectedData) {
+      const updateData: UpdateInstrumentDataRequest = {};
+      await updateDataMutation.mutateAsync({ id: selectedData.id, data: updateData });
+    } else {
+      await createDataMutation.mutateAsync(dataFormData);
     }
   };
 
   const handleDeleteData = async (id: string) => {
     if (!window.confirm('确定要删除这条数据吗？')) return;
-    try {
-      const response = await instrumentDataApi.deleteInstrumentData(id);
-      if (response.success) {
-        showNotification('删除成功', 'success');
-        loadInstrumentData();
-        loadStatistics();
-      }
-    } catch (error) {
-      apiLogger.error('删除数据失败', error);
-      showNotification('删除数据失败', 'error');
-    }
+    await deleteDataMutation.mutateAsync(id);
   };
 
   const handleCreateTask = () => {
@@ -365,69 +548,28 @@ const LimsInstrumentDataPage: React.FC = () => {
   };
 
   const handleSaveTask = async () => {
-    try {
-      setSubmitting(true);
-      if (isEditingTask) {
-        const updateData: UpdateCollectionTaskRequest = {
-          task_name: taskFormData.task_name,
-          cron_expression: taskFormData.cron_expression,
-          interval_minutes: taskFormData.interval_minutes,
-          parse_rule_id: taskFormData.parse_rule_id,
-        };
-        const response = await collectionTaskApi.updateCollectionTask(
-          collectionTasks[0].id,
-          updateData
-        );
-        if (response.success) {
-          showNotification('更新成功', 'success');
-        }
-      } else {
-        const response = await collectionTaskApi.createCollectionTask(taskFormData);
-        if (response.success) {
-          showNotification('创建成功', 'success');
-        }
-      }
-      setShowTaskForm(false);
-      loadCollectionTasks();
-      loadStatistics();
-    } catch (error) {
-      apiLogger.error('保存任务失败', error);
-      showNotification('保存任务失败', 'error');
-    } finally {
-      setSubmitting(false);
+    if (isEditingTask) {
+      const updateData: UpdateCollectionTaskRequest = {
+        task_name: taskFormData.task_name,
+        cron_expression: taskFormData.cron_expression,
+        interval_minutes: taskFormData.interval_minutes,
+        parse_rule_id: taskFormData.parse_rule_id,
+      };
+      const targetId = selectedData?.id || collectionTasks[0]?.id || '';
+      if (!targetId) return;
+      await updateTaskMutation.mutateAsync({ id: targetId, data: updateData });
+    } else {
+      await createTaskMutation.mutateAsync(taskFormData);
     }
   };
 
   const handleTriggerTask = async (id: string) => {
-    try {
-      setSubmitting(true);
-      const response = await collectionTaskApi.triggerCollection(id);
-      if (response.success) {
-        showNotification('采集任务触发成功', 'success');
-        loadInstrumentData();
-        loadStatistics();
-      }
-    } catch (error) {
-      apiLogger.error('触发采集失败', error);
-      showNotification('触发采集失败', 'error');
-    } finally {
-      setSubmitting(false);
-    }
+    await triggerTaskMutation.mutateAsync(id);
   };
 
   const handleDeleteTask = async (id: string) => {
     if (!window.confirm('确定要删除这个采集任务吗？')) return;
-    try {
-      const response = await collectionTaskApi.deleteCollectionTask(id);
-      if (response.success) {
-        showNotification('删除成功', 'success');
-        loadCollectionTasks();
-        loadStatistics();
-      }
-    } catch (error) {
-      apiLogger.error('删除任务失败', error);
-      showNotification('删除任务失败', 'error');
-    }
+    await deleteTaskMutation.mutateAsync(id);
   };
 
   const handleCreateRule = () => {
@@ -457,64 +599,28 @@ const LimsInstrumentDataPage: React.FC = () => {
   };
 
   const handleSaveRule = async () => {
-    try {
-      setSubmitting(true);
-      if (isEditingRule) {
-        const updateData: UpdateParseRuleRequest = {
-          rule_name: ruleFormData.rule_name,
-          parse_config: ruleFormData.parse_config,
-          quality_rules: ruleFormData.quality_rules,
-          description: ruleFormData.description,
-        };
-        const response = await parseRuleApi.updateParseRule(parseRules[0].id, updateData);
-        if (response.success) {
-          showNotification('更新成功', 'success');
-        }
-      } else {
-        const response = await parseRuleApi.createParseRule(ruleFormData);
-        if (response.success) {
-          showNotification('创建成功', 'success');
-        }
-      }
-      setShowRuleForm(false);
-      loadParseRules();
-      loadStatistics();
-    } catch (error) {
-      apiLogger.error('保存规则失败', error);
-      showNotification('保存规则失败', 'error');
-    } finally {
-      setSubmitting(false);
+    if (isEditingRule) {
+      const updateData: UpdateParseRuleRequest = {
+        rule_name: ruleFormData.rule_name,
+        parse_config: ruleFormData.parse_config,
+        quality_rules: ruleFormData.quality_rules,
+        description: ruleFormData.description,
+      };
+      const targetId = selectedData?.id || parseRules[0]?.id || '';
+      if (!targetId) return;
+      await updateRuleMutation.mutateAsync({ id: targetId, data: updateData });
+    } else {
+      await createRuleMutation.mutateAsync(ruleFormData);
     }
   };
 
   const handleDeleteRule = async (id: string) => {
     if (!window.confirm('确定要删除这条解析规则吗？')) return;
-    try {
-      const response = await parseRuleApi.deleteParseRule(id);
-      if (response.success) {
-        showNotification('删除成功', 'success');
-        loadParseRules();
-        loadStatistics();
-      }
-    } catch (error) {
-      apiLogger.error('删除规则失败', error);
-      showNotification('删除规则失败', 'error');
-    }
+    await deleteRuleMutation.mutateAsync(id);
   };
 
   const handleTestParse = async () => {
-    try {
-      setSubmitting(true);
-      const response = await instrumentDataApi.testParseData(parseTestData);
-      if (response.success && response.data) {
-        setParseTestResult(response.data);
-      }
-    } catch (error) {
-      apiLogger.error('解析测试失败', error);
-      showNotification('解析测试失败', 'error');
-    } finally {
-      setSubmitting(false);
-    }
+    await testParseMutation.mutateAsync(parseTestData);
   };
 
   const getStatusColor = (status: string) => {
@@ -756,7 +862,7 @@ const LimsInstrumentDataPage: React.FC = () => {
               <Button
                 variant='outlined'
                 startIcon={<RefreshCw size={18} />}
-                onClick={() => loadInstrumentData()}
+                onClick={() => instrumentDataQuery.refetch()}
               >
                 刷新
               </Button>
@@ -774,7 +880,7 @@ const LimsInstrumentDataPage: React.FC = () => {
               <Button
                 variant='outlined'
                 startIcon={<RefreshCw size={18} />}
-                onClick={() => loadCollectionTasks()}
+                onClick={() => collectionTasksQuery.refetch()}
               >
                 刷新
               </Button>
@@ -799,7 +905,7 @@ const LimsInstrumentDataPage: React.FC = () => {
               <Button
                 variant='outlined'
                 startIcon={<RefreshCw size={18} />}
-                onClick={() => loadParseRules()}
+                onClick={() => parseRulesQuery.refetch()}
               >
                 刷新
               </Button>

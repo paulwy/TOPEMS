@@ -159,19 +159,20 @@ export const useAuthUserRole = () => {
   return user?.role || (roles && roles.length > 0 ? roles[0] : '');
 };
 
-export const useAuthActions = () => useAuthStore((state) => ({
-  setUser: state.setUser,
-  setToken: state.setToken,
-  setPermissions: state.setPermissions,
-  setRoles: state.setRoles,
-  clearAuth: state.clearAuth,
-  updateUser: state.updateUser,
-  hasPermission: state.hasPermission,
-  hasAnyPermission: state.hasAnyPermission,
-  hasAllPermissions: state.hasAllPermissions,
-  hasRole: state.hasRole,
-  hasAnyRole: state.hasAnyRole,
-}));
+export const useAuthActions = () =>
+  useAuthStore((state) => ({
+    setUser: state.setUser,
+    setToken: state.setToken,
+    setPermissions: state.setPermissions,
+    setRoles: state.setRoles,
+    clearAuth: state.clearAuth,
+    updateUser: state.updateUser,
+    hasPermission: state.hasPermission,
+    hasAnyPermission: state.hasAnyPermission,
+    hasAllPermissions: state.hasAllPermissions,
+    hasRole: state.hasRole,
+    hasAnyRole: state.hasAnyRole,
+  }));
 
 export const useAuth = () => {
   const user = useAuthUser();

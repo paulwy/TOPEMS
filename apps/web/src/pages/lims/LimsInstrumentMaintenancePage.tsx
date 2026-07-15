@@ -1,5 +1,7 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import { QUERY_KEYS } from '@/lib/reactQuery';
 import {
   Wrench,
   Calendar,
@@ -30,7 +32,7 @@ import {
 } from '@mui/material';
 
 import { limsApi } from '@/api/lims';
-import type { Instrument, MaintenanceRecord } from '@/api/lims';
+import type { Instrument, MaintenanceRecord, CreateMaintenanceRecordRequest } from '@/api/lims';
 import { ListPageTemplate, type ColumnDef } from '@/components/templates';
 import { PageContainer } from '@/components/common';
 import { logger } from '@/utils/logger';
@@ -40,13 +42,15 @@ import { LIMS_PATHS } from '@/modules/lims/config';
 
 const ct = designTokens.colors;
 
+interface LimsListResponse<T> {
+  items?: T[];
+}
+
 const LimsInstrumentMaintenancePage: React.FC = () => {
   const { id } = useParams<{ id: string }>();
   const theme = useTheme();
   const navigate = useNavigate();
-  const [instrument, setInstrument] = useState<Instrument | null>(null);
-  const [maintenanceRecords, setMaintenanceRecords] = useState<MaintenanceRecord[]>([]);
-  const [loading, setLoading] = useState(true);
+  const queryClient = useQueryClient();
   const [showAddModal, setShowAddModal] = useState(false);
   const [showEditModal, setShowEditModal] = useState(false);
   const [editingRecord, setEditingRecord] = useState<MaintenanceRecord | null>(null);
@@ -61,37 +65,105 @@ const LimsInstrumentMaintenancePage: React.FC = () => {
   });
   const addNotification = useNotificationStore((state) => state.addNotification);
 
-  useEffect(() => {
-    if (id) {
-      loadInstrumentDetail(id);
-    }
-  }, [id]);
-
-  const loadInstrumentDetail = async (instrumentId: string) => {
-    try {
-      setLoading(true);
+  const { data: detailData, isLoading: loading } = useQuery({
+    queryKey: QUERY_KEYS.LIMS.INSTRUMENT(id || ''),
+    queryFn: async () => {
+      if (!id) return null;
       const [instrumentRes, maintenanceRes] = await Promise.all([
-        limsApi.getInstrument(instrumentId),
-        limsApi.listMaintenanceByInstrument(instrumentId),
+        limsApi.getInstrument(id),
+        limsApi.listMaintenanceByInstrument(id),
       ]);
 
+      let instrument: Instrument | null = null;
       if (instrumentRes.success && instrumentRes.data) {
-        setInstrument(instrumentRes.data as Instrument);
+        instrument = instrumentRes.data as Instrument;
       }
 
+      let maintenanceRecords: MaintenanceRecord[] = [];
       if (maintenanceRes.success && maintenanceRes.data) {
-        const maintenanceData = maintenanceRes.data as any;
-        const recordsArray = Array.isArray(maintenanceData)
+        const maintenanceData = maintenanceRes.data as
+          LimsListResponse<MaintenanceRecord> | MaintenanceRecord[];
+        maintenanceRecords = Array.isArray(maintenanceData)
           ? maintenanceData
           : maintenanceData.items || [];
-        setMaintenanceRecords(recordsArray);
       }
-    } catch (error: unknown) {
-      logger.error('加载仪器详情失败:', error);
-    } finally {
-      setLoading(false);
+
+      return { instrument, maintenanceRecords };
+    },
+    enabled: !!id,
+  });
+
+  const instrument = detailData?.instrument || null;
+  const maintenanceRecords = detailData?.maintenanceRecords || [];
+
+  const invalidateMaintenance = () => {
+    if (id) {
+      queryClient.invalidateQueries({ queryKey: QUERY_KEYS.LIMS.INSTRUMENT(id) });
+      queryClient.invalidateQueries({
+        queryKey: QUERY_KEYS.LIMS.MAINTENANCE_BY_INSTRUMENT(id),
+      });
     }
+    queryClient.invalidateQueries({ queryKey: QUERY_KEYS.LIMS.MAINTENANCE });
   };
+
+  const createMutation = useMutation({
+    mutationFn: async (data: CreateMaintenanceRecordRequest) => {
+      const response = await limsApi.createMaintenance(data);
+      if (!response.success) {
+        throw new Error(response.message || '创建失败，请稍后重试');
+      }
+      return response;
+    },
+    onSuccess: () => {
+      invalidateMaintenance();
+      setShowAddModal(false);
+      resetForm();
+    },
+    onError: (error: unknown) => {
+      logger.error('创建维护记录失败:', error);
+    },
+  });
+
+  const updateMutation = useMutation({
+    mutationFn: async ({
+      id,
+      data,
+    }: {
+      id: string;
+      data: Partial<CreateMaintenanceRecordRequest>;
+    }) => {
+      const response = await limsApi.updateMaintenance(id, data);
+      if (!response.success) {
+        throw new Error(response.message || '更新失败，请稍后重试');
+      }
+      return response;
+    },
+    onSuccess: () => {
+      invalidateMaintenance();
+      setShowEditModal(false);
+      resetForm();
+      setEditingRecord(null);
+    },
+    onError: (error: unknown) => {
+      logger.error('更新维护记录失败:', error);
+    },
+  });
+
+  const deleteMutation = useMutation({
+    mutationFn: async (recordId: string) => {
+      const response = await limsApi.deleteMaintenance(recordId);
+      if (!response.success) {
+        throw new Error(response.message || '删除失败，请稍后重试');
+      }
+      return response;
+    },
+    onSuccess: () => {
+      invalidateMaintenance();
+    },
+    onError: (error: unknown) => {
+      logger.error('删除维护记录失败:', error);
+    },
+  });
 
   const getStatusBadge = (status: string) => {
     const statusMap: Record<string, { bg: string; color: string; label: string }> = {
@@ -144,41 +216,16 @@ const LimsInstrumentMaintenancePage: React.FC = () => {
       });
       return;
     }
-    try {
-      const response = await limsApi.createMaintenance({
-        instrument_id: instrument.id,
-        maintenance_type: formData.maintenance_type,
-        description: formData.description,
-        performed_by: formData.performed_by,
-        performed_at: formData.performed_at,
-        next_maintenance_date: formData.next_maintenance_date,
-        cost: parseFloat(formData.cost) || 0,
-        notes: formData.notes,
-      });
-      if (response.success) {
-        addNotification({
-          title: '成功',
-          message: '维护记录创建成功',
-          type: 'success',
-        });
-        setShowAddModal(false);
-        loadInstrumentDetail(instrument.id);
-        resetForm();
-      } else {
-        addNotification({
-          title: '错误',
-          message: response.message || '创建失败，请稍后重试',
-          type: 'error',
-        });
-      }
-    } catch (error: unknown) {
-      logger.error('创建维护记录失败:', error);
-      addNotification({
-        title: '错误',
-        message: '创建维护记录失败，请稍后重试',
-        type: 'error',
-      });
-    }
+    await createMutation.mutateAsync({
+      instrument_id: instrument.id,
+      maintenance_type: formData.maintenance_type,
+      description: formData.description,
+      performed_by: formData.performed_by,
+      performed_at: formData.performed_at,
+      next_maintenance_date: formData.next_maintenance_date,
+      cost: parseFloat(formData.cost) || 0,
+      notes: formData.notes,
+    });
   };
 
   const handleUpdateMaintenance = async () => {
@@ -207,8 +254,9 @@ const LimsInstrumentMaintenancePage: React.FC = () => {
       });
       return;
     }
-    try {
-      const response = await limsApi.updateMaintenance(editingRecord.id, {
+    await updateMutation.mutateAsync({
+      id: editingRecord.id,
+      data: {
         maintenance_type: formData.maintenance_type,
         description: formData.description,
         performed_by: formData.performed_by,
@@ -216,60 +264,13 @@ const LimsInstrumentMaintenancePage: React.FC = () => {
         next_maintenance_date: formData.next_maintenance_date,
         cost: parseFloat(formData.cost) || 0,
         notes: formData.notes,
-      });
-      if (response.success) {
-        addNotification({
-          title: '成功',
-          message: '维护记录更新成功',
-          type: 'success',
-        });
-        setShowEditModal(false);
-        loadInstrumentDetail(instrument.id);
-        resetForm();
-        setEditingRecord(null);
-      } else {
-        addNotification({
-          title: '错误',
-          message: response.message || '更新失败，请稍后重试',
-          type: 'error',
-        });
-      }
-    } catch (error: unknown) {
-      logger.error('更新维护记录失败:', error);
-      addNotification({
-        title: '错误',
-        message: '更新维护记录失败，请稍后重试',
-        type: 'error',
-      });
-    }
+      },
+    });
   };
 
   const handleDeleteMaintenance = async (recordId: string) => {
     if (!confirm('确定要删除这条维护记录吗？')) return;
-    try {
-      const response = await limsApi.deleteMaintenance(recordId);
-      if (response.success && instrument) {
-        addNotification({
-          title: '成功',
-          message: '维护记录删除成功',
-          type: 'success',
-        });
-        loadInstrumentDetail(instrument.id);
-      } else {
-        addNotification({
-          title: '错误',
-          message: response.message || '删除失败，请稍后重试',
-          type: 'error',
-        });
-      }
-    } catch (error: unknown) {
-      logger.error('删除维护记录失败:', error);
-      addNotification({
-        title: '错误',
-        message: '删除维护记录失败，请稍后重试',
-        type: 'error',
-      });
-    }
+    await deleteMutation.mutateAsync(recordId);
   };
 
   const resetForm = () => {

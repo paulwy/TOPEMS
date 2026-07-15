@@ -118,9 +118,14 @@ export const WorkflowApprovalsPage: React.FC = () => {
   const [rejectReason, setRejectReason] = useState('');
   const [selectedTask, setSelectedTask] = useState<ApprovalTask | null>(null);
 
-  const statusParam = activeTab === 'pending' ? 'pending' : activeTab === 'approved' ? undefined : undefined;
+  const statusParam =
+    activeTab === 'pending' ? 'pending' : activeTab === 'approved' ? undefined : undefined;
 
-  const { data: tasks = [], isLoading: loading, error } = useQuery({
+  const {
+    data: tasks = [],
+    isLoading: loading,
+    error,
+  } = useQuery({
     queryKey: ['workflow-approvals', statusParam, page, pageSize],
     queryFn: async () => {
       const params = {
@@ -159,7 +164,11 @@ export const WorkflowApprovalsPage: React.FC = () => {
       await queryClient.cancelQueries({ queryKey: ['workflow-approvals'] });
       const previousTasks = queryClient.getQueryData<ApprovalTask[]>(['workflow-approvals']);
       queryClient.setQueryData<ApprovalTask[]>(['workflow-approvals'], (old) =>
-        old ? old.map((t: ApprovalTask) => (t.id === taskId ? { ...t, status: 'approved' as const } : t)) : []
+        old
+          ? old.map((t: ApprovalTask) =>
+              t.id === taskId ? { ...t, status: 'approved' as const } : t
+            )
+          : []
       );
       return { previousTasks };
     },
@@ -193,7 +202,11 @@ export const WorkflowApprovalsPage: React.FC = () => {
       await queryClient.cancelQueries({ queryKey: ['workflow-approvals'] });
       const previousTasks = queryClient.getQueryData<ApprovalTask[]>(['workflow-approvals']);
       queryClient.setQueryData<ApprovalTask[]>(['workflow-approvals'], (old) =>
-        old ? old.map((t: ApprovalTask) => (t.id === taskId ? { ...t, status: 'rejected' as const } : t)) : []
+        old
+          ? old.map((t: ApprovalTask) =>
+              t.id === taskId ? { ...t, status: 'rejected' as const } : t
+            )
+          : []
       );
       return { previousTasks };
     },
@@ -226,7 +239,9 @@ export const WorkflowApprovalsPage: React.FC = () => {
     if (activeTab === 'pending') {
       result = result.filter((t: ApprovalTask) => t.status === 'pending' || t.status === 'claimed');
     } else if (activeTab === 'approved') {
-      result = result.filter((t: ApprovalTask) => t.status === 'approved' || t.status === 'rejected');
+      result = result.filter(
+        (t: ApprovalTask) => t.status === 'approved' || t.status === 'rejected'
+      );
     } else if (activeTab === 'initiated') {
       result = result.filter((t: ApprovalTask) => t.initiator === '当前用户');
     } else if (activeTab === 'cc') {

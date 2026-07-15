@@ -168,7 +168,7 @@ const FilterControl: React.FC<{
             type='date'
             label='开始日期'
             value={filter.value?.start ?? ''}
-            onChange={(e) => handleChange({ ...filter.value, start: e.target.value })}
+            onChange={(e: React.ChangeEvent<HTMLInputElement>) => handleChange({ ...filter.value, start: e.target.value })}
             sx={{ width: filter.width || 140 }}
           />
           <Typography color='text.secondary'>至</Typography>
@@ -177,7 +177,7 @@ const FilterControl: React.FC<{
             type='date'
             label='结束日期'
             value={filter.value?.end ?? ''}
-            onChange={(e) => handleChange({ ...filter.value, end: e.target.value })}
+            onChange={(e: React.ChangeEvent<HTMLInputElement>) => handleChange({ ...filter.value, end: e.target.value })}
             sx={{ width: filter.width || 140 }}
           />
         </Box>

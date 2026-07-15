@@ -1,4 +1,5 @@
-import React, { useEffect, useState } from 'react';
+import React, { useMemo } from 'react';
+import { useQuery } from '@tanstack/react-query';
 import { useNavigate } from 'react-router-dom';
 import {
   TrendingUp,
@@ -14,7 +15,8 @@ import type { StatCard, ChartCard, QuickAction } from '@/components/templates';
 import { PageContainer } from '@/components/common';
 import BarChartComponent from '../../components/charts/BarChart';
 import LineChartComponent from '../../components/charts/LineChart';
-import PieChartComponent from '../../components/charts/PieChart';
+import { erpApi } from '@/api/erp';
+import type { ErpDashboardStats } from '@/api/erp';
 
 const iconMap: Record<string, React.ReactNode> = {
   TrendingUp: <TrendingUp size={24} />,
@@ -22,29 +24,6 @@ const iconMap: Record<string, React.ReactNode> = {
   Wallet: <Wallet size={24} />,
   Package: <Package size={24} />,
 };
-
-const barData = [
-  { name: '1月', value: 4000 },
-  { name: '2月', value: 3000 },
-  { name: '3月', value: 5000 },
-  { name: '4月', value: 4500 },
-  { name: '5月', value: 6000 },
-  { name: '6月', value: 5500 },
-];
-const pieData = [
-  { name: '原材料', value: 45 },
-  { name: '成品', value: 35 },
-  { name: '半成品', value: 20 },
-];
-const lineData = [
-  { name: '周一', value: 120 },
-  { name: '周二', value: 130 },
-  { name: '周三', value: 110 },
-  { name: '周四', value: 140 },
-  { name: '周五', value: 160 },
-  { name: '周六', value: 90 },
-  { name: '周日', value: 80 },
-];
 
 const getGreeting = (): string => {
   const hour = new Date().getHours();
@@ -55,78 +34,106 @@ const getGreeting = (): string => {
 
 export const DashboardPage: React.FC = () => {
   const navigate = useNavigate();
-  const [loading, setLoading] = useState(true);
 
-  useEffect(() => {
-    const timer = setTimeout(() => setLoading(false), 500);
-    return () => clearTimeout(timer);
-  }, []);
+  const { data: statsData, isLoading: loading } = useQuery<ErpDashboardStats | null>({
+    queryKey: ['erp-dashboard'],
+    queryFn: async () => {
+      const response = await erpApi.getDashboard();
+      if (response.success && response.data) {
+        return response.data;
+      }
+      return null;
+    },
+    staleTime: 5 * 60 * 1000,
+  });
 
-  const stats: StatCard[] = [
-    {
-      id: 'total-assets',
-      title: '总资产',
-      value: '¥12,580,000',
-      icon: iconMap.TrendingUp,
-      change: 8.5,
-      changeLabel: '% vs 上周期',
-      color: 'success',
-    },
-    {
-      id: 'monthly-income',
-      title: '本月收入',
-      value: '¥2,340,000',
-      icon: iconMap.Wallet,
-      change: 12,
-      changeLabel: '% vs 上周期',
-      color: 'info',
-    },
-    {
-      id: 'inventory-total',
-      title: '库存总量',
-      value: '15,680',
-      icon: iconMap.Package,
-      change: -3,
-      changeLabel: '% vs 上周期',
-      color: 'warning',
-    },
-    {
-      id: 'pending-orders',
-      title: '待审批订单',
-      value: '23',
-      icon: iconMap.FileText,
-      change: 5,
-      changeLabel: 'vs 上周期',
-      color: 'primary',
-    },
-  ];
+  const stats: StatCard[] = useMemo(() => {
+    if (!statsData) return [];
+    return [
+      {
+        id: 'total-assets',
+        title: '总资产',
+        value: statsData.total_assets.toLocaleString(),
+        icon: iconMap.TrendingUp,
+        change: 0,
+        changeLabel: '% vs 上周期',
+        color: 'success',
+      },
+      {
+        id: 'active-assets',
+        title: '在用资产',
+        value: statsData.active_assets.toLocaleString(),
+        icon: iconMap.Wallet,
+        change: 0,
+        changeLabel: '% vs 上周期',
+        color: 'info',
+      },
+      {
+        id: 'inventory-total',
+        title: '库存总量',
+        value: statsData.total_inventory.toLocaleString(),
+        icon: iconMap.Package,
+        change: 0,
+        changeLabel: '% vs 上周期',
+        color: 'warning',
+      },
+      {
+        id: 'pending-orders',
+        title: '待处理订单',
+        value: statsData.pending_orders.toLocaleString(),
+        icon: iconMap.FileText,
+        change: 0,
+        changeLabel: 'vs 上周期',
+        color: 'primary',
+      },
+    ];
+  }, [statsData]);
 
-  const charts: ChartCard[] = [
-    {
-      id: 'data-overview',
-      title: '数据概览',
-      chart: (
-        <BarChartComponent
-          data={barData}
-          xKey='name'
-          yKey='value'
-        />
-      ),
-      height: 300,
-    },
-    {
-      id: 'trend-analysis',
-      title: '趋势分析',
-      chart: (
-        <LineChartComponent
-          data={lineData}
-          xKey='name'
-          yKey='value'
-        />
-      ),
-      height: 300,
-    },
-  ];
+  const charts: ChartCard[] = useMemo(() => {
+    if (!statsData) return [];
+    const barData = [
+      { name: '总订单', value: statsData.total_orders },
+      { name: '待处理', value: statsData.pending_orders },
+      { name: '供应商', value: statsData.total_suppliers },
+      { name: '客户', value: statsData.total_customers },
+      { name: '资产', value: statsData.total_assets },
+      { name: '凭证', value: statsData.total_vouchers },
+    ];
+    const lineData = [
+      { name: '资产', value: statsData.total_assets },
+      { name: '在用', value: statsData.active_assets },
+      { name: '库存', value: statsData.total_inventory },
+      { name: '低库存', value: statsData.low_stock_items },
+      { name: '待审批', value: statsData.pending_vouchers },
+      { name: '供应商', value: statsData.active_suppliers },
+    ];
+    return [
+      {
+        id: 'data-overview',
+        title: '数据概览',
+        chart: (
+          <BarChartComponent
+            data={barData}
+            xKey='name'
+            yKey='value'
+          />
+        ),
+        height: 300,
+      },
+      {
+        id: 'trend-analysis',
+        title: '趋势分析',
+        chart: (
+          <LineChartComponent
+            data={lineData}
+            xKey='name'
+            yKey='value'
+          />
+        ),
+        height: 300,
+      },
+    ];
+  }, [statsData]);
 
   const quickActions: QuickAction[] = [];
 

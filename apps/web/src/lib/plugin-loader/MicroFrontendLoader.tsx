@@ -50,7 +50,7 @@ const loadRemoteEntry = async (remoteName: string): Promise<void> => {
 
     const getRemoteUrl = (name: string): string => {
       const envKey = `VITE_${name.toUpperCase()}_REMOTE_ENTRY`;
-      const envUrl = import.meta.env[envKey];
+      const envUrl = typeof import.meta !== 'undefined' ? import.meta.env?.[envKey] : undefined;
       if (envUrl) return envUrl;
       const port = remotePorts[name] ?? 3001;
       return `http://localhost:${port}/remoteEntry.js`;

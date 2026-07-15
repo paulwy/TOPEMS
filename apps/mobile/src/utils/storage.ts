@@ -5,6 +5,7 @@ const STORAGE_KEYS = {
   USER: 'topems_user',
   THEME: 'topems_theme',
   LANGUAGE: 'topems_language',
+  SCAN_HISTORY: 'topems_scan_history',
 };
 
 export const storage = {
@@ -19,15 +20,13 @@ export const storage = {
   setToken: async (token: string): Promise<void> => {
     try {
       await AsyncStorage.setItem(STORAGE_KEYS.TOKEN, token);
-    } catch {
-    }
+    } catch {}
   },
 
   removeToken: async (): Promise<void> => {
     try {
       await AsyncStorage.removeItem(STORAGE_KEYS.TOKEN);
-    } catch {
-    }
+    } catch {}
   },
 
   getUser: async <T>(): Promise<T | null> => {
@@ -42,15 +41,13 @@ export const storage = {
   setUser: async <T>(user: T): Promise<void> => {
     try {
       await AsyncStorage.setItem(STORAGE_KEYS.USER, JSON.stringify(user));
-    } catch {
-    }
+    } catch {}
   },
 
   removeUser: async (): Promise<void> => {
     try {
       await AsyncStorage.removeItem(STORAGE_KEYS.USER);
-    } catch {
-    }
+    } catch {}
   },
 
   clearAll: async (): Promise<void> => {
@@ -60,9 +57,30 @@ export const storage = {
         STORAGE_KEYS.USER,
         STORAGE_KEYS.THEME,
         STORAGE_KEYS.LANGUAGE,
+        STORAGE_KEYS.SCAN_HISTORY,
       ]);
+    } catch {}
+  },
+
+  getScanHistory: async <T>(): Promise<T | null> => {
+    try {
+      const data = await AsyncStorage.getItem(STORAGE_KEYS.SCAN_HISTORY);
+      return data ? JSON.parse(data) : null;
     } catch {
+      return null;
     }
+  },
+
+  setScanHistory: async <T>(history: T): Promise<void> => {
+    try {
+      await AsyncStorage.setItem(STORAGE_KEYS.SCAN_HISTORY, JSON.stringify(history));
+    } catch {}
+  },
+
+  removeScanHistory: async (): Promise<void> => {
+    try {
+      await AsyncStorage.removeItem(STORAGE_KEYS.SCAN_HISTORY);
+    } catch {}
   },
 };
 

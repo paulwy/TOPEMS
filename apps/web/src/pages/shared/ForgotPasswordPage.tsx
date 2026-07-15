@@ -3,6 +3,7 @@ import { useNavigate, useSearchParams } from 'react-router-dom';
 import { useForm } from 'react-hook-form';
 import { z } from 'zod';
 import { zodResolver } from '@hookform/resolvers/zod';
+import { useMutation } from '@tanstack/react-query';
 import { Eye, EyeOff, Lock, Mail, ArrowLeft, CheckCircle } from 'lucide-react';
 import { authApi } from '@/api/iam';
 import { apiLogger } from '@/utils/logger';
@@ -51,7 +52,6 @@ const ForgotPasswordPage: React.FC = () => {
   const isResetMode = !!token;
 
   const [showPassword, setShowPassword] = useState(false);
-  const [loading, setLoading] = useState(false);
   const [emailSent, setEmailSent] = useState(false);
   const [resetSuccess, setResetSuccess] = useState(false);
 
@@ -71,12 +71,12 @@ const ForgotPasswordPage: React.FC = () => {
     },
   });
 
-  const handleRequestReset = async (values: RequestResetValues) => {
-    setLoading(true);
-    try {
-      const response = await authApi.requestPasswordReset({ email: values.email });
+  const requestResetMutation = useMutation({
+    mutationFn: async (values: RequestResetValues) => {
+      return await authApi.requestPasswordReset({ email: values.email });
+    },
+    onSuccess: (response) => {
       apiLogger.info('密码重置请求响应:', response);
-
       if (response.success) {
         setEmailSent(true);
         addNotification({
@@ -91,27 +91,26 @@ const ForgotPasswordPage: React.FC = () => {
           type: 'error',
         });
       }
-    } catch (err: unknown) {
+    },
+    onError: (err: unknown) => {
       apiLogger.error('密码重置请求错误:', err);
       addNotification({
         title: '错误',
         message: (err as { message?: string }).message || '请求失败',
         type: 'error',
       });
-    } finally {
-      setLoading(false);
-    }
-  };
+    },
+  });
 
-  const handleResetPassword = async (values: ResetPasswordValues) => {
-    setLoading(true);
-    try {
-      const response = await authApi.confirmPasswordReset({
+  const resetPasswordMutation = useMutation({
+    mutationFn: async (values: ResetPasswordValues) => {
+      return await authApi.confirmPasswordReset({
         token: values.token,
         new_password: values.password,
       });
+    },
+    onSuccess: (response) => {
       apiLogger.info('密码重置响应:', response);
-
       if (response.success) {
         setResetSuccess(true);
         addNotification({
@@ -126,16 +125,25 @@ const ForgotPasswordPage: React.FC = () => {
           type: 'error',
         });
       }
-    } catch (err: unknown) {
+    },
+    onError: (err: unknown) => {
       apiLogger.error('密码重置错误:', err);
       addNotification({
         title: '错误',
         message: (err as { message?: string }).message || '请求失败',
         type: 'error',
       });
-    } finally {
-      setLoading(false);
-    }
+    },
+  });
+
+  const loading = requestResetMutation.isPending || resetPasswordMutation.isPending;
+
+  const handleRequestReset = (values: RequestResetValues) => {
+    requestResetMutation.mutate(values);
+  };
+
+  const handleResetPassword = (values: ResetPasswordValues) => {
+    resetPasswordMutation.mutate(values);
   };
 
   return (
@@ -314,21 +322,21 @@ const ForgotPasswordPage: React.FC = () => {
                 您的密码已成功重置，请使用新密码登录。
               </Typography>
               <Button
-              onClick={() => navigate(AUTH_PATHS.login)}
-              variant='contained'
-              fullWidth
-              sx={{
-                height: 48,
-                borderRadius: 1.5,
-                fontWeight: 600,
-                background: `linear-gradient(135deg, ${ct.secondary[400]} 0%, ${ct.secondary.dark} 100%)`,
-                '&:hover': {
-                  background: `linear-gradient(135deg, ${ct.secondary[600]} 0%, ${ct.secondary[800]} 100%)`,
-                },
-              }}
-            >
-              去登录
-            </Button>
+                onClick={() => navigate(AUTH_PATHS.login)}
+                variant='contained'
+                fullWidth
+                sx={{
+                  height: 48,
+                  borderRadius: 1.5,
+                  fontWeight: 600,
+                  background: `linear-gradient(135deg, ${ct.secondary[400]} 0%, ${ct.secondary.dark} 100%)`,
+                  '&:hover': {
+                    background: `linear-gradient(135deg, ${ct.secondary[600]} 0%, ${ct.secondary[800]} 100%)`,
+                  },
+                }}
+              >
+                去登录
+              </Button>
             </Box>
           )}
 
@@ -505,19 +513,19 @@ const ForgotPasswordPage: React.FC = () => {
 
           <Box sx={{ mt: 3, textAlign: 'center' }}>
             <Button
-            type='button'
-            onClick={() => navigate(AUTH_PATHS.login)}
-            startIcon={<ArrowLeft size={16} />}
-            sx={{
-              color: ct.secondary[400],
-              '&:hover': { color: ct.secondary[600] },
-              fontSize: '0.875rem',
-              background: 'transparent',
-              fontWeight: 500,
-            }}
-          >
-            返回登录
-          </Button>
+              type='button'
+              onClick={() => navigate(AUTH_PATHS.login)}
+              startIcon={<ArrowLeft size={16} />}
+              sx={{
+                color: ct.secondary[400],
+                '&:hover': { color: ct.secondary[600] },
+                fontSize: '0.875rem',
+                background: 'transparent',
+                fontWeight: 500,
+              }}
+            >
+              返回登录
+            </Button>
           </Box>
         </CardContent>
       </MuiCard>

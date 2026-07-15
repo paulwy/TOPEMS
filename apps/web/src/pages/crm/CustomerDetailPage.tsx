@@ -1,18 +1,8 @@
 import { Chip, Typography, Box, InputLabel, Button } from '@mui/material';
-import React, { useState, useEffect, useMemo } from 'react';
-import { useParams, useNavigate } from 'react-router-dom';
+import React, { useMemo } from 'react';
+import { useParams } from 'react-router-dom';
 import { designTokens } from '@/theme/tokens';
-import {
-  Building2,
-  Mail,
-  Phone,
-  FileText,
-  CreditCard,
-  Receipt,
-  Wallet,
-  TrendingUp,
-  Clock,
-} from 'lucide-react';
+import { Building2, Receipt, Wallet } from 'lucide-react';
 import { crmApi } from '@/api/crm';
 import {
   useCustomerFinanceInfo,
@@ -20,24 +10,24 @@ import {
   useCollectionRecords,
 } from '@/hooks/useCrmFinance';
 import type { SalesInvoice, CollectionRecord } from '@/api/crmFinance';
-import { useNotification } from '@/hooks/useNotification';
-import type { Customer } from '@/api/crm';
-import { apiLogger } from '@/utils/logger';
 import { DetailPageTemplate, type TabConfig, type SectionConfig } from '@/components/templates';
 import { PageContainer } from '@/components/common';
 import { CRM_PATHS } from '@/modules/crm/config';
+import { useQuery } from '@tanstack/react-query';
+import { QUERY_KEYS } from '@/lib/reactQuery';
 
 const ct = designTokens.colors;
 
 const CustomerDetailPage: React.FC = () => {
   const { id } = useParams<{ id: string }>();
-  const navigate = useNavigate();
-  const { error } = useNotification();
 
-  const [customer, setCustomer] = useState<Customer | null>(null);
-  const [loading, setLoading] = useState(true);
+  const customerQuery = useQuery({
+    queryKey: QUERY_KEYS.CRM.CUSTOMER(id || ''),
+    queryFn: () => crmApi.customers.get(id!),
+    enabled: !!id,
+    staleTime: 5 * 60 * 1000,
+  });
 
-  // 财务数据
   const { data: financeInfo } = useCustomerFinanceInfo(id || '');
   const { data: invoicesData } = useSalesInvoices({
     customer_id: id,
@@ -48,26 +38,9 @@ const CustomerDetailPage: React.FC = () => {
     pagesize: 10,
   });
 
-  useEffect(() => {
-    if (id) {
-      loadCustomer(id);
-    }
-  }, [id]);
-
-  const loadCustomer = async (customerId: string) => {
-    setLoading(true);
-    try {
-      const res = await crmApi.customers.get(customerId);
-      if (res.success && res.data) {
-        setCustomer(res.data);
-      }
-    } catch (err: unknown) {
-      apiLogger.error('Failed to load customer:', err);
-      error('加载客户信息失败');
-    } finally {
-      setLoading(false);
-    }
-  };
+  const customer =
+    customerQuery.data?.success && customerQuery.data.data ? customerQuery.data.data : null;
+  const loading = customerQuery.isLoading;
 
   const formatCurrency = (amount?: number) => {
     if (!amount) return '¥0';
@@ -108,7 +81,6 @@ const CustomerDetailPage: React.FC = () => {
 
   const finInfo = financeInfo?.data;
 
-  // 基本信息 Tab
   const basicInfoContent = useMemo(() => {
     if (!customer) return null;
     return (
@@ -161,7 +133,6 @@ const CustomerDetailPage: React.FC = () => {
     );
   }, [customer]);
 
-  // 财务信息 Tab
   const financeInfoContent = useMemo(() => {
     if (!finInfo) return null;
     return (
@@ -172,7 +143,6 @@ const CustomerDetailPage: React.FC = () => {
           gap: 3,
         }}
       >
-        {/* 信用管理 */}
         <Box sx={{ p: 2, border: 1, borderColor: 'divider', borderRadius: 1 }}>
           <Typography
             variant='subtitle1'
@@ -228,7 +198,6 @@ const CustomerDetailPage: React.FC = () => {
           </Box>
         </Box>
 
-        {/* 应收款概览 */}
         <Box sx={{ p: 2, border: 1, borderColor: 'divider', borderRadius: 1 }}>
           <Typography
             variant='subtitle1'
@@ -286,7 +255,6 @@ const CustomerDetailPage: React.FC = () => {
           </Box>
         </Box>
 
-        {/* 交易统计 */}
         <Box sx={{ p: 2, border: 1, borderColor: 'divider', borderRadius: 1 }}>
           <Typography
             variant='subtitle1'
@@ -330,7 +298,6 @@ const CustomerDetailPage: React.FC = () => {
           </Box>
         </Box>
 
-        {/* 银行账户信息 */}
         <Box sx={{ p: 2, border: 1, borderColor: 'divider', borderRadius: 1 }}>
           <Typography
             variant='subtitle1'
@@ -383,7 +350,6 @@ const CustomerDetailPage: React.FC = () => {
     );
   }, [finInfo]);
 
-  // 销售发票 Tab
   const invoicesContent = useMemo(() => {
     const invoiceList = invoicesData?.data?.items || [];
     return (
@@ -465,7 +431,6 @@ const CustomerDetailPage: React.FC = () => {
     );
   }, [invoicesData]);
 
-  // 收款记录 Tab
   const collectionsContent = useMemo(() => {
     const collectionList = collectionsData?.data?.items || [];
     return (
@@ -545,7 +510,6 @@ const CustomerDetailPage: React.FC = () => {
     );
   }, [collectionsData]);
 
-  // 底部信息 Section
   const footerSection = useMemo<SectionConfig>(() => {
     if (!customer) return { id: 'footer', content: null };
     return {
@@ -613,7 +577,6 @@ const CustomerDetailPage: React.FC = () => {
     };
   }, [customer]);
 
-  // tabs 配置
   const tabs = useMemo<TabConfig[]>(
     () => [
       { id: 'basic', label: '基本信息', content: basicInfoContent || <></> },
@@ -628,7 +591,6 @@ const CustomerDetailPage: React.FC = () => {
     [basicInfoContent, financeInfoContent, invoicesContent, collectionsContent]
   );
 
-  // infoCard 配置
   const infoCard = useMemo(
     () => ({
       avatar: (
@@ -656,7 +618,6 @@ const CustomerDetailPage: React.FC = () => {
     [customer, finInfo]
   );
 
-  // sections 配置
   const sections = useMemo<SectionConfig[]>(() => [footerSection], [footerSection]);
 
   return (

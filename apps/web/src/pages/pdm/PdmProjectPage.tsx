@@ -149,9 +149,12 @@ export const PdmProjectPage: React.FC = () => {
     enabled: !!selectedProjectId,
   });
 
-  const loadPhases = useCallback((projectId: string) => {
-    queryClient.invalidateQueries({ queryKey: QUERY_KEYS.PDM.PROJECT_PHASES(projectId) });
-  }, [queryClient]);
+  const loadPhases = useCallback(
+    (projectId: string) => {
+      queryClient.invalidateQueries({ queryKey: QUERY_KEYS.PDM.PROJECT_PHASES(projectId) });
+    },
+    [queryClient]
+  );
 
   const { data: phases = [] } = useQuery({
     queryKey: QUERY_KEYS.PDM.PROJECT_PHASES(selectedProjectId || ''),
@@ -218,8 +221,7 @@ export const PdmProjectPage: React.FC = () => {
   });
 
   const updatePhaseMutation = useMutation({
-    mutationFn: ({ id, phase }: { id: string; phase: string }) =>
-      projectApi.updatePhase(id, phase),
+    mutationFn: ({ id, phase }: { id: string; phase: string }) => projectApi.updatePhase(id, phase),
     onSuccess: () => {
       addNotification({ title: '成功', message: '阶段更新成功', type: 'success' });
       queryClient.invalidateQueries({ queryKey: QUERY_KEYS.PDM.PROJECTS });
@@ -234,7 +236,9 @@ export const PdmProjectPage: React.FC = () => {
       projectApi.removeMember(projectId, userId),
     onSuccess: (_data, variables) => {
       addNotification({ title: '成功', message: '成员移除成功', type: 'success' });
-      queryClient.invalidateQueries({ queryKey: QUERY_KEYS.PDM.PROJECT_MEMBERS(variables.projectId) });
+      queryClient.invalidateQueries({
+        queryKey: QUERY_KEYS.PDM.PROJECT_MEMBERS(variables.projectId),
+      });
     },
     onError: () => {
       addNotification({ title: '错误', message: '移除成员失败', type: 'error' });

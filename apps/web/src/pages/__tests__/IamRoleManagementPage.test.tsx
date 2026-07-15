@@ -111,6 +111,7 @@ vi.mock('@/store', () => ({
   useSetSidebarCollapsed: vi.fn(),
 }));
 
+describe('RoleManagementPage', () => {
   it('should render without crashing', () => {
     const { container } = render(
       <BrowserRouter>

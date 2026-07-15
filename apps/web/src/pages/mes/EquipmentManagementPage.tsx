@@ -253,8 +253,7 @@ const EquipmentManagementPage: React.FC = () => {
       }
       setShowDialog(false);
       resetForm();
-    } catch {
-    }
+    } catch {}
   };
 
   const handleMaintenanceSubmit = async (e: React.FormEvent) => {
@@ -267,8 +266,7 @@ const EquipmentManagementPage: React.FC = () => {
       });
       setShowMaintenanceDialog(false);
       resetMaintenanceForm();
-    } catch {
-    }
+    } catch {}
   };
 
   const handleDelete = useCallback(
@@ -276,8 +274,7 @@ const EquipmentManagementPage: React.FC = () => {
       if (!window.confirm('确定要删除这个设备吗?')) return;
       try {
         await deleteMutation.mutateAsync(id);
-      } catch {
-      }
+      } catch {}
     },
     [deleteMutation]
   );

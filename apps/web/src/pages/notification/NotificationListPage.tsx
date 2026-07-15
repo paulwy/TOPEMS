@@ -152,9 +152,7 @@ export const NotificationListPage: React.FC = () => {
     }
 
     if (statusFilter !== 'all') {
-      result = result.filter((n) =>
-        statusFilter === 'unread' ? !n.is_read : !!n.is_read
-      );
+      result = result.filter((n) => (statusFilter === 'unread' ? !n.is_read : !!n.is_read));
     }
 
     if (importantFilter !== 'all') {

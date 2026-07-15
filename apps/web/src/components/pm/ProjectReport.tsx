@@ -37,6 +37,7 @@ import {
   Cell,
   Legend,
 } from 'recharts';
+import type { PieLabelRenderProps } from 'recharts';
 import type { PmStatistics, ProjectBenefit } from '@/api/pm';
 
 interface ProjectReportProps {
@@ -262,7 +263,9 @@ const ProjectReport: React.FC<ProjectReportProps> = ({ stats, benefits }) => {
                     cx='50%'
                     cy='50%'
                     labelLine={false}
-                    label={({ name, percent }) => `${name}: ${((percent ?? 0) * 100).toFixed(0)}%`}
+                    label={({ name, percent }: { name: string; percent?: number }) =>
+                      `${name}: ${((percent ?? 0) * 100).toFixed(0)}%`
+                    }
                     outerRadius={80}
                     dataKey='value'
                   >
@@ -297,7 +300,9 @@ const ProjectReport: React.FC<ProjectReportProps> = ({ stats, benefits }) => {
                     cx='50%'
                     cy='50%'
                     labelLine={false}
-                    label={({ name, percent }) => `${name}: ${((percent ?? 0) * 100).toFixed(0)}%`}
+                    label={({ name, percent }: { name: string; percent?: number }) =>
+                      `${name}: ${((percent ?? 0) * 100).toFixed(0)}%`
+                    }
                     outerRadius={60}
                     dataKey='value'
                   >

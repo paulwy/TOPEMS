@@ -1,4 +1,6 @@
-import React, { useState, useEffect, useMemo } from 'react';
+import React, { useState, useMemo } from 'react';
+import { useQuery } from '@tanstack/react-query';
+import { QUERY_KEYS } from '@/lib/reactQuery';
 import { designTokens } from '@/theme/tokens';
 import { FINANCE_PATHS } from '@/modules/finance/config';
 import {
@@ -70,21 +72,14 @@ interface BudgetDetail {
 const FinanceBudgetDetailPage: React.FC = () => {
   const navigate = useNavigate();
   const { id } = useParams<{ id: string }>();
-  const { success, error } = useNotification();
+  const { error, success } = useNotification();
 
-  const [budget, setBudget] = useState<BudgetDetail | null>(null);
-  const [loading, setLoading] = useState(true);
-  const [errorMessage, setErrorMessage] = useState<string | undefined>(undefined);
   const [showAnalysis, setShowAnalysis] = useState(false);
 
-  useEffect(() => {
-    loadBudgetDetail();
-  }, [id]);
-
-  const loadBudgetDetail = async () => {
-    setLoading(true);
-    setErrorMessage(undefined);
-    try {
+  const budgetQuery = useQuery<BudgetDetail | null>({
+    queryKey: [...QUERY_KEYS.FINANCE.BUDGET_DETAIL(id || '')],
+    enabled: !!id,
+    queryFn: async () => {
       if (!id) {
         throw new Error('预算ID为空');
       }
@@ -135,7 +130,7 @@ const FinanceBudgetDetailPage: React.FC = () => {
       const usageRate =
         budgetData.total_budget > 0 ? (totalUsed / budgetData.total_budget) * 100 : 0;
 
-      setBudget({
+      return {
         id: budgetData.id,
         code: `BUD-${budgetData.fiscal_year}-${budgetData.id.slice(-3).toUpperCase()}`,
         name: `${budgetData.fiscal_year}年度${getBudgetTypeName(budgetData.budget_type || '')}`,
@@ -150,15 +145,13 @@ const FinanceBudgetDetailPage: React.FC = () => {
         items,
         createdAt: budgetData.created_at,
         updatedAt: budgetData.updated_at,
-      });
-    } catch (err: unknown) {
-      apiLogger.error('加载预算详情失败:', err);
-      setErrorMessage('加载预算详情失败');
-      error('加载预算详情失败');
-    } finally {
-      setLoading(false);
-    }
-  };
+      };
+    },
+  });
+
+  const budget = budgetQuery.data ?? null;
+  const loading = budgetQuery.isLoading;
+  const errorMessage = budgetQuery.error ? '加载预算详情失败' : undefined;
 
   const getCategoryLabel = (category?: string) => {
     const labels: Record<string, string> = {

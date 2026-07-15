@@ -719,8 +719,7 @@ const HrmDepartmentPage: React.FC = () => {
     setShowAIFormValidator(false);
   }, []);
 
-  const handleFixIssue = useCallback((issue: ValidationIssue) => {
-  }, []);
+  const handleFixIssue = useCallback((issue: ValidationIssue) => {}, []);
 
   const availableParentDepts = departments.filter(
     (d) => d.id !== (formData.id as string | undefined)

@@ -825,7 +825,7 @@ pub async fn db_create_photo_upload(
 ) -> sqlx::Result<PhotoUpload> {
     let id = Uuid::new_v4();
     let now = Utc::now();
-    let file_path = format!("/api/core/mobile/v1/photos/{}", id);
+    let file_path = format!("/api/core/mobile/photos/{}", id);
 
     sqlx::query(
         "INSERT INTO photo_uploads (id, tenant_id, user_id, file_name, file_path, file_size, mime_type, width, height, compression_ratio, has_watermark, watermark_text, upload_status, upload_progress, location_lat, location_lng, created_at)

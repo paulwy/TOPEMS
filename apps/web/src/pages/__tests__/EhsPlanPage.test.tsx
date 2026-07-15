@@ -31,7 +31,7 @@ vi.mock('@/store', () => {
     removeNotification: vi.fn(),
     clearNotifications: vi.fn(),
   };
-  
+
   const authState = {
     user: { id: '1', username: 'testuser', email: 'test@example.com', isActive: true },
     token: 'test-token',
@@ -53,14 +53,12 @@ vi.mock('@/store', () => {
     getDisplayName: vi.fn(() => 'Test User'),
     getAvatarUrl: vi.fn(() => ''),
   };
-  
+
   return {
-    useNotificationStore: vi.fn((selector?: any) => 
+    useNotificationStore: vi.fn((selector?: any) =>
       selector ? selector(notificationState) : notificationState
     ),
-    useAuthStore: vi.fn((selector?: any) => 
-      selector ? selector(authState) : authState
-    ),
+    useAuthStore: vi.fn((selector?: any) => (selector ? selector(authState) : authState)),
     useThemeStore: vi.fn(() => ({
       theme: 'light',
       setTheme: vi.fn(),

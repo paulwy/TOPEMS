@@ -138,110 +138,109 @@ vi.mock('@/store', () => ({
 }));
 
 describe('ReportBuilder', () => {
-    it('should render without crashing', () => {
-      const { container } = render(
-        <BrowserRouter>
-          <ReportBuilder
-            onClose={vi.fn()}
-            reportTypes={[]}
-            onSuccess={vi.fn()}
-          />
-        </BrowserRouter>
-      );
-      expect(container).toBeDefined();
-    });
-
-    it('should have report API methods defined', () => {
-      expect(reportApi.createReport).toBeDefined();
-      expect(reportApi.createReportFromTemplate).toBeDefined();
-      expect(reportApi.listReportTypes).toBeDefined();
-    });
+  it('should render without crashing', () => {
+    const { container } = render(
+      <BrowserRouter>
+        <ReportBuilder
+          onClose={vi.fn()}
+          reportTypes={[]}
+          onSuccess={vi.fn()}
+        />
+      </BrowserRouter>
+    );
+    expect(container).toBeDefined();
   });
+
+  it('should have report API methods defined', () => {
+    expect(reportApi.createReport).toBeDefined();
+    expect(reportApi.createReportFromTemplate).toBeDefined();
+    expect(reportApi.listReportTypes).toBeDefined();
+  });
+});
 
 describe('ReportDesignPage', () => {
-    it('should render without crashing', () => {
-      const { container } = render(
-        <BrowserRouter>
-          <ReportDesignPage />
-        </BrowserRouter>
-      );
-      expect(container).toBeDefined();
-    });
-
-    it('should have template API methods defined', () => {
-      expect(reportApi.listTemplates).toBeDefined();
-      expect(reportApi.getTemplate).toBeDefined();
-      expect(reportApi.createTemplate).toBeDefined();
-      expect(reportApi.updateTemplate).toBeDefined();
-      expect(reportApi.deleteTemplate).toBeDefined();
-    });
+  it('should render without crashing', () => {
+    const { container } = render(
+      <BrowserRouter>
+        <ReportDesignPage />
+      </BrowserRouter>
+    );
+    expect(container).toBeDefined();
   });
+
+  it('should have template API methods defined', () => {
+    expect(reportApi.listTemplates).toBeDefined();
+    expect(reportApi.getTemplate).toBeDefined();
+    expect(reportApi.createTemplate).toBeDefined();
+    expect(reportApi.updateTemplate).toBeDefined();
+    expect(reportApi.deleteTemplate).toBeDefined();
+  });
+});
 
 describe('ReportPage', () => {
-    it('should render without crashing', () => {
-      const { container } = render(
-        <BrowserRouter>
-          <ReportPage />
-        </BrowserRouter>
-      );
-      expect(container).toBeDefined();
-    });
-
-    it('should have report API methods defined', () => {
-      expect(reportApi.listReports).toBeDefined();
-      expect(reportApi.getReport).toBeDefined();
-      expect(reportApi.deleteReport).toBeDefined();
-      expect(reportApi.exportReport).toBeDefined();
-      expect(reportApi.runReport).toBeDefined();
-    });
+  it('should render without crashing', () => {
+    const { container } = render(
+      <BrowserRouter>
+        <ReportPage />
+      </BrowserRouter>
+    );
+    expect(container).toBeDefined();
   });
+
+  it('should have report API methods defined', () => {
+    expect(reportApi.listReports).toBeDefined();
+    expect(reportApi.getReport).toBeDefined();
+    expect(reportApi.deleteReport).toBeDefined();
+    expect(reportApi.exportReport).toBeDefined();
+    expect(reportApi.runReport).toBeDefined();
+  });
+});
 
 describe('ReportViewer', () => {
-    it('should render without crashing', () => {
-      const { container } = render(
-        <BrowserRouter>
-          <ReportViewer
-            report={{
-              id: '1',
-              config: {
-                report_type: 'rs_project_progress',
-                format: 'excel',
-                title: '测试报表',
-                columns: ['项目名称', '负责人'],
-              },
-              data: [],
-              row_count: 0,
-              created_at: '2024-01-01',
-            }}
-            onClose={vi.fn()}
-          />
-        </BrowserRouter>
-      );
-      expect(container).toBeDefined();
-    });
-
-    it('should have report API methods defined', () => {
-      expect(reportApi.getReport).toBeDefined();
-      expect(reportApi.exportReport).toBeDefined();
-    });
+  it('should render without crashing', () => {
+    const { container } = render(
+      <BrowserRouter>
+        <ReportViewer
+          report={{
+            id: '1',
+            config: {
+              report_type: 'rs_project_progress',
+              format: 'excel',
+              title: '测试报表',
+              columns: ['项目名称', '负责人'],
+            },
+            data: [],
+            row_count: 0,
+            created_at: '2024-01-01',
+          }}
+          onClose={vi.fn()}
+        />
+      </BrowserRouter>
+    );
+    expect(container).toBeDefined();
   });
 
-describe('TemplateManagementPage', () => {
-    it('should render without crashing', () => {
-      const { container } = render(
-        <BrowserRouter>
-          <TemplateManagementPage />
-        </BrowserRouter>
-      );
-      expect(container).toBeDefined();
-    });
+  it('should have report API methods defined', () => {
+    expect(reportApi.getReport).toBeDefined();
+    expect(reportApi.exportReport).toBeDefined();
+  });
+});
 
-    it('should have template management API methods defined', () => {
-      expect(reportApi.listTemplates).toBeDefined();
-      expect(reportApi.getTemplate).toBeDefined();
-      expect(reportApi.createTemplate).toBeDefined();
-      expect(reportApi.updateTemplate).toBeDefined();
-      expect(reportApi.deleteTemplate).toBeDefined();
-    });
+describe('TemplateManagementPage', () => {
+  it('should render without crashing', () => {
+    const { container } = render(
+      <BrowserRouter>
+        <TemplateManagementPage />
+      </BrowserRouter>
+    );
+    expect(container).toBeDefined();
+  });
+
+  it('should have template management API methods defined', () => {
+    expect(reportApi.listTemplates).toBeDefined();
+    expect(reportApi.getTemplate).toBeDefined();
+    expect(reportApi.createTemplate).toBeDefined();
+    expect(reportApi.updateTemplate).toBeDefined();
+    expect(reportApi.deleteTemplate).toBeDefined();
   });
 });

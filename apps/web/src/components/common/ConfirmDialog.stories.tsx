@@ -154,15 +154,21 @@ export const WithCustomContent: Story = {
     children: (
       <div style={{ display: 'flex', flexDirection: 'column', gap: 12, marginTop: 16 }}>
         <label style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-          <input type="checkbox" defaultChecked />
+          <input
+            type='checkbox'
+            defaultChecked
+          />
           导出基本信息
         </label>
         <label style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-          <input type="checkbox" defaultChecked />
+          <input
+            type='checkbox'
+            defaultChecked
+          />
           导出操作记录
         </label>
         <label style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-          <input type="checkbox" />
+          <input type='checkbox' />
           导出附件文件
         </label>
       </div>
@@ -257,7 +263,8 @@ export const ErrorDialog: Story = {
   args: {
     isOpen: true,
     title: '操作失败',
-    message: '删除操作失败：该用户存在未处理的订单关联，请先解除关联后再删除。错误代码：ERR_CONSTRAINT_VIOLATION',
+    message:
+      '删除操作失败：该用户存在未处理的订单关联，请先解除关联后再删除。错误代码：ERR_CONSTRAINT_VIOLATION',
     type: 'error',
     confirmLabel: '知道了',
   },

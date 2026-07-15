@@ -45,14 +45,14 @@ pub struct TokenResponse {
 
 pub fn create_routes() -> Router<super::ApiState> {
     Router::new()
-        .route("/api/core/rs/v1/auth/login", post(login))
-        .route("/api/core/rs/v1/auth/refresh", post(refresh_token))
-        .route("/api/core/rs/v1/auth/logout", post(logout))
+        .route("/api/core/rd/auth/login", post(login))
+        .route("/api/core/rd/auth/refresh", post(refresh_token))
+        .route("/api/core/rd/auth/logout", post(logout))
 }
 
 #[utoipa::path(
     post,
-    path = "/api/core/rs/v1/auth/login",
+    path = "/api/core/rd/auth/login",
     tag = "auth",
     request_body = LoginRequest,
     responses(
@@ -182,7 +182,7 @@ async fn login(
 
 #[utoipa::path(
     post,
-    path = "/api/core/rs/v1/auth/refresh",
+    path = "/api/core/rd/auth/refresh",
     tag = "auth",
     request_body = RefreshRequest,
     responses(
@@ -275,7 +275,7 @@ async fn refresh_token(
 
 #[utoipa::path(
     post,
-    path = "/api/core/rs/v1/auth/logout",
+    path = "/api/core/rd/auth/logout",
     tag = "auth",
     responses(
         (status = 200, description = "Logout successful"),

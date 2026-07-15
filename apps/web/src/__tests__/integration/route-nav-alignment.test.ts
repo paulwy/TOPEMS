@@ -111,9 +111,7 @@ describe('Route-Navigation Alignment', () => {
     });
 
     it('should handle plugin initialization failure without crashing', async () => {
-      mockPluginManager.initialize.mockRejectedValue(
-        new Error('Network timeout')
-      );
+      mockPluginManager.initialize.mockRejectedValue(new Error('Network timeout'));
 
       await expect(getAllRoutes()).resolves.not.toThrow();
       const routes = await getAllRoutes();
@@ -167,9 +165,7 @@ describe('Route-Navigation Alignment', () => {
         pathCounts.set(route.path, (pathCounts.get(route.path) || 0) + 1);
       });
 
-      const duplicatePaths = Array.from(pathCounts.entries()).filter(
-        ([, count]) => count > 1
-      );
+      const duplicatePaths = Array.from(pathCounts.entries()).filter(([, count]) => count > 1);
 
       expect(duplicatePaths).toHaveLength(
         0,

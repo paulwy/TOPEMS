@@ -1,6 +1,15 @@
-import { useState, useEffect, useRef, useCallback } from 'react';
+import { useState, useEffect, useRef, useCallback, useMemo } from 'react';
 import { searchApi, type SearchResult } from '@/api/search';
-import { loadSearchHistory, saveSearchHistory, MAX_HISTORY_ITEMS } from '../components/GlobalSearchBar/utils';
+import {
+  loadSearchHistory,
+  saveSearchHistory,
+  MAX_HISTORY_ITEMS,
+  fuzzySearch,
+  filterResults,
+  getAvailableModules,
+  getAvailableTypes,
+} from '../components/GlobalSearchBar/utils';
+import { type SearchFilter, type SearchFilterOption } from '../components/GlobalSearchBar/types';
 import { SEARCH_SHORTCUTS, matchShortcut } from './shortcuts';
 
 interface UseGlobalSearchOptions {
@@ -26,6 +35,10 @@ interface UseGlobalSearchReturn {
   addToHistory: (text: string) => void;
   removeFromHistory: (text: string) => void;
   clearHistory: () => void;
+  filter: SearchFilter;
+  setFilter: React.Dispatch<React.SetStateAction<SearchFilter>>;
+  availableModules: SearchFilterOption[];
+  availableTypes: SearchFilterOption[];
 }
 
 function useSearchShortcuts({
@@ -60,12 +73,10 @@ function useSearchShortcuts({
           setOpen(false);
           setQuery('');
         }
-      } else if (matchShortcut(e, SEARCH_SHORTCUTS.FOCUS_SEARCH)) {
-        if (!open && !isInputFocused()) {
-          e.preventDefault();
-          setOpen(true);
-          setTimeout(() => inputRef.current?.focus(), 50);
-        }
+      } else if (matchShortcut(e, SEARCH_SHORTCUTS.FOCUS_SEARCH) && !open && !isInputFocused()) {
+        e.preventDefault();
+        setOpen(true);
+        setTimeout(() => inputRef.current?.focus(), 50);
       }
     };
 
@@ -76,16 +87,17 @@ function useSearchShortcuts({
 
 export function useGlobalSearch(
   navigate: (path: string) => void,
-  options: UseGlobalSearchOptions = {},
+  options: UseGlobalSearchOptions = {}
 ): UseGlobalSearchReturn {
   const { debounceMs = 300, maxResults = 10 } = options;
 
   const [open, setOpen] = useState(false);
   const [query, setQuery] = useState('');
-  const [results, setResults] = useState<SearchResult[]>([]);
+  const [rawResults, setRawResults] = useState<SearchResult[]>([]);
   const [loading, setLoading] = useState(false);
   const [selectedIndex, setSelectedIndex] = useState(-1);
   const [searchHistory, setSearchHistory] = useState<string[]>([]);
+  const [filter, setFilter] = useState<SearchFilter>({});
 
   const inputRef = useRef<HTMLInputElement>(null);
   const searchRef = useRef<HTMLDivElement>(null);
@@ -132,40 +144,43 @@ export function useGlobalSearch(
     saveSearchHistory([]);
   }, []);
 
-  const executeSearch = useCallback(async (q: string) => {
-    if (!q.trim()) {
-      setResults([]);
-      setLoading(false);
-      return;
-    }
-
-    if (abortControllerRef.current) {
-      abortControllerRef.current.abort();
-    }
-
-    const controller = new AbortController();
-    abortControllerRef.current = controller;
-
-    setLoading(true);
-    try {
-      const response = await searchApi.globalSearch(q, maxResults, controller.signal);
-      if (response.success && response.data) {
-        setResults(response.data);
-      } else {
-        setResults([]);
-      }
-    } catch (err: any) {
-      if (err.name === 'CanceledError' || err.name === 'AbortError') {
+  const executeSearch = useCallback(
+    async (q: string) => {
+      if (!q.trim()) {
+        setRawResults([]);
+        setLoading(false);
         return;
       }
-      setResults([]);
-    } finally {
-      if (abortControllerRef.current === controller) {
-        setLoading(false);
-        abortControllerRef.current = null;
+
+      if (abortControllerRef.current) {
+        abortControllerRef.current.abort();
       }
-    }
-  }, [maxResults]);
+
+      const controller = new AbortController();
+      abortControllerRef.current = controller;
+
+      setLoading(true);
+      try {
+        const response = await searchApi.globalSearch(q, maxResults, controller.signal);
+        if (response.success && response.data) {
+          setRawResults(response.data);
+        } else {
+          setRawResults([]);
+        }
+      } catch (err: any) {
+        if (err.name === 'CanceledError' || err.name === 'AbortError') {
+          return;
+        }
+        setRawResults([]);
+      } finally {
+        if (abortControllerRef.current === controller) {
+          setLoading(false);
+          abortControllerRef.current = null;
+        }
+      }
+    },
+    [maxResults]
+  );
 
   useEffect(() => {
     if (debounceRef.current) clearTimeout(debounceRef.current);
@@ -192,43 +207,74 @@ export function useGlobalSearch(
     return () => document.removeEventListener('mousedown', handleClickOutside);
   }, []);
 
-  const handleResultClick = useCallback((result: SearchResult) => {
-    addToHistory(query);
-    navigate(result.path);
-    setOpen(false);
-    setQuery('');
-  }, [query, navigate, addToHistory]);
+  useEffect(() => {
+    setSelectedIndex(-1);
+  }, [filter]);
 
-  const handleKeyDown = useCallback((e: React.KeyboardEvent) => {
-    if (matchShortcut(e, SEARCH_SHORTCUTS.NAVIGATE_DOWN)) {
-      if (!open || results.length === 0) return;
-      e.preventDefault();
-      setSelectedIndex((prev) => {
-        const next = prev + 1;
-        return next >= results.length ? 0 : next;
-      });
-    } else if (matchShortcut(e, SEARCH_SHORTCUTS.NAVIGATE_UP)) {
-      if (!open || results.length === 0) return;
-      e.preventDefault();
-      setSelectedIndex((prev) => {
-        const next = prev - 1;
-        return next < 0 ? results.length - 1 : next;
-      });
-    } else if (matchShortcut(e, SEARCH_SHORTCUTS.GO_TO_FIRST)) {
-      if (!open || results.length === 0) return;
-      e.preventDefault();
-      setSelectedIndex(0);
-    } else if (matchShortcut(e, SEARCH_SHORTCUTS.GO_TO_LAST)) {
-      if (!open || results.length === 0) return;
-      e.preventDefault();
-      setSelectedIndex(results.length - 1);
-    } else if (matchShortcut(e, SEARCH_SHORTCUTS.SELECT)) {
-      if (selectedIndex >= 0 && results[selectedIndex]) {
+  const results = useMemo(() => {
+    let filtered = filterResults(rawResults, filter);
+    if (query.trim()) {
+      filtered = fuzzySearch(filtered, query);
+    }
+    return filtered;
+  }, [rawResults, filter, query]);
+
+  const availableModules = useMemo(() => {
+    return getAvailableModules(rawResults);
+  }, [rawResults]);
+
+  const availableTypes = useMemo(() => {
+    const filteredByModule = filter.module
+      ? rawResults.filter((r) => r.module === filter.module)
+      : rawResults;
+    return getAvailableTypes(filteredByModule);
+  }, [rawResults, filter.module]);
+
+  const handleResultClick = useCallback(
+    (result: SearchResult) => {
+      addToHistory(query);
+      navigate(result.path);
+      setOpen(false);
+      setQuery('');
+    },
+    [query, navigate, addToHistory]
+  );
+
+  const handleKeyDown = useCallback(
+    (e: React.KeyboardEvent) => {
+      if (matchShortcut(e, SEARCH_SHORTCUTS.NAVIGATE_DOWN)) {
+        if (!open || results.length === 0) return;
+        e.preventDefault();
+        setSelectedIndex((prev) => {
+          const next = prev + 1;
+          return next >= results.length ? 0 : next;
+        });
+      } else if (matchShortcut(e, SEARCH_SHORTCUTS.NAVIGATE_UP)) {
+        if (!open || results.length === 0) return;
+        e.preventDefault();
+        setSelectedIndex((prev) => {
+          const next = prev - 1;
+          return next < 0 ? results.length - 1 : next;
+        });
+      } else if (matchShortcut(e, SEARCH_SHORTCUTS.GO_TO_FIRST)) {
+        if (!open || results.length === 0) return;
+        e.preventDefault();
+        setSelectedIndex(0);
+      } else if (matchShortcut(e, SEARCH_SHORTCUTS.GO_TO_LAST)) {
+        if (!open || results.length === 0) return;
+        e.preventDefault();
+        setSelectedIndex(results.length - 1);
+      } else if (
+        matchShortcut(e, SEARCH_SHORTCUTS.SELECT) &&
+        selectedIndex >= 0 &&
+        results[selectedIndex]
+      ) {
         e.preventDefault();
         handleResultClick(results[selectedIndex]);
       }
-    }
-  }, [open, results, selectedIndex, handleResultClick]);
+    },
+    [open, results, selectedIndex, handleResultClick]
+  );
 
   const handleFocus = useCallback(() => {
     setOpen(true);
@@ -252,5 +298,9 @@ export function useGlobalSearch(
     addToHistory,
     removeFromHistory,
     clearHistory,
+    filter,
+    setFilter,
+    availableModules,
+    availableTypes,
   };
 }

@@ -64,10 +64,7 @@ export const reportModuleConfig: RouteModuleConfig = {
     },
     {
       path: REPORT_PATHS.design,
-      element: lazyWithRetry(
-        () => import('@/pages/report/ReportDesignPage'),
-        'ReportDesignPage'
-      ),
+      element: lazyWithRetry(() => import('@/pages/report/ReportDesignPage'), 'ReportDesignPage'),
       module: 'report',
       title: '报表设计',
       code: 'report-design',
@@ -78,10 +75,7 @@ export const reportModuleConfig: RouteModuleConfig = {
     },
     {
       path: REPORT_PATHS.builder,
-      element: lazyWithRetry(
-        () => import('@/pages/report/ReportBuilderPage'),
-        'ReportBuilderPage'
-      ),
+      element: lazyWithRetry(() => import('@/pages/report/ReportBuilderPage'), 'ReportBuilderPage'),
       module: 'report',
       title: '报表构建',
       code: 'report-builder',

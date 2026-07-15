@@ -5,29 +5,22 @@ import type { Notification, ListParams } from '@/api/workflow';
 import { workflowApi } from '@/api/workflow';
 import { useNotificationStore, useAuthStore } from '../../store';
 import { apiLogger } from '@/utils/logger';
-import { Box, Typography, Tabs, Tab, CircularProgress, Button } from '@mui/material';
+import { Box, Typography, Tabs, Tab, Button } from '@mui/material';
+import { LoadingSpinner } from '@topems/shared-components';
 import { PageContainer } from '@/components/common';
 import { WORKFLOW_PATHS } from '@/modules/workflow/config';
-
-// TODO(v2-phase2): Replace CircularProgress with LoadingSpinner from '@topems/shared-components'. Complex usage found - manual review needed.
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 
 const FlowNotificationCenter: React.FC = () => {
   const navigate = useNavigate();
   const addNotification = useNotificationStore((state) => state.addNotification);
   const user = useAuthStore((state) => state.user);
-  const [notifications, setNotifications] = useState<Notification[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [unreadCount, setUnreadCount] = useState(0);
+  const queryClient = useQueryClient();
   const [filter, setFilter] = useState<'all' | 'unread'>('all');
 
-  useEffect(() => {
-    loadNotifications();
-  }, [filter]);
-
-  const loadNotifications = async () => {
-    try {
-      setLoading(true);
-
+  const notificationsQuery = useQuery<Notification[]>({
+    queryKey: ['workflow-notifications', filter],
+    queryFn: async () => {
       const userId = user?.id || 'current-user-id';
 
       const params: ListParams = {};
@@ -39,45 +32,54 @@ const FlowNotificationCenter: React.FC = () => {
       if (response.success && response.data) {
         const data = response.data as any;
         const notificationList = Array.isArray(data) ? data : data.items || [];
-        setNotifications(notificationList);
-
-        // Count unread
-        const unread = notificationList.filter((n: Notification) => !n.is_read).length;
-        setUnreadCount(unread);
-      } else {
-        setNotifications([]);
+        return notificationList;
       }
-    } catch (err: unknown) {
-      apiLogger.error('加载通知失败:', err);
+      return [];
+    },
+    staleTime: 5 * 60 * 1000,
+  });
+
+  const notifications = notificationsQuery.data ?? [];
+  const loading = notificationsQuery.isLoading;
+
+  const unreadCount = useMemo(
+    () => notifications.filter((n) => !n.is_read).length,
+    [notifications]
+  );
+
+  useEffect(() => {
+    if (notificationsQuery.isError) {
+      apiLogger.error('加载通知失败:', notificationsQuery.error);
       addNotification({
         title: '错误',
         message: '加载通知失败',
         type: 'error',
       });
-    } finally {
-      setLoading(false);
     }
-  };
+  }, [notificationsQuery.isError, notificationsQuery.error, addNotification]);
 
-  const handleMarkAsRead = async () => {
-    try {
-      const userId = user?.id || 'current-user-id';
-      const response = await workflowApi.markNotificationsAsRead(userId);
-      if (response.success) {
-        addNotification({
-          title: '成功',
-          message: '所有通知已标记为已读',
-          type: 'success',
-        });
-        loadNotifications();
-      }
-    } catch (err: unknown) {
+  const markAsReadMutation = useMutation({
+    mutationFn: (userId: string) => workflowApi.markNotificationsAsRead(userId),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['workflow-notifications'] });
+      addNotification({
+        title: '成功',
+        message: '所有通知已标记为已读',
+        type: 'success',
+      });
+    },
+    onError: (err: unknown) => {
       addNotification({ title: '错误', message: '标记失败', type: 'error' });
       apiLogger.error('标记失败:', err);
-    }
+    },
+  });
+
+  const handleMarkAsRead = () => {
+    const userId = user?.id || 'current-user-id';
+    markAsReadMutation.mutate(userId);
   };
 
-  const handleNotificationClick = async (notification: Notification) => {
+  const handleNotificationClick = (notification: Notification) => {
     // Mark as read if unread
     if (!notification.is_read) {
       // In a real app, we'd mark this single notification as read
@@ -197,7 +199,7 @@ const FlowNotificationCenter: React.FC = () => {
               py: 6,
             }}
           >
-            <CircularProgress sx={{ color: 'primary.main' }} />
+            <LoadingSpinner size='lg' />
           </Box>
         ) : filteredNotifications.length === 0 ? (
           <Box sx={{ textAlign: 'center', py: 6 }}>

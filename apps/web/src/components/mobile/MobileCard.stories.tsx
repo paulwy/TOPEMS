@@ -72,21 +72,39 @@ export const WithBadge: Story = {
       <MobileCard
         title='生产任务'
         subtitle='进行中'
-        badge={<Chip label='紧急' size='small' color='error' />}
+        badge={
+          <Chip
+            label='紧急'
+            size='small'
+            color='error'
+          />
+        }
         showArrow
         divider
       />
       <MobileCard
         title='质量检测'
         subtitle='已通过'
-        badge={<Chip label='正常' size='small' color='success' />}
+        badge={
+          <Chip
+            label='正常'
+            size='small'
+            color='success'
+          />
+        }
         showArrow
         divider
       />
       <MobileCard
         title='库存预警'
         subtitle='物料 A 已低于安全库存'
-        badge={<Chip label='预警' size='small' color='warning' />}
+        badge={
+          <Chip
+            label='预警'
+            size='small'
+            color='warning'
+          />
+        }
         showArrow
       />
     </Box>
@@ -100,7 +118,12 @@ export const WithoutIcon: Story = {
         title='设备编号: DEV-2024-001'
         subtitle='运行正常 | 运行时长: 1,280 小时'
         rightContent={
-          <Chip label='在线' size='small' color='success' variant='outlined' />
+          <Chip
+            label='在线'
+            size='small'
+            color='success'
+            variant='outlined'
+          />
         }
         divider
       />
@@ -108,7 +131,12 @@ export const WithoutIcon: Story = {
         title='设备编号: DEV-2024-002'
         subtitle='维护中 | 预计恢复: 14:00'
         rightContent={
-          <Chip label='维护' size='small' color='warning' variant='outlined' />
+          <Chip
+            label='维护'
+            size='small'
+            color='warning'
+            variant='outlined'
+          />
         }
       />
     </Box>

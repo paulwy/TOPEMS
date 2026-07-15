@@ -104,10 +104,7 @@ export const biModuleConfig: RouteModuleConfig = {
     },
     {
       path: BI_PATHS.visualization,
-      element: lazyWithRetry(
-        () => import('@/pages/bi/BIVisualizationPage'),
-        'BIVisualizationPage'
-      ),
+      element: lazyWithRetry(() => import('@/pages/bi/BIVisualizationPage'), 'BIVisualizationPage'),
       module: 'bi',
       title: '可视化',
       code: 'bi-visualization',
@@ -151,10 +148,7 @@ export const biModuleConfig: RouteModuleConfig = {
     },
     {
       path: BI_PATHS.moduleDetail,
-      element: lazyWithRetry(
-        () => import('@/pages/bi/BIModuleDetailPage'),
-        'BIModuleDetailPage'
-      ),
+      element: lazyWithRetry(() => import('@/pages/bi/BIModuleDetailPage'), 'BIModuleDetailPage'),
       module: 'bi',
       title: '模块详情',
       code: 'bi-module-detail',

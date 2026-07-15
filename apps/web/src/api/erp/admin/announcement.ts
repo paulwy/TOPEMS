@@ -44,11 +44,12 @@ export const announcementApi = {
 };
 
 export const announcementCrudApi: CrudOperations<Announcement> = {
-  list: (params?) => announcementApi.list({
-    page: params?.page,
-    pagesize: params?.pagesize,
-    ...(params as any),
-  }),
+  list: (params?) =>
+    announcementApi.list({
+      page: params?.page,
+      pagesize: params?.pagesize,
+      ...(params as any),
+    }),
   get: announcementApi.get,
   create: announcementApi.create,
   update: announcementApi.update,

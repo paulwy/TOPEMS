@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useMemo } from 'react';
+import React, { useMemo } from 'react';
 import { logger } from '@/utils/logger';
 import { Edit, FileText, Calendar, DollarSign, Building, CheckCircle } from 'lucide-react';
 import { useNavigate, useParams } from 'react-router-dom';
@@ -22,6 +22,8 @@ import { DetailPageTemplate, type TabConfig } from '@/components/templates';
 import { PageContainer } from '@/components/common';
 import { designTokens } from '@/theme/tokens';
 import { PM_PATHS } from '@/modules/pm/config';
+import { useQuery, useQueryClient } from '@tanstack/react-query';
+import { QUERY_KEYS } from '@/lib/reactQuery';
 
 const ct = designTokens.colors;
 
@@ -53,44 +55,44 @@ const CONTRACT_TYPE_LABELS: Record<string, string> = {
 const PmContractDetailPage: React.FC = () => {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
-  const [contract, setContract] = useState<Contract | null>(null);
-  const [milestones, setMilestones] = useState<ContractMilestone[]>([]);
-  const [payments, setPayments] = useState<ContractPaymentSchedule[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string>('');
+  const queryClient = useQueryClient();
 
-  useEffect(() => {
-    if (id) {
-      loadContractData(id);
-    }
-  }, [id]);
+  const contractQuery = useQuery({
+    queryKey: QUERY_KEYS.PM.CONTRACT(id || ''),
+    queryFn: () => pmApi.contracts.get(id || ''),
+    enabled: !!id,
+    staleTime: 5 * 60 * 1000,
+    gcTime: 10 * 60 * 1000,
+  });
 
-  const loadContractData = async (contractId: string) => {
-    setLoading(true);
-    setError('');
-    try {
-      const [contractRes, milestonesRes, paymentsRes] = await Promise.all([
-        pmApi.contracts.get(contractId),
-        pmApi.contracts.milestones.list(contractId),
-        pmApi.contracts.payments.list(contractId),
-      ]);
+  const milestonesQuery = useQuery({
+    queryKey: [...QUERY_KEYS.PM.CONTRACT(id || ''), 'milestones'],
+    queryFn: () => pmApi.contracts.milestones.list(id || ''),
+    enabled: !!id,
+    staleTime: 5 * 60 * 1000,
+    gcTime: 10 * 60 * 1000,
+  });
 
-      if (contractRes.success && contractRes.data) {
-        setContract(contractRes.data);
-      }
-      if (milestonesRes.success && milestonesRes.data) {
-        setMilestones(milestonesRes.data.milestones || milestonesRes.data || []);
-      }
-      if (paymentsRes.success && paymentsRes.data) {
-        setPayments(paymentsRes.data.payments || paymentsRes.data || []);
-      }
-    } catch (error: unknown) {
-      logger.error('Failed to load contract data:', error);
-      setError('加载合同数据失败');
-    } finally {
-      setLoading(false);
-    }
-  };
+  const paymentsQuery = useQuery({
+    queryKey: [...QUERY_KEYS.PM.CONTRACT(id || ''), 'payments'],
+    queryFn: () => pmApi.contracts.payments.list(id || ''),
+    enabled: !!id,
+    staleTime: 5 * 60 * 1000,
+    gcTime: 10 * 60 * 1000,
+  });
+
+  const contract =
+    contractQuery.data?.success && contractQuery.data.data ? contractQuery.data.data : null;
+  const milestones =
+    milestonesQuery.data?.success && milestonesQuery.data.data
+      ? milestonesQuery.data.data.milestones || milestonesQuery.data.data || []
+      : [];
+  const payments =
+    paymentsQuery.data?.success && paymentsQuery.data.data
+      ? paymentsQuery.data.data.payments || paymentsQuery.data.data || []
+      : [];
+  const loading = contractQuery.isLoading || milestonesQuery.isLoading || paymentsQuery.isLoading;
+  const error = contractQuery.error || milestonesQuery.error || paymentsQuery.error;
 
   const formatDate = (dateStr?: string) => {
     if (!dateStr) return '-';
@@ -328,7 +330,7 @@ const PmContractDetailPage: React.FC = () => {
             </Typography>
           ) : (
             <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
-              {milestones.map((milestone) => (
+              {milestones.map((milestone: ContractMilestone) => (
                 <Box
                   key={milestone.id}
                   sx={{
@@ -424,7 +426,7 @@ const PmContractDetailPage: React.FC = () => {
                   </TableRow>
                 </TableHead>
                 <TableBody>
-                  {payments.map((payment, index) => (
+                  {payments.map((payment: ContractPaymentSchedule, index: number) => (
                     <TableRow
                       key={payment.id}
                       sx={{ '&:hover': { bgcolor: 'grey.50' } }}
@@ -505,6 +507,14 @@ const PmContractDetailPage: React.FC = () => {
     };
   }, [contract]);
 
+  const handleRefresh = () => {
+    queryClient.invalidateQueries({ queryKey: QUERY_KEYS.PM.CONTRACT(id || '') });
+    queryClient.invalidateQueries({
+      queryKey: [...QUERY_KEYS.PM.CONTRACT(id || ''), 'milestones'],
+    });
+    queryClient.invalidateQueries({ queryKey: [...QUERY_KEYS.PM.CONTRACT(id || ''), 'payments'] });
+  };
+
   return (
     <PageContainer
       title={contract?.contract_name || '合同详情'}
@@ -520,13 +530,13 @@ const PmContractDetailPage: React.FC = () => {
           { label: '合同详情' },
         ]}
         loading={loading}
-        error={error}
+        error={error ? (error as Error).message : ''}
         backHref={PM_PATHS.contracts}
         onEdit={() => id && navigate(`${PM_PATHS.contracts}/${id}`)}
         tabs={tabs}
         defaultTab='overview'
         infoCard={infoCard}
-        onRefresh={() => id && loadContractData(id)}
+        onRefresh={handleRefresh}
       />
     </PageContainer>
   );

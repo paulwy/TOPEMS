@@ -164,96 +164,95 @@ vi.mock('@/store', () => ({
 }));
 
 describe('SalesOrderPage', () => {
-    it('should render without crashing', () => {
-      const { container } = render(
-        <BrowserRouter>
-          <SalesOrderPage />
-        </BrowserRouter>
-      );
-      expect(container).toBeDefined();
-    });
-
-    it('should have sales order API methods defined', () => {
-      expect(erpApi.salesOrders.list).toBeDefined();
-      expect(erpApi.salesOrders.get).toBeDefined();
-      expect(erpApi.salesOrders.create).toBeDefined();
-      expect(erpApi.salesOrders.update).toBeDefined();
-      expect(erpApi.salesOrders.delete).toBeDefined();
-    });
+  it('should render without crashing', () => {
+    const { container } = render(
+      <BrowserRouter>
+        <SalesOrderPage />
+      </BrowserRouter>
+    );
+    expect(container).toBeDefined();
   });
+
+  it('should have sales order API methods defined', () => {
+    expect(erpApi.salesOrders.list).toBeDefined();
+    expect(erpApi.salesOrders.get).toBeDefined();
+    expect(erpApi.salesOrders.create).toBeDefined();
+    expect(erpApi.salesOrders.update).toBeDefined();
+    expect(erpApi.salesOrders.delete).toBeDefined();
+  });
+});
 
 describe('PurchaseOrderPage', () => {
-    it('should render without crashing', () => {
-      const { container } = render(
-        <BrowserRouter>
-          <PurchaseOrderPage />
-        </BrowserRouter>
-      );
-      expect(container).toBeDefined();
-    });
-
-    it('should have purchase order API methods defined', () => {
-      expect(erpApi.purchaseOrders.list).toBeDefined();
-      expect(erpApi.purchaseOrders.get).toBeDefined();
-      expect(erpApi.purchaseOrders.create).toBeDefined();
-      expect(erpApi.purchaseOrders.update).toBeDefined();
-      expect(erpApi.purchaseOrders.delete).toBeDefined();
-    });
+  it('should render without crashing', () => {
+    const { container } = render(
+      <BrowserRouter>
+        <PurchaseOrderPage />
+      </BrowserRouter>
+    );
+    expect(container).toBeDefined();
   });
+
+  it('should have purchase order API methods defined', () => {
+    expect(erpApi.purchaseOrders.list).toBeDefined();
+    expect(erpApi.purchaseOrders.get).toBeDefined();
+    expect(erpApi.purchaseOrders.create).toBeDefined();
+    expect(erpApi.purchaseOrders.update).toBeDefined();
+    expect(erpApi.purchaseOrders.delete).toBeDefined();
+  });
+});
 
 describe('InventoryManagementPage', () => {
-    it('should render without crashing', () => {
-      const { container } = render(
-        <BrowserRouter>
-          <InventoryManagementPage />
-        </BrowserRouter>
-      );
-      expect(container).toBeDefined();
-    });
-
-    it('should have inventory API methods defined', () => {
-      expect(erpApi.inventory.list).toBeDefined();
-      expect(erpApi.inventory.get).toBeDefined();
-      expect(erpApi.inventory.adjust).toBeDefined();
-      expect(erpApi.inventory.transfer).toBeDefined();
-    });
+  it('should render without crashing', () => {
+    const { container } = render(
+      <BrowserRouter>
+        <InventoryManagementPage />
+      </BrowserRouter>
+    );
+    expect(container).toBeDefined();
   });
+
+  it('should have inventory API methods defined', () => {
+    expect(erpApi.inventory.list).toBeDefined();
+    expect(erpApi.inventory.get).toBeDefined();
+    expect(erpApi.inventory.adjust).toBeDefined();
+    expect(erpApi.inventory.transfer).toBeDefined();
+  });
+});
 
 describe('CustomerManagementPage', () => {
-    it('should render without crashing', () => {
-      const { container } = render(
-        <BrowserRouter>
-          <CustomerManagementPage />
-        </BrowserRouter>
-      );
-      expect(container).toBeDefined();
-    });
-
-    it('should have customer API methods defined', () => {
-      expect(erpApi.customers.list).toBeDefined();
-      expect(erpApi.customers.get).toBeDefined();
-      expect(erpApi.customers.create).toBeDefined();
-      expect(erpApi.customers.update).toBeDefined();
-      expect(erpApi.customers.delete).toBeDefined();
-    });
+  it('should render without crashing', () => {
+    const { container } = render(
+      <BrowserRouter>
+        <CustomerManagementPage />
+      </BrowserRouter>
+    );
+    expect(container).toBeDefined();
   });
 
-describe('SupplierManagementPage', () => {
-    it('should render without crashing', () => {
-      const { container } = render(
-        <BrowserRouter>
-          <SupplierManagementPage />
-        </BrowserRouter>
-      );
-      expect(container).toBeDefined();
-    });
+  it('should have customer API methods defined', () => {
+    expect(erpApi.customers.list).toBeDefined();
+    expect(erpApi.customers.get).toBeDefined();
+    expect(erpApi.customers.create).toBeDefined();
+    expect(erpApi.customers.update).toBeDefined();
+    expect(erpApi.customers.delete).toBeDefined();
+  });
+});
 
-    it('should have supplier API methods defined', () => {
-      expect(erpApi.suppliers.list).toBeDefined();
-      expect(erpApi.suppliers.get).toBeDefined();
-      expect(erpApi.suppliers.create).toBeDefined();
-      expect(erpApi.suppliers.update).toBeDefined();
-      expect(erpApi.suppliers.delete).toBeDefined();
-    });
+describe('SupplierManagementPage', () => {
+  it('should render without crashing', () => {
+    const { container } = render(
+      <BrowserRouter>
+        <SupplierManagementPage />
+      </BrowserRouter>
+    );
+    expect(container).toBeDefined();
+  });
+
+  it('should have supplier API methods defined', () => {
+    expect(erpApi.suppliers.list).toBeDefined();
+    expect(erpApi.suppliers.get).toBeDefined();
+    expect(erpApi.suppliers.create).toBeDefined();
+    expect(erpApi.suppliers.update).toBeDefined();
+    expect(erpApi.suppliers.delete).toBeDefined();
   });
 });

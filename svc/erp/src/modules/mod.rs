@@ -17,6 +17,7 @@ pub mod audit;
 pub mod bank;
 pub mod consolidation;
 pub mod customer;
+pub mod dashboard;
 pub mod db_structure;
 pub mod demo_data;
 pub mod dict;
@@ -74,6 +75,7 @@ impl FromRef<ApiState> for PgPool {
 pub fn create_routes() -> Router<ApiState> {
     Router::new()
         .merge(health::create_routes())
+        .merge(dashboard::create_routes())
         .merge(addressbook::create_routes())
         .merge(asset::create_routes())
         .merge(audit::create_routes())

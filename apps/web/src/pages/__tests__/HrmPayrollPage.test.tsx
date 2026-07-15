@@ -143,6 +143,7 @@ vi.mock('@/store', () => ({
   useSetSidebarCollapsed: vi.fn(),
 }));
 
+describe('HrmPayrollPage', () => {
   it('should render without crashing', () => {
     const { container } = render(
       <BrowserRouter>
@@ -151,7 +152,8 @@ vi.mock('@/store', () => ({
     );
     expect(container).toBeDefined();
   });
-
+});
+describe('HrmPayrollPage', () => {
   it('should have valid payroll API methods', () => {
     expect(payrollApi.list).toBeDefined();
     expect(payrollApi.get).toBeDefined();

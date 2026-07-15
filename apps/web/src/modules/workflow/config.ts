@@ -35,7 +35,10 @@ export const workflowModuleConfig: RouteModuleConfig = {
   routes: [
     {
       path: WORKFLOW_PATHS.dashboard,
-      element: lazyWithRetry(() => import('@/pages/workflow/WorkflowDashboardPage'), 'WorkflowDashboardPage'),
+      element: lazyWithRetry(
+        () => import('@/pages/workflow/WorkflowDashboardPage'),
+        'WorkflowDashboardPage'
+      ),
       module: 'workflow',
       code: 'workflow-dashboard',
       title: '仪表盘',
@@ -46,7 +49,10 @@ export const workflowModuleConfig: RouteModuleConfig = {
     },
     {
       path: WORKFLOW_PATHS.definitions,
-      element: lazyWithRetry(() => import('@/pages/workflow/WorkflowDefinitionsPage'), 'WorkflowDefinitionsPage'),
+      element: lazyWithRetry(
+        () => import('@/pages/workflow/WorkflowDefinitionsPage'),
+        'WorkflowDefinitionsPage'
+      ),
       module: 'workflow',
       code: 'workflow-definitions',
       title: '流程定义',
@@ -57,7 +63,10 @@ export const workflowModuleConfig: RouteModuleConfig = {
     },
     {
       path: WORKFLOW_PATHS.designer,
-      element: lazyWithRetry(() => import('@/pages/workflow/WorkflowDesignerPage'), 'WorkflowDesignerPage'),
+      element: lazyWithRetry(
+        () => import('@/pages/workflow/WorkflowDesignerPage'),
+        'WorkflowDesignerPage'
+      ),
       module: 'workflow',
       code: 'workflow-designer',
       title: '流程设计器',
@@ -68,7 +77,10 @@ export const workflowModuleConfig: RouteModuleConfig = {
     },
     {
       path: WORKFLOW_PATHS.versionHistory,
-      element: lazyWithRetry(() => import('@/pages/workflow/WorkflowVersionHistoryPage'), 'WorkflowVersionHistoryPage'),
+      element: lazyWithRetry(
+        () => import('@/pages/workflow/WorkflowVersionHistoryPage'),
+        'WorkflowVersionHistoryPage'
+      ),
       module: 'workflow',
       code: 'workflow-version-history',
       title: '版本历史',
@@ -79,7 +91,10 @@ export const workflowModuleConfig: RouteModuleConfig = {
     },
     {
       path: WORKFLOW_PATHS.instances,
-      element: lazyWithRetry(() => import('@/pages/workflow/WorkflowInstancesPage'), 'WorkflowInstancesPage'),
+      element: lazyWithRetry(
+        () => import('@/pages/workflow/WorkflowInstancesPage'),
+        'WorkflowInstancesPage'
+      ),
       module: 'workflow',
       code: 'workflow-instances',
       title: '流程实例',
@@ -90,7 +105,10 @@ export const workflowModuleConfig: RouteModuleConfig = {
     },
     {
       path: WORKFLOW_PATHS.instanceDetail,
-      element: lazyWithRetry(() => import('@/pages/workflow/WorkflowInstanceDetailPage'), 'WorkflowInstanceDetailPage'),
+      element: lazyWithRetry(
+        () => import('@/pages/workflow/WorkflowInstanceDetailPage'),
+        'WorkflowInstanceDetailPage'
+      ),
       module: 'workflow',
       code: 'workflow-instance-detail',
       title: '实例详情',
@@ -101,7 +119,10 @@ export const workflowModuleConfig: RouteModuleConfig = {
     },
     {
       path: WORKFLOW_PATHS.approvals,
-      element: lazyWithRetry(() => import('@/pages/workflow/WorkflowApprovalsPage'), 'WorkflowApprovalsPage'),
+      element: lazyWithRetry(
+        () => import('@/pages/workflow/WorkflowApprovalsPage'),
+        'WorkflowApprovalsPage'
+      ),
       module: 'workflow',
       code: 'workflow-approvals',
       title: '审批任务',
@@ -112,7 +133,10 @@ export const workflowModuleConfig: RouteModuleConfig = {
     },
     {
       path: WORKFLOW_PATHS.approvalDetail,
-      element: lazyWithRetry(() => import('@/pages/workflow/WorkflowApprovalDetailPage'), 'WorkflowApprovalDetailPage'),
+      element: lazyWithRetry(
+        () => import('@/pages/workflow/WorkflowApprovalDetailPage'),
+        'WorkflowApprovalDetailPage'
+      ),
       module: 'workflow',
       code: 'workflow-approval-detail',
       title: '审批详情',
@@ -123,7 +147,10 @@ export const workflowModuleConfig: RouteModuleConfig = {
     },
     {
       path: WORKFLOW_PATHS.notificationCenter,
-      element: lazyWithRetry(() => import('@/pages/workflow/WorkflowNotificationCenterPage'), 'WorkflowNotificationCenterPage'),
+      element: lazyWithRetry(
+        () => import('@/pages/workflow/WorkflowNotificationCenterPage'),
+        'WorkflowNotificationCenterPage'
+      ),
       module: 'workflow',
       code: 'workflow-notification-center',
       title: '通知中心',
@@ -134,7 +161,10 @@ export const workflowModuleConfig: RouteModuleConfig = {
     },
     {
       path: WORKFLOW_PATHS.monitor,
-      element: lazyWithRetry(() => import('@/pages/workflow/WorkflowMonitorPage'), 'WorkflowMonitorPage'),
+      element: lazyWithRetry(
+        () => import('@/pages/workflow/WorkflowMonitorPage'),
+        'WorkflowMonitorPage'
+      ),
       module: 'workflow',
       code: 'workflow-monitor',
       title: '流程监控',
@@ -145,7 +175,10 @@ export const workflowModuleConfig: RouteModuleConfig = {
     },
     {
       path: WORKFLOW_PATHS.statistics,
-      element: lazyWithRetry(() => import('@/pages/workflow/WorkflowStatisticsPage'), 'WorkflowStatisticsPage'),
+      element: lazyWithRetry(
+        () => import('@/pages/workflow/WorkflowStatisticsPage'),
+        'WorkflowStatisticsPage'
+      ),
       module: 'workflow',
       code: 'workflow-statistics',
       title: '统计分析',
@@ -156,7 +189,10 @@ export const workflowModuleConfig: RouteModuleConfig = {
     },
     {
       path: WORKFLOW_PATHS.templates,
-      element: lazyWithRetry(() => import('@/pages/workflow/WorkflowTemplatePage'), 'WorkflowTemplatePage'),
+      element: lazyWithRetry(
+        () => import('@/pages/workflow/WorkflowTemplatePage'),
+        'WorkflowTemplatePage'
+      ),
       module: 'workflow',
       code: 'workflow-templates',
       title: '流程模板',
@@ -167,7 +203,10 @@ export const workflowModuleConfig: RouteModuleConfig = {
     },
     {
       path: WORKFLOW_PATHS.settings,
-      element: lazyWithRetry(() => import('@/pages/workflow/WorkflowSettingsPage'), 'WorkflowSettingsPage'),
+      element: lazyWithRetry(
+        () => import('@/pages/workflow/WorkflowSettingsPage'),
+        'WorkflowSettingsPage'
+      ),
       module: 'workflow',
       code: 'workflow-settings',
       title: '系统设置',

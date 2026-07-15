@@ -12,7 +12,7 @@ import {
   MenuItem,
   Button,
 } from '@mui/material';
-import React, { useState, useEffect, useMemo, useCallback } from 'react';
+import React, { useState, useMemo, useCallback } from 'react';
 import type { InboundOrder, CreateInboundOrderRequest, UpdateInboundOrderRequest } from '@/api/wms';
 import { wmsApi } from '@/api/wms';
 import { WMS_PATHS } from '@/modules/wms/config';
@@ -26,6 +26,8 @@ import {
 import { Plus, Edit, Trash2, Eye } from 'lucide-react';
 import { apiLogger } from '@/utils/logger';
 import { ConfirmDialog, PageContainer, StatusBadge } from '@/components/common';
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import { QUERY_KEYS } from '@/lib/reactQuery';
 
 const orderTypeConfig: Record<string, string> = {
   purchase_in: '采购入库',
@@ -48,11 +50,8 @@ const statusConfig: Record<
 const InboundOrderPage: React.FC = () => {
   const { addNotification } = useNotificationStore();
 
-  const [orders, setOrders] = useState<InboundOrder[]>([]);
-  const [loading, setLoading] = useState(true);
   const [currentPage, setCurrentPage] = useState(1);
   const [pageSize] = useState(10);
-  const [total, setTotal] = useState(0);
   const [searchTerm, setSearchTerm] = useState('');
   const [statusFilter, setStatusFilter] = useState<string>('');
 
@@ -77,9 +76,13 @@ const InboundOrderPage: React.FC = () => {
 
   const [editFormData, setEditFormData] = useState<UpdateInboundOrderRequest>({});
 
-  const loadOrders = useCallback(async () => {
-    try {
-      setLoading(true);
+  const queryClient = useQueryClient();
+
+  const queryKey = [QUERY_KEYS.WMS.INBOUND_ORDERS, currentPage, pageSize, searchTerm, statusFilter];
+
+  const { data: ordersResponse, isLoading: loading } = useQuery({
+    queryKey,
+    queryFn: async () => {
       const params: Record<string, unknown> = {
         page: currentPage,
         pagesize: pageSize,
@@ -88,25 +91,66 @@ const InboundOrderPage: React.FC = () => {
       if (statusFilter) params.status = statusFilter;
 
       const response = await wmsApi.inboundOrders.list(params);
-      if (response.success && response.data) {
-        setOrders(response.data.items || []);
-        setTotal(response.data.total || 0);
+      if (!response.success) {
+        throw new Error('Failed to fetch inbound orders');
       }
-    } catch (error: unknown) {
-      apiLogger.error('加载入库订单失败:', error);
-      addNotification({
-        type: 'error',
-        title: '加载失败',
-        message: '无法加载入库订单',
-      });
-    } finally {
-      setLoading(false);
-    }
-  }, [currentPage, pageSize, searchTerm, statusFilter, addNotification]);
+      return response.data;
+    },
+  });
 
-  useEffect(() => {
-    loadOrders();
-  }, [loadOrders]);
+  const orders = ordersResponse?.items || [];
+  const total = ordersResponse?.total || 0;
+
+  const createMutation = useMutation({
+    mutationFn: async (data: CreateInboundOrderRequest) => {
+      const response = await wmsApi.inboundOrders.create(data);
+      if (!response.success) {
+        throw new Error('Failed to create inbound order');
+      }
+      return response;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: [QUERY_KEYS.WMS.INBOUND_ORDERS] });
+      setShowCreateDialog(false);
+      resetForm();
+    },
+    onError: (error) => {
+      apiLogger.error('创建入库订单失败:', error);
+    },
+  });
+
+  const updateMutation = useMutation({
+    mutationFn: async ({ id, data }: { id: string; data: UpdateInboundOrderRequest }) => {
+      const response = await wmsApi.inboundOrders.update(id, data);
+      if (!response.success) {
+        throw new Error('Failed to update inbound order');
+      }
+      return response;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: [QUERY_KEYS.WMS.INBOUND_ORDERS] });
+      setShowEditDialog(false);
+    },
+    onError: (error) => {
+      apiLogger.error('更新入库订单失败:', error);
+    },
+  });
+
+  const deleteMutation = useMutation({
+    mutationFn: async (id: string) => {
+      const response = await wmsApi.inboundOrders.delete(id);
+      if (!response.success) {
+        throw new Error('Failed to delete inbound order');
+      }
+      return response;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: [QUERY_KEYS.WMS.INBOUND_ORDERS] });
+    },
+    onError: (error) => {
+      apiLogger.error('删除入库订单失败:', error);
+    },
+  });
 
   const handleCreate = async () => {
     if (!formData.order_number) {
@@ -118,50 +162,12 @@ const InboundOrderPage: React.FC = () => {
       return;
     }
 
-    try {
-      const response = await wmsApi.inboundOrders.create(formData);
-      if (response.success) {
-        addNotification({
-          type: 'success',
-          title: '创建成功',
-          message: '新入库订单已创建',
-        });
-        setShowCreateDialog(false);
-        resetForm();
-        loadOrders();
-      }
-    } catch (error: unknown) {
-      apiLogger.error('创建入库订单失败:', error);
-      addNotification({
-        type: 'error',
-        title: '创建失败',
-        message: '创建入库订单失败',
-      });
-    }
+    await createMutation.mutateAsync(formData);
   };
 
   const handleUpdate = async () => {
     if (!selectedOrder) return;
-
-    try {
-      const response = await wmsApi.inboundOrders.update(selectedOrder.id, editFormData);
-      if (response.success) {
-        addNotification({
-          type: 'success',
-          title: '更新成功',
-          message: '入库订单已更新',
-        });
-        setShowEditDialog(false);
-        loadOrders();
-      }
-    } catch (error: unknown) {
-      apiLogger.error('更新入库订单失败:', error);
-      addNotification({
-        type: 'error',
-        title: '更新失败',
-        message: '更新入库订单失败',
-      });
-    }
+    await updateMutation.mutateAsync({ id: selectedOrder.id, data: editFormData });
   };
 
   const handleDeleteClick = (id: string) => {
@@ -171,26 +177,8 @@ const InboundOrderPage: React.FC = () => {
 
   const handleDelete = useCallback(async () => {
     if (!deleteOrderId) return;
-
-    try {
-      const response = await wmsApi.inboundOrders.delete(deleteOrderId);
-      if (response.success) {
-        addNotification({
-          type: 'success',
-          title: '删除成功',
-          message: '入库订单已删除',
-        });
-        loadOrders();
-      }
-    } catch (error: unknown) {
-      apiLogger.error('删除入库订单失败:', error);
-      addNotification({
-        type: 'error',
-        title: '删除失败',
-        message: '删除入库订单失败',
-      });
-    }
-  }, [addNotification, loadOrders, deleteOrderId]);
+    await deleteMutation.mutateAsync(deleteOrderId);
+  }, [deleteMutation, deleteOrderId]);
 
   const handleEdit = (order: InboundOrder) => {
     setSelectedOrder(order);

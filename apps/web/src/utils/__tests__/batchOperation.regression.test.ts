@@ -64,8 +64,8 @@ describe('batchOperation regression tests', () => {
       expect(deleteApi).toHaveBeenCalledTimes(3);
       expect(result.successCount).toBe(2);
       expect(result.failureCount).toBe(1);
-      expect(result.successes.map(e => e.id)).toEqual([1, 3]);
-      expect(result.failures.map(e => e.id)).toEqual([2]);
+      expect(result.successes.map((e) => e.id)).toEqual([1, 3]);
+      expect(result.failures.map((e) => e.id)).toEqual([2]);
     });
   });
 
@@ -143,7 +143,7 @@ describe('batchOperation regression tests', () => {
 
       expect(deleteApi).toHaveBeenCalledTimes(4);
       expect(result.successCount).toBe(2);
-      expect(result.failures.map(c => c.id)).toEqual([1, 3]);
+      expect(result.failures.map((c) => c.id)).toEqual([1, 3]);
     });
   });
 
@@ -165,7 +165,7 @@ describe('batchOperation regression tests', () => {
 
       expect(approveApi).toHaveBeenCalledTimes(3);
       expect(result.successCount).toBe(2);
-      expect(result.failures.map(o => o.id)).toEqual([2]);
+      expect(result.failures.map((o) => o.id)).toEqual([2]);
     });
   });
 

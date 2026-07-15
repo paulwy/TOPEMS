@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useMemo } from 'react';
+import React, { useState, useMemo } from 'react';
 import {
   Box,
   Typography,
@@ -20,6 +20,7 @@ import {
 } from '@mui/material';
 import { FileUpload, PageContainer } from '@/components/common';
 import { Plus, Eye, RotateCcw, Tag, Calendar, User } from 'lucide-react';
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import {
   ListPageTemplate,
   type ColumnDef,
@@ -30,6 +31,7 @@ import { rdApi } from '@/api/rd';
 import { useNotificationStore } from '@/store';
 import type { Deploy, CreateDeployRequest } from '@/api/rd';
 import { logger } from '@/utils/logger';
+import { QUERY_KEYS } from '@/lib/reactQuery';
 
 interface Release {
   id: string;
@@ -42,12 +44,10 @@ interface Release {
 }
 
 const RsReleasePage: React.FC = () => {
+  const queryClient = useQueryClient();
   const { addNotification } = useNotificationStore();
-  const [releases, setReleases] = useState<Release[]>([]);
-  const [loading, setLoading] = useState(false);
   const [page, setPage] = useState(0);
   const [rowsPerPage, setRowsPerPage] = useState(10);
-  const [total, setTotal] = useState(0);
   const [searchTerm, setSearchTerm] = useState('');
   const [envFilter, setEnvFilter] = useState<string>('');
   const [statusFilter, setStatusFilter] = useState<string>('');
@@ -65,13 +65,12 @@ const RsReleasePage: React.FC = () => {
   });
   const [releasePackageAttachments, setReleasePackageAttachments] = useState<string[]>([]);
 
-  useEffect(() => {
-    loadReleases();
-  }, [searchTerm, envFilter, statusFilter, page, rowsPerPage]);
-
-  const loadReleases = async () => {
-    try {
-      setLoading(true);
+  const releaseListQuery = useQuery({
+    queryKey: [
+      ...QUERY_KEYS.RD.RELEASES,
+      { page, rowsPerPage, searchTerm, envFilter, statusFilter },
+    ],
+    queryFn: async () => {
       const params: Record<string, unknown> = {
         page: page + 1,
         pagesize: rowsPerPage,
@@ -81,36 +80,52 @@ const RsReleasePage: React.FC = () => {
       if (statusFilter) params.status = statusFilter;
 
       const response = await rdApi.listDeploys(params);
-      if (response.success && response.data) {
-        const deploys = response.data.deploys || [];
-        const transformed = deploys.map((d: Deploy) => ({
-          id: d.id,
-          version: d.version || d.deploy_no,
-          release_time: d.deploy_time || d.created_at || '',
-          release_note: d.app_name || d.deploy_no,
-          environment: d.env || d.environment || '',
-          status:
-            d.status === 'success'
-              ? 'released'
-              : d.status === 'failed'
-                ? 'rolled_back'
-                : 'planning',
-          release_by: d.deployer || d.operator || '',
-        }));
-        setReleases(transformed);
-        setTotal(response.data.total || 0);
+      if (!response.success || !response.data) {
+        throw new Error(response.message || '加载发布数据失败');
       }
-    } catch (error: unknown) {
-      logger.error('加载发布数据失败:', error);
+      const deploys = response.data.deploys || [];
+      const transformed = deploys.map((d: Deploy) => ({
+        id: d.id,
+        version: d.version || d.deploy_no,
+        release_time: d.deploy_time || d.created_at || '',
+        release_note: d.app_name || d.deploy_no,
+        environment: d.env || d.environment || '',
+        status:
+          d.status === 'success' ? 'released' : d.status === 'failed' ? 'rolled_back' : 'planning',
+        release_by: d.deployer || d.operator || '',
+      }));
+      return {
+        releases: transformed,
+        total: response.data.total || 0,
+      };
+    },
+  });
+
+  const createDeployMutation = useMutation({
+    mutationFn: async (data: CreateDeployRequest) => {
+      const response = await rdApi.createDeploy(data);
+      if (!response.success) {
+        throw new Error(response.message || '创建发布失败');
+      }
+      return response;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: QUERY_KEYS.RD.RELEASES });
+      queryClient.invalidateQueries({ queryKey: QUERY_KEYS.RD.DEPLOYS });
+    },
+    onError: (error: unknown) => {
+      logger.error('创建发布失败:', error);
       addNotification({
         type: 'error',
-        title: '加载失败',
-        message: '无法加载发布数据',
+        title: '操作失败',
+        message: error instanceof Error ? error.message : '创建发布失败',
       });
-    } finally {
-      setLoading(false);
-    }
-  };
+    },
+  });
+
+  const releases = releaseListQuery.data?.releases || [];
+  const total = releaseListQuery.data?.total || 0;
+  const loading = releaseListQuery.isLoading || createDeployMutation.isPending;
 
   const getEnvColor = (env: string): 'error' | 'warning' | 'success' => {
     switch (env) {
@@ -195,20 +210,14 @@ const RsReleasePage: React.FC = () => {
         app_name: release.release_note,
         version: release.version,
       };
-      await rdApi.createDeploy(createData);
+      await createDeployMutation.mutateAsync(createData);
       addNotification({
         type: 'success',
         title: '操作成功',
         message: '回滚任务已提交',
       });
-      loadReleases();
-    } catch (error: unknown) {
-      logger.error('回滚失败:', error);
-      addNotification({
-        type: 'error',
-        title: '操作失败',
-        message: '回滚失败',
-      });
+    } catch {
+      // 错误已在 mutation onError 中处理
     }
   };
 
@@ -223,7 +232,7 @@ const RsReleasePage: React.FC = () => {
         app_name: newReleaseForm.release_note,
         version: newReleaseForm.version,
       };
-      await rdApi.createDeploy(createData);
+      await createDeployMutation.mutateAsync(createData);
       addNotification({
         type: 'success',
         title: '创建成功',
@@ -235,14 +244,8 @@ const RsReleasePage: React.FC = () => {
         environment: 'staging',
         release_note: '',
       });
-      loadReleases();
-    } catch (error: unknown) {
-      logger.error('创建发布失败:', error);
-      addNotification({
-        type: 'error',
-        title: '创建失败',
-        message: '无法创建发布',
-      });
+    } catch {
+      // 错误已在 mutation onError 中处理
     }
   };
 

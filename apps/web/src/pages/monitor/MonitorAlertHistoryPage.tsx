@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useMemo, useCallback } from 'react';
+import React, { useState, useMemo, useCallback, useEffect } from 'react';
 import {
   Box,
   Typography,
@@ -6,38 +6,35 @@ import {
   Button,
   Paper,
   Tooltip,
-  Alert as MuiAlert,
-  Divider,
   IconButton,
+  Card,
+  CardContent,
+  Stack,
 } from '@mui/material';
 import {
   AlertTriangle,
   CheckCircle,
   Clock,
   Bell,
-  BellOff,
   Check,
-  XCircle,
-  Info,
+  Eye,
   Filter,
   Download,
   RefreshCw,
-  Eye,
-  ChevronRight,
-  ArrowUpRight,
+  Info,
 } from 'lucide-react';
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { PageContainer, Dialog } from '@/components/common';
-import { StatsPageTemplate } from '@/components/templates/StatsPageTemplate';
-import type { StatCard, ChartConfig, DataTable } from '@/components/templates/StatsPageTemplate';
+import { ListPageTemplate, type ColumnDef } from '@/components/templates';
 import { monitorApi } from '@/api/monitor';
 import type { Alert, AlertQueryParams } from '@/api/monitor';
 import { useNotification } from '@/hooks/useNotification';
 import { apiLogger } from '@/utils/logger';
 import { designTokens } from '@/theme/tokens';
+import { MONITOR_PATHS } from '@/modules/monitor/config';
+import { QUERY_KEYS } from '@/lib/reactQuery';
 
 const ct = designTokens.colors;
-
-// ============ 类型 ============
 
 interface AlertDetail extends Alert {
   resolved_by?: string;
@@ -54,28 +51,22 @@ const METRIC_FILTER_OPTIONS = [
   { label: '数据库', value: 'database' },
 ];
 
-// ============ 告警历史页面 ============
-
 const MonitorAlertHistoryPage: React.FC = () => {
   const { error: notifyError, success: notifySuccess } = useNotification();
+  const queryClient = useQueryClient();
   const [searchTerm, setSearchTerm] = useState('');
   const [severityFilter, setSeverityFilter] = useState<string>('all');
   const [statusFilter, setStatusFilter] = useState<string>('all');
   const [metricFilter, setMetricFilter] = useState<string>('all');
   const [timeRange, setTimeRange] = useState('7d');
-  const [loading, setLoading] = useState(true);
-  const [alerts, setAlerts] = useState<AlertDetail[]>([]);
-  const [totalAlerts, setTotalAlerts] = useState(0);
   const [detailOpen, setDetailOpen] = useState(false);
   const [selectedAlert, setSelectedAlert] = useState<AlertDetail | null>(null);
+  const [page, setPage] = useState(0);
+  const [pageSize] = useState(10);
 
-  useEffect(() => {
-    loadAlerts();
-  }, [timeRange, severityFilter, statusFilter]);
-
-  const loadAlerts = async () => {
-    setLoading(true);
-    try {
+  const alertsQuery = useQuery({
+    queryKey: [...QUERY_KEYS.MONITOR.ALERTS, timeRange, severityFilter, statusFilter],
+    queryFn: async () => {
       const params: AlertQueryParams = {
         pagesize: 100,
       };
@@ -87,17 +78,58 @@ const MonitorAlertHistoryPage: React.FC = () => {
       }
 
       const response = await monitorApi.listAlerts(params);
-      if (response.success && response.data) {
-        setAlerts(response.data.items as AlertDetail[]);
-        setTotalAlerts(response.data.total);
-      }
-    } catch (err: unknown) {
-      apiLogger.error('加载告警历史数据失败:', err);
-      notifyError('加载告警历史数据失败');
-    } finally {
-      setLoading(false);
-    }
-  };
+      return {
+        items: (response.data?.items ?? []) as AlertDetail[],
+        total: response.data?.total ?? 0,
+      };
+    },
+  });
+
+  const alerts = alertsQuery.data?.items ?? [];
+  const totalAlerts = alertsQuery.data?.total ?? 0;
+  const loading = alertsQuery.isLoading;
+
+  const loadAlerts = useCallback(() => {
+    alertsQuery.refetch();
+  }, [alertsQuery]);
+
+  const acknowledgeMutation = useMutation({
+    mutationFn: async (id: string) => monitorApi.acknowledgeAlert(id),
+    onSuccess: () => {
+      notifySuccess('告警已确认');
+      queryClient.invalidateQueries({ queryKey: QUERY_KEYS.MONITOR.ALERTS });
+    },
+    onError: (err: unknown) => {
+      apiLogger.error('确认告警失败:', err);
+      notifyError('确认告警失败');
+    },
+  });
+
+  const resolveMutation = useMutation({
+    mutationFn: async (id: string) => monitorApi.resolveAlert(id),
+    onSuccess: () => {
+      notifySuccess('告警已解决');
+      queryClient.invalidateQueries({ queryKey: QUERY_KEYS.MONITOR.ALERTS });
+    },
+    onError: (err: unknown) => {
+      apiLogger.error('解决告警失败:', err);
+      notifyError('解决告警失败');
+    },
+  });
+
+  const handleAcknowledge = useCallback(
+    (id: string) => {
+      acknowledgeMutation.mutate(id);
+    },
+    [acknowledgeMutation]
+  );
+
+  const handleResolve = useCallback(
+    (id: string) => {
+      resolveMutation.mutate(id);
+    },
+    [resolveMutation]
+  );
 
   const getSeverityLabel = (severity: string) => {
     switch (severity) {
@@ -128,48 +160,26 @@ const MonitorAlertHistoryPage: React.FC = () => {
   const getSeverityColor = (severity: string) => {
     switch (severity) {
       case 'critical':
-        return 'error.main';
+        return 'error';
       case 'warning':
-        return 'warning.main';
+        return 'warning';
       case 'info':
-        return 'primary.main';
+        return 'info';
       default:
-        return 'grey.500';
+        return 'default';
     }
   };
 
   const getStatusColor = (status: string) => {
     switch (status) {
       case 'active':
-        return 'error.main';
+        return 'error';
       case 'acknowledged':
-        return 'warning.main';
+        return 'warning';
       case 'resolved':
-        return 'success.main';
+        return 'success';
       default:
-        return 'grey.500';
-    }
-  };
-
-  const handleAcknowledge = async (id: string) => {
-    try {
-      await monitorApi.acknowledgeAlert(id);
-      notifySuccess('告警已确认');
-      loadAlerts();
-    } catch (err: unknown) {
-      apiLogger.error('确认告警失败:', err);
-      notifyError('确认告警失败');
-    }
-  };
-
-  const handleResolve = async (id: string) => {
-    try {
-      await monitorApi.resolveAlert(id);
-      notifySuccess('告警已解决');
-      loadAlerts();
-    } catch (err: unknown) {
-      apiLogger.error('解决告警失败:', err);
-      notifyError('解决告警失败');
+        return 'default';
     }
   };
 
@@ -194,6 +204,11 @@ const MonitorAlertHistoryPage: React.FC = () => {
     }
     return result;
   }, [alerts, searchTerm, metricFilter]);
+
+  const paginatedData = useMemo(() => {
+    const start = page * pageSize;
+    return filteredAlerts.slice(start, start + pageSize);
+  }, [filteredAlerts, page, pageSize]);
 
   const handleExport = useCallback(() => {
     try {
@@ -222,42 +237,42 @@ const MonitorAlertHistoryPage: React.FC = () => {
     }
   }, [filteredAlerts, notifySuccess, notifyError]);
 
-  const statCards = useMemo<StatCard[]>(
+  const stats = useMemo(
     () => [
       {
         id: 'total-alerts',
         title: '总告警数',
         value: totalAlerts || alerts.length,
-        icon: <Bell size={24} />,
-        gradient: [ct.primary.dark, ct.primary[800]] as [string, string],
+        icon: <Bell size={20} />,
+        color: 'primary' as const,
       },
       {
         id: 'critical-alerts',
         title: '严重告警',
         value: alerts.filter((a) => a.severity === 'critical').length,
-        icon: <AlertTriangle size={24} />,
-        gradient: [ct.error.main, ct.error[600]] as [string, string],
+        icon: <AlertTriangle size={20} />,
+        color: 'error' as const,
       },
       {
         id: 'warning-alerts',
         title: '警告告警',
         value: alerts.filter((a) => a.severity === 'warning').length,
-        icon: <AlertTriangle size={24} />,
-        gradient: [ct.warning.main, ct.warning.dark] as [string, string],
+        icon: <AlertTriangle size={20} />,
+        color: 'warning' as const,
       },
       {
         id: 'active-alerts',
         title: '未处理',
         value: alerts.filter((a) => a.status === 'active').length,
-        icon: <Clock size={24} />,
-        gradient: [ct.error.main, ct.error[600]] as [string, string],
+        icon: <Clock size={20} />,
+        color: 'error' as const,
       },
       {
         id: 'resolved-alerts',
         title: '已解决',
         value: alerts.filter((a) => a.status === 'resolved').length,
-        icon: <CheckCircle size={24} />,
-        gradient: [ct.success.main, ct.success.dark] as [string, string],
+        icon: <CheckCircle size={20} />,
+        color: 'success' as const,
       },
       {
         id: 'avg-resolution',
@@ -273,198 +288,247 @@ const MonitorAlertHistoryPage: React.FC = () => {
                 }, 0) / alerts.filter((a) => a.resolved_at).length
             )}分钟`
           : '-',
-        icon: <Clock size={24} />,
-        gradient: [ct.secondary.main, ct.secondary.dark] as [string, string],
+        icon: <Clock size={20} />,
+        color: 'secondary' as const,
       },
     ],
     [alerts, totalAlerts]
   );
 
-  const charts = useMemo<ChartConfig[]>(
-    () => [
-      {
-        id: 'alert-trend',
-        title: '告警趋势',
-        type: 'line',
-        dataKey: 'value',
-        nameKey: 'name',
-        data: [
-          {
-            name: '严重',
-            value: alerts.filter((a) => a.severity === 'critical').length,
-            stroke: 'error.main',
-          },
-          {
-            name: '警告',
-            value: alerts.filter((a) => a.severity === 'warning').length,
-            stroke: 'warning.main',
-          },
-          {
-            name: '信息',
-            value: alerts.filter((a) => a.severity === 'info').length,
-            stroke: 'primary.main',
-          },
-        ],
-        height: 280,
-      },
-      {
-        id: 'alert-severity-distribution',
-        title: '告警级别分布',
-        type: 'pie',
-        dataKey: 'value',
-        nameKey: 'name',
-        data: [
-          {
-            name: '严重',
-            value: alerts.filter((a) => a.severity === 'critical').length,
-            color: 'error.main',
-          },
-          {
-            name: '警告',
-            value: alerts.filter((a) => a.severity === 'warning').length,
-            color: 'warning.main',
-          },
-          {
-            name: '信息',
-            value: alerts.filter((a) => a.severity === 'info').length,
-            color: 'primary.main',
-          },
-        ].filter((d) => d.value > 0),
-        height: 280,
-      },
-    ],
-    [alerts]
-  );
-
-  const tables = useMemo<DataTable[]>(
-    () => [
-      {
-        id: 'alert-history',
-        title: '告警历史记录',
-        columns: [
-          {
-            id: 'severity',
-            label: '级别',
-            field: 'severity',
-            render: (value: unknown) => (
-              <Chip
-                size='small'
-                label={getSeverityLabel(value as string)}
-                sx={{
-                  fontWeight: 500,
-                  bgcolor: `${getSeverityColor(value as string)}18`,
-                  color: getSeverityColor(value as string),
-                  border: `1px solid ${getSeverityColor(value as string)}40`,
-                }}
-              />
-            ),
-          },
-          {
-            id: 'title',
-            label: '告警标题',
-            field: 'title',
-            render: (value: unknown, row: Record<string, unknown>) => (
-              <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-                <Typography
-                  variant='body2'
-                  sx={{ fontWeight: 500 }}
+  const statsCards = useMemo(
+    () => (
+      <Box
+        sx={{
+          display: 'grid',
+          gridTemplateColumns: { xs: 'repeat(2, 1fr)', md: 'repeat(3, 1fr)', lg: 'repeat(6, 1fr)' },
+          gap: 2,
+          mb: 3,
+        }}
+      >
+        {stats.map((item) => (
+          <Card
+            key={item.id}
+            sx={{
+              transition: 'all 0.2s',
+              '&:hover': { boxShadow: 2 },
+            }}
+          >
+            <CardContent sx={{ p: 2, '&:last-child': { pb: 2 } }}>
+              <Stack
+                direction='row'
+                spacing={1.5}
+                sx={{ alignItems: 'center' }}
+              >
+                <Box
+                  sx={{
+                    width: 40,
+                    height: 40,
+                    borderRadius: 1,
+                    bgcolor: `${item.color}.light`,
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    color: `${item.color}.main`,
+                  }}
                 >
-                  {value as string}
-                </Typography>
-                <Tooltip title='查看详情'>
-                  <IconButton
-                    size='small'
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      handleViewDetail(row as unknown as AlertDetail);
-                    }}
+                  {item.icon}
+                </Box>
+                <Box>
+                  <Typography
+                    variant='h4'
+                    sx={{ fontWeight: 700, lineHeight: 1.2 }}
                   >
-                    <Eye size={14} />
-                  </IconButton>
-                </Tooltip>
-              </Box>
-            ),
-          },
-          { id: 'service_name', label: '来源服务', field: 'service_name' },
-          { id: 'alert_type', label: '类型', field: 'alert_type' },
-          {
-            id: 'created_at',
-            label: '触发时间',
-            field: 'created_at',
-            render: (value: unknown) => new Date(value as string).toLocaleString('zh-CN'),
-          },
-          {
-            id: 'status',
-            label: '状态',
-            field: 'status',
-            render: (value: unknown) => (
-              <Chip
-                size='small'
-                label={getStatusLabel(value as string)}
-                sx={{
-                  fontWeight: 500,
-                  bgcolor: `${getStatusColor(value as string)}18`,
-                  color: getStatusColor(value as string),
-                  border: `1px solid ${getStatusColor(value as string)}40`,
-                }}
-              />
-            ),
-          },
-          {
-            id: 'actions',
-            label: '操作',
-            field: '',
-            render: (value: unknown, row: Record<string, unknown>) => (
-              <Box sx={{ display: 'flex', gap: 0.5 }}>
-                {(row.status as string) === 'active' && (
-                  <Tooltip title='确认告警'>
-                    <Button
-                      size='small'
-                      variant='outlined'
-                      color='warning'
-                      startIcon={<Check size={14} />}
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        handleAcknowledge(row.id as string);
-                      }}
-                    >
-                      确认
-                    </Button>
-                  </Tooltip>
-                )}
-                {(row.status as string) === 'acknowledged' && (
-                  <Tooltip title='解决告警'>
-                    <Button
-                      size='small'
-                      variant='contained'
-                      color='success'
-                      startIcon={<CheckCircle size={14} />}
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        handleResolve(row.id as string);
-                      }}
-                    >
-                      解决
-                    </Button>
-                  </Tooltip>
-                )}
-              </Box>
-            ),
-          },
-        ],
-        data: filteredAlerts as unknown as Record<string, unknown>[],
-        loading,
-      },
-    ],
-    [filteredAlerts, loading]
+                    {item.value}
+                  </Typography>
+                  <Typography
+                    variant='body2'
+                    color='text.secondary'
+                  >
+                    {item.title}
+                  </Typography>
+                </Box>
+              </Stack>
+            </CardContent>
+          </Card>
+        ))}
+      </Box>
+    ),
+    [stats]
   );
 
-  const timeRangeOptions = [
-    { label: '1小时', value: '1h' },
-    { label: '24小时', value: '24h' },
-    { label: '7天', value: '7d' },
-    { label: '30天', value: '30d' },
-  ];
+  const columns: ColumnDef<AlertDetail>[] = useMemo(
+    () => [
+      {
+        id: 'severity',
+        label: '级别',
+        width: 100,
+        render: (row) => (
+          <Chip
+            size='small'
+            color={getSeverityColor(row.severity) as any}
+            label={getSeverityLabel(row.severity)}
+            variant='outlined'
+          />
+        ),
+      },
+      {
+        id: 'title',
+        label: '告警标题',
+        minWidth: 200,
+        render: (row) => (
+          <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+            <Typography
+              variant='body2'
+              sx={{ fontWeight: 500 }}
+            >
+              {row.title}
+            </Typography>
+            <Tooltip title='查看详情'>
+              <IconButton
+                size='small'
+                onClick={(e) => {
+                  e.stopPropagation();
+                  handleViewDetail(row);
+                }}
+              >
+                <Eye size={14} />
+              </IconButton>
+            </Tooltip>
+          </Box>
+        ),
+      },
+      {
+        id: 'service_name',
+        label: '来源服务',
+        width: 140,
+      },
+      {
+        id: 'alert_type',
+        label: '类型',
+        width: 120,
+      },
+      {
+        id: 'created_at',
+        label: '触发时间',
+        width: 160,
+        render: (row) => new Date(row.created_at).toLocaleString('zh-CN'),
+      },
+      {
+        id: 'status',
+        label: '状态',
+        width: 100,
+        render: (row) => (
+          <Chip
+            size='small'
+            color={getStatusColor(row.status) as any}
+            label={getStatusLabel(row.status)}
+            variant='outlined'
+          />
+        ),
+      },
+      {
+        id: 'actions',
+        label: '操作',
+        align: 'right',
+        width: 150,
+        render: (row) => (
+          <Box sx={{ display: 'flex', gap: 0.5 }}>
+            {row.status === 'active' && (
+              <Tooltip title='确认告警'>
+                <Button
+                  size='small'
+                  variant='outlined'
+                  color='warning'
+                  startIcon={<Check size={14} />}
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    handleAcknowledge(row.id);
+                  }}
+                >
+                  确认
+                </Button>
+              </Tooltip>
+            )}
+            {row.status === 'acknowledged' && (
+              <Tooltip title='解决告警'>
+                <Button
+                  size='small'
+                  variant='contained'
+                  color='success'
+                  startIcon={<CheckCircle size={14} />}
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    handleResolve(row.id);
+                  }}
+                >
+                  解决
+                </Button>
+              </Tooltip>
+            )}
+          </Box>
+        ),
+      },
+    ],
+    []
+  );
+
+  const filters = useMemo(
+    () => [
+      {
+        id: 'severity',
+        label: '严重级别',
+        type: 'select' as const,
+        options: [
+          { label: '全部级别', value: 'all' },
+          { label: '严重', value: 'critical' },
+          { label: '警告', value: 'warning' },
+          { label: '信息', value: 'info' },
+        ],
+      },
+      {
+        id: 'status',
+        label: '状态',
+        type: 'select' as const,
+        options: [
+          { label: '全部状态', value: 'all' },
+          { label: '未处理', value: 'active' },
+          { label: '已确认', value: 'acknowledged' },
+          { label: '已解决', value: 'resolved' },
+        ],
+      },
+    ],
+    []
+  );
+
+  const headerContent = (
+    <>
+      {statsCards}
+      <Box sx={{ px: { xs: 2, sm: 3 }, pb: 3 }}>
+        <Box sx={{ display: 'flex', gap: 1, flexWrap: 'wrap' }}>
+          {METRIC_FILTER_OPTIONS.map((opt) => (
+            <Chip
+              key={opt.value}
+              label={opt.label}
+              size='small'
+              variant={metricFilter === opt.value ? 'filled' : 'outlined'}
+              color={metricFilter === opt.value ? 'info' : 'default'}
+              onClick={() => setMetricFilter(metricFilter === opt.value ? 'all' : opt.value)}
+            />
+          ))}
+        </Box>
+      </Box>
+    </>
+  );
+
+  const handleFilterChange = (filters: Record<string, unknown>) => {
+    if (typeof filters.severity === 'string') {
+      setSeverityFilter(filters.severity);
+    }
+    if (typeof filters.status === 'string') {
+      setStatusFilter(filters.status);
+    }
+    setPage(0);
+  };
 
   return (
     <PageContainer
@@ -472,104 +536,53 @@ const MonitorAlertHistoryPage: React.FC = () => {
       subtitle='查看和处理所有告警记录'
       headerProps={{
         pageIcon: <Clock style={{ width: 20, height: 20 }} />,
-        pageGradient: `linear-gradient(135deg, ${ct.secondary.main} 0%, ${ct.secondary.dark} 100%)`,
+        backButton: {
+          href: MONITOR_PATHS.dashboard,
+        },
       }}
     >
-      <StatsPageTemplate
-        title='告警历史'
-        subtitle={`共 ${filteredAlerts.length} 条告警记录`}
-        statCards={statCards}
-        statColumns={3}
-        charts={charts}
-        chartColumns={{ xs: 1, md: 2 }}
-        tables={tables}
+      <ListPageTemplate
+        title=''
+        subtitle=''
+        columns={columns}
+        data={paginatedData}
         loading={loading}
-        timeRangeOptions={timeRangeOptions}
-        timeRange={timeRange}
-        onTimeRangeChange={setTimeRange}
-        search={{
-          value: searchTerm,
-          onChange: setSearchTerm,
-          placeholder: '搜索告警标题、服务或类型...',
+        searchable
+        searchPlaceholder='搜索告警标题、服务或类型...'
+        searchValue={searchTerm}
+        onSearch={setSearchTerm}
+        filters={filters}
+        filtersValue={{
+          severity: severityFilter,
+          status: statusFilter,
         }}
-        showTimeRange={true}
-        showSearch={true}
-        showExport={true}
-        onExport={handleExport}
-        exportText='导出告警'
-        showRefresh={true}
+        onFilterChange={handleFilterChange}
+        pagination={{
+          page,
+          pageSize,
+          total: filteredAlerts.length,
+          onPageChange: setPage,
+        }}
+        actions={[
+          {
+            label: '刷新',
+            icon: <RefreshCw size={16} />,
+            onClick: loadAlerts,
+            variant: 'outlined',
+          },
+          {
+            label: '导出',
+            icon: <Download size={16} />,
+            onClick: handleExport,
+            variant: 'outlined',
+          },
+        ]}
         onRefresh={loadAlerts}
-        showStatCards={true}
-        showCharts={true}
-        showTables={true}
-        statCardDirection='row'
-        customToolbar={
-          <Box sx={{ display: 'flex', gap: 1, flexWrap: 'wrap' }}>
-            {/* 级别筛选 */}
-            {['all', 'critical', 'warning', 'info'].map((value) => (
-              <Chip
-                key={value}
-                label={value === 'all' ? '全部级别' : getSeverityLabel(value)}
-                size='small'
-                variant={severityFilter === value ? 'filled' : 'outlined'}
-                color={severityFilter === value ? 'primary' : 'default'}
-                onClick={() => setSeverityFilter(value)}
-                icon={
-                  value === 'critical' ? (
-                    <AlertTriangle size={14} />
-                  ) : value === 'warning' ? (
-                    <AlertTriangle size={14} />
-                  ) : value === 'info' ? (
-                    <Info size={14} />
-                  ) : undefined
-                }
-              />
-            ))}
-            <Divider
-              orientation='vertical'
-              flexItem
-              sx={{ mx: 0.5 }}
-            />
-            {/* 状态筛选 */}
-            {['all', 'active', 'acknowledged', 'resolved'].map((value) => (
-              <Chip
-                key={value}
-                label={value === 'all' ? '全部状态' : getStatusLabel(value)}
-                size='small'
-                variant={statusFilter === value ? 'filled' : 'outlined'}
-                color={statusFilter === value ? 'secondary' : 'default'}
-                onClick={() => setStatusFilter(value)}
-              />
-            ))}
-            <Divider
-              orientation='vertical'
-              flexItem
-              sx={{ mx: 0.5 }}
-            />
-            {/* 指标筛选 */}
-            <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5 }}>
-              <Typography
-                variant='caption'
-                color='text.secondary'
-              >
-                指标:
-              </Typography>
-              {METRIC_FILTER_OPTIONS.map((opt) => (
-                <Chip
-                  key={opt.value}
-                  label={opt.label}
-                  size='small'
-                  variant={metricFilter === opt.value ? 'filled' : 'outlined'}
-                  color={metricFilter === opt.value ? 'info' : 'default'}
-                  onClick={() => setMetricFilter(metricFilter === opt.value ? 'all' : opt.value)}
-                />
-              ))}
-            </Box>
-          </Box>
-        }
+        headerContent={headerContent}
+        emptyMessage='暂无告警数据'
+        getRowId={(row) => row.id}
       />
 
-      {/* 告警详情对话框 */}
       <Dialog
         open={detailOpen}
         onClose={() => setDetailOpen(false)}
@@ -618,11 +631,10 @@ const MonitorAlertHistoryPage: React.FC = () => {
       >
         {selectedAlert && (
           <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2, pt: 1 }}>
-            {/* 告警概要 */}
             <Paper
               sx={{
                 p: 2,
-                bgcolor: `${getSeverityColor(selectedAlert.severity)}08`,
+                bgcolor: `${getSeverityColor(selectedAlert.severity)}.50`,
                 borderColor: getSeverityColor(selectedAlert.severity),
                 border: 1,
               }}
@@ -631,21 +643,13 @@ const MonitorAlertHistoryPage: React.FC = () => {
                 <Chip
                   label={getSeverityLabel(selectedAlert.severity)}
                   size='small'
-                  sx={{
-                    fontWeight: 600,
-                    bgcolor: getSeverityColor(selectedAlert.severity),
-                    color: ct.background.paper,
-                  }}
+                  color={getSeverityColor(selectedAlert.severity) as any}
                 />
                 <Chip
                   label={getStatusLabel(selectedAlert.status)}
                   size='small'
-                  sx={{
-                    fontWeight: 500,
-                    bgcolor: `${getStatusColor(selectedAlert.status)}18`,
-                    color: getStatusColor(selectedAlert.status),
-                    border: `1px solid ${getStatusColor(selectedAlert.status)}40`,
-                  }}
+                  color={getStatusColor(selectedAlert.status) as any}
+                  variant='outlined'
                 />
               </Box>
               <Typography
@@ -663,7 +667,6 @@ const MonitorAlertHistoryPage: React.FC = () => {
               </Typography>
             </Paper>
 
-            {/* 告警信息 */}
             <Box
               sx={{
                 display: 'grid',
@@ -747,11 +750,9 @@ const MonitorAlertHistoryPage: React.FC = () => {
               )}
             </Box>
 
-            {/* 解决信息 */}
             {selectedAlert.status === 'resolved' && (
               <>
-                <Divider />
-                <Box>
+                <Box sx={{ borderTop: 1, borderColor: 'divider', pt: 2 }}>
                   <Typography
                     variant='subtitle2'
                     sx={{ mb: 1, fontWeight: 600 }}

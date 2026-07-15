@@ -5,6 +5,7 @@ import {
   deleteOfflineRecord,
   type OfflineRecord,
 } from './offlineStorage';
+import { logger } from '@/utils/logger';
 
 const MAX_RETRY_COUNT = 5;
 const RETRY_DELAY_BASE = 1000;
@@ -79,15 +80,13 @@ export async function syncPendingRecords(): Promise<{
               status: 'pending',
               retryCount: currentRetryCount,
             });
-            await new Promise((resolve) =>
-              setTimeout(resolve, getRetryDelay(currentRetryCount))
-            );
+            await new Promise((resolve) => setTimeout(resolve, getRetryDelay(currentRetryCount)));
           }
         }
       }
     }
   } catch (error) {
-    console.error('[offlineSync] Failed to get pending records:', error);
+    logger.error('[offlineSync] Failed to get pending records:', error);
   }
 
   return { successCount, failedCount, skippedCount };
@@ -126,7 +125,7 @@ export async function syncSingleRecord(recordId: string): Promise<boolean> {
     await deleteOfflineRecord(record.id);
     return true;
   } catch (error) {
-    console.error('[offlineSync] Failed to sync record:', error);
+    logger.error('[offlineSync] Failed to sync record:', error);
     return false;
   }
 }

@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useMemo, useCallback } from 'react';
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import {
   Archive,
   ChevronLeft,
@@ -36,14 +37,11 @@ const NotificationArchivePage: React.FC = () => {
   const theme = useTheme();
   const navigate = useNavigate();
   const { success, error, notifications, hideNotification } = useNotification();
+  const queryClient = useQueryClient();
 
-  const [archivedNotifications, setArchivedNotifications] = useState<ArchivedNotification[]>([]);
-  const [archiveConfig, setArchiveConfig] = useState<ArchiveConfig | null>(null);
-  const [loading, setLoading] = useState(true);
   const [searchQuery, setSearchQuery] = useState('');
   const [debouncedSearch, setDebouncedSearch] = useState('');
   const [page, setPage] = useState(1);
-  const [total, setTotal] = useState(0);
   const [showConfigModal, setShowConfigModal] = useState(false);
   const [selectedNotification, setSelectedNotification] = useState<ArchivedNotification | null>(
     null
@@ -57,59 +55,91 @@ const NotificationArchivePage: React.FC = () => {
     return () => clearTimeout(timer);
   }, [searchQuery]);
 
+  const archivedQuery = useQuery<{ notifications: ArchivedNotification[]; total: number }>({
+    queryKey: ['notification-archive', page],
+    queryFn: async () => {
+      const res = await getArchivedNotifications(page, 20);
+      if (res.success && res.data) {
+        return {
+          notifications: res.data.notifications || [],
+          total: res.data.total,
+        };
+      }
+      throw new Error(res.message || '加载归档通知失败');
+    },
+    staleTime: 5 * 60 * 1000,
+  });
+
+  const configQuery = useQuery<ArchiveConfig>({
+    queryKey: ['notification-archive-config'],
+    queryFn: async () => {
+      const res = await getArchiveConfig();
+      if (res.success && res.data) {
+        return res.data;
+      }
+      throw new Error(res.message || '加载归档配置失败');
+    },
+    staleTime: 5 * 60 * 1000,
+  });
+
+  const archivedNotifications = archivedQuery.data?.notifications ?? [];
+  const archiveConfig = configQuery.data ?? null;
+  const total = archivedQuery.data?.total ?? 0;
+  const loading = archivedQuery.isFetching || configQuery.isFetching;
+
   useEffect(() => {
-    loadData();
-  }, [page, debouncedSearch]);
-
-  const loadData = async () => {
-    setLoading(true);
-    try {
-      const [archivedRes, configRes] = await Promise.all([
-        getArchivedNotifications(page, 20),
-        getArchiveConfig(),
-      ]);
-
-      if (archivedRes.success && archivedRes.data) {
-        setArchivedNotifications(archivedRes.data.notifications || []);
-        setTotal(archivedRes.data.total);
-      }
-      if (configRes.success && configRes.data) {
-        setArchiveConfig(configRes.data);
-      }
-    } catch (err: unknown) {
-      apiLogger.error('Error loading data:', err);
-    } finally {
-      setLoading(false);
+    if (archivedQuery.isError) {
+      apiLogger.error('Error loading archived notifications:', archivedQuery.error);
     }
-  };
+  }, [archivedQuery.isError, archivedQuery.error]);
 
-  const handleUpdateConfig = async (config: ArchiveConfig) => {
-    try {
+  useEffect(() => {
+    if (configQuery.isError) {
+      apiLogger.error('Error loading archive config:', configQuery.error);
+    }
+  }, [configQuery.isError, configQuery.error]);
+
+  const updateConfigMutation = useMutation({
+    mutationFn: async (config: ArchiveConfig) => {
       const res = await updateArchiveConfig(config);
-      if (res.success) {
-        success('归档配置更新成功');
-        setShowConfigModal(false);
-        loadData();
-      } else {
-        error(res.message || '更新失败');
+      if (!res.success) {
+        throw new Error(res.message || '更新失败');
       }
-    } catch (err: unknown) {
+      return res;
+    },
+    onSuccess: () => {
+      success('归档配置更新成功');
+      setShowConfigModal(false);
+      queryClient.invalidateQueries({ queryKey: ['notification-archive-config'] });
+    },
+    onError: (err: unknown) => {
       error((err as { message?: string }).message || '更新失败');
-    }
+    },
+  });
+
+  const handleUpdateConfig = (config: ArchiveConfig) => {
+    updateConfigMutation.mutate(config);
   };
 
-  const handleRunAutoArchive = async () => {
-    try {
+  const runAutoArchiveMutation = useMutation({
+    mutationFn: async () => {
       const res = await runAutoArchive();
-      if (res.success) {
-        success(`自动归档执行成功，已归档 ${res.data?.archived_count || 0} 条通知`);
-        loadData();
-      } else {
-        error(res.message || '执行失败');
+      if (!res.success) {
+        throw new Error(res.message || '执行失败');
       }
-    } catch (err: unknown) {
+      return res;
+    },
+    onSuccess: (res) => {
+      success(`自动归档执行成功，已归档 ${res.data?.archived_count || 0} 条通知`);
+      queryClient.invalidateQueries({ queryKey: ['notification-archive'] });
+    },
+    onError: (err: unknown) => {
       error((err as { message?: string }).message || '执行失败');
-    }
+    },
+  });
+
+  const handleRunAutoArchive = () => {
+    runAutoArchiveMutation.mutate();
   };
 
   const filteredNotifications = useMemo(() => {
@@ -268,7 +298,10 @@ const NotificationArchivePage: React.FC = () => {
           onPageChange: (p) => setPage(p + 1),
         }}
         rowActions={rowActions}
-        onRefresh={loadData}
+        onRefresh={() => {
+          archivedQuery.refetch();
+          configQuery.refetch();
+        }}
         actions={[
           {
             label: '执行自动归档',

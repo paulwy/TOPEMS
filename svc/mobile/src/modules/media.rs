@@ -226,7 +226,7 @@ pub async fn upload_media(
     }
 
     let media_id = Uuid::new_v4();
-    let file_url = format!("/api/v1/media/{}/{}", file_type, media_id);
+    let file_url = format!("/api/media/{}/{}", file_type, media_id);
 
     if let Err(e) = sqlx::query(
         "INSERT INTO media_files (id, file_name, file_type, file_url, file_size, mime_type, uploaded_by, description, created_at)

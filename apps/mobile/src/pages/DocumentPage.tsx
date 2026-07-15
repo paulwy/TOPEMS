@@ -1,9 +1,16 @@
 import React, { useState, useEffect } from 'react';
-import { View, StyleSheet, FlatList, TouchableOpacity, RefreshControl, TextInput } from 'react-native';
+import {
+  View,
+  StyleSheet,
+  FlatList,
+  TouchableOpacity,
+  RefreshControl,
+  TextInput,
+} from 'react-native';
 import { Text, Card, IconButton, Divider, Badge } from 'react-native-paper';
 import { documentApi } from '@/api/document';
 import type { Document } from '@/types';
-import { FileText, Search, Download, FolderOpen, ChevronRight } from 'lucide-react-native';
+import { FileText, Search, Download, FolderOpen } from 'lucide-react-native';
 
 const DocumentPage: React.FC = () => {
   const [documents, setDocuments] = useState<Document[]>([]);
@@ -85,7 +92,7 @@ const DocumentPage: React.FC = () => {
           </View>
         </View>
         <TouchableOpacity style={styles.actionButton}>
-          <IconButton icon="chevron-right" size={24} color="#9ca3af" />
+          <IconButton icon="chevron-right" size={24} iconColor="#9ca3af" />
         </TouchableOpacity>
       </Card.Content>
       <Card.Actions style={styles.documentActions}>
@@ -130,9 +137,7 @@ const DocumentPage: React.FC = () => {
           keyExtractor={(item) => item.id}
           renderItem={renderItem}
           contentContainerStyle={styles.listContainer}
-          refreshControl={
-            <RefreshControl refreshing={refreshing} onRefresh={fetchDocuments} />
-          }
+          refreshControl={<RefreshControl refreshing={refreshing} onRefresh={fetchDocuments} />}
           ListEmptyComponent={
             <View style={styles.emptyContainer}>
               <FileText size={48} color="#9ca3af" />

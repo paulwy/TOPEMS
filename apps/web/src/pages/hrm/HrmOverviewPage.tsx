@@ -1,4 +1,5 @@
-import React, { useState, useEffect, useMemo } from 'react';
+import React, { useState, useMemo } from 'react';
+import { useQuery } from '@tanstack/react-query';
 import { useNavigate } from 'react-router-dom';
 import {
   Users,
@@ -26,12 +27,13 @@ const ct = designTokens.colors;
 
 const HrmOverviewPage: React.FC = () => {
   const navigate = useNavigate();
-  const [loading, setLoading] = useState(true);
 
-  useEffect(() => {
-    const timer = setTimeout(() => setLoading(false), 600);
-    return () => clearTimeout(timer);
-  }, []);
+  const loadingQuery = useQuery<boolean>({
+    queryKey: ['hrm-dashboard'],
+    queryFn: async () => true,
+    staleTime: Infinity,
+  });
+  const loading = loadingQuery.isLoading;
 
   const stats: StatCard[] = useMemo(
     () => [

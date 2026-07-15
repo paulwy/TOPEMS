@@ -108,6 +108,7 @@ vi.mock('@/store', () => ({
   useSetSidebarCollapsed: vi.fn(),
 }));
 
+describe('QmsNonconformancePage', () => {
   it('should render without crashing', () => {
     const { container } = render(
       <BrowserRouter>

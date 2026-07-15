@@ -1,4 +1,5 @@
-import React, { useEffect, useState } from 'react';
+import React, { useMemo } from 'react';
+import { useQuery } from '@tanstack/react-query';
 import { useNavigate } from 'react-router-dom';
 import {
   FileText,
@@ -20,6 +21,8 @@ import PieChartComponent from '../../components/charts/PieChart';
 import LineChartComponent from '../../components/charts/LineChart';
 import { useNotificationStore } from '@/store';
 import { designTokens } from '@/theme/tokens';
+import { docApi } from '@/api/doc';
+import type { DocDashboardStats } from '@/api/doc';
 
 const ct = designTokens.colors;
 
@@ -32,24 +35,6 @@ const iconMap: Record<string, React.ReactNode> = {
   FileSpreadsheet: <FileSpreadsheet size={24} />,
 };
 
-const pieData = [
-  { name: 'PDF', value: 35 },
-  { name: 'Word', value: 28 },
-  { name: 'Excel', value: 18 },
-  { name: 'PPT', value: 12 },
-  { name: '图片', value: 7 },
-];
-
-const lineData = [
-  { name: '周一', uploads: 12 },
-  { name: '周二', uploads: 19 },
-  { name: '周三', uploads: 15 },
-  { name: '周四', uploads: 22 },
-  { name: '周五', uploads: 28 },
-  { name: '周六', uploads: 8 },
-  { name: '周日', uploads: 5 },
-];
-
 const getGreeting = (): string => {
   const hour = new Date().getHours();
   if (hour < 12) return '上午好';
@@ -60,133 +45,117 @@ const getGreeting = (): string => {
 export const DocumentDashboardPage: React.FC = () => {
   const navigate = useNavigate();
   const addNotification = useNotificationStore((state) => state.addNotification);
-  const [loading, setLoading] = useState(true);
 
-  useEffect(() => {
-    const timer = setTimeout(() => setLoading(false), 500);
-    return () => clearTimeout(timer);
-  }, []);
+  const { data: statsData, isLoading: loading } = useQuery<DocDashboardStats | null>({
+    queryKey: ['doc-dashboard'],
+    queryFn: async () => {
+      const response = await docApi.getDashboard();
+      if (response.success && response.data) {
+        return response.data;
+      }
+      return null;
+    },
+    staleTime: 5 * 60 * 1000,
+  });
 
-  const stats: StatCard[] = [
-    {
-      id: 'my-documents',
-      title: '我的文档',
-      value: '256',
-      icon: iconMap.FileText,
-      change: 12,
-      changeLabel: 'vs 上周',
-      color: 'primary',
-    },
-    {
-      id: 'shared-documents',
-      title: '共享文档',
-      value: '89',
-      icon: iconMap.FolderOpen,
-      change: 5,
-      changeLabel: 'vs 上周',
-      color: 'success',
-    },
-    {
-      id: 'recent-access',
-      title: '最近访问',
-      value: '34',
-      icon: iconMap.Clock,
-      change: 8,
-      changeLabel: 'vs 上周',
-      color: 'info',
-    },
-    {
-      id: 'favorites',
-      title: '收藏夹',
-      value: '42',
-      icon: iconMap.Star,
-      change: 3,
-      changeLabel: 'vs 上周',
-      color: 'warning',
-    },
-    {
-      id: 'storage',
-      title: '存储空间',
-      value: '2.4',
-      unit: 'GB',
-      icon: iconMap.HardDrive,
-      change: -2,
-      changeLabel: 'vs 上周',
-      color: 'secondary',
-      progress: 48,
-      progressLabel: '已用 48%',
-    },
-    {
-      id: 'templates',
-      title: '文档模板',
-      value: '15',
-      icon: iconMap.FileSpreadsheet,
-      change: 2,
-      changeLabel: 'vs 上周',
-      color: 'error',
-    },
-  ];
+  const stats: StatCard[] = useMemo(() => {
+    if (!statsData) return [];
+    return [
+      {
+        id: 'total-documents',
+        title: '文档总数',
+        value: statsData.total_documents.toLocaleString(),
+        icon: iconMap.FileText,
+        change: 0,
+        changeLabel: 'vs 上周',
+        color: 'primary',
+      },
+      {
+        id: 'published-documents',
+        title: '已发布',
+        value: statsData.published_documents.toLocaleString(),
+        icon: iconMap.FolderOpen,
+        change: 0,
+        changeLabel: 'vs 上周',
+        color: 'success',
+      },
+      {
+        id: 'draft-documents',
+        title: '草稿',
+        value: statsData.draft_documents.toLocaleString(),
+        icon: iconMap.Clock,
+        change: 0,
+        changeLabel: 'vs 上周',
+        color: 'info',
+      },
+      {
+        id: 'archived-documents',
+        title: '已归档',
+        value: statsData.archived_documents.toLocaleString(),
+        icon: iconMap.Star,
+        change: 0,
+        changeLabel: 'vs 上周',
+        color: 'warning',
+      },
+      {
+        id: 'total-folders',
+        title: '文件夹',
+        value: statsData.total_folders.toLocaleString(),
+        icon: iconMap.HardDrive,
+        change: 0,
+        changeLabel: 'vs 上周',
+        color: 'secondary',
+      },
+      {
+        id: 'templates',
+        title: '文档模板',
+        value: statsData.total_templates.toLocaleString(),
+        icon: iconMap.FileSpreadsheet,
+        change: 0,
+        changeLabel: 'vs 上周',
+        color: 'error',
+      },
+    ];
+  }, [statsData]);
 
-  const charts: ChartCard[] = [
-    {
-      id: 'document-type-distribution',
-      title: '文档类型分布',
-      chart: <PieChartComponent data={pieData} />,
-      height: 300,
-    },
-    {
-      id: 'upload-trend',
-      title: '上传趋势（近7天）',
-      chart: (
-        <LineChartComponent
-          data={lineData}
-          xKey='name'
-          yKey='uploads'
-          height={260}
-        />
-      ),
-      height: 300,
-    },
-  ];
+  const charts: ChartCard[] = useMemo(() => {
+    if (!statsData) return [];
+    const pieData = [
+      { name: '已发布', value: statsData.published_documents },
+      { name: '草稿', value: statsData.draft_documents },
+      { name: '已归档', value: statsData.archived_documents },
+    ];
+    const lineData = [
+      { name: '文档', value: statsData.total_documents },
+      { name: '模板', value: statsData.total_templates },
+      { name: '文件夹', value: statsData.total_folders },
+      { name: '本月新增', value: statsData.this_month_created },
+      { name: '本月更新', value: statsData.this_month_updated },
+    ];
+    return [
+      {
+        id: 'document-type-distribution',
+        title: '文档状态分布',
+        chart: <PieChartComponent data={pieData} />,
+        height: 300,
+      },
+      {
+        id: 'upload-trend',
+        title: '文档统计',
+        chart: (
+          <LineChartComponent
+            data={lineData}
+            xKey='name'
+            yKey='value'
+            height={260}
+          />
+        ),
+        height: 300,
+      },
+    ];
+  }, [statsData]);
 
-  const recentItems: RecentItem[] = [
-    {
-      id: 'doc-1',
-      title: '2024年度工作总结报告.pdf',
-      description: 'PDF · 工作文档 · 10分钟前',
-      status: 'success',
-    },
-    {
-      id: 'doc-2',
-      title: '产品需求规格说明书.docx',
-      description: 'Word · 项目文档 · 30分钟前',
-      status: 'success',
-    },
-    {
-      id: 'doc-3',
-      title: '财务报表-第四季度.xlsx',
-      description: 'Excel · 财务文档 · 1小时前',
-      status: 'default',
-    },
-    {
-      id: 'doc-4',
-      title: '项目进度汇报.pptx',
-      description: 'PPT · 项目文档 · 2小时前',
-      status: 'info',
-    },
-    {
-      id: 'doc-5',
-      title: '产品架构设计图.png',
-      description: '图片 · 技术文档 · 3小时前',
-      status: 'success',
-    },
-    {
-      id: 'doc-6',
-      title: '员工手册.pdf',
-      description: 'PDF · 规章制度 · 昨天',
-      status: 'default',
-    },
-  ];
+  const recentItems: RecentItem[] = [];
 
   const quickActions: QuickAction[] = [
     {
