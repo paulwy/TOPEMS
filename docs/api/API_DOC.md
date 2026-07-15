@@ -1,3 +1,5 @@
+> 🚨 路由版本过渡中：本文档描述路径含 /v1 为旧格式，新生产路径去掉 /v1。详见 [路由统一计划](../superpowers/plans/2026-07-15-route-unification-contract.md)
+
 # TOPEMS Document Service API Documentation
 
 ## 1. Service Overview

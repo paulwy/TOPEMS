@@ -8,7 +8,7 @@ TEST_TOKEN = "eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9.eyJzdWIiOiIxMjM0NTY3ODkwIiwib
 async def test_heartbeat_direct():
     print("=== Test 1: Direct connection with heartbeat ===")
     try:
-        async with websockets.connect(f'ws://localhost:8030/mes/ws/dashboard?token={TEST_TOKEN}', ping_interval=None) as ws:
+        async with websockets.connect(f'ws://localhost:8030/ws/mes/dashboard?token={TEST_TOKEN}', ping_interval=None) as ws:
             print("✅ Connected directly to backend")
             msg = await ws.recv()
             data = json.loads(msg)
@@ -36,7 +36,7 @@ async def test_heartbeat_direct():
 async def test_heartbeat_proxy():
     print("\n=== Test 2: Proxy connection with heartbeat ===")
     try:
-        async with websockets.connect(f'ws://localhost:3000/mes/ws/dashboard?token={TEST_TOKEN}', ping_interval=None) as ws:
+        async with websockets.connect(f'ws://localhost:3000/ws/mes/dashboard?token={TEST_TOKEN}', ping_interval=None) as ws:
             print("✅ Connected via Vite proxy")
             msg = await ws.recv()
             data = json.loads(msg)
@@ -64,7 +64,7 @@ async def test_heartbeat_proxy():
 async def test_reconnection():
     print("\n=== Test 3: Reconnection test ===")
     try:
-        async with websockets.connect(f'ws://localhost:3000/mes/ws/dashboard?token={TEST_TOKEN}', ping_interval=None) as ws:
+        async with websockets.connect(f'ws://localhost:3000/ws/mes/dashboard?token={TEST_TOKEN}', ping_interval=None) as ws:
             msg = await ws.recv()
             print("✅ First connection successful")
             
@@ -73,7 +73,7 @@ async def test_reconnection():
             
         await asyncio.sleep(1)
         
-        async with websockets.connect(f'ws://localhost:3000/mes/ws/dashboard?token={TEST_TOKEN}', ping_interval=None) as ws:
+        async with websockets.connect(f'ws://localhost:3000/ws/mes/dashboard?token={TEST_TOKEN}', ping_interval=None) as ws:
             msg = await ws.recv()
             print("✅ Reconnection successful")
             return True

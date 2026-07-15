@@ -134,8 +134,17 @@ const handleAuthError = (): void => {
   }
 };
 
+const PUBLIC_API_PATTERNS = [
+  '/health',
+  '/auth/login',
+  '/auth/register',
+  '/auth/refresh',
+  '/auth/forgot-password',
+  '/auth/reset-password',
+];
+
 const isPublicPath = (url: string): boolean => {
-  return url === '/health' || url.startsWith('/auth/');
+  return PUBLIC_API_PATTERNS.some((p) => url === p || url.endsWith(p));
 };
 
 interface CreateAxiosClientOptions {
@@ -183,6 +192,14 @@ export const createAxiosClient = ({
       const url = requestConfig.url || '';
       const requestBaseURL = requestConfig.baseURL || '';
       const fullUrl = `${requestBaseURL}${url}`;
+
+      apiLogger.info(`[日志1-请求发送] ${requestConfig.method?.toUpperCase()} ${fullUrl}`, {
+        hasToken: !!token,
+        tokenLength: token?.length || 0,
+        hasAuthHeader: !!requestConfig.headers['Authorization'],
+        isPublicPath: isPublicPath(url),
+        timestamp: new Date().toISOString(),
+      });
 
       if (isDevelopment()) {
         apiLogger.debug(`[API Request] ${requestConfig.method?.toUpperCase()} ${fullUrl}`, {
@@ -314,7 +331,27 @@ export const createAxiosClient = ({
 
       if (error.response?.status === 401) {
         const currentPath = window.location.pathname;
-        if (currentPath !== '/login' && currentPath !== '/register') {
+        const tokenBefore = localStorage.getItem('token');
+        const requestIsAuthPublicApi = isPublicPath(url);
+
+        apiLogger.warn(`[日志2-收到401响应] ${fullUrl}`, {
+          currentPath,
+          hasTokenBeforeClear: !!tokenBefore,
+          isUserOnLoginPage: currentPath === '/login' || currentPath === '/register',
+          isRequestAuthPublicApi: requestIsAuthPublicApi,
+          serverMessage: error.response?.data?.message || error.response?.statusText,
+          willClearToken:
+            !requestIsAuthPublicApi && currentPath !== '/login' && currentPath !== '/register',
+          timestamp: new Date().toISOString(),
+        });
+
+        // 关键：如果请求本身是登录/注册/刷新/找回密码等认证公开API，
+        // 返回 401 是正常业务失败（如密码错误），不应清除 token 或触发登出事件
+        if (
+          !requestIsAuthPublicApi &&
+          currentPath !== '/login' &&
+          currentPath !== '/register'
+        ) {
           handleAuthError();
         }
         return Promise.reject(error);
@@ -342,12 +379,12 @@ export const createAxiosClient = ({
 
       const isHealthCheck = url.includes('/health');
       const isNotFound = error.response?.status === 404;
-      const isServiceUnavailable = error.response?.status === 503;
+      const hasServiceUnavailable = error.response?.status === 503;
       const isServerError = error.response?.status === 500;
 
       if (
         isProduction() ||
-        !(isHealthCheck || isNotFound || isServiceUnavailable || isServerError)
+        !(isHealthCheck || isNotFound || hasServiceUnavailable || isServerError)
       ) {
         logger.error('Response error:', error);
       }

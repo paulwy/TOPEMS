@@ -31,8 +31,9 @@ use utoipa::OpenApi;
 
 use topems_shared::{
     auth_middleware, check_http_health, create_api_info_router, create_cors_layer,
-    create_database_pool, init_telemetry, rls_middleware, telemetry_middleware, ApiResponse,
-    AuthState, DatabaseConfig, DependencyHealth, HealthStatus, ServiceHealth, SystemMetrics,
+    create_database_pool, init_telemetry, rls_middleware, telemetry_middleware, wrap_group2_router,
+    ApiResponse, AuthState, DatabaseConfig, DependencyHealth, HealthStatus, RouteCompatConfig,
+    ServiceHealth, SystemMetrics,
 };
 
 use modules::wms_plugin::{auto_register_to_core, get_plugin_info, plugin_health_check};
@@ -404,6 +405,9 @@ async fn main() -> Result<()> {
         .layer(prometheus_layer)
         .layer(cors)
         .with_state(api_state.clone());
+
+    let cfg = RouteCompatConfig::new("wms", "/api/core/wms", &[]);
+    let app = wrap_group2_router(app, cfg);
 
     let port = env::var("WMS_PORT")
         .or_else(|_| env::var("SERVER_PORT"))

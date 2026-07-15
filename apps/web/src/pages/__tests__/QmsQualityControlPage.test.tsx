@@ -130,16 +130,16 @@ vi.mock('@/store', () => ({
 }));
 
 describe('QmsQualityControlPage', () => {
-  it('should render without crashing', () => {
+it('should render without crashing', () => {
     const { container } = render(
       <BrowserRouter>
         <QmsQualityControlPage />
       </BrowserRouter>
     );
     expect(container).toBeDefined();
-  });
+});
 
-  it('should have QMS API methods defined', () => {
+it('should have QMS API methods defined', () => {
     render(
       <BrowserRouter>
         <QmsQualityControlPage />
@@ -147,5 +147,6 @@ describe('QmsQualityControlPage', () => {
     );
     expect(qmsApi.qualityIssues.list).toBeDefined();
     expect(qmsApi.inspections.list).toBeDefined();
-  });
+});
+;
 });

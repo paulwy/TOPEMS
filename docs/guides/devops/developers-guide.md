@@ -397,9 +397,9 @@ TOPEMS 使用统一的 WebSocket 路径命名规范：
 |------|----------|----------|----------|----------|
 | Core | `/ws/core/notifications` | `/ws/core` → 8000 | `/ws/core/notifications` | 8000 |
 | Core | `/ws/core/im` | `/ws/core` → 8000 | `/ws/core/im` | 8000 |
-| MES | `/mes/ws/dashboard` | `/mes/ws` → 8030 | `/mes/ws/dashboard` | 8030 |
-| GIS | `/gis/ws` | `/gis/ws` → 8071 (重写) | `/api/gis/ws` | 8071 |
-| GIS | `/gis/ws/device/{device_code}` | `/gis/ws` → 8071 (重写) | `/api/gis/ws/device/{device_code}` | 8071 |
+| MES | `/ws/mes/dashboard` | `/ws/mes` → 8030 | `/ws/mes/dashboard` | 8030 |
+| BI | `/ws/bi/dashboard/{id}` | `/ws/bi` → 8060 | `/ws/bi/dashboard/{id}` | 8060 |
+| GIS | `/ws/gis` | `/ws/gis` → 8071 | `/ws/gis` | 8071 |
 
 ### 前端连接方式
 
@@ -438,7 +438,7 @@ const { connect, disconnect, send } = useNotificationWebSocket({
 
 ```typescript
 const protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
-const wsUrl = `${protocol}//${window.location.host}/mes/ws/dashboard`;
+const wsUrl = `${protocol}//${window.location.host}/ws/mes/dashboard`;
 const ws = new WebSocket(wsUrl);
 
 ws.onopen = () => {
@@ -471,14 +471,19 @@ ws.onclose = () => {
 #### MES 服务
 
 ```rust
-.route("/mes/ws/dashboard", axum::routing::get(api::dashboard_ws::dashboard_websocket))
+.route("/ws/mes/dashboard", axum::routing::get(modules::dashboard_ws::dashboard_websocket))
+```
+
+#### BI 服务
+
+```rust
+.route("/ws/bi/dashboard/{dashboard_id}", get(modules::bi::websocket::dashboard_websocket))
 ```
 
 #### GIS 服务
 
 ```rust
-.route("/api/gis/ws", get(api::websocket::websocket_handler))
-.route("/api/gis/ws/device/{device_code}", get(api::websocket::websocket_device_handler))
+.route("/ws/gis", get(modules::gis_ws::gis_websocket))
 ```
 
 ### Vite 代理配置
@@ -492,7 +497,7 @@ ws.onclose = () => {
   timeout: 60000,
 },
 
-'/mes/ws': {
+'/ws/mes': {
   target: 'http://localhost:8030',
   changeOrigin: true,
   ws: true,
@@ -500,13 +505,20 @@ ws.onclose = () => {
   timeout: 60000,
 },
 
-'/gis/ws': {
+'/ws/bi': {
+  target: 'http://localhost:8060',
+  changeOrigin: true,
+  ws: true,
+  proxyTimeout: 60000,
+  timeout: 60000,
+},
+
+'/ws/gis': {
   target: 'http://localhost:8071',
   changeOrigin: true,
   ws: true,
   proxyTimeout: 60000,
   timeout: 60000,
-  rewrite: (path: string) => path.replace(/^\/gis\/ws/, '/api/gis/ws'),
 },
 ```
 

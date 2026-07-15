@@ -340,6 +340,17 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
   // Listen for unauthorized events from API client to sync React state with localStorage
   useEffect(() => {
     const handleUnauthorized = () => {
+      const tokenAtEventTime = localStorage.getItem('token');
+      const userAtEventTime = localStorage.getItem('user');
+      
+      authLogger.warn('[日志4-收到未授权事件触发登出]', {
+        hasTokenAtEventTime: !!tokenAtEventTime,
+        hasUserAtEventTime: !!userAtEventTime,
+        currentPath: window.location.pathname,
+        callingLogout: true,
+        timestamp: new Date().toISOString(),
+      });
+
       logout();
     };
     window.addEventListener('auth:unauthorized', handleUnauthorized);

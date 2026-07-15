@@ -33,8 +33,8 @@ use sqlx::PgPool;
 
 use topems_shared::{
     auth_middleware, create_cors_layer, get_api_info_handler, init_telemetry, rls_middleware,
-    simple_health_check, telemetry_middleware, ApiResponse, AuthState, ServiceHealth,
-    SimpleHealthConfig,
+    simple_health_check, telemetry_middleware, wrap_group2_router, ApiResponse, AuthState,
+    RouteCompatConfig, ServiceHealth, SimpleHealthConfig,
 };
 
 pub use shared::*;
@@ -117,6 +117,12 @@ async fn main() {
         .route(
             "/metrics",
             get(move || async move { metric_handle.render() }),
+        )
+        // WebSocket - auth handled via token query param (subscribe message)
+        // Consistent with Core/MES/GIS WebSocket placement
+        .route(
+            "/ws/bi/dashboard/{dashboard_id}",
+            get(modules::bi::websocket::dashboard_websocket),
         );
 
     // Protected routes (auth required)
@@ -230,11 +236,6 @@ async fn main() {
         .route(
             "/api/bi/dashboard/user/{owner_id}",
             get(modules::bi::dashboard::get_user_dashboards),
-        )
-        // WebSocket
-        .route(
-            "/ws/dashboard/{dashboard_id}",
-            get(modules::bi::websocket::dashboard_websocket),
         )
         // Widget
         .route("/api/bi/widget", get(modules::bi::widget::list_widgets))
@@ -1076,6 +1077,9 @@ async fn main() {
         .layer(cors)
         .layer(prometheus_layer)
         .with_state(state);
+
+    let cfg = RouteCompatConfig::new("analytics", "/api/core/bi", &[]);
+    let app = wrap_group2_router(app, cfg);
 
     let port = std::env::var("ANALYTICS_PORT")
         .unwrap_or_else(|_| "8060".to_string())

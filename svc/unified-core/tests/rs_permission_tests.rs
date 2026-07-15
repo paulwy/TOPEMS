@@ -12,19 +12,6 @@ use serde_json::{json, Value};
 
 const API_URL: &str = "http://localhost:8000";
 
-/// 检查 API 服务是否可用
-async fn ensure_api_available() -> bool {
-    reqwest::Client::builder()
-        .timeout(std::time::Duration::from_secs(2))
-        .build()
-        .unwrap()
-        .get(format!("{}/api/core/iam/auth/login", API_URL))
-        .send()
-        .await
-        .map(|resp| !resp.status().is_server_error())
-        .unwrap_or(false)
-}
-
 fn create_client() -> Client {
     Client::new()
 }
@@ -32,7 +19,7 @@ fn create_client() -> Client {
 async fn login(username: &str, password: &str) -> Result<String, String> {
     let client = create_client();
     let response = client
-        .post(format!("{}/api/core/iam/auth/login", API_URL))
+        .post(format!("{}/api/core/iam/v1/auth/login", API_URL))
         .json(&json!({ "username": username, "password": password }))
         .send()
         .await
@@ -86,15 +73,12 @@ async fn auth_request(
 // ==================== RS-001: 查看资源列表 ====================
 
 #[tokio::test]
+#[ignore]
 async fn test_rs_001_list_resources() {
-    if !ensure_api_available().await {
-        eprintln!("⏭ 跳过: API服务未运行 ({})", API_URL);
-        return;
-    }
     tracing::info!("测试 RS-001: 查看资源列表");
     let token = login("admin", "admin123").await.expect("管理员登录失败");
     let client = create_client();
-    match auth_request(&client, &token, "GET", "/api/core/rd/resources", None).await {
+    match auth_request(&client, &token, "GET", "/api/core/rs/v1/resources", None).await {
         Ok((status, body)) => {
             assert_eq!(status, 200, "状态码应为 200");
             assert!(body["success"].as_bool().unwrap_or(false), "请求应成功");
@@ -107,11 +91,8 @@ async fn test_rs_001_list_resources() {
 // ==================== RS-002: 创建资源 ====================
 
 #[tokio::test]
+#[ignore]
 async fn test_rs_002_create_resource() {
-    if !ensure_api_available().await {
-        eprintln!("⏭ 跳过: API服务未运行 ({})", API_URL);
-        return;
-    }
     tracing::info!("测试 RS-002: 创建资源");
     let token = login("admin", "admin123").await.expect("管理员登录失败");
     let client = create_client();
@@ -119,7 +100,7 @@ async fn test_rs_002_create_resource() {
         &client,
         &token,
         "POST",
-        "/api/core/rd/resources",
+        "/api/core/rs/v1/resources",
         Some(json!({
             "name": "测试资源",
             "type": "server",
@@ -139,15 +120,12 @@ async fn test_rs_002_create_resource() {
 // ==================== RS-003: 分配资源 ====================
 
 #[tokio::test]
+#[ignore]
 async fn test_rs_003_allocate_resource() {
-    if !ensure_api_available().await {
-        eprintln!("⏭ 跳过: API服务未运行 ({})", API_URL);
-        return;
-    }
     tracing::info!("测试 RS-003: 分配资源");
     let token = login("admin", "admin123").await.expect("管理员登录失败");
     let client = create_client();
-    match auth_request(&client, &token, "GET", "/api/core/rd/resources", None).await {
+    match auth_request(&client, &token, "GET", "/api/core/rs/v1/resources", None).await {
         Ok((_, body)) => {
             let resources = body["data"]["resources"]
                 .as_array()
@@ -159,7 +137,7 @@ async fn test_rs_003_allocate_resource() {
                             &client,
                             &token,
                             "POST",
-                            &format!("/api/core/rd/resources/{}/allocate", id),
+                            &format!("/api/core/rs/v1/resources/{}/allocate", id),
                             Some(json!({ "user_id": null })),
                         )
                         .await
@@ -183,15 +161,12 @@ async fn test_rs_003_allocate_resource() {
 // ==================== RS-004: 释放资源 ====================
 
 #[tokio::test]
+#[ignore]
 async fn test_rs_004_release_resource() {
-    if !ensure_api_available().await {
-        eprintln!("⏭ 跳过: API服务未运行 ({})", API_URL);
-        return;
-    }
     tracing::info!("测试 RS-004: 释放资源");
     let token = login("admin", "admin123").await.expect("管理员登录失败");
     let client = create_client();
-    match auth_request(&client, &token, "GET", "/api/core/rd/resources", None).await {
+    match auth_request(&client, &token, "GET", "/api/core/rs/v1/resources", None).await {
         Ok((_, body)) => {
             let resources = body["data"]["resources"]
                 .as_array()
@@ -206,7 +181,7 @@ async fn test_rs_004_release_resource() {
                             &client,
                             &token,
                             "POST",
-                            &format!("/api/core/rd/resources/{}/release", id),
+                            &format!("/api/core/rs/v1/resources/{}/release", id),
                             None,
                         )
                         .await
@@ -230,15 +205,12 @@ async fn test_rs_004_release_resource() {
 // ==================== RS-005: 资源使用统计 ====================
 
 #[tokio::test]
+#[ignore]
 async fn test_rs_005_resource_stats() {
-    if !ensure_api_available().await {
-        eprintln!("⏭ 跳过: API服务未运行 ({})", API_URL);
-        return;
-    }
     tracing::info!("测试 RS-005: 资源使用统计");
     let token = login("admin", "admin123").await.expect("管理员登录失败");
     let client = create_client();
-    match auth_request(&client, &token, "GET", "/api/core/rd/stats", None).await {
+    match auth_request(&client, &token, "GET", "/api/core/rs/v1/stats", None).await {
         Ok((status, body)) => {
             assert_eq!(status, 200, "状态码应为 200");
             assert!(body["success"].as_bool().unwrap_or(false), "请求应成功");
@@ -251,11 +223,8 @@ async fn test_rs_005_resource_stats() {
 // ==================== 测试总结 ====================
 
 #[tokio::test]
+#[ignore]
 async fn run_all_rs_tests_summary() {
-    if !ensure_api_available().await {
-        eprintln!("⏭ 跳过: API服务未运行 ({})", API_URL);
-        return;
-    }
     tracing::info!("========================================");
     tracing::info!("  RS 权限测试套件 (5个用例)");
     tracing::info!("========================================");

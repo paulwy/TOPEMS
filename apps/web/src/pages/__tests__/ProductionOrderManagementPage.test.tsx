@@ -115,7 +115,7 @@ vi.mock('@/store', () => ({
 }));
 
 describe('ProductionOrderManagementPage', () => {
-  it('should render without crashing', () => {
+it('should render without crashing', () => {
     const { container } = render(
       <QueryClientProvider client={queryClient}>
         <BrowserRouter>
@@ -124,13 +124,13 @@ describe('ProductionOrderManagementPage', () => {
       </QueryClientProvider>
     );
     expect(container).toBeDefined();
-  });
-  describe('ProductionOrderManagementPage', () => {
-    it('should have production order API methods defined', () => {
-      expect(mesApi.productionOrders.list).toBeDefined();
-      expect(mesApi.productionOrders.create).toBeDefined();
-      expect(mesApi.productionOrders.get).toBeDefined();
-      expect(mesApi.productionOrders.update).toBeDefined();
-    });
-  });
+});
+
+it('should have production order API methods defined', () => {
+    expect(mesApi.productionOrders.list).toBeDefined();
+    expect(mesApi.productionOrders.create).toBeDefined();
+    expect(mesApi.productionOrders.get).toBeDefined();
+    expect(mesApi.productionOrders.update).toBeDefined();
+});
+;
 });

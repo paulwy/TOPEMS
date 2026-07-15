@@ -20,7 +20,7 @@ export interface UserInfo {
 }
 
 export const iamApi = {
-  login: (data: LoginRequest) => apiClient.post('/api/core/iam/login', data),
+  login: (data: LoginRequest) => apiClient.post('/api/core/iam/auth/login', data),
   getUserInfo: () => apiClient.get<UserInfo>('/api/core/iam/users/me'),
-  logout: () => apiClient.post('/api/core/iam/logout'),
+  logout: () => apiClient.post('/api/core/iam/auth/logout'),
 };

@@ -111,7 +111,7 @@ vi.mock('@/store', () => ({
 }));
 
 describe('WIPPage', () => {
-  it('should render without crashing', () => {
+it('should render without crashing', () => {
     // WIPPage is a stub component that returns null
     render(
       <BrowserRouter>
@@ -120,12 +120,13 @@ describe('WIPPage', () => {
     );
     // Stub component renders null, so no errors is the expected behavior
     expect(true).toBe(true);
-  });
+});
 
-  it('should have valid mock API', () => {
+it('should have valid mock API', () => {
     expect(mesApi.wips.list).toBeDefined();
     expect(mesApi.wips.create).toBeDefined();
     expect(mesApi.wips.update).toBeDefined();
     expect(mesApi.wips.delete).toBeDefined();
-  });
+});
+;
 });

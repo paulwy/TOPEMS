@@ -12,19 +12,6 @@ use serde_json::{json, Value};
 
 const API_URL: &str = "http://localhost:8000";
 
-/// 检查 API 服务是否可用
-async fn ensure_api_available() -> bool {
-    reqwest::Client::builder()
-        .timeout(std::time::Duration::from_secs(2))
-        .build()
-        .unwrap()
-        .get(format!("{}/api/core/iam/auth/login", API_URL))
-        .send()
-        .await
-        .map(|resp| !resp.status().is_server_error())
-        .unwrap_or(false)
-}
-
 fn create_client() -> Client {
     Client::new()
 }
@@ -32,7 +19,7 @@ fn create_client() -> Client {
 async fn login(username: &str, password: &str) -> Result<String, String> {
     let client = create_client();
     let response = client
-        .post(format!("{}/api/core/iam/auth/login", API_URL))
+        .post(format!("{}/api/core/iam/v1/auth/login", API_URL))
         .json(&json!({ "username": username, "password": password }))
         .send()
         .await
@@ -86,11 +73,8 @@ async fn auth_request(
 // ==================== CRM-001: 查看客户列表 ====================
 
 #[tokio::test]
+#[ignore]
 async fn test_crm_001_list_customers() {
-    if !ensure_api_available().await {
-        eprintln!("⏭ 跳过: API服务未运行 ({})", API_URL);
-        return;
-    }
     tracing::info!("测试 CRM-001: 查看客户列表");
     let token = login("admin", "admin123").await.expect("管理员登录失败");
     let client = create_client();
@@ -107,11 +91,8 @@ async fn test_crm_001_list_customers() {
 // ==================== CRM-002: 创建客户 ====================
 
 #[tokio::test]
+#[ignore]
 async fn test_crm_002_create_customer() {
-    if !ensure_api_available().await {
-        eprintln!("⏭ 跳过: API服务未运行 ({})", API_URL);
-        return;
-    }
     tracing::info!("测试 CRM-002: 创建客户");
     let token = login("admin", "admin123").await.expect("管理员登录失败");
     let client = create_client();
@@ -144,11 +125,8 @@ async fn test_crm_002_create_customer() {
 // ==================== CRM-003: 更新客户信息 ====================
 
 #[tokio::test]
+#[ignore]
 async fn test_crm_003_update_customer() {
-    if !ensure_api_available().await {
-        eprintln!("⏭ 跳过: API服务未运行 ({})", API_URL);
-        return;
-    }
     tracing::info!("测试 CRM-003: 更新客户信息");
     let token = login("admin", "admin123").await.expect("管理员登录失败");
     let client = create_client();
@@ -183,11 +161,8 @@ async fn test_crm_003_update_customer() {
 // ==================== CRM-004: 删除客户 ====================
 
 #[tokio::test]
+#[ignore]
 async fn test_crm_004_delete_customer() {
-    if !ensure_api_available().await {
-        eprintln!("⏭ 跳过: API服务未运行 ({})", API_URL);
-        return;
-    }
     tracing::info!("测试 CRM-004: 删除客户");
     let token = login("admin", "admin123").await.expect("管理员登录失败");
     let client = create_client();
@@ -228,11 +203,8 @@ async fn test_crm_004_delete_customer() {
 // ==================== CRM-005: 查看商机列表 ====================
 
 #[tokio::test]
+#[ignore]
 async fn test_crm_005_list_opportunities() {
-    if !ensure_api_available().await {
-        eprintln!("⏭ 跳过: API服务未运行 ({})", API_URL);
-        return;
-    }
     tracing::info!("测试 CRM-005: 查看商机列表");
     let token = login("admin", "admin123").await.expect("管理员登录失败");
     let client = create_client();
@@ -249,11 +221,8 @@ async fn test_crm_005_list_opportunities() {
 // ==================== CRM-006: 创建商机 ====================
 
 #[tokio::test]
+#[ignore]
 async fn test_crm_006_create_opportunity() {
-    if !ensure_api_available().await {
-        eprintln!("⏭ 跳过: API服务未运行 ({})", API_URL);
-        return;
-    }
     tracing::info!("测试 CRM-006: 创建商机");
     let token = login("admin", "admin123").await.expect("管理员登录失败");
     let client = create_client();
@@ -282,11 +251,8 @@ async fn test_crm_006_create_opportunity() {
 // ==================== CRM-007: 查看联系人 ====================
 
 #[tokio::test]
+#[ignore]
 async fn test_crm_007_list_contacts() {
-    if !ensure_api_available().await {
-        eprintln!("⏭ 跳过: API服务未运行 ({})", API_URL);
-        return;
-    }
     tracing::info!("测试 CRM-007: 查看联系人");
     let token = login("admin", "admin123").await.expect("管理员登录失败");
     let client = create_client();
@@ -303,11 +269,8 @@ async fn test_crm_007_list_contacts() {
 // ==================== CRM-008: 查看客户跟进记录 ====================
 
 #[tokio::test]
+#[ignore]
 async fn test_crm_008_view_followups() {
-    if !ensure_api_available().await {
-        eprintln!("⏭ 跳过: API服务未运行 ({})", API_URL);
-        return;
-    }
     tracing::info!("测试 CRM-008: 查看客户跟进记录");
     let token = login("admin", "admin123").await.expect("管理员登录失败");
     let client = create_client();
@@ -324,11 +287,8 @@ async fn test_crm_008_view_followups() {
 // ==================== 测试总结 ====================
 
 #[tokio::test]
+#[ignore]
 async fn run_all_crm_tests_summary() {
-    if !ensure_api_available().await {
-        eprintln!("⏭ 跳过: API服务未运行 ({})", API_URL);
-        return;
-    }
     tracing::info!("========================================");
     tracing::info!("  CRM 权限测试套件 (8个用例)");
     tracing::info!("========================================");

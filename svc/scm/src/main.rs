@@ -31,8 +31,9 @@ use std::time::Duration;
 use topems_shared::redis::RedisCacheService;
 use topems_shared::{
     auth_middleware, build_health_response, create_api_info_router, create_cors_layer,
-    create_database_pool, init_telemetry, rls_middleware, telemetry_middleware, ApiResponse,
-    AuthState, DatabaseConfig, RedisConfig, RedisPool as RedisPoolTrait, ServiceHealth,
+    create_database_pool, init_telemetry, rls_middleware, telemetry_middleware, wrap_group2_router,
+    ApiResponse, AuthState, DatabaseConfig, RedisConfig, RedisPool as RedisPoolTrait,
+    RouteCompatConfig, ServiceHealth,
 };
 use tower_http::{compression::CompressionLayer, timeout::TimeoutLayer};
 
@@ -317,6 +318,9 @@ async fn main() -> Result<()> {
             StatusCode::REQUEST_TIMEOUT,
             Duration::from_secs(30),
         ));
+
+    let cfg = RouteCompatConfig::new("scm", "/api/core/scm", &[]);
+    let app = wrap_group2_router(app, cfg);
 
     let port = env::var("SCM_PORT")
         .or_else(|_| env::var("SERVER_PORT"))

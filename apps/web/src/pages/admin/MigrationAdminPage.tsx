@@ -1,5 +1,4 @@
-import React, { useState, useEffect, useCallback, useMemo } from 'react';
-import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import React, { useState, useMemo } from 'react';
 import { Play, Eye, RotateCcw, FileSearch } from 'lucide-react';
 import {
   Box,
@@ -23,6 +22,8 @@ import { useNotificationStore } from '@/store';
 import { ListPageTemplate, type ColumnDef } from '@/components/templates';
 import { PageContainer } from '@/components/common';
 import { migrationApi, type MigrationService, type MigrationStatus } from '@/api/migration';
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import { apiLogger } from '@/utils/logger';
 
 interface ServiceStatusMap {
   [serviceName: string]: MigrationStatus;
@@ -30,200 +31,144 @@ interface ServiceStatusMap {
 
 const MigrationAdminPage: React.FC = () => {
   const theme = useTheme();
+  const { addNotification } = useNotificationStore();
   const queryClient = useQueryClient();
-  const addNotification = useNotificationStore((state) => state.addNotification);
-  const [statusLoading, setStatusLoading] = useState<string | null>(null);
-  const [statusMap, setStatusMap] = useState<ServiceStatusMap>({});
+
+  const [applyingService, setApplyingService] = useState<string | null>(null);
+  const [rollingBackService, setRollingBackService] = useState<string | null>(null);
+  const [batchApplying, setBatchApplying] = useState(false);
   const [activeService, setActiveService] = useState<MigrationService | null>(null);
   const [statusDialogOpen, setStatusDialogOpen] = useState(false);
   const [searchValue, setSearchValue] = useState('');
 
-  const servicesQuery = useQuery<MigrationService[]>({
-    queryKey: ['admin-migration-services'],
-    queryFn: async () => migrationApi.listServices(),
+  const servicesQuery = useQuery({
+    queryKey: ['migration-services'],
+    queryFn: async () => {
+      const data = await migrationApi.listServices();
+      return data;
+    },
     staleTime: 5 * 60 * 1000,
   });
 
-  const services = servicesQuery.data ?? [];
-  const loading = servicesQuery.isLoading;
+  const statusQuery = useQuery({
+    queryKey: ['migration-status', servicesQuery.data?.map((s) => s.name) || []],
+    queryFn: async () => {
+      const services = servicesQuery.data || [];
+      if (services.length === 0) return {};
 
-  useEffect(() => {
-    if (servicesQuery.isError) {
-      addNotification({
-        title: '错误',
-        message: (servicesQuery.error as { message?: string })?.message || '加载服务列表失败',
-        type: 'error',
-      });
-    }
-  }, [servicesQuery.isError, servicesQuery.error, addNotification]);
-
-  useEffect(() => {
-    if (!servicesQuery.isSuccess || services.length === 0) return;
-    let cancelled = false;
-    (async () => {
       const results = await Promise.all(
         services.map((svc) => migrationApi.getMigrationStatus(svc.name).catch(() => null))
       );
-      if (cancelled) return;
-      const nextStatusMap: ServiceStatusMap = {};
-      services.forEach((svc, idx) => {
-        if (results[idx]) nextStatusMap[svc.name] = results[idx] as MigrationStatus;
-      });
-      setStatusMap((prev) => ({ ...prev, ...nextStatusMap }));
-    })();
-    return () => {
-      cancelled = true;
-    };
-  }, [servicesQuery.isSuccess, services]);
 
-  const fetchStatusFor = useCallback(
-    async (serviceName: string, silent = false) => {
-      if (!silent) setStatusLoading(serviceName);
-      try {
-        const status = await migrationApi.getMigrationStatus(serviceName);
-        setStatusMap((prev) => ({ ...prev, [serviceName]: status }));
-        return status;
-      } catch (err: unknown) {
-        if (!silent)
-          addNotification({
-            title: '错误',
-            message: (err as { message?: string }).message || '获取迁移状态失败',
-            type: 'error',
-          });
-        return null;
-      } finally {
-        if (!silent) setStatusLoading(null);
-      }
+      const statusMap: ServiceStatusMap = {};
+      services.forEach((svc, idx) => {
+        if (results[idx]) statusMap[svc.name] = results[idx] as MigrationStatus;
+      });
+      return statusMap;
     },
-    [addNotification]
-  );
+    enabled: !!servicesQuery.data && servicesQuery.data.length > 0,
+    staleTime: 5 * 60 * 1000,
+  });
+
+  const services = servicesQuery.data || [];
+  const loading = servicesQuery.isLoading;
+  const statusMap = statusQuery.data || {};
 
   const applyMutation = useMutation({
-    mutationFn: async (service: MigrationService) => {
-      const result = await migrationApi.applyMigration(service.name, 'schema');
-      return { service, result };
-    },
-    onSuccess: async ({ service, result }) => {
+    mutationFn: (serviceName: string) => migrationApi.applyMigration(serviceName, 'schema'),
+    onSuccess: (result, serviceName) => {
       addNotification({
         title: '成功',
-        message: `${service.name} 迁移执行成功，共 ${result.files.length} 个文件`,
+        message: `${serviceName} 迁移执行成功，共 ${result.files.length} 个文件`,
         type: 'success',
       });
-      await fetchStatusFor(service.name, true);
-      await queryClient.invalidateQueries({ queryKey: ['admin-migration-services'] });
+      queryClient.invalidateQueries({ queryKey: ['migration-status'] });
     },
-    onError: (err: unknown, service: MigrationService) => {
+    onError: (error: unknown, serviceName) => {
+      apiLogger.error('迁移执行失败:', error);
       addNotification({
         title: '错误',
-        message: (err as { message?: string }).message || `${service.name} 迁移执行失败`,
+        message: (error as { message?: string }).message || `${serviceName} 迁移执行失败`,
         type: 'error',
       });
     },
   });
 
   const rollbackMutation = useMutation({
-    mutationFn: async (service: MigrationService) => {
-      const result = await migrationApi.rollbackMigration(service.name);
-      return { service, result };
-    },
-    onSuccess: async ({ service, result }) => {
+    mutationFn: (serviceName: string) => migrationApi.rollbackMigration(serviceName),
+    onSuccess: (result, serviceName) => {
       addNotification({
         title: '成功',
-        message: `${service.name} 回滚完成：${result.record ? '已移除记录' : '无记录可回滚'}`,
+        message: `${serviceName} 回滚完成：${result.record ? '已移除记录' : '无记录可回滚'}`,
         type: 'success',
       });
-      await fetchStatusFor(service.name, true);
-      await queryClient.invalidateQueries({ queryKey: ['admin-migration-services'] });
+      queryClient.invalidateQueries({ queryKey: ['migration-status'] });
     },
-    onError: (err: unknown, service: MigrationService) => {
+    onError: (error: unknown, serviceName) => {
+      apiLogger.error('回滚失败:', error);
       addNotification({
         title: '错误',
-        message: (err as { message?: string }).message || `${service.name} 回滚失败`,
+        message: (error as { message?: string }).message || `${serviceName} 回滚失败`,
         type: 'error',
       });
     },
   });
 
-  const batchApplyMutation = useMutation({
-    mutationFn: async (servicesToApply: MigrationService[]) => {
-      let succeeded = 0;
-      let failed = 0;
-      for (const svc of servicesToApply) {
-        try {
-          await migrationApi.applyMigration(svc.name, 'schema');
-          succeeded += 1;
-        } catch (err: unknown) {
-          failed += 1;
-          addNotification({
-            title: '错误',
-            message: `${svc.name} 迁移失败：${(err as { message?: string }).message || '未知错误'}`,
-            type: 'error',
-          });
-        }
-      }
-      const results = await Promise.all(
-        servicesToApply.map((svc) => migrationApi.getMigrationStatus(svc.name).catch(() => null))
-      );
-      const nextStatusMap: ServiceStatusMap = {};
-      servicesToApply.forEach((svc, idx) => {
-        if (results[idx]) nextStatusMap[svc.name] = results[idx] as MigrationStatus;
-      });
-      setStatusMap((prev) => ({ ...prev, ...nextStatusMap }));
-      return { succeeded, failed };
-    },
-    onSuccess: ({ succeeded, failed }) => {
-      addNotification({
-        title: failed === 0 ? '成功' : '警告',
-        message: `批量迁移完成：成功 ${succeeded} 个，失败 ${failed} 个`,
-        type: failed === 0 ? 'success' : 'warning',
-      });
-      queryClient.invalidateQueries({ queryKey: ['admin-migration-services'] });
-    },
-  });
+  const handleApply = async (service: MigrationService) => {
+    setApplyingService(service.name);
+    await applyMutation.mutateAsync(service.name);
+    setApplyingService(null);
+  };
 
-  const applyingService = applyMutation.isPending
-    ? ((applyMutation.variables as MigrationService)?.name ?? null)
-    : null;
-  const rollingBackService = rollbackMutation.isPending
-    ? ((rollbackMutation.variables as MigrationService)?.name ?? null)
-    : null;
-  const batchApplying = batchApplyMutation.isPending;
+  const handleRollback = async (service: MigrationService) => {
+    if (!window.confirm(`确认回滚 ${service.name} 最近一次迁移？该操作不可恢复。`)) {
+      return;
+    }
+    setRollingBackService(service.name);
+    await rollbackMutation.mutateAsync(service.name);
+    setRollingBackService(null);
+  };
 
-  const handleApply = useCallback(
-    (service: MigrationService) => {
-      applyMutation.mutate(service);
-    },
-    [applyMutation]
-  );
+  const handleShowStatus = async (service: MigrationService) => {
+    setActiveService(service);
+    setStatusDialogOpen(true);
+    if (!statusMap[service.name]) {
+      queryClient.invalidateQueries({ queryKey: ['migration-status'] });
+    }
+  };
 
-  const handleRollback = useCallback(
-    (service: MigrationService) => {
-      if (!window.confirm(`确认回滚 ${service.name} 最近一次迁移？该操作不可恢复。`)) {
-        return;
-      }
-      rollbackMutation.mutate(service);
-    },
-    [rollbackMutation]
-  );
-
-  const handleShowStatus = useCallback(
-    async (service: MigrationService) => {
-      setActiveService(service);
-      setStatusDialogOpen(true);
-      if (!statusMap[service.name]) {
-        await fetchStatusFor(service.name);
-      }
-    },
-    [statusMap, fetchStatusFor]
-  );
-
-  const handleBatchApply = useCallback(() => {
+  const handleBatchApply = async () => {
     if (services.length === 0) return;
     if (!window.confirm(`将对全部 ${services.length} 个服务执行 schema 迁移，确认继续？`)) {
       return;
     }
-    batchApplyMutation.mutate(services);
-  }, [services, batchApplyMutation]);
+    setBatchApplying(true);
+    let succeeded = 0;
+    let failed = 0;
+
+    for (const svc of services) {
+      try {
+        await migrationApi.applyMigration(svc.name, 'schema');
+        succeeded += 1;
+      } catch (err: unknown) {
+        failed += 1;
+        addNotification({
+          title: '错误',
+          message: `${svc.name} 迁移失败：${(err as { message?: string }).message || '未知错误'}`,
+          type: 'error',
+        });
+      }
+    }
+
+    queryClient.invalidateQueries({ queryKey: ['migration-status'] });
+
+    addNotification({
+      title: failed === 0 ? '成功' : '警告',
+      message: `批量迁移完成：成功 ${succeeded} 个，失败 ${failed} 个`,
+      type: failed === 0 ? 'success' : 'warning',
+    });
+    setBatchApplying(false);
+  };
 
   const getPendingCount = (serviceName: string) => statusMap[serviceName]?.pending?.length ?? 0;
   const getAppliedCount = (serviceName: string) => statusMap[serviceName]?.applied?.length ?? 0;
@@ -239,9 +184,9 @@ const MigrationAdminPage: React.FC = () => {
     );
   }, [services, searchValue]);
 
-  const handleSearch = useCallback((value: string) => {
+  const handleSearch = (value: string) => {
     setSearchValue(value);
-  }, []);
+  };
 
   const columns: ColumnDef<MigrationService>[] = useMemo(
     () => [
@@ -287,25 +232,8 @@ const MigrationAdminPage: React.FC = () => {
         minWidth: 140,
         align: 'center',
         render: (row) => {
-          const isLoadingStatus = statusLoading === row.name;
           const pending = getPendingCount(row.name);
           const applied = getAppliedCount(row.name);
-          if (isLoadingStatus) {
-            return (
-              <Box
-                sx={{
-                  display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'center',
-                  gap: 1,
-                  color: 'text.secondary',
-                }}
-              >
-                <CircularProgress size={14} />
-                <Typography variant='caption'>加载中</Typography>
-              </Box>
-            );
-          }
           return (
             <Box sx={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 0.5 }}>
               <Chip
@@ -323,58 +251,53 @@ const MigrationAdminPage: React.FC = () => {
         },
       },
     ],
-    [statusLoading]
+    []
   );
 
-  const renderRowActions = useCallback(
-    (row: MigrationService) => {
-      const isApplying = applyingService === row.name;
-      const isRolling = rollingBackService === row.name;
-      const isLoadingStatus = statusLoading === row.name;
-      return (
-        <Box sx={{ display: 'flex', justifyContent: 'flex-end', gap: 1 }}>
-          <Button
-            size='small'
-            variant='outlined'
-            onClick={(e) => {
-              e.stopPropagation();
-              handleShowStatus(row);
-            }}
-            disabled={isLoadingStatus}
-            startIcon={<Eye size={14} />}
-          >
-            查看状态
-          </Button>
-          <Button
-            size='small'
-            variant='text'
-            onClick={(e) => {
-              e.stopPropagation();
-              handleRollback(row);
-            }}
-            disabled={isRolling || isApplying || getAppliedCount(row.name) === 0}
-            sx={{ color: 'warning.main' }}
-            startIcon={isRolling ? <CircularProgress size={14} /> : <RotateCcw size={14} />}
-          >
-            回滚
-          </Button>
-          <Button
-            size='small'
-            variant='contained'
-            onClick={(e) => {
-              e.stopPropagation();
-              handleApply(row);
-            }}
-            disabled={isApplying || isRolling}
-            startIcon={isApplying ? <CircularProgress size={14} /> : <Play size={14} />}
-          >
-            生成迁移
-          </Button>
-        </Box>
-      );
-    },
-    [applyingService, rollingBackService, statusLoading]
-  );
+  const renderRowActions = (row: MigrationService) => {
+    const isApplying = applyingService === row.name || applyMutation.isPending;
+    const isRolling = rollingBackService === row.name || rollbackMutation.isPending;
+    return (
+      <Box sx={{ display: 'flex', justifyContent: 'flex-end', gap: 1 }}>
+        <Button
+          size='small'
+          variant='outlined'
+          onClick={(e) => {
+            e.stopPropagation();
+            handleShowStatus(row);
+          }}
+          startIcon={<Eye size={14} />}
+        >
+          查看状态
+        </Button>
+        <Button
+          size='small'
+          variant='text'
+          onClick={(e) => {
+            e.stopPropagation();
+            handleRollback(row);
+          }}
+          disabled={isRolling || isApplying || getAppliedCount(row.name) === 0}
+          sx={{ color: 'warning.main' }}
+          startIcon={isRolling ? <CircularProgress size={14} /> : <RotateCcw size={14} />}
+        >
+          回滚
+        </Button>
+        <Button
+          size='small'
+          variant='contained'
+          onClick={(e) => {
+            e.stopPropagation();
+            handleApply(row);
+          }}
+          disabled={isApplying || isRolling}
+          startIcon={isApplying ? <CircularProgress size={14} /> : <Play size={14} />}
+        >
+          生成迁移
+        </Button>
+      </Box>
+    );
+  };
 
   return (
     <PageContainer
@@ -395,11 +318,11 @@ const MigrationAdminPage: React.FC = () => {
           {
             label: '批量生成全部服务迁移',
             icon: batchApplying ? <CircularProgress size={16} /> : <Play size={16} />,
-            onClick: handleBatchApply,
-            variant: 'contained',
+            onClick: batchApplying ? undefined : handleBatchApply,
+            variant: 'contained' as const,
           },
         ]}
-        onRefresh={() => servicesQuery.refetch()}
+        onRefresh={() => queryClient.invalidateQueries({ queryKey: ['migration-services', 'migration-status'] })}
         emptyMessage='暂无可管理的迁移服务'
         emptyIcon={
           <FileSearch style={{ width: 48, height: 48, color: theme.palette.text.disabled }} />
@@ -423,26 +346,7 @@ const MigrationAdminPage: React.FC = () => {
             {activeService ? `Schema: ${activeService.schema} ｜ 端口: ${activeService.port}` : ''}
           </Typography>
 
-          {activeService && statusLoading === activeService.name ? (
-            <Box
-              sx={{
-                py: 10,
-                display: 'flex',
-                flexDirection: 'column',
-                alignItems: 'center',
-                justifyContent: 'center',
-                color: 'text.secondary',
-              }}
-            >
-              <CircularProgress size={40} />
-              <Typography
-                variant='body2'
-                sx={{ mt: 3 }}
-              >
-                加载迁移状态中...
-              </Typography>
-            </Box>
-          ) : activeService && statusMap[activeService.name] ? (
+          {activeService && statusMap[activeService.name] ? (
             <Box sx={{ maxHeight: '60vh', overflowY: 'auto' }}>
               <Box sx={{ mt: 4 }}>
                 <Typography

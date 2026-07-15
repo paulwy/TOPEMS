@@ -107,17 +107,17 @@ vi.mock('@/store', () => ({
   useSetSidebarCollapsed: vi.fn(),
 }));
 
-describe('PermissionManagementPage', () => {
-  it('should render without crashing', () => {
+describe('IamPermissionManagementPage', () => {
+it('should render without crashing', () => {
     const { container } = render(
       <BrowserRouter>
         <PermissionManagementPage />
       </BrowserRouter>
     );
     expect(container).toBeDefined();
-  });
+});
 
-  it('should have permission management API methods', async () => {
+it('should have permission management API methods', async () => {
     render(
       <BrowserRouter>
         <PermissionManagementPage />
@@ -127,14 +127,15 @@ describe('PermissionManagementPage', () => {
     expect(authApi.createPermission).toBeDefined();
     expect(authApi.updatePermission).toBeDefined();
     expect(authApi.deletePermission).toBeDefined();
-  });
+});
 
-  it('should call listPermissions API on mount', async () => {
+it('should call listPermissions API on mount', async () => {
     render(
       <BrowserRouter>
         <PermissionManagementPage />
       </BrowserRouter>
     );
     expect(authApi.listPermissions).toHaveBeenCalled();
-  });
+});
+;
 });

@@ -9,7 +9,7 @@ export const TEST_ACCOUNTS = {
 };
 
 export async function apiLogin(username: string, password: string): Promise<string> {
-  const response = await fetch(`${API_URL}/api/v1/auth/login`, {
+  const response = await fetch(`${API_URL}/api/core/iam/auth/login`, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({ username, password }),

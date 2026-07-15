@@ -294,22 +294,11 @@ _start_service_internal() {
 
     cd "$PROJECT_ROOT"
     
-    case "$service_name" in
-        iam) CORE_PORT=$port nohup "$executable_path" > "/tmp/topems-${service_name}.log" 2>&1 & ;;
-        pm) PM_PORT=$port nohup "$executable_path" > "/tmp/topems-${service_name}.log" 2>&1 & ;;
-        erp) ERP_PORT=$port nohup "$executable_path" > "/tmp/topems-${service_name}.log" 2>&1 & ;;
-        finance) FINANCE_PORT=$port nohup "$executable_path" > "/tmp/topems-${service_name}.log" 2>&1 & ;;
-        doc) DOC_PORT=$port nohup "$executable_path" > "/tmp/topems-${service_name}.log" 2>&1 & ;;
-        ai) AI_PORT=$port nohup "$executable_path" > "/tmp/topems-${service_name}.log" 2>&1 & ;;
-        mes) MES_PORT=$port nohup "$executable_path" > "/tmp/topems-${service_name}.log" 2>&1 & ;;
-        pdm) PDM_PORT=$port nohup "$executable_path" > "/tmp/topems-${service_name}.log" 2>&1 & ;;
-        qms) QMS_PORT=$port nohup "$executable_path" > "/tmp/topems-${service_name}.log" 2>&1 & ;;
-        lims) LIMS_PORT=$port nohup "$executable_path" > "/tmp/topems-${service_name}.log" 2>&1 & ;;
-        ehs) EHS_PORT=$port nohup "$executable_path" > "/tmp/topems-${service_name}.log" 2>&1 & ;;
-        bi) BI_PORT=$port nohup "$executable_path" > "/tmp/topems-${service_name}.log" 2>&1 & ;;
-        report) REPORT_PORT=$port nohup "$executable_path" > "/tmp/topems-${service_name}.log" 2>&1 & ;;
-        *) SERVER_PORT=$port nohup "$executable_path" > "/tmp/topems-${service_name}.log" 2>&1 & ;;
-    esac
+    if [ "$service_name" = "iam" ]; then
+        CORE_PORT=$port nohup "$executable_path" > "/tmp/topems-${service_name}.log" 2>&1 &
+    else
+        SERVER_PORT=$port nohup "$executable_path" > "/tmp/topems-${service_name}.log" 2>&1 &
+    fi
     
     echo "$!"
 }
@@ -794,7 +783,7 @@ ws_check() {
     local ws_endpoints=(
         "通知服务:/ws/core/notifications:8000"
         "IM服务:/ws/core/im:8000"
-        "MES仪表盘:/mes/ws/dashboard:8030"
+        "MES仪表盘:/ws/mes/dashboard:8030"
         "GIS服务:/ws/gis:8071"
     )
     
@@ -817,21 +806,37 @@ ws_check() {
         fi
         
         if [ "$frontend_running" = true ]; then
-            local proxy_status=$(curl -s -o /dev/null -w "%{http_code}" -H "Upgrade: websocket" -H "Connection: Upgrade" "http://localhost:3000${path}" 2>/dev/null)
-            if [ "$proxy_status" = "101" ] || [ "$proxy_status" = "401" ] || [ "$proxy_status" = "403" ]; then
+            local proxy_status=$(curl -s -o /dev/null -w "%{http_code}" --max-time 2 \
+                -H "Upgrade: websocket" \
+                -H "Connection: Upgrade" \
+                -H "Sec-WebSocket-Key: dGhlIHNhbXBsZSBub25jZQ==" \
+                -H "Sec-WebSocket-Version: 13" \
+                "http://localhost:3000${path}" 2>/dev/null)
+            if [ "$proxy_status" = "101" ]; then
                 echo -e "${GREEN}✅${NC} $name ($path) 代理配置正确 (状态码: $proxy_status)"
+                accessible_count=$((accessible_count + 1))
+            elif [ "$proxy_status" = "401" ] || [ "$proxy_status" = "403" ]; then
+                echo -e "${GREEN}✅${NC} $name ($path) 代理配置正确 (需要认证: $proxy_status)"
                 accessible_count=$((accessible_count + 1))
             elif [ "$proxy_status" = "503" ]; then
                 echo -e "${YELLOW}⚠️${NC} $name ($path) 后端服务未响应"
             elif [ "$proxy_status" = "000" ]; then
-                echo -e "${YELLOW}⚠️${NC} $name ($path) 连接失败 (可能是WebSocket握手问题)"
+                echo -e "${YELLOW}⚠️${NC} $name ($path) 连接失败"
             else
                 echo -e "${YELLOW}⚠️${NC} $name ($path) 状态码: $proxy_status"
             fi
         elif [ "$backend_running" = true ]; then
-            local backend_status=$(curl -s -o /dev/null -w "%{http_code}" -H "Upgrade: websocket" -H "Connection: Upgrade" "http://localhost:${port}${path}" 2>/dev/null)
-            if [ "$backend_status" = "101" ] || [ "$backend_status" = "401" ]; then
+            local backend_status=$(curl -s -o /dev/null -w "%{http_code}" --max-time 2 \
+                -H "Upgrade: websocket" \
+                -H "Connection: Upgrade" \
+                -H "Sec-WebSocket-Key: dGhlIHNhbXBsZSBub25jZQ==" \
+                -H "Sec-WebSocket-Version: 13" \
+                "http://localhost:${port}${path}" 2>/dev/null)
+            if [ "$backend_status" = "101" ]; then
                 echo -e "${GREEN}✅${NC} $name ($path) 后端可访问 (状态码: $backend_status)"
+                accessible_count=$((accessible_count + 1))
+            elif [ "$backend_status" = "401" ]; then
+                echo -e "${GREEN}✅${NC} $name ($path) 后端可访问 (需要认证: $backend_status)"
                 accessible_count=$((accessible_count + 1))
             else
                 echo -e "${YELLOW}⚠️${NC} $name ($path) 后端状态码: $backend_status"

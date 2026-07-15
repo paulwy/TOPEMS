@@ -1,5 +1,6 @@
 import apiClient from './client';
 import type { ApiResponse } from './client';
+import { API_PATHS } from '../utils/apiPath';
 
 export interface Faq {
   id: string;
@@ -113,46 +114,46 @@ export interface CreateLessonRequest {
 
 export const helpApi = {
   async listFaqs(params?: FaqQuery): Promise<ApiResponse<FaqListResponse>> {
-    return apiClient.get<FaqListResponse>('/api/core/help/faqs', { params });
+    return apiClient.get<FaqListResponse>(API_PATHS.help.faqs, { params });
   },
 
   async getFaq(id: string): Promise<ApiResponse<Faq>> {
-    return apiClient.get<Faq>(`/api/core/help/faqs/${id}`);
+    return apiClient.get<Faq>(API_PATHS.help.faq(id));
   },
 
   async createFaq(data: CreateFaqRequest): Promise<ApiResponse<Faq>> {
-    return apiClient.post<Faq>('/api/core/help/faqs', data);
+    return apiClient.post<Faq>(API_PATHS.help.faqs, data);
   },
 
   async updateFaq(id: string, data: UpdateFaqRequest): Promise<ApiResponse<Faq>> {
-    return apiClient.put<Faq>(`/api/core/help/faqs/${id}`, data);
+    return apiClient.put<Faq>(API_PATHS.help.faq(id), data);
   },
 
   async deleteFaq(id: string): Promise<ApiResponse<boolean>> {
-    return apiClient.delete<boolean>(`/api/core/help/faqs/${id}`);
+    return apiClient.delete<boolean>(API_PATHS.help.faq(id));
   },
 
   async getFaqCategories(): Promise<ApiResponse<string[]>> {
-    return apiClient.get<string[]>('/api/core/help/faqs/categories');
+    return apiClient.get<string[]>(API_PATHS.help.faqCategories);
   },
 
   async listGuides(params?: GuideQuery): Promise<ApiResponse<GuideListResponse>> {
-    return apiClient.get<GuideListResponse>('/api/core/help/guides', { params });
+    return apiClient.get<GuideListResponse>(API_PATHS.help.guides, { params });
   },
 
   async getGuide(id: string): Promise<ApiResponse<GuideDetailResponse>> {
-    return apiClient.get<GuideDetailResponse>(`/api/core/help/guides/${id}`);
+    return apiClient.get<GuideDetailResponse>(API_PATHS.help.guide(id));
   },
 
   async createGuide(data: CreateGuideRequest): Promise<ApiResponse<Guide>> {
-    return apiClient.post<Guide>('/api/core/help/guides', data);
+    return apiClient.post<Guide>(API_PATHS.help.guides, data);
   },
 
   async addLesson(guideId: string, data: CreateLessonRequest): Promise<ApiResponse<GuideLesson>> {
-    return apiClient.post<GuideLesson>(`/api/core/help/guides/${guideId}/lessons`, data);
+    return apiClient.post<GuideLesson>(`${API_PATHS.help.guide(guideId)}/lessons`, data);
   },
 
   async getGuideCategories(): Promise<ApiResponse<string[]>> {
-    return apiClient.get<string[]>('/api/core/help/guides/categories');
+    return apiClient.get<string[]>(API_PATHS.help.guideCategories);
   },
 };

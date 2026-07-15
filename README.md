@@ -340,9 +340,10 @@ curl -s http://localhost:8000/api/plugins/info | python3 -m json.tool
 |------|----------|----------|----------|
 | Core | `/ws/core/notifications` | `/ws/core/notifications` | 8000 |
 | Core | `/ws/core/im` | `/ws/core/im` | 8000 |
-| MES | `/mes/ws/dashboard` | `/mes/ws/dashboard` | 8030 |
-| GIS | `/gis/ws` | `/api/gis/ws` | 8071 |
-| GIS | `/gis/ws/device/{device_code}` | `/api/gis/ws/device/{device_code}` | 8071 |
+| MES | `/ws/mes/dashboard` | `/ws/mes/dashboard` | 8030 |
+| GIS | `/ws/gis` | `/ws/gis` | 8071 |
+| GIS | `/ws/gis/device/{device_code}` | `/ws/gis/device/{device_code}` | 8071 |
+| BI | `/ws/bi/dashboard/{id}` | `/ws/bi/dashboard/{id}` | 8060 |
 
 详细说明请参考 [WebSocket 路径映射规范](docs/guides/devops/websocket-path-mapping.md)
 

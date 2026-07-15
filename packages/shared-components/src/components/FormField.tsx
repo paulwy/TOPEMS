@@ -6,8 +6,6 @@ export interface FormFieldProps extends Omit<TextFieldProps, 'size'> {
   name: string;
   compact?: boolean;
   size?: 'small' | 'medium';
-  variant?: TextFieldProps['variant'];
-  type?: TextFieldProps['type'];
 }
 
 export const FormField: React.FC<FormFieldProps> = ({
@@ -26,6 +24,13 @@ export const FormField: React.FC<FormFieldProps> = ({
       name={name}
       label={label}
       size={isMobile ? 'medium' : (compact ? 'small' : size)}
+      slotProps={{
+        input: {
+          sx: {
+            fontSize: isMobile ? '0.9375rem' : undefined,
+          },
+        },
+      }}
       sx={{
         '& .MuiFormHelperText-root': {
           marginTop: 0.5,
@@ -33,9 +38,6 @@ export const FormField: React.FC<FormFieldProps> = ({
         },
         '& .MuiInputLabel-root': {
           fontSize: isMobile ? '0.875rem' : undefined,
-        },
-        '& .MuiInput-input': {
-          fontSize: isMobile ? '0.9375rem' : undefined,
         },
         ...sx,
       }}

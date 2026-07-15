@@ -1,4 +1,4 @@
-import React, { useState, useMemo } from 'react';
+import React, { useState, useMemo, useEffect } from 'react';
 import {
   Box,
   Typography,
@@ -40,7 +40,7 @@ import type {
 import { apiLogger } from '@/utils/logger';
 import { designTokens } from '@/theme/tokens';
 import { useQuery } from '@tanstack/react-query';
-import { QUERY_KEYS } from '@/lib/reactQuery';
+import { useNotificationStore } from '@/store';
 
 const ct = designTokens.colors;
 
@@ -66,92 +66,152 @@ function TabPanel(props: TabPanelProps) {
 }
 
 const InventoryReportPage: React.FC = () => {
+  const { addNotification } = useNotificationStore();
   const [currentTab, setCurrentTab] = useState(0);
   const [warehouseFilter, setWarehouseFilter] = useState<string>('');
 
-  const { data: warehousesData } = useQuery({
-    queryKey: [QUERY_KEYS.WMS.WAREHOUSES],
+  const warehousesQuery = useQuery({
+    queryKey: ['wms-warehouses'],
     queryFn: async () => {
       const response = await wmsApi.warehouses.list({ page: 1, pagesize: 100 });
-      if (!response.success) {
-        throw new Error('Failed to fetch warehouses');
+      if (response.success && response.data) {
+        return response.data.items || [];
       }
-      return response.data;
+      return [];
     },
+    staleTime: 5 * 60 * 1000,
   });
+  const warehouses = warehousesQuery.data || [];
 
-  const warehouses = warehousesData?.items || [];
+  useEffect(() => {
+    if (warehousesQuery.isError && warehousesQuery.error) {
+      apiLogger.error('获取仓库列表失败:', warehousesQuery.error);
+    }
+  }, [warehousesQuery.isError, warehousesQuery.error]);
 
-  const { data: statistics, isLoading: statisticsLoading } = useQuery({
-    queryKey: [QUERY_KEYS.WMS.INVENTORY_STATS, warehouseFilter],
+  const statisticsQuery = useQuery({
+    queryKey: ['wms-inventory-statistics', warehouseFilter],
     queryFn: async () => {
       const params: Record<string, unknown> = {};
       if (warehouseFilter) params.warehouse_id = warehouseFilter;
-
       const response = await wmsApi.inventoryStats.getStatistics(params as any);
-      if (!response.success) {
-        throw new Error('Failed to fetch inventory statistics');
+      if (response.success && response.data) {
+        return response.data;
       }
-      return response.data as InventoryStatistics;
+      return null;
     },
+    staleTime: 5 * 60 * 1000,
   });
+  const statistics = statisticsQuery.data;
+  const statisticsLoading = statisticsQuery.isLoading;
 
-  const { data: abcData, isLoading: abcLoading } = useQuery({
-    queryKey: [QUERY_KEYS.WMS.INVENTORY_ABC, warehouseFilter],
+  useEffect(() => {
+    if (statisticsQuery.isError && statisticsQuery.error) {
+      apiLogger.error('获取库存统计失败:', statisticsQuery.error);
+      addNotification({
+        type: 'error',
+        title: '加载失败',
+        message: '无法加载库存统计数据',
+      });
+    }
+  }, [statisticsQuery.isError, statisticsQuery.error, addNotification]);
+
+  const abcAnalysisQuery = useQuery({
+    queryKey: ['wms-abc-analysis', warehouseFilter],
     queryFn: async () => {
       const params: Record<string, unknown> = {};
       if (warehouseFilter) params.warehouse_id = warehouseFilter;
-
       const response = await wmsApi.inventoryStats.getABCAnalysis(params as any);
-      if (!response.success) {
-        throw new Error('Failed to fetch ABC analysis');
+      if (response.success && response.data) {
+        return {
+          items: response.data.items || [],
+          total_sku: response.data.total_sku || 0,
+          total_value: response.data.total_value || 0,
+        };
       }
-      return response.data;
+      return { items: [], total_sku: 0, total_value: 0 };
     },
+    staleTime: 5 * 60 * 1000,
     enabled: currentTab === 1,
   });
+  const abcAnalysis = abcAnalysisQuery.data?.items || [];
+  const abcTotalSku = abcAnalysisQuery.data?.total_sku || 0;
+  const abcTotalValue = abcAnalysisQuery.data?.total_value || 0;
+  const abcLoading = abcAnalysisQuery.isLoading;
 
-  const abcAnalysis = abcData?.items || [];
-  const abcTotalSku = abcData?.total_sku || 0;
-  const abcTotalValue = abcData?.total_value || 0;
+  useEffect(() => {
+    if (abcAnalysisQuery.isError && abcAnalysisQuery.error) {
+      apiLogger.error('获取ABC分析失败:', abcAnalysisQuery.error);
+      addNotification({
+        type: 'error',
+        title: '加载失败',
+        message: '无法加载ABC分析数据',
+      });
+    }
+  }, [abcAnalysisQuery.isError, abcAnalysisQuery.error, addNotification]);
 
-  const { data: turnoverDataRaw, isLoading: turnoverLoading } = useQuery({
-    queryKey: [QUERY_KEYS.WMS.INVENTORY_TURNOVER, warehouseFilter],
+  const turnoverQuery = useQuery({
+    queryKey: ['wms-turnover-analysis', warehouseFilter],
     queryFn: async () => {
       const params: Record<string, unknown> = {
         period_type: 'month',
         periods: 12,
       };
       if (warehouseFilter) params.warehouse_id = warehouseFilter;
-
       const response = await wmsApi.inventoryStats.getTurnover(params as any);
-      if (!response.success) {
-        throw new Error('Failed to fetch inventory turnover');
+      if (response.success && response.data) {
+        return response.data.items || [];
       }
-      return response.data;
+      return [];
     },
+    staleTime: 5 * 60 * 1000,
     enabled: currentTab === 2,
   });
+  const turnoverData = turnoverQuery.data || [];
+  const turnoverLoading = turnoverQuery.isLoading;
 
-  const turnoverData = turnoverDataRaw?.items || [];
+  useEffect(() => {
+    if (turnoverQuery.isError && turnoverQuery.error) {
+      apiLogger.error('获取库存周转失败:', turnoverQuery.error);
+      addNotification({
+        type: 'error',
+        title: '加载失败',
+        message: '无法加载库存周转数据',
+      });
+    }
+  }, [turnoverQuery.isError, turnoverQuery.error, addNotification]);
 
-  const { data: valueByWarehouseData, isLoading: valueByWarehouseLoading } = useQuery({
-    queryKey: [QUERY_KEYS.WMS.INVENTORY_VALUE_BY_WAREHOUSE, warehouseFilter],
+  const valueByWarehouseQuery = useQuery({
+    queryKey: ['wms-value-by-warehouse', warehouseFilter],
     queryFn: async () => {
       const params: Record<string, unknown> = {};
       if (warehouseFilter) params.category_id = warehouseFilter;
-
       const response = await wmsApi.inventoryStats.getValueByWarehouse(params as any);
-      if (!response.success) {
-        throw new Error('Failed to fetch inventory value by warehouse');
+      if (response.success && response.data) {
+        return {
+          items: response.data.items || [],
+          total_value: response.data.total_value || 0,
+        };
       }
-      return response.data;
+      return { items: [], total_value: 0 };
     },
+    staleTime: 5 * 60 * 1000,
     enabled: currentTab === 3,
   });
+  const valueByWarehouse = valueByWarehouseQuery.data?.items || [];
+  const totalWarehouseValue = valueByWarehouseQuery.data?.total_value || 0;
+  const valueByWarehouseLoading = valueByWarehouseQuery.isLoading;
 
-  const valueByWarehouse = valueByWarehouseData?.items || [];
-  const totalWarehouseValue = valueByWarehouseData?.total_value || 0;
+  useEffect(() => {
+    if (valueByWarehouseQuery.isError && valueByWarehouseQuery.error) {
+      apiLogger.error('获取仓库库存价值失败:', valueByWarehouseQuery.error);
+      addNotification({
+        type: 'error',
+        title: '加载失败',
+        message: '无法加载仓库库存价值数据',
+      });
+    }
+  }, [valueByWarehouseQuery.isError, valueByWarehouseQuery.error, addNotification]);
 
   const getABCCategoryColor = (category: string) => {
     switch (category) {
@@ -175,7 +235,6 @@ const InventoryReportPage: React.FC = () => {
 
   const renderStatisticsTab = () => (
     <Box>
-      {/* Summary Cards */}
       <Grid
         container
         spacing={3}
@@ -291,7 +350,6 @@ const InventoryReportPage: React.FC = () => {
         </Grid>
       </Grid>
 
-      {/* Alert Cards */}
       <Grid
         container
         spacing={3}
@@ -427,7 +485,6 @@ const InventoryReportPage: React.FC = () => {
         </Grid>
       </Grid>
 
-      {/* Inventory Alert Details */}
       <Card>
         <CardContent>
           <Typography

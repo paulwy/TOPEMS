@@ -19,7 +19,8 @@ use std::net::SocketAddr;
 
 use topems_shared::{
     auth_middleware, create_api_info_router, create_cors_layer, init_telemetry,
-    telemetry_middleware, ApiResponse, AuthState, DependencyHealth, HealthStatus, ServiceHealth,
+    telemetry_middleware, wrap_group2_router, ApiResponse, AuthState, DependencyHealth,
+    HealthStatus, RouteCompatConfig, ServiceHealth,
 };
 
 #[tokio::main]
@@ -98,6 +99,9 @@ async fn main() {
         .layer(cors)
         .layer(prometheus_layer)
         .with_state(state);
+
+    let cfg = RouteCompatConfig::new("doc", "/api/core/doc", &[]);
+    let app = wrap_group2_router(app, cfg);
 
     let port = std::env::var("DOC_PORT")
         .unwrap_or_else(|_| "8012".to_string())

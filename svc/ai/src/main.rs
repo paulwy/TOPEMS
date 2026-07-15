@@ -40,7 +40,8 @@ use services::{
 use topems_shared::ai_client::{AIModelConfig, AIProviderType};
 use topems_shared::{
     auth_middleware, check_http_health, create_api_info_router, create_cors_layer, init_telemetry,
-    telemetry_middleware, ApiResponse, AuthState, DependencyHealth, HealthStatus, ServiceHealth,
+    telemetry_middleware, wrap_group2_router, ApiResponse, AuthState, DependencyHealth,
+    HealthStatus, RouteCompatConfig, ServiceHealth,
 };
 
 // AI 生成请求
@@ -2144,6 +2145,9 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
         .layer(prometheus_layer)
         .layer(cors)
         .layer(DefaultBodyLimit::max(500 * 1024 * 1024));
+
+    let cfg = RouteCompatConfig::new("ai", "/api/core/ai", &[]);
+    let app = wrap_group2_router(app, cfg);
 
     let port = std::env::var("AI_PORT")
         .or_else(|_| std::env::var("SERVER_PORT"))

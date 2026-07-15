@@ -118,20 +118,23 @@ vi.mock('@/store', () => ({
   useSetSidebarCollapsed: vi.fn(),
 }));
 
+describe('FinanceDashboardPage', () => {
 it('should render without crashing', () => {
-  const { container } = render(
-    <BrowserRouter>
-      <FinanceDashboardPage />
-    </BrowserRouter>
-  );
-  expect(container).toBeDefined();
+    const { container } = render(
+      <BrowserRouter>
+        <FinanceDashboardPage />
+      </BrowserRouter>
+    );
+    expect(container).toBeDefined();
 });
 
 it('should have valid finance API methods', () => {
-  expect(financeApi.account.list).toBeDefined();
-  expect(financeApi.voucher.list).toBeDefined();
-  expect(financeApi.receivablePayable.list).toBeDefined();
-  expect(financeApi.report.getOverview).toBeDefined();
-  expect(financeApi.report.getTrend).toBeDefined();
-  expect(financeApi.period.getCurrent).toBeDefined();
+    expect(financeApi.account.list).toBeDefined();
+    expect(financeApi.voucher.list).toBeDefined();
+    expect(financeApi.receivablePayable.list).toBeDefined();
+    expect(financeApi.report.getOverview).toBeDefined();
+    expect(financeApi.report.getTrend).toBeDefined();
+    expect(financeApi.period.getCurrent).toBeDefined();
+});
+;
 });

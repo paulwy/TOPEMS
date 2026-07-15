@@ -171,26 +171,28 @@ describe('BIDataSourcePage', () => {
     (refreshDataSource as vi.Mock).mockResolvedValue({ success: true });
   });
 
-  it('should render page title', async () => {
+describe('BIDataSourcePage', () => {
+it('should render page title', async () => {
     renderWithProviders(<BIDataSourcePage />);
     expect(
       await screen.findByRole('heading', { name: '数据源管理' }, { timeout: 10000 })
     ).toBeInTheDocument();
-  });
+});
 
-  it('should render data source list', async () => {
+it('should render data source list', async () => {
     renderWithProviders(<BIDataSourcePage />);
     await waitFor(() => {
       expect(screen.getByText('MySQL数据库')).toBeInTheDocument();
-    });
   });
+});
 
-  it('should handle API error', async () => {
+it('should handle API error', async () => {
     (listDataSources as vi.Mock).mockRejectedValue(new Error('Network error'));
     renderWithProviders(<BIDataSourcePage />);
 
     await waitFor(async () => {
       expect(await screen.findByRole('heading', { name: '数据源管理' })).toBeInTheDocument();
-    });
   });
+});
+;
 });

@@ -1,4 +1,4 @@
-import React, { useState, useMemo } from 'react';
+import React, { useState, useMemo, useCallback, useEffect } from 'react';
 import {
   Chip,
   Dialog,
@@ -30,6 +30,7 @@ import type {
 import { wmsApi } from '@/api/wms';
 import { WMS_PATHS } from '@/modules/wms/config';
 import { useNotificationStore } from '@/store';
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import {
   Plus,
   Edit,
@@ -43,8 +44,6 @@ import {
 import { apiLogger } from '@/utils/logger';
 import { ConfirmDialog, PageContainer, StatusBadge } from '@/components/common';
 import { designTokens } from '@/theme/tokens';
-import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { QUERY_KEYS } from '@/lib/reactQuery';
 
 const ct = designTokens.colors;
 
@@ -102,21 +101,27 @@ const ReplenishmentPage: React.FC = () => {
   const [selectedOrder, setSelectedOrder] = useState<ReplenishmentOrder | null>(null);
   const [deleteItemId, setDeleteItemId] = useState<string | null>(null);
 
-  const invalidateReplenishment = () => {
-    queryClient.invalidateQueries({ queryKey: [QUERY_KEYS.WMS.REPLENISHMENT_SUGGESTIONS] });
-    queryClient.invalidateQueries({ queryKey: [QUERY_KEYS.WMS.REPLENISHMENT_ORDERS] });
-    queryClient.invalidateQueries({ queryKey: [QUERY_KEYS.WMS.REPLENISHMENT_STATISTICS] });
-  };
+  const warehousesQuery = useQuery({
+    queryKey: ['wms-warehouses'],
+    queryFn: async () => {
+      const response = await wmsApi.warehouses.list({ page: 1, pagesize: 100 });
+      if (response.success && response.data) {
+        return response.data.items || [];
+      }
+      return [];
+    },
+    staleTime: 5 * 60 * 1000,
+  });
+  const warehouses = warehousesQuery.data || [];
 
-  const { data: suggestionsResponse, isLoading: suggestionsLoading } = useQuery({
-    queryKey: [
-      QUERY_KEYS.WMS.REPLENISHMENT_SUGGESTIONS,
-      currentPage,
-      pageSize,
-      searchTerm,
-      statusFilter,
-      warehouseFilter,
-    ],
+  useEffect(() => {
+    if (warehousesQuery.isError && warehousesQuery.error) {
+      apiLogger.error('获取仓库列表失败:', warehousesQuery.error);
+    }
+  }, [warehousesQuery.isError, warehousesQuery.error]);
+
+  const suggestionsQuery = useQuery({
+    queryKey: ['wms-suggestions', searchTerm, statusFilter, warehouseFilter, currentPage, pageSize],
     queryFn: async () => {
       const params: Record<string, unknown> = {
         page: currentPage,
@@ -127,23 +132,31 @@ const ReplenishmentPage: React.FC = () => {
       if (warehouseFilter) params.warehouse_id = warehouseFilter;
 
       const response = await wmsApi.smartReplenishment.listSuggestions(params);
-      if (!response.success) {
-        throw new Error('Failed to fetch replenishment suggestions');
+      if (response.success && response.data) {
+        return { suggestions: response.data.items || [], total: response.data.total || 0 };
       }
-      return response.data;
+      return { suggestions: [], total: 0 };
     },
+    staleTime: 5 * 60 * 1000,
     enabled: activeTab === 'suggestions',
   });
+  const suggestions = suggestionsQuery.data?.suggestions || [];
+  const suggestionsTotal = suggestionsQuery.data?.total || 0;
+  const suggestionsLoading = suggestionsQuery.isLoading;
 
-  const { data: ordersResponse, isLoading: ordersLoading } = useQuery({
-    queryKey: [
-      QUERY_KEYS.WMS.REPLENISHMENT_ORDERS,
-      currentPage,
-      pageSize,
-      searchTerm,
-      statusFilter,
-      warehouseFilter,
-    ],
+  useEffect(() => {
+    if (suggestionsQuery.isError && suggestionsQuery.error) {
+      apiLogger.error('获取补货建议列表失败:', suggestionsQuery.error);
+      addNotification({
+        type: 'error',
+        title: '加载失败',
+        message: '无法加载补货建议列表',
+      });
+    }
+  }, [suggestionsQuery.isError, suggestionsQuery.error, addNotification]);
+
+  const ordersQuery = useQuery({
+    queryKey: ['wms-replenishment-orders', searchTerm, statusFilter, warehouseFilter, currentPage, pageSize],
     queryFn: async () => {
       const params: Record<string, unknown> = {
         page: currentPage,
@@ -154,155 +167,184 @@ const ReplenishmentPage: React.FC = () => {
       if (warehouseFilter) params.warehouse_id = warehouseFilter;
 
       const response = await wmsApi.smartReplenishment.listOrders(params);
-      if (!response.success) {
-        throw new Error('Failed to fetch replenishment orders');
+      if (response.success && response.data) {
+        return { orders: response.data.items || [], total: response.data.total || 0 };
       }
-      return response.data;
+      return { orders: [], total: 0 };
     },
+    staleTime: 5 * 60 * 1000,
     enabled: activeTab === 'orders',
   });
+  const orders = ordersQuery.data?.orders || [];
+  const ordersTotal = ordersQuery.data?.total || 0;
+  const ordersLoading = ordersQuery.isLoading;
 
-  const { data: warehousesResponse } = useQuery({
-    queryKey: [QUERY_KEYS.WMS.WAREHOUSES, 'replenishment'],
-    queryFn: async () => {
-      const response = await wmsApi.warehouses.list({ page: 1, pagesize: 100 });
-      if (!response.success) {
-        throw new Error('Failed to fetch warehouses');
-      }
-      return response.data;
-    },
-  });
+  useEffect(() => {
+    if (ordersQuery.isError && ordersQuery.error) {
+      apiLogger.error('获取补货单列表失败:', ordersQuery.error);
+      addNotification({
+        type: 'error',
+        title: '加载失败',
+        message: '无法加载补货单列表',
+      });
+    }
+  }, [ordersQuery.isError, ordersQuery.error, addNotification]);
 
-  const { data: statistics } = useQuery<ReplenishmentStatistics | undefined>({
-    queryKey: [QUERY_KEYS.WMS.REPLENISHMENT_STATISTICS, warehouseFilter],
+  const statisticsQuery = useQuery({
+    queryKey: ['wms-replenishment-statistics', warehouseFilter],
     queryFn: async () => {
       const params: Record<string, unknown> = {};
       if (warehouseFilter) params.warehouse_id = warehouseFilter;
       const response = await wmsApi.smartReplenishment.getStatistics(params);
-      if (!response.success) {
-        throw new Error('Failed to fetch replenishment statistics');
+      if (response.success && response.data) {
+        return response.data;
       }
-      return response.data;
+      return null;
     },
+    staleTime: 5 * 60 * 1000,
   });
+  const statistics = statisticsQuery.data;
 
-  const warehouses: Warehouse[] = warehousesResponse?.items || [];
-  const suggestions: ReplenishmentSuggestion[] = suggestionsResponse?.items || [];
-  const orders: ReplenishmentOrder[] = ordersResponse?.items || [];
+  useEffect(() => {
+    if (statisticsQuery.isError && statisticsQuery.error) {
+      apiLogger.error('获取补货统计失败:', statisticsQuery.error);
+    }
+  }, [statisticsQuery.isError, statisticsQuery.error]);
+
   const loading = activeTab === 'suggestions' ? suggestionsLoading : ordersLoading;
-  const total =
-    activeTab === 'suggestions' ? suggestionsResponse?.total || 0 : ordersResponse?.total || 0;
+  const total = activeTab === 'suggestions' ? suggestionsTotal : ordersTotal;
 
-  const generateMutation = useMutation({
-    mutationFn: async () => {
-      const response = await wmsApi.smartReplenishment.generateSuggestions();
-      if (!response.success) {
-        throw new Error('Failed to generate suggestions');
-      }
-      return response;
-    },
+  const generateSuggestionsMutation = useMutation({
+    mutationFn: () => wmsApi.smartReplenishment.generateSuggestions(),
     onSuccess: (response) => {
       addNotification({
         type: 'success',
         title: '生成成功',
         message: `已生成 ${response.data?.count || 0} 条补货建议`,
       });
-      invalidateReplenishment();
+      queryClient.invalidateQueries({ queryKey: ['wms-suggestions'] });
+      queryClient.invalidateQueries({ queryKey: ['wms-replenishment-statistics'] });
     },
-    onError: (error) => {
+    onError: (error: unknown) => {
       apiLogger.error('生成补货建议失败:', error);
+      addNotification({
+        type: 'error',
+        title: '生成失败',
+        message: '生成补货建议失败',
+      });
     },
   });
 
   const createOrderMutation = useMutation({
-    mutationFn: async (suggestion: ReplenishmentSuggestion) => {
-      const response = await wmsApi.smartReplenishment.createOrder({
-        warehouse_id: suggestion.warehouse_id,
-        supplier_id: suggestion.supplier_id,
-        supplier_name: suggestion.supplier_name,
-        expected_date: '',
-        priority: suggestion.priority,
-        remarks: `根据建议 ${suggestion.suggestion_number} 创建`,
-        items: [
-          {
-            sku: suggestion.sku,
-            material_name: suggestion.material_name,
-            specification: suggestion.specification,
-            unit: suggestion.unit,
-            quantity: suggestion.suggested_quantity,
-            unit_price: suggestion.unit_price,
-          },
-        ],
-      });
-      if (!response.success) {
-        throw new Error('Failed to create replenishment order');
-      }
-      return response;
-    },
+    mutationFn: (data: Parameters<typeof wmsApi.smartReplenishment.createOrder>[0]) =>
+      wmsApi.smartReplenishment.createOrder(data),
     onSuccess: () => {
-      invalidateReplenishment();
+      addNotification({
+        type: 'success',
+        title: '创建成功',
+        message: '补货单已创建',
+      });
+      queryClient.invalidateQueries({ queryKey: ['wms-suggestions'] });
+      queryClient.invalidateQueries({ queryKey: ['wms-replenishment-orders'] });
+      queryClient.invalidateQueries({ queryKey: ['wms-replenishment-statistics'] });
     },
-    onError: (error) => {
+    onError: (error: unknown) => {
       apiLogger.error('创建补货单失败:', error);
+      addNotification({
+        type: 'error',
+        title: '创建失败',
+        message: '创建补货单失败',
+      });
     },
   });
 
   const confirmOrderMutation = useMutation({
-    mutationFn: async (id: string) => {
-      const response = await wmsApi.smartReplenishment.confirmOrder(id);
-      if (!response.success) {
-        throw new Error('Failed to confirm replenishment order');
-      }
-      return response;
-    },
+    mutationFn: (id: string) => wmsApi.smartReplenishment.confirmOrder(id),
     onSuccess: () => {
-      invalidateReplenishment();
+      addNotification({
+        type: 'success',
+        title: '确认成功',
+        message: '补货单已确认',
+      });
+      queryClient.invalidateQueries({ queryKey: ['wms-replenishment-orders'] });
+      queryClient.invalidateQueries({ queryKey: ['wms-replenishment-statistics'] });
     },
-    onError: (error) => {
+    onError: (error: unknown) => {
       apiLogger.error('确认补货单失败:', error);
+      addNotification({
+        type: 'error',
+        title: '确认失败',
+        message: '确认补货单失败',
+      });
     },
   });
 
   const completeOrderMutation = useMutation({
-    mutationFn: async (id: string) => {
-      const response = await wmsApi.smartReplenishment.completeOrder(id);
-      if (!response.success) {
-        throw new Error('Failed to complete replenishment order');
-      }
-      return response;
-    },
+    mutationFn: (id: string) => wmsApi.smartReplenishment.completeOrder(id),
     onSuccess: () => {
-      invalidateReplenishment();
+      addNotification({
+        type: 'success',
+        title: '完成成功',
+        message: '补货单已完成',
+      });
+      queryClient.invalidateQueries({ queryKey: ['wms-replenishment-orders'] });
+      queryClient.invalidateQueries({ queryKey: ['wms-replenishment-statistics'] });
     },
-    onError: (error) => {
+    onError: (error: unknown) => {
       apiLogger.error('完成补货单失败:', error);
+      addNotification({
+        type: 'error',
+        title: '完成失败',
+        message: '完成补货单失败',
+      });
     },
   });
 
   const deleteOrderMutation = useMutation({
-    mutationFn: async (id: string) => {
-      const response = await wmsApi.smartReplenishment.deleteOrder(id);
-      if (!response.success) {
-        throw new Error('Failed to delete replenishment order');
-      }
-      return response;
-    },
+    mutationFn: (id: string) => wmsApi.smartReplenishment.deleteOrder(id),
     onSuccess: () => {
-      invalidateReplenishment();
-      setShowDeleteConfirm(false);
-      setDeleteItemId(null);
+      addNotification({
+        type: 'success',
+        title: '删除成功',
+        message: '补货单已删除',
+      });
+      queryClient.invalidateQueries({ queryKey: ['wms-replenishment-orders'] });
+      queryClient.invalidateQueries({ queryKey: ['wms-replenishment-statistics'] });
     },
-    onError: (error) => {
+    onError: (error: unknown) => {
       apiLogger.error('删除补货单失败:', error);
+      addNotification({
+        type: 'error',
+        title: '删除失败',
+        message: '删除补货单失败',
+      });
     },
   });
 
   const handleGenerateSuggestions = async () => {
-    await generateMutation.mutateAsync();
+    await generateSuggestionsMutation.mutateAsync();
   };
 
   const handleCreateOrderFromSuggestion = async (suggestion: ReplenishmentSuggestion) => {
-    await createOrderMutation.mutateAsync(suggestion);
+    await createOrderMutation.mutateAsync({
+      warehouse_id: suggestion.warehouse_id,
+      supplier_id: suggestion.supplier_id,
+      supplier_name: suggestion.supplier_name,
+      expected_date: '',
+      priority: suggestion.priority,
+      remarks: `根据建议 ${suggestion.suggestion_number} 创建`,
+      items: [
+        {
+          sku: suggestion.sku,
+          material_name: suggestion.material_name,
+          specification: suggestion.specification,
+          unit: suggestion.unit,
+          quantity: suggestion.suggested_quantity,
+          unit_price: suggestion.unit_price,
+        },
+      ],
+    });
+    setShowDetailDialog(false);
   };
 
   const handleConfirmOrder = async (id: string) => {
@@ -318,10 +360,10 @@ const ReplenishmentPage: React.FC = () => {
     setShowDeleteConfirm(true);
   };
 
-  const handleDelete = async () => {
+  const handleDelete = useCallback(async () => {
     if (!deleteItemId) return;
     await deleteOrderMutation.mutateAsync(deleteItemId);
-  };
+  }, [deleteItemId, deleteOrderMutation]);
 
   const handleViewSuggestionDetail = (item: ReplenishmentSuggestion) => {
     setSelectedSuggestion(item);
@@ -523,7 +565,6 @@ const ReplenishmentPage: React.FC = () => {
 
   const currentColumns = (activeTab === 'suggestions' ? suggestionColumns : orderColumns) as any;
   const currentData = (activeTab === 'suggestions' ? suggestions : orders) as any;
-
   const currentRowActions = (
     activeTab === 'suggestions' ? suggestionRowActions : orderRowActions
   ) as any;
@@ -646,6 +687,7 @@ const ReplenishmentPage: React.FC = () => {
             variant='outlined'
             startIcon={<RefreshCw size={16} />}
             onClick={handleGenerateSuggestions}
+            disabled={generateSuggestionsMutation.isPending}
           >
             生成补货建议
           </Button>
@@ -681,7 +723,6 @@ const ReplenishmentPage: React.FC = () => {
         getRowId={(row) => (row as { id: string }).id}
       />
 
-      {/* 建议详情对话框 */}
       <Dialog
         open={showDetailDialog}
         onClose={() => setShowDetailDialog(false)}
@@ -964,11 +1005,9 @@ const ReplenishmentPage: React.FC = () => {
           {activeTab === 'suggestions' && selectedSuggestion && (
             <Button
               variant='contained'
-              onClick={() => {
-                handleCreateOrderFromSuggestion(selectedSuggestion);
-                setShowDetailDialog(false);
-              }}
+              onClick={() => handleCreateOrderFromSuggestion(selectedSuggestion)}
               startIcon={<ShoppingCart size={16} />}
+              disabled={createOrderMutation.isPending}
             >
               创建补货单
             </Button>
@@ -976,7 +1015,6 @@ const ReplenishmentPage: React.FC = () => {
         </DialogActions>
       </Dialog>
 
-      {/* 删除确认对话框 */}
       <ConfirmDialog
         isOpen={showDeleteConfirm}
         onClose={() => setShowDeleteConfirm(false)}

@@ -26,22 +26,19 @@ export const createPermissionInterceptor = () => {
           );
         }
 
-        // 暂时禁用自动重定向，避免登录后闪退
-        // 只在有 token 但认证失败时重定向（不拦截登录页的请求）
+        // 注意：401 错误已在 client.ts 的主拦截器中统一处理
+        // 此处只记录额外调试信息，避免重复处理导致 token 被清除两次
         if (error.response?.status === 401) {
           const currentPath = window.location.pathname;
-          // 登录页的 401 不处理（避免循环）
-          if (
-            currentPath !== '/login' &&
-            currentPath !== '/register' &&
-            localStorage.getItem('token')
-          ) {
-            apiLogger.warn('Unauthorized, but not redirecting temporarily - token invalid');
-            // 暂时不自动重定向
-            // localStorage.removeItem('token');
-            // localStorage.removeItem('user');
-            // window.location.href = '/login';
-          }
+          const hasToken = !!localStorage.getItem('token');
+          
+          apiLogger.warn(`[日志3-权限拦截器检测401] ${error.config?.url || ''}`, {
+            currentPath,
+            hasToken,
+            note: '401已由client.ts统一处理，此处仅做记录',
+            handledByPrimaryInterceptor: true,
+            timestamp: new Date().toISOString(),
+          });
         }
 
         return Promise.reject(error);

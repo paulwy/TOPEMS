@@ -2,9 +2,9 @@ import asyncio
 import websockets
 
 async def test():
-    print("Connecting to ws://localhost:3000/mes/ws/dashboard...")
+    print("Connecting to ws://localhost:3000/ws/mes/dashboard...")
     try:
-        async with websockets.connect('ws://localhost:3000/mes/ws/dashboard') as ws:
+        async with websockets.connect('ws://localhost:3000/ws/mes/dashboard') as ws:
             print("✅ Connected successfully")
             msg = await ws.recv()
             print(f"📩 Received: {msg[:100]}")

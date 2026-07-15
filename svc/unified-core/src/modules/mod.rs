@@ -1,7 +1,6 @@
 //! Modules for unified-core service
 //! Contains IAM, Flow, File, Communication, Tenant, Billing, Plugin, and Sync submodules
 
-pub mod backup;
 pub mod billing;
 pub mod communication;
 pub mod crm;

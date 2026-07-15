@@ -161,6 +161,38 @@ spec:
             name: portal-service
             port:
               number: 8063
+      # Finance API
+      - path: /api/finance(/|$)(.*)
+        pathType: Prefix
+        backend:
+          service:
+            name: finance-service
+            port:
+              number: 8011
+      # Doc API
+      - path: /api/doc(/|$)(.*)
+        pathType: Prefix
+        backend:
+          service:
+            name: doc-service
+            port:
+              number: 8012
+      # Analytics API（与 BI 共端口）
+      - path: /api/analytics(/|$)(.*)
+        pathType: Prefix
+        backend:
+          service:
+            name: bi-service
+            port:
+              number: 8060
+      # R&D (RD) API
+      - path: /api/rd(/|$)(.*)
+        pathType: Prefix
+        backend:
+          service:
+            name: rs-service
+            port:
+              number: 8053
       # AI API
       - path: /api/ai(/|$)(.*)
         pathType: Prefix

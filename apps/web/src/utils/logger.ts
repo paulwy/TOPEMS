@@ -163,19 +163,37 @@ function createLogger(name: string, options: LoggerOptions = {}): Logger {
 export { createLogger };
 export default createLogger;
 
+/**
+ * 安全获取 import.meta.env.PROD / DEV
+ * 避免在非标准模块加载环境下抛出 import.meta SyntaxError
+ */
+function safeEnvFlag(flag: 'PROD' | 'DEV', fallback: boolean): boolean {
+  try {
+    if (typeof import.meta !== 'undefined' && import.meta.env) {
+      const value = (import.meta.env as Record<string, unknown>)[flag];
+      return typeof value === 'boolean' ? value : String(value) === 'true';
+    }
+  } catch {
+    // ignore
+  }
+  return fallback;
+}
+
+const IS_PROD = safeEnvFlag('PROD', false);
+
 // 导出预设的日志记录器
 export const logger = createLogger('App', {
-  level: typeof import.meta !== 'undefined' && import.meta.env?.PROD ? 'error' : 'debug',
+  level: IS_PROD ? 'error' : 'debug',
   enableTimestamp: true,
 });
 
 export const apiLogger = createLogger('API', {
-  level: typeof import.meta !== 'undefined' && import.meta.env?.PROD ? 'warn' : 'debug',
+  level: IS_PROD ? 'warn' : 'debug',
   prefix: 'API',
 });
 
 export const authLogger = createLogger('Auth', {
-  level: typeof import.meta !== 'undefined' && import.meta.env?.PROD ? 'error' : 'info',
+  level: IS_PROD ? 'error' : 'info',
   prefix: 'AUTH',
 });
 

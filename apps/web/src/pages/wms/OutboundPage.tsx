@@ -1,4 +1,4 @@
-import React, { useState, useMemo, useCallback } from 'react';
+import React, { useState, useMemo, useCallback, useEffect } from 'react';
 import {
   Chip,
   Dialog,
@@ -35,6 +35,7 @@ import type {
 import { wmsApi } from '@/api/wms';
 import { WMS_PATHS } from '@/modules/wms/config';
 import { useNotificationStore } from '@/store';
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import {
   Plus,
   Edit,
@@ -49,8 +50,6 @@ import {
 import { apiLogger } from '@/utils/logger';
 import { ConfirmDialog, PageContainer, StatusBadge } from '@/components/common';
 import { designTokens } from '@/theme/tokens';
-import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { QUERY_KEYS } from '@/lib/reactQuery';
 
 const ct = designTokens.colors;
 
@@ -92,14 +91,12 @@ const OutboundPage: React.FC = () => {
   const queryClient = useQueryClient();
   const [currentTab, setCurrentTab] = useState(0);
 
-  // Filter/search/pagination states
+  // Filter states
   const [searchTerm, setSearchTerm] = useState('');
   const [statusFilter, setStatusFilter] = useState<string>('');
   const [warehouseFilter, setWarehouseFilter] = useState<string>('');
   const [currentPage, setCurrentPage] = useState(1);
   const [pageSize] = useState(10);
-
-  // Wave pick pagination
   const [wavePicksPage, setWavePicksPage] = useState(1);
 
   // Dialog states
@@ -126,18 +123,27 @@ const OutboundPage: React.FC = () => {
     items: [],
   });
 
-  const ordersQueryKey = [
-    QUERY_KEYS.WMS.OUTBOUND_ORDERS,
-    currentPage,
-    pageSize,
-    searchTerm,
-    statusFilter,
-    warehouseFilter,
-  ];
+  const warehousesQuery = useQuery({
+    queryKey: ['wms-warehouses'],
+    queryFn: async () => {
+      const response = await wmsApi.warehouses.list({ page: 1, pagesize: 100 });
+      if (response.success && response.data) {
+        return response.data.items || [];
+      }
+      return [];
+    },
+    staleTime: 5 * 60 * 1000,
+  });
+  const warehouses = warehousesQuery.data || [];
 
-  const { data: ordersResponse, isLoading: loading } = useQuery({
-    queryKey: ordersQueryKey,
-    enabled: currentTab === 0,
+  useEffect(() => {
+    if (warehousesQuery.isError && warehousesQuery.error) {
+      apiLogger.error('获取仓库列表失败:', warehousesQuery.error);
+    }
+  }, [warehousesQuery.isError, warehousesQuery.error]);
+
+  const ordersQuery = useQuery({
+    queryKey: ['wms-outbound-orders', searchTerm, statusFilter, warehouseFilter, currentPage, pageSize],
     queryFn: async () => {
       const params: Record<string, unknown> = {
         page: currentPage,
@@ -148,34 +154,30 @@ const OutboundPage: React.FC = () => {
       if (warehouseFilter) params.warehouse_id = warehouseFilter;
 
       const response = await wmsApi.outboundOrders.list(params as any);
-      if (!response.success) {
-        throw new Error('Failed to fetch outbound orders');
+      if (response.success && response.data) {
+        return { orders: response.data.items || [], total: response.data.total || 0 };
       }
-      return response.data;
+      return { orders: [], total: 0 };
     },
+    staleTime: 5 * 60 * 1000,
   });
+  const orders = ordersQuery.data?.orders || [];
+  const total = ordersQuery.data?.total || 0;
+  const loading = ordersQuery.isLoading;
 
-  const orders = ordersResponse?.items || [];
-  const total = ordersResponse?.total || 0;
+  useEffect(() => {
+    if (ordersQuery.isError && ordersQuery.error) {
+      apiLogger.error('获取出库单列表失败:', ordersQuery.error);
+      addNotification({
+        type: 'error',
+        title: '加载失败',
+        message: '无法加载出库单列表',
+      });
+    }
+  }, [ordersQuery.isError, ordersQuery.error, addNotification]);
 
-  const { data: warehousesData } = useQuery({
-    queryKey: [QUERY_KEYS.WMS.WAREHOUSES],
-    queryFn: async () => {
-      const response = await wmsApi.warehouses.list({ page: 1, pagesize: 100 });
-      if (!response.success) {
-        throw new Error('Failed to fetch warehouses');
-      }
-      return response.data;
-    },
-  });
-
-  const warehouses = warehousesData?.items || [];
-
-  const wavePicksQueryKey = [QUERY_KEYS.WMS.WAVE_PICKS, wavePicksPage, pageSize];
-
-  const { data: wavePicksResponse, isLoading: wavePicksLoading } = useQuery({
-    queryKey: wavePicksQueryKey,
-    enabled: currentTab === 1,
+  const wavePicksQuery = useQuery({
+    queryKey: ['wms-wave-picks', wavePicksPage, pageSize],
     queryFn: async () => {
       const params: Record<string, unknown> = {
         page: wavePicksPage,
@@ -183,15 +185,143 @@ const OutboundPage: React.FC = () => {
       };
 
       const response = await wmsApi.wavePicks.list(params as any);
-      if (!response.success) {
-        throw new Error('Failed to fetch wave picks');
+      if (response.success && response.data) {
+        return { wavePicks: response.data.items || [], total: response.data.total || 0 };
       }
-      return response.data;
+      return { wavePicks: [], total: 0 };
+    },
+    staleTime: 5 * 60 * 1000,
+    enabled: currentTab === 1,
+  });
+  const wavePicks = wavePicksQuery.data?.wavePicks || [];
+  const wavePicksTotal = wavePicksQuery.data?.total || 0;
+  const wavePicksLoading = wavePicksQuery.isLoading;
+
+  useEffect(() => {
+    if (wavePicksQuery.isError && wavePicksQuery.error) {
+      apiLogger.error('获取波次拣货列表失败:', wavePicksQuery.error);
+    }
+  }, [wavePicksQuery.isError, wavePicksQuery.error]);
+
+  const createOrderMutation = useMutation({
+    mutationFn: (data: CreateOutboundOrderRequest) => wmsApi.outboundOrders.create(data),
+    onSuccess: () => {
+      addNotification({
+        type: 'success',
+        title: '创建成功',
+        message: '出库单已创建',
+      });
+      queryClient.invalidateQueries({ queryKey: ['wms-outbound-orders'] });
+    },
+    onError: (error: unknown) => {
+      apiLogger.error('创建出库单失败:', error);
+      addNotification({
+        type: 'error',
+        title: '创建失败',
+        message: '创建出库单失败',
+      });
     },
   });
 
-  const wavePicks = wavePicksResponse?.items || [];
-  const wavePicksTotal = wavePicksResponse?.total || 0;
+  const confirmOrderMutation = useMutation({
+    mutationFn: (id: string) => wmsApi.outboundOrders.confirm(id),
+    onSuccess: () => {
+      addNotification({
+        type: 'success',
+        title: '确认成功',
+        message: '出库单已确认',
+      });
+      queryClient.invalidateQueries({ queryKey: ['wms-outbound-orders'] });
+    },
+    onError: (error: unknown) => {
+      apiLogger.error('确认出库单失败:', error);
+      addNotification({
+        type: 'error',
+        title: '确认失败',
+        message: '确认出库单失败',
+      });
+    },
+  });
+
+  const pickOrderMutation = useMutation({
+    mutationFn: (id: string) => wmsApi.outboundOrders.pick(id),
+    onSuccess: () => {
+      addNotification({
+        type: 'success',
+        title: '拣货成功',
+        message: '出库单已开始拣货',
+      });
+      queryClient.invalidateQueries({ queryKey: ['wms-outbound-orders'] });
+    },
+    onError: (error: unknown) => {
+      apiLogger.error('拣货失败:', error);
+      addNotification({
+        type: 'error',
+        title: '拣货失败',
+        message: '拣货失败',
+      });
+    },
+  });
+
+  const shipOrderMutation = useMutation({
+    mutationFn: (id: string) => wmsApi.outboundOrders.ship(id, []),
+    onSuccess: () => {
+      addNotification({
+        type: 'success',
+        title: '发货成功',
+        message: '出库单已发货',
+      });
+      queryClient.invalidateQueries({ queryKey: ['wms-outbound-orders'] });
+    },
+    onError: (error: unknown) => {
+      apiLogger.error('发货失败:', error);
+      addNotification({
+        type: 'error',
+        title: '发货失败',
+        message: '发货失败',
+      });
+    },
+  });
+
+  const completeOrderMutation = useMutation({
+    mutationFn: (id: string) => wmsApi.outboundOrders.complete(id),
+    onSuccess: () => {
+      addNotification({
+        type: 'success',
+        title: '完成成功',
+        message: '出库单已完成',
+      });
+      queryClient.invalidateQueries({ queryKey: ['wms-outbound-orders'] });
+    },
+    onError: (error: unknown) => {
+      apiLogger.error('完成出库单失败:', error);
+      addNotification({
+        type: 'error',
+        title: '完成失败',
+        message: '完成出库单失败',
+      });
+    },
+  });
+
+  const deleteOrderMutation = useMutation({
+    mutationFn: (id: string) => wmsApi.outboundOrders.delete(id),
+    onSuccess: () => {
+      addNotification({
+        type: 'success',
+        title: '删除成功',
+        message: '出库单已删除',
+      });
+      queryClient.invalidateQueries({ queryKey: ['wms-outbound-orders'] });
+    },
+    onError: (error: unknown) => {
+      apiLogger.error('删除出库单失败:', error);
+      addNotification({
+        type: 'error',
+        title: '删除失败',
+        message: '删除出库单失败',
+      });
+    },
+  });
 
   const fetchOrderItems = async (orderId: string) => {
     try {
@@ -204,108 +334,6 @@ const OutboundPage: React.FC = () => {
     }
   };
 
-  const invalidateOrders = () => {
-    queryClient.invalidateQueries({ queryKey: [QUERY_KEYS.WMS.OUTBOUND_ORDERS] });
-  };
-
-  const createMutation = useMutation({
-    mutationFn: async (data: CreateOutboundOrderRequest) => {
-      const response = await wmsApi.outboundOrders.create(data);
-      if (!response.success) {
-        throw new Error('Failed to create outbound order');
-      }
-      return response;
-    },
-    onSuccess: () => {
-      invalidateOrders();
-      setShowCreateDialog(false);
-      resetNewItem();
-    },
-    onError: (error) => {
-      apiLogger.error('创建出库单失败:', error);
-    },
-  });
-
-  const confirmMutation = useMutation({
-    mutationFn: async (id: string) => {
-      const response = await wmsApi.outboundOrders.confirm(id);
-      if (!response.success) {
-        throw new Error('Failed to confirm outbound order');
-      }
-      return response;
-    },
-    onSuccess: () => {
-      invalidateOrders();
-    },
-    onError: (error) => {
-      apiLogger.error('确认出库单失败:', error);
-    },
-  });
-
-  const pickMutation = useMutation({
-    mutationFn: async (id: string) => {
-      const response = await wmsApi.outboundOrders.pick(id);
-      if (!response.success) {
-        throw new Error('Failed to pick outbound order');
-      }
-      return response;
-    },
-    onSuccess: () => {
-      invalidateOrders();
-    },
-    onError: (error) => {
-      apiLogger.error('拣货失败:', error);
-    },
-  });
-
-  const shipMutation = useMutation({
-    mutationFn: async (id: string) => {
-      const response = await wmsApi.outboundOrders.ship(id, []);
-      if (!response.success) {
-        throw new Error('Failed to ship outbound order');
-      }
-      return response;
-    },
-    onSuccess: () => {
-      invalidateOrders();
-    },
-    onError: (error) => {
-      apiLogger.error('发货失败:', error);
-    },
-  });
-
-  const completeMutation = useMutation({
-    mutationFn: async (id: string) => {
-      const response = await wmsApi.outboundOrders.complete(id);
-      if (!response.success) {
-        throw new Error('Failed to complete outbound order');
-      }
-      return response;
-    },
-    onSuccess: () => {
-      invalidateOrders();
-    },
-    onError: (error) => {
-      apiLogger.error('完成出库单失败:', error);
-    },
-  });
-
-  const deleteMutation = useMutation({
-    mutationFn: async (id: string) => {
-      const response = await wmsApi.outboundOrders.delete(id);
-      if (!response.success) {
-        throw new Error('Failed to delete outbound order');
-      }
-      return response;
-    },
-    onSuccess: () => {
-      invalidateOrders();
-    },
-    onError: (error) => {
-      apiLogger.error('删除出库单失败:', error);
-    },
-  });
-
   const handleCreate = async () => {
     if (!newItem.order_number || !newItem.warehouse_id) {
       addNotification({
@@ -316,23 +344,25 @@ const OutboundPage: React.FC = () => {
       return;
     }
 
-    await createMutation.mutateAsync(newItem);
+    await createOrderMutation.mutateAsync(newItem);
+    setShowCreateDialog(false);
+    resetNewItem();
   };
 
   const handleConfirm = async (id: string) => {
-    await confirmMutation.mutateAsync(id);
+    await confirmOrderMutation.mutateAsync(id);
   };
 
   const handlePick = async (id: string) => {
-    await pickMutation.mutateAsync(id);
+    await pickOrderMutation.mutateAsync(id);
   };
 
   const handleShip = async (id: string) => {
-    await shipMutation.mutateAsync(id);
+    await shipOrderMutation.mutateAsync(id);
   };
 
   const handleComplete = async (id: string) => {
-    await completeMutation.mutateAsync(id);
+    await completeOrderMutation.mutateAsync(id);
   };
 
   const handleDeleteClick = (id: string) => {
@@ -342,8 +372,8 @@ const OutboundPage: React.FC = () => {
 
   const handleDelete = useCallback(async () => {
     if (!deleteOrderId) return;
-    await deleteMutation.mutateAsync(deleteOrderId);
-  }, [deleteMutation, deleteOrderId]);
+    await deleteOrderMutation.mutateAsync(deleteOrderId);
+  }, [deleteOrderId, deleteOrderMutation]);
 
   const handleViewDetail = async (order: OutboundOrder) => {
     setSelectedOrder(order);
@@ -728,7 +758,6 @@ const OutboundPage: React.FC = () => {
         />
       )}
 
-      {/* 新增对话框 */}
       <Dialog
         open={showCreateDialog}
         onClose={() => setShowCreateDialog(false)}
@@ -846,13 +875,13 @@ const OutboundPage: React.FC = () => {
           <Button
             variant='contained'
             onClick={handleCreate}
+            disabled={createOrderMutation.isPending}
           >
             创建
           </Button>
         </DialogActions>
       </Dialog>
 
-      {/* 详情对话框 */}
       <Dialog
         open={showDetailDialog}
         onClose={() => setShowDetailDialog(false)}
@@ -957,7 +986,6 @@ const OutboundPage: React.FC = () => {
                 </Box>
               </Box>
 
-              {/* 明细列表 */}
               <Box sx={{ mt: 2 }}>
                 <Typography
                   variant='subtitle2'
@@ -1032,7 +1060,6 @@ const OutboundPage: React.FC = () => {
         </DialogActions>
       </Dialog>
 
-      {/* 删除确认对话框 */}
       <ConfirmDialog
         isOpen={showDeleteConfirm}
         onClose={() => setShowDeleteConfirm(false)}

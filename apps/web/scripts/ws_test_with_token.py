@@ -6,7 +6,7 @@ TEST_TOKEN = "eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9.eyJzdWIiOiIxMjM0NTY3ODkwIiwib
 async def test_direct():
     print("=== Test 1: Direct connection to backend (port 8030) ===")
     try:
-        async with websockets.connect(f'ws://localhost:8030/mes/ws/dashboard?token={TEST_TOKEN}') as ws:
+        async with websockets.connect(f'ws://localhost:8030/ws/mes/dashboard?token={TEST_TOKEN}') as ws:
             print("✅ Connected directly to backend")
             msg = await ws.recv()
             print(f"📩 Received: {msg[:100]}")
@@ -20,7 +20,7 @@ async def test_direct():
 async def test_via_proxy():
     print("\n=== Test 2: Connection via Vite proxy (port 3000) ===")
     try:
-        async with websockets.connect(f'ws://localhost:3000/mes/ws/dashboard?token={TEST_TOKEN}') as ws:
+        async with websockets.connect(f'ws://localhost:3000/ws/mes/dashboard?token={TEST_TOKEN}') as ws:
             print("✅ Connected via Vite proxy")
             msg = await ws.recv()
             print(f"📩 Received: {msg[:100]}")
@@ -34,7 +34,7 @@ async def test_via_proxy():
 async def test_no_token():
     print("\n=== Test 3: Proxy connection without token ===")
     try:
-        async with websockets.connect('ws://localhost:3000/mes/ws/dashboard') as ws:
+        async with websockets.connect('ws://localhost:3000/ws/mes/dashboard') as ws:
             print("✅ Connected via Vite proxy (no token)")
             msg = await ws.recv()
             print(f"📩 Received: {msg[:100]}")

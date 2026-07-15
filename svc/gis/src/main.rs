@@ -24,7 +24,8 @@ use utoipa::OpenApi;
 
 use topems_shared::{
     auth::Claims, create_api_info_router, create_cors_layer, init_telemetry, telemetry_middleware,
-    ApiResponse, AuthState, DependencyHealth, HealthStatus, ServiceHealth,
+    wrap_group2_router, ApiResponse, AuthState, DependencyHealth, HealthStatus, RouteCompatConfig,
+    ServiceHealth,
 };
 
 mod db;
@@ -571,6 +572,9 @@ async fn main() -> Result<()> {
         .layer(axum::middleware::from_fn(telemetry_middleware))
         .layer(prometheus_layer)
         .layer(cors);
+
+    let cfg = RouteCompatConfig::new("gis", "/api/core/gis", &[]);
+    let app = wrap_group2_router(app, cfg);
 
     let port = env::var("GIS_PORT")
         .or_else(|_| env::var("SERVER_PORT"))

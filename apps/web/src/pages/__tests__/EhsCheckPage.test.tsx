@@ -110,20 +110,20 @@ vi.mock('@/store', () => ({
 }));
 
 describe('EhsCheckPage', () => {
-  it('should render without crashing', () => {
+it('should render without crashing', () => {
     const { container } = render(
       <BrowserRouter>
         <EhsCheckPage />
       </BrowserRouter>
     );
     expect(container).toBeDefined();
-  });
-  describe('EhsCheckPage', () => {
-    it('should have check API methods defined', () => {
-      expect(ehsApi.listChecks).toBeDefined();
-      expect(ehsApi.createCheck).toBeDefined();
-      expect(ehsApi.getCheck).toBeDefined();
-      expect(ehsApi.updateCheck).toBeDefined();
-    });
-  });
+});
+
+it('should have check API methods defined', () => {
+    expect(ehsApi.listChecks).toBeDefined();
+    expect(ehsApi.createCheck).toBeDefined();
+    expect(ehsApi.getCheck).toBeDefined();
+    expect(ehsApi.updateCheck).toBeDefined();
+});
+;
 });

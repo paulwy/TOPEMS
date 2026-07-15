@@ -110,17 +110,16 @@ vi.mock('@/store', () => ({
 }));
 
 describe('EhsDrillPage', () => {
-  it('should render without crashing', () => {
+it('should render without crashing', () => {
     const { container } = render(
       <BrowserRouter>
         <EhsDrillPage />
       </BrowserRouter>
     );
     expect(container).toBeDefined();
-  });
 });
-describe('EhsDrillPage', () => {
-  it('should have drill API methods defined', () => {
+
+it('should have drill API methods defined', () => {
     render(
       <BrowserRouter>
         <EhsDrillPage />
@@ -129,14 +128,15 @@ describe('EhsDrillPage', () => {
     expect(ehsApi.listDrills).toBeDefined();
     expect(ehsApi.createDrill).toBeDefined();
     expect(ehsApi.getDrill).toBeDefined();
-  });
+});
 
-  it('should call listDrills API on mount', () => {
+it('should call listDrills API on mount', () => {
     render(
       <BrowserRouter>
         <EhsDrillPage />
       </BrowserRouter>
     );
     expect(ehsApi.listDrills).toHaveBeenCalled();
-  });
+});
+;
 });

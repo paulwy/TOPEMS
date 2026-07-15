@@ -1,6 +1,5 @@
-import React, { useState, useEffect, useMemo } from 'react';
+import React, { useState, useMemo, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { useQuery, useQueryClient } from '@tanstack/react-query';
 import {
   Package,
   Star,
@@ -41,15 +40,16 @@ import { usePluginStore } from '@/store/pluginStore';
 import { useNotificationStore } from '@/store';
 import { logger } from '@/utils/logger';
 import { PLUGIN_PATHS } from '@/modules/plugin/config';
+import { useQuery, useQueryClient } from '@tanstack/react-query';
 
 type SortOption = 'popular' | 'rating' | 'newest' | 'price';
 type ViewMode = 'grid' | 'list';
 
 const PluginMarketplacePage: React.FC = () => {
   const navigate = useNavigate();
-  const queryClient = useQueryClient();
   const { healthStatus, fetchHealthStatus } = usePluginStore();
   const addNotification = useNotificationStore((state) => state.addNotification);
+  const queryClient = useQueryClient();
 
   const [searchQuery, setSearchQuery] = useState('');
   const [activeCategory, setActiveCategory] = useState('all');
@@ -58,80 +58,92 @@ const PluginMarketplacePage: React.FC = () => {
   const [activeTab, setActiveTab] = useState(0);
 
   const summaryQuery = useQuery({
-    queryKey: ['plugin-marketplace-summary'],
+    queryKey: ['marketplace-summary'],
     queryFn: async () => {
       const res = await getMarketplaceSummary();
-      return res.success && res.data ? res.data : null;
+      if (res.success && res.data) {
+        return res.data;
+      }
+      throw new Error('获取市场摘要失败');
     },
     staleTime: 5 * 60 * 1000,
   });
 
-  const categoriesQuery = useQuery<PluginCategory[]>({
+  const categoriesQuery = useQuery({
     queryKey: ['plugin-categories'],
     queryFn: async () => {
       const res = await getPluginCategories();
-      return res.success && res.data ? res.data : [];
+      if (res.success && res.data) {
+        return res.data;
+      }
+      throw new Error('获取分类失败');
     },
-    staleTime: 5 * 60 * 1000,
+    staleTime: 10 * 60 * 1000,
   });
 
-  const hasFilters = activeTab !== 0 || activeCategory !== 'all' || !!searchQuery;
-
-  const pluginsQuery = useQuery<Plugin[]>({
-    queryKey: ['plugin-marketplace-plugins', searchQuery, activeCategory, sortBy, activeTab],
+  const pluginsQuery = useQuery({
+    queryKey: ['marketplace-plugins', activeCategory, sortBy, searchQuery, activeTab],
     queryFn: async () => {
+      if (activeTab === 0 && activeCategory === 'all' && !searchQuery) {
+        return { plugins: summaryQuery.data?.featured_plugins || [] };
+      }
+
       const params: Record<string, unknown> = {
         sort_by: sortBy,
       };
+
       if (searchQuery) params.search = searchQuery;
       if (activeCategory !== 'all') params.category = activeCategory;
+
       const res = await listPlugins(params);
-      return res.success && res.data ? res.data.plugins : [];
+      if (res.success && res.data) {
+        return res.data;
+      }
+      throw new Error('获取插件列表失败');
     },
-    enabled: hasFilters,
+    enabled: !(activeTab === 0 && activeCategory === 'all' && !searchQuery),
     staleTime: 5 * 60 * 1000,
   });
 
-  const summary = summaryQuery.data ?? null;
-  const categories = categoriesQuery.data ?? [];
-  const featuredPlugins = summary?.featured_plugins ?? [];
-  const newPlugins = summary?.new_plugins ?? [];
-  const topRatedPlugins = summary?.top_rated ?? [];
-  const plugins = pluginsQuery.data ?? [];
-
-  const loading = summaryQuery.isLoading || categoriesQuery.isLoading;
-  const error = summaryQuery.isError || categoriesQuery.isError ? '加载失败，请稍后重试' : null;
-  const isRefreshing = pluginsQuery.isFetching || summaryQuery.isFetching;
-
   useEffect(() => {
-    if (summaryQuery.isError) {
+    if (summaryQuery.isError && summaryQuery.error) {
       logger.error('Failed to load marketplace:', summaryQuery.error);
+      addNotification({
+        title: '加载失败',
+        message: (summaryQuery.error as { message?: string }).message || '加载市场数据失败',
+        type: 'error',
+      });
     }
   }, [summaryQuery.isError, summaryQuery.error]);
 
   useEffect(() => {
-    if (categoriesQuery.isError) {
+    if (categoriesQuery.isError && categoriesQuery.error) {
       logger.error('Failed to load categories:', categoriesQuery.error);
     }
   }, [categoriesQuery.isError, categoriesQuery.error]);
 
   useEffect(() => {
-    if (pluginsQuery.isError) {
+    if (pluginsQuery.isError && pluginsQuery.error) {
       logger.error('Failed to load plugins:', pluginsQuery.error);
     }
   }, [pluginsQuery.isError, pluginsQuery.error]);
 
-  useEffect(() => {
-    fetchHealthStatus();
-  }, [fetchHealthStatus]);
+  const featuredPlugins = summaryQuery.data?.featured_plugins || [];
+  const newPlugins = summaryQuery.data?.new_plugins || [];
+  const topRatedPlugins = summaryQuery.data?.top_rated || [];
+  const categories = categoriesQuery.data || [];
+  const plugins = pluginsQuery.data?.plugins || [];
+  const loading = summaryQuery.isLoading || categoriesQuery.isLoading;
+  const isRefreshing = summaryQuery.isFetching || categoriesQuery.isFetching || pluginsQuery.isFetching;
 
   const handleRefresh = async () => {
     await Promise.all([
-      queryClient.invalidateQueries({ queryKey: ['plugin-marketplace-summary'] }),
+      queryClient.invalidateQueries({ queryKey: ['marketplace-summary'] }),
       queryClient.invalidateQueries({ queryKey: ['plugin-categories'] }),
-      queryClient.invalidateQueries({ queryKey: ['plugin-marketplace-plugins'] }),
+      queryClient.invalidateQueries({ queryKey: ['marketplace-plugins'] }),
     ]);
     fetchHealthStatus(true);
+
     addNotification({
       title: '刷新成功',
       message: '插件列表已更新',
@@ -223,12 +235,6 @@ const PluginMarketplacePage: React.FC = () => {
           </Box>
         </Box>
       </Box>
-
-      {error && (
-        <Box sx={{ maxWidth: '1200px', mx: 'auto', px: 6, py: 4 }}>
-          <Alert severity='error'>{error}</Alert>
-        </Box>
-      )}
 
       <Box sx={{ maxWidth: '1200px', mx: 'auto', px: 6, py: 6 }}>
         <Box sx={{ mb: 6 }}>

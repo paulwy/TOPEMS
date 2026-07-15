@@ -15,10 +15,14 @@ import {
   Stack,
   Typography,
   Button,
+  useTheme,
+  useMediaQuery,
 } from '@mui/material';
 import { PageContainer } from '@/components/common';
 import React, { useState, useMemo, useCallback, useEffect } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import { useResponsive } from '@/hooks/useResponsive';
+import { Hidden } from '@topems/shared-components';
 import type {
   WorkOrder,
   CreateWorkOrderRequest,
@@ -52,6 +56,9 @@ import { designTokens } from '@/theme/tokens';
 const ct = designTokens.colors;
 
 const WorkOrderPage: React.FC = () => {
+  const { isMobile, isTablet } = useResponsive();
+  const theme = useTheme();
+
   const [searchTerm, setSearchTerm] = useState('');
   const [statusFilter, setStatusFilter] = useState<string>('all');
   const [currentPage, setCurrentPage] = useState(1);
@@ -71,7 +78,7 @@ const WorkOrderPage: React.FC = () => {
   const { addNotification } = useNotificationStore();
   const queryClient = useQueryClient();
 
-  const workOrdersQuery = useQuery({
+  const { data, isError, error, isLoading } = useQuery({
     queryKey: ['mes-work-orders', searchTerm, statusFilter, currentPage, pageSize],
     queryFn: async () => {
       const params: ListParams = {
@@ -89,20 +96,20 @@ const WorkOrderPage: React.FC = () => {
     },
     staleTime: 5 * 60 * 1000,
   });
-  const workOrders = workOrdersQuery.data?.workOrders || [];
-  const total = workOrdersQuery.data?.total || 0;
-  const loading = workOrdersQuery.isLoading;
+  const workOrders = data?.workOrders || [];
+  const total = data?.total || 0;
+  const loading = isLoading;
 
   useEffect(() => {
-    if (workOrdersQuery.isError) {
-      apiLogger.error('加载工单列表失败:', workOrdersQuery.error);
+    if (isError && error) {
+      apiLogger.error('加载工单列表失败:', error);
       addNotification({
         type: 'error',
         title: '加载失败',
         message: '无法加载工单列表',
       });
     }
-  }, [workOrdersQuery.isError, workOrdersQuery.error]);
+  }, [isError, error]);
 
   const createWorkOrderMutation = useMutation({
     mutationFn: (data: CreateWorkOrderRequest) => mesApi.workOrders.create(data),
@@ -376,40 +383,60 @@ const WorkOrderPage: React.FC = () => {
   };
 
   const columns: ColumnDef<WorkOrder>[] = useMemo(
-    () => [
-      { id: 'work_order_no', label: '工单号', sortable: true },
-      { id: 'order_number', label: '生产订单', sortable: true },
-      { id: 'process_name', label: '工序', sortable: true },
-      { id: 'work_station_name', label: '工作站', sortable: true },
-      { id: 'team_name', label: '班组', sortable: true },
-      { id: 'quantity', label: '计划数量', sortable: true },
-      { id: 'completed_quantity', label: '完成数量', sortable: true },
-      {
-        id: 'priority',
-        label: '优先级',
-        render: (row) => getPriorityBadge(row.priority),
-      },
-      {
-        id: 'planned_start_time',
-        label: '计划开始',
-        render: (row) =>
-          row.planned_start_time
-            ? new Date(row.planned_start_time).toLocaleDateString('zh-CN')
-            : '-',
-      },
-      {
-        id: 'planned_end_time',
-        label: '计划结束',
-        render: (row) =>
-          row.planned_end_time ? new Date(row.planned_end_time).toLocaleDateString('zh-CN') : '-',
-      },
-      {
-        id: 'status',
-        label: '状态',
-        render: (row) => getStatusBadge(row.status),
-      },
-    ],
-    []
+    () => {
+      const baseColumns = [
+        { id: 'work_order_no', label: '工单号', sortable: true },
+        { id: 'quantity', label: '计划数量', sortable: true },
+        {
+          id: 'priority',
+          label: '优先级',
+          render: (row: WorkOrder) => getPriorityBadge(row.priority),
+        },
+        {
+          id: 'status',
+          label: '状态',
+          render: (row: WorkOrder) => getStatusBadge(row.status),
+        },
+      ];
+
+      if (isMobile) {
+        return baseColumns;
+      }
+
+      if (isTablet) {
+        return [
+          ...baseColumns.slice(0, 1),
+          { id: 'order_number', label: '生产订单', sortable: true },
+          { id: 'completed_quantity', label: '完成数量', sortable: true },
+          ...baseColumns.slice(1),
+        ];
+      }
+
+      return [
+        ...baseColumns.slice(0, 1),
+        { id: 'order_number', label: '生产订单', sortable: true },
+        { id: 'process_name', label: '工序', sortable: true },
+        { id: 'work_station_name', label: '工作站', sortable: true },
+        { id: 'team_name', label: '班组', sortable: true },
+        ...baseColumns.slice(1),
+        { id: 'completed_quantity', label: '完成数量', sortable: true },
+        {
+          id: 'planned_start_time',
+          label: '计划开始',
+          render: (row: WorkOrder) =>
+            row.planned_start_time
+              ? new Date(row.planned_start_time).toLocaleDateString('zh-CN')
+              : '-',
+        },
+        {
+          id: 'planned_end_time',
+          label: '计划结束',
+          render: (row: WorkOrder) =>
+            row.planned_end_time ? new Date(row.planned_end_time).toLocaleDateString('zh-CN') : '-',
+        },
+      ];
+    },
+    [isMobile, isTablet]
   );
 
   const filters: FilterConfig[] = useMemo(
@@ -650,7 +677,8 @@ const WorkOrderPage: React.FC = () => {
       <Dialog
         open={showDialog}
         onClose={() => setShowDialog(false)}
-        maxWidth='md'
+        maxWidth={isMobile ? 'sm' : 'md'}
+        fullWidth={isMobile}
       >
         <DialogTitle>{selectedWorkOrder ? '编辑工单' : '新增工单'}</DialogTitle>
         <DialogContent>
@@ -780,7 +808,8 @@ const WorkOrderPage: React.FC = () => {
       <Dialog
         open={showDetailDialog}
         onClose={() => setShowDetailDialog(false)}
-        maxWidth='md'
+        maxWidth={isMobile ? 'sm' : 'md'}
+        fullWidth={isMobile}
       >
         <DialogTitle>工单详情</DialogTitle>
         <DialogContent>

@@ -139,35 +139,37 @@ describe('ReportListPage', () => {
     });
   });
 
-  it('should render page title', async () => {
+describe('ReportListPage', () => {
+it('should render page title', async () => {
     renderWithProviders(<ReportListPage />);
     await waitFor(() => {
       expect(screen.getByRole('heading', { name: '报表中心' })).toBeInTheDocument();
-    });
   });
+});
 
-  it('should render report list', async () => {
+it('should render report list', async () => {
     renderWithProviders(<ReportListPage />);
     await waitFor(() => {
       expect(screen.getByText('销售月报')).toBeInTheDocument();
       expect(screen.getByText('生产日报')).toBeInTheDocument();
-    });
   });
+});
 
-  it('should handle search', async () => {
+it('should handle search', async () => {
     renderWithProviders(<ReportListPage />);
     await waitFor(() => {
       const searchInput = screen.getByPlaceholderText(/搜索报表/);
       fireEvent.change(searchInput, { target: { value: '销售' } });
-    });
   });
+});
 
-  it('should handle API error', async () => {
+it('should handle API error', async () => {
     (reportApi.listReports as vi.Mock).mockRejectedValue(new Error('Network error'));
     renderWithProviders(<ReportListPage />);
 
     await waitFor(() => {
       expect(screen.getByRole('heading', { name: '报表中心' })).toBeInTheDocument();
-    });
   });
+});
+;
 });

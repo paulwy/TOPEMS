@@ -144,17 +144,16 @@ vi.mock('@/store', () => ({
 }));
 
 describe('HrmPayrollPage', () => {
-  it('should render without crashing', () => {
+it('should render without crashing', () => {
     const { container } = render(
       <BrowserRouter>
         <HrmPayrollPage />
       </BrowserRouter>
     );
     expect(container).toBeDefined();
-  });
 });
-describe('HrmPayrollPage', () => {
-  it('should have valid payroll API methods', () => {
+
+it('should have valid payroll API methods', () => {
     expect(payrollApi.list).toBeDefined();
     expect(payrollApi.get).toBeDefined();
     expect(payrollApi.create).toBeDefined();
@@ -163,22 +162,23 @@ describe('HrmPayrollPage', () => {
     expect(payrollApi.calculate).toBeDefined();
     expect(payrollApi.approve).toBeDefined();
     expect(payrollApi.pay).toBeDefined();
-  });
+});
 
-  it('should have valid payroll items API methods', () => {
+it('should have valid payroll items API methods', () => {
     expect(payrollItemApi.list).toBeDefined();
-  });
+});
 
-  it('should have valid salary adjustments API methods', () => {
+it('should have valid salary adjustments API methods', () => {
     expect(salaryAdjustmentApi.list).toBeDefined();
-  });
+});
 
-  it('should call payroll list API on mount', async () => {
+it('should call payroll list API on mount', async () => {
     render(
       <BrowserRouter>
         <HrmPayrollPage />
       </BrowserRouter>
     );
     expect(payrollApi.list).toHaveBeenCalled();
-  });
+});
+;
 });

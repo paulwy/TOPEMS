@@ -113,17 +113,17 @@ vi.mock('@/store', () => ({
   useSetSidebarCollapsed: vi.fn(),
 }));
 
-describe('UserManagementPage', () => {
-  it('should render without crashing', () => {
+describe('IamUserManagementPage', () => {
+it('should render without crashing', () => {
     const { container } = render(
       <BrowserRouter>
         <UserManagementPage />
       </BrowserRouter>
     );
     expect(container).toBeDefined();
-  });
+});
 
-  it('should have user list API method', async () => {
+it('should have user list API method', async () => {
     render(
       <BrowserRouter>
         <UserManagementPage />
@@ -138,14 +138,15 @@ describe('UserManagementPage', () => {
     expect(authApi.removeUserRole).toBeDefined();
     expect(authApi.batchUpdateUsers).toBeDefined();
     expect(authApi.batchDeleteUsers).toBeDefined();
-  });
+});
 
-  it('should call listUsers API on mount', async () => {
+it('should call listUsers API on mount', async () => {
     render(
       <BrowserRouter>
         <UserManagementPage />
       </BrowserRouter>
     );
     expect(authApi.listUsers).toHaveBeenCalled();
-  });
+});
+;
 });
